@@ -1,0 +1,60 @@
+#! /bin/bash -eu
+
+INPUT="$1"
+
+PROG="$(basename "$0")"
+
+if grep -Eq '(^|:)(all|'"${PROG}"')(:|$)' <<< "${DISABLE_GIT_HOOKS:-}" ; then
+    exit 0
+fi
+
+if tty --quiet <&2 ; then
+    E="$(tput bold)$(tput setaf 1)ERROR$(tput sgr0)"
+else
+    E="ERROR"
+fi
+
+H="${PROG}:$E"
+
+MAX_COL=80
+COUNT_ERROR=0
+
+if ! awk '$0 !~ /^#/ && length($0) > '${MAX_COL}' { exit 1; }' "$INPUT" ; then
+    (
+        echo
+        echo "$H: commit log include long lines with more than ${MAX_COL} columns."
+        echo "$H: Please use 'git commit --amend' to reformat it."
+    ) >&2
+    let COUNT_ERROR+=1
+fi
+
+if ! head -2 "${INPUT}" | tail -1 | grep -Eq '^$' ; then
+    (
+        echo
+        echo "$H: The 2nd line of the commit log should be empty."
+        echo "$H: This is for readable summaries using 'git log --oneline'"
+        echo "$H: Please use 'git commit --amend' to fix it."
+    ) >&2
+    let COUNT_ERROR+=1
+fi
+
+if ! grep -Eq '^Signed-off-by: [^<]+<[^@]+@nxp.com>' "${INPUT}" ; then
+    (
+        echo
+        echo "$H: 'Signed-off-by:' tag is missing or incorrect in commit log."
+        echo "$H: Name format: Firstname Lastname <firstname.lastname@nxp.com>"
+        echo "$H: Please use 'git commit --amend -s' to add or correct it."
+    ) >&2
+    let COUNT_ERROR+=1
+fi
+
+if ! grep -Eq 'SSMW-[0-9]+:?[[:blank:]]+' "${INPUT}" ; then
+    (
+        echo
+        echo "$H: JIRA 'SSMW-nnn: ' tag is missing or malformed in commit log."
+        echo "$H: Please use 'git commit --amend' to add or correct it."
+    ) >&2
+    let COUNT_ERROR+=1
+fi
+
+exit ${COUNT_ERROR}

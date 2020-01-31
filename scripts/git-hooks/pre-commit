@@ -1,0 +1,40 @@
+#! /bin/bash
+
+set -eu
+
+if tty --quiet <&2 ; then
+    W="$(tput bold)$(tput setaf 1)WARNING$(tput sgr0)"
+else
+    W="WARNING"
+fi
+
+HOOK_NAME="$(basename "$0")"
+
+REALPATH="$(readlink -e "$0")"
+BASEDIR="$(dirname "${REALPATH}")"
+HOOK_DIR="${BASEDIR}/${HOOK_NAME}.d"
+
+RETURN=0
+
+if grep -Eq '(^|:)(all|'"${HOOK_NAME}"')(:|$)' <<< "${DISABLE_GIT_HOOKS:-}" ; then
+    exit 0
+fi
+
+for script in "${HOOK_DIR}"/* ; do
+    SCRIPT_RET=0
+    "${script}" || SCRIPT_RET=$?
+    if [ $SCRIPT_RET -ne 0 ] ; then
+        echo "$W: ${HOOK_NAME}: Script ${script} returned an error (code $SCRIPT_RET)" >&2
+        RETURN=1
+    fi
+done
+
+if [ ${RETURN} -ne 0 ] ; then
+    (
+        echo ""
+        echo "NOTE: ${HOOK_NAME} warnings can be skipped with command: git commit --no-verify"
+        echo ""
+    ) >&2
+fi
+
+exit ${RETURN}

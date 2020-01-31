@@ -1,0 +1,59 @@
+#!/bin/bash
+set -eu
+
+if tty --quiet <&2 ; then
+    E="$(tput bold)$(tput setaf 1)ERROR$(tput sgr0)"
+else
+    E="ERROR"
+fi
+
+show_help() {
+  cat << EOF
+  This repository requires you to install the git clang-format command.
+  One-time setup steps:
+    1) install the git-clang-format script in your \$PATH, for example:
+      curl https://raw.githubusercontent.com/llvm-mirror/clang/master/tools/clang-format/git-clang-format > git-clang-format
+      sudo mv git-clang-format /usr/local/bin/.
+    2) make sure git-clang-format is executable:
+      chmod u+x /usr/local/bin/git-clang-format
+EOF
+}
+
+# Check if git-clang-format is reachable. Because of the || true,
+# if git-clang-format is not found, we won't get any error
+check_clang_format() {
+  if hash git-clang-format 2>/dev/null; then
+    return
+  else
+    echo "${E} SETUP: no git-clang-format executable found, or it is not executable"
+    show_help
+    exit 1
+  fi
+}
+
+# Extensions file to verify
+EXTENSIONS="c,h,cpp"
+
+check_clang_format
+
+readonly patch_commit=$(mktemp)
+trap '{ rm -f "$patch_commit"; }' exit 1
+git-clang-format --style='file' --extensions ${EXTENSIONS} --diff > "$patch_commit" || exit 1
+
+if [[ $(< "$patch_commit") == *"no modified files to format"* ]]; then exit 0; fi
+if [[ $(< "$patch_commit") == *"clang-format did not modify any files"* ]]; then exit 0; fi
+
+if hash colordiff 2> /dev/null; then
+    colordiff < "$patch_commit"
+else
+    echo "(Install colordiff to see this diff in color!)"
+    echo
+    echo "$patch_commit"
+fi
+
+echo
+echo "${E}: commit containes file(s) not formatted correctly"
+echo "You need to run git-clang-format on your commit"
+echo
+exit 1
+

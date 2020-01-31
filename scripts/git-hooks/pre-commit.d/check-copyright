@@ -1,0 +1,61 @@
+#! /bin/bash
+
+set -u
+
+if tty --quiet <&2 ; then
+    W="$(tput bold)$(tput setaf 1)WARNING$(tput sgr0)"
+else
+    W="WARNING"
+fi
+
+: "${CHECK_STYLE_IGNORE:=.check-style.ignore}"
+
+function is_ignored() {
+    TEST_FILE="$1"
+    while read -r ignore_pattern ; do
+        case $FILE in
+            $ignore_pattern)
+                return 0
+                ;;
+        esac
+    done < <(grep -Ev '^[[:blank:]]*(#|$)' "${CHECK_STYLE_IGNORE}")
+
+    return 1
+}
+
+RETURN=0
+
+FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "\.(c|h|cpp)$")
+for FILE in $FILES ; do
+
+    if is_ignored "${FILE}" ; then
+        continue
+    fi
+
+    # search copyright in 20 first lines, with current year date
+    head -n 20 "$FILE" | grep "[Cc]opyright 20..* NXP" | grep $(date +%Y) > /dev/null
+    if [ $? -ne 0 ]; then
+        if [ $RETURN -eq 0 ] ; then
+            echo >&2
+        fi
+        echo "$W: $FILE misses correct copyright info." >&2
+        RETURN=1
+    fi
+done
+
+if [ $RETURN -eq 1 ] ; then
+    (
+        echo ""
+        echo "Wrong Copyrights detected in some files."
+        echo "The copyright notice should look like:"
+        echo ""
+        echo "      /*"
+        echo "       * Copyright $(date +%Y) NXP"
+        echo "       */"
+        echo ""
+        echo "Refer to https://nww.wiki.nxp.com/display/OSS/Copyright+Usage for details"
+        echo ""
+    ) >&2
+fi
+
+exit $RETURN

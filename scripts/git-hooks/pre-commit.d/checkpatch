@@ -1,0 +1,33 @@
+#!/bin/bash
+set -eu
+
+if tty --quiet <&2 ; then
+    E="$(tput bold)$(tput setaf 1)ERROR$(tput sgr0)"
+else
+    E="ERROR"
+fi
+
+# Get the Git Top level directory
+function get_toplevel() {
+	local topdir
+	topdir=$(git rev-parse --show-toplevel)
+	echo "$topdir"
+}
+
+# Check if the local checkpatch.sh script exist or not.
+check_script() {
+  if  [ -f $CHECKPATCH_SH ]; then
+    return
+  else
+    echo "${E} SETUP: no $CHECKPATCH_SH found, or it is not executable"
+    exit 1
+  fi
+}
+
+# Get the git root directory
+GIT_TOPLEVEL=$(get_toplevel)
+CHECKPATCH_SH="$GIT_TOPLEVEL"/scripts/checkpatch.sh
+
+check_script
+
+$CHECKPATCH_SH --cached

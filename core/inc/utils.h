@@ -10,51 +10,12 @@
 #include <string.h>
 #include <limits.h>
 
-#include <smw_osal.h>
-#include <smw_debug.h>
-
-extern struct smw_ctx g_smw_ctx;
-
-#define SMW_UTILS_DBG_LEVEL_DEFAULT SMW_DBG_LEVEL_NONE
-
-/* SMW globals */
-/**
- * struct smw_ctx - SMW context
- * @ops: Structure containing the OSAL primitives
- * @start_count: Number of threads/applications that started the SMW library
- * @dbg_lvl: Current debug level
- *
- */
-struct smw_ctx {
-	struct smw_ops ops;
-	int start_count;
-	unsigned char dgb_lvl;
-};
-
-#define SMW_UTILS_PRINTF(...)                                                  \
-	do {                                                                   \
-		if (g_smw_ctx.ops.thread_self)                                 \
-			printf("(%lx) ", g_smw_ctx.ops.thread_self());         \
-		printf(__VA_ARGS__);                                           \
-	} while (0)
-
-#if defined(ENABLE_DEBUG)
-#define SMW_UTILS_TRACE_FUNCTION_CALL                                          \
-	do {                                                                   \
-		if (g_smw_ctx.dgb_lvl >= SMW_DBG_LEVEL_VERBOSE)                \
-			SMW_UTILS_PRINTF("Executing %s\n", __func__);          \
-	} while (0)
-
-#define SMW_UTILS_DBG_PRINTF(level, ...)                                       \
-	do {                                                                   \
-		if (g_smw_ctx.dgb_lvl >= SMW_DBG_LEVEL_##level)                \
-			SMW_UTILS_PRINTF(__VA_ARGS__);                         \
-	} while (0)
-
-#else
-#define SMW_UTILS_TRACE_FUNCTION_CALL
-#define SMW_UTILS_DBG_PRINTF(level, ...)
-#endif /* ENABLE_DEBUG */
+#define SMW_UTILS_MALLOC  malloc
+#define SMW_UTILS_FREE	  free
+#define SMW_UTILS_MEMCPY  memcpy
+#define SMW_UTILS_STRLEN  strlen
+#define SMW_UTILS_STRCMP  strcmp
+#define SMW_UTILS_STRNCMP strncmp
 
 #define SMW_UTILS_CRITICAL_SECTION_START                                       \
 	do {                                                                   \
@@ -67,3 +28,59 @@ struct smw_ctx {
 		if (g_smw_ctx.ops.critical_section_stop)                       \
 			g_smw_ctx.ops.critical_section_stop();                 \
 	} while (0)
+
+static inline int smw_utils_mutex_init(void **mutex)
+{
+	int err = 0;
+
+	SMW_DBG_ASSERT(mutex);
+	if (g_smw_ctx.ops.mutex_init)
+		err = g_smw_ctx.ops.mutex_init(mutex);
+
+	return err;
+}
+
+static inline int smw_utils_mutex_destroy(void **mutex)
+{
+	int err = 0;
+
+	SMW_DBG_ASSERT(mutex);
+	if (g_smw_ctx.ops.mutex_destroy)
+		err = g_smw_ctx.ops.mutex_destroy(mutex);
+
+	return err;
+}
+
+static inline void smw_utils_mutex_lock(void *mutex)
+{
+	if (g_smw_ctx.ops.mutex_lock)
+		SMW_DBG_ASSERT(!g_smw_ctx.ops.mutex_lock(mutex));
+}
+
+static inline void smw_utils_mutex_unlock(void *mutex)
+{
+	if (g_smw_ctx.ops.mutex_unlock)
+		SMW_DBG_ASSERT(!g_smw_ctx.ops.mutex_unlock(mutex));
+}
+
+static inline int smw_utils_thread_create(unsigned long *thread,
+					  void *(*start_routine)(void *arg),
+					  void *arg)
+{
+	int err = 0;
+
+	if (g_smw_ctx.ops.thread_create)
+		err = g_smw_ctx.ops.thread_create(thread, start_routine, arg);
+
+	return err;
+}
+
+static inline int smw_utils_thread_cancel(unsigned long thread)
+{
+	int err = 0;
+
+	if (g_smw_ctx.ops.thread_cancel)
+		err = g_smw_ctx.ops.thread_cancel(thread);
+
+	return err;
+}

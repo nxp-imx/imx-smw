@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/*
+ * Copyright 2020 NXP
+ */
+
+${ENUM_OPERATION_ID} {
+	${LIST_OPERATION_ID}
+	${OPERATION_ID}_NB,
+	${OPERATION_ID}_INVALID
+};
+
+${STRUCT_OPERATION_FUNC} {
+	int (*decode)(char **start, char *end,
+		      ${ENUM_OPERATION_ID} operation_id, void **params);
+	void (*destroy)(void *params);
+	void (*print)(void *params);
+};

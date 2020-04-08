@@ -1,0 +1,13 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/*
+ * Copyright 2020 NXP
+ */
+
+${LIST_SUBSYSTEM_EXPORT}
+static const char *const subsystem_names[] = {
+	${LIST_SUBSYSTEM_NAME}
+};
+
+static ${RETURN_SUBSYSTEM_FUNC}(*subsystem_func[]) (void) = {
+	${LIST_SUBSYSTEM_FUNC}
+};

@@ -1,0 +1,15 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/*
+ * Copyright 2020 NXP
+ */
+
+${ENUM_SUBSYSTEM_ID} {
+	${LIST_SUBSYSTEM_ID}
+	${SUBSYSTEM_ID}_NB,
+	${SUBSYSTEM_ID}_INVALID
+};
+
+${STRUCT_SUBSYSTEM_FUNC} {
+	int (*load)(void);
+	int (*unload)(void);
+};

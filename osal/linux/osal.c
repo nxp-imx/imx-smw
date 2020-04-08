@@ -10,105 +10,252 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "smw_debug.h"
 #include "smw_osal.h"
 
-#include "osal_debug.h"
+/* Debug levels */
+#define DBG_LEVEL_NONE	  0 /* No trace */
+#define DBG_LEVEL_ERROR	  1 /* Failures of which the user must be aware */
+#define DBG_LEVEL_INFO	  2 /* Traces which could interest the user */
+#define DBG_LEVEL_DEBUG	  3 /* First level of debugging information */
+#define DBG_LEVEL_VERBOSE 4 /* Maximum level of debugging information */
 
-#define OSAL_DBG_LEVEL_DEFAULT OSAL_DBG_LEVEL_NONE
+__attribute__((constructor)) static void constructor(void);
+__attribute__((destructor)) static void destructor(void);
 
-__attribute__((constructor)) void smw_constructor(void);
-__attribute__((destructor)) void smw_destructor(void);
+#if defined(ENABLE_TRACE)
 
-/* OSAL globals */
-/**
- * struct osal_ctx - OSAL context
- * @dbg_lvl: Current debug level
- *
- */
-static struct osal_ctx {
-	unsigned char dbg_lvl;
-} g_osal_ctx = {
-	.dbg_lvl = 0,
-};
+#define DBG_LEVEL TRACE_LEVEL
 
-static unsigned long osal_thread_self(void)
+#define DBG_PRINTF(level, ...)                                                 \
+	do {                                                                   \
+		if (DBG_LEVEL_##level <= DBG_LEVEL) {                          \
+			printf("(%lx) ", pthread_self());                      \
+			printf(__VA_ARGS__);                                   \
+		}                                                              \
+	} while (0)
+
+#define TRACE_FUNCTION_CALL DBG_PRINTF(VERBOSE, "Executing %s\n", __func__)
+
+#else
+#define DBG_PRINTF(level, ...)
+#define TRACE_FUNCTION_CALL
+#endif /* ENABLE_TRACE */
+
+static int mutex_init(void **mutex)
+{
+	int status = -1;
+
+	TRACE_FUNCTION_CALL;
+
+	if (!mutex)
+		goto end;
+	if (*mutex)
+		goto end;
+
+	*mutex = malloc(sizeof(pthread_mutex_t));
+	if (!*mutex)
+		goto end;
+
+	status = pthread_mutex_init((pthread_mutex_t *)*mutex, NULL);
+
+end:
+	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
+
+	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int mutex_destroy(void **mutex)
+{
+	int status = -1;
+
+	TRACE_FUNCTION_CALL;
+
+	if (!mutex)
+		goto end;
+	if (!*mutex)
+		goto end;
+
+	status = pthread_mutex_destroy((pthread_mutex_t *)*mutex);
+	if (status)
+		goto end;
+
+	free(*mutex);
+	*mutex = NULL;
+
+end:
+	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
+
+	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int mutex_lock(void *mutex)
+{
+	int status = -1;
+
+	TRACE_FUNCTION_CALL;
+
+	status = pthread_mutex_lock((pthread_mutex_t *)mutex);
+
+	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
+
+	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int mutex_unlock(void *mutex)
+{
+	int status = -1;
+
+	TRACE_FUNCTION_CALL;
+
+	status = pthread_mutex_unlock((pthread_mutex_t *)mutex);
+
+	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
+
+	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int thread_create(unsigned long *thread, void *(*start_routine)(void *),
+			 void *arg)
+{
+	return pthread_create(thread, NULL, start_routine, arg);
+}
+
+static int thread_cancel(unsigned long thread)
+{
+	return pthread_cancel(thread);
+}
+
+static unsigned long thread_self(void)
 {
 	return (unsigned long)pthread_self();
 }
 
-#if defined(ENABLE_DEBUG)
-static int osal_printf(const char *fmt, ...)
+static int get_default_config(char **buffer, unsigned int *size)
 {
-	va_list args;
+	int status = -1;
 
-	printf("(%lx) ", pthread_self());
+	FILE *f = NULL;
+	const char *file_name = getenv("SMW_CONFIG_FILE");
 
-	va_start(args, fmt);
-	vprintf(fmt, args);
-	va_end(args);
+	TRACE_FUNCTION_CALL;
 
-	return 0;
+	if (!file_name) {
+		DBG_PRINTF(ERROR, "SMW_CONFIG_FILE not set.\n"
+				  "Use export SMW_CONFIG_FILE=...\n");
+		goto end;
+	}
+
+	f = fopen(file_name, "r");
+	if (!f)
+		goto end;
+
+	if (fseek(f, 0, SEEK_END)) {
+		if (ferror(f))
+			perror("fseek() SEEK_END");
+		goto end;
+	}
+
+	*size = ftell(f);
+	if (*size == -1) {
+		if (ferror(f))
+			perror("ftell()");
+		goto end;
+	}
+	DBG_PRINTF(INFO, "File size: %d\n", *size);
+
+	if (fseek(f, 0, SEEK_SET)) {
+		if (ferror(f))
+			perror("fseek() SEEK_SET");
+		goto end;
+	}
+
+	*buffer = malloc(*size + 1);
+	if (!*buffer)
+		goto end;
+	if (*size != fread(*buffer, sizeof **buffer, *size, f)) {
+		if (feof(f))
+			DBG_PRINTF(ERROR, "Error reading %s: unexpected EOF\n",
+				   file_name);
+		else if (ferror(f))
+			perror("fread()");
+		goto end;
+	}
+	*(*buffer + *size) = '\0';
+	DBG_PRINTF(INFO, "Plaintext configuration (size: %d):\n%.*s\n", *size,
+		   *size, *buffer);
+
+	status = 0;
+
+end:
+	if (f)
+		if (fclose(f))
+			perror("fclose()");
+
+	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
-#define OSAL_PRINTF osal_printf
-
-#define OSAL_DBG_PRINTF(level, ...)                                            \
-	do {                                                                   \
-		if (OSAL_DBG_LEVEL_##level <= g_osal_ctx.dbg_lvl)              \
-			OSAL_PRINTF(__VA_ARGS__);                              \
-	} while (0)
-
-#define OSAL_TRACE_FUNCTION_CALL                                               \
-	OSAL_DBG_PRINTF(VERBOSE, "Executing %s\n", __func__)
-
-#else
-#define OSAL_DBG_PRINTF(level, ...)
-#define OSAL_TRACE_FUNCTION_CALL
-#endif /* ENABLE_DEBUG */
-
-static int smw_osal_start(unsigned char osal_dbg_lvl, unsigned char smw_dbg_lvl)
+static int start(void)
 {
 	int status = 0;
 
+	unsigned int size = 0;
+	char *buffer = NULL;
 	struct smw_ops ops;
 
-	OSAL_TRACE_FUNCTION_CALL;
-
-	if (g_osal_ctx.dbg_lvl == OSAL_DBG_LEVEL_DEFAULT)
-		g_osal_ctx.dbg_lvl = osal_dbg_lvl;
+	TRACE_FUNCTION_CALL;
 
 	memset(&ops, 0, sizeof(ops));
-	ops.thread_self = osal_thread_self;
+	ops.mutex_init = mutex_init;
+	ops.mutex_destroy = mutex_destroy;
+	ops.mutex_lock = mutex_lock;
+	ops.mutex_unlock = mutex_unlock;
+	ops.thread_create = thread_create;
+	ops.thread_cancel = thread_cancel;
+	ops.thread_self = thread_self;
 
-	status = smw_start(&ops, smw_dbg_lvl);
+	status = smw_init(&ops);
 	if (status)
-		OSAL_DBG_PRINTF(ERROR, "SMW start failure: %d\n", status);
+		goto end;
 
-	OSAL_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	status = get_default_config(&buffer, &size);
+	if (status)
+		goto end;
+
+	status = smw_config_load(buffer, size);
+
+end:
+	if (buffer)
+		free(buffer);
+
+	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-static int smw_osal_stop(void)
+static int stop(void)
 {
 	int status = 0;
 
-	OSAL_TRACE_FUNCTION_CALL;
+	TRACE_FUNCTION_CALL;
 
-	status = smw_stop();
-	if (status)
-		OSAL_DBG_PRINTF(ERROR, "SMW stop failure: %d\n", status);
+	smw_config_unload();
 
-	OSAL_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	status = smw_deinit();
+
+	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-void smw_constructor(void)
+static void constructor(void)
 {
-	smw_osal_start(OSAL_DBG_LEVEL_VERBOSE, SMW_DBG_LEVEL_VERBOSE);
+	start();
 }
 
-void smw_destructor(void)
+static void destructor(void)
 {
-	smw_osal_stop();
+	stop();
 }

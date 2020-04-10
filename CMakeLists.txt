@@ -4,6 +4,8 @@ project(SecurityMiddlewareLibrary C)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+set(SMW_IMPORTS_PATH "${CMAKE_SOURCE_DIR}/imports")
+
 if(VERBOSE)
     if(NOT VERBOSE MATCHES "^[0-9]$")
         message(FATAL_ERROR "VERBOSE must be an integer")
@@ -32,6 +34,11 @@ if(SECO_LIBS_EXPORT_DIR)
         set(SECO_LIBS_EXPORT_DIR "${CMAKE_SOURCE_DIR}/${SECO_LIBS_EXPORT_DIR}")
     endif()
     set(ENABLE_HSM ON)
+    if("${TOOLCHAIN_NAME}" STREQUAL "aarch64-none-linux-gnu" OR
+       "${TOOLCHAIN_NAME}" STREQUAL "arm-none-linux-gnueabihf")
+        message(STATUS "Installing zlib")
+        include("${CMAKE_SOURCE_DIR}/scripts/install_zlib.cmake")
+    endif()
 endif()
 
 set(BUILD_SHARED_LIBS ON)

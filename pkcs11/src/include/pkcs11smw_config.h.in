@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright 2020 NXP
+ */
+
+#ifndef __PKCS11SMW_CONFIG_H__
+#define __PKCS11SMW_CONFIG_H__
+
+/*
+ * Define the Library information
+ */
+#define MANUFACTURER_ID	    "NXP Semiconductor"
+#define LIBRARY_DESCRIPTION "Interface with SMW Library"
+
+#define LIB_VER_MAJOR @smw_pkcs11_VERSION_MAJOR@
+#define LIB_VER_MINOR @smw_pkcs11_VERSION_MINOR@
+
+#endif /* __PKCS11SMW_H__ */

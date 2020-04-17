@@ -1,1 +1,3 @@
 scripts
+pkcs11/import
+pkcs11/src/include/pkcs11smw.h

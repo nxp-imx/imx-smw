@@ -1,0 +1,4 @@
+#
+# Ignore clang-format in this directory
+#
+DisableFormat: true

@@ -66,6 +66,11 @@ set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/public ${CMAKE_SOURCE_DIR}/inc)
 add_subdirectory(osal)
 add_subdirectory(core)
 
+#
+# Include PKCS#11 project
+#
+add_subdirectory(pkcs11)
+
 add_library(smw ${OBJ_LIST} ${INCLUDE_DIR})
 set_target_properties(smw PROPERTIES
 	VERSION ${PROJECT_VERSION}

@@ -10,6 +10,12 @@
 #include <string.h>
 #include <limits.h>
 
+#define SMW_ALL_ONES (-1)
+
+#if !defined ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif
+
 #define SMW_UTILS_MALLOC  malloc
 #define SMW_UTILS_FREE	  free
 #define SMW_UTILS_MEMCPY  memcpy

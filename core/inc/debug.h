@@ -43,11 +43,33 @@
 			SMW_PRINTF(__VA_ARGS__);                               \
 	} while (0)
 
-#define SMW_DBG_PRINTF_COND(cond, level, ...)                                  \
+#define SMW_DBG_PRINTF_COND(level, cond, ...)                                  \
 	do {                                                                   \
 		if (SMW_DBG_LEVEL_##level <= SMW_DBG_LEVEL)                    \
 			if (cond)                                              \
 				SMW_PRINTF(__VA_ARGS__);                       \
+	} while (0)
+
+#define SMW_DBG_HEX_DUMP(level, addr, size, align)                             \
+	do {                                                                   \
+		if (SMW_DBG_LEVEL_##level > SMW_DBG_LEVEL)                     \
+			break;                                                 \
+		int i;                                                         \
+		unsigned char *_addr = addr;                                   \
+		unsigned int _size = (unsigned int)(size);                     \
+		unsigned int _align = (unsigned int)(align);                   \
+		_size--;                                                       \
+		if (_align > 4)                                                \
+			_align = 4;                                            \
+		if (_align)                                                    \
+			_align = 1 << _align;                                  \
+		if (g_smw_ctx.ops.thread_self)                                 \
+			printf("(%lx)\n", g_smw_ctx.ops.thread_self());        \
+		for (i = 0; i < _size; i++) {                                  \
+			printf("%.2x%s", (_addr)[i],                           \
+			       (i + 1) & (_align - 1) ? " " : "\n");           \
+		}                                                              \
+		printf("%.2x\n", (_addr)[_size]);                              \
 	} while (0)
 
 #else /* ENABLE_TRACE */
@@ -55,7 +77,8 @@
 #define SMW_PRINTF(...)
 #define SMW_DBG_TRACE_FUNCTION_CALL
 #define SMW_DBG_PRINTF(level, ...)
-#define SMW_DBG_PRINTF_COND(cond, level, ...)
+#define SMW_DBG_PRINTF_COND(level, cond, ...)
+#define SMW_DBG_HEX_DUMP(level, addr, size, align)
 
 #endif /* ENABLE_TRACE */
 

@@ -9,6 +9,7 @@
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
+#include "operations.h"
 #include "subsystems.h"
 #include "config.h"
 
@@ -92,15 +93,4 @@ end:
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
-}
-
-void smw_dummy(void)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-}
-
-struct operation_func *smw_dummy_get_func(void)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-	return NULL;
 }

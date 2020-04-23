@@ -12,6 +12,7 @@
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
+#include "operations.h"
 #include "subsystems.h"
 #include "config.h"
 
@@ -279,7 +280,7 @@ static void close_hash_service(hsm_hdl_t hash_hdl)
 		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
 }
 
-static void reset_handlers(void)
+static void reset_handles(void)
 {
 	struct hdl *hdl = &ctx.hdl;
 
@@ -317,7 +318,7 @@ static void *storage_thread(void *arg)
 
 	smw_utils_mutex_lock(ctx.mutex);
 
-	reset_handlers();
+	reset_handles();
 
 	smw_utils_mutex_unlock(ctx.mutex);
 
@@ -374,13 +375,13 @@ static int stop_storage_manager(void)
 	return status;
 }
 
-static int unload(void)
+int unload(void)
 {
 	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	reset_handlers();
+	reset_handles();
 
 	status = stop_storage_manager();
 	if (status != SMW_STATUS_OK)
@@ -394,7 +395,7 @@ end:
 	return status;
 }
 
-static int load(void)
+int load(void)
 {
 	int status = SMW_STATUS_OK;
 
@@ -450,7 +451,38 @@ end:
 	return status;
 }
 
-struct subsystem_func func = { .load = load, .unload = unload };
+struct hdl *get_handles_struct(void)
+{
+	return &ctx.hdl;
+}
+
+__attribute__((weak)) bool key_handle(struct hdl *hdl,
+				      enum operation_id operation_id,
+				      void *args, int *status)
+{
+	return false;
+}
+
+static int execute(enum operation_id operation_id, void *args)
+{
+	int status = SMW_STATUS_OK;
+
+	struct hdl *hdl = get_handles_struct();
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (key_handle(hdl, operation_id, args, &status))
+		;
+	else
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+struct subsystem_func func = { .load = load,
+			       .unload = unload,
+			       .execute = execute };
 
 struct subsystem_func *smw_hsm_get_func(void)
 {

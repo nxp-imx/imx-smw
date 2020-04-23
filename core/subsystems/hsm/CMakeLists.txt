@@ -78,7 +78,11 @@ set(INCLUDE_DIR ${INCLUDE_DIR} ${SECO_NVM_MANAGER_INCLUDE_PATH}
 
 add_library(hsm OBJECT "" ${INCLUDE_DIR})
 target_sources(hsm PRIVATE
-               hsm.c load.c common.h
+               entry.c common.h
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
+target_sources(hsm PRIVATE
+               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr_debug.c>)
+endif()
 target_include_directories(hsm PRIVATE ${INCLUDE_DIR})
 

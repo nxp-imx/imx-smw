@@ -1,4 +1,4 @@
-set(SMW_LIBS ${SMW_LIBS} hsm PARENT_SCOPE)
+set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:hsm> PARENT_SCOPE)
 
 find_file(ZLIB_LIB_FILE libz.so ${ZLIB_LIB_PATH})
 
@@ -76,26 +76,9 @@ endif()
 set(INCLUDE_DIR ${INCLUDE_DIR} ${SECO_NVM_MANAGER_INCLUDE_PATH}
     ${HSM_LIB_INCLUDE_PATH})
 
-add_library(hsm STATIC "" ${INCLUDE_DIR})
-target_sources(hsm PRIVATE load.c common.h)
+add_library(hsm OBJECT "" ${INCLUDE_DIR})
+target_sources(hsm PRIVATE
+               hsm.c load.c common.h
+               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>)
 target_include_directories(hsm PRIVATE ${INCLUDE_DIR})
-
-add_library(hsm_lib STATIC IMPORTED)
-set_target_properties(hsm_lib PROPERTIES IMPORTED_LOCATION ${HSM_LIB_FILE})
-
-add_library(seco_nvm_manager STATIC IMPORTED)
-set_target_properties(seco_nvm_manager PROPERTIES IMPORTED_LOCATION
-                      ${SECO_NVM_MANAGER_LIB_FILE})
-
-target_link_libraries(hsm PRIVATE
-                      -Wl,-whole-archive hsm_lib -Wl,-no-whole-archive
-                      seco_nvm_manager)
-
-if(ZLIB_LIB_FILE)
-    add_library(zlib STATIC IMPORTED)
-    set_target_properties(zlib PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_FILE})
-    target_link_libraries(hsm PRIVATE zlib)
-else()
-    target_link_libraries(hsm PRIVATE z)
-endif()
 

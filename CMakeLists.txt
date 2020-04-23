@@ -41,6 +41,8 @@ if(SECO_LIBS_EXPORT_DIR)
     endif()
 endif()
 
+option(ENABLE_KEYMGR_MODULE "Link the Key manager" ON)
+
 set(BUILD_SHARED_LIBS ON)
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -61,12 +63,32 @@ add_subdirectory(osal)
 add_subdirectory(core)
 
 add_library(smw ${OBJ_LIST} ${INCLUDE_DIR})
-target_include_directories(smw PRIVATE ${INCLUDE_DIR})
+target_include_directories(smw PRIVATE ${INCLUDE_DIR} PUBLIC ${CMAKE_SOURCE_DIR}/public)
 target_include_directories(smw INTERFACE "$<INSTALL_INTERFACE:include>")
 
 FIND_PACKAGE(Threads REQUIRED)
+target_link_libraries(smw PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-target_link_libraries(smw PUBLIC ${SMW_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+if(HSM_LIB_FILE)
+    add_library(hsm_lib STATIC IMPORTED)
+    set_target_properties(hsm_lib PROPERTIES IMPORTED_LOCATION ${HSM_LIB_FILE})
+    target_link_libraries(smw PRIVATE hsm_lib)
+endif()
+
+if(SECO_NVM_MANAGER_LIB_FILE)
+    add_library(seco_nvm_manager STATIC IMPORTED)
+    set_target_properties(seco_nvm_manager PROPERTIES IMPORTED_LOCATION
+                          ${SECO_NVM_MANAGER_LIB_FILE})
+    target_link_libraries(smw PRIVATE seco_nvm_manager)
+endif()
+
+if(ZLIB_LIB_FILE)
+    add_library(zlib STATIC IMPORTED)
+    set_target_properties(zlib PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_FILE})
+    target_link_libraries(smw PUBLIC zlib)
+else()
+    target_link_libraries(smw PRIVATE z)
+endif()
 
 install(TARGETS smw DESTINATION lib)
 install(FILES public/smw_status.h DESTINATION include/smw)

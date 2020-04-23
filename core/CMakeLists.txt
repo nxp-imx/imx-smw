@@ -48,15 +48,16 @@ macro(add_operation operation)
     set(LIST_OPERATION_FUNC ${LIST_OPERATION_FUNC} PARENT_SCOPE)
 endmacro()
 
-add_subdirectory(subsystems)
-
-configure_file(${CORE_SRC_INC}/subsystems.h.in ${CORE_BIN_INC}/subsystems.h)
-
 add_subdirectory(utils)
 add_subdirectory(init)
+add_subdirectory(subsystems)
+add_subdirectory(keymgr)
+#[[The subdirectory config must be the last one to be added because
+config/CMakeLists.txt calls configure_file() that requires cache variables
+that are set by several CMakeLists.txt from the subdirectories above.]]
 add_subdirectory(config)
 
 configure_file(${CORE_SRC_INC}/operations.h.in ${CORE_BIN_INC}/operations.h)
+configure_file(${CORE_SRC_INC}/subsystems.h.in ${CORE_BIN_INC}/subsystems.h)
 
 set(OBJ_LIST ${OBJ_LIST} PARENT_SCOPE)
-set(SMW_LIBS ${SMW_LIBS} PARENT_SCOPE)

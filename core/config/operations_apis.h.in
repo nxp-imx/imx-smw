@@ -8,6 +8,6 @@ static const char *const operation_names[] = {
 	${LIST_OPERATION_NAME}
 };
 
-static ${RETURN_OPERATION_FUNC}(*operation_func[]) (void) = {
+static ${RETURN_OPERATION_FUNC}(*operation_func[])(void) = {
 	${LIST_OPERATION_FUNC}
 };

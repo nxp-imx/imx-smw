@@ -3,13 +3,19 @@
  * Copyright 2020 NXP
  */
 
-#define SMW_CONFIG_MAX_STRING_LENGTH 256
-
-#define SMW_CONFIG_MAX_OPERATION_NAME_LENGTH 16
-
-#define SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH 8
-
-#define SMW_CONFIG_MAX_LOAD_METHOD_NAME_LENGTH 32
+enum smw_config_key_type_id {
+	/* Key type IDs */
+	SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
+	SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
+	SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1,
+	SMW_CONFIG_KEY_TYPE_ID_AES,
+	SMW_CONFIG_KEY_TYPE_ID_DES,
+	SMW_CONFIG_KEY_TYPE_ID_DES3,
+	SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP,
+	SMW_CONFIG_KEY_TYPE_ID_SM4,
+	SMW_CONFIG_KEY_TYPE_ID_NB,
+	SMW_CONFIG_KEY_TYPE_ID_INVALID
+};
 
 /**
  * smw_config_init() - Initialize the Configuration module.
@@ -32,6 +38,47 @@ int smw_config_init(void);
 int smw_config_deinit(void);
 
 /**
+ * smw_config_get_subsystem_caps() - Get capabilities.
+ * @subsystem_id: Pointer to a Secure Subsystem ID.
+ * @operation_id: Security Operation ID.
+ * @params: Address of a pointer pointing to the data structure
+ *          that describes the capabilities.
+ *
+ * If @subsystem_id is set invalid, this function sets it
+ * to the default Secure Subsystem configured for the Security Operation.
+ * Then this function gets the capabilities configured for
+ * this Secure Operation.
+ *
+ * Return:
+ * error code.
+ */
+int smw_config_get_subsystem_caps(enum subsystem_id *subsystem_id,
+				  enum operation_id operation_id,
+				  void **params);
+
+/**
+ * smw_config_load_subsystem() - Load a Secure Subsystem.
+ * @id: Secure Subsystem ID.
+ *
+ * This function loads a Secure Subsystem.
+ *
+ * Return:
+ * error code.
+ */
+int smw_config_load_subsystem(enum subsystem_id id);
+
+/**
+ * smw_config_unload_subsystem() - Unload a Secure Subsystem.
+ * @id: Secure Subsystem ID.
+ *
+ * This function unloads a Secure Subsystem.
+ *
+ * Return:
+ * error code.
+ */
+int smw_config_unload_subsystem(enum subsystem_id id);
+
+/**
  * smw_config_notify_subsystem_failure() - Notify subsystem failure.
  * @id: ID of the subsystem.
  *
@@ -43,3 +90,74 @@ int smw_config_deinit(void);
  * none.
  */
 void smw_config_notify_subsystem_failure(enum subsystem_id id);
+
+/**
+ * smw_config_get_operation_func() - Get the Security Operation functions.
+ * @operation_id: Security Operation ID.
+ *
+ * This function gets a Security Operation functions.
+ *
+ * Return:
+ * * pointer to the data structure containing the functions pointers
+ *   associated with the Security Operation.
+ */
+struct operation_func *smw_config_get_operation_func(enum operation_id id);
+
+/**
+ * smw_config_get_subsystem_func() - Get the Secure Subsystem functions.
+ * @subsystem_id: Secure Subsystem ID.
+ *
+ * This function gets a Secure Subsystem functions.
+ *
+ * Return:
+ * * pointer to the data structure containing the functions pointers
+ *   associated with the Secure Subsystem.
+ */
+struct subsystem_func *smw_config_get_subsystem_func(enum subsystem_id id);
+
+/**
+ * smw_config_get_operation_name() - Get the Security Operation name.
+ * @operation_id: Security Operation ID.
+ *
+ * This function gets the name of a Security Operation.
+ *
+ * Return:
+ * pointer to the string that is the Security Operation name.
+ */
+const char *smw_config_get_operation_name(enum operation_id id);
+
+/**
+ * smw_config_get_subsystem_name() - Get the Secure Subsystem name.
+ * @subsystem_id: Secure Subsystem ID.
+ *
+ * This function gets the name of a Secure Subsystem.
+ *
+ * Return:
+ * pointer to the string that is the Secure Subsystem name.
+ */
+const char *smw_config_get_subsystem_name(enum subsystem_id id);
+
+/**
+ * smw_config_get_subsystem_id() - Get the ID associated to a name.
+ * @name: Name of the Secure Subsystem.
+ * @id: Pointer where the ID is written.
+ *
+ * This function gets the ID of a Secure Subsystem designated by its name.
+ *
+ * Return:
+ * error code.
+ */
+int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id);
+
+/**
+ * smw_config_get_key_type_id() - Get the ID associated to a Key type name.
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * This function gets the ID associated to a Key type name.
+ *
+ * Return:
+ * error code.
+ */
+int smw_config_get_key_type_id(const char *name,
+			       enum smw_config_key_type_id *id);

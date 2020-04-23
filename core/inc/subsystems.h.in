@@ -12,4 +12,5 @@ ${ENUM_SUBSYSTEM_ID} {
 ${STRUCT_SUBSYSTEM_FUNC} {
 	int (*load)(void);
 	int (*unload)(void);
+	int (*execute)(${ENUM_OPERATION_ID} operation_id, void *args);
 };

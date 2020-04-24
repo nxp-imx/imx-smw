@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(SecurityMiddlewareLibrary C)
+project(SecurityMiddlewareLibrary VERSION 0.1 LANGUAGES C)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
@@ -63,6 +63,10 @@ add_subdirectory(osal)
 add_subdirectory(core)
 
 add_library(smw ${OBJ_LIST} ${INCLUDE_DIR})
+set_target_properties(smw PROPERTIES
+	VERSION ${PROJECT_VERSION}
+	SOVERSION ${PROJECT_VERSION_MAJOR}
+)
 target_include_directories(smw PRIVATE ${INCLUDE_DIR} PUBLIC ${CMAKE_SOURCE_DIR}/public)
 target_include_directories(smw INTERFACE "$<INSTALL_INTERFACE:include>")
 

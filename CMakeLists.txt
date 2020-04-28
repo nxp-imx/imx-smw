@@ -69,4 +69,4 @@ FIND_PACKAGE(Threads REQUIRED)
 target_link_libraries(smw PUBLIC ${SMW_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS smw DESTINATION lib)
-install(FILES public/smw_status.h DESTINATION include)
+install(FILES public/smw_status.h DESTINATION include/smw)

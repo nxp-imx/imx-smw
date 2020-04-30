@@ -17,6 +17,18 @@ enum smw_config_key_type_id {
 	SMW_CONFIG_KEY_TYPE_ID_INVALID
 };
 
+enum smw_config_hash_algo_id {
+	SMW_CONFIG_HASH_ALGO_ID_MD5,
+	SMW_CONFIG_HASH_ALGO_ID_SHA1,
+	SMW_CONFIG_HASH_ALGO_ID_SHA224,
+	SMW_CONFIG_HASH_ALGO_ID_SHA256,
+	SMW_CONFIG_HASH_ALGO_ID_SHA384,
+	SMW_CONFIG_HASH_ALGO_ID_SHA512,
+	SMW_CONFIG_HASH_ALGO_ID_SM3,
+	SMW_CONFIG_HASH_ALGO_ID_NB,
+	SMW_CONFIG_HASH_ALGO_ID_INVALID
+};
+
 /**
  * smw_config_init() - Initialize the Configuration module.
  *
@@ -161,3 +173,16 @@ int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id);
  */
 int smw_config_get_key_type_id(const char *name,
 			       enum smw_config_key_type_id *id);
+
+/**
+ * smw_config_get_hash_algo_id() - Get the Hash algo ID associated to a name.
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * This function gets the Hash algo ID associated to a name.
+ *
+ * Return:
+ * error code.
+ */
+int smw_config_get_hash_algo_id(const char *name,
+				enum smw_config_hash_algo_id *id);

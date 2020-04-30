@@ -13,6 +13,18 @@
 
 #define SMW_CONFIG_MAX_PARAMS_NAME_LENGTH 16
 
+#define DEFINE_CONFIG_OPERATION_FUNC(operation)                                \
+	struct operation_func operation##_func = {                             \
+		.read = operation##_read_params,                               \
+		.destroy = NULL,                                               \
+		.print = operation##_print_params,                             \
+		.check_subsystem_caps = operation##_check_subsystem_caps       \
+	};                                                                     \
+	struct operation_func *smw_##operation##_get_func(void)                \
+	{                                                                      \
+		return &operation##_func;                                      \
+	}
+
 struct ctx {
 	void *mutex;
 	unsigned int load_count;
@@ -32,6 +44,11 @@ struct key_operation_params {
 	unsigned long key_type_bitmap;
 	unsigned int key_size_min;
 	unsigned int key_size_max;
+};
+
+struct hash_params {
+	enum operation_id operation_id;
+	unsigned long algo_bitmap;
 };
 
 extern struct ctx ctx;
@@ -251,6 +268,16 @@ void print_database(void);
  * none.
  */
 void print_key_params(void *params);
+
+/**
+ * print_hash_params() - Print the Hash configuration.
+ *
+ * This function prints the Hash configuration.
+ *
+ * Return:
+ * none.
+ */
+void print_hash_params(void *params);
 
 /**
  * get_id() - Get the ID associated to a name.

@@ -80,7 +80,8 @@ add_library(hsm OBJECT "" ${INCLUDE_DIR})
 set_target_properties(hsm PROPERTIES C_VISIBILITY_PRESET hidden)
 target_sources(hsm PRIVATE
                entry.c common.h
-               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>)
+               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>
+               $<$<BOOL:${ENABLE_HASH}>:hash.c>)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
 target_sources(hsm PRIVATE
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr_debug.c>)

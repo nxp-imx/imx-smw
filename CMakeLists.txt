@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 
 project(SecurityMiddlewareLibrary VERSION 0.1 LANGUAGES C)
 
+include(CMakeDependentOption)
+
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 set(SMW_IMPORTS_PATH "${CMAKE_SOURCE_DIR}/imports")
@@ -42,6 +44,7 @@ if(SECO_LIBS_EXPORT_DIR)
 endif()
 
 option(ENABLE_KEYMGR_MODULE "Link the Key manager" ON)
+cmake_dependent_option(ENABLE_HASH "Enable Hash" ON "ENABLE_KEYMGR_MODULE" OFF)
 
 set(BUILD_SHARED_LIBS ON)
 

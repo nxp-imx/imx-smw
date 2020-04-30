@@ -52,6 +52,7 @@ add_subdirectory(utils)
 add_subdirectory(init)
 add_subdirectory(subsystems)
 add_subdirectory(keymgr)
+add_subdirectory(crypto)
 #[[The subdirectory config must be the last one to be added because
 config/CMakeLists.txt calls configure_file() that requires cache variables
 that are set by several CMakeLists.txt from the subdirectories above.]]

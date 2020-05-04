@@ -77,6 +77,7 @@ set(INCLUDE_DIR ${INCLUDE_DIR} ${SECO_NVM_MANAGER_INCLUDE_PATH}
     ${HSM_LIB_INCLUDE_PATH})
 
 add_library(hsm OBJECT "" ${INCLUDE_DIR})
+set_target_properties(hsm PROPERTIES C_VISIBILITY_PRESET hidden)
 target_sources(hsm PRIVATE
                entry.c common.h
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>)

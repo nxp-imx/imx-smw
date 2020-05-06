@@ -6,6 +6,7 @@
 #ifndef __PKCS11SMW_H__
 #define __PKCS11SMW_H__
 
+#include <stdbool.h>
 #include <stddef.h>
 
 /*

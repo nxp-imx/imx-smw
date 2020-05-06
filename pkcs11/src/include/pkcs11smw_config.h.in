@@ -15,4 +15,23 @@
 #define LIB_VER_MAJOR @smw_pkcs11_VERSION_MAJOR@
 #define LIB_VER_MINOR @smw_pkcs11_VERSION_MINOR@
 
+/*
+ * Library capabilities enablement
+ */
+#cmakedefine PKCS11_MULTI_THREAD
+#cmakedefine PKCS11_OS_THREAD_SUPPORT
+#cmakedefine PKCS11_OS_MUTEX_SUPPORT
+
+#if defined(PKCS11_MULTI_THREAD) && !defined(PKCS11_OS_THREAD_SUPPORT)
+#error "Multi-thread require OS Thread support primitives"
+#endif
+
+#ifdef PKCS11_OS_THREAD_SUPPORT
+#error "OS Thread primitives not supported"
+#endif
+
+#ifdef PKCS11_OS_MUTEX_SUPPORT
+#error "OS Mutex primitives not supported"
+#endif
+
 #endif /* __PKCS11SMW_H__ */

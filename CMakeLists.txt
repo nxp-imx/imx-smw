@@ -96,3 +96,4 @@ endif()
 
 install(TARGETS smw DESTINATION lib)
 install(FILES public/smw_status.h DESTINATION include/smw)
+install(FILES osal/${OS}/config/default_config.txt DESTINATION share/smw)

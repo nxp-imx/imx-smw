@@ -29,6 +29,69 @@ struct smw_hash_args {
 };
 
 /**
+ * struct smw_sign_args - Sign arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name
+ * @key_identifier: Pointer to the Key identifier
+ * @algo_name: Algorithm name
+ * @hashed: Is the message hashed
+ * @message: Location of the message to be signed
+ * @message_length: Length of the message to be signed
+ * @signature: Location where the signature has to be written
+ * @signature_length: Length of the signature
+ *
+ * @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is NULL, the default configured Secure Subsystem is used.
+ */
+struct smw_sign_args {
+	/* Inputs */
+	unsigned char version;
+	const char *subsystem_name;
+	struct smw_key_identifier *key_identifier;
+	const char *algo_name;
+	int hashed;
+	unsigned char *message;
+	unsigned int message_length;
+	/* Outputs */
+	unsigned char *signature;
+	unsigned int signature_length;
+};
+
+/**
+ * struct smw_verify_args - Verify arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name
+ * @key_type_name: Key type name
+ * @security_size: Security size
+ * @algo_name: Algorithm name
+ * @hashed: Is the message hashed
+ * @key: Pointer to the Key
+ * @key_size: Size of the key
+ * @message: Location of the message
+ * @message_length: Length of the message
+ * @signature: Location of the signature
+ * @signature_length: Length of the signature
+ *
+ * @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is NULL, the default configured Secure Subsystem is used.
+ */
+struct smw_verify_args {
+	/* Inputs */
+	unsigned char version;
+	const char *subsystem_name;
+	const char *key_type_name;
+	unsigned int security_size;
+	const char *algo_name;
+	int hashed;
+	unsigned char *key;
+	unsigned int key_size;
+	unsigned char *message;
+	unsigned int message_length;
+	unsigned char *signature;
+	unsigned int signature_length;
+};
+
+/**
  * smw_hash() - Compute hash.
  * @args: Pointer to the structure that contains the Hash arguments.
  *
@@ -38,3 +101,25 @@ struct smw_hash_args {
  * error code.
  */
 int smw_hash(struct smw_hash_args *args);
+
+/**
+ * smw_sign() - Generate a signature.
+ * @args: Pointer to the structure that contains the Sign arguments.
+ *
+ * This function generates a signature.
+ *
+ * Return:
+ * error code.
+ */
+int smw_sign(struct smw_sign_args *args);
+
+/**
+ * smw_verify() - Verify a signature.
+ * @args: Pointer to the structure that contains the Verify arguments.
+ *
+ * This function verifies a sigature.
+ *
+ * Return:
+ * error code.
+ */
+int smw_verify(struct smw_verify_args *args);

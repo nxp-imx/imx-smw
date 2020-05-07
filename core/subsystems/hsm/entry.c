@@ -470,6 +470,13 @@ __attribute__((weak)) bool hash_handle(struct hdl *hdl,
 	return false;
 }
 
+__attribute__((weak)) bool sign_verify_handle(struct hdl *hdl,
+					      enum operation_id operation_id,
+					      void *args, int *status)
+{
+	return false;
+}
+
 static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OK;
@@ -481,6 +488,8 @@ static int execute(enum operation_id operation_id, void *args)
 	if (key_handle(hdl, operation_id, args, &status))
 		;
 	else if (hash_handle(hdl, operation_id, args, &status))
+		;
+	else if (sign_verify_handle(hdl, operation_id, args, &status))
 		;
 	else
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;

@@ -88,6 +88,23 @@ bool hash_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		 int *status);
 
 /**
+ * sign_verify_handle() - Handle the Sign and Verify operations.
+ * @hdl: Pointer to the HSM handles structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the Sign and Verify operations.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
+			void *args, int *status);
+
+/**
  * alloc_out_key() - Allocate buffer to store out key.
  * @out_key: Pointer to the buffer address.
  * @out_size: Pointer to the buffer size.

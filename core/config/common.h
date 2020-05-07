@@ -51,6 +51,14 @@ struct hash_params {
 	unsigned long algo_bitmap;
 };
 
+struct sign_verify_params {
+	enum operation_id operation_id;
+	unsigned long algo_bitmap;
+	unsigned long key_type_bitmap;
+	unsigned int key_size_min;
+	unsigned int key_size_max;
+};
+
 extern struct ctx ctx;
 
 /* Specified separators */
@@ -59,6 +67,11 @@ extern const char close_square_bracket;
 extern const char semicolon;
 extern const char equal;
 extern const char colon;
+
+extern const char *key_type_values;
+extern const char *key_size_range;
+
+extern const char *hash_algo_values;
 
 /**
  * skip_insignificant_chars() - Skip insignificant chars.
@@ -138,6 +151,58 @@ int skip_param(char **start, char *end);
  */
 int read_names(char **start, char *end, unsigned long *bitmap,
 	       const char *const array[], unsigned int size);
+
+/**
+ * read_key_type_names() - Read a list of Key types names.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured names.
+ *
+ * This function reads a list of names from the current char
+ * of the buffer being parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Return:
+ * error code.
+ */
+int read_key_type_names(char **start, char *end, unsigned long *bitmap);
+
+/**
+ * read_key_size_range() - Read a Key size range.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @min: Pointer where the minimum value is written.
+ * @max: Pointer where the maximum value is written.
+ *
+ * This function reads the minimum and maximum values of the Key size.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Return:
+ * error code.
+ */
+int read_key_size_range(char **start, char *end, unsigned int *min,
+			unsigned int *max);
+
+/**
+ * read_hash_algo_names() - Read a list of Hash algos names.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured names.
+ *
+ * This function reads a list of names from the current char
+ * of the buffer being parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Return:
+ * error code.
+ */
+int read_hash_algo_names(char **start, char *end, unsigned long *bitmap);
 
 /**
  * parse() - Parse a plaintext configuration.
@@ -278,6 +343,31 @@ void print_key_params(void *params);
  * none.
  */
 void print_hash_params(void *params);
+
+/**
+ * print_sign_verify_params() - Print the Sign and Verify configuration.
+ *
+ * This function prints the Sign and Verify configuration.
+ *
+ * Return:
+ * none.
+ */
+void print_sign_verify_params(void *params);
+
+/**
+ * check_security_size() - Check if the Security size if configured.
+ * @security_size: .
+ * @key_size_min: .
+ * @key_size_max: .
+ *
+ * This function checks if the Security size if configured.
+ *
+ * Return:
+ * * true:	- the Security size is within the range.
+ * * false:	- the Security size is outside the range.
+ */
+bool check_security_size(unsigned int security_size, unsigned int key_size_min,
+			 unsigned int key_size_max);
 
 /**
  * get_id() - Get the ID associated to a name.

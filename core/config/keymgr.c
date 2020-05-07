@@ -17,8 +17,8 @@
 
 #include "common.h"
 
-static const char *key_type_values = "KEY_TYPE_VALUES";
-static const char *key_size_range = "KEY_SIZE_RANGE";
+const char *key_type_values = "KEY_TYPE_VALUES";
+const char *key_size_range = "KEY_SIZE_RANGE";
 
 static const char *const key_type_names[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST] = "NIST",
@@ -31,14 +31,14 @@ static const char *const key_type_names[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_SM4] = "SM4"
 };
 
-static int read_key_type_names(char **start, char *end, unsigned long *bitmap)
+int read_key_type_names(char **start, char *end, unsigned long *bitmap)
 {
 	return read_names(start, end, bitmap, key_type_names,
 			  SMW_CONFIG_KEY_TYPE_ID_NB);
 }
 
-static int read_key_size_range(char **start, char *end, unsigned int *min,
-			       unsigned int *max)
+int read_key_size_range(char **start, char *end, unsigned int *min,
+			unsigned int *max)
 {
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
@@ -203,9 +203,8 @@ __attribute__((weak)) void print_key_params(void *params)
 {
 }
 
-static bool check_security_size(unsigned int security_size,
-				unsigned int key_size_min,
-				unsigned int key_size_max)
+bool check_security_size(unsigned int security_size, unsigned int key_size_min,
+			 unsigned int key_size_max)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

@@ -17,3 +17,17 @@ __attribute__((weak)) int smw_hash(struct smw_hash_args *args)
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
+
+__attribute__((weak)) int smw_sign(struct smw_sign_args *args)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__attribute__((weak)) int smw_verify(struct smw_verify_args *args)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}

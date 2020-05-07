@@ -1,0 +1,147 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright 2020 NXP
+ */
+
+#include "smw_status.h"
+#include "smw_crypto.h"
+
+#include "smw_osal.h"
+#include "global.h"
+#include "debug.h"
+#include "utils.h"
+#include "operations.h"
+#include "subsystems.h"
+#include "config.h"
+#include "keymgr.h"
+#include "crypto.h"
+#include "exec.h"
+
+static int sign_convert_args(struct smw_sign_args *args,
+			     struct smw_crypto_sign_args *converted_args,
+			     enum subsystem_id *subsystem_id)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (args->version != 0) {
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	status =
+		smw_config_get_subsystem_id(args->subsystem_name, subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_config_get_hash_algo_id(args->algo_name,
+					     &converted_args->algo_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	converted_args->key_identifier = args->key_identifier;
+	converted_args->hashed = args->hashed;
+	converted_args->message = args->message;
+	converted_args->message_length = args->message_length;
+	converted_args->signature = args->signature;
+	converted_args->signature_length = args->signature_length;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int verify_convert_args(struct smw_verify_args *args,
+			       struct smw_crypto_verify_args *converted_args,
+			       enum subsystem_id *subsystem_id)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (args->version != 0) {
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	status =
+		smw_config_get_subsystem_id(args->subsystem_name, subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_config_get_key_type_id(args->key_type_name,
+					    &converted_args->key_type_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_config_get_hash_algo_id(args->algo_name,
+					     &converted_args->algo_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	converted_args->security_size = args->security_size;
+	converted_args->hashed = args->hashed;
+	converted_args->key = args->key;
+	converted_args->key_size = args->key_size;
+	converted_args->message = args->message;
+	converted_args->message_length = args->message_length;
+	converted_args->signature = args->signature;
+	converted_args->signature_length = args->signature_length;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_sign(struct smw_sign_args *args)
+{
+	int status = SMW_STATUS_OK;
+
+	struct smw_crypto_sign_args sign_args;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	status = sign_convert_args(args, &sign_args, &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_utils_execute_operation(OPERATION_ID_SIGN, &sign_args,
+					     subsystem_id);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_verify(struct smw_verify_args *args)
+{
+	int status = SMW_STATUS_OK;
+
+	struct smw_crypto_verify_args verify_args;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	status = verify_convert_args(args, &verify_args, &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_utils_execute_operation(OPERATION_ID_VERIFY, &verify_args,
+					     subsystem_id);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}

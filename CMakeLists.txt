@@ -45,6 +45,7 @@ endif()
 
 option(ENABLE_KEYMGR_MODULE "Link the Key manager" ON)
 cmake_dependent_option(ENABLE_HASH "Enable Hash" ON "ENABLE_KEYMGR_MODULE" OFF)
+cmake_dependent_option(ENABLE_SIGN_VERIFY "Enable Sign and Verify" ON "ENABLE_KEYMGR_MODULE" OFF)
 
 set(BUILD_SHARED_LIBS ON)
 

@@ -19,7 +19,7 @@
 
 const char *hash_algo_values = "HASH_ALGO_VALUES";
 
-const char *const hash_algo_names[] = {
+static const char *const hash_algo_names[] = {
 	[SMW_CONFIG_HASH_ALGO_ID_MD5] = "MD5",
 	[SMW_CONFIG_HASH_ALGO_ID_SHA1] = "SHA1",
 	[SMW_CONFIG_HASH_ALGO_ID_SHA224] = "SHA224",

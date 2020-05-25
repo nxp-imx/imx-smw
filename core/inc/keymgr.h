@@ -118,3 +118,36 @@ struct smw_keymgr_delete_key_args {
 	/* Inputs */
 	struct smw_key_identifier *key_identifier;
 };
+
+/**
+ * struct smw_keymgr_attributes - Key attributes list.
+ * @persistent_storage: Use persistent subsystem storage or not.
+ *
+ */
+struct smw_keymgr_attributes {
+	bool persistent_storage;
+};
+
+/**
+ * smw_keymgr_read_attributes() - Read key_attributes_list buffer.
+ * @attributes_list: List of attributes buffer to read.
+ * @attributes_length: Buffer size (bytes).
+ * @key_attributes: Pointer to smw_keymgr_attributes structure to fill.
+ *
+ * This function reads a list of attributes parsed by smw_tlv_read_element()
+ * function and fill smw_keymgr_attributes structure using fill_key_attributes()
+ * function.
+ * @attributes_list is encoded with TLV encoding scheme:
+ * The ‘Type’ field is encoded as an ASCII string terminated with the null
+ * character.
+ * The ‘Length’ field is encoded with two bytes.
+ * The ‘Value’ field is a byte stream that contains the data.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- One of the parameter is invalid.
+ * SMW_STATUS_ALLOC_FAILURE	- Memory allocation failed.
+ */
+int smw_keymgr_read_attributes(const unsigned char *attributes_list,
+			       unsigned int attributes_length,
+			       struct smw_keymgr_attributes *key_attributes);

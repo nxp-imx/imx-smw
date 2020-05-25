@@ -15,6 +15,38 @@
 #include "config.h"
 #include "keymgr.h"
 #include "exec.h"
+#include "tlv.h"
+
+/**
+ * smw_keymgr_store_persistent() - Store persistent storage info.
+ * @key_attributes: Pointer to smw_keymgr_attributes structure to fill.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- key_attributes is NULL.
+ */
+static int
+smw_keymgr_store_persistent(struct smw_keymgr_attributes *key_attributes);
+
+/**
+ * struct smw_keymgr_attributes_tlv - Key manager attribute handler.
+ * @type: Attribute type.
+ * @verify: Verification function appropriate to the attribute type.
+ * @store: Store function appropriate to the attribute type.
+ *
+ * For an attribute type related to key manager module, this structure provides
+ * functions to verify the kind of type (boolean, enumeration, string, numeral)
+ * and store the value.
+ */
+static struct smw_keymgr_attributes_tlv {
+	const unsigned char *type;
+	int (*verify)(unsigned int length, unsigned char *value);
+	int (*store)(struct smw_keymgr_attributes *key_attributes);
+} smw_keymgr_attributes_tlv_array[] = {
+	{ .type = (const unsigned char *)"PERSISTENT",
+	  .verify = smw_tlv_verify_boolean,
+	  .store = smw_keymgr_store_persistent }
+};
 
 static int
 generate_key_convert_args(struct smw_generate_key_args *args,
@@ -195,6 +227,70 @@ delete_key_convert_args(struct smw_delete_key_args *args,
 	*subsystem_id = converted_args->key_identifier->subsystem_id;
 
 end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
+ * fill_key_attributes() - Fill a smw_keymgr_attributes structure.
+ * @type: Attribute type.
+ * @value: Attribute value.
+ * @value_size: Length of @value in bytes.
+ * @key_attributes: Pointer the key attributes structure to fill.
+ *
+ * Finds the attribute @type into the key attribute TLV list and if found,
+ * verify that value is correct.
+ * Then store the attribute value into the @key_attributes.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- One of the parameter is invalid.
+ */
+static int fill_key_attributes(unsigned char *type, unsigned char *value,
+			       unsigned int value_size,
+			       struct smw_keymgr_attributes *key_attributes)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(smw_keymgr_attributes_tlv_array);
+	struct smw_keymgr_attributes_tlv *array =
+		smw_keymgr_attributes_tlv_array;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!type || !key_attributes)
+		goto end;
+
+	for (i = 0; i < size; i++) {
+		if (!SMW_UTILS_STRCMP((char *)type, (char *)array[i].type)) {
+			status = array[i].verify(value_size, value);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			status = array[i].store(key_attributes);
+			break;
+		}
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int
+smw_keymgr_store_persistent(struct smw_keymgr_attributes *key_attributes)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!key_attributes)
+		goto exit;
+
+	key_attributes->persistent_storage = true;
+	status = SMW_STATUS_OK;
+
+exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -387,6 +483,49 @@ int smw_delete_key(struct smw_delete_key_args *args)
 	status = smw_utils_execute_operation(OPERATION_ID_DELETE_KEY,
 					     &delete_key_args, subsystem_id);
 end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_keymgr_read_attributes(const unsigned char *attributes_list,
+			       unsigned int attributes_length,
+			       struct smw_keymgr_attributes *key_attributes)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	unsigned int value_size = 0;
+	unsigned char *type = NULL;
+	unsigned char *value = NULL;
+	const unsigned char *p = attributes_list;
+	const unsigned char *end = attributes_list + attributes_length;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!attributes_list || !key_attributes) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
+	}
+
+	/* Initialize key_attributes parameter to default values */
+	key_attributes->persistent_storage = false;
+
+	while (p < end) {
+		/* Parse attribute */
+		status = smw_tlv_read_element(&p, end, &type, &value,
+					      &value_size);
+		if (status != SMW_STATUS_OK) {
+			SMW_DBG_PRINTF(ERROR, "%s: Parsing attribute failed\n",
+				       __func__);
+			goto exit;
+		}
+
+		/* Fill smw_keymgr_attributes struct */
+		status = fill_key_attributes(type, value, value_size,
+					     key_attributes);
+		if (status != SMW_STATUS_OK)
+			SMW_DBG_PRINTF(ERROR, "%s: Bad attribute\n", __func__);
+	}
+
+exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

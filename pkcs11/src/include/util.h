@@ -7,6 +7,28 @@
 
 #include "pkcs11smw.h"
 
+/*
+ * Useful macros
+ */
+#define BIT(bit)	      (1 << (bit))
+#define SET_BITS(val, mask)   ((val) |= (mask))
+#define CLEAR_BITS(val, mask) ((val) &= ~(mask))
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#endif /* ARRAY_SIZE */
+
+#ifndef MIN
+#define MIN(a, b)                                                              \
+	({                                                                     \
+		__typeof__(a) _a = (a);                                        \
+		__typeof__(b) _b = (b);                                        \
+		_a < _b ? _a : _b;                                             \
+	})
+#endif /* MIN */
+
+#define STR(x) #x
+
 /**
  * util_check_ptrs_null() - Verify all given pointers are NULL
  * @nb: Number of pointers to verify
@@ -25,13 +47,16 @@ bool util_check_ptrs_null(int nb, ...);
  */
 bool util_check_ptrs_set(int nb, ...);
 
-/*
- * Useful macros
+/**
+ * util_copy_str_to_utf8() - Copy a string char to utf8
+ * @dst: Destination string
+ * @len_dst: Length of the destination string
+ * @src: Source string
+ *
+ * Copy a null terminated string to a UTF8 string and complete the
+ * UTF8 string with spaces.
  */
-#define BIT32(bit) (1 << (bit))
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif /* ARRAY_SIZE */
+void util_copy_str_to_utf8(CK_UTF8CHAR_PTR dst, size_t len_dst,
+			   const char *src);
 
 #endif /* __UTIL_H__ */

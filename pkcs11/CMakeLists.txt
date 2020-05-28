@@ -24,6 +24,11 @@ add_subdirectory(src)
 #
 target_include_directories(${PROJECT_NAME} PUBLIC import)
 
+#
+# Link with SMW Library
+#
+target_link_libraries(${PROJECT_NAME} smw)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	VERSION ${PROJECT_VERSION}
 	SOVERSION ${PROJECT_VERSION_MAJOR})

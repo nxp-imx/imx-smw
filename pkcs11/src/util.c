@@ -3,6 +3,7 @@
  * Copyright 2020 NXP
  */
 #include <stdarg.h>
+#include <string.h>
 
 #include "trace.h"
 #include "util.h"
@@ -48,4 +49,17 @@ bool util_check_ptrs_set(int nb, ...)
 	va_end(args);
 
 	return (nb_set == nb);
+}
+
+void util_copy_str_to_utf8(CK_UTF8CHAR_PTR dst, size_t len_dst, const char *src)
+{
+	size_t len_src;
+
+	len_src = strlen(src);
+
+	DBG_TRACE("SRC %zu vs %zu - %s", len_src, len_dst, src);
+	memcpy(dst, src, MIN(len_dst, len_src));
+
+	if (len_src < len_dst)
+		memset(dst + len_src, ' ', len_dst - len_src);
 }

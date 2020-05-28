@@ -5,8 +5,9 @@
 #include <stdlib.h>
 
 #include "lib_context.h"
+#include "lib_device.h"
 #include "pkcs11smw_config.h"
-#include "pkcs11smw.h"
+
 #include "trace.h"
 
 static struct libctx *libctx;
@@ -40,6 +41,14 @@ static void initialize_caps(struct libcaps *caps)
 #endif
 
 	DBG_TRACE("Libraries capabilities = 0x%08X", caps->flags);
+}
+
+struct libdevice *libctx_get_devices(void)
+{
+	if (!libctx)
+		return NULL;
+
+	return libctx->devices;
 }
 
 struct libcaps *libctx_get_caps(void)
@@ -95,6 +104,8 @@ CK_RV libctx_setup_mutex(CK_C_INITIALIZE_ARGS_PTR pinit, struct libcaps *caps)
 
 CK_RV libctx_create(void)
 {
+	CK_RV ret;
+
 	if (libctx && libctx->initialized)
 		return CKR_CRYPTOKI_ALREADY_INITIALIZED;
 
@@ -107,7 +118,9 @@ CK_RV libctx_create(void)
 
 	initialize_caps(&libctx->caps);
 
-	return CKR_OK;
+	ret = libdev_initialize(libctx);
+
+	return ret;
 }
 
 CK_RV libctx_destroy(void)

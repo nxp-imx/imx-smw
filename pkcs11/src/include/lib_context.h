@@ -6,53 +6,20 @@
 #ifndef __LIBCAPS_H__
 #define __LIBCAPS_H__
 
-#include "pkcs11smw.h"
+#include "types.h"
 #include "util.h"
 
-/**
- * struct libmutex - Mutex functions
- * @create: Create a mutex
- * @destroy: Destroy a mutex
- * @lock: Lock a mutex
- * @unlock: Unlock a mutex
- */
-struct libmutex {
-	CK_CREATEMUTEX create;
-	CK_DESTROYMUTEX destroy;
-	CK_LOCKMUTEX lock;
-	CK_UNLOCKMUTEX unlock;
-};
+#define LIBCAPS_OS_MUTEX_SUPPORT  BIT(3)
+#define LIBCAPS_OS_THREAD_SUPPORT BIT(2)
+#define LIBCAPS_MULTI_THREAD	  BIT(1)
+#define LIBCAPS_NO_FLAGS	  BIT(0)
 
 /**
- * struct libcaps - Library capabilities
- * @flags: Capabilities flags
- * @use_os_thread: Library can create its own thread with OS primitive
- * @use_os_mutex: OS Mutex Primitive can be used
- * @multi_thread: Multi-threading is enabled
+ * libctx_get_devices() - returns the library devices
+ *
+ * Return: a pointer to the library devices @libdevice
  */
-struct libcaps {
-	unsigned int flags;
-	bool use_os_thread;
-	bool use_os_mutex;
-	bool multi_thread;
-};
-
-#define LIBCAPS_OS_MUTEX_SUPPORT  BIT32(3)
-#define LIBCAPS_OS_THREAD_SUPPORT BIT32(2)
-#define LIBCAPS_MULTI_THREAD	  BIT32(1)
-#define LIBCAPS_NO_FLAGS	  BIT32(0)
-
-/**
- * struct libctx - Library context
- * @initialized: Library is initialized
- * @caps: Library capabilities
- * @mutex: Mutex operations
- */
-struct libctx {
-	bool initialized;
-	struct libcaps caps;
-	struct libmutex mutex;
-};
+struct libdevice *libctx_get_devices(void);
 
 /**
  * libctx_get_caps() - returns the library capabilities
@@ -72,12 +39,11 @@ CK_RV libctx_set_initialized(void);
 
 /**
  * libctx_setup_mutex() - Setup the mutex operations
+ * @pinit: C_Initialize arguments
+ * @caps : Library capabilities
  *
  * Function of the library capabilities, setup the mutex operations to
  * be either NULL, OS primitives, or application primitives.
- *
- * @pinit: C_Initialize arguments
- * @caps : Library capabilities
  *
  * Return:
  * CKR_FUNCTION_FAILED - Can't support this option

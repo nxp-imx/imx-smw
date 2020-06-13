@@ -62,3 +62,4 @@ configure_file(${CORE_SRC_INC}/operations.h.in ${CORE_BIN_INC}/operations.h)
 configure_file(${CORE_SRC_INC}/subsystems.h.in ${CORE_BIN_INC}/subsystems.h)
 
 set(OBJ_LIST ${OBJ_LIST} PARENT_SCOPE)
+set(EXT_LIBS ${EXT_LIBS} PARENT_SCOPE)

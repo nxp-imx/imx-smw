@@ -31,17 +31,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DENABLE_DEBUG)
 endif()
 
-if(SECO_LIBS_EXPORT_DIR)
-    if(NOT IS_ABSOLUTE ${SECO_LIBS_EXPORT_DIR})
-        set(SECO_LIBS_EXPORT_DIR "${CMAKE_SOURCE_DIR}/${SECO_LIBS_EXPORT_DIR}")
-    endif()
-    set(ENABLE_HSM ON)
-    if("${TOOLCHAIN_NAME}" STREQUAL "aarch64-none-linux-gnu" OR
-       "${TOOLCHAIN_NAME}" STREQUAL "arm-none-linux-gnueabihf")
-        message(STATUS "Installing zlib")
-        include("${CMAKE_SOURCE_DIR}/scripts/install_zlib.cmake")
-    endif()
-endif()
+option(ENABLE_HSM "Enable HSM subsystem" ON)
 
 option(ENABLE_KEYMGR_MODULE "Link the Key manager" ON)
 cmake_dependent_option(ENABLE_HASH "Enable Hash" ON "ENABLE_KEYMGR_MODULE" OFF)
@@ -80,28 +70,8 @@ target_include_directories(smw PRIVATE ${INCLUDE_DIR} PUBLIC ${CMAKE_SOURCE_DIR}
 target_include_directories(smw INTERFACE "$<INSTALL_INTERFACE:include>")
 
 FIND_PACKAGE(Threads REQUIRED)
-target_link_libraries(smw PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-if(HSM_LIB_FILE)
-    add_library(hsm_lib STATIC IMPORTED)
-    set_target_properties(hsm_lib PROPERTIES IMPORTED_LOCATION ${HSM_LIB_FILE})
-    target_link_libraries(smw PRIVATE hsm_lib)
-endif()
-
-if(SECO_NVM_MANAGER_LIB_FILE)
-    add_library(seco_nvm_manager STATIC IMPORTED)
-    set_target_properties(seco_nvm_manager PROPERTIES IMPORTED_LOCATION
-                          ${SECO_NVM_MANAGER_LIB_FILE})
-    target_link_libraries(smw PRIVATE seco_nvm_manager)
-endif()
-
-if(ZLIB_LIB_FILE)
-    add_library(zlib STATIC IMPORTED)
-    set_target_properties(zlib PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_FILE})
-    target_link_libraries(smw PUBLIC zlib)
-else()
-    target_link_libraries(smw PRIVATE z)
-endif()
+target_link_libraries(smw PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${EXT_LIBS})
 
 install(TARGETS smw DESTINATION lib)
 install(FILES public/smw_status.h DESTINATION include/smw)

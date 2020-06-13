@@ -1,17 +1,45 @@
 set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:hsm> PARENT_SCOPE)
 
-find_file(ZLIB_LIB_FILE libz.so ${ZLIB_LIB_PATH})
+set(ZLIB_TEST_APP zlib_test_app)
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_TEST_APP}.c "int main(){}")
+
+set(ZLIB_TEST_ARGS "$ENV{CFLAGS} -o ${ZLIB_TEST_APP} ${ZLIB_TEST_APP}.c -lz")
+string(REGEX REPLACE "[ ]+" " " ZLIB_TEST_ARGS ${ZLIB_TEST_ARGS})
+separate_arguments(ZLIB_TEST_ARGS)
+
+execute_process(
+    COMMAND ${CMAKE_C_COMPILER} ${ZLIB_TEST_ARGS}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    OUTPUT_QUIET
+    ERROR_QUIET
+    RESULT_VARIABLE ZLIB_IS_NOT_INSTALLED
+)
+file(REMOVE
+     ${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_TEST_APP}.c
+     ${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_TEST_APP})
+
+if(${ZLIB_IS_NOT_INSTALLED} EQUAL 0)
+    message(STATUS "zlib is installed in build environment")
+else()
+    message(STATUS "Installing zlib")
+    include("${CMAKE_SOURCE_DIR}/scripts/install_zlib.cmake")
+    find_file(ZLIB_LIB_FILE libz.so ${ZLIB_LIB_PATH})
+endif()
+
+if(DEFINED SECO_LIBS_EXPORT_DIR AND NOT IS_ABSOLUTE ${SECO_LIBS_EXPORT_DIR})
+    set(SECO_LIBS_EXPORT_DIR "${CMAKE_SOURCE_DIR}/${SECO_LIBS_EXPORT_DIR}")
+endif()
 
 set(HSM_LIB_FILE_NAME "hsm_lib.a")
 set(SECO_NVM_MANAGER_LIB_FILE_NAME "seco_nvm_manager.a")
 
 macro(find_seco_libs export_dir found)
     find_file(SECO_NVM_MANAGER_LIB_FILE ${SECO_NVM_MANAGER_LIB_FILE_NAME}
-              ${export_dir}/usr/lib)
+              ${${export_dir}}/usr/lib)
     find_path(SECO_NVM_MANAGER_INCLUDE_PATH seco_nvm.h
-              ${export_dir}/usr/include)
-    find_file(HSM_LIB_FILE ${HSM_LIB_FILE_NAME} ${export_dir}/usr/lib)
-    find_path(HSM_LIB_INCLUDE_PATH hsm_api.h ${export_dir}/usr/include/hsm)
+              ${${export_dir}}/usr/include)
+    find_file(HSM_LIB_FILE ${HSM_LIB_FILE_NAME} ${${export_dir}}/usr/lib)
+    find_path(HSM_LIB_INCLUDE_PATH hsm_api.h ${${export_dir}}/usr/include/hsm)
 
     if(SECO_NVM_MANAGER_LIB_FILE AND
        SECO_NVM_MANAGER_INCLUDE_PATH AND
@@ -23,7 +51,7 @@ macro(find_seco_libs export_dir found)
     endif()
 endmacro()
 
-find_seco_libs(${SECO_LIBS_EXPORT_DIR} SECO_LIBS_FOUND)
+find_seco_libs(SECO_LIBS_EXPORT_DIR SECO_LIBS_FOUND)
 
 if(NOT SECO_LIBS_FOUND)
     find_file(SECO_MAKEFILE Makefile ${SECO_LIBS_EXPORT_DIR}/..)
@@ -65,7 +93,7 @@ if(NOT SECO_LIBS_FOUND)
              "${SECO_SOURCES}/include"
              DESTINATION ${SECO_LIBS_EXPORT_DIR}/usr)
 
-        find_seco_libs(${SECO_LIBS_EXPORT_DIR} SECO_LIBS_FOUND)
+        find_seco_libs(SECO_LIBS_EXPORT_DIR SECO_LIBS_FOUND)
 
         if(NOT SECO_LIBS_FOUND)
             message(FATAL_ERROR "\nSeco libs export directory not valid.\n")
@@ -89,3 +117,8 @@ target_sources(hsm PRIVATE
 endif()
 target_include_directories(hsm PRIVATE ${INCLUDE_DIR})
 
+set(EXT_LIBS ${EXT_LIBS}
+    $<$<BOOL:${HSM_LIB_FILE}>:${HSM_LIB_FILE}>
+    $<$<BOOL:${SECO_NVM_MANAGER_LIB_FILE}>:${SECO_NVM_MANAGER_LIB_FILE}>
+    $<IF:$<BOOL:${ZLIB_LIB_FILE}>,${ZLIB_LIB_FILE},"z">
+    PARENT_SCOPE)

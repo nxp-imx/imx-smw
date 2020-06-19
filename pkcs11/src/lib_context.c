@@ -81,14 +81,18 @@ struct libmutex *libctx_get_mutex(void)
 	return &libctx->mutex;
 }
 
-CK_RV libctx_set_initialized(void)
+CK_RV libctx_initialized(void)
 {
+	CK_RV ret;
+
 	if (!libctx)
 		return CKR_GENERAL_ERROR;
 
-	libctx->initialized = true;
+	ret = libdev_initialize(&libctx->devices);
+	if (ret == CKR_OK)
+		libctx->initialized = true;
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV libctx_get_initialized(void)
@@ -126,8 +130,6 @@ CK_RV libctx_setup_mutex(CK_C_INITIALIZE_ARGS_PTR pinit, struct libcaps *caps)
 
 CK_RV libctx_create(void)
 {
-	CK_RV ret;
-
 	if (libctx && libctx->initialized)
 		return CKR_CRYPTOKI_ALREADY_INITIALIZED;
 
@@ -140,18 +142,23 @@ CK_RV libctx_create(void)
 
 	initialize_caps(&libctx->caps);
 
-	ret = libdev_initialize(&libctx->devices);
-
-	return ret;
+	return CKR_OK;
 }
 
 CK_RV libctx_destroy(void)
 {
+	CK_RV ret;
+
 	if (!libctx)
 		return CKR_GENERAL_ERROR;
 
 	if (!libctx->initialized)
 		return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	ret = libdev_destroy(&libctx->devices);
+	DBG_TRACE("Devices destroy return %lu", ret);
+	if (ret != CKR_OK)
+		return CKR_GENERAL_ERROR;
 
 	free(libctx);
 	libctx = NULL;

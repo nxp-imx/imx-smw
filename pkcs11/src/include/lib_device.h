@@ -118,6 +118,19 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label);
 CK_RV libdev_initialize(struct libdevice **devices);
 
 /**
+ * libdev_destroy() - Destroy the library context devices
+ * @devices: Library devices context
+ *
+ * Free all the devices' context.
+ *
+ * Return:
+ * CKR_GENERAL_ERROR - No context available
+ * CKR_HOST_MEMORY   - Out of memory
+ * CKR_OK            - Success
+ */
+CK_RV libdev_destroy(struct libdevice **devices);
+
+/**
  * libdev_get_devinfo() - Return a reference to @slotid's device information
  * @slotid: Slot ID
  *

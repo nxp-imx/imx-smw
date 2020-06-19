@@ -36,13 +36,14 @@ struct libcaps *libctx_get_caps(void);
 struct libmutex *libctx_get_mutex(void);
 
 /**
- * libctx_set_initialized - set the context initialized status
+ * libctx_initialized - initialises the library context
  *
  * Return:
  * CKR_GENERAL_ERROR - No context available
+ * CKR_HOST_MEMORY   - Out of memory
  * CKR_OK            - Success
  */
-CK_RV libctx_set_initialized(void);
+CK_RV libctx_initialized(void);
 
 /**
  * libctx_setup_mutex() - Setup the mutex operations

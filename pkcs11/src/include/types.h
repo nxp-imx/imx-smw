@@ -6,6 +6,7 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+#include "list.h"
 #include "pkcs11smw.h"
 
 /**
@@ -39,12 +40,13 @@ struct libslot {
 };
 
 /**
- * struct libslot - runtime token information
+ * struct libtoken - runtime token information
  * @label: Token label (set thru C_InitToken)
  * @flags: Bits flag of the token's capabilities/status
- * @max_session: Maximum number of sessions that can be opened
- *               with the token at one time by a single application
- * @session_count: Number of sessions currently opened with the token
+ * @max_ro_session: Maximum number of red only sessions that can be opened
+ *                  with the token at one time by a single application
+ * @ro_session_count: Number of read only sessions currently opened with
+ *                    the token
  * @max_rw_session: Maximum number of read/write sessions that can be opened
  *                  with the token at one time by a single application
  * @rw_session_count: Number of read/write sessions currently opened with
@@ -63,8 +65,8 @@ struct libslot {
 struct libtoken {
 	CK_UTF8CHAR label[32];
 	CK_FLAGS flags;
-	CK_ULONG max_session;
-	CK_ULONG session_count;
+	CK_ULONG max_ro_session;
+	CK_ULONG ro_session_count;
 	CK_ULONG max_rw_session;
 	CK_ULONG rw_session_count;
 	CK_ULONG max_pin_len;
@@ -75,10 +77,16 @@ struct libtoken {
 	CK_ULONG free_priv_mem;
 };
 
+#define NO_LOGIN -1UL
+
 /**
  * struct libdevice - definition of a device
  * @slot: Slot information
  * @token: Token information
+ * @login_as: Define the type of Cryptoki's user login
+ * @mutex_session: Mutex to manage session (create/login/logout/close)
+ * @rw_session: List of the Read/Write Sessions
+ * @ro_session: List of the Read Only Sessions
  *
  * A device is the cryptographic module storing keys, making cryptographic
  * operation, ...
@@ -88,6 +96,10 @@ struct libtoken {
 struct libdevice {
 	struct libslot slot;
 	struct libtoken token;
+	CK_USER_TYPE login_as;
+	CK_VOID_PTR mutex_session;
+	LIST_HEAD(rw_sessions) rw_sessions;
+	LIST_HEAD(ro_sessions) ro_sessions;
 };
 
 /**

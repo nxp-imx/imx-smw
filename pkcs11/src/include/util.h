@@ -29,6 +29,8 @@
 
 #define STR(x) #x
 
+#define ADD_OVERFLOW(a, b, res) __builtin_add_overflow(a, b, res)
+
 /**
  * util_check_ptrs_null() - Verify all given pointers are NULL
  * @nb: Number of pointers to verify

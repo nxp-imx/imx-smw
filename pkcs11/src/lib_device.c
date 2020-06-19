@@ -9,23 +9,66 @@
 
 #include "lib_context.h"
 #include "lib_device.h"
+#include "lib_mutex.h"
+#include "lib_session.h"
 
 #include "trace.h"
 
 /**
  * clean_token() - Clean the token
  * @device: reference to the slot's device objects
+ * @slotid: Token ID
  *
- * TODO: implementation of the token clean (destroy object that
- * can be destroyed)
+ * Close all Token's sessions.
+ * If success clear the Token Initialization flag.
  *
  * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_OK   Success
  */
-static CK_RV clean_token(struct libdevice *device)
+static CK_RV clean_token(struct libdevice *device, CK_SLOT_ID slotid)
 {
-	CLEAR_BITS(device->token.flags, CKF_TOKEN_INITIALIZED);
-	return CKR_OK;
+	CK_RV ret;
+
+	ret = libsess_close_all(slotid);
+	DBG_TRACE("Token #%lu close all sessions return %lu", slotid, ret);
+
+	if (ret == CKR_OK)
+		CLEAR_BITS(device->token.flags, CKF_TOKEN_INITIALIZED);
+
+	return ret;
+}
+
+/**
+ * init_device_info() - Initialize the device information
+ * @device: reference to the slot's device objects
+ * @devinfo: hardcoded device information
+ */
+static void init_device_info(struct libdevice *device,
+			     const struct libdev *devinfo)
+{
+	/*
+	 * Copy the hardcoded Slot/Token flags into the
+	 * runtime flags
+	 */
+	device->token.flags = devinfo->flags_token;
+	device->slot.flags = devinfo->flags_slot;
+
+	/*
+	 * Set the default Max Session value to infinite value
+	 */
+	device->token.max_ro_session = CK_EFFECTIVELY_INFINITE;
+	device->token.max_rw_session = CK_EFFECTIVELY_INFINITE;
+
+	/*
+	 * Set the default memory Total/Free to unavailable value
+	 */
+	device->token.total_pub_mem = CK_UNAVAILABLE_INFORMATION;
+	device->token.free_pub_mem = CK_UNAVAILABLE_INFORMATION;
+	device->token.total_priv_mem = CK_UNAVAILABLE_INFORMATION;
+	device->token.free_priv_mem = CK_UNAVAILABLE_INFORMATION;
 }
 
 CK_RV libdev_get_slotdev(struct libdevice **dev, CK_SLOT_ID slotid)
@@ -135,8 +178,10 @@ CK_RV libdev_get_tokeninfo(CK_SLOT_ID slotid, CK_TOKEN_INFO_PTR pinfo)
 		  pinfo->serialNumber);
 
 	pinfo->flags = dev->token.flags;
-	pinfo->ulMaxSessionCount = dev->token.max_session;
-	pinfo->ulSessionCount = dev->token.session_count;
+	pinfo->ulMaxSessionCount =
+		dev->token.max_ro_session + dev->token.max_rw_session;
+	pinfo->ulSessionCount =
+		dev->token.ro_session_count + dev->token.rw_session_count;
 	pinfo->ulMaxRwSessionCount = dev->token.max_rw_session;
 	pinfo->ulRwSessionCount = dev->token.rw_session_count;
 	pinfo->ulMaxPinLen = dev->token.max_pin_len;
@@ -274,7 +319,7 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 	 * If there is a session opened on this token, it can't be
 	 * initialized or re-initialized.
 	 */
-	if (dev->token.session_count)
+	if (dev->token.ro_session_count + dev->token.rw_session_count)
 		return CKR_SESSION_EXISTS;
 
 	/*
@@ -283,7 +328,7 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 	 *  - re-initialized the token
 	 */
 	if (!(dev->token.flags & CKF_TOKEN_INITIALIZED)) {
-		ret = clean_token(dev);
+		ret = clean_token(dev, slotid);
 		if (ret != CKR_OK)
 			return ret;
 	}
@@ -294,6 +339,16 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 
 	memcpy(dev->token.label, label, sizeof(dev->token.label));
 
+	/*
+	 * Initialize the Token counter and flags
+	 */
+	dev->token.ro_session_count = 0;
+	dev->token.rw_session_count = 0;
+	dev->login_as = NO_LOGIN;
+
+	LIST_INIT(&dev->rw_sessions);
+	LIST_INIT(&dev->ro_sessions);
+
 	SET_BITS(dev->token.flags, CKF_TOKEN_INITIALIZED);
 
 	return CKR_OK;
@@ -301,28 +356,78 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 
 CK_RV libdev_initialize(struct libdevice **devices)
 {
+	CK_RV ret;
 	unsigned int nb_devices;
 	unsigned int slotid;
+	struct libdevice *dev;
 	const struct libdev *devinfo;
 
 	if (!devices)
 		return CKR_GENERAL_ERROR;
 
 	nb_devices = libdev_get_nb_devinfo();
-	*devices = calloc(1, nb_devices * sizeof(**devices));
+	dev = calloc(1, nb_devices * sizeof(*dev));
 
-	if (!*devices)
+	if (!dev)
 		return CKR_HOST_MEMORY;
 
-	/* Copy the hardcoded Slot/Token flags into the runtime flags */
-	for (slotid = 0; slotid < nb_devices; slotid++) {
-		devinfo = libdev_get_devinfo(slotid);
-		if (!devinfo)
-			return CKR_GENERAL_ERROR;
+	*devices = dev;
 
-		(*devices)[slotid].token.flags = devinfo->flags_token;
-		(*devices)[slotid].slot.flags = devinfo->flags_slot;
+	for (slotid = 0; slotid < nb_devices; slotid++, dev++) {
+		devinfo = libdev_get_devinfo(slotid);
+		if (!devinfo) {
+			ret = CKR_GENERAL_ERROR;
+			goto err;
+		}
+
+		init_device_info(dev, devinfo);
+
+		/* Create mutexes */
+		ret = libmutex_create(&dev->mutex_session);
+		if (ret != CKR_OK)
+			goto err;
 	}
+
+	return CKR_OK;
+
+err:
+	if (dev)
+		free(dev);
+
+	return ret;
+}
+
+CK_RV libdev_destroy(struct libdevice **devices)
+{
+	CK_RV ret;
+	struct libdevice *dev;
+	unsigned int nb_devices;
+	unsigned int slotid;
+
+	if (!devices)
+		return CKR_GENERAL_ERROR;
+
+	/* Nothing to do, it's ok */
+	if (!*devices)
+		return CKR_OK;
+
+	dev = *devices;
+
+	nb_devices = libdev_get_nb_devinfo();
+	for (slotid = 0; slotid < nb_devices; slotid++, dev++) {
+		/* Clean Token */
+		ret = clean_token(dev, slotid);
+		if (ret != CKR_OK)
+			return ret;
+
+		/* Destroy mutexes */
+		ret = libmutex_destroy(&dev->mutex_session);
+		if (ret != CKR_OK)
+			return ret;
+	};
+
+	free(*devices);
+	*devices = NULL;
 
 	return CKR_OK;
 }

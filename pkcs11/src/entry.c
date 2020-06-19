@@ -106,7 +106,7 @@ end_check:
 		ret = libctx_setup_mutex(pinit, libcaps);
 
 		if (ret == CKR_OK)
-			ret = libctx_set_initialized();
+			ret = libctx_initialized();
 	}
 
 	DBG_TRACE("return 0x%08lX", ret);

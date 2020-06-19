@@ -78,29 +78,20 @@ CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
 			    CK_ULONG_PTR count)
 {
 	CK_RV ret;
-	struct libdevice *devices;
+	struct libdevice *dev;
 	struct mgroup *group;
 	struct mentry *entry;
 	unsigned int idx;
-	unsigned int nb_devices;
 	CK_MECHANISM_TYPE_PTR item = mechanismlist;
 	CK_ULONG nb_mechanisms = 0;
 	CK_FLAGS slot_flag;
 
-	ret = libctx_get_initialized();
-	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
+	ret = libdev_get_slotdev(&dev, slotid);
+	if (ret != CKR_OK)
 		return ret;
 
-	nb_devices = libdev_get_nb_devinfo();
-	if (slotid >= nb_devices)
-		return CKR_SLOT_ID_INVALID;
-
-	devices = libctx_get_devices();
-	if (!devices)
-		return CKR_GENERAL_ERROR;
-
 	/* Check if the Slot is present */
-	if (!devices[slotid].slot.flags & CKF_TOKEN_PRESENT) {
+	if (!dev->slot.flags & CKF_TOKEN_PRESENT) {
 		DBG_TRACE("Slot %lu is not present", slotid);
 		return CKR_TOKEN_NOT_PRESENT;
 	}
@@ -136,27 +127,18 @@ CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 				CK_MECHANISM_INFO_PTR info)
 {
 	CK_RV ret;
-	struct libdevice *devices;
+	struct libdevice *dev;
 	struct mgroup *group;
 	struct mentry *entry;
 	unsigned int idx;
-	unsigned int nb_devices;
 	CK_FLAGS slot_flag;
 
-	ret = libctx_get_initialized();
-	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
+	ret = libdev_get_slotdev(&dev, slotid);
+	if (ret != CKR_OK)
 		return ret;
 
-	nb_devices = libdev_get_nb_devinfo();
-	if (slotid >= nb_devices)
-		return CKR_SLOT_ID_INVALID;
-
-	devices = libctx_get_devices();
-	if (!devices)
-		return CKR_GENERAL_ERROR;
-
 	/* Check if the Slot is present */
-	if (!devices[slotid].slot.flags & CKF_TOKEN_PRESENT) {
+	if (!dev->slot.flags & CKF_TOKEN_PRESENT) {
 		DBG_TRACE("Slot %lu is not present", slotid);
 		return CKR_TOKEN_NOT_PRESENT;
 	}

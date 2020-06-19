@@ -28,12 +28,10 @@ static CK_RV clean_token(struct libdevice *device)
 	return CKR_OK;
 }
 
-CK_RV libdev_get_slotinfo(CK_SLOT_ID slotid, CK_SLOT_INFO_PTR pinfo)
+CK_RV libdev_get_slotdev(struct libdevice **dev, CK_SLOT_ID slotid)
 {
 	CK_RV ret;
 	struct libdevice *devices;
-	const struct libdev *devinfo;
-	size_t len;
 
 	ret = libctx_get_initialized();
 	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
@@ -42,6 +40,25 @@ CK_RV libdev_get_slotinfo(CK_SLOT_ID slotid, CK_SLOT_INFO_PTR pinfo)
 	devices = libctx_get_devices();
 	if (!devices)
 		return CKR_GENERAL_ERROR;
+
+	if (!libdev_slot_valid(slotid))
+		return CKR_SLOT_ID_INVALID;
+
+	*dev = &devices[slotid];
+
+	return CKR_OK;
+}
+
+CK_RV libdev_get_slotinfo(CK_SLOT_ID slotid, CK_SLOT_INFO_PTR pinfo)
+{
+	CK_RV ret;
+	struct libdevice *dev;
+	const struct libdev *devinfo;
+	size_t len;
+
+	ret = libdev_get_slotdev(&dev, slotid);
+	if (ret != CKR_OK)
+		return ret;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
@@ -68,9 +85,9 @@ CK_RV libdev_get_slotinfo(CK_SLOT_ID slotid, CK_SLOT_INFO_PTR pinfo)
 		memset(pinfo->manufacturerID + len, ' ',
 		       sizeof(pinfo->manufacturerID) - len);
 
-	pinfo->flags = devinfo->flags_slot | devices[slotid].slot.flags;
+	pinfo->flags = dev->slot.flags;
 
-	if (devinfo->flags_slot & CKF_HW_SLOT) {
+	if (pinfo->flags & CKF_HW_SLOT) {
 		pinfo->hardwareVersion = devinfo->version;
 		pinfo->firmwareVersion.major = 0;
 		pinfo->firmwareVersion.minor = 0;
@@ -86,24 +103,20 @@ CK_RV libdev_get_slotinfo(CK_SLOT_ID slotid, CK_SLOT_INFO_PTR pinfo)
 CK_RV libdev_get_tokeninfo(CK_SLOT_ID slotid, CK_TOKEN_INFO_PTR pinfo)
 {
 	CK_RV ret;
-	struct libdevice *devices;
+	struct libdevice *dev;
 	const struct libdev *devinfo;
 	time_t now;
 	struct tm *tminfo;
 
-	ret = libctx_get_initialized();
-	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
+	ret = libdev_get_slotdev(&dev, slotid);
+	if (ret != CKR_OK)
 		return ret;
-
-	devices = libctx_get_devices();
-	if (!devices)
-		return CKR_GENERAL_ERROR;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	memcpy(pinfo->label, devices[slotid].token.label, sizeof(pinfo->label));
+	memcpy(pinfo->label, dev->token.label, sizeof(pinfo->label));
 	DBG_TRACE("Token label: %.*s", (int)sizeof(pinfo->label), pinfo->label);
 
 	util_copy_str_to_utf8(pinfo->manufacturerID,
@@ -121,19 +134,19 @@ CK_RV libdev_get_tokeninfo(CK_SLOT_ID slotid, CK_TOKEN_INFO_PTR pinfo)
 	DBG_TRACE("Serial Number: %.*s", (int)sizeof(pinfo->serialNumber),
 		  pinfo->serialNumber);
 
-	pinfo->flags = devinfo->flags_token | devices[slotid].token.flags;
-	pinfo->ulMaxSessionCount = devices[slotid].token.max_session;
-	pinfo->ulSessionCount = devices[slotid].token.session_count;
-	pinfo->ulMaxRwSessionCount = devices[slotid].token.max_rw_session;
-	pinfo->ulRwSessionCount = devices[slotid].token.rw_session_count;
-	pinfo->ulMaxPinLen = devices[slotid].token.max_pin_len;
-	pinfo->ulMinPinLen = devices[slotid].token.min_pin_len;
-	pinfo->ulTotalPublicMemory = devices[slotid].token.total_pub_mem;
-	pinfo->ulFreePublicMemory = devices[slotid].token.free_pub_mem;
-	pinfo->ulTotalPrivateMemory = devices[slotid].token.total_priv_mem;
-	pinfo->ulFreePrivateMemory = devices[slotid].token.free_priv_mem;
+	pinfo->flags = dev->token.flags;
+	pinfo->ulMaxSessionCount = dev->token.max_session;
+	pinfo->ulSessionCount = dev->token.session_count;
+	pinfo->ulMaxRwSessionCount = dev->token.max_rw_session;
+	pinfo->ulRwSessionCount = dev->token.rw_session_count;
+	pinfo->ulMaxPinLen = dev->token.max_pin_len;
+	pinfo->ulMinPinLen = dev->token.min_pin_len;
+	pinfo->ulTotalPublicMemory = dev->token.total_pub_mem;
+	pinfo->ulFreePublicMemory = dev->token.free_pub_mem;
+	pinfo->ulTotalPrivateMemory = dev->token.total_priv_mem;
+	pinfo->ulFreePrivateMemory = dev->token.free_priv_mem;
 
-	if (devinfo->flags_slot & CKF_HW_SLOT) {
+	if (pinfo->flags & CKF_HW_SLOT) {
 		pinfo->hardwareVersion = devinfo->version;
 		pinfo->firmwareVersion.major = 0;
 		pinfo->firmwareVersion.minor = 0;
@@ -248,29 +261,20 @@ CK_RV libdev_get_slots_present(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
 CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 {
 	CK_RV ret;
-	struct libdevice *devices;
-	unsigned int nb_devices;
+	struct libdevice *dev;
 
-	ret = libctx_get_initialized();
-	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
+	ret = libdev_get_slotdev(&dev, slotid);
+	if (ret)
 		return ret;
 
-	devices = libctx_get_devices();
-	if (!devices)
-		return CKR_GENERAL_ERROR;
-
-	nb_devices = libdev_get_nb_devinfo();
-	if (slotid >= nb_devices)
-		return CKR_SLOT_ID_INVALID;
-
-	if (!(devices[slotid].slot.flags & CKF_TOKEN_PRESENT))
+	if (!(dev->slot.flags & CKF_TOKEN_PRESENT))
 		return CKR_TOKEN_NOT_PRESENT;
 
 	/*
 	 * If there is a session opened on this token, it can't be
 	 * initialized or re-initialized.
 	 */
-	if (devices[slotid].token.session_count)
+	if (dev->token.session_count)
 		return CKR_SESSION_EXISTS;
 
 	/*
@@ -278,8 +282,8 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 	 *  - destroyed all associated objects that can be destroyed
 	 *  - re-initialized the token
 	 */
-	if (!(devices[slotid].token.flags & CKF_TOKEN_INITIALIZED)) {
-		ret = clean_token(&devices[slotid]);
+	if (!(dev->token.flags & CKF_TOKEN_INITIALIZED)) {
+		ret = clean_token(dev);
 		if (ret != CKR_OK)
 			return ret;
 	}
@@ -288,10 +292,9 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 	if (ret != CKR_OK)
 		return ret;
 
-	memcpy(devices[slotid].token.label, label,
-	       sizeof(devices[slotid].token.label));
+	memcpy(dev->token.label, label, sizeof(dev->token.label));
 
-	SET_BITS(devices[slotid].token.flags, CKF_TOKEN_INITIALIZED);
+	SET_BITS(dev->token.flags, CKF_TOKEN_INITIALIZED);
 
 	return CKR_OK;
 }
@@ -299,15 +302,27 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 CK_RV libdev_initialize(struct libdevice **devices)
 {
 	unsigned int nb_devices;
+	unsigned int slotid;
+	const struct libdev *devinfo;
 
 	if (!devices)
 		return CKR_GENERAL_ERROR;
 
 	nb_devices = libdev_get_nb_devinfo();
-	*devices = calloc(1, nb_devices * sizeof(*devices));
+	*devices = calloc(1, nb_devices * sizeof(**devices));
 
 	if (!*devices)
 		return CKR_HOST_MEMORY;
+
+	/* Copy the hardcoded Slot/Token flags into the runtime flags */
+	for (slotid = 0; slotid < nb_devices; slotid++) {
+		devinfo = libdev_get_devinfo(slotid);
+		if (!devinfo)
+			return CKR_GENERAL_ERROR;
+
+		(*devices)[slotid].token.flags = devinfo->flags_token;
+		(*devices)[slotid].slot.flags = devinfo->flags_slot;
+	}
 
 	return CKR_OK;
 }

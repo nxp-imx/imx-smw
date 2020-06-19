@@ -9,6 +9,19 @@
 #include "types.h"
 
 /**
+ * libdev_get_slotdev() - Get the slot's device object
+ * @dev: Reference to the device object to set
+ * @slotid: Slot ID
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_get_slotdev(struct libdevice **dev, CK_SLOT_ID slotid);
+
+/**
  * libdev_get_slotinfo() - Get the slot information
  * @slotid: Slot ID
  * @pinfo : Slot Information output structure
@@ -118,6 +131,21 @@ const struct libdev *libdev_get_devinfo(CK_SLOT_ID slotid);
  * Return: Number of device information
  */
 unsigned int libdev_get_nb_devinfo(void);
+
+/**
+ * libdev_slot_valid() - Return if the @slotid is valid or not
+ * @slotid: Slot ID
+ *
+ * Return: True if valid, false otherwise
+ */
+static inline bool libdev_slot_valid(CK_SLOT_ID slotid)
+{
+	unsigned int nb_devices;
+
+	nb_devices = libdev_get_nb_devinfo();
+
+	return (slotid < nb_devices);
+}
 
 /**
  * libdev_set_present() - Update the Device slot flag presence status

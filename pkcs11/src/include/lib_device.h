@@ -93,7 +93,7 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label);
 
 /**
  * libdev_initialize() - Initialize the library context devices
- * @libctx: Library context
+ * @devices: Library devices context
  *
  * Allocate the devices' context and initialized it.
  *
@@ -102,7 +102,7 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label);
  * CKR_HOST_MEMORY   - Out of memory
  * CKR_OK            - Success
  */
-CK_RV libdev_initialize(struct libctx *libctx);
+CK_RV libdev_initialize(struct libdevice **devices);
 
 /**
  * libdev_get_devinfo() - Return a reference to @slotid's device information

@@ -296,17 +296,17 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 	return CKR_OK;
 }
 
-CK_RV libdev_initialize(struct libctx *libctx)
+CK_RV libdev_initialize(struct libdevice **devices)
 {
 	unsigned int nb_devices;
 
-	if (!libctx)
+	if (!devices)
 		return CKR_GENERAL_ERROR;
 
 	nb_devices = libdev_get_nb_devinfo();
-	libctx->devices = calloc(1, nb_devices * sizeof(*libctx->devices));
+	*devices = calloc(1, nb_devices * sizeof(*devices));
 
-	if (!libctx->devices)
+	if (!*devices)
 		return CKR_HOST_MEMORY;
 
 	return CKR_OK;

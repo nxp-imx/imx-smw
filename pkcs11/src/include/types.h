@@ -118,18 +118,4 @@ struct libcaps {
 	bool multi_thread;
 };
 
-/**
- * struct libctx - Library context
- * @initialized: Library is initialized
- * @caps: Library capabilities
- * @mutex: Mutex operations
- * @devices: Devices info/status
- */
-struct libctx {
-	bool initialized;
-	struct libcaps caps;
-	struct libmutex mutex;
-	struct libdevice *devices;
-};
-
 #endif /* __TYPES_H__ */

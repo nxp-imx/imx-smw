@@ -29,6 +29,13 @@ struct libdevice *libctx_get_devices(void);
 struct libcaps *libctx_get_caps(void);
 
 /**
+ * libctx_get_mutex() - returns the library mutex operations
+ *
+ * Return: a pointer to the library mutex operation @libmutex
+ */
+struct libmutex *libctx_get_mutex(void);
+
+/**
  * libctx_set_initialized - set the context initialized status
  *
  * Return:

@@ -10,6 +10,20 @@
 
 #include "trace.h"
 
+/**
+ * struct libctx - Library context
+ * @initialized: Library is initialized
+ * @caps: Library capabilities
+ * @mutex: Mutex operations
+ * @devices: Devices info/status
+ */
+struct libctx {
+	bool initialized;
+	struct libcaps caps;
+	struct libmutex mutex;
+	struct libdevice *devices;
+};
+
 static struct libctx *libctx;
 
 static void initialize_caps(struct libcaps *caps)
@@ -57,6 +71,14 @@ struct libcaps *libctx_get_caps(void)
 		return NULL;
 
 	return &libctx->caps;
+}
+
+struct libmutex *libctx_get_mutex(void)
+{
+	if (!libctx)
+		return NULL;
+
+	return &libctx->mutex;
 }
 
 CK_RV libctx_set_initialized(void)
@@ -118,7 +140,7 @@ CK_RV libctx_create(void)
 
 	initialize_caps(&libctx->caps);
 
-	ret = libdev_initialize(libctx);
+	ret = libdev_initialize(&libctx->devices);
 
 	return ret;
 }

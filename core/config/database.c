@@ -288,6 +288,8 @@ int get_id(const char *name, const char *const array[], unsigned int size,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	SMW_DBG_ASSERT(name);
+
 	for (i = 0; i < size; i++) {
 		if (*array[i]) {
 			if (!SMW_UTILS_STRCMP(array[i], name)) {
@@ -304,11 +306,18 @@ int get_id(const char *name, const char *const array[], unsigned int size,
 
 int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id)
 {
-	int status;
+	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = get_id(name, subsystem_names, SUBSYSTEM_ID_NB, id);
+	/*
+	 * If name is NULL, require the default subsytem.
+	 * Hence, set the id as invalid by default.
+	 */
+	*id = SUBSYSTEM_ID_INVALID;
+
+	if (name)
+		status = get_id(name, subsystem_names, SUBSYSTEM_ID_NB, id);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

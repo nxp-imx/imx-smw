@@ -16,7 +16,7 @@
 
 __export int smw_config_subsystem_present(const char *subsystem)
 {
-	unsigned int id;
+	unsigned int id = SUBSYSTEM_ID_INVALID;
 
 	if (!subsystem)
 		return SMW_STATUS_INVALID_PARAM;
@@ -28,11 +28,11 @@ __export int smw_config_subsystem_check_digest(const char *subsystem,
 					       const char *algo)
 {
 	int status;
-	unsigned int id;
+	unsigned int id = SUBSYSTEM_ID_INVALID;
 	unsigned int algo_id;
 	struct hash_params *params;
 
-	if (!subsystem || !algo)
+	if (!algo)
 		return SMW_STATUS_INVALID_PARAM;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);

@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright 2020 NXP
+ */
+
+#ifndef __DEV_CONFIG_H__
+#define __DEV_CONFIG_H__
+
+#include "pkcs11smw.h"
+
+/*
+ * Define the number of devices interface
+ */
+#define NB_IFSWM_DEV @NB_IFSWM_DEV@
+
+/**
+ * struct ifdev - SMW device definition
+ * @dev: Constant information
+ */
+struct ifdev {
+	const struct libdev *dev;
+};
+
+extern const struct ifdev smw_devices[NB_IFSWM_DEV];
+
+/*
+ * Definition of the device's mechanism information function prototype
+ */
+#define FUNC_DEV_MECH_INFO(name)                                               \
+	CK_RV(name)(CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR info)
+#define FUNC_DEV_MECH_INFO_PTR(name) FUNC_DEV_MECH_INFO(*name)
+
+extern FUNC_DEV_MECH_INFO_PTR(dev_mech_info[NB_IFSWM_DEV]);
+
+/*
+ * Declaration of the device information structures
+ */
+${DECLARE_DEV_INFO}
+
+/*
+ * Declaration of the device mechanism information functions
+ */
+${DECLARE_DEV_MECH_INFO}
+
+#endif /* __DEV_CONFIG_H__ */

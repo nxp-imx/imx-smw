@@ -2,6 +2,7 @@
 /*
  * Copyright 2020 NXP
  */
+
 #include "dev_config.h"
 #include "lib_device.h"
 #include "pkcs11smw_config.h"
@@ -9,26 +10,27 @@
 #include "trace.h"
 
 /*
- * Define HSM Security Middleware library Secure Subsystem.
+ * Define Security Middleware library generic device.
+ * Use default Secure Subsystem operation defined in
+ * the configuration file.
  */
-const struct libdev hsm_info = {
-	.name = "HSM",
-	.description = "Hardware Secure Module",
+const struct libdev smw_info = {
+	.name = NULL,
+	.description = "Security Middleware Abstraction",
 	.manufacturer = MANUFACTURER_ID,
 	.model = "",
 	.serial = "",
 	.version = { 0, 0 },
-	.flags_slot = CKF_HW_SLOT,
+	.flags_slot = 0,
 	.flags_token = 0,
 };
 
-FUNC_DEV_MECH_INFO(hsm_mech_info)
+FUNC_DEV_MECH_INFO(smw_mech_info)
 {
 	(void)(type);
+	(void)(info);
 
 	DBG_TRACE("Return info of %lu digest mechanism", type);
-	if (info->flags & CKF_DIGEST)
-		info->flags |= CKF_HW;
 
 	return CKR_OK;
 }

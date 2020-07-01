@@ -5,26 +5,19 @@
 #include "smw_config.h"
 #include "smw_status.h"
 
+#include "dev_config.h"
 #include "lib_context.h"
 #include "lib_device.h"
 #include "pkcs11smw.h"
 
 #include "trace.h"
 
-#include "local.h"
-
 struct mgroup;
 
-/*
- * Function prototype to check if all mechanism of a group
- * are supported by a SMW subsystem
- */
-#define FUNC_MECH_CHECK(name)                                                  \
-	void(name)(CK_SLOT_ID slotid, const char *subsystem,                   \
-		   struct mgroup *mgroup)
-#define FUNC_MECH_CHECK_PTR(name) FUNC_MECH_CHECK(*(name))
-
-static FUNC_MECH_CHECK(check_mdigest);
+static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
+			  struct mgroup *mgroup);
+static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			  CK_MECHANISM_INFO_PTR info);
 
 /**
  * struct mentry - Definition of a mechanism supported by each device
@@ -49,8 +42,10 @@ struct mgroup {
 	unsigned int number;
 	struct mentry *mechanism;
 
-	FUNC_MECH_CHECK_PTR(check);
-	FUNC_MECH_INFO_PTR(*info);
+	void (*check)(CK_SLOT_ID slotid, const char *subsystem,
+		      struct mgroup *mgroup);
+	CK_RV(*info)
+	(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type, CK_MECHANISM_INFO_PTR info);
 };
 
 #define M_INIT(name, id)                                                       \
@@ -71,8 +66,6 @@ static struct mentry mdigest[] = {
 	M_INIT(SHA1, SHA_1),	M_INIT(SHA224, SHA224), M_INIT(SHA256, SHA256),
 	M_INIT(SHA384, SHA384), M_INIT(SHA512, SHA512),
 };
-
-FUNC_MECH_INFO_PTR(info_mdigest[]) = { hsm_info_mdigest, optee_info_mdigest };
 
 /*
  * All SMW mechanisms
@@ -181,7 +174,7 @@ CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 					return CKR_MECHANISM_INVALID;
 				}
 
-				return group->info[slotid](type, info);
+				return group->info(slotid, type, info);
 			}
 		}
 	}
@@ -189,7 +182,8 @@ CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return CKR_MECHANISM_INVALID;
 }
 
-static FUNC_MECH_CHECK(check_mdigest)
+static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
+			  struct mgroup *mgroup)
 {
 	int status;
 	unsigned int idx;
@@ -205,6 +199,30 @@ static FUNC_MECH_CHECK(check_mdigest)
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
 	}
+}
+
+static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			  CK_MECHANISM_INFO_PTR info)
+{
+	CK_RV ret = CKR_OK;
+
+	DBG_TRACE("Return info of %lu digest mechanism", type);
+
+	/*
+	 * Digest global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = CKF_DIGEST;
+
+	/*
+	 * Call specific device mechanism information function
+	 * to complete the global setting.
+	 */
+	if (dev_mech_info[slotid])
+		ret = dev_mech_info[slotid](type, info);
+
+	return ret;
 }
 
 CK_RV libdev_mechanisms_init(CK_SLOT_ID slotid)

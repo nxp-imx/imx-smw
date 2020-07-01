@@ -1,0 +1,11 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/*
+ * Copyright 2020 NXP
+ */
+
+#include "dev_config.h"
+
+const struct ifdev smw_devices[NB_IFSWM_DEV] = { @DEV_INFO@ };
+
+FUNC_DEV_MECH_INFO_PTR(dev_mech_info[NB_IFSWM_DEV]) = { @DEV_MECH_INFO@ };
+

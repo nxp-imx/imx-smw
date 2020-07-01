@@ -5,25 +5,15 @@
 #include "smw_config.h"
 #include "smw_status.h"
 
+#include "dev_config.h"
 #include "lib_device.h"
 #include "util.h"
 
-#include "local.h"
-
-/**
- * struct ifdev - SMW device definition
- * @dev: Constant information
- */
-struct ifdev {
-	const struct libdev *dev;
-};
-
-const struct ifdev smw_devices[] = { { .dev = &hsm_info },
-				     { .dev = &optee_info } };
+#include "trace.h"
 
 const struct libdev *libdev_get_devinfo(CK_SLOT_ID slotid)
 {
-	if (slotid < ARRAY_SIZE(smw_devices))
+	if (slotid < NB_IFSWM_DEV)
 		return smw_devices[slotid].dev;
 
 	return NULL;
@@ -31,7 +21,7 @@ const struct libdev *libdev_get_devinfo(CK_SLOT_ID slotid)
 
 unsigned int libdev_get_nb_devinfo(void)
 {
-	return ARRAY_SIZE(smw_devices);
+	return NB_IFSWM_DEV;
 }
 
 void libdev_set_present(struct libdevice *devices)
@@ -43,7 +33,13 @@ void libdev_set_present(struct libdevice *devices)
 
 	for (idx = 0; idx < nb_devices; idx++) {
 		devinfo = libdev_get_devinfo(idx);
-		status = smw_config_subsystem_present(devinfo->name);
+		if (devinfo->name)
+			status = smw_config_subsystem_present(devinfo->name);
+		else
+			status = SMW_STATUS_OK;
+
+		DBG_TRACE("SMW subsytem (%u) [%s] present returned %d", idx,
+			  devinfo->name, status);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(devices[idx].slot.flags, CKF_TOKEN_PRESENT);
 		else

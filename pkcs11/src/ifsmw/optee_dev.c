@@ -3,8 +3,7 @@
  * Copyright 2020 NXP
  */
 
-#include "local.h"
-
+#include "dev_config.h"
 #include "lib_device.h"
 #include "pkcs11smw_config.h"
 
@@ -24,14 +23,12 @@ const struct libdev optee_info = {
 	.flags_token = 0,
 };
 
-FUNC_MECH_INFO(optee_info_mdigest)
+FUNC_DEV_MECH_INFO(optee_mech_info)
 {
 	(void)(type);
+	(void)(info);
 
 	DBG_TRACE("Return info of %lu digset mechanism", type);
 
-	info->ulMaxKeySize = 0;
-	info->ulMinKeySize = 0;
-	info->flags = CKF_DIGEST;
 	return CKR_OK;
 }

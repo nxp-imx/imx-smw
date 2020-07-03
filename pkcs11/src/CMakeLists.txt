@@ -15,3 +15,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	${CMAKE_CURRENT_BINARY_DIR}/include)
 
 add_subdirectory(ifsmw)
+add_subdirectory(objects)

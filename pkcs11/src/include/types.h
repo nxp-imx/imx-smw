@@ -130,4 +130,48 @@ struct libcaps {
 	bool multi_thread;
 };
 
+/**
+ * struct libobj - Definition of an object element of a object list
+ * @class: Object class
+ * @object: Pointer to the object (type depend on the class)
+ * @prev: Previous element of the list
+ * @next: Next element of the list
+ */
+struct libobj {
+	CK_OBJECT_CLASS class;
+	void *object;
+	struct libobj *prev;
+	struct libobj *next;
+};
+
+/**
+ * struct libattr_list - Library attribute list
+ * @attr: Array of attribute
+ * @number: Number of attributes
+ */
+struct libattr_list {
+	CK_ATTRIBUTE_PTR attr;
+	size_t number;
+};
+
+/**
+ * struct libbignumber - Library big number
+ * @value: Big number value
+ * @length: Length in bytes of the big number
+ */
+struct libbignumber {
+	CK_BYTE_PTR value;
+	size_t length;
+};
+
+/**
+ * struct libbytes - Library bytes array
+ * @array: Bytes array
+ * @number: Number of bytes
+ */
+struct libbytes {
+	CK_BYTE_PTR array;
+	size_t number;
+};
+
 #endif /* __TYPES_H__ */

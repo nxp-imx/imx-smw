@@ -26,7 +26,7 @@
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
  * CKR_GENERAL_ERROR             - No slot defined
  * CKR_SLOT_ID_INVALID           - Slot ID is not valid
- * CKR_OK   Success
+ * CKR_OK                        - Success
  */
 static CK_RV clean_token(struct libdevice *device, CK_SLOT_ID slotid)
 {

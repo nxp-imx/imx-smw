@@ -113,4 +113,58 @@ CK_RV libsess_login(CK_SESSION_HANDLE hsession, CK_USER_TYPE user);
  */
 CK_RV libsess_logout(CK_SESSION_HANDLE hsession);
 
+/**
+ * libsess_validate() - Check the session handle
+ * @hsession: Session handle
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_validate(CK_SESSION_HANDLE hsession);
+
+/**
+ * libsess_add_object() - Add an object in the session objects list
+ * @hsession: Session handle
+ * @object: Object to add
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_SESSION_CLOSED                 - Session closed
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_add_object(CK_SESSION_HANDLE hsession, struct libobj *object);
+
+/**
+ * libsess_find_object() - Find a session object
+ * @hsession: Session handle
+ * @object: Object to find
+ *
+ * Return:
+ * CKR_OBJECT_HANDLE_INVALID          - Object not found
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_find_object(CK_SESSION_HANDLE hsession, struct libobj *object);
+
+/**
+ * libsess_remove_object() - Find a session object and remove it
+ * @hsession: Session handle
+ * @object: Object to remove
+ *
+ * Return:
+ * CKR_OBJECT_HANDLE_INVALID          - Object not found
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_remove_object(CK_SESSION_HANDLE hsession, struct libobj *object);
+
 #endif /* __LIB_SESSION_H__ */

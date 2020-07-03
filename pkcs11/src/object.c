@@ -3,17 +3,21 @@
  * Copyright 2020 NXP
  */
 
-#include "pkcs11smw.h"
+#include "lib_object.h"
 
 CK_RV C_CreateObject(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate,
 		     CK_ULONG ulCount, CK_OBJECT_HANDLE_PTR phObject)
 {
-	(void)hSession;
-	(void)pTemplate;
-	(void)ulCount;
-	(void)phObject;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!pTemplate || !ulCount)
+		return CKR_TEMPLATE_INCOMPLETE;
+
+	if (!phObject)
+		return CKR_ARGUMENTS_BAD;
+
+	return libobj_create(hSession, pTemplate, ulCount, phObject);
 }
 
 CK_RV C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
@@ -31,10 +35,7 @@ CK_RV C_CopyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 
 CK_RV C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 {
-	(void)hSession;
-	(void)hObject;
-
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return libobj_destroy(hSession, hObject);
 }
 
 CK_RV C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,

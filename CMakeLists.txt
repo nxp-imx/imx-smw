@@ -73,7 +73,7 @@ target_include_directories(smw INTERFACE "$<INSTALL_INTERFACE:include>")
 
 FIND_PACKAGE(Threads REQUIRED)
 
-target_link_libraries(smw PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${EXT_LIBS})
+target_link_libraries(smw ${CMAKE_THREAD_LIBS_INIT} ${EXT_LIBS})
 
 install(TARGETS smw DESTINATION lib)
 install(FILES public/smw_status.h DESTINATION include/smw)

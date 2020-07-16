@@ -32,6 +32,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 option(ENABLE_HSM "Enable HSM subsystem" ON)
+option(ENABLE_TEE "Enable TEE subsystem" ON)
 
 option(ENABLE_KEYMGR_MODULE "Link the Key manager" ON)
 cmake_dependent_option(ENABLE_HASH "Enable Hash" ON "ENABLE_KEYMGR_MODULE" OFF)

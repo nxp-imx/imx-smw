@@ -1,0 +1,59 @@
+// Generate key with bad args
+
+{
+        "Subtest1": { // Bad version
+                "command": "GENERATE",
+                "version": 1,
+                "subsystem": "TEE",
+                "key_type": "AES",
+                "security_size": 128,
+                "attributes_list": null,
+                "attributes_list_len": 0,
+                "result": 10, // SMW_STATUS_VERSION_NOT_SUPPORTED
+                "key_identifier_id": 0
+        },
+        "Subtest2": { // Bad subsystem name
+                "command": "GENERATE",
+                "version": 0,
+                "subsystem": "BAD",
+                "key_type": "AES",
+                "security_size": 128,
+                "attributes_list": null,
+                "attributes_list_len": 0,
+                "result": 5, // SMW_STATUS_UNKNOWN_NAME
+                "key_identifier_id": 0
+        },
+        "Subtest3": { // Bad key type
+                "command": "GENERATE",
+                "version": 0,
+                "subsystem": "TEE",
+                "key_type": "BAD",
+                "security_size": 128,
+                "attributes_list": null,
+                "attributes_list_len": 0,
+                "result": 5, // SMW_STATUS_UNKNOWN_NAME
+                "key_identifier_id": 0
+        },
+        "Subtest4": { // Key type not supported
+                "command": "GENERATE",
+                "version": 0,
+                "subsystem": "TEE",
+                "key_type": "BRAINPOOL_R1",
+                "security_size": 128,
+                "attributes_list": null,
+                "attributes_list_len": 0,
+                "result": 15, // SMW_STATUS_OPERATION_NOT_SUPPORTED
+                "key_identifier_id": 0
+        },
+        "Subtest5": { // Security size not supported
+                "command": "GENERATE",
+                "version": 0,
+                "subsystem": "TEE",
+                "key_type": "AES",
+                "security_size": 200,
+                "attributes_list": null,
+                "attributes_list_len": 0,
+                "result": 15, // SMW_STATUS_OPERATION_NOT_SUPPORTED
+                "key_identifier_id": 0
+        }
+}

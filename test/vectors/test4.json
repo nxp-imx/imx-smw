@@ -1,0 +1,34 @@
+// Hash with bad args
+
+{
+        "Subtest1": { // Bad version
+                "command": "HASH",
+                "version": 1,
+                "subsystem": "TEE",
+                "algo": "SHA1",
+                "input": "444b25f9c9259dc217772cc4478c44b6feff62353673",
+                "input_len": 22,
+                "digest": "76159368f99dece30aadcfb9b7b41dab33688858",
+                "result": 10 // SMW_STATUS_VERSION_NOT_SUPPORTED
+        },
+        "Subtest2": { // Bad subsystem
+                "command": "HASH",
+                "version": 0,
+                "subsystem": "BAD",
+                "algo": "SHA1",
+                "input": "444b25f9c9259dc217772cc4478c44b6feff62353673",
+                "input_len": 22,
+                "digest": "76159368f99dece30aadcfb9b7b41dab33688858",
+                "result": 5 // SMW_STATUS_UNKNOWN_NAME
+        },
+        "Subtest3": { // Bad algo name
+                "command": "HASH",
+                "version": 0,
+                "subsystem": "TEE",
+                "algo": "BAD",
+                "input": "444b25f9c9259dc217772cc4478c44b6feff62353673",
+                "input_len": 22,
+                "digest": "76159368f99dece30aadcfb9b7b41dab33688858",
+                "result": 5 // SMW_STATUS_UNKNOWN_NAME
+        }
+}

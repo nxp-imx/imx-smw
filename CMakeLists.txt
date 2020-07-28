@@ -33,6 +33,7 @@ endif()
 
 option(ENABLE_HSM "Enable HSM subsystem" ON)
 option(ENABLE_TEE "Enable TEE subsystem" ON)
+option(BUILD_TEST "Build smw test suite" OFF)
 
 option(ENABLE_KEYMGR_MODULE "Link the Key manager" ON)
 cmake_dependent_option(ENABLE_HASH "Enable Hash" ON "ENABLE_KEYMGR_MODULE" OFF)
@@ -77,3 +78,8 @@ target_link_libraries(smw PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${EXT_LIBS})
 install(TARGETS smw DESTINATION lib)
 install(FILES public/smw_status.h DESTINATION include/smw)
 install(FILES osal/${OS}/config/default_config.txt DESTINATION share/smw)
+
+if(BUILD_TEST)
+    enable_testing()
+    add_subdirectory(test)
+endif()

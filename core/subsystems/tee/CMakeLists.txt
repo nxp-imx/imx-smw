@@ -1,8 +1,10 @@
 set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:tee> PARENT_SCOPE)
 
 macro(find_teec_lib export_dir found)
-    find_file(TEEC_LIB_FILE ${TEEC_LIB_NAME} ${export_dir}/usr/lib)
-    find_path(TEEC_INCLUDE_PATH tee_client_api.h ${export_dir}/usr/include)
+    find_library(TEEC_LIB_FILE ${TEEC_LIB_NAME} ${export_dir}/usr/lib
+                 CMAKE_FIND_ROOT_PATH_BOTH)
+    find_path(TEEC_INCLUDE_PATH tee_client_api.h ${export_dir}/usr/include
+              CMAKE_FIND_ROOT_PATH_BOTH)
 
     if(TEEC_LIB_FILE AND TEEC_INCLUDE_PATH)
         set(${found} True)
@@ -12,8 +14,10 @@ macro(find_teec_lib export_dir found)
 endmacro()
 
 macro(find_optee_os_export_files export_dir found)
-    find_path(OPTEE_INCLUDE_FILES tee_internal_api.h ${export_dir}/include)
-    find_path(OPTEE_MK_FILES ta_dev_kit.mk ${export_dir}/mk)
+    find_path(OPTEE_INCLUDE_FILES tee_internal_api.h ${export_dir}/include
+              CMAKE_FIND_ROOT_PATH_BOTH)
+    find_path(OPTEE_MK_FILES ta_dev_kit.mk ${export_dir}/mk
+              CMAKE_FIND_ROOT_PATH_BOTH)
 
     if(OPTEE_INCLUDE_FILES AND OPTEE_MK_FILES)
         set(${found} True)
@@ -32,12 +36,12 @@ macro(check_optee_arch)
         set(toolchain_arch 32)
     endif()
 
-    get_filename_component(optee_arch ${OPTEE_OS_TA_EXPORT_DIR} NAME)
-    if(${optee_arch} MATCHES "arm64$")
+    if(${OPTEE_OS_TA_EXPORT_DIR} MATCHES "arm64$")
         set(optee_arch 64)
-    elseif(${optee_arch} MATCHES "arm32$")
+    elseif(${OPTEE_OS_TA_EXPORT_DIR} MATCHES "arm32$")
         set(optee_arch 32)
     endif()
+
 
     if(NOT ${toolchain_arch} EQUAL ${optee_arch})
         message(FATAL_ERROR "\nToolchain architecture is ${toolchain_arch}bits "
@@ -45,7 +49,8 @@ macro(check_optee_arch)
     endif()
 endmacro()
 
-set(TEEC_LIB_NAME "libteec.a")
+string(REGEX REPLACE "-gcc$" "-" CROSS_COMPILE  ${CMAKE_C_COMPILER})
+set(TEEC_LIB_NAME "teec")
 set(TA_BINARY 11b5c4aa-6d20-11ea-bc55-0242ac130003)
 set(TA_FILE ${TA_BINARY}.ta)
 set(OPTEE_DEFAULT_PLATFORM mx8qmmek)
@@ -61,8 +66,8 @@ set(TA_EXPORT_64 export-ta_arm64)
 if(NOT DEFINED OPTEE_CLIENT_EXPORT_DIR)
     set(OPTEE_CLIENT_EXPORT_DIR ${CMAKE_SOURCE_DIR}/../imx-optee-client)
 elseif(NOT IS_ABSOLUTE ${OPTEE_CLIENT_EXPORT_DIR})
-        set(OPTEE_CLIENT_EXPORT_DIR
-            "${CMAKE_SOURCE_DIR}/${OPTEE_CLIENT_EXPORT_DIR}")
+    set(OPTEE_CLIENT_EXPORT_DIR
+        "${CMAKE_SOURCE_DIR}/${OPTEE_CLIENT_EXPORT_DIR}")
 endif()
 
 #
@@ -197,13 +202,15 @@ set(EXT_LIBS ${EXT_LIBS}
 
 # Invoke TA Makefile
 set(TA_MAKEFILE_PATH ${CMAKE_SOURCE_DIR}/core/subsystems/tee/ta)
+
 set(TA_BUILD_DIR ${CMAKE_BINARY_DIR}/ta)
-set(ENV{O} ${TA_BUILD_DIR})
+
 execute_process(COMMAND make -C ${TA_MAKEFILE_PATH}
                 BINARY=${TA_BINARY}
-				TA_EXPORT_DIR=${OPTEE_OS_TA_EXPORT_DIR}
-				TA_CROSS_COMPILE=${CROSS_COMPILE}
+                TA_EXPORT_DIR=${OPTEE_OS_TA_EXPORT_DIR}
+                TA_CROSS_COMPILE=${CROSS_COMPILE}
                 TA_LOG_LEVEL=${VERBOSE}
+		O=${TA_BUILD_DIR}
                 RESULT_VARIABLE TA_MAKE_RES)
 
 if(NOT ${TA_MAKE_RES} EQUAL 0)

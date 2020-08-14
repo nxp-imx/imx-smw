@@ -81,5 +81,5 @@ install(FILES osal/${OS}/config/default_config.txt DESTINATION share/smw)
 
 if(BUILD_TEST)
     enable_testing()
-    add_subdirectory(test)
+    add_subdirectory(tests)
 endif()

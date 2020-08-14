@@ -70,11 +70,11 @@ if(NOT ${JSON_LIB_FOUND})
                         OUTPUT_QUIET
                         RESULT_VARIABLE JSON_CMAKE_RES)
         if(NOT ${JSON_CMAKE_RES} EQUAL 0)
-                message(FATAL_ERROR "\n"${JSON_CMAKE} " command failed\n")
+                message(FATAL_ERROR "\n${JSON_CMAKE} command failed\n")
         endif()
 
         set(JSON_MAKE make)
-        message(STATUS "Buildind json-c library")
+        message(STATUS "Building json-c library")
         execute_process(COMMAND ${JSON_MAKE}
                         WORKING_DIRECTORY ${JSON_BUILD_DIR}
                         OUTPUT_QUIET

@@ -25,6 +25,8 @@ if(VERBOSE)
     endif()
     add_definitions(-DTRACE_LEVEL=${VERBOSE})
     message(STATUS TRACE_LEVEL: ${VERBOSE})
+else()
+    set(VERBOSE 0)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

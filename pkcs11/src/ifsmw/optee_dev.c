@@ -28,7 +28,7 @@ FUNC_DEV_MECH_INFO(optee_mech_info)
 	(void)(type);
 	(void)(info);
 
-	DBG_TRACE("Return info of %lu digset mechanism", type);
+	DBG_TRACE("Complete info of 0x%lx mechanism", type);
 
 	return CKR_OK;
 }

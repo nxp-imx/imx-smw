@@ -26,7 +26,7 @@ FUNC_DEV_MECH_INFO(hsm_mech_info)
 {
 	(void)(type);
 
-	DBG_TRACE("Return info of %lu digest mechanism", type);
+	DBG_TRACE("Complete info of 0x%lx mechanism", type);
 	if (info->flags & CKF_DIGEST)
 		info->flags |= CKF_HW;
 

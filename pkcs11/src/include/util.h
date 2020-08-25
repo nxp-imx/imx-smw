@@ -27,6 +27,15 @@
 	})
 #endif /* MIN */
 
+#ifndef MAX
+#define MAX(a, b)                                                              \
+	({                                                                     \
+		__typeof__(a) _a = (a);                                        \
+		__typeof__(b) _b = (b);                                        \
+		_a < _b ? _b : _a;                                             \
+	})
+#endif /* MAX */
+
 #define STR(x) #x
 
 #define ADD_OVERFLOW(a, b, res) __builtin_add_overflow(a, b, res)

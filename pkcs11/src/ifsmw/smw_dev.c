@@ -30,7 +30,7 @@ FUNC_DEV_MECH_INFO(smw_mech_info)
 	(void)(type);
 	(void)(info);
 
-	DBG_TRACE("Return info of %lu digest mechanism", type);
+	DBG_TRACE("Complete info of 0x%lx mechanism", type);
 
 	return CKR_OK;
 }

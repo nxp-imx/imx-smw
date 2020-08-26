@@ -11,22 +11,6 @@
 #include "debug.h"
 #include "utils.h"
 
-__attribute__((weak)) int
-smw_alloc_key_identifier(struct smw_key_identifier **key_identifier)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
-}
-
-__attribute__((weak)) int
-smw_free_key_identifier(struct smw_key_identifier *key_identifier)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
-}
-
 __attribute__((weak)) int smw_generate_key(struct smw_generate_key_args *args)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;

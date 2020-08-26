@@ -3,61 +3,85 @@
  * Copyright 2020 NXP
  */
 
+#include <stdint.h>
+
+enum smw_keymgr_privacy_id {
+	/* Key privacy */
+	SMW_KEYMGR_PRIVACY_ID_PUBLIC,
+	SMW_KEYMGR_PRIVACY_ID_PRIVATE,
+	SMW_KEYMGR_PRIVACY_ID_PAIR,
+	SMW_KEYMGR_PRIVACY_ID_NB,
+	SMW_KEYMGR_PRIVACY_ID_INVALID
+};
+
+enum smw_keymgr_format_id {
+	/* Key format */
+	SMW_KEYMGR_FORMAT_ID_HEX,
+	SMW_KEYMGR_FORMAT_ID_BASE64,
+	SMW_KEYMGR_FORMAT_ID_NB,
+	SMW_KEYMGR_FORMAT_ID_INVALID
+};
+
 /**
- * struct smw_key_identifier - Key identifier
+ * struct smw_keymgr_identifier - Key identifier
  * @subsystem_id: Secure Subsystem ID
- * @key_type_id: Key type ID
- * @security_size: Key length
- * @is_private: true - private Key / false - public Key
+ * @type_id: Key type ID
+ * @privacy_id: Key privacy ID
+ * @security_size: Security size in bits
  * @id: Key ID set by the subsystem
  *
  */
-struct smw_key_identifier {
+struct smw_keymgr_identifier {
 	enum subsystem_id subsystem_id;
-	enum smw_config_key_type_id key_type_id;
+	enum smw_config_key_type_id type_id;
+	enum smw_keymgr_privacy_id privacy_id;
 	unsigned int security_size;
-	bool is_private;
-	unsigned long id;
+	uint32_t id;
+};
+
+/**
+ * struct smw_keymgr_descriptor - Key descriptor
+ * @identifier: Key identifier
+ * @format_id: Format ID of the Key buffers
+ * @pub: Key descriptor from the public API
+ */
+struct smw_keymgr_descriptor {
+	struct smw_keymgr_identifier identifier;
+	enum smw_keymgr_format_id format_id;
+	struct smw_key_descriptor *pub;
+};
+
+/**
+ * struct smw_keymgr_attributes - Key attributes list.
+ * @persistent_storage: Use persistent subsystem storage or not.
+ *
+ */
+struct smw_keymgr_attributes {
+	bool persistent_storage;
 };
 
 /**
  * struct smw_keymgr_generate_key_args - Key generation arguments
- * @key_type_id: Key type ID
- * @security_size: Security size
- * @key_attributes_list: Key attributes list
- * @key_attributes_list_length: Length of the Key attributes list
- * @key_identifier: Pointer to the new Key identifier
+ * @key_attributes: Key attributes
+ * @key_descriptor: Descriptor of the generated Key
  *
  */
 struct smw_keymgr_generate_key_args {
-	/* Inputs */
-	enum smw_config_key_type_id key_type_id;
-	unsigned int security_size;
-	const unsigned char *key_attributes_list;
-	unsigned int key_attributes_list_length;
-	/* Outputs */
-	struct smw_key_identifier *key_identifier;
+	struct smw_keymgr_attributes key_attributes;
+	struct smw_keymgr_descriptor key_descriptor;
 };
 
 /**
  * struct smw_keymgr_derive_key_args - Key derivation arguments
- * @original_key_identifier: Pointer to a Key identifier
- * @key_type_id: Key type ID
- * @security_size: Security size
- * @key_attributes_list: Key attributes list
- * @key_attributes_list_length: Length of the Key attributes list
- * @key_identifier: Pointer to the new Key identifier
+ * @key_descriptor_in: Descriptor of the input Key
+ * @key_attributes: Key attributes
+ * @key_descriptor_out: Descriptor of the derived Key
  *
  */
 struct smw_keymgr_derive_key_args {
-	/* Inputs */
-	struct smw_key_identifier *original_key_identifier;
-	enum smw_config_key_type_id key_type_id;
-	unsigned int security_size;
-	const unsigned char *key_attributes_list;
-	unsigned int key_attributes_list_length;
-	/* Outputs */
-	struct smw_key_identifier *key_identifier;
+	struct smw_keymgr_descriptor key_descriptor_in;
+	struct smw_keymgr_attributes key_attributes;
+	struct smw_keymgr_descriptor key_descriptor_out;
 };
 
 /**
@@ -71,83 +95,186 @@ struct smw_keymgr_update_key_args {
 
 /**
  * struct smw_keymgr_import_key_args - Key import arguments
- * @key_type_id: Key type ID
- * @input_buffer: Location of the Key to be imported
- * @input_buffer_length: Length of the Key to be imported
- * @key_attributes_list: Key attributes list
- * @key_attributes_list_length: Length of the Key attributes list
- * @key_identifier: Pointer to the new Key identifier
+ * @key_attributes: Key attributes
+ * @key_descriptor: Descriptor of the imported Key
  *
  */
 struct smw_keymgr_import_key_args {
-	/* Inputs */
-	enum smw_config_key_type_id key_type_id;
-	unsigned char *input_buffer;
-	unsigned int input_buffer_length;
-	const unsigned char *key_attributes_list;
-	unsigned int key_attributes_list_length;
-	/* Outputs */
-	struct smw_key_identifier *key_identifier;
+	struct smw_keymgr_attributes key_attributes;
+	struct smw_keymgr_descriptor key_descriptor;
 };
 
 /**
  * struct smw_keymgr_export_key_args - Key export arguments
- * @key_identifier: Pointer to the Key identifier
- * @output_buffer: Location where the Key has to be exported
- * @output_buffer_length: Maximum length of the Key to be exported
- * @key_attributes_list: Key attributes list
- * @key_attributes_list_length: Length of the Key attributes list
+ * @key_attributes: Key attributes
+ * @key_descriptor: Descriptor of the exported Key
  *
  */
 struct smw_keymgr_export_key_args {
-	/* Inputs */
-	struct smw_key_identifier *key_identifier;
-	/* Outputs */
-	unsigned char *output_buffer;
-	unsigned int output_buffer_length;
-	const unsigned char *key_attributes_list;
-	unsigned int key_attributes_list_length;
+	struct smw_keymgr_attributes key_attributes;
+	struct smw_keymgr_descriptor key_descriptor;
 };
 
 /**
  * struct smw_keymgr_delete_key_args - Key deletion arguments
- * @key_identifier: Pointer to the Key identifier
+ * @key_descriptor: Descriptor of the Key to delete
  *
  */
 struct smw_keymgr_delete_key_args {
-	/* Inputs */
-	struct smw_key_identifier *key_identifier;
+	struct smw_keymgr_descriptor key_descriptor;
 };
 
 /**
- * struct smw_keymgr_attributes - Key attributes list.
- * @persistent_storage: Use persistent subsystem storage or not.
+ * smw_keymgr_alloc_keypair_buffer() - Allocate a keypair object.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ * @public_length: Length of the public Key buffer
+ * @private_length: Length of the private Key buffer
  *
- */
-struct smw_keymgr_attributes {
-	bool persistent_storage;
-};
-
-/**
- * smw_keymgr_read_attributes() - Read key_attributes_list buffer.
- * @attributes_list: List of attributes buffer to read.
- * @attributes_length: Buffer size (bytes).
- * @key_attributes: Pointer to smw_keymgr_attributes structure to fill.
- *
- * This function reads a list of attributes parsed by smw_tlv_read_element()
- * function and fill smw_keymgr_attributes structure using fill_key_attributes()
- * function.
- * @attributes_list is encoded with TLV encoding scheme:
- * The ‘Type’ field is encoded as an ASCII string terminated with the null
- * character.
- * The ‘Length’ field is encoded with two bytes.
- * The ‘Value’ field is a byte stream that contains the data.
+ * This function allocates a keypair buffer object and
+ * the keys buffers (public/private) if corresponding lengths are set.
  *
  * Return:
- * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- One of the parameter is invalid.
- * SMW_STATUS_ALLOC_FAILURE	- Memory allocation failed.
+ * error code.
  */
-int smw_keymgr_read_attributes(const unsigned char *attributes_list,
-			       unsigned int attributes_length,
-			       struct smw_keymgr_attributes *key_attributes);
+int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
+				    unsigned int public_length,
+				    unsigned int private_length);
+
+/**
+ * smw_keymgr_free_keypair_buffer() - Free a keypair object.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function frees the memory allocated by
+ * smw_keymgr_alloc_keypair_buffer().
+ *
+ * Return:
+ * error code.
+ */
+int smw_keymgr_free_keypair_buffer(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_get_public_data() - Return the address of the public Key buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the address of the public Key buffer.
+ * If the @buffer field @pub is NULL, the function returns NULL.
+ *
+ * Return:
+ * NULL
+ * address of the public Key buffer
+ */
+unsigned char *
+smw_keymgr_get_public_data(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_get_public_length() - Return the length of the public Key buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the length of the public Key buffer.
+ * If the @buffer field @pub is NULL, the function returns 0.
+ *
+ * Return:
+ * 0
+ * length of the public Key buffer.
+ */
+unsigned int
+smw_keymgr_get_public_length(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_set_public_data() - Set the address of the public Key buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ * @public_data: Address of the public Key buffer.
+ *
+ * This function sets the address of the public Key buffer.
+ * If the @buffer field @pub is NULL, the function returns with no action.
+ *
+ * Return:
+ * none.
+ */
+void smw_keymgr_set_public_data(struct smw_keymgr_descriptor *descriptor,
+				unsigned char *public_data);
+
+/**
+ * smw_keymgr_set_public_length() - Set the length of the public Key buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ * @public_length: Length of the public Key buffer.
+ *
+ * This function sets the length of the public Key buffer.
+ * If the @buffer field @pub is NULL, the function returns with no action.
+ *
+ * Return:
+ * none.
+ */
+void smw_keymgr_set_public_length(struct smw_keymgr_descriptor *descriptor,
+				  unsigned int public_length);
+
+/**
+ * smw_keymgr_set_private_length() - Set the length of the private Key buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ * @private_length: Length of the private Key buffer.
+ *
+ * This function sets the length of the private Key buffer.
+ * If the @buffer field @pub is NULL, the function returns with no action.
+ *
+ * Return:
+ * none.
+ */
+void smw_keymgr_set_private_length(struct smw_keymgr_descriptor *descriptor,
+				   unsigned int private_length);
+
+/**
+ * smw_keymgr_get_buffers_lengths() - Get the lengths of the Key buffers.
+ * @type_id: Key type ID.
+ * @security_size: Security size in bits.
+ * @format_id: Format ID.
+ * @public_buffer_length: Pointer to the public buffer length.
+ * @private_buffer_length: Pointer to the private buffer length.
+ *
+ * This function computes the lengths of the Key buffers.
+ *
+ * Return:
+ * error code.
+ */
+int smw_keymgr_get_buffers_lengths(enum smw_config_key_type_id type_id,
+				   unsigned int security_size,
+				   enum smw_keymgr_format_id format_id,
+				   unsigned int *public_buffer_length,
+				   unsigned int *private_buffer_length);
+
+/**
+ * smw_keymgr_convert_descriptor() - Key descriptor conversion.
+ * @in: Pointer to a public Key descriptor.
+ * @out: Pointer to an internal Key descriptor.
+ *
+ * This function converts a public Key descriptor
+ * into an internal Key descriptor.
+ *
+ * Return:
+ * error code.
+ */
+int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
+				  struct smw_keymgr_descriptor *out);
+
+/**
+ * smw_keymgr_set_default_attributes() - Set default Key attributes.
+ * @attr: Pointer to the Key attributes structure.
+ *
+ * This function sets the default values of the Key attributes.
+ *
+ * Return:
+ * None.
+ */
+void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr);
+
+/**
+ * smw_keymgr_get_privacy_id() - Get the Key privacy ID.
+ * @type_id: Key type ID.
+ * @privacy_id: Key privacy ID.
+ *
+ * This function gets the Key privacy ID given the Key type ID.
+ *
+ * Return:
+ * error code.
+ */
+int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
+			      enum smw_keymgr_privacy_id *privacy_id);

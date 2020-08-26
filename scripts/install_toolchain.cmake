@@ -29,5 +29,6 @@ if(NOT EXISTS ${TOOLCHAIN_PATH}/${TOOLCHAIN_AR_DIR})
     if(NOT ${res} EQUAL 0)
         message(FATAL_ERROR "Cannot extract toolchain :${res}")
     endif()
+else()
+    message(STATUS "Toolchain already installed")
 endif()
-

@@ -17,6 +17,8 @@
 
 #define SMW_ALL_ONES (-1)
 
+#define BIT_MASK(length) ((1ULL << (length)) - 1)
+
 #if !defined ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif

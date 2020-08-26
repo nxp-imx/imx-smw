@@ -25,14 +25,7 @@ static const unsigned char encoding_table[] = {
 /* Mask used to avoid encoding table buffer over-read */
 #define ENC_MAX_ARRAY_MASK (ARRAY_SIZE(encoding_table) - 1)
 
-/**
- * get_base64_len() - Calculate the base64 length of a hexadecimal buffer.
- * @hex_len: Hex buffer length in bytes.
- *
- * Return:
- * Base64 buffer length in bytes.
- */
-static unsigned int get_base64_len(unsigned int hex_len)
+unsigned int smw_utils_get_base64_len(unsigned int hex_len)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -96,7 +89,7 @@ static unsigned char convert_char(unsigned char c)
 }
 
 int smw_utils_base64_encode(const unsigned char *in, unsigned int in_len,
-			    unsigned char **base64, unsigned int *base64_len)
+			    unsigned char *base64, unsigned int *base64_len)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	unsigned int len = 0;
@@ -105,23 +98,22 @@ int smw_utils_base64_encode(const unsigned char *in, unsigned int in_len,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_ASSERT(in && base64_len);
+	SMW_DBG_ASSERT(in && base64 && base64_len);
 
-	len = get_base64_len(in_len);
+	len = smw_utils_get_base64_len(in_len);
 	if (!len) {
 		SMW_DBG_PRINTF(ERROR, "%s: Input buffer length is 0\n",
 			       __func__);
 		goto exit;
 	}
 
-	*base64 = SMW_UTILS_MALLOC(len);
-	if (!*base64) {
-		SMW_DBG_PRINTF(ERROR, "%s: Alloc failed\n", __func__);
-		status = SMW_STATUS_ALLOC_FAILURE;
+	if (*base64_len < len) {
+		SMW_DBG_PRINTF(ERROR, "%s: Base64 buffer too small (%d / %d)\n",
+			       __func__, *base64_len, len);
 		goto exit;
 	}
 
-	p = *base64;
+	p = base64;
 
 	while (rest >= 3) {
 		/* Convert 3 input bytes into 4 Base64 bytes */

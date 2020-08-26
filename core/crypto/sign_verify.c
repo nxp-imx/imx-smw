@@ -14,7 +14,7 @@
 #include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
-#include "crypto.h"
+#include "sign_verify.h"
 #include "exec.h"
 
 static int sign_convert_args(struct smw_sign_args *args,
@@ -35,12 +35,16 @@ static int sign_convert_args(struct smw_sign_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = smw_keymgr_convert_descriptor(args->key_descriptor,
+					       &converted_args->key_descriptor);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	status = smw_config_get_hash_algo_id(args->algo_name,
 					     &converted_args->algo_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	converted_args->key_identifier = args->key_identifier;
 	converted_args->hashed = args->hashed;
 	converted_args->message = args->message;
 	converted_args->message_length = args->message_length;
@@ -70,8 +74,8 @@ static int verify_convert_args(struct smw_verify_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_config_get_key_type_id(args->key_type_name,
-					    &converted_args->key_type_id);
+	status = smw_keymgr_convert_descriptor(args->key_descriptor,
+					       &converted_args->key_descriptor);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -80,10 +84,7 @@ static int verify_convert_args(struct smw_verify_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	converted_args->security_size = args->security_size;
 	converted_args->hashed = args->hashed;
-	converted_args->key = args->key;
-	converted_args->key_size = args->key_size;
 	converted_args->message = args->message;
 	converted_args->message_length = args->message_length;
 	converted_args->signature = args->signature;

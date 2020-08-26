@@ -13,7 +13,7 @@
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
-#include "crypto.h"
+#include "hash.h"
 #include "exec.h"
 
 static int hash_convert_args(struct smw_hash_args *args,

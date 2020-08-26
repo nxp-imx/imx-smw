@@ -4,9 +4,18 @@ project(SecurityMiddlewareLibrary VERSION 0.1 LANGUAGES C)
 
 include(CMakeDependentOption)
 
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+# Configuration types
+if(NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Configs" FORCE)
+endif()
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Set default build type Release.")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+else()
+    message(STATUS "Build type ${CMAKE_BUILD_TYPE}.")
+endif()
 
-set(SMW_IMPORTS_PATH "${CMAKE_SOURCE_DIR}/imports")
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 if(VERBOSE)
     if(NOT VERBOSE MATCHES "^[0-9]$")
@@ -33,8 +42,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DENABLE_DEBUG)
 endif()
 
-option(ENABLE_HSM "Enable HSM subsystem" ON)
-option(ENABLE_TEE "Enable TEE subsystem" ON)
 option(BUILD_TEST "Build smw test suite" OFF)
 
 option(ENABLE_KEYMGR_MODULE "Link the Key manager" ON)
@@ -67,10 +74,11 @@ add_subdirectory(pkcs11)
 
 add_library(smw ${OBJ_LIST} ${INCLUDE_DIR})
 set_target_properties(smw PROPERTIES
-	VERSION ${PROJECT_VERSION}
-	SOVERSION ${PROJECT_VERSION_MAJOR}
-)
-target_include_directories(smw PRIVATE ${INCLUDE_DIR} PUBLIC ${CMAKE_SOURCE_DIR}/public)
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR})
+
+target_include_directories(smw PRIVATE ${INCLUDE_DIR}
+    PUBLIC ${CMAKE_SOURCE_DIR}/public)
 target_include_directories(smw INTERFACE "$<INSTALL_INTERFACE:include>")
 
 FIND_PACKAGE(Threads REQUIRED)

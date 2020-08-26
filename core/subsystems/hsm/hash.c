@@ -14,8 +14,7 @@
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
-#include "keymgr.h"
-#include "crypto.h"
+#include "hash.h"
 
 #include "common.h"
 
@@ -69,8 +68,7 @@ static int hash(struct hdl *hdl, void *args)
 
 	op_hash_one_go_args_t op_hash_one_go_args;
 
-	struct smw_crypto_hash_args *hash_args =
-		(struct smw_crypto_hash_args *)args;
+	struct smw_crypto_hash_args *hash_args = args;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -117,8 +115,8 @@ end:
 	return status;
 }
 
-bool hash_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
-		 int *status)
+bool hsm_hash_handle(struct hdl *hdl, enum operation_id operation_id,
+		     void *args, int *status)
 {
 	switch (operation_id) {
 	case OPERATION_ID_HASH:

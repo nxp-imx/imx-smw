@@ -10,13 +10,12 @@
 #include "debug.h"
 #include "smw_osal.h"
 #include "utils.h"
+#include "base64.h"
 #include "config.h"
 #include "keymgr.h"
 #include "tee.h"
 #include "tee_subsystem.h"
 #include "smw_status.h"
-
-#define KEY_ID_MASK UINT32_MAX
 
 /**
  * struct - Key info
@@ -112,14 +111,14 @@ static int convert_key_type(enum smw_config_key_type_id smw_key_type,
 
 /**
  * check_key_security_size() - Check key security size value.
- * @key_type: Key type.
+ * @key_type_id: Key type ID.
  * @security_size: Key security size in bits.
  *
  * Return:
  * SMW_STATUS_OK			- Size is ok.
  * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Size is not supported.
  */
-static int check_key_security_size(enum smw_config_key_type_id key_type,
+static int check_key_security_size(enum smw_config_key_type_id key_type_id,
 				   unsigned int security_size)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -129,9 +128,9 @@ static int check_key_security_size(enum smw_config_key_type_id key_type,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < size; i++) {
-		if (smw_tee_key_info[i].smw_key_type < key_type)
+		if (smw_tee_key_info[i].smw_key_type < key_type_id)
 			continue;
-		if (smw_tee_key_info[i].smw_key_type > key_type)
+		if (smw_tee_key_info[i].smw_key_type > key_type_id)
 			break;
 		if (smw_tee_key_info[i].security_size < security_size)
 			continue;
@@ -157,65 +156,85 @@ static int check_key_security_size(enum smw_config_key_type_id key_type,
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid.
  * SMW_STATUS_SUBSYSTEM_FAILURE	- Operation failed.
- * Error code from smw_keymgr_read_attributes().
  */
 static int generate_key(void *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
-	unsigned int attribute_length = 0;
-	unsigned long id = 0;
-	unsigned char *attribute_list = NULL;
 	enum tee_key_type key_type = TEE_KEY_TYPE_ID_INVALID;
-	struct smw_keymgr_attributes attributes = { 0 };
-	struct smw_keymgr_generate_key_args *key_args =
-		(struct smw_keymgr_generate_key_args *)args;
+	struct smw_keymgr_generate_key_args *key_args = args;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&key_args->key_descriptor;
+	struct smw_keymgr_identifier *key_identifier =
+		&key_descriptor->identifier;
+	enum smw_keymgr_format_id format_id = key_descriptor->format_id;
+	enum smw_config_key_type_id key_type_id = key_identifier->type_id;
+	unsigned int security_size = key_identifier->security_size;
+	unsigned char *public_data = smw_keymgr_get_public_data(key_descriptor);
+	unsigned char *out_key = NULL;
+	unsigned int out_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!key_args)
 		goto exit;
 
+	if (public_data) {
+		status =
+			smw_keymgr_get_buffers_lengths(key_type_id,
+						       security_size,
+						       SMW_KEYMGR_FORMAT_ID_HEX,
+						       &out_size, NULL);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+
+		if (format_id == SMW_KEYMGR_FORMAT_ID_HEX) {
+			out_key = public_data;
+		} else {
+			out_key = SMW_UTILS_MALLOC(out_size);
+			if (!out_key) {
+				SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
+				status = SMW_STATUS_ALLOC_FAILURE;
+				goto exit;
+			}
+		}
+	}
+
 	/* Convert smw key type to tee key type */
-	status = convert_key_type(key_args->key_type_id, &key_type);
+	status = convert_key_type(key_type_id, &key_type);
 	if (status != SMW_STATUS_OK) {
 		SMW_DBG_PRINTF(ERROR, "%s: Key type not supported\n", __func__);
 		goto exit;
 	}
 
 	/* Check that key size is supported by optee */
-	status = check_key_security_size(key_args->key_type_id,
-					 key_args->security_size);
+	status = check_key_security_size(key_type_id, security_size);
 	if (status != SMW_STATUS_OK) {
 		SMW_DBG_PRINTF(ERROR, "%s: Key size not supported\n", __func__);
 		goto exit;
-	}
-
-	/* Parse key attributes */
-	if (key_args->key_attributes_list) {
-		attribute_list = (unsigned char *)key_args->key_attributes_list;
-		attribute_length = key_args->key_attributes_list_length;
-		status = smw_keymgr_read_attributes(attribute_list,
-						    attribute_length,
-						    &attributes);
-		if (status != SMW_STATUS_OK) {
-			SMW_DBG_PRINTF(ERROR, "%s: Undefined key attributes\n",
-				       __func__);
-			goto exit;
-		}
 	}
 
 	/*
 	 * params[0] = Key security size (in bits) and key type
 	 * params[1] = Key ID
 	 * params[2] = Persistent or not
+	 * params[3] = Key buffer or none
 	 */
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT,
+	if (out_key) {
+		op.paramTypes =
+			TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT,
+					 TEEC_VALUE_INPUT, TEEC_MEM_OUTPUT);
+		op.params[3].tmpref.buffer = out_key;
+		op.params[3].tmpref.size = out_size;
+	} else {
+		op.paramTypes =
+			TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT,
 					 TEEC_VALUE_INPUT, TEEC_NONE);
+	}
 
-	op.params[0].value.a = key_args->security_size;
+	op.params[0].value.a = security_size;
 	op.params[0].value.b = key_type;
-	op.params[2].value.a = attributes.persistent_storage;
+	op.params[2].value.a = key_args->key_attributes.persistent_storage;
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_GENERATE_KEY, &op);
@@ -224,21 +243,36 @@ static int generate_key(void *args)
 		goto exit;
 	}
 
-	id = op.params[1].value.a;
-	/* Internal TA ID is 32 bits coded */
-	id |= (unsigned long)SUBSYSTEM_ID_TEE << 32;
-
 	/* Update key_identifier struct */
-	key_args->key_identifier->subsystem_id = SUBSYSTEM_ID_TEE;
-	key_args->key_identifier->key_type_id = key_args->key_type_id;
-	key_args->key_identifier->security_size = key_args->security_size;
-	key_args->key_identifier->is_private = true;
-	key_args->key_identifier->id = id;
+	status = smw_keymgr_get_privacy_id(key_type_id,
+					   &key_identifier->privacy_id);
+	if (status != SMW_STATUS_OK)
+		goto exit;
 
-	SMW_DBG_PRINTF(DEBUG, "%s: Key #%ld is generated\n", __func__,
-		       key_args->key_identifier->id);
+	key_identifier->subsystem_id = SUBSYSTEM_ID_TEE;
+	key_identifier->id = op.params[1].value.a;
+	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated\n", __func__,
+		       key_identifier->id);
+
+	if (out_key) {
+		if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+			status =
+				smw_utils_base64_encode(out_key, out_size,
+							public_data, &out_size);
+			if (status != SMW_STATUS_OK)
+				goto exit;
+		}
+
+		SMW_DBG_PRINTF(DEBUG, "Out key:\n");
+		SMW_DBG_HEX_DUMP(DEBUG, public_data, out_size, 4);
+	}
+
+	smw_keymgr_set_public_length(key_descriptor, out_size);
 
 exit:
+	if (out_key && out_key != public_data)
+		SMW_UTILS_FREE(out_key);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -256,9 +290,7 @@ static int delete_key(void *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
-	uint32_t key_id = 0;
-	struct smw_keymgr_delete_key_args *key_args =
-		(struct smw_keymgr_delete_key_args *)args;
+	struct smw_keymgr_delete_key_args *key_args = args;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -270,16 +302,15 @@ static int delete_key(void *args)
 					 TEEC_NONE);
 
 	/* Key research is done with Key ID */
-	key_id = (uint32_t)(key_args->key_identifier->id & KEY_ID_MASK);
-	op.params[0].value.a = key_id;
+	op.params[0].value.a = key_args->key_descriptor.identifier.id;
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_DELETE_KEY, &op);
 	if (status != SMW_STATUS_OK)
 		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
 	else
-		SMW_DBG_PRINTF(DEBUG, "%s: Key #%ld is deleted\n", __func__,
-			       key_args->key_identifier->id);
+		SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is deleted\n", __func__,
+			       key_args->key_descriptor.identifier.id);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

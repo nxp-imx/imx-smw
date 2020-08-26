@@ -529,7 +529,6 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	TEE_ObjectHandle key_handle = { 0 };
 	TEE_ObjectHandle persistent_key_handle = { 0 };
 	TEE_Attribute *attr = NULL;
-	uint32_t exp_param_types = 0;
 	uint32_t object_type = 0;
 	uint32_t attr_count = 0;
 	unsigned int security_size = 0;
@@ -538,6 +537,8 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	uint8_t *key = NULL;
 	uint8_t *pubx = NULL;
 	uint8_t *puby = NULL;
+	uint8_t *pub_key = NULL;
+	uint32_t pub_key_size = 0;
 	bool persistent = false;
 	struct key_data *key_data = NULL;
 	enum tee_key_type key_type = 0;
@@ -548,23 +549,30 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	 * params[0] = Key security size (in bits) and key type
 	 * params[1] = Key ID
 	 * params[2] = Persistent or not
+	 * params[3] = Key buffer or none
 	 */
-	exp_param_types = TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
-					  TEE_PARAM_TYPE_VALUE_OUTPUT,
-					  TEE_PARAM_TYPE_VALUE_INPUT,
-					  TEE_PARAM_TYPE_NONE);
 
-	if (exp_param_types != param_types)
+	if (param_types == TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
+					   TEE_PARAM_TYPE_VALUE_OUTPUT,
+					   TEE_PARAM_TYPE_VALUE_INPUT,
+					   TEE_PARAM_TYPE_MEMREF_OUTPUT)) {
+		pub_key = params[3].memref.buffer;
+		pub_key_size = params[3].memref.size;
+	} else if (param_types == TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
+						  TEE_PARAM_TYPE_VALUE_OUTPUT,
+						  TEE_PARAM_TYPE_VALUE_INPUT,
+						  TEE_PARAM_TYPE_NONE)) {
+		pub_key = NULL;
+		pub_key_size = 0;
+	} else {
 		return res;
+	}
 
 	security_size = params[0].value.a;
 	key_type = params[0].value.b;
 	persistent = params[2].value.a;
 
-	if (security_size == 521)
-		key_size_bytes = 66; /* 521 bits key special case */
-	else
-		key_size_bytes = security_size / 8;
+	key_size_bytes = (security_size + 7) / 8;
 
 	/* Get TEE object type */
 	res = get_key_obj_type(key_type, &object_type);
@@ -588,11 +596,26 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	}
 
 	if (key_type == TEE_KEY_TYPE_ID_ECDSA) {
-		pubx = TEE_Malloc(2 * key_size_bytes,
-				  TEE_USER_MEM_HINT_NO_FILL_ZERO);
-		if (!pubx) {
-			EMSG("TEE_Malloc failed");
-			res = TEE_ERROR_OUT_OF_MEMORY;
+		if (pub_key && pub_key_size) {
+			if (pub_key_size != 2 * key_size_bytes) {
+				EMSG("Invalid key size: %d (%d expected)",
+				     pub_key_size, key_size_bytes);
+				res = TEE_ERROR_BAD_PARAMETERS;
+				goto exit;
+			}
+			pubx = pub_key;
+		} else if (!pub_key && !pub_key_size) {
+			pubx = TEE_Malloc(2 * key_size_bytes,
+					  TEE_USER_MEM_HINT_NO_FILL_ZERO);
+			if (!pubx) {
+				EMSG("TEE_Malloc failed");
+				res = TEE_ERROR_OUT_OF_MEMORY;
+				goto exit;
+			}
+		} else {
+			EMSG("Invalid pub key params: %p, %d", pub_key,
+			     pub_key_size);
+			res = TEE_ERROR_BAD_PARAMETERS;
 			goto exit;
 		}
 
@@ -687,7 +710,7 @@ exit:
 	if (key)
 		TEE_Free(key);
 
-	if (pubx)
+	if (!pub_key && pubx)
 		TEE_Free(pubx);
 
 	if (attr)

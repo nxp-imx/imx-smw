@@ -54,7 +54,7 @@ int unload(void);
 struct hdl *get_handles_struct(void);
 
 /**
- * key_handle() - Handle the Key operations.
+ * hsm_key_handle() - Handle the Key operations.
  * @hdl: Pointer to the HSM handles structure.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.
@@ -67,8 +67,8 @@ struct hdl *get_handles_struct(void);
  * * true:	- the Security Operation has been handled.
  * * false:	- the Security Operation has not been handled.
  */
-bool key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
-		int *status);
+bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
+		    int *status);
 
 /**
  * hash_handle() - Handle the Hash operation.
@@ -103,40 +103,3 @@ bool hash_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
  */
 bool sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
 			void *args, int *status);
-
-/**
- * alloc_out_key() - Allocate buffer to store out key.
- * @out_key: Pointer to the buffer address.
- * @out_size: Pointer to the buffer size.
- * @security_size: Security size in bits.
- *
- * This function allocates buffer to store out key.
- *
- * Return:
- * erro code.
- */
-int alloc_out_key(uint8_t **out_key, uint16_t *out_size,
-		  unsigned int security_size);
-
-/**
- * print_out_key() - Print the out key.
- * @out_key: Pointer to the out key.
- * @out_size: Size of the out key.
- *
- * This function prints the out key.
- *
- * Return:
- * erro code.
- */
-void print_out_key(uint8_t *out_key, uint16_t out_size);
-
-/**
- * free_out_key() - Free the out key buffer.
- * @out_key: Pointer to the out key.
- *
- * This function frees the out key buffer.
- *
- * Return:
- * erro code.
- */
-void free_out_key(uint8_t *out_key);

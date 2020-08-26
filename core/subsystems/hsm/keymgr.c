@@ -11,6 +11,7 @@
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
+#include "base64.h"
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
@@ -109,23 +110,6 @@ end:
 	return status;
 }
 
-__attribute__((weak)) int alloc_out_key(uint8_t **out_key, uint16_t *out_size,
-					unsigned int security_size)
-{
-	*out_key = NULL;
-	*out_size = 0;
-
-	return SMW_STATUS_OK;
-}
-
-__attribute__((weak)) void print_out_key(uint8_t *out_key, uint16_t out_size)
-{
-}
-
-__attribute__((weak)) void free_out_key(uint8_t *out_key)
-{
-}
-
 static int generate_key(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OK;
@@ -134,31 +118,57 @@ static int generate_key(struct hdl *hdl, void *args)
 
 	op_generate_key_args_t op_generate_key_args;
 
-	struct smw_keymgr_generate_key_args *generate_key_args =
-		(struct smw_keymgr_generate_key_args *)args;
-
+	struct smw_keymgr_generate_key_args *generate_key_args = args;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&generate_key_args->key_descriptor;
+	struct smw_keymgr_identifier *key_identifier =
+		&key_descriptor->identifier;
+	enum smw_keymgr_format_id format_id = key_descriptor->format_id;
+	enum smw_config_key_type_id key_type_id = key_identifier->type_id;
+	unsigned int security_size = key_identifier->security_size;
+	unsigned char *public_data = smw_keymgr_get_public_data(key_descriptor);
 	uint32_t key_id = 0;
-	uint8_t *out_key = NULL;
-	uint16_t out_size = 0;
+	unsigned char *out_key = NULL;
+	unsigned int out_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = alloc_out_key(&out_key, &out_size,
-			       generate_key_args->security_size);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	SMW_DBG_ASSERT(generate_key_args);
+
+	if (public_data) {
+		status =
+			smw_keymgr_get_buffers_lengths(key_type_id,
+						       security_size,
+						       SMW_KEYMGR_FORMAT_ID_HEX,
+						       &out_size, NULL);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		if (format_id == SMW_KEYMGR_FORMAT_ID_HEX) {
+			out_key = public_data;
+		} else {
+			out_key = SMW_UTILS_MALLOC(out_size);
+			if (!out_key) {
+				SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
+				status = SMW_STATUS_ALLOC_FAILURE;
+				goto end;
+			}
+		}
+	}
 
 	op_generate_key_args.key_identifier = &key_id;
 	op_generate_key_args.out_size = out_size;
 	op_generate_key_args.flags = HSM_OP_KEY_GENERATION_FLAGS_CREATE;
-	status = set_key_type(generate_key_args->key_type_id,
-			      generate_key_args->security_size,
+
+	status = set_key_type(key_type_id, security_size,
 			      &op_generate_key_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
 	op_generate_key_args.key_group = 0;
-	op_generate_key_args.key_info =
-		HSM_KEY_INFO_PERSISTENT | HSM_KEY_INFO_MASTER;
+	op_generate_key_args.key_info = HSM_KEY_INFO_MASTER;
+	if (generate_key_args->key_attributes.persistent_storage)
+		op_generate_key_args.key_info |= HSM_KEY_INFO_PERSISTENT;
 	op_generate_key_args.out_key = out_key;
 
 	SMW_DBG_PRINTF(VERBOSE,
@@ -188,20 +198,34 @@ static int generate_key(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	generate_key_args->key_identifier->subsystem_id = SUBSYSTEM_ID_HSM;
-	generate_key_args->key_identifier->key_type_id =
-		generate_key_args->key_type_id;
-	generate_key_args->key_identifier->security_size =
-		generate_key_args->security_size;
-	generate_key_args->key_identifier->is_private = false;
-	generate_key_args->key_identifier->id = (unsigned long)key_id;
+	status = smw_keymgr_get_privacy_id(key_type_id,
+					   &key_identifier->privacy_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
-	SMW_DBG_PRINTF(DEBUG, "HSM Key identifier: %ld\n",
-		       generate_key_args->key_identifier->id);
-	print_out_key(out_key, out_size);
+	key_identifier->subsystem_id = SUBSYSTEM_ID_HSM;
+	key_identifier->id = key_id;
+
+	SMW_DBG_PRINTF(DEBUG, "HSM Key identifier: %d\n", key_id);
+
+	if (out_key) {
+		if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+			status =
+				smw_utils_base64_encode(out_key, out_size,
+							public_data, &out_size);
+			if (status != SMW_STATUS_OK)
+				goto end;
+		}
+
+		SMW_DBG_PRINTF(DEBUG, "Out key:\n");
+		SMW_DBG_HEX_DUMP(DEBUG, public_data, out_size, 4);
+	}
+
+	smw_keymgr_set_public_length(key_descriptor, out_size);
 
 end:
-	free_out_key(out_key);
+	if (out_key && out_key != public_data)
+		SMW_UTILS_FREE(out_key);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -254,23 +278,50 @@ static int export_key(struct hdl *hdl, void *args)
 
 	op_pub_key_recovery_args_t op_pub_key_recovery_args;
 
-	struct smw_keymgr_export_key_args *export_key_args =
-		(struct smw_keymgr_export_key_args *)args;
+	struct smw_keymgr_export_key_args *export_key_args = args;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&export_key_args->key_descriptor;
+	struct smw_keymgr_identifier *key_identifier =
+		&key_descriptor->identifier;
+	enum smw_keymgr_format_id format_id = key_descriptor->format_id;
+	enum smw_config_key_type_id key_type_id = key_identifier->type_id;
+	unsigned int security_size = key_identifier->security_size;
+	unsigned char *public_data = smw_keymgr_get_public_data(key_descriptor);
+	unsigned char *out_key = NULL;
+	unsigned int out_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	op_pub_key_recovery_args.key_identifier =
-		(uint32_t)export_key_args->key_identifier->id;
-	op_pub_key_recovery_args.out_key =
-		(uint8_t *)export_key_args->output_buffer;
-	op_pub_key_recovery_args.out_key_size =
-		(uint16_t)export_key_args->output_buffer_length;
+	SMW_DBG_ASSERT(export_key_args);
 
-	status = set_key_type(export_key_args->key_identifier->key_type_id,
-			      export_key_args->key_identifier->security_size,
+	SMW_DBG_ASSERT(public_data);
+
+	status = smw_keymgr_get_buffers_lengths(key_type_id, security_size,
+						SMW_KEYMGR_FORMAT_ID_HEX,
+						&out_size, NULL);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (format_id == SMW_KEYMGR_FORMAT_ID_HEX) {
+		out_key = public_data;
+	} else {
+		out_key = SMW_UTILS_MALLOC(out_size);
+		if (!out_key) {
+			SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+	}
+
+	op_pub_key_recovery_args.key_identifier = key_identifier->id;
+	op_pub_key_recovery_args.out_key = out_key;
+	op_pub_key_recovery_args.out_key_size = out_size;
+
+	status = set_key_type(key_type_id, security_size,
 			      &op_pub_key_recovery_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
 	op_pub_key_recovery_args.flags = 0;
 
 	SMW_DBG_PRINTF(VERBOSE,
@@ -297,7 +348,25 @@ static int export_key(struct hdl *hdl, void *args)
 		goto end;
 	}
 
+	SMW_DBG_PRINTF(DEBUG, "HSM Key identifier: %d\n", key_identifier->id);
+
+	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+		status = smw_utils_base64_encode(out_key, out_size, public_data,
+						 &out_size);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
+
+	smw_keymgr_set_public_length(key_descriptor, out_size);
+	smw_keymgr_set_private_length(key_descriptor, 0);
+
+	SMW_DBG_PRINTF(DEBUG, "Out key:\n");
+	SMW_DBG_HEX_DUMP(DEBUG, public_data, out_size, 4);
+
 end:
+	if (out_key && out_key != public_data)
+		SMW_UTILS_FREE(out_key);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -310,22 +379,26 @@ static int delete_key(struct hdl *hdl, void *args)
 
 	op_manage_key_args_t manage_key_args;
 
-	struct smw_keymgr_delete_key_args *delete_key_args =
-		(struct smw_keymgr_delete_key_args *)args;
-
-	uint32_t key_id = 0;
+	struct smw_keymgr_delete_key_args *delete_key_args = args;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&delete_key_args->key_descriptor;
+	uint32_t key_id = key_descriptor->identifier.id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(delete_key_args);
 
 	manage_key_args.key_identifier = &key_id;
 	manage_key_args.kek_identifier = 0;
 	manage_key_args.input_size = 0;
 	manage_key_args.flags = HSM_OP_MANAGE_KEY_FLAGS_DELETE;
-	status = set_key_type(delete_key_args->key_identifier->key_type_id,
-			      delete_key_args->key_identifier->security_size,
+
+	status = set_key_type(key_descriptor->identifier.type_id,
+			      key_descriptor->identifier.security_size,
 			      &manage_key_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
 	manage_key_args.key_group = 0;
 	manage_key_args.key_info = 0;
 	manage_key_args.input_data = NULL;
@@ -356,15 +429,13 @@ static int delete_key(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	delete_key_args->key_identifier->id = (unsigned long)key_id;
-
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-bool key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
-		int *status)
+bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
+		    int *status)
 {
 	switch (operation_id) {
 	case OPERATION_ID_GENERATE_KEY:

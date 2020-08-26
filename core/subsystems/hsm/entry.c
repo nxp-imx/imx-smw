@@ -456,23 +456,23 @@ struct hdl *get_handles_struct(void)
 	return &ctx.hdl;
 }
 
-__attribute__((weak)) bool key_handle(struct hdl *hdl,
-				      enum operation_id operation_id,
-				      void *args, int *status)
+__attribute__((weak)) bool hsm_key_handle(struct hdl *hdl,
+					  enum operation_id operation_id,
+					  void *args, int *status)
 {
 	return false;
 }
 
-__attribute__((weak)) bool hash_handle(struct hdl *hdl,
-				       enum operation_id operation_id,
-				       void *args, int *status)
+__attribute__((weak)) bool hsm_hash_handle(struct hdl *hdl,
+					   enum operation_id operation_id,
+					   void *args, int *status)
 {
 	return false;
 }
 
-__attribute__((weak)) bool sign_verify_handle(struct hdl *hdl,
-					      enum operation_id operation_id,
-					      void *args, int *status)
+__attribute__((weak)) bool
+hsm_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
+		       void *args, int *status)
 {
 	return false;
 }
@@ -485,11 +485,11 @@ static int execute(enum operation_id operation_id, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (key_handle(hdl, operation_id, args, &status))
+	if (hsm_key_handle(hdl, operation_id, args, &status))
 		;
-	else if (hash_handle(hdl, operation_id, args, &status))
+	else if (hsm_hash_handle(hdl, operation_id, args, &status))
 		;
-	else if (sign_verify_handle(hdl, operation_id, args, &status))
+	else if (hsm_sign_verify_handle(hdl, operation_id, args, &status))
 		;
 	else
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -498,9 +498,9 @@ static int execute(enum operation_id operation_id, void *args)
 	return status;
 }
 
-struct subsystem_func func = { .load = load,
-			       .unload = unload,
-			       .execute = execute };
+static struct subsystem_func func = { .load = load,
+				      .unload = unload,
+				      .execute = execute };
 
 struct subsystem_func *smw_hsm_get_func(void)
 {

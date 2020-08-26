@@ -13,11 +13,11 @@
 /**
  * struct key_identifier_data
  * @id: Local ID of the key identifier. Comes from test vectors.
- * @key_identifier: Pointer to key identifier structure.
+ * @key_identifier: Key identifier assigned by SMW.
  */
 struct key_identifier_data {
 	unsigned int id;
-	struct smw_key_identifier *key_identifier;
+	unsigned long long key_identifier;
 };
 
 /**
@@ -68,10 +68,10 @@ int key_identifier_add_list(struct key_identifier_list **key_identifiers,
  * @id: Id of the key identifier.
  *
  * Return:
- * Pointer to key identifier	- Success.
+ * Key identifier	- Success.
  * NULL				- Fail.
  */
-struct smw_key_identifier *
+unsigned long long
 find_key_identifier(struct key_identifier_list *key_identifiers,
 		    unsigned int id);
 

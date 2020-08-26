@@ -109,14 +109,14 @@ int key_identifier_add_list(struct key_identifier_list **key_identifiers,
 	return 0;
 }
 
-struct smw_key_identifier *
+unsigned long long
 find_key_identifier(struct key_identifier_list *key_identifiers,
 		    unsigned int id)
 {
 	struct key_identifier_node *head = NULL;
 
 	if (!key_identifiers)
-		return NULL;
+		return 0;
 
 	head = key_identifiers->head;
 
@@ -127,7 +127,7 @@ find_key_identifier(struct key_identifier_list *key_identifiers,
 		head = head->next;
 	}
 
-	return NULL;
+	return 0;
 }
 
 void key_identifier_clear_list(struct key_identifier_list *key_identifiers)
@@ -143,7 +143,6 @@ void key_identifier_clear_list(struct key_identifier_list *key_identifiers)
 	while (head) {
 		del = head;
 		head = head->next;
-		smw_free_key_identifier(del->data->key_identifier);
 		free(del->data);
 		free(del);
 	}

@@ -16,7 +16,7 @@ int generate_key(json_object *args,
 {
 	int status = SMW_STATUS_OPERATION_FAILURE;
 	int expected_result = SMW_STATUS_OPERATION_FAILURE;
-	struct smw_key_identifier *key_identifier = NULL;
+	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_generate_key_args key_args = { 0 };
 	struct key_identifier_data *data = NULL;
 	json_object *version = NULL;
@@ -27,13 +27,6 @@ int generate_key(json_object *args,
 	json_object *attributes_len = NULL;
 	json_object *result = NULL;
 	json_object *key_identifier_id = NULL;
-
-	status = smw_alloc_key_identifier(&key_identifier);
-	if (status) {
-		printf("ERROR in %s. Key identifier allocation failed\n",
-		       __func__);
-		return 1;
-	}
 
 	/* Get all args objects */
 	json_object_object_get_ex(args, VERSION_OBJ, &version);
@@ -48,8 +41,9 @@ int generate_key(json_object *args,
 	/* Fill generate key args */
 	key_args.version = json_object_get_int(version);
 	key_args.subsystem_name = json_object_get_string(subsystem);
-	key_args.key_type_name = json_object_get_string(key_type);
-	key_args.security_size = json_object_get_int(security_size);
+	key_args.key_descriptor = &key_descriptor;
+	key_descriptor.type_name = json_object_get_string(key_type);
+	key_descriptor.security_size = json_object_get_int(security_size);
 
 	if (json_object_get_type(attributes) == json_type_null)
 		key_args.key_attributes_list = NULL;
@@ -59,7 +53,22 @@ int generate_key(json_object *args,
 
 	key_args.key_attributes_list_length =
 		json_object_get_int(attributes_len);
-	key_args.key_identifier = key_identifier;
+
+	/* Call generate key function to get the key buffer size */
+	status = smw_generate_key(&key_args);
+
+	if (status) {
+		printf("ERROR in %s. Failed to get key buffer size\n",
+		       __func__);
+		return 1;
+	}
+
+	key_args.key_descriptor->buffer->public_data =
+		malloc(key_args.key_descriptor->buffer->public_length);
+	if (!key_args.key_descriptor->buffer->public_data) {
+		printf("ERROR in %s. Key buffer allocation failed\n", __func__);
+		return 1;
+	}
 
 	/* Call generate key function and compare result with expected one */
 	status = smw_generate_key(&key_args);
@@ -81,7 +90,7 @@ int generate_key(json_object *args,
 		}
 
 		data->id = json_object_get_int(key_identifier_id);
-		data->key_identifier = key_identifier;
+		data->key_identifier = key_args.key_descriptor->id;
 		return key_identifier_add_list(key_identifiers, data);
 	}
 
@@ -92,6 +101,7 @@ int delete_key(json_object *args, struct key_identifier_list *key_identifiers)
 {
 	int status = SMW_STATUS_OPERATION_FAILURE;
 	int expected_result = SMW_STATUS_OPERATION_FAILURE;
+	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_delete_key_args key_args = { 0 };
 	json_object *version = NULL;
 	json_object *result = NULL;
@@ -104,7 +114,8 @@ int delete_key(json_object *args, struct key_identifier_list *key_identifiers)
 
 	/* Fill delete key args */
 	key_args.version = json_object_get_int(version);
-	key_args.key_identifier =
+	key_args.key_descriptor = &key_descriptor;
+	key_descriptor.id =
 		find_key_identifier(key_identifiers,
 				    json_object_get_int(key_identifier_id));
 

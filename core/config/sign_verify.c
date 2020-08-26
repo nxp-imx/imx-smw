@@ -14,7 +14,7 @@
 #include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
-#include "crypto.h"
+#include "sign_verify.h"
 
 #include "common.h"
 
@@ -124,19 +124,19 @@ static int sign_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_crypto_sign_args *sign_args =
-		(struct smw_crypto_sign_args *)args;
-	struct sign_verify_params *sign_params =
-		(struct sign_verify_params *)params;
-	struct smw_key_identifier *key_identifier = sign_args->key_identifier;
+	struct smw_crypto_sign_args *sign_args = args;
+	struct sign_verify_params *sign_params = params;
+
+	enum smw_config_key_type_id key_type_id =
+		sign_args->key_descriptor.identifier.type_id;
+	unsigned int security_size =
+		sign_args->key_descriptor.identifier.security_size;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!check_id(sign_args->algo_id, sign_params->algo_bitmap) ||
-	    !check_id(key_identifier->key_type_id,
-		      sign_params->key_type_bitmap) ||
-	    !check_security_size(key_identifier->security_size,
-				 sign_params->key_size_min,
+	    !check_id(key_type_id, sign_params->key_type_bitmap) ||
+	    !check_security_size(security_size, sign_params->key_size_min,
 				 sign_params->key_size_max))
 		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
@@ -148,18 +148,19 @@ static int verify_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_crypto_verify_args *verify_args =
-		(struct smw_crypto_verify_args *)args;
-	struct sign_verify_params *verify_params =
-		(struct sign_verify_params *)params;
+	struct smw_crypto_verify_args *verify_args = args;
+	struct sign_verify_params *verify_params = params;
+
+	enum smw_config_key_type_id key_type_id =
+		verify_args->key_descriptor.identifier.type_id;
+	unsigned int security_size =
+		verify_args->key_descriptor.identifier.security_size;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!check_id(verify_args->algo_id, verify_params->algo_bitmap) ||
-	    !check_id(verify_args->key_type_id,
-		      verify_params->key_type_bitmap) ||
-	    !check_security_size(verify_args->security_size,
-				 verify_params->key_size_min,
+	    !check_id(key_type_id, verify_params->key_type_bitmap) ||
+	    !check_security_size(security_size, verify_params->key_size_min,
 				 verify_params->key_size_max))
 		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 

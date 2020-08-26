@@ -12,6 +12,7 @@
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
+#include "name.h"
 
 #include "common.h"
 
@@ -346,7 +347,7 @@ int read_names(char **start, char *end, unsigned long *bitmap,
 			goto end;
 		SMW_DBG_PRINTF(INFO, "Value: %s\n", buffer);
 
-		status = get_id(buffer, array, size, &id);
+		status = smw_utils_get_string_index(buffer, array, size, &id);
 		if (status != SMW_STATUS_OK)
 			goto end;
 		set_bit(bitmap, sizeof(bitmap) << 3, id);

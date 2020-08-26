@@ -13,7 +13,8 @@
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
-#include "crypto.h"
+#include "hash.h"
+#include "name.h"
 
 #include "common.h"
 
@@ -97,9 +98,8 @@ static int hash_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_crypto_hash_args *hash_args =
-		(struct smw_crypto_hash_args *)args;
-	struct hash_params *hash_params = (struct hash_params *)params;
+	struct smw_crypto_hash_args *hash_args = args;
+	struct hash_params *hash_params = params;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -117,5 +117,6 @@ int smw_config_get_hash_algo_id(const char *name,
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return get_id(name, hash_algo_names, SMW_CONFIG_HASH_ALGO_ID_NB, id);
+	return smw_utils_get_string_index(name, hash_algo_names,
+					  SMW_CONFIG_HASH_ALGO_ID_NB, id);
 }

@@ -14,6 +14,7 @@
 #include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
+#include "name.h"
 
 #include "common.h"
 
@@ -214,23 +215,33 @@ bool check_security_size(unsigned int security_size, unsigned int key_size_min,
 		       false;
 }
 
+static int check_subsystem_caps(struct smw_keymgr_descriptor *key_descriptor,
+				struct key_operation_params *params)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!check_id(key_descriptor->identifier.type_id,
+		      params->key_type_bitmap) ||
+	    !check_security_size(key_descriptor->identifier.security_size,
+				 params->key_size_min, params->key_size_max))
+		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static int generate_key_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_generate_key_args *generate_key_args =
-		(struct smw_keymgr_generate_key_args *)args;
-	struct key_operation_params *generate_key_params =
-		(struct key_operation_params *)params;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&((struct smw_keymgr_generate_key_args *)args)->key_descriptor;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!check_id(generate_key_args->key_type_id,
-		      generate_key_params->key_type_bitmap) ||
-	    !check_security_size(generate_key_args->security_size,
-				 generate_key_params->key_size_min,
-				 generate_key_params->key_size_max))
-		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	status = check_subsystem_caps(key_descriptor, params);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -240,19 +251,12 @@ static int derive_key_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_derive_key_args *derive_key_args =
-		(struct smw_keymgr_derive_key_args *)args;
-	struct key_operation_params *derive_key_params =
-		(struct key_operation_params *)params;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&((struct smw_keymgr_derive_key_args *)args)->key_descriptor_in;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!check_id(derive_key_args->key_type_id,
-		      derive_key_params->key_type_bitmap) ||
-	    !check_security_size(derive_key_args->security_size,
-				 derive_key_params->key_size_min,
-				 derive_key_params->key_size_max))
-		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	status = check_subsystem_caps(key_descriptor, params);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -262,10 +266,8 @@ static int update_key_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	//struct smw_keymgr_update_key_args *update_key_args =
-	//	(struct smw_keymgr_update_key_args *)args;
-	//struct key_operation_params *update_key_params =
-	//	(struct key_operation_params *)params;
+	//struct smw_keymgr_update_key_args *update_key_args = args;
+	//struct key_operation_params *update_key_params = params;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -279,19 +281,12 @@ static int import_key_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_import_key_args *import_key_args =
-		(struct smw_keymgr_import_key_args *)args;
-	struct key_operation_params *import_key_params =
-		(struct key_operation_params *)params;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&((struct smw_keymgr_import_key_args *)args)->key_descriptor;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!check_id(import_key_args->key_type_id,
-		      import_key_params->key_type_bitmap) ||
-	    !check_security_size(import_key_args->input_buffer_length,
-				 import_key_params->key_size_min,
-				 import_key_params->key_size_max))
-		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	status = check_subsystem_caps(key_descriptor, params);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -301,21 +296,12 @@ static int export_key_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_export_key_args *export_key_args =
-		(struct smw_keymgr_export_key_args *)args;
-	struct key_operation_params *export_key_params =
-		(struct key_operation_params *)params;
-	struct smw_key_identifier *key_identifier =
-		export_key_args->key_identifier;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&((struct smw_keymgr_export_key_args *)args)->key_descriptor;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!check_id(key_identifier->key_type_id,
-		      export_key_params->key_type_bitmap) ||
-	    !check_security_size(key_identifier->security_size,
-				 export_key_params->key_size_min,
-				 export_key_params->key_size_max))
-		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	status = check_subsystem_caps(key_descriptor, params);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -325,21 +311,12 @@ static int delete_key_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_delete_key_args *delete_key_args =
-		(struct smw_keymgr_delete_key_args *)args;
-	struct key_operation_params *delete_key_params =
-		(struct key_operation_params *)params;
-	struct smw_key_identifier *key_identifier =
-		delete_key_args->key_identifier;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&((struct smw_keymgr_delete_key_args *)args)->key_descriptor;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!check_id(key_identifier->key_type_id,
-		      delete_key_params->key_type_bitmap) ||
-	    !check_security_size(key_identifier->security_size,
-				 delete_key_params->key_size_min,
-				 delete_key_params->key_size_max))
-		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	status = check_subsystem_caps(key_descriptor, params);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -364,10 +341,37 @@ DEFINE_KEYMGR_OPERATION_FUNC(import_key);
 DEFINE_KEYMGR_OPERATION_FUNC(export_key);
 DEFINE_KEYMGR_OPERATION_FUNC(delete_key);
 
+void smw_config_get_key_type_name(enum smw_config_key_type_id id,
+				  const char **name)
+{
+	unsigned int index = id;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (id < SMW_CONFIG_KEY_TYPE_ID_NB &&
+	    id != SMW_CONFIG_KEY_TYPE_ID_INVALID)
+		*name = key_type_names[index];
+	else
+		*name = NULL;
+}
+
 int smw_config_get_key_type_id(const char *name,
 			       enum smw_config_key_type_id *id)
 {
+	int status = SMW_STATUS_OK;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return get_id(name, key_type_names, SMW_CONFIG_KEY_TYPE_ID_NB, id);
+	/* name == NULL is an acceptable input from caller.
+	 * Just set *id to invalid and return status OK.
+	 */
+	*id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
+
+	if (name)
+		status = smw_utils_get_string_index(name, key_type_names,
+						    SMW_CONFIG_KEY_TYPE_ID_NB,
+						    id);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }

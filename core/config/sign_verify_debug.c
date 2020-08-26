@@ -13,7 +13,6 @@
 #include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
-#include "crypto.h"
 
 #include "common.h"
 

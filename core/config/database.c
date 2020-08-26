@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "utils.h"
 #include "list.h"
+#include "name.h"
 #include "operations.h"
 #include "subsystems.h"
 
@@ -279,31 +280,6 @@ end:
 	return status;
 }
 
-int get_id(const char *name, const char *const array[], unsigned int size,
-	   unsigned int *id)
-{
-	int status = SMW_STATUS_UNKNOWN_NAME;
-
-	unsigned int i;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_ASSERT(name);
-
-	for (i = 0; i < size; i++) {
-		if (*array[i]) {
-			if (!SMW_UTILS_STRCMP(array[i], name)) {
-				status = SMW_STATUS_OK;
-				*id = i;
-				break;
-			}
-		}
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id)
 {
 	int status = SMW_STATUS_OK;
@@ -317,7 +293,8 @@ int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id)
 	*id = SUBSYSTEM_ID_INVALID;
 
 	if (name)
-		status = get_id(name, subsystem_names, SUBSYSTEM_ID_NB, id);
+		status = smw_utils_get_string_index(name, subsystem_names,
+						    SUBSYSTEM_ID_NB, id);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -325,16 +302,17 @@ int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id)
 
 int get_load_method_id(const char *name, enum load_method_id *id)
 {
-	int status;
+	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!SMW_UTILS_STRLEN(name)) {
-		*id = LOAD_METHOD_ID_DEFAULT;
-		return SMW_STATUS_OK;
-	}
+	SMW_DBG_ASSERT(name);
 
-	status = get_id(name, load_method_names, LOAD_METHOD_ID_NB, id);
+	if (!SMW_UTILS_STRLEN(name))
+		*id = LOAD_METHOD_ID_DEFAULT;
+	else
+		status = smw_utils_get_string_index(name, load_method_names,
+						    LOAD_METHOD_ID_NB, id);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -346,7 +324,8 @@ int get_operation_id(const char *name, enum operation_id *id)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = get_id(name, operation_names, OPERATION_ID_NB, id);
+	status = smw_utils_get_string_index(name, operation_names,
+					    OPERATION_ID_NB, id);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

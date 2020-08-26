@@ -175,6 +175,19 @@ int smw_config_get_key_type_id(const char *name,
 			       enum smw_config_key_type_id *id);
 
 /**
+ * smw_config_get_key_type_name() - Get the name associated to a Key type ID.
+ * @id: Key type ID.
+ * @name: Pointer to the Key type name.
+ *
+ * This function gets the name associated to a Key type ID.
+ *
+ * Return:
+ * none.
+ */
+void smw_config_get_key_type_name(enum smw_config_key_type_id id,
+				  const char **name);
+
+/**
  * smw_config_get_hash_algo_id() - Get the Hash algo ID associated to a name.
  * @name: Name as a string.
  * @id: Pointer where the ID is written.

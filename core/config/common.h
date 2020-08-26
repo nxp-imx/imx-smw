@@ -370,21 +370,6 @@ bool check_security_size(unsigned int security_size, unsigned int key_size_min,
 			 unsigned int key_size_max);
 
 /**
- * get_id() - Get the ID associated to a name.
- * @name: Name as a string.
- * @array: Array associating an ID (index) to a name (value).
- * @size: Size of @array.
- * @id: Pointer where the ID is written.
- *
- * This function gets the ID associated to a name as decribed in @array.
- *
- * Return:
- * error code.
- */
-int get_id(const char *name, const char *const array[], unsigned int size,
-	   unsigned int *id);
-
-/**
  * get_load_method_id() - Get the load method ID associated to a name.
  * @name: Name as a string.
  * @id: Pointer where the load method ID is written.

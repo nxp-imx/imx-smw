@@ -32,7 +32,7 @@ struct smw_hash_args {
  * struct smw_sign_args - Sign arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name
- * @key_identifier: Pointer to the Key identifier
+ * @key_descriptor: Pointer to a Key descriptor object
  * @algo_name: Algorithm name
  * @hashed: Is the message hashed
  * @message: Location of the message to be signed
@@ -47,7 +47,7 @@ struct smw_sign_args {
 	/* Inputs */
 	unsigned char version;
 	const char *subsystem_name;
-	struct smw_key_identifier *key_identifier;
+	struct smw_key_descriptor *key_descriptor;
 	const char *algo_name;
 	int hashed;
 	unsigned char *message;
@@ -61,12 +61,9 @@ struct smw_sign_args {
  * struct smw_verify_args - Verify arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name
- * @key_type_name: Key type name
- * @security_size: Security size
+ * @key_descriptor: Pointer to a Key descriptor object
  * @algo_name: Algorithm name
  * @hashed: Is the message hashed
- * @key: Pointer to the Key
- * @key_size: Size of the key
  * @message: Location of the message
  * @message_length: Length of the message
  * @signature: Location of the signature
@@ -79,12 +76,9 @@ struct smw_verify_args {
 	/* Inputs */
 	unsigned char version;
 	const char *subsystem_name;
-	const char *key_type_name;
-	unsigned int security_size;
+	struct smw_key_descriptor *key_descriptor;
 	const char *algo_name;
 	int hashed;
-	unsigned char *key;
-	unsigned int key_size;
 	unsigned char *message;
 	unsigned int message_length;
 	unsigned char *signature;

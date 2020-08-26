@@ -76,6 +76,7 @@ CK_RV libdev_get_slotdev(struct libdevice **dev, CK_SLOT_ID slotid)
 	CK_RV ret;
 	struct libdevice *devices;
 
+	*dev = NULL;
 	ret = libctx_get_initialized();
 	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
 		return ret;

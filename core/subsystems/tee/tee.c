@@ -9,7 +9,6 @@
 #include "subsystems.h"
 #include "debug.h"
 #include "smw_osal.h"
-#include "global.h"
 #include "utils.h"
 #include "tee.h"
 #include "tee_subsystem.h"

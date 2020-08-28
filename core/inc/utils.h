@@ -3,12 +3,17 @@
  * Copyright 2019-2020 NXP
  */
 
+#ifndef __UTILS_H__
+#define __UTILS_H__
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+
+#include "global.h"
 
 #define SMW_ALL_ONES (-1)
 
@@ -90,3 +95,5 @@ static inline int smw_utils_thread_cancel(unsigned long thread)
 
 	return err;
 }
+
+#endif /* __UTILS_H__ */

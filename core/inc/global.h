@@ -3,6 +3,9 @@
  * Copyright 2020 NXP
  */
 
+#ifndef __GLOBAL_H__
+#define __GLOBAL_H__
+
 /* SMW globals */
 /**
  * struct smw_ctx - SMW context
@@ -16,3 +19,5 @@ struct smw_ctx {
 };
 
 extern struct smw_ctx g_smw_ctx;
+
+#endif /* __GLOBAL_H__ */

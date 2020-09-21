@@ -55,7 +55,7 @@ struct mech_list {
  * type CK_OBJECT_CLASS
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value not valid
  * CKR_OK                      - Success
  */
 CK_RV attr_to_class(void *dest, CK_ATTRIBUTE_PTR attr);
@@ -69,7 +69,7 @@ CK_RV attr_to_class(void *dest, CK_ATTRIBUTE_PTR attr);
  * type rfc2279 into the @dest.
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value or length not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
  * CKR_HOST_MEMORY             - Out of memory
  * CKR_OK                      - Success
  */
@@ -84,7 +84,7 @@ CK_RV attr_to_rfc2279(void *dest, CK_ATTRIBUTE_PTR attr);
  * type CK_BBOOL
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value not valid
  * CKR_OK                      - Success
  */
 CK_RV attr_to_bool(void *dest, CK_ATTRIBUTE_PTR attr);
@@ -98,7 +98,7 @@ CK_RV attr_to_bool(void *dest, CK_ATTRIBUTE_PTR attr);
  * type CK_KEY_TYPE
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value not valid
  * CKR_OK                      - Success
  */
 CK_RV attr_to_key(void *dest, CK_ATTRIBUTE_PTR attr);
@@ -112,7 +112,7 @@ CK_RV attr_to_key(void *dest, CK_ATTRIBUTE_PTR attr);
  * attribute of type CK_BYTE_PTR
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value or length not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
  * CKR_HOST_MEMORY             - Out of memory
  * CKR_OK                      - Success
  */
@@ -127,7 +127,7 @@ CK_RV attr_to_byte_array(void *dest, CK_ATTRIBUTE_PTR attr);
  * type CK_DATE
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value not valid
  * CKR_OK                      - Success
  */
 CK_RV attr_to_date(void *dest, CK_ATTRIBUTE_PTR attr);
@@ -141,7 +141,7 @@ CK_RV attr_to_date(void *dest, CK_ATTRIBUTE_PTR attr);
  * type CK_MECHANISM_TYPE
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value not valid
  * CKR_OK                      - Success
  */
 CK_RV attr_to_mech(void *dest, CK_ATTRIBUTE_PTR attr);
@@ -155,7 +155,7 @@ CK_RV attr_to_mech(void *dest, CK_ATTRIBUTE_PTR attr);
  * type CK_MECHANISM_TYPE_PTR
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value or length not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
  * CKR_HOST_MEMORY             - Out of memory
  * CKR_OK                      - Success
  */
@@ -170,7 +170,7 @@ CK_RV attr_to_mech_list(void *dest, CK_ATTRIBUTE_PTR attr);
  * type CK_ATTRIBUTE_PTR
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value or length not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
  * CKR_HOST_MEMORY             - Out of memory
  * CKR_OK                      - Success
  */
@@ -185,7 +185,7 @@ CK_RV attr_to_attr_list(void *dest, CK_ATTRIBUTE_PTR attr);
  * type CK_BYTE_PTR
  *
  * return:
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value or length not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
  * CKR_HOST_MEMORY             - Out of memory
  * CKR_OK                      - Success
  */
@@ -207,7 +207,7 @@ CK_RV attr_to_bignumber(void *dest, CK_ATTRIBUTE_PTR attr);
  * CKR_ATTRIBUTE_READ_ONLY     - Attribute is read only
  * CKR_TEMPLATE_INCOMPLETE     - Attribute type not found
  * CKR_TEMPLATE_INCONSISTENT   - Attribute type must not be defined
- * CKR_ATTIBUTE_VALUE_INVALID  - Attribute value or length not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
  * CKR_OK                      - Success
  */
 CK_RV

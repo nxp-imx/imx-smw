@@ -5,12 +5,16 @@
 
 #include <stdlib.h>
 
+#include "smw_keymgr.h"
+
 #include "asn1_ec_curve.h"
 
 #include "asn1.h"
 #include "asn1_types.h"
 #include "attributes.h"
 #include "key_ec.h"
+#include "lib_device.h"
+#include "util.h"
 
 #include "trace.h"
 
@@ -100,9 +104,16 @@ const struct curve_def ec_curves[] = {
 	{ 0 },
 };
 
-struct key_ec_public {
+#define EC_KEY_PUBLIC  BIT(0)
+#define EC_KEY_PRIVATE BIT(1)
+#define EC_KEY_PAIR    (EC_KEY_PUBLIC | EC_KEY_PRIVATE)
+
+struct key_ec_pair {
+	unsigned long long key_id;
+	unsigned int type;
 	struct libbytes params;
-	struct libbytes point_q;
+	struct libbytes point_q;     // Public Key point
+	struct libbignumber value_d; // Secure Key scalar
 };
 
 enum attr_key_ec_public_list {
@@ -110,14 +121,9 @@ enum attr_key_ec_public_list {
 	PUB_POINT,
 };
 
-struct template_attr attr_key_ec_public[] = {
+const struct template_attr attr_key_ec_public[] = {
 	[PUB_PARAMS] = { CKA_EC_PARAMS, 0, MUST, attr_to_byte_array },
 	[PUB_POINT] = { CKA_EC_POINT, 0, MUST, attr_to_byte_array },
-};
-
-struct key_ec_private {
-	struct libbytes params;
-	struct libbignumber value_d;
 };
 
 enum attr_key_ec_private_list {
@@ -125,89 +131,102 @@ enum attr_key_ec_private_list {
 	PRIV_VALUE,
 };
 
-struct template_attr attr_key_ec_private[] = {
+const struct template_attr attr_key_ec_private[] = {
 	[PRIV_PARAMS] = { CKA_EC_PARAMS, 0, MUST, attr_to_byte_array },
 	[PRIV_VALUE] = { CKA_VALUE, 0, MUST, attr_to_bignumber },
 };
 
 /**
- * key_ec_public_allocate() - Allocate and initialize EC public key
- * @key: Key allocated
+ * key_ec_allocate() - Allocate and initialize EC keypair
+ * @type: Type of Key to allocate *
+ *
+ * Allocation and set the @type of key to allocate which is:
+ *   EC_KEY_PUBLIC
+ *   EC_KEY_PRIVATE
+ *   EC_KEY_PAIR
  *
  * return:
- * CKR_HOST_MEMORY - Out of memory
- * CKR_OK          - Success
+ * Key allocated if success
+ * NULL otherwise
  */
-static CK_RV key_ec_public_allocate(struct key_ec_public **key)
+static struct key_ec_pair *key_ec_allocate(unsigned int type)
 {
-	*key = calloc(1, sizeof(**key));
-	if (!*key)
-		return CKR_HOST_MEMORY;
+	struct key_ec_pair *key = NULL;
 
-	DBG_TRACE("Allocated a new public EC key (%p)", *key);
+	key = calloc(1, sizeof(*key));
 
-	return CKR_OK;
+	DBG_TRACE("Allocated a new EC key (%p) of type %d", key, type);
+
+	if (key)
+		key->type = type;
+
+	return key;
 }
 
 /**
- * key_ec_private_allocate() - Allocate and initialize EC private key
- * @key: Key allocated
+ * key_ec_free() - Free private or public key
+ * @key: EC Keypair
+ * @type: Type of key private/public to free
  *
- * return:
- * CKR_HOST_MEMORY - Out of memory
- * CKR_OK          - Success
+ * Free the key's field related to the request @type.
+ *
+ * Then, if the requested key @type to free is the same of the @key type:
+ *    - Delete the key from SMW subsystem if key'id set
+ *    - Free the keypair common fields
+ *    - Free the keypair object itself
+ *
+ * Else key is a keypair, hence switch the key type to the remaining
+ * key type part not freed.
  */
-static CK_RV key_ec_private_allocate(struct key_ec_private **key)
+static void key_ec_free(struct key_ec_pair *key, unsigned int type)
 {
-	*key = calloc(1, sizeof(**key));
-	if (!*key)
-		return CKR_HOST_MEMORY;
+	if (!key)
+		return;
 
-	DBG_TRACE("Allocated a new private EC key (%p)", *key);
+	switch (type) {
+	case EC_KEY_PUBLIC:
+		if (key->point_q.array)
+			free(key->point_q.array);
+		break;
 
-	return CKR_OK;
+	case EC_KEY_PRIVATE:
+		if (key->value_d.value)
+			free(key->value_d.value);
+		break;
+	default:
+		return;
+	}
+
+	if (key->type == type) {
+		if (key->params.array)
+			free(key->params.array);
+
+		(void)libdev_delete_key(key->key_id);
+
+		free(key);
+	} else {
+		key->type &= ~type;
+	}
 }
 
 void key_ec_public_free(void *obj)
 {
-	struct key_ec_public *key = obj;
-
-	if (!key)
-		return;
-
-	if (key->params.array)
-		free(key->params.array);
-
-	if (key->point_q.array)
-		free(key->point_q.array);
-
-	free(key);
+	key_ec_free(obj, EC_KEY_PUBLIC);
 }
 
 void key_ec_private_free(void *obj)
 {
-	struct key_ec_private *key = obj;
-
-	if (!key)
-		return;
-
-	if (key->params.array)
-		free(key->params.array);
-
-	if (key->value_d.value)
-		free(key->value_d.value);
-
-	free(key);
+	key_ec_free(obj, EC_KEY_PRIVATE);
 }
 
 CK_RV key_ec_public_create(void **obj, struct libattr_list *attrs)
 {
 	CK_RV ret;
-	struct key_ec_public *new_key;
+	struct key_ec_pair *new_key;
 
-	ret = key_ec_public_allocate(&new_key);
-	if (ret != CKR_OK)
-		return ret;
+	new_key = key_ec_allocate(EC_KEY_PUBLIC);
+	if (!new_key)
+		return CKR_HOST_MEMORY;
 
 	*obj = new_key;
 
@@ -219,7 +238,7 @@ CK_RV key_ec_public_create(void **obj, struct libattr_list *attrs)
 		return ret;
 
 	/* Verify that curve is supported */
-	ret = asn1_ec_params_to_curve(&new_key->params, ec_curves);
+	ret = asn1_ec_params_to_curve(NULL, &new_key->params, ec_curves);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -234,11 +253,11 @@ CK_RV key_ec_public_create(void **obj, struct libattr_list *attrs)
 CK_RV key_ec_private_create(void **obj, struct libattr_list *attrs)
 {
 	CK_RV ret;
-	struct key_ec_private *new_key;
+	struct key_ec_pair *new_key;
 
-	ret = key_ec_private_allocate(&new_key);
-	if (ret != CKR_OK)
-		return ret;
+	new_key = key_ec_allocate(EC_KEY_PRIVATE);
+	if (!new_key)
+		return CKR_HOST_MEMORY;
 
 	*obj = new_key;
 
@@ -251,7 +270,7 @@ CK_RV key_ec_private_create(void **obj, struct libattr_list *attrs)
 		return ret;
 
 	/* Verify that curve is supported */
-	ret = asn1_ec_params_to_curve(&new_key->params, ec_curves);
+	ret = asn1_ec_params_to_curve(NULL, &new_key->params, ec_curves);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -260,6 +279,90 @@ CK_RV key_ec_private_create(void **obj, struct libattr_list *attrs)
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
+
+	return CKR_OK;
+}
+
+CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			      void **pub_obj, struct libattr_list *pub_attrs,
+			      void **priv_obj, struct libattr_list *priv_attrs)
+{
+	CK_RV ret;
+	struct key_ec_pair *keypair;
+	struct smw_generate_key_args gen_args = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+	const struct curve_def *key_curve;
+
+	keypair = key_ec_allocate(EC_KEY_PAIR);
+	if (!keypair)
+		return CKR_HOST_MEMORY;
+
+	*pub_obj = keypair;
+	*priv_obj = keypair;
+
+	DBG_TRACE("Generate an EC keypair (%p)", keypair);
+
+	/* Verify the public key attributes */
+	ret = attr_get_value(&keypair->params, &attr_key_ec_public[PUB_PARAMS],
+			     pub_attrs, NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = asn1_ec_params_to_curve(&key_curve, &keypair->params, ec_curves);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(&keypair->point_q, &attr_key_ec_public[PUB_POINT],
+			     pub_attrs, MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	/* Verify the private key attributes */
+	ret = attr_get_value(&keypair->params,
+			     &attr_key_ec_private[PRIV_PARAMS], priv_attrs,
+			     MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(&keypair->value_d,
+			     &attr_key_ec_private[PRIV_VALUE], priv_attrs,
+			     MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	/* Generate the keypair with SMW library */
+	key_desc.type_name = key_curve->smw->name;
+	key_desc.security_size = key_curve->smw->security_size;
+	gen_args.key_descriptor = &key_desc;
+
+	ret = libdev_operate_mechanism(hsession, mech, &gen_args);
+
+	if (ret == CKR_OK) {
+		/*
+		 * Save the SMW key identifier in private key object
+		 */
+		keypair->key_id = key_desc.id;
+		DBG_TRACE("Key Pair ID 0x%llX", keypair->key_id);
+	}
+
+	return ret;
+}
+
+CK_RV key_ec_get_id(struct libbytes *id, void *key, size_t prefix_len)
+{
+	struct key_ec_pair *keypair = key;
+
+	if (!key || !id)
+		return CKR_GENERAL_ERROR;
+
+	id->number = prefix_len + sizeof(keypair->key_id);
+	id->array = malloc(id->number);
+	if (!id->array)
+		return CKR_HOST_MEMORY;
+
+	DBG_TRACE("EC Key ID 0x%llX", keypair->key_id);
+
+	TO_CK_BYTES(&id->array[prefix_len], keypair->key_id);
 
 	return CKR_OK;
 }

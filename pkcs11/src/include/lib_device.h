@@ -205,6 +205,62 @@ CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 				CK_MECHANISM_INFO_PTR info);
 
 /**
+ * libdev_validate_mechanism() - Validate mechanism
+ * @slotid: Slot ID
+ * @mech: Mechanism definition
+ *
+ * Checks if a slot ID is supporting given mechanism
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_TOKEN_NOT_PRESENT         - Token is not present
+ * CKR_MECHANISM_INVALID         - Mechanism not supported
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech);
+
+/**
+ * libdev_operate_mechanism() - Operate the mechanism calling SMW APIs
+ * @hsession: Session handle
+ * @mech: Mechanism definition
+ * @args: SMW API arguments
+ *
+ * Function completes the SMW API argument like `Subsystem Name` opened
+ * with the Session. Other arguments might be set function of the mechanism
+ * operation.
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_MECHANISM_INVALID         - Mechanism not supported
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
+			       CK_MECHANISM_PTR mech, void *args);
+
+/**
+ * libdev_delete_key() - Call SMW delete key API
+ * @key_id: Key id to deleete
+ *
+ * Function build the SMW API argument to delete a key in the session's
+ * subsystem.
+ *
+ * Return:
+ * CKR_ARGUMENTS_BAD             - Key id is 0
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_MECHANISM_INVALID         - Mechanism not supported
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_delete_key(unsigned long long key_id);
+
+/**
  * libdev_mechanisms_init() - Initialize the device mechanism information
  * @slotid: Slot ID
  *

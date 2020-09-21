@@ -453,6 +453,35 @@ end:
 	return ret;
 }
 
+CK_RV libsess_get_user(CK_SESSION_HANDLE hsession, CK_USER_TYPE *user)
+{
+	CK_RV ret;
+	struct libdevice *dev;
+	struct libsess *sess = (struct libsess *)hsession;
+
+	if (!user)
+		return CKR_GENERAL_ERROR;
+
+	DBG_TRACE("Get the user logged on session %p", sess);
+
+	ret = get_slotdev(&dev, sess);
+	if (ret != CKR_OK)
+		return ret;
+
+	/* Lock session mutex */
+	ret = libmutex_lock(dev->mutex_session);
+	if (ret != CKR_OK)
+		return ret;
+
+	DBG_TRACE("Session current user = %lu", dev->login_as);
+	*user = dev->login_as;
+
+	/* Unlock session mutex */
+	libmutex_unlock(dev->mutex_session);
+
+	return ret;
+}
+
 CK_RV libsess_validate(CK_SESSION_HANDLE hsession)
 {
 	CK_RV ret;
@@ -562,6 +591,55 @@ CK_RV libsess_remove_object(CK_SESSION_HANDLE hsession, struct libobj *object)
 
 	/* Unlock session mutex */
 	libmutex_unlock(dev->mutex_session);
+
+	return ret;
+}
+
+CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
+				 CK_MECHANISM_PTR mech)
+{
+	CK_RV ret;
+	struct libdevice *dev;
+	struct libsess *sess = (struct libsess *)hsession;
+
+	DBG_TRACE("Validate session %p (slotid = %lu)", sess, sess->slotid);
+
+	ret = get_slotdev(&dev, sess);
+	if (ret != CKR_OK)
+		return ret;
+
+	/* Lock session mutex */
+	ret = libmutex_lock(dev->mutex_session);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (find_session(dev, sess) != sess)
+		ret = CKR_SESSION_HANDLE_INVALID;
+	else
+		ret = libdev_validate_mechanism(sess->slotid, mech);
+
+	/* Unlock session mutex */
+	libmutex_unlock(dev->mutex_session);
+
+	return ret;
+}
+
+CK_RV libsess_get_slotid(CK_SESSION_HANDLE hsession, CK_SLOT_ID *slotid)
+{
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+
+	DBG_TRACE("Get slot ID of session %p (slotid = %lu)", sess,
+		  sess->slotid);
+
+	if (!slotid)
+		return CKR_GENERAL_ERROR;
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		return ret;
+
+	*slotid = sess->slotid;
 
 	return ret;
 }

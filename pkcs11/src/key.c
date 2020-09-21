@@ -3,7 +3,7 @@
  * Copyright 2020 NXP
  */
 
-#include "pkcs11smw.h"
+#include "lib_object.h"
 
 CK_RV C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism,
 		    CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount,
@@ -26,16 +26,30 @@ CK_RV C_GenerateKeyPair(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism,
 			CK_OBJECT_HANDLE_PTR phPublicKey,
 			CK_OBJECT_HANDLE_PTR phPrivateKey)
 {
-	(void)hSession;
-	(void)pMechanism;
-	(void)pPublicKeyTemplate;
-	(void)ulPublicKeyAttributeCount;
-	(void)pPrivateKeyTemplate;
-	(void)ulPrivateKeyAttributeCount;
-	(void)phPublicKey;
-	(void)phPrivateKey;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!pMechanism)
+		return CKR_MECHANISM_PARAM_INVALID;
+
+	if (!pPublicKeyTemplate || !ulPublicKeyAttributeCount)
+		return CKR_TEMPLATE_INCOMPLETE;
+
+	/*
+	 * Private key template attributes may not be necessary
+	 */
+	if ((!pPrivateKeyTemplate && ulPrivateKeyAttributeCount) ||
+	    (pPrivateKeyTemplate && !ulPrivateKeyAttributeCount))
+		return CKR_TEMPLATE_INCOMPLETE;
+
+	if (!phPublicKey || !phPrivateKey)
+		return CKR_ARGUMENTS_BAD;
+
+	return libobj_generate_keypair(hSession, pMechanism, pPublicKeyTemplate,
+				       ulPublicKeyAttributeCount,
+				       pPrivateKeyTemplate,
+				       ulPrivateKeyAttributeCount, phPublicKey,
+				       phPrivateKey);
 }
 
 CK_RV C_WrapKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism,

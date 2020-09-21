@@ -114,6 +114,19 @@ CK_RV libsess_login(CK_SESSION_HANDLE hsession, CK_USER_TYPE user);
 CK_RV libsess_logout(CK_SESSION_HANDLE hsession);
 
 /**
+ * libsess_get_user() - Get the user logged on the session
+ * @hsession: Session handle
+ * @user: Cryptoki's user
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_get_user(CK_SESSION_HANDLE hsession, CK_USER_TYPE *user);
+
+/**
  * libsess_validate() - Check the session handle
  * @hsession: Session handle
  *
@@ -166,5 +179,37 @@ CK_RV libsess_find_object(CK_SESSION_HANDLE hsession, struct libobj *object);
  * CKR_OK                             - Success
  */
 CK_RV libsess_remove_object(CK_SESSION_HANDLE hsession, struct libobj *object);
+
+/**
+ * libsess_validate_mechanism() - Validate a session mechanism
+ * @hsession: Session handle
+ * @mech: Mechanism definition
+ *
+ * Checks if the slot id linked to the session supports the mechanism
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_SLOT_ID_INVALID                - Slot ID is not valid
+ * CKR_TOKEN_NOT_PRESENT              - Token is not present
+ * CKR_MECHANISM_INVALID              - Mechanism not supported
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
+				 CK_MECHANISM_PTR mech);
+
+/**
+ * libsess_get_slotid() - Get the Session's slot ID
+ * @hsession: Session handle
+ * @slotid: Session's slot ID
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - General error
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_get_slotid(CK_SESSION_HANDLE hsession, CK_SLOT_ID *slotid);
 
 #endif /* __LIB_SESSION_H__ */

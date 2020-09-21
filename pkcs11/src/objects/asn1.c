@@ -125,7 +125,8 @@ static const struct curve_def *get_curve_by_name(struct asn1_tlv *tlv,
 	return NULL;
 }
 
-CK_RV asn1_ec_params_to_curve(struct libbytes *params,
+CK_RV asn1_ec_params_to_curve(const struct curve_def **out_curve,
+			      struct libbytes *params,
 			      const struct curve_def *curves)
 {
 	CK_RV ret;
@@ -170,6 +171,9 @@ CK_RV asn1_ec_params_to_curve(struct libbytes *params,
 		DBG_TRACE("Tag not supported %d", tlv.tag);
 		ret = CKR_ATTRIBUTE_TYPE_INVALID;
 	}
+
+	if (ret == CKR_OK && out_curve)
+		*out_curve = fcurve;
 
 	return ret;
 }

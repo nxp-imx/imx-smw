@@ -26,7 +26,7 @@
  * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
  * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
  * CKR_TEMPLATE_INCONSISTENT     - Attribute type must not be defined
- * CKR_ATTIBUTE_VALUE_INVALID    - Attribute value is not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
  * CKR_USER_NOT_LOGGED_IN        - User must log to create object
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -61,5 +61,43 @@ void libobj_delete(struct libobj *object);
  * CKR_OK                        - Success
  */
 CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject);
+
+/**
+ * libobj_generate_keypair() - Generate a keypair object
+ * @hsession: Session handle
+ * @mech: Keypair generation mechanism
+ * @pub_attrs: List of the public key attributes
+ * @nb_pub_attrs: Number of public key attributes
+ * @priv_attrs: List of the private key attributes
+ * @nb_priv_attrs: Number of private key attributes
+ * @hpub: Public key object handle
+ * @hpriv: Private key object handle
+ *
+ * After verifying the validity of the @hsession and the support of the
+ * generate key mechanism, the function creates a public and private key
+ * object function of the related attributes.
+ * To finish, the SlotID Generate Key Pair operation is executed before
+ * adding the objects in the session's object list if everything success.
+ *
+ * return:
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
+ * CKR_TEMPLATE_INCONSISTENT     - Attribute type must not be defined
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_USER_NOT_LOGGED_IN        - User must log to create object
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SESSION_CLOSED            - Session closed
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			      CK_ATTRIBUTE_PTR pub_attrs, CK_ULONG nb_pub_attrs,
+			      CK_ATTRIBUTE_PTR priv_attrs,
+			      CK_ULONG nb_priv_attrs, CK_OBJECT_HANDLE_PTR hpub,
+			      CK_OBJECT_HANDLE_PTR hpriv);
 
 #endif /* __LIB_OBJECT_H__ */

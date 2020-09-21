@@ -65,6 +65,79 @@ struct libobj_storage {
 };
 
 /**
+ * get_unique_id() - Get the object unique id
+ * @unique_id: UTF8 unique id string
+ * @obj: object
+ *
+ * Build and return the object unique id with the object class
+ * and SMW returned ID.
+ *
+ * return:
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+static CK_RV get_unique_id(struct rfc2279 *unique_id, struct libobj *obj)
+{
+	CK_RV ret = CKR_FUNCTION_FAILED;
+	struct libbytes id = {};
+	struct libobj_storage *key_storage;
+
+	if (!obj || !unique_id)
+		return CKR_GENERAL_ERROR;
+
+	DBG_TRACE("Class %lx", obj->class);
+
+	switch (obj->class) {
+	case CKO_SECRET_KEY:
+	case CKO_PUBLIC_KEY:
+	case CKO_PRIVATE_KEY:
+		key_storage = obj->object;
+		ret = key_get_id(&id, key_storage->subobject,
+				 sizeof(obj->class));
+		break;
+
+	default:
+		break;
+	}
+
+	if (ret != CKR_OK)
+		goto end;
+
+	TO_CK_BYTES(id.array, obj->class);
+
+	/* Get UTF8 length and allocate UTF8 string */
+	unique_id->length = util_byte_to_utf8_len(id.array, id.number);
+	if (!unique_id->length) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
+	unique_id->string = malloc(unique_id->length);
+	if (!unique_id->string) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	ret = CKR_FUNCTION_FAILED;
+	if (util_byte_to_utf8(unique_id->string, unique_id->length, id.array,
+			      id.number) == id.number)
+		ret = CKR_OK;
+
+end:
+	if (id.array)
+		free(id.array);
+
+	if (ret != CKR_OK && unique_id->string) {
+		free(unique_id->string);
+		unique_id->string = NULL;
+		unique_id->length = 0;
+	}
+
+	return ret;
+}
+
+/**
  * get_session_obj_access() - Get the session object right access
  * @hsession: Session Handle
  * @access: Session object right access
@@ -160,8 +233,9 @@ static CK_RV obj_is_destoyable(CK_SESSION_HANDLE hsession, struct libobj *obj)
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
-		is_destroyable = ((struct libobj_storage *)obj)->destroyable;
-		is_private = ((struct libobj_storage *)obj)->private;
+		is_destroyable =
+			((struct libobj_storage *)obj->object)->destroyable;
+		is_private = ((struct libobj_storage *)obj->object)->private;
 		DBG_TRACE("Storage object class %lu, destroy=%d, private=%d",
 			  obj->class, is_destroyable, is_private);
 		break;
@@ -315,15 +389,13 @@ static void obj_free(struct libobj *obj)
 }
 
 /**
- * obj_storage_new() - Create a new storage object type
+ * obj_storage_new() - New storage object type
  * @hsession: Session handle
  * @obj: Object into which storage object is to be attached
  * @attrs: List of object attributes
  *
  * Allocates a new storage object and setup the common storage
  * attributes function of @attrs given list.
- * Then function of object class and session/token access right calls
- * function to create subobject.
  *
  * return:
  * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
@@ -331,7 +403,7 @@ static void obj_free(struct libobj *obj)
  * CKR_USER_NOT_LOGGED_IN        - User must be login to create object
  * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
  * CKR_TEMPLATE_INCONSISTENT     - Attribute type must not be defined
- * CKR_ATTIBUTE_VALUE_INVALID    - Attribute length is not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute length is not valid
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
  * CKR_GENERAL_ERROR             - No slot defined
  * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
@@ -351,14 +423,14 @@ static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj *obj,
 
 	obj->object = newobj;
 
-	DBG_TRACE("Create a new storage object (%p)", newobj);
+	DBG_TRACE("New storage object (%p)", newobj);
 
 	ret = attr_get_value(&newobj->token, &attr_obj_storage[STORAGE_TOKEN],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	/* TODO: Support Token object */
+	/* TODO: Support Token object is set for Key this is persistent key */
 	if (newobj->token)
 		return CKR_FUNCTION_FAILED;
 
@@ -393,7 +465,7 @@ static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj *obj,
 
 	ret = attr_get_value(&newobj->unique_id,
 			     &attr_obj_storage[STORAGE_UNIQUE_ID], attrs,
-			     NO_OVERWRITE);
+			     MUST_NOT);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -405,34 +477,15 @@ static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj *obj,
 	if (ret != CKR_OK)
 		return ret;
 
-	switch (obj->class) {
-	case CKO_PRIVATE_KEY:
-	case CKO_SECRET_KEY:
+	if (obj->class == CKO_PRIVATE_KEY || obj->class == CKO_SECRET_KEY) {
 		if (!(access & OBJ_PRIVATE))
 			return CKR_USER_NOT_LOGGED_IN;
 
 		/* This is a private object anyway */
 		newobj->private = true;
-		__attribute__((fallthrough));
-
-	case CKO_PUBLIC_KEY:
-		ret = key_create(&newobj->subobject, obj->class, attrs);
-		if (ret != CKR_OK)
-			return ret;
-		break;
-
-	default:
-		DBG_TRACE("Class object %lu not supported", obj->class);
-		return CKR_FUNCTION_FAILED;
 	}
 
-	if (!newobj->token) {
-		ret = libsess_add_object(hsession, obj);
-		DBG_TRACE("Add object to the session object list return %ld",
-			  ret);
-	}
-
-	return ret;
+	return CKR_OK;
 }
 
 CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
@@ -463,9 +516,27 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	switch (newobj->class) {
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
-	case CKO_PUBLIC_KEY:
+	case CKO_PUBLIC_KEY: {
+		struct libobj_storage *key_storage;
+
 		ret = obj_storage_new(hsession, newobj, &attrs_list);
+		if (ret != CKR_OK)
+			break;
+
+		key_storage = newobj->object;
+
+		ret = key_create(hsession, &key_storage->subobject,
+				 newobj->class, &attrs_list);
+		if (ret != CKR_OK)
+			break;
+
+		if (!key_storage->token) {
+			ret = libsess_add_object(hsession, newobj);
+			DBG_TRACE("Add object to the session list return %ld",
+				  ret);
+		}
 		break;
+	}
 
 	default:
 		DBG_TRACE("Class object %lu not supported", newobj->class);
@@ -512,5 +583,124 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 
 end:
 	DBG_TRACE("Destroy object (%p) return %lu", object, ret);
+	return ret;
+}
+
+CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			      CK_ATTRIBUTE_PTR pub_attrs, CK_ULONG nb_pub_attrs,
+			      CK_ATTRIBUTE_PTR priv_attrs,
+			      CK_ULONG nb_priv_attrs, CK_OBJECT_HANDLE_PTR hpub,
+			      CK_OBJECT_HANDLE_PTR hpriv)
+{
+	CK_RV ret;
+	struct libobj *pub_key = NULL;
+	struct libobj *priv_key = NULL;
+	struct libobj_storage *pub_key_storage;
+	struct libobj_storage *priv_key_storage;
+	struct libattr_list pub_attrs_list = { .attr = pub_attrs,
+					       .number = nb_pub_attrs };
+	struct libattr_list priv_attrs_list = { .attr = priv_attrs,
+						.number = nb_priv_attrs };
+
+	DBG_TRACE("Generate a keypair on session %lu", hsession);
+
+	ret = libsess_validate_mechanism(hsession, mech);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * First create the storage object for the public key
+	 */
+	ret = obj_allocate(&pub_key);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * Get the optional class of the object
+	 * By default this is a CKO_PUBLIC_KEY class
+	 */
+	pub_key->class = CKO_PUBLIC_KEY;
+	ret = attr_get_value(&pub_key->class, &attr_obj_common[OBJ_CLASS],
+			     &pub_attrs_list, OPTIONAL);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (pub_key->class != CKO_PUBLIC_KEY) {
+		ret = CKR_TEMPLATE_INCONSISTENT;
+		goto end;
+	}
+
+	ret = obj_storage_new(hsession, pub_key, &pub_attrs_list);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * Next create the storage object for the private key
+	 */
+	ret = obj_allocate(&priv_key);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * Get the optional class of the object
+	 * By default this is a CKO_PRIVATE_KEY class
+	 */
+	priv_key->class = CKO_PRIVATE_KEY;
+	ret = attr_get_value(&priv_key->class, &attr_obj_common[OBJ_CLASS],
+			     &priv_attrs_list, OPTIONAL);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (priv_key->class != CKO_PRIVATE_KEY) {
+		ret = CKR_TEMPLATE_INCONSISTENT;
+		goto end;
+	}
+
+	ret = obj_storage_new(hsession, priv_key, &priv_attrs_list);
+	if (ret != CKR_OK)
+		goto end;
+
+	pub_key_storage = pub_key->object;
+	priv_key_storage = priv_key->object;
+
+	ret = key_keypair_generate(hsession, mech, &pub_key_storage->subobject,
+				   &pub_attrs_list,
+				   &priv_key_storage->subobject,
+				   &priv_attrs_list);
+	if (ret == CKR_OK) {
+		ret = get_unique_id(&pub_key_storage->unique_id, pub_key);
+		if (ret == CKR_OK)
+			ret = get_unique_id(&pub_key_storage->unique_id,
+					    priv_key);
+	}
+
+	if (ret != CKR_OK)
+		goto end;
+
+	if (!pub_key_storage->token) {
+		ret = libsess_add_object(hsession, pub_key);
+		DBG_TRACE("Add public key to the session list return %ld", ret);
+
+		if (ret != CKR_OK)
+			goto end;
+	}
+
+	if (!priv_key_storage->token) {
+		ret = libsess_add_object(hsession, priv_key);
+		DBG_TRACE("Add private key to the session list return %ld",
+			  ret);
+	}
+
+end:
+	DBG_TRACE("Generate keypair return %ld", ret);
+
+	if (ret == CKR_OK) {
+		*hpub = (CK_OBJECT_HANDLE)pub_key;
+		*hpriv = (CK_OBJECT_HANDLE)priv_key;
+	} else {
+		obj_free(pub_key);
+		obj_free(priv_key);
+	}
+
 	return ret;
 }

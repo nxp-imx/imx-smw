@@ -8,6 +8,7 @@
 #include "attributes.h"
 #include "key.h"
 #include "key_ec.h"
+#include "lib_session.h"
 
 #include "trace.h"
 
@@ -21,6 +22,7 @@ struct key {
 	CK_MECHANISM_TYPE gen_mech;
 	struct mech_list mech;
 	void *key;
+	void *subkey;
 };
 
 enum attr_key_common_list {
@@ -34,7 +36,7 @@ enum attr_key_common_list {
 	KEY_ALLOWED_MECH,
 };
 
-struct template_attr attr_key_common[] = {
+const struct template_attr attr_key_common[] = {
 	[KEY_TYPE] = { CKA_KEY_TYPE, sizeof(CK_KEY_TYPE), MUST, attr_to_key },
 	[KEY_ID] = { CKA_ID, 0, OPTIONAL, attr_to_byte_array },
 	[KEY_START_DATE] = { CKA_START_DATE, sizeof(CK_DATE), OPTIONAL,
@@ -58,7 +60,6 @@ struct key_public {
 	bool trusted;
 	struct libattr_list wrap_attrs;
 	struct libbytes info;
-	void *subkey;
 };
 
 enum attr_key_public_list {
@@ -72,7 +73,7 @@ enum attr_key_public_list {
 	PUB_INFO
 };
 
-struct template_attr attr_key_public[] = {
+const struct template_attr attr_key_public[] = {
 	[PUB_SUBJECT] = { CKA_SUBJECT, 0, OPTIONAL, attr_to_byte_array },
 	[PUB_ENCRYPT] = { CKA_ENCRYPT, sizeof(CK_BBOOL), OPTIONAL,
 			  attr_to_bool },
@@ -101,7 +102,6 @@ struct key_private {
 	struct libattr_list unwrap_attrs;
 	bool always_authenticate;
 	struct libbytes info;
-	void *subkey;
 };
 
 enum attr_key_private_list {
@@ -120,7 +120,7 @@ enum attr_key_private_list {
 	PRIV_INFO
 };
 
-struct template_attr attr_key_private[] = {
+const struct template_attr attr_key_private[] = {
 	[PRIV_SUBJECT] = { CKA_SUBJECT, 0, OPTIONAL, attr_to_byte_array },
 	[PRIV_SENSITIVE] = { CKA_SENSITIVE, sizeof(CK_BBOOL), OPTIONAL,
 			     attr_to_bool },
@@ -163,7 +163,6 @@ struct key_secret {
 	struct libattr_list unwrap_attrs;
 	bool trusted;
 	struct libbytes checksum;
-	void *subkey;
 };
 
 enum attr_key_secret_list {
@@ -184,7 +183,7 @@ enum attr_key_secret_list {
 	SECR_CHECK_VALUE,
 };
 
-struct template_attr attr_key_secret[] = {
+const struct template_attr attr_key_secret[] = {
 	[SECR_SENSITIVE] = { CKA_SENSITIVE, sizeof(CK_BBOOL), OPTIONAL,
 			     attr_to_bool },
 	[SECR_ALWAYS_SENSITIVE] = { CKA_ALWAYS_SENSITIVE, sizeof(CK_BBOOL),
@@ -331,7 +330,7 @@ static void key_private_free(struct key *key)
 
 	switch (key->type) {
 	case CKK_EC:
-		key_ec_private_free(priv_key->subkey);
+		key_ec_private_free(key->subkey);
 		break;
 
 	default:
@@ -365,7 +364,7 @@ static void key_public_free(struct key *key)
 
 	switch (key->type) {
 	case CKK_EC:
-		key_ec_public_free(pub_key->subkey);
+		key_ec_public_free(key->subkey);
 		break;
 
 	default:
@@ -396,7 +395,7 @@ static void key_public_free(struct key *key)
  * CKR_FUNCTION_FAILED        - Function failure
  * CKR_TEMPLATE_INCOMPLETE    - Attribute type not found
  * CKR_TEMPLATE_INCONSISTENT  - Attribute type must not be defined
- * CKR_ATTIBUTE_VALUE_INVALID - Attribute length is not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID- Attribute length is not valid
  * CKR_HOST_MEMORY            - Allocation error
  * CKR_OK                     - Success
  */
@@ -516,7 +515,7 @@ static CK_RV key_secret_new(struct key *key_obj, struct libattr_list *attrs)
  * CKR_FUNCTION_FAILED        - Function failure
  * CKR_TEMPLATE_INCOMPLETE    - Attribute type not found
  * CKR_TEMPLATE_INCONSISTENT  - Attribute type must not be defined
- * CKR_ATTIBUTE_VALUE_INVALID - Attribute length is not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID- Attribute length is not valid
  * CKR_HOST_MEMORY            - Allocation error
  * CKR_OK                     - Success
  */
@@ -603,23 +602,13 @@ static CK_RV key_private_new(struct key *key_obj, struct libattr_list *attrs)
 	ret = attr_get_value(&new_key->always_authenticate,
 			     &attr_key_private[PRIV_ALWAYS_AUTHENTICATE], attrs,
 			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	switch (key_obj->type) {
-	case CKK_EC:
-		ret = key_ec_private_create(&new_key->subkey, attrs);
-		break;
-
-	default:
-		ret = CKR_FUNCTION_FAILED;
-	}
 
 	return ret;
 }
 
 /**
  * key_public_new() - Create a new public key object
+ * @hsession: Session handle
  * @key_obj: Key object to be attached
  * @attrs: List of object attributes
  *
@@ -627,17 +616,23 @@ static CK_RV key_private_new(struct key *key_obj, struct libattr_list *attrs)
  * attribute list.
  *
  * return:
- * CKR_FUNCTION_FAILED        - Function failure
- * CKR_TEMPLATE_INCOMPLETE    - Attribute type not found
- * CKR_TEMPLATE_INCONSISTENT  - Attribute type must not be defined
- * CKR_ATTIBUTE_VALUE_INVALID - Attribute length is not valid
- * CKR_HOST_MEMORY            - Allocation error
- * CKR_OK                     - Success
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
+ * CKR_TEMPLATE_INCONSISTENT     - Attribute type must not be defined
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute length is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_OK                        - Success
  */
-static CK_RV key_public_new(struct key *key_obj, struct libattr_list *attrs)
+static CK_RV key_public_new(CK_SESSION_HANDLE hsession, struct key *key_obj,
+			    struct libattr_list *attrs)
 {
 	CK_RV ret;
 	struct key_public *new_key = NULL;
+	CK_USER_TYPE user;
 
 	ret = key_public_allocate(&new_key);
 	if (ret != CKR_OK)
@@ -673,6 +668,15 @@ static CK_RV key_public_new(struct key *key_obj, struct libattr_list *attrs)
 	if (ret != CKR_OK)
 		return ret;
 
+	if (new_key->trusted) {
+		ret = libsess_get_user(hsession, &user);
+		if (ret != CKR_OK)
+			return ret;
+
+		if (user != CKU_SO)
+			return CKR_ATTRIBUTE_READ_ONLY;
+	}
+
 	ret = attr_get_value(&new_key->wrap, &attr_key_public[PUB_WRAP], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
@@ -686,12 +690,36 @@ static CK_RV key_public_new(struct key *key_obj, struct libattr_list *attrs)
 
 	ret = attr_get_value(&new_key->info, &attr_key_public[PUB_INFO], attrs,
 			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
+
+	return ret;
+}
+
+/**
+ * subkey_private_create() - Create a private subkey object
+ * @key_obj: Key object to be attached
+ * @attrs: List of object attributes
+ *
+ * Call the key object type creation function.
+ *
+ * return:
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_private_create(struct key *key_obj,
+				   struct libattr_list *attrs)
+{
+	CK_RV ret;
 
 	switch (key_obj->type) {
 	case CKK_EC:
-		ret = key_ec_public_create(&new_key->subkey, attrs);
+		ret = key_ec_private_create(&key_obj->subkey, attrs);
 		break;
 
 	default:
@@ -702,21 +730,56 @@ static CK_RV key_public_new(struct key *key_obj, struct libattr_list *attrs)
 }
 
 /**
- * key_new() - Create a new common key object
+ * subkey_public_create() - Create a public subkey object
+ * @key_obj: Key object to be attached
+ * @attrs: List of object attributes
+ *
+ * Call the key object type creation function.
+ *
+ * return:
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_public_create(struct key *key_obj,
+				  struct libattr_list *attrs)
+{
+	CK_RV ret;
+
+	switch (key_obj->type) {
+	case CKK_EC:
+		ret = key_ec_public_create(&key_obj->subkey, attrs);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	return ret;
+}
+
+/**
+ * create_key_new() - New common key object for object creation
  * @obj: return Key object created
  * @attrs: List of object attributes
  *
  * Allocate a new key object and setup it with given object
- * attribute list.
+ * attribute list following the C_CreateObject requirements
  *
  * return:
  * CKR_TEMPLATE_INCOMPLETE    - Attribute type not found
  * CKR_TEMPLATE_INCONSISTENT  - Attribute type must not be defined
- * CKR_ATTIBUTE_VALUE_INVALID - Attribute length is not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID- Attribute length is not valid
  * CKR_HOST_MEMORY            - Allocation error
  * CKR_OK                     - Success
  */
-static CK_RV key_new(void **obj, struct libattr_list *attrs)
+static CK_RV create_key_new(void **obj, struct libattr_list *attrs)
 {
 	CK_RV ret;
 	struct key *new_key = NULL;
@@ -770,6 +833,89 @@ static CK_RV key_new(void **obj, struct libattr_list *attrs)
 	return ret;
 }
 
+/**
+ * generate_key_new() - New common key object for key generation
+ * @obj: return Key object created
+ * @attrs: List of object attributes
+ * @mech: Generate mechanism definition
+ * @key_type: Key type of the key to generate
+ *
+ * Allocate a new key object and setup it with given object
+ * attribute list following the C_GenerateKey or C_GenerateKeyPair
+ * requirement
+ *
+ * return:
+ * CKR_TEMPLATE_INCOMPLETE    - Attribute type not found
+ * CKR_TEMPLATE_INCONSISTENT  - Attribute type must not be defined
+ * CKR_ATTRIBUTE_VALUE_INVALID- Attribute length is not valid
+ * CKR_HOST_MEMORY            - Allocation error
+ * CKR_MECHANISM_INVALID      - Mechanism not supported
+ * CKR_OK                     - Success
+ */
+static CK_RV generate_key_new(void **obj, struct libattr_list *attrs,
+			      CK_MECHANISM_PTR mech, CK_KEY_TYPE key_type)
+{
+	CK_RV ret;
+	struct key *new_key = NULL;
+
+	ret = key_allocate(&new_key);
+	if (ret != CKR_OK)
+		return ret;
+
+	*obj = new_key;
+
+	DBG_TRACE("Generate a new key (%p)", new_key);
+
+	new_key->type = key_type;
+	ret = attr_get_value(&new_key->type, &attr_key_common[KEY_TYPE], attrs,
+			     OPTIONAL);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (new_key->type != key_type)
+		return CKR_TEMPLATE_INCONSISTENT;
+
+	ret = attr_get_value(&new_key->id, &attr_key_common[KEY_ID], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(&new_key->start_date,
+			     &attr_key_common[KEY_START_DATE], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(&new_key->end_date, &attr_key_common[KEY_END_DATE],
+			     attrs, NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(&new_key->derive, &attr_key_common[KEY_DERIVE],
+			     attrs, NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(&new_key->local, &attr_key_common[KEY_LOCAL],
+			     attrs, MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(&new_key->gen_mech, &attr_key_common[KEY_GEN_MECH],
+			     attrs, MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(&new_key->mech, &attr_key_common[KEY_ALLOWED_MECH],
+			     attrs, NO_OVERWRITE);
+
+	/* Set the generate mechanism and the local flag */
+	new_key->gen_mech = mech->mechanism;
+	new_key->local = true;
+
+	return ret;
+}
+
 void key_free(void *obj, CK_OBJECT_CLASS class)
 {
 	struct key *key = obj;
@@ -805,7 +951,8 @@ void key_free(void *obj, CK_OBJECT_CLASS class)
 	free(key);
 }
 
-CK_RV key_create(void **obj, CK_OBJECT_CLASS class, struct libattr_list *attrs)
+CK_RV key_create(CK_SESSION_HANDLE hsession, void **obj, CK_OBJECT_CLASS class,
+		 struct libattr_list *attrs)
 {
 	CK_RV ret;
 
@@ -815,15 +962,19 @@ CK_RV key_create(void **obj, CK_OBJECT_CLASS class, struct libattr_list *attrs)
 		return CKR_GENERAL_ERROR;
 
 	/* Create the common key object */
-	ret = key_new(obj, attrs);
+	ret = create_key_new(obj, attrs);
 	if (ret == CKR_OK) {
 		switch (class) {
 		case CKO_PUBLIC_KEY:
-			ret = key_public_new(*obj, attrs);
+			ret = key_public_new(hsession, *obj, attrs);
+			if (ret == CKR_OK)
+				ret = subkey_public_create(*obj, attrs);
 			break;
 
 		case CKO_PRIVATE_KEY:
 			ret = key_private_new(*obj, attrs);
+			if (ret == CKR_OK)
+				ret = subkey_private_create(*obj, attrs);
 			break;
 
 		case CKO_SECRET_KEY:
@@ -837,5 +988,82 @@ CK_RV key_create(void **obj, CK_OBJECT_CLASS class, struct libattr_list *attrs)
 	}
 
 	DBG_TRACE("Key type object (%p) creation return %ld", *obj, ret);
+	return ret;
+}
+
+CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			   void **pub_key, struct libattr_list *pub_attrs,
+			   void **priv_key, struct libattr_list *priv_attrs)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Generate a new keypair type object");
+
+	if (!pub_key || !priv_key)
+		return CKR_GENERAL_ERROR;
+
+	/* Support only EC Keypair generation */
+	if (mech->mechanism != CKM_EC_KEY_PAIR_GEN)
+		return CKR_MECHANISM_INVALID;
+
+	DBG_TRACE("Create Public key");
+
+	ret = generate_key_new(pub_key, pub_attrs, mech, CKK_EC);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = key_public_new(hsession, *pub_key, pub_attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	DBG_TRACE("Create Private key");
+
+	ret = generate_key_new(priv_key, priv_attrs, mech, CKK_EC);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = key_private_new(*priv_key, priv_attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = key_ec_keypair_generate(hsession, mech,
+				      &((struct key *)*pub_key)->subkey,
+				      pub_attrs,
+				      &((struct key *)*priv_key)->subkey,
+				      priv_attrs);
+
+end:
+	DBG_TRACE("Keypair object (pub=%p priv=%p) generate return %ld",
+		  *pub_key, *priv_key, ret);
+	return ret;
+}
+
+CK_RV key_get_id(struct libbytes *id, void *key, size_t prefix_len)
+{
+	CK_RV ret;
+	CK_KEY_TYPE key_type;
+
+	if (!id || !key)
+		return CKR_GENERAL_ERROR;
+
+	key_type = ((struct key *)key)->type;
+	switch (key_type) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+		ret = key_cipher_get_id(id, ((struct key *)key)->subkey,
+					prefix_len);
+		break;
+
+	case CKK_EC:
+		ret = key_ec_get_id(id, ((struct key *)key)->subkey,
+				    prefix_len);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+		break;
+	}
+
 	return ret;
 }

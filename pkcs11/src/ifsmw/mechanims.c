@@ -3,11 +3,13 @@
  * Copyright 2020 NXP
  */
 #include "smw_config.h"
+#include "smw_keymgr.h"
 #include "smw_status.h"
 
 #include "dev_config.h"
 #include "lib_context.h"
 #include "lib_device.h"
+#include "lib_session.h"
 #include "pkcs11smw.h"
 
 #include "trace.h"
@@ -19,10 +21,12 @@ static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 			  struct mgroup *mgroup);
 static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_mdigest(CK_SLOT_ID slotid, void *args);
 static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
 			    struct mgroup *mgroup);
 static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_meckeygen(CK_SLOT_ID slotid, void *args);
 
 const char *smw_ec_name[] = { "NIST", "BRAINPOOL_R1", "BRAINPOOL_T1" };
 
@@ -45,7 +49,8 @@ struct mentry {
  * @number: Number of mechanisms in the group
  * @mechanism: Mechanism entry
  * @check: Function checking if mechanism supported in SMW
- * @info: Function getting SMW informaton on mechanism
+ * @info: Function getting SMW information on mechanism
+ * @op: Function executing the mechanism operation
  *
  * Mechanisms are grouped by class of cryptographic
  */
@@ -58,6 +63,7 @@ struct mgroup {
 	CK_RV(*info)
 	(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type, struct mentry *entry,
 	 CK_MECHANISM_INFO_PTR info);
+	CK_RV (*op)(CK_SLOT_ID slotid, void *args);
 };
 
 /* Macro filling a struct mentry for a hash algo */
@@ -78,7 +84,7 @@ struct mgroup {
 #define M_GROUP(nb, grp)                                                       \
 	{                                                                      \
 		.number = nb, .mechanism = grp, .check = check_##grp,          \
-		.info = info_##grp,                                            \
+		.info = info_##grp, .op = op_##grp,                            \
 	}
 
 /*
@@ -106,64 +112,13 @@ static struct mgroup smw_mechanims[] = {
 	{ 0 },
 };
 
-CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
-			    CK_MECHANISM_TYPE_PTR mechanismlist,
-			    CK_ULONG_PTR count)
+static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			    struct mgroup **group, struct mentry **entry)
 {
 	CK_RV ret;
 	struct libdevice *dev;
-	struct mgroup *group;
-	struct mentry *entry;
-	unsigned int idx;
-	CK_MECHANISM_TYPE_PTR item = mechanismlist;
-	CK_ULONG nb_mechanisms = 0;
-	CK_FLAGS slot_flag;
-
-	ret = libdev_get_slotdev(&dev, slotid);
-	if (ret != CKR_OK)
-		return ret;
-
-	/* Check if the Slot is present */
-	if (!dev->slot.flags & CKF_TOKEN_PRESENT) {
-		DBG_TRACE("Slot %lu is not present", slotid);
-		return CKR_TOKEN_NOT_PRESENT;
-	}
-
-	DBG_TRACE("Get list of mechanisms for slot %lu", slotid);
-
-	slot_flag = BIT(slotid);
-	for (group = smw_mechanims; group->number; group++) {
-		DBG_TRACE("Group %p has %u entries", group, group->number);
-		for (idx = 0, entry = group->mechanism; idx < group->number;
-		     idx++, entry++) {
-			DBG_TRACE("Mechanism type 0x%lx", entry->type);
-			if (entry->slot_flag & slot_flag) {
-				DBG_TRACE("Mechanism 0x%lx supported",
-					  entry->type);
-				nb_mechanisms++;
-				if (item) {
-					if (*count < nb_mechanisms)
-						return CKR_BUFFER_TOO_SMALL;
-
-					*item = entry->type;
-					item++;
-				}
-			}
-		}
-	}
-
-	*count = nb_mechanisms;
-
-	return CKR_OK;
-}
-
-CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-				CK_MECHANISM_INFO_PTR info)
-{
-	CK_RV ret;
-	struct libdevice *dev;
-	struct mgroup *group;
-	struct mentry *entry;
+	struct mgroup *grp;
+	struct mentry *ent;
 	unsigned int idx;
 	CK_FLAGS slot_flag;
 
@@ -180,17 +135,21 @@ CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	DBG_TRACE("Search for mechanism %lu", type);
 
 	slot_flag = BIT(slotid);
-	for (group = smw_mechanims; group->number; group++) {
-		for (idx = 0, entry = group->mechanism; idx < group->number;
-		     idx++, entry++) {
-			if (entry->type == type) {
+	for (grp = smw_mechanims; grp->number; grp++) {
+		for (idx = 0, ent = grp->mechanism; idx < grp->number;
+		     idx++, ent++) {
+			if (ent->type == type) {
 				DBG_TRACE("Found mechanism 0x%lx", type);
-				if (!(entry->slot_flag & slot_flag)) {
+				if (!(ent->slot_flag & slot_flag)) {
 					DBG_TRACE("0x%lx not supported", type);
 					return CKR_MECHANISM_INVALID;
 				}
+				if (group)
+					*group = grp;
+				if (entry)
+					*entry = ent;
 
-				return group->info(slotid, type, entry, info);
+				return CKR_OK;
 			}
 		}
 	}
@@ -271,6 +230,13 @@ static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return ret;
 }
 
+static CK_RV op_mdigest(CK_SLOT_ID slotid, void *args)
+{
+	(void)slotid;
+	(void)args;
+
+	return CKR_FUNCTION_FAILED;
+}
 static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
@@ -325,6 +291,137 @@ static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 		ret = dev_mech_info[slotid](type, info);
 
 	return ret;
+}
+
+static CK_RV op_meckeygen(CK_SLOT_ID slotid, void *args)
+{
+	const struct libdev *devinfo;
+	int status;
+	struct smw_generate_key_args *gen_args = args;
+
+	DBG_TRACE("Generate EC Key mechanism");
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	gen_args->subsystem_name = devinfo->name;
+
+	status = smw_generate_key(gen_args);
+
+	DBG_TRACE("Generate EC Key on %s status %d", devinfo->name, status);
+	if (status != SMW_STATUS_OK)
+		return CKR_FUNCTION_FAILED;
+
+	return CKR_OK;
+}
+
+CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
+			    CK_MECHANISM_TYPE_PTR mechanismlist,
+			    CK_ULONG_PTR count)
+{
+	CK_RV ret;
+	struct libdevice *dev;
+	struct mgroup *group;
+	struct mentry *entry;
+	unsigned int idx;
+	CK_MECHANISM_TYPE_PTR item = mechanismlist;
+	CK_ULONG nb_mechanisms = 0;
+	CK_FLAGS slot_flag;
+
+	ret = libdev_get_slotdev(&dev, slotid);
+	if (ret != CKR_OK)
+		return ret;
+
+	/* Check if the Slot is present */
+	if (!dev->slot.flags & CKF_TOKEN_PRESENT) {
+		DBG_TRACE("Slot %lu is not present", slotid);
+		return CKR_TOKEN_NOT_PRESENT;
+	}
+
+	DBG_TRACE("Get list of mechanisms for slot %lu", slotid);
+
+	slot_flag = BIT(slotid);
+	for (group = smw_mechanims; group->number; group++) {
+		DBG_TRACE("Group %p has %u entries", group, group->number);
+		for (idx = 0, entry = group->mechanism; idx < group->number;
+		     idx++, entry++) {
+			DBG_TRACE("Mechanism type 0x%lx", entry->type);
+			if (entry->slot_flag & slot_flag) {
+				DBG_TRACE("Mechanism 0x%lx supported",
+					  entry->type);
+				nb_mechanisms++;
+				if (item) {
+					if (*count < nb_mechanisms)
+						return CKR_BUFFER_TOO_SMALL;
+
+					*item = entry->type;
+					item++;
+				}
+			}
+		}
+	}
+
+	*count = nb_mechanisms;
+
+	return CKR_OK;
+}
+
+CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				CK_MECHANISM_INFO_PTR info)
+{
+	CK_RV ret;
+	struct mgroup *group;
+	struct mentry *entry;
+
+	ret = find_mechanism(slotid, type, &group, &entry);
+	if (ret == CKR_OK)
+		ret = group->info(slotid, type, entry, info);
+
+	return ret;
+}
+
+CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech)
+{
+	return find_mechanism(slotid, mech->mechanism, NULL, NULL);
+}
+
+CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
+			       CK_MECHANISM_PTR mech, void *args)
+{
+	CK_RV ret;
+	CK_SLOT_ID slotid;
+	struct mgroup *group;
+
+	ret = libsess_get_slotid(hsession, &slotid);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = find_mechanism(slotid, mech->mechanism, &group, NULL);
+	if (ret == CKR_OK)
+		ret = group->op(slotid, args);
+
+	return ret;
+}
+
+CK_RV libdev_delete_key(unsigned long long key_id)
+{
+	int status;
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_delete_key_args key_args = { 0 };
+
+	DBG_TRACE("Delete Key ID %llx", key_id);
+	if (!key_id)
+		return CKR_ARGUMENTS_BAD;
+
+	key_desc.id = key_id;
+	key_args.key_descriptor = &key_desc;
+	status = smw_delete_key(&key_args);
+
+	DBG_TRACE("Delete Key status %d", status);
+	if (status != SMW_STATUS_OK)
+		return CKR_FUNCTION_FAILED;
+
+	return CKR_OK;
 }
 
 CK_RV libdev_mechanisms_init(CK_SLOT_ID slotid)

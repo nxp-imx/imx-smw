@@ -63,3 +63,69 @@ void util_copy_str_to_utf8(CK_UTF8CHAR_PTR dst, size_t len_dst, const char *src)
 	if (len_src < len_dst)
 		memset(dst + len_src, ' ', len_dst - len_src);
 }
+
+size_t util_byte_to_utf8_len(const CK_BYTE_PTR src, size_t len_src)
+{
+	size_t len = 0;
+	size_t idx = 0;
+
+	for (; idx < len_src; idx++, len++)
+		if (src[idx] > 0x7F)
+			len++;
+
+	return len + 1;
+}
+
+size_t util_byte_to_utf8(CK_UTF8CHAR_PTR dst, size_t len_dst,
+			 const CK_BYTE_PTR src, size_t len_src)
+{
+	size_t len = 0;
+	size_t idx = 0;
+
+	for (; idx < len_src && len < len_dst; idx++, len++) {
+		if (src[idx] > 0x7F) {
+			if (len_dst <= len + 2)
+				return idx;
+
+			dst[len] = ((src[idx] >> 6) & 0x1F) | 0xC0;
+			dst[++len] = (src[idx] & 0x3F) | 0x80;
+		} else {
+			dst[len] = src[idx];
+		}
+	}
+
+	return idx;
+}
+
+size_t util_utf8_to_byte_len(const CK_UTF8CHAR_PTR src, size_t len_src)
+{
+	size_t len = 0;
+	size_t idx = 0;
+
+	for (; idx < len_src; idx++)
+		if ((src[idx] & 0xC0) != 0x80)
+			len++;
+
+	return len + 1;
+}
+
+size_t util_utf8_to_byte(CK_BYTE_PTR dst, size_t len_dst,
+			 const CK_UTF8CHAR_PTR src, size_t len_src)
+{
+	size_t len = 0;
+	size_t idx = 0;
+
+	for (; idx < len_src && len < len_dst; idx++, len++) {
+		if (src[idx] & 0xC0) {
+			if (len_src <= idx + 2)
+				return idx;
+
+			dst[len] = src[idx] << 6;
+			dst[len] |= src[++idx] & 0x3F;
+		} else {
+			dst[len] = src[idx];
+		}
+	}
+
+	return idx;
+}

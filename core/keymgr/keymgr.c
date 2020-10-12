@@ -828,19 +828,20 @@ int smw_generate_key(struct smw_generate_key_args *args)
 	type_id = generate_key_args.key_descriptor.identifier.type_id;
 	format_id = generate_key_args.key_descriptor.format_id;
 
-	status =
-		smw_keymgr_get_buffers_lengths(type_id, security_size,
-					       format_id, &public_length, NULL);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	if (key_buffer) {
+		status = smw_keymgr_get_buffers_lengths(type_id, security_size,
+							format_id,
+							&public_length, NULL);
+		if (status != SMW_STATUS_OK)
+			goto end;
 
-	if (key_buffer)
 		if ((key_buffer->public_data &&
 		     key_buffer->public_length < public_length) ||
 		    key_buffer->private_data || key_buffer->private_length) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
+	}
 
 	status = smw_utils_execute_operation(OPERATION_ID_GENERATE_KEY,
 					     &generate_key_args, subsystem_id);

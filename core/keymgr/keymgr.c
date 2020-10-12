@@ -282,8 +282,10 @@ static int read_attributes(const unsigned char *attributes_list,
 	/* Initialize key_attributes parameters to default values */
 	smw_keymgr_set_default_attributes(key_attributes);
 
-	if (!attributes_list)
+	if (!attributes_list) {
+		status = SMW_STATUS_OK;
 		goto end;
+	}
 
 	while (p < end) {
 		/* Parse attribute */

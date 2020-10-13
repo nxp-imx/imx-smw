@@ -223,7 +223,8 @@ static int generate_key(void *args)
 	if (out_key) {
 		op.paramTypes =
 			TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT,
-					 TEEC_VALUE_INPUT, TEEC_MEM_OUTPUT);
+					 TEEC_VALUE_INPUT,
+					 TEEC_MEMREF_TEMP_OUTPUT);
 		op.params[3].tmpref.buffer = out_key;
 		op.params[3].tmpref.size = out_size;
 	} else {

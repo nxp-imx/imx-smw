@@ -384,8 +384,8 @@ static bool is_key_id_used(uint32_t id, bool persistent)
  * @persistent: Key storage information.
  *
  * Return:
- * TEE_SUCCESS		- Success.
- * TEE_ERROR_GENERIC	- Failed.
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_ITEM_NOT_FOUND	- Failed.
  */
 static TEE_Result find_unused_id(uint32_t *id, bool persistent)
 {
@@ -401,18 +401,16 @@ static TEE_Result find_unused_id(uint32_t *id, bool persistent)
 		}
 	}
 
-	return TEE_ERROR_GENERIC;
+	EMSG("Failed to find an unused ID");
+	return TEE_ERROR_ITEM_NOT_FOUND;
 }
 
 /**
- * conf_key_attribute() - Configure key attributes.
+ * conf_key_ecc_attribute() - Configure key ECC attribute.
  * @key_type: Key type.
- * @key_size: Key size in bytes.
- * @attr: Pointer to attributes to configure. Not updated if an error is
- *        returned. Allocated by this function and must be freed by caller.
- * @key: Pointer to key buffer.
- * @pubx: Pointer to public x buffer (only for ECDSA).
- * @puby: Pointer to public y buffer (only for ECDSA).
+ * @security_size: Key security size.
+ * @attr: Pointer to attribute to configure. Not updated if an error is
+ *        returned.
  *
  * Return:
  * TEE_SUCCESS			- Success.
@@ -420,76 +418,25 @@ static TEE_Result find_unused_id(uint32_t *id, bool persistent)
  * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
  * Error code from get_key_ecc_curve().
  */
-static TEE_Result conf_key_attribute(enum tee_key_type key_type,
-				     unsigned int key_size,
-				     TEE_Attribute **attr, uint8_t *key,
-				     uint8_t *pubx, uint8_t *puby)
+static TEE_Result conf_key_ecc_attribute(enum tee_key_type key_type,
+					 unsigned int security_size,
+					 TEE_Attribute *attr)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_Attribute *attributes = NULL;
-	uint32_t nb_attr = 0;
 	unsigned int ecc_curve = 0;
-	unsigned int i = 0;
-	unsigned int security_size = 0;
 
 	FMSG("Executing %s", __func__);
 
-	if (key_type == TEE_KEY_TYPE_ID_ECDSA) {
-		if (!pubx || !puby)
-			return res;
-		else if (!key)
-			nb_attr = NB_ATTR_ECDSA_PUB_KEY;
-		else
-			nb_attr = NB_ATTR_ECDSA_KEYPAIR;
+	if (!attr)
+		return res;
 
-		if (key_size == 66) /* 521 bits key special case */
-			security_size = 521;
-		else
-			security_size = key_size * 8;
-
-		res = get_key_ecc_curve(key_type, security_size, &ecc_curve);
-		if (res) {
-			EMSG("Can't get key ecc curve: 0x%x", res);
-			return res;
-		}
-
-		*attr = TEE_Malloc(nb_attr * sizeof(TEE_Attribute),
-				   TEE_USER_MEM_HINT_NO_FILL_ZERO);
-		if (!*attr) {
-			EMSG("TEE_Malloc failed");
-			return TEE_ERROR_OUT_OF_MEMORY;
-		}
-
-		attributes = *attr;
-		if (nb_attr == NB_ATTR_ECDSA_KEYPAIR)
-			TEE_InitRefAttribute(&attributes[i++],
-					     TEE_ATTR_ECC_PRIVATE_VALUE, key,
-					     key_size);
-
-		TEE_InitRefAttribute(&attributes[i++],
-				     TEE_ATTR_ECC_PUBLIC_VALUE_X, pubx,
-				     key_size);
-
-		TEE_InitRefAttribute(&attributes[i++],
-				     TEE_ATTR_ECC_PUBLIC_VALUE_Y, puby,
-				     key_size);
-
-		TEE_InitValueAttribute(&attributes[i], TEE_ATTR_ECC_CURVE,
-				       ecc_curve, 0);
-	} else { /* Symmetric-key algorithms */
-		if (!key)
-			return res;
-
-		*attr = TEE_Malloc(sizeof(TEE_Attribute),
-				   TEE_USER_MEM_HINT_NO_FILL_ZERO);
-		if (!*attr) {
-			EMSG("TEE_Malloc failed");
-			return TEE_ERROR_OUT_OF_MEMORY;
-		}
-
-		TEE_InitRefAttribute(*attr, TEE_ATTR_SECRET_VALUE, key,
-				     key_size);
+	res = get_key_ecc_curve(key_type, security_size, &ecc_curve);
+	if (res) {
+		EMSG("Can't get key ecc curve: 0x%x", res);
+		return res;
 	}
+
+	TEE_InitValueAttribute(attr, TEE_ATTR_ECC_CURVE, ecc_curve, 0);
 
 	return TEE_SUCCESS;
 }
@@ -523,20 +470,97 @@ static TEE_Result set_key_usage(enum tee_key_type key_type,
 	return TEE_ERROR_BAD_PARAMETERS;
 }
 
+/**
+ * shift_public_key() - Right shift public key buffer.
+ * @key_size: Key size in bytes.
+ * @size: Key size returned by TEE_GetObjectBufferAttribute.
+ * @pub_key: Public key buffer.
+ *
+ * Beginning of @pub_key is set to 0.
+ *
+ * Return:
+ * none.
+ */
+static void shift_public_key(unsigned int key_size, unsigned int size,
+			     unsigned char *pub_key)
+{
+	unsigned int shift = key_size - size;
+
+	memmove(pub_key + shift, pub_key, size);
+	memset(pub_key, 0, shift);
+}
+
+/**
+ * export_pub_key_ecc() - Export asymmetric public key.
+ * @handle: Key handle.
+ * @security_size: Key security size.
+ * @pub_key: Pointer to public key buffer.
+ * @pub_key_size: @pub_key size (bytes).
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * Error code from TEE_GetObjectBufferAttribute().
+ */
+static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
+				     unsigned int security_size,
+				     unsigned char *pub_key,
+				     unsigned int pub_key_size)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	unsigned int key_size_bytes = 0;
+	unsigned int size = 0;
+
+	if (!pub_key)
+		return res;
+
+	key_size_bytes = (security_size + 7) / 8;
+
+	/* Public key size is twice private key size */
+	if (pub_key_size != 2 * key_size_bytes) {
+		EMSG("Invalid pub key size: %d (%d expected)", pub_key_size,
+		     2 * key_size_bytes);
+		return res;
+	}
+
+	/* Get first part of public key */
+	size = key_size_bytes;
+	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_ECC_PUBLIC_VALUE_X,
+					   pub_key, &size);
+	if (res) {
+		EMSG("TEE_GetObjectBufferAttribute returned 0x%x", res);
+		return res;
+	}
+
+	if (size < key_size_bytes)
+		shift_public_key(key_size_bytes, size, pub_key);
+
+	/* Get second part of the public key */
+	size = key_size_bytes;
+	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_ECC_PUBLIC_VALUE_Y,
+					   pub_key + key_size_bytes, &size);
+	if (res) {
+		EMSG("TEE_GetObjectBufferAttribute returned 0x%x", res);
+		return res;
+	}
+
+	if (size < key_size_bytes)
+		shift_public_key(key_size_bytes, size,
+				 pub_key + key_size_bytes);
+
+	return res;
+}
+
 TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_ObjectHandle key_handle = { 0 };
-	TEE_ObjectHandle persistent_key_handle = { 0 };
-	TEE_Attribute *attr = NULL;
+	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
+	TEE_ObjectHandle persistent_key_handle = TEE_HANDLE_NULL;
+	TEE_Attribute key_attr = {};
 	uint32_t object_type = 0;
 	uint32_t attr_count = 0;
 	unsigned int security_size = 0;
-	unsigned int key_size_bytes = 0;
 	uint32_t id = 0;
-	uint8_t *key = NULL;
-	uint8_t *pubx = NULL;
-	uint8_t *puby = NULL;
 	uint8_t *pub_key = NULL;
 	uint32_t pub_key_size = 0;
 	bool persistent = false;
@@ -572,8 +596,6 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	key_type = params[0].value.b;
 	persistent = params[2].value.a;
 
-	key_size_bytes = (security_size + 7) / 8;
-
 	/* Get TEE object type */
 	res = get_key_obj_type(key_type, &object_type);
 	if (res) {
@@ -583,54 +605,20 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 
 	/* Find an unused ID */
 	res = find_unused_id(&id, persistent);
-	if (res) {
-		EMSG("Failed to find an unused ID");
+	if (res)
 		return res;
-	}
 
-	/* Allocate key buffer(s) */
-	key = TEE_Malloc(key_size_bytes, TEE_USER_MEM_HINT_NO_FILL_ZERO);
-	if (!key) {
-		EMSG("TEE_Malloc failed");
-		return TEE_ERROR_OUT_OF_MEMORY;
-	}
-
+	/* Configure key ECC attribute */
 	if (key_type == TEE_KEY_TYPE_ID_ECDSA) {
-		if (pub_key && pub_key_size) {
-			if (pub_key_size != 2 * key_size_bytes) {
-				EMSG("Invalid key size: %d (%d expected)",
-				     pub_key_size, key_size_bytes);
-				res = TEE_ERROR_BAD_PARAMETERS;
-				goto exit;
-			}
-			pubx = pub_key;
-		} else if (!pub_key && !pub_key_size) {
-			pubx = TEE_Malloc(2 * key_size_bytes,
-					  TEE_USER_MEM_HINT_NO_FILL_ZERO);
-			if (!pubx) {
-				EMSG("TEE_Malloc failed");
-				res = TEE_ERROR_OUT_OF_MEMORY;
-				goto exit;
-			}
-		} else {
-			EMSG("Invalid pub key params: %p, %d", pub_key,
-			     pub_key_size);
-			res = TEE_ERROR_BAD_PARAMETERS;
-			goto exit;
+		res = conf_key_ecc_attribute(key_type, security_size,
+					     &key_attr);
+		if (res) {
+			EMSG("Failed to configure key ecc attribute: 0x%x",
+			     res);
+			return res;
 		}
 
-		puby = pubx + key_size_bytes;
-		attr_count = NB_ATTR_ECDSA_KEYPAIR;
-	} else {
-		attr_count = NB_ATTR_SYMMETRIC_KEY;
-	}
-
-	/* Configure key TEE attributes */
-	res = conf_key_attribute(key_type, key_size_bytes, &attr, key, pubx,
-				 puby);
-	if (res) {
-		EMSG("Failed to configure attribute: 0x%x", res);
-		goto exit;
+		attr_count = 1;
 	}
 
 	/* Allocate a transient object */
@@ -638,23 +626,21 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 					  &key_handle);
 	if (res) {
 		EMSG("Failed to allocate transient object: 0x%x", res);
-		goto exit;
+		return res;
 	}
 
 	/* Generate key */
-	res = TEE_GenerateKey(key_handle, security_size, attr, attr_count);
+	res = TEE_GenerateKey(key_handle, security_size, &key_attr, attr_count);
 	if (res) {
 		EMSG("Failed to generate key: 0x%x", res);
-		TEE_FreeTransientObject(key_handle);
-		goto exit;
+		goto err;
 	}
 
 	/* Set key usage. Make it non extractable */
 	res = set_key_usage(key_type, key_handle);
 	if (res) {
 		EMSG("Failed to set key usage: 0x%x", res);
-		TEE_FreeTransientObject(key_handle);
-		goto exit;
+		goto err;
 	}
 
 	/* Create a key data structure representing the generated key */
@@ -663,8 +649,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	if (!key_data) {
 		EMSG("TEE_Malloc failed");
 		res = TEE_ERROR_OUT_OF_MEMORY;
-		TEE_FreeTransientObject(key_handle);
-		goto exit;
+		goto err;
 	}
 
 	/* Update key data fields */
@@ -672,6 +657,16 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	key_data->key_id = id;
 	key_data->key_type = key_type;
 	key_data->security_size = security_size;
+
+	/* Export ECC public key */
+	if (key_type == TEE_KEY_TYPE_ID_ECDSA && pub_key) {
+		res = export_pub_key_ecc(key_handle, security_size, pub_key,
+					 pub_key_size);
+		if (res) {
+			EMSG("Failed to export public key: 0x%x", res);
+			goto err;
+		}
+	}
 
 	if (persistent) {
 		/* Create a persistent object and free the transient object */
@@ -681,10 +676,11 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 						 key_handle, NULL, 0,
 						 &persistent_key_handle);
 		TEE_FreeTransientObject(key_handle);
+		key_handle = TEE_HANDLE_NULL;
 
 		if (res) {
 			EMSG("Failed to create a persistent key: 0x%x", res);
-			goto exit;
+			goto err;
 		}
 
 		key_data->handle = persistent_key_handle;
@@ -694,30 +690,21 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 
 	/* Add key to the linked list */
 	res = key_add_list(key_data);
-	if (res) {
-		EMSG("Failed to add key to linked list: 0x%x", res);
-
-		if (persistent)
-			TEE_CloseAndDeletePersistentObject(key_data->handle);
-		else
-			TEE_FreeTransientObject(key_data->handle);
-	} else {
+	if (!res) {
 		/* Share key ID with Normal World */
 		params[1].value.a = key_data->key_id;
+		return res;
 	}
 
-exit:
-	if (key)
-		TEE_Free(key);
-
-	if (!pub_key && pubx)
-		TEE_Free(pubx);
-
-	if (attr)
-		TEE_Free(attr);
-
-	if (res && key_data)
+err:
+	if (key_data)
 		TEE_Free(key_data);
+
+	if (key_handle != TEE_HANDLE_NULL)
+		TEE_FreeTransientObject(key_handle);
+
+	if (persistent_key_handle != TEE_HANDLE_NULL)
+		TEE_CloseAndDeletePersistentObject(persistent_key_handle);
 
 	return res;
 }

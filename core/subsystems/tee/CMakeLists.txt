@@ -38,16 +38,23 @@ set(TA_MAKEFILE_PATH ${CMAKE_SOURCE_DIR}/core/subsystems/tee/ta)
 
 set(TA_BUILD_DIR ${CMAKE_BINARY_DIR}/ta)
 string(REGEX REPLACE "-gcc$" "-" CROSS_COMPILE  ${CMAKE_C_COMPILER})
-execute_process(COMMAND make -C ${TA_MAKEFILE_PATH}
+
+set(TA_CMD make -C ${TA_MAKEFILE_PATH}
                 BINARY=${TA_BINARY}
                 TA_EXPORT_DIR=${TA_DEV_KIT_DIR}
                 TA_CROSS_COMPILE=${CROSS_COMPILE}
                 TA_LOG_LEVEL=${VERBOSE}
                 O=${TA_BUILD_DIR}
-                RESULT_VARIABLE TA_MAKE_RES)
+                )
 
-if(NOT ${TA_MAKE_RES} EQUAL 0)
-     message(FATAL_ERROR "\nFailed to build SMW Trusted Application\n")
-endif()
+include(ExternalProject)
+ExternalProject_Add(smw_tee_ta
+	CONFIGURE_COMMAND ""
+	INSTALL_COMMAND ""
+	BUILD_ALWAYS True
+	SOURCE_DIR ${CMAKE_SOURCE_DIR}/core/subsystems/tee/ta
+	BINARY_DIR ${CMAKE_BINARY_DIR}/ta
+	TMP_DIR ${CMAKE_BINARY_DIR}/ta
+	BUILD_COMMAND ${TA_CMD})
 
 install(FILES ${TA_BUILD_DIR}/${TA_FILE} DESTINATION ${DESTDIR}/lib/optee_armtz)

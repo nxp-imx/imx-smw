@@ -132,6 +132,15 @@ function smw()
     printf "Execute %s\n" "${cmd_script}"
     eval "${cmd_script}"
     eval "make"
+    if ${opt_package}; then
+        package_name="libsmw_package.tar.gz"
+        tmp_install_dir="tmp_install"
+
+        mkdir -p "${tmp_install_dir}"
+        eval "make install DESTDIR=${tmp_install_dir} > /dev/null"
+        eval "cd ${tmp_install_dir} && tar -czf ../${package_name} . && cd .."
+        rm -rf "${tmp_install_dir}"
+    fi
 }
 
 function jsonc()
@@ -228,9 +237,10 @@ function usage_smw()
   printf "\n"
     printf "To build the Secure Middleware\n"
     printf " - Note: all dependencies must be present\n"
-    printf "  %s smw out=[dir] debug verbose=[dir] zlib=[dir] seco=[dir] teec=[dir] tadevkit=[dir] arch=[arch] toolpath=[dir] toolname=[name]\n" "${script_name}"
+    printf "  %s smw out=[dir] debug package verbose=[lvl] zlib=[dir] seco=[dir] teec=[dir] tadevkit=[dir] arch=[arch] toolpath=[dir] toolname=[name]\n" "${script_name}"
     printf "    out      = Build directory\n"
     printf "    debug    = [optional] if set build type to debug\n"
+    printf "    package  = [optional] if set build package\n"
     printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
     printf "    toolpath = [optional] Toolchain path where installed\n"
     printf "    toolname = [optional] Toolchain name\n"
@@ -280,6 +290,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 opt_action=$1
+opt_package=false
 shift
 
 for arg in "$@"
@@ -347,6 +358,10 @@ do
 
         debug)
              opt_buildtype="-DCMAKE_BUILD_TYPE=Debug"
+             ;;
+
+        package)
+             opt_package=true
              ;;
 
         verbose=*)

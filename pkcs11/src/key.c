@@ -9,13 +9,23 @@ CK_RV C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism,
 		    CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount,
 		    CK_OBJECT_HANDLE_PTR phKey)
 {
-	(void)hSession;
-	(void)pMechanism;
-	(void)pTemplate;
-	(void)ulCount;
-	(void)phKey;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!pMechanism)
+		return CKR_MECHANISM_PARAM_INVALID;
+
+	/*
+	 * Key template attributes may not be necessary
+	 */
+	if ((!pTemplate && ulCount) || (pTemplate && !ulCount))
+		return CKR_TEMPLATE_INCOMPLETE;
+
+	if (!phKey)
+		return CKR_ARGUMENTS_BAD;
+
+	return libobj_generate_key(hSession, pMechanism, pTemplate, ulCount,
+				   phKey);
 }
 
 CK_RV C_GenerateKeyPair(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism,

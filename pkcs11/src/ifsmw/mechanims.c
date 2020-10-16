@@ -27,6 +27,11 @@ static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
 static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_meckeygen(CK_SLOT_ID slotid, void *args);
+static void check_mkeygen(CK_SLOT_ID slotid, const char *subsystem,
+			  struct mgroup *mgroup);
+static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_mkeygen(CK_SLOT_ID slotid, void *args);
 
 const char *smw_ec_name[] = { "NIST", "BRAINPOOL_R1", "BRAINPOOL_T1" };
 
@@ -104,13 +109,31 @@ static struct mentry meckeygen[] = {
 };
 
 /*
+ * AES Key Generate mechanism
+ */
+static struct mentry mkeygen[] = {
+	M_ALGO_SINGLE(AES, AES_KEY_GEN),
+	M_ALGO_SINGLE(DES, DES_KEY_GEN),
+	M_ALGO_SINGLE(DES3, DES3_KEY_GEN),
+};
+
+/*
  * All SMW mechanisms
  */
 static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(mdigest), mdigest),
 	M_GROUP(ARRAY_SIZE(meckeygen), meckeygen),
+	M_GROUP(ARRAY_SIZE(mkeygen), mkeygen),
 	{ 0 },
 };
+
+#define GET_ALGO_NAME(entry, idx)                                              \
+	({                                                                     \
+		__typeof__(entry) _entry = entry;                              \
+		(_entry->nb_smw_algo > 1) ?                                    \
+			((const char **)_entry->smw_algo)[idx] :               \
+			_entry->smw_algo;                                      \
+	})
 
 static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mgroup **group, struct mentry **entry)
@@ -176,8 +199,8 @@ static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 	}
 }
 
-static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
-			    struct mgroup *mgroup)
+static void check_keygen_common(CK_SLOT_ID slotid, const char *subsystem,
+				struct mgroup *mgroup)
 {
 	int status;
 	unsigned int idx;
@@ -185,24 +208,36 @@ static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
 	struct mentry *entry;
 	CK_FLAGS slot_flag;
 	struct smw_key_info info = { 0 };
-	char **name;
 
 	slot_flag = BIT(slotid);
 	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
 	     idx++, entry++) {
-		name = entry->smw_algo;
 		for (idx_algo = 0; idx_algo < entry->nb_smw_algo; idx_algo++) {
-			info.key_type_name = name[idx_algo];
+			info.key_type_name = GET_ALGO_NAME(entry, idx_algo);
 
 			status =
 				smw_config_check_generate_key(subsystem, &info);
-			DBG_TRACE("%s EC Key Generate %s: %d", subsystem,
-				  name[idx_algo], status);
+			DBG_TRACE("%s Key Generate %s: %d", subsystem,
+				  info.key_type_name, status);
 
 			if (status == SMW_STATUS_OK)
 				SET_BITS(entry->slot_flag, slot_flag);
 		}
 	}
+}
+
+static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
+			    struct mgroup *mgroup)
+{
+	DBG_TRACE("Check EC Key generate");
+	check_keygen_common(slotid, subsystem, mgroup);
+}
+
+static void check_mkeygen(CK_SLOT_ID slotid, const char *subsystem,
+			  struct mgroup *mgroup)
+{
+	DBG_TRACE("Check Key generate");
+	check_keygen_common(slotid, subsystem, mgroup);
 }
 
 static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
@@ -237,38 +272,28 @@ static CK_RV op_mdigest(CK_SLOT_ID slotid, void *args)
 
 	return CKR_FUNCTION_FAILED;
 }
-static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			    struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+
+static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				struct mentry *entry,
+				CK_MECHANISM_INFO_PTR info)
 {
 	CK_RV ret = CKR_OK;
 	int status;
 	const struct libdev *devinfo;
 	unsigned int idx;
 	struct smw_key_info keyinfo = { 0 };
-	char **name;
-
-	DBG_TRACE("Return info of 0x%lx EC Key Generate mechanism", type);
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	/*
-	 * EC Key Generate global settings.
-	 */
-	info->ulMaxKeySize = 0;
-	info->ulMinKeySize = 0;
-	info->flags =
-		CKF_EC_OID | CKF_EC_CURVENAME | CKF_EC_F_P | CKF_EC_UNCOMPRESS;
-
-	name = entry->smw_algo;
 	for (idx = 0; idx < entry->nb_smw_algo; idx++) {
-		keyinfo.key_type_name = name[idx];
+		keyinfo.key_type_name = GET_ALGO_NAME(entry, idx);
 		keyinfo.security_size = 0;
 
 		status = smw_config_check_generate_key(devinfo->name, &keyinfo);
-		DBG_TRACE("%s EC Key Generate %s: %d", devinfo->name, name[idx],
-			  status);
+		DBG_TRACE("%s Key Generate %s: %d", devinfo->name,
+			  keyinfo.key_type_name, status);
 
 		if (status != SMW_STATUS_OK)
 			continue;
@@ -293,13 +318,44 @@ static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return ret;
 }
 
-static CK_RV op_meckeygen(CK_SLOT_ID slotid, void *args)
+static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			    struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	DBG_TRACE("Return info of 0x%lx EC Key Generate mechanism", type);
+
+	/*
+	 * EC Key Generate global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags =
+		CKF_EC_OID | CKF_EC_CURVENAME | CKF_EC_F_P | CKF_EC_UNCOMPRESS;
+
+	return info_keygen_common(slotid, type, entry, info);
+}
+
+static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			  struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	DBG_TRACE("Return info of 0x%lx Key Generate mechanism", type);
+
+	/*
+	 * Key Generate global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = 0;
+
+	return info_keygen_common(slotid, type, entry, info);
+}
+
+static CK_RV op_keygen_common(CK_SLOT_ID slotid, void *args)
 {
 	const struct libdev *devinfo;
 	int status;
 	struct smw_generate_key_args *gen_args = args;
 
-	DBG_TRACE("Generate EC Key mechanism");
+	DBG_TRACE("Common Generate Key mechanism");
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
@@ -308,11 +364,23 @@ static CK_RV op_meckeygen(CK_SLOT_ID slotid, void *args)
 
 	status = smw_generate_key(gen_args);
 
-	DBG_TRACE("Generate EC Key on %s status %d", devinfo->name, status);
+	DBG_TRACE("Generate Key on %s status %d", devinfo->name, status);
 	if (status != SMW_STATUS_OK)
 		return CKR_FUNCTION_FAILED;
 
 	return CKR_OK;
+}
+
+static CK_RV op_meckeygen(CK_SLOT_ID slotid, void *args)
+{
+	DBG_TRACE("Generate EC Key mechanism");
+	return op_keygen_common(slotid, args);
+}
+
+static CK_RV op_mkeygen(CK_SLOT_ID slotid, void *args)
+{
+	DBG_TRACE("Generate Key mechanism");
+	return op_keygen_common(slotid, args);
 }
 
 CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,

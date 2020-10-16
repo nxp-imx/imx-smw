@@ -63,6 +63,38 @@ void libobj_delete(struct libobj *object);
 CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject);
 
 /**
+ * libobj_generate_key() - Generate a secret key object
+ * @hsession: Session handle
+ * @mech: Key generation mechanism
+ * @attrs: List of the key attributes
+ * @nb_attrs: Number of key attributes
+ * @hkey: Key object handle
+ *
+ * After verifying the validity of the @hsession and the support of the
+ * generate key mechanism, the function creates a secret key
+ * object function of the related attributes.
+ * To finish, the SlotID Generate Key operation is executed before
+ * adding the objects in the session's object list if everything success.
+ *
+ * return:
+ * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
+ * CKR_TEMPLATE_INCONSISTENT     - Attribute type must not be defined
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_USER_NOT_LOGGED_IN        - User must log to create object
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SESSION_CLOSED            - Session closed
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			  CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs,
+			  CK_OBJECT_HANDLE_PTR hkey);
+
+/**
  * libobj_generate_keypair() - Generate a keypair object
  * @hsession: Session handle
  * @mech: Keypair generation mechanism

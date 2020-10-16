@@ -7,6 +7,7 @@
 
 #include "attributes.h"
 #include "key.h"
+#include "key_cipher.h"
 #include "key_ec.h"
 #include "lib_session.h"
 
@@ -301,6 +302,17 @@ static void key_secret_free(struct key *key)
 	if (!sec_key)
 		return;
 
+	switch (key->type) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+		key_cipher_free(key->subkey);
+		break;
+
+	default:
+		break;
+	}
+
 	DBG_TRACE("Free secret key (%p)", sec_key);
 
 	if (sec_key->wrap_attrs.attr)
@@ -492,13 +504,6 @@ static CK_RV key_secret_new(struct key *key_obj, struct libattr_list *attrs)
 	ret = attr_get_value(&new_key->checksum,
 			     &attr_key_secret[SECR_CHECK_VALUE], attrs,
 			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	switch (key_obj->type) {
-	default:
-		ret = CKR_FUNCTION_FAILED;
-	}
 
 	return ret;
 }
@@ -690,6 +695,42 @@ static CK_RV key_public_new(CK_SESSION_HANDLE hsession, struct key *key_obj,
 
 	ret = attr_get_value(&new_key->info, &attr_key_public[PUB_INFO], attrs,
 			     NO_OVERWRITE);
+
+	return ret;
+}
+
+/**
+ * subkey_secret_create() - Create a secret subkey object
+ * @key_obj: Key object to be attached
+ * @attrs: List of object attributes
+ *
+ * Call the key object type creation function.
+ *
+ * return:
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_secret_create(struct key *key_obj,
+				  struct libattr_list *attrs)
+{
+	CK_RV ret;
+
+	switch (key_obj->type) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+		ret = key_cipher_create(&key_obj->subkey, attrs);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
 
 	return ret;
 }
@@ -979,6 +1020,8 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, void **obj, CK_OBJECT_CLASS class,
 
 		case CKO_SECRET_KEY:
 			ret = key_secret_new(*obj, attrs);
+			if (ret == CKR_OK)
+				ret = subkey_secret_create(*obj, attrs);
 			break;
 
 		default:
@@ -1035,6 +1078,53 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 end:
 	DBG_TRACE("Keypair object (pub=%p priv=%p) generate return %ld",
 		  *pub_key, *priv_key, ret);
+	return ret;
+}
+
+CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			      void **key, struct libattr_list *attrs)
+{
+	CK_RV ret;
+	CK_KEY_TYPE key_type;
+
+	DBG_TRACE("Generate a new secret key type object");
+
+	if (!key)
+		return CKR_GENERAL_ERROR;
+
+	switch (mech->mechanism) {
+	case CKM_AES_KEY_GEN:
+		key_type = CKK_AES;
+		break;
+	default:
+		return CKR_MECHANISM_INVALID;
+	}
+
+	ret = generate_key_new(key, attrs, mech, key_type);
+	if (ret != CKR_OK)
+		goto end;
+
+	key_type = ((struct key *)*key)->type;
+
+	ret = key_secret_new(*key, attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	switch (key_type) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+		ret = key_cipher_generate(hsession, mech, key_type,
+					  &((struct key *)*key)->subkey, attrs);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+		break;
+	}
+
+end:
+	DBG_TRACE("Secret Key object (%p) generate return %ld", *key, ret);
 	return ret;
 }
 

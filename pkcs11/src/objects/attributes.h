@@ -192,6 +192,20 @@ CK_RV attr_to_attr_list(void *dest, CK_ATTRIBUTE_PTR attr);
 CK_RV attr_to_bignumber(void *dest, CK_ATTRIBUTE_PTR attr);
 
 /**
+ * attr_to_ulong() - Copy attribute to unsigned long
+ * @dest: destination value
+ * @attr: Attribute to copy into @dest
+ *
+ * If attribute @value is defined, copies the attribute of
+ * type CK_ULONG
+ *
+ * return:
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value not valid
+ * CKR_OK                      - Success
+ */
+CK_RV attr_to_ulong(void *dest, CK_ATTRIBUTE_PTR attr);
+
+/**
  * get_attr_value() - Find an attribute type and get its value
  * @dest: Attribute value destination
  * @tattr: Attribute definition

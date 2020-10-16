@@ -185,6 +185,18 @@ CK_RV attr_to_bignumber(void *dest, CK_ATTRIBUTE_PTR attr)
 	return CKR_OK;
 }
 
+CK_RV attr_to_ulong(void *dest, CK_ATTRIBUTE_PTR attr)
+{
+	CK_ULONG *out = dest;
+
+	if (!attr->pValue)
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	*out = *(CK_ULONG *)attr->pValue;
+
+	return CKR_OK;
+}
+
 CK_RV attr_get_value(void *dest, const struct template_attr *tattr,
 		     struct libattr_list *attrs, enum attr_req req_overwrite)
 {

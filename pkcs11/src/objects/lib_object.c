@@ -704,3 +704,68 @@ end:
 
 	return ret;
 }
+
+CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			  CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs,
+			  CK_OBJECT_HANDLE_PTR hkey)
+{
+	CK_RV ret;
+	struct libobj *key = NULL;
+	struct libobj_storage *key_storage;
+	struct libattr_list attrs_list = { .attr = attrs, .number = nb_attrs };
+
+	DBG_TRACE("Generate a secret key on session %lu", hsession);
+
+	ret = libsess_validate_mechanism(hsession, mech);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * First create the storage object for the secret key
+	 */
+	ret = obj_allocate(&key);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * Get the optional class of the object
+	 * By default this is a CKO_SECRET_KEY class
+	 */
+	key->class = CKO_SECRET_KEY;
+	ret = attr_get_value(&key->class, &attr_obj_common[OBJ_CLASS],
+			     &attrs_list, OPTIONAL);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (key->class != CKO_SECRET_KEY) {
+		ret = CKR_TEMPLATE_INCONSISTENT;
+		goto end;
+	}
+
+	ret = obj_storage_new(hsession, key, &attrs_list);
+	if (ret != CKR_OK)
+		goto end;
+
+	key_storage = key->object;
+
+	ret = key_secret_key_generate(hsession, mech, &key_storage->subobject,
+				      &attrs_list);
+
+	if (ret == CKR_OK)
+		ret = get_unique_id(&key_storage->unique_id, key);
+
+	if (!key_storage->token && ret == CKR_OK) {
+		ret = libsess_add_object(hsession, key);
+		DBG_TRACE("Add secret key to the session list return %ld", ret);
+	}
+
+end:
+	DBG_TRACE("Generate secret key return %ld", ret);
+
+	if (ret == CKR_OK)
+		*hkey = (CK_OBJECT_HANDLE)key;
+	else
+		obj_free(key);
+
+	return ret;
+}

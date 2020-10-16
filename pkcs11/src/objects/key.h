@@ -68,6 +68,30 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			   void **pub_key, struct libattr_list *pub_attrs,
 			   void **priv_key, struct libattr_list *priv_attrs);
 
+/**
+ * key_secret_key_generate() - Generate a secret key object
+ * @hsession: Session handle
+ * @mech: Key generation mechanism
+ * @key: Secret Key object
+ * @attrs: List of the key attributes
+ *
+ * If key attributes are corrects, create a secret key object.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_OK                        - Success
+ */
+CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			      void **key, struct libattr_list *attrs);
+
 /*
  * key_get_id() - Get the key ID returned by SMW
  * @id: Byte buffer of the key ID

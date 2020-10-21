@@ -145,6 +145,8 @@ case "$op" in
 	--help|-h)
 		usage
 		;;
+	--install)
+		;;
 	*)
 		echo "Checking commit(s):"
 		for c in "$@"; do checkpatch "$c"; done

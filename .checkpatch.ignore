@@ -4,3 +4,5 @@ pkcs11/src/include/pkcs11smw.h
 *.sh
 cmake
 tests/scripts
+tests/lava
+

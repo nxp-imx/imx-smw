@@ -1,0 +1,18 @@
+
+- test:
+    namespace: smw_test
+    timeout:
+      minutes: 10
+    definitions:
+    - from: inline
+      name: smw_install
+      path: inline/smw_install.yaml
+      repository:
+        metadata:
+          name: smw_install
+          description: Prepare target by downloading and installing SMW
+          format: Lava-Test Test Definition 1.0
+        run:
+          steps:
+          - lava-test-case dl_package --shell 'wget REPLACE_PACKAGE_URL/libsmw_package.tar.gz'
+          - lava-test-case install_package --shell 'tar -xvf libsmw_package.tar.gz -C / --warning=no-timestamp'

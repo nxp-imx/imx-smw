@@ -125,12 +125,35 @@ function smw()
     cmd_script="${cmd_script} ${opt_buildtype} ${opt_verbose}"
     cmd_script="${cmd_script} ${opt_zlib} ${opt_seco}"
     cmd_script="${cmd_script} ${opt_teec} ${opt_tadevkit}"
+    cmd_script="${cmd_script} ${opt_test} ${opt_jsonc}"
 
     mkdir -p "${opt_out}"
     cd "${opt_out}"
     printf "Execute %s\n" "${cmd_script}"
     eval "${cmd_script}"
     eval "make"
+}
+
+function jsonc()
+{
+    cmd_script="cmake ${opt_toolchain}"
+    jsonc_script="${script_dir}/build_jsonc.cmake"
+
+    printf "\033[0;32m\n"
+    printf "***************************************\n"
+    printf " Install json-c to %s \n" "${opt_export}"
+    printf "***************************************\n"
+    printf "\033[0m\n"
+
+    if [[ -z ${opt_export} || -z ${opt_src} ]]; then
+        usage_jsonc
+        exit 1
+    fi
+
+    cmd_script="${cmd_script} -DJSONC_SRC_PATH=${opt_src} -DJSONC_ROOT=${opt_export} -P ${jsonc_script}"
+
+    printf "Execute %s\n" "${cmd_script}"
+    eval "${cmd_script}"
 }
 
 function usage_toolchain()
@@ -217,6 +240,22 @@ function usage_smw()
     printf "  To enable TEE subsystem [optional]\n"
     printf "    teec     = OPTEE Client export directory\n"
     printf "    tadevkit = OPTEE TA Development Kit export directory\n"
+    printf "  To enable tests [optionnal]\n"
+    printf "    test\n"
+    printf "    jsonc = JSON-C export directory\n"
+    printf "\n"
+}
+
+function usage_jsonc()
+{
+    printf "\n"
+    printf "To build and install the JSON-C Library\n"
+    printf "  %s jsonc export=[dir] src=[dir] arch=[arch] toolpath=[dir] toolname=[name]\n" "${script_name}"
+    printf "    export   = Export directory\n"
+    printf "    src      = Temporary directory where install sources\n"
+    printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
+    printf "    toolpath = [optional] Toolchain path where installed\n"
+    printf "    toolname = [optional] Toolchain name\n"
     printf "\n"
 }
 
@@ -231,6 +270,7 @@ function usage()
     usage_seco
     usage_teec
     usage_tadevkit
+    usage_jsonc
     usage_smw
 }
 
@@ -314,6 +354,15 @@ do
              opt_verbose="-DVERBOSE=${opt_verbose}"
              ;;
 
+        test)
+             opt_test="-DBUILD_TEST=ON"
+             ;;
+
+        jsonc=*)
+             opt_jsonc="${arg#*=}"
+             opt_jsonc="-DJSONC_ROOT=${opt_jsonc}"
+             ;;
+
         *)
             usage
             exit 1
@@ -348,6 +397,10 @@ case $opt_action in
 
     smw)
         smw
+        ;;
+
+    jsonc)
+        jsonc
         ;;
 
     *)

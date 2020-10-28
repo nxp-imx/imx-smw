@@ -16,6 +16,7 @@ else()
 endif()
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_INSTALL_PREFIX /usr)
 
 if(VERBOSE)
     if(NOT VERBOSE MATCHES "^[0-9]$")

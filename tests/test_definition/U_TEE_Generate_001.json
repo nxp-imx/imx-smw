@@ -1,0 +1,123 @@
+{
+	"subtest 1": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 128,
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"key_id": 1
+	},
+	"subtest 3": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 2
+	},
+	"subtest 4": {
+		"command": "GENERATE_DES",
+		"subsystem": "TEE",
+		"security_size": 56,
+		"key_id": 3
+	},
+	"subtest 5": {
+		"command": "GENERATE_DES3",
+		"subsystem": "TEE",
+		"security_size": 112,
+		"key_id": 4
+	},
+	"subtest 6": {
+		"command": "GENERATE_DES3",
+		"subsystem": "TEE",
+		"security_size": 168,
+		"key_id": 5
+	},
+	"subtest 7": {
+		"command": "GENERATE_NIST",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"key_id": 6
+	},
+	"subtest 8": {
+		"command": "GENERATE_NIST",
+		"subsystem": "TEE",
+		"security_size": 224,
+		"key_id": 7
+	},
+	"subtest 9": {
+		"command": "GENERATE_NIST",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 8
+	},
+	"subtest 10": {
+		"command": "GENERATE_NIST",
+		"subsystem": "TEE",
+		"security_size": 384,
+		"key_id": 9
+	},
+	"subtest 11": {
+		"command": "GENERATE_NIST",
+		"subsystem": "TEE",
+		"security_size": 521,
+		"key_id": 10
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 2
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_id": 2,
+		"depends": 3
+	},
+	"subtest 15": {
+		"command": "DELETE",
+		"key_id": 3,
+		"depends": 4
+	},
+	"subtest 16": {
+		"command": "DELETE",
+		"key_id": 4,
+		"depends": 5
+	},
+	"subtest 17": {
+		"command": "DELETE",
+		"key_id": 5,
+		"depends": 6
+	},
+	"subtest 18": {
+		"command": "DELETE",
+		"key_id": 6,
+		"depends": 7
+	},
+	"subtest 19": {
+		"command": "DELETE",
+		"key_id": 7,
+		"depends": 8
+	},
+	"subtest 20": {
+		"command": "DELETE",
+		"key_id": 8,
+		"depends": 9
+	},
+	"subtest 21": {
+		"command": "DELETE",
+		"key_id": 9,
+		"depends": 10
+	},
+	"subtest 22": {
+		"command": "DELETE",
+		"key_id": 10,
+		"depends": 11
+	}
+}

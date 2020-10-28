@@ -1,0 +1,27 @@
+{
+	"subtest 1": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 128,
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "GENERATE_NIST",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 1
+	},
+	"subtest 3": {
+		"command": "DELETE",
+		"key_id": 1
+	},
+	"subtest 4": { // Try to delete a key already deleted
+		"command": "DELETE",
+		"key_id": 1,
+		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"key_id": 0
+	}
+}

@@ -1,0 +1,102 @@
+{
+	"subtest 1": { // Generate args pointer is NULL
+		"command": "GENERATE_AES",
+		"subsystem": "DEFAULT",
+		"security_size": 128,
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"test_error": "ARGS_NULL"
+	},
+	"subtest 2": { // Key descriptor pointer is NULL
+		"command": "GENERATE_AES",
+		"subsystem": "DEFAULT",
+		"security_size": 128,
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"test_error": "KEY_DESC_NULL"
+	},
+	"subtest 3": { // Key type is not set
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"security_size": 128,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"key_id": 0
+	},
+	"subtest 4": { // Key security size is not set
+		"command": "GENERATE_AES",
+		"subsystem": "DEFAULT",
+		"security_size": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"key_id": 0
+	},
+	"subtest 5": { // Key decriptor ID is set
+		"command": "GENERATE_AES",
+		"subsystem": "DEFAULT",
+		"security_size": 128,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"key_id": 0,
+		"test_error": "KEY_DESC_ID_SET"
+	},
+	"subtest 6": { // Version is not supported
+		"command": "GENERATE_AES",
+		"subsystem": "DEFAULT",
+		"security_size": 128,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
+		"key_id": 0,
+		"version": "1"
+	},
+	"subtest 7": { // Subsystem is not set in the config file
+		"command": "GENERATE_AES",
+		"subsystem": "UNDEFINED",
+		"security_size": 128,
+		"result": "SMW_STATUS_UNKNOWN_NAME",
+		"key_id": 0
+	},
+	"subtest 8": { // Key type is undefined
+		"command": "GENERATE_UNDEFINED",
+		"subsystem": "DEFAULT",
+		"security_size": 128,
+		"result": "SMW_STATUS_UNKNOWN_NAME",
+		"key_id": 0
+	},
+	"subtest 9": { // Attribute list in undefined
+		"command": "GENERATE_AES",
+		"subsystem": "DEFAULT",
+		"security_size": 128,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"key_id": 0,
+		"attributes_list": "persistent"
+	},
+	"subtest 10": { // Key format is undefined
+		"command": "GENERATE_NIST",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"result": "SMW_STATUS_UNKNOWN_NAME",
+		"key_id": 0,
+		"format": "UNDEFINED"
+	},
+	"subtest 11": { // Public key buffer length is too small
+		"command": "GENERATE_NIST",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"key_id": 0,
+		"test_error": "PUB_KEY_BUFF_TOO_SMALL"
+	},
+	"subtest 12": { // Private key buffer is set
+		"command": "GENERATE_NIST",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"key_id": 0,
+		"test_error": "PRIV_KEY_BUFF_SET"
+	},
+	"subtest 13": { // Private key buffer len is set
+		"command": "GENERATE_NIST",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"key_id": 0,
+		"test_error": "PRIV_KEY_BUFF_LEN_SET"
+	}
+}

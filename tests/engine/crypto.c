@@ -3,21 +3,20 @@
  * Copyright 2020 NXP
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "json.h"
 #include "util.h"
-#include "crypto.h"
 #include "types.h"
+#include "crypto.h"
+#include "json_types.h"
 #include "smw_crypto.h"
 #include "smw_status.h"
 
 /**
  * struct hash
  * @algo_name: Hash algo name.
- * @digest_len: @algo_name digest len in bytes.
+ * @digest_len: @algo_name digest length in bytes.
  */
 static struct hash {
 	const char *algo_name;
@@ -30,119 +29,150 @@ static struct hash {
 		  { .algo_name = "SHA512", .digest_len = 64 },
 		  { .algo_name = "SM3", .digest_len = 32 } };
 
-static int get_hash_digest_len(char *algo)
+/**
+ * get_hash_digest_len() - Return digest byte length switch algorithm.
+ * @algo: Algorithm name.
+ * @len: Pointer to digest length to update. Set to 0 if @algo is not found
+ *       in @hash_size.
+ *
+ * Call this function with an undefined algo value is not an error.
+ *
+ * Return:
+ * PASSED	- Success.
+ * -BAD_ARGS	- One of the arguments is bad.
+ */
+static int get_hash_digest_len(char *algo, unsigned int *len)
 {
 	unsigned int i = 0;
 	unsigned int array_size = ARRAY_SIZE(hash_size);
 
-	for (; i < array_size; i++) {
-		if (!strcmp(algo, hash_size[i].algo_name))
-			return hash_size[i].digest_len;
+	if (!algo || !len) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
 	}
 
-	return 0;
+	*len = 0;
+
+	for (; i < array_size; i++) {
+		if (!strcmp(algo, hash_size[i].algo_name)) {
+			*len = hash_size[i].digest_len;
+			break;
+		}
+	}
+
+	return ERR_CODE(PASSED);
 }
 
-int hash(json_object *args)
+int hash(json_object *params, struct common_parameters *common_params,
+	 char *algo_type, int *ret_status)
 {
-	int status = 1;
-	int expected_result = SMW_STATUS_OPERATION_FAILURE;
+	int res = ERR_CODE(PASSED);
 	unsigned int output_len = 0;
-	char *string_input = NULL;
+	char *input_string = NULL;
 	char *digest_string = NULL;
 	unsigned char *hex_message = NULL;
 	unsigned char *output = NULL;
 	unsigned char *expected_digest = NULL;
-	struct smw_hash_args hash_args = { 0 };
-	json_object *version = NULL;
-	json_object *subsystem = NULL;
-	json_object *algo = NULL;
-	json_object *input = NULL;
-	json_object *input_len = NULL;
-	json_object *result = NULL;
-	json_object *digest = NULL;
+	enum arguments_test_err_case test_error = NB_ERROR_CASE;
+	struct smw_hash_args args = { 0 };
+	struct smw_hash_args *smw_hash_args = NULL;
+	json_object *digest_obj = NULL;
+	json_object *input_obj = NULL;
+	json_object *test_err_obj = NULL;
 
-	/* Get hash args objects */
-	json_object_object_get_ex(args, VERSION_OBJ, &version);
-	json_object_object_get_ex(args, SUBSYSTEM_OBJ, &subsystem);
-	json_object_object_get_ex(args, ALGO_OBJ, &algo);
-	json_object_object_get_ex(args, INPUT_OBJ, &input);
-	json_object_object_get_ex(args, INPUT_LEN_OBJ, &input_len);
-	json_object_object_get_ex(args, RES_OBJ, &result);
-
-	/* Fill hash args */
-	hash_args.version = json_object_get_int(version);
-	hash_args.subsystem_name = json_object_get_string(subsystem);
-	hash_args.algo_name = json_object_get_string(algo);
-	hash_args.input_length = json_object_get_int(input_len);
-
-	if (hash_args.input_length) {
-		hex_message = malloc(hash_args.input_length);
-		if (!hex_message) {
-			printf("ERROR in %s. Memory allocation failed\n",
-			       __func__);
-			goto exit;
-		}
+	if (!params || !algo_type || !ret_status || !common_params) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
 	}
 
-	/* Convert input string in hex values */
-	string_input = (char *)json_object_get_string(input);
-	convert_string_to_hex(string_input, hex_message,
-			      hash_args.input_length);
-	hash_args.input = hex_message;
+	/* Specific test cases */
+	if (json_object_object_get_ex(params, TEST_ERR_OBJ, &test_err_obj)) {
+		/*
+		 * If test error is ARGS_NULL nothing has to be done. This
+		 * case call smw_hash with NULL argument.
+		 */
+		res = get_test_err_status(&test_error,
+					  json_object_get_string(test_err_obj));
+		if (res != ERR_CODE(PASSED))
+			return res;
 
-	output_len = get_hash_digest_len((char *)hash_args.algo_name);
-	/*
-	 * Output len can be 0. For example: test with a bad algo name config.
-	 * In this case don't need to allocate output buffer
-	 */
-	if (output_len) {
-		output = malloc(output_len);
-		if (!output) {
-			printf("ERROR in %s. Memory allocation failed\n",
-			       __func__);
-			goto exit;
+		if (test_error != ARGS_NULL) {
+			DBG_PRINT_BAD_PARAM(__func__, "test_error");
+			return ERR_CODE(BAD_PARAM_TYPE);
 		}
-	}
+	} else {
+		args.version = common_params->version;
+		args.algo_name = algo_type;
 
-	hash_args.output = output;
-	hash_args.output_length = output_len;
+		if (!strcmp(common_params->subsystem, "DEFAULT"))
+			args.subsystem_name = NULL;
+		else
+			args.subsystem_name = common_params->subsystem;
+
+		/* 'input' is an optional parameter */
+		if (json_object_object_get_ex(params, INPUT_OBJ, &input_obj)) {
+			input_string =
+				(char *)json_object_get_string(input_obj);
+			res = convert_string_to_hex(input_string, &hex_message);
+			if (res != ERR_CODE(PASSED)) {
+				DBG_PRINT("Can't convert message: %d", res);
+				return res;
+			}
+
+			args.input = hex_message;
+			args.input_length = strlen((char *)hex_message);
+		}
+
+		res = get_hash_digest_len((char *)args.algo_name, &output_len);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+
+		/*
+		 * Output len can be 0. For example: test with a bad algo name
+		 * config. In this case don't need to allocate output buffer.
+		 */
+		if (output_len) {
+			output = malloc(output_len);
+			if (!output) {
+				DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+				goto exit;
+			}
+		}
+
+		args.output = output;
+		args.output_length = output_len;
+		smw_hash_args = &args;
+	}
 
 	/* Call hash function and compare result with expected one */
-	status = smw_hash(&hash_args);
-	expected_result = json_object_get_int(result);
+	*ret_status = smw_hash(smw_hash_args);
 
-	if (status != expected_result) {
-		printf("ERROR in %s. Result is %d and should be %d\n", __func__,
-		       status, expected_result);
-		status = 1;
+	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+		res = ERR_CODE(BAD_RESULT);
 		goto exit;
 	}
 
-	/* If hash operation succeeded, compare digest with expected one */
-	if (!status) {
-		expected_digest = malloc(output_len);
-		if (!expected_digest) {
-			printf("ERROR in %s. Memory allocation failed\n",
-			       __func__);
-			status = 1;
+	/*
+	 * If Hash operation succeeded and digest and input are set in the test
+	 * definition file then compare operation result.
+	 */
+	if (*ret_status == SMW_STATUS_OK && hex_message &&
+	    json_object_object_get_ex(params, DIGEST_OBJ, &digest_obj)) {
+		digest_string = (char *)json_object_get_string(digest_obj);
+		res = convert_string_to_hex(digest_string, &expected_digest);
+		if (res != ERR_CODE(PASSED)) {
+			DBG_PRINT("Can't convert digest: %d", res);
 			goto exit;
 		}
-
-		json_object_object_get_ex(args, DIGEST_OBJ, &digest);
-		digest_string = (char *)json_object_get_string(digest);
-		/* Convert digest string in hex values */
-		convert_string_to_hex(digest_string, expected_digest,
-				      output_len);
 
 		if (strcmp((char *)expected_digest, (char *)output)) {
-			printf("ERROR in %s. Digest is bad\n", __func__);
-			status = 1;
-			goto exit;
+			DBG_PRINT("Digest is bad");
+			res = ERR_CODE(SUBSYSTEM);
 		}
+	} else {
+		res = ERR_CODE(PASSED);
 	}
-
-	status = 0;
 
 exit:
 	if (hex_message)
@@ -154,5 +184,5 @@ exit:
 	if (expected_digest)
 		free(expected_digest);
 
-	return status;
+	return res;
 }

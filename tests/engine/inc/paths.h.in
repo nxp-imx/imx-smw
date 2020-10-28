@@ -1,0 +1,12 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/*
+ * Copyright 2020 NXP
+ */
+
+#ifndef __PATH_H__
+#define __PATH_H__
+
+/* Directory where tests status files are located */
+#define DEFAULT_OUT_STATUS_PATH "${DEFAULT_OUT_STATUS_DIR}/"
+
+#endif /* __PATH_H__ */

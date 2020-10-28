@@ -8,27 +8,45 @@
 
 /**
  * generate_key() - Generate a key.
- * @args: Generate key args.
- * @key_identifiers: Key identifier linked list where smw key identifier
- *                   pointer will be saved.
+ * @params: Generate key parameters.
+ * @common_params: Some parameters common to commands.
+ * @key_type: Type of key to generate.
+ * @key_identifiers: Key identifier linked list where key identifier value
+ *                   will be saved.
+ * @ret_status: Status returned by SMW API.
  *
  * Return:
- * 0	- Success.
- * 1	- Fail.
+ * PASSED			- Success.
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
+ * -MISSING_PARAMS		- Missing mandatory parameters in @params.
+ * -BAD_RESULT			- SMW API status differs from expected one.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * Error code from get_test_err_status().
+ * Error code from set_gen_bad_args().
+ * Error code from set_gen_opt_params().
+ * Error code from key_identifier_add_list().
  */
-int generate_key(json_object *args,
-		 struct key_identifier_list **key_identifiers);
+int generate_key(json_object *params, struct common_parameters *common_params,
+		 char *key_type, struct key_identifier_list **key_identifiers,
+		 int *ret_status);
 
 /**
  * delete_key() - Delete a key.
- * @args: Delete key args.
- * @key_identifiers: Key identifier linked list where smw key identifier
- *                   pointer is saved.
+ * @params: Delete key parameters.
+ * @common_params: Some parameters common to commands.
+ * @key_identifiers: Key identifier linked list where key identifier value
+ *                   is saved.
+ * @ret_status: Status returned by SMW API.
  *
  * Return:
- * 0	- Success.
- * 1	- Fail.
+ * PASSED		- Success.
+ * -MISSING_PARAMS	- Missing mandatory parameters in @params.
+ * -BAD_RESULT		- SMW API status differs from expected one.
+ * -BAD_ARGS		- One of the arguments is bad.
+ * Error code from get_test_err_status().
+ * Error code from set_del_bad_args().
  */
-int delete_key(json_object *args, struct key_identifier_list *key_identifiers);
+int delete_key(json_object *params, struct common_parameters *common_params,
+	       struct key_identifier_list *key_identifiers, int *ret_status);
 
 #endif /* __KEYMGR_H__ */

@@ -1,0 +1,38 @@
+{
+	"subtest 1": { // Delete args pointer is NULL
+		"command": "DELETE",
+		"key_id": 0,
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Key descriptor pointer is NULL
+		"command": "DELETE",
+		"key_id": 0,
+		"test_error": "KEY_DESC_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": { // Key descriptor key type field is set and undefined
+		"command": "DELETE",
+		"key_id": 0,
+		"test_error": "KEY_TYPE_UNDEFINED",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 4": { // Key descriptor security size field is set and doesn't match id
+		"command": "DELETE",
+		"key_id": 0,
+		"test_error": "BAD_KEY_SEC_SIZE",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Key descriptor key type field is set and doesn't match id
+		"command": "DELETE",
+		"key_id": 0,
+		"test_error": "BAD_KEY_TYPE",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Version is not supported
+		"command": "DELETE",
+		"key_id": 0,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
+		"version": "1"
+	}
+}

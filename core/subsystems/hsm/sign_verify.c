@@ -239,7 +239,7 @@ static int verify(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 
-	op_verify_sign_args_t op_verify_sign_args;
+	op_verify_sign_args_t op_verify_sign_args = { 0 };
 	hsm_verification_status_t hsm_verification_status;
 
 	struct smw_crypto_verify_args *verify_args = args;
@@ -296,7 +296,6 @@ static int verify(struct hdl *hdl, void *args)
 		goto end;
 
 	op_verify_sign_args.flags = flags;
-	op_verify_sign_args.reserved = 0;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_verify_signature()\n"
@@ -309,16 +308,15 @@ static int verify(struct hdl *hdl, void *args)
 		       "    message_size: %d\n"
 		       "    signature_size: %d\n"
 		       "    scheme_id: %x\n"
-		       "    flags: %x\n"
-		       "    reserved: %d\n",
+		       "    flags: %x\n",
 		       __func__, __LINE__, hdl->signature_ver,
 		       op_verify_sign_args.key, op_verify_sign_args.message,
 		       op_verify_sign_args.signature,
 		       op_verify_sign_args.key_size,
 		       op_verify_sign_args.message_size,
 		       op_verify_sign_args.signature_size,
-		       op_verify_sign_args.scheme_id, op_verify_sign_args.flags,
-		       op_verify_sign_args.reserved);
+		       op_verify_sign_args.scheme_id,
+		       op_verify_sign_args.flags);
 
 	err = hsm_verify_signature(hdl->signature_ver, &op_verify_sign_args,
 				   &hsm_verification_status);

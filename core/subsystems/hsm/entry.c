@@ -38,13 +38,10 @@ static int open_session(hsm_hdl_t *session_hdl)
 	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
-	open_session_args_t open_session_args;
+	open_session_args_t open_session_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	open_session_args.session_priority = 0;
-	open_session_args.operating_mode = 0;
-	open_session_args.reserved = 0;
 	err = hsm_open_session(&open_session_args, session_hdl);
 	if (err != HSM_NO_ERROR) {
 		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
@@ -76,7 +73,7 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_key_store_args_t open_svc_key_store_args;
+	open_svc_key_store_args_t open_svc_key_store_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -85,7 +82,6 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	open_svc_key_store_args.max_updates_number = 0;
 	/* Key store may not exists. Try to create it */
 	open_svc_key_store_args.flags = HSM_SVC_KEY_STORE_FLAGS_CREATE;
-	open_svc_key_store_args.reserved = 0;
 	err = hsm_open_key_store_service(session_hdl, &open_svc_key_store_args,
 					 key_store_hdl);
 	if (err == HSM_ID_CONFLICT) {
@@ -125,14 +121,10 @@ static int open_key_mgmt_service(hsm_hdl_t key_store_hdl,
 	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_key_management_args_t open_svc_key_management_args;
+	open_svc_key_management_args_t open_svc_key_management_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	open_svc_key_management_args.flags = 0;
-	open_svc_key_management_args.reserved[0] = 0;
-	open_svc_key_management_args.reserved[1] = 0;
-	open_svc_key_management_args.reserved[2] = 0;
 	err = hsm_open_key_management_service(key_store_hdl,
 					      &open_svc_key_management_args,
 					      key_management_hdl);
@@ -166,14 +158,10 @@ static int open_signature_gen_service(hsm_hdl_t key_store_hdl,
 	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_sign_gen_args_t open_svc_sign_gen_args;
+	open_svc_sign_gen_args_t open_svc_sign_gen_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	open_svc_sign_gen_args.flags = 0;
-	open_svc_sign_gen_args.reserved[0] = 0;
-	open_svc_sign_gen_args.reserved[1] = 0;
-	open_svc_sign_gen_args.reserved[2] = 0;
 	err = hsm_open_signature_generation_service(key_store_hdl,
 						    &open_svc_sign_gen_args,
 						    signature_gen_hdl);
@@ -207,14 +195,10 @@ static int open_signature_ver_service(hsm_hdl_t session_hdl,
 	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_sign_ver_args_t open_svc_sign_ver_args;
+	open_svc_sign_ver_args_t open_svc_sign_ver_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	open_svc_sign_ver_args.flags = 0;
-	open_svc_sign_ver_args.reserved[0] = 0;
-	open_svc_sign_ver_args.reserved[1] = 0;
-	open_svc_sign_ver_args.reserved[2] = 0;
 	err = hsm_open_signature_verification_service(session_hdl,
 						      &open_svc_sign_ver_args,
 						      signature_ver_hdl);
@@ -247,14 +231,10 @@ static int open_hash_service(hsm_hdl_t session_hdl, hsm_hdl_t *hash_hdl)
 	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_hash_args_t open_svc_hash_args;
+	open_svc_hash_args_t open_svc_hash_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	open_svc_hash_args.flags = 0;
-	open_svc_hash_args.reserved[0] = 0;
-	open_svc_hash_args.reserved[1] = 0;
-	open_svc_hash_args.reserved[2] = 0;
 	err = hsm_open_hash_service(session_hdl, &open_svc_hash_args, hash_hdl);
 	if (err != HSM_NO_ERROR) {
 		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);

@@ -66,7 +66,7 @@ static int hash(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 
-	op_hash_one_go_args_t op_hash_one_go_args;
+	op_hash_one_go_args_t op_hash_one_go_args = { 0 };
 
 	struct smw_crypto_hash_args *hash_args = args;
 
@@ -79,8 +79,6 @@ static int hash(struct hdl *hdl, void *args)
 	status = set_hash_algo(hash_args->algo_id, &op_hash_one_go_args.algo);
 	if (status != SMW_STATUS_OK)
 		goto end;
-	op_hash_one_go_args.flags = 0;
-	op_hash_one_go_args.reserved = 0;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_hash_one_go()\n"
@@ -91,14 +89,12 @@ static int hash(struct hdl *hdl, void *args)
 		       "    input_size: %d\n"
 		       "    output_size: %d\n"
 		       "    algo: %x\n"
-		       "    flags: %x\n"
-		       "    reserved: %x\n",
+		       "    flags: %x\n",
 		       __func__, __LINE__, hdl->hash, op_hash_one_go_args.input,
 		       op_hash_one_go_args.output,
 		       op_hash_one_go_args.input_size,
 		       op_hash_one_go_args.output_size,
-		       op_hash_one_go_args.algo, op_hash_one_go_args.flags,
-		       op_hash_one_go_args.reserved);
+		       op_hash_one_go_args.algo, op_hash_one_go_args.flags);
 
 	err = hsm_hash_one_go(hdl->hash, &op_hash_one_go_args);
 	if (err != HSM_NO_ERROR) {

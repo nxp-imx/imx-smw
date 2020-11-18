@@ -67,7 +67,6 @@ set(ENV{AR} ${CMAKE_AR})
 
 set(JSONC_BUILD_DIR ${JSONC_ROOT}/jsonc-build)
 execute_process(COMMAND mkdir -p ${JSONC_BUILD_DIR}
-                WORKING_DIRECTORY ${JSONC_ROOT}
                 RESULT_VARIABLE RES)
 
 if(NOT ${RES} EQUAL 0)

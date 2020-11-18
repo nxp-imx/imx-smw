@@ -372,8 +372,10 @@ static bool is_key_id_used(uint32_t id, bool persistent)
 	 * persistent object
 	 */
 	res = is_persistent_key(id, &tmp_handle);
-	if (!res)
+	if (!res) {
+		TEE_CloseObject(tmp_handle);
 		return true;
+	}
 
 	return false;
 }
@@ -684,6 +686,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		}
 
 		key_data->handle = persistent_key_handle;
+		TEE_CloseObject(persistent_key_handle);
 	} else {
 		key_data->handle = key_handle;
 	}

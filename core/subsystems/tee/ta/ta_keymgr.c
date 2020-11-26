@@ -27,7 +27,7 @@
 /**
  * struct key_data - Key data.
  * @key_id: Key ID.
- * @handle: Key handle.
+ * @handle: Key handle (only for transient object).
  * @is_persistent: True if key object is persistent.
  * @key_type: TEE key type.
  * @security_size: Key security size in bits.
@@ -557,7 +557,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
-	TEE_ObjectHandle persistent_key_handle = TEE_HANDLE_NULL;
+	TEE_ObjectHandle pers_key_handle = TEE_HANDLE_NULL;
 	TEE_Attribute key_attr = {};
 	uint32_t object_type = 0;
 	uint32_t attr_count = 0;
@@ -676,7 +676,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 						 sizeof(id),
 						 PERSISTENT_KEY_FLAGS,
 						 key_handle, NULL, 0,
-						 &persistent_key_handle);
+						 &pers_key_handle);
 		TEE_FreeTransientObject(key_handle);
 		key_handle = TEE_HANDLE_NULL;
 
@@ -685,8 +685,8 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 			goto err;
 		}
 
-		key_data->handle = persistent_key_handle;
-		TEE_CloseObject(persistent_key_handle);
+		key_data->handle = NULL;
+		TEE_CloseObject(pers_key_handle);
 	} else {
 		key_data->handle = key_handle;
 	}
@@ -706,8 +706,8 @@ err:
 	if (key_handle != TEE_HANDLE_NULL)
 		TEE_FreeTransientObject(key_handle);
 
-	if (persistent_key_handle != TEE_HANDLE_NULL)
-		TEE_CloseAndDeletePersistentObject(persistent_key_handle);
+	if (pers_key_handle != TEE_HANDLE_NULL)
+		res = TEE_CloseAndDeletePersistentObject1(pers_key_handle);
 
 	return res;
 }
@@ -715,7 +715,7 @@ err:
 TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_ObjectHandle persistent_handle = { 0 };
+	TEE_ObjectHandle hdl = { 0 };
 	uint32_t exp_param_types = 0;
 	uint32_t id = 0;
 	struct key_data *key = NULL;
@@ -735,25 +735,41 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	/* Check if the key is present in the key linked list */
 	key = key_find_list(id);
 	if (key) {
-		/* Free TEE object */
-		if (key->is_persistent)
-			TEE_CloseAndDeletePersistentObject(key->handle);
-		else
+		/* If key is persisent, try to open it and close/delete it */
+		if (key->is_persistent) {
+			res = is_persistent_key(id, &hdl);
+			if (!res) {
+				res = TEE_CloseAndDeletePersistentObject1(hdl);
+				if (res) {
+					EMSG("Failed to delete key: 0x%x", res);
+					return res;
+				}
+			} else {
+				EMSG("Failed to open persistent object: 0x%x",
+				     res);
+				return res;
+			}
+		} else {
 			TEE_FreeTransientObject(key->handle);
+		}
 
 		/* Delete key from key linked list */
 		res = key_del_list(key);
 		if (res)
 			EMSG("Failed to delete key from linked list: 0x%x",
 			     res);
+
+		return res;
+	}
+
+	/* Close and delete persistent object not present in the list */
+	res = is_persistent_key(id, &hdl);
+	if (!res) {
+		res = TEE_CloseAndDeletePersistentObject1(hdl);
+		if (res)
+			EMSG("Failed to delete persistent key: 0x%x", res);
 	} else {
-		/*
-		 * Check if key is a persistent object not present in key
-		 * linked list.
-		 */
-		res = is_persistent_key(id, &persistent_handle);
-		if (!res)
-			TEE_CloseAndDeletePersistentObject(persistent_handle);
+		EMSG("Failed to open persistent object: 0x%x", res);
 	}
 
 	return res;

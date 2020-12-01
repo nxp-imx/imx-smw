@@ -36,12 +36,12 @@ if(DEFINED JSONC_ROOT AND NOT IS_ABSOLUTE ${JSONC_ROOT})
 endif()
 
 find_library(JSONC_LIBRARY json-c
-             PATHS ${JSONC_ROOT}/lib
-             PATH_SUFFIXES usr/lib lib
+             PATHS ${JSONC_ROOT} ${JSONC_ROOT}/usr
+             PATH_SUFFIXES lib
              CMAKE_FIND_ROOT_PATH_BOTH)
 find_path(JSONC_INCLUDE_DIR NAMES json.h json_config.h
-          PATHS ${JSONC_ROOT}/include ${JSONC_ROOT}/include/json-c
-          PATH_SUFFIXES usr/include include
+          PATHS ${JSONC_ROOT} ${JSONC_ROOT}/usr
+          PATH_SUFFIXES include include/json-c
           CMAKE_FIND_ROOT_PATH_BOTH)
 
 include(FindPackageHandleStandardArgs)

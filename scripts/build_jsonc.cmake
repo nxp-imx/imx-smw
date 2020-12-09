@@ -35,25 +35,29 @@ if(NOT IS_ABSOLUTE ${JSONC_SRC_PATH})
     set(JSONC_SRC_PATH "${CMAKE_SOURCE_DIR}/${JSONC_SRC_PATH}")
 endif()
 
-set(JSONC_SRC "${JSONC_SRC_PATH}/json-c-master")
+if(NOT JSONC_VERSION)
+    set(JSONC_VERSION "0.15" CACHE STRING "Default JSON-C Version")
+    set(JSONC_HASH "SHA256=b8d80a1ddb718b3ba7492916237bbf86609e9709fb007e7f7d4322f02341a4c6")
+endif()
+
+set(JSONC_SRC "${JSONC_SRC_PATH}/json-c-${JSONC_VERSION}")
 
 if(NOT EXISTS ${JSONC_SRC})
-    set(JSONC_URL https://github.com/json-c/json-c/archive/master.zip)
-    set(JSONC_ARCHIVE "jsonc-src.zip")
-    set(JSONC_HASH "SHA256=a1225f55bd5872de975344cdb642cf99569fb60c9096b8e4d9bbb624f2127ed5")
+    set(JSONC_URL https://s3.amazonaws.com/json-c_releases/releases)
+    set(JSONC_ARCHIVE "json-c-${JSONC_VERSION}.tar.gz")
 
     find_file(JSONC_ARCHIVE_PATH ${JSONC_ARCHIVE} ${JSONC_SRC_PATH})
     if (NOT ${JSONC_ARCHIVE_PATH})
         message(STATUS "Downloading json-c library sources from " ${JSONC_URL})
         file(DOWNLOAD
-            "${JSONC_URL}"
+            "${JSONC_URL}/${JSONC_ARCHIVE}"
             "${JSONC_SRC_PATH}/${JSONC_ARCHIVE}"
             EXPECTED_HASH ${JSONC_HASH}
             STATUS DL_STATUS)
     endif()
 
     message(STATUS "Extracting ${JSONC_ARCHIVE}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${JSONC_ARCHIVE}
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvzf ${JSONC_ARCHIVE}
                     WORKING_DIRECTORY ${JSONC_SRC_PATH}
                     RESULT_VARIABLE RES)
 
@@ -91,7 +95,7 @@ if(NOT ${RES} EQUAL 0)
     message(FATAL_ERROR "Cannot build json-c library: ${RES}")
 endif()
 
-execute_process(COMMAND mkdir lib
+execute_process(COMMAND mkdir -p usr/lib
                 WORKING_DIRECTORY ${JSONC_ROOT}
                 RESULT_VARIABLE RES)
 
@@ -99,7 +103,7 @@ if(NOT ${RES} EQUAL 0)
     message(FATAL_ERROR "Cannot create ${JSONC_ROOT}/lib: ${RES}")
 endif()
 
-execute_process(COMMAND mkdir include
+execute_process(COMMAND mkdir -p usr/include
                 WORKING_DIRECTORY ${JSONC_ROOT}
                 RESULT_VARIABLE RES)
 
@@ -109,22 +113,22 @@ endif()
 
 file(GLOB jsonc_include ${JSONC_SRC}/*.h ${JSONC_BUILD_DIR}/*.h)
 foreach(file IN LISTS jsonc_include)
-    execute_process(COMMAND cp ${file} ${JSONC_ROOT}/include
+    execute_process(COMMAND cp ${file} ${JSONC_ROOT}/usr/include
                     RESULT_VARIABLE RES)
     if(NOT ${RES} EQUAL 0)
-        message(FATAL_ERROR "Can't copy ${file} in ${JSONC_ROOT}/include: ${RES}")
+        message(FATAL_ERROR "Can't copy ${file} in ${JSONC_ROOT}/usr/include: ${RES}")
     endif()
 endforeach()
 
-message(STATUS "JSON C include files are located in ${JSONC_ROOT}/include")
+message(STATUS "JSON C include files are located in ${JSONC_ROOT}/usr/include")
 
 file(GLOB jsonc_library ${JSONC_BUILD_DIR}/libjson-c*)
 foreach(file IN LISTS jsonc_library)
-    execute_process(COMMAND cp ${file} ${JSONC_ROOT}/lib
+    execute_process(COMMAND cp -P ${file} ${JSONC_ROOT}/usr/lib
                     RESULT_VARIABLE RES)
     if(NOT ${RES} EQUAL 0)
-        message(FATAL_ERROR "Can't copy ${file} in ${JSONC_ROOT}/lib: ${RES}")
+        message(FATAL_ERROR "Can't copy ${file} in ${JSONC_ROOT}/usr/lib: ${RES}")
     endif()
 endforeach()
 
-message(STATUS "JSON C library files are located in ${JSONC_ROOT}/lib")
+message(STATUS "JSON C library files are located in ${JSONC_ROOT}/usr/lib")

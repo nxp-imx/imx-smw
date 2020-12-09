@@ -138,6 +138,7 @@ function smw()
 
         mkdir -p "${tmp_install_dir}"
         eval "make install DESTDIR=${tmp_install_dir} > /dev/null"
+        eval "cp -P ../${opt_jsonc_lib}/libjson-c.so.* ${tmp_install_dir}/usr/lib/."
         eval "cd ${tmp_install_dir} && tar -czf ../${package_name} . && cd .."
         rm -rf "${tmp_install_dir}"
     fi
@@ -160,6 +161,10 @@ function jsonc()
     fi
 
     cmd_script="${cmd_script} -DJSONC_SRC_PATH=${opt_src} -DJSONC_ROOT=${opt_export} -P ${jsonc_script}"
+
+    if [[ ${opt_version} && ${opt_hash} ]]; then
+        cmd_script="${cmd_script} -DJSONC_VERSION=${opt_version} -DJSONC_HASH=${opt_hash}"
+    fi
 
     printf "Execute %s\n" "${cmd_script}"
     eval "${cmd_script}"
@@ -234,7 +239,7 @@ function usage_tadevkit()
 
 function usage_smw()
 {
-  printf "\n"
+    printf "\n"
     printf "To build the Secure Middleware\n"
     printf " - Note: all dependencies must be present\n"
     printf "  %s smw out=[dir] debug package verbose=[lvl] zlib=[dir] seco=[dir] teec=[dir] tadevkit=[dir] arch=[arch] toolpath=[dir] toolname=[name]\n" "${script_name}"
@@ -266,6 +271,8 @@ function usage_jsonc()
     printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
     printf "    toolpath = [optional] Toolchain path where installed\n"
     printf "    toolname = [optional] Toolchain name\n"
+    printf "    version  = [optional] JSON-C Version to upload\n"
+    printf "    hash     = [optional] JSON-C Hash of archive to upload\n"
     printf "\n"
 }
 
@@ -375,7 +382,16 @@ do
 
         jsonc=*)
              opt_jsonc="${arg#*=}"
+             opt_jsonc_lib="${opt_jsonc}/usr/lib"
              opt_jsonc="-DJSONC_ROOT=${opt_jsonc}"
+             ;;
+
+        version=*)
+             opt_version="${arg#*=}"
+             ;;
+
+        hash=*)
+             opt_hash="${arg#*=}"
              ;;
 
         *)

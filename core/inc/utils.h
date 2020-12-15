@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <time.h>
 
 #include "global.h"
 
@@ -96,6 +97,16 @@ static inline int smw_utils_thread_cancel(unsigned long thread)
 		err = g_smw_ctx.ops.thread_cancel(thread);
 
 	return err;
+}
+
+static inline unsigned long smw_utils_time(unsigned long ref)
+{
+	time_t t = time(NULL);
+
+	if (t)
+		return (unsigned long)difftime(t, ref);
+
+	return 0;
 }
 
 #endif /* __UTILS_H__ */

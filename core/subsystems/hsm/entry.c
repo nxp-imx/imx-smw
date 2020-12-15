@@ -18,6 +18,8 @@
 
 #include "common.h"
 
+#define STORAGE_MANAGER_TIMEOUT 1 /* s */
+
 static struct {
 	struct hdl hdl;
 	uint32_t nvm_status;
@@ -309,6 +311,8 @@ static int start_storage_manager(void)
 {
 	int status = SMW_STATUS_OK;
 
+	unsigned long start_time = smw_utils_time(0);
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	ctx.nvm_status = NVM_STATUS_UNDEF;
@@ -325,6 +329,14 @@ static int start_storage_manager(void)
 		SMW_DBG_PRINTF(DEBUG, "Storage manager status: %d\n",
 			       ctx.nvm_status);
 		smw_utils_mutex_unlock(ctx.mutex);
+		if (smw_utils_time(start_time) >= STORAGE_MANAGER_TIMEOUT) {
+			SMW_DBG_PRINTF(DEBUG,
+				       "Storage manager failed to start (%d)\n",
+				       ctx.nvm_status);
+			(void)smw_utils_thread_cancel(ctx.tid);
+			status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
+			goto end;
+		}
 	}
 
 	if (ctx.nvm_status >= NVM_STATUS_STOPPED) {

@@ -15,34 +15,23 @@ visibility: public
 
 context:
   arch: arm64
-  save_uboot_env: True
   support_system_reset: True
   extra_kernel_args: fsck.mode=skip no_console_suspend
 
 actions:
 - deploy:
-    namespace: burning-uboot
-    timeout:
-      minutes: 3
-    to: tftp
-    kernel:
-      url: REPLACE_BOOTIMAGE
-      type: image
-    os: debian
-
+    namespace: smw_test
+    to: uuu
+    images:
+      boot:
+        url: REPLACE_BOOTIMAGE
 - boot:
-    failure_retry: 2
-    namespace: burning-uboot
-    timeout:
-      minutes: 3
-    method: bootloader
-    bootloader: u-boot
+    namespace: smw_test
+    method: uuu
     commands:
-    - if bootp {KERNEL_ADDR} {SERVER_IP}:{KERNEL}; then if tftp {KERNEL_ADDR} {SERVER_IP}:{KERNEL}; then echo ok; else sleep 200; fi; else sleep 200; fi
-    - mmc dev
-    - mmc write {KERNEL_ADDR} REPLACE_UBOOT_MMC_BLK REPLACE_UBOOT_MMC_CNT
-    - echo update-uboot-done
-    prompts: 'update-uboot-done'
+      - uuu: -b sd {boot}
+    timeout:
+      minutes: 20
 
 - deploy:
     namespace: smw_test
@@ -62,7 +51,6 @@ actions:
 - boot:
     failure_retry: 2
     namespace: smw_test
-    connection-namespace: burning-uboot
     method: u-boot
     commands: nfs
     auto_login:

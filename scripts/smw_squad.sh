@@ -12,15 +12,19 @@ smw_ctest_yaml="smw_ctest.yaml"
 
 devops_script="nexus-find-latest-db.sh"
 lavacli_tool="lavacli"
-squad_token="b786b334a22cd4734d4f180813f75bb7d725d491"
+def_squad_token="b786b334a22cd4734d4f180813f75bb7d725d491"
 
 export PATH=/home/bamboo/.local/bin:$PATH
 
 lava_url="${bamboo_lava_url:-https://lava.sw.nxp.com}"
 lava_backend="${bamboo_lava_backend:-lava-https}"
-lava_token="${bamboo_lava_token_secret:-${squad_token}}"
+lava_token="${bamboo_lava_token_secret:-}"
 lava_user="${bamboo_lava_user:-squad-mougins}"
+squad_token="${bamboo_squad_token:-${def_squad_token}}"
 DAILY_BUILD_VERSION="${bamboo_daily_build_version:-"-2"}"
+IMAGE_TYPE="${bamboo_image_type:-"Linux_IMX_Core"}"
+
+use_new_lava=0
 
 function usage_lavacli()
 {
@@ -39,13 +43,15 @@ function usage_submit()
 {
     printf "\n"
     printf "To submit a squad job\n"
-    printf "  %s submit platform script_dir yaml_dir squad_group package_url=[url] ctest_label=[label]\n" "${script_name}"
+    printf "  %s [action] platform script_dir yaml_dir squad_id package_url=[url] ctest_label=[label] job_name=[name]\n" "${script_name}"
+    printf "    action      = [submit] boot with flashing MMC or [submit_uuu] boot with UUU\n"
     printf "    platform    = Platform name\n"
     printf "    script_dir  = Directory where %s is located\n" "${devops_script}"
     printf "    yaml_dir    = Directory where Lava jobs descriptions for Security Middleware are located\n"
     printf "    squad_id    = Suffix of squad tests, can contains more than one job\n"
     printf "    package_url = [optional] URL to custom Security Middleware package\n"
     printf "    ctest_label = [optional] CTest label\n"
+    printf "    job_name    = [optional] Job name added in the job description\n"
     printf "\n"
 }
 
@@ -92,6 +98,10 @@ function parse_parameters
           opt_ctest_label="${arg#*=}"
           ;;
 
+        job_name=*)
+          opt_job_name="${arg#*=}"
+          ;;
+
         *)
           usage
           exit 1
@@ -114,6 +124,15 @@ function check_file
 {
     if [[ ! -e "$1"/"$2" ]]; then
       printf "Cannot find %s in %s\n" "$2" "$1"
+      exit 1
+    fi
+}
+
+function check_url
+{
+    status=$(curl -I -s "$1" | head -n 1)
+    if [[ -w ${status} ]]; then
+      printf "File %s doesn't exist\n" "$1"
       exit 1
     fi
 }
@@ -142,7 +161,7 @@ function install_lavacli
 
     ${lavacli_tool} identities add \
     --token "${lava_token}" \
-    --uri ${lava_url}/RPC2 \
+    --uri "${lava_url}/RPC2" \
     --username "${lava_user}" default
 
     exit 0
@@ -163,6 +182,9 @@ function squad_submit
     yaml_dir=$3
     squad_id=$4
 
+    # Set the default job name in case not set
+    opt_job_name=${platform}
+
     shift 4
 
     parse_parameters "$@"
@@ -178,7 +200,11 @@ function squad_submit
         FILENAME_KERNEL=Image-imx8qxpc0mek.bin
         IMAGE_NAME=imx-image-core-imx8qxpc0mek
         BOARD_ID=imx8qxpc0mek
-        LAVA_DEVICE_TYPE=fsl-imx8qxp-c0-mek-linux
+        if [[ ${use_new_lava} -eq 1 ]]; then
+            LAVA_DEVICE_TYPE=imx8qxp-mek
+        else
+            LAVA_DEVICE_TYPE=fsl-imx8qxp-c0-mek-linux
+        fi
         UBOOT_MMC_BLK=0x40
         UBOOT_MMC_CNT=0x1000
         ;;
@@ -205,6 +231,8 @@ function squad_submit
 
     cat "${yaml_dir}"/"${smw_setup_yaml}" > "${yaml_dir}"/"${smw_tmp_yaml}"
     if [[ ! -z ${opt_package_url} ]]; then
+      check_url "${opt_package_url}/libsmw_package.tar.gz"
+
       cat "${yaml_dir}"/"${smw_package_yaml}" >> "${yaml_dir}"/"${smw_tmp_yaml}"
     fi
 
@@ -221,12 +249,14 @@ function squad_submit
     sed -i "s|REPLACE_CTEST_LABEL|$CTEST_LABEL|" "$JOB_FILE"
 
     NEXUS_REPO=IMX-raw_Linux_Internal_Daily_Build
-    IMAGE_TYPE=Linux_IMX_Core
     ROOTFS_FOLDER_NAME=fsl-imx-internal-wayland
-    JOB_TAG=daas_mougins
     SQUAD_GROUP="mougins-devops"
+    if [[ ${use_new_lava} -eq 1 ]]; then
+      JOB_TAG=mougins-docker-soplpuats50
+    else
+      JOB_TAG=daas_mougins
+    fi
     SQUAD_SLUG=SMW
-    LAVA_JOB_NAME="SMW CI on $BOARD_ID"
 
     "${script_dir}"/"${devops_script}" \
               -l nl \
@@ -238,7 +268,7 @@ function squad_submit
               -m "$FILENAME_BOOTIMAGE" \
               -b "$IMAGE_NAME" \
               -y "$JOB_FILE" \
-              -o "$LAVA_JOB_NAME" \
+              -o "${opt_job_name}" \
               -v "$LAVA_DEVICE_TYPE" \
               -t "$JOB_TAG" \
               -n "$DAILY_BUILD_VERSION"
@@ -263,10 +293,6 @@ function squad_submit
       exit 1
     fi
 
-    if [[ ${lava_backend} == "lava-https" ]]; then
-	    squad_token=${lava_token}
-    fi
-
     squad_url_suffix="${SQUAD_GROUP}"/"${SQUAD_SLUG}"/SMW_"${squad_id}"/"${BOARD_ID}"
 
     curl --noproxy "*" \
@@ -280,6 +306,8 @@ function squad_submit
 
 function squad_result
 {
+    local exit_val=0
+
     if [[ ! -x "$(command -v ${lavacli_tool})" ]]; then
       printf "lavacli not installed"
       exit 1
@@ -305,22 +333,32 @@ function squad_result
       printf "Check jobid %s on platform %s\n" "${job_id}" "${platform}"
 
       # Wait for test to finish
-      lavacli jobs wait "${job_id}" --polling 60 --timeout 3600 || true
+      wait_res="$(${lavacli_tool} jobs wait "${job_id}" --polling 60 --timeout 3600 || true)"
+      if [[ ! -z ${wait_res} ]]; then
+         printf "Error: %s\n" "${wait_res}"
+         exit_val=1
+      fi
 
       # Fetch Juint report
       curl -X GET -H "Authorization: Token ${lava_token}" \
           --output logs/"${platform}"_"${job_id}".xml \
-          ${lava_url}/api/v0.2/jobs/"${job_id}"/junit/
+          "${lava_url}"/api/v0.2/jobs/"${job_id}"/junit/
 
       # Fetch logs
       curl -X GET -H "Authorization: Token ${lava_token}" \
           --output logs/"${platform}"_"${job_id}"_log.txt \
-          ${lava_url}/api/v0.2/jobs/"${job_id}"/logs/
+          "${lava_url}"/api/v0.2/jobs/"${job_id}"/logs/
     done < "${tmp_jobids}"
+
+    if grep -q "\"result\": \"fail\"" logs/*.txt; then
+      exit 1
+    fi
 
     if grep -q "RESULT=fail" logs/*.txt; then
       exit 1
     fi
+
+    exit ${exit_val}
 }
 
 if [[ $# -eq 0 ]]; then
@@ -331,12 +369,21 @@ fi
 opt_action=$1
 shift
 
+if [[ ${lava_url} == "https://lava.sw.nxp.com" ]]; then
+  use_new_lava=1
+fi
+
 case $opt_action in
   install)
     install_lavacli "$@"
     ;;
 
   submit)
+    squad_submit "$@"
+    ;;
+
+  submit_uuu)
+    smw_setup_yaml="smw_setup_uuu.yaml"
     squad_submit "$@"
     ;;
 

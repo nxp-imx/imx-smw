@@ -382,6 +382,9 @@ int unload(void)
 	if (smw_utils_mutex_destroy(&ctx.mutex))
 		status = SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE;
 
+	/* Close Seco Session */
+	seco_nvm_close_session();
+
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

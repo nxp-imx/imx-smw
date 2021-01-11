@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "hsm_api.h"
@@ -36,33 +36,12 @@ key_type_ids[] = { { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 		     .security_size = 384,
 		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_NIST_P384 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-		     .security_size = 521,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_NIST_P521 },
 		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
 		     .security_size = 256,
 		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_256 },
 		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-		     .security_size = 320,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_320 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
 		     .security_size = 384,
 		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_384 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-		     .security_size = 512,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_512 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1,
-		     .security_size = 256,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_T1_256 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1,
-		     .security_size = 320,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_T1_320 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1,
-		     .security_size = 384,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_T1_384 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1,
-		     .security_size = 512,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_T1_512 },
 		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 		     .security_size = 128,
 		     .hsm_key_type = HSM_KEY_TYPE_AES_128 },
@@ -71,13 +50,7 @@ key_type_ids[] = { { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 		     .hsm_key_type = HSM_KEY_TYPE_AES_192 },
 		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 		     .security_size = 256,
-		     .hsm_key_type = HSM_KEY_TYPE_AES_256 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP,
-		     .security_size = 256,
-		     .hsm_key_type = HSM_KEY_TYPE_DSA_SM2_FP_256 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_SM4,
-		     .security_size = 128,
-		     .hsm_key_type = HSM_KEY_TYPE_SM4_128 } };
+		     .hsm_key_type = HSM_KEY_TYPE_AES_256 } };
 
 static int set_key_type(enum smw_config_key_type_id key_type_id,
 			unsigned short security_size, hsm_key_type_t *key_type)

@@ -174,6 +174,7 @@ CK_RV key_ec_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_DEVICE_MEMORY             - Device memory error
  * CKR_DEVICE_ERROR              - Device failure
+ * CKR_FUNCTION_CANCELED         - Application callback canceled function
  * CKR_OK                        - Success
  */
 CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,

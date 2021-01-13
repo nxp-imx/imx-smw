@@ -165,6 +165,7 @@ CK_RV libsess_open(CK_SLOT_ID slotid, CK_FLAGS flags, CK_VOID_PTR application,
 	sess->slotid = slotid;
 	sess->flags = flags;
 	sess->callback = notify;
+	sess->callback_count = 0;
 	sess->application = application;
 
 	/* Initialize object list and its mutex */
@@ -587,4 +588,52 @@ CK_RV libsess_get_query(CK_SESSION_HANDLE hsession, struct libobj_query **query)
 	*query = sess->query;
 
 	return ret;
+}
+
+CK_RV libsess_callback(CK_SESSION_HANDLE hsession, CK_NOTIFICATION event)
+{
+	CK_RV ret_callback;
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+	struct libdevice *dev;
+
+	DBG_TRACE("Call session (%p) callback", sess);
+
+	ret = libsess_get_device(hsession, &dev);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (!sess->callback)
+		return CKR_OK;
+
+	/*
+	 * Increment the callback counter
+	 */
+	ret = libmutex_lock(dev->mutex_session);
+	if (ret == CKR_OK) {
+		if (ADD_OVERFLOW(sess->callback_count, 1,
+				 &sess->callback_count))
+			ret = CKR_GENERAL_ERROR;
+		libmutex_unlock(dev->mutex_session);
+	}
+
+	if (ret != CKR_OK)
+		return ret;
+
+	ret_callback = sess->callback(hsession, event, sess->application);
+
+	/*
+	 * Decrement the callback counter
+	 */
+	ret = libmutex_lock(dev->mutex_session);
+	if (ret != CKR_OK)
+		return ret;
+
+	sess->callback_count--;
+	libmutex_unlock(dev->mutex_session);
+
+	if (ret_callback == CKR_CANCEL)
+		return CKR_FUNCTION_CANCELED;
+
+	return CKR_OK;
 }

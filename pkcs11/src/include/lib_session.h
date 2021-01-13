@@ -224,4 +224,18 @@ CK_RV libsess_set_query(CK_SESSION_HANDLE hsession, struct libobj_query *query);
 CK_RV libsess_get_query(CK_SESSION_HANDLE hsession,
 			struct libobj_query **query);
 
+/**
+ * libsess_callback() - Call the application callback function
+ * @hsession: Session handle
+ * @event: Type of notification callback
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_FUNCTION_CANCELED              - Function must be canceled
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_callback(CK_SESSION_HANDLE hsession, CK_NOTIFICATION event);
+
 #endif /* __LIB_SESSION_H__ */

@@ -516,6 +516,11 @@ CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
 	CK_SLOT_ID slotid;
 	struct mgroup *group;
 
+	/* Before calling SMW, call the application callback */
+	ret = libsess_callback(hsession, CKN_SURRENDER);
+	if (ret != CKR_OK)
+		return ret;
+
 	ret = libsess_get_slotid(hsession, &slotid);
 	if (ret != CKR_OK)
 		return ret;
@@ -539,6 +544,7 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	struct smw_keypair_buffer keypair_buffer = { 0 };
 
 	DBG_TRACE("Import a Key");
+
 	ret = libsess_get_slotid(hsession, &slotid);
 	if (ret != CKR_OK)
 		return ret;

@@ -111,6 +111,7 @@ struct libobj_query {
  * @slotid: Slot/Token ID
  * @flags: Session flags
  * @callback: Application notification callback (setup C_InitToken)
+ * @callback_count: Application callback on-going
  * @application: Reference to the application (setup C_InitToken)
  * @objects: Object created by the session
  * @query: Session Object query
@@ -121,6 +122,7 @@ struct libsess {
 	CK_SLOT_ID slotid;
 	CK_FLAGS flags;
 	CK_NOTIFY callback;
+	CK_ULONG callback_count;
 	CK_VOID_PTR application;
 	struct libobj_query *query;
 	struct libobj_list objects;

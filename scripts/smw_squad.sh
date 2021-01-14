@@ -21,8 +21,14 @@ lava_backend="${bamboo_lava_backend:-lava-https}"
 lava_token="${bamboo_lava_token_secret:-}"
 lava_user="${bamboo_lava_user:-squad-mougins}"
 squad_token="${bamboo_squad_token:-${def_squad_token}}"
-DAILY_BUILD_VERSION="${bamboo_daily_build_version:-"-2"}"
-IMAGE_TYPE="${bamboo_image_type:-"Linux_IMX_Core"}"
+daily_build_version="${bamboo_daily_build_version:-"-2"}"
+image_type="${bamboo_image_type:-"Linux_IMX_Core"}"
+prefix_rootfs="${bamboo_prefix_rootfs:-"imx-image-core-"}"
+prefix_kernel="${bamboo_prefix_kernel:-"Image-"}"
+prefix_boot="${bamboo_prefix_boot:-"imx-boot-"}"
+suffix_boot="${bamboo_suffix_boot:-"-sd.bin-flash_spl"}"
+image_folder="${bamboo_image_folder:-"fsl-imx-internal-wayland"}"
+nexus_repo="${bamboo_nexus_repo:-"IMX-raw_Linux_Internal_Daily_Build"}"
 
 use_new_lava=0
 
@@ -193,12 +199,12 @@ function squad_submit
     # Define the Yaml replacement variable
     # depending on the platform
     #
-    case $platform in
+    case ${platform} in
       imx8qxpc0mek)
-        FILENAME_BOOTIMAGE=imx-boot-imx8qxpc0mek-sd.bin-flash
-        FILENAME_DTB=imx8qxp-mek.dtb
-        FILENAME_KERNEL=Image-imx8qxpc0mek.bin
-        IMAGE_NAME=imx-image-core-imx8qxpc0mek
+        filename_bootimage=${prefix_boot}${platform}${suffix_boot}
+        filename_dtb=imx8qxp-mek.dtb
+        filename_kernel=${prefix_kernel}${platform}.bin
+        rootfs_name=${prefix_rootfs}${platform}
         BOARD_ID=imx8qxpc0mek
         if [[ ${use_new_lava} -eq 1 ]]; then
             LAVA_DEVICE_TYPE=imx8qxp-mek
@@ -236,20 +242,20 @@ function squad_submit
       cat "${yaml_dir}"/"${smw_package_yaml}" >> "${yaml_dir}"/"${smw_tmp_yaml}"
     fi
 
+    # SMW Ctest execution
     cat "${yaml_dir}"/"${smw_ctest_yaml}" >> "${yaml_dir}"/"${smw_tmp_yaml}"
-    JOB_FILE="${yaml_dir}"/"${smw_tmp_yaml}"
+
+    filename_job="${yaml_dir}"/"${smw_tmp_yaml}"
     check_file "${yaml_dir}" "${smw_tmp_yaml}"
 
-    sed -i "s|REPLACE_UBOOT_MMC_BLK|$UBOOT_MMC_BLK|" "$JOB_FILE"
-    sed -i "s|REPLACE_UBOOT_MMC_CNT|$UBOOT_MMC_CNT|" "$JOB_FILE"
+    sed -i "s|REPLACE_UBOOT_MMC_BLK|$UBOOT_MMC_BLK|" "${filename_job}"
+    sed -i "s|REPLACE_UBOOT_MMC_CNT|$UBOOT_MMC_CNT|" "${filename_job}"
 
     if [[ ! -z ${opt_package_url} ]]; then
-      sed -i "s|REPLACE_PACKAGE_URL|$PACKAGE_URL|" "$JOB_FILE"
+      sed -i "s|REPLACE_PACKAGE_URL|$PACKAGE_URL|" "${filename_job}"
     fi
-    sed -i "s|REPLACE_CTEST_LABEL|$CTEST_LABEL|" "$JOB_FILE"
+    sed -i "s|REPLACE_CTEST_LABEL|$CTEST_LABEL|" "${filename_job}"
 
-    NEXUS_REPO=IMX-raw_Linux_Internal_Daily_Build
-    ROOTFS_FOLDER_NAME=fsl-imx-internal-wayland
     SQUAD_GROUP="mougins-devops"
     if [[ ${use_new_lava} -eq 1 ]]; then
       JOB_TAG=mougins-docker-soplpuats50
@@ -260,18 +266,18 @@ function squad_submit
 
     "${script_dir}"/"${devops_script}" \
               -l nl \
-              -r "$NEXUS_REPO" \
-              -i "$IMAGE_TYPE" \
-              -j "$ROOTFS_FOLDER_NAME" \
-              -d "$FILENAME_DTB" \
-              -k "$FILENAME_KERNEL" \
-              -m "$FILENAME_BOOTIMAGE" \
-              -b "$IMAGE_NAME" \
-              -y "$JOB_FILE" \
+              -r "${nexus_repo}" \
+              -i "${image_type}" \
+              -j "${image_folder}" \
+              -d "${filename_dtb}" \
+              -k "${filename_kernel}" \
+              -m "${filename_bootimage}" \
+              -b "${rootfs_name}" \
+              -y "${filename_job}" \
               -o "${opt_job_name}" \
               -v "$LAVA_DEVICE_TYPE" \
               -t "$JOB_TAG" \
-              -n "$DAILY_BUILD_VERSION"
+              -n "${daily_build_version}"
 
     if [[ ! -z ${opt_package_url} ]]; then
         printf "PACKAGE_URL = %s\n" "$PACKAGE_URL"
@@ -285,7 +291,7 @@ function squad_submit
     sleep 5
 
     # Return job id submitted to LAVA
-    job_id="$(${lavacli_tool} jobs submit "$JOB_FILE")"
+    job_id="$(${lavacli_tool} jobs submit "${filename_job}")"
     printf "Job ID %s\n" "${job_id}"
 
     if [[ ${job_id} == "Unable to submit" ]]; then
@@ -334,10 +340,21 @@ function squad_result
 
       # Wait for test to finish
       wait_res="$(${lavacli_tool} jobs wait "${job_id}" --polling 60 --timeout 3600 || true)"
-      if [[ ! -z ${wait_res} ]]; then
-         printf "Error: %s\n" "${wait_res}"
-         exit_val=1
-      fi
+
+      case $wait_res in
+        *"timeout"*)
+           printf "Error: %s\n" "${wait_res}"
+           exit_val=1
+           ;;
+
+        *"Unable"*)
+           printf "Error: %s\n" "${wait_res}"
+           exit_val=1
+           ;;
+
+         *)
+           ;;
+      esac
 
       # Fetch Juint report
       curl -X GET -H "Authorization: Token ${lava_token}" \
@@ -345,12 +362,10 @@ function squad_result
           "${lava_url}"/api/v0.2/jobs/"${job_id}"/junit/
 
       # Fetch logs
-      curl -X GET -H "Authorization: Token ${lava_token}" \
-          --output logs/"${platform}"_"${job_id}"_log.txt \
-          "${lava_url}"/api/v0.2/jobs/"${job_id}"/logs/
+      ${lavacli_tool} jobs logs "${job_id}" > logs/"${platform}"_"${job_id}"_log.txt
     done < "${tmp_jobids}"
 
-    if grep -q "\"result\": \"fail\"" logs/*.txt; then
+    if grep -q "'result': 'fail'" logs/*.txt; then
       exit 1
     fi
 

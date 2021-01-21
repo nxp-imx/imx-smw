@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <string.h>
@@ -68,6 +68,7 @@ int hash(json_object *params, struct common_parameters *common_params,
 {
 	int res = ERR_CODE(PASSED);
 	unsigned int output_len = 0;
+	unsigned int hex_message_len = 0;
 	char *input_string = NULL;
 	char *digest_string = NULL;
 	unsigned char *hex_message = NULL;
@@ -113,14 +114,15 @@ int hash(json_object *params, struct common_parameters *common_params,
 		if (json_object_object_get_ex(params, INPUT_OBJ, &input_obj)) {
 			input_string =
 				(char *)json_object_get_string(input_obj);
-			res = convert_string_to_hex(input_string, &hex_message);
+			res = convert_string_to_hex(input_string, &hex_message,
+						    &hex_message_len);
 			if (res != ERR_CODE(PASSED)) {
 				DBG_PRINT("Can't convert message: %d", res);
 				return res;
 			}
 
 			args.input = hex_message;
-			args.input_length = strlen((char *)hex_message);
+			args.input_length = hex_message_len;
 		}
 
 		res = get_hash_digest_len((char *)args.algo_name, &output_len);
@@ -160,7 +162,8 @@ int hash(json_object *params, struct common_parameters *common_params,
 	if (*ret_status == SMW_STATUS_OK && hex_message &&
 	    json_object_object_get_ex(params, DIGEST_OBJ, &digest_obj)) {
 		digest_string = (char *)json_object_get_string(digest_obj);
-		res = convert_string_to_hex(digest_string, &expected_digest);
+		res = convert_string_to_hex(digest_string, &expected_digest,
+					    &output_len);
 		if (res != ERR_CODE(PASSED)) {
 			DBG_PRINT("Can't convert digest: %d", res);
 			goto exit;

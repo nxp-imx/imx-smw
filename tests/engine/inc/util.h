@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __UTIL_H__
@@ -86,6 +86,9 @@
 		} while (0);                                                   \
 		__ret;                                                         \
 	})
+
+#define BASE64_FORMAT "BASE64"
+#define HEX_FORMAT    "HEX"
 
 /**
  * struct key_identifier_node - Node of key identifier linked list.
@@ -184,6 +187,7 @@ void key_identifier_clear_list(struct key_identifier_list *key_identifiers);
  * @string: Input string.
  * @hex: Hex output string. Allocated by the function. Must be freed by the
  *       caller.
+ * @len: Pointer to @hex length in bytes. Not updated if function failed.
  *
  * This function convert an ASCII string that represents hexadecimal values
  * to hex string.
@@ -193,7 +197,7 @@ void key_identifier_clear_list(struct key_identifier_list *key_identifiers);
  * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
  * -BAD_ARGS			- One of the arguments is bad.
  */
-int convert_string_to_hex(char *string, unsigned char **hex);
+int convert_string_to_hex(char *string, unsigned char **hex, unsigned int *len);
 
 /**
  * get_test_name() - Get test name from test definition file.

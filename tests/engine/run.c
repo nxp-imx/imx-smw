@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <string.h>
@@ -109,6 +109,57 @@ static int execute_hash_cmd(char *cmd, struct json_object *params,
 }
 
 /**
+ * execute_import_cmd() - Execute import key command.
+ * @cmd: Command name.
+ * @params: Command parameters.
+ * @common_params: Some parameters common to commands.
+ * @key_ids: Pointer to key identifiers list.
+ * @status: Pointer to SMW command status.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from import_key().
+ */
+static int execute_import_cmd(char *cmd, struct json_object *params,
+			      struct common_parameters *common_params,
+			      struct key_identifier_list **key_ids, int *status)
+{
+	if (!strcmp(cmd, IMPORT))
+		return import_key(params, common_params, NULL, key_ids, status);
+	else if (!strcmp(cmd, IMPORT_AES))
+		return import_key(params, common_params, AES_KEY, key_ids,
+				  status);
+	else if (!strcmp(cmd, IMPORT_BR1))
+		return import_key(params, common_params, BR1_KEY, key_ids,
+				  status);
+	else if (!strcmp(cmd, IMPORT_BT1))
+		return import_key(params, common_params, BT1_KEY, key_ids,
+				  status);
+	else if (!strcmp(cmd, IMPORT_DES))
+		return import_key(params, common_params, DES_KEY, key_ids,
+				  status);
+	else if (!strcmp(cmd, IMPORT_DES3))
+		return import_key(params, common_params, DES3_KEY, key_ids,
+				  status);
+	else if (!strcmp(cmd, IMPORT_DSA_SM2))
+		return import_key(params, common_params, DSA_SM2_KEY, key_ids,
+				  status);
+	else if (!strcmp(cmd, IMPORT_NIST))
+		return import_key(params, common_params, NIST_KEY, key_ids,
+				  status);
+	else if (!strcmp(cmd, IMPORT_SM4))
+		return import_key(params, common_params, SM4_KEY, key_ids,
+				  status);
+	else if (!strcmp(cmd, IMPORT_UNDEFINED))
+		return import_key(params, common_params, UNDEFINED_KEY, key_ids,
+				  status);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
+/**
  * execute_command() - Execute a subtest command.
  * @cmd: Command name.
  * @params: Command parameters.
@@ -130,6 +181,9 @@ static int execute_command(char *cmd, struct json_object *params,
 	else if (!strncmp(cmd, GENERATE, strlen(GENERATE)))
 		return execute_generate_cmd(cmd, params, common_params, key_ids,
 					    status);
+	else if (!strncmp(cmd, IMPORT, strlen(IMPORT)))
+		return execute_import_cmd(cmd, params, common_params, key_ids,
+					  status);
 	else if (!strncmp(cmd, HASH, strlen(HASH)))
 		return execute_hash_cmd(cmd, params, common_params, status);
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <stdlib.h>
@@ -61,6 +61,9 @@ struct test_err_case {
 			   SET_STATUS_CODE(PUB_KEY_BUFF_TOO_SMALL),
 			   SET_STATUS_CODE(PRIV_KEY_BUFF_SET),
 			   SET_STATUS_CODE(PRIV_KEY_BUFF_LEN_SET),
+			   SET_STATUS_CODE(KEY_BUFFER_NULL),
+			   SET_STATUS_CODE(PUB_DATA_LEN_NOT_SET),
+			   SET_STATUS_CODE(PRIV_DATA_LEN_NOT_SET),
 			   SET_STATUS_CODE(NB_ERROR_CASE) };
 
 #undef SET_STATUS_CODE
@@ -261,16 +264,15 @@ void key_identifier_clear_list(struct key_identifier_list *key_identifiers)
 	free(key_identifiers);
 }
 
-int convert_string_to_hex(char *string, unsigned char **hex)
+int convert_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 {
 	char tmp[2] = { 0 };
 	char *endptr = NULL;
 	int i = 0;
 	int j = 0;
 	int string_len = 0;
-	int hex_len = 0;
 
-	if (!string || !hex) {
+	if (!string || !hex || !len) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -282,18 +284,18 @@ int convert_string_to_hex(char *string, unsigned char **hex)
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	hex_len = string_len / 2;
+	*len = string_len / 2;
 
-	*hex = malloc(hex_len);
+	*hex = malloc(*len);
 	if (!*hex) {
 		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
-	for (; i < string_len && j < hex_len; i += 2, j++) {
+	for (; i < string_len && j < *len; i += 2, j++) {
 		tmp[0] = string[i];
 		tmp[1] = string[i + 1];
-		*hex[j] = strtol(tmp, &endptr, 16);
+		(*hex)[j] = strtol(tmp, &endptr, 16);
 	}
 
 	return ERR_CODE(PASSED);

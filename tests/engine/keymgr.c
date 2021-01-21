@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <string.h>
@@ -224,6 +224,195 @@ exit:
 	return ERR_CODE(PASSED);
 }
 
+/**
+ * set_import_opt_params() - Set key import optional parameters.
+ * @params: Pointer to json parameters.
+ * @key_args: Pointer to smw import key args structure to update.
+ *
+ * Return:
+ * PASSED	- Success.
+ * -BAD_RESULT	- Function from SMW API returned a bad result.
+ * -BAD_ARGS	- One of the arguments is bad.
+ */
+static int set_import_opt_params(json_object *params,
+				 struct smw_import_key_args *key_args)
+{
+	int res = ERR_CODE(PASSED);
+	char *attributes = NULL;
+	unsigned char **attributes_list = NULL;
+	unsigned char *hex_priv_key = NULL;
+	unsigned char *hex_pub_key = NULL;
+	unsigned char *priv_key = NULL;
+	unsigned char *pub_key = NULL;
+	unsigned int priv_len = 0;
+	unsigned int pub_len = 0;
+	unsigned int *attributes_len = NULL;
+	json_object *attr_obj = NULL;
+	json_object *key_format = NULL;
+	json_object *priv_key_obj = NULL;
+	json_object *pub_key_obj = NULL;
+
+	if (!params || !key_args)
+		return ERR_CODE(BAD_ARGS);
+
+	/* Get 'attributes_list' optional parameter */
+	if (json_object_object_get_ex(params, ATTR_LIST_OBJ, &attr_obj)) {
+		attributes = (char *)json_object_get_string(attr_obj);
+		attributes_list =
+			(unsigned char **)&key_args->key_attributes_list;
+		attributes_len = &key_args->key_attributes_list_length;
+		res = convert_string_to_hex(attributes, attributes_list,
+					    attributes_len);
+		if (res != ERR_CODE(PASSED)) {
+			DBG_PRINT("Can't convert message: %d", res);
+			return res;
+		}
+	}
+
+	/* Get 'format' optional parameter */
+	if (json_object_object_get_ex(params, KEY_FORMAT_OBJ, &key_format))
+		key_args->key_descriptor->buffer->format_name =
+			json_object_get_string(key_format);
+
+	/*
+	 * Get 'priv_key' optional parameter.
+	 * The string defines the private key format in hex or base64.
+	 */
+	if (json_object_object_get_ex(params, PRIV_KEY_OBJ, &priv_key_obj)) {
+		priv_key =
+			(unsigned char *)json_object_get_string(priv_key_obj);
+
+		if (key_args->key_descriptor->buffer->format_name &&
+		    !strcmp(key_args->key_descriptor->buffer->format_name,
+			    BASE64_FORMAT)) {
+			key_args->key_descriptor->buffer->private_data =
+				priv_key;
+			key_args->key_descriptor->buffer->private_length =
+				json_object_get_string_len(priv_key_obj);
+		} else {
+			res = convert_string_to_hex((char *)priv_key,
+						    &hex_priv_key, &priv_len);
+			if (res != ERR_CODE(PASSED)) {
+				DBG_PRINT("Can't convert message: %d", res);
+				return res;
+			}
+
+			key_args->key_descriptor->buffer->private_data =
+				hex_priv_key;
+			key_args->key_descriptor->buffer->private_length =
+				priv_len;
+		}
+	}
+
+	/*
+	 * Get 'pub_key' optional parameter.
+	 * The string defines the private key format in hex or base64.
+	 */
+	if (json_object_object_get_ex(params, PUB_KEY_OBJ, &pub_key_obj)) {
+		pub_key = (unsigned char *)json_object_get_string(pub_key_obj);
+
+		if (key_args->key_descriptor->buffer->format_name &&
+		    !strcmp(key_args->key_descriptor->buffer->format_name,
+			    BASE64_FORMAT)) {
+			key_args->key_descriptor->buffer->public_data = pub_key;
+			key_args->key_descriptor->buffer->public_length =
+				json_object_get_string_len(pub_key_obj);
+		} else {
+			res = convert_string_to_hex((char *)pub_key,
+						    &hex_pub_key, &pub_len);
+			if (res != ERR_CODE(PASSED)) {
+				DBG_PRINT("Can't convert message: %d", res);
+				return res;
+			}
+
+			key_args->key_descriptor->buffer->public_data =
+				hex_pub_key;
+			key_args->key_descriptor->buffer->public_length =
+				pub_len;
+		}
+	}
+
+	return ERR_CODE(PASSED);
+}
+
+/**
+ * set_import_bad_args() - Set import key parameters for specific test cases.
+ * @error: Test error id.
+ * @ptr: Pointer to smw import key args structure.
+ * @args: Pointer to smw import key args buffer structure.
+ * @key: Pointer to smw key descriptor structure.
+ * @key_buffer: Pointer to smw keypair buffer structure.
+ *
+ * These configurations represent specific error case using SMW API for a key
+ * import.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ */
+static int set_import_bad_args(enum arguments_test_err_case error,
+			       struct smw_import_key_args **ptr,
+			       struct smw_import_key_args *args,
+			       struct smw_key_descriptor *key,
+			       struct smw_keypair_buffer *key_buffer)
+{
+	if (!ptr || !args || !key || !key_buffer)
+		return ERR_CODE(BAD_ARGS);
+
+	switch (error) {
+	case KEY_DESC_NULL:
+		/* Key descriptor is NULL */
+		args->key_descriptor = NULL;
+		break;
+
+	case KEY_BUFFER_NULL:
+		/* Nothing to do expect set args->key_descriptor */
+		args->key_descriptor = key;
+		break;
+
+	case KEY_DESC_ID_SET:
+		/* Key descriptor @id field is set */
+		args->key_descriptor = key;
+		key->id = 1;
+		break;
+
+	case PUB_DATA_LEN_NOT_SET:
+		/* Buffer size doesn't matter */
+		args->key_descriptor = key;
+		key->buffer = key_buffer;
+		key_buffer->public_data = malloc(key->security_size / 8);
+
+		if (!key_buffer->public_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		break;
+
+	case PRIV_DATA_LEN_NOT_SET:
+		/* Buffer size doesn't matter */
+		args->key_descriptor = key;
+		key->buffer = key_buffer;
+		key_buffer->private_data = malloc(key->security_size / 8);
+
+		if (!key_buffer->private_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		break;
+
+	default:
+		DBG_PRINT_BAD_PARAM(__func__, "test_error");
+		return ERR_CODE(BAD_PARAM_TYPE);
+	}
+
+	*ptr = args;
+	return ERR_CODE(PASSED);
+}
+
 int generate_key(json_object *params, struct common_parameters *common_params,
 		 char *key_type, struct key_identifier_list **key_identifiers,
 		 int *ret_status)
@@ -397,4 +586,124 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 	 */
 
 	return ERR_CODE(PASSED);
+}
+
+int import_key(json_object *params, struct common_parameters *common_params,
+	       char *key_type, struct key_identifier_list **key_identifiers,
+	       int *ret_status)
+{
+	int res = ERR_CODE(PASSED);
+	enum arguments_test_err_case test_error = NB_ERROR_CASE;
+	struct smw_key_descriptor key_descriptor = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
+	struct smw_import_key_args args = { 0 };
+	struct smw_import_key_args *smw_import_args = NULL;
+	struct key_identifier_node *key_node;
+	json_object *key_id_obj = NULL;
+	json_object *size_obj = NULL;
+	json_object *test_err_obj = NULL;
+
+	if (!params || !common_params || !key_identifiers || !ret_status) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	/* 'security_size' is a mandatory parameter */
+	if (!json_object_object_get_ex(params, SEC_SIZE_OBJ, &size_obj)) {
+		DBG_PRINT_MISS_PARAM(__func__, "security_size");
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
+	/* 'key_id' is a mandatory parameter */
+	if (!json_object_object_get_ex(params, KEY_ID_OBJ, &key_id_obj)) {
+		DBG_PRINT_MISS_PARAM(__func__, "key_id");
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
+	args.version = common_params->version;
+
+	if (!strcmp(common_params->subsystem, "DEFAULT"))
+		args.subsystem_name = NULL;
+	else
+		args.subsystem_name = common_params->subsystem;
+
+	key_descriptor.type_name = key_type;
+	key_descriptor.security_size = json_object_get_int(size_obj);
+
+	if (json_object_object_get_ex(params, TEST_ERR_OBJ, &test_err_obj)) {
+		/* Specific test cases parameters */
+		res = get_test_err_status(&test_error,
+					  json_object_get_string(test_err_obj));
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		/*
+		 * If test error is ARGS_NULL nothing has to be done. This
+		 * case call smw_import_key with NULL argument.
+		 */
+		if (test_error != ARGS_NULL) {
+			res = set_import_bad_args(test_error, &smw_import_args,
+						  &args, &key_descriptor,
+						  &key_buffer);
+
+			if (res != ERR_CODE(PASSED))
+				return res;
+		}
+	} else {
+		args.key_descriptor = &key_descriptor;
+		key_descriptor.buffer = &key_buffer;
+
+		/* Set optional parameters */
+		res = set_import_opt_params(params, &args);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		smw_import_args = &args;
+	}
+
+	/* Call import key function and compare result with expected one */
+	*ret_status = smw_import_key(smw_import_args);
+
+	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+		res = ERR_CODE(BAD_RESULT);
+		goto exit;
+	}
+
+	if (*ret_status == SMW_STATUS_OK) {
+		/* Save key identifier if a key is imported */
+		key_node = malloc(sizeof(struct key_identifier_node));
+		if (!key_node) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto exit;
+		}
+
+		key_node->id = json_object_get_int(key_id_obj);
+		key_node->key_identifier = args.key_descriptor->id;
+		key_node->next = NULL;
+
+		res = key_identifier_add_list(key_identifiers, key_node);
+		if (res != ERR_CODE(PASSED))
+			free(key_node);
+	}
+
+exit:
+	/*
+	 * Free key buffers if they are set and if format is HEX (or NULL).
+	 * These buffers are allocated by convert_string_to_hex() function.
+	 */
+	if (!key_buffer.format_name ||
+	    (key_buffer.format_name &&
+	     !strcmp(key_buffer.format_name, HEX_FORMAT))) {
+		if (key_buffer.private_data)
+			free(key_buffer.private_data);
+
+		if (key_buffer.public_data)
+			free(key_buffer.public_data);
+	}
+
+	if (args.key_attributes_list)
+		free((void *)args.key_attributes_list);
+
+	return res;
 }

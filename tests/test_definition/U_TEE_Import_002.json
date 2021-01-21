@@ -1,0 +1,253 @@
+{
+	"subtest 1": { // Import AES 128
+		"command": "IMPORT_AES",
+		"subsystem": "TEE",
+		"security_size": 128,
+		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
+		"key_id": 0
+	},
+	"subtest 2": { // Import AES 192
+		"command": "IMPORT_AES",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"priv_key": "ba75f4d1d9d7cf7f551445d56cc1a8ab2a078e15e049dc2c",
+		"key_id": 1
+	},
+	"subtest 3": { // Import AES 256
+		"command": "IMPORT_AES",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": "6ed76d2d97c69fd1339589523931f2a6cff554b15f738f21ec72dd97a7330907",
+		"key_id": 2
+	},
+	"subtest 4": { // Import DES 56
+		"command": "IMPORT_DES",
+		"subsystem": "TEE",
+		"security_size": 56,
+		"priv_key": "752878397493cb70",
+		"key_id": 3
+	},
+	"subtest 5": { // Import DES3 112
+		"command": "IMPORT_DES3",
+		"subsystem": "TEE",
+		"security_size": 112,
+		"priv_key": "a974cadbcccf5f2b76e4d66026685496",
+		"key_id": 4
+	},
+	"subtest 6": { // Import DES3 168
+		"command": "IMPORT_DES3",
+		"subsystem": "TEE",
+		"security_size": 168,
+		"priv_key": "fe85e7dbfb940f695702d5e835af829a5c5811573c3f2db8",
+		"key_id": 5
+	},
+	"subtest 7": { // Import ECDSA NIST 192 keypair
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"priv_key": "e5ce89a34adddf25ff3bf1ffe6803f57d0220de3118798ea",
+		"pub_key": "8abf7b3ceb2b02438af19543d3e5b1d573fa9ac60085840fa87f80182dcd56a6a061f81f7da393e7cffd5e0738c6b245",
+		"key_id": 6
+	},
+	"subtest 8": { // Import ECDSA NIST 192 public key
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"pub_key": "8abf7b3ceb2b02438af19543d3e5b1d573fa9ac60085840fa87f80182dcd56a6a061f81f7da393e7cffd5e0738c6b245",
+		"key_id": 7
+	},
+	"subtest 9": { // Import ECDSA NIST 224 keypair
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 224,
+		"priv_key": "e7c92383846a4e6887a10498d8eaca2bd0487d985bd7d3f92ce3ab30",
+		"pub_key": "0a3682d2aaa4dd931bee042d32e95755507ab164b12f84843f4b7b96a6313a938eff7a293222e0e3c7b4c6132489b33255a61c3fc1ce2256",
+		"key_id": 8
+	},
+	"subtest 10": { // Import ECDSA NIST 224 public key
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 224,
+		"pub_key": "0a3682d2aaa4dd931bee042d32e95755507ab164b12f84843f4b7b96a6313a938eff7a293222e0e3c7b4c6132489b33255a61c3fc1ce2256",
+		"key_id": 9
+	},
+	"subtest 11": { // Import ECDSA NIST 256 keypair
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": "c9806898a0334916c860748880a541f093b579a9b1f32934d86c363c39800357",
+		"pub_key": "d0720dc691aa80096ba32fed1cb97c2b620690d06de0317b8618d5ce65eb728f9681b517b1cda17d0d83d335d9c4a8a9a9b0b1b3c7106d8f3c72bc5093dc275f",
+		"key_id": 10
+	},
+	"subtest 12": { // Import ECDSA NIST 256 public key
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"pub_key": "d0720dc691aa80096ba32fed1cb97c2b620690d06de0317b8618d5ce65eb728f9681b517b1cda17d0d83d335d9c4a8a9a9b0b1b3c7106d8f3c72bc5093dc275f",
+		"key_id": 11
+	},
+	"subtest 13": { // Import ECDSA NIST 384 keypair
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 384,
+		"priv_key": "5394f7973ea868c52bf3ff8d8ceeb4db90a683653b12485d5f627c3ce5abd8978fc9673d14a71d925747931662493c37",
+		"pub_key": "fd3c84e5689bed270e601b3d80f90d67a9ae451cce890f53e583229ad0e2ee645611fa9936dfa45306ec18066774aa24b83ca4126cfc4c4d1d18a4b6c21c7f699d5123dd9c24f66f833846eeb58296196b42ec06425db5b70a4b81b7fcf705a0",
+		"key_id": 12
+	},
+	"subtest 14": { // Import ECDSA NIST 384 public key
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 384,
+		"pub_key": "fd3c84e5689bed270e601b3d80f90d67a9ae451cce890f53e583229ad0e2ee645611fa9936dfa45306ec18066774aa24b83ca4126cfc4c4d1d18a4b6c21c7f699d5123dd9c24f66f833846eeb58296196b42ec06425db5b70a4b81b7fcf705a0",
+		"key_id": 13
+	},
+	"subtest 15": { // Import ECDSA NIST 521 keypair
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 521,
+		"priv_key": "0184258ea667ab99d09d4363b3f51384fc0acd2f3b66258ef31203ed30363fcda7661b6a817daaf831415a1f21cb1cda3a74cc1865f2ef40f683c14174ea72803cff",
+		"pub_key": "019ee818048f86ada6db866b7e49a9b535750c3673cb61bbfe5585c2df263860fe4d8aa8f7486aed5ea2a4d733e346eaefa87ac515c78b9a986ee861584926ce486001b6809c89c0aa7fb057a32acbb9ab4d7b06ba39dba8833b9b54424add2956e95fe48b7fbf60c3df5172bf386f2505f1e1bb2893da3b96d4f5ae78f2544881a238f7",
+		"key_id": 14
+	},
+	"subtest 16": { // Import ECDSA NIST 521 public key
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 521,
+		"pub_key": "019ee818048f86ada6db866b7e49a9b535750c3673cb61bbfe5585c2df263860fe4d8aa8f7486aed5ea2a4d733e346eaefa87ac515c78b9a986ee861584926ce486001b6809c89c0aa7fb057a32acbb9ab4d7b06ba39dba8833b9b54424add2956e95fe48b7fbf60c3df5172bf386f2505f1e1bb2893da3b96d4f5ae78f2544881a238f7",
+		"key_id": 15
+	},
+	"subtest 17": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 18": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 2
+	},
+	"subtest 19": {
+		"command": "DELETE",
+		"key_id": 2,
+		"depends": 3
+	},
+	"subtest 20": {
+		"command": "DELETE",
+		"key_id": 3,
+		"depends": 4
+	},
+	"subtest 21": {
+		"command": "DELETE",
+		"key_id": 4,
+		"depends": 5
+	},
+	"subtest 22": {
+		"command": "DELETE",
+		"key_id": 5,
+		"depends": 6
+	},
+	"subtest 23": {
+		"command": "DELETE",
+		"key_id": 6,
+		"depends": 7
+	},
+	"subtest 24": {
+		"command": "DELETE",
+		"key_id": 7,
+		"depends": 8
+	},
+	"subtest 25": {
+		"command": "DELETE",
+		"key_id": 8,
+		"depends": 9
+	},
+	"subtest 26": {
+		"command": "DELETE",
+		"key_id": 9,
+		"depends": 10
+	},
+	"subtest 27": {
+		"command": "DELETE",
+		"key_id": 10,
+		"depends": 11
+	},
+	"subtest 28": {
+		"command": "DELETE",
+		"key_id": 11,
+		"depends": 12
+	},
+	"subtest 29": {
+		"command": "DELETE",
+		"key_id": 12,
+		"depends": 13
+	},
+	"subtest 30": {
+		"command": "DELETE",
+		"key_id": 13,
+		"depends": 14
+	},
+	"subtest 31": {
+		"command": "DELETE",
+		"key_id": 14,
+		"depends": 15
+	},
+	"subtest 32": {
+		"command": "DELETE",
+		"key_id": 15,
+		"depends": 16
+	},
+	"subtest 33": { // Import AES 128 in base64 format
+		"command": "IMPORT_AES",
+		"subsystem": "TEE",
+		"security_size": 128,
+		"priv_key": "H45Jc5U/P7C9axZmLpo8Fw==",
+		"format": "BASE64",
+		"key_id": 16
+	},
+	"subtest 34": { // Import ECDSA NIST 192 keypair in base64 format
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"priv_key": "5c6Jo0rd3yX/O/H/5oA/V9AiDeMRh5jq",
+		"pub_key": "ir97POsrAkOK8ZVD0+Wx1XP6msYAhYQPqH+AGC3NVqagYfgffaOT58/9Xgc4xrJF",
+		"format": "BASE64",
+		"key_id": 17
+	},
+	"subtest 35": {
+		"command": "DELETE",
+		"key_id": 16,
+		"depends": 33
+	},
+	"subtest 36": {
+		"command": "DELETE",
+		"key_id": 17,
+		"depends": 34
+	},
+	"subtest 37": { // Import AES 128 key as persistent object
+		"command": "IMPORT_AES",
+		"subsystem": "TEE",
+		"security_size": 128,
+		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
+		"key_id": 18,
+		"attributes_list": "50455253495354454e54000000" // "PERSISTENT\000"
+	},
+	"subtest 38": { // Import ECDSA NIST 192 Keypair as persistent object
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"priv_key": "e5ce89a34adddf25ff3bf1ffe6803f57d0220de3118798ea",
+		"pub_key": "8abf7b3ceb2b02438af19543d3e5b1d573fa9ac60085840fa87f80182dcd56a6a061f81f7da393e7cffd5e0738c6b245",
+		"key_id": 19,
+		"attributes_list": "50455253495354454e54000000" // "PERSISTENT\000"
+	},
+	"subtest 39": {
+		"command": "DELETE",
+		"key_id": 18,
+		"depends": 37
+	},
+	"subtest 40": {
+		"command": "DELETE",
+		"key_id": 19,
+		"depends": 38
+	}
+}

@@ -1,0 +1,60 @@
+{
+	"subtest 1": { // Key type is not supported
+		"command": "IMPORT_BR1",
+		"subsystem": "TEE",
+		"security_size": 160,
+		"priv_key": "0123456789012345678901234567890123456789",
+		"pub_key": "01234567890123456789012345678901234567890123456789012345678901234567890123456789",
+		"key_id": 0,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 2": { // Import only ECDSA private key
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"priv_key": "012345678901234567890123456789012345678901234567",
+		"key_id": 0,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 3": { // Import symmetric key without private key set
+		"command": "IMPORT_AES",
+		"subsystem": "TEE",
+		"security_size": 128,
+		"pub_key": "0123456789",
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": { // Import symmetric key with public key set
+		"command": "IMPORT_AES",
+		"subsystem": "TEE",
+		"security_size": 128,
+		"priv_key": "0123456789",
+		"pub_key": "0123456789",
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Key size is not supported by TEE
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 512,
+		"pub_key": "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123345601234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901233456",
+		"key_id": 0,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 6": { // Private buffer size doesn't match key security size
+		"command": "IMPORT_AES",
+		"subsystem": "TEE",
+		"security_size": 128,
+		"priv_key": "0123456789",
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": { // Public buffer size doesn't match key security size
+		"command": "IMPORT_NIST",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"pub_key": "0123456789",
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

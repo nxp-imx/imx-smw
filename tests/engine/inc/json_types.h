@@ -14,6 +14,7 @@
 #define INPUT_OBJ      "input"
 #define KEY_FORMAT_OBJ "format"
 #define KEY_ID_OBJ     "key_id"
+#define PRIV_KEY_OBJ   "priv_key"
 #define PUB_KEY_OBJ    "pub_key"
 #define RES_OBJ	       "result"
 #define SEC_SIZE_OBJ   "security_size"
@@ -48,18 +49,31 @@
 #define HASH_SHA512	   "HASH_SHA512"
 #define HASH_SM3	   "HASH_SM3"
 #define HASH_UNDEFINED	   "HASH_UNDEFINED"
+#define IMPORT		   "IMPORT"
+#define IMPORT_AES	   "IMPORT_AES"
+#define IMPORT_BR1	   "IMPORT_BR1"
+#define IMPORT_BT1	   "IMPORT_BT1"
+#define IMPORT_DES	   "IMPORT_DES"
+#define IMPORT_DES3	   "IMPORT_DES3"
+#define IMPORT_DSA_SM2	   "IMPORT_DSA_SM2"
+#define IMPORT_NIST	   "IMPORT_NIST"
+#define IMPORT_SM4	   "IMPORT_SM4"
+#define IMPORT_UNDEFINED   "IMPORT_UNDEFINED"
 
 /* 'test_error' parameter values */
 enum arguments_test_err_case {
 	ARGS_NULL = 0,
-	KEY_DESC_NULL,
-	KEY_TYPE_UNDEFINED,
 	BAD_KEY_SEC_SIZE,
 	BAD_KEY_TYPE,
+	KEY_BUFFER_NULL,
 	KEY_DESC_ID_SET,
-	PUB_KEY_BUFF_TOO_SMALL,
-	PRIV_KEY_BUFF_SET,
+	KEY_DESC_NULL,
+	KEY_TYPE_UNDEFINED,
+	PRIV_DATA_LEN_NOT_SET,
 	PRIV_KEY_BUFF_LEN_SET,
+	PRIV_KEY_BUFF_SET,
+	PUB_DATA_LEN_NOT_SET,
+	PUB_KEY_BUFF_TOO_SMALL,
 	NB_ERROR_CASE,
 };
 

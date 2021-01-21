@@ -243,6 +243,39 @@ static int import_key(struct hdl *hdl, void *args)
 	return status;
 }
 
+/**
+ * check_export_key_config() - Check key descriptor configuration.
+ * @key_descriptor: Pointer to key descriptor.
+ *
+ * HSM secure subsystem only exports ECDSA NIST and BR1 public key.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Configuration ok.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Configuration not supported.
+ */
+static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
+{
+	if (key_descriptor->identifier.type_id !=
+		    SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST &&
+	    key_descriptor->identifier.type_id !=
+		    SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1) {
+		SMW_DBG_PRINTF(
+			ERROR,
+			"%s: HSM only exports ECDSA NIST and BR1 public key\n",
+			__func__);
+		return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	}
+
+	if (smw_keymgr_get_private_data(key_descriptor) ||
+	    !smw_keymgr_get_public_data(key_descriptor)) {
+		SMW_DBG_PRINTF(ERROR, "%s: HSM only exports public key\n",
+			       __func__);
+		return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	}
+
+	return SMW_STATUS_OK;
+}
+
 static int export_key(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OK;
@@ -262,12 +295,15 @@ static int export_key(struct hdl *hdl, void *args)
 	unsigned char *public_data = smw_keymgr_get_public_data(key_descriptor);
 	unsigned char *out_key = NULL;
 	unsigned int out_size = 0;
+	unsigned int pub_data_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_ASSERT(export_key_args);
 
-	SMW_DBG_ASSERT(public_data);
+	status = check_export_key_config(key_descriptor);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	status = smw_keymgr_get_buffers_lengths(key_type_id, security_size,
 						SMW_KEYMGR_FORMAT_ID_HEX,
@@ -323,18 +359,21 @@ static int export_key(struct hdl *hdl, void *args)
 
 	SMW_DBG_PRINTF(DEBUG, "HSM Key identifier: %d\n", key_identifier->id);
 
+	/* Get public key buffer length */
+	pub_data_len = smw_keymgr_get_public_length(key_descriptor);
+
 	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
 		status = smw_utils_base64_encode(out_key, out_size, public_data,
-						 &out_size);
+						 &pub_data_len);
 		if (status != SMW_STATUS_OK)
 			goto end;
 	}
 
-	smw_keymgr_set_public_length(key_descriptor, out_size);
+	smw_keymgr_set_public_length(key_descriptor, pub_data_len);
 	smw_keymgr_set_private_length(key_descriptor, 0);
 
 	SMW_DBG_PRINTF(DEBUG, "Out key:\n");
-	SMW_DBG_HEX_DUMP(DEBUG, public_data, out_size, 4);
+	SMW_DBG_HEX_DUMP(DEBUG, public_data, pub_data_len, 4);
 
 end:
 	if (out_key && out_key != public_data)

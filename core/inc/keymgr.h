@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <stdint.h>
@@ -179,6 +179,37 @@ smw_keymgr_get_public_data(struct smw_keymgr_descriptor *descriptor);
  */
 unsigned int
 smw_keymgr_get_public_length(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_get_private_data() - Return the address of the private Key buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the address of the private Key buffer.
+ * If the @descriptor field @pub is NULL or if the @pub field @buffer is NULL,
+ * the function returns NULL.
+ *
+ * Return:
+ * NULL
+ * address of the private Key buffer
+ */
+unsigned char *
+smw_keymgr_get_private_data(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_get_private_length() - Return the length of the private Key
+ *                                   buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the length of the private Key buffer.
+ * If the @descriptor field @pub is NULL or if the @pub field @buffer is NULL,
+ * the function returns 0.
+ *
+ * Return:
+ * 0
+ * length of the private Key buffer.
+ */
+unsigned int
+smw_keymgr_get_private_length(struct smw_keymgr_descriptor *descriptor);
 
 /**
  * smw_keymgr_set_public_data() - Set the address of the public Key buffer.

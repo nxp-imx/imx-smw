@@ -637,6 +637,28 @@ smw_keymgr_get_public_length(struct smw_keymgr_descriptor *descriptor)
 	return public_length;
 }
 
+inline unsigned char *
+smw_keymgr_get_private_data(struct smw_keymgr_descriptor *descriptor)
+{
+	unsigned char *private_data = NULL;
+
+	if (descriptor->pub && descriptor->pub->buffer)
+		private_data = descriptor->pub->buffer->private_data;
+
+	return private_data;
+}
+
+inline unsigned int
+smw_keymgr_get_private_length(struct smw_keymgr_descriptor *descriptor)
+{
+	unsigned int private_length = 0;
+
+	if (descriptor->pub && descriptor->pub->buffer)
+		private_length = descriptor->pub->buffer->private_length;
+
+	return private_length;
+}
+
 inline void smw_keymgr_set_public_data(struct smw_keymgr_descriptor *descriptor,
 				       unsigned char *public_data)
 {
@@ -719,7 +741,7 @@ int smw_keymgr_get_buffers_lengths(enum smw_config_key_type_id type_id,
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
-		public_length = ((security_size + 7) / 8) * 2;
+		public_length = BITS_TO_BYTES_SIZE(security_size) * 2;
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
@@ -755,6 +777,7 @@ int smw_keymgr_get_buffers_lengths(enum smw_config_key_type_id type_id,
 
 	if (public_buffer_length)
 		*public_buffer_length = public_length;
+
 	if (private_buffer_length)
 		//TODO: export of pivate key is not supported now
 		*private_buffer_length = 0;

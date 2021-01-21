@@ -1,23 +1,81 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 /**
  * struct smw_crypto_hash_args - Hash arguments
  * @algo_id: Algorithm ID
- * @input: Location of the stream to be hashed
- * @input_length: Length of the stream to be hashed
- * @output: Location where the digest has to be written
- * @output_length: Maximum length of the digest
+ * @pub: Pointer to the public API arguments structure
  *
  */
 struct smw_crypto_hash_args {
 	/* Inputs */
 	enum smw_config_hash_algo_id algo_id;
-	unsigned char *input;
-	unsigned int input_length;
-	/* Outputs */
-	unsigned char *output;
-	unsigned int output_length;
+	struct smw_hash_args *pub;
 };
+
+/**
+ * smw_crypto_get_hash_input_data() - Return the address of the Hash input buffer.
+ * @args: Pointer to the internal Hash args structure.
+ *
+ * This function returns the address of the Hash input buffer.
+ *
+ * Return:
+ * NULL
+ * address of the Hash input buffer.
+ */
+unsigned char *
+smw_crypto_get_hash_input_data(struct smw_crypto_hash_args *args);
+
+/**
+ * smw_crypto_get_hash_input_length() - Return the length of the Hash input buffer.
+ * @args: Pointer to the internal Hash args structure.
+ *
+ * This function returns the length of the Hash input buffer.
+ *
+ * Return:
+ * 0
+ * length of the Hash input buffer.
+ */
+unsigned int
+smw_crypto_get_hash_input_length(struct smw_crypto_hash_args *args);
+
+/**
+ * smw_crypto_get_hash_output_data() - Return the address of the Hash output buffer.
+ * @args: Pointer to the internal Hash args structure.
+ *
+ * This function returns the address of the Hash output buffer.
+ *
+ * Return:
+ * NULL
+ * address of the Hash output buffer.
+ */
+unsigned char *
+smw_crypto_get_hash_output_data(struct smw_crypto_hash_args *args);
+
+/**
+ * smw_crypto_get_hash_output_length() - Return the length of the Hash output buffer.
+ * @args: Pointer to the internal Hash args structure.
+ *
+ * This function returns the length of the Hash output buffer.
+ *
+ * Return:
+ * 0
+ * length of the Hash output buffer.
+ */
+unsigned int
+smw_crypto_get_hash_output_length(struct smw_crypto_hash_args *args);
+
+/**
+ * smw_crypto_set_hash_output_length() - Set the length of the Hash output buffer.
+ * @args: Pointer to the internal Hash args structure.
+ * @output_length: Length of the Hash output buffer.
+ *
+ * This function sets the length of the Hash output buffer.
+ *
+ * Return:
+ * none.
+ */
+void smw_crypto_set_hash_output_length(struct smw_crypto_hash_args *args,
+				       unsigned int output_length);

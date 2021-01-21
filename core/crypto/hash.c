@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_status.h"
@@ -39,14 +39,60 @@ static int hash_convert_args(struct smw_hash_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	converted_args->input = args->input;
-	converted_args->input_length = args->input_length;
-	converted_args->output = args->output;
-	converted_args->output_length = args->output_length;
+	converted_args->pub = args;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+unsigned char *smw_crypto_get_hash_input_data(struct smw_crypto_hash_args *args)
+{
+	unsigned char *input_data = NULL;
+
+	if (args->pub)
+		input_data = args->pub->input;
+
+	return input_data;
+}
+
+unsigned int smw_crypto_get_hash_input_length(struct smw_crypto_hash_args *args)
+{
+	unsigned int input_length = 0;
+
+	if (args->pub)
+		input_length = args->pub->input_length;
+
+	return input_length;
+}
+
+unsigned char *
+smw_crypto_get_hash_output_data(struct smw_crypto_hash_args *args)
+{
+	unsigned char *output_data = NULL;
+
+	if (args->pub)
+		output_data = args->pub->output;
+
+	return output_data;
+}
+
+unsigned int
+smw_crypto_get_hash_output_length(struct smw_crypto_hash_args *args)
+{
+	unsigned int output_length = 0;
+
+	if (args->pub)
+		output_length = args->pub->output_length;
+
+	return output_length;
+}
+
+void smw_crypto_set_hash_output_length(struct smw_crypto_hash_args *args,
+				       unsigned int output_length)
+{
+	if (args->pub)
+		args->pub->output_length = output_length;
 }
 
 int smw_hash(struct smw_hash_args *args)

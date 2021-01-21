@@ -20,5 +20,17 @@
 		"command": "HASH_UNDEFINED",
 		"subsystem": "DEFAULT",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 5": { // Digest buffer is NULL
+		"command": "HASH_MD5",
+		"subsystem": "DEFAULT",
+		"test_error": "DIGEST_BUFFER_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Digest length is zero
+		"command": "HASH_MD5",
+		"subsystem": "DEFAULT",
+		"test_error": "DIGEST_LENGTH_ZERO",
+		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

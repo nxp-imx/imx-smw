@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __JSON_TYPES_H__
@@ -30,6 +30,10 @@
 
 /* List of commands */
 #define DELETE		   "DELETE"
+#define EXPORT		   "EXPORT"
+#define EXPORT_KEYPAIR	   "EXPORT_KEYPAIR"
+#define EXPORT_PRIVATE	   "EXPORT_PRIVATE"
+#define EXPORT_PUBLIC	   "EXPORT_PUBLIC"
 #define GENERATE	   "GENERATE"
 #define GENERATE_AES	   "GENERATE_AES"
 #define GENERATE_BR1	   "GENERATE_BR1"
@@ -63,18 +67,32 @@
 /* 'test_error' parameter values */
 enum arguments_test_err_case {
 	ARGS_NULL = 0,
+	BAD_FORMAT,
+	BAD_ATTRIBUTES,
 	BAD_KEY_SEC_SIZE,
 	BAD_KEY_TYPE,
+	BAD_VERSION,
 	KEY_BUFFER_NULL,
+	KEY_DESC_ID_NOT_SET,
 	KEY_DESC_ID_SET,
 	KEY_DESC_NULL,
 	KEY_TYPE_UNDEFINED,
+	NO_BUFFER_SET,
 	PRIV_DATA_LEN_NOT_SET,
 	PRIV_KEY_BUFF_LEN_SET,
 	PRIV_KEY_BUFF_SET,
 	PUB_DATA_LEN_NOT_SET,
 	PUB_KEY_BUFF_TOO_SMALL,
+	WRONG_SECURITY_SIZE,
+	WRONG_TYPE_NAME,
 	NB_ERROR_CASE,
+};
+
+/* Type of export */
+enum export_type {
+	EXP_KEYPAIR,
+	EXP_PRIV,
+	EXP_PUB,
 };
 
 #endif /* __JSON_TYPES_H__ */

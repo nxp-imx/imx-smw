@@ -1,0 +1,80 @@
+{
+	"subtest 1": { // Export args pointer is NULL
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Key descriptor pointer is NULL
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "KEY_DESC_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": { // Key descriptor ID is not set
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "KEY_DESC_ID_NOT_SET",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": { // Key descriptor buffer is NULL
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "KEY_BUFFER_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // No buffers are set
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "NO_BUFFER_SET",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Public buffer lenght is not set
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "PUB_DATA_LEN_NOT_SET",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": { // Private buffer lenght is not set
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "PRIV_DATA_LEN_NOT_SET",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": { // Bad version
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "BAD_VERSION",
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 9": { // Buffer key format is undefined
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "BAD_FORMAT",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 10": { // Key descriptor type name doesn't match key identifier
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "WRONG_TYPE_NAME",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": { // Key descriptor security size doesn't match key identifier
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "WRONG_SECURITY_SIZE",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 12": { // Attributes list is undefined
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "BAD_ATTRIBUTES",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 13": { // Public key buffer is too small
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"test_error": "PUB_KEY_BUFF_TOO_SMALL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

@@ -6,6 +6,8 @@
 #ifndef __KEYMGR_H__
 #define __KEYMGR_H__
 
+#include "json_types.h"
+
 /**
  * generate_key() - Generate a key.
  * @params: Generate key parameters.
@@ -72,5 +74,29 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 int import_key(json_object *params, struct common_parameters *common_params,
 	       char *key_type, struct key_identifier_list **key_identifiers,
 	       int *ret_status);
+
+/**
+ * export_key() - Export a key.
+ * @params: Import key parameters.
+ * @common_params: Some parameters common to commands.
+ * @export_type: Type of key to export (private, public. keypair).
+ * @key_identifiers: Key identifier linked list where key identifier value
+ *                   will be saved.
+ * @ret_status: Status returned by SMW API.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
+ * -MISSING_PARAMS		- Missing mandatory parameters in @params.
+ * -BAD_RESULT			- SMW API status differs from expected one.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -SUBSYSTEM			- Expected exported key is wrong.
+ * Error code from get_test_err_status().
+ * Error code from set_export_bad_args().
+ * Error code from set_import_opt_params().
+ */
+int export_key(json_object *params, struct common_parameters *common_params,
+	       enum export_type export_type,
+	       struct key_identifier_list *key_identifiers, int *ret_status);
 
 #endif /* __KEYMGR_H__ */

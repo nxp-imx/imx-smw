@@ -10,7 +10,6 @@
 #include "types.h"
 #include "keymgr.h"
 #include "crypto.h"
-#include "json_types.h"
 #include "run.h"
 #include "paths.h"
 #include "smw_status.h"
@@ -160,6 +159,37 @@ static int execute_import_cmd(char *cmd, struct json_object *params,
 }
 
 /**
+ * execute_export_cmd() - Execute export command.
+ * @cmd: Command name.
+ * @params: Command parameters.
+ * @common_params: Some parameters common to commands.
+ * @key_ids: Pointer to key identifiers list.
+ * @status: Pointer to SMW command status.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from export_key().
+ */
+static int execute_export_cmd(char *cmd, struct json_object *params,
+			      struct common_parameters *common_params,
+			      struct key_identifier_list *key_ids, int *status)
+{
+	if (!strcmp(cmd, EXPORT_KEYPAIR))
+		return export_key(params, common_params, EXP_KEYPAIR, key_ids,
+				  status);
+	else if (!strcmp(cmd, EXPORT_PRIVATE))
+		return export_key(params, common_params, EXP_PRIV, key_ids,
+				  status);
+	else if (!strcmp(cmd, EXPORT_PUBLIC))
+		return export_key(params, common_params, EXP_PUB, key_ids,
+				  status);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
+/**
  * execute_command() - Execute a subtest command.
  * @cmd: Command name.
  * @params: Command parameters.
@@ -183,6 +213,9 @@ static int execute_command(char *cmd, struct json_object *params,
 					    status);
 	else if (!strncmp(cmd, IMPORT, strlen(IMPORT)))
 		return execute_import_cmd(cmd, params, common_params, key_ids,
+					  status);
+	else if (!strncmp(cmd, EXPORT, strlen(EXPORT)))
+		return execute_export_cmd(cmd, params, common_params, *key_ids,
 					  status);
 	else if (!strncmp(cmd, HASH, strlen(HASH)))
 		return execute_hash_cmd(cmd, params, common_params, status);
@@ -308,9 +341,10 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 
 	/*
 	 * 'subsystem' is a mandatory parameter for all commands except
-	 * 'DELETE'.
+	 * 'DELETE' and 'EXPORT'.
 	 */
 	if (strcmp(command_name, DELETE) &&
+	    strncmp(command_name, EXPORT, strlen(EXPORT)) &&
 	    !json_object_object_get_ex(obj_iter->val, SUBSYSTEM_OBJ,
 				       &sub_obj)) {
 		res = ERR_CODE(MISSING_PARAMS);

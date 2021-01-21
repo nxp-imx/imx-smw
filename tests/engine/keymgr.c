@@ -13,6 +13,17 @@
 #include "smw_keymgr.h"
 #include "smw_status.h"
 
+/*
+ * This identifier is used for export API tests.
+ * It represents the following key:
+ *  - Generated/Imported by subsystem ID 0
+ *  - Type is NIST
+ *  - Parity is Public
+ *  - Security size is 192
+ *  - Subsystem ID is 1
+ */
+#define TEST_ID 824633720833
+
 /**
  * set_gen_opt_params() - Set key generation optional parameters.
  * @params: Pointer to json parameters.
@@ -413,6 +424,260 @@ static int set_import_bad_args(enum arguments_test_err_case error,
 	return ERR_CODE(PASSED);
 }
 
+/**
+ * set_export_opt_params() - Set key export optional parameters.
+ * @params: Pointer to json parameters.
+ * @key_args: Pointer to smw export key args structure to update.
+ * @pub_key: Pointer to expected exported public key. If key format is HEX,
+ *           it's allocated by this function and must be free by caller.
+ *
+ * Return:
+ * PASSED	- Success.
+ * -BAD_ARGS	- One of the arguments is bad.
+ * Error code from convert_string_to_hex().
+ */
+static int set_export_opt_params(json_object *params,
+				 struct smw_export_key_args *key_args,
+				 unsigned char **pub_key)
+{
+	int res = ERR_CODE(PASSED);
+	char *key = NULL;
+	char *attributes = NULL;
+	unsigned char **attributes_list = NULL;
+	unsigned int hex_len = 0;
+	unsigned int *attributes_len = NULL;
+	json_object *attr_obj = NULL;
+	json_object *key_format = NULL;
+	json_object *pub_key_obj = NULL;
+
+	if (!params || !key_args)
+		return ERR_CODE(BAD_ARGS);
+
+	/* Get 'attributes_list' optional parameter */
+	if (json_object_object_get_ex(params, ATTR_LIST_OBJ, &attr_obj)) {
+		attributes = (char *)json_object_get_string(attr_obj);
+		attributes_list =
+			(unsigned char **)&key_args->key_attributes_list;
+		attributes_len = &key_args->key_attributes_list_length;
+		res = convert_string_to_hex(attributes, attributes_list,
+					    attributes_len);
+		if (res != ERR_CODE(PASSED)) {
+			DBG_PRINT("Can't convert message: %d", res);
+			return res;
+		}
+	}
+
+	/* Get 'format' optional parameter */
+	if (json_object_object_get_ex(params, KEY_FORMAT_OBJ, &key_format))
+		key_args->key_descriptor->buffer->format_name =
+			json_object_get_string(key_format);
+
+	/* Get 'pub_key' optional parameter */
+	if (json_object_object_get_ex(params, PUB_KEY_OBJ, &pub_key_obj)) {
+		if (!pub_key)
+			return ERR_CODE(BAD_ARGS);
+
+		key = (char *)json_object_get_string(pub_key_obj);
+
+		if (!key_args->key_descriptor->buffer->format_name ||
+		    !strcmp(key_args->key_descriptor->buffer->format_name,
+			    HEX_FORMAT)) {
+			res = convert_string_to_hex(key, pub_key, &hex_len);
+			if (res != ERR_CODE(PASSED)) {
+				DBG_PRINT("Can't convert message: %d", res);
+				return res;
+			}
+		} else {
+			*pub_key = (unsigned char *)key;
+		}
+	}
+
+	return ERR_CODE(PASSED);
+}
+
+/**
+ * set_export_bad_args() - Set export key parameters for specific test cases.
+ * @error: Test error id.
+ * @ptr: Pointer to smw export key args structure.
+ * @args: Pointer to smw export key args buffer structure.
+ * @key: Pointer to smw key descriptor structure.
+ * @key_buffer: Pointer to smw keypair buffer structure.
+ *
+ * These configurations represent specific error case using SMW API for a key
+ * export.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ */
+static int set_export_bad_args(enum arguments_test_err_case error,
+			       struct smw_export_key_args **ptr,
+			       struct smw_export_key_args *args,
+			       struct smw_key_descriptor *key,
+			       struct smw_keypair_buffer *key_buffer)
+{
+	if (!ptr || !args || !key || !key_buffer)
+		return ERR_CODE(BAD_ARGS);
+
+	switch (error) {
+	case KEY_DESC_NULL:
+		/* Key descriptor is NULL */
+		args->key_descriptor = NULL;
+		break;
+
+	case KEY_DESC_ID_NOT_SET:
+		args->key_descriptor = key;
+		key->id = 0;
+		break;
+
+	case KEY_BUFFER_NULL:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		break;
+
+	case NO_BUFFER_SET:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		key->buffer = key_buffer;
+		key_buffer->private_data = NULL;
+		key_buffer->public_data = NULL;
+		break;
+
+	case PUB_DATA_LEN_NOT_SET:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		key->buffer = key_buffer;
+		/* Buffer size doesn't matter */
+		key_buffer->public_data = malloc(10);
+
+		if (!key_buffer->public_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		break;
+
+	case PRIV_DATA_LEN_NOT_SET:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		key->buffer = key_buffer;
+		/* Buffer size doesn't matter */
+		key_buffer->private_data = malloc(10);
+
+		if (!key_buffer->private_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		break;
+
+	case BAD_FORMAT:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		key->buffer = key_buffer;
+		/* Buffer size doesn't matter */
+		key_buffer->public_length = 10;
+		key_buffer->public_data = malloc(key_buffer->public_length);
+
+		if (!key_buffer->public_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		key_buffer->format_name = "UNDEFINED";
+		break;
+
+	case WRONG_TYPE_NAME:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		key->buffer = key_buffer;
+		/* Buffer size doesn't matter */
+		key_buffer->public_length = 10;
+		key_buffer->public_data = malloc(key_buffer->public_length);
+
+		if (!key_buffer->public_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		key->type_name = "AES";
+		break;
+
+	case WRONG_SECURITY_SIZE:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		key->buffer = key_buffer;
+		/* Buffer size doesn't matter */
+		key_buffer->public_length = 10;
+		key_buffer->public_data = malloc(key_buffer->public_length);
+
+		if (!key_buffer->public_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		key->security_size = 128;
+		break;
+
+	case BAD_VERSION:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		key->buffer = key_buffer;
+		/* Buffer size doesn't matter */
+		key_buffer->public_length = 10;
+		key_buffer->public_data = malloc(key_buffer->public_length);
+
+		if (!key_buffer->public_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		args->version = '1';
+		break;
+
+	case BAD_ATTRIBUTES:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		key->buffer = key_buffer;
+		/* Buffer size doesn't matter */
+		key_buffer->public_length = 10;
+		key_buffer->public_data = malloc(key_buffer->public_length);
+
+		if (!key_buffer->public_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		args->key_attributes_list = (unsigned char *)"undefined";
+		args->key_attributes_list_length =
+			strlen((char *)args->key_attributes_list);
+		break;
+
+	case PUB_KEY_BUFF_TOO_SMALL:
+		args->key_descriptor = key;
+		key->id = TEST_ID;
+		key->buffer = key_buffer;
+		key_buffer->public_length = 10;
+		key_buffer->public_data = malloc(key_buffer->public_length);
+
+		if (!key_buffer->public_data) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		break;
+
+	default:
+		DBG_PRINT_BAD_PARAM(__func__, "test_error");
+		return ERR_CODE(BAD_PARAM_TYPE);
+	}
+
+	*ptr = args;
+	return ERR_CODE(PASSED);
+}
+
 int generate_key(json_object *params, struct common_parameters *common_params,
 		 char *key_type, struct key_identifier_list **key_identifiers,
 		 int *ret_status)
@@ -703,6 +968,169 @@ exit:
 	}
 
 	if (args.key_attributes_list)
+		free((void *)args.key_attributes_list);
+
+	return res;
+}
+
+int export_key(json_object *params, struct common_parameters *common_params,
+	       enum export_type export_type,
+	       struct key_identifier_list *key_identifiers, int *ret_status)
+{
+	int res = ERR_CODE(PASSED);
+	int status = SMW_STATUS_OPERATION_FAILURE;
+	unsigned char *expected_pub_key = NULL;
+	enum arguments_test_err_case test_error = NB_ERROR_CASE;
+	struct smw_key_descriptor key_descriptor = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
+	struct smw_export_key_args args = { 0 };
+	struct smw_export_key_args *smw_exp_args = NULL;
+	json_object *key_id_obj = NULL;
+	json_object *test_err_obj = NULL;
+
+	if (!params || !common_params || !ret_status) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	/* 'key_id' is a mandatory parameter */
+	if (!json_object_object_get_ex(params, KEY_ID_OBJ, &key_id_obj)) {
+		DBG_PRINT_MISS_PARAM(__func__, "key_id");
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
+	args.version = common_params->version;
+
+	if (json_object_object_get_ex(params, TEST_ERR_OBJ, &test_err_obj)) {
+		/* Specific test cases parameters */
+		res = get_test_err_status(&test_error,
+					  json_object_get_string(test_err_obj));
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		/*
+		 * If test error is ARGS_NULL nothing has to be done. This
+		 * case call smw_export_key with NULL argument.
+		 */
+		if (test_error != ARGS_NULL) {
+			res = set_export_bad_args(test_error, &smw_exp_args,
+						  &args, &key_descriptor,
+						  &key_buffer);
+
+			if (res != ERR_CODE(PASSED))
+				return res;
+		}
+	} else {
+		args.key_descriptor = &key_descriptor;
+		key_descriptor.buffer = &key_buffer;
+
+		key_descriptor.id =
+			find_key_identifier(key_identifiers,
+					    json_object_get_int(key_id_obj));
+
+		status = smw_get_security_size(&key_descriptor);
+		if (status != SMW_STATUS_OK)
+			return ERR_CODE(BAD_RESULT);
+
+		status = smw_get_key_type_name(&key_descriptor);
+		if (status != SMW_STATUS_OK)
+			return ERR_CODE(BAD_RESULT);
+
+		res = set_export_opt_params(params, &args, &expected_pub_key);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		status = smw_get_key_buffers_lengths(&key_descriptor);
+		if (status != SMW_STATUS_OK) {
+			res = ERR_CODE(BAD_RESULT);
+			goto exit;
+		}
+
+		switch (export_type) {
+		case EXP_KEYPAIR:
+			/*
+			 * Private buffer size doesn't matter as private key
+			 * export is not supported by any subsystem.
+			 */
+			key_buffer.private_length = 10;
+			key_buffer.private_data =
+				malloc(key_buffer.private_length);
+			key_buffer.public_data =
+				malloc(key_buffer.public_length);
+
+			if (!key_buffer.private_data ||
+			    !key_buffer.public_data) {
+				DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+				goto exit;
+			}
+			break;
+
+		case EXP_PRIV:
+			/*
+			 * Private buffer size doesn't matter as private key
+			 * export is not supported by any subsystem.
+			 */
+			key_buffer.private_length = 10;
+			key_buffer.private_data =
+				malloc(key_buffer.private_length);
+			key_buffer.public_data = NULL;
+
+			if (!key_buffer.private_data) {
+				DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+				goto exit;
+			}
+			break;
+
+		case EXP_PUB:
+			key_buffer.public_data =
+				malloc(key_buffer.public_length);
+			key_buffer.private_data = NULL;
+
+			if (!key_buffer.public_data) {
+				DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+				goto exit;
+			}
+			break;
+
+		default:
+			res = ERR_CODE(BAD_PARAM_TYPE);
+			goto exit;
+		}
+
+		smw_exp_args = &args;
+	}
+
+	/* Call export key function and compare result with expected one */
+	*ret_status = smw_export_key(smw_exp_args);
+
+	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+		res = ERR_CODE(BAD_RESULT);
+		goto exit;
+	}
+
+	if (*ret_status == SMW_STATUS_OK && expected_pub_key &&
+	    key_buffer.public_data) {
+		if (strncmp((char *)expected_pub_key,
+			    (char *)key_buffer.public_data,
+			    key_buffer.public_length))
+			res = ERR_CODE(SUBSYSTEM);
+	}
+
+exit:
+	if (key_buffer.private_data)
+		free(key_buffer.private_data);
+
+	if (key_buffer.public_data)
+		free(key_buffer.public_data);
+
+	if (expected_pub_key && (!key_buffer.format_name ||
+				 !strcmp(key_buffer.format_name, HEX_FORMAT)))
+		free(expected_pub_key);
+
+	if (args.key_attributes_list && test_error != BAD_ATTRIBUTES)
 		free((void *)args.key_attributes_list);
 
 	return res;

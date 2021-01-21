@@ -1,0 +1,59 @@
+{
+	"subtest 1": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 128,
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "GENERATE_NIST",
+		"subsystem": "TEE",
+		"security_size": 224,
+		"key_id": 1
+	},
+	"subtest 3": { // Export symmetric key
+		"command": "EXPORT_PRIVATE",
+		"key_id": 0,
+		"depends": 1,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 4": { // Export ECDSA keypair
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 1,
+		"depends": 2,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 5": { // Export ECDSA private key
+		"command": "EXPORT_PRIVATE",
+		"key_id": 1,
+		"depends": 2,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 6": { // Export ECDSA public key in HEX format
+		"command": "EXPORT_PUBLIC",
+		"key_id": 1,
+		"depends": 2
+	},
+	"subtest 7": { // Export ECDSA public key in BASE64 format
+		"command": "EXPORT_PUBLIC",
+		"key_id": 1,
+		"depends": 2,
+		"format": "BASE64"
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 2
+	},
+	"subtest 10": {
+		"command": "EXPORT_PUBLIC",
+		"key_id": 1,
+		"depends": 9,
+		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+	}
+}

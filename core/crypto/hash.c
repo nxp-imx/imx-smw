@@ -104,7 +104,7 @@ int smw_hash(struct smw_hash_args *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args) {
+	if (!args || !args->output || !args->output_length) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_status.h"
@@ -969,6 +969,23 @@ int smw_import_key(struct smw_import_key_args *args)
 
 	status = smw_utils_execute_operation(OPERATION_ID_IMPORT_KEY,
 					     &import_key_args, subsystem_id);
+
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (key_buffer->public_data && key_buffer->private_data)
+		import_key_args.key_descriptor.identifier.privacy_id =
+			SMW_KEYMGR_PRIVACY_ID_PAIR;
+	else if (key_buffer->public_data)
+		import_key_args.key_descriptor.identifier.privacy_id =
+			SMW_KEYMGR_PRIVACY_ID_PUBLIC;
+	else
+		/* Only private data is set */
+		import_key_args.key_descriptor.identifier.privacy_id =
+			SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+
+	set_key_identifier(&import_key_args.key_descriptor);
+	set_key_buffer_format(&import_key_args.key_descriptor);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

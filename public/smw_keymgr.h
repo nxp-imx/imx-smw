@@ -120,6 +120,7 @@ struct smw_update_key_args {
  * or a key pair is imported if the corresponding pointer and size is set.
  * The @key_descriptor field @id is filled by the API
  * if the operation is successful.
+ * The @buffer field @format_name is optional. The default value is "HEX".
  */
 struct smw_import_key_args {
 	unsigned char version;
@@ -209,6 +210,7 @@ int smw_update_key(struct smw_update_key_args *args);
  * @args: Pointer to the structure that contains the Key import arguments.
  *
  * This function imports a Key into the storage managed by the Secure Subsystem.
+ * The key must be plain text.
  *
  * Return:
  * error code.

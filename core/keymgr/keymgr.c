@@ -448,8 +448,7 @@ end:
 
 static int
 export_key_convert_args(struct smw_export_key_args *args,
-			struct smw_keymgr_export_key_args *converted_args,
-			enum subsystem_id *subsystem_id)
+			struct smw_keymgr_export_key_args *converted_args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -459,11 +458,6 @@ export_key_convert_args(struct smw_export_key_args *args,
 		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
-
-	status =
-		smw_config_get_subsystem_id(args->subsystem_name, subsystem_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor);
@@ -1022,11 +1016,12 @@ int smw_export_key(struct smw_export_key_args *args)
 		goto end;
 	}
 
-	status = export_key_convert_args(args, &export_key_args, &subsystem_id);
+	status = export_key_convert_args(args, &export_key_args);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	security_size = args->key_descriptor->security_size;
+	subsystem_id = export_key_args.key_descriptor.identifier.subsystem_id;
+	security_size = export_key_args.key_descriptor.identifier.security_size;
 	type_id = export_key_args.key_descriptor.identifier.type_id;
 	format_id = export_key_args.key_descriptor.format_id;
 	status = smw_keymgr_get_buffers_lengths(type_id, security_size,

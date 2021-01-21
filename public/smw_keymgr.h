@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 /**
@@ -133,14 +133,10 @@ struct smw_import_key_args {
 /**
  * struct smw_export_key_args - Key export arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
  * @key_attributes_list: Key attributes list
  * @key_attributes_list_length: Length of the Key attributes list
  * @key_descriptor: Pointer to a Key descriptor object
  *
- * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default Secure Subsystem configured for
- * this Security Operation is used.
  * The @key_descriptor fields @id must be given as input.
  * The @key_descriptor field @buffer is mandatory.
  * The public key buffer must be set in order to export the public Key,
@@ -153,7 +149,6 @@ struct smw_import_key_args {
  */
 struct smw_export_key_args {
 	unsigned char version;
-	const char *subsystem_name;
 	const unsigned char *key_attributes_list;
 	unsigned int key_attributes_list_length;
 	struct smw_key_descriptor *key_descriptor;

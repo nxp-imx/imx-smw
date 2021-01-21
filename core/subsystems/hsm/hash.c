@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "hsm_api.h"
@@ -72,10 +72,12 @@ static int hash(struct hdl *hdl, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	op_hash_one_go_args.input = hash_args->input;
-	op_hash_one_go_args.output = hash_args->output;
-	op_hash_one_go_args.input_size = hash_args->input_length;
-	op_hash_one_go_args.output_size = hash_args->output_length;
+	op_hash_one_go_args.input = smw_crypto_get_hash_input_data(hash_args);
+	op_hash_one_go_args.output = smw_crypto_get_hash_output_data(hash_args);
+	op_hash_one_go_args.input_size =
+		smw_crypto_get_hash_input_length(hash_args);
+	op_hash_one_go_args.output_size =
+		smw_crypto_get_hash_output_length(hash_args);
 	status = set_hash_algo(hash_args->algo_id, &op_hash_one_go_args.algo);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -103,8 +105,13 @@ static int hash(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	SMW_DBG_PRINTF(DEBUG, "Output (%d):\n", hash_args->output_length);
-	SMW_DBG_HEX_DUMP(DEBUG, hash_args->output, hash_args->output_length, 4);
+	smw_crypto_set_hash_output_length(hash_args,
+					  op_hash_one_go_args.output_size);
+
+	SMW_DBG_PRINTF(DEBUG, "Output (%d):\n",
+		       op_hash_one_go_args.output_size);
+	SMW_DBG_HEX_DUMP(DEBUG, op_hash_one_go_args.output,
+			 op_hash_one_go_args.output_size, 4);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

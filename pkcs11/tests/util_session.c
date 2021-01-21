@@ -20,7 +20,7 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	CK_UTF8CHAR label[32];
 	const char *slot_label = NULL;
 
-	TEST_OUT("\nGet Nb slots present\n");
+	TEST_OUT("Get Nb slots present\n");
 	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
@@ -48,8 +48,8 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	memcpy(label, slot_label, strlen(slot_label));
 	ret = pfunc->C_InitToken(p11_slot, NULL, 0, label);
 
-	TEST_OUT("\n-- Process #%u Open Session on Slot %lu [%s] --\n",
-		 getpid(), p11_slot, slot_label);
+	TEST_OUT("-- Process #%u Open Session on Slot %lu [%s] --\n", getpid(),
+		 p11_slot, slot_label);
 
 	TEST_OUT("Check Open Session\n");
 	if (callback)

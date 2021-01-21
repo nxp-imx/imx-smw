@@ -3,10 +3,13 @@
  * Copyright 2021 NXP
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "tests_pkcs11.h"
+
+const char *progname;
 
 static void printf_repeat(size_t count, const char ch)
 {
@@ -19,7 +22,7 @@ static void printf_repeat(size_t count, const char ch)
 	printf("\n");
 }
 
-static void usage(char *progname)
+static void usage(void)
 {
 	printf("Usage: %s <options>\n", progname);
 	printf("\n");
@@ -51,6 +54,8 @@ int main(int argc, char *argv[])
 	printf_repeat(strlen(argv[0]) + 4, '*');
 	printf("\n");
 
+	progname = argv[0];
+
 	if (argc > 1) {
 		/*
 		 * Parse command line argument to get the
@@ -74,11 +79,11 @@ int main(int argc, char *argv[])
 				return 0;
 
 			case 'h':
-				usage(argv[0]);
+				usage();
 				return 0;
 
 			default:
-				usage(argv[0]);
+				usage();
 				return ret;
 			}
 		} while (option != -1);

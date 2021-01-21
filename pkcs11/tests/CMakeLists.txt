@@ -32,7 +32,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_BINARY_DIR}/pkcs11/src/include)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
+find_package(Threads REQUIRED)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    ${CMAKE_DL_LIBS}
+    rt
+    ${CMAKE_THREAD_LIBS_INIT})
 
 if(NOT NO_SMW_CONFIG AND NOT DEFINED SMW_CONFIG_FILE)
   set(SMW_CONFIG_FILE "${CMAKE_INSTALL_PREFIX}/${PKCS11_TARGET_CONFIG_DIR}/default_config.txt")
@@ -61,3 +66,4 @@ pkcs11_test(session)
 pkcs11_test(object)
 pkcs11_test(find)
 pkcs11_test(parallel)
+pkcs11_test(callback)

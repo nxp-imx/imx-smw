@@ -2,80 +2,17 @@
 /*
  * Copyright 2021 NXP
  */
-#include <dlfcn.h>
-#include <errno.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include <pkcs11smw.h>
 #include <pkcs11smw_config.h>
 
-#include "config.h"
 #include "tests_pkcs11.h"
 #include "local.h"
 #include "os_mutex.h"
+#include "util_lib.h"
 
-/* Declaration of the overall tests result */
-struct tests_result tests_result;
-
-static void *open_lib(const char *libname)
-{
-	void *handle = NULL;
-
-#ifdef SMW_CONFIG_FILE
-	int err;
-	int errnum;
-	char env_config[1024];
-
-	strcpy(env_config, SMW_CONFIG_FILE);
-	printf("SMW_CONFIG_FILE=%s\n", env_config);
-	err = setenv("SMW_CONFIG_FILE", env_config, 1);
-	if (__errno_location()) {
-		errnum = errno;
-		(void)CHECK_EXPECTED(!err, "Set Environment error: %s\n",
-				     strerror(errnum));
-	} else {
-		(void)CHECK_EXPECTED(!err, "Set Environment error\n");
-	}
-#else
-	char *env_config;
-
-	env_config = getenv("SMW_CONFIG_FILE");
-	printf("SMW_CONFIG_FILE=%s\n", env_config);
-#endif
-
-	handle = dlopen(libname, RTLD_LAZY);
-	(void)CHECK_EXPECTED(handle, "%s\n", dlerror());
-
-	return handle;
-}
-
-static CK_FUNCTION_LIST_PTR get_function_list(void *handle)
-{
-	CK_RV ret = CKR_GENERAL_ERROR;
-
-	CK_FUNCTION_PTR(C_GetFunctionList)(CK_FUNCTION_LIST_PTR_PTR);
-	CK_FUNCTION_LIST_PTR pfunc = NULL;
-
-	/* First get the function symbol */
-	C_GetFunctionList = dlsym(handle, "C_GetFunctionList");
-	if (CHECK_EXPECTED(C_GetFunctionList,
-			   "Symbol C_GetFunctionList - error %s\n", dlerror()))
-		goto end;
-
-	ret = C_GetFunctionList(&pfunc);
-	if (CHECK_CK_RV(CKR_OK, "C_GetFunctionList"))
-		goto end;
-
-	TEST_OUT("Function list version is %01d.%01d\n", pfunc->version.major,
-		 pfunc->version.minor);
-
-end:
-	if (ret == CKR_OK)
-		return pfunc;
-
-	return NULL;
-}
+/* Declaration of the global tests data */
+struct tests_data tests_data;
 
 static int initialize(CK_FUNCTION_LIST_PTR pfunc)
 {
@@ -169,11 +106,6 @@ end:
 	return status;
 }
 
-static void close_lib(void *handle)
-{
-	dlclose(handle);
-}
-
 static void tests_pkcs11_get_functions(void *lib_hdl,
 				       CK_FUNCTION_LIST_PTR_PTR pfunc)
 {
@@ -181,7 +113,7 @@ static void tests_pkcs11_get_functions(void *lib_hdl,
 
 	TEST_START(status);
 
-	*pfunc = get_function_list(lib_hdl);
+	*pfunc = util_lib_get_func_list(lib_hdl);
 	if (!CHECK_EXPECTED(*pfunc, "Get function failure"))
 		status = TEST_PASS;
 
@@ -213,16 +145,16 @@ struct test_def {
 struct test_def test_list[] = {
 	TEST_DEF(get_info_ifs), TEST_DEF(get_ifs),  TEST_DEF(initialize),
 	TEST_DEF(slot_token),	TEST_DEF(session),  TEST_DEF(object),
-	TEST_DEF(find),		TEST_DEF(parallel),
+	TEST_DEF(find),		TEST_DEF(parallel), TEST_DEF(callback),
 };
 
 void tests_pkcs11_list(void)
 {
-	printf("PKCS#11 List of tests:\n");
+	TEST_OUT("PKCS#11 List of tests:\n");
 	for (unsigned int id = 0; id < ARRAY_SIZE(test_list); id++)
-		printf("\t %s\n", test_list[id].name);
+		TEST_OUT("\t %s\n", test_list[id].name);
 
-	printf("\n");
+	TEST_OUT("\n");
 }
 
 int tests_pkcs11(char *test_name)
@@ -232,17 +164,16 @@ int tests_pkcs11(char *test_name)
 	CK_FUNCTION_LIST_PTR func_list;
 
 	/* Initialize tests result */
-	memset(&tests_result, 0, sizeof(tests_result));
+	memset(&tests_data, 0, sizeof(tests_data));
 
-	printf("Lib %s\n", DEFAULT_PKCS11_LIB);
-
-	lib_hdl = open_lib(DEFAULT_PKCS11_LIB);
+	lib_hdl = util_lib_open(NULL);
 	if (!lib_hdl)
 		return -1;
 
 	tests_pkcs11_get_functions(lib_hdl, &func_list);
 	if (func_list) {
 		for (unsigned int id = 0; id < ARRAY_SIZE(test_list); id++) {
+			tests_data.trace_pid = 0;
 			if (test_name) {
 				if (!strcmp(test_name, test_list[id].name)) {
 					test_list[id].test(lib_hdl, func_list);
@@ -257,23 +188,22 @@ int tests_pkcs11(char *test_name)
 	TEST_OUT("\n");
 	TEST_OUT(" _______________________________\n");
 	TEST_OUT("|\n");
-	TEST_OUT("| Ran %d tests with %d failures\n", tests_result.count,
-		 tests_result.count_fail);
+	TEST_OUT("| Ran %d tests with %d failures\n", tests_data.result.count,
+		 tests_data.result.count_fail);
 
-	diff_count = tests_result.count - tests_result.count_pass -
-		     tests_result.count_fail;
+	diff_count = tests_data.result.count - tests_data.result.count_pass -
+		     tests_data.result.count_fail;
 	if (diff_count)
 		TEST_OUT("| Total tests %d != %d PASSED + %d FAILED\n",
-			 tests_result.count, tests_result.count_pass,
-			 tests_result.count_fail);
+			 tests_data.result.count, tests_data.result.count_pass,
+			 tests_data.result.count_fail);
 
 	TEST_OUT("|_______________________________\n");
 	TEST_OUT("\n");
 
-	if (lib_hdl)
-		close_lib(lib_hdl);
+	util_lib_close(lib_hdl);
 
-	if (diff_count || tests_result.count_fail)
+	if (diff_count || tests_data.result.count_fail)
 		return -1;
 
 	return 0;

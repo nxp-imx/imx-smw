@@ -1,6 +1,7 @@
 scripts
 pkcs11/import
 pkcs11/src/include/pkcs11smw.h
+pkcs11/tests/include/compiler.h
 *.sh
 cmake
 tests/scripts

@@ -27,7 +27,8 @@ static struct hash {
 		  { .algo_name = "SHA256", .digest_len = 32 },
 		  { .algo_name = "SHA384", .digest_len = 48 },
 		  { .algo_name = "SHA512", .digest_len = 64 },
-		  { .algo_name = "SM3", .digest_len = 32 } };
+		  { .algo_name = "SM3", .digest_len = 32 },
+		  { .algo_name = "UNDEFINED", .digest_len = 1 } };
 
 /**
  * get_hash_digest_len() - Return digest byte length switch algorithm.
@@ -64,24 +65,25 @@ static int get_hash_digest_len(char *algo, unsigned int *len)
 }
 
 int hash(json_object *params, struct common_parameters *common_params,
-	 char *algo_type, int *ret_status)
+	 char *algo_name, int *ret_status)
 {
 	int res = ERR_CODE(PASSED);
-	unsigned int output_len = 0;
-	unsigned int hex_message_len = 0;
-	char *input_string = NULL;
-	char *digest_string = NULL;
-	unsigned char *hex_message = NULL;
-	unsigned char *output = NULL;
-	unsigned char *expected_digest = NULL;
-	enum arguments_test_err_case test_error = NB_ERROR_CASE;
-	struct smw_hash_args args = { 0 };
-	struct smw_hash_args *smw_hash_args = NULL;
 	json_object *digest_obj = NULL;
 	json_object *input_obj = NULL;
 	json_object *test_err_obj = NULL;
+	char *input_str = NULL;
+	char *digest_str = NULL;
+	enum arguments_test_err_case test_error = NB_ERROR_CASE;
+	unsigned int input_len = 0;
+	unsigned int output_len = 0;
+	unsigned int digest_len = 0;
+	unsigned char *input_hex = NULL;
+	unsigned char *output_hex = NULL;
+	unsigned char *digest_hex = NULL;
+	struct smw_hash_args args = { 0 };
+	struct smw_hash_args *smw_hash_args = NULL;
 
-	if (!params || !algo_type || !ret_status || !common_params) {
+	if (!params || !algo_name || !ret_status || !common_params) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -97,13 +99,27 @@ int hash(json_object *params, struct common_parameters *common_params,
 		if (res != ERR_CODE(PASSED))
 			return res;
 
+		/*
+		 * If test error is ARGS_NULL nothing has to be done. This
+		 * case call smw_hash with NULL argument.
+		 */
 		if (test_error != ARGS_NULL) {
-			DBG_PRINT_BAD_PARAM(__func__, "test_error");
-			return ERR_CODE(BAD_PARAM_TYPE);
+			if (test_error == DIGEST_BUFFER_NULL) {
+				args.output = NULL;
+				args.output_length = 1;
+			} else if (test_error == DIGEST_LENGTH_ZERO) {
+				args.output = (unsigned char *)1;
+				args.output_length = 0;
+			} else {
+				DBG_PRINT_BAD_PARAM(__func__, "test_error");
+				return ERR_CODE(BAD_PARAM_TYPE);
+			}
+
+			smw_hash_args = &args;
 		}
 	} else {
 		args.version = common_params->version;
-		args.algo_name = algo_type;
+		args.algo_name = strlen(algo_name) ? algo_name : NULL;
 
 		if (!strcmp(common_params->subsystem, "DEFAULT"))
 			args.subsystem_name = NULL;
@@ -112,17 +128,16 @@ int hash(json_object *params, struct common_parameters *common_params,
 
 		/* 'input' is an optional parameter */
 		if (json_object_object_get_ex(params, INPUT_OBJ, &input_obj)) {
-			input_string =
-				(char *)json_object_get_string(input_obj);
-			res = convert_string_to_hex(input_string, &hex_message,
-						    &hex_message_len);
+			input_str = (char *)json_object_get_string(input_obj);
+			res = convert_string_to_hex(input_str, &input_hex,
+						    &input_len);
 			if (res != ERR_CODE(PASSED)) {
 				DBG_PRINT("Can't convert message: %d", res);
 				return res;
 			}
 
-			args.input = hex_message;
-			args.input_length = hex_message_len;
+			args.input = input_hex;
+			args.input_length = input_len;
 		}
 
 		res = get_hash_digest_len((char *)args.algo_name, &output_len);
@@ -130,20 +145,21 @@ int hash(json_object *params, struct common_parameters *common_params,
 			goto exit;
 
 		/*
-		 * Output len can be 0. For example: test with a bad algo name
+		 * Output length can be 0. For example: test with a bad algo name
 		 * config. In this case don't need to allocate output buffer.
 		 */
 		if (output_len) {
-			output = malloc(output_len);
-			if (!output) {
+			output_hex = malloc(output_len);
+			if (!output_hex) {
 				DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 				goto exit;
 			}
 		}
 
-		args.output = output;
+		args.output = output_hex;
 		args.output_length = output_len;
+
 		smw_hash_args = &args;
 	}
 
@@ -156,36 +172,35 @@ int hash(json_object *params, struct common_parameters *common_params,
 	}
 
 	/*
-	 * If Hash operation succeeded and digest and input are set in the test
+	 * If Hash operation succeeded and expected digest is set in the test
 	 * definition file then compare operation result.
 	 */
-	if (*ret_status == SMW_STATUS_OK && hex_message &&
+	if (*ret_status == SMW_STATUS_OK && input_hex &&
 	    json_object_object_get_ex(params, DIGEST_OBJ, &digest_obj)) {
-		digest_string = (char *)json_object_get_string(digest_obj);
-		res = convert_string_to_hex(digest_string, &expected_digest,
-					    &output_len);
+		digest_str = (char *)json_object_get_string(digest_obj);
+		res = convert_string_to_hex(digest_str, &digest_hex,
+					    &digest_len);
 		if (res != ERR_CODE(PASSED)) {
 			DBG_PRINT("Can't convert digest: %d", res);
 			goto exit;
 		}
 
-		if (strcmp((char *)expected_digest, (char *)output)) {
+		if ((digest_len != output_len) ||
+		    memcmp(digest_hex, output_hex, output_len)) {
 			DBG_PRINT("Digest is bad");
 			res = ERR_CODE(SUBSYSTEM);
 		}
-	} else {
-		res = ERR_CODE(PASSED);
 	}
 
 exit:
-	if (hex_message)
-		free(hex_message);
+	if (input_hex)
+		free(input_hex);
 
-	if (output)
-		free(output);
+	if (output_hex)
+		free(output_hex);
 
-	if (expected_digest)
-		free(expected_digest);
+	if (digest_hex)
+		free(digest_hex);
 
 	return res;
 }

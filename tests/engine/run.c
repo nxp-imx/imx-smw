@@ -72,7 +72,7 @@ static int execute_generate_cmd(char *cmd, struct json_object *params,
 
 /**
  * execute_hash_cmd() - Execute hash command.
- * @cmd: Command name.
+ * @algo_name: Algorithm name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
  * @status: Pointer to SMW command status.
@@ -82,26 +82,16 @@ static int execute_generate_cmd(char *cmd, struct json_object *params,
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from hash().
  */
-static int execute_hash_cmd(char *cmd, struct json_object *params,
+static int execute_hash_cmd(char *algo_name, struct json_object *params,
 			    struct common_parameters *common_params,
 			    int *status)
 {
-	if (!strcmp(cmd, HASH_MD5))
-		return hash(params, common_params, MD5_ALG, status);
-	else if (!strcmp(cmd, HASH_SHA1))
-		return hash(params, common_params, SHA1_ALG, status);
-	else if (!strcmp(cmd, HASH_SHA224))
-		return hash(params, common_params, SHA224_ALG, status);
-	else if (!strcmp(cmd, HASH_SHA256))
-		return hash(params, common_params, SHA256_ALG, status);
-	else if (!strcmp(cmd, HASH_SHA384))
-		return hash(params, common_params, SHA384_ALG, status);
-	else if (!strcmp(cmd, HASH_SHA512))
-		return hash(params, common_params, SHA512_ALG, status);
-	else if (!strcmp(cmd, HASH_SM3))
-		return hash(params, common_params, SM3_ALG, status);
-	else if (!strcmp(cmd, HASH_UNDEFINED))
-		return hash(params, common_params, UNDEFINED_ALG, status);
+	if (!strlen(algo_name) || !strcmp(algo_name, MD5_ALG) ||
+	    !strcmp(algo_name, SHA1_ALG) || !strcmp(algo_name, SHA224_ALG) ||
+	    !strcmp(algo_name, SHA256_ALG) || !strcmp(algo_name, SHA384_ALG) ||
+	    !strcmp(algo_name, SHA512_ALG) || !strcmp(algo_name, SM3_ALG) ||
+	    !strcmp(algo_name, UNDEFINED_ALG))
+		return hash(params, common_params, algo_name, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -218,7 +208,8 @@ static int execute_command(char *cmd, struct json_object *params,
 		return execute_export_cmd(cmd, params, common_params, *key_ids,
 					  status);
 	else if (!strncmp(cmd, HASH, strlen(HASH)))
-		return execute_hash_cmd(cmd, params, common_params, status);
+		return execute_hash_cmd(cmd + strlen(HASH) + 1, params,
+					common_params, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

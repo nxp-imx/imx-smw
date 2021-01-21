@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <tee_client_api.h>
@@ -29,6 +29,12 @@ static struct tee_subsystem tee_ctx;
 
 __attribute__((weak)) bool tee_key_handle(enum operation_id operation_id,
 					  void *args, int *status)
+{
+	return false;
+}
+
+__attribute__((weak)) bool tee_hash_handle(enum operation_id operation_id,
+					   void *args, int *status)
 {
 	return false;
 }
@@ -103,6 +109,8 @@ static int execute(enum operation_id op_id, void *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (tee_key_handle(op_id, args, &status))
+		;
+	else if (tee_hash_handle(op_id, args, &status))
 		;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

@@ -24,10 +24,23 @@ enum tee_key_type {
 	TEE_KEY_TYPE_ID_INVALID
 };
 
+/* TEE algorithm ID */
+enum tee_algorithm_id {
+	TEE_ALGORITHM_ID_MD5,
+	TEE_ALGORITHM_ID_SHA1,
+	TEE_ALGORITHM_ID_SHA224,
+	TEE_ALGORITHM_ID_SHA256,
+	TEE_ALGORITHM_ID_SHA384,
+	TEE_ALGORITHM_ID_SHA512,
+	TEE_ALGORITHM_ID_SM3,
+	TEE_ALGORITHM_ID_INVALID
+};
+
 /* Key manager commands */
 #define CMD_GENERATE_KEY 0
 #define CMD_DELETE_KEY	 1
 #define CMD_IMPORT_KEY	 2
 #define CMD_EXPORT_KEY	 3
+#define CMD_HASH	 4
 
 #endif /* TEE_SUBSYSTEM_H */

@@ -25,7 +25,8 @@ set_target_properties(tee PROPERTIES C_VISIBILITY_PRESET hidden)
 
 target_sources(tee PRIVATE
                tee.c
-               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>)
+               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>
+               $<$<BOOL:${ENABLE_HASH}>:hash.c>)
 
 target_include_directories(tee PRIVATE ${INCLUDE_DIR}
                            ${TEEC_INCLUDE_DIR}

@@ -347,6 +347,36 @@ static int check_import_key_buffers_presence(enum tee_key_type key_type,
 }
 
 /**
+ * check_export_key_config() - Check key descriptor configuration.
+ * @key_descriptor: Pointer to key descriptor.
+ *
+ * OPTEE secure subsystem only exports ECDSA NIST public key.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Configuration ok.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Configuration not supported.
+ */
+static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
+{
+	if (key_descriptor->identifier.type_id !=
+	    SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST) {
+		SMW_DBG_PRINTF(ERROR,
+			       "%s: OPTEE only exports ECDSA NIST public key\n",
+			       __func__);
+		return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	}
+
+	if (smw_keymgr_get_private_data(key_descriptor) ||
+	    !smw_keymgr_get_public_data(key_descriptor)) {
+		SMW_DBG_PRINTF(ERROR, "%s: OPTEE only exports public key\n",
+			       __func__);
+		return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	}
+
+	return SMW_STATUS_OK;
+}
+
+/**
  * import_key() - Import a key or keypair in OPTEE OS storage.
  * @args: Import key parameters.
  *
@@ -550,6 +580,115 @@ exit:
 	return status;
 }
 
+/**
+ * export_key() - Export a key from OPTEE storage.
+ * @args: Export key parameters.
+ *
+ * Only ECDSA NIST public key can be exported.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Success.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Operation parameters not supported.
+ * SMW_STATUS_INVALID_PARAM		- One of the parameter is invalid.
+ * SMW_STATUS_ALLOC_FAILURE		- Memory allocation failed.
+ * SMW_STATUS_SUBSYSTEM_FAILURE		- Trusted application failed.
+ */
+static int export_key(void *args)
+{
+	TEEC_Operation op = { 0 };
+	int status = SMW_STATUS_INVALID_PARAM;
+	unsigned int hex_pub_len = 0;
+	unsigned int security_size = 0;
+	unsigned int pub_data_len = 0;
+	unsigned char *hex_pub = NULL;
+	unsigned char *pub_data = NULL;
+	struct smw_keymgr_export_key_args *key_args = args;
+	struct smw_keymgr_descriptor *key_descriptor = NULL;
+	struct smw_keymgr_identifier *key_identifier = NULL;
+	enum smw_config_key_type_id key_type_id =
+		SMW_CONFIG_KEY_TYPE_ID_INVALID;
+	enum smw_keymgr_format_id format_id = SMW_KEYMGR_FORMAT_ID_INVALID;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args)
+		goto exit;
+
+	key_descriptor = &key_args->key_descriptor;
+
+	status = check_export_key_config(key_descriptor);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	pub_data = smw_keymgr_get_public_data(key_descriptor);
+	key_identifier = &key_descriptor->identifier;
+	key_type_id = key_identifier->type_id;
+	security_size = key_identifier->security_size;
+
+	/* Get public key buffer length for HEX format */
+	status = smw_keymgr_get_buffers_lengths(key_type_id, security_size,
+						SMW_KEYMGR_FORMAT_ID_HEX,
+						&hex_pub_len, NULL);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	format_id = key_descriptor->format_id;
+
+	if (format_id == SMW_KEYMGR_FORMAT_ID_HEX) {
+		hex_pub = pub_data;
+	} else {
+		hex_pub = SMW_UTILS_MALLOC(hex_pub_len);
+		if (!hex_pub) {
+			SMW_DBG_PRINTF(ERROR, "%s: Allocation failure\n",
+				       __func__);
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto exit;
+		}
+	}
+
+	/*
+	 * params[0] = TEE Key ID, Key security size.
+	 * params[1] = Key buffer.
+	 * params[2] = None.
+	 * params[3] = None.
+	 */
+	op.paramTypes =
+		TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_MEMREF_TEMP_OUTPUT,
+				 TEEC_NONE, TEEC_NONE);
+	op.params[0].value.a = key_identifier->id;
+	op.params[0].value.b = security_size;
+	op.params[1].tmpref.buffer = hex_pub;
+	op.params[1].tmpref.size = hex_pub_len;
+
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_EXPORT_KEY, &op);
+	if (status != SMW_STATUS_OK) {
+		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
+		goto exit;
+	}
+
+	/* Get public key buffer length address */
+	pub_data_len = smw_keymgr_get_public_length(key_descriptor);
+
+	/* Encode key in base64 format */
+	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+		status = smw_utils_base64_encode(hex_pub, hex_pub_len, pub_data,
+						 &pub_data_len);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+	}
+
+	SMW_DBG_PRINTF(DEBUG, "Out key:\n");
+	SMW_DBG_HEX_DUMP(DEBUG, pub_data, pub_data_len, 4);
+
+exit:
+	if (hex_pub && hex_pub != pub_data)
+		SMW_UTILS_FREE(hex_pub);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 bool tee_key_handle(enum operation_id op_id, void *args, int *status)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -571,7 +710,7 @@ bool tee_key_handle(enum operation_id op_id, void *args, int *status)
 		*status = import_key(args);
 		break;
 	case OPERATION_ID_EXPORT_KEY:
-		*status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+		*status = export_key(args);
 		break;
 	default:
 		return false;

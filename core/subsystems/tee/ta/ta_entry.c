@@ -114,6 +114,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx __maybe_unused,
 		return delete_key(param_types, params);
 	case CMD_IMPORT_KEY:
 		return import_key(param_types, params);
+	case CMD_EXPORT_KEY:
+		return export_key(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}

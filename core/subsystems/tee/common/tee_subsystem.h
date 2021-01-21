@@ -28,5 +28,6 @@ enum tee_key_type {
 #define CMD_GENERATE_KEY 0
 #define CMD_DELETE_KEY	 1
 #define CMD_IMPORT_KEY	 2
+#define CMD_EXPORT_KEY	 3
 
 #endif /* TEE_SUBSYSTEM_H */

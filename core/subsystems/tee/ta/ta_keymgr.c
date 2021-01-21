@@ -513,10 +513,12 @@ static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 	unsigned int key_size_bytes = 0;
 	unsigned int size = 0;
 
+	FMSG("Executing %s", __func__);
+
 	if (!pub_key)
 		return res;
 
-	key_size_bytes = (security_size + 7) / 8;
+	key_size_bytes = BITS_TO_BYTES_SIZE(security_size);
 
 	/* Public key size is twice private key size */
 	if (pub_key_size != 2 * key_size_bytes) {
@@ -1168,6 +1170,67 @@ exit:
 
 	if (key_attr)
 		TEE_Free(key_attr);
+
+	return res;
+}
+
+TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
+	uint32_t id = 0;
+	unsigned int security_size = 0;
+	unsigned int pub_key_len = 0;
+	bool persistent = false;
+	unsigned char *pub_key = NULL;
+	struct key_data *key_data = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	/*
+	 * params[0] = TEE Key ID, Key security size.
+	 * params[1] = Key buffer.
+	 * params[2] = None.
+	 * params[3] = None.
+	 */
+	if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
+					   TEE_PARAM_TYPE_MEMREF_OUTPUT,
+					   TEE_PARAM_TYPE_NONE,
+					   TEE_PARAM_TYPE_NONE))
+		return res;
+
+	id = params[0].value.a;
+	security_size = params[0].value.b;
+	pub_key = params[1].memref.buffer;
+	pub_key_len = params[1].memref.size;
+
+	key_data = key_find_list(id);
+	if (key_data) {
+		if (key_data->is_persistent) {
+			res = is_persistent_key(id, &key_handle);
+			if (res) {
+				EMSG("Failed to open persistent object: 0x%x",
+				     res);
+				return res;
+			}
+
+			persistent = true;
+		} else {
+			key_handle = key_data->handle;
+		}
+	} else {
+		res = is_persistent_key(id, &key_handle);
+		if (res)
+			return res;
+
+		persistent = true;
+	}
+
+	res = export_pub_key_ecc(key_handle, security_size, pub_key,
+				 pub_key_len);
+
+	if (persistent)
+		TEE_CloseObject(key_handle);
 
 	return res;
 }

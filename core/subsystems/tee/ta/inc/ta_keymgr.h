@@ -1,10 +1,14 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef TA_KEYMGR_H
 #define TA_KEYMGR_H
+
+#ifndef BITS_TO_BYTES_SIZE
+#define BITS_TO_BYTES_SIZE(security_size) (((security_size) + 7) / 8)
+#endif
 
 /**
  * generate_key() - Generate a key.
@@ -54,6 +58,20 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
  * Error code from internal functions.
  */
 TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
+
+/**
+ * export_key() - Export a key.
+ * @param_types: Parameters types.
+ * @params: Shared parameters between Secure and Normal world.
+ *
+ * This function only supports the export of a ECDSA NIST public key.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * Error code from internal functions.
+ */
+TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
 
 /**
  * clear_key_linked_list() - Clear key linked list.

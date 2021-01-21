@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <tee_internal_api.h>
@@ -112,6 +112,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx __maybe_unused,
 		return generate_key(param_types, params);
 	case CMD_DELETE_KEY:
 		return delete_key(param_types, params);
+	case CMD_IMPORT_KEY:
+		return import_key(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}

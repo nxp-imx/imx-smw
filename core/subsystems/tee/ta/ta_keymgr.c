@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <util.h>
@@ -12,9 +12,9 @@
 #include "ta_keymgr.h"
 
 /* Number of attributes switch key type */
-#define NB_ATTR_SYMMETRIC_KEY 1
 #define NB_ATTR_ECDSA_PUB_KEY 3
 #define NB_ATTR_ECDSA_KEYPAIR 4
+#define NB_ATTR_SYMM_KEY      1
 
 /* Persistent key object access flags */
 #define PERSISTENT_KEY_FLAGS                                                   \
@@ -553,6 +553,244 @@ static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 	return res;
 }
 
+/**
+ * set_ecc_public_key() - Set ecc public key attributes.
+ * @attr: Pointer to TEE Attrbute structure to update.
+ * @key: Public key.
+ * @key_len: @ken length in bytes.
+ *
+ * Return:
+ * None.
+ */
+static inline void set_ecc_public_key(TEE_Attribute *attr, unsigned char *key,
+				      unsigned int key_len)
+{
+	TEE_InitRefAttribute(attr, TEE_ATTR_ECC_PUBLIC_VALUE_X, key,
+			     key_len / 2);
+
+	TEE_InitRefAttribute(&attr[1], TEE_ATTR_ECC_PUBLIC_VALUE_Y,
+			     key + key_len / 2, key_len / 2);
+}
+
+/**
+ * set_import_key_public_attributes() - Set import attributes for public key.
+ * @attr: TEE Attribute structure to allocate and set.
+ * @attr_count: Number of attributes to set.
+ * @key_type: Key type.
+ * @security_size: Key security size.
+ * @pub_key: Pointer to public key buffer.
+ * @pub_key_len: @pub_key length in bytes.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
+ * Error code from conf_key_ecc_attribute().
+ */
+static TEE_Result set_import_key_public_attributes(TEE_Attribute **attr,
+						   uint32_t attr_count,
+						   enum tee_key_type key_type,
+						   unsigned int security_size,
+						   unsigned char *pub_key,
+						   unsigned int pub_key_len)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_Attribute *key_attr = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	key_attr = TEE_Malloc(attr_count * sizeof(TEE_Attribute),
+			      TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!key_attr) {
+		EMSG("TEE_Malloc failed");
+		return TEE_ERROR_OUT_OF_MEMORY;
+	}
+
+	*attr = key_attr;
+
+	res = conf_key_ecc_attribute(key_type, security_size, key_attr++);
+	if (res != TEE_SUCCESS) {
+		TEE_Free(*attr);
+		*attr = NULL;
+		return res;
+	}
+
+	set_ecc_public_key(key_attr, pub_key, pub_key_len);
+
+	return TEE_SUCCESS;
+}
+
+/**
+ * set_import_keypair_attributes() - Set import attributes for keypair.
+ * @attr: TEE Attribute structure to allocate and set.
+ * @attr_count: Number of attributes to set.
+ * @key_type: Key type.
+ * @security_size: Key security size.
+ * @priv_key: Pointer to private key buffer.
+ * @priv_key_len: @priv_key length in bytes.
+ * @pub_key: Pointer to public key buffer.
+ * @pub_key_len: @pub_key length in bytes.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
+ * Error code from conf_key_ecc_attribute().
+ */
+static TEE_Result set_import_keypair_attributes(
+	TEE_Attribute **attr, uint32_t attr_count, enum tee_key_type key_type,
+	unsigned int security_size, unsigned char *priv_key,
+	unsigned int priv_key_len, unsigned char *pub_key,
+	unsigned int pub_key_len)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_Attribute *key_attr = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	key_attr = TEE_Malloc(attr_count * sizeof(TEE_Attribute),
+			      TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!key_attr) {
+		EMSG("TEE_Malloc failed");
+		return TEE_ERROR_OUT_OF_MEMORY;
+	}
+
+	*attr = key_attr;
+
+	res = conf_key_ecc_attribute(key_type, security_size, key_attr++);
+	if (res != TEE_SUCCESS) {
+		TEE_Free(*attr);
+		*attr = NULL;
+		return res;
+	}
+
+	TEE_InitRefAttribute(key_attr++, TEE_ATTR_ECC_PRIVATE_VALUE, priv_key,
+			     priv_key_len);
+
+	set_ecc_public_key(key_attr, pub_key, pub_key_len);
+
+	return TEE_SUCCESS;
+}
+
+/**
+ * set_import_key_private_attributes() - Set import attributes for private key.
+ * @attr: TEE Attribute structure to allocate and set.
+ * @attr_count: Number of attributes to set.
+ * @priv_key: Pointer to private key buffer.
+ * @priv_key_len: @priv_key length in bytes.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
+ */
+static TEE_Result set_import_key_private_attributes(TEE_Attribute **attr,
+						    uint32_t attr_count,
+						    unsigned char *priv_key,
+						    unsigned int priv_key_len)
+{
+	FMSG("Executing %s", __func__);
+
+	*attr = TEE_Malloc(attr_count * sizeof(TEE_Attribute),
+			   TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!*attr) {
+		EMSG("TEE_Malloc failed");
+		return TEE_ERROR_OUT_OF_MEMORY;
+	}
+
+	TEE_InitRefAttribute(*attr, TEE_ATTR_SECRET_VALUE, priv_key,
+			     priv_key_len);
+
+	return TEE_SUCCESS;
+}
+
+/**
+ * set_import_key_attributes() - Set import key attributes.
+ * @attr: Pointer to TEE Attribute structure. Allocated by sub function. Must
+ *        be freed by the caller if function returned SUCCESS.
+ * @attr_count: Pointer to the number of attributes set.
+ * @object_type: TEE object type.
+ * @security_size: Key security size.
+ * @priv_key: Pointer to private key buffer. Can be NULL.
+ * @priv_key_len: @priv_key length in bytes.
+ * @pub_key: Pointer to public key buffer. Can be NULL.
+ * @pub_key_len: @pub_key length in bytes.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is bad.
+ * Error code from set_import_key_public_attributes().
+ * Error code from set_import_keypair_attributes().
+ * Error code from set_import_key_private_attributes().
+ */
+static TEE_Result
+set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
+			  uint32_t object_type, unsigned int security_size,
+			  unsigned char *priv_key, unsigned int priv_key_len,
+			  unsigned char *pub_key, unsigned int pub_key_len)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+
+	FMSG("Executing %s", __func__);
+
+	if (!attr || !attr_count || (!priv_key && !pub_key))
+		return res;
+
+	switch (object_type) {
+	case TEE_TYPE_ECDSA_PUBLIC_KEY:
+		*attr_count = NB_ATTR_ECDSA_PUB_KEY;
+		return set_import_key_public_attributes(attr,
+							NB_ATTR_ECDSA_PUB_KEY,
+							TEE_KEY_TYPE_ID_ECDSA,
+							security_size, pub_key,
+							pub_key_len);
+
+	case TEE_TYPE_ECDSA_KEYPAIR:
+		*attr_count = NB_ATTR_ECDSA_KEYPAIR;
+		return set_import_keypair_attributes(attr,
+						     NB_ATTR_ECDSA_KEYPAIR,
+						     TEE_KEY_TYPE_ID_ECDSA,
+						     security_size, priv_key,
+						     priv_key_len, pub_key,
+						     pub_key_len);
+
+	case TEE_TYPE_AES:
+	case TEE_TYPE_DES:
+	case TEE_TYPE_DES3:
+		*attr_count = NB_ATTR_SYMM_KEY;
+		return set_import_key_private_attributes(attr, NB_ATTR_SYMM_KEY,
+							 priv_key,
+							 priv_key_len);
+
+	default:
+		return res;
+	}
+}
+
+/**
+ * get_import_key_obj_type() - Get key's object type for import key operation.
+ * @key_type: Key type.
+ * @obj_type: Pointer to object type. Not updated if an error is returned.
+ * @priv_key: Pointer to private key. Can be NULL.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- @obj_type is NULL.
+ * Error code from get_key_obj_type().
+ */
+static TEE_Result get_import_key_obj_type(enum tee_key_type key_type,
+					  uint32_t *obj_type, void *priv_key)
+{
+	FMSG("Executing %s", __func__);
+
+	if (!obj_type)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	if (key_type == TEE_KEY_TYPE_ID_ECDSA && !priv_key) {
+		*obj_type = TEE_TYPE_ECDSA_PUBLIC_KEY;
+		return TEE_SUCCESS;
+	}
+
+	return get_key_obj_type(key_type, obj_type);
+}
+
 TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
@@ -771,6 +1009,165 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	} else {
 		EMSG("Failed to open persistent object: 0x%x", res);
 	}
+
+	return res;
+}
+
+TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
+	TEE_ObjectHandle pers_handle = TEE_HANDLE_NULL;
+	TEE_Attribute *key_attr = NULL;
+	uint32_t object_type = 0;
+	uint32_t attr_count = 0;
+	uint32_t id = 0;
+	unsigned int security_size = 0;
+	unsigned int priv_key_len = 0;
+	unsigned int pub_key_len = 0;
+	unsigned char *priv_key = NULL;
+	unsigned char *pub_key = NULL;
+	bool persistent = false;
+	struct key_data *key_data = NULL;
+	enum tee_key_type key_type = 0;
+
+	FMSG("Executing %s", __func__);
+
+	/*
+	 * params[0] = Key security size (in bits) and key type
+	 * params[1] = Persistent or not, key ID
+	 * params[2] = Private key buffer
+	 * params[3] = Public key buffer
+	 */
+	if (param_types == TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
+					   TEE_PARAM_TYPE_VALUE_INOUT,
+					   TEE_PARAM_TYPE_MEMREF_INPUT,
+					   TEE_PARAM_TYPE_MEMREF_INPUT)) {
+		/* Asymmetric Keypair */
+		priv_key = params[2].memref.buffer;
+		priv_key_len = params[2].memref.size;
+		pub_key = params[3].memref.buffer;
+		pub_key_len = params[3].memref.size;
+	} else if (param_types == TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
+						  TEE_PARAM_TYPE_VALUE_INOUT,
+						  TEE_PARAM_TYPE_MEMREF_INPUT,
+						  TEE_PARAM_TYPE_NONE)) {
+		/* Symmetric Key */
+		priv_key = params[2].memref.buffer;
+		priv_key_len = params[2].memref.size;
+	} else if (param_types ==
+		   TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
+				   TEE_PARAM_TYPE_VALUE_INOUT,
+				   TEE_PARAM_TYPE_NONE,
+				   TEE_PARAM_TYPE_MEMREF_INPUT)) {
+		/* Asymmetric Public key */
+		pub_key = params[3].memref.buffer;
+		pub_key_len = params[3].memref.size;
+	} else {
+		return res;
+	}
+
+	security_size = params[0].value.a;
+	key_type = params[0].value.b;
+	persistent = params[1].value.a;
+
+	/* Get TEE object type */
+	res = get_import_key_obj_type(key_type, &object_type, priv_key);
+	if (res) {
+		EMSG("Failed to get key object type: 0x%x", res);
+		return res;
+	}
+
+	/* Find an unused ID */
+	res = find_unused_id(&id, persistent);
+	if (res)
+		return res;
+
+	/* Setup key attributes */
+	res = set_import_key_attributes(&key_attr, &attr_count, object_type,
+					security_size, priv_key, priv_key_len,
+					pub_key, pub_key_len);
+	if (res)
+		return res;
+
+	/* Allocate a transient object */
+	res = TEE_AllocateTransientObject(object_type, security_size,
+					  &key_handle);
+	if (res) {
+		EMSG("Failed to allocate transient object: 0x%x", res);
+		goto exit;
+	}
+
+	/* Populate transient object */
+	res = TEE_PopulateTransientObject(key_handle, key_attr, attr_count);
+	if (res) {
+		EMSG("Failed to populate transient object: 0x%x", res);
+		goto exit;
+	}
+
+	/* Set key usage. Make it non extractable */
+	res = set_key_usage(key_type, key_handle);
+	if (res) {
+		EMSG("Failed to set key usage: 0x%x", res);
+		goto exit;
+	}
+
+	/* Create a key data structure representing the imported key */
+	key_data = TEE_Malloc(sizeof(struct key_data),
+			      TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!key_data) {
+		EMSG("TEE_Malloc failed");
+		res = TEE_ERROR_OUT_OF_MEMORY;
+		goto exit;
+	}
+
+	/* Update key data fields */
+	key_data->is_persistent = persistent;
+	key_data->key_id = id;
+	key_data->key_type = key_type;
+	key_data->security_size = security_size;
+
+	if (persistent) {
+		/* Create a persistent object and free the transient object */
+		res = TEE_CreatePersistentObject(SMW_TEE_STORAGE, &id,
+						 sizeof(id),
+						 PERSISTENT_KEY_FLAGS,
+						 key_handle, NULL, 0,
+						 &pers_handle);
+		TEE_FreeTransientObject(key_handle);
+		key_handle = TEE_HANDLE_NULL;
+
+		if (res) {
+			EMSG("Failed to create a persistent key: 0x%x", res);
+			goto exit;
+		}
+
+		key_data->handle = NULL;
+		TEE_CloseObject(pers_handle);
+	} else {
+		key_data->handle = key_handle;
+	}
+
+	/* Add key to the linked list */
+	res = key_add_list(key_data);
+
+exit:
+	if (res) {
+		if (key_data)
+			TEE_Free(key_data);
+
+		if (key_handle != TEE_HANDLE_NULL)
+			TEE_FreeTransientObject(key_handle);
+
+		if (pers_handle != TEE_HANDLE_NULL)
+			res = TEE_CloseAndDeletePersistentObject1(pers_handle);
+	} else {
+		/* Share key ID with Normal World */
+		params[1].value.b = key_data->key_id;
+	}
+
+	if (key_attr)
+		TEE_Free(key_attr);
 
 	return res;
 }

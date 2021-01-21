@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef TEE_SUBSYSTEM_H
@@ -27,5 +27,6 @@ enum tee_key_type {
 /* Key manager commands */
 #define CMD_GENERATE_KEY 0
 #define CMD_DELETE_KEY	 1
+#define CMD_IMPORT_KEY	 2
 
 #endif /* TEE_SUBSYSTEM_H */

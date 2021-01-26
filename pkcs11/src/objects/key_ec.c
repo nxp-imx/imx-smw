@@ -181,6 +181,38 @@ end:
 	return ret;
 }
 
+CK_RV key_ec_public_get_attribute(CK_ATTRIBUTE_PTR attr,
+				  const struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Get attribute type=%#lx", attr->type);
+
+	ret = attr_get_obj_value(attr, attr_key_ec_public,
+				 ARRAY_SIZE(attr_key_ec_public),
+				 get_subkey_from(obj));
+	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
+
+	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+CK_RV key_ec_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
+				     struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Modify attribute type=%#lx", attr->type);
+
+	ret = attr_modify_obj_value(attr, attr_key_ec_public,
+				    ARRAY_SIZE(attr_key_ec_public),
+				    get_subkey_from(obj));
+
+	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
 CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			    struct libattr_list *attrs)
 {
@@ -219,6 +251,39 @@ end:
 	if (ret != CKR_OK)
 		key_ec_private_free(obj);
 
+	return ret;
+}
+
+CK_RV key_ec_private_get_attribute(CK_ATTRIBUTE_PTR attr,
+				   const struct libobj_obj *obj, bool protect)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
+		  protect ? "YES" : "NO");
+
+	ret = attr_get_obj_prot_value(attr, attr_key_ec_private,
+				      ARRAY_SIZE(attr_key_ec_private),
+				      get_subkey_from(obj), protect);
+	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
+
+	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+CK_RV key_ec_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
+				      struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Modify attribute type=%#lx", attr->type);
+
+	ret = attr_modify_obj_value(attr, attr_key_ec_private,
+				    ARRAY_SIZE(attr_key_ec_private),
+				    get_subkey_from(obj));
+
+	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
 

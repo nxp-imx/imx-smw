@@ -58,6 +58,58 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject);
 
 /**
+ * libobj_get_attribute() - Return object's attributes
+ * @hsession: Session handle
+ * @hobject: Object handle
+ * @attrs: List of the object attributes to return
+ * @nb_attrs: Number of attributes
+ *
+ * After verifing the validity of the @hsession and the @hobj,
+ * the function returns the value of the given attributes list @attrs.
+ *
+ * return:
+ * CKR_OBJECT_HANDLE_INVALID     - Object not found
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_ATTRIBUTE_SENSITIVE       - Attribute is sensitive
+ * CKR_BUFFER_TOO_SMALL          - One of the attributes length is too small
+ * CKR_ATTRIBUTE_TYPE_INVALID    - One of the attributes is not present
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
+			   CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs);
+
+/**
+ * libobj_modify_attribute() - Modify object's attributes
+ * @hsession: Session handle
+ * @hobject: Object handle
+ * @attrs: List of the object attributes to modify
+ * @nb_attrs: Number of attributes
+ *
+ * After verifing the validity of the @hsession and the @hobj,
+ * the function modifies the value of the given attributes list @attrs.
+ * If an attribute is not modifiable, the attribute is not changed and
+ * CKR_ACTION_PROHIBITED error is returned.
+ *
+ * return:
+ * CKR_OBJECT_HANDLE_INVALID     - Object not found
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_ATTRIBUTE_READ_ONLY       - Attribute is read only
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value or length not valid
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_modify_attribute(CK_SESSION_HANDLE hsession,
+			      CK_OBJECT_HANDLE hobject, CK_ATTRIBUTE_PTR attrs,
+			      CK_ULONG nb_attrs);
+
+/**
  * libobj_generate_key() - Generate a secret key object
  * @hsession: Session handle
  * @mech: Key generation mechanism

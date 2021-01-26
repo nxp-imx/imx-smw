@@ -20,7 +20,7 @@ enum attr_key_cipher_list {
 };
 
 const struct template_attr attr_key_cipher[] = {
-	[SEC_VALUE] = TATTR(key_cipher, value, VALUE, 0, MUST, byte_array),
+	[SEC_VALUE] = TATTR_P(key_cipher, value, VALUE, 0, MUST, byte_array),
 	[SEC_VALUE_LEN] = TATTR(key_cipher, value_len, VALUE_LEN,
 				sizeof(CK_ULONG), MUST_NOT, ulong),
 };
@@ -97,6 +97,38 @@ end:
 	if (ret != CKR_OK)
 		key_cipher_free(obj);
 
+	return ret;
+}
+
+CK_RV key_cipher_get_attribute(CK_ATTRIBUTE_PTR attr,
+			       const struct libobj_obj *obj, bool protect)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
+		  protect ? "YES" : "NO");
+
+	ret = attr_get_obj_prot_value(attr, attr_key_cipher,
+				      ARRAY_SIZE(attr_key_cipher),
+				      get_subkey_from(obj), protect);
+	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
+
+	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+CK_RV key_cipher_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Modify attribute type=%#lx", attr->type);
+
+	ret = attr_modify_obj_value(attr, attr_key_cipher,
+				    ARRAY_SIZE(attr_key_cipher),
+				    get_subkey_from(obj));
+
+	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
 

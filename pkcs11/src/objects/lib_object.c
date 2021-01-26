@@ -47,11 +47,12 @@ const struct template_attr attr_obj_storage[] = {
 				  OPTIONAL, boolean),
 	[STORAGE_MODIFIABLE] = TATTR(storage, modifiable, MODIFIABLE,
 				     sizeof(CK_BBOOL), OPTIONAL, boolean),
-	[STORAGE_COPYABLE] = TATTR(storage, copyable, COPYABLE,
-				   sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[STORAGE_COPYABLE] =
+		TATTR_MS(storage, copyable, COPYABLE, sizeof(CK_BBOOL),
+			 OPTIONAL, boolean, false_only),
 	[STORAGE_DESTROYABLE] = TATTR(storage, destroyable, DESTROYABLE,
 				      sizeof(CK_BBOOL), OPTIONAL, boolean),
-	[STORAGE_LABEL] = TATTR(storage, label, LABEL, 0, OPTIONAL, rfc2279),
+	[STORAGE_LABEL] = TATTR_M(storage, label, LABEL, 0, OPTIONAL, rfc2279),
 	[STORAGE_UNIQUE_ID] =
 		TATTR(storage, unique_id, UNIQUE_ID, 0, READ_ONLY, rfc2279),
 };
@@ -357,6 +358,57 @@ static CK_RV obj_is_destoyable(CK_SESSION_HANDLE hsession,
 }
 
 /**
+ * obj_is_modifiable() - Return if an object is modifiable
+ * @hsession: Session handle
+ * @obj: Object
+ *
+ * return:
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_ACTION_PROHIBITED         - Object is not modifiable
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_OK                        - Object is modifiable
+ */
+static CK_RV obj_is_modifiable(CK_SESSION_HANDLE hsession,
+			       struct libobj_obj *obj)
+{
+	CK_RV ret;
+	unsigned int access;
+	bool is_modifiable = true;
+	bool is_token = false;
+
+	switch (obj->class) {
+	case CKO_PRIVATE_KEY:
+	case CKO_SECRET_KEY:
+	case CKO_PUBLIC_KEY:
+		is_modifiable = is_modifiable_obj(obj, storage);
+		is_token = is_token_obj(obj, storage);
+		DBG_TRACE("Storage object class %lu, modifiable=%d, token=%d",
+			  obj->class, is_modifiable, is_token);
+		break;
+
+	default:
+		return CKR_FUNCTION_FAILED;
+	}
+
+	if (!is_modifiable)
+		return CKR_ACTION_PROHIBITED;
+
+	/* Token objects can be modifiable only if R/W Session */
+	if (is_token) {
+		ret = get_token_obj_access(hsession, &access);
+		if (ret != CKR_OK)
+			return ret;
+
+		if (!(access & OBJ_RW))
+			return CKR_ACTION_PROHIBITED;
+	}
+
+	return CKR_OK;
+}
+
+/**
  * obj_allocate() - Allocate and initialize common object
  * @obj: Object allocated
  *
@@ -593,6 +645,99 @@ static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	return CKR_OK;
 }
 
+/**
+ * class_get_attribute() - Get an attribute from the class object
+ * @attr: Attribute to get
+ * @libobj: Library object reference
+ *
+ * Get the given attribute @attr from the object's class,
+ * if not present, call the class's subobject get attribute function.
+ *
+ * return:
+ * CKR_ATTRIBUTE_SENSITIVE       - Attribute is sensitive
+ * CKR_BUFFER_TOO_SMALL          - Attribute length is too small
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+static CK_RV class_get_attribute(CK_ATTRIBUTE_PTR attr,
+				 const struct libobj_obj *libobj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Get attribute type=%#lx", attr->type);
+	switch (libobj->class) {
+	case CKO_PRIVATE_KEY:
+	case CKO_SECRET_KEY:
+	case CKO_PUBLIC_KEY:
+		ret = attr_get_obj_value(attr, attr_obj_storage,
+					 ARRAY_SIZE(attr_obj_storage),
+					 get_object_from(libobj));
+		/*
+		 * If attribute not present in the common storage
+		 * object attributes, try to get it from
+		 * the specific key object
+		 */
+		if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+			ret = key_get_attribute(attr, libobj);
+
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+/**
+ * class_modify_attribute() - Modify an attribute of the class object
+ * @attr: Attribute to modify
+ * @libobj: Library object reference
+ *
+ * Modify the given attribute @attr of the object's class,
+ * if not present, call the class's subobject modify attribute function.
+ *
+ * return:
+ * CKR_ATTRIBUTE_READ_ONLY       - Attribute is read only
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value or length not valid
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+static CK_RV class_modify_attribute(CK_ATTRIBUTE_PTR attr,
+				    struct libobj_obj *libobj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Modify attribute type=%#lx", attr->type);
+	switch (libobj->class) {
+	case CKO_PRIVATE_KEY:
+	case CKO_SECRET_KEY:
+	case CKO_PUBLIC_KEY:
+		ret = attr_modify_obj_value(attr, attr_obj_storage,
+					    ARRAY_SIZE(attr_obj_storage),
+					    get_object_from(libobj));
+		/*
+		 * If attribute not present in the common storage
+		 * object attributes, try to modify it in
+		 * the specific key object
+		 */
+		if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+			ret = key_modify_attribute(attr, libobj);
+
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
 CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		    CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj)
 {
@@ -674,6 +819,106 @@ end:
 		libmutex_unlock(obj->lock);
 
 	DBG_TRACE("Destroy object (%p) return %lu", obj, ret);
+	return ret;
+}
+
+CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
+			   CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs)
+{
+	CK_RV ret;
+	CK_RV status;
+	struct libobj_obj *libobj = (struct libobj_obj *)hobject;
+	CK_ULONG idx;
+
+	DBG_TRACE("Get attribute(s) of object (%p) in session %lu", libobj,
+		  hsession);
+
+	ret = find_lock_object(hsession, libobj, NULL);
+	if (ret != CKR_OK)
+		goto end;
+
+	DBG_TRACE("Get %lu attribute(s)", nb_attrs);
+	for (idx = 0; idx < nb_attrs; idx++) {
+		DBG_TRACE("Get attribute %lu type=%#lx", idx, attrs[idx].type);
+		status =
+			attr_get_obj_value(&attrs[idx], attr_obj_common,
+					   ARRAY_SIZE(attr_obj_common), libobj);
+		if (status == CKR_ATTRIBUTE_TYPE_INVALID) {
+			/*
+			 * Attribute not present in the common
+			 * object attributes, try to get it from
+			 * the specific class object
+			 */
+			status = class_get_attribute(&attrs[idx], libobj);
+		}
+
+		DBG_TRACE("Get attribute %lu type=%#lx status=%ld", idx,
+			  attrs[idx].type, status);
+		/*
+		 * Continue to parse all requested attributes while
+		 * there is not fatal error, else return the fatal error
+		 * immediately.
+		 * If status is not CKR_OK, set return function  value
+		 * to the first error occurring.
+		 */
+		if (status != CKR_OK && status != CKR_ATTRIBUTE_TYPE_INVALID &&
+		    status != CKR_BUFFER_TOO_SMALL &&
+		    status != CKR_ATTRIBUTE_SENSITIVE) {
+			ret = status;
+			break;
+		}
+
+		if (ret == CKR_OK && status != CKR_OK)
+			ret = status;
+	}
+
+end:
+	libmutex_unlock(libobj->lock);
+
+	DBG_TRACE("Get attribute(s) of object (%p) return %lu", libobj, ret);
+	return ret;
+}
+
+CK_RV libobj_modify_attribute(CK_SESSION_HANDLE hsession,
+			      CK_OBJECT_HANDLE hobject, CK_ATTRIBUTE_PTR attrs,
+			      CK_ULONG nb_attrs)
+{
+	CK_RV ret;
+	struct libobj_obj *libobj = (struct libobj_obj *)hobject;
+	CK_ULONG idx;
+
+	DBG_TRACE("Modify attribute(s) of object (%p) in session %lu", libobj,
+		  hsession);
+
+	ret = find_lock_object(hsession, libobj, NULL);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = obj_is_modifiable(hsession, libobj);
+
+	DBG_TRACE("Modify %lu attribute(s)", nb_attrs);
+	for (idx = 0; idx < nb_attrs && ret == CKR_OK; idx++) {
+		DBG_TRACE("Modify attribute %lu type=%#lx", idx,
+			  attrs[idx].type);
+		ret = attr_modify_obj_value(&attrs[idx], attr_obj_common,
+					    ARRAY_SIZE(attr_obj_common),
+					    libobj);
+		/*
+		 * If attribute not present in the common
+		 * object attributes, try to modify it from
+		 * the specific class object
+		 */
+		if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+			ret = class_modify_attribute(&attrs[idx], libobj);
+
+		DBG_TRACE("Modify attribute %lu type=%#lx status=%ld", idx,
+			  attrs[idx].type, ret);
+	}
+
+end:
+	libmutex_unlock(libobj->lock);
+
+	DBG_TRACE("Modify attribute(s) of object (%p) return %lu", libobj, ret);
 	return ret;
 }
 

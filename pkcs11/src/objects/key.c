@@ -29,13 +29,13 @@ enum attr_key_common_list {
 
 const struct template_attr attr_key_common[] = {
 	[KEY_TYPE] = TATTR(key, type, KEY_TYPE, sizeof(CK_KEY_TYPE), MUST, key),
-	[KEY_ID] = TATTR(key, id, ID, 0, OPTIONAL, byte_array),
-	[KEY_START_DATE] = TATTR(key, start_date, START_DATE, sizeof(CK_DATE),
+	[KEY_ID] = TATTR_M(key, id, ID, 0, OPTIONAL, byte_array),
+	[KEY_START_DATE] = TATTR_M(key, start_date, START_DATE, sizeof(CK_DATE),
+				   OPTIONAL, date),
+	[KEY_END_DATE] = TATTR_M(key, end_date, END_DATE, sizeof(CK_DATE),
 				 OPTIONAL, date),
-	[KEY_END_DATE] =
-		TATTR(key, end_date, END_DATE, sizeof(CK_DATE), OPTIONAL, date),
-	[KEY_DERIVE] =
-		TATTR(key, derive, DERIVE, sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[KEY_DERIVE] = TATTR_M(key, derive, DERIVE, sizeof(CK_BBOOL), OPTIONAL,
+			       boolean),
 	[KEY_LOCAL] =
 		TATTR(key, local, LOCAL, sizeof(CK_BBOOL), OPTIONAL, boolean),
 	[KEY_GEN_MECH] = TATTR(key, gen_mech, KEY_GEN_MECHANISM,
@@ -68,17 +68,18 @@ enum attr_key_public_list {
 
 const struct template_attr attr_key_public[] = {
 	[PUB_SUBJECT] =
-		TATTR(key_public, subject, SUBJECT, 0, OPTIONAL, byte_array),
-	[PUB_ENCRYPT] = TATTR(key_public, encrypt, ENCRYPT, sizeof(CK_BBOOL),
-			      OPTIONAL, boolean),
-	[PUB_VERIFY] = TATTR(key_public, verify, VERIFY, sizeof(CK_BBOOL),
-			     OPTIONAL, boolean),
-	[PUB_VERIFY_RECOVER] = TATTR(key_public, verify_recover, VERIFY_RECOVER,
-				     sizeof(CK_BBOOL), OPTIONAL, boolean),
+		TATTR_M(key_public, subject, SUBJECT, 0, OPTIONAL, byte_array),
+	[PUB_ENCRYPT] = TATTR_M(key_public, encrypt, ENCRYPT, sizeof(CK_BBOOL),
+				OPTIONAL, boolean),
+	[PUB_VERIFY] = TATTR_M(key_public, verify, VERIFY, sizeof(CK_BBOOL),
+			       OPTIONAL, boolean),
+	[PUB_VERIFY_RECOVER] =
+		TATTR_M(key_public, verify_recover, VERIFY_RECOVER,
+			sizeof(CK_BBOOL), OPTIONAL, boolean),
 	[PUB_TRUSTED] = TATTR(key_public, trusted, TRUSTED, sizeof(CK_BBOOL),
 			      OPTIONAL, boolean),
-	[PUB_WRAP] = TATTR(key_public, wrap, WRAP, sizeof(CK_BBOOL), OPTIONAL,
-			   boolean),
+	[PUB_WRAP] = TATTR_M(key_public, wrap, WRAP, sizeof(CK_BBOOL), OPTIONAL,
+			     boolean),
 	[PUB_WRAP_TEMPLATE] = TATTR(key_public, wrap_attrs, WRAP_TEMPLATE, 0,
 				    OPTIONAL, attr_list),
 	[PUB_INFO] = TATTR(key_public, info, PUBLIC_KEY_INFO, 0, OPTIONAL,
@@ -119,35 +120,37 @@ enum attr_key_private_list {
 
 const struct template_attr attr_key_private[] = {
 	[PRIV_SUBJECT] =
-		TATTR(key_private, subject, SUBJECT, 0, OPTIONAL, byte_array),
-	[PRIV_SENSITIVE] = TATTR(key_private, sensitive, SENSITIVE,
-				 sizeof(CK_BBOOL), OPTIONAL, boolean),
+		TATTR_M(key_private, subject, SUBJECT, 0, OPTIONAL, byte_array),
+	[PRIV_SENSITIVE] =
+		TATTR_MS(key_private, sensitive, SENSITIVE, sizeof(CK_BBOOL),
+			 OPTIONAL, boolean, true_only),
 	[PRIV_ALWAYS_SENSITIVE] =
 		TATTR(key_private, always_sensitive, ALWAYS_SENSITIVE,
 		      sizeof(CK_BBOOL), OPTIONAL, boolean),
-	[PRIV_DECRYPT] = TATTR(key_private, decrypt, DECRYPT, sizeof(CK_BBOOL),
-			       OPTIONAL, boolean),
-	[PRIV_SIGN] = TATTR(key_private, sign, SIGN, sizeof(CK_BBOOL), OPTIONAL,
-			    boolean),
-	[PRIV_SIGN_RECOVER] = TATTR(key_private, sign_recover, SIGN_RECOVER,
-				    sizeof(CK_BBOOL), OPTIONAL, boolean),
-	[PRIV_EXTRACTABLE] = TATTR(key_private, extractable, EXTRACTABLE,
-				   sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_DECRYPT] = TATTR_M(key_private, decrypt, DECRYPT,
+				 sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_SIGN] = TATTR_M(key_private, sign, SIGN, sizeof(CK_BBOOL),
+			      OPTIONAL, boolean),
+	[PRIV_SIGN_RECOVER] = TATTR_M(key_private, sign_recover, SIGN_RECOVER,
+				      sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_EXTRACTABLE] =
+		TATTR_MS(key_private, extractable, EXTRACTABLE,
+			 sizeof(CK_BBOOL), OPTIONAL, boolean, false_only),
 	[PRIV_NEVER_EXTRACTABLE] =
 		TATTR(key_private, never_extractable, NEVER_EXTRACTABLE,
 		      sizeof(CK_BBOOL), OPTIONAL, boolean),
 	[PRIV_WRAP_WITH_TRUSTED] =
 		TATTR(key_private, wrap_with_trusted, WRAP_WITH_TRUSTED,
 		      sizeof(CK_BBOOL), OPTIONAL, boolean),
-	[PRIV_UNWRAP] = TATTR(key_private, unwrap, UNWRAP, sizeof(CK_BBOOL),
-			      OPTIONAL, boolean),
+	[PRIV_UNWRAP] = TATTR_M(key_private, unwrap, UNWRAP, sizeof(CK_BBOOL),
+				OPTIONAL, boolean),
 	[PRIV_UNWRAP_TEMPLATE] = TATTR(key_private, unwrap_attrs,
 				       UNWRAP_TEMPLATE, 0, OPTIONAL, attr_list),
 	[PRIV_ALWAYS_AUTHENTICATE] =
 		TATTR(key_private, always_authenticate, ALWAYS_AUTHENTICATE,
 		      sizeof(CK_BBOOL), OPTIONAL, boolean),
-	[PRIV_INFO] = TATTR(key_private, info, PUBLIC_KEY_INFO, 0, OPTIONAL,
-			    byte_array),
+	[PRIV_INFO] = TATTR_M(key_private, info, PUBLIC_KEY_INFO, 0, OPTIONAL,
+			      byte_array),
 };
 
 struct libobj_key_secret {
@@ -187,33 +190,34 @@ enum attr_key_secret_list {
 };
 
 const struct template_attr attr_key_secret[] = {
-	[SECR_SENSITIVE] = TATTR(key_secret, sensitive, SENSITIVE,
-				 sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[SECR_SENSITIVE] =
+		TATTR_MS(key_secret, sensitive, SENSITIVE, sizeof(CK_BBOOL),
+			 OPTIONAL, boolean, true_only),
 	[SECR_ALWAYS_SENSITIVE] =
 		TATTR(key_secret, always_sensitive, ALWAYS_SENSITIVE,
 		      sizeof(CK_BBOOL), OPTIONAL, boolean),
-	[SECR_ENCRYPT] = TATTR(key_secret, encrypt, ENCRYPT, sizeof(CK_BBOOL),
-			       OPTIONAL, boolean),
-	[SECR_DECRYPT] = TATTR(key_secret, decrypt, DECRYPT, sizeof(CK_BBOOL),
-			       OPTIONAL, boolean),
-	[SECR_SIGN] = TATTR(key_secret, sign, SIGN, sizeof(CK_BBOOL), OPTIONAL,
-			    boolean),
-	[SECR_VERIFY] = TATTR(key_secret, verify, VERIFY, sizeof(CK_BBOOL),
+	[SECR_ENCRYPT] = TATTR_M(key_secret, encrypt, ENCRYPT, sizeof(CK_BBOOL),
+				 OPTIONAL, boolean),
+	[SECR_DECRYPT] = TATTR_M(key_secret, decrypt, DECRYPT, sizeof(CK_BBOOL),
+				 OPTIONAL, boolean),
+	[SECR_SIGN] = TATTR_M(key_secret, sign, SIGN, sizeof(CK_BBOOL),
 			      OPTIONAL, boolean),
+	[SECR_VERIFY] = TATTR_M(key_secret, verify, VERIFY, sizeof(CK_BBOOL),
+				OPTIONAL, boolean),
 	[SECR_EXTRACTABLE] = TATTR(key_secret, extractable, EXTRACTABLE,
 				   sizeof(CK_BBOOL), OPTIONAL, boolean),
 	[SECR_NEVER_EXTRACTABLE] =
-		TATTR(key_secret, never_extractable, NEVER_EXTRACTABLE,
-		      sizeof(CK_BBOOL), OPTIONAL, boolean),
-	[SECR_WRAP] = TATTR(key_secret, wrap, WRAP, sizeof(CK_BBOOL), OPTIONAL,
-			    boolean),
+		TATTR_MS(key_secret, never_extractable, NEVER_EXTRACTABLE,
+			 sizeof(CK_BBOOL), OPTIONAL, boolean, false_only),
+	[SECR_WRAP] = TATTR_M(key_secret, wrap, WRAP, sizeof(CK_BBOOL),
+			      OPTIONAL, boolean),
 	[SECR_WRAP_TEMPLATE] = TATTR(key_secret, wrap_attrs, WRAP_TEMPLATE, 0,
 				     OPTIONAL, attr_list),
 	[SECR_WRAP_WITH_TRUSTED] =
 		TATTR(key_secret, wrap_with_trusted, WRAP_WITH_TRUSTED,
 		      sizeof(CK_BBOOL), OPTIONAL, boolean),
-	[SECR_UNWRAP] = TATTR(key_secret, unwrap, UNWRAP, sizeof(CK_BBOOL),
-			      OPTIONAL, boolean),
+	[SECR_UNWRAP] = TATTR_M(key_secret, unwrap, UNWRAP, sizeof(CK_BBOOL),
+				OPTIONAL, boolean),
 	[SECR_UNWRAP_TEMPLATE] = TATTR(key_secret, unwrap_attrs,
 				       UNWRAP_TEMPLATE, 0, OPTIONAL, attr_list),
 	[SECR_TRUSTED] = TATTR(key_secret, trusted, TRUSTED, sizeof(CK_BBOOL),
@@ -733,6 +737,109 @@ static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
 }
 
 /**
+ * subkey_secret_get_attribute() - Get an attribute from the secret key
+ * @attr: Attribute to get
+ * @obj: Key object
+ *
+ * Get the given attribute @attr from the secret key object,
+ * if not present, call the secret key type get attribute function.
+ *
+ * return:
+ * CKR_ATTRIBUTE_SENSITIVE       - Attribute is sensitive
+ * CKR_BUFFER_TOO_SMALL          - Attribute length is too small
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_secret_get_attribute(CK_ATTRIBUTE_PTR attr,
+					 const struct libobj_obj *obj)
+{
+	CK_RV ret;
+	const struct libobj_key_secret *secret_key = get_key_from(obj);
+	bool protect = false;
+
+	if (secret_key->sensitive || !secret_key->extractable)
+		protect = true;
+
+	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
+		  protect ? "YES" : "NO");
+
+	/* Get attribute from the secret key attribute */
+	ret = attr_get_obj_prot_value(attr, attr_key_secret,
+				      ARRAY_SIZE(attr_key_secret), secret_key,
+				      protect);
+	if (ret != CKR_ATTRIBUTE_TYPE_INVALID)
+		return ret;
+
+	/*
+	 * Attribute not present in the secret key object attributes,
+	 * try to get it from the specific key type
+	 */
+	switch (get_key_type(obj)) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+		ret = key_cipher_get_attribute(attr, obj, protect);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+/**
+ * subkey_secret_modify_attribute() - Modify an attribute of the secret key
+ * @attr: Attribute to modify
+ * @obj: Key object
+ *
+ * Modify the given attribute @attr of the secret key object,
+ * if not present, call the secret key type modify attribute function.
+ *
+ * return:
+ * CKR_ATTRIBUTE_READ_ONLY     - Attribute is read only
+ * CKR_ATTRIBUTE_TYPE_INVALID  - Attribute not found
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
+ * CKR_HOST_MEMORY             - Out of memory
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_secret_modify_attribute(CK_ATTRIBUTE_PTR attr,
+					    struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Modify attribute type=%#lx", attr->type);
+
+	/* Modifyt attribute of the secret key attribute */
+	ret = attr_modify_obj_value(attr, attr_key_secret,
+				    ARRAY_SIZE(attr_key_secret),
+				    get_key_from(obj));
+	if (ret != CKR_ATTRIBUTE_TYPE_INVALID)
+		return ret;
+
+	/*
+	 * Attribute not present in the secret key object attributes,
+	 * try to modify it in the specific key type
+	 */
+	switch (get_key_type(obj)) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+		ret = key_cipher_modify_attribute(attr, obj);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+/**
  * subkey_private_create() - Create a private subkey object
  * @hsession: Session handle
  * @obj: Key object
@@ -774,6 +881,106 @@ static CK_RV subkey_private_create(CK_SESSION_HANDLE hsession,
 }
 
 /**
+ * subkey_private_get_attribute() - Get an attribute from the private key
+ * @attr: Attribute to get
+ * @obj: Key object
+ *
+ * Get the given attribute @attr from the private key object,
+ * if not present, call the private key type get attribute function.
+ *
+ * return:
+ * CKR_ATTRIBUTE_SENSITIVE       - Attribute is sensitive
+ * CKR_BUFFER_TOO_SMALL          - Attribute length is too small
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_private_get_attribute(CK_ATTRIBUTE_PTR attr,
+					  const struct libobj_obj *obj)
+{
+	CK_RV ret;
+	const struct libobj_key_private *priv_key = get_key_from(obj);
+	bool protect = false;
+
+	if (priv_key->sensitive || !priv_key->extractable)
+		protect = true;
+
+	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
+		  protect ? "YES" : "NO");
+
+	/* Get attribute from the private key attribute */
+	ret = attr_get_obj_prot_value(attr, attr_key_private,
+				      ARRAY_SIZE(attr_key_private), priv_key,
+				      protect);
+	if (ret != CKR_ATTRIBUTE_TYPE_INVALID)
+		return ret;
+
+	/*
+	 * Attribute not present in the private key object attributes,
+	 * try to get it from the specific key type
+	 */
+	switch (get_key_type(obj)) {
+	case CKK_EC:
+		ret = key_ec_private_get_attribute(attr, obj, protect);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+/**
+ * subkey_private_modify_attribute() - Modify an attribute of the private key
+ * @attr: Attribute to modify
+ * @obj: Key object
+ *
+ * Modify the given attribute @attr of the private key object,
+ * if not present, call the private key type modify attribute function.
+ *
+ * return:
+ * CKR_ATTRIBUTE_READ_ONLY     - Attribute is read only
+ * CKR_ATTRIBUTE_TYPE_INVALID  - Attribute not found
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
+ * CKR_HOST_MEMORY             - Out of memory
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
+					     struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Modify attribute type=%#lx", attr->type);
+
+	/* Modify attribute of the private key attribute */
+	ret = attr_modify_obj_value(attr, attr_key_private,
+				    ARRAY_SIZE(attr_key_private),
+				    get_key_from(obj));
+
+	if (ret != CKR_ATTRIBUTE_TYPE_INVALID)
+		return ret;
+
+	/*
+	 * Attribute not present in the private key object attributes,
+	 * try to modify it in the specific key type
+	 */
+	switch (get_key_type(obj)) {
+	case CKK_EC:
+		ret = key_ec_private_modify_attribute(attr, obj);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+/**
  * subkey_public_create() - Create a public subkey object
  * @hsession: Session handle
  * @obj: Key object
@@ -811,6 +1018,98 @@ static CK_RV subkey_public_create(CK_SESSION_HANDLE hsession,
 		ret = CKR_FUNCTION_FAILED;
 	}
 
+	return ret;
+}
+
+/**
+ * subkey_public_get_attribute() - Get an attribute from the public key
+ * @attr: Attribute to get
+ * @key: Key object
+ *
+ * Get the given attribute @attr from the public key object,
+ * if not present, call the public key type get attribute function.
+ *
+ * return:
+ * CKR_BUFFER_TOO_SMALL          - Attribute length is too small
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_public_get_attribute(CK_ATTRIBUTE_PTR attr,
+					 const struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Get attribute type=%#lx", attr->type);
+
+	/* Get attribute from the public key attribute */
+	ret = attr_get_obj_value(attr, attr_key_public,
+				 ARRAY_SIZE(attr_key_public),
+				 get_key_from(obj));
+	if (ret != CKR_ATTRIBUTE_TYPE_INVALID)
+		return ret;
+
+	/*
+	 * Attribute not present in the public key object attributes,
+	 * try to get it from the specific key type
+	 */
+	switch (get_key_type(obj)) {
+	case CKK_EC:
+		ret = key_ec_public_get_attribute(attr, obj);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+/**
+ * subkey_public_modify_attribute() - Modify an attribute from the public key
+ * @attr: Attribute to modify
+ * @obj: Key object
+ *
+ * Modify the given attribute @attr of the public key object,
+ * if not present, call the public key type modify attribute function.
+ *
+ * return:
+ * CKR_ATTRIBUTE_READ_ONLY     - Attribute is read only
+ * CKR_ATTRIBUTE_TYPE_INVALID  - Attribute not found
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
+ * CKR_HOST_MEMORY             - Out of memory
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
+					    struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Modify attribute type=%#lx", attr->type);
+
+	/* Modify attribute of the public key attribute */
+	ret = attr_modify_obj_value(attr, attr_key_public,
+				    ARRAY_SIZE(attr_key_public),
+				    get_key_from(obj));
+	if (ret != CKR_ATTRIBUTE_TYPE_INVALID)
+		return ret;
+
+	/*
+	 * Attribute not present in the public key object attributes,
+	 * try to modify it in the specific key type
+	 */
+	switch (get_key_type(obj)) {
+	case CKK_EC:
+		ret = key_ec_public_modify_attribute(attr, obj);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
 
@@ -1038,6 +1337,84 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	}
 
 	DBG_TRACE("Key type object (%p) creation return %ld", obj, ret);
+	return ret;
+}
+
+CK_RV key_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Get attribute type=%#lx", attr->type);
+
+	/* Get attribute from the common key attribute */
+	ret = attr_get_obj_value(attr, attr_key_common,
+				 ARRAY_SIZE(attr_key_common),
+				 get_subobj_from(obj, storage));
+
+	if (ret != CKR_ATTRIBUTE_TYPE_INVALID)
+		return ret;
+
+	/*
+	 * Attribute not present in the common key object attributes,
+	 * try to get it from the specific key class type
+	 */
+	switch (obj->class) {
+	case CKO_PUBLIC_KEY:
+		ret = subkey_public_get_attribute(attr, obj);
+		break;
+
+	case CKO_PRIVATE_KEY:
+		ret = subkey_private_get_attribute(attr, obj);
+		break;
+
+	case CKO_SECRET_KEY:
+		ret = subkey_secret_get_attribute(attr, obj);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
+	return ret;
+}
+
+CK_RV key_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
+{
+	CK_RV ret;
+
+	DBG_TRACE("Modify attribute type=%#lx", attr->type);
+
+	/* Get attribute from the common key attribute */
+	ret = attr_modify_obj_value(attr, attr_key_common,
+				    ARRAY_SIZE(attr_key_common),
+				    get_subobj_from(obj, storage));
+
+	if (ret != CKR_ATTRIBUTE_TYPE_INVALID)
+		return ret;
+
+	/*
+	 * Attribute not present in the common key object attributes,
+	 * try to modify it in the specific key class type
+	 */
+	switch (obj->class) {
+	case CKO_PUBLIC_KEY:
+		ret = subkey_public_modify_attribute(attr, obj);
+		break;
+
+	case CKO_PRIVATE_KEY:
+		ret = subkey_private_modify_attribute(attr, obj);
+		break;
+
+	case CKO_SECRET_KEY:
+		ret = subkey_secret_modify_attribute(attr, obj);
+		break;
+
+	default:
+		ret = CKR_FUNCTION_FAILED;
+	}
+
+	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
 }
 

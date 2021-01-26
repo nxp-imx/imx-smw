@@ -45,6 +45,43 @@ void key_ec_private_free(struct libobj_obj *obj);
 CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			   struct libattr_list *attrs);
 
+/**
+ * key_ec_public_get_attribute() - Get an attribute from the EC public key
+ * @attr: Attribute to get
+ * @obj: EC public key object
+ *
+ * Get the given attribute @attr from the EC public key object,
+ * if not present, as this is the last function called to get the attribute
+ * set the attribute's ulValueLen to CK_UNAVAILABLE_INFORMATION
+ *
+ * return:
+ * CKR_ATTRIBUTE_SENSITIVE       - Attribute is sensitive
+ * CKR_BUFFER_TOO_SMALL          - Attribute length is too small
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_OK                        - Success
+ */
+CK_RV key_ec_public_get_attribute(CK_ATTRIBUTE_PTR attr,
+				  const struct libobj_obj *obj);
+
+/**
+ * key_ec_public_modify_attribute() - Modify an attribute of the EC public key
+ * @attr: Attribute to modify
+ * @obj: EC public key object
+ *
+ * Modify the given attribute @attr of the EC public key object,
+ * if not present, as this is the last function called returns the
+ * CKR_ATTRIBUTE_TYPE_INVALID error.
+ *
+ * return:
+ * CKR_ATTRIBUTE_READ_ONLY       - Attribute is read only
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value or length not valid
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_OK                        - Success
+ */
+CK_RV key_ec_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
+				     struct libobj_obj *obj);
+
 /*
  * key_ec_private_create() - Creates an EC private key object
  * @hsession: Session handle
@@ -69,6 +106,44 @@ CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
  */
 CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			    struct libattr_list *attrs);
+
+/**
+ * key_ec_private_get_attribute() - Get an attribute from the EC private key
+ * @attr: Attribute to get
+ * @obj: EC private key object
+ * @protect: True if object is sensitive or unextractable
+ *
+ * Get the given attribute @attr from the EC private key object,
+ * if not present, as this is the last function called to get the attribute
+ * set the attribute's ulValueLen to CK_UNAVAILABLE_INFORMATION
+ *
+ * return:
+ * CKR_ATTRIBUTE_SENSITIVE       - Attribute is sensitive
+ * CKR_BUFFER_TOO_SMALL          - Attribute length is too small
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_OK                        - Success
+ */
+CK_RV key_ec_private_get_attribute(CK_ATTRIBUTE_PTR attr,
+				   const struct libobj_obj *obj, bool protect);
+
+/**
+ * key_ec_private_modify_attribute() - Modify an attribute of the EC private key
+ * @attr: Attribute to modify
+ * @obj: EC private key object
+ *
+ * Modify the given attribute @attr of the EC private key object,
+ * if not present, as this is the last function called returns the
+ * CKR_ATTRIBUTE_TYPE_INVALID error.
+ *
+ * return:
+ * CKR_ATTRIBUTE_READ_ONLY       - Attribute is read only
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value or length not valid
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_OK                        - Success
+ */
+CK_RV key_ec_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
+				      struct libobj_obj *obj);
 
 /*
  * key_ec_keypair_generate() - Generates an EC keypair object

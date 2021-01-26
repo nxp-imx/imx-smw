@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "lib_object.h"
@@ -51,23 +51,31 @@ CK_RV C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 CK_RV C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 			  CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
 {
-	(void)hSession;
-	(void)hObject;
-	(void)pTemplate;
-	(void)ulCount;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!pTemplate || !ulCount)
+		return CKR_TEMPLATE_INCOMPLETE;
+
+	if (!hObject)
+		return CKR_ARGUMENTS_BAD;
+
+	return libobj_get_attribute(hSession, hObject, pTemplate, ulCount);
 }
 
 CK_RV C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 			  CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
 {
-	(void)hSession;
-	(void)hObject;
-	(void)pTemplate;
-	(void)ulCount;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!pTemplate || !ulCount)
+		return CKR_TEMPLATE_INCOMPLETE;
+
+	if (!hObject)
+		return CKR_ARGUMENTS_BAD;
+
+	return libobj_modify_attribute(hSession, hObject, pTemplate, ulCount);
 }
 
 CK_RV C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate,

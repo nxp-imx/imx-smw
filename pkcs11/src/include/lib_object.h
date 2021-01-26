@@ -188,6 +188,64 @@ CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			      CK_OBJECT_HANDLE_PTR hpriv);
 
 /**
+ * libobj_find_init() - Initialize the find object query
+ * @hsession: Session handle
+ * @attrs: List of the object attributes to find
+ * @nb_attrs: Number of attributes
+ *
+ * Initializes a session find object query.
+ * Objects must match defined @attrs, if @nb_attrs is 0, find all objects
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SESSION_CLOSED            - Session closed
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_OPERATION_ACTIVE          - A query is already active
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
+		       CK_ULONG nb_attrs);
+
+/**
+ * libobj_find() - Continues search of objects matching started query
+ * @hsession: Session handle
+ * @pobjs: List of the object handles found
+ * @nb_obj_max: Maximum number of object handles to be returned
+ * @pnb_objs_found: Number of object handles found
+ *
+ * Continues a maximum of @nb_obj_max matching the started query operation
+ * with libobj_find_init function.
+ * If no more objects found, set @pnb_objs_found to 0, else @pnb_objs_found
+ * is set with the number of object handles returned.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_find(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE_PTR pobjs,
+		  CK_ULONG nb_objs_max, CK_ULONG_PTR pnb_objs_found);
+
+/**
+ * libobj_find_final() - Finalize the find object query
+ * @hsession: Session handle
+ *
+ * Finalizes a session find object query initiated with libobj_find_init
+ * function.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_find_final(CK_SESSION_HANDLE hsession);
+
+/**
  * libobj_list_destroy() - Destroy all objects of the @list
  * @list: List of objects
  *

@@ -142,7 +142,7 @@ CK_RV libsess_open(CK_SLOT_ID slotid, CK_FLAGS flags, CK_VOID_PTR application,
 	if (!(dev->token.flags & CKF_TOKEN_INITIALIZED))
 		return CKR_TOKEN_NOT_RECOGNIZED;
 
-	sess = malloc(sizeof(*sess));
+	sess = calloc(1, sizeof(*sess));
 	if (!sess)
 		return CKR_HOST_MEMORY;
 
@@ -548,6 +548,43 @@ CK_RV libsess_get_objects(CK_SESSION_HANDLE hsession, struct libobj_list **list)
 		return ret;
 
 	*list = &sess->objects;
+
+	return ret;
+}
+
+CK_RV libsess_set_query(CK_SESSION_HANDLE hsession, struct libobj_query *query)
+{
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+
+	DBG_TRACE("Get slot ID of session %p (slotid = %lu)", sess,
+		  sess->slotid);
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		return ret;
+
+	sess->query = query;
+
+	return ret;
+}
+
+CK_RV libsess_get_query(CK_SESSION_HANDLE hsession, struct libobj_query **query)
+{
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+
+	DBG_TRACE("Get slot ID of session %p (slotid = %lu)", sess,
+		  sess->slotid);
+
+	if (!query)
+		return CKR_GENERAL_ERROR;
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		return ret;
+
+	*query = sess->query;
 
 	return ret;
 }

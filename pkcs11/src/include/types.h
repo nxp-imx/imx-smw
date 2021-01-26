@@ -87,12 +87,33 @@ struct libobj_obj;
 LLIST_HEAD(libobj_list, libobj_obj);
 
 /**
+ * struct libobj_handles - definition of an object handle element
+ * @handle: Object handle
+ * @prev: Previous element of the list
+ * @next: Next element of the list
+ */
+struct libobj_handles {
+	CK_OBJECT_HANDLE handle;
+	struct libobj_handles *prev;
+	struct libobj_handles *next;
+};
+
+/**
+ * struct libobj_query - definition of a object query
+ * @objects: List of object handles matching @attr
+ */
+struct libobj_query {
+	LIST_HEAD(libobjs_match, libobj_handles) objects;
+};
+
+/**
  * struct libsess - definition of a session element of a session list
  * @slotid: Slot/Token ID
  * @flags: Session flags
  * @callback: Application notification callback (setup C_InitToken)
  * @application: Reference to the application (setup C_InitToken)
  * @objects: Object created by the session
+ * @query: Session Object query
  * @prev: Previous element of the list
  * @next: Next element of the list
  */
@@ -101,6 +122,7 @@ struct libsess {
 	CK_FLAGS flags;
 	CK_NOTIFY callback;
 	CK_VOID_PTR application;
+	struct libobj_query *query;
 	struct libobj_list objects;
 	struct libsess *prev;
 	struct libsess *next;

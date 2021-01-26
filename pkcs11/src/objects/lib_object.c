@@ -4,6 +4,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "attributes.h"
 #include "key.h"
@@ -1091,6 +1092,240 @@ end:
 		*hkey = (CK_OBJECT_HANDLE)key;
 	else
 		obj_free(key, NULL);
+
+	return ret;
+}
+
+/**
+ * object_match() - Find objects in list matching atttributes
+ * @hsession: Session handle
+ * @list_match: List of objects matching
+ * @list: List of objects
+ * @attrs_match: List of the object attributes to match
+ * @attrs_tmp: Template of object attributes to get
+ * @nb_attrs: Number of attributes
+ *
+ * return:
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_OK                        - Success
+ */
+static CK_RV object_match(CK_SESSION_HANDLE hsession,
+			  struct libobjs_match *list_match,
+			  struct libobj_list *list,
+			  CK_ATTRIBUTE_PTR attrs_match,
+			  CK_ATTRIBUTE_PTR attrs_tmp, CK_ULONG nb_attrs)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_obj *obj;
+	struct libobj_handles *obj_match = NULL;
+	CK_ULONG idx;
+	bool match;
+
+	for (obj = LIST_FIRST(list); obj; obj = LIST_NEXT(obj)) {
+		DBG_TRACE("Check if object %p match", obj);
+		if (nb_attrs) {
+			for (idx = 0; idx < nb_attrs; idx++) {
+				attrs_tmp[idx].ulValueLen =
+					attrs_match[idx].ulValueLen;
+				memset(attrs_tmp[idx].pValue, 0,
+				       attrs_tmp[idx].ulValueLen);
+			}
+
+			ret = libobj_get_attribute(hsession,
+						   (CK_OBJECT_HANDLE)obj,
+						   attrs_tmp, nb_attrs);
+			if (ret != CKR_OK)
+				continue;
+
+			match = true;
+			for (idx = 0; idx < nb_attrs; idx++) {
+				if (attrs_tmp[idx].ulValueLen !=
+					    attrs_match[idx].ulValueLen ||
+				    memcmp(attrs_tmp[idx].pValue,
+					   attrs_match[idx].pValue,
+					   attrs_match[idx].ulValueLen)) {
+					match = false;
+					break;
+				}
+			}
+			if (!match)
+				continue;
+		}
+
+		obj_match = malloc(sizeof(*obj_match));
+		if (!obj_match)
+			return CKR_HOST_MEMORY;
+
+		obj_match->handle = (CK_OBJECT_HANDLE)obj;
+		LIST_INSERT_TAIL(list_match, obj_match);
+	}
+
+	return ret;
+}
+
+static void destroy_query_list(struct libobj_query *query)
+{
+	struct libobj_handles *obj;
+	struct libobj_handles *next;
+
+	if (query) {
+		obj = LIST_FIRST(&query->objects);
+		while (obj) {
+			next = LIST_NEXT(obj);
+			free(obj);
+			obj = next;
+		}
+
+		free(query);
+	}
+}
+
+CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
+		       CK_ULONG nb_attrs)
+{
+	CK_RV ret;
+	struct libobj_query *query = NULL;
+	struct libobj_list *objects;
+	struct libdevice *dev;
+	CK_ULONG idx;
+	CK_ATTRIBUTE_PTR attrs_tmp = NULL;
+
+	DBG_TRACE("Start Find Object Query on session %lu", hsession);
+
+	/*
+	 * Check if a query is already started, if this is the
+	 * case return in error.
+	 */
+	ret = libsess_get_query(hsession, &query);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (query)
+		return CKR_OPERATION_ACTIVE;
+
+	ret = libsess_get_device(hsession, &dev);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (nb_attrs) {
+		attrs_tmp = calloc(1, nb_attrs * sizeof(CK_ATTRIBUTE));
+		if (!attrs_tmp)
+			return CKR_HOST_MEMORY;
+
+		for (idx = 0; idx < nb_attrs; idx++) {
+			attrs_tmp[idx].type = attrs[idx].type;
+			attrs_tmp[idx].ulValueLen = attrs[idx].ulValueLen;
+			if (!attrs_tmp[idx].ulValueLen) {
+				ret = CKR_ATTRIBUTE_VALUE_INVALID;
+				goto end;
+			}
+			attrs_tmp[idx].pValue =
+				calloc(1, attrs_tmp[idx].ulValueLen);
+			if (!attrs_tmp[idx].pValue) {
+				ret = CKR_HOST_MEMORY;
+				goto end;
+			}
+		}
+	}
+
+	query = malloc(sizeof(*query));
+	if (!query) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	LIST_INIT(&query->objects);
+
+	/*
+	 * First go thru token's objects
+	 */
+	DBG_TRACE("Check if token's objects");
+	ret = object_match(hsession, &query->objects, &dev->objects, attrs,
+			   attrs_tmp, nb_attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * Next go thru session's objects
+	 */
+	DBG_TRACE("Check if session's objects");
+	ret = libsess_get_objects(hsession, &objects);
+	if (ret == CKR_OK)
+		ret = object_match(hsession, &query->objects, objects, attrs,
+				   attrs_tmp, nb_attrs);
+
+	if (ret == CKR_OK) {
+		ret = libsess_set_query(hsession, query);
+		if (ret == CKR_SESSION_HANDLE_INVALID)
+			ret = CKR_SESSION_CLOSED;
+	}
+
+end:
+	DBG_TRACE("Start Find Object Query on session %lu return %ld", hsession,
+		  ret);
+
+	if (attrs_tmp) {
+		for (idx = 0; idx < nb_attrs; idx++)
+			if (attrs_tmp[idx].pValue)
+				free(attrs_tmp[idx].pValue);
+
+		free(attrs_tmp);
+	}
+
+	if (ret != CKR_OK && query)
+		destroy_query_list(query);
+
+	return ret;
+}
+
+CK_RV libobj_find(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE_PTR pobjs,
+		  CK_ULONG nb_objs_max, CK_ULONG_PTR pnb_objs_found)
+{
+	CK_RV ret;
+	struct libobj_query *query;
+	struct libobj_handles *obj;
+	struct libobj_handles *next;
+	CK_ULONG rem_objs = nb_objs_max;
+	CK_OBJECT_HANDLE_PTR out_objs = pobjs;
+
+	DBG_TRACE("Find Objects max=%lu on session %lu", nb_objs_max, hsession);
+	ret = libsess_get_query(hsession, &query);
+	if (ret != CKR_OK)
+		goto end;
+
+	*pnb_objs_found = 0;
+	for (obj = LIST_FIRST(&query->objects); obj && rem_objs; rem_objs--) {
+		*out_objs = obj->handle;
+		next = LIST_NEXT(obj);
+		LIST_REMOVE(&query->objects, obj);
+		free(obj);
+		obj = next;
+		(*pnb_objs_found)++;
+		out_objs++;
+	}
+
+end:
+	DBG_TRACE("Find Objects found %lu on session %lu return %ld",
+		  *pnb_objs_found, hsession, ret);
+
+	return ret;
+}
+
+CK_RV libobj_find_final(CK_SESSION_HANDLE hsession)
+{
+	CK_RV ret;
+	struct libobj_query *query;
+
+	DBG_TRACE("Final Find Object Query on session %lu", hsession);
+	ret = libsess_get_query(hsession, &query);
+
+	if (ret == CKR_OK && query) {
+		destroy_query_list(query);
+		ret = libsess_set_query(hsession, NULL);
+	}
+
+	DBG_TRACE("Final Find Object Query on session %lu return %ld", hsession,
+		  ret);
 
 	return ret;
 }

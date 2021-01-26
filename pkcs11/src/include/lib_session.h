@@ -197,4 +197,31 @@ CK_RV libsess_get_device(CK_SESSION_HANDLE hsession, struct libdevice **dev);
 CK_RV libsess_get_objects(CK_SESSION_HANDLE hsession,
 			  struct libobj_list **list);
 
+/**
+ * libsess_set_query() - Set the session query object
+ * @hsession: Session handle
+ * @query: Session query
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_set_query(CK_SESSION_HANDLE hsession, struct libobj_query *query);
+
+/**
+ * libsess_get_query() - Get the session query object
+ * @hsession: Session handle
+ * @query: Session query
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_get_query(CK_SESSION_HANDLE hsession,
+			struct libobj_query **query);
+
 #endif /* __LIB_SESSION_H__ */

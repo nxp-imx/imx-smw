@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <stdlib.h>
@@ -11,26 +11,6 @@
 #include "lib_object.h"
 
 #include "trace.h"
-
-/**
- * struct libsess - definition of a session element of a session list
- * @slotid: Slot/Token ID
- * @flags: Session flags
- * @callback: Application notification callback (setup C_InitToken)
- * @application: Reference to the application (setup C_InitToken)
- * @objects: Object created by the session
- * @prev: Previous element of the list
- * @next: Next element of the list
- */
-struct libsess {
-	CK_SLOT_ID slotid;
-	CK_FLAGS flags;
-	CK_NOTIFY callback;
-	CK_VOID_PTR application;
-	LIST_HEAD(objects) objects;
-	struct libsess *prev;
-	struct libsess *next;
-};
 
 static CK_RV get_slotdev(struct libdevice **dev, struct libsess *sess)
 {
@@ -60,17 +40,6 @@ struct libsess *find_session(struct libdevice *dev, struct libsess *session)
 	return sess;
 }
 
-static struct libobj *find_object(struct objects *objects,
-				  struct libobj *object)
-{
-	struct libobj *obj;
-
-	LIST_FIND(obj, objects, object);
-	DBG_TRACE("Object object %p %sfound", object,
-		  object == obj ? "" : "NOT ");
-
-	return obj;
-}
 static CK_RV open_rw_session(struct libsess *session, struct libdevice *dev)
 {
 	if (dev->token.flags & CKF_WRITE_PROTECTED)
@@ -114,52 +83,39 @@ static CK_RV open_ro_session(struct libsess *session, struct libdevice *dev)
 	return CKR_OK;
 }
 
-static void destroy_all_objects(struct objects *objects)
-{
-	struct libobj *obj;
-	struct libobj *next;
-
-	DBG_TRACE("Destroy all session objects");
-
-	if (!objects)
-		return;
-
-	obj = LIST_FIRST(objects);
-	while (obj) {
-		next = LIST_NEXT(obj);
-		LIST_REMOVE(objects, obj);
-
-		libobj_delete(obj);
-		obj = next;
-	}
-}
-
 static CK_RV close_rw_session(struct libdevice *dev, struct libsess *session)
 {
+	CK_RV ret;
+
 	DBG_TRACE("Close R/W session %p", session);
 
-	destroy_all_objects(&session->objects);
+	ret = libobj_list_destroy(&session->objects);
+	if (ret == CKR_OK) {
+		LIST_REMOVE(&dev->rw_sessions, session);
+		dev->token.rw_session_count--;
 
-	LIST_REMOVE(&dev->rw_sessions, session);
-	dev->token.rw_session_count--;
+		free(session);
+	}
 
-	free(session);
-
-	return CKR_OK;
+	return ret;
 }
 
 static CK_RV close_ro_session(struct libdevice *dev, struct libsess *session)
 {
+	CK_RV ret;
+
 	DBG_TRACE("Close RO session %p", session);
 
-	destroy_all_objects(&session->objects);
+	ret = libobj_list_destroy(&session->objects);
 
-	LIST_REMOVE(&dev->ro_sessions, session);
-	dev->token.ro_session_count--;
+	if (ret == CKR_OK) {
+		LIST_REMOVE(&dev->ro_sessions, session);
+		dev->token.ro_session_count--;
 
-	free(session);
+		free(session);
+	}
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV libsess_open(CK_SLOT_ID slotid, CK_FLAGS flags, CK_VOID_PTR application,
@@ -211,14 +167,14 @@ CK_RV libsess_open(CK_SLOT_ID slotid, CK_FLAGS flags, CK_VOID_PTR application,
 	sess->callback = notify;
 	sess->application = application;
 
-	/* Initialize object list */
-	LIST_INIT(&sess->objects);
+	/* Initialize object list and its mutex */
+	ret = LLIST_INIT(&sess->objects);
+	if (ret == CKR_OK) {
+		*hsession = (CK_SESSION_HANDLE)sess;
 
-	*hsession = (CK_SESSION_HANDLE)sess;
-
-	DBG_TRACE("New session %p opened on token #%ld", sess, slotid);
-
-	return CKR_OK;
+		DBG_TRACE("New session %p opened on token #%ld", sess, slotid);
+		return ret;
+	}
 
 err:
 	if (sess)
@@ -508,93 +464,6 @@ CK_RV libsess_validate(CK_SESSION_HANDLE hsession)
 	return ret;
 }
 
-CK_RV libsess_add_object(CK_SESSION_HANDLE hsession, struct libobj *object)
-{
-	CK_RV ret;
-	struct libdevice *dev;
-	struct libsess *sess = (struct libsess *)hsession;
-
-	DBG_TRACE("Add object (%p) to session %p", object, sess);
-
-	ret = get_slotdev(&dev, sess);
-	if (ret != CKR_OK)
-		return ret;
-
-	/* Lock session mutex */
-	ret = libmutex_lock(dev->mutex_session);
-	if (ret != CKR_OK)
-		return ret;
-
-	if (find_session(dev, sess) == sess)
-		LIST_INSERT_TAIL(&sess->objects, object);
-	else
-		ret = CKR_SESSION_CLOSED;
-
-	/* Unlock session mutex */
-	libmutex_unlock(dev->mutex_session);
-
-	return ret;
-}
-
-CK_RV libsess_find_object(CK_SESSION_HANDLE hsession, struct libobj *object)
-{
-	CK_RV ret;
-	struct libdevice *dev;
-	struct libsess *sess = (struct libsess *)hsession;
-
-	DBG_TRACE("Validate session %p (slotid = %lu)", sess, sess->slotid);
-
-	ret = get_slotdev(&dev, sess);
-	if (ret != CKR_OK)
-		return ret;
-
-	/* Lock session mutex */
-	ret = libmutex_lock(dev->mutex_session);
-	if (ret != CKR_OK)
-		return ret;
-
-	if (find_session(dev, sess) != sess)
-		ret = CKR_SESSION_HANDLE_INVALID;
-	else if (find_object(&sess->objects, object) != object)
-		ret = CKR_OBJECT_HANDLE_INVALID;
-
-	/* Unlock session mutex */
-	libmutex_unlock(dev->mutex_session);
-
-	return ret;
-}
-
-CK_RV libsess_remove_object(CK_SESSION_HANDLE hsession, struct libobj *object)
-{
-	CK_RV ret;
-	struct libdevice *dev;
-	struct libsess *sess = (struct libsess *)hsession;
-
-	DBG_TRACE("Remove object (%p) from session %p", object, sess);
-
-	ret = get_slotdev(&dev, sess);
-	if (ret != CKR_OK)
-		return ret;
-
-	/* Lock session mutex */
-	ret = libmutex_lock(dev->mutex_session);
-	if (ret != CKR_OK)
-		return ret;
-
-	if (find_session(dev, sess) != sess)
-		ret = CKR_SESSION_HANDLE_INVALID;
-	else if (find_object(&sess->objects, object) != object)
-		ret = CKR_OBJECT_HANDLE_INVALID;
-
-	if (ret == CKR_OK)
-		LIST_REMOVE(&sess->objects, object);
-
-	/* Unlock session mutex */
-	libmutex_unlock(dev->mutex_session);
-
-	return ret;
-}
-
 CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
 				 CK_MECHANISM_PTR mech)
 {
@@ -640,6 +509,45 @@ CK_RV libsess_get_slotid(CK_SESSION_HANDLE hsession, CK_SLOT_ID *slotid)
 		return ret;
 
 	*slotid = sess->slotid;
+
+	return ret;
+}
+
+CK_RV libsess_get_device(CK_SESSION_HANDLE hsession, struct libdevice **dev)
+{
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+
+	DBG_TRACE("Get the session %p (slotid = %lu)", sess, sess->slotid);
+
+	if (!dev)
+		return CKR_GENERAL_ERROR;
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = get_slotdev(dev, sess);
+
+	return ret;
+}
+
+CK_RV libsess_get_objects(CK_SESSION_HANDLE hsession, struct libobj_list **list)
+{
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+
+	DBG_TRACE("Get slot ID of session %p (slotid = %lu)", sess,
+		  sess->slotid);
+
+	if (!list)
+		return CKR_GENERAL_ERROR;
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		return ret;
+
+	*list = &sess->objects;
 
 	return ret;
 }

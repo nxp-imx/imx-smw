@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __TYPES_H__
@@ -79,6 +79,33 @@ struct libtoken {
 
 #define NO_LOGIN -1UL
 
+struct libobj_obj;
+
+/**
+ * struct libobj_list - object lists definition
+ */
+LLIST_HEAD(libobj_list, libobj_obj);
+
+/**
+ * struct libsess - definition of a session element of a session list
+ * @slotid: Slot/Token ID
+ * @flags: Session flags
+ * @callback: Application notification callback (setup C_InitToken)
+ * @application: Reference to the application (setup C_InitToken)
+ * @objects: Object created by the session
+ * @prev: Previous element of the list
+ * @next: Next element of the list
+ */
+struct libsess {
+	CK_SLOT_ID slotid;
+	CK_FLAGS flags;
+	CK_NOTIFY callback;
+	CK_VOID_PTR application;
+	struct libobj_list objects;
+	struct libsess *prev;
+	struct libsess *next;
+};
+
 /**
  * struct libdevice - definition of a device
  * @slot: Slot information
@@ -87,6 +114,7 @@ struct libtoken {
  * @mutex_session: Mutex to manage session (create/login/logout/close)
  * @rw_session: List of the Read/Write Sessions
  * @ro_session: List of the Read Only Sessions
+ * @objects: List of the token objects (accessible to all devices sessions)
  *
  * A device is the cryptographic module storing keys, making cryptographic
  * operation, ...
@@ -98,8 +126,9 @@ struct libdevice {
 	struct libtoken token;
 	CK_USER_TYPE login_as;
 	CK_VOID_PTR mutex_session;
-	LIST_HEAD(rw_sessions) rw_sessions;
-	LIST_HEAD(ro_sessions) ro_sessions;
+	LIST_HEAD(rw_sessions, libsess) rw_sessions;
+	LIST_HEAD(ro_sessions, libsess) ro_sessions;
+	struct libobj_list objects;
 };
 
 /**
@@ -131,20 +160,6 @@ struct libcaps {
 };
 
 /**
- * struct libobj - Definition of an object element of a object list
- * @class: Object class
- * @object: Pointer to the object (type depend on the class)
- * @prev: Previous element of the list
- * @next: Next element of the list
- */
-struct libobj {
-	CK_OBJECT_CLASS class;
-	void *object;
-	struct libobj *prev;
-	struct libobj *next;
-};
-
-/**
  * struct libattr_list - Library attribute list
  * @attr: Array of attribute
  * @number: Number of attributes
@@ -171,6 +186,26 @@ struct libbignumber {
  */
 struct libbytes {
 	CK_BYTE_PTR array;
+	size_t number;
+};
+
+/**
+ * struct librfc2279 - RFC2279 string data type
+ * @string: No NULL terminated string of CK_UTF8CHAR
+ * @length: Length of string
+ */
+struct librfc2279 {
+	CK_UTF8CHAR_PTR string;
+	size_t length;
+};
+
+/**
+ * struct libmech_list - Mechanim type list
+ * @mech: Pointer to an array of mechanism
+ * @number: Number of mechanism
+ */
+struct libmech_list {
+	CK_MECHANISM_TYPE_PTR mech;
 	size_t number;
 };
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __LIB_OBJECT_H__
@@ -22,6 +22,7 @@
  * are correct.
  *
  * return:
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
  * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
  * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
@@ -38,12 +39,6 @@
  */
 CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		    CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj);
-
-/**
- * libobj_delete() - Delete an object
- * @object: Object to delete
- */
-void libobj_delete(struct libobj *object);
 
 /**
  * libobj_destroy() - Destroy an object
@@ -77,6 +72,8 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject);
  * adding the objects in the session's object list if everything success.
  *
  * return:
+ * CKR_MECHANISM_INVALID         - Mechanism not supported
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
  * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
  * CKR_TEMPLATE_INCONSISTENT     - Attribute type must not be defined
@@ -112,6 +109,8 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
  * adding the objects in the session's object list if everything success.
  *
  * return:
+ * CKR_MECHANISM_INVALID         - Mechanism not supported
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
  * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
  * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
@@ -131,5 +130,20 @@ CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			      CK_ATTRIBUTE_PTR priv_attrs,
 			      CK_ULONG nb_priv_attrs, CK_OBJECT_HANDLE_PTR hpub,
 			      CK_OBJECT_HANDLE_PTR hpriv);
+
+/**
+ * libobj_list_destroy() - Destroy all objects of the @list
+ * @list: List of objects
+ *
+ * Destroy all objects of the @list and the destroy the @list's mutex
+ * protection.
+ *
+ * return:
+ * CKR_MUTEX_BAD                 - Mutex not correct
+ * CKR_HOST_MEMORY               - Memory error
+ * CKR_GENERAL_ERROR             - No context available
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_list_destroy(struct libobj_list *list);
 
 #endif /* __LIB_OBJECT_H__ */

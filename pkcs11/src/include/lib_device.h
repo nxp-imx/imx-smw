@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __LIB_DEVICE_H__
@@ -227,16 +227,17 @@ CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech);
  * @mech: Mechanism definition
  * @args: SMW API arguments
  *
- * Function completes the SMW API argument like `Subsystem Name` opened
- * with the Session. Other arguments might be set function of the mechanism
- * operation.
+ * Function prepare the SMW API argument for the API operation.
+ * Other arguments might be set function of the mechanism operation.
  *
  * Return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
  * CKR_GENERAL_ERROR             - No slot defined
  * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
  * CKR_MECHANISM_INVALID         - Mechanism not supported
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_HOST_MEMORY               - Out of memory
  * CKR_OK                        - Success
  */
 CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,

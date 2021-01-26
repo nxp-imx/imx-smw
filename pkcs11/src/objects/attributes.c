@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <stdlib.h>
@@ -54,7 +54,7 @@ CK_RV attr_to_class(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV attr_to_rfc2279(void *dest, CK_ATTRIBUTE_PTR attr)
 {
-	struct rfc2279 *out = dest;
+	struct librfc2279 *out = dest;
 
 	if (!attr->pValue || !attr->ulValueLen)
 		return CKR_ATTRIBUTE_VALUE_INVALID;
@@ -136,7 +136,7 @@ CK_RV attr_to_mech(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV attr_to_mech_list(void *dest, CK_ATTRIBUTE_PTR attr)
 {
-	struct mech_list *out = dest;
+	struct libmech_list *out = dest;
 
 	if (!attr->pValue || !attr->ulValueLen)
 		return CKR_ATTRIBUTE_VALUE_INVALID;

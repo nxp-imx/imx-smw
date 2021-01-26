@@ -1,16 +1,23 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
+
+#include <string.h>
+
 #include "smw_config.h"
-#include "smw_keymgr.h"
 #include "smw_status.h"
 
 #include "dev_config.h"
 #include "lib_context.h"
 #include "lib_device.h"
 #include "lib_session.h"
+#include "libobj_types.h"
 #include "pkcs11smw.h"
+#include "types.h"
+
+#include "key_desc.h"
+#include "tlv_encode.h"
 
 #include "trace.h"
 
@@ -349,26 +356,50 @@ static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return info_keygen_common(slotid, type, entry, info);
 }
 
-static CK_RV op_keygen_common(CK_SLOT_ID slotid, void *args)
+static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 {
+	CK_RV ret;
 	const struct libdev *devinfo;
 	int status;
-	struct smw_generate_key_args *gen_args = args;
+	struct smw_tlv key_attr = { 0 };
+	struct smw_generate_key_args gen_args = { 0 };
+	struct smw_key_descriptor key = { 0 };
 
 	DBG_TRACE("Common Generate Key mechanism");
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	gen_args->subsystem_name = devinfo->name;
+	ret = key_desc_setup(&key, obj);
+	if (ret != CKR_OK)
+		return ret;
 
-	status = smw_generate_key(gen_args);
+	gen_args.subsystem_name = devinfo->name;
+	gen_args.key_descriptor = &key;
+
+	if (is_token_obj(obj, storage)) {
+		DBG_TRACE("Generate Persistent Key");
+		ret = tlv_encode_boolean(&key_attr, "PERSISTENT");
+		if (ret != CKR_OK)
+			goto end;
+
+		gen_args.key_attributes_list =
+			(const unsigned char *)key_attr.string;
+		gen_args.key_attributes_list_length = key_attr.length;
+	}
+
+	status = smw_generate_key(&gen_args);
 
 	DBG_TRACE("Generate Key on %s status %d", devinfo->name, status);
 	if (status != SMW_STATUS_OK)
-		return CKR_FUNCTION_FAILED;
+		ret = CKR_FUNCTION_FAILED;
+	else
+		key_desc_copy_key_id(obj, &key);
 
-	return CKR_OK;
+end:
+	tlv_encode_free(&key_attr);
+
+	return ret;
 }
 
 static CK_RV op_meckeygen(CK_SLOT_ID slotid, void *args)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <stdlib.h>
@@ -10,6 +10,7 @@
 #include "lib_context.h"
 #include "lib_device.h"
 #include "lib_mutex.h"
+#include "lib_object.h"
 #include "lib_session.h"
 
 #include "trace.h"
@@ -32,11 +33,17 @@ static CK_RV clean_token(struct libdevice *device, CK_SLOT_ID slotid)
 {
 	CK_RV ret;
 
-	ret = libsess_close_all(slotid);
-	DBG_TRACE("Token #%lu close all sessions return %lu", slotid, ret);
+	if (!(device->token.flags & CKF_TOKEN_INITIALIZED))
+		return CKR_OK;
 
-	if (ret == CKR_OK)
-		CLEAR_BITS(device->token.flags, CKF_TOKEN_INITIALIZED);
+	ret = libsess_close_all(slotid);
+	DBG_TRACE("Token #%lu close all sessions ret %lu", slotid, ret);
+
+	if (ret == CKR_OK) {
+		ret = libobj_list_destroy(&device->objects);
+		if (ret == CKR_OK)
+			CLEAR_BITS(device->token.flags, CKF_TOKEN_INITIALIZED);
+	}
 
 	return ret;
 }
@@ -328,11 +335,9 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 	 *  - destroyed all associated objects that can be destroyed
 	 *  - re-initialized the token
 	 */
-	if (!(dev->token.flags & CKF_TOKEN_INITIALIZED)) {
-		ret = clean_token(dev, slotid);
-		if (ret != CKR_OK)
-			return ret;
-	}
+	ret = clean_token(dev, slotid);
+	if (ret != CKR_OK)
+		return ret;
 
 	ret = libdev_mechanisms_init(slotid);
 	if (ret != CKR_OK)
@@ -347,12 +352,20 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 	dev->token.rw_session_count = 0;
 	dev->login_as = NO_LOGIN;
 
+	/*
+	 * Initializze the R/W and Read Only Sessions list
+	 */
 	LIST_INIT(&dev->rw_sessions);
 	LIST_INIT(&dev->ro_sessions);
 
-	SET_BITS(dev->token.flags, CKF_TOKEN_INITIALIZED);
+	/*
+	 * Initialize the token objects list
+	 */
+	ret = LLIST_INIT(&dev->objects);
+	if (ret == CKR_OK)
+		SET_BITS(dev->token.flags, CKF_TOKEN_INITIALIZED);
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV libdev_initialize(struct libdevice **devices)

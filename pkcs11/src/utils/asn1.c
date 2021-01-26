@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 #include <string.h>
 
 #include "util.h"
-
-#include "asn1.h"
+#include "util_asn1.h"
 
 #include "trace.h"
 
@@ -125,9 +124,9 @@ static const struct curve_def *get_curve_by_name(struct asn1_tlv *tlv,
 	return NULL;
 }
 
-CK_RV asn1_ec_params_to_curve(const struct curve_def **out_curve,
-			      struct libbytes *params,
-			      const struct curve_def *curves)
+CK_RV util_asn1_ec_params_to_curve(const struct curve_def **out_curve,
+				   struct libbytes *params,
+				   const struct curve_def *curves)
 {
 	CK_RV ret;
 	struct asn1_tlv tlv;

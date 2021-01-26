@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <stdlib.h>
@@ -8,8 +8,10 @@
 #include "attributes.h"
 #include "key.h"
 
+#include "lib_mutex.h"
 #include "lib_object.h"
 #include "lib_session.h"
+#include "libobj_types.h"
 #include "util.h"
 
 #include "trace.h"
@@ -53,20 +55,117 @@ const struct template_attr attr_obj_storage[] = {
 	[STORAGE_UNIQUE_ID] = { CKA_UNIQUE_ID, 0, READ_ONLY, attr_to_rfc2279 },
 };
 
-struct libobj_storage {
-	bool token;
-	bool private;
-	bool modifiable;
-	bool copyable;
-	bool destroyable;
-	struct rfc2279 label;
-	struct rfc2279 unique_id;
-	void *subobject;
-};
+/**
+ * obj_add_to_list() - Add @obj to session or token objects list
+ * @hsession: Session handle
+ * @obj: Object to add
+ * @token: True if token object
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+static CK_RV obj_add_to_list(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+			     bool token)
+{
+	CK_RV ret;
+	struct libdevice *dev;
+	struct libobj_list *objects;
+
+	DBG_TRACE("Add object (%p) in session %lu list", obj, hsession);
+
+	if (token) {
+		ret = libsess_get_device(hsession, &dev);
+		if (ret != CKR_OK)
+			return ret;
+
+		objects = &dev->objects;
+	} else {
+		ret = libsess_get_objects(hsession, &objects);
+		if (ret != CKR_OK)
+			return ret;
+	}
+
+	ret = LLIST_INSERT_TAIL(objects, obj);
+
+	return ret;
+}
 
 /**
- * get_unique_id() - Get the object unique id
- * @unique_id: UTF8 unique id string
+ * find_lock_object() - Find and lock a token or session object
+ * @hsession: Session Handle
+ * @obj: Object to find
+ * @list: Output of the object's list (session or token)
+ *
+ * Try to find the object by handle in first the token object lists,
+ * then in the session object lists.
+ * If object is found, it's locked.
+ * IF parameter @list is not NULL, the function return the pointer
+ * to the list where object is present.
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OBJECT_HANDLE_INVALID          - Object not found
+ * CKR_MUTEX_BAD                      - Mutex not correct
+ * CKR_HOST_MEMORY                    - Memory error
+ * CKR_OK                             - Success
+ */
+static CK_RV find_lock_object(CK_SESSION_HANDLE hsession,
+			      struct libobj_obj *obj, struct libobj_list **list)
+{
+	CK_RV ret;
+	struct libdevice *dev;
+	struct libobj_list *objects;
+	struct libobj_obj *fobj = NULL;
+
+	DBG_TRACE("Find and lock object %p", obj);
+
+	ret = libsess_get_device(hsession, &dev);
+	if (ret != CKR_OK)
+		return ret;
+
+	objects = &dev->objects;
+	/* Try to find the object in the token list */
+	ret = LLIST_FIND_LOCK(fobj, objects, obj);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (fobj != obj) {
+		DBG_TRACE("Object %p NOT in token list", obj);
+
+		/*
+		 * Object is not in the token list.
+		 * Try the session object list.
+		 */
+		ret = libsess_get_objects(hsession, &objects);
+		if (ret != CKR_OK)
+			return ret;
+
+		ret = LLIST_FIND_LOCK(fobj, objects, obj);
+		if (ret != CKR_OK)
+			return ret;
+
+		if (fobj != obj) {
+			DBG_TRACE("Object %p NOT in session list", obj);
+			ret = CKR_OBJECT_HANDLE_INVALID;
+		}
+	}
+
+	if (ret == CKR_OK) {
+		DBG_TRACE("Object %p found in list %p", obj, objects);
+		if (list)
+			*list = objects;
+	}
+
+	return ret;
+}
+
+/**
+ * set_unique_id() - Set the object unique id
  * @obj: object
  *
  * Build and return the object unique id with the object class
@@ -77,13 +176,13 @@ struct libobj_storage {
  * CKR_FUNCTION_FAILED           - Object not supported
  * CKR_OK                        - Success
  */
-static CK_RV get_unique_id(struct rfc2279 *unique_id, struct libobj *obj)
+static CK_RV set_unique_id(struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_FUNCTION_FAILED;
+	struct librfc2279 *unique_id = NULL;
 	struct libbytes id = {};
-	struct libobj_storage *key_storage;
 
-	if (!obj || !unique_id)
+	if (!obj)
 		return CKR_GENERAL_ERROR;
 
 	DBG_TRACE("Class %lx", obj->class);
@@ -92,13 +191,12 @@ static CK_RV get_unique_id(struct rfc2279 *unique_id, struct libobj *obj)
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
 	case CKO_PRIVATE_KEY:
-		key_storage = obj->object;
-		ret = key_get_id(&id, key_storage->subobject,
-				 sizeof(obj->class));
+		unique_id = get_unique_id_obj(obj, storage);
+		ret = key_get_id(&id, obj, sizeof(obj->class));
 		break;
 
 	default:
-		break;
+		return CKR_FUNCTION_FAILED;
 	}
 
 	if (ret != CKR_OK)
@@ -222,7 +320,8 @@ static CK_RV get_token_obj_access(CK_SESSION_HANDLE hsession,
  * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
  * CKR_OK                        - Success
  */
-static CK_RV obj_is_destoyable(CK_SESSION_HANDLE hsession, struct libobj *obj)
+static CK_RV obj_is_destoyable(CK_SESSION_HANDLE hsession,
+			       struct libobj_obj *obj)
 {
 	CK_RV ret;
 	unsigned int access;
@@ -233,9 +332,8 @@ static CK_RV obj_is_destoyable(CK_SESSION_HANDLE hsession, struct libobj *obj)
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
-		is_destroyable =
-			((struct libobj_storage *)obj->object)->destroyable;
-		is_private = ((struct libobj_storage *)obj->object)->private;
+		is_destroyable = is_destroyable_obj(obj, storage);
+		is_private = is_private_obj(obj, storage);
 		DBG_TRACE("Storage object class %lu, destroy=%d, private=%d",
 			  obj->class, is_destroyable, is_private);
 		break;
@@ -262,16 +360,22 @@ static CK_RV obj_is_destoyable(CK_SESSION_HANDLE hsession, struct libobj *obj)
  * @obj: Object allocated
  *
  * return:
- * CKR_HOST_MEMORY - Out of memory
- * CKR_OK          - Success
+ * CKR_GENERAL_ERROR - No context available
+ * CKR_HOST_MEMORY   - Out of memory
+ * CKR_OK            - Success
  */
-static CK_RV obj_allocate(struct libobj **obj)
+static CK_RV obj_allocate(struct libobj_obj **obj)
 {
-	struct libobj *newobj;
+	CK_RV ret;
+	struct libobj_obj *newobj;
 
 	newobj = malloc(sizeof(*newobj));
 	if (!newobj)
 		return CKR_HOST_MEMORY;
+
+	ret = libmutex_create(&newobj->lock);
+	if (ret != CKR_OK)
+		return ret;
 
 	newobj->class = 0;
 	newobj->object = NULL;
@@ -327,14 +431,14 @@ static CK_RV obj_storage_allocate(struct libobj_storage **obj)
  * obj_storage_free() - Free a storage object type
  * @obj - Object containing the storage object
  */
-static void obj_storage_free(struct libobj *obj)
+static void obj_storage_free(struct libobj_obj *obj)
 {
 	struct libobj_storage *objstorage;
 
 	if (!obj)
 		return;
 
-	objstorage = obj->object;
+	objstorage = get_object_from(obj);
 	if (!objstorage)
 		return;
 
@@ -344,7 +448,7 @@ static void obj_storage_free(struct libobj *obj)
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
-		key_free(objstorage->subobject, obj->class);
+		key_free(obj);
 		break;
 
 	default:
@@ -364,10 +468,11 @@ static void obj_storage_free(struct libobj *obj)
 /**
  * obj_free() - Free an object
  * @obj: Object to free
+ * @list: List of objects
  *
  * Function the object class call class's object free function.
  */
-static void obj_free(struct libobj *obj)
+static void obj_free(struct libobj_obj *obj, struct libobj_list *list)
 {
 	if (!obj)
 		return;
@@ -384,6 +489,14 @@ static void obj_free(struct libobj *obj)
 	default:
 		break;
 	}
+
+	if (list) {
+		DBG_TRACE("Remove object (%p) from %p", obj, list);
+		LIST_REMOVE(list, obj);
+	}
+
+	libmutex_unlock(obj->lock);
+	libmutex_destroy(obj->lock);
 
 	free(obj);
 }
@@ -410,7 +523,7 @@ static void obj_free(struct libobj *obj)
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_OK                        - Success
  */
-static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj *obj,
+static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			     struct libattr_list *attrs)
 {
 	CK_RV ret;
@@ -429,10 +542,6 @@ static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj *obj,
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
-
-	/* TODO: Support Token object is set for Key this is persistent key */
-	if (newobj->token)
-		return CKR_FUNCTION_FAILED;
 
 	ret = attr_get_value(&newobj->private,
 			     &attr_obj_storage[STORAGE_PRIVATE], attrs,
@@ -492,7 +601,7 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		    CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj)
 {
 	CK_RV ret;
-	struct libobj *newobj = NULL;
+	struct libobj_obj *newobj = NULL;
 	struct libattr_list attrs_list = { .attr = attrs, .number = nb_attrs };
 
 	DBG_TRACE("Create an object on session %lu", hsession);
@@ -517,24 +626,16 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY: {
-		struct libobj_storage *key_storage;
-
 		ret = obj_storage_new(hsession, newobj, &attrs_list);
 		if (ret != CKR_OK)
 			break;
 
-		key_storage = newobj->object;
+		ret = key_create(hsession, newobj, &attrs_list);
 
-		ret = key_create(hsession, &key_storage->subobject,
-				 newobj->class, &attrs_list);
-		if (ret != CKR_OK)
-			break;
+		if (ret == CKR_OK)
+			ret = obj_add_to_list(hsession, newobj,
+					      is_token_obj(newobj, storage));
 
-		if (!key_storage->token) {
-			ret = libsess_add_object(hsession, newobj);
-			DBG_TRACE("Add object to the session list return %ld",
-				  ret);
-		}
 		break;
 	}
 
@@ -550,39 +651,33 @@ end:
 	if (ret == CKR_OK)
 		*hobj = (CK_OBJECT_HANDLE)newobj;
 	else
-		obj_free(newobj);
+		obj_free(newobj, NULL);
 
 	return ret;
-}
-
-void libobj_delete(struct libobj *object)
-{
-	DBG_TRACE("Destroy object (%p)", object);
-	obj_free(object);
 }
 
 CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 {
 	CK_RV ret;
-	struct libobj *object = (struct libobj *)hobject;
+	struct libobj_obj *obj = (struct libobj_obj *)hobject;
+	struct libobj_list *objects;
 
-	DBG_TRACE("Destroy object (%p) of session %lu", object, hsession);
+	DBG_TRACE("Destroy object (%p) of session %lu", obj, hsession);
 
-	ret = libsess_find_object(hsession, object);
+	ret = find_lock_object(hsession, obj, &objects);
 	if (ret != CKR_OK)
 		goto end;
 
 	/* Check if the object can be destroyed */
-	ret = obj_is_destoyable(hsession, object);
-	if (ret != CKR_OK)
-		goto end;
-
-	ret = libsess_remove_object(hsession, object);
+	ret = obj_is_destoyable(hsession, obj);
 	if (ret == CKR_OK)
-		obj_free(object);
+		obj_free(obj, objects);
 
 end:
-	DBG_TRACE("Destroy object (%p) return %lu", object, ret);
+	if (ret != CKR_OK)
+		libmutex_unlock(obj->lock);
+
+	DBG_TRACE("Destroy object (%p) return %lu", obj, ret);
 	return ret;
 }
 
@@ -593,10 +688,8 @@ CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			      CK_OBJECT_HANDLE_PTR hpriv)
 {
 	CK_RV ret;
-	struct libobj *pub_key = NULL;
-	struct libobj *priv_key = NULL;
-	struct libobj_storage *pub_key_storage;
-	struct libobj_storage *priv_key_storage;
+	struct libobj_obj *pub_key = NULL;
+	struct libobj_obj *priv_key = NULL;
 	struct libattr_list pub_attrs_list = { .attr = pub_attrs,
 					       .number = nb_pub_attrs };
 	struct libattr_list priv_attrs_list = { .attr = priv_attrs,
@@ -660,35 +753,31 @@ CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	if (ret != CKR_OK)
 		goto end;
 
-	pub_key_storage = pub_key->object;
-	priv_key_storage = priv_key->object;
+	/*
+	 * If either public or private key is a token object,
+	 * align both objects as token objects
+	 */
+	if (is_token_obj(pub_key, storage) || is_token_obj(priv_key, storage)) {
+		set_token_obj(pub_key, storage);
+		set_token_obj(priv_key, storage);
+	}
 
-	ret = key_keypair_generate(hsession, mech, &pub_key_storage->subobject,
-				   &pub_attrs_list,
-				   &priv_key_storage->subobject,
-				   &priv_attrs_list);
+	ret = key_keypair_generate(hsession, mech, pub_key, &pub_attrs_list,
+				   priv_key, &priv_attrs_list);
 	if (ret == CKR_OK) {
-		ret = get_unique_id(&pub_key_storage->unique_id, pub_key);
+		ret = set_unique_id(pub_key);
 		if (ret == CKR_OK)
-			ret = get_unique_id(&pub_key_storage->unique_id,
-					    priv_key);
+			ret = set_unique_id(priv_key);
 	}
 
 	if (ret != CKR_OK)
 		goto end;
 
-	if (!pub_key_storage->token) {
-		ret = libsess_add_object(hsession, pub_key);
-		DBG_TRACE("Add public key to the session list return %ld", ret);
-
-		if (ret != CKR_OK)
-			goto end;
-	}
-
-	if (!priv_key_storage->token) {
-		ret = libsess_add_object(hsession, priv_key);
-		DBG_TRACE("Add private key to the session list return %ld",
-			  ret);
+	ret = obj_add_to_list(hsession, pub_key,
+			      is_token_obj(pub_key, storage));
+	if (ret == CKR_OK) {
+		ret = obj_add_to_list(hsession, priv_key,
+				      is_token_obj(priv_key, storage));
 	}
 
 end:
@@ -698,8 +787,8 @@ end:
 		*hpub = (CK_OBJECT_HANDLE)pub_key;
 		*hpriv = (CK_OBJECT_HANDLE)priv_key;
 	} else {
-		obj_free(pub_key);
-		obj_free(priv_key);
+		obj_free(pub_key, NULL);
+		obj_free(priv_key, NULL);
 	}
 
 	return ret;
@@ -710,8 +799,7 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			  CK_OBJECT_HANDLE_PTR hkey)
 {
 	CK_RV ret;
-	struct libobj *key = NULL;
-	struct libobj_storage *key_storage;
+	struct libobj_obj *key = NULL;
 	struct libattr_list attrs_list = { .attr = attrs, .number = nb_attrs };
 
 	DBG_TRACE("Generate a secret key on session %lu", hsession);
@@ -746,18 +834,14 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	if (ret != CKR_OK)
 		goto end;
 
-	key_storage = key->object;
-
-	ret = key_secret_key_generate(hsession, mech, &key_storage->subobject,
-				      &attrs_list);
+	ret = key_secret_key_generate(hsession, mech, key, &attrs_list);
 
 	if (ret == CKR_OK)
-		ret = get_unique_id(&key_storage->unique_id, key);
+		ret = set_unique_id(key);
 
-	if (!key_storage->token && ret == CKR_OK) {
-		ret = libsess_add_object(hsession, key);
-		DBG_TRACE("Add secret key to the session list return %ld", ret);
-	}
+	if (ret == CKR_OK)
+		ret = obj_add_to_list(hsession, key,
+				      is_token_obj(key, storage));
 
 end:
 	DBG_TRACE("Generate secret key return %ld", ret);
@@ -765,7 +849,43 @@ end:
 	if (ret == CKR_OK)
 		*hkey = (CK_OBJECT_HANDLE)key;
 	else
-		obj_free(key);
+		obj_free(key, NULL);
+
+	return ret;
+}
+
+CK_RV libobj_list_destroy(struct libobj_list *list)
+{
+	CK_RV ret;
+	struct libobj_obj *obj;
+	struct libobj_obj *next;
+
+	DBG_TRACE("Destroy all objects from list %p", list);
+
+	if (!list)
+		return CKR_GENERAL_ERROR;
+
+	/* Lock the list until the end of the destruction */
+	ret = LLIST_LOCK(list);
+	if (ret != CKR_OK)
+		return ret;
+
+	obj = LIST_FIRST(list);
+	while (obj) {
+		next = LIST_NEXT(obj);
+
+		ret = libmutex_lock(obj->lock);
+		if (ret != CKR_OK) {
+			LLIST_UNLOCK(list);
+			return ret;
+		}
+
+		obj_free(obj, list);
+		obj = next;
+	}
+
+	/* Close the list and destroy the list mutex */
+	LLIST_CLOSE(list);
 
 	return ret;
 }

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __KEY_H__
@@ -11,15 +11,13 @@
 /**
  * key_free() - Free a key object
  * @obj: Key object
- * @class: Class of the key object
  */
-void key_free(void *obj, CK_OBJECT_CLASS class);
+void key_free(struct libobj_obj *obj);
 
 /**
  * key_create() - Create a key object
  * @hsession: Session handle
- * @obj: Key object created
- * @class: Key class object
+ * @obj: Key object
  * @attrs: List of object attributes
  *
  * If key attributes are corrects, create a new key object.
@@ -37,7 +35,7 @@ void key_free(void *obj, CK_OBJECT_CLASS class);
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_OK                        - Success
  */
-CK_RV key_create(CK_SESSION_HANDLE hsession, void **obj, CK_OBJECT_CLASS class,
+CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		 struct libattr_list *attrs);
 
 /**
@@ -65,14 +63,16 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, void **obj, CK_OBJECT_CLASS class,
  * CKR_OK                        - Success
  */
 CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
-			   void **pub_key, struct libattr_list *pub_attrs,
-			   void **priv_key, struct libattr_list *priv_attrs);
+			   struct libobj_obj *pub_key,
+			   struct libattr_list *pub_attrs,
+			   struct libobj_obj *priv_key,
+			   struct libattr_list *priv_attrs);
 
 /**
  * key_secret_key_generate() - Generate a secret key object
  * @hsession: Session handle
  * @mech: Key generation mechanism
- * @key: Secret Key object
+ * @obj: Secret Key object
  * @attrs: List of the key attributes
  *
  * If key attributes are corrects, create a secret key object.
@@ -90,12 +90,13 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
  * CKR_OK                        - Success
  */
 CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
-			      void **key, struct libattr_list *attrs);
+			      struct libobj_obj *obj,
+			      struct libattr_list *attrs);
 
 /*
  * key_get_id() - Get the key ID returned by SMW
  * @id: Byte buffer of the key ID
- * @key: Key object
+ * @obj: Key object
  * @prefix_len: Byte length of id prefix
  *
  * Call the specific key get id function that will allocate and return
@@ -107,6 +108,7 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
  * CKR_FUNCTION_FAILED           - Function failure
  * CKR_OK                        - Success
  */
-CK_RV key_get_id(struct libbytes *id, void *key, size_t prefix_len);
+CK_RV key_get_id(struct libbytes *id, struct libobj_obj *obj,
+		 size_t prefix_len);
 
 #endif /* __KEY_H__ */

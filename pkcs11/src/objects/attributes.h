@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __ATTRIBUTE_H__
@@ -24,26 +24,6 @@ struct template_attr {
 
 	CK_DECLARE_FUNCTION_POINTER(CK_RV, copy_to)
 	(void *dest, CK_ATTRIBUTE_PTR attr);
-};
-
-/**
- * struct rfc2279 - RFC2279 string data type
- * @string: No NULL terminated string of CK_UTF8CHAR
- * @length: Length of string
- */
-struct rfc2279 {
-	CK_UTF8CHAR_PTR string;
-	size_t length;
-};
-
-/**
- * struct mech_list - Mechanim type list
- * @mech: Pointer to an array of mechanism
- * @number: Number of mechanism
- */
-struct mech_list {
-	CK_MECHANISM_TYPE_PTR mech;
-	size_t number;
 };
 
 /**

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __LIST_H__
@@ -9,10 +9,10 @@
 /*
  * Definition of the head of the list @name
  */
-#define LIST_HEAD(name)                                                        \
+#define LIST_HEAD(name, type)                                                  \
 	struct name {                                                          \
-		void *first;                                                   \
-		void *last;                                                    \
+		struct type *first;                                            \
+		struct type *last;                                             \
 	}
 
 #define LIST_INIT(head)                                                        \
@@ -62,6 +62,10 @@
 			_next->prev = _prev;                                   \
 	} while (0)
 
+/*
+ * Find the element @find in the list pointed by the @head
+ * The element found (otherwise NULL) is returned in @res
+ */
 #define LIST_FIND(res, head, find)                                             \
 	do {                                                                   \
 		__typeof__(find) _elem = LIST_FIRST(head);                     \
@@ -69,5 +73,106 @@
 			;                                                      \
 		res = _elem;                                                   \
 	} while (0)
+
+/*
+ * Definition of the head of the list @name
+ * This list includes a lock (mutex) object
+ */
+#define LLIST_HEAD(name, type)                                                 \
+	struct name {                                                          \
+		void *lock;                                                    \
+		struct type *first;                                            \
+		struct type *last;                                             \
+	}
+
+/*
+ * Lock/Unlock list access
+ */
+#define LLIST_LOCK(head)   libmutex_lock((head)->lock)
+#define LLIST_UNLOCK(head) libmutex_unlock((head)->lock)
+
+/* Initialize the list, creates list mutex */
+#define LLIST_INIT(head)                                                       \
+	({                                                                     \
+		CK_RV _ret;                                                    \
+		do {                                                           \
+			__typeof__(head) _head = (head);                       \
+			_head->first = NULL;                                   \
+			_head->last = NULL;                                    \
+			_ret = libmutex_create(&_head->lock);                  \
+		} while (0);                                                   \
+		_ret;                                                          \
+	})
+
+/* Close the list, destroyes list mutex */
+#define LLIST_CLOSE(head)                                                      \
+	({                                                                     \
+		CK_RV _ret;                                                    \
+		do {                                                           \
+			__typeof__(head) _head = (head);                       \
+			_head->first = NULL;                                   \
+			_head->last = NULL;                                    \
+			LLIST_UNLOCK(_head);                                   \
+			_ret = libmutex_destroy(&_head->lock);                 \
+		} while (0);                                                   \
+		_ret;                                                          \
+	})
+
+#define LLIST_EMPTY(head) LIST_EMPTY(head)
+#define LLIST_FIRST(head) LIST_FIRST(head)
+#define LLIST_NEXT(elem)  LIST_NEXT(elem)
+
+/*
+ * Insert a new element @elem in the list pointed by the @head
+ */
+#define LLIST_INSERT_TAIL(head, elem)                                          \
+	({                                                                     \
+		CK_RV _ret;                                                    \
+		do {                                                           \
+			__typeof__(head) _head = (head);                       \
+			__typeof__(elem) _elem = (elem);                       \
+			__typeof__(elem) _prev = _head->last;                  \
+			_ret = LLIST_LOCK(_head);                              \
+			if (_ret == CKR_OK) {                                  \
+				_elem->next = NULL;                            \
+				if (LIST_EMPTY(_head))                         \
+					_head->first = _elem;                  \
+				else                                           \
+					_prev->next = _elem;                   \
+				_head->last = _elem;                           \
+				_elem->prev = _prev;                           \
+				LLIST_UNLOCK(_head);                           \
+			}                                                      \
+		} while (0);                                                   \
+		_ret;                                                          \
+	})
+
+/*
+ * Remove the element @elem from the list pointed by the @head
+ */
+#define LLIST_REMOVE(head, elem) LIST_REMOVE(head, elem)
+
+/*
+ * Find the element @find in the list pointed by the @head
+ * The element found (otherwise NULL) is returned in @res
+ */
+#define LLIST_FIND_LOCK(res, head, find)                                       \
+	({                                                                     \
+		CK_RV _ret;                                                    \
+		do {                                                           \
+			__typeof__(head) _head = (head);                       \
+			__typeof__(find) _find = (find);                       \
+			__typeof__(res) _res;                                  \
+			_ret = LLIST_LOCK(_head);                              \
+			if (_ret == CKR_OK) {                                  \
+				LIST_FIND(_res, _head, _find);                 \
+				if (_res == _find)                             \
+					_ret = libmutex_lock(_find->lock);     \
+				LLIST_UNLOCK(_head);                           \
+				res = _res;                                    \
+			}                                                      \
+		} while (0);                                                   \
+		_ret;                                                          \
+	})
 
 #endif /* __LIST_H__ */

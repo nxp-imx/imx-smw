@@ -40,6 +40,8 @@ void key_ec_private_free(struct libobj_obj *obj);
  * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_GENERAL_ERROR             - General error defined
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
  * CKR_OK                        - Success
  */
 CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
@@ -102,6 +104,8 @@ CK_RV key_ec_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
  * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_GENERAL_ERROR             - General error defined
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
  * CKR_OK                        - Success
  */
 CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
@@ -168,6 +172,8 @@ CK_RV key_ec_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
  * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_GENERAL_ERROR             - General error defined
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
  * CKR_OK                        - Success
  */
 CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,

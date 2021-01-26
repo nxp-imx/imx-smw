@@ -142,6 +142,29 @@ static struct mgroup smw_mechanims[] = {
 			_entry->smw_algo;                                      \
 	})
 
+/**
+ * smw_status_to_ck_rv() - Converts a SMW status to CK_RV value
+ * @status: SMW status
+ *
+ * return:
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+static CK_RV smw_status_to_ck_rv(int status)
+{
+	switch (status) {
+	case SMW_STATUS_OK:
+		return CKR_OK;
+
+	case SMW_STATUS_ALLOC_FAILURE:
+		return CKR_DEVICE_MEMORY;
+
+	default:
+		return CKR_DEVICE_ERROR;
+	}
+}
+
 static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mgroup **group, struct mentry **entry)
 {
@@ -390,10 +413,12 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 
 	status = smw_generate_key(&gen_args);
 
-	DBG_TRACE("Generate Key on %s status %d", devinfo->name, status);
-	if (status != SMW_STATUS_OK)
-		ret = CKR_FUNCTION_FAILED;
-	else
+	ret = smw_status_to_ck_rv(status);
+
+	DBG_TRACE("Generate Key on %s status %d return %ld", devinfo->name,
+		  status, ret);
+
+	if (ret == CKR_OK)
 		key_desc_copy_key_id(obj, &key);
 
 end:
@@ -547,11 +572,12 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	}
 
 	status = smw_import_key(&imp_args);
+	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("Import Key on %s status %d", devinfo->name, status);
-	if (status != SMW_STATUS_OK)
-		ret = CKR_FUNCTION_FAILED;
-	else
+	DBG_TRACE("Import Key on %s status %d return %ld", devinfo->name,
+		  status, ret);
+
+	if (ret == CKR_OK)
 		key_desc_copy_key_id(obj, &key);
 
 end:
@@ -562,6 +588,7 @@ end:
 
 CK_RV libdev_delete_key(unsigned long long key_id)
 {
+	CK_RV ret;
 	int status;
 	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_delete_key_args key_args = { 0 };
@@ -574,11 +601,11 @@ CK_RV libdev_delete_key(unsigned long long key_id)
 	key_args.key_descriptor = &key_desc;
 	status = smw_delete_key(&key_args);
 
-	DBG_TRACE("Delete Key status %d", status);
-	if (status != SMW_STATUS_OK)
-		return CKR_FUNCTION_FAILED;
+	ret = smw_status_to_ck_rv(status);
 
-	return CKR_OK;
+	DBG_TRACE("Delete Key status %d return %ld", status, ret);
+
+	return ret;
 }
 
 CK_RV libdev_mechanisms_init(CK_SLOT_ID slotid)

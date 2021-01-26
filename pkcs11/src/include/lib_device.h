@@ -238,6 +238,8 @@ CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech);
  * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_FUNCTION_FAILED           - Operation failed
  * CKR_HOST_MEMORY               - Out of memory
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
  * CKR_OK                        - Success
  */
 CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
@@ -259,6 +261,8 @@ CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
  * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
  * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute type is not valid
  * CKR_HOST_MEMORY               - Out of memory
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
  * CKR_OK                        - Success
  */
 CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj);
@@ -272,11 +276,8 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj);
  *
  * Return:
  * CKR_ARGUMENTS_BAD             - Key id is 0
- * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
- * CKR_GENERAL_ERROR             - No slot defined
- * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
- * CKR_MECHANISM_INVALID         - Mechanism not supported
- * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
  * CKR_OK                        - Success
  */
 CK_RV libdev_delete_key(unsigned long long key_id);

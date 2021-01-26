@@ -28,18 +28,20 @@ enum attr_key_common_list {
 };
 
 const struct template_attr attr_key_common[] = {
-	[KEY_TYPE] = { CKA_KEY_TYPE, sizeof(CK_KEY_TYPE), MUST, attr_to_key },
-	[KEY_ID] = { CKA_ID, 0, OPTIONAL, attr_to_byte_array },
-	[KEY_START_DATE] = { CKA_START_DATE, sizeof(CK_DATE), OPTIONAL,
-			     attr_to_date },
-	[KEY_END_DATE] = { CKA_END_DATE, sizeof(CK_DATE), OPTIONAL,
-			   attr_to_date },
-	[KEY_DERIVE] = { CKA_DERIVE, sizeof(CK_BBOOL), OPTIONAL, attr_to_bool },
-	[KEY_LOCAL] = { CKA_LOCAL, sizeof(CK_BBOOL), OPTIONAL, attr_to_bool },
-	[KEY_GEN_MECH] = { CKA_KEY_GEN_MECHANISM, sizeof(CK_MECHANISM_TYPE),
-			   OPTIONAL, attr_to_mech },
-	[KEY_ALLOWED_MECH] = { CKA_ALLOWED_MECHANISMS, 0, OPTIONAL,
-			       attr_to_mech_list },
+	[KEY_TYPE] = TATTR(key, type, KEY_TYPE, sizeof(CK_KEY_TYPE), MUST, key),
+	[KEY_ID] = TATTR(key, id, ID, 0, OPTIONAL, byte_array),
+	[KEY_START_DATE] = TATTR(key, start_date, START_DATE, sizeof(CK_DATE),
+				 OPTIONAL, date),
+	[KEY_END_DATE] =
+		TATTR(key, end_date, END_DATE, sizeof(CK_DATE), OPTIONAL, date),
+	[KEY_DERIVE] =
+		TATTR(key, derive, DERIVE, sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[KEY_LOCAL] =
+		TATTR(key, local, LOCAL, sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[KEY_GEN_MECH] = TATTR(key, gen_mech, KEY_GEN_MECHANISM,
+			       sizeof(CK_MECHANISM_TYPE), OPTIONAL, mech),
+	[KEY_ALLOWED_MECH] =
+		TATTR(key, mech, ALLOWED_MECHANISMS, 0, OPTIONAL, mech_list),
 };
 
 struct libobj_key_public {
@@ -65,18 +67,22 @@ enum attr_key_public_list {
 };
 
 const struct template_attr attr_key_public[] = {
-	[PUB_SUBJECT] = { CKA_SUBJECT, 0, OPTIONAL, attr_to_byte_array },
-	[PUB_ENCRYPT] = { CKA_ENCRYPT, sizeof(CK_BBOOL), OPTIONAL,
-			  attr_to_bool },
-	[PUB_VERIFY] = { CKA_VERIFY, sizeof(CK_BBOOL), OPTIONAL, attr_to_bool },
-	[PUB_VERIFY_RECOVER] = { CKA_VERIFY_RECOVER, sizeof(CK_BBOOL), OPTIONAL,
-				 attr_to_bool },
-	[PUB_TRUSTED] = { CKA_TRUSTED, sizeof(CK_BBOOL), OPTIONAL,
-			  attr_to_bool },
-	[PUB_WRAP] = { CKA_WRAP, sizeof(CK_BBOOL), OPTIONAL, attr_to_bool },
-	[PUB_WRAP_TEMPLATE] = { CKA_WRAP_TEMPLATE, 0, OPTIONAL,
-				attr_to_attr_list },
-	[PUB_INFO] = { CKA_PUBLIC_KEY_INFO, 0, OPTIONAL, attr_to_byte_array },
+	[PUB_SUBJECT] =
+		TATTR(key_public, subject, SUBJECT, 0, OPTIONAL, byte_array),
+	[PUB_ENCRYPT] = TATTR(key_public, encrypt, ENCRYPT, sizeof(CK_BBOOL),
+			      OPTIONAL, boolean),
+	[PUB_VERIFY] = TATTR(key_public, verify, VERIFY, sizeof(CK_BBOOL),
+			     OPTIONAL, boolean),
+	[PUB_VERIFY_RECOVER] = TATTR(key_public, verify_recover, VERIFY_RECOVER,
+				     sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PUB_TRUSTED] = TATTR(key_public, trusted, TRUSTED, sizeof(CK_BBOOL),
+			      OPTIONAL, boolean),
+	[PUB_WRAP] = TATTR(key_public, wrap, WRAP, sizeof(CK_BBOOL), OPTIONAL,
+			   boolean),
+	[PUB_WRAP_TEMPLATE] = TATTR(key_public, wrap_attrs, WRAP_TEMPLATE, 0,
+				    OPTIONAL, attr_list),
+	[PUB_INFO] = TATTR(key_public, info, PUBLIC_KEY_INFO, 0, OPTIONAL,
+			   byte_array),
 };
 
 struct libobj_key_private {
@@ -112,30 +118,36 @@ enum attr_key_private_list {
 };
 
 const struct template_attr attr_key_private[] = {
-	[PRIV_SUBJECT] = { CKA_SUBJECT, 0, OPTIONAL, attr_to_byte_array },
-	[PRIV_SENSITIVE] = { CKA_SENSITIVE, sizeof(CK_BBOOL), OPTIONAL,
-			     attr_to_bool },
-	[PRIV_ALWAYS_SENSITIVE] = { CKA_ALWAYS_SENSITIVE, sizeof(CK_BBOOL),
-				    OPTIONAL, attr_to_bool },
-	[PRIV_DECRYPT] = { CKA_DECRYPT, sizeof(CK_BBOOL), OPTIONAL,
-			   attr_to_bool },
-	[PRIV_SIGN] = { CKA_SIGN, sizeof(CK_BBOOL), OPTIONAL, attr_to_bool },
-	[PRIV_SIGN_RECOVER] = { CKA_SIGN_RECOVER, sizeof(CK_BBOOL), OPTIONAL,
-				attr_to_bool },
-	[PRIV_EXTRACTABLE] = { CKA_EXTRACTABLE, sizeof(CK_BBOOL), OPTIONAL,
-			       attr_to_bool },
-	[PRIV_NEVER_EXTRACTABLE] = { CKA_NEVER_EXTRACTABLE, sizeof(CK_BBOOL),
-				     OPTIONAL, attr_to_bool },
-	[PRIV_WRAP_WITH_TRUSTED] = { CKA_WRAP_WITH_TRUSTED, sizeof(CK_BBOOL),
-				     OPTIONAL, attr_to_bool },
-	[PRIV_UNWRAP] = { CKA_UNWRAP, sizeof(CK_BBOOL), OPTIONAL,
-			  attr_to_bool },
-	[PRIV_UNWRAP_TEMPLATE] = { CKA_UNWRAP_TEMPLATE, 0, OPTIONAL,
-				   attr_to_attr_list },
-	[PRIV_ALWAYS_AUTHENTICATE] = { CKA_ALWAYS_AUTHENTICATE,
-				       sizeof(CK_BBOOL), OPTIONAL,
-				       attr_to_bool },
-	[PRIV_INFO] = { CKA_PUBLIC_KEY_INFO, 0, OPTIONAL, attr_to_byte_array },
+	[PRIV_SUBJECT] =
+		TATTR(key_private, subject, SUBJECT, 0, OPTIONAL, byte_array),
+	[PRIV_SENSITIVE] = TATTR(key_private, sensitive, SENSITIVE,
+				 sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_ALWAYS_SENSITIVE] =
+		TATTR(key_private, always_sensitive, ALWAYS_SENSITIVE,
+		      sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_DECRYPT] = TATTR(key_private, decrypt, DECRYPT, sizeof(CK_BBOOL),
+			       OPTIONAL, boolean),
+	[PRIV_SIGN] = TATTR(key_private, sign, SIGN, sizeof(CK_BBOOL), OPTIONAL,
+			    boolean),
+	[PRIV_SIGN_RECOVER] = TATTR(key_private, sign_recover, SIGN_RECOVER,
+				    sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_EXTRACTABLE] = TATTR(key_private, extractable, EXTRACTABLE,
+				   sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_NEVER_EXTRACTABLE] =
+		TATTR(key_private, never_extractable, NEVER_EXTRACTABLE,
+		      sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_WRAP_WITH_TRUSTED] =
+		TATTR(key_private, wrap_with_trusted, WRAP_WITH_TRUSTED,
+		      sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_UNWRAP] = TATTR(key_private, unwrap, UNWRAP, sizeof(CK_BBOOL),
+			      OPTIONAL, boolean),
+	[PRIV_UNWRAP_TEMPLATE] = TATTR(key_private, unwrap_attrs,
+				       UNWRAP_TEMPLATE, 0, OPTIONAL, attr_list),
+	[PRIV_ALWAYS_AUTHENTICATE] =
+		TATTR(key_private, always_authenticate, ALWAYS_AUTHENTICATE,
+		      sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[PRIV_INFO] = TATTR(key_private, info, PUBLIC_KEY_INFO, 0, OPTIONAL,
+			    byte_array),
 };
 
 struct libobj_key_secret {
@@ -175,34 +187,39 @@ enum attr_key_secret_list {
 };
 
 const struct template_attr attr_key_secret[] = {
-	[SECR_SENSITIVE] = { CKA_SENSITIVE, sizeof(CK_BBOOL), OPTIONAL,
-			     attr_to_bool },
-	[SECR_ALWAYS_SENSITIVE] = { CKA_ALWAYS_SENSITIVE, sizeof(CK_BBOOL),
-				    OPTIONAL, attr_to_bool },
-	[SECR_ENCRYPT] = { CKA_ENCRYPT, sizeof(CK_BBOOL), OPTIONAL,
-			   attr_to_bool },
-	[SECR_DECRYPT] = { CKA_DECRYPT, sizeof(CK_BBOOL), OPTIONAL,
-			   attr_to_bool },
-	[SECR_SIGN] = { CKA_SIGN, sizeof(CK_BBOOL), OPTIONAL, attr_to_bool },
-	[SECR_VERIFY] = { CKA_VERIFY, sizeof(CK_BBOOL), OPTIONAL,
-			  attr_to_bool },
-	[SECR_EXTRACTABLE] = { CKA_EXTRACTABLE, sizeof(CK_BBOOL), OPTIONAL,
-			       attr_to_bool },
-	[SECR_NEVER_EXTRACTABLE] = { CKA_NEVER_EXTRACTABLE, sizeof(CK_BBOOL),
-				     OPTIONAL, attr_to_bool },
-	[SECR_WRAP] = { CKA_WRAP, sizeof(CK_BBOOL), OPTIONAL, attr_to_bool },
-	[SECR_WRAP_TEMPLATE] = { CKA_WRAP_TEMPLATE, 0, OPTIONAL,
-				 attr_to_attr_list },
-	[SECR_WRAP_WITH_TRUSTED] = { CKA_WRAP_WITH_TRUSTED, sizeof(CK_BBOOL),
-				     OPTIONAL, attr_to_bool },
-	[SECR_UNWRAP] = { CKA_UNWRAP, sizeof(CK_BBOOL), OPTIONAL,
-			  attr_to_bool },
-	[SECR_UNWRAP_TEMPLATE] = { CKA_UNWRAP_TEMPLATE, 0, OPTIONAL,
-				   attr_to_attr_list },
-	[SECR_TRUSTED] = { CKA_TRUSTED, sizeof(CK_BBOOL), OPTIONAL,
-			   attr_to_bool },
-	[SECR_CHECK_VALUE] = { CKA_CHECK_VALUE, 3 * sizeof(CK_BYTE), OPTIONAL,
-			       attr_to_byte_array },
+	[SECR_SENSITIVE] = TATTR(key_secret, sensitive, SENSITIVE,
+				 sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[SECR_ALWAYS_SENSITIVE] =
+		TATTR(key_secret, always_sensitive, ALWAYS_SENSITIVE,
+		      sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[SECR_ENCRYPT] = TATTR(key_secret, encrypt, ENCRYPT, sizeof(CK_BBOOL),
+			       OPTIONAL, boolean),
+	[SECR_DECRYPT] = TATTR(key_secret, decrypt, DECRYPT, sizeof(CK_BBOOL),
+			       OPTIONAL, boolean),
+	[SECR_SIGN] = TATTR(key_secret, sign, SIGN, sizeof(CK_BBOOL), OPTIONAL,
+			    boolean),
+	[SECR_VERIFY] = TATTR(key_secret, verify, VERIFY, sizeof(CK_BBOOL),
+			      OPTIONAL, boolean),
+	[SECR_EXTRACTABLE] = TATTR(key_secret, extractable, EXTRACTABLE,
+				   sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[SECR_NEVER_EXTRACTABLE] =
+		TATTR(key_secret, never_extractable, NEVER_EXTRACTABLE,
+		      sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[SECR_WRAP] = TATTR(key_secret, wrap, WRAP, sizeof(CK_BBOOL), OPTIONAL,
+			    boolean),
+	[SECR_WRAP_TEMPLATE] = TATTR(key_secret, wrap_attrs, WRAP_TEMPLATE, 0,
+				     OPTIONAL, attr_list),
+	[SECR_WRAP_WITH_TRUSTED] =
+		TATTR(key_secret, wrap_with_trusted, WRAP_WITH_TRUSTED,
+		      sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[SECR_UNWRAP] = TATTR(key_secret, unwrap, UNWRAP, sizeof(CK_BBOOL),
+			      OPTIONAL, boolean),
+	[SECR_UNWRAP_TEMPLATE] = TATTR(key_secret, unwrap_attrs,
+				       UNWRAP_TEMPLATE, 0, OPTIONAL, attr_list),
+	[SECR_TRUSTED] = TATTR(key_secret, trusted, TRUSTED, sizeof(CK_BBOOL),
+			       OPTIONAL, boolean),
+	[SECR_CHECK_VALUE] = TATTR(key_secret, checksum, CHECK_VALUE,
+				   3 * sizeof(CK_BYTE), OPTIONAL, byte_array),
 };
 
 /**
@@ -415,85 +432,77 @@ static CK_RV key_secret_new(struct libobj_obj *obj, struct libattr_list *attrs)
 
 	DBG_TRACE("Create a new secret key (%p)", new_key);
 
-	ret = attr_get_value(&new_key->sensitive,
-			     &attr_key_secret[SECR_SENSITIVE], attrs,
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_SENSITIVE], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->always_sensitive,
-			     &attr_key_secret[SECR_ALWAYS_SENSITIVE], attrs,
-			     MUST_NOT);
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_ALWAYS_SENSITIVE],
+			     attrs, MUST_NOT);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->encrypt, &attr_key_secret[SECR_ENCRYPT],
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_ENCRYPT], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_DECRYPT], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_SIGN], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_VERIFY], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_EXTRACTABLE], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_NEVER_EXTRACTABLE],
+			     attrs, MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_WRAP], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_WRAP_TEMPLATE],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->decrypt, &attr_key_secret[SECR_DECRYPT],
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_WRAP_WITH_TRUSTED],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->sign, &attr_key_secret[SECR_SIGN], attrs,
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_UNWRAP], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->verify, &attr_key_secret[SECR_VERIFY],
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_UNWRAP_TEMPLATE],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->extractable,
-			     &attr_key_secret[SECR_EXTRACTABLE], attrs,
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_TRUSTED], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->never_extractable,
-			     &attr_key_secret[SECR_NEVER_EXTRACTABLE], attrs,
-			     MUST_NOT);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->wrap, &attr_key_secret[SECR_WRAP], attrs,
-			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->wrap_attrs,
-			     &attr_key_secret[SECR_WRAP_TEMPLATE], attrs,
-			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->wrap_with_trusted,
-			     &attr_key_secret[SECR_WRAP_WITH_TRUSTED], attrs,
-			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->unwrap, &attr_key_secret[SECR_UNWRAP],
-			     attrs, NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->unwrap_attrs,
-			     &attr_key_secret[SECR_UNWRAP_TEMPLATE], attrs,
-			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->trusted, &attr_key_secret[SECR_TRUSTED],
-			     attrs, NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->checksum,
-			     &attr_key_secret[SECR_CHECK_VALUE], attrs,
+	ret = attr_get_value(new_key, &attr_key_secret[SECR_CHECK_VALUE], attrs,
 			     NO_OVERWRITE);
 
 	return ret;
@@ -528,74 +537,67 @@ static CK_RV key_private_new(struct libobj_obj *obj, struct libattr_list *attrs)
 
 	DBG_TRACE("Create a new private key (%p)", new_key);
 
-	ret = attr_get_value(&new_key->subject, &attr_key_private[PRIV_SUBJECT],
-			     attrs, NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->sensitive,
-			     &attr_key_private[PRIV_SENSITIVE], attrs,
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_SUBJECT], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->always_sensitive,
-			     &attr_key_private[PRIV_ALWAYS_SENSITIVE], attrs,
-			     MUST_NOT);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->decrypt, &attr_key_private[PRIV_DECRYPT],
-			     attrs, NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->sign, &attr_key_private[PRIV_SIGN],
-			     attrs, NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->sign_recover,
-			     &attr_key_private[PRIV_SIGN_RECOVER], attrs,
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_SENSITIVE], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->extractable,
-			     &attr_key_private[PRIV_EXTRACTABLE], attrs,
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_ALWAYS_SENSITIVE],
+			     attrs, MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_DECRYPT], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->never_extractable,
-			     &attr_key_private[PRIV_NEVER_EXTRACTABLE], attrs,
-			     MUST_NOT);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->wrap_with_trusted,
-			     &attr_key_private[PRIV_WRAP_WITH_TRUSTED], attrs,
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_SIGN], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->unwrap, &attr_key_private[PRIV_UNWRAP],
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_SIGN_RECOVER],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->unwrap_attrs,
-			     &attr_key_private[PRIV_UNWRAP_TEMPLATE], attrs,
-			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->info, &attr_key_private[PRIV_INFO],
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_EXTRACTABLE],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->always_authenticate,
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_NEVER_EXTRACTABLE],
+			     attrs, MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_WRAP_WITH_TRUSTED],
+			     attrs, NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_UNWRAP], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_UNWRAP_TEMPLATE],
+			     attrs, NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_private[PRIV_INFO], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key,
 			     &attr_key_private[PRIV_ALWAYS_AUTHENTICATE], attrs,
 			     NO_OVERWRITE);
 
@@ -638,29 +640,28 @@ static CK_RV key_public_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 	DBG_TRACE("Create a new public key (%p)", new_key);
 
-	ret = attr_get_value(&new_key->subject, &attr_key_public[PUB_SUBJECT],
-			     attrs, NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->encrypt, &attr_key_public[PUB_ENCRYPT],
-			     attrs, NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->verify, &attr_key_public[PUB_VERIFY],
-			     attrs, NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&new_key->verify_recover,
-			     &attr_key_public[PUB_VERIFY_RECOVER], attrs,
+	ret = attr_get_value(new_key, &attr_key_public[PUB_SUBJECT], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->trusted, &attr_key_public[PUB_TRUSTED],
+	ret = attr_get_value(new_key, &attr_key_public[PUB_ENCRYPT], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_public[PUB_VERIFY], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_public[PUB_VERIFY_RECOVER],
 			     attrs, NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_public[PUB_TRUSTED], attrs,
+			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -673,18 +674,17 @@ static CK_RV key_public_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			return CKR_ATTRIBUTE_READ_ONLY;
 	}
 
-	ret = attr_get_value(&new_key->wrap, &attr_key_public[PUB_WRAP], attrs,
+	ret = attr_get_value(new_key, &attr_key_public[PUB_WRAP], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->wrap_attrs,
-			     &attr_key_public[PUB_WRAP_TEMPLATE], attrs,
-			     NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_public[PUB_WRAP_TEMPLATE],
+			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->info, &attr_key_public[PUB_INFO], attrs,
+	ret = attr_get_value(new_key, &attr_key_public[PUB_INFO], attrs,
 			     NO_OVERWRITE);
 
 	return ret;
@@ -840,44 +840,43 @@ static CK_RV create_key_new(struct libobj_obj *obj, struct libattr_list *attrs)
 
 	DBG_TRACE("Create a new key (%p)", new_key);
 
-	ret = attr_get_value(&new_key->type, &attr_key_common[KEY_TYPE], attrs,
+	ret = attr_get_value(new_key, &attr_key_common[KEY_TYPE], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->id, &attr_key_common[KEY_ID], attrs,
+	ret = attr_get_value(new_key, &attr_key_common[KEY_ID], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->start_date,
-			     &attr_key_common[KEY_START_DATE], attrs,
+	ret = attr_get_value(new_key, &attr_key_common[KEY_START_DATE], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->end_date, &attr_key_common[KEY_END_DATE],
-			     attrs, NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_END_DATE], attrs,
+			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->derive, &attr_key_common[KEY_DERIVE],
-			     attrs, NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_DERIVE], attrs,
+			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->local, &attr_key_common[KEY_LOCAL],
-			     attrs, MUST_NOT);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_LOCAL], attrs,
+			     MUST_NOT);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->gen_mech, &attr_key_common[KEY_GEN_MECH],
-			     attrs, MUST_NOT);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_GEN_MECH], attrs,
+			     MUST_NOT);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->mech, &attr_key_common[KEY_ALLOWED_MECH],
-			     attrs, NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_ALLOWED_MECH], attrs,
+			     NO_OVERWRITE);
 	return ret;
 }
 
@@ -914,7 +913,7 @@ static CK_RV generate_key_new(struct libobj_obj *obj,
 	DBG_TRACE("Generate a new key (%p)", new_key);
 
 	new_key->type = key_type;
-	ret = attr_get_value(&new_key->type, &attr_key_common[KEY_TYPE], attrs,
+	ret = attr_get_value(new_key, &attr_key_common[KEY_TYPE], attrs,
 			     OPTIONAL);
 	if (ret != CKR_OK)
 		return ret;
@@ -922,39 +921,38 @@ static CK_RV generate_key_new(struct libobj_obj *obj,
 	if (new_key->type != key_type)
 		return CKR_TEMPLATE_INCONSISTENT;
 
-	ret = attr_get_value(&new_key->id, &attr_key_common[KEY_ID], attrs,
+	ret = attr_get_value(new_key, &attr_key_common[KEY_ID], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->start_date,
-			     &attr_key_common[KEY_START_DATE], attrs,
+	ret = attr_get_value(new_key, &attr_key_common[KEY_START_DATE], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->end_date, &attr_key_common[KEY_END_DATE],
-			     attrs, NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_END_DATE], attrs,
+			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->derive, &attr_key_common[KEY_DERIVE],
-			     attrs, NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_DERIVE], attrs,
+			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->local, &attr_key_common[KEY_LOCAL],
-			     attrs, MUST_NOT);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_LOCAL], attrs,
+			     MUST_NOT);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->gen_mech, &attr_key_common[KEY_GEN_MECH],
-			     attrs, MUST_NOT);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_GEN_MECH], attrs,
+			     MUST_NOT);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&new_key->mech, &attr_key_common[KEY_ALLOWED_MECH],
-			     attrs, NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_common[KEY_ALLOWED_MECH], attrs,
+			     NO_OVERWRITE);
 
 	/* Set the generate mechanism and the local flag */
 	new_key->gen_mech = mech->mechanism;

@@ -24,8 +24,10 @@ enum attr_key_ec_public_list {
 };
 
 const struct template_attr attr_key_ec_public[] = {
-	[PUB_PARAMS] = { CKA_EC_PARAMS, 0, MUST, attr_to_byte_array },
-	[PUB_POINT] = { CKA_EC_POINT, 0, MUST, attr_to_byte_array },
+	[PUB_PARAMS] =
+		TATTR(key_ec_pair, params, EC_PARAMS, 0, MUST, byte_array),
+	[PUB_POINT] =
+		TATTR(key_ec_pair, point_q, EC_POINT, 0, MUST, byte_array),
 };
 
 enum attr_key_ec_private_list {
@@ -159,13 +161,13 @@ CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 	DBG_TRACE("Create a new EC public key (%p)", new_key);
 
-	ret = attr_get_value(&new_key->params, &attr_key_ec_public[PUB_PARAMS],
-			     attrs, NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_ec_public[PUB_PARAMS], attrs,
+			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = attr_get_value(&new_key->point_q, &attr_key_ec_public[PUB_POINT],
-			     attrs, NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_ec_public[PUB_POINT], attrs,
+			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -191,14 +193,12 @@ CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 	DBG_TRACE("Create a new EC private key (%p)", new_key);
 
-	ret = attr_get_value(&new_key->params,
-			     &attr_key_ec_private[PRIV_PARAMS], attrs,
+	ret = attr_get_value(new_key, &attr_key_ec_private[PRIV_PARAMS], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = attr_get_value(&new_key->value_d,
-			     &attr_key_ec_private[PRIV_VALUE], attrs,
+	ret = attr_get_value(new_key, &attr_key_ec_private[PRIV_VALUE], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		goto end;
@@ -240,26 +240,24 @@ CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	DBG_TRACE("Generate an EC keypair (%p)", keypair);
 
 	/* Verify the public key attributes */
-	ret = attr_get_value(&keypair->params, &attr_key_ec_public[PUB_PARAMS],
+	ret = attr_get_value(keypair, &attr_key_ec_public[PUB_PARAMS],
 			     pub_attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = attr_get_value(&keypair->point_q, &attr_key_ec_public[PUB_POINT],
-			     pub_attrs, MUST_NOT);
+	ret = attr_get_value(keypair, &attr_key_ec_public[PUB_POINT], pub_attrs,
+			     MUST_NOT);
 	if (ret != CKR_OK)
 		goto end;
 
 	/* Verify the private key attributes */
-	ret = attr_get_value(&keypair->params,
-			     &attr_key_ec_private[PRIV_PARAMS], priv_attrs,
-			     MUST_NOT);
+	ret = attr_get_value(keypair, &attr_key_ec_private[PRIV_PARAMS],
+			     priv_attrs, MUST_NOT);
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = attr_get_value(&keypair->value_d,
-			     &attr_key_ec_private[PRIV_VALUE], priv_attrs,
-			     MUST_NOT);
+	ret = attr_get_value(keypair, &attr_key_ec_private[PRIV_VALUE],
+			     priv_attrs, MUST_NOT);
 	if (ret != CKR_OK)
 		goto end;
 

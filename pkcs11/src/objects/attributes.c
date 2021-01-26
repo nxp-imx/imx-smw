@@ -69,7 +69,7 @@ CK_RV attr_to_rfc2279(void *dest, CK_ATTRIBUTE_PTR attr)
 	return CKR_OK;
 }
 
-CK_RV attr_to_bool(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV attr_to_boolean(void *dest, CK_ATTRIBUTE_PTR attr)
 {
 	CK_BBOOL *out = dest;
 
@@ -197,7 +197,7 @@ CK_RV attr_to_ulong(void *dest, CK_ATTRIBUTE_PTR attr)
 	return CKR_OK;
 }
 
-CK_RV attr_get_value(void *dest, const struct template_attr *tattr,
+CK_RV attr_get_value(void *obj, const struct template_attr *tattr,
 		     struct libattr_list *attrs, enum attr_req req_overwrite)
 {
 	CK_RV ret;
@@ -249,6 +249,6 @@ CK_RV attr_get_value(void *dest, const struct template_attr *tattr,
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 	}
 
-	ret = tattr->copy_to(dest, cattr);
+	ret = tattr->attr_to(obj + tattr->of_field, cattr);
 	return CKR_OK;
 }

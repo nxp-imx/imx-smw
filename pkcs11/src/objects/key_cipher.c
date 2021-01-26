@@ -20,9 +20,9 @@ enum attr_key_cipher_list {
 };
 
 const struct template_attr attr_key_cipher[] = {
-	[SEC_VALUE] = { CKA_VALUE, 0, MUST, attr_to_byte_array },
-	[SEC_VALUE_LEN] = { CKA_VALUE_LEN, sizeof(CK_ULONG), MUST_NOT,
-			    attr_to_ulong },
+	[SEC_VALUE] = TATTR(key_cipher, value, VALUE, 0, MUST, byte_array),
+	[SEC_VALUE_LEN] = TATTR(key_cipher, value_len, VALUE_LEN,
+				sizeof(CK_ULONG), MUST_NOT, ulong),
 };
 
 /**
@@ -75,13 +75,13 @@ CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 	DBG_TRACE("Create a new Cipher secret key (%p)", new_key);
 
-	ret = attr_get_value(&new_key->value, &attr_key_cipher[SEC_VALUE],
-			     attrs, NO_OVERWRITE);
+	ret = attr_get_value(new_key, &attr_key_cipher[SEC_VALUE], attrs,
+			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		goto end;
 
 	/* Verify the key size value is not defined */
-	ret = attr_get_value(NULL, &attr_key_cipher[SEC_VALUE_LEN], attrs,
+	ret = attr_get_value(new_key, &attr_key_cipher[SEC_VALUE_LEN], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		goto end;
@@ -113,19 +113,16 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	DBG_TRACE("Generate a Cipher key (%p)", key);
 
 	/* Verify the key attributes */
-	ret = attr_get_value(&key->value, &attr_key_cipher[SEC_VALUE], attrs,
-			     MUST_NOT);
+	ret = attr_get_value(key, &attr_key_cipher[SEC_VALUE], attrs, MUST_NOT);
 	if (ret != CKR_OK)
 		goto end;
 
 	if (get_key_type(obj) == CKK_AES)
-		ret = attr_get_value(&key->value_len,
-				     &attr_key_cipher[SEC_VALUE_LEN], attrs,
-				     MUST);
+		ret = attr_get_value(key, &attr_key_cipher[SEC_VALUE_LEN],
+				     attrs, MUST);
 	else
-		ret = attr_get_value(&key->value_len,
-				     &attr_key_cipher[SEC_VALUE_LEN], attrs,
-				     NO_OVERWRITE);
+		ret = attr_get_value(key, &attr_key_cipher[SEC_VALUE_LEN],
+				     attrs, NO_OVERWRITE);
 
 	if (ret != CKR_OK)
 		goto end;

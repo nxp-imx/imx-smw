@@ -26,8 +26,8 @@ enum attr_obj_common_list {
 };
 
 const struct template_attr attr_obj_common[] = {
-	[OBJ_CLASS] = { CKA_CLASS, sizeof(CK_OBJECT_CLASS), MUST,
-			attr_to_class },
+	[OBJ_CLASS] =
+		TATTR(obj, class, CLASS, sizeof(CK_OBJECT_CLASS), MUST, class),
 };
 
 enum attr_obj_storage_list {
@@ -41,18 +41,19 @@ enum attr_obj_storage_list {
 };
 
 const struct template_attr attr_obj_storage[] = {
-	[STORAGE_TOKEN] = { CKA_TOKEN, sizeof(CK_BBOOL), OPTIONAL,
-			    attr_to_bool },
-	[STORAGE_PRIVATE] = { CKA_PRIVATE, sizeof(CK_BBOOL), OPTIONAL,
-			      attr_to_bool },
-	[STORAGE_MODIFIABLE] = { CKA_MODIFIABLE, sizeof(CK_BBOOL), OPTIONAL,
-				 attr_to_bool },
-	[STORAGE_COPYABLE] = { CKA_COPYABLE, sizeof(CK_BBOOL), OPTIONAL,
-			       attr_to_bool },
-	[STORAGE_DESTROYABLE] = { CKA_DESTROYABLE, sizeof(CK_BBOOL), OPTIONAL,
-				  attr_to_bool },
-	[STORAGE_LABEL] = { CKA_LABEL, 0, OPTIONAL, attr_to_rfc2279 },
-	[STORAGE_UNIQUE_ID] = { CKA_UNIQUE_ID, 0, READ_ONLY, attr_to_rfc2279 },
+	[STORAGE_TOKEN] = TATTR(storage, token, TOKEN, sizeof(CK_BBOOL),
+				OPTIONAL, boolean),
+	[STORAGE_PRIVATE] = TATTR(storage, private, PRIVATE, sizeof(CK_BBOOL),
+				  OPTIONAL, boolean),
+	[STORAGE_MODIFIABLE] = TATTR(storage, modifiable, MODIFIABLE,
+				     sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[STORAGE_COPYABLE] = TATTR(storage, copyable, COPYABLE,
+				   sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[STORAGE_DESTROYABLE] = TATTR(storage, destroyable, DESTROYABLE,
+				      sizeof(CK_BBOOL), OPTIONAL, boolean),
+	[STORAGE_LABEL] = TATTR(storage, label, LABEL, 0, OPTIONAL, rfc2279),
+	[STORAGE_UNIQUE_ID] =
+		TATTR(storage, unique_id, UNIQUE_ID, 0, READ_ONLY, rfc2279),
 };
 
 /**
@@ -538,43 +539,38 @@ static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 	DBG_TRACE("New storage object (%p)", newobj);
 
-	ret = attr_get_value(&newobj->token, &attr_obj_storage[STORAGE_TOKEN],
+	ret = attr_get_value(newobj, &attr_obj_storage[STORAGE_TOKEN], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(newobj, &attr_obj_storage[STORAGE_PRIVATE], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(newobj, &attr_obj_storage[STORAGE_MODIFIABLE],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&newobj->private,
-			     &attr_obj_storage[STORAGE_PRIVATE], attrs,
+	ret = attr_get_value(newobj, &attr_obj_storage[STORAGE_COPYABLE], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&newobj->modifiable,
-			     &attr_obj_storage[STORAGE_MODIFIABLE], attrs,
-			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&newobj->copyable,
-			     &attr_obj_storage[STORAGE_COPYABLE], attrs,
-			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&newobj->destroyable,
-			     &attr_obj_storage[STORAGE_DESTROYABLE], attrs,
-			     NO_OVERWRITE);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = attr_get_value(&newobj->label, &attr_obj_storage[STORAGE_LABEL],
+	ret = attr_get_value(newobj, &attr_obj_storage[STORAGE_DESTROYABLE],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(&newobj->unique_id,
-			     &attr_obj_storage[STORAGE_UNIQUE_ID], attrs,
-			     MUST_NOT);
+	ret = attr_get_value(newobj, &attr_obj_storage[STORAGE_LABEL], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(newobj, &attr_obj_storage[STORAGE_UNIQUE_ID],
+			     attrs, MUST_NOT);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -617,8 +613,8 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	DBG_TRACE("Create a new object (%p)", newobj);
 
 	/* Get the class of the object */
-	ret = attr_get_value(&newobj->class, &attr_obj_common[OBJ_CLASS],
-			     &attrs_list, NO_OVERWRITE);
+	ret = attr_get_value(newobj, &attr_obj_common[OBJ_CLASS], &attrs_list,
+			     NO_OVERWRITE);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -713,7 +709,7 @@ CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	 * By default this is a CKO_PUBLIC_KEY class
 	 */
 	pub_key->class = CKO_PUBLIC_KEY;
-	ret = attr_get_value(&pub_key->class, &attr_obj_common[OBJ_CLASS],
+	ret = attr_get_value(pub_key, &attr_obj_common[OBJ_CLASS],
 			     &pub_attrs_list, OPTIONAL);
 	if (ret != CKR_OK)
 		goto end;
@@ -739,7 +735,7 @@ CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	 * By default this is a CKO_PRIVATE_KEY class
 	 */
 	priv_key->class = CKO_PRIVATE_KEY;
-	ret = attr_get_value(&priv_key->class, &attr_obj_common[OBJ_CLASS],
+	ret = attr_get_value(priv_key, &attr_obj_common[OBJ_CLASS],
 			     &priv_attrs_list, OPTIONAL);
 	if (ret != CKR_OK)
 		goto end;
@@ -820,8 +816,8 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	 * By default this is a CKO_SECRET_KEY class
 	 */
 	key->class = CKO_SECRET_KEY;
-	ret = attr_get_value(&key->class, &attr_obj_common[OBJ_CLASS],
-			     &attrs_list, OPTIONAL);
+	ret = attr_get_value(key, &attr_obj_common[OBJ_CLASS], &attrs_list,
+			     OPTIONAL);
 	if (ret != CKR_OK)
 		goto end;
 

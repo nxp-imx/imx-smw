@@ -502,6 +502,64 @@ CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
 	return ret;
 }
 
+CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
+{
+	CK_RV ret;
+	int status;
+	CK_SLOT_ID slotid;
+	const struct libdev *devinfo;
+	struct smw_tlv key_attr = { 0 };
+	struct smw_import_key_args imp_args = { 0 };
+	struct smw_key_descriptor key = { 0 };
+	struct smw_keypair_buffer keypair_buffer = { 0 };
+
+	DBG_TRACE("Import a Key");
+	ret = libsess_get_slotid(hsession, &slotid);
+	if (ret != CKR_OK)
+		return ret;
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	/*
+	 * Set the key's buffer field to get the
+	 * object key's buffer(s) to import.
+	 */
+	key.buffer = &keypair_buffer;
+
+	ret = key_desc_setup(&key, obj);
+	if (ret != CKR_OK)
+		return ret;
+
+	imp_args.subsystem_name = devinfo->name;
+	imp_args.key_descriptor = &key;
+
+	if (is_token_obj(obj, storage)) {
+		DBG_TRACE("Import Persistent Key");
+		ret = tlv_encode_boolean(&key_attr, "PERSISTENT");
+		if (ret != CKR_OK)
+			goto end;
+
+		imp_args.key_attributes_list =
+			(const unsigned char *)key_attr.string;
+		imp_args.key_attributes_list_length = key_attr.length;
+	}
+
+	status = smw_import_key(&imp_args);
+
+	DBG_TRACE("Import Key on %s status %d", devinfo->name, status);
+	if (status != SMW_STATUS_OK)
+		ret = CKR_FUNCTION_FAILED;
+	else
+		key_desc_copy_key_id(obj, &key);
+
+end:
+	tlv_encode_free(&key_attr);
+
+	return ret;
+}
+
 CK_RV libdev_delete_key(unsigned long long key_id)
 {
 	int status;

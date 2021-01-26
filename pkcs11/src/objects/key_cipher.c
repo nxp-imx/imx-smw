@@ -59,9 +59,12 @@ void key_cipher_free(struct libobj_obj *obj)
 		free(key->value.array);
 
 	free(key);
+
+	set_subkey_to(obj, NULL);
 }
 
-CK_RV key_cipher_create(struct libobj_obj *obj, struct libattr_list *attrs)
+CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+			struct libattr_list *attrs)
 {
 	CK_RV ret;
 	struct libobj_key_cipher *new_key;
@@ -75,15 +78,26 @@ CK_RV key_cipher_create(struct libobj_obj *obj, struct libattr_list *attrs)
 	ret = attr_get_value(&new_key->value, &attr_key_cipher[SEC_VALUE],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	/* Verify the key size value is not defined */
 	ret = attr_get_value(NULL, &attr_key_cipher[SEC_VALUE_LEN], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
-	return CKR_OK;
+	/* Set the Key object value length equal to the buffer value length */
+	new_key->value_len = new_key->value.number;
+
+	/* Import the secret key in the SMW library session's subsystem */
+	ret = libdev_import_key(hsession, obj);
+	DBG_TRACE("Cipher Key ID 0x%llX", new_key->key_id);
+
+end:
+	if (ret != CKR_OK)
+		key_cipher_free(obj);
+
+	return ret;
 }
 
 CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
@@ -102,7 +116,7 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	ret = attr_get_value(&key->value, &attr_key_cipher[SEC_VALUE], attrs,
 			     MUST_NOT);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	if (get_key_type(obj) == CKK_AES)
 		ret = attr_get_value(&key->value_len,
@@ -114,11 +128,15 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 				     NO_OVERWRITE);
 
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	/* Generate the secret key with SMW library */
 	ret = libdev_operate_mechanism(hsession, mech, obj);
 	DBG_TRACE("Cipher Key ID 0x%llX", key->key_id);
+
+end:
+	if (ret != CKR_OK)
+		key_cipher_free(obj);
 
 	return ret;
 }

@@ -133,6 +133,23 @@ static CK_RV ec_key_desc(struct smw_key_descriptor *desc,
 		desc->security_size = curve->dev->security_size;
 	}
 
+	/*
+	 * If SMW key's descriptor buffer field is set, setup it
+	 * with the EC key object's buffer
+	 */
+	if (desc->buffer) {
+		/*
+		 * Remove the first byte of the Public Buffer
+		 * DER ANSI X9.62 uncompress code byte
+		 */
+		if (key->point_q.array) {
+			desc->buffer->public_data = key->point_q.array + 1;
+			desc->buffer->public_length = key->point_q.number - 1;
+		}
+		desc->buffer->private_data = key->value_d.value;
+		desc->buffer->private_length = key->value_d.length;
+	}
+
 	return ret;
 }
 
@@ -171,6 +188,15 @@ static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 	};
 
 	desc->type_name = cipher->smw_name;
+
+	/*
+	 * If SMW key's descriptor buffer field is set, setup it
+	 * with the Cipher key object's buffer
+	 */
+	if (desc->buffer) {
+		desc->buffer->private_data = key->value.array;
+		desc->buffer->private_length = key->value.number;
+	}
 
 	return CKR_OK;
 }

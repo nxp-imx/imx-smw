@@ -22,12 +22,17 @@ void key_ec_private_free(struct libobj_obj *obj);
 
 /*
  * key_ec_public_create() - Creates an EC public key object
+ * @hsession: Session handle
  * @obj: EC Public Key object
  * @attrs: List of object attributes
  *
  * If key attributes are corrects, create a new EC Public key object.
  *
  * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
  * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
  * CKR_FUNCTION_FAILED           - Function failure
@@ -37,16 +42,22 @@ void key_ec_private_free(struct libobj_obj *obj);
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_OK                        - Success
  */
-CK_RV key_ec_public_create(struct libobj_obj *obj, struct libattr_list *attrs);
+CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+			   struct libattr_list *attrs);
 
 /*
  * key_ec_private_create() - Creates an EC private key object
+ * @hsession: Session handle
  * @obj: EC Private Key object
  * @attrs: List of object attributes
  *
  * If key attributes are corrects, create a new EC Private key object.
  *
  * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
  * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
  * CKR_FUNCTION_FAILED           - Function failure
@@ -56,7 +67,8 @@ CK_RV key_ec_public_create(struct libobj_obj *obj, struct libattr_list *attrs);
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_OK                        - Success
  */
-CK_RV key_ec_private_create(struct libobj_obj *obj, struct libattr_list *attrs);
+CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+			    struct libattr_list *attrs);
 
 /*
  * key_ec_keypair_generate() - Generates an EC keypair object

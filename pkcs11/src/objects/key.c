@@ -692,12 +692,17 @@ static CK_RV key_public_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 /**
  * subkey_secret_create() - Create a secret subkey object
+ * @hsession: Session handle
  * @obj: Key object
  * @attrs: List of object attributes
  *
  * Call the key object type creation function.
  *
  * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
  * CKR_FUNCTION_FAILED           - Function failure
  * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
@@ -707,7 +712,8 @@ static CK_RV key_public_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
  * CKR_FUNCTION_FAILED           - Function failure
  * CKR_OK                        - Success
  */
-static CK_RV subkey_secret_create(struct libobj_obj *obj,
+static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
+				  struct libobj_obj *obj,
 				  struct libattr_list *attrs)
 {
 	CK_RV ret;
@@ -716,7 +722,7 @@ static CK_RV subkey_secret_create(struct libobj_obj *obj,
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
-		ret = key_cipher_create(obj, attrs);
+		ret = key_cipher_create(hsession, obj, attrs);
 		break;
 
 	default:
@@ -728,6 +734,7 @@ static CK_RV subkey_secret_create(struct libobj_obj *obj,
 
 /**
  * subkey_private_create() - Create a private subkey object
+ * @hsession: Session handle
  * @obj: Key object
  * @attrs: List of object attributes
  *
@@ -735,6 +742,10 @@ static CK_RV subkey_secret_create(struct libobj_obj *obj,
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
  * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
  * CKR_FUNCTION_FAILED           - Function failure
  * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
@@ -744,14 +755,15 @@ static CK_RV subkey_secret_create(struct libobj_obj *obj,
  * CKR_FUNCTION_FAILED           - Function failure
  * CKR_OK                        - Success
  */
-static CK_RV subkey_private_create(struct libobj_obj *obj,
+static CK_RV subkey_private_create(CK_SESSION_HANDLE hsession,
+				   struct libobj_obj *obj,
 				   struct libattr_list *attrs)
 {
 	CK_RV ret;
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
-		ret = key_ec_private_create(obj, attrs);
+		ret = key_ec_private_create(hsession, obj, attrs);
 		break;
 
 	default:
@@ -763,6 +775,7 @@ static CK_RV subkey_private_create(struct libobj_obj *obj,
 
 /**
  * subkey_public_create() - Create a public subkey object
+ * @hsession: Session handle
  * @obj: Key object
  * @attrs: List of object attributes
  *
@@ -771,6 +784,10 @@ static CK_RV subkey_private_create(struct libobj_obj *obj,
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
  * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
  * CKR_FUNCTION_FAILED           - Function failure
  * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
  * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
@@ -779,14 +796,15 @@ static CK_RV subkey_private_create(struct libobj_obj *obj,
  * CKR_FUNCTION_FAILED           - Function failure
  * CKR_OK                        - Success
  */
-static CK_RV subkey_public_create(struct libobj_obj *obj,
+static CK_RV subkey_public_create(CK_SESSION_HANDLE hsession,
+				  struct libobj_obj *obj,
 				  struct libattr_list *attrs)
 {
 	CK_RV ret;
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
-		ret = key_ec_public_create(obj, attrs);
+		ret = key_ec_public_create(hsession, obj, attrs);
 		break;
 
 	default:
@@ -997,19 +1015,22 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		case CKO_PUBLIC_KEY:
 			ret = key_public_new(hsession, obj, attrs);
 			if (ret == CKR_OK)
-				ret = subkey_public_create(obj, attrs);
+				ret = subkey_public_create(hsession, obj,
+							   attrs);
 			break;
 
 		case CKO_PRIVATE_KEY:
 			ret = key_private_new(obj, attrs);
 			if (ret == CKR_OK)
-				ret = subkey_private_create(obj, attrs);
+				ret = subkey_private_create(hsession, obj,
+							    attrs);
 			break;
 
 		case CKO_SECRET_KEY:
 			ret = key_secret_new(obj, attrs);
 			if (ret == CKR_OK)
-				ret = subkey_secret_create(obj, attrs);
+				ret = subkey_secret_create(hsession, obj,
+							   attrs);
 			break;
 
 		default:

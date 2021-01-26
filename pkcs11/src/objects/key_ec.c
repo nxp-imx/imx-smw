@@ -31,11 +31,15 @@ const struct template_attr attr_key_ec_public[] = {
 enum attr_key_ec_private_list {
 	PRIV_PARAMS = 0,
 	PRIV_VALUE,
+	PRIV_PUB_POINT,
 };
 
 const struct template_attr attr_key_ec_private[] = {
-	[PRIV_PARAMS] = { CKA_EC_PARAMS, 0, MUST, attr_to_byte_array },
-	[PRIV_VALUE] = { CKA_VALUE, 0, MUST, attr_to_bignumber },
+	[PRIV_PARAMS] =
+		TATTR(key_ec_pair, params, EC_PARAMS, 0, MUST, byte_array),
+	[PRIV_VALUE] = TATTR_P(key_ec_pair, value_d, VALUE, 0, MUST, bignumber),
+	[PRIV_PUB_POINT] =
+		TATTR(key_ec_pair, point_q, EC_POINT, 0, MUST, byte_array),
 };
 
 /**
@@ -99,13 +103,21 @@ static void key_ec_free(struct libobj_obj *obj, unsigned int type)
 
 	switch (type) {
 	case EC_KEY_PUBLIC:
-		if (key->point_q.array)
+		if (key->point_q.array) {
 			free(key->point_q.array);
+			key->point_q.array = NULL;
+		}
 		break;
 
 	case EC_KEY_PRIVATE:
-		if (key->value_d.value)
+		if (key->value_d.value) {
 			free(key->value_d.value);
+			key->value_d.value = NULL;
+		}
+		if (key->type == EC_KEY_PRIVATE && key->point_q.array) {
+			free(key->point_q.array);
+			key->point_q.array = NULL;
+		}
 		break;
 	default:
 		return;
@@ -121,6 +133,8 @@ static void key_ec_free(struct libobj_obj *obj, unsigned int type)
 	} else {
 		key->type &= ~type;
 	}
+
+	set_subkey_to(obj, NULL);
 }
 
 void key_ec_public_free(struct libobj_obj *obj)
@@ -133,7 +147,8 @@ void key_ec_private_free(struct libobj_obj *obj)
 	key_ec_free(obj, EC_KEY_PRIVATE);
 }
 
-CK_RV key_ec_public_create(struct libobj_obj *obj, struct libattr_list *attrs)
+CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+			   struct libattr_list *attrs)
 {
 	CK_RV ret;
 	struct libobj_key_ec_pair *new_key;
@@ -147,15 +162,25 @@ CK_RV key_ec_public_create(struct libobj_obj *obj, struct libattr_list *attrs)
 	ret = attr_get_value(&new_key->params, &attr_key_ec_public[PUB_PARAMS],
 			     attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	ret = attr_get_value(&new_key->point_q, &attr_key_ec_public[PUB_POINT],
 			     attrs, NO_OVERWRITE);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = libdev_import_key(hsession, obj);
+	DBG_TRACE("Public Key ID 0x%llX", new_key->key_id);
+
+end:
+	if (ret != CKR_OK)
+		key_ec_public_free(obj);
 
 	return ret;
 }
 
-CK_RV key_ec_private_create(struct libobj_obj *obj, struct libattr_list *attrs)
+CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+			    struct libattr_list *attrs)
 {
 	CK_RV ret;
 	struct libobj_key_ec_pair *new_key;
@@ -170,15 +195,31 @@ CK_RV key_ec_private_create(struct libobj_obj *obj, struct libattr_list *attrs)
 			     &attr_key_ec_private[PRIV_PARAMS], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	ret = attr_get_value(&new_key->value_d,
 			     &attr_key_ec_private[PRIV_VALUE], attrs,
 			     NO_OVERWRITE);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
-	return CKR_OK;
+	/*
+	 * Private key required the public point to be imported
+	 * in token.
+	 */
+	ret = attr_get_value(new_key, &attr_key_ec_private[PRIV_PUB_POINT],
+			     attrs, NO_OVERWRITE);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = libdev_import_key(hsession, obj);
+	DBG_TRACE("Private Key ID 0x%llX", new_key->key_id);
+
+end:
+	if (ret != CKR_OK)
+		key_ec_private_free(obj);
+
+	return ret;
 }
 
 CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
@@ -202,28 +243,34 @@ CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	ret = attr_get_value(&keypair->params, &attr_key_ec_public[PUB_PARAMS],
 			     pub_attrs, NO_OVERWRITE);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	ret = attr_get_value(&keypair->point_q, &attr_key_ec_public[PUB_POINT],
 			     pub_attrs, MUST_NOT);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	/* Verify the private key attributes */
 	ret = attr_get_value(&keypair->params,
 			     &attr_key_ec_private[PRIV_PARAMS], priv_attrs,
 			     MUST_NOT);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	ret = attr_get_value(&keypair->value_d,
 			     &attr_key_ec_private[PRIV_VALUE], priv_attrs,
 			     MUST_NOT);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	ret = libdev_operate_mechanism(hsession, mech, priv_obj);
 	DBG_TRACE("Key Pair ID 0x%llX", keypair->key_id);
+
+end:
+	if (ret != CKR_OK) {
+		key_ec_public_free(pub_obj);
+		key_ec_private_free(priv_obj);
+	}
 
 	return ret;
 }

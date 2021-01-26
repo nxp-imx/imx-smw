@@ -16,12 +16,17 @@ void key_cipher_free(struct libobj_obj *obj);
 
 /*
  * key_cipher_create() - Creates a Cipher key object
- * @obj: Cipher Key
+ * @hsession: Session handle
+ * @obj: Cipher Key object
  * @attrs: List of object attributes
  *
  * If key attributes are corrects, create a new Cipher key object.
  *
  * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
  * CKR_FUNCTION_FAILED           - Function failure
  * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
@@ -30,7 +35,8 @@ void key_cipher_free(struct libobj_obj *obj);
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_OK                        - Success
  */
-CK_RV key_cipher_create(struct libobj_obj *obj, struct libattr_list *attrs);
+CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+			struct libattr_list *attrs);
 
 /*
  * key_cipher_generate() - Generates a Cipher object

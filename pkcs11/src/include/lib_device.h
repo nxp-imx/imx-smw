@@ -244,6 +244,26 @@ CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
 			       CK_MECHANISM_PTR mech, void *args);
 
 /**
+ * libdev_import_key() - Call SMW import key API
+ * @hsession: Session handle
+ * @obj: Key object to import
+ *
+ * Function prepare the SMW API argument for the API key import.
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute type is not valid
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj);
+
+/**
  * libdev_delete_key() - Call SMW delete key API
  * @key_id: Key id to deleete
  *

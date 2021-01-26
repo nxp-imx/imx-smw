@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 #include "smw_config.h"
 #include "smw_status.h"
@@ -39,7 +39,7 @@ void libdev_set_present(struct libdevice *devices)
 			status = SMW_STATUS_OK;
 
 		DBG_TRACE("SMW subsytem (%u) [%s] present returned %d", idx,
-			  devinfo->name, status);
+			  devinfo->name ? devinfo->name : "NULL", status);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(devices[idx].slot.flags, CKF_TOKEN_PRESENT);
 		else

@@ -274,6 +274,142 @@ void key_identifier_clear_list(struct key_identifier_list *key_identifiers)
 	free(key_identifiers);
 }
 
+static int read_json_buffer(char **buf, unsigned int *len, json_object *obuf)
+{
+	json_object *otmp;
+	char *buf_tmp = NULL;
+	int idx;
+	int nb_entries;
+	unsigned int len_tmp = 0;
+
+	switch (json_object_get_type(obuf)) {
+	case json_type_array:
+		nb_entries = json_object_array_length(obuf);
+		for (idx = 0; idx < nb_entries; idx++) {
+			otmp = json_object_array_get_idx(obuf, idx);
+			if (json_object_get_type(otmp) != json_type_string) {
+				DBG_PRINT("Attributes must be json-c string");
+				return ERR_CODE(FAILED);
+			}
+
+			len_tmp += json_object_get_string_len(otmp);
+		}
+		break;
+
+	case json_type_string:
+		len_tmp = json_object_get_string_len(obuf);
+		otmp = obuf;
+		nb_entries = 1;
+		break;
+
+	default:
+		DBG_PRINT("Attributes must be string or an array of strings");
+		return ERR_CODE(FAILED);
+	}
+
+	/* Don't miss the NULL termination */
+	buf_tmp = malloc(len_tmp + 1);
+	if (!buf_tmp)
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+
+	*buf = buf_tmp;
+	*len = len_tmp;
+
+	for (idx = 0; idx < nb_entries; idx++) {
+		if (nb_entries > 1)
+			otmp = json_object_array_get_idx(obuf, idx);
+
+		len_tmp = json_object_get_string_len(otmp);
+		memcpy(buf_tmp, json_object_get_string(otmp), len_tmp);
+		buf_tmp += len_tmp;
+	}
+
+	*buf_tmp = '\0';
+
+	return ERR_CODE(PASSED);
+}
+
+static int read_private_key(struct smw_keypair_buffer *key, json_object *params)
+{
+	int ret = ERR_CODE(PASSED);
+	json_object *okey;
+	char *buf = NULL;
+	unsigned int len = 0;
+
+	if (json_object_object_get_ex(params, PRIV_KEY_OBJ, &okey)) {
+		ret = read_json_buffer(&buf, &len, okey);
+		if (ret != ERR_CODE(PASSED))
+			return ret;
+
+		if (key->format_name &&
+		    !strcmp(key->format_name, BASE64_FORMAT)) {
+			key->private_data = (unsigned char *)buf;
+			key->private_length = len;
+		} else {
+			ret = convert_string_to_hex(buf, &key->private_data,
+						    &key->private_length);
+			/*
+			 * Buffer can be freed because a new one has been
+			 * allocated to convert the string to hex
+			 */
+			free(buf);
+		}
+	}
+
+	return ret;
+}
+
+static int read_public_key(struct smw_keypair_buffer *key, json_object *params)
+{
+	int ret = ERR_CODE(PASSED);
+	json_object *okey;
+	char *buf = NULL;
+	unsigned int len = 0;
+
+	if (json_object_object_get_ex(params, PUB_KEY_OBJ, &okey)) {
+		ret = read_json_buffer(&buf, &len, okey);
+		if (ret != ERR_CODE(PASSED))
+			return ret;
+
+		if (key->format_name &&
+		    !strcmp(key->format_name, BASE64_FORMAT)) {
+			key->public_data = (unsigned char *)buf;
+			key->public_length = len;
+		} else {
+			ret = convert_string_to_hex(buf, &key->public_data,
+						    &key->public_length);
+			/*
+			 * Buffer can be freed because a new one has been
+			 * allocated to convert the string to hex
+			 */
+			free(buf);
+		}
+	}
+
+	return ret;
+}
+
+int util_read_keys(struct smw_keypair_buffer *key, json_object *params)
+{
+	int ret;
+	json_object *okey;
+
+	if (!params || !key) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	if (json_object_object_get_ex(params, KEY_FORMAT_OBJ, &okey))
+		key->format_name = json_object_get_string(okey);
+
+	ret = read_public_key(key, params);
+
+	if (ret == ERR_CODE(PASSED))
+		ret = read_private_key(key, params);
+
+	return ret;
+}
+
 int convert_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 {
 	char tmp[2] = { 0 };
@@ -376,3 +512,30 @@ int get_test_err_status(unsigned int *status, const char *string)
 	DBG_PRINT_BAD_PARAM(__func__, "test_error");
 	return ERR_CODE(BAD_PARAM_TYPE);
 }
+
+#ifdef ENABLE_TRACE
+void dbg_dumphex(const char *function, int line, char *msg, void *buf,
+		 size_t len)
+{
+	size_t idx;
+	char out[256];
+	int off = 0;
+
+	printf("%s:%d %s (%p-%zu)\n", function, line, msg, buf, len);
+
+	for (idx = 0; idx < len; idx++) {
+		if (((idx % 16) == 0) && (idx > 0)) {
+			printf("%s\n", out);
+			off = 0;
+		}
+		off += snprintf(out + off, (sizeof(out) - off), "%02X ",
+				((char *)buf)[idx]);
+	}
+
+	if (off > 0) {
+		printf("%s\n", out);
+	}
+
+	(void)fflush(stdout);
+}
+#endif

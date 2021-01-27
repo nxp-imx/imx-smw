@@ -8,6 +8,9 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <json_object.h>
+
+#include "smw_keymgr.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
@@ -62,6 +65,10 @@
 		printf("\n");                                                  \
 	} while (0)
 
+void dbg_dumphex(const char *function, int line, char *msg, void *buf,
+		 size_t len);
+#define DBG_DHEX(msg, buf, len) dbg_dumphex(__func__, __LINE__, msg, buf, len)
+
 #else /* ENABLE_TRACE */
 
 #define DBG_PRINT_ALLOC_FAILURE(function, line)
@@ -69,6 +76,7 @@
 #define DBG_PRINT_BAD_PARAM(function, param)
 #define DBG_PRINT_MISS_PARAM(function, param)
 #define DBG_PRINT(...)
+#define DBG_DHEX(msg, buf, len)
 
 #endif /* ENABLE_TRACE */
 
@@ -231,5 +239,24 @@ int get_test_name(char **test_name, char *test_definition_file);
  * -BAD_ARGS		- One of the argument is bad.
  */
 int get_test_err_status(unsigned int *status, const char *string);
+
+/**
+ * util_read_keys() - Read the public and private key definition
+ * @key: SMW Key buffer parameter to setup
+ * @params: json-c object
+ *
+ * Read and set the key format, public key buffer and private key buffer.
+ * Key buffer is defined by a string or an array of string.
+ * The public and private data buffer of the @key SMW buffer object are
+ * allocated by this function but must be freed by caller if function
+ * succeed.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -FAILED                  - Error in definition file
+ */
+int util_read_keys(struct smw_keypair_buffer *key, json_object *params);
 
 #endif /* __UTIL_H__ */

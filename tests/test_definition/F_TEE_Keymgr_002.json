@@ -145,7 +145,7 @@
 		"security_size": 192,
 		"pub_key": "39dc723b19527daa1e80425209c56463481b9b47c51f8cbd432a3e84f2a16418834fabaf6b7d2341669512951f1672ad",
 		"key_id": 5,
-		"attributes_list": "50455253495354454e54000000" // "PERSISTENT\000"
+		"attributes_list": ["PERSISTENT"]
 	},
 	"subtest 23": {
 		"command": "EXPORT_PUBLIC",

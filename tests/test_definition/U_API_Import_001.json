@@ -108,7 +108,7 @@
 		"security_size": 128,
 		"key_id": 0,
 		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
-		"attributes_list": "70657273", // "pers"
+		"attributes_list": ["pers"],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

@@ -65,7 +65,7 @@
 		"security_size": 128,
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"key_id": 0,
-		"attributes_list": "persistent"
+		"attributes_list": ["persistent"]
 	},
 	"subtest 10": { // Key format is undefined
 		"command": "GENERATE_NIST",

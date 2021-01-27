@@ -229,7 +229,7 @@
 		"security_size": 128,
 		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"key_id": 18,
-		"attributes_list": "50455253495354454e54000000" // "PERSISTENT\000"
+		"attributes_list": ["PERSISTENT"]
 	},
 	"subtest 38": { // Import ECDSA NIST 192 Keypair as persistent object
 		"command": "IMPORT_NIST",
@@ -238,7 +238,7 @@
 		"priv_key": "e5ce89a34adddf25ff3bf1ffe6803f57d0220de3118798ea",
 		"pub_key": "8abf7b3ceb2b02438af19543d3e5b1d573fa9ac60085840fa87f80182dcd56a6a061f81f7da393e7cffd5e0738c6b245",
 		"key_id": 19,
-		"attributes_list": "50455253495354454e54000000" // "PERSISTENT\000"
+		"attributes_list": ["PERSISTENT"]
 	},
 	"subtest 39": {
 		"command": "DELETE",

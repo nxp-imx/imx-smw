@@ -7,6 +7,7 @@
 
 #include "json.h"
 #include "util.h"
+#include "util_tlv.h"
 #include "types.h"
 #include "json_types.h"
 #include "keymgr.h"
@@ -30,17 +31,18 @@
  * @key_args: Pointer to smw generate key args structure to update.
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -BAD_RESULT			- Function from SMW API returned a bad result.
- * -BAD_ARGS			- One of the arguments is bad.
- * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_RESULT              - Function from SMW API returned a bad result.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -FAILED                  - Error in definition file
  */
 static int set_gen_opt_params(json_object *params,
 			      struct smw_generate_key_args *key_args)
 {
+	int res;
 	int status = SMW_STATUS_INVALID_PARAM;
-	json_object *attr_obj = NULL;
 	json_object *key_format = NULL;
 	json_object *pub_key_obj = NULL;
 
@@ -48,12 +50,11 @@ static int set_gen_opt_params(json_object *params,
 		return ERR_CODE(BAD_ARGS);
 
 	/* Get 'attributes_list' optional parameter */
-	if (json_object_object_get_ex(params, ATTR_LIST_OBJ, &attr_obj)) {
-		key_args->key_attributes_list =
-			(unsigned char *)json_object_get_string(attr_obj);
-		key_args->key_attributes_list_length =
-			strlen((char *)key_args->key_attributes_list);
-	}
+	res = util_tlv_read_attrs(
+		(unsigned char **)&key_args->key_attributes_list,
+		&key_args->key_attributes_list_length, params);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	/* Get 'format' optional parameter */
 	if (json_object_object_get_ex(params, KEY_FORMAT_OBJ, &key_format))
@@ -241,24 +242,23 @@ exit:
  * @key_args: Pointer to smw import key args structure to update.
  *
  * Return:
- * PASSED	- Success.
- * -BAD_RESULT	- Function from SMW API returned a bad result.
- * -BAD_ARGS	- One of the arguments is bad.
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_RESULT              - Function from SMW API returned a bad result.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -FAILED                  - Error in definition file
+ * Error code from convert_string_to_hex().
  */
 static int set_import_opt_params(json_object *params,
 				 struct smw_import_key_args *key_args)
 {
 	int res = ERR_CODE(PASSED);
-	char *attributes = NULL;
-	unsigned char **attributes_list = NULL;
 	unsigned char *hex_priv_key = NULL;
 	unsigned char *hex_pub_key = NULL;
 	unsigned char *priv_key = NULL;
 	unsigned char *pub_key = NULL;
 	unsigned int priv_len = 0;
 	unsigned int pub_len = 0;
-	unsigned int *attributes_len = NULL;
-	json_object *attr_obj = NULL;
 	json_object *key_format = NULL;
 	json_object *priv_key_obj = NULL;
 	json_object *pub_key_obj = NULL;
@@ -267,18 +267,11 @@ static int set_import_opt_params(json_object *params,
 		return ERR_CODE(BAD_ARGS);
 
 	/* Get 'attributes_list' optional parameter */
-	if (json_object_object_get_ex(params, ATTR_LIST_OBJ, &attr_obj)) {
-		attributes = (char *)json_object_get_string(attr_obj);
-		attributes_list =
-			(unsigned char **)&key_args->key_attributes_list;
-		attributes_len = &key_args->key_attributes_list_length;
-		res = convert_string_to_hex(attributes, attributes_list,
-					    attributes_len);
-		if (res != ERR_CODE(PASSED)) {
-			DBG_PRINT("Can't convert message: %d", res);
-			return res;
-		}
-	}
+	res = util_tlv_read_attrs(
+		(unsigned char **)&key_args->key_attributes_list,
+		&key_args->key_attributes_list_length, params);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	/* Get 'format' optional parameter */
 	if (json_object_object_get_ex(params, KEY_FORMAT_OBJ, &key_format))
@@ -432,8 +425,10 @@ static int set_import_bad_args(enum arguments_test_err_case error,
  *           it's allocated by this function and must be free by caller.
  *
  * Return:
- * PASSED	- Success.
- * -BAD_ARGS	- One of the arguments is bad.
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -FAILED                  - Error in definition file
  * Error code from convert_string_to_hex().
  */
 static int set_export_opt_params(json_object *params,
@@ -442,11 +437,7 @@ static int set_export_opt_params(json_object *params,
 {
 	int res = ERR_CODE(PASSED);
 	char *key = NULL;
-	char *attributes = NULL;
-	unsigned char **attributes_list = NULL;
 	unsigned int hex_len = 0;
-	unsigned int *attributes_len = NULL;
-	json_object *attr_obj = NULL;
 	json_object *key_format = NULL;
 	json_object *pub_key_obj = NULL;
 
@@ -454,18 +445,11 @@ static int set_export_opt_params(json_object *params,
 		return ERR_CODE(BAD_ARGS);
 
 	/* Get 'attributes_list' optional parameter */
-	if (json_object_object_get_ex(params, ATTR_LIST_OBJ, &attr_obj)) {
-		attributes = (char *)json_object_get_string(attr_obj);
-		attributes_list =
-			(unsigned char **)&key_args->key_attributes_list;
-		attributes_len = &key_args->key_attributes_list_length;
-		res = convert_string_to_hex(attributes, attributes_list,
-					    attributes_len);
-		if (res != ERR_CODE(PASSED)) {
-			DBG_PRINT("Can't convert message: %d", res);
-			return res;
-		}
-	}
+	res = util_tlv_read_attrs(
+		(unsigned char **)&key_args->key_attributes_list,
+		&key_args->key_attributes_list_length, params);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	/* Get 'format' optional parameter */
 	if (json_object_object_get_ex(params, KEY_FORMAT_OBJ, &key_format))

@@ -39,7 +39,8 @@ add_executable(${PROJECT_NAME}
                engine/keymgr.c
                engine/run.c
                engine/test_engine.c
-               engine/util.c)
+               engine/util.c
+               engine/util_tlv.c)
 
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${TEST_SRC_INC} ${TEST_BIN_INC}

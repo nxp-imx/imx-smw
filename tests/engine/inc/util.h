@@ -6,11 +6,14 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
+#include <limits.h>
 #include <stdio.h>
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif /* ARRAY_SIZE */
+
+#define UCHAR_SHIFT_BYTE(val, byte) ((val) >> ((byte) * (CHAR_BIT)) & UCHAR_MAX)
 
 /* File extension used */
 #define DEFINITION_FILE_EXTENSION ".json"

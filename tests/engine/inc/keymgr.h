@@ -7,6 +7,7 @@
 #define __KEYMGR_H__
 
 #include "json_types.h"
+#include "util_key.h"
 
 /**
  * generate_key() - Generate a key.

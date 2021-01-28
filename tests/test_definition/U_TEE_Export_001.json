@@ -14,18 +14,21 @@
 	"subtest 3": { // Export symmetric key
 		"command": "EXPORT_PRIVATE",
 		"key_id": 0,
+		"priv_key": 16, // Force private key length
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 4": { // Export ECDSA keypair
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 1,
+		"priv_key": 28, // Force private key length
 		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 5": { // Export ECDSA private key
 		"command": "EXPORT_PRIVATE",
 		"key_id": 1,
+		"priv_key": 28, // Force private key length
 		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},

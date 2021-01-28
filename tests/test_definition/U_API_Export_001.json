@@ -1,80 +1,155 @@
 {
-	"subtest 1": { // Export args pointer is NULL
+	"subtest 1": { // Generate a keypair for the test
+		"command": "GENERATE_NIST",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 0
+	},
+	"subtest 2": { // Export args pointer is NULL
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
 		"test_error": "ARGS_NULL",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 2": { // Key descriptor pointer is NULL
+	"subtest 3": { // Key descriptor pointer is NULL
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
 		"test_error": "KEY_DESC_NULL",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 3": { // Key descriptor ID is not set
+	"subtest 4": { // Key descriptor ID is not set
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
 		"test_error": "KEY_DESC_ID_NOT_SET",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 4": { // Key descriptor buffer is NULL
+	"subtest 5": { // Key descriptor buffer is NULL
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
 		"test_error": "KEY_BUFFER_NULL",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 5": { // No buffers are set
+	"subtest 6": { // No buffers are set
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
-		"test_error": "NO_BUFFER_SET",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"pub_key": 64,
+		"priv_key": 32,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 6": { // Public buffer lenght is not set
+	"subtest 7": { // Public buffer length is not set
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
-		"test_error": "PUB_DATA_LEN_NOT_SET",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"pub_key": [
+			0,
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"priv_key": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 7": { // Private buffer lenght is not set
+	"subtest 8": { // Private buffer length is not set
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
-		"test_error": "PRIV_DATA_LEN_NOT_SET",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"pub_key": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"priv_key": [
+			0,
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 8": { // Bad version
-		"command": "EXPORT_KEYPAIR",
+	"subtest 9": { // Bad version
+		"command": "EXPORT_PUBLIC",
+		"version": "1",
 		"key_id": 0,
-		"test_error": "BAD_VERSION",
-		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+		"pub_key": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
+		"depends": 1
 	},
-	"subtest 9": { // Buffer key format is undefined
-		"command": "EXPORT_KEYPAIR",
+	"subtest 10": { // Buffer key format is undefined
+		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
 		"test_error": "BAD_FORMAT",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_NAME",
+		"depends": 1
 	},
-	"subtest 10": { // Key descriptor type name doesn't match key identifier
-		"command": "EXPORT_KEYPAIR",
+	"subtest 11": { // Key descriptor type name doesn't match key identifier
+		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
-		"test_error": "WRONG_TYPE_NAME",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"key_type": "AES",
+		"pub_key": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 11": { // Key descriptor security size doesn't match key identifier
-		"command": "EXPORT_KEYPAIR",
+	"subtest 12": { // Key descriptor security size doesn't match key identifier
+		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
-		"test_error": "WRONG_SECURITY_SIZE",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"security_size": 255,
+		"pub_key": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 12": { // Attributes list is undefined
-		"command": "EXPORT_KEYPAIR",
+	"subtest 13": { // Attributes list is undefined
+		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
-		"test_error": "BAD_ATTRIBUTES",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"pub_key": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"attributes_list": ["undefined"],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 13": { // Public key buffer is too small
-		"command": "EXPORT_KEYPAIR",
+	"subtest 14": { // Public key buffer is too small
+		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
-		"test_error": "PUB_KEY_BUFF_TOO_SMALL",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"pub_key": [
+			63,
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 15": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
 	}
 }

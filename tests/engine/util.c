@@ -9,7 +9,6 @@
 
 #include "util.h"
 #include "types.h"
-#include "json_types.h"
 #include "smw_keymgr.h"
 #include "smw_status.h"
 
@@ -55,23 +54,10 @@ struct test_err_case {
 	char *string;
 } args_test_err_case[] = { SET_STATUS_CODE(ARGS_NULL),
 			   SET_STATUS_CODE(KEY_DESC_NULL),
-			   SET_STATUS_CODE(KEY_TYPE_UNDEFINED),
-			   SET_STATUS_CODE(BAD_KEY_SEC_SIZE),
-			   SET_STATUS_CODE(BAD_KEY_TYPE),
 			   SET_STATUS_CODE(KEY_DESC_ID_SET),
-			   SET_STATUS_CODE(PUB_KEY_BUFF_TOO_SMALL),
-			   SET_STATUS_CODE(PRIV_KEY_BUFF_SET),
-			   SET_STATUS_CODE(PRIV_KEY_BUFF_LEN_SET),
 			   SET_STATUS_CODE(KEY_BUFFER_NULL),
-			   SET_STATUS_CODE(PUB_DATA_LEN_NOT_SET),
-			   SET_STATUS_CODE(PRIV_DATA_LEN_NOT_SET),
 			   SET_STATUS_CODE(BAD_FORMAT),
-			   SET_STATUS_CODE(WRONG_TYPE_NAME),
-			   SET_STATUS_CODE(WRONG_SECURITY_SIZE),
 			   SET_STATUS_CODE(KEY_DESC_ID_NOT_SET),
-			   SET_STATUS_CODE(NO_BUFFER_SET),
-			   SET_STATUS_CODE(BAD_VERSION),
-			   SET_STATUS_CODE(BAD_ATTRIBUTES),
 			   SET_STATUS_CODE(DIGEST_BUFFER_NULL),
 			   SET_STATUS_CODE(DIGEST_LENGTH_ZERO),
 			   SET_STATUS_CODE(BAD_SUBSYSTEM),
@@ -97,7 +83,9 @@ const struct error list_err[] = {
 	SET_ERR_CODE_AND_NAME(BAD_ARGS, "BAD ARGUMENTS"),
 	SET_ERR_CODE_AND_NAME(SUBSYSTEM, "SUBSYSTEM ERROR"),
 	SET_ERR_CODE_AND_NAME(NOT_RUN, "NOT RUN"),
-	SET_ERR_CODE_AND_NAME(BAD_PARAM_TYPE, "BAD PARAMETER TYPE")
+	SET_ERR_CODE_AND_NAME(BAD_PARAM_TYPE, "BAD PARAMETER TYPE"),
+	SET_ERR_CODE_AND_NAME(KEY_NOTFOUND, "KEY NOT FOUND"),
+	SET_ERR_CODE_AND_NAME(ERROR_NOT_DEFINED, "TEST ERROR NOT DEFINED"),
 };
 
 #undef SET_ERR_CODE_AND_NAME
@@ -203,81 +191,7 @@ char *get_smw_string_status(unsigned int status)
 	return NULL;
 }
 
-int key_identifier_add_list(struct key_identifier_list **key_identifiers,
-			    struct key_identifier_node *node)
-{
-	struct key_identifier_node *head = NULL;
-
-	if (!node) {
-		DBG_PRINT_BAD_ARGS(__func__);
-		return ERR_CODE(BAD_ARGS);
-	}
-
-	if (!*key_identifiers) {
-		*key_identifiers = malloc(sizeof(struct key_identifier_list));
-		if (!*key_identifiers) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		}
-
-		/* New key is the first of the list */
-		(*key_identifiers)->head = node;
-	} else {
-		head = (*key_identifiers)->head;
-		while (head->next)
-			head = head->next;
-
-		/* New key is the last of the list */
-		head->next = node;
-	}
-
-	return ERR_CODE(PASSED);
-}
-
-unsigned long long
-find_key_identifier(struct key_identifier_list *key_identifiers,
-		    unsigned int id)
-{
-	struct key_identifier_node *head = NULL;
-
-	if (!key_identifiers) {
-		DBG_PRINT_BAD_ARGS(__func__);
-		return 0;
-	}
-
-	head = key_identifiers->head;
-
-	while (head) {
-		if (head->id == id)
-			return head->key_identifier;
-
-		head = head->next;
-	}
-
-	return 0;
-}
-
-void key_identifier_clear_list(struct key_identifier_list *key_identifiers)
-{
-	struct key_identifier_node *head = NULL;
-	struct key_identifier_node *del = NULL;
-
-	if (!key_identifiers)
-		return;
-
-	head = key_identifiers->head;
-
-	while (head) {
-		del = head;
-		head = head->next;
-		free(del);
-	}
-
-	free(key_identifiers);
-}
-
-static int convert_string_to_hex(char *string, unsigned char **hex,
-				 unsigned int *len)
+int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 {
 	char tmp[3] = { 0 };
 	int i = 0;
@@ -313,18 +227,33 @@ static int convert_string_to_hex(char *string, unsigned char **hex,
 	return ERR_CODE(PASSED);
 }
 
-static int read_json_buffer(char **buf, unsigned int *len, json_object *obuf)
+int util_read_json_buffer(char **buf, unsigned int *buf_len,
+			  unsigned int *json_len, json_object *obuf)
 {
 	json_object *otmp;
 	char *buf_tmp = NULL;
-	int idx;
+	int idx = 0;
+	int idx_string = 0;
 	int nb_entries;
 	unsigned int len_tmp = 0;
+
+	if (!buf || !buf_len || !json_len || !obuf) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
 
 	switch (json_object_get_type(obuf)) {
 	case json_type_array:
 		nb_entries = json_object_array_length(obuf);
-		for (idx = 0; idx < nb_entries; idx++) {
+
+		otmp = json_object_array_get_idx(obuf, 0);
+		if (json_object_get_type(otmp) == json_type_int) {
+			/* Buffer length in byte is specified, get it */
+			*json_len = json_object_get_int(otmp);
+			idx++;
+			idx_string = 1;
+		}
+		for (; idx < nb_entries; idx++) {
 			otmp = json_object_array_get_idx(obuf, idx);
 			if (json_object_get_type(otmp) != json_type_string) {
 				DBG_PRINT("Attributes must be json-c string");
@@ -341,112 +270,40 @@ static int read_json_buffer(char **buf, unsigned int *len, json_object *obuf)
 		nb_entries = 1;
 		break;
 
+	case json_type_int:
+		/* Just the buffer length in byte is given, there is no data */
+		*json_len = json_object_get_int(obuf);
+		nb_entries = 0;
+		break;
+
 	default:
 		DBG_PRINT("Attributes must be string or an array of strings");
 		return ERR_CODE(FAILED);
 	}
 
-	/* Don't miss the NULL termination */
-	buf_tmp = malloc(len_tmp + 1);
-	if (!buf_tmp)
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+	*buf_len = len_tmp;
 
-	*buf = buf_tmp;
-	*len = len_tmp;
+	/* Read data if any */
+	if (len_tmp) {
+		/* Don't miss the NULL termination */
+		buf_tmp = malloc(len_tmp + 1);
+		if (!buf_tmp)
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 
-	for (idx = 0; idx < nb_entries; idx++) {
-		if (nb_entries > 1)
-			otmp = json_object_array_get_idx(obuf, idx);
+		*buf = buf_tmp;
+		for (idx = idx_string; idx < nb_entries; idx++) {
+			if (nb_entries > 1)
+				otmp = json_object_array_get_idx(obuf, idx);
 
-		len_tmp = json_object_get_string_len(otmp);
-		memcpy(buf_tmp, json_object_get_string(otmp), len_tmp);
-		buf_tmp += len_tmp;
+			len_tmp = json_object_get_string_len(otmp);
+			memcpy(buf_tmp, json_object_get_string(otmp), len_tmp);
+			buf_tmp += len_tmp;
+		}
+
+		*buf_tmp = '\0';
 	}
-
-	*buf_tmp = '\0';
 
 	return ERR_CODE(PASSED);
-}
-
-static int read_private_key(struct smw_keypair_buffer *key, json_object *params)
-{
-	int ret = ERR_CODE(PASSED);
-	json_object *okey;
-	char *buf = NULL;
-	unsigned int len = 0;
-
-	if (json_object_object_get_ex(params, PRIV_KEY_OBJ, &okey)) {
-		ret = read_json_buffer(&buf, &len, okey);
-		if (ret != ERR_CODE(PASSED))
-			return ret;
-
-		if (key->format_name &&
-		    !strcmp(key->format_name, BASE64_FORMAT)) {
-			key->private_data = (unsigned char *)buf;
-			key->private_length = len;
-		} else {
-			ret = convert_string_to_hex(buf, &key->private_data,
-						    &key->private_length);
-			/*
-			 * Buffer can be freed because a new one has been
-			 * allocated to convert the string to hex
-			 */
-			free(buf);
-		}
-	}
-
-	return ret;
-}
-
-static int read_public_key(struct smw_keypair_buffer *key, json_object *params)
-{
-	int ret = ERR_CODE(PASSED);
-	json_object *okey;
-	char *buf = NULL;
-	unsigned int len = 0;
-
-	if (json_object_object_get_ex(params, PUB_KEY_OBJ, &okey)) {
-		ret = read_json_buffer(&buf, &len, okey);
-		if (ret != ERR_CODE(PASSED))
-			return ret;
-
-		if (key->format_name &&
-		    !strcmp(key->format_name, BASE64_FORMAT)) {
-			key->public_data = (unsigned char *)buf;
-			key->public_length = len;
-		} else {
-			ret = convert_string_to_hex(buf, &key->public_data,
-						    &key->public_length);
-			/*
-			 * Buffer can be freed because a new one has been
-			 * allocated to convert the string to hex
-			 */
-			free(buf);
-		}
-	}
-
-	return ret;
-}
-
-int util_read_keys(struct smw_keypair_buffer *key, json_object *params)
-{
-	int ret;
-	json_object *okey;
-
-	if (!params || !key) {
-		DBG_PRINT_BAD_ARGS(__func__);
-		return ERR_CODE(BAD_ARGS);
-	}
-
-	if (json_object_object_get_ex(params, KEY_FORMAT_OBJ, &okey))
-		key->format_name = json_object_get_string(okey);
-
-	ret = read_public_key(key, params);
-
-	if (ret == ERR_CODE(PASSED))
-		ret = read_private_key(key, params);
-
-	return ret;
 }
 
 int util_read_hex_buffer(unsigned char **hex, unsigned int *len,
@@ -456,6 +313,7 @@ int util_read_hex_buffer(unsigned char **hex, unsigned int *len,
 	json_object *obj;
 	char *str = NULL;
 	unsigned int str_len = 0;
+	unsigned int json_len = UINT_MAX;
 
 	if (!params || !field || !hex || !len) {
 		DBG_PRINT_BAD_ARGS(__func__);
@@ -463,9 +321,9 @@ int util_read_hex_buffer(unsigned char **hex, unsigned int *len,
 	}
 
 	if (json_object_object_get_ex(params, field, &obj)) {
-		ret = read_json_buffer(&str, &str_len, obj);
+		ret = util_read_json_buffer(&str, &str_len, &json_len, obj);
 		if (ret == ERR_CODE(PASSED))
-			ret = convert_string_to_hex(str, hex, len);
+			ret = util_string_to_hex(str, hex, len);
 
 		if (str)
 			free(str);
@@ -538,6 +396,20 @@ int get_test_err_status(unsigned int *status, const char *string)
 
 	DBG_PRINT_BAD_PARAM(__func__, "test_error");
 	return ERR_CODE(BAD_PARAM_TYPE);
+}
+
+int util_read_test_error(enum arguments_test_err_case *error,
+			 json_object *params)
+{
+	int ret = ERR_CODE(PASSED);
+	json_object *obj = NULL;
+
+	*error = NOT_DEFINED;
+
+	if (json_object_object_get_ex(params, TEST_ERR_OBJ, &obj))
+		ret = get_test_err_status(error, json_object_get_string(obj));
+
+	return ret;
 }
 
 #ifdef ENABLE_TRACE

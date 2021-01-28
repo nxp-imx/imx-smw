@@ -14,6 +14,7 @@
 #define INPUT_OBJ      "input"
 #define KEY_FORMAT_OBJ "format"
 #define KEY_ID_OBJ     "key_id"
+#define KEY_TYPE_OBJ   "key_type"
 #define PRIV_KEY_OBJ   "priv_key"
 #define PUB_KEY_OBJ    "pub_key"
 #define RES_OBJ	       "result"
@@ -66,29 +67,15 @@
 
 /* 'test_error' parameter values */
 enum arguments_test_err_case {
-	ARGS_NULL = 0,
+	NOT_DEFINED = 0, // Nothing specified in the test definition
+	ARGS_NULL,
 	BAD_FORMAT,
-	BAD_ATTRIBUTES,
-	BAD_KEY_SEC_SIZE,
-	BAD_KEY_TYPE,
-	BAD_VERSION,
-	BAD_SUBSYSTEM,
-	BAD_ALGO,
 	DIGEST_BUFFER_NULL,
 	DIGEST_LENGTH_ZERO,
 	KEY_BUFFER_NULL,
 	KEY_DESC_ID_NOT_SET,
 	KEY_DESC_ID_SET,
 	KEY_DESC_NULL,
-	KEY_TYPE_UNDEFINED,
-	NO_BUFFER_SET,
-	PRIV_DATA_LEN_NOT_SET,
-	PRIV_KEY_BUFF_LEN_SET,
-	PRIV_KEY_BUFF_SET,
-	PUB_DATA_LEN_NOT_SET,
-	PUB_KEY_BUFF_TOO_SMALL,
-	WRONG_SECURITY_SIZE,
-	WRONG_TYPE_NAME,
 	NB_ERROR_CASE,
 };
 

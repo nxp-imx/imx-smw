@@ -1,38 +1,56 @@
 {
-	"subtest 1": { // Delete args pointer is NULL
+	"subtest 1": { // Generate an AES key
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 192,
+		"key_id": 1
+	},
+	"subtest 2": { // Delete args pointer is NULL
 		"command": "DELETE",
-		"key_id": 0,
+		"key_id": 1,
+		"depends": 1,
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": { // Key descriptor pointer is NULL
+	"subtest 3": { // Key descriptor pointer is NULL
 		"command": "DELETE",
-		"key_id": 0,
+		"key_id": 1,
+		"depends": 1,
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // Key descriptor key type field is set and undefined
+	"subtest 4": { // Key descriptor key type field is set and undefined
 		"command": "DELETE",
-		"key_id": 0,
-		"test_error": "KEY_TYPE_UNDEFINED",
+		"key_type": "UNDEFINED",
+		"key_id": 1,
+		"depends": 1,
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 4": { // Key descriptor security size field is set and doesn't match id
+	"subtest 5": { // Key descriptor security size field is set and doesn't match id
 		"command": "DELETE",
-		"key_id": 0,
-		"test_error": "BAD_KEY_SEC_SIZE",
+		"key_id": 1,
+		"security_size": 190,
+		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Key descriptor key type field is set and doesn't match id
+	"subtest 6": { // Key descriptor key type field is set and doesn't match id
 		"command": "DELETE",
-		"key_id": 0,
-		"test_error": "BAD_KEY_TYPE",
+		"key_type": "NIST",
+		"key_id": 1,
+		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Version is not supported
+	"subtest 7": { // Version is not supported
 		"command": "DELETE",
-		"key_id": 0,
+		"key_id": 1,
+		"depends": 1,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"version": "1"
+	},
+	"subtest 8": { // Delete Generate AES Key
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 1
 	}
+
 }

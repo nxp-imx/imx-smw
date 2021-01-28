@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <json_object.h>
 
+#include "json_types.h"
+#include "types.h"
+
 #include "smw_keymgr.h"
 
 #ifndef ARRAY_SIZE
@@ -18,9 +21,16 @@
 
 #define UCHAR_SHIFT_BYTE(val, byte) ((val) >> ((byte) * (CHAR_BIT)) & UCHAR_MAX)
 
+#ifndef BITS_TO_BYTES_SIZE
+#define BITS_TO_BYTES_SIZE(nb_bits) (((nb_bits) + 7) / 8)
+#endif
+
 /* File extension used */
 #define DEFINITION_FILE_EXTENSION ".json"
 #define TEST_STATUS_EXTENSION	  ".txt"
+
+/* Test type specified by the definition file name */
+#define TEST_API_TYPE "_API_"
 
 #define ERR_CODE(val)	(list_err[(val)].code)
 #define ERR_STATUS(val) (list_err[(val)].status)
@@ -98,29 +108,6 @@ void dbg_dumphex(const char *function, int line, char *msg, void *buf,
 		__ret;                                                         \
 	})
 
-#define BASE64_FORMAT "BASE64"
-#define HEX_FORMAT    "HEX"
-
-/**
- * struct key_identifier_node - Node of key identifier linked list.
- * @id: Local ID of the key identifier. Comes from test definition file.
- * @key_identifier: Key identifier assigned by SMW.
- * @next: Pointer to next node.
- */
-struct key_identifier_node {
-	unsigned int id;
-	unsigned long long key_identifier;
-	struct key_identifier_node *next;
-};
-
-/**
- * struct key_identifier_list - Linked list to save keys identifiers.
- * @head: Pointer to the head of the linked list
- */
-struct key_identifier_list {
-	struct key_identifier_node *head;
-};
-
 /**
  * copy_file_into_buffer() - Copy file content into buffer.
  * @filename: Name of the file to copy.
@@ -159,41 +146,6 @@ int get_smw_int_status(int *smw_status, const char *string);
 char *get_smw_string_status(unsigned int status);
 
 /**
- * key_identifier_add_list() - Add a new node in a key identifier linked list.
- * @key_identifiers: Pointer to linked list.
- * @node: Linked list node.
- *
- * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -BAD_ARGS			- @node is NULL.
- */
-int key_identifier_add_list(struct key_identifier_list **key_identifiers,
-			    struct key_identifier_node *node);
-
-/**
- * find_key_identifier() - Search a key identifier.
- * @key_identifiers: Key identifier linked list where the research is done.
- * @id: Id of the key identifier.
- *
- * Return:
- * 0	- @key_identifiers is NULL or @id is not found.
- * Key identifier otherwise.
- */
-unsigned long long
-find_key_identifier(struct key_identifier_list *key_identifiers,
-		    unsigned int id);
-
-/**
- * key_identifier_clear_list() - Clear key identifier linked list.
- * @key_identifiers: Key identifier linked list to clear.
- *
- * Return:
- * none
- */
-void key_identifier_clear_list(struct key_identifier_list *key_identifiers);
-
-/**
  * get_test_name() - Get test name from test definition file.
  * @test_name: Pointer to test name buffer. Allocated by this function and must
  *             be freed by caller.
@@ -224,15 +176,41 @@ int get_test_name(char **test_name, char *test_definition_file);
 int get_test_err_status(unsigned int *status, const char *string);
 
 /**
- * util_read_keys() - Read the public and private key definition
- * @key: SMW Key buffer parameter to setup
- * @params: json-c object
+ * util_string_to_hex() - Convert ASCII string to hex string.
+ * @string: Input string.
+ * @hex: Hex output string. Allocated by the function. Must be freed by the
+ *       caller.
+ * @len: Pointer to @hex length in bytes. Not updated if function failed.
  *
- * Read and set the key format, public key buffer and private key buffer.
- * Key buffer is defined by a string or an array of string.
- * The public and private data buffer of the @key SMW buffer object are
- * allocated by this function but must be freed by caller if function
- * succeed.
+ * This function convert an ASCII string that represents hexadecimal values
+ * to hex string.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
+ * -BAD_ARGS			- One of the arguments is bad.
+ */
+int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len);
+
+/**
+ * util_read_json_buffer() - Read a data buffer from json-c object
+ * @buf: Buffer read
+ * @buf_len: Length of the buffer read
+ * @json_len: Length set in json-c object buffer definition
+ * @obuf: Json_c buffer object to read
+ *
+ * Function allocates the output buffer @buf and reads json-c buffer
+ * object.
+ * Buffer can be defined with one entry or an array of entries.
+ * If the definition of the buffer is an integer or if the first entry
+ * of the array is an integer, it's the buffer length in bytes regardless
+ * of the define buffer data (data is defined by string or multiple strings).
+ *
+ * Buffer formatting can be:
+ * - "buffer": x
+ * - "buffer": [x, "hex string 0", "hex string 1", ...]
+ * - "buffer": ["hex string 0", "hex string 1", ...]
+ * - "buffer": "hex string"
  *
  * Return:
  * PASSED                   - Success.
@@ -240,7 +218,8 @@ int get_test_err_status(unsigned int *status, const char *string);
  * -BAD_ARGS                - One of the arguments is bad.
  * -FAILED                  - Error in definition file
  */
-int util_read_keys(struct smw_keypair_buffer *key, json_object *params);
+int util_read_json_buffer(char **buf, unsigned int *buf_len,
+			  unsigned int *json_len, json_object *obuf);
 
 /**
  * util_read_hex_buffers() - Read an hexadecimal buffer definition
@@ -263,5 +242,22 @@ int util_read_keys(struct smw_keypair_buffer *key, json_object *params);
  */
 int util_read_hex_buffer(unsigned char **hex, unsigned int *len,
 			 json_object *params, const char *field);
+
+/**
+ * util_read_test_error() - Get the test error type if defined
+ * @error: Test error type
+ * @params: json-c parameters
+ *
+ * Return the 'test_error' parameter if specified in the test
+ * definition.
+ * Else @error is 'NOT_DEFINED'
+ *
+ * Return:
+ * PASSED           - Success.
+ * -BAD_PARAM_TYPE  - Test error is not suuported.
+ * -BAD_ARGS        - One of the argument is bad.
+  */
+int util_read_test_error(enum arguments_test_err_case *error,
+			 json_object *params);
 
 #endif /* __UTIL_H__ */

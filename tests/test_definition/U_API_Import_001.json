@@ -3,6 +3,7 @@
 		"command": "IMPORT_AES",
 		"subsystem": "DEFAULT",
 		"security_size": 128,
+		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"key_id": 0,
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
@@ -11,6 +12,7 @@
 		"command": "IMPORT_AES",
 		"subsystem": "DEFAULT",
 		"security_size": 128,
+		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"key_id": 0,
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
@@ -19,6 +21,7 @@
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"security_size": 128,
+		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"key_id": 0,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
@@ -26,13 +29,23 @@
 		"command": "IMPORT_AES",
 		"subsystem": "DEFAULT",
 		"security_size": 0,
+		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"key_id": 0,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": { // Key decriptor ID is set
-		"command": "IMPORT_AES",
+		"command": "IMPORT_NIST",
 		"subsystem": "DEFAULT",
-		"security_size": 128,
+		"security_size": 192,
+		"priv_key": [
+			"e5ce89a34adddf25ff3bf1ffe6803f57",
+			"d0220de3118798ea"
+		],
+		"pub_key": [
+			"8abf7b3ceb2b02438af19543d3e5b1d5",
+			"73fa9ac60085840fa87f80182dcd56a6",
+			"a061f81f7da393e7cffd5e0738c6b245"
+		],
 		"key_id": 0,
 		"test_error": "KEY_DESC_ID_SET",
 		"result": "SMW_STATUS_INVALID_PARAM"
@@ -41,31 +54,50 @@
 		"command": "IMPORT_AES",
 		"subsystem": "DEFAULT",
 		"security_size": 128,
+		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"key_id": 0,
 		"test_error": "KEY_BUFFER_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": { // Neither private key nor public key buffer is set
-		"command": "IMPORT_AES",
+		"command": "IMPORT_NIST",
 		"subsystem": "DEFAULT",
-		"security_size": 128,
+		"security_size": 192,
 		"key_id": 0,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 8": { // Public data length is not set
-		"command": "IMPORT_AES",
+		"command": "IMPORT_NIST",
 		"subsystem": "DEFAULT",
-		"security_size": 128,
+		"security_size": 192,
+		"priv_key": [
+			"e5ce89a34adddf25ff3bf1ffe6803f57",
+			"d0220de3118798ea"
+		],
+		"pub_key": [
+			0,
+			"8abf7b3ceb2b02438af19543d3e5b1d5",
+			"73fa9ac60085840fa87f80182dcd56a6",
+			"a061f81f7da393e7cffd5e0738c6b245"
+		],
 		"key_id": 0,
-		"test_error": "PUB_DATA_LEN_NOT_SET",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 9": { // Private data length is not set
-		"command": "IMPORT_AES",
+		"command": "IMPORT_NIST",
 		"subsystem": "DEFAULT",
-		"security_size": 128,
+		"security_size": 192,
+		"priv_key": [
+			0,
+			"e5ce89a34adddf25ff3bf1ffe6803f57",
+			"d0220de3118798ea"
+		],
+		"pub_key": [
+			"8abf7b3ceb2b02438af19543d3e5b1d5",
+			"73fa9ac60085840fa87f80182dcd56a6",
+			"a061f81f7da393e7cffd5e0738c6b245"
+		],
 		"key_id": 0,
-		"test_error": "PRIV_DATA_LEN_NOT_SET",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 10": { // Version not supported
@@ -99,7 +131,7 @@
 		"security_size": 128,
 		"key_id": 0,
 		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
-		"format": "UNDEFINED",
+		"test_error": "BAD_FORMAT",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 14": { // Attributes list is undefined
@@ -108,7 +140,7 @@
 		"security_size": 128,
 		"key_id": 0,
 		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
-		"attributes_list": ["pers"],
+		"attributes_list": ["undefined"],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

@@ -41,6 +41,8 @@ enum err_num {
 	SUBSYSTEM,
 	NOT_RUN, /* 10 */
 	BAD_PARAM_TYPE,
+	KEY_NOTFOUND,
+	ERROR_NOT_DEFINED,
 };
 
 /**
@@ -58,11 +60,13 @@ extern unsigned int list_err_size;
 
 /**
  * struct common_params - Parameters common to commands.
+ * @is_api_test: Define if it's an API test or not
  * @expected_res: Expected result of the command.
  * @subsystem: Subsystem to use for the command.
  * @version: Version of the SMW API.
  */
 struct common_parameters {
+	int is_api_test;
 	int expected_res;
 	char *subsystem;
 	unsigned int version;

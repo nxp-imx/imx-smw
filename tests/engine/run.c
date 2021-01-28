@@ -7,6 +7,7 @@
 
 #include "json.h"
 #include "util.h"
+#include "util_key.h"
 #include "types.h"
 #include "keymgr.h"
 #include "crypto.h"
@@ -273,13 +274,14 @@ static int update_status(int sub_res, char **sub_status, const char **sub_err,
  * @obj_iter: Pointer to json object iterator of the json definition file
  *            object.
  * @status_file: Pointer to the test status file.
+ * @is_api_test: Define if it's an API test or not
  * @test_status: Pointer to the test status variable.
  *
  * Return:
  * none.
  */
 static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
-			int *test_status)
+			int is_api_test, int *test_status)
 {
 	int res = ERR_CODE(FAILED);
 	int status = SMW_STATUS_OPERATION_FAILURE;
@@ -307,6 +309,8 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 
 		return;
 	}
+
+	common_params.is_api_test = is_api_test;
 
 	/* Verify the presence of subtest json object */
 	if (strncmp(obj_iter->key, SUBTEST_OBJ, SUBTEST_OBJ_LEN) ||
@@ -472,6 +476,7 @@ int run_test(char *test_definition_file, char *test_name, char *output_dir)
 	struct json_object_iter iter = { 0 };
 	FILE *status_file = NULL;
 	json_object *definition_obj = NULL;
+	int is_api_test = 0;
 
 	if (!test_definition_file || !test_name) {
 		DBG_PRINT_BAD_ARGS(__func__);
@@ -520,13 +525,19 @@ int run_test(char *test_definition_file, char *test_name, char *output_dir)
 		goto exit;
 	}
 
+	/*
+	 * Check from test name if it's a test to verify the API only
+	 */
+	if (strstr(test_name, TEST_API_TYPE))
+		is_api_test = 1;
+
 	/* Run subtests */
 	json_object_object_foreachC(definition_obj, iter)
 	{
-		run_subtest(&iter, status_file, &test_status);
+		run_subtest(&iter, status_file, is_api_test, &test_status);
 	}
 
-	key_identifier_clear_list(key_identifiers);
+	util_key_clear_list(key_identifiers);
 
 	if (!test_status)
 		FPRINT_TEST_STATUS(status_file, test_name,

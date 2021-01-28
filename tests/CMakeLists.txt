@@ -40,6 +40,7 @@ add_executable(${PROJECT_NAME}
                engine/run.c
                engine/test_engine.c
                engine/util.c
+               engine/util_key.c
                engine/util_tlv.c)
 
 target_include_directories(${PROJECT_NAME}

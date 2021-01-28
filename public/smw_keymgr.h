@@ -3,6 +3,9 @@
  * Copyright 2020-2021 NXP
  */
 
+#ifndef __SMW_KEYMGR_H__
+#define __SMW_KEYMGR_H__
+
 /**
  * struct smw_keypair_buffer - Key pair buffer
  * @format_name: Defines the encoding format of all buffers
@@ -275,3 +278,5 @@ int smw_get_key_type_name(struct smw_key_descriptor *descriptor);
  * error code.
  */
 int smw_get_security_size(struct smw_key_descriptor *descriptor);
+
+#endif /* __SMW_KEYMGR_H__ */

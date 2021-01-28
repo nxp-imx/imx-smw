@@ -74,6 +74,8 @@ struct test_err_case {
 			   SET_STATUS_CODE(BAD_ATTRIBUTES),
 			   SET_STATUS_CODE(DIGEST_BUFFER_NULL),
 			   SET_STATUS_CODE(DIGEST_LENGTH_ZERO),
+			   SET_STATUS_CODE(BAD_SUBSYSTEM),
+			   SET_STATUS_CODE(BAD_ALGO),
 			   SET_STATUS_CODE(NB_ERROR_CASE) };
 
 #undef SET_STATUS_CODE
@@ -274,6 +276,43 @@ void key_identifier_clear_list(struct key_identifier_list *key_identifiers)
 	free(key_identifiers);
 }
 
+static int convert_string_to_hex(char *string, unsigned char **hex,
+				 unsigned int *len)
+{
+	char tmp[3] = { 0 };
+	int i = 0;
+	int j = 0;
+	int string_len = 0;
+
+	if (!string || !hex || !len) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	string_len = strlen(string);
+	if (string_len % 2) {
+		/* String message represents an hexadecimal value */
+		DBG_PRINT("String message length must be a multiple of 2");
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	*len = string_len / 2;
+
+	*hex = malloc(*len);
+	if (!*hex) {
+		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+	}
+
+	for (; i < string_len && j < *len; i += 2, j++) {
+		tmp[0] = string[i];
+		tmp[1] = string[i + 1];
+		(*hex)[j] = strtol(tmp, NULL, 16);
+	}
+
+	return ERR_CODE(PASSED);
+}
+
 static int read_json_buffer(char **buf, unsigned int *len, json_object *obuf)
 {
 	json_object *otmp;
@@ -410,41 +449,29 @@ int util_read_keys(struct smw_keypair_buffer *key, json_object *params)
 	return ret;
 }
 
-int convert_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
+int util_read_hex_buffer(unsigned char **hex, unsigned int *len,
+			 json_object *params, const char *field)
 {
-	char tmp[2] = { 0 };
-	char *endptr = NULL;
-	int i = 0;
-	int j = 0;
-	int string_len = 0;
+	int ret = ERR_CODE(MISSING_PARAMS);
+	json_object *obj;
+	char *str = NULL;
+	unsigned int str_len = 0;
 
-	if (!string || !hex || !len) {
+	if (!params || !field || !hex || !len) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	string_len = strlen(string);
-	if (string_len % 2) {
-		/* String message represents an hexadecimal value */
-		DBG_PRINT("String message length must be a multiple of 2");
-		return ERR_CODE(BAD_ARGS);
+	if (json_object_object_get_ex(params, field, &obj)) {
+		ret = read_json_buffer(&str, &str_len, obj);
+		if (ret == ERR_CODE(PASSED))
+			ret = convert_string_to_hex(str, hex, len);
+
+		if (str)
+			free(str);
 	}
 
-	*len = string_len / 2;
-
-	*hex = malloc(*len);
-	if (!*hex) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-	}
-
-	for (; i < string_len && j < *len; i += 2, j++) {
-		tmp[0] = string[i];
-		tmp[1] = string[i + 1];
-		(*hex)[j] = strtol(tmp, &endptr, 16);
-	}
-
-	return ERR_CODE(PASSED);
+	return ret;
 }
 
 int get_test_name(char **test_name, char *test_definition_file)

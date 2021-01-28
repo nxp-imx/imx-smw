@@ -194,23 +194,6 @@ find_key_identifier(struct key_identifier_list *key_identifiers,
 void key_identifier_clear_list(struct key_identifier_list *key_identifiers);
 
 /**
- * convert_string_to_hex() - Convert ASCII string to hex string.
- * @string: Input string.
- * @hex: Hex output string. Allocated by the function. Must be freed by the
- *       caller.
- * @len: Pointer to @hex length in bytes. Not updated if function failed.
- *
- * This function convert an ASCII string that represents hexadecimal values
- * to hex string.
- *
- * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -BAD_ARGS			- One of the arguments is bad.
- */
-int convert_string_to_hex(char *string, unsigned char **hex, unsigned int *len);
-
-/**
  * get_test_name() - Get test name from test definition file.
  * @test_name: Pointer to test name buffer. Allocated by this function and must
  *             be freed by caller.
@@ -258,5 +241,27 @@ int get_test_err_status(unsigned int *status, const char *string);
  * -FAILED                  - Error in definition file
  */
 int util_read_keys(struct smw_keypair_buffer *key, json_object *params);
+
+/**
+ * util_read_hex_buffers() - Read an hexadecimal buffer definition
+ * @hex: Hex output buffer.
+ * @len: Length of the buffer @hex in bytes.
+ * @params: json-c object
+ * @field: Field key name to get in json-c @param object
+ *
+ * Read a buffer defined by a string or an array of string and converts
+ * it in hexadecimal buffer.
+ * The output @hex buffer is allocated by this function but must be freed
+ * by caller if function succeed.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -MISSING_PARAMS          - Params' field not defined
+ * -FAILED                  - Error in definition file
+ */
+int util_read_hex_buffer(unsigned char **hex, unsigned int *len,
+			 json_object *params, const char *field);
 
 #endif /* __UTIL_H__ */

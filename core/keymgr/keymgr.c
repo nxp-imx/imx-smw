@@ -215,7 +215,7 @@ static int fill_key_attributes(unsigned char *type, unsigned char *value,
 			       unsigned int value_size,
 			       struct smw_keymgr_attributes *key_attributes)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(smw_keymgr_attributes_tlv_array);
 	struct smw_keymgr_attributes_tlv *array =

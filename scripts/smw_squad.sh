@@ -258,7 +258,7 @@ function squad_submit
 
     SQUAD_GROUP="mougins-devops"
     if [[ ${use_new_lava} -eq 1 ]]; then
-      JOB_TAG=mougins-docker-soplpuats50
+      JOB_TAG=mougins-public
     else
       JOB_TAG=daas_mougins
     fi

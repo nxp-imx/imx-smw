@@ -5,3 +5,4 @@ pkcs11/src/include/pkcs11smw.h
 cmake
 tests/scripts
 tests/lava
+core/inc/compiler.h

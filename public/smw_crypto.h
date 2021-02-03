@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 /**
@@ -29,41 +29,11 @@ struct smw_hash_args {
 };
 
 /**
- * struct smw_sign_args - Sign arguments
+ * struct smw_sign_verify_args - Sign or verify arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name
  * @key_descriptor: Pointer to a Key descriptor object
- * @algo_name: Algorithm name
- * @hashed: Is the message hashed
- * @message: Location of the message to be signed
- * @message_length: Length of the message to be signed
- * @signature: Location where the signature has to be written
- * @signature_length: Length of the signature
- *
- * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
- */
-struct smw_sign_args {
-	/* Inputs */
-	unsigned char version;
-	const char *subsystem_name;
-	struct smw_key_descriptor *key_descriptor;
-	const char *algo_name;
-	int hashed;
-	unsigned char *message;
-	unsigned int message_length;
-	/* Outputs */
-	unsigned char *signature;
-	unsigned int signature_length;
-};
-
-/**
- * struct smw_verify_args - Verify arguments
- * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
- * @key_descriptor: Pointer to a Key descriptor object
- * @algo_name: Algorithm name
- * @hashed: Is the message hashed
+ * @algo_name: Hash algorithm name
  * @message: Location of the message
  * @message_length: Length of the message
  * @signature: Location of the signature
@@ -72,13 +42,12 @@ struct smw_sign_args {
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default configured Secure Subsystem is used.
  */
-struct smw_verify_args {
+struct smw_sign_verify_args {
 	/* Inputs */
 	unsigned char version;
 	const char *subsystem_name;
 	struct smw_key_descriptor *key_descriptor;
 	const char *algo_name;
-	int hashed;
 	unsigned char *message;
 	unsigned int message_length;
 	unsigned char *signature;
@@ -105,7 +74,7 @@ int smw_hash(struct smw_hash_args *args);
  * Return:
  * error code.
  */
-int smw_sign(struct smw_sign_args *args);
+int smw_sign(struct smw_sign_verify_args *args);
 
 /**
  * smw_verify() - Verify a signature.
@@ -116,4 +85,4 @@ int smw_sign(struct smw_sign_args *args);
  * Return:
  * error code.
  */
-int smw_verify(struct smw_verify_args *args);
+int smw_verify(struct smw_sign_verify_args *args);

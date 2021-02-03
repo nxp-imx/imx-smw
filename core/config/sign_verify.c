@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_status.h"
@@ -120,52 +120,40 @@ static void verify_print_params(void *params)
 	sign_verify_print_params(params);
 }
 
-static int sign_check_subsystem_caps(void *args, void *params)
+static int check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_crypto_sign_args *sign_args = args;
-	struct sign_verify_params *sign_params = params;
+	struct smw_crypto_sign_verify_args *sign_verify_args = args;
+	struct sign_verify_params *sign_verify_params = params;
 
 	enum smw_config_key_type_id key_type_id =
-		sign_args->key_descriptor.identifier.type_id;
+		sign_verify_args->key_descriptor.identifier.type_id;
 	unsigned int security_size =
-		sign_args->key_descriptor.identifier.security_size;
+		sign_verify_args->key_descriptor.identifier.security_size;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!check_id(sign_args->algo_id, sign_params->algo_bitmap) ||
-	    !check_id(key_type_id, sign_params->key_type_bitmap) ||
-	    !check_security_size(security_size, sign_params->key_size_min,
-				 sign_params->key_size_max))
+	if (!check_id(sign_verify_args->algo_id,
+		      sign_verify_params->algo_bitmap) ||
+	    !check_id(key_type_id, sign_verify_params->key_type_bitmap) ||
+	    !check_security_size(security_size,
+				 sign_verify_params->key_size_min,
+				 sign_verify_params->key_size_max))
 		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
+static int sign_check_subsystem_caps(void *args, void *params)
+{
+	return check_subsystem_caps(args, params);
+}
+
 static int verify_check_subsystem_caps(void *args, void *params)
 {
-	int status = SMW_STATUS_OK;
-
-	struct smw_crypto_verify_args *verify_args = args;
-	struct sign_verify_params *verify_params = params;
-
-	enum smw_config_key_type_id key_type_id =
-		verify_args->key_descriptor.identifier.type_id;
-	unsigned int security_size =
-		verify_args->key_descriptor.identifier.security_size;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!check_id(verify_args->algo_id, verify_params->algo_bitmap) ||
-	    !check_id(key_type_id, verify_params->key_type_bitmap) ||
-	    !check_security_size(security_size, verify_params->key_size_min,
-				 verify_params->key_size_max))
-		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return check_subsystem_caps(args, params);
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(sign);

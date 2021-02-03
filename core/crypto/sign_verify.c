@@ -38,7 +38,7 @@ sign_verify_convert_args(struct smw_sign_verify_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor);
-	if (status != SMW_STATUS_OK)
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
 		goto end;
 
 	status = smw_config_get_hash_algo_id(args->algo_name,
@@ -46,15 +46,74 @@ sign_verify_convert_args(struct smw_sign_verify_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	converted_args->hashed = args->hashed;
-	converted_args->message = args->message;
-	converted_args->message_length = args->message_length;
-	converted_args->signature = args->signature;
-	converted_args->signature_length = args->signature_length;
+	converted_args->pub = args;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+inline unsigned char *
+smw_sign_verify_get_msg_buf(struct smw_crypto_sign_verify_args *args)
+{
+	unsigned char *message_buffer = NULL;
+
+	if (args->pub)
+		message_buffer = args->pub->message;
+
+	return message_buffer;
+}
+
+inline unsigned int
+smw_sign_verify_get_msg_len(struct smw_crypto_sign_verify_args *args)
+{
+	unsigned int message_length = 0;
+
+	if (args->pub)
+		message_length = args->pub->message_length;
+
+	return message_length;
+}
+
+inline unsigned char *
+smw_sign_verify_get_sign_buf(struct smw_crypto_sign_verify_args *args)
+{
+	unsigned char *signature_buffer = NULL;
+
+	if (args->pub)
+		signature_buffer = args->pub->signature;
+
+	return signature_buffer;
+}
+
+inline unsigned int
+smw_sign_verify_get_sign_len(struct smw_crypto_sign_verify_args *args)
+{
+	unsigned int signature_length = 0;
+
+	if (args->pub)
+		signature_length = args->pub->signature_length;
+
+	return signature_length;
+}
+
+inline void
+smw_sign_verify_copy_sign_buf(struct smw_crypto_sign_verify_args *args,
+			      unsigned char *signature,
+			      unsigned int signature_length)
+{
+	if (args->pub && args->pub->signature_length >= signature_length) {
+		SMW_UTILS_MEMCPY(args->pub->signature, signature,
+				 signature_length);
+	}
+}
+
+inline void
+smw_sign_verify_set_sign_len(struct smw_crypto_sign_verify_args *args,
+			     unsigned int signature_length)
+{
+	if (args->pub)
+		args->pub->signature_length = signature_length;
 }
 
 static int smw_sign_verify(enum operation_id operation_id,
@@ -62,12 +121,13 @@ static int smw_sign_verify(enum operation_id operation_id,
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_crypto_sign_args sign_args;
+	struct smw_crypto_sign_verify_args sign_verify_args;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args) {
+	if (!args || !args->message || !args->message_length ||
+	    !args->signature || !args->signature_length) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}

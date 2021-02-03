@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_status.h"
@@ -115,8 +115,17 @@ DEFINE_CONFIG_OPERATION_FUNC(hash);
 int smw_config_get_hash_algo_id(const char *name,
 				enum smw_config_hash_algo_id *id)
 {
+	int status = SMW_STATUS_OK;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return smw_utils_get_string_index(name, hash_algo_names,
-					  SMW_CONFIG_HASH_ALGO_ID_NB, id);
+	if (!name)
+		*id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
+	else
+		status = smw_utils_get_string_index(name, hash_algo_names,
+						    SMW_CONFIG_HASH_ALGO_ID_NB,
+						    id);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }

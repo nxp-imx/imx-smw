@@ -478,14 +478,18 @@ int run_test(char *test_definition_file, char *test_name, char *output_dir)
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	file_path_size = strlen(test_name) + strlen(TEST_STATUS_EXTENSION) + 1;
+	file_path_size = strlen(test_name) + strlen(TEST_STATUS_EXTENSION);
 
 	if (output_dir)
 		file_path_size += strlen(output_dir) + 1;
 	else
 		file_path_size += strlen(DEFAULT_OUT_STATUS_PATH);
 
-	file_path = malloc(file_path_size);
+	/*
+	 * Allocate test file result full pathname
+	 * null terminated string.
+	 */
+	file_path = malloc(file_path_size + 1);
 	if (!file_path) {
 		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
@@ -500,6 +504,7 @@ int run_test(char *test_definition_file, char *test_name, char *output_dir)
 	}
 	strcat(file_path, test_name);
 	strcat(file_path, TEST_STATUS_EXTENSION);
+	file_path[file_path_size] = '\0';
 
 	status_file = fopen(file_path, "w+");
 	if (!status_file) {

@@ -73,10 +73,13 @@ int main(int argc, char *argv[])
 
 	res = get_test_name(&test_name, def_file);
 	if (res != ERR_CODE(PASSED))
-		return res;
+		goto exit;
 
 	res = run_test(def_file, test_name, output_dir);
 
-	free(test_name);
+exit:
+	if (test_name)
+		free(test_name);
+
 	return res;
 }

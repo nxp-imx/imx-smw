@@ -3,6 +3,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -314,6 +315,7 @@ int get_test_name(char **test_name, char *test_definition_file)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	unsigned int len = 0;
+	char *filename;
 	char *file_extension = NULL;
 
 	if (!test_name || !test_definition_file) {
@@ -321,8 +323,10 @@ int get_test_name(char **test_name, char *test_definition_file)
 		return res;
 	}
 
+	filename = basename(test_definition_file);
+
 	/* First check test definition file extension */
-	file_extension = strrchr(test_definition_file, '.');
+	file_extension = strrchr(filename, '.');
 	if (file_extension) {
 		res = strcmp(file_extension, DEFINITION_FILE_EXTENSION);
 		if (res) {
@@ -335,16 +339,20 @@ int get_test_name(char **test_name, char *test_definition_file)
 		return ERR_CODE(INTERNAL);
 	}
 
-	/* Get filename from test definition file */
-	len = file_extension - strrchr(test_definition_file, '/') - 1;
+	/*
+	 * Extract filename without extension
+	 * and build the @test_name null terminated string
+	 */
+	len = file_extension - filename;
 
-	*test_name = malloc(len);
+	*test_name = malloc(len + 1);
 	if (!*test_name) {
 		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
-	strncpy(*test_name, strrchr(test_definition_file, '/') + 1, len);
+	strncpy(*test_name, filename, len);
+	(*test_name)[len] = '\0';
 
 	return ERR_CODE(PASSED);
 }

@@ -104,6 +104,18 @@ struct key_identifier_list {
 };
 
 /**
+ * util_key_is_type_set() - Return if key type is defined
+ * @key_test: Test keypair structure with operations
+ *
+ * Return:
+ * false if not set, otherwise true
+ */
+static inline int util_key_is_type_set(struct keypair_ops *key_test)
+{
+	return !!key_test->desc.type_name;
+}
+
+/**
  * util_key_is_id_set() - Return if key id is defined
  * @key_test: Test keypair structure with operations
  *
@@ -149,6 +161,32 @@ static inline int util_key_is_public_len_set(struct keypair_ops *key_test)
 static inline int util_key_is_private_len_set(struct keypair_ops *key_test)
 {
 	return (*key_private_length(key_test) != KEY_LENGTH_NOT_SET);
+}
+
+/**
+ * util_key_is_public_key_defined() - Return if public key buffer is defined
+ * @key_test: Test keypair structure with operations
+ *
+ * Return:
+ * false if not set, otherwise true
+ */
+static inline int util_key_is_public_key_defined(struct keypair_ops *key_test)
+{
+	return (*key_public_length(key_test) != KEY_LENGTH_NOT_SET) &&
+	       *key_public_data(key_test);
+}
+
+/**
+ * util_key_is_private_key_defined() - Return if private key buffer is defined
+ * @key_test: Test keypair structure with operations
+ *
+ * Return:
+ * false if not set, otherwise true
+ */
+static inline int util_key_is_private_key_defined(struct keypair_ops *key_test)
+{
+	return (*key_private_length(key_test) != KEY_LENGTH_NOT_SET) &&
+	       *key_private_data(key_test);
 }
 
 /**
@@ -238,6 +276,17 @@ int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
  */
 int util_key_desc_set_key(struct keypair_ops *key_test,
 			  struct smw_keypair_buffer *key);
+
+/**
+ * util_key_set_ops() - Set a SMW keypair to the key descriptor
+ * @key_test: Test keypair structure with operations
+ *
+ * Setup the test keypair operations.
+ *
+ * Return:
+ * None.
+ */
+void util_key_set_ops(struct keypair_ops *key_test);
 
 /**
  * util_key_free_key() - Free test keypair buffer

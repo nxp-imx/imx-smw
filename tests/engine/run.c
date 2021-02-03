@@ -11,6 +11,7 @@
 #include "types.h"
 #include "keymgr.h"
 #include "crypto.h"
+#include "sign_verify.h"
 #include "run.h"
 #include "paths.h"
 #include "smw_status.h"
@@ -199,6 +200,45 @@ static int execute_export_cmd(char *cmd, struct json_object *params,
 }
 
 /**
+ * execute_sign_verify_cmd() - Execute sign or verify command.
+ * @operation: SIGN_OPERATION or VERIFY_OPERATION.
+ * @algo_name: Algorithm name.
+ * @params: Command parameters.
+ * @common_params: Some parameters common to commands.
+ * @key_ids: Pointer to key identifiers list.
+ * @status: Pointer to SMW command status.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from sign_verify().
+ */
+static int execute_sign_verify_cmd(int operation, char *algo_name,
+				   struct json_object *params,
+				   struct common_parameters *common_params,
+				   struct key_identifier_list *key_ids,
+				   int *status)
+{
+	/* Check mandatory params */
+	if (!common_params->subsystem) {
+		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
+	if (!strlen(algo_name) || !strcmp(algo_name, MD5_ALG) ||
+	    !strcmp(algo_name, SHA1_ALG) || !strcmp(algo_name, SHA224_ALG) ||
+	    !strcmp(algo_name, SHA256_ALG) || !strcmp(algo_name, SHA384_ALG) ||
+	    !strcmp(algo_name, SHA512_ALG) || !strcmp(algo_name, SM3_ALG) ||
+	    !strcmp(algo_name, UNDEFINED_ALG))
+
+		return sign_verify(operation, params, common_params, algo_name,
+				   key_ids, status);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
+/**
  * execute_command() - Execute a subtest command.
  * @cmd: Command name.
  * @params: Command parameters.
@@ -229,6 +269,14 @@ static int execute_command(char *cmd, struct json_object *params,
 	else if (!strncmp(cmd, HASH, strlen(HASH)))
 		return execute_hash_cmd(cmd + strlen(HASH) + 1, params,
 					common_params, status);
+	else if (!strncmp(cmd, SIGN, strlen(SIGN)))
+		return execute_sign_verify_cmd(SIGN_OPERATION,
+					       cmd + strlen(SIGN) + 1, params,
+					       common_params, *key_ids, status);
+	else if (!strncmp(cmd, VERIFY, strlen(VERIFY)))
+		return execute_sign_verify_cmd(VERIFY_OPERATION,
+					       cmd + strlen(VERIFY) + 1, params,
+					       common_params, *key_ids, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -559,6 +607,7 @@ int run_test(char *test_definition_file, char *test_name, char *output_dir)
 	}
 
 	util_key_clear_list(key_identifiers);
+	sign_clear_signatures_list();
 
 	if (!test_status)
 		FPRINT_TEST_STATUS(status_file, test_name,

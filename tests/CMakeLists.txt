@@ -35,12 +35,14 @@ configure_file(${TEST_SCRIPTS_SRC}/run_simple_test.sh.in
                ${TEST_SCRIPTS_BIN}/run_simple_test.sh)
 
 add_executable(${PROJECT_NAME}
+               engine/sign_verify.c
                engine/crypto.c
                engine/keymgr.c
                engine/run.c
                engine/test_engine.c
                engine/util.c
                engine/util_key.c
+               engine/util_sign.c
                engine/util_tlv.c)
 
 target_include_directories(${PROJECT_NAME}
@@ -64,6 +66,8 @@ set(GENERATE_LABEL Generate)
 set(HASH_LABEL Hash)
 set(IMPORT_LABEL Import)
 set(KEYMGR_LABEL Keymgr)
+set(SIGN_LABEL Sign)
+set(VERIFY_LABEL Verify)
 
 install(DIRECTORY DESTINATION ${SMW_TESTS_TARGET_CONFIG_DIR})
 install(DIRECTORY DESTINATION ${SMW_TESTS_TARGET_DEF_DIR})

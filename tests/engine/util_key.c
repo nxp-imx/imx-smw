@@ -42,7 +42,7 @@ static unsigned int *get_private_length_gen(struct keypair_ops *this)
 	return &key->private_length;
 }
 
-static void setup_keypair_ops(struct keypair_ops *key_test)
+void util_key_set_ops(struct keypair_ops *key_test)
 {
 	if (!key_test->keys) {
 		key_test->public_data = NULL;
@@ -285,7 +285,7 @@ int util_key_desc_init(struct keypair_ops *key_test,
 	key_test->keys = key;
 
 	/* Initialize the keypair buffer and operations */
-	setup_keypair_ops(key_test);
+	util_key_set_ops(key_test);
 
 	if (key) {
 		key->format_name = NULL;
@@ -325,7 +325,7 @@ int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 		*key_id = json_object_get_int(obj);
 
 	/* Setup the key ops function of the key type */
-	setup_keypair_ops(key_test);
+	util_key_set_ops(key_test);
 
 	if (key_test->keys)
 		ret = keypair_read(key_test, params);
@@ -345,7 +345,7 @@ int util_key_desc_set_key(struct keypair_ops *key_test,
 	key_test->keys = key;
 
 	/* Initialize the keypair buffer and operations */
-	setup_keypair_ops(key_test);
+	util_key_set_ops(key_test);
 
 	key->format_name = NULL;
 	*key_public_data(key_test) = NULL;
@@ -358,7 +358,7 @@ int util_key_desc_set_key(struct keypair_ops *key_test,
 
 void util_key_free_key(struct keypair_ops *key_test)
 {
-	if (key_test) {
+	if (key_test && key_test->keys) {
 		if (*key_public_data(key_test))
 			free(*key_public_data(key_test));
 

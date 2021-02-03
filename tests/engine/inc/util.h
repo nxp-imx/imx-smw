@@ -223,15 +223,19 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 
 /**
  * util_read_hex_buffers() - Read an hexadecimal buffer definition
- * @hex: Hex output buffer.
- * @len: Length of the buffer @hex in bytes.
+ * @hex: Hexadecimal data buffer.
+ * @length: Length of the data buffer.
  * @params: json-c object
  * @field: Field key name to get in json-c @param object
  *
- * Read a buffer defined by a string or an array of string and converts
- * it in hexadecimal buffer.
+ * Call function util_read_json_buffer() to read json-c buffer as defined
+ * by util_read_json_buffer() function.
+ * If test definition contains data in string format, converts it to
+ * hexadecimal buffer value.
  * The output @hex buffer is allocated by this function but must be freed
  * by caller if function succeed.
+ * The output @length value might not reflect the real length of the @hex
+ * buffer.
  *
  * Return:
  * PASSED                   - Success.
@@ -240,7 +244,7 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
  * -MISSING_PARAMS          - Params' field not defined
  * -FAILED                  - Error in definition file
  */
-int util_read_hex_buffer(unsigned char **hex, unsigned int *len,
+int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
 			 json_object *params, const char *field);
 
 /**

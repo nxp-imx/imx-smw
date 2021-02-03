@@ -70,8 +70,6 @@ enum arguments_test_err_case {
 	NOT_DEFINED = 0, // Nothing specified in the test definition
 	ARGS_NULL,
 	BAD_FORMAT,
-	DIGEST_BUFFER_NULL,
-	DIGEST_LENGTH_ZERO,
 	KEY_BUFFER_NULL,
 	KEY_DESC_ID_NOT_SET,
 	KEY_DESC_ID_SET,

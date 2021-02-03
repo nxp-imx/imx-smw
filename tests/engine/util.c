@@ -58,10 +58,6 @@ struct test_err_case {
 			   SET_STATUS_CODE(KEY_BUFFER_NULL),
 			   SET_STATUS_CODE(BAD_FORMAT),
 			   SET_STATUS_CODE(KEY_DESC_ID_NOT_SET),
-			   SET_STATUS_CODE(DIGEST_BUFFER_NULL),
-			   SET_STATUS_CODE(DIGEST_LENGTH_ZERO),
-			   SET_STATUS_CODE(BAD_SUBSYSTEM),
-			   SET_STATUS_CODE(BAD_ALGO),
 			   SET_STATUS_CODE(NB_ERROR_CASE) };
 
 #undef SET_STATUS_CODE
@@ -306,28 +302,42 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 	return ERR_CODE(PASSED);
 }
 
-int util_read_hex_buffer(unsigned char **hex, unsigned int *len,
+int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
 			 json_object *params, const char *field)
 {
 	int ret = ERR_CODE(MISSING_PARAMS);
 	json_object *obj;
 	char *str = NULL;
-	unsigned int str_len = 0;
+	unsigned int len = 0;
 	unsigned int json_len = UINT_MAX;
 
-	if (!params || !field || !hex || !len) {
+	if (!params || !field || !hex || !length) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	if (json_object_object_get_ex(params, field, &obj)) {
-		ret = util_read_json_buffer(&str, &str_len, &json_len, obj);
-		if (ret == ERR_CODE(PASSED))
-			ret = util_string_to_hex(str, hex, len);
+	if (!json_object_object_get_ex(params, field, &obj))
+		return ret;
 
+	ret = util_read_json_buffer(&str, &len, &json_len, obj);
+	if (ret == ERR_CODE(PASSED)) {
+		/* Either test definition specify:
+		 * - length != 0 but no data
+		 * - length = 0 but data
+		 * - no length but data
+		 * - length and data
+		 */
 		if (str)
-			free(str);
+			ret = util_string_to_hex(str, hex, &len);
+
+		if (json_len != UINT_MAX)
+			*length = json_len;
+		else
+			*length = len;
 	}
+
+	if (str)
+		free(str);
 
 	return ret;
 }

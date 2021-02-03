@@ -1,39 +1,58 @@
 {
 	"subtest 1": { // Hash args pointer is NULL
-		"command": "HASH_MD5",
+		"command": "HASH_SHA256",
 		"subsystem": "DEFAULT",
+		"input": "5468697320696e707574206973206e6f742075736564",
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 2": { // Version is not supported
-		"command": "HASH_MD5",
+		"command": "HASH_SHA256",
 		"subsystem": "DEFAULT",
+		"input": "5468697320696e707574206973206e6f742075736564",
+		"digest": [
+			"6C2064F09625A0E63F7E1F18BCAFC631",
+			"0768290AF18FE21847C8344E02C5CECF"
+		],
 		"version": "1",
-		"test_error": "BAD_VERSION",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Subsystem is not set in SMW config file
-		"command": "HASH_MD5",
+		"command": "HASH_SHA256",
 		"subsystem": "UNDEFINED",
-		"test_error": "BAD_SUBSYSTEM",
+		"input": "5468697320696e707574206973206e6f742075736564",
+		"digest": [
+			"6C2064F09625A0E63F7E1F18BCAFC631",
+			"0768290AF18FE21847C8344E02C5CECF"
+		],
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 4": { // Algo is undefined
 		"command": "HASH_UNDEFINED",
 		"subsystem": "DEFAULT",
-		"test_error": "BAD_ALGO",
+		"input": "5468697320696e707574206973206e6f742075736564",
+		"digest": [
+			"6C2064F09625A0E63F7E1F18BCAFC631",
+			"0768290AF18FE21847C8344E02C5CECF"
+		],
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 5": { // Digest buffer is NULL
-		"command": "HASH_MD5",
+		"command": "HASH_SHA256",
 		"subsystem": "DEFAULT",
-		"test_error": "DIGEST_BUFFER_NULL",
+		"input": "5468697320696e707574206973206e6f742075736564",
+		"digest": 16,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 6": { // Digest length is zero
-		"command": "HASH_MD5",
+		"command": "HASH_SHA256",
 		"subsystem": "DEFAULT",
-		"test_error": "DIGEST_LENGTH_ZERO",
+		"input": "5468697320696e707574206973206e6f742075736564",
+		"digest": [
+			0,
+			"6C2064F09625A0E63F7E1F18BCAFC631",
+			"0768290AF18FE21847C8344E02C5CECF"
+		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

@@ -39,5 +39,6 @@ const char *get_slot_label(CK_ULONG slotid);
 void tests_pkcs11_get_info_ifs(CK_FUNCTION_LIST_PTR pfunc, void *lib_hdl);
 void tests_pkcs11_get_ifs(void *lib_hdl);
 void tests_pkcs11_slot_token(CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_session(CK_FUNCTION_LIST_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

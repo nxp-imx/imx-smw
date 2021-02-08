@@ -229,7 +229,7 @@ static int get_slotinfo(CK_FUNCTION_LIST_PTR pfunc)
 		}
 
 		if (CHECK_EXPECTED(info.flags == exp_flags,
-				   "Flags Got=0x%X Expected=0x%X", info.flags,
+				   "Flags Got=0x%lX Expected=0x%lX", info.flags,
 				   exp_flags))
 			goto end;
 	}
@@ -399,20 +399,26 @@ static int get_tokeninfo(CK_FUNCTION_LIST_PTR pfunc)
 			 info.ulMinPinLen);
 
 		if (info.ulTotalPublicMemory == CK_UNAVAILABLE_INFORMATION)
-			TEST_OUT("\tPublic Memory Total=N/A Free=%lu\n",
-				 info.ulFreePublicMemory);
+			TEST_OUT("\tPublic Memory Total=N/A ");
 		else
-			TEST_OUT("\tPublic Memory Total=%lu Free=%lu\n",
-				 info.ulTotalPublicMemory,
-				 info.ulFreePublicMemory);
+			TEST_OUT("\tPublic Memory Total=%lu ",
+				 info.ulTotalPublicMemory);
+
+		if (info.ulFreePublicMemory == CK_UNAVAILABLE_INFORMATION)
+			TEST_OUT("Free=N/A\n");
+		else
+			TEST_OUT("Free=%lu\n", info.ulFreePublicMemory);
 
 		if (info.ulTotalPrivateMemory == CK_UNAVAILABLE_INFORMATION)
-			TEST_OUT("\tPrivate Memory Total=N/A Free=%lu\n",
-				 info.ulFreePrivateMemory);
+			TEST_OUT("\tPrivate Memory Total=N/A ");
 		else
-			TEST_OUT("\tPrivate Memory Total=%lu Free=%lu\n",
-				 info.ulTotalPrivateMemory,
-				 info.ulFreePrivateMemory);
+			TEST_OUT("\tPrivate Memory Total=%lu ",
+				 info.ulTotalPrivateMemory);
+
+		if (info.ulFreePrivateMemory == CK_UNAVAILABLE_INFORMATION)
+			TEST_OUT("Free=N/A\n");
+		else
+			TEST_OUT("Free=%lu\n", info.ulFreePrivateMemory);
 
 		TEST_OUT("\tHW version:   %01d.%01d\n",
 			 info.hardwareVersion.major,
@@ -505,9 +511,9 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 
 		for (idx_m = 0; idx_m < nb_mechs; idx_m++) {
-			if (CHECK_EXPECTED(mechs[idx_m] == mdigest[idx_m],
-					   "Mech %d Got 0x%lx Expected 0x%lx",
-					   mechs[idx_m], mdigest[idx_m]))
+			if (CHECK_EXPECTED(mechs[idx_m] == mlist[idx_m],
+					   "Mech %lu Got 0x%lx Expected 0x%lx",
+					   idx_m, mechs[idx_m], mlist[idx_m]))
 				goto end;
 		}
 	}

@@ -273,6 +273,7 @@ int tests_pkcs11(void)
 	tests_pkcs11_get_ifs(lib_hdl);
 	tests_pkcs11_initialize(func_list);
 	tests_pkcs11_slot_token(func_list);
+	tests_pkcs11_session(func_list);
 
 	TEST_OUT("\n");
 	TEST_OUT(" _______________________________\n");

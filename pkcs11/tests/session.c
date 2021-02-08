@@ -64,6 +64,11 @@ static int open_session_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 		slots_present = malloc(nb_slots_present * sizeof(CK_SLOT_ID));
 		if (CHECK_EXPECTED(slots_present, "Allocation error"))
 			goto end;
+
+		ret = pfunc->C_GetSlotList(CK_TRUE, slots_present,
+					   &nb_slots_present);
+		if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
+			goto end;
 	}
 
 	TEST_OUT("Check all parameters NULL\n");

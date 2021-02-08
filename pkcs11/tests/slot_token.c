@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "local.h"
 
 #define M(id) CKM_##id
@@ -16,14 +17,25 @@ static CK_MECHANISM_TYPE mdigest[] = {
 
 const struct test_slots exp_slots[] = { {
 						.num = 0,
+						.label = "SMW",
+						.flags_slot = 0,
+					},
+					{
+						.num = 1,
 						.label = "HSM",
 						.flags_slot = CKF_HW_SLOT,
 					},
 					{
-						.num = 1,
+						.num = 2,
 						.label = "OPTEE",
 						.flags_slot = 0,
 					} };
+
+#ifdef SMW_DEVICE_ONLY
+#define NB_EXP_DEVICES 1
+#else
+#define NB_EXP_DEVICES ARRAY_SIZE(exp_slots)
+#endif
 
 const char *get_slot_label(CK_ULONG slotid)
 {
@@ -55,9 +67,9 @@ static int get_slotlist(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
-	if (CHECK_EXPECTED(nb_slots == ARRAY_SIZE(exp_slots),
+	if (CHECK_EXPECTED(nb_slots == NB_EXP_DEVICES,
 			   "Got %lu but expected %zu slots", nb_slots,
-			   ARRAY_SIZE(exp_slots)))
+			   NB_EXP_DEVICES))
 		goto end;
 
 	slots = malloc(nb_slots * sizeof(CK_SLOT_ID));
@@ -112,10 +124,6 @@ static int get_slotlist_present(CK_FUNCTION_LIST_PTR pfunc)
 	TEST_OUT("\nGet number of slots present\n");
 	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
-		goto end;
-	if (CHECK_EXPECTED(nb_slots == 1,
-			   "Got %lu but expected %zu slots present", nb_slots,
-			   1))
 		goto end;
 
 	slots = malloc(nb_slots * sizeof(CK_SLOT_ID));
@@ -199,6 +207,11 @@ static int get_slotinfo(CK_FUNCTION_LIST_PTR pfunc)
 		slots_present = malloc(nb_slots_present * sizeof(CK_SLOT_ID));
 		if (CHECK_EXPECTED(slots_present, "Allocation error"))
 			goto end;
+
+		ret = pfunc->C_GetSlotList(CK_TRUE, slots_present,
+					   &nb_slots_present);
+		if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
+			goto end;
 	}
 
 	for (idx = 0; idx < nb_slots; idx++) {
@@ -274,9 +287,9 @@ static int init_token(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_GetSlotList(CK_FALSE, slots, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
-	if (CHECK_EXPECTED(nb_slots == ARRAY_SIZE(exp_slots),
+	if (CHECK_EXPECTED(nb_slots == NB_EXP_DEVICES,
 			   "Got %lu but expected %zu slots", nb_slots,
-			   ARRAY_SIZE(exp_slots)))
+			   NB_EXP_DEVICES))
 		goto end;
 
 	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots_present);
@@ -286,6 +299,11 @@ static int init_token(CK_FUNCTION_LIST_PTR pfunc)
 	if (nb_slots_present) {
 		slots_present = malloc(nb_slots_present * sizeof(CK_SLOT_ID));
 		if (CHECK_EXPECTED(slots_present, "Allocation error"))
+			goto end;
+
+		ret = pfunc->C_GetSlotList(CK_TRUE, slots_present,
+					   &nb_slots_present);
+		if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 			goto end;
 	}
 
@@ -494,7 +512,7 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 
 		if (CHECK_EXPECTED(nb_mechs == ARRAY_SIZE(mdigest),
-				   "Slot [%s] Got %lu Expectd %lu Mechanism",
+				   "Slot [%s] Got %lu Expected %lu Mechanism",
 				   get_slot_label(slots[idx]), nb_mechs,
 				   ARRAY_SIZE(mdigest)))
 			goto end;

@@ -5,6 +5,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#cmakedefine SMW_DEVICE_ONLY
+
 #define DEFAULT_PKCS11_LIB "@DEFAULT_PKCS11_LIB@"
 #define SMW_CONFIG_FILE_PATH "@SMW_CONFIG_FILE_PATH@/config/"
 

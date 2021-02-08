@@ -282,7 +282,7 @@ end:
 	return status;
 }
 
-void tests_pkcs11_get_info_ifs(CK_FUNCTION_LIST_PTR pfunc, void *lib_hdl)
+void tests_pkcs11_get_info_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status;
 
@@ -297,8 +297,9 @@ end:
 	TEST_END(status);
 }
 
-void tests_pkcs11_get_ifs(void *lib_hdl)
+void tests_pkcs11_get_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
+	(void)pfunc;
 	int status;
 
 	TEST_START(status);

@@ -36,9 +36,10 @@ const char *get_slot_label(CK_ULONG slotid);
 
 #define CK_FUNCTION_PTR(name) CK_DECLARE_FUNCTION_POINTER(CK_RV, name)
 
-void tests_pkcs11_get_info_ifs(CK_FUNCTION_LIST_PTR pfunc, void *lib_hdl);
-void tests_pkcs11_get_ifs(void *lib_hdl);
-void tests_pkcs11_slot_token(CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_session(CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_get_info_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_get_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_slot_token(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_session(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_object(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

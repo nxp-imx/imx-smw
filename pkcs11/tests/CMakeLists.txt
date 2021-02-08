@@ -29,8 +29,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	${CMAKE_BINARY_DIR}/pkcs11/src/include)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
-set(SMW_CONFIG_FILE_PATH ${CMAKE_BINARY_DIR}/bin)
+
+if(NOT NO_SMW_CONFIG AND NOT DEFINED SMW_CONFIG_FILE)
+  set(SMW_CONFIG_FILE "./bin/config/default_config.txt")
+  message(STATUS "SMW Config will be loaded from ${SMW_CONFIG_FILE}")
+endif()
 
 configure_file(./include/config.h.in ./include/config.h)
 
-file(COPY config DESTINATION ${SMW_CONFIG_FILE_PATH})
+file(COPY config DESTINATION ${CMAKE_BINARY_DIR}/bin)

@@ -25,13 +25,16 @@ static void usage(char *progname)
 	printf("\n");
 	printf("options:\n");
 	printf("\t-h    This help\n");
+	printf("\t-t    Test name\n");
+	printf("\t-l    List of tests\n");
+	printf("\n");
 }
 
-static int run_tests(void)
+static int run_tests(char *test_name)
 {
 	int ret;
 
-	ret = tests_pkcs11();
+	ret = tests_pkcs11(test_name);
 
 	return ret;
 }
@@ -40,6 +43,7 @@ int main(int argc, char *argv[])
 {
 	int ret = -1;
 	int option = 0;
+	char *test_name = NULL;
 
 	printf("\n");
 	printf_repeat(strlen(argv[0]) + 4, '*');
@@ -54,11 +58,20 @@ int main(int argc, char *argv[])
 		 * If one of the option is unknown exit in error.
 		 */
 		do {
-			option = getopt(argc, argv, "h");
+			option = getopt(argc, argv, "ht:l");
 
 			switch (option) {
 			case -1:
 				break;
+
+			case 't':
+				test_name = optarg;
+				printf("Run test name %s\n", optarg);
+				break;
+
+			case 'l':
+				tests_pkcs11_list();
+				return 0;
 
 			case 'h':
 				usage(argv[0]);
@@ -71,7 +84,7 @@ int main(int argc, char *argv[])
 		} while (option != -1);
 	}
 
-	ret = run_tests();
+	ret = run_tests(test_name);
 
 	return ret;
 }

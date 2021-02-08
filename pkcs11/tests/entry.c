@@ -22,7 +22,7 @@ static CK_RV mutex_create_empty(CK_VOID_PTR_PTR mutex)
 	int *mutex_cnt;
 
 	TEST_OUT("Create Empty mutex\n");
-	mutex_cnt = malloc(sizeof(*mutex_cnt));
+	mutex_cnt = calloc(1, sizeof(*mutex_cnt));
 	if (!mutex_cnt)
 		return CKR_HOST_MEMORY;
 
@@ -80,17 +80,17 @@ static CK_RV mutex_unlock_empty(CK_VOID_PTR mutex)
 	return CKR_OK;
 }
 
-static void *open_lib(const char *libname, const char *config)
+static void *open_lib(const char *libname)
 {
 	void *handle = NULL;
+
+#ifdef SMW_CONFIG_FILE
 	int err;
 	int errnum;
 	char env_config[1024];
 
-	strcpy(env_config, SMW_CONFIG_FILE_PATH);
-	strcat(env_config, config);
-	printf("cmd %s\n", env_config);
-
+	strcpy(env_config, SMW_CONFIG_FILE);
+	printf("SMW_CONFIG_FILE=%s\n", env_config);
 	err = setenv("SMW_CONFIG_FILE", env_config, 1);
 	if (__errno_location()) {
 		errnum = errno;
@@ -99,6 +99,12 @@ static void *open_lib(const char *libname, const char *config)
 	} else {
 		(void)CHECK_EXPECTED(!err, "Set Environment error\n");
 	}
+#else
+	char *env_config;
+
+	env_config = getenv("SMW_CONFIG_FILE");
+	printf("SMW_CONFIG_FILE=%s\n", env_config);
+#endif
 
 	handle = dlopen(libname, RTLD_LAZY);
 	(void)CHECK_EXPECTED(handle, "%s\n", dlerror());
@@ -244,8 +250,9 @@ static void tests_pkcs11_get_functions(void *lib_hdl,
 	TEST_END(status);
 }
 
-static void tests_pkcs11_initialize(CK_FUNCTION_LIST_PTR pfunc)
+static void tests_pkcs11_initialize(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
+	(void)lib_hdl;
 	int status;
 
 	TEST_START(status);
@@ -255,7 +262,31 @@ static void tests_pkcs11_initialize(CK_FUNCTION_LIST_PTR pfunc)
 	TEST_END(status);
 }
 
-int tests_pkcs11(void)
+struct test_def {
+	const char *name;
+	void (*test)(void *handle, CK_FUNCTION_LIST_PTR func_list);
+};
+
+#define TEST_DEF(name)                                                         \
+	{                                                                      \
+#name, tests_pkcs11_##name,                                    \
+	}
+
+struct test_def test_list[] = {
+	TEST_DEF(get_info_ifs), TEST_DEF(get_ifs), TEST_DEF(initialize),
+	TEST_DEF(slot_token),	TEST_DEF(session), TEST_DEF(object),
+};
+
+void tests_pkcs11_list(void)
+{
+	printf("PKCS#11 List of tests:\n");
+	for (unsigned int id = 0; id < ARRAY_SIZE(test_list); id++)
+		printf("\t %s\n", test_list[id].name);
+
+	printf("\n");
+}
+
+int tests_pkcs11(char *test_name)
 {
 	int diff_count;
 	void *lib_hdl;
@@ -264,16 +295,25 @@ int tests_pkcs11(void)
 	/* Initialize tests result */
 	memset(&tests_result, 0, sizeof(tests_result));
 
-	lib_hdl = open_lib(DEFAULT_PKCS11_LIB, "hsm_only_config.txt");
+	printf("Lib %s\n", DEFAULT_PKCS11_LIB);
+
+	lib_hdl = open_lib(DEFAULT_PKCS11_LIB);
 	if (!lib_hdl)
 		return -1;
 
 	tests_pkcs11_get_functions(lib_hdl, &func_list);
-	tests_pkcs11_get_info_ifs(func_list, lib_hdl);
-	tests_pkcs11_get_ifs(lib_hdl);
-	tests_pkcs11_initialize(func_list);
-	tests_pkcs11_slot_token(func_list);
-	tests_pkcs11_session(func_list);
+	if (func_list) {
+		for (unsigned int id = 0; id < ARRAY_SIZE(test_list); id++) {
+			if (test_name) {
+				if (!strcmp(test_name, test_list[id].name)) {
+					test_list[id].test(lib_hdl, func_list);
+					break;
+				}
+			} else {
+				test_list[id].test(lib_hdl, func_list);
+			}
+		}
+	}
 
 	TEST_OUT("\n");
 	TEST_OUT(" _______________________________\n");

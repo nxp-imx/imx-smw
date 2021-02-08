@@ -1083,9 +1083,11 @@ end:
 	return status;
 }
 
-void tests_pkcs11_session(CK_FUNCTION_LIST_PTR pfunc)
+void tests_pkcs11_session(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
+	(void)lib_hdl;
 	int status;
+
 	CK_RV ret;
 
 	TEST_START(status);

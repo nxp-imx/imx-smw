@@ -11,8 +11,9 @@
 
 #define M(id) CKM_##id
 
-static CK_MECHANISM_TYPE mdigest[] = {
-	M(SHA_1), M(SHA224), M(SHA256), M(SHA384), M(SHA512),
+static CK_MECHANISM_TYPE mlist[] = {
+	M(SHA_1),  M(SHA224), M(SHA256),
+	M(SHA384), M(SHA512), M(EC_KEY_PAIR_GEN),
 };
 
 const struct test_slots exp_slots[] = { {
@@ -32,7 +33,7 @@ const struct test_slots exp_slots[] = { {
 					} };
 
 #ifdef SMW_DEVICE_ONLY
-#define NB_EXP_DEVICES 1
+#define NB_EXP_DEVICES ((size_t)1)
 #else
 #define NB_EXP_DEVICES ARRAY_SIZE(exp_slots)
 #endif
@@ -511,10 +512,10 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_GetMechanisms"))
 			goto end;
 
-		if (CHECK_EXPECTED(nb_mechs == ARRAY_SIZE(mdigest),
+		if (CHECK_EXPECTED(nb_mechs == ARRAY_SIZE(mlist),
 				   "Slot [%s] Got %lu Expected %lu Mechanism",
 				   get_slot_label(slots[idx]), nb_mechs,
-				   ARRAY_SIZE(mdigest)))
+				   ARRAY_SIZE(mlist)))
 			goto end;
 
 		if (mechs)
@@ -569,12 +570,12 @@ static int get_mechanismsinfo(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("\nGet Mechanism Info NULL\n");
-	ret = pfunc->C_GetMechanismInfo(0, mdigest[0], NULL);
+	ret = pfunc->C_GetMechanismInfo(0, mlist[0], NULL);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetMechanismInfo"))
 		goto end;
 
 	TEST_OUT("\nGet Mechanism Info Bad Slot ID\n");
-	ret = pfunc->C_GetMechanismInfo(nb_slots, mdigest[0], &info);
+	ret = pfunc->C_GetMechanismInfo(nb_slots, mlist[0], &info);
 	if (CHECK_CK_RV(CKR_SLOT_ID_INVALID, "C_GetMechanismInfo"))
 		goto end;
 
@@ -634,8 +635,9 @@ end:
 	return status;
 }
 
-void tests_pkcs11_slot_token(CK_FUNCTION_LIST_PTR pfunc)
+void tests_pkcs11_slot_token(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
+	(void)lib_hdl;
 	int status;
 
 	CK_RV ret;

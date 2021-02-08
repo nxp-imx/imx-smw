@@ -3,6 +3,7 @@
  * Copyright 2021 NXP
  */
 #include <dlfcn.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -79,9 +80,25 @@ static CK_RV mutex_unlock_empty(CK_VOID_PTR mutex)
 	return CKR_OK;
 }
 
-static void *open_lib(const char *libname)
+static void *open_lib(const char *libname, const char *config)
 {
 	void *handle = NULL;
+	int err;
+	int errnum;
+	char env_config[1024];
+
+	strcpy(env_config, SMW_CONFIG_FILE_PATH);
+	strcat(env_config, config);
+	printf("cmd %s\n", env_config);
+
+	err = setenv("SMW_CONFIG_FILE", env_config, 1);
+	if (__errno_location()) {
+		errnum = errno;
+		(void)CHECK_EXPECTED(!err, "Set Environment error: %s\n",
+				     strerror(errnum));
+	} else {
+		(void)CHECK_EXPECTED(!err, "Set Environment error\n");
+	}
 
 	handle = dlopen(libname, RTLD_LAZY);
 	(void)CHECK_EXPECTED(handle, "%s\n", dlerror());
@@ -227,28 +244,13 @@ static void tests_pkcs11_get_functions(void *lib_hdl,
 	TEST_END(status);
 }
 
-static void tests_pkcs11_002(void)
+static void tests_pkcs11_initialize(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status;
 
-	void *lib_hdl;
-	CK_FUNCTION_LIST_PTR pfunc;
-
 	TEST_START(status);
 
-	lib_hdl = open_lib(DEFAULT_PKCS11_LIB);
-	if (!lib_hdl)
-		goto end;
-
-	pfunc = get_function_list(lib_hdl);
-	if (!pfunc)
-		goto end;
-
 	status = initialize(pfunc);
-
-end:
-	if (lib_hdl)
-		close_lib(lib_hdl);
 
 	TEST_END(status);
 }
@@ -262,14 +264,15 @@ int tests_pkcs11(void)
 	/* Initialize tests result */
 	memset(&tests_result, 0, sizeof(tests_result));
 
-	lib_hdl = open_lib(DEFAULT_PKCS11_LIB);
+	lib_hdl = open_lib(DEFAULT_PKCS11_LIB, "hsm_only_config.txt");
 	if (!lib_hdl)
 		return -1;
 
 	tests_pkcs11_get_functions(lib_hdl, &func_list);
 	tests_pkcs11_get_info_ifs(func_list, lib_hdl);
 	tests_pkcs11_get_ifs(lib_hdl);
-	tests_pkcs11_002();
+	tests_pkcs11_initialize(func_list);
+	tests_pkcs11_slot_token(func_list);
 
 	TEST_OUT("\n");
 	TEST_OUT(" _______________________________\n");

@@ -6,6 +6,7 @@
 #define __CONFIG_H__
 
 #define DEFAULT_PKCS11_LIB "@DEFAULT_PKCS11_LIB@"
+#define SMW_CONFIG_FILE_PATH "@SMW_CONFIG_FILE_PATH@/config/"
 
 #endif /* __CONFIG_H__ */
 

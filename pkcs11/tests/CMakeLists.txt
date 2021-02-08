@@ -1,7 +1,7 @@
 project(testsmw_pkcs11 VERSION 1.0 LANGUAGES C)
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-	add_compile_options(-Wall -Wextra -Werror)
+  add_compile_options(-Wall -Wextra -Werror)
 endif()
 
 add_executable(${PROJECT_NAME} "")
@@ -14,7 +14,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE include)
 set(LIBRARY_PATH ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 if(NOT DEFAULT_PKCS11_LIB)
-set(DEFAULT_PKCS11_LIB ${LIBRARY_PATH}/libsmw_pkcs11.so)
+  set(DEFAULT_PKCS11_LIB ${LIBRARY_PATH}/libsmw_pkcs11.so)
 endif()
 
 message(STATUS "Default PKCS11 Library: ${DEFAULT_PKCS11_LIB}")
@@ -29,5 +29,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 	${CMAKE_BINARY_DIR}/pkcs11/src/include)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
+set(SMW_CONFIG_FILE_PATH ${CMAKE_BINARY_DIR}/bin)
 
 configure_file(./include/config.h.in ./include/config.h)
+
+file(COPY config DESTINATION ${SMW_CONFIG_FILE_PATH})

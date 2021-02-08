@@ -9,6 +9,7 @@ smw_tmp_yaml="smw_tmp.yaml"
 smw_setup_yaml="smw_setup.yaml"
 smw_package_yaml="smw_package.yaml"
 smw_ctest_yaml="smw_ctest.yaml"
+pkcs11_ctest_yaml="pkcs11_ctest.yaml"
 
 devops_script="nexus-find-latest-db.sh"
 lavacli_tool="lavacli"
@@ -244,6 +245,9 @@ function squad_submit
 
     # SMW Ctest execution
     cat "${yaml_dir}"/"${smw_ctest_yaml}" >> "${yaml_dir}"/"${smw_tmp_yaml}"
+
+    # PKCS11 Ctest execution
+    cat "${yaml_dir}"/"${pkcs11_ctest_yaml}" >> "${yaml_dir}"/"${smw_tmp_yaml}"
 
     filename_job="${yaml_dir}"/"${smw_tmp_yaml}"
     check_file "${yaml_dir}" "${smw_tmp_yaml}"

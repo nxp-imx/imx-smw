@@ -1,7 +1,7 @@
 project(smw_pkcs11 VERSION 1.0 LANGUAGES C)
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-	add_compile_options(-Wall -Wextra -Werror)
+  add_compile_options(-Wall -Wextra -Werror)
 endif()
 
 #
@@ -39,3 +39,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
 
+if(BUILD_TEST)
+    add_subdirectory(tests)
+endif()

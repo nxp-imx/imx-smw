@@ -1,0 +1,11 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/*
+ * Copyright 2021 NXP
+ */
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+#define DEFAULT_PKCS11_LIB "@DEFAULT_PKCS11_LIB@"
+
+#endif /* __CONFIG_H__ */
+

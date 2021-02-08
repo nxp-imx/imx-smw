@@ -39,6 +39,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
 
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+
 if(BUILD_TEST)
-    add_subdirectory(tests)
+  enable_testing()
+  set(SMW_PKCS11_LIB "lib${PROJECT_NAME}.so.${PROJECT_VERSION_MAJOR}")
+  add_subdirectory(tests)
 endif()
+

@@ -13,6 +13,10 @@
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif /* ARRAY_SIZE */
 
+#ifndef BITS_TO_BYTES
+#define BITS_TO_BYTES(size) (((size) + 7) / 8)
+#endif /* BITS_TO_BYTES */
+
 struct ckr_enum {
 	CK_RV val;
 	const char *const name;

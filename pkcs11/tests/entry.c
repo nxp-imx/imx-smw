@@ -13,72 +13,10 @@
 #include "config.h"
 #include "tests_pkcs11.h"
 #include "local.h"
+#include "os_mutex.h"
 
 /* Declaration of the overall tests result */
 struct tests_result tests_result;
-
-static CK_RV mutex_create_empty(CK_VOID_PTR_PTR mutex)
-{
-	int *mutex_cnt;
-
-	TEST_OUT("Create Empty mutex\n");
-	mutex_cnt = calloc(1, sizeof(*mutex_cnt));
-	if (!mutex_cnt)
-		return CKR_HOST_MEMORY;
-
-	TEST_OUT("Create Empty mutex (%p)\n", mutex_cnt);
-	*mutex = mutex_cnt;
-
-	return CKR_OK;
-}
-
-static CK_RV mutex_destroy_empty(CK_VOID_PTR mutex)
-{
-	int *cnt = mutex;
-
-	TEST_OUT("Destroy Empty mutex (%p)\n", mutex);
-	if (!mutex)
-		return CKR_MUTEX_BAD;
-
-	TEST_OUT("Destroy (%p)=%d\n", mutex, *cnt);
-	if (*cnt)
-		return CKR_GENERAL_ERROR;
-
-	free(mutex);
-
-	return CKR_OK;
-}
-
-static CK_RV mutex_lock_empty(CK_VOID_PTR mutex)
-{
-	int *cnt = mutex;
-
-	TEST_OUT("Lock Empty mutex (%p)\n", mutex);
-	if (!mutex)
-		return CKR_MUTEX_BAD;
-
-	(*cnt)++;
-	TEST_OUT("Lock (%p)=%d\n", mutex, *cnt);
-
-	return CKR_OK;
-}
-
-static CK_RV mutex_unlock_empty(CK_VOID_PTR mutex)
-{
-	int *cnt = mutex;
-
-	TEST_OUT("Unlock Empty mutex (%p)\n", mutex);
-	if (!mutex)
-		return CKR_MUTEX_BAD;
-
-	TEST_OUT("Unlock (%p)=%d\n", mutex, *cnt);
-	if (!*cnt)
-		return CKR_MUTEX_NOT_LOCKED;
-
-	(*cnt)--;
-
-	return CKR_OK;
-}
 
 static void *open_lib(const char *libname)
 {

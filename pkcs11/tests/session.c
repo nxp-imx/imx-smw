@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "os_mutex.h"
 #include "local.h"
 
 static CK_RV test_notify(CK_SESSION_HANDLE session, CK_NOTIFICATION event,
@@ -1089,10 +1090,16 @@ void tests_pkcs11_session(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	int status;
 
 	CK_RV ret;
+	CK_C_INITIALIZE_ARGS init = { 0 };
+
+	init.CreateMutex = mutex_create;
+	init.DestroyMutex = mutex_destroy;
+	init.LockMutex = mutex_lock;
+	init.UnlockMutex = mutex_unlock;
 
 	TEST_START(status);
 
-	ret = pfunc->C_Initialize(NULL);
+	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 

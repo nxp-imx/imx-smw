@@ -7,13 +7,15 @@
 #include <string.h>
 
 #include "config.h"
+#include "os_mutex.h"
 #include "local.h"
 
 #define M(id) CKM_##id
 
 static CK_MECHANISM_TYPE mlist[] = {
-	M(SHA_1),  M(SHA224), M(SHA256),
-	M(SHA384), M(SHA512), M(EC_KEY_PAIR_GEN),
+	M(SHA_1),	M(SHA224),	M(SHA256),
+	M(SHA384),	M(SHA512),	M(EC_KEY_PAIR_GEN),
+	M(AES_KEY_GEN), M(DES_KEY_GEN), M(DES3_KEY_GEN),
 };
 
 const struct test_slots exp_slots[] = { {
@@ -641,10 +643,16 @@ void tests_pkcs11_slot_token(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	int status;
 
 	CK_RV ret;
+	CK_C_INITIALIZE_ARGS init = { 0 };
+
+	init.CreateMutex = mutex_create;
+	init.DestroyMutex = mutex_destroy;
+	init.LockMutex = mutex_lock;
+	init.UnlockMutex = mutex_unlock;
 
 	TEST_START(status);
 
-	ret = pfunc->C_Initialize(NULL);
+	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 

@@ -213,6 +213,7 @@ struct test_def {
 struct test_def test_list[] = {
 	TEST_DEF(get_info_ifs), TEST_DEF(get_ifs), TEST_DEF(initialize),
 	TEST_DEF(slot_token),	TEST_DEF(session), TEST_DEF(object),
+	TEST_DEF(find),
 };
 
 void tests_pkcs11_list(void)

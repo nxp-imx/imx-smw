@@ -40,10 +40,17 @@ const char *get_slot_label(CK_ULONG slotid);
 
 #define CK_FUNCTION_PTR(name) CK_DECLARE_FUNCTION_POINTER(CK_RV, name)
 
+extern const CK_BYTE prime192v1[];
+extern const CK_BYTE prime256v1[];
+
+int util_to_asn1_string(CK_ATTRIBUTE_PTR attr, const char *str);
+int util_to_asn1_oid(CK_ATTRIBUTE_PTR attr, const CK_BYTE *oid);
+
 void tests_pkcs11_get_info_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_get_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_slot_token(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_session(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_object(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_find(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

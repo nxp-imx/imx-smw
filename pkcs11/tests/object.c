@@ -6,16 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <asn1_ec_curve.h>
-
 #include "os_mutex.h"
 #include "util_session.h"
-
-/*
- * ASN1 TAGs value
- */
-#define ASN1_PRINTABLE_STRING  19
-#define ASN1_OBJECT_IDENTIFIER 6
 
 struct asn1_ec_curve {
 	size_t security_size;
@@ -26,49 +18,10 @@ struct asn1_ec_curve {
 #define EC_STR_PRIME192_V1 "prime192v1"
 #define EC_STR_PRIME256_V1 "prime256v1"
 
-const CK_BYTE prime192v1[] = ASN1_OID_PRIME192;
-const CK_BYTE prime256v1[] = ASN1_OID_PRIME256;
-
 static struct asn1_ec_curve ec_curves[] = {
 	{ 192, EC_STR_PRIME192_V1, prime192v1 },
 	{ 256, EC_STR_PRIME256_V1, prime256v1 },
 };
-
-static int _to_asn1_string(CK_ATTRIBUTE_PTR attr, const char *str)
-{
-	CK_BYTE_PTR bytes;
-
-	attr->ulValueLen = 2 + strlen(str);
-	attr->pValue = malloc(attr->ulValueLen);
-	if (!attr->pValue)
-		return 0;
-
-	bytes = attr->pValue;
-
-	bytes[0] = ASN1_PRINTABLE_STRING;
-	bytes[1] = strlen(str);
-	memcpy(&bytes[2], str, attr->ulValueLen - 2);
-
-	return 1;
-}
-
-static int _to_asn1_oid(CK_ATTRIBUTE_PTR attr, const CK_BYTE *oid)
-{
-	CK_BYTE_PTR bytes;
-
-	attr->ulValueLen = 2 + sizeof(oid);
-	attr->pValue = malloc(attr->ulValueLen);
-	if (!attr->pValue)
-		return 0;
-
-	bytes = attr->pValue;
-
-	bytes[0] = ASN1_OBJECT_IDENTIFIER;
-	bytes[1] = sizeof(oid);
-	memcpy(&bytes[2], oid, attr->ulValueLen - 2);
-
-	return 1;
-}
 
 static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 {
@@ -103,7 +56,8 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 		BITS_TO_BYTES(ec_curves[0].security_size) * 2 + 1;
 
 	TEST_OUT("Create %sKey Public by curve name\n", token ? "Token " : "");
-	if (CHECK_EXPECTED(_to_asn1_string(&keyTemplate[2], ec_curves[0].name),
+	if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
+					       ec_curves[0].name),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -117,7 +71,7 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	if (keyTemplate[2].pValue)
 		free(keyTemplate[2].pValue);
 
-	if (CHECK_EXPECTED(_to_asn1_oid(&keyTemplate[2], ec_curves[0].oid),
+	if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2], ec_curves[0].oid),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -175,7 +129,8 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 		goto end;
 
 	TEST_OUT("Create %sKey Private by curve name\n", token ? "Token " : "");
-	if (CHECK_EXPECTED(_to_asn1_string(&keyTemplate[2], ec_curves[0].name),
+	if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
+					       ec_curves[0].name),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -199,7 +154,7 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	if (keyTemplate[2].pValue)
 		free(keyTemplate[2].pValue);
 
-	if (CHECK_EXPECTED(_to_asn1_oid(&keyTemplate[2], ec_curves[0].oid),
+	if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2], ec_curves[0].oid),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -256,7 +211,8 @@ static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Generate %sKeypair by curve name\n", token ? "Token " : "");
-	if (CHECK_EXPECTED(_to_asn1_string(&pubkey_attrs[0], ec_curves[0].name),
+	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
+					       ec_curves[0].name),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -274,7 +230,7 @@ static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	if (pubkey_attrs[0].pValue)
 		free(pubkey_attrs[0].pValue);
 
-	if (CHECK_EXPECTED(_to_asn1_oid(&pubkey_attrs[0], ec_curves[0].oid),
+	if (CHECK_EXPECTED(util_to_asn1_oid(&pubkey_attrs[0], ec_curves[0].oid),
 			   "ASN1 Conversion"))
 		goto end;
 

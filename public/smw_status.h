@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef SMW_STATUS_H
@@ -26,5 +26,6 @@
 #define SMW_STATUS_OPERATION_NOT_CONFIGURED 16
 #define SMW_STATUS_OPERATION_FAILURE	    17
 #define SMW_STATUS_SIGNATURE_INVALID	    18
+#define SMW_STATUS_NO_KEY_BUFFER	    19
 
 #endif /* SMW_STATUS_H */

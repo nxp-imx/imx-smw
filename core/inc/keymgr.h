@@ -39,16 +39,20 @@ struct smw_keymgr_identifier {
 	uint32_t id;
 };
 
+struct smw_keymgr_key_ops;
+
 /**
  * struct smw_keymgr_descriptor - Key descriptor
  * @identifier: Key identifier
  * @format_id: Format ID of the Key buffers
  * @pub: Key descriptor from the public API
+ * @ops: Keypair operations
  */
 struct smw_keymgr_descriptor {
 	struct smw_keymgr_identifier identifier;
 	enum smw_keymgr_format_id format_id;
 	struct smw_key_descriptor *pub;
+	struct smw_keymgr_key_ops *ops;
 };
 
 /**
@@ -238,6 +242,20 @@ void smw_keymgr_set_public_data(struct smw_keymgr_descriptor *descriptor,
  */
 void smw_keymgr_set_public_length(struct smw_keymgr_descriptor *descriptor,
 				  unsigned int public_length);
+
+/**
+ * smw_keymgr_set_private_data() - Set the address of the private Key buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ * @private_data: Address of the private Key buffer.
+ *
+ * This function sets the address of the private Key buffer.
+ * If the @buffer field @pub is NULL, the function returns with no action.
+ *
+ * Return:
+ * none.
+ */
+void smw_keymgr_set_private_data(struct smw_keymgr_descriptor *descriptor,
+				 unsigned char *private_data);
 
 /**
  * smw_keymgr_set_private_length() - Set the length of the private Key buffer.

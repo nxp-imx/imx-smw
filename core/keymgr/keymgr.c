@@ -55,6 +55,28 @@
 
 #define SMW_KEYMGR_FORMAT_ID_DEFAULT SMW_KEYMGR_FORMAT_ID_HEX
 
+/**
+ * struct smw_keymgr_key_ops - keypair with operations
+ * @keys: Public API Keypair
+ * @public_data: Get the @pub's public data reference
+ * @public_length: Get the @pub's public length reference
+ * @private_data: Get the @pub's private data reference
+ * @private_length: Get the @pub's private length reference
+ *
+ * This structure is initialized by the function
+ * smw_keymgr_convert_descriptor().
+ * The operations are function of the keypair object defined by the
+ * key type.
+ */
+struct smw_keymgr_key_ops {
+	struct smw_keypair_buffer *keys;
+
+	unsigned char **(*public_data)(struct smw_keymgr_key_ops *this);
+	unsigned int *(*public_length)(struct smw_keymgr_key_ops *this);
+	unsigned char **(*private_data)(struct smw_keymgr_key_ops *this);
+	unsigned int *(*private_length)(struct smw_keymgr_key_ops *this);
+};
+
 static const char *const format_names[] = { [SMW_KEYMGR_FORMAT_ID_HEX] = "HEX",
 					    [SMW_KEYMGR_FORMAT_ID_BASE64] =
 						    "BASE64" };
@@ -132,6 +154,72 @@ static int key_id_to_identifier(unsigned long long *id,
 	return status;
 }
 
+static unsigned char **public_data_key_gen(struct smw_keymgr_key_ops *this)
+{
+	SMW_DBG_ASSERT(this && this->keys && this->public_data);
+	return &this->keys->gen.public_data;
+}
+
+static unsigned int *public_length_key_gen(struct smw_keymgr_key_ops *this)
+{
+	SMW_DBG_ASSERT(this && this->keys && this->public_length);
+	return &this->keys->gen.public_length;
+}
+
+static unsigned char **private_data_key_gen(struct smw_keymgr_key_ops *this)
+{
+	SMW_DBG_ASSERT(this && this->keys && this->private_data);
+	return &this->keys->gen.private_data;
+}
+
+static unsigned int *private_length_key_gen(struct smw_keymgr_key_ops *this)
+{
+	SMW_DBG_ASSERT(this && this->keys && this->private_length);
+	return &this->keys->gen.private_length;
+}
+
+static struct smw_keymgr_key_ops keypair_gen_ops = {
+	.public_data = &public_data_key_gen,
+	.public_length = &public_length_key_gen,
+	.private_data = &private_data_key_gen,
+	.private_length = &private_length_key_gen,
+};
+
+/**
+ * setup_key_ops() - Setup the key operations in the key descriptor
+ * @descriptor: key descriptor
+ *
+ * The operations depends on the key type.
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success
+ * SMW_STATUS_INVALID_PARAM  - Wrong key descriptor
+ * SMW_STATUS_NO_KEY_BUFFER  - Key buffer is not setup
+ */
+static int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	if (descriptor->pub) {
+		if (!descriptor->pub->buffer)
+			return SMW_STATUS_NO_KEY_BUFFER;
+
+		switch (descriptor->identifier.type_id) {
+		case SMW_CONFIG_KEY_TYPE_ID_NB:
+		case SMW_CONFIG_KEY_TYPE_ID_INVALID:
+			break;
+
+		default:
+			keypair_gen_ops.keys = descriptor->pub->buffer;
+			descriptor->ops = &keypair_gen_ops;
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	return status;
+}
+
 int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 				  struct smw_keymgr_descriptor *out)
 {
@@ -185,6 +273,7 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 	}
 
 	out->pub = in;
+	status = setup_key_ops(out);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -489,11 +578,12 @@ delete_key_convert_args(struct smw_delete_key_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor);
-	if (status != SMW_STATUS_OK)
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
 		goto end;
 
 	*subsystem_id = converted_args->key_descriptor.identifier.subsystem_id;
 
+	status = SMW_STATUS_OK;
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -560,12 +650,13 @@ int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
 		}
 	}
 
-	buffer->public_data = public_data;
-	buffer->private_data = private_data;
-	buffer->public_length = public_length;
-	buffer->private_length = private_length;
 	pub->buffer = buffer;
 	descriptor->pub = pub;
+
+	smw_keymgr_set_public_data(descriptor, public_data);
+	smw_keymgr_set_public_length(descriptor, public_length);
+	smw_keymgr_set_private_data(descriptor, private_data);
+	smw_keymgr_set_private_length(descriptor, private_length);
 
 end:
 	if (status != SMW_STATUS_OK) {
@@ -586,19 +677,29 @@ end:
 int smw_keymgr_free_keypair_buffer(struct smw_keymgr_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
+	unsigned char *data;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!descriptor || !descriptor->pub || !descriptor->pub->buffer) {
+	if (!descriptor || !descriptor->pub) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
 
-	if (descriptor->pub->buffer->public_data)
-		SMW_UTILS_FREE(descriptor->pub->buffer->public_data);
+	if (!descriptor->pub->buffer) {
+		status = SMW_STATUS_NO_KEY_BUFFER;
+		goto end;
+	}
 
-	if (descriptor->pub->buffer->private_data)
-		SMW_UTILS_FREE(descriptor->pub->buffer->private_data);
+	/* Free public key data if defined */
+	data = smw_keymgr_get_public_data(descriptor);
+	if (data)
+		SMW_UTILS_FREE(data);
+
+	/* Free private key data if defined */
+	data = smw_keymgr_get_private_data(descriptor);
+	if (data)
+		SMW_UTILS_FREE(data);
 
 	SMW_UTILS_FREE(descriptor->pub->buffer);
 	SMW_UTILS_FREE(descriptor->pub);
@@ -612,10 +713,11 @@ end:
 inline unsigned char *
 smw_keymgr_get_public_data(struct smw_keymgr_descriptor *descriptor)
 {
+	struct smw_keymgr_key_ops *ops = descriptor->ops;
 	unsigned char *public_data = NULL;
 
-	if (descriptor->pub && descriptor->pub->buffer)
-		public_data = descriptor->pub->buffer->public_data;
+	if (ops)
+		public_data = *ops->public_data(ops);
 
 	return public_data;
 }
@@ -623,10 +725,11 @@ smw_keymgr_get_public_data(struct smw_keymgr_descriptor *descriptor)
 inline unsigned int
 smw_keymgr_get_public_length(struct smw_keymgr_descriptor *descriptor)
 {
+	struct smw_keymgr_key_ops *ops = descriptor->ops;
 	unsigned int public_length = 0;
 
-	if (descriptor->pub && descriptor->pub->buffer)
-		public_length = descriptor->pub->buffer->public_length;
+	if (ops)
+		public_length = *ops->public_length(ops);
 
 	return public_length;
 }
@@ -634,10 +737,11 @@ smw_keymgr_get_public_length(struct smw_keymgr_descriptor *descriptor)
 inline unsigned char *
 smw_keymgr_get_private_data(struct smw_keymgr_descriptor *descriptor)
 {
+	struct smw_keymgr_key_ops *ops = descriptor->ops;
 	unsigned char *private_data = NULL;
 
-	if (descriptor->pub && descriptor->pub->buffer)
-		private_data = descriptor->pub->buffer->private_data;
+	if (ops)
+		private_data = *ops->private_data(ops);
 
 	return private_data;
 }
@@ -645,10 +749,11 @@ smw_keymgr_get_private_data(struct smw_keymgr_descriptor *descriptor)
 inline unsigned int
 smw_keymgr_get_private_length(struct smw_keymgr_descriptor *descriptor)
 {
+	struct smw_keymgr_key_ops *ops = descriptor->ops;
 	unsigned int private_length = 0;
 
-	if (descriptor->pub && descriptor->pub->buffer)
-		private_length = descriptor->pub->buffer->private_length;
+	if (ops)
+		private_length = *ops->private_length(ops);
 
 	return private_length;
 }
@@ -656,24 +761,40 @@ smw_keymgr_get_private_length(struct smw_keymgr_descriptor *descriptor)
 inline void smw_keymgr_set_public_data(struct smw_keymgr_descriptor *descriptor,
 				       unsigned char *public_data)
 {
-	if (descriptor->pub && descriptor->pub->buffer)
-		descriptor->pub->buffer->public_data = public_data;
+	struct smw_keymgr_key_ops *ops = descriptor->ops;
+
+	if (ops)
+		*ops->public_data(ops) = public_data;
 }
 
 inline void
 smw_keymgr_set_public_length(struct smw_keymgr_descriptor *descriptor,
 			     unsigned int public_length)
 {
-	if (descriptor->pub && descriptor->pub->buffer)
-		descriptor->pub->buffer->public_length = public_length;
+	struct smw_keymgr_key_ops *ops = descriptor->ops;
+
+	if (ops)
+		*ops->public_length(ops) = public_length;
+}
+
+inline void
+smw_keymgr_set_private_data(struct smw_keymgr_descriptor *descriptor,
+			    unsigned char *private_data)
+{
+	struct smw_keymgr_key_ops *ops = descriptor->ops;
+
+	if (ops)
+		*ops->private_data(ops) = private_data;
 }
 
 inline void
 smw_keymgr_set_private_length(struct smw_keymgr_descriptor *descriptor,
 			      unsigned int private_length)
 {
-	if (descriptor->pub && descriptor->pub->buffer)
-		descriptor->pub->buffer->private_length = private_length;
+	struct smw_keymgr_key_ops *ops = descriptor->ops;
+
+	if (ops)
+		*ops->private_length(ops) = private_length;
 }
 
 static void set_key_identifier(struct smw_keymgr_descriptor *descriptor)
@@ -726,7 +847,6 @@ int smw_keymgr_get_buffers_lengths(enum smw_config_key_type_id type_id,
 				   unsigned int *private_buffer_length)
 {
 	int status = SMW_STATUS_OK;
-
 	unsigned int public_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -816,12 +936,15 @@ int smw_generate_key(struct smw_generate_key_args *args)
 	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_generate_key_args generate_key_args;
+	struct smw_keymgr_descriptor *key_desc;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	struct smw_keypair_buffer *key_buffer;
-	unsigned int security_size;
 	enum smw_config_key_type_id type_id;
-	enum smw_keymgr_format_id format_id;
+	unsigned char *public_data;
+	unsigned char *private_data;
+	unsigned int security_size;
+	unsigned int private_length;
 	unsigned int public_length;
+	unsigned int exp_pub_length;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -830,7 +953,6 @@ int smw_generate_key(struct smw_generate_key_args *args)
 		goto end;
 	}
 
-	key_buffer = args->key_descriptor->buffer;
 	security_size = args->key_descriptor->security_size;
 
 	if (!args->key_descriptor->type_name || !security_size ||
@@ -844,19 +966,23 @@ int smw_generate_key(struct smw_generate_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	type_id = generate_key_args.key_descriptor.identifier.type_id;
-	format_id = generate_key_args.key_descriptor.format_id;
+	key_desc = &generate_key_args.key_descriptor;
 
-	if (key_buffer) {
+	if (args->key_descriptor->buffer) {
+		type_id = key_desc->identifier.type_id;
 		status = smw_keymgr_get_buffers_lengths(type_id, security_size,
-							format_id,
-							&public_length, NULL);
+							key_desc->format_id,
+							&exp_pub_length, NULL);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
-		if ((key_buffer->public_data &&
-		     key_buffer->public_length < public_length) ||
-		    key_buffer->private_data || key_buffer->private_length) {
+		public_data = smw_keymgr_get_public_data(key_desc);
+		public_length = smw_keymgr_get_public_length(key_desc);
+		private_data = smw_keymgr_get_private_data(key_desc);
+		private_length = smw_keymgr_get_private_length(key_desc);
+
+		if ((public_data && public_length < exp_pub_length) ||
+		    private_data || private_length) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
@@ -867,8 +993,8 @@ int smw_generate_key(struct smw_generate_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	set_key_identifier(&generate_key_args.key_descriptor);
-	set_key_buffer_format(&generate_key_args.key_descriptor);
+	set_key_identifier(key_desc);
+	set_key_buffer_format(key_desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -935,8 +1061,12 @@ int smw_import_key(struct smw_import_key_args *args)
 	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_import_key_args import_key_args;
+	struct smw_keymgr_descriptor *key_desc;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	struct smw_keypair_buffer *key_buffer;
+	unsigned char *public_data;
+	unsigned char *private_data;
+	unsigned int private_length;
+	unsigned int public_length;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -947,13 +1077,8 @@ int smw_import_key(struct smw_import_key_args *args)
 		goto end;
 	}
 
-	key_buffer = args->key_descriptor->buffer;
-
-	if (!key_buffer ||
-	    (!key_buffer->public_data && !key_buffer->private_data) ||
-	    (key_buffer->public_data && !key_buffer->public_length) ||
-	    (key_buffer->private_data && !key_buffer->private_length)) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!args->key_descriptor->buffer) {
+		status = SMW_STATUS_NO_KEY_BUFFER;
 		goto end;
 	}
 
@@ -961,25 +1086,36 @@ int smw_import_key(struct smw_import_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	key_desc = &import_key_args.key_descriptor;
+
+	public_data = smw_keymgr_get_public_data(key_desc);
+	public_length = smw_keymgr_get_public_length(key_desc);
+	private_data = smw_keymgr_get_private_data(key_desc);
+	private_length = smw_keymgr_get_private_length(key_desc);
+
+	if ((!public_data && !private_data) ||
+	    (public_data && !public_length) ||
+	    (private_data && !private_length)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
 	status = smw_utils_execute_operation(OPERATION_ID_IMPORT_KEY,
 					     &import_key_args, subsystem_id);
 
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (key_buffer->public_data && key_buffer->private_data)
-		import_key_args.key_descriptor.identifier.privacy_id =
-			SMW_KEYMGR_PRIVACY_ID_PAIR;
-	else if (key_buffer->public_data)
-		import_key_args.key_descriptor.identifier.privacy_id =
-			SMW_KEYMGR_PRIVACY_ID_PUBLIC;
+	if (public_data && private_data)
+		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PAIR;
+	else if (public_data)
+		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
 	else
 		/* Only private data is set */
-		import_key_args.key_descriptor.identifier.privacy_id =
-			SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 
-	set_key_identifier(&import_key_args.key_descriptor);
-	set_key_buffer_format(&import_key_args.key_descriptor);
+	set_key_identifier(key_desc);
+	set_key_buffer_format(key_desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -992,12 +1128,15 @@ int smw_export_key(struct smw_export_key_args *args)
 
 	struct smw_keymgr_export_key_args export_key_args;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	struct smw_keypair_buffer *key_buffer;
+	struct smw_keymgr_descriptor *key_desc;
 	unsigned int security_size;
 	enum smw_config_key_type_id type_id;
-	enum smw_keymgr_format_id format_id;
-	unsigned int public_length;
+	unsigned char *public_data;
+	unsigned char *private_data;
 	unsigned int private_length;
+	unsigned int public_length;
+	unsigned int exp_pub_length;
+	unsigned int exp_priv_length;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1006,13 +1145,8 @@ int smw_export_key(struct smw_export_key_args *args)
 		goto end;
 	}
 
-	key_buffer = args->key_descriptor->buffer;
-
-	if (!key_buffer ||
-	    (!key_buffer->public_data && !key_buffer->private_data) ||
-	    (key_buffer->public_data && !key_buffer->public_length) ||
-	    (key_buffer->private_data && !key_buffer->private_length)) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!args->key_descriptor->buffer) {
+		status = SMW_STATUS_NO_KEY_BUFFER;
 		goto end;
 	}
 
@@ -1020,20 +1154,32 @@ int smw_export_key(struct smw_export_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	subsystem_id = export_key_args.key_descriptor.identifier.subsystem_id;
-	security_size = export_key_args.key_descriptor.identifier.security_size;
-	type_id = export_key_args.key_descriptor.identifier.type_id;
-	format_id = export_key_args.key_descriptor.format_id;
+	key_desc = &export_key_args.key_descriptor;
+
+	public_data = smw_keymgr_get_public_data(key_desc);
+	public_length = smw_keymgr_get_public_length(key_desc);
+	private_data = smw_keymgr_get_private_data(key_desc);
+	private_length = smw_keymgr_get_private_length(key_desc);
+
+	if ((!public_data && !private_data) ||
+	    (public_data && !public_length) ||
+	    (private_data && !private_length)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	subsystem_id = key_desc->identifier.subsystem_id;
+	security_size = key_desc->identifier.security_size;
+	type_id = key_desc->identifier.type_id;
 	status = smw_keymgr_get_buffers_lengths(type_id, security_size,
-						format_id, &public_length,
-						&private_length);
+						key_desc->format_id,
+						&exp_pub_length,
+						&exp_priv_length);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if ((key_buffer->public_data &&
-	     key_buffer->public_length < public_length) ||
-	    (key_buffer->private_data &&
-	     key_buffer->private_length < private_length)) {
+	if ((public_data && public_length < exp_pub_length) ||
+	    (private_data && private_length < exp_priv_length)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
@@ -1043,7 +1189,7 @@ int smw_export_key(struct smw_export_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	set_key_buffer_format(&export_key_args.key_descriptor);
+	set_key_buffer_format(key_desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1080,10 +1226,10 @@ int smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
 
+	struct smw_keymgr_descriptor key_desc = { 0 };
 	enum smw_config_key_type_id type_id;
-	enum smw_keymgr_format_id format_id;
-	unsigned int *public_length;
-	unsigned int *private_length;
+	unsigned int public_length;
+	unsigned int private_length;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1092,29 +1238,31 @@ int smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 		goto end;
 	}
 
-	if (!descriptor->type_name || !descriptor->security_size ||
-	    !descriptor->buffer) {
+	if (!descriptor->type_name || !descriptor->security_size) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
 
-	status = smw_config_get_key_type_id(descriptor->type_name, &type_id);
+	if (!descriptor->buffer) {
+		status = SMW_STATUS_NO_KEY_BUFFER;
+		goto end;
+	}
+
+	status = smw_keymgr_convert_descriptor(descriptor, &key_desc);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = get_format_id(descriptor->buffer->format_name, &format_id);
+	type_id = key_desc.identifier.type_id;
+	status =
+		smw_keymgr_get_buffers_lengths(type_id,
+					       descriptor->security_size,
+					       key_desc.format_id,
+					       &public_length, &private_length);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	public_length = &descriptor->buffer->public_length;
-	private_length = &descriptor->buffer->private_length;
-
-	status = smw_keymgr_get_buffers_lengths(type_id,
-						descriptor->security_size,
-						format_id, public_length,
-						private_length);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	smw_keymgr_set_public_length(&key_desc, public_length);
+	smw_keymgr_set_private_length(&key_desc, private_length);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

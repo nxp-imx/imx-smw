@@ -30,7 +30,7 @@
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
 		"test_error": "KEY_BUFFER_NULL",
-		"result": "SMW_STATUS_INVALID_PARAM",
+		"result": "SMW_STATUS_NO_KEY_BUFFER",
 		"depends": 1
 	},
 	"subtest 6": { // No buffers are set

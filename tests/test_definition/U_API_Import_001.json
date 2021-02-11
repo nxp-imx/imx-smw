@@ -57,7 +57,7 @@
 		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"key_id": 0,
 		"test_error": "KEY_BUFFER_NULL",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_NO_KEY_BUFFER"
 	},
 	"subtest 7": { // Neither private key nor public key buffer is set
 		"command": "IMPORT_NIST",

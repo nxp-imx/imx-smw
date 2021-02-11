@@ -5,6 +5,7 @@
 #ifndef __UTIL_KEY_H__
 #define __UTIL_KEY_H__
 
+#include <assert.h>
 #include <limits.h>
 #include <json_object.h>
 
@@ -24,6 +25,61 @@
 #define KEY_SECURITY_NOT_SET UINT_MAX
 #define KEY_ID_NOT_SET	     0
 #define KEY_LENGTH_NOT_SET   0
+
+/**
+ * struct keypair_ops - Test keypair with operations
+ * @desc: SMW key descriptor
+ * @keys: Pointer to the SMW keypair buffer
+ * @public_data: Get the @keys' public data reference
+ * @public_length: Get the @keys' public length reference
+ * @private_data: Get the @keys' private data reference
+ * @private_length: Get the @keys' private length reference
+ *
+ * This structure is internal to the test enabling to handle any
+ * SMW keypair object referenced in the `struct smw_keypair_buffer`.
+ * Operation function pointers are setup when calling util_key_desc_init()
+ * or util_key_desc_set_key() functions.
+ */
+struct keypair_ops {
+	struct smw_key_descriptor desc;
+	struct smw_keypair_buffer *keys;
+	unsigned char **(*public_data)(struct keypair_ops *this);
+	unsigned int *(*public_length)(struct keypair_ops *this);
+	unsigned char **(*private_data)(struct keypair_ops *this);
+	unsigned int *(*private_length)(struct keypair_ops *this);
+};
+
+#define key_public_data(this)                                                  \
+	({                                                                     \
+		__typeof__(this) _this = (this);                               \
+		assert(_this);                                                 \
+		assert(_this->public_data);                                    \
+		_this->public_data(_this);                                     \
+	})
+
+#define key_public_length(this)                                                \
+	({                                                                     \
+		__typeof__(this) _this = (this);                               \
+		assert(_this);                                                 \
+		assert(_this->public_length);                                  \
+		_this->public_length(_this);                                   \
+	})
+
+#define key_private_data(this)                                                 \
+	({                                                                     \
+		__typeof__(this) _this = (this);                               \
+		assert(_this);                                                 \
+		assert(_this->private_data);                                   \
+		_this->private_data(_this);                                    \
+	})
+
+#define key_private_length(this)                                               \
+	({                                                                     \
+		__typeof__(this) _this = (this);                               \
+		assert(_this);                                                 \
+		assert(_this->private_length);                                 \
+		_this->private_length(_this);                                  \
+	})
 
 /**
  * struct key_identifier_node - Node of key identifier linked list.
@@ -49,57 +105,57 @@ struct key_identifier_list {
 
 /**
  * util_key_is_id_set() - Return if key id is defined
- * @desc: SMW key descriptor
+ * @key_test: Test keypair structure with operations
  *
  * Return:
  * false if not set, otherwise true
  */
-static inline int util_key_is_id_set(struct smw_key_descriptor *desc)
+static inline int util_key_is_id_set(struct keypair_ops *key_test)
 {
-	return (desc->id != KEY_ID_NOT_SET);
+	return (key_test->desc.id != KEY_ID_NOT_SET);
 }
 
 /**
  * util_key_is_security_set() - Return if security size defined
- * @desc: SMW key descriptor
+ * @key_test: Test keypair structure with operations
  *
  * Return:
  * false if not set, otherwise true
  */
-static inline int util_key_is_security_set(struct smw_key_descriptor *desc)
+static inline int util_key_is_security_set(struct keypair_ops *key_test)
 {
-	return (desc->security_size != KEY_SECURITY_NOT_SET);
+	return (key_test->desc.security_size != KEY_SECURITY_NOT_SET);
 }
 
 /**
  * util_key_is_public_len_set() - Return if public key length is defined
- * @key: SMW keypair buffer
+ * @key_test: Test keypair structure with operations
  *
  * Return:
  * false if not set, otherwise true
  */
-static inline int util_key_is_public_len_set(struct smw_keypair_buffer *key)
+static inline int util_key_is_public_len_set(struct keypair_ops *key_test)
 {
-	return (key->public_length != KEY_LENGTH_NOT_SET);
+	return (*key_public_length(key_test) != KEY_LENGTH_NOT_SET);
 }
 
 /**
  * util_key_is_private_len_set() - Return if private key length is defined
- * @key: SMW keypair buffer
+ * @key_test: Test keypair structure with operations
  *
  * Return:
  * false if not set, otherwise true
  */
-static inline int util_key_is_private_len_set(struct smw_keypair_buffer *key)
+static inline int util_key_is_private_len_set(struct keypair_ops *key_test)
 {
-	return (key->private_length != KEY_LENGTH_NOT_SET);
+	return (*key_private_length(key_test) != KEY_LENGTH_NOT_SET);
 }
 
 /**
  * util_key_add_node() - Add a new node in a key identifier linked list.
  * @key_identifiers: Pointer to linked list.
  * @id: Local ID of the key identifier. Comes from test definition file.
- * @key_desc: SMW key descriptor containing key information to save
+ * @key_test: Test keypair structure with operations to save
  *
  * Return:
  * PASSED                   - Success.
@@ -107,7 +163,7 @@ static inline int util_key_is_private_len_set(struct smw_keypair_buffer *key)
  * -BAD_ARGS                - One of the argument is not correct.
  */
 int util_key_add_node(struct key_identifier_list **key_identifiers,
-		      unsigned int id, struct smw_key_descriptor *key_desc);
+		      unsigned int id, struct keypair_ops *key_test);
 
 /**
  * util_key_clear_list() - Clear key identifier linked list.
@@ -122,7 +178,7 @@ void util_key_clear_list(struct key_identifier_list *key_identifiers);
  * util_key_find_key_node() - Search a key identifier node.
  * @key_identifiers: Key identifier linked list where the research is done.
  * @id: Id of the key identifier.
- * @key_desc: SMW key descriptor to fill with key information saved
+ * @key_test: Test keypair structure with operations to fill
  *
  * Return:
  * PASSED        - Success.
@@ -130,12 +186,11 @@ void util_key_clear_list(struct key_identifier_list *key_identifiers);
  * -BAD_ARGS     - One of the argument is not correct.
  */
 int util_key_find_key_node(struct key_identifier_list *key_identifiers,
-			   unsigned int id,
-			   struct smw_key_descriptor *key_desc);
+			   unsigned int id, struct keypair_ops *key_test);
 
 /**
  * util_key_desc_init() - Initialize SMW key descriptor fields
- * @desc: SMW key descriptor
+ * @key_test: Test keypair structure with operations
  * @key: SMW keypair buffer (can be NULL)
  *
  * Initialize key descriptor fields with default unset value.
@@ -146,12 +201,12 @@ int util_key_find_key_node(struct key_identifier_list *key_identifiers,
  * PASSED    - Success
  * -BAD_ARGS - Bad function argument
  */
-int util_key_desc_init(struct smw_key_descriptor *desc,
+int util_key_desc_init(struct keypair_ops *key_test,
 		       struct smw_keypair_buffer *key);
 
 /**
  * util_key_read_descriptor() - Read the key descriptor definition
- * @desc: SMW Key descriptor to setup
+ * @key_test: Test keypair structure with operations
  * @key_id: Test application key id
  * @params: json-c object
  *
@@ -166,7 +221,28 @@ int util_key_desc_init(struct smw_key_descriptor *desc,
  * -BAD_ARGS                - One of the arguments is bad.
  * -FAILED                  - Error in definition file
  */
-int util_key_read_descriptor(struct smw_key_descriptor *desc, int *key_id,
+int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 			     json_object *params);
+
+/**
+ * util_key_desc_set_key() - Set a SMW keypair to the key descriptor
+ * @key_test: Test keypair structure with operations
+ * @key: SMW keypair buffer
+ *
+ * Setup the test keypair to use the @key SMW keypair buffer.
+ * Initialize the @key with default unset value.
+ *
+ * Return:
+ * PASSED    - Success
+ * -BAD_ARGS - Bad function argument
+ */
+int util_key_desc_set_key(struct keypair_ops *key_test,
+			  struct smw_keypair_buffer *key);
+
+/**
+ * util_key_free_key() - Free test keypair buffer
+ * @key_test: Test keypair structure with operations
+ */
+void util_key_free_key(struct keypair_ops *key_test);
 
 #endif /* __UTIL_KEY_H__ */

@@ -8,24 +8,73 @@
 #include "util.h"
 #include "util_key.h"
 
+static struct smw_keypair_gen *get_keypair_gen(struct keypair_ops *this)
+{
+	assert(this && this->keys);
+	return &this->keys->gen;
+}
+
+static unsigned char **get_public_data_gen(struct keypair_ops *this)
+{
+	struct smw_keypair_gen *key = get_keypair_gen(this);
+
+	return &key->public_data;
+}
+
+static unsigned int *get_public_length_gen(struct keypair_ops *this)
+{
+	struct smw_keypair_gen *key = get_keypair_gen(this);
+
+	return &key->public_length;
+}
+
+static unsigned char **get_private_data_gen(struct keypair_ops *this)
+{
+	struct smw_keypair_gen *key = get_keypair_gen(this);
+
+	return &key->private_data;
+}
+
+static unsigned int *get_private_length_gen(struct keypair_ops *this)
+{
+	struct smw_keypair_gen *key = get_keypair_gen(this);
+
+	return &key->private_length;
+}
+
+static void setup_keypair_ops(struct keypair_ops *key_test)
+{
+	if (!key_test->keys) {
+		key_test->public_data = NULL;
+		key_test->public_length = NULL;
+		key_test->private_data = NULL;
+		key_test->private_length = NULL;
+	} else {
+		key_test->public_data = &get_public_data_gen;
+		key_test->public_length = &get_public_length_gen;
+		key_test->private_data = &get_private_data_gen;
+		key_test->private_length = &get_private_length_gen;
+	}
+}
+
 /**
  * util_key_get_node_info() - Get the key information saved in the key node
  * @node: Key node.
- * @key_desc: SMW key descriptor to fill with key information saved.
+ * @key_test: Test keypair structure with operations to fill with saved data.
  *
- * Function fills the @key_desc fields functions of the key node fields
- * saved.
- * If a @key_desc field is already set, don't overwrite it.
+ * Function fills the @key_test descriptor fields functions of the
+ * key node fields saved.
+ * If a descriptor field is already set, don't overwrite it.
  *
  */
 static void util_key_get_node_info(struct key_identifier_node *node,
-				   struct smw_key_descriptor *key_desc)
+				   struct keypair_ops *key_test)
 {
-	if (!util_key_is_id_set(key_desc))
-		key_desc->id = node->key_identifier;
+	if (!util_key_is_id_set(key_test))
+		key_test->desc.id = node->key_identifier;
 
-	if (!util_key_is_security_set(key_desc))
-		key_desc->security_size = node->security_size;
+	if (!util_key_is_security_set(key_test))
+		key_test->desc.security_size = node->security_size;
 }
 
 /**
@@ -83,7 +132,7 @@ static int read_key(unsigned char **key, unsigned int *length,
 
 /**
  * keypair_read() - Read the public and private key definition
- * @key: SMW Key buffer parameter to setup
+ * @key_test: Test keypair structure with operations
  * @params: json-c object
  *
  * Read and set the key format, public key buffer and private key buffer.
@@ -98,41 +147,43 @@ static int read_key(unsigned char **key, unsigned int *length,
  * -BAD_ARGS                - One of the arguments is bad.
  * -FAILED                  - Error in definition file
  */
-static int keypair_read(struct smw_keypair_buffer *key, json_object *params)
+static int keypair_read(struct keypair_ops *key_test, json_object *params)
 {
-	int ret;
+	int ret = ERR_CODE(PASSED);
 	json_object *okey;
 
-	if (!params || !key) {
+	if (!params || !key_test) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
 
 	if (json_object_object_get_ex(params, KEY_FORMAT_OBJ, &okey))
-		key->format_name = json_object_get_string(okey);
+		key_test->keys->format_name = json_object_get_string(okey);
 
 	if (json_object_object_get_ex(params, PUB_KEY_OBJ, &okey)) {
-		ret = read_key(&key->public_data, &key->public_length,
-			       key->format_name, okey);
+		ret = read_key(key_public_data(key_test),
+			       key_public_length(key_test),
+			       key_test->keys->format_name, okey);
 
 		if (ret != ERR_CODE(PASSED))
 			return ret;
 	}
 
 	if (json_object_object_get_ex(params, PRIV_KEY_OBJ, &okey))
-		ret = read_key(&key->private_data, &key->private_length,
-			       key->format_name, okey);
+		ret = read_key(key_private_data(key_test),
+			       key_private_length(key_test),
+			       key_test->keys->format_name, okey);
 
 	return ret;
 }
 
 int util_key_add_node(struct key_identifier_list **key_identifiers,
-		      unsigned int id, struct smw_key_descriptor *key_desc)
+		      unsigned int id, struct keypair_ops *key_test)
 {
 	struct key_identifier_node *head = NULL;
 	struct key_identifier_node *node;
 
-	if (!key_desc)
+	if (!key_test)
 		return ERR_CODE(BAD_ARGS);
 
 	node = malloc(sizeof(*node));
@@ -142,8 +193,8 @@ int util_key_add_node(struct key_identifier_list **key_identifiers,
 	}
 
 	node->id = id;
-	node->key_identifier = key_desc->id;
-	node->security_size = key_desc->security_size;
+	node->key_identifier = key_test->desc.id;
+	node->security_size = key_test->desc.security_size;
 	node->next = NULL;
 
 	if (!*key_identifiers) {
@@ -188,11 +239,11 @@ void util_key_clear_list(struct key_identifier_list *key_identifiers)
 }
 
 int util_key_find_key_node(struct key_identifier_list *key_identifiers,
-			   unsigned int id, struct smw_key_descriptor *key_desc)
+			   unsigned int id, struct keypair_ops *key_test)
 {
 	struct key_identifier_node *head = NULL;
 
-	if (!key_identifiers || !key_desc) {
+	if (!key_identifiers || !key_test) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -201,7 +252,7 @@ int util_key_find_key_node(struct key_identifier_list *key_identifiers,
 
 	while (head) {
 		if (head->id == id) {
-			util_key_get_node_info(head, key_desc);
+			util_key_get_node_info(head, key_test);
 			return ERR_CODE(PASSED);
 		}
 
@@ -211,40 +262,52 @@ int util_key_find_key_node(struct key_identifier_list *key_identifiers,
 	return ERR_CODE(KEY_NOTFOUND);
 }
 
-int util_key_desc_init(struct smw_key_descriptor *desc,
+int util_key_desc_init(struct keypair_ops *key_test,
 		       struct smw_keypair_buffer *key)
 {
-	if (!desc) {
+	struct smw_key_descriptor *desc;
+
+	if (!key_test) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
+
+	desc = &key_test->desc;
 
 	desc->type_name = NULL;
 	desc->security_size = KEY_SECURITY_NOT_SET;
 	desc->id = KEY_ID_NOT_SET;
 	desc->buffer = key;
 
+	key_test->keys = key;
+
+	/* Initialize the keypair buffer and operations */
+	setup_keypair_ops(key_test);
+
 	if (key) {
 		key->format_name = NULL;
-		key->public_data = NULL;
-		key->public_length = KEY_LENGTH_NOT_SET;
-		key->private_data = NULL;
-		key->private_length = KEY_LENGTH_NOT_SET;
+		*key_public_data(key_test) = NULL;
+		*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
+		*key_private_data(key_test) = NULL;
+		*key_private_length(key_test) = KEY_LENGTH_NOT_SET;
 	}
 
 	return ERR_CODE(PASSED);
 }
 
-int util_key_read_descriptor(struct smw_key_descriptor *desc, int *key_id,
+int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 			     json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
 	json_object *obj;
+	struct smw_key_descriptor *desc;
 
-	if (!params || !desc || !key_id) {
+	if (!params || !key_test || !key_id) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
+
+	desc = &key_test->desc;
 
 	/* Read 'key_type' parameter if defined */
 	if (json_object_object_get_ex(params, KEY_TYPE_OBJ, &obj))
@@ -258,8 +321,45 @@ int util_key_read_descriptor(struct smw_key_descriptor *desc, int *key_id,
 	if (json_object_object_get_ex(params, KEY_ID_OBJ, &obj))
 		*key_id = json_object_get_int(obj);
 
-	if (desc->buffer)
-		ret = keypair_read(desc->buffer, params);
+	/* Setup the key ops function of the key type */
+	setup_keypair_ops(key_test);
+
+	if (key_test->keys)
+		ret = keypair_read(key_test, params);
 
 	return ret;
+}
+
+int util_key_desc_set_key(struct keypair_ops *key_test,
+			  struct smw_keypair_buffer *key)
+{
+	if (!key_test || !key) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	key_test->desc.buffer = key;
+	key_test->keys = key;
+
+	/* Initialize the keypair buffer and operations */
+	setup_keypair_ops(key_test);
+
+	key->format_name = NULL;
+	*key_public_data(key_test) = NULL;
+	*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
+	*key_private_data(key_test) = NULL;
+	*key_private_length(key_test) = KEY_LENGTH_NOT_SET;
+
+	return ERR_CODE(PASSED);
+}
+
+void util_key_free_key(struct keypair_ops *key_test)
+{
+	if (key_test) {
+		if (*key_public_data(key_test))
+			free(*key_public_data(key_test));
+
+		if (*key_private_data(key_test))
+			free(*key_private_data(key_test));
+	}
 }

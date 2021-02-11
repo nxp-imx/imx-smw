@@ -123,6 +123,7 @@ static CK_RV ec_key_desc(struct smw_key_descriptor *desc,
 			 struct libobj_obj *obj)
 {
 	CK_RV ret;
+	struct smw_keypair_gen *smw_key;
 	const struct curve_def *curve;
 	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 
@@ -138,16 +139,17 @@ static CK_RV ec_key_desc(struct smw_key_descriptor *desc,
 	 * with the EC key object's buffer
 	 */
 	if (desc->buffer) {
+		smw_key = &desc->buffer->gen;
 		/*
 		 * Remove the first byte of the Public Buffer
 		 * DER ANSI X9.62 uncompress code byte
 		 */
 		if (key->point_q.array) {
-			desc->buffer->public_data = key->point_q.array + 1;
-			desc->buffer->public_length = key->point_q.number - 1;
+			smw_key->public_data = key->point_q.array + 1;
+			smw_key->public_length = key->point_q.number - 1;
 		}
-		desc->buffer->private_data = key->value_d.value;
-		desc->buffer->private_length = key->value_d.length;
+		smw_key->private_data = key->value_d.value;
+		smw_key->private_length = key->value_d.length;
 	}
 
 	return ret;
@@ -156,6 +158,7 @@ static CK_RV ec_key_desc(struct smw_key_descriptor *desc,
 static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 			     struct libobj_obj *obj)
 {
+	struct smw_keypair_gen *smw_key;
 	const struct cipher_def *cipher = ciphers;
 	struct libobj_key_cipher *key = get_subkey_from(obj);
 	CK_KEY_TYPE key_type = get_key_type(obj);
@@ -194,8 +197,9 @@ static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 	 * with the Cipher key object's buffer
 	 */
 	if (desc->buffer) {
-		desc->buffer->private_data = key->value.array;
-		desc->buffer->private_length = key->value.number;
+		smw_key = &desc->buffer->gen;
+		smw_key->private_data = key->value.array;
+		smw_key->private_length = key->value.number;
 	}
 
 	return CKR_OK;

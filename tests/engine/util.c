@@ -433,7 +433,7 @@ void dbg_dumphex(const char *function, int line, char *msg, void *buf,
 	printf("%s:%d %s (%p-%zu)\n", function, line, msg, buf, len);
 
 	for (idx = 0; idx < len; idx++) {
-		if (((idx % 16) == 0) && (idx > 0)) {
+		if (((idx % 16) == 0) && idx > 0) {
 			printf("%s\n", out);
 			off = 0;
 		}
@@ -441,9 +441,8 @@ void dbg_dumphex(const char *function, int line, char *msg, void *buf,
 				((char *)buf)[idx]);
 	}
 
-	if (off > 0) {
+	if (off > 0)
 		printf("%s\n", out);
-	}
 
 	(void)fflush(stdout);
 }

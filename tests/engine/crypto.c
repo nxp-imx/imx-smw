@@ -79,7 +79,7 @@ static int get_hash_digest_len(char *algo, unsigned int *len)
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
  */
 static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
-			     unsigned char *digest_hex, unsigned digest_len,
+			     unsigned char *digest_hex, unsigned int digest_len,
 			     int is_api_test)
 {
 	int ret = ERR_CODE(PASSED);

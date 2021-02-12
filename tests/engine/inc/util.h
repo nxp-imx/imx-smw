@@ -260,7 +260,7 @@ int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
  * PASSED           - Success.
  * -BAD_PARAM_TYPE  - Test error is not suuported.
  * -BAD_ARGS        - One of the argument is bad.
-  */
+ */
 int util_read_test_error(enum arguments_test_err_case *error,
 			 json_object *params);
 

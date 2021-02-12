@@ -44,7 +44,7 @@ static int set_gen_opt_params(json_object *params,
 {
 	int res;
 	int status = SMW_STATUS_INVALID_PARAM;
-	struct smw_keypair_buffer *key;
+	struct smw_key_descriptor *desc;
 
 	if (!params || !args || !args->key_descriptor ||
 	    !args->key_descriptor->buffer)
@@ -56,29 +56,27 @@ static int set_gen_opt_params(json_object *params,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	key = args->key_descriptor->buffer;
+	desc = args->key_descriptor;
 
 	/*
 	 * If 'pub_key' optional parameter is set, it defines
 	 * the public key length in byte. If the length is 1,
-	 * retreive the public key length by calling SMW.
+	 * retrieve the public key length by calling SMW.
 	 * Else if 'pub_key' not set, public key length is not set and
 	 * there is not public key to export.
 	 */
-	if (util_key_is_public_len_set(key)) {
-		if (key->public_length == 1) {
-			status = smw_get_key_buffers_lengths(
-				args->key_descriptor);
+	if (util_key_is_public_len_set(desc->buffer)) {
+		if (desc->buffer->public_length == 1) {
+			status = smw_get_key_buffers_lengths(desc);
 			if (status != SMW_STATUS_OK) {
-				DBG_PRINT(
-					"Failed to get public key buffer len");
+				DBG_PRINT("Error public key buffer len");
 				return ERR_CODE(BAD_RESULT);
 			}
 		}
 
-		key->public_data = malloc(key->public_length);
+		desc->buffer->public_data = malloc(desc->buffer->public_length);
 
-		if (!key->public_data) {
+		if (!desc->buffer->public_data) {
 			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
@@ -180,7 +178,7 @@ static int set_export_opt_params(json_object *params,
 		break;
 	}
 
-	/* Alllocate buffers function of the requested key */
+	/* Allocate buffers function of the requested key */
 	if (key_buffer->private_length) {
 		key_buffer->private_data = malloc(key_buffer->private_length);
 		if (!key_buffer->private_data) {
@@ -352,6 +350,7 @@ static int set_import_bad_args(json_object *params,
 			       struct smw_import_key_args **args)
 {
 	int ret;
+
 	if (!args || !*args || !(*args)->key_descriptor ||
 	    !(*args)->key_descriptor->buffer) {
 		DBG_PRINT_BAD_ARGS(__func__);

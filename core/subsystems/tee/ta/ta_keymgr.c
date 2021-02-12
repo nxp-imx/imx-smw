@@ -622,7 +622,7 @@ static TEE_Result set_import_key_public_attributes(TEE_Attribute **attr,
 }
 
 /**
- * set_import_keypair_attributes() - Set import attributes for keypair.
+ * set_import_keypair_attrs() - Set import attributes for keypair.
  * @attr: TEE Attribute structure to allocate and set.
  * @attr_count: Number of attributes to set.
  * @key_type: Key type.
@@ -637,11 +637,11 @@ static TEE_Result set_import_key_public_attributes(TEE_Attribute **attr,
  * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
  * Error code from conf_key_ecc_attribute().
  */
-static TEE_Result set_import_keypair_attributes(
-	TEE_Attribute **attr, uint32_t attr_count, enum tee_key_type key_type,
-	unsigned int security_size, unsigned char *priv_key,
-	unsigned int priv_key_len, unsigned char *pub_key,
-	unsigned int pub_key_len)
+static TEE_Result
+set_import_keypair_attrs(TEE_Attribute **attr, uint32_t attr_count,
+			 enum tee_key_type key_type, unsigned int security_size,
+			 unsigned char *priv_key, unsigned int priv_key_len,
+			 unsigned char *pub_key, unsigned int pub_key_len)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_Attribute *key_attr = NULL;
@@ -719,7 +719,7 @@ static TEE_Result set_import_key_private_attributes(TEE_Attribute **attr,
  * TEE_SUCCESS			- Success.
  * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is bad.
  * Error code from set_import_key_public_attributes().
- * Error code from set_import_keypair_attributes().
+ * Error code from set_import_keypair_attrs().
  * Error code from set_import_key_private_attributes().
  */
 static TEE_Result
@@ -746,12 +746,11 @@ set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
 
 	case TEE_TYPE_ECDSA_KEYPAIR:
 		*attr_count = NB_ATTR_ECDSA_KEYPAIR;
-		return set_import_keypair_attributes(attr,
-						     NB_ATTR_ECDSA_KEYPAIR,
-						     TEE_KEY_TYPE_ID_ECDSA,
-						     security_size, priv_key,
-						     priv_key_len, pub_key,
-						     pub_key_len);
+		return set_import_keypair_attrs(attr, NB_ATTR_ECDSA_KEYPAIR,
+						TEE_KEY_TYPE_ID_ECDSA,
+						security_size, priv_key,
+						priv_key_len, pub_key,
+						pub_key_len);
 
 	case TEE_TYPE_AES:
 	case TEE_TYPE_DES:

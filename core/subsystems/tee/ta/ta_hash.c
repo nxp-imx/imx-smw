@@ -94,7 +94,7 @@ TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	/* Compute digest */
 	res = TEE_DigestDoFinal(operation, chunk, chunkLen, hash, &hashLen);
 	if (res) {
-		EMSG("Failed to compute hash: 0x%x", res);
+		EMSG("Failed to compute digest: 0x%x", res);
 		goto exit;
 	}
 

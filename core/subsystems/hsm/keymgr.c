@@ -259,10 +259,8 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 		    SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST &&
 	    key_descriptor->identifier.type_id !=
 		    SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1) {
-		SMW_DBG_PRINTF(
-			ERROR,
-			"%s: HSM only exports ECDSA NIST and BR1 public key\n",
-			__func__);
+		SMW_DBG_PRINTF(ERROR, "%s: HSM unsupported exported key\n",
+			       __func__);
 		return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	}
 

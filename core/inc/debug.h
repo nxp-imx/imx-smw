@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 /* Debug levels */
@@ -65,6 +65,10 @@
 			_align = 1 << _align;                                  \
 		if (g_smw_ctx.ops.thread_self)                                 \
 			printf("(%lx)\n", g_smw_ctx.ops.thread_self());        \
+		if (!_addr) {                                                  \
+			printf("buffer address is NULL");                      \
+			break;                                                 \
+		}                                                              \
 		for (i = 0; i < _size; i++) {                                  \
 			printf("%.2x%s", (_addr)[i],                           \
 			       (i + 1) & (_align - 1) ? " " : "\n");           \

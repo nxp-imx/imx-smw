@@ -812,8 +812,10 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 
 	/* Check if the object can be destroyed */
 	ret = obj_is_destoyable(hsession, obj);
-	if (ret == CKR_OK)
+	if (ret == CKR_OK) {
 		obj_free(obj, objects);
+		obj = NULL;
+	}
 
 end:
 	if (ret != CKR_OK)

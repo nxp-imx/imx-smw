@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 #include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "trace.h"
 
@@ -23,10 +22,12 @@ void trace_print(const char *function, int line, const char *format, ...)
 	}
 
 	nbchar += vsnprintf(&buf[nbchar], sizeof(buf) - nbchar, format, args);
-	if (sizeof(buf) - nbchar > 2)
-		sprintf(&buf[nbchar], "\n\r");
+	if (sizeof(buf) - nbchar > 2) {
+		if (sprintf(&buf[nbchar], "\n\r") < 0)
+			buf[nbchar] = '\0';
+	}
 
-	fprintf(stdout, "%s", buf);
+	(void)fprintf(stdout, "%s", buf);
 
 exit:
 	va_end(args);

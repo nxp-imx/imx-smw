@@ -94,7 +94,7 @@ static int sign(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 
-	op_generate_sign_args_t op_generate_sign_args;
+	op_generate_sign_args_t op_generate_sign_args = { 0 };
 
 	struct smw_crypto_sign_args *sign_args = args;
 	struct smw_keymgr_descriptor *key_descriptor =

@@ -89,7 +89,7 @@ static int generate_key(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 
-	op_generate_key_args_t op_generate_key_args;
+	op_generate_key_args_t op_generate_key_args = { 0 };
 
 	struct smw_keymgr_generate_key_args *generate_key_args = args;
 	struct smw_keymgr_descriptor *key_descriptor =
@@ -138,7 +138,6 @@ static int generate_key(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	op_generate_key_args.key_group = 0;
 	op_generate_key_args.key_info = HSM_KEY_INFO_MASTER;
 	if (generate_key_args->key_attributes.persistent_storage)
 		op_generate_key_args.key_info |= HSM_KEY_INFO_PERSISTENT;
@@ -280,7 +279,7 @@ static int export_key(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 
-	op_pub_key_recovery_args_t op_pub_key_recovery_args;
+	op_pub_key_recovery_args_t op_pub_key_recovery_args = { 0 };
 
 	struct smw_keymgr_export_key_args *export_key_args = args;
 	struct smw_keymgr_descriptor *key_descriptor =
@@ -328,8 +327,6 @@ static int export_key(struct hdl *hdl, void *args)
 			      &op_pub_key_recovery_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	op_pub_key_recovery_args.flags = 0;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_pub_key_recovery()\n"
@@ -387,7 +384,7 @@ static int delete_key(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 
-	op_manage_key_args_t manage_key_args;
+	op_manage_key_args_t manage_key_args = { 0 };
 
 	struct smw_keymgr_delete_key_args *delete_key_args = args;
 	struct smw_keymgr_descriptor *key_descriptor =
@@ -399,8 +396,6 @@ static int delete_key(struct hdl *hdl, void *args)
 	SMW_DBG_ASSERT(delete_key_args);
 
 	manage_key_args.key_identifier = &key_id;
-	manage_key_args.kek_identifier = 0;
-	manage_key_args.input_size = 0;
 	manage_key_args.flags = HSM_OP_MANAGE_KEY_FLAGS_DELETE;
 
 	status = set_key_type(key_descriptor->identifier.type_id,
@@ -408,10 +403,6 @@ static int delete_key(struct hdl *hdl, void *args)
 			      &manage_key_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	manage_key_args.key_group = 0;
-	manage_key_args.key_info = 0;
-	manage_key_args.input_data = NULL;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_manage_key()\n"

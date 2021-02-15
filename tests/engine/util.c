@@ -297,8 +297,11 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 				otmp = json_object_array_get_idx(obuf, idx);
 
 			len_tmp = json_object_get_string_len(otmp);
-			memcpy(buf_tmp, json_object_get_string(otmp), len_tmp);
-			buf_tmp += len_tmp;
+			if (len_tmp && json_object_get_string(otmp)) {
+				memcpy(buf_tmp, json_object_get_string(otmp),
+				       len_tmp);
+				buf_tmp += len_tmp;
+			}
 		}
 
 		*buf_tmp = '\0';
@@ -360,6 +363,10 @@ int get_test_name(char **test_name, char *test_definition_file)
 	}
 
 	filename = basename(test_definition_file);
+	if (!filename) {
+		DBG_PRINT("test definition file name incorrect");
+		return res;
+	}
 
 	/* First check test definition file extension */
 	file_extension = strrchr(filename, '.');

@@ -51,6 +51,11 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, json_object *obj)
 	DBG_PRINT("Get nb array elem %d", nb_elem);
 
 	tlv->type = json_object_get_string(json_object_array_get_idx(obj, 0));
+	if (!tlv->type) {
+		DBG_PRINT("TLV empty");
+		return ret;
+	}
+
 	/* Add length of the 'type" null terminated string */
 	*len += strlen(tlv->type) + 1;
 

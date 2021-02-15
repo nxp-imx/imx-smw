@@ -36,6 +36,12 @@ static int execute_generate_cmd(char *cmd, struct json_object *params,
 				struct key_identifier_list **key_ids,
 				int *status)
 {
+	/* Check mandatory params */
+	if (!common_params->subsystem) {
+		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
 	if (!strcmp(cmd, GENERATE))
 		return generate_key(params, common_params, NULL, key_ids,
 				    status);
@@ -87,6 +93,12 @@ static int execute_hash_cmd(char *algo_name, struct json_object *params,
 			    struct common_parameters *common_params,
 			    int *status)
 {
+	/* Check mandatory params */
+	if (!common_params->subsystem) {
+		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
 	if (!strlen(algo_name) || !strcmp(algo_name, MD5_ALG) ||
 	    !strcmp(algo_name, SHA1_ALG) || !strcmp(algo_name, SHA224_ALG) ||
 	    !strcmp(algo_name, SHA256_ALG) || !strcmp(algo_name, SHA384_ALG) ||
@@ -115,6 +127,12 @@ static int execute_import_cmd(char *cmd, struct json_object *params,
 			      struct common_parameters *common_params,
 			      struct key_identifier_list **key_ids, int *status)
 {
+	/* Check mandatory params */
+	if (!common_params->subsystem) {
+		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
 	if (!strcmp(cmd, IMPORT))
 		return import_key(params, common_params, NULL, key_ids, status);
 	else if (!strcmp(cmd, IMPORT_AES))
@@ -338,16 +356,9 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 	 * 'subsystem' is a mandatory parameter for all commands except
 	 * 'DELETE' and 'EXPORT'.
 	 */
-	if (strcmp(command_name, DELETE) &&
-	    strncmp(command_name, EXPORT, strlen(EXPORT)) &&
-	    !json_object_object_get_ex(obj_iter->val, SUBSYSTEM_OBJ,
-				       &sub_obj)) {
-		res = ERR_CODE(MISSING_PARAMS);
-		goto exit;
-	} else {
+	if (json_object_object_get_ex(obj_iter->val, SUBSYSTEM_OBJ, &sub_obj))
 		common_params.subsystem =
 			(char *)json_object_get_string(sub_obj);
-	}
 
 	/*
 	 * Get dependent subtest parameter 'depends' set in test definition
@@ -364,10 +375,17 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 		}
 
 		/* Expected dependent subtest status */
-		sprintf(depends_status, "%s%d: PASSED\n", SUBTEST_OBJ, depends);
+		if (sprintf(depends_status, "%s%d: PASSED\n", SUBTEST_OBJ,
+			    depends) < 0) {
+			res = ERR_CODE(INTERNAL);
+			goto exit;
+		}
 
 		/* Backup current status file position */
-		fgetpos(status_file, &status_file_pos);
+		if (fgetpos(status_file, &status_file_pos)) {
+			res = ERR_CODE(INTERNAL);
+			goto exit;
+		}
 
 		/* Set status file position to beginning */
 		rewind(status_file);
@@ -382,7 +400,10 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 		}
 
 		/* Restore status file position */
-		fsetpos(status_file, &status_file_pos);
+		if (fsetpos(status_file, &status_file_pos)) {
+			res = ERR_CODE(INTERNAL);
+			goto exit;
+		}
 
 		if (!depends) {
 			res = ERR_CODE(NOT_RUN);
@@ -549,7 +570,8 @@ exit:
 	if (file_path)
 		free(file_path);
 
-	fclose(status_file);
+	if (status_file)
+		fclose(status_file);
 
 	return test_status;
 }

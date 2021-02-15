@@ -102,8 +102,11 @@ static int read_key(unsigned char **key, unsigned int *length,
 	unsigned int json_len = UINT_MAX;
 
 	ret = util_read_json_buffer(&buf, &len, &json_len, okey);
-	if (ret != ERR_CODE(PASSED))
+	if (ret != ERR_CODE(PASSED)) {
+		if (buf)
+			free(buf);
 		return ret;
+	}
 
 	/* Either test definition specify:
 	 * - length != 0 but no data

@@ -39,19 +39,19 @@
 	do {                                                                   \
 		__typeof__(file) f = (file);                                   \
 		__typeof__(error_code) error = (error_code);                   \
-		fprintf(f, "%s: %s", subtest, status);                         \
+		(void)fprintf(f, "%s: %s", subtest, status);                   \
 		if (error)                                                     \
-			fprintf(f, " (%s)\n", error);                          \
+			(void)fprintf(f, " (%s)\n", error);                    \
 		else                                                           \
-			fprintf(f, "\n");                                      \
+			(void)fprintf(f, "\n");                                \
 	} while (0)
 
 #define FPRINT_TEST_INTERNAL_FAILURE(file, test_name)                          \
-	fprintf(file, "%s: %s (%s)\n", test_name, ERR_STATUS(FAILED),          \
-		ERR_STATUS(INTERNAL))
+	(void)fprintf(file, "%s: %s (%s)\n", test_name, ERR_STATUS(FAILED),    \
+		      ERR_STATUS(INTERNAL))
 
 #define FPRINT_TEST_STATUS(file, test_name, status)                            \
-	fprintf(file, "%s: %s\n", (test_name), (status))
+	(void)fprintf(file, "%s: %s\n", (test_name), (status))
 
 #define FPRINT_MESSAGE(file, ...) fprintf(file, __VA_ARGS__)
 

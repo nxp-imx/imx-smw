@@ -179,6 +179,7 @@ static unsigned int *private_length_key_gen(struct smw_keymgr_key_ops *this)
 }
 
 static struct smw_keymgr_key_ops keypair_gen_ops = {
+	.keys = NULL,
 	.public_data = &public_data_key_gen,
 	.public_length = &public_length_key_gen,
 	.private_data = &private_data_key_gen,
@@ -634,6 +635,13 @@ int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
 		goto end;
 	}
 
+	pub->buffer = buffer;
+	descriptor->pub = pub;
+
+	status = setup_key_ops(descriptor);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	if (public_length) {
 		public_data = SMW_UTILS_MALLOC(public_length);
 		if (!public_data) {
@@ -650,9 +658,6 @@ int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
 		}
 	}
 
-	pub->buffer = buffer;
-	descriptor->pub = pub;
-
 	smw_keymgr_set_public_data(descriptor, public_data);
 	smw_keymgr_set_public_length(descriptor, public_length);
 	smw_keymgr_set_private_data(descriptor, private_data);
@@ -660,6 +665,9 @@ int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
 
 end:
 	if (status != SMW_STATUS_OK) {
+		if (descriptor)
+			descriptor->pub = NULL;
+
 		if (public_data)
 			SMW_UTILS_FREE(public_data);
 

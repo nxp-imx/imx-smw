@@ -6,7 +6,6 @@
 #include <util.h>
 #include <string.h>
 #include <tee_internal_api.h>
-#include <tee_internal_api_extensions.h>
 
 #include "tee_subsystem.h"
 #include "ta_hash.h"

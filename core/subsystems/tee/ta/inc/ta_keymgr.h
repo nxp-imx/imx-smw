@@ -49,6 +49,8 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
  * @priv_key_len: @priv_key length in bytes.
  * @pub_key: Pointer to public key buffer.
  * @pub_key_len: @pub_key length in bytes.
+ * @modulus: Pointer to modulus buffer (RSA).
+ * @modulus_len: @modulus length in bytes.
  *
  * If the operation is successful @key_handle is allocated by the function
  * and must be freed by the caller.
@@ -61,7 +63,8 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
 TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 			 enum tee_key_type key_type, unsigned int security_size,
 			 unsigned char *priv_key, unsigned int priv_key_len,
-			 unsigned char *pub_key, unsigned int pub_key_len);
+			 unsigned char *pub_key, unsigned int pub_key_len,
+			 unsigned char *modulus, unsigned int modulus_len);
 
 /**
  * import_key() - Import a key or keypair.

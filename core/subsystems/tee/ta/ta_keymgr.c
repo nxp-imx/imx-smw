@@ -14,6 +14,8 @@
 /* Number of attributes switch key type */
 #define NB_ATTR_ECDSA_PUB_KEY 3
 #define NB_ATTR_ECDSA_KEYPAIR 4
+#define NB_ATTR_RSA_PUB_KEY   2
+#define NB_ATTR_RSA_KEYPAIR   3
 #define NB_ATTR_SYMM_KEY      1
 
 /* Persistent key object access flags */
@@ -66,6 +68,8 @@ static struct key_list *key_linked_list;
  * key_info must be ordered from lowest to highest.
  * Security sizes must be ordered from lowest to highest for one given
  * key type ID.
+ * If @security_size in set to SECURITY_SIZE_RANGE, the size is a range of value
+ * and the field is not used.
  */
 struct {
 	enum tee_key_type key_type;
@@ -100,17 +104,7 @@ struct {
 	  .ecc_curve = TEE_ECC_CURVE_NIST_P521,
 	  .usage = TEE_USAGE_SIGN | TEE_USAGE_VERIFY },
 	{ .key_type = TEE_KEY_TYPE_ID_AES,
-	  .security_size = 128,
-	  .obj_type = TEE_TYPE_AES,
-	  .ecc_curve = 0,
-	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_AES,
-	  .security_size = 192,
-	  .obj_type = TEE_TYPE_AES,
-	  .ecc_curve = 0,
-	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_AES,
-	  .security_size = 256,
+	  .security_size = SECURITY_SIZE_RANGE,
 	  .obj_type = TEE_TYPE_AES,
 	  .ecc_curve = 0,
 	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
@@ -120,12 +114,7 @@ struct {
 	  .ecc_curve = 0,
 	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
 	{ .key_type = TEE_KEY_TYPE_ID_DES3,
-	  .security_size = 112,
-	  .obj_type = TEE_TYPE_DES3,
-	  .ecc_curve = 0,
-	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_DES3,
-	  .security_size = 168,
+	  .security_size = SECURITY_SIZE_RANGE,
 	  .obj_type = TEE_TYPE_DES3,
 	  .ecc_curve = 0,
 	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
@@ -163,7 +152,13 @@ struct {
 	  .security_size = SECURITY_SIZE_RANGE,
 	  .obj_type = TEE_TYPE_HMAC_SM3,
 	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_MAC }
+	  .usage = TEE_USAGE_MAC },
+	{ .key_type = TEE_KEY_TYPE_ID_RSA,
+	  .security_size = SECURITY_SIZE_RANGE,
+	  .obj_type = TEE_TYPE_RSA_KEYPAIR,
+	  .ecc_curve = 0,
+	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_SIGN |
+		   TEE_USAGE_VERIFY }
 };
 
 /**
@@ -391,7 +386,7 @@ static TEE_Result is_persistent_key(uint32_t id, TEE_ObjectHandle *key_handle)
 static bool is_key_id_used(uint32_t id, bool persistent)
 {
 	TEE_Result res = TEE_ERROR_GENERIC;
-	TEE_ObjectHandle tmp_handle = { 0 };
+	TEE_ObjectHandle tmp_handle = TEE_HANDLE_NULL;
 	struct key_data *key = NULL;
 
 	FMSG("Executing %s", __func__);
@@ -534,19 +529,19 @@ static void shift_public_key(unsigned int key_size, unsigned int size,
  * @handle: Key handle.
  * @security_size: Key security size.
  * @pub_key: Pointer to public key buffer.
- * @pub_key_size: @pub_key size (bytes).
+ * @pub_key_size: Pointer to @pub_key size (bytes).
  *
  * Return:
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * TEE_SUCCESS		- Success.
+ * TEE_ERROR_NO_DATA	- @pub_key is not set.
  * Error code from TEE_GetObjectBufferAttribute().
  */
 static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 				     unsigned int security_size,
 				     unsigned char *pub_key,
-				     unsigned int pub_key_size)
+				     unsigned int *pub_key_size)
 {
-	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_Result res = TEE_ERROR_NO_DATA;
 	unsigned int key_size_bytes = 0;
 	unsigned int size = 0;
 
@@ -558,8 +553,8 @@ static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 	key_size_bytes = BITS_TO_BYTES_SIZE(security_size);
 
 	/* Public key size is twice private key size */
-	if (pub_key_size != 2 * key_size_bytes) {
-		EMSG("Invalid pub key size: %d (%d expected)", pub_key_size,
+	if (*pub_key_size != 2 * key_size_bytes) {
+		EMSG("Invalid pub key size: %d (%d expected)", *pub_key_size,
 		     2 * key_size_bytes);
 		return res;
 	}
@@ -576,6 +571,8 @@ static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 	if (size < key_size_bytes)
 		shift_public_key(key_size_bytes, size, pub_key);
 
+	*pub_key_size = size;
+
 	/* Get second part of the public key */
 	size = key_size_bytes;
 	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_ECC_PUBLIC_VALUE_Y,
@@ -588,6 +585,8 @@ static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 	if (size < key_size_bytes)
 		shift_public_key(key_size_bytes, size,
 				 pub_key + key_size_bytes);
+
+	*pub_key_size += size;
 
 	return res;
 }
@@ -741,6 +740,76 @@ static TEE_Result set_import_key_private_attributes(TEE_Attribute **attr,
 }
 
 /**
+ * set_rsa_public_key() - Set the rsa public key attributes (modulus and
+ *                        public exponent)
+ * @attr: Pointer to TEE Attrbute structure to update.
+ * @modulus: Modulus buffer.
+ * @modulus_len: @modulus length in bytes.
+ * @pub_exp: Public exponent buffer.
+ * @pub_len: @pub_key length in bytes.
+ *
+ * Return:
+ * none
+ */
+static inline void set_rsa_public_key(TEE_Attribute *attr,
+				      unsigned char *modulus,
+				      unsigned int modulus_len,
+				      unsigned char *pub_exp,
+				      unsigned int pub_len)
+{
+	TEE_InitRefAttribute(attr, TEE_ATTR_RSA_MODULUS, modulus, modulus_len);
+
+	TEE_InitRefAttribute(&attr[1], TEE_ATTR_RSA_PUBLIC_EXPONENT, pub_exp,
+			     pub_len);
+}
+
+/**
+ * set_import_key_rsa_attributes() - Set the import key rsa attributes.
+ * @attr: TEE Attribute structure to allocate and set.
+ * @attr_count: Number of attributes to set.
+ * @modulus: Modulus buffer.
+ * @modulus_len: @modulus length in bytes.
+ * @pub_exp: Public exponent buffer.
+ * @pub_len: @pub_key length in bytes.
+ * @priv_exp: Private exponent buffer.
+ * @priv_len: @priv_key length in bytes.
+ *
+ * RSA public key is composed of modulus and public exponent.
+ * RSA keypair is composed of RSA public key and private exponent.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
+ */
+static TEE_Result
+set_import_key_rsa_attributes(TEE_Attribute **attr, uint32_t attr_count,
+			      unsigned char *modulus, unsigned int modulus_len,
+			      unsigned char *pub_exp, unsigned int pub_len,
+			      unsigned char *priv_exp, unsigned int priv_len)
+{
+	TEE_Attribute *key_attr = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	key_attr = TEE_Malloc(attr_count * sizeof(TEE_Attribute),
+			      TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!key_attr) {
+		EMSG("TEE_Malloc failed");
+		return TEE_ERROR_OUT_OF_MEMORY;
+	}
+
+	*attr = key_attr;
+
+	if (attr_count == NB_ATTR_RSA_KEYPAIR)
+		TEE_InitRefAttribute(key_attr++, TEE_ATTR_RSA_PRIVATE_EXPONENT,
+				     priv_exp, priv_len);
+
+	set_rsa_public_key(key_attr, modulus, modulus_len, pub_exp, pub_len);
+
+	return TEE_SUCCESS;
+}
+
+/**
  * set_import_key_attributes() - Set import key attributes.
  * @attr: Pointer to TEE Attribute structure. Allocated by sub function. Must
  *        be freed by the caller if function returned SUCCESS.
@@ -751,6 +820,8 @@ static TEE_Result set_import_key_private_attributes(TEE_Attribute **attr,
  * @priv_key_len: @priv_key length in bytes.
  * @pub_key: Pointer to public key buffer. Can be NULL.
  * @pub_key_len: @pub_key length in bytes.
+ * @modulus: Pointer to modulus buffer. Can be NULL.
+ * @modulus_len: @modulus length in bytes.
  *
  * Return:
  * TEE_SUCCESS			- Success.
@@ -758,12 +829,14 @@ static TEE_Result set_import_key_private_attributes(TEE_Attribute **attr,
  * Error code from set_import_key_public_attributes().
  * Error code from set_import_keypair_attrs().
  * Error code from set_import_key_private_attributes().
+ * Error code from set_import_key_rsa_attributes().
  */
 static TEE_Result
 set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
 			  uint32_t object_type, unsigned int security_size,
 			  unsigned char *priv_key, unsigned int priv_key_len,
-			  unsigned char *pub_key, unsigned int pub_key_len)
+			  unsigned char *pub_key, unsigned int pub_key_len,
+			  unsigned char *modulus, unsigned int modulus_len)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 
@@ -788,6 +861,20 @@ set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
 						security_size, priv_key,
 						priv_key_len, pub_key,
 						pub_key_len);
+
+	case TEE_TYPE_RSA_PUBLIC_KEY:
+		*attr_count = NB_ATTR_RSA_PUB_KEY;
+		return set_import_key_rsa_attributes(attr, NB_ATTR_RSA_PUB_KEY,
+						     modulus, modulus_len,
+						     pub_key, pub_key_len, NULL,
+						     0);
+
+	case TEE_TYPE_RSA_KEYPAIR:
+		*attr_count = NB_ATTR_RSA_KEYPAIR;
+		return set_import_key_rsa_attributes(attr, NB_ATTR_RSA_KEYPAIR,
+						     modulus, modulus_len,
+						     pub_key, pub_key_len,
+						     priv_key, priv_key_len);
 
 	case TEE_TYPE_AES:
 	case TEE_TYPE_DES:
@@ -833,7 +920,79 @@ static TEE_Result get_import_key_obj_type(enum tee_key_type key_type,
 		return TEE_SUCCESS;
 	}
 
+	if (key_type == TEE_KEY_TYPE_ID_RSA && !priv_key) {
+		*obj_type = TEE_TYPE_RSA_PUBLIC_KEY;
+		return TEE_SUCCESS;
+	}
+
 	return get_key_obj_type(key_type, obj_type);
+}
+
+/**
+ * set_key_rsa_attribute() - Set RSA key attribute.
+ * @pub_exp: Pointer to public exponent buffer.
+ * @pub_exp_len: @pub_exp length in bytes.
+ * @attr: Pointer to TEE Attribute structure to fill.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ */
+static TEE_Result set_key_rsa_attribute(unsigned char *pub_exp,
+					size_t pub_exp_len, TEE_Attribute *attr)
+{
+	FMSG("Executing %s", __func__);
+
+	if (!attr)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	TEE_InitRefAttribute(attr, TEE_ATTR_RSA_PUBLIC_EXPONENT, pub_exp,
+			     pub_exp_len);
+
+	return TEE_SUCCESS;
+}
+
+/**
+ * export_pub_key_rsa() - Export RSA public key.
+ * @handle: Key handle.
+ * @modulus: Pointer to modulus buffer.
+ * @modulus_len: Pointer to @modulus length in bytes.
+ * @pub_exp: Pointer to public exponent buffer.
+ * @pub_exp_len: Pointer to @pub_exp length in bytes.
+ *
+ * Return:
+ * TEE_SUCCESS		- Success.
+ * TEE_ERROR_NO_DATA	- @modulus and @pub_exp are not set.
+ * Error code from TEE_GetObjectBufferAttribute().
+ */
+static TEE_Result export_pub_key_rsa(TEE_ObjectHandle handle,
+				     unsigned char *modulus,
+				     unsigned int *modulus_len,
+				     unsigned char *pub_exp,
+				     unsigned int *pub_exp_len)
+{
+	TEE_Result res = TEE_ERROR_NO_DATA;
+
+	FMSG("Executing %s", __func__);
+
+	if (!(modulus && pub_exp))
+		return res;
+
+	/* Get modulus */
+	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_RSA_MODULUS,
+					   modulus, modulus_len);
+	if (res) {
+		EMSG("TEE_GetObjectBufferAttribute returned 0x%x", res);
+		return res;
+	}
+
+	/* Get public exponent */
+	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_RSA_PUBLIC_EXPONENT,
+					   pub_exp, pub_exp_len);
+	if (res)
+		EMSG("TEE_GetObjectBufferAttribute returned 0x%x", res);
+
+	return res;
 }
 
 TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
@@ -841,45 +1000,69 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
 	TEE_ObjectHandle pers_key_handle = TEE_HANDLE_NULL;
-	TEE_Attribute key_attr = {};
+	TEE_Attribute key_attr = { 0 };
 	uint32_t object_type = 0;
 	uint32_t attr_count = 0;
 	unsigned int security_size = 0;
 	uint32_t id = 0;
-	uint8_t *pub_key = NULL;
-	uint32_t pub_key_size = 0;
+	unsigned char *pub_key = NULL;
+	unsigned char *modulus = NULL;
+	unsigned char *rsa_pub_exp_attr = NULL;
+	uint32_t *pub_key_size = NULL;
+	uint32_t *modulus_size = NULL;
+	size_t rsa_pub_exp_attr_len = 0;
 	bool persistent = false;
 	struct key_data *key_data = NULL;
+	struct keymgr_shared_params *shared_params = NULL;
 	enum tee_key_type key_type = 0;
 
 	FMSG("Executing %s", __func__);
 
 	/*
-	 * params[0] = Key security size (in bits) and key type
-	 * params[1] = Key ID
-	 * params[2] = Persistent or not
-	 * params[3] = Key buffer or none
+	 * params[0] = Pointer to generate shared params structure.
+	 * params[1] = Pointer to public key buffer or none.
+	 * params[2] = Pointer to modulus buffer (RSA) or none.
+	 * params[3] = Pointer to public exponent attribute (RSA) or none.
 	 */
+	if (TEE_PARAM_TYPE_GET(param_types, 0) != TEE_PARAM_TYPE_MEMREF_INOUT)
+		return res;
 
-	if (param_types == TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
-					   TEE_PARAM_TYPE_VALUE_OUTPUT,
-					   TEE_PARAM_TYPE_VALUE_INPUT,
-					   TEE_PARAM_TYPE_MEMREF_OUTPUT)) {
-		pub_key = params[3].memref.buffer;
-		pub_key_size = params[3].memref.size;
-	} else if (param_types == TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
-						  TEE_PARAM_TYPE_VALUE_OUTPUT,
-						  TEE_PARAM_TYPE_VALUE_INPUT,
-						  TEE_PARAM_TYPE_NONE)) {
-		pub_key = NULL;
-		pub_key_size = 0;
-	} else {
+	if (params[0].memref.size != sizeof(*shared_params) ||
+	    !params[0].memref.buffer)
+		return res;
+
+	if (TEE_PARAM_TYPE_GET(param_types, GEN_PUB_KEY_PARAM_IDX) ==
+	    TEE_PARAM_TYPE_MEMREF_OUTPUT) {
+		pub_key = params[GEN_PUB_KEY_PARAM_IDX].memref.buffer;
+		pub_key_size = &params[GEN_PUB_KEY_PARAM_IDX].memref.size;
+	} else if (TEE_PARAM_TYPE_GET(param_types, GEN_PUB_KEY_PARAM_IDX) !=
+		   TEE_PARAM_TYPE_NONE) {
 		return res;
 	}
 
-	security_size = params[0].value.a;
-	key_type = params[0].value.b;
-	persistent = params[2].value.a;
+	if (TEE_PARAM_TYPE_GET(param_types, GEN_MOD_PARAM_IDX) ==
+	    TEE_PARAM_TYPE_MEMREF_OUTPUT) {
+		modulus = params[GEN_MOD_PARAM_IDX].memref.buffer;
+		modulus_size = &params[GEN_MOD_PARAM_IDX].memref.size;
+	} else if (TEE_PARAM_TYPE_GET(param_types, GEN_MOD_PARAM_IDX) !=
+		   TEE_PARAM_TYPE_NONE) {
+		return res;
+	}
+
+	if (TEE_PARAM_TYPE_GET(param_types, GEN_PUB_EXP_PARAM_IDX) ==
+	    TEE_PARAM_TYPE_MEMREF_INPUT) {
+		rsa_pub_exp_attr = params[GEN_PUB_EXP_PARAM_IDX].memref.buffer;
+		rsa_pub_exp_attr_len =
+			params[GEN_PUB_EXP_PARAM_IDX].memref.size;
+	} else if (TEE_PARAM_TYPE_GET(param_types, GEN_PUB_EXP_PARAM_IDX) !=
+		   TEE_PARAM_TYPE_NONE) {
+		return res;
+	}
+
+	shared_params = params[0].memref.buffer;
+	security_size = shared_params->security_size;
+	key_type = shared_params->key_type;
+	persistent = shared_params->persistent_storage;
 
 	/* Get TEE object type */
 	res = get_key_obj_type(key_type, &object_type);
@@ -893,13 +1076,24 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	if (res)
 		return res;
 
-	/* Configure key ECC attribute */
 	if (key_type == TEE_KEY_TYPE_ID_ECDSA) {
+		/* Configure key ECC attribute */
 		res = conf_key_ecc_attribute(key_type, security_size,
 					     &key_attr);
 		if (res) {
 			EMSG("Failed to configure key ecc attribute: 0x%x",
 			     res);
+			return res;
+		}
+
+		attr_count = 1;
+	} else if (key_type == TEE_KEY_TYPE_ID_RSA && rsa_pub_exp_attr) {
+		/* Configure RSA public exponent attribute */
+		res = set_key_rsa_attribute(rsa_pub_exp_attr,
+					    rsa_pub_exp_attr_len, &key_attr);
+
+		if (res) {
+			EMSG("Failed to configure RSA key attribute");
 			return res;
 		}
 
@@ -943,14 +1137,18 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	key_data->key_type = key_type;
 	key_data->security_size = security_size;
 
-	/* Export ECC public key */
-	if (key_type == TEE_KEY_TYPE_ID_ECDSA && pub_key) {
+	if (key_type == TEE_KEY_TYPE_ID_RSA)
+		/* Export RSA public key */
+		res = export_pub_key_rsa(key_handle, modulus, modulus_size,
+					 pub_key, pub_key_size);
+	else if (key_type == TEE_KEY_TYPE_ID_ECDSA)
+		/* Export ECDSA public key */
 		res = export_pub_key_ecc(key_handle, security_size, pub_key,
 					 pub_key_size);
-		if (res) {
-			EMSG("Failed to export public key: 0x%x", res);
-			goto err;
-		}
+
+	if (res != TEE_SUCCESS && res != TEE_ERROR_NO_DATA) {
+		EMSG("Failed to export public key: 0x%x", res);
+		goto err;
 	}
 
 	if (persistent) {
@@ -978,7 +1176,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	res = key_add_list(key_data);
 	if (!res) {
 		/* Share key ID with Normal World */
-		params[1].value.a = key_data->key_id;
+		shared_params->id = key_data->key_id;
 		return res;
 	}
 
@@ -1061,7 +1259,8 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 			 enum tee_key_type key_type, unsigned int security_size,
 			 unsigned char *priv_key, unsigned int priv_key_len,
-			 unsigned char *pub_key, unsigned int pub_key_len)
+			 unsigned char *pub_key, unsigned int pub_key_len,
+			 unsigned char *modulus, unsigned int modulus_len)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_Attribute *key_attr = NULL;
@@ -1080,7 +1279,8 @@ TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 	/* Setup key attributes */
 	res = set_import_key_attributes(&key_attr, &attr_count, object_type,
 					security_size, priv_key, priv_key_len,
-					pub_key, pub_key_len);
+					pub_key, pub_key_len, modulus,
+					modulus_len);
 	if (res)
 		goto exit;
 
@@ -1120,61 +1320,70 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	unsigned int security_size = 0;
 	unsigned int priv_key_len = 0;
 	unsigned int pub_key_len = 0;
+	unsigned int modulus_len = 0;
 	unsigned char *priv_key = NULL;
 	unsigned char *pub_key = NULL;
+	unsigned char *modulus = NULL;
 	bool persistent = false;
 	struct key_data *key_data = NULL;
+	struct keymgr_shared_params *shared_params = NULL;
 	enum tee_key_type key_type = 0;
 
 	FMSG("Executing %s", __func__);
 
 	/*
-	 * params[0] = Key security size (in bits) and key type
-	 * params[1] = Persistent or not, key ID
-	 * params[2] = Private key buffer
-	 * params[3] = Public key buffer
+	 * params[0]: Pointer to import shared params structure.
+	 * params[1]: Private key buffer or none.
+	 * params[2]: Public key buffer or none.
+	 * params[3]: Modulus buffer (RSA) or none.
 	 */
-	if (param_types == TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
-					   TEE_PARAM_TYPE_VALUE_INOUT,
-					   TEE_PARAM_TYPE_MEMREF_INPUT,
-					   TEE_PARAM_TYPE_MEMREF_INPUT)) {
-		/* Asymmetric Keypair */
-		priv_key = params[2].memref.buffer;
-		priv_key_len = params[2].memref.size;
-		pub_key = params[3].memref.buffer;
-		pub_key_len = params[3].memref.size;
-	} else if (param_types == TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
-						  TEE_PARAM_TYPE_VALUE_INOUT,
-						  TEE_PARAM_TYPE_MEMREF_INPUT,
-						  TEE_PARAM_TYPE_NONE)) {
-		/* Symmetric Key */
-		priv_key = params[2].memref.buffer;
-		priv_key_len = params[2].memref.size;
-	} else if (param_types ==
-		   TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
-				   TEE_PARAM_TYPE_VALUE_INOUT,
-				   TEE_PARAM_TYPE_NONE,
-				   TEE_PARAM_TYPE_MEMREF_INPUT)) {
-		/* Asymmetric Public key */
-		pub_key = params[3].memref.buffer;
-		pub_key_len = params[3].memref.size;
-	} else {
+	if (TEE_PARAM_TYPE_GET(param_types, 0) != TEE_PARAM_TYPE_MEMREF_INOUT)
+		return res;
+
+	if (params[0].memref.size != sizeof(*shared_params) ||
+	    !params[0].memref.buffer)
+		return res;
+
+	if (TEE_PARAM_TYPE_GET(param_types, IMP_PRIV_KEY_PARAM_IDX) ==
+	    TEE_PARAM_TYPE_MEMREF_INPUT) {
+		priv_key = params[IMP_PRIV_KEY_PARAM_IDX].memref.buffer;
+		priv_key_len = params[IMP_PRIV_KEY_PARAM_IDX].memref.size;
+	} else if (TEE_PARAM_TYPE_GET(param_types, IMP_PRIV_KEY_PARAM_IDX) !=
+		   TEE_PARAM_TYPE_NONE) {
 		return res;
 	}
 
-	security_size = params[0].value.a;
-	key_type = params[0].value.b;
-	persistent = params[1].value.a;
+	if (TEE_PARAM_TYPE_GET(param_types, IMP_PUB_KEY_PARAM_IDX) ==
+	    TEE_PARAM_TYPE_MEMREF_INPUT) {
+		pub_key = params[IMP_PUB_KEY_PARAM_IDX].memref.buffer;
+		pub_key_len = params[IMP_PUB_KEY_PARAM_IDX].memref.size;
+	} else if (TEE_PARAM_TYPE_GET(param_types, IMP_PUB_KEY_PARAM_IDX) !=
+		   TEE_PARAM_TYPE_NONE) {
+		return res;
+	}
+
+	if (TEE_PARAM_TYPE_GET(param_types, IMP_MOD_PARAM_IDX) ==
+	    TEE_PARAM_TYPE_MEMREF_INPUT) {
+		modulus = params[IMP_MOD_PARAM_IDX].memref.buffer;
+		modulus_len = params[IMP_MOD_PARAM_IDX].memref.size;
+	} else if (TEE_PARAM_TYPE_GET(param_types, IMP_MOD_PARAM_IDX) !=
+		   TEE_PARAM_TYPE_NONE) {
+		return res;
+	}
+
+	shared_params = params[0].memref.buffer;
+	security_size = shared_params->security_size;
+	key_type = shared_params->key_type;
+	persistent = shared_params->persistent_storage;
 
 	/* Find an unused ID */
 	res = find_unused_id(&id, persistent);
-	if (res) {
-		EMSG("Failed to find an unused id: 0x%x", res);
-		goto exit;
-	}
+	if (res)
+		return res;
 
 	res = ta_import_key(&key_handle, key_type, security_size, priv_key,
-			    priv_key_len, pub_key, pub_key_len);
+			    priv_key_len, pub_key, pub_key_len, modulus,
+			    modulus_len);
 	if (res) {
 		EMSG("Failed to import key: 0x%x", res);
 		goto exit;
@@ -1231,7 +1440,7 @@ exit:
 			res = TEE_CloseAndDeletePersistentObject1(pers_handle);
 	} else {
 		/* Share key ID with Normal World */
-		params[1].value.b = key_data->key_id;
+		shared_params->id = key_data->key_id;
 	}
 
 	return res;
@@ -1265,21 +1474,35 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
+	TEE_ObjectInfo obj_info = { 0 };
 	bool persistent = false;
+	uint32_t *modulus_len = NULL;
+	uint32_t *pub_len = NULL;
+	unsigned char *modulus = NULL;
+	unsigned char *pub_data = NULL;
 
 	FMSG("Executing %s", __func__);
 
 	/*
 	 * params[0] = TEE Key ID, Key security size.
-	 * params[1] = Key buffer.
-	 * params[2] = None.
+	 * params[1] = Public key buffer.
+	 * params[2] = Modulus buffer (RSA key) or none.
 	 * params[3] = None.
 	 */
-	if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
-					   TEE_PARAM_TYPE_MEMREF_OUTPUT,
-					   TEE_PARAM_TYPE_NONE,
-					   TEE_PARAM_TYPE_NONE))
+	if (TEE_PARAM_TYPE_GET(param_types, 0) != TEE_PARAM_TYPE_VALUE_INPUT ||
+	    TEE_PARAM_TYPE_GET(param_types, EXP_PUB_KEY_PARAM_IDX) !=
+		    TEE_PARAM_TYPE_MEMREF_OUTPUT ||
+	    TEE_PARAM_TYPE_GET(param_types, 3) != TEE_PARAM_TYPE_NONE)
 		return res;
+
+	if (TEE_PARAM_TYPE_GET(param_types, EXP_MOD_PARAM_IDX) ==
+	    TEE_PARAM_TYPE_MEMREF_OUTPUT) {
+		modulus = params[EXP_MOD_PARAM_IDX].memref.buffer;
+		modulus_len = &params[EXP_MOD_PARAM_IDX].memref.size;
+	} else if (TEE_PARAM_TYPE_GET(param_types, EXP_MOD_PARAM_IDX) !=
+		   TEE_PARAM_TYPE_NONE) {
+		return res;
+	}
 
 	res = ta_get_key_handle(&key_handle, params[0].value.a, &persistent);
 	if (res) {
@@ -1287,9 +1510,23 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		return res;
 	}
 
-	res = export_pub_key_ecc(key_handle, params[0].value.b,
-				 params[1].memref.buffer,
-				 params[1].memref.size);
+	res = TEE_GetObjectInfo1(key_handle, &obj_info);
+	if (res) {
+		EMSG("Failed to get object info: 0x%x", res);
+		return res;
+	}
+
+	pub_data = params[EXP_PUB_KEY_PARAM_IDX].memref.buffer;
+	pub_len = &params[EXP_PUB_KEY_PARAM_IDX].memref.size;
+
+	if (obj_info.objectType == TEE_TYPE_RSA_PUBLIC_KEY ||
+	    obj_info.objectType == TEE_TYPE_RSA_KEYPAIR)
+		res = export_pub_key_rsa(key_handle, modulus, modulus_len,
+					 pub_data, pub_len);
+	else if (obj_info.objectType == TEE_TYPE_ECDSA_PUBLIC_KEY ||
+		 obj_info.objectType == TEE_TYPE_ECDSA_KEYPAIR)
+		res = export_pub_key_ecc(key_handle, params[0].value.b,
+					 pub_data, pub_len);
 
 	if (persistent)
 		TEE_CloseObject(key_handle);

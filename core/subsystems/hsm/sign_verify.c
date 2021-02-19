@@ -238,10 +238,9 @@ set_export_key_args(struct smw_keymgr_descriptor *key_descriptor,
 	export_key_descriptor->pub = NULL;
 	export_key_descriptor->format_id = SMW_KEYMGR_FORMAT_ID_HEX;
 
-	status = smw_keymgr_get_buffers_lengths(key_identifier->type_id,
-						key_identifier->security_size,
+	status = smw_keymgr_get_buffers_lengths(key_identifier,
 						SMW_KEYMGR_FORMAT_ID_HEX,
-						&public_length, NULL);
+						&public_length, NULL, NULL);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

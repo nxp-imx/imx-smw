@@ -21,9 +21,28 @@ struct smw_keypair_gen {
 };
 
 /**
+ * struct smw_keypair_rsa - RSA Keypair object
+ * @modulus: Pointer to the RSA modulus
+ * @modulus_length: Length of @modulus in bytes
+ * @public_data: Pointer to the RSA public exponent
+ * @public_length: Length of @public_data in bytes
+ * @private_data: Pointer to the RSA private exponent
+ * @private_length: Length of @private_data in bytes
+ */
+struct smw_keypair_rsa {
+	unsigned char *modulus;
+	unsigned int modulus_length;
+	unsigned char *public_data;
+	unsigned int public_length;
+	unsigned char *private_data;
+	unsigned int private_length;
+};
+
+/**
  * struct smw_keypair_buffer - Keypair buffer
  * @format_name: Defines the encoding format of all buffers
  * @gen: Generic keypair object definition
+ * @rsa: RSA keypair object definition
  *
  * @format_name is a string value among:
  * - "HEX": hexadecimal value (no encoding)
@@ -35,6 +54,7 @@ struct smw_keypair_buffer {
 	const char *format_name;
 	union {
 		struct smw_keypair_gen gen;
+		struct smw_keypair_rsa rsa;
 	};
 };
 

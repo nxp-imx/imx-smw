@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 /* TLV defines */
@@ -71,3 +71,15 @@ int smw_tlv_verify_string(unsigned int length, unsigned char *value);
  * SMW_STATUS_INVALID_PARAM	- One of the parameter is invalid.
  */
 int smw_tlv_verify_enumeration(unsigned int length, unsigned char *value);
+
+/**
+ * smw_tlv_verify_large_numeral() - Verify that TLV length and value correspond
+ *                                  to large numeral type.
+ *
+ * Length and value must be set.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- One of the parameter is invalid.
+ */
+int smw_tlv_verify_large_numeral(unsigned int length, unsigned char *value);

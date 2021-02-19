@@ -36,7 +36,8 @@ static const char *const key_type_names[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256] = "HMAC_SHA256",
 	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384] = "HMAC_SHA384",
 	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512] = "HMAC_SHA512",
-	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3] = "HMAC_SM3"
+	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3] = "HMAC_SM3",
+	[SMW_CONFIG_KEY_TYPE_ID_RSA] = "RSA"
 };
 
 int read_key_type_names(char **start, char *end, unsigned long *bitmap)

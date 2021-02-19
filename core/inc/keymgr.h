@@ -5,6 +5,12 @@
 
 #include <stdint.h>
 
+/* Default RSA public exponent is 65537, which has a length of 3 bytes */
+#define DEFAULT_RSA_PUB_EXP_LEN 3
+
+#define PERSISTENT_STR	"PERSISTENT"
+#define RSA_PUB_EXP_STR "RSA_PUB_EXP"
+
 enum smw_keymgr_privacy_id {
 	/* Key privacy */
 	SMW_KEYMGR_PRIVACY_ID_PUBLIC,
@@ -27,14 +33,18 @@ enum smw_keymgr_format_id {
  * @subsystem_id: Secure Subsystem ID
  * @type_id: Key type ID
  * @privacy_id: Key privacy ID
+ * @attribute: Key attribute
  * @security_size: Security size in bits
  * @id: Key ID set by the subsystem
  *
+ * The value of @attribute is key type dependent.
+ * For RSA key type, it represents the public exponent length in bytes.
  */
 struct smw_keymgr_identifier {
 	enum subsystem_id subsystem_id;
 	enum smw_config_key_type_id type_id;
 	enum smw_keymgr_privacy_id privacy_id;
+	unsigned int attribute;
 	unsigned int security_size;
 	uint32_t id;
 };
@@ -46,6 +56,8 @@ struct smw_keymgr_identifier {
  * @public_length: Get the @pub's public length reference
  * @private_data: Get the @pub's private data reference
  * @private_length: Get the @pub's private length reference
+ * @modulus: Get the @pub's modulus reference
+ * @modulus_length: Get the @pub's modulus length reference
  *
  * This structure is initialized by the function
  * smw_keymgr_convert_descriptor().
@@ -59,6 +71,8 @@ struct smw_keymgr_key_ops {
 	unsigned int *(*public_length)(struct smw_keymgr_key_ops *this);
 	unsigned char **(*private_data)(struct smw_keymgr_key_ops *this);
 	unsigned int *(*private_length)(struct smw_keymgr_key_ops *this);
+	unsigned char **(*modulus)(struct smw_keymgr_key_ops *this);
+	unsigned int *(*modulus_length)(struct smw_keymgr_key_ops *this);
 };
 
 /**
@@ -78,10 +92,13 @@ struct smw_keymgr_descriptor {
 /**
  * struct smw_keymgr_attributes - Key attributes list.
  * @persistent_storage: Use persistent subsystem storage or not.
- *
+ * @rsa_pub_exp: Pointer to rsa public exponent.
+ * @rsa_pub_exp_len: @rsa_pub_exp length in bytes.
  */
 struct smw_keymgr_attributes {
 	bool persistent_storage;
+	unsigned char *rsa_pub_exp;
+	unsigned int rsa_pub_exp_len;
 };
 
 /**
@@ -236,6 +253,35 @@ unsigned int
 smw_keymgr_get_private_length(struct smw_keymgr_descriptor *descriptor);
 
 /**
+ * smw_keymgr_get_modulus() - Return the address of the modulus buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the address of the modulus buffer.
+ * If the @descriptor field @pub is NULL or if the @pub field @buffer is NULL,
+ * the function returns NULL.
+ *
+ * Return:
+ * NULL
+ * address of the modulus buffer.
+ */
+unsigned char *smw_keymgr_get_modulus(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_get_modulus_length() - Return the length of the modulus buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the length of the modulus buffer.
+ * If the @descriptor field @pub is NULL or if the @pub field @buffer is NULL,
+ * the function returns 0.
+ *
+ * Return:
+ * 0
+ * length of the mofulus Key buffer.
+ */
+unsigned int
+smw_keymgr_get_modulus_length(struct smw_keymgr_descriptor *descriptor);
+
+/**
  * smw_keymgr_set_public_data() - Set the address of the public Key buffer.
  * @descriptor: Pointer to the internal Key descriptor structure.
  * @public_data: Address of the public Key buffer.
@@ -292,23 +338,37 @@ void smw_keymgr_set_private_length(struct smw_keymgr_descriptor *descriptor,
 				   unsigned int private_length);
 
 /**
+ * smw_keymgr_set_modulus_length() - Set the length of the modulus buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ * @modulus_length: Length of the modulus buffer.
+ *
+ * This function sets the length of the modulus buffer.
+ * If the @buffer field @pub is NULL, the function returns with no action.
+ *
+ * Return:
+ * none.
+ */
+void smw_keymgr_set_modulus_length(struct smw_keymgr_descriptor *descriptor,
+				   unsigned int modulus_length);
+
+/**
  * smw_keymgr_get_buffers_lengths() - Get the lengths of the Key buffers.
- * @type_id: Key type ID.
- * @security_size: Security size in bits.
+ * @identifier: Pointer to key identifier structure.
  * @format_id: Format ID.
  * @public_buffer_length: Pointer to the public buffer length.
  * @private_buffer_length: Pointer to the private buffer length.
+ * @modulus_buffer_length: Pointer to the modulus buffer length (RSA key).
  *
  * This function computes the lengths of the Key buffers.
  *
  * Return:
  * error code.
  */
-int smw_keymgr_get_buffers_lengths(enum smw_config_key_type_id type_id,
-				   unsigned int security_size,
+int smw_keymgr_get_buffers_lengths(struct smw_keymgr_identifier *identifier,
 				   enum smw_keymgr_format_id format_id,
 				   unsigned int *public_buffer_length,
-				   unsigned int *private_buffer_length);
+				   unsigned int *private_buffer_length,
+				   unsigned int *modulus_buffer_length);
 
 /**
  * smw_keymgr_convert_descriptor() - Key descriptor conversion.

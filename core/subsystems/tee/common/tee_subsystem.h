@@ -14,6 +14,16 @@
 		}                                                              \
 	}
 
+/* Index of operation shared buffers parameters */
+#define GEN_PUB_KEY_PARAM_IDX  1
+#define GEN_PUB_EXP_PARAM_IDX  3
+#define GEN_MOD_PARAM_IDX      2
+#define IMP_PUB_KEY_PARAM_IDX  2
+#define IMP_PRIV_KEY_PARAM_IDX 1
+#define IMP_MOD_PARAM_IDX      3
+#define EXP_PUB_KEY_PARAM_IDX  1
+#define EXP_MOD_PARAM_IDX      2
+
 /* TEE key type */
 enum tee_key_type {
 	TEE_KEY_TYPE_ID_ECDSA,
@@ -27,6 +37,7 @@ enum tee_key_type {
 	TEE_KEY_TYPE_ID_HMAC_SHA384,
 	TEE_KEY_TYPE_ID_HMAC_SHA512,
 	TEE_KEY_TYPE_ID_HMAC_SM3,
+	TEE_KEY_TYPE_ID_RSA,
 	TEE_KEY_TYPE_ID_NB,
 	TEE_KEY_TYPE_ID_INVALID
 };
@@ -57,6 +68,20 @@ struct hmac_shared_params {
 	enum tee_key_type tee_key_type;
 	enum tee_algorithm_id tee_algorithm_id;
 	unsigned int security_size;
+};
+
+/**
+ * struct keymgr_shared_params - Key manager operation shared parameters.
+ * @security_size: Key security size.
+ * @key_type: Key type.
+ * @id: Key ID set by the TA.
+ * @persistent_storage: Use persistent subsystem storage or not.
+ */
+struct keymgr_shared_params {
+	unsigned int security_size;
+	enum tee_key_type key_type;
+	uint32_t id;
+	bool persistent_storage;
 };
 
 #endif /* TEE_SUBSYSTEM_H */

@@ -110,10 +110,9 @@ static int generate_key(struct hdl *hdl, void *args)
 
 	if (public_data) {
 		status =
-			smw_keymgr_get_buffers_lengths(key_type_id,
-						       security_size,
+			smw_keymgr_get_buffers_lengths(key_identifier,
 						       SMW_KEYMGR_FORMAT_ID_HEX,
-						       &out_size, NULL);
+						       &out_size, NULL, NULL);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
@@ -302,9 +301,9 @@ static int export_key(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_keymgr_get_buffers_lengths(key_type_id, security_size,
+	status = smw_keymgr_get_buffers_lengths(key_identifier,
 						SMW_KEYMGR_FORMAT_ID_HEX,
-						&out_size, NULL);
+						&out_size, NULL, NULL);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

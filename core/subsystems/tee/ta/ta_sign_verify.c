@@ -120,7 +120,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 			return res;
 		}
 		res = ta_import_key(&key_handle, key_type_id, security_size,
-				    NULL, 0, pub_key, pub_key_len);
+				    NULL, 0, pub_key, pub_key_len, NULL, 0);
 		if (res) {
 			EMSG("Failed to import key: 0x%x", res);
 			goto err;

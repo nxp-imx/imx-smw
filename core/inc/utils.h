@@ -26,6 +26,8 @@
 
 #define BITS_TO_BYTES_SIZE(security_size) (((security_size) + 7) / 8)
 
+#define SET_CLEAR_MASK(val, set, clear) (((val) & ~(clear)) | (set))
+
 #define SMW_UTILS_MALLOC  malloc
 #define SMW_UTILS_FREE	  free
 #define SMW_UTILS_MEMCPY  memcpy

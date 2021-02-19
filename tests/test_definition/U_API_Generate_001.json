@@ -73,7 +73,8 @@
 		"security_size": 256,
 		"key_id": 0,
 		"result": "SMW_STATUS_UNKNOWN_NAME",
-		"format": "UNDEFINED"
+		"format": "UNDEFINED",
+		"pub_key": 64
 	},
 	"subtest 11": { // Public key buffer length is too small
 		"command": "GENERATE_NIST",

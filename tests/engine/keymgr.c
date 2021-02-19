@@ -65,9 +65,10 @@ static int set_gen_opt_params(json_object *params,
 	 * Else if 'pub_key' not set, public key length is not set and
 	 * there is not public key to export.
 	 */
+	desc = args->key_descriptor;
+
 	if (util_key_is_public_len_set(key_test)) {
 		public_length = *key_public_length(key_test);
-		desc = args->key_descriptor;
 		if (public_length == 1) {
 			status = smw_get_key_buffers_lengths(desc);
 			if (status != SMW_STATUS_OK) {
@@ -82,6 +83,9 @@ static int set_gen_opt_params(json_object *params,
 			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
+	} else if (!util_key_is_private_len_set(key_test)) {
+		/* Remove key buffer if no private buffer set */
+		desc->buffer = NULL;
 	}
 
 	return ERR_CODE(PASSED);
@@ -222,7 +226,6 @@ static int set_common_bad_args(json_object *params, void **args,
 			       struct smw_key_descriptor **key)
 {
 	int ret;
-	struct smw_keypair_buffer *key_buffer;
 	enum arguments_test_err_case error;
 
 	if (!params)
@@ -231,8 +234,6 @@ static int set_common_bad_args(json_object *params, void **args,
 	ret = util_read_test_error(&error, params);
 	if (ret != ERR_CODE(PASSED))
 		return ret;
-
-	key_buffer = (*key)->buffer;
 
 	switch (error) {
 	case NOT_DEFINED:
@@ -266,7 +267,10 @@ static int set_common_bad_args(json_object *params, void **args,
 
 	case BAD_FORMAT:
 		/* key format is undefined */
-		key_buffer->format_name = KEY_FORMAT_UNDEFINED;
+		if (!(*key)->buffer)
+			ret = ERR_CODE(BAD_ARGS);
+		else
+			(*key)->buffer->format_name = KEY_FORMAT_UNDEFINED;
 		break;
 
 	default:
@@ -295,8 +299,7 @@ static int set_gen_bad_args(json_object *params,
 {
 	int ret;
 
-	if (!args || !*args || !(*args)->key_descriptor ||
-	    !(*args)->key_descriptor->buffer) {
+	if (!args || !*args || !(*args)->key_descriptor) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}

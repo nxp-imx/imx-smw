@@ -55,28 +55,6 @@
 
 #define SMW_KEYMGR_FORMAT_ID_DEFAULT SMW_KEYMGR_FORMAT_ID_HEX
 
-/**
- * struct smw_keymgr_key_ops - keypair with operations
- * @keys: Public API Keypair
- * @public_data: Get the @pub's public data reference
- * @public_length: Get the @pub's public length reference
- * @private_data: Get the @pub's private data reference
- * @private_length: Get the @pub's private length reference
- *
- * This structure is initialized by the function
- * smw_keymgr_convert_descriptor().
- * The operations are function of the keypair object defined by the
- * key type.
- */
-struct smw_keymgr_key_ops {
-	struct smw_keypair_buffer *keys;
-
-	unsigned char **(*public_data)(struct smw_keymgr_key_ops *this);
-	unsigned int *(*public_length)(struct smw_keymgr_key_ops *this);
-	unsigned char **(*private_data)(struct smw_keymgr_key_ops *this);
-	unsigned int *(*private_length)(struct smw_keymgr_key_ops *this);
-};
-
 static const char *const format_names[] = { [SMW_KEYMGR_FORMAT_ID_HEX] = "HEX",
 					    [SMW_KEYMGR_FORMAT_ID_BASE64] =
 						    "BASE64" };
@@ -178,14 +156,6 @@ static unsigned int *private_length_key_gen(struct smw_keymgr_key_ops *this)
 	return &this->keys->gen.private_length;
 }
 
-static struct smw_keymgr_key_ops keypair_gen_ops = {
-	.keys = NULL,
-	.public_data = &public_data_key_gen,
-	.public_length = &public_length_key_gen,
-	.private_data = &private_data_key_gen,
-	.private_length = &private_length_key_gen,
-};
-
 /**
  * setup_key_ops() - Setup the key operations in the key descriptor
  * @descriptor: key descriptor
@@ -200,8 +170,12 @@ static struct smw_keymgr_key_ops keypair_gen_ops = {
 static int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keymgr_key_ops *ops;
 
 	if (descriptor->pub) {
+		ops = &descriptor->ops;
+		/* Clear all operations */
+		memset(ops, 0, sizeof(*ops));
 		if (!descriptor->pub->buffer)
 			return SMW_STATUS_NO_KEY_BUFFER;
 
@@ -211,8 +185,11 @@ static int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
 			break;
 
 		default:
-			keypair_gen_ops.keys = descriptor->pub->buffer;
-			descriptor->ops = &keypair_gen_ops;
+			ops->keys = descriptor->pub->buffer;
+			ops->public_data = &public_data_key_gen;
+			ops->public_length = &public_length_key_gen;
+			ops->private_data = &private_data_key_gen;
+			ops->private_length = &private_length_key_gen;
 			status = SMW_STATUS_OK;
 			break;
 		}
@@ -422,7 +399,7 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor);
-	if (status != SMW_STATUS_OK)
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
 		goto end;
 
 	status = read_attributes(args->key_attributes_list,
@@ -721,10 +698,10 @@ end:
 inline unsigned char *
 smw_keymgr_get_public_data(struct smw_keymgr_descriptor *descriptor)
 {
-	struct smw_keymgr_key_ops *ops = descriptor->ops;
+	struct smw_keymgr_key_ops *ops = &descriptor->ops;
 	unsigned char *public_data = NULL;
 
-	if (ops)
+	if (ops->public_data)
 		public_data = *ops->public_data(ops);
 
 	return public_data;
@@ -733,10 +710,10 @@ smw_keymgr_get_public_data(struct smw_keymgr_descriptor *descriptor)
 inline unsigned int
 smw_keymgr_get_public_length(struct smw_keymgr_descriptor *descriptor)
 {
-	struct smw_keymgr_key_ops *ops = descriptor->ops;
+	struct smw_keymgr_key_ops *ops = &descriptor->ops;
 	unsigned int public_length = 0;
 
-	if (ops)
+	if (ops->public_length)
 		public_length = *ops->public_length(ops);
 
 	return public_length;
@@ -745,10 +722,10 @@ smw_keymgr_get_public_length(struct smw_keymgr_descriptor *descriptor)
 inline unsigned char *
 smw_keymgr_get_private_data(struct smw_keymgr_descriptor *descriptor)
 {
-	struct smw_keymgr_key_ops *ops = descriptor->ops;
+	struct smw_keymgr_key_ops *ops = &descriptor->ops;
 	unsigned char *private_data = NULL;
 
-	if (ops)
+	if (ops->private_data)
 		private_data = *ops->private_data(ops);
 
 	return private_data;
@@ -757,10 +734,10 @@ smw_keymgr_get_private_data(struct smw_keymgr_descriptor *descriptor)
 inline unsigned int
 smw_keymgr_get_private_length(struct smw_keymgr_descriptor *descriptor)
 {
-	struct smw_keymgr_key_ops *ops = descriptor->ops;
+	struct smw_keymgr_key_ops *ops = &descriptor->ops;
 	unsigned int private_length = 0;
 
-	if (ops)
+	if (ops->private_length)
 		private_length = *ops->private_length(ops);
 
 	return private_length;
@@ -769,9 +746,9 @@ smw_keymgr_get_private_length(struct smw_keymgr_descriptor *descriptor)
 inline void smw_keymgr_set_public_data(struct smw_keymgr_descriptor *descriptor,
 				       unsigned char *public_data)
 {
-	struct smw_keymgr_key_ops *ops = descriptor->ops;
+	struct smw_keymgr_key_ops *ops = &descriptor->ops;
 
-	if (ops)
+	if (ops->public_data)
 		*ops->public_data(ops) = public_data;
 }
 
@@ -779,9 +756,9 @@ inline void
 smw_keymgr_set_public_length(struct smw_keymgr_descriptor *descriptor,
 			     unsigned int public_length)
 {
-	struct smw_keymgr_key_ops *ops = descriptor->ops;
+	struct smw_keymgr_key_ops *ops = &descriptor->ops;
 
-	if (ops)
+	if (ops->public_length)
 		*ops->public_length(ops) = public_length;
 }
 
@@ -789,9 +766,9 @@ inline void
 smw_keymgr_set_private_data(struct smw_keymgr_descriptor *descriptor,
 			    unsigned char *private_data)
 {
-	struct smw_keymgr_key_ops *ops = descriptor->ops;
+	struct smw_keymgr_key_ops *ops = &descriptor->ops;
 
-	if (ops)
+	if (ops->private_data)
 		*ops->private_data(ops) = private_data;
 }
 
@@ -799,9 +776,9 @@ inline void
 smw_keymgr_set_private_length(struct smw_keymgr_descriptor *descriptor,
 			      unsigned int private_length)
 {
-	struct smw_keymgr_key_ops *ops = descriptor->ops;
+	struct smw_keymgr_key_ops *ops = &descriptor->ops;
 
-	if (ops)
+	if (ops->private_length)
 		*ops->private_length(ops) = private_length;
 }
 
@@ -943,7 +920,7 @@ int smw_generate_key(struct smw_generate_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_generate_key_args generate_key_args;
+	struct smw_keymgr_generate_key_args generate_key_args = { 0 };
 	struct smw_keymgr_descriptor *key_desc;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	enum smw_config_key_type_id type_id;
@@ -1013,7 +990,7 @@ int smw_derive_key(struct smw_derive_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_derive_key_args derive_key_args;
+	struct smw_keymgr_derive_key_args derive_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1068,7 +1045,7 @@ int smw_import_key(struct smw_import_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_import_key_args import_key_args;
+	struct smw_keymgr_import_key_args import_key_args = { 0 };
 	struct smw_keymgr_descriptor *key_desc;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	unsigned char *public_data;
@@ -1134,7 +1111,7 @@ int smw_export_key(struct smw_export_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_export_key_args export_key_args;
+	struct smw_keymgr_export_key_args export_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	struct smw_keymgr_descriptor *key_desc;
 	unsigned int security_size;

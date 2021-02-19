@@ -39,7 +39,27 @@ struct smw_keymgr_identifier {
 	uint32_t id;
 };
 
-struct smw_keymgr_key_ops;
+/**
+ * struct smw_keymgr_key_ops - keypair with operations
+ * @keys: Public API Keypair
+ * @public_data: Get the @pub's public data reference
+ * @public_length: Get the @pub's public length reference
+ * @private_data: Get the @pub's private data reference
+ * @private_length: Get the @pub's private length reference
+ *
+ * This structure is initialized by the function
+ * smw_keymgr_convert_descriptor().
+ * The operations are function of the keypair object defined by the
+ * key type.
+ */
+struct smw_keymgr_key_ops {
+	struct smw_keypair_buffer *keys;
+
+	unsigned char **(*public_data)(struct smw_keymgr_key_ops *this);
+	unsigned int *(*public_length)(struct smw_keymgr_key_ops *this);
+	unsigned char **(*private_data)(struct smw_keymgr_key_ops *this);
+	unsigned int *(*private_length)(struct smw_keymgr_key_ops *this);
+};
 
 /**
  * struct smw_keymgr_descriptor - Key descriptor
@@ -52,7 +72,7 @@ struct smw_keymgr_descriptor {
 	struct smw_keymgr_identifier identifier;
 	enum smw_keymgr_format_id format_id;
 	struct smw_key_descriptor *pub;
-	struct smw_keymgr_key_ops *ops;
+	struct smw_keymgr_key_ops ops;
 };
 
 /**

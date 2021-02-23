@@ -41,6 +41,11 @@ set(EXT_LIBS ${EXT_LIBS} ${TEEC_LIBRARY} PARENT_SCOPE)
 set(TA_MAKEFILE_PATH ${CMAKE_SOURCE_DIR}/core/subsystems/tee/ta)
 
 set(TA_BUILD_DIR ${CMAKE_BINARY_DIR}/ta)
+
+# Add TA Build directory in the clean list
+set_property(DIRECTORY APPEND PROPERTY
+             ADDITIONAL_MAKE_CLEAN_FILES ${TA_BUILD_DIR})
+
 string(REGEX REPLACE "-gcc$" "-" CROSS_COMPILE  ${CMAKE_C_COMPILER})
 
 set(TA_CMD make -C ${TA_MAKEFILE_PATH}

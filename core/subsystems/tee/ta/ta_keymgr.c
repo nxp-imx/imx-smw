@@ -1014,14 +1014,64 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	return res;
 }
 
+TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
+			 enum tee_key_type key_type, unsigned int security_size,
+			 unsigned char *priv_key, unsigned int priv_key_len,
+			 unsigned char *pub_key, unsigned int pub_key_len)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_Attribute *key_attr = NULL;
+	uint32_t object_type = 0;
+	uint32_t attr_count = 0;
+
+	FMSG("Executing %s", __func__);
+
+	/* Get TEE object type */
+	res = get_import_key_obj_type(key_type, &object_type, priv_key);
+	if (res) {
+		EMSG("Failed to get key object type: 0x%x", res);
+		return res;
+	}
+
+	/* Setup key attributes */
+	res = set_import_key_attributes(&key_attr, &attr_count, object_type,
+					security_size, priv_key, priv_key_len,
+					pub_key, pub_key_len);
+	if (res)
+		goto exit;
+
+	/* Allocate a transient object */
+	res = TEE_AllocateTransientObject(object_type, security_size,
+					  key_handle);
+	if (res) {
+		EMSG("Failed to allocate transient object: 0x%x", res);
+		goto exit;
+	}
+
+	/* Populate transient object */
+	res = TEE_PopulateTransientObject(*key_handle, key_attr, attr_count);
+	if (res) {
+		EMSG("Failed to populate transient object: 0x%x", res);
+		goto exit;
+	}
+
+	/* Set key usage. Make it non extractable */
+	res = set_key_usage(key_type, *key_handle);
+	if (res)
+		EMSG("Failed to set key usage: 0x%x", res);
+
+exit:
+	if (key_attr)
+		TEE_Free(key_attr);
+
+	return res;
+}
+
 TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
 	TEE_ObjectHandle pers_handle = TEE_HANDLE_NULL;
-	TEE_Attribute *key_attr = NULL;
-	uint32_t object_type = 0;
-	uint32_t attr_count = 0;
 	uint32_t id = 0;
 	unsigned int security_size = 0;
 	unsigned int priv_key_len = 0;
@@ -1072,44 +1122,17 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	key_type = params[0].value.b;
 	persistent = params[1].value.a;
 
-	/* Get TEE object type */
-	res = get_import_key_obj_type(key_type, &object_type, priv_key);
-	if (res) {
-		EMSG("Failed to get key object type: 0x%x", res);
-		return res;
-	}
-
 	/* Find an unused ID */
 	res = find_unused_id(&id, persistent);
-	if (res)
-		return res;
-
-	/* Setup key attributes */
-	res = set_import_key_attributes(&key_attr, &attr_count, object_type,
-					security_size, priv_key, priv_key_len,
-					pub_key, pub_key_len);
-	if (res)
-		return res;
-
-	/* Allocate a transient object */
-	res = TEE_AllocateTransientObject(object_type, security_size,
-					  &key_handle);
 	if (res) {
-		EMSG("Failed to allocate transient object: 0x%x", res);
+		EMSG("Failed to find an unused id: 0x%x", res);
 		goto exit;
 	}
 
-	/* Populate transient object */
-	res = TEE_PopulateTransientObject(key_handle, key_attr, attr_count);
+	res = ta_import_key(&key_handle, key_type, security_size, priv_key,
+			    priv_key_len, pub_key, pub_key_len);
 	if (res) {
-		EMSG("Failed to populate transient object: 0x%x", res);
-		goto exit;
-	}
-
-	/* Set key usage. Make it non extractable */
-	res = set_key_usage(key_type, key_handle);
-	if (res) {
-		EMSG("Failed to set key usage: 0x%x", res);
+		EMSG("Failed to import key: 0x%x", res);
 		goto exit;
 	}
 
@@ -1167,8 +1190,29 @@ exit:
 		params[1].value.b = key_data->key_id;
 	}
 
-	if (key_attr)
-		TEE_Free(key_attr);
+	return res;
+}
+
+TEE_Result ta_get_key_handle(TEE_ObjectHandle *key_handle, uint32_t key_id,
+			     bool *persistent)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	struct key_data *key_data = NULL;
+
+	if (!key_handle || !persistent)
+		return res;
+
+	*persistent = false;
+
+	key_data = key_find_list(key_id);
+	if (key_data && !key_data->is_persistent) {
+		*key_handle = key_data->handle;
+		res = TEE_SUCCESS;
+	} else {
+		res = is_persistent_key(key_id, key_handle);
+		if (!res)
+			*persistent = true;
+	}
 
 	return res;
 }
@@ -1177,12 +1221,7 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
-	uint32_t id = 0;
-	unsigned int security_size = 0;
-	unsigned int pub_key_len = 0;
 	bool persistent = false;
-	unsigned char *pub_key = NULL;
-	struct key_data *key_data = NULL;
 
 	FMSG("Executing %s", __func__);
 
@@ -1198,35 +1237,15 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 					   TEE_PARAM_TYPE_NONE))
 		return res;
 
-	id = params[0].value.a;
-	security_size = params[0].value.b;
-	pub_key = params[1].memref.buffer;
-	pub_key_len = params[1].memref.size;
-
-	key_data = key_find_list(id);
-	if (key_data) {
-		if (key_data->is_persistent) {
-			res = is_persistent_key(id, &key_handle);
-			if (res) {
-				EMSG("Failed to open persistent object: 0x%x",
-				     res);
-				return res;
-			}
-
-			persistent = true;
-		} else {
-			key_handle = key_data->handle;
-		}
-	} else {
-		res = is_persistent_key(id, &key_handle);
-		if (res)
-			return res;
-
-		persistent = true;
+	res = ta_get_key_handle(&key_handle, params[0].value.a, &persistent);
+	if (res) {
+		EMSG("Key not found: 0x%x", res);
+		return res;
 	}
 
-	res = export_pub_key_ecc(key_handle, security_size, pub_key,
-				 pub_key_len);
+	res = export_pub_key_ecc(key_handle, params[0].value.b,
+				 params[1].memref.buffer,
+				 params[1].memref.size);
 
 	if (persistent)
 		TEE_CloseObject(key_handle);

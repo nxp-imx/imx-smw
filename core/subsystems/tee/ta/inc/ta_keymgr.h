@@ -41,6 +41,29 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
 TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
 
 /**
+ * ta_import_key() - Import a TEE transient key.
+ * @key_handle: Key handle.
+ * @key_type: Key type.
+ * @security_size: Key security size.
+ * @priv_key: Pointer to private key buffer.
+ * @priv_key_len: @priv_key length in bytes.
+ * @pub_key: Pointer to public key buffer.
+ * @pub_key_len: @pub_key length in bytes.
+ *
+ * If the operation is successful @key_handle is allocated by the function
+ * and must be freed by the caller.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * Error code from internal functions.
+ */
+TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
+			 enum tee_key_type key_type, unsigned int security_size,
+			 unsigned char *priv_key, unsigned int priv_key_len,
+			 unsigned char *pub_key, unsigned int pub_key_len);
+
+/**
  * import_key() - Import a key or keypair.
  * @param_types: Parameters types.
  * @params: Shared parameters between Secure and Normal world.
@@ -58,6 +81,19 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
  * Error code from internal functions.
  */
 TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
+
+/**
+ * ta_get_key_handle() - Get the TEE key object handle of a given key ID.
+ * @key_handle: Key handle.
+ * @key_id: Key ID.
+ * @persistent: Set to true if key object is persistent.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * Error code from internal functions.
+ */
+TEE_Result ta_get_key_handle(TEE_ObjectHandle *key_handle, uint32_t key_id,
+			     bool *persistent);
 
 /**
  * export_key() - Export a key.

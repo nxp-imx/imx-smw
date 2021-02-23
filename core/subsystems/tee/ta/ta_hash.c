@@ -5,59 +5,110 @@
 
 #include <util.h>
 #include <string.h>
+#include <utee_defines.h>
 #include <tee_internal_api.h>
 
 #include "tee_subsystem.h"
 #include "ta_hash.h"
 
-#define ALGORITHM_ID(_algorithm_id)                                            \
+#define ALGORITHM_INFO(_algo)                                                  \
 	{                                                                      \
-		.ca_id = TEE_ALGORITHM_ID_##_algorithm_id,                     \
-		.ta_id = TEE_ALG_##_algorithm_id                               \
+		.ca_id = TEE_ALGORITHM_ID_##_algo, .ta_id = TEE_ALG_##_algo,   \
+		.length = TEE_##_algo##_HASH_SIZE                              \
 	}
 
 /* Algorithm IDs must be ordered from lowest to highest. */
-struct {
+static struct algorithm_info {
 	enum tee_algorithm_id ca_id;
 	uint32_t ta_id;
-} algorithm_ids[] = { ALGORITHM_ID(MD5),    ALGORITHM_ID(SHA1),
-		      ALGORITHM_ID(SHA224), ALGORITHM_ID(SHA256),
-		      ALGORITHM_ID(SHA384), ALGORITHM_ID(SHA512),
-		      ALGORITHM_ID(SM3) };
+	uint32_t length;
+} algorithm_infos[] = { ALGORITHM_INFO(MD5),	ALGORITHM_INFO(SHA1),
+			ALGORITHM_INFO(SHA224), ALGORITHM_INFO(SHA256),
+			ALGORITHM_INFO(SHA384), ALGORITHM_INFO(SHA512),
+			ALGORITHM_INFO(SM3) };
 
-static TEE_Result get_algorithm_id(enum tee_algorithm_id ca_id, uint32_t *ta_id)
+static TEE_Result get_algorithm_info(enum tee_algorithm_id ca_id,
+				     struct algorithm_info **info)
 {
 	unsigned int i;
-	unsigned int size = ARRAY_SIZE(algorithm_ids);
+	unsigned int size = ARRAY_SIZE(algorithm_infos);
 
 	FMSG("Executing %s", __func__);
 
-	if (!ta_id)
+	if (!info)
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	for (i = 0; i < size; i++) {
-		if (algorithm_ids[i].ca_id < ca_id)
+		if (algorithm_infos[i].ca_id < ca_id)
 			continue;
-		if (algorithm_ids[i].ca_id > ca_id)
+		if (algorithm_infos[i].ca_id > ca_id)
 			return TEE_ERROR_NOT_SUPPORTED;
 
-		*ta_id = algorithm_ids[i].ta_id;
+		*info = &algorithm_infos[i];
 		break;
 	}
 
 	return TEE_SUCCESS;
 }
 
-TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
+TEE_Result ta_get_digest_length(enum tee_algorithm_id tee_algorithm_id,
+				uint32_t *digest_len)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	struct algorithm_info *info = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	if (digest_len) {
+		res = get_algorithm_info(tee_algorithm_id, &info);
+		if (!info)
+			res = TEE_ERROR_BAD_PARAMETERS;
+		if (res == TEE_SUCCESS)
+			*digest_len = info->length;
+	}
+
+	return res;
+}
+
+TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
+			     const void *chunk, uint32_t chunk_len, void **hash,
+			     uint32_t *hash_len)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_OperationHandle operation = TEE_HANDLE_NULL;
-	uint32_t algorithm_id = 0;
-	void *chunk;
-	uint32_t chunkLen;
-	void *hash;
-	uint32_t hashLen;
+	struct algorithm_info *algorithm_info = NULL;
 
+	FMSG("Executing %s", __func__);
+
+	if (!hash || !hash_len)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	/* Get TEE algorithm ID */
+	res = get_algorithm_info(tee_algorithm_id, &algorithm_info);
+	if (res) {
+		EMSG("Failed to get algorithm info: 0x%x", res);
+		return res;
+	}
+
+	res = TEE_AllocateOperation(&operation, algorithm_info->ta_id,
+				    TEE_MODE_DIGEST, 0);
+	if (res) {
+		EMSG("Failed to alloc operation: 0x%x", res);
+		return res;
+	}
+
+	/* Compute digest */
+	res = TEE_DigestDoFinal(operation, chunk, chunk_len, *hash, hash_len);
+	if (res)
+		EMSG("Failed to compute digest: 0x%x", res);
+
+	TEE_FreeOperation(operation);
+
+	return res;
+}
+
+TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
+{
 	FMSG("Executing %s", __func__);
 
 	/*
@@ -69,39 +120,10 @@ TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 					   TEE_PARAM_TYPE_MEMREF_INPUT,
 					   TEE_PARAM_TYPE_MEMREF_OUTPUT,
 					   TEE_PARAM_TYPE_NONE))
-		return res;
+		return TEE_ERROR_BAD_PARAMETERS;
 
-	/* Get TEE algorithm ID */
-	res = get_algorithm_id(params[0].value.a, &algorithm_id);
-	if (res) {
-		EMSG("Failed to get algorithm ID: 0x%x", res);
-		return res;
-	}
-
-	chunk = params[1].memref.buffer;
-	chunkLen = params[1].memref.size;
-	hash = params[2].memref.buffer;
-	hashLen = params[2].memref.size;
-
-	res = TEE_AllocateOperation(&operation, algorithm_id, TEE_MODE_DIGEST,
-				    0);
-	if (res) {
-		EMSG("Failed to alloc operation: 0x%x", res);
-		return res;
-	}
-
-	/* Compute digest */
-	res = TEE_DigestDoFinal(operation, chunk, chunkLen, hash, &hashLen);
-	if (res) {
-		EMSG("Failed to compute digest: 0x%x", res);
-		goto exit;
-	}
-
-	/* Update the hash length */
-	params[2].memref.size = hashLen;
-
-exit:
-	TEE_FreeOperation(operation);
-
-	return res;
+	return ta_compute_digest(params[0].value.a, params[1].memref.buffer,
+				 params[1].memref.size,
+				 &params[2].memref.buffer,
+				 &params[2].memref.size);
 }

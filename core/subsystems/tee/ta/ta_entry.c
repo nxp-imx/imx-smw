@@ -8,6 +8,7 @@
 #include "tee_subsystem.h"
 #include "ta_keymgr.h"
 #include "ta_hash.h"
+#include "ta_sign_verify.h"
 
 /**
  * TA_CreateEntryPoint() - Create entry point.
@@ -119,6 +120,9 @@ TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx __maybe_unused,
 		return export_key(param_types, params);
 	case CMD_HASH:
 		return hash(param_types, params);
+	case CMD_SIGN:
+	case CMD_VERIFY:
+		return sign_verify(param_types, params, cmd_id);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}

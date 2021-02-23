@@ -42,5 +42,7 @@ enum tee_algorithm_id {
 #define CMD_IMPORT_KEY	 2
 #define CMD_EXPORT_KEY	 3
 #define CMD_HASH	 4
+#define CMD_SIGN	 5
+#define CMD_VERIFY	 6
 
 #endif /* TEE_SUBSYSTEM_H */

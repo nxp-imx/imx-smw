@@ -86,6 +86,31 @@ static struct key_info {
 		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_SM4,
 		   .tee_key_type = TEE_KEY_TYPE_ID_INVALID } };
 
+int tee_convert_key_type(enum smw_config_key_type_id smw_key_type,
+			 enum tee_key_type *tee_key_type)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(key_info);
+	enum tee_key_type tmp_type = TEE_KEY_TYPE_ID_INVALID;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < size; i++) {
+		if (key_info[i].smw_key_type == smw_key_type) {
+			tmp_type = key_info[i].tee_key_type;
+			if (tmp_type != TEE_KEY_TYPE_ID_INVALID) {
+				*tee_key_type = tmp_type;
+				status = SMW_STATUS_OK;
+			}
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 /**
  * find_check_key_info() - Get and check key info.
  * @key_type_id: Key type ID.

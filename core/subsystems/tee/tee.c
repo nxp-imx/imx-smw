@@ -5,11 +5,14 @@
 
 #include <tee_client_api.h>
 
+#include "compiler.h"
+
 #include "operations.h"
 #include "subsystems.h"
 #include "debug.h"
 #include "smw_osal.h"
 #include "utils.h"
+#include "config.h"
 #include "tee.h"
 #include "tee_subsystem.h"
 #include "smw_status.h"
@@ -27,14 +30,20 @@ struct tee_subsystem {
 /* SMW-OPTEE OS global context */
 static struct tee_subsystem tee_ctx;
 
-__attribute__((weak)) bool tee_key_handle(enum operation_id operation_id,
-					  void *args, int *status)
+__weak bool tee_key_handle(enum operation_id operation_id, void *args,
+			   int *status)
 {
 	return false;
 }
 
-__attribute__((weak)) bool tee_hash_handle(enum operation_id operation_id,
-					   void *args, int *status)
+__weak bool tee_hash_handle(enum operation_id operation_id, void *args,
+			    int *status)
+{
+	return false;
+}
+
+__weak bool tee_sign_verify_handle(enum operation_id operation_id, void *args,
+				   int *status)
 {
 	return false;
 }
@@ -112,8 +121,37 @@ static int execute(enum operation_id op_id, void *args)
 		;
 	else if (tee_hash_handle(op_id, args, &status))
 		;
+	else if (tee_sign_verify_handle(op_id, args, &status))
+		;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
+ * convert_tee_result() - Convert TEE result into SMW status.
+ * @result: TEE result.
+ *
+ * Return:
+ * SMW status.
+ */
+static int convert_tee_result(TEEC_Result result)
+{
+	int status;
+
+	switch (result) {
+	case TEEC_SUCCESS:
+		status = SMW_STATUS_OK;
+		break;
+
+	case TEEC_ERROR_SHORT_BUFFER:
+		status = SMW_STATUS_OUTPUT_TOO_SHORT;
+		break;
+
+	default:
+		status = SMW_STATUS_SUBSYSTEM_FAILURE;
+	}
+
 	return status;
 }
 
@@ -127,8 +165,7 @@ int execute_tee_cmd(uint32_t cmd_id, TEEC_Operation *op)
 
 	tee_res = TEEC_InvokeCommand(&tee_ctx.session, cmd_id, op, &err_origin);
 
-	if (tee_res == TEEC_SUCCESS)
-		status = SMW_STATUS_OK;
+	status = convert_tee_result(tee_res);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

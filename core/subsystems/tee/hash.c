@@ -23,11 +23,11 @@
 	}
 
 /**
- * struct - Algorithm IDs
- * @smw_id: Algorithm ID as defined in SMW.
- * @tee_id: Algorithm ID as defined in TEE subsystem.
+ * struct - Hash algorithm IDs
+ * @smw_id: Hash algorithm ID as defined in SMW.
+ * @tee_id: Hash algorithm ID as defined in TEE subsystem.
  */
-struct {
+static struct {
 	enum smw_config_hash_algo_id smw_id;
 	enum tee_algorithm_id tee_id;
 } algorithm_ids[] = { ALGORITHM_ID(MD5),    ALGORITHM_ID(SHA1),
@@ -35,8 +35,8 @@ struct {
 		      ALGORITHM_ID(SHA384), ALGORITHM_ID(SHA512),
 		      ALGORITHM_ID(SM3),    ALGORITHM_ID(INVALID) };
 
-static int convert_algorithm_id(enum smw_config_hash_algo_id smw_id,
-				enum tee_algorithm_id *tee_id)
+int tee_convert_hash_algorithm_id(enum smw_config_hash_algo_id smw_id,
+				  enum tee_algorithm_id *tee_id)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
@@ -79,7 +79,8 @@ static int hash(void *args)
 		goto exit;
 
 	/* Convert smw algorithm ID to tee algorithm ID */
-	status = convert_algorithm_id(hash_args->algo_id, &tee_algorithm_id);
+	status = tee_convert_hash_algorithm_id(hash_args->algo_id,
+					       &tee_algorithm_id);
 	if (status != SMW_STATUS_OK) {
 		SMW_DBG_PRINTF(ERROR, "%s: Algorithm ID not supported\n",
 			       __func__);

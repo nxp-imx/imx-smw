@@ -66,58 +66,180 @@
 		"key_id": 10
 	},
 	"subtest 12": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 11
+	},
+	"subtest 13": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 384,
+		"key_id": 12
+	},
+	"subtest 14": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 512,
+		"key_id": 13
+	},
+	"subtest 15": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 640,
+		"key_id": 14
+	},
+	"subtest 16": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 768,
+		"key_id": 15
+	},
+	"subtest 17": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 896,
+		"key_id": 16
+	},
+	"subtest 18": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 1024,
+		"key_id": 17
+	},
+	"subtest 19": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 1536,
+		"key_id": 18
+	},
+	"subtest 20": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 2048,
+		"key_id": 19
+	},
+	"subtest 21": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 3072,
+		"key_id": 20
+	},
+	"subtest 22": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 4096,
+		"key_id": 21
+	},
+	"subtest 23": {
 		"command": "DELETE",
 		"key_id": 0,
 		"depends": 1
 	},
-	"subtest 13": {
+	"subtest 24": {
 		"command": "DELETE",
 		"key_id": 1,
 		"depends": 2
 	},
-	"subtest 14": {
+	"subtest 25": {
 		"command": "DELETE",
 		"key_id": 2,
 		"depends": 3
 	},
-	"subtest 15": {
+	"subtest 26": {
 		"command": "DELETE",
 		"key_id": 3,
 		"depends": 4
 	},
-	"subtest 16": {
+	"subtest 27": {
 		"command": "DELETE",
 		"key_id": 4,
 		"depends": 5
 	},
-	"subtest 17": {
+	"subtest 28": {
 		"command": "DELETE",
 		"key_id": 5,
 		"depends": 6
 	},
-	"subtest 18": {
+	"subtest 29": {
 		"command": "DELETE",
 		"key_id": 6,
 		"depends": 7
 	},
-	"subtest 19": {
+	"subtest 30": {
 		"command": "DELETE",
 		"key_id": 7,
 		"depends": 8
 	},
-	"subtest 20": {
+	"subtest 31": {
 		"command": "DELETE",
 		"key_id": 8,
 		"depends": 9
 	},
-	"subtest 21": {
+	"subtest 32": {
 		"command": "DELETE",
 		"key_id": 9,
 		"depends": 10
 	},
-	"subtest 22": {
+	"subtest 33": {
 		"command": "DELETE",
 		"key_id": 10,
 		"depends": 11
+	}
+	,
+	"subtest 34": {
+		"command": "DELETE",
+		"key_id": 11,
+		"depends": 12
+	},
+	"subtest 35": {
+		"command": "DELETE",
+		"key_id": 12,
+		"depends": 13
+	},
+	"subtest 36": {
+		"command": "DELETE",
+		"key_id": 13,
+		"depends": 14
+	},
+	"subtest 37": {
+		"command": "DELETE",
+		"key_id": 14,
+		"depends": 15
+	},
+	"subtest 38": {
+		"command": "DELETE",
+		"key_id": 15,
+		"depends": 16
+	},
+	"subtest 39": {
+		"command": "DELETE",
+		"key_id": 16,
+		"depends": 17
+	},
+	"subtest 40": {
+		"command": "DELETE",
+		"key_id": 17,
+		"depends": 18
+	},
+	"subtest 41": {
+		"command": "DELETE",
+		"key_id": 18,
+		"depends": 19
+	},
+	"subtest 42": {
+		"command": "DELETE",
+		"key_id": 19,
+		"depends": 20
+	},
+	"subtest 43": {
+		"command": "DELETE",
+		"key_id": 20,
+		"depends": 21
+	},
+	"subtest 44": {
+		"command": "DELETE",
+		"key_id": 21,
+		"depends": 22
 	}
 }

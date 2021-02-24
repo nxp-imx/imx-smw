@@ -1,0 +1,110 @@
+{
+	"subtest 1": { // Import RSA 2048bits keypair
+		"command": "IMPORT_RSA",
+		"subsystem": "TEE",
+		"security_size": 2048,
+		"pub_key": [
+			"010001"
+		],
+		"priv_key": [
+			"861157a028574cdd47858b73a036023e",
+			"cb0d3378a6d60edc162b621d27c3d289",
+			"6a62c7177c692d1c896ce64d104a1ec0",
+			"dfadad633479326c5a8b520e6dd123af",
+			"d1071963c4f2a6df7d44d5f86908b67e",
+			"ecec1ba5c17f1d02eb05b33a96abe04a",
+			"d6faca28cc2840388f7a9744fbe9333f",
+			"b95bad9ccfc9a5628795fe8dcdf64080",
+			"0d4e6adc04b963ae9b6ced73cdae2c63",
+			"392174d87ab6c99397625290b79c3574",
+			"a90407e2f266c2a58a4a583c8c527e8a",
+			"45a3433a2218923ef7deae5ffa2b7c4d",
+			"70939c74612b414f6acaaf7b22821788",
+			"58cc3d3a4ddd013381c57423f914d753",
+			"0074d45f686098a8cb4bf7d99785df68",
+			"65fa68d4f3d50112e3efc44cbf372e05"
+		],
+		"modulus": [
+			"91f4b43229bfd57e6d12bec4340a92e5",
+			"3a252fc6e3af69a375ca1aaed05651dd",
+			"f99457045d82168deb360940e016ecfd",
+			"b381db45267baf72308deb47cba3ff7a",
+			"0c1d7d31e363fb31f8f35cc662e4d410",
+			"b39b6bbac5ed2bfc00b33669aad08cbc",
+			"c277d56337c6dd3af1888ea569a5ae35",
+			"cc28a213639e439ba4c6b90b8e7097c3",
+			"aada01fa04f7b5621cf61044f342672d",
+			"7b5284e1f024c89590b56272749b3b3e",
+			"bd56ce3064f52348ecce80f44b462bbe",
+			"7fcfefaa980310daca6a9d11c7936427",
+			"576b8445f0d5cf5738e294303cb00314",
+			"6568e02115e84ee97bffda9b9b57deb7",
+			"377fbb316f1e69a763b1ec1265454e60",
+			"bf18ea22e64bf5142b3bcb8833800abd"
+		],
+		"key_id": 0
+	},
+	"subtest 2": { // Import RSA 2048bits public key
+		"command": "IMPORT_RSA",
+		"subsystem": "TEE",
+		"security_size": 2048,
+		"pub_key": [
+			"010001"
+		],
+		"modulus": [
+			"91f4b43229bfd57e6d12bec4340a92e5",
+			"3a252fc6e3af69a375ca1aaed05651dd",
+			"f99457045d82168deb360940e016ecfd",
+			"b381db45267baf72308deb47cba3ff7a",
+			"0c1d7d31e363fb31f8f35cc662e4d410",
+			"b39b6bbac5ed2bfc00b33669aad08cbc",
+			"c277d56337c6dd3af1888ea569a5ae35",
+			"cc28a213639e439ba4c6b90b8e7097c3",
+			"aada01fa04f7b5621cf61044f342672d",
+			"7b5284e1f024c89590b56272749b3b3e",
+			"bd56ce3064f52348ecce80f44b462bbe",
+			"7fcfefaa980310daca6a9d11c7936427",
+			"576b8445f0d5cf5738e294303cb00314",
+			"6568e02115e84ee97bffda9b9b57deb7",
+			"377fbb316f1e69a763b1ec1265454e60",
+			"bf18ea22e64bf5142b3bcb8833800abd"
+		],
+		"key_id": 1
+	},
+	"subtest 3": { // Import RSA 2048bits public key base 64 format
+		"command": "IMPORT_RSA",
+		"subsystem": "TEE",
+		"security_size": 2048,
+		"format": "BASE64",
+		"pub_key": "AQAB",
+		"modulus": [
+			"kfS0Mim/1X5tEr7ENAqS5TolL8bjr2mj",
+			"dcoartBWUd35lFcEXYIWjes2CUDgFuz9",
+			"s4HbRSZ7r3IwjetHy6P/egwdfTHjY/sx",
+			"+PNcxmLk1BCzm2u6xe0r/ACzNmmq0Iy8",
+			"wnfVYzfG3TrxiI6laaWuNcwoohNjnkOb",
+			"pMa5C45wl8Oq2gH6BPe1Yhz2EETzQmct",
+			"e1KE4fAkyJWQtWJydJs7Pr1WzjBk9SNI",
+			"7M6A9EtGK75/z++qmAMQ2spqnRHHk2Qn",
+			"V2uERfDVz1c44pQwPLADFGVo4CEV6E7p",
+			"e//am5tX3rc3f7sxbx5pp2Ox7BJlRU5g",
+			"vxjqIuZL9RQrO8uIM4AKvQ=="
+		],
+		"key_id": 2
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 2
+	},
+	"subtest 6": {
+		"command": "DELETE",
+		"key_id": 2,
+		"depends": 3
+	}
+}

@@ -11,6 +11,8 @@
 #include "util.h"
 #include "util_tlv.h"
 
+#define TLV_NUMERAL_ARRAY_NB_ELEM 2
+
 struct tlv {
 	const char *type;
 	int length;
@@ -46,6 +48,8 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, json_object *obj)
 	int ret = ERR_CODE(FAILED);
 	int nb_elem = 0;
 	json_object *ovalue;
+	json_object *oidx;
+	enum json_type type;
 
 	nb_elem = json_object_array_length(obj);
 	DBG_PRINT("Get nb array elem %d", nb_elem);
@@ -89,6 +93,42 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, json_object *obj)
 			ret = ERR_CODE(PASSED);
 			break;
 
+		case json_type_array:
+			/*
+			 * Case for numeral and large numeral TLV type.
+			 * The array must be composed of two values:
+			 * Index 0: an integer which represent the length field
+			 * Index 1: a string that represent the hex value
+			 */
+			nb_elem = json_object_array_length(ovalue);
+			if (nb_elem != TLV_NUMERAL_ARRAY_NB_ELEM) {
+				DBG_PRINT("TLV numeral bad 'nb elem'\n");
+				break;
+			}
+
+			oidx = json_object_array_get_idx(ovalue, 0);
+			type = json_object_get_type(oidx);
+
+			if (type != json_type_int) {
+				DBG_PRINT("TLV numeral bad 1st elem\n");
+				break;
+			}
+
+			tlv->length = json_object_get_int64(oidx);
+
+			oidx = json_object_array_get_idx(ovalue, 1);
+			type = json_object_get_type(oidx);
+
+			if (type != json_type_string) {
+				DBG_PRINT("TLV numeral bad 2nd elem\n");
+				break;
+			}
+
+			tlv->value.str = json_object_get_string(oidx);
+
+			ret = ERR_CODE(PASSED);
+			break;
+
 		default:
 			DBG_PRINT("TLV Value of type %d not supported",
 				  tlv->val_type);
@@ -114,6 +154,8 @@ static int build_attr_lists(unsigned char **attr, unsigned int len,
 	int ret;
 	int idx;
 	unsigned char *attr_string = NULL;
+	unsigned char *hex_string = NULL;
+	unsigned int hex_len = 0;
 
 	attr_string = malloc(len);
 	if (!attr_string)
@@ -152,6 +194,22 @@ static int build_attr_lists(unsigned char **attr, unsigned int len,
 		case json_type_boolean:
 			break;
 
+		case json_type_array:
+			/* Case for numeral and large numeral type */
+			ret = util_string_to_hex((char *)tlv[idx].value.str,
+						 &hex_string, &hex_len);
+			if (ret != ERR_CODE(PASSED))
+				goto end;
+
+			if (hex_len != tlv[idx].length) {
+				DBG_PRINT("TLV length is badly set\n");
+				ret = ERR_CODE(FAILED);
+				goto end;
+			}
+
+			memcpy(attr_string, hex_string, tlv[idx].length);
+			break;
+
 		default:
 			DBG_PRINT("Unsupported TLV of type %d",
 				  tlv[idx].val_type);
@@ -169,6 +227,9 @@ end:
 		free(*attr);
 		*attr = NULL;
 	}
+
+	if (hex_string)
+		free(hex_string);
 
 	return ret;
 }

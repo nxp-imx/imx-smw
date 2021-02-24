@@ -75,5 +75,34 @@
 		"pub_key": "0123456789",
 		"key_id": 0,
 		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": { // Import RSA private key only
+		"command": "IMPORT_RSA",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"890108895a7c27cedab50179f31e1052",
+			"37b7b5b3b075de6a40dB8b4d4b579721"
+		],
+		"modulus": [
+			"96798eefa1fb273c08150eb1a75cfc1a",
+			"671c4cb93897a5abf5ac2dbac912d3af"
+		],
+		"key_id": 0,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 9": { // Wrong modulus length
+		"command": "IMPORT_RSA",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"pub_key": [
+			"010001"
+		],
+		"modulus": [
+			"96798eefa1fb273c08150eb1a75cfc1a",
+			"671c4cb93897a5abf5ac2dbac912"
+		],
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

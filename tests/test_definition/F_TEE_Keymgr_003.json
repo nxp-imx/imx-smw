@@ -1,0 +1,91 @@
+{
+	"subtest 1": { // Import RSA 512bits keypair
+		"command": "IMPORT_RSA",
+		"subsystem": "TEE",
+		"security_size": 512,
+		"pub_key": [
+			"010001"
+		],
+		"priv_key": [
+			"a386c6fddde3888750aed9b09c703c78",
+			"bf1a09235b0c707b635b62dfee02efae",
+			"a74ed980f9419900217a8bf00284658e",
+			"40aa563080fddb4833d72d6f0f142b11"
+		],
+		"modulus": [
+			"acc096d20de553dc09ae7e585795f7a8",
+			"fe5f8c2e62275b76f6d68cb03dbecc88",
+			"b6cc3d592dd59b81462b894beb3b32d9",
+			"7680b326c3f0f93b89d885c417cb28df"
+		],
+		"key_id": 0
+	},
+	"subtest 2": { // Export RSA public key with check
+		"command": "EXPORT_PUBLIC",
+		"key_type": "RSA",
+		"pub_key": "010001",
+		"modulus": [
+			"acc096d20de553dc09ae7e585795f7a8",
+			"fe5f8c2e62275b76f6d68cb03dbecc88",
+			"b6cc3d592dd59b81462b894beb3b32d9",
+			"7680b326c3f0f93b89d885c417cb28df"
+		],
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 3": { // Export RSA public key with check in base 64 format
+		"command": "EXPORT_PUBLIC",
+		"key_type": "RSA",
+		"format": "BASE64",
+		"pub_key": "AQAB",
+		"modulus": [
+			"rMCW0g3lU9wJrn5YV5X3qP5fjC5iJ1t2",
+			"9taMsD2+zIi2zD1ZLdWbgUYriUvrOzLZ",
+			"doCzJsPw+TuJ2IXEF8so3w=="
+		],
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 1024,
+		"key_id": 1,
+		"attributes_list": [
+			["RSA_PUB_EXP", [9, "4000000041CB995001"]]
+		]
+	},
+	"subtest 6": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 4096,
+		"key_id": 2
+	},
+	"subtest 7": {
+		"command": "EXPORT_PUBLIC",
+		"key_type": "RSA",
+		"key_id": 1,
+		"depends": 5
+	},
+	"subtest 8": {
+		"command": "EXPORT_PUBLIC",
+		"key_type": "RSA",
+		"key_id": 2,
+		"depends": 6
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 5
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_id": 2,
+		"depends": 6
+	}
+}

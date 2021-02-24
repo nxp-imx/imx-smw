@@ -47,7 +47,8 @@ static int set_gen_opt_params(json_object *params,
 	int res;
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_key_descriptor *desc;
-	unsigned int public_length;
+	unsigned int public_length = 0;
+	unsigned int modulus_length = 0;
 
 	if (!params || !args || !key_test || !key_test->keys)
 		return ERR_CODE(BAD_ARGS);
@@ -83,7 +84,35 @@ static int set_gen_opt_params(json_object *params,
 			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
-	} else if (!util_key_is_private_len_set(key_test)) {
+	}
+
+	/*
+	 * If 'modulus' optional parameter is set, it defines the RSA modulus
+	 * length in bytes.
+	 * If the length is 1, retrieve the modulus length by calling SMW.
+	 * Else if 'modulus' not set, modulus length is not set and there is
+	 * no modulus to export.
+	 */
+	if (util_key_is_modulus(key_test)) {
+		modulus_length = *key_modulus_length(key_test);
+		if (modulus_length == 1) {
+			status = smw_get_key_buffers_lengths(desc);
+			if (status != SMW_STATUS_OK) {
+				DBG_PRINT("Error modulus buffer len");
+				return ERR_CODE(BAD_RESULT);
+			}
+		}
+
+		*key_modulus(key_test) = malloc(modulus_length);
+
+		if (!*key_modulus(key_test)) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+	}
+
+	if (!util_key_is_private_len_set(key_test) && !public_length &&
+	    !modulus_length) {
 		/* Remove key buffer if no private buffer set */
 		desc->buffer = NULL;
 	}
@@ -202,6 +231,15 @@ static int set_export_opt_params(json_object *params,
 		*key_public_data(key_test) =
 			malloc(*key_public_length(key_test));
 		if (!*key_public_data(key_test)) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+	}
+
+	if (!strcmp(tmp_key_desc.type_name, RSA_KEY) &&
+	    *key_modulus_length(key_test)) {
+		*key_modulus(key_test) = malloc(*key_modulus_length(key_test));
+		if (!*key_modulus(key_test)) {
 			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
@@ -483,6 +521,24 @@ static int compare_keys(struct keypair_ops *key_test,
 		}
 	}
 
+	if (exp_key_test->modulus_length && *key_modulus_length(exp_key_test)) {
+		if (*key_modulus_length(exp_key_test) !=
+		    *key_modulus_length(key_test)) {
+			DBG_PRINT("Bad Modulus length got %d expected %d",
+				  *key_modulus_length(key_test),
+				  *key_modulus_length(exp_key_test));
+			res = ERR_CODE(SUBSYSTEM);
+		} else if (memcmp(*key_modulus(exp_key_test),
+				  *key_modulus(key_test),
+				  *key_modulus_length(key_test))) {
+			DBG_DHEX("Got Modulus", *key_modulus(key_test),
+				 *key_modulus_length(key_test));
+			DBG_DHEX("Expected Modulus", *key_modulus(exp_key_test),
+				 *key_modulus_length(exp_key_test));
+			res = ERR_CODE(SUBSYSTEM);
+		}
+	}
+
 	return res;
 }
 
@@ -512,7 +568,7 @@ int generate_key(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor */
-	res = util_key_desc_init(&key_test, &key_buffer);
+	res = util_key_desc_init(&key_test, &key_buffer, key_type);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -586,7 +642,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor, no key buffer */
-	res = util_key_desc_init(&key_test, NULL);
+	res = util_key_desc_init(&key_test, NULL, NULL);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -653,7 +709,7 @@ int import_key(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor */
-	res = util_key_desc_init(&key_test, &key_buffer);
+	res = util_key_desc_init(&key_test, &key_buffer, key_type);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -723,6 +779,8 @@ int export_key(json_object *params, struct common_parameters *common_params,
 	struct smw_keypair_buffer key_buffer;
 	struct smw_keypair_buffer exp_key_buffer;
 	int key_id = INT_MAX;
+	json_object *obj;
+	char *key_type = NULL;
 
 	if (!params || !common_params || !ret_status) {
 		DBG_PRINT_BAD_ARGS(__func__);
@@ -733,13 +791,20 @@ int export_key(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/*
+	 * Note: For RSA, key type must be known before keypair ops init. If the
+	 * "key_type" parameter is not correctly set, a seg fault will occurred
+	 */
+	if (json_object_object_get_ex(params, KEY_TYPE_OBJ, &obj))
+		key_type = (char *)json_object_get_string(obj);
+
+	/*
 	 * Initialize 2 key descriptors:
 	 *  - one with the expected key buffers if private/public keys
 	 *    are defined in the test definition file.
 	 *  - one use for the export key operation.
 	 */
 	/* Initialize expected keys */
-	res = util_key_desc_init(&exp_key_test, &exp_key_buffer);
+	res = util_key_desc_init(&exp_key_test, &exp_key_buffer, key_type);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -754,7 +819,7 @@ int export_key(json_object *params, struct common_parameters *common_params,
 	 * defined public/private key if set in the
 	 * test definition file.
 	 */
-	res = util_key_desc_init(&key_test, NULL);
+	res = util_key_desc_init(&key_test, NULL, key_type);
 	if (res != ERR_CODE(PASSED))
 		return res;
 

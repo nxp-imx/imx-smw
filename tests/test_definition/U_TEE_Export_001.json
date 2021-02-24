@@ -58,5 +58,32 @@
 		"key_id": 1,
 		"depends": 9,
 		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+	},
+	"subtest 11": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 512,
+		"key_id": 2
+	},
+	"subtest 12": {
+		"command": "EXPORT_KEYPAIR",
+		"key_type": "RSA",
+		"key_id": 2,
+		"priv_key": 64, // Force private key length
+		"depends": 11,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 13": {
+		"command": "EXPORT_PRIVATE",
+		"key_type": "RSA",
+		"key_id": 2,
+		"priv_key": 64, // Force private key length
+		"depends": 11,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_id": 2,
+		"depends": 11
 	}
 }

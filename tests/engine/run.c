@@ -68,6 +68,9 @@ static int execute_generate_cmd(char *cmd, struct json_object *params,
 	else if (!strcmp(cmd, GENERATE_NIST))
 		return generate_key(params, common_params, NIST_KEY, key_ids,
 				    status);
+	else if (!strcmp(cmd, GENERATE_RSA))
+		return generate_key(params, common_params, RSA_KEY, key_ids,
+				    status);
 	else if (!strcmp(cmd, GENERATE_SM4))
 		return generate_key(params, common_params, SM4_KEY, key_ids,
 				    status);
@@ -212,6 +215,9 @@ static int execute_import_cmd(char *cmd, struct json_object *params,
 				  status);
 	else if (!strcmp(cmd, IMPORT_NIST))
 		return import_key(params, common_params, NIST_KEY, key_ids,
+				  status);
+	else if (!strcmp(cmd, IMPORT_RSA))
+		return import_key(params, common_params, RSA_KEY, key_ids,
 				  status);
 	else if (!strcmp(cmd, IMPORT_SM4))
 		return import_key(params, common_params, SM4_KEY, key_ids,

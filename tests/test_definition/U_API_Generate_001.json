@@ -102,5 +102,61 @@
 		"key_id": 0,
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"priv_key": 32
+	},
+	"subtest 14": { // RSA_PUB_EXP attribute set for non RSA key type
+		"command": "GENERATE_NIST",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"attributes_list": [
+			["RSA_PUB_EXP", [9, "4000000041CB995001"]]
+		]
+	},
+	"subtest 15": { // Public buffer set, modulus buffer not
+		"command": "GENERATE_RSA",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"pub_key": 3
+	},
+	"subtest 16": { // Modulus buffer set, public buffer not
+		"command": "GENERATE_RSA",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"modulus": 32
+	},
+	"subtest 17": { // Public buffer len is too small
+		"command": "GENERATE_RSA",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"pub_key": 2,
+		"modulus": 32
+	},
+	"subtest 18": { // Public buffer len too small (with RSA attribute set)
+		"command": "GENERATE_RSA",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"pub_key": 6,
+		"modulus": 32,
+		"attributes_list": [
+			["RSA_PUB_EXP", [9, "4000000041CB995001"]]
+		]
+	},
+	"subtest 19": { // Modulus buffer len is too small
+		"command": "GENERATE_RSA",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"pub_key": 3,
+		"modulus": 30
 	}
 }

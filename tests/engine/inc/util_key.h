@@ -34,6 +34,8 @@
  * @public_length: Get the @keys' public length reference
  * @private_data: Get the @keys' private data reference
  * @private_length: Get the @keys' private length reference
+ * @modulus: Get the @key's modulus data reference
+ * @modulus_length: Get the @key's modulus length reference
  *
  * This structure is internal to the test enabling to handle any
  * SMW keypair object referenced in the `struct smw_keypair_buffer`.
@@ -47,6 +49,8 @@ struct keypair_ops {
 	unsigned int *(*public_length)(struct keypair_ops *this);
 	unsigned char **(*private_data)(struct keypair_ops *this);
 	unsigned int *(*private_length)(struct keypair_ops *this);
+	unsigned char **(*modulus)(struct keypair_ops *this);
+	unsigned int *(*modulus_length)(struct keypair_ops *this);
 };
 
 #define key_public_data(this)                                                  \
@@ -79,6 +83,22 @@ struct keypair_ops {
 		assert(_this);                                                 \
 		assert(_this->private_length);                                 \
 		_this->private_length(_this);                                  \
+	})
+
+#define key_modulus(this)                                                      \
+	({                                                                     \
+		__typeof__(this) _this = (this);                               \
+		assert(_this);                                                 \
+		assert(_this->modulus);                                        \
+		_this->modulus(_this);                                         \
+	})
+
+#define key_modulus_length(this)                                               \
+	({                                                                     \
+		__typeof__(this) _this = (this);                               \
+		assert(_this);                                                 \
+		assert(_this->modulus_length);                                 \
+		_this->modulus_length(_this);                                  \
 	})
 
 /**
@@ -164,6 +184,18 @@ static inline int util_key_is_private_len_set(struct keypair_ops *key_test)
 }
 
 /**
+ * util_key_is_modulus_len_set() - Return if modulus length is defined
+ * @key_test: Test keypair structure with operations
+ *
+ * Return:
+ * false if not set, otherwise true
+ */
+static inline int util_key_is_modulus_len_set(struct keypair_ops *key_test)
+{
+	return (*key_modulus_length(key_test) != KEY_LENGTH_NOT_SET);
+}
+
+/**
  * util_key_is_public_key_defined() - Return if public key buffer is defined
  * @key_test: Test keypair structure with operations
  *
@@ -187,6 +219,18 @@ static inline int util_key_is_private_key_defined(struct keypair_ops *key_test)
 {
 	return (*key_private_length(key_test) != KEY_LENGTH_NOT_SET) &&
 	       *key_private_data(key_test);
+}
+
+/**
+ * util_key_is_modulus() - Return if modulus buffer is supported.
+ * @key_test: Test keypair structure with operations
+ *
+ * Return:
+ * false if not supported, otherwise true
+ */
+static inline int util_key_is_modulus(struct keypair_ops *key_test)
+{
+	return key_test->modulus_length && key_test->modulus;
 }
 
 /**
@@ -230,17 +274,19 @@ int util_key_find_key_node(struct key_identifier_list *key_identifiers,
  * util_key_desc_init() - Initialize SMW key descriptor fields
  * @key_test: Test keypair structure with operations
  * @key: SMW keypair buffer (can be NULL)
+ * @key_type: Pointer to key type name (can be NULL)
  *
  * Initialize key descriptor fields with default unset value.
  * Set the key descriptor key buffer with the @key pointer.
  * If @key is given initialize it with default unset value.
+ * If @key_type is set to "RSA", initialize to RSA specific values.
  *
  * Return:
  * PASSED    - Success
  * -BAD_ARGS - Bad function argument
  */
 int util_key_desc_init(struct keypair_ops *key_test,
-		       struct smw_keypair_buffer *key);
+		       struct smw_keypair_buffer *key, char *key_type);
 
 /**
  * util_key_read_descriptor() - Read the key descriptor definition
@@ -280,13 +326,14 @@ int util_key_desc_set_key(struct keypair_ops *key_test,
 /**
  * util_key_set_ops() - Set a SMW keypair to the key descriptor
  * @key_test: Test keypair structure with operations
+ * @key_type: Key type. Can be NULL. Used to properly set RSA key ops.
  *
  * Setup the test keypair operations.
  *
  * Return:
  * None.
  */
-void util_key_set_ops(struct keypair_ops *key_test);
+void util_key_set_ops(struct keypair_ops *key_test, char *key_type);
 
 /**
  * util_key_free_key() - Free test keypair buffer

@@ -42,18 +42,77 @@ static unsigned int *get_private_length_gen(struct keypair_ops *this)
 	return &key->private_length;
 }
 
-void util_key_set_ops(struct keypair_ops *key_test)
+static struct smw_keypair_rsa *get_keypair_rsa(struct keypair_ops *this)
+{
+	assert(this && this->keys);
+	return &this->keys->rsa;
+}
+
+static unsigned char **get_public_data_rsa(struct keypair_ops *this)
+{
+	struct smw_keypair_rsa *key = get_keypair_rsa(this);
+
+	return &key->public_data;
+}
+
+static unsigned int *get_public_length_rsa(struct keypair_ops *this)
+{
+	struct smw_keypair_rsa *key = get_keypair_rsa(this);
+
+	return &key->public_length;
+}
+
+static unsigned char **get_private_data_rsa(struct keypair_ops *this)
+{
+	struct smw_keypair_rsa *key = get_keypair_rsa(this);
+
+	return &key->private_data;
+}
+
+static unsigned int *get_private_length_rsa(struct keypair_ops *this)
+{
+	struct smw_keypair_rsa *key = get_keypair_rsa(this);
+
+	return &key->private_length;
+}
+
+static unsigned char **get_modulus_rsa(struct keypair_ops *this)
+{
+	struct smw_keypair_rsa *key = get_keypair_rsa(this);
+
+	return &key->modulus;
+}
+
+static unsigned int *get_modulus_length_rsa(struct keypair_ops *this)
+{
+	struct smw_keypair_rsa *key = get_keypair_rsa(this);
+
+	return &key->modulus_length;
+}
+
+void util_key_set_ops(struct keypair_ops *key_test, char *key_type)
 {
 	if (!key_test->keys) {
 		key_test->public_data = NULL;
 		key_test->public_length = NULL;
 		key_test->private_data = NULL;
 		key_test->private_length = NULL;
+		key_test->modulus = NULL;
+		key_test->modulus_length = NULL;
+	} else if (key_type && !strcmp(key_type, RSA_KEY)) {
+		key_test->public_data = &get_public_data_rsa;
+		key_test->public_length = &get_public_length_rsa;
+		key_test->private_data = &get_private_data_rsa;
+		key_test->private_length = &get_private_length_rsa;
+		key_test->modulus = &get_modulus_rsa;
+		key_test->modulus_length = &get_modulus_length_rsa;
 	} else {
 		key_test->public_data = &get_public_data_gen;
 		key_test->public_length = &get_public_length_gen;
 		key_test->private_data = &get_private_data_gen;
 		key_test->private_length = &get_private_length_gen;
+		key_test->modulus = NULL;
+		key_test->modulus_length = NULL;
 	}
 }
 
@@ -172,9 +231,18 @@ static int keypair_read(struct keypair_ops *key_test, json_object *params)
 			return ret;
 	}
 
-	if (json_object_object_get_ex(params, PRIV_KEY_OBJ, &okey))
+	if (json_object_object_get_ex(params, PRIV_KEY_OBJ, &okey)) {
 		ret = read_key(key_private_data(key_test),
 			       key_private_length(key_test),
+			       key_test->keys->format_name, okey);
+
+		if (ret != ERR_CODE(PASSED))
+			return ret;
+	}
+
+	if (json_object_object_get_ex(params, MODULUS_OBJ, &okey))
+		ret = read_key(key_modulus(key_test),
+			       key_modulus_length(key_test),
 			       key_test->keys->format_name, okey);
 
 	return ret;
@@ -266,7 +334,7 @@ int util_key_find_key_node(struct key_identifier_list *key_identifiers,
 }
 
 int util_key_desc_init(struct keypair_ops *key_test,
-		       struct smw_keypair_buffer *key)
+		       struct smw_keypair_buffer *key, char *key_type)
 {
 	struct smw_key_descriptor *desc;
 
@@ -285,14 +353,24 @@ int util_key_desc_init(struct keypair_ops *key_test,
 	key_test->keys = key;
 
 	/* Initialize the keypair buffer and operations */
-	util_key_set_ops(key_test);
+	util_key_set_ops(key_test, key_type);
 
 	if (key) {
-		key->format_name = NULL;
-		*key_public_data(key_test) = NULL;
-		*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
-		*key_private_data(key_test) = NULL;
-		*key_private_length(key_test) = KEY_LENGTH_NOT_SET;
+		if (key_type && !strcmp(key_type, RSA_KEY)) {
+			key->format_name = NULL;
+			*key_public_data(key_test) = NULL;
+			*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
+			*key_private_data(key_test) = NULL;
+			*key_private_length(key_test) = KEY_LENGTH_NOT_SET;
+			*key_modulus(key_test) = NULL;
+			*key_modulus_length(key_test) = KEY_LENGTH_NOT_SET;
+		} else {
+			key->format_name = NULL;
+			*key_public_data(key_test) = NULL;
+			*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
+			*key_private_data(key_test) = NULL;
+			*key_private_length(key_test) = KEY_LENGTH_NOT_SET;
+		}
 	}
 
 	return ERR_CODE(PASSED);
@@ -325,7 +403,7 @@ int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 		*key_id = json_object_get_int(obj);
 
 	/* Setup the key ops function of the key type */
-	util_key_set_ops(key_test);
+	util_key_set_ops(key_test, (char *)desc->type_name);
 
 	if (key_test->keys)
 		ret = keypair_read(key_test, params);
@@ -345,13 +423,24 @@ int util_key_desc_set_key(struct keypair_ops *key_test,
 	key_test->keys = key;
 
 	/* Initialize the keypair buffer and operations */
-	util_key_set_ops(key_test);
+	util_key_set_ops(key_test, (char *)key_test->desc.type_name);
 
-	key->format_name = NULL;
-	*key_public_data(key_test) = NULL;
-	*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
-	*key_private_data(key_test) = NULL;
-	*key_private_length(key_test) = KEY_LENGTH_NOT_SET;
+	if (key_test->desc.type_name &&
+	    !strcmp(key_test->desc.type_name, RSA_KEY)) {
+		key->format_name = NULL;
+		*key_public_data(key_test) = NULL;
+		*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
+		*key_private_data(key_test) = NULL;
+		*key_private_length(key_test) = KEY_LENGTH_NOT_SET;
+		*key_modulus(key_test) = NULL;
+		*key_modulus_length(key_test) = KEY_LENGTH_NOT_SET;
+	} else {
+		key->format_name = NULL;
+		*key_public_data(key_test) = NULL;
+		*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
+		*key_private_data(key_test) = NULL;
+		*key_private_length(key_test) = KEY_LENGTH_NOT_SET;
+	}
 
 	return ERR_CODE(PASSED);
 }
@@ -364,5 +453,8 @@ void util_key_free_key(struct keypair_ops *key_test)
 
 		if (*key_private_data(key_test))
 			free(*key_private_data(key_test));
+
+		if (key_test->modulus && *key_modulus(key_test))
+			free(*key_modulus(key_test));
 	}
 }

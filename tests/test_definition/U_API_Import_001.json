@@ -142,5 +142,42 @@
 		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"attributes_list": ["undefined"],
 		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 15": { // Modulus buffer not set
+		"command": "IMPORT_RSA",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"key_id": 0,
+		"pub_key": [
+			3,
+			"010001"
+		],
+		"priv_key": [
+			32,
+			"890108895a7c27cedab50179f31e1052",
+			"37b7b5b3b075de6a40dB8b4d4b579721"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 16": { // Modulus length is not set
+		"command": "IMPORT_RSA",
+		"subsystem": "DEFAULT",
+		"security_size": 256,
+		"key_id": 0,
+		"pub_key": [
+			3,
+			"010001"
+		],
+		"priv_key": [
+			32,
+			"890108895a7c27cedab50179f31e1052",
+			"37b7b5b3b075de6a40dB8b4d4b579721"
+		],
+		"modulus": [
+			0,
+			"96798eefa1fb273c08150eb1a75cfc1a",
+			"671c4cb93897a5abf5ac2dbac912d3af"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

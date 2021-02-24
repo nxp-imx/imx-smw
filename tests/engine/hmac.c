@@ -109,7 +109,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor */
-	res = util_key_desc_init(&key_test, &key_buffer);
+	res = util_key_desc_init(&key_test, &key_buffer, NULL);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -122,7 +122,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 		util_key_free_key(&key_test);
 		key_test.desc.buffer = NULL;
 		key_test.keys = NULL;
-		util_key_set_ops(&key_test);
+		util_key_set_ops(&key_test, NULL);
 
 		/* Fill key descriptor field saved */
 		res = util_key_find_key_node(key_identifiers, key_id,

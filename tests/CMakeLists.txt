@@ -9,6 +9,8 @@ endif()
 
 find_package(JSONC REQUIRED)
 
+enable_testing()
+
 set(SMW_TESTS_TARGET_BIN_DIR bin)
 set(SMW_TESTS_TARGET_DATA_DIR share/smw/tests)
 set(SMW_CTEST_TEST_FILE_DIR ${SMW_TESTS_TARGET_DATA_DIR})
@@ -35,6 +37,7 @@ configure_file(${TEST_SCRIPTS_SRC}/run_simple_test.sh.in
                ${TEST_SCRIPTS_BIN}/run_simple_test.sh)
 
 add_executable(${PROJECT_NAME}
+               EXCLUDE_FROM_ALL
                engine/crypto.c
                engine/hmac.c
                engine/keymgr.c
@@ -48,7 +51,8 @@ add_executable(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${TEST_SRC_INC} ${TEST_BIN_INC}
-                                   ${JSONC_INCLUDE_DIR})
+                                   ${JSONC_INCLUDE_DIR}
+                           PUBLIC ${CMAKE_SOURCE_DIR}/public)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONC_LIBRARY})
 target_link_libraries(${PROJECT_NAME} PRIVATE smw)
@@ -71,9 +75,6 @@ set(KEYMGR_LABEL Keymgr)
 set(SIGN_LABEL Sign)
 set(VERIFY_LABEL Verify)
 
-install(DIRECTORY DESTINATION ${SMW_TESTS_TARGET_CONFIG_DIR})
-install(DIRECTORY DESTINATION ${SMW_TESTS_TARGET_DEF_DIR})
-
 # Include SMW API tests
 include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)
 
@@ -95,10 +96,24 @@ endif()
 # TODO: Include multi subsystem tests -> multi_tests.cmake
 #       Switch values of <SUBSYSTEM>_TESTS add tests
 #
-
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
-        DESTINATION ${SMW_CTEST_TEST_FILE_DIR})
+        DESTINATION ${SMW_CTEST_TEST_FILE_DIR}
+        EXCLUDE_FROM_ALL
+        COMPONENT ${PROJECT_NAME})
+
 install(FILES ${TEST_SCRIPTS_BIN}/run_simple_test.sh
         DESTINATION ${SMW_TESTS_TARGET_SCRIPTS_DIR}
-        PERMISSIONS WORLD_EXECUTE OWNER_READ)
-install(TARGETS ${PROJECT_NAME} DESTINATION ${SMW_TESTS_TARGET_BIN_DIR})
+        PERMISSIONS WORLD_EXECUTE OWNER_READ
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL)
+
+install(TARGETS ${PROJECT_NAME}
+        DESTINATION ${SMW_TESTS_TARGET_BIN_DIR}
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL OPTIONAL)
+
+add_custom_target(install_tests
+        COMMAND "${CMAKE_COMMAND}" -DCOMPONENT=${PROJECT_NAME}
+                -P "${CMAKE_BINARY_DIR}/tests/cmake_install.cmake"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        VERBATIM)

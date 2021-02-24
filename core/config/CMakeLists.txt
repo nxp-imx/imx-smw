@@ -1,6 +1,6 @@
 set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:config> PARENT_SCOPE)
 
-add_library(config OBJECT "" ${INCLUDE_DIR})
+add_library(config OBJECT "")
 set_target_properties(config PROPERTIES C_VISIBILITY_PRESET hidden)
 target_sources(config PRIVATE
                entry.c

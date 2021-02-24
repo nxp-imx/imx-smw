@@ -13,7 +13,7 @@ if(ENABLE_HMAC)
 add_operation(HMAC)
 endif()
 
-add_library(crypto OBJECT "" ${INCLUDE_DIR})
+add_library(crypto OBJECT "")
 target_sources(crypto PRIVATE
                crypto_weak.c
                $<$<BOOL:${ENABLE_HASH}>:hash.c>

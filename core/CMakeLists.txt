@@ -1,11 +1,17 @@
+cmake_minimum_required(VERSION 3.5)
+
+project(smw VERSION 0.1 LANGUAGES C)
+
 include(add_component)
 
 set(CORE_SRC_INC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
 set(CORE_BIN_INC ${CMAKE_CURRENT_BINARY_DIR}/inc)
-set(INCLUDE_DIR ${INCLUDE_DIR} ${CORE_SRC_INC} ${CORE_BIN_INC})
+set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/public
+                ${CMAKE_SOURCE_DIR}/inc
+                ${CORE_SRC_INC} ${CORE_BIN_INC})
 
 #
-#Initialize Cache variables use to build source files
+# Initialize Cache variables use to build source files
 #
 define_property(GLOBAL PROPERTY PROP_SUBSYSTEM_ID
     BRIEF_DOCS "Subsytem" FULL_DOCS "Subsystem IDs")
@@ -89,3 +95,21 @@ configure_file(${CORE_SRC_INC}/subsystems.h.in ${CORE_BIN_INC}/subsystems.h)
 
 set(OBJ_LIST ${OBJ_LIST} PARENT_SCOPE)
 set(EXT_LIBS ${EXT_LIBS} PARENT_SCOPE)
+
+add_library(${PROJECT_NAME} SHARED ${OBJ_LIST})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    C_STANDARD 99
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR})
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ${INCLUDE_DIR}
+    PUBLIC ${CMAKE_SOURCE_DIR}/public)
+target_include_directories(${PROJECT_NAME}
+    INTERFACE "$<INSTALL_INTERFACE:include>")
+
+target_link_libraries(smw ${CMAKE_THREAD_LIBS_INIT} ${EXT_LIBS})
+
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+install(FILES ${CMAKE_SOURCE_DIR}/osal/${OS}/config/default_config.txt
+        DESTINATION share/smw)

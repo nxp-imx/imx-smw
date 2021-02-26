@@ -38,6 +38,8 @@ struct smw_hash_args {
  * @message_length: Length of the message
  * @signature: Location of the signature
  * @signature_length: Length of the signature
+ * @attributes_list: Sign Verify attributes list.
+ * @attributes_list_length: @attributes_list length in bytes.
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default configured Secure Subsystem is used.
@@ -52,6 +54,8 @@ struct smw_sign_verify_args {
 	unsigned int message_length;
 	unsigned char *signature;
 	unsigned int signature_length;
+	const unsigned char *attributes_list;
+	unsigned int attributes_list_length;
 };
 
 /**

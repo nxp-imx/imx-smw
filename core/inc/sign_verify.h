@@ -3,6 +3,33 @@
  * Copyright 2020-2021 NXP
  */
 
+/* Signature type string */
+#define SIGNATURE_TYPE_STR    "SIGNATURE_TYPE"
+#define RSASSA_PKCS1_V1_5_STR "RSASSA-PKCS1-V1_5"
+#define RSASSA_PSS_STR	      "RSASSA-PSS"
+
+#define SALT_LEN_STR "SALT_LEN"
+
+/* Signature type enum */
+enum signature_type {
+	SIGNATURE_TYPE_RSASSA_PKCS1_V1_5,
+	SIGNATURE_TYPE_RSASSA_PSS,
+	SIGNATURE_TYPE_UNDEFINED
+};
+
+/**
+ * struct smw_sign_verify_attributes - Sign Verify attributes list.
+ * @signature_type: Type of signature.
+ * @salt_length: Optional salt length in bytes.
+ *
+ * @salt_length is only for 'RSASSA-PSS' signature type. If not set, the
+ * salt length is equal to the hash length.
+ */
+struct smw_sign_verify_attributes {
+	enum signature_type signature_type;
+	uint32_t salt_length;
+};
+
 /**
  * struct smw_crypto_sign_verify_args - Sign or verify arguments
  * @key_descriptor: Descriptor of the Key
@@ -16,6 +43,7 @@ struct smw_crypto_sign_verify_args {
 	struct smw_keymgr_descriptor key_descriptor;
 	enum smw_config_hash_algo_id algo_id;
 	struct smw_sign_verify_args *pub;
+	struct smw_sign_verify_attributes attributes;
 };
 
 /**

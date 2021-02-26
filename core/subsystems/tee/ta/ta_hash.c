@@ -70,6 +70,28 @@ TEE_Result ta_get_digest_length(enum tee_algorithm_id tee_algorithm_id,
 	return res;
 }
 
+TEE_Result ta_get_hash_ca_id(uint32_t digest_len, enum tee_algorithm_id *ca_id)
+{
+	unsigned int i;
+	unsigned int size = ARRAY_SIZE(algorithm_infos);
+
+	FMSG("Executing %s", __func__);
+
+	if (ca_id) {
+		for (i = 0; i < size; i++) {
+			if (algorithm_infos[i].length < digest_len)
+				continue;
+			if (algorithm_infos[i].length > digest_len)
+				return TEE_ERROR_NOT_SUPPORTED;
+
+			*ca_id = algorithm_infos[i].ca_id;
+			return TEE_SUCCESS;
+		}
+	}
+
+	return TEE_ERROR_BAD_PARAMETERS;
+}
+
 TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 			     const void *chunk, uint32_t chunk_len, void **hash,
 			     uint32_t *hash_len)

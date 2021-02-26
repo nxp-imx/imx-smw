@@ -20,6 +20,14 @@
 		.tee_algorithm_id = TEE_ALG_##_key_type_id##_P##_security_size \
 	}
 
+#define RSA_ALGORITHM_ID(_sign_type, _rsa_algo, _hash_algo)                    \
+	{                                                                      \
+		.signature_type = TEE_SIGNATURE_TYPE_##_sign_type,             \
+		.hash_algo = TEE_ALGORITHM_ID_##_hash_algo,                    \
+		.tee_algorithm_id =                                            \
+			TEE_ALG_RSASSA_PKCS1_##_rsa_algo##_##_hash_algo        \
+	}
+
 /* Key type IDs must be ordered from lowest to highest.
  * Security size must be ordered from lowest to highest
  * for 1 given Key type ID
@@ -31,6 +39,78 @@ static struct {
 } algorithm_ids[] = { ALGORITHM_ID(ECDSA, 192), ALGORITHM_ID(ECDSA, 224),
 		      ALGORITHM_ID(ECDSA, 256), ALGORITHM_ID(ECDSA, 384),
 		      ALGORITHM_ID(ECDSA, 521) };
+
+/*
+ * RSA algo must be ordered from lowest to highest.
+ * Hash algo muste be ordered from lowest to hioghest for one given RSA algo.
+ */
+static struct {
+	enum tee_signature_type signature_type;
+	enum tee_algorithm_id hash_algo;
+	uint32_t tee_algorithm_id;
+} rsa_algorithm_ids[] = { RSA_ALGORITHM_ID(RSASSA_PKCS1_V1_5, V1_5, MD5),
+			  RSA_ALGORITHM_ID(RSASSA_PKCS1_V1_5, V1_5, SHA1),
+			  RSA_ALGORITHM_ID(RSASSA_PKCS1_V1_5, V1_5, SHA224),
+			  RSA_ALGORITHM_ID(RSASSA_PKCS1_V1_5, V1_5, SHA256),
+			  RSA_ALGORITHM_ID(RSASSA_PKCS1_V1_5, V1_5, SHA384),
+			  RSA_ALGORITHM_ID(RSASSA_PKCS1_V1_5, V1_5, SHA512),
+			  RSA_ALGORITHM_ID(RSASSA_PSS, PSS_MGF1, SHA1),
+			  RSA_ALGORITHM_ID(RSASSA_PSS, PSS_MGF1, SHA224),
+			  RSA_ALGORITHM_ID(RSASSA_PSS, PSS_MGF1, SHA256),
+			  RSA_ALGORITHM_ID(RSASSA_PSS, PSS_MGF1, SHA384),
+			  RSA_ALGORITHM_ID(RSASSA_PSS, PSS_MGF1, SHA512) };
+
+/**
+ * get_rsa_algo_id() - Get sign verify algorithm ID from RSA key type.
+ * @signature_type: Signature type.
+ * @hash_algo: Hash algorithm used for the operation.
+ * @digest_len: Length of the operation hashed message in bytes.
+ * @algorithm_id: Pointer to the algorithm ID variable to update.
+ *
+ * If @hash_algo is TEE_ALGORITHM_ID_INVALID, @digest_len must be set. Else,
+ * @digest_len is not necessary.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameter is invalid.
+ * TEE_ERROR_NOT_SUPPORTED	- Operation not supported.
+ */
+static TEE_Result get_rsa_algo_id(enum tee_signature_type signature_type,
+				  enum tee_algorithm_id hash_algo,
+				  uint32_t digest_len, uint32_t *algorithm_id)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	unsigned int i;
+	unsigned int size = ARRAY_SIZE(rsa_algorithm_ids);
+	enum tee_algorithm_id tee_hash_algo = hash_algo;
+
+	FMSG("Executing %s", __func__);
+
+	if (!algorithm_id)
+		return res;
+
+	if (tee_hash_algo == TEE_ALGORITHM_ID_INVALID) {
+		res = ta_get_hash_ca_id(digest_len, &tee_hash_algo);
+		if (res != TEE_SUCCESS)
+			return res;
+	}
+
+	for (i = 0; i < size; i++) {
+		if (rsa_algorithm_ids[i].signature_type < signature_type)
+			continue;
+		if (rsa_algorithm_ids[i].signature_type > signature_type)
+			return TEE_ERROR_NOT_SUPPORTED;
+		if (rsa_algorithm_ids[i].hash_algo < tee_hash_algo)
+			continue;
+		if (rsa_algorithm_ids[i].hash_algo > tee_hash_algo)
+			return TEE_ERROR_NOT_SUPPORTED;
+
+		*algorithm_id = rsa_algorithm_ids[i].tee_algorithm_id;
+		break;
+	}
+
+	return TEE_SUCCESS;
+}
 
 static TEE_Result get_algorithm_id(enum tee_key_type key_type_id,
 				   unsigned int security_size,
@@ -67,6 +147,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_OperationHandle operation = TEE_HANDLE_NULL;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
+	TEE_Attribute sign_verify_attr = { 0 };
 	uint32_t param0_type = TEE_PARAM_TYPE_GET(param_types, 0);
 	uint32_t exp_param3_type;
 	uint32_t mode;
@@ -79,6 +160,8 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	void *digest = NULL;
 	uint32_t digest_len = 0;
 	bool persistent = false;
+	uint32_t attr_count = 0;
+	struct sign_verify_shared_params *shared_params = NULL;
 
 	FMSG("Executing %s (%d)", __func__, cmd_id);
 
@@ -86,8 +169,8 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 		return res;
 
 	/*
-	 * params[0] = Key ID or Key buffer
-	 * params[1] = Key type ID / hash algorithm ID and Security size
+	 * params[0] = Key buffer or none
+	 * params[1] = Pointer to sign verify shared params structure
 	 * params[2] = Message buffer and message length
 	 * params[3] = Signature buffer and signature length
 	 */
@@ -98,23 +181,26 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	} else { /* CMD_VERIFY */
 		exp_param3_type = TEE_PARAM_TYPE_MEMREF_INPUT;
 		mode = TEE_MODE_VERIFY;
-		pub_key = params[0].memref.buffer;
-		pub_key_len = params[0].memref.size;
 	}
-
 	if ((TEE_PARAM_TYPE_GET(param_types, 1) !=
-	     TEE_PARAM_TYPE_VALUE_INPUT) ||
+	     TEE_PARAM_TYPE_MEMREF_INPUT) ||
+	    params[1].memref.size != sizeof(*shared_params) ||
+	    !params[1].memref.buffer ||
 	    (TEE_PARAM_TYPE_GET(param_types, 2) !=
 	     TEE_PARAM_TYPE_MEMREF_INPUT) ||
 	    (TEE_PARAM_TYPE_GET(param_types, 3) != exp_param3_type))
 		return res;
 
-	hash_algo_id = params[1].value.a & 0xFFFF;
-	key_type_id = params[1].value.a >> 16;
-	security_size = params[1].value.b;
+	shared_params = params[1].memref.buffer;
+	hash_algo_id = shared_params->hash_algorithm;
+	key_type_id = shared_params->key_type;
+	security_size = shared_params->security_size;
 
 	switch (param0_type) {
 	case TEE_PARAM_TYPE_MEMREF_INPUT:
+		pub_key = params[0].memref.buffer;
+		pub_key_len = params[0].memref.size;
+
 		if (cmd_id == CMD_SIGN) {
 			EMSG("Key import not supported with Sign operation");
 			return res;
@@ -128,8 +214,8 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 
 		break;
 
-	case TEE_PARAM_TYPE_VALUE_INPUT:
-		res = ta_get_key_handle(&key_handle, params[0].value.a,
+	case TEE_PARAM_TYPE_NONE:
+		res = ta_get_key_handle(&key_handle, shared_params->id,
 					&persistent);
 		if (res) {
 			EMSG("Key not found: 0x%x", res);
@@ -165,7 +251,22 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	}
 
 	/* Get TEE algorithm ID */
-	res = get_algorithm_id(key_type_id, security_size, &algorithm_id);
+	if (key_type_id == TEE_KEY_TYPE_ID_RSA) {
+		res = get_rsa_algo_id(shared_params->signature_type,
+				      hash_algo_id, digest_len, &algorithm_id);
+
+		/* Set salt length attribute if needed */
+		if (!res && shared_params->salt_length) {
+			TEE_InitValueAttribute(&sign_verify_attr,
+					       TEE_ATTR_RSA_PSS_SALT_LENGTH,
+					       shared_params->salt_length, 0);
+			attr_count = 1;
+		}
+	} else {
+		res = get_algorithm_id(key_type_id, security_size,
+				       &algorithm_id);
+	}
+
 	if (res) {
 		EMSG("Failed to get algorithm ID: 0x%x", res);
 		goto err;
@@ -185,15 +286,15 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	}
 
 	if (cmd_id == CMD_SIGN) {
-		res = TEE_AsymmetricSignDigest(operation, NULL, 0, digest,
-					       digest_len,
+		res = TEE_AsymmetricSignDigest(operation, &sign_verify_attr,
+					       attr_count, digest, digest_len,
 					       params[3].memref.buffer,
 					       &params[3].memref.size);
 		if (res)
 			EMSG("Failed to sign digest: 0x%x", res);
 	} else { /* CMD_VERIFY */
-		res = TEE_AsymmetricVerifyDigest(operation, NULL, 0, digest,
-						 digest_len,
+		res = TEE_AsymmetricVerifyDigest(operation, &sign_verify_attr,
+						 attr_count, digest, digest_len,
 						 params[3].memref.buffer,
 						 params[3].memref.size);
 		if (res)

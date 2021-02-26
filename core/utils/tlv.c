@@ -53,8 +53,7 @@ int smw_tlv_read_element(const unsigned char **attribute,
 	if (!*value_size) {
 		SMW_DBG_PRINTF(DEBUG, "%s: Attribute is boolean\n", __func__);
 		*value = NULL;
-		/* Update attribute pointer to next element to handle */
-		*attribute = p + SMW_TLV_LENGTH_FIELD_SIZE;
+		*attribute = p;
 		goto exit;
 	}
 
@@ -126,4 +125,35 @@ int smw_tlv_verify_large_numeral(unsigned int length, unsigned char *value)
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+int smw_tlv_verify_numeral(unsigned int length, unsigned char *value)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (value && (length == 1 || length == 2 || length == 4 || length == 8))
+		status = SMW_STATUS_OK;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+unsigned long long smw_tlv_convert_numeral(unsigned int length,
+					   unsigned char *value)
+{
+	unsigned int i;
+	unsigned long long numeral = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!value)
+		return numeral;
+
+	for (i = 0; i < length; i++)
+		numeral |= (unsigned long long)value[i]
+			   << ((length - 1 - i) * 8);
+
+	return numeral;
 }

@@ -35,6 +35,18 @@ TEE_Result ta_get_digest_length(enum tee_algorithm_id tee_algorithm_id,
 				uint32_t *digest_len);
 
 /**
+ * ta_get_hash_ca_id() - Get CA hash ID from digest length.
+ * @digest_len: Digest length of the hash algorithm.
+ * @ca_id: Pointer to CA hash ID to update.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * TEE_ERROR_NOT_SUPPORTED	- Hash algorithm is not supported.
+ */
+TEE_Result ta_get_hash_ca_id(uint32_t digest_len, enum tee_algorithm_id *ca_id);
+
+/**
  * ta_compute_digest() - Compute a digest.
  * @tee_algorithm_id: Hash algorithm ID.
  * @chunk: Address of data to be hashed.

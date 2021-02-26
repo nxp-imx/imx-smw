@@ -16,6 +16,60 @@
 #include "keymgr.h"
 #include "sign_verify.h"
 #include "exec.h"
+#include "tlv.h"
+#include "attr.h"
+
+/**
+ * store_signature_type() - Store signature type.
+ * @attributes: Pointer to attribute structure to fill.
+ * @value: Signature type string.
+ * @length: Length of @value in bytes.
+ *
+ * @value is converted in 'enum signature_type'.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
+ */
+static int store_signature_type(void *attributes, unsigned char *value,
+				unsigned int length);
+
+/**
+ * store_salt_len() - Store optional salt length.
+ * @attributes: Pointer to attribute structure to fill.
+ * @value: Salt length (HEX buffer).
+ * @length: @value length in bytes.
+ *
+ * @value is converted in uint32_t.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid.
+ */
+static int store_salt_len(void *attributes, unsigned char *value,
+			  unsigned int length);
+
+static struct attribute_tlv sign_verify_attributes_tlv_array[] = {
+	{ .type = (const unsigned char *)SIGNATURE_TYPE_STR,
+	  .verify = smw_tlv_verify_enumeration,
+	  .store = store_signature_type },
+	{ .type = (const unsigned char *)SALT_LEN_STR,
+	  .verify = smw_tlv_verify_numeral,
+	  .store = store_salt_len }
+};
+
+/**
+ * set_default_attributes() - Set default sign/verify attributes
+ * @attr: Pointer to the sign/verify attributes structure.
+ *
+ * Return:
+ * None.
+ */
+static void set_default_attributes(struct smw_sign_verify_attributes *attr)
+{
+	attr->signature_type = SIGNATURE_TYPE_UNDEFINED;
+	attr->salt_length = 0;
+}
 
 static int
 sign_verify_convert_args(struct smw_sign_verify_args *args,
@@ -43,6 +97,17 @@ sign_verify_convert_args(struct smw_sign_verify_args *args,
 
 	status = smw_config_get_hash_algo_id(args->algo_name,
 					     &converted_args->algo_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	/* Initialize attributes parameters to default values */
+	set_default_attributes(&converted_args->attributes);
+
+	status = read_attributes(args->attributes_list,
+				 args->attributes_list_length,
+				 &converted_args->attributes,
+				 sign_verify_attributes_tlv_array,
+				 ARRAY_SIZE(sign_verify_attributes_tlv_array));
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -114,6 +179,50 @@ smw_sign_verify_set_sign_len(struct smw_crypto_sign_verify_args *args,
 {
 	if (args->pub)
 		args->pub->signature_length = signature_length;
+}
+
+static int store_signature_type(void *attributes, unsigned char *value,
+				unsigned int length)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_sign_verify_attributes *attr = attributes;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!value || !attr)
+		goto end;
+
+	if (!SMW_UTILS_STRCMP((char *)value, RSASSA_PSS_STR))
+		attr->signature_type = SIGNATURE_TYPE_RSASSA_PSS;
+	else if (!SMW_UTILS_STRCMP((char *)value, RSASSA_PKCS1_V1_5_STR))
+		attr->signature_type = SIGNATURE_TYPE_RSASSA_PKCS1_V1_5;
+	else
+		goto end;
+
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int store_salt_len(void *attributes, unsigned char *value,
+			  unsigned int length)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_sign_verify_attributes *attr = attributes;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!value || !attr)
+		goto end;
+
+	attr->salt_length = (uint32_t)smw_tlv_convert_numeral(length, value);
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 static int smw_sign_verify(enum operation_id operation_id,

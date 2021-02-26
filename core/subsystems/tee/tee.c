@@ -156,6 +156,14 @@ static int convert_tee_result(TEEC_Result result)
 		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		break;
 
+	case TEEC_ERROR_NOT_SUPPORTED:
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		break;
+
+	case TEE_ERROR_SIGNATURE_INVALID:
+		status = SMW_STATUS_SIGNATURE_INVALID;
+		break;
+
 	default:
 		status = SMW_STATUS_SUBSYSTEM_FAILURE;
 	}

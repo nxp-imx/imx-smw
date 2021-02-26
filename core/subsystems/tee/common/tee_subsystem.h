@@ -54,6 +54,13 @@ enum tee_algorithm_id {
 	TEE_ALGORITHM_ID_INVALID
 };
 
+/* TEE signature type */
+enum tee_signature_type {
+	TEE_SIGNATURE_TYPE_RSASSA_PKCS1_V1_5,
+	TEE_SIGNATURE_TYPE_RSASSA_PSS,
+	TEE_SIGNATURE_TYPE_UNDEFINED
+};
+
 /* Key manager commands */
 #define CMD_GENERATE_KEY 0
 #define CMD_DELETE_KEY	 1
@@ -82,6 +89,24 @@ struct keymgr_shared_params {
 	enum tee_key_type key_type;
 	uint32_t id;
 	bool persistent_storage;
+};
+
+/**
+ * struct sign_verify_shared_params - Sign/verify operation shared parameters.
+ * @id: Key ID. Not set if a buffer is used.
+ * @key_type: Key type.
+ * @security_size: Key security size.
+ * @hash_algorithm: Hash algorithm.
+ * @signature_type: Signature type.
+ * @salt_length: Optional salt length (only for TEE_RSA_PKCS1_PSS_MGF1).
+ */
+struct sign_verify_shared_params {
+	uint32_t id;
+	enum tee_key_type key_type;
+	unsigned int security_size;
+	enum tee_algorithm_id hash_algorithm;
+	enum tee_signature_type signature_type;
+	uint32_t salt_length;
 };
 
 #endif /* TEE_SUBSYSTEM_H */

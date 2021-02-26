@@ -9,10 +9,6 @@
 #include "tee_subsystem.h"
 #include "tee_api_defines.h"
 
-#ifndef TEEC_ERROR_SIGNATURE_INVALID
-#define TEEC_ERROR_SIGNATURE_INVALID 0xFFFF3072
-#endif
-
 /*
  * Set the type @p of the parameter @i in the operation parameter
  * type @t.
@@ -25,6 +21,10 @@
 		*_t = SET_CLEAR_MASK(*_t, (_p & 0xF) << (_i * 4),              \
 				     (0xF << (_i * 4)));                       \
 	} while (0)
+
+#ifndef TEEC_ERROR_SIGNATURE_INVALID
+#define TEEC_ERROR_SIGNATURE_INVALID 0xFFFF3072
+#endif
 
 /**
  * tee_convert_key_type() - Convert SMW key type to TEE key type.

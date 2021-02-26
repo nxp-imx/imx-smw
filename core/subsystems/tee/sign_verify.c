@@ -39,8 +39,9 @@ static int sign_verify(void *args, enum operation_id op_id)
 		&sign_verify_args->key_descriptor;
 	struct smw_keymgr_identifier *key_identifier =
 		&key_descriptor->identifier;
+	struct sign_verify_shared_params shared_params = { 0 };
 
-	uint32_t param0_type;
+	uint32_t param0_type = TEEC_NONE;
 	uint32_t param3_type;
 
 	uint32_t key_type_id;
@@ -54,8 +55,8 @@ static int sign_verify(void *args, enum operation_id op_id)
 		goto exit;
 
 	/*
-	 * params[0] = Key ID or Key buffer
-	 * params[1] = Key type ID / hash algorithm ID and Security size
+	 * params[0] = Key buffer or none
+	 * params[1] = Pointer to sign verify shared params structure
 	 * params[2] = Message buffer and message length
 	 * params[3] = Signature buffer and signature length
 	 */
@@ -78,21 +79,6 @@ static int sign_verify(void *args, enum operation_id op_id)
 		goto exit;
 	}
 
-	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
-		param0_type = TEEC_MEMREF_TEMP_INPUT;
-		operation.params[0].tmpref.buffer =
-			smw_keymgr_get_public_data(key_descriptor);
-		operation.params[0].tmpref.size =
-			smw_keymgr_get_public_length(key_descriptor);
-	} else {
-		param0_type = TEEC_VALUE_INPUT;
-		operation.params[0].value.a = key_identifier->id;
-	}
-
-	operation.paramTypes =
-		TEEC_PARAM_TYPES(param0_type, TEEC_VALUE_INPUT,
-				 TEEC_MEMREF_TEMP_INPUT, param3_type);
-
 	status = tee_convert_key_type(key_identifier->type_id, &key_type_id);
 	if (status != SMW_STATUS_OK)
 		goto exit;
@@ -102,8 +88,58 @@ static int sign_verify(void *args, enum operation_id op_id)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	operation.params[1].value.a = (key_type_id << 16) | hash_algorithm_id;
-	operation.params[1].value.b = key_identifier->security_size;
+	if (key_type_id == TEE_KEY_TYPE_ID_RSA) {
+		/*
+		 * Signature type is mandatory.
+		 * Salt length optional attribute is only for RSASSA-PSS
+		 * signature type.
+		 */
+		if (sign_verify_args->attributes.signature_type ==
+		    SIGNATURE_TYPE_UNDEFINED) {
+			SMW_DBG_PRINTF(ERROR, "No signature type set\n");
+			status = SMW_STATUS_INVALID_PARAM;
+			goto exit;
+		} else if (sign_verify_args->attributes.signature_type ==
+				   SIGNATURE_TYPE_RSASSA_PKCS1_V1_5 &&
+			   sign_verify_args->attributes.salt_length) {
+			SMW_DBG_PRINTF(ERROR,
+				       "Salt length not supported for %s\n",
+				       RSASSA_PKCS1_V1_5_STR);
+			status = SMW_STATUS_INVALID_PARAM;
+			goto exit;
+		}
+
+		if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
+			/* Key buffer is not supported for RSA key type */
+			SMW_DBG_PRINTF(ERROR, "RSA key buffer not supported\n");
+			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+			goto exit;
+		}
+	}
+
+	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
+		param0_type = TEEC_MEMREF_TEMP_INPUT;
+		operation.params[0].tmpref.buffer =
+			smw_keymgr_get_public_data(key_descriptor);
+		operation.params[0].tmpref.size =
+			smw_keymgr_get_public_length(key_descriptor);
+	} else {
+		shared_params.id = key_identifier->id;
+	}
+
+	shared_params.key_type = key_type_id;
+	shared_params.security_size = key_identifier->security_size;
+	shared_params.hash_algorithm = hash_algorithm_id;
+	shared_params.signature_type =
+		sign_verify_args->attributes.signature_type;
+	shared_params.salt_length = sign_verify_args->attributes.salt_length;
+
+	operation.paramTypes =
+		TEEC_PARAM_TYPES(param0_type, TEEC_MEMREF_TEMP_INPUT,
+				 TEEC_MEMREF_TEMP_INPUT, param3_type);
+
+	operation.params[1].tmpref.buffer = &shared_params;
+	operation.params[1].tmpref.size = sizeof(shared_params);
 	operation.params[2].tmpref.buffer =
 		smw_sign_verify_get_msg_buf(sign_verify_args);
 	operation.params[2].tmpref.size =

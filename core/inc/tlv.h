@@ -83,3 +83,29 @@ int smw_tlv_verify_enumeration(unsigned int length, unsigned char *value);
  * SMW_STATUS_INVALID_PARAM	- One of the parameter is invalid.
  */
 int smw_tlv_verify_large_numeral(unsigned int length, unsigned char *value);
+
+/**
+ * smw_tlv_verify_numeral() - Verify that TLV length and value correspond to
+ *                            numeral type.
+ * @length: Length of @value in bytes.
+ * @value: Value buffer.
+ *
+ * Length must be 1, 2, 4 or 8. Value must be set.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- One of the parameter is invalid.
+ */
+int smw_tlv_verify_numeral(unsigned int length, unsigned char *value);
+
+/**
+ * smw_tlv_convert_numeral() - Convert TLV numeral value in uint64_t.
+ * @length: Length of @value in bytes.
+ * @value: Value buffer.
+ *
+ * Return:
+ * 0	- @length is 0 or @value is NULL.
+ * Converted integer.
+ */
+unsigned long long smw_tlv_convert_numeral(unsigned int length,
+					   unsigned char *value);

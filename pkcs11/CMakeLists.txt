@@ -9,6 +9,10 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   add_compile_options(-Wall -Wextra -Werror)
 endif()
 
+add_library(${PROJECT_NAME} SHARED "")
+
+include(gcov)
+
 #
 # Define the Library Capabilities
 #
@@ -19,11 +23,6 @@ option(PKCS11_OS_THREAD_SUPPORT "PKCS11 Use OS Thread primitives")
 message(STATUS "    Use OS Thread primitives: ${PKCS11_OS_THREAD_SUPPORT}")
 option(PKCS11_OS_MUTEX_SUPPORT "PKCS11 Use OS Mutex primitives")
 message(STATUS "    Use OS Mutex primitives: ${PKCS11_OS_MUTEX_SUPPORT}")
-
-add_library(${PROJECT_NAME}
-            SHARED
-            EXCLUDE_FROM_ALL
-            "")
 
 add_subdirectory(src)
 
@@ -50,8 +49,5 @@ string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib OPTIONAL)
 
-if(BUILD_TEST)
-  enable_testing()
-  set(SMW_PKCS11_LIB "lib${PROJECT_NAME}.so.${PROJECT_VERSION_MAJOR}")
-  add_subdirectory(tests)
-endif()
+set(SMW_PKCS11_LIB "lib${PROJECT_NAME}.so.${PROJECT_VERSION_MAJOR}")
+add_subdirectory(tests)

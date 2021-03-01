@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.5)
 
 project(smw VERSION 0.1 LANGUAGES C)
 
+add_library(${PROJECT_NAME} SHARED "")
+
+include(gcov)
+
+# add_compile_options defines coverage options to
+# the objects built in the subdirectories
+add_compile_options(${CMAKE_C_FLAGS_COVERAGE})
+
 include(add_component)
 
 set(CORE_SRC_INC ${CMAKE_CURRENT_SOURCE_DIR}/inc)
@@ -96,7 +104,8 @@ configure_file(${CORE_SRC_INC}/subsystems.h.in ${CORE_BIN_INC}/subsystems.h)
 set(OBJ_LIST ${OBJ_LIST} PARENT_SCOPE)
 set(EXT_LIBS ${EXT_LIBS} PARENT_SCOPE)
 
-add_library(${PROJECT_NAME} SHARED ${OBJ_LIST})
+target_sources(${PROJECT_NAME} PRIVATE ${OBJ_LIST})
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 99
     VERSION ${PROJECT_VERSION}
@@ -108,7 +117,7 @@ target_include_directories(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
     INTERFACE "$<INSTALL_INTERFACE:include>")
 
-target_link_libraries(smw ${CMAKE_THREAD_LIBS_INIT} ${EXT_LIBS})
+target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 install(FILES ${CMAKE_SOURCE_DIR}/osal/${OS}/config/default_config.txt

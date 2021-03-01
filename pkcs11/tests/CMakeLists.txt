@@ -4,7 +4,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   add_compile_options(-Wall -Wextra -Werror)
 endif()
 
-add_executable(${PROJECT_NAME} "")
+add_executable(${PROJECT_NAME} EXCLUDE_FROM_ALL "")
 
 file(GLOB pkcs11_test *.c)
 target_sources(${PROJECT_NAME} PRIVATE  ${pkcs11_test})
@@ -46,11 +46,43 @@ endif()
 
 configure_file(./include/config.h.in ./include/config.h)
 
-install(TARGETS ${PROJECT_NAME} DESTINATION bin)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
-        DESTINATION ${PKCS11_TESTS_TARGET_DATA_DIR})
-install(DIRECTORY config DESTINATION ${PKCS11_SHARE_TARGET_DIR})
+#
+# Installation procedure done as separated make target
+#
+install(TARGETS ${PROJECT_NAME}
+        DESTINATION bin
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL OPTIONAL)
 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
+        DESTINATION ${PKCS11_TESTS_TARGET_DATA_DIR}
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL)
+
+install(DIRECTORY config
+        DESTINATION ${PKCS11_SHARE_TARGET_DIR}
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL)
+
+add_custom_target(install_${PROJECT_NAME}
+        COMMAND "${CMAKE_COMMAND}" -DCOMPONENT=${PROJECT_NAME}
+                -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        VERBATIM)
+
+if(TARGET install_tests)
+    add_dependencies(install_tests install_${PROJECT_NAME})
+endif()
+
+if(TARGET build_tests)
+    add_dependencies(build_tests ${PROJECT_NAME})
+endif()
+
+enable_testing()
+
+#
+# Add ctest definition
+#
 macro(pkcs11_test name)
     add_test(NAME pkcs11_${name}
              COMMAND ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME} -t ${name})

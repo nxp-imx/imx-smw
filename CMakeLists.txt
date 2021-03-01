@@ -15,6 +15,15 @@ else()
     message(STATUS "Build type ${CMAKE_BUILD_TYPE}.")
 endif()
 
+option(CODE_COVERAGE "Enable Code Coverage analysis" OFF)
+if(CODE_COVERAGE)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(FATAL_ERROR "Code coverage required build type \"Debug\"")
+    endif()
+    message(STATUS "Code Coverage enabled, force all traces ON")
+    set(VERBOSE 4)
+endif()
+
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_INSTALL_PREFIX /usr)
 
@@ -58,6 +67,17 @@ endif()
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+#
+# Define tests build and install targets
+# Building SMW and/or PKCS11 tests with make command
+#     "make build_tests"
+#
+# Installing SMW and/PKCS11 tests with make command
+#     "make install_tests [DESTDIR=dir]"
+#
+add_custom_target(build_tests)
+add_custom_target(install_tests)
 
 # Include OS Abstration layer
 set(OS linux)

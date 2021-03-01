@@ -112,8 +112,16 @@ install(TARGETS ${PROJECT_NAME}
         COMPONENT ${PROJECT_NAME}
         EXCLUDE_FROM_ALL OPTIONAL)
 
-add_custom_target(install_tests
+add_custom_target(install_${PROJECT_NAME}
         COMMAND "${CMAKE_COMMAND}" -DCOMPONENT=${PROJECT_NAME}
-                -P "${CMAKE_BINARY_DIR}/tests/cmake_install.cmake"
+                -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake"
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         VERBATIM)
+
+if(TARGET install_tests)
+    add_dependencies(install_tests install_${PROJECT_NAME})
+endif()
+
+if(TARGET build_tests)
+    add_dependencies(build_tests ${PROJECT_NAME})
+endif()

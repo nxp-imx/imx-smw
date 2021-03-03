@@ -16,6 +16,7 @@
 #include "smw_crypto.h"
 #include "smw_status.h"
 #include "sign_verify.h"
+#include "util_tlv.h"
 
 /* Signatures linked list */
 static struct signature_list *signatures;
@@ -182,7 +183,7 @@ int sign_verify(int operation, json_object *params,
 		goto exit;
 	}
 
-	args.algo_name = strlen(algo_name) ? algo_name : NULL;
+	args.algo_name = algo_name;
 
 	/* Read message buffer if any */
 	res = util_read_hex_buffer(&message, &message_length, params, MESS_OBJ);
@@ -243,6 +244,12 @@ int sign_verify(int operation, json_object *params,
 	res = set_sign_verify_bad_args(operation, params, &smw_sign_verify_args,
 				       exp_sign, exp_sign_length,
 				       common_params->is_api_test);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Get 'attributes_list' optional parameter */
+	res = util_tlv_read_attrs((unsigned char **)&args.attributes_list,
+				  &args.attributes_list_length, params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 

@@ -1,0 +1,135 @@
+{
+	"subtest 1": {
+		"command": "GENERATE_RSA",
+		"subsystem": "TEE",
+		"security_size": 4096,
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "SIGN_SHA1",
+		"subsystem": "TEE",
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"attributes_list": [
+			["SIGNATURE_TYPE", "RSASSA-PSS"]
+		],
+		"sign_id": 0,
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "VERIFY_SHA1",
+		"subsystem": "TEE",
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"attributes_list": [
+			["SIGNATURE_TYPE", "RSASSA-PSS"]
+		],
+		"sign_id": 0,
+		"key_id": 0,
+		"depends": 2
+	},
+	"subtest 4": { // Salt length set to 480 (0x01E0)
+		"command": "SIGN_SHA224",
+		"subsystem": "TEE",
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"attributes_list": [
+			["SIGNATURE_TYPE", "RSASSA-PSS"],
+			["SALT_LEN", [2, "01E0"]]
+		],
+		"sign_id": 1,
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "VERIFY_SHA224",
+		"subsystem": "TEE",
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b",
+			"060c9a"
+		],
+		"attributes_list": [
+			["SIGNATURE_TYPE", "RSASSA-PSS"],
+			["SALT_LEN", [2, "01E0"]]
+		],
+		"sign_id": 1,
+		"key_id": 0,
+		"depends": 4
+	},
+	"subtest 6": { // Already hashed message (SHA256)
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"message": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"attributes_list": [
+			["SIGNATURE_TYPE", "RSASSA-PSS"],
+		],
+		"sign_id": 2,
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 7": {
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"message": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"attributes_list": [
+			["SIGNATURE_TYPE", "RSASSA-PSS"],
+		],
+		"sign_id": 2,
+		"key_id": 0,
+		"depends": 6
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	}
+}

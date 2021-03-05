@@ -131,11 +131,17 @@ static CK_RV find_lock_object(CK_SESSION_HANDLE hsession,
 	if (ret != CKR_OK)
 		return ret;
 
-	objects = &dev->objects;
 	/* Try to find the object in the token list */
-	ret = LLIST_FIND_LOCK(fobj, objects, obj);
+	objects = &dev->objects;
+	ret = LLIST_LOCK(objects);
 	if (ret != CKR_OK)
 		return ret;
+
+	LIST_FIND(fobj, objects, obj);
+	if (fobj == obj)
+		ret = libmutex_lock(obj->lock);
+
+	LLIST_UNLOCK(objects);
 
 	if (fobj != obj) {
 		DBG_TRACE("Object %p NOT in token list", obj);
@@ -148,13 +154,19 @@ static CK_RV find_lock_object(CK_SESSION_HANDLE hsession,
 		if (ret != CKR_OK)
 			return ret;
 
-		ret = LLIST_FIND_LOCK(fobj, objects, obj);
+		ret = LLIST_LOCK(objects);
 		if (ret != CKR_OK)
 			return ret;
 
+		LIST_FIND(fobj, objects, obj);
+		if (fobj == obj)
+			ret = libmutex_lock(obj->lock);
+
+		LLIST_UNLOCK(objects);
+
 		if (fobj != obj) {
 			DBG_TRACE("Object %p NOT in session list", obj);
-			ret = CKR_OBJECT_HANDLE_INVALID;
+			return CKR_OBJECT_HANDLE_INVALID;
 		}
 	}
 
@@ -428,8 +440,10 @@ static CK_RV obj_allocate(struct libobj_obj **obj)
 		return CKR_HOST_MEMORY;
 
 	ret = libmutex_create(&newobj->lock);
-	if (ret != CKR_OK)
+	if (ret != CKR_OK) {
+		free(newobj);
 		return ret;
+	}
 
 	newobj->class = 0;
 	newobj->object = NULL;
@@ -807,19 +821,16 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 	DBG_TRACE("Destroy object (%p) of session %lu", obj, hsession);
 
 	ret = find_lock_object(hsession, obj, &objects);
-	if (ret != CKR_OK)
-		goto end;
-
-	/* Check if the object can be destroyed */
-	ret = obj_is_destoyable(hsession, obj);
 	if (ret == CKR_OK) {
-		obj_free(obj, objects);
-		obj = NULL;
+		/* Check if the object can be destroyed */
+		ret = obj_is_destoyable(hsession, obj);
+		if (ret == CKR_OK) {
+			obj_free(obj, objects);
+			obj = NULL;
+		} else {
+			libmutex_unlock(obj->lock);
+		}
 	}
-
-end:
-	if (ret != CKR_OK)
-		libmutex_unlock(obj->lock);
 
 	DBG_TRACE("Destroy object (%p) return %lu", obj, ret);
 	return ret;
@@ -875,9 +886,9 @@ CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 			ret = status;
 	}
 
-end:
 	libmutex_unlock(libobj->lock);
 
+end:
 	DBG_TRACE("Get attribute(s) of object (%p) return %lu", libobj, ret);
 	return ret;
 }
@@ -918,9 +929,9 @@ CK_RV libobj_modify_attribute(CK_SESSION_HANDLE hsession,
 			  attrs[idx].type, ret);
 	}
 
-end:
 	libmutex_unlock(libobj->lock);
 
+end:
 	DBG_TRACE("Modify attribute(s) of object (%p) return %lu", libobj, ret);
 	return ret;
 }

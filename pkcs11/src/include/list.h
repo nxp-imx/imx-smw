@@ -152,27 +152,4 @@
  */
 #define LLIST_REMOVE(head, elem) LIST_REMOVE(head, elem)
 
-/*
- * Find the element @find in the list pointed by the @head
- * The element found (otherwise NULL) is returned in @res
- */
-#define LLIST_FIND_LOCK(res, head, find)                                       \
-	({                                                                     \
-		CK_RV _ret;                                                    \
-		do {                                                           \
-			__typeof__(head) _head = (head);                       \
-			__typeof__(find) _find = (find);                       \
-			__typeof__(res) _res;                                  \
-			_ret = LLIST_LOCK(_head);                              \
-			if (_ret == CKR_OK) {                                  \
-				LIST_FIND(_res, _head, _find);                 \
-				if (_res == _find)                             \
-					_ret = libmutex_lock(_find->lock);     \
-				LLIST_UNLOCK(_head);                           \
-				res = _res;                                    \
-			}                                                      \
-		} while (0);                                                   \
-		_ret;                                                          \
-	})
-
 #endif /* __LIST_H__ */

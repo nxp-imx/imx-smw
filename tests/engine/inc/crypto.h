@@ -1,10 +1,24 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __CRYPTO_H__
 #define __CRYPTO_H__
+
+/**
+ * get_hash_digest_len() - Return digest byte length switch algorithm.
+ * @algo: Algorithm name.
+ * @len: Pointer to digest length to update. Set to 0 if @algo is not found
+ *       in @hash_size.
+ *
+ * Call this function with an undefined algo value is not an error.
+ *
+ * Return:
+ * PASSED	- Success.
+ * -BAD_ARGS	- One of the arguments is bad.
+ */
+int get_hash_digest_len(char *algo, unsigned int *len);
 
 /**
  * hash() - Do a hash operation.

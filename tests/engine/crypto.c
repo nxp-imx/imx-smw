@@ -30,19 +30,7 @@ static struct hash {
 		  { .algo_name = "SM3", .digest_len = 32 },
 		  { .algo_name = "UNDEFINED", .digest_len = 20 } };
 
-/**
- * get_hash_digest_len() - Return digest byte length switch algorithm.
- * @algo: Algorithm name.
- * @len: Pointer to digest length to update. Set to 0 if @algo is not found
- *       in @hash_size.
- *
- * Call this function with an undefined algo value is not an error.
- *
- * Return:
- * PASSED	- Success.
- * -BAD_ARGS	- One of the arguments is bad.
- */
-static int get_hash_digest_len(char *algo, unsigned int *len)
+int get_hash_digest_len(char *algo, unsigned int *len)
 {
 	unsigned int i = 0;
 	unsigned int array_size = ARRAY_SIZE(hash_size);

@@ -1,0 +1,244 @@
+{
+	"subtest 1": { // HMAC args pointer is NULL
+		"command": "HMAC_SHA256",
+		"subsystem": "DEFAULT",
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"input": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"mac": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Version is not supported
+		"command": "HMAC_SHA256",
+		"subsystem": "DEFAULT",
+		"version": 255,
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"input": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"mac": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": { // Subsystem is not set in SMW config file
+		"command": "HMAC_SHA256",
+		"subsystem": "UNDEFINED",
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"input": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"mac": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 4": { // Key descriptor pointer is NULL
+		"command": "HMAC_SHA256",
+		"subsystem": "DEFAULT",
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"input": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"mac": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"test_error": "KEY_DESC_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Algo is undefined
+		"command": "HMAC_UNDEFINED",
+		"subsystem": "DEFAULT",
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"input": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"mac": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 6": { // Message buffer is NULL
+		"command": "HMAC_SHA256",
+		"subsystem": "DEFAULT",
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"input": 163,
+		"mac": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": { // Message length is 0
+		"command": "HMAC_SHA256",
+		"subsystem": "DEFAULT",
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"input": [
+			0,
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"mac": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": { // MAC buffer is NULL
+		"command": "HMAC_SHA256",
+		"subsystem": "DEFAULT",
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"input": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"mac": 32,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 9": { // MAC length is 0
+		"command": "HMAC_SHA256",
+		"subsystem": "DEFAULT",
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"input": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"mac": [
+			0,
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

@@ -30,3 +30,6 @@ VERSION=0;
     [SECURITY_OPERATION]
         VERIFY;
         DEFAULT;
+    [SECURITY_OPERATION]
+        HMAC;
+        DEFAULT;

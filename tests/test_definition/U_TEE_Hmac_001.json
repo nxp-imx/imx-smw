@@ -1,0 +1,305 @@
+{
+	"subtest 1": {
+		"command": "IMPORT_HMAC_MD5",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "IMPORT_HMAC_SHA1",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 1
+	},
+	"subtest 3": {
+		"command": "IMPORT_HMAC_SHA224",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 2
+	},
+	"subtest 4": {
+		"command": "IMPORT_HMAC_SHA256",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 3
+	},
+	"subtest 5": {
+		"command": "IMPORT_HMAC_SHA384",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 4
+	},
+	"subtest 6": {
+		"command": "IMPORT_HMAC_SHA512",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 5
+	},
+	"subtest 7": {
+		"command": "IMPORT_HMAC_SM3",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 6
+	},
+	"subtest 8": { // MD5
+		"command": "HMAC_MD5",
+		"subsystem": "TEE",
+		"key_id": 0,
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"mac": [
+			16,
+			"a00d6a1f7399a54dc2629828c9d6424f"
+		],
+		"depends": 1
+	},
+	"subtest 9": { // SHA1
+		"command": "HMAC_SHA1",
+		"subsystem": "TEE",
+		"key_id": 1,
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"mac": [
+			20,
+			"e7ec5ed418b0ed8cf4a4949fad904cfa",
+			"3b1f0849"
+		],
+		"depends": 2
+	},
+	"subtest 10": { // SHA224
+		"command": "HMAC_SHA224",
+		"subsystem": "TEE",
+		"key_id": 2,
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"mac": [
+			28,
+			"166a3a31264d759db4858f8e9bb7ed37",
+			"2fa85e6d75d4b3558f9f8642"
+		],
+		"depends": 3
+	},
+	"subtest 11": { // SHA256
+		"command": "HMAC_SHA256",
+		"subsystem": "TEE",
+		"key_id": 3,
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"mac": [
+			32,
+			"f255a1f28be5919270ae235acd8922bd",
+			"fb42e9c625d33f0897860ad85b46796a"
+		],
+		"depends": 4
+	},
+	"subtest 12": { // SHA384
+		"command": "HMAC_SHA384",
+		"subsystem": "TEE",
+		"key_id": 4,
+		"input": [
+			"62c6a169b9be02b3d7b471a964fc0bcc",
+			"72b480d26aecb2ed460b7f50016ddaf0",
+			"4c51218783f3aadfdff5a04ded030d7b",
+			"3fb7376b61ba30b90e2da921a4470740",
+			"d63fb99fa16cc8ed81abaf8ce4016e50",
+			"df81da832070372c24a80890aa3a26fa",
+			"675710b8fb718266249d496f313c55d0",
+			"bada101f8f56eeccee4345a8f98f60a3",
+			"6662cfda794900d12f9414fcbdfdeb85",
+			"388a814996b47e24d5c8086e7a8edcc5",
+			"3d299d0d033e6bb60c58b83d6e8b57f6",
+			"c258d6081dd10eb942fdf8ec157ec3e7",
+			"5371235a8196eb9d22b1de3a2d30c2ab",
+			"be0db7650cf6c7159bacbe29b3a93c92",
+			"100508"
+		],
+		"mac": [
+			48,
+			"b0f139502154d96bdddfeb7419612ac7",
+			"ce5db214aa637fe1dc9e9bba230b9d43",
+			"9c8c183fca367d99f97dd00c9b0a79b9"
+		],
+		"depends": 5
+	},
+	"subtest 13": { // SHA512
+		"command": "HMAC_SHA512",
+		"subsystem": "TEE",
+		"key_id": 5,
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"mac": [
+			64,
+			"ab74d0b60dd93fe6bd9ede1ec1c3129c",
+			"6a7dcbd76447afc1e15a7bedc1c9c212",
+			"cd19ae841690f9206bb4314066f89ed3",
+			"8957c6829648102c6408f1c6342a1575"
+		],
+		"depends": 6
+	},
+	"subtest 14": { // SM3
+		"command": "HMAC_SM3",
+		"subsystem": "TEE",
+		"key_id": 6,
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"mac": [
+			32,
+			"2672da55660b5437dde775082347ddcb",
+			"0776e696adc151fa040f188f40a875cd"
+		],
+		"depends": 7
+	},
+	"subtest 15": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 16": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 2
+	},
+	"subtest 17": {
+		"command": "DELETE",
+		"key_id": 2,
+		"depends": 3
+	},
+	"subtest 18": {
+		"command": "DELETE",
+		"key_id": 3,
+		"depends": 4
+	},
+	"subtest 19": {
+		"command": "DELETE",
+		"key_id": 4,
+		"depends": 5
+	},
+	"subtest 20": {
+		"command": "DELETE",
+		"key_id": 5,
+		"depends": 6
+	},
+	"subtest 21": {
+		"command": "DELETE",
+		"key_id": 6,
+		"depends": 7
+	},
+}

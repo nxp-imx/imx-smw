@@ -1,0 +1,107 @@
+{
+	"subtest 1": {
+		"command": "IMPORT_HMAC_MD5",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "IMPORT_HMAC_SHA1",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 1
+	},
+	"subtest 3": {
+		"command": "IMPORT_HMAC_SHA224",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 2
+	},
+	"subtest 4": {
+		"command": "IMPORT_HMAC_SHA256",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 3
+	},
+	"subtest 5": {
+		"command": "IMPORT_HMAC_SHA384",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 4
+	},
+	"subtest 6": {
+		"command": "IMPORT_HMAC_SHA512",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 5
+	},
+	"subtest 7": {
+		"command": "IMPORT_HMAC_SM3",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"priv_key": [
+			"6ed76d2d97c69fd1339589523931f2a6",
+			"cff554b15f738f21ec72dd97a7330907"
+		],
+		"key_id": 6
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 2
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_id": 2,
+		"depends": 3
+	},
+	"subtest 11": {
+		"command": "DELETE",
+		"key_id": 3,
+		"depends": 4
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_id": 4,
+		"depends": 5
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_id": 5,
+		"depends": 6
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_id": 6,
+		"depends": 7
+	}
+}

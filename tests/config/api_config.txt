@@ -51,3 +51,5 @@ VERSION=0;
         SIGN;
     [SECURITY_OPERATION]
         VERIFY;
+    [SECURITY_OPERATION]
+        HMAC;

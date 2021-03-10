@@ -94,10 +94,10 @@ static int set_sign_verify_bad_args(int operation, json_object *params,
 
 	default:
 		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
-		return ERR_CODE(BAD_PARAM_TYPE);
+		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
 
-	return ERR_CODE(PASSED);
+	return ret;
 }
 
 int sign_verify(int operation, json_object *params,

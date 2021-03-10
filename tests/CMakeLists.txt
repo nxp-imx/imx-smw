@@ -35,10 +35,11 @@ configure_file(${TEST_SCRIPTS_SRC}/run_simple_test.sh.in
                ${TEST_SCRIPTS_BIN}/run_simple_test.sh)
 
 add_executable(${PROJECT_NAME}
-               engine/sign_verify.c
                engine/crypto.c
+               engine/hmac.c
                engine/keymgr.c
                engine/run.c
+               engine/sign_verify.c
                engine/test_engine.c
                engine/util.c
                engine/util_key.c
@@ -64,6 +65,7 @@ set(DELETE_LABEL Delete)
 set(EXPORT_LABEL Export)
 set(GENERATE_LABEL Generate)
 set(HASH_LABEL Hash)
+set(HMAC_LABEL HMAC)
 set(IMPORT_LABEL Import)
 set(KEYMGR_LABEL Keymgr)
 set(SIGN_LABEL Sign)

@@ -55,6 +55,33 @@ struct smw_sign_verify_args {
 };
 
 /**
+ * struct smw_hmac_args - HMAC arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name
+ * @key_descriptor: Pointer to a Key descriptor object
+ * @algo_name: Algorithm name
+ * @input: Location of the stream to be hash-mac'ed
+ * @input_length: Length of the stream to be hashed
+ * @output: Location where the MAC has to be written
+ * @output_length: Length of the MAC
+ *
+ * @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is NULL, the default configured Secure Subsystem is used.
+ */
+struct smw_hmac_args {
+	/* Inputs */
+	unsigned char version;
+	const char *subsystem_name;
+	struct smw_key_descriptor *key_descriptor;
+	const char *algo_name;
+	unsigned char *input;
+	unsigned int input_length;
+	/* Outputs */
+	unsigned char *output;
+	unsigned int output_length;
+};
+
+/**
  * smw_hash() - Compute hash.
  * @args: Pointer to the structure that contains the Hash arguments.
  *
@@ -86,3 +113,14 @@ int smw_sign(struct smw_sign_verify_args *args);
  * error code.
  */
 int smw_verify(struct smw_sign_verify_args *args);
+
+/**
+ * smw_hmac() - Compute a HASH-MAC.
+ * @args: Pointer to the structure that contains the HMAC arguments.
+ *
+ * This function computes a Keyed-Hash Message Authentication Code.
+ *
+ * Return:
+ * error code.
+ */
+int smw_hmac(struct smw_hmac_args *args);

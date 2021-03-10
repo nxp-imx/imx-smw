@@ -9,6 +9,7 @@
 #include "ta_keymgr.h"
 #include "ta_hash.h"
 #include "ta_sign_verify.h"
+#include "ta_hmac.h"
 
 /**
  * TA_CreateEntryPoint() - Create entry point.
@@ -123,6 +124,8 @@ TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx __maybe_unused,
 	case CMD_SIGN:
 	case CMD_VERIFY:
 		return sign_verify(param_types, params, cmd_id);
+	case CMD_HMAC:
+		return hmac(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}

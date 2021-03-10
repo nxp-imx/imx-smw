@@ -27,7 +27,8 @@ target_sources(tee PRIVATE
                tee.c
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
-               $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>)
+               $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
+               $<$<BOOL:${ENABLE_HMAC}>:hmac.c>)
 
 target_include_directories(tee PRIVATE ${INCLUDE_DIR}
                            ${TEEC_INCLUDE_DIR}

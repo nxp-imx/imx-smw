@@ -20,6 +20,13 @@ enum tee_key_type {
 	TEE_KEY_TYPE_ID_AES,
 	TEE_KEY_TYPE_ID_DES,
 	TEE_KEY_TYPE_ID_DES3,
+	TEE_KEY_TYPE_ID_HMAC_MD5,
+	TEE_KEY_TYPE_ID_HMAC_SHA1,
+	TEE_KEY_TYPE_ID_HMAC_SHA224,
+	TEE_KEY_TYPE_ID_HMAC_SHA256,
+	TEE_KEY_TYPE_ID_HMAC_SHA384,
+	TEE_KEY_TYPE_ID_HMAC_SHA512,
+	TEE_KEY_TYPE_ID_HMAC_SM3,
 	TEE_KEY_TYPE_ID_NB,
 	TEE_KEY_TYPE_ID_INVALID
 };
@@ -44,5 +51,12 @@ enum tee_algorithm_id {
 #define CMD_HASH	 4
 #define CMD_SIGN	 5
 #define CMD_VERIFY	 6
+#define CMD_HMAC	 7
+
+struct hmac_shared_params {
+	enum tee_key_type tee_key_type;
+	enum tee_algorithm_id tee_algorithm_id;
+	unsigned int security_size;
+};
 
 #endif /* TEE_SUBSYSTEM_H */

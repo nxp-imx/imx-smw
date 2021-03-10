@@ -24,6 +24,8 @@
 /* Trusted storage space used by SMW */
 #define SMW_TEE_STORAGE TEE_STORAGE_PRIVATE
 
+#define SECURITY_SIZE_RANGE UINT_MAX
+
 /**
  * struct key_data - Key data.
  * @key_id: Key ID.
@@ -126,7 +128,42 @@ struct {
 	  .security_size = 168,
 	  .obj_type = TEE_TYPE_DES3,
 	  .ecc_curve = 0,
-	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC }
+	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
+	{ .key_type = TEE_KEY_TYPE_ID_HMAC_MD5,
+	  .security_size = SECURITY_SIZE_RANGE,
+	  .obj_type = TEE_TYPE_HMAC_MD5,
+	  .ecc_curve = 0,
+	  .usage = TEE_USAGE_MAC },
+	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA1,
+	  .security_size = SECURITY_SIZE_RANGE,
+	  .obj_type = TEE_TYPE_HMAC_SHA1,
+	  .ecc_curve = 0,
+	  .usage = TEE_USAGE_MAC },
+	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA224,
+	  .security_size = SECURITY_SIZE_RANGE,
+	  .obj_type = TEE_TYPE_HMAC_SHA224,
+	  .ecc_curve = 0,
+	  .usage = TEE_USAGE_MAC },
+	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA256,
+	  .security_size = SECURITY_SIZE_RANGE,
+	  .obj_type = TEE_TYPE_HMAC_SHA256,
+	  .ecc_curve = 0,
+	  .usage = TEE_USAGE_MAC },
+	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA384,
+	  .security_size = SECURITY_SIZE_RANGE,
+	  .obj_type = TEE_TYPE_HMAC_SHA384,
+	  .ecc_curve = 0,
+	  .usage = TEE_USAGE_MAC },
+	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA512,
+	  .security_size = SECURITY_SIZE_RANGE,
+	  .obj_type = TEE_TYPE_HMAC_SHA512,
+	  .ecc_curve = 0,
+	  .usage = TEE_USAGE_MAC },
+	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SM3,
+	  .security_size = SECURITY_SIZE_RANGE,
+	  .obj_type = TEE_TYPE_HMAC_SM3,
+	  .ecc_curve = 0,
+	  .usage = TEE_USAGE_MAC }
 };
 
 /**
@@ -755,6 +792,13 @@ set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
 	case TEE_TYPE_AES:
 	case TEE_TYPE_DES:
 	case TEE_TYPE_DES3:
+	case TEE_TYPE_HMAC_MD5:
+	case TEE_TYPE_HMAC_SHA1:
+	case TEE_TYPE_HMAC_SHA224:
+	case TEE_TYPE_HMAC_SHA256:
+	case TEE_TYPE_HMAC_SHA384:
+	case TEE_TYPE_HMAC_SHA512:
+	case TEE_TYPE_HMAC_SM3:
 		*attr_count = NB_ATTR_SYMM_KEY;
 		return set_import_key_private_attributes(attr, NB_ATTR_SYMM_KEY,
 							 priv_key,

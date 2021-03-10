@@ -17,21 +17,39 @@
 #include "tee_subsystem.h"
 #include "smw_status.h"
 
+#define SECURITY_SIZE_RANGE UINT_MAX
+
+/**
+ * struct security_size_range - Security size range
+ * @min: Minimum key security size in bits.
+ * @max: Maximum key security size in bits.
+ * @mod: Modulus key security size in bits.
+ */
+struct security_size_range {
+	unsigned int min;
+	unsigned int max;
+	unsigned int mod;
+};
+
 /**
  * struct - Key info
  * @smw_key_type: SMW key type.
  * @tee_key_type: TEE key type.
  * @security_size: Key security size in bits.
+ * @security_size_range: Key security size range.
  * @symmetric: Is a symmetric key or not.
  *
  * key_info must be ordered from lowest to highest.
  * Security sizes must be ordered from lowest to highest for one given
  * key type ID.
+ * @security_size_range is considered only
+ * if @security_size is set to SECURITY_SIZE_RANGE.
  */
 static struct key_info {
 	enum smw_config_key_type_id smw_key_type;
 	enum tee_key_type tee_key_type;
 	unsigned int security_size;
+	struct security_size_range security_size_range;
 	bool symmetric;
 } key_info[] = { { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 		   .tee_key_type = TEE_KEY_TYPE_ID_ECDSA,
@@ -84,7 +102,70 @@ static struct key_info {
 		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP,
 		   .tee_key_type = TEE_KEY_TYPE_ID_INVALID },
 		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_SM4,
-		   .tee_key_type = TEE_KEY_TYPE_ID_INVALID } };
+		   .tee_key_type = TEE_KEY_TYPE_ID_INVALID },
+		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5,
+		   .tee_key_type = TEE_KEY_TYPE_ID_HMAC_MD5,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .security_size_range = {
+			   .min = 64,
+			   .max = 512,
+			   .mod = 8,
+			},
+		   .symmetric = true },
+		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1,
+		   .tee_key_type = TEE_KEY_TYPE_ID_HMAC_SHA1,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .security_size_range = {
+			   .min = 80,
+			   .max = 512,
+			   .mod = 8,
+			},
+		   .symmetric = true },
+		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224,
+		   .tee_key_type = TEE_KEY_TYPE_ID_HMAC_SHA224,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .security_size_range = {
+			   .min = 112,
+			   .max = 512,
+			   .mod = 8,
+			},
+		   .symmetric = true },
+		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
+		   .tee_key_type = TEE_KEY_TYPE_ID_HMAC_SHA256,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .security_size_range = {
+			   .min = 192,
+			   .max = 1024,
+			   .mod = 8,
+			},
+		   .symmetric = true },
+		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
+		   .tee_key_type = TEE_KEY_TYPE_ID_HMAC_SHA384,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .security_size_range = {
+			   .min = 256,
+			   .max = 1024,
+			   .mod = 8,
+			},
+		   .symmetric = true },
+		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512,
+		   .tee_key_type = TEE_KEY_TYPE_ID_HMAC_SHA512,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .security_size_range = {
+			   .min = 256,
+			   .max = 1024,
+			   .mod = 8,
+			},
+		   .symmetric = true },
+		 { .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3,
+		   .tee_key_type = TEE_KEY_TYPE_ID_HMAC_SM3,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .security_size_range = {
+			   .min = 80,
+			   .max = 1024,
+			   .mod = 8,
+			},
+		   .symmetric = true } };
 
 int tee_convert_key_type(enum smw_config_key_type_id smw_key_type,
 			 enum tee_key_type *tee_key_type)
@@ -112,6 +193,35 @@ int tee_convert_key_type(enum smw_config_key_type_id smw_key_type,
 }
 
 /**
+ * check_security_size() - Check security size.
+ * @key_info: Pointer to key info structure.
+ * @security_size: Key security size in bits.
+ *
+ * Check if key security size is supported by OPTEE.
+ *
+ * Return:
+ * true if supported.
+ * false if not supported.
+ */
+static bool check_security_size(struct key_info *key_info,
+				unsigned int security_size)
+{
+	struct security_size_range *range = &key_info->security_size_range;
+
+	if (key_info->security_size == SECURITY_SIZE_RANGE) {
+		if (range->min <= security_size &&
+		    range->max >= security_size &&
+		    !(security_size % range->mod))
+			return true;
+		return false;
+	} else if (key_info->security_size == security_size) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * find_check_key_info() - Get and check key info.
  * @key_type_id: Key type ID.
  * @security_size: Key security size in bits.
@@ -135,7 +245,7 @@ find_check_key_info(enum smw_config_key_type_id key_type_id,
 		if (key_info[i].smw_key_type == key_type_id) {
 			if (key_info[i].tee_key_type !=
 				    TEE_KEY_TYPE_ID_INVALID &&
-			    key_info[i].security_size == security_size)
+			    check_security_size(&key_info[i], security_size))
 				return &key_info[i];
 		}
 	}
@@ -333,6 +443,13 @@ static int check_import_key_buffers_presence(enum tee_key_type key_type,
 	case TEE_KEY_TYPE_ID_AES:
 	case TEE_KEY_TYPE_ID_DES:
 	case TEE_KEY_TYPE_ID_DES3:
+	case TEE_KEY_TYPE_ID_HMAC_MD5:
+	case TEE_KEY_TYPE_ID_HMAC_SHA1:
+	case TEE_KEY_TYPE_ID_HMAC_SHA224:
+	case TEE_KEY_TYPE_ID_HMAC_SHA256:
+	case TEE_KEY_TYPE_ID_HMAC_SHA384:
+	case TEE_KEY_TYPE_ID_HMAC_SHA512:
+	case TEE_KEY_TYPE_ID_HMAC_SM3:
 		/* Symmetric key cases */
 		if (!priv_data) {
 			SMW_DBG_PRINTF(ERROR,

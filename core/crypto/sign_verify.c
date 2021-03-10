@@ -123,6 +123,12 @@ static int smw_sign_verify(enum operation_id operation_id,
 
 	struct smw_crypto_sign_verify_args sign_verify_args;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	struct smw_keymgr_descriptor *key_descriptor;
+	enum smw_keymgr_format_id format_id;
+	unsigned char *public_data;
+	unsigned int public_length;
+	unsigned char *private_data;
+	unsigned int private_length;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -136,6 +142,26 @@ static int smw_sign_verify(enum operation_id operation_id,
 					  &subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	key_descriptor = &sign_verify_args.key_descriptor;
+	format_id = key_descriptor->format_id;
+	public_data = smw_keymgr_get_public_data(key_descriptor);
+	public_length = smw_keymgr_get_public_length(key_descriptor);
+	private_data = smw_keymgr_get_private_data(key_descriptor);
+	private_length = smw_keymgr_get_private_length(key_descriptor);
+	if (format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
+		if (operation_id == OPERATION_ID_SIGN) {
+			if (!private_data || !private_length) {
+				status = SMW_STATUS_INVALID_PARAM;
+				goto end;
+			}
+		} else { // operation_id == OPERATION_ID_VERIFY
+			if (!public_data || !public_length) {
+				status = SMW_STATUS_INVALID_PARAM;
+				goto end;
+			}
+		}
+	}
 
 	status = smw_utils_execute_operation(operation_id, &sign_verify_args,
 					     subsystem_id);

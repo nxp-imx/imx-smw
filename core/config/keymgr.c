@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_status.h"
@@ -29,7 +29,14 @@ static const char *const key_type_names[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_DES] = "DES",
 	[SMW_CONFIG_KEY_TYPE_ID_DES3] = "DES3",
 	[SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP] = "DSA_SM2_FP",
-	[SMW_CONFIG_KEY_TYPE_ID_SM4] = "SM4"
+	[SMW_CONFIG_KEY_TYPE_ID_SM4] = "SM4",
+	[SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5] = "HMAC_MD5",
+	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1] = "HMAC_SHA1",
+	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224] = "HMAC_SHA224",
+	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256] = "HMAC_SHA256",
+	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384] = "HMAC_SHA384",
+	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512] = "HMAC_SHA512",
+	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3] = "HMAC_SM3"
 };
 
 int read_key_type_names(char **start, char *end, unsigned long *bitmap)

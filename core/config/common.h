@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #define SMW_CONFIG_MAX_STRING_LENGTH 256
@@ -49,6 +49,14 @@ struct key_operation_params {
 struct hash_params {
 	enum operation_id operation_id;
 	unsigned long algo_bitmap;
+};
+
+struct hmac_params {
+	enum operation_id operation_id;
+	unsigned long algo_bitmap;
+	unsigned long key_type_bitmap;
+	unsigned int key_size_min;
+	unsigned int key_size_max;
 };
 
 struct sign_verify_params {

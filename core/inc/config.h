@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 enum smw_config_key_type_id {
@@ -13,6 +13,13 @@ enum smw_config_key_type_id {
 	SMW_CONFIG_KEY_TYPE_ID_DES3,
 	SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP,
 	SMW_CONFIG_KEY_TYPE_ID_SM4,
+	SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5,
+	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1,
+	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224,
+	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
+	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
+	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512,
+	SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3,
 	SMW_CONFIG_KEY_TYPE_ID_NB,
 	SMW_CONFIG_KEY_TYPE_ID_INVALID
 };
@@ -27,6 +34,18 @@ enum smw_config_hash_algo_id {
 	SMW_CONFIG_HASH_ALGO_ID_SM3,
 	SMW_CONFIG_HASH_ALGO_ID_NB,
 	SMW_CONFIG_HASH_ALGO_ID_INVALID
+};
+
+enum smw_config_hmac_algo_id {
+	SMW_CONFIG_HMAC_ALGO_ID_MD5,
+	SMW_CONFIG_HMAC_ALGO_ID_SHA1,
+	SMW_CONFIG_HMAC_ALGO_ID_SHA224,
+	SMW_CONFIG_HMAC_ALGO_ID_SHA256,
+	SMW_CONFIG_HMAC_ALGO_ID_SHA384,
+	SMW_CONFIG_HMAC_ALGO_ID_SHA512,
+	SMW_CONFIG_HMAC_ALGO_ID_SM3,
+	SMW_CONFIG_HMAC_ALGO_ID_NB,
+	SMW_CONFIG_HMAC_ALGO_ID_INVALID
 };
 
 /**
@@ -199,3 +218,16 @@ void smw_config_get_key_type_name(enum smw_config_key_type_id id,
  */
 int smw_config_get_hash_algo_id(const char *name,
 				enum smw_config_hash_algo_id *id);
+
+/**
+ * smw_config_get_hmac_algo_id() - Get the HMAC algo ID associated to a name.
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * This function gets the HMAC algo ID associated to a name.
+ *
+ * Return:
+ * error code.
+ */
+int smw_config_get_hmac_algo_id(const char *name,
+				enum smw_config_hmac_algo_id *id);

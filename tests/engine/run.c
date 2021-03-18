@@ -143,7 +143,7 @@ static int execute_hash_cmd(char *cmd, struct json_object *params,
 
 /**
  * execute_hmac_cmd() - Execute hmac command.
- * @algo_name: Algorithm name.
+ * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
  * @key_ids: Pointer to key identifiers list.
@@ -152,19 +152,24 @@ static int execute_hash_cmd(char *cmd, struct json_object *params,
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
- * Error code from hash().
+ * Error code from hmac().
  */
-static int execute_hmac_cmd(char *algo_name, struct json_object *params,
+static int execute_hmac_cmd(char *cmd, struct json_object *params,
 			    struct common_parameters *common_params,
 			    struct key_identifier_list *key_ids, int *status)
 {
+	char *algo_name = NULL;
+
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
 		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	if (!strlen(algo_name) || !strcmp(algo_name, MD5_ALG) ||
+	if (strcmp(cmd, HMAC))
+		algo_name = cmd + strlen(HASH) + 1;
+
+	if (!algo_name || !strcmp(algo_name, MD5_ALG) ||
 	    !strcmp(algo_name, SHA1_ALG) || !strcmp(algo_name, SHA224_ALG) ||
 	    !strcmp(algo_name, SHA256_ALG) || !strcmp(algo_name, SHA384_ALG) ||
 	    !strcmp(algo_name, SHA512_ALG) || !strcmp(algo_name, SM3_ALG) ||
@@ -364,8 +369,8 @@ static int execute_command(char *cmd, struct json_object *params,
 	else if (!strncmp(cmd, HASH, strlen(HASH)))
 		return execute_hash_cmd(cmd, params, common_params, status);
 	else if (!strncmp(cmd, HMAC, strlen(HMAC)))
-		return execute_hmac_cmd(cmd + strlen(HMAC) + 1, params,
-					common_params, *key_ids, status);
+		return execute_hmac_cmd(cmd, params, common_params, *key_ids,
+					status);
 	else if (!strncmp(cmd, SIGN, strlen(SIGN)))
 		return execute_sign_verify_cmd(SIGN_OPERATION, cmd, params,
 					       common_params, *key_ids, status);

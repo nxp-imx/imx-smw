@@ -149,7 +149,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 		goto exit;
 	}
 
-	args.algo_name = strlen(algo_name) ? algo_name : NULL;
+	args.algo_name = algo_name;
 
 	res = util_read_hex_buffer(&input_hex, &input_len, params, INPUT_OBJ);
 	if (res != ERR_CODE(PASSED))

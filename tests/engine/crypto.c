@@ -126,7 +126,7 @@ int hash(json_object *params, struct common_parameters *common_params,
 	}
 
 	args.version = common_params->version;
-	args.algo_name = strlen(algo_name) ? algo_name : NULL;
+	args.algo_name = algo_name;
 
 	if (!strcmp(common_params->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;

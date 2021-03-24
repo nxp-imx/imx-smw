@@ -151,6 +151,20 @@ struct libobj_key_ec_pair {
 	struct libbignumber value_d; // Secure Key scalar
 };
 
+struct libobj_key_rsa_pair {
+	unsigned long long key_id;
+	unsigned int type;
+	struct libbignumber modulus;  // Modulus n
+	CK_ULONG modulus_length;      // Modulus length in bits
+	struct libbignumber pub_exp;  // Public Exponent e
+	struct libbignumber priv_exp; // Private Exponent d
+	struct libbignumber prime_p;  // Private Prime p
+	struct libbignumber prime_q;  // Private Prime q
+	struct libbignumber exp_dp;   // Private exponent d modulo p-1
+	struct libbignumber exp_dq;   // Private exponent d modulo q-1
+	struct libbignumber coeff;    // Private CRT coefficient q^-1 mod p
+};
+
 struct libobj_key_cipher {
 	unsigned long long key_id;
 	struct libbytes value;

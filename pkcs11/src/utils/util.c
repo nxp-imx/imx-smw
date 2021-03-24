@@ -129,3 +129,27 @@ size_t util_utf8_to_byte(CK_BYTE_PTR dst, size_t len_dst,
 
 	return idx;
 }
+
+size_t util_get_bignum_bits(struct libbignumber *bignum)
+{
+	size_t nb_bits;
+	int msb;
+	size_t i;
+
+	nb_bits = bignum->length * 8;
+
+	for (i = 0; i < bignum->length; i++) {
+		msb = bignum->value[i];
+		if (msb) {
+			while (!(msb & 0x80)) {
+				nb_bits--;
+				msb <<= 1;
+			}
+			break;
+		}
+
+		nb_bits -= 8;
+	}
+
+	return nb_bits;
+}

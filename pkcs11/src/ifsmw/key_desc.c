@@ -5,6 +5,7 @@
 
 #include "asn1_ec_curve.h"
 #include "libobj_types.h"
+#include "util.h"
 #include "util_asn1.h"
 
 #include "key_desc.h"
@@ -205,6 +206,45 @@ static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 	return CKR_OK;
 }
 
+static CK_RV rsa_key_desc(struct smw_key_descriptor *desc,
+			  struct libobj_obj *obj)
+{
+	struct smw_keypair_rsa *smw_key;
+	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
+
+	desc->type_name = "RSA";
+
+	/*
+	 * Modulus length defines the RSA security size
+	 * If key field modulus_length is defined, this is
+	 * by definition a key generation.
+	 * Else, the object key modulus length buffer defines
+	 * the key security size
+	 */
+	if (key->modulus_length)
+		desc->security_size = key->modulus_length;
+	else if (key->modulus.value)
+		desc->security_size = util_get_bignum_bits(&key->modulus);
+	else
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	/*
+	 * If SMW key's descriptor buffer field is set, setup it
+	 * with the RSA key object's buffer
+	 */
+	if (desc->buffer) {
+		smw_key = &desc->buffer->rsa;
+		smw_key->modulus = key->modulus.value;
+		smw_key->modulus_length = key->modulus.length;
+		smw_key->public_data = key->pub_exp.value;
+		smw_key->public_length = key->pub_exp.length;
+		smw_key->private_data = key->priv_exp.value;
+		smw_key->private_length = key->priv_exp.length;
+	}
+
+	return CKR_OK;
+}
+
 CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj)
 {
 	CK_RV ret;
@@ -218,6 +258,10 @@ CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj)
 
 	case CKK_EC:
 		ret = ec_key_desc(desc, obj);
+		break;
+
+	case CKK_RSA:
+		ret = rsa_key_desc(desc, obj);
 		break;
 
 	default:
@@ -239,8 +283,16 @@ void key_desc_copy_key_id(struct libobj_obj *obj,
 		key->key_id = desc->id;
 		break;
 	}
+
 	case CKK_EC: {
 		struct libobj_key_ec_pair *key = get_subkey_from(obj);
+
+		key->key_id = desc->id;
+		break;
+	}
+
+	case CKK_RSA: {
+		struct libobj_key_rsa_pair *key = get_subkey_from(obj);
 
 		key->key_id = desc->id;
 		break;

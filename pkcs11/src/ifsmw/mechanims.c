@@ -16,6 +16,7 @@
 #include "pkcs11smw.h"
 #include "types.h"
 
+#include "args_attr.h"
 #include "key_desc.h"
 #include "tlv_encode.h"
 
@@ -116,12 +117,14 @@ static struct mentry meckeygen[] = {
 };
 
 /*
- * AES Key Generate mechanism
+ * Key Generate mechanism
+ * Cipher and RSA keys
  */
 static struct mentry mkeygen[] = {
 	M_ALGO_SINGLE(AES, AES_KEY_GEN),
 	M_ALGO_SINGLE(DES, DES_KEY_GEN),
 	M_ALGO_SINGLE(DES3, DES3_KEY_GEN),
+	M_ALGO_SINGLE(RSA, RSA_PKCS_KEY_PAIR_GEN),
 };
 
 /*
@@ -400,16 +403,12 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	gen_args.subsystem_name = devinfo->name;
 	gen_args.key_descriptor = &key;
 
-	if (is_token_obj(obj, storage)) {
-		DBG_TRACE("Generate Persistent Key");
-		ret = tlv_encode_boolean(&key_attr, "PERSISTENT");
-		if (ret != CKR_OK)
-			goto end;
+	ret = args_attr_generate_key(&key_attr, obj);
+	if (ret != CKR_OK)
+		goto end;
 
-		gen_args.key_attributes_list =
-			(const unsigned char *)key_attr.string;
-		gen_args.key_attributes_list_length = key_attr.length;
-	}
+	gen_args.key_attributes_list = (const unsigned char *)key_attr.string;
+	gen_args.key_attributes_list_length = key_attr.length;
 
 	status = smw_generate_key(&gen_args);
 
@@ -566,16 +565,12 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	imp_args.subsystem_name = devinfo->name;
 	imp_args.key_descriptor = &key;
 
-	if (is_token_obj(obj, storage)) {
-		DBG_TRACE("Import Persistent Key");
-		ret = tlv_encode_boolean(&key_attr, "PERSISTENT");
-		if (ret != CKR_OK)
-			goto end;
+	ret = args_attr_import_key(&key_attr, obj);
+	if (ret != CKR_OK)
+		goto end;
 
-		imp_args.key_attributes_list =
-			(const unsigned char *)key_attr.string;
-		imp_args.key_attributes_list_length = key_attr.length;
-	}
+	imp_args.key_attributes_list = (const unsigned char *)key_attr.string;
+	imp_args.key_attributes_list_length = key_attr.length;
 
 	status = smw_import_key(&imp_args);
 	ret = smw_status_to_ck_rv(status);

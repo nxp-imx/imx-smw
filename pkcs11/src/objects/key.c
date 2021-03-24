@@ -9,6 +9,7 @@
 #include "key.h"
 #include "key_cipher.h"
 #include "key_ec.h"
+#include "key_rsa.h"
 
 #include "lib_session.h"
 #include "libobj_types.h"
@@ -357,6 +358,10 @@ static void key_private_free(struct libobj_obj *obj)
 		key_ec_private_free(obj);
 		break;
 
+	case CKK_RSA:
+		key_rsa_private_free(obj);
+		break;
+
 	default:
 		break;
 	}
@@ -389,6 +394,10 @@ static void key_public_free(struct libobj_obj *obj)
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 		key_ec_public_free(obj);
+		break;
+
+	case CKK_RSA:
+		key_rsa_public_free(obj);
 		break;
 
 	default:
@@ -873,6 +882,10 @@ static CK_RV subkey_private_create(CK_SESSION_HANDLE hsession,
 		ret = key_ec_private_create(hsession, obj, attrs);
 		break;
 
+	case CKK_RSA:
+		ret = key_rsa_private_create(hsession, obj, attrs);
+		break;
+
 	default:
 		ret = CKR_FUNCTION_FAILED;
 	}
@@ -924,6 +937,10 @@ static CK_RV subkey_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 		ret = key_ec_private_get_attribute(attr, obj, protect);
 		break;
 
+	case CKK_RSA:
+		ret = key_rsa_private_get_attribute(attr, obj, protect);
+		break;
+
 	default:
 		ret = CKR_FUNCTION_FAILED;
 	}
@@ -972,6 +989,10 @@ static CK_RV subkey_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
 		ret = key_ec_private_modify_attribute(attr, obj);
 		break;
 
+	case CKK_RSA:
+		ret = key_rsa_private_modify_attribute(attr, obj);
+		break;
+
 	default:
 		ret = CKR_FUNCTION_FAILED;
 	}
@@ -1012,6 +1033,10 @@ static CK_RV subkey_public_create(CK_SESSION_HANDLE hsession,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 		ret = key_ec_public_create(hsession, obj, attrs);
+		break;
+
+	case CKK_RSA:
+		ret = key_rsa_public_create(hsession, obj, attrs);
 		break;
 
 	default:
@@ -1056,6 +1081,10 @@ static CK_RV subkey_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 		ret = key_ec_public_get_attribute(attr, obj);
+		break;
+
+	case CKK_RSA:
+		ret = key_rsa_public_get_attribute(attr, obj);
 		break;
 
 	default:
@@ -1103,6 +1132,10 @@ static CK_RV subkey_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 		ret = key_ec_public_modify_attribute(attr, obj);
+		break;
+
+	case CKK_RSA:
+		ret = key_rsa_public_modify_attribute(attr, obj);
 		break;
 
 	default:
@@ -1425,19 +1458,30 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			   struct libattr_list *priv_attrs)
 {
 	CK_RV ret;
+	CK_KEY_TYPE key_type;
 
 	DBG_TRACE("Generate a new keypair type object");
 
 	if (!pub_key || !priv_key)
 		return CKR_GENERAL_ERROR;
 
-	/* Support only EC Keypair generation */
-	if (mech->mechanism != CKM_EC_KEY_PAIR_GEN)
+	switch (mech->mechanism) {
+	case CKM_EC_KEY_PAIR_GEN:
+		key_type = CKK_EC;
+		break;
+
+	case CKM_RSA_PKCS_KEY_PAIR_GEN:
+	case CKM_RSA_X9_31_KEY_PAIR_GEN:
+		key_type = CKK_RSA;
+		break;
+
+	default:
 		return CKR_MECHANISM_INVALID;
+	}
 
 	DBG_TRACE("Create Public key (%p)", pub_key);
 
-	ret = generate_key_new(pub_key, pub_attrs, mech, CKK_EC);
+	ret = generate_key_new(pub_key, pub_attrs, mech, key_type);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -1447,7 +1491,7 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 	DBG_TRACE("Create Private key (%p)", priv_key);
 
-	ret = generate_key_new(priv_key, priv_attrs, mech, CKK_EC);
+	ret = generate_key_new(priv_key, priv_attrs, mech, key_type);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -1455,8 +1499,12 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = key_ec_keypair_generate(hsession, mech, pub_key, pub_attrs,
-				      priv_key, priv_attrs);
+	if (key_type == CKK_EC)
+		ret = key_ec_keypair_generate(hsession, mech, pub_key,
+					      pub_attrs, priv_key, priv_attrs);
+	else
+		ret = key_rsa_keypair_generate(hsession, mech, pub_key,
+					       pub_attrs, priv_key, priv_attrs);
 
 end:
 	DBG_TRACE("Keypair object (pub=%p priv=%p) generate return %ld",
@@ -1533,6 +1581,10 @@ CK_RV key_get_id(struct libbytes *id, struct libobj_obj *obj, size_t prefix_len)
 
 	case CKK_EC:
 		ret = key_ec_get_id(id, obj, prefix_len);
+		break;
+
+	case CKK_RSA:
+		ret = key_rsa_get_id(id, obj, prefix_len);
 		break;
 
 	default:

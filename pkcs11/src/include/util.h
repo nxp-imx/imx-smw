@@ -5,7 +5,10 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
+#include <stdint.h>
+
 #include "pkcs11smw.h"
+#include "types.h"
 
 /*
  * Useful macros
@@ -13,6 +16,9 @@
 #define BIT(bit)	      (1 << (bit))
 #define SET_BITS(val, mask)   ((val) |= (mask))
 #define CLEAR_BITS(val, mask) ((val) &= ~(mask))
+
+/* Extract the byte @n of the value @val */
+#define GET_BYTE(val, n) (((val) >> (n) * (8)) & UINT8_MAX)
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
@@ -123,5 +129,14 @@ size_t util_utf8_to_byte_len(const CK_UTF8CHAR_PTR src, size_t len_src);
  */
 size_t util_utf8_to_byte(CK_BYTE_PTR dst, size_t len_dst,
 			 const CK_UTF8CHAR_PTR src, size_t len_src);
+
+/**
+ * util_get_bignum_bits() - Get the number of bits of a big number
+ * @bignum: Big number
+ *
+ * Return:
+ * The number of bits of the big number
+ */
+size_t util_get_bignum_bits(struct libbignumber *bignum);
 
 #endif /* __UTIL_H__ */

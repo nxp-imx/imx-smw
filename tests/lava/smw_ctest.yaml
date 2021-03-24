@@ -14,4 +14,4 @@
           format: Lava-Test Test Definition 1.0
         run:
           steps:
-          - lava-test-case run_ctest --shell 'cd /usr/share/smw/tests && CTEST_OUTPUT_ON_FAILURE=TRUE ctest REPLACE_CTEST_LABEL && cat ./Testing/Temporary/LastTest.log'
+          - lava-test-case run_ctest --shell 'cd /usr/share/smw/tests && CTEST_OUTPUT_ON_FAILURE=TRUE ctest REPLACE_CTEST_LABEL'

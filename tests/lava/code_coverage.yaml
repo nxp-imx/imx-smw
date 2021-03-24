@@ -1,0 +1,31 @@
+
+- test:
+    namespace: smw_test
+    timeout:
+      minutes: 60
+    definitions:
+    - from: inline
+      name: smw-gcov
+      path: inline/smw-cov.yaml
+      repository:
+        metadata:
+          name: smw-gcov
+          description: Upload Code Coverage data
+          format: Lava-Test Test Definition 1.0
+        run:
+          steps:
+          - lava-test-case tar_cov --shell 'cd /usr/share/smw && tar -czf REPLACE_GCDA_FILE /bamboo'
+
+- test:
+    namespace: smw_test
+    timeout:
+      minutes: 20
+    definitions:
+    - repository: ssh://git@bitbucket.sw.nxp.com/~nxa06745/lava-test-definitions-nxp.git
+      from: git
+      branch: nexus-upload
+      path: linux/nexus-upload/upload.yaml
+      parameters:
+        UPLOAD_URL: "REPLACE_UPLOAD_URL"
+        FILE_TO_UPLOAD: "/usr/share/smw/REPLACE_GCDA_FILE"
+      name: nexus-upload-file

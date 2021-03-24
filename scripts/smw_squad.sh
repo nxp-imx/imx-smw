@@ -10,6 +10,7 @@ smw_setup_yaml="smw_setup.yaml"
 smw_package_yaml="smw_package.yaml"
 smw_ctest_yaml="smw_ctest.yaml"
 pkcs11_ctest_yaml="pkcs11_ctest.yaml"
+code_coverage_yaml="code_coverage.yaml"
 
 devops_script="nexus-find-latest-db.sh"
 lavacli_tool="lavacli"
@@ -17,7 +18,7 @@ def_squad_token="b786b334a22cd4734d4f180813f75bb7d725d491"
 
 export PATH=/home/bamboo/.local/bin:$PATH
 
-lava_url="${bamboo_lava_url:-https://lava.sw.nxp.com}"
+lava_url="${bamboo_lava_url:-"https://lava.sw.nxp.com"}"
 lava_backend="${bamboo_lava_backend:-lava-https}"
 lava_token="${bamboo_lava_token_secret:-}"
 lava_user="${bamboo_lava_user:-squad-mougins}"
@@ -30,8 +31,12 @@ prefix_boot="${bamboo_prefix_boot:-"imx-boot-"}"
 suffix_boot="${bamboo_suffix_boot:-"-sd.bin-flash_spl"}"
 image_folder="${bamboo_image_folder:-"fsl-imx-internal-wayland"}"
 nexus_repo="${bamboo_nexus_repo:-"IMX-raw_Linux_Internal_Daily_Build"}"
+nexus_url="${bamboo_nexus_url:-"https://nl-nxrm.sw.nxp.com/repository"}"
+nexus_dir="${bamboo_nexus_lava_dir:-"mougins-raw-public-artifacts/LAVA/smw"}"
+bamboo_plan="${bamboo_planKey:-"misc"}"
 
-use_new_lava=0
+opt_coverage=0
+ctest_label=""
 
 function usage_lavacli()
 {
@@ -50,12 +55,17 @@ function usage_submit()
 {
     printf "\n"
     printf "To submit a squad job\n"
-    printf "  %s [action] platform script_dir yaml_dir squad_id package_url=[url] ctest_label=[label] job_name=[name]\n" "${script_name}"
-    printf "    action      = [submit] boot with flashing MMC or [submit_uuu] boot with UUU\n"
+    printf "  %s [action] platform script_dir yaml_dir"  "${script_name}"
+    printf " squad_id coverage package_url=[url] ctest_label=[label]"
+    printf " job_name=[name]\n"
+    printf "    action      = [submit] boot with flashing MMC or [submit_uuu]"
+    printf " boot with UUU\n"
     printf "    platform    = Platform name\n"
     printf "    script_dir  = Directory where %s is located\n" "${devops_script}"
-    printf "    yaml_dir    = Directory where Lava jobs descriptions for Security Middleware are located\n"
+    printf "    yaml_dir    = Directory where Lava jobs descriptions for"
+    printf " Security Middleware are located\n"
     printf "    squad_id    = Suffix of squad tests, can contains more than one job\n"
+    printf "    coverage    = [optional} Upload Code Coverage result\n"
     printf "    package_url = [optional] URL to custom Security Middleware package\n"
     printf "    ctest_label = [optional] CTest label\n"
     printf "    job_name    = [optional] Job name added in the job description\n"
@@ -82,6 +92,8 @@ function usage()
     usage_lavacli
     usage_submit
     usage_result
+
+    exit 1
 }
 
 function parse_parameters
@@ -107,6 +119,10 @@ function parse_parameters
 
         job_name=*)
           opt_job_name="${arg#*=}"
+          ;;
+
+        coverage)
+          opt_coverage=1
           ;;
 
         *)
@@ -181,7 +197,6 @@ function squad_submit
     #
     if [[ $# -lt 4 ]]; then
       usage
-      exit 0
     fi
 
     platform=$1
@@ -206,14 +221,9 @@ function squad_submit
         filename_dtb=imx8qxp-mek.dtb
         filename_kernel=${prefix_kernel}${platform}.bin
         rootfs_name=${prefix_rootfs}${platform}
-        BOARD_ID=imx8qxpc0mek
-        if [[ ${use_new_lava} -eq 1 ]]; then
-            LAVA_DEVICE_TYPE=imx8qxp-mek
-        else
-            LAVA_DEVICE_TYPE=fsl-imx8qxp-c0-mek-linux
-        fi
-        UBOOT_MMC_BLK=0x40
-        UBOOT_MMC_CNT=0x1000
+        lava_device_type=imx8qxp-mek
+        uboot_mmc_blk=0x40
+        uboot_mmc_cnt=0x1000
         ;;
 
       *)
@@ -221,7 +231,6 @@ function squad_submit
         printf "Supported platforms: %s " "imx8qxpc0mek"
         printf "\n"
         usage
-        exit 1
         ;;
     esac
 
@@ -230,43 +239,54 @@ function squad_submit
 
     check_file "${script_dir}" "${devops_script}"
 
-    PACKAGE_URL=${opt_package_url}
-
     if [[ ! -z ${opt_ctest_label} ]]; then
-      CTEST_LABEL="-L ${opt_ctest_label}"
+      ctest_label="-L ${opt_ctest_label}"
     fi
 
-    cat "${yaml_dir}"/"${smw_setup_yaml}" > "${yaml_dir}"/"${smw_tmp_yaml}"
+    cat "${yaml_dir}/${smw_setup_yaml}" > "${yaml_dir}/${smw_tmp_yaml}"
     if [[ ! -z ${opt_package_url} ]]; then
       check_url "${opt_package_url}/libsmw_package.tar.gz"
 
-      cat "${yaml_dir}"/"${smw_package_yaml}" >> "${yaml_dir}"/"${smw_tmp_yaml}"
+      cat "${yaml_dir}/${smw_package_yaml}" >> "${yaml_dir}/${smw_tmp_yaml}"
     fi
 
-    # SMW Ctest execution
-    cat "${yaml_dir}"/"${smw_ctest_yaml}" >> "${yaml_dir}"/"${smw_tmp_yaml}"
+    {
+        # SMW ctest execution
+        cat "${yaml_dir}/${smw_ctest_yaml}"
+        # PKCS11 ctest execution
+        cat "${yaml_dir}/${pkcs11_ctest_yaml}"
+    } >> "${yaml_dir}/${smw_tmp_yaml}"
 
-    # PKCS11 Ctest execution
-    cat "${yaml_dir}"/"${pkcs11_ctest_yaml}" >> "${yaml_dir}"/"${smw_tmp_yaml}"
+    if [[ ${opt_coverage} -eq 1 ]]; then
+      # If code coverage enabled
+      gcda_tarball="${platform}_${opt_job_name}.tar.gz"
+      gcda_tarball="${gcda_tarball// /_}"
+      cat "${yaml_dir}/${code_coverage_yaml}" >> "${yaml_dir}/${smw_tmp_yaml}"
+    fi
 
     filename_job="${yaml_dir}"/"${smw_tmp_yaml}"
     check_file "${yaml_dir}" "${smw_tmp_yaml}"
 
-    sed -i "s|REPLACE_UBOOT_MMC_BLK|$UBOOT_MMC_BLK|" "${filename_job}"
-    sed -i "s|REPLACE_UBOOT_MMC_CNT|$UBOOT_MMC_CNT|" "${filename_job}"
+    sed -i "s|REPLACE_UBOOT_MMC_BLK|${uboot_mmc_blk}|" "${filename_job}"
+    sed -i "s|REPLACE_UBOOT_MMC_CNT|${uboot_mmc_cnt}|" "${filename_job}"
 
     if [[ ! -z ${opt_package_url} ]]; then
-      sed -i "s|REPLACE_PACKAGE_URL|$PACKAGE_URL|" "${filename_job}"
+      sed -i "s|REPLACE_PACKAGE_URL|${opt_package_url}|" "${filename_job}"
     fi
-    sed -i "s|REPLACE_CTEST_LABEL|$CTEST_LABEL|" "${filename_job}"
+    sed -i "s|REPLACE_CTEST_LABEL|${ctest_label}|" "${filename_job}"
 
-    SQUAD_GROUP="mougins-devops"
-    if [[ ${use_new_lava} -eq 1 ]]; then
-      JOB_TAG=mougins-public
-    else
-      JOB_TAG=daas_mougins
+    if [[ ${opt_coverage} -eq 1 ]]; then
+      upload_url="${nexus_url}/${nexus_dir}"
+      if [[ ! -z ${bamboo_plan} ]]; then
+          upload_url="${upload_url}/${bamboo_plan}"
+      fi
+      sed -i "s|REPLACE_GCDA_FILE|${gcda_tarball}|" "${filename_job}"
+      sed -i "s|REPLACE_UPLOAD_URL|${upload_url}|" "${filename_job}"
     fi
-    SQUAD_SLUG=SMW
+
+    squad_group="mougins-devops"
+    job_tag=mougins-public
+    squad_slug=SMW
 
     "${script_dir}"/"${devops_script}" \
               -l nl \
@@ -279,12 +299,12 @@ function squad_submit
               -b "${rootfs_name}" \
               -y "${filename_job}" \
               -o "${opt_job_name}" \
-              -v "$LAVA_DEVICE_TYPE" \
-              -t "$JOB_TAG" \
+              -v "${lava_device_type}" \
+              -t "${job_tag}" \
               -n "${daily_build_version}"
 
     if [[ ! -z ${opt_package_url} ]]; then
-        printf "PACKAGE_URL = %s\n" "$PACKAGE_URL"
+        printf "PACKAGE_URL = %s\n" "${opt_package_url}"
     fi
 
     if [[ ! -x "$(command -v ${lavacli_tool})" ]]; then
@@ -303,7 +323,7 @@ function squad_submit
       exit 1
     fi
 
-    squad_url_suffix="${SQUAD_GROUP}"/"${SQUAD_SLUG}"/SMW_"${squad_id}"/"${BOARD_ID}"
+    squad_url_suffix="${squad_group}"/"${squad_slug}"/SMW_"${squad_id}"/"${platform}"
 
     curl --noproxy "*" \
          --header "Auth-Token: ${squad_token}" \
@@ -382,15 +402,10 @@ function squad_result
 
 if [[ $# -eq 0 ]]; then
   usage
-  exit 0
 fi
 
 opt_action=$1
 shift
-
-if [[ ${lava_url} == "https://lava.sw.nxp.com" ]]; then
-  use_new_lava=1
-fi
 
 case $opt_action in
   install)

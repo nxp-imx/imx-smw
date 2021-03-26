@@ -13,9 +13,11 @@
 #define M(id) CKM_##id
 
 static CK_MECHANISM_TYPE mlist[] = {
-	M(SHA_1),	M(SHA224),	M(SHA256),
-	M(SHA384),	M(SHA512),	M(EC_KEY_PAIR_GEN),
-	M(AES_KEY_GEN), M(DES_KEY_GEN), M(DES3_KEY_GEN),
+	M(SHA_1),	 M(SHA224),
+	M(SHA256),	 M(SHA384),
+	M(SHA512),	 M(EC_KEY_PAIR_GEN),
+	M(AES_KEY_GEN),	 M(DES_KEY_GEN),
+	M(DES3_KEY_GEN), M(RSA_PKCS_KEY_PAIR_GEN),
 };
 
 const struct test_slots exp_slots[] = { {

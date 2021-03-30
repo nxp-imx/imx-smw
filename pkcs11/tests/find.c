@@ -491,7 +491,7 @@ static int find_cipher_aes_keys(CK_FUNCTION_LIST_PTR pfunc,
 	 * matching.
 	 */
 	status = TEST_PASS;
-	for (idx = 0; idx < nb_aes_keys; idx++) {
+	for (idx = 0; idx < nb_keys_match; idx++) {
 		match = is_key_expected(&hkeys_match[idx], hkeys, NB_MAX_KEY);
 		if (CHECK_EXPECTED(match, "Key #%lu not expected",
 				   hkeys_match[idx]))

@@ -18,46 +18,44 @@
 
 #include "common.h"
 
-#define HASH_ALGO(id, hsm_id)                                                  \
+#define HASH_ALGO(_id, _hsm_id, _length)                                       \
 	{                                                                      \
-		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##id,                       \
-		.hsm_hash_algo = HSM_HASH_ALGO_##hsm_id                        \
+		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_id,                      \
+		.hsm_hash_algo = HSM_HASH_ALGO_##_hsm_id, .length = _length    \
 	}
 
 /* Algo IDs must be ordered from lowest to highest.
- * This sorting is required to simplify the implementation of set_hash_algo().
+ * This sorting is required to simplify the implementation of get_hash_algo_info().
  */
-struct {
+struct hash_algo_info {
 	enum smw_config_hash_algo_id algo_id;
 	hsm_hash_algo_t hsm_hash_algo;
-} hash_algo_ids[] = { HASH_ALGO(SHA224, SHA_224), HASH_ALGO(SHA256, SHA_256),
-		      HASH_ALGO(SHA384, SHA_384), HASH_ALGO(SHA512, SHA_512) };
+	uint32_t length;
+} hash_algo_info[] = { HASH_ALGO(SHA224, SHA_224, 28),
+		       HASH_ALGO(SHA256, SHA_256, 32),
+		       HASH_ALGO(SHA384, SHA_384, 48),
+		       HASH_ALGO(SHA512, SHA_512, 64) };
 
-static int set_hash_algo(enum smw_config_hash_algo_id algo_id,
-			 hsm_hash_algo_t *algo)
+static struct hash_algo_info *
+get_hash_algo_info(enum smw_config_hash_algo_id algo_id)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	struct hash_algo_info *info = NULL;
 
 	unsigned int i;
-	unsigned int size = ARRAY_SIZE(hash_algo_ids);
+	unsigned int size = ARRAY_SIZE(hash_algo_info);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (i = 0; i < size; i++) {
-		if (hash_algo_ids[i].algo_id < algo_id)
+		if (hash_algo_info[i].algo_id < algo_id)
 			continue;
-		if (hash_algo_ids[i].algo_id > algo_id)
-			goto end;
-		*algo = hash_algo_ids[i].hsm_hash_algo;
-		status = SMW_STATUS_OK;
+		if (hash_algo_info[i].algo_id > algo_id)
+			break;
+		info = &hash_algo_info[i];
 		break;
 	}
 
-	SMW_DBG_PRINTF(DEBUG, "HSM Algo: %x\n", *algo);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return info;
 }
 
 static int hash(struct hdl *hdl, void *args)
@@ -69,8 +67,15 @@ static int hash(struct hdl *hdl, void *args)
 	op_hash_one_go_args_t op_hash_one_go_args = { 0 };
 
 	struct smw_crypto_hash_args *hash_args = args;
+	struct hash_algo_info *hash_algo_info;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	hash_algo_info = get_hash_algo_info(hash_args->algo_id);
+	if (!hash_algo_info) {
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
+	}
 
 	op_hash_one_go_args.input = smw_crypto_get_hash_input_data(hash_args);
 	op_hash_one_go_args.output = smw_crypto_get_hash_output_data(hash_args);
@@ -78,9 +83,18 @@ static int hash(struct hdl *hdl, void *args)
 		smw_crypto_get_hash_input_length(hash_args);
 	op_hash_one_go_args.output_size =
 		smw_crypto_get_hash_output_length(hash_args);
-	status = set_hash_algo(hash_args->algo_id, &op_hash_one_go_args.algo);
-	if (status != SMW_STATUS_OK)
+	op_hash_one_go_args.algo = hash_algo_info->hsm_hash_algo;
+
+	if (op_hash_one_go_args.output_size < hash_algo_info->length) {
+		smw_crypto_set_hash_output_length(hash_args,
+						  hash_algo_info->length);
+		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		goto end;
+	}
+
+	if (op_hash_one_go_args.output_size > hash_algo_info->length) {
+		op_hash_one_go_args.output_size = hash_algo_info->length;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_hash_one_go()\n"

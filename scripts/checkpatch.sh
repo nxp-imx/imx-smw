@@ -85,7 +85,7 @@ function checkpatch() {
 	# The first git 'format-patch' shows the commit message
 	# The second one produces the diff
 	(git format-patch "$1"^.."$1" --stdout | sed -n '/^diff --git/q;p'; \
-	 git format-patch "$1"^.."$1" --stdout --  ${_CP_EXCLED[*]} . | \
+	 git format-patch "$1"^.."$1" --stdout -- . ${_CP_EXCLED[*]} | \
 		sed -n '/^diff --git/,$p') | _ex_checkpatch
 }
 

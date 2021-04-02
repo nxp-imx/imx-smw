@@ -93,7 +93,7 @@ TEE_Result ta_get_hash_ca_id(uint32_t digest_len, enum tee_algorithm_id *ca_id)
 }
 
 TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
-			     const void *chunk, uint32_t chunk_len, void **hash,
+			     const void *chunk, uint32_t chunk_len, void *hash,
 			     uint32_t *hash_len)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
@@ -102,7 +102,7 @@ TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 
 	FMSG("Executing %s", __func__);
 
-	if (!hash || !hash_len)
+	if (!hash_len)
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	/* Get TEE algorithm ID */
@@ -110,6 +110,11 @@ TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 	if (res) {
 		EMSG("Failed to get algorithm info: 0x%x", res);
 		return res;
+	}
+
+	if (!hash) {
+		*hash_len = algorithm_info->length;
+		return TEE_SUCCESS;
 	}
 
 	res = TEE_AllocateOperation(&operation, algorithm_info->ta_id,
@@ -120,7 +125,7 @@ TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 	}
 
 	/* Compute digest */
-	res = TEE_DigestDoFinal(operation, chunk, chunk_len, *hash, hash_len);
+	res = TEE_DigestDoFinal(operation, chunk, chunk_len, hash, hash_len);
 	if (res)
 		EMSG("Failed to compute digest: 0x%x", res);
 
@@ -145,7 +150,6 @@ TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	return ta_compute_digest(params[0].value.a, params[1].memref.buffer,
-				 params[1].memref.size,
-				 &params[2].memref.buffer,
+				 params[1].memref.size, params[2].memref.buffer,
 				 &params[2].memref.size);
 }

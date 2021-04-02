@@ -85,6 +85,12 @@ static int hash(struct hdl *hdl, void *args)
 		smw_crypto_get_hash_output_length(hash_args);
 	op_hash_one_go_args.algo = hash_algo_info->hsm_hash_algo;
 
+	if (!op_hash_one_go_args.output) {
+		smw_crypto_set_hash_output_length(hash_args,
+						  hash_algo_info->length);
+		goto end;
+	}
+
 	if (op_hash_one_go_args.output_size < hash_algo_info->length) {
 		smw_crypto_set_hash_output_length(hash_args,
 						  hash_algo_info->length);

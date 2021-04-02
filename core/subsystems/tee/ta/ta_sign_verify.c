@@ -236,7 +236,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 		if (digest) {
 			res = ta_compute_digest(hash_algo_id,
 						params[2].memref.buffer,
-						params[2].memref.size, &digest,
+						params[2].memref.size, digest,
 						&digest_len);
 		} else {
 			EMSG("TEE_Malloc failed");

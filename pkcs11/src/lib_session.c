@@ -9,6 +9,7 @@
 #include "lib_device.h"
 #include "lib_mutex.h"
 #include "lib_object.h"
+#include "lib_opctx.h"
 
 #include "trace.h"
 
@@ -90,6 +91,10 @@ static CK_RV close_rw_session(struct libdevice *dev, struct libsess *session)
 	DBG_TRACE("Close R/W session %p", session);
 
 	ret = libobj_list_destroy(&session->objects);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_list_destroy(&session->opctx);
 	if (ret == CKR_OK) {
 		LIST_REMOVE(&dev->rw_sessions, session);
 		dev->token.rw_session_count--;
@@ -107,6 +112,10 @@ static CK_RV close_ro_session(struct libdevice *dev, struct libsess *session)
 	DBG_TRACE("Close RO session %p", session);
 
 	ret = libobj_list_destroy(&session->objects);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_list_destroy(&session->opctx);
 
 	if (ret == CKR_OK) {
 		LIST_REMOVE(&dev->ro_sessions, session);
@@ -170,6 +179,11 @@ CK_RV libsess_open(CK_SLOT_ID slotid, CK_FLAGS flags, CK_VOID_PTR application,
 
 	/* Initialize object list and its mutex */
 	ret = LLIST_INIT(&sess->objects);
+	if (ret != CKR_OK)
+		goto err;
+
+	/* Initialize operations context list and its mutex */
+	ret = LLIST_INIT(&sess->opctx);
 	if (ret == CKR_OK) {
 		*hsession = (CK_SESSION_HANDLE)sess;
 
@@ -636,4 +650,107 @@ CK_RV libsess_callback(CK_SESSION_HANDLE hsession, CK_NOTIFICATION event)
 		return CKR_FUNCTION_CANCELED;
 
 	return CKR_OK;
+}
+
+CK_RV libsess_add_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
+			CK_MECHANISM_PTR mech, void *ctx)
+{
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+	struct libopctx *opctx_find = NULL;
+	struct libopctx opctx_add = { 0 };
+
+	DBG_TRACE("Store operation context (sess: %p, op: %lx, mech: %lx)",
+		  sess, op_flag, mech->mechanism);
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = LLIST_LOCK(&sess->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_find(&sess->opctx, op_flag, &opctx_find);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (opctx_find) {
+		ret = CKR_OPERATION_ACTIVE;
+		goto end;
+	}
+
+	opctx_add.op_flag = op_flag;
+	opctx_add.mech = *mech;
+	opctx_add.ctx = ctx;
+	ret = libopctx_add(&sess->opctx, &opctx_add);
+
+end:
+	LLIST_UNLOCK(&sess->opctx);
+	return ret;
+}
+
+CK_RV libsess_find_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
+			 CK_MECHANISM_PTR mech, void **ctx)
+{
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+	struct libopctx *opctx = NULL;
+
+	DBG_TRACE("Find operation context (sess: %p, op: %lx, mech: %lx)", sess,
+		  op_flag, mech->mechanism);
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = LLIST_LOCK(&sess->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_find(&sess->opctx, op_flag, &opctx);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (!opctx) {
+		ret = CKR_OPERATION_NOT_INITIALIZED;
+		goto end;
+	}
+
+	*mech = opctx->mech;
+	if (ctx)
+		*ctx = opctx->ctx;
+
+end:
+	LLIST_UNLOCK(&sess->opctx);
+	return ret;
+}
+
+CK_RV libsess_remove_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
+{
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+	struct libopctx *opctx = NULL;
+
+	DBG_TRACE("Remove operation context (sess: %p, op: %lx)", sess,
+		  op_flag);
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = LLIST_LOCK(&sess->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_find(&sess->opctx, op_flag, &opctx);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (opctx)
+		ret = libopctx_destroy(&sess->opctx, opctx);
+
+end:
+	LLIST_UNLOCK(&sess->opctx);
+	return ret;
 }

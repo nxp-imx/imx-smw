@@ -80,11 +80,17 @@ struct libtoken {
 #define NO_LOGIN -1UL
 
 struct libobj_obj;
+struct libopctx;
 
 /**
- * struct libobj_list - object lists definition
+ * struct libobj_list - objects list definition
  */
 LLIST_HEAD(libobj_list, libobj_obj);
+
+/**
+ * struct libopctx_list - operation contexts list definition
+ */
+LLIST_HEAD(libopctx_list, libopctx);
 
 /**
  * struct libobj_handles - definition of an object handle element
@@ -115,6 +121,7 @@ struct libobj_query {
  * @application: Reference to the application (setup C_InitToken)
  * @objects: Object created by the session
  * @query: Session Object query
+ * @opctx: Active operations in the session
  * @prev: Previous element of the list
  * @next: Next element of the list
  */
@@ -126,6 +133,7 @@ struct libsess {
 	CK_VOID_PTR application;
 	struct libobj_query *query;
 	struct libobj_list objects;
+	struct libopctx_list opctx;
 	struct libsess *prev;
 	struct libsess *next;
 };
@@ -231,6 +239,23 @@ struct librfc2279 {
 struct libmech_list {
 	CK_MECHANISM_TYPE_PTR mech;
 	size_t number;
+};
+
+/**
+ * struct libopctx - Operation context element
+ * @op_flag: Operation flag
+ * @mech: Mechanism definition
+ * @ctx: Operation specific context
+ * @prev: Previous element of the list
+ * @next: Next element of the list
+ *
+ */
+struct libopctx {
+	CK_FLAGS op_flag;
+	CK_MECHANISM mech;
+	void *ctx;
+	struct libopctx *prev;
+	struct libopctx *next;
 };
 
 #endif /* __TYPES_H__ */

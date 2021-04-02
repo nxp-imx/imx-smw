@@ -238,4 +238,57 @@ CK_RV libsess_get_query(CK_SESSION_HANDLE hsession,
  */
 CK_RV libsess_callback(CK_SESSION_HANDLE hsession, CK_NOTIFICATION event);
 
+/**
+ * libsess_add_opctx() - Add an active operation in session
+ * @hsession: Session handle
+ * @op_flag: Operation flag
+ * @mech: Mechanism definition
+ * @ctx: Operation context
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OPERATION_ACTIVE               - Operation is already initialized
+ * CKR_HOST_MEMORY                    - Allocation error
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_add_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
+			CK_MECHANISM_PTR mech, void *ctx);
+
+/**
+ * libsess_find_opctx() - Find an active session operation
+ * @hsession: Session handle
+ * @op_flag: Operation flag
+ * @mech: Mechanism definition
+ * @ctx: Operation context
+ *
+ * If the operation mechanism @op_flag is present in the list,
+ * returns the mechanism parameters in @mech and the operation
+ * context in the @ctx.
+ * Else return CKR_OPERATION_NOT_INITIALIZED error.
+
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OPERATION_NOT_INITIALIZED      - Operation not initialized
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_find_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
+			 CK_MECHANISM_PTR mech, void **ctx);
+
+/**
+ * libsess_remove_opctx() - Remove an active session operation
+ * @hsession: Session handle
+ * @op_flag: Operation flag
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_remove_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag);
+
 #endif /* __LIB_SESSION_H__ */

@@ -145,33 +145,35 @@ int hash(json_object *params, struct common_parameters *common_params,
 		goto exit;
 
 	/*
-	 * Output length can be 0. For example: test with a bad algo name
-	 * config. In this case don't need to allocate output buffer.
-	 */
-	if (output_len) {
-		output_hex = malloc(output_len);
-		if (!output_hex) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-			goto exit;
-		}
-	}
-
-	args.output = output_hex;
-	args.output_length = output_len;
-
-	/*
 	 * Read expected digest buffer if any.
 	 * Test definition migth not set the expected digest buffer.
 	 */
 	res = util_read_hex_buffer(&digest_hex, &digest_len, params,
 				   DIGEST_OBJ);
-	if (res != ERR_CODE(PASSED)) {
-		if (res != ERR_CODE(MISSING_PARAMS))
-			goto exit;
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
+		goto exit;
+
+	if (res == ERR_CODE(PASSED) && !digest_hex) {
+		output_len = 0;
+	} else {
+		/*
+		 * Output length can be 0. For example: test with a bad algo name
+		 * config. In this case don't need to allocate output buffer.
+		 */
+		if (output_len) {
+			output_hex = malloc(output_len);
+			if (!output_hex) {
+				DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+				goto exit;
+			}
+		}
 
 		res = ERR_CODE(PASSED);
 	}
+
+	args.output = output_hex;
+	args.output_length = output_len;
 
 	/* Specific test cases */
 	res = set_hash_bad_args(params, &smw_hash_args, digest_hex, digest_len,
@@ -188,18 +190,28 @@ int hash(json_object *params, struct common_parameters *common_params,
 	}
 
 	/*
-	 * If Hash operation succeeded and expected digest is set in the test
-	 * definition file then compare operation result.
+	 * If Hash operation succeeded and expected digest or digest length
+	 * is set in the test definition file then compare operation result.
 	 */
-	if (*ret_status == SMW_STATUS_OK && digest_hex) {
-		if (digest_len != output_len) {
-			DBG_PRINT("Bad Digest length got %d expected %d",
-				  output_len, digest_len);
-			res = ERR_CODE(SUBSYSTEM);
-		} else if (memcmp(digest_hex, output_hex, output_len)) {
-			DBG_DHEX("Got Digest", output_hex, output_len);
-			DBG_DHEX("Expected Digest", digest_hex, digest_len);
-			res = ERR_CODE(SUBSYSTEM);
+	if (*ret_status == SMW_STATUS_OK) {
+		if (digest_hex || !output_hex) {
+			if (digest_len != args.output_length) {
+				DBG_PRINT("Bad Digest length got %d expected %d",
+					  args.output_length, digest_len);
+				res = ERR_CODE(SUBSYSTEM);
+				goto exit;
+			}
+		}
+
+		if (digest_hex) {
+			if (memcmp(digest_hex, args.output,
+				   args.output_length)) {
+				DBG_DHEX("Got Digest", args.output,
+					 args.output_length);
+				DBG_DHEX("Expected Digest", digest_hex,
+					 digest_len);
+				res = ERR_CODE(SUBSYSTEM);
+			}
 		}
 	}
 

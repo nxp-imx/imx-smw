@@ -37,14 +37,7 @@
 		],
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 5": { // Digest buffer is NULL
-		"command": "HASH_SHA256",
-		"subsystem": "DEFAULT",
-		"input": "5468697320696e707574206973206e6f742075736564",
-		"digest": 16,
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 6": { // Digest length is zero
+	"subtest 5": { // Digest length is zero
 		"command": "HASH_SHA256",
 		"subsystem": "DEFAULT",
 		"input": "5468697320696e707574206973206e6f742075736564",

@@ -23,14 +23,28 @@ static struct signature_list *signatures;
 
 /**
  * get_signature_len() - Return signature byte length given security size.
- * @security_size: Security size.
+ * @key_desc: Pointer to key descriptor
  *
  * Return:
  * The signature length in bytes.
+ * 0 if key type not supported.
  */
-static unsigned int get_signature_len(int security_size)
+static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
 {
-	return BITS_TO_BYTES_SIZE(security_size) * 2;
+	int status = smw_get_key_type_name(key_desc);
+
+	if (status != SMW_STATUS_OK)
+		return 0;
+
+	if (!strcmp(key_desc->type_name, BR1_KEY) ||
+	    !strcmp(key_desc->type_name, BT1_KEY) ||
+	    !strcmp(key_desc->type_name, NIST_KEY))
+		return BITS_TO_BYTES_SIZE(key_desc->security_size) * 2;
+
+	if (!strcmp(key_desc->type_name, RSA_KEY))
+		return BITS_TO_BYTES_SIZE(key_desc->security_size);
+
+	return 0;
 }
 
 /**
@@ -206,8 +220,7 @@ int sign_verify(int operation, json_object *params,
 				res = ERR_CODE(BAD_PARAM_TYPE);
 				goto exit;
 			}
-			new_sign_length =
-				get_signature_len(key_test.desc.security_size);
+			new_sign_length = get_signature_len(&key_test.desc);
 
 			if (new_sign_length) {
 				new_sign = malloc(new_sign_length);
@@ -264,7 +277,18 @@ int sign_verify(int operation, json_object *params,
 		goto exit;
 	}
 
-	if (operation == SIGN_OPERATION && *ret_status == SMW_STATUS_OK) {
+	if (*ret_status == SMW_STATUS_OK && operation == SIGN_OPERATION) {
+		if (!args.signature) {
+			if (args.signature_length != exp_sign_length) {
+				DBG_PRINT("Bad Sign length got %d expected %d",
+					  args.signature_length,
+					  exp_sign_length);
+				res = ERR_CODE(SUBSYSTEM);
+			}
+
+			goto exit;
+		}
+
 		/* Store signature */
 		res = util_sign_add_node(&signatures,
 					 json_object_get_int(sign_id_obj),

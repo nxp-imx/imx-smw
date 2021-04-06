@@ -201,32 +201,7 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Signature buffer is NULL
-		"command": "SIGN_SHA256",
-		"subsystem": "DEFAULT",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
-		"message": [
-			"7c9c67323a1df1adbfe5ceb415eaef01",
-			"55ece2820f4d50c1ec22cba4928ac656",
-			"c83fe585db6a78ce40bc42757aba7e5a",
-			"3f582428d6ca68d0c3978336a6efb729",
-			"613e8d9979016204bfd921322fdd5222",
-			"183554447de5e6e9bbe6edf76d7b71e1",
-			"8dc2e8d6dc89b7398364f652fafc7343",
-			"29aafa3dcd45d4f31e388e4fafd7fc64",
-			"95f37ca5cbab7f54d586463da4bfeaa3",
-			"bae09f7b8e9239d832b4f0a733aa609c",
-			"c1f8d4"
-		],
-		"signature": 64,
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 9": { // Signature length is 0
+	"subtest 8": { // Signature length is 0
 		"command": "SIGN_SHA256",
 		"subsystem": "DEFAULT",
 		"key_type": "NIST",
@@ -257,7 +232,7 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Attributes list not defined
+	"subtest 9": { // Attributes list not defined
 		"command": "SIGN_SHA256",
 		"subsystem": "DEFAULT",
 		"key_type": "NIST",
@@ -287,5 +262,23 @@
 		],
 		"attributes_list": ["undefined"],
 		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": { // Add a keypair for the test
+		"command": "GENERATE_NIST",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 0
+	},
+	"subtest 11": { // Get the signature length
+		"command": "SIGN_SHA256",
+		"subsystem": "DEFAULT",
+		"signature": 64,
+		"key_id": 0,
+		"depends": 10
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 10
 	}
 }

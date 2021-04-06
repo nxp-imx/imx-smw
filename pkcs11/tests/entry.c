@@ -154,6 +154,7 @@ struct test_def test_list[] = {
 	TEST_DEF(find),
 	TEST_DEF(parallel),
 	TEST_DEF(callback),
+	TEST_DEF(digest),
 };
 
 void tests_pkcs11_list(void)

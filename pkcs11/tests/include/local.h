@@ -56,5 +56,6 @@ void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_find(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_parallel(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_callback(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_digest(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

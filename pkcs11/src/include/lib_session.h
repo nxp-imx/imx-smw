@@ -142,6 +142,7 @@ CK_RV libsess_validate(CK_SESSION_HANDLE hsession);
  * libsess_validate_mechanism() - Validate a session mechanism
  * @hsession: Session handle
  * @mech: Mechanism definition
+ * @op_flag: Operation flag
  *
  * Checks if the slot id linked to the session supports the mechanism
  *
@@ -155,7 +156,7 @@ CK_RV libsess_validate(CK_SESSION_HANDLE hsession);
  * CKR_OK                             - Success
  */
 CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
-				 CK_MECHANISM_PTR mech);
+				 CK_MECHANISM_PTR mech, CK_FLAGS op_flag);
 
 /**
  * libsess_get_slotid() - Get the Session's slot ID

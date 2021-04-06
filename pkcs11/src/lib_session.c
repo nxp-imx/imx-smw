@@ -480,7 +480,7 @@ CK_RV libsess_validate(CK_SESSION_HANDLE hsession)
 }
 
 CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
-				 CK_MECHANISM_PTR mech)
+				 CK_MECHANISM_PTR mech, CK_FLAGS op_flag)
 {
 	CK_RV ret;
 	struct libdevice *dev;
@@ -500,7 +500,7 @@ CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
 	if (find_session(dev, sess) != sess)
 		ret = CKR_SESSION_HANDLE_INVALID;
 	else
-		ret = libdev_validate_mechanism(sess->slotid, mech);
+		ret = libdev_validate_mechanism(sess->slotid, mech, op_flag);
 
 	/* Unlock session mutex */
 	libmutex_unlock(dev->mutex_session);

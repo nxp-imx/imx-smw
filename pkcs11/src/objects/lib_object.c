@@ -952,7 +952,7 @@ CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 	DBG_TRACE("Generate a keypair on session %lu", hsession);
 
-	ret = libsess_validate_mechanism(hsession, mech);
+	ret = libsess_validate_mechanism(hsession, mech, CKF_GENERATE_KEY_PAIR);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -1059,7 +1059,7 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 	DBG_TRACE("Generate a secret key on session %lu", hsession);
 
-	ret = libsess_validate_mechanism(hsession, mech);
+	ret = libsess_validate_mechanism(hsession, mech, CKF_GENERATE);
 	if (ret != CKR_OK)
 		goto end;
 

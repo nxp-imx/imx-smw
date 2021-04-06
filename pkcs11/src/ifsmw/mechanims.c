@@ -7,11 +7,13 @@
 
 #include "smw_config.h"
 #include "smw_status.h"
+#include "smw_crypto.h"
 
 #include "dev_config.h"
 #include "lib_context.h"
 #include "lib_device.h"
 #include "lib_session.h"
+#include "lib_digest.h"
 #include "libobj_types.h"
 #include "pkcs11smw.h"
 #include "types.h"
@@ -29,17 +31,17 @@ static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 			  struct mgroup *mgroup);
 static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
-static CK_RV op_mdigest(CK_SLOT_ID slotid, void *args);
+static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
 			    struct mgroup *mgroup);
 static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mentry *entry, CK_MECHANISM_INFO_PTR info);
-static CK_RV op_meckeygen(CK_SLOT_ID slotid, void *args);
+static CK_RV op_meckeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 static void check_mkeygen(CK_SLOT_ID slotid, const char *subsystem,
 			  struct mgroup *mgroup);
 static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
-static CK_RV op_mkeygen(CK_SLOT_ID slotid, void *args);
+static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 
 const char *smw_ec_name[] = { "NIST", "BRAINPOOL_R1", "BRAINPOOL_T1" };
 
@@ -76,7 +78,7 @@ struct mgroup {
 	CK_RV(*info)
 	(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type, struct mentry *entry,
 	 CK_MECHANISM_INFO_PTR info);
-	CK_RV (*op)(CK_SLOT_ID slotid, void *args);
+	CK_RV (*op)(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 };
 
 /* Macro filling a struct mentry for a hash algo */
@@ -152,6 +154,7 @@ static struct mgroup smw_mechanims[] = {
  * return:
  * CKR_DEVICE_MEMORY             - Device memory error
  * CKR_DEVICE_ERROR              - Device failure
+ * CKR_BUFFER_TOO_SMALL          - Output buffer too small
  * CKR_OK                        - Success
  */
 static CK_RV smw_status_to_ck_rv(int status)
@@ -162,6 +165,9 @@ static CK_RV smw_status_to_ck_rv(int status)
 
 	case SMW_STATUS_ALLOC_FAILURE:
 		return CKR_DEVICE_MEMORY;
+
+	case SMW_STATUS_OUTPUT_TOO_SHORT:
+		return CKR_BUFFER_TOO_SMALL;
 
 	default:
 		return CKR_DEVICE_ERROR;
@@ -298,12 +304,36 @@ static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return ret;
 }
 
-static CK_RV op_mdigest(CK_SLOT_ID slotid, void *args)
+static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
-	(void)slotid;
-	(void)args;
+	CK_RV ret;
+	int status;
+	const struct libdev *devinfo;
+	struct libdig_params *params = args;
+	struct smw_hash_args hash_args = { 0 };
 
-	return CKR_FUNCTION_FAILED;
+	DBG_TRACE("Digest mechanism");
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	hash_args.subsystem_name = devinfo->name;
+	hash_args.algo_name = GET_ALGO_NAME(entry, 0);
+	hash_args.input = params->pData;
+	hash_args.input_length = params->ulDataLen;
+	hash_args.output = params->pDigest;
+	hash_args.output_length = *params->pulDigestLen;
+
+	status = smw_hash(&hash_args);
+
+	ret = smw_status_to_ck_rv(status);
+
+	if (ret == CKR_OK || ret == CKR_BUFFER_TOO_SMALL)
+		*params->pulDigestLen = hash_args.output_length;
+
+	DBG_TRACE("Digest on %s status %d return %ld", devinfo->name, status,
+		  ret);
+	return ret;
 }
 
 static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
@@ -361,8 +391,8 @@ static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	 */
 	info->ulMaxKeySize = 0;
 	info->ulMinKeySize = 0;
-	info->flags =
-		CKF_EC_OID | CKF_EC_CURVENAME | CKF_EC_F_P | CKF_EC_UNCOMPRESS;
+	info->flags = CKF_GENERATE_KEY_PAIR | CKF_EC_OID | CKF_EC_CURVENAME |
+		      CKF_EC_F_P | CKF_EC_UNCOMPRESS;
 
 	return info_keygen_common(slotid, type, entry, info);
 }
@@ -377,7 +407,10 @@ static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	 */
 	info->ulMaxKeySize = 0;
 	info->ulMinKeySize = 0;
-	info->flags = 0;
+	if (type == CKM_RSA_PKCS_KEY_PAIR_GEN)
+		info->flags = CKF_GENERATE_KEY_PAIR;
+	else
+		info->flags = CKF_GENERATE;
 
 	return info_keygen_common(slotid, type, entry, info);
 }
@@ -426,14 +459,16 @@ end:
 	return ret;
 }
 
-static CK_RV op_meckeygen(CK_SLOT_ID slotid, void *args)
+static CK_RV op_meckeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
+	(void)entry;
 	DBG_TRACE("Generate EC Key mechanism");
 	return op_keygen_common(slotid, args);
 }
 
-static CK_RV op_mkeygen(CK_SLOT_ID slotid, void *args)
+static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
+	(void)entry;
 	DBG_TRACE("Generate Key mechanism");
 	return op_keygen_common(slotid, args);
 }
@@ -503,9 +538,21 @@ CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return ret;
 }
 
-CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech)
+CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech,
+				CK_FLAGS op_flag)
 {
-	return find_mechanism(slotid, mech->mechanism, NULL, NULL);
+	CK_RV ret;
+	CK_MECHANISM_INFO info;
+
+	ret = find_mechanism(slotid, mech->mechanism, NULL, NULL);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libdev_get_mechanism_info(slotid, mech->mechanism, &info);
+	if (ret == CKR_OK && !(op_flag & info.flags))
+		ret = CKR_MECHANISM_INVALID;
+
+	return ret;
 }
 
 CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
@@ -514,6 +561,7 @@ CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
 	CK_RV ret;
 	CK_SLOT_ID slotid;
 	struct mgroup *group;
+	struct mentry *entry;
 
 	/* Before calling SMW, call the application callback */
 	ret = libsess_callback(hsession, CKN_SURRENDER);
@@ -524,9 +572,9 @@ CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = find_mechanism(slotid, mech->mechanism, &group, NULL);
+	ret = find_mechanism(slotid, mech->mechanism, &group, &entry);
 	if (ret == CKR_OK)
-		ret = group->op(slotid, args);
+		ret = group->op(slotid, entry, args);
 
 	return ret;
 }

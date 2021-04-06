@@ -225,6 +225,24 @@ end:
 	return status;
 }
 
+static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
+{
+	switch (key->identifier.type_id) {
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
+		/* Signature size is public key size */
+		return BITS_TO_BYTES_SIZE(key->identifier.security_size) * 2;
+
+	case SMW_CONFIG_KEY_TYPE_ID_RSA:
+		/* Signature size is modulus size */
+		return BITS_TO_BYTES_SIZE(key->identifier.security_size);
+
+	default:
+		return 0;
+	}
+}
+
 static int smw_sign_verify(enum operation_id operation_id,
 			   struct smw_sign_verify_args *args)
 {
@@ -241,8 +259,14 @@ static int smw_sign_verify(enum operation_id operation_id,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args || !args->message || !args->message_length ||
-	    !args->signature || !args->signature_length) {
+	/*
+	 * Sign API can be called with a NULL signature pointer to get the
+	 * signature length
+	 */
+	if (!args ||
+	    (!args->signature && operation_id == OPERATION_ID_VERIFY) ||
+	    (args->signature && (!args->message || !args->message_length ||
+				 !args->signature_length))) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
@@ -253,6 +277,20 @@ static int smw_sign_verify(enum operation_id operation_id,
 		goto end;
 
 	key_descriptor = &sign_verify_args.key_descriptor;
+
+	if (!args->signature) {
+		smw_sign_verify_set_sign_len(&sign_verify_args,
+					     get_sign_size(key_descriptor));
+		goto end;
+	}
+
+	if (operation_id == OPERATION_ID_VERIFY) {
+		if (args->signature_length != get_sign_size(key_descriptor)) {
+			status = SMW_STATUS_SIGNATURE_LEN_INVALID;
+			goto end;
+		}
+	}
+
 	format_id = key_descriptor->format_id;
 	public_data = smw_keymgr_get_public_data(key_descriptor);
 	public_length = smw_keymgr_get_public_length(key_descriptor);

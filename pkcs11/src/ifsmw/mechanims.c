@@ -17,12 +17,16 @@
 #include "libobj_types.h"
 #include "pkcs11smw.h"
 #include "types.h"
+#include "lib_sign_verify.h"
 
 #include "args_attr.h"
 #include "key_desc.h"
 #include "tlv_encode.h"
 
 #include "trace.h"
+
+#define SMW_RSA_PKCS1_V1_5_SIGN_TYPE "RSASSA-PKCS1-V1_5"
+#define SMW_RSA_PSS_SIGN_TYPE	     "RSASSA-PSS"
 
 struct mgroup;
 struct mentry;
@@ -42,6 +46,26 @@ static void check_mkeygen(CK_SLOT_ID slotid, const char *subsystem,
 static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args);
+static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
+			      struct mgroup *mgroup);
+static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry,
+			    void *args);
+static void check_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, const char *subsystem,
+				      struct mgroup *mgroup);
+static CK_RV info_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				      struct mentry *entry,
+				      CK_MECHANISM_INFO_PTR info);
+static CK_RV op_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, struct mentry *entry,
+				    void *args);
+static void check_msign_rsa_pss(CK_SLOT_ID slotid, const char *subsystem,
+				struct mgroup *mgroup);
+static CK_RV info_msign_rsa_pss(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				struct mentry *entry,
+				CK_MECHANISM_INFO_PTR info);
+static CK_RV op_msign_rsa_pss(CK_SLOT_ID slotid, struct mentry *entry,
+			      void *args);
 
 const char *smw_ec_name[] = { "NIST", "BRAINPOOL_R1", "BRAINPOOL_T1" };
 
@@ -130,12 +154,45 @@ static struct mentry mkeygen[] = {
 };
 
 /*
+ * Signature mechanism
+ */
+static struct mentry msign_ecdsa[] = {
+	M_ALGO_SINGLE(, ECDSA),
+	M_ALGO_SINGLE(SHA1, ECDSA_SHA1),
+	M_ALGO_SINGLE(SHA224, ECDSA_SHA224),
+	M_ALGO_SINGLE(SHA256, ECDSA_SHA256),
+	M_ALGO_SINGLE(SHA384, ECDSA_SHA384),
+	M_ALGO_SINGLE(SHA512, ECDSA_SHA512),
+};
+
+static struct mentry msign_rsa_pkcs_v1_5[] = {
+	M_ALGO_SINGLE(, RSA_PKCS),
+	M_ALGO_SINGLE(SHA1, SHA1_RSA_PKCS),
+	M_ALGO_SINGLE(SHA224, SHA224_RSA_PKCS),
+	M_ALGO_SINGLE(SHA256, SHA256_RSA_PKCS),
+	M_ALGO_SINGLE(SHA384, SHA384_RSA_PKCS),
+	M_ALGO_SINGLE(SHA512, SHA512_RSA_PKCS),
+};
+
+static struct mentry msign_rsa_pss[] = {
+	M_ALGO_SINGLE(, RSA_PKCS_PSS),
+	M_ALGO_SINGLE(SHA1, SHA1_RSA_PKCS_PSS),
+	M_ALGO_SINGLE(SHA224, SHA224_RSA_PKCS_PSS),
+	M_ALGO_SINGLE(SHA256, SHA256_RSA_PKCS_PSS),
+	M_ALGO_SINGLE(SHA384, SHA384_RSA_PKCS_PSS),
+	M_ALGO_SINGLE(SHA512, SHA512_RSA_PKCS_PSS),
+};
+
+/*
  * All SMW mechanisms
  */
 static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(mdigest), mdigest),
 	M_GROUP(ARRAY_SIZE(meckeygen), meckeygen),
 	M_GROUP(ARRAY_SIZE(mkeygen), mkeygen),
+	M_GROUP(ARRAY_SIZE(msign_ecdsa), msign_ecdsa),
+	M_GROUP(ARRAY_SIZE(msign_rsa_pkcs_v1_5), msign_rsa_pkcs_v1_5),
+	M_GROUP(ARRAY_SIZE(msign_rsa_pss), msign_rsa_pss),
 	{ 0 },
 };
 
@@ -156,6 +213,9 @@ static struct mgroup smw_mechanims[] = {
  * CKR_DEVICE_ERROR              - Device failure
  * CKR_BUFFER_TOO_SMALL          - Output buffer too small
  * CKR_OK                        - Success
+ * CKR_BUFFER_TOO_SMALL          - Output buffer too small
+ * CKR_SIGNATURE_INVALID         - Signature is invalid
+ * CKR_SIGNATURE_LEN_RANGE       - Signature length is invalid
  */
 static CK_RV smw_status_to_ck_rv(int status)
 {
@@ -168,6 +228,12 @@ static CK_RV smw_status_to_ck_rv(int status)
 
 	case SMW_STATUS_OUTPUT_TOO_SHORT:
 		return CKR_BUFFER_TOO_SMALL;
+
+	case SMW_STATUS_SIGNATURE_INVALID:
+		return CKR_SIGNATURE_INVALID;
+
+	case SMW_STATUS_SIGNATURE_LEN_INVALID:
+		return CKR_SIGNATURE_LEN_RANGE;
 
 	default:
 		return CKR_DEVICE_ERROR;
@@ -471,6 +537,383 @@ static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	(void)entry;
 	DBG_TRACE("Generate Key mechanism");
 	return op_keygen_common(slotid, args);
+}
+
+static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
+			      struct mgroup *mgroup)
+{
+	int status;
+	unsigned int idx;
+	unsigned int ecdsa_idx;
+	struct smw_signature_info info = { 0 };
+	struct mentry *entry;
+	CK_FLAGS slot_flag;
+
+	DBG_TRACE("Check ECDSA Signature mechanism");
+
+	/*
+	 * smw_config_check_sign() checks the key type, the hash algorithm
+	 * (optional) and the signature type (optional).
+	 *
+	 * Slot flag is set if:
+	 *  - sign or verify or both operations are supported
+	 *  - at least one ECDSA key type is supported
+	 */
+
+	slot_flag = BIT(slotid);
+	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
+	     idx++, entry++) {
+		if (strlen(entry->smw_algo))
+			info.hash_algo = entry->smw_algo;
+
+		for (ecdsa_idx = 0; ecdsa_idx < ARRAY_SIZE(smw_ec_name);
+		     ecdsa_idx++) {
+			info.key_type_name = smw_ec_name[ecdsa_idx];
+
+			status = smw_config_check_sign(subsystem, &info);
+			DBG_TRACE("%s sign mechanism %lu: %d", subsystem,
+				  entry->type, status);
+			if (status == SMW_STATUS_OK)
+				SET_BITS(entry->slot_flag, slot_flag);
+
+			status = smw_config_check_verify(subsystem, &info);
+			DBG_TRACE("%s verify mechanism %lu: %d", subsystem,
+				  entry->type, status);
+			if (status == SMW_STATUS_OK)
+				SET_BITS(entry->slot_flag, slot_flag);
+		}
+	}
+}
+
+static void check_msign_rsa_common(CK_SLOT_ID slotid, const char *subsystem,
+				   struct mgroup *mgroup,
+				   struct smw_signature_info *info)
+{
+	int status;
+	unsigned int idx;
+	CK_FLAGS slot_flag;
+	struct mentry *entry;
+
+	/*
+	 * smw_config_check_sign() checks the key type, the hash algorithm
+	 * (optional) and the signature type (optional).
+	 *
+	 * Slot flag is set if:
+	 *  - sign or verify or both operations are supported
+	 */
+
+	info->key_type_name = "RSA";
+
+	slot_flag = BIT(slotid);
+	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
+	     idx++, entry++) {
+		if (strlen(entry->smw_algo))
+			info->hash_algo = entry->smw_algo;
+
+		status = smw_config_check_sign(subsystem, info);
+		DBG_TRACE("%s sign mechanism %lu: %d", subsystem, entry->type,
+			  status);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+
+		status = smw_config_check_verify(subsystem, info);
+		DBG_TRACE("%s verify mechanism %lu: %d", subsystem, entry->type,
+			  status);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+	}
+}
+
+static void check_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, const char *subsystem,
+				      struct mgroup *mgroup)
+{
+	struct smw_signature_info info = {
+		.signature_type = SMW_RSA_PKCS1_V1_5_SIGN_TYPE
+	};
+
+	DBG_TRACE("Check RSA PKCS V1_5 Signature mechanism");
+
+	check_msign_rsa_common(slotid, subsystem, mgroup, &info);
+}
+
+static void check_msign_rsa_pss(CK_SLOT_ID slotid, const char *subsystem,
+				struct mgroup *mgroup)
+{
+	struct smw_signature_info info = { .signature_type =
+						   SMW_RSA_PSS_SIGN_TYPE };
+
+	DBG_TRACE("Check RSA PSS Signature mechanism");
+
+	check_msign_rsa_common(slotid, subsystem, mgroup, &info);
+}
+
+static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	int status;
+	CK_RV ret = CKR_OK;
+	unsigned int ecdsa_idx;
+	struct smw_signature_info sign_verify_info = { 0 };
+	const struct libdev *devinfo;
+
+	DBG_TRACE("Return info of 0x%lx signature mechanism", type);
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	/*
+	 * Signature global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = 0;
+
+	if (strlen(entry->smw_algo))
+		sign_verify_info.hash_algo = entry->smw_algo;
+
+	/*
+	 * @info flag is set with Sign flag or Verify flag or both
+	 *
+	 * If at least one ECDSA key type is supported by the operation,
+	 * @info flag is set
+	 */
+	for (ecdsa_idx = 0; ecdsa_idx < ARRAY_SIZE(smw_ec_name); ecdsa_idx++) {
+		sign_verify_info.key_type_name = smw_ec_name[ecdsa_idx];
+
+		status =
+			smw_config_check_sign(devinfo->name, &sign_verify_info);
+		if (status == SMW_STATUS_OK)
+			info->flags |= CKF_SIGN;
+
+		status = smw_config_check_verify(devinfo->name,
+						 &sign_verify_info);
+		if (status == SMW_STATUS_OK)
+			info->flags |= CKF_VERIFY;
+	}
+
+	/*
+	 * Call specific device mechanism information function
+	 * to complete the global setting.
+	 */
+	if (dev_mech_info[slotid])
+		ret = dev_mech_info[slotid](type, info);
+
+	return ret;
+}
+
+static CK_RV info_msign_rsa_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				   struct mentry *entry,
+				   CK_MECHANISM_INFO_PTR info,
+				   struct smw_signature_info *sign_verify_info)
+{
+	int status;
+	CK_RV ret = CKR_OK;
+	const struct libdev *devinfo;
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	/*
+	 * Signature global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = 0;
+
+	sign_verify_info->key_type_name = "RSA";
+
+	if (strlen(entry->smw_algo))
+		sign_verify_info->hash_algo = entry->smw_algo;
+	else
+		sign_verify_info->hash_algo = NULL_PTR;
+
+	/* @info flag is set with Sign flag or Verify flag or both */
+	status = smw_config_check_sign(devinfo->name, sign_verify_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_SIGN;
+
+	status = smw_config_check_verify(devinfo->name, sign_verify_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_VERIFY;
+
+	/*
+	 * Call specific device mechanism information function
+	 * to complete the global setting.
+	 */
+	if (dev_mech_info[slotid])
+		ret = dev_mech_info[slotid](type, info);
+
+	return ret;
+}
+
+static CK_RV info_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				      struct mentry *entry,
+				      CK_MECHANISM_INFO_PTR info)
+{
+	struct smw_signature_info sign_verify_info = {
+		.signature_type = SMW_RSA_PKCS1_V1_5_SIGN_TYPE
+	};
+
+	DBG_TRACE("Return info of 0x%lx signature mechanism", type);
+
+	return info_msign_rsa_common(slotid, type, entry, info,
+				     &sign_verify_info);
+}
+
+static CK_RV info_msign_rsa_pss(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				struct mentry *entry,
+				CK_MECHANISM_INFO_PTR info)
+{
+	struct smw_signature_info sign_verify_info = {
+		.signature_type = SMW_RSA_PSS_SIGN_TYPE
+	};
+
+	DBG_TRACE("Return info of 0x%lx signature mechanism", type);
+
+	return info_msign_rsa_common(slotid, type, entry, info,
+				     &sign_verify_info);
+}
+
+static CK_RV op_msign_common(struct smw_sign_verify_args *smw_args,
+			     struct mentry *entry,
+			     struct lib_signature_params *params,
+			     const char *signature_type)
+{
+	CK_RV ret;
+	int status;
+	unsigned int i;
+	struct smw_tlv attr = { 0 };
+	struct lib_signature_ctx *ctx = (struct lib_signature_ctx *)params->ctx;
+
+	smw_args->message = params->pdata;
+	smw_args->message_length = params->uldatalen;
+	smw_args->signature = params->psignature;
+	smw_args->signature_length = params->ulsignaturelen;
+
+	/* Get hash algorithm */
+	if (strlen(entry->smw_algo)) {
+		smw_args->algo_name = entry->smw_algo;
+	} else if (ctx->hash_mech) {
+		for (i = 0; i < ARRAY_SIZE(mdigest); i++) {
+			if (ctx->hash_mech == mdigest[i].type) {
+				smw_args->algo_name =
+					(char *)mdigest[i].smw_algo;
+				break;
+			}
+		}
+	}
+
+	/* Build attribute list */
+	ret = args_attr_sign_verify(&attr, signature_type, ctx->salt_len);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (attr.string) {
+		smw_args->attributes_list = (const unsigned char *)attr.string;
+		smw_args->attributes_list_length = attr.length;
+	}
+
+	if (params->op_flag == CKF_SIGN) {
+		status = smw_sign(smw_args);
+
+		/* Update signature length */
+		if (status == SMW_STATUS_OK ||
+		    status == SMW_STATUS_OUTPUT_TOO_SHORT)
+			params->ulsignaturelen = smw_args->signature_length;
+	} else {
+		status = smw_verify(smw_args);
+	}
+
+	ret = smw_status_to_ck_rv(status);
+
+	DBG_TRACE("%s on %s status %d return %ld",
+		  params->op_flag == CKF_SIGN ? "Sign" : "Verify",
+		  smw_args->subsystem_name, status, ret);
+
+end:
+	tlv_encode_free(&attr);
+
+	return ret;
+}
+
+static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	const struct libdev *devinfo;
+	struct lib_signature_ctx *ctx;
+	struct lib_signature_params *params;
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_sign_verify_args smw_args = { 0 };
+
+	DBG_TRACE("ECDSA Signature mechanism");
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	params = (struct lib_signature_params *)args;
+	ctx = (struct lib_signature_ctx *)params->ctx;
+
+	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, ec_pair);
+
+	smw_args.subsystem_name = devinfo->name;
+	smw_args.key_descriptor = &key_desc;
+
+	return op_msign_common(&smw_args, entry, params, NULL);
+}
+
+static CK_RV op_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, struct mentry *entry,
+				    void *args)
+{
+	const struct libdev *devinfo;
+	struct lib_signature_ctx *ctx;
+	struct lib_signature_params *params;
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_sign_verify_args smw_args = { 0 };
+
+	DBG_TRACE("RSA PKCS V1_5 Signature mechanism");
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	params = (struct lib_signature_params *)args;
+	ctx = (struct lib_signature_ctx *)params->ctx;
+
+	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, rsa_pair);
+
+	smw_args.subsystem_name = devinfo->name;
+	smw_args.key_descriptor = &key_desc;
+
+	return op_msign_common(&smw_args, entry, params,
+			       SMW_RSA_PKCS1_V1_5_SIGN_TYPE);
+}
+
+static CK_RV op_msign_rsa_pss(CK_SLOT_ID slotid, struct mentry *entry,
+			      void *args)
+{
+	const struct libdev *devinfo;
+	struct lib_signature_ctx *ctx;
+	struct lib_signature_params *params;
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_sign_verify_args smw_args = { 0 };
+
+	DBG_TRACE("RSA PSS Signature mechanism");
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	params = (struct lib_signature_params *)args;
+	ctx = (struct lib_signature_ctx *)params->ctx;
+
+	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, rsa_pair);
+
+	smw_args.subsystem_name = devinfo->name;
+	smw_args.key_descriptor = &key_desc;
+
+	return op_msign_common(&smw_args, entry, params, SMW_RSA_PSS_SIGN_TYPE);
 }
 
 CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,

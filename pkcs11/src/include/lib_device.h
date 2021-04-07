@@ -244,6 +244,9 @@ CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech,
  * CKR_DEVICE_MEMORY             - Device memory error
  * CKR_DEVICE_ERROR              - Device failure
  * CKR_FUNCTION_CANCELED         - Application callback canceled function
+ * CKR_BUFFER_TOO_SMALL          - Output buffer too small
+ * CKR_SIGNATURE_INVALID         - Signature is invalid
+ * CKR_SIGNATURE_LEN_RANGE       - Signature length is invalid
  * CKR_OK                        - Success
  */
 CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,

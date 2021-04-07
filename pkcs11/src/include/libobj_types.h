@@ -171,4 +171,11 @@ struct libobj_key_cipher {
 	size_t value_len;
 };
 
+#define get_key_id_from(obj, type)                                             \
+	({                                                                     \
+		struct libobj_key_##type *_key = get_subkey_from(obj);         \
+		assert(_key);                                                  \
+		_key->key_id;                                                  \
+	})
+
 #endif /* __LIBOBJ_TYPES_H__ */

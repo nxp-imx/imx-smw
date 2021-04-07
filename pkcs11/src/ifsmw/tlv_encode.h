@@ -49,6 +49,43 @@ CK_RV tlv_encode_large_numeral(struct smw_tlv *tlv, const char *type,
 			       struct libbignumber *bignum);
 
 /**
+ * tlv_encode_string() - Add a TLV's string @type to TLV string
+ * @tlv: TLV's string to be updated
+ * @type: String data name
+ * @value: String value
+ *
+ * Return:
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_OK                        - Success
+ */
+CK_RV tlv_encode_string(struct smw_tlv *tlv, const char *type,
+			const char *value);
+
+/**
+ * tlv_encode_enum() - Add a TLV's enumeration @type to TLV string
+ * @tlv: TLV's string to be updated
+ * @type: Enumeration prefix string
+ * @value: Enumeration value string
+ *
+ * Return:
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_OK                        - Success
+ */
+CK_RV tlv_encode_enum(struct smw_tlv *tlv, const char *type, const char *value);
+
+/**
+ * tlv_encode_numeral() - Add TLV's numeral @type to TLV string
+ * @tlv: TLV's string to be updated
+ * @type: Numeral data name (string)
+ * @num: Numeral value
+ *
+ * Return:
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_OK                        - Success
+ */
+CK_RV tlv_encode_numeral(struct smw_tlv *tlv, const char *type, long long num);
+
+/**
  * tlv_encode_free() - Free the TLV's string
  * @tlv: TLV object
  */

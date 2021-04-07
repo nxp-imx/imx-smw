@@ -61,3 +61,20 @@ CK_RV args_attr_import_key(struct smw_tlv *attr, struct libobj_obj *obj)
 
 	return ret;
 }
+
+CK_RV args_attr_sign_verify(struct smw_tlv *attr, const char *signature_type,
+			    CK_ULONG salt_len)
+{
+	CK_RV ret = CKR_OK;
+
+	if (signature_type) {
+		ret = tlv_encode_enum(attr, "SIGNATURE_TYPE", signature_type);
+		if (ret != CKR_OK)
+			return ret;
+	}
+
+	if (salt_len)
+		ret = tlv_encode_numeral(attr, "SALT_LEN", salt_len);
+
+	return ret;
+}

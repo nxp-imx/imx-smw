@@ -9,16 +9,10 @@
 #include "os_mutex.h"
 #include "util_session.h"
 
-struct asn1_ec_curve {
-	size_t security_size;
-	const char *name;
-	const unsigned char *oid;
-};
-
 #define EC_STR_PRIME192_V1 "prime192v1"
 #define EC_STR_PRIME256_V1 "prime256v1"
 
-static struct asn1_ec_curve ec_curves[] = {
+const struct asn1_ec_curve ec_curves[] = {
 	{ 192, EC_STR_PRIME192_V1, prime192v1 },
 	{ 256, EC_STR_PRIME256_V1, prime256v1 },
 };

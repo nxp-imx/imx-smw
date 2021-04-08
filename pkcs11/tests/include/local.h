@@ -43,6 +43,14 @@ const char *get_slot_label(CK_ULONG slotid);
 extern const CK_BYTE prime192v1[];
 extern const CK_BYTE prime256v1[];
 
+struct asn1_ec_curve {
+	size_t security_size;
+	const char *name;
+	const unsigned char *oid;
+};
+
+extern const struct asn1_ec_curve ec_curves[];
+
 int util_to_asn1_string(CK_ATTRIBUTE_PTR attr, const char *str);
 int util_to_asn1_oid(CK_ATTRIBUTE_PTR attr, const CK_BYTE *oid);
 
@@ -57,5 +65,6 @@ void tests_pkcs11_find(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_parallel(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_callback(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_digest(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_sign_verify(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

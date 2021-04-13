@@ -78,5 +78,5 @@ eval "./scripts/smw_build.sh package out=${build_debug}"
 #
 # Create text file with build information
 #
-echo "ROOT_DIR=$PWD" >> gcno_build_info.txt
+echo "ROOT_DIR=$PWD" > gcno_build_info.txt
 echo "BUILD_DIR=${build_debug}" >> gcno_build_info.txt

@@ -29,8 +29,9 @@ void sign_verify_print_params(void *params)
 		       "    algo_bitmap: %.8lX\n"
 		       "    key_type_bitmap: %.8lX\n"
 		       "    key_size_min: %u\n"
-		       "    key_size_max: %u\n",
+		       "    key_size_max: %u\n"
+		       "    sign_type_bitmap: %.8lX\n",
 		       smw_config_get_operation_name(p->operation_id),
 		       p->algo_bitmap, p->key_type_bitmap, p->key_size_min,
-		       p->key_size_max);
+		       p->key_size_max, p->sign_type_bitmap);
 }

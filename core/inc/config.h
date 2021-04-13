@@ -49,6 +49,13 @@ enum smw_config_hmac_algo_id {
 	SMW_CONFIG_HMAC_ALGO_ID_INVALID
 };
 
+enum smw_config_sign_type_id {
+	SMW_CONFIG_SIGN_TYPE_ID_DEFAULT,
+	SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PKCS1_V1_5,
+	SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PSS,
+	SMW_CONFIG_SIGN_TYPE_ID_NB
+};
+
 /**
  * smw_config_init() - Initialize the Configuration module.
  *
@@ -232,3 +239,16 @@ int smw_config_get_hash_algo_id(const char *name,
  */
 int smw_config_get_hmac_algo_id(const char *name,
 				enum smw_config_hmac_algo_id *id);
+
+/**
+ * smw_config_get_signature_type_id() - Get the signature type ID associated to
+ *                                      a name.
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * Return:
+ * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_OK		- Success
+ */
+int smw_config_get_signature_type_id(const char *name,
+				     enum smw_config_sign_type_id *id);

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 #ifndef __SMW_CONFIG_H__
 #define __SMW_CONFIG_H__
@@ -65,5 +65,69 @@ struct smw_key_info {
  */
 int smw_config_check_generate_key(const char *subsystem,
 				  struct smw_key_info *info);
+
+/**
+ * struct smw_signature_info - Signature operation information
+ * @key_type_name: Key type name
+ * @hash_algo: Hash algorithm name
+ * @signature_type: Signature type name
+ */
+struct smw_signature_info {
+	const char *key_type_name;
+	const char *hash_algo;
+	const char *signature_type;
+};
+
+/**
+ * smw_config_check_sign() - Check if signature generation operation is
+ *                           supported
+ * @subsystem: Name of the subsystem (if NULL default subsystem)
+ * @info: Signature information
+ *
+ * @info key type name field is mandatory.
+ * @info hash algorithm name and signature type name fields are optional.
+ *
+ * Function checks if the key type provided in the @info structure is
+ * supported on the given @subsystem for a signature generation operation.
+ * If set, function checks if the hash algorithm is supported on the given
+ * @subsytem for the signature generation operation.
+ * If set, function checks if the signature type is supported on the given
+ * @subsytem for the signature generation operation.
+ *
+ * If @subsystem is NULL, default subsystem digest capability is checked.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Parameter(s) is(are) supported
+ * SMW_STATUS_OPERATION_NOT_CONFIGURED	- One of the parameters is not supported
+ * error code otherwise
+ */
+int smw_config_check_sign(const char *subsystem,
+			  struct smw_signature_info *info);
+
+/**
+ * smw_config_check_verify() - Check if signature verification operation is
+ *                             supported
+ * @subsystem: Name of the subsystem (if NULL default subsystem)
+ * @info: Signature information
+ *
+ * @info key type name field is mandatory.
+ * @info hash algorithm name and signature type name fields are optional.
+ *
+ * Function checks if the key type provided in the @info structure is
+ * supported on the given @subsystem for a signature verification operation.
+ * If set, function checks if the hash algorithm is supported on the given
+ * @subsytem for the signature verification operation.
+ * If set, function checks if the signature type is supported on the given
+ * @subsytem for the signature verification operation.
+ *
+ * If @subsystem is NULL, default subsystem digest capability is checked.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Parameter(s) is(are) supported
+ * SMW_STATUS_OPERATION_NOT_CONFIGURED	- One of the parameters is not supported
+ * error code otherwise
+ */
+int smw_config_check_verify(const char *subsystem,
+			    struct smw_signature_info *info);
 
 #endif /* __SMW_CONFIG_H__ */

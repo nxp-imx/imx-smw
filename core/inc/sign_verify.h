@@ -10,13 +10,6 @@
 
 #define SALT_LEN_STR "SALT_LEN"
 
-/* Signature type enum */
-enum signature_type {
-	SIGNATURE_TYPE_RSASSA_PKCS1_V1_5,
-	SIGNATURE_TYPE_RSASSA_PSS,
-	SIGNATURE_TYPE_UNDEFINED
-};
-
 /**
  * struct smw_sign_verify_attributes - Sign Verify attributes list.
  * @signature_type: Type of signature.
@@ -26,7 +19,7 @@ enum signature_type {
  * salt length is equal to the hash length.
  */
 struct smw_sign_verify_attributes {
-	enum signature_type signature_type;
+	enum smw_config_sign_type_id signature_type;
 	uint32_t salt_length;
 };
 

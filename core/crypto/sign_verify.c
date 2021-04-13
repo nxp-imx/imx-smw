@@ -25,7 +25,7 @@
  * @value: Signature type string.
  * @length: Length of @value in bytes.
  *
- * @value is converted in 'enum signature_type'.
+ * @value is converted in 'enum smw_config_sign_type_id'.
  *
  * Return:
  * SMW_STATUS_OK		- Success.
@@ -67,7 +67,7 @@ static struct attribute_tlv sign_verify_attributes_tlv_array[] = {
  */
 static void set_default_attributes(struct smw_sign_verify_attributes *attr)
 {
-	attr->signature_type = SIGNATURE_TYPE_UNDEFINED;
+	attr->signature_type = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT;
 	attr->salt_length = 0;
 }
 
@@ -192,14 +192,8 @@ static int store_signature_type(void *attributes, unsigned char *value,
 	if (!value || !attr)
 		goto end;
 
-	if (!SMW_UTILS_STRCMP((char *)value, RSASSA_PSS_STR))
-		attr->signature_type = SIGNATURE_TYPE_RSASSA_PSS;
-	else if (!SMW_UTILS_STRCMP((char *)value, RSASSA_PKCS1_V1_5_STR))
-		attr->signature_type = SIGNATURE_TYPE_RSASSA_PKCS1_V1_5;
-	else
-		goto end;
-
-	status = SMW_STATUS_OK;
+	status = smw_config_get_signature_type_id((char *)value,
+						  &attr->signature_type);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

@@ -65,6 +65,7 @@ struct sign_verify_params {
 	unsigned long key_type_bitmap;
 	unsigned int key_size_min;
 	unsigned int key_size_max;
+	unsigned long sign_type_bitmap;
 };
 
 extern struct ctx ctx;

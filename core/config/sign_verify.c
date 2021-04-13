@@ -15,8 +15,24 @@
 #include "config.h"
 #include "keymgr.h"
 #include "sign_verify.h"
+#include "name.h"
 
 #include "common.h"
+
+const char *sign_type_values = "SIGN_TYPE_VALUES";
+
+static const char *const sign_type_names[] = {
+	[SMW_CONFIG_SIGN_TYPE_ID_DEFAULT] = "DEFAULT",
+	[SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PKCS1_V1_5] = RSASSA_PKCS1_V1_5_STR,
+	[SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PSS] = RSASSA_PSS_STR
+};
+
+static int read_signature_type_names(char **start, char *end,
+				     unsigned long *bitmap)
+{
+	return read_names(start, end, bitmap, sign_type_names,
+			  SMW_CONFIG_SIGN_TYPE_ID_NB);
+}
 
 static int sign_verify_read_params(char **start, char *end,
 				   enum operation_id operation_id,
@@ -30,6 +46,7 @@ static int sign_verify_read_params(char **start, char *end,
 
 	unsigned long algo_bitmap = SMW_ALL_ONES;
 	unsigned long key_type_bitmap = SMW_ALL_ONES;
+	unsigned long sign_type_bitmap = SMW_ALL_ONES;
 
 	unsigned int key_size_min = 0;
 	unsigned int key_size_max = UINT_MAX;
@@ -62,6 +79,12 @@ static int sign_verify_read_params(char **start, char *end,
 						     &key_size_max);
 			if (status != SMW_STATUS_OK)
 				goto end;
+		} else if (!SMW_UTILS_STRNCMP(buffer, sign_type_values,
+					      length)) {
+			status = read_signature_type_names(&cur, end,
+							   &sign_type_bitmap);
+			if (status != SMW_STATUS_OK)
+				goto end;
 		} else {
 			status = skip_param(&cur, end);
 			if (status != SMW_STATUS_OK)
@@ -82,6 +105,7 @@ static int sign_verify_read_params(char **start, char *end,
 	p->key_type_bitmap = key_type_bitmap;
 	p->key_size_min = key_size_min;
 	p->key_size_max = key_size_max;
+	p->sign_type_bitmap = sign_type_bitmap;
 
 	*params = p;
 
@@ -139,7 +163,10 @@ static int check_subsystem_caps(void *args, void *params)
 	    !check_id(key_type_id, sign_verify_params->key_type_bitmap) ||
 	    !check_security_size(security_size,
 				 sign_verify_params->key_size_min,
-				 sign_verify_params->key_size_max))
+				 sign_verify_params->key_size_max) ||
+	    !check_id(sign_verify_args->attributes.signature_type,
+		      sign_verify_params->sign_type_bitmap))
+
 		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -158,3 +185,21 @@ static int verify_check_subsystem_caps(void *args, void *params)
 
 DEFINE_CONFIG_OPERATION_FUNC(sign);
 DEFINE_CONFIG_OPERATION_FUNC(verify);
+
+int smw_config_get_signature_type_id(const char *name,
+				     enum smw_config_sign_type_id *id)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!name)
+		*id = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT;
+	else
+		status = smw_utils_get_string_index(name, sign_type_names,
+						    SMW_CONFIG_SIGN_TYPE_ID_NB,
+						    id);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}

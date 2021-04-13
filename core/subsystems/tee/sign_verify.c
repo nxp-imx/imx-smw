@@ -95,12 +95,12 @@ static int sign_verify(void *args, enum operation_id op_id)
 		 * signature type.
 		 */
 		if (sign_verify_args->attributes.signature_type ==
-		    SIGNATURE_TYPE_UNDEFINED) {
+		    SMW_CONFIG_SIGN_TYPE_ID_DEFAULT) {
 			SMW_DBG_PRINTF(ERROR, "No signature type set\n");
 			status = SMW_STATUS_INVALID_PARAM;
 			goto exit;
 		} else if (sign_verify_args->attributes.signature_type ==
-				   SIGNATURE_TYPE_RSASSA_PKCS1_V1_5 &&
+				   SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PKCS1_V1_5 &&
 			   sign_verify_args->attributes.salt_length) {
 			SMW_DBG_PRINTF(ERROR,
 				       "Salt length not supported for %s\n",

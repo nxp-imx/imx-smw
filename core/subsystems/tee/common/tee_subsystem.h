@@ -56,9 +56,9 @@ enum tee_algorithm_id {
 
 /* TEE signature type */
 enum tee_signature_type {
+	TEE_SIGNATURE_TYPE_DEFAULT,
 	TEE_SIGNATURE_TYPE_RSASSA_PKCS1_V1_5,
 	TEE_SIGNATURE_TYPE_RSASSA_PSS,
-	TEE_SIGNATURE_TYPE_UNDEFINED
 };
 
 /* Key manager commands */

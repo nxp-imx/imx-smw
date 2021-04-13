@@ -27,9 +27,13 @@ VERSION=0;
     [SECURITY_OPERATION]
         SIGN;
         DEFAULT;
+        KEY_TYPE_VALUES=NIST:BRAINPOOL_R1;
+        SIGN_TYPE_VALUES=DEFAULT;
     [SECURITY_OPERATION]
         VERIFY;
         DEFAULT;
+        KEY_TYPE_VALUES=NIST:BRAINPOOL_R1;
+        SIGN_TYPE_VALUES=DEFAULT;
 [SECURE_SUBSYSTEM]
     TEE;
     /* No Start/Stop method specified. Default is 1. */
@@ -49,7 +53,9 @@ VERSION=0;
         HASH;
     [SECURITY_OPERATION]
         SIGN;
+        KEY_TYPE_VALUES=NIST:RSA;
     [SECURITY_OPERATION]
         VERIFY;
+        KEY_TYPE_VALUES=NIST:RSA;
     [SECURITY_OPERATION]
         HMAC;

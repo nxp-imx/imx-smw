@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include <seco_nvm.h>
@@ -8,6 +8,7 @@
 
 #include "smw_status.h"
 
+#include "compiler.h"
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
@@ -30,7 +31,8 @@ static struct {
 		   .key_management = 0,
 		   .signature_gen = 0,
 		   .signature_ver = 0,
-		   .hash = 0 },
+		   .hash = 0,
+		   .rng = 0 },
 	  .nvm_status = NVM_STATUS_UNDEF,
 	  .tid = 0,
 	  .mutex = NULL };
@@ -262,12 +264,48 @@ static void close_hash_service(hsm_hdl_t hash_hdl)
 		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
 }
 
+static int open_rng_service(hsm_hdl_t session_hdl, hsm_hdl_t *rng_hdl)
+{
+	int status = SMW_STATUS_OK;
+
+	hsm_err_t err = HSM_NO_ERROR;
+	open_svc_rng_args_t open_svc_rng_args = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	err = hsm_open_rng_service(session_hdl, &open_svc_rng_args, rng_hdl);
+	if (err != HSM_NO_ERROR) {
+		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+		status = SMW_STATUS_SUBSYSTEM_FAILURE;
+		goto end;
+	}
+	SMW_DBG_PRINTF(DEBUG, "rng_hdl: %d\n", *rng_hdl);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static void close_rng_service(hsm_hdl_t rng_hdl)
+{
+	hsm_err_t err = HSM_NO_ERROR;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_PRINTF(DEBUG, "rng_hdl: %d\n", rng_hdl);
+	err = hsm_close_rng_service(rng_hdl);
+	if (err != HSM_NO_ERROR)
+		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+}
+
 static void reset_handles(void)
 {
 	struct hdl *hdl = &ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	if (hdl->rng)
+		close_rng_service(hdl->rng);
 	if (hdl->hash)
 		close_hash_service(hdl->hash);
 	if (hdl->signature_ver)
@@ -287,6 +325,7 @@ static void reset_handles(void)
 	hdl->signature_gen = 0;
 	hdl->signature_ver = 0;
 	hdl->hash = 0;
+	hdl->rng = 0;
 }
 
 static void *storage_thread(void *arg)
@@ -435,6 +474,11 @@ int load(void)
 
 	status = open_hash_service(hdl->session, &hdl->hash);
 
+	if (status != SMW_STATUS_OK)
+		goto err;
+
+	status = open_rng_service(hdl->session, &hdl->rng);
+
 err:
 	smw_utils_mutex_unlock(ctx.mutex);
 
@@ -451,23 +495,27 @@ struct hdl *get_handles_struct(void)
 	return &ctx.hdl;
 }
 
-__attribute__((weak)) bool hsm_key_handle(struct hdl *hdl,
-					  enum operation_id operation_id,
-					  void *args, int *status)
+__weak bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id,
+			   void *args, int *status)
 {
 	return false;
 }
 
-__attribute__((weak)) bool hsm_hash_handle(struct hdl *hdl,
-					   enum operation_id operation_id,
-					   void *args, int *status)
+__weak bool hsm_hash_handle(struct hdl *hdl, enum operation_id operation_id,
+			    void *args, int *status)
 {
 	return false;
 }
 
-__attribute__((weak)) bool
-hsm_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
-		       void *args, int *status)
+__weak bool hsm_sign_verify_handle(struct hdl *hdl,
+				   enum operation_id operation_id, void *args,
+				   int *status)
+{
+	return false;
+}
+
+__weak bool hsm_rng_handle(struct hdl *hdl, enum operation_id operation_id,
+			   void *args, int *status)
 {
 	return false;
 }
@@ -485,6 +533,8 @@ static int execute(enum operation_id operation_id, void *args)
 	else if (hsm_hash_handle(hdl, operation_id, args, &status))
 		;
 	else if (hsm_sign_verify_handle(hdl, operation_id, args, &status))
+		;
+	else if (hsm_rng_handle(hdl, operation_id, args, &status))
 		;
 	else
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;

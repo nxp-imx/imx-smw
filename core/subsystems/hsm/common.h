@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 /**
@@ -11,6 +11,7 @@
  * @signature_gen: Signature generation service flow handle
  * @signature_ver: Signature verification service flow handle
  * @hash: Hash service flow handle
+ * @rng: RNG service flow handle
  *
  * This structure stores the HSM handles managed by the SMW library.
  */
@@ -21,6 +22,7 @@ struct hdl {
 	hsm_hdl_t signature_gen;
 	hsm_hdl_t signature_ver;
 	hsm_hdl_t hash;
+	hsm_hdl_t rng;
 };
 
 /**

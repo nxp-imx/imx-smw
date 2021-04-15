@@ -68,6 +68,12 @@ struct sign_verify_params {
 	unsigned long sign_type_bitmap;
 };
 
+struct rng_params {
+	enum operation_id operation_id;
+	unsigned int length_min;
+	unsigned int length_max;
+};
+
 extern struct ctx ctx;
 
 /* Specified separators */
@@ -108,6 +114,23 @@ void skip_insignificant_chars(char **start, char *end);
  * error code.
  */
 int read_unsigned_integer(char **start, char *end, unsigned int *dest);
+
+/**
+ * read_range() - Read a range.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @min: Pointer where the minimum value is written.
+ * @max: Pointer where the maximum value is written.
+ *
+ * This function reads the minimum and maximum values.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Return:
+ * error code.
+ */
+int read_range(char **start, char *end, unsigned int *min, unsigned int *max);
 
 /**
  * read_params_name() - Read parameters name.
@@ -177,24 +200,6 @@ int read_names(char **start, char *end, unsigned long *bitmap,
  * error code.
  */
 int read_key_type_names(char **start, char *end, unsigned long *bitmap);
-
-/**
- * read_key_size_range() - Read a Key size range.
- * @start: Address of the pointer to the current char.
- * @end: Pointer to the last char of the buffer being parsed.
- * @min: Pointer where the minimum value is written.
- * @max: Pointer where the maximum value is written.
- *
- * This function reads the minimum and maximum values of the Key size.
- * The pointer to the current char is moved to the next char
- * after the semicolon.
- * Insignificant chars are skipped if any.
- *
- * Return:
- * error code.
- */
-int read_key_size_range(char **start, char *end, unsigned int *min,
-			unsigned int *max);
 
 /**
  * read_hash_algo_names() - Read a list of Hash algos names.

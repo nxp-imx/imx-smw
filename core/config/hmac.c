@@ -76,8 +76,8 @@ static int hmac_read_params(char **start, char *end, void **params)
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, key_size_range, length)) {
-			status = read_key_size_range(&cur, end, &key_size_min,
-						     &key_size_max);
+			status = read_range(&cur, end, &key_size_min,
+					    &key_size_max);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else {

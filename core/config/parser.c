@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_status.h"
@@ -248,6 +248,59 @@ int read_unsigned_integer(char **start, char *end, unsigned int *dest)
 	}
 
 	skip_insignificant_chars(&cur, end);
+
+	*start = cur;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int read_range(char **start, char *end, unsigned int *min, unsigned int *max)
+{
+	int status = SMW_STATUS_OK;
+	char *cur = *start;
+
+	unsigned int m;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	while ((cur < end) && (semicolon != *cur)) {
+		m = 0;
+		if (colon != *cur) {
+			status = read_unsigned_integer(&cur, end, &m);
+			if (status != SMW_STATUS_OK)
+				goto end;
+		}
+		SMW_DBG_PRINTF(INFO, "Min: %d\n", m);
+
+		*min = m;
+
+		skip_insignificant_chars(&cur, end);
+
+		if (colon != *cur) {
+			status = SMW_STATUS_SYNTAX_ERROR;
+			goto end;
+		}
+		cur++;
+
+		skip_insignificant_chars(&cur, end);
+
+		m = UINT_MAX;
+		if (semicolon != *cur) {
+			status = read_unsigned_integer(&cur, end, &m);
+			if (status != SMW_STATUS_OK)
+				goto end;
+		}
+		SMW_DBG_PRINTF(INFO, "Max: %d\n", m);
+
+		*max = m;
+
+		skip_insignificant_chars(&cur, end);
+	}
+
+	if (semicolon == *cur)
+		cur++;
 
 	*start = cur;
 

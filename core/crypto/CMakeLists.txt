@@ -13,10 +13,15 @@ if(ENABLE_HMAC)
 add_operation(HMAC)
 endif()
 
+if(ENABLE_RNG)
+add_operation(RNG)
+endif()
+
 add_library(crypto OBJECT "")
 target_sources(crypto PRIVATE
                crypto_weak.c
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
-               $<$<BOOL:${ENABLE_HMAC}>:hmac.c>)
+               $<$<BOOL:${ENABLE_HMAC}>:hmac.c>
+               $<$<BOOL:${ENABLE_RNG}>:rng.c>)
 target_include_directories(crypto PRIVATE ${INCLUDE_DIR})

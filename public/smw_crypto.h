@@ -86,6 +86,25 @@ struct smw_hmac_args {
 };
 
 /**
+ * struct smw_rng_args - Random number generator arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name
+ * @output: Location where the random number has to be written
+ * @output_length: Length of the random number
+ *
+ * @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is NULL, the default configured Secure Subsystem is used.
+ */
+struct smw_rng_args {
+	/* Inputs */
+	unsigned char version;
+	const char *subsystem_name;
+	/* Outputs */
+	unsigned char *output;
+	unsigned int output_length;
+};
+
+/**
  * smw_hash() - Compute hash.
  * @args: Pointer to the structure that contains the Hash arguments.
  *
@@ -128,3 +147,14 @@ int smw_verify(struct smw_sign_verify_args *args);
  * error code.
  */
 int smw_hmac(struct smw_hmac_args *args);
+
+/**
+ * smw_rng() - Compute a random number.
+ * @args: Pointer to the structure that contains the RNG arguments.
+ *
+ * This function computes a random number.
+ *
+ * Return:
+ * error code.
+ */
+int smw_rng(struct smw_rng_args *args);

@@ -41,6 +41,7 @@ add_executable(${PROJECT_NAME}
                engine/crypto.c
                engine/hmac.c
                engine/keymgr.c
+               engine/rng.c
                engine/run.c
                engine/sign_verify.c
                engine/test_engine.c
@@ -74,6 +75,7 @@ set(IMPORT_LABEL Import)
 set(KEYMGR_LABEL Keymgr)
 set(SIGN_LABEL Sign)
 set(VERIFY_LABEL Verify)
+set(RNG_LABEL Rng)
 
 # Include SMW API tests
 include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)

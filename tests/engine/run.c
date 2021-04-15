@@ -13,6 +13,7 @@
 #include "crypto.h"
 #include "sign_verify.h"
 #include "hmac.h"
+#include "rng.h"
 #include "run.h"
 #include "paths.h"
 #include "smw_status.h"
@@ -339,6 +340,29 @@ static int execute_sign_verify_cmd(int operation, char *cmd,
 }
 
 /**
+ * execute_rng_cmd() - Execute RNG command.
+ * @params: Command parameters.
+ * @common_params: Some parameters common to commands.
+ * @status: Pointer to SMW command status.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from hash().
+ */
+static int execute_rng_cmd(struct json_object *params,
+			   struct common_parameters *common_params, int *status)
+{
+	/* Check mandatory params */
+	if (!common_params->subsystem) {
+		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
+	return rng(params, common_params, status);
+}
+
+/**
  * execute_command() - Execute a subtest command.
  * @cmd: Command name.
  * @params: Command parameters.
@@ -377,6 +401,8 @@ static int execute_command(char *cmd, struct json_object *params,
 	else if (!strncmp(cmd, VERIFY, strlen(VERIFY)))
 		return execute_sign_verify_cmd(VERIFY_OPERATION, cmd, params,
 					       common_params, *key_ids, status);
+	else if (!strncmp(cmd, RNG, strlen(RNG)))
+		return execute_rng_cmd(params, common_params, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

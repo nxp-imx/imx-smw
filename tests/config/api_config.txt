@@ -34,6 +34,9 @@ VERSION=0;
         DEFAULT;
         KEY_TYPE_VALUES=NIST:BRAINPOOL_R1;
         SIGN_TYPE_VALUES=DEFAULT;
+    [SECURITY_OPERATION]
+        RNG;
+        DEFAULT;
 [SECURE_SUBSYSTEM]
     TEE;
     /* No Start/Stop method specified. Default is 1. */
@@ -59,3 +62,5 @@ VERSION=0;
         KEY_TYPE_VALUES=NIST:RSA;
     [SECURITY_OPERATION]
         HMAC;
+    [SECURITY_OPERATION]
+        RNG;

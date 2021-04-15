@@ -1,0 +1,37 @@
+{
+	"subtest 1": { // RNG args pointer is NULL
+		"command": "RNG",
+		"subsystem": "DEFAULT",
+		"random": "55555555555555555555555555555555",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Version is not supported
+		"command": "RNG",
+		"subsystem": "DEFAULT",
+		"random": "55555555555555555555555555555555",
+		"version": "1",
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": { // Subsystem is not set in SMW config file
+		"command": "RNG",
+		"subsystem": "UNDEFINED",
+		"random": "55555555555555555555555555555555",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 4": { // Random buffer is NULL
+		"command": "RNG",
+		"subsystem": "DEFAULT",
+		"random": 16,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Random length is zero
+		"command": "RNG",
+		"subsystem": "DEFAULT",
+		"random": [
+			0,
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

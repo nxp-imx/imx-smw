@@ -299,4 +299,20 @@ CK_RV libdev_delete_key(unsigned long long key_id);
  */
 CK_RV libdev_mechanisms_init(CK_SLOT_ID slotid);
 
+/**
+ * libdev_rng() - Call SMW random number generator API
+ * @pRandomData: Location that receives the random data
+ * @ulRandomLen: Length in bytes of the random data
+ *
+ * Function build the SMW API argument to generate a random number.
+ *
+ * Return:
+ * CKR_ARGUMENTS_BAD             - Bad arguments
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
+		 CK_ULONG ulRandomLen);
+
 #endif /* __LIB_DEVICE_H__ */

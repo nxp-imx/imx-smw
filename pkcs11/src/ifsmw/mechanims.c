@@ -1114,3 +1114,34 @@ CK_RV libdev_mechanisms_init(CK_SLOT_ID slotid)
 
 	return CKR_OK;
 }
+
+CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
+		 CK_ULONG ulRandomLen)
+{
+	CK_RV ret;
+	int status;
+	CK_SLOT_ID slotid;
+	const struct libdev *devinfo;
+	struct smw_rng_args args = { 0 };
+
+	DBG_TRACE("Generate a random number");
+
+	ret = libsess_get_slotid(hsession, &slotid);
+	if (ret != CKR_OK)
+		return ret;
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	args.subsystem_name = devinfo->name;
+	args.output = pRandomData;
+	args.output_length = ulRandomLen;
+
+	status = smw_rng(&args);
+
+	ret = smw_status_to_ck_rv(status);
+
+	DBG_TRACE("RNG on %s status %d return %ld", devinfo->name, status, ret);
+	return ret;
+}

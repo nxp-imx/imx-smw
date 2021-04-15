@@ -35,3 +35,6 @@ VERSION=0;
     [SECURITY_OPERATION]
         HMAC;
         DEFAULT;
+    [SECURITY_OPERATION]
+        RNG;
+        DEFAULT;

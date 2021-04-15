@@ -70,6 +70,7 @@ enum tee_signature_type {
 #define CMD_SIGN	 5
 #define CMD_VERIFY	 6
 #define CMD_HMAC	 7
+#define CMD_RNG		 8
 
 struct hmac_shared_params {
 	enum tee_key_type tee_key_type;

@@ -54,6 +54,12 @@ __weak bool tee_hmac_handle(enum operation_id operation_id, void *args,
 	return false;
 }
 
+__weak bool tee_rng_handle(enum operation_id operation_id, void *args,
+			   int *status)
+{
+	return false;
+}
+
 /**
  * load() - Load optee os subsystem.
  *
@@ -130,6 +136,8 @@ static int execute(enum operation_id op_id, void *args)
 	else if (tee_sign_verify_handle(op_id, args, &status))
 		;
 	else if (tee_hmac_handle(op_id, args, &status))
+		;
+	else if (tee_rng_handle(op_id, args, &status))
 		;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

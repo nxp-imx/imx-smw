@@ -32,3 +32,6 @@ VERSION=0;
         VERIFY;
         DEFAULT;
         KEY_TYPE_VALUES=NIST:RSA;
+    [SECURITY_OPERATION]
+        RNG;
+        DEFAULT;

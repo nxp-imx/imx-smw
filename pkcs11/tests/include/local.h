@@ -66,5 +66,6 @@ void tests_pkcs11_parallel(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_callback(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_digest(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_sign_verify(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_random(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

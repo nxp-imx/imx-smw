@@ -60,6 +60,12 @@ function check_url
     fi
 }
 
+function tarball_extract
+{
+    printf "Untar %s into %s\n" "$1" "$2"
+    eval "tar -xvmf $1 -C $2"
+}
+
 function gcda_upload_extract
 {
     #
@@ -74,8 +80,7 @@ function gcda_upload_extract
     printf "Get the GCDA tarball file\n"
     eval "curl -O ${gcda_url}/${gcda_filename}"
 
-    printf "Untar %s into %s\n" "$1" "$2"
-    eval "tar -xvmf $1 -C $2"
+    tarball_extract "$1" "$2"
 
     eval "curl -n -X DELETE ${gcda_url}/${gcda_filename}"
 }
@@ -91,30 +96,49 @@ platform=$1
 #
 root_dir=
 build_dir=
+gcno_tarball=
 get_file_info root_dir "ROOT_DIR" "gcno_build_info.txt"
 get_file_info build_dir "BUILD_DIR" "gcno_build_info.txt"
+get_file_info gcno_tarball "GCNO_TARBALL" "gcno_build_info.txt"
 
 #
 # Define code coverage directories
 #
 gcov_report="gcov_report"
 gcov_out="./${gcov_report}"
-gcno_dir="${root_dir}/${build_dir}"
-gcda_dir="${root_dir}/${build_dir}"
-
 lcov_tool="../lcov_tool"
+
 gcda_tarball="${platform}_${job_name}.tar.gz"
 gcda_tarball="${gcda_tarball// /_}"
 
-# Go to the bamboo build directory where are the gcno files
-eval "cd ${root_dir}"
+#
+# Check if gcno tarball exist and copy it locally
+#
+if [[ ! -e "${root_dir}/${gcno_tarball}" ]]; then
+    printf "gcno tarball not found"
+    exit 1
+fi
 
-gcda_upload_extract "${gcda_tarball}" "/"
+eval "cp ${root_dir}/${gcno_tarball} ."
+
+# Make directory to uncompress gcno and gcda files
+gcov_data="./gcov_data"
+if [[ -e "${gcov_data}" ]]; then
+    eval "rm -rf ${gcov_data}"
+fi
+
+eval "mkdir -p ${gcov_data}${root_dir}"
+
+tarball_extract "${gcno_tarball}" "${gcov_data}${root_dir}"
+gcda_upload_extract "${gcda_tarball}" "${gcov_data}"
+
+gcno_dir="${gcov_data}/${build_dir}"
+gcda_dir="${gcov_data}/${build_dir}"
 
 #
 # Install lcov tool
 #
-eval "./scripts/gcov-gen.sh install lcov=${lcov_tool}"
+eval "./smw/scripts/gcov-gen.sh install lcov=${lcov_tool}"
 
 #
 # Find where the toolchain is installed
@@ -125,11 +149,6 @@ get_file_info toolchain_path "TOOLCHAIN_BIN_PATH" "${build_dir}/CMakeCache.txt"
 #
 # Generate gcov report and tar it
 #
-eval "./scripts/gcov-gen.sh report gcno=${gcno_dir} gcda=${gcda_dir} \
+eval "./smw/scripts/gcov-gen.sh report gcno=${gcno_dir} gcda=${gcda_dir} \
        src=. nomerge out=${gcov_out} conf=./scripts/lcov.rc \
        lcov=${lcov_tool} gcov=${toolchain_path} title=\"SMW Code Coverage\""
-
-#
-# Copy generated report in current plan to publish artifact
-#
-eval "cp ${gcov_report}.tar.gz $bamboo_build_working_directory"

@@ -76,7 +76,14 @@ eval "./scripts/smw_build.sh build out=${build_debug}"
 eval "./scripts/smw_build.sh package out=${build_debug}"
 
 #
+# Create a tarball of all gnco files to create an artifact
+#
+gcno_tarball="gcno.tar.gz"
+find "${build_debug}" -type f -name "*.gcno" -exec tar -czf "${gcno_tarball}" {} +
+
+#
 # Create text file with build information
 #
 echo "ROOT_DIR=$PWD" > gcno_build_info.txt
-echo "BUILD_DIR=${build_debug}" >> gcno_build_info.txt
+echo "BUILD_DIR=$PWD/${build_debug}" >> gcno_build_info.txt
+echo "GCNO_TARBALL=${gcno_tarball}" >> gcno_build_info.txt

@@ -34,7 +34,7 @@ cd "$bamboo_build_working_directory"/smw
 eval "./scripts/smw_squad.sh install"
 
 script_dir="$bamboo_build_working_directory"/lava/bambooIntegrationScripts
-yaml_dir=./tests/lava
+yaml_dir=./scripts/lava
 
 daytoday=$(date +%w)
 PR=0

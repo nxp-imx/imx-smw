@@ -6,7 +6,7 @@ script_name=$0
 
 tmp_jobids="logs/jobids.txt"
 smw_tmp_yaml="smw_tmp.yaml"
-smw_setup_yaml="smw_setup.yaml"
+smw_setup_yaml="smw_setup"
 smw_package_yaml="smw_package.yaml"
 smw_ctest_yaml="smw_ctest.yaml"
 pkcs11_ctest_yaml="pkcs11_ctest.yaml"
@@ -14,7 +14,6 @@ code_coverage_yaml="code_coverage.yaml"
 
 devops_script="nexus-find-latest-db.sh"
 lavacli_tool="lavacli"
-def_squad_token="b786b334a22cd4734d4f180813f75bb7d725d491"
 
 export PATH=/home/bamboo/.local/bin:$PATH
 
@@ -22,13 +21,16 @@ lava_url="${bamboo_lava_url:-"https://lava.sw.nxp.com"}"
 lava_backend="${bamboo_lava_backend:-lava-https}"
 lava_token="${bamboo_lava_token_secret:-}"
 lava_user="${bamboo_lava_user:-squad-mougins}"
-squad_token="${bamboo_squad_token:-${def_squad_token}}"
+squad_token="${bamboo_squad_token_secret:-}"
 daily_build_version="${bamboo_daily_build_version:-"-2"}"
 image_type="${bamboo_image_type:-"Linux_IMX_Core"}"
 prefix_rootfs="${bamboo_prefix_rootfs:-"imx-image-core-"}"
-prefix_kernel="${bamboo_prefix_kernel:-"Image-"}"
-prefix_boot="${bamboo_prefix_boot:-"imx-boot-"}"
-suffix_boot="${bamboo_suffix_boot:-"-sd.bin-flash_spl"}"
+prefix_image="${bamboo_prefix_image:-"Image-"}"
+prefix_zimage="${bamboo_prefix_zimage:-"zImage-"}"
+prefix_imx_boot="${bamboo_prefix_imx_boot:-"imx-boot-"}"
+suffix_imx_boot="${bamboo_suffix_boot:-"-sd.bin-flash"}"
+prefix_u_boot="${bamboo_prefix_u_boot:-"u-boot-"}"
+suffix_u_boot="${bamboo_suffix_boot:-"_sd-optee.imx"}"
 image_folder="${bamboo_image_folder:-"fsl-imx-internal-wayland"}"
 nexus_repo="${bamboo_nexus_repo:-"IMX-raw_Linux_Internal_Daily_Build"}"
 nexus_url="${bamboo_nexus_url:-"https://nl-nxrm.sw.nxp.com/repository"}"
@@ -37,6 +39,21 @@ bamboo_plan="${bamboo_planKey:-"misc"}"
 
 opt_coverage=0
 ctest_label=""
+
+platforms_list=(
+    imx8mmevk \
+    imx7dsabresd \
+    imx8qxpc0mek)
+
+function display_platforms()
+{
+    printf "Supported platforms:\n"
+    for plat in "${platforms_list[@]}"
+    do
+        printf "%s\n" "${plat}"
+    done
+    printf "\n"
+}
 
 function usage_lavacli()
 {
@@ -57,7 +74,7 @@ function usage_submit()
     printf "To submit a squad job\n"
     printf "  %s [action] platform script_dir yaml_dir"  "${script_name}"
     printf " squad_id coverage package_url=[url] ctest_label=[label]"
-    printf " job_name=[name]\n"
+    printf " job_name=[name] token=[token]\n"
     printf "    action      = [submit] boot with flashing MMC or [submit_uuu]"
     printf " boot with UUU\n"
     printf "    platform    = Platform name\n"
@@ -65,10 +82,11 @@ function usage_submit()
     printf "    yaml_dir    = Directory where Lava jobs descriptions for"
     printf " Security Middleware are located\n"
     printf "    squad_id    = Suffix of squad tests, can contains more than one job\n"
-    printf "    coverage    = [optional} Upload Code Coverage result\n"
+    printf "    coverage    = [optional] Upload Code Coverage result\n"
     printf "    package_url = [optional] URL to custom Security Middleware package\n"
     printf "    ctest_label = [optional] CTest label\n"
     printf "    job_name    = [optional] Job name added in the job description\n"
+    printf "    token       = [optional] Squad token key\n"
     printf "\n"
 }
 
@@ -102,7 +120,7 @@ function parse_parameters
     do
       case $arg in
         token=*)
-          lava_token="${arg#*=}"
+          opt_token="${arg#*=}"
           ;;
 
         user=*)
@@ -167,6 +185,10 @@ function install_lavacli
     #
     parse_parameters "$@"
 
+    if [[ ! -z ${opt_token} ]]; then
+      lava_token="{opt_token}"
+    fi
+
     if [[ ! -x "$(command -v ${lavacli_tool})" ]]; then
       # Install lavacli & Create identity default
       pip3 install --user lavacli
@@ -192,6 +214,8 @@ function install_lavacli
 
 function squad_submit
 {
+    local nexus_find_args=
+
     #
     # Get the mandatory parameters
     #
@@ -211,28 +235,70 @@ function squad_submit
 
     parse_parameters "$@"
 
+    if [[ ! -z ${opt_token} ]]; then
+      squad_token="{opt_token}"
+    fi
+
+    if [[ -z ${squad_token} ]]; then
+      printf "No Token defined to use squad\n"
+      exit 1
+    fi
+
+    nexus_find_args="-l nl -nosdcard -r ${nexus_repo} "
+    nexus_find_args="${nexus_find_args} -i ${image_type}"
+    nexus_find_args="${nexus_find_args} -j ${image_folder}"
+    nexus_find_args="${nexus_find_args} -o ${opt_job_name}"
+    nexus_find_args="${nexus_find_args} -t mougins-public"
+    nexus_find_args="${nexus_find_args} -n ${daily_build_version}"
+
     #
     # Define the Yaml replacement variable
     # depending on the platform
     #
     case ${platform} in
       imx8qxpc0mek)
-        filename_bootimage=${prefix_boot}${platform}${suffix_boot}
-        filename_dtb=imx8qxp-mek.dtb
-        filename_kernel=${prefix_kernel}${platform}.bin
-        rootfs_name=${prefix_rootfs}${platform}
-        lava_device_type=imx8qxp-mek
-        uboot_mmc_blk=0x40
-        uboot_mmc_cnt=0x1000
+        bootimage="-m ${prefix_imx_boot}${platform}${suffix_imx_boot}_spl"
+        nexus_find_args="${nexus_find_args} -d imx8qxp-mek.dtb"
+        nexus_find_args="${nexus_find_args} -k ${prefix_image}${platform}.bin"
+        kernel_type="image"
+        nexus_find_args="${nexus_find_args} -b ${prefix_rootfs}${platform}"
+        nexus_find_args="${nexus_find_args} -v imx8qxp-mek"
+        uboot_mmc_blk="0x40"
+        uboot_mmc_cnt="0x1000"
+        ;;
+
+      imx8mmevk)
+        bootimage="-m ${prefix_imx_boot}${platform}${suffix_imx_boot}_evk"
+        nexus_find_args="${nexus_find_args} -d imx8mm-evk.dtb"
+        nexus_find_args="${nexus_find_args} -k ${prefix_image}${platform}.bin"
+        kernel_type="image"
+        nexus_find_args="${nexus_find_args} -b ${prefix_rootfs}${platform}"
+        nexus_find_args="${nexus_find_args} -v imx8mm-evk"
+        uboot_mmc_blk="0x42"
+        uboot_mmc_cnt="0x1000"
+        ;;
+
+      imx7dsabresd)
+        smw_setup_yaml="${smw_setup_yaml}_tee"
+        bootimage="-u ${prefix_u_boot}${platform}${suffix_u_boot}"
+        nexus_find_args="${nexus_find_args} -d imx7d-sdb.dtb"
+        nexus_find_args="${nexus_find_args} -k ${prefix_zimage}imx6ul7d.bin"
+        kernel_type="uimage"
+        nexus_find_args="${nexus_find_args} -b ${prefix_rootfs}imx6ul7d"
+        nexus_find_args="${nexus_find_args} -v imx7d-sdb"
+        nexus_find_args="${nexus_find_args} -s uTee-7dsdb"
+        uboot_mmc_blk="0x2"
+        uboot_mmc_cnt="0x800"
         ;;
 
       *)
         printf "Platform %s not supported\n" "${platform}"
-        printf "Supported platforms: %s " "imx8qxpc0mek"
-        printf "\n"
+        display_platforms
         usage
         ;;
     esac
+
+    nexus_find_args="${nexus_find_args} ${bootimage}"
 
     check_directory "${script_dir}"
     check_directory "${yaml_dir}"
@@ -243,7 +309,7 @@ function squad_submit
       ctest_label="-L ${opt_ctest_label}"
     fi
 
-    cat "${yaml_dir}/${smw_setup_yaml}" > "${yaml_dir}/${smw_tmp_yaml}"
+    cat "${yaml_dir}/${smw_setup_yaml}.yaml" > "${yaml_dir}/${smw_tmp_yaml}"
     if [[ ! -z ${opt_package_url} ]]; then
       check_url "${opt_package_url}/libsmw_package.tar.gz"
 
@@ -269,6 +335,7 @@ function squad_submit
 
     sed -i "s|REPLACE_UBOOT_MMC_BLK|${uboot_mmc_blk}|" "${filename_job}"
     sed -i "s|REPLACE_UBOOT_MMC_CNT|${uboot_mmc_cnt}|" "${filename_job}"
+    sed -i "s|REPLACE_KERNEL_TYPE|${kernel_type}|" "${filename_job}"
 
     if [[ ! -z ${opt_package_url} ]]; then
       sed -i "s|REPLACE_PACKAGE_URL|${opt_package_url}|" "${filename_job}"
@@ -285,23 +352,11 @@ function squad_submit
     fi
 
     squad_group="mougins-devops"
-    job_tag=mougins-public
     squad_slug=SMW
 
-    "${script_dir}"/"${devops_script}" \
-              -l nl \
-              -r "${nexus_repo}" \
-              -i "${image_type}" \
-              -j "${image_folder}" \
-              -d "${filename_dtb}" \
-              -k "${filename_kernel}" \
-              -m "${filename_bootimage}" \
-              -b "${rootfs_name}" \
-              -y "${filename_job}" \
-              -o "${opt_job_name}" \
-              -v "${lava_device_type}" \
-              -t "${job_tag}" \
-              -n "${daily_build_version}"
+    nexus_find_args="${nexus_find_args} -y ${filename_job}"
+
+    eval "${script_dir}/${devops_script} ${nexus_find_args}"
 
     if [[ ! -z ${opt_package_url} ]]; then
         printf "PACKAGE_URL = %s\n" "${opt_package_url}"
@@ -417,7 +472,7 @@ case $opt_action in
     ;;
 
   submit_uuu)
-    smw_setup_yaml="smw_setup_uuu.yaml"
+    smw_setup_yaml="smw_setup_uuu"
     squad_submit "$@"
     ;;
 

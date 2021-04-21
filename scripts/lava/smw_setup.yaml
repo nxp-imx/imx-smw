@@ -14,7 +14,6 @@ priority: medium
 visibility: public
 
 context:
-  arch: arm64
   save_uboot_env: True
   support_system_reset: True
   extra_kernel_args: fsck.mode=skip no_console_suspend
@@ -51,7 +50,7 @@ actions:
     to: tftp
     kernel:
       url: REPLACE_KERNEL
-      type: image
+      type: REPLACE_KERNEL_TYPE
     nfsrootfs:
       url: REPLACE_ROOTFS
       compression: bz2

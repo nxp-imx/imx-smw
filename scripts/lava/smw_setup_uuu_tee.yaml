@@ -45,6 +45,8 @@ actions:
       compression: bz2
     dtb:
       url: REPLACE_DTB
+    tee:
+      url: REPLACE_OPTEE
     os: debian
 
 - boot:

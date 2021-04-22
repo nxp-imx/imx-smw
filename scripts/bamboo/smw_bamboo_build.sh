@@ -18,22 +18,45 @@ function usage()
     for each build mode, all files used to run tests including
     built libraries.
 
-    $(basename "$0") <arch>
-      <arch> : Mandatory architecture aarch32 or aarch64
+    $(basename "$0") <arch> <platform> coverage
+      <arch>     : Mandatory architecture aarch32 or aarch64
+      <platform> : Mandatory platform
+      coverage   : [optional] Enable the code coverage tool
 
 EOF
     exit 1
 }
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 2 ]]; then
     usage
 fi
 
 arch="$1"
-build_release="build.${arch}_rel"
-build_debug="build.${arch}_deb"
+platform="$2"
 
-cd "$bamboo_build_working_directory"/smw
+shift 2
+
+opt_coverage=
+
+if [[ $# -ne 0 ]]; then
+    for arg in "$@"
+    do
+        case ${arg} in
+              coverage)
+                opt_coverage="coverage"
+                ;;
+
+           *)
+                echo "ERROR: Unknown argument \"${arg}\""
+                usage
+                ;;
+        esac
+        shift
+    done
+fi
+
+build_release="build.${platform}_rel"
+build_debug="build.${platform}_deb"
 
 # Delete previous builds
 rm -rf "${build_release}"
@@ -49,7 +72,6 @@ if [ -z "${bamboo_repository_pr_targetBranch+x}" ]; then
 fi
 
 export="./export"
-
 # Delete seco export in case there is a change
 if [[ -e "${export}/usr/include/hsm/" ]]; then
     rm -f "${export}/usr/include/seco_nvm.h"
@@ -61,7 +83,7 @@ fi
 #
 # Configure, build and package Release build of all targets
 #
-eval "./scripts/smw_configure.sh ${build_release} ${arch}"
+eval "./scripts/smw_configure.sh ${build_release} ${arch} ${platform}"
 eval "./scripts/smw_build.sh build out=${build_release}"
 eval "./scripts/smw_build.sh package out=${build_release}"
 
@@ -69,21 +91,23 @@ eval "./scripts/smw_build.sh package out=${build_release}"
 # Configure, build and package Debug build of all targets
 # Enable code coverage
 #
-eval "./scripts/smw_configure.sh ${build_debug} ${arch}"
+eval "./scripts/smw_configure.sh ${build_debug} ${arch} ${platform}"
 eval "./scripts/smw_build.sh configure out=${build_debug} \
-      coverage debug verbose=4"
+      ${opt_coverage} debug verbose=4"
 eval "./scripts/smw_build.sh build out=${build_debug}"
 eval "./scripts/smw_build.sh package out=${build_debug}"
 
-#
-# Create a tarball of all gnco files to create an artifact
-#
-gcno_tarball="gcno.tar.gz"
-find "${build_debug}" -type f -name "*.gcno" -exec tar -czf "${gcno_tarball}" {} +
+if [[ ! -z ${opt_coverage} ]]; then
+    #
+    # Create a tarball of all gnco files to create an artifact
+    #
+    gcno_tarball="gcno_${platform}.tar.gz"
+    find "${build_debug}" -type f -name "*.gcno" -exec tar -czf "${gcno_tarball}" {} +
 
-#
-# Create text file with build information
-#
-echo "ROOT_DIR=$PWD" > gcno_build_info.txt
-echo "BUILD_DIR=$PWD/${build_debug}" >> gcno_build_info.txt
-echo "GCNO_TARBALL=${gcno_tarball}" >> gcno_build_info.txt
+    #
+    # Create text file with build information
+    #
+    echo "ROOT_DIR=$PWD" > "gcno_build_${platform}_info.txt"
+    echo "BUILD_DIR=${build_debug}" >> "gcno_build_${platform}_info.txt"
+    echo "GCNO_TARBALL=${gcno_tarball}" >> "gcno_build_${platform}_info.txt"
+fi

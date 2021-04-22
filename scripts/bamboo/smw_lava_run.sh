@@ -16,20 +16,50 @@ function usage()
     Else if it's not a PR run tests using Linux root
     file system libraries and tests.
 
-    $(basename "$0") <platform>
+    $(basename "$0") <platform> <type> coverage
       <platform> : Mandatory platform
+      <type>     : [option] build type ('release' or 'debug', default: 'release')
+      coverage   : [option] enable the code coverage tool
 
 EOF
     exit 1
 }
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 1 ]]; then
     usage
 fi
 
 platform="$1"
+shift
 
-cd "$bamboo_build_working_directory"/smw
+opt_type=rel
+opt_coverage=
+
+if [[ $# -ne 0 ]]; then
+    for arg in "$@"
+    do
+        case ${arg} in
+            coverage)
+                opt_coverage="coverage"
+                ;;
+
+            debug)
+                opt_type=deb
+                ;;
+
+            release)
+                opt_type=rel
+                ;;
+
+
+            *)
+                echo "Unknown argument \"${arg}\""
+                usage
+                ;;
+        esac
+        shift
+    done
+fi
 
 eval "./scripts/smw_squad.sh install"
 
@@ -51,26 +81,21 @@ job_id=${bamboo_planKey}-${bamboo_buildNumber}
 
 if [[ ${daytoday} == "$bamboo_weekly_day_run" ]] && [[ ${PR} == 0 ]]; then
     #
-    # If executed on Sunday, assume it's a periodic weekly check not a code change
+    # If executed on Sunday, assume it's a periodic weekly don't
+    # check code change neither do a code coverage report
     #
     eval "./scripts/smw_squad.sh submit_uuu ${platform} \
           ${script_dir} ${yaml_dir} ${squad_id} job_name=${job_id}"
 else
     package_url="https://bamboo1.sw.nxp.com/browse/${job_id}/artifact/shared"
+    plat_package="package_${platform}_${opt_type}"
 
     #
-    # Test Release build
+    # Test Release or Debug build and retrieve code coverage result if any
     #
     eval "./scripts/smw_squad.sh submit_uuu ${platform} ${script_dir} \
-           ${yaml_dir} ${squad_id} package_url=${package_url}/package_rel \
-           job_name=${job_id}"
-
-    #
-    # Test Debug build and retreive code coverage result
-    #
-    eval "./scripts/smw_squad.sh submit_uuu ${platform} ${script_dir} \
-          ${yaml_dir} ${squad_id} coverage \
-          package_url=${package_url}/package_deb \
+          ${yaml_dir} ${squad_id} ${opt_coverage} \
+          package_url=${package_url}/${plat_package} \
           job_name=${job_id}"
 fi
 

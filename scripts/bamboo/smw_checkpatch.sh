@@ -2,7 +2,7 @@
 # Checkpatch script
 # Install checkpatch in .tmp directory
 
-set -e
+set -ex
 
 PR=0
 
@@ -11,7 +11,9 @@ if [ -e ".tmp/checkpatch.pl" ]; then
     rm ".tmp/checkpatch.pl"
 fi
 
-source scripts/checkpatch.sh --install
+cp_tool="./scripts/checkpatch.sh"
+
+source ${cp_tool} --install
 
 # Check if the branch is a PR
 if [ ! -z "${bamboo_repository_pr_targetBranch+x}" ] ; then
@@ -22,7 +24,7 @@ fi
 
 if [[ ${PR} -eq 0 ]]; then
     # If it is not a PR, run checkpatch on the top commit only
-    checkpatch HEAD
+    ${cp_tool} HEAD
 else
     cp_error=0
 
@@ -33,7 +35,7 @@ else
     do
         printf "========================================================\n"
         # If checkpatch fails, assign cp_error to 1
-        checkpatch "$c" || cp_error=1
+        ${cp_tool} "$c" || cp_error=1
         printf "========================================================\n"
     done
 

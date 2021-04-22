@@ -97,14 +97,15 @@ platform=$1
 root_dir=
 build_dir=
 gcno_tarball=
-get_file_info root_dir "ROOT_DIR" "gcno_build_info.txt"
-get_file_info build_dir "BUILD_DIR" "gcno_build_info.txt"
-get_file_info gcno_tarball "GCNO_TARBALL" "gcno_build_info.txt"
+gcno_info="../gcno_build_${platform}_info.txt"
+get_file_info root_dir "ROOT_DIR" "${gcno_info}"
+get_file_info build_dir "BUILD_DIR" "${gcno_info}"
+get_file_info gcno_tarball "GCNO_TARBALL" "${gcno_info}"
 
 #
 # Define code coverage directories
 #
-gcov_report="gcov_report"
+gcov_report="gcov_report_${platform}"
 gcov_out="./${gcov_report}"
 lcov_tool="../lcov_tool"
 
@@ -132,23 +133,24 @@ eval "mkdir -p ${gcov_data}${root_dir}"
 tarball_extract "${gcno_tarball}" "${gcov_data}${root_dir}"
 gcda_upload_extract "${gcda_tarball}" "${gcov_data}"
 
-gcno_dir="${gcov_data}/${build_dir}"
-gcda_dir="${gcov_data}/${build_dir}"
+gcno_dir="${gcov_data}/${root_dir}/${build_dir}"
+gcda_dir="${gcov_data}/${root_dir}/${build_dir}"
 
 #
 # Install lcov tool
 #
-eval "./smw/scripts/gcov-gen.sh install lcov=${lcov_tool}"
+eval "./scripts/gcov-gen.sh install lcov=${lcov_tool}"
 
 #
 # Find where the toolchain is installed
 #
 toolchain_path=
-get_file_info toolchain_path "TOOLCHAIN_BIN_PATH" "${build_dir}/CMakeCache.txt"
+get_file_info toolchain_path "TOOLCHAIN_BIN_PATH" \
+              "${root_dir}/${build_dir}/CMakeCache.txt"
 
 #
 # Generate gcov report and tar it
 #
-eval "./smw/scripts/gcov-gen.sh report gcno=${gcno_dir} gcda=${gcda_dir} \
+eval "./scripts/gcov-gen.sh report gcno=${gcno_dir} gcda=${gcda_dir} \
        src=. nomerge out=${gcov_out} conf=./scripts/lcov.rc \
        lcov=${lcov_tool} gcov=${toolchain_path} title=\"SMW Code Coverage\""

@@ -409,7 +409,7 @@ function usage_tadevkit()
     printf "    export   = Export directory\n"
     printf "    src      = Source directory\n"
     printf "    out      = [optional] Build root directory\n"
-    printf "    platform = [optional] OPTEE OS Platform (default=mx8qmmek)\n"
+    printf "    platform = [optional] Not use if OPTEE doesn't have to be built\n"
     printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
     printf "    toolpath = [optional] Toolchain path where installed\n"
     printf "    toolname = [optional] Toolchain name\n"

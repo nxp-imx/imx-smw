@@ -27,8 +27,9 @@ elseif(${arch} MATCHES "^arm")
 else()
     message(FATAL_ERROR "Machine architecture ${arch} not supported")
 endif()
+
 if(NOT DEFINED PLATFORM)
-    set(PLATFORM mx8qmmek)
+    message(FATAL_ERROR "OPTEE OS build platform not defined")
 endif()
 message(STATUS "Platform used to build OPTEE OS is ${PLATFORM}")
 

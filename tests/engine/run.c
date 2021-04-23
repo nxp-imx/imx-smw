@@ -428,7 +428,7 @@ static int execute_command(char *cmd, struct json_object *params,
 static int update_status(int sub_res, char **sub_status, const char **sub_err,
 			 int *test_status, int status)
 {
-	int idx = 0;
+	unsigned int idx = 0;
 
 	if (!test_status || !sub_status || !sub_err) {
 		DBG_PRINT_BAD_ARGS(__func__);

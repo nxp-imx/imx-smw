@@ -111,8 +111,9 @@ int rng(json_object *params, struct common_parameters *common_params,
 	}
 
 	if (*ret_status == SMW_STATUS_OK && random_hex) {
-		if (random_len <= 256)
+		if (random_len <= 256) {
 			DBG_DHEX("Random number", random_hex, random_len);
+		}
 
 		if (!common_params->is_api_test) {
 			while (random_len--) {

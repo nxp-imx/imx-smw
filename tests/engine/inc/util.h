@@ -143,7 +143,7 @@ int get_smw_int_status(int *smw_status, const char *string);
  * NULL	- Status doesn't exist.
  * SMW status string value otherwise.
  */
-char *get_smw_string_status(unsigned int status);
+char *get_smw_string_status(int status);
 
 /**
  * get_test_name() - Get test name from test definition file.

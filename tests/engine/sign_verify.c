@@ -49,7 +49,6 @@ static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
 
 /**
  * set_sign_verify_bad_args() - Set sign/verify bad parameters.
- * @operation: SIGN_OPERATION or VERIFY_OPERATION.
  * @params: json-c object
  * @args: SMW Sign/Verify parameters.
  * @signature: expected signature buffer argument parameter.
@@ -65,7 +64,7 @@ static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
  * -BAD_ARGS			- One of the arguments is bad.
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
  */
-static int set_sign_verify_bad_args(int operation, json_object *params,
+static int set_sign_verify_bad_args(json_object *params,
 				    struct smw_sign_verify_args **args,
 				    unsigned char *signature,
 				    unsigned int signature_length,
@@ -254,8 +253,8 @@ int sign_verify(int operation, json_object *params,
 		goto exit;
 
 	/* Specific test cases */
-	res = set_sign_verify_bad_args(operation, params, &smw_sign_verify_args,
-				       exp_sign, exp_sign_length,
+	res = set_sign_verify_bad_args(params, &smw_sign_verify_args, exp_sign,
+				       exp_sign_length,
 				       common_params->is_api_test);
 	if (res != ERR_CODE(PASSED))
 		goto exit;

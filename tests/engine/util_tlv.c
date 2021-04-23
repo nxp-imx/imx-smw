@@ -15,7 +15,7 @@
 
 struct tlv {
 	const char *type;
-	int length;
+	unsigned int length;
 	enum json_type val_type;
 	union {
 		long num;

@@ -22,7 +22,7 @@
  * @status: smw status integer value.
  * @string: smw status string value.
  */
-struct smw_status {
+static const struct smw_status {
 	int status;
 	char *string;
 } status_codes[] = {
@@ -96,7 +96,7 @@ unsigned int list_err_size = ARRAY_SIZE(list_err);
 int copy_file_into_buffer(char *filename, char **buffer)
 {
 	int res = ERR_CODE(INTERNAL);
-	unsigned int size = 0;
+	long size = 0;
 	FILE *f = NULL;
 
 	if (!filename || !buffer) {
@@ -139,7 +139,7 @@ int copy_file_into_buffer(char *filename, char **buffer)
 		goto exit;
 	}
 
-	if (size != fread(*buffer, sizeof(char), size, f)) {
+	if (size != (long)fread(*buffer, sizeof(char), size, f)) {
 		if (feof(f))
 			DBG_PRINT("Error reading %s: unexpected EOF", filename);
 		else if (ferror(f))
@@ -180,9 +180,9 @@ int get_smw_int_status(int *smw_status, const char *string)
 	return ERR_CODE(UNKNOWN_RESULT);
 }
 
-char *get_smw_string_status(unsigned int status)
+char *get_smw_string_status(int status)
 {
-	int i = 0;
+	unsigned long i = 0;
 
 	for (; i < ARRAY_SIZE(status_codes); i++) {
 		if (status_codes[i].status == status)
@@ -196,7 +196,7 @@ int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 {
 	char tmp[3] = { 0 };
 	int i = 0;
-	int j = 0;
+	unsigned int j = 0;
 	int string_len = 0;
 
 	if (!string || !hex || !len) {

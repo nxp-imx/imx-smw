@@ -18,6 +18,48 @@
 #include "tee_subsystem.h"
 #include "tee.h"
 
+#define SIGNATURE_TYPE_ID(_id)                                                 \
+	{                                                                      \
+		.smw_id = SMW_CONFIG_SIGN_TYPE_ID_##_id,                       \
+		.tee_id = TEE_SIGNATURE_TYPE_##_id                             \
+	}
+
+/**
+ * struct - Signature type IDs
+ * @smw_id: Signature type ID as defined in SMW.
+ * @tee_id: Signature type ID as defined in TEE subsystem.
+ */
+static const struct {
+	enum smw_config_sign_type_id smw_id;
+	enum tee_signature_type tee_id;
+} signature_type_ids[] = {
+	SIGNATURE_TYPE_ID(DEFAULT),
+	SIGNATURE_TYPE_ID(RSASSA_PKCS1_V1_5),
+	SIGNATURE_TYPE_ID(RSASSA_PSS),
+};
+
+static int tee_convert_signature_type_id(enum smw_config_sign_type_id smw_id,
+					 enum tee_signature_type *tee_id)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	unsigned int i;
+	unsigned int array_size = ARRAY_SIZE(signature_type_ids);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (i = 0; i < array_size; i++) {
+		if (signature_type_ids[i].smw_id == smw_id) {
+			*tee_id = signature_type_ids[i].tee_id;
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 /**
  * sign_verify() - Generate or verify a signature.
  * @args: Sign or verify arguments.
@@ -28,15 +70,14 @@
  * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid.
  * SMW_STATUS_SUBSYSTEM_FAILURE	- Operation failed.
  */
-static int sign_verify(void *args, enum operation_id op_id)
+static int sign_verify(struct smw_crypto_sign_verify_args *args,
+		       enum operation_id op_id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
 	TEEC_Operation operation = { 0 };
 
-	struct smw_crypto_sign_verify_args *sign_verify_args = args;
-	struct smw_keymgr_descriptor *key_descriptor =
-		&sign_verify_args->key_descriptor;
+	struct smw_keymgr_descriptor *key_descriptor = &args->key_descriptor;
 	struct smw_keymgr_identifier *key_identifier =
 		&key_descriptor->identifier;
 	struct sign_verify_shared_params shared_params = { 0 };
@@ -44,14 +85,13 @@ static int sign_verify(void *args, enum operation_id op_id)
 	uint32_t param0_type = TEEC_NONE;
 	uint32_t param3_type;
 
-	uint32_t key_type_id;
-	uint32_t hash_algorithm_id;
+	enum tee_key_type key_type_id;
 
 	uint32_t cmd_id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!sign_verify_args)
+	if (!args)
 		goto exit;
 
 	/*
@@ -83,25 +123,20 @@ static int sign_verify(void *args, enum operation_id op_id)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	status = tee_convert_hash_algorithm_id(sign_verify_args->algo_id,
-					       &hash_algorithm_id);
-	if (status != SMW_STATUS_OK)
-		goto exit;
-
 	if (key_type_id == TEE_KEY_TYPE_ID_RSA) {
 		/*
 		 * Signature type is mandatory.
 		 * Salt length optional attribute is only for RSASSA-PSS
 		 * signature type.
 		 */
-		if (sign_verify_args->attributes.signature_type ==
+		if (args->attributes.signature_type ==
 		    SMW_CONFIG_SIGN_TYPE_ID_DEFAULT) {
 			SMW_DBG_PRINTF(ERROR, "No signature type set\n");
 			status = SMW_STATUS_INVALID_PARAM;
 			goto exit;
-		} else if (sign_verify_args->attributes.signature_type ==
+		} else if (args->attributes.signature_type ==
 				   SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PKCS1_V1_5 &&
-			   sign_verify_args->attributes.salt_length) {
+			   args->attributes.salt_length) {
 			SMW_DBG_PRINTF(ERROR,
 				       "Salt length not supported for %s\n",
 				       RSASSA_PKCS1_V1_5_STR);
@@ -127,12 +162,19 @@ static int sign_verify(void *args, enum operation_id op_id)
 		shared_params.id = key_identifier->id;
 	}
 
+	status = tee_convert_hash_algorithm_id(args->algo_id,
+					       &shared_params.hash_algorithm);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	status = tee_convert_signature_type_id(args->attributes.signature_type,
+					       &shared_params.signature_type);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
 	shared_params.key_type = key_type_id;
 	shared_params.security_size = key_identifier->security_size;
-	shared_params.hash_algorithm = hash_algorithm_id;
-	shared_params.signature_type =
-		sign_verify_args->attributes.signature_type;
-	shared_params.salt_length = sign_verify_args->attributes.salt_length;
+	shared_params.salt_length = args->attributes.salt_length;
 
 	operation.paramTypes =
 		TEEC_PARAM_TYPES(param0_type, TEEC_MEMREF_TEMP_INPUT,
@@ -140,14 +182,10 @@ static int sign_verify(void *args, enum operation_id op_id)
 
 	operation.params[1].tmpref.buffer = &shared_params;
 	operation.params[1].tmpref.size = sizeof(shared_params);
-	operation.params[2].tmpref.buffer =
-		smw_sign_verify_get_msg_buf(sign_verify_args);
-	operation.params[2].tmpref.size =
-		smw_sign_verify_get_msg_len(sign_verify_args);
-	operation.params[3].tmpref.buffer =
-		smw_sign_verify_get_sign_buf(sign_verify_args);
-	operation.params[3].tmpref.size =
-		smw_sign_verify_get_sign_len(sign_verify_args);
+	operation.params[2].tmpref.buffer = smw_sign_verify_get_msg_buf(args);
+	operation.params[2].tmpref.size = smw_sign_verify_get_msg_len(args);
+	operation.params[3].tmpref.buffer = smw_sign_verify_get_sign_buf(args);
+	operation.params[3].tmpref.size = smw_sign_verify_get_sign_len(args);
 
 	/* Invoke TA */
 	status = execute_tee_cmd(cmd_id, &operation);
@@ -155,10 +193,10 @@ static int sign_verify(void *args, enum operation_id op_id)
 			    "%s: Operation failed\n", __func__);
 
 	if (op_id == OPERATION_ID_SIGN) {
-		smw_sign_verify_set_sign_len(sign_verify_args,
+		smw_sign_verify_set_sign_len(args,
 					     operation.params[3].tmpref.size);
 
-		SMW_DBG_PRINTF(DEBUG, "Output (%ld):\n",
+		SMW_DBG_PRINTF(DEBUG, "Output (%zu):\n",
 			       operation.params[3].tmpref.size);
 		SMW_DBG_HEX_DUMP(DEBUG, operation.params[3].tmpref.buffer,
 				 operation.params[3].tmpref.size, 4);

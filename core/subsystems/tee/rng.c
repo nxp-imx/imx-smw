@@ -52,8 +52,6 @@ static int rng(void *args)
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_RNG, &operation);
-	if (status != SMW_STATUS_OK)
-		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

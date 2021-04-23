@@ -45,7 +45,7 @@ struct security_size_range {
  * @security_size_range is considered only
  * if @security_size is set to SECURITY_SIZE_RANGE.
  */
-static struct key_info {
+static const struct key_info {
 	enum smw_config_key_type_id smw_key_type;
 	enum tee_key_type tee_key_type;
 	unsigned int security_size;
@@ -207,10 +207,11 @@ int tee_convert_key_type(enum smw_config_key_type_id smw_key_type,
  * true if supported.
  * false if not supported.
  */
-static bool check_security_size(struct key_info *key_info,
+static bool check_security_size(const struct key_info *key_info,
 				unsigned int security_size)
 {
-	struct security_size_range *range = &key_info->security_size_range;
+	const struct security_size_range *range =
+		&key_info->security_size_range;
 
 	if (key_info->security_size == SECURITY_SIZE_RANGE) {
 		if (range->min <= security_size &&
@@ -236,7 +237,7 @@ static bool check_security_size(struct key_info *key_info,
  * Pointer to key info.
  * NULL if not supported.
  */
-static struct key_info *
+static const struct key_info *
 find_check_key_info(enum smw_config_key_type_id key_type_id,
 		    unsigned int security_size)
 {
@@ -568,7 +569,7 @@ static int generate_key(void *args)
 	struct smw_keymgr_identifier *key_identifier =
 		&key_args->key_descriptor.identifier;
 	struct smw_keymgr_attributes *key_attrs;
-	struct key_info *key = NULL;
+	const struct key_info *key = NULL;
 	struct keymgr_shared_params shared_params = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -684,11 +685,10 @@ static int delete_key(void *args)
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_DELETE_KEY, &op);
-	if (status != SMW_STATUS_OK)
-		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
-	else
-		SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is deleted\n", __func__,
-			       key_args->key_descriptor.identifier.id);
+
+	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is %sdeleted\n", __func__,
+		       key_args->key_descriptor.identifier.id,
+		       (status == SMW_STATUS_OK) ? "" : "NOT ");
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -864,8 +864,9 @@ exit:
  */
 static int
 set_params_import_pub_key(struct smw_keymgr_descriptor *key_descriptor,
-			  struct key_info *key, unsigned int key_size_bytes,
-			  unsigned char *pub_data, TEEC_Operation *op)
+			  const struct key_info *key,
+			  unsigned int key_size_bytes, unsigned char *pub_data,
+			  TEEC_Operation *op)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	unsigned char *hex_pub_data;
@@ -1029,7 +1030,7 @@ exit:
  * Error code from set_params_import_modulus().
  */
 static int set_params_import_key(struct smw_keymgr_descriptor *key_descriptor,
-				 struct key_info *key,
+				 const struct key_info *key,
 				 unsigned int key_size_bytes,
 				 TEEC_Operation *op)
 {
@@ -1097,7 +1098,7 @@ static int import_key(void *args)
 	unsigned int key_size_bytes = 0;
 	struct smw_keymgr_import_key_args *key_args = args;
 	struct smw_keymgr_identifier *key_identifier = NULL;
-	struct key_info *key = NULL;
+	const struct key_info *key = NULL;
 	struct keymgr_shared_params shared_params = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

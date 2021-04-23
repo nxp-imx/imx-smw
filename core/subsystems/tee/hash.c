@@ -27,7 +27,7 @@
  * @smw_id: Hash algorithm ID as defined in SMW.
  * @tee_id: Hash algorithm ID as defined in TEE subsystem.
  */
-static struct {
+static const struct {
 	enum smw_config_hash_algo_id smw_id;
 	enum tee_algorithm_id tee_id;
 } algorithm_ids[] = { ALGORITHM_ID(MD5),    ALGORITHM_ID(SHA1),
@@ -107,9 +107,6 @@ static int hash(void *args)
 	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT)
 		smw_crypto_set_hash_output_length(hash_args,
 						  op.params[2].tmpref.size);
-
-	if (status != SMW_STATUS_OK)
-		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

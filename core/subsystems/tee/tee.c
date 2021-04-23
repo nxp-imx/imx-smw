@@ -33,30 +33,50 @@ static struct tee_subsystem tee_ctx;
 __weak bool tee_key_handle(enum operation_id operation_id, void *args,
 			   int *status)
 {
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
 	return false;
 }
 
 __weak bool tee_hash_handle(enum operation_id operation_id, void *args,
 			    int *status)
 {
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
 	return false;
 }
 
 __weak bool tee_sign_verify_handle(enum operation_id operation_id, void *args,
 				   int *status)
 {
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
 	return false;
 }
 
 __weak bool tee_hmac_handle(enum operation_id operation_id, void *args,
 			    int *status)
 {
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
 	return false;
 }
 
 __weak bool tee_rng_handle(enum operation_id operation_id, void *args,
 			   int *status)
 {
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
 	return false;
 }
 
@@ -130,16 +150,17 @@ static int execute(enum operation_id op_id, void *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (tee_key_handle(op_id, args, &status))
-		;
+		goto end;
 	else if (tee_hash_handle(op_id, args, &status))
-		;
+		goto end;
 	else if (tee_sign_verify_handle(op_id, args, &status))
-		;
+		goto end;
 	else if (tee_hmac_handle(op_id, args, &status))
-		;
-	else if (tee_rng_handle(op_id, args, &status))
-		;
+		goto end;
 
+	tee_rng_handle(op_id, args, &status);
+
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

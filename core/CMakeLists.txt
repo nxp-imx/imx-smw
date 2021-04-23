@@ -10,6 +10,12 @@ include(gcov)
 # the objects built in the subdirectories
 add_compile_options(${CMAKE_C_FLAGS_COVERAGE})
 
+#
+# Force Position independent code to build object
+# Fix some build toolchain like "arm-none-linux-gnueabihf"
+#
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 include(add_component)
 
 set(CORE_SRC_INC ${CMAKE_CURRENT_SOURCE_DIR}/inc)

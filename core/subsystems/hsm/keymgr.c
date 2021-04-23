@@ -19,38 +19,36 @@
 
 #include "common.h"
 
-struct {
-	enum smw_config_key_type_id key_type_id;
-	unsigned int security_size;
-	hsm_key_type_t hsm_key_type;
-}
-
 /* Key type IDs must be ordered from lowest to highest.
  * Security sizes must be ordered from lowest to highest
  * for 1 given Key type ID.
  * This sorting is required to simplify the implementation of set_key_type().
  */
-key_type_ids[] = { { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-		     .security_size = 256,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_NIST_P256 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-		     .security_size = 384,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_NIST_P384 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-		     .security_size = 256,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_256 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-		     .security_size = 384,
-		     .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_384 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-		     .security_size = 128,
-		     .hsm_key_type = HSM_KEY_TYPE_AES_128 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-		     .security_size = 192,
-		     .hsm_key_type = HSM_KEY_TYPE_AES_192 },
-		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-		     .security_size = 256,
-		     .hsm_key_type = HSM_KEY_TYPE_AES_256 } };
+static const struct {
+	enum smw_config_key_type_id key_type_id;
+	unsigned int security_size;
+	hsm_key_type_t hsm_key_type;
+} key_type_ids[] = { { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
+		       .security_size = 256,
+		       .hsm_key_type = HSM_KEY_TYPE_ECDSA_NIST_P256 },
+		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
+		       .security_size = 384,
+		       .hsm_key_type = HSM_KEY_TYPE_ECDSA_NIST_P384 },
+		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
+		       .security_size = 256,
+		       .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_256 },
+		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
+		       .security_size = 384,
+		       .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_384 },
+		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
+		       .security_size = 128,
+		       .hsm_key_type = HSM_KEY_TYPE_AES_128 },
+		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
+		       .security_size = 192,
+		       .hsm_key_type = HSM_KEY_TYPE_AES_192 },
+		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
+		       .security_size = 256,
+		       .hsm_key_type = HSM_KEY_TYPE_AES_256 } };
 
 static int set_key_type(enum smw_config_key_type_id key_type_id,
 			unsigned short security_size, hsm_key_type_t *key_type)
@@ -204,6 +202,9 @@ end:
 
 static int derive_key(struct hdl *hdl, void *args)
 {
+	(void)hdl;
+	(void)args;
+
 	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -217,6 +218,9 @@ static int derive_key(struct hdl *hdl, void *args)
 
 static int update_key(struct hdl *hdl, void *args)
 {
+	(void)hdl;
+	(void)args;
+
 	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -230,6 +234,9 @@ static int update_key(struct hdl *hdl, void *args)
 
 static int import_key(struct hdl *hdl, void *args)
 {
+	(void)hdl;
+	(void)args;
+
 	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

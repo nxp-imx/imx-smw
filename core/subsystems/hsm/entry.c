@@ -61,14 +61,13 @@ end:
 
 static void close_session(hsm_hdl_t session_hdl)
 {
-	hsm_err_t err = HSM_NO_ERROR;
+	hsm_err_t __maybe_unused err;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(DEBUG, "session_hdl: %d\n", session_hdl);
 	err = hsm_close_session(session_hdl);
-	if (err != HSM_NO_ERROR)
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
 
 static int open_key_store_service(hsm_hdl_t session_hdl,
@@ -109,14 +108,13 @@ end:
 
 static void close_key_store_service(hsm_hdl_t key_store_hdl)
 {
-	hsm_err_t err = HSM_NO_ERROR;
+	hsm_err_t __maybe_unused err;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %d\n", key_store_hdl);
 	err = hsm_close_key_store_service(key_store_hdl);
-	if (err != HSM_NO_ERROR)
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
 
 static int open_key_mgmt_service(hsm_hdl_t key_store_hdl,
@@ -124,7 +122,7 @@ static int open_key_mgmt_service(hsm_hdl_t key_store_hdl,
 {
 	int status = SMW_STATUS_OK;
 
-	hsm_err_t err = HSM_NO_ERROR;
+	hsm_err_t err;
 	open_svc_key_management_args_t open_svc_key_management_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -146,14 +144,13 @@ end:
 
 static void close_key_management_service(hsm_hdl_t key_management_hdl)
 {
-	hsm_err_t err = HSM_NO_ERROR;
+	hsm_err_t __maybe_unused err;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(DEBUG, "key_management_hdl: %d\n", key_management_hdl);
 	err = hsm_close_key_management_service(key_management_hdl);
-	if (err != HSM_NO_ERROR)
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
 
 static int open_signature_gen_service(hsm_hdl_t key_store_hdl,
@@ -183,14 +180,13 @@ end:
 
 static void close_signature_geneneration_service(hsm_hdl_t signature_gen_hdl)
 {
-	hsm_err_t err = HSM_NO_ERROR;
+	hsm_err_t __maybe_unused err;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(DEBUG, "signature_gen_hdl: %d\n", signature_gen_hdl);
 	err = hsm_close_signature_generation_service(signature_gen_hdl);
-	if (err != HSM_NO_ERROR)
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
 
 static int open_signature_ver_service(hsm_hdl_t session_hdl,
@@ -220,14 +216,13 @@ end:
 
 static void close_signature_verification_service(hsm_hdl_t signature_ver_hdl)
 {
-	hsm_err_t err = HSM_NO_ERROR;
+	hsm_err_t __maybe_unused err;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(DEBUG, "signature_ver_hdl: %d\n", signature_ver_hdl);
 	err = hsm_close_signature_verification_service(signature_ver_hdl);
-	if (err != HSM_NO_ERROR)
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
 
 static int open_hash_service(hsm_hdl_t session_hdl, hsm_hdl_t *hash_hdl)
@@ -254,14 +249,13 @@ end:
 
 static void close_hash_service(hsm_hdl_t hash_hdl)
 {
-	hsm_err_t err = HSM_NO_ERROR;
+	hsm_err_t __maybe_unused err;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(DEBUG, "hash_hdl: %d\n", hash_hdl);
 	err = hsm_close_hash_service(hash_hdl);
-	if (err != HSM_NO_ERROR)
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
 
 static int open_rng_service(hsm_hdl_t session_hdl, hsm_hdl_t *rng_hdl)
@@ -288,14 +282,13 @@ end:
 
 static void close_rng_service(hsm_hdl_t rng_hdl)
 {
-	hsm_err_t err = HSM_NO_ERROR;
+	hsm_err_t __maybe_unused err;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(DEBUG, "rng_hdl: %d\n", rng_hdl);
 	err = hsm_close_rng_service(rng_hdl);
-	if (err != HSM_NO_ERROR)
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
 
 static void reset_handles(void)
@@ -330,6 +323,8 @@ static void reset_handles(void)
 
 static void *storage_thread(void *arg)
 {
+	(void)arg;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	seco_nvm_manager(NVM_FLAGS_HSM, &ctx.nvm_status);
@@ -498,12 +493,22 @@ struct hdl *get_handles_struct(void)
 __weak bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id,
 			   void *args, int *status)
 {
+	(void)hdl;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
 	return false;
 }
 
 __weak bool hsm_hash_handle(struct hdl *hdl, enum operation_id operation_id,
 			    void *args, int *status)
 {
+	(void)hdl;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
 	return false;
 }
 
@@ -511,34 +516,43 @@ __weak bool hsm_sign_verify_handle(struct hdl *hdl,
 				   enum operation_id operation_id, void *args,
 				   int *status)
 {
+	(void)hdl;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
 	return false;
 }
 
 __weak bool hsm_rng_handle(struct hdl *hdl, enum operation_id operation_id,
 			   void *args, int *status)
 {
+	(void)hdl;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
 	return false;
 }
 
 static int execute(enum operation_id operation_id, void *args)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	struct hdl *hdl = get_handles_struct();
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (hsm_key_handle(hdl, operation_id, args, &status))
-		;
+		goto end;
 	else if (hsm_hash_handle(hdl, operation_id, args, &status))
-		;
+		goto end;
 	else if (hsm_sign_verify_handle(hdl, operation_id, args, &status))
-		;
-	else if (hsm_rng_handle(hdl, operation_id, args, &status))
-		;
-	else
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
 
+	hsm_rng_handle(hdl, operation_id, args, &status);
+
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

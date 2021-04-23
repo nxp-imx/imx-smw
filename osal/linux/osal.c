@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2019-2020 NXP
+ * Copyright 2019-2021 NXP
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -134,9 +135,10 @@ static unsigned long thread_self(void)
 	return (unsigned long)pthread_self();
 }
 
-static int get_default_config(char **buffer, unsigned int *size)
+static int get_default_config(char **buffer, unsigned short *size)
 {
 	int status = -1;
+	long fsize;
 
 	FILE *f = NULL;
 	const char *file_name = getenv("SMW_CONFIG_FILE");
@@ -159,14 +161,21 @@ static int get_default_config(char **buffer, unsigned int *size)
 		goto end;
 	}
 
-	*size = ftell(f);
-	if (*size == -1) {
+	fsize = ftell(f);
+	if (fsize == -1) {
 		if (ferror(f))
 			perror("ftell()");
 		goto end;
 	}
-	DBG_PRINTF(INFO, "File size: %d\n", *size);
+	DBG_PRINTF(INFO, "File size: %ld\n", fsize);
 
+	/* Check of file size is not too big */
+	if (fsize > (long)(UINT16_MAX - 1)) {
+		DBG_PRINTF(ERROR, "File size too big\n");
+		goto end;
+	}
+
+	*size = fsize;
 	if (fseek(f, 0, SEEK_SET)) {
 		if (ferror(f))
 			perror("fseek() SEEK_SET");
@@ -177,11 +186,15 @@ static int get_default_config(char **buffer, unsigned int *size)
 	if (!*buffer)
 		goto end;
 	if (*size != fread(*buffer, sizeof **buffer, *size, f)) {
-		if (feof(f))
+		if (feof(f)) {
 			DBG_PRINTF(ERROR, "Error reading %s: unexpected EOF\n",
 				   file_name);
-		else if (ferror(f))
+			goto end;
+		}
+
+		if (ferror(f))
 			perror("fread()");
+
 		goto end;
 	}
 	*(*buffer + *size) = '\0';
@@ -203,7 +216,7 @@ static int start(void)
 {
 	int status = 0;
 
-	unsigned int size = 0;
+	unsigned short size = 0;
 	char *buffer = NULL;
 	struct smw_ops ops;
 

@@ -54,10 +54,10 @@
 	do {                                                                   \
 		if (SMW_DBG_LEVEL_##level > SMW_DBG_LEVEL)                     \
 			break;                                                 \
-		int i;                                                         \
+		__typeof__(size) i;                                            \
 		unsigned char *_addr = addr;                                   \
-		unsigned int _size = (unsigned int)(size);                     \
-		unsigned int _align = (unsigned int)(align);                   \
+		__typeof__(size) _size = (size);                               \
+		__typeof__(align) _align = (align);                            \
 		_size--;                                                       \
 		if (_align > 4)                                                \
 			_align = 4;                                            \

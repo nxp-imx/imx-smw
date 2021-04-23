@@ -424,6 +424,8 @@ update_key_convert_args(struct smw_update_key_args *args,
 			struct smw_keymgr_update_key_args *converted_args,
 			enum subsystem_id *subsystem_id)
 {
+	(void)converted_args;
+
 	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -541,6 +543,9 @@ end:
 static int store_persistent(void *attributes, unsigned char *value,
 			    unsigned int length)
 {
+	(void)value;
+	(void)length;
+
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_attributes *attr = attributes;
 

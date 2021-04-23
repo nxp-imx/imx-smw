@@ -184,6 +184,8 @@ smw_sign_verify_set_sign_len(struct smw_crypto_sign_verify_args *args,
 static int store_signature_type(void *attributes, unsigned char *value,
 				unsigned int length)
 {
+	(void)length;
+
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_sign_verify_attributes *attr = attributes;
 

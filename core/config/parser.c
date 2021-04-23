@@ -449,9 +449,8 @@ static int read_operation(char **start, char *end,
 
 	/* Security operation default */
 	subsystem_is_default = detect_tag(&cur, end, default_tag);
-	if (subsystem_is_default)
-		SMW_DBG_PRINTF(INFO, "Secure subsystem (%d) is DEFAULT\n",
-			       subsystem_id);
+	SMW_DBG_PRINTF(INFO, "Secure subsystem (%d) is %sDEFAULT\n",
+		       subsystem_id, subsystem_is_default ? "" : "NOT ");
 
 	skip_insignificant_chars(&cur, end);
 

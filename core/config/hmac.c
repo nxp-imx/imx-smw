@@ -112,6 +112,7 @@ end:
 
 __weak void hmac_print_params(void *params)
 {
+	(void)params;
 }
 
 static int hmac_check_subsystem_caps(void *args, void *params)

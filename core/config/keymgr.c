@@ -5,6 +5,7 @@
 
 #include "smw_status.h"
 
+#include "compiler.h"
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
@@ -154,8 +155,9 @@ static int delete_key_read_params(char **start, char *end, void **params)
 	return read_params(start, end, OPERATION_ID_DELETE_KEY, params);
 }
 
-__attribute__((weak)) void print_key_params(void *params)
+__weak void print_key_params(void *params)
 {
+	(void)params;
 }
 
 bool check_security_size(unsigned int security_size, unsigned int key_size_min,
@@ -218,6 +220,9 @@ static int derive_key_check_subsystem_caps(void *args, void *params)
 
 static int update_key_check_subsystem_caps(void *args, void *params)
 {
+	(void)args;
+	(void)params;
+
 	int status = SMW_STATUS_OK;
 
 	//struct smw_keymgr_update_key_args *update_key_args = args;

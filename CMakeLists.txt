@@ -62,7 +62,7 @@ option(ENABLE_RNG "Enable Random number generator" ON)
 # Define all targets compiler options
 #
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    add_compile_options(-Wall -Werror)
+    add_compile_options(-Wall -Wextra -Werror)
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

@@ -6,6 +6,7 @@
 #include "smw_status.h"
 #include "smw_crypto.h"
 
+#include "compiler.h"
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
@@ -90,8 +91,9 @@ end:
 	return status;
 }
 
-__attribute__((weak)) void hash_print_params(void *params)
+__weak void hash_print_params(void *params)
 {
+	(void)params;
 }
 
 static int hash_check_subsystem_caps(void *args, void *params)

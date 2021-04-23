@@ -57,7 +57,7 @@ int smw_tlv_read_element(const unsigned char **attribute,
 		goto exit;
 	}
 
-	if ((end - p) < *value_size) {
+	if ((unsigned int)(end - p) < *value_size) {
 		SMW_DBG_PRINTF(ERROR,
 			       "%s (%d): attributes_length is too small\n",
 			       __func__, __LINE__);

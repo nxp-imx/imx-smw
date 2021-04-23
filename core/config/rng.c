@@ -79,6 +79,7 @@ end:
 
 __weak void rng_print_params(void *params)
 {
+	(void)params;
 }
 
 static bool check_random_number_length(unsigned int length,

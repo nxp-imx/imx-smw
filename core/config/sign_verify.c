@@ -6,6 +6,7 @@
 #include "smw_status.h"
 #include "smw_crypto.h"
 
+#include "compiler.h"
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
@@ -130,8 +131,9 @@ static int verify_read_params(char **start, char *end, void **params)
 	return sign_verify_read_params(start, end, OPERATION_ID_VERIFY, params);
 }
 
-__attribute__((weak)) void sign_verify_print_params(void *params)
+__weak void sign_verify_print_params(void *params)
 {
+	(void)params;
 }
 
 static void sign_print_params(void *params)

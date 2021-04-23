@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
+#include "compiler.h"
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
@@ -117,6 +118,7 @@ void *smw_utils_list_find_data(struct smw_utils_list *list, void *filter,
 	return NULL;
 }
 
-__attribute__((weak)) void smw_utils_list_print(struct smw_utils_list *list)
+__weak void smw_utils_list_print(struct smw_utils_list *list)
 {
+	(void)list;
 }

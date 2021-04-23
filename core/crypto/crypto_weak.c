@@ -15,6 +15,8 @@
 
 __weak int smw_hash(struct smw_hash_args *args)
 {
+	(void)args;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -22,6 +24,8 @@ __weak int smw_hash(struct smw_hash_args *args)
 
 __weak int smw_sign(struct smw_sign_verify_args *args)
 {
+	(void)args;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -29,6 +33,8 @@ __weak int smw_sign(struct smw_sign_verify_args *args)
 
 __weak int smw_verify(struct smw_sign_verify_args *args)
 {
+	(void)args;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;

@@ -212,7 +212,8 @@ int execute_tee_cmd(uint32_t cmd_id, TEEC_Operation *op)
 
 	status = convert_tee_result(tee_res);
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d (%x)\n", __func__, status,
+		       tee_res);
 	return status;
 }
 

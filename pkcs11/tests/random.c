@@ -90,6 +90,26 @@ static int random_multiple_length(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_EXPECTED(diff, "Random number has not changed"))
 		goto end;
 
+	random_length = 16384;
+	memcpy(latest, random, random_length);
+	TEST_OUT("Check random number length: %ld\n", random_length);
+	ret = pfunc->C_GenerateRandom(sess, random, random_length);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateRandom"))
+		goto end;
+	diff = memcmp(latest, random, random_length);
+	if (CHECK_EXPECTED(diff, "Random number has not changed"))
+		goto end;
+
+	random_length = 4096;
+	memcpy(latest, random, random_length);
+	TEST_OUT("Check random number length: %ld\n", random_length);
+	ret = pfunc->C_GenerateRandom(sess, random, random_length);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateRandom"))
+		goto end;
+	diff = memcmp(latest, random, random_length);
+	if (CHECK_EXPECTED(diff, "Random number has not changed"))
+		goto end;
+
 	random_length = 1024;
 	memcpy(latest, random, random_length);
 	TEST_OUT("Check random number length: %ld\n", random_length);

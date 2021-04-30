@@ -27,6 +27,16 @@
 	"subtest 6": {
 		"command": "RNG",
 		"subsystem": "TEE",
+		"random": 4096
+	},
+	"subtest 7": {
+		"command": "RNG",
+		"subsystem": "TEE",
+		"random": 16384
+	},
+	"subtest 8": {
+		"command": "RNG",
+		"subsystem": "TEE",
 		"random": 65535
 	}
 }

@@ -7,6 +7,7 @@
 #define __SMW_KEYMGR_H__
 
 #include "smw_strings.h"
+#include <stdbool.h>
 
 /**
  * struct smw_keypair_gen - Generic Keypair object
@@ -104,30 +105,95 @@ struct smw_generate_key_args {
  * struct smw_derive_key_args - Key derivation arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @key_descriptor_in: Pointer to a Key descriptor.
- *		       See &struct smw_key_descriptor
- * @key_attributes_list: Key attributes list.
- *			 See &typedef smw_attribute_type_t
+ * @kdf_name: Key derivation function name. See &typedef smw_kdf_t
+ * @kdf_arguments: Key derivation function arguments
+ * @key_descriptor_base: Pointer to a Key base descriptor.
+ *			 See &struct smw_key_descriptor
+ * @key_attributes_list: Key attributes list
  * @key_attributes_list_length: Length of the Key attributes list
- * @key_descriptor_out: Pointer to the new Key decriptor.
- *		        See &struct smw_key_descriptor
+ * @key_descriptor_derived: Pointer to the Key derived descriptor.
+ *			    See &struct smw_key_descriptor
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default Secure Subsystem configured for
  * this Security Operation is used.
- * The new Key is derived from the key described by @key_descriptor_in.
- * The @key_descriptor_out field @buffer is optional. Only the public key
- * will be returned if the corresponding pointer and size are set.
- * The @key_descriptor_out field @id is filled by the API
- * if the operation is successful.
+ *
+ * A new key is derived from a given key base (@key_descriptor_base) using
+ * the key derivation function @kdf_name.
+ * If the key derivation function requires more arguments,
+ * the @kdf_arguments refers to the associated key derivation function
+ * arguments, else this pointer is not used and can be NULL.
+ *
+ * The result of the key derivation is set in the @key_descriptor_derived
+ * structure and consist in a new key id and the public data is exported
+ * if the public data and size are set in the @buffer field.
  */
 struct smw_derive_key_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
-	struct smw_key_descriptor *key_descriptor_in;
+	smw_kdf_t kdf_name;
+	void *kdf_arguments;
+	struct smw_key_descriptor *key_descriptor_base;
 	const unsigned char *key_attributes_list;
 	unsigned int key_attributes_list_length;
-	struct smw_key_descriptor *key_descriptor_out;
+	struct smw_key_descriptor *key_descriptor_derived;
+};
+
+/**
+ * struct smw_kdf_tls12_args - Key derivation function TLS 1.2 arguments
+ * @key_exchange_name: Name of the key exchange algorithm.
+ *                     See &typedef smw_tls12_kea_t
+ * @encryption_name: Name of the encryption algorithm.
+ *                   See &typedef smw_tls12_enc_t
+ * @prf_name: Name of the Pseudo-Random Function (PRF).
+ *            See &typedef smw_hash_algo_t
+ * @ext_master_key: If true, generates an extended master secret key
+ * @kdf_input: Key derivation input data used to generate the master secret key
+ * @kdf_input_length: Length in bytes of the @kdf_input buffer
+ * @master_sec_key_id: Generated master key identifier
+ * @client_w_enc_key_id: Generated client write encryption key identifier
+ * @server_w_enc_key_id: Generated server write encryption key identifier
+ * @client_w_mac_key_id: Generated client write MAC key identifier (see note 1)
+ * @server_w_mac_key_id: Generated server write MAC key identifier (see note 1)
+ * @client_w_iv: Pointer to the Client IV buffer (see note 2)
+ * @client_w_iv_length: Length of @client_w_iv in bytes (see note 2)
+ * @server_w_iv: Pointer to the Server IV buffer (see note 2)
+ * @server_w_iv_length: Length of @server_w_iv in bytes (see note 2)
+ *
+ * This structure defines the additional arguments needed for the TLS 1.2
+ * Key derivation (&smw_derive_key_args->kdf_name = `TLS12_KEY_EXCHANGE`).
+ *
+ * Note 1: Client/Server write MAC key are not generated with AES GCM cipher
+ *         encryption.
+ * Note 2: Client/Server write IVs are generated only in case of Authentication
+ *         Encryption with Additional Data Cipher mode (like AES CCM or GCM).
+ *
+ * The key derivation &smw_derive_key_args->key_descriptor_derived is filled
+ * only if the @key_exchange_name request for an ephemeral public key.
+ * Following &smw_derive_key_args->key_descriptor_derived fields are filled:
+ *  - @id: set to 0
+ *  - @type_name: Set the key type name
+ *  - @security_size: Size in bits of the derived key
+ *  - @buffer: Public key data buffer only
+ */
+struct smw_kdf_tls12_args {
+	// Input parameters
+	smw_tls12_kea_t key_exchange_name;
+	smw_tls12_enc_t encryption_name;
+	smw_hash_algo_t prf_name;
+	bool ext_master_key;
+	unsigned char *kdf_input;
+	unsigned int kdf_input_length;
+	// Output parameters
+	unsigned long long master_sec_key_id;
+	unsigned long long client_w_enc_key_id;
+	unsigned long long server_w_enc_key_id;
+	unsigned long long client_w_mac_key_id;
+	unsigned long long server_w_mac_key_id;
+	unsigned char *client_w_iv;
+	unsigned int client_w_iv_length;
+	unsigned char *server_w_iv;
+	unsigned int server_w_iv_length;
 };
 
 /**

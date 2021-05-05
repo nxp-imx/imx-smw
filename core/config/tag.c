@@ -29,3 +29,5 @@ const char *hash_algo_values = "HASH_ALGO_VALUES";
 const char *hmac_algo_values = "HMAC_ALGO_VALUES";
 const char *rng_range = "RNG_RANGE";
 const char *sign_type_values = "SIGN_TYPE_VALUES";
+const char *op_type_values = "OP_TYPE_VALUES";
+const char *mode_values = "MODE_VALUES";

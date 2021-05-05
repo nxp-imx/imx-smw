@@ -5,6 +5,8 @@
 #ifndef __SMW_CONFIG_H__
 #define __SMW_CONFIG_H__
 
+#include <stdbool.h>
+
 /**
  * smw_config_subsystem_present() - Check if the subsystem is present or not.
  * @subsystem: Name of the subsystem
@@ -129,5 +131,38 @@ int smw_config_check_sign(const char *subsystem,
  */
 int smw_config_check_verify(const char *subsystem,
 			    struct smw_signature_info *info);
+
+/**
+ * struct smw_cipher_info - Cipher operation information
+ * @multipart: True if it's a cipher multi-part operation
+ * @key_type_name: Key type name
+ * @mode: Operation mode name
+ * @op_type: Operation type name
+ */
+struct smw_cipher_info {
+	bool multipart;
+	const char *key_type_name;
+	const char *mode;
+	const char *op_type;
+};
+
+/**
+ * smw_config_check_cipher() - Check if cipher operation is supported
+ * @subsystem: Name of the subsystem (if NULL default subsystem)
+ * @info: Cipher information
+ *
+ * Function checks if all the fields provided in the @info structure are
+ * supported on the given @subsystem for a cipher one-shot or multi-part
+ * operation.
+ *
+ * If @subsystem is NULL, default subsystem cipher capability is checked.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Parameters are supported
+ * SMW_STATUS_OPERATION_NOT_CONFIGURED	- One of the parameters is not supported
+ * error code otherwise
+ */
+int smw_config_check_cipher(const char *subsystem,
+			    struct smw_cipher_info *info);
 
 #endif /* __SMW_CONFIG_H__ */

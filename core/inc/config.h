@@ -56,6 +56,25 @@ enum smw_config_sign_type_id {
 	SMW_CONFIG_SIGN_TYPE_ID_NB
 };
 
+enum smw_config_cipher_op_type_id {
+	SMW_CONFIG_CIPHER_OP_ID_ENCRYPT,
+	SMW_CONFIG_CIPHER_OP_ID_DECRYPT,
+	SMW_CONFIG_CIPHER_OP_ID_NB,
+	SMW_CONFIG_CIPHER_OP_ID_INVALID
+};
+
+enum smw_config_cipher_mode_id {
+	SMW_CONFIG_CIPHER_MODE_ID_CBC,
+	SMW_CONFIG_CIPHER_MODE_ID_CCM,
+	SMW_CONFIG_CIPHER_MODE_ID_CTR,
+	SMW_CONFIG_CIPHER_MODE_ID_CTS,
+	SMW_CONFIG_CIPHER_MODE_ID_ECB,
+	SMW_CONFIG_CIPHER_MODE_ID_GCM,
+	SMW_CONFIG_CIPHER_MODE_ID_XTS,
+	SMW_CONFIG_CIPHER_MODE_ID_NB,
+	SMW_CONFIG_CIPHER_MODE_ID_INVALID
+};
+
 /**
  * smw_config_init() - Initialize the Configuration module.
  *
@@ -252,3 +271,28 @@ int smw_config_get_hmac_algo_id(const char *name,
  */
 int smw_config_get_signature_type_id(const char *name,
 				     enum smw_config_sign_type_id *id);
+
+/**
+ * smw_config_get_cipher_mode_id() - Get the cipher mode ID associated to a name
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * Return:
+ * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_OK		- Success
+ */
+int smw_config_get_cipher_mode_id(const char *name,
+				  enum smw_config_cipher_mode_id *id);
+
+/**
+ * smw_config_get_cipher_op_type_id() - Get the cipher operation type ID
+ *                                      associated to a name
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * Return:
+ * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_OK		- Success
+ */
+int smw_config_get_cipher_op_type_id(const char *name,
+				     enum smw_config_cipher_op_type_id *id);

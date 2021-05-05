@@ -5,7 +5,7 @@
 
 #define SMW_CONFIG_MAX_STRING_LENGTH 256
 
-#define SMW_CONFIG_MAX_OPERATION_NAME_LENGTH 16
+#define SMW_CONFIG_MAX_OPERATION_NAME_LENGTH 17
 
 #define SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH 8
 
@@ -72,6 +72,13 @@ struct rng_params {
 	enum operation_id operation_id;
 	unsigned int length_min;
 	unsigned int length_max;
+};
+
+struct cipher_params {
+	enum operation_id operation_id;
+	unsigned long mode_bitmap;
+	unsigned long key_type_bitmap;
+	unsigned long op_bitmap;
 };
 
 extern struct ctx ctx;

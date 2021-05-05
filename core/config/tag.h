@@ -32,5 +32,7 @@ extern const char *hash_algo_values;
 extern const char *hmac_algo_values;
 extern const char *rng_range;
 extern const char *sign_type_values;
+extern const char *op_type_values;
+extern const char *mode_values;
 
 #endif /* __TAG_H__ */

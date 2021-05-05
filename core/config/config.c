@@ -158,3 +158,57 @@ __export int smw_config_check_verify(const char *subsystem,
 {
 	return check_sign_verify_common(subsystem, info, OPERATION_ID_VERIFY);
 }
+
+__export int smw_config_check_cipher(const char *subsystem,
+				     struct smw_cipher_info *info)
+{
+	int status;
+	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
+	enum smw_config_key_type_id keytype_id;
+	enum smw_config_cipher_op_type_id op_type_id;
+	enum smw_config_cipher_mode_id mode_id;
+	enum operation_id op_id;
+	struct cipher_params *params;
+
+	if (!info || !info->key_type_name || !info->mode || !info->op_type)
+		return SMW_STATUS_INVALID_PARAM;
+
+	status = smw_config_get_subsystem_id(subsystem, &id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = smw_config_get_key_type_id(info->key_type_name, &keytype_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = smw_config_get_cipher_mode_id(info->mode, &mode_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = smw_config_get_cipher_op_type_id(info->op_type, &op_type_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	if (info->multipart)
+		op_id = OPERATION_ID_CIPHER_MULTI_PART;
+	else
+		op_id = OPERATION_ID_CIPHER;
+
+	status = smw_config_get_subsystem_caps(&id, op_id, (void **)&params);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	/* Check key type */
+	if (!check_id(keytype_id, params->key_type_bitmap))
+		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	/* Check operation mode*/
+	if (!check_id(mode_id, params->mode_bitmap))
+		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	/* Check operation type */
+	if (!check_id(op_type_id, params->op_bitmap))
+		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	return SMW_STATUS_OK;
+}

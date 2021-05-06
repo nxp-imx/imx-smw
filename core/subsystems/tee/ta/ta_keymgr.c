@@ -107,17 +107,17 @@ struct {
 	  .security_size = SECURITY_SIZE_RANGE,
 	  .obj_type = TEE_TYPE_AES,
 	  .ecc_curve = 0,
-	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
+	  .usage = TEE_USAGE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
 	{ .key_type = TEE_KEY_TYPE_ID_DES,
 	  .security_size = 56,
 	  .obj_type = TEE_TYPE_DES,
 	  .ecc_curve = 0,
-	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
+	  .usage = TEE_USAGE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
 	{ .key_type = TEE_KEY_TYPE_ID_DES3,
 	  .security_size = SECURITY_SIZE_RANGE,
 	  .obj_type = TEE_TYPE_DES3,
 	  .ecc_curve = 0,
-	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
+	  .usage = TEE_USAGE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
 	{ .key_type = TEE_KEY_TYPE_ID_HMAC_MD5,
 	  .security_size = SECURITY_SIZE_RANGE,
 	  .obj_type = TEE_TYPE_HMAC_MD5,
@@ -157,7 +157,7 @@ struct {
 	  .security_size = SECURITY_SIZE_RANGE,
 	  .obj_type = TEE_TYPE_RSA_KEYPAIR,
 	  .ecc_curve = 0,
-	  .usage = TEE_MODE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_SIGN |
+	  .usage = TEE_USAGE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_SIGN |
 		   TEE_USAGE_VERIFY }
 };
 

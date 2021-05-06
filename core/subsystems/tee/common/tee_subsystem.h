@@ -6,6 +6,8 @@
 #ifndef TEE_SUBSYSTEM_H
 #define TEE_SUBSYSTEM_H
 
+#include "tee_api_types.h"
+
 #define SMW_TA_UUID                                                            \
 	{                                                                      \
 		0x11b5c4aa, 0x6d20, 0x11ea,                                    \
@@ -61,16 +63,19 @@ enum tee_signature_type {
 	TEE_SIGNATURE_TYPE_RSASSA_PSS,
 };
 
-/* Key manager commands */
-#define CMD_GENERATE_KEY 0
-#define CMD_DELETE_KEY	 1
-#define CMD_IMPORT_KEY	 2
-#define CMD_EXPORT_KEY	 3
-#define CMD_HASH	 4
-#define CMD_SIGN	 5
-#define CMD_VERIFY	 6
-#define CMD_HMAC	 7
-#define CMD_RNG		 8
+/* TA commands */
+#define CMD_GENERATE_KEY  0
+#define CMD_DELETE_KEY	  1
+#define CMD_IMPORT_KEY	  2
+#define CMD_EXPORT_KEY	  3
+#define CMD_HASH	  4
+#define CMD_SIGN	  5
+#define CMD_VERIFY	  6
+#define CMD_HMAC	  7
+#define CMD_RNG		  8
+#define CMD_CIPHER_INIT	  9
+#define CMD_CIPHER_UPDATE 10
+#define CMD_CIPHER_FINAL  11
 
 struct hmac_shared_params {
 	enum tee_key_type tee_key_type;
@@ -108,6 +113,14 @@ struct sign_verify_shared_params {
 	enum tee_algorithm_id hash_algorithm;
 	enum tee_signature_type signature_type;
 	uint32_t salt_length;
+};
+
+/**
+ * struct shared_context - Context operation handle
+ * @handle: Pointer to operation handle
+ */
+struct shared_context {
+	void *handle;
 };
 
 #endif /* TEE_SUBSYSTEM_H */

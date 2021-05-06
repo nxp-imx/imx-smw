@@ -11,6 +11,7 @@
 #include "ta_sign_verify.h"
 #include "ta_hmac.h"
 #include "ta_rng.h"
+#include "ta_cipher.h"
 
 /**
  * TA_CreateEntryPoint() - Create entry point.
@@ -129,6 +130,12 @@ TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx __maybe_unused,
 		return hmac(param_types, params);
 	case CMD_RNG:
 		return rng(param_types, params);
+	case CMD_CIPHER_INIT:
+		return cipher_init(param_types, params);
+	case CMD_CIPHER_UPDATE:
+		return cipher_update(param_types, params);
+	case CMD_CIPHER_FINAL:
+		return cipher_final(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}

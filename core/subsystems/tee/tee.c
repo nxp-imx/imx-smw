@@ -80,6 +80,17 @@ __weak bool tee_rng_handle(enum operation_id operation_id, void *args,
 	return false;
 }
 
+__weak bool tee_cipher_handle(enum operation_id operation_id, void *args,
+			      int *status)
+
+{
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
 /**
  * load() - Load optee os subsystem.
  *
@@ -157,8 +168,10 @@ static int execute(enum operation_id op_id, void *args)
 		goto end;
 	else if (tee_hmac_handle(op_id, args, &status))
 		goto end;
+	else if (tee_rng_handle(op_id, args, &status))
+		goto end;
 
-	tee_rng_handle(op_id, args, &status);
+	tee_cipher_handle(op_id, args, &status);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

@@ -29,11 +29,13 @@ target_sources(tee PRIVATE
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
                $<$<BOOL:${ENABLE_HMAC}>:hmac.c>
-               $<$<BOOL:${ENABLE_RNG}>:rng.c>)
+               $<$<BOOL:${ENABLE_RNG}>:rng.c>
+               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>)
 
-target_include_directories(tee PRIVATE ${INCLUDE_DIR}
-                           ${TEEC_INCLUDE_DIR}
+target_include_directories(tee PRIVATE
                            ${TA_HOST_INCLUDE_DIR}
+                           ${INCLUDE_DIR}
+                           ${TEEC_INCLUDE_DIR}
                            ./common)
 
 set(EXT_LIBS ${EXT_LIBS} ${TEEC_LIBRARY} PARENT_SCOPE)

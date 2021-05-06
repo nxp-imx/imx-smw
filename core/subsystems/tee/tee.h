@@ -7,7 +7,6 @@
 #define TEE_H
 
 #include "tee_subsystem.h"
-#include "tee_api_defines.h"
 
 /*
  * Set the type @p of the parameter @i in the operation parameter
@@ -109,5 +108,17 @@ bool tee_sign_verify_handle(enum operation_id operation_id, void *args,
  * false	- the Security Operation has not been handled.
  */
 bool tee_hmac_handle(enum operation_id operation_id, void *args, int *status);
+
+/**
+ * tee_cipher_handle() - Handle the Cipher operation.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * Return:
+ * true		- the Security Operation has been handled.
+ * false	- the Security Operation has not been handled.
+ */
+bool tee_cipher_handle(enum operation_id operation_id, void *args, int *status);
 
 #endif /* TEE_H */

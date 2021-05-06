@@ -15,6 +15,7 @@
 #include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
+#include "keymgr_derive.h"
 #include "name.h"
 
 #include "common.h"
@@ -39,10 +40,33 @@ static const char *const key_type_names[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_RSA] = "RSA"
 };
 
+static const char *const key_derive_op_names[] = {
+	[SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE] = "TLS12_KEY_EXCHANGE"
+};
+
 int read_key_type_names(char **start, char *end, unsigned long *bitmap)
 {
 	return read_names(start, end, bitmap, key_type_names,
 			  SMW_CONFIG_KEY_TYPE_ID_NB);
+}
+
+int read_key_op_names(char **start, char *end, enum operation_id op_id,
+		      unsigned long *bitmap)
+{
+	const char *const *op_names;
+	unsigned int nb_op_names;
+
+	switch (op_id) {
+	case OPERATION_ID_DERIVE_KEY:
+		op_names = key_derive_op_names;
+		nb_op_names = SMW_CONFIG_KDF_ID_NB;
+		break;
+
+	default:
+		return SMW_STATUS_UNKNOWN_NAME;
+	}
+
+	return read_names(start, end, bitmap, op_names, nb_op_names);
 }
 
 static int read_params(char **start, char *end, enum operation_id operation_id,
@@ -55,6 +79,7 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 	int length;
 
 	unsigned long key_type_bitmap = SMW_ALL_ONES;
+	unsigned long op_bitmap = 0;
 
 	unsigned int key_size_min = 0;
 	unsigned int key_size_max = UINT_MAX;
@@ -82,6 +107,11 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 					    &key_size_max);
 			if (status != SMW_STATUS_OK)
 				goto end;
+		} else if (!SMW_UTILS_STRNCMP(buffer, op_type_values, length)) {
+			status = read_key_op_names(&cur, end, operation_id,
+						   &op_bitmap);
+			if (status != SMW_STATUS_OK)
+				goto end;
 		} else {
 			status = skip_param(&cur, end);
 			if (status != SMW_STATUS_OK)
@@ -99,6 +129,7 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 
 	p->operation_id = operation_id;
 	p->key_type_bitmap = key_type_bitmap;
+	p->op_bitmap = op_bitmap;
 	p->key_size_min = key_size_min;
 	p->key_size_max = key_size_max;
 
@@ -205,12 +236,22 @@ static int derive_key_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_descriptor *key_descriptor =
-		&((struct smw_keymgr_derive_key_args *)args)->key_descriptor_in;
+	struct smw_keymgr_derive_key_args *derive_args = args;
+	struct key_operation_params *op_params = params;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = check_subsystem_caps(key_descriptor, params);
+	status = check_subsystem_caps(&derive_args->key_base, op_params);
+
+	/*
+	 * Check if the Key Derivation Function if specified is
+	 * supported by the subsystem.
+	 */
+	if (status == SMW_STATUS_OK &&
+	    derive_args->kdf_id != SMW_CONFIG_KDF_ID_INVALID) {
+		if (!check_id(derive_args->kdf_id, op_params->op_bitmap))
+			status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -330,5 +371,23 @@ int smw_config_get_key_type_id(const char *name,
 						    id);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/* It's not an error to have a @name parameter NULL */
+	*id = SMW_CONFIG_KDF_ID_INVALID;
+
+	if (name)
+		status = smw_utils_get_string_index(name, key_derive_op_names,
+						    SMW_CONFIG_KDF_ID_NB, id);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
 	return status;
 }

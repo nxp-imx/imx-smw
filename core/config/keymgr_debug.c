@@ -27,8 +27,10 @@ void print_key_params(void *params)
 	SMW_DBG_PRINTF(DEBUG,
 		       "%s params:\n"
 		       "    key_type_bitmap: %.8lX\n"
+		       "    op_bitmap: %.8lX\n"
 		       "    key_size_min: %u\n"
 		       "    key_size_max: %u\n",
 		       smw_config_get_operation_name(p->operation_id),
-		       p->key_type_bitmap, p->key_size_min, p->key_size_max);
+		       p->key_type_bitmap, p->op_bitmap, p->key_size_min,
+		       p->key_size_max);
 }

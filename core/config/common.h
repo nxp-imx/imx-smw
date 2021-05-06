@@ -42,6 +42,7 @@ enum load_method_id {
 struct key_operation_params {
 	enum operation_id operation_id;
 	unsigned long key_type_bitmap;
+	unsigned long op_bitmap;
 	unsigned int key_size_min;
 	unsigned int key_size_max;
 };

@@ -3,6 +3,9 @@
  * Copyright 2020-2021 NXP
  */
 
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
 enum smw_config_key_type_id {
 	/* Key type IDs */
 	SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
@@ -73,6 +76,12 @@ enum smw_config_cipher_mode_id {
 	SMW_CONFIG_CIPHER_MODE_ID_XTS,
 	SMW_CONFIG_CIPHER_MODE_ID_NB,
 	SMW_CONFIG_CIPHER_MODE_ID_INVALID
+};
+
+enum smw_config_kdf_id {
+	SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE,
+	SMW_CONFIG_KDF_ID_NB,
+	SMW_CONFIG_KDF_ID_INVALID
 };
 
 /**
@@ -296,3 +305,19 @@ int smw_config_get_cipher_mode_id(const char *name,
  */
 int smw_config_get_cipher_op_type_id(const char *name,
 				     enum smw_config_cipher_op_type_id *id);
+
+/**
+ * smw_config_get_kdf_id() - Get the id of the key derivation function name
+ * @name: Name of the key derivation function
+ * @id: Key derivation function id found
+ *
+ * Note: If name is NULL, the returned @id is set SMW_CONFIG_KDF_ID_INVALID
+ *       and function return SMW_STATUS_OK.
+ *
+ * Return:
+ * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_OK		- Success
+ */
+int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id);
+
+#endif /* __CONFIG_H__ */

@@ -105,6 +105,85 @@ struct smw_rng_args {
 };
 
 /**
+ * struct smw_op_context - SMW cryptographic operation context
+ * @handle: Pointer to operation handle
+ * @reserved: Reserved data
+ *
+ * Parameters @handle and @reserved are set by SMW. They must not be modified by
+ * the application
+ */
+struct smw_op_context {
+	/* Outputs */
+	void *handle;
+	unsigned long long reserved;
+};
+
+/**
+ * struct smw_cipher_init_args - Cipher multi-part initialization arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name
+ * @keys_desc: Pointer to an array of pointers to key descriptors
+ * @nb_keys: Number of entries of @keys_desc
+ * @mode_name: Cipher mode name
+ * @operation_name: Cipher operation name
+ * @iv: Pointer to initialization vector
+ * @iv_length: @iv length in bytes
+ * @context: Pointer to operation context
+ *
+ * Switch @mode, @iv is optional and represents:
+ * - Initialization Vector (CBC, CTS)
+ * - Initial Counter Value (CTR)
+ * - Tweak Value (XTS)
+ */
+struct smw_cipher_init_args {
+	/* Inputs */
+	unsigned char version;
+	const char *subsystem_name;
+	struct smw_key_descriptor **keys_desc;
+	unsigned int nb_keys;
+	const char *mode_name;
+	const char *operation_name;
+	unsigned char *iv;
+	unsigned int iv_length;
+	/* Outputs */
+	struct smw_op_context *context;
+};
+
+/**
+ * struct smw_cipher_data_args - Cipher data arguments
+ * @version: Version of this structure
+ * @context: Pointer to operation context
+ * @input: Input data buffer
+ * @input_length: @input length in bytes
+ * @output: Output data buffer
+ * @output_length: @output length in bytes
+ *
+ * In case of final operation, @input and @input_length are optional.
+ */
+struct smw_cipher_data_args {
+	/* Inputs */
+	unsigned char version;
+	struct smw_op_context *context;
+	unsigned char *input;
+	unsigned int input_length;
+	/* Outputs */
+	unsigned char *output;
+	unsigned int output_length;
+};
+
+/**
+ * struct smw_cipher_args - Cipher one-shot arguments
+ * @init: Initialization arguments
+ * @data: Data arguments
+ *
+ * Field @context present in @init and @data is ignored.
+ */
+struct smw_cipher_args {
+	struct smw_cipher_init_args init;
+	struct smw_cipher_data_args data;
+};
+
+/**
  * smw_hash() - Compute hash.
  * @args: Pointer to the structure that contains the Hash arguments.
  *
@@ -158,3 +237,103 @@ int smw_hmac(struct smw_hmac_args *args);
  * error code.
  */
 int smw_rng(struct smw_rng_args *args);
+
+/**
+ * smw_cipher() - Cipher one-shot
+ * @args: Pointer to the structure that contains the cipher arguments.
+ *
+ * This function executes a cipher encryption or decryption.
+ *
+ * Output data field of @args can be a NULL pointer to get the required output
+ * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK.
+ *
+ * Output length @args field is updated to the correct value when:
+ *  - Output length is bigger than expected. In this case operation succeeded.
+ *  - Output length is shorter than expected. In this case operation failed and
+ *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * Keys used can be defined as buffer and as key ID.
+ * All key types must be identical and must be linked to the same subystem.
+ * If at least one key ID is set, subsystem name field of @args is optional. If
+ * set it must be coherent with the key ID.
+ *
+ * Return:
+ * error code.
+ */
+int smw_cipher(struct smw_cipher_args *args);
+
+/**
+ * smw_cipher_init() - Cipher multi-part initialization
+ * @args: Pointer to the structure that contains the cipher multi-part
+ *        initialization arguments.
+ *
+ * This function executes a cipher multi-part encryption or decryption
+ * initialization.
+ *
+ * Keys used can be defined as buffer and as key ID.
+ * All key types must be identical and must be linked to the same subystem.
+ * If at least one key ID is set, subsystem name field of @args is optional. If
+ * set it must be coherent with the key ID.
+ *
+ * Context structure presents in @args must be allocated by the application.
+ *
+ * Return:
+ * error code.
+ */
+int smw_cipher_init(struct smw_cipher_init_args *args);
+
+/**
+ * smw_cipher_update() - Cipher multi-part update
+ * @args: Pointer to the structure that contains the cipher multi-part update
+ *        arguments.
+ *
+ * This function executes a cipher multi-part encryption or decryption update
+ * operation.
+ *
+ * The context used must be initialized by the cipher multi-part initialization.
+ *
+ * Output length @args field is updated to the correct value when:
+ *  - Output length is bigger than expected. In this case operation succeeded.
+ *  - Output length is shorter than expected. In this case operation failed and
+ *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * If the returned error code is SMW_STATUS_OK, SMW_STATUS_INVALID_PARAM,
+ * SMW_STATUS_VERSION_NOT_SUPPORTED or SMW_STATUS_OUTPUT_TOO_SHORT the operation
+ * is not terminated and the context remains valid.
+ *
+ * Return:
+ * error code.
+ */
+int smw_cipher_update(struct smw_cipher_data_args *args);
+
+/**
+ * smw_cipher_final() - Cipher multi-part final
+ * @args: Pointer to the structure that contains the cipher multi-part final
+ *        arguments.
+ *
+ * This function executes a cipher multi-part encryption or decryption final
+ * operation.
+ *
+ * The context used must be initialized by the cipher multi-part initialization.
+ *
+ * Input data field of @args can be a NULL pointer if no additional data are
+ * used.
+ *
+ * Output data field of @args can be a NULL pointer to get the required output
+ * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK
+ * and the operation is no terminated (context remains valid) unless required
+ * output buffer length is 0.
+ *
+ * Output length @args field is updated to the correct value when:
+ *  - Output length is bigger than expected. In this case operation succeeded.
+ *  - Output length is shorter than expected. In this case operation failed and
+ *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * If the returned error code is SMW_STATUS_INVALID_PARAM,
+ * SMW_STATUS_VERSION_NOT_SUPPORTED or SMW_STATUS_OUTPUT_TOO_SHORT the operation
+ * is not terminated and the context remains valid.
+ *
+ * Return:
+ * error code.
+ */
+int smw_cipher_final(struct smw_cipher_data_args *args);

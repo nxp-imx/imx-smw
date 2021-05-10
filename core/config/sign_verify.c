@@ -19,8 +19,7 @@
 #include "name.h"
 
 #include "common.h"
-
-const char *sign_type_values = "SIGN_TYPE_VALUES";
+#include "tag.h"
 
 static const char *const sign_type_names[] = {
 	[SMW_CONFIG_SIGN_TYPE_ID_DEFAULT] = "DEFAULT",

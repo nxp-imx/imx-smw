@@ -18,9 +18,7 @@
 #include "name.h"
 
 #include "common.h"
-
-const char *key_type_values = "KEY_TYPE_VALUES";
-const char *key_size_range = "KEY_SIZE_RANGE";
+#include "tag.h"
 
 static const char *const key_type_names[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST] = "NIST",

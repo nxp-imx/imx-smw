@@ -17,8 +17,7 @@
 #include "rng.h"
 
 #include "common.h"
-
-const char *rng_range = "RNG_RANGE";
+#include "tag.h"
 
 static int rng_read_params(char **start, char *end, void **params)
 {

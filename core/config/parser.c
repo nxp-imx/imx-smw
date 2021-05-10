@@ -15,29 +15,9 @@
 #include "name.h"
 
 #include "common.h"
+#include "tag.h"
 
 #define SMW_CONFIG_PARSER_VERSION 0
-
-/* Specified separators */
-const char open_square_bracket = '[';
-const char close_square_bracket = ']';
-const char semicolon = ';';
-const char equal = '=';
-const char colon = ':';
-
-/* Whitespaces */
-static const char space = ' ';
-static const char carriage_return = '\r';
-static const char new_line = '\n';
-static const char tab = '\t';
-
-/* Sections tags */
-static const char *subsystem_tag = "[SECURE_SUBSYSTEM]";
-static const char *operation_tag = "[SECURITY_OPERATION]";
-
-/* Parameters tags */
-static const char *version_tag = "VERSION";
-static const char *default_tag = "DEFAULT;";
 
 static bool is_string_delimiter(char c)
 {

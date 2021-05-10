@@ -76,18 +76,6 @@ struct rng_params {
 
 extern struct ctx ctx;
 
-/* Specified separators */
-extern const char open_square_bracket;
-extern const char close_square_bracket;
-extern const char semicolon;
-extern const char equal;
-extern const char colon;
-
-extern const char *key_type_values;
-extern const char *key_size_range;
-
-extern const char *hash_algo_values;
-
 /**
  * skip_insignificant_chars() - Skip insignificant chars.
  * @start: Address of the pointer to the current char.

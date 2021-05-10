@@ -18,8 +18,7 @@
 #include "name.h"
 
 #include "common.h"
-
-const char *hash_algo_values = "HASH_ALGO_VALUES";
+#include "tag.h"
 
 static const char *const hash_algo_names[] = {
 	[SMW_CONFIG_HASH_ALGO_ID_MD5] = "MD5",

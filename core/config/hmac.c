@@ -19,8 +19,7 @@
 #include "name.h"
 
 #include "common.h"
-
-const char *hmac_algo_values = "HMAC_ALGO_VALUES";
+#include "tag.h"
 
 static const char *const hmac_algo_names[] = {
 	[SMW_CONFIG_HMAC_ALGO_ID_MD5] = "MD5",

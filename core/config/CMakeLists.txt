@@ -7,6 +7,7 @@ target_sources(config PRIVATE
                parser.c
                database.c
 	       config.c
+               tag.c
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>

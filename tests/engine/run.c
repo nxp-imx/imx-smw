@@ -8,18 +8,23 @@
 #include "json.h"
 #include "util.h"
 #include "util_key.h"
+#include "util_context.h"
 #include "types.h"
 #include "keymgr.h"
 #include "crypto.h"
 #include "sign_verify.h"
 #include "hmac.h"
 #include "rng.h"
+#include "cipher.h"
 #include "run.h"
 #include "paths.h"
 #include "smw_status.h"
 
 /* Key identifiers linked list */
 static struct key_identifier_list *key_identifiers;
+
+/* Operation context linked list */
+static struct context_list *ctx_list;
 
 /**
  * execute_generate_cmd() - Execute generate key command.
@@ -363,11 +368,46 @@ static int execute_rng_cmd(struct json_object *params,
 }
 
 /**
+ * execute_cipher() - Execute cipher command
+ * @cmd: Command name.
+ * @params: Command parameters.
+ * @common_params: Some parameters common to commands.
+ * @key_ids: Pointer to key identifiers list.
+ * @ctx: Pointer to context linked list.
+ * @status: Pointer to SMW command status.
+ *
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from cipher().
+ * Error code from cipher_init().
+ * Error code from cipher_update().
+ * Error code from cipher_final().
+ */
+static int execute_cipher(char *cmd, struct json_object *params,
+			  struct common_parameters *common_params,
+			  struct key_identifier_list *key_ids,
+			  struct context_list **ctx, int *status)
+{
+	if (!strcmp(cmd, CIPHER))
+		return cipher(params, common_params, key_ids, status);
+	else if (!strcmp(cmd, CIPHER_INIT))
+		return cipher_init(params, common_params, key_ids, ctx, status);
+	else if (!strcmp(cmd, CIPHER_UPDATE))
+		return cipher_update(params, common_params, *ctx, status);
+	else if (!strcmp(cmd, CIPHER_FINAL))
+		return cipher_final(params, common_params, *ctx, status);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
+/**
  * execute_command() - Execute a subtest command.
  * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
  * @key_ids: Pointer to key identifiers list.
+ * @ctx: Pointer to context linked list.
  * @status: Pointer to SMW command status.
  *
  * Return:
@@ -377,7 +417,8 @@ static int execute_rng_cmd(struct json_object *params,
  */
 static int execute_command(char *cmd, struct json_object *params,
 			   struct common_parameters *common_params,
-			   struct key_identifier_list **key_ids, int *status)
+			   struct key_identifier_list **key_ids,
+			   struct context_list **ctx, int *status)
 {
 	if (!strcmp(cmd, DELETE))
 		return delete_key(params, common_params, *key_ids, status);
@@ -403,6 +444,9 @@ static int execute_command(char *cmd, struct json_object *params,
 					       common_params, *key_ids, status);
 	else if (!strncmp(cmd, RNG, strlen(RNG)))
 		return execute_rng_cmd(params, common_params, status);
+	else if (!strncmp(cmd, CIPHER, strlen(CIPHER)))
+		return execute_cipher(cmd, params, common_params, *key_ids, ctx,
+				      status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -462,6 +506,103 @@ static int update_status(int sub_res, char **sub_status, const char **sub_err,
 }
 
 /**
+ * get_depends_status() - Handle 'depends' test definition parameter.
+ * @params: Test definition parameters.
+ * @status_file: Pointer to current status file.
+ *
+ * If 'depends' parameter is set in the test definition file check that
+ * associated subtest(s) succeed.
+ * 'depends' parameter can be an integer or an array of integer in case there
+ * are multiple dependencies.
+ * If at least one dependent subtest failed, current subtest is skipped.
+ *
+ * Return:
+ * PASSED		- Success.
+ * -BAD_PARAM_TYPE	- Parameter is not correctly set.
+ * -INTERNAL		- Internal error.
+ * -NOT_RUN		- Subtest is skipped.
+ */
+static int get_depends_status(struct json_object *params, FILE *status_file)
+{
+	int i;
+	int depends;
+	int nb_members = 1;
+	long fsave_pos;
+	char depends_status[SUBTEST_STATUS_PASSED_MAX_LEN] = { 0 };
+	char file_line[SUBTEST_STATUS_PASSED_MAX_LEN] = { 0 };
+	char *read;
+	json_object *depends_obj = NULL;
+	json_object *array_member = NULL;
+
+	if (!json_object_object_get_ex(params, DEPENDS_OBJ, &depends_obj))
+		return ERR_CODE(PASSED);
+
+	if (json_object_get_type(depends_obj) == json_type_array) {
+		nb_members = json_object_array_length(depends_obj);
+
+		/*
+		 * 'depends' parameter must be an array only for multiple
+		 * entries. Otherwise it must be an integer
+		 */
+		if (nb_members <= 1) {
+			DBG_PRINT_BAD_PARAM(__func__, "depends");
+			return ERR_CODE(BAD_PARAM_TYPE);
+		}
+	}
+
+	for (i = 0; i < nb_members; i++) {
+		if (nb_members > 1)
+			array_member =
+				json_object_array_get_idx(depends_obj, i);
+		else
+			array_member = depends_obj;
+
+		depends = json_object_get_int(array_member);
+		if (depends <= 0) {
+			DBG_PRINT_BAD_PARAM(__func__, "depends");
+			return ERR_CODE(BAD_PARAM_TYPE);
+		}
+
+		/* Expected dependent subtest status */
+		if (sprintf(depends_status, "%s%d: PASSED\n", SUBTEST_OBJ,
+			    depends) < 0)
+			return ERR_CODE(INTERNAL);
+
+		/* Backup current status file position */
+		fsave_pos = ftell(status_file);
+		if (fsave_pos == -1)
+			return ERR_CODE(INTERNAL);
+
+		/* Set status file position to beginning */
+		if (fseek(status_file, 0, SEEK_SET))
+			return ERR_CODE(INTERNAL);
+
+		depends = 0;
+
+		while (fgets(file_line, sizeof(file_line), status_file)) {
+			read = strchr(file_line, '\n');
+			if (read)
+				*read = '\0';
+
+			if (!strncmp(file_line, depends_status,
+				     strlen(file_line))) {
+				depends = 1;
+				break;
+			}
+		};
+
+		/* Restore status file position */
+		if (fseek(status_file, fsave_pos, SEEK_SET))
+			return ERR_CODE(INTERNAL);
+
+		if (!depends)
+			return ERR_CODE(NOT_RUN);
+	}
+
+	return ERR_CODE(PASSED);
+}
+
+/**
  * run_subtest() - Run a subtest.
  * @obj_iter: Pointer to json object iterator of the json definition file
  *            object.
@@ -477,17 +618,12 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 {
 	int res = ERR_CODE(FAILED);
 	int status = SMW_STATUS_OPERATION_FAILURE;
-	int depends = 0;
-	char depends_status[SUBTEST_STATUS_PASSED_MAX_LEN] = { 0 };
-	char file_line[SUBTEST_STATUS_PASSED_MAX_LEN] = { 0 };
 	char *command_name = NULL;
 	char *expected_status = NULL;
 	char *sub_status = NULL;
 	const char *sub_error = NULL;
 	struct common_parameters common_params = { 0 };
-	fpos_t status_file_pos = { 0 };
 	json_object *cmd_obj = NULL;
-	json_object *depends_obj = NULL;
 	json_object *res_obj = NULL;
 	json_object *sub_obj = NULL;
 	json_object *version_obj = NULL;
@@ -534,56 +670,10 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 		common_params.subsystem =
 			(char *)json_object_get_string(sub_obj);
 
-	/*
-	 * Get dependent subtest parameter 'depends' set in test definition
-	 * file. If set, the subtest is run only if the dependent subtest status
-	 * is PASSED.
-	 */
-	if (json_object_object_get_ex(obj_iter->val, DEPENDS_OBJ,
-				      &depends_obj)) {
-		depends = json_object_get_int(depends_obj);
-		if (depends <= 0) {
-			DBG_PRINT_BAD_PARAM(__func__, "depends");
-			res = ERR_CODE(BAD_PARAM_TYPE);
-			goto exit;
-		}
-
-		/* Expected dependent subtest status */
-		if (sprintf(depends_status, "%s%d: PASSED\n", SUBTEST_OBJ,
-			    depends) < 0) {
-			res = ERR_CODE(INTERNAL);
-			goto exit;
-		}
-
-		/* Backup current status file position */
-		if (fgetpos(status_file, &status_file_pos)) {
-			res = ERR_CODE(INTERNAL);
-			goto exit;
-		}
-
-		/* Set status file position to beginning */
-		rewind(status_file);
-
-		depends = 0;
-		while (fgets(file_line, SUBTEST_STATUS_PASSED_MAX_LEN,
-			     status_file)) {
-			if (!strcmp(file_line, depends_status)) {
-				depends = 1;
-				break;
-			}
-		}
-
-		/* Restore status file position */
-		if (fsetpos(status_file, &status_file_pos)) {
-			res = ERR_CODE(INTERNAL);
-			goto exit;
-		}
-
-		if (!depends) {
-			res = ERR_CODE(NOT_RUN);
-			goto exit;
-		}
-	}
+	/* Check dependent subtest(s) status */
+	res = get_depends_status(obj_iter->val, status_file);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
 
 	/*
 	 * Get expected result parameter 'result' set in test definition file.
@@ -612,7 +702,7 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 
 	/* Execute subtest command */
 	res = execute_command(command_name, obj_iter->val, &common_params,
-			      &key_identifiers, &status);
+			      &key_identifiers, &ctx_list, &status);
 
 exit:
 	res = update_status(res, &sub_status, &sub_error, test_status, status);
@@ -734,6 +824,8 @@ int run_test(char *test_definition_file, char *test_name, char *output_dir)
 
 	util_key_clear_list(key_identifiers);
 	sign_clear_signatures_list();
+	util_context_clear_list(ctx_list);
+	cipher_clear_out_data_list();
 
 	if (!test_status)
 		FPRINT_TEST_STATUS(status_file, test_name,

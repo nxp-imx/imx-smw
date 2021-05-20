@@ -292,6 +292,7 @@ int util_key_desc_init(struct keypair_ops *key_test,
  * util_key_read_descriptor() - Read the key descriptor definition
  * @key_test: Test keypair structure with operations
  * @key_id: Test application key id
+ * @key_idx: Key index if @params contains multiple keys
  * @params: json-c object
  *
  * Read the test definition @param to extract SMW key descriptor field.
@@ -306,7 +307,7 @@ int util_key_desc_init(struct keypair_ops *key_test,
  * -FAILED                  - Error in definition file
  */
 int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
-			     json_object *params);
+			     unsigned int key_idx, json_object *params);
 
 /**
  * util_key_desc_set_key() - Set a SMW keypair to the key descriptor

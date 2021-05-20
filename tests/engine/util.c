@@ -60,10 +60,19 @@ struct test_err_case {
 	enum arguments_test_err_case status;
 	char *string;
 } args_test_err_case[] = {
-	SET_STATUS_CODE(ARGS_NULL),	  SET_STATUS_CODE(BAD_FORMAT),
-	SET_STATUS_CODE(KEY_BUFFER_NULL), SET_STATUS_CODE(KEY_DESC_ID_NOT_SET),
-	SET_STATUS_CODE(KEY_DESC_ID_SET), SET_STATUS_CODE(KEY_DESC_NULL),
+	SET_STATUS_CODE(ARGS_NULL),
+	SET_STATUS_CODE(BAD_FORMAT),
+	SET_STATUS_CODE(KEY_BUFFER_NULL),
+	SET_STATUS_CODE(KEY_DESC_ID_NOT_SET),
+	SET_STATUS_CODE(KEY_DESC_ID_SET),
+	SET_STATUS_CODE(KEY_DESC_NULL),
 	SET_STATUS_CODE(NB_ERROR_CASE),
+	SET_STATUS_CODE(CIPHER_NO_NB_KEYS),
+	SET_STATUS_CODE(CIPHER_NO_KEYS),
+	SET_STATUS_CODE(CIPHER_DIFF_SUBSYSTEM),
+	SET_STATUS_CODE(CIPHER_DIFF_KEY_TYPE),
+	SET_STATUS_CODE(CTX_NULL),
+	SET_STATUS_CODE(CTX_HANDLE_NULL),
 };
 #undef SET_STATUS_CODE
 
@@ -459,3 +468,23 @@ void dbg_dumphex(const char *function, int line, char *msg, void *buf,
 	(void)fflush(stdout);
 }
 #endif
+
+int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
+			 unsigned char *expected_buffer,
+			 unsigned int expected_len)
+{
+	if (buffer_len != expected_len) {
+		DBG_PRINT("Bad length, got %d expected %d", buffer_len,
+			  expected_len);
+		return ERR_CODE(SUBSYSTEM);
+	}
+
+	if (buffer && expected_buffer &&
+	    memcmp(buffer, expected_buffer, buffer_len)) {
+		DBG_DHEX("Got buffer", buffer, buffer_len);
+		DBG_DHEX("Expected buffer", expected_buffer, expected_len);
+		return ERR_CODE(SUBSYSTEM);
+	}
+
+	return ERR_CODE(PASSED);
+}

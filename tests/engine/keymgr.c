@@ -483,61 +483,23 @@ static int compare_keys(struct keypair_ops *key_test,
 	 * the one set in the test definition, do
 	 * the comparaison.
 	 */
-	if (*key_private_length(exp_key_test)) {
-		if (*key_private_length(exp_key_test) !=
-		    *key_private_length(key_test)) {
-			DBG_PRINT("Bad Private length got %d expected %d",
-				  *key_private_length(key_test),
-				  *key_private_length(exp_key_test));
-			res = ERR_CODE(SUBSYSTEM);
-		} else if (memcmp(*key_private_data(exp_key_test),
-				  *key_private_data(key_test),
-				  *key_private_length(key_test))) {
-			DBG_DHEX("Got Private Key", *key_private_data(key_test),
-				 *key_private_length(key_test));
-			DBG_DHEX("Expected Private Key",
-				 *key_private_data(exp_key_test),
-				 *key_private_length(exp_key_test));
-			res = ERR_CODE(SUBSYSTEM);
-		}
-	}
+	if (*key_private_length(exp_key_test))
+		res = util_compare_buffers(*key_private_data(key_test),
+					   *key_private_length(key_test),
+					   *key_private_data(exp_key_test),
+					   *key_private_length(exp_key_test));
 
-	if (*key_public_length(exp_key_test)) {
-		if (*key_public_length(exp_key_test) !=
-		    *key_public_length(key_test)) {
-			DBG_PRINT("Bad Public length got %d expected %d",
-				  *key_public_length(key_test),
-				  *key_public_length(exp_key_test));
-			res = ERR_CODE(SUBSYSTEM);
-		} else if (memcmp(*key_public_data(exp_key_test),
-				  *key_public_data(key_test),
-				  *key_public_length(key_test))) {
-			DBG_DHEX("Got Public Key", *key_public_data(key_test),
-				 *key_public_length(key_test));
-			DBG_DHEX("Expected Public Key",
-				 *key_public_data(exp_key_test),
-				 *key_public_length(exp_key_test));
-			res = ERR_CODE(SUBSYSTEM);
-		}
-	}
+	if (*key_public_length(exp_key_test))
+		res = util_compare_buffers(*key_public_data(key_test),
+					   *key_public_length(key_test),
+					   *key_public_data(exp_key_test),
+					   *key_public_length(exp_key_test));
 
-	if (exp_key_test->modulus_length && *key_modulus_length(exp_key_test)) {
-		if (*key_modulus_length(exp_key_test) !=
-		    *key_modulus_length(key_test)) {
-			DBG_PRINT("Bad Modulus length got %d expected %d",
-				  *key_modulus_length(key_test),
-				  *key_modulus_length(exp_key_test));
-			res = ERR_CODE(SUBSYSTEM);
-		} else if (memcmp(*key_modulus(exp_key_test),
-				  *key_modulus(key_test),
-				  *key_modulus_length(key_test))) {
-			DBG_DHEX("Got Modulus", *key_modulus(key_test),
-				 *key_modulus_length(key_test));
-			DBG_DHEX("Expected Modulus", *key_modulus(exp_key_test),
-				 *key_modulus_length(exp_key_test));
-			res = ERR_CODE(SUBSYSTEM);
-		}
-	}
+	if (exp_key_test->modulus_length && *key_modulus_length(exp_key_test))
+		res = util_compare_buffers(*key_modulus(key_test),
+					   *key_modulus_length(key_test),
+					   *key_modulus(exp_key_test),
+					   *key_modulus_length(exp_key_test));
 
 	return res;
 }
@@ -576,7 +538,7 @@ int generate_key(json_object *params, struct common_parameters *common_params,
 	key_test.desc.type_name = key_type;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -647,7 +609,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -717,7 +679,7 @@ int import_key(json_object *params, struct common_parameters *common_params,
 	key_test.desc.type_name = key_type;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -809,7 +771,7 @@ int export_key(json_object *params, struct common_parameters *common_params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&exp_key_test, &key_id, params);
+	res = util_key_read_descriptor(&exp_key_test, &key_id, 0, params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -824,7 +786,7 @@ int export_key(json_object *params, struct common_parameters *common_params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 

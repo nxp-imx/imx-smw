@@ -1,0 +1,153 @@
+{
+	"subtest 1": {
+		"command": "CIPHER_INIT",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Version not supported
+		"command": "CIPHER_INIT",
+		"version": 255,
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"command": "CIPHER_INIT",
+		"test_error": "KEY_DESC_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"command": "CIPHER_INIT",
+		"test_error": "CIPHER_NO_NB_KEYS",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Mode is not set
+		"command": "CIPHER_INIT",
+		"op_type": "ENCRYPT",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Operation type is not set
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": {
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"test_error": "CTX_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": { // Mode is undefined
+		"command": "CIPHER_INIT",
+		"mode": "UNDEFINED",
+		"op_type": "ENCRYPT",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 9": { // Operation type is undefined
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "UNDEFINED",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 10": { // Subsystem name is undefined
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"subsystem": "UNDEFINED",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 11": { // Format is undefined
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"format": "UNDEFINED",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 12": { // ID set and wrong key type
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_type": "DES",
+		"test_error": "KEY_DESC_ID_SET",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 13": { // ID set and wrong key security size
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"security_size": 256,
+		"test_error": "KEY_DESC_ID_SET",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 14": { // Wrong number of keys
+		"command": "CIPHER_INIT",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"priv_key": [
+			"a1b90cba3f06ac353b2c343876081762",
+			"090923026e91771815f29dab01932f2f"
+		],
+		"key_type": "AES",
+		"security_size": 128,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 15": { // No key is set
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"test_error": "CIPHER_NO_KEYS",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 16": { // Key type is missing
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"priv_key": [
+			"a1b90cba3f06ac353b2c343876081762",
+			"090923026e91771815f29dab01932f2f"
+		],
+		"security_size": 128,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 17": { // Security size is 0
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"priv_key": [
+			"a1b90cba3f06ac353b2c343876081762",
+			"090923026e91771815f29dab01932f2f"
+		],
+		"security_size": 0,
+		"key_type": "AES",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 18": {
+		"command": "CIPHER_INIT",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"nb_keys": 2,
+		"test_error": "CIPHER_DIFF_SUBSYSTEM",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 19": {
+		"command": "CIPHER_INIT",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"nb_keys": 2,
+		"test_error": "CIPHER_DIFF_KEY_TYPE",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 20": { // IV is missing
+		"command": "CIPHER_INIT",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"priv_key": [
+			"a1b90cba3f06ac353b2c343876081762",
+			"090923026e91771815f29dab01932f2f"
+		],
+		"security_size": 128,
+		"key_type": "AES",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

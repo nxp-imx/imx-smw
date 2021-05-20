@@ -1,0 +1,54 @@
+{
+	"subtest 1": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_id": 0,
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "CIPHER_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"command": "CIPHER_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"output": 5,
+		"context_id": 0,
+		"depends": 2,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 5": {
+		"command": "CIPHER_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 6": {
+		"command": "CIPHER_FINAL",
+		"input": "32333435363738394142434445463031",
+		"output": 0,
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 7": {
+		"command": "CIPHER_FINAL",
+		"input": "32333435363738394142434445463031",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	}
+}

@@ -1,0 +1,116 @@
+{
+	"subtest 1": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 1
+	},
+	"subtest 3": {
+		"command": "CIPHER_INIT",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"nb_keys": 2,
+		"key_id": [
+			0,
+			1
+		],
+		"iv": "041f41fa30b78898040b5e0ecba27d2b",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		]
+	},
+	"subtest 4": {
+		"command": "CIPHER_INIT",
+		"mode": "XTS",
+		"op_type": "DECRYPT",
+		"subsystem": "TEE",
+		"nb_keys": 2,
+		"priv_key": [
+			[
+				"d6c4cf73c639e025654dd3232fe3aa71",
+				"38f21bc8922271b4a6c0af999100b6b5"
+			],
+			[
+				"e380ec7ec8da88e6816cd7f4f26e7ac0",
+				"f86e4caac3be55234ebcd4347cda2fa5"
+			]
+		],
+		"key_type": "AES",
+		"security_size": 256,
+		"iv": "041f41fa30b78898040b5e0ecba27d2b",
+		"context_id": 1
+	},
+	"subtest 5": {
+		"command": "CIPHER_INIT",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"nb_keys": 2,
+		"priv_key": [
+			"d6c4cf73c639e025654dd3232fe3aa71",
+			"38f21bc8922271b4a6c0af999100b6b5"
+		],
+		"key_id": 0,
+		"iv": "041f41fa30b78898040b5e0ecba27d2b",
+		"context_id": 2,
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "CIPHER_UPDATE",
+		"input": "d083f37a6160ac25c3229800ae0721d9",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 7": { // Input is bigger than AES block size
+		"command": "CIPHER_UPDATE",
+		"input": "d083f37a6160ac25c3229800ae0721d94b",
+		"context_id": 1,
+		"save_output": 1,
+		"depends": 4
+	},
+	"subtest 8": {
+		"command": "CIPHER_UPDATE",
+		"input": "d083f37a6160ac25c3229800ae0721d9",
+		"context_id": 2,
+		"depends": 5
+	},
+	"subtest 9": {
+		"command": "CIPHER_FINAL",
+		"input": "4bf6a9ff2f73a418544e6c787cbcd34a",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 10": {
+		"command": "CIPHER_FINAL",
+		"input": "f6a9ff2f73a418544e6c787cbcd34a",
+		"output": [
+			"b8f33dd38c138daca227728e19b62c4a",
+			"d5ad516ee2c3af3431097ff281956d7d"
+		],
+		"context_id": 1,
+		"depends": 4
+	},
+	"subtest 11": {
+		"command": "CIPHER_FINAL",
+		"input": "4bf6a9ff2f73a418544e6c787cbcd34a",
+		"context_id": 2,
+		"depends": 5
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 2
+	}
+}

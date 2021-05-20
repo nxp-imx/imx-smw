@@ -1,0 +1,221 @@
+{
+	"subtest 1": { // Key type not supported
+		"command": "CIPHER",
+		"mode": "ECB",
+		"subsystem": "TEE",
+		"op_type": "ENCRYPT",
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"priv_key": "30313233343536373839414243444546",
+		"key_type": "NIST",
+		"security_size": 128,
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
+	},
+	"subtest 2": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 0
+	},
+	"subtest 3": {
+		"command": "GENERATE_AES",
+		"subsystem": "TEE",
+		"security_size": 256,
+		"key_id": 1
+	},
+	"subtest 4": {
+		"command": "GENERATE_DES",
+		"subsystem": "TEE",
+		"security_size": 56,
+		"key_id": 2
+	},
+	"subtest 5": { // Encrypt with key ID
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_id": 2,
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"depends": 4
+	},
+	"subtest 6": { // Decrypt with key ID
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "DECRYPT",
+		"key_id": 2,
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"depends": 4
+	},
+	"subtest 7": { // Encrypt with key buffer
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"priv_key": "303132333435363738394142434445463132333435363738",
+		"key_type": "DES3",
+		"security_size": 168,
+		"input": [
+			"323334353637383941424344454630313334353637383941",
+			"424344454630313234353637383941424344454630313233"
+		],
+		"iv": "3132333435363738",
+		"output": [
+			"1809eb98e45872113058ab38b0c92beddac5e8a9f68aa780",
+			"be541f63f6eea24c7ceb847ddaca1eb2ed5e96b8014b7702"
+		]
+	},
+	"subtest 8": { // Decrypt with key buffer
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "DECRYPT",
+		"subsystem": "TEE",
+		"priv_key": "303132333435363738394142434445463132333435363738",
+		"key_type": "DES3",
+		"security_size": 168,
+		"input": [
+			"1809eb98e45872113058ab38b0c92beddac5e8a9f68aa780",
+			"be541f63f6eea24c7ceb847ddaca1eb2ed5e96b8014b7702"
+		],
+		"iv": "3132333435363738",
+		"output": [
+			"323334353637383941424344454630313334353637383941",
+			"424344454630313234353637383941424344454630313233"
+		]
+	},
+	"subtest 9": { // Encrypt with 2 key ids
+		"command": "CIPHER",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"nb_keys": 2,
+		"key_id": [
+			0,
+			1
+		],
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"iv": "33333333330000000000000000000000",
+		"depends": [
+			2,
+			3
+		]
+	},
+	"subtest 10": { // Decrypt with 2 key ids
+		"command": "CIPHER",
+		"mode": "XTS",
+		"op_type": "DECRYPT",
+		"nb_keys": 2,
+		"key_id": [
+			0,
+			1
+		],
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"iv": "33333333330000000000000000000000",
+		"depends": [
+			2,
+			3
+		]
+	},
+	"subtest 11": { // Encrypt with 2 key buffers
+		"command": "CIPHER",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"nb_keys": 2,
+		"priv_key": [
+			["11111111111111111111111111111111"],
+			["22222222222222222222222222222222"]
+		],
+		"key_type": "AES",
+		"security_size": 128,
+		"input": [
+			"44444444444444444444444444444444",
+			"44444444444444444444444444444444"
+		],
+		"iv": "33333333330000000000000000000000",
+		"output": [
+			"c454185e6a16936e39334038acef838b",
+			"fb186fff7480adc4289382ecd6d394f0"
+		]
+	},
+	"subtest 12": { // Decrypt with 2 key buffers
+		"command": "CIPHER",
+		"mode": "XTS",
+		"op_type": "DECRYPT",
+		"subsystem": "TEE",
+		"nb_keys": 2,
+		"priv_key": [
+			["11111111111111111111111111111111"],
+			["22222222222222222222222222222222"]
+		],
+		"key_type": "AES",
+		"security_size": 128,
+		"input": [
+			"c454185e6a16936e39334038acef838b",
+			"fb186fff7480adc4289382ecd6d394f0"
+		],
+		"iv": "33333333330000000000000000000000",
+		"output": [
+			"44444444444444444444444444444444",
+			"44444444444444444444444444444444"
+		]
+	},
+	"subtest 13": { // Encrypt with 1 key id, 1 key buffer
+		"command": "CIPHER",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"nb_keys": 2,
+		"priv_key": [
+			"11111111111111111111111111111111",
+			"22222222222222222222222222222222"
+		],
+		"key_id": 0,
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"iv": "33333333330000000000000000000000",
+		"depends": 2
+	},
+	"subtest 14": { // Decrypt with 1 key id, 1 key buffer
+		"command": "CIPHER",
+		"mode": "XTS",
+		"op_type": "DECRYPT",
+		"nb_keys": 2,
+		"priv_key": [
+			"11111111111111111111111111111111",
+			"22222222222222222222222222222222"
+		],
+		"key_id": 0,
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"iv": "33333333330000000000000000000000",
+		"depends": 2
+	},
+	"subtest 15": { // Output length too small
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_id": 0,
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"output": 2,
+		"depends": 2,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 16": { // Get output length
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_id": 0,
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"output": 0,
+		"depends": 2
+	},
+	"subtest 17": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 2
+	},
+	"subtest 18": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 3
+	},
+	"subtest 19": {
+		"command": "DELETE",
+		"key_id": 2,
+		"depends": 4
+	}
+}

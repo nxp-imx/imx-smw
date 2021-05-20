@@ -195,6 +195,7 @@ static int read_key(unsigned char **key, unsigned int *length,
 /**
  * keypair_read() - Read the public and private key definition
  * @key_test: Test keypair structure with operations
+ * @key_idx: Key index if @params contains multiple keys
  * @params: json-c object
  *
  * Read and set the key format, public key buffer and private key buffer.
@@ -209,10 +210,13 @@ static int read_key(unsigned char **key, unsigned int *length,
  * -BAD_ARGS                - One of the arguments is bad.
  * -FAILED                  - Error in definition file
  */
-static int keypair_read(struct keypair_ops *key_test, json_object *params)
+static int keypair_read(struct keypair_ops *key_test, unsigned int key_idx,
+			json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
+	unsigned int nb_keys = 1;
 	json_object *okey;
+	json_object *nb_keys_obj;
 
 	if (!params || !key_test) {
 		DBG_PRINT_BAD_ARGS(__func__);
@@ -232,6 +236,23 @@ static int keypair_read(struct keypair_ops *key_test, json_object *params)
 	}
 
 	if (json_object_object_get_ex(params, PRIV_KEY_OBJ, &okey)) {
+		/*
+		 * Private key parameter could be an array of multiple private
+		 * key definition. i.e: an array of private key array
+		 */
+		if (json_object_object_get_ex(params, NB_KEYS_OBJ,
+					      &nb_keys_obj))
+			nb_keys = json_object_get_int(nb_keys_obj);
+
+		/* Case where multiple keys are defined as key buffer */
+		if (nb_keys > 1 &&
+		    json_object_get_type(okey) == json_type_array) {
+			if (key_idx >= json_object_array_length(okey))
+				return ERR_CODE(BAD_PARAM_TYPE);
+
+			okey = json_object_array_get_idx(okey, key_idx);
+		}
+
 		ret = read_key(key_private_data(key_test),
 			       key_private_length(key_test),
 			       key_test->keys->format_name, okey);
@@ -377,7 +398,7 @@ int util_key_desc_init(struct keypair_ops *key_test,
 }
 
 int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
-			     json_object *params)
+			     unsigned int key_idx, json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
 	json_object *obj;
@@ -399,14 +420,21 @@ int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 		desc->security_size = json_object_get_int(obj);
 
 	/* Read test 'key_id' value if defined */
-	if (json_object_object_get_ex(params, KEY_ID_OBJ, &obj))
-		*key_id = json_object_get_int(obj);
+	if (json_object_object_get_ex(params, KEY_ID_OBJ, &obj)) {
+		/* If multiple keys are used 'key_id' is an array */
+		if (json_object_get_type(obj) == json_type_array) {
+			obj = json_object_array_get_idx(obj, key_idx);
+			*key_id = json_object_get_int(obj);
+		} else {
+			*key_id = json_object_get_int(obj);
+		}
+	}
 
 	/* Setup the key ops function of the key type */
 	util_key_set_ops(key_test, (char *)desc->type_name);
 
 	if (key_test->keys)
-		ret = keypair_read(key_test, params);
+		ret = keypair_read(key_test, key_idx, params);
 
 	return ret;
 }

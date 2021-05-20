@@ -9,19 +9,26 @@
 /* List of parameters present in JSON test definition file */
 #define ATTR_LIST_OBJ  "attributes_list"
 #define CMD_OBJ	       "command"
+#define CTX_ID_OBJ     "context_id"
 #define DEPENDS_OBJ    "depends"
 #define DIGEST_OBJ     "digest"
 #define INPUT_OBJ      "input"
+#define IV_OBJ	       "iv"
 #define KEY_FORMAT_OBJ "format"
 #define KEY_ID_OBJ     "key_id"
 #define KEY_TYPE_OBJ   "key_type"
 #define MAC_OBJ	       "mac"
 #define MESS_OBJ       "message"
 #define MODULUS_OBJ    "modulus"
+#define MODE_OBJ       "mode"
+#define NB_KEYS_OBJ    "nb_keys"
+#define OP_TYPE_OBJ    "op_type"
+#define OUTPUT_OBJ     "output"
 #define PRIV_KEY_OBJ   "priv_key"
 #define PUB_KEY_OBJ    "pub_key"
 #define RANDOM_OBJ     "random"
 #define RES_OBJ	       "result"
+#define SAVE_OUT_OBJ   "save_output"
 #define SEC_SIZE_OBJ   "security_size"
 #define SIGN_ID_OBJ    "sign_id"
 #define SIGN_OBJ       "signature"
@@ -36,6 +43,10 @@
 #define SMW_API_DEFAULT_VERSION 0
 
 /* List of commands */
+#define CIPHER		     "CIPHER"
+#define CIPHER_INIT	     "CIPHER_INIT"
+#define CIPHER_UPDATE	     "CIPHER_UPDATE"
+#define CIPHER_FINAL	     "CIPHER_FINAL"
 #define DELETE		     "DELETE"
 #define EXPORT		     "EXPORT"
 #define EXPORT_KEYPAIR	     "EXPORT_KEYPAIR"
@@ -122,9 +133,15 @@ enum arguments_test_err_case {
 	BAD_FORMAT,
 	KEY_BUFFER_NULL,
 	KEY_DESC_ID_NOT_SET,
-	KEY_DESC_ID_SET,
+	KEY_DESC_ID_SET, /* 5 */
 	KEY_DESC_NULL,
 	NB_ERROR_CASE,
+	CIPHER_NO_NB_KEYS,
+	CIPHER_NO_KEYS,
+	CIPHER_DIFF_SUBSYSTEM, /* 10 */
+	CIPHER_DIFF_KEY_TYPE,
+	CTX_NULL,
+	CTX_HANDLE_NULL,
 };
 
 /* Type of export */

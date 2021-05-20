@@ -264,4 +264,22 @@ int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
 int util_read_test_error(enum arguments_test_err_case *error,
 			 json_object *params);
 
+/**
+ * util_compare_buffers() - Compare two buffers
+ * @buffer: Buffer to compare
+ * @buffer_len: @buffer length in bytes
+ * @expected_buffer: Expected buffer
+ * @expected_len: @expected_buffer length in bytes
+ *
+ * If @buffer or @expected_buffer is not set, only @buffer_len and @expected_len
+ * are compared.
+ *
+ * Return:
+ * PASSED	- Success
+ * -SUBSYSTEM	- @buffer and @expected_buffer are different
+ */
+int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
+			 unsigned char *expected_buffer,
+			 unsigned int expected_len);
+
 #endif /* __UTIL_H__ */

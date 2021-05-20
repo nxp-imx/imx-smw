@@ -1,0 +1,38 @@
+{
+	"subtest 1": {
+		"command": "CIPHER_FINAL",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"command": "CIPHER_FINAL",
+		"version": 255,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"command": "CIPHER_FINAL",
+		"test_error": "CTX_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"command": "CIPHER_FINAL",
+		"test_error": "CTX_HANDLE_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Input data set and input length is 0
+		"command": "CIPHER_FINAL",
+		"input": [
+			0,
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Cipher output pointer is set and output length not
+		"command": "CIPHER_FINAL",
+		"output": [
+			0,
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

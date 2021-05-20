@@ -158,7 +158,7 @@ int sign_verify(int operation, json_object *params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 

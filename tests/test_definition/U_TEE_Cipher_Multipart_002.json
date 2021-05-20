@@ -1,0 +1,62 @@
+{
+	"subtest 1": {
+		"command": "GENERATE_DES3",
+		"subsystem": "TEE",
+		"security_size": 112,
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "CIPHER_INIT",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_id": 0,
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "CIPHER_INIT",
+		"mode": "CBC",
+		"op_type": "DECRYPT",
+		"priv_key": [
+			"addf88c1ab997eb58c0455288c3a4fa3",
+			"20ada8c18a69cc90aa99c73b174dfde6"
+		],
+		"key_type": "AES",
+		"security_size": 256,
+		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"context_id": 1
+	},
+	"subtest 4": {
+		"command": "CIPHER_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 5": {
+		"command": "CIPHER_UPDATE",
+		"input": "6cb4e2f4ddf79a8e08c96c7f4040e8a8",
+		"context_id": 1,
+		"save_output": 1,
+		"depends": 3
+	},
+	"subtest 6": {
+		"command": "CIPHER_FINAL",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 7": {
+		"command": "CIPHER_FINAL",
+		"input": "3266c07fc88dd0074ee25b00d445985a",
+		"output": [
+			"98a8a9d84356bf403a9ccc384a06fe04",
+			"3dfeecb89e59ce0cb8bd0a495ef76cf0"
+		],
+		"context_id": 1,
+		"depends": 2
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	}
+}

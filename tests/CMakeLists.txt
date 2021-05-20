@@ -38,6 +38,7 @@ configure_file(${TEST_SCRIPTS_SRC}/run_simple_test.sh.in
 
 add_executable(${PROJECT_NAME}
                EXCLUDE_FROM_ALL
+               engine/cipher.c
                engine/crypto.c
                engine/hmac.c
                engine/keymgr.c
@@ -48,7 +49,9 @@ add_executable(${PROJECT_NAME}
                engine/util.c
                engine/util_key.c
                engine/util_sign.c
-               engine/util_tlv.c)
+               engine/util_tlv.c
+               engine/util_context.c
+               engine/util_cipher.c)
 
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${TEST_SRC_INC} ${TEST_BIN_INC}
@@ -76,6 +79,8 @@ set(KEYMGR_LABEL Keymgr)
 set(SIGN_LABEL Sign)
 set(VERIFY_LABEL Verify)
 set(RNG_LABEL Rng)
+set(CIPHER_LABEL Cipher)
+set(MULTIPART_LABEL Multipart)
 
 # Include SMW API tests
 include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)

@@ -114,7 +114,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -208,17 +208,9 @@ int hmac(json_object *params, struct common_parameters *common_params,
 	 * If HMAC operation succeeded and expected mac is set in the test
 	 * definition file then compare operation result.
 	 */
-	if (*ret_status == SMW_STATUS_OK && mac_hex) {
-		if (mac_len != output_len) {
-			DBG_PRINT("Bad Mac length got %d expected %d",
-				  output_len, mac_len);
-			res = ERR_CODE(SUBSYSTEM);
-		} else if (memcmp(mac_hex, output_hex, output_len)) {
-			DBG_DHEX("Got Mac", output_hex, output_len);
-			DBG_DHEX("Expected Mac", mac_hex, mac_len);
-			res = ERR_CODE(SUBSYSTEM);
-		}
-	}
+	if (*ret_status == SMW_STATUS_OK && mac_hex)
+		res = util_compare_buffers(output_hex, output_len, mac_hex,
+					   mac_len);
 
 exit:
 	util_key_free_key(&key_test);

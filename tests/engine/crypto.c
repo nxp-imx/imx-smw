@@ -193,27 +193,9 @@ int hash(json_object *params, struct common_parameters *common_params,
 	 * If Hash operation succeeded and expected digest or digest length
 	 * is set in the test definition file then compare operation result.
 	 */
-	if (*ret_status == SMW_STATUS_OK) {
-		if (digest_hex || !output_hex) {
-			if (digest_len != args.output_length) {
-				DBG_PRINT("Bad Digest length got %d expected %d",
-					  args.output_length, digest_len);
-				res = ERR_CODE(SUBSYSTEM);
-				goto exit;
-			}
-		}
-
-		if (digest_hex) {
-			if (memcmp(digest_hex, args.output,
-				   args.output_length)) {
-				DBG_DHEX("Got Digest", args.output,
-					 args.output_length);
-				DBG_DHEX("Expected Digest", digest_hex,
-					 digest_len);
-				res = ERR_CODE(SUBSYSTEM);
-			}
-		}
-	}
+	if (*ret_status == SMW_STATUS_OK)
+		res = util_compare_buffers(args.output, args.output_length,
+					   digest_hex, digest_len);
 
 exit:
 	if (input_hex)

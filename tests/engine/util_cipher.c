@@ -156,3 +156,17 @@ int compare_output_data(struct cipher_output_list *list, unsigned int ctx_id,
 
 	return ERR_CODE(PASSED);
 }
+
+int util_cipher_copy_node(struct cipher_output_list **list,
+			  unsigned int dst_ctx_id, unsigned int src_ctx_id)
+{
+	struct cipher_output_node *src_node = NULL;
+
+	find_node(*list, src_ctx_id, &src_node);
+
+	if (!src_node)
+		return ERR_CODE(INTERNAL);
+
+	return util_cipher_add_out_data(list, dst_ctx_id, src_node->output,
+					src_node->output_len);
+}

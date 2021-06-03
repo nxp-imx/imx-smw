@@ -51,7 +51,8 @@ add_executable(${PROJECT_NAME}
                engine/util_sign.c
                engine/util_tlv.c
                engine/util_context.c
-               engine/util_cipher.c)
+               engine/util_cipher.c
+               engine/operation_context.c)
 
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${TEST_SRC_INC} ${TEST_BIN_INC}
@@ -81,6 +82,7 @@ set(VERIFY_LABEL Verify)
 set(RNG_LABEL Rng)
 set(CIPHER_LABEL Cipher)
 set(MULTIPART_LABEL Multipart)
+set(CONTEXT_LABEL Context)
 
 # Include SMW API tests
 include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)

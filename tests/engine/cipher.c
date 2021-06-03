@@ -887,3 +887,8 @@ void cipher_clear_out_data_list(void)
 {
 	util_cipher_clear_out_data_list(cipher_out_data);
 }
+
+int cipher_copy_node(unsigned int dst_ctx_id, unsigned int src_ctx_id)
+{
+	return util_cipher_copy_node(&cipher_out_data, dst_ctx_id, src_ctx_id);
+}

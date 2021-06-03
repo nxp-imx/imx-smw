@@ -34,9 +34,9 @@ struct cipher_output_list {
  * @out_data: Data to add.
  * @data_len: @out_data length in bytes.
  *
- * If @list is NULL it's allocated in this function.
- * If it's the first call for the @ctx_id, the node is allocated.
- * Else, @out_data is added to existing node data.
+ * If parameter @list is NULL it's allocated in this function.
+ * If it's the first call for parameter @ctx_id, the node is allocated.
+ * Else, parameter @out_data is added to existing node data.
  * All the memory allocated by this function is freed when
  * util_cipher_clear_out_data_list() is called.
  *
@@ -67,8 +67,6 @@ void util_cipher_clear_out_data_list(struct cipher_output_list *list);
  * @data: Data to compare.
  * @data_len: @data length in bytes.
  *
- * This function compares the output data saved in @list for @ctx_id with @data.
- *
  * Return:
  * PASSED	- Success.
  * -INTERNAL	- @ctx_id node is not found.
@@ -76,5 +74,23 @@ void util_cipher_clear_out_data_list(struct cipher_output_list *list);
  */
 int compare_output_data(struct cipher_output_list *list, unsigned int ctx_id,
 			unsigned char *data, unsigned int data_len);
+
+/**
+ * util_cipher_copy_node() - Copy a cipher output data node
+ * @list: Pointer to cipher output data linked list.
+ * @dst_ctx_id: Context ID associated to the new node
+ * @src_ctx_id: Context ID associated to the source node
+ *
+ * A new node is created in parameter @list linked list, associated to parameter
+ * @dst_ctx_id. Data present in parameter @src_ctx_id node are copied in the new
+ * node.
+ *
+ * Return:
+ * PASSED			- Success
+ * -INTERNAL			- Source node not found
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed
+ */
+int util_cipher_copy_node(struct cipher_output_list **list,
+			  unsigned int dst_ctx_id, unsigned int src_ctx_id);
 
 #endif /* __UTIL_CIPHER_H__ */

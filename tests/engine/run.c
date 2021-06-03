@@ -16,6 +16,7 @@
 #include "hmac.h"
 #include "rng.h"
 #include "cipher.h"
+#include "operation_context.h"
 #include "run.h"
 #include "paths.h"
 #include "smw_status.h"
@@ -402,6 +403,33 @@ static int execute_cipher(char *cmd, struct json_object *params,
 }
 
 /**
+ * execute_operation_context() - Execute an operation context operation
+ * @cmd: Command name.
+ * @params: Command parameters.
+ * @common_params: Some parameters common to commands.
+ * @ctx: Pointer to context linked list.
+ * @status: Pointer to SMW command status.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from cancel_operation().
+ * Error code from copy_context().
+ */
+static int execute_operation_context(char *cmd, struct json_object *params,
+				     struct common_parameters *common_params,
+				     struct context_list **ctx, int *status)
+{
+	if (!strcmp(cmd, OP_CTX_CANCEL))
+		return cancel_operation(params, common_params, *ctx, status);
+	else if (!strcmp(cmd, OP_CTX_COPY))
+		return copy_context(params, common_params, ctx, status);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
+/**
  * execute_command() - Execute a subtest command.
  * @cmd: Command name.
  * @params: Command parameters.
@@ -447,6 +475,9 @@ static int execute_command(char *cmd, struct json_object *params,
 	else if (!strncmp(cmd, CIPHER, strlen(CIPHER)))
 		return execute_cipher(cmd, params, common_params, *key_ids, ctx,
 				      status);
+	else if (!strncmp(cmd, OP_CTX, strlen(OP_CTX)))
+		return execute_operation_context(cmd, params, common_params,
+						 ctx, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

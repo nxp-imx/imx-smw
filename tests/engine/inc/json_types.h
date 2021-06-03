@@ -7,35 +7,36 @@
 #define __JSON_TYPES_H__
 
 /* List of parameters present in JSON test definition file */
-#define ATTR_LIST_OBJ  "attributes_list"
-#define CMD_OBJ	       "command"
-#define CTX_ID_OBJ     "context_id"
-#define DEPENDS_OBJ    "depends"
-#define DIGEST_OBJ     "digest"
-#define INPUT_OBJ      "input"
-#define IV_OBJ	       "iv"
-#define KEY_FORMAT_OBJ "format"
-#define KEY_ID_OBJ     "key_id"
-#define KEY_TYPE_OBJ   "key_type"
-#define MAC_OBJ	       "mac"
-#define MESS_OBJ       "message"
-#define MODULUS_OBJ    "modulus"
-#define MODE_OBJ       "mode"
-#define NB_KEYS_OBJ    "nb_keys"
-#define OP_TYPE_OBJ    "op_type"
-#define OUTPUT_OBJ     "output"
-#define PRIV_KEY_OBJ   "priv_key"
-#define PUB_KEY_OBJ    "pub_key"
-#define RANDOM_OBJ     "random"
-#define RES_OBJ	       "result"
-#define SAVE_OUT_OBJ   "save_output"
-#define SEC_SIZE_OBJ   "security_size"
-#define SIGN_ID_OBJ    "sign_id"
-#define SIGN_OBJ       "signature"
-#define SUBSYSTEM_OBJ  "subsystem"
-#define SUBTEST_OBJ    "subtest "
-#define TEST_ERR_OBJ   "test_error"
-#define VERSION_OBJ    "version"
+#define ATTR_LIST_OBJ	"attributes_list"
+#define CMD_OBJ		"command"
+#define CTX_ID_OBJ	"context_id"
+#define COPY_CIPHER_CTX "copy_cipher_ctx"
+#define DEPENDS_OBJ	"depends"
+#define DIGEST_OBJ	"digest"
+#define INPUT_OBJ	"input"
+#define IV_OBJ		"iv"
+#define KEY_FORMAT_OBJ	"format"
+#define KEY_ID_OBJ	"key_id"
+#define KEY_TYPE_OBJ	"key_type"
+#define MAC_OBJ		"mac"
+#define MESS_OBJ	"message"
+#define MODULUS_OBJ	"modulus"
+#define MODE_OBJ	"mode"
+#define NB_KEYS_OBJ	"nb_keys"
+#define OP_TYPE_OBJ	"op_type"
+#define OUTPUT_OBJ	"output"
+#define PRIV_KEY_OBJ	"priv_key"
+#define PUB_KEY_OBJ	"pub_key"
+#define RANDOM_OBJ	"random"
+#define RES_OBJ		"result"
+#define SAVE_OUT_OBJ	"save_output"
+#define SEC_SIZE_OBJ	"security_size"
+#define SIGN_ID_OBJ	"sign_id"
+#define SIGN_OBJ	"signature"
+#define SUBSYSTEM_OBJ	"subsystem"
+#define SUBTEST_OBJ	"subtest "
+#define TEST_ERR_OBJ	"test_error"
+#define VERSION_OBJ	"version"
 
 #define SUBTEST_OBJ_LEN strlen(SUBTEST_OBJ)
 
@@ -106,6 +107,9 @@
 #define IMPORT_HMAC_SM3	     "IMPORT_HMAC_SM3"
 #define IMPORT_RSA	     "IMPORT_RSA"
 #define IMPORT_UNDEFINED     "IMPORT_UNDEFINED"
+#define OP_CTX		     "OP_CONTEXT"
+#define OP_CTX_CANCEL	     "OP_CONTEXT_CANCEL"
+#define OP_CTX_COPY	     "OP_CONTEXT_COPY"
 #define RNG		     "RNG"
 #define SIGN		     "SIGN"
 #define SIGN_MD5	     "SIGN_MD5"
@@ -142,6 +146,7 @@ enum arguments_test_err_case {
 	CIPHER_DIFF_KEY_TYPE,
 	CTX_NULL,
 	CTX_HANDLE_NULL,
+	DST_CPY_ARGS_NULL,
 };
 
 /* Type of export */

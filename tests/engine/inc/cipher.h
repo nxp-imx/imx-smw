@@ -87,4 +87,20 @@ int cipher_final(struct json_object *params,
  */
 void cipher_clear_out_data_list(void);
 
+/**
+ * cipher_copy_node() - Copy a cipher output data node
+ * @dst_ctx_id: Context ID associated to the new node
+ * @src_ctx_id: Context ID associated to the source node
+ *
+ * A new node is created in cipher output data linked list, associated to
+ * parameter @dst_ctx_id. Data present in parameter @src_ctx_id node are copied
+ * in the new node.
+ *
+ * Return:
+ * PASSED			- Success
+ * -INTERNAL			- Source node not found
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed
+ */
+int cipher_copy_node(unsigned int dst_ctx_id, unsigned int src_ctx_id);
+
 #endif /* __CIPHER_H__ */

@@ -1,0 +1,56 @@
+{
+	"subtest 1": {
+		"command": "CIPHER_INIT",
+		"subsystem": "TEE",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"priv_key": [
+			"dce26c6b4cfb286510da4eecd2cffe6c",
+			"df430f33db9b5f77b460679bd49d13ae"
+		],
+		"key_type": "AES",
+		"security_size": 256,
+		"iv": "fdeaa134c8d7379d457175fd1a57d3fc",
+		"context_id": 0
+	},
+	"subtest 2": {
+		"command": "CIPHER_UPDATE",
+		"input": "50e9eee1ac528009e8cbcd356975881f",
+		"save_output": 1,
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "OP_CONTEXT_COPY",
+		"copy_cipher_ctx": 1,
+		"context_id": [
+			0,
+			1
+		],
+		"depends": [
+			1,
+			2
+		]
+	},
+	"subtest 4": {
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "CIPHER_FINAL",
+		"input": "957254b13f91d7c6662d10312052eb00",
+		"output": [
+			"2fa0df722a9fd3b64cb18fb2b3db55ff",
+			"2267422757289413f8f657507412a64c"
+		],
+		"context_id": 1,
+		"depends": 3
+	},
+	"subtest 6": {
+		"command": "CIPHER_FINAL",
+		"context_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 4
+	}
+}

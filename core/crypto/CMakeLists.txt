@@ -22,6 +22,14 @@ add_operation(CIPHER)
 add_operation(CIPHER_MULTI_PART)
 endif()
 
+#
+# If at least one of the operation that supports MULTI_PART is enabled, context
+# features are enabled
+#
+if (ENABLE_CIPHER)
+set(ENABLE_CONTEXT ON)
+endif()
+
 add_library(crypto OBJECT "")
 target_sources(crypto PRIVATE
                crypto_weak.c
@@ -29,5 +37,6 @@ target_sources(crypto PRIVATE
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
                $<$<BOOL:${ENABLE_HMAC}>:hmac.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
-               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>)
+               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
+               $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>)
 target_include_directories(crypto PRIVATE ${INCLUDE_DIR})

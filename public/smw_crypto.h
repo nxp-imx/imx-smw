@@ -115,7 +115,7 @@ struct smw_rng_args {
 struct smw_op_context {
 	/* Outputs */
 	void *handle;
-	unsigned long long reserved;
+	void *reserved;
 };
 
 /**
@@ -337,3 +337,28 @@ int smw_cipher_update(struct smw_cipher_data_args *args);
  * error code.
  */
 int smw_cipher_final(struct smw_cipher_data_args *args);
+
+/**
+ * smw_cancel_operation() - Cancel on-going cryptographic multi-part operation
+ * @args: Pointer to operation context.
+ *
+ * If function succeeds, @args handle field is set to NULL.
+ *
+ * Return:
+ * error code.
+ */
+int smw_cancel_operation(struct smw_op_context *args);
+
+/**
+ * smw_copy_context() - Copy an operation context
+ * @dst: Pointer to destination operation context.
+ * @src: Pointer to source operation context.
+ *
+ * This function copies an initialized or updated source context to a new
+ * created destination context.
+ * Parameter @dst must be allocated by caller.
+ *
+ * Return:
+ * error code.
+ */
+int smw_copy_context(struct smw_op_context *dst, struct smw_op_context *src);

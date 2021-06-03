@@ -76,6 +76,8 @@ enum tee_signature_type {
 #define CMD_CIPHER_INIT	  9
 #define CMD_CIPHER_UPDATE 10
 #define CMD_CIPHER_FINAL  11
+#define CMD_CANCEL_OP	  12
+#define CMD_COPY_CTX	  13
 
 struct hmac_shared_params {
 	enum tee_key_type tee_key_type;

@@ -7,3 +7,4 @@ srcs-y += ta_sign_verify.c
 srcs-y += ta_hmac.c
 srcs-y += ta_rng.c
 srcs-y += ta_cipher.c
+srcs-y += ta_operation_context.c

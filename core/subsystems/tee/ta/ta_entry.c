@@ -12,6 +12,7 @@
 #include "ta_hmac.h"
 #include "ta_rng.h"
 #include "ta_cipher.h"
+#include "ta_operation_context.h"
 
 /**
  * TA_CreateEntryPoint() - Create entry point.
@@ -136,6 +137,10 @@ TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx __maybe_unused,
 		return cipher_update(param_types, params);
 	case CMD_CIPHER_FINAL:
 		return cipher_final(param_types, params);
+	case CMD_CANCEL_OP:
+		return cancel_operation(param_types, params);
+	case CMD_COPY_CTX:
+		return copy_context(param_types, params);
 	default:
 		return TEE_ERROR_BAD_PARAMETERS;
 	}

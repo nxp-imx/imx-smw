@@ -121,4 +121,12 @@ bool tee_hmac_handle(enum operation_id operation_id, void *args, int *status);
  */
 bool tee_cipher_handle(enum operation_id operation_id, void *args, int *status);
 
+/**
+ * tee_get_ctx_ops() - Return TEE context operations structure
+ *
+ * Return:
+ * Pointer to TEE context operations structure
+ */
+struct smw_crypto_context_ops *tee_get_ctx_ops(void);
+
 #endif /* TEE_H */

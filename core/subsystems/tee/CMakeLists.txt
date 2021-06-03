@@ -23,6 +23,14 @@ set(TA_FILE ${TA_BINARY}.ta)
 add_library(tee OBJECT "")
 set_target_properties(tee PROPERTIES C_VISIBILITY_PRESET hidden)
 
+#
+# If at least one of the operation that supports MULTI_PART is enabled, context
+# features are enabled
+#
+if (ENABLE_CIPHER)
+set(ENABLE_CONTEXT ON)
+endif()
+
 target_sources(tee PRIVATE
                tee.c
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>
@@ -30,7 +38,8 @@ target_sources(tee PRIVATE
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
                $<$<BOOL:${ENABLE_HMAC}>:hmac.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
-               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>)
+               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
+               $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>)
 
 target_include_directories(tee PRIVATE
                            ${TA_HOST_INCLUDE_DIR}

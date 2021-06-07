@@ -37,3 +37,8 @@ VERSION=0;
     [SECURITY_OPERATION]
         RNG;
         DEFAULT;
+    [SECURITY_OPERATION]
+        CIPHER;
+        KEY_TYPE_VALUES=AES;
+        MODE_VALUES=CBC:ECB;
+        DEFAULT;

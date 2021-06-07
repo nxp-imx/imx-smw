@@ -587,3 +587,19 @@ smw_crypto_set_cipher_init_handle(struct smw_crypto_cipher_args *args,
 	if (args && args->init_pub && args->init_pub->context)
 		args->init_pub->context->handle = handle;
 }
+
+unsigned int
+smw_crypto_get_cipher_nb_key_buffer(struct smw_crypto_cipher_args *args)
+{
+	unsigned int i;
+	unsigned int nb_buffers = 0;
+
+	/* Key is defined as buffer if ID is not set and buffer set */
+	for (i = 0; i < args->nb_keys; i++) {
+		if (!args->keys_desc[i]->identifier.id &&
+		    smw_crypto_get_cipher_key(args, i))
+			nb_buffers++;
+	}
+
+	return nb_buffers;
+}

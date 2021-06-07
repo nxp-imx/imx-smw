@@ -32,7 +32,8 @@ static struct {
 		   .signature_gen = 0,
 		   .signature_ver = 0,
 		   .hash = 0,
-		   .rng = 0 },
+		   .rng = 0,
+		   .cipher = 0 },
 	  .nvm_status = NVM_STATUS_UNDEF,
 	  .tid = 0,
 	  .mutex = NULL };
@@ -291,12 +292,49 @@ static void close_rng_service(hsm_hdl_t rng_hdl)
 	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
 
+static int open_cipher_service(hsm_hdl_t key_store_hdl, hsm_hdl_t *cipher_hdl)
+{
+	int status = SMW_STATUS_OK;
+
+	hsm_err_t err = HSM_NO_ERROR;
+	open_svc_cipher_args_t open_svc_cipher_args = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	err = hsm_open_cipher_service(key_store_hdl, &open_svc_cipher_args,
+				      cipher_hdl);
+	if (err != HSM_NO_ERROR) {
+		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+		status = SMW_STATUS_SUBSYSTEM_FAILURE;
+		goto end;
+	}
+
+	SMW_DBG_PRINTF(DEBUG, "cipher_hdl: %d\n", *cipher_hdl);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static void close_cipher_service(hsm_hdl_t cipher_hdl)
+{
+	hsm_err_t __maybe_unused err;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_PRINTF(DEBUG, "cipher_hdl: %d\n", cipher_hdl);
+	err = hsm_close_cipher_service(cipher_hdl);
+	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+}
+
 static void reset_handles(void)
 {
 	struct hdl *hdl = &ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	if (hdl->cipher)
+		close_cipher_service(hdl->cipher);
 	if (hdl->rng)
 		close_rng_service(hdl->rng);
 	if (hdl->hash)
@@ -319,6 +357,7 @@ static void reset_handles(void)
 	hdl->signature_ver = 0;
 	hdl->hash = 0;
 	hdl->rng = 0;
+	hdl->cipher = 0;
 }
 
 static void *storage_thread(void *arg)
@@ -473,6 +512,10 @@ int load(void)
 		goto err;
 
 	status = open_rng_service(hdl->session, &hdl->rng);
+	if (status != SMW_STATUS_OK)
+		goto err;
+
+	status = open_cipher_service(hdl->key_store, &hdl->cipher);
 
 err:
 	smw_utils_mutex_unlock(ctx.mutex);
@@ -535,6 +578,17 @@ __weak bool hsm_rng_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
+__weak bool hsm_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
+			      void *args, int *status)
+{
+	(void)hdl;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
 static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -549,8 +603,10 @@ static int execute(enum operation_id operation_id, void *args)
 		goto end;
 	else if (hsm_sign_verify_handle(hdl, operation_id, args, &status))
 		goto end;
+	else if (hsm_rng_handle(hdl, operation_id, args, &status))
+		goto end;
 
-	hsm_rng_handle(hdl, operation_id, args, &status);
+	hsm_cipher_handle(hdl, operation_id, args, &status);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

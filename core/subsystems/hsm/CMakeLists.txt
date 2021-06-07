@@ -26,7 +26,8 @@ target_sources(hsm PRIVATE
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
-               $<$<BOOL:${ENABLE_RNG}>:rng.c>)
+               $<$<BOOL:${ENABLE_RNG}>:rng.c>
+               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>)
 
 target_include_directories(hsm PRIVATE ${INCLUDE_DIR}
                            ${SECO_INCLUDE_DIRS})

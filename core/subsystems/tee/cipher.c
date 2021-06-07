@@ -85,21 +85,6 @@ static unsigned int get_nb_key_id(struct smw_crypto_cipher_args *args)
 	return nb_ids;
 }
 
-static unsigned int get_nb_key_buffer(struct smw_crypto_cipher_args *args)
-{
-	unsigned int i;
-	unsigned int nb_buffers = 0;
-
-	/* Key is defined as buffer if ID is not set and buffer set */
-	for (i = 0; i < args->nb_keys; i++) {
-		if (!args->keys_desc[i]->identifier.id &&
-		    smw_crypto_get_cipher_key(args, i))
-			nb_buffers++;
-	}
-
-	return nb_buffers;
-}
-
 static int import_key_buffer(struct smw_crypto_cipher_args *args,
 			     enum smw_config_key_type_id key_type,
 			     uint32_t **key_ids, unsigned int *nb_ids)
@@ -112,7 +97,7 @@ static int import_key_buffer(struct smw_crypto_cipher_args *args,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	*nb_ids = get_nb_key_buffer(args);
+	*nb_ids = smw_crypto_get_cipher_nb_key_buffer(args);
 
 	/* No key is defined as buffer, no key to import */
 	if (!*nb_ids)

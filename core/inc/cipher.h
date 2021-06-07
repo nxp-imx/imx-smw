@@ -196,4 +196,14 @@ void smw_crypto_set_cipher_ctx_reserved(struct smw_crypto_cipher_args *args,
 void smw_crypto_set_cipher_init_handle(struct smw_crypto_cipher_args *args,
 				       void *handle);
 
+/**
+ * smw_crypto_get_cipher_nb_key_buffer() - Get number of keys defined as buffer
+ * @args: Pointer to internal cipher arguments.
+ *
+ * Return:
+ * Number of keys defined as buffer
+ */
+unsigned int
+smw_crypto_get_cipher_nb_key_buffer(struct smw_crypto_cipher_args *args);
+
 #endif /* __CIPHER_H__ */

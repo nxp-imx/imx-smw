@@ -12,6 +12,7 @@
  * @signature_ver: Signature verification service flow handle
  * @hash: Hash service flow handle
  * @rng: RNG service flow handle
+ * @cipher: Cipher service flow handle
  *
  * This structure stores the HSM handles managed by the SMW library.
  */
@@ -23,6 +24,7 @@ struct hdl {
 	hsm_hdl_t signature_ver;
 	hsm_hdl_t hash;
 	hsm_hdl_t rng;
+	hsm_hdl_t cipher;
 };
 
 /**

@@ -279,15 +279,17 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 	SMW_DBG_PRINTF_COND(ERROR, status != SMW_STATUS_OK,
 			    "%s: Operation failed\n", __func__);
 
-	args->handle = context.handle;
-
-	/* Delete imported ephemeral keys */
-	if (status != SMW_STATUS_OK)
+	/* Delete imported ephemeral keys and update operation context */
+	if (status != SMW_STATUS_OK) {
 		/* TA cipher initialization error code is returned */
 		(void)delete_imported_keys(ephemeral_key_ids, nb_ephemeral_ids);
-	else
+	} else {
+		smw_crypto_set_cipher_init_handle(args, context.handle);
+		smw_crypto_set_cipher_ctx_reserved(args, tee_get_ctx_ops());
+
 		status = delete_imported_keys(ephemeral_key_ids,
 					      nb_ephemeral_ids);
+	}
 
 end:
 	if (ephemeral_key_ids)
@@ -376,14 +378,15 @@ static int cipher(void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	smw_crypto_set_cipher_init_op_context(cipher_args, &op_context);
+
 	/* Cipher initialization */
 	status = cipher_init(cipher_args);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	/* Cipher final */
-	op_context.handle = cipher_args->handle;
-	smw_crypto_set_cipher_op_context(cipher_args, &op_context);
+	smw_crypto_set_cipher_data_op_context(cipher_args, &op_context);
 
 	status = cipher_multi_part_common(cipher_args, CMD_CIPHER_FINAL);
 

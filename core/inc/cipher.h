@@ -9,7 +9,7 @@
 #include "config.h"
 #include "keymgr.h"
 #include "exec.h"
-#include "smw_crypto.h"
+#include "operation_context.h"
 
 /**
  * struct smw_crypto_cipher_args - Internal cipher arguments structure
@@ -27,7 +27,6 @@ struct smw_crypto_cipher_args {
 	unsigned int nb_keys;
 	enum smw_config_cipher_mode_id mode_id;
 	enum smw_config_cipher_op_type_id op_id;
-	void *handle;
 	enum smw_op_step op_step;
 	struct smw_cipher_init_args *init_pub;
 	struct smw_cipher_data_args *data_pub;
@@ -154,14 +153,47 @@ void smw_crypto_set_cipher_output_len(struct smw_crypto_cipher_args *args,
 				      unsigned int len);
 
 /**
- * smw_crypto_set_cipher_op_context() - Set operation context pointer
+ * smw_crypto_set_cipher_data_op_context() - Set cipher data context pointer
  * @args: Pointer to internal cipher arguments.
  * @op_context: Pointer top SMW operation context structure.
  *
  * Return:
  * none
  */
-void smw_crypto_set_cipher_op_context(struct smw_crypto_cipher_args *args,
-				      struct smw_op_context *op_context);
+void smw_crypto_set_cipher_data_op_context(struct smw_crypto_cipher_args *args,
+					   struct smw_op_context *op_context);
+
+/**
+ * smw_crypto_set_cipher_init_op_context() - Set cipher init context pointer
+ * @args: Pointer to internal cipher arguments.
+ * @op_context: Pointer top SMW operation context structure.
+ *
+ * Return:
+ * none
+ */
+void smw_crypto_set_cipher_init_op_context(struct smw_crypto_cipher_args *args,
+					   struct smw_op_context *op_context);
+
+/**
+ * smw_crypto_set_cipher_ctx_reserved() - Set cipher context reserved field
+ * @args: Pointer to internal cipher arguments.
+ * @rsvd: Pointer to subsystem context operation structure.
+ *
+ * Return:
+ * none
+ */
+void smw_crypto_set_cipher_ctx_reserved(struct smw_crypto_cipher_args *args,
+					struct smw_crypto_context_ops *rsvd);
+
+/**
+ * smw_crypto_set_cipher_init_handle() - Set cipher init handle
+ * @args: Pointer to internal cipher arguments.
+ * @handle: Pointer to handle.
+ *
+ * Return:
+ * none
+ */
+void smw_crypto_set_cipher_init_handle(struct smw_crypto_cipher_args *args,
+				       void *handle);
 
 #endif /* __CIPHER_H__ */

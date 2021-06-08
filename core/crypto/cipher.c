@@ -375,12 +375,6 @@ int smw_cipher_init(struct smw_cipher_init_args *args)
 
 	status = smw_utils_execute_init(OPERATION_ID_CIPHER_MULTI_PART,
 					&init_args, subsystem_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	/* Update operation context */
-	args->context->reserved = subsystem_id;
-	args->context->handle = init_args.handle;
 
 end:
 	/* Free keys decriptor allocated in convert_init_args() */
@@ -395,6 +389,7 @@ int smw_cipher_update(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args update_args = { 0 };
+	struct smw_crypto_context_ops *ops;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -410,9 +405,10 @@ int smw_cipher_update(struct smw_cipher_data_args *args)
 	update_args.op_step = SMW_OP_STEP_UPDATE;
 	update_args.data_pub = args;
 
-	status =
-		smw_utils_execute_update(OPERATION_ID_CIPHER_MULTI_PART,
-					 &update_args, args->context->reserved);
+	ops = (struct smw_crypto_context_ops *)args->context->reserved;
+
+	status = smw_utils_execute_update(OPERATION_ID_CIPHER_MULTI_PART,
+					  &update_args, ops->subsystem);
 
 end:
 
@@ -424,6 +420,7 @@ int smw_cipher_final(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args final_args = { 0 };
+	struct smw_crypto_context_ops *ops;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -440,8 +437,10 @@ int smw_cipher_final(struct smw_cipher_data_args *args)
 	final_args.op_step = SMW_OP_STEP_FINAL;
 	final_args.data_pub = args;
 
+	ops = (struct smw_crypto_context_ops *)args->context->reserved;
+
 	status = smw_utils_execute_final(OPERATION_ID_CIPHER_MULTI_PART,
-					 &final_args, args->context->reserved);
+					 &final_args, ops->subsystem);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -558,9 +557,33 @@ smw_crypto_set_cipher_output_len(struct smw_crypto_cipher_args *args,
 }
 
 inline void
-smw_crypto_set_cipher_op_context(struct smw_crypto_cipher_args *args,
-				 struct smw_op_context *op_context)
+smw_crypto_set_cipher_data_op_context(struct smw_crypto_cipher_args *args,
+				      struct smw_op_context *op_context)
 {
 	if (args && args->data_pub)
 		args->data_pub->context = op_context;
+}
+
+inline void
+smw_crypto_set_cipher_init_op_context(struct smw_crypto_cipher_args *args,
+				      struct smw_op_context *op_context)
+{
+	if (args && args->init_pub)
+		args->init_pub->context = op_context;
+}
+
+inline void
+smw_crypto_set_cipher_ctx_reserved(struct smw_crypto_cipher_args *args,
+				   struct smw_crypto_context_ops *rsvd)
+{
+	if (args && args->init_pub && args->init_pub->context)
+		args->init_pub->context->reserved = rsvd;
+}
+
+inline void
+smw_crypto_set_cipher_init_handle(struct smw_crypto_cipher_args *args,
+				  void *handle)
+{
+	if (args && args->init_pub && args->init_pub->context)
+		args->init_pub->context->handle = handle;
 }

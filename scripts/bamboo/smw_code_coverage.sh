@@ -89,6 +89,19 @@ if [[ $# -lt 1 ]]; then
     usage
 fi
 
+daytoday=$(date +%w)
+PR=0
+# Check if the branch is a PR
+if [ ! -z "${bamboo_repository_pr_targetBranch+x}" ] ; then
+    PR=1
+fi
+
+if [[ ${daytoday} == "$bamboo_weekly_day_run" ]] && [[ ${PR} == 0 ]]; then
+    #
+    # Don't run code coverage
+    exit 0
+fi
+
 platform=$1
 
 #

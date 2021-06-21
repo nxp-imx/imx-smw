@@ -81,9 +81,12 @@ job_id=${bamboo_planKey}-${bamboo_buildNumber}
 
 if [[ ${daytoday} == "$bamboo_weekly_day_run" ]] && [[ ${PR} == 0 ]]; then
     #
-    # If executed on Sunday, assume it's a periodic weekly don't
+    # If executed on selected weekly day, assume it's a periodic weekly don't
     # check code change neither do a code coverage report
     #
+
+    if [[ ! -z ${opt_coverage} ]]; then exit 0; fi
+
     eval "./scripts/smw_squad.sh submit_uuu ${platform} \
           ${script_dir} ${yaml_dir} ${squad_id} job_name=${job_id}"
 else

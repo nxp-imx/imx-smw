@@ -1,3 +1,4 @@
 *.swp
 .tmp
 build*/
+Documentations/API/source/conf.py

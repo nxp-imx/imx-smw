@@ -12,12 +12,17 @@ Description and comments: This Security Middleware library (SMW) proposed
   devices.
 
 -------------------------------------------------------------------------------
-Description: 	    SMW Library exported APIs.
+Description:        SMW Library exported APIs.
 Location:           public/*
 License:            BSD 3-Clause
 Origin:             NXP
 -------------------------------------------------------------------------------
-Description: 	    SMW Core Library.
+Description:        SMW Library documentation squeleton.
+Location:           Documentations/*
+License:            BSD 3-Clause
+Origin:             NXP
+-------------------------------------------------------------------------------
+Description:        SMW Core Library.
 Location:           core/*
                     inc/*
                     CMakeLists.txt
@@ -25,28 +30,28 @@ Location:           core/*
 License:            BSD 3-Clause
 Origin:             NXP
 -------------------------------------------------------------------------------
-Description: 	    SMW OSAL interface.
+Description:        SMW OSAL interface.
 Location:           osal/*
 License:            BSD 3-Clause
 Origin:             NXP
 -------------------------------------------------------------------------------
-Description: 	    SMW cmake and other scripts.
+Description:        SMW cmake and other scripts.
 Location:           cmake/*
                     scripts/*
 License:            BSD 3-Clause
 Origin:             NXP
 --------------------------------------------------------------------------------
-Description: 	    Tests suite of the SMW Library.
+Description:        Tests suite of the SMW Library.
 Location:           tests/*
 License:            BSD 3-Clause
 Origin:             NXP
 --------------------------------------------------------------------------------
-Description: 	    PKCS11 Library interfaced with SMW's library.
+Description:        PKCS11 Library interfaced with SMW's library.
 Location:           pkcs11/* (except pkcs11/import/*)
 License:            BSD 3-Clause
 Origin:             NXP
 ---------------------------------------------------------------------------------
-Description: 	    PKCS11 APIs.
+Description:        PKCS11 APIs.
 Location:           pkcs11/import/*
 License:            OASIS IPR Policy
                     (http://www.oasis-open.org/who/intellectualproperty.php)

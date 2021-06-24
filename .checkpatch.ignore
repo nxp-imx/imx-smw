@@ -7,3 +7,4 @@ cmake
 tests/scripts
 tests/lava
 core/inc/compiler.h
+*.rst

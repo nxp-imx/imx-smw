@@ -3,31 +3,112 @@
  * Copyright 2020-2021 NXP
  */
 
-#ifndef SMW_STATUS_H
-#define SMW_STATUS_H
+#ifndef __SMW_STATUS_H__
+#define __SMW_STATUS_H__
+
+/**
+ * enum smw_status_code - Security Middleware status codes
+ *
+ * @SMW_STATUS_OK: Function returned successfully.
+ * @SMW_STATUS_UNKNOWN_NAME: One of the string name arguments is not valid.
+ * @SMW_STATUS_ALLOC_FAILURE: Internal allocation failure.
+ * @SMW_STATUS_INVALID_PARAM: One of the argument parameter is not valid.
+ * @SMW_STATUS_VERSION_NOT_SUPPORTED: Argument version not compatible.
+ * @SMW_STATUS_SUBSYSTEM_LOAD_FAILURE: Load of the Secure Subsystem failed.
+ * @SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE: Unload of the Secure Subsystem failed.
+ * @SMW_STATUS_SUBSYSTEM_FAILURE: Secure Subsystem operation general failure.
+ * @SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED: Subsystem is not configured in the
+ * user configuration.
+ * @SMW_STATUS_OPERATION_NOT_SUPPORTED: Operation is not supported by the Secure Subsystem.
+ * @SMW_STATUS_OPERATION_NOT_CONFIGURED: Operation is not configured in the user configuration.
+ * @SMW_STATUS_OPERATION_FAILURE: Operation general failure. Error returned before calling the
+ * Secure Subsystem.
+ * @SMW_STATUS_NO_KEY_BUFFER: No Key buffer is set in the Key descriptor structure.
+ * @SMW_STATUS_OUTPUT_TOO_SHORT: Output buffer is too small. Output size field is updated with
+ * the expected size.
+ *
+ * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
+ * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
+ * @SMW_STATUS_MUTEX_DESTROY_FAILURE: Mutex destruction has failed.
+ *
+ * @SMW_STATUS_INVALID_VERSION: The version of the configuration file is not supported.
+ * @SMW_STATUS_INVALID_BUFFER: The configuration file passed by OSAL to the library is not valid.
+ * @SMW_STATUS_EOF: The configuration file is syntactically too short.
+ * @SMW_STATUS_SYNTAX_ERROR: The configuration file is syntactically wrong.
+ * @SMW_STATUS_UNKNOWN_ID: The configuration file defines an operation twice or more for a given
+ * subsystem.
+ * @SMW_STATUS_TOO_LARGE_NUMBER: The configuration file defines a too big numeral value.
+ *
+ * @SMW_STATUS_SIGNATURE_INVALID: The Signature is not valid.
+ * @SMW_STATUS_SIGNATURE_LEN_INVALID: The Signature length is not valid.
+ *
+ * Status code classification:
+ ** Common return codes
+ *
+ *	- SMW_STATUS_OK
+ *	- SMW_STATUS_UNKNOWN_NAME
+ *	- SMW_STATUS_ALLOC_FAILURE
+ *	- SMW_STATUS_INVALID_PARAM
+ *	- SMW_STATUS_VERSION_NOT_SUPPORTED
+ *	- SMW_STATUS_SUBSYSTEM_LOAD_FAILURE
+ *	- SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE
+ *	- SMW_STATUS_SUBSYSTEM_FAILURE
+ *	- SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED
+ *	- SMW_STATUS_OPERATION_NOT_SUPPORTED
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED
+ *	- SMW_STATUS_OPERATION_FAILURE
+ *	- SMW_STATUS_NO_KEY_BUFFER
+ *	- SMW_STATUS_OUTPUT_TOO_SHORT
+ *
+ ** Specific return codes - Library initialization
+ *
+ *	- SMW_STATUS_OPS_INVALID,
+ *	- SMW_STATUS_MUTEX_INIT_FAILURE,
+ *	- SMW_STATUS_MUTEX_DESTROY_FAILURE
+ *
+ ** Specific return codes - Configuration file
+ *
+ *	- SMW_STATUS_INVALID_VERSION
+ *	- SMW_STATUS_INVALID_BUFFER
+ *	- SMW_STATUS_EOF
+ *	- SMW_STATUS_SYNTAX_ERROR
+ *	- SMW_STATUS_UNKNOWN_ID
+ *	- SMW_STATUS_TOO_LARGE_NUMBER
+ *
+ ** Specific return codes - Signature
+ *
+ *	- SMW_STATUS_SIGNATURE_INVALID
+ *	- SMW_STATUS_SIGNATURE_LEN_INVALID
+ *
+ */
 
 /* Status codes */
-#define SMW_STATUS_OK			    0
-#define SMW_STATUS_INVALID_VERSION	    1
-#define SMW_STATUS_INVALID_BUFFER	    2
-#define SMW_STATUS_EOF			    3
-#define SMW_STATUS_SYNTAX_ERROR		    4
-#define SMW_STATUS_UNKNOWN_NAME		    5
-#define SMW_STATUS_UNKNOWN_ID		    6
-#define SMW_STATUS_TOO_LARGE_NUMBER	    7
-#define SMW_STATUS_ALLOC_FAILURE	    8
-#define SMW_STATUS_INVALID_PARAM	    9
-#define SMW_STATUS_VERSION_NOT_SUPPORTED    10
-#define SMW_STATUS_SUBSYSTEM_LOAD_FAILURE   11
-#define SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE 12
-#define SMW_STATUS_SUBSYSTEM_FAILURE	    13
-#define SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED 14
-#define SMW_STATUS_OPERATION_NOT_SUPPORTED  15
-#define SMW_STATUS_OPERATION_NOT_CONFIGURED 16
-#define SMW_STATUS_OPERATION_FAILURE	    17
-#define SMW_STATUS_SIGNATURE_INVALID	    18
-#define SMW_STATUS_NO_KEY_BUFFER	    19
-#define SMW_STATUS_OUTPUT_TOO_SHORT	    20
-#define SMW_STATUS_SIGNATURE_LEN_INVALID    21
+enum smw_status_code {
+	SMW_STATUS_OK = 0,
+	SMW_STATUS_INVALID_VERSION,
+	SMW_STATUS_INVALID_BUFFER,
+	SMW_STATUS_EOF,
+	SMW_STATUS_SYNTAX_ERROR,
+	SMW_STATUS_UNKNOWN_NAME, /* 5 */
+	SMW_STATUS_UNKNOWN_ID,
+	SMW_STATUS_TOO_LARGE_NUMBER,
+	SMW_STATUS_ALLOC_FAILURE,
+	SMW_STATUS_INVALID_PARAM,
+	SMW_STATUS_VERSION_NOT_SUPPORTED, /* 10 */
+	SMW_STATUS_SUBSYSTEM_LOAD_FAILURE,
+	SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE,
+	SMW_STATUS_SUBSYSTEM_FAILURE,
+	SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED,
+	SMW_STATUS_OPERATION_NOT_SUPPORTED, /* 15 */
+	SMW_STATUS_OPERATION_NOT_CONFIGURED,
+	SMW_STATUS_OPERATION_FAILURE,
+	SMW_STATUS_SIGNATURE_INVALID,
+	SMW_STATUS_NO_KEY_BUFFER,
+	SMW_STATUS_OUTPUT_TOO_SHORT, /* 20 */
+	SMW_STATUS_SIGNATURE_LEN_INVALID,
+	SMW_STATUS_OPS_INVALID,
+	SMW_STATUS_MUTEX_INIT_FAILURE,
+	SMW_STATUS_MUTEX_DESTROY_FAILURE
+};
 
-#endif /* SMW_STATUS_H */
+#endif /* __SMW_STATUS_H__ */

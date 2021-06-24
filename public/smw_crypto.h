@@ -3,11 +3,16 @@
  * Copyright 2020-2021 NXP
  */
 
+#ifndef __SMW_CRYPTO_H__
+#define __SMW_CRYPTO_H__
+
+#include "smw_strings.h"
+
 /**
  * struct smw_hash_args - Hash arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
- * @algo_name: Algorithm name
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @algo_name: Algorithm name. See &typedef smw_hash_algo_t
  * @input: Location of the stream to be hashed
  * @input_length: Length of the stream to be hashed
  * @output: Location where the digest has to be written
@@ -19,8 +24,8 @@
 struct smw_hash_args {
 	/* Inputs */
 	unsigned char version;
-	const char *subsystem_name;
-	const char *algo_name;
+	smw_subsystem_t subsystem_name;
+	smw_hash_algo_t algo_name;
 	unsigned char *input;
 	unsigned int input_length;
 	/* Outputs */
@@ -31,15 +36,16 @@ struct smw_hash_args {
 /**
  * struct smw_sign_verify_args - Sign or verify arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
- * @key_descriptor: Pointer to a Key descriptor object
- * @algo_name: Hash algorithm name
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @key_descriptor: Pointer to a Key descriptor object.
+ *		    See &struct smw_key_descriptor
+ * @algo_name: Hash algorithm name. See &typedef smw_hash_algo_t
  * @message: Location of the message
  * @message_length: Length of the message
  * @signature: Location of the signature
  * @signature_length: Length of the signature
- * @attributes_list: Sign Verify attributes list.
- * @attributes_list_length: @attributes_list length in bytes.
+ * @attributes_list: Sign Verify attributes list
+ * @attributes_list_length: @attributes_list length in bytes
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default configured Secure Subsystem is used.
@@ -47,9 +53,9 @@ struct smw_hash_args {
 struct smw_sign_verify_args {
 	/* Inputs */
 	unsigned char version;
-	const char *subsystem_name;
+	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_descriptor;
-	const char *algo_name;
+	smw_hash_algo_t algo_name;
 	unsigned char *message;
 	unsigned int message_length;
 	unsigned char *signature;
@@ -61,9 +67,10 @@ struct smw_sign_verify_args {
 /**
  * struct smw_hmac_args - HMAC arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
- * @key_descriptor: Pointer to a Key descriptor object
- * @algo_name: Algorithm name
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @key_descriptor: Pointer to a Key descriptor object.
+ *		    See &struct smw_key_descriptor
+ * @algo_name: Hash algorithm name. See &typedef smw_hash_algo_t
  * @input: Location of the stream to be hash-mac'ed
  * @input_length: Length of the stream to be hashed
  * @output: Location where the MAC has to be written
@@ -75,9 +82,9 @@ struct smw_sign_verify_args {
 struct smw_hmac_args {
 	/* Inputs */
 	unsigned char version;
-	const char *subsystem_name;
+	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_descriptor;
-	const char *algo_name;
+	smw_hash_algo_t algo_name;
 	unsigned char *input;
 	unsigned int input_length;
 	/* Outputs */
@@ -88,7 +95,7 @@ struct smw_hmac_args {
 /**
  * struct smw_rng_args - Random number generator arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @output: Location where the random number has to be written
  * @output_length: Length of the random number
  *
@@ -98,7 +105,7 @@ struct smw_hmac_args {
 struct smw_rng_args {
 	/* Inputs */
 	unsigned char version;
-	const char *subsystem_name;
+	smw_subsystem_t subsystem_name;
 	/* Outputs */
 	unsigned char *output;
 	unsigned int output_length;
@@ -121,28 +128,29 @@ struct smw_op_context {
 /**
  * struct smw_cipher_init_args - Cipher multi-part initialization arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
- * @keys_desc: Pointer to an array of pointers to key descriptors
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @keys_desc: Pointer to an array of pointers to key descriptors.
+ *	       See &struct smw_key_descriptor
  * @nb_keys: Number of entries of @keys_desc
- * @mode_name: Cipher mode name
- * @operation_name: Cipher operation name
+ * @mode_name: Cipher mode name. See &typedef smw_cipher_mode_t.
+ * @operation_name: Cipher operation name. See &typedef smw_cipher_operation_t
  * @iv: Pointer to initialization vector
  * @iv_length: @iv length in bytes
- * @context: Pointer to operation context
+ * @context: Pointer to operation context. See &struct smw_op_context
  *
  * Switch @mode, @iv is optional and represents:
- * - Initialization Vector (CBC, CTS)
- * - Initial Counter Value (CTR)
- * - Tweak Value (XTS)
+ *	- Initialization Vector (CBC, CTS)
+ *	- Initial Counter Value (CTR)
+ *	- Tweak Value (XTS)
  */
 struct smw_cipher_init_args {
 	/* Inputs */
 	unsigned char version;
-	const char *subsystem_name;
+	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor **keys_desc;
 	unsigned int nb_keys;
-	const char *mode_name;
-	const char *operation_name;
+	smw_cipher_mode_t mode_name;
+	smw_cipher_operation_t operation_name;
 	unsigned char *iv;
 	unsigned int iv_length;
 	/* Outputs */
@@ -152,7 +160,7 @@ struct smw_cipher_init_args {
 /**
  * struct smw_cipher_data_args - Cipher data arguments
  * @version: Version of this structure
- * @context: Pointer to operation context
+ * @context: Pointer to operation context. See &struct smw_op_context
  * @input: Input data buffer
  * @input_length: @input length in bytes
  * @output: Output data buffer
@@ -173,8 +181,8 @@ struct smw_cipher_data_args {
 
 /**
  * struct smw_cipher_args - Cipher one-shot arguments
- * @init: Initialization arguments
- * @data: Data arguments
+ * @init: Initialization arguments. See &struct smw_cipher_init_args
+ * @data: Data arguments. See &struct smw_cipher_data_args
  *
  * Field @context present in @init and @data is ignored.
  */
@@ -190,9 +198,10 @@ struct smw_cipher_args {
  * This function computes a hash.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_hash(struct smw_hash_args *args);
+enum smw_status_code smw_hash(struct smw_hash_args *args);
 
 /**
  * smw_sign() - Generate a signature.
@@ -201,9 +210,11 @@ int smw_hash(struct smw_hash_args *args);
  * This function generates a signature.
  *
  * Return:
- * error code.
+ * &enum smw_status_code
+ *	- Common return codes
+ *	- Specific return codes - Signature
  */
-int smw_sign(struct smw_sign_verify_args *args);
+enum smw_status_code smw_sign(struct smw_sign_verify_args *args);
 
 /**
  * smw_verify() - Verify a signature.
@@ -212,9 +223,11 @@ int smw_sign(struct smw_sign_verify_args *args);
  * This function verifies a sigature.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
+ *	- Specific return codes - Signature
  */
-int smw_verify(struct smw_sign_verify_args *args);
+enum smw_status_code smw_verify(struct smw_sign_verify_args *args);
 
 /**
  * smw_hmac() - Compute a HASH-MAC.
@@ -223,9 +236,10 @@ int smw_verify(struct smw_sign_verify_args *args);
  * This function computes a Keyed-Hash Message Authentication Code.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_hmac(struct smw_hmac_args *args);
+enum smw_status_code smw_hmac(struct smw_hmac_args *args);
 
 /**
  * smw_rng() - Compute a random number.
@@ -234,9 +248,10 @@ int smw_hmac(struct smw_hmac_args *args);
  * This function computes a random number.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_rng(struct smw_rng_args *args);
+enum smw_status_code smw_rng(struct smw_rng_args *args);
 
 /**
  * smw_cipher() - Cipher one-shot
@@ -258,9 +273,10 @@ int smw_rng(struct smw_rng_args *args);
  * set it must be coherent with the key ID.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_cipher(struct smw_cipher_args *args);
+enum smw_status_code smw_cipher(struct smw_cipher_args *args);
 
 /**
  * smw_cipher_init() - Cipher multi-part initialization
@@ -278,9 +294,10 @@ int smw_cipher(struct smw_cipher_args *args);
  * Context structure presents in @args must be allocated by the application.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_cipher_init(struct smw_cipher_init_args *args);
+enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args);
 
 /**
  * smw_cipher_update() - Cipher multi-part update
@@ -302,9 +319,10 @@ int smw_cipher_init(struct smw_cipher_init_args *args);
  * is not terminated and the context remains valid.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_cipher_update(struct smw_cipher_data_args *args);
+enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args);
 
 /**
  * smw_cipher_final() - Cipher multi-part final
@@ -334,9 +352,10 @@ int smw_cipher_update(struct smw_cipher_data_args *args);
  * is not terminated and the context remains valid.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_cipher_final(struct smw_cipher_data_args *args);
+enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args);
 
 /**
  * smw_cancel_operation() - Cancel on-going cryptographic multi-part operation
@@ -345,9 +364,10 @@ int smw_cipher_final(struct smw_cipher_data_args *args);
  * If function succeeds, @args handle field is set to NULL.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_cancel_operation(struct smw_op_context *args);
+enum smw_status_code smw_cancel_operation(struct smw_op_context *args);
 
 /**
  * smw_copy_context() - Copy an operation context
@@ -359,6 +379,10 @@ int smw_cancel_operation(struct smw_op_context *args);
  * Parameter @dst must be allocated by caller.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_copy_context(struct smw_op_context *dst, struct smw_op_context *src);
+enum smw_status_code smw_copy_context(struct smw_op_context *dst,
+				      struct smw_op_context *src);
+
+#endif /* __SMW_CRYPTO_H__ */

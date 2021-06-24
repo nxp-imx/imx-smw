@@ -2,45 +2,66 @@
 /*
  * Copyright 2020-2021 NXP
  */
+
 #ifndef __SMW_CONFIG_H__
 #define __SMW_CONFIG_H__
 
 #include <stdbool.h>
 
+#include "smw_strings.h"
+
+/**
+ * DOC:
+ * The configuration APIs allow user of the library to get information about the state of
+ * the Secure Subsystems and the capabilities of the library operations.
+ */
+
 /**
  * smw_config_subsystem_present() - Check if the subsystem is present or not.
- * @subsystem: Name of the subsystem
+ * @subsystem: Name of the subsystem.
  *
  * Return:
- * SMW_STATUS_OK  Subsystem is present
- * error code otherwise
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		@subsystem is present
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@subsystem is NULL
+ *	- SMW_STATUS_UNKNOWN_NAME:
+ *		@subsystem is not a valid string
  */
-int smw_config_subsystem_present(const char *subsystem);
+enum smw_status_code smw_config_subsystem_present(smw_subsystem_t subsystem);
 
 /**
  * smw_config_check_digest() - Check if a digest @algo is supported
- * @subsystem: Name of the subsystem (if NULL default subsystem)
- * @algo: Digest algorithm name
+ * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @algo: Digest algorithm name.
  *
- * Function checks if the digest @algo is supported on the given @subsytem.
+ * Function checks if the digest @algo is supported on the given @subsystem.
  * If @subsystem is NULL, default subsystem digest capability is checked.
  *
  * Return:
- * SMW_STATUS_OK                       Subsystem is present
- * SMW_STATUS_OPERATION_NOT_CONFIGURED Algorithm not supported
- * error code otherwise
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		@algo is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@algo is NULL
+ *	- SMW_STATUS_UNKNOWN_NAME:
+ *		@algo is not a valid string
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		@algo is not supported
  */
-int smw_config_check_digest(const char *subsystem, const char *algo);
+enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
+					     smw_hash_algo_t algo);
 
 /**
  * struct smw_key_info - Key information
- * @key_type_name: Key type name
+ * @key_type_name: Key type name. See &typedef smw_key_type_t
  * @security_size: Key security size in bits
  * @security_size_min: Key security size minimum in bits
  * @security_size_max: Key security size maximum in bits
  */
 struct smw_key_info {
-	const char *key_type_name;
+	smw_key_type_t key_type_name;
 	unsigned int security_size;
 	unsigned int security_size_min;
 	unsigned int security_size_max;
@@ -48,7 +69,7 @@ struct smw_key_info {
 
 /**
  * smw_config_check_generate_key() - Check generate key type
- * @subsystem: Name of the subsystem (if NULL default subsystem)
+ * @subsystem: Name of the subsystem (if NULL default subsystem).
  * @info: Key information
  *
  * Function checks if the key type provided in the @info structure is
@@ -58,32 +79,38 @@ struct smw_key_info {
  * range size in bits supported by the subsystem for the key type. Else
  * checks if the security size is supported.
  *
- * If @subsystem is NULL, default subsystem digest capability is checked.
+ * If @subsystem is NULL, default subsystem key generation is checked.
  *
  * Return:
- * SMW_STATUS_OK                       Subsystem is present
- * SMW_STATUS_OPERATION_NOT_CONFIGURED Algorithm not supported
- * error code otherwise
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		Key type is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@info or @info->key_type_name is NULL
+ *	- SMW_STATUS_UNKNOWN_NAME:
+ *		@info->key_type_name is not a valid string
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		Key type is not supported
  */
-int smw_config_check_generate_key(const char *subsystem,
-				  struct smw_key_info *info);
+enum smw_status_code smw_config_check_generate_key(smw_subsystem_t subsystem,
+						   struct smw_key_info *info);
 
 /**
  * struct smw_signature_info - Signature operation information
- * @key_type_name: Key type name
- * @hash_algo: Hash algorithm name
- * @signature_type: Signature type name
+ * @key_type_name: Key type name. See &typedef smw_key_type_t
+ * @hash_algo: Hash algorithm name. See &typedef smw_hash_algo_t
+ * @signature_type: Signature type name. See &typedef smw_signature_type_t
  */
 struct smw_signature_info {
-	const char *key_type_name;
-	const char *hash_algo;
-	const char *signature_type;
+	smw_key_type_t key_type_name;
+	smw_hash_algo_t hash_algo;
+	smw_signature_type_t signature_type;
 };
 
 /**
  * smw_config_check_sign() - Check if signature generation operation is
  *                           supported
- * @subsystem: Name of the subsystem (if NULL default subsystem)
+ * @subsystem: Name of the subsystem (if NULL default subsystem).
  * @info: Signature information
  *
  * @info key type name field is mandatory.
@@ -92,24 +119,30 @@ struct smw_signature_info {
  * Function checks if the key type provided in the @info structure is
  * supported on the given @subsystem for a signature generation operation.
  * If set, function checks if the hash algorithm is supported on the given
- * @subsytem for the signature generation operation.
+ * @subsystem for the signature generation operation.
  * If set, function checks if the signature type is supported on the given
- * @subsytem for the signature generation operation.
+ * @subsystem for the signature generation operation.
  *
  * If @subsystem is NULL, default subsystem digest capability is checked.
  *
  * Return:
- * SMW_STATUS_OK			- Parameter(s) is(are) supported
- * SMW_STATUS_OPERATION_NOT_CONFIGURED	- One of the parameters is not supported
- * error code otherwise
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		Signature operation is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@info or @info->key_type_name is NULL
+ *	- SMW_STATUS_UNKNOWN_NAME:
+ *		@info->key_type_name is not a valid string
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		Signature operation is not supported
  */
-int smw_config_check_sign(const char *subsystem,
-			  struct smw_signature_info *info);
+enum smw_status_code smw_config_check_sign(smw_subsystem_t subsystem,
+					   struct smw_signature_info *info);
 
 /**
  * smw_config_check_verify() - Check if signature verification operation is
  *                             supported
- * @subsystem: Name of the subsystem (if NULL default subsystem)
+ * @subsystem: Name of the subsystem (if NULL default subsystem).
  * @info: Signature information
  *
  * @info key type name field is mandatory.
@@ -118,51 +151,63 @@ int smw_config_check_sign(const char *subsystem,
  * Function checks if the key type provided in the @info structure is
  * supported on the given @subsystem for a signature verification operation.
  * If set, function checks if the hash algorithm is supported on the given
- * @subsytem for the signature verification operation.
+ * @subsystem for the signature verification operation.
  * If set, function checks if the signature type is supported on the given
- * @subsytem for the signature verification operation.
+ * @subsystem for the signature verification operation.
  *
  * If @subsystem is NULL, default subsystem digest capability is checked.
  *
  * Return:
- * SMW_STATUS_OK			- Parameter(s) is(are) supported
- * SMW_STATUS_OPERATION_NOT_CONFIGURED	- One of the parameters is not supported
- * error code otherwise
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		Verify operation is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@info or @info->key_type_name is NULL
+ *	- SMW_STATUS_UNKNOWN_NAME:
+ *		@info->key_type_name is not a valid string
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		Verify operation is not supported
  */
-int smw_config_check_verify(const char *subsystem,
-			    struct smw_signature_info *info);
+enum smw_status_code smw_config_check_verify(smw_subsystem_t subsystem,
+					     struct smw_signature_info *info);
 
 /**
  * struct smw_cipher_info - Cipher operation information
  * @multipart: True if it's a cipher multi-part operation
- * @key_type_name: Key type name
- * @mode: Operation mode name
- * @op_type: Operation type name
+ * @key_type_name: Key type name. See &typedef smw_key_type_t
+ * @mode: Operation mode name. See &typedef smw_cipher_mode_t
+ * @op_type: Operation type name. See &typedef smw_cipher_operation_t
  */
 struct smw_cipher_info {
 	bool multipart;
-	const char *key_type_name;
-	const char *mode;
-	const char *op_type;
+	smw_key_type_t key_type_name;
+	smw_cipher_mode_t mode;
+	smw_cipher_operation_t op_type;
 };
 
 /**
  * smw_config_check_cipher() - Check if cipher operation is supported
- * @subsystem: Name of the subsystem (if NULL default subsystem)
+ * @subsystem: Name of the subsystem (if NULL default subsystem).
  * @info: Cipher information
  *
- * Function checks if all the fields provided in the @info structure are
+ * Function checks if all fields provided in the @info structure are
  * supported on the given @subsystem for a cipher one-shot or multi-part
  * operation.
  *
  * If @subsystem is NULL, default subsystem cipher capability is checked.
  *
  * Return:
- * SMW_STATUS_OK			- Parameters are supported
- * SMW_STATUS_OPERATION_NOT_CONFIGURED	- One of the parameters is not supported
- * error code otherwise
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		Cipher operation is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@info, @info->key_type_name, @info->mode or @info->op_type is NULL
+ *	- SMW_STATUS_UNKNOWN_NAME:
+ *		@info->key_type_name, @info->mode or @info->op_type is not a valid string
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		Cipher operation is not supported
  */
-int smw_config_check_cipher(const char *subsystem,
-			    struct smw_cipher_info *info);
+enum smw_status_code smw_config_check_cipher(smw_subsystem_t subsystem,
+					     struct smw_cipher_info *info);
 
 #endif /* __SMW_CONFIG_H__ */

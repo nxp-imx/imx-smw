@@ -6,6 +6,8 @@
 #ifndef __SMW_KEYMGR_H__
 #define __SMW_KEYMGR_H__
 
+#include "smw_strings.h"
+
 /**
  * struct smw_keypair_gen - Generic Keypair object
  * @public_data: Pointer to the public key
@@ -40,18 +42,16 @@ struct smw_keypair_rsa {
 
 /**
  * struct smw_keypair_buffer - Keypair buffer
- * @format_name: Defines the encoding format of all buffers
- * @gen: Generic keypair object definition
- * @rsa: RSA keypair object definition
+ * @format_name: Defines the encoding format of all buffers.
+ *		 See &typedef smw_key_format_t
+ * @gen: Generic keypair object definition. See &struct smw_keypair_gen
+ * @rsa: RSA keypair object definition. See &struct smw_keypair_rsa
  *
- * @format_name is a string value among:
- * - "HEX": hexadecimal value (no encoding)
- * - "BASE64": base 64 encodng value
  * By default if format name is not specified,
  * there will be no encoding (equivalent to "HEX")
  */
 struct smw_keypair_buffer {
-	const char *format_name;
+	smw_key_format_t format_name;
 	union {
 		struct smw_keypair_gen gen;
 		struct smw_keypair_rsa rsa;
@@ -60,13 +60,13 @@ struct smw_keypair_buffer {
 
 /**
  * struct smw_key_descriptor - Key descriptor
- * @type_name: Key type name
+ * @type_name: Key type name. See &typedef smw_key_type_t
  * @security_size: Security size in bits
  * @id: Key identifier
- * @buffer: Key pair buffer
+ * @buffer: Key pair buffer. See &struct smw_keypair_buffer
  */
 struct smw_key_descriptor {
-	const char *type_name;
+	smw_key_type_t type_name;
 	unsigned int security_size;
 	unsigned long long id;
 	struct smw_keypair_buffer *buffer;
@@ -75,10 +75,12 @@ struct smw_key_descriptor {
 /**
  * struct smw_generate_key_args - Key generation arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
- * @key_attributes_list: Key attributes list
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @key_attributes_list: Key attributes list.
+ *			 See &typedef smw_attribute_type_t
  * @key_attributes_list_length: Length of the Key attributes list
- * @key_descriptor: Pointer to a Key descriptor object
+ * @key_descriptor: Pointer to a Key descriptor object.
+ *		    See &struct smw_key_descriptor
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default Secure Subsystem configured for
@@ -92,7 +94,7 @@ struct smw_key_descriptor {
  */
 struct smw_generate_key_args {
 	unsigned char version;
-	const char *subsystem_name;
+	smw_subsystem_t subsystem_name;
 	const unsigned char *key_attributes_list;
 	unsigned int key_attributes_list_length;
 	struct smw_key_descriptor *key_descriptor;
@@ -101,11 +103,14 @@ struct smw_generate_key_args {
 /**
  * struct smw_derive_key_args - Key derivation arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
- * @key_descriptor_in: Pointer to a Key descriptor
- * @key_attributes_list: Key attributes list
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @key_descriptor_in: Pointer to a Key descriptor.
+ *		       See &struct smw_key_descriptor
+ * @key_attributes_list: Key attributes list.
+ *			 See &typedef smw_attribute_type_t
  * @key_attributes_list_length: Length of the Key attributes list
- * @key_descriptor_out: Pointer to the new Key decriptor
+ * @key_descriptor_out: Pointer to the new Key decriptor.
+ *		        See &struct smw_key_descriptor
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default Secure Subsystem configured for
@@ -118,7 +123,7 @@ struct smw_generate_key_args {
  */
 struct smw_derive_key_args {
 	unsigned char version;
-	const char *subsystem_name;
+	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_descriptor_in;
 	const unsigned char *key_attributes_list;
 	unsigned int key_attributes_list_length;
@@ -128,21 +133,23 @@ struct smw_derive_key_args {
 /**
  * struct smw_update_key_args - Key update arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  */
 struct smw_update_key_args {
 	unsigned char version;
-	const char *subsystem_name;
+	smw_subsystem_t subsystem_name;
 	//TODO: define smw_update_key_args
 };
 
 /**
  * struct smw_import_key_args - Key import arguments
  * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name
- * @key_attributes_list: Key attributes list
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @key_attributes_list: Key attributes list.
+ *			 See &typedef smw_attribute_type_t
  * @key_attributes_list_length: Length of a Key attributes list
- * @key_descriptor: Pointer to a Key descriptor object
+ * @key_descriptor: Pointer to a Key descriptor object.
+ *		    See &struct smw_key_descriptor
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default Secure Subsystem configured for
@@ -157,7 +164,7 @@ struct smw_update_key_args {
  */
 struct smw_import_key_args {
 	unsigned char version;
-	const char *subsystem_name;
+	smw_subsystem_t subsystem_name;
 	const unsigned char *key_attributes_list;
 	unsigned int key_attributes_list_length;
 	struct smw_key_descriptor *key_descriptor;
@@ -166,9 +173,11 @@ struct smw_import_key_args {
 /**
  * struct smw_export_key_args - Key export arguments
  * @version: Version of this structure
- * @key_attributes_list: Key attributes list
+ * @key_attributes_list: Key attributes list.
+ *			 See &typedef smw_attribute_type_t
  * @key_attributes_list_length: Length of the Key attributes list
- * @key_descriptor: Pointer to a Key descriptor object
+ * @key_descriptor: Pointer to a Key descriptor object.
+ *		    See &struct smw_key_descriptor
  *
  * The @key_descriptor fields @id must be given as input.
  * The @key_descriptor field @buffer is mandatory.
@@ -190,7 +199,8 @@ struct smw_export_key_args {
 /**
  * struct smw_delete_key_args - Key deletion arguments
  * @version: Version of this structure
- * @key_descriptor: Pointer to a Key descriptor object
+ * @key_descriptor: Pointer to a Key descriptor object.
+ *		    See &struct smw_key_descriptor
  *
  * The @key_descriptor fields @id must be given as input.
  * The @key_descriptor fields @buffer is ignored.
@@ -207,9 +217,10 @@ struct smw_delete_key_args {
  * This function generates a Key.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_generate_key(struct smw_generate_key_args *args);
+enum smw_status_code smw_generate_key(struct smw_generate_key_args *args);
 
 /**
  * smw_derive_key() - Derive a Key.
@@ -218,9 +229,10 @@ int smw_generate_key(struct smw_generate_key_args *args);
  * This function derives a Key.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_derive_key(struct smw_derive_key_args *args);
+enum smw_status_code smw_derive_key(struct smw_derive_key_args *args);
 
 /**
  * smw_update_key() - Update a Key.
@@ -229,9 +241,10 @@ int smw_derive_key(struct smw_derive_key_args *args);
  * This function updates the Key attribute list.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_update_key(struct smw_update_key_args *args);
+enum smw_status_code smw_update_key(struct smw_update_key_args *args);
 
 /**
  * smw_import_key() - Import a Key.
@@ -241,9 +254,10 @@ int smw_update_key(struct smw_update_key_args *args);
  * The key must be plain text.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_import_key(struct smw_import_key_args *args);
+enum smw_status_code smw_import_key(struct smw_import_key_args *args);
 
 /**
  * smw_export_key() - Export a Key.
@@ -252,9 +266,10 @@ int smw_import_key(struct smw_import_key_args *args);
  * This function exports a Key.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_export_key(struct smw_export_key_args *args);
+enum smw_status_code smw_export_key(struct smw_export_key_args *args);
 
 /**
  * smw_delete_key() - Delete a Key.
@@ -263,9 +278,10 @@ int smw_export_key(struct smw_export_key_args *args);
  * This function deletes a Key.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_delete_key(struct smw_delete_key_args *args);
+enum smw_status_code smw_delete_key(struct smw_delete_key_args *args);
 
 /**
  * smw_get_key_buffers_lengths() - Gets Key buffers lengths.
@@ -279,9 +295,11 @@ int smw_delete_key(struct smw_delete_key_args *args);
  * The @buffer fields @public_length and @private_length are updated.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor);
+enum smw_status_code
+smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor);
 
 /**
  * smw_get_key_type_name() - Gets the Key type name.
@@ -292,9 +310,11 @@ int smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor);
  * The @descriptor fields @type_name is updated.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_get_key_type_name(struct smw_key_descriptor *descriptor);
+enum smw_status_code
+smw_get_key_type_name(struct smw_key_descriptor *descriptor);
 
 /**
  * smw_get_security_size() - Gets the Security size.
@@ -305,8 +325,10 @@ int smw_get_key_type_name(struct smw_key_descriptor *descriptor);
  * The @descriptor fields @security_size is updated.
  *
  * Return:
- * error code.
+ * See &enum smw_status_code
+ *	- Common return codes
  */
-int smw_get_security_size(struct smw_key_descriptor *descriptor);
+enum smw_status_code
+smw_get_security_size(struct smw_key_descriptor *descriptor);
 
 #endif /* __SMW_KEYMGR_H__ */

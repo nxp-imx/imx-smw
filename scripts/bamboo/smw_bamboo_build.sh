@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+function cleanup {
+    #
+    # Stop venv
+    #
+    deactivate
+}
+trap cleanup EXIT
+
 function usage()
 {
     cat << EOF
@@ -22,13 +30,14 @@ function usage()
       <arch>     : Mandatory architecture aarch32 or aarch64
       <platform> : Mandatory platform
       coverage   : [optional] Enable the code coverage tool
+      doc        : [optional] Archive documentation
 
 EOF
-    exit 1
 }
 
 if [[ $# -lt 2 ]]; then
     usage
+    exit 1
 fi
 
 arch="$1"
@@ -37,6 +46,7 @@ platform="$2"
 shift 2
 
 opt_coverage=
+opt_doc=0
 
 if [[ $# -ne 0 ]]; then
     for arg in "$@"
@@ -46,8 +56,12 @@ if [[ $# -ne 0 ]]; then
                 opt_coverage="coverage"
                 ;;
 
-           *)
-                echo "ERROR: Unknown argument \"${arg}\""
+              doc)
+                opt_doc=1
+                ;;
+
+              *)
+                echo "WARNING: Unknown argument \"${arg}\""
                 usage
                 ;;
         esac
@@ -62,10 +76,16 @@ build_debug="build.${platform}_deb"
 rm -rf "${build_release}"
 rm -rf "${build_debug}"
 
+PR=0
 daytoday=$(date +%w)
 
-# Check if the branch is a PR and it's daily build
-if [ -z "${bamboo_repository_pr_targetBranch+x}" ]; then
+# Check if the branch is a PR
+if [ ! -z "${bamboo_repository_pr_targetBranch+x}" ] ; then
+    PR=1
+fi
+
+# Check if the branch is not a PR and it's daily build
+if [[ ${PR} -eq 0 ]]; then
     if [[ ${daytoday} == "$bamboo_weekly_day_run" ]]; then
         git clean -xdf
     fi
@@ -81,11 +101,21 @@ if [[ -e "${export}/usr/include/hsm/" ]]; then
 fi
 
 #
+# Start venv
+#
+venv_dir="venv_smw"
+eval "python3 -m venv ${venv_dir}"
+eval "source ${venv_dir}/bin/activate"
+
+eval "python3 -m pip install pyelftools pycryptodomex"
+
+#
 # Configure, build and package Release build of all targets
 #
 eval "./scripts/smw_configure.sh ${build_release} ${arch} ${platform}"
 eval "./scripts/smw_build.sh build out=${build_release}"
 eval "./scripts/smw_build.sh package out=${build_release}"
+eval "./scripts/smw_build.sh build docs out=${build_release} format=\"all\""
 
 #
 # Configure, build and package Debug build of all targets
@@ -110,4 +140,26 @@ if [[ ! -z ${opt_coverage} ]]; then
     echo "ROOT_DIR=$PWD" > "gcno_build_${platform}_info.txt"
     echo "BUILD_DIR=${build_debug}" >> "gcno_build_${platform}_info.txt"
     echo "GCNO_TARBALL=${gcno_tarball}" >> "gcno_build_${platform}_info.txt"
+fi
+
+#
+# Archive documentation
+#
+mnt_server="/mnt/ubuntuserver/SharedFiles/security_middleware"
+doc_path="${build_release}/Documentations/API"
+doc_dir_root="Documentations"
+doc_dir_html="html"
+doc_dir_pdf="latex"
+
+if [[ ${PR} -eq 0 ]]; then
+    if [[ ${opt_doc} -eq 1 ]]; then
+        echo "Archiving documentation..."
+        rm -rf "${mnt_server}/${doc_dir_root}"
+        eval "mkdir -p ${mnt_server}/${doc_dir_root}"
+        eval "cp -r ${doc_path}/${doc_dir_html} ${mnt_server}/${doc_dir_root}/."
+        if [[ -n "$(find ${doc_path}/${doc_dir_pdf} -maxdepth 1 -name '*.pdf' -type f -print -quit)" ]]; then
+            eval "mkdir ${mnt_server}/${doc_dir_root}/${doc_dir_pdf}"
+            eval "cp ${doc_path}/${doc_dir_pdf}/*.pdf ${mnt_server}/${doc_dir_root}/${doc_dir_pdf}/."
+        fi
+    fi
 fi

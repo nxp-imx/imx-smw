@@ -93,3 +93,6 @@ add_subdirectory(tests)
 
 # Include PKCS#11 project
 add_subdirectory(pkcs11)
+
+# Include SMW Documentations
+add_subdirectory(Documentations)

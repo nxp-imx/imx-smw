@@ -10,6 +10,7 @@ opt_jsonc_lib=
 opt_coverage="-DCODE_COVERAGE=OFF"
 opt_buildtype="-DCMAKE_BUILD_TYPE=Release"
 opt_verbose="-DVERBOSE=0"
+opt_format=
 
 #
 # Get script name and path
@@ -195,7 +196,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_buildtype} ${opt_verbose}"
     cmd_script="${cmd_script} ${opt_zlib} ${opt_seco}"
     cmd_script="${cmd_script} ${opt_teec} ${opt_tadevkit}"
-    cmd_script="${cmd_script} ${opt_jsonc}"
+    cmd_script="${cmd_script} ${opt_jsonc} ${opt_format}"
 
     mkdir -p "${opt_out}"
     cd "${opt_out}"
@@ -212,6 +213,15 @@ function build_tests()
     fi
 
     eval "make build_tests"
+}
+
+function build_docs()
+{
+    if [[ ! -z ${opt_format} ]]; then
+        eval "cmake .. ${opt_format}"
+    fi
+
+    eval "make docs"
 }
 
 function build()
@@ -243,6 +253,9 @@ function build()
             ;;
         tests)
             build_tests
+            ;;
+        docs)
+            build_docs
             ;;
         *)
             pr_err "Unknwon build option: \"${opt_build}\""
@@ -344,6 +357,40 @@ function jsonc()
     eval "${cmd_script}"
 }
 
+function sphinx()
+{
+    cmd_script="cmake"
+    sphinx_script="${script_dir}/install_sphinx.cmake"
+
+    printf "\033[0;32m\n"
+    printf "***************************************\n"
+    printf " Install sphinx\n"
+    printf "***************************************\n"
+    printf "\033[0m\n"
+
+    cmd_script="${cmd_script} -P ${sphinx_script}"
+
+    printf "Execute %s\n" "${cmd_script}"
+    eval "${cmd_script}"
+}
+
+function linuxdoc()
+{
+    cmd_script="cmake"
+    linuxdoc_script="${script_dir}/install_linuxdoc.cmake"
+
+    printf "\033[0;32m\n"
+    printf "***************************************\n"
+    printf " Install linuxdoc\n"
+    printf "***************************************\n"
+    printf "\033[0m\n"
+
+    cmd_script="${cmd_script} -P ${linuxdoc_script}"
+
+    printf "Execute %s\n" "${cmd_script}"
+    eval "${cmd_script}"
+}
+
 function usage_toolchain()
 {
     printf "\n"
@@ -423,13 +470,15 @@ function usage_configure()
     printf " - Note: all dependencies must be present\n"
     printf "  %s configure out=[dir] coverage debug " "${script_name}"
     printf "verbose=[lvl] zlib=[dir] seco=[dir] teec=[dir] tadevkit=[dir] "
-    printf "arch=[arch] toolpath=[dir] toolname=[name] json=[dir]\n"
+    printf "arch=[arch] toolpath=[dir] toolname=[name] json=[dir] "
+    printf "format=[name]\n"
     printf "    out      = Build directory\n"
     printf "    coverage = [optional] if set enable code coverage tool\n"
     printf "    debug    = [optional] if set build type to debug\n"
     printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
     printf "    toolpath = [optional] Toolchain path where installed\n"
     printf "    toolname = [optional] Toolchain name\n"
+    printf "    format   = [optional] Documentation format\n"
     printf "  To enable HSM subsystem [optional]\n"
     printf "    zlib     = ZLIB library root directory\n"
     printf "    seco     = SECO export directory\n"
@@ -448,9 +497,11 @@ function usage_build()
     printf " - Note: Project must have been configure first\n"
     printf " (ref. %s configure)\n" "${script_name}"
     printf "\n"
-    printf "  %s build [option] out=[dir] jsonc=[dir]\n" "${script_name}"
-    printf "    out   = Build directory\n"
-    printf "    jsonc = [optional] JSON-C export directory (tests build)\n"
+    printf "  %s build [option] out=[dir] jsonc=[dir] " "${script_name}"
+    printf "format=[name]\n"
+    printf "    out    = Build directory\n"
+    printf "    jsonc  = [optional] JSON-C export directory (tests build)\n"
+    printf "    format = [optional] Documentation format (docs)\n"
     printf "\n"
     printf "Note:\n"
     printf "  - If no [option] specified, build all SMW component\n"
@@ -461,6 +512,7 @@ function usage_build()
     printf "  smw      Build SMW library only\n"
     printf "  pkcs11   Build PKCS11 library\n"
     printf "  tests    Build all tests (smw and pkcs11)\n"
+    printf "  docs     Build all documentations\n"
     printf "  all      Build all projects including pksc11 and tests (default)\n"
     printf "\n"
 }
@@ -500,6 +552,22 @@ function usage_package()
     printf "\n"
 }
 
+function usage_sphinx()
+{
+    printf "\n"
+    printf "To install the sphinx tool\n"
+    printf "  %s sphinx" "${script_name}"
+    printf "\n"
+}
+
+function usage_linuxdoc()
+{
+    printf "\n"
+    printf "To install the linuxdoc tool\n"
+    printf "  %s linuxdoc" "${script_name}"
+    printf "\n"
+}
+
 function usage()
 {
     printf "\n"
@@ -516,6 +584,8 @@ function usage()
     usage_build
     usage_install
     usage_package
+    usage_sphinx
+    usage_linuxdoc
 
     exit 1
 }
@@ -626,6 +696,11 @@ do
             opt_hash="${arg#*=}"
             ;;
 
+        format=*)
+            opt_format="${arg#*=}"
+            opt_format="-DFORMAT=${opt_format}"
+            ;;
+
         #
         # Build option
         #
@@ -640,6 +715,9 @@ do
             ;;
         tests)
             opt_build="tests"
+            ;;
+        docs)
+            opt_build="docs"
             ;;
 
         *)
@@ -692,6 +770,14 @@ case ${opt_action} in
 
     package)
         package
+        ;;
+
+    sphinx)
+        sphinx
+        ;;
+
+    linuxdoc)
+        linuxdoc
         ;;
 
     *)

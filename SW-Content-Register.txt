@@ -1,0 +1,54 @@
+NXP Software Content Register
+
+Date Created:             2021 June 29
+
+Package Category:         NXP Security Middleware Library
+License File:             COPYING
+Outgoing License:         BSD 3-Clause
+Type of content:          Source code
+
+Description and comments: This Security Middleware library (SMW) proposed
+  uniform application APIs use to call Secure Subsystems running on NXP
+  devices.
+
+-------------------------------------------------------------------------------
+Description: 	    SMW Library exported APIs.
+Location:           public/*
+License:            BSD 3-Clause
+Origin:             NXP
+-------------------------------------------------------------------------------
+Description: 	    SMW Core Library.
+Location:           core/*
+                    inc/*
+                    CMakeLists.txt
+                    README.md
+License:            BSD 3-Clause
+Origin:             NXP
+-------------------------------------------------------------------------------
+Description: 	    SMW OSAL interface.
+Location:           osal/*
+License:            BSD 3-Clause
+Origin:             NXP
+-------------------------------------------------------------------------------
+Description: 	    SMW cmake and other scripts.
+Location:           cmake/*
+                    scripts/*
+License:            BSD 3-Clause
+Origin:             NXP
+--------------------------------------------------------------------------------
+Description: 	    Tests suite of the SMW Library.
+Location:           tests/*
+License:            BSD 3-Clause
+Origin:             NXP
+--------------------------------------------------------------------------------
+Description: 	    PKCS11 Library interfaced with SMW's library.
+Location:           pkcs11/* (except pkcs11/import/*)
+License:            BSD 3-Clause
+Origin:             NXP
+---------------------------------------------------------------------------------
+Description: 	    PKCS11 APIs.
+Location:           pkcs11/import/*
+License:            OASIS IPR Policy
+                    (http://www.oasis-open.org/who/intellectualproperty.php)
+Origin:             OASIS
+---------------------------------------------------------------------------------

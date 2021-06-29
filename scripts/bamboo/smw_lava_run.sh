@@ -1,6 +1,14 @@
 #!/bin/bash
 set -ex
 
+function cleanup {
+    #
+    # Stop venv
+    #
+    deactivate
+}
+trap cleanup EXIT
+
 function usage()
 {
     cat << EOF
@@ -78,6 +86,13 @@ rm -rf logs && mkdir logs
 
 squad_id=$(echo "$bamboo_planRepository_branchName" | tr / _)_${bamboo_buildNumber}
 job_id=${bamboo_planKey}-${bamboo_buildNumber}
+
+#
+# Start venv
+#
+venv_dir="venv_smw"
+eval "python3 -m venv ${venv_dir}"
+eval "source ${venv_dir}/bin/activate"
 
 if [[ ${daytoday} == "$bamboo_weekly_day_run" ]] && [[ ${PR} == 0 ]]; then
     #

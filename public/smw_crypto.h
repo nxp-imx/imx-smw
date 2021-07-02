@@ -8,6 +8,9 @@
 
 #include "smw_strings.h"
 
+/* Default TLS 1.2 verify data length for Finished message */
+#define TLS12_MAC_FINISH_DEFAULT_LEN 12
+
 /**
  * struct smw_hash_args - Hash arguments
  * @version: Version of this structure
@@ -208,6 +211,7 @@ enum smw_status_code smw_hash(struct smw_hash_args *args);
  * @args: Pointer to the structure that contains the Sign arguments.
  *
  * This function generates a signature.
+ * When TLS_MAC_FINISH attribute is set, the key type must be TLS_MASTER_KEY.
  *
  * Return:
  * &enum smw_status_code

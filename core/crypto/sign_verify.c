@@ -49,13 +49,32 @@ static int store_signature_type(void *attributes, unsigned char *value,
 static int store_salt_len(void *attributes, unsigned char *value,
 			  unsigned int length);
 
+/**
+ * store_tls_mac_finish_label() - Store TLS finished message label.
+ * @attributes: Pointer to attribute structure to fill.
+ * @value: Label string.
+ * @length: Length of @value in bytes.
+ *
+ * The parameter @value is converted in
+ * 'enum smw_config_tls_mac_finish_label_id'.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
+ */
+static int store_tls_mac_finish_label(void *attributes, unsigned char *value,
+				      unsigned int length);
+
 static struct attribute_tlv sign_verify_attributes_tlv_array[] = {
 	{ .type = (const unsigned char *)SIGNATURE_TYPE_STR,
 	  .verify = smw_tlv_verify_enumeration,
 	  .store = store_signature_type },
 	{ .type = (const unsigned char *)SALT_LEN_STR,
 	  .verify = smw_tlv_verify_numeral,
-	  .store = store_salt_len }
+	  .store = store_salt_len },
+	{ .type = (const unsigned char *)TLS_MAC_FINISH_STR,
+	  .verify = smw_tlv_verify_enumeration,
+	  .store = store_tls_mac_finish_label }
 };
 
 /**
@@ -69,6 +88,7 @@ static void set_default_attributes(struct smw_sign_verify_attributes *attr)
 {
 	attr->signature_type = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT;
 	attr->salt_length = 0;
+	attr->tls_label = SMW_CONFIG_TLS_FINISH_ID_INVALID;
 }
 
 static int
@@ -221,6 +241,26 @@ end:
 	return status;
 }
 
+static int store_tls_mac_finish_label(void *attributes, unsigned char *value,
+				      unsigned int length)
+{
+	(void)length;
+
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_sign_verify_attributes *attr = attributes;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!value || !attr)
+		goto end;
+
+	status = smw_config_get_tls_label_id((char *)value, &attr->tls_label);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 {
 	switch (key->identifier.type_id) {
@@ -233,6 +273,9 @@ static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		/* Signature size is modulus size */
 		return BITS_TO_BYTES_SIZE(key->identifier.security_size);
+
+	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY:
+		return TLS12_MAC_FINISH_DEFAULT_LEN;
 
 	default:
 		return 0;

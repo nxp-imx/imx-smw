@@ -27,6 +27,11 @@ static const char *const sign_type_names[] = {
 	[SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PSS] = RSASSA_PSS_STR
 };
 
+static const char *const tls_finish_label_names[] = {
+	[SMW_CONFIG_TLS_FINISH_ID_CLIENT] = TLS_FINISH_CLIENT_STR,
+	[SMW_CONFIG_TLS_FINISH_ID_SERVER] = TLS_FINISH_SERVER_STR
+};
+
 static int read_signature_type_names(char **start, char *end,
 				     unsigned long *bitmap)
 {
@@ -200,6 +205,25 @@ int smw_config_get_signature_type_id(const char *name,
 		status = smw_utils_get_string_index(name, sign_type_names,
 						    SMW_CONFIG_SIGN_TYPE_ID_NB,
 						    id);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_config_get_tls_label_id(const char *name,
+				enum smw_config_tls_finish_label_id *id)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!name)
+		*id = SMW_CONFIG_TLS_FINISH_ID_INVALID;
+	else
+		status =
+			smw_utils_get_string_index(name, tls_finish_label_names,
+						   SMW_CONFIG_TLS_FINISH_ID_NB,
+						   id);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

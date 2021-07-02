@@ -41,7 +41,8 @@ static const char *const key_type_names[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512] = "HMAC_SHA512",
 	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3] = "HMAC_SM3",
 	[SMW_CONFIG_KEY_TYPE_ID_RSA] = "RSA",
-	[SMW_CONFIG_KEY_TYPE_ID_DH] = "DH"
+	[SMW_CONFIG_KEY_TYPE_ID_DH] = "DH",
+	[SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY] = "TLS_MASTER_KEY"
 };
 
 static const char *const key_derive_op_names[] = {

@@ -86,6 +86,7 @@ typedef smw_string_t smw_key_format_t;
  *	- PERSISTENT
  *	- SIGNATURE_TYPE
  *	- RSA_PUB_EXP
+ *	- TLS_MAC_FINISH
  */
 typedef smw_string_t smw_attribute_type_t;
 

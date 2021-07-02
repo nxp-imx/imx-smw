@@ -89,6 +89,13 @@ enum smw_config_kdf_id {
 	SMW_CONFIG_KDF_ID_INVALID
 };
 
+enum smw_config_tls_finish_label_id {
+	SMW_CONFIG_TLS_FINISH_ID_CLIENT,
+	SMW_CONFIG_TLS_FINISH_ID_SERVER,
+	SMW_CONFIG_TLS_FINISH_ID_NB,
+	SMW_CONFIG_TLS_FINISH_ID_INVALID
+};
+
 /**
  * smw_config_init() - Initialize the Configuration module.
  *
@@ -324,5 +331,17 @@ int smw_config_get_cipher_op_type_id(const char *name,
  * SMW_STATUS_OK		- Success
  */
 int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id);
+
+/**
+ * smw_config_get_tls_label_id() - Get TLS MAC finish label ID
+ * @name: Label name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * Return:
+ * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_OK		- Success
+ */
+int smw_config_get_tls_label_id(const char *name,
+				enum smw_config_tls_finish_label_id *id);
 
 #endif /* __CONFIG_H__ */

@@ -10,17 +10,24 @@
 
 #define SALT_LEN_STR "SALT_LEN"
 
+/* TLS finished message label */
+#define TLS_MAC_FINISH_STR    "TLS_MAC_FINISH"
+#define TLS_FINISH_CLIENT_STR "CLIENT"
+#define TLS_FINISH_SERVER_STR "SERVER"
+
 /**
  * struct smw_sign_verify_attributes - Sign Verify attributes list.
  * @signature_type: Type of signature.
  * @salt_length: Optional salt length in bytes.
+ * @tls_mac_finish: TLS finished message label.
  *
- * @salt_length is only for 'RSASSA-PSS' signature type. If not set, the
- * salt length is equal to the hash length.
+ * Parameter @salt_length is only for 'RSASSA-PSS' signature type. If not set,
+ * the salt length is equal to the hash length.
  */
 struct smw_sign_verify_attributes {
 	enum smw_config_sign_type_id signature_type;
 	uint32_t salt_length;
+	enum smw_config_tls_finish_label_id tls_label;
 };
 
 /**

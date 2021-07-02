@@ -55,8 +55,10 @@ Signature
    +--------------+--------------------------+--------------------+
 
 Operations supported:
- - Sign
+ - Sign [2]_
  - Verify
+
+.. [2] Attribute TLS_MAC_FINISH available only when hardware supports it
 
 Random
 ^^^^^^

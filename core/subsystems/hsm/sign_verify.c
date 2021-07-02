@@ -6,7 +6,9 @@
 #include "hsm_api.h"
 
 #include "smw_status.h"
+#include "smw_crypto.h"
 
+#include "compiler.h"
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
@@ -18,6 +20,7 @@
 #include "sign_verify.h"
 
 #include "common.h"
+#include "sign_verify_tls12.h"
 
 #define SIGNATURE_SCHEME_ID(_key_type_id, _security_size, _algo_id,            \
 			    _hsm_signature_scheme_id)                          \
@@ -96,6 +99,14 @@ static uint16_t get_hsm_signature_size(int security_size)
 	return BITS_TO_BYTES_SIZE(security_size) * 2 + 1;
 }
 
+__weak int tls_mac_finish(struct hdl *hdl, void *args)
+{
+	(void)hdl;
+	(void)args;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
 static int sign(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OK;
@@ -122,6 +133,13 @@ static int sign(struct hdl *hdl, void *args)
 		//TODO: first import key, then sign
 		//      for now import is not supported by HSM
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	/* TLS finish case */
+	if (sign_args->attributes.tls_label !=
+	    SMW_CONFIG_TLS_FINISH_ID_INVALID) {
+		status = tls_mac_finish(hdl, args);
 		goto end;
 	}
 

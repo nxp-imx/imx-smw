@@ -217,7 +217,7 @@ static struct mgroup smw_mechanims[] = {
  * CKR_SIGNATURE_INVALID         - Signature is invalid
  * CKR_SIGNATURE_LEN_RANGE       - Signature length is invalid
  */
-static CK_RV smw_status_to_ck_rv(int status)
+static CK_RV smw_status_to_ck_rv(enum smw_status_code status)
 {
 	switch (status) {
 	case SMW_STATUS_OK:
@@ -288,7 +288,7 @@ static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 			  struct mgroup *mgroup)
 {
-	int status;
+	enum smw_status_code status;
 	unsigned int idx;
 	struct mentry *entry;
 	CK_FLAGS slot_flag;
@@ -307,7 +307,7 @@ static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 static void check_keygen_common(CK_SLOT_ID slotid, const char *subsystem,
 				struct mgroup *mgroup)
 {
-	int status;
+	enum smw_status_code status;
 	unsigned int idx;
 	unsigned int idx_algo;
 	struct mentry *entry;
@@ -373,7 +373,7 @@ static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
 	CK_RV ret;
-	int status;
+	enum smw_status_code status;
 	const struct libdev *devinfo;
 	struct libdig_params *params = args;
 	struct smw_hash_args hash_args = { 0 };
@@ -407,7 +407,7 @@ static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 				CK_MECHANISM_INFO_PTR info)
 {
 	CK_RV ret = CKR_OK;
-	int status;
+	enum smw_status_code status;
 	const struct libdev *devinfo;
 	unsigned int idx;
 	struct smw_key_info keyinfo = { 0 };
@@ -485,7 +485,7 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 {
 	CK_RV ret;
 	const struct libdev *devinfo;
-	int status;
+	enum smw_status_code status;
 	struct smw_tlv key_attr = { 0 };
 	struct smw_generate_key_args gen_args = { 0 };
 	struct smw_key_descriptor key = { 0 };
@@ -542,7 +542,7 @@ static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
 			      struct mgroup *mgroup)
 {
-	int status;
+	enum smw_status_code status;
 	unsigned int idx;
 	unsigned int ecdsa_idx;
 	struct smw_signature_info info = { 0 };
@@ -589,7 +589,7 @@ static void check_msign_rsa_common(CK_SLOT_ID slotid, const char *subsystem,
 				   struct mgroup *mgroup,
 				   struct smw_signature_info *info)
 {
-	int status;
+	enum smw_status_code status;
 	unsigned int idx;
 	CK_FLAGS slot_flag;
 	struct mentry *entry;
@@ -650,7 +650,7 @@ static void check_msign_rsa_pss(CK_SLOT_ID slotid, const char *subsystem,
 static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
-	int status;
+	enum smw_status_code status;
 	CK_RV ret = CKR_OK;
 	unsigned int ecdsa_idx;
 	struct smw_signature_info sign_verify_info = { 0 };
@@ -707,7 +707,7 @@ static CK_RV info_msign_rsa_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 				   CK_MECHANISM_INFO_PTR info,
 				   struct smw_signature_info *sign_verify_info)
 {
-	int status;
+	enum smw_status_code status;
 	CK_RV ret = CKR_OK;
 	const struct libdev *devinfo;
 
@@ -782,7 +782,7 @@ static CK_RV op_msign_common(struct smw_sign_verify_args *smw_args,
 			     const char *signature_type)
 {
 	CK_RV ret;
-	int status;
+	enum smw_status_code status;
 	unsigned int i;
 	struct smw_tlv attr = { 0 };
 	struct lib_signature_ctx *ctx = (struct lib_signature_ctx *)params->ctx;
@@ -1025,7 +1025,7 @@ CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
 CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 {
 	CK_RV ret;
-	int status;
+	enum smw_status_code status;
 	CK_SLOT_ID slotid;
 	const struct libdev *devinfo;
 	struct smw_tlv key_attr = { 0 };
@@ -1081,7 +1081,7 @@ end:
 CK_RV libdev_delete_key(unsigned long long key_id)
 {
 	CK_RV ret;
-	int status;
+	enum smw_status_code status;
 	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_delete_key_args key_args = { 0 };
 
@@ -1119,7 +1119,7 @@ CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
 		 CK_ULONG ulRandomLen)
 {
 	CK_RV ret;
-	int status;
+	enum smw_status_code status;
 	CK_SLOT_ID slotid;
 	const struct libdev *devinfo;
 	struct smw_rng_args args = { 0 };

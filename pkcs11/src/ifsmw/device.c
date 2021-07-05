@@ -27,7 +27,7 @@ unsigned int libdev_get_nb_devinfo(void)
 void libdev_set_present(struct libdevice *devices)
 {
 	const struct libdev *devinfo;
-	int status;
+	enum smw_status_code status;
 	unsigned int idx;
 	unsigned int nb_devices = libdev_get_nb_devinfo();
 

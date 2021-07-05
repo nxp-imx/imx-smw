@@ -8,4 +8,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_library(osal OBJECT ${OS}/osal.c)
 set_target_properties(osal PROPERTIES C_VISIBILITY_PRESET hidden)
-target_include_directories(osal PRIVATE ${CMAKE_SOURCE_DIR}/inc)
+target_include_directories(osal
+                           PRIVATE ${CMAKE_SOURCE_DIR}/inc
+                           PUBLIC ${CMAKE_SOURCE_DIR}/public)

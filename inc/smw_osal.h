@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2019-2020 NXP
+ * Copyright 2019-2021 NXP
  */
 
-#ifndef SMW_OSAL_H
-#define SMW_OSAL_H
+#ifndef __SMW_OSAL_H__
+#define __SMW_OSAL_H__
+
+#include "smw_status.h"
 
 /**
  * struct smw_ops - SMW OSAL
@@ -49,9 +51,11 @@ struct smw_ops {
  * then initializes SMW modules.
  *
  * Return:
- * error code.
+ * SMW_STATUS_OK			- Initialization is successful
+ * SMW_STATUS_OPS_INVALID		- @ops is invalid
+ * SMW_STATUS_MUTEX_INIT_FAILURE	- Mutex initialization has failed
  */
-int smw_init(const struct smw_ops *ops);
+enum smw_status_code smw_init(const struct smw_ops *ops);
 
 /**
  * smw_deinit() - Deinitialize the SMW library.
@@ -60,9 +64,10 @@ int smw_init(const struct smw_ops *ops);
  * It frees all memory dynamically allocated by SMW.
  *
  * Return:
- * error code.
+ * SMW_STATUS_OK			- Deinitialization is successful
+ * SMW_STATUS_MUTEX_DESTROY_FAILURE	- Mutex destruction has failed
  */
-int smw_deinit(void);
+enum smw_status_code smw_deinit(void);
 
 /**
  * smw_config_load() - Load a configuration.
@@ -74,9 +79,11 @@ int smw_deinit(void);
  * the content is stored in the Configuration database.
  *
  * Return:
- * error code.
+ * SMW_STATUS_OK		- Configuration load is successful
+ * SMW_STATUS_INVALID_BUFFER	- @buffer is NULL or @size is 0
+ * error code otherwise
  */
-int smw_config_load(char *buffer, unsigned int size);
+enum smw_status_code smw_config_load(char *buffer, unsigned int size);
 
 /**
  * smw_config_unload() - Unload the current configuration.
@@ -89,4 +96,4 @@ int smw_config_load(char *buffer, unsigned int size);
  */
 void smw_config_unload(void);
 
-#endif /* SMW_OSAL_H */
+#endif /* __SMW_OSAL_H__ */

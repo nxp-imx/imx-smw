@@ -336,7 +336,7 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
 		    unsigned int *nb_keys,
 		    struct smw_key_descriptor ***out_keys_desc, int is_api_test)
 {
-	int status;
+	enum smw_status_code status;
 	int res = ERR_CODE(BAD_ARGS);
 	unsigned int i;
 	struct smw_key_descriptor *desc;
@@ -595,7 +595,8 @@ static int set_op_context(json_object *params, int is_api_test,
 }
 
 int cipher(json_object *params, struct common_parameters *common_params,
-	   struct key_identifier_list *key_identifiers, int *ret_status)
+	   struct key_identifier_list *key_identifiers,
+	   enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	unsigned int expected_out_len;
@@ -671,7 +672,7 @@ end:
 
 int cipher_init(json_object *params, struct common_parameters *common_params,
 		struct key_identifier_list *key_identifiers,
-		struct context_list **ctx, int *ret_status)
+		struct context_list **ctx, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;
@@ -747,7 +748,7 @@ end:
 }
 
 int cipher_update(json_object *params, struct common_parameters *common_params,
-		  struct context_list *ctx, int *ret_status)
+		  struct context_list *ctx, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;
@@ -813,7 +814,7 @@ end:
 }
 
 int cipher_final(json_object *params, struct common_parameters *common_params,
-		 struct context_list *ctx, int *ret_status)
+		 struct context_list *ctx, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;

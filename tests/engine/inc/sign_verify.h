@@ -41,7 +41,8 @@
  */
 int sign_verify(int operation, json_object *params,
 		struct common_parameters *common_params, char *algo_name,
-		struct key_identifier_list *key_identifiers, int *ret_status);
+		struct key_identifier_list *key_identifiers,
+		enum smw_status_code *ret_status);
 
 /**
  * sign_clear_signatures_list() - Clear the signatures list.

@@ -78,10 +78,10 @@ static int set_hmac_bad_args(json_object *params, struct smw_hmac_args **args,
 
 int hmac(json_object *params, struct common_parameters *common_params,
 	 char *algo_name, struct key_identifier_list *key_identifiers,
-	 int *ret_status)
+	 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
-	int status = SMW_STATUS_OPERATION_FAILURE;
+	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
 	struct keypair_ops key_test;
 	struct smw_keypair_buffer key_buffer;
 	int key_id = INT_MAX;

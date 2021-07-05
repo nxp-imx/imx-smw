@@ -43,7 +43,7 @@ static struct context_list *ctx_list;
 static int execute_generate_cmd(char *cmd, struct json_object *params,
 				struct common_parameters *common_params,
 				struct key_identifier_list **key_ids,
-				int *status)
+				enum smw_status_code *status)
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
@@ -124,7 +124,7 @@ static int execute_generate_cmd(char *cmd, struct json_object *params,
  */
 static int execute_hash_cmd(char *cmd, struct json_object *params,
 			    struct common_parameters *common_params,
-			    int *status)
+			    enum smw_status_code *status)
 {
 	char *algo_name = NULL;
 
@@ -163,7 +163,8 @@ static int execute_hash_cmd(char *cmd, struct json_object *params,
  */
 static int execute_hmac_cmd(char *cmd, struct json_object *params,
 			    struct common_parameters *common_params,
-			    struct key_identifier_list *key_ids, int *status)
+			    struct key_identifier_list *key_ids,
+			    enum smw_status_code *status)
 {
 	char *algo_name = NULL;
 
@@ -202,7 +203,8 @@ static int execute_hmac_cmd(char *cmd, struct json_object *params,
  */
 static int execute_import_cmd(char *cmd, struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct key_identifier_list **key_ids, int *status)
+			      struct key_identifier_list **key_ids,
+			      enum smw_status_code *status)
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
@@ -283,7 +285,8 @@ static int execute_import_cmd(char *cmd, struct json_object *params,
  */
 static int execute_export_cmd(char *cmd, struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct key_identifier_list *key_ids, int *status)
+			      struct key_identifier_list *key_ids,
+			      enum smw_status_code *status)
 {
 	if (!strcmp(cmd, EXPORT_KEYPAIR))
 		return export_key(params, common_params, EXP_KEYPAIR, key_ids,
@@ -317,7 +320,7 @@ static int execute_sign_verify_cmd(int operation, char *cmd,
 				   struct json_object *params,
 				   struct common_parameters *common_params,
 				   struct key_identifier_list *key_ids,
-				   int *status)
+				   enum smw_status_code *status)
 {
 	char *algo_name = NULL;
 
@@ -357,7 +360,8 @@ static int execute_sign_verify_cmd(int operation, char *cmd,
  * Error code from hash().
  */
 static int execute_rng_cmd(struct json_object *params,
-			   struct common_parameters *common_params, int *status)
+			   struct common_parameters *common_params,
+			   enum smw_status_code *status)
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
@@ -387,7 +391,8 @@ static int execute_rng_cmd(struct json_object *params,
 static int execute_cipher(char *cmd, struct json_object *params,
 			  struct common_parameters *common_params,
 			  struct key_identifier_list *key_ids,
-			  struct context_list **ctx, int *status)
+			  struct context_list **ctx,
+			  enum smw_status_code *status)
 {
 	if (!strcmp(cmd, CIPHER))
 		return cipher(params, common_params, key_ids, status);
@@ -418,7 +423,8 @@ static int execute_cipher(char *cmd, struct json_object *params,
  */
 static int execute_operation_context(char *cmd, struct json_object *params,
 				     struct common_parameters *common_params,
-				     struct context_list **ctx, int *status)
+				     struct context_list **ctx,
+				     enum smw_status_code *status)
 {
 	if (!strcmp(cmd, OP_CTX_CANCEL))
 		return cancel_operation(params, common_params, *ctx, status);
@@ -446,7 +452,8 @@ static int execute_operation_context(char *cmd, struct json_object *params,
 static int execute_command(char *cmd, struct json_object *params,
 			   struct common_parameters *common_params,
 			   struct key_identifier_list **key_ids,
-			   struct context_list **ctx, int *status)
+			   struct context_list **ctx,
+			   enum smw_status_code *status)
 {
 	if (!strcmp(cmd, DELETE))
 		return delete_key(params, common_params, *key_ids, status);
@@ -501,7 +508,7 @@ static int execute_command(char *cmd, struct json_object *params,
  * -BAD_ARGS	- One of the arguments is bad.
  */
 static int update_status(int sub_res, char **sub_status, const char **sub_err,
-			 int *test_status, int status)
+			 int *test_status, enum smw_status_code status)
 {
 	unsigned int idx = 0;
 
@@ -648,7 +655,7 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 			int is_api_test, int *test_status)
 {
 	int res = ERR_CODE(FAILED);
-	int status = SMW_STATUS_OPERATION_FAILURE;
+	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
 	char *command_name = NULL;
 	char *expected_status = NULL;
 	char *sub_status = NULL;

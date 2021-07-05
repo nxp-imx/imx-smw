@@ -31,7 +31,7 @@ static struct signature_list *signatures;
  */
 static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
 {
-	int status = smw_get_key_type_name(key_desc);
+	enum smw_status_code status = smw_get_key_type_name(key_desc);
 
 	if (status != SMW_STATUS_OK)
 		return 0;
@@ -116,10 +116,11 @@ static int set_sign_verify_bad_args(json_object *params,
 
 int sign_verify(int operation, json_object *params,
 		struct common_parameters *common_params, char *algo_name,
-		struct key_identifier_list *key_identifiers, int *ret_status)
+		struct key_identifier_list *key_identifiers,
+		enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
-	int status = SMW_STATUS_OPERATION_FAILURE;
+	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
 	struct keypair_ops key_test;
 	struct smw_keypair_buffer key_buffer;
 	int key_id = INT_MAX;

@@ -23,7 +23,8 @@
  */
 int cancel_operation(json_object *params,
 		     struct common_parameters *common_params,
-		     struct context_list *ctx, int *ret_status);
+		     struct context_list *ctx,
+		     enum smw_status_code *ret_status);
 
 /**
  * copy_context() - Copy operation context
@@ -43,6 +44,6 @@ int cancel_operation(json_object *params,
  * -INTERNAL			- Internal error
  */
 int copy_context(json_object *params, struct common_parameters *common_params,
-		 struct context_list **ctx, int *ret_status);
+		 struct context_list **ctx, enum smw_status_code *ret_status);
 
 #endif /* __OPERATION_CONTEXT_H__ */

@@ -23,7 +23,7 @@
  * @string: smw status string value.
  */
 static const struct smw_status {
-	int status;
+	enum smw_status_code status;
 	char *string;
 } status_codes[] = {
 	SET_STATUS_CODE(SMW_STATUS_OK),
@@ -190,7 +190,7 @@ int get_smw_int_status(int *smw_status, const char *string)
 	return ERR_CODE(UNKNOWN_RESULT);
 }
 
-char *get_smw_string_status(int status)
+char *get_smw_string_status(enum smw_status_code status)
 {
 	unsigned long i = 0;
 

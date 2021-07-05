@@ -31,6 +31,6 @@
  */
 int hmac(json_object *params, struct common_parameters *common_params,
 	 char *algo_name, struct key_identifier_list *key_identifiers,
-	 int *ret_status);
+	 enum smw_status_code *ret_status);
 
 #endif /* __HMAC_H__ */

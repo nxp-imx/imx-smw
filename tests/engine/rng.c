@@ -53,7 +53,7 @@ static int set_rng_bad_args(json_object *params, struct smw_rng_args **args)
 }
 
 int rng(json_object *params, struct common_parameters *common_params,
-	int *ret_status)
+	enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	unsigned int random_len = 0;

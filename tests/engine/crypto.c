@@ -108,7 +108,7 @@ static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
 }
 
 int hash(json_object *params, struct common_parameters *common_params,
-	 char *algo_name, int *ret_status)
+	 char *algo_name, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	unsigned int input_len = 0;

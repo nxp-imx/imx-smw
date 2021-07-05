@@ -23,6 +23,6 @@
  * Error code from set_rng_bad_args().
  */
 int rng(json_object *params, struct common_parameters *common_params,
-	int *ret_status);
+	enum smw_status_code *ret_status);
 
 #endif /* __RNG_H__ */

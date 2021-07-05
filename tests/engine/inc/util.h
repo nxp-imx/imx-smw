@@ -94,8 +94,8 @@ void dbg_dumphex(const char *function, int line, char *msg, void *buf,
 #define CHECK_RESULT(got, exp)                                                 \
 	({                                                                     \
 		int __ret = 0;                                                 \
-		int got_res = got;                                             \
-		int exp_res = exp;                                             \
+		enum smw_status_code got_res = got;                            \
+		enum smw_status_code exp_res = exp;                            \
 		do {                                                           \
 			if (got_res != exp_res) {                              \
 				DBG_PRINT("Expected result is %s, got %s",     \
@@ -143,7 +143,7 @@ int get_smw_int_status(int *smw_status, const char *string);
  * NULL	- Status doesn't exist.
  * SMW status string value otherwise.
  */
-char *get_smw_string_status(int status);
+char *get_smw_string_status(enum smw_status_code status);
 
 /**
  * get_test_name() - Get test name from test definition file.

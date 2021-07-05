@@ -39,6 +39,6 @@ int get_hash_digest_len(char *algo, unsigned int *len);
  * Error code from get_hash_digest_len().
  */
 int hash(json_object *params, struct common_parameters *common_params,
-	 char *algo_type, int *ret_status);
+	 char *algo_type, enum smw_status_code *ret_status);
 
 #endif /* __CRYPTO_H__ */

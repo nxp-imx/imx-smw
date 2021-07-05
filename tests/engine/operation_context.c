@@ -56,7 +56,7 @@ static int bad_params(json_object *params, struct smw_op_context **args,
 
 int cancel_operation(json_object *params,
 		     struct common_parameters *common_params,
-		     struct context_list *ctx, int *ret_status)
+		     struct context_list *ctx, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id;
@@ -101,7 +101,7 @@ int cancel_operation(json_object *params,
 }
 
 int copy_context(json_object *params, struct common_parameters *common_params,
-		 struct context_list **ctx, int *ret_status)
+		 struct context_list **ctx, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int dst_ctx_id = 0;

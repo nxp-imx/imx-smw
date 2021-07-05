@@ -45,7 +45,7 @@ static int set_gen_opt_params(json_object *params,
 			      struct keypair_ops *key_test)
 {
 	int res;
-	int status = SMW_STATUS_INVALID_PARAM;
+	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 	struct smw_key_descriptor *desc;
 	unsigned int public_length = 0;
 	unsigned int modulus_length = 0;
@@ -143,7 +143,7 @@ static int set_export_opt_params(json_object *params,
 				 enum export_type export_type)
 {
 	int res = ERR_CODE(PASSED);
-	int status;
+	enum smw_status_code status;
 	struct smw_key_descriptor tmp_key_desc = { 0 };
 
 	if (!params || !args || !key_test || !exp_key_test)
@@ -506,7 +506,7 @@ static int compare_keys(struct keypair_ops *key_test,
 
 int generate_key(json_object *params, struct common_parameters *common_params,
 		 char *key_type, struct key_identifier_list **key_identifiers,
-		 int *ret_status)
+		 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test;
@@ -587,7 +587,8 @@ exit:
 }
 
 int delete_key(json_object *params, struct common_parameters *common_params,
-	       struct key_identifier_list *key_identifiers, int *ret_status)
+	       struct key_identifier_list *key_identifiers,
+	       enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(FAILED);
 	struct keypair_ops key_test;
@@ -647,7 +648,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 
 int import_key(json_object *params, struct common_parameters *common_params,
 	       char *key_type, struct key_identifier_list **key_identifiers,
-	       int *ret_status)
+	       enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test;
@@ -730,10 +731,11 @@ exit:
 
 int export_key(json_object *params, struct common_parameters *common_params,
 	       enum export_type export_type,
-	       struct key_identifier_list *key_identifiers, int *ret_status)
+	       struct key_identifier_list *key_identifiers,
+	       enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
-	int status = SMW_STATUS_OPERATION_FAILURE;
+	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
 	struct keypair_ops key_test;
 	struct keypair_ops exp_key_test;
 	struct smw_export_key_args args = { 0 };

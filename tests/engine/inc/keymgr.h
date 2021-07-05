@@ -31,7 +31,7 @@
  */
 int generate_key(json_object *params, struct common_parameters *common_params,
 		 char *key_type, struct key_identifier_list **key_identifiers,
-		 int *ret_status);
+		 enum smw_status_code *ret_status);
 
 /**
  * delete_key() - Delete a key.
@@ -50,7 +50,8 @@ int generate_key(json_object *params, struct common_parameters *common_params,
  * Error code from set_del_bad_args().
  */
 int delete_key(json_object *params, struct common_parameters *common_params,
-	       struct key_identifier_list *key_identifiers, int *ret_status);
+	       struct key_identifier_list *key_identifiers,
+	       enum smw_status_code *ret_status);
 
 /**
  * import_key() - Import a key.
@@ -74,7 +75,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
  */
 int import_key(json_object *params, struct common_parameters *common_params,
 	       char *key_type, struct key_identifier_list **key_identifiers,
-	       int *ret_status);
+	       enum smw_status_code *ret_status);
 
 /**
  * export_key() - Export a key.
@@ -98,6 +99,7 @@ int import_key(json_object *params, struct common_parameters *common_params,
  */
 int export_key(json_object *params, struct common_parameters *common_params,
 	       enum export_type export_type,
-	       struct key_identifier_list *key_identifiers, int *ret_status);
+	       struct key_identifier_list *key_identifiers,
+	       enum smw_status_code *ret_status);
 
 #endif /* __KEYMGR_H__ */

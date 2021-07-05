@@ -14,7 +14,8 @@
 #include "common.h"
 #include "config.h"
 
-__export int smw_config_subsystem_present(const char *subsystem)
+__export enum smw_status_code
+smw_config_subsystem_present(smw_subsystem_t subsystem)
 {
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
 
@@ -24,7 +25,8 @@ __export int smw_config_subsystem_present(const char *subsystem)
 	return smw_config_get_subsystem_id(subsystem, &id);
 }
 
-__export int smw_config_check_digest(const char *subsystem, const char *algo)
+__export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
+						      smw_hash_algo_t algo)
 {
 	int status;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
@@ -53,8 +55,9 @@ __export int smw_config_check_digest(const char *subsystem, const char *algo)
 	return SMW_STATUS_OK;
 }
 
-__export int smw_config_check_generate_key(const char *subsystem,
-					   struct smw_key_info *info)
+__export enum smw_status_code
+smw_config_check_generate_key(smw_subsystem_t subsystem,
+			      struct smw_key_info *info)
 {
 	int status;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
@@ -93,7 +96,7 @@ __export int smw_config_check_generate_key(const char *subsystem,
 	return SMW_STATUS_OK;
 }
 
-static int check_sign_verify_common(const char *subsystem,
+static int check_sign_verify_common(smw_subsystem_t subsystem,
 				    struct smw_signature_info *info,
 				    enum operation_id op_id)
 {
@@ -147,20 +150,22 @@ static int check_sign_verify_common(const char *subsystem,
 	return SMW_STATUS_OK;
 }
 
-__export int smw_config_check_sign(const char *subsystem,
-				   struct smw_signature_info *info)
+__export enum smw_status_code
+smw_config_check_sign(smw_subsystem_t subsystem,
+		      struct smw_signature_info *info)
 {
 	return check_sign_verify_common(subsystem, info, OPERATION_ID_SIGN);
 }
 
-__export int smw_config_check_verify(const char *subsystem,
-				     struct smw_signature_info *info)
+__export enum smw_status_code
+smw_config_check_verify(smw_subsystem_t subsystem,
+			struct smw_signature_info *info)
 {
 	return check_sign_verify_common(subsystem, info, OPERATION_ID_VERIFY);
 }
 
-__export int smw_config_check_cipher(const char *subsystem,
-				     struct smw_cipher_info *info)
+__export enum smw_status_code
+smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 {
 	int status;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;

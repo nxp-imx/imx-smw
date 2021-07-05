@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_status.h"
@@ -18,13 +18,13 @@ struct ctx ctx = { .mutex = NULL, .load_count = 0 };
 
 int smw_config_init(void)
 {
-	int status = 0;
+	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_utils_mutex_init(&ctx.mutex);
-
-	if (!status)
+	if (smw_utils_mutex_init(&ctx.mutex))
+		status = SMW_STATUS_MUTEX_INIT_FAILURE;
+	else
 		init_database(false);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -33,19 +33,20 @@ int smw_config_init(void)
 
 int smw_config_deinit(void)
 {
-	int status = 0;
+	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_utils_mutex_destroy(&ctx.mutex);
+	if (smw_utils_mutex_destroy(&ctx.mutex))
+		status = SMW_STATUS_MUTEX_DESTROY_FAILURE;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-int smw_config_load(char *buffer, unsigned int size)
+enum smw_status_code smw_config_load(char *buffer, unsigned int size)
 {
-	int status = SMW_STATUS_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

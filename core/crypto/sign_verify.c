@@ -314,12 +314,12 @@ end:
 	return status;
 }
 
-int smw_sign(struct smw_sign_verify_args *args)
+enum smw_status_code smw_sign(struct smw_sign_verify_args *args)
 {
 	return smw_sign_verify(OPERATION_ID_SIGN, args);
 }
 
-int smw_verify(struct smw_sign_verify_args *args)
+enum smw_status_code smw_verify(struct smw_sign_verify_args *args)
 {
 	return smw_sign_verify(OPERATION_ID_VERIFY, args);
 }

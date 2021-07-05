@@ -987,7 +987,7 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 	return status;
 }
 
-int smw_generate_key(struct smw_generate_key_args *args)
+enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -1076,7 +1076,7 @@ end:
 	return status;
 }
 
-int smw_derive_key(struct smw_derive_key_args *args)
+enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -1105,7 +1105,7 @@ end:
 	return status;
 }
 
-int smw_update_key(struct smw_update_key_args *args)
+enum smw_status_code smw_update_key(struct smw_update_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -1131,7 +1131,7 @@ end:
 	return status;
 }
 
-int smw_import_key(struct smw_import_key_args *args)
+enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -1214,7 +1214,7 @@ end:
 	return status;
 }
 
-int smw_export_key(struct smw_export_key_args *args)
+enum smw_status_code smw_export_key(struct smw_export_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -1304,7 +1304,7 @@ end:
 	return status;
 }
 
-int smw_delete_key(struct smw_delete_key_args *args)
+enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -1330,7 +1330,8 @@ end:
 	return status;
 }
 
-int smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
+enum smw_status_code
+smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
 
@@ -1376,7 +1377,8 @@ end:
 	return status;
 }
 
-int smw_get_key_type_name(struct smw_key_descriptor *descriptor)
+enum smw_status_code
+smw_get_key_type_name(struct smw_key_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
 
@@ -1401,7 +1403,8 @@ end:
 	return status;
 }
 
-int smw_get_security_size(struct smw_key_descriptor *descriptor)
+enum smw_status_code
+smw_get_security_size(struct smw_key_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
 

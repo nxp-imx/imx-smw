@@ -12,7 +12,7 @@
 #include "debug.h"
 #include "utils.h"
 
-__weak int smw_generate_key(struct smw_generate_key_args *args)
+__weak enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 {
 	(void)args;
 
@@ -21,7 +21,7 @@ __weak int smw_generate_key(struct smw_generate_key_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak int smw_derive_key(struct smw_derive_key_args *args)
+__weak enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 {
 	(void)args;
 
@@ -30,7 +30,7 @@ __weak int smw_derive_key(struct smw_derive_key_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak int smw_update_key(struct smw_update_key_args *args)
+__weak enum smw_status_code smw_update_key(struct smw_update_key_args *args)
 {
 	(void)args;
 
@@ -39,7 +39,7 @@ __weak int smw_update_key(struct smw_update_key_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak int smw_import_key(struct smw_import_key_args *args)
+__weak enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 {
 	(void)args;
 
@@ -48,7 +48,7 @@ __weak int smw_import_key(struct smw_import_key_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak int smw_export_key(struct smw_export_key_args *args)
+__weak enum smw_status_code smw_export_key(struct smw_export_key_args *args)
 {
 	(void)args;
 
@@ -57,7 +57,7 @@ __weak int smw_export_key(struct smw_export_key_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak int smw_delete_key(struct smw_delete_key_args *args)
+__weak enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 {
 	(void)args;
 

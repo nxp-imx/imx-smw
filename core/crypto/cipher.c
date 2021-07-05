@@ -297,7 +297,7 @@ static int is_iv_set(struct smw_crypto_cipher_args *args)
 	return SMW_STATUS_OK;
 }
 
-int smw_cipher(struct smw_cipher_args *args)
+enum smw_status_code smw_cipher(struct smw_cipher_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args cipher_args = { 0 };
@@ -348,7 +348,7 @@ end:
 	return status;
 }
 
-int smw_cipher_init(struct smw_cipher_init_args *args)
+enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args init_args = { 0 };
@@ -385,7 +385,7 @@ end:
 	return status;
 }
 
-int smw_cipher_update(struct smw_cipher_data_args *args)
+enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args update_args = { 0 };
@@ -416,7 +416,7 @@ end:
 	return status;
 }
 
-int smw_cipher_final(struct smw_cipher_data_args *args)
+enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args final_args = { 0 };

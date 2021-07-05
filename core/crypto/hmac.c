@@ -99,7 +99,7 @@ void smw_hmac_set_output_length(struct smw_crypto_hmac_args *args,
 		args->pub->output_length = output_length;
 }
 
-int smw_hmac(struct smw_hmac_args *args)
+enum smw_status_code smw_hmac(struct smw_hmac_args *args)
 {
 	int status = SMW_STATUS_OK;
 

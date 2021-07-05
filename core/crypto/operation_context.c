@@ -13,7 +13,7 @@
 #include "subsystems.h"
 #include "operation_context.h"
 
-int smw_cancel_operation(struct smw_op_context *context)
+enum smw_status_code smw_cancel_operation(struct smw_op_context *context)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cancel_op_args args = { .ctx = context };
@@ -43,7 +43,8 @@ end:
 	return status;
 }
 
-int smw_copy_context(struct smw_op_context *dst, struct smw_op_context *src)
+enum smw_status_code smw_copy_context(struct smw_op_context *dst,
+				      struct smw_op_context *src)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_copy_ctx_args args = { .src = src, .dst = dst };

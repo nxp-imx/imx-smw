@@ -95,7 +95,7 @@ void smw_crypto_set_hash_output_length(struct smw_crypto_hash_args *args,
 		args->pub->output_length = output_length;
 }
 
-int smw_hash(struct smw_hash_args *args)
+enum smw_status_code smw_hash(struct smw_hash_args *args)
 {
 	int status = SMW_STATUS_OK;
 

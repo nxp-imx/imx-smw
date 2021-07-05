@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2019-2020 NXP
+ * Copyright 2019-2021 NXP
  */
 
 #include "smw_status.h"
@@ -36,15 +36,16 @@ static int check_ops(const struct smw_ops *ops)
 	return 0;
 }
 
-int smw_init(const struct smw_ops *ops)
+enum smw_status_code smw_init(const struct smw_ops *ops)
 {
-	int status = 0;
+	enum smw_status_code status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = check_ops(ops);
-	if (status)
+	if (check_ops(ops)) {
+		status = SMW_STATUS_OPS_INVALID;
 		goto end;
+	}
 
 	if (ops->critical_section_start)
 		ops->critical_section_start();
@@ -54,7 +55,7 @@ int smw_init(const struct smw_ops *ops)
 		status = smw_config_init();
 	}
 
-	if (!status)
+	if (status == SMW_STATUS_OK)
 		g_smw_ctx.start_count++;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s - Start count: %d\n", __func__,
@@ -68,9 +69,9 @@ end:
 	return status;
 }
 
-int smw_deinit(void)
+enum smw_status_code smw_deinit(void)
 {
-	int status = 0;
+	enum smw_status_code status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -78,7 +79,7 @@ int smw_deinit(void)
 
 	if (g_smw_ctx.start_count == 1) {
 		status = smw_config_deinit();
-		if (status)
+		if (status != SMW_STATUS_OK)
 			goto end;
 	}
 

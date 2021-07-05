@@ -13,7 +13,7 @@
 #include "debug.h"
 #include "utils.h"
 
-__weak int smw_hash(struct smw_hash_args *args)
+__weak enum smw_status_code smw_hash(struct smw_hash_args *args)
 {
 	(void)args;
 
@@ -22,7 +22,7 @@ __weak int smw_hash(struct smw_hash_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak int smw_sign(struct smw_sign_verify_args *args)
+__weak enum smw_status_code smw_sign(struct smw_sign_verify_args *args)
 {
 	(void)args;
 
@@ -31,7 +31,7 @@ __weak int smw_sign(struct smw_sign_verify_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak int smw_verify(struct smw_sign_verify_args *args)
+__weak enum smw_status_code smw_verify(struct smw_sign_verify_args *args)
 {
 	(void)args;
 

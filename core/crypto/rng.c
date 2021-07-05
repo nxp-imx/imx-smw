@@ -61,7 +61,7 @@ unsigned int smw_crypto_get_rng_output_length(struct smw_crypto_rng_args *args)
 	return output_length;
 }
 
-int smw_rng(struct smw_rng_args *args)
+enum smw_status_code smw_rng(struct smw_rng_args *args)
 {
 	int status = SMW_STATUS_OK;
 

@@ -23,11 +23,12 @@ set_target_properties(hsm PROPERTIES C_VISIBILITY_PRESET hidden)
 
 target_sources(hsm PRIVATE
                entry.c common.h
-               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>
+               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c keymgr_derive.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
-               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>)
+               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
+               $<$<BOOL:${ENABLE_TLS12}>:keymgr_derive_tls12.c>)
 
 target_include_directories(hsm PRIVATE ${INCLUDE_DIR}
                            ${SECO_INCLUDE_DIRS})

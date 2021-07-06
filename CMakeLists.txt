@@ -58,6 +58,7 @@ cmake_dependent_option(ENABLE_SIGN_VERIFY "Enable Sign and Verify" ON "ENABLE_KE
 cmake_dependent_option(ENABLE_HMAC "Enable HMAC" ON "ENABLE_KEYMGR_MODULE" OFF)
 cmake_dependent_option(ENABLE_CIPHER "Enable Cipher" ON "ENABLE_KEYMGR_MODULE" OFF)
 option(ENABLE_RNG "Enable Random number generator" ON)
+option(ENABLE_TLS12 "Enable TLS 1.2 features" OFF)
 
 #
 # Define all targets compiler options

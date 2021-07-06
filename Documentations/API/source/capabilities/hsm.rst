@@ -22,6 +22,9 @@ Operations supported:
  - Generate
  - Export (only public key in HEX or Base64 format)
  - Delete
+ - Derive [1]_
+
+.. [1] Only TLS12_KEY_EXCHANGE when hardware supports it
 
 Hash
 ^^^^

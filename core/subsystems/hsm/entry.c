@@ -528,11 +528,6 @@ end:
 	return status;
 }
 
-struct hdl *get_handles_struct(void)
-{
-	return &ctx.hdl;
-}
-
 __weak bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id,
 			   void *args, int *status)
 {
@@ -593,7 +588,7 @@ static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	struct hdl *hdl = get_handles_struct();
+	struct hdl *hdl = &ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -620,4 +615,48 @@ static struct subsystem_func func = { .load = load,
 struct subsystem_func *smw_hsm_get_func(void)
 {
 	return &func;
+}
+
+int convert_hsm_err(hsm_err_t err)
+{
+	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
+
+	switch (err) {
+	case HSM_NO_ERROR:
+		status = SMW_STATUS_OK;
+		break;
+
+	case HSM_INVALID_PARAM:
+	case HSM_INVALID_MESSAGE:
+	case HSM_INVALID_ADDRESS:
+	case HSM_UNKNOWN_HANDLE:
+	case HSM_UNKNOWN_KEY_STORE:
+	case HSM_ID_CONFLICT:
+		status = SMW_STATUS_INVALID_PARAM;
+		break;
+
+	case HSM_OUT_OF_MEMORY:
+		status = SMW_STATUS_ALLOC_FAILURE;
+		break;
+
+	case HSM_UNKNOWN_ID:
+		status = SMW_STATUS_UNKNOWN_ID;
+		break;
+
+	case HSM_FEATURE_NOT_SUPPORTED:
+	case HSM_FEATURE_DISABLED:
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		break;
+
+	case HSM_KEY_STORE_CONFLICT:
+	case HSM_KEY_STORE_AUTH:
+	case HSM_NOT_READY_RATING:
+		status = SMW_STATUS_OPERATION_FAILURE;
+		break;
+
+	default:
+		break;
+	}
+
+	return status;
 }

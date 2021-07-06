@@ -3,8 +3,6 @@
  * Copyright 2020-2021 NXP
  */
 
-#include "hsm_api.h"
-
 #include "smw_status.h"
 
 #include "smw_osal.h"
@@ -48,7 +46,17 @@ static const struct {
 		       .hsm_key_type = HSM_KEY_TYPE_AES_192 },
 		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 		       .security_size = 256,
-		       .hsm_key_type = HSM_KEY_TYPE_AES_256 } };
+		       .hsm_key_type = HSM_KEY_TYPE_AES_256 },
+		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
+		       .security_size = 256,
+		       .hsm_key_type = HSM_KEY_TYPE_HMAC_256 },
+		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
+		       .security_size = 384,
+		       .hsm_key_type = HSM_KEY_TYPE_HMAC_384 },
+		     { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY,
+		       .security_size = TLS12_MASTER_SECRET_SEC_SIZE,
+		       /* There is no HSM master key type value */
+		       .hsm_key_type = 0 } };
 
 static int set_key_type(enum smw_config_key_type_id key_type_id,
 			unsigned short security_size, hsm_key_type_t *key_type)
@@ -195,22 +203,6 @@ static int generate_key(struct hdl *hdl, void *args)
 end:
 	if (out_key && out_key != public_data)
 		SMW_UTILS_FREE(out_key);
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static int derive_key(struct hdl *hdl, void *args)
-{
-	(void)hdl;
-	(void)args;
-
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	//TODO: implement derive_key()
-	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

@@ -3,6 +3,13 @@
  * Copyright 2020-2021 NXP
  */
 
+#ifndef __COMMON_H__
+#define __COMMON_H__
+
+#include <hsm_api.h>
+
+#include "keymgr_derive.h"
+
 /**
  * struct hdl - HSM handles
  * @session: Session handle
@@ -46,16 +53,6 @@ int load(void);
  * error code.
  */
 int unload(void);
-
-/**
- * get_handles_struct() - Get the HSM handles.
- *
- * This function gets the HSM handles.
- *
- * Return:
- * pointer to the HSM handles structure.
- */
-struct hdl *get_handles_struct(void);
 
 /**
  * hsm_key_handle() - Handle the Key operations.
@@ -107,3 +104,24 @@ bool hash_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
  */
 bool sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
 			void *args, int *status);
+
+/**
+ * derive_key() - HSM key derivation operation.
+ * @hdl: Pointer to the HSM handles structure.
+ * @args: Pointer to the derive key arguments.
+ *
+ * Return:
+ * SMW status
+ */
+int derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args);
+
+/**
+ * convert_hsm_err() - Convert HSM error into SMW status.
+ * @err: HSM error code.
+ *
+ * Return:
+ * SMW status
+ */
+int convert_hsm_err(hsm_err_t err);
+
+#endif /* __COMMON_H__ */

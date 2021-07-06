@@ -44,7 +44,7 @@ struct attribute_tlv {
  */
 int read_attributes(const unsigned char *attributes_list,
 		    unsigned int attributes_length, void *attributes,
-		    struct attribute_tlv *tlv_array,
+		    const struct attribute_tlv *tlv_array,
 		    unsigned int tlv_array_size);
 
 #endif /* __ATTR_H__ */

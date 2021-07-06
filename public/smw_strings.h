@@ -35,7 +35,6 @@ typedef smw_string_t smw_subsystem_t;
  *	- HMAC_SHA512
  *	- HMAC_SM3
  *	- RSA
- *	- TLS_MASTER_KEY
  */
 typedef smw_string_t smw_key_type_t;
 

@@ -3,7 +3,11 @@
  * Copyright 2020-2021 NXP
  */
 
+#ifndef __KEYMGR_H__
+#define __KEYMGR_H__
+
 #include <stdint.h>
+#include <stdbool.h>
 
 /* Default RSA public exponent is 65537, which has a length of 3 bytes */
 #define DEFAULT_RSA_PUB_EXP_LEN 3
@@ -113,19 +117,6 @@ struct smw_keymgr_generate_key_args {
 };
 
 /**
- * struct smw_keymgr_derive_key_args - Key derivation arguments
- * @key_descriptor_in: Descriptor of the input Key
- * @key_attributes: Key attributes
- * @key_descriptor_out: Descriptor of the derived Key
- *
- */
-struct smw_keymgr_derive_key_args {
-	struct smw_keymgr_descriptor key_descriptor_in;
-	struct smw_keymgr_attributes key_attributes;
-	struct smw_keymgr_descriptor key_descriptor_out;
-};
-
-/**
  * struct smw_keymgr_update_key_args - Key update arguments
  *
  */
@@ -192,6 +183,18 @@ int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
  * error code.
  */
 int smw_keymgr_free_keypair_buffer(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_get_api_key_id() - Return the API key descriptor id value.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the value of the API key descriptor id value.
+ *
+ * Return:
+ * key descriptor id
+ */
+unsigned long long
+smw_keymgr_get_api_key_id(struct smw_keymgr_descriptor *descriptor);
 
 /**
  * smw_keymgr_get_public_data() - Return the address of the public Key buffer.
@@ -396,6 +399,23 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr);
 
 /**
+ * smw_keymgr_read_attributes() - Read key attributes from list
+ * @key_attrs: Key attributes read.
+ * @attr_list: List (TLV string format) of attribute to read.
+ * @attr_length: Length of the @att_list string.
+ *
+ * This function reads the TLV string @attr_list and set appropriate
+ * key attributes in @key_attrs structure.
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success.
+ * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
+ */
+int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
+			       const unsigned char *attr_list,
+			       unsigned int attr_length);
+
+/**
  * smw_keymgr_get_privacy_id() - Get the Key privacy ID.
  * @type_id: Key type ID.
  * @privacy_id: Key privacy ID.
@@ -407,3 +427,15 @@ void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr);
  */
 int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 			      enum smw_keymgr_privacy_id *privacy_id);
+
+/**
+ * smw_keymgr_build_key_id() - Build unique key ID.
+ * @identifier: Internal key identifier structure
+ *
+ * Return:
+ * Unique key ID.
+ */
+unsigned long long
+smw_keymgr_build_key_id(struct smw_keymgr_identifier *identifier);
+
+#endif /* __KEYMGR_H__ */

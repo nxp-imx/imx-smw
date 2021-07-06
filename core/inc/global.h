@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
+
+#include "smw_osal.h"
 
 /* SMW globals */
 /**

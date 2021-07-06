@@ -29,7 +29,7 @@
  */
 static int fill_attributes(unsigned char *type, unsigned char *value,
 			   unsigned int value_size, void *attributes,
-			   struct attribute_tlv *tlv_array,
+			   const struct attribute_tlv *tlv_array,
 			   unsigned int tlv_array_size)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -60,7 +60,7 @@ end:
 
 int read_attributes(const unsigned char *attributes_list,
 		    unsigned int attributes_length, void *attributes,
-		    struct attribute_tlv *tlv_array,
+		    const struct attribute_tlv *tlv_array,
 		    unsigned int tlv_array_size)
 {
 	int status = SMW_STATUS_INVALID_PARAM;

@@ -12,5 +12,5 @@ endif()
 add_library(keymgr OBJECT "")
 target_sources(keymgr PRIVATE
                keymgr_weak.c
-               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>)
+               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c keymgr_derive.c>)
 target_include_directories(keymgr PRIVATE ${INCLUDE_DIR})

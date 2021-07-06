@@ -89,7 +89,7 @@ static int store_persistent(void *attributes, unsigned char *value,
 static int store_rsa_pub_exp(void *attributes, unsigned char *value,
 			     unsigned int length);
 
-static struct attribute_tlv keymgr_attributes_tlv_array[] = {
+static const struct attribute_tlv keymgr_attributes_tlv_array[] = {
 	{ .type = (const unsigned char *)PERSISTENT_STR,
 	  .verify = smw_tlv_verify_boolean,
 	  .store = store_persistent },
@@ -323,6 +323,36 @@ void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr)
 	attr->rsa_pub_exp_len = 0;
 }
 
+int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
+			       const unsigned char *attr_list,
+			       unsigned int attr_length)
+{
+	int status;
+
+	status = read_attributes(attr_list, attr_length, key_attrs,
+				 keymgr_attributes_tlv_array,
+				 ARRAY_SIZE(keymgr_attributes_tlv_array));
+
+	return status;
+}
+
+unsigned long long
+smw_keymgr_build_key_id(struct smw_keymgr_identifier *identifier)
+{
+	unsigned long long id;
+
+	id = (identifier->id & ID_MASK) << ID_OFFSET;
+	id |= (identifier->security_size & SECURITY_SIZE_MASK)
+	      << SECURITY_SIZE_OFFSET;
+	id |= (identifier->privacy_id & PRIVACY_ID_MASK) << PRIVACY_ID_OFFSET;
+	id |= (identifier->attribute & ATTRIBUTE_MASK) << ATTRIBUTE_OFFSET;
+	id |= (identifier->type_id & TYPE_ID_MASK) << TYPE_ID_OFFSET;
+	id |= (identifier->subsystem_id & SUBSYSTEM_ID_MASK)
+	      << SUBSYSTEM_ID_OFFSET;
+
+	return id;
+}
+
 static int
 generate_key_convert_args(struct smw_generate_key_args *args,
 			  struct smw_keymgr_generate_key_args *converted_args,
@@ -348,11 +378,9 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 	/* Initialize key_attributes parameters to default values */
 	smw_keymgr_set_default_attributes(&converted_args->key_attributes);
 
-	status = read_attributes(args->key_attributes_list,
-				 args->key_attributes_list_length,
-				 &converted_args->key_attributes,
-				 keymgr_attributes_tlv_array,
-				 ARRAY_SIZE(keymgr_attributes_tlv_array));
+	status = smw_keymgr_read_attributes(&converted_args->key_attributes,
+					    args->key_attributes_list,
+					    args->key_attributes_list_length);
 
 	if (status == SMW_STATUS_OK) {
 		/* RSA_PUB_EXP attribute must only be set for RSA key type */
@@ -361,57 +389,6 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 		    converted_args->key_attributes.rsa_pub_exp_len)
 			status = SMW_STATUS_INVALID_PARAM;
 	}
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static int
-derive_key_convert_args(struct smw_derive_key_args *args,
-			struct smw_keymgr_derive_key_args *converted_args,
-			enum subsystem_id *subsystem_id)
-{
-	int status = SMW_STATUS_OK;
-
-	struct smw_key_descriptor *key_descriptor_in = args->key_descriptor_in;
-	struct smw_key_descriptor *key_descriptor_out =
-		args->key_descriptor_out;
-	struct smw_keymgr_descriptor *converted_key_descriptor_in =
-		&converted_args->key_descriptor_in;
-	struct smw_keymgr_descriptor *converted_key_descriptor_out =
-		&converted_args->key_descriptor_out;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (args->version != 0) {
-		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
-		goto end;
-	}
-
-	status =
-		smw_config_get_subsystem_id(args->subsystem_name, subsystem_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = smw_keymgr_convert_descriptor(key_descriptor_in,
-					       converted_key_descriptor_in);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = smw_keymgr_convert_descriptor(key_descriptor_out,
-					       converted_key_descriptor_out);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	/* Initialize key_attributes parameters to default values */
-	smw_keymgr_set_default_attributes(&converted_args->key_attributes);
-
-	status = read_attributes(args->key_attributes_list,
-				 args->key_attributes_list_length,
-				 &converted_args->key_attributes,
-				 keymgr_attributes_tlv_array,
-				 ARRAY_SIZE(keymgr_attributes_tlv_array));
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -470,11 +447,9 @@ import_key_convert_args(struct smw_import_key_args *args,
 	/* Initialize key_attributes parameters to default values */
 	smw_keymgr_set_default_attributes(&converted_args->key_attributes);
 
-	status = read_attributes(args->key_attributes_list,
-				 args->key_attributes_list_length,
-				 &converted_args->key_attributes,
-				 keymgr_attributes_tlv_array,
-				 ARRAY_SIZE(keymgr_attributes_tlv_array));
+	status = smw_keymgr_read_attributes(&converted_args->key_attributes,
+					    args->key_attributes_list,
+					    args->key_attributes_list_length);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -502,11 +477,9 @@ export_key_convert_args(struct smw_export_key_args *args,
 	/* Initialize key_attributes parameters to default values */
 	smw_keymgr_set_default_attributes(&converted_args->key_attributes);
 
-	status = read_attributes(args->key_attributes_list,
-				 args->key_attributes_list_length,
-				 &converted_args->key_attributes,
-				 keymgr_attributes_tlv_array,
-				 ARRAY_SIZE(keymgr_attributes_tlv_array));
+	status = smw_keymgr_read_attributes(&converted_args->key_attributes,
+					    args->key_attributes_list,
+					    args->key_attributes_list_length);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -691,6 +664,14 @@ end:
 	return status;
 }
 
+inline unsigned long long
+smw_keymgr_get_api_key_id(struct smw_keymgr_descriptor *descriptor)
+{
+	SMW_DBG_ASSERT(descriptor && descriptor->pub);
+
+	return descriptor->pub->id;
+}
+
 inline unsigned char *
 smw_keymgr_get_public_data(struct smw_keymgr_descriptor *descriptor)
 {
@@ -814,9 +795,6 @@ smw_keymgr_set_modulus_length(struct smw_keymgr_descriptor *descriptor,
 
 static void set_key_identifier(struct smw_keymgr_descriptor *descriptor)
 {
-	struct smw_keymgr_identifier *identifier = &descriptor->identifier;
-	unsigned long long *id;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_ASSERT(descriptor);
@@ -824,16 +802,7 @@ static void set_key_identifier(struct smw_keymgr_descriptor *descriptor)
 	if (!descriptor->pub)
 		return;
 
-	id = &descriptor->pub->id;
-
-	*id = (identifier->id & ID_MASK) << ID_OFFSET;
-	*id |= (identifier->security_size & SECURITY_SIZE_MASK)
-	       << SECURITY_SIZE_OFFSET;
-	*id |= (identifier->privacy_id & PRIVACY_ID_MASK) << PRIVACY_ID_OFFSET;
-	*id |= (identifier->attribute & ATTRIBUTE_MASK) << ATTRIBUTE_OFFSET;
-	*id |= (identifier->type_id & TYPE_ID_MASK) << TYPE_ID_OFFSET;
-	*id |= (identifier->subsystem_id & SUBSYSTEM_ID_MASK)
-	       << SUBSYSTEM_ID_OFFSET;
+	descriptor->pub->id = smw_keymgr_build_key_id(&descriptor->identifier);
 }
 
 static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
@@ -874,8 +843,15 @@ int smw_keymgr_get_buffers_lengths(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
 		public_length =
 			BITS_TO_BYTES_SIZE(identifier->security_size) * 2;
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_DH:
+		public_length = BITS_TO_BYTES_SIZE(identifier->security_size);
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
@@ -974,6 +950,7 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
+	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY:
 		*privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 		break;
 
@@ -1070,35 +1047,6 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 
 	set_key_identifier(key_desc);
 	set_key_buffer_format(key_desc);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
-{
-	int status = SMW_STATUS_OK;
-
-	struct smw_keymgr_derive_key_args derive_key_args = { 0 };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!args || !args->key_descriptor_in || !args->key_descriptor_out ||
-	    !args->key_descriptor_out->type_name ||
-	    !args->key_descriptor_out->security_size ||
-	    args->key_descriptor_out->id) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
-
-	status = derive_key_convert_args(args, &derive_key_args, &subsystem_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = smw_utils_execute_operation(OPERATION_ID_DERIVE_KEY,
-					     &derive_key_args, subsystem_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

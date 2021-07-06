@@ -3,6 +3,14 @@
  * Copyright 2020-2021 NXP
  */
 
+#ifndef __DEBUG_H__
+#define __DEBUG_H__
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "global.h"
+
 /* Debug levels */
 #define SMW_DBG_LEVEL_NONE    0 /* No trace */
 #define SMW_DBG_LEVEL_ERROR   1 /* Failures of which the user must be aware */
@@ -95,3 +103,5 @@
 			   #exp, __FILE__, __LINE__);                          \
 		SMW_ABORT();                                                   \
 	} while (0)
+
+#endif /* __DEBUG_H__ */

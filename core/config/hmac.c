@@ -146,5 +146,5 @@ int smw_config_get_hmac_algo_id(const char *name,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return smw_utils_get_string_index(name, hmac_algo_names,
-					  SMW_CONFIG_HASH_ALGO_ID_NB, id);
+					  SMW_CONFIG_HMAC_ALGO_ID_NB, id);
 }

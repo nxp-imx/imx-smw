@@ -23,6 +23,7 @@
 #define HMAC_SHA512_KEY "HMAC_SHA512"
 #define HMAC_SM3_KEY	"HMAC_SM3"
 #define RSA_KEY		"RSA"
+#define TLS_MASTER_KEY	"TLS_MASTER_KEY"
 #define UNDEFINED_KEY	"UNDEFINED"
 
 /* List of hash algo */

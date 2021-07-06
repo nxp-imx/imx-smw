@@ -44,6 +44,9 @@ static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
 	if (!strcmp(key_desc->type_name, RSA_KEY))
 		return BITS_TO_BYTES_SIZE(key_desc->security_size);
 
+	if (!strcmp(key_desc->type_name, TLS_MASTER_KEY))
+		return TLS12_MAC_FINISH_DEFAULT_LEN;
+
 	return 0;
 }
 

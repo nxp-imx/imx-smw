@@ -85,6 +85,7 @@ set(CIPHER_LABEL Cipher)
 set(MULTIPART_LABEL Multipart)
 set(CONTEXT_LABEL Context)
 set(DERIVE_LABEL Derive)
+set(TLS_LABEL TLS)
 
 # Include SMW API tests
 include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)

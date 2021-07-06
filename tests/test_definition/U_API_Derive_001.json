@@ -1,0 +1,146 @@
+{
+	"subtest 1": {
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"command": "DERIVE",
+		"version": 255,
+		"subsystem": "DEFAULT",
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"priv_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810"
+			]
+		},
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": { // Subsystem is not set in the config file
+		"command": "DERIVE",
+		"subsystem": "UNDEFINED",
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"priv_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810"
+			]
+		},
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 4": { // Key derivation name function not defined
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "UNDEFINED",
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"priv_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810"
+			]
+		},
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 5": { // Base key descriptor is not set
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"test_error": "KEY_DESC_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Derived key descriptor is not set
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"test_error": "KEY_DESC_OUT_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": { // Attribute list in undefined
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"priv_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810"
+			]
+		},
+		"attributes_list": ["undefined"],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": { // Key base type name not defined
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": {
+			"key_type": "UNDEFINED",
+			"security_size": 256,
+			"priv_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810"
+			]
+		},
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 9": { // Key base format name not defined
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"format": "UNDEFINED",
+			"security_size": 256,
+			"priv_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810"
+			]
+		},
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 10": { // Key type doesn't match key ID
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256
+		},
+		"test_error": "FAKE_KEY_ID",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": { // Security size doesn't match key ID
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": {
+			"key_type": "NIST",
+			"security_size": 384
+		},
+		"test_error": "FAKE_KEY_ID",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 12": { // No key base ID and buffer defined
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 13": { // Key base buffer must be private key for key derivation
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

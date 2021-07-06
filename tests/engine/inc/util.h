@@ -19,6 +19,10 @@
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif /* ARRAY_SIZE */
 
+#ifndef BIT
+#define BIT(n) (1 << (n))
+#endif /* BIT */
+
 #define UCHAR_SHIFT_BYTE(val, byte) ((val) >> ((byte) * (CHAR_BIT)) & UCHAR_MAX)
 
 #ifndef BITS_TO_BYTES_SIZE
@@ -65,6 +69,9 @@
 #define DBG_PRINT_BAD_PARAM(function, param)                                   \
 	printf("%s: '%s' parameter isn't properly set\n", function, param)
 
+#define DBG_PRINT_VALUE_NOTFOUND(param)                                        \
+	printf("%s: '%s' value not found\n", __func__, param)
+
 #define DBG_PRINT_MISS_PARAM(function, param)                                  \
 	printf("%s: '%s' mandatory parameter is missing\n", function, param)
 
@@ -84,6 +91,7 @@ void dbg_dumphex(const char *function, int line, char *msg, void *buf,
 #define DBG_PRINT_ALLOC_FAILURE(function, line)
 #define DBG_PRINT_BAD_ARGS(function)
 #define DBG_PRINT_BAD_PARAM(function, param)
+#define DBG_PRINT_VALUE_NOTFOUND(param)
 #define DBG_PRINT_MISS_PARAM(function, param)
 #define DBG_PRINT(...)
 #define DBG_DHEX(msg, buf, len)
@@ -281,5 +289,30 @@ int util_read_test_error(enum arguments_test_err_case *error,
 int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
 			 unsigned char *expected_buffer,
 			 unsigned int expected_len);
+/**
+ * util_read_json_type() - Read an json-c @key value of type @type
+ * @value: Pointer to the output value read (can be NULL)
+ * @key: Key value to read
+ * @type: data type to read
+ * @params: json-c object where is the @key value
+ *
+ * Searches if the @key value is defined in json-c @params.
+ * Then if @key found, verifies if the @key value type is supported and
+ * correctly defined json-c object.
+ * Finally if the type is correct and the @value is not NULL, reads the
+ * value.
+ *
+ * If @value is NULL, functions is used to find and check if @key exists
+ * and its type is same as @type.
+ *
+ * Return:
+ * PASSED           - Success.
+ * -BAD_PARAM_TYPE  - Parameter type is not correct or not supported.
+ * -BAD_ARGS        - One of the argument is bad.
+ * -VALUE_NOTFOUND  - Value not found.
+ * -FAILED          - Error in definition file
+ */
+int util_read_json_type(void *value, const char *key, enum t_data_type type,
+			json_object *params);
 
 #endif /* __UTIL_H__ */

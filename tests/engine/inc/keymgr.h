@@ -7,6 +7,7 @@
 #define __KEYMGR_H__
 
 #include "json_types.h"
+#include "types.h"
 #include "util_key.h"
 
 /**
@@ -100,6 +101,25 @@ int import_key(json_object *params, struct common_parameters *common_params,
 int export_key(json_object *params, struct common_parameters *common_params,
 	       enum export_type export_type,
 	       struct key_identifier_list *key_identifiers,
+	       enum smw_status_code *ret_status);
+
+/**
+ * derive_key() - Derive a key.
+ * @params: Derive key parameters.
+ * @common_params: Some parameters common to commands.
+ * @key_identifiers: Key identifier linked list where key identifier value
+ *                   will be saved.
+ * @ret_status: Status returned by SMW API.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
+ * -MISSING_PARAMS		- Missing mandatory parameters in @params.
+ * -BAD_RESULT			- SMW API status differs from expected one.
+ * -BAD_ARGS			- One of the arguments is bad.
+ */
+int derive_key(json_object *params, struct common_parameters *common_params,
+	       struct key_identifier_list **key_identifiers,
 	       enum smw_status_code *ret_status);
 
 #endif /* __KEYMGR_H__ */

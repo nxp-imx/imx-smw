@@ -289,6 +289,17 @@ int util_key_add_node(struct key_identifier_list **key_identifiers,
 	node->security_size = key_test->desc.security_size;
 	node->next = NULL;
 
+	if (!node->key_identifier) {
+		/*
+		 * Key is ephemeral. Save public key data to be able to use it
+		 * later
+		 */
+		node->pub_key.data = *key_test->public_data(key_test);
+		node->pub_key.length = *key_test->public_length(key_test);
+	} else {
+		node->pub_key.data = NULL;
+	}
+
 	if (!*key_identifiers) {
 		*key_identifiers = malloc(sizeof(struct key_identifier_list));
 		if (!*key_identifiers) {
@@ -324,6 +335,10 @@ void util_key_clear_list(struct key_identifier_list *key_identifiers)
 	while (head) {
 		del = head;
 		head = head->next;
+
+		if (del->pub_key.data)
+			free(del->pub_key.data);
+
 		free(del);
 	}
 
@@ -404,7 +419,7 @@ int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 	json_object *obj;
 	struct smw_key_descriptor *desc;
 
-	if (!params || !key_test || !key_id) {
+	if (!params || !key_test) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -420,13 +435,15 @@ int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 		desc->security_size = json_object_get_int(obj);
 
 	/* Read test 'key_id' value if defined */
-	if (json_object_object_get_ex(params, KEY_ID_OBJ, &obj)) {
-		/* If multiple keys are used 'key_id' is an array */
-		if (json_object_get_type(obj) == json_type_array) {
-			obj = json_object_array_get_idx(obj, key_idx);
-			*key_id = json_object_get_int(obj);
-		} else {
-			*key_id = json_object_get_int(obj);
+	if (key_id) {
+		if (json_object_object_get_ex(params, KEY_ID_OBJ, &obj)) {
+			/* If multiple keys are used 'key_id' is an array */
+			if (json_object_get_type(obj) == json_type_array) {
+				obj = json_object_array_get_idx(obj, key_idx);
+				*key_id = json_object_get_int(obj);
+			} else {
+				*key_id = json_object_get_int(obj);
+			}
 		}
 	}
 

@@ -303,6 +303,26 @@ static int execute_export_cmd(char *cmd, struct json_object *params,
 }
 
 /**
+ * execute_derive_cmd() - Execute derive command.
+ * @params: Command parameters.
+ * @common_params: Some parameters common to commands.
+ * @key_ids: Pointer to key identifiers list.
+ * @status: Pointer to SMW command status.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from derive_key().
+ */
+static int execute_derive_cmd(struct json_object *params,
+			      struct common_parameters *common_params,
+			      struct key_identifier_list **key_ids,
+			      enum smw_status_code *status)
+{
+	return derive_key(params, common_params, key_ids, status);
+}
+
+/**
  * execute_sign_verify_cmd() - Execute sign or verify command.
  * @operation: SIGN_OPERATION or VERIFY_OPERATION.
  * @cmd: Command name.
@@ -465,6 +485,9 @@ static int execute_command(char *cmd, struct json_object *params,
 					  status);
 	else if (!strncmp(cmd, EXPORT, strlen(EXPORT)))
 		return execute_export_cmd(cmd, params, common_params, *key_ids,
+					  status);
+	else if (!strncmp(cmd, DERIVE, strlen(DERIVE)))
+		return execute_derive_cmd(params, common_params, key_ids,
 					  status);
 	else if (!strncmp(cmd, HASH, strlen(HASH)))
 		return execute_hash_cmd(cmd, params, common_params, status);

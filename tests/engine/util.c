@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "json_util.h"
 #include "util.h"
 #include "types.h"
 #include "smw_keymgr.h"
@@ -66,6 +67,7 @@ struct test_err_case {
 	SET_STATUS_CODE(KEY_DESC_ID_NOT_SET),
 	SET_STATUS_CODE(KEY_DESC_ID_SET),
 	SET_STATUS_CODE(KEY_DESC_NULL),
+	SET_STATUS_CODE(KEY_DESC_OUT_NULL),
 	SET_STATUS_CODE(NB_ERROR_CASE),
 	SET_STATUS_CODE(CIPHER_NO_NB_KEYS),
 	SET_STATUS_CODE(CIPHER_NO_KEYS),
@@ -74,6 +76,8 @@ struct test_err_case {
 	SET_STATUS_CODE(CTX_NULL),
 	SET_STATUS_CODE(CTX_HANDLE_NULL),
 	SET_STATUS_CODE(DST_CPY_ARGS_NULL),
+	SET_STATUS_CODE(TLS12_KDF_ARGS_NULL),
+	SET_STATUS_CODE(FAKE_KEY_ID),
 };
 #undef SET_STATUS_CODE
 
@@ -95,6 +99,7 @@ const struct error list_err[] = {
 	SET_ERR_CODE_AND_NAME(SUBSYSTEM, "SUBSYSTEM ERROR"),
 	SET_ERR_CODE_AND_NAME(NOT_RUN, "NOT RUN"),
 	SET_ERR_CODE_AND_NAME(BAD_PARAM_TYPE, "BAD PARAMETER TYPE"),
+	SET_ERR_CODE_AND_NAME(VALUE_NOTFOUND, "VALUE NOT FOUND"),
 	SET_ERR_CODE_AND_NAME(KEY_NOTFOUND, "KEY NOT FOUND"),
 	SET_ERR_CODE_AND_NAME(ERROR_NOT_DEFINED, "TEST ERROR NOT DEFINED"),
 };
@@ -488,4 +493,86 @@ int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
 	}
 
 	return ERR_CODE(PASSED);
+};
+
+static const unsigned int t_data_2_json_type[] = {
+	[t_boolean] = BIT(json_type_boolean),
+	[t_int] = BIT(json_type_int),
+	[t_string] = BIT(json_type_string),
+	[t_object] = BIT(json_type_object),
+	[t_buffer] = BIT(json_type_int) | BIT(json_type_string) |
+		     BIT(json_type_array),
+	[t_buffer_hex] = BIT(json_type_int) | BIT(json_type_string) |
+			 BIT(json_type_array),
+};
+
+int util_read_json_type(void *value, const char *key, enum t_data_type type,
+			json_object *params)
+{
+	int ret = ERR_CODE(BAD_PARAM_TYPE);
+	struct tbuffer *buf;
+
+	json_type val_type;
+	json_object *obj = NULL;
+
+	if (!params || !key) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	if (type >= ARRAY_SIZE(t_data_2_json_type)) {
+		DBG_PRINT("Parameter %s type \"%d\" not supported", key, type);
+		return ERR_CODE(BAD_PARAM_TYPE);
+	}
+
+	if (!json_object_object_get_ex(params, key, &obj)) {
+		DBG_PRINT_VALUE_NOTFOUND(key);
+		return ERR_CODE(VALUE_NOTFOUND);
+	}
+
+	val_type = json_object_get_type(obj);
+	if (!(BIT(val_type) & t_data_2_json_type[type])) {
+		DBG_PRINT_BAD_PARAM(__func__, key);
+		return ERR_CODE(BAD_PARAM_TYPE);
+	}
+
+	if (value) {
+		switch (type) {
+		case t_boolean:
+			*((bool *)value) = json_object_get_boolean(obj);
+			ret = ERR_CODE(PASSED);
+			break;
+
+		case t_int:
+			*((int *)value) = json_object_get_int(obj);
+			ret = ERR_CODE(PASSED);
+			break;
+
+		case t_string:
+			*((const char **)value) = json_object_get_string(obj);
+			ret = ERR_CODE(PASSED);
+			break;
+
+		case t_buffer_hex:
+			buf = value;
+			buf->data = NULL;
+			buf->length = 0;
+			ret = util_read_hex_buffer(&buf->data, &buf->length,
+						   params, key);
+			break;
+
+		case t_object:
+			*((json_object **)value) = obj;
+			ret = ERR_CODE(PASSED);
+			break;
+
+		default:
+			ret = ERR_CODE(BAD_PARAM_TYPE);
+			break;
+		}
+	} else {
+		ret = ERR_CODE(PASSED);
+	}
+
+	return ret;
 }

@@ -1,0 +1,965 @@
+{
+	"subtest 1": { // TLS 1.2 operation arguments is NULL
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		// "op_type": "TLS12_KEY_EXCHANGE" is hard coded in the test engine
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"test_error": "TLS12_KDF_ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // TLS 1.2 KDF input not set
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": { // TLS 1.2 KDF input length set to 0
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				0,
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": { // Key exchange name is undefined
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "UNDEFINED",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 5": { // Key exchange name is not set
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Encryption name is undefined
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "UNDEFINED",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 7": { // Encryption name is not set
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": { // PRF name is undefined
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "UNDEFINED",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 9": { // PRF name is not set
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": { // Client write IV buffer not allocated with Cipher GCM encryption
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": { // Client write IV buffer length set to 0 with Cipher GCM encryption
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": [
+				0,
+				"55555555"
+			],
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 12": { // Server write IV buffer length not allocated with Cipher GCM encryption
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 13": { // Server write IV buffer length set to 0 with Cipher GCM encryption
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": [
+				0,
+				"55555555"
+			],
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 14": { // Key base type not supported
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 15": { // RSA key base with bad key exchange
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "RSA",
+			"security_size": 2048,
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"91f4b43229bfd57e6d12bec4340a92e5",
+				"3a252fc6e3af69a375ca1aaed05651dd",
+				"f99457045d82168deb360940e016ecfd",
+				"b381db45267baf72308deb47cba3ff7a",
+				"0c1d7d31e363fb31f8f35cc662e4d410",
+				"b39b6bbac5ed2bfc00b33669aad08cbc",
+				"c277d56337c6dd3af1888ea569a5ae35",
+				"cc28a213639e439ba4c6b90b8e7097c3",
+				"aada01fa04f7b5621cf61044f342672d",
+				"7b5284e1f024c89590b56272749b3b3e",
+				"bd56ce3064f52348ecce80f44b462bbe",
+				"7fcfefaa980310daca6a9d11c7936427",
+				"576b8445f0d5cf5738e294303cb00314",
+				"6568e02115e84ee97bffda9b9b57deb7",
+				"377fbb316f1e69a763b1ec1265454e60",
+				"bf18ea22e64bf5142b3bcb8833800abd"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 16": { // ECDH key base with bad key exchange
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "DH_DSS",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 17": { // DH key base with bad key exchange
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "DH",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 18": { // Key base private buffer set
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"priv_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 19": { // Key base public buffer length set to 0
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				0,
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 20": { // RSA modulus is missing
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "RSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "RSA",
+			"security_size": 2048,
+			"pub_key": [
+				"010001"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 21": { // RSA modulus length is set to 0
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "RSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "RSA",
+			"security_size": 2048,
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				0,
+				"91f4b43229bfd57e6d12bec4340a92e5",
+				"3a252fc6e3af69a375ca1aaed05651dd",
+				"f99457045d82168deb360940e016ecfd",
+				"b381db45267baf72308deb47cba3ff7a",
+				"0c1d7d31e363fb31f8f35cc662e4d410",
+				"b39b6bbac5ed2bfc00b33669aad08cbc",
+				"c277d56337c6dd3af1888ea569a5ae35",
+				"cc28a213639e439ba4c6b90b8e7097c3",
+				"aada01fa04f7b5621cf61044f342672d",
+				"7b5284e1f024c89590b56272749b3b3e",
+				"bd56ce3064f52348ecce80f44b462bbe",
+				"7fcfefaa980310daca6a9d11c7936427",
+				"576b8445f0d5cf5738e294303cb00314",
+				"6568e02115e84ee97bffda9b9b57deb7",
+				"377fbb316f1e69a763b1ec1265454e60",
+				"bf18ea22e64bf5142b3bcb8833800abd"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 22": { // Key derived public length too short
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 1,
+			"server_w_enc_key_id": 2,
+			"master_sec_key_id": 3
+		},
+		"op_output": {
+			"key_id": 0,
+			"pub_key": [
+				32,
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

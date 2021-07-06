@@ -106,12 +106,14 @@ struct keypair_ops {
  * @id: Local ID of the key identifier. Comes from test definition file.
  * @key_identifier: Key identifier assigned by SMW.
  * @security_size: Key security size.
+ * @pub_key: Public key data buffer structure. Used for ephemeral keys.
  * @next: Pointer to next node.
  */
 struct key_identifier_node {
 	unsigned int id;
 	unsigned long long key_identifier;
 	unsigned int security_size;
+	struct tbuffer pub_key;
 	struct key_identifier_node *next;
 };
 

@@ -23,6 +23,9 @@
 #define MODULUS_OBJ	"modulus"
 #define MODE_OBJ	"mode"
 #define NB_KEYS_OBJ	"nb_keys"
+#define OP_ARGS_OBJ	"op_args"
+#define OP_INPUT_OBJ	"op_input"
+#define OP_OUTPUT_OBJ	"op_output"
 #define OP_TYPE_OBJ	"op_type"
 #define OUTPUT_OBJ	"output"
 #define PRIV_KEY_OBJ	"priv_key"
@@ -129,6 +132,7 @@
 #define VERIFY_SHA512	     "VERIFY_SHA512"
 #define VERIFY_SM3	     "VERIFY_SM3"
 #define VERIFY_UNDEFINED     "VERIFY_UNDEFINED"
+#define DERIVE		     "DERIVE"
 
 /* 'test_error' parameter values */
 enum arguments_test_err_case {
@@ -139,14 +143,17 @@ enum arguments_test_err_case {
 	KEY_DESC_ID_NOT_SET,
 	KEY_DESC_ID_SET, /* 5 */
 	KEY_DESC_NULL,
+	KEY_DESC_OUT_NULL,
 	NB_ERROR_CASE,
 	CIPHER_NO_NB_KEYS,
-	CIPHER_NO_KEYS,
-	CIPHER_DIFF_SUBSYSTEM, /* 10 */
+	CIPHER_NO_KEYS, /* 10 */
+	CIPHER_DIFF_SUBSYSTEM,
 	CIPHER_DIFF_KEY_TYPE,
 	CTX_NULL,
 	CTX_HANDLE_NULL,
-	DST_CPY_ARGS_NULL,
+	DST_CPY_ARGS_NULL, /* 15 */
+	TLS12_KDF_ARGS_NULL,
+	FAKE_KEY_ID,
 };
 
 /* Type of export */

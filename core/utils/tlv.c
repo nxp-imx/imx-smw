@@ -8,7 +8,6 @@
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
-#include "utils.h"
 
 int smw_tlv_read_element(const unsigned char **attribute,
 			 const unsigned char *end, unsigned char **type,

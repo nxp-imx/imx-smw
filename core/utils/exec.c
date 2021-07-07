@@ -8,7 +8,6 @@
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
-#include "utils.h"
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"

@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
-#include "utils.h"
 #include "list.h"
 
 #include "common.h"

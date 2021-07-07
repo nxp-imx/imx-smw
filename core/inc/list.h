@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
+
+#include <stdbool.h>
 
 /* List management */
 

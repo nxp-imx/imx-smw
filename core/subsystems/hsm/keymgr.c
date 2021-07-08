@@ -17,6 +17,15 @@
 
 #include "common.h"
 
+/*
+ * Hardcoded values due to limitation of SMW's HSM subsystem support. Transient
+ * and persistent keys can't be part of the same key group and user can't set
+ * the key group ID.
+ * May have to be change in other version.
+ */
+#define PERSISTENT_KEY_GROUP 0
+#define TRANSIENT_KEY_GROUP  1
+
 /* Key type IDs must be ordered from lowest to highest.
  * Security sizes must be ordered from lowest to highest
  * for 1 given Key type ID.
@@ -143,9 +152,18 @@ static int generate_key(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	op_generate_key_args.key_info = HSM_KEY_INFO_MASTER;
-	if (generate_key_args->key_attributes.persistent_storage)
-		op_generate_key_args.key_info |= HSM_KEY_INFO_PERSISTENT;
+	if (generate_key_args->key_attributes.persistent_storage) {
+		op_generate_key_args.key_info = HSM_KEY_INFO_PERSISTENT;
+		op_generate_key_args.key_group = PERSISTENT_KEY_GROUP;
+	} else {
+		op_generate_key_args.key_info = HSM_KEY_INFO_TRANSIENT;
+		op_generate_key_args.key_group = TRANSIENT_KEY_GROUP;
+	}
+
+	if (generate_key_args->key_attributes.flush_key)
+		op_generate_key_args.flags |=
+			HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
+
 	op_generate_key_args.out_key = out_key;
 
 	SMW_DBG_PRINTF(VERBOSE,
@@ -401,6 +419,11 @@ static int delete_key(struct hdl *hdl, void *args)
 			      &manage_key_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	if (key_descriptor->identifier.persistent)
+		manage_key_args.key_group = PERSISTENT_KEY_GROUP;
+	else
+		manage_key_args.key_group = TRANSIENT_KEY_GROUP;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_manage_key()\n"

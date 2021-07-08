@@ -1,0 +1,23 @@
+{
+	"subtest 1": {
+		"command": "RESTORE_KEY_IDS",
+		"filepath": "/usr/share/smw/tests/F_TEE_Keymgr_004_ids.json"
+	},
+	"subtest 2": {
+		"command": "DELETE",
+		"key_id": 0
+	},
+	"subtest 3": {
+		"command": "DELETE",
+		"key_id": 1
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"key_id": 2,
+		"result": "SMW_STATUS_UNKNOWN_ID"
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"key_id": 3
+	}
+}

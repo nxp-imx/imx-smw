@@ -57,7 +57,7 @@
 #define FPRINT_TEST_STATUS(file, test_name, status)                            \
 	(void)fprintf(file, "%s: %s\n", (test_name), (status))
 
-#define FPRINT_MESSAGE(file, ...) fprintf(file, __VA_ARGS__)
+#define FPRINT_MESSAGE(file, ...) ((void)fprintf(file, __VA_ARGS__))
 
 #if defined(ENABLE_TRACE)
 
@@ -314,5 +314,34 @@ int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
  */
 int util_read_json_type(void *value, const char *key, enum t_data_type type,
 			json_object *params);
+
+/**
+ * file_to_json_object() - Fill a json object with file content.
+ * @file_path: Path of the file.
+ * @json_obj: Pointer to json_obj. Not updated if an error is returned.
+ *
+ * This function copies @file_path content into a buffer and then fills
+ * the json object with the buffer content.
+ *
+ * Return:
+ * PASSED	- Success.
+ * -BAD_ARGS	- One of the arguments is bad.
+ * -INTERNAL	- json_tokener_parse() failed.
+ * Error code from copy_file_into_buffer().
+ */
+int file_to_json_object(char *file_path, json_object **json_obj);
+
+/**
+ * check_file_extension() - Check a filename extension.
+ * @filename: Filename.
+ * @extension: Expected file extension.
+ *
+ * Return:
+ * PASSED- Success.
+ * -BAD_ARGS	- One of the argument is invalid.
+ * -INTERNAL	- Internal function failure.
+ * -FAILED	- @extension doesn't match @filename extension.
+ */
+int check_file_extension(char *filename, char *extension);
 
 #endif /* __UTIL_H__ */

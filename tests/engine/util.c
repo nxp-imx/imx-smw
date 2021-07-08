@@ -9,7 +9,7 @@
 
 #include "json_util.h"
 #include "util.h"
-#include "types.h"
+#include "json.h"
 #include "smw_keymgr.h"
 #include "smw_status.h"
 
@@ -378,7 +378,6 @@ int get_test_name(char **test_name, char *test_definition_file)
 	int res = ERR_CODE(BAD_ARGS);
 	unsigned int len = 0;
 	char *filename;
-	char *file_extension = NULL;
 
 	if (!test_name || !test_definition_file) {
 		DBG_PRINT_BAD_ARGS(__func__);
@@ -392,24 +391,16 @@ int get_test_name(char **test_name, char *test_definition_file)
 	}
 
 	/* First check test definition file extension */
-	file_extension = strrchr(filename, '.');
-	if (file_extension) {
-		res = strcmp(file_extension, DEFINITION_FILE_EXTENSION);
-		if (res) {
-			DBG_PRINT("%s must be a JSON file",
-				  test_definition_file);
-			return ERR_CODE(BAD_ARGS);
-		}
-	} else {
-		DBG_PRINT("strrchr returned NULL pointer");
-		return ERR_CODE(INTERNAL);
-	}
+	res = check_file_extension(test_definition_file,
+				   DEFINITION_FILE_EXTENSION);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	/*
 	 * Extract filename without extension
 	 * and build the @test_name null terminated string
 	 */
-	len = file_extension - filename;
+	len = strlen(filename) - strlen(DEFINITION_FILE_EXTENSION);
 
 	*test_name = malloc(len + 1);
 	if (!*test_name) {
@@ -512,6 +503,7 @@ static const unsigned int t_data_2_json_type[] = {
 		     BIT(json_type_array),
 	[t_buffer_hex] = BIT(json_type_int) | BIT(json_type_string) |
 			 BIT(json_type_array),
+	[t_int64] = BIT(json_type_int),
 };
 
 int util_read_json_type(void *value, const char *key, enum t_data_type type,
@@ -574,6 +566,11 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 			ret = ERR_CODE(PASSED);
 			break;
 
+		case t_int64:
+			*((int64_t *)value) = json_object_get_int64(obj);
+			ret = ERR_CODE(PASSED);
+			break;
+
 		default:
 			ret = ERR_CODE(BAD_PARAM_TYPE);
 			break;
@@ -583,4 +580,52 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 	}
 
 	return ret;
+}
+
+int file_to_json_object(char *file_path, json_object **json_obj)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	char *definition_buffer = NULL;
+
+	if (!file_path || !json_obj) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return res;
+	}
+
+	res = copy_file_into_buffer(file_path, &definition_buffer);
+	if (res != ERR_CODE(PASSED)) {
+		DBG_PRINT("Copy file into buffer failed");
+		return res;
+	}
+
+	*json_obj = json_tokener_parse(definition_buffer);
+	if (!*json_obj) {
+		DBG_PRINT("Can't parse json definition buffer");
+		res = ERR_CODE(INTERNAL);
+	}
+
+	free(definition_buffer);
+	return res;
+}
+
+int check_file_extension(char *filename, char *extension)
+{
+	char *file_extension = NULL;
+
+	if (!filename || !extension)
+		return ERR_CODE(BAD_ARGS);
+
+	file_extension = strrchr(filename, '.');
+	if (file_extension) {
+		if (strcmp(file_extension, extension)) {
+			DBG_PRINT("%s: Expected %s file extension", filename,
+				  extension);
+			return ERR_CODE(FAILED);
+		} else {
+			return ERR_CODE(PASSED);
+		}
+	}
+
+	DBG_PRINT("strrchr returned NULL pointer");
+	return ERR_CODE(INTERNAL);
 }

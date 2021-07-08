@@ -26,6 +26,8 @@
  */
 #define FAKE_KEY_NIST_192_ID INT64_C(0x00C000000001)
 
+#define KEY_JSON_OBJECT_STRING_MAX_LEN 10
+
 /**
  * set_gen_opt_params() - Set key generation optional parameters.
  * @params: Pointer to json parameters.
@@ -504,6 +506,212 @@ static int compare_keys(struct keypair_ops *key_test,
 	return res;
 }
 
+/**
+ * save_key_ids_to_json_file() - Save key ids from a linked list in a json file.
+ * @key_list: Key identifier linked list.
+ * @filepath: Path of the json file.
+ *
+ * Return:
+ * PASSED	- Success.
+ * -BAD_ARGS	- One of the arguments is bad.
+ * -INTERNAL	- Internal function failure.
+ * Error code from check_file_extension().
+ */
+static int save_key_ids_to_json_file(struct key_identifier_list *key_list,
+				     char *filepath)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	unsigned int counter = 1;
+	char key_object_string[KEY_JSON_OBJECT_STRING_MAX_LEN];
+	struct key_identifier_node *head = NULL;
+	struct json_object *global_obj = NULL;
+	struct json_object *id_obj = NULL;
+	struct json_object *key_identifier_obj = NULL;
+	struct json_object *key_obj = NULL;
+	FILE *json_file = NULL;
+
+	if (!key_list || !filepath) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return res;
+	}
+
+	res = check_file_extension(filepath, DEFINITION_FILE_EXTENSION);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	json_file = fopen(filepath, "w+");
+	if (!json_file) {
+		DBG_PRINT("fopen failed, file is %s", filepath);
+		return ERR_CODE(INTERNAL);
+	}
+
+	global_obj = json_object_new_object();
+	if (!global_obj) {
+		DBG_PRINT("Can't create a new json object");
+		res = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	id_obj = json_object_new_int(0);
+	if (!id_obj) {
+		DBG_PRINT("Can't create a new json object");
+		res = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	/* Add id_obj to global_obj */
+	if (json_object_object_add(global_obj, "id", id_obj)) {
+		DBG_PRINT("Can't add a json object");
+		res = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	key_identifier_obj = json_object_new_int64(0);
+	if (!key_identifier_obj) {
+		DBG_PRINT("Can't create a new json object");
+		res = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	/* Add key_identifier_obj to global_obj */
+	if (json_object_object_add(global_obj, "key_identifier",
+				   key_identifier_obj)) {
+		DBG_PRINT("Can't add a json object");
+		res = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	key_obj = json_object_new_string(key_object_string);
+	if (!key_obj) {
+		DBG_PRINT("Can't create a new json object");
+		res = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	FPRINT_MESSAGE(json_file, "{\n");
+
+	head = key_list->head;
+
+	while (head) {
+		if (counter > 1)
+			FPRINT_MESSAGE(json_file, ",\n");
+
+		if (!json_object_set_int(id_obj, head->id)) {
+			DBG_PRINT("json_object_set_int() failed");
+			res = ERR_CODE(INTERNAL);
+			goto exit;
+		}
+
+		if (!json_object_set_int64(key_identifier_obj,
+					   head->key_identifier)) {
+			DBG_PRINT("json_object_set_int64() failed");
+			res = ERR_CODE(INTERNAL);
+			goto exit;
+		}
+
+		if (sprintf(key_object_string, "key %d", counter++) < 0) {
+			res = ERR_CODE(INTERNAL);
+			goto exit;
+		}
+
+		if (!json_object_set_string(key_obj, key_object_string)) {
+			DBG_PRINT("json_object_set_string() failed");
+			res = ERR_CODE(INTERNAL);
+			goto exit;
+		}
+
+		/*
+		 * Fill json file with the following template:
+		 * "key X":{ "id": XX, "key_identifier": XX}
+		 */
+		FPRINT_MESSAGE(json_file, "%s:%s",
+			       json_object_to_json_string(key_obj),
+			       json_object_to_json_string(global_obj));
+
+		head = head->next;
+	}
+
+	FPRINT_MESSAGE(json_file, "\n}");
+
+exit:
+	if (fclose(json_file))
+		res = ERR_CODE(INTERNAL);
+
+	/* Free json objects */
+	if (global_obj)
+		json_object_put(global_obj);
+
+	if (key_obj)
+		json_object_put(key_obj);
+
+	return res;
+}
+
+/**
+ * restore_key_ids_from_json_file() - Restore key ids from a json file to a key
+ *                                    identifier linked list.
+ * @key_list: Key identifier linked list to update.
+ * @filepath: Path of the file.
+ *
+ * Return:
+ * PASSED		- Success.
+ * -BAD_ARGS		- One of the arguments is bad.
+ * -MISSING_PARAMS	- Missing mandatory parameters in @filepath.
+ * Error code from file_to_json_object().
+ */
+static int restore_key_ids_from_json_file(struct key_identifier_list **key_list,
+					  char *filepath)
+{
+	int res = ERR_CODE(FAILED);
+	int id = 0;
+	enum smw_status_code status;
+	json_object *restore_obj = NULL;
+	struct json_object_iter iter = { 0 };
+	struct keypair_ops key = { 0 };
+
+	if (!key_list || !filepath) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	res = check_file_extension(filepath, DEFINITION_FILE_EXTENSION);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = file_to_json_object(filepath, &restore_obj);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (!restore_obj || !json_object_get_object(restore_obj))
+		return ERR_CODE(INTERNAL);
+
+	json_object_object_foreachC(restore_obj, iter)
+	{
+		res = util_read_json_type(&id, "id", t_int, iter.val);
+		if (res != ERR_CODE(PASSED))
+			break;
+
+		res = util_read_json_type(&key.desc.id, "key_identifier",
+					  t_int64, iter.val);
+		if (res != ERR_CODE(PASSED))
+			break;
+
+		status = smw_get_security_size(&key.desc);
+		if (status != SMW_STATUS_OK) {
+			res = ERR_CODE(BAD_ARGS);
+			break;
+		}
+
+		res = util_key_add_node(key_list, id, &key);
+		if (res != ERR_CODE(PASSED))
+			break;
+	}
+
+	json_object_put(restore_obj);
+
+	return res;
+}
+
 int generate_key(json_object *params, struct common_parameters *common_params,
 		 char *key_type, struct key_identifier_list **key_identifiers,
 		 enum smw_status_code *ret_status)
@@ -850,4 +1058,56 @@ exit:
 		free((void *)args.key_attributes_list);
 
 	return res;
+}
+
+int save_key_ids_to_file(struct json_object *params,
+			 struct common_parameters *common_params,
+			 struct key_identifier_list *key_list,
+			 enum smw_status_code *ret_status)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	char *filename = NULL;
+
+	if (!params || !common_params || !ret_status) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	/* 'filepath' is a mandatory parameter */
+	res = util_read_json_type(&filename, FILEPATH_OBJ, t_string, params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	*ret_status = save_key_ids_to_json_file(key_list, filename);
+
+	if (CHECK_RESULT(*ret_status, common_params->expected_res))
+		return ERR_CODE(BAD_RESULT);
+
+	return ERR_CODE(PASSED);
+}
+
+int restore_key_ids_from_file(struct json_object *params,
+			      struct common_parameters *common_params,
+			      struct key_identifier_list **key_list,
+			      enum smw_status_code *ret_status)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	char *filename;
+
+	if (!params || !common_params || !ret_status) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	/* 'filepath' is a mandatory parameter */
+	res = util_read_json_type(&filename, FILEPATH_OBJ, t_string, params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	*ret_status = restore_key_ids_from_json_file(key_list, filename);
+
+	if (CHECK_RESULT(*ret_status, common_params->expected_res))
+		return ERR_CODE(BAD_RESULT);
+
+	return ERR_CODE(PASSED);
 }

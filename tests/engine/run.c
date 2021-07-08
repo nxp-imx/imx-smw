@@ -536,6 +536,12 @@ static int execute_command(char *cmd, struct json_object *params,
 						 ctx, status);
 	else if (!strncmp(cmd, CONFIG, strlen(CONFIG)))
 		return execute_config_cmd(cmd, params, common_params, status);
+	else if (!strcmp(cmd, SAVE_KEY_IDS))
+		return save_key_ids_to_file(params, common_params, *key_ids,
+					    status);
+	else if (!strcmp(cmd, RESTORE_KEY_IDS))
+		return restore_key_ids_from_file(params, common_params, key_ids,
+						 status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -751,10 +757,6 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 
 	command_name = (char *)json_object_get_string(cmd_obj);
 
-	/*
-	 * 'subsystem' is a mandatory parameter for all commands except
-	 * 'DELETE' and 'EXPORT'.
-	 */
 	if (json_object_object_get_ex(obj_iter->val, SUBSYSTEM_OBJ, &sub_obj))
 		common_params.subsystem =
 			(char *)json_object_get_string(sub_obj);
@@ -799,46 +801,6 @@ exit:
 	FPRINT_SUBTEST_STATUS(status_file, obj_iter->key, sub_status,
 			      sub_error);
 	FPRINT_SUBTEST_STATUS(stdout, obj_iter->key, sub_status, sub_error);
-}
-
-/**
- * file_to_json_object() - Fill a json object with file content.
- * @file_path: Path of the file.
- * @json_obj: Pointer to json_obj. Not updated if an error is returned.
- *
- * This function copies @file_path content into a buffer and then fills
- * the json object with the buffer content.
- *
- * Return:
- * PASSED	- Success.
- * -BAD_ARGS	- One of the arguments is bad.
- * -INTERNAL	- json_tokener_parse() failed.
- * Error code from copy_file_into_buffer().
- */
-static int file_to_json_object(char *file_path, json_object **json_obj)
-{
-	int res = ERR_CODE(BAD_ARGS);
-	char *definition_buffer = NULL;
-
-	if (!file_path || !json_obj) {
-		DBG_PRINT_BAD_ARGS(__func__);
-		return res;
-	}
-
-	res = copy_file_into_buffer(file_path, &definition_buffer);
-	if (res != ERR_CODE(PASSED)) {
-		DBG_PRINT("Copy file into buffer failed");
-		return res;
-	}
-
-	*json_obj = json_tokener_parse(definition_buffer);
-	if (!*json_obj) {
-		DBG_PRINT("Can't parse json definition buffer");
-		res = ERR_CODE(INTERNAL);
-	}
-
-	free(definition_buffer);
-	return res;
 }
 
 int run_test(char *test_definition_file, char *test_name, char *output_dir)
@@ -927,7 +889,10 @@ exit:
 		free(file_path);
 
 	if (status_file)
-		fclose(status_file);
+		(void)fclose(status_file);
+
+	if (definition_obj)
+		json_object_put(definition_obj);
 
 	return test_status;
 }

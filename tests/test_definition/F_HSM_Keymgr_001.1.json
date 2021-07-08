@@ -1,0 +1,36 @@
+{
+	"subtest 1": {
+		"command": "GENERATE_AES",
+		"subsystem": "HSM",
+		"security_size": 128,
+		"key_id": 0,
+		"attributes_list": ["PERSISTENT"]
+	},
+	"subtest 2": {
+		"command": "GENERATE_NIST",
+		"subsystem": "HSM",
+		"security_size": 256,
+		"key_id": 1,
+		"attributes_list": ["PERSISTENT"]
+	},
+	"subtest 3": {
+		"command": "GENERATE_AES",
+		"subsystem": "HSM",
+		"security_size": 256,
+		"key_id": 2
+	},
+	"subtest 4": {
+		"command": "GENERATE_BR1",
+		"subsystem": "HSM",
+		"security_size": 384,
+		"key_id": 3,
+		"attributes_list": [
+			["PERSISTENT"],
+			["FLUSH_KEY"]
+		]
+	},
+	"subtest 5": {
+		"command": "SAVE_KEY_IDS",
+		"filepath": "/usr/share/smw/tests/F_HSM_Keymgr_001_ids.json"
+	}
+}

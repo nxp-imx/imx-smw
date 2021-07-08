@@ -98,7 +98,8 @@ enum t_data_type {
 	t_string,
 	t_object,
 	t_buffer,
-	t_buffer_hex
+	t_buffer_hex,
+	t_int64
 };
 
 #endif /* __TYPES_H__ */

@@ -84,12 +84,6 @@ eval "./scripts/smw_build.sh tadevkit export=${ta_export} \
       src=../optee-os out=../build ${arch} ${optee_plat} ${toolpath}"
 
 #
-# Tools required to build documentation
-#
-eval "./scripts/smw_build.sh sphinx"
-eval "./scripts/smw_build.sh linuxdoc"
-
-#
 # Define common configuration option
 #
 conf_opts="${arch} ${toolpath}"
@@ -103,9 +97,6 @@ fi
 conf_opts="${conf_opts} teec=${export} tadevkit=${ta_export}"
 # Enable tests
 conf_opts="${conf_opts} jsonc=${export}"
-
-# Set documentations format to HTML
-conf_opts="${conf_opts} format=\"html\""
 
 #
 # Configure build targets

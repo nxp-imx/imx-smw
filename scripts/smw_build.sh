@@ -10,7 +10,7 @@ opt_jsonc_lib=
 opt_coverage="-DCODE_COVERAGE=OFF"
 opt_buildtype="-DCMAKE_BUILD_TYPE=Release"
 opt_verbose="-DVERBOSE=0"
-opt_format=
+opt_format="-DFORMAT=html"
 
 #
 # Get script name and path
@@ -196,7 +196,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_buildtype} ${opt_verbose}"
     cmd_script="${cmd_script} ${opt_zlib} ${opt_seco}"
     cmd_script="${cmd_script} ${opt_teec} ${opt_tadevkit}"
-    cmd_script="${cmd_script} ${opt_jsonc} ${opt_format}"
+    cmd_script="${cmd_script} ${opt_jsonc}"
 
     mkdir -p "${opt_out}"
     cd "${opt_out}"
@@ -357,40 +357,6 @@ function jsonc()
     eval "${cmd_script}"
 }
 
-function sphinx()
-{
-    cmd_script="cmake"
-    sphinx_script="${script_dir}/install_sphinx.cmake"
-
-    printf "\033[0;32m\n"
-    printf "***************************************\n"
-    printf " Install sphinx\n"
-    printf "***************************************\n"
-    printf "\033[0m\n"
-
-    cmd_script="${cmd_script} -P ${sphinx_script}"
-
-    printf "Execute %s\n" "${cmd_script}"
-    eval "${cmd_script}"
-}
-
-function linuxdoc()
-{
-    cmd_script="cmake"
-    linuxdoc_script="${script_dir}/install_linuxdoc.cmake"
-
-    printf "\033[0;32m\n"
-    printf "***************************************\n"
-    printf " Install linuxdoc\n"
-    printf "***************************************\n"
-    printf "\033[0m\n"
-
-    cmd_script="${cmd_script} -P ${linuxdoc_script}"
-
-    printf "Execute %s\n" "${cmd_script}"
-    eval "${cmd_script}"
-}
-
 function usage_toolchain()
 {
     printf "\n"
@@ -501,7 +467,7 @@ function usage_build()
     printf "format=[name]\n"
     printf "    out    = Build directory\n"
     printf "    jsonc  = [optional] JSON-C export directory (tests build)\n"
-    printf "    format = [optional] Documentation format (docs)\n"
+    printf "    format = [optional] Documentation format (default is HTML) (docs)\n"
     printf "\n"
     printf "Note:\n"
     printf "  - If no [option] specified, build all SMW component\n"
@@ -552,22 +518,6 @@ function usage_package()
     printf "\n"
 }
 
-function usage_sphinx()
-{
-    printf "\n"
-    printf "To install the sphinx tool\n"
-    printf "  %s sphinx" "${script_name}"
-    printf "\n"
-}
-
-function usage_linuxdoc()
-{
-    printf "\n"
-    printf "To install the linuxdoc tool\n"
-    printf "  %s linuxdoc" "${script_name}"
-    printf "\n"
-}
-
 function usage()
 {
     printf "\n"
@@ -584,8 +534,6 @@ function usage()
     usage_build
     usage_install
     usage_package
-    usage_sphinx
-    usage_linuxdoc
 
     exit 1
 }
@@ -770,14 +718,6 @@ case ${opt_action} in
 
     package)
         package
-        ;;
-
-    sphinx)
-        sphinx
-        ;;
-
-    linuxdoc)
-        linuxdoc
         ;;
 
     *)

@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 
-message(STATUS "Documentations")
+if(NOT DEFINED FORMAT)
+    return()
+endif()
 
-find_package(Sphinx REQUIRED)
-find_package(Kerneldoc REQUIRED)
+message(STATUS "Documentations")
 
 set(DOC_API_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/API/source)
 set(DOC_API_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/API)
@@ -11,11 +12,6 @@ set(DOC_API_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/API)
 set(BUILD_DOC_DEFINITIONS
     -DBUILD_DOC_SOURCE_DIR=${DOC_API_SOURCE_DIR}
     -DBUILD_DOC_OUTPUT_DIR=${DOC_API_OUTPUT_DIR})
-
-if(NOT DEFINED FORMAT)
-    set(FORMAT "all")
-    message(STATUS "Default documentations format is \"all\"")
-endif()
 
 if(${FORMAT} STREQUAL "html" OR
    ${FORMAT} STREQUAL "all")
@@ -44,13 +40,13 @@ set(PROJECT_COPYRIGHT "2021 - NXP - Non-Confidential")
 configure_file(${DOC_API_SOURCE_DIR}/conf.py.in
                ${DOC_API_SOURCE_DIR}/conf.py)
 
-message(STATUS "Installing sphinx requirements for API documentation")
+message(STATUS "Installing requirements for API documentation")
 execute_process(COMMAND python3 -m pip install -r ${DOC_API_SOURCE_DIR}/requirements.txt
                 OUTPUT_QUIET
                 RESULT_VARIABLE res)
 
 if(NOT ${res} EQUAL 0)
-    message(FATAL_ERROR "Cannot install sphinx requirements for API documentation ${res}")
+    message(FATAL_ERROR "Cannot install requirements for API documentation ${res}")
 endif()
 
 add_custom_target(docs

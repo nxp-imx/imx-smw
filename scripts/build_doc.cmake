@@ -1,5 +1,6 @@
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
 find_package(Sphinx REQUIRED)
+find_package(Kerneldoc REQUIRED)
 
 string(REPLACE " " ";" BUILD_DOC_BUILDER "${BUILD_DOC_BUILDER}")
 

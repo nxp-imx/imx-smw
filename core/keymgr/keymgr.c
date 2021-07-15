@@ -22,13 +22,14 @@
 
 /*
  * Key identifier is encoded as described below.
+ * Sub. ID is Subsystem ID
  * P is Privacy ID.
  *
  *   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * | Subsystem ID  |        Key type ID        | P |     ATTRI-    |
+ * |  Sub. ID  |        Key type ID        |       ATTRIBUTE       |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * | -BUTE |               Security size                           |
+ * |   P   |               Security size                           |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  * |                            ID                                 |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
@@ -38,9 +39,9 @@
 
 #define ID_LENGTH	     32
 #define SECURITY_SIZE_LENGTH 14
-#define PRIVACY_ID_LENGTH    1
+#define PRIVACY_ID_LENGTH    2
 #define TYPE_ID_LENGTH	     7
-#define SUBSYSTEM_ID_LENGTH  4
+#define SUBSYSTEM_ID_LENGTH  3
 #define ATTRIBUTE_LENGTH     6
 
 #define ID_MASK		   BIT_MASK(ID_LENGTH)
@@ -52,9 +53,9 @@
 
 #define ID_OFFSET	     0
 #define SECURITY_SIZE_OFFSET (ID_OFFSET + ID_LENGTH)
-#define ATTRIBUTE_OFFSET     (SECURITY_SIZE_OFFSET + SECURITY_SIZE_LENGTH)
-#define PRIVACY_ID_OFFSET    (ATTRIBUTE_OFFSET + ATTRIBUTE_LENGTH)
-#define TYPE_ID_OFFSET	     (PRIVACY_ID_OFFSET + PRIVACY_ID_LENGTH)
+#define PRIVACY_ID_OFFSET    (SECURITY_SIZE_OFFSET + SECURITY_SIZE_LENGTH)
+#define ATTRIBUTE_OFFSET     (PRIVACY_ID_OFFSET + PRIVACY_ID_LENGTH)
+#define TYPE_ID_OFFSET	     (ATTRIBUTE_OFFSET + ATTRIBUTE_LENGTH)
 #define SUBSYSTEM_ID_OFFSET  (TYPE_ID_OFFSET + TYPE_ID_LENGTH)
 
 #define SMW_KEYMGR_FORMAT_ID_DEFAULT SMW_KEYMGR_FORMAT_ID_HEX

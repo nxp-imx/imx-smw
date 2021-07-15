@@ -278,7 +278,7 @@ static int tls12_get_prf_id(const char *name, enum smw_config_hmac_algo_id *id)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	*id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
+	*id = SMW_CONFIG_HMAC_ALGO_ID_INVALID;
 
 	if (name)
 		status = smw_config_get_hmac_algo_id(name, id);

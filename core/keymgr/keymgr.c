@@ -23,13 +23,14 @@
 /*
  * Key identifier is encoded as described below.
  * Sub. ID is Subsystem ID
- * P is Privacy ID.
+ * Priv is Privacy ID
+ * P: Persistent (=1) or Transient (=0)
  *
  *   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |  Sub. ID  |        Key type ID        |       ATTRIBUTE       |
+ * |  Sub. ID  |      Key type ID      |       ATTRIBUTE       | P |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |   P   |               Security size                           |
+ * | Priv  |               Security size                           |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
  * |                            ID                                 |
  * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
@@ -40,9 +41,10 @@
 #define ID_LENGTH	     32
 #define SECURITY_SIZE_LENGTH 14
 #define PRIVACY_ID_LENGTH    2
-#define TYPE_ID_LENGTH	     7
+#define TYPE_ID_LENGTH	     6
 #define SUBSYSTEM_ID_LENGTH  3
 #define ATTRIBUTE_LENGTH     6
+#define PERSISTENT_LENGTH    1
 
 #define ID_MASK		   BIT_MASK(ID_LENGTH)
 #define SECURITY_SIZE_MASK BIT_MASK(SECURITY_SIZE_LENGTH)
@@ -50,11 +52,13 @@
 #define TYPE_ID_MASK	   BIT_MASK(TYPE_ID_LENGTH)
 #define SUBSYSTEM_ID_MASK  BIT_MASK(SUBSYSTEM_ID_LENGTH)
 #define ATTRIBUTE_MASK	   BIT_MASK(ATTRIBUTE_LENGTH)
+#define PERSISTENT_MASK	   BIT_MASK(PERSISTENT_LENGTH)
 
 #define ID_OFFSET	     0
 #define SECURITY_SIZE_OFFSET (ID_OFFSET + ID_LENGTH)
 #define PRIVACY_ID_OFFSET    (SECURITY_SIZE_OFFSET + SECURITY_SIZE_LENGTH)
-#define ATTRIBUTE_OFFSET     (PRIVACY_ID_OFFSET + PRIVACY_ID_LENGTH)
+#define PERSISTENT_OFFSET    (PRIVACY_ID_OFFSET + PRIVACY_ID_LENGTH)
+#define ATTRIBUTE_OFFSET     (PERSISTENT_OFFSET + PERSISTENT_LENGTH)
 #define TYPE_ID_OFFSET	     (ATTRIBUTE_OFFSET + ATTRIBUTE_LENGTH)
 #define SUBSYSTEM_ID_OFFSET  (TYPE_ID_OFFSET + TYPE_ID_LENGTH)
 
@@ -90,13 +94,29 @@ static int store_persistent(void *attributes, unsigned char *value,
 static int store_rsa_pub_exp(void *attributes, unsigned char *value,
 			     unsigned int length);
 
+/**
+ * store_flush_key() - Store flush key attribute.
+ * @attributes: Pointer to attribute structure to fill.
+ * @value: Unused.
+ * @length: Unused.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- key_attributes is NULL.
+ */
+static int store_flush_key(void *attributes, unsigned char *value,
+			   unsigned int length);
+
 static const struct attribute_tlv keymgr_attributes_tlv_array[] = {
 	{ .type = (const unsigned char *)PERSISTENT_STR,
 	  .verify = smw_tlv_verify_boolean,
 	  .store = store_persistent },
 	{ .type = (const unsigned char *)RSA_PUB_EXP_STR,
 	  .verify = smw_tlv_verify_large_numeral,
-	  .store = store_rsa_pub_exp }
+	  .store = store_rsa_pub_exp },
+	{ .type = (const unsigned char *)FLUSH_KEY_STR,
+	  .verify = smw_tlv_verify_boolean,
+	  .store = store_flush_key }
 };
 
 static int get_format_id(const char *name, enum smw_keymgr_format_id *id)
@@ -136,6 +156,8 @@ static int key_id_to_identifier(unsigned long long *id,
 		identifier->security_size =
 			(*id >> SECURITY_SIZE_OFFSET) & SECURITY_SIZE_MASK;
 		identifier->id = (*id >> ID_OFFSET) & ID_MASK;
+		identifier->persistent =
+			(*id >> PERSISTENT_OFFSET) & PERSISTENT_MASK;
 
 		status = SMW_STATUS_OK;
 	}
@@ -322,6 +344,7 @@ void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr)
 	attr->persistent_storage = false;
 	attr->rsa_pub_exp = NULL;
 	attr->rsa_pub_exp_len = 0;
+	attr->flush_key = false;
 }
 
 int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
@@ -350,6 +373,7 @@ smw_keymgr_build_key_id(struct smw_keymgr_identifier *identifier)
 	id |= (identifier->type_id & TYPE_ID_MASK) << TYPE_ID_OFFSET;
 	id |= (identifier->subsystem_id & SUBSYSTEM_ID_MASK)
 	      << SUBSYSTEM_ID_OFFSET;
+	id |= (identifier->persistent & PERSISTENT_MASK) << PERSISTENT_OFFSET;
 
 	return id;
 }
@@ -545,6 +569,26 @@ static int store_rsa_pub_exp(void *attributes, unsigned char *value,
 	if (attr) {
 		attr->rsa_pub_exp = value;
 		attr->rsa_pub_exp_len = length;
+		status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int store_flush_key(void *attributes, unsigned char *value,
+			   unsigned int length)
+{
+	(void)value;
+	(void)length;
+
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keymgr_attributes *attr = attributes;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (attr) {
+		attr->flush_key = true;
 		status = SMW_STATUS_OK;
 	}
 
@@ -1046,6 +1090,11 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	if (generate_key_args.key_attributes.persistent_storage)
+		key_desc->identifier.persistent = true;
+	else
+		key_desc->identifier.persistent = false;
+
 	set_key_identifier(key_desc);
 	set_key_buffer_format(key_desc);
 
@@ -1156,6 +1205,11 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	else
 		/* Only private data is set */
 		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+
+	if (import_key_args.key_attributes.persistent_storage)
+		key_desc->identifier.persistent = true;
+	else
+		key_desc->identifier.persistent = false;
 
 	set_key_identifier(key_desc);
 	set_key_buffer_format(key_desc);

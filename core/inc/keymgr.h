@@ -14,6 +14,7 @@
 
 #define PERSISTENT_STR	"PERSISTENT"
 #define RSA_PUB_EXP_STR "RSA_PUB_EXP"
+#define FLUSH_KEY_STR	"FLUSH_KEY"
 
 enum smw_keymgr_privacy_id {
 	/* Key privacy */
@@ -40,6 +41,7 @@ enum smw_keymgr_format_id {
  * @attribute: Key attribute
  * @security_size: Security size in bits
  * @id: Key ID set by the subsystem
+ * @persistent: Is persistent or transient key
  *
  * The value of @attribute is key type dependent.
  * For RSA key type, it represents the public exponent length in bytes.
@@ -51,6 +53,7 @@ struct smw_keymgr_identifier {
 	unsigned int attribute;
 	unsigned int security_size;
 	uint32_t id;
+	bool persistent;
 };
 
 /**
@@ -98,11 +101,13 @@ struct smw_keymgr_descriptor {
  * @persistent_storage: Use persistent subsystem storage or not.
  * @rsa_pub_exp: Pointer to rsa public exponent.
  * @rsa_pub_exp_len: @rsa_pub_exp length in bytes.
+ * @flush_key: Flush persistent key(s)
  */
 struct smw_keymgr_attributes {
 	bool persistent_storage;
 	unsigned char *rsa_pub_exp;
 	unsigned int rsa_pub_exp_len;
+	bool flush_key;
 };
 
 /**

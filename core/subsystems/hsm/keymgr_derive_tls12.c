@@ -9,6 +9,7 @@
 #include "operations.h"
 #include "subsystems.h"
 #include "utils.h"
+#include "base64.h"
 
 #include "common.h"
 #include "keymgr_derive_tls12.h"
@@ -296,8 +297,16 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	const struct tls12_kdf_info *kdf_info;
 
 	unsigned char kdf_output[TLS12_KDF_OUTPUT_SIZE] = { 0 };
+	unsigned char *key_base;
+	unsigned char *hex_key_base = NULL;
+	unsigned char *key_derived = NULL;
+	unsigned char *hex_key_derived = NULL;
 	unsigned int *shared_key_id = NULL;
 	unsigned int *shared_key_ids = NULL;
+	unsigned int key_base_len;
+	unsigned int key_derived_len;
+	unsigned int hex_key_base_len;
+	unsigned int hex_key_derived_len;
 	unsigned long long key_id;
 
 	hsm_err_t hsm_err;
@@ -329,15 +338,37 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	op_hsm_args.kdf_output_size = sizeof(kdf_output);
 	op_hsm_args.kdf_output = kdf_output;
 
+	key_derived = smw_keymgr_get_public_data(&args->key_derived);
+	key_derived_len = smw_keymgr_get_public_length(&args->key_derived);
+
 	/* Key derived public output pointer must be defined */
-	op_hsm_args.ke_output = smw_keymgr_get_public_data(&args->key_derived);
-	if (!op_hsm_args.ke_output) {
+	if (!key_derived) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
 
-	op_hsm_args.ke_output_size =
-		smw_keymgr_get_public_length(&args->key_derived);
+	/* Get HEX derived key length */
+	status = smw_keymgr_get_buffers_lengths(key_derived_id,
+						SMW_KEYMGR_FORMAT_ID_HEX,
+						&hex_key_derived_len, NULL,
+						NULL);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (args->key_derived.format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+		hex_key_derived = SMW_UTILS_MALLOC(hex_key_derived_len);
+		if (!hex_key_derived) {
+			SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		op_hsm_args.ke_output = hex_key_derived;
+		op_hsm_args.ke_output_size = hex_key_derived_len;
+	} else {
+		op_hsm_args.ke_output = key_derived;
+		op_hsm_args.ke_output_size = hex_key_derived_len;
+	}
 
 	op_hsm_args.kdf_algorithm = kdf_info->hsm_kdf;
 	op_hsm_args.shared_key_identifier_array_size =
@@ -372,10 +403,22 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 
 	op_hsm_args.shared_key_identifier_array = (uint8_t *)shared_key_ids;
 
-	op_hsm_args.ke_input_size =
-		smw_keymgr_get_public_length(&args->key_base);
+	key_base = smw_keymgr_get_public_data(&args->key_base);
+	key_base_len = smw_keymgr_get_public_length(&args->key_base);
 
-	op_hsm_args.ke_input = smw_keymgr_get_public_data(&args->key_base);
+	if (args->key_base.format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+		status = smw_utils_base64_decode(key_base, key_base_len,
+						 &hex_key_base,
+						 &hex_key_base_len);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		op_hsm_args.ke_input = hex_key_base;
+		op_hsm_args.ke_input_size = hex_key_base_len;
+	} else {
+		op_hsm_args.ke_input = key_base;
+		op_hsm_args.ke_input_size = key_base_len;
+	}
 
 	op_hsm_args.shared_key_info = HSM_KEY_INFO_TRANSIENT;
 
@@ -416,6 +459,21 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	status = convert_hsm_err(hsm_err);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	/* Convert output derived key in BASE64 format */
+	if (hex_key_derived) {
+		status = smw_utils_base64_encode(hex_key_derived,
+						 hex_key_derived_len,
+						 key_derived, &key_derived_len);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		smw_keymgr_set_public_length(&args->key_derived,
+					     key_derived_len);
+	} else {
+		smw_keymgr_set_public_length(&args->key_derived,
+					     hex_key_derived_len);
+	}
 
 	/* Extract Client and Server write IVs */
 	if (smw_keymgr_tls12_is_encryption_aead(tls_args->encryption_id)) {
@@ -463,6 +521,12 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 end:
 	if (shared_key_ids)
 		SMW_UTILS_FREE(shared_key_ids);
+
+	if (hex_key_base)
+		SMW_UTILS_FREE(hex_key_base);
+
+	if (hex_key_derived)
+		SMW_UTILS_FREE(hex_key_derived);
 
 	SMW_DBG_PRINTF(DEBUG, "%s returned %d\n", __func__, status);
 	return status;

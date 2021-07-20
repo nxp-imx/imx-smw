@@ -1120,7 +1120,9 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 
 	if ((!public_data && !private_data) ||
 	    (public_data && !public_length) ||
-	    (private_data && !private_length)) {
+	    (!public_data && public_length) ||
+	    (private_data && !private_length) ||
+	    (!private_data && private_length)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
@@ -1204,7 +1206,9 @@ enum smw_status_code smw_export_key(struct smw_export_key_args *args)
 
 	if ((!public_data && !private_data) ||
 	    (public_data && !public_length) ||
-	    (private_data && !private_length)) {
+	    (!public_data && public_length) ||
+	    (private_data && !private_length) ||
+	    (!private_data && private_length)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}

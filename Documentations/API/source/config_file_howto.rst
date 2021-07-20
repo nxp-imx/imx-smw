@@ -29,6 +29,8 @@ The configuration format must respect following rules:
 
 - There must be at least one occurrence of **[SECURE_SUBSYSTEM]**. This tag is the starter of a Secure Subsystem configuration.
 
+- There must be only one block defining a Secure Subsystem.
+
 - There must be only one **<string: name of subsystem>** per **[SECURE_SUBSYSTEM]**.
 
 - The load/unload method **<string: load/unload method>** is optional. Only one occurrence is allowed if present.
@@ -37,9 +39,17 @@ The configuration format must respect following rules:
 
 - There must be one **<string: name of operation>** set in **[SECURITY_OPERATION]**. The possible values of string correspond to the external interfaces of each module as listed in `List of Security Operations`_.
 
+- There must be only one block defining a Security Operation for a given Secure Subsystem.
+
 - The Security Operation can define its capabilities values (e.g. key types, hash algorithms...) using tags **<param#>_VALUES** (as listed in `List of Security Operation values tag`_). Each value is a non-quoted string separated by a colon.
 
 - The Security Operation can define its capabilities range using tags **<param#>_RANGE** (as listed in `List of Security Operation range tag`_). Range values are integer defining minimum and/or maximum capability value.
+
+- The tag DEFAULT may be placed after <string: name of operation> to set the default subsystem for this operation.
+
+If no tag DEFAULT is present, the first subsystem defining the operation in the configuration is the default subsystem for this operation.
+
+If several tag DEFAULT are present for different subsystems and the same operation, the latest subsystem defining the operation with tag DEFAULT is the default subsystem for this operation.
 
 Secure Subsystem definition
 ---------------------------

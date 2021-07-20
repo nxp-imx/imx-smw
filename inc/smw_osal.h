@@ -72,18 +72,25 @@ enum smw_status_code smw_deinit(void);
 /**
  * smw_config_load() - Load a configuration.
  * @buffer: pointer to the plaintext configuration.
- * @size: size of the plaintext configuration
+ * @size: size of the plaintext configuration.
+ * @offset: current offset in plaintext configuration.
  *
  * This function loads a configuration.
  * The plaintext configuration is parsed and
  * the content is stored in the Configuration database.
+ * If the parsing of plaintext configuration fails, @offset points to
+ * the number of characters that have been correctly parsed.
+ * The beginning of the remaining plaintext which cannot be parsed is printed
+ * out.
  *
  * Return:
- * SMW_STATUS_OK		- Configuration load is successful
- * SMW_STATUS_INVALID_BUFFER	- @buffer is NULL or @size is 0
+ * SMW_STATUS_OK			- Configuration load is successful
+ * SMW_STATUS_INVALID_BUFFER		- @buffer is NULL or @size is 0
+ * SMW_STATUS_CONFIG_ALREADY_LOADED	- A configuration is already loaded
  * error code otherwise
  */
-enum smw_status_code smw_config_load(char *buffer, unsigned int size);
+enum smw_status_code smw_config_load(char *buffer, unsigned int size,
+				     unsigned int *offset);
 
 /**
  * smw_config_unload() - Unload the current configuration.
@@ -92,8 +99,9 @@ enum smw_status_code smw_config_load(char *buffer, unsigned int size);
  * It frees all memory dynamically allocated by SMW.
  *
  * Return:
- * none.
+ * SMW_STATUS_OK		- Configuration unload is successful
+ * SMW_STATUS_NO_CONFIG_LOADED	- No configuration is loaded
  */
-void smw_config_unload(void);
+enum smw_status_code smw_config_unload(void);
 
 #endif /* __SMW_OSAL_H__ */

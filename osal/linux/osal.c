@@ -135,7 +135,7 @@ static unsigned long thread_self(void)
 	return (unsigned long)pthread_self();
 }
 
-static int get_default_config(char **buffer, unsigned short *size)
+static int get_default_config(char **buffer, unsigned int *size)
 {
 	int status = -1;
 	long fsize;
@@ -216,9 +216,10 @@ static int start(void)
 {
 	int status = 0;
 
-	unsigned short size = 0;
-	char *buffer = NULL;
 	struct smw_ops ops;
+	char *buffer = NULL;
+	unsigned int size = 0;
+	unsigned int offset = 0;
 
 	TRACE_FUNCTION_CALL;
 
@@ -239,7 +240,7 @@ static int start(void)
 	if (status)
 		goto end;
 
-	status = smw_config_load(buffer, size);
+	status = smw_config_load(buffer, size, &offset);
 
 end:
 	if (buffer)
@@ -255,10 +256,13 @@ static int stop(void)
 
 	TRACE_FUNCTION_CALL;
 
-	smw_config_unload();
+	status = smw_config_unload();
+	if (status)
+		goto end;
 
 	status = smw_deinit();
 
+end:
 	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

@@ -41,7 +41,7 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 7": { // Public buffer length is not set
+	"subtest 7": { // Public data length is not set
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
 		"pub_key": [
@@ -58,7 +58,18 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 8": { // Private buffer length is not set
+	"subtest 8": { // Public data is not set and public data length is set
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"pub_key": 64,
+		"priv_key": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 9": { // Private data length is not set
 		"command": "EXPORT_KEYPAIR",
 		"key_id": 0,
 		"pub_key": [
@@ -75,7 +86,20 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 9": { // Bad version
+	"subtest 10": { // Private data is not set and private data length is set
+		"command": "EXPORT_KEYPAIR",
+		"key_id": 0,
+		"pub_key": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"priv_key": 32,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 11": { // Bad version
 		"command": "EXPORT_PUBLIC",
 		"version": "1",
 		"key_id": 0,
@@ -88,14 +112,14 @@
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"depends": 1
 	},
-	"subtest 10": { // Buffer key format is undefined
+	"subtest 12": { // Buffer key format is undefined
 		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
 		"test_error": "BAD_FORMAT",
 		"result": "SMW_STATUS_UNKNOWN_NAME",
 		"depends": 1
 	},
-	"subtest 11": { // Key descriptor type name doesn't match key identifier
+	"subtest 13": { // Key descriptor type name doesn't match key identifier
 		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
 		"key_type": "AES",
@@ -108,7 +132,7 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 12": { // Key descriptor security size doesn't match key identifier
+	"subtest 14": { // Key descriptor security size doesn't match key identifier
 		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
 		"security_size": 255,
@@ -121,7 +145,7 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 13": { // Attributes list is undefined
+	"subtest 15": { // Attributes list is undefined
 		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
 		"pub_key": [
@@ -134,7 +158,7 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 14": { // Public key buffer is too small
+	"subtest 16": { // Public key buffer is too small
 		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
 		"pub_key": [
@@ -147,18 +171,18 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 15": {
+	"subtest 17": {
 		"command": "DELETE",
 		"key_id": 0,
 		"depends": 1
 	},
-	"subtest 16": { // Generate RSA key
+	"subtest 18": { // Generate RSA key
 		"command": "GENERATE_RSA",
 		"subsystem": "TEE",
 		"security_size": 256,
 		"key_id": 1
 	},
-	"subtest 17": { // Modulus length not set
+	"subtest 19": { // Modulus length not set
 		"command": "EXPORT_PUBLIC",
 		"key_type": "RSA",
 		"key_id": 1,
@@ -173,9 +197,9 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 16
+		"depends": 18
 	},
-	"subtest 18": { // Modulus length not set
+	"subtest 20": { // Modulus length not set
 		"command": "EXPORT_KEYPAIR",
 		"key_type": "RSA",
 		"key_id": 1,
@@ -196,9 +220,9 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 16
+		"depends": 18
 	},
-	"subtest 19": { // Modulus buffer is too small
+	"subtest 21": { // Modulus buffer is too small
 		"command": "EXPORT_PUBLIC",
 		"key_type": "RSA",
 		"key_id": 1,
@@ -213,9 +237,9 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 16
+		"depends": 18
 	},
-	"subtest 20": { // Public buffer length is too small (default public exponent)
+	"subtest 22": { // Public buffer length is too small (default public exponent)
 		"command": "EXPORT_PUBLIC",
 		"key_type": "RSA",
 		"key_id": 1,
@@ -230,14 +254,14 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 16
+		"depends": 18
 	},
-	"subtest 21": {
+	"subtest 23": {
 		"command": "DELETE",
 		"key_id": 1,
-		"depends": 16
+		"depends": 18
 	},
-	"subtest 22": { // Generate RSA key
+	"subtest 24": { // Generate RSA key
 		"command": "GENERATE_RSA",
 		"subsystem": "TEE",
 		"security_size": 256,
@@ -246,7 +270,7 @@
 			["RSA_PUB_EXP", [9, "4000000041CB995001"]]
 		]
 	},
-	"subtest 23": { // Public buffer length is too small (user public exponent)
+	"subtest 25": { // Public buffer length is too small (user public exponent)
 		"command": "EXPORT_PUBLIC",
 		"key_type": "RSA",
 		"key_id": 2,
@@ -261,11 +285,11 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 22
+		"depends": 24
 	},
-	"subtest 24": {
+	"subtest 26": {
 		"command": "DELETE",
 		"key_id": 2,
-		"depends": 22
+		"depends": 24
 	}
 }

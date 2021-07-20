@@ -56,6 +56,7 @@
 #define CONFIG_LOAD	     "CONFIG_LOAD"
 #define CONFIG_UNLOAD	     "CONFIG_UNLOAD"
 #define DELETE		     "DELETE"
+#define DERIVE		     "DERIVE"
 #define EXPORT		     "EXPORT"
 #define EXPORT_KEYPAIR	     "EXPORT_KEYPAIR"
 #define EXPORT_PRIVATE	     "EXPORT_PRIVATE"
@@ -136,7 +137,6 @@
 #define VERIFY_SHA512	     "VERIFY_SHA512"
 #define VERIFY_SM3	     "VERIFY_SM3"
 #define VERIFY_UNDEFINED     "VERIFY_UNDEFINED"
-#define DERIVE		     "DERIVE"
 
 /* 'test_error' parameter values */
 enum arguments_test_err_case {

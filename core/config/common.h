@@ -27,7 +27,7 @@
 
 struct ctx {
 	void *mutex;
-	unsigned int load_count;
+	bool config_loaded;
 };
 
 enum load_method_id {
@@ -218,6 +218,7 @@ int read_hash_algo_names(char **start, char *end, unsigned long *bitmap);
  * parse() - Parse a plaintext configuration.
  * @buffer: Address of the first char of the plaintext configuration.
  * @size: Size of of rth plaintext configuration.
+ * @offset: current offset in plaintext configuration.
  *
  * This function parses a plaintext configuration and
  * fills the Configuration database.
@@ -225,7 +226,7 @@ int read_hash_algo_names(char **start, char *end, unsigned long *bitmap);
  * Return:
  * error code.
  */
-int parse(char *buffer, unsigned int size);
+int parse(char *buffer, unsigned int size, unsigned int *offset);
 
 /**
  * init_database() - Initialize the Configuration database.
@@ -261,6 +262,18 @@ void set_bit(unsigned long *bitmap, unsigned int size, unsigned int offset);
  * none.
  */
 void set_subsystem_configured(enum subsystem_id id);
+
+/**
+ * is_subsystem_configured() - Tell if a Secure subsystem is configured.
+ * @id: Secure Subsystem ID.
+ *
+ * This function tells if Secure subsystem is configured.
+ *
+ * Return:
+ * * true:	- the Secure subsystem is configured.
+ * * false:	- the Secure subsystem is not configured.
+ */
+bool is_subsystem_configured(enum subsystem_id id);
 
 /**
  * set_subsystem_load_method() - Set a Secure subsystem load method.

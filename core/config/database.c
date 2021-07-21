@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_status.h"
@@ -99,7 +99,7 @@ void set_subsystem_configured(enum subsystem_id id)
 	database.subsystem[index].configured = true;
 }
 
-static bool is_subsystem_configured(enum subsystem_id id)
+bool is_subsystem_configured(enum subsystem_id id)
 {
 	unsigned int index = id;
 
@@ -249,7 +249,7 @@ int store_operation_params(enum operation_id operation_id, void *params,
 			   struct operation_func *func,
 			   enum subsystem_id subsystem_id)
 {
-	int status = SMW_STATUS_UNKNOWN_ID;
+	int status = SMW_STATUS_OK;
 
 	unsigned int index = subsystem_id;
 	struct smw_utils_list *list;
@@ -260,20 +260,18 @@ int store_operation_params(enum operation_id operation_id, void *params,
 	OPERATION_ID_ASSERT(operation_id);
 	SMW_DBG_ASSERT(func);
 
-	/* Only store the first configuration of a Security operation
-	 * for a given Secure subsystem.
+	/* Configuration is syntactically wrong if a Security operation
+	 * is defined more than once for a given Secure subsystem.
 	 */
-	if (find_operation_params(operation_id, subsystem_id))
-		goto end;
-
-	list = &database.subsystem[index].operations_caps_list;
-	if (!smw_utils_list_append_data(list, params, func->destroy,
-					func->print)) {
-		status = SMW_STATUS_ALLOC_FAILURE;
+	if (find_operation_params(operation_id, subsystem_id)) {
+		status = SMW_STATUS_OPERATION_DUPLICATE;
 		goto end;
 	}
 
-	status = SMW_STATUS_OK;
+	list = &database.subsystem[index].operations_caps_list;
+	if (!smw_utils_list_append_data(list, params, func->destroy,
+					func->print))
+		status = SMW_STATUS_ALLOC_FAILURE;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

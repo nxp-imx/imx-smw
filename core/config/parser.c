@@ -214,11 +214,18 @@ int read_unsigned_integer(char **start, char *end, unsigned int *dest)
 	}
 
 	while ((*cur >= '0') && (*cur <= '9') && (cur < end)) {
-		temp = *dest * 10 + (*cur++ - '0');
-		if (temp < *dest) {
+		if (*dest > UINT_MAX / 10) {
 			status = SMW_STATUS_TOO_LARGE_NUMBER;
 			goto end;
 		}
+		temp = *dest * 10;
+
+		if (temp > UINT_MAX - (*cur - '0')) {
+			status = SMW_STATUS_TOO_LARGE_NUMBER;
+			goto end;
+		}
+		temp += (*cur++ - '0');
+
 		*dest = temp;
 	}
 
@@ -308,16 +315,19 @@ static int read_string(char **start, char *end, char *dest,
 
 		*p++ = *cur++;
 	}
-	*p = 0;
 
 	skip_insignificant_chars(&cur, end);
 
 	if (separator == *cur)
 		cur++;
+	else
+		status = SMW_STATUS_SYNTAX_ERROR;
 
 	*start = cur;
 
 end:
+	*p = 0;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s decoded %s\n", __func__, dest);
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -376,6 +386,9 @@ int read_names(char **start, char *end, unsigned long *bitmap,
 	while ((cur < end) && (semicolon != *cur)) {
 		status = read_string(&cur, end, buffer,
 				     SMW_CONFIG_MAX_STRING_LENGTH, colon);
+		/* The end of the names list has been reached */
+		if (status == SMW_STATUS_SYNTAX_ERROR && semicolon == *cur)
+			status = SMW_STATUS_OK;
 		if (status != SMW_STATUS_OK)
 			goto end;
 		SMW_DBG_PRINTF(INFO, "Value: %s\n", buffer);
@@ -398,9 +411,11 @@ end:
 	return status;
 }
 
-static int read_operation(char **start, char *end,
-			  enum subsystem_id subsystem_id)
+static bool read_operation(char **start, char *end,
+			   enum subsystem_id subsystem_id, int *return_status)
 {
+	bool skip = false;
+
 	int status = SMW_STATUS_OK;
 
 	char *cur = *start;
@@ -421,8 +436,12 @@ static int read_operation(char **start, char *end,
 
 	/* Security operation id */
 	status = get_operation_id(buffer, &operation_id);
-	if (status != SMW_STATUS_OK)
+	if (status != SMW_STATUS_OK) {
+		/* Skip unknown Security Operation without error */
+		if (status == SMW_STATUS_UNKNOWN_NAME)
+			skip = true;
 		goto end;
+	}
 	SMW_DBG_PRINTF(DEBUG, "Security operation id: %d\n", operation_id);
 
 	skip_insignificant_chars(&cur, end);
@@ -459,12 +478,19 @@ static int read_operation(char **start, char *end,
 	*start = cur;
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	if (return_status)
+		*return_status = status;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned status: %d\n", __func__, status);
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+		       skip ? "TRUE" : "FALSE");
+	return skip;
 }
 
-static int read_subsystem(char **start, char *end)
+static bool read_subsystem(char **start, char *end, int *return_status)
 {
+	bool skip = false;
+
 	int status = SMW_STATUS_OK;
 
 	char *cur = *start;
@@ -484,15 +510,28 @@ static int read_subsystem(char **start, char *end)
 
 	/* Secure Subsystem id */
 	status = smw_config_get_subsystem_id(buffer, &subsystem_id);
-	if (status != SMW_STATUS_OK)
+	if (status != SMW_STATUS_OK) {
+		/* Skip unknown Secure Subsystem without error */
+		if (status == SMW_STATUS_UNKNOWN_NAME)
+			skip = true;
 		goto end;
+	}
 	SMW_DBG_PRINTF(DEBUG, "Secure subsystem id: %d\n", subsystem_id);
+
+	if (is_subsystem_configured(subsystem_id)) {
+		init_database(true);
+		status = SMW_STATUS_SUBSYSTEM_DUPLICATE;
+		goto end;
+	}
 
 	skip_insignificant_chars(&cur, end);
 
 	/* Secure Subsystem start/stop method name */
 	status = read_string(&cur, end, buffer,
 			     SMW_CONFIG_MAX_LOAD_METHOD_NAME_LENGTH, semicolon);
+	if (status == SMW_STATUS_SYNTAX_ERROR && open_square_bracket == *cur &&
+	    !SMW_UTILS_STRLEN(buffer))
+		status = SMW_STATUS_OK;
 	if (status != SMW_STATUS_OK)
 		goto end;
 	SMW_DBG_PRINTF(INFO, "Start/stop method name: %s\n", buffer);
@@ -503,25 +542,31 @@ static int read_subsystem(char **start, char *end)
 		goto end;
 	SMW_DBG_PRINTF(DEBUG, "Start/stop method id: %d\n", subsystem_id);
 
+	skip_insignificant_chars(&cur, end);
+
 	/* List of Security operations */
 	while (cur < end) {
-		skip_insignificant_chars(&cur, end);
-
 		/* Security operation tag */
-		if (!detect_tag(&cur, end, operation_tag))
-			break;
+		if (!detect_tag(&cur, end, operation_tag)) {
+			if (detect_tag(&cur, end, subsystem_tag)) {
+				cur -= SMW_UTILS_STRLEN(subsystem_tag);
+				break;
+			}
+			status = SMW_STATUS_INVALID_TAG;
+			goto end;
+		}
 
 		skip_insignificant_chars(&cur, end);
 
-		status = read_operation(&cur, end, subsystem_id);
-
-		if (status == SMW_STATUS_UNKNOWN_NAME) {
+		if (read_operation(&cur, end, subsystem_id, &status)) {
 			skip_operation(&cur, end);
 			status = SMW_STATUS_OK;
 		}
 
 		if (status != SMW_STATUS_OK)
 			goto end;
+
+		skip_insignificant_chars(&cur, end);
 	}
 
 	set_subsystem_configured(subsystem_id);
@@ -530,8 +575,13 @@ static int read_subsystem(char **start, char *end)
 	*start = cur;
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	if (return_status)
+		*return_status = status;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned status: %d\n", __func__, status);
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+		       skip ? "TRUE" : "FALSE");
+	return skip;
 }
 
 static int verify_version(char **start, char *end)
@@ -544,7 +594,7 @@ static int verify_version(char **start, char *end)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!detect_tag(&cur, end, version_tag)) {
-		status = SMW_STATUS_SYNTAX_ERROR;
+		status = SMW_STATUS_INVALID_TAG;
 		goto end;
 	}
 
@@ -570,8 +620,10 @@ static int verify_version(char **start, char *end)
 
 	SMW_DBG_PRINTF(INFO, "Version: %d\n", version);
 
-	if (version > SMW_CONFIG_PARSER_VERSION)
-		return SMW_STATUS_INVALID_VERSION;
+	if (version > SMW_CONFIG_PARSER_VERSION) {
+		status = SMW_STATUS_INVALID_VERSION;
+		goto end;
+	}
 
 	*start = cur;
 
@@ -580,7 +632,7 @@ end:
 	return status;
 }
 
-int parse(char *buffer, unsigned int size)
+int parse(char *buffer, unsigned int size, unsigned int *offset)
 {
 	int status = SMW_STATUS_OK;
 
@@ -596,30 +648,41 @@ int parse(char *buffer, unsigned int size)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	skip_insignificant_chars(&cur, end);
+
 	/* List of Secure Subsystems */
 	while (cur < end) {
-		skip_insignificant_chars(&cur, end);
-
 		/* Secure Subsystem tag */
-		if (!detect_tag(&cur, end, subsystem_tag))
-			break;
+		if (!detect_tag(&cur, end, subsystem_tag)) {
+			status = SMW_STATUS_INVALID_TAG;
+			goto end;
+		}
 
 		skip_insignificant_chars(&cur, end);
 
-		status = read_subsystem(&cur, end);
-
-		if (status == SMW_STATUS_UNKNOWN_NAME) {
+		if (read_subsystem(&cur, end, &status)) {
 			skip_subsystem(&cur, end);
 			status = SMW_STATUS_OK;
 		}
 
 		if (status != SMW_STATUS_OK)
 			goto end;
+
+		skip_insignificant_chars(&cur, end);
 	}
 
 end:
-	SMW_DBG_PRINTF_COND(DEBUG, cur < end, "Ignore end of file:\n%.*s\n",
-			    (unsigned int)(end - cur), cur);
+	if (status != SMW_STATUS_OK) {
+		if (*offset) {
+			*offset = (unsigned int)(cur - buffer);
+			SMW_DBG_PRINTF(ERROR,
+				       "Error detected nearly after offset:%d\n",
+				       *offset);
+		}
+		SMW_DBG_PRINTF_COND(ERROR, cur < end,
+				    "Ignore end of file:\n%.*s\n",
+				    (unsigned int)(end - cur), cur);
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

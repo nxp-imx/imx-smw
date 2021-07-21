@@ -1,0 +1,2 @@
+/* Configuration file */
+VERSION=5000000000;

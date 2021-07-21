@@ -1,0 +1,7 @@
+/* Configuration file */
+VERSION=0;
+[SECURE_SUBSYSTEM]
+    TEE;
+    [SECURITY_OPERATION]
+        GENERATE_KEY;
+        KEY_SIZE_RANGE=:5000000000;

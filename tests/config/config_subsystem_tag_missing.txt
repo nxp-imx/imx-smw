@@ -1,0 +1,5 @@
+/* Configuration file */
+VERSION=0;
+    TEE;
+    [SECURITY_OPERATION]
+        GENERATE_KEY;

@@ -1,0 +1,6 @@
+/* Configuration file */
+VERSION=0;
+[SECURE_SUBSYSTEM]
+    DEADBEEF;
+    [SECURITY_OPERATION]
+        GENERATE_KEY;

@@ -1,0 +1,153 @@
+{
+	"subtest 1": {
+		"command": "CONFIG_UNLOAD"
+	},
+	"subtest 2": {
+		"command": "CONFIG_LOAD",
+		"input": 16,
+		"result": "SMW_STATUS_INVALID_BUFFER"
+	},
+	"subtest 3": {
+		"command": "CONFIG_LOAD",
+		"input": [
+			0,
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_BUFFER"
+	},
+	"subtest 4": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_version_tag_invalid.txt",
+		"result": "SMW_STATUS_INVALID_TAG"
+	},
+	"subtest 5": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_version_value_invalid.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 6": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_version_number_too_large.txt",
+		"result": "SMW_STATUS_TOO_LARGE_NUMBER"
+	},
+	"subtest 7": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_version_no_semicolon.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 8": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_subsystem_tag_invalid.txt",
+		"result": "SMW_STATUS_INVALID_TAG"
+	},
+	"subtest 9": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_subsystem_tag_missing.txt",
+		"result": "SMW_STATUS_INVALID_TAG"
+	},
+	"subtest 10": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_subsystem_name_twice.txt",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 11": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_subsystem_no_semicolon.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 12": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_subsystem_name_missing.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 13": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_load_method_unknown.txt",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 14": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_load_method_twice.txt",
+		"result": "SMW_STATUS_INVALID_TAG"
+	},
+	"subtest 15": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_load_method_no_semicolon.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 16": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_no_operation.txt",
+		"result": "SMW_STATUS_EOF"
+	},
+	"subtest 17": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_operation_tag_invalid.txt",
+		"result": "SMW_STATUS_INVALID_TAG"
+	},
+	"subtest 18": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_operation_tag_missing.txt",
+		"result": "SMW_STATUS_INVALID_TAG"
+	},
+	"subtest 19": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_operation_name_twice.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 20": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_operation_no_semicolon.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 21": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_operation_name_missing.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 22": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_parameter_name_missing.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 23": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_parameter_no_semicolon.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 24": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_parameter_value_unknown.txt",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 25": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_parameter_range_no_semicolon.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 26": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_parameter_range_min_too_large.txt",
+		"result": "SMW_STATUS_TOO_LARGE_NUMBER"
+	},
+	"subtest 27": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_parameter_range_max_too_large.txt",
+		"result": "SMW_STATUS_TOO_LARGE_NUMBER"
+	},
+	"subtest 28": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_parameter_range_no_colon.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 29": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_subsystem_defined_twice.txt",
+		"result": "SMW_STATUS_SUBSYSTEM_DUPLICATE"
+	},
+	"subtest 30": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_operation_defined_twice.txt",
+		"result": "SMW_STATUS_OPERATION_DUPLICATE"
+	},
+}

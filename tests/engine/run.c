@@ -17,6 +17,7 @@
 #include "rng.h"
 #include "cipher.h"
 #include "operation_context.h"
+#include "config.h"
 #include "run.h"
 #include "paths.h"
 #include "smw_status.h"
@@ -456,6 +457,31 @@ static int execute_operation_context(char *cmd, struct json_object *params,
 }
 
 /**
+ * execute_config_cmd() - Execute configuration load or unload command.
+ * @cmd: Command name.
+ * @params: Command parameters.
+ * @common_params: Some parameters common to commands.
+ * @status: Pointer to SMW command status.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from smw_config_load() and smw_config_unload().
+ */
+static int execute_config_cmd(char *cmd, struct json_object *params,
+			      struct common_parameters *common_params,
+			      enum smw_status_code *status)
+{
+	if (!strcmp(cmd, CONFIG_LOAD))
+		return config_load(params, common_params, status);
+	if (!strcmp(cmd, CONFIG_UNLOAD))
+		return config_unload(params, common_params, status);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
+/**
  * execute_command() - Execute a subtest command.
  * @cmd: Command name.
  * @params: Command parameters.
@@ -508,6 +534,8 @@ static int execute_command(char *cmd, struct json_object *params,
 	else if (!strncmp(cmd, OP_CTX, strlen(OP_CTX)))
 		return execute_operation_context(cmd, params, common_params,
 						 ctx, status);
+	else if (!strncmp(cmd, CONFIG, strlen(CONFIG)))
+		return execute_config_cmd(cmd, params, common_params, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

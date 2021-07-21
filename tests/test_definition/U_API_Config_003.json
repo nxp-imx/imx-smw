@@ -1,0 +1,50 @@
+{
+	"subtest 1": {
+		"command": "CONFIG_UNLOAD"
+	},
+	"subtest 2": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_version_not_supported.txt",
+		"result": "SMW_STATUS_INVALID_VERSION"
+	},
+	"subtest 3": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_no_subsystem.txt"
+	},
+	"subtest 4": {
+		"command": "CONFIG_UNLOAD",
+		"depends": 3
+	},
+	"subtest 5": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_subsystem_unknown.txt"
+	},
+	"subtest 6": {
+		"command": "CONFIG_UNLOAD",
+		"depends": 5
+	},
+	"subtest 7": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_load_method_omitted.txt"
+	},
+	"subtest 8": {
+		"command": "CONFIG_UNLOAD",
+		"depends": 7
+	},
+	"subtest 9": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_operation_unknown.txt"
+	},
+	"subtest 10": {
+		"command": "CONFIG_UNLOAD",
+		"depends": 9
+	},
+	"subtest 11": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_parameter_unknown.txt"
+	},
+	"subtest 12": {
+		"command": "CONFIG_UNLOAD",
+		"depends": 11
+	}
+}

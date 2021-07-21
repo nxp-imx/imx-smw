@@ -1,0 +1,4 @@
+/* Configuration file */
+VERSION=0;
+[SECURE_SUBSYSTEM]
+    TEE;

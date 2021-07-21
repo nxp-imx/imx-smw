@@ -39,6 +39,7 @@ configure_file(${TEST_SCRIPTS_SRC}/run_simple_test.sh.in
 add_executable(${PROJECT_NAME}
                EXCLUDE_FROM_ALL
                engine/cipher.c
+               engine/config.c
                engine/crypto.c
                engine/hmac.c
                engine/keymgr.c
@@ -58,7 +59,8 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${TEST_SRC_INC} ${TEST_BIN_INC}
                                    ${JSONC_INCLUDE_DIR}
-                           PUBLIC ${CMAKE_SOURCE_DIR}/public)
+                           PUBLIC ${CMAKE_SOURCE_DIR}/public
+                                  ${CMAKE_SOURCE_DIR}/inc)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONC_LIBRARY})
 target_link_libraries(${PROJECT_NAME} PRIVATE smw)
@@ -86,6 +88,7 @@ set(MULTIPART_LABEL Multipart)
 set(CONTEXT_LABEL Context)
 set(DERIVE_LABEL Derive)
 set(TLS_LABEL TLS)
+set(CONFIG_LABEL Config)
 
 # Include SMW API tests
 include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)

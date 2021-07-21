@@ -1,0 +1,6 @@
+/* Configuration file */
+VERSION=0;
+[SECURE_SUBSYSTEM_TAG_INVALID]
+    TEE;
+    [SECURITY_OPERATION]
+        GENERATE_KEY;

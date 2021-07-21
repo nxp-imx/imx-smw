@@ -1,0 +1,15 @@
+{
+	"subtest 1": {
+		"command": "CONFIG_LOAD",
+		"filepath": "api_config.txt",
+		"result": "SMW_STATUS_CONFIG_ALREADY_LOADED"
+	},
+	"subtest 2": {
+		"command": "CONFIG_UNLOAD"
+	},
+	"subtest 3": {
+		"command": "CONFIG_UNLOAD",
+		"depends": 2,
+		"result": "SMW_STATUS_NO_CONFIG_LOADED"
+	}
+}

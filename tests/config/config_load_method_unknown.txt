@@ -1,0 +1,6 @@
+/* Configuration file */
+VERSION=0;
+[SECURE_SUBSYSTEM]
+    TEE;
+    /* Start/Stop method */
+    LOAD_UNLOAD_METHOD_UNKNOWN;

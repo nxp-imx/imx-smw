@@ -55,8 +55,8 @@ int read_key_type_names(char **start, char *end, unsigned long *bitmap)
 			  SMW_CONFIG_KEY_TYPE_ID_NB);
 }
 
-int read_key_op_names(char **start, char *end, enum operation_id op_id,
-		      unsigned long *bitmap)
+static int read_key_op_names(char **start, char *end, enum operation_id op_id,
+			     unsigned long *bitmap)
 {
 	const char *const *op_names;
 	unsigned int nb_op_names;

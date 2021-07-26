@@ -241,7 +241,7 @@
 		"command": "EXPORT_PUBLIC",
 		"key_id": 4,
 		"depends": 20,
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+		"result": "SMW_STATUS_UNKNOWN_ID"
 	},
 	"subtest 22": {
 		"command": "IMPORT_NIST",

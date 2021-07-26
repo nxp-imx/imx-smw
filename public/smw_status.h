@@ -27,6 +27,11 @@
  * @SMW_STATUS_NO_KEY_BUFFER: No Key buffer is set in the Key descriptor structure.
  * @SMW_STATUS_OUTPUT_TOO_SHORT: Output buffer is too small. Output size field is updated with
  * the expected size.
+ * @SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY: Subsystem memory allocation failure.
+ * @SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE: Not enough space in the secure subsystem to handle
+ * the requested operation.
+ * @SMW_STATUS_SUBSYSTEM_STORAGE_ERROR: Generic secure subsystem storage error.
+ * @SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT: An object stored in the secure subsystem is corrupted.
  *
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
@@ -67,6 +72,10 @@
  *	- SMW_STATUS_OPERATION_FAILURE
  *	- SMW_STATUS_NO_KEY_BUFFER
  *	- SMW_STATUS_OUTPUT_TOO_SHORT
+ *	- SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY
+ *	- SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE
+ *	- SMW_STATUS_SUBSYSTEM_STORAGE_ERROR
+ *	- SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT
  *
  ** Specific return codes - Library initialization
  *
@@ -125,7 +134,11 @@ enum smw_status_code {
 	SMW_STATUS_SUBSYSTEM_DUPLICATE,
 	SMW_STATUS_OPERATION_DUPLICATE,
 	SMW_STATUS_CONFIG_ALREADY_LOADED,
-	SMW_STATUS_NO_CONFIG_LOADED
+	SMW_STATUS_NO_CONFIG_LOADED,
+	SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY, /* 30 */
+	SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE,
+	SMW_STATUS_SUBSYSTEM_STORAGE_ERROR,
+	SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT
 };
 
 #endif /* __SMW_STATUS_H__ */

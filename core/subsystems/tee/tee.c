@@ -187,7 +187,7 @@ end:
  */
 static int convert_tee_result(TEEC_Result result)
 {
-	int status;
+	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
 
 	switch (result) {
 	case TEEC_SUCCESS:
@@ -199,16 +199,71 @@ static int convert_tee_result(TEEC_Result result)
 		break;
 
 	case TEEC_ERROR_NOT_SUPPORTED:
+	case TEEC_ERROR_NOT_IMPLEMENTED:
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		break;
+
+	case TEE_ERROR_OVERFLOW:
+	case TEE_ERROR_TIME_NOT_SET:
+	case TEEC_ERROR_BAD_PARAMETERS:
+	case TEEC_ERROR_SECURITY:
+	case TEEC_ERROR_BAD_FORMAT:
+	case TEEC_ERROR_BAD_STATE:
+	case TEEC_ERROR_NO_DATA:
+		status = SMW_STATUS_INVALID_PARAM;
+		break;
+
+	case TEEC_ERROR_ITEM_NOT_FOUND:
+		status = SMW_STATUS_UNKNOWN_ID;
 		break;
 
 	case TEE_ERROR_SIGNATURE_INVALID:
 		status = SMW_STATUS_SIGNATURE_INVALID;
 		break;
 
+	case TEE_ERROR_STORAGE_NO_SPACE:
+		status = SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE;
+		break;
+
+	case TEEC_ERROR_OUT_OF_MEMORY:
+		status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+		break;
+
+	case TEE_ERROR_STORAGE_NOT_AVAILABLE:
+	case TEE_ERROR_STORAGE_NOT_AVAILABLE_2:
+		status = SMW_STATUS_SUBSYSTEM_STORAGE_ERROR;
+		break;
+
+	case TEE_ERROR_CORRUPT_OBJECT:
+	case TEE_ERROR_CORRUPT_OBJECT_2:
+		status = SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT;
+		break;
+
+	case TEE_ERROR_TIME_NEEDS_RESET:
+	case TEEC_ERROR_ACCESS_DENIED:
+	case TEEC_ERROR_CANCEL:
+	case TEEC_ERROR_BUSY:
+	case TEEC_ERROR_EXTERNAL_CANCEL:
+	case TEEC_ERROR_ACCESS_CONFLICT:
+	case TEEC_ERROR_EXCESS_DATA:
+		status = SMW_STATUS_OPERATION_FAILURE;
+		break;
+
 	default:
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
+		/*
+		 * status = SMW_STATUS_SUBSYSTEM_FAILURE
+		 * TEEC_ERROR_GENERIC
+		 * TEEC_ERROR_COMMUNICATION
+		 * TEEC_ERROR_TARGET_DEAD
+		 */
+		break;
 	}
+
+	/*
+	 * To handle when feature will be supported:
+	 * - TEE_ERROR_CIPHERTEXT_INVALID (AsymmetricEncrypt, AsymmetricDecrypt)
+	 * - TEE_ERROR_MAC_INVALID (MACCompareFinal, AEDecryptFinal)
+	 */
 
 	return status;
 }

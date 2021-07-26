@@ -636,7 +636,7 @@ int convert_hsm_err(hsm_err_t err)
 		break;
 
 	case HSM_OUT_OF_MEMORY:
-		status = SMW_STATUS_ALLOC_FAILURE;
+		status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
 		break;
 
 	case HSM_UNKNOWN_ID:
@@ -645,16 +645,31 @@ int convert_hsm_err(hsm_err_t err)
 
 	case HSM_FEATURE_NOT_SUPPORTED:
 	case HSM_FEATURE_DISABLED:
+	case HSM_CMD_NOT_SUPPORTED:
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		break;
 
 	case HSM_KEY_STORE_CONFLICT:
 	case HSM_KEY_STORE_AUTH:
 	case HSM_NOT_READY_RATING:
+	case HSM_RNG_NOT_STARTED:
+	case HSM_KEY_STORE_COUNTER:
 		status = SMW_STATUS_OPERATION_FAILURE;
 		break;
 
+	case HSM_NVM_ERROR:
+	case HSM_KEY_STORE_ERROR:
+		status = SMW_STATUS_SUBSYSTEM_STORAGE_ERROR;
+		break;
+
 	default:
+		/*
+		 * status = SMW_STATUS_SUBSYSTEM_FAILURE
+		 * HSM_INVALID_LIFECYCLE
+		 * HSM_SELF_TEST_FAILURE
+		 * HSM_FATAL_FAILURE
+		 * HSM_GENERAL_ERROR
+		 */
 		break;
 	}
 

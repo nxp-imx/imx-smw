@@ -67,28 +67,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE smw)
 
 set(TEST_CMD ${CMAKE_INSTALL_PREFIX}/${SMW_TESTS_TARGET_SCRIPTS_DIR}/run_simple_test.sh)
 
-# Labels
-set(UNITARY_LABEL U)
-set(FUNCTIONAL_LABEL F)
-set(API_LABEL API)
-set(TEE_LABEL TEE)
-set(HSM_LABEL HSM)
-set(DELETE_LABEL Delete)
-set(EXPORT_LABEL Export)
-set(GENERATE_LABEL Generate)
-set(HASH_LABEL Hash)
-set(HMAC_LABEL HMAC)
-set(IMPORT_LABEL Import)
-set(KEYMGR_LABEL Keymgr)
-set(SIGN_LABEL Sign)
-set(VERIFY_LABEL Verify)
-set(RNG_LABEL Rng)
-set(CIPHER_LABEL Cipher)
-set(MULTIPART_LABEL Multipart)
-set(CONTEXT_LABEL Context)
-set(DERIVE_LABEL Derive)
-set(TLS_LABEL TLS)
-set(CONFIG_LABEL Config)
+# Include utils
+include(${CMAKE_SOURCE_DIR}/tests/cmake/utils.cmake)
 
 # Include SMW API tests
 include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)

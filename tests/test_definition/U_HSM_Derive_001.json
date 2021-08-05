@@ -98,45 +98,104 @@
 			]
 		}
 	},
-	"subtest 4": {
+	"subtest 4": { // Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_id": 11,
+			"server_w_enc_key_id": 12,
+			"master_sec_key_id": 13
+		},
+		"op_output": {
+			"key_id": 10,
+			"format": "BASE64",
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"op_input": {
+			"key_type": "ECDH_NIST",
+			"security_size": 256,
+			"format": "BASE64",
+			"pub_key": [
+				"duZWqeoNUUErg6SIkb+x5wy7jiElxiDj",
+				"JjYiLDLsKBCvyj0dN2bzUfRCMtCm9qbk",
+				"jSDkk6AavsoSHnGSFd8FQQ=="
+			]
+		}
+	},
+	"subtest 5": {
 		"command": "DELETE",
 		"key_id": 1,
 		"depends": 2
 	},
-	"subtest 5": {
+	"subtest 6": {
 		"command": "DELETE",
 		"key_id": 2,
 		"depends": 2
 	},
-	"subtest 6": {
+	"subtest 7": {
 		"command": "DELETE",
 		"key_id": 3,
 		"depends": 2
 	},
-	"subtest 7": {
+	"subtest 8": {
 		"command": "DELETE",
 		"key_id": 5,
 		"depends": 3
 	},
-	"subtest 8": {
+	"subtest 9": {
 		"command": "DELETE",
 		"key_id": 6,
 		"depends": 3
 	},
-	"subtest 9": {
+	"subtest 10": {
 		"command": "DELETE",
 		"key_id": 7,
 		"depends": 3
 	},
-	"subtest 10": {
+	"subtest 11": {
 		"command": "DELETE",
 		"key_id": 8,
 		"depends": 3
 	},
-	"subtest 11": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_id": 9,
 		"depends": 3
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_id": 11,
+		"depends": 4
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_id": 12,
+		"depends": 4
+	},
+	"subtest 15": {
+		"command": "DELETE",
+		"key_id": 13,
+		"depends": 4
 	}
 }
-/* Ephemeral key (key_id = 0 and 4) doesn't need to be deleted */
+/* Ephemeral key (key_id = 0, 4 and 10) doesn't need to be deleted */

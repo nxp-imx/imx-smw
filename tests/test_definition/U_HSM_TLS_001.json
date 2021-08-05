@@ -67,6 +67,6 @@
 	"subtest 4": {
 		"command": "DELETE",
 		"key_id": 0,
-		"depends": 1
+		"depends": 2
 	}
 }

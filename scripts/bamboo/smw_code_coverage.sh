@@ -1,11 +1,10 @@
 #!/bin/bash
 set -ex
 
-# Define nexus default url
-nexus_url="${bamboo_nexus_url:-"https://nl-nxrm.sw.nxp.com/repository"}"
-nexus_dir="${bamboo_nexus_lava_dir:-"mougins-raw-public-artifacts/LAVA/smw"}"
-job_name="${bamboo_planKey}-${bamboo_buildNumber}"
-bamboo_plan="${bamboo_planKey:-"misc"}"
+bash_dir=$(dirname "${BASH_SOURCE[0]}")
+source "${bash_dir}/smw_bamboo_config.sh"
+
+trap exit_vvenv EXIT
 
 function usage()
 {
@@ -51,15 +50,6 @@ function get_file_info()
     fi
 }
 
-function check_url
-{
-    status=$(curl -I -s "$1" | head -n 1)
-    if [[ -w ${status} ]]; then
-      printf "File %s doesn't exist\n" "$1"
-      exit 1
-    fi
-}
-
 function tarball_extract
 {
     printf "Untar %s into %s\n" "$1" "$2"
@@ -72,35 +62,30 @@ function gcda_upload_extract
     # Upload gdca tarball and untar it in the
     # build directory
     #
-    local gcda_filename="${platform}_${job_name}.tar.gz"
-    local gcda_url="${nexus_url}/${nexus_dir}/${bamboo_plan}"
+    local gcda_filename="$1"
 
-    check_url "${gcda_url}/${gcda_filename}"
+    check_url "${nexus_test_full_path}/${gcda_filename}"
 
     printf "Get the GCDA tarball file\n"
-    eval "curl -O ${gcda_url}/${gcda_filename}"
+    eval "curl -O ${nexus_test_full_path}/${gcda_filename}"
 
-    tarball_extract "$1" "$2"
-
-    eval "curl -n -X DELETE ${gcda_url}/${gcda_filename}"
+    tarball_extract "${gcda_filename}" "$2"
 }
 
 if [[ $# -lt 1 ]]; then
     usage
 fi
 
-daytoday=$(date +%w)
-PR=0
-# Check if the branch is a PR
-if [ ! -z "${bamboo_repository_pr_targetBranch+x}" ] ; then
-    PR=1
-fi
-
-if [[ ${daytoday} == "$bamboo_weekly_day_run" ]] && [[ ${PR} == 0 ]]; then
-    #
+# Check if the branch is not a PR and it's daily build
+if [[ $(is_pr) -eq 0 ]] && [[ $(is_weekly_build) -eq 1 ]]; then
     # Don't run code coverage
     exit 0
 fi
+
+#
+# Start venv
+#
+start_vvenv
 
 platform=$1
 
@@ -122,9 +107,6 @@ gcov_report="gcov_report_${platform}"
 gcov_out="./${gcov_report}"
 lcov_tool="../lcov_tool"
 
-gcda_tarball="${platform}_${job_name}.tar.gz"
-gcda_tarball="${gcda_tarball// /_}"
-
 #
 # Check if gcno tarball exist and copy it locally
 #
@@ -144,7 +126,7 @@ fi
 eval "mkdir -p ${gcov_data}${root_dir}"
 
 tarball_extract "${gcno_tarball}" "${gcov_data}${root_dir}"
-gcda_upload_extract "${gcda_tarball}" "${gcov_data}"
+gcda_upload_extract "${platform}_${gcda_tarball}" "${gcov_data}"
 
 gcno_dir="${gcov_data}/${root_dir}/${build_dir}"
 gcda_dir="${gcov_data}/${root_dir}/${build_dir}"

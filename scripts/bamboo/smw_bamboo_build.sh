@@ -1,13 +1,10 @@
 #!/bin/bash
-set -e
+set -ex
 
-function cleanup {
-    #
-    # Stop venv
-    #
-    deactivate
-}
-trap cleanup EXIT
+bash_dir=$(dirname "${BASH_SOURCE[0]}")
+source "${bash_dir}/smw_bamboo_config.sh"
+
+trap exit_vvenv EXIT
 
 function usage()
 {
@@ -76,19 +73,9 @@ build_debug="build.${platform}_deb"
 rm -rf "${build_release}"
 rm -rf "${build_debug}"
 
-PR=0
-daytoday=$(date +%w)
-
-# Check if the branch is a PR
-if [ ! -z "${bamboo_repository_pr_targetBranch+x}" ] ; then
-    PR=1
-fi
-
 # Check if the branch is not a PR and it's daily build
-if [[ ${PR} -eq 0 ]]; then
-    if [[ ${daytoday} == "$bamboo_weekly_day_run" ]]; then
-        git clean -xdf
-    fi
+if [[ $(is_pr) -eq 0 ]] && [[ $(is_weekly_build) -eq 1 ]]; then
+    git clean -xdf
 fi
 
 export="./export"
@@ -103,10 +90,9 @@ fi
 #
 # Start venv
 #
-venv_dir="venv_smw"
-eval "python3 -m venv ${venv_dir}"
-eval "source ${venv_dir}/bin/activate"
+start_vvenv
 
+# Install python package to build OPTEE
 eval "python3 -m pip install pyelftools pycryptodomex"
 
 #
@@ -151,7 +137,7 @@ doc_dir_root="Documentations"
 doc_dir_html="html"
 doc_dir_pdf="latex"
 
-if [[ ${PR} -eq 0 ]]; then
+if [[ $(is_pr) -eq 0 ]]; then
     if [[ ${opt_doc} -eq 1 ]]; then
         echo "Archiving documentation..."
         rm -rf "${mnt_server}/${doc_dir_root}"

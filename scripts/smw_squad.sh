@@ -1,5 +1,7 @@
 #!/bin/bash
 set -eE
+set -x
+
 trap 'error ${LINENO}' ERR
 
 script_name=$0
@@ -32,12 +34,9 @@ suffix_imx_boot="${bamboo_suffix_boot:-"-sd.bin-flash"}"
 prefix_u_boot="${bamboo_prefix_u_boot:-"u-boot-"}"
 suffix_u_boot="${bamboo_suffix_boot:-"_sd-optee.imx"}"
 image_folder="${bamboo_image_folder:-"fsl-imx-internal-wayland"}"
-nexus_repo="${bamboo_nexus_repo:-"IMX-raw_Linux_Internal_Daily_Build"}"
-nexus_url="${bamboo_nexus_url:-"https://nl-nxrm.sw.nxp.com/repository"}"
-nexus_dir="${bamboo_nexus_lava_dir:-"mougins-raw-public-artifacts/LAVA/smw"}"
-bamboo_plan="${bamboo_planKey:-"misc"}"
+nexus_build_repo="${bamboo_nexus_build_repo:-"Linux_Factory"}"
 
-opt_coverage=0
+opt_coverage_url=
 ctest_label=""
 
 platforms_list=(
@@ -139,8 +138,8 @@ function parse_parameters
           opt_job_name="${arg#*=}"
           ;;
 
-        coverage)
-          opt_coverage=1
+        coverage_url=*)
+          opt_coverage_url="${arg#*=}"
           ;;
 
         *)
@@ -171,8 +170,8 @@ function check_file
 
 function check_url
 {
-    status=$(curl -I -s "$1" | head -n 1)
-    if [[ -w ${status} ]]; then
+    status=$(curl --head --silent "$1" | head -n 1)
+    if echo "$status" | grep -q 404; then
       printf "File %s doesn't exist\n" "$1"
       exit 1
     fi
@@ -244,7 +243,7 @@ function squad_submit
       exit 1
     fi
 
-    nexus_find_args="-l nl -nosdcard -r ${nexus_repo} "
+    nexus_find_args="-l nl -nosdcard -r ${nexus_build_repo} "
     nexus_find_args="${nexus_find_args} -i ${image_type}"
     nexus_find_args="${nexus_find_args} -j ${image_folder}"
     nexus_find_args="${nexus_find_args} -o ${opt_job_name}"
@@ -311,7 +310,7 @@ function squad_submit
 
     cat "${yaml_dir}/${smw_setup_yaml}.yaml" > "${yaml_dir}/${smw_tmp_yaml}"
     if [[ ! -z ${opt_package_url} ]]; then
-      check_url "${opt_package_url}/libsmw_package.tar.gz"
+      check_url "${opt_package_url}"
 
       cat "${yaml_dir}/${smw_package_yaml}" >> "${yaml_dir}/${smw_tmp_yaml}"
     fi
@@ -323,10 +322,7 @@ function squad_submit
         cat "${yaml_dir}/${pkcs11_ctest_yaml}"
     } >> "${yaml_dir}/${smw_tmp_yaml}"
 
-    if [[ ${opt_coverage} -eq 1 ]]; then
-      # If code coverage enabled
-      gcda_tarball="${platform}_${opt_job_name}.tar.gz"
-      gcda_tarball="${gcda_tarball// /_}"
+    if [[ -n ${opt_coverage_url} ]]; then
       cat "${yaml_dir}/${code_coverage_yaml}" >> "${yaml_dir}/${smw_tmp_yaml}"
     fi
 
@@ -342,11 +338,10 @@ function squad_submit
     fi
     sed -i "s|REPLACE_CTEST_LABEL|${ctest_label}|" "${filename_job}"
 
-    if [[ ${opt_coverage} -eq 1 ]]; then
-      upload_url="${nexus_url}/${nexus_dir}"
-      if [[ ! -z ${bamboo_plan} ]]; then
-          upload_url="${upload_url}/${bamboo_plan}"
-      fi
+    if [[ -n ${opt_coverage_url} ]]; then
+      # If code coverage enabled
+      gcda_tarball=$(basename "${opt_coverage_url}")
+      upload_url=$(dirname "${opt_coverage_url}")
       sed -i "s|REPLACE_GCDA_FILE|${gcda_tarball}|" "${filename_job}"
       sed -i "s|REPLACE_UPLOAD_URL|${upload_url}|" "${filename_job}"
     fi

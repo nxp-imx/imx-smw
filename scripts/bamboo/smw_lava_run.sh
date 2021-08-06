@@ -1,13 +1,10 @@
 #!/bin/bash
 set -ex
 
-function cleanup {
-    #
-    # Stop venv
-    #
-    deactivate
-}
-trap cleanup EXIT
+bash_dir=$(dirname "${BASH_SOURCE[0]}")
+source "${bash_dir}/smw_bamboo_config.sh"
+
+trap exit_vvenv EXIT
 
 function usage()
 {
@@ -69,32 +66,23 @@ if [[ $# -ne 0 ]]; then
     done
 fi
 
+#
+# Start venv
+#
+start_vvenv
+
 eval "./scripts/smw_squad.sh install"
 
-script_dir="$bamboo_build_working_directory"/lava/bambooIntegrationScripts
+script_lava_dir="$bamboo_build_working_directory/lava/bambooIntegrationScripts"
+script_tools_dir="$bamboo_build_working_directory/tools"
 yaml_dir=./scripts/lava
-
-daytoday=$(date +%w)
-PR=0
-# Check if the branch is a PR
-if [ ! -z "${bamboo_repository_pr_targetBranch+x}" ] ; then
-    PR=1
-fi
 
 # Fetch all reports from LAVA
 rm -rf logs && mkdir logs
 
 squad_id=$(echo "$bamboo_planRepository_branchName" | tr / _)_${bamboo_buildNumber}
-job_id=${bamboo_planKey}-${bamboo_buildNumber}
 
-#
-# Start venv
-#
-venv_dir="venv_smw"
-eval "python3 -m venv ${venv_dir}"
-eval "source ${venv_dir}/bin/activate"
-
-if [[ ${daytoday} == "$bamboo_weekly_day_run" ]] && [[ ${PR} == 0 ]]; then
+if [[ $(is_pr) -eq 0 ]] && [[ $(is_weekly_build) -eq 1 ]]; then
     #
     # If executed on selected weekly day, assume it's a periodic weekly don't
     # check code change neither do a code coverage report
@@ -103,20 +91,33 @@ if [[ ${daytoday} == "$bamboo_weekly_day_run" ]] && [[ ${PR} == 0 ]]; then
     if [[ ! -z ${opt_coverage} ]]; then exit 0; fi
 
     eval "./scripts/smw_squad.sh submit_uuu ${platform} \
-          ${script_dir} ${yaml_dir} ${squad_id} job_name=${job_id}"
+          ${script_lava_dir} ${yaml_dir} ${squad_id} job_name=${job_name}"
 else
-    package_url="https://bamboo1.sw.nxp.com/browse/${job_id}/artifact/shared"
-    plat_package="package_${platform}_${opt_type}"
-
     #
     # Test Release or Debug build and retrieve code coverage result if any
     #
-    eval "./scripts/smw_squad.sh submit_uuu ${platform} ${script_dir} \
-          ${yaml_dir} ${squad_id} ${opt_coverage} \
-          package_url=${package_url}/${plat_package} \
-          job_name=${job_id}"
-fi
+    to_nexus_dir="to_nexus"
+    plat_package="libsmw_package.tar.gz"
+    pkg_name="pkg_${platform}_${opt_type}_${bamboo_buildNumber}.tar.gz"
 
+    eval "mkdir -p ${to_nexus_dir}"
+    eval "cp ./package/${plat_package} ./to_nexus/${pkg_name}"
+
+    # Upload package to be tested in Nexus
+    nexus_upload_artifacts "${script_tools_dir}" "${to_nexus_dir}" "${nexus_test_dir}"
+
+    coverage_url=
+
+    if [[ -n ${opt_coverage} ]]; then
+        coverage_url="${nexus_test_full_path}/${platform}_${gcda_tarball}"
+    fi
+
+    eval "./scripts/smw_squad.sh submit_uuu ${platform} ${script_lava_dir} \
+          ${yaml_dir} ${squad_id} \
+          package_url=${nexus_test_full_path}/${pkg_name} \
+          coverage_url=${coverage_url} \
+          job_name=${job_name}"
+fi
 
 #
 # Wait for LAVA execution results

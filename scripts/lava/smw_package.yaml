@@ -14,5 +14,5 @@
           format: Lava-Test Test Definition 1.0
         run:
           steps:
-          - lava-test-case dl_package --shell 'wget REPLACE_PACKAGE_URL/libsmw_package.tar.gz'
+          - lava-test-case dl_package --shell 'curl REPLACE_PACKAGE_URL -o libsmw_package.tar.gz'
           - lava-test-case install_package --shell 'tar -xvf libsmw_package.tar.gz -C / --warning=no-timestamp'

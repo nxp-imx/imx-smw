@@ -12,7 +12,7 @@ set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
-find_package(TEEC)
+find_package(Teec)
 
 if(TEEC_FOUND)
     message(STATUS "OPTEE Client and TA Development kit already installed")

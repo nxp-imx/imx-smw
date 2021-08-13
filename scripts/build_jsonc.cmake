@@ -21,7 +21,7 @@ endif()
 include(${CMAKE_TOOLCHAIN_FILE})
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
-find_package(JSONC)
+find_package(Jsonc)
 
 if(JSONC_FOUND)
     message(STATUS "JSON C library already installed")

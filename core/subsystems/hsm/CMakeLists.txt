@@ -4,7 +4,7 @@ if(NOT DEFINED SECO_ROOT)
 endif()
 
 find_package(ZLIBLight REQUIRED)
-find_package(SECO REQUIRED)
+find_package(Seco REQUIRED)
 
 #
 # Add HSM subsystem

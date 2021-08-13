@@ -11,7 +11,7 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
 include(${CMAKE_TOOLCHAIN_FILE})
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
-find_package(SECO)
+find_package(Seco)
 find_package(ZLIBLight)
 
 if(SECO_FOUND AND ZLIB_FOUND)

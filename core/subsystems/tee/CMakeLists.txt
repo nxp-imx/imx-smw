@@ -3,7 +3,7 @@ if(NOT DEFINED TEEC_ROOT OR NOT DEFINED TA_DEV_KIT_ROOT)
     return()
 endif()
 
-find_package(TEEC REQUIRED)
+find_package(Teec REQUIRED)
 find_package(TAdevkit REQUIRED)
 
 #

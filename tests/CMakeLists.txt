@@ -7,7 +7,7 @@ if(NOT DEFINED JSONC_ROOT)
     return()
 endif()
 
-find_package(JSONC REQUIRED)
+find_package(Jsonc REQUIRED)
 
 enable_testing()
 

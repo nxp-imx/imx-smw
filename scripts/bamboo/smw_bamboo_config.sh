@@ -1,6 +1,9 @@
 #!/bin/bash
 # Define all bamboo common share function/macro and constants
 
+# Flag indicating if python virtual environment activated or not
+python_vvenv_on=0
+
 # Get bamboo variables
 bamboo_plan="${bamboo_planKey:-"misc"}"
 
@@ -21,7 +24,9 @@ gcda_tarball="${gcda_tarball// /_}"
 #
 # End vvenv
 function exit_vvenv {
-    deactivate
+    if [[ ${python_vvenv_on} -eq 1 ]]; then
+        deactivate
+    fi
 }
 
 # Start venv
@@ -29,6 +34,8 @@ function start_vvenv {
     venv_dir="venv_smw"
     eval "python3 -m venv ${venv_dir}"
     eval "source ${venv_dir}/bin/activate"
+
+    python_vvenv_on=1
 }
 
 #

@@ -276,19 +276,17 @@ int util_key_find_key_node(struct key_identifier_list *key_identifiers,
  * util_key_desc_init() - Initialize SMW key descriptor fields
  * @key_test: Test keypair structure with operations
  * @key: SMW keypair buffer (can be NULL)
- * @key_type: Pointer to key type name (can be NULL)
  *
  * Initialize key descriptor fields with default unset value.
  * Set the key descriptor key buffer with the @key pointer.
  * If @key is given initialize it with default unset value.
- * If @key_type is set to "RSA", initialize to RSA specific values.
  *
  * Return:
  * PASSED    - Success
  * -BAD_ARGS - Bad function argument
  */
 int util_key_desc_init(struct keypair_ops *key_test,
-		       struct smw_keypair_buffer *key, char *key_type);
+		       struct smw_keypair_buffer *key);
 
 /**
  * util_key_read_descriptor() - Read the key descriptor definition
@@ -329,14 +327,13 @@ int util_key_desc_set_key(struct keypair_ops *key_test,
 /**
  * util_key_set_ops() - Set a SMW keypair to the key descriptor
  * @key_test: Test keypair structure with operations
- * @key_type: Key type. Can be NULL. Used to properly set RSA key ops.
  *
  * Setup the test keypair operations.
  *
  * Return:
  * None.
  */
-void util_key_set_ops(struct keypair_ops *key_test, char *key_type);
+void util_key_set_ops(struct keypair_ops *key_test);
 
 /**
  * util_key_free_key() - Free test keypair buffer

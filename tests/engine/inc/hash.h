@@ -24,7 +24,6 @@ int get_hash_digest_len(char *algo, unsigned int *len);
  * hash() - Do a hash operation.
  * @params: Hash parameters.
  * @common_params: Some parameters common to commands.
- * @algo_type: Algorithm used.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -34,11 +33,11 @@ int get_hash_digest_len(char *algo, unsigned int *len);
  * -BAD_ARGS			- One of the arguments is bad.
  * -SUBSYSTEM			- Hash operation failed (bad hash digest).
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
- * Error code from get_test_err_status().
- * Error code from convert_string_to_hex().
+ * Error code from util_read_hex_buffer().
  * Error code from get_hash_digest_len().
+ * Error code from set_hash_bad_args().
  */
 int hash(json_object *params, struct common_parameters *common_params,
-	 char *algo_type, enum smw_status_code *ret_status);
+	 enum smw_status_code *ret_status);
 
 #endif /* __CRYPTO_H__ */

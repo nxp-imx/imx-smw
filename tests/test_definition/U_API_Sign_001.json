@@ -1,7 +1,8 @@
 {
 	"subtest 1": { // Sign args pointer is NULL
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
@@ -31,9 +32,10 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 2": { // Version is not supported
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"version": 255,
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
@@ -62,8 +64,9 @@
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Subsystem is not set in SMW config file
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "UNDEFINED",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
@@ -92,8 +95,9 @@
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 4": { // Key descriptor pointer is NULL
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
@@ -123,8 +127,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": { // Algo is undefined
-		"command": "SIGN_UNDEFINED",
+		"command": "SIGN",
 		"subsystem": "DEFAULT",
+		"algo": "UNDEFINED",
 		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
@@ -153,8 +158,9 @@
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 6": { // Message buffer is NULL
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
@@ -171,8 +177,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": { // Message length is 0
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
@@ -202,8 +209,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 8": { // Signature length is 0
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
@@ -233,8 +241,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 9": { // Attributes list not defined
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
@@ -264,14 +273,16 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 10": { // Add a keypair for the test
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 256,
 		"key_id": 0
 	},
 	"subtest 11": { // Get the signature length
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"signature": 64,
 		"key_id": 0,
 		"depends": 10

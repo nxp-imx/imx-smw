@@ -1,13 +1,15 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 4096,
 		"key_id": 0
 	},
 	"subtest 2": {
-		"command": "SIGN_SHA1",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA1",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -29,8 +31,9 @@
 		"depends": 1
 	},
 	"subtest 3": {
-		"command": "VERIFY_SHA1",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA1",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -52,8 +55,9 @@
 		"depends": 2
 	},
 	"subtest 4": { // Salt length set to 480 (0x01E0)
-		"command": "SIGN_SHA224",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA224",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -76,8 +80,9 @@
 		"depends": 1
 	},
 	"subtest 5": {
-		"command": "VERIFY_SHA224",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA224",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",

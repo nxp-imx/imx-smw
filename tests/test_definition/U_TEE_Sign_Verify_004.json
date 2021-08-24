@@ -1,13 +1,15 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 4096,
 		"key_id": 0
 	},
 	"subtest 2": {
-		"command": "SIGN_MD5",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "MD5",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -29,8 +31,9 @@
 		"depends": 1
 	},
 	"subtest 3": {
-		"command": "VERIFY_MD5",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "MD5",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",

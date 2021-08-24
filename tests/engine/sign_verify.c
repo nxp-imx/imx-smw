@@ -9,7 +9,7 @@
 #include "util.h"
 #include "util_sign.h"
 #include "types.h"
-#include "crypto.h"
+#include "hash.h"
 #include "json_types.h"
 #include "keymgr.h"
 #include "smw_keymgr.h"
@@ -118,7 +118,7 @@ static int set_sign_verify_bad_args(json_object *params,
 }
 
 int sign_verify(int operation, json_object *params,
-		struct common_parameters *common_params, char *algo_name,
+		struct common_parameters *common_params,
 		struct key_identifier_list *key_identifiers,
 		enum smw_status_code *ret_status)
 {
@@ -157,7 +157,7 @@ int sign_verify(int operation, json_object *params,
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor */
-	res = util_key_desc_init(&key_test, &key_buffer, NULL);
+	res = util_key_desc_init(&key_test, &key_buffer);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -168,9 +168,6 @@ int sign_verify(int operation, json_object *params,
 
 	if (key_id != INT_MAX) {
 		util_key_free_key(&key_test);
-		key_test.desc.buffer = NULL;
-		key_test.keys = NULL;
-		util_key_set_ops(&key_test, NULL);
 
 		/* Fill key descriptor field saved */
 		res = util_key_find_key_node(key_identifiers, key_id,
@@ -200,7 +197,10 @@ int sign_verify(int operation, json_object *params,
 		goto exit;
 	}
 
-	args.algo_name = algo_name;
+	/* Get 'algo' optional parameter */
+	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string, params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
 
 	/* Read message buffer if any */
 	res = util_read_hex_buffer(&message, &message_length, params, MESS_OBJ);

@@ -1,13 +1,15 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_AES",
+		"command": "GENERATE",
 		"subsystem": "HSM",
+		"key_type": "AES",
 		"security_size": 256,
 		"key_id": 0
 	},
 	"subtest 2": {
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "HSM",
+		"key_type": "NIST",
 		"security_size": 256,
 		"key_id": 1
 	},

@@ -1,43 +1,50 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_HMAC_MD5",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "HMAC_MD5",
 		"security_size": 256,
 		"key_id": 0
 	},
 	"subtest 2": {
-		"command": "GENERATE_HMAC_SHA1",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA1",
 		"security_size": 256,
 		"key_id": 1
 	},
 	"subtest 3": {
-		"command": "GENERATE_HMAC_SHA224",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA224",
 		"security_size": 256,
 		"key_id": 2
 	},
 	"subtest 4": {
-		"command": "GENERATE_HMAC_SHA256",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA256",
 		"security_size": 256,
 		"key_id": 3
 	},
 	"subtest 5": {
-		"command": "GENERATE_HMAC_SHA384",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA384",
 		"security_size": 256,
 		"key_id": 4
 	},
 	"subtest 6": {
-		"command": "GENERATE_HMAC_SHA512",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA512",
 		"security_size": 256,
 		"key_id": 5
 	},
 	"subtest 7": {
-		"command": "GENERATE_HMAC_SM3",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SM3",
 		"security_size": 256,
 		"key_id": 6
 	},

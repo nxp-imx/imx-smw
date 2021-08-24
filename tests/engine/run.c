@@ -11,7 +11,7 @@
 #include "util_context.h"
 #include "types.h"
 #include "keymgr.h"
-#include "crypto.h"
+#include "hash.h"
 #include "sign_verify.h"
 #include "hmac.h"
 #include "rng.h"
@@ -30,7 +30,6 @@ static struct context_list *ctx_list;
 
 /**
  * execute_generate_cmd() - Execute generate key command.
- * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
  * @key_ids: Pointer to key identifiers list.
@@ -41,7 +40,7 @@ static struct context_list *ctx_list;
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from generate_key().
  */
-static int execute_generate_cmd(char *cmd, struct json_object *params,
+static int execute_generate_cmd(struct json_object *params,
 				struct common_parameters *common_params,
 				struct key_identifier_list **key_ids,
 				enum smw_status_code *status)
@@ -52,68 +51,11 @@ static int execute_generate_cmd(char *cmd, struct json_object *params,
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	if (!strcmp(cmd, GENERATE))
-		return generate_key(params, common_params, NULL, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_AES))
-		return generate_key(params, common_params, AES_KEY, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_BR1))
-		return generate_key(params, common_params, BR1_KEY, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_BT1))
-		return generate_key(params, common_params, BT1_KEY, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_DES))
-		return generate_key(params, common_params, DES_KEY, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_DES3))
-		return generate_key(params, common_params, DES3_KEY, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_DSA_SM2))
-		return generate_key(params, common_params, DSA_SM2_KEY, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_NIST))
-		return generate_key(params, common_params, NIST_KEY, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_RSA))
-		return generate_key(params, common_params, RSA_KEY, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_SM4))
-		return generate_key(params, common_params, SM4_KEY, key_ids,
-				    status);
-	else if (!strcmp(cmd, GENERATE_HMAC_MD5))
-		return generate_key(params, common_params, HMAC_MD5_KEY,
-				    key_ids, status);
-	else if (!strcmp(cmd, GENERATE_HMAC_SHA1))
-		return generate_key(params, common_params, HMAC_SHA1_KEY,
-				    key_ids, status);
-	else if (!strcmp(cmd, GENERATE_HMAC_SHA224))
-		return generate_key(params, common_params, HMAC_SHA224_KEY,
-				    key_ids, status);
-	else if (!strcmp(cmd, GENERATE_HMAC_SHA256))
-		return generate_key(params, common_params, HMAC_SHA256_KEY,
-				    key_ids, status);
-	else if (!strcmp(cmd, GENERATE_HMAC_SHA384))
-		return generate_key(params, common_params, HMAC_SHA384_KEY,
-				    key_ids, status);
-	else if (!strcmp(cmd, GENERATE_HMAC_SHA512))
-		return generate_key(params, common_params, HMAC_SHA512_KEY,
-				    key_ids, status);
-	else if (!strcmp(cmd, GENERATE_HMAC_SM3))
-		return generate_key(params, common_params, HMAC_SM3_KEY,
-				    key_ids, status);
-	else if (!strcmp(cmd, GENERATE_UNDEFINED))
-		return generate_key(params, common_params, UNDEFINED_KEY,
-				    key_ids, status);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
+	return generate_key(params, common_params, key_ids, status);
 }
 
 /**
  * execute_hash_cmd() - Execute hash command.
- * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
  * @status: Pointer to SMW command status.
@@ -123,35 +65,21 @@ static int execute_generate_cmd(char *cmd, struct json_object *params,
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from hash().
  */
-static int execute_hash_cmd(char *cmd, struct json_object *params,
+static int execute_hash_cmd(struct json_object *params,
 			    struct common_parameters *common_params,
 			    enum smw_status_code *status)
 {
-	char *algo_name = NULL;
-
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
 		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	if (strcmp(cmd, HASH))
-		algo_name = cmd + strlen(HASH) + 1;
-
-	if (!algo_name || !strcmp(algo_name, MD5_ALG) ||
-	    !strcmp(algo_name, SHA1_ALG) || !strcmp(algo_name, SHA224_ALG) ||
-	    !strcmp(algo_name, SHA256_ALG) || !strcmp(algo_name, SHA384_ALG) ||
-	    !strcmp(algo_name, SHA512_ALG) || !strcmp(algo_name, SM3_ALG) ||
-	    !strcmp(algo_name, UNDEFINED_ALG))
-		return hash(params, common_params, algo_name, status);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
+	return hash(params, common_params, status);
 }
 
 /**
  * execute_hmac_cmd() - Execute hmac command.
- * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
  * @key_ids: Pointer to key identifiers list.
@@ -162,36 +90,22 @@ static int execute_hash_cmd(char *cmd, struct json_object *params,
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from hmac().
  */
-static int execute_hmac_cmd(char *cmd, struct json_object *params,
+static int execute_hmac_cmd(struct json_object *params,
 			    struct common_parameters *common_params,
 			    struct key_identifier_list *key_ids,
 			    enum smw_status_code *status)
 {
-	char *algo_name = NULL;
-
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
 		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	if (strcmp(cmd, HMAC))
-		algo_name = cmd + strlen(HASH) + 1;
-
-	if (!algo_name || !strcmp(algo_name, MD5_ALG) ||
-	    !strcmp(algo_name, SHA1_ALG) || !strcmp(algo_name, SHA224_ALG) ||
-	    !strcmp(algo_name, SHA256_ALG) || !strcmp(algo_name, SHA384_ALG) ||
-	    !strcmp(algo_name, SHA512_ALG) || !strcmp(algo_name, SM3_ALG) ||
-	    !strcmp(algo_name, UNDEFINED_ALG))
-		return hmac(params, common_params, algo_name, key_ids, status);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
+	return hmac(params, common_params, key_ids, status);
 }
 
 /**
  * execute_import_cmd() - Execute import key command.
- * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
  * @key_ids: Pointer to key identifiers list.
@@ -202,7 +116,7 @@ static int execute_hmac_cmd(char *cmd, struct json_object *params,
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from import_key().
  */
-static int execute_import_cmd(char *cmd, struct json_object *params,
+static int execute_import_cmd(struct json_object *params,
 			      struct common_parameters *common_params,
 			      struct key_identifier_list **key_ids,
 			      enum smw_status_code *status)
@@ -213,62 +127,7 @@ static int execute_import_cmd(char *cmd, struct json_object *params,
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	if (!strcmp(cmd, IMPORT))
-		return import_key(params, common_params, NULL, key_ids, status);
-	else if (!strcmp(cmd, IMPORT_AES))
-		return import_key(params, common_params, AES_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_BR1))
-		return import_key(params, common_params, BR1_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_BT1))
-		return import_key(params, common_params, BT1_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_DES))
-		return import_key(params, common_params, DES_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_DES3))
-		return import_key(params, common_params, DES3_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_DSA_SM2))
-		return import_key(params, common_params, DSA_SM2_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_NIST))
-		return import_key(params, common_params, NIST_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_RSA))
-		return import_key(params, common_params, RSA_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_SM4))
-		return import_key(params, common_params, SM4_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_HMAC_MD5))
-		return import_key(params, common_params, HMAC_MD5_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_HMAC_SHA1))
-		return import_key(params, common_params, HMAC_SHA1_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_HMAC_SHA224))
-		return import_key(params, common_params, HMAC_SHA224_KEY,
-				  key_ids, status);
-	else if (!strcmp(cmd, IMPORT_HMAC_SHA256))
-		return import_key(params, common_params, HMAC_SHA256_KEY,
-				  key_ids, status);
-	else if (!strcmp(cmd, IMPORT_HMAC_SHA384))
-		return import_key(params, common_params, HMAC_SHA384_KEY,
-				  key_ids, status);
-	else if (!strcmp(cmd, IMPORT_HMAC_SHA512))
-		return import_key(params, common_params, HMAC_SHA512_KEY,
-				  key_ids, status);
-	else if (!strcmp(cmd, IMPORT_HMAC_SM3))
-		return import_key(params, common_params, HMAC_SM3_KEY, key_ids,
-				  status);
-	else if (!strcmp(cmd, IMPORT_UNDEFINED))
-		return import_key(params, common_params, UNDEFINED_KEY, key_ids,
-				  status);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
+	return import_key(params, common_params, key_ids, status);
 }
 
 /**
@@ -326,7 +185,6 @@ static int execute_derive_cmd(struct json_object *params,
 /**
  * execute_sign_verify_cmd() - Execute sign or verify command.
  * @operation: SIGN_OPERATION or VERIFY_OPERATION.
- * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
  * @key_ids: Pointer to key identifiers list.
@@ -337,36 +195,18 @@ static int execute_derive_cmd(struct json_object *params,
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from sign_verify().
  */
-static int execute_sign_verify_cmd(int operation, char *cmd,
-				   struct json_object *params,
+static int execute_sign_verify_cmd(int operation, struct json_object *params,
 				   struct common_parameters *common_params,
 				   struct key_identifier_list *key_ids,
 				   enum smw_status_code *status)
 {
-	char *algo_name = NULL;
-
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
 		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	if (operation == SIGN_OPERATION && strcmp(cmd, SIGN))
-		algo_name = cmd + strlen(SIGN) + 1;
-	else if (operation == VERIFY_OPERATION && strcmp(cmd, VERIFY))
-		algo_name = cmd + strlen(VERIFY) + 1;
-
-	if (!algo_name || !strcmp(algo_name, MD5_ALG) ||
-	    !strcmp(algo_name, SHA1_ALG) || !strcmp(algo_name, SHA224_ALG) ||
-	    !strcmp(algo_name, SHA256_ALG) || !strcmp(algo_name, SHA384_ALG) ||
-	    !strcmp(algo_name, SHA512_ALG) || !strcmp(algo_name, SM3_ALG) ||
-	    !strcmp(algo_name, UNDEFINED_ALG))
-
-		return sign_verify(operation, params, common_params, algo_name,
-				   key_ids, status);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
+	return sign_verify(operation, params, common_params, key_ids, status);
 }
 
 /**
@@ -503,30 +343,30 @@ static int execute_command(char *cmd, struct json_object *params,
 {
 	if (!strcmp(cmd, DELETE))
 		return delete_key(params, common_params, *key_ids, status);
-	else if (!strncmp(cmd, GENERATE, strlen(GENERATE)))
-		return execute_generate_cmd(cmd, params, common_params, key_ids,
+	else if (!strcmp(cmd, GENERATE))
+		return execute_generate_cmd(params, common_params, key_ids,
 					    status);
-	else if (!strncmp(cmd, IMPORT, strlen(IMPORT)))
-		return execute_import_cmd(cmd, params, common_params, key_ids,
+	else if (!strcmp(cmd, IMPORT))
+		return execute_import_cmd(params, common_params, key_ids,
 					  status);
 	else if (!strncmp(cmd, EXPORT, strlen(EXPORT)))
 		return execute_export_cmd(cmd, params, common_params, *key_ids,
 					  status);
-	else if (!strncmp(cmd, DERIVE, strlen(DERIVE)))
+	else if (!strcmp(cmd, DERIVE))
 		return execute_derive_cmd(params, common_params, key_ids,
 					  status);
-	else if (!strncmp(cmd, HASH, strlen(HASH)))
-		return execute_hash_cmd(cmd, params, common_params, status);
-	else if (!strncmp(cmd, HMAC, strlen(HMAC)))
-		return execute_hmac_cmd(cmd, params, common_params, *key_ids,
+	else if (!strcmp(cmd, HASH))
+		return execute_hash_cmd(params, common_params, status);
+	else if (!strcmp(cmd, HMAC))
+		return execute_hmac_cmd(params, common_params, *key_ids,
 					status);
-	else if (!strncmp(cmd, SIGN, strlen(SIGN)))
-		return execute_sign_verify_cmd(SIGN_OPERATION, cmd, params,
+	else if (!strcmp(cmd, SIGN))
+		return execute_sign_verify_cmd(SIGN_OPERATION, params,
 					       common_params, *key_ids, status);
-	else if (!strncmp(cmd, VERIFY, strlen(VERIFY)))
-		return execute_sign_verify_cmd(VERIFY_OPERATION, cmd, params,
+	else if (!strcmp(cmd, VERIFY))
+		return execute_sign_verify_cmd(VERIFY_OPERATION, params,
 					       common_params, *key_ids, status);
-	else if (!strncmp(cmd, RNG, strlen(RNG)))
+	else if (!strcmp(cmd, RNG))
 		return execute_rng_cmd(params, common_params, status);
 	else if (!strncmp(cmd, CIPHER, strlen(CIPHER)))
 		return execute_cipher(cmd, params, common_params, *key_ids, ctx,
@@ -640,7 +480,7 @@ static int get_depends_status(struct json_object *params, FILE *status_file)
 		 * entries. Otherwise it must be an integer
 		 */
 		if (nb_members <= 1) {
-			DBG_PRINT_BAD_PARAM(__func__, "depends");
+			DBG_PRINT_BAD_PARAM(__func__, DEPENDS_OBJ);
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 	}
@@ -654,7 +494,7 @@ static int get_depends_status(struct json_object *params, FILE *status_file)
 
 		depends = json_object_get_int(array_member);
 		if (depends <= 0) {
-			DBG_PRINT_BAD_PARAM(__func__, "depends");
+			DBG_PRINT_BAD_PARAM(__func__, DEPENDS_OBJ);
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 

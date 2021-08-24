@@ -1,7 +1,8 @@
 {
 	"subtest 1": { // Import RSA 512bits keypair
-		"command": "IMPORT_RSA",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 512,
 		"pub_key": [
 			"010001"
@@ -52,8 +53,9 @@
 		"depends": 1
 	},
 	"subtest 5": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 1024,
 		"key_id": 1,
 		"attributes_list": [
@@ -61,8 +63,9 @@
 		]
 	},
 	"subtest 6": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 4096,
 		"key_id": 2
 	},

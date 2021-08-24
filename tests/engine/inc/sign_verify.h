@@ -17,7 +17,6 @@
  * @operation: SIGN_OPERATION or VERIFY_OPERATION
  * @params: Sign or verify parameters.
  * @common_params: Common commands parameters.
- * @algo_name: Hash algorithm name.
  * @key_identifiers: Key identifier linked list where key identifier value
  *                   is saved.
  * @ret_status: Status returned by SMW API.
@@ -40,7 +39,7 @@
  * Error code from util_sign_add_node().
  */
 int sign_verify(int operation, json_object *params,
-		struct common_parameters *common_params, char *algo_name,
+		struct common_parameters *common_params,
 		struct key_identifier_list *key_identifiers,
 		enum smw_status_code *ret_status);
 

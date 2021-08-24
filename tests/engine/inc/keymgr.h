@@ -14,7 +14,6 @@
  * generate_key() - Generate a key.
  * @params: Generate key parameters.
  * @common_params: Some parameters common to commands.
- * @key_type: Type of key to generate.
  * @key_identifiers: Key identifier linked list where key identifier value
  *                   will be saved.
  * @ret_status: Status returned by SMW API.
@@ -31,7 +30,7 @@
  * Error code from key_identifier_add_list().
  */
 int generate_key(json_object *params, struct common_parameters *common_params,
-		 char *key_type, struct key_identifier_list **key_identifiers,
+		 struct key_identifier_list **key_identifiers,
 		 enum smw_status_code *ret_status);
 
 /**
@@ -58,7 +57,6 @@ int delete_key(json_object *params, struct common_parameters *common_params,
  * import_key() - Import a key.
  * @params: Import key parameters.
  * @common_params: Some parameters common to commands.
- * @key_type: Type of key to import.
  * @key_identifiers: Key identifier linked list where key identifier value
  *                   will be saved.
  * @ret_status: Status returned by SMW API.
@@ -75,7 +73,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
  * Error code from key_identifier_add_list().
  */
 int import_key(json_object *params, struct common_parameters *common_params,
-	       char *key_type, struct key_identifier_list **key_identifiers,
+	       struct key_identifier_list **key_identifiers,
 	       enum smw_status_code *ret_status);
 
 /**

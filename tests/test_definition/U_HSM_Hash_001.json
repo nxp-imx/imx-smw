@@ -1,7 +1,8 @@
 {
 	"subtest 1": { // SHA224
-		"command": "HASH_SHA224",
+		"command": "HASH",
 		"subsystem": "HSM",
+		"algo": "SHA224",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA224LongMsg.rsp
 		"input": [
@@ -23,8 +24,9 @@
 		]
 	},
 	"subtest 2": { // SHA256
-		"command": "HASH_SHA256",
+		"command": "HASH",
 		"subsystem": "HSM",
+		"algo": "SHA256",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA256LongMsg.rsp
 		"input": [
@@ -46,8 +48,9 @@
 		]
 	},
 	"subtest 3": { // SHA384
-		"command": "HASH_SHA384",
+		"command": "HASH",
 		"subsystem": "HSM",
+		"algo": "SHA384",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA384LongMsg.rsp
 		"input": [
@@ -74,8 +77,9 @@
 		]
 	},
 	"subtest 4": { // SHA512
-		"command": "HASH_SHA512",
+		"command": "HASH",
 		"subsystem": "HSM",
+		"algo": "SHA512",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
@@ -103,8 +107,9 @@
 		]
 	},
 	"subtest 5": { // SHA224
-		"command": "HASH_SHA224",
+		"command": "HASH",
 		"subsystem": "HSM",
+		"algo": "SHA224",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA224LongMsg.rsp
 		"input": [
@@ -123,8 +128,9 @@
 		"digest": 28
 	},
 	"subtest 6": { // SHA256
-		"command": "HASH_SHA256",
+		"command": "HASH",
 		"subsystem": "HSM",
+		"algo": "SHA256",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA256LongMsg.rsp
 		"input": [
@@ -143,8 +149,9 @@
 		"digest": 32
 	},
 	"subtest 7": { // SHA384
-		"command": "HASH_SHA384",
+		"command": "HASH",
 		"subsystem": "HSM",
+		"algo": "SHA384",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA384LongMsg.rsp
 		"input": [
@@ -167,8 +174,9 @@
 		"digest": 48
 	},
 	"subtest 8": { // SHA512
-		"command": "HASH_SHA512",
+		"command": "HASH",
 		"subsystem": "HSM",
+		"algo": "SHA512",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [

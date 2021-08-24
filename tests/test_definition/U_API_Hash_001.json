@@ -1,14 +1,16 @@
 {
 	"subtest 1": { // Hash args pointer is NULL
-		"command": "HASH_SHA256",
+		"command": "HASH",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"input": "5468697320696e707574206973206e6f742075736564",
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 2": { // Version is not supported
-		"command": "HASH_SHA256",
+		"command": "HASH",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"input": "5468697320696e707574206973206e6f742075736564",
 		"digest": [
 			"6C2064F09625A0E63F7E1F18BCAFC631",
@@ -18,8 +20,9 @@
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Subsystem is not set in SMW config file
-		"command": "HASH_SHA256",
+		"command": "HASH",
 		"subsystem": "UNDEFINED",
+		"algo": "SHA256",
 		"input": "5468697320696e707574206973206e6f742075736564",
 		"digest": [
 			"6C2064F09625A0E63F7E1F18BCAFC631",
@@ -28,8 +31,9 @@
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 4": { // Algo is undefined
-		"command": "HASH_UNDEFINED",
+		"command": "HASH",
 		"subsystem": "DEFAULT",
+		"algo": "UNDEFINED",
 		"input": "5468697320696e707574206973206e6f742075736564",
 		"digest": [
 			"6C2064F09625A0E63F7E1F18BCAFC631",
@@ -38,8 +42,9 @@
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 5": { // Digest length is zero
-		"command": "HASH_SHA256",
+		"command": "HASH",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"input": "5468697320696e707574206973206e6f742075736564",
 		"digest": [
 			0,

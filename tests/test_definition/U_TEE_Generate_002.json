@@ -1,67 +1,78 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 256,
 		"key_id": 0
 	},
 	"subtest 2": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 384,
 		"key_id": 1
 	},
 	"subtest 3": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 512,
 		"key_id": 2
 	},
 	"subtest 4": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 640,
 		"key_id": 3
 	},
 	"subtest 5": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 768,
 		"key_id": 4
 	},
 	"subtest 6": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 896,
 		"key_id": 5
 	},
 	"subtest 7": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 1024,
 		"key_id": 6
 	},
 	"subtest 8": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 1536,
 		"key_id": 7
 	},
 	"subtest 9": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 2048,
 		"key_id": 8
 	},
 	"subtest 10": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 3072,
 		"key_id": 9
 	},
 	"subtest 11": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 4096,
 		"key_id": 10
 	},

@@ -314,7 +314,7 @@ static int set_common_bad_args(json_object *params, void **args,
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, "test_error");
+		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -713,7 +713,7 @@ static int restore_key_ids_from_json_file(struct key_identifier_list **key_list,
 }
 
 int generate_key(json_object *params, struct common_parameters *common_params,
-		 char *key_type, struct key_identifier_list **key_identifiers,
+		 struct key_identifier_list **key_identifiers,
 		 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
@@ -738,12 +738,9 @@ int generate_key(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor */
-	res = util_key_desc_init(&key_test, &key_buffer, key_type);
+	res = util_key_desc_init(&key_test, &key_buffer);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
-
-	/* Setup the key type name */
-	key_test.desc.type_name = key_type;
 
 	/* Read the json-c key description */
 	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
@@ -813,7 +810,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor, no key buffer */
-	res = util_key_desc_init(&key_test, NULL, NULL);
+	res = util_key_desc_init(&key_test, NULL);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -855,7 +852,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 }
 
 int import_key(json_object *params, struct common_parameters *common_params,
-	       char *key_type, struct key_identifier_list **key_identifiers,
+	       struct key_identifier_list **key_identifiers,
 	       enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
@@ -880,12 +877,9 @@ int import_key(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor */
-	res = util_key_desc_init(&key_test, &key_buffer, key_type);
+	res = util_key_desc_init(&key_test, &key_buffer);
 	if (res != ERR_CODE(PASSED))
 		return res;
-
-	/* Setup the key type name */
-	key_test.desc.type_name = key_type;
 
 	/* Read the json-c key description */
 	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
@@ -951,8 +945,6 @@ int export_key(json_object *params, struct common_parameters *common_params,
 	struct smw_keypair_buffer key_buffer;
 	struct smw_keypair_buffer exp_key_buffer;
 	int key_id = INT_MAX;
-	json_object *obj;
-	char *key_type = NULL;
 
 	if (!params || !common_params || !ret_status) {
 		DBG_PRINT_BAD_ARGS(__func__);
@@ -963,20 +955,13 @@ int export_key(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/*
-	 * Note: For RSA, key type must be known before keypair ops init. If the
-	 * "key_type" parameter is not correctly set, a seg fault will occurred
-	 */
-	if (json_object_object_get_ex(params, KEY_TYPE_OBJ, &obj))
-		key_type = (char *)json_object_get_string(obj);
-
-	/*
 	 * Initialize 2 key descriptors:
 	 *  - one with the expected key buffers if private/public keys
 	 *    are defined in the test definition file.
 	 *  - one use for the export key operation.
 	 */
 	/* Initialize expected keys */
-	res = util_key_desc_init(&exp_key_test, &exp_key_buffer, key_type);
+	res = util_key_desc_init(&exp_key_test, &exp_key_buffer);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -991,7 +976,7 @@ int export_key(json_object *params, struct common_parameters *common_params,
 	 * defined public/private key if set in the
 	 * test definition file.
 	 */
-	res = util_key_desc_init(&key_test, NULL, key_type);
+	res = util_key_desc_init(&key_test, NULL);
 	if (res != ERR_CODE(PASSED))
 		return res;
 

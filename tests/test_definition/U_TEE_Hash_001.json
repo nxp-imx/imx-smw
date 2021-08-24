@@ -1,14 +1,16 @@
 {
 	"subtest 1": { // MD5
-		"command": "HASH_MD5",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "MD5",
 		//https://tools.ietf.org/html/rfc1321 Appendix A.5
 		"input": "6d65737361676520646967657374",
 		"digest": "f96b697d7cb7938d525a2f31aaf161d0"
 	},
 	"subtest 2": { // SHA1
-		"command": "HASH_SHA1",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA1",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA1LongMsg.rsp
 		"input": [
@@ -27,8 +29,9 @@
 		"digest": "d8fd6a91ef3b6ced05b98358a99107c1fac8c807"
 	},
 	"subtest 3": { // SHA224
-		"command": "HASH_SHA224",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA224",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA224LongMsg.rsp
 		"input": [
@@ -50,8 +53,9 @@
 		]
 	},
 	"subtest 4": { // SHA256
-		"command": "HASH_SHA256",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA256LongMsg.rsp
 		"input": [
@@ -73,8 +77,9 @@
 		]
 	},
 	"subtest 5": { // SHA384
-		"command": "HASH_SHA384",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA384LongMsg.rsp
 		"input": [
@@ -101,8 +106,9 @@
 		]
 	},
 	"subtest 6": { // SHA512
-		"command": "HASH_SHA512",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
@@ -130,8 +136,9 @@
 		]
 	},
 	"subtest 7": { // SM3
-		"command": "HASH_SM3",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SM3",
 		//https://tools.ietf.org/html/draft-oscca-cfrg-sm3-02 Appendix B.2
 		"input": [
 			"F4A38489E32B45B6F876E3AC2168CA39",
@@ -144,15 +151,17 @@
 		]
 	},
 	"subtest 8": { // MD5
-		"command": "HASH_MD5",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "MD5",
 		//https://tools.ietf.org/html/rfc1321 Appendix A.5
 		"input": "6d65737361676520646967657374",
 		"digest": 16
 	},
 	"subtest 9": { // SHA1
-		"command": "HASH_SHA1",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA1",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA1LongMsg.rsp
 		"input": [
@@ -171,8 +180,9 @@
 		"digest": 20
 	},
 	"subtest 10": { // SHA224
-		"command": "HASH_SHA224",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA224",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA224LongMsg.rsp
 		"input": [
@@ -191,8 +201,9 @@
 		"digest": 28
 	},
 	"subtest 11": { // SHA256
-		"command": "HASH_SHA256",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA256LongMsg.rsp
 		"input": [
@@ -211,8 +222,9 @@
 		"digest": 32
 	},
 	"subtest 12": { // SHA384
-		"command": "HASH_SHA384",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA384LongMsg.rsp
 		"input": [
@@ -235,8 +247,9 @@
 		"digest": 48
 	},
 	"subtest 13": { // SHA512
-		"command": "HASH_SHA512",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
@@ -259,8 +272,9 @@
 		"digest": 64
 	},
 	"subtest 14": { // SM3
-		"command": "HASH_SM3",
+		"command": "HASH",
 		"subsystem": "TEE",
+		"algo": "SM3",
 		//https://tools.ietf.org/html/draft-oscca-cfrg-sm3-02 Appendix B.2
 		"input": [
 			"F4A38489E32B45B6F876E3AC2168CA39",

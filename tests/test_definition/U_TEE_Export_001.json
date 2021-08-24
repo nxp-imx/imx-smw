@@ -1,13 +1,15 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_AES",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 128,
 		"key_id": 0
 	},
 	"subtest 2": {
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 224,
 		"key_id": 1
 	},
@@ -60,8 +62,9 @@
 		"result": "SMW_STATUS_UNKNOWN_ID"
 	},
 	"subtest 11": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 512,
 		"key_id": 2
 	},

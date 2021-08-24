@@ -1,7 +1,8 @@
 {
 	"subtest 1": {
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 192,
 		"priv_key": [
 			"e5ce89a34adddf25ff3bf1ffe6803f57",
@@ -40,8 +41,9 @@
 		"depends": 1
 	},
 	"subtest 5": {
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 224,
 		"priv_key": [
 			"e7c92383846a4e6887a10498d8eaca2b",
@@ -84,8 +86,9 @@
 		"depends": 5
 	},
 	"subtest 9": {
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
 			"c9806898a0334916c860748880a541f0",
@@ -128,8 +131,9 @@
 		"depends": 9
 	},
 	"subtest 13": {
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 384,
 		"priv_key": [
 			"5394f7973ea868c52bf3ff8d8ceeb4db",
@@ -178,8 +182,9 @@
 		"depends": 13
 	},
 	"subtest 17": {
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 521,
 		"priv_key": [
 			"0184258ea667ab99d09d4363b3f51384",
@@ -244,8 +249,9 @@
 		"result": "SMW_STATUS_UNKNOWN_ID"
 	},
 	"subtest 22": {
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 192,
 		"pub_key": [
 			"39dc723b19527daa1e80425209c56463",

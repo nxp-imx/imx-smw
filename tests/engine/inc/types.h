@@ -7,34 +7,11 @@
 #define __TYPES_H__
 
 /* List of key type */
-#define AES_KEY		"AES"
-#define BR1_KEY		"BRAINPOOL_R1"
-#define BT1_KEY		"BRAINPOOL_T1"
-#define DES_KEY		"DES"
-#define DES3_KEY	"DES3"
-#define DSA_SM2_KEY	"DSA_SM2_FP"
-#define NIST_KEY	"NIST"
-#define SM4_KEY		"SM4"
-#define HMAC_MD5_KEY	"HMAC_MD5"
-#define HMAC_SHA1_KEY	"HMAC_SHA1"
-#define HMAC_SHA224_KEY "HMAC_SHA224"
-#define HMAC_SHA256_KEY "HMAC_SHA256"
-#define HMAC_SHA384_KEY "HMAC_SHA384"
-#define HMAC_SHA512_KEY "HMAC_SHA512"
-#define HMAC_SM3_KEY	"HMAC_SM3"
-#define RSA_KEY		"RSA"
-#define TLS_MASTER_KEY	"TLS_MASTER_KEY"
-#define UNDEFINED_KEY	"UNDEFINED"
-
-/* List of hash algo */
-#define MD5_ALG	      "MD5"
-#define SHA1_ALG      "SHA1"
-#define SHA224_ALG    "SHA224"
-#define SHA256_ALG    "SHA256"
-#define SHA384_ALG    "SHA384"
-#define SHA512_ALG    "SHA512"
-#define SM3_ALG	      "SM3"
-#define UNDEFINED_ALG "UNDEFINED"
+#define BR1_KEY	       "BRAINPOOL_R1"
+#define BT1_KEY	       "BRAINPOOL_T1"
+#define NIST_KEY       "NIST"
+#define RSA_KEY	       "RSA"
+#define TLS_MASTER_KEY "TLS_MASTER_KEY"
 
 /* Type of errors */
 enum err_num {

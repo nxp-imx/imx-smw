@@ -346,12 +346,16 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
+	if (!keys->keys_test || !keys->keys_desc || !keys->keys_buffer ||
+	    !keys->keys_id)
+		return res;
+
 	for (i = 0; i < keys->nb_keys; i++) {
 		key_test = &keys->keys_test[i];
 		keys->keys_id[i] = INT_MAX;
 
 		/* Initialize key descriptor */
-		res = util_key_desc_init(key_test, &keys->keys_buffer[i], NULL);
+		res = util_key_desc_init(key_test, &keys->keys_buffer[i]);
 		if (res != ERR_CODE(PASSED))
 			return res;
 
@@ -363,7 +367,6 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
 
 		if (keys->keys_id[i] != INT_MAX) {
 			util_key_free_key(key_test);
-			util_key_desc_init(key_test, NULL, NULL);
 
 			res = util_key_find_key_node(keys->key_identifiers,
 						     keys->keys_id[i],

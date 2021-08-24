@@ -1,7 +1,8 @@
 {
 	"subtest 1": {
-		"command": "IMPORT_HMAC_MD5",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "HMAC_MD5",
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -10,8 +11,9 @@
 		"key_id": 0
 	},
 	"subtest 2": {
-		"command": "IMPORT_HMAC_SHA1",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA1",
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -20,8 +22,9 @@
 		"key_id": 1
 	},
 	"subtest 3": {
-		"command": "IMPORT_HMAC_SHA224",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA224",
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -30,8 +33,9 @@
 		"key_id": 2
 	},
 	"subtest 4": {
-		"command": "IMPORT_HMAC_SHA256",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA256",
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -40,8 +44,9 @@
 		"key_id": 3
 	},
 	"subtest 5": {
-		"command": "IMPORT_HMAC_SHA384",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA384",
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -50,8 +55,9 @@
 		"key_id": 4
 	},
 	"subtest 6": {
-		"command": "IMPORT_HMAC_SHA512",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SHA512",
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -60,8 +66,9 @@
 		"key_id": 5
 	},
 	"subtest 7": {
-		"command": "IMPORT_HMAC_SM3",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "HMAC_SM3",
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",

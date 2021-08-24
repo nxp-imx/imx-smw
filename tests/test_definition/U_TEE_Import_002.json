@@ -1,14 +1,16 @@
 {
 	"subtest 1": { // Import AES 128
-		"command": "IMPORT_AES",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 128,
 		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"key_id": 0
 	},
 	"subtest 2": { // Import AES 192
-		"command": "IMPORT_AES",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 192,
 		"priv_key": [
 			"ba75f4d1d9d7cf7f551445d56cc1a8ab",
@@ -17,8 +19,9 @@
 		"key_id": 1
 	},
 	"subtest 3": { // Import AES 256
-		"command": "IMPORT_AES",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -27,22 +30,25 @@
 		"key_id": 2
 	},
 	"subtest 4": { // Import DES 56
-		"command": "IMPORT_DES",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "DES",
 		"security_size": 56,
 		"priv_key": "752878397493cb70",
 		"key_id": 3
 	},
 	"subtest 5": { // Import DES3 112
-		"command": "IMPORT_DES3",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "DES3",
 		"security_size": 112,
 		"priv_key": "a974cadbcccf5f2b76e4d66026685496",
 		"key_id": 4
 	},
 	"subtest 6": { // Import DES3 168
-		"command": "IMPORT_DES3",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "DES3",
 		"security_size": 168,
 		"priv_key": [
 			"fe85e7dbfb940f695702d5e835af829a",
@@ -51,8 +57,9 @@
 		"key_id": 5
 	},
 	"subtest 7": { // Import ECDSA NIST 192 keypair
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 192,
 		"priv_key": [
 			"e5ce89a34adddf25ff3bf1ffe6803f57",
@@ -66,8 +73,9 @@
 		"key_id": 6
 	},
 	"subtest 8": { // Import ECDSA NIST 192 public key
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 192,
 		"pub_key": [
 			"8abf7b3ceb2b02438af19543d3e5b1d5",
@@ -77,8 +85,9 @@
 		"key_id": 7
 	},
 	"subtest 9": { // Import ECDSA NIST 224 keypair
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 224,
 		"priv_key": [
 			"e7c92383846a4e6887a10498d8eaca2b",
@@ -93,8 +102,9 @@
 		"key_id": 8
 	},
 	"subtest 10": { // Import ECDSA NIST 224 public key
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 224,
 		"pub_key": [
 			"0a3682d2aaa4dd931bee042d32e95755",
@@ -105,8 +115,9 @@
 		"key_id": 9
 	},
 	"subtest 11": { // Import ECDSA NIST 256 keypair
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
 			"c9806898a0334916c860748880a541f0",
@@ -121,8 +132,9 @@
 		"key_id": 10
 	},
 	"subtest 12": { // Import ECDSA NIST 256 public key
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
 			"d0720dc691aa80096ba32fed1cb97c2b",
@@ -133,8 +145,9 @@
 		"key_id": 11
 	},
 	"subtest 13": { // Import ECDSA NIST 384 keypair
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 384,
 		"priv_key": [
 			"5394f7973ea868c52bf3ff8d8ceeb4db",
@@ -152,8 +165,9 @@
 		"key_id": 12
 	},
 	"subtest 14": { // Import ECDSA NIST 384 public key
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 384,
 		"pub_key": [
 			"fd3c84e5689bed270e601b3d80f90d67",
@@ -166,8 +180,9 @@
 		"key_id": 13
 	},
 	"subtest 15": { // Import ECDSA NIST 521 keypair
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 521,
 		"priv_key": [
 			"0184258ea667ab99d09d4363b3f51384",
@@ -190,8 +205,9 @@
 		"key_id": 14
 	},
 	"subtest 16": { // Import ECDSA NIST 521 public key
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 521,
 		"pub_key": [
 			"019ee818048f86ada6db866b7e49a9b5",
@@ -287,16 +303,18 @@
 		"depends": 16
 	},
 	"subtest 33": { // Import AES 128 in base64 format
-		"command": "IMPORT_AES",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 128,
 		"priv_key": "H45Jc5U/P7C9axZmLpo8Fw==",
 		"format": "BASE64",
 		"key_id": 16
 	},
 	"subtest 34": { // Import ECDSA NIST 192 keypair in base64 format
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 192,
 		"priv_key": "5c6Jo0rd3yX/O/H/5oA/V9AiDeMRh5jq",
 		"pub_key": [
@@ -317,16 +335,18 @@
 		"depends": 34
 	},
 	"subtest 37": { // Import AES 128 key as persistent object
-		"command": "IMPORT_AES",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 128,
 		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
 		"key_id": 18,
 		"attributes_list": ["PERSISTENT"]
 	},
 	"subtest 38": { // Import ECDSA NIST 192 Keypair as persistent object
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 192,
 		"priv_key": [
 			"e5ce89a34adddf25ff3bf1ffe6803f57",

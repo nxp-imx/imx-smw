@@ -1,7 +1,8 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_AES",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 256,
 		"key_id": 0
 	},

@@ -430,7 +430,7 @@ int get_test_err_status(unsigned int *status, const char *string)
 		}
 	}
 
-	DBG_PRINT_BAD_PARAM(__func__, "test_error");
+	DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
 	return ERR_CODE(BAD_PARAM_TYPE);
 }
 

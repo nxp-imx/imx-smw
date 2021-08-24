@@ -1,31 +1,36 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 192,
 		"key_id": 0
 	},
 	"subtest 2": {
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 224,
 		"key_id": 1
 	},
 	"subtest 3": {
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 256,
 		"key_id": 2
 	},
 	"subtest 4": {
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 384,
 		"key_id": 3
 	},
 	"subtest 5": {
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 521,
 		"key_id": 4
 	},
@@ -52,8 +57,9 @@
 		"depends": 6
 	},
 	"subtest 8": {
-		"command": "SIGN_SHA224",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA224",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -72,8 +78,9 @@
 		"depends": 1
 	},
 	"subtest 9": {
-		"command": "VERIFY_SHA224",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA224",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -92,8 +99,9 @@
 		"depends": 8
 	},
 	"subtest 10": {
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -112,8 +120,9 @@
 		"depends": 1
 	},
 	"subtest 11": {
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -132,8 +141,9 @@
 		"depends": 10
 	},
 	"subtest 12": {
-		"command": "SIGN_SHA384",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -156,8 +166,9 @@
 		"depends": 1
 	},
 	"subtest 13": {
-		"command": "VERIFY_SHA384",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -180,8 +191,9 @@
 		"depends": 12
 	},
 	"subtest 14": {
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -204,8 +216,9 @@
 		"depends": 1
 	},
 	"subtest 15": {
-		"command": "VERIFY_SHA512",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -250,8 +263,9 @@
 		"depends": 16
 	},
 	"subtest 18": {
-		"command": "SIGN_SHA224",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA224",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -270,8 +284,9 @@
 		"depends": 2
 	},
 	"subtest 19": {
-		"command": "VERIFY_SHA224",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA224",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -290,8 +305,9 @@
 		"depends": 18
 	},
 	"subtest 20": {
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -310,8 +326,9 @@
 		"depends": 2
 	},
 	"subtest 21": {
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -330,8 +347,9 @@
 		"depends": 20
 	},
 	"subtest 22": {
-		"command": "SIGN_SHA384",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -354,8 +372,9 @@
 		"depends": 2
 	},
 	"subtest 23": {
-		"command": "VERIFY_SHA384",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -378,8 +397,9 @@
 		"depends": 22
 	},
 	"subtest 24": {
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -402,8 +422,9 @@
 		"depends": 2
 	},
 	"subtest 25": {
-		"command": "VERIFY_SHA512",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -448,8 +469,9 @@
 		"depends": 26
 	},
 	"subtest 28": {
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -468,8 +490,9 @@
 		"depends": 3
 	},
 	"subtest 29": {
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -488,8 +511,9 @@
 		"depends": 28
 	},
 	"subtest 30": {
-		"command": "SIGN_SHA384",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -512,8 +536,9 @@
 		"depends": 3
 	},
 	"subtest 31": {
-		"command": "VERIFY_SHA384",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -536,8 +561,9 @@
 		"depends": 30
 	},
 	"subtest 32": {
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -560,8 +586,9 @@
 		"depends": 3
 	},
 	"subtest 33": {
-		"command": "VERIFY_SHA512",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -606,8 +633,9 @@
 		"depends": 34
 	},
 	"subtest 36": {
-		"command": "SIGN_SHA384",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -630,8 +658,9 @@
 		"depends": 4
 	},
 	"subtest 37": {
-		"command": "VERIFY_SHA384",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -654,8 +683,9 @@
 		"depends": 36
 	},
 	"subtest 38": {
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -678,8 +708,9 @@
 		"depends": 4
 	},
 	"subtest 39": {
-		"command": "VERIFY_SHA512",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -724,8 +755,9 @@
 		"depends": 40
 	},
 	"subtest 42": {
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -748,8 +780,9 @@
 		"depends": 5
 	},
 	"subtest 43": {
-		"command": "VERIFY_SHA512",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",

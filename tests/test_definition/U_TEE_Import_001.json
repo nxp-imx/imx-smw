@@ -1,7 +1,8 @@
 {
 	"subtest 1": { // Key type is not supported
-		"command": "IMPORT_BR1",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "BRAINPOOL_R1",
 		"security_size": 160,
 		"priv_key": [
 			"01234567890123456789012345678901",
@@ -16,8 +17,9 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 2": { // Import only ECDSA private key
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 192,
 		"priv_key": [
 			"01234567890123456789012345678901",
@@ -27,16 +29,18 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Import symmetric key without private key set
-		"command": "IMPORT_AES",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 128,
 		"pub_key": "0123456789",
 		"key_id": 0,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 4": { // Import symmetric key with public key set
-		"command": "IMPORT_AES",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 128,
 		"priv_key": "0123456789",
 		"pub_key": "0123456789",
@@ -44,8 +48,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": { // Key size is not supported by TEE
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 512,
 		"pub_key": [
 			"01234567890123456789012345678901",
@@ -61,24 +66,27 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 6": { // Private buffer size doesn't match key security size
-		"command": "IMPORT_AES",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 128,
 		"priv_key": "0123456789",
 		"key_id": 0,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": { // Public buffer size doesn't match key security size
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 192,
 		"pub_key": "0123456789",
 		"key_id": 0,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 8": { // Import RSA private key only
-		"command": "IMPORT_RSA",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 256,
 		"priv_key": [
 			"890108895a7c27cedab50179f31e1052",
@@ -92,8 +100,9 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 9": { // Wrong modulus length
-		"command": "IMPORT_RSA",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 256,
 		"pub_key": [
 			"010001"

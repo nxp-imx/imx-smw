@@ -9,7 +9,7 @@
 #include "util.h"
 #include "types.h"
 #include "json_types.h"
-#include "crypto.h"
+#include "hash.h"
 #include "smw_crypto.h"
 #include "smw_status.h"
 

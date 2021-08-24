@@ -44,14 +44,16 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 2": { // Generate a "fake key"
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "HSM",
+		"key_type": "NIST",
 		"security_size": 384,
 		"key_id": 0
 	},
 	"subtest 3": {
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "HSM",
+		"algo": "SHA256",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"

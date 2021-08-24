@@ -494,7 +494,7 @@ static int setup_derive_base(json_object *params,
 	 * Initialize key descriptor of the key base
 	 * No key buffer and type of key unknown
 	 */
-	res = util_key_desc_init(key_base, NULL, "");
+	res = util_key_desc_init(key_base, NULL);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -666,7 +666,7 @@ int derive_key(json_object *params, struct common_parameters *common_params,
 	 * Initialize key descriptor of the key derived
 	 * No key buffer and type of key unknown
 	 */
-	res = util_key_desc_init(&key_derived, NULL, "");
+	res = util_key_desc_init(&key_derived, NULL);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 

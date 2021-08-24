@@ -8,7 +8,7 @@
 #include "json.h"
 #include "util.h"
 #include "types.h"
-#include "crypto.h"
+#include "hash.h"
 #include "json_types.h"
 #include "smw_crypto.h"
 #include "smw_status.h"
@@ -54,10 +54,10 @@ int get_hash_digest_len(char *algo, unsigned int *len)
 
 /**
  * set_hash_bad_args() - Set hash bad parameters function of the test error.
- * @params: json-c object
- * @smw_hash_args: SMW Hash parameters
- * @digest_hex: expected digest buffer argument parameter
- * @digest_len: expected digest length argument parameter
+ * @params: json-c object.
+ * @args: SMW Hash parameters.
+ * @digest_hex: expected digest buffer argument parameter.
+ * @digest_len: expected digest length argument parameter.
  * @is_api_test: Test concerns the API validation.
  *
  * Return:
@@ -73,7 +73,7 @@ static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
 	int ret = ERR_CODE(PASSED);
 	enum arguments_test_err_case error;
 
-	if (!params)
+	if (!params || !args)
 		return ERR_CODE(BAD_ARGS);
 
 	ret = util_read_test_error(&error, params);
@@ -99,7 +99,7 @@ static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, "test_error");
+		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 		break;
 	}
@@ -108,7 +108,7 @@ static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
 }
 
 int hash(json_object *params, struct common_parameters *common_params,
-	 char *algo_name, enum smw_status_code *ret_status)
+	 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	unsigned int input_len = 0;
@@ -120,18 +120,22 @@ int hash(json_object *params, struct common_parameters *common_params,
 	struct smw_hash_args args = { 0 };
 	struct smw_hash_args *smw_hash_args = &args;
 
-	if (!params || !algo_name || !ret_status || !common_params) {
+	if (!params || !ret_status || !common_params) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
 
 	args.version = common_params->version;
-	args.algo_name = algo_name;
 
 	if (!strcmp(common_params->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
 		args.subsystem_name = common_params->subsystem;
+
+	/* Algorithm is mandatory */
+	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string, params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
 
 	res = util_read_hex_buffer(&input_hex, &input_len, params, INPUT_OBJ);
 	if (res != ERR_CODE(PASSED))
@@ -146,7 +150,7 @@ int hash(json_object *params, struct common_parameters *common_params,
 
 	/*
 	 * Read expected digest buffer if any.
-	 * Test definition migth not set the expected digest buffer.
+	 * Test definition might not set the expected digest buffer.
 	 */
 	res = util_read_hex_buffer(&digest_hex, &digest_len, params,
 				   DIGEST_OBJ);

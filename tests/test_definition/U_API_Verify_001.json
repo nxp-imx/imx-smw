@@ -1,7 +1,8 @@
 {
 	"subtest 1": { // Verify args pointer is NULL
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -33,9 +34,10 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 2": { // Version is not supported
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"version": 255,
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -66,8 +68,9 @@
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Subsystem is not set in SMW config file
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "UNDEFINED",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -98,8 +101,9 @@
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 4": { // Key descriptor pointer is NULL
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -131,8 +135,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": { // Algo is undefined
-		"command": "VERIFY_UNDEFINED",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
+		"algo": "UNDEFINED",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -163,8 +168,9 @@
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 6": { // Message buffer is NULL
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -183,8 +189,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": { // Message length is 0
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -207,8 +214,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 8": { // Signature buffer is NULL
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -234,8 +242,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 9": { // Signature length is 0
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -267,8 +276,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 10": { // Attributes list not defined
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"key_type": "NIST",
 		"security_size": 256,
 		"pub_key": [
@@ -300,14 +310,16 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 11": { // Add a keypair for the test
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 256,
 		"key_id": 0
 	},
 	"subtest 12": { // Get the signature length
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "DEFAULT",
+		"algo": "SHA256",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",

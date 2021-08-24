@@ -1,27 +1,31 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_AES",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 128,
 		"key_id": 0,
 		"attributes_list": ["PERSISTENT"]
 	},
 	"subtest 2": {
-		"command": "GENERATE_NIST",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 521,
 		"key_id": 1,
 		"attributes_list": ["PERSISTENT"]
 	},
 	"subtest 3": {
-		"command": "GENERATE_AES",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 256,
 		"key_id": 2
 	},
 	"subtest 4": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 1024,
 		"key_id": 3,
 		"attributes_list": ["PERSISTENT"]

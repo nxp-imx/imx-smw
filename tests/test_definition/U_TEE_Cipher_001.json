@@ -11,20 +11,23 @@
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 2": {
-		"command": "GENERATE_AES",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 256,
 		"key_id": 0
 	},
 	"subtest 3": {
-		"command": "GENERATE_AES",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "AES",
 		"security_size": 256,
 		"key_id": 1
 	},
 	"subtest 4": {
-		"command": "GENERATE_DES",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "DES",
 		"security_size": 56,
 		"key_id": 2
 	},

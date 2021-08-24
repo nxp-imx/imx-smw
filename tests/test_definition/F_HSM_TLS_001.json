@@ -43,8 +43,9 @@
 		}
 	},
 	"subtest 2": { // TLS MAC Finish with unsupported hash algorithm
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "HSM",
+		"algo": "SHA512",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
@@ -58,8 +59,9 @@
 		"depends": 1
 	},
 	"subtest 3": { // TLS MAC Finish with client label
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "HSM",
+		"algo": "SHA256",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
@@ -72,8 +74,9 @@
 		"depends": 1
 	},
 	"subtest 4": { // TLS MAC Finish with server label
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "HSM",
+		"algo": "SHA256",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"

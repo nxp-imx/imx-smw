@@ -1,7 +1,8 @@
 {
 	"subtest 1": {
-		"command": "IMPORT_RSA",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 4096,
 		"pub_key": [
 			"010001"
@@ -77,8 +78,9 @@
 		"key_id": 0
 	},
 	"subtest 2": { // NIST SigVer15_186-3.rsp
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"42c5ea617a25f019329ee172e4932485",
 			"518dabd01983249189597473b4a6616c",
@@ -131,8 +133,9 @@
 		"depends": 1
 	},
 	"subtest 3": {
-		"command": "VERIFY_SHA512",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"42c5ea617a25f019329ee172e4932485",
 			"518dabd01983249189597473b4a6616c",
@@ -151,8 +154,9 @@
 		"depends": 2
 	},
 	"subtest 4": {
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"42c5ea617a25f019329ee172e4932485",
 			"518dabd01983249189597473b4a6616c",
@@ -171,8 +175,9 @@
 		"depends": 1
 	},
 	"subtest 5": {
-		"command": "VERIFY_SHA512",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"42c5ea617a25f019329ee172e4932485",
 			"518dabd01983249189597473b4a6616c",

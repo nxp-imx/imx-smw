@@ -10,7 +10,7 @@
 #include "types.h"
 #include "json_types.h"
 #include "keymgr.h"
-#include "crypto.h"
+#include "hash.h"
 #include "smw_keymgr.h"
 #include "smw_crypto.h"
 #include "smw_status.h"
@@ -77,7 +77,7 @@ static int set_hmac_bad_args(json_object *params, struct smw_hmac_args **args,
 }
 
 int hmac(json_object *params, struct common_parameters *common_params,
-	 char *algo_name, struct key_identifier_list *key_identifiers,
+	 struct key_identifier_list *key_identifiers,
 	 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
@@ -94,7 +94,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 	struct smw_hmac_args args = { 0 };
 	struct smw_hmac_args *smw_hmac_args = &args;
 
-	if (!params || !algo_name || !ret_status || !common_params) {
+	if (!params || !ret_status || !common_params) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -109,7 +109,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor */
-	res = util_key_desc_init(&key_test, &key_buffer, NULL);
+	res = util_key_desc_init(&key_test, &key_buffer);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -120,9 +120,6 @@ int hmac(json_object *params, struct common_parameters *common_params,
 
 	if (key_id != INT_MAX) {
 		util_key_free_key(&key_test);
-		key_test.desc.buffer = NULL;
-		key_test.keys = NULL;
-		util_key_set_ops(&key_test, NULL);
 
 		/* Fill key descriptor field saved */
 		res = util_key_find_key_node(key_identifiers, key_id,
@@ -149,7 +146,10 @@ int hmac(json_object *params, struct common_parameters *common_params,
 		goto exit;
 	}
 
-	args.algo_name = algo_name;
+	/* Algorithm is mandatory */
+	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string, params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
 
 	res = util_read_hex_buffer(&input_hex, &input_len, params, INPUT_OBJ);
 	if (res != ERR_CODE(PASSED))

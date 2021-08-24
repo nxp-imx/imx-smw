@@ -1,7 +1,8 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_DES3",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "DES3",
 		"security_size": 112,
 		"key_id": 0
 	},

@@ -1,7 +1,8 @@
 {
 	"subtest 1": { // Import RSA 2048bits keypair
-		"command": "IMPORT_RSA",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 2048,
 		"pub_key": [
 			"010001"
@@ -45,8 +46,9 @@
 		"key_id": 0
 	},
 	"subtest 2": { // Import RSA 2048bits public key
-		"command": "IMPORT_RSA",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 2048,
 		"pub_key": [
 			"010001"
@@ -72,8 +74,9 @@
 		"key_id": 1
 	},
 	"subtest 3": { // Import RSA 2048bits public key base 64 format
-		"command": "IMPORT_RSA",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 2048,
 		"format": "BASE64",
 		"pub_key": "AQAB",

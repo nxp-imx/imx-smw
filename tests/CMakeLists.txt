@@ -45,7 +45,7 @@ add_executable(${PROJECT_NAME}
                EXCLUDE_FROM_ALL
                engine/cipher.c
                engine/config.c
-               engine/crypto.c
+               engine/hash.c
                engine/hmac.c
                engine/keymgr.c
                engine/keymgr_derive.c

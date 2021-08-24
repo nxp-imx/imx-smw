@@ -1,13 +1,15 @@
 {
 	"subtest 1": {
-		"command": "GENERATE_RSA",
+		"command": "GENERATE",
 		"subsystem": "TEE",
+		"key_type": "RSA",
 		"security_size": 1536,
 		"key_id": 0
 	},
 	"subtest 2": { // No attributes are set
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -27,8 +29,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 3": { // MD5 algorithm is set for PSS signature type
-		"command": "SIGN_MD5",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "MD5",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -51,8 +54,9 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 4": { // Salt length is set for PKCS1 V1_5 signature type
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -76,8 +80,9 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": {
-		"command": "SIGN_SHA512",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -99,8 +104,9 @@
 		"depends": 1
 	},
 	"subtest 6": { // Signature type different from the one use for signature operation
-		"command": "VERIFY_SHA512",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA512",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -123,8 +129,9 @@
 		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	},
 	"subtest 7": {
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",

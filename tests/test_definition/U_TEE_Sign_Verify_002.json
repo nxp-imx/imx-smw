@@ -1,7 +1,8 @@
 {
 	"subtest 1": {
-		"command": "IMPORT_NIST",
+		"command": "IMPORT",
 		"subsystem": "TEE",
+		"key_type": "NIST",
 		"security_size": 256,
 		"priv_key": [
 			"c9806898a0334916c860748880a541f0",
@@ -16,8 +17,9 @@
 		"key_id": 0
 	},
 	"subtest 2": {
-		"command": "SIGN_SHA256",
+		"command": "SIGN",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -41,8 +43,9 @@
 		"depends": 1
 	},
 	"subtest 4": {
-		"command": "VERIFY_SHA256",
+		"command": "VERIFY",
 		"subsystem": "TEE",
+		"algo": "SHA256",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",

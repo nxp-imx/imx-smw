@@ -41,16 +41,16 @@ optee_plat=
 opt_seco=0
 case ${platform} in
     imx8qxpc0mek)
-        optee_plat="mx8qxpmek"
+        optee_plat="imx-mx8qxpmek"
 	opt_seco=1
 	;;
 
     imx8mmevk)
-        optee_plat="mx8mmevk"
+        optee_plat="imx-mx8mmevk"
 	;;
 
     imx7dsabresd)
-        optee_plat="mx7dsabresd"
+        optee_plat="imx-mx7dsabresd"
 	;;
 
     *)

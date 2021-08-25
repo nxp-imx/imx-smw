@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+bash_dir=$(dirname "${BASH_SOURCE[0]}")
+source "${bash_dir}/smw_bamboo_config.sh"
+
+trap exit_vvenv EXIT
+
 function usage()
 {
     cat << EOF
@@ -38,7 +43,15 @@ cd "$bamboo_build_working_directory"/smw
 build_debug=build.${platform}_deb
 
 # Delete previous builds
-rm -rf "${build_debug}"
+rm -rf "smw/${build_debug}"
+
+#
+# Start venv
+#
+start_vvenv
+
+# Install python package to build OPTEE
+eval "python3 -m pip install pyelftools pycryptodomex"
 
 #
 # Configure, build and package Debug build of all targets

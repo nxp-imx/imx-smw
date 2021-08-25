@@ -6,7 +6,6 @@
 #include <tee_client_api.h>
 
 #include "compiler.h"
-
 #include "operations.h"
 #include "subsystems.h"
 #include "debug.h"
@@ -14,7 +13,6 @@
 #include "utils.h"
 #include "config.h"
 #include "tee.h"
-#include "tee_subsystem.h"
 #include "smw_status.h"
 
 /**

@@ -13,7 +13,6 @@
 #include "config.h"
 #include "hash.h"
 #include "tee.h"
-#include "tee_subsystem.h"
 #include "smw_status.h"
 
 #define ALGORITHM_ID(_id)                                                      \

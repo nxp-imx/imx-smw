@@ -15,7 +15,6 @@
 #include "config.h"
 #include "keymgr.h"
 #include "sign_verify.h"
-#include "tee_subsystem.h"
 #include "tee.h"
 
 #define SIGNATURE_TYPE_ID(_id)                                                 \

@@ -6,7 +6,7 @@
 #ifndef TEE_SUBSYSTEM_H
 #define TEE_SUBSYSTEM_H
 
-#include "tee_api_types.h"
+#include <tee_api_types.h>
 
 #define SMW_TA_UUID                                                            \
 	{                                                                      \

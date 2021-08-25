@@ -14,7 +14,6 @@
 #include "config.h"
 #include "keymgr.h"
 #include "tee.h"
-#include "tee_subsystem.h"
 #include "smw_status.h"
 
 #define SECURITY_SIZE_RANGE UINT_MAX

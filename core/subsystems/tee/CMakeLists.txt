@@ -44,8 +44,9 @@ target_sources(tee PRIVATE
 target_include_directories(tee PRIVATE
                            ${TA_HOST_INCLUDE_DIR}
                            ${INCLUDE_DIR}
-                           ${TEEC_INCLUDE_DIR}
                            ./common)
+
+target_include_directories(tee SYSTEM PRIVATE ${TEEC_INCLUDE_DIR})
 
 set(EXT_LIBS ${EXT_LIBS} ${TEEC_LIBRARY} PARENT_SCOPE)
 

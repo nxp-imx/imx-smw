@@ -1,0 +1,51 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright 2021 NXP
+ */
+
+#include <string.h>
+
+#include "smw_status.h"
+#include "util.h"
+
+/**
+ * struct - smw status
+ * @status: smw status integer value.
+ * @string: smw status string value.
+ */
+static const struct smw_status {
+	enum smw_status_code status;
+	char *string;
+} status_codes[] = { @SMW_STATUS_STR_LIST@ };
+
+int get_smw_int_status(int *smw_status, const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string || !smw_status) {
+		DBG_PRINT_BAD_ARGS(__func__);
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	for (; i < ARRAY_SIZE(status_codes); i++) {
+		if (!strcmp(status_codes[i].string, string)) {
+			*smw_status = status_codes[i].status;
+			return ERR_CODE(PASSED);
+		}
+	}
+
+	DBG_PRINT("Unknown expected result");
+	return ERR_CODE(UNKNOWN_RESULT);
+}
+
+char *get_smw_string_status(enum smw_status_code status)
+{
+	unsigned long i = 0;
+
+	for (; i < ARRAY_SIZE(status_codes); i++) {
+		if (status_codes[i].status == status)
+			return status_codes[i].string;
+	}
+
+	return NULL;
+}

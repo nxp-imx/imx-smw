@@ -11,53 +11,6 @@
 #include "util.h"
 #include "json.h"
 #include "smw_keymgr.h"
-#include "smw_status.h"
-
-#define SET_STATUS_CODE(name)                                                  \
-	{                                                                      \
-		.status = name, .string = #name                                \
-	}
-
-/**
- * struct - smw status
- * @status: smw status integer value.
- * @string: smw status string value.
- */
-static const struct smw_status {
-	enum smw_status_code status;
-	char *string;
-} status_codes[] = {
-	SET_STATUS_CODE(SMW_STATUS_OK),
-	SET_STATUS_CODE(SMW_STATUS_INVALID_VERSION),
-	SET_STATUS_CODE(SMW_STATUS_INVALID_BUFFER),
-	SET_STATUS_CODE(SMW_STATUS_EOF),
-	SET_STATUS_CODE(SMW_STATUS_SYNTAX_ERROR),
-	SET_STATUS_CODE(SMW_STATUS_UNKNOWN_NAME),
-	SET_STATUS_CODE(SMW_STATUS_UNKNOWN_ID),
-	SET_STATUS_CODE(SMW_STATUS_TOO_LARGE_NUMBER),
-	SET_STATUS_CODE(SMW_STATUS_ALLOC_FAILURE),
-	SET_STATUS_CODE(SMW_STATUS_INVALID_PARAM),
-	SET_STATUS_CODE(SMW_STATUS_VERSION_NOT_SUPPORTED),
-	SET_STATUS_CODE(SMW_STATUS_SUBSYSTEM_LOAD_FAILURE),
-	SET_STATUS_CODE(SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE),
-	SET_STATUS_CODE(SMW_STATUS_SUBSYSTEM_FAILURE),
-	SET_STATUS_CODE(SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED),
-	SET_STATUS_CODE(SMW_STATUS_OPERATION_NOT_SUPPORTED),
-	SET_STATUS_CODE(SMW_STATUS_OPERATION_NOT_CONFIGURED),
-	SET_STATUS_CODE(SMW_STATUS_OPERATION_FAILURE),
-	SET_STATUS_CODE(SMW_STATUS_SIGNATURE_INVALID),
-	SET_STATUS_CODE(SMW_STATUS_NO_KEY_BUFFER),
-	SET_STATUS_CODE(SMW_STATUS_OUTPUT_TOO_SHORT),
-	SET_STATUS_CODE(SMW_STATUS_SIGNATURE_LEN_INVALID),
-	SET_STATUS_CODE(SMW_STATUS_OPS_INVALID),
-	SET_STATUS_CODE(SMW_STATUS_MUTEX_INIT_FAILURE),
-	SET_STATUS_CODE(SMW_STATUS_MUTEX_DESTROY_FAILURE),
-	SET_STATUS_CODE(SMW_STATUS_INVALID_TAG),
-	SET_STATUS_CODE(SMW_STATUS_SUBSYSTEM_DUPLICATE),
-	SET_STATUS_CODE(SMW_STATUS_OPERATION_DUPLICATE),
-	SET_STATUS_CODE(SMW_STATUS_CONFIG_ALREADY_LOADED),
-	SET_STATUS_CODE(SMW_STATUS_NO_CONFIG_LOADED),
-};
 
 /**
  * struct - test_err_case
@@ -69,25 +22,24 @@ struct test_err_case {
 	enum arguments_test_err_case status;
 	char *string;
 } args_test_err_case[] = {
-	SET_STATUS_CODE(ARGS_NULL),
-	SET_STATUS_CODE(BAD_FORMAT),
-	SET_STATUS_CODE(KEY_BUFFER_NULL),
-	SET_STATUS_CODE(KEY_DESC_ID_NOT_SET),
-	SET_STATUS_CODE(KEY_DESC_ID_SET),
-	SET_STATUS_CODE(KEY_DESC_NULL),
-	SET_STATUS_CODE(KEY_DESC_OUT_NULL),
-	SET_STATUS_CODE(NB_ERROR_CASE),
-	SET_STATUS_CODE(CIPHER_NO_NB_KEYS),
-	SET_STATUS_CODE(CIPHER_NO_KEYS),
-	SET_STATUS_CODE(CIPHER_DIFF_SUBSYSTEM),
-	SET_STATUS_CODE(CIPHER_DIFF_KEY_TYPE),
-	SET_STATUS_CODE(CTX_NULL),
-	SET_STATUS_CODE(CTX_HANDLE_NULL),
-	SET_STATUS_CODE(DST_CPY_ARGS_NULL),
-	SET_STATUS_CODE(TLS12_KDF_ARGS_NULL),
-	SET_STATUS_CODE(FAKE_KEY_ID),
+	ENUM_TO_STRING(ARGS_NULL),
+	ENUM_TO_STRING(BAD_FORMAT),
+	ENUM_TO_STRING(KEY_BUFFER_NULL),
+	ENUM_TO_STRING(KEY_DESC_ID_NOT_SET),
+	ENUM_TO_STRING(KEY_DESC_ID_SET),
+	ENUM_TO_STRING(KEY_DESC_NULL),
+	ENUM_TO_STRING(KEY_DESC_OUT_NULL),
+	ENUM_TO_STRING(NB_ERROR_CASE),
+	ENUM_TO_STRING(CIPHER_NO_NB_KEYS),
+	ENUM_TO_STRING(CIPHER_NO_KEYS),
+	ENUM_TO_STRING(CIPHER_DIFF_SUBSYSTEM),
+	ENUM_TO_STRING(CIPHER_DIFF_KEY_TYPE),
+	ENUM_TO_STRING(CTX_NULL),
+	ENUM_TO_STRING(CTX_HANDLE_NULL),
+	ENUM_TO_STRING(DST_CPY_ARGS_NULL),
+	ENUM_TO_STRING(TLS12_KDF_ARGS_NULL),
+	ENUM_TO_STRING(FAKE_KEY_ID),
 };
-#undef SET_STATUS_CODE
 
 #define SET_ERR_CODE_AND_NAME(err, name)                                       \
 	{                                                                      \
@@ -181,38 +133,6 @@ exit:
 		free(*buffer);
 
 	return res;
-}
-
-int get_smw_int_status(int *smw_status, const char *string)
-{
-	unsigned int i = 0;
-
-	if (!string || !smw_status) {
-		DBG_PRINT_BAD_ARGS(__func__);
-		return ERR_CODE(BAD_ARGS);
-	}
-
-	for (; i < ARRAY_SIZE(status_codes); i++) {
-		if (!strcmp(status_codes[i].string, string)) {
-			*smw_status = status_codes[i].status;
-			return ERR_CODE(PASSED);
-		}
-	}
-
-	DBG_PRINT("Unknown expected result");
-	return ERR_CODE(UNKNOWN_RESULT);
-}
-
-char *get_smw_string_status(enum smw_status_code status)
-{
-	unsigned long i = 0;
-
-	for (; i < ARRAY_SIZE(status_codes); i++) {
-		if (status_codes[i].status == status)
-			return status_codes[i].string;
-	}
-
-	return NULL;
 }
 
 int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)

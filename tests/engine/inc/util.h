@@ -98,6 +98,11 @@ void dbg_dumphex(const char *function, int line, char *msg, void *buf,
 
 #endif /* ENABLE_TRACE */
 
+#define ENUM_TO_STRING(name)                                                   \
+	{                                                                      \
+		.status = name, .string = #name                                \
+	}
+
 /* Compare @got and @exp. Return 0 if equal, 1 otherwise */
 #define CHECK_RESULT(got, exp)                                                 \
 	({                                                                     \

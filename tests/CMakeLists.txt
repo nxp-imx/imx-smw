@@ -41,6 +41,19 @@ configure_file(${TEST_SCRIPTS_SRC}/run_keymgr_suspend_resume.sh.in
                ${TEST_SCRIPTS_BIN}/run_keymgr_suspend_resume.sh
                @ONLY)
 
+#
+# Use custom command with dependency to ensure that the
+# util_status.c is regrenerated each time smw_status.h change
+#
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c
+       COMMAND "${CMAKE_COMMAND}" -DENUM="smw_status_code"
+               -DINPUT="${CMAKE_SOURCE_DIR}/public/smw_status.h"
+               -DSRC="${CMAKE_CURRENT_SOURCE_DIR}/engine/util_status.c.in"
+               -DDST="${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c"
+               -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/enum_to_string.cmake
+       DEPENDS ${CMAKE_SOURCE_DIR}/public/smw_status.h
+       WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_executable(${PROJECT_NAME}
                EXCLUDE_FROM_ALL
                engine/cipher.c
@@ -59,7 +72,8 @@ add_executable(${PROJECT_NAME}
                engine/util_tlv.c
                engine/util_context.c
                engine/util_cipher.c
-               engine/operation_context.c)
+               engine/operation_context.c
+               ${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c)
 
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${TEST_SRC_INC} ${TEST_BIN_INC}

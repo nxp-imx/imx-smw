@@ -50,7 +50,7 @@ configure_file(./include/config.h.in ./include/config.h)
 # Installation procedure done as separated make target
 #
 install(TARGETS ${PROJECT_NAME}
-        DESTINATION bin
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
         COMPONENT ${PROJECT_NAME}
         EXCLUDE_FROM_ALL OPTIONAL)
 

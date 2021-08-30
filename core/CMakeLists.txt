@@ -125,6 +125,6 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})
 
-install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_SOURCE_DIR}/osal/${OS}/config/default_config.txt
         DESTINATION share/smw)

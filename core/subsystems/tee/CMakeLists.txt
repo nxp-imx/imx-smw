@@ -79,4 +79,4 @@ ExternalProject_Add(smw_tee_ta
 	TMP_DIR ${CMAKE_BINARY_DIR}/ta
 	BUILD_COMMAND ${TA_CMD})
 
-install(FILES ${TA_BUILD_DIR}/${TA_FILE} DESTINATION ${DESTDIR}/lib/optee_armtz)
+install(FILES ${TA_BUILD_DIR}/${TA_FILE} DESTINATION ${DESTDIR}/${CMAKE_INSTALL_LIBDIR}/optee_armtz)

@@ -132,7 +132,7 @@ void util_key_set_ops(struct keypair_ops *key_test)
 
 /**
  * util_key_get_node_info() - Get the key information saved in the key node
- * @node: Key node.
+ * @data: Key node data.
  * @key_test: Test keypair structure with operations to fill with saved data.
  *
  * Function fills the @key_test descriptor fields functions of the
@@ -140,14 +140,14 @@ void util_key_set_ops(struct keypair_ops *key_test)
  * If a descriptor field is already set, don't overwrite it.
  *
  */
-static void util_key_get_node_info(struct key_identifier_node *node,
+static void util_key_get_node_info(struct key_identifier_data *data,
 				   struct keypair_ops *key_test)
 {
 	if (!util_key_is_id_set(key_test))
-		key_test->desc.id = node->key_identifier;
+		key_test->desc.id = data->key_identifier;
 
 	if (!util_key_is_security_set(key_test))
-		key_test->desc.security_size = node->security_size;
+		key_test->desc.security_size = data->security_size;
 }
 
 /**
@@ -283,104 +283,74 @@ static int keypair_read(struct keypair_ops *key_test, unsigned int key_idx,
 	return ret;
 }
 
-int util_key_add_node(struct key_identifier_list **key_identifiers,
-		      unsigned int id, struct keypair_ops *key_test)
+static void util_key_free_data(void *data)
 {
-	struct key_identifier_node *head = NULL;
-	struct key_identifier_node *node;
+	struct key_identifier_data *key_identifier_data = data;
 
-	if (!key_test)
+	if (key_identifier_data && key_identifier_data->pub_key.data)
+		free(key_identifier_data->pub_key.data);
+}
+
+int util_key_add_node(struct llist **key_identifiers, unsigned int id,
+		      struct keypair_ops *key_test)
+{
+	int res;
+
+	struct key_identifier_data *data;
+
+	if (!key_test || !key_identifiers)
 		return ERR_CODE(BAD_ARGS);
 
-	node = malloc(sizeof(*node));
-	if (!node) {
+	if (!*key_identifiers) {
+		res = util_list_init(key_identifiers, util_key_free_data);
+		if (res != ERR_CODE(PASSED))
+			return res;
+	}
+
+	data = malloc(sizeof(*data));
+	if (!data) {
 		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
-	node->id = id;
-	node->key_identifier = key_test->desc.id;
-	node->security_size = key_test->desc.security_size;
-	node->next = NULL;
+	data->key_identifier = key_test->desc.id;
+	data->security_size = key_test->desc.security_size;
 
-	if (!node->key_identifier) {
+	if (!data->key_identifier) {
 		/*
 		 * Key is ephemeral. Save public key data to be able to use it
 		 * later
 		 */
-		node->pub_key.data = *key_test->public_data(key_test);
-		node->pub_key.length = *key_test->public_length(key_test);
+		data->pub_key.data = *key_test->public_data(key_test);
+		data->pub_key.length = *key_test->public_length(key_test);
 	} else {
-		node->pub_key.data = NULL;
+		data->pub_key.data = NULL;
 	}
 
-	if (!*key_identifiers) {
-		*key_identifiers = malloc(sizeof(struct key_identifier_list));
-		if (!*key_identifiers) {
-			free(node);
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		}
+	res = util_list_add_node(*key_identifiers, id, data);
 
-		/* New key is the first of the list */
-		(*key_identifiers)->head = node;
-	} else {
-		head = (*key_identifiers)->head;
-		while (head->next)
-			head = head->next;
+	if (res != ERR_CODE(PASSED))
+		if (data)
+			free(data);
 
-		/* New key is the last of the list */
-		head->next = node;
-	}
+	return res;
+}
+
+int util_key_find_key_node(struct llist *key_identifiers, unsigned int id,
+			   struct keypair_ops *key_test)
+{
+	struct key_identifier_data *data;
+
+	if (!key_identifiers || !key_test)
+		return ERR_CODE(BAD_ARGS);
+
+	data = util_list_find_node(key_identifiers, id);
+	if (!data)
+		return ERR_CODE(KEY_NOTFOUND);
+
+	util_key_get_node_info(data, key_test);
 
 	return ERR_CODE(PASSED);
-}
-
-void util_key_clear_list(struct key_identifier_list *key_identifiers)
-{
-	struct key_identifier_node *head = NULL;
-	struct key_identifier_node *del = NULL;
-
-	if (!key_identifiers)
-		return;
-
-	head = key_identifiers->head;
-
-	while (head) {
-		del = head;
-		head = head->next;
-
-		if (del->pub_key.data)
-			free(del->pub_key.data);
-
-		free(del);
-	}
-
-	free(key_identifiers);
-}
-
-int util_key_find_key_node(struct key_identifier_list *key_identifiers,
-			   unsigned int id, struct keypair_ops *key_test)
-{
-	struct key_identifier_node *head = NULL;
-
-	if (!key_identifiers || !key_test) {
-		DBG_PRINT_BAD_ARGS(__func__);
-		return ERR_CODE(BAD_ARGS);
-	}
-
-	head = key_identifiers->head;
-
-	while (head) {
-		if (head->id == id) {
-			util_key_get_node_info(head, key_test);
-			return ERR_CODE(PASSED);
-		}
-
-		head = head->next;
-	}
-
-	return ERR_CODE(KEY_NOTFOUND);
 }
 
 int util_key_desc_init(struct keypair_ops *key_test,

@@ -7,6 +7,7 @@
 
 #include "json.h"
 #include "util.h"
+#include "util_list.h"
 #include "util_context.h"
 #include "util_cipher.h"
 #include "types.h"
@@ -59,7 +60,7 @@
  * Linked list containing cipher output data. It's used to be able to check the
  * result of a multi-part operation
  */
-static struct cipher_output_list *cipher_out_data;
+static struct llist *cipher_out_data;
 
 /**
  * struct cipher_keys - Group of structures representing keys
@@ -72,7 +73,7 @@ static struct cipher_output_list *cipher_out_data;
  */
 struct cipher_keys {
 	unsigned int nb_keys;
-	struct key_identifier_list *key_identifiers;
+	struct llist *key_identifiers;
 	int *keys_id;
 	struct keypair_ops *keys_test;
 	struct smw_key_descriptor **keys_desc;
@@ -567,7 +568,7 @@ static int set_output_params(json_object *params,
  * Error code from util_context_find_node
  */
 static int set_op_context(json_object *params, int is_api_test,
-			  struct context_list *ctx, int *ctx_id,
+			  struct llist *ctx, int *ctx_id,
 			  struct smw_cipher_data_args *args,
 			  struct smw_op_context *api_ctx)
 {
@@ -598,8 +599,7 @@ static int set_op_context(json_object *params, int is_api_test,
 }
 
 int cipher(json_object *params, struct common_parameters *common_params,
-	   struct key_identifier_list *key_identifiers,
-	   enum smw_status_code *ret_status)
+	   struct llist *key_identifiers, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	unsigned int expected_out_len;
@@ -674,8 +674,8 @@ end:
 }
 
 int cipher_init(json_object *params, struct common_parameters *common_params,
-		struct key_identifier_list *key_identifiers,
-		struct context_list **ctx, enum smw_status_code *ret_status)
+		struct llist *key_identifiers, struct llist **ctx,
+		enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;
@@ -751,7 +751,7 @@ end:
 }
 
 int cipher_update(json_object *params, struct common_parameters *common_params,
-		  struct context_list *ctx, enum smw_status_code *ret_status)
+		  struct llist *ctx, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;
@@ -817,7 +817,7 @@ end:
 }
 
 int cipher_final(json_object *params, struct common_parameters *common_params,
-		 struct context_list *ctx, enum smw_status_code *ret_status)
+		 struct llist *ctx, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;
@@ -889,7 +889,7 @@ end:
 
 void cipher_clear_out_data_list(void)
 {
-	util_cipher_clear_out_data_list(cipher_out_data);
+	util_list_clear(cipher_out_data);
 }
 
 int cipher_copy_node(unsigned int dst_ctx_id, unsigned int src_ctx_id)

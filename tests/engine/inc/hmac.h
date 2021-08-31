@@ -29,7 +29,6 @@
  * Error code from set_hmac_bad_args().
  */
 int hmac(json_object *params, struct common_parameters *common_params,
-	 struct key_identifier_list *key_identifiers,
-	 enum smw_status_code *ret_status);
+	 struct llist *key_identifiers, enum smw_status_code *ret_status);
 
 #endif /* __HMAC_H__ */

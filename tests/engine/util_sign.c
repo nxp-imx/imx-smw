@@ -8,86 +8,63 @@
 #include "util.h"
 #include "util_sign.h"
 
-int util_sign_add_node(struct signature_list **signatures, unsigned int id,
+static void util_sign_free_data(void *data)
+{
+	struct signature_data *signature_data = data;
+
+	if (signature_data && signature_data->signature)
+		free(signature_data->signature);
+}
+
+int util_sign_add_node(struct llist **signatures, unsigned int id,
 		       unsigned char *signature, unsigned int signature_length)
 {
-	struct signature_node *head = NULL;
-	struct signature_node *node;
+	int res;
 
-	node = malloc(sizeof(*node));
-	if (!node) {
+	struct signature_data *data;
+
+	if (!signatures)
+		return ERR_CODE(BAD_ARGS);
+
+	if (!*signatures) {
+		res = util_list_init(signatures, util_sign_free_data);
+		if (res != ERR_CODE(PASSED))
+			return res;
+	}
+
+	data = malloc(sizeof(*data));
+	if (!data) {
 		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
-	node->id = id;
-	node->signature = signature;
-	node->signature_length = signature_length;
-	node->next = NULL;
+	data->signature = signature;
+	data->signature_length = signature_length;
 
-	if (!*signatures) {
-		*signatures = malloc(sizeof(struct signature_list));
-		if (!*signatures) {
-			free(node);
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		}
+	res = util_list_add_node(*signatures, id, data);
 
-		/* New signature is the first of the list */
-		(*signatures)->head = node;
-	} else {
-		head = (*signatures)->head;
-		while (head->next)
-			head = head->next;
+	if (res != ERR_CODE(PASSED))
+		if (data)
+			free(data);
 
-		/* New signature is the last of the list */
-		head->next = node;
-	}
-
-	return ERR_CODE(PASSED);
+	return res;
 }
 
-void util_sign_clear_list(struct signature_list *signatures)
-{
-	struct signature_node *head = NULL;
-	struct signature_node *del = NULL;
-
-	if (!signatures)
-		return;
-
-	head = signatures->head;
-
-	while (head) {
-		del = head;
-		head = head->next;
-		if (del->signature)
-			free(del->signature);
-		free(del);
-	}
-
-	free(signatures);
-}
-
-int util_sign_find_node(struct signature_list *signatures, unsigned int id,
+int util_sign_find_node(struct llist *signatures, unsigned int id,
 			unsigned char **signature,
 			unsigned int *signature_length)
 {
-	struct signature_node *head = NULL;
+	struct signature_data *data = NULL;
 
 	if (!signatures || !signature || !signature_length)
+		return ERR_CODE(BAD_ARGS);
+
+	data = util_list_find_node(signatures, id);
+	if (!data)
 		return ERR_CODE(FAILED);
 
-	head = signatures->head;
+	*signature = data->signature;
+	*signature_length = data->signature_length;
 
-	while (head) {
-		if (head->id == id) {
-			*signature = head->signature;
-			*signature_length = head->signature_length;
-			return ERR_CODE(PASSED);
-		}
-
-		head = head->next;
-	}
-
-	return ERR_CODE(FAILED);
+	return ERR_CODE(PASSED);
 }

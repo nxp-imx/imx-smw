@@ -67,6 +67,7 @@ add_executable(${PROJECT_NAME}
                engine/sign_verify.c
                engine/test_engine.c
                engine/util.c
+               engine/util_list.c
                engine/util_key.c
                engine/util_sign.c
                engine/util_tlv.c

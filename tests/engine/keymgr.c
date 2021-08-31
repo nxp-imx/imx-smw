@@ -517,13 +517,14 @@ static int compare_keys(struct keypair_ops *key_test,
  * -INTERNAL	- Internal function failure.
  * Error code from check_file_extension().
  */
-static int save_key_ids_to_json_file(struct key_identifier_list *key_list,
-				     char *filepath)
+static int save_key_ids_to_json_file(struct llist *key_list, char *filepath)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	unsigned int counter = 1;
 	char key_object_string[KEY_JSON_OBJECT_STRING_MAX_LEN];
-	struct key_identifier_node *head = NULL;
+	void *node = NULL;
+	unsigned int id;
+	struct key_identifier_data *data = NULL;
 	struct json_object *global_obj = NULL;
 	struct json_object *id_obj = NULL;
 	struct json_object *key_identifier_obj = NULL;
@@ -590,20 +591,27 @@ static int save_key_ids_to_json_file(struct key_identifier_list *key_list,
 
 	FPRINT_MESSAGE(json_file, "{\n");
 
-	head = key_list->head;
+	node = util_list_next(key_list, node, &id);
 
-	while (head) {
+	while (node) {
+		data = util_list_data(node);
+		if (!data) {
+			DBG_PRINT("Can't get the key identifier data");
+			res = ERR_CODE(INTERNAL);
+			goto exit;
+		}
+
 		if (counter > 1)
 			FPRINT_MESSAGE(json_file, ",\n");
 
-		if (!json_object_set_int(id_obj, head->id)) {
+		if (!json_object_set_int(id_obj, id)) {
 			DBG_PRINT("json_object_set_int() failed");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
 		}
 
 		if (!json_object_set_int64(key_identifier_obj,
-					   head->key_identifier)) {
+					   data->key_identifier)) {
 			DBG_PRINT("json_object_set_int64() failed");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
@@ -628,7 +636,7 @@ static int save_key_ids_to_json_file(struct key_identifier_list *key_list,
 			       json_object_to_json_string(key_obj),
 			       json_object_to_json_string(global_obj));
 
-		head = head->next;
+		node = util_list_next(key_list, node, &id);
 	}
 
 	FPRINT_MESSAGE(json_file, "\n}");
@@ -659,7 +667,7 @@ exit:
  * -MISSING_PARAMS	- Missing mandatory parameters in @filepath.
  * Error code from file_to_json_object().
  */
-static int restore_key_ids_from_json_file(struct key_identifier_list **key_list,
+static int restore_key_ids_from_json_file(struct llist **key_list,
 					  char *filepath)
 {
 	int res = ERR_CODE(FAILED);
@@ -713,7 +721,7 @@ static int restore_key_ids_from_json_file(struct key_identifier_list **key_list,
 }
 
 int generate_key(json_object *params, struct common_parameters *common_params,
-		 struct key_identifier_list **key_identifiers,
+		 struct llist **key_identifiers,
 		 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
@@ -792,8 +800,7 @@ exit:
 }
 
 int delete_key(json_object *params, struct common_parameters *common_params,
-	       struct key_identifier_list *key_identifiers,
-	       enum smw_status_code *ret_status)
+	       struct llist *key_identifiers, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(FAILED);
 	struct keypair_ops key_test;
@@ -852,8 +859,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 }
 
 int import_key(json_object *params, struct common_parameters *common_params,
-	       struct key_identifier_list **key_identifiers,
-	       enum smw_status_code *ret_status)
+	       struct llist **key_identifiers, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test;
@@ -932,8 +938,7 @@ exit:
 }
 
 int export_key(json_object *params, struct common_parameters *common_params,
-	       enum export_type export_type,
-	       struct key_identifier_list *key_identifiers,
+	       enum export_type export_type, struct llist *key_identifiers,
 	       enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
@@ -1047,7 +1052,7 @@ exit:
 
 int save_key_ids_to_file(struct json_object *params,
 			 struct common_parameters *common_params,
-			 struct key_identifier_list *key_list,
+			 struct llist *key_list,
 			 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
@@ -1073,7 +1078,7 @@ int save_key_ids_to_file(struct json_object *params,
 
 int restore_key_ids_from_file(struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct key_identifier_list **key_list,
+			      struct llist **key_list,
 			      enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);

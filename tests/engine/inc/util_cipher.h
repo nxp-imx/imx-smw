@@ -5,26 +5,16 @@
 #ifndef __UTIL_CIPHER_H__
 #define __UTIL_CIPHER_H__
 
-/**
- * struct cipher_output_node - Cipher output data node
- * @ctx_id: Local context ID.
- * @output: Pointer to output data.
- * @output_len: @output length in bytes.
- * @next: Pointer to next node of the linked list.
- */
-struct cipher_output_node {
-	unsigned int ctx_id;
-	unsigned char *output;
-	unsigned int output_len;
-	struct cipher_output_node *next;
-};
+#include "util_list.h"
 
 /**
- * struct cipher_output_list - Cipher output data linked list
- * @head: Pointer to the head of the list
+ * struct cipher_output_data - Cipher output data
+ * @output: Pointer to output data.
+ * @output_len: @output length in bytes.
  */
-struct cipher_output_list {
-	struct cipher_output_node *head;
+struct cipher_output_data {
+	unsigned char *output;
+	unsigned int output_len;
 };
 
 /**
@@ -38,27 +28,14 @@ struct cipher_output_list {
  * If it's the first call for parameter @ctx_id, the node is allocated.
  * Else, parameter @out_data is added to existing node data.
  * All the memory allocated by this function is freed when
- * util_cipher_clear_out_data_list() is called.
+ * util_list_clear() is called.
  *
  * Return:
  * PASSED			- Success.
  * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
  */
-int util_cipher_add_out_data(struct cipher_output_list **list,
-			     unsigned int ctx_id, unsigned char *out_data,
-			     unsigned int data_len);
-
-/**
- * util_cipher_clear_out_data_list() - Clear a cipher output linked list
- * @list: Pointer to the list to free.
- *
- * Function frees the data buffer allocated by function
- * util_cipher_add_out_data()
- *
- * Return:
- * none
- */
-void util_cipher_clear_out_data_list(struct cipher_output_list *list);
+int util_cipher_add_out_data(struct llist **list, unsigned int ctx_id,
+			     unsigned char *out_data, unsigned int data_len);
 
 /**
  * compare_output_data() - Compare cipher output data
@@ -72,7 +49,7 @@ void util_cipher_clear_out_data_list(struct cipher_output_list *list);
  * -INTERNAL	- @ctx_id node is not found.
  * -SUBSYSTEM	- Comparison failed.
  */
-int compare_output_data(struct cipher_output_list *list, unsigned int ctx_id,
+int compare_output_data(struct llist *list, unsigned int ctx_id,
 			unsigned char *data, unsigned int data_len);
 
 /**
@@ -90,7 +67,7 @@ int compare_output_data(struct cipher_output_list *list, unsigned int ctx_id,
  * -INTERNAL			- Source node not found
  * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed
  */
-int util_cipher_copy_node(struct cipher_output_list **list,
-			  unsigned int dst_ctx_id, unsigned int src_ctx_id);
+int util_cipher_copy_node(struct llist **list, unsigned int dst_ctx_id,
+			  unsigned int src_ctx_id);
 
 #endif /* __UTIL_CIPHER_H__ */

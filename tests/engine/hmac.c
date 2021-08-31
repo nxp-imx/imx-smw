@@ -77,8 +77,7 @@ static int set_hmac_bad_args(json_object *params, struct smw_hmac_args **args,
 }
 
 int hmac(json_object *params, struct common_parameters *common_params,
-	 struct key_identifier_list *key_identifiers,
-	 enum smw_status_code *ret_status)
+	 struct llist *key_identifiers, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;

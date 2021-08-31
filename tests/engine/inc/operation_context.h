@@ -22,8 +22,7 @@
  * -FAILED		- Operation context is not found
  */
 int cancel_operation(json_object *params,
-		     struct common_parameters *common_params,
-		     struct context_list *ctx,
+		     struct common_parameters *common_params, struct llist *ctx,
 		     enum smw_status_code *ret_status);
 
 /**
@@ -44,6 +43,6 @@ int cancel_operation(json_object *params,
  * -INTERNAL			- Internal error
  */
 int copy_context(json_object *params, struct common_parameters *common_params,
-		 struct context_list **ctx, enum smw_status_code *ret_status);
+		 struct llist **ctx, enum smw_status_code *ret_status);
 
 #endif /* __OPERATION_CONTEXT_H__ */

@@ -11,6 +11,8 @@
 
 #include "smw_keymgr.h"
 
+#include "util_list.h"
+
 /*
  * Key format values
  */
@@ -102,27 +104,15 @@ struct keypair_ops {
 	})
 
 /**
- * struct key_identifier_node - Node of key identifier linked list.
- * @id: Local ID of the key identifier. Comes from test definition file.
+ * struct key_identifier_data - Data of key identifier linked list node.
  * @key_identifier: Key identifier assigned by SMW.
  * @security_size: Key security size.
  * @pub_key: Public key data buffer structure. Used for ephemeral keys.
- * @next: Pointer to next node.
  */
-struct key_identifier_node {
-	unsigned int id;
+struct key_identifier_data {
 	unsigned long long key_identifier;
 	unsigned int security_size;
 	struct tbuffer pub_key;
-	struct key_identifier_node *next;
-};
-
-/**
- * struct key_identifier_list - Linked list to save keys identifiers.
- * @head: Pointer to the head of the linked list
- */
-struct key_identifier_list {
-	struct key_identifier_node *head;
 };
 
 /**
@@ -246,17 +236,8 @@ static inline int util_key_is_modulus(struct keypair_ops *key_test)
  * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
  * -BAD_ARGS                - One of the argument is not correct.
  */
-int util_key_add_node(struct key_identifier_list **key_identifiers,
-		      unsigned int id, struct keypair_ops *key_test);
-
-/**
- * util_key_clear_list() - Clear key identifier linked list.
- * @key_identifiers: Key identifier linked list to clear.
- *
- * Return:
- * none
- */
-void util_key_clear_list(struct key_identifier_list *key_identifiers);
+int util_key_add_node(struct llist **key_identifiers, unsigned int id,
+		      struct keypair_ops *key_test);
 
 /**
  * util_key_find_key_node() - Search a key identifier node.
@@ -269,8 +250,8 @@ void util_key_clear_list(struct key_identifier_list *key_identifiers);
  * -KEY_NOTFOUND - @id is not found.
  * -BAD_ARGS     - One of the argument is not correct.
  */
-int util_key_find_key_node(struct key_identifier_list *key_identifiers,
-			   unsigned int id, struct keypair_ops *key_test);
+int util_key_find_key_node(struct llist *key_identifiers, unsigned int id,
+			   struct keypair_ops *key_test);
 
 /**
  * util_key_desc_init() - Initialize SMW key descriptor fields

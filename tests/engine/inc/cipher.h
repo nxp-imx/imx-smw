@@ -21,8 +21,7 @@
  * -BAD_ARGS			- One of the arguments is bad.
  */
 int cipher(struct json_object *params, struct common_parameters *common_params,
-	   struct key_identifier_list *key_identifiers,
-	   enum smw_status_code *ret_status);
+	   struct llist *key_identifiers, enum smw_status_code *ret_status);
 
 /**
  * cipher_init() - Do a cipher initialization
@@ -41,8 +40,8 @@ int cipher(struct json_object *params, struct common_parameters *common_params,
  */
 int cipher_init(struct json_object *params,
 		struct common_parameters *common_params,
-		struct key_identifier_list *key_identifiers,
-		struct context_list **ctx, enum smw_status_code *ret_status);
+		struct llist *key_identifiers, struct llist **ctx,
+		enum smw_status_code *ret_status);
 
 /**
  * cipher_update() - Do a cipher update
@@ -59,8 +58,8 @@ int cipher_init(struct json_object *params,
  * -BAD_ARGS			- One of the arguments is bad.
  */
 int cipher_update(struct json_object *params,
-		  struct common_parameters *common_params,
-		  struct context_list *ctx, enum smw_status_code *ret_status);
+		  struct common_parameters *common_params, struct llist *ctx,
+		  enum smw_status_code *ret_status);
 
 /**
  * cipher_final() - Do a cipher final
@@ -77,8 +76,8 @@ int cipher_update(struct json_object *params,
  * -BAD_ARGS			- One of the arguments is bad.
  */
 int cipher_final(struct json_object *params,
-		 struct common_parameters *common_params,
-		 struct context_list *ctx, enum smw_status_code *ret_status);
+		 struct common_parameters *common_params, struct llist *ctx,
+		 enum smw_status_code *ret_status);
 
 /**
  * cipher_clear_out_data_list() - Clear cipher output data linked list

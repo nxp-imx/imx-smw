@@ -9,147 +9,85 @@
 #include "util.h"
 #include "util_cipher.h"
 
-/**
- * find_node() - Find a node in a cipher output data linked list
- * @list: Pointer to cipher output data linked list.
- * @ctx_id: Context ID associated to the wanted node.
- * @node: Pointer to cipher output data node to update.
- *
- * Parameter @node is not updated if not found.
- *
- * Return:
- * none
- */
-static void find_node(struct cipher_output_list *list, unsigned int ctx_id,
-		      struct cipher_output_node **node)
+static void util_cipher_free_data(void *data)
 {
-	struct cipher_output_node *head = list->head;
+	struct cipher_output_data *cipher_output_data = data;
 
-	while (head) {
-		if (head->ctx_id == ctx_id) {
-			*node = head;
-			return;
-		}
-
-		head = head->next;
-	}
+	if (cipher_output_data && cipher_output_data->output)
+		free(cipher_output_data->output);
 }
 
-/**
- * insert_node() - Insert a node in a cipher output data linked list
- * @list: Pointer to cipher output data linked list.
- * @node: Pointer to the node to insert.
- *
- * Return:
- * none
- */
-static void insert_node(struct cipher_output_list *list,
-			struct cipher_output_node *node)
+int util_cipher_add_out_data(struct llist **list, unsigned int ctx_id,
+			     unsigned char *out_data, unsigned int data_len)
 {
-	struct cipher_output_node *head = list->head;
+	int res;
 
-	if (!head) {
-		list->head = node;
-	} else {
-		while (head->next)
-			head = head->next;
+	struct cipher_output_data *data = NULL;
 
-		head->next = node;
-	}
-}
-
-int util_cipher_add_out_data(struct cipher_output_list **list,
-			     unsigned int ctx_id, unsigned char *out_data,
-			     unsigned int data_len)
-{
-	struct cipher_output_node *node = NULL;
+	if (!out_data || !list)
+		return ERR_CODE(BAD_ARGS);
 
 	if (!*list) {
-		*list = malloc(sizeof(struct cipher_output_list));
-		if (!*list) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		}
-
-		(*list)->head = NULL;
+		res = util_list_init(list, util_cipher_free_data);
+		if (res != ERR_CODE(PASSED))
+			return res;
 	}
 
-	find_node(*list, ctx_id, &node);
+	data = util_list_find_node(*list, ctx_id);
 
-	if (!node) {
-		/* 1st call, allocate note and output data */
-		node = malloc(sizeof(struct cipher_output_node));
-		if (!node) {
+	if (!data) {
+		/* 1st call, allocate node and output data */
+		data = malloc(sizeof(*data));
+		if (!data) {
 			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 
-		node->ctx_id = ctx_id;
-		node->next = NULL;
-		node->output_len = data_len;
-
-		node->output = malloc(node->output_len);
-		if (!node->output) {
-			free(node);
+		data->output_len = data_len;
+		data->output = malloc(data->output_len);
+		if (!data->output) {
 			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			free(data);
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 
-		memcpy(node->output, out_data, node->output_len);
+		memcpy(data->output, out_data, data->output_len);
 
-		insert_node(*list, node);
+		res = util_list_add_node(*list, ctx_id, data);
+		if (res != ERR_CODE(PASSED)) {
+			util_cipher_free_data(data);
+			free(data);
+			return res;
+		}
 	} else {
 		/* Realloc output data and fill it */
-		node->output =
-			realloc(node->output, node->output_len + data_len);
-		if (!node->output) {
+		data->output =
+			realloc(data->output, data->output_len + data_len);
+		if (!data->output) {
 			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 
-		memcpy(node->output + node->output_len, out_data, data_len);
-		node->output_len += data_len;
+		memcpy(data->output + data->output_len, out_data, data_len);
+		data->output_len += data_len;
 	}
 
 	return ERR_CODE(PASSED);
 }
 
-void util_cipher_clear_out_data_list(struct cipher_output_list *list)
-{
-	struct cipher_output_node *head = NULL;
-	struct cipher_output_node *del = NULL;
-
-	if (!list)
-		return;
-
-	head = list->head;
-
-	while (head) {
-		del = head;
-		head = head->next;
-
-		if (del->output)
-			free(del->output);
-
-		free(del);
-	}
-
-	free(list);
-}
-
-int compare_output_data(struct cipher_output_list *list, unsigned int ctx_id,
+int compare_output_data(struct llist *list, unsigned int ctx_id,
 			unsigned char *data, unsigned int data_len)
 {
-	struct cipher_output_node *node = NULL;
+	struct cipher_output_data *node_data = NULL;
 
-	find_node(list, ctx_id, &node);
+	node_data = util_list_find_node(list, ctx_id);
 
-	if (!node)
+	if (!node_data)
 		return ERR_CODE(INTERNAL);
 
-	if (strncmp((char *)node->output, (char *)data, data_len)) {
+	if (strncmp((char *)node_data->output, (char *)data, data_len)) {
 		DBG_PRINT("Output doesn't match expected output");
-		DBG_DHEX("Got output", node->output, data_len);
+		DBG_DHEX("Got output", node_data->output, data_len);
 		DBG_DHEX("Expected output", data, data_len);
 		return ERR_CODE(SUBSYSTEM);
 	}
@@ -157,16 +95,16 @@ int compare_output_data(struct cipher_output_list *list, unsigned int ctx_id,
 	return ERR_CODE(PASSED);
 }
 
-int util_cipher_copy_node(struct cipher_output_list **list,
-			  unsigned int dst_ctx_id, unsigned int src_ctx_id)
+int util_cipher_copy_node(struct llist **list, unsigned int dst_ctx_id,
+			  unsigned int src_ctx_id)
 {
-	struct cipher_output_node *src_node = NULL;
+	struct cipher_output_data *data = NULL;
 
-	find_node(*list, src_ctx_id, &src_node);
+	data = util_list_find_node(*list, src_ctx_id);
 
-	if (!src_node)
+	if (!data)
 		return ERR_CODE(INTERNAL);
 
-	return util_cipher_add_out_data(list, dst_ctx_id, src_node->output,
-					src_node->output_len);
+	return util_cipher_add_out_data(list, dst_ctx_id, data->output,
+					data->output_len);
 }

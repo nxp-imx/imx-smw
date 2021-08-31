@@ -23,10 +23,10 @@
 #include "smw_status.h"
 
 /* Key identifiers linked list */
-static struct key_identifier_list *key_identifiers;
+static struct llist *key_identifiers;
 
 /* Operation context linked list */
-static struct context_list *ctx_list;
+static struct llist *ctx_list;
 
 /**
  * execute_generate_cmd() - Execute generate key command.
@@ -42,7 +42,7 @@ static struct context_list *ctx_list;
  */
 static int execute_generate_cmd(struct json_object *params,
 				struct common_parameters *common_params,
-				struct key_identifier_list **key_ids,
+				struct llist **key_ids,
 				enum smw_status_code *status)
 {
 	/* Check mandatory params */
@@ -92,8 +92,7 @@ static int execute_hash_cmd(struct json_object *params,
  */
 static int execute_hmac_cmd(struct json_object *params,
 			    struct common_parameters *common_params,
-			    struct key_identifier_list *key_ids,
-			    enum smw_status_code *status)
+			    struct llist *key_ids, enum smw_status_code *status)
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
@@ -118,7 +117,7 @@ static int execute_hmac_cmd(struct json_object *params,
  */
 static int execute_import_cmd(struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct key_identifier_list **key_ids,
+			      struct llist **key_ids,
 			      enum smw_status_code *status)
 {
 	/* Check mandatory params */
@@ -145,7 +144,7 @@ static int execute_import_cmd(struct json_object *params,
  */
 static int execute_export_cmd(char *cmd, struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct key_identifier_list *key_ids,
+			      struct llist *key_ids,
 			      enum smw_status_code *status)
 {
 	if (!strcmp(cmd, EXPORT_KEYPAIR))
@@ -176,7 +175,7 @@ static int execute_export_cmd(char *cmd, struct json_object *params,
  */
 static int execute_derive_cmd(struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct key_identifier_list **key_ids,
+			      struct llist **key_ids,
 			      enum smw_status_code *status)
 {
 	return derive_key(params, common_params, key_ids, status);
@@ -197,7 +196,7 @@ static int execute_derive_cmd(struct json_object *params,
  */
 static int execute_sign_verify_cmd(int operation, struct json_object *params,
 				   struct common_parameters *common_params,
-				   struct key_identifier_list *key_ids,
+				   struct llist *key_ids,
 				   enum smw_status_code *status)
 {
 	/* Check mandatory params */
@@ -251,8 +250,7 @@ static int execute_rng_cmd(struct json_object *params,
  */
 static int execute_cipher(char *cmd, struct json_object *params,
 			  struct common_parameters *common_params,
-			  struct key_identifier_list *key_ids,
-			  struct context_list **ctx,
+			  struct llist *key_ids, struct llist **ctx,
 			  enum smw_status_code *status)
 {
 	if (!strcmp(cmd, CIPHER))
@@ -284,7 +282,7 @@ static int execute_cipher(char *cmd, struct json_object *params,
  */
 static int execute_operation_context(char *cmd, struct json_object *params,
 				     struct common_parameters *common_params,
-				     struct context_list **ctx,
+				     struct llist **ctx,
 				     enum smw_status_code *status)
 {
 	if (!strcmp(cmd, OP_CTX_CANCEL))
@@ -337,8 +335,7 @@ static int execute_config_cmd(char *cmd, struct json_object *params,
  */
 static int execute_command(char *cmd, struct json_object *params,
 			   struct common_parameters *common_params,
-			   struct key_identifier_list **key_ids,
-			   struct context_list **ctx,
+			   struct llist **key_ids, struct llist **ctx,
 			   enum smw_status_code *status)
 {
 	if (!strcmp(cmd, DELETE))
@@ -713,9 +710,9 @@ int run_test(char *test_definition_file, char *test_name, char *output_dir)
 		run_subtest(&iter, status_file, is_api_test, &test_status);
 	}
 
-	util_key_clear_list(key_identifiers);
+	util_list_clear(key_identifiers);
 	sign_clear_signatures_list();
-	util_context_clear_list(ctx_list);
+	util_list_clear(ctx_list);
 	cipher_clear_out_data_list();
 
 	if (!test_status)

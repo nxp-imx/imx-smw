@@ -19,7 +19,7 @@
 #include "util_tlv.h"
 
 /* Signatures linked list */
-static struct signature_list *signatures;
+static struct llist *signatures;
 
 /**
  * get_signature_len() - Return signature byte length given security size.
@@ -119,8 +119,7 @@ static int set_sign_verify_bad_args(json_object *params,
 
 int sign_verify(int operation, json_object *params,
 		struct common_parameters *common_params,
-		struct key_identifier_list *key_identifiers,
-		enum smw_status_code *ret_status)
+		struct llist *key_identifiers, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
@@ -318,5 +317,5 @@ exit:
 
 void sign_clear_signatures_list(void)
 {
-	util_sign_clear_list(signatures);
+	util_list_clear(signatures);
 }

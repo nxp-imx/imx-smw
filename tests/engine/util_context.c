@@ -8,83 +8,33 @@
 #include "util.h"
 #include "util_context.h"
 
-int util_context_add_node(struct context_list **list, unsigned int id,
+int util_context_add_node(struct llist **list, unsigned int id,
 			  struct smw_op_context *smw_context)
 {
-	struct context_node *head = NULL;
-	struct context_node *node;
-
-	node = malloc(sizeof(*node));
-	if (!node) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-	}
-
-	node->id = id;
-	node->smw_context = smw_context;
-	node->next = NULL;
-
-	if (!*list) {
-		*list = malloc(sizeof(struct context_list));
-		if (!*list) {
-			free(node);
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		}
-
-		/* New context is the first of the list */
-		(*list)->head = node;
-	} else {
-		head = (*list)->head;
-		while (head->next)
-			head = head->next;
-
-		/* New context is the last of the list */
-		head->next = node;
-	}
-
-	return ERR_CODE(PASSED);
-}
-
-void util_context_clear_list(struct context_list *list)
-{
-	struct context_node *head = NULL;
-	struct context_node *del = NULL;
+	int res = ERR_CODE(PASSED);
 
 	if (!list)
-		return;
+		return ERR_CODE(BAD_ARGS);
 
-	head = list->head;
+	if (!*list)
+		res = util_list_init(list, NULL);
 
-	while (head) {
-		del = head;
-		head = head->next;
-		if (del->smw_context)
-			free(del->smw_context);
-		free(del);
-	}
+	if (res == ERR_CODE(PASSED))
+		res = util_list_add_node(*list, id, smw_context);
 
-	free(list);
+	return res;
 }
 
-int util_context_find_node(struct context_list *list, unsigned int id,
+int util_context_find_node(struct llist *list, unsigned int id,
 			   struct smw_op_context **smw_context)
 {
-	struct context_node *head = NULL;
-
 	if (!list || !smw_context)
 		return ERR_CODE(BAD_ARGS);
 
-	head = list->head;
+	*smw_context = util_list_find_node(list, id);
 
-	while (head) {
-		if (head->id == id) {
-			*smw_context = head->smw_context;
-			return ERR_CODE(PASSED);
-		}
+	if (!*smw_context)
+		return ERR_CODE(FAILED);
 
-		head = head->next;
-	}
-
-	return ERR_CODE(FAILED);
+	return ERR_CODE(PASSED);
 }

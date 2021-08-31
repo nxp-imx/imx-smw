@@ -40,7 +40,7 @@
  */
 int sign_verify(int operation, json_object *params,
 		struct common_parameters *common_params,
-		struct key_identifier_list *key_identifiers,
+		struct llist *key_identifiers,
 		enum smw_status_code *ret_status);
 
 /**

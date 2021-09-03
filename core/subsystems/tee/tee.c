@@ -176,14 +176,7 @@ end:
 	return status;
 }
 
-/**
- * convert_tee_result() - Convert TEE result into SMW status.
- * @result: TEE result.
- *
- * Return:
- * SMW status.
- */
-static int convert_tee_result(TEEC_Result result)
+int convert_tee_result(TEEC_Result result)
 {
 	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
 
@@ -281,6 +274,11 @@ int execute_tee_cmd(uint32_t cmd_id, TEEC_Operation *op)
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d (%x)\n", __func__, status,
 		       tee_res);
 	return status;
+}
+
+TEEC_Context *get_tee_context_ptr(void)
+{
+	return &tee_ctx.context;
 }
 
 static struct subsystem_func func = { .load = load,

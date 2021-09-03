@@ -6,6 +6,8 @@
 #ifndef TEE_H
 #define TEE_H
 
+#include "keymgr.h"
+
 #include "tee_subsystem.h"
 
 /*
@@ -128,5 +130,45 @@ bool tee_cipher_handle(enum operation_id operation_id, void *args, int *status);
  * Pointer to TEE context operations structure
  */
 struct smw_crypto_context_ops *tee_get_ctx_ops(void);
+
+/**
+ * convert_tee_result() - Convert TEE result into SMW status.
+ * @result: TEE result.
+ *
+ * Return:
+ * SMW status.
+ */
+int convert_tee_result(TEEC_Result result);
+
+/**
+ * get_tee_context_ptr() - Get TEE context address.
+ *
+ * Return:
+ * TEE context address
+ */
+TEEC_Context *get_tee_context_ptr(void);
+
+/**
+ * copy_keys_to_shm() - Copy keys in CA/TA shared memory.
+ * @shm: Pointer to TEEC shared memory structure.
+ * @key_descriptor: Pointer to key descriptor.
+ * @privacy: Key privacy.
+ *
+ * The @shm buffer is allocated, set as input and must be freed using
+ * TEEC_ReleaseSharedMemory().
+ * This buffer is set as follow:
+ * - For Keypair: Public || Private || Modulus
+ * - For Public key: Public || Modulus
+ * - For Private key: Private || Modulus
+ * where || stands for concatenation. Modulus buffer is only for RSA key type.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Success.
+ * SMW_STATUS_INVALID_PARAM		- One of the parameters is invalid.
+ * SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY	- Subsystem memory allocation failed.
+ */
+int copy_keys_to_shm(TEEC_SharedMemory *shm,
+		     struct smw_keymgr_descriptor *key_descriptor,
+		     enum smw_keymgr_privacy_id privacy);
 
 #endif /* TEE_H */

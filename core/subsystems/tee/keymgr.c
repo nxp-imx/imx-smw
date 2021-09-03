@@ -1333,3 +1333,161 @@ bool tee_key_handle(enum operation_id op_id, void *args, int *status)
 
 	return true;
 }
+
+/**
+ * get_shared_key_size() - Get shared key memory size.
+ * @key_descriptor: Pointer to key descriptor.
+ * @privacy: Key privacy.
+ * @memory_size: Size to update.
+ *
+ * The parameter @memory_size is not updated if an error is returned.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- Key privacy is invalid.
+ */
+static int get_shared_key_size(struct smw_keymgr_descriptor *key_descriptor,
+			       enum smw_keymgr_privacy_id privacy,
+			       unsigned int *memory_size)
+{
+	unsigned int size = smw_keymgr_get_modulus_length(key_descriptor);
+
+	switch (privacy) {
+	case SMW_KEYMGR_PRIVACY_ID_PAIR:
+		if (!smw_keymgr_get_public_data(key_descriptor) ||
+		    !smw_keymgr_get_private_data(key_descriptor))
+			return SMW_STATUS_INVALID_PARAM;
+
+		size += smw_keymgr_get_public_length(key_descriptor);
+		size += smw_keymgr_get_private_length(key_descriptor);
+		break;
+
+	case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
+		if (!smw_keymgr_get_private_data(key_descriptor))
+			return SMW_STATUS_INVALID_PARAM;
+
+		size += smw_keymgr_get_private_length(key_descriptor);
+		break;
+
+	case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
+		if (!smw_keymgr_get_public_data(key_descriptor))
+			return SMW_STATUS_INVALID_PARAM;
+
+		size += smw_keymgr_get_public_length(key_descriptor);
+		break;
+
+	default:
+		return SMW_STATUS_INVALID_PARAM;
+	}
+
+	*memory_size = size;
+
+	return SMW_STATUS_OK;
+}
+
+/**
+ * fill_shared_key_memory() - Fill shared memory with key buffer.
+ * @key_descriptor: Pointer to key descriptor.
+ * @privacy: Key privacy.
+ * @shared_key: Pointer to TEEC shared memory structure.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- Key privacy is invalid.
+ */
+static int fill_shared_key_memory(struct smw_keymgr_descriptor *key_descriptor,
+				  enum smw_keymgr_privacy_id privacy,
+				  TEEC_SharedMemory *shared_key)
+{
+	void *key_buffer = shared_key->buffer;
+
+	switch (privacy) {
+	case SMW_KEYMGR_PRIVACY_ID_PAIR:
+		if (!smw_keymgr_get_public_data(key_descriptor) ||
+		    !smw_keymgr_get_private_data(key_descriptor))
+			return SMW_STATUS_INVALID_PARAM;
+
+		memcpy(key_buffer, smw_keymgr_get_public_data(key_descriptor),
+		       smw_keymgr_get_public_length(key_descriptor));
+		key_buffer += smw_keymgr_get_public_length(key_descriptor);
+
+		memcpy(key_buffer, smw_keymgr_get_private_data(key_descriptor),
+		       smw_keymgr_get_private_length(key_descriptor));
+		key_buffer += smw_keymgr_get_private_length(key_descriptor);
+
+		if (smw_keymgr_get_modulus(key_descriptor)) {
+			memcpy(key_buffer,
+			       smw_keymgr_get_modulus(key_descriptor),
+			       smw_keymgr_get_modulus_length(key_descriptor));
+		}
+		break;
+
+	case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
+		if (!smw_keymgr_get_private_data(key_descriptor))
+			return SMW_STATUS_INVALID_PARAM;
+
+		memcpy(key_buffer, smw_keymgr_get_private_data(key_descriptor),
+		       smw_keymgr_get_private_length(key_descriptor));
+		key_buffer += smw_keymgr_get_private_length(key_descriptor);
+
+		if (smw_keymgr_get_modulus(key_descriptor)) {
+			memcpy(key_buffer,
+			       smw_keymgr_get_modulus(key_descriptor),
+			       smw_keymgr_get_modulus_length(key_descriptor));
+		}
+		break;
+
+	case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
+		if (!smw_keymgr_get_public_data(key_descriptor))
+			return SMW_STATUS_INVALID_PARAM;
+
+		memcpy(key_buffer, smw_keymgr_get_public_data(key_descriptor),
+		       smw_keymgr_get_public_length(key_descriptor));
+		key_buffer += smw_keymgr_get_public_length(key_descriptor);
+
+		if (smw_keymgr_get_modulus(key_descriptor)) {
+			memcpy(key_buffer,
+			       smw_keymgr_get_modulus(key_descriptor),
+			       smw_keymgr_get_modulus_length(key_descriptor));
+		}
+		break;
+
+	default:
+		return SMW_STATUS_INVALID_PARAM;
+	}
+
+	return SMW_STATUS_OK;
+}
+
+int copy_keys_to_shm(TEEC_SharedMemory *shm,
+		     struct smw_keymgr_descriptor *key_descriptor,
+		     enum smw_keymgr_privacy_id privacy)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	unsigned int memory_size;
+	TEEC_Result result;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!shm || !key_descriptor)
+		goto exit;
+
+	status = get_shared_key_size(key_descriptor, privacy, &memory_size);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	shm->size = memory_size;
+	shm->flags = TEEC_MEM_INPUT;
+
+	result = TEEC_AllocateSharedMemory(get_tee_context_ptr(), shm);
+	if (result != TEEC_SUCCESS) {
+		status = convert_tee_result(result);
+		goto exit;
+	}
+
+	status = fill_shared_key_memory(key_descriptor, privacy, shm);
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}

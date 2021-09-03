@@ -141,6 +141,86 @@ static TEE_Result get_algorithm_id(enum tee_key_type key_type_id,
 	return TEE_SUCCESS;
 }
 
+/**
+ * set_key() - Set key handle for signature operation.
+ * @cmd_id: Command ID.
+ * @ta_param: TA parameter. Contains key buffer or nothing.
+ * @ta_param_type: @ta_param type.
+ * @shared_params: Pointer to signature operation shared parameters structure.
+ * @key_handle: Pointer to key handle to update.
+ * @persistent: Pointer to key info to update.
+ *
+ * If key is defined as buffer, it is imported as a new transient object. This
+ * new key handle is returned and the key is deleted at the end of the signature
+ * operation.
+ * If key is defined as key ID, key handle is retrieved.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * Error code from ta_import_key().
+ * Error code from ta_get_key_handle().
+ */
+static TEE_Result set_key(uint32_t cmd_id, TEE_Param ta_param,
+			  uint32_t ta_param_type,
+			  struct sign_verify_shared_params *shared_params,
+			  TEE_ObjectHandle *key_handle, bool *persistent)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	unsigned char *pub_key = NULL;
+	unsigned char *priv_key = NULL;
+	unsigned char *modulus = NULL;
+	unsigned char *ptr;
+	unsigned int priv_key_len = 0;
+	unsigned int modulus_len = 0;
+	unsigned int key_size =
+		BITS_TO_BYTES_SIZE(shared_params->security_size);
+
+	FMSG("Executing %s", __func__);
+
+	switch (ta_param_type) {
+	case TEE_PARAM_TYPE_MEMREF_INPUT:
+		/* Set key buffers and lengths */
+		pub_key = ta_param.memref.buffer;
+
+		ptr = pub_key + shared_params->pub_key_len;
+
+		if (cmd_id == CMD_SIGN) {
+			priv_key = ptr;
+			priv_key_len = key_size;
+			ptr = priv_key + priv_key_len;
+		}
+
+		if (shared_params->key_type == TEE_KEY_TYPE_ID_RSA) {
+			modulus = ptr;
+			modulus_len = key_size;
+		}
+
+		/* Import key */
+		res = ta_import_key(key_handle, shared_params->key_type,
+				    shared_params->security_size, priv_key,
+				    priv_key_len, pub_key,
+				    shared_params->pub_key_len, modulus,
+				    modulus_len);
+		if (res)
+			EMSG("Failed to import key: 0x%x", res);
+
+		return res;
+
+	case TEE_PARAM_TYPE_NONE:
+		/* Retrieve key handle */
+		res = ta_get_key_handle(key_handle, shared_params->id,
+					persistent);
+		if (res)
+			EMSG("Key not found: 0x%x", res);
+
+		return res;
+
+	default:
+		return res;
+	}
+}
+
 TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 		       uint32_t cmd_id)
 {
@@ -151,12 +231,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	uint32_t param0_type = TEE_PARAM_TYPE_GET(param_types, 0);
 	uint32_t exp_param3_type;
 	uint32_t mode;
-	unsigned int pub_key_len = 0;
-	unsigned char *pub_key = NULL;
 	uint32_t algorithm_id = 0;
-	uint32_t hash_algo_id;
-	uint32_t key_type_id;
-	uint32_t security_size;
 	void *digest = NULL;
 	uint32_t digest_len = 0;
 	bool persistent = false;
@@ -192,49 +267,21 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 		return res;
 
 	shared_params = params[1].memref.buffer;
-	hash_algo_id = shared_params->hash_algorithm;
-	key_type_id = shared_params->key_type;
-	security_size = shared_params->security_size;
 
-	switch (param0_type) {
-	case TEE_PARAM_TYPE_MEMREF_INPUT:
-		pub_key = params[0].memref.buffer;
-		pub_key_len = params[0].memref.size;
+	res = set_key(cmd_id, params[0], param0_type, shared_params,
+		      &key_handle, &persistent);
+	if (res)
+		goto err;
 
-		if (cmd_id == CMD_SIGN) {
-			EMSG("Key import not supported with Sign operation");
-			return res;
-		}
-		res = ta_import_key(&key_handle, key_type_id, security_size,
-				    NULL, 0, pub_key, pub_key_len, NULL, 0);
-		if (res) {
-			EMSG("Failed to import key: 0x%x", res);
-			goto err;
-		}
-
-		break;
-
-	case TEE_PARAM_TYPE_NONE:
-		res = ta_get_key_handle(&key_handle, shared_params->id,
-					&persistent);
-		if (res) {
-			EMSG("Key not found: 0x%x", res);
-			goto err;
-		}
-		break;
-
-	default:
-		return res;
-	}
-
-	if (hash_algo_id != TEE_ALGORITHM_ID_INVALID) {
-		res = ta_get_digest_length(hash_algo_id, &digest_len);
+	if (shared_params->hash_algorithm != TEE_ALGORITHM_ID_INVALID) {
+		res = ta_get_digest_length(shared_params->hash_algorithm,
+					   &digest_len);
 		if (res)
 			goto err;
 
 		digest = TEE_Malloc(digest_len, TEE_USER_MEM_HINT_NO_FILL_ZERO);
 		if (digest) {
-			res = ta_compute_digest(hash_algo_id,
+			res = ta_compute_digest(shared_params->hash_algorithm,
 						params[2].memref.buffer,
 						params[2].memref.size, digest,
 						&digest_len);
@@ -251,9 +298,10 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	}
 
 	/* Get TEE algorithm ID */
-	if (key_type_id == TEE_KEY_TYPE_ID_RSA) {
+	if (shared_params->key_type == TEE_KEY_TYPE_ID_RSA) {
 		res = get_rsa_algo_id(shared_params->signature_type,
-				      hash_algo_id, digest_len, &algorithm_id);
+				      shared_params->hash_algorithm, digest_len,
+				      &algorithm_id);
 
 		/* Set salt length attribute if needed */
 		if (!res && shared_params->salt_length) {
@@ -263,7 +311,8 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 			attr_count = 1;
 		}
 	} else {
-		res = get_algorithm_id(key_type_id, security_size,
+		res = get_algorithm_id(shared_params->key_type,
+				       shared_params->security_size,
 				       &algorithm_id);
 	}
 
@@ -273,7 +322,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	}
 
 	res = TEE_AllocateOperation(&operation, algorithm_id, mode,
-				    security_size);
+				    shared_params->security_size);
 	if (res) {
 		EMSG("Failed to alloc operation: 0x%x", res);
 		goto err;
@@ -309,7 +358,7 @@ err:
 			TEE_FreeTransientObject(key_handle);
 	}
 
-	if (hash_algo_id != TEE_ALGORITHM_ID_INVALID && digest)
+	if (shared_params->hash_algorithm != TEE_ALGORITHM_ID_INVALID && digest)
 		if (digest)
 			TEE_Free(digest);
 

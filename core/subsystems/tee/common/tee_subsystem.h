@@ -107,6 +107,7 @@ struct keymgr_shared_params {
  * @hash_algorithm: Hash algorithm.
  * @signature_type: Signature type.
  * @salt_length: Optional salt length (only for TEE_RSA_PKCS1_PSS_MGF1).
+ * @pub_key_len: Key public length in bytes.
  */
 struct sign_verify_shared_params {
 	uint32_t id;
@@ -115,6 +116,7 @@ struct sign_verify_shared_params {
 	enum tee_algorithm_id hash_algorithm;
 	enum tee_signature_type signature_type;
 	uint32_t salt_length;
+	unsigned int pub_key_len;
 };
 
 /**

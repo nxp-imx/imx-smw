@@ -75,6 +75,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	int status = SMW_STATUS_INVALID_PARAM;
 
 	TEEC_Operation operation = { 0 };
+	TEEC_SharedMemory shm = { 0 };
 
 	struct smw_keymgr_descriptor *key_descriptor = &args->key_descriptor;
 	struct smw_keymgr_identifier *key_identifier =
@@ -85,6 +86,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	uint32_t param3_type;
 
 	enum tee_key_type key_type_id;
+	enum smw_keymgr_privacy_id key_privacy;
 
 	uint32_t cmd_id;
 
@@ -92,31 +94,6 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 
 	if (!args)
 		goto exit;
-
-	/*
-	 * params[0] = Key buffer or none
-	 * params[1] = Pointer to sign verify shared params structure
-	 * params[2] = Message buffer and message length
-	 * params[3] = Signature buffer and signature length
-	 */
-
-	switch (op_id) {
-	case OPERATION_ID_SIGN:
-		if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
-			/* Key buffer is only supported for verify operation */
-			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-			goto exit;
-		}
-		param3_type = TEEC_MEMREF_TEMP_OUTPUT;
-		cmd_id = CMD_SIGN;
-		break;
-	case OPERATION_ID_VERIFY:
-		param3_type = TEEC_MEMREF_TEMP_INPUT;
-		cmd_id = CMD_VERIFY;
-		break;
-	default:
-		goto exit;
-	}
 
 	status = tee_convert_key_type(key_identifier->type_id, &key_type_id);
 	if (status != SMW_STATUS_OK)
@@ -142,23 +119,6 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 			status = SMW_STATUS_INVALID_PARAM;
 			goto exit;
 		}
-
-		if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
-			/* Key buffer is not supported for RSA key type */
-			SMW_DBG_PRINTF(ERROR, "RSA key buffer not supported\n");
-			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-			goto exit;
-		}
-	}
-
-	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
-		param0_type = TEEC_MEMREF_TEMP_INPUT;
-		operation.params[0].tmpref.buffer =
-			smw_keymgr_get_public_data(key_descriptor);
-		operation.params[0].tmpref.size =
-			smw_keymgr_get_public_length(key_descriptor);
-	} else {
-		shared_params.id = key_identifier->id;
 	}
 
 	status = tee_convert_hash_algorithm_id(args->algo_id,
@@ -170,6 +130,65 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 					       &shared_params.signature_type);
 	if (status != SMW_STATUS_OK)
 		goto exit;
+
+	/*
+	 * params[0] = Key buffer or key shared memory or none
+	 * params[1] = Pointer to sign verify shared params structure
+	 * params[2] = Message buffer and message length
+	 * params[3] = Signature buffer and signature length
+	 */
+
+	switch (op_id) {
+	case OPERATION_ID_SIGN:
+		if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
+			param0_type = TEEC_MEMREF_PARTIAL_INPUT;
+			key_privacy = SMW_KEYMGR_PRIVACY_ID_PAIR;
+		}
+
+		param3_type = TEEC_MEMREF_TEMP_OUTPUT;
+		cmd_id = CMD_SIGN;
+		break;
+
+	case OPERATION_ID_VERIFY:
+		if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
+			if (key_type_id == TEE_KEY_TYPE_ID_RSA) {
+				param0_type = TEEC_MEMREF_PARTIAL_INPUT;
+				key_privacy = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
+			} else {
+				/*
+				 * Verify operation with a non RSA key doesn't
+				 * require shared memory
+				 */
+				param0_type = TEEC_MEMREF_TEMP_INPUT;
+			}
+		}
+
+		param3_type = TEEC_MEMREF_TEMP_INPUT;
+		cmd_id = CMD_VERIFY;
+		break;
+
+	default:
+		goto exit;
+	}
+
+	shared_params.pub_key_len =
+		smw_keymgr_get_public_length(key_descriptor);
+
+	if (param0_type == TEEC_MEMREF_PARTIAL_INPUT) {
+		status = copy_keys_to_shm(&shm, key_descriptor, key_privacy);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+
+		operation.params[0].memref.parent = &shm;
+		operation.params[0].memref.offset = 0;
+		operation.params[0].memref.size = shm.size;
+	} else if (param0_type == TEEC_MEMREF_TEMP_INPUT) {
+		operation.params[0].tmpref.buffer =
+			smw_keymgr_get_public_data(key_descriptor);
+		operation.params[0].tmpref.size = shared_params.pub_key_len;
+	} else {
+		shared_params.id = key_identifier->id;
+	}
 
 	shared_params.key_type = key_type_id;
 	shared_params.security_size = key_identifier->security_size;
@@ -202,6 +221,9 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	}
 
 exit:
+	if (param0_type == TEEC_MEMREF_PARTIAL_INPUT)
+		TEEC_ReleaseSharedMemory(&shm);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

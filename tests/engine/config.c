@@ -114,6 +114,12 @@ int config_load(json_object *params, struct common_parameters *common_params,
 
 		file_path_size = strlen(CONFIG_DIR) + strlen(file_name);
 		file_path = malloc(file_path_size + 1);
+		if (!file_path) {
+			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto end;
+		}
+
 		strcpy(file_path, CONFIG_DIR);
 		strcat(file_path, file_name);
 		DBG_PRINT("Configuration file: %s", file_path);

@@ -31,9 +31,8 @@ static struct llist *signatures;
  */
 static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
 {
-	enum smw_status_code status = smw_get_key_type_name(key_desc);
-
-	if (status != SMW_STATUS_OK)
+	if (!key_desc->type_name &&
+	    smw_get_key_type_name(key_desc) != SMW_STATUS_OK)
 		return 0;
 
 	if (!strcmp(key_desc->type_name, BR1_KEY) ||

@@ -1,5 +1,5 @@
 #[=======================================================================[.rst:
-FindJSONC
+FindJsonc
 -------
 
 Finds the JSON-C library.
@@ -45,6 +45,6 @@ find_path(JSONC_INCLUDE_DIR NAMES json.h json_config.h
           CMAKE_FIND_ROOT_PATH_BOTH)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(JSONC REQUIRED_VARS JSONC_LIBRARY
-                                                      JSONC_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS
+                                  JSONC_LIBRARY JSONC_INCLUDE_DIR)
 mark_as_advanced(JSONC_LIBRARY JSONC_INCLUDE_DIR)

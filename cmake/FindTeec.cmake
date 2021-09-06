@@ -1,5 +1,5 @@
 #[=======================================================================[.rst:
-FindTEEC
+FindTeec
 -------
 
 Finds the TEE Client library.
@@ -45,6 +45,7 @@ find_path(TEEC_INCLUDE_DIR tee_client_api.h
           CMAKE_FIND_ROOT_PATH_BOTH)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(TEEC REQUIRED_VARS TEEC_LIBRARY TEEC_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS
+                                  TEEC_LIBRARY TEEC_INCLUDE_DIR)
 
 mark_as_advanced(TEEC_INCLUDE_DIR TEEC_LIBRARY)

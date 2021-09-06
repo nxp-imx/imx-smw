@@ -1,5 +1,5 @@
 #[=======================================================================[.rst:
-FindSECO
+FindSeco
 -------
 
 Finds the Seco NVM and HSM library.
@@ -53,11 +53,11 @@ find_path(SECO_HSM_INCLUDE_DIR hsm_api.h
           PATH_SUFFIXES usr/include/hsm include/hsm)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SECO REQUIRED_VARS
-        SECO_NVM_LIBRARY SECO_NVM_INCLUDE_DIR
-        SECO_HSM_LIBRARY SECO_HSM_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS
+                                  SECO_NVM_LIBRARY SECO_NVM_INCLUDE_DIR
+                                  SECO_HSM_LIBRARY SECO_HSM_INCLUDE_DIR)
 
-if(SECO_FOUND)
+if(${CMAKE_FIND_PACKAGE_NAME}_FOUND)
     set(SECO_LIBRARIES ${SECO_NVM_LIBRARY} ${SECO_HSM_LIBRARY})
     set(SECO_INCLUDE_DIRS ${SECO_NVM_INCLUDE_DIR} ${SECO_HSM_INCLUDE_DIR})
 endif()

@@ -9,6 +9,7 @@ Result Variables
 ^^^^^^^^^^^^^^^^
 This will define the following variables:
 
+``ZLIBLight_FOUND``
 ``ZLIB_FOUND``
 True if the system has the ZLIB library.
 ``ZLIB_INCLUDE_DIR``
@@ -45,7 +46,13 @@ find_path(ZLIB_INCLUDE_DIR zlib.h
           CMAKE_FIND_ROOT_PATH_BOTH)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(ZLIB REQUIRED_VARS
-    ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS
+                                  ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
 
-mark_as_advanced(ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
+#
+# To be coherent with other ZLIB variables, ZLIB_FOUND is used instead of
+# ZLIBLight_FOUND.
+#
+set(ZLIB_FOUND ${${CMAKE_FIND_PACKAGE_NAME}_FOUND})
+
+mark_as_advanced(ZLIB_LIBRARY ZLIB_INCLUDE_DIR ZLIB_FOUND)

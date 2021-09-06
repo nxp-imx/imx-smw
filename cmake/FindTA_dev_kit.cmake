@@ -1,5 +1,5 @@
 #[=======================================================================[.rst:
-FindTAdevkit
+FindTA_dev_kit
 -------
 
 Finds the TEE TA Development kit.
@@ -50,8 +50,8 @@ find_path(TA_HOST_INCLUDE_DIR tee_api_defines.h
           PATH_SUFFIXES host_include)
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(TA_DEV_KIT REQUIRED_VARS
-    TA_DEV_KIT_INCLUDE_DIR TA_DEV_KIT_MK_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS
+                                  TA_DEV_KIT_INCLUDE_DIR TA_DEV_KIT_MK_DIR)
 
 set(TA_DEV_KIT_DIR ${TA_DEV_KIT_ROOT})
 mark_as_advanced(TA_DEV_KIT_INCLUDE_DIR TA_DEV_KIT_MK_DIR TA_HOST_INCLUDE_DIR)

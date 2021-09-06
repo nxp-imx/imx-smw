@@ -26,6 +26,7 @@ find_program(SPHINX_EXECUTABLE
              DOC "Sphinx documentation generator")
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SPHINX REQUIRED_VARS SPHINX_EXECUTABLE)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS
+                                  SPHINX_EXECUTABLE)
 
 mark_as_advanced(SPHINX_EXECUTABLE)

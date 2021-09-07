@@ -4,7 +4,7 @@ if(NOT DEFINED TEEC_ROOT OR NOT DEFINED TA_DEV_KIT_ROOT)
 endif()
 
 find_package(Teec REQUIRED)
-find_package(TAdevkit REQUIRED)
+find_package(TA_dev_kit REQUIRED)
 
 #
 # Add TEE subsystem

@@ -9,7 +9,7 @@ endif()
 include(${CMAKE_TOOLCHAIN_FILE})
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
-find_package(TAdevkit)
+find_package(TA_dev_kit)
 
 if(TA_DEV_KIT_FOUND)
     message(STATUS "OPTEE TA Development kit already installed")

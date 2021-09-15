@@ -1,0 +1,12 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+/*
+ * Copyright 2021 NXP
+ */
+
+#ifndef __INFO_H__
+#define __INFO_H__
+
+#define LIB_VER_MAJOR @smw_VERSION_MAJOR@
+#define LIB_VER_MINOR @smw_VERSION_MINOR@
+
+#endif /* __INFO_H__ */

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(smw VERSION 0.1 LANGUAGES C)
+project(smw VERSION 1.0 LANGUAGES C)
 
 add_library(${PROJECT_NAME} SHARED "")
 
@@ -75,6 +75,9 @@ macro(add_operation operation)
                   PROP_OPERATION_NAME
                   PROP_OPERATION_FUNC)
 endmacro()
+
+# Create the library information file
+configure_file(${CORE_SRC_INC}/info.h.in ${CORE_BIN_INC}/info.h)
 
 add_subdirectory(utils)
 add_subdirectory(init)

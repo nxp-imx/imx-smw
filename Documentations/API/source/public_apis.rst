@@ -6,6 +6,7 @@ Public APIs
    :caption: Contents:
    :glob:
 
+   apis/information
    apis/config
    apis/crypto
    apis/keymgr

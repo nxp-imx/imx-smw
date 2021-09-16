@@ -20,6 +20,7 @@
 #include "config.h"
 #include "run.h"
 #include "paths.h"
+#include "info.h"
 #include "smw_status.h"
 
 /* Key identifiers linked list */
@@ -379,6 +380,8 @@ static int execute_command(char *cmd, struct json_object *params,
 	else if (!strcmp(cmd, RESTORE_KEY_IDS))
 		return restore_key_ids_from_file(params, common_params, key_ids,
 						 status);
+	else if (!strcmp(cmd, GET_VERSION))
+		return get_info(params, common_params, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

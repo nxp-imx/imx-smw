@@ -76,7 +76,8 @@ enum t_data_type {
 	t_object,
 	t_buffer,
 	t_buffer_hex,
-	t_int64
+	t_int64,
+	t_double
 };
 
 #endif /* __TYPES_H__ */

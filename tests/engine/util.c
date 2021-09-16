@@ -424,6 +424,7 @@ static const unsigned int t_data_2_json_type[] = {
 	[t_buffer_hex] = BIT(json_type_int) | BIT(json_type_string) |
 			 BIT(json_type_array),
 	[t_int64] = BIT(json_type_int),
+	[t_double] = BIT(json_type_double),
 };
 
 int util_read_json_type(void *value, const char *key, enum t_data_type type,
@@ -451,6 +452,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 	}
 
 	val_type = json_object_get_type(obj);
+
 	if (!(BIT(val_type) & t_data_2_json_type[type])) {
 		DBG_PRINT_BAD_PARAM(__func__, key);
 		return ERR_CODE(BAD_PARAM_TYPE);
@@ -488,6 +490,11 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 
 		case t_int64:
 			*((int64_t *)value) = json_object_get_int64(obj);
+			ret = ERR_CODE(PASSED);
+			break;
+
+		case t_double:
+			*((double *)value) = json_object_get_double(obj);
 			ret = ERR_CODE(PASSED);
 			break;
 

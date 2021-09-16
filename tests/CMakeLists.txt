@@ -60,6 +60,7 @@ add_executable(${PROJECT_NAME}
                engine/config.c
                engine/hash.c
                engine/hmac.c
+               engine/info.c
                engine/keymgr.c
                engine/keymgr_derive.c
                engine/rng.c

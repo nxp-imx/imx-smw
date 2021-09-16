@@ -1,0 +1,11 @@
+{
+	"subtest 1": {
+		"command": "GET_VERSION",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"command": "GET_VERSION",
+		"version": 1.0
+	}
+}

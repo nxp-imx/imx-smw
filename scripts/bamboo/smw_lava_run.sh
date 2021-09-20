@@ -82,7 +82,7 @@ rm -rf logs && mkdir logs
 
 squad_id=$(echo "$bamboo_planRepository_branchName" | tr / _)_${bamboo_buildNumber}
 
-if [[ $(is_pr) -eq 0 ]] && [[ $(is_weekly_build) -eq 1 ]]; then
+if [[ $(is_pr) -eq 0 ]] && [[ $(is_release_build) -eq 1 ]]; then
     #
     # If executed on selected weekly day, assume it's a periodic weekly don't
     # check code change neither do a code coverage report

@@ -77,7 +77,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 # Check if the branch is not a PR and it's daily build
-if [[ $(is_pr) -eq 0 ]] && [[ $(is_weekly_build) -eq 1 ]]; then
+if [[ $(is_pr) -eq 0 ]] && [[ $(is_release_build) -eq 1 ]]; then
     # Don't run code coverage
     exit 0
 fi

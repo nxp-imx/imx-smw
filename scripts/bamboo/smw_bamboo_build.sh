@@ -74,7 +74,7 @@ rm -rf "${build_release}"
 rm -rf "${build_debug}"
 
 # Check if the branch is not a PR and it's daily build
-if [[ $(is_pr) -eq 0 ]] && [[ $(is_weekly_build) -eq 1 ]]; then
+if [[ $(is_pr) -eq 0 ]] && [[ $(is_release_build) -eq 1 ]]; then
     git clean -xdf
 fi
 
@@ -138,10 +138,10 @@ doc_dir_html="html"
 doc_dir_pdf="latex"
 doc_arch="${mnt_server}/${doc_dir_root}"
 
-if [[ $(is_pr) -eq 0 ]]; then
+if [[ $(is_pr) -eq 0 && $(is_release_build) -eq 1 ]]; then
     if [[ ${opt_doc} -eq 1 ]]; then
         doc_ver=$(get_lib_version)
-        doc_arch="${doc_arch}/${doc_version}/${doc_ver}"
+        doc_arch="${doc_arch}/${doc_ver}"
         printf "Archiving documentation version %s ..." "${doc_ver}"
         rm -rf "${doc_arch}"
         eval "mkdir -p ${doc_arch}"

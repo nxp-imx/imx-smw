@@ -71,11 +71,13 @@ function is_pr
    fi
 }
 
-function is_weekly_build
+function is_release_build
 {
     local daytoday=$(date +%w)
 
     if [[ ${daytoday} == "$bamboo_weekly_day_run" ]]; then
+        echo 1
+    elif [[ -n "$bamboo_release_build" && "$bamboo_release_build" -eq 1 ]]; then
         echo 1
     else
         echo 0
@@ -85,10 +87,10 @@ function is_weekly_build
 function get_lib_version
 {
     # Get the version last part of branch name after `_`
-    # Branch name must be "blabla_1.x" to get the version "1.x"
+    # Branch name must be "release/blabla_1.x" to get the version "1.x"
     local br_name="${bamboo_planRepository_branchName}"
 
-    if [[ "${br_name}" != "master" && "${br_name}" =~ .*"_".* ]]; then
+    if [[ "${br_name}" =~ ^"release//"* && "${br_name}" =~ .*"_".* ]]; then
         echo "${br_name##*_}"
     else
         echo "latest"

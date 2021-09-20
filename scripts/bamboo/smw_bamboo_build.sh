@@ -136,16 +136,19 @@ doc_path="${build_release}/Documentations/API"
 doc_dir_root="Documentations"
 doc_dir_html="html"
 doc_dir_pdf="latex"
+doc_arch="${mnt_server}/${doc_dir_root}"
 
 if [[ $(is_pr) -eq 0 ]]; then
     if [[ ${opt_doc} -eq 1 ]]; then
-        echo "Archiving documentation..."
-        rm -rf "${mnt_server}/${doc_dir_root}"
-        eval "mkdir -p ${mnt_server}/${doc_dir_root}"
-        eval "cp -r ${doc_path}/${doc_dir_html} ${mnt_server}/${doc_dir_root}/."
+        doc_ver=$(get_lib_version)
+        doc_arch="${doc_arch}/${doc_version}/${doc_ver}"
+        printf "Archiving documentation version %s ..." "${doc_ver}"
+        rm -rf "${doc_arch}"
+        eval "mkdir -p ${doc_arch}"
+        eval "cp -r ${doc_path}/${doc_dir_html} ${doc_arch}/."
         if [[ -n "$(find ${doc_path}/${doc_dir_pdf} -maxdepth 1 -name '*.pdf' -type f -print -quit)" ]]; then
-            eval "mkdir ${mnt_server}/${doc_dir_root}/${doc_dir_pdf}"
-            eval "cp ${doc_path}/${doc_dir_pdf}/*.pdf ${mnt_server}/${doc_dir_root}/${doc_dir_pdf}/."
+            eval "mkdir ${doc_arch}/${doc_dir_pdf}"
+            eval "cp ${doc_path}/${doc_dir_pdf}/*.pdf ${doc_arch}/${doc_dir_pdf}/."
         fi
     fi
 fi

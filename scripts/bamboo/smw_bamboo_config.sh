@@ -81,3 +81,16 @@ function is_weekly_build
         echo 0
     fi
 }
+
+function get_lib_version
+{
+    # Get the version last part of branch name after `_`
+    # Branch name must be "blabla_1.x" to get the version "1.x"
+    local br_name="${bamboo_planRepository_branchName}"
+
+    if [[ "${br_name}" != "master" && "${br_name}" =~ .*"_".* ]]; then
+        echo "${br_name##*_}"
+    else
+        echo "latest"
+    fi
+}

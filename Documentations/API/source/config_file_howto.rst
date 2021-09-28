@@ -27,6 +27,8 @@ The configuration format must respect following rules:
 
 - The first tag to define is the **VERSION** tag specifying the parser version compatibility.
 
+- The tag **PSA_DEFAULT**, if present, must be after the tag **VERSION**. If present after the first occurrence of **[SECURE_SUBSYSTEM]**, it is ignored. The possible values are the Secure Subsystems names listed in `List of Secure Subsystems`_.
+
 - There must be at least one occurrence of **[SECURE_SUBSYSTEM]**. This tag is the starter of a Secure Subsystem configuration.
 
 - There must be only one block defining a Secure Subsystem.
@@ -65,6 +67,8 @@ Secure Subsystem definition
        …
 
 The Secure Subsystems definition starts with the tag [SECURE_SUBSYSTEM] and is followed by its string name. The table below lists all Secure Subsystems supported by the Security Middleware library.
+
+.. _`List of Secure Subsystems`:
 
 List of Secure Subsystems:
 
@@ -249,7 +253,8 @@ HSM configuration:
 .. code-block:: text
 
    /* Configuration file */
-   VERSION=0;
+   VERSION=1;
+   PSA_DEFAULT=TEE;
    [SECURE_SUBSYSTEM]
        TEE;
        /* Load/unload method */

@@ -46,5 +46,10 @@
 	"subtest 12": {
 		"command": "CONFIG_UNLOAD",
 		"depends": 11
+	},
+	"subtest 13": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_psa_default_value_unknown.txt",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
 	}
 }

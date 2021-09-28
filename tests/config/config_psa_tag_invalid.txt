@@ -1,0 +1,7 @@
+/* Configuration file */
+VERSION=0;
+PSA_TAG_INVALID=TEE;
+[SECURE_SUBSYSTEM]
+    TEE;
+    [SECURITY_OPERATION]
+        GENERATE_KEY;

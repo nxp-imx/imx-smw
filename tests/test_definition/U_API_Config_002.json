@@ -150,4 +150,27 @@
 		"filepath": "config_operation_defined_twice.txt",
 		"result": "SMW_STATUS_OPERATION_DUPLICATE"
 	},
+	"subtest 31": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_psa_tag_invalid.txt",
+		"result": "SMW_STATUS_INVALID_TAG"
+	},
+	"subtest 32": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_psa_default_no_semicolon.txt",
+		"result": "SMW_STATUS_SYNTAX_ERROR"
+	},
+	"subtest 33": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_psa_default_before_version.txt",
+		"result": "SMW_STATUS_INVALID_TAG"
+	},
+	"subtest 34": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_psa_default_after_subsystem.txt"
+	},
+	"subtest 35": {
+		"command": "CONFIG_UNLOAD",
+		"depends": 34
+	}
 }

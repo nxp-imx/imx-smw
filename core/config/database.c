@@ -64,11 +64,22 @@ void init_database(bool reset)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	database.psa_default_subsystem_id = SUBSYSTEM_ID_INVALID;
+
 	for (i = 0; i < SUBSYSTEM_ID_NB; i++)
 		init_subsystem(&database.subsystem[i], reset);
 
 	for (i = 0; i < OPERATION_ID_NB; i++)
 		database.operation[i] = SUBSYSTEM_ID_INVALID;
+}
+
+void set_psa_default_subsystem(enum subsystem_id id)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SUBSYSTEM_ID_ASSERT(id);
+
+	database.psa_default_subsystem_id = id;
 }
 
 void set_bit(unsigned long *bitmap, unsigned int size, unsigned int offset)

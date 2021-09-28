@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #include "smw_status.h"
@@ -26,6 +26,9 @@ void print_database(void)
 	unsigned long operations_bitmap;
 	struct smw_utils_list *operations_caps_list;
 
+	SMW_DBG_PRINTF(INFO, "PSA default subsystem: %d\n",
+		       database.psa_default_subsystem_id);
+
 	SMW_DBG_PRINTF(INFO, "Secure subsystems capabilities:\n");
 	for (i = 0; i < SUBSYSTEM_ID_NB; i++) {
 		subsystem = &database.subsystem[i];
@@ -50,6 +53,7 @@ void print_database(void)
 		if (configured)
 			smw_utils_list_print(operations_caps_list);
 	}
+
 	SMW_DBG_PRINTF(INFO, "Default subsystems:\n");
 	for (i = 0; i < OPERATION_ID_NB; i++) {
 		SMW_DBG_PRINTF(INFO, "    [%d] = %d\n", i,

@@ -26,6 +26,7 @@ extern const char *operation_tag;
 /* Parameters tags */
 extern const char *version_tag;
 extern const char *default_tag;
+extern const char *psa_default_tag;
 extern const char *key_type_values;
 extern const char *key_size_range;
 extern const char *hash_algo_values;

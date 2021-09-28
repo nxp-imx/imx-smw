@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2021 NXP
  */
 
 #define LOAD_METHOD_ID_DEFAULT LOAD_METHOD_ID_AT_CONFIG_LOAD_UNLOAD
@@ -16,6 +16,7 @@ struct subsystem {
 };
 
 struct database {
+	enum subsystem_id psa_default_subsystem_id;
 	struct subsystem subsystem[SUBSYSTEM_ID_NB];
 	enum subsystem_id operation[OPERATION_ID_NB];
 };

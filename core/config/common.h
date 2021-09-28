@@ -239,6 +239,17 @@ int parse(char *buffer, unsigned int size, unsigned int *offset);
 void init_database(bool reset);
 
 /**
+ * set_psa_default_subsystem() - Set the PSA default Secure Subsystem.
+ * @id: Secure Subsystem ID.
+ *
+ * This function sets the PSA default Secure Subsystem.
+ *
+ * Return:
+ * none.
+ */
+void set_psa_default_subsystem(enum subsystem_id id);
+
+/**
  * set_bit() - Set a bit in a bitmap.
  * @bitmap: Bitmap.
  * @size: Size of the bitmap in bits.
@@ -252,10 +263,10 @@ void init_database(bool reset);
 void set_bit(unsigned long *bitmap, unsigned int size, unsigned int offset);
 
 /**
- * set_subsystem_configured() - Set a Secure subsystem as configured.
+ * set_subsystem_configured() - Set a Secure Subsystem as configured.
  * @id: Secure Subsystem ID.
  *
- * This function sets a Secure subsystem as configured.
+ * This function sets a Secure Subsystem as configured.
  *
  * Return:
  * none.
@@ -263,23 +274,23 @@ void set_bit(unsigned long *bitmap, unsigned int size, unsigned int offset);
 void set_subsystem_configured(enum subsystem_id id);
 
 /**
- * is_subsystem_configured() - Tell if a Secure subsystem is configured.
+ * is_subsystem_configured() - Tell if a Secure Subsystem is configured.
  * @id: Secure Subsystem ID.
  *
- * This function tells if Secure subsystem is configured.
+ * This function tells if Secure Subsystem is configured.
  *
  * Return:
- * * true:	- the Secure subsystem is configured.
- * * false:	- the Secure subsystem is not configured.
+ * * true:	- the Secure Subsystem is configured.
+ * * false:	- the Secure Subsystem is not configured.
  */
 bool is_subsystem_configured(enum subsystem_id id);
 
 /**
- * set_subsystem_load_method() - Set a Secure subsystem load method.
+ * set_subsystem_load_method() - Set a Secure Subsystem load method.
  * @id: Secure Subsystem ID.
  * @load_method_id: Load method ID.
  *
- * This function sets a Secure subsystem load method.
+ * This function sets a Secure Subsystem load method if not already set.
  *
  * Return:
  * none.

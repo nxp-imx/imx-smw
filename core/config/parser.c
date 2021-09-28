@@ -246,8 +246,8 @@ end:
 int read_range(char **start, char *end, unsigned int *min, unsigned int *max)
 {
 	int status = SMW_STATUS_OK;
-	char *cur = *start;
 
+	char *cur = *start;
 	unsigned int m;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -342,6 +342,7 @@ int read_params_name(char **start, char *end, char *dest)
 int skip_param(char **start, char *end)
 {
 	int status = SMW_STATUS_OK;
+
 	char *cur = *start;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -374,8 +375,8 @@ int read_names(char **start, char *end, unsigned long *bitmap,
 	       const char *const array[], unsigned int size)
 {
 	int status = SMW_STATUS_OK;
-	char *cur = *start;
 
+	char *cur = *start;
 	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1];
 	unsigned int id;
 
@@ -417,7 +418,6 @@ static bool read_operation(char **start, char *end,
 	bool skip = false;
 
 	int status = SMW_STATUS_OK;
-
 	char *cur = *start;
 	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1];
 	enum operation_id operation_id = OPERATION_ID_INVALID;
@@ -490,10 +490,8 @@ static bool read_subsystem(char **start, char *end, int *return_status)
 	bool skip = false;
 
 	int status = SMW_STATUS_OK;
-
 	char *cur = *start;
 	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1];
-
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	enum load_method_id load_method_id = LOAD_METHOD_ID_INVALID;
 
@@ -532,12 +530,14 @@ static bool read_subsystem(char **start, char *end, int *return_status)
 		status = SMW_STATUS_OK;
 	if (status != SMW_STATUS_OK)
 		goto end;
+
 	SMW_DBG_PRINTF(INFO, "Start/stop method name: %s\n", buffer);
 
 	/* Secure Subsystem start/stop method id */
 	status = get_load_method_id(buffer, &load_method_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
 	SMW_DBG_PRINTF(DEBUG, "Start/stop method id: %d\n", subsystem_id);
 
 	skip_insignificant_chars(&cur, end);
@@ -580,6 +580,53 @@ end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
 		       skip ? "TRUE" : "FALSE");
 	return skip;
+}
+
+static int get_psa_default_subsystem(char **start, char *end)
+{
+	int status = SMW_STATUS_OK;
+
+	char *cur = *start;
+	char buffer[SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH + 1];
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!detect_tag(&cur, end, psa_default_tag))
+		goto end;
+
+	skip_insignificant_chars(&cur, end);
+
+	if (equal != *cur) {
+		status = SMW_STATUS_SYNTAX_ERROR;
+		goto end;
+	}
+	cur++;
+
+	skip_insignificant_chars(&cur, end);
+
+	status = read_string(&cur, end, buffer,
+			     SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH, semicolon);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	SMW_DBG_PRINTF(INFO, "PSA default secure subsystem name: %s\n", buffer);
+
+	/* Secure Subsystem id */
+	status = smw_config_get_subsystem_id(buffer, &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	SMW_DBG_PRINTF(DEBUG, "PSA default secure subsystem id: %d\n",
+		       subsystem_id);
+
+	set_psa_default_subsystem(subsystem_id);
+
+	*start = cur;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 static int verify_version(char **start, char *end)
@@ -647,6 +694,11 @@ int parse(char *buffer, unsigned int size, unsigned int *offset)
 		goto end;
 
 	skip_insignificant_chars(&cur, end);
+
+	/* PSA default subsystem */
+	status = get_psa_default_subsystem(&cur, end);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	/* List of Secure Subsystems */
 	while (cur < end) {

@@ -50,6 +50,9 @@
  * @SMW_STATUS_CONFIG_ALREADY_LOADED: User configuration is already loaded. To load another one,
  * the Unload configuration API must be called first.
  * @SMW_STATUS_NO_CONFIG_LOADED: No user configuration is loaded.
+ * @SMW_STATUS_RANGE_DUPLICATE: Size range is defined more than once for a given algorithm.
+ * @SMW_STATUS_ALGO_NOT_CONFIGURED: Size range is defined but the corresponding algorithm is not
+ * configured.
  *
  * @SMW_STATUS_SIGNATURE_INVALID: The Signature is not valid.
  * @SMW_STATUS_SIGNATURE_LEN_INVALID: The Signature length is not valid.
@@ -95,6 +98,8 @@
  *	- SMW_STATUS_OPERATION_DUPLICATE
  *	- SMW_STATUS_CONFIG_ALREADY_LOADED
  *	- SMW_STATUS_NO_CONFIG_LOADED
+ *	- SMW_STATUS_RANGE_DUPLICATE
+ *	- SMW_STATUS_ALGO_NOT_CONFIGURED
  *
  ** Specific return codes - Signature
  *
@@ -138,7 +143,9 @@ enum smw_status_code {
 	SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY, /* 30 */
 	SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE,
 	SMW_STATUS_SUBSYSTEM_STORAGE_ERROR,
-	SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT
+	SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT,
+	SMW_STATUS_RANGE_DUPLICATE,
+	SMW_STATUS_ALGO_NOT_CONFIGURED
 };
 
 #endif /* __SMW_STATUS_H__ */

@@ -190,46 +190,43 @@ List of Security Operation values tag:
    :align: left
    :widths: auto
 
-   +------------------+---------------------------------------------------------------------------------+
-   | **Tag Values**   | **Description**                                                                 |
-   +==================+=================================================================================+
-   | ALGO_VALUES      | Define the operation algorithm(s) supported.                                    |
-   +------------------+---------------------------------------------------------------------------------+
-   | MODE_VALUES      | Define for the operation’s algorithm’s the algorithm mode(s) supported.         |
-   +------------------+---------------------------------------------------------------------------------+
-   | HASH_ALGO_VALUES | Define the Hash operation algorithm supported for the operation.                |
-   +------------------+---------------------------------------------------------------------------------+
-   | KEY_TYPE_VALUES  | Define the Key type supported for the operation.                                |
-   +------------------+---------------------------------------------------------------------------------+
-   | SIGN_TYPE_VALUES | Define the signature type supported for signature operations (sign and verify). |
-   +------------------+---------------------------------------------------------------------------------+
-   | OP_TYPE_VALUES   | Define the type of operation when it has multiple possibilities                 |
-   |                  | (ex: encryption vs decryption for cipher operation).                            |
-   +------------------+---------------------------------------------------------------------------------+
+   +------------------+----------------------------------------------------------------------------------+
+   | **Tag Values**   | **Description**                                                                  |
+   +==================+==================================================================================+
+   | ALGO_VALUES      | Define the operation algorithms supported.                                       |
+   +------------------+----------------------------------------------------------------------------------+
+   | MODE_VALUES      | Define the modes supported for the operation algorithms.                         |
+   +------------------+----------------------------------------------------------------------------------+
+   | HASH_ALGO_VALUES | Define the Hash operation algorithms supported for the operation.                |
+   +------------------+----------------------------------------------------------------------------------+
+   | KEY_TYPE_VALUES  | Define the Key types supported for the operation.                                |
+   +------------------+----------------------------------------------------------------------------------+
+   | SIGN_TYPE_VALUES | Define the signature types supported for signature operations (sign and verify). |
+   +------------------+----------------------------------------------------------------------------------+
+   | OP_TYPE_VALUES   | Define the type of operation when it has multiple possibilities                  |
+   |                  | (ex: encryption vs decryption for cipher operation).                             |
+   +------------------+----------------------------------------------------------------------------------+
 
 .. _`List of Security Operation range tag`:
 
 List of Security Operation range tag:
 
-.. tabularcolumns:: |\Y{0.5}|\Y{0.5}|
+.. tabularcolumns:: |\Y{0.4}|\Y{0.6}|
 
 .. table::
    :align: left
    :widths: auto
 
-   +------------------------------+-------------------------------------------------+
-   | **Tag Range**                | **Description**                                 |
-   +==============================+=================================================+
-   | INPUT_DATA_LENGTH_RANGE      | Define the range of the input data length.      |
-   +------------------------------+-------------------------------------------------+
-   | OUTPUT_DATA_LENGTH_RANGE     | Define the range of the output data length.     |
-   +------------------------------+-------------------------------------------------+
-   | ADDITIONAL_DATA_LENGTH_RANGE | Define the range of the additional data length. |
-   +------------------------------+-------------------------------------------------+
-   | LABEL_DATA_LENGTH_RANGE      | Define the range of the label data length.      |
-   +------------------------------+-------------------------------------------------+
-   | KEY_SIZE_RANGE               | Define the range of the key size.               |
-   +------------------------------+-------------------------------------------------+
+   +------------------------------+---------------------------------------------------+
+   | **Tag Range**                | **Description**                                   |
+   +==============================+===================================================+
+   +------------------------------+---------------------------------------------------+
+   | <KEY_TYPE>_SIZE_RANGE        | Define the minimum and maximum key size bits of   |
+   |                              | a key type listed by the **KEY_TYPE_VALUES** tag. |
+   +------------------------------+---------------------------------------------------+
+   | RNG_LENGTH_RANGE             | Define the length range of a random number        |
+   |                              | generated with the RNG operation.                 |
+   +------------------------------+---------------------------------------------------+
 
 Notice that all Values or Range are not useful for each operation. Refer to each operation to get the tags that could be defined and the corresponding value.
 
@@ -248,7 +245,9 @@ HSM configuration:
 
 - Subsystem is loaded/unloaded with the default method as defined in Secure Subsystems definition.
 - Digest SHA256 operation.
-- AES and DES keys with a maximum of 128 bits generation. HSM is the default subsystem for this operation for the defined key capabilities.
+- Generate 128 bits to 256 bits AES keys.
+- Generate 56 bits DES keys.
+- HSM is the default subsystem for this operation for the defined key capabilities.
 
 .. code-block:: text
 
@@ -282,5 +281,7 @@ HSM configuration:
            DEFAULT;
            /* Only AES and DES algorithms are supported */
            KEY_TYPE_VALUES=AES:DES;
-           /* Max key size allowed is 128 bits */
-           KEY_SIZE_RANGE=:128;
+           /* AES key size allowed is between 128 bits and 256 bits */
+           AES_SIZE_RANGE=128:256;
+           /* DES key size allowed is 56 bits */
+           DES_SIZE_RANGE=56:56;

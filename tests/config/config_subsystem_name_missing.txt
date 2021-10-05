@@ -1,5 +1,5 @@
 /* Configuration file */
-VERSION=0;
+VERSION=1;
 [SECURE_SUBSYSTEM]
     [SECURITY_OPERATION]
         GENERATE_KEY;

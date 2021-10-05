@@ -172,5 +172,15 @@
 	"subtest 35": {
 		"command": "CONFIG_UNLOAD",
 		"depends": 34
+	},
+	"subtest 36": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_key_size_range_defined_twice.txt",
+		"result": "SMW_STATUS_RANGE_DUPLICATE"
+	},
+	"subtest 37": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_key_size_range_defined_without_key_type.txt",
+		"result": "SMW_STATUS_ALGO_NOT_CONFIGURED"
 	}
 }

@@ -1,7 +1,8 @@
 /* Configuration file */
-VERSION=0;
+VERSION=1;
 [SECURE_SUBSYSTEM]
     TEE;
     [SECURITY_OPERATION]
         GENERATE_KEY;
-        KEY_SIZE_RANGE=0|128;
+        KEY_TYPE_VALUES=AES;
+        AES_SIZE_RANGE=0|128;

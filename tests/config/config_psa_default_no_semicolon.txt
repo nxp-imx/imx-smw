@@ -1,5 +1,5 @@
 /* Configuration file */
-VERSION=0;
+VERSION=1;
 PSA_DEFAULT=TEE
 [SECURE_SUBSYSTEM]
     TEE;

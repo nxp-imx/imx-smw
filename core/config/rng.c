@@ -25,14 +25,15 @@ static int rng_read_params(char **start, char *end, void **params)
 	char *cur = *start;
 
 	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1];
-	int length;
+	unsigned int length;
 
-	unsigned int length_min = 0;
-	unsigned int length_max = UINT_MAX;
-
+	struct range range;
 	struct rng_params *p;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	range.min = 0;
+	range.max = UINT_MAX;
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
 		status = read_params_name(&cur, end, buffer);
@@ -44,8 +45,7 @@ static int rng_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, rng_range, length)) {
-			status =
-				read_range(&cur, end, &length_min, &length_max);
+			status = read_range(&cur, end, &range);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else {
@@ -57,15 +57,14 @@ static int rng_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 	}
 
-	p = SMW_UTILS_MALLOC(sizeof(struct rng_params));
+	p = SMW_UTILS_MALLOC(sizeof(*p));
 	if (!p) {
 		status = SMW_STATUS_ALLOC_FAILURE;
 		goto end;
 	}
 
 	p->operation_id = OPERATION_ID_RNG;
-	p->length_min = length_min;
-	p->length_max = length_max;
+	p->range = range;
 
 	*params = p;
 
@@ -81,16 +80,6 @@ __weak void rng_print_params(void *params)
 	(void)params;
 }
 
-static bool check_random_number_length(unsigned int length,
-				       unsigned int length_min,
-				       unsigned int length_max)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return ((length >= length_min) && (length <= length_max)) ? true :
-								    false;
-}
-
 static int rng_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
@@ -102,8 +91,7 @@ static int rng_check_subsystem_caps(void *args, void *params)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!check_random_number_length(length, rng_params->length_min,
-					rng_params->length_max))
+	if (!check_size(length, &rng_params->range))
 		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

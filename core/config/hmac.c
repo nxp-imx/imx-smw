@@ -43,17 +43,21 @@ static int hmac_read_params(char **start, char *end, void **params)
 	char *cur = *start;
 
 	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1];
-	int length;
-
-	unsigned long algo_bitmap = SMW_ALL_ONES;
-	unsigned long key_type_bitmap = SMW_ALL_ONES;
-
-	unsigned int key_size_min = 0;
-	unsigned int key_size_max = UINT_MAX;
+	unsigned int length;
 
 	struct hmac_params *p;
+	unsigned long key_size_range_bitmap = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	p = SMW_UTILS_CALLOC(1, sizeof(*p));
+	if (!p) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+
+	p->operation_id = OPERATION_ID_HMAC;
+	init_key_params(&p->key);
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
 		status = read_params_name(&cur, end, buffer);
@@ -65,18 +69,12 @@ static int hmac_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, hmac_algo_values, length)) {
-			status = read_hmac_algo_names(&cur, end, &algo_bitmap);
+			status = read_hmac_algo_names(&cur, end,
+						      &p->algo_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
-		} else if (!SMW_UTILS_STRNCMP(buffer, key_type_values,
-					      length)) {
-			status = read_key_type_names(&cur, end,
-						     &key_type_bitmap);
-			if (status != SMW_STATUS_OK)
-				goto end;
-		} else if (!SMW_UTILS_STRNCMP(buffer, key_size_range, length)) {
-			status = read_range(&cur, end, &key_size_min,
-					    &key_size_max);
+		} else if (read_key(buffer, length, &cur, end,
+				    &key_size_range_bitmap, &p->key, &status)) {
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else {
@@ -88,23 +86,20 @@ static int hmac_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 	}
 
-	p = SMW_UTILS_MALLOC(sizeof(struct hmac_params));
-	if (!p) {
-		status = SMW_STATUS_ALLOC_FAILURE;
-		goto end;
-	}
+	if (!p->algo_bitmap)
+		p->algo_bitmap = SMW_ALL_ONES;
 
-	p->operation_id = OPERATION_ID_HMAC;
-	p->algo_bitmap = algo_bitmap;
-	p->key_type_bitmap = key_type_bitmap;
-	p->key_size_min = key_size_min;
-	p->key_size_max = key_size_max;
+	if (!p->key.type_bitmap)
+		p->key.type_bitmap = SMW_ALL_ONES;
 
 	*params = p;
 
 	*start = cur;
 
 end:
+	if (p && status != SMW_STATUS_OK)
+		SMW_UTILS_FREE(p);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -121,17 +116,11 @@ static int hmac_check_subsystem_caps(void *args, void *params)
 	struct smw_crypto_hmac_args *hmac_args = args;
 	struct hmac_params *hmac_params = params;
 
-	enum smw_config_key_type_id key_type_id =
-		hmac_args->key_descriptor.identifier.type_id;
-	unsigned int security_size =
-		hmac_args->key_descriptor.identifier.security_size;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!check_id(hmac_args->algo_id, hmac_params->algo_bitmap) ||
-	    !check_id(key_type_id, hmac_params->key_type_bitmap) ||
-	    !check_security_size(security_size, hmac_params->key_size_min,
-				 hmac_params->key_size_max))
+	    !check_key(&hmac_args->key_descriptor.identifier,
+		       &hmac_params->key))
 		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

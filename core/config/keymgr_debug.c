@@ -15,7 +15,7 @@
 
 #include "common.h"
 
-void print_key_params(void *params)
+void print_key_operation_params(void *params)
 {
 	struct key_operation_params *p = params;
 
@@ -26,11 +26,9 @@ void print_key_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "%s params:\n"
-		       "    key_type_bitmap: %.8lX\n"
-		       "    op_bitmap: %.8lX\n"
-		       "    key_size_min: %u\n"
-		       "    key_size_max: %u\n",
+		       "    op_bitmap: %.8lX\n",
 		       smw_config_get_operation_name(p->operation_id),
-		       p->key_type_bitmap, p->op_bitmap, p->key_size_min,
-		       p->key_size_max);
+		       p->op_bitmap);
+
+	print_key_params(&p->key);
 }

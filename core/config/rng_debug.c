@@ -26,7 +26,7 @@ void rng_print_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "RNG params:\n"
-		       "    length_min: %u\n"
-		       "    length_max: %u\n",
-		       p->length_min, p->length_max);
+		       "    range_min: %u\n"
+		       "    range_max: %u\n",
+		       p->range.min, p->range.max);
 }

@@ -26,10 +26,8 @@ void hmac_print_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "HMAC params:\n"
-		       "    algo_bitmap: %.8lX\n"
-		       "    key_type_bitmap: %.8lX\n"
-		       "    key_size_min: %u\n"
-		       "    key_size_max: %u\n",
-		       p->algo_bitmap, p->key_type_bitmap, p->key_size_min,
-		       p->key_size_max);
+		       "    algo_bitmap: %.8lX\n",
+		       p->algo_bitmap);
+
+	print_key_params(&p->key);
 }

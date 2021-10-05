@@ -16,6 +16,20 @@
 #include "common.h"
 #include "database.h"
 
+void print_key_params(struct op_key *key)
+{
+	unsigned int i;
+
+	SMW_DBG_PRINTF(DEBUG,
+		       "    key_type_bitmap: %.8lX\n"
+		       "    key_size_range:\n",
+		       key->type_bitmap);
+
+	for (i = 0; i < ARRAY_SIZE(key->size_range); i++)
+		SMW_DBG_PRINTF(DEBUG, "        (%u, %u)\n",
+			       key->size_range[i].min, key->size_range[i].max);
+}
+
 void print_database(void)
 {
 	unsigned int i;

@@ -42,7 +42,7 @@ static int hash_read_params(char **start, char *end, void **params)
 	char *cur = *start;
 
 	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1];
-	int length;
+	unsigned int length;
 
 	unsigned long algo_bitmap = SMW_ALL_ONES;
 
@@ -72,7 +72,7 @@ static int hash_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 	}
 
-	p = SMW_UTILS_MALLOC(sizeof(struct hash_params));
+	p = SMW_UTILS_MALLOC(sizeof(*p));
 	if (!p) {
 		status = SMW_STATUS_ALLOC_FAILURE;
 		goto end;

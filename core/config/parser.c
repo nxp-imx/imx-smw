@@ -17,7 +17,7 @@
 #include "common.h"
 #include "tag.h"
 
-#define SMW_CONFIG_PARSER_VERSION 0
+#define SMW_CONFIG_PARSER_VERSION 1
 
 static bool is_string_delimiter(char c)
 {
@@ -58,6 +58,30 @@ static bool detect_tag(char **start, char *end, const char *tag)
 		match = true;
 		*start += tag_length;
 		SMW_DBG_PRINTF(INFO, "Tag: %s\n", tag);
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+		       match ? "true" : "false");
+	return match;
+}
+
+bool get_tag_prefix(char *tag, unsigned int length, const char *suffix)
+{
+	bool match = false;
+
+	unsigned int suffix_length = SMW_UTILS_STRLEN(suffix);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (length > suffix_length &&
+	    !SMW_UTILS_STRNCMP(tag + length - suffix_length, suffix,
+			       suffix_length)) {
+		match = true;
+
+		/* Remove suffix from tag */
+		*(tag + length - suffix_length) = 0;
+
+		SMW_DBG_PRINTF(INFO, "Algo: %s\n", tag);
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
@@ -243,7 +267,7 @@ end:
 	return status;
 }
 
-int read_range(char **start, char *end, unsigned int *min, unsigned int *max)
+int read_range(char **start, char *end, struct range *range)
 {
 	int status = SMW_STATUS_OK;
 
@@ -261,7 +285,7 @@ int read_range(char **start, char *end, unsigned int *min, unsigned int *max)
 		}
 		SMW_DBG_PRINTF(INFO, "Min: %d\n", m);
 
-		*min = m;
+		range->min = m;
 
 		skip_insignificant_chars(&cur, end);
 
@@ -281,7 +305,7 @@ int read_range(char **start, char *end, unsigned int *min, unsigned int *max)
 		}
 		SMW_DBG_PRINTF(INFO, "Max: %d\n", m);
 
-		*max = m;
+		range->max = m;
 
 		skip_insignificant_chars(&cur, end);
 	}
@@ -665,7 +689,8 @@ static int verify_version(char **start, char *end)
 
 	SMW_DBG_PRINTF(INFO, "Version: %d\n", version);
 
-	if (version > SMW_CONFIG_PARSER_VERSION) {
+	if (version == 0 || /* No backward compatibility with version 0 */
+	    version > SMW_CONFIG_PARSER_VERSION) {
 		status = SMW_STATUS_INVALID_VERSION;
 		goto end;
 	}

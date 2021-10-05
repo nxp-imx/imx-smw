@@ -3,6 +3,9 @@
  * Copyright 2020-2021 NXP
  */
 
+#include "config.h"
+#include "keymgr.h"
+
 #define SMW_CONFIG_MAX_STRING_LENGTH 256
 
 #define SMW_CONFIG_MAX_OPERATION_NAME_LENGTH 17
@@ -11,7 +14,8 @@
 
 #define SMW_CONFIG_MAX_LOAD_METHOD_NAME_LENGTH 32
 
-#define SMW_CONFIG_MAX_PARAMS_NAME_LENGTH 16
+/* All <ALGO>_SIZE_RANGE must be smaller than SMW_CONFIG_MAX_PARAMS_NAME_LENGTH */
+#define SMW_CONFIG_MAX_PARAMS_NAME_LENGTH 32
 
 #define DEFINE_CONFIG_OPERATION_FUNC(operation)                                \
 	struct operation_func operation##_func = {                             \
@@ -38,12 +42,20 @@ enum load_method_id {
 	LOAD_METHOD_ID_INVALID
 };
 
+struct range {
+	unsigned int min;
+	unsigned int max;
+};
+
+struct op_key {
+	unsigned long type_bitmap;
+	struct range size_range[SMW_CONFIG_KEY_TYPE_ID_NB];
+};
+
 struct key_operation_params {
 	enum operation_id operation_id;
-	unsigned long key_type_bitmap;
 	unsigned long op_bitmap;
-	unsigned int key_size_min;
-	unsigned int key_size_max;
+	struct op_key key;
 };
 
 struct hash_params {
@@ -54,34 +66,47 @@ struct hash_params {
 struct hmac_params {
 	enum operation_id operation_id;
 	unsigned long algo_bitmap;
-	unsigned long key_type_bitmap;
-	unsigned int key_size_min;
-	unsigned int key_size_max;
+	struct op_key key;
 };
 
 struct sign_verify_params {
 	enum operation_id operation_id;
 	unsigned long algo_bitmap;
-	unsigned long key_type_bitmap;
-	unsigned int key_size_min;
-	unsigned int key_size_max;
 	unsigned long sign_type_bitmap;
+	struct op_key key;
 };
 
 struct rng_params {
 	enum operation_id operation_id;
-	unsigned int length_min;
-	unsigned int length_max;
+	struct range range;
 };
 
 struct cipher_params {
 	enum operation_id operation_id;
 	unsigned long mode_bitmap;
-	unsigned long key_type_bitmap;
 	unsigned long op_bitmap;
+	struct op_key key;
 };
 
 extern struct ctx ctx;
+
+/**
+ * get_tag_prefix() - Get a tag prefix.
+ * @tag: In/Out tag string.
+ * @length: Length of the tag.
+ * @suffix: Tag suffix to remove.
+ *
+ * This function checks if the suffix of @tag matches @suffix.
+ * If true, the function sets the first char of @tag suffix
+ * to null char. The caller can then use @tag as a null-terminated string
+ * from which @suffix has been removed.
+ * @suffix must be a null-terminated string.
+ *
+ * Return:
+ * * true:      - the suffix is detected.
+ * * false:     - the suffix is not detected.
+ */
+bool get_tag_prefix(char *tag, unsigned int length, const char *suffix);
 
 /**
  * skip_insignificant_chars() - Skip insignificant chars.
@@ -114,8 +139,7 @@ int read_unsigned_integer(char **start, char *end, unsigned int *dest);
  * read_range() - Read a range.
  * @start: Address of the pointer to the current char.
  * @end: Pointer to the last char of the buffer being parsed.
- * @min: Pointer where the minimum value is written.
- * @max: Pointer where the maximum value is written.
+ * @range: Pointer to the range structure.
  *
  * This function reads the minimum and maximum values.
  * The pointer to the current char is moved to the next char
@@ -125,7 +149,31 @@ int read_unsigned_integer(char **start, char *end, unsigned int *dest);
  * Return:
  * error code.
  */
-int read_range(char **start, char *end, unsigned int *min, unsigned int *max);
+int read_range(char **start, char *end, struct range *range);
+
+/**
+ * read_key() - Read a Key configuration.
+ * @tag: Tag string.
+ * @length: Length of the tag.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @key_size_range_bitmap: Bitmap representing the Key size ranges already read.
+ * @key: Key parameters.
+ * @status: Error code set only if the tag is related to a key.
+ *
+ * This function reads a Key configuration from the current char
+ * of the buffer being parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Return:
+ * * true:      - @tag is related to Key configuration.
+ * * false:     - @tag is not related to Key configuration.
+ */
+bool read_key(char *tag, unsigned int length, char **start, char *end,
+	      unsigned long *key_size_range_bitmap, struct op_key *key,
+	      int *status);
 
 /**
  * read_params_name() - Read parameters name.
@@ -226,6 +274,17 @@ int read_hash_algo_names(char **start, char *end, unsigned long *bitmap);
  * error code.
  */
 int parse(char *buffer, unsigned int size, unsigned int *offset);
+
+/**
+ * init_key_params() - Initialize the key parameters of a Security Operation.
+ * @key: Key parameters.
+ *
+ * This function initializes the key parameters of a Security Operation.
+ *
+ * Return:
+ * none.
+ */
+void init_key_params(struct op_key *key);
 
 /**
  * init_database() - Initialize the Configuration database.
@@ -348,6 +407,16 @@ int store_operation_params(enum operation_id operation_id, void *params,
 			   enum subsystem_id subsystem_id);
 
 /**
+ * print_key_params() - Print the Key parameters of a Security Operation.
+ *
+ * This function prints the Key parameters of a Security Operation.
+ *
+ * Return:
+ * none.
+ */
+void print_key_params(struct op_key *key);
+
+/**
  * print_database() - Print the Configuration database.
  *
  * This function prints the Configuration database.
@@ -356,51 +425,6 @@ int store_operation_params(enum operation_id operation_id, void *params,
  * none.
  */
 void print_database(void);
-
-/**
- * print_key_params() - Print the Key Security Operations configuration.
- *
- * This function prints the Key Security Operations configuration.
- *
- * Return:
- * none.
- */
-void print_key_params(void *params);
-
-/**
- * print_hash_params() - Print the Hash configuration.
- *
- * This function prints the Hash configuration.
- *
- * Return:
- * none.
- */
-void print_hash_params(void *params);
-
-/**
- * print_sign_verify_params() - Print the Sign and Verify configuration.
- *
- * This function prints the Sign and Verify configuration.
- *
- * Return:
- * none.
- */
-void print_sign_verify_params(void *params);
-
-/**
- * check_security_size() - Check if the Security size if configured.
- * @security_size: .
- * @key_size_min: .
- * @key_size_max: .
- *
- * This function checks if the Security size if configured.
- *
- * Return:
- * * true:	- the Security size is within the range.
- * * false:	- the Security size is outside the range.
- */
-bool check_security_size(unsigned int security_size, unsigned int key_size_min,
-			 unsigned int key_size_max);
 
 /**
  * get_load_method_id() - Get the load method ID associated to a name.
@@ -439,6 +463,33 @@ int get_operation_id(const char *name, enum operation_id *id);
  * * false:	- parameter value is not configured.
  */
 bool check_id(unsigned int id, unsigned long bitmap);
+
+/**
+ * check_size() - Is a size configured.
+ * @size: Key size or random number size.
+ * @range: Range configured.
+ *
+ * This function states if a size is configured for a Security Operation.
+ *
+ * Return:
+ * * true:      - size is configured.
+ * * false:     - size is not configured.
+ */
+bool check_size(unsigned int size, struct range *range);
+
+/**
+ * check_key() - Is a key configured.
+ * @key_identifier: Key identifier.
+ * @key_params: Key parameters.
+ *
+ * This function states if a key is configured for a Security Operation.
+ *
+ * Return:
+ * * true:      - key is configured.
+ * * false:     - key is not configured.
+ */
+bool check_key(struct smw_keymgr_identifier *key_identifier,
+	       struct op_key *key_params);
 
 /**
  * load_subsystems() - Load all configured Secure Subsystems.

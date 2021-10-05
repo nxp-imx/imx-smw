@@ -11,8 +11,9 @@
 #include "compiler.h"
 #include "operations.h"
 #include "subsystems.h"
-#include "common.h"
 #include "config.h"
+
+#include "common.h"
 
 __export enum smw_status_code
 smw_config_subsystem_present(smw_subsystem_t subsystem)
@@ -61,8 +62,9 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 {
 	int status;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
-	enum smw_config_key_type_id keytype_id;
+	enum smw_config_key_type_id key_type_id;
 	struct key_operation_params *params;
+	struct range *key_size_range;
 
 	if (!info || !info->key_type_name)
 		return SMW_STATUS_INVALID_PARAM;
@@ -71,7 +73,7 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_config_get_key_type_id(info->key_type_name, &keytype_id);
+	status = smw_config_get_key_type_id(info->key_type_name, &key_type_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 
@@ -80,17 +82,16 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	if (!check_id(keytype_id, params->key_type_bitmap))
+	if (!check_id(key_type_id, params->key.type_bitmap))
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
+	key_size_range = &params->key.size_range[key_type_id];
 	if (info->security_size) {
-		if (!check_security_size(info->security_size,
-					 params->key_size_min,
-					 params->key_size_max))
+		if (!check_size(info->security_size, key_size_range))
 			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 	} else {
-		info->security_size_min = params->key_size_min;
-		info->security_size_max = params->key_size_max;
+		info->security_size_min = key_size_range->min;
+		info->security_size_max = key_size_range->max;
 	}
 
 	return SMW_STATUS_OK;
@@ -102,7 +103,7 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 {
 	int status;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
-	enum smw_config_key_type_id keytype_id;
+	enum smw_config_key_type_id key_type_id;
 	enum smw_config_hash_algo_id algo_id;
 	enum smw_config_sign_type_id sign_type_id;
 	struct sign_verify_params *params;
@@ -114,7 +115,7 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_config_get_key_type_id(info->key_type_name, &keytype_id);
+	status = smw_config_get_key_type_id(info->key_type_name, &key_type_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 
@@ -123,7 +124,7 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 		return status;
 
 	/* Check key type */
-	if (!check_id(keytype_id, params->key_type_bitmap))
+	if (!check_id(key_type_id, params->key.type_bitmap))
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	/* Check hash algorithm if set */
@@ -169,7 +170,7 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 {
 	int status;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
-	enum smw_config_key_type_id keytype_id;
+	enum smw_config_key_type_id key_type_id;
 	enum smw_config_cipher_op_type_id op_type_id;
 	enum smw_config_cipher_mode_id mode_id;
 	enum operation_id op_id;
@@ -182,7 +183,7 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_config_get_key_type_id(info->key_type_name, &keytype_id);
+	status = smw_config_get_key_type_id(info->key_type_name, &key_type_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 
@@ -204,7 +205,7 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 		return status;
 
 	/* Check key type */
-	if (!check_id(keytype_id, params->key_type_bitmap))
+	if (!check_id(key_type_id, params->key.type_bitmap))
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	/* Check operation mode*/

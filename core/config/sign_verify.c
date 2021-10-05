@@ -47,18 +47,22 @@ static int sign_verify_read_params(char **start, char *end,
 	char *cur = *start;
 
 	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1];
-	int length;
-
-	unsigned long algo_bitmap = SMW_ALL_ONES;
-	unsigned long key_type_bitmap = SMW_ALL_ONES;
-	unsigned long sign_type_bitmap = SMW_ALL_ONES;
-
-	unsigned int key_size_min = 0;
-	unsigned int key_size_max = UINT_MAX;
+	unsigned int length;
 
 	struct sign_verify_params *p;
+	unsigned long key_size_range_bitmap = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	p = SMW_UTILS_CALLOC(1, sizeof(*p));
+	if (!p) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+
+	p->operation_id = operation_id;
+	init_key_params(&p->key);
+	p->sign_type_bitmap = SMW_ALL_ONES;
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
 		status = read_params_name(&cur, end, buffer);
@@ -70,24 +74,19 @@ static int sign_verify_read_params(char **start, char *end,
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values, length)) {
-			status = read_hash_algo_names(&cur, end, &algo_bitmap);
-			if (status != SMW_STATUS_OK)
-				goto end;
-		} else if (!SMW_UTILS_STRNCMP(buffer, key_type_values,
-					      length)) {
-			status = read_key_type_names(&cur, end,
-						     &key_type_bitmap);
-			if (status != SMW_STATUS_OK)
-				goto end;
-		} else if (!SMW_UTILS_STRNCMP(buffer, key_size_range, length)) {
-			status = read_range(&cur, end, &key_size_min,
-					    &key_size_max);
+			status = read_hash_algo_names(&cur, end,
+						      &p->algo_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, sign_type_values,
 					      length)) {
-			status = read_signature_type_names(&cur, end,
-							   &sign_type_bitmap);
+			status =
+				read_signature_type_names(&cur, end,
+							  &p->sign_type_bitmap);
+			if (status != SMW_STATUS_OK)
+				goto end;
+		} else if (read_key(buffer, length, &cur, end,
+				    &key_size_range_bitmap, &p->key, &status)) {
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else {
@@ -99,24 +98,20 @@ static int sign_verify_read_params(char **start, char *end,
 		skip_insignificant_chars(&cur, end);
 	}
 
-	p = SMW_UTILS_MALLOC(sizeof(struct sign_verify_params));
-	if (!p) {
-		status = SMW_STATUS_ALLOC_FAILURE;
-		goto end;
-	}
+	if (!p->algo_bitmap)
+		p->algo_bitmap = SMW_ALL_ONES;
 
-	p->operation_id = operation_id;
-	p->algo_bitmap = algo_bitmap;
-	p->key_type_bitmap = key_type_bitmap;
-	p->key_size_min = key_size_min;
-	p->key_size_max = key_size_max;
-	p->sign_type_bitmap = sign_type_bitmap;
+	if (!p->key.type_bitmap)
+		p->key.type_bitmap = SMW_ALL_ONES;
 
 	*params = p;
 
 	*start = cur;
 
 end:
+	if (p && status != SMW_STATUS_OK)
+		SMW_UTILS_FREE(p);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -157,22 +152,14 @@ static int check_subsystem_caps(void *args, void *params)
 	struct smw_crypto_sign_verify_args *sign_verify_args = args;
 	struct sign_verify_params *sign_verify_params = params;
 
-	enum smw_config_key_type_id key_type_id =
-		sign_verify_args->key_descriptor.identifier.type_id;
-	unsigned int security_size =
-		sign_verify_args->key_descriptor.identifier.security_size;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!check_id(sign_verify_args->algo_id,
 		      sign_verify_params->algo_bitmap) ||
-	    !check_id(key_type_id, sign_verify_params->key_type_bitmap) ||
-	    !check_security_size(security_size,
-				 sign_verify_params->key_size_min,
-				 sign_verify_params->key_size_max) ||
+	    !check_key(&sign_verify_args->key_descriptor.identifier,
+		       &sign_verify_params->key) ||
 	    !check_id(sign_verify_args->attributes.signature_type,
 		      sign_verify_params->sign_type_bitmap))
-
 		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

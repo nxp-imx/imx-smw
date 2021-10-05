@@ -5,6 +5,7 @@
 
 #include "smw_status.h"
 
+#include "compiler.h"
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
@@ -42,6 +43,19 @@ static const char *const load_method_names[] = {
 	[LOAD_METHOD_ID_AT_CONTEXT_CREATION_DESTRUCTION] =
 		"AT_CONTEXT_CREATION_DESTRUCTION"
 };
+
+void init_key_params(struct op_key *key)
+{
+	unsigned int i;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key->type_bitmap = 0;
+	for (i = 0; i < ARRAY_SIZE(key->size_range); i++) {
+		key->size_range[i].min = 0;
+		key->size_range[i].max = UINT_MAX;
+	}
+}
 
 static void init_subsystem(struct subsystem *subsystem, bool reset)
 {
@@ -339,7 +353,12 @@ int get_operation_id(const char *name, enum operation_id *id)
 	return status;
 }
 
-__attribute__((weak)) void print_database(void)
+__weak void print_key_params(struct op_key *key)
+{
+	(void)key;
+}
+
+__weak void print_database(void)
 {
 }
 
@@ -379,6 +398,26 @@ bool check_id(unsigned int id, unsigned long bitmap)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return get_bit(bitmap, sizeof(bitmap) << 3, id);
+}
+
+bool check_size(unsigned int size, struct range *range)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return ((size >= range->min) && (size <= range->max)) ? true : false;
+}
+
+bool check_key(struct smw_keymgr_identifier *key_identifier,
+	       struct op_key *key_params)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!check_id(key_identifier->type_id, key_params->type_bitmap) ||
+	    !check_size(key_identifier->security_size,
+			&key_params->size_range[key_identifier->type_id]))
+		return false;
+
+	return true;
 }
 
 struct operation_func *smw_config_get_operation_func(enum operation_id id)

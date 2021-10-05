@@ -103,15 +103,21 @@ static int cipher_common_read_params(char **start, char *end,
 	char *cur = *start;
 
 	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1];
-	int length;
-
-	unsigned long mode_bitmap = SMW_ALL_ONES;
-	unsigned long key_type_bitmap = SMW_ALL_ONES;
-	unsigned long op_bitmap = SMW_ALL_ONES;
+	unsigned int length;
 
 	struct cipher_params *p;
+	unsigned long key_size_range_bitmap = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	p = SMW_UTILS_CALLOC(1, sizeof(*p));
+	if (!p) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+
+	p->operation_id = operation_id;
+	init_key_params(&p->key);
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
 		status = read_params_name(&cur, end, buffer);
@@ -123,19 +129,17 @@ static int cipher_common_read_params(char **start, char *end,
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, mode_values, length)) {
-			status =
-				read_cipher_mode_names(&cur, end, &mode_bitmap);
-			if (status != SMW_STATUS_OK)
-				goto end;
-		} else if (!SMW_UTILS_STRNCMP(buffer, key_type_values,
-					      length)) {
-			status = read_key_type_names(&cur, end,
-						     &key_type_bitmap);
+			status = read_cipher_mode_names(&cur, end,
+							&p->mode_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, op_type_values, length)) {
 			status = read_cipher_op_type_names(&cur, end,
-							   &op_bitmap);
+							   &p->op_bitmap);
+			if (status != SMW_STATUS_OK)
+				goto end;
+		} else if (read_key(buffer, length, &cur, end,
+				    &key_size_range_bitmap, &p->key, &status)) {
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else {
@@ -147,22 +151,23 @@ static int cipher_common_read_params(char **start, char *end,
 		skip_insignificant_chars(&cur, end);
 	}
 
-	p = SMW_UTILS_MALLOC(sizeof(*p));
-	if (!p) {
-		status = SMW_STATUS_ALLOC_FAILURE;
-		goto end;
-	}
+	if (!p->mode_bitmap)
+		p->mode_bitmap = SMW_ALL_ONES;
 
-	p->operation_id = operation_id;
-	p->mode_bitmap = mode_bitmap;
-	p->key_type_bitmap = key_type_bitmap;
-	p->op_bitmap = op_bitmap;
+	if (!p->key.type_bitmap)
+		p->key.type_bitmap = SMW_ALL_ONES;
+
+	if (!p->op_bitmap)
+		p->op_bitmap = SMW_ALL_ONES;
 
 	*params = p;
 
 	*start = cur;
 
 end:
+	if (p && status != SMW_STATUS_OK)
+		SMW_UTILS_FREE(p);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -219,7 +224,6 @@ static int check_common_subsystem_caps(void *args, void *params)
 	unsigned int i;
 	struct smw_crypto_cipher_args *cipher_args = args;
 	struct cipher_params *cipher_params = params;
-	enum smw_config_key_type_id key_type_id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -227,12 +231,10 @@ static int check_common_subsystem_caps(void *args, void *params)
 	    !check_id(cipher_args->op_id, cipher_params->op_bitmap))
 		goto end;
 
-	for (i = 0; i < cipher_args->nb_keys; i++) {
-		key_type_id = cipher_args->keys_desc[i]->identifier.type_id;
-
-		if (!check_id(key_type_id, cipher_params->key_type_bitmap))
+	for (i = 0; i < cipher_args->nb_keys; i++)
+		if (!check_key(&cipher_args->keys_desc[i]->identifier,
+			       &cipher_params->key))
 			goto end;
-	}
 
 	status = SMW_STATUS_OK;
 

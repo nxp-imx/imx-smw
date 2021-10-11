@@ -14,6 +14,7 @@ static void print_node(struct node *node)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	SMW_DBG_PRINTF(DEBUG, "Reference: %d\n", node->ref);
 	SMW_DBG_PRINTF(DEBUG, "Data: %p\n", node->data);
 	if (node->printer)
 		node->printer(node->data);

@@ -47,6 +47,7 @@ void smw_utils_list_destroy(struct smw_utils_list *list);
 /**
  * smw_utils_list_append_data() - Append data to the linked list.
  * @list: Pointer to a linked list.
+ * @ref: Reference associated to the data to be stored.
  * @data: Pointer to the data to be stored.
  * @print: Pointer to a dedicated function to print the data.
  *
@@ -58,24 +59,65 @@ void smw_utils_list_destroy(struct smw_utils_list *list);
  * * false	- the operation has failed.
  */
 bool smw_utils_list_append_data(struct smw_utils_list *list, void *data,
-				void (*print)(void *));
+				unsigned int ref, void (*print)(void *));
 
 /**
- * smw_utils_list_find_data() - Find data from the linked list.
- * @list: Pointer to a linked list.
- * @filter: Pointer to criteria to find a node in the list.
- * @match: Pointer to a dedicated function that matches
- *         the data contained in a node and the criteria pointed by filter.
+ * smw_utils_list_find_first() - Return address of the first node.
+ * @list: Linked list.
+ * @ref: Pointer to the reference associated to the node.
  *
- * This function returns the pointer to the data
- * contained in the node matching the criteria if any.
+ * Parameter @ref may be NULL.
+ * If NULL, the function returns the address of the first node.
+ * If not NULL, the function returns the address of the first node matching @ref
+ * or NULL if none is matching.
  *
  * Return:
- * * pointer to the data if found
- * * NULL
+ * Address of the first node of @list.
+ * Address of the first node associated to @ref.
+ * NULL.
  */
-void *smw_utils_list_find_data(struct smw_utils_list *list, void *filter,
-			       bool (*match)(void *, void *));
+struct node *smw_utils_list_find_first(struct smw_utils_list *list,
+				       unsigned int *ref);
+
+/**
+ * smw_utils_list_find_next() - Return address of the next node.
+ * @node: A node from a list.
+ * @ref: Pointer to the reference associated to the node.
+ *
+ * Parameter @node must be a valid node.
+ * Parameter @ref may be NULL.
+ * If NULL, the function returns the address of the next node.
+ * If not NULL, the function returns the address of the next node matching @ref
+ * or NULL if none is matching.
+ *
+ * Return:
+ * Address of the next node in @list.
+ * Address of the next node associated to @ref.
+ * NULL.
+ */
+struct node *smw_utils_list_find_next(struct node *node, unsigned int *ref);
+
+/**
+ * smw_utils_list_get_ref() - Return reference associated to the node.
+ * @node: A node from a list.
+ *
+ * Parameter @node must be a valid node.
+ *
+ * Return:
+ * Reference associated to the node.
+ */
+unsigned int smw_utils_list_get_ref(struct node *node);
+
+/**
+ * smw_utils_list_get_data() - Return address of the node data.
+ * @node: A node from a list.
+ *
+ * Parameter @node must be a valid node.
+ *
+ * Return:
+ * Address of the data stored by the node.
+ */
+void *smw_utils_list_get_data(struct node *node);
 
 /**
  * smw_utils_list_print() - Print the linked list.

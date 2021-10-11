@@ -8,6 +8,7 @@
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
+#include "list.h"
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
@@ -19,8 +20,6 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 {
 	int status = SMW_STATUS_OK;
 
-	void *params = NULL;
-	struct operation_func *operation_func;
 	struct subsystem_func *subsystem_func;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -29,22 +28,13 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 		       smw_config_get_operation_name(operation_id),
 		       operation_id);
 
-	operation_func = smw_config_get_operation_func(operation_id);
-
-	SMW_DBG_ASSERT(operation_func);
-	SMW_DBG_ASSERT(operation_func->check_subsystem_caps);
-
-	status = smw_config_get_subsystem_caps(&subsystem_id, operation_id,
-					       &params);
-	if (status != SMW_STATUS_OK)
-		return status;
-
 	/*
 	 * For update and final operation no need to check subsystem
 	 * capabilities and load subsystem. This is done at initialization
 	 */
 	if (op_step == SMW_OP_STEP_INIT || op_step == SMW_OP_STEP_ONESHOT) {
-		status = operation_func->check_subsystem_caps(args, params);
+		status = smw_config_select_subsystem(operation_id, args,
+						     &subsystem_id);
 		if (status != SMW_STATUS_OK)
 			return status;
 

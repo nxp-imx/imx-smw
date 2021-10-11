@@ -11,6 +11,7 @@ ${ENUM_OPERATION_ID} {
 
 ${STRUCT_OPERATION_FUNC} {
 	int (*read)(char **start, char *end, void **params);
+	void (*merge)(void *caps, void *params);
 	void (*print)(void *params);
 	int (*check_subsystem_caps)(void *args, void *params);
 };

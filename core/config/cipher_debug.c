@@ -25,10 +25,9 @@ void cipher_common_print_params(void *params)
 		return;
 
 	SMW_DBG_PRINTF(DEBUG,
-		       "%s params:\n"
+		       "Params:\n"
 		       "    mode_bitmap: %.8lX\n"
 		       "    op_bitmap: %.8lX\n",
-		       smw_config_get_operation_name(p->operation_id),
 		       p->mode_bitmap, p->op_bitmap);
 
 	print_key_params(&p->key);

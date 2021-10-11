@@ -56,7 +56,6 @@ static int hmac_read_params(char **start, char *end, void **params)
 		goto end;
 	}
 
-	p->operation_id = OPERATION_ID_HMAC;
 	init_key_params(&p->key);
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
@@ -102,6 +101,17 @@ end:
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+static void hmac_merge_params(void *caps, void *params)
+{
+	struct hmac_params *hmac_caps = caps;
+	struct hmac_params *hmac_params = params;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	hmac_caps->algo_bitmap |= hmac_params->algo_bitmap;
+	merge_key_params(&hmac_caps->key, &hmac_params->key);
 }
 
 __weak void hmac_print_params(void *params)

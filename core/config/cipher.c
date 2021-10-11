@@ -95,9 +95,7 @@ static int read_cipher_mode_names(char **start, char *end,
  * Return:
  * error code.
  */
-static int cipher_common_read_params(char **start, char *end,
-				     enum operation_id operation_id,
-				     void **params)
+static int cipher_common_read_params(char **start, char *end, void **params)
 {
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
@@ -116,7 +114,6 @@ static int cipher_common_read_params(char **start, char *end,
 		goto end;
 	}
 
-	p->operation_id = operation_id;
 	init_key_params(&p->key);
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
@@ -174,19 +171,34 @@ end:
 
 static int cipher_read_params(char **start, char *end, void **params)
 {
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return cipher_common_read_params(start, end, OPERATION_ID_CIPHER,
-					 params);
+	return cipher_common_read_params(start, end, params);
 }
 
 static int cipher_multi_part_read_params(char **start, char *end, void **params)
 {
+	return cipher_common_read_params(start, end, params);
+}
+
+static void cipher_common_merge_params(void *caps, void *params)
+{
+	struct cipher_params *cipher_caps = caps;
+	struct cipher_params *cipher_params = params;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return cipher_common_read_params(start, end,
-					 OPERATION_ID_CIPHER_MULTI_PART,
-					 params);
+	cipher_caps->mode_bitmap |= cipher_params->mode_bitmap;
+	cipher_caps->op_bitmap |= cipher_params->op_bitmap;
+	merge_key_params(&cipher_caps->key, &cipher_params->key);
+}
+
+static void cipher_merge_params(void *caps, void *params)
+{
+	return cipher_common_merge_params(caps, params);
+}
+
+static void cipher_multi_part_merge_params(void *caps, void *params)
+{
+	return cipher_common_merge_params(caps, params);
 }
 
 __weak void cipher_common_print_params(void *params)

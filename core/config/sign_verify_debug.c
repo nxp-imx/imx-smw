@@ -25,10 +25,9 @@ void sign_verify_print_params(void *params)
 		return;
 
 	SMW_DBG_PRINTF(DEBUG,
-		       "%s params:\n"
+		       "Params:\n"
 		       "    algo_bitmap: %.8lX\n"
 		       "    sign_type_bitmap: %.8lX\n",
-		       smw_config_get_operation_name(p->operation_id),
 		       p->algo_bitmap, p->sign_type_bitmap);
 
 	print_key_params(&p->key);

@@ -162,7 +162,6 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 		goto end;
 	}
 
-	p->operation_id = operation_id;
 	init_key_params(&p->key);
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
@@ -250,6 +249,17 @@ static int delete_key_read_params(char **start, char *end, void **params)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return read_params(start, end, OPERATION_ID_DELETE_KEY, params);
+}
+
+static void merge_params(void *caps, void *params)
+{
+	struct key_operation_params *key_operation_caps = caps;
+	struct key_operation_params *key_operation_params = params;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key_operation_caps->op_bitmap |= key_operation_params->op_bitmap;
+	merge_key_params(&key_operation_caps->key, &key_operation_params->key);
 }
 
 __weak void print_key_operation_params(void *params)
@@ -377,6 +387,7 @@ static int delete_key_check_subsystem_caps(void *args, void *params)
 #define DEFINE_KEYMGR_OPERATION_FUNC(operation)                                \
 	struct operation_func operation##_func = {                             \
 		.read = operation##_read_params,                               \
+		.merge = merge_params,                                         \
 		.print = print_key_operation_params,                           \
 		.check_subsystem_caps = operation##_check_subsystem_caps,      \
 	};                                                                     \

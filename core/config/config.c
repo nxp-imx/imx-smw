@@ -32,7 +32,7 @@ __export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
 	int status;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
 	enum smw_config_hash_algo_id algo_id;
-	struct hash_params *params;
+	struct hash_params params = { 0 };
 
 	if (!algo)
 		return SMW_STATUS_INVALID_PARAM;
@@ -45,12 +45,11 @@ __export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_config_get_subsystem_caps(&id, OPERATION_ID_HASH,
-					       (void **)&params);
+	status = get_operation_params(OPERATION_ID_HASH, id, &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	if (!check_id(algo_id, params->algo_bitmap))
+	if (!check_id(algo_id, params.algo_bitmap))
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	return SMW_STATUS_OK;
@@ -63,7 +62,7 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 	int status;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
 	enum smw_config_key_type_id key_type_id;
-	struct key_operation_params *params;
+	struct key_operation_params params = { 0 };
 	struct range *key_size_range;
 
 	if (!info || !info->key_type_name)
@@ -77,15 +76,14 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_config_get_subsystem_caps(&id, OPERATION_ID_GENERATE_KEY,
-					       (void **)&params);
+	status = get_operation_params(OPERATION_ID_GENERATE_KEY, id, &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	if (!check_id(key_type_id, params->key.type_bitmap))
+	if (!check_id(key_type_id, params.key.type_bitmap))
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
-	key_size_range = &params->key.size_range[key_type_id];
+	key_size_range = &params.key.size_range[key_type_id];
 	if (info->security_size) {
 		if (!check_size(info->security_size, key_size_range))
 			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
@@ -106,7 +104,7 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	enum smw_config_key_type_id key_type_id;
 	enum smw_config_hash_algo_id algo_id;
 	enum smw_config_sign_type_id sign_type_id;
-	struct sign_verify_params *params;
+	struct sign_verify_params params = { 0 };
 
 	if (!info || !info->key_type_name)
 		return SMW_STATUS_INVALID_PARAM;
@@ -119,12 +117,12 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_config_get_subsystem_caps(&id, op_id, (void **)&params);
+	status = get_operation_params(op_id, id, &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 
 	/* Check key type */
-	if (!check_id(key_type_id, params->key.type_bitmap))
+	if (!check_id(key_type_id, params.key.type_bitmap))
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	/* Check hash algorithm if set */
@@ -133,7 +131,7 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 		if (status != SMW_STATUS_OK)
 			return status;
 
-		if (!check_id(algo_id, params->algo_bitmap))
+		if (!check_id(algo_id, params.algo_bitmap))
 			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 	}
 
@@ -144,7 +142,7 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 		if (status != SMW_STATUS_OK)
 			return status;
 
-		if (!check_id(sign_type_id, params->sign_type_bitmap))
+		if (!check_id(sign_type_id, params.sign_type_bitmap))
 			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 	}
 
@@ -174,7 +172,7 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	enum smw_config_cipher_op_type_id op_type_id;
 	enum smw_config_cipher_mode_id mode_id;
 	enum operation_id op_id;
-	struct cipher_params *params;
+	struct cipher_params params = { 0 };
 
 	if (!info || !info->key_type_name || !info->mode || !info->op_type)
 		return SMW_STATUS_INVALID_PARAM;
@@ -200,20 +198,20 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	else
 		op_id = OPERATION_ID_CIPHER;
 
-	status = smw_config_get_subsystem_caps(&id, op_id, (void **)&params);
+	status = get_operation_params(op_id, id, &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 
 	/* Check key type */
-	if (!check_id(key_type_id, params->key.type_bitmap))
+	if (!check_id(key_type_id, params.key.type_bitmap))
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	/* Check operation mode*/
-	if (!check_id(mode_id, params->mode_bitmap))
+	if (!check_id(mode_id, params.mode_bitmap))
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	/* Check operation type */
-	if (!check_id(op_type_id, params->op_bitmap))
+	if (!check_id(op_type_id, params.op_bitmap))
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	return SMW_STATUS_OK;

@@ -25,7 +25,7 @@ void hmac_print_params(void *params)
 		return;
 
 	SMW_DBG_PRINTF(DEBUG,
-		       "HMAC params:\n"
+		       "Params:\n"
 		       "    algo_bitmap: %.8lX\n",
 		       p->algo_bitmap);
 

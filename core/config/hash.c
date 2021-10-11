@@ -78,7 +78,6 @@ static int hash_read_params(char **start, char *end, void **params)
 		goto end;
 	}
 
-	p->operation_id = OPERATION_ID_HASH;
 	p->algo_bitmap = algo_bitmap;
 
 	*params = p;
@@ -88,6 +87,16 @@ static int hash_read_params(char **start, char *end, void **params)
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+static void hash_merge_params(void *caps, void *params)
+{
+	struct hash_params *hash_caps = caps;
+	struct hash_params *hash_params = params;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	hash_caps->algo_bitmap |= hash_params->algo_bitmap;
 }
 
 __weak void hash_print_params(void *params)

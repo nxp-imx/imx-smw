@@ -12,6 +12,7 @@
 #include "list.h"
 #include "operations.h"
 #include "subsystems.h"
+#include "config.h"
 
 #include "common.h"
 #include "database.h"
@@ -37,40 +38,35 @@ void print_database(void)
 	bool configured;
 	enum subsystem_state state;
 	enum load_method_id load_method_id;
-	unsigned long operations_bitmap;
-	struct smw_utils_list *operations_caps_list;
+	struct operation *operation;
 
 	SMW_DBG_PRINTF(INFO, "PSA default subsystem: %d\n",
 		       database.psa_default_subsystem_id);
 
-	SMW_DBG_PRINTF(INFO, "Secure subsystems capabilities:\n");
+	SMW_DBG_PRINTF(INFO, "Secure subsystems:\n");
 	for (i = 0; i < SUBSYSTEM_ID_NB; i++) {
 		subsystem = &database.subsystem[i];
 		configured = subsystem->configured;
 		state = subsystem->state;
 		load_method_id = subsystem->load_method_id;
-		operations_bitmap = subsystem->operations_bitmap;
-		operations_caps_list = &subsystem->operations_caps_list;
 
 		SMW_DBG_PRINTF(INFO,
 			       "\n%s%d\n"
 			       "%s%s\n"
 			       "%s%d\n"
-			       "%s%d\n"
-			       "%s%lX\n",
+			       "%s%d\n",
 			       "    id                : ", i,
 			       "    configured        : ",
 			       configured ? "true" : "false",
 			       "    state             : ", state,
-			       "    load/unload method: ", load_method_id,
-			       "    operations_bitmap : ", operations_bitmap);
-		if (configured)
-			smw_utils_list_print(operations_caps_list);
+			       "    load/unload method: ", load_method_id);
 	}
 
-	SMW_DBG_PRINTF(INFO, "Default subsystems:\n");
+	SMW_DBG_PRINTF(INFO, "Security operations:\n");
 	for (i = 0; i < OPERATION_ID_NB; i++) {
-		SMW_DBG_PRINTF(INFO, "    [%d] = %d\n", i,
-			       database.operation[i]);
+		SMW_DBG_PRINTF(INFO, "%s%s\n", "    operation: ",
+			       smw_config_get_operation_name(i));
+		operation = &database.operation[i];
+		smw_utils_list_print(&operation->subsystems_list);
 	}
 }

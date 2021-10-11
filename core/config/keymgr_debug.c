@@ -25,9 +25,8 @@ void print_key_operation_params(void *params)
 		return;
 
 	SMW_DBG_PRINTF(DEBUG,
-		       "%s params:\n"
+		       "Params:\n"
 		       "    op_bitmap: %.8lX\n",
-		       smw_config_get_operation_name(p->operation_id),
 		       p->op_bitmap);
 
 	print_key_params(&p->key);

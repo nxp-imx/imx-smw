@@ -39,9 +39,7 @@ static int read_signature_type_names(char **start, char *end,
 			  SMW_CONFIG_SIGN_TYPE_ID_NB);
 }
 
-static int sign_verify_read_params(char **start, char *end,
-				   enum operation_id operation_id,
-				   void **params)
+static int sign_verify_read_params(char **start, char *end, void **params)
 {
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
@@ -60,7 +58,6 @@ static int sign_verify_read_params(char **start, char *end,
 		goto end;
 	}
 
-	p->operation_id = operation_id;
 	init_key_params(&p->key);
 	p->sign_type_bitmap = SMW_ALL_ONES;
 
@@ -118,16 +115,35 @@ end:
 
 static int sign_read_params(char **start, char *end, void **params)
 {
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return sign_verify_read_params(start, end, OPERATION_ID_SIGN, params);
+	return sign_verify_read_params(start, end, params);
 }
 
 static int verify_read_params(char **start, char *end, void **params)
 {
+	return sign_verify_read_params(start, end, params);
+}
+
+static void sign_verify_merge_params(void *caps, void *params)
+{
+	struct sign_verify_params *sign_verify_caps = caps;
+	struct sign_verify_params *sign_verify_params = params;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return sign_verify_read_params(start, end, OPERATION_ID_VERIFY, params);
+	sign_verify_caps->algo_bitmap |= sign_verify_params->algo_bitmap;
+	sign_verify_caps->sign_type_bitmap |=
+		sign_verify_params->sign_type_bitmap;
+	merge_key_params(&sign_verify_caps->key, &sign_verify_params->key);
+}
+
+static void sign_merge_params(void *caps, void *params)
+{
+	sign_verify_merge_params(caps, params);
+}
+
+static void verify_merge_params(void *caps, void *params)
+{
+	sign_verify_merge_params(caps, params);
 }
 
 __weak void sign_verify_print_params(void *params)

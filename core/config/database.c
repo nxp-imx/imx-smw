@@ -57,19 +57,25 @@ void init_key_params(struct op_key *key)
 	}
 }
 
-static void init_subsystem(struct subsystem *subsystem, bool reset)
+static void init_subsystem(struct subsystem *subsystem)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	subsystem->configured = false;
 	subsystem->state = SUBSYSTEM_STATE_UNLOADED;
-	subsystem->load_method_id = LOAD_METHOD_ID_DEFAULT;
-	subsystem->operations_bitmap = 0;
+	subsystem->load_method_id = LOAD_METHOD_ID_INVALID;
+}
+
+static void init_operation(struct operation *operation, bool reset)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
 	if (reset)
-		smw_utils_list_destroy(&subsystem->operations_caps_list);
+		smw_utils_list_destroy(&operation->subsystems_list);
 	else
-		smw_utils_list_init(&subsystem->operations_caps_list);
-	smw_utils_list_print(&subsystem->operations_caps_list);
+		smw_utils_list_init(&operation->subsystems_list);
+
+	smw_utils_list_print(&operation->subsystems_list);
 }
 
 void init_database(bool reset)
@@ -81,10 +87,10 @@ void init_database(bool reset)
 	database.psa_default_subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	for (i = 0; i < SUBSYSTEM_ID_NB; i++)
-		init_subsystem(&database.subsystem[i], reset);
+		init_subsystem(&database.subsystem[i]);
 
 	for (i = 0; i < OPERATION_ID_NB; i++)
-		database.operation[i] = SUBSYSTEM_ID_INVALID;
+		init_operation(&database.operation[i], reset);
 }
 
 void set_psa_default_subsystem(enum subsystem_id id)
@@ -159,56 +165,46 @@ static enum subsystem_state get_subsystem_state(enum subsystem_id id)
 	return database.subsystem[index].state;
 }
 
-void set_subsystem_load_method(enum subsystem_id id,
-			       enum load_method_id load_method_id)
+int set_subsystem_load_method(enum subsystem_id id,
+			      enum load_method_id load_method_id)
 {
+	int status = SMW_STATUS_OK;
 	unsigned int index = id;
+	struct subsystem *subsystem;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SUBSYSTEM_ID_ASSERT(id);
 
-	database.subsystem[index].load_method_id = load_method_id;
+	subsystem = &database.subsystem[index];
+
+	if (load_method_id != LOAD_METHOD_ID_INVALID) {
+		if (subsystem->load_method_id == LOAD_METHOD_ID_INVALID)
+			/* Load/unload method not specified yet */
+			subsystem->load_method_id = load_method_id;
+		else
+			/* Load/unload method already specified */
+			status = SMW_STATUS_LOAD_METHOD_DUPLICATE;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 static enum load_method_id get_subsystem_load_method_id(enum subsystem_id id)
 {
+	enum load_method_id load_method_id;
 	unsigned int index = id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SUBSYSTEM_ID_ASSERT(id);
 
-	return database.subsystem[index].load_method_id;
-}
+	load_method_id = database.subsystem[index].load_method_id;
+	if (load_method_id == LOAD_METHOD_ID_INVALID)
+		load_method_id = LOAD_METHOD_ID_DEFAULT;
 
-void set_subsystem_operation_bitmap(enum subsystem_id subsystem_id,
-				    enum operation_id operation_id)
-{
-	unsigned int index = subsystem_id;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SUBSYSTEM_ID_ASSERT(subsystem_id);
-	OPERATION_ID_ASSERT(operation_id);
-
-	set_bit(&database.subsystem[index].operations_bitmap,
-		sizeof(database.subsystem[index].operations_bitmap) << 3,
-		operation_id);
-}
-
-void set_subsystem_default(enum operation_id operation_id,
-			   enum subsystem_id subsystem_id, bool is_default)
-{
-	unsigned int index = operation_id;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SUBSYSTEM_ID_ASSERT(subsystem_id);
-	OPERATION_ID_ASSERT(operation_id);
-
-	if (is_default || database.operation[index] == SUBSYSTEM_ID_INVALID)
-		database.operation[index] = subsystem_id;
+	return load_method_id;
 }
 
 void smw_config_notify_subsystem_failure(enum subsystem_id id)
@@ -227,56 +223,13 @@ void smw_config_notify_subsystem_failure(enum subsystem_id id)
 	smw_utils_mutex_unlock(ctx.mutex);
 }
 
-static int get_subsystem_default(enum operation_id operation_id,
-				 enum subsystem_id *subsystem_id)
-{
-	int status = SMW_STATUS_OK;
-
-	unsigned int index = operation_id;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_ASSERT(subsystem_id);
-	OPERATION_ID_ASSERT(operation_id);
-
-	*subsystem_id = database.operation[index];
-
-	if (*subsystem_id == SUBSYSTEM_ID_INVALID)
-		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-/* The first fields of all Security operations params structures
- * must be the Security operation id
- */
-static bool match_operation_id(void *params, void *filter)
-{
-	return (*((enum operation_id *)params) ==
-		*((enum operation_id *)filter));
-}
-
-static void *find_operation_params(enum operation_id operation_id,
-				   enum subsystem_id subsystem_id)
-{
-	unsigned int index = subsystem_id;
-
-	struct smw_utils_list *list;
-
-	list = &database.subsystem[index].operations_caps_list;
-
-	return smw_utils_list_find_data(list, &operation_id,
-					match_operation_id);
-}
-
 int store_operation_params(enum operation_id operation_id, void *params,
 			   struct operation_func *func,
 			   enum subsystem_id subsystem_id)
 {
 	int status = SMW_STATUS_OK;
 
-	unsigned int index = subsystem_id;
+	unsigned int index = operation_id;
 	struct smw_utils_list *list;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -285,19 +238,11 @@ int store_operation_params(enum operation_id operation_id, void *params,
 	OPERATION_ID_ASSERT(operation_id);
 	SMW_DBG_ASSERT(func);
 
-	/* Configuration is syntactically wrong if a Security operation
-	 * is defined more than once for a given Secure subsystem.
-	 */
-	if (find_operation_params(operation_id, subsystem_id)) {
-		status = SMW_STATUS_OPERATION_DUPLICATE;
-		goto end;
-	}
-
-	list = &database.subsystem[index].operations_caps_list;
-	if (!smw_utils_list_append_data(list, params, func->print))
+	list = &database.operation[index].subsystems_list;
+	if (!smw_utils_list_append_data(list, params, subsystem_id,
+					func->print))
 		status = SMW_STATUS_ALLOC_FAILURE;
 
-end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -309,7 +254,7 @@ int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	/*
-	 * If name is NULL, require the default subsytem.
+	 * If name is NULL, require the default subsystem.
 	 * Hence, set the id as invalid by default.
 	 */
 	*id = SUBSYSTEM_ID_INVALID;
@@ -331,7 +276,7 @@ int get_load_method_id(const char *name, enum load_method_id *id)
 	SMW_DBG_ASSERT(name);
 
 	if (!SMW_UTILS_STRLEN(name))
-		*id = LOAD_METHOD_ID_DEFAULT;
+		*id = LOAD_METHOD_ID_INVALID;
 	else
 		status = smw_utils_get_string_index(name, load_method_names,
 						    LOAD_METHOD_ID_NB, id);
@@ -362,31 +307,116 @@ __weak void print_database(void)
 {
 }
 
-int smw_config_get_subsystem_caps(enum subsystem_id *subsystem_id,
-				  enum operation_id operation_id, void **params)
+void merge_key_params(struct op_key *key_caps, struct op_key *key_params)
 {
-	int status = SMW_STATUS_OK;
+	struct range *caps_range = key_caps->size_range;
+	struct range *params_range = key_params->size_range;
+
+	unsigned int i;
+
+	for (i = 0; i < SMW_CONFIG_KEY_TYPE_ID_NB; i++) {
+		if (check_id(i, key_params->type_bitmap)) {
+			if (!check_id(i, key_caps->type_bitmap)) {
+				caps_range[i] = params_range[i];
+			} else {
+				if (caps_range[i].min > params_range[i].min)
+					caps_range[i].min = params_range[i].min;
+				if (caps_range[i].max < params_range[i].max)
+					caps_range[i].max = params_range[i].max;
+			}
+		}
+	}
+
+	key_caps->type_bitmap |= key_params->type_bitmap;
+}
+
+int smw_config_select_subsystem(enum operation_id operation_id, void *args,
+				enum subsystem_id *subsystem_id)
+{
+	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	struct operation_func *operation_func;
+	int (*check_subsystem_caps)(void *args, void *params);
+	unsigned int index = operation_id;
+
+	struct smw_utils_list *list;
+	unsigned int *ref = NULL;
+	struct node *node = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	smw_utils_mutex_lock(ctx.mutex);
-
 	SMW_DBG_ASSERT(subsystem_id);
 
-	if (*subsystem_id == SUBSYSTEM_ID_INVALID) {
-		status = get_subsystem_default(operation_id, subsystem_id);
-		if (status != SMW_STATUS_OK)
-			goto end;
+	operation_func = get_operation_func(operation_id);
+	SMW_DBG_ASSERT(operation_func);
+
+	check_subsystem_caps = operation_func->check_subsystem_caps;
+	SMW_DBG_ASSERT(check_subsystem_caps);
+
+	list = &database.operation[index].subsystems_list;
+
+	if (*subsystem_id != SUBSYSTEM_ID_INVALID)
+		ref = subsystem_id;
+
+	smw_utils_mutex_lock(ctx.mutex);
+
+	node = smw_utils_list_find_first(list, ref);
+	while (node) {
+		status = check_subsystem_caps(args,
+					      smw_utils_list_get_data(node));
+
+		if (status == SMW_STATUS_OK) {
+			*subsystem_id = smw_utils_list_get_ref(node);
+			break;
+		}
+
+		node = smw_utils_list_find_next(node, ref);
 	}
 
-	SMW_DBG_PRINTF(DEBUG, "Secure subsystem id: %d\n", *subsystem_id);
+	smw_utils_mutex_unlock(ctx.mutex);
 
-	*params = find_operation_params(operation_id, *subsystem_id);
+	return status;
+}
 
-	if (!*params)
-		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+int get_operation_params(enum operation_id operation_id,
+			 enum subsystem_id subsystem_id, void *params)
+{
+	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
-end:
+	struct operation_func *operation_func;
+	unsigned int index = operation_id;
+
+	struct smw_utils_list *list;
+	struct node *node = NULL;
+	unsigned int *key = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(params);
+	OPERATION_ID_ASSERT(operation_id);
+
+	SMW_DBG_PRINTF(DEBUG, "Security operation id: %d\n", operation_id);
+	SMW_DBG_PRINTF(DEBUG, "Secure subsystem id: %d\n", subsystem_id);
+
+	operation_func = get_operation_func(operation_id);
+
+	list = &database.operation[index].subsystems_list;
+
+	if (subsystem_id != SUBSYSTEM_ID_INVALID)
+		key = &subsystem_id;
+
+	smw_utils_mutex_lock(ctx.mutex);
+
+	node = smw_utils_list_find_first(list, key);
+	if (node)
+		status = SMW_STATUS_OK;
+
+	while (node) {
+		operation_func->merge(params, smw_utils_list_get_data(node));
+
+		node = smw_utils_list_find_next(node, key);
+	}
+
 	smw_utils_mutex_unlock(ctx.mutex);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -420,7 +450,7 @@ bool check_key(struct smw_keymgr_identifier *key_identifier,
 	return true;
 }
 
-struct operation_func *smw_config_get_operation_func(enum operation_id id)
+struct operation_func *get_operation_func(enum operation_id id)
 {
 	unsigned int index;
 
@@ -448,8 +478,6 @@ const char *smw_config_get_operation_name(enum operation_id id)
 {
 	unsigned int index;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
 	OPERATION_ID_ASSERT(id);
 
 	index = id;
@@ -459,8 +487,6 @@ const char *smw_config_get_operation_name(enum operation_id id)
 const char *smw_config_get_subsystem_name(enum subsystem_id id)
 {
 	unsigned int index;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SUBSYSTEM_ID_ASSERT(id);
 

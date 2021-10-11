@@ -63,7 +63,6 @@ static int rng_read_params(char **start, char *end, void **params)
 		goto end;
 	}
 
-	p->operation_id = OPERATION_ID_RNG;
 	p->range = range;
 
 	*params = p;
@@ -73,6 +72,19 @@ static int rng_read_params(char **start, char *end, void **params)
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+static void rng_merge_params(void *caps, void *params)
+{
+	struct rng_params *rng_caps = caps;
+	struct rng_params *rng_params = params;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (rng_caps->range.min > rng_params->range.min)
+		rng_caps->range.min = rng_params->range.min;
+	if (rng_caps->range.max < rng_params->range.max)
+		rng_caps->range.max = rng_params->range.max;
 }
 
 __weak void rng_print_params(void *params)

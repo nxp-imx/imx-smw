@@ -20,6 +20,7 @@
 #define DEFINE_CONFIG_OPERATION_FUNC(operation)                                \
 	struct operation_func operation##_func = {                             \
 		.read = operation##_read_params,                               \
+		.merge = operation##_merge_params,                             \
 		.print = operation##_print_params,                             \
 		.check_subsystem_caps = operation##_check_subsystem_caps       \
 	};                                                                     \
@@ -53,36 +54,30 @@ struct op_key {
 };
 
 struct key_operation_params {
-	enum operation_id operation_id;
 	unsigned long op_bitmap;
 	struct op_key key;
 };
 
 struct hash_params {
-	enum operation_id operation_id;
 	unsigned long algo_bitmap;
 };
 
 struct hmac_params {
-	enum operation_id operation_id;
 	unsigned long algo_bitmap;
 	struct op_key key;
 };
 
 struct sign_verify_params {
-	enum operation_id operation_id;
 	unsigned long algo_bitmap;
 	unsigned long sign_type_bitmap;
 	struct op_key key;
 };
 
 struct rng_params {
-	enum operation_id operation_id;
 	struct range range;
 };
 
 struct cipher_params {
-	enum operation_id operation_id;
 	unsigned long mode_bitmap;
 	unsigned long op_bitmap;
 	struct op_key key;
@@ -352,41 +347,10 @@ bool is_subsystem_configured(enum subsystem_id id);
  * This function sets a Secure Subsystem load method if not already set.
  *
  * Return:
- * none.
+ * error code.
  */
-void set_subsystem_load_method(enum subsystem_id id,
-			       enum load_method_id load_method_id);
-
-/**
- * set_subsystem_operation_bitmap() - Set a Secure subsystem operation bitmap.
- * @subsystem_id: Secure Subsystem ID.
- * @operation_id: Security Operation ID.
- *
- * This function sets a Secure subsystem operation bitmap.
- * The operation bitmap tells what Security Operations are configured for
- * the Secure Subsystem.
- *
- * Return:
- * none.
- */
-void set_subsystem_operation_bitmap(enum subsystem_id subsystem_id,
-				    enum operation_id operation_id);
-
-/**
- * set_subsystem_default() - Set the default Secure Subsystem.
- * @subsystem_id: Secure Subsystem ID.
- * @operation_id: Security Operation ID.
- * @is_default: If true, the Secure Subsystem is the default subsystem.
- *
- * This function sets the default Secure Subsystem for a Security Operation.
- * If is_default is false, the Secure Subsystem is the default subsystem
- * if none has been set before.
- *
- * Return:
- * none.
- */
-void set_subsystem_default(enum operation_id operation_id,
-			   enum subsystem_id subsystem_id, bool is_default);
+int set_subsystem_load_method(enum subsystem_id id,
+			      enum load_method_id load_method_id);
 
 /**
  * store_operation_params() - Store the Security Operation configuration.
@@ -397,14 +361,42 @@ void set_subsystem_default(enum operation_id operation_id,
  * @subsystem_id: Secure Subsystem ID.
  *
  * This function stores the Security Operation configuration for a given
- * a Secure Subsystem.
+ * Secure Subsystem.
  *
  * Return:
- * none.
+ * error code.
  */
 int store_operation_params(enum operation_id operation_id, void *params,
 			   struct operation_func *func,
 			   enum subsystem_id subsystem_id);
+
+/**
+ * get_operation_params() - Get an operation parameters.
+ * @operation_id: Security Operation ID.
+ * @subsystem_id: Secure Subsystem ID.
+ * @params: Pointer to the data structure
+ *          that describes the parameters.
+ *
+ * This function gets the parameters configured for
+ * this Security Operation.
+ *
+ * Return:
+ * error code.
+ */
+int get_operation_params(enum operation_id operation_id,
+			 enum subsystem_id subsystem_id, void *params);
+
+/**
+ * get_operation_func() - Get the Security Operation functions.
+ * @operation_id: Security Operation ID.
+ *
+ * This function gets a Security Operation functions.
+ *
+ * Return:
+ * * pointer to the data structure containing the functions pointers
+ *   associated with the Security Operation.
+ */
+struct operation_func *get_operation_func(enum operation_id id);
 
 /**
  * print_key_params() - Print the Key parameters of a Security Operation.
@@ -449,6 +441,18 @@ int get_load_method_id(const char *name, enum load_method_id *id);
  * error code.
  */
 int get_operation_id(const char *name, enum operation_id *id);
+
+/**
+ * merge_key_params() - Merge two operation keys parameters.
+ * @key_caps: Current key capabilities.
+ * @key_params: Key parameters to be merged.
+ *
+ * This function merges @key_params into @key_caps.
+ *
+ * Return:
+ * none.
+ */
+void merge_key_params(struct op_key *key_caps, struct op_key *key_params);
 
 /**
  * check_id() - Is an ID configured.

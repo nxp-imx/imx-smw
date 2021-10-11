@@ -445,7 +445,6 @@ static bool read_operation(char **start, char *end,
 	char *cur = *start;
 	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1];
 	enum operation_id operation_id = OPERATION_ID_INVALID;
-	bool subsystem_is_default = false;
 	struct operation_func *func;
 	void *params = NULL;
 
@@ -470,15 +469,8 @@ static bool read_operation(char **start, char *end,
 
 	skip_insignificant_chars(&cur, end);
 
-	/* Security operation default */
-	subsystem_is_default = detect_tag(&cur, end, default_tag);
-	SMW_DBG_PRINTF(INFO, "Secure subsystem (%d) is %sDEFAULT\n",
-		       subsystem_id, subsystem_is_default ? "" : "NOT ");
-
-	skip_insignificant_chars(&cur, end);
-
 	/* Security operation params functions */
-	func = smw_config_get_operation_func(operation_id);
+	func = get_operation_func(operation_id);
 
 	SMW_DBG_PRINTF(DEBUG, "Security operation params functions: %p\n",
 		       func);
@@ -493,9 +485,6 @@ static bool read_operation(char **start, char *end,
 		SMW_UTILS_FREE(params);
 		goto end;
 	}
-
-	set_subsystem_operation_bitmap(subsystem_id, operation_id);
-	set_subsystem_default(operation_id, subsystem_id, subsystem_is_default);
 
 	*start = cur;
 
@@ -538,12 +527,6 @@ static bool read_subsystem(char **start, char *end, int *return_status)
 	}
 	SMW_DBG_PRINTF(DEBUG, "Secure subsystem id: %d\n", subsystem_id);
 
-	if (is_subsystem_configured(subsystem_id)) {
-		init_database(true);
-		status = SMW_STATUS_SUBSYSTEM_DUPLICATE;
-		goto end;
-	}
-
 	skip_insignificant_chars(&cur, end);
 
 	/* Secure Subsystem start/stop method name */
@@ -563,6 +546,10 @@ static bool read_subsystem(char **start, char *end, int *return_status)
 		goto end;
 
 	SMW_DBG_PRINTF(DEBUG, "Start/stop method id: %d\n", subsystem_id);
+
+	status = set_subsystem_load_method(subsystem_id, load_method_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	skip_insignificant_chars(&cur, end);
 
@@ -592,7 +579,6 @@ static bool read_subsystem(char **start, char *end, int *return_status)
 	}
 
 	set_subsystem_configured(subsystem_id);
-	set_subsystem_load_method(subsystem_id, load_method_id);
 
 	*start = cur;
 

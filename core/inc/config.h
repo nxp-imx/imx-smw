@@ -117,23 +117,19 @@ int smw_config_init(void);
 int smw_config_deinit(void);
 
 /**
- * smw_config_get_subsystem_caps() - Get capabilities.
- * @subsystem_id: Pointer to a Secure Subsystem ID.
+ * smw_config_select_subsystem() - Select a subsystem for an operation.
  * @operation_id: Security Operation ID.
- * @params: Address of a pointer pointing to the data structure
- *          that describes the capabilities.
+ * @args: Security Operation arguments.
+ * @subsystem_id: Pointer to the Secure Subsystem ID.
  *
- * If @subsystem_id is set invalid, this function sets it
- * to the default Secure Subsystem configured for the Security Operation.
- * Then this function gets the capabilities configured for
- * this Secure Operation.
+ * This function selects a Secure Subsystem to execute the Security Operation
+ * given the arguments.
  *
  * Return:
  * error code.
  */
-int smw_config_get_subsystem_caps(enum subsystem_id *subsystem_id,
-				  enum operation_id operation_id,
-				  void **params);
+int smw_config_select_subsystem(enum operation_id operation_id, void *args,
+				enum subsystem_id *subsystem_id);
 
 /**
  * smw_config_load_subsystem() - Load a Secure Subsystem.
@@ -169,18 +165,6 @@ int smw_config_unload_subsystem(enum subsystem_id id);
  * none.
  */
 void smw_config_notify_subsystem_failure(enum subsystem_id id);
-
-/**
- * smw_config_get_operation_func() - Get the Security Operation functions.
- * @operation_id: Security Operation ID.
- *
- * This function gets a Security Operation functions.
- *
- * Return:
- * * pointer to the data structure containing the functions pointers
- *   associated with the Security Operation.
- */
-struct operation_func *smw_config_get_operation_func(enum operation_id id);
 
 /**
  * smw_config_get_subsystem_func() - Get the Secure Subsystem functions.

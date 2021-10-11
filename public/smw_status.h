@@ -43,16 +43,13 @@
  * @SMW_STATUS_SYNTAX_ERROR: The configuration file is syntactically wrong.
  * @SMW_STATUS_TOO_LARGE_NUMBER: The configuration file defines a too big numeral value.
  * @SMW_STATUS_INVALID_TAG: Tag is invalid.
- * @SMW_STATUS_SUBSYSTEM_DUPLICATE: Secure Subsystem is defined more than once in the user
- * configuration.
- * @SMW_STATUS_OPERATION_DUPLICATE: Security Operation is defined more than once in the user
- * configuration for a given Secure Subsystem.
- * @SMW_STATUS_CONFIG_ALREADY_LOADED: User configuration is already loaded. To load another one,
- * the Unload configuration API must be called first.
- * @SMW_STATUS_NO_CONFIG_LOADED: No user configuration is loaded.
  * @SMW_STATUS_RANGE_DUPLICATE: Size range is defined more than once for a given algorithm.
  * @SMW_STATUS_ALGO_NOT_CONFIGURED: Size range is defined but the corresponding algorithm is not
  * configured.
+ * @SMW_STATUS_CONFIG_ALREADY_LOADED: User configuration is already loaded. To load another one,
+ * the Unload configuration API must be called first.
+ * @SMW_STATUS_NO_CONFIG_LOADED: No user configuration is loaded.
+ * @SMW_STATUS_LOAD_METHOD_DUPLICATE: The load/unload method is defined more than once.
  *
  * @SMW_STATUS_SIGNATURE_INVALID: The Signature is not valid.
  * @SMW_STATUS_SIGNATURE_LEN_INVALID: The Signature length is not valid.
@@ -94,12 +91,11 @@
  *	- SMW_STATUS_SYNTAX_ERROR
  *	- SMW_STATUS_TOO_LARGE_NUMBER
  *	- SMW_STATUS_INVALID_TAG
- *	- SMW_STATUS_SUBSYSTEM_DUPLICATE
- *	- SMW_STATUS_OPERATION_DUPLICATE
- *	- SMW_STATUS_CONFIG_ALREADY_LOADED
- *	- SMW_STATUS_NO_CONFIG_LOADED
  *	- SMW_STATUS_RANGE_DUPLICATE
  *	- SMW_STATUS_ALGO_NOT_CONFIGURED
+ *	- SMW_STATUS_CONFIG_ALREADY_LOADED
+ *	- SMW_STATUS_NO_CONFIG_LOADED
+ *	- SMW_STATUS_LOAD_METHOD_DUPLICATE
  *
  ** Specific return codes - Signature
  *
@@ -136,16 +132,15 @@ enum smw_status_code {
 	SMW_STATUS_MUTEX_INIT_FAILURE,
 	SMW_STATUS_MUTEX_DESTROY_FAILURE,
 	SMW_STATUS_INVALID_TAG, /* 25 */
-	SMW_STATUS_SUBSYSTEM_DUPLICATE,
-	SMW_STATUS_OPERATION_DUPLICATE,
+	SMW_STATUS_RANGE_DUPLICATE,
+	SMW_STATUS_ALGO_NOT_CONFIGURED,
 	SMW_STATUS_CONFIG_ALREADY_LOADED,
 	SMW_STATUS_NO_CONFIG_LOADED,
 	SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY, /* 30 */
 	SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE,
 	SMW_STATUS_SUBSYSTEM_STORAGE_ERROR,
 	SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT,
-	SMW_STATUS_RANGE_DUPLICATE,
-	SMW_STATUS_ALGO_NOT_CONFIGURED
+	SMW_STATUS_LOAD_METHOD_DUPLICATE
 };
 
 #endif /* __SMW_STATUS_H__ */

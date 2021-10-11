@@ -142,45 +142,40 @@
 	},
 	"subtest 29": {
 		"command": "CONFIG_LOAD",
-		"filepath": "config_subsystem_defined_twice.txt",
-		"result": "SMW_STATUS_SUBSYSTEM_DUPLICATE"
-	},
-	"subtest 30": {
-		"command": "CONFIG_LOAD",
-		"filepath": "config_operation_defined_twice.txt",
-		"result": "SMW_STATUS_OPERATION_DUPLICATE"
-	},
-	"subtest 31": {
-		"command": "CONFIG_LOAD",
 		"filepath": "config_psa_tag_invalid.txt",
 		"result": "SMW_STATUS_INVALID_TAG"
 	},
-	"subtest 32": {
+	"subtest 30": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_psa_default_no_semicolon.txt",
 		"result": "SMW_STATUS_SYNTAX_ERROR"
 	},
-	"subtest 33": {
+	"subtest 31": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_psa_default_before_version.txt",
 		"result": "SMW_STATUS_INVALID_TAG"
 	},
-	"subtest 34": {
+	"subtest 32": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_psa_default_after_subsystem.txt"
 	},
-	"subtest 35": {
+	"subtest 33": {
 		"command": "CONFIG_UNLOAD",
-		"depends": 34
+		"depends": 32
 	},
-	"subtest 36": {
+	"subtest 34": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_key_size_range_defined_twice.txt",
 		"result": "SMW_STATUS_RANGE_DUPLICATE"
 	},
-	"subtest 37": {
+	"subtest 35": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_key_size_range_defined_without_key_type.txt",
 		"result": "SMW_STATUS_ALGO_NOT_CONFIGURED"
+	},
+	"subtest 36": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_load_method_defined_twice.txt",
+		"result": "SMW_STATUS_LOAD_METHOD_DUPLICATE"
 	}
 }

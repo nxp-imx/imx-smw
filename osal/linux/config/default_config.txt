@@ -5,31 +5,21 @@ VERSION=1;
     /* No Start/Stop method specified. Default is 1. */
     [SECURITY_OPERATION]
         GENERATE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         DERIVE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         UPDATE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         IMPORT_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         EXPORT_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         DELETE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         HASH;
-        DEFAULT;
     [SECURITY_OPERATION]
         SIGN;
-        DEFAULT;
     [SECURITY_OPERATION]
         VERIFY;
-        DEFAULT;
     [SECURITY_OPERATION]
         RNG;
-        DEFAULT;

@@ -5,46 +5,33 @@ VERSION=1;
     /* No Start/Stop method specified. Default is 1. */
     [SECURITY_OPERATION]
         GENERATE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         DERIVE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         UPDATE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         IMPORT_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         EXPORT_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         DELETE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         HASH;
-        DEFAULT;
     [SECURITY_OPERATION]
         SIGN;
-        DEFAULT;
         KEY_TYPE_VALUES=NIST:RSA;
     [SECURITY_OPERATION]
         VERIFY;
-        DEFAULT;
         KEY_TYPE_VALUES=NIST:RSA;
     [SECURITY_OPERATION]
         HMAC;
-        DEFAULT;
     [SECURITY_OPERATION]
         RNG;
-        DEFAULT;
     [SECURITY_OPERATION]
         CIPHER;
-        DEFAULT;
         KEY_TYPE_VALUES=AES:DES:DES3;
         MODE_VALUES=CBC:CTR:CTS:ECB:XTS;
     [SECURITY_OPERATION]
         CIPHER_MULTI_PART;
-        DEFAULT;
         KEY_TYPE_VALUES=AES:DES:DES3;
         MODE_VALUES=CBC:CTR:CTS:ECB:XTS;

@@ -5,39 +5,29 @@ VERSION=1;
     /* No Start/Stop method specified. Default is 1. */
     [SECURITY_OPERATION]
         GENERATE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         DERIVE_KEY;
-        DEFAULT;
         OP_TYPE_VALUES=TLS12_KEY_EXCHANGE;
     [SECURITY_OPERATION]
         UPDATE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         IMPORT_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         EXPORT_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         DELETE_KEY;
-        DEFAULT;
     [SECURITY_OPERATION]
         HASH;
-        DEFAULT;
     [SECURITY_OPERATION]
         SIGN;
-        DEFAULT;
         KEY_TYPE_VALUES=NIST:BRAINPOOL_R1:TLS_MASTER_KEY;
         SIGN_TYPE_VALUES=DEFAULT;
     [SECURITY_OPERATION]
         VERIFY;
-        DEFAULT;
         KEY_TYPE_VALUES=NIST:BRAINPOOL_R1;
         SIGN_TYPE_VALUES=DEFAULT;
     [SECURITY_OPERATION]
         RNG;
-        DEFAULT;
 [SECURE_SUBSYSTEM]
     TEE;
     /* No Start/Stop method specified. Default is 1. */
@@ -67,11 +57,9 @@ VERSION=1;
         RNG;
     [SECURITY_OPERATION]
         CIPHER;
-        DEFAULT;
         KEY_TYPE_VALUES=AES:DES:DES3;
         MODE_VALUES=CBC:CTR:CTS:ECB:XTS;
     [SECURITY_OPERATION]
         CIPHER_MULTI_PART;
-        DEFAULT;
         KEY_TYPE_VALUES=AES:DES:DES3;
         MODE_VALUES=CBC:CTR:CTS:ECB:XTS;

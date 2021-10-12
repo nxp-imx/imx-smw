@@ -47,11 +47,7 @@ The configuration format must respect following rules:
 
 - The Security Operation can define its capabilities range using tags **<param#>_RANGE** (as listed in `List of Security Operation range tag`_). Range values are integer defining minimum and/or maximum capability value.
 
-- The tag DEFAULT may be placed after <string: name of operation> to set the default subsystem for this operation.
-
-If no tag DEFAULT is present, the first subsystem defining the operation in the configuration is the default subsystem for this operation.
-
-If several tag DEFAULT are present for different subsystems and the same operation, the latest subsystem defining the operation with tag DEFAULT is the default subsystem for this operation.
+Configuration file subsystem/operation definition pair represents the subsystem selection order when Secure Subsystem is not specified in the operation arguments. Note: Secure Subsystem is implicit when an operation uses a key identifier of a key already present in the Secure Subsystem key storage.
 
 Secure Subsystem definition
 ---------------------------
@@ -120,7 +116,7 @@ Security Operation definition
    [SECURITY_OPERATION]
        <string: name of operation>;
        /* A combination of the lines below describes */
-       /* the Secure Subsystem capabilities for this Security operation. */
+       /* the Secure Subsystem capabilities for this Security Operation. */
        <param1>_VALUES=<value1>:<value2>:<value3>;
        <param2>_RANGE=<integer: min>:<integer: max>;
        <param3>_RANGE=:<integer: max>; /* threshold lower than */
@@ -260,8 +256,6 @@ HSM configuration:
        AT_CONFIG_LOAD_UNLOAD;
        [SECURITY_OPERATION]
            CIPHER;
-           /* TEE is the default Secure Subsystem for CIPHER */
-           DEFAULT;
            /* Only AES and DES keys are supported */
            KEY_TYPE_VALUES=AES:DES;
            /* Only ECB and CBC modes are supported */
@@ -277,8 +271,6 @@ HSM configuration:
            HASH_ALGO_VALUES=SHA256;
        [SECURITY_OPERATION]
            GENERATE_KEY;
-           /* HSM is the default Secure Subsystem for HASH */
-           DEFAULT;
            /* Only AES and DES algorithms are supported */
            KEY_TYPE_VALUES=AES:DES;
            /* AES key size allowed is between 128 bits and 256 bits */

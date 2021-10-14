@@ -269,8 +269,7 @@ int store_operation_params(enum operation_id operation_id, void *params,
 	}
 
 	list = &database.subsystem[index].operations_caps_list;
-	if (!smw_utils_list_append_data(list, params, func->destroy,
-					func->print))
+	if (!smw_utils_list_append_data(list, params, func->print))
 		status = SMW_STATUS_ALLOC_FAILURE;
 
 end:

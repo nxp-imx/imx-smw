@@ -12,8 +12,7 @@
 
 #include "common.h"
 
-static struct node *create_node(void *data, void (*destructor)(void *),
-				void (*printer)(void *))
+static struct node *create_node(void *data, void (*printer)(void *))
 {
 	struct node *node = SMW_UTILS_MALLOC(sizeof(struct node));
 
@@ -23,7 +22,6 @@ static struct node *create_node(void *data, void (*destructor)(void *),
 		node->prev = NULL;
 		node->next = NULL;
 
-		node->destructor = destructor;
 		node->printer = printer;
 		node->data = data;
 	}
@@ -35,8 +33,8 @@ static void destroy_node(struct node *node)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (node->destructor)
-		node->destructor(node->data);
+	if (node->data)
+		SMW_UTILS_FREE(node->data);
 
 	SMW_UTILS_FREE(node);
 }
@@ -82,10 +80,9 @@ static struct node *find_node(struct smw_utils_list *list, void *filter,
 }
 
 bool smw_utils_list_append_data(struct smw_utils_list *list, void *data,
-				void (*destructor)(void *),
 				void (*printer)(void *))
 {
-	struct node *node = create_node(data, destructor, printer);
+	struct node *node = create_node(data, printer);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

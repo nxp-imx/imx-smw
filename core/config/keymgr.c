@@ -328,7 +328,6 @@ static int delete_key_check_subsystem_caps(void *args, void *params)
 #define DEFINE_KEYMGR_OPERATION_FUNC(operation)                                \
 	struct operation_func operation##_func = {                             \
 		.read = operation##_read_params,                               \
-		.destroy = NULL,                                               \
 		.print = print_key_params,                                     \
 		.check_subsystem_caps = operation##_check_subsystem_caps,      \
 	};                                                                     \

@@ -48,7 +48,6 @@ void smw_utils_list_destroy(struct smw_utils_list *list);
  * smw_utils_list_append_data() - Append data to the linked list.
  * @list: Pointer to a linked list.
  * @data: Pointer to the data to be stored.
- * @destructor: Pointer to a dedicated function to destroy the data.
  * @print: Pointer to a dedicated function to print the data.
  *
  * This function creates a node containing the data,
@@ -59,7 +58,6 @@ void smw_utils_list_destroy(struct smw_utils_list *list);
  * * false	- the operation has failed.
  */
 bool smw_utils_list_append_data(struct smw_utils_list *list, void *data,
-				void (*destructor)(void *),
 				void (*print)(void *));
 
 /**

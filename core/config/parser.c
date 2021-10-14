@@ -466,8 +466,6 @@ static bool read_operation(char **start, char *end,
 	status = store_operation_params(operation_id, params, func,
 					subsystem_id);
 	if (status != SMW_STATUS_OK) {
-		if (func->destroy)
-			func->destroy(params);
 		SMW_UTILS_FREE(params);
 		goto end;
 	}

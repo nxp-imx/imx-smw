@@ -16,7 +16,6 @@
 #define DEFINE_CONFIG_OPERATION_FUNC(operation)                                \
 	struct operation_func operation##_func = {                             \
 		.read = operation##_read_params,                               \
-		.destroy = NULL,                                               \
 		.print = operation##_print_params,                             \
 		.check_subsystem_caps = operation##_check_subsystem_caps       \
 	};                                                                     \

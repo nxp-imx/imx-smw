@@ -259,7 +259,7 @@ HSM configuration:
            /* TEE is the default Secure Subsystem for CIPHER */
            DEFAULT;
            /* Only AES and DES keys are supported */
-           KEY_TYPES_VALUES=AES:DES;
+           KEY_TYPE_VALUES=AES:DES;
            /* Only ECB and CBC modes are supported */
            MODE_VALUES=ECB:CBC;
        [SECURITY_OPERATION]

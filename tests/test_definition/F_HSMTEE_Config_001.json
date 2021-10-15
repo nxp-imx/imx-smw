@@ -1,0 +1,38 @@
+{
+	"subtest 1": {
+		"command": "CONFIG_UNLOAD"
+	},
+	"subtest 2": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_select_subsystem.txt",
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "RNG",
+		"subsystem": "DEFAULT",
+		"random": 16,
+		"subsystem_exp": "TEE",
+		"depends": 2
+	},
+	"subtest 4": {
+		"command": "RNG",
+		"subsystem": "DEFAULT",
+		"random": 64,
+		"subsystem_exp": "HSM",
+		"depends": 2
+	},
+	"subtest 5": {
+		"command": "RNG",
+		"subsystem": "DEFAULT",
+		"random": 128,
+		"subsystem_exp": "TEE",
+		"depends": 2
+	},
+	"subtest 6": {
+		"command": "RNG",
+		"subsystem": "DEFAULT",
+		"random": 512,
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED",
+		"depends": 2
+	}
+}

@@ -9,7 +9,7 @@ install(FILES ${SMW_CONFIG_SRC_DIR}/${HSM_CONFIG_FILE}
 	COMPONENT ${PROJECT_NAME})
 
 # Get all HSM test definition files except those in multiple parts
-FILE(GLOB HSM_TESTS ${TEST_DEF_SRC_DIR}/*_HSM*_???.json)
+FILE(GLOB HSM_TESTS ${TEST_DEF_SRC_DIR}/*_HSM_*_???.json)
 
 if(ENABLE_TLS12)
 	set(U_TLS_001 U_HSM_TLS_001.json)

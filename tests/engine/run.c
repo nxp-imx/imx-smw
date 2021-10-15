@@ -21,6 +21,7 @@
 #include "run.h"
 #include "paths.h"
 #include "info.h"
+#include "smw_osal.h"
 #include "smw_status.h"
 
 /* Key identifiers linked list */
@@ -557,6 +558,8 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 	char *expected_status = NULL;
 	char *sub_status = NULL;
 	const char *sub_error = NULL;
+	const char *sub_used = NULL;
+	const char *sub_exp = NULL;
 	struct common_parameters common_params = { 0 };
 	json_object *cmd_obj = NULL;
 	json_object *res_obj = NULL;
@@ -631,9 +634,33 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 	else
 		common_params.version = SMW_API_DEFAULT_VERSION;
 
+	/*
+	 * Get expected subsystem to be used.
+	 * If not set in test definition file don't verify it.
+	 */
+	res = util_read_json_type(&sub_exp, SUBSYSTEM_EXP_OBJ, t_string,
+				  obj_iter->val);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
 	/* Execute subtest command */
 	res = execute_command(command_name, obj_iter->val, &common_params,
 			      &key_identifiers, &ctx_list, &status);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	if (sub_exp) {
+		sub_used = smw_read_latest_subsystem_name();
+		if (sub_used) {
+			DBG_PRINT("Selected subsystem: %s", sub_used);
+			if (strcmp(sub_used, sub_exp)) {
+				DBG_PRINT("Expected subsystem: %s", sub_exp);
+				res = ERR_CODE(BAD_RESULT);
+			}
+		} else {
+			DBG_PRINT("WARNING - subsystem cannot be verified!");
+		}
+	}
 
 exit:
 	res = update_status(res, &sub_status, &sub_error, test_status, status);

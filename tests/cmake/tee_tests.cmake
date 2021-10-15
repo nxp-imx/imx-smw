@@ -9,7 +9,7 @@ install(FILES ${SMW_CONFIG_SRC_DIR}/${TEE_CONFIG_FILE}
 	COMPONENT ${PROJECT_NAME})
 
 # Get all TEE test definition files except those in multiple parts
-FILE(GLOB TEE_TESTS ${TEST_DEF_SRC_DIR}/*_TEE*_???.json)
+FILE(GLOB TEE_TESTS ${TEST_DEF_SRC_DIR}/*_TEE_*_???.json)
 
 add_and_install_tests("${TEE_TESTS}" "${TEE_COMMAND}")
 

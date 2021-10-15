@@ -110,10 +110,12 @@ if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco AND
     include(${CMAKE_SOURCE_DIR}/tests/cmake/hsm_tests.cmake)
 endif()
 
-#
-# TODO: Include multi subsystem tests -> multi_tests.cmake
-#       Switch values of <SUBSYSTEM>_TESTS add tests
-#
+# If HSM subsystem and TEE subsystem defined, include tests
+if(TEE_TESTS AND HSM_TESTS)
+    set(HSMTEE_TESTS ON)
+    include(${CMAKE_SOURCE_DIR}/tests/cmake/hsmtee_tests.cmake)
+endif()
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
         DESTINATION ${SMW_CTEST_TEST_FILE_DIR}
         EXCLUDE_FROM_ALL

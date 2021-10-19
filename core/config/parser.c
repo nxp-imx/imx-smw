@@ -680,6 +680,8 @@ end:
 		SMW_DBG_PRINTF_COND(ERROR, cur < end,
 				    "Ignore end of file:\n%.*s\n",
 				    (unsigned int)(end - cur), cur);
+
+		init_database(true);
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

@@ -97,15 +97,15 @@ include(${CMAKE_SOURCE_DIR}/tests/cmake/utils.cmake)
 include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)
 
 # If TEE subsystem defined, include tests
-if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TEEC AND
-   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TA_DEV_KIT)
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
+   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TA_dev_kit)
     set(TEE_TESTS ON)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/tee_tests.cmake)
 endif()
 
 # If HSM subsystem defined, include tests
-if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_SECO AND
-   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_ZLIB)
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco AND
+   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_ZLIBLight)
     set(HSM_TESTS ON)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/hsm_tests.cmake)
 endif()

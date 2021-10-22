@@ -88,7 +88,7 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	open_svc_key_store_args.flags = HSM_SVC_KEY_STORE_FLAGS_CREATE;
 	err = hsm_open_key_store_service(session_hdl, &open_svc_key_store_args,
 					 key_store_hdl);
-	if (err == HSM_ID_CONFLICT) {
+	if (err == HSM_ID_CONFLICT || err == HSM_KEY_STORE_CONFLICT) {
 		/* Key store already exists. Do not try to create it */
 		open_svc_key_store_args.flags = 0;
 		err = hsm_open_key_store_service(session_hdl,

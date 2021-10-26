@@ -45,6 +45,10 @@ case ${platform} in
 	opt_seco=1
 	;;
 
+    imx8ulpevk)
+        optee_plat="imx-mx8ulpevk"
+	;;
+
     imx8mmevk)
         optee_plat="imx-mx8mmevk"
 	;;

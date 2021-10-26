@@ -40,6 +40,7 @@ opt_coverage_url=
 ctest_label=""
 
 platforms_list=(
+    imx8ulpevk \
     imx8mmevk \
     imx7dsabresd \
     imx8qxpc0mek)
@@ -184,7 +185,7 @@ function install_lavacli
     #
     parse_parameters "$@"
 
-    if [[ ! -z ${opt_token} ]]; then
+    if [[ -n ${opt_token} ]]; then
       lava_token="{opt_token}"
     fi
 
@@ -234,7 +235,7 @@ function squad_submit
 
     parse_parameters "$@"
 
-    if [[ ! -z ${opt_token} ]]; then
+    if [[ -n ${opt_token} ]]; then
       squad_token="{opt_token}"
     fi
 
@@ -290,6 +291,18 @@ function squad_submit
         uboot_mmc_cnt="0x800"
         ;;
 
+      imx8ulpevk)
+        smw_setup_yaml="${smw_setup_yaml}"
+        bootimage="-m ${prefix_imx_boot}${platform}-sd.bin-flash_singleboot_m33"
+        nexus_find_args="${nexus_find_args} -d imx8ulp-evk.dtb"
+        nexus_find_args="${nexus_find_args} -k ${prefix_image}${platform}.bin"
+        kernel_type="image"
+        nexus_find_args="${nexus_find_args} -b ${prefix_rootfs}${platform}"
+        nexus_find_args="${nexus_find_args} -v imx8ulp-evk-no-usb"
+        uboot_mmc_blk="0x0"
+        uboot_mmc_cnt="0x2000"
+        ;;
+
       *)
         printf "Platform %s not supported\n" "${platform}"
         display_platforms
@@ -304,12 +317,12 @@ function squad_submit
 
     check_file "${script_dir}" "${devops_script}"
 
-    if [[ ! -z ${opt_ctest_label} ]]; then
+    if [[ -n ${opt_ctest_label} ]]; then
       ctest_label="-L ${opt_ctest_label}"
     fi
 
     cat "${yaml_dir}/${smw_setup_yaml}.yaml" > "${yaml_dir}/${smw_tmp_yaml}"
-    if [[ ! -z ${opt_package_url} ]]; then
+    if [[ -n ${opt_package_url} ]]; then
       check_url "${opt_package_url}"
 
       cat "${yaml_dir}/${smw_package_yaml}" >> "${yaml_dir}/${smw_tmp_yaml}"
@@ -333,7 +346,7 @@ function squad_submit
     sed -i "s|REPLACE_UBOOT_MMC_CNT|${uboot_mmc_cnt}|" "${filename_job}"
     sed -i "s|REPLACE_KERNEL_TYPE|${kernel_type}|" "${filename_job}"
 
-    if [[ ! -z ${opt_package_url} ]]; then
+    if [[ -n ${opt_package_url} ]]; then
       sed -i "s|REPLACE_PACKAGE_URL|${opt_package_url}|" "${filename_job}"
     fi
     sed -i "s|REPLACE_CTEST_LABEL|${ctest_label}|" "${filename_job}"
@@ -353,7 +366,7 @@ function squad_submit
 
     eval "${script_dir}/${devops_script} ${nexus_find_args}"
 
-    if [[ ! -z ${opt_package_url} ]]; then
+    if [[ -n ${opt_package_url} ]]; then
         printf "PACKAGE_URL = %s\n" "${opt_package_url}"
     fi
 

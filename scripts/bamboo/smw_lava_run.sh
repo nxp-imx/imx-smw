@@ -23,6 +23,7 @@ function usage()
 
     $(basename "$0") <platform> <type> coverage
       <platform> : Mandatory platform
+      <deploy>   : [option] board binary deployement (default: 'uuu' or 'uboot')
       <type>     : [option] build type ('release' or 'debug', default: 'release')
       coverage   : [option] enable the code coverage tool
 
@@ -39,6 +40,7 @@ shift
 
 opt_type=rel
 opt_coverage=
+opt_deploy=submit_uuu
 
 if [[ $# -ne 0 ]]; then
     for arg in "$@"
@@ -56,6 +58,13 @@ if [[ $# -ne 0 ]]; then
                 opt_type=rel
                 ;;
 
+            uuu)
+                opt_deploy=submit_uuu
+                ;;
+
+            uboot)
+                opt_deploy=submit
+                ;;
 
             *)
                 echo "Unknown argument \"${arg}\""
@@ -88,7 +97,7 @@ if [[ $(is_pr) -eq 0 ]] && [[ $(is_release_build) -eq 1 ]]; then
     # check code change neither do a code coverage report
     #
 
-    if [[ ! -z ${opt_coverage} ]]; then exit 0; fi
+    if [[ -n ${opt_coverage} ]]; then exit 0; fi
 
     eval "./scripts/smw_squad.sh submit_uuu ${platform} \
           ${script_lava_dir} ${yaml_dir} ${squad_id} job_name=${job_name}"
@@ -112,7 +121,7 @@ else
         coverage_url="${nexus_test_full_path}/${platform}_${gcda_tarball}"
     fi
 
-    eval "./scripts/smw_squad.sh submit_uuu ${platform} ${script_lava_dir} \
+    eval "./scripts/smw_squad.sh ${opt_deploy} ${platform} ${script_lava_dir} \
           ${yaml_dir} ${squad_id} \
           package_url=${nexus_test_full_path}/${pkg_name} \
           coverage_url=${coverage_url} \

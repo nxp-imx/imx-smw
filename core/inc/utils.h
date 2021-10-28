@@ -104,6 +104,13 @@ static inline int smw_utils_thread_cancel(unsigned long thread)
 	return err;
 }
 
+static inline void
+smw_utils_register_active_subsystem(const char *subsystem_name)
+{
+	if (g_smw_ctx.ops.register_active_subsystem)
+		g_smw_ctx.ops.register_active_subsystem(subsystem_name);
+}
+
 static inline unsigned long smw_utils_time(unsigned long ref)
 {
 	time_t t = time(NULL);

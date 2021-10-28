@@ -8,6 +8,7 @@
 #include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
+#include "utils.h"
 #include "list.h"
 #include "operations.h"
 #include "subsystems.h"
@@ -21,6 +22,7 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 	int status = SMW_STATUS_OK;
 
 	struct subsystem_func *subsystem_func;
+	const char *subsystem_name;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -43,9 +45,13 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 			return status;
 	}
 
-	SMW_DBG_PRINTF(INFO, "Secure Subsystem: %s (%d)\n",
-		       smw_config_get_subsystem_name(subsystem_id),
+	subsystem_name = smw_config_get_subsystem_name(subsystem_id);
+
+	SMW_DBG_PRINTF(INFO, "Secure Subsystem: %s (%d)\n", subsystem_name,
 		       subsystem_id);
+
+	/* Register the latest Secure Subsystem selected */
+	smw_utils_register_active_subsystem(subsystem_name);
 
 	subsystem_func = smw_config_get_subsystem_func(subsystem_id);
 

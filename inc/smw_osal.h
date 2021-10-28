@@ -19,6 +19,7 @@
  * @thread_create: [mandatory] Create a thread
  * @thread_cancel: [mandatory] Cancel a thread
  * @thread_self: [optional] Return the ID of the thread being executed
+ * @register_active_subsystem: [optional] Register the active Secure Subsystem
  *
  * This structure defines the SMW OSAL.
  * Functions pointers marked as [mandatory] must be assigned.
@@ -40,6 +41,8 @@ struct smw_ops {
 	int (*thread_cancel)(unsigned long thread);
 
 	unsigned long (*thread_self)(void);
+
+	void (*register_active_subsystem)(const char *subsystem_name);
 };
 
 /**
@@ -103,5 +106,21 @@ enum smw_status_code smw_config_load(char *buffer, unsigned int size,
  * SMW_STATUS_NO_CONFIG_LOADED	- No configuration is loaded
  */
 enum smw_status_code smw_config_unload(void);
+
+/**
+ * smw_read_latest_subsystem_name() - Return the latest Secure Subsystem name
+ *
+ * In DEBUG mode only, function returns the name of the latest Secure Subsystem
+ * invoked by SMW.
+ * This Secure Subsystem have been either explicitly requested by the caller or
+ * selected by SMW given the operation arguments and the configuration file.
+ * In other modes, function always returns NULL.
+ *
+ * Return:
+ * In DEBUG mode only, the pointer to the static buffer containing the null-terminated
+ * string name of the Secure Subsystem.
+ * In other modes, NULL
+ */
+const char *smw_read_latest_subsystem_name(void);
 
 #endif /* __SMW_OSAL_H__ */

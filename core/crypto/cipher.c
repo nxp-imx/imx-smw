@@ -105,8 +105,8 @@ convert_key_descriptors(struct smw_key_descriptor **keys_desc,
 	 * This memory is freed at the end of cipher one-shot operation or
 	 * cipher initialization
 	 */
-	keymgr_desc = calloc(converted_args->nb_keys,
-			     sizeof(struct smw_keymgr_descriptor *));
+	keymgr_desc = SMW_UTILS_CALLOC(converted_args->nb_keys,
+				       sizeof(struct smw_keymgr_descriptor *));
 	if (!keymgr_desc)
 		goto end;
 
@@ -118,7 +118,8 @@ convert_key_descriptors(struct smw_key_descriptor **keys_desc,
 		 * cipher initialization
 		 */
 		keymgr_desc[i] =
-			calloc(1, sizeof(struct smw_keymgr_descriptor));
+			SMW_UTILS_CALLOC(1,
+					 sizeof(struct smw_keymgr_descriptor));
 		if (!keymgr_desc[i]) {
 			status = SMW_STATUS_ALLOC_FAILURE;
 			free_keys_ptr_array(keymgr_desc,

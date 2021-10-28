@@ -29,6 +29,7 @@
 #define SET_CLEAR_MASK(val, set, clear) (((val) & ~(clear)) | (set))
 
 #define SMW_UTILS_MALLOC  malloc
+#define SMW_UTILS_CALLOC  calloc
 #define SMW_UTILS_FREE	  free
 #define SMW_UTILS_MEMCPY  memcpy
 #define SMW_UTILS_STRLEN  strlen

@@ -5,14 +5,7 @@
 
 #include <tee_internal_api.h>
 
-#include "tee_subsystem.h"
-#include "ta_keymgr.h"
-#include "ta_hash.h"
-#include "ta_sign_verify.h"
-#include "ta_hmac.h"
-#include "ta_rng.h"
-#include "ta_cipher.h"
-#include "ta_operation_context.h"
+#include <libsmw_ta.h>
 
 /**
  * TA_CreateEntryPoint() - Create entry point.
@@ -87,9 +80,9 @@ void TA_CloseSessionEntryPoint(void *sess_ctx __maybe_unused)
 	FMSG("Executing %s", __func__);
 
 	/* Make sure to free transient resources */
-	res = clear_key_linked_list();
+	res = libsmw_detach();
 	if (res)
-		EMSG("Error while cleaning key linked list");
+		EMSG("Error while detaching for the library");
 }
 
 /**
@@ -113,35 +106,5 @@ TEE_Result TA_InvokeCommandEntryPoint(void *sess_ctx __maybe_unused,
 {
 	FMSG("Executing %s", __func__);
 
-	switch (cmd_id) {
-	case CMD_GENERATE_KEY:
-		return generate_key(param_types, params);
-	case CMD_DELETE_KEY:
-		return delete_key(param_types, params);
-	case CMD_IMPORT_KEY:
-		return import_key(param_types, params);
-	case CMD_EXPORT_KEY:
-		return export_key(param_types, params);
-	case CMD_HASH:
-		return hash(param_types, params);
-	case CMD_SIGN:
-	case CMD_VERIFY:
-		return sign_verify(param_types, params, cmd_id);
-	case CMD_HMAC:
-		return hmac(param_types, params);
-	case CMD_RNG:
-		return rng(param_types, params);
-	case CMD_CIPHER_INIT:
-		return cipher_init(param_types, params);
-	case CMD_CIPHER_UPDATE:
-		return cipher_update(param_types, params);
-	case CMD_CIPHER_FINAL:
-		return cipher_final(param_types, params);
-	case CMD_CANCEL_OP:
-		return cancel_operation(param_types, params);
-	case CMD_COPY_CTX:
-		return copy_context(param_types, params);
-	default:
-		return TEE_ERROR_BAD_PARAMETERS;
-	}
+	return libsmw_dispatcher(cmd_id, param_types, params);
 }

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <util.h>
 #include <tee_internal_api.h>
 
 #include "tee_subsystem.h"
-#include "ta_operation_context.h"
+#include "operation_context.h"
 
 TEE_Result cancel_operation(uint32_t param_types,
 			    TEE_Param params[TEE_NUM_PARAMS])

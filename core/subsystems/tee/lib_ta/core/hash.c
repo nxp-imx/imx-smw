@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <util.h>
@@ -9,7 +9,7 @@
 #include <tee_internal_api.h>
 
 #include "tee_subsystem.h"
-#include "ta_hash.h"
+#include "hash.h"
 
 #define ALGORITHM_INFO(_algo)                                                  \
 	{                                                                      \

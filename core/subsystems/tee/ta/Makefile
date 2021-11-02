@@ -1,7 +1,8 @@
 BINARY = ${BINARY}
-CFG_TEE_TA_LOG_LEVEL ?= ${TA_LOG_LEVEL}
 CPPFLAGS += -DCFG_TEE_TA_LOG_LEVEL=$(CFG_TEE_TA_LOG_LEVEL)
-CROSS_COMPILE = $(TA_CROSS_COMPILE)
-TA_DEV_KIT = ${TA_EXPORT_DIR}/mk/ta_dev_kit.mk
 
-include ${TA_DEV_KIT}
+# Hack: to locate the TA smw library, we assume that parent directory of the
+# TA is the same as the TA smw library
+LDADD = -L$(abspath $(link-out-dir))/../lib_ta -lsmw_ta
+
+include ${TA_DEV_KIT_DIR}/mk/ta_dev_kit.mk

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <util.h>
@@ -9,9 +9,9 @@
 #include <tee_internal_api_extensions.h>
 
 #include "tee_subsystem.h"
-#include "ta_keymgr.h"
-#include "ta_hash.h"
-#include "ta_sign_verify.h"
+#include "keymgr.h"
+#include "hash.h"
+#include "sign_verify.h"
 
 #define ALGORITHM_ID(_key_type_id, _security_size)                             \
 	{                                                                      \

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <util.h>
@@ -9,7 +9,7 @@
 #include <tee_internal_api_extensions.h>
 
 #include "tee_subsystem.h"
-#include "ta_keymgr.h"
+#include "keymgr.h"
 
 /* Number of attributes switch key type */
 #define NB_ATTR_ECDSA_PUB_KEY 3

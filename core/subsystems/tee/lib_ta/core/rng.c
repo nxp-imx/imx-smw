@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <util.h>
@@ -8,7 +8,7 @@
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
 
-#include "ta_rng.h"
+#include "rng.h"
 
 #define BLOCK_SIZE BIT(12) // 4 KB
 

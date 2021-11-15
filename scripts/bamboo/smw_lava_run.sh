@@ -99,7 +99,7 @@ if [[ $(is_pr) -eq 0 ]] && [[ $(is_release_build) -eq 1 ]]; then
 
     if [[ -n ${opt_coverage} ]]; then exit 0; fi
 
-    eval "./scripts/smw_squad.sh submit_uuu ${platform} \
+    eval "./scripts/smw_squad.sh ${opt_deploy} ${platform} \
           ${script_lava_dir} ${yaml_dir} ${squad_id} job_name=${job_name}"
 else
     #

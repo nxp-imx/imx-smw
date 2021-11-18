@@ -48,7 +48,7 @@
 		"security_size": 128,
 		"key_id": 0,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
-		"version": "1"
+		"version": 255
 	},
 	"subtest 7": { // Subsystem is not set in the config file
 		"command": "GENERATE",

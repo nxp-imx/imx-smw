@@ -16,7 +16,7 @@
 			"6C2064F09625A0E63F7E1F18BCAFC631",
 			"0768290AF18FE21847C8344E02C5CECF"
 		],
-		"version": "1",
+		"version": 255,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Subsystem is not set in SMW config file

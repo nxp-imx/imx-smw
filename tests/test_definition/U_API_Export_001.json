@@ -102,7 +102,7 @@
 	},
 	"subtest 11": { // Bad version
 		"command": "EXPORT_PUBLIC",
-		"version": "1",
+		"version": 255,
 		"key_id": 0,
 		"pub_key": [
 			"55555555555555555555555555555555",

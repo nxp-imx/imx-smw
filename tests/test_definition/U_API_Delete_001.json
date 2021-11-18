@@ -46,7 +46,7 @@
 		"key_id": 1,
 		"depends": 1,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
-		"version": "1"
+		"version": 255
 	},
 	"subtest 8": { // Delete Generate AES Key
 		"command": "DELETE",

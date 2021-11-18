@@ -142,7 +142,7 @@
 		"security_size": 128,
 		"key_id": 0,
 		"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
-		"version": "1",
+		"version": 255,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 13": { // Subsystem is not set in the config file

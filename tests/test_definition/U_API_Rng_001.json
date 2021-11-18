@@ -10,7 +10,7 @@
 		"command": "RNG",
 		"subsystem": "DEFAULT",
 		"random": "55555555555555555555555555555555",
-		"version": "1",
+		"version": 255,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Subsystem is not set in SMW config file

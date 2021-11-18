@@ -21,7 +21,8 @@ static int check_version(struct json_object *params,
 
 	*ret_status = smw_get_version(&major, &minor);
 
-	ret = util_read_json_type(&exp_version, VERSION_OBJ, t_double, params);
+	ret = util_read_json_type(&exp_version, LIB_VERSION_OBJ, t_double,
+				  params);
 	if (ret != ERR_CODE(PASSED))
 		return ret;
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2019-2021 NXP
+ * Copyright 2019-2022 NXP
  */
 
 #include "local.h"
@@ -8,10 +8,9 @@
 #include "smw_config.h"
 #include "smw_osal.h"
 
-__attribute__((constructor)) static void constructor(void);
 __attribute__((destructor)) static void destructor(void);
 
-const char *active_subsystem_name;
+struct osal_priv osal_priv = { 0 };
 
 static int mutex_init(void **mutex)
 {
@@ -110,12 +109,85 @@ static void register_active_subsystem(const char *subsystem_name)
 {
 	TRACE_FUNCTION_CALL;
 
-	active_subsystem_name = subsystem_name;
+	osal_priv.active_subsystem_name = subsystem_name;
+}
+
+static int set_tee_info(void *info, size_t info_size)
+{
+	if (info_size != sizeof(struct tee_info))
+		return SMW_STATUS_INVALID_PARAM;
+
+	osal_priv.config.tee_info = *((struct tee_info *)info);
+	osal_priv.config.config_flags |= CONFIG_TEE;
+
+	return SMW_STATUS_OK;
+}
+
+static int get_tee_info(struct tee_info *info)
+{
+	int ret = -1;
+
+	/*
+	 * Copy the TEE configuration if value set
+	 * in the library instance
+	 */
+	if (osal_priv.config.config_flags & CONFIG_TEE) {
+		*info = osal_priv.config.tee_info;
+		ret = 0;
+	}
+
+	return ret;
+}
+
+static int set_hsm_info(void *info, size_t info_size)
+{
+	if (info_size != sizeof(struct se_info))
+		return SMW_STATUS_INVALID_PARAM;
+
+	osal_priv.config.se_info = *((struct se_info *)info);
+	osal_priv.config.config_flags |= CONFIG_SE;
+
+	return SMW_STATUS_OK;
+}
+
+static int get_hsm_info(struct se_info *info)
+{
+	int ret = -1;
+
+	/*
+	 * Copy the Storage Nonce configuration if value set
+	 * in the library instance
+	 */
+	if (osal_priv.config.config_flags & CONFIG_SE) {
+		*info = osal_priv.config.se_info;
+		ret = 0;
+	}
+
+	return ret;
+}
+
+static int get_subsystem_info(const char *subsystem_name, void *info)
+{
+	TRACE_FUNCTION_CALL;
+
+	if (!info || !subsystem_name)
+		return -1;
+
+	if (!strcmp(subsystem_name, "TEE"))
+		return get_tee_info(info);
+
+	if (!strcmp(subsystem_name, "HSM"))
+		return get_hsm_info(info);
+
+	DBG_PRINTF(VERBOSE, "%s unknown %s subsystem\n", __func__,
+		   subsystem_name);
+
+	return -1;
 }
 
 static int get_default_config(char **buffer, unsigned int *size)
 {
-	int status = -1;
+	int status = SMW_STATUS_NO_CONFIG_LOADED;
 	long fsize;
 
 	FILE *f = NULL;
@@ -179,51 +251,12 @@ static int get_default_config(char **buffer, unsigned int *size)
 	DBG_PRINTF(INFO, "Plaintext configuration (size: %d):\n%.*s\n", *size,
 		   *size, *buffer);
 
-	status = 0;
+	status = SMW_STATUS_OK;
 
 end:
 	if (f)
 		if (fclose(f))
 			perror("fclose()");
-
-	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static int start(void)
-{
-	int status = 0;
-
-	struct smw_ops ops;
-	char *buffer = NULL;
-	unsigned int size = 0;
-	unsigned int offset = 0;
-
-	TRACE_FUNCTION_CALL;
-
-	memset(&ops, 0, sizeof(ops));
-	ops.mutex_init = mutex_init;
-	ops.mutex_destroy = mutex_destroy;
-	ops.mutex_lock = mutex_lock;
-	ops.mutex_unlock = mutex_unlock;
-	ops.thread_create = thread_create;
-	ops.thread_cancel = thread_cancel;
-	ops.thread_self = thread_self;
-	ops.register_active_subsystem = register_active_subsystem;
-
-	status = smw_init(&ops);
-	if (status)
-		goto end;
-
-	status = get_default_config(&buffer, &size);
-	if (status)
-		goto end;
-
-	status = smw_config_load(buffer, size, &offset);
-
-end:
-	if (buffer)
-		free(buffer);
 
 	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -246,11 +279,6 @@ end:
 	return status;
 }
 
-static void constructor(void)
-{
-	start();
-}
-
 static void destructor(void)
 {
 	stop();
@@ -259,4 +287,69 @@ static void destructor(void)
 __export __weak const char *smw_osal_latest_subsystem_name(void)
 {
 	return NULL;
+}
+
+__export enum smw_status_code
+smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
+			    size_t info_size)
+{
+	int status;
+
+	if (!subsystem || !info)
+		return SMW_STATUS_INVALID_PARAM;
+
+	status = smw_config_subsystem_loaded(subsystem);
+	if (status != SMW_STATUS_SUBSYSTEM_LOADED) {
+		if (!strcmp(subsystem, "TEE"))
+			status = set_tee_info(info, info_size);
+		else if (!strcmp(subsystem, "HSM"))
+			status = set_hsm_info(info, info_size);
+		else
+			status = SMW_STATUS_UNKNOWN_NAME;
+	}
+
+	return status;
+}
+
+__export enum smw_status_code smw_osal_lib_init(void)
+{
+	int status;
+
+	struct smw_ops ops = { 0 };
+	char *buffer = NULL;
+	unsigned int size = 0;
+	unsigned int offset = 0;
+
+	TRACE_FUNCTION_CALL;
+
+	if (osal_priv.lib_initialized)
+		return SMW_STATUS_LIBRARY_ALREADY_INIT;
+
+	ops.mutex_init = mutex_init;
+	ops.mutex_destroy = mutex_destroy;
+	ops.mutex_lock = mutex_lock;
+	ops.mutex_unlock = mutex_unlock;
+	ops.thread_create = thread_create;
+	ops.thread_cancel = thread_cancel;
+	ops.thread_self = thread_self;
+	ops.register_active_subsystem = register_active_subsystem;
+	ops.get_subsystem_info = get_subsystem_info;
+
+	status = smw_init(&ops);
+
+	if (status == SMW_STATUS_OK) {
+		status = get_default_config(&buffer, &size);
+
+		if (status == SMW_STATUS_OK)
+			status = smw_config_load(buffer, size, &offset);
+	}
+
+	if (buffer)
+		free(buffer);
+
+	if (status == SMW_STATUS_OK)
+		osal_priv.lib_initialized = 1;
+
+	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }

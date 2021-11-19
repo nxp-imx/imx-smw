@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __LOCAL_H__
@@ -13,6 +13,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+
+#include "smw_osal.h"
 
 #include "compiler.h"
 #include "osal.h"
@@ -43,6 +45,34 @@
 #define TRACE_FUNCTION_CALL
 #endif /* ENABLE_TRACE */
 
-extern const char *active_subsystem_name;
+#ifndef BIT
+#define BIT(bit) (1 << (bit))
+#endif /* BIT */
+
+/*
+ * Define the configuration flags ids
+ */
+#define CONFIG_TEE BIT(0)
+#define CONFIG_SE  BIT(1)
+
+/**
+ * struct lib_config_args - Library configuration arguments
+ * @config_flags: Flags the library configuration set
+ * @tee_info: TEE subsystem configuration
+ * @se_info: Secure Enclave subsystem configuration
+ */
+struct lib_config_args {
+	unsigned int config_flags;
+	struct tee_info tee_info;
+	struct se_info se_info;
+};
+
+struct osal_priv {
+	int lib_initialized;
+	struct lib_config_args config;
+	const char *active_subsystem_name;
+};
+
+extern struct osal_priv osal_priv;
 
 #endif /* __LOCAL_H__ */

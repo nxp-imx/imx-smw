@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2019-2021 NXP
+ * Copyright 2019-2022 NXP
  */
 
 #ifndef __OSAL_H__
@@ -20,6 +20,7 @@
  * @thread_cancel: [mandatory] Cancel a thread
  * @thread_self: [optional] Return the ID of the thread being executed
  * @register_active_subsystem: [optional] Register the active Secure Subsystem
+ * @get_subsystem_info: [mandatory] Get Subsystem configuration info
  *
  * This structure defines the SMW OSAL.
  * Functions pointers marked as [mandatory] must be assigned.
@@ -43,6 +44,8 @@ struct smw_ops {
 	unsigned long (*thread_self)(void);
 
 	void (*register_active_subsystem)(const char *subsystem_name);
+
+	int (*get_subsystem_info)(const char *subsystem_name, void *info);
 };
 
 /**

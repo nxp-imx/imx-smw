@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <string.h>
@@ -85,8 +85,6 @@ int config_load(json_object *params, struct common_parameters *common_params,
 {
 	int res = ERR_CODE(PASSED);
 
-	json_object *filepath_obj = NULL;
-
 	char *file_path = NULL;
 	char *file_name = NULL;
 	unsigned int file_path_size = 0;
@@ -102,14 +100,13 @@ int config_load(json_object *params, struct common_parameters *common_params,
 	res = util_read_hex_buffer((unsigned char **)&buffer, &size, params,
 				   INPUT_OBJ);
 	if (res == ERR_CODE(MISSING_PARAMS)) {
-		if (!json_object_object_get_ex(params, FILEPATH_OBJ,
-					       &filepath_obj)) {
+		res = util_read_json_type(&file_name, FILEPATH_OBJ, t_string,
+					  params);
+		if (res != ERR_CODE(PASSED)) {
 			DBG_PRINT_MISS_PARAM(__func__, "filepath");
 			DBG_PRINT_MISS_PARAM(__func__, "input");
 			goto end;
 		}
-
-		file_name = (char *)json_object_get_string(filepath_obj);
 
 		file_path_size = strlen(CONFIG_DIR) + strlen(file_name);
 		file_path = malloc(file_path_size + 1);

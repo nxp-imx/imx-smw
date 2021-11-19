@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -22,17 +22,6 @@
  *  - Subsystem Key ID is 1
  */
 #define FAKE_KEY_ID_NIST_256_0_ID INT64_C(0x0010010000000001)
-
-#define READ_KDF_ARGS(st, f, type, jobj)                                       \
-	({                                                                     \
-		int _ret;                                                      \
-		do {                                                           \
-			unsigned char *_elm = (unsigned char *)(st);           \
-			_elm += offsetof(struct smw_kdf_tls12_args, f);        \
-			_ret = util_read_json_type(_elm, #f, t_##type, jobj);  \
-		} while (0);                                                   \
-		_ret;                                                          \
-	})
 
 /**
  * kdf_args_tls12_read() - Read the TLS 1.2 function arguments
@@ -64,19 +53,20 @@ static int kdf_tls12_args_read(void **kdf_args, json_object *oargs)
 	if (!tls_args)
 		return INTERNAL_OUT_OF_MEMORY;
 
-	res = READ_KDF_ARGS(tls_args, key_exchange_name, string, oargs);
+	res = UTIL_READ_JSON_ST_FIELD(tls_args, key_exchange_name, string,
+				      oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
-	res = READ_KDF_ARGS(tls_args, encryption_name, string, oargs);
+	res = UTIL_READ_JSON_ST_FIELD(tls_args, encryption_name, string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
-	res = READ_KDF_ARGS(tls_args, prf_name, string, oargs);
+	res = UTIL_READ_JSON_ST_FIELD(tls_args, prf_name, string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
-	res = READ_KDF_ARGS(tls_args, ext_master_key, boolean, oargs);
+	res = UTIL_READ_JSON_ST_FIELD(tls_args, ext_master_key, boolean, oargs);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 

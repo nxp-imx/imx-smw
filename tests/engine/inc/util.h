@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __UTIL_H__
@@ -29,6 +29,22 @@
 #define BITS_TO_BYTES_SIZE(nb_bits) (((nb_bits) + 7) / 8)
 #endif
 
+/*
+ * Read a JSON-C name/value from an object containing field @f of
+ * the structure @st
+ */
+#define UTIL_READ_JSON_ST_FIELD(st, f, type, jobj)                             \
+	({                                                                     \
+		int _ret;                                                      \
+		do {                                                           \
+			__typeof__(st) _st = st;                               \
+			unsigned char *_elm = (unsigned char *)(_st);          \
+			_elm += offsetof(__typeof__(*_st), f);                 \
+			_ret = util_read_json_type(_elm, #f, t_##type, jobj);  \
+		} while (0);                                                   \
+		_ret;                                                          \
+	})
+
 /* File extension used */
 #define DEFINITION_FILE_EXTENSION ".json"
 #define TEST_STATUS_EXTENSION	  ".txt"
@@ -39,15 +55,15 @@
 #define ERR_CODE(val)	(list_err[(val)].code)
 #define ERR_STATUS(val) (list_err[(val)].status)
 
-#define FPRINT_SUBTEST_STATUS(file, subtest, status, error_code)               \
+#define FPRINT_SUBTEST_STATUS(file, subtest, status, error)                    \
 	do {                                                                   \
-		__typeof__(file) f = (file);                                   \
-		__typeof__(error_code) error = (error_code);                   \
-		(void)fprintf(f, "%s: %s", subtest, status);                   \
-		if (error)                                                     \
-			(void)fprintf(f, " (%s)\n", error);                    \
+		__typeof__(file) _f = (file);                                  \
+		__typeof__(error) _err = (error);                              \
+		(void)fprintf(_f, "%s: %s", subtest, status);                  \
+		if (_err)                                                      \
+			(void)fprintf(_f, " (%s)\n", _err);                    \
 		else                                                           \
-			(void)fprintf(f, "\n");                                \
+			(void)fprintf(_f, "\n");                               \
 	} while (0)
 
 #define FPRINT_TEST_INTERNAL_FAILURE(file, test_name)                          \

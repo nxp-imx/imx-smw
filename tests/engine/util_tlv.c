@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -86,11 +86,16 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, json_object *obj)
 
 		case json_type_string:
 			tlv->value.str = json_object_get_string(ovalue);
-			/* Length is the string length in including the NULL */
-			tlv->length = strlen(tlv->value.str) + 1;
-			DBG_PRINT("Type %s, L=%d, V=%s", tlv->type, tlv->length,
-				  tlv->value.str);
-			ret = ERR_CODE(PASSED);
+			if (tlv->value.str) {
+				/*
+				 * Length is the string length including
+				 * the NULL ending character
+				 */
+				tlv->length = strlen(tlv->value.str) + 1;
+				DBG_PRINT("Type %s, L=%d, V=%s", tlv->type,
+					  tlv->length, tlv->value.str);
+				ret = ERR_CODE(PASSED);
+			}
 			break;
 
 		case json_type_array:

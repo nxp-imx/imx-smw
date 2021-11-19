@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <string.h>
+
+#include "smw_osal.h"
 
 #include "json.h"
 #include "util.h"
@@ -21,14 +23,25 @@
 #include "run.h"
 #include "paths.h"
 #include "info.h"
-#include "smw_osal.h"
-#include "smw_status.h"
 
 /* Key identifiers linked list */
 static struct llist *key_identifiers;
 
 /* Operation context linked list */
 static struct llist *ctx_list;
+
+static const struct tee_info tee_default_info = {
+	{ "11b5c4aa-6d20-11ea-bc55-0242ac130003" }
+};
+
+static const struct se_info se_default_info = { 0x534d5754, 0x444546,
+						1000 }; // SMWT, DEF
+
+struct obj_operation {
+	struct json_object_iter obj;
+	FILE *log;
+	int is_api_test;
+};
 
 /**
  * execute_generate_cmd() - Execute generate key command.
@@ -389,56 +402,52 @@ static int execute_command(char *cmd, struct json_object *params,
 }
 
 /**
- * update_status() - Update subtest status, subtest error code and test status.
- * @sub_res: Result of the subtest.
- * @sub_status: Subtest status to update (PASSED or FAILED).
- * @sub_err: Subtest error code to update.
- * @test_status: Test status to update.
- * @status: Subtest command status from SMW API.
+ * log_subtest_status() - Log the subtest status
+ * @op: Subtest status to update (PASSED or FAILED).
+ * @res: Result of the subtest.
+ * @status: SMW Library status.
  *
- * If a subtest failed, the test status becomes FAILED.
- * If the subtest result is not a specific error code, the subtest error
- * code is the SMW status returned by the SMW API. This case appears when
- * the subtest result is different from the expected one.
+ * Log the subtest name and the reason of the failure if any.
+ * Function returns if overall test passed or failed.
  *
  * Return:
- * PASSED	- Success.
- * -BAD_ARGS	- One of the arguments is bad.
+ * PASSED - subtest passed
+ * -FAILED - subtest failed
  */
-static int update_status(int sub_res, char **sub_status, const char **sub_err,
-			 int *test_status, enum smw_status_code status)
+static int log_subtest_status(struct obj_operation *op, int res,
+			      enum smw_status_code status)
 {
+	int ret = FAILED;
 	unsigned int idx = 0;
+	const char *error = NULL;
 
-	if (!test_status || !sub_status || !sub_err) {
-		DBG_PRINT_BAD_ARGS(__func__);
-		return ERR_CODE(BAD_ARGS);
+	printf("operation res %d with %x\n", res, status);
+	/* Find the error entry in the array of error string */
+	for (; idx < list_err_size && res != ERR_CODE(idx); idx++)
+		;
+
+	switch (idx) {
+	case PASSED:
+		ret = PASSED;
+		break;
+
+	case BAD_RESULT:
+		error = get_smw_string_status(status);
+		break;
+
+	default:
+		if (idx < list_err_size)
+			error = ERR_STATUS(idx);
+		else
+			error = ERR_STATUS(INTERNAL);
+
+		break;
 	}
 
-	if (!sub_res) {
-		*sub_status = (char *)ERR_STATUS(PASSED);
-	} else {
-		if (!*test_status)
-			*test_status = ERR_CODE(FAILED);
+	FPRINT_SUBTEST_STATUS(op->log, op->obj.key, ERR_STATUS(ret), error);
+	FPRINT_SUBTEST_STATUS(stdout, op->obj.key, ERR_STATUS(ret), error);
 
-		*sub_status = (char *)ERR_STATUS(FAILED);
-
-		for (; idx < list_err_size; idx++) {
-			if (sub_res == ERR_CODE(idx)) {
-				if (idx == BAD_RESULT)
-					*sub_err =
-						get_smw_string_status(status);
-				else
-					*sub_err = ERR_STATUS(idx);
-
-				return ERR_CODE(PASSED);
-			}
-		}
-
-		*sub_err = ERR_STATUS(INTERNAL);
-	}
-
-	return ERR_CODE(PASSED);
+	return ERR_CODE(ret);
 }
 
 /**
@@ -540,72 +549,57 @@ static int get_depends_status(struct json_object *params, FILE *status_file)
 
 /**
  * run_subtest() - Run a subtest.
- * @obj_iter: Pointer to json object iterator of the json definition file
- *            object.
- * @status_file: Pointer to the test status file.
- * @is_api_test: Define if it's an API test or not
- * @test_status: Pointer to the test status variable.
+ * @op: Operation object data
  *
  * Return:
- * none.
+ * PASSED - subtest passed
+ * -FAILED - subtest failed
  */
-static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
-			int is_api_test, int *test_status)
+static int run_subtest(struct obj_operation *op)
 {
 	int res = ERR_CODE(FAILED);
 	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
-	char *command_name = NULL;
+	char *cmd_name = NULL;
 	char *expected_status = NULL;
-	char *sub_status = NULL;
-	const char *sub_error = NULL;
 	const char *sub_used = NULL;
 	const char *sub_exp = NULL;
 	struct common_parameters common_params = { 0 };
-	json_object *cmd_obj = NULL;
-	json_object *res_obj = NULL;
-	json_object *sub_obj = NULL;
-	json_object *version_obj = NULL;
 
-	if (!obj_iter || !status_file || !test_status) {
+	if (!op) {
 		DBG_PRINT_BAD_ARGS(__func__);
-
-		if (test_status)
-			if (*test_status == ERR_CODE(PASSED))
-				*test_status = ERR_CODE(FAILED);
-
-		return;
+		return res;
 	}
 
-	common_params.is_api_test = is_api_test;
+	common_params.is_api_test = op->is_api_test;
 
 	/* Verify the presence of subtest json object */
-	if (strncmp(obj_iter->key, SUBTEST_OBJ, SUBTEST_OBJ_LEN) ||
-	    json_object_get_type(obj_iter->val) != json_type_object) {
-		FPRINT_MESSAGE(status_file, "Error in test definiton file: ");
-		FPRINT_MESSAGE(status_file, "subtest object is not present\n");
-		DBG_PRINT("subtest object is not present");
+	if (json_object_get_type(op->obj.val) != json_type_object) {
+		FPRINT_MESSAGE(op->log, "Error in test definiton file: ");
+		FPRINT_MESSAGE(op->log, "\"subtest\" is not a JSON-C object\n");
+		DBG_PRINT("\"subtest\" is not a JSON-C object");
 
-		if (*test_status == ERR_CODE(PASSED))
-			*test_status = ERR_CODE(FAILED);
-
-		return;
-	}
-
-	/* 'command' is a mandatory parameter */
-	if (!json_object_object_get_ex(obj_iter->val, CMD_OBJ, &cmd_obj)) {
-		DBG_PRINT_MISS_PARAM(__func__, "command");
-		res = ERR_CODE(MISSING_PARAMS);
+		res = ERR_CODE(BAD_PARAM_TYPE);
 		goto exit;
 	}
 
-	command_name = (char *)json_object_get_string(cmd_obj);
+	/* 'command' is a mandatory parameter */
+	res = util_read_json_type(&cmd_name, CMD_OBJ, t_string, op->obj.val);
+	if (res != ERR_CODE(PASSED)) {
+		if (res == ERR_CODE(VALUE_NOTFOUND)) {
+			DBG_PRINT_MISS_PARAM(__func__, CMD_OBJ);
+			res = ERR_CODE(MISSING_PARAMS);
+		}
 
-	if (json_object_object_get_ex(obj_iter->val, SUBSYSTEM_OBJ, &sub_obj))
-		common_params.subsystem =
-			(char *)json_object_get_string(sub_obj);
+		goto exit;
+	}
+
+	res = util_read_json_type(&common_params.subsystem, SUBSYSTEM_OBJ,
+				  t_string, op->obj.val);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
 
 	/* Check dependent subtest(s) status */
-	res = get_depends_status(obj_iter->val, status_file);
+	res = get_depends_status(op->obj.val, op->log);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -613,8 +607,12 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 	 * Get expected result parameter 'result' set in test definition file.
 	 * If not defined, the default value is SMW_STATUS_OK.
 	 */
-	if (json_object_object_get_ex(obj_iter->val, RES_OBJ, &res_obj)) {
-		expected_status = (char *)json_object_get_string(res_obj);
+	res = util_read_json_type(&expected_status, RES_OBJ, t_string,
+				  op->obj.val);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
+	if (expected_status) {
 		res = get_smw_int_status(&common_params.expected_res,
 					 expected_status);
 
@@ -629,22 +627,23 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 	 * Get SMW API version.
 	 * If not set in test definition file, use default value.
 	 */
-	if (json_object_object_get_ex(obj_iter->val, VERSION_OBJ, &version_obj))
-		common_params.version = json_object_get_int(version_obj);
-	else
-		common_params.version = SMW_API_DEFAULT_VERSION;
+	common_params.version = SMW_API_DEFAULT_VERSION;
+	res = util_read_json_type(&common_params.version, VERSION_OBJ, t_int,
+				  op->obj.val);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
 
 	/*
 	 * Get expected subsystem to be used.
 	 * If not set in test definition file don't verify it.
 	 */
 	res = util_read_json_type(&sub_exp, SUBSYSTEM_EXP_OBJ, t_string,
-				  obj_iter->val);
+				  op->obj.val);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
 	/* Execute subtest command */
-	res = execute_command(command_name, obj_iter->val, &common_params,
+	res = execute_command(cmd_name, op->obj.val, &common_params,
 			      &key_identifiers, &ctx_list, &status);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
@@ -663,25 +662,191 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 	}
 
 exit:
-	res = update_status(res, &sub_status, &sub_error, test_status, status);
-
-	FPRINT_SUBTEST_STATUS(status_file, obj_iter->key, sub_status,
-			      sub_error);
-	FPRINT_SUBTEST_STATUS(stdout, obj_iter->key, sub_status, sub_error);
+	return log_subtest_status(op, res, status);
 }
 
-int run_test(char *test_definition_file, char *test_name, char *output_dir)
+/**
+ * setup_tee_info() - Read and setup TEE Information
+ * @test_def: JSON-C test definition of the application
+ *
+ * Function extracts TEE information from the test definition of
+ * the application configuration and calls the SMW Library TEE Information
+ * setup API.
+ *
+ * TEE info is defined with a JSON-C object "tee_info".
+ *
+ * Return:
+ * PASSED              - Success.
+ * -BAD_PARAM_TYPE     - Parameter type is not correct or not supported.
+ * -BAD_ARGS           - One of the argument is bad.
+ * -FAILED             - Error in definition file
+ * -ERROR_SMWLIB_INIT  - SMW Library initialization error
+ */
+static int setup_tee_info(json_object *test_def)
 {
-	int res = ERR_CODE(FAILED);
-	int test_status = ERR_CODE(PASSED);
+	int res;
+	struct tee_info info = tee_default_info;
+	json_object *oinfo = NULL;
+	char *ta_uuid = NULL;
+
+	res = util_read_json_type(&oinfo, TEE_INFO_OBJ, t_object, test_def);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
+	    !oinfo)
+		return res;
+
+	if (res == ERR_CODE(PASSED)) {
+		res = util_read_json_type(&ta_uuid, TA_UUID, t_string, oinfo);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			return res;
+
+		if (strlen(ta_uuid) + 1 > sizeof(info.ta_uuid))
+			return ERR_CODE(BAD_PARAM_TYPE);
+
+		memcpy(info.ta_uuid, ta_uuid, strlen(ta_uuid) + 1);
+	}
+
+	res = smw_osal_set_subsystem_info("TEE", &info, sizeof(info));
+	if (res != SMW_STATUS_OK) {
+		DBG_PRINT("SMW Set TEE Info failed %s",
+			  get_smw_string_status(res));
+		res = ERR_CODE(ERROR_SMWLIB_INIT);
+	} else {
+		res = ERR_CODE(PASSED);
+	}
+
+	return res;
+}
+
+/**
+ * setup_hsm_info() - Read and setup HSM Secure Enclave Information
+ * @test_def: JSON-C test definition of the application
+ *
+ * Function extracts HSM information from the test definition of
+ * the application configuration and calls the SMW Library HSM Information
+ * setup API.
+ *
+ * SE info is defined with a JSON-C object "hsm_info".
+ *
+ * Return:
+ * PASSED              - Success.
+ * -BAD_PARAM_TYPE     - Parameter type is not correct or not supported.
+ * -BAD_ARGS           - One of the argument is bad.
+ * -FAILED             - Error in definition file
+ * -ERROR_SMWLIB_INIT  - SMW Library initialization error
+ */
+static int setup_hsm_info(json_object *test_def)
+{
+	int res;
+	struct se_info info = se_default_info;
+	json_object *oinfo = NULL;
+
+	res = util_read_json_type(&oinfo, HSM_INFO_OBJ, t_object, test_def);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
+	    !oinfo)
+		return res;
+
+	if (res == ERR_CODE(PASSED)) {
+		res = UTIL_READ_JSON_ST_FIELD(&info, storage_id, int, oinfo);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			return res;
+
+		res = UTIL_READ_JSON_ST_FIELD(&info, storage_nonce, int, oinfo);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			return res;
+
+		res = UTIL_READ_JSON_ST_FIELD(&info, storage_replay, int,
+					      oinfo);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			return res;
+	}
+
+	res = smw_osal_set_subsystem_info("HSM", &info, sizeof(info));
+	if (res != SMW_STATUS_OK) {
+		DBG_PRINT("SMW Set HSM Info failed %s",
+			  get_smw_string_status(res));
+		res = ERR_CODE(ERROR_SMWLIB_INIT);
+
+	} else {
+		res = ERR_CODE(PASSED);
+	}
+
+	return res;
+}
+
+/**
+ * init_smwlib() - Initialize the SMW Library
+ * @test_def: JSON-C test definition of the application
+ *
+ * Function extracts from the test definition the application configuration
+ * and call the SMW Library inilization API.
+ *
+ * Return:
+ * PASSED              - Success.
+ * -ERROR_SMWLIB_INIT  - SMW Library initialization error
+ */
+static int init_smwlib(json_object *test_def)
+{
+	int res;
+
+	res = setup_tee_info(test_def);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	res = setup_hsm_info(test_def);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	res = smw_osal_lib_init();
+	if (res != SMW_STATUS_OK) {
+		DBG_PRINT("SMW Library initialization failed %s",
+			  get_smw_string_status(res));
+		res = ERR_CODE(ERROR_SMWLIB_INIT);
+	} else {
+		res = ERR_CODE(PASSED);
+	}
+
+end:
+	if (res != ERR_CODE(PASSED))
+		res = ERR_CODE(ERROR_SMWLIB_INIT);
+
+	return res;
+}
+
+/*
+ * ignore_tag() - Ignore a JSON-C top tag/value
+ * @obj: Operation object
+ *
+ * Return
+ * PASSED - Success
+ */
+static int ignore_tag(struct obj_operation *obj)
+{
+	(void)obj;
+
+	return ERR_CODE(PASSED);
+}
+
+/*
+ * List of the operation per JSONC-C top tag/value
+ */
+const struct op_type {
+	const char *name;
+	int (*run)(struct obj_operation *obj);
+} op_types[] = { { TEE_INFO_OBJ, &ignore_tag },
+		 { HSM_INFO_OBJ, &ignore_tag },
+		 { SUBTEST_OBJ, &run_subtest },
+		 { NULL, NULL } };
+
+int run_test(char *test_def_file, char *test_name, char *output_dir)
+{
+	int test_status = ERR_CODE(FAILED);
 	int file_path_size = 0;
 	char *file_path = NULL;
-	struct json_object_iter iter = { 0 };
-	FILE *status_file = NULL;
 	json_object *definition_obj = NULL;
-	int is_api_test = 0;
+	struct obj_operation op = { 0 };
+	const struct op_type *op_type;
 
-	if (!test_definition_file || !test_name) {
+	if (!test_def_file || !test_name) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -714,30 +879,49 @@ int run_test(char *test_definition_file, char *test_name, char *output_dir)
 	strcat(file_path, TEST_STATUS_EXTENSION);
 	file_path[file_path_size] = '\0';
 
-	status_file = fopen(file_path, "w+");
-	if (!status_file) {
+	op.log = fopen(file_path, "w+");
+	if (!op.log) {
 		DBG_PRINT("fopen failed, file is %s", file_path);
 		test_status = ERR_CODE(INTERNAL);
 		goto exit;
 	}
 
-	res = file_to_json_object(test_definition_file, &definition_obj);
-	if (res != ERR_CODE(PASSED)) {
-		FPRINT_TEST_INTERNAL_FAILURE(status_file, test_name);
-		test_status = res;
+	test_status = file_to_json_object(test_def_file, &definition_obj);
+	if (test_status != ERR_CODE(PASSED)) {
+		FPRINT_TEST_INTERNAL_FAILURE(op.log, test_name);
 		goto exit;
 	}
+
+	test_status = init_smwlib(definition_obj);
+	if (test_status != ERR_CODE(PASSED))
+		goto exit;
 
 	/*
 	 * Check from test name if it's a test to verify the API only
 	 */
 	if (strstr(test_name, TEST_API_TYPE))
-		is_api_test = 1;
+		op.is_api_test = 1;
 
-	/* Run subtests */
-	json_object_object_foreachC(definition_obj, iter)
+	/*
+	 * For each test definition JSON-C top tag/value,
+	 * search tag in the op_types list and execute action assiciated.
+	 */
+	json_object_object_foreachC(definition_obj, op.obj)
 	{
-		run_subtest(&iter, status_file, is_api_test, &test_status);
+		for (op_type = op_types; op_type->name; op_type++) {
+			if (!strncmp(op.obj.key, op_type->name,
+				     strlen(op_type->name))) {
+				test_status |= op_type->run(&op);
+				break;
+			}
+		}
+
+		if (!op_type->name) {
+			FPRINT_MESSAGE(op.log, "JSON-C tag name %s ignored\n",
+				       op.obj.key);
+			DBG_PRINT("WARNING: JSON-C object tag %s ignored",
+				  op.obj.key);
+		}
 	}
 
 	util_list_clear(key_identifiers);
@@ -746,17 +930,16 @@ int run_test(char *test_definition_file, char *test_name, char *output_dir)
 	cipher_clear_out_data_list();
 
 	if (!test_status)
-		FPRINT_TEST_STATUS(status_file, test_name,
-				   (char *)ERR_STATUS(PASSED));
+		FPRINT_TEST_STATUS(op.log, test_name, ERR_STATUS(PASSED));
 	else
-		FPRINT_TEST_STATUS(status_file, test_name, ERR_STATUS(FAILED));
+		FPRINT_TEST_STATUS(op.log, test_name, ERR_STATUS(FAILED));
 
 exit:
 	if (file_path)
 		free(file_path);
 
-	if (status_file)
-		(void)fclose(status_file);
+	if (op.log)
+		(void)fclose(op.log);
 
 	if (definition_obj)
 		json_object_put(definition_obj);

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __JSON_TYPES_H__
@@ -15,6 +15,7 @@
 #define DEPENDS_OBJ	  "depends"
 #define DIGEST_OBJ	  "digest"
 #define FILEPATH_OBJ	  "filepath"
+#define HSM_INFO_OBJ	  "hsm_info"
 #define INPUT_OBJ	  "input"
 #define IV_OBJ		  "iv"
 #define KEY_FORMAT_OBJ	  "format"
@@ -42,6 +43,8 @@
 #define SUBSYSTEM_EXP_OBJ "subsystem_exp"
 #define SUBSYSTEM_OBJ	  "subsystem"
 #define SUBTEST_OBJ	  "subtest "
+#define TA_UUID		  "ta_uuid"
+#define TEE_INFO_OBJ	  "tee_info"
 #define TEST_ERR_OBJ	  "test_error"
 #define VERSION_OBJ	  "version"
 

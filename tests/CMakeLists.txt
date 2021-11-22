@@ -11,7 +11,6 @@ find_package(Jsonc REQUIRED)
 
 enable_testing()
 
-set(SMW_TESTS_TARGET_BIN_DIR bin)
 set(SMW_TESTS_TARGET_DATA_DIR share/smw/tests)
 set(SMW_CTEST_TEST_FILE_DIR ${SMW_TESTS_TARGET_DATA_DIR})
 set(DEFAULT_OUT_STATUS_DIR ${CMAKE_INSTALL_PREFIX}/${SMW_TESTS_TARGET_DATA_DIR})
@@ -114,6 +113,10 @@ if(TEE_TESTS AND HSM_TESTS)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/hsmtee_tests.cmake)
 endif()
 
+if(TEE_TESTS)
+    add_subdirectory(tee)
+endif()
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
         DESTINATION ${SMW_CTEST_TEST_FILE_DIR}
         EXCLUDE_FROM_ALL
@@ -128,7 +131,7 @@ install(FILES ${TEST_SCRIPTS_BIN}/run_simple_test.sh
         EXCLUDE_FROM_ALL)
 
 install(TARGETS ${PROJECT_NAME}
-        DESTINATION ${SMW_TESTS_TARGET_BIN_DIR}
+	DESTINATION ${CMAKE_INSTALL_BINDIR}
         COMPONENT ${PROJECT_NAME}
         EXCLUDE_FROM_ALL OPTIONAL)
 

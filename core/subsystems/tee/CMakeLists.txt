@@ -17,9 +17,6 @@ message(STATUS "    OPTEE client Library: ${TEEC_LIBRARY}")
 message(STATUS "    OPTEE client Header : ${TEEC_INCLUDE_DIR}")
 message(STATUS "    OPTEE TA Dev Kit    : ${TA_DEV_KIT_DIR}")
 
-set(TA_BINARY 11b5c4aa-6d20-11ea-bc55-0242ac130003)
-set(TA_FILE ${TA_BINARY}.ta)
-
 add_library(tee OBJECT "")
 set_target_properties(tee PROPERTIES C_VISIBILITY_PRESET hidden)
 
@@ -28,7 +25,7 @@ set_target_properties(tee PROPERTIES C_VISIBILITY_PRESET hidden)
 # features are enabled
 #
 if (ENABLE_CIPHER)
-set(ENABLE_CONTEXT ON)
+    set(ENABLE_CONTEXT ON)
 endif()
 
 target_sources(tee PRIVATE
@@ -50,48 +47,6 @@ target_include_directories(tee SYSTEM PRIVATE ${TEEC_INCLUDE_DIR})
 
 set(EXT_LIBS ${EXT_LIBS} ${TEEC_LIBRARY} PARENT_SCOPE)
 
-# Add TA Build directory in the clean list
-set_property(DIRECTORY APPEND PROPERTY
-             ADDITIONAL_MAKE_CLEAN_FILES ${TA_BUILD_DIR})
-
 string(REGEX REPLACE "-gcc$" "-" CROSS_COMPILE  ${CMAKE_C_COMPILER})
 
-set(TA_LIB_CMD make -C ${CMAKE_CURRENT_SOURCE_DIR}/lib_ta
-		TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR}
-                CROSS_COMPILE=${CROSS_COMPILE}
-		CFG_TEE_TA_LOG_LEVEL=${VERBOSE}
-		O=${CMAKE_BINARY_DIR}/lib_ta
-                )
-
-
-set(TA_CMD make -C ${CMAKE_CURRENT_SOURCE_DIR}/ta
-                BINARY=${TA_BINARY}
-		TA_DEV_KIT_DIR=${TA_DEV_KIT_DIR}
-                CROSS_COMPILE=${CROSS_COMPILE}
-		CFG_TEE_TA_LOG_LEVEL=${VERBOSE}
-                O=${CMAKE_BINARY_DIR}/ta
-                )
-
-include(ExternalProject)
-ExternalProject_Add(lib_ta
-	CONFIGURE_COMMAND ""
-	INSTALL_COMMAND ""
-	BUILD_ALWAYS True
-	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib_ta
-	BINARY_DIR ${CMAKE_BINARY_DIR}/lib_ta
-	TMP_DIR ${CMAKE_BINARY_DIR}/lib_ta
-	BUILD_COMMAND ${TA_LIB_CMD})
-
-ExternalProject_Add(smw_ta
-	CONFIGURE_COMMAND ""
-	INSTALL_COMMAND ""
-	DEPENDS lib_ta
-	BUILD_ALWAYS True
-	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ta
-	BINARY_DIR ${CMAKE_BINARY_DIR}/ta
-	TMP_DIR ${CMAKE_BINARY_DIR}/ta
-	BUILD_COMMAND ${TA_CMD})
-
-include(GNUInstallDirs)
-install(FILES ${CMAKE_BINARY_DIR}/ta/${TA_FILE}
-       	DESTINATION ${DESTDIR}/${CMAKE_INSTALL_LIBDIR}/optee_armtz)
+add_subdirectory(lib_ta)

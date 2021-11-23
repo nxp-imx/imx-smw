@@ -1,4 +1,4 @@
 Library information APIs
 ========================
 
-.. kernel-doc:: ../../../../public/smw_info.h
+.. kernel-doc:: ../../../../../public/smw_info.h

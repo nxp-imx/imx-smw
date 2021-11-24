@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2019-2021 NXP
+ * Copyright 2019-2022 NXP
  */
 
 #include "smw_status.h"
@@ -30,6 +30,9 @@ static int check_ops(const struct smw_ops *ops)
 		return -1;
 
 	if (!ops->thread_create || !ops->thread_cancel)
+		return -1;
+
+	if (!ops->get_subsystem_info)
 		return -1;
 
 	return 0;

@@ -1,20 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef TEE_SUBSYSTEM_H
 #define TEE_SUBSYSTEM_H
 
 #include <tee_api_types.h>
-
-#define SMW_TA_UUID                                                            \
-	{                                                                      \
-		0x11b5c4aa, 0x6d20, 0x11ea,                                    \
-		{                                                              \
-			0xbc, 0x55, 0x02, 0x42, 0xac, 0x13, 0x00, 0x03         \
-		}                                                              \
-	}
 
 /* Index of operation shared buffers parameters */
 #define GEN_PUB_KEY_PARAM_IDX  1

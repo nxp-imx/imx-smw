@@ -35,6 +35,8 @@
 #define SMW_UTILS_STRLEN  strlen
 #define SMW_UTILS_STRCMP  strcmp
 #define SMW_UTILS_STRNCMP strncmp
+#define SMW_UTILS_STRTOK  strtok
+#define SMW_UTILS_STRTOL  strtol
 
 #define SMW_UTILS_CRITICAL_SECTION_START                                       \
 	do {                                                                   \
@@ -114,12 +116,7 @@ smw_utils_register_active_subsystem(const char *subsystem_name)
 static inline int smw_utils_get_subsystem_info(const char *subsystem_name,
 					       void *info)
 {
-	int err = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
-
-	if (!g_smw_ctx.ops.get_subsystem_info(subsystem_name, info))
-		err = SMW_STATUS_OK;
-
-	return err;
+	return g_smw_ctx.ops.get_subsystem_info(subsystem_name, info);
 }
 
 static inline unsigned long smw_utils_time(unsigned long ref)

@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <tee_client_api.h>
+
+#include "smw_osal.h"
 
 #include "compiler.h"
 #include "operations.h"
@@ -12,7 +14,6 @@
 #include "utils.h"
 #include "config.h"
 #include "tee.h"
-#include "smw_status.h"
 
 /**
  * struct tee_subsystem - Context between Normal World and Secure World.
@@ -92,6 +93,138 @@ __weak bool tee_cipher_handle(enum operation_id operation_id, void *args,
 	return false;
 }
 
+static void str_to_hex(char *str, unsigned char *hex)
+{
+	long val;
+	unsigned char *phex = hex;
+	char tmp[3] = { 0 };
+	size_t i;
+
+	for (i = 0; i < strlen(str); i += 2, phex++) {
+		tmp[0] = str[i];
+		tmp[1] = str[i + 1];
+		val = SMW_UTILS_STRTOL(tmp, NULL, 16);
+		if (val)
+			*phex = val;
+	}
+}
+
+/*
+ * ta_uuid_string_to_uuid() - Convert TA UUID string to UUID object
+ * @str: TA UUID string value
+ * @uuid: TA UUID object result
+ *
+ * return:
+ * SMW_STATUS_OK             - Success.
+ * SMW_STATUS_ALLOC_FAILURE  - Memory allocation failed.
+ * SMW_STATUS_INVALID_PARAM  - UUID is not valid
+ */
+static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
+{
+	int res = SMW_STATUS_INVALID_PARAM;
+	static const char delim[2] = "-";
+	char *field;
+	char *tmp = NULL;
+	size_t len;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	len = SMW_UTILS_STRLEN(str) + 1;
+	tmp = SMW_UTILS_CALLOC(1, len);
+	if (!tmp) {
+		SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
+		return SMW_STATUS_ALLOC_FAILURE;
+	}
+
+	SMW_UTILS_MEMCPY(tmp, str, len - 1);
+
+	/* Read the timeLow field */
+	field = SMW_UTILS_STRTOK(tmp, delim);
+	if (!field) {
+		SMW_DBG_PRINTF(ERROR, "TA UUID timeLow wrong\n");
+		goto exit;
+	}
+
+	uuid->timeLow = SMW_UTILS_STRTOL(field, NULL, 16);
+	if (!uuid->timeLow) {
+		SMW_DBG_PRINTF(ERROR, "TA UUID timeLow bad value\n");
+		goto exit;
+	}
+
+	/* Read the timeMid field */
+	field = SMW_UTILS_STRTOK(NULL, delim);
+	if (!field) {
+		SMW_DBG_PRINTF(ERROR, "TA UUID timeMid wrong\n");
+		goto exit;
+	}
+
+	uuid->timeMid = SMW_UTILS_STRTOL(field, NULL, 16);
+	if (!uuid->timeMid) {
+		SMW_DBG_PRINTF(ERROR, "TA UUID timeMid bad value\n");
+		goto exit;
+	}
+
+	/* Read the timeHiAndVersion field */
+	field = SMW_UTILS_STRTOK(NULL, delim);
+	if (!field) {
+		SMW_DBG_PRINTF(ERROR, "TA UUID timeHiAndVersion wrong\n");
+		goto exit;
+	}
+
+	uuid->timeHiAndVersion = SMW_UTILS_STRTOL(field, NULL, 16);
+	if (!uuid->timeHiAndVersion) {
+		SMW_DBG_PRINTF(ERROR, "TA UUID timeHiAndVersion bad value\n");
+		goto exit;
+	}
+
+	/*
+	 * Read the clockSeqAndNode field
+	 * Format can be:
+	 *  - single string of 8 hexadecimal value
+	 *  - or a string split with 2 hexadecimal `-` (Seq-Node)
+	 */
+	field = SMW_UTILS_STRTOK(NULL, delim);
+	if (!field) {
+		SMW_DBG_PRINTF(ERROR, "TA UUID clockSeqAndNode wrong\n");
+		goto exit;
+	}
+
+	/* Convert nb char to number of bytes */
+	len = SMW_UTILS_STRLEN(field) / 2;
+
+	if (len == sizeof(uuid->clockSeqAndNode)) {
+		str_to_hex(field, uuid->clockSeqAndNode);
+		res = SMW_STATUS_OK;
+	} else if (len == 2) {
+		str_to_hex(field, uuid->clockSeqAndNode);
+
+		field = SMW_UTILS_STRTOK(NULL, delim);
+		if (!field) {
+			SMW_DBG_PRINTF(ERROR,
+				       "TA UUID clockSeqAndNode wrong\n");
+			goto exit;
+		}
+
+		/* Convert nb char to number of bytes */
+		len = SMW_UTILS_STRLEN(field) / 2;
+		if (len == sizeof(uuid->clockSeqAndNode) - 2) {
+			str_to_hex(field, &uuid->clockSeqAndNode[2]);
+			res = SMW_STATUS_OK;
+		} else {
+			SMW_DBG_PRINTF(ERROR,
+				       "TA UUID clockSeqAndNode wrong\n");
+		}
+	} else {
+		SMW_DBG_PRINTF(ERROR, "TA UUID clockSeqAndNode wrong\n");
+	}
+
+exit:
+	if (tmp)
+		SMW_UTILS_FREE(tmp);
+
+	return res;
+}
+
 /**
  * load() - Load optee os subsystem.
  *
@@ -102,14 +235,26 @@ __weak bool tee_cipher_handle(enum operation_id operation_id, void *args,
 static int load(void)
 {
 	TEEC_Result tee_res = TEEC_ERROR_GENERIC;
-	TEEC_UUID ta_uuid = SMW_TA_UUID;
+	TEEC_UUID ta_uuid = { 0 };
 	int status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
 	uint32_t err_origin = 0;
+	const char *subsystem_name;
+	struct tee_info info;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	/* Initialize the TEE context */
 	memset(&tee_ctx, 0, sizeof(tee_ctx));
+
+	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_TEE);
+
+	status = smw_utils_get_subsystem_info(subsystem_name, &info);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	status = ta_uuid_string_to_uuid(info.ta_uuid, &ta_uuid);
+	if (status != SMW_STATUS_OK)
+		goto exit;
 
 	tee_res = TEEC_InitializeContext(NULL, &tee_ctx.context);
 	if (tee_res != TEEC_SUCCESS) {

@@ -5,5 +5,13 @@
 	"subtest 2": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_psa_default.txt"
-	}
+	},
+	"subtest 3": {
+		"command": "CONFIG_UNLOAD",
+		"depends": 2
+	},
+	"subtest 4": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_psa_default_alt.txt"
+	},
 }

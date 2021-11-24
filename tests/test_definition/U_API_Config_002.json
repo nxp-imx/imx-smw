@@ -177,5 +177,10 @@
 		"command": "CONFIG_LOAD",
 		"filepath": "config_load_method_defined_twice.txt",
 		"result": "SMW_STATUS_LOAD_METHOD_DUPLICATE"
+	},
+	"subtest 37": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_psa_alt_invalid.txt",
+		"result": "SMW_STATUS_INVALID_TAG"
 	}
 }

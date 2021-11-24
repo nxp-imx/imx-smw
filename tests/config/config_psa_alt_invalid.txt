@@ -1,0 +1,7 @@
+/* Configuration file */
+VERSION=1;
+PSA_DEFAULT=TEE:ART;
+[SECURE_SUBSYSTEM]
+    TEE;
+    [SECURITY_OPERATION]
+        GENERATE_KEY;

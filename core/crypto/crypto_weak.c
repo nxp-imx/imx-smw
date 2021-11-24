@@ -93,3 +93,23 @@ __weak enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
+
+__weak enum smw_status_code smw_cancel_operation(struct smw_op_context *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code smw_copy_context(struct smw_op_context *dst,
+					     struct smw_op_context *src)
+{
+	(void)dst;
+	(void)src;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}

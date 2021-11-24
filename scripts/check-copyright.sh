@@ -46,6 +46,11 @@ function _copyright() {
             continue
         fi
 
+	if [[ ! -e ${f} ]]; then
+	    echo "WARNING: File $f deleted"
+	    continue
+	fi
+
         # Search copyright in 20 first lines, with current year date
         head -n 20 "$f" | grep "[Cc]opyright 20..* NXP" | \
               grep "$(date +%Y)" > /dev/null
@@ -80,6 +85,7 @@ function checkdiff() {
     do
         echo ""
         echo "========================================================"
+	echo " commit $c "
         checkcommit "$c"
         echo "========================================================"
     done

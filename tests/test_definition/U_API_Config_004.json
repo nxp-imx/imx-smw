@@ -1,0 +1,9 @@
+{
+	"subtest 1": {
+		"command": "CONFIG_UNLOAD"
+	},
+	"subtest 2": {
+		"command": "CONFIG_LOAD",
+		"filepath": "config_psa_default.txt"
+	}
+}

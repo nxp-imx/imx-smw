@@ -5,6 +5,7 @@
 
 #include "smw_status.h"
 
+#include "compiler.h"
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
@@ -591,13 +592,21 @@ end:
 	return skip;
 }
 
+__weak bool is_psa_default_alt_enabled(void)
+{
+	return false;
+}
+
 static int get_psa_default_subsystem(char **start, char *end)
 {
 	int status = SMW_STATUS_OK;
 
 	char *cur = *start;
 	char buffer[SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH + 1];
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	bool option_present = false;
+	struct psa_config config = { .subsystem_id = SUBSYSTEM_ID_INVALID,
+				     .alt = false };
+	unsigned int alt_tag_len = SMW_UTILS_STRLEN(alt_tag);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -616,20 +625,48 @@ static int get_psa_default_subsystem(char **start, char *end)
 
 	status = read_string(&cur, end, buffer,
 			     SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH, semicolon);
+	if (status == SMW_STATUS_SYNTAX_ERROR && colon == *cur) {
+		status = SMW_STATUS_OK;
+		option_present = true;
+		cur++;
+	}
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	SMW_DBG_PRINTF(INFO, "PSA default secure subsystem name: %s\n", buffer);
 
 	/* Secure Subsystem id */
-	status = smw_config_get_subsystem_id(buffer, &subsystem_id);
+	status = smw_config_get_subsystem_id(buffer, &config.subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	SMW_DBG_PRINTF(DEBUG, "PSA default secure subsystem id: %d\n",
-		       subsystem_id);
+	if (option_present) {
+		skip_insignificant_chars(&cur, end);
 
-	set_psa_default_subsystem(subsystem_id);
+		status = read_string(&cur, end, buffer, alt_tag_len, semicolon);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		if (alt_tag_len != SMW_UTILS_STRLEN(buffer) ||
+		    SMW_UTILS_STRNCMP(buffer, alt_tag, alt_tag_len)) {
+			status = SMW_STATUS_INVALID_TAG;
+			goto end;
+		}
+
+		if (is_psa_default_alt_enabled()) {
+			config.alt = true;
+		} else {
+			SMW_DBG_PRINTF(INFO,
+				       "ENABLE_PSA_DEFAULT_ALT is OFF.\n");
+		}
+	}
+
+	SMW_DBG_PRINTF(DEBUG,
+		       "PSA default secure subsystem id: %d, alternative %s\n",
+		       config.subsystem_id,
+		       config.alt ? "enabled" : "disabled");
+
+	set_psa_default_subsystem(&config);
 
 	*start = cur;
 

@@ -32,6 +32,7 @@ void print_key_params(struct op_key *key)
 
 void print_database(void)
 {
+	struct psa_config *psa = &database.psa;
 	unsigned int i;
 	struct subsystem *subsystem;
 	bool configured;
@@ -39,8 +40,8 @@ void print_database(void)
 	enum load_method_id load_method_id;
 	struct operation *operation;
 
-	SMW_DBG_PRINTF(INFO, "PSA default subsystem: %d\n",
-		       database.psa_default_subsystem_id);
+	SMW_DBG_PRINTF(INFO, "PSA default subsystem: %d, alternative: %s\n",
+		       psa->subsystem_id, psa->alt ? "ENABLED" : "DISABLED");
 
 	SMW_DBG_PRINTF(INFO, "Secure subsystems:\n");
 	for (i = 0; i < SUBSYSTEM_ID_NB; i++) {

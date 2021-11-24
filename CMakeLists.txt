@@ -60,6 +60,8 @@ cmake_dependent_option(ENABLE_CIPHER "Enable Cipher" ON "ENABLE_KEYMGR_MODULE" O
 option(ENABLE_RNG "Enable Random number generator" ON)
 option(ENABLE_TLS12 "Enable TLS 1.2 features" OFF)
 
+option(ENABLE_PSA_DEFAULT_ALT "Enable alternative subsystem selection for PSA API" OFF)
+
 #
 # Define all targets compiler options
 #

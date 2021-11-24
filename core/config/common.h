@@ -34,6 +34,11 @@ struct ctx {
 	bool config_loaded;
 };
 
+struct psa_config {
+	enum subsystem_id subsystem_id;
+	bool alt;
+};
+
 enum load_method_id {
 	/* Load / unload methods */
 	LOAD_METHOD_ID_AT_CONFIG_LOAD_UNLOAD,
@@ -293,15 +298,15 @@ void init_key_params(struct op_key *key);
 void init_database(bool reset);
 
 /**
- * set_psa_default_subsystem() - Set the PSA default Secure Subsystem.
- * @id: Secure Subsystem ID.
+ * set_psa_default_subsystem() - Set the PSA configuration.
+ * @config: New PSA configuration.
  *
- * This function sets the PSA default Secure Subsystem.
+ * This function sets the PSA configuration.
  *
  * Return:
  * none.
  */
-void set_psa_default_subsystem(enum subsystem_id id);
+void set_psa_default_subsystem(struct psa_config *config);
 
 /**
  * set_bit() - Set a bit in a bitmap.
@@ -514,3 +519,14 @@ void load_subsystems(void);
  * error code.
  */
 void unload_subsystems(void);
+
+/**
+ * is_psa_default_alt_enabled() - Tell if ENABLE_PSA_DEFAULT_ALT is enabled.
+ *
+ * This function tells if ENABLE_PSA_DEFAULT_ALT option is enabled.
+ *
+ * Return:
+ * * true:  - ENABLE_PSA_DEFAULT_ALT is enabled.
+ * * false: - ENABLE_PSA_DEFAULT_ALT is not enabled.
+ */
+bool is_psa_default_alt_enabled(void);

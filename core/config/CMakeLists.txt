@@ -13,7 +13,8 @@ target_sources(config PRIVATE
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
                $<$<BOOL:${ENABLE_HMAC}>:hmac.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
-               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>)
+               $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
+               $<$<BOOL:${ENABLE_PSA_DEFAULT_ALT}>:parser_psa_alt.c>)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
 target_sources(config PRIVATE
                database_debug.c

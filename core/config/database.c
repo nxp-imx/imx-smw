@@ -77,13 +77,21 @@ static void init_operation(struct operation *operation, bool reset)
 	smw_utils_list_print(&operation->subsystems_list);
 }
 
+static void init_psa_config(struct psa_config *psa)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	psa->subsystem_id = SUBSYSTEM_ID_INVALID;
+	psa->alt = false;
+}
+
 void init_database(bool reset)
 {
 	unsigned int i;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	database.psa_default_subsystem_id = SUBSYSTEM_ID_INVALID;
+	init_psa_config(&database.psa);
 
 	for (i = 0; i < SUBSYSTEM_ID_NB; i++)
 		init_subsystem(&database.subsystem[i]);
@@ -92,13 +100,13 @@ void init_database(bool reset)
 		init_operation(&database.operation[i], reset);
 }
 
-void set_psa_default_subsystem(enum subsystem_id id)
+void set_psa_default_subsystem(struct psa_config *config)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SUBSYSTEM_ID_ASSERT(id);
+	SUBSYSTEM_ID_ASSERT(config->subsystem_id);
 
-	database.psa_default_subsystem_id = id;
+	database.psa = *config;
 }
 
 void set_bit(unsigned long *bitmap, unsigned int size, unsigned int offset)

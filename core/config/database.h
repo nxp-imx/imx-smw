@@ -18,7 +18,7 @@ struct operation {
 };
 
 struct database {
-	enum subsystem_id psa_default_subsystem_id;
+	struct psa_config psa;
 	struct subsystem subsystem[SUBSYSTEM_ID_NB];
 	struct operation operation[OPERATION_ID_NB];
 };

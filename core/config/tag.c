@@ -23,6 +23,7 @@ const char *operation_tag = "[SECURITY_OPERATION]";
 /* Parameters tags */
 const char *version_tag = "VERSION";
 const char *psa_default_tag = "PSA_DEFAULT";
+const char *alt_tag = "ALT";
 const char *key_type_values = "KEY_TYPE_VALUES";
 const char *hash_algo_values = "HASH_ALGO_VALUES";
 const char *hmac_algo_values = "HMAC_ALGO_VALUES";

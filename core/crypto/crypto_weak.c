@@ -57,3 +57,39 @@ __weak enum smw_status_code smw_rng(struct smw_rng_args *args)
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
+
+__weak enum smw_status_code smw_cipher(struct smw_cipher_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}

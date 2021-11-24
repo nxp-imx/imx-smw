@@ -711,6 +711,8 @@ int parse(char *buffer, unsigned int size, unsigned int *offset)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	skip_insignificant_chars(&cur, end);
+
 	/* List of Secure Subsystems */
 	while (cur < end) {
 		/* Secure Subsystem tag */

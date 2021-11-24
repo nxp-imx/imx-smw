@@ -11,6 +11,7 @@ opt_coverage="-DCODE_COVERAGE=OFF"
 opt_buildtype="-DCMAKE_BUILD_TYPE=Release"
 opt_verbose="-DVERBOSE=0"
 opt_format="-DFORMAT=html"
+opt_psa="-DENABLE_PSA_DEFAULT=OFF"
 
 #
 # Get script name and path
@@ -197,6 +198,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_zlib} ${opt_seco}"
     cmd_script="${cmd_script} ${opt_teec} ${opt_tadevkit}"
     cmd_script="${cmd_script} ${opt_jsonc}"
+    cmd_script="${cmd_script} ${opt_psa}"
 
     mkdir -p "${opt_out}"
     cd "${opt_out}"
@@ -647,6 +649,10 @@ do
         format=*)
             opt_format="${arg#*=}"
             opt_format="-DFORMAT=${opt_format}"
+            ;;
+
+        psa_default_alt)
+            opt_psa="-DENABLE_PSA_DEFAULT_ALT=ON"
             ;;
 
         #

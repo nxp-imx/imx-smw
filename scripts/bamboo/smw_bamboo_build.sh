@@ -24,10 +24,11 @@ function usage()
     built libraries.
 
     $(basename "$0") <arch> <platform> coverage
-      <arch>     : Mandatory architecture aarch32 or aarch64
-      <platform> : Mandatory platform
-      coverage   : [optional] Enable the code coverage tool
-      doc        : [optional] Archive documentation
+      <arch>          : Mandatory architecture aarch32 or aarch64
+      <platform>      : Mandatory platform
+      coverage        : [optional] Enable the code coverage tool
+      doc             : [optional] Archive documentation
+      psa_default_alt : [optional] Enable alternative subsystem selection for PSA API
 
 EOF
 }
@@ -44,6 +45,7 @@ shift 2
 
 opt_coverage=
 opt_doc=0
+psa_default_alt=
 
 if [[ $# -ne 0 ]]; then
     for arg in "$@"
@@ -55,6 +57,10 @@ if [[ $# -ne 0 ]]; then
 
               doc)
                 opt_doc=1
+                ;;
+
+              psa_default_alt)
+                psa_default_alt="psa_default_alt"
                 ;;
 
               *)
@@ -109,7 +115,7 @@ eval "./scripts/smw_build.sh build docs out=${build_release} format=\"all\""
 #
 eval "./scripts/smw_configure.sh ${build_debug} ${arch} ${platform}"
 eval "./scripts/smw_build.sh configure out=${build_debug} \
-      ${opt_coverage} debug verbose=4"
+      ${opt_coverage} debug verbose=4 ${psa_default_alt}"
 eval "./scripts/smw_build.sh build out=${build_debug}"
 eval "./scripts/smw_build.sh package out=${build_debug}"
 

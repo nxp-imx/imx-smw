@@ -231,6 +231,8 @@ Example
 
 On Linux the plaintext configuration may be a text file. This example defines the configuration supporting 2 Secure Subsystems: OPTEE and HSM.
 
+PSA default Secure Subsystem is OPTEE.
+
 OPTEE configuration:
 
 - Subsystem is loaded/unloaded when configuration is loaded and unloaded, refer to Secure Subsystems definition.

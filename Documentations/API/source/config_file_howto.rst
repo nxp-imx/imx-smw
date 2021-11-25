@@ -27,7 +27,7 @@ The configuration format must respect following rules:
 
 - The first tag to define is the **VERSION** tag specifying the parser version compatibility.
 
-- The tag **PSA_DEFAULT**, if present, must be after the tag **VERSION**. If present after the first occurrence of **[SECURE_SUBSYSTEM]**, it is ignored. The possible values are the Secure Subsystems names listed in `List of Secure Subsystems`_.
+- The tag **PSA_DEFAULT**, if present, must be after the tag **VERSION**. If present after the first occurrence of **[SECURE_SUBSYSTEM]**, it is ignored. The possible values are the Secure Subsystems names listed in `List of Secure Subsystems`_. Adding option **ALT** (":ALT") after the Secure Subsystem name allows the selection of another Secure Subsystem if the default one doesn't support the requested Security Operation.
 
 - There must be at least one occurrence of **[SECURE_SUBSYSTEM]**. This tag is the starter of a Secure Subsystem configuration.
 
@@ -232,6 +232,7 @@ Example
 On Linux the plaintext configuration may be a text file. This example defines the configuration supporting 2 Secure Subsystems: OPTEE and HSM.
 
 PSA default Secure Subsystem is OPTEE.
+Secure Subsystem selection is enabled if OPTEE does not support the requested Security Operation.
 
 OPTEE configuration:
 
@@ -251,7 +252,7 @@ HSM configuration:
 
    /* Configuration file */
    VERSION=1;
-   PSA_DEFAULT=TEE;
+   PSA_DEFAULT=TEE:ALT;
    [SECURE_SUBSYSTEM]
        TEE;
        /* Load/unload method */

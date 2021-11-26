@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "smw_status.h"
@@ -160,7 +160,7 @@ static void set_subsystem_state(enum subsystem_id id,
 	database.subsystem[index].state = state;
 }
 
-static enum subsystem_state get_subsystem_state(enum subsystem_id id)
+enum subsystem_state get_subsystem_state(enum subsystem_id id)
 {
 	unsigned int index = id;
 

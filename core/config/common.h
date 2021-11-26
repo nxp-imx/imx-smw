@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "config.h"
 #include "keymgr.h"
+
+enum subsystem_state { SUBSYSTEM_STATE_UNLOADED, SUBSYSTEM_STATE_LOADED };
 
 #define SMW_CONFIG_MAX_STRING_LENGTH 256
 
@@ -342,6 +344,16 @@ void set_subsystem_configured(enum subsystem_id id);
  * * false:	- the Secure Subsystem is not configured.
  */
 bool is_subsystem_configured(enum subsystem_id id);
+
+/**
+ * get_subsystem_state() - Return the subsystem state.
+ * @id: Secure Subsystem ID.
+ *
+ * Return
+ * SUBSYSTEM_STATE_LOADED   - Secure Subsystem is loaded
+ * SUBSYSTEM_STATE_UNLOADED - Secure Subsystem is not loaded
+ */
+enum subsystem_state get_subsystem_state(enum subsystem_id id);
 
 /**
  * set_subsystem_load_method() - Set a Secure Subsystem load method.

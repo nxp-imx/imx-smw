@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <stdbool.h>
@@ -24,6 +24,26 @@ smw_config_subsystem_present(smw_subsystem_t subsystem)
 		return SMW_STATUS_INVALID_PARAM;
 
 	return smw_config_get_subsystem_id(subsystem, &id);
+}
+
+__export enum smw_status_code
+smw_config_subsystem_loaded(smw_subsystem_t subsystem)
+{
+	int status;
+	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
+
+	if (!subsystem)
+		return SMW_STATUS_INVALID_PARAM;
+
+	status = smw_config_get_subsystem_id(subsystem, &id);
+	if (status == SMW_STATUS_OK) {
+		if (get_subsystem_state(id) == SUBSYSTEM_STATE_LOADED)
+			status = SMW_STATUS_SUBSYSTEM_LOADED;
+		else
+			status = SMW_STATUS_SUBSYSTEM_NOT_LOADED;
+	}
+
+	return status;
 }
 
 __export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,

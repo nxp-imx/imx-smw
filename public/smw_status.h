@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __SMW_STATUS_H__
@@ -32,10 +32,13 @@
  * the requested operation.
  * @SMW_STATUS_SUBSYSTEM_STORAGE_ERROR: Generic secure subsystem storage error.
  * @SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT: An object stored in the secure subsystem is corrupted.
+ * @SMW_STATUS_SUBSYSTEM_LOADED: Secure Subsystem is loaded
+ * @SMW_STATUS_SUBSYSTEM_NOT_LOADED: Secure Subsystem is not loaded
  *
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
  * @SMW_STATUS_MUTEX_DESTROY_FAILURE: Mutex destruction has failed.
+ * @SMW_STATUS_LIBRARY_ALREADY_INIT: Library already initialized
  *
  * @SMW_STATUS_INVALID_VERSION: The version of the configuration file is not supported.
  * @SMW_STATUS_INVALID_BUFFER: The configuration file passed by OSAL to the library is not valid.
@@ -76,12 +79,15 @@
  *	- SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE
  *	- SMW_STATUS_SUBSYSTEM_STORAGE_ERROR
  *	- SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT
+ *	- SMW_STATUS_SUBSYSTEM_LOADED
+ *	- SMW_STATUS_SUBSYSTEM_NOT_LOADED
  *
  ** Specific return codes - Library initialization
  *
  *	- SMW_STATUS_OPS_INVALID,
  *	- SMW_STATUS_MUTEX_INIT_FAILURE,
  *	- SMW_STATUS_MUTEX_DESTROY_FAILURE
+ *	- SMW_STATUS_LIBRARY_ALREADY_INIT
  *
  ** Specific return codes - Configuration file
  *
@@ -140,7 +146,10 @@ enum smw_status_code {
 	SMW_STATUS_SUBSYSTEM_STORAGE_NO_SPACE,
 	SMW_STATUS_SUBSYSTEM_STORAGE_ERROR,
 	SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT,
-	SMW_STATUS_LOAD_METHOD_DUPLICATE
+	SMW_STATUS_LOAD_METHOD_DUPLICATE,
+	SMW_STATUS_LIBRARY_ALREADY_INIT, /* 35 */
+	SMW_STATUS_SUBSYSTEM_LOADED,
+	SMW_STATUS_SUBSYSTEM_NOT_LOADED
 };
 
 #endif /* __SMW_STATUS_H__ */

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __SMW_CONFIG_H__
@@ -33,6 +33,23 @@
  *		@subsystem is not a valid string
  */
 enum smw_status_code smw_config_subsystem_present(smw_subsystem_t subsystem);
+
+/**
+ * smw_config_subsystem_loaded() - Return if the subsystem is loaded or not.
+ * @subsystem: Name of the subsystem.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- SMW_STATUS_SUBSYSTEM_LOADED:
+ *		@subsystem is loaded
+ *	- SMW_STATUS_SUBSYSTEM_NOT_LOADED:
+ *		@subsystem is not loaded
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@subsystem is NULL
+ *	- SMW_STATUS_UNKNOWN_NAME:
+ *		@subsystem is not a valid string
+ */
+enum smw_status_code smw_config_subsystem_loaded(smw_subsystem_t subsystem);
 
 /**
  * smw_config_check_digest() - Check if a digest @algo is supported

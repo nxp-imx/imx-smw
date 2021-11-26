@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "dev_config.h"
@@ -13,7 +13,7 @@
  * Define OPTEE Security Middleware library Secure Subsystem.
  */
 const struct libdev optee_info = {
-	.name = "OPTEE",
+	.name = "TEE",
 	.description = "OPTEE OS",
 	.manufacturer = MANUFACTURER_ID, // or Linaro???
 	.model = "",

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "attributes.h"
+#include "data.h"
 #include "key.h"
 
 #include "lib_mutex.h"
@@ -335,8 +336,8 @@ static CK_RV get_token_obj_access(CK_SESSION_HANDLE hsession,
  * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
  * CKR_OK                        - Success
  */
-static CK_RV obj_is_destoyable(CK_SESSION_HANDLE hsession,
-			       struct libobj_obj *obj)
+static CK_RV obj_is_destroyable(CK_SESSION_HANDLE hsession,
+				struct libobj_obj *obj)
 {
 	CK_RV ret;
 	unsigned int access;
@@ -347,6 +348,7 @@ static CK_RV obj_is_destoyable(CK_SESSION_HANDLE hsession,
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
+	case CKO_DATA:
 		is_destroyable = is_destroyable_obj(obj, storage);
 		is_private = is_private_obj(obj, storage);
 		DBG_TRACE("Storage object class %lu, destroy=%d, private=%d",
@@ -519,6 +521,10 @@ static void obj_storage_free(struct libobj_obj *obj)
 		key_free(obj);
 		break;
 
+	case CKO_DATA:
+		data_free(obj);
+		break;
+
 	default:
 		DBG_TRACE("Class object %lu not supported", obj->class);
 		break;
@@ -551,6 +557,7 @@ static void obj_free(struct libobj_obj *obj, struct libobj_list *list)
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
+	case CKO_DATA:
 		obj_storage_free(obj);
 		break;
 
@@ -698,6 +705,20 @@ static CK_RV class_get_attribute(CK_ATTRIBUTE_PTR attr,
 
 		break;
 
+	case CKO_DATA:
+		ret = attr_get_obj_value(attr, attr_obj_storage,
+					 ARRAY_SIZE(attr_obj_storage),
+					 get_object_from(libobj));
+		/*
+		 * If attribute not present in the common storage
+		 * object attributes, try to get it from
+		 * the specific data object
+		 */
+		if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+			ret = data_get_attribute(attr, libobj);
+
+		break;
+
 	default:
 		ret = CKR_FUNCTION_FAILED;
 	}
@@ -745,6 +766,20 @@ static CK_RV class_modify_attribute(CK_ATTRIBUTE_PTR attr,
 
 		break;
 
+	case CKO_DATA:
+		ret = attr_modify_obj_value(attr, attr_obj_storage,
+					    ARRAY_SIZE(attr_obj_storage),
+					    get_object_from(libobj));
+		/*
+		 * If attribute not present in the common storage
+		 * object attributes, try to modify it in
+		 * the specific data object
+		 */
+		if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+			ret = data_modify_attribute(attr, libobj);
+
+		break;
+
 	default:
 		ret = CKR_FUNCTION_FAILED;
 	}
@@ -781,25 +816,31 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	switch (newobj->class) {
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
-	case CKO_PUBLIC_KEY: {
+	case CKO_PUBLIC_KEY:
 		ret = obj_storage_new(hsession, newobj, &attrs_list);
 		if (ret != CKR_OK)
 			break;
 
 		ret = key_create(hsession, newobj, &attrs_list);
-
-		if (ret == CKR_OK)
-			ret = obj_add_to_list(hsession, newobj,
-					      is_token_obj(newobj, storage));
-
 		break;
-	}
+
+	case CKO_DATA:
+		ret = obj_storage_new(hsession, newobj, &attrs_list);
+		if (ret != CKR_OK)
+			break;
+
+		ret = data_create(hsession, newobj, &attrs_list);
+		break;
 
 	default:
 		DBG_TRACE("Class object %lu not supported", newobj->class);
 		ret = CKR_FUNCTION_FAILED;
 		break;
 	}
+
+	if (ret == CKR_OK)
+		ret = obj_add_to_list(hsession, newobj,
+				      is_token_obj(newobj, storage));
 
 end:
 	DBG_TRACE("Object (%p) creation return %ld", newobj, ret);
@@ -823,7 +864,7 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 	ret = find_lock_object(hsession, obj, &objects);
 	if (ret == CKR_OK) {
 		/* Check if the object can be destroyed */
-		ret = obj_is_destoyable(hsession, obj);
+		ret = obj_is_destroyable(hsession, obj);
 		if (ret == CKR_OK) {
 			obj_free(obj, objects);
 			obj = NULL;

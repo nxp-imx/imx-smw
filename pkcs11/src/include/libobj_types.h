@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __LIBOBJ_TYPES_H__
@@ -177,5 +177,11 @@ struct libobj_key_cipher {
 		assert(_key);                                                  \
 		_key->key_id;                                                  \
 	})
+
+struct libobj_data {
+	struct librfc2279 application; // Application managing object
+	struct libbytes id;	       // Object identifier
+	struct libbytes value;	       // Value of the object
+};
 
 #endif /* __LIBOBJ_TYPES_H__ */

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <string.h>
 
 #include "smw_config.h"
-#include "smw_status.h"
 #include "smw_crypto.h"
+#include "smw_osal.h"
 
 #include "dev_config.h"
 #include "lib_context.h"
@@ -1102,12 +1102,18 @@ CK_RV libdev_delete_key(unsigned long long key_id)
 
 CK_RV libdev_mechanisms_init(CK_SLOT_ID slotid)
 {
+	enum smw_status_code status;
 	const struct libdev *devinfo;
 	struct mgroup *group;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
+
+	status = smw_osal_lib_init();
+	if (status != SMW_STATUS_OK &&
+	    status != SMW_STATUS_LIBRARY_ALREADY_INIT)
+		return CKR_DEVICE_ERROR;
 
 	for (group = smw_mechanims; group->number; group++)
 		group->check(slotid, devinfo->name, group);

@@ -104,3 +104,9 @@ pkcs11_test(callback)
 pkcs11_test(digest)
 pkcs11_test(sign_verify)
 pkcs11_test(random)
+
+# If TEE subsystem defined, include tests
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
+   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TA_dev_kit)
+    add_subdirectory(tee)
+endif()

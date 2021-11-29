@@ -1,12 +1,82 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "util_session.h"
+
+static struct tee_info {
+	char ta_uuid[37];
+} tee_default_info = { { "218c6053-294e-4e96-830c-e6eba4aa4345" } };
+
+static struct se_info {
+	unsigned int storage_id;
+	unsigned int storage_nonce;
+	unsigned short storage_replay;
+} se_default_info = { 0x504b3131, 0x444546, 1000 }; // PK11, DEF
+
+static CK_RV create_tee_info(CK_SESSION_HANDLE_PTR sess,
+			     CK_FUNCTION_LIST_PTR pfunc)
+{
+	CK_RV ret;
+	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
+	CK_OBJECT_CLASS data_class = CKO_DATA;
+	CK_BBOOL token = true;
+	CK_UTF8CHAR label[] = "TEE Info";
+
+	CK_ATTRIBUTE data_template[] = {
+		{ CKA_CLASS, &data_class, sizeof(data_class) },
+		{ CKA_LABEL, &label, sizeof(label) - 1 },
+		{ CKA_VALUE, &tee_default_info, sizeof(struct tee_info) },
+		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+	};
+
+	TEST_OUT("Create %sTEE Info (UUID=%s) data object\n",
+		 token ? "Token " : "", tee_default_info.ta_uuid);
+
+	ret = pfunc->C_CreateObject(*sess, data_template,
+				    ARRAY_SIZE(data_template), &hdata);
+	if (!CHECK_EXPECTED(ret == CKR_OK || ret == CKR_FUNCTION_FAILED,
+			    "C_CreateObject returned 0x%lx", ret)) {
+		TEST_OUT("TEE Info created #%lu\n", hdata);
+		ret = CKR_OK;
+	}
+
+	return ret;
+}
+
+static CK_RV create_hsm_info(CK_SESSION_HANDLE_PTR sess,
+			     CK_FUNCTION_LIST_PTR pfunc)
+{
+	CK_RV ret;
+	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
+	CK_OBJECT_CLASS data_class = CKO_DATA;
+	CK_BBOOL token = true;
+	CK_UTF8CHAR label[] = "HSM Info";
+
+	CK_ATTRIBUTE data_template[] = {
+		{ CKA_CLASS, &data_class, sizeof(data_class) },
+		{ CKA_LABEL, &label, sizeof(label) - 1 },
+		{ CKA_VALUE, &se_default_info, sizeof(struct se_info) },
+		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+	};
+
+	TEST_OUT("Create %sHSM Info (Storage ID=0x%x) data object\n",
+		 token ? "Token " : "", se_default_info.storage_id);
+
+	ret = pfunc->C_CreateObject(*sess, data_template,
+				    ARRAY_SIZE(data_template), &hdata);
+	if (!CHECK_EXPECTED(ret == CKR_OK || ret == CKR_FUNCTION_FAILED,
+			    "C_CreateObject returned 0x%lx", ret)) {
+		TEST_OUT("HSM Info created #%lu\n", hdata);
+		ret = CKR_OK;
+	}
+
+	return ret;
+}
 
 static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 			CK_NOTIFY callback, CK_VOID_PTR cb_args,
@@ -64,6 +134,15 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 		goto end;
 	TEST_OUT("Opened Session #%lu\n", *sess);
+
+	TEST_OUT("Create TEE and HSM Data objects\n");
+	ret = create_tee_info(sess, pfunc);
+	if (CHECK_CK_RV(CKR_OK, "create_tee_info"))
+		goto end;
+
+	ret = create_hsm_info(sess, pfunc);
+	if (CHECK_CK_RV(CKR_OK, "create_hsm_info"))
+		goto end;
 
 	status = TEST_PASS;
 end:

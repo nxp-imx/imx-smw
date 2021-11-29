@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -298,9 +298,14 @@ static int find_all_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE_PTR sess,
 	CK_RV ret;
 	CK_OBJECT_HANDLE hkeys_match[NB_MAX_KEY + 1] = { 0 };
 	CK_ULONG nb_match;
-	CK_ULONG nb_keys_match;
+	CK_ULONG nb_keys_match = 0;
 	CK_ULONG idx;
 	int match;
+	CK_OBJECT_CLASS key_class[] = { CKO_SECRET_KEY, CKO_PUBLIC_KEY,
+					CKO_PRIVATE_KEY };
+	CK_ATTRIBUTE match_attrs[] = {
+		{ CKA_CLASS, NULL, sizeof(CK_OBJECT_CLASS) },
+	};
 
 	SUBTEST_START(status);
 
@@ -310,24 +315,35 @@ static int find_all_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE_PTR sess,
 		goto end;
 
 	TEST_OUT("Find all keys\n");
-	ret = pfunc->C_FindObjectsInit(*sess, NULL, 0);
-	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
-		goto end;
+	for (idx = 0; idx < ARRAY_SIZE(key_class); idx++) {
+		match_attrs[0].pValue = &key_class[idx];
 
-	ret = pfunc->C_FindObjects(*sess, hkeys_match, 2, &nb_match);
-	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
-		goto end;
-	nb_keys_match = nb_match;
+		ret = pfunc->C_FindObjectsInit(*sess, match_attrs,
+					       ARRAY_SIZE(match_attrs));
+		if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+			goto end;
 
-	ret = pfunc->C_FindObjects(*sess, &hkeys_match[2],
-				   ARRAY_SIZE(hkeys_match) - 2, &nb_match);
-	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
-		goto end;
-	nb_keys_match += nb_match;
+		ret = pfunc->C_FindObjects(*sess, hkeys_match + nb_keys_match,
+					   2, &nb_match);
+		if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+			goto end;
+		nb_keys_match += nb_match;
 
-	ret = pfunc->C_FindObjectsFinal(*sess);
-	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
-		goto end;
+		if (nb_match == 2) {
+			ret = pfunc->C_FindObjects(*sess,
+						   hkeys_match + nb_keys_match,
+						   ARRAY_SIZE(hkeys_match) -
+							   nb_keys_match,
+						   &nb_match);
+			if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+				goto end;
+			nb_keys_match += nb_match;
+		}
+
+		ret = pfunc->C_FindObjectsFinal(*sess);
+		if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+			goto end;
+	}
 
 	if (CHECK_EXPECTED(nb_keys_match == NB_MAX_KEY,
 			   "Got %lu but expected %u objects", nb_keys_match,
@@ -367,9 +383,14 @@ static int find_while_active(CK_FUNCTION_LIST_PTR pfunc,
 	CK_RV ret;
 	CK_OBJECT_HANDLE hkeys_match[NB_MAX_KEY + 1] = { 0 };
 	CK_ULONG nb_match;
-	CK_ULONG nb_keys_match;
+	CK_ULONG nb_keys_match = 0;
 	CK_ULONG idx;
 	int match;
+	CK_OBJECT_CLASS key_class[] = { CKO_SECRET_KEY, CKO_PUBLIC_KEY,
+					CKO_PRIVATE_KEY };
+	CK_ATTRIBUTE match_attrs[] = {
+		{ CKA_CLASS, NULL, sizeof(CK_OBJECT_CLASS) },
+	};
 
 	SUBTEST_START(status);
 
@@ -379,29 +400,40 @@ static int find_while_active(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Find all keys\n");
-	ret = pfunc->C_FindObjectsInit(*sess, NULL, 0);
-	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
-		goto end;
+	for (idx = 0; idx < ARRAY_SIZE(key_class); idx++) {
+		match_attrs[0].pValue = &key_class[idx];
 
-	ret = pfunc->C_FindObjects(*sess, hkeys_match, 2, &nb_match);
-	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
-		goto end;
-	nb_keys_match = nb_match;
+		ret = pfunc->C_FindObjectsInit(*sess, match_attrs,
+					       ARRAY_SIZE(match_attrs));
+		if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+			goto end;
 
-	TEST_OUT("Start a new query while first not complete\n");
-	ret = pfunc->C_FindObjectsInit(*sess, NULL, 0);
-	if (CHECK_CK_RV(CKR_OPERATION_ACTIVE, "C_FindObjectsInit"))
-		goto end;
+		ret = pfunc->C_FindObjects(*sess, hkeys_match + nb_keys_match,
+					   2, &nb_match);
+		if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+			goto end;
+		nb_keys_match += nb_match;
 
-	ret = pfunc->C_FindObjects(*sess, &hkeys_match[2],
-				   ARRAY_SIZE(hkeys_match) - 2, &nb_match);
-	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
-		goto end;
-	nb_keys_match += nb_match;
+		TEST_OUT("Start a new query while first not complete\n");
+		ret = pfunc->C_FindObjectsInit(*sess, NULL, 0);
+		if (CHECK_CK_RV(CKR_OPERATION_ACTIVE, "C_FindObjectsInit"))
+			goto end;
 
-	ret = pfunc->C_FindObjectsFinal(*sess);
-	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
-		goto end;
+		if (nb_match == 2) {
+			ret = pfunc->C_FindObjects(*sess,
+						   hkeys_match + nb_keys_match,
+						   ARRAY_SIZE(hkeys_match) -
+							   nb_keys_match,
+						   &nb_match);
+			if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+				goto end;
+			nb_keys_match += nb_match;
+		}
+
+		ret = pfunc->C_FindObjectsFinal(*sess);
+		if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+			goto end;
+	}
 
 	if (CHECK_EXPECTED(nb_keys_match == NB_MAX_KEY,
 			   "Got %lu but expected %u objects", nb_keys_match,

@@ -17,11 +17,15 @@
 
 /**
  * struct tee_subsystem - Context between Normal World and Secure World.
+ * @ctx_initialized: Optee OS TA context initialized.
  * @context: Optee OS TA context.
+ * @sess_opened: Optee OS TA session opened.
  * @session: Optee OS TA session.
  */
 struct tee_subsystem {
+	bool ctx_initialized;
 	TEEC_Context context;
+	bool sess_opened;
 	TEEC_Session session;
 };
 
@@ -105,6 +109,9 @@ static int load(void)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	/* Initialize the TEE context */
+	memset(&tee_ctx, 0, sizeof(tee_ctx));
+
 	tee_res = TEEC_InitializeContext(NULL, &tee_ctx.context);
 	if (tee_res != TEEC_SUCCESS) {
 		SMW_DBG_PRINTF(ERROR, "Can't init TEE context: 0x%x\n",
@@ -112,13 +119,18 @@ static int load(void)
 		goto exit;
 	}
 
+	tee_ctx.ctx_initialized = true;
+
 	tee_res = TEEC_OpenSession(&tee_ctx.context, &tee_ctx.session, &ta_uuid,
 				   TEEC_LOGIN_PUBLIC, NULL, NULL, &err_origin);
-	if (tee_res != TEEC_SUCCESS)
+	if (tee_res != TEEC_SUCCESS) {
 		SMW_DBG_PRINTF(ERROR, "Can't open TEE Session: 0x%x\n",
 			       tee_res);
-	else
-		status = SMW_STATUS_OK;
+		goto exit;
+	}
+
+	tee_ctx.sess_opened = true;
+	status = SMW_STATUS_OK;
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -135,8 +147,11 @@ static int unload(void)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	TEEC_CloseSession(&tee_ctx.session);
-	TEEC_FinalizeContext(&tee_ctx.context);
+	if (tee_ctx.sess_opened)
+		TEEC_CloseSession(&tee_ctx.session);
+
+	if (tee_ctx.ctx_initialized)
+		TEEC_FinalizeContext(&tee_ctx.context);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, SMW_STATUS_OK);
 	return SMW_STATUS_OK;

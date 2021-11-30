@@ -650,7 +650,7 @@ static void run_subtest(struct json_object_iter *obj_iter, FILE *status_file,
 		goto exit;
 
 	if (sub_exp) {
-		sub_used = smw_read_latest_subsystem_name();
+		sub_used = smw_osal_latest_subsystem_name();
 		if (sub_used) {
 			DBG_PRINT("Selected subsystem: %s", sub_used);
 			if (strcmp(sub_used, sub_exp)) {

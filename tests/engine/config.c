@@ -10,8 +10,7 @@
 #include "types.h"
 #include "json_types.h"
 #include "paths.h"
-#include "smw_osal.h"
-#include "smw_status.h"
+#include "smw_config.h"
 
 static int read_config_file(char *file_name, char **buffer, unsigned int *size)
 {

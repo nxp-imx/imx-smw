@@ -4,7 +4,6 @@
  */
 
 #include "smw_status.h"
-#include "smw_osal.h"
 #include "debug.h"
 #include "attr.h"
 #include "utils.h"

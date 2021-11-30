@@ -3,7 +3,6 @@
  * Copyright 2020-2021 NXP
  */
 
-#include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
 #include "list.h"

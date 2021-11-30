@@ -6,7 +6,7 @@
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
 
-#include "smw_osal.h"
+#include "osal.h"
 
 /* SMW globals */
 /**

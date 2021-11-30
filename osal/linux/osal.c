@@ -3,7 +3,10 @@
  * Copyright 2019-2021 NXP
  */
 
-#include "osal.h"
+#include "local.h"
+
+#include "smw_config.h"
+#include "smw_osal.h"
 
 __attribute__((constructor)) static void constructor(void);
 __attribute__((destructor)) static void destructor(void);
@@ -253,7 +256,7 @@ static void destructor(void)
 	stop();
 }
 
-__export __weak const char *smw_read_latest_subsystem_name(void)
+__export __weak const char *smw_osal_latest_subsystem_name(void)
 {
 	return NULL;
 }

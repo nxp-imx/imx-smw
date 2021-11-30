@@ -3,9 +3,9 @@
  * Copyright 2021 NXP
  */
 
-#include "osal.h"
+#include "local.h"
 
-__export const char *smw_read_latest_subsystem_name(void)
+__export const char *smw_osal_latest_subsystem_name(void)
 {
 	TRACE_FUNCTION_CALL;
 

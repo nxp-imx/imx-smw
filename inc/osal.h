@@ -3,8 +3,8 @@
  * Copyright 2019-2021 NXP
  */
 
-#ifndef __SMW_OSAL_H__
-#define __SMW_OSAL_H__
+#ifndef __OSAL_H__
+#define __OSAL_H__
 
 #include "smw_status.h"
 
@@ -72,55 +72,4 @@ enum smw_status_code smw_init(const struct smw_ops *ops);
  */
 enum smw_status_code smw_deinit(void);
 
-/**
- * smw_config_load() - Load a configuration.
- * @buffer: pointer to the plaintext configuration.
- * @size: size of the plaintext configuration.
- * @offset: current offset in plaintext configuration.
- *
- * This function loads a configuration.
- * The plaintext configuration is parsed and
- * the content is stored in the Configuration database.
- * If the parsing of plaintext configuration fails, @offset points to
- * the number of characters that have been correctly parsed.
- * The beginning of the remaining plaintext which cannot be parsed is printed
- * out.
- *
- * Return:
- * SMW_STATUS_OK			- Configuration load is successful
- * SMW_STATUS_INVALID_BUFFER		- @buffer is NULL or @size is 0
- * SMW_STATUS_CONFIG_ALREADY_LOADED	- A configuration is already loaded
- * error code otherwise
- */
-enum smw_status_code smw_config_load(char *buffer, unsigned int size,
-				     unsigned int *offset);
-
-/**
- * smw_config_unload() - Unload the current configuration.
- *
- * This function unloads the current configuration.
- * It frees all memory dynamically allocated by SMW.
- *
- * Return:
- * SMW_STATUS_OK		- Configuration unload is successful
- * SMW_STATUS_NO_CONFIG_LOADED	- No configuration is loaded
- */
-enum smw_status_code smw_config_unload(void);
-
-/**
- * smw_read_latest_subsystem_name() - Return the latest Secure Subsystem name
- *
- * In DEBUG mode only, function returns the name of the latest Secure Subsystem
- * invoked by SMW.
- * This Secure Subsystem have been either explicitly requested by the caller or
- * selected by SMW given the operation arguments and the configuration file.
- * In other modes, function always returns NULL.
- *
- * Return:
- * In DEBUG mode only, the pointer to the static buffer containing the null-terminated
- * string name of the Secure Subsystem.
- * In other modes, NULL
- */
-const char *smw_read_latest_subsystem_name(void);
-
-#endif /* __SMW_OSAL_H__ */
+#endif /* __OSAL_H__ */

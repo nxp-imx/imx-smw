@@ -3,8 +3,8 @@
  * Copyright 2021 NXP
  */
 
-#ifndef __OSAL_H__
-#define __OSAL_H__
+#ifndef __LOCAL_H__
+#define __LOCAL_H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,9 +14,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "smw_osal.h"
-
 #include "compiler.h"
+#include "osal.h"
 
 /* Debug levels */
 #define DBG_LEVEL_NONE	  0 /* No trace */
@@ -46,4 +45,4 @@
 
 extern const char *active_subsystem_name;
 
-#endif /* __OSAL_H__ */
+#endif /* __LOCAL_H__ */

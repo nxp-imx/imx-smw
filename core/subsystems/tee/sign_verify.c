@@ -6,7 +6,6 @@
 #include <tee_client_api.h>
 
 #include "smw_status.h"
-#include "smw_osal.h"
 #include "debug.h"
 #include "utils.h"
 #include "base64.h"

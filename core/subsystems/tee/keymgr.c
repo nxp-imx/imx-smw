@@ -8,7 +8,6 @@
 #include "operations.h"
 #include "subsystems.h"
 #include "debug.h"
-#include "smw_osal.h"
 #include "utils.h"
 #include "base64.h"
 #include "config.h"

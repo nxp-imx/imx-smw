@@ -8,12 +8,15 @@
 
 #include <stdbool.h>
 
+#include "smw_status.h"
 #include "smw_strings.h"
 
 /**
  * DOC:
- * The configuration APIs allow user of the library to get information about the state of
- * the Secure Subsystems and the capabilities of the library operations.
+ * The configuration APIs allow user of the library to:
+ *  - Get information about the state of the Secure Subsystems.
+ *  - Get the capabilities of the library operations.
+ *  - Load/Unload library configuration.
  */
 
 /**
@@ -209,5 +212,40 @@ struct smw_cipher_info {
  */
 enum smw_status_code smw_config_check_cipher(smw_subsystem_t subsystem,
 					     struct smw_cipher_info *info);
+
+/**
+ * smw_config_load() - Load a configuration.
+ * @buffer: pointer to the plaintext configuration.
+ * @size: size of the plaintext configuration.
+ * @offset: current offset in plaintext configuration.
+ *
+ * This function loads a configuration.
+ * The plaintext configuration is parsed and
+ * the content is stored in the Configuration database.
+ * If the parsing of plaintext configuration fails, @offset points to
+ * the number of characters that have been correctly parsed.
+ * The beginning of the remaining plaintext which cannot be parsed is printed
+ * out.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Configuration load is successful
+ * SMW_STATUS_INVALID_BUFFER		- @buffer is NULL or @size is 0
+ * SMW_STATUS_CONFIG_ALREADY_LOADED	- A configuration is already loaded
+ * error code otherwise
+ */
+enum smw_status_code smw_config_load(char *buffer, unsigned int size,
+				     unsigned int *offset);
+
+/**
+ * smw_config_unload() - Unload the current configuration.
+ *
+ * This function unloads the current configuration.
+ * It frees all memory dynamically allocated by SMW.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Configuration unload is successful
+ * SMW_STATUS_NO_CONFIG_LOADED	- No configuration is loaded
+ */
+enum smw_status_code smw_config_unload(void);
 
 #endif /* __SMW_CONFIG_H__ */

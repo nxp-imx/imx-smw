@@ -6,6 +6,7 @@
 #ifndef __SMW_CRYPTO_H__
 #define __SMW_CRYPTO_H__
 
+#include "smw_status.h"
 #include "smw_strings.h"
 
 /* Default TLS 1.2 verify data length for Finished message */

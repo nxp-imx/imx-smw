@@ -6,8 +6,10 @@
 #ifndef __SMW_KEYMGR_H__
 #define __SMW_KEYMGR_H__
 
-#include "smw_strings.h"
 #include <stdbool.h>
+
+#include "smw_status.h"
+#include "smw_strings.h"
 
 /**
  * struct smw_keypair_gen - Generic Keypair object

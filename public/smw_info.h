@@ -6,6 +6,7 @@
 #ifndef __SMW_INFO_H__
 #define __SMW_INFO_H__
 
+#include "smw_status.h"
 #include "smw_strings.h"
 
 /**

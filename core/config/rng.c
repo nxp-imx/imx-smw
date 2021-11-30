@@ -7,7 +7,6 @@
 #include "smw_crypto.h"
 
 #include "compiler.h"
-#include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
 #include "utils.h"

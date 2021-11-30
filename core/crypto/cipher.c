@@ -6,7 +6,6 @@
 #include "smw_status.h"
 #include "smw_keymgr.h"
 
-#include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
 #include "utils.h"

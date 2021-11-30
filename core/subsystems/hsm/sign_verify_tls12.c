@@ -8,7 +8,6 @@
 #include "smw_status.h"
 #include "smw_crypto.h"
 
-#include "smw_osal.h"
 #include "global.h"
 #include "debug.h"
 #include "operations.h"

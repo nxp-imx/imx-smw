@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <seco_nvm.h>
 #include <hsm_api.h>
 
-#include "smw_status.h"
+#include "smw_osal.h"
 
 #include "compiler.h"
 #include "global.h"
@@ -77,12 +77,19 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 
 	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_store_args_t open_svc_key_store_args = { 0 };
+	const char *subsystem_name;
+	struct se_info info;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_HSM);
 
-	open_svc_key_store_args.key_store_identifier = 0xDEADBEEF;
-	open_svc_key_store_args.authentication_nonce = 0;
-	open_svc_key_store_args.max_updates_number = 0;
+	status = smw_utils_get_subsystem_info(subsystem_name, &info);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	open_svc_key_store_args.key_store_identifier = info.storage_id;
+	open_svc_key_store_args.authentication_nonce = info.storage_nonce;
+	open_svc_key_store_args.max_updates_number = info.storage_replay;
 	/* Key store may not exists. Try to create it */
 	open_svc_key_store_args.flags = HSM_SVC_KEY_STORE_FLAGS_CREATE;
 	err = hsm_open_key_store_service(session_hdl, &open_svc_key_store_args,

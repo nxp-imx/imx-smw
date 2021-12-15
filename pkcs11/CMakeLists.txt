@@ -26,15 +26,16 @@ message(STATUS "    Use OS Mutex primitives: ${PKCS11_OS_MUTEX_SUPPORT}")
 
 add_subdirectory(src)
 
-#
-# Include pkcs11 headers
-#
-target_include_directories(${PROJECT_NAME} PUBLIC import)
+# Define the library header interface, when the library is included
+# in another target in the same build.
+# Else header files are installed in system include path.
+target_include_directories(${PROJECT_NAME}
+	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/import)
 
 #
 # Link with SMW Library
 #
-target_link_libraries(${PROJECT_NAME} smw)
+target_link_libraries(${PROJECT_NAME} PUBLIC smw)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -48,6 +49,11 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} OPTIONAL)
+
+# Install library headers interface
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/import/
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+	FILES_MATCHING PATTERN "*.h")
 
 set(SMW_PKCS11_LIB "lib${PROJECT_NAME}.so.${PROJECT_VERSION_MAJOR}")
 add_subdirectory(tests)

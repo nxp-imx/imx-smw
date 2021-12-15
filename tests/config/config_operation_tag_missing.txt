@@ -3,5 +3,5 @@ VERSION=1;
 [SECURE_SUBSYSTEM]
     TEE;
     /* Start/Stop method */
-    AT_CONFIG_LOAD_UNLOAD;
+    AT_FIRST_CALL_LOAD;
         GENERATE_KEY;

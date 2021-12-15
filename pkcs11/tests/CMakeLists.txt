@@ -24,12 +24,12 @@ set(PKCS11_TARGET_CONFIG_DIR ${PKCS11_SHARE_TARGET_DIR}/config)
 message(STATUS "Default PKCS11 Library: ${DEFAULT_PKCS11_LIB}")
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_SOURCE_DIR}/pkcs11/import
-    ${CMAKE_SOURCE_DIR}/pkcs11/src/include)
+    ${CMAKE_SOURCE_DIR}/pkcs11/import)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/pkcs11/src/include
     ${CMAKE_BINARY_DIR}/pkcs11/src/include)
 
 find_package(Threads REQUIRED)

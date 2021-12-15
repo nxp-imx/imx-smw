@@ -79,9 +79,7 @@ add_executable(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME}
                            PRIVATE ${TEST_SRC_INC} ${TEST_BIN_INC}
-                                   ${JSONC_INCLUDE_DIR}
-                           PUBLIC ${CMAKE_SOURCE_DIR}/public
-                                  ${CMAKE_SOURCE_DIR}/inc)
+                                   ${JSONC_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONC_LIBRARY})
 target_link_libraries(${PROJECT_NAME} PRIVATE smw)

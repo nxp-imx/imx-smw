@@ -65,8 +65,6 @@ __export enum smw_status_code smw_config_load(char *buffer, unsigned int size,
 
 		print_database();
 
-		load_subsystems();
-
 		ctx.config_loaded = true;
 	}
 

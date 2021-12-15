@@ -41,7 +41,6 @@ struct psa_config {
 
 enum load_method_id {
 	/* Load / unload methods */
-	LOAD_METHOD_ID_AT_CONFIG_LOAD_UNLOAD,
 	LOAD_METHOD_ID_AT_FIRST_CALL_LOAD,
 	LOAD_METHOD_ID_AT_CONTEXT_CREATION_DESTRUCTION,
 	LOAD_METHOD_ID_NB,
@@ -501,17 +500,7 @@ bool check_key(struct smw_keymgr_identifier *key_identifier,
 	       struct op_key *key_params);
 
 /**
- * load_subsystems() - Load all configured Secure Subsystems.
- *
- * This function loads all configured Secure Subsystems.
- *
- * Return:
- * error code.
- */
-void load_subsystems(void);
-
-/**
- * load_subsystems() - Unload all configured Secure Subsystems.
+ * unload_subsystems() - Unload all configured Secure Subsystems.
  *
  * This function unloads all configured Secure Subsystems.
  *

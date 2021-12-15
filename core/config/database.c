@@ -37,7 +37,6 @@
 struct database database;
 
 static const char *const load_method_names[] = {
-	[LOAD_METHOD_ID_AT_CONFIG_LOAD_UNLOAD] = "AT_CONFIG_LOAD_UNLOAD",
 	[LOAD_METHOD_ID_AT_FIRST_CALL_LOAD] = "AT_FIRST_CALL_LOAD",
 	[LOAD_METHOD_ID_AT_CONTEXT_CREATION_DESTRUCTION] =
 		"AT_CONTEXT_CREATION_DESTRUCTION"
@@ -501,38 +500,6 @@ const char *smw_config_get_subsystem_name(enum subsystem_id id)
 	return subsystem_names[index];
 }
 
-void load_subsystems(void)
-{
-	int status;
-
-	unsigned int i;
-	struct subsystem_func *func;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	for (i = 0; i < SUBSYSTEM_ID_NB; i++) {
-		if (is_subsystem_configured(i) &&
-		    get_subsystem_load_method_id(i) ==
-			    LOAD_METHOD_ID_AT_CONFIG_LOAD_UNLOAD) {
-			SMW_DBG_ASSERT(get_subsystem_state(i) ==
-				       SUBSYSTEM_STATE_UNLOADED);
-			func = smw_config_get_subsystem_func(i);
-			SMW_DBG_ASSERT(func);
-			if (func->load) {
-				status = func->load();
-				SMW_DBG_PRINTF_COND(ERROR,
-						    status != SMW_STATUS_OK,
-						    "Failed to load %s\n",
-						    subsystem_names[i]);
-			} else {
-				status = SMW_STATUS_OK;
-			}
-			if (status == SMW_STATUS_OK)
-				set_subsystem_state(i, SUBSYSTEM_STATE_LOADED);
-		}
-	}
-}
-
 void unload_subsystems(void)
 {
 	int status;
@@ -593,10 +560,6 @@ int smw_config_load_subsystem(enum subsystem_id id)
 
 	case SUBSYSTEM_STATE_UNLOADED:
 		switch (load_method_id) {
-		case LOAD_METHOD_ID_AT_CONFIG_LOAD_UNLOAD:
-			status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
-			goto end;
-
 		case LOAD_METHOD_ID_AT_FIRST_CALL_LOAD:
 		case LOAD_METHOD_ID_AT_CONTEXT_CREATION_DESTRUCTION:
 			if (func && func->load)
@@ -652,7 +615,6 @@ int smw_config_unload_subsystem(enum subsystem_id id)
 	switch (state) {
 	case SUBSYSTEM_STATE_LOADED:
 		switch (load_method_id) {
-		case LOAD_METHOD_ID_AT_CONFIG_LOAD_UNLOAD:
 		case LOAD_METHOD_ID_AT_FIRST_CALL_LOAD:
 			break;
 

@@ -120,14 +120,22 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR})
 
-target_include_directories(${PROJECT_NAME}
-    PRIVATE ${INCLUDE_DIR}
-    PUBLIC ${CMAKE_SOURCE_DIR}/public)
-target_include_directories(${PROJECT_NAME}
-    INTERFACE "$<INSTALL_INTERFACE:include>")
+target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR})
 
-target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})
+# Define the library header interface, when the library is included
+# in another target in the same build.
+# Else header files are installed in system include path.
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/public)
+
+# Add external library dependency as target interface but
+# don't use them to link the target
+target_link_libraries(${PROJECT_NAME} INTERFACE ${EXT_LIBS})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_SOURCE_DIR}/osal/${OS}/config/default_config.txt
         DESTINATION share/smw)
+
+# Install library headers interface
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/public/
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+	FILES_MATCHING PATTERN "*.h")

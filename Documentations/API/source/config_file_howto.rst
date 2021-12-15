@@ -96,9 +96,6 @@ List of Secure Subsystem load/unload methods:
    +---------------------------------+-----------------------------------------------------------------------+
    | **Load/Unload string method**   | **Description**                                                       |
    +=================================+=======================================================================+
-   | AT_CONFIG_LOAD_UNLOAD           | At configuration load (resp. unload),                                 | 
-   |                                 | the Secure Subsystem is loaded (resp. unloaded).                      |
-   +---------------------------------+-----------------------------------------------------------------------+
    | AT_FIRST_CALL_LOAD              | At first Secure Subsystem call, the Secure Subsystem is loaded.       |
    |                                 | The Secure Subsystem is unloaded when the configuration is unloaded.  |
    +---------------------------------+-----------------------------------------------------------------------+
@@ -256,7 +253,7 @@ HSM configuration:
    [SECURE_SUBSYSTEM]
        TEE;
        /* Load/unload method */
-       AT_CONFIG_LOAD_UNLOAD;
+       AT_FIRST_CALL_LOAD;
        [SECURITY_OPERATION]
            CIPHER;
            /* Only AES and DES keys are supported */

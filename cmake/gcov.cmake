@@ -9,6 +9,6 @@ if(CODE_COVERAGE)
 
     # add coverage compile and link option to the target
     target_compile_options(${PROJECT_NAME} PRIVATE ${CMAKE_C_FLAGS_COVERAGE})
-    target_link_libraries(${PROJECT_NAME} ${CMAKE_LINK_FLAGS_COVERAGE})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_LINK_FLAGS_COVERAGE})
     mark_as_advanced(CMAKE_C_FLAGS_COVERAGE CMAKE_LINK_FLAGS_COVERAGE)
 endif()

@@ -32,6 +32,8 @@
 #define OP_OUTPUT_OBJ	  "op_output"
 #define OP_TYPE_OBJ	  "op_type"
 #define OUTPUT_OBJ	  "output"
+#define POST_AFTER	  "post_after"
+#define POST_BEFORE	  "post_before"
 #define PRIV_KEY_OBJ	  "priv_key"
 #define PUB_KEY_OBJ	  "pub_key"
 #define RANDOM_OBJ	  "random"
@@ -46,7 +48,10 @@
 #define TA_UUID		  "ta_uuid"
 #define TEE_INFO_OBJ	  "tee_info"
 #define TEST_ERR_OBJ	  "test_error"
+#define THREAD_OBJ	  "Thread"
 #define VERSION_OBJ	  "version"
+#define WAIT_AFTER	  "wait_after"
+#define WAIT_BEFORE	  "wait_before"
 
 #define SUBTEST_OBJ_LEN strlen(SUBTEST_OBJ)
 

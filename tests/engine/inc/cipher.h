@@ -1,10 +1,15 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __CIPHER_H__
 #define __CIPHER_H__
+
+#include <json.h>
+
+#include "util_list.h"
+#include "types.h"
 
 /**
  * cipher() - Do a cipher one-shot operation

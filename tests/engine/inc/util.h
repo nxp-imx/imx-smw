@@ -114,6 +114,17 @@ void dbg_dumphex(const char *function, int line, char *msg, void *buf,
 
 #endif /* ENABLE_TRACE */
 
+/**
+ * util_get_strerr() - Get the system error message
+ *
+ * If the system "errno" is defined get the current error message
+ *
+ * Return:
+ * System error message
+ * Otherwise unknown error message
+ */
+char *util_get_strerr(void);
+
 #define ENUM_TO_STRING(name)                                                   \
 	{                                                                      \
 		.status = name, .string = #name                                \
@@ -138,18 +149,50 @@ void dbg_dumphex(const char *function, int line, char *msg, void *buf,
 	})
 
 /**
- * copy_file_into_buffer() - Copy file content into buffer.
- * @filename: Name of the file to copy.
- * @buffer: Pointer to buffer to fill. Allocate by this function and must be
- *          free by caller.
+ * struct app_data - Application data structure
+ * @dir_def_file:    Folder of the test definition file
+ * @key_identifiers: Key identifiers list
+ * @op_contexts:     Operation context list
+ * @threads:         Application threads list
+ * @semaphores:      Semaphores list
+ * @log:             Application log file
+ * @is_multithread:  Application is multithread
+ * @is_api_test:     Flag if test only SMW's API
+ * @definition:      Application test definition
+ */
+struct app_data {
+	char *dir_def_file;
+	struct llist *key_identifiers;
+	struct llist *op_contexts;
+	struct llist *threads;
+	struct llist *semaphores;
+	FILE *log;
+	int is_multithread;
+	int is_api_test;
+	struct json_object *definition;
+};
+
+/**
+ * util_setup_app() - Setup the application global data
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL			- Internal error.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -BAD_ARGS- One of the arguments is bad.
+ * Pointer to the application data object
+ * Otherwise NULL if error
  */
-int copy_file_into_buffer(char *filename, char **buffer);
+struct app_data *util_setup_app(void);
+
+/**
+ * util_get_app() - Get the application global data
+ *
+ * Return:
+ * Pointer to the application data object
+ */
+struct app_data *util_get_app(void);
+
+/**
+ * util_destroy_app() - Destroy the application global data
+ */
+void util_destroy_app(void);
 
 /**
  * get_smw_int_status() - Convert SMW status string value into integer value.
@@ -337,8 +380,9 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 			json_object *params);
 
 /**
- * file_to_json_object() - Fill a json object with file content.
- * @file_path: Path of the file.
+ * util_read_json_file() - Fill a json object with file content.
+ * @dir: Directory where is the file (can be NULL).
+ * @name: Name of the file.
  * @json_obj: Pointer to json_obj. Not updated if an error is returned.
  *
  * This function copies @file_path content into a buffer and then fills
@@ -350,7 +394,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
  * -INTERNAL	- json_tokener_parse() failed.
  * Error code from copy_file_into_buffer().
  */
-int file_to_json_object(char *file_path, json_object **json_obj);
+int util_read_json_file(char *dir, char *name, json_object **json_obj);
 
 /**
  * check_file_extension() - Check a filename extension.

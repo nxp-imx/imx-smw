@@ -3,14 +3,19 @@
  * Copyright 2020-2022 NXP
  */
 
+#include <assert.h>
+#include <dlfcn.h>
+#include <errno.h>
+#include <json.h>
 #include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "smw_keymgr.h"
+
 #include "json_util.h"
 #include "util.h"
-#include "json.h"
-#include "smw_keymgr.h"
+#include "util_file.h"
 
 /**
  * struct - test_err_case
@@ -68,72 +73,30 @@ const struct error list_err[] = {
 #undef SET_ERR_CODE_AND_NAME
 
 unsigned int list_err_size = ARRAY_SIZE(list_err);
+static struct app_data *app_data;
 
-int copy_file_into_buffer(char *filename, char **buffer)
+struct app_data *util_setup_app(void)
 {
-	int res = ERR_CODE(INTERNAL);
-	long size = 0;
-	FILE *f = NULL;
+	app_data = calloc(1, sizeof(*app_data));
+	if (!app_data)
+		return NULL;
 
-	if (!filename || !buffer) {
-		DBG_PRINT_BAD_ARGS(__func__);
-		return ERR_CODE(BAD_ARGS);
-	}
+	return app_data;
+}
 
-	f = fopen(filename, "r");
-	if (!f) {
-		DBG_PRINT("can't open file %s", filename);
-		return res;
-	}
+struct app_data *util_get_app(void)
+{
+	return app_data;
+}
 
-	if (fseek(f, 0, SEEK_END)) {
-		if (ferror(f))
-			perror("fseek() SEEK_END");
+void util_destroy_app(void)
+{
+	if (!app_data)
+		return;
 
-		goto exit;
-	}
+	free(app_data);
 
-	size = ftell(f);
-	if (size == -1) {
-		if (ferror(f))
-			perror("ftell()");
-
-		goto exit;
-	}
-
-	if (fseek(f, 0, SEEK_SET)) {
-		if (ferror(f))
-			perror("fseek() SEEK_SET");
-
-		goto exit;
-	}
-
-	*buffer = malloc(size);
-	if (!*buffer) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		goto exit;
-	}
-
-	if (size != (long)fread(*buffer, sizeof(char), size, f)) {
-		if (feof(f))
-			DBG_PRINT("Error reading %s: unexpected EOF", filename);
-		else if (ferror(f))
-			perror("fread()");
-
-		goto exit;
-	}
-
-	res = ERR_CODE(PASSED);
-
-exit:
-	if (fclose(f))
-		perror("fclose()");
-
-	if (*buffer && res != ERR_CODE(PASSED))
-		free(*buffer);
-
-	return res;
+	app_data = NULL;
 }
 
 int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
@@ -426,6 +389,7 @@ static const unsigned int t_data_2_json_type[] = {
 			 BIT(json_type_array),
 	[t_int64] = BIT(json_type_int),
 	[t_double] = BIT(json_type_double),
+	[t_sem] = BIT(json_type_string) | BIT(json_type_array),
 };
 
 int util_read_json_type(void *value, const char *key, enum t_data_type type,
@@ -485,6 +449,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 			break;
 
 		case t_object:
+		case t_sem:
 			*((json_object **)value) = obj;
 			ret = ERR_CODE(PASSED);
 			break;
@@ -510,29 +475,30 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 	return ret;
 }
 
-int file_to_json_object(char *file_path, json_object **json_obj)
+int util_read_json_file(char *dir, char *name, json_object **json_obj)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	char *definition_buffer = NULL;
 
-	if (!file_path || !json_obj) {
+	if (!name || !json_obj) {
 		DBG_PRINT_BAD_ARGS(__func__);
 		return res;
 	}
 
-	res = copy_file_into_buffer(file_path, &definition_buffer);
-	if (res != ERR_CODE(PASSED)) {
+	res = util_file_to_buffer(dir, name, &definition_buffer);
+	if (res == ERR_CODE(PASSED)) {
+		*json_obj = json_tokener_parse(definition_buffer);
+		if (!*json_obj) {
+			DBG_PRINT("Can't parse json definition buffer");
+			res = ERR_CODE(INTERNAL);
+		}
+	} else {
 		DBG_PRINT("Copy file into buffer failed");
-		return res;
 	}
 
-	*json_obj = json_tokener_parse(definition_buffer);
-	if (!*json_obj) {
-		DBG_PRINT("Can't parse json definition buffer");
-		res = ERR_CODE(INTERNAL);
-	}
+	if (definition_buffer)
+		free(definition_buffer);
 
-	free(definition_buffer);
 	return res;
 }
 
@@ -556,4 +522,12 @@ int check_file_extension(char *filename, char *extension)
 
 	DBG_PRINT("strrchr returned NULL pointer");
 	return ERR_CODE(INTERNAL);
+}
+
+char *util_get_strerr(void)
+{
+	if (__errno_location())
+		return strerror(errno);
+
+	return "Unknown error";
 }

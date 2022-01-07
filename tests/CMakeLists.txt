@@ -63,7 +63,7 @@ add_executable(${PROJECT_NAME}
                engine/keymgr.c
                engine/keymgr_derive.c
                engine/rng.c
-               engine/run.c
+               engine/run_thread.c
                engine/sign_verify.c
                engine/test_engine.c
                engine/util.c
@@ -73,6 +73,9 @@ add_executable(${PROJECT_NAME}
                engine/util_tlv.c
                engine/util_context.c
                engine/util_cipher.c
+               engine/util_thread.c
+               engine/util_file.c
+               engine/util_sem.c
                engine/operation_context.c
                ${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c)
 
@@ -81,6 +84,7 @@ target_include_directories(${PROJECT_NAME}
                                    ${JSONC_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONC_LIBRARY})
+target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
 target_link_libraries(${PROJECT_NAME} PRIVATE smw)
 
 set(TEST_CMD ${CMAKE_INSTALL_PREFIX}/${SMW_TESTS_TARGET_SCRIPTS_DIR}/run_simple_test.sh)

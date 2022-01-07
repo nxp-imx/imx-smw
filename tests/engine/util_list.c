@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -119,7 +119,7 @@ struct node *util_list_next(struct llist *list, struct node *node,
 	else
 		next = node->next;
 
-	if (next)
+	if (next && id)
 		*id = next->id;
 
 	return next;

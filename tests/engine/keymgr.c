@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <string.h>
@@ -686,7 +686,7 @@ static int restore_key_ids_from_json_file(struct llist **key_list,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	res = file_to_json_object(filepath, &restore_obj);
+	res = util_read_json_file(NULL, filepath, &restore_obj);
 	if (res != ERR_CODE(PASSED))
 		return res;
 

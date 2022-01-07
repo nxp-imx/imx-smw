@@ -7,11 +7,7 @@
 
 #include "smw_osal.h"
 
-#include "json.h"
-#include "util.h"
-#include "util_key.h"
-#include "util_context.h"
-#include "types.h"
+#include "util_thread.h"
 #include "keymgr.h"
 #include "hash.h"
 #include "sign_verify.h"
@@ -20,34 +16,15 @@
 #include "cipher.h"
 #include "operation_context.h"
 #include "config.h"
-#include "run.h"
-#include "paths.h"
 #include "info.h"
 
-/* Key identifiers linked list */
-static struct llist *key_identifiers;
-
-/* Operation context linked list */
-static struct llist *ctx_list;
-
-static const struct tee_info tee_default_info = {
-	{ "11b5c4aa-6d20-11ea-bc55-0242ac130003" }
-};
-
-static const struct se_info se_default_info = { 0x534d5754, 0x444546,
-						1000 }; // SMWT, DEF
-
-struct obj_operation {
-	struct json_object_iter obj;
-	FILE *log;
-	int is_api_test;
-};
+#define SUBTEST_STATUS_PASSED_MAX_LEN 30
 
 /**
  * execute_generate_cmd() - Execute generate key command.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
- * @key_ids: Pointer to key identifiers list.
+ * @app: Application data.
  * @status: Pointer to SMW command status.
  *
  * Return:
@@ -57,7 +34,7 @@ struct obj_operation {
  */
 static int execute_generate_cmd(struct json_object *params,
 				struct common_parameters *common_params,
-				struct llist **key_ids,
+				struct app_data *app,
 				enum smw_status_code *status)
 {
 	/* Check mandatory params */
@@ -66,7 +43,8 @@ static int execute_generate_cmd(struct json_object *params,
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return generate_key(params, common_params, key_ids, status);
+	return generate_key(params, common_params, &app->key_identifiers,
+			    status);
 }
 
 /**
@@ -97,7 +75,7 @@ static int execute_hash_cmd(struct json_object *params,
  * execute_hmac_cmd() - Execute hmac command.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
- * @key_ids: Pointer to key identifiers list.
+ * @app: Application data.
  * @status: Pointer to SMW command status.
  *
  * Return:
@@ -107,7 +85,7 @@ static int execute_hash_cmd(struct json_object *params,
  */
 static int execute_hmac_cmd(struct json_object *params,
 			    struct common_parameters *common_params,
-			    struct llist *key_ids, enum smw_status_code *status)
+			    struct app_data *app, enum smw_status_code *status)
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
@@ -115,14 +93,14 @@ static int execute_hmac_cmd(struct json_object *params,
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return hmac(params, common_params, key_ids, status);
+	return hmac(params, common_params, app->key_identifiers, status);
 }
 
 /**
  * execute_import_cmd() - Execute import key command.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
- * @key_ids: Pointer to key identifiers list.
+ * @app: Application data.
  * @status: Pointer to SMW command status.
  *
  * Return:
@@ -132,7 +110,7 @@ static int execute_hmac_cmd(struct json_object *params,
  */
 static int execute_import_cmd(struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct llist **key_ids,
+			      struct app_data *app,
 			      enum smw_status_code *status)
 {
 	/* Check mandatory params */
@@ -141,7 +119,7 @@ static int execute_import_cmd(struct json_object *params,
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return import_key(params, common_params, key_ids, status);
+	return import_key(params, common_params, &app->key_identifiers, status);
 }
 
 /**
@@ -149,7 +127,7 @@ static int execute_import_cmd(struct json_object *params,
  * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
- * @key_ids: Pointer to key identifiers list.
+ * @app: Application data.
  * @status: Pointer to SMW command status.
  *
  * Return:
@@ -159,18 +137,18 @@ static int execute_import_cmd(struct json_object *params,
  */
 static int execute_export_cmd(char *cmd, struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct llist *key_ids,
+			      struct app_data *app,
 			      enum smw_status_code *status)
 {
 	if (!strcmp(cmd, EXPORT_KEYPAIR))
-		return export_key(params, common_params, EXP_KEYPAIR, key_ids,
-				  status);
+		return export_key(params, common_params, EXP_KEYPAIR,
+				  app->key_identifiers, status);
 	else if (!strcmp(cmd, EXPORT_PRIVATE))
-		return export_key(params, common_params, EXP_PRIV, key_ids,
-				  status);
+		return export_key(params, common_params, EXP_PRIV,
+				  app->key_identifiers, status);
 	else if (!strcmp(cmd, EXPORT_PUBLIC))
-		return export_key(params, common_params, EXP_PUB, key_ids,
-				  status);
+		return export_key(params, common_params, EXP_PUB,
+				  app->key_identifiers, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -180,7 +158,7 @@ static int execute_export_cmd(char *cmd, struct json_object *params,
  * execute_derive_cmd() - Execute derive command.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
- * @key_ids: Pointer to key identifiers list.
+ * @app: Application data.
  * @status: Pointer to SMW command status.
  *
  * Return:
@@ -190,10 +168,10 @@ static int execute_export_cmd(char *cmd, struct json_object *params,
  */
 static int execute_derive_cmd(struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct llist **key_ids,
+			      struct app_data *app,
 			      enum smw_status_code *status)
 {
-	return derive_key(params, common_params, key_ids, status);
+	return derive_key(params, common_params, &app->key_identifiers, status);
 }
 
 /**
@@ -201,7 +179,7 @@ static int execute_derive_cmd(struct json_object *params,
  * @operation: SIGN_OPERATION or VERIFY_OPERATION.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
- * @key_ids: Pointer to key identifiers list.
+ * @app: Application data.
  * @status: Pointer to SMW command status.
  *
  * Return:
@@ -211,7 +189,7 @@ static int execute_derive_cmd(struct json_object *params,
  */
 static int execute_sign_verify_cmd(int operation, struct json_object *params,
 				   struct common_parameters *common_params,
-				   struct llist *key_ids,
+				   struct app_data *app,
 				   enum smw_status_code *status)
 {
 	/* Check mandatory params */
@@ -220,7 +198,8 @@ static int execute_sign_verify_cmd(int operation, struct json_object *params,
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return sign_verify(operation, params, common_params, key_ids, status);
+	return sign_verify(operation, params, common_params,
+			   app->key_identifiers, status);
 }
 
 /**
@@ -252,8 +231,7 @@ static int execute_rng_cmd(struct json_object *params,
  * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
- * @key_ids: Pointer to key identifiers list.
- * @ctx: Pointer to context linked list.
+ * @app: Application data
  * @status: Pointer to SMW command status.
  *
  * PASSED		- Passed.
@@ -265,17 +243,20 @@ static int execute_rng_cmd(struct json_object *params,
  */
 static int execute_cipher(char *cmd, struct json_object *params,
 			  struct common_parameters *common_params,
-			  struct llist *key_ids, struct llist **ctx,
-			  enum smw_status_code *status)
+			  struct app_data *app, enum smw_status_code *status)
 {
 	if (!strcmp(cmd, CIPHER))
-		return cipher(params, common_params, key_ids, status);
+		return cipher(params, common_params, app->key_identifiers,
+			      status);
 	else if (!strcmp(cmd, CIPHER_INIT))
-		return cipher_init(params, common_params, key_ids, ctx, status);
+		return cipher_init(params, common_params, app->key_identifiers,
+				   &app->op_contexts, status);
 	else if (!strcmp(cmd, CIPHER_UPDATE))
-		return cipher_update(params, common_params, *ctx, status);
+		return cipher_update(params, common_params, app->op_contexts,
+				     status);
 	else if (!strcmp(cmd, CIPHER_FINAL))
-		return cipher_final(params, common_params, *ctx, status);
+		return cipher_final(params, common_params, app->op_contexts,
+				    status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -286,7 +267,7 @@ static int execute_cipher(char *cmd, struct json_object *params,
  * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
- * @ctx: Pointer to context linked list.
+ * @app: Application data.
  * @status: Pointer to SMW command status.
  *
  * Return:
@@ -297,13 +278,15 @@ static int execute_cipher(char *cmd, struct json_object *params,
  */
 static int execute_operation_context(char *cmd, struct json_object *params,
 				     struct common_parameters *common_params,
-				     struct llist **ctx,
+				     struct app_data *app,
 				     enum smw_status_code *status)
 {
 	if (!strcmp(cmd, OP_CTX_CANCEL))
-		return cancel_operation(params, common_params, *ctx, status);
+		return cancel_operation(params, common_params, app->op_contexts,
+					status);
 	else if (!strcmp(cmd, OP_CTX_COPY))
-		return copy_context(params, common_params, ctx, status);
+		return copy_context(params, common_params, &app->op_contexts,
+				    status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -339,8 +322,7 @@ static int execute_config_cmd(char *cmd, struct json_object *params,
  * @cmd: Command name.
  * @params: Command parameters.
  * @common_params: Some parameters common to commands.
- * @key_ids: Pointer to key identifiers list.
- * @ctx: Pointer to context linked list.
+ * @app: Application data
  * @status: Pointer to SMW command status.
  *
  * Return:
@@ -350,50 +332,45 @@ static int execute_config_cmd(char *cmd, struct json_object *params,
  */
 static int execute_command(char *cmd, struct json_object *params,
 			   struct common_parameters *common_params,
-			   struct llist **key_ids, struct llist **ctx,
-			   enum smw_status_code *status)
+			   struct app_data *app, enum smw_status_code *status)
 {
 	if (!strcmp(cmd, DELETE))
-		return delete_key(params, common_params, *key_ids, status);
+		return delete_key(params, common_params, app->key_identifiers,
+				  status);
 	else if (!strcmp(cmd, GENERATE))
-		return execute_generate_cmd(params, common_params, key_ids,
-					    status);
+		return execute_generate_cmd(params, common_params, app, status);
 	else if (!strcmp(cmd, IMPORT))
-		return execute_import_cmd(params, common_params, key_ids,
-					  status);
+		return execute_import_cmd(params, common_params, app, status);
 	else if (!strncmp(cmd, EXPORT, strlen(EXPORT)))
-		return execute_export_cmd(cmd, params, common_params, *key_ids,
+		return execute_export_cmd(cmd, params, common_params, app,
 					  status);
 	else if (!strcmp(cmd, DERIVE))
-		return execute_derive_cmd(params, common_params, key_ids,
-					  status);
+		return execute_derive_cmd(params, common_params, app, status);
 	else if (!strcmp(cmd, HASH))
 		return execute_hash_cmd(params, common_params, status);
 	else if (!strcmp(cmd, HMAC))
-		return execute_hmac_cmd(params, common_params, *key_ids,
-					status);
+		return execute_hmac_cmd(params, common_params, app, status);
 	else if (!strcmp(cmd, SIGN))
 		return execute_sign_verify_cmd(SIGN_OPERATION, params,
-					       common_params, *key_ids, status);
+					       common_params, app, status);
 	else if (!strcmp(cmd, VERIFY))
 		return execute_sign_verify_cmd(VERIFY_OPERATION, params,
-					       common_params, *key_ids, status);
+					       common_params, app, status);
 	else if (!strcmp(cmd, RNG))
 		return execute_rng_cmd(params, common_params, status);
 	else if (!strncmp(cmd, CIPHER, strlen(CIPHER)))
-		return execute_cipher(cmd, params, common_params, *key_ids, ctx,
-				      status);
+		return execute_cipher(cmd, params, common_params, app, status);
 	else if (!strncmp(cmd, OP_CTX, strlen(OP_CTX)))
 		return execute_operation_context(cmd, params, common_params,
-						 ctx, status);
+						 app, status);
 	else if (!strncmp(cmd, CONFIG, strlen(CONFIG)))
 		return execute_config_cmd(cmd, params, common_params, status);
 	else if (!strcmp(cmd, SAVE_KEY_IDS))
-		return save_key_ids_to_file(params, common_params, *key_ids,
-					    status);
+		return save_key_ids_to_file(params, common_params,
+					    app->key_identifiers, status);
 	else if (!strcmp(cmd, RESTORE_KEY_IDS))
-		return restore_key_ids_from_file(params, common_params, key_ids,
-						 status);
+		return restore_key_ids_from_file(params, common_params,
+						 &app->key_identifiers, status);
 	else if (!strcmp(cmd, GET_VERSION))
 		return get_info(params, common_params, status);
 
@@ -403,9 +380,10 @@ static int execute_command(char *cmd, struct json_object *params,
 
 /**
  * log_subtest_status() - Log the subtest status
- * @op: Subtest status to update (PASSED or FAILED).
+ * @thr: Thread data
+ * @obj: Subtest operation object
  * @res: Result of the subtest.
- * @status: SMW Library status.
+ * @status: SMW Library status
  *
  * Log the subtest name and the reason of the failure if any.
  * Function returns if overall test passed or failed.
@@ -414,14 +392,14 @@ static int execute_command(char *cmd, struct json_object *params,
  * PASSED - subtest passed
  * -FAILED - subtest failed
  */
-static int log_subtest_status(struct obj_operation *op, int res,
+static int log_subtest_status(struct thread_data *thr,
+			      struct json_object_iter *obj, int res,
 			      enum smw_status_code status)
 {
 	int ret = FAILED;
 	unsigned int idx = 0;
 	const char *error = NULL;
 
-	printf("operation res %d with %x\n", res, status);
 	/* Find the error entry in the array of error string */
 	for (; idx < list_err_size && res != ERR_CODE(idx); idx++)
 		;
@@ -444,8 +422,8 @@ static int log_subtest_status(struct obj_operation *op, int res,
 		break;
 	}
 
-	FPRINT_SUBTEST_STATUS(op->log, op->obj.key, ERR_STATUS(ret), error);
-	FPRINT_SUBTEST_STATUS(stdout, op->obj.key, ERR_STATUS(ret), error);
+	FPRINT_SUBTEST_STATUS(thr->app->log, obj->key, ERR_STATUS(ret), error);
+	FPRINT_SUBTEST_STATUS(stdout, obj->key, ERR_STATUS(ret), error);
 
 	return ERR_CODE(ret);
 }
@@ -549,13 +527,14 @@ static int get_depends_status(struct json_object *params, FILE *status_file)
 
 /**
  * run_subtest() - Run a subtest.
- * @op: Operation object data
+ * @thr: Thread data
+ * @obj: Operation object data
  *
  * Return:
  * PASSED - subtest passed
  * -FAILED - subtest failed
  */
-static int run_subtest(struct obj_operation *op)
+static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 {
 	int res = ERR_CODE(FAILED);
 	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
@@ -565,25 +544,21 @@ static int run_subtest(struct obj_operation *op)
 	const char *sub_exp = NULL;
 	struct common_parameters common_params = { 0 };
 
-	if (!op) {
-		DBG_PRINT_BAD_ARGS(__func__);
-		return res;
-	}
+	common_params.is_api_test = thr->app->is_api_test;
 
-	common_params.is_api_test = op->is_api_test;
-
-	/* Verify the presence of subtest json object */
-	if (json_object_get_type(op->obj.val) != json_type_object) {
-		FPRINT_MESSAGE(op->log, "Error in test definiton file: ");
-		FPRINT_MESSAGE(op->log, "\"subtest\" is not a JSON-C object\n");
-		DBG_PRINT("\"subtest\" is not a JSON-C object");
+	/* Verify the type of the subtest tag/value is json object */
+	if (json_object_get_type(obj->val) != json_type_object) {
+		FPRINT_MESSAGE(thr->app->log, "Error in test definiton file: ");
+		FPRINT_MESSAGE(thr->app->log,
+			       "\"subtest\" is not a json-c object\n");
+		DBG_PRINT("\"subtest\" is not a json-c object");
 
 		res = ERR_CODE(BAD_PARAM_TYPE);
 		goto exit;
 	}
 
 	/* 'command' is a mandatory parameter */
-	res = util_read_json_type(&cmd_name, CMD_OBJ, t_string, op->obj.val);
+	res = util_read_json_type(&cmd_name, CMD_OBJ, t_string, obj->val);
 	if (res != ERR_CODE(PASSED)) {
 		if (res == ERR_CODE(VALUE_NOTFOUND)) {
 			DBG_PRINT_MISS_PARAM(__func__, CMD_OBJ);
@@ -594,12 +569,12 @@ static int run_subtest(struct obj_operation *op)
 	}
 
 	res = util_read_json_type(&common_params.subsystem, SUBSYSTEM_OBJ,
-				  t_string, op->obj.val);
+				  t_string, obj->val);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
 	/* Check dependent subtest(s) status */
-	res = get_depends_status(op->obj.val, op->log);
+	res = get_depends_status(obj->val, thr->app->log);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -608,7 +583,7 @@ static int run_subtest(struct obj_operation *op)
 	 * If not defined, the default value is SMW_STATUS_OK.
 	 */
 	res = util_read_json_type(&expected_status, RES_OBJ, t_string,
-				  op->obj.val);
+				  obj->val);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
@@ -629,7 +604,7 @@ static int run_subtest(struct obj_operation *op)
 	 */
 	common_params.version = SMW_API_DEFAULT_VERSION;
 	res = util_read_json_type(&common_params.version, VERSION_OBJ, t_int,
-				  op->obj.val);
+				  obj->val);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
@@ -638,13 +613,13 @@ static int run_subtest(struct obj_operation *op)
 	 * If not set in test definition file don't verify it.
 	 */
 	res = util_read_json_type(&sub_exp, SUBSYSTEM_EXP_OBJ, t_string,
-				  op->obj.val);
+				  obj->val);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
 	/* Execute subtest command */
-	res = execute_command(cmd_name, op->obj.val, &common_params,
-			      &key_identifiers, &ctx_list, &status);
+	res = execute_command(cmd_name, obj->val, &common_params, thr->app,
+			      &status);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -662,287 +637,54 @@ static int run_subtest(struct obj_operation *op)
 	}
 
 exit:
-	return log_subtest_status(op, res, status);
+	return log_subtest_status(thr, obj, res, status);
 }
 
-/**
- * setup_tee_info() - Read and setup TEE Information
- * @test_def: JSON-C test definition of the application
- *
- * Function extracts TEE information from the test definition of
- * the application configuration and calls the SMW Library TEE Information
- * setup API.
- *
- * TEE info is defined with a JSON-C object "tee_info".
- *
- * Return:
- * PASSED              - Success.
- * -BAD_PARAM_TYPE     - Parameter type is not correct or not supported.
- * -BAD_ARGS           - One of the argument is bad.
- * -FAILED             - Error in definition file
- * -ERROR_SMWLIB_INIT  - SMW Library initialization error
- */
-static int setup_tee_info(json_object *test_def)
+void *process_thread(void *arg)
 {
-	int res;
-	struct tee_info info = tee_default_info;
-	json_object *oinfo = NULL;
-	char *ta_uuid = NULL;
+	int status = ERR_CODE(PASSED);
+	int err = ERR_CODE(BAD_ARGS);
+	int i;
+	bool ran_subtest = false;
+	struct thread_data *thr = arg;
+	struct json_object_iter obj;
 
-	res = util_read_json_type(&oinfo, TEE_INFO_OBJ, t_object, test_def);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
-	    !oinfo)
-		return res;
-
-	if (res == ERR_CODE(PASSED)) {
-		res = util_read_json_type(&ta_uuid, TA_UUID, t_string, oinfo);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			return res;
-
-		if (strlen(ta_uuid) + 1 > sizeof(info.ta_uuid))
-			return ERR_CODE(BAD_PARAM_TYPE);
-
-		memcpy(info.ta_uuid, ta_uuid, strlen(ta_uuid) + 1);
-	}
-
-	res = smw_osal_set_subsystem_info("TEE", &info, sizeof(info));
-	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Set TEE Info failed %s",
-			  get_smw_string_status(res));
-		res = ERR_CODE(ERROR_SMWLIB_INIT);
-	} else {
-		res = ERR_CODE(PASSED);
-	}
-
-	return res;
-}
-
-/**
- * setup_hsm_info() - Read and setup HSM Secure Enclave Information
- * @test_def: JSON-C test definition of the application
- *
- * Function extracts HSM information from the test definition of
- * the application configuration and calls the SMW Library HSM Information
- * setup API.
- *
- * SE info is defined with a JSON-C object "hsm_info".
- *
- * Return:
- * PASSED              - Success.
- * -BAD_PARAM_TYPE     - Parameter type is not correct or not supported.
- * -BAD_ARGS           - One of the argument is bad.
- * -FAILED             - Error in definition file
- * -ERROR_SMWLIB_INIT  - SMW Library initialization error
- */
-static int setup_hsm_info(json_object *test_def)
-{
-	int res;
-	struct se_info info = se_default_info;
-	json_object *oinfo = NULL;
-
-	res = util_read_json_type(&oinfo, HSM_INFO_OBJ, t_object, test_def);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
-	    !oinfo)
-		return res;
-
-	if (res == ERR_CODE(PASSED)) {
-		res = UTIL_READ_JSON_ST_FIELD(&info, storage_id, int, oinfo);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			return res;
-
-		res = UTIL_READ_JSON_ST_FIELD(&info, storage_nonce, int, oinfo);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			return res;
-
-		res = UTIL_READ_JSON_ST_FIELD(&info, storage_replay, int,
-					      oinfo);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			return res;
-	}
-
-	res = smw_osal_set_subsystem_info("HSM", &info, sizeof(info));
-	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Set HSM Info failed %s",
-			  get_smw_string_status(res));
-		res = ERR_CODE(ERROR_SMWLIB_INIT);
-
-	} else {
-		res = ERR_CODE(PASSED);
-	}
-
-	return res;
-}
-
-/**
- * init_smwlib() - Initialize the SMW Library
- * @test_def: JSON-C test definition of the application
- *
- * Function extracts from the test definition the application configuration
- * and call the SMW Library inilization API.
- *
- * Return:
- * PASSED              - Success.
- * -ERROR_SMWLIB_INIT  - SMW Library initialization error
- */
-static int init_smwlib(json_object *test_def)
-{
-	int res;
-
-	res = setup_tee_info(test_def);
-	if (res != ERR_CODE(PASSED))
-		goto end;
-
-	res = setup_hsm_info(test_def);
-	if (res != ERR_CODE(PASSED))
-		goto end;
-
-	res = smw_osal_lib_init();
-	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Library initialization failed %s",
-			  get_smw_string_status(res));
-		res = ERR_CODE(ERROR_SMWLIB_INIT);
-	} else {
-		res = ERR_CODE(PASSED);
-	}
-
-end:
-	if (res != ERR_CODE(PASSED))
-		res = ERR_CODE(ERROR_SMWLIB_INIT);
-
-	return res;
-}
-
-/*
- * ignore_tag() - Ignore a JSON-C top tag/value
- * @obj: Operation object
- *
- * Return
- * PASSED - Success
- */
-static int ignore_tag(struct obj_operation *obj)
-{
-	(void)obj;
-
-	return ERR_CODE(PASSED);
-}
-
-/*
- * List of the operation per JSONC-C top tag/value
- */
-const struct op_type {
-	const char *name;
-	int (*run)(struct obj_operation *obj);
-} op_types[] = { { TEE_INFO_OBJ, &ignore_tag },
-		 { HSM_INFO_OBJ, &ignore_tag },
-		 { SUBTEST_OBJ, &run_subtest },
-		 { NULL, NULL } };
-
-int run_test(char *test_def_file, char *test_name, char *output_dir)
-{
-	int test_status = ERR_CODE(FAILED);
-	int file_path_size = 0;
-	char *file_path = NULL;
-	json_object *definition_obj = NULL;
-	struct obj_operation op = { 0 };
-	const struct op_type *op_type;
-
-	if (!test_def_file || !test_name) {
+	if (!thr || !thr->def) {
 		DBG_PRINT_BAD_ARGS(__func__);
-		return ERR_CODE(BAD_ARGS);
+		exit(ERR_CODE(BAD_ARGS));
 	}
 
-	file_path_size = strlen(test_name) + strlen(TEST_STATUS_EXTENSION);
-
-	if (output_dir)
-		file_path_size += strlen(output_dir) + 1;
-	else
-		file_path_size += strlen(DEFAULT_OUT_STATUS_PATH);
-
-	/*
-	 * Allocate test file result full pathname
-	 * null terminated string.
-	 */
-	file_path = malloc(file_path_size + 1);
-	if (!file_path) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-	}
-
-	/* Build test status file path */
-	if (output_dir) {
-		strcpy(file_path, output_dir);
-		strcat(file_path, "/");
-	} else {
-		strcpy(file_path, DEFAULT_OUT_STATUS_PATH);
-	}
-	strcat(file_path, test_name);
-	strcat(file_path, TEST_STATUS_EXTENSION);
-	file_path[file_path_size] = '\0';
-
-	op.log = fopen(file_path, "w+");
-	if (!op.log) {
-		DBG_PRINT("fopen failed, file is %s", file_path);
-		test_status = ERR_CODE(INTERNAL);
+	if (!json_object_get_object(thr->def)) {
+		DBG_PRINT("Thread definition json_object_get_object error");
+		err = ERR_CODE(INTERNAL);
 		goto exit;
 	}
 
-	test_status = file_to_json_object(test_def_file, &definition_obj);
-	if (test_status != ERR_CODE(PASSED)) {
-		FPRINT_TEST_INTERNAL_FAILURE(op.log, test_name);
-		goto exit;
-	}
+	thr->state = RUNNING;
 
-	test_status = init_smwlib(definition_obj);
-	if (test_status != ERR_CODE(PASSED))
-		goto exit;
+	for (i = 0; i < thr->loop + 1; i++) {
+		json_object_object_foreachC(thr->def, obj)
+		{
+			/* Run the JSON-C "subtest" object, other tag is ignored */
+			if (strncmp(obj.key, SUBTEST_OBJ, strlen(SUBTEST_OBJ)))
+				continue;
 
-	/*
-	 * Check from test name if it's a test to verify the API only
-	 */
-	if (strstr(test_name, TEST_API_TYPE))
-		op.is_api_test = 1;
-
-	/*
-	 * For each test definition JSON-C top tag/value,
-	 * search tag in the op_types list and execute action assiciated.
-	 */
-	json_object_object_foreachC(definition_obj, op.obj)
-	{
-		for (op_type = op_types; op_type->name; op_type++) {
-			if (!strncmp(op.obj.key, op_type->name,
-				     strlen(op_type->name))) {
-				test_status |= op_type->run(&op);
-				break;
-			}
-		}
-
-		if (!op_type->name) {
-			FPRINT_MESSAGE(op.log, "JSON-C tag name %s ignored\n",
-				       op.obj.key);
-			DBG_PRINT("WARNING: JSON-C object tag %s ignored",
-				  op.obj.key);
+			err = run_subtest(thr, &obj);
+			status = (status == ERR_CODE(PASSED)) ? err : status;
+			ran_subtest = true;
 		}
 	}
 
-	util_list_clear(key_identifiers);
-	sign_clear_signatures_list();
-	util_list_clear(ctx_list);
-	cipher_clear_out_data_list();
-
-	if (!test_status)
-		FPRINT_TEST_STATUS(op.log, test_name, ERR_STATUS(PASSED));
-	else
-		FPRINT_TEST_STATUS(op.log, test_name, ERR_STATUS(FAILED));
+	if (!ran_subtest)
+		status = ERR_CODE(FAILED);
 
 exit:
-	if (file_path)
-		free(file_path);
+	thr->state = EXITED;
+	thr->status = (status == ERR_CODE(PASSED)) ? err : status;
 
-	if (op.log)
-		(void)fclose(op.log);
+	/* Decrement (free) the thread JSON-C definition */
+	if (thr->def)
+		json_object_put(thr->def);
 
-	if (definition_obj)
-		json_object_put(definition_obj);
-
-	return test_status;
+	return &thr->status;
 }

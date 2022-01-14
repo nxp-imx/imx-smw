@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __HMAC_H__
@@ -9,9 +9,7 @@
 /**
  * hmac() - Do a HMAC operation.
  * @params: HMAC parameters.
- * @common_params: Common commands parameters.
- * @key_identifiers: Key identifier linked list where key identifier value
- *                   is saved.
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -28,7 +26,7 @@
  * Error code from get_hash_digest_len().
  * Error code from set_hmac_bad_args().
  */
-int hmac(json_object *params, struct common_parameters *common_params,
-	 struct llist *key_identifiers, enum smw_status_code *ret_status);
+int hmac(json_object *params, struct cmn_params *cmn_params,
+	 enum smw_status_code *ret_status);
 
 #endif /* __HMAC_H__ */

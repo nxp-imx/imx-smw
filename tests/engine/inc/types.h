@@ -6,6 +6,9 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+#include <assert.h>
+#include <stdio.h>
+
 /* List of key type */
 #define BR1_KEY	       "BRAINPOOL_R1"
 #define BT1_KEY	       "BRAINPOOL_T1"
@@ -48,18 +51,83 @@ extern const struct error list_err[];
 extern unsigned int list_err_size;
 
 /**
- * struct common_params - Parameters common to commands.
- * @is_api_test: Define if it's an API test or not
+ * struct app_data - Application data structure
+ * @dir_def_file:    Folder of the test definition file
+ * @key_identifiers: Key identifiers list
+ * @op_contexts:     Operation context list
+ * @ciphers:         Cipher to verify list
+ * @signatures:      Signatures to verify list
+ * @threads:         Application threads list
+ * @semaphores:      Semaphores list
+ * @log:             Application log file
+ * @is_multithread:  Application is multithread
+ * @is_api_test:     Flag if test only SMW's API
+ * @definition:      Application test definition
+ * @lock_dbg:        Debug Printf protector
+ */
+struct app_data {
+	char *dir_def_file;
+	struct llist *key_identifiers;
+	struct llist *op_contexts;
+	struct llist *ciphers;
+	struct llist *signatures;
+	struct llist *threads;
+	struct llist *semaphores;
+	FILE *log;
+	int is_multithread;
+	int is_api_test;
+	struct json_object *definition;
+	void *lock_dbg;
+};
+
+/**
+ * struct cmn_params - Parameters common to commands.
+ * @app: Application data.
  * @expected_res: Expected result of the command.
  * @subsystem: Subsystem to use for the command.
  * @version: Version of the SMW API.
  */
-struct common_parameters {
-	int is_api_test;
+struct cmn_params {
+	struct app_data *app;
 	int expected_res;
 	char *subsystem;
 	unsigned int version;
 };
+
+#define is_api_test(this)                                                      \
+	({                                                                     \
+		struct cmn_params *_this = (this);                             \
+		assert(_this->app);                                            \
+		_this->app->is_api_test;                                       \
+	})
+
+#define list_keys(this)                                                        \
+	({                                                                     \
+		struct cmn_params *_this = (this);                             \
+		assert(_this->app);                                            \
+		_this->app->key_identifiers;                                   \
+	})
+
+#define list_op_ctxs(this)                                                     \
+	({                                                                     \
+		struct cmn_params *_this = (this);                             \
+		assert(_this->app);                                            \
+		_this->app->op_contexts;                                       \
+	})
+
+#define list_ciphers(this)                                                     \
+	({                                                                     \
+		struct cmn_params *_this = (this);                             \
+		assert(_this->app);                                            \
+		_this->app->ciphers;                                           \
+	})
+
+#define list_signatures(this)                                                  \
+	({                                                                     \
+		struct cmn_params *_this = (this);                             \
+		assert(_this->app);                                            \
+		_this->app->signatures;                                        \
+	})
 
 /**
  * struct tbuffer - Data of type buffer

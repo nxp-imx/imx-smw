@@ -16,8 +16,7 @@
  * sign_verify() - Do a sign or verify operation.
  * @operation: SIGN_OPERATION or VERIFY_OPERATION
  * @params: Sign or verify parameters.
- * @common_params: Common commands parameters.
- * @app: Application data
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -38,7 +37,7 @@
  * Error code from util_sign_add_node().
  */
 int sign_verify(int operation, json_object *params,
-		struct common_parameters *common_params, struct app_data *app,
+		struct cmn_params *cmn_params,
 		enum smw_status_code *ret_status);
 
 #endif /* __SIGN_VERIFY_H__ */

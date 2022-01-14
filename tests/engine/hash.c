@@ -107,7 +107,7 @@ static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
 	return ret;
 }
 
-int hash(json_object *params, struct common_parameters *common_params,
+int hash(json_object *params, struct cmn_params *cmn_params,
 	 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
@@ -120,17 +120,17 @@ int hash(json_object *params, struct common_parameters *common_params,
 	struct smw_hash_args args = { 0 };
 	struct smw_hash_args *smw_hash_args = &args;
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 
-	if (!strcmp(common_params->subsystem, "DEFAULT"))
+	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = common_params->subsystem;
+		args.subsystem_name = cmn_params->subsystem;
 
 	/* Algorithm is mandatory */
 	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string, params);
@@ -181,14 +181,14 @@ int hash(json_object *params, struct common_parameters *common_params,
 
 	/* Specific test cases */
 	res = set_hash_bad_args(params, &smw_hash_args, digest_hex, digest_len,
-				common_params->is_api_test);
+				is_api_test(cmn_params));
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Call hash function and compare result with expected one */
 	*ret_status = smw_hash(smw_hash_args);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto exit;
 	}

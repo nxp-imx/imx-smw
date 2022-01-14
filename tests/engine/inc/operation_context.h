@@ -9,8 +9,7 @@
 /**
  * cancel_operation() - Cancel operation
  * @params: Cancel operation parameters.
- * @common_params: Some parameters common to commands.
- * @ctx: Context linked list.
+ * @cmn_params: Some parameters common to commands.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -21,15 +20,13 @@
  * -BAD_RESULT		- SMW API status differs from expected one
  * -FAILED		- Operation context is not found
  */
-int cancel_operation(json_object *params,
-		     struct common_parameters *common_params, struct llist *ctx,
+int cancel_operation(json_object *params, struct cmn_params *cmn_params,
 		     enum smw_status_code *ret_status);
 
 /**
  * copy_context() - Copy operation context
  * @params: Cancel operation parameters.
- * @common_params: Some parameters common to commands.
- * @app: Application data.
+ * @cmn_params: Some parameters common to commands.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -42,7 +39,7 @@ int cancel_operation(json_object *params,
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed
  * -INTERNAL               - Internal error
  */
-int copy_context(json_object *params, struct common_parameters *common_params,
-		 struct app_data *app, enum smw_status_code *ret_status);
+int copy_context(json_object *params, struct cmn_params *cmn_params,
+		 enum smw_status_code *ret_status);
 
 #endif /* __OPERATION_CONTEXT_H__ */

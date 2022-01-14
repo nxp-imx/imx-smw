@@ -721,8 +721,7 @@ static int restore_key_ids_from_json_file(struct llist *key_list,
 	return res;
 }
 
-int generate_key(json_object *params, struct common_parameters *common_params,
-		 struct llist *key_identifiers,
+int generate_key(json_object *params, struct cmn_params *cmn_params,
 		 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
@@ -732,17 +731,17 @@ int generate_key(json_object *params, struct common_parameters *common_params,
 	struct smw_generate_key_args *smw_gen_args = &args;
 	int key_id = INT_MAX;
 
-	if (!params || !key_identifiers || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 
-	if (!strcmp(common_params->subsystem, "DEFAULT"))
+	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = common_params->subsystem;
+		args.subsystem_name = cmn_params->subsystem;
 
 	args.key_descriptor = &key_test.desc;
 
@@ -783,13 +782,14 @@ int generate_key(json_object *params, struct common_parameters *common_params,
 	/* Call generate key function and compare result with expected one */
 	*ret_status = smw_generate_key(smw_gen_args);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto exit;
 	}
 
 	if (*ret_status == SMW_STATUS_OK)
-		res = util_key_add_node(key_identifiers, key_id, &key_test);
+		res = util_key_add_node(list_keys(cmn_params), key_id,
+					&key_test);
 
 exit:
 	util_key_free_key(&key_test);
@@ -800,8 +800,8 @@ exit:
 	return res;
 }
 
-int delete_key(json_object *params, struct common_parameters *common_params,
-	       struct llist *key_identifiers, enum smw_status_code *ret_status)
+int delete_key(json_object *params, struct cmn_params *cmn_params,
+	       enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(FAILED);
 	struct keypair_ops key_test;
@@ -809,12 +809,12 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 	struct smw_delete_key_args *smw_del_args = &args;
 	int key_id = INT_MAX;
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor, no key buffer */
@@ -834,7 +834,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 	}
 
 	/* Fill key descriptor field saved */
-	res = util_key_find_key_node(key_identifiers, key_id, &key_test);
+	res = util_key_find_key_node(list_keys(cmn_params), key_id, &key_test);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -846,7 +846,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 	/* Call delete key function and compare result with expected one */
 	*ret_status = smw_delete_key(smw_del_args);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res))
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
 		return ERR_CODE(BAD_RESULT);
 
 	/*
@@ -859,8 +859,8 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 	return ERR_CODE(PASSED);
 }
 
-int import_key(json_object *params, struct common_parameters *common_params,
-	       struct llist *key_identifiers, enum smw_status_code *ret_status)
+int import_key(json_object *params, struct cmn_params *cmn_params,
+	       enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test;
@@ -869,17 +869,17 @@ int import_key(json_object *params, struct common_parameters *common_params,
 	struct smw_import_key_args *smw_import_args = &args;
 	int key_id = INT_MAX;
 
-	if (!params || !common_params || !key_identifiers || !ret_status) {
+	if (!params || !cmn_params || !ret_status) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 
-	if (!strcmp(common_params->subsystem, "DEFAULT"))
+	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = common_params->subsystem;
+		args.subsystem_name = cmn_params->subsystem;
 
 	args.key_descriptor = &key_test.desc;
 
@@ -921,13 +921,14 @@ int import_key(json_object *params, struct common_parameters *common_params,
 	/* Call import key function and compare result with expected one */
 	*ret_status = smw_import_key(smw_import_args);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto exit;
 	}
 
 	if (*ret_status == SMW_STATUS_OK)
-		res = util_key_add_node(key_identifiers, key_id, &key_test);
+		res = util_key_add_node(list_keys(cmn_params), key_id,
+					&key_test);
 
 exit:
 	util_key_free_key(&key_test);
@@ -938,9 +939,8 @@ exit:
 	return res;
 }
 
-int export_key(json_object *params, struct common_parameters *common_params,
-	       enum export_type export_type, struct llist *key_identifiers,
-	       enum smw_status_code *ret_status)
+int export_key(json_object *params, struct cmn_params *cmn_params,
+	       enum export_type export_type, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
@@ -952,12 +952,12 @@ int export_key(json_object *params, struct common_parameters *common_params,
 	struct smw_keypair_buffer exp_key_buffer;
 	int key_id = INT_MAX;
 
-	if (!params || !common_params || !ret_status) {
+	if (!params || !cmn_params || !ret_status) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 	args.key_descriptor = &key_test.desc;
 
 	/*
@@ -998,7 +998,7 @@ int export_key(json_object *params, struct common_parameters *common_params,
 		goto exit;
 	}
 
-	res = util_key_find_key_node(key_identifiers, key_id, &key_test);
+	res = util_key_find_key_node(list_keys(cmn_params), key_id, &key_test);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -1026,14 +1026,14 @@ int export_key(json_object *params, struct common_parameters *common_params,
 
 	/* Specific test cases */
 	res = set_export_bad_args(params, &smw_export_args, &exp_key_buffer,
-				  common_params->is_api_test);
+				  is_api_test(cmn_params));
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Call export key function and compare result with expected one */
 	*ret_status = smw_export_key(smw_export_args);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto exit;
 	}
@@ -1052,14 +1052,13 @@ exit:
 }
 
 int save_key_ids_to_file(struct json_object *params,
-			 struct common_parameters *common_params,
-			 struct llist *key_list,
+			 struct cmn_params *cmn_params,
 			 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	char *filename = NULL;
 
-	if (!params || !common_params || !ret_status) {
+	if (!params || !cmn_params || !ret_status) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -1069,23 +1068,23 @@ int save_key_ids_to_file(struct json_object *params,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	*ret_status = save_key_ids_to_json_file(key_list, filename);
+	*ret_status =
+		save_key_ids_to_json_file(list_keys(cmn_params), filename);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res))
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
 		return ERR_CODE(BAD_RESULT);
 
 	return ERR_CODE(PASSED);
 }
 
 int restore_key_ids_from_file(struct json_object *params,
-			      struct common_parameters *common_params,
-			      struct llist *key_list,
+			      struct cmn_params *cmn_params,
 			      enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	char *filename;
 
-	if (!params || !common_params || !ret_status) {
+	if (!params || !cmn_params || !ret_status) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -1095,9 +1094,10 @@ int restore_key_ids_from_file(struct json_object *params,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	*ret_status = restore_key_ids_from_json_file(key_list, filename);
+	*ret_status =
+		restore_key_ids_from_json_file(list_keys(cmn_params), filename);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res))
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
 		return ERR_CODE(BAD_RESULT);
 
 	return ERR_CODE(PASSED);

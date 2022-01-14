@@ -46,13 +46,13 @@ static int check_version(struct json_object *params,
 	return ret;
 }
 
-int get_info(json_object *params, struct common_parameters *common_params,
+int get_info(json_object *params, struct cmn_params *cmn_params,
 	     enum smw_status_code *ret_status)
 {
 	int ret;
 	enum arguments_test_err_case error;
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -76,7 +76,7 @@ int get_info(json_object *params, struct common_parameters *common_params,
 	}
 
 	if (ret == ERR_CODE(PASSED) &&
-	    CHECK_RESULT(*ret_status, common_params->expected_res))
+	    CHECK_RESULT(*ret_status, cmn_params->expected_res))
 		ret = ERR_CODE(BAD_RESULT);
 
 	return ret;

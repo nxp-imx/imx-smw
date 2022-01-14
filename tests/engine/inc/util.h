@@ -7,7 +7,6 @@
 #define __UTIL_H__
 
 #include <limits.h>
-#include <stdio.h>
 #include <json_object.h>
 
 #include <smw_status.h>
@@ -98,36 +97,6 @@
 		} while (0);                                                   \
 		__ret;                                                         \
 	})
-
-/**
- * struct app_data - Application data structure
- * @dir_def_file:    Folder of the test definition file
- * @key_identifiers: Key identifiers list
- * @op_contexts:     Operation context list
- * @ciphers:         Cipher to verify list
- * @signatures:      Signatures to verify list
- * @threads:         Application threads list
- * @semaphores:      Semaphores list
- * @log:             Application log file
- * @is_multithread:  Application is multithread
- * @is_api_test:     Flag if test only SMW's API
- * @definition:      Application test definition
- * @lock_dbg:        Debug Printf protector
- */
-struct app_data {
-	char *dir_def_file;
-	struct llist *key_identifiers;
-	struct llist *op_contexts;
-	struct llist *ciphers;
-	struct llist *signatures;
-	struct llist *threads;
-	struct llist *semaphores;
-	FILE *log;
-	int is_multithread;
-	int is_api_test;
-	struct json_object *definition;
-	void *lock_dbg;
-};
 
 /**
  * util_setup_app() - Setup the application global data

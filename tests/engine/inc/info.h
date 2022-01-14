@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __INFO_H__
@@ -14,7 +14,7 @@
 /**
  * get_info() - Test get information API.
  * @params: Get information parameters.
- * @common_params: Common commands parameters.
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -25,8 +25,7 @@
  * -VALUE_NOTFOUND	- Test definition Value not found.
  * -FAILED		- Test failed
  */
-int get_info(struct json_object *params,
-	     struct common_parameters *common_params,
+int get_info(struct json_object *params, struct cmn_params *cmn_params,
 	     enum smw_status_code *ret_status);
 
 #endif /* __INFO_H__ */

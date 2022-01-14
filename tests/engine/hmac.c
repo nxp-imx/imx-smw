@@ -76,8 +76,8 @@ static int set_hmac_bad_args(json_object *params, struct smw_hmac_args **args,
 	return ret;
 }
 
-int hmac(json_object *params, struct common_parameters *common_params,
-	 struct llist *key_identifiers, enum smw_status_code *ret_status)
+int hmac(json_object *params, struct cmn_params *cmn_params,
+	 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
@@ -93,17 +93,17 @@ int hmac(json_object *params, struct common_parameters *common_params,
 	struct smw_hmac_args args = { 0 };
 	struct smw_hmac_args *smw_hmac_args = &args;
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 
-	if (!strcmp(common_params->subsystem, "DEFAULT"))
+	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = common_params->subsystem;
+		args.subsystem_name = cmn_params->subsystem;
 
 	args.key_descriptor = &key_test.desc;
 
@@ -121,7 +121,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 		util_key_free_key(&key_test);
 
 		/* Fill key descriptor field saved */
-		res = util_key_find_key_node(key_identifiers, key_id,
+		res = util_key_find_key_node(list_keys(cmn_params), key_id,
 					     &key_test);
 		if (res != ERR_CODE(PASSED))
 			goto exit;
@@ -191,14 +191,14 @@ int hmac(json_object *params, struct common_parameters *common_params,
 
 	/* Specific test cases */
 	res = set_hmac_bad_args(params, &smw_hmac_args, mac_hex, mac_len,
-				common_params->is_api_test);
+				is_api_test(cmn_params));
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Call hmac function and compare result with expected one */
 	*ret_status = smw_hmac(smw_hmac_args);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto exit;
 	}

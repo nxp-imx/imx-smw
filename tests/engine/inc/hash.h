@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __CRYPTO_H__
@@ -23,7 +23,7 @@ int get_hash_digest_len(char *algo, unsigned int *len);
 /**
  * hash() - Do a hash operation.
  * @params: Hash parameters.
- * @common_params: Some parameters common to commands.
+ * @cmn_params: Some parameters common to commands.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -37,7 +37,7 @@ int get_hash_digest_len(char *algo, unsigned int *len);
  * Error code from get_hash_digest_len().
  * Error code from set_hash_bad_args().
  */
-int hash(json_object *params, struct common_parameters *common_params,
+int hash(json_object *params, struct cmn_params *cmn_params,
 	 enum smw_status_code *ret_status);
 
 #endif /* __CRYPTO_H__ */

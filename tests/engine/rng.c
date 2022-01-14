@@ -52,50 +52,53 @@ static int set_rng_bad_args(json_object *params, struct smw_rng_args **args)
 	return ret;
 }
 
-int rng(json_object *params, struct common_parameters *common_params,
+int rng(json_object *params, struct cmn_params *cmn_params,
 	enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
-	unsigned int random_len = 0;
-	unsigned char *random_hex = NULL;
+	struct tbuffer random = { 0 };
 	struct smw_rng_args args = { 0 };
 	struct smw_rng_args *smw_rng_args = &args;
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 
-	if (!strcmp(common_params->subsystem, "DEFAULT"))
+	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = common_params->subsystem;
+		args.subsystem_name = cmn_params->subsystem;
 
-	res = util_read_hex_buffer(&random_hex, &random_len, params,
-				   RANDOM_OBJ);
+	res = util_read_json_type(&random, RANDOM_OBJ, t_buffer_hex, params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	if (!common_params->is_api_test && (!random_len || random_hex)) {
-		DBG_PRINT_BAD_ARGS();
-		res = ERR_CODE(BAD_ARGS);
-		goto exit;
-	}
+	if (!is_api_test(cmn_params)) {
+		/*
+		 * In case of non API test, the test must specify only
+		 * the "random" buffer length.
+		 */
+		if (!random.length || random.data) {
+			DBG_PRINT_BAD_PARAM(RANDOM_OBJ);
+			res = ERR_CODE(BAD_PARAM_TYPE);
+			goto exit;
+		}
 
-	if (!common_params->is_api_test) {
-		random_hex = malloc(random_len);
-		if (!random_hex) {
+		random.data = malloc(random.length);
+		if (!random.data) {
 			DBG_PRINT_ALLOC_FAILURE();
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 			goto exit;
 		}
-		memset(random_hex, 0, random_len);
+
+		memset(random.data, 0, random.length);
 	}
 
-	args.output = random_hex;
-	args.output_length = random_len;
+	args.output = random.data;
+	args.output_length = random.length;
 
 	/* Specific test cases */
 	res = set_rng_bad_args(params, &smw_rng_args);
@@ -105,28 +108,27 @@ int rng(json_object *params, struct common_parameters *common_params,
 	/* Call RNG function */
 	*ret_status = smw_rng(smw_rng_args);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto exit;
 	}
 
-	if (*ret_status == SMW_STATUS_OK && random_hex) {
-		if (random_len <= 256) {
-			DBG_DHEX("Random number", random_hex, random_len);
+	if (*ret_status == SMW_STATUS_OK && !is_api_test(cmn_params)) {
+		if (random.length <= 256)
+			DBG_DHEX("Random number", random.data, random.length);
+
+		/* Verify there is not zero value in the random bufffer */
+		while (random.length--) {
+			if (*(random.data + random.length))
+				goto exit;
 		}
 
-		if (!common_params->is_api_test) {
-			while (random_len--) {
-				if (*(random_hex + random_len))
-					goto exit;
-			}
-			res = ERR_CODE(SUBSYSTEM);
-		}
+		res = ERR_CODE(SUBSYSTEM);
 	}
 
 exit:
-	if (random_hex)
-		free(random_hex);
+	if (random.data)
+		free(random.data);
 
 	return res;
 }

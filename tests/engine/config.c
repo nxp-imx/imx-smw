@@ -74,7 +74,7 @@ end:
 	return res;
 }
 
-int config_load(json_object *params, struct common_parameters *common_params,
+int config_load(json_object *params, struct cmn_params *cmn_params,
 		enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
@@ -86,7 +86,7 @@ int config_load(json_object *params, struct common_parameters *common_params,
 	unsigned int size = 0;
 	unsigned int offset = 0;
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -125,7 +125,7 @@ int config_load(json_object *params, struct common_parameters *common_params,
 	/* Call configuration load function */
 	*ret_status = smw_config_load((char *)buffer, size, &offset);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res))
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
 		res = ERR_CODE(BAD_RESULT);
 
 end:
@@ -138,12 +138,12 @@ end:
 	return res;
 }
 
-int config_unload(json_object *params, struct common_parameters *common_params,
+int config_unload(json_object *params, struct cmn_params *cmn_params,
 		  enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -151,7 +151,7 @@ int config_unload(json_object *params, struct common_parameters *common_params,
 	/* Call configuration unload function */
 	*ret_status = smw_config_unload();
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res))
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
 		res = ERR_CODE(BAD_RESULT);
 
 	return res;

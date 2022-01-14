@@ -114,8 +114,7 @@ static int set_sign_verify_bad_args(json_object *params,
 }
 
 int sign_verify(int operation, json_object *params,
-		struct common_parameters *common_params, struct app_data *app,
-		enum smw_status_code *ret_status)
+		struct cmn_params *cmn_params, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
@@ -134,7 +133,7 @@ int sign_verify(int operation, json_object *params,
 	struct smw_sign_verify_args *smw_sign_verify_args = &args;
 	json_object *sign_id_obj = NULL;
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -142,12 +141,12 @@ int sign_verify(int operation, json_object *params,
 	if (operation != SIGN_OPERATION && operation != VERIFY_OPERATION)
 		return ERR_CODE(UNDEFINED_CMD);
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 
-	if (!strcmp(common_params->subsystem, "DEFAULT"))
+	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = common_params->subsystem;
+		args.subsystem_name = cmn_params->subsystem;
 
 	args.key_descriptor = &key_test.desc;
 
@@ -165,7 +164,7 @@ int sign_verify(int operation, json_object *params,
 		util_key_free_key(&key_test);
 
 		/* Fill key descriptor field saved */
-		res = util_key_find_key_node(app->key_identifiers, key_id,
+		res = util_key_find_key_node(list_keys(cmn_params), key_id,
 					     &key_test);
 		if (res != ERR_CODE(PASSED))
 			goto exit;
@@ -207,7 +206,7 @@ int sign_verify(int operation, json_object *params,
 
 	/* Get 'sign_id' parameter */
 	if (json_object_object_get_ex(params, SIGN_ID_OBJ, &sign_id_obj)) {
-		res = util_sign_find_node(app->signatures,
+		res = util_sign_find_node(list_signatures(cmn_params),
 					  json_object_get_int(sign_id_obj),
 					  &list_sign, &list_sign_length);
 
@@ -253,7 +252,7 @@ int sign_verify(int operation, json_object *params,
 	/* Specific test cases */
 	res = set_sign_verify_bad_args(params, &smw_sign_verify_args, exp_sign,
 				       exp_sign_length,
-				       common_params->is_api_test);
+				       is_api_test(cmn_params));
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -269,7 +268,7 @@ int sign_verify(int operation, json_object *params,
 	else /* operation == VERIFY_OPERATION */
 		*ret_status = smw_verify(smw_sign_verify_args);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto exit;
 	}
@@ -287,7 +286,7 @@ int sign_verify(int operation, json_object *params,
 		}
 
 		/* Store signature */
-		res = util_sign_add_node(app->signatures,
+		res = util_sign_add_node(list_signatures(cmn_params),
 					 json_object_get_int(sign_id_obj),
 					 args.signature, args.signature_length);
 		if (res)

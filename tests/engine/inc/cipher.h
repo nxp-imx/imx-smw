@@ -14,8 +14,7 @@
 /**
  * cipher() - Do a cipher one-shot operation
  * @params: JSON Cipher parameters.
- * @common_params: Common commands parameters.
- * @key_identifiers: Key identifier linked list.
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -25,15 +24,13 @@
  * -BAD_RESULT			- SMW API status differs from expected one.
  * -BAD_ARGS			- One of the arguments is bad.
  */
-int cipher(struct json_object *params, struct common_parameters *common_params,
-	   struct llist *key_identifiers, enum smw_status_code *ret_status);
+int cipher(struct json_object *params, struct cmn_params *cmn_params,
+	   enum smw_status_code *ret_status);
 
 /**
  * cipher_init() - Do a cipher initialization
  * @params: JSON Cipher parameters.
- * @common_params: Common commands parameters.
- * @key_identifiers: Key identifier linked list.
- * @ctx: Context linked list.
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -43,16 +40,13 @@ int cipher(struct json_object *params, struct common_parameters *common_params,
  * -BAD_RESULT			- SMW API status differs from expected one.
  * -BAD_ARGS			- One of the arguments is bad.
  */
-int cipher_init(struct json_object *params,
-		struct common_parameters *common_params,
-		struct llist *key_identifiers, struct llist *ctx,
+int cipher_init(struct json_object *params, struct cmn_params *cmn_params,
 		enum smw_status_code *ret_status);
 
 /**
  * cipher_update() - Do a cipher update
  * @params: JSON Cipher parameters.
- * @common_params: Common commands parameters.
- * @app: Application data
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -62,15 +56,13 @@ int cipher_init(struct json_object *params,
  * -BAD_RESULT			- SMW API status differs from expected one.
  * -BAD_ARGS			- One of the arguments is bad.
  */
-int cipher_update(struct json_object *params,
-		  struct common_parameters *common_params, struct app_data *app,
+int cipher_update(struct json_object *params, struct cmn_params *cmn_params,
 		  enum smw_status_code *ret_status);
 
 /**
  * cipher_final() - Do a cipher final
  * @params: JSON Cipher parameters.
- * @common_params: Common commands parameters.
- * @app: Application data
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -80,8 +72,7 @@ int cipher_update(struct json_object *params,
  * -BAD_RESULT			- SMW API status differs from expected one.
  * -BAD_ARGS			- One of the arguments is bad.
  */
-int cipher_final(struct json_object *params,
-		 struct common_parameters *common_params, struct app_data *app,
+int cipher_final(struct json_object *params, struct cmn_params *cmn_params,
 		 enum smw_status_code *ret_status);
 
 #endif /* __CIPHER_H__ */

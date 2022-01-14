@@ -13,9 +13,7 @@
 /**
  * generate_key() - Generate a key.
  * @params: Generate key parameters.
- * @common_params: Some parameters common to commands.
- * @key_identifiers: Key identifier linked list where key identifier value
- *                   will be saved.
+ * @cmn_params: Some parameters common to commands.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -29,16 +27,13 @@
  * Error code from set_gen_opt_params().
  * Error code from key_identifier_add_list().
  */
-int generate_key(json_object *params, struct common_parameters *common_params,
-		 struct llist *key_identifiers,
+int generate_key(json_object *params, struct cmn_params *cmn_params,
 		 enum smw_status_code *ret_status);
 
 /**
  * delete_key() - Delete a key.
  * @params: Delete key parameters.
- * @common_params: Some parameters common to commands.
- * @key_identifiers: Key identifier linked list where key identifier value
- *                   is saved.
+ * @cmn_params: Some parameters common to commands.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -49,15 +44,13 @@ int generate_key(json_object *params, struct common_parameters *common_params,
  * Error code from get_test_err_status().
  * Error code from set_del_bad_args().
  */
-int delete_key(json_object *params, struct common_parameters *common_params,
-	       struct llist *key_identifiers, enum smw_status_code *ret_status);
+int delete_key(json_object *params, struct cmn_params *cmn_params,
+	       enum smw_status_code *ret_status);
 
 /**
  * import_key() - Import a key.
  * @params: Import key parameters.
- * @common_params: Some parameters common to commands.
- * @key_identifiers: Key identifier linked list where key identifier value
- *                   will be saved.
+ * @cmn_params: Some parameters common to commands.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -71,17 +64,14 @@ int delete_key(json_object *params, struct common_parameters *common_params,
  * Error code from set_import_opt_params().
  * Error code from key_identifier_add_list().
  */
-int import_key(json_object *params, struct common_parameters *common_params,
-	       struct llist *key_identifiers,
+int import_key(json_object *params, struct cmn_params *cmn_params,
 	       enum smw_status_code *ret_status);
 
 /**
  * export_key() - Export a key.
  * @params: Import key parameters.
- * @common_params: Some parameters common to commands.
+ * @cmn_params: Some parameters common to commands.
  * @export_type: Type of key to export (private, public. keypair).
- * @key_identifiers: Key identifier linked list where key identifier value
- *                   will be saved.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -95,16 +85,13 @@ int import_key(json_object *params, struct common_parameters *common_params,
  * Error code from set_export_bad_args().
  * Error code from set_import_opt_params().
  */
-int export_key(json_object *params, struct common_parameters *common_params,
-	       enum export_type export_type, struct llist *key_identifiers,
-	       enum smw_status_code *ret_status);
+int export_key(json_object *params, struct cmn_params *cmn_params,
+	       enum export_type export_type, enum smw_status_code *ret_status);
 
 /**
  * derive_key() - Derive a key.
  * @params: Derive key parameters.
- * @common_params: Some parameters common to commands.
- * @key_identifiers: Key identifier linked list where key identifier value
- *                   will be saved.
+ * @cmn_params: Some parameters common to commands.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -114,15 +101,13 @@ int export_key(json_object *params, struct common_parameters *common_params,
  * -BAD_RESULT             - SMW API status differs from expected one.
  * -BAD_ARGS               - One of the arguments is bad.
  */
-int derive_key(json_object *params, struct common_parameters *common_params,
-	       struct llist *key_identifiers,
+int derive_key(json_object *params, struct cmn_params *cmn_params,
 	       enum smw_status_code *ret_status);
 
 /**
  * save_key_ids_to_file() - Save key ids from a linked list in a file.
  * @params: Function parameters.
- * @common_params: Some parameters common to commands.
- * @key_list: Key identifier linked list to save.
+ * @cmn_params: Some parameters common to commands.
  * @ret_status: Status returned by SMW API.
  *
  * The file where values are saved is a parameter from @params.
@@ -134,15 +119,13 @@ int derive_key(json_object *params, struct common_parameters *common_params,
  * -BAD_ARGS		- One of the arguments is bad.
  */
 int save_key_ids_to_file(struct json_object *params,
-			 struct common_parameters *common_params,
-			 struct llist *key_list,
+			 struct cmn_params *cmn_params,
 			 enum smw_status_code *ret_status);
 
 /**
  * restore_key_ids_from_file() - Restore key ids from a file to a linked list.
  * @params: Function parameters.
- * @common_params: Some parameters common to commands.
- * @key_list: Key identifier linked list to save.
+ * @cmn_params: Some parameters common to commands.
  * @ret_status: Status returned by SMW API.
  *
  * The file where values are coming from is a parameter from @params.
@@ -155,8 +138,7 @@ int save_key_ids_to_file(struct json_object *params,
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  */
 int restore_key_ids_from_file(struct json_object *params,
-			      struct common_parameters *common_params,
-			      struct llist *key_list,
+			      struct cmn_params *cmn_params,
 			      enum smw_status_code *ret_status);
 
 #endif /* __KEYMGR_H__ */

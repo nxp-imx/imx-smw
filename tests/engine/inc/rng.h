@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __RNG_H__
@@ -9,7 +9,7 @@
 /**
  * rng() - Do a RNG operation.
  * @params: RNG parameters.
- * @common_params: Common commands parameters.
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -22,7 +22,7 @@
  * Error code from util_read_hex_buffer().
  * Error code from set_rng_bad_args().
  */
-int rng(json_object *params, struct common_parameters *common_params,
+int rng(json_object *params, struct cmn_params *cmn_params,
 	enum smw_status_code *ret_status);
 
 #endif /* __RNG_H__ */

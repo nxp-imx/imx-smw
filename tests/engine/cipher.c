@@ -59,7 +59,6 @@
 /**
  * struct cipher_keys - Group of structures representing keys
  * @nb_keys: Number of keys
- * @key_identifiers: Pointer to key identifiers linked list
  * @keys_id: Pointer to an array of local key ids
  * @keys_test: Pointer to an array of test keypair structures
  * @keys_desc: Pointer to an array of SMW key descriptor pointers
@@ -67,7 +66,6 @@
  */
 struct cipher_keys {
 	unsigned int nb_keys;
-	struct llist *key_identifiers;
 	int *keys_id;
 	struct keypair_ops *keys_test;
 	struct smw_key_descriptor **keys_desc;
@@ -310,10 +308,10 @@ static void free_keys(struct cipher_keys *keys)
 /**
  * set_keys() - Set cipher keys structure
  * @params: JSON Cipher parameters
+ * @cmn_params: Operation common parameters
  * @keys: Pointer to structure to update
  * @nb_keys: Pointer to number of keys variable to update
  * @out_keys_desc: Pointer to output SMW key descriptors pointer array to update
- * @is_api_test: API test flag
  *
  * This function reads the keys description present in the test definition file
  * and set the keys structure.
@@ -327,9 +325,9 @@ static void free_keys(struct cipher_keys *keys)
  * Error code from util_key_read_descriptor
  * Error code from util_key_find_key_node
  */
-static int set_keys(json_object *params, struct cipher_keys *keys,
-		    unsigned int *nb_keys,
-		    struct smw_key_descriptor ***out_keys_desc, int is_api_test)
+static int set_keys(json_object *params, struct cmn_params *cmn_params,
+		    struct cipher_keys *keys, unsigned int *nb_keys,
+		    struct smw_key_descriptor ***out_keys_desc)
 {
 	enum smw_status_code status;
 	int res = ERR_CODE(BAD_ARGS);
@@ -363,7 +361,7 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
 		if (keys->keys_id[i] != INT_MAX) {
 			util_key_free_key(key_test);
 
-			res = util_key_find_key_node(keys->key_identifiers,
+			res = util_key_find_key_node(list_keys(cmn_params),
 						     keys->keys_id[i],
 						     key_test);
 			if (res != ERR_CODE(PASSED))
@@ -381,7 +379,7 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
 					return res;
 				}
 			}
-		} else if (!is_api_test &&
+		} else if (!is_api_test(cmn_params) &&
 			   (!util_key_is_type_set(key_test) ||
 			    !util_key_is_security_set(key_test) ||
 			    !util_key_is_private_key_defined(key_test))) {
@@ -400,8 +398,8 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
 
 /**
  * cipher_update_save_out_data() - Save intermediate output data
- * @app: Application data
  * @params: JSON Cipher parameters
+ * @cmn_params: Operation common parameters
  * @cipher_args: SMW cipher update arguments
  * @ctx_id: Local context ID
  *
@@ -413,8 +411,8 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
  * -BAD_PARAM_TYPE	- JSON parameter incorrectly set
  * Error code from util_cipher_add_out_data
  */
-static int cipher_update_save_out_data(struct app_data *app,
-				       json_object *params,
+static int cipher_update_save_out_data(json_object *params,
+				       struct cmn_params *cmn_params,
 				       struct smw_cipher_data_args *cipher_args,
 				       int ctx_id)
 {
@@ -433,7 +431,7 @@ static int cipher_update_save_out_data(struct app_data *app,
 		return ERR_CODE(PASSED);
 	}
 
-	return util_cipher_add_out_data(app->ciphers, ctx_id,
+	return util_cipher_add_out_data(list_ciphers(cmn_params), ctx_id,
 					cipher_args->output,
 					cipher_args->output_length);
 }
@@ -441,7 +439,7 @@ static int cipher_update_save_out_data(struct app_data *app,
 /**
  * set_init_params() - Set cipher initialization parameters
  * @params: JSON Cipher parameters
- * @common_params: Common commands parameters
+ * @cmn_params: Common commands parameters
  * @args: Pointer to SMW cipher initialization API arguments
  * @keys: Pointer to internal cipher keys structure
  *
@@ -451,23 +449,22 @@ static int cipher_update_save_out_data(struct app_data *app,
  * Error code from util_read_hex_buffer
  * Error code from set_keys
  */
-static int set_init_params(json_object *params,
-			   struct common_parameters *common_params,
+static int set_init_params(json_object *params, struct cmn_params *cmn_params,
 			   struct smw_cipher_init_args *args,
 			   struct cipher_keys *keys)
 {
 	int res;
 
-	if (common_params->subsystem) {
-		if (!strcmp(common_params->subsystem, "DEFAULT"))
+	if (cmn_params->subsystem) {
+		if (!strcmp(cmn_params->subsystem, "DEFAULT"))
 			args->subsystem_name = NULL;
 		else
-			args->subsystem_name = common_params->subsystem;
+			args->subsystem_name = cmn_params->subsystem;
 	}
 
 	/* Get mode and operation type */
 	res = get_cipher_config(params, &args->mode_name, &args->operation_name,
-				common_params->is_api_test);
+				is_api_test(cmn_params));
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -479,8 +476,8 @@ static int set_init_params(json_object *params,
 	}
 
 	/* Set key descriptors */
-	res = set_keys(params, keys, &args->nb_keys, &args->keys_desc,
-		       common_params->is_api_test);
+	res = set_keys(params, cmn_params, keys, &args->nb_keys,
+		       &args->keys_desc);
 
 	return res;
 }
@@ -488,7 +485,7 @@ static int set_init_params(json_object *params,
 /**
  * set_output_params() - Set cipher output related parameters
  * @params: JSON Cipher parameters
- * @common_params: Common commands parameters
+ * @cmn_params: Common commands parameters
  * @expected_output: Pointer to expected output buffer
  * @expected_out_len: Pointer to expected output buffer length
  * @args: Pointer to SMW cipher data API arguments
@@ -498,8 +495,7 @@ static int set_init_params(json_object *params,
  * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed
  * Error code from util_read_hex_buffer
  */
-static int set_output_params(json_object *params,
-			     struct common_parameters *common_params,
+static int set_output_params(json_object *params, struct cmn_params *cmn_params,
 			     unsigned char **expected_output,
 			     unsigned int *expected_out_len,
 			     struct smw_cipher_data_args *args)
@@ -516,7 +512,7 @@ static int set_output_params(json_object *params,
 
 	/* Output length is not set by definition file */
 	if (res == ERR_CODE(MISSING_PARAMS) ||
-	    (common_params->is_api_test && !*expected_out_len &&
+	    (is_api_test(cmn_params) && !*expected_out_len &&
 	     *expected_output)) {
 		/* Set a value large enough (input + AES block size):
 		 * In case of final operation, if previous cipher update
@@ -541,7 +537,7 @@ static int set_output_params(json_object *params,
 		 * Specific error case where output pointer is set and output
 		 * length not
 		 */
-		if (common_params->is_api_test && !*expected_out_len &&
+		if (is_api_test(cmn_params) && !*expected_out_len &&
 		    *expected_output)
 			args->output_length = 0;
 	}
@@ -552,8 +548,7 @@ static int set_output_params(json_object *params,
 /**
  * set_op_context() - Set operation context
  * @params: JSON Cipher parameters
- * @is_api_test: API test flag
- * @pctx: Pointer to context linked list
+ * @cmn_params: Operation common parameters
  * @ctx_id: Pointer to context ID
  * @args: Pointer to SMW cipher data API arguments
  * @api_ctx: Pointer to API operation context structure
@@ -563,9 +558,8 @@ static int set_output_params(json_object *params,
  * -MISSING_PARAMS	- Context ID json parameter is missing
  * Error code from util_context_find_node
  */
-static int set_op_context(json_object *params, int is_api_test,
-			  struct llist *ctx, int *ctx_id,
-			  struct smw_cipher_data_args *args,
+static int set_op_context(json_object *params, struct cmn_params *cmn_params,
+			  int *ctx_id, struct smw_cipher_data_args *args,
 			  struct smw_op_context *api_ctx)
 {
 	int res;
@@ -574,14 +568,15 @@ static int set_op_context(json_object *params, int is_api_test,
 	/* Context ID is a mandatory parameter except for API tests */
 	if (json_object_object_get_ex(params, CTX_ID_OBJ, &ctx_id_obj)) {
 		*ctx_id = json_object_get_int(ctx_id_obj);
-	} else if (!is_api_test) {
+	} else if (!is_api_test(cmn_params)) {
 		DBG_PRINT_MISS_PARAM("Context ID");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
 	/* Get operation context */
 	if (*ctx_id != -1) {
-		res = util_context_find_node(ctx, *ctx_id, &args->context);
+		res = util_context_find_node(list_op_ctxs(cmn_params), *ctx_id,
+					     &args->context);
 		if (res != ERR_CODE(PASSED)) {
 			DBG_PRINT("Failed to find context node");
 			return res;
@@ -594,42 +589,40 @@ static int set_op_context(json_object *params, int is_api_test,
 	return ERR_CODE(PASSED);
 }
 
-int cipher(json_object *params, struct common_parameters *common_params,
-	   struct llist *key_identifiers, enum smw_status_code *ret_status)
+int cipher(json_object *params, struct cmn_params *cmn_params,
+	   enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	unsigned int expected_out_len;
+	unsigned int expected_out_len = 0;
 	unsigned char *expected_output = NULL;
 	struct smw_cipher_args args = { 0 };
 	struct smw_cipher_args *cipher_args = &args;
 	struct smw_cipher_init_args *init = &args.init;
 	struct cipher_keys keys = { 0 };
 
-	if (!params || !common_params || !ret_status) {
+	if (!params || !cmn_params || !ret_status) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
-	keys.key_identifiers = key_identifiers;
+	args.init.version = cmn_params->version;
+	args.data.version = cmn_params->version;
 
-	args.init.version = common_params->version;
-	args.data.version = common_params->version;
-
-	res = set_init_params(params, common_params, init, &keys);
+	res = set_init_params(params, cmn_params, init, &keys);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
 	/* Read input buffer. Could not be set for API tests only */
 	res = util_read_hex_buffer(&args.data.input, &args.data.input_length,
 				   params, INPUT_OBJ);
-	if ((!common_params->is_api_test && res != ERR_CODE(PASSED)) ||
-	    (common_params->is_api_test && res != ERR_CODE(PASSED) &&
+	if ((!is_api_test(cmn_params) && res != ERR_CODE(PASSED)) ||
+	    (is_api_test(cmn_params) && res != ERR_CODE(PASSED) &&
 	     res != ERR_CODE(MISSING_PARAMS))) {
 		DBG_PRINT("Failed to read input buffer");
 		goto end;
 	}
 
-	res = set_output_params(params, common_params, &expected_output,
+	res = set_output_params(params, cmn_params, &expected_output,
 				&expected_out_len, &args.data);
 	if (res != ERR_CODE(PASSED))
 		goto end;
@@ -640,7 +633,7 @@ int cipher(json_object *params, struct common_parameters *common_params,
 		goto end;
 
 	*ret_status = smw_cipher(cipher_args);
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto end;
 	}
@@ -669,8 +662,7 @@ end:
 	return res;
 }
 
-int cipher_init(json_object *params, struct common_parameters *common_params,
-		struct llist *key_identifiers, struct llist *ctx,
+int cipher_init(json_object *params, struct cmn_params *cmn_params,
 		enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
@@ -681,7 +673,7 @@ int cipher_init(json_object *params, struct common_parameters *common_params,
 	struct cipher_keys keys = { 0 };
 	json_object *ctx_id_obj;
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
@@ -689,16 +681,14 @@ int cipher_init(json_object *params, struct common_parameters *common_params,
 	/* Context ID is a mandatory parameter except for API tests */
 	if (json_object_object_get_ex(params, CTX_ID_OBJ, &ctx_id_obj)) {
 		ctx_id = json_object_get_int(ctx_id_obj);
-	} else if (!common_params->is_api_test) {
+	} else if (!is_api_test(cmn_params)) {
 		DBG_PRINT_MISS_PARAM("Context ID");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	keys.key_identifiers = key_identifiers;
+	args.version = cmn_params->version;
 
-	args.version = common_params->version;
-
-	res = set_init_params(params, common_params, cipher_args, &keys);
+	res = set_init_params(params, cmn_params, cipher_args, &keys);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
@@ -719,7 +709,7 @@ int cipher_init(json_object *params, struct common_parameters *common_params,
 
 	*ret_status = smw_cipher_init(cipher_args);
 
-	if (CHECK_RESULT(*ret_status, common_params->expected_res))
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
 		res = ERR_CODE(BAD_RESULT);
 
 	/*
@@ -727,8 +717,9 @@ int cipher_init(json_object *params, struct common_parameters *common_params,
 	 * an API test
 	 */
 	if (res == ERR_CODE(PASSED) && *ret_status == SMW_STATUS_OK &&
-	    !common_params->is_api_test) {
-		res = util_context_add_node(ctx, ctx_id, context);
+	    !is_api_test(cmn_params)) {
+		res = util_context_add_node(list_op_ctxs(cmn_params), ctx_id,
+					    context);
 		if (res == ERR_CODE(PASSED))
 			goto end;
 
@@ -746,40 +737,40 @@ end:
 	return res;
 }
 
-int cipher_update(json_object *params, struct common_parameters *common_params,
-		  struct app_data *app, enum smw_status_code *ret_status)
+int cipher_update(json_object *params, struct cmn_params *cmn_params,
+		  enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;
-	unsigned int expected_out_len;
+	unsigned int expected_out_len = 0;
 	unsigned char *expected_output = NULL;
 	struct smw_cipher_data_args args = { 0 };
 	struct smw_cipher_data_args *cipher_args = &args;
 	struct smw_op_context api_ctx = { .handle = &api_ctx };
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 
-	res = set_op_context(params, common_params->is_api_test,
-			     app->op_contexts, &ctx_id, cipher_args, &api_ctx);
+	res = set_op_context(params, cmn_params, &ctx_id, cipher_args,
+			     &api_ctx);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Read input buffer. Could not be set for API tests only */
 	res = util_read_hex_buffer(&args.input, &args.input_length, params,
 				   INPUT_OBJ);
-	if ((!common_params->is_api_test && res != ERR_CODE(PASSED)) ||
-	    (common_params->is_api_test && res != ERR_CODE(PASSED) &&
+	if ((!is_api_test(cmn_params) && res != ERR_CODE(PASSED)) ||
+	    (is_api_test(cmn_params) && res != ERR_CODE(PASSED) &&
 	     res != ERR_CODE(MISSING_PARAMS))) {
 		DBG_PRINT("Failed to read input buffer");
 		goto end;
 	}
 
-	res = set_output_params(params, common_params, &expected_output,
+	res = set_output_params(params, cmn_params, &expected_output,
 				&expected_out_len, cipher_args);
 	if (res != ERR_CODE(PASSED))
 		goto end;
@@ -790,15 +781,15 @@ int cipher_update(json_object *params, struct common_parameters *common_params,
 		goto end;
 
 	*ret_status = smw_cipher_update(cipher_args);
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto end;
 	}
 
 	/* Save output data if result is checked at final step */
 	if (*ret_status == SMW_STATUS_OK)
-		res = cipher_update_save_out_data(app, params, cipher_args,
-						  ctx_id);
+		res = cipher_update_save_out_data(params, cmn_params,
+						  cipher_args, ctx_id);
 
 end:
 	if (args.input)
@@ -813,26 +804,26 @@ end:
 	return res;
 }
 
-int cipher_final(json_object *params, struct common_parameters *common_params,
-		 struct app_data *app, enum smw_status_code *ret_status)
+int cipher_final(json_object *params, struct cmn_params *cmn_params,
+		 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;
-	unsigned int expected_out_len;
+	unsigned int expected_out_len = 0;
 	unsigned char *expected_output = NULL;
 	struct smw_cipher_data_args args = { 0 };
 	struct smw_cipher_data_args *cipher_args = &args;
 	struct smw_op_context api_ctx = { .handle = &api_ctx };
 
-	if (!params || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 
-	res = set_op_context(params, common_params->is_api_test,
-			     app->op_contexts, &ctx_id, cipher_args, &api_ctx);
+	res = set_op_context(params, cmn_params, &ctx_id, cipher_args,
+			     &api_ctx);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -844,7 +835,7 @@ int cipher_final(json_object *params, struct common_parameters *common_params,
 		goto end;
 	}
 
-	res = set_output_params(params, common_params, &expected_output,
+	res = set_output_params(params, cmn_params, &expected_output,
 				&expected_out_len, cipher_args);
 	if (res != ERR_CODE(PASSED))
 		goto end;
@@ -855,20 +846,20 @@ int cipher_final(json_object *params, struct common_parameters *common_params,
 		goto end;
 
 	*ret_status = smw_cipher_final(cipher_args);
-	if (CHECK_RESULT(*ret_status, common_params->expected_res)) {
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
 		res = ERR_CODE(BAD_RESULT);
 		goto end;
 	}
 
 	if (*ret_status == SMW_STATUS_OK && expected_output) {
-		res = util_cipher_add_out_data(app->ciphers, ctx_id,
+		res = util_cipher_add_out_data(list_ciphers(cmn_params), ctx_id,
 					       cipher_args->output,
 					       cipher_args->output_length);
 		if (res != ERR_CODE(PASSED))
 			goto end;
 
-		res = util_cipher_cmp_output_data(app->ciphers, ctx_id,
-						  expected_output,
+		res = util_cipher_cmp_output_data(list_ciphers(cmn_params),
+						  ctx_id, expected_output,
 						  expected_out_len);
 	}
 

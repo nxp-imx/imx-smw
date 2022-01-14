@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __CONFIG_H__
@@ -9,7 +9,7 @@
 /**
  * config_load() - Call configuration load API.
  * @params: Configuration parameters.
- * @common_params: Common commands parameters.
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -20,20 +20,20 @@
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * Error code from util_read_hex_buffer().
  */
-int config_load(json_object *params, struct common_parameters *common_params,
+int config_load(json_object *params, struct cmn_params *cmn_params,
 		enum smw_status_code *ret_status);
 
 /**
  * config_unload() - Call configuration unload API.
  * @params: Configuration parameters.
- * @common_params: Common commands parameters.
+ * @cmn_params: Common commands parameters.
  * @ret_status: Status returned by SMW API.
  *
  * Return:
  * PASSED       - Success.
  * -BAD_RESULT  - SMW API status differs from expected one.
  */
-int config_unload(json_object *params, struct common_parameters *common_params,
+int config_unload(json_object *params, struct cmn_params *cmn_params,
 		  enum smw_status_code *ret_status);
 
 #endif /* __CONFIG_H__ */

@@ -612,8 +612,8 @@ static int derive_bad_params(json_object *params,
 	return ret;
 }
 
-int derive_key(json_object *params, struct common_parameters *common_params,
-	       struct llist *key_identifiers, enum smw_status_code *ret_status)
+int derive_key(json_object *params, struct cmn_params *cmn_params,
+	       enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(FAILED);
 	struct keypair_ops key_base = { 0 };
@@ -622,31 +622,30 @@ int derive_key(json_object *params, struct common_parameters *common_params,
 	struct smw_derive_key_args args = { 0 };
 	struct smw_derive_key_args *smw_args = &args;
 
-	if (!params || !key_identifiers || !ret_status || !common_params) {
+	if (!params || !ret_status || !cmn_params) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = common_params->version;
+	args.version = cmn_params->version;
 
-	if (common_params->subsystem &&
-	    !strcmp(common_params->subsystem, "DEFAULT"))
+	if (cmn_params->subsystem && !strcmp(cmn_params->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = common_params->subsystem;
+		args.subsystem_name = cmn_params->subsystem;
 
 	args.key_descriptor_base = &key_base.desc;
 	args.key_descriptor_derived = &key_derived.desc;
 
 	/* Setup key descitpor or the key base */
-	res = setup_derive_base(params, key_identifiers, &key_base,
+	res = setup_derive_base(params, list_keys(cmn_params), &key_base,
 				&base_buffer);
-	if (res != ERR_CODE(PASSED) && !common_params->is_api_test)
+	if (res != ERR_CODE(PASSED) && !is_api_test(cmn_params))
 		goto exit;
 
 	/* Setup optional parameters */
 	res = setup_derive_opt_params(&args, params);
-	if (res != ERR_CODE(PASSED) && !common_params->is_api_test)
+	if (res != ERR_CODE(PASSED) && !is_api_test(cmn_params))
 		goto exit;
 
 	/*
@@ -659,7 +658,7 @@ int derive_key(json_object *params, struct common_parameters *common_params,
 
 	/* Setup the output arguments */
 	res = setup_derive_output(&args, &key_derived, params);
-	if (res != ERR_CODE(PASSED) && !common_params->is_api_test)
+	if (res != ERR_CODE(PASSED) && !is_api_test(cmn_params))
 		goto exit;
 
 	res = derive_bad_params(params, &smw_args);
@@ -667,12 +666,12 @@ int derive_key(json_object *params, struct common_parameters *common_params,
 		goto exit;
 
 	*ret_status = smw_derive_key(smw_args);
-	if (CHECK_RESULT(*ret_status, common_params->expected_res))
+	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
 		res = ERR_CODE(BAD_RESULT);
 
 	if (*ret_status == SMW_STATUS_OK)
-		res = end_derive_operation(&args, &key_derived, key_identifiers,
-					   params);
+		res = end_derive_operation(&args, &key_derived,
+					   list_keys(cmn_params), params);
 
 exit:
 	util_key_free_key(&key_base);

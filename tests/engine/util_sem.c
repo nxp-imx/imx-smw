@@ -10,7 +10,6 @@
 #include <time.h>
 
 #include "util.h"
-#include "util_list.h"
 #include "util_sem.h"
 
 struct app_sem {
@@ -78,20 +77,18 @@ static struct app_sem *find_sem(struct llist *lsem, const char *name)
  * @name: Name of the semaphore.
  * @new_sem: Return the new semaphore object.
  *
- * If the application semaphore list is empty, the function initializes
- * the list.
  * Function allocates the new semaphore object and add it in the list.
  * If an error occurs, the new semaphore is destroyed.
  *
  * Return:
- * PASSED                   - Success.
- * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
- * -BAD_ARGS                - One of the argument is not correct.
+ * PASSED                  - Success.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -BAD_ARGS               - One of the argument is not correct.
  */
-static int register_sem(struct llist **lsem, const char *name,
+static int register_sem(struct llist *lsem, const char *name,
 			struct app_sem **new_sem)
 {
-	int err;
+	int res = ERR_CODE(PASSED);
 	struct app_sem *sem = NULL;
 	size_t len;
 
@@ -100,22 +97,22 @@ static int register_sem(struct llist **lsem, const char *name,
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	if (!*lsem) {
-		err = util_list_init(lsem, free_sem);
-		if (err != ERR_CODE(PASSED))
-			return err;
-	}
+	util_list_lock(lsem);
+
+	sem = find_sem(lsem, name);
+	if (sem)
+		goto exit;
 
 	sem = calloc(1, sizeof(*sem));
 	if (!sem) {
 		DBG_PRINT_ALLOC_FAILURE();
-		err = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		goto exit;
 	}
 
 	if (sem_init(&sem->handle, 1, 0)) {
 		DBG_PRINT("Semaphore %s failure %s", name, util_get_strerr());
-		err = ERR_CODE(FAILED);
+		res = ERR_CODE(FAILED);
 		goto exit;
 	}
 
@@ -123,30 +120,34 @@ static int register_sem(struct llist **lsem, const char *name,
 
 	len = strlen(name);
 	if (!len) {
-		err = ERR_CODE(BAD_ARGS);
+		res = ERR_CODE(BAD_ARGS);
 		goto exit;
 	}
 
 	sem->name = malloc(len + 1);
 	if (!sem->name) {
 		DBG_PRINT_ALLOC_FAILURE();
-		err = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		goto exit;
 	}
 
 	strcpy(sem->name, name);
 
-	err = util_list_add_node(*lsem, 0, sem);
+	res = util_list_add_node_nl(lsem, 0, sem);
 
 exit:
-	if (err != ERR_CODE(PASSED)) {
-		free_sem(sem);
+	if (res != ERR_CODE(PASSED)) {
+		if (sem)
+			free_sem(sem);
+
 		sem = NULL;
 	}
 
 	*new_sem = sem;
 
-	return err;
+	util_list_unlock(lsem);
+
+	return res;
 }
 
 /**
@@ -183,8 +184,7 @@ static int wait_sem(struct thread_data *thr, struct app_sem *sem,
 		ts.tv_sec += timeout;
 
 		thr->state = WAITING;
-		DBG_PRINT("%s is waiting %s for %d seconds",
-			  util_get_thread_name(thr->app), sem->name, timeout);
+		DBG_PRINT("Waiting %s for %d seconds", sem->name, timeout);
 
 		err = sem_timedwait(&sem->handle, &ts);
 		if (err) {
@@ -214,12 +214,12 @@ static int wait_sem(struct thread_data *thr, struct app_sem *sem,
  * @tag: JSON-C semaphore tag name.
  *
  * Return:
- * PASSED                   - Success.
- * -BAD_PARAM_TYPE          - Semaphore definition not correct.
- * -INTERNAL                - Internal system error.
- * -BAD_ARGS                - One of the argument is not correct.
- * -FAILED                  - Failure
- * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * PASSED                  - Success.
+ * -BAD_PARAM_TYPE         - Semaphore definition not correct.
+ * -INTERNAL               - Internal system error.
+ * -BAD_ARGS               - One of the argument is not correct.
+ * -FAILED                 - Failure
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  */
 static int get_wait_sem(struct thread_data *thr, struct json_object *obj,
 			const char *tag)
@@ -299,14 +299,9 @@ static int get_wait_sem(struct thread_data *thr, struct json_object *obj,
 		return ERR_CODE(FAILED);
 	}
 
-	sem = find_sem(thr->app->semaphores, sem_name);
-	if (!sem) {
-		err = register_sem(&thr->app->semaphores, sem_name, &sem);
-		if (err != ERR_CODE(PASSED))
-			return err;
-	}
-
-	err = wait_sem(thr, sem, sem_timeout);
+	err = register_sem(thr->app->semaphores, sem_name, &sem);
+	if (err == ERR_CODE(PASSED))
+		err = wait_sem(thr, sem, sem_timeout);
 
 	return err;
 }
@@ -316,14 +311,16 @@ static int get_wait_sem(struct thread_data *thr, struct json_object *obj,
  * @app: Application data.
  *
  * Return:
- * PASSED                   - Success.
- * -FAILED                  - Post semaphore failure.
+ * PASSED                  - Success.
+ * -FAILED                 - Post semaphore failure.
  */
 static int post_sem_all(struct app_data *app)
 {
 	int res = ERR_CODE(PASSED);
 	struct app_sem *sem = NULL;
 	struct node *node = NULL;
+
+	util_list_lock(app->semaphores);
 
 	do {
 		sem = NULL;
@@ -337,6 +334,8 @@ static int post_sem_all(struct app_data *app)
 			}
 		}
 	} while (node);
+
+	util_list_unlock(app->semaphores);
 
 	return res;
 }
@@ -359,7 +358,7 @@ static int post_sem_all(struct app_data *app)
  */
 static int post_sem(struct app_data *app, const char *sem_name)
 {
-	int res = ERR_CODE(PASSED);
+	int res;
 	int err;
 	struct app_sem *sem = NULL;
 
@@ -370,15 +369,12 @@ static int post_sem(struct app_data *app, const char *sem_name)
 
 	DBG_PRINT("%s", sem_name);
 
-	if (strcmp(sem_name, "all"))
+	if (!strcmp(sem_name, "all"))
 		return post_sem_all(app);
 
-	sem = find_sem(app->semaphores, sem_name);
-	if (!sem) {
-		res = register_sem(&app->semaphores, sem_name, &sem);
-		if (res != ERR_CODE(PASSED))
-			return res;
-	}
+	res = register_sem(app->semaphores, sem_name, &sem);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	err = sem_post(&sem->handle);
 	if (err) {
@@ -473,6 +469,14 @@ static int get_post_sem(struct thread_data *thr, struct json_object *obj,
 	}
 
 	return err;
+}
+
+int util_sem_init(struct llist **list)
+{
+	if (!list)
+		return ERR_CODE(BAD_ARGS);
+
+	return util_list_init(list, free_sem);
 }
 
 int util_sem_wait_before(struct thread_data *thr, struct json_object *obj)

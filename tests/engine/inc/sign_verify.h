@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __SIGN_VERIFY_H__
@@ -17,8 +17,7 @@
  * @operation: SIGN_OPERATION or VERIFY_OPERATION
  * @params: Sign or verify parameters.
  * @common_params: Common commands parameters.
- * @key_identifiers: Key identifier linked list where key identifier value
- *                   is saved.
+ * @app: Application data
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -39,13 +38,7 @@
  * Error code from util_sign_add_node().
  */
 int sign_verify(int operation, json_object *params,
-		struct common_parameters *common_params,
-		struct llist *key_identifiers,
+		struct common_parameters *common_params, struct app_data *app,
 		enum smw_status_code *ret_status);
-
-/**
- * sign_clear_signatures_list() - Clear the signatures list.
- */
-void sign_clear_signatures_list(void);
 
 #endif /* __SIGN_VERIFY_H__ */

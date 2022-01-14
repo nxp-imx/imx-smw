@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 #ifndef __UTIL_KEY_H__
 #define __UTIL_KEY_H__
@@ -226,17 +226,29 @@ static inline int util_key_is_modulus(struct keypair_ops *key_test)
 }
 
 /**
+ * util_key_init() - Initialize the key list
+ * @list: Pointer to linked list.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARG                - @list is NULL.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -FAILED                 - Failure
+ */
+int util_key_init(struct llist **list);
+
+/**
  * util_key_add_node() - Add a new node in a key identifier linked list.
  * @key_identifiers: Pointer to linked list.
  * @id: Local ID of the key identifier. Comes from test definition file.
  * @key_test: Test keypair structure with operations to save
  *
  * Return:
- * PASSED                   - Success.
- * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
- * -BAD_ARGS                - One of the argument is not correct.
+ * PASSED                  - Success.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -BAD_ARGS               - One of the argument is not correct.
  */
-int util_key_add_node(struct llist **key_identifiers, unsigned int id,
+int util_key_add_node(struct llist *key_identifiers, unsigned int id,
 		      struct keypair_ops *key_test);
 
 /**
@@ -246,9 +258,9 @@ int util_key_add_node(struct llist **key_identifiers, unsigned int id,
  * @key_test: Test keypair structure with operations to fill
  *
  * Return:
- * PASSED        - Success.
- * -KEY_NOTFOUND - @id is not found.
- * -BAD_ARGS     - One of the argument is not correct.
+ * PASSED                  - Success.
+ * -KEY_NOTFOUND           - @id is not found.
+ * -BAD_ARGS               - One of the argument is not correct.
  */
 int util_key_find_key_node(struct llist *key_identifiers, unsigned int id,
 			   struct keypair_ops *key_test);

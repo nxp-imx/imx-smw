@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __KEYMGR_H__
@@ -30,7 +30,7 @@
  * Error code from key_identifier_add_list().
  */
 int generate_key(json_object *params, struct common_parameters *common_params,
-		 struct llist **key_identifiers,
+		 struct llist *key_identifiers,
 		 enum smw_status_code *ret_status);
 
 /**
@@ -61,18 +61,18 @@ int delete_key(json_object *params, struct common_parameters *common_params,
  * @ret_status: Status returned by SMW API.
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -MISSING_PARAMS		- Missing mandatory parameters in @params.
- * -BAD_RESULT			- SMW API status differs from expected one.
- * -BAD_ARGS			- One of the arguments is bad.
+ * PASSED                  - Success.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -MISSING_PARAMS         - Missing mandatory parameters in @params.
+ * -BAD_RESULT             - SMW API status differs from expected one.
+ * -BAD_ARGS               - One of the arguments is bad.
  * Error code from get_test_err_status().
  * Error code from set_import_bad_args().
  * Error code from set_import_opt_params().
  * Error code from key_identifier_add_list().
  */
 int import_key(json_object *params, struct common_parameters *common_params,
-	       struct llist **key_identifiers,
+	       struct llist *key_identifiers,
 	       enum smw_status_code *ret_status);
 
 /**
@@ -108,21 +108,21 @@ int export_key(json_object *params, struct common_parameters *common_params,
  * @ret_status: Status returned by SMW API.
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -MISSING_PARAMS		- Missing mandatory parameters in @params.
- * -BAD_RESULT			- SMW API status differs from expected one.
- * -BAD_ARGS			- One of the arguments is bad.
+ * PASSED                  - Success.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -MISSING_PARAMS         - Missing mandatory parameters in @params.
+ * -BAD_RESULT             - SMW API status differs from expected one.
+ * -BAD_ARGS               - One of the arguments is bad.
  */
 int derive_key(json_object *params, struct common_parameters *common_params,
-	       struct llist **key_identifiers,
+	       struct llist *key_identifiers,
 	       enum smw_status_code *ret_status);
 
 /**
  * save_key_ids_to_file() - Save key ids from a linked list in a file.
  * @params: Function parameters.
  * @common_params: Some parameters common to commands.
- * @key_identifiers: Key identifier linked list to save.
+ * @key_list: Key identifier linked list to save.
  * @ret_status: Status returned by SMW API.
  *
  * The file where values are saved is a parameter from @params.
@@ -142,20 +142,21 @@ int save_key_ids_to_file(struct json_object *params,
  * restore_key_ids_from_file() - Restore key ids from a file to a linked list.
  * @params: Function parameters.
  * @common_params: Some parameters common to commands.
- * @key_identifiers: Key identifier linked list to save.
+ * @key_list: Key identifier linked list to save.
  * @ret_status: Status returned by SMW API.
  *
  * The file where values are coming from is a parameter from @params.
  *
  * Return:
- * PASSED		- Success.
- * -MISSING_PARAMS	- Missing mandatory parameters in @params.
- * -BAD_RESULT		- SMW API status differs from expected one.
- * -BAD_ARGS		- One of the arguments is bad.
+ * PASSED                  - Success.
+ * -MISSING_PARAMS         - Missing mandatory parameters in @params.
+ * -BAD_RESULT             - SMW API status differs from expected one.
+ * -BAD_ARGS               - One of the arguments is bad.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  */
 int restore_key_ids_from_file(struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct llist **key_list,
+			      struct llist *key_list,
 			      enum smw_status_code *ret_status);
 
 #endif /* __KEYMGR_H__ */

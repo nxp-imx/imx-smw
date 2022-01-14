@@ -7,7 +7,20 @@
 
 #include <json.h>
 
+#include "util_list.h"
 #include "util_thread.h"
+
+/**
+ * util_sem_init() - Initialize the semaphore list
+ * @list: Pointer to linked list.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARG                - @list is NULL.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -FAILED                 - Failure
+ */
+int util_sem_init(struct llist **list);
 
 /**
  * util_sem_wait_before() - Wait a semaphore before operation

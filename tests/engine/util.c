@@ -16,8 +16,15 @@
 
 #include "json_util.h"
 #include "util.h"
+#include "util_cipher.h"
+#include "util_key.h"
+#include "util_list.h"
 #include "util_file.h"
 #include "util_mutex.h"
+#include "util_context.h"
+#include "util_sem.h"
+#include "util_sign.h"
+#include "util_thread.h"
 
 /**
  * struct - test_err_case
@@ -80,12 +87,42 @@ static struct app_data *app_data;
 
 struct app_data *util_setup_app(void)
 {
+	int err;
+
 	app_data = calloc(1, sizeof(*app_data));
 	if (!app_data)
 		return NULL;
 
+	err = util_key_init(&app_data->key_identifiers);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_context_init(&app_data->op_contexts);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_cipher_init(&app_data->ciphers);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_sign_init(&app_data->signatures);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_thread_init(&app_data->threads);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_sem_init(&app_data->semaphores);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
 	app_data->lock_dbg = util_mutex_create();
 	if (!app_data->lock_dbg)
+		err = ERR_CODE(FAILED);
+
+exit:
+	if (err != ERR_CODE(PASSED))
 		util_destroy_app();
 
 	return app_data;
@@ -96,20 +133,63 @@ struct app_data *util_get_app(void)
 	return app_data;
 }
 
-void util_destroy_app(void)
+int util_destroy_app(void)
 {
-	int res;
+	int res = 0;
+	int err;
 
 	if (!app_data)
-		return;
+		return ERR_CODE(FAILED);
+
+	res = util_list_clear(app_data->key_identifiers);
+	if (res != ERR_CODE(PASSED))
+		DBG_PRINT("Clear list key identiers error %d", res);
+
+	err = util_list_clear(app_data->op_contexts);
+	if (err != ERR_CODE(PASSED)) {
+		DBG_PRINT("Clear list operation contexts error %d", err);
+		res = (res == ERR_CODE(PASSED)) ? err : res;
+	}
+
+	err = util_list_clear(app_data->ciphers);
+	if (err != ERR_CODE(PASSED)) {
+		DBG_PRINT("Clear list ciphers error %d", err);
+		res = (res == ERR_CODE(PASSED)) ? err : res;
+	}
+
+	err = util_list_clear(app_data->signatures);
+	if (err != ERR_CODE(PASSED)) {
+		DBG_PRINT("Clear list signatures error %d", err);
+		res = (res == ERR_CODE(PASSED)) ? err : res;
+	}
+
+	err = util_list_clear(app_data->threads);
+	if (err != ERR_CODE(PASSED)) {
+		DBG_PRINT("Clear list threads error %d", err);
+		res = (res == ERR_CODE(PASSED)) ? err : res;
+	}
+
+	err = util_list_clear(app_data->semaphores);
+	if (err != ERR_CODE(PASSED)) {
+		DBG_PRINT("Clear list semaphores error %d", err);
+		res = (res == ERR_CODE(PASSED)) ? err : res;
+	}
 
 	/* Destroy the debug print mutex and abort if failure */
 	res = util_mutex_destroy(&app_data->lock_dbg);
 	assert(res == ERR_CODE(PASSED));
 
+	if (app_data->log)
+		(void)fclose(app_data->log);
+
+	if (app_data->definition)
+		json_object_put(app_data->definition);
+
 	free(app_data);
 
 	app_data = NULL;
+
+	return res;
 }
 
 int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)

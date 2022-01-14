@@ -3,6 +3,7 @@
  * Copyright 2020-2022 NXP
  */
 
+#include <json.h>
 #include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,12 +11,10 @@
 
 #include "smw_osal.h"
 
-#include "cipher.h"
 #include "util.h"
 #include "util_file.h"
 #include "util_thread.h"
 #include "paths.h"
-#include "sign_verify.h"
 #include "run_thread.h"
 
 static const struct tee_info tee_default_info = {
@@ -342,6 +341,7 @@ static const struct test_type *get_test_type(struct app_data *app)
 static int run_test(char *def_file, char *test_name, char *output_dir)
 {
 	int test_status = ERR_CODE(FAILED);
+	int err;
 	char *dir = output_dir;
 	char *name = NULL;
 	const struct test_type *test;
@@ -402,30 +402,18 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 	if (test)
 		test_status = test->run(app);
 
-	util_list_clear(app->key_identifiers);
-	sign_clear_signatures_list();
-	util_list_clear(app->op_contexts);
-	cipher_clear_out_data_list();
-
-	/* Erase semaphores list */
-	util_list_clear(app->semaphores);
-
-	if (!test_status)
-		FPRINT_TEST_STATUS(app->log, test_name, ERR_STATUS(PASSED));
-	else
-		FPRINT_TEST_STATUS(app->log, test_name, ERR_STATUS(FAILED));
-
 exit:
 	if (name)
 		free(name);
 
-	if (app->log)
-		(void)fclose(app->log);
+	if (test_status == ERR_CODE(PASSED))
+		FPRINT_TEST_STATUS(app->log, test_name, ERR_STATUS(PASSED));
+	else
+		FPRINT_TEST_STATUS(app->log, test_name, ERR_STATUS(FAILED));
 
-	if (app->definition)
-		json_object_put(app->definition);
-
-	util_destroy_app();
+	err = util_destroy_app();
+	if (test_status == ERR_CODE(PASSED))
+		test_status = err;
 
 	return test_status;
 }

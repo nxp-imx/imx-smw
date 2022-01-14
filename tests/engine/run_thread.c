@@ -44,7 +44,7 @@ static int execute_generate_cmd(struct json_object *params,
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return generate_key(params, common_params, &app->key_identifiers,
+	return generate_key(params, common_params, app->key_identifiers,
 			    status);
 }
 
@@ -120,7 +120,7 @@ static int execute_import_cmd(struct json_object *params,
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return import_key(params, common_params, &app->key_identifiers, status);
+	return import_key(params, common_params, app->key_identifiers, status);
 }
 
 /**
@@ -172,7 +172,7 @@ static int execute_derive_cmd(struct json_object *params,
 			      struct app_data *app,
 			      enum smw_status_code *status)
 {
-	return derive_key(params, common_params, &app->key_identifiers, status);
+	return derive_key(params, common_params, app->key_identifiers, status);
 }
 
 /**
@@ -199,8 +199,7 @@ static int execute_sign_verify_cmd(int operation, struct json_object *params,
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return sign_verify(operation, params, common_params,
-			   app->key_identifiers, status);
+	return sign_verify(operation, params, common_params, app, status);
 }
 
 /**
@@ -251,13 +250,11 @@ static int execute_cipher(char *cmd, struct json_object *params,
 			      status);
 	else if (!strcmp(cmd, CIPHER_INIT))
 		return cipher_init(params, common_params, app->key_identifiers,
-				   &app->op_contexts, status);
+				   app->op_contexts, status);
 	else if (!strcmp(cmd, CIPHER_UPDATE))
-		return cipher_update(params, common_params, app->op_contexts,
-				     status);
+		return cipher_update(params, common_params, app, status);
 	else if (!strcmp(cmd, CIPHER_FINAL))
-		return cipher_final(params, common_params, app->op_contexts,
-				    status);
+		return cipher_final(params, common_params, app, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -286,8 +283,7 @@ static int execute_operation_context(char *cmd, struct json_object *params,
 		return cancel_operation(params, common_params, app->op_contexts,
 					status);
 	else if (!strcmp(cmd, OP_CTX_COPY))
-		return copy_context(params, common_params, &app->op_contexts,
-				    status);
+		return copy_context(params, common_params, app, status);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -371,7 +367,7 @@ static int execute_command(char *cmd, struct json_object *params,
 					    app->key_identifiers, status);
 	else if (!strcmp(cmd, RESTORE_KEY_IDS))
 		return restore_key_ids_from_file(params, common_params,
-						 &app->key_identifiers, status);
+						 app->key_identifiers, status);
 	else if (!strcmp(cmd, GET_VERSION))
 		return get_info(params, common_params, status);
 

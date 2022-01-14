@@ -662,12 +662,13 @@ exit:
  * @filepath: Path of the file.
  *
  * Return:
- * PASSED		- Success.
- * -BAD_ARGS		- One of the arguments is bad.
- * -MISSING_PARAMS	- Missing mandatory parameters in @filepath.
+ * PASSED                  - Success.
+ * -BAD_ARGS               - One of the arguments is bad.
+ * -MISSING_PARAMS         - Missing mandatory parameters in @filepath.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  * Error code from file_to_json_object().
  */
-static int restore_key_ids_from_json_file(struct llist **key_list,
+static int restore_key_ids_from_json_file(struct llist *key_list,
 					  char *filepath)
 {
 	int res = ERR_CODE(FAILED);
@@ -721,7 +722,7 @@ static int restore_key_ids_from_json_file(struct llist **key_list,
 }
 
 int generate_key(json_object *params, struct common_parameters *common_params,
-		 struct llist **key_identifiers,
+		 struct llist *key_identifiers,
 		 enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
@@ -859,7 +860,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 }
 
 int import_key(json_object *params, struct common_parameters *common_params,
-	       struct llist **key_identifiers, enum smw_status_code *ret_status)
+	       struct llist *key_identifiers, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test;
@@ -1078,7 +1079,7 @@ int save_key_ids_to_file(struct json_object *params,
 
 int restore_key_ids_from_file(struct json_object *params,
 			      struct common_parameters *common_params,
-			      struct llist **key_list,
+			      struct llist *key_list,
 			      enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);

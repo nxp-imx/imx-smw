@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <string.h>
@@ -8,10 +8,10 @@
 #include "json.h"
 #include "util.h"
 #include "util_context.h"
+#include "util_cipher.h"
 #include "types.h"
 #include "json_types.h"
 #include "keymgr.h"
-#include "cipher.h"
 #include "operation_context.h"
 
 #include "smw_crypto.h"
@@ -101,7 +101,7 @@ int cancel_operation(json_object *params,
 }
 
 int copy_context(json_object *params, struct common_parameters *common_params,
-		 struct llist **ctx, enum smw_status_code *ret_status)
+		 struct app_data *app, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int dst_ctx_id = 0;
@@ -144,7 +144,8 @@ int copy_context(json_object *params, struct common_parameters *common_params,
 
 		src_ctx_id = json_object_get_int(array_member);
 
-		res = util_context_find_node(*ctx, src_ctx_id, &src_args_ptr);
+		res = util_context_find_node(app->op_contexts, src_ctx_id,
+					     &src_args_ptr);
 		if (res != ERR_CODE(PASSED)) {
 			DBG_PRINT("Failed to find context node");
 			return res;
@@ -186,7 +187,8 @@ int copy_context(json_object *params, struct common_parameters *common_params,
 
 	if (*ret_status == SMW_STATUS_OK && res == ERR_CODE(PASSED) &&
 	    !common_params->is_api_test) {
-		res = util_context_add_node(ctx, dst_ctx_id, dst_args_ptr);
+		res = util_context_add_node(app->op_contexts, dst_ctx_id,
+					    dst_args_ptr);
 		if (res != ERR_CODE(PASSED)) {
 			DBG_PRINT("Failed to add context node");
 			goto free;
@@ -204,7 +206,8 @@ int copy_context(json_object *params, struct common_parameters *common_params,
 			}
 
 			/* Copy cipher output data node */
-			res = cipher_copy_node(dst_ctx_id, src_ctx_id);
+			res = util_cipher_copy_node(app->ciphers, dst_ctx_id,
+						    src_ctx_id);
 		}
 	} else if (!common_params->is_api_test) {
 		goto free;

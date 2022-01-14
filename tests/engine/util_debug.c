@@ -14,17 +14,16 @@
 void util_dbg_printf(const char *function, int line, const char *fmt, ...)
 {
 	struct app_data *app;
-	const char *thr_name;
+	const char *thr_name = NULL;
 	va_list args;
 
 	va_start(args, fmt);
 
 	app = util_get_app();
-
-	thr_name = util_get_thread_name(app);
-
 	if (app)
 		util_mutex_lock(app->lock_dbg);
+
+	(void)util_get_thread_name(app, &thr_name);
 
 	if (thr_name)
 		printf("(%s) [%s:%d] ", thr_name, function, line);
@@ -44,17 +43,16 @@ void util_dbg_dumphex(const char *function, int line, char *msg, void *buf,
 		      size_t len)
 {
 	struct app_data *app;
-	const char *thr_name;
+	const char *thr_name = NULL;
 	size_t idx;
 	char out[256];
 	int off = 0;
 
 	app = util_get_app();
-
-	thr_name = util_get_thread_name(app);
-
 	if (app)
 		util_mutex_lock(app->lock_dbg);
+
+	(void)util_get_thread_name(app, &thr_name);
 
 	if (thr_name)
 		printf("(%s) [%s:%d] %s (%p-%zu)\n", thr_name, function, line,

@@ -9,15 +9,35 @@
 #include "util.h"
 #include "util_cipher.h"
 
-static void util_cipher_free_data(void *data)
+/**
+ * struct cipher_output_data - Cipher output data
+ * @output: Pointer to output data.
+ * @output_len: @output length in bytes.
+ */
+struct cipher_output_data {
+	unsigned char *output;
+	unsigned int output_len;
+};
+
+static void cipher_free_data(void *data)
 {
 	struct cipher_output_data *cipher_output_data = data;
 
 	if (cipher_output_data && cipher_output_data->output)
 		free(cipher_output_data->output);
+
+	free(data);
 }
 
-int util_cipher_add_out_data(struct llist **list, unsigned int ctx_id,
+int util_cipher_init(struct llist **list)
+{
+	if (!list)
+		return ERR_CODE(BAD_ARGS);
+
+	return util_list_init(list, &cipher_free_data);
+}
+
+int util_cipher_add_out_data(struct llist *list, unsigned int ctx_id,
 			     unsigned char *out_data, unsigned int data_len)
 {
 	int res;
@@ -27,13 +47,9 @@ int util_cipher_add_out_data(struct llist **list, unsigned int ctx_id,
 	if (!out_data || !list)
 		return ERR_CODE(BAD_ARGS);
 
-	if (!*list) {
-		res = util_list_init(list, util_cipher_free_data);
-		if (res != ERR_CODE(PASSED))
-			return res;
-	}
-
-	data = util_list_find_node(*list, ctx_id);
+	res = util_list_find_node(list, ctx_id, (void **)&data);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	if (!data) {
 		/* 1st call, allocate node and output data */
@@ -53,10 +69,9 @@ int util_cipher_add_out_data(struct llist **list, unsigned int ctx_id,
 
 		memcpy(data->output, out_data, data->output_len);
 
-		res = util_list_add_node(*list, ctx_id, data);
+		res = util_list_add_node(list, ctx_id, data);
 		if (res != ERR_CODE(PASSED)) {
-			util_cipher_free_data(data);
-			free(data);
+			cipher_free_data(data);
 			return res;
 		}
 	} else {
@@ -75,12 +90,15 @@ int util_cipher_add_out_data(struct llist **list, unsigned int ctx_id,
 	return ERR_CODE(PASSED);
 }
 
-int compare_output_data(struct llist *list, unsigned int ctx_id,
-			unsigned char *data, unsigned int data_len)
+int util_cipher_cmp_output_data(struct llist *list, unsigned int ctx_id,
+				unsigned char *data, unsigned int data_len)
 {
+	int res;
 	struct cipher_output_data *node_data = NULL;
 
-	node_data = util_list_find_node(list, ctx_id);
+	res = util_list_find_node(list, ctx_id, (void **)&node_data);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	if (!node_data)
 		return ERR_CODE(INTERNAL);
@@ -95,12 +113,15 @@ int compare_output_data(struct llist *list, unsigned int ctx_id,
 	return ERR_CODE(PASSED);
 }
 
-int util_cipher_copy_node(struct llist **list, unsigned int dst_ctx_id,
+int util_cipher_copy_node(struct llist *list, unsigned int dst_ctx_id,
 			  unsigned int src_ctx_id)
 {
+	int res;
 	struct cipher_output_data *data = NULL;
 
-	data = util_list_find_node(*list, src_ctx_id);
+	res = util_list_find_node(list, src_ctx_id, (void **)&data);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	if (!data)
 		return ERR_CODE(INTERNAL);

@@ -18,9 +18,6 @@
 #include "sign_verify.h"
 #include "util_tlv.h"
 
-/* Signatures linked list */
-static struct llist *signatures;
-
 /**
  * get_signature_len() - Return signature byte length given security size.
  * @key_desc: Pointer to key descriptor
@@ -117,8 +114,8 @@ static int set_sign_verify_bad_args(json_object *params,
 }
 
 int sign_verify(int operation, json_object *params,
-		struct common_parameters *common_params,
-		struct llist *key_identifiers, enum smw_status_code *ret_status)
+		struct common_parameters *common_params, struct app_data *app,
+		enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(PASSED);
 	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
@@ -168,7 +165,7 @@ int sign_verify(int operation, json_object *params,
 		util_key_free_key(&key_test);
 
 		/* Fill key descriptor field saved */
-		res = util_key_find_key_node(key_identifiers, key_id,
+		res = util_key_find_key_node(app->key_identifiers, key_id,
 					     &key_test);
 		if (res != ERR_CODE(PASSED))
 			goto exit;
@@ -210,7 +207,7 @@ int sign_verify(int operation, json_object *params,
 
 	/* Get 'sign_id' parameter */
 	if (json_object_object_get_ex(params, SIGN_ID_OBJ, &sign_id_obj)) {
-		res = util_sign_find_node(signatures,
+		res = util_sign_find_node(app->signatures,
 					  json_object_get_int(sign_id_obj),
 					  &list_sign, &list_sign_length);
 
@@ -290,7 +287,7 @@ int sign_verify(int operation, json_object *params,
 		}
 
 		/* Store signature */
-		res = util_sign_add_node(&signatures,
+		res = util_sign_add_node(app->signatures,
 					 json_object_get_int(sign_id_obj),
 					 args.signature, args.signature_length);
 		if (res)
@@ -311,9 +308,4 @@ exit:
 			free(exp_sign);
 
 	return res;
-}
-
-void sign_clear_signatures_list(void)
-{
-	util_list_clear(signatures);
 }

@@ -7,6 +7,7 @@
 
 #include "util.h"
 #include "util_list.h"
+#include "util_mutex.h"
 
 /**
  * struct node - Node of a linked list.
@@ -20,32 +21,24 @@ struct node {
 	struct node *next;
 };
 
-int util_list_init(struct llist **list, void (*free)(void *))
+static int list_add_node(struct llist *list, unsigned int id, void *data,
+			 int lock)
 {
+	int res;
+	struct node *last = NULL;
+	struct node *node;
+
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	*list = malloc(sizeof(struct llist));
-	if (!*list) {
-		DBG_PRINT_ALLOC_FAILURE();
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-	}
-
-	(*list)->head = NULL;
-	(*list)->free = free;
-
-	return ERR_CODE(PASSED);
-}
-
-int util_list_add_node(struct llist *list, unsigned int id, void *data)
-{
-	struct node *last = NULL;
-	struct node *node;
+	if (lock)
+		util_mutex_lock(list->lock);
 
 	node = malloc(sizeof(*node));
 	if (!node) {
 		DBG_PRINT_ALLOC_FAILURE();
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto exit;
 	}
 
 	node->id = id;
@@ -63,17 +56,74 @@ int util_list_add_node(struct llist *list, unsigned int id, void *data)
 		last->next = node;
 	}
 
+	res = ERR_CODE(PASSED);
+
+exit:
+	if (lock)
+		util_mutex_unlock(list->lock);
+
+	return res;
+}
+
+static int list_find_node(struct llist *list, unsigned int id, void **data,
+			  int lock)
+{
+	struct node *node;
+
+	if (!list || !data)
+		return ERR_CODE(BAD_ARGS);
+
+	if (lock)
+		util_mutex_lock(list->lock);
+
+	node = list->head;
+
+	while (node) {
+		if (node->id == id) {
+			*data = node->data;
+			break;
+		}
+		node = node->next;
+	}
+
+	if (lock)
+		util_mutex_unlock(list->lock);
+
 	return ERR_CODE(PASSED);
 }
 
-void util_list_clear(struct llist *list)
+int util_list_init(struct llist **list, void (*free)(void *))
 {
+	if (!list)
+		return ERR_CODE(BAD_ARGS);
+
+	*list = malloc(sizeof(struct llist));
+	if (!*list) {
+		DBG_PRINT_ALLOC_FAILURE();
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+	}
+
+	(*list)->head = NULL;
+	(*list)->free = free;
+
+	/* List protector */
+	(*list)->lock = util_mutex_create();
+	if (!(*list)->lock)
+		return ERR_CODE(FAILED);
+
+	return ERR_CODE(PASSED);
+}
+
+int util_list_clear(struct llist *list)
+{
+	int res;
 	struct node *head = NULL;
 	struct node *next = NULL;
 
 	if (!list)
-		return;
+		return ERR_CODE(PASSED);
 
+	util_mutex_lock(list->lock);
 	head = list->head;
 
 	while (head) {
@@ -84,26 +134,28 @@ void util_list_clear(struct llist *list)
 		free(next);
 	}
 
-	free(list);
+	util_mutex_unlock(list->lock);
+	res = util_mutex_destroy(list->lock);
+
+	if (res == ERR_CODE(PASSED))
+		free(list);
+
+	return res;
 }
 
-void *util_list_find_node(struct llist *list, unsigned int id)
+int util_list_add_node(struct llist *list, unsigned int id, void *data)
 {
-	struct node *node;
+	return list_add_node(list, id, data, 1);
+}
 
-	if (!list)
-		return NULL;
+int util_list_add_node_nl(struct llist *list, unsigned int id, void *data)
+{
+	return list_add_node(list, id, data, 0);
+}
 
-	node = list->head;
-
-	while (node) {
-		if (node->id == id)
-			return node->data;
-
-		node = node->next;
-	}
-
-	return NULL;
+int util_list_find_node(struct llist *list, unsigned int id, void **data)
+{
+	return list_find_node(list, id, data, 1);
 }
 
 struct node *util_list_next(struct llist *list, struct node *node,
@@ -131,4 +183,16 @@ void *util_list_data(struct node *node)
 		return NULL;
 
 	return node->data;
+}
+
+void util_list_lock(struct llist *list)
+{
+	if (list)
+		util_mutex_lock(list->lock);
+}
+
+void util_list_unlock(struct llist *list)
+{
+	if (list)
+		util_mutex_unlock(list->lock);
 }

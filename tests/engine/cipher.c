@@ -56,12 +56,6 @@
 #define UPDATE	2
 #define FINAL	3
 
-/*
- * Linked list containing cipher output data. It's used to be able to check the
- * result of a multi-part operation
- */
-static struct llist *cipher_out_data;
-
 /**
  * struct cipher_keys - Group of structures representing keys
  * @nb_keys: Number of keys
@@ -406,6 +400,7 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
 
 /**
  * cipher_update_save_out_data() - Save intermediate output data
+ * @app: Application data
  * @params: JSON Cipher parameters
  * @cipher_args: SMW cipher update arguments
  * @ctx_id: Local context ID
@@ -418,7 +413,8 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
  * -BAD_PARAM_TYPE	- JSON parameter incorrectly set
  * Error code from util_cipher_add_out_data
  */
-static int cipher_update_save_out_data(json_object *params,
+static int cipher_update_save_out_data(struct app_data *app,
+				       json_object *params,
 				       struct smw_cipher_data_args *cipher_args,
 				       int ctx_id)
 {
@@ -437,7 +433,7 @@ static int cipher_update_save_out_data(json_object *params,
 		return ERR_CODE(PASSED);
 	}
 
-	return util_cipher_add_out_data(&cipher_out_data, ctx_id,
+	return util_cipher_add_out_data(app->ciphers, ctx_id,
 					cipher_args->output,
 					cipher_args->output_length);
 }
@@ -674,7 +670,7 @@ end:
 }
 
 int cipher_init(json_object *params, struct common_parameters *common_params,
-		struct llist *key_identifiers, struct llist **ctx,
+		struct llist *key_identifiers, struct llist *ctx,
 		enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
@@ -751,7 +747,7 @@ end:
 }
 
 int cipher_update(json_object *params, struct common_parameters *common_params,
-		  struct llist *ctx, enum smw_status_code *ret_status)
+		  struct app_data *app, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;
@@ -768,8 +764,8 @@ int cipher_update(json_object *params, struct common_parameters *common_params,
 
 	args.version = common_params->version;
 
-	res = set_op_context(params, common_params->is_api_test, ctx, &ctx_id,
-			     cipher_args, &api_ctx);
+	res = set_op_context(params, common_params->is_api_test,
+			     app->op_contexts, &ctx_id, cipher_args, &api_ctx);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -801,7 +797,8 @@ int cipher_update(json_object *params, struct common_parameters *common_params,
 
 	/* Save output data if result is checked at final step */
 	if (*ret_status == SMW_STATUS_OK)
-		res = cipher_update_save_out_data(params, cipher_args, ctx_id);
+		res = cipher_update_save_out_data(app, params, cipher_args,
+						  ctx_id);
 
 end:
 	if (args.input)
@@ -817,7 +814,7 @@ end:
 }
 
 int cipher_final(json_object *params, struct common_parameters *common_params,
-		 struct llist *ctx, enum smw_status_code *ret_status)
+		 struct app_data *app, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	int ctx_id = -1;
@@ -834,8 +831,8 @@ int cipher_final(json_object *params, struct common_parameters *common_params,
 
 	args.version = common_params->version;
 
-	res = set_op_context(params, common_params->is_api_test, ctx, &ctx_id,
-			     cipher_args, &api_ctx);
+	res = set_op_context(params, common_params->is_api_test,
+			     app->op_contexts, &ctx_id, cipher_args, &api_ctx);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -864,14 +861,15 @@ int cipher_final(json_object *params, struct common_parameters *common_params,
 	}
 
 	if (*ret_status == SMW_STATUS_OK && expected_output) {
-		res = util_cipher_add_out_data(&cipher_out_data, ctx_id,
+		res = util_cipher_add_out_data(app->ciphers, ctx_id,
 					       cipher_args->output,
 					       cipher_args->output_length);
 		if (res != ERR_CODE(PASSED))
 			goto end;
 
-		res = compare_output_data(cipher_out_data, ctx_id,
-					  expected_output, expected_out_len);
+		res = util_cipher_cmp_output_data(app->ciphers, ctx_id,
+						  expected_output,
+						  expected_out_len);
 	}
 
 end:
@@ -885,14 +883,4 @@ end:
 		free(expected_output);
 
 	return res;
-}
-
-void cipher_clear_out_data_list(void)
-{
-	util_list_clear(cipher_out_data);
-}
-
-int cipher_copy_node(unsigned int dst_ctx_id, unsigned int src_ctx_id)
-{
-	return util_cipher_copy_node(&cipher_out_data, dst_ctx_id, src_ctx_id);
 }

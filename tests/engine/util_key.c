@@ -131,7 +131,7 @@ void util_key_set_ops(struct keypair_ops *key_test)
 }
 
 /**
- * util_key_get_node_info() - Get the key information saved in the key node
+ * get_key_node_info() - Get the key information saved in the key node
  * @data: Key node data.
  * @key_test: Test keypair structure with operations to fill with saved data.
  *
@@ -140,8 +140,8 @@ void util_key_set_ops(struct keypair_ops *key_test)
  * If a descriptor field is already set, don't overwrite it.
  *
  */
-static void util_key_get_node_info(struct key_identifier_data *data,
-				   struct keypair_ops *key_test)
+static void get_key_node_info(struct key_identifier_data *data,
+			      struct keypair_ops *key_test)
 {
 	if (!util_key_is_id_set(key_test))
 		key_test->desc.id = data->key_identifier;
@@ -291,7 +291,15 @@ static void util_key_free_data(void *data)
 		free(key_identifier_data->pub_key.data);
 }
 
-int util_key_add_node(struct llist **key_identifiers, unsigned int id,
+int util_key_init(struct llist **list)
+{
+	if (!list)
+		return ERR_CODE(BAD_ARGS);
+
+	return util_list_init(list, util_key_free_data);
+}
+
+int util_key_add_node(struct llist *key_identifiers, unsigned int id,
 		      struct keypair_ops *key_test)
 {
 	int res;
@@ -300,12 +308,6 @@ int util_key_add_node(struct llist **key_identifiers, unsigned int id,
 
 	if (!key_test || !key_identifiers)
 		return ERR_CODE(BAD_ARGS);
-
-	if (!*key_identifiers) {
-		res = util_list_init(key_identifiers, util_key_free_data);
-		if (res != ERR_CODE(PASSED))
-			return res;
-	}
 
 	data = malloc(sizeof(*data));
 	if (!data) {
@@ -327,11 +329,10 @@ int util_key_add_node(struct llist **key_identifiers, unsigned int id,
 		data->pub_key.data = NULL;
 	}
 
-	res = util_list_add_node(*key_identifiers, id, data);
+	res = util_list_add_node(key_identifiers, id, data);
 
-	if (res != ERR_CODE(PASSED))
-		if (data)
-			free(data);
+	if (res != ERR_CODE(PASSED) && data)
+		free(data);
 
 	return res;
 }
@@ -339,18 +340,20 @@ int util_key_add_node(struct llist **key_identifiers, unsigned int id,
 int util_key_find_key_node(struct llist *key_identifiers, unsigned int id,
 			   struct keypair_ops *key_test)
 {
+	int res;
 	struct key_identifier_data *data;
 
 	if (!key_identifiers || !key_test)
 		return ERR_CODE(BAD_ARGS);
 
-	data = util_list_find_node(key_identifiers, id);
-	if (!data)
-		return ERR_CODE(KEY_NOTFOUND);
+	res = util_list_find_node(key_identifiers, id, (void **)&data);
+	if (res == ERR_CODE(PASSED) && !data)
+		res = ERR_CODE(KEY_NOTFOUND);
 
-	util_key_get_node_info(data, key_test);
+	if (res == ERR_CODE(PASSED))
+		get_key_node_info(data, key_test);
 
-	return ERR_CODE(PASSED);
+	return res;
 }
 
 int util_key_desc_init(struct keypair_ops *key_test,

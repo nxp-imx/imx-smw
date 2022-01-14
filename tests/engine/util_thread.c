@@ -11,28 +11,32 @@
 #include "util_thread.h"
 #include "run_thread.h"
 
-static struct thread_data *get_active_thread_data(struct app_data *app)
+static int get_active_thread_data(struct app_data *app,
+				  struct thread_data **thr)
 {
 	struct node *node = NULL;
-	struct thread_data *thr;
 	pthread_t tid;
 
-	if (!app)
-		return NULL;
+	if (!app || !thr)
+		return ERR_CODE(BAD_ARGS);
 
 	tid = pthread_self();
 
+	util_list_lock(app->threads);
 	node = util_list_next(app->threads, node, NULL);
 	while (node) {
-		thr = util_list_data(node);
+		*thr = util_list_data(node);
 
-		if (thr && thr->id == tid)
-			return thr;
+		if (*thr && (*thr)->id == tid)
+			break;
 
 		node = util_list_next(app->threads, node, NULL);
+		*thr = NULL;
 	};
 
-	return NULL;
+	util_list_unlock(app->threads);
+
+	return ERR_CODE(PASSED);
 }
 
 static void thr_free_data(void *data)
@@ -114,6 +118,14 @@ static int read_thread_loop(struct json_object_iter *thr_obj, int *loop,
 	return ERR_CODE(PASSED);
 }
 
+int util_thread_init(struct llist **list)
+{
+	if (!list)
+		return ERR_CODE(BAD_ARGS);
+
+	return util_list_init(list, &thr_free_data);
+}
+
 int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 		      unsigned int thr_num)
 {
@@ -159,12 +171,6 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 		DBG_PRINT("\"%s\" is not a json-c object", thr_obj->key);
 
 		return ERR_CODE(BAD_PARAM_TYPE);
-	}
-
-	if (!app->threads) {
-		err = util_list_init(&app->threads, thr_free_data);
-		if (err != ERR_CODE(PASSED))
-			return err;
 	}
 
 	thr = calloc(1, sizeof(*thr));
@@ -230,9 +236,6 @@ int util_thread_end(struct app_data *app)
 		node = util_list_next(app->threads, node, NULL);
 	};
 
-	/* Erase Application thread list */
-	util_list_clear(app->threads);
-
 	return status;
 }
 
@@ -297,13 +300,17 @@ exit:
 	return err;
 }
 
-const char *util_get_thread_name(struct app_data *app)
+int util_get_thread_name(struct app_data *app, const char **name)
 {
-	struct thread_data *thr;
+	int res;
+	struct thread_data *thr = NULL;
 
-	thr = get_active_thread_data(app);
-	if (thr)
-		return thr->name;
+	if (!app || !name)
+		return ERR_CODE(BAD_ARGS);
 
-	return NULL;
+	res = get_active_thread_data(app, &thr);
+	if (res == ERR_CODE(PASSED) && thr)
+		*name = thr->name;
+
+	return res;
 }

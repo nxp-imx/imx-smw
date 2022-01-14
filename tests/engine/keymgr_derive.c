@@ -182,7 +182,7 @@ static bool kdf_tls12_is_mac_key_expected(const char *encryption_name)
  */
 int kdf_tls12_end(struct smw_derive_key_args *args,
 		  struct keypair_ops *key_derived,
-		  struct llist **key_identifiers, json_object *params)
+		  struct llist *key_identifiers, json_object *params)
 {
 	int res;
 	json_object *oargs = NULL;
@@ -303,7 +303,7 @@ static const struct kdf_op {
 	int (*prepare_result)(struct keypair_ops *key, json_object *params);
 	int (*end_operation)(struct smw_derive_key_args *args,
 			     struct keypair_ops *key_derived,
-			     struct llist **key_identifiers,
+			     struct llist *key_identifiers,
 			     json_object *params);
 	void (*free)(struct smw_derive_key_args *args);
 } kdf_ops[] = { {
@@ -537,7 +537,7 @@ static int setup_derive_base(json_object *params, struct llist *key_identifiers,
  */
 static int end_derive_operation(struct smw_derive_key_args *args,
 				struct keypair_ops *key_derived,
-				struct llist **key_identifiers,
+				struct llist *key_identifiers,
 				json_object *params)
 {
 	int res = ERR_CODE(FAILED);
@@ -613,7 +613,7 @@ static int derive_bad_params(json_object *params,
 }
 
 int derive_key(json_object *params, struct common_parameters *common_params,
-	       struct llist **key_identifiers, enum smw_status_code *ret_status)
+	       struct llist *key_identifiers, enum smw_status_code *ret_status)
 {
 	int res = ERR_CODE(FAILED);
 	struct keypair_ops key_base = { 0 };
@@ -639,7 +639,7 @@ int derive_key(json_object *params, struct common_parameters *common_params,
 	args.key_descriptor_derived = &key_derived.desc;
 
 	/* Setup key descitpor or the key base */
-	res = setup_derive_base(params, *key_identifiers, &key_base,
+	res = setup_derive_base(params, key_identifiers, &key_base,
 				&base_buffer);
 	if (res != ERR_CODE(PASSED) && !common_params->is_api_test)
 		goto exit;

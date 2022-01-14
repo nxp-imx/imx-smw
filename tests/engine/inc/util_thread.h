@@ -37,6 +37,18 @@ struct thread_data {
 };
 
 /**
+ * util_thread_init() - Initialize the thread list
+ * @list: Pointer to linked list.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARG                - @list is NULL.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -FAILED                 - Failure
+ */
+int util_thread_init(struct llist **list);
+
+/**
  * util_thread_start() - Start a new thread linked to the application.
  * @app: Application data
  * @obj: Thread JSON-C definition
@@ -46,10 +58,10 @@ struct thread_data {
  * starts it.
  *
  * Return:
- * PASSED                   - Success.
- * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
- * -BAD_ARGS                - One of the argument is not correct.
- * -BAD_PARAM_TYPE          - Thread definition is not correct.
+ * PASSED                  - Success.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -BAD_ARGS               - One of the argument is not correct.
+ * -BAD_PARAM_TYPE         - Thread definition is not correct.
  */
 int util_thread_start(struct app_data *app, struct json_object_iter *obj,
 		      unsigned int thr_num);
@@ -88,14 +100,15 @@ int util_thread_get_ids(const char *name, unsigned int *first,
 /**
  * util_get_thread_name() - Get the thread name
  * @app: Application data
+ * @name: Thread name
  *
  * Function returns the active thread name register in the application
  * thread list.
  *
  * Return:
- * Pointer to the thread name if thread found,
- * Otherwise NULL
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the argument is not correct.
  */
-const char *util_get_thread_name(struct app_data *app);
+int util_get_thread_name(struct app_data *app, const char **name);
 
 #endif /* __UTIL_THREAD__H__ */

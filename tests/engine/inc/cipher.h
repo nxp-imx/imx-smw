@@ -45,14 +45,14 @@ int cipher(struct json_object *params, struct common_parameters *common_params,
  */
 int cipher_init(struct json_object *params,
 		struct common_parameters *common_params,
-		struct llist *key_identifiers, struct llist **ctx,
+		struct llist *key_identifiers, struct llist *ctx,
 		enum smw_status_code *ret_status);
 
 /**
  * cipher_update() - Do a cipher update
  * @params: JSON Cipher parameters.
  * @common_params: Common commands parameters.
- * @ctx: Context linked list.
+ * @app: Application data
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -63,14 +63,14 @@ int cipher_init(struct json_object *params,
  * -BAD_ARGS			- One of the arguments is bad.
  */
 int cipher_update(struct json_object *params,
-		  struct common_parameters *common_params, struct llist *ctx,
+		  struct common_parameters *common_params, struct app_data *app,
 		  enum smw_status_code *ret_status);
 
 /**
  * cipher_final() - Do a cipher final
  * @params: JSON Cipher parameters.
  * @common_params: Common commands parameters.
- * @ctx: Context linked list.
+ * @app: Application data
  * @ret_status: Status returned by SMW API.
  *
  * Return:
@@ -81,31 +81,7 @@ int cipher_update(struct json_object *params,
  * -BAD_ARGS			- One of the arguments is bad.
  */
 int cipher_final(struct json_object *params,
-		 struct common_parameters *common_params, struct llist *ctx,
+		 struct common_parameters *common_params, struct app_data *app,
 		 enum smw_status_code *ret_status);
-
-/**
- * cipher_clear_out_data_list() - Clear cipher output data linked list
- *
- * Return:
- * none
- */
-void cipher_clear_out_data_list(void);
-
-/**
- * cipher_copy_node() - Copy a cipher output data node
- * @dst_ctx_id: Context ID associated to the new node
- * @src_ctx_id: Context ID associated to the source node
- *
- * A new node is created in cipher output data linked list, associated to
- * parameter @dst_ctx_id. Data present in parameter @src_ctx_id node are copied
- * in the new node.
- *
- * Return:
- * PASSED			- Success
- * -INTERNAL			- Source node not found
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed
- */
-int cipher_copy_node(unsigned int dst_ctx_id, unsigned int src_ctx_id);
 
 #endif /* __CIPHER_H__ */

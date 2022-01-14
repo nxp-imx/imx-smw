@@ -104,6 +104,8 @@
  * @dir_def_file:    Folder of the test definition file
  * @key_identifiers: Key identifiers list
  * @op_contexts:     Operation context list
+ * @ciphers:         Cipher to verify list
+ * @signatures:      Signatures to verify list
  * @threads:         Application threads list
  * @semaphores:      Semaphores list
  * @log:             Application log file
@@ -116,6 +118,8 @@ struct app_data {
 	char *dir_def_file;
 	struct llist *key_identifiers;
 	struct llist *op_contexts;
+	struct llist *ciphers;
+	struct llist *signatures;
 	struct llist *threads;
 	struct llist *semaphores;
 	FILE *log;
@@ -144,8 +148,12 @@ struct app_data *util_get_app(void);
 
 /**
  * util_destroy_app() - Destroy the application global data
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -MUTEX_DESTROY          - Mutex destroy failed.
  */
-void util_destroy_app(void);
+int util_destroy_app(void);
 
 /**
  * get_smw_int_status() - Convert SMW status string value into integer value.

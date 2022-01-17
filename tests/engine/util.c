@@ -118,7 +118,13 @@ struct app_data *util_setup_app(void)
 		goto exit;
 
 	app_data->lock_dbg = util_mutex_create();
-	if (!app_data->lock_dbg)
+	if (!app_data->lock_dbg) {
+		err = ERR_CODE(FAILED);
+		goto exit;
+	}
+
+	app_data->lock_log = util_mutex_create();
+	if (!app_data->lock_log)
 		err = ERR_CODE(FAILED);
 
 exit:
@@ -181,6 +187,9 @@ int util_destroy_app(void)
 
 	if (app_data->log)
 		(void)fclose(app_data->log);
+
+	/* Destroy the log file mutex and abort if failure */
+	res = util_mutex_destroy(&app_data->lock_log);
 
 	if (app_data->definition)
 		json_object_put(app_data->definition);
@@ -517,6 +526,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 
 		case t_object:
 		case t_sem:
+		case t_buffer:
 			*((json_object **)value) = obj;
 			ret = ERR_CODE(PASSED);
 			break;

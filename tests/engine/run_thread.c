@@ -7,6 +7,7 @@
 
 #include "smw_osal.h"
 
+#include "util_log.h"
 #include "util_sem.h"
 #include "util_thread.h"
 #include "keymgr.h"
@@ -18,8 +19,6 @@
 #include "operation_context.h"
 #include "config.h"
 #include "info.h"
-
-#define SUBTEST_STATUS_PASSED_MAX_LEN 30
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -493,14 +492,15 @@ static int execute_command(char *cmd, struct json_object *params,
  * Function returns if overall test passed or failed.
  *
  * Return:
- * PASSED - subtest passed
- * -FAILED - subtest failed
+ * PASSED  - Subtest passed
+ * -FAILED - Subtest failed
  */
 static int log_subtest_status(struct thread_data *thr,
 			      struct json_object_iter *obj, int res,
 			      enum smw_status_code status)
 {
 	int ret = FAILED;
+	char str[256] = { 0 };
 	unsigned int idx = 0;
 	const char *error = NULL;
 
@@ -526,16 +526,52 @@ static int log_subtest_status(struct thread_data *thr,
 		break;
 	}
 
-	FPRINT_SUBTEST_STATUS(thr->app->log, obj->key, ERR_STATUS(ret), error);
-	FPRINT_SUBTEST_STATUS(stdout, obj->key, ERR_STATUS(ret), error);
+	if (strlen(thr->name))
+		(void)sprintf(str, "[%s] %s %s", thr->name, obj->key,
+			      ERR_STATUS(ret));
+	else
+		(void)sprintf(str, "%s %s", obj->key, ERR_STATUS(ret));
+
+	/* Additional error message if any */
+	if (error)
+		util_log_status(thr->app, "%s (%s)\n", str, error);
+	else
+		util_log_status(thr->app, "%s\n", str);
 
 	return ERR_CODE(ret);
 }
 
 /**
+ * is_subtest_passed() - Return if a subtest passed
+ * @thr: Thread data
+ * @id: Subtest id
+ *
+ * Read the application log file and retrieve if the subtest @id passed
+ * or not.
+ *
+ * Return:
+ * PASSED          - Subtest passed
+ * -FAILED         - Subtest failed
+ * -INTERNAL       - Internal error when accessing the log
+ */
+static int is_subtest_passed(struct thread_data *thr, int id)
+{
+	char str[256] = { 0 };
+
+	if (strlen(thr->name))
+		(void)sprintf(str, "[%s] %s %d %s", thr->name, SUBTEST_OBJ, id,
+			      ERR_STATUS(PASSED));
+	else
+		(void)sprintf(str, "%s %d %s", SUBTEST_OBJ, id,
+			      ERR_STATUS(PASSED));
+
+	return util_log_find(thr->app, str);
+}
+
+/**
  * get_depends_status() - Handle 'depends' test definition parameter.
- * @params: Test definition parameters.
- * @status_file: Pointer to current status file.
+ * @thr: Thread data
+ * @def: Test definition parameters.
  *
  * If 'depends' parameter is set in the test definition file check that
  * associated subtest(s) succeed.
@@ -544,89 +580,73 @@ static int log_subtest_status(struct thread_data *thr,
  * If at least one dependent subtest failed, current subtest is skipped.
  *
  * Return:
- * PASSED		- Success.
- * -BAD_PARAM_TYPE	- Parameter is not correctly set.
- * -INTERNAL		- Internal error.
- * -NOT_RUN		- Subtest is skipped.
+ * PASSED           - Success.
+ * -BAD_PARAM_TYPE  - Parameter is not correctly set.
+ * -INTERNAL        - Internal error.
+ * -NOT_RUN         - Subtest is skipped.
+ * -FAILED          - Failure
  */
-static int get_depends_status(struct json_object *params, FILE *status_file)
+static int get_depends_status(struct thread_data *thr, struct json_object *def)
 {
-	int i;
-	int depends;
+	int res;
+	int dep_id;
 	int nb_members = 1;
-	long fsave_pos;
-	char depends_status[SUBTEST_STATUS_PASSED_MAX_LEN] = { 0 };
-	char file_line[SUBTEST_STATUS_PASSED_MAX_LEN] = { 0 };
-	char *read;
 	json_object *depends_obj = NULL;
-	json_object *array_member = NULL;
+	json_object *oval = NULL;
 
-	if (!json_object_object_get_ex(params, DEPENDS_OBJ, &depends_obj))
-		return ERR_CODE(PASSED);
+	res = util_read_json_type(&depends_obj, DEPENDS_OBJ, t_buffer, def);
+	if (res != ERR_CODE(PASSED)) {
+		/* If JSON tag not found, return with no error */
+		if (res == ERR_CODE(VALUE_NOTFOUND))
+			res = ERR_CODE(PASSED);
 
-	if (json_object_get_type(depends_obj) == json_type_array) {
+		return res;
+	}
+
+	switch (json_object_get_type(depends_obj)) {
+	case json_type_int:
+		dep_id = json_object_get_int(depends_obj);
+		res = is_subtest_passed(thr, dep_id);
+		if (res == ERR_CODE(FAILED))
+			res = ERR_CODE(NOT_RUN);
+		break;
+
+	case json_type_array:
 		nb_members = json_object_array_length(depends_obj);
 
 		/*
 		 * 'depends' parameter must be an array only for multiple
 		 * entries. Otherwise it must be an integer
 		 */
-		if (nb_members <= 1) {
-			DBG_PRINT_BAD_PARAM(DEPENDS_OBJ);
-			return ERR_CODE(BAD_PARAM_TYPE);
-		}
-	}
-
-	for (i = 0; i < nb_members; i++) {
-		if (nb_members > 1)
-			array_member =
-				json_object_array_get_idx(depends_obj, i);
-		else
-			array_member = depends_obj;
-
-		depends = json_object_get_int(array_member);
-		if (depends <= 0) {
+		if (nb_members < 2) {
 			DBG_PRINT_BAD_PARAM(DEPENDS_OBJ);
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
-		/* Expected dependent subtest status */
-		if (sprintf(depends_status, "%s%d: PASSED\n", SUBTEST_OBJ,
-			    depends) < 0)
-			return ERR_CODE(INTERNAL);
+		for (int i = 0; i < nb_members; i++) {
+			/* Get the subtest id number */
+			oval = json_object_array_get_idx(depends_obj, i);
+			if (json_object_get_type(oval) != json_type_int) {
+				DBG_PRINT("%s must be an array of integer",
+					  DEPENDS_OBJ);
+				return ERR_CODE(BAD_PARAM_TYPE);
+			}
 
-		/* Backup current status file position */
-		fsave_pos = ftell(status_file);
-		if (fsave_pos == -1)
-			return ERR_CODE(INTERNAL);
-
-		/* Set status file position to beginning */
-		if (fseek(status_file, 0, SEEK_SET))
-			return ERR_CODE(INTERNAL);
-
-		depends = 0;
-
-		while (fgets(file_line, sizeof(file_line), status_file)) {
-			read = strchr(file_line, '\n');
-			if (read)
-				*read = '\0';
-
-			if (!strncmp(file_line, depends_status,
-				     strlen(file_line))) {
-				depends = 1;
+			dep_id = json_object_get_int(depends_obj);
+			res = is_subtest_passed(thr, dep_id);
+			if (res == ERR_CODE(FAILED)) {
+				res = ERR_CODE(NOT_RUN);
 				break;
 			}
-		};
+		}
 
-		/* Restore status file position */
-		if (fseek(status_file, fsave_pos, SEEK_SET))
-			return ERR_CODE(INTERNAL);
+		break;
 
-		if (!depends)
-			return ERR_CODE(NOT_RUN);
+	default:
+		res = ERR_CODE(INTERNAL);
 	}
 
-	return ERR_CODE(PASSED);
+	return res;
 }
 
 /**
@@ -635,8 +655,8 @@ static int get_depends_status(struct json_object *params, FILE *status_file)
  * @obj: Operation object data
  *
  * Return:
- * PASSED - subtest passed
- * -FAILED - subtest failed
+ * PASSED  - Subtest passed
+ * -FAILED - Subtest failed
  */
 static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 {
@@ -652,8 +672,8 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 
 	/* Verify the type of the subtest tag/value is json object */
 	if (json_object_get_type(obj->val) != json_type_object) {
-		FPRINT_MESSAGE(thr->app->log, "Error in test definiton file: ");
-		FPRINT_MESSAGE(thr->app->log,
+		FPRINT_MESSAGE(thr->app, "Error in test definiton file: ");
+		FPRINT_MESSAGE(thr->app,
 			       "\"subtest\" is not a json-c object\n");
 		DBG_PRINT("\"subtest\" is not a json-c object");
 
@@ -678,7 +698,7 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 		goto exit;
 
 	/* Check dependent subtest(s) status */
-	res = get_depends_status(obj->val, thr->app->log);
+	res = get_depends_status(thr, obj->val);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 

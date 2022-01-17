@@ -64,6 +64,7 @@ extern unsigned int list_err_size;
  * @is_api_test:     Flag if test only SMW's API
  * @definition:      Application test definition
  * @lock_dbg:        Debug Printf protector
+ * @lock_log:        Log into file protector
  */
 struct app_data {
 	char *dir_def_file;
@@ -78,6 +79,7 @@ struct app_data {
 	int is_api_test;
 	struct json_object *definition;
 	void *lock_dbg;
+	void *lock_log;
 };
 
 /**

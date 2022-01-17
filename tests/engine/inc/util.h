@@ -55,26 +55,6 @@
 #define ERR_CODE(val)	(list_err[(val)].code)
 #define ERR_STATUS(val) (list_err[(val)].status)
 
-#define FPRINT_SUBTEST_STATUS(file, subtest, status, error)                    \
-	do {                                                                   \
-		__typeof__(file) _f = (file);                                  \
-		__typeof__(error) _err = (error);                              \
-		(void)fprintf(_f, "%s: %s", subtest, status);                  \
-		if (_err)                                                      \
-			(void)fprintf(_f, " (%s)\n", _err);                    \
-		else                                                           \
-			(void)fprintf(_f, "\n");                               \
-	} while (0)
-
-#define FPRINT_TEST_INTERNAL_FAILURE(file, test_name)                          \
-	(void)fprintf(file, "%s: %s (%s)\n", test_name, ERR_STATUS(FAILED),    \
-		      ERR_STATUS(INTERNAL))
-
-#define FPRINT_TEST_STATUS(file, test_name, status)                            \
-	(void)fprintf(file, "%s: %s\n", (test_name), (status))
-
-#define FPRINT_MESSAGE(file, ...) ((void)fprintf(file, __VA_ARGS__))
-
 #define ENUM_TO_STRING(name)                                                   \
 	{                                                                      \
 		.status = name, .string = #name                                \

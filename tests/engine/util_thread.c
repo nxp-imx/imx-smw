@@ -8,6 +8,7 @@
 
 #include "util.h"
 #include "util_list.h"
+#include "util_log.h"
 #include "util_thread.h"
 #include "run_thread.h"
 
@@ -151,10 +152,8 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 	case json_type_array:
 		err = read_thread_loop(thr_obj, &loop, &def_obj);
 		if (err != ERR_CODE(PASSED)) {
-			FPRINT_MESSAGE(app->log,
-				       "Error in test definiton file: ");
-			FPRINT_MESSAGE(app->log,
-				       "\"%s\" is not a json-c object\n",
+			FPRINT_MESSAGE(app, "Error in test definiton file: ");
+			FPRINT_MESSAGE(app, "\"%s\" is not a json-c object\n",
 				       thr_obj->key);
 			return err;
 		}
@@ -165,8 +164,8 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 		break;
 
 	default:
-		FPRINT_MESSAGE(app->log, "Error in test definiton file: ");
-		FPRINT_MESSAGE(app->log, "\"%s\" is not a json-c object\n",
+		FPRINT_MESSAGE(app, "Error in test definiton file: ");
+		FPRINT_MESSAGE(app, "\"%s\" is not a json-c object\n",
 			       thr_obj->key);
 		DBG_PRINT("\"%s\" is not a json-c object", thr_obj->key);
 

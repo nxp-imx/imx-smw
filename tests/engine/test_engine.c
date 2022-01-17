@@ -13,6 +13,7 @@
 
 #include "util.h"
 #include "util_file.h"
+#include "util_log.h"
 #include "util_thread.h"
 #include "paths.h"
 #include "run_thread.h"
@@ -315,7 +316,7 @@ static const struct test_type *get_test_type(struct app_data *app)
 		}
 
 		if (!test->name) {
-			FPRINT_MESSAGE(app->log, "JSON-C tag name %s ignored\n",
+			FPRINT_MESSAGE(app, "JSON-C tag name %s ignored\n",
 				       obj.key);
 			DBG_PRINT("WARNING: JSON-C object tag %s ignored",
 				  obj.key);
@@ -376,7 +377,7 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 
 	test_status = util_read_json_file(NULL, def_file, &app->definition);
 	if (test_status != ERR_CODE(PASSED)) {
-		FPRINT_TEST_INTERNAL_FAILURE(app->log, test_name);
+		FPRINT_TEST_INTERNAL_FAILURE(app, test_name);
 		goto exit;
 	}
 
@@ -407,9 +408,9 @@ exit:
 		free(name);
 
 	if (test_status == ERR_CODE(PASSED))
-		FPRINT_TEST_STATUS(app->log, test_name, ERR_STATUS(PASSED));
+		FPRINT_TEST_STATUS(app, test_name, ERR_STATUS(PASSED));
 	else
-		FPRINT_TEST_STATUS(app->log, test_name, ERR_STATUS(FAILED));
+		FPRINT_TEST_STATUS(app, test_name, ERR_STATUS(FAILED));
 
 	err = util_destroy_app();
 	if (test_status == ERR_CODE(PASSED))

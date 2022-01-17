@@ -530,6 +530,7 @@ static int save_key_ids_to_json_file(struct llist *key_list, char *filepath)
 	struct json_object *key_identifier_obj = NULL;
 	struct json_object *key_obj = NULL;
 	FILE *json_file = NULL;
+	int nb_char;
 
 	if (!key_list || !filepath) {
 		DBG_PRINT_BAD_ARGS();
@@ -589,7 +590,9 @@ static int save_key_ids_to_json_file(struct llist *key_list, char *filepath)
 		goto exit;
 	}
 
-	FPRINT_MESSAGE(json_file, "{\n");
+	nb_char = fprintf(json_file, "{\n");
+	if (nb_char < 0)
+		DBG_PRINT("error %s", util_get_strerr());
 
 	node = util_list_next(key_list, node, &id);
 
@@ -601,8 +604,11 @@ static int save_key_ids_to_json_file(struct llist *key_list, char *filepath)
 			goto exit;
 		}
 
-		if (counter > 1)
-			FPRINT_MESSAGE(json_file, ",\n");
+		if (counter > 1) {
+			nb_char = fprintf(json_file, ",\n");
+			if (nb_char < 0)
+				DBG_PRINT("error %s", util_get_strerr());
+		}
 
 		if (!json_object_set_int(id_obj, id)) {
 			DBG_PRINT("json_object_set_int() failed");
@@ -632,14 +638,18 @@ static int save_key_ids_to_json_file(struct llist *key_list, char *filepath)
 		 * Fill json file with the following template:
 		 * "key X":{ "id": XX, "key_identifier": XX}
 		 */
-		FPRINT_MESSAGE(json_file, "%s:%s",
-			       json_object_to_json_string(key_obj),
-			       json_object_to_json_string(global_obj));
+		nb_char = fprintf(json_file, "%s:%s",
+				  json_object_to_json_string(key_obj),
+				  json_object_to_json_string(global_obj));
+		if (nb_char < 0)
+			DBG_PRINT("error %s", util_get_strerr());
 
 		node = util_list_next(key_list, node, &id);
 	}
 
-	FPRINT_MESSAGE(json_file, "\n}");
+	nb_char = fprintf(json_file, "\n}");
+	if (nb_char < 0)
+		DBG_PRINT("error %s", util_get_strerr());
 
 exit:
 	if (fclose(json_file))

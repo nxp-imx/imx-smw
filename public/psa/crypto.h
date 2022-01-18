@@ -497,7 +497,7 @@ typedef uint32_t psa_key_lifetime_t;
  * Note:
  *	Key location indicators are 24-bit values. Key management interfaces operate on lifetimes
  *	(see &typedef psa_key_lifetime_t), and encode the location as the upper 24 bits of a 32-bit
- *  value.
+ *	value.
  */
 typedef uint32_t psa_key_location_t;
 
@@ -3427,7 +3427,7 @@ psa_status_t psa_aead_abort(psa_aead_operation_t *operation);
  * @alg: The AEAD algorithm to compute (PSA_ALG_XXX value such that PSA_ALG_IS_AEAD(alg) is true).
  * @nonce: Nonce or IV to use.
  * @nonce_length: Size of the @nonce buffer in bytes. This must be appropriate for the selected
- *                algorithm. The default nonce size is PSA_AEAD_NONCE_LENGTH(key_type, @alg) where
+ *                algorithm. The default nonce size is PSA_AEAD_NONCE_LENGTH(key_type, alg) where
  *                key_type is the type of @key.
  * @additional_data: Additional data that has been authenticated but not encrypted.
  * @additional_data_length: Size of @additional_data in bytes.
@@ -3443,7 +3443,7 @@ psa_status_t psa_aead_abort(psa_aead_operation_t *operation);
  *
  * Parameter @plaintext_size must be appropriate for the selected algorithm and key\:
  *
- * - A sufficient output size is PSA_AEAD_DECRYPT_OUTPUT_SIZE(key_type, @alg, @ciphertext_length)
+ * - A sufficient output size is PSA_AEAD_DECRYPT_OUTPUT_SIZE(key_type, alg, ciphertext_length)
  *   where key_type is the type of @key.
  * - PSA_AEAD_DECRYPT_OUTPUT_MAX_SIZE(ciphertext_length) evaluates to the maximum plaintext size of
  *   any supported AEAD decryption.
@@ -3561,7 +3561,7 @@ psa_status_t psa_aead_decrypt_setup(psa_aead_operation_t *operation,
  * @alg: The AEAD algorithm to compute (PSA_ALG_XXX value such that PSA_ALG_IS_AEAD(alg) is true).
  * @nonce: Nonce or IV to use.
  * @nonce_length: Size of the @nonce buffer in bytes. This must be appropriate for the selected
- *                algorithm. The default nonce size is PSA_AEAD_NONCE_LENGTH(key_type, @alg) where
+ *                algorithm. The default nonce size is PSA_AEAD_NONCE_LENGTH(key_type, alg) where
  *                key_type is the type of @key.
  * @additional_data: Additional data that will be authenticated but not encrypted.
  * @additional_data_length: Size of @additional_data in bytes.
@@ -3578,7 +3578,7 @@ psa_status_t psa_aead_decrypt_setup(psa_aead_operation_t *operation,
  *
  * Parameter @ciphertext_size must be appropriate for the selected algorithm and key\:
  *
- * - A sufficient output size is PSA_AEAD_ENCRYPT_OUTPUT_SIZE(key_type, @alg, @plaintext_length)
+ * - A sufficient output size is PSA_AEAD_ENCRYPT_OUTPUT_SIZE(key_type, alg, plaintext_length)
  *   where key_type is the type of @key.
  *
  * - PSA_AEAD_ENCRYPT_OUTPUT_MAX_SIZE(plaintext_length) evaluates to the maximum ciphertext size of
@@ -3944,7 +3944,7 @@ psa_status_t psa_aead_set_nonce(psa_aead_operation_t *operation,
  *
  * Parameter @output_size must be appropriate for the selected algorithm and key\:
  *
- * - A sufficient output size is PSA_AEAD_UPDATE_OUTPUT_SIZE(key_type, alg, @input_length) where
+ * - A sufficient output size is PSA_AEAD_UPDATE_OUTPUT_SIZE(key_type, alg, input_length) where
  *   key_type is the type of @key and alg is the algorithm that were used to set up the operation.
  *
  * - PSA_AEAD_UPDATE_OUTPUT_MAX_SIZE(input_length) evaluates to the maximum output size of any
@@ -4136,7 +4136,7 @@ psa_status_t psa_aead_verify(psa_aead_operation_t *operation,
  *
  * Parameter @output_size must be appropriate for the selected algorithm and key\:
  *
- * - The required output size is PSA_ASYMMETRIC_DECRYPT_OUTPUT_SIZE(key_type, key_bits, @alg) where
+ * - The required output size is PSA_ASYMMETRIC_DECRYPT_OUTPUT_SIZE(key_type, key_bits, alg) where
  *   key_type and key_bits are the type and bit-size respectively of @key.
  *
  * - PSA_ASYMMETRIC_DECRYPT_OUTPUT_MAX_SIZE evaluates to the maximum output size of any supported
@@ -4193,7 +4193,7 @@ psa_status_t psa_asymmetric_decrypt(psa_key_id_t key, psa_algorithm_t alg,
  *
  * Parameter @output_size must be appropriate for the selected algorithm and key\:
  *
- * - The required output size is PSA_ASYMMETRIC_ENCRYPT_OUTPUT_SIZE(key_type, key_bits, @alg) where
+ * - The required output size is PSA_ASYMMETRIC_ENCRYPT_OUTPUT_SIZE(key_type, key_bits, alg) where
  *   key_type and key_bits are the type and bit-size respectively of @key.
  *
  * - PSA_ASYMMETRIC_ENCRYPT_OUTPUT_MAX_SIZE evaluates to the maximum output size of any supported
@@ -4273,7 +4273,7 @@ psa_status_t psa_cipher_abort(psa_cipher_operation_t *operation);
  * This function decrypts a message encrypted with a symmetric cipher.
  *
  * The input to this function must contain the IV followed by the ciphertext, as output by
- * psa_cipher_encrypt(). The IV must be PSA_CIPHER_IV_LENGTH(key_type, @alg) bytes in length, where
+ * psa_cipher_encrypt(). The IV must be PSA_CIPHER_IV_LENGTH(key_type, alg) bytes in length, where
  * key_type is the type of @key.
  *
  * Use the multi-part operation interface with a &typedef psa_cipher_operation_t object to decrypt
@@ -4281,7 +4281,7 @@ psa_status_t psa_cipher_abort(psa_cipher_operation_t *operation);
  *
  * Parameter @output_size must be appropriate for the selected algorithm and key\:
  *
- * - A sufficient output size is PSA_CIPHER_DECRYPT_OUTPUT_SIZE(key_type, @alg, @input_length) where
+ * - A sufficient output size is PSA_CIPHER_DECRYPT_OUTPUT_SIZE(key_type, alg, input_length) where
  *   key_type is the type of @key.
  *
  * - PSA_CIPHER_DECRYPT_OUTPUT_MAX_SIZE(input_length) evaluates to the maximum output size of any
@@ -4402,7 +4402,7 @@ psa_status_t psa_cipher_decrypt_setup(psa_cipher_operation_t *operation,
  * **Warning: Not supported**
  *
  * This function encrypts a message with a random initialization vector (IV). The length of the IV
- * is PSA_CIPHER_IV_LENGTH(key_type, @alg) where key_type is the type of @key. The output of
+ * is PSA_CIPHER_IV_LENGTH(key_type, alg) where key_type is the type of @key. The output of
  * psa_cipher_encrypt() is the IV followed by the ciphertext.
  *
  * Use the multi-part operation interface with a &typedef psa_cipher_operation_t object to provide
@@ -4410,7 +4410,7 @@ psa_status_t psa_cipher_decrypt_setup(psa_cipher_operation_t *operation,
  *
  * Parameter @output_size must be appropriate for the selected algorithm and key\:
  *
- * - A sufficient output size is PSA_CIPHER_ENCRYPT_OUTPUT_SIZE(key_type, @alg, @input_length) where
+ * - A sufficient output size is PSA_CIPHER_ENCRYPT_OUTPUT_SIZE(key_type, alg, input_length) where
  *   key_type is the type of @key.
  *
  * - PSA_CIPHER_ENCRYPT_OUTPUT_MAX_SIZE(input_length) evaluates to the maximum output size of any
@@ -4716,7 +4716,7 @@ psa_status_t psa_cipher_set_iv(psa_cipher_operation_t *operation,
  *
  * Parameter @output_size must be appropriate for the selected algorithm and key\:
  *
- * - A sufficient output size is PSA_CIPHER_UPDATE_OUTPUT_SIZE(key_type, alg, @input_length) where
+ * - A sufficient output size is PSA_CIPHER_UPDATE_OUTPUT_SIZE(key_type, alg, input_length) where
  *   key_type is the type of @key and alg is the algorithm that were used to set up the operation.
  *
  * - PSA_CIPHER_UPDATE_OUTPUT_MAX_SIZE(input_length) evaluates to the maximum output size of any
@@ -6086,8 +6086,8 @@ psa_key_derivation_input_key(psa_key_derivation_operation_t *operation,
  * @private_key: Identifier of the private key to use. It must allow the usage PSA_KEY_USAGE_DERIVE.
  * @peer_key: Public key of the peer. The peer key must be in the same format that psa_import_key()
  *            accepts for the public key type corresponding to the type of @private_key. That is,
- *            this function performs the equivalent of psa_import_key(..., @peer_key,
- *            @peer_key_length) where with key attributes indicating the public key type
+ *            this function performs the equivalent of psa_import_key(..., peer_key,
+ *            peer_key_length) where with key attributes indicating the public key type
  *            corresponding to the type of @private_key. For example, for EC keys, this means that
  *            @peer_key is interpreted as a point on the curve that the private key is on. The
  *            standard formats for public keys are documented in the documentation of
@@ -6543,7 +6543,7 @@ psa_status_t psa_mac_abort(psa_mac_operation_t *operation);
  *
  * Parameter @mac_size must be appropriate for the selected algorithm and key\:
  *
- * - The exact MAC size is PSA_MAC_LENGTH(key_type, key_bits, @alg) where key_type and key_bits are
+ * - The exact MAC size is PSA_MAC_LENGTH(key_type, key_bits, alg) where key_type and key_bits are
  *   attributes of the key used to compute the MAC.
  *
  * - PSA_MAC_MAX_SIZE evaluates to the maximum MAC size of any supported MAC algorithm.
@@ -7225,7 +7225,7 @@ void psa_set_key_usage_flags(psa_key_attributes_t *attributes,
  *
  * Parameter @signature_size must be appropriate for the selected algorithm and key\:
  *
- * - The required signature size is PSA_SIGN_OUTPUT_SIZE(key_type, key_bits, @alg) where key_type
+ * - The required signature size is PSA_SIGN_OUTPUT_SIZE(key_type, key_bits, alg) where key_type
  *   and key_bits are the type and bit-size respectively of @key.
  *
  * - PSA_SIGNATURE_MAX_SIZE evaluates to the maximum signature size of any supported signature
@@ -7281,7 +7281,7 @@ psa_status_t psa_sign_hash(psa_key_id_t key, psa_algorithm_t alg,
  *
  * Parameter @signature_size must be appropriate for the selected algorithm and key\:
  *
- * - The required signature size is PSA_SIGN_OUTPUT_SIZE(key_type, key_bits, @alg) where key_type
+ * - The required signature size is PSA_SIGN_OUTPUT_SIZE(key_type, key_bits, alg) where key_type
  *   and key_bits are the type and bit-size respectively of key.
  *
  * - PSA_SIGNATURE_MAX_SIZE evaluates to the maximum signature size of any supported signature

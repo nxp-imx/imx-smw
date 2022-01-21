@@ -35,6 +35,9 @@ enum err_num {
 	ERROR_NOT_DEFINED,
 	ERROR_SMWLIB_INIT, /* 15 */
 	MUTEX_DESTROY,
+	COND_DESTROY,
+	TIMEOUT,
+	THREAD_CANCELED,
 };
 
 /**
@@ -49,6 +52,11 @@ struct error {
 
 extern const struct error list_err[];
 extern unsigned int list_err_size;
+
+/*
+ * Opaque type of thread waiting all test thread
+ */
+struct thread_ends;
 
 /**
  * struct app_data - Application data structure
@@ -65,6 +73,8 @@ extern unsigned int list_err_size;
  * @definition:      Application test definition
  * @lock_dbg:        Debug Printf protector
  * @lock_log:        Log into file protector
+ * @thr_ends:        Thread waiting all test threads
+ * @timeout:         Application timeout in seconds
  */
 struct app_data {
 	char *dir_def_file;
@@ -80,6 +90,8 @@ struct app_data {
 	struct json_object *definition;
 	void *lock_dbg;
 	void *lock_log;
+	struct thread_ends *thr_ends;
+	unsigned int timeout;
 };
 
 /**

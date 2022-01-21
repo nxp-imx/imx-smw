@@ -10,7 +10,13 @@
 
 #include "util.h"
 
-enum thread_state { NOT_INIT = 0, RUNNING, WAITING, EXITED };
+enum thread_state {
+	STATE_NOT_INIT = 0,
+	STATE_RUNNING,
+	STATE_WAITING,
+	STATE_EXITED,
+	STATE_CANCELED
+};
 
 #define MAX_THR_NAME 20
 
@@ -34,6 +40,24 @@ struct thread_data {
 	enum thread_state state;
 	int loop;
 	struct json_object *def;
+};
+
+/**
+ * struct thread_ends - Thread waiting all test threads
+ * @app: Application data
+ * @status: Test status
+ * @id: Thread ID
+ * @state: Thread state
+ * @lock: Thread Mutex used to manage @cond
+ * @cond: Thread Condition
+ */
+struct thread_ends {
+	struct app_data *app;
+	int status;
+	pthread_t id;
+	enum thread_state state;
+	void *lock;
+	void *cond;
 };
 
 /**
@@ -65,17 +89,6 @@ int util_thread_init(struct llist **list);
  */
 int util_thread_start(struct app_data *app, struct json_object_iter *obj,
 		      unsigned int thr_num);
-
-/**
- * util_thread_end() - Wait the end of all application threads
- * @app: Application data
- *
- * Return:
- * PASSED                   - Success.
- * -FAILED                  - At least one thread failed
- * -BAD_ARGS                - One of the argument is not correct.
- */
-int util_thread_end(struct app_data *app);
 
 /**
  * util_thread_get_ids() - Get the Thread ids from the thread name
@@ -110,5 +123,31 @@ int util_thread_get_ids(const char *name, unsigned int *first,
  * -BAD_ARGS                - One of the argument is not correct.
  */
 int util_get_thread_name(struct app_data *app, const char **name);
+
+/**
+ * util_thread_ends_destroy() - Destroy the thread waiting ends of test threads
+ * @app: Application data
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARGS               - One of the argument is not correct.
+ * -MUTEX_DESTROY          - Mutex destroy failure
+ * -COND_DESTROY           - Mutex destroy failure
+ */
+int util_thread_ends_destroy(struct app_data *app);
+
+/**
+ * util_thread_ends_destroy() - Destroy the thread waiting ends of test threads
+ * @app: Application data
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARGS               - One of the argument is not correct.
+ * -FAILED                 - Operation failed
+ * -BAD_ARGS               - One of the argument is invalid.
+ * -INTERNAL               - Internal failure
+ * -TIMEOUT                - Function timeout
+ */
+int util_thread_ends_wait(struct app_data *app);
 
 #endif /* __UTIL_THREAD__H__ */

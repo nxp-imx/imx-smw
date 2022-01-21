@@ -193,6 +193,7 @@ static int run_multithread(struct app_data *app)
 	if (!json_object_get_object(app->definition))
 		return ERR_CODE(FAILED);
 
+	app->timeout = 10;
 	app->is_multithread = 1;
 
 	json_object_object_foreachC(app->definition, obj)
@@ -228,7 +229,8 @@ static int run_multithread(struct app_data *app)
 		}
 	}
 
-	res = util_thread_end(app);
+	res = util_thread_ends_wait(app);
+
 	status = (status == ERR_CODE(PASSED)) ? res : status;
 
 	return status;

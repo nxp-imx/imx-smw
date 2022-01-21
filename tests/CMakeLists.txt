@@ -78,6 +78,7 @@ add_executable(${PROJECT_NAME}
                engine/util_mutex.c
                engine/util_sem.c
                engine/util_log.c
+               engine/util_cond.c
                engine/operation_context.c
                ${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c
                $<$<CONFIG:Debug>:engine/util_debug.c>)

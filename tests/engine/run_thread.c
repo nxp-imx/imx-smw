@@ -7,6 +7,7 @@
 
 #include "smw_osal.h"
 
+#include "util_cond.h"
 #include "util_log.h"
 #include "util_sem.h"
 #include "util_thread.h"
@@ -801,6 +802,8 @@ void *process_thread(void *arg)
 		goto exit;
 	}
 
+	thr->state = STATE_RUNNING;
+
 	/* First wait and post semaphore if multi-thread test */
 	err = util_sem_wait_before(thr, thr->parent_def);
 	if (err != ERR_CODE(PASSED)) {
@@ -813,8 +816,6 @@ void *process_thread(void *arg)
 		err = ERR_CODE(FAILED);
 		goto exit;
 	}
-
-	thr->state = RUNNING;
 
 	for (i = 0; i < thr->loop + 1; i++) {
 		json_object_object_foreachC(thr->def, obj)
@@ -844,7 +845,7 @@ void *process_thread(void *arg)
 		err = ERR_CODE(FAILED);
 
 exit:
-	thr->state = EXITED;
+	thr->state = STATE_EXITED;
 	thr->status = (status == ERR_CODE(PASSED)) ? err : status;
 
 	/* Decrement (free) the thread JSON-C definition */

@@ -78,6 +78,9 @@ const struct error list_err[] = {
 	SET_ERR_CODE_AND_NAME(ERROR_NOT_DEFINED, "TEST ERROR NOT DEFINED"),
 	SET_ERR_CODE_AND_NAME(ERROR_SMWLIB_INIT, "SMW LIBRARY INIT ERROR"),
 	SET_ERR_CODE_AND_NAME(MUTEX_DESTROY, "MUTEX DESTROY ERROR"),
+	SET_ERR_CODE_AND_NAME(COND_DESTROY, "COND DESTROY ERROR"),
+	SET_ERR_CODE_AND_NAME(TIMEOUT, "WAIT TIMEOUT ERROR"),
+	SET_ERR_CODE_AND_NAME(THREAD_CANCELED, "THREAD HAS BEEN CANCELED"),
 };
 
 #undef SET_ERR_CODE_AND_NAME
@@ -180,6 +183,11 @@ int util_destroy_app(void)
 		DBG_PRINT("Clear list semaphores error %d", err);
 		res = (res == ERR_CODE(PASSED)) ? err : res;
 	}
+
+	/* Destroy the thread completion mutex and condition */
+	err = util_thread_ends_destroy(app_data);
+	if (err != ERR_CODE(PASSED))
+		res = (res == ERR_CODE(PASSED)) ? err : res;
 
 	/* Destroy the debug print mutex and abort if failure */
 	res = util_mutex_destroy(&app_data->lock_dbg);

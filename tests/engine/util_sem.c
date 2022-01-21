@@ -183,7 +183,7 @@ static int wait_sem(struct thread_data *thr, struct app_sem *sem,
 
 		ts.tv_sec += timeout;
 
-		thr->state = WAITING;
+		thr->state = STATE_WAITING;
 		DBG_PRINT("Waiting %s for %d seconds", sem->name, timeout);
 
 		err = sem_timedwait(&sem->handle, &ts);
@@ -193,7 +193,7 @@ static int wait_sem(struct thread_data *thr, struct app_sem *sem,
 			res = ERR_CODE(FAILED);
 		}
 	} else {
-		thr->state = WAITING;
+		thr->state = STATE_WAITING;
 		DBG_PRINT("Waiting %s", sem->name);
 
 		err = sem_wait(&sem->handle);
@@ -203,6 +203,8 @@ static int wait_sem(struct thread_data *thr, struct app_sem *sem,
 			res = ERR_CODE(INTERNAL);
 		}
 	}
+
+	thr->state = STATE_RUNNING;
 
 	return res;
 }

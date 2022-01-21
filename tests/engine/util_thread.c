@@ -7,8 +7,10 @@
 #include <string.h>
 
 #include "util.h"
+#include "util_cond.h"
 #include "util_list.h"
 #include "util_log.h"
+#include "util_mutex.h"
 #include "util_thread.h"
 #include "run_thread.h"
 
@@ -47,7 +49,8 @@ static void thr_free_data(void *data)
 	if (!thr_data)
 		return;
 
-	if (thr_data->state == RUNNING || thr_data->state == WAITING)
+	if (thr_data->state == STATE_RUNNING ||
+	    thr_data->state == STATE_WAITING)
 		pthread_cancel(thr_data->id);
 
 	free(thr_data);
@@ -117,6 +120,144 @@ static int read_thread_loop(struct json_object_iter *thr_obj, int *loop,
 	*thr_def = otmp;
 
 	return ERR_CODE(PASSED);
+}
+
+static int cancel_all_threads(struct app_data *app)
+{
+	int status = ERR_CODE(PASSED);
+	struct node *node = NULL;
+	struct thread_data *thr;
+
+	node = util_list_next(app->threads, node, NULL);
+	while (node) {
+		thr = util_list_data(node);
+		if (thr) {
+			switch (thr->state) {
+			case STATE_EXITED:
+				break;
+
+			default:
+				DBG_PRINT("Cancelling %s", thr->name);
+
+				thr->state = STATE_CANCELED;
+				thr->status = ERR_CODE(THREAD_CANCELED);
+
+				if (pthread_cancel(thr->id))
+					DBG_PRINT("%s cancel with %s",
+						  thr->name, util_get_strerr());
+				break;
+			}
+
+			if (status == ERR_CODE(PASSED))
+				status = thr->status;
+		}
+
+		node = util_list_next(app->threads, node, NULL);
+	};
+
+	return status;
+}
+
+static void *process_thread_ends(void *arg)
+{
+	struct thread_ends *thr_end = arg;
+	int *thr_status = NULL;
+	struct node *node = NULL;
+	struct thread_data *thr;
+
+	if (!thr_end || !thr_end->app) {
+		DBG_PRINT_BAD_ARGS();
+		exit(ERR_CODE(BAD_ARGS));
+	}
+
+	thr_end->state = STATE_RUNNING;
+
+	node = util_list_next(thr_end->app->threads, node, NULL);
+	while (node) {
+		thr_status = NULL;
+
+		thr = util_list_data(node);
+		if (thr) {
+			if (pthread_join(thr->id, (void **)&thr_status))
+				DBG_PRINT("%s exits with %s", thr->name,
+					  util_get_strerr());
+
+			if (thr_status == PTHREAD_CANCELED)
+				DBG_PRINT("%s canceled", thr->name);
+			else
+				DBG_PRINT("%s complete with %d status",
+					  thr->name, *thr_status);
+		}
+
+		node = util_list_next(thr_end->app->threads, node, NULL);
+	};
+
+	thr_end->status = util_cond_signal(thr_end->cond);
+	if (thr_end->status != ERR_CODE(PASSED))
+		DBG_PRINT("Signal thread ends error %d", thr_end->status);
+
+	thr_end->state = STATE_EXITED;
+
+	return &thr_end->status;
+}
+
+/**
+ * thread_ends_start() - Start the thread waiting ends of test threads
+ * @app: Application data
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARGS               - One of the argument is not correct.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -FAILED                 - Thread creating failure.
+ */
+static int thread_ends_start(struct app_data *app)
+{
+	int res;
+	struct thread_ends *thr;
+
+	if (!app)
+		return ERR_CODE(BAD_ARGS);
+
+	thr = calloc(1, sizeof(*thr));
+	if (!thr) {
+		DBG_PRINT_ALLOC_FAILURE();
+		return INTERNAL_OUT_OF_MEMORY;
+	}
+
+	thr->app = app;
+	app->thr_ends = thr;
+
+	/*
+	 * Create the mutex and condition to run the thread waiting
+	 * all threads completion.
+	 */
+	thr->lock = util_mutex_create();
+	if (!thr->lock) {
+		DBG_PRINT("Can't create mutex");
+		res = ERR_CODE(FAILED);
+		goto exit;
+	}
+
+	thr->cond = util_cond_create();
+	if (!thr->cond) {
+		DBG_PRINT("Can't create condition");
+		res = ERR_CODE(FAILED);
+		goto exit;
+	}
+
+	if (pthread_create(&thr->id, NULL, &process_thread_ends, thr)) {
+		DBG_PRINT("Thread creation %s", util_get_strerr());
+		res = ERR_CODE(FAILED);
+	} else {
+		res = ERR_CODE(PASSED);
+	}
+
+exit:
+	if (res != ERR_CODE(PASSED))
+		(void)util_thread_ends_destroy(app);
+
+	return res;
 }
 
 int util_thread_init(struct llist **list)
@@ -202,42 +343,6 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 	return err;
 }
 
-int util_thread_end(struct app_data *app)
-{
-	int *thr_status = NULL;
-	int status = ERR_CODE(PASSED);
-	struct node *node = NULL;
-	struct thread_data *thr;
-
-	if (!app)
-		return ERR_CODE(BAD_ARGS);
-
-	node = util_list_next(app->threads, node, NULL);
-	while (node) {
-		thr_status = NULL;
-
-		thr = util_list_data(node);
-		if (thr) {
-			if (pthread_join(thr->id, (void **)&thr_status)) {
-				status |= ERR_CODE(FAILED);
-				DBG_PRINT("%s exits with %s", thr->name,
-					  util_get_strerr());
-			}
-
-			DBG_PRINT("%s", thr->name);
-
-			if (thr_status == PTHREAD_CANCELED)
-				status |= ERR_CODE(FAILED);
-			else
-				status |= *thr_status;
-		}
-
-		node = util_list_next(app->threads, node, NULL);
-	};
-
-	return status;
-}
-
 int util_thread_get_ids(const char *name, unsigned int *first,
 			unsigned int *last)
 {
@@ -310,6 +415,67 @@ int util_get_thread_name(struct app_data *app, const char **name)
 	res = get_active_thread_data(app, &thr);
 	if (res == ERR_CODE(PASSED) && thr)
 		*name = thr->name;
+
+	return res;
+}
+
+int util_thread_ends_destroy(struct app_data *app)
+{
+	int res = ERR_CODE(PASSED);
+	int err;
+
+	if (!app)
+		return ERR_CODE(BAD_ARGS);
+
+	if (!app->thr_ends)
+		return res;
+
+	res = util_mutex_destroy(&app->thr_ends->lock);
+	if (res != ERR_CODE(PASSED))
+		DBG_PRINT("Destroy mutex %d", res);
+
+	err = util_cond_destroy(&app->thr_ends->cond);
+	if (err != ERR_CODE(PASSED)) {
+		DBG_PRINT("Destroy condition %d", err);
+		res = (res == ERR_CODE(PASSED)) ? err : res;
+	}
+
+	free(app->thr_ends);
+	app->thr_ends = NULL;
+
+	return res;
+}
+
+int util_thread_ends_wait(struct app_data *app)
+{
+	int res;
+	int status;
+
+	if (!app)
+		return ERR_CODE(BAD_ARGS);
+
+	/*
+	 * Create and start the thread waiting all test threads
+	 */
+	res = thread_ends_start(app);
+	if (res == ERR_CODE(PASSED)) {
+		res = util_cond_wait(app->thr_ends->cond, app->thr_ends->lock,
+				     app->timeout);
+
+		if (res != ERR_CODE(PASSED))
+			DBG_PRINT("Application thread completion error %d",
+				  res);
+
+		if (app->thr_ends->id && app->thr_ends->state != STATE_EXITED) {
+			if (pthread_cancel(app->thr_ends->id))
+				DBG_PRINT("Cancel Thread error: %s",
+					  util_get_strerr());
+		}
+	}
+
+	/* Ensure all threads are canceled to exit application properly */
+	status = cancel_all_threads(app);
+	res = (res == ERR_CODE(PASSED)) ? status : res;
 
 	return res;
 }

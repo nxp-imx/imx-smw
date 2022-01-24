@@ -8,13 +8,6 @@
 
 #include "types.h"
 
-#define FPRINT_TEST_INTERNAL_FAILURE(app, test_name)                           \
-	util_log(app, "%s: %s (%s)\n", test_name, ERR_STATUS(FAILED),          \
-		 ERR_STATUS(INTERNAL))
-
-#define FPRINT_TEST_STATUS(app, test_name, status)                             \
-	util_log(app, "%s: %s\n", (test_name), (status))
-
 #define FPRINT_MESSAGE(app, ...) util_log(app, __VA_ARGS__)
 
 /**

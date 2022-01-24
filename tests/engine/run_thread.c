@@ -483,66 +483,6 @@ static int execute_command(char *cmd, struct json_object *params,
 }
 
 /**
- * log_subtest_status() - Log the subtest status
- * @thr: Thread data
- * @obj: Subtest operation object
- * @res: Result of the subtest.
- * @status: SMW Library status
- *
- * Log the subtest name and the reason of the failure if any.
- * Function returns if overall test passed or failed.
- *
- * Return:
- * PASSED  - Subtest passed
- * -FAILED - Subtest failed
- */
-static int log_subtest_status(struct thread_data *thr,
-			      struct json_object_iter *obj, int res,
-			      enum smw_status_code status)
-{
-	int ret = FAILED;
-	char str[256] = { 0 };
-	unsigned int idx = 0;
-	const char *error = NULL;
-
-	/* Find the error entry in the array of error string */
-	for (; idx < list_err_size && res != ERR_CODE(idx); idx++)
-		;
-
-	switch (idx) {
-	case PASSED:
-		ret = PASSED;
-		break;
-
-	case BAD_RESULT:
-		error = get_smw_string_status(status);
-		break;
-
-	default:
-		if (idx < list_err_size)
-			error = ERR_STATUS(idx);
-		else
-			error = ERR_STATUS(INTERNAL);
-
-		break;
-	}
-
-	if (strlen(thr->name))
-		(void)sprintf(str, "[%s] %s %s", thr->name, obj->key,
-			      ERR_STATUS(ret));
-	else
-		(void)sprintf(str, "%s %s", obj->key, ERR_STATUS(ret));
-
-	/* Additional error message if any */
-	if (error)
-		util_log_status(thr->app, "%s (%s)\n", str, error);
-	else
-		util_log_status(thr->app, "%s\n", str);
-
-	return ERR_CODE(ret);
-}
-
-/**
  * is_subtest_passed() - Return if a subtest passed
  * @thr: Thread data
  * @id: Subtest id
@@ -561,10 +501,10 @@ static int is_subtest_passed(struct thread_data *thr, int id)
 
 	if (strlen(thr->name))
 		(void)sprintf(str, "[%s] %s %d %s", thr->name, SUBTEST_OBJ, id,
-			      ERR_STATUS(PASSED));
+			      util_get_err_code_str(ERR_CODE(PASSED)));
 	else
 		(void)sprintf(str, "%s %d %s", SUBTEST_OBJ, id,
-			      ERR_STATUS(PASSED));
+			      util_get_err_code_str(ERR_CODE(PASSED)));
 
 	return util_log_find(thr->app, str);
 }
@@ -654,15 +594,10 @@ static int get_depends_status(struct thread_data *thr, struct json_object *def)
  * run_subtest() - Run a subtest.
  * @thr: Thread data
  * @obj: Operation object data
- *
- * Return:
- * PASSED  - Subtest passed
- * -FAILED - Subtest failed
  */
-static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
+static void run_subtest(struct thread_data *thr, struct json_object *obj)
 {
 	int res = ERR_CODE(FAILED);
-	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
 	char *cmd_name = NULL;
 	char *expected_status = NULL;
 	const char *sub_used = NULL;
@@ -670,9 +605,10 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 	struct cmn_params cmn_params = { 0 };
 
 	cmn_params.app = thr->app;
+	thr->smw_status = SMW_STATUS_OPERATION_FAILURE;
 
 	/* Verify the type of the subtest tag/value is json object */
-	if (json_object_get_type(obj->val) != json_type_object) {
+	if (json_object_get_type(obj) != json_type_object) {
 		FPRINT_MESSAGE(thr->app, "Error in test definiton file: ");
 		FPRINT_MESSAGE(thr->app,
 			       "\"subtest\" is not a json-c object\n");
@@ -683,7 +619,7 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 	}
 
 	/* 'command' is a mandatory parameter */
-	res = util_read_json_type(&cmd_name, CMD_OBJ, t_string, obj->val);
+	res = util_read_json_type(&cmd_name, CMD_OBJ, t_string, obj);
 	if (res != ERR_CODE(PASSED)) {
 		if (res == ERR_CODE(VALUE_NOTFOUND)) {
 			DBG_PRINT_MISS_PARAM(CMD_OBJ);
@@ -694,12 +630,12 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 	}
 
 	res = util_read_json_type(&cmn_params.subsystem, SUBSYSTEM_OBJ,
-				  t_string, obj->val);
+				  t_string, obj);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
 	/* Check dependent subtest(s) status */
-	res = get_depends_status(thr, obj->val);
+	res = get_depends_status(thr, obj);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -707,8 +643,7 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 	 * Get expected result parameter 'result' set in test definition file.
 	 * If not defined, the default value is SMW_STATUS_OK.
 	 */
-	res = util_read_json_type(&expected_status, RES_OBJ, t_string,
-				  obj->val);
+	res = util_read_json_type(&expected_status, RES_OBJ, t_string, obj);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
@@ -728,8 +663,7 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 	 * If not set in test definition file, use default value.
 	 */
 	cmn_params.version = SMW_API_DEFAULT_VERSION;
-	res = util_read_json_type(&cmn_params.version, VERSION_OBJ, t_int,
-				  obj->val);
+	res = util_read_json_type(&cmn_params.version, VERSION_OBJ, t_int, obj);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
@@ -737,31 +671,30 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 	 * Get expected subsystem to be used.
 	 * If not set in test definition file don't verify it.
 	 */
-	res = util_read_json_type(&sub_exp, SUBSYSTEM_EXP_OBJ, t_string,
-				  obj->val);
+	res = util_read_json_type(&sub_exp, SUBSYSTEM_EXP_OBJ, t_string, obj);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
 	/* First wait and post semaphore */
-	res = util_sem_wait_before(thr, obj->val);
+	res = util_sem_wait_before(thr, obj);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	res = util_sem_post_before(thr, obj->val);
+	res = util_sem_post_before(thr, obj);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Execute subtest command */
-	res = execute_command(cmd_name, obj->val, &cmn_params, &status);
+	res = execute_command(cmd_name, obj, &cmn_params, &thr->smw_status);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Last wait and post semaphore */
-	res = util_sem_post_after(thr, obj->val);
+	res = util_sem_post_after(thr, obj);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	res = util_sem_wait_after(thr, obj->val);
+	res = util_sem_wait_after(thr, obj);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -779,15 +712,14 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 	}
 
 exit:
-	return log_subtest_status(thr, obj, res, status);
+	thr->status = res;
+	util_thread_log(thr);
 }
 
 void *process_thread(void *arg)
 {
-	int status = ERR_CODE(PASSED);
 	int err = ERR_CODE(BAD_ARGS);
 	int i;
-	bool ran_subtest = false;
 	struct thread_data *thr = arg;
 	struct json_object_iter obj;
 
@@ -798,22 +730,23 @@ void *process_thread(void *arg)
 
 	if (!json_object_get_object(thr->def)) {
 		DBG_PRINT("Thread definition json_object_get_object error");
-		err = ERR_CODE(INTERNAL);
+		thr->status = ERR_CODE(INTERNAL);
 		goto exit;
 	}
 
 	thr->state = STATE_RUNNING;
+	thr->status = ERR_CODE(FAILED);
 
 	/* First wait and post semaphore if multi-thread test */
 	err = util_sem_wait_before(thr, thr->parent_def);
 	if (err != ERR_CODE(PASSED)) {
-		err = ERR_CODE(FAILED);
+		thr->status = err;
 		goto exit;
 	}
 
 	err = util_sem_post_before(thr, thr->parent_def);
 	if (err != ERR_CODE(PASSED)) {
-		err = ERR_CODE(FAILED);
+		thr->status = err;
 		goto exit;
 	}
 
@@ -824,29 +757,27 @@ void *process_thread(void *arg)
 			if (strncmp(obj.key, SUBTEST_OBJ, strlen(SUBTEST_OBJ)))
 				continue;
 
-			err = run_subtest(thr, &obj);
-			status = (status == ERR_CODE(PASSED)) ? err : status;
-			ran_subtest = true;
+			thr->subtest = obj.key;
+			run_subtest(thr, obj.val);
+			thr->subtest = NULL;
 		}
 	}
 
-	if (!ran_subtest)
-		status = ERR_CODE(FAILED);
-
 	/* Last wait and post semaphore if multi-thread test */
 	err = util_sem_post_after(thr, thr->parent_def);
-	if (err != ERR_CODE(PASSED)) {
-		err = ERR_CODE(FAILED);
+	if (err != ERR_CODE(PASSED))
 		goto exit;
-	}
 
 	err = util_sem_wait_after(thr, thr->parent_def);
-	if (err != ERR_CODE(PASSED))
-		err = ERR_CODE(FAILED);
 
 exit:
 	thr->state = STATE_EXITED;
-	thr->status = (status == ERR_CODE(PASSED)) ? err : status;
+
+	if (thr->status == ERR_CODE(PASSED))
+		thr->status = err;
+
+	if (thr->app->is_multithread)
+		util_thread_log(thr);
 
 	/* Decrement (free) the thread JSON-C definition */
 	if (thr->def)

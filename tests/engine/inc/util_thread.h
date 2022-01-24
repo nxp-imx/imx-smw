@@ -25,6 +25,8 @@ enum thread_state {
  * @app: Application data
  * @parent_def: Parent's thread object definition
  * @status: Test status
+ * @smw_status: SMW operation status
+ * @subtest: Name of the subtest running
  * @id: Thread ID
  * @name: Thread name
  * @state: Thread state
@@ -35,6 +37,8 @@ struct thread_data {
 	struct app_data *app;
 	struct json_object *parent_def;
 	int status;
+	enum smw_status_code smw_status;
+	char *subtest;
 	pthread_t id;
 	char name[MAX_THR_NAME];
 	enum thread_state state;
@@ -149,5 +153,15 @@ int util_thread_ends_destroy(struct app_data *app);
  * -TIMEOUT                - Function timeout
  */
 int util_thread_ends_wait(struct app_data *app);
+
+/**
+ * util_thread_log() - Log the given thread status
+ * @thr: Thread data
+ *
+ * Log the thread name if multi-thread test, the subtest name if
+ * a subtest is running, the error code string.
+ * If the error code is a bad result, the SMW library status error.
+ */
+void util_thread_log(struct thread_data *thr);
 
 #endif /* __UTIL_THREAD__H__ */

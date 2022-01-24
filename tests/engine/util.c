@@ -32,7 +32,7 @@
  * @string: String value of 'test_error' json parameter presents in test
  *          definition file.
  */
-struct test_err_case {
+static const struct test_err_case {
 	enum arguments_test_err_case status;
 	char *string;
 } args_test_err_case[] = {
@@ -60,7 +60,7 @@ struct test_err_case {
 		.code = -(err), .status = name                                 \
 	}
 
-const struct error list_err[] = {
+const struct error list_err[MAX_TEST_ERROR] = {
 	SET_ERR_CODE_AND_NAME(PASSED, "PASSED"),
 	SET_ERR_CODE_AND_NAME(FAILED, "FAILED"),
 	SET_ERR_CODE_AND_NAME(INTERNAL, "INTERNAL"),
@@ -85,7 +85,6 @@ const struct error list_err[] = {
 
 #undef SET_ERR_CODE_AND_NAME
 
-unsigned int list_err_size = ARRAY_SIZE(list_err);
 static struct app_data *app_data;
 
 struct app_data *util_setup_app(void)
@@ -408,36 +407,31 @@ int get_test_name(char **test_name, char *test_definition_file)
 	return ERR_CODE(PASSED);
 }
 
-int get_test_err_status(unsigned int *status, const char *string)
-{
-	unsigned int idx = 0;
-
-	if (!string || !status) {
-		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
-	}
-
-	for (; idx < ARRAY_SIZE(args_test_err_case); idx++) {
-		if (!strcmp(args_test_err_case[idx].string, string)) {
-			*status = args_test_err_case[idx].status;
-			return ERR_CODE(PASSED);
-		}
-	}
-
-	DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
-	return ERR_CODE(BAD_PARAM_TYPE);
-}
-
 int util_read_test_error(enum arguments_test_err_case *error,
 			 json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
-	json_object *obj = NULL;
+	size_t idx;
+	char *tst_err = NULL;
+
+	if (!error || !params) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
 
 	*error = NOT_DEFINED;
 
-	if (json_object_object_get_ex(params, TEST_ERR_OBJ, &obj))
-		ret = get_test_err_status(error, json_object_get_string(obj));
+	ret = util_read_json_type(&tst_err, TEST_ERR_OBJ, t_string, params);
+	if (ret == ERR_CODE(PASSED)) {
+		for (idx = 0; idx < ARRAY_SIZE(args_test_err_case); idx++) {
+			if (!strcmp(args_test_err_case[idx].string, tst_err)) {
+				*error = args_test_err_case[idx].status;
+				break;
+			}
+		}
+	} else if (ret == ERR_CODE(VALUE_NOTFOUND)) {
+		ret = ERR_CODE(PASSED);
+	}
 
 	return ret;
 }
@@ -615,6 +609,18 @@ char *util_get_strerr(void)
 		return strerror(errno);
 
 	return "Unknown error";
+}
+
+const char *util_get_err_code_str(int err)
+{
+	size_t idx;
+
+	/* Find the error entry in the array of error string */
+	for (idx = 0; idx < MAX_TEST_ERROR; idx++)
+		if (err == ERR_CODE(idx))
+			return list_err[idx].status;
+
+	return list_err[INTERNAL].status;
 }
 
 __weak void util_dbg_printf(const char *function, int line, const char *fmt,

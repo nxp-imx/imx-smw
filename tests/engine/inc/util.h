@@ -52,8 +52,7 @@
 /* Test type specified by the definition file name */
 #define TEST_API_TYPE "_API_"
 
-#define ERR_CODE(val)	(list_err[(val)].code)
-#define ERR_STATUS(val) (list_err[(val)].status)
+#define ERR_CODE(val) (list_err[(val)].code)
 
 #define ENUM_TO_STRING(name)                                                   \
 	{                                                                      \
@@ -329,5 +328,15 @@ int check_file_extension(char *filename, char *extension);
  * Otherwise unknown error message
  */
 char *util_get_strerr(void);
+
+/**
+ * util_get_err_code_str() - Get the test engine error code string
+ * @err: Error code
+ *
+ * Return:
+ * Pointer to the string of the error code if exist,
+ * Otherwise return string of the error code (-INTERNAL)
+ */
+const char *util_get_err_code_str(int err);
 
 #endif /* __UTIL_H__ */

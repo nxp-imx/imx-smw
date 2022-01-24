@@ -145,6 +145,8 @@ static int cancel_all_threads(struct app_data *app)
 				if (pthread_cancel(thr->id))
 					DBG_PRINT("%s cancel with %s",
 						  thr->name, util_get_strerr());
+
+				util_thread_log(thr);
 				break;
 			}
 
@@ -478,4 +480,40 @@ int util_thread_ends_wait(struct app_data *app)
 	res = (res == ERR_CODE(PASSED)) ? status : res;
 
 	return res;
+}
+
+void util_thread_log(struct thread_data *thr)
+{
+	int nb_char = 0;
+	char str[256] = { 0 };
+	const char *error = NULL;
+
+	if (thr->status == ERR_CODE(BAD_RESULT))
+		error = get_smw_string_status(thr->smw_status);
+
+	if (strlen(thr->name))
+		nb_char = sprintf(str, "[%s] ", thr->name);
+
+	if (nb_char < 0)
+		DBG_PRINT("Error (%d) %s", nb_char, util_get_strerr());
+
+	if (thr->subtest) {
+		(void)sprintf(&str[nb_char], "%s: %s", thr->subtest,
+			      util_get_err_code_str(thr->status));
+	} else {
+		/* This is the status of the thread */
+		if (thr->status == ERR_CODE(PASSED))
+			(void)sprintf(&str[nb_char], "%s",
+				      util_get_err_code_str(thr->status));
+		else
+			(void)sprintf(&str[nb_char], "%s (%s)",
+				      util_get_err_code_str(ERR_CODE(FAILED)),
+				      util_get_err_code_str(thr->status));
+	}
+
+	/* Additional error message if any */
+	if (error)
+		util_log_status(thr->app, "%s (%s)\n", str, error);
+	else
+		util_log_status(thr->app, "%s\n", str);
 }

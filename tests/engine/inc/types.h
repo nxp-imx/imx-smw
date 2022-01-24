@@ -38,6 +38,7 @@ enum err_num {
 	COND_DESTROY,
 	TIMEOUT,
 	THREAD_CANCELED,
+	MAX_TEST_ERROR, /* Maximum test error constant - keep last item */
 };
 
 /**
@@ -50,8 +51,7 @@ struct error {
 	const char *status;
 };
 
-extern const struct error list_err[];
-extern unsigned int list_err_size;
+extern const struct error list_err[MAX_TEST_ERROR];
 
 /*
  * Opaque type of thread waiting all test thread

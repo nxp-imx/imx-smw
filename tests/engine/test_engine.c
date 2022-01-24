@@ -177,7 +177,7 @@ end:
  *
  * Return
  * PASSED  - Success
- * -FAILED - Subtest failed
+ * or any error code (see enum err_num)
  */
 static int run_multithread(struct app_data *app)
 {
@@ -244,7 +244,7 @@ static int run_multithread(struct app_data *app)
  *
  * Return
  * PASSED  - Single Thread test passed
- * -FAILED - Single Thread test failed
+ * or any error code (see enum err_num)
  */
 static int run_singlethread(struct app_data *app)
 {
@@ -378,10 +378,8 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 		goto exit;
 
 	test_status = util_read_json_file(NULL, def_file, &app->definition);
-	if (test_status != ERR_CODE(PASSED)) {
-		FPRINT_TEST_INTERNAL_FAILURE(app, test_name);
+	if (test_status != ERR_CODE(PASSED))
 		goto exit;
-	}
 
 	/* Free the file name no more used */
 	free(name);
@@ -410,9 +408,12 @@ exit:
 		free(name);
 
 	if (test_status == ERR_CODE(PASSED))
-		FPRINT_TEST_STATUS(app, test_name, ERR_STATUS(PASSED));
+		util_log(app, "%s: %s\n", test_name,
+			 util_get_err_code_str(test_status));
 	else
-		FPRINT_TEST_STATUS(app, test_name, ERR_STATUS(FAILED));
+		util_log(app, "%s: %s (%s)\n", test_name,
+			 util_get_err_code_str(ERR_CODE(FAILED)),
+			 util_get_err_code_str(test_status));
 
 	err = util_destroy_app();
 	if (test_status == ERR_CODE(PASSED))

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <string.h>
@@ -109,7 +109,7 @@ static int set_sign_verify_bad_args(json_object *params,
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -138,7 +138,7 @@ int sign_verify(int operation, json_object *params,
 	json_object *sign_id_obj = NULL;
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -190,7 +190,7 @@ int sign_verify(int operation, json_object *params,
 		    !util_key_is_private_key_defined(&key_test)) ||
 		   ((operation == VERIFY_OPERATION) &&
 		    !util_key_is_public_key_defined(&key_test))) {
-		DBG_PRINT_MISS_PARAM(__func__, "Key description");
+		DBG_PRINT_MISS_PARAM("Key description");
 		res = ERR_CODE(MISSING_PARAMS);
 		goto exit;
 	}
@@ -217,7 +217,7 @@ int sign_verify(int operation, json_object *params,
 		if (operation == SIGN_OPERATION) {
 			/* 'sign_id' must not be in the signatures list */
 			if (res == ERR_CODE(PASSED)) {
-				DBG_PRINT_BAD_PARAM(__func__, SIGN_ID_OBJ);
+				DBG_PRINT_BAD_PARAM(SIGN_ID_OBJ);
 				res = ERR_CODE(BAD_PARAM_TYPE);
 				goto exit;
 			}
@@ -226,8 +226,7 @@ int sign_verify(int operation, json_object *params,
 			if (new_sign_length) {
 				new_sign = malloc(new_sign_length);
 				if (!new_sign) {
-					DBG_PRINT_ALLOC_FAILURE(__func__,
-								__LINE__);
+					DBG_PRINT_ALLOC_FAILURE();
 					res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 					goto exit;
 				}
@@ -238,7 +237,7 @@ int sign_verify(int operation, json_object *params,
 		} else /* operation == VERIFY_OPERATION */ {
 			/* 'sign_id' must be in the signatures list */
 			if (res != ERR_CODE(PASSED)) {
-				DBG_PRINT_BAD_PARAM(__func__, SIGN_ID_OBJ);
+				DBG_PRINT_BAD_PARAM(SIGN_ID_OBJ);
 				res = ERR_CODE(BAD_PARAM_TYPE);
 				goto exit;
 			}

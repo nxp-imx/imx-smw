@@ -47,7 +47,7 @@ static int bad_params(json_object *params, struct smw_op_context **args,
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -67,7 +67,7 @@ int cancel_operation(json_object *params,
 					  .reserved = NULL };
 
 	if (!params || !common_params || !ret_status) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
@@ -75,7 +75,7 @@ int cancel_operation(json_object *params,
 	if (json_object_object_get_ex(params, CTX_ID_OBJ, &ctx_id_obj)) {
 		ctx_id = json_object_get_int(ctx_id_obj);
 	} else if (!common_params->is_api_test) {
-		DBG_PRINT_MISS_PARAM(__func__, "Context ID");
+		DBG_PRINT_MISS_PARAM("Context ID");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -114,7 +114,7 @@ int copy_context(json_object *params, struct common_parameters *common_params,
 					  .reserved = NULL };
 
 	if (!params || !common_params || !ret_status) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
@@ -126,19 +126,19 @@ int copy_context(json_object *params, struct common_parameters *common_params,
 		 */
 
 		if (json_object_get_type(obj) != json_type_array) {
-			DBG_PRINT_BAD_PARAM(__func__, CTX_ID_OBJ);
+			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
 		if (json_object_array_length(obj) != 2) {
-			DBG_PRINT_BAD_PARAM(__func__, CTX_ID_OBJ);
+			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
 		array_member = json_object_array_get_idx(obj, 0);
 
 		if (json_object_get_type(array_member) != json_type_int) {
-			DBG_PRINT_BAD_PARAM(__func__, CTX_ID_OBJ);
+			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
@@ -153,13 +153,13 @@ int copy_context(json_object *params, struct common_parameters *common_params,
 		array_member = json_object_array_get_idx(obj, 1);
 
 		if (json_object_get_type(array_member) != json_type_int) {
-			DBG_PRINT_BAD_PARAM(__func__, CTX_ID_OBJ);
+			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
 		dst_ctx_id = json_object_get_int(array_member);
 	} else if (!common_params->is_api_test) {
-		DBG_PRINT_MISS_PARAM(__func__, "Context ID");
+		DBG_PRINT_MISS_PARAM("Context ID");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -194,7 +194,7 @@ int copy_context(json_object *params, struct common_parameters *common_params,
 
 		if (json_object_object_get_ex(params, COPY_CIPHER_CTX, &obj)) {
 			if (json_object_get_type(obj) != json_type_int) {
-				DBG_PRINT_BAD_PARAM(__func__, COPY_CIPHER_CTX);
+				DBG_PRINT_BAD_PARAM(COPY_CIPHER_CTX);
 				return ERR_CODE(BAD_PARAM_TYPE);
 			}
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -233,7 +233,7 @@ static int keypair_read(struct keypair_ops *key_test, unsigned int key_idx,
 	json_object *nb_keys_obj;
 
 	if (!params || !key_test) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -309,7 +309,7 @@ int util_key_add_node(struct llist **key_identifiers, unsigned int id,
 
 	data = malloc(sizeof(*data));
 	if (!data) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
@@ -359,7 +359,7 @@ int util_key_desc_init(struct keypair_ops *key_test,
 	struct smw_key_descriptor *desc;
 
 	if (!key_test) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -386,7 +386,7 @@ int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 	struct smw_key_descriptor *desc;
 
 	if (!params || !key_test) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -426,7 +426,7 @@ int util_key_desc_set_key(struct keypair_ops *key_test,
 			  struct smw_keypair_buffer *key)
 {
 	if (!key_test || !key) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 

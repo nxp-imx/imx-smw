@@ -7,6 +7,7 @@
 
 #include "smw_osal.h"
 
+#include "util_sem.h"
 #include "util_thread.h"
 #include "keymgr.h"
 #include "hash.h"
@@ -39,7 +40,7 @@ static int execute_generate_cmd(struct json_object *params,
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
-		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -64,7 +65,7 @@ static int execute_hash_cmd(struct json_object *params,
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
-		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -89,7 +90,7 @@ static int execute_hmac_cmd(struct json_object *params,
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
-		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -115,7 +116,7 @@ static int execute_import_cmd(struct json_object *params,
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
-		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -194,7 +195,7 @@ static int execute_sign_verify_cmd(int operation, struct json_object *params,
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
-		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -219,7 +220,7 @@ static int execute_rng_cmd(struct json_object *params,
 {
 	/* Check mandatory params */
 	if (!common_params->subsystem) {
-		DBG_PRINT_MISS_PARAM(__func__, "subsystem");
+		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -468,7 +469,7 @@ static int get_depends_status(struct json_object *params, FILE *status_file)
 		 * entries. Otherwise it must be an integer
 		 */
 		if (nb_members <= 1) {
-			DBG_PRINT_BAD_PARAM(__func__, DEPENDS_OBJ);
+			DBG_PRINT_BAD_PARAM(DEPENDS_OBJ);
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 	}
@@ -482,7 +483,7 @@ static int get_depends_status(struct json_object *params, FILE *status_file)
 
 		depends = json_object_get_int(array_member);
 		if (depends <= 0) {
-			DBG_PRINT_BAD_PARAM(__func__, DEPENDS_OBJ);
+			DBG_PRINT_BAD_PARAM(DEPENDS_OBJ);
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
@@ -561,7 +562,7 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 	res = util_read_json_type(&cmd_name, CMD_OBJ, t_string, obj->val);
 	if (res != ERR_CODE(PASSED)) {
 		if (res == ERR_CODE(VALUE_NOTFOUND)) {
-			DBG_PRINT_MISS_PARAM(__func__, CMD_OBJ);
+			DBG_PRINT_MISS_PARAM(CMD_OBJ);
 			res = ERR_CODE(MISSING_PARAMS);
 		}
 
@@ -617,9 +618,27 @@ static int run_subtest(struct thread_data *thr, struct json_object_iter *obj)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
+	/* First wait and post semaphore */
+	res = util_sem_wait_before(thr, obj->val);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	res = util_sem_post_before(thr, obj->val);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
 	/* Execute subtest command */
 	res = execute_command(cmd_name, obj->val, &common_params, thr->app,
 			      &status);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Last wait and post semaphore */
+	res = util_sem_post_after(thr, obj->val);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	res = util_sem_wait_after(thr, obj->val);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -650,13 +669,26 @@ void *process_thread(void *arg)
 	struct json_object_iter obj;
 
 	if (!thr || !thr->def) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		exit(ERR_CODE(BAD_ARGS));
 	}
 
 	if (!json_object_get_object(thr->def)) {
 		DBG_PRINT("Thread definition json_object_get_object error");
 		err = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	/* First wait and post semaphore if multi-thread test */
+	err = util_sem_wait_before(thr, thr->parent_def);
+	if (err != ERR_CODE(PASSED)) {
+		err = ERR_CODE(FAILED);
+		goto exit;
+	}
+
+	err = util_sem_post_before(thr, thr->parent_def);
+	if (err != ERR_CODE(PASSED)) {
+		err = ERR_CODE(FAILED);
 		goto exit;
 	}
 
@@ -677,6 +709,17 @@ void *process_thread(void *arg)
 
 	if (!ran_subtest)
 		status = ERR_CODE(FAILED);
+
+	/* Last wait and post semaphore if multi-thread test */
+	err = util_sem_post_after(thr, thr->parent_def);
+	if (err != ERR_CODE(PASSED)) {
+		err = ERR_CODE(FAILED);
+		goto exit;
+	}
+
+	err = util_sem_wait_after(thr, thr->parent_def);
+	if (err != ERR_CODE(PASSED))
+		err = ERR_CODE(FAILED);
 
 exit:
 	thr->state = EXITED;

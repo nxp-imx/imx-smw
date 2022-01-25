@@ -10,10 +10,11 @@
 #include <stdio.h>
 #include <json_object.h>
 
+#include <smw_status.h>
+
 #include "json_types.h"
 #include "types.h"
-
-#include "smw_keymgr.h"
+#include "util_debug.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
@@ -75,56 +76,6 @@
 
 #define FPRINT_MESSAGE(file, ...) ((void)fprintf(file, __VA_ARGS__))
 
-#if defined(ENABLE_TRACE)
-
-#define DBG_PRINT_ALLOC_FAILURE(function, line)                                \
-	printf("%s (%d): Memory allocation failed\n", function, line)
-
-#define DBG_PRINT_BAD_ARGS(function) printf("%s: Bad arguments\n", function)
-
-#define DBG_PRINT_BAD_PARAM(function, param)                                   \
-	printf("%s: '%s' parameter isn't properly set\n", function, param)
-
-#define DBG_PRINT_VALUE_NOTFOUND(param)                                        \
-	printf("%s: '%s' value not found\n", __func__, param)
-
-#define DBG_PRINT_MISS_PARAM(function, param)                                  \
-	printf("%s: '%s' mandatory parameter is missing\n", function, param)
-
-#define DBG_PRINT(...)                                                         \
-	do {                                                                   \
-		printf("%s: ", __func__);                                      \
-		printf(__VA_ARGS__);                                           \
-		printf("\n");                                                  \
-	} while (0)
-
-void dbg_dumphex(const char *function, int line, char *msg, void *buf,
-		 size_t len);
-#define DBG_DHEX(msg, buf, len) dbg_dumphex(__func__, __LINE__, msg, buf, len)
-
-#else /* ENABLE_TRACE */
-
-#define DBG_PRINT_ALLOC_FAILURE(function, line)
-#define DBG_PRINT_BAD_ARGS(function)
-#define DBG_PRINT_BAD_PARAM(function, param)
-#define DBG_PRINT_VALUE_NOTFOUND(param)
-#define DBG_PRINT_MISS_PARAM(function, param)
-#define DBG_PRINT(...)
-#define DBG_DHEX(msg, buf, len)
-
-#endif /* ENABLE_TRACE */
-
-/**
- * util_get_strerr() - Get the system error message
- *
- * If the system "errno" is defined get the current error message
- *
- * Return:
- * System error message
- * Otherwise unknown error message
- */
-char *util_get_strerr(void);
-
 #define ENUM_TO_STRING(name)                                                   \
 	{                                                                      \
 		.status = name, .string = #name                                \
@@ -159,6 +110,7 @@ char *util_get_strerr(void);
  * @is_multithread:  Application is multithread
  * @is_api_test:     Flag if test only SMW's API
  * @definition:      Application test definition
+ * @lock_dbg:        Debug Printf protector
  */
 struct app_data {
 	char *dir_def_file;
@@ -170,6 +122,7 @@ struct app_data {
 	int is_multithread;
 	int is_api_test;
 	struct json_object *definition;
+	void *lock_dbg;
 };
 
 /**
@@ -408,5 +361,16 @@ int util_read_json_file(char *dir, char *name, json_object **json_obj);
  * -FAILED	- @extension doesn't match @filename extension.
  */
 int check_file_extension(char *filename, char *extension);
+
+/**
+ * util_get_strerr() - Get the system error message
+ *
+ * If the system "errno" is defined get the current error message
+ *
+ * Return:
+ * System error message
+ * Otherwise unknown error message
+ */
+char *util_get_strerr(void);
 
 #endif /* __UTIL_H__ */

@@ -169,11 +169,12 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 
 	thr = calloc(1, sizeof(*thr));
 	if (!thr) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
 	thr->app = app;
+	thr->parent_def = thr_obj->val;
 	(void)sprintf(thr->name, "Thread %d", thr_num);
 	thr->loop = loop;
 
@@ -249,7 +250,7 @@ int util_thread_get_ids(const char *name, unsigned int *first,
 
 	tmp = malloc(strlen(name) - strlen(THREAD_OBJ) + 1);
 	if (!tmp) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 

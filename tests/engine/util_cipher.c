@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -39,14 +39,14 @@ int util_cipher_add_out_data(struct llist **list, unsigned int ctx_id,
 		/* 1st call, allocate node and output data */
 		data = malloc(sizeof(*data));
 		if (!data) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 
 		data->output_len = data_len;
 		data->output = malloc(data->output_len);
 		if (!data->output) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			free(data);
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
@@ -64,7 +64,7 @@ int util_cipher_add_out_data(struct llist **list, unsigned int ctx_id,
 		data->output =
 			realloc(data->output, data->output_len + data_len);
 		if (!data->output) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 

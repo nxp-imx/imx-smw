@@ -25,15 +25,13 @@ static int read_config_file(char *file_name, char **buffer, unsigned int *size)
 		goto end;
 
 	if (fseek(f, 0, SEEK_END)) {
-		if (ferror(f))
-			perror("fseek() SEEK_END");
+		DBG_PRINT("fseek(SEEK_END) %s", util_get_strerr());
 		goto end;
 	}
 
 	fsize = ftell(f);
 	if (fsize == -1) {
-		if (ferror(f))
-			perror("ftell()");
+		DBG_PRINT("ftell() %s", util_get_strerr());
 		goto end;
 	}
 	DBG_PRINT("File size: %ld", fsize);
@@ -46,8 +44,7 @@ static int read_config_file(char *file_name, char **buffer, unsigned int *size)
 
 	*size = fsize;
 	if (fseek(f, 0, SEEK_SET)) {
-		if (ferror(f))
-			perror("fseek() SEEK_SET");
+		DBG_PRINT("fseek(SEEK_SET) %s", util_get_strerr());
 		goto end;
 	}
 
@@ -57,14 +54,11 @@ static int read_config_file(char *file_name, char **buffer, unsigned int *size)
 		goto end;
 	}
 	if (*size != fread(*buffer, sizeof **buffer, *size, f)) {
-		if (feof(f)) {
+		if (feof(f))
 			DBG_PRINT("Error reading %s: unexpected EOF",
 				  file_name);
-			goto end;
-		}
-
-		if (ferror(f))
-			perror("fread()");
+		else
+			DBG_PRINT("fread() %s", util_get_strerr());
 
 		goto end;
 	}
@@ -75,7 +69,7 @@ static int read_config_file(char *file_name, char **buffer, unsigned int *size)
 end:
 	if (f)
 		if (fclose(f))
-			perror("fclose()");
+			DBG_PRINT("fclose() %s", util_get_strerr());
 
 	return res;
 }
@@ -93,7 +87,7 @@ int config_load(json_object *params, struct common_parameters *common_params,
 	unsigned int offset = 0;
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -103,15 +97,15 @@ int config_load(json_object *params, struct common_parameters *common_params,
 		res = util_read_json_type(&file_name, FILEPATH_OBJ, t_string,
 					  params);
 		if (res != ERR_CODE(PASSED)) {
-			DBG_PRINT_MISS_PARAM(__func__, "filepath");
-			DBG_PRINT_MISS_PARAM(__func__, "input");
+			DBG_PRINT_MISS_PARAM("filepath");
+			DBG_PRINT_MISS_PARAM("input");
 			goto end;
 		}
 
 		file_path_size = strlen(CONFIG_DIR) + strlen(file_name);
 		file_path = malloc(file_path_size + 1);
 		if (!file_path) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 			goto end;
 		}
@@ -150,7 +144,7 @@ int config_unload(json_object *params, struct common_parameters *common_params,
 	int res = ERR_CODE(PASSED);
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 

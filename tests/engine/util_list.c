@@ -27,7 +27,7 @@ int util_list_init(struct llist **list, void (*free)(void *))
 
 	*list = malloc(sizeof(struct llist));
 	if (!*list) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
@@ -44,7 +44,7 @@ int util_list_add_node(struct llist *list, unsigned int id, void *data)
 
 	node = malloc(sizeof(*node));
 	if (!node) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 

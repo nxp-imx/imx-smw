@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <string.h>
@@ -45,7 +45,7 @@ static int set_rng_bad_args(json_object *params, struct smw_rng_args **args)
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -62,7 +62,7 @@ int rng(json_object *params, struct common_parameters *common_params,
 	struct smw_rng_args *smw_rng_args = &args;
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -79,7 +79,7 @@ int rng(json_object *params, struct common_parameters *common_params,
 		goto exit;
 
 	if (!common_params->is_api_test && (!random_len || random_hex)) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		res = ERR_CODE(BAD_ARGS);
 		goto exit;
 	}
@@ -87,7 +87,7 @@ int rng(json_object *params, struct common_parameters *common_params,
 	if (!common_params->is_api_test) {
 		random_hex = malloc(random_len);
 		if (!random_hex) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 			goto exit;
 		}

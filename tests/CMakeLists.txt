@@ -75,13 +75,17 @@ add_executable(${PROJECT_NAME}
                engine/util_cipher.c
                engine/util_thread.c
                engine/util_file.c
+               engine/util_mutex.c
                engine/util_sem.c
                engine/operation_context.c
-               ${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c)
+               ${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c
+               $<$<CONFIG:Debug>:engine/util_debug.c>)
 
-target_include_directories(${PROJECT_NAME}
-                           PRIVATE ${TEST_SRC_INC} ${TEST_BIN_INC}
-                                   ${JSONC_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE
+                           ${TEST_SRC_INC}
+                           ${TEST_BIN_INC}
+                           ${JSONC_INCLUDE_DIR}
+                           ${CMAKE_SOURCE_DIR}/inc)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONC_LIBRARY})
 target_link_libraries(${PROJECT_NAME} PRIVATE pthread)

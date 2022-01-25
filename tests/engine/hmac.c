@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <string.h>
@@ -69,7 +69,7 @@ static int set_hmac_bad_args(json_object *params, struct smw_hmac_args **args,
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -94,7 +94,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 	struct smw_hmac_args *smw_hmac_args = &args;
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -140,7 +140,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 	} else if (!util_key_is_type_set(&key_test) ||
 		   !util_key_is_security_set(&key_test) ||
 		   !util_key_is_private_key_defined(&key_test)) {
-		DBG_PRINT_MISS_PARAM(__func__, "Key description");
+		DBG_PRINT_MISS_PARAM("Key description");
 		res = ERR_CODE(MISSING_PARAMS);
 		goto exit;
 	}
@@ -168,7 +168,7 @@ int hmac(json_object *params, struct common_parameters *common_params,
 	if (output_len) {
 		output_hex = malloc(output_len);
 		if (!output_hex) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 			goto exit;
 		}

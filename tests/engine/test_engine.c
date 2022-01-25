@@ -193,6 +193,8 @@ static int run_multithread(struct app_data *app)
 	if (!json_object_get_object(app->definition))
 		return ERR_CODE(FAILED);
 
+	app->is_multithread = 1;
+
 	json_object_object_foreachC(app->definition, obj)
 	{
 		first = 0;
@@ -350,7 +352,7 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 		return ERR_CODE(INTERNAL);
 
 	if (!def_file || !test_name) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		test_status = ERR_CODE(BAD_ARGS);
 		goto exit;
 	}
@@ -360,7 +362,7 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 
 	name = malloc(strlen(test_name) + strlen(TEST_STATUS_EXTENSION) + 1);
 	if (!name) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		test_status = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		goto exit;
 	}
@@ -404,6 +406,9 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 	sign_clear_signatures_list();
 	util_list_clear(app->op_contexts);
 	cipher_clear_out_data_list();
+
+	/* Erase semaphores list */
+	util_list_clear(app->semaphores);
 
 	if (!test_status)
 		FPRINT_TEST_STATUS(app->log, test_name, ERR_STATUS(PASSED));

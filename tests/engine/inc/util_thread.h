@@ -17,15 +17,17 @@ enum thread_state { NOT_INIT = 0, RUNNING, WAITING, EXITED };
 /**
  * struct thread_data - Thread data object
  * @app: Application data
+ * @parent_def: Parent's thread object definition
  * @status: Test status
  * @id: Thread ID
- * @name: Thread Name
+ * @name: Thread name
  * @state: Thread state
  * @loop: Thread loop
  * @def: Thread test definition
  */
 struct thread_data {
 	struct app_data *app;
+	struct json_object *parent_def;
 	int status;
 	pthread_t id;
 	char name[MAX_THR_NAME];

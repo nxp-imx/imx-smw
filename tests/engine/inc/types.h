@@ -31,6 +31,7 @@ enum err_num {
 	KEY_NOTFOUND,
 	ERROR_NOT_DEFINED,
 	ERROR_SMWLIB_INIT, /* 15 */
+	MUTEX_DESTROY,
 };
 
 /**

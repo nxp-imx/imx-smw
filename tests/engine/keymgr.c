@@ -83,7 +83,7 @@ static int set_gen_opt_params(json_object *params,
 		*key_public_data(key_test) = malloc(public_length);
 
 		if (!*key_public_data(key_test)) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 	}
@@ -108,7 +108,7 @@ static int set_gen_opt_params(json_object *params,
 		*key_modulus(key_test) = malloc(modulus_length);
 
 		if (!*key_modulus(key_test)) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 	}
@@ -224,7 +224,7 @@ static int set_export_opt_params(json_object *params,
 		*key_private_data(key_test) =
 			malloc(*key_private_length(key_test));
 		if (!*key_private_data(key_test)) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 	}
@@ -233,7 +233,7 @@ static int set_export_opt_params(json_object *params,
 		*key_public_data(key_test) =
 			malloc(*key_public_length(key_test));
 		if (!*key_public_data(key_test)) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 	}
@@ -242,7 +242,7 @@ static int set_export_opt_params(json_object *params,
 	    *key_modulus_length(key_test)) {
 		*key_modulus(key_test) = malloc(*key_modulus_length(key_test));
 		if (!*key_modulus(key_test)) {
-			DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+			DBG_PRINT_ALLOC_FAILURE();
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 	}
@@ -314,7 +314,7 @@ static int set_common_bad_args(json_object *params, void **args,
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -340,7 +340,7 @@ static int set_gen_bad_args(json_object *params,
 	int ret;
 
 	if (!args || !*args || !(*args)->key_descriptor) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -372,7 +372,7 @@ static int set_del_bad_args(json_object *params,
 
 	if (!args || !*args || !(*args)->key_descriptor ||
 	    (*args)->key_descriptor->buffer) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -404,7 +404,7 @@ static int set_import_bad_args(json_object *params,
 
 	if (!args || !*args || !(*args)->key_descriptor ||
 	    !(*args)->key_descriptor->buffer) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -440,7 +440,7 @@ static int set_export_bad_args(json_object *params,
 
 	if (!args || !*args || !(*args)->key_descriptor ||
 	    !(*args)->key_descriptor->buffer) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -532,7 +532,7 @@ static int save_key_ids_to_json_file(struct llist *key_list, char *filepath)
 	FILE *json_file = NULL;
 
 	if (!key_list || !filepath) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
@@ -678,7 +678,7 @@ static int restore_key_ids_from_json_file(struct llist **key_list,
 	struct keypair_ops key = { 0 };
 
 	if (!key_list || !filepath) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -732,7 +732,7 @@ int generate_key(json_object *params, struct common_parameters *common_params,
 	int key_id = INT_MAX;
 
 	if (!params || !key_identifiers || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -757,14 +757,14 @@ int generate_key(json_object *params, struct common_parameters *common_params,
 
 	/* Key ID is mandatory */
 	if (key_id == INT_MAX) {
-		DBG_PRINT_MISS_PARAM(__func__, "key_id");
+		DBG_PRINT_MISS_PARAM("key_id");
 		res = ERR_CODE(MISSING_PARAMS);
 		goto exit;
 	}
 
 	/* Security size is mandatory */
 	if (!util_key_is_security_set(&key_test)) {
-		DBG_PRINT_MISS_PARAM(__func__, "security_size");
+		DBG_PRINT_MISS_PARAM("security_size");
 		res = ERR_CODE(MISSING_PARAMS);
 		goto exit;
 	}
@@ -809,7 +809,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 	int key_id = INT_MAX;
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -828,7 +828,7 @@ int delete_key(json_object *params, struct common_parameters *common_params,
 
 	/* Key ID is mandatory */
 	if (key_id == INT_MAX) {
-		DBG_PRINT_MISS_PARAM(__func__, "key_id");
+		DBG_PRINT_MISS_PARAM("key_id");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -869,7 +869,7 @@ int import_key(json_object *params, struct common_parameters *common_params,
 	int key_id = INT_MAX;
 
 	if (!params || !common_params || !key_identifiers || !ret_status) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -894,14 +894,14 @@ int import_key(json_object *params, struct common_parameters *common_params,
 
 	/* Key ID is mandatory */
 	if (key_id == INT_MAX) {
-		DBG_PRINT_MISS_PARAM(__func__, "key_id");
+		DBG_PRINT_MISS_PARAM("key_id");
 		res = ERR_CODE(MISSING_PARAMS);
 		goto exit;
 	}
 
 	/* Security size is mandatory */
 	if (!util_key_is_security_set(&key_test)) {
-		DBG_PRINT_MISS_PARAM(__func__, "security_size");
+		DBG_PRINT_MISS_PARAM("security_size");
 		res = ERR_CODE(MISSING_PARAMS);
 		goto exit;
 	}
@@ -952,7 +952,7 @@ int export_key(json_object *params, struct common_parameters *common_params,
 	int key_id = INT_MAX;
 
 	if (!params || !common_params || !ret_status) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -992,7 +992,7 @@ int export_key(json_object *params, struct common_parameters *common_params,
 
 	/* Key ID is mandatory */
 	if (key_id == INT_MAX) {
-		DBG_PRINT_MISS_PARAM(__func__, "key_id");
+		DBG_PRINT_MISS_PARAM("key_id");
 		res = ERR_CODE(MISSING_PARAMS);
 		goto exit;
 	}
@@ -1059,7 +1059,7 @@ int save_key_ids_to_file(struct json_object *params,
 	char *filename = NULL;
 
 	if (!params || !common_params || !ret_status) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -1085,7 +1085,7 @@ int restore_key_ids_from_file(struct json_object *params,
 	char *filename;
 
 	if (!params || !common_params || !ret_status) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 

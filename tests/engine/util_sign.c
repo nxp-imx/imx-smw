@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -34,7 +34,7 @@ int util_sign_add_node(struct llist **signatures, unsigned int id,
 
 	data = malloc(sizeof(*data));
 	if (!data) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 

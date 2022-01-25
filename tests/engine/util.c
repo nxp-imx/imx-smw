@@ -8,14 +8,16 @@
 #include <errno.h>
 #include <json.h>
 #include <libgen.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "smw_keymgr.h"
+#include <compiler.h>
 
 #include "json_util.h"
 #include "util.h"
 #include "util_file.h"
+#include "util_mutex.h"
 
 /**
  * struct - test_err_case
@@ -68,6 +70,7 @@ const struct error list_err[] = {
 	SET_ERR_CODE_AND_NAME(KEY_NOTFOUND, "KEY NOT FOUND"),
 	SET_ERR_CODE_AND_NAME(ERROR_NOT_DEFINED, "TEST ERROR NOT DEFINED"),
 	SET_ERR_CODE_AND_NAME(ERROR_SMWLIB_INIT, "SMW LIBRARY INIT ERROR"),
+	SET_ERR_CODE_AND_NAME(MUTEX_DESTROY, "MUTEX DESTROY ERROR"),
 };
 
 #undef SET_ERR_CODE_AND_NAME
@@ -81,6 +84,10 @@ struct app_data *util_setup_app(void)
 	if (!app_data)
 		return NULL;
 
+	app_data->lock_dbg = util_mutex_create();
+	if (!app_data->lock_dbg)
+		util_destroy_app();
+
 	return app_data;
 }
 
@@ -91,8 +98,14 @@ struct app_data *util_get_app(void)
 
 void util_destroy_app(void)
 {
+	int res;
+
 	if (!app_data)
 		return;
+
+	/* Destroy the debug print mutex and abort if failure */
+	res = util_mutex_destroy(&app_data->lock_dbg);
+	assert(res == ERR_CODE(PASSED));
 
 	free(app_data);
 
@@ -107,7 +120,7 @@ int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 	int string_len = 0;
 
 	if (!string || !hex || !len) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -122,7 +135,7 @@ int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 
 	*hex = malloc(*len);
 	if (!*hex) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
@@ -146,7 +159,7 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 	unsigned int len_tmp = 0;
 
 	if (!buf || !buf_len || !json_len || !obuf) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -227,7 +240,7 @@ int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
 	unsigned int json_len = UINT_MAX;
 
 	if (!params || !field || !hex || !length) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -264,7 +277,7 @@ int get_test_name(char **test_name, char *test_definition_file)
 	char *filename;
 
 	if (!test_name || !test_definition_file) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
@@ -288,7 +301,7 @@ int get_test_name(char **test_name, char *test_definition_file)
 
 	*test_name = malloc(len + 1);
 	if (!*test_name) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
@@ -303,7 +316,7 @@ int get_test_err_status(unsigned int *status, const char *string)
 	unsigned int idx = 0;
 
 	if (!string || !status) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -314,7 +327,7 @@ int get_test_err_status(unsigned int *status, const char *string)
 		}
 	}
 
-	DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
+	DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 	return ERR_CODE(BAD_PARAM_TYPE);
 }
 
@@ -331,32 +344,6 @@ int util_read_test_error(enum arguments_test_err_case *error,
 
 	return ret;
 }
-
-#ifdef ENABLE_TRACE
-void dbg_dumphex(const char *function, int line, char *msg, void *buf,
-		 size_t len)
-{
-	size_t idx;
-	char out[256];
-	int off = 0;
-
-	printf("%s:%d %s (%p-%zu)\n", function, line, msg, buf, len);
-
-	for (idx = 0; idx < len; idx++) {
-		if (((idx % 16) == 0) && idx > 0) {
-			printf("%s\n", out);
-			off = 0;
-		}
-		off += snprintf(out + off, (sizeof(out) - off), "%02X ",
-				((char *)buf)[idx]);
-	}
-
-	if (off > 0)
-		printf("%s\n", out);
-
-	(void)fflush(stdout);
-}
-#endif
 
 int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
 			 unsigned char *expected_buffer,
@@ -402,7 +389,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 	json_object *obj = NULL;
 
 	if (!params || !key) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -419,7 +406,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 	val_type = json_object_get_type(obj);
 
 	if (!(BIT(val_type) & t_data_2_json_type[type])) {
-		DBG_PRINT_BAD_PARAM(__func__, key);
+		DBG_PRINT_BAD_PARAM(key);
 		return ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -481,7 +468,7 @@ int util_read_json_file(char *dir, char *name, json_object **json_obj)
 	char *definition_buffer = NULL;
 
 	if (!name || !json_obj) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
@@ -530,4 +517,22 @@ char *util_get_strerr(void)
 		return strerror(errno);
 
 	return "Unknown error";
+}
+
+__weak void util_dbg_printf(const char *function, int line, const char *fmt,
+			    ...)
+{
+	(void)function;
+	(void)line;
+	(void)fmt;
+}
+
+__weak void util_dbg_dumphex(const char *function, int line, char *msg,
+			     void *buf, size_t len)
+{
+	(void)function;
+	(void)line;
+	(void)msg;
+	(void)buf;
+	(void)len;
 }

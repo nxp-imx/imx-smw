@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <string.h>
@@ -36,7 +36,7 @@ int get_hash_digest_len(char *algo, unsigned int *len)
 	unsigned int array_size = ARRAY_SIZE(hash_size);
 
 	if (!algo || !len) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -99,7 +99,7 @@ static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 		break;
 	}
@@ -121,7 +121,7 @@ int hash(json_object *params, struct common_parameters *common_params,
 	struct smw_hash_args *smw_hash_args = &args;
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -167,7 +167,7 @@ int hash(json_object *params, struct common_parameters *common_params,
 		if (output_len) {
 			output_hex = malloc(output_len);
 			if (!output_hex) {
-				DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+				DBG_PRINT_ALLOC_FAILURE();
 				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 				goto exit;
 			}

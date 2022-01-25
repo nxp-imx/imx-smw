@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <string.h>
@@ -173,7 +173,7 @@ static int cipher_bad_params(json_object *params,
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -202,14 +202,14 @@ static int get_cipher_config(json_object *params, const char **mode,
 	if (json_object_object_get_ex(params, MODE_OBJ, &mode_obj)) {
 		*mode = json_object_get_string(mode_obj);
 	} else if (!is_api_test) {
-		DBG_PRINT_MISS_PARAM(__func__, "Cipher mode");
+		DBG_PRINT_MISS_PARAM("Cipher mode");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
 	if (json_object_object_get_ex(params, OP_TYPE_OBJ, &op_type_obj)) {
 		*op_type = json_object_get_string(op_type_obj);
 	} else if (!is_api_test) {
-		DBG_PRINT_MISS_PARAM(__func__, "Cipher operation type");
+		DBG_PRINT_MISS_PARAM("Cipher operation type");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -391,7 +391,7 @@ static int set_keys(json_object *params, struct cipher_keys *keys,
 			   (!util_key_is_type_set(key_test) ||
 			    !util_key_is_security_set(key_test) ||
 			    !util_key_is_private_key_defined(key_test))) {
-			DBG_PRINT_MISS_PARAM(__func__, "Key description");
+			DBG_PRINT_MISS_PARAM("Key description");
 			res = ERR_CODE(MISSING_PARAMS);
 			return res;
 		}
@@ -428,7 +428,7 @@ static int cipher_update_save_out_data(json_object *params,
 		return ERR_CODE(PASSED);
 
 	if (json_object_get_type(save_output_obj) != json_type_int) {
-		DBG_PRINT_BAD_PARAM(__func__, SAVE_OUT_OBJ);
+		DBG_PRINT_BAD_PARAM(SAVE_OUT_OBJ);
 		return ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -579,7 +579,7 @@ static int set_op_context(json_object *params, int is_api_test,
 	if (json_object_object_get_ex(params, CTX_ID_OBJ, &ctx_id_obj)) {
 		*ctx_id = json_object_get_int(ctx_id_obj);
 	} else if (!is_api_test) {
-		DBG_PRINT_MISS_PARAM(__func__, "Context ID");
+		DBG_PRINT_MISS_PARAM("Context ID");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -610,7 +610,7 @@ int cipher(json_object *params, struct common_parameters *common_params,
 	struct cipher_keys keys = { 0 };
 
 	if (!params || !common_params || !ret_status) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
@@ -686,7 +686,7 @@ int cipher_init(json_object *params, struct common_parameters *common_params,
 	json_object *ctx_id_obj;
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
@@ -694,7 +694,7 @@ int cipher_init(json_object *params, struct common_parameters *common_params,
 	if (json_object_object_get_ex(params, CTX_ID_OBJ, &ctx_id_obj)) {
 		ctx_id = json_object_get_int(ctx_id_obj);
 	} else if (!common_params->is_api_test) {
-		DBG_PRINT_MISS_PARAM(__func__, "Context ID");
+		DBG_PRINT_MISS_PARAM("Context ID");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
@@ -762,7 +762,7 @@ int cipher_update(json_object *params, struct common_parameters *common_params,
 	struct smw_op_context api_ctx = { .handle = &api_ctx };
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
@@ -828,7 +828,7 @@ int cipher_final(json_object *params, struct common_parameters *common_params,
 	struct smw_op_context api_ctx = { .handle = &api_ctx };
 
 	if (!params || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 

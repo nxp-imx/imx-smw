@@ -250,7 +250,7 @@ int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
 	int idx;
 
 	if (!params || !attr || !len) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 

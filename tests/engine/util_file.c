@@ -17,7 +17,7 @@ int util_file_open(char *dir, char *name, const char *restrict mode, FILE **f)
 	char *fullname = NULL;
 
 	if (!name || !f) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -27,7 +27,7 @@ int util_file_open(char *dir, char *name, const char *restrict mode, FILE **f)
 	fullname_size += strlen(name) + 1;
 	fullname = calloc(1, fullname_size);
 	if (!fullname) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
@@ -55,7 +55,7 @@ int util_file_to_buffer(char *dir, char *name, char **buffer)
 	FILE *f = NULL;
 
 	if (!name || !buffer) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -64,30 +64,24 @@ int util_file_to_buffer(char *dir, char *name, char **buffer)
 		goto exit;
 
 	if (fseek(f, 0, SEEK_END)) {
-		if (ferror(f))
-			perror("fseek() SEEK_END");
-
+		DBG_PRINT("fseek(SEEK_END) %s", util_get_strerr());
 		goto exit;
 	}
 
 	size = ftell(f);
 	if (size == -1) {
-		if (ferror(f))
-			perror("ftell()");
-
+		DBG_PRINT("ftell() %s", util_get_strerr());
 		goto exit;
 	}
 
 	if (fseek(f, 0, SEEK_SET)) {
-		if (ferror(f))
-			perror("fseek() SEEK_SET");
-
+		DBG_PRINT("fseek(SEEK_SET) %s", util_get_strerr());
 		goto exit;
 	}
 
 	*buffer = malloc(size);
 	if (!*buffer) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		goto exit;
 	}
@@ -95,8 +89,8 @@ int util_file_to_buffer(char *dir, char *name, char **buffer)
 	if (size != (long)fread(*buffer, sizeof(char), size, f)) {
 		if (feof(f))
 			DBG_PRINT("Error reading %s: unexpected EOF", name);
-		else if (ferror(f))
-			perror("fread()");
+		else
+			DBG_PRINT("fread() %s", util_get_strerr());
 
 		res = ERR_CODE(INTERNAL);
 	} else {
@@ -105,7 +99,7 @@ int util_file_to_buffer(char *dir, char *name, char **buffer)
 
 exit:
 	if (f && fclose(f))
-		perror("fclose()");
+		DBG_PRINT("fclose() %s", util_get_strerr());
 
 	if (*buffer && res != ERR_CODE(PASSED)) {
 		free(*buffer);

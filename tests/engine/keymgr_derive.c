@@ -45,7 +45,7 @@ static int kdf_tls12_args_read(void **kdf_args, json_object *oargs)
 	struct smw_kdf_tls12_args *tls_args = NULL;
 
 	if (!kdf_args || !oargs) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -191,7 +191,7 @@ int kdf_tls12_end(struct smw_derive_key_args *args,
 	struct smw_kdf_tls12_args *tls_args;
 
 	if (!args || !params || !args->kdf_arguments) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -605,7 +605,7 @@ static int derive_bad_params(json_object *params,
 		break;
 
 	default:
-		DBG_PRINT_BAD_PARAM(__func__, TEST_ERR_OBJ);
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -623,7 +623,7 @@ int derive_key(json_object *params, struct common_parameters *common_params,
 	struct smw_derive_key_args *smw_args = &args;
 
 	if (!params || !key_identifiers || !ret_status || !common_params) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 

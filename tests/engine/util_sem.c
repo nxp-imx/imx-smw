@@ -96,7 +96,7 @@ static int register_sem(struct llist **lsem, const char *name,
 	size_t len;
 
 	if (!name || !lsem || !new_sem) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -108,7 +108,7 @@ static int register_sem(struct llist **lsem, const char *name,
 
 	sem = calloc(1, sizeof(*sem));
 	if (!sem) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		err = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		goto exit;
 	}
@@ -129,7 +129,7 @@ static int register_sem(struct llist **lsem, const char *name,
 
 	sem->name = malloc(len + 1);
 	if (!sem->name) {
-		DBG_PRINT_ALLOC_FAILURE(__func__, __LINE__);
+		DBG_PRINT_ALLOC_FAILURE();
 		err = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		goto exit;
 	}
@@ -169,7 +169,7 @@ static int wait_sem(struct thread_data *thr, struct app_sem *sem,
 	struct timespec ts;
 
 	if (!sem) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -233,7 +233,7 @@ static int get_wait_sem(struct thread_data *thr, struct json_object *obj,
 	int sem_timeout = 0;
 
 	if (!thr || !thr->app) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -241,7 +241,7 @@ static int get_wait_sem(struct thread_data *thr, struct json_object *obj,
 		return ERR_CODE(PASSED);
 
 	if (!obj || !tag) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -364,7 +364,7 @@ static int post_sem(struct app_data *app, const char *sem_name)
 	struct app_sem *sem = NULL;
 
 	if (!sem_name) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -414,7 +414,7 @@ static int get_post_sem(struct thread_data *thr, struct json_object *obj,
 	int idx;
 
 	if (!thr || !thr->app) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
@@ -422,7 +422,7 @@ static int get_post_sem(struct thread_data *thr, struct json_object *obj,
 		return ERR_CODE(PASSED);
 
 	if (!obj || !tag) {
-		DBG_PRINT_BAD_ARGS(__func__);
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 

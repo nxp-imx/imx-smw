@@ -6,8 +6,6 @@
 #ifndef USER_TA_HEADER_DEFINES_H
 #define USER_TA_HEADER_DEFINES_H
 
-#include <tee_subsystem.h>
-
 #define TA_UUID                                                                \
 	{                                                                      \
 		0x11b5c4aa, 0x6d20, 0x11ea,                                    \

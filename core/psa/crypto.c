@@ -493,7 +493,8 @@ __export psa_status_t psa_generate_random(uint8_t *output, size_t output_size)
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
-psa_algorithm_t psa_get_key_algorithm(const psa_key_attributes_t *attributes)
+__export psa_algorithm_t
+psa_get_key_algorithm(const psa_key_attributes_t *attributes)
 {
 	(void)attributes;
 

@@ -9,4 +9,5 @@ install:
 	@echo "Move target $(libname).a to $(LIB_DIR)"
 	$(q)mv $(libname).a $(LIB_DIR)
 	@echo "Copy library include(s) to $(INCLUDE_DIR)"
-	$(q)cp -r include $(INCLUDE_DIR)
+	$(q)mkdir -p $(INCLUDE_DIR)
+	$(q)cp -r include/* $(INCLUDE_DIR)

@@ -6,6 +6,8 @@
 #ifndef __PSA_STATUS_H__
 #define __PSA_STATUS_H__
 
+#include <stdint.h>
+
 /**
  * DOC: Reference
  * Documentation:

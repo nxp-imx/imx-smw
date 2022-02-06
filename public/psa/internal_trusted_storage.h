@@ -6,7 +6,7 @@
 #ifndef __PSA_INTERNAL_TRUSTED_STORAGE_H__
 #define __PSA_INTERNAL_TRUSTED_STORAGE_H__
 
-#include <psa/storage_common.h>
+#include "psa/storage_common.h"
 
 /**
  * DOC: Reference

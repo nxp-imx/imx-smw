@@ -9,7 +9,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include <psa/status.h>
+#include "psa/status.h"
+#include "psa/crypto_struct.h"
 
 /**
  * DOC: Reference

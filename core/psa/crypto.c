@@ -8,36 +8,6 @@
 #include "compiler.h"
 #include "debug.h"
 
-/* To be defined */
-struct psa_aead_operation {
-	int dummy;
-};
-
-/* To be defined */
-struct psa_cipher_operation {
-	int dummy;
-};
-
-/* To be defined */
-struct psa_hash_operation {
-	int dummy;
-};
-
-/* To be defined */
-struct psa_key_attributes {
-	int dummy;
-};
-
-/* To be defined */
-struct psa_key_derivation_operation {
-	int dummy;
-};
-
-/* To be defined */
-struct psa_mac_operation {
-	int dummy;
-};
-
 __export psa_status_t psa_aead_abort(psa_aead_operation_t *operation)
 {
 	(void)operation;

@@ -57,6 +57,7 @@ This version introduces the support of the ARM PSA APIs in addition to the SMW A
 * Add subsystems information (TA UUID, key storage) in the test definition file.
 * Add OPTEE TAs to be loaded per test application.
 * Support of single application with multi-threads.
+* Add PSA Architecture Tests (only supported PSA APIs are tested)
 
 #### PKCS#11 Library - _version 2.0_
 
@@ -82,7 +83,7 @@ This is the first release version of the project.
 
 * Basic Linux support
 
-3. Subsytems
+3. Subsystems
 
 * TEE (all NXP platforms supporting OPTEE OS)
 * HSM (NXP i.MX8qxpc0 running SECO firmware)

@@ -106,25 +106,39 @@ include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)
 # If TEE subsystem defined, include tests
 if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
    DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TA_dev_kit)
-    set(TEE_TESTS ON)
+    set(TEE_TESTS_ENABLED ON)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/tee_tests.cmake)
 endif()
 
 # If HSM subsystem defined, include tests
 if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco AND
    DEFINED FIND_PACKAGE_MESSAGE_DETAILS_ZLIBLight)
-    set(HSM_TESTS ON)
+    set(HSM_TESTS_ENABLED ON)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/hsm_tests.cmake)
 endif()
 
 # If HSM subsystem and TEE subsystem defined, include tests
-if(TEE_TESTS AND HSM_TESTS)
+if(TEE_TESTS_ENABLED AND HSM_TESTS_ENABLED)
     set(HSMTEE_TESTS ON)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/hsmtee_tests.cmake)
 endif()
 
-if(TEE_TESTS)
+if(TEE_TESTS_ENABLED)
     add_subdirectory(tee)
+endif()
+
+if(HSM_TESTS_ENABLED OR ENABLE_PSA_DEFAULT_ALT)
+    if(NOT DEFINED PSA_ARCH_TESTS_SRC_PATH)
+        message(WARNING
+                "-DPSA_ARCH_TESTS_SRC_PATH="
+                "<PSA Architecture Tests source path> missing\n"
+                "PSA Tests are not built")
+    else()
+        # Include SMW PSA tests
+        include(${CMAKE_SOURCE_DIR}/tests/cmake/psa_tests.cmake)
+
+        add_subdirectory(psa)
+    endif()
 endif()
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
@@ -141,7 +155,7 @@ install(FILES ${TEST_SCRIPTS_BIN}/run_simple_test.sh
         EXCLUDE_FROM_ALL)
 
 install(TARGETS ${PROJECT_NAME}
-	DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
         COMPONENT ${PROJECT_NAME}
         EXCLUDE_FROM_ALL OPTIONAL)
 

@@ -6,5 +6,6 @@ target_sources(psa PRIVATE
                crypto.c
                initial_attestation.c
                internal_trusted_storage.c
-               protected_storage.c)
+               protected_storage.c
+               util_status.c)
 target_include_directories(psa PRIVATE ${INCLUDE_DIR})

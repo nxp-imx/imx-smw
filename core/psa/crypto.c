@@ -3,10 +3,45 @@
  * Copyright 2022 NXP
  */
 
-#include <psa/crypto.h>
+#include "psa/crypto.h"
+
+#include "smw_crypto.h"
 
 #include "compiler.h"
 #include "debug.h"
+#include "utils.h"
+#include "operations.h"
+#include "subsystems.h"
+#include "config.h"
+
+#include "util_status.h"
+
+enum smw_status_code call_smw_api(enum smw_status_code (*api)(void *a),
+				  void *args,
+				  struct smw_config_psa_config *config,
+				  smw_subsystem_t *subsystem_name)
+{
+	enum smw_status_code status;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = api(args);
+	if (config->alt && status == SMW_STATUS_OPERATION_NOT_SUPPORTED &&
+	    subsystem_name && *subsystem_name) {
+		*subsystem_name = NULL;
+		status = api(args);
+	}
+
+	return status;
+}
+
+static smw_subsystem_t get_subsystem_name(struct smw_config_psa_config *config)
+{
+	if (config->subsystem_id != SUBSYSTEM_ID_INVALID)
+		return smw_config_get_subsystem_name(config->subsystem_id);
+
+	return NULL;
+}
 
 __export psa_status_t psa_aead_abort(psa_aead_operation_t *operation)
 {
@@ -403,7 +438,10 @@ __export psa_status_t psa_crypto_init(void)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_GENERIC_ERROR;
+
+	return PSA_SUCCESS;
 }
 
 __export psa_status_t psa_destroy_key(psa_key_id_t key)
@@ -455,12 +493,26 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 
 __export psa_status_t psa_generate_random(uint8_t *output, size_t output_size)
 {
-	(void)output;
-	(void)output_size;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_rng_args args = { 0 };
+	struct smw_config_psa_config config;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	smw_config_get_psa_config(&config);
+
+	args.subsystem_name = get_subsystem_name(&config);
+	args.output = output;
+	args.output_length = output_size;
+
+	if (output_size)
+		status = call_smw_api((enum smw_status_code(*)(void *))smw_rng,
+				      &args, &config, &args.subsystem_name);
+
+	return util_smw_to_psa_status(status);
 }
 
 __export psa_algorithm_t

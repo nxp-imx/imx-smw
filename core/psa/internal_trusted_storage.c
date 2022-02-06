@@ -3,7 +3,7 @@
  * Copyright 2022 NXP
  */
 
-#include <psa/internal_trusted_storage.h>
+#include "psa/internal_trusted_storage.h"
 
 #include "compiler.h"
 #include "debug.h"

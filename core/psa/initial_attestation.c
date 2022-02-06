@@ -3,7 +3,7 @@
  * Copyright 2022 NXP
  */
 
-#include <psa/initial_attestation.h>
+#include "psa/initial_attestation.h"
 
 #include "compiler.h"
 #include "debug.h"

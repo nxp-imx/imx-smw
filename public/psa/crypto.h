@@ -4847,8 +4847,6 @@ psa_status_t psa_copy_key(psa_key_id_t source_key,
 /**
  * psa_crypto_init() - Library initialization.
  *
- * **Warning: Not supported**
- *
  * Applications must call this function before calling any other function in this module.
  *
  * Applications are permitted to call this function more than once. Once a call succeeds, subsequent
@@ -5207,8 +5205,6 @@ psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
  * psa_generate_random() - Generate random bytes.
  * @output: Output buffer for the generated data.
  * @output_size: Number of bytes to generate and output.
- *
- * **Warning: Not supported**
  *
  * **Warning**:
  *	This function can fail! Callers MUST check the return status and MUST NOT use the content of

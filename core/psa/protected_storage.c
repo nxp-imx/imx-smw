@@ -3,7 +3,7 @@
  * Copyright 2022 NXP
  */
 
-#include <psa/protected_storage.h>
+#include "psa/protected_storage.h"
 
 #include "compiler.h"
 #include "debug.h"

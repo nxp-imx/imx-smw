@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
+
+#include <stdbool.h>
 
 enum smw_config_key_type_id {
 	/* Key type IDs */
@@ -94,6 +96,11 @@ enum smw_config_tls_finish_label_id {
 	SMW_CONFIG_TLS_FINISH_ID_SERVER,
 	SMW_CONFIG_TLS_FINISH_ID_NB,
 	SMW_CONFIG_TLS_FINISH_ID_INVALID
+};
+
+struct smw_config_psa_config {
+	enum subsystem_id subsystem_id;
+	bool alt;
 };
 
 /**
@@ -327,5 +334,16 @@ int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id);
  */
 int smw_config_get_tls_label_id(const char *name,
 				enum smw_config_tls_finish_label_id *id);
+
+/**
+ * smw_config_get_psa_config() - Get the PSA configuration.
+ * @config: PSA configuration.
+ *
+ * This function gets the PSA configuration.
+ *
+ * Return:
+ * none.
+ */
+void smw_config_get_psa_config(struct smw_config_psa_config *config);
 
 #endif /* __CONFIG_H__ */

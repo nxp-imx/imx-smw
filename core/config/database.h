@@ -16,7 +16,7 @@ struct operation {
 };
 
 struct database {
-	struct psa_config psa;
+	struct smw_config_psa_config psa;
 	struct subsystem subsystem[SUBSYSTEM_ID_NB];
 	struct operation operation[OPERATION_ID_NB];
 };

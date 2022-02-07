@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "smw_status.h"
@@ -32,7 +32,7 @@ void print_key_params(struct op_key *key)
 
 void print_database(void)
 {
-	struct psa_config *psa = &database.psa;
+	struct smw_config_psa_config *psa = &database.psa;
 	unsigned int i;
 	struct subsystem *subsystem;
 	bool configured;

@@ -36,11 +36,6 @@ struct ctx {
 	bool config_loaded;
 };
 
-struct psa_config {
-	enum subsystem_id subsystem_id;
-	bool alt;
-};
-
 enum load_method_id {
 	/* Load / unload methods */
 	LOAD_METHOD_ID_AT_FIRST_CALL_LOAD,
@@ -299,7 +294,7 @@ void init_key_params(struct op_key *key);
 void init_database(bool reset);
 
 /**
- * set_psa_default_subsystem() - Set the PSA configuration.
+ * set_psa_config() - Set the PSA configuration.
  * @config: New PSA configuration.
  *
  * This function sets the PSA configuration.
@@ -307,7 +302,7 @@ void init_database(bool reset);
  * Return:
  * none.
  */
-void set_psa_default_subsystem(struct psa_config *config);
+void set_psa_config(struct smw_config_psa_config *config);
 
 /**
  * set_bit() - Set a bit in a bitmap.

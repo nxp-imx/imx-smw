@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "smw_status.h"
@@ -604,8 +604,9 @@ static int get_psa_default_subsystem(char **start, char *end)
 	char *cur = *start;
 	char buffer[SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH + 1];
 	bool option_present = false;
-	struct psa_config config = { .subsystem_id = SUBSYSTEM_ID_INVALID,
-				     .alt = false };
+	struct smw_config_psa_config config = { .subsystem_id =
+							SUBSYSTEM_ID_INVALID,
+						.alt = false };
 	unsigned int alt_tag_len = SMW_UTILS_STRLEN(alt_tag);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -666,7 +667,7 @@ static int get_psa_default_subsystem(char **start, char *end)
 		       config.subsystem_id,
 		       config.alt ? "enabled" : "disabled");
 
-	set_psa_default_subsystem(&config);
+	set_psa_config(&config);
 
 	*start = cur;
 

@@ -6,6 +6,8 @@
 #ifndef __OSAL_H__
 #define __OSAL_H__
 
+#include <stdbool.h>
+
 #include "smw_status.h"
 
 /**
@@ -21,6 +23,7 @@
  * @thread_self: [optional] Return the ID of the thread being executed
  * @register_active_subsystem: [optional] Register the active Secure Subsystem
  * @get_subsystem_info: [mandatory] Get Subsystem configuration info
+ * @is_lib_initialized: [mandatory] Check if the library was successfully initialized by OSAL
  *
  * This structure defines the SMW OSAL.
  * Functions pointers marked as [mandatory] must be assigned.
@@ -46,6 +49,8 @@ struct smw_ops {
 	void (*register_active_subsystem)(const char *subsystem_name);
 
 	int (*get_subsystem_info)(const char *subsystem_name, void *info);
+
+	bool (*is_lib_initialized)(void);
 };
 
 /**

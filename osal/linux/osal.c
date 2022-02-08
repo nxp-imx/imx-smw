@@ -185,6 +185,11 @@ static int get_subsystem_info(const char *subsystem_name, void *info)
 	return -1;
 }
 
+static bool is_lib_initialized(void)
+{
+	return osal_priv.lib_initialized;
+}
+
 static int get_default_config(char **buffer, unsigned int *size)
 {
 	int status = SMW_STATUS_NO_CONFIG_LOADED;
@@ -334,6 +339,7 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	ops.thread_self = thread_self;
 	ops.register_active_subsystem = register_active_subsystem;
 	ops.get_subsystem_info = get_subsystem_info;
+	ops.is_lib_initialized = is_lib_initialized;
 
 	status = smw_init(&ops);
 

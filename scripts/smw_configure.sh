@@ -67,6 +67,7 @@ optee_plat="platform=${optee_plat}"
 toolpath="toolpath=/opt/toolchains"
 export="./export"
 ta_export="${export}/export-ta_arm""${arch//[^0-9]/}"
+psaarchtests_src_path="../psa-arch-tests"
 
 #
 # Build/Prepare external dependencies
@@ -86,6 +87,7 @@ eval "./scripts/smw_build.sh teec export=${export} \
       src=../optee-client out=../build ${arch} ${toolpath}"
 eval "./scripts/smw_build.sh tadevkit export=${ta_export} \
       src=../optee-os out=../build ${arch} ${optee_plat} ${toolpath}"
+eval "./scripts/smw_build.sh psaarchtests src=${psaarchtests_src_path}"
 
 #
 # Define common configuration option
@@ -101,6 +103,8 @@ fi
 conf_opts="${conf_opts} teec=${export} tadevkit=${ta_export}"
 # Enable tests
 conf_opts="${conf_opts} jsonc=${export}"
+# Enable PSA Architecture tests
+conf_opts="${conf_opts} psaarchtests=${psaarchtests_src_path}"
 
 #
 # Configure build targets

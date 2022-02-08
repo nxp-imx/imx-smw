@@ -11,7 +11,7 @@ opt_coverage="-DCODE_COVERAGE=OFF"
 opt_buildtype="-DCMAKE_BUILD_TYPE=Release"
 opt_verbose="-DVERBOSE=0"
 opt_format="-DFORMAT=html"
-opt_psa="-DENABLE_PSA_DEFAULT=OFF"
+opt_psa="-DENABLE_PSA_DEFAULT_ALT=OFF"
 opt_tls12="-DENABLE_TLS12=OFF"
 
 #
@@ -180,6 +180,29 @@ function tadevkit()
     eval "${cmd_script}"
 }
 
+function psaarchtests()
+{
+    cmd_script="cmake"
+    psaarchtests_script="${script_dir}/fetch_psaarchtests.cmake"
+
+    printf "\033[0;32m\n"
+    printf "***************************************************\n"
+    printf " Fetch PSA Architecture Tests repo to %s\n" "${opt_src}"
+    printf "***************************************************\n"
+    printf "\033[0m\n"
+
+    if [[ -z ${opt_src} ]]; then
+        usage_psaarchtests
+        exit 1
+    fi
+
+    cmd_script="${cmd_script} -DPSA_ARCH_TESTS_SRC_PATH=${opt_src}"
+    cmd_script="${cmd_script} -P ${psaarchtests_script}"
+
+    printf "Execute %s\n" "${cmd_script}"
+    eval "${cmd_script}"
+}
+
 function configure()
 {
     printf "\033[0;32m\n"
@@ -198,7 +221,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_buildtype} ${opt_verbose}"
     cmd_script="${cmd_script} ${opt_zlib} ${opt_seco}"
     cmd_script="${cmd_script} ${opt_teec} ${opt_tadevkit}"
-    cmd_script="${cmd_script} ${opt_jsonc}"
+    cmd_script="${cmd_script} ${opt_jsonc} ${opt_psaarchtests}"
     cmd_script="${cmd_script} ${opt_psa}"
     cmd_script="${cmd_script} ${opt_tls12}"
 
@@ -433,6 +456,15 @@ function usage_tadevkit()
     printf "\n"
 }
 
+function usage_psaarchtests()
+{
+    printf "\n"
+    printf "To fetch the PSA Architecture Tests repo\n"
+    printf "  %s psaarchtests src=[dir] " "${script_name}"
+    printf "    src = Source directory\n"
+    printf "\n"
+}
+
 function usage_configure()
 {
     printf "\n"
@@ -440,7 +472,8 @@ function usage_configure()
     printf " - Note: all dependencies must be present\n"
     printf "  %s configure out=[dir] coverage debug " "${script_name}"
     printf "verbose=[lvl] zlib=[dir] seco=[dir] teec=[dir] tadevkit=[dir] "
-    printf "arch=[arch] toolpath=[dir] toolname=[name] json=[dir] "
+    printf "arch=[arch] toolpath=[dir] toolname=[name] jsonc=[dir] "
+    printf "psaarchtests=[dir]"
     printf "format=[name] ...\n"
     printf "    out      = Build directory\n"
     printf "    coverage = [optional] if set enable code coverage tool\n"
@@ -457,6 +490,8 @@ function usage_configure()
     printf "    tadevkit = OPTEE TA Development Kit export directory\n"
     printf "  To enable tests [optionnal]\n"
     printf "    jsonc = JSON-C export directory\n"
+    printf "  To enable PSA Architecture tests [optionnal]\n"
+    printf "    psaarchtests = psa-arch-tests sources directory\n"
     printf "  To enable library option off by default\n"
     printf "    all_options     = [optional] Enable all options described below\n"
     printf "    tls12           = [optional] Enable TLS1.2\n"
@@ -537,6 +572,7 @@ function usage()
     usage_seco
     usage_teec
     usage_tadevkit
+    usage_psaarchtests
     usage_jsonc
     usage_configure
     usage_build
@@ -657,6 +693,12 @@ do
             opt_format="-DFORMAT=${opt_format}"
             ;;
 
+        psaarchtests=*)
+            opt_psaarchtests="${arg#*=}"
+            check_directory opt_psaarchtests
+            opt_psaarchtests="-DPSA_ARCH_TESTS_SRC_PATH=${opt_psaarchtests}"
+            ;;
+
         psa_default_alt)
             opt_psa="-DENABLE_PSA_DEFAULT_ALT=ON"
             ;;
@@ -719,6 +761,10 @@ case ${opt_action} in
 
     tadevkit)
         tadevkit
+        ;;
+
+    psaarchtests)
+        psaarchtests
         ;;
 
     configure)

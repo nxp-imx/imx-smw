@@ -119,6 +119,16 @@ static inline int smw_utils_get_subsystem_info(const char *subsystem_name,
 	return g_smw_ctx.ops.get_subsystem_info(subsystem_name, info);
 }
 
+static inline bool smw_utils_is_lib_initialized(void)
+{
+	bool is_initialized = false;
+
+	if (g_smw_ctx.ops.is_lib_initialized)
+		is_initialized = g_smw_ctx.ops.is_lib_initialized();
+
+	return is_initialized;
+}
+
 static inline unsigned long smw_utils_time(unsigned long ref)
 {
 	time_t t = time(NULL);

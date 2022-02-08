@@ -35,6 +35,9 @@ static int check_ops(const struct smw_ops *ops)
 	if (!ops->get_subsystem_info)
 		return -1;
 
+	if (!ops->is_lib_initialized)
+		return -1;
+
 	return 0;
 }
 

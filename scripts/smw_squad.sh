@@ -21,8 +21,6 @@ export PATH=/home/bamboo/.local/bin:$PATH
 
 lava_url="${bamboo_lava_url:-"https://lava.sw.nxp.com"}"
 lava_backend="${bamboo_lava_backend:-lava-https}"
-lava_token="${bamboo_lava_token_secret:-}"
-lava_user="${bamboo_lava_user:-squad-mougins}"
 squad_token="${bamboo_squad_token_secret:-}"
 daily_build_version="${bamboo_daily_build_version:-"-2"}"
 image_type="${bamboo_image_type:-"Linux_IMX_Core"}"
@@ -35,6 +33,10 @@ prefix_u_boot="${bamboo_prefix_u_boot:-"u-boot-"}"
 suffix_u_boot="${bamboo_suffix_boot:-"_sd-optee.imx"}"
 image_folder="${bamboo_image_folder:-"fsl-imx-internal-wayland"}"
 nexus_build_repo="${bamboo_nexus_build_repo:-"Linux_Factory"}"
+
+opt_lava_token="${bamboo_lava_token_secret:-}"
+opt_lava_user="${bamboo_lava_user:-squad-mougins}"
+opt_lava_id="${bamboo_lava_id:-squad-mougins}"
 
 opt_coverage_url=
 ctest_label=""
@@ -59,9 +61,10 @@ function usage_lavacli()
 {
     printf "\n"
     printf " To install and register lavacli user\n"
-    printf "  %s install token=[token] user=[user]\n" "${script_name}"
-    printf "    token = [optional] Lava token key\n"
-    printf "    user  = [optional] Lava user name of the token key\n"
+    printf "  %s install token=[token] user=[user] lava_id=[id]\n" "${script_name}"
+    printf "    token   = [optional] Lava token key\n"
+    printf "    user    = [optional] Lava user name of the token key\n"
+    printf "    lava_id = [optional] Lava id name\n"
     printf "Note: optional parameters in bamboo environment require the variables\n"
     printf " \$bamboo_lava_token_secret for the token\n"
     printf " \$bamboo_lava_user for the user\n"
@@ -120,12 +123,16 @@ function parse_parameters
     do
       case $arg in
         token=*)
-          opt_token="${arg#*=}"
+          opt_lava_token="${arg#*=}"
           ;;
 
         user=*)
-          lava_user="${arg#*=}"
+          opt_lava_user="${arg#*=}"
           ;;
+
+        lava_id=*)
+          opt_lava_id="${arg#*=}"
+	  ;;
 
         package_url=*)
           opt_package_url="${arg#*=}"
@@ -180,14 +187,11 @@ function check_url
 
 function install_lavacli
 {
+    local unknown_id=0
     #
     # Get optional script command parameters
     #
     parse_parameters "$@"
-
-    if [[ -n ${opt_token} ]]; then
-      lava_token="{opt_token}"
-    fi
 
     if [[ ! -x "$(command -v ${lavacli_tool})" ]]; then
       # Install lavacli & Create identity default
@@ -199,15 +203,21 @@ function install_lavacli
       fi
     fi
 
-    if [[ -z ${lava_token} || -z ${lava_user} ]]; then
+    if [[ -z ${opt_lava_token} || -z ${opt_lava_user} ]]; then
       printf "No User and/or Token defined to use lavacli\n"
       exit 1
     fi
 
-    ${lavacli_tool} identities add \
-    --token "${lava_token}" \
-    --uri "${lava_url}/RPC2" \
-    --username "${lava_user}" default
+    # Check if the user id is already present or not
+    ${lavacli_tool} identities show "${opt_lava_id}" || unknown_id=1
+
+    if [[ ${unknown_id} -eq 1 ]]; then
+      ${lavacli_tool} identities add \
+      --token "${opt_lava_token}" \
+      --uri "${lava_url}/RPC2" \
+      --username "${opt_lava_user}" \
+      "${opt_lava_id}"
+    fi
 
     exit 0
 }
@@ -215,6 +225,7 @@ function install_lavacli
 function squad_submit
 {
     local nexus_find_args=
+    local lava_cmd="${lavacli_tool} -i ${opt_lava_id}"
 
     #
     # Get the mandatory parameters
@@ -235,8 +246,8 @@ function squad_submit
 
     parse_parameters "$@"
 
-    if [[ -n ${opt_token} ]]; then
-      squad_token="{opt_token}"
+    if [[ -n ${opt_lava_token} ]]; then
+      squad_token="{opt_lava_token}"
     fi
 
     if [[ -z ${squad_token} ]]; then
@@ -378,7 +389,7 @@ function squad_submit
     sleep 5
 
     # Return job id submitted to LAVA
-    job_id="$(${lavacli_tool} jobs submit "${filename_job}")"
+    job_id="$(${lava_cmd} jobs submit "${filename_job}")"
     printf "Job ID %s\n" "${job_id}"
 
     if [[ ${job_id} == "Unable to submit" ]]; then
@@ -400,6 +411,7 @@ function squad_submit
 function squad_result
 {
     local exit_val=0
+    local lava_cmd="${lavacli_tool} -i ${opt_lava_id}"
 
     if [[ ! -x "$(command -v ${lavacli_tool})" ]]; then
       printf "lavacli not installed"
@@ -413,7 +425,7 @@ function squad_result
     #
     parse_parameters "$@"
 
-    if [[ -z ${lava_token} ]]; then
+    if [[ -z ${opt_lava_token} ]]; then
        printf "No Token defined to use lavacli\n"
        exit 1
     fi
@@ -426,7 +438,7 @@ function squad_result
       printf "Check jobid %s on platform %s\n" "${job_id}" "${platform}"
 
       # Wait for test to finish
-      wait_res="$(${lavacli_tool} jobs wait "${job_id}" --polling 60 --timeout 3600 || true)"
+      wait_res="$(${lava_cmd} jobs wait "${job_id}" --polling 60 --timeout 3600 || true)"
 
       case $wait_res in
         *"timeout"*)
@@ -444,12 +456,12 @@ function squad_result
       esac
 
       # Fetch Juint report
-      curl -X GET -H "Authorization: Token ${lava_token}" \
+      curl -X GET -H "Authorization: Token ${opt_lava_token}" \
           --output logs/"${platform}"_"${job_id}".xml \
           "${lava_url}"/api/v0.2/jobs/"${job_id}"/junit/
 
       # Fetch logs
-      ${lavacli_tool} jobs logs "${job_id}" > logs/"${platform}"_"${job_id}"_log.txt
+      ${lava_cmd} jobs logs "${job_id}" > logs/"${platform}"_"${job_id}"_log.txt
     done < "${tmp_jobids}"
 
     if grep -q "'result': 'fail'" logs/*.txt; then

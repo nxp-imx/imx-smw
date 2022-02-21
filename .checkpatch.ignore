@@ -5,6 +5,5 @@ pkcs11/tests/include/compiler.h
 *.sh
 cmake
 tests/scripts
-tests/lava
 inc/compiler.h
 *.rst

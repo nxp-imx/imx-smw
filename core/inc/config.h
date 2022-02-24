@@ -8,6 +8,8 @@
 
 #include <stdbool.h>
 
+#include "subsystems.h"
+
 enum smw_config_key_type_id {
 	/* Key type IDs */
 	SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,

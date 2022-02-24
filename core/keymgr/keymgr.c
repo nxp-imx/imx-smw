@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "smw_status.h"
@@ -13,53 +13,12 @@
 #include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
+#include "keymgr_db.h"
 #include "exec.h"
 #include "tlv.h"
 #include "name.h"
 #include "base64.h"
 #include "attr.h"
-
-/*
- * Key identifier is encoded as described below.
- * Sub. ID is Subsystem ID
- * Priv is Privacy ID
- * P: Persistent (=1) or Transient (=0)
- *
- *   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |  Sub. ID  |      Key type ID      |       ATTRIBUTE       | P |
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * | Priv  |               Security size                           |
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |                            ID                                 |
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- * |                            ID                                 |
- * +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- */
-
-#define ID_LENGTH	     32
-#define SECURITY_SIZE_LENGTH 14
-#define PRIVACY_ID_LENGTH    2
-#define TYPE_ID_LENGTH	     6
-#define SUBSYSTEM_ID_LENGTH  3
-#define ATTRIBUTE_LENGTH     6
-#define PERSISTENT_LENGTH    1
-
-#define ID_MASK		   BIT_MASK(ID_LENGTH)
-#define SECURITY_SIZE_MASK BIT_MASK(SECURITY_SIZE_LENGTH)
-#define PRIVACY_ID_MASK	   BIT_MASK(PRIVACY_ID_LENGTH)
-#define TYPE_ID_MASK	   BIT_MASK(TYPE_ID_LENGTH)
-#define SUBSYSTEM_ID_MASK  BIT_MASK(SUBSYSTEM_ID_LENGTH)
-#define ATTRIBUTE_MASK	   BIT_MASK(ATTRIBUTE_LENGTH)
-#define PERSISTENT_MASK	   BIT_MASK(PERSISTENT_LENGTH)
-
-#define ID_OFFSET	     0
-#define SECURITY_SIZE_OFFSET (ID_OFFSET + ID_LENGTH)
-#define PRIVACY_ID_OFFSET    (SECURITY_SIZE_OFFSET + SECURITY_SIZE_LENGTH)
-#define PERSISTENT_OFFSET    (PRIVACY_ID_OFFSET + PRIVACY_ID_LENGTH)
-#define ATTRIBUTE_OFFSET     (PERSISTENT_OFFSET + PERSISTENT_LENGTH)
-#define TYPE_ID_OFFSET	     (ATTRIBUTE_OFFSET + ATTRIBUTE_LENGTH)
-#define SUBSYSTEM_ID_OFFSET  (TYPE_ID_OFFSET + TYPE_ID_LENGTH)
 
 #define SMW_KEYMGR_FORMAT_ID_DEFAULT SMW_KEYMGR_FORMAT_ID_HEX
 
@@ -130,36 +89,6 @@ static int get_format_id(const char *name, enum smw_keymgr_format_id *id)
 		status =
 			smw_utils_get_string_index(name, format_names,
 						   SMW_KEYMGR_FORMAT_ID_NB, id);
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static int key_id_to_identifier(unsigned long long *id,
-				struct smw_keymgr_identifier *identifier)
-{
-	int status = SMW_STATUS_INVALID_PARAM;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_ASSERT(identifier);
-
-	if (id) {
-		identifier->subsystem_id =
-			(*id >> SUBSYSTEM_ID_OFFSET) & SUBSYSTEM_ID_MASK;
-		identifier->type_id = (*id >> TYPE_ID_OFFSET) & TYPE_ID_MASK;
-		identifier->privacy_id =
-			(*id >> PRIVACY_ID_OFFSET) & PRIVACY_ID_MASK;
-		identifier->attribute =
-			(*id >> ATTRIBUTE_OFFSET) & ATTRIBUTE_MASK;
-		identifier->security_size =
-			(*id >> SECURITY_SIZE_OFFSET) & SECURITY_SIZE_MASK;
-		identifier->id = (*id >> ID_OFFSET) & ID_MASK;
-		identifier->persistent =
-			(*id >> PERSISTENT_OFFSET) & PERSISTENT_MASK;
-
-		status = SMW_STATUS_OK;
-	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -298,9 +227,11 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = key_id_to_identifier(&in->id, &out->identifier);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	if (in->id != INVALID_KEY_ID) {
+		status = smw_keymgr_db_get_info(in->id, &out->identifier);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
 
 	if (!in->buffer) {
 		out->format_id = SMW_KEYMGR_FORMAT_ID_INVALID;
@@ -311,21 +242,21 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 			goto end;
 	}
 
-	if (in->id && in->type_name) {
+	if (in->id != INVALID_KEY_ID && in->type_name) {
 		if (type_id != out->identifier.type_id) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
 	}
 
-	if (in->id && in->security_size) {
+	if (in->id != INVALID_KEY_ID && in->security_size) {
 		if (in->security_size != out->identifier.security_size) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
 	}
 
-	if (!in->id) {
+	if (in->id == INVALID_KEY_ID) {
 		out->identifier.type_id = type_id;
 		out->identifier.security_size = in->security_size;
 	}
@@ -359,24 +290,6 @@ int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
 	return status;
 }
 
-unsigned long long
-smw_keymgr_build_key_id(struct smw_keymgr_identifier *identifier)
-{
-	unsigned long long id;
-
-	id = (identifier->id & ID_MASK) << ID_OFFSET;
-	id |= (identifier->security_size & SECURITY_SIZE_MASK)
-	      << SECURITY_SIZE_OFFSET;
-	id |= (identifier->privacy_id & PRIVACY_ID_MASK) << PRIVACY_ID_OFFSET;
-	id |= (identifier->attribute & ATTRIBUTE_MASK) << ATTRIBUTE_OFFSET;
-	id |= (identifier->type_id & TYPE_ID_MASK) << TYPE_ID_OFFSET;
-	id |= (identifier->subsystem_id & SUBSYSTEM_ID_MASK)
-	      << SUBSYSTEM_ID_OFFSET;
-	id |= (identifier->persistent & PERSISTENT_MASK) << PERSISTENT_OFFSET;
-
-	return id;
-}
-
 static int
 generate_key_convert_args(struct smw_generate_key_args *args,
 			  struct smw_keymgr_generate_key_args *converted_args,
@@ -394,6 +307,7 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	args->key_descriptor->id = INVALID_KEY_ID;
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor);
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
@@ -463,6 +377,7 @@ import_key_convert_args(struct smw_import_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	args->key_descriptor->id = INVALID_KEY_ID;
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor);
 	if (status != SMW_STATUS_OK)
@@ -837,16 +752,22 @@ smw_keymgr_set_modulus_length(struct smw_keymgr_descriptor *descriptor,
 		*ops->modulus_length(ops) = modulus_length;
 }
 
-static void set_key_identifier(struct smw_keymgr_descriptor *descriptor)
+static int set_key_identifier(unsigned int id,
+			      struct smw_keymgr_descriptor *descriptor)
 {
+	int status;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_ASSERT(descriptor);
+	if (!descriptor || !descriptor->pub)
+		return SMW_STATUS_INVALID_PARAM;
 
-	if (!descriptor->pub)
-		return;
+	status = smw_keymgr_db_update(id, &descriptor->identifier);
 
-	descriptor->pub->id = smw_keymgr_build_key_id(&descriptor->identifier);
+	if (status == SMW_STATUS_OK)
+		descriptor->pub->id = id;
+
+	return status;
 }
 
 static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
@@ -1024,6 +945,7 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 	unsigned int modulus_length;
 	unsigned int exp_pub_length;
 	unsigned int exp_modulus_length;
+	unsigned int new_id = INVALID_KEY_ID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1084,18 +1006,30 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 		}
 	}
 
-	status = smw_utils_execute_operation(OPERATION_ID_GENERATE_KEY,
-					     &generate_key_args, subsystem_id);
+	/*
+	 * Try to create the key in the database before
+	 * generating the key.
+	 */
+	status = smw_keymgr_db_create(&new_id, &key_desc->identifier);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	status = smw_utils_execute_operation(OPERATION_ID_GENERATE_KEY,
+					     &generate_key_args, subsystem_id);
+	if (status != SMW_STATUS_OK) {
+		/* Delete the key from the database */
+		(void)smw_keymgr_db_delete(new_id, &key_desc->identifier);
+		goto end;
+	}
 
 	if (generate_key_args.key_attributes.persistent_storage)
 		key_desc->identifier.persistent = true;
 	else
 		key_desc->identifier.persistent = false;
 
-	set_key_identifier(key_desc);
-	set_key_buffer_format(key_desc);
+	status = set_key_identifier(new_id, key_desc);
+	if (status == SMW_STATUS_OK)
+		set_key_buffer_format(key_desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1141,6 +1075,7 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	unsigned int private_length;
 	unsigned int public_length;
 	unsigned int modulus_length;
+	unsigned int new_id = INVALID_KEY_ID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1191,11 +1126,21 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 		}
 	}
 
-	status = smw_utils_execute_operation(OPERATION_ID_IMPORT_KEY,
-					     &import_key_args, subsystem_id);
-
+	/*
+	 * Try to create the key in the database before
+	 * importing the key.
+	 */
+	status = smw_keymgr_db_create(&new_id, &key_desc->identifier);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	status = smw_utils_execute_operation(OPERATION_ID_IMPORT_KEY,
+					     &import_key_args, subsystem_id);
+	if (status != SMW_STATUS_OK) {
+		/* Delete the key from the database */
+		(void)smw_keymgr_db_delete(new_id, &key_desc->identifier);
+		goto end;
+	}
 
 	if (public_data && private_data)
 		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PAIR;
@@ -1210,8 +1155,9 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	else
 		key_desc->identifier.persistent = false;
 
-	set_key_identifier(key_desc);
-	set_key_buffer_format(key_desc);
+	status = set_key_identifier(new_id, key_desc);
+	if (status == SMW_STATUS_OK)
+		set_key_buffer_format(key_desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1314,8 +1260,9 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_delete_key_args delete_key_args;
+	struct smw_keymgr_delete_key_args delete_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	struct smw_keymgr_descriptor *key_desc;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1328,8 +1275,14 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	key_desc = &delete_key_args.key_descriptor;
+
 	status = smw_utils_execute_operation(OPERATION_ID_DELETE_KEY,
 					     &delete_key_args, subsystem_id);
+
+	if (status == SMW_STATUS_OK)
+		status = smw_keymgr_db_delete(args->key_descriptor->id,
+					      &key_desc->identifier);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1388,12 +1341,12 @@ smw_get_key_type_name(struct smw_key_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_identifier key_identifier;
+	struct smw_keymgr_identifier key_identifier = { 0 };
 	const char *name;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = key_id_to_identifier(&descriptor->id, &key_identifier);
+	status = smw_keymgr_db_get_info(descriptor->id, &key_identifier);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -1414,11 +1367,11 @@ smw_get_security_size(struct smw_key_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_identifier key_identifier;
+	struct smw_keymgr_identifier key_identifier = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = key_id_to_identifier(&descriptor->id, &key_identifier);
+	status = smw_keymgr_db_get_info(descriptor->id, &key_identifier);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

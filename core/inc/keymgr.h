@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "config.h"
+
 /*
  * Hardcoded values due to limitation of SMW's HSM subsystem support. Transient
  * and persistent keys can't be part of the same key group and user can't set
@@ -17,6 +19,9 @@
  */
 #define PERSISTENT_KEY_GROUP 0
 #define TRANSIENT_KEY_GROUP  1
+
+/* Define invalid key identifier */
+#define INVALID_KEY_ID 0
 
 /* Default RSA public exponent is 65537, which has a length of 3 bytes */
 #define DEFAULT_RSA_PUB_EXP_LEN 3
@@ -441,15 +446,5 @@ int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
  */
 int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 			      enum smw_keymgr_privacy_id *privacy_id);
-
-/**
- * smw_keymgr_build_key_id() - Build unique key ID.
- * @identifier: Internal key identifier structure
- *
- * Return:
- * Unique key ID.
- */
-unsigned long long
-smw_keymgr_build_key_id(struct smw_keymgr_identifier *identifier);
 
 #endif /* __KEYMGR_H__ */

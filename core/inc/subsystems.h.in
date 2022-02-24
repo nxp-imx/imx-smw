@@ -1,7 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020-2022 NXP
  */
+
+#ifndef __SUBSYSTEMS_H__
+#define __SUBSYSTEMS_H__
+
+#include "operations.h"
 
 ${ENUM_SUBSYSTEM_ID} {
 	${LIST_SUBSYSTEM_ID}
@@ -14,3 +19,5 @@ ${STRUCT_SUBSYSTEM_FUNC} {
 	int (*unload)(void);
 	int (*execute)(${ENUM_OPERATION_ID} operation_id, void *args);
 };
+
+#endif /* __SUBSYSTEMS_H__ */

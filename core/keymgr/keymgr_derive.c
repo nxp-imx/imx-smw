@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include "smw_keymgr.h"
@@ -391,7 +391,7 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 	struct smw_key_descriptor *key_out;
 	struct smw_keymgr_tls12_args *tls_args;
 	struct smw_keymgr_descriptor *key_desc;
-	unsigned int exp_pub_length;
+	unsigned int exp_pub_length = 0;
 
 	key_base = args->key_descriptor_base;
 	key_out = args->key_descriptor_derived;
@@ -409,7 +409,7 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 		 * key conversion to ensure that key converted into
 		 * internal object is correct.
 		 */
-		key_out->id = 0;
+		key_out->id = INVALID_KEY_ID;
 		key_out->type_name = key_base->type_name;
 		key_out->security_size = key_base->security_size;
 

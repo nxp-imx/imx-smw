@@ -38,7 +38,7 @@
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
  * @SMW_STATUS_MUTEX_DESTROY_FAILURE: Mutex destruction has failed.
- * @SMW_STATUS_LIBRARY_ALREADY_INIT: Library already initialized
+ * @SMW_STATUS_LIBRARY_ALREADY_INIT: Library already initialized.
  *
  * @SMW_STATUS_INVALID_VERSION: The version of the configuration file is not supported.
  * @SMW_STATUS_INVALID_BUFFER: The configuration file passed by OSAL to the library is not valid.
@@ -56,6 +56,12 @@
  *
  * @SMW_STATUS_SIGNATURE_INVALID: The Signature is not valid.
  * @SMW_STATUS_SIGNATURE_LEN_INVALID: The Signature length is not valid.
+ *
+ * @SMW_STATUS_KEY_DB_INIT: Initialization error of the keys database.
+ * @SMW_STATUS_KEY_DB_CREATE: Key database creation error.
+ * @SMW_STATUS_KEY_DB_UPDATE: Key database update error.
+ * @SMW_STATUS_KEY_DB_DELETE: Key database delete error.
+ * @SMW_STATUS_KEY_DB_GET_INFO: Key database get information error.
  *
  * Status code classification:
  ** Common return codes
@@ -108,6 +114,12 @@
  *	- SMW_STATUS_SIGNATURE_INVALID
  *	- SMW_STATUS_SIGNATURE_LEN_INVALID
  *
+ ** Specific return codes - Key database
+ *	- SMW_STATUS_ERROR_KEY_DB_INIT
+ *	- SMW_STATUS_ERROR_KEY_DB_CREATE
+ *	- SMW_STATUS_ERROR_KEY_DB_UPDATE
+ *	- SMW_STATUS_ERROR_KEY_DB_DELETE
+ *	- SMW_STATUS_ERROR_KEY_DB_GET_INFO
  */
 
 /* Status codes */
@@ -149,7 +161,12 @@ enum smw_status_code {
 	SMW_STATUS_LOAD_METHOD_DUPLICATE,
 	SMW_STATUS_LIBRARY_ALREADY_INIT, /* 35 */
 	SMW_STATUS_SUBSYSTEM_LOADED,
-	SMW_STATUS_SUBSYSTEM_NOT_LOADED
+	SMW_STATUS_SUBSYSTEM_NOT_LOADED,
+	SMW_STATUS_KEY_DB_INIT,
+	SMW_STATUS_KEY_DB_CREATE,
+	SMW_STATUS_KEY_DB_UPDATE, /* 40 */
+	SMW_STATUS_KEY_DB_DELETE,
+	SMW_STATUS_KEY_DB_GET_INFO
 };
 
 #endif /* __SMW_STATUS_H__ */

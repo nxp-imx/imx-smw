@@ -38,6 +38,10 @@ static int check_ops(const struct smw_ops *ops)
 	if (!ops->is_lib_initialized)
 		return -1;
 
+	if (!ops->get_key_info || !ops->add_key_info || !ops->update_key_info ||
+	    !ops->delete_key_info)
+		return -1;
+
 	return 0;
 }
 

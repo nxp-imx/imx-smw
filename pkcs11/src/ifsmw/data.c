@@ -50,12 +50,29 @@ static int set_hsm_info(struct libobj_obj *obj)
 	return ret;
 }
 
+static int set_key_db(struct libobj_obj *obj)
+{
+	int ret = CKR_DEVICE_ERROR;
+
+	enum smw_status_code status;
+	struct libobj_data *data = get_subobj_from(obj, storage);
+
+	status = smw_osal_open_key_db((const char *)data->value.array,
+				      data->value.number);
+	if (status == SMW_STATUS_OK)
+		ret = CKR_OK;
+	else
+		ret = CKR_FUNCTION_FAILED;
+
+	return ret;
+}
 static const struct data_op {
 	struct librfc2279 label;
 	int (*set)(struct libobj_obj *obj);
 } data_op[] = {
 	{ DATA_LABEL("TEE Info"), .set = &set_tee_info },
 	{ DATA_LABEL("HSM Info"), .set = &set_hsm_info },
+	{ DATA_LABEL("Key DB"), .set = &set_key_db },
 };
 
 CK_RV libdev_create_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)

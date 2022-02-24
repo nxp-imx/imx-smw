@@ -7,14 +7,15 @@ set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:osal> PARENT_SCOPE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_library(osal OBJECT "")
-set_target_properties(osal PROPERTIES C_VISIBILITY_PRESET hidden)
-target_sources(osal PRIVATE
-                ${OS}/osal.c)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+set_target_properties(osal PROPERTIES C_VISIBILITY_PRESET hidden)
+
 target_sources(osal PRIVATE
-               ${OS}/osal_debug.c)
-endif()
+               osal.c
+               key_db.c
+               $<$<BOOL:${VERBOSE}>:osal_trace.c>
+               $<$<CONFIG:DEBUG>:osal_debug.c>)
+
 target_include_directories(osal
                            PRIVATE ${CMAKE_SOURCE_DIR}/inc
                            PUBLIC ${CMAKE_SOURCE_DIR}/public)

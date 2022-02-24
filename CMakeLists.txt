@@ -87,7 +87,7 @@ add_custom_target(install_tests)
 
 # Include OS Abstration layer
 set(OS linux)
-add_subdirectory(osal)
+add_subdirectory(osal/${OS})
 
 # Include SMW Library (using osal)
 add_subdirectory(core)

@@ -12,7 +12,7 @@ __attribute__((destructor)) static void destructor(void);
 
 struct osal_priv osal_priv = { 0 };
 
-static int mutex_init(void **mutex)
+int mutex_init(void **mutex)
 {
 	int status = -1;
 
@@ -36,7 +36,7 @@ end:
 	return status;
 }
 
-static int mutex_destroy(void **mutex)
+int mutex_destroy(void **mutex)
 {
 	int status = -1;
 
@@ -61,7 +61,7 @@ end:
 	return status;
 }
 
-static int mutex_lock(void *mutex)
+int mutex_lock(void *mutex)
 {
 	int status = -1;
 
@@ -75,7 +75,7 @@ static int mutex_lock(void *mutex)
 	return status;
 }
 
-static int mutex_unlock(void *mutex)
+int mutex_unlock(void *mutex)
 {
 	int status = -1;
 
@@ -279,6 +279,8 @@ static int stop(void)
 
 	status = smw_deinit();
 
+	key_db_close();
+
 end:
 	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -316,6 +318,19 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 	return status;
 }
 
+__export enum smw_status_code smw_osal_open_key_db(const char *file,
+						   size_t len __maybe_unused)
+{
+	DBG_PRINTF(INFO, "Open Key database %s (%zu)\n", file, len);
+
+	if (key_db_open(file)) {
+		DBG_PRINTF(ERROR, "Error opening/creating key db %s\n", file);
+		return SMW_STATUS_KEY_DB_INIT;
+	}
+
+	return SMW_STATUS_OK;
+}
+
 __export enum smw_status_code smw_osal_lib_init(void)
 {
 	int status;
@@ -340,6 +355,12 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	ops.register_active_subsystem = register_active_subsystem;
 	ops.get_subsystem_info = get_subsystem_info;
 	ops.is_lib_initialized = is_lib_initialized;
+
+	/* Key database management */
+	ops.get_key_info = key_db_get_info;
+	ops.add_key_info = key_db_add;
+	ops.update_key_info = key_db_update;
+	ops.delete_key_info = key_db_delete;
 
 	status = smw_init(&ops);
 

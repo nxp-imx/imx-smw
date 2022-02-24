@@ -71,8 +71,150 @@ struct osal_priv {
 	int lib_initialized;
 	struct lib_config_args config;
 	const char *active_subsystem_name;
+	void *key_db_obj;
 };
 
 extern struct osal_priv osal_priv;
+
+enum key_flags {
+	ENTRY_FREE = 0,
+	ENTRY_USE,
+};
+
+/**
+ * struct key_entry - Key entry header in key database
+ * @id: 16 bits key id in the DB
+ * @flags: Flags state of the entry
+ * @persistent: Key is persistent
+ * @info_size: Key information block size
+ *
+ * The key database is a binary file build with
+ * ----------------------
+ * | Key header         |
+ * | (struct key_entry) |
+ * ----------------------
+ * |                    |
+ * | Key information of |
+ * | info_size bytes    |
+ * |                    |
+ * ----------------------
+ */
+struct key_entry {
+	unsigned int id;
+	enum key_flags flags;
+	int persitent;
+	size_t info_size;
+	/* Info data block is right after the key entry header */
+};
+
+/**
+ * mutex_init() - Create and initialize a mutex
+ * @mutex: Mutex object created
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int mutex_init(void **mutex);
+
+/**
+ * mutex_destroy() - Destroy and free a mutex
+ * @mutex: Mutex object to destroy
+ *
+ * Function set the @mutex to NULL when freed.
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int mutex_destroy(void **mutex);
+
+/**
+ * @mutex_lock() - Lock a mutex
+ * @mutex: Mutex to lock
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int mutex_lock(void *mutex);
+
+/**
+ * @mutex_unlock() - Unlock a mutex
+ * @mutex: Mutex to unlock
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int mutex_unlock(void *mutex);
+
+/**
+ * key_db_open() - Open Key database
+ * @key_db: Database file name
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int key_db_open(const char *key_db);
+
+/**
+ * key_db_close() - Close Key database
+ */
+void key_db_close(void);
+
+/**
+ * key_db_get_info() - Get a key information from DB
+ * @key: OSAL key object
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int key_db_get_info(struct osal_key *key);
+
+/**
+ * key_db_add() - Add a key in the DB
+ * @key: OSAL key object
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int key_db_add(struct osal_key *key);
+
+/**
+ * key_db_update() - Update a key information into the DB
+ * @key: OSAL key object
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int key_db_update(struct osal_key *key);
+
+/**
+ * key_db_delete() - Remove a key from the DB
+ * @key: OSAL key object
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int key_db_delete(struct osal_key *key);
+
+/**
+ * get_strerr() - Return the system error message
+ *
+ * Return:
+ * Pointer to the system message error if supported.
+ * Else pointer to default "Unknown error" string.
+ */
+char *get_strerr(void);
+
+/**
+ * dbg_entry() - Debug print the key database entry object
+ * @entry: Key entry object
+ */
+void dbg_entry(struct key_entry *entry);
+
+/**
+ * dbg_entry_info() - Debug print the key database data
+ * @buf: Data buffer
+ * @len: Length in bytes of the buffer
+ */
+void dbg_entry_info(void *buf, size_t len);
 
 #endif /* __LOCAL_H__ */

@@ -7,8 +7,32 @@
 #define __OSAL_H__
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "smw_status.h"
+
+/**
+ * struct osal_key - OSAL Key database operation parameters
+ * @id: Key id output when key added, else input
+ * @range: Key id range to generate
+ * @persistent: Key is persistent
+ * @info: Key information to store
+ * @info_size: Size of the key information
+ *
+ * Note: if key range min and max are equal, the key id is not generated
+ * by the Key database manager.
+ */
+struct osal_key {
+	unsigned int id;
+	struct {
+		unsigned int min;
+		unsigned int max;
+	} range;
+
+	int persistent;
+	void *info;
+	size_t info_size;
+};
 
 /**
  * struct smw_ops - SMW OSAL
@@ -24,6 +48,10 @@
  * @register_active_subsystem: [optional] Register the active Secure Subsystem
  * @get_subsystem_info: [mandatory] Get Subsystem configuration info
  * @is_lib_initialized: [mandatory] Check if the library was successfully initialized by OSAL
+ * @get_key_info: [mandatory] Get a key information from database
+ * @add_key_info: [mandatory] Add a key information into database
+ * @update_key_info: [mandatory] Update a key information into database
+ * @delete_key_info: [mandatory] Delete a key information from database
  *
  * This structure defines the SMW OSAL.
  * Functions pointers marked as [mandatory] must be assigned.
@@ -51,6 +79,11 @@ struct smw_ops {
 	int (*get_subsystem_info)(const char *subsystem_name, void *info);
 
 	bool (*is_lib_initialized)(void);
+
+	int (*get_key_info)(struct osal_key *key);
+	int (*add_key_info)(struct osal_key *key);
+	int (*update_key_info)(struct osal_key *key);
+	int (*delete_key_info)(struct osal_key *key);
 };
 
 /**

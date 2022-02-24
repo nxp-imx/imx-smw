@@ -78,6 +78,38 @@ static CK_RV create_hsm_info(CK_SESSION_HANDLE_PTR sess,
 	return ret;
 }
 
+static CK_RV create_key_db(CK_SESSION_HANDLE_PTR sess,
+			   CK_FUNCTION_LIST_PTR pfunc)
+{
+	CK_RV ret;
+	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
+	CK_OBJECT_CLASS data_class = CKO_DATA;
+	CK_BBOOL token = true;
+	CK_UTF8CHAR label[] = "Key DB";
+	CK_UTF8CHAR app[] = "Test PKCS11";
+	CK_BYTE key_db_file[] = "/var/tmp/key_db_pkcs11_test.dat";
+
+	CK_ATTRIBUTE data_template[] = {
+		{ CKA_CLASS, &data_class, sizeof(data_class) },
+		{ CKA_APPLICATION, &app, sizeof(app) },
+		{ CKA_LABEL, &label, sizeof(label) - 1 },
+		{ CKA_VALUE, &key_db_file, sizeof(key_db_file) },
+		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+	};
+
+	TEST_OUT("Create %sKey Database object\n", token ? "Token " : "");
+
+	ret = pfunc->C_CreateObject(*sess, data_template,
+				    ARRAY_SIZE(data_template), &hdata);
+	if (!CHECK_EXPECTED(ret == CKR_OK, "C_CreateObject returned 0x%lx",
+			    ret)) {
+		TEST_OUT("Key Database created #%lu\n", hdata);
+		ret = CKR_OK;
+	}
+
+	return ret;
+}
+
 static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 			CK_NOTIFY callback, CK_VOID_PTR cb_args,
 			CK_FLAGS sess_flags, CK_SESSION_HANDLE_PTR sess)
@@ -142,6 +174,10 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 
 	ret = create_hsm_info(sess, pfunc);
 	if (CHECK_CK_RV(CKR_OK, "create_hsm_info"))
+		goto end;
+
+	ret = create_key_db(sess, pfunc);
+	if (CHECK_CK_RV(CKR_OK, "create_key_db"))
 		goto end;
 
 	status = TEST_PASS;

@@ -262,6 +262,30 @@ exit:
 	return res;
 }
 
+static void subtest_log(struct thread_data *thr)
+{
+	int nb_char = 0;
+	char str[256] = { 0 };
+	const char *error = NULL;
+
+	if (strlen(thr->name))
+		nb_char = sprintf(str, "[%s] ", thr->name);
+
+	if (nb_char < 0)
+		DBG_PRINT("Error (%d) %s", nb_char, util_get_strerr());
+
+	if (thr->subtest->status == ERR_CODE(BAD_RESULT))
+		error = get_smw_string_status(thr->subtest->smw_status);
+
+	(void)sprintf(&str[nb_char], "%s: %s", thr->subtest->name,
+		      util_get_err_code_str(thr->subtest->status));
+	/* Additional error message if any */
+	if (error)
+		util_log_status(thr->app, "%s (%s)\n", str, error);
+	else
+		util_log_status(thr->app, "%s\n", str);
+}
+
 int util_thread_init(struct llist **list)
 {
 	if (!list)
@@ -486,10 +510,12 @@ void util_thread_log(struct thread_data *thr)
 {
 	int nb_char = 0;
 	char str[256] = { 0 };
-	const char *error = NULL;
+	int rate_passed = 0;
 
-	if (thr->status == ERR_CODE(BAD_RESULT))
-		error = get_smw_string_status(thr->smw_status);
+	if (thr->subtest) {
+		subtest_log(thr);
+		return;
+	}
 
 	if (strlen(thr->name))
 		nb_char = sprintf(str, "[%s] ", thr->name);
@@ -497,23 +523,34 @@ void util_thread_log(struct thread_data *thr)
 	if (nb_char < 0)
 		DBG_PRINT("Error (%d) %s", nb_char, util_get_strerr());
 
-	if (thr->subtest) {
-		(void)sprintf(&str[nb_char], "%s: %s", thr->subtest,
-			      util_get_err_code_str(thr->status));
-	} else {
+	if (thr->app->is_multithread) {
 		/* This is the status of the thread */
 		if (thr->status == ERR_CODE(PASSED))
-			(void)sprintf(&str[nb_char], "%s",
-				      util_get_err_code_str(thr->status));
+			nb_char += sprintf(&str[nb_char], "%s\n",
+					   util_get_err_code_str(thr->status));
 		else
-			(void)sprintf(&str[nb_char], "%s (%s)",
-				      util_get_err_code_str(ERR_CODE(FAILED)),
-				      util_get_err_code_str(thr->status));
+			nb_char +=
+				sprintf(&str[nb_char], "%s (%s)\n",
+					util_get_err_code_str(ERR_CODE(FAILED)),
+					util_get_err_code_str(thr->status));
 	}
 
-	/* Additional error message if any */
-	if (error)
-		util_log_status(thr->app, "%s (%s)\n", str, error);
+	/* Print the subtests statistic */
+	if (thr->subtests_total) {
+		rate_passed = 100 * thr->subtests_passed;
+		rate_passed /= thr->subtests_total;
+	}
+
+	nb_char +=
+		sprintf(&str[nb_char],
+			"\n\t%d%% subtests passed, %d failed out of %d",
+			rate_passed, thr->subtests_total - thr->subtests_passed,
+			thr->subtests_total);
+
+	if (thr->loop)
+		(void)sprintf(&str[nb_char], " in %d loops\n", thr->loop);
 	else
-		util_log_status(thr->app, "%s\n", str);
+		(void)sprintf(&str[nb_char], "\n");
+
+	util_log_status(thr->app, "%s\n", str);
 }

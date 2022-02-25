@@ -605,7 +605,7 @@ static void run_subtest(struct thread_data *thr, struct json_object *obj)
 	struct cmn_params cmn_params = { 0 };
 
 	cmn_params.app = thr->app;
-	thr->smw_status = SMW_STATUS_OPERATION_FAILURE;
+	thr->subtest->smw_status = SMW_STATUS_OPERATION_FAILURE;
 
 	/* Verify the type of the subtest tag/value is json object */
 	if (json_object_get_type(obj) != json_type_object) {
@@ -685,7 +685,8 @@ static void run_subtest(struct thread_data *thr, struct json_object *obj)
 		goto exit;
 
 	/* Execute subtest command */
-	res = execute_command(cmd_name, obj, &cmn_params, &thr->smw_status);
+	res = execute_command(cmd_name, obj, &cmn_params,
+			      &thr->subtest->smw_status);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -712,7 +713,14 @@ static void run_subtest(struct thread_data *thr, struct json_object *obj)
 	}
 
 exit:
-	thr->status = res;
+	thr->subtest->status = res;
+
+	if (res == ERR_CODE(PASSED))
+		thr->subtests_passed++;
+
+	if (thr->status == ERR_CODE(PASSED))
+		thr->status = res;
+
 	util_thread_log(thr);
 }
 
@@ -722,6 +730,7 @@ void *process_thread(void *arg)
 	int i;
 	struct thread_data *thr = arg;
 	struct json_object_iter obj;
+	struct subtest_data subtest = { 0 };
 
 	if (!thr || !thr->def) {
 		DBG_PRINT_BAD_ARGS();
@@ -735,7 +744,7 @@ void *process_thread(void *arg)
 	}
 
 	thr->state = STATE_RUNNING;
-	thr->status = ERR_CODE(FAILED);
+	thr->status = ERR_CODE(PASSED);
 
 	/* First wait and post semaphore if multi-thread test */
 	err = util_sem_wait_before(thr, thr->parent_def);
@@ -750,18 +759,28 @@ void *process_thread(void *arg)
 		goto exit;
 	}
 
+	thr->subtests_total = 0;
+	thr->subtests_passed = 0;
+
 	for (i = 0; i < thr->loop + 1; i++) {
+		thr->subtest = &subtest;
 		json_object_object_foreachC(thr->def, obj)
 		{
 			/* Run the JSON-C "subtest" object, other tag is ignored */
 			if (strncmp(obj.key, SUBTEST_OBJ, strlen(SUBTEST_OBJ)))
 				continue;
 
-			thr->subtest = obj.key;
+			thr->subtests_total++;
+			thr->subtest->name = obj.key;
 			run_subtest(thr, obj.val);
-			thr->subtest = NULL;
 		}
 	}
+
+	thr->subtest = NULL;
+
+	/* If no subtests ran - Failure */
+	if (!thr->subtests_total)
+		thr->status = ERR_CODE(FAILED);
 
 	/* Last wait and post semaphore if multi-thread test */
 	err = util_sem_post_after(thr, thr->parent_def);
@@ -776,8 +795,7 @@ exit:
 	if (thr->status == ERR_CODE(PASSED))
 		thr->status = err;
 
-	if (thr->app->is_multithread)
-		util_thread_log(thr);
+	util_thread_log(thr);
 
 	/* Decrement (free) the thread JSON-C definition */
 	if (thr->def)

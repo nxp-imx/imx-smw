@@ -21,12 +21,25 @@ enum thread_state {
 #define MAX_THR_NAME 20
 
 /**
+ * struct subtest_data - Subtest data object
+ * @name: Name of the subtest running
+ * @status: Test status
+ * @smw_status: SMW operation status
+ */
+struct subtest_data {
+	char *name;
+	int status;
+	enum smw_status_code smw_status;
+};
+
+/**
  * struct thread_data - Thread data object
  * @app: Application data
  * @parent_def: Parent's thread object definition
- * @status: Test status
- * @smw_status: SMW operation status
- * @subtest: Name of the subtest running
+ * @subtest: Subtest running if not NULL
+ * @subtests_total: Number of subtests ran
+ * @subtests_passed: Number of subtests passed
+ * @status: Thread status
  * @id: Thread ID
  * @name: Thread name
  * @state: Thread state
@@ -36,9 +49,10 @@ enum thread_state {
 struct thread_data {
 	struct app_data *app;
 	struct json_object *parent_def;
+	struct subtest_data *subtest;
+	int subtests_total;
+	int subtests_passed;
 	int status;
-	enum smw_status_code smw_status;
-	char *subtest;
 	pthread_t id;
 	char name[MAX_THR_NAME];
 	enum thread_state state;

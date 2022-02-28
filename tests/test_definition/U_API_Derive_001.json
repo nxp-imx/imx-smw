@@ -1,11 +1,18 @@
 {
 	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_type": "NIST",
+		"security_size": 256,
+		"key_id": 0
+	},
+	"subtest 2": {
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": {
+	"subtest 3": {
 		"command": "DERIVE",
 		"version": 255,
 		"subsystem": "DEFAULT",
@@ -19,7 +26,7 @@
 		},
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
-	"subtest 3": { // Subsystem is not set in the config file
+	"subtest 4": { // Subsystem is not set in the config file
 		"command": "DERIVE",
 		"subsystem": "UNDEFINED",
 		"op_input": {
@@ -32,7 +39,7 @@
 		},
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 4": { // Key derivation name function not defined
+	"subtest 5": { // Key derivation name function not defined
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "UNDEFINED",
@@ -46,19 +53,19 @@
 		},
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 5": { // Base key descriptor is not set
+	"subtest 6": { // Base key descriptor is not set
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Derived key descriptor is not set
+	"subtest 7": { // Derived key descriptor is not set
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"test_error": "KEY_DESC_OUT_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // Attribute list in undefined
+	"subtest 8": { // Attribute list in undefined
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": {
@@ -69,10 +76,12 @@
 				"0cbb8e2125c620e32636222c32ec2810"
 			]
 		},
-		"attributes_list": ["undefined"],
+		"attributes_list": [
+			"undefined"
+		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Key base type name not defined
+	"subtest 9": { // Key base type name not defined
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": {
@@ -85,7 +94,7 @@
 		},
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 9": { // Key base format name not defined
+	"subtest 10": { // Key base format name not defined
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": {
@@ -99,27 +108,29 @@
 		},
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 10": { // Key type doesn't match key ID
+	"subtest 11": { // Key type doesn't match key ID
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": {
+			"key_id": 0,
 			"key_type": "ECDH_NIST",
 			"security_size": 256
 		},
-		"test_error": "FAKE_KEY_ID",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 11": { // Security size doesn't match key ID
+	"subtest 12": { // Security size doesn't match key ID
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": {
+			"key_id": 0,
 			"key_type": "NIST",
 			"security_size": 384
 		},
-		"test_error": "FAKE_KEY_ID",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
 	},
-	"subtest 12": { // No key base ID and buffer defined
+	"subtest 13": { // No key base ID and buffer defined
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": {
@@ -128,7 +139,7 @@
 		},
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 13": { // Key base buffer must be private key for key derivation
+	"subtest 14": { // Key base buffer must be private key for key derivation
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": {
@@ -142,5 +153,10 @@
 			]
 		},
 		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 15": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
 	}
 }

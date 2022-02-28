@@ -18,6 +18,7 @@
 #define HSM_INFO_OBJ	  "hsm_info"
 #define INPUT_OBJ	  "input"
 #define IV_OBJ		  "iv"
+#define KEY_DB_OBJ	  "key_db"
 #define KEY_FORMAT_OBJ	  "format"
 #define KEY_ID_OBJ	  "key_id"
 #define KEY_TYPE_OBJ	  "key_type"
@@ -97,15 +98,10 @@ enum arguments_test_err_case {
 	KEY_DESC_NULL,
 	KEY_DESC_OUT_NULL,
 	NB_ERROR_CASE,
-	CIPHER_NO_NB_KEYS,
-	CIPHER_NO_KEYS, /* 10 */
-	CIPHER_DIFF_SUBSYSTEM,
-	CIPHER_DIFF_KEY_TYPE,
 	CTX_NULL,
-	CTX_HANDLE_NULL,
-	DST_CPY_ARGS_NULL, /* 15 */
+	CTX_HANDLE_NULL, /* 10 */
+	DST_CPY_ARGS_NULL,
 	TLS12_KDF_ARGS_NULL,
-	FAKE_KEY_ID,
 };
 
 /* Type of export */

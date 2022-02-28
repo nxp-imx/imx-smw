@@ -5,9 +5,9 @@
 
 #include <string.h>
 
-#include "smw_osal.h"
+#include <smw_osal.h>
 
-#include "util_cond.h"
+#include "util.h"
 #include "util_log.h"
 #include "util_sem.h"
 #include "util_thread.h"
@@ -24,153 +24,129 @@
 /**
  * execute_delete_key_cmd() - Execute delete key command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * Error code from delete_key().
  */
-static int execute_delete_key_cmd(char *cmd, struct json_object *params,
-				  struct cmn_params *cmn_params,
-				  enum smw_status_code *status)
+static int execute_delete_key_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	return delete_key(params, cmn_params, status);
+	return delete_key(subtest);
 }
 
 /**
  * execute_generate_cmd() - Execute generate key command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED          - Passed.
  * -MISSING_PARAMS - Subsystem missing
  * Error code from generate_key().
  */
-static int execute_generate_cmd(char *cmd, struct json_object *params,
-				struct cmn_params *cmn_params,
-				enum smw_status_code *status)
+static int execute_generate_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
 	/* Check mandatory params */
-	if (!cmn_params->subsystem) {
+	if (!subtest->subsystem) {
 		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return generate_key(params, cmn_params, status);
+	return generate_key(subtest);
 }
 
 /**
  * execute_hash_cmd() - Execute hash command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from hash().
  */
-static int execute_hash_cmd(char *cmd, struct json_object *params,
-			    struct cmn_params *cmn_params,
-			    enum smw_status_code *status)
+static int execute_hash_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
 	/* Check mandatory params */
-	if (!cmn_params->subsystem) {
+	if (!subtest->subsystem) {
 		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return hash(params, cmn_params, status);
+	return hash(subtest);
 }
 
 /**
  * execute_hmac_cmd() - Execute hmac command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from hmac().
  */
-static int execute_hmac_cmd(char *cmd, struct json_object *params,
-			    struct cmn_params *cmn_params,
-			    enum smw_status_code *status)
+static int execute_hmac_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
 	/* Check mandatory params */
-	if (!cmn_params->subsystem) {
+	if (!subtest->subsystem) {
 		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return hmac(params, cmn_params, status);
+	return hmac(subtest);
 }
 
 /**
  * execute_import_cmd() - Execute import key command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from import_key().
  */
-static int execute_import_cmd(char *cmd, struct json_object *params,
-			      struct cmn_params *cmn_params,
-			      enum smw_status_code *status)
+static int execute_import_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
 	/* Check mandatory params */
-	if (!cmn_params->subsystem) {
+	if (!subtest->subsystem) {
 		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return import_key(params, cmn_params, status);
+	return import_key(subtest);
 }
 
 /**
  * execute_export_cmd() - Execute export command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from export_key().
  */
-static int execute_export_cmd(char *cmd, struct json_object *params,
-			      struct cmn_params *cmn_params,
-			      enum smw_status_code *status)
+static int execute_export_cmd(char *cmd, struct subtest_data *subtest)
 {
 	if (!strcmp(cmd, EXPORT_KEYPAIR))
-		return export_key(params, cmn_params, EXP_KEYPAIR, status);
+		return export_key(subtest, EXP_KEYPAIR);
 	else if (!strcmp(cmd, EXPORT_PRIVATE))
-		return export_key(params, cmn_params, EXP_PRIV, status);
+		return export_key(subtest, EXP_PRIV);
 	else if (!strcmp(cmd, EXPORT_PUBLIC))
-		return export_key(params, cmn_params, EXP_PUB, status);
+		return export_key(subtest, EXP_PUB);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -179,111 +155,93 @@ static int execute_export_cmd(char *cmd, struct json_object *params,
 /**
  * execute_derive_cmd() - Execute derive command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from derive_key().
  */
-static int execute_derive_cmd(char *cmd, struct json_object *params,
-			      struct cmn_params *cmn_params,
-			      enum smw_status_code *status)
+static int execute_derive_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	return derive_key(params, cmn_params, status);
+	return derive_key(subtest);
 }
 
 /**
  * execute_sign_cmd() - Execute sign command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from sign_verify().
  */
-static int execute_sign_cmd(char *cmd, struct json_object *params,
-			    struct cmn_params *cmn_params,
-			    enum smw_status_code *status)
+static int execute_sign_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
 	/* Check mandatory params */
-	if (!cmn_params->subsystem) {
+	if (!subtest->subsystem) {
 		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return sign_verify(SIGN_OPERATION, params, cmn_params, status);
+	return sign_verify(subtest, SIGN_OPERATION);
 }
 
 /**
  * execute_sign_verify_cmd() - Execute sign or verify command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from sign_verify().
  */
-static int execute_verify_cmd(char *cmd, struct json_object *params,
-			      struct cmn_params *cmn_params,
-			      enum smw_status_code *status)
+static int execute_verify_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
 	/* Check mandatory params */
-	if (!cmn_params->subsystem) {
+	if (!subtest->subsystem) {
 		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return sign_verify(VERIFY_OPERATION, params, cmn_params, status);
+	return sign_verify(subtest, VERIFY_OPERATION);
 }
 
 /**
  * execute_rng_cmd() - Execute RNG command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from hash().
  */
-static int execute_rng_cmd(char *cmd, struct json_object *params,
-			   struct cmn_params *cmn_params,
-			   enum smw_status_code *status)
+static int execute_rng_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
 	/* Check mandatory params */
-	if (!cmn_params->subsystem) {
+	if (!subtest->subsystem) {
 		DBG_PRINT_MISS_PARAM("subsystem");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	return rng(params, cmn_params, status);
+	return rng(subtest);
 }
 
 /**
  * execute_cipher_cmd() - Execute cipher command
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
@@ -292,18 +250,16 @@ static int execute_rng_cmd(char *cmd, struct json_object *params,
  * Error code from cipher_update().
  * Error code from cipher_final().
  */
-static int execute_cipher_cmd(char *cmd, struct json_object *params,
-			      struct cmn_params *cmn_params,
-			      enum smw_status_code *status)
+static int execute_cipher_cmd(char *cmd, struct subtest_data *subtest)
 {
 	if (!strcmp(cmd, CIPHER))
-		return cipher(params, cmn_params, status);
+		return cipher(subtest);
 	else if (!strcmp(cmd, CIPHER_INIT))
-		return cipher_init(params, cmn_params, status);
+		return cipher_init(subtest);
 	else if (!strcmp(cmd, CIPHER_UPDATE))
-		return cipher_update(params, cmn_params, status);
+		return cipher_update(subtest);
 	else if (!strcmp(cmd, CIPHER_FINAL))
-		return cipher_final(params, cmn_params, status);
+		return cipher_final(subtest);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -312,9 +268,7 @@ static int execute_cipher_cmd(char *cmd, struct json_object *params,
 /**
  * execute_operation_context() - Execute an operation context operation
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
@@ -322,14 +276,12 @@ static int execute_cipher_cmd(char *cmd, struct json_object *params,
  * Error code from cancel_operation().
  * Error code from copy_context().
  */
-static int execute_op_context_cmd(char *cmd, struct json_object *params,
-				  struct cmn_params *cmn_params,
-				  enum smw_status_code *status)
+static int execute_op_context_cmd(char *cmd, struct subtest_data *subtest)
 {
 	if (!strcmp(cmd, OP_CTX_CANCEL))
-		return cancel_operation(params, cmn_params, status);
+		return cancel_operation(subtest);
 	else if (!strcmp(cmd, OP_CTX_COPY))
-		return copy_context(params, cmn_params, status);
+		return copy_context(subtest);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -338,23 +290,19 @@ static int execute_op_context_cmd(char *cmd, struct json_object *params,
 /**
  * execute_config_cmd() - Execute configuration load or unload command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Error code from smw_config_load() and smw_config_unload().
  */
-static int execute_config_cmd(char *cmd, struct json_object *params,
-			      struct cmn_params *cmn_params,
-			      enum smw_status_code *status)
+static int execute_config_cmd(char *cmd, struct subtest_data *subtest)
 {
 	if (!strcmp(cmd, CONFIG_LOAD))
-		return config_load(params, cmn_params, status);
+		return config_load(subtest);
 	if (!strcmp(cmd, CONFIG_UNLOAD))
-		return config_unload(params, cmn_params, status);
+		return config_unload(subtest);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);
@@ -363,9 +311,7 @@ static int execute_config_cmd(char *cmd, struct json_object *params,
 /**
  * execute_save_keys_cmd() - Execute backup keys ids in a file
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
@@ -374,21 +320,17 @@ static int execute_config_cmd(char *cmd, struct json_object *params,
  * -BAD_ARGS		- One of the arguments is bad.
  * -UNDEFINED_CMD	- Command is undefined.
  */
-static int execute_save_keys_cmd(char *cmd, struct json_object *params,
-				 struct cmn_params *cmn_params,
-				 enum smw_status_code *status)
+static int execute_save_keys_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	return save_key_ids_to_file(params, cmn_params, status);
+	return save_key_ids_to_file(subtest);
 }
 
 /**
  * execute_restore_keys_cmd() - Execute restore keys ids from a file
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED                  - Success.
@@ -397,21 +339,17 @@ static int execute_save_keys_cmd(char *cmd, struct json_object *params,
  * -BAD_ARGS               - One of the arguments is bad.
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  */
-static int execute_restore_keys_cmd(char *cmd, struct json_object *params,
-				    struct cmn_params *cmn_params,
-				    enum smw_status_code *status)
+static int execute_restore_keys_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	return restore_key_ids_from_file(params, cmn_params, status);
+	return restore_key_ids_from_file(subtest);
 }
 
 /**
  * execute_get_version_cmd() - Execute get version commands
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Success.
@@ -421,36 +359,28 @@ static int execute_restore_keys_cmd(char *cmd, struct json_object *params,
  * -VALUE_NOTFOUND	- Test definition Value not found.
  * -FAILED		- Test failed
  */
-static int execute_get_version_cmd(char *cmd, struct json_object *params,
-				   struct cmn_params *cmn_params,
-				   enum smw_status_code *status)
+static int execute_get_version_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	return get_info(params, cmn_params, status);
+	return get_info(subtest);
 }
 
 /**
  * execute_command() - Execute a subtest command.
  * @cmd: Command name.
- * @params: Command parameters.
- * @cmn_params: Some parameters common to commands.
- * @status: Pointer to SMW command status.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
  * Other error code otherwise.
  */
-static int execute_command(char *cmd, struct json_object *params,
-			   struct cmn_params *cmn_params,
-			   enum smw_status_code *status)
+static int execute_command(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
 		const char *cmd_prefix;
-		int (*op)(char *cmd, struct json_object *params,
-			  struct cmn_params *cmn_params,
-			  enum smw_status_code *status);
+		int (*op)(char *cmd, struct subtest_data *subtest);
 	} cmd_list[] = {
 		{ DELETE, &execute_delete_key_cmd },
 		{ GENERATE, &execute_generate_cmd },
@@ -472,10 +402,8 @@ static int execute_command(char *cmd, struct json_object *params,
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {
 		if (!strncmp(cmd, cmd_list[idx].cmd_prefix,
-			     strlen(cmd_list[idx].cmd_prefix))) {
-			return cmd_list[idx].op(cmd, params, cmn_params,
-						status);
-		}
+			     strlen(cmd_list[idx].cmd_prefix)))
+			return cmd_list[idx].op(cmd, subtest);
 	}
 
 	DBG_PRINT("Undefined command");
@@ -595,20 +523,21 @@ static int get_depends_status(struct thread_data *thr, struct json_object *def)
  * @thr: Thread data
  * @obj: Operation object data
  */
-static void run_subtest(struct thread_data *thr, struct json_object *obj)
+static void run_subtest(struct thread_data *thr)
 {
 	int res = ERR_CODE(FAILED);
 	char *cmd_name = NULL;
-	char *expected_status = NULL;
 	const char *sub_used = NULL;
 	const char *sub_exp = NULL;
-	struct cmn_params cmn_params = { 0 };
+	const char *exp_res_st = NULL;
+	enum smw_status_code exp_smw_status = SMW_STATUS_OK;
+	struct subtest_data *subtest;
 
-	cmn_params.app = thr->app;
-	thr->subtest->smw_status = SMW_STATUS_OPERATION_FAILURE;
+	subtest = thr->subtest;
+	subtest->smw_status = SMW_STATUS_OPERATION_FAILURE;
 
 	/* Verify the type of the subtest tag/value is json object */
-	if (json_object_get_type(obj) != json_type_object) {
+	if (json_object_get_type(subtest->params) != json_type_object) {
 		FPRINT_MESSAGE(thr->app, "Error in test definiton file: ");
 		FPRINT_MESSAGE(thr->app,
 			       "\"subtest\" is not a json-c object\n");
@@ -619,7 +548,8 @@ static void run_subtest(struct thread_data *thr, struct json_object *obj)
 	}
 
 	/* 'command' is a mandatory parameter */
-	res = util_read_json_type(&cmd_name, CMD_OBJ, t_string, obj);
+	res = util_read_json_type(&cmd_name, CMD_OBJ, t_string,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED)) {
 		if (res == ERR_CODE(VALUE_NOTFOUND)) {
 			DBG_PRINT_MISS_PARAM(CMD_OBJ);
@@ -629,13 +559,13 @@ static void run_subtest(struct thread_data *thr, struct json_object *obj)
 		goto exit;
 	}
 
-	res = util_read_json_type(&cmn_params.subsystem, SUBSYSTEM_OBJ,
-				  t_string, obj);
+	res = util_read_json_type(&subtest->subsystem, SUBSYSTEM_OBJ, t_string,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
 	/* Check dependent subtest(s) status */
-	res = get_depends_status(thr, obj);
+	res = get_depends_status(thr, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -643,27 +573,25 @@ static void run_subtest(struct thread_data *thr, struct json_object *obj)
 	 * Get expected result parameter 'result' set in test definition file.
 	 * If not defined, the default value is SMW_STATUS_OK.
 	 */
-	res = util_read_json_type(&expected_status, RES_OBJ, t_string, obj);
+	res = util_read_json_type(&exp_res_st, RES_OBJ, t_string,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
-	if (expected_status) {
-		res = get_smw_int_status(&cmn_params.expected_res,
-					 expected_status);
+	if (exp_res_st) {
+		res = get_smw_int_status(&exp_smw_status, exp_res_st);
 
 		if (res != ERR_CODE(PASSED))
 			goto exit;
-
-	} else {
-		cmn_params.expected_res = SMW_STATUS_OK;
 	}
 
 	/*
 	 * Get SMW API version.
 	 * If not set in test definition file, use default value.
 	 */
-	cmn_params.version = SMW_API_DEFAULT_VERSION;
-	res = util_read_json_type(&cmn_params.version, VERSION_OBJ, t_int, obj);
+	subtest->version = SMW_API_DEFAULT_VERSION;
+	res = util_read_json_type(&subtest->version, VERSION_OBJ, t_int,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
@@ -671,31 +599,36 @@ static void run_subtest(struct thread_data *thr, struct json_object *obj)
 	 * Get expected subsystem to be used.
 	 * If not set in test definition file don't verify it.
 	 */
-	res = util_read_json_type(&sub_exp, SUBSYSTEM_EXP_OBJ, t_string, obj);
+	res = util_read_json_type(&sub_exp, SUBSYSTEM_EXP_OBJ, t_string,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
 	/* First wait and post semaphore */
-	res = util_sem_wait_before(thr, obj);
+	res = util_sem_wait_before(thr, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	res = util_sem_post_before(thr, obj);
+	res = util_sem_post_before(thr, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Execute subtest command */
-	res = execute_command(cmd_name, obj, &cmn_params,
-			      &thr->subtest->smw_status);
+	res = execute_command(cmd_name, subtest);
+
+	if (res == ERR_CODE(API_STATUS_NOK) &&
+	    !CHECK_RESULT(subtest->smw_status, exp_smw_status))
+		res = ERR_CODE(PASSED);
+
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Last wait and post semaphore */
-	res = util_sem_post_after(thr, obj);
+	res = util_sem_post_after(thr, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	res = util_sem_wait_after(thr, obj);
+	res = util_sem_wait_after(thr, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -705,7 +638,7 @@ static void run_subtest(struct thread_data *thr, struct json_object *obj)
 			DBG_PRINT("Selected subsystem: %s", sub_used);
 			if (strcmp(sub_used, sub_exp)) {
 				DBG_PRINT("Expected subsystem: %s", sub_exp);
-				res = ERR_CODE(BAD_RESULT);
+				res = ERR_CODE(BAD_SUBSYSTEM);
 			}
 		} else {
 			DBG_PRINT("WARNING - subsystem cannot be verified!");
@@ -713,7 +646,7 @@ static void run_subtest(struct thread_data *thr, struct json_object *obj)
 	}
 
 exit:
-	thr->subtest->status = res;
+	subtest->status = res;
 
 	if (res == ERR_CODE(PASSED))
 		thr->subtests_passed++;
@@ -762,8 +695,9 @@ void *process_thread(void *arg)
 	thr->subtests_total = 0;
 	thr->subtests_passed = 0;
 
+	thr->subtest = &subtest;
+
 	for (i = 0; i < thr->loop + 1; i++) {
-		thr->subtest = &subtest;
 		json_object_object_foreachC(thr->def, obj)
 		{
 			/* Run the JSON-C "subtest" object, other tag is ignored */
@@ -771,8 +705,14 @@ void *process_thread(void *arg)
 				continue;
 
 			thr->subtests_total++;
-			thr->subtest->name = obj.key;
-			run_subtest(thr, obj.val);
+
+			/* Reset the subtest data */
+			memset(&subtest, 0, sizeof(subtest));
+
+			subtest.app = thr->app;
+			subtest.name = obj.key;
+			subtest.params = obj.val;
+			run_subtest(thr);
 		}
 	}
 

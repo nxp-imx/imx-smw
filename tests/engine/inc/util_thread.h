@@ -8,7 +8,9 @@
 
 #include <pthread.h>
 
-#include "util.h"
+#include <json_object.h>
+
+#include "types.h"
 
 enum thread_state {
 	STATE_NOT_INIT = 0,
@@ -19,18 +21,6 @@ enum thread_state {
 };
 
 #define MAX_THR_NAME 20
-
-/**
- * struct subtest_data - Subtest data object
- * @name: Name of the subtest running
- * @status: Test status
- * @smw_status: SMW operation status
- */
-struct subtest_data {
-	char *name;
-	int status;
-	enum smw_status_code smw_status;
-};
 
 /**
  * struct thread_data - Thread data object

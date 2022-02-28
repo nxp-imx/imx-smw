@@ -6,16 +6,16 @@
 #ifndef __HMAC_H__
 #define __HMAC_H__
 
+#include "types.h"
+
 /**
  * hmac() - Do a HMAC operation.
- * @params: HMAC parameters.
- * @cmn_params: Common commands parameters.
- * @ret_status: Status returned by SMW API.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED			- Success.
  * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -BAD_RESULT			- SMW API status differs from expected one.
+ * -API_STATUS_NOK              - SMW API Call return error
  * -BAD_ARGS			- One of the arguments is bad.
  * -SUBSYSTEM			- HMAC operation failed.
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
@@ -26,7 +26,6 @@
  * Error code from get_hash_digest_len().
  * Error code from set_hmac_bad_args().
  */
-int hmac(json_object *params, struct cmn_params *cmn_params,
-	 enum smw_status_code *ret_status);
+int hmac(struct subtest_data *subtest);
 
 #endif /* __HMAC_H__ */

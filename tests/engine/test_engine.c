@@ -25,6 +25,8 @@ static const struct tee_info tee_default_info = {
 static const struct se_info se_default_info = { 0x534d5754, 0x444546,
 						1000 }; // SMWT, DEF
 
+#define DEFAULT_KEY_DB "/var/tmp/key_db_smw_test.dat"
+
 /**
  * setup_tee_info() - Read and setup TEE Information
  * @test_def: JSON-C test definition of the application
@@ -133,6 +135,47 @@ static int setup_hsm_info(json_object *test_def)
 }
 
 /**
+ * setup_key_db() -  Open/Create the application key database
+ * @test_def: JSON-C test definition of the application
+ *
+ * Return:
+ * PASSED              - Success.
+ * -BAD_PARAM_TYPE     - Parameter type is not correct or not supported.
+ * -BAD_ARGS           - One of the argument is bad.
+ * -FAILED             - Error in definition file
+ * -ERROR_SMWLIB_INIT  - SMW Library initialization error
+ */
+static int setup_key_db(json_object *test_def)
+{
+	int res;
+	char *filepath = DEFAULT_KEY_DB;
+	json_object *oinfo = NULL;
+
+	res = util_read_json_type(&oinfo, KEY_DB_OBJ, t_object, test_def);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
+	    !oinfo)
+		return res;
+
+	if (res == ERR_CODE(PASSED)) {
+		res = util_read_json_type(&filepath, FILEPATH_OBJ, t_string,
+					  oinfo);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			return res;
+	}
+
+	res = smw_osal_open_key_db(filepath, strlen(filepath) + 1);
+	if (res != SMW_STATUS_OK) {
+		DBG_PRINT("SMW Create Key database failed %s",
+			  get_smw_string_status(res));
+		res = ERR_CODE(ERROR_SMWLIB_INIT);
+	} else {
+		res = ERR_CODE(PASSED);
+	}
+
+	return res;
+}
+
+/**
  * init_smwlib() - Initialize the SMW Library
  * @app: Application data object
  *
@@ -152,6 +195,10 @@ static int init_smwlib(struct app_data *app)
 		goto end;
 
 	res = setup_hsm_info(app->definition);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	res = setup_key_db(app->definition);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 

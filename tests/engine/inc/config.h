@@ -6,34 +6,30 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+#include "types.h"
+
 /**
  * config_load() - Call configuration load API.
- * @params: Configuration parameters.
- * @cmn_params: Common commands parameters.
- * @ret_status: Status returned by SMW API.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED                   - Success.
  * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
- * -BAD_RESULT              - SMW API status differs from expected one.
+ * -API_STATUS_NOK          - SMW API Call return error
  * -BAD_ARGS                - One of the arguments is bad.
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * Error code from util_read_hex_buffer().
  */
-int config_load(json_object *params, struct cmn_params *cmn_params,
-		enum smw_status_code *ret_status);
+int config_load(struct subtest_data *subtest);
 
 /**
  * config_unload() - Call configuration unload API.
- * @params: Configuration parameters.
- * @cmn_params: Common commands parameters.
- * @ret_status: Status returned by SMW API.
+ * @subtest: Subtest data.
  *
  * Return:
- * PASSED       - Success.
- * -BAD_RESULT  - SMW API status differs from expected one.
+ * PASSED                   - Success.
+ * -API_STATUS_NOK          - SMW API Call return error
  */
-int config_unload(json_object *params, struct cmn_params *cmn_params,
-		  enum smw_status_code *ret_status);
+int config_unload(struct subtest_data *subtest);
 
 #endif /* __CONFIG_H__ */

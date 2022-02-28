@@ -6,23 +6,22 @@
 #ifndef __RNG_H__
 #define __RNG_H__
 
+#include "types.h"
+
 /**
  * rng() - Do a RNG operation.
- * @params: RNG parameters.
- * @cmn_params: Common commands parameters.
- * @ret_status: Status returned by SMW API.
+ * @subtest: Subtest data.
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -BAD_RESULT			- SMW API status differs from expected one.
- * -BAD_ARGS			- One of the arguments is bad.
- * -SUBSYSTEM			- RNG operation failed.
- * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ * PASSED                       - Success.
+ * -INTERNAL_OUT_OF_MEMORY      - Memory allocation failed.
+ * -API_STATUS_NOK              - SMW API Call return error
+ * -BAD_ARGS                    - One of the arguments is bad.
+ * -SUBSYSTEM                   - RNG operation failed.
+ * -BAD_PARAM_TYPE              - A parameter value is undefined.
  * Error code from util_read_hex_buffer().
  * Error code from set_rng_bad_args().
  */
-int rng(json_object *params, struct cmn_params *cmn_params,
-	enum smw_status_code *ret_status);
+int rng(struct subtest_data *subtest);
 
 #endif /* __RNG_H__ */

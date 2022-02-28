@@ -3,15 +3,13 @@
  * Copyright 2021-2022 NXP
  */
 
+#include <stdlib.h>
 #include <string.h>
 
-#include "json.h"
+#include <smw_crypto.h>
+
+#include "rng.h"
 #include "util.h"
-#include "types.h"
-#include "json_types.h"
-#include "hash.h"
-#include "smw_crypto.h"
-#include "smw_status.h"
 
 /**
  * set_rng_bad_args() - Set RNG bad parameters function of the test error.
@@ -52,31 +50,31 @@ static int set_rng_bad_args(json_object *params, struct smw_rng_args **args)
 	return ret;
 }
 
-int rng(json_object *params, struct cmn_params *cmn_params,
-	enum smw_status_code *ret_status)
+int rng(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
 	struct tbuffer random = { 0 };
 	struct smw_rng_args args = { 0 };
 	struct smw_rng_args *smw_rng_args = &args;
 
-	if (!params || !ret_status || !cmn_params) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = cmn_params->version;
+	args.version = subtest->version;
 
-	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
+	if (!strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = cmn_params->subsystem;
+		args.subsystem_name = subtest->subsystem;
 
-	res = util_read_json_type(&random, RANDOM_OBJ, t_buffer_hex, params);
+	res = util_read_json_type(&random, RANDOM_OBJ, t_buffer_hex,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	if (!is_api_test(cmn_params)) {
+	if (!is_api_test(subtest)) {
 		/*
 		 * In case of non API test, the test must specify only
 		 * the "random" buffer length.
@@ -101,19 +99,18 @@ int rng(json_object *params, struct cmn_params *cmn_params,
 	args.output_length = random.length;
 
 	/* Specific test cases */
-	res = set_rng_bad_args(params, &smw_rng_args);
+	res = set_rng_bad_args(subtest->params, &smw_rng_args);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Call RNG function */
-	*ret_status = smw_rng(smw_rng_args);
-
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
-		res = ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_rng(smw_rng_args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
 		goto exit;
 	}
 
-	if (*ret_status == SMW_STATUS_OK && !is_api_test(cmn_params)) {
+	if (!is_api_test(subtest)) {
 		if (random.length <= 256)
 			DBG_DHEX("Random number", random.data, random.length);
 

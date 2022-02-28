@@ -3,25 +3,24 @@
  * Copyright 2021-2022 NXP
  */
 
+#include <stdlib.h>
 #include <string.h>
 
-#include "json.h"
-#include "util.h"
-#include "types.h"
-#include "json_types.h"
-#include "keymgr.h"
+#include <smw_keymgr.h>
+#include <smw_crypto.h>
+
 #include "hash.h"
-#include "smw_keymgr.h"
-#include "smw_crypto.h"
-#include "smw_status.h"
+#include "hmac.h"
+#include "keymgr.h"
+#include "util.h"
+#include "util_key.h"
 
 /**
  * set_hmac_bad_args() - Set hmac bad parameters function of the test error.
- * @params: json-c object.
+ * @subtest: Subtest data
  * @args: SMW HMAC parameters.
  * @mac_hex: expected mac buffer argument parameter.
  * @mac_len: expected mac length argument parameter.
- * @is_api_test: Test concerns the API validation.
  *
  * Return:
  * PASSED			- Success.
@@ -29,14 +28,14 @@
  * -BAD_ARGS			- One of the arguments is bad.
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
  */
-static int set_hmac_bad_args(json_object *params, struct smw_hmac_args **args,
-			     unsigned char *mac_hex, unsigned int mac_len,
-			     int is_api_test)
+static int set_hmac_bad_args(struct subtest_data *subtest,
+			     struct smw_hmac_args **args,
+			     unsigned char *mac_hex, unsigned int mac_len)
 {
 	int ret = ERR_CODE(PASSED);
-	enum arguments_test_err_case error;
+	enum arguments_test_err_case error = NOT_DEFINED;
 
-	if (!params || !args)
+	if (!subtest || !args)
 		return ERR_CODE(BAD_ARGS);
 
 	/*
@@ -44,7 +43,7 @@ static int set_hmac_bad_args(json_object *params, struct smw_hmac_args **args,
 	 * can explicitly define the mac buffer.
 	 * Otherwise it is ignored.
 	 */
-	if (is_api_test) {
+	if (is_api_test(subtest)) {
 		/*
 		 * The mac buffer may have been already allocated.
 		 */
@@ -52,7 +51,7 @@ static int set_hmac_bad_args(json_object *params, struct smw_hmac_args **args,
 		(*args)->output_length = mac_len;
 	}
 
-	ret = util_read_test_error(&error, params);
+	ret = util_read_test_error(&error, subtest->params);
 	if (ret != ERR_CODE(PASSED))
 		return ret;
 
@@ -76,11 +75,9 @@ static int set_hmac_bad_args(json_object *params, struct smw_hmac_args **args,
 	return ret;
 }
 
-int hmac(json_object *params, struct cmn_params *cmn_params,
-	 enum smw_status_code *ret_status)
+int hmac(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
-	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
 	struct keypair_ops key_test;
 	struct smw_keypair_buffer key_buffer;
 	int key_id = INT_MAX;
@@ -93,17 +90,17 @@ int hmac(json_object *params, struct cmn_params *cmn_params,
 	struct smw_hmac_args args = { 0 };
 	struct smw_hmac_args *smw_hmac_args = &args;
 
-	if (!params || !ret_status || !cmn_params) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = cmn_params->version;
+	args.version = subtest->version;
 
-	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
+	if (!strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = cmn_params->subsystem;
+		args.subsystem_name = subtest->subsystem;
 
 	args.key_descriptor = &key_test.desc;
 
@@ -113,7 +110,7 @@ int hmac(json_object *params, struct cmn_params *cmn_params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -121,7 +118,7 @@ int hmac(json_object *params, struct cmn_params *cmn_params,
 		util_key_free_key(&key_test);
 
 		/* Fill key descriptor field saved */
-		res = util_key_find_key_node(list_keys(cmn_params), key_id,
+		res = util_key_find_key_node(list_keys(subtest), key_id,
 					     &key_test);
 		if (res != ERR_CODE(PASSED))
 			goto exit;
@@ -131,9 +128,10 @@ int hmac(json_object *params, struct cmn_params *cmn_params,
 		 * get it from the SMW key identifier
 		 */
 		if (!util_key_is_security_set(&key_test)) {
-			status = smw_get_security_size(&key_test.desc);
-			if (status != SMW_STATUS_OK) {
-				res = ERR_CODE(BAD_RESULT);
+			subtest->smw_status =
+				smw_get_security_size(&key_test.desc);
+			if (subtest->status != SMW_STATUS_OK) {
+				res = ERR_CODE(API_STATUS_NOK);
 				goto exit;
 			}
 		}
@@ -146,11 +144,13 @@ int hmac(json_object *params, struct cmn_params *cmn_params,
 	}
 
 	/* Algorithm is mandatory */
-	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string, params);
+	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	res = util_read_hex_buffer(&input_hex, &input_len, params, INPUT_OBJ);
+	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
+				   INPUT_OBJ);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -181,7 +181,8 @@ int hmac(json_object *params, struct cmn_params *cmn_params,
 	 * Read expected mac buffer if any.
 	 * Test definition might not set the expected mac buffer.
 	 */
-	res = util_read_hex_buffer(&mac_hex, &mac_len, params, MAC_OBJ);
+	res = util_read_hex_buffer(&mac_hex, &mac_len, subtest->params,
+				   MAC_OBJ);
 	if (res != ERR_CODE(PASSED)) {
 		if (res != ERR_CODE(MISSING_PARAMS))
 			goto exit;
@@ -190,16 +191,14 @@ int hmac(json_object *params, struct cmn_params *cmn_params,
 	}
 
 	/* Specific test cases */
-	res = set_hmac_bad_args(params, &smw_hmac_args, mac_hex, mac_len,
-				is_api_test(cmn_params));
+	res = set_hmac_bad_args(subtest, &smw_hmac_args, mac_hex, mac_len);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Call hmac function and compare result with expected one */
-	*ret_status = smw_hmac(smw_hmac_args);
-
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
-		res = ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_hmac(smw_hmac_args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
 		goto exit;
 	}
 
@@ -207,7 +206,7 @@ int hmac(json_object *params, struct cmn_params *cmn_params,
 	 * If HMAC operation succeeded and expected mac is set in the test
 	 * definition file then compare operation result.
 	 */
-	if (*ret_status == SMW_STATUS_OK && mac_hex)
+	if (mac_hex)
 		res = util_compare_buffers(output_hex, output_len, mac_hex,
 					   mac_len);
 

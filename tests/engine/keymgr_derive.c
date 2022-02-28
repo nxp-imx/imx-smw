@@ -6,22 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <smw_keymgr.h>
+
 #include "keymgr.h"
 #include "util.h"
+#include "util_key.h"
 #include "util_tlv.h"
-
-#include "smw_status.h"
-
-/*
- * This identifier is used for test error tests.
- * It represents the following key:
- *  - Generated/Imported by subsystem ID 0
- *  - Type is ECDSA NIST
- *  - Parity is private
- *  - Security size is 256
- *  - Subsystem Key ID is 1
- */
-#define FAKE_KEY_ID_NIST_256_0_ID INT64_C(0x0010010000000001)
 
 /**
  * kdf_args_tls12_read() - Read the TLS 1.2 function arguments
@@ -167,10 +157,9 @@ static bool kdf_tls12_is_mac_key_expected(const char *encryption_name)
 
 /**
  * kdf_tls12_end() - Finalize the TLS 1.2 operation
+ * @subtest: Subtest data
  * @args: SMW's Key derivation arguments
  * @key_derived: Key derived result
- * @key_identifiers: Test key identifiers list
- * @params: Pointer to json parameters
  *
  * Return:
  * PASSED                   - Success.
@@ -180,25 +169,28 @@ static bool kdf_tls12_is_mac_key_expected(const char *encryption_name)
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  * -FAILED                  - Error in definition file
  */
-int kdf_tls12_end(struct smw_derive_key_args *args,
-		  struct keypair_ops *key_derived,
-		  struct llist *key_identifiers, json_object *params)
+int kdf_tls12_end(struct subtest_data *subtest,
+		  struct smw_derive_key_args *args,
+		  struct keypair_ops *key_derived)
 {
 	int res;
 	json_object *oargs = NULL;
 	int key_id;
 	struct keypair_ops key_test = { 0 };
 	struct smw_kdf_tls12_args *tls_args;
+	struct llist *key_identifiers;
 
-	if (!args || !params || !args->kdf_arguments) {
+	if (!args || !subtest || !args->kdf_arguments) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
+	key_identifiers = list_keys(subtest);
 	tls_args = args->kdf_arguments;
 
 	/* Registers all generated keys in the test key identifiers list */
-	res = util_read_json_type(&oargs, OP_ARGS_OBJ, t_object, params);
+	res = util_read_json_type(&oargs, OP_ARGS_OBJ, t_object,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -255,7 +247,8 @@ int kdf_tls12_end(struct smw_derive_key_args *args,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	res = util_read_json_type(&oargs, OP_OUTPUT_OBJ, t_object, params);
+	res = util_read_json_type(&oargs, OP_OUTPUT_OBJ, t_object,
+				  subtest->params);
 	if (res == ERR_CODE(PASSED) && oargs) {
 		res = util_read_json_type(&key_id, "key_id", t_int, oargs);
 		if (res != ERR_CODE(PASSED))
@@ -301,10 +294,9 @@ static const struct kdf_op {
 	const char *name;
 	int (*read_args)(void **kdf_args, json_object *oargs);
 	int (*prepare_result)(struct keypair_ops *key, json_object *params);
-	int (*end_operation)(struct smw_derive_key_args *args,
-			     struct keypair_ops *key_derived,
-			     struct llist *key_identifiers,
-			     json_object *params);
+	int (*end_operation)(struct subtest_data *subtest,
+			     struct smw_derive_key_args *args,
+			     struct keypair_ops *key_derived);
 	void (*free)(struct smw_derive_key_args *args);
 } kdf_ops[] = { {
 			.name = "TLS12_KEY_EXCHANGE",
@@ -453,8 +445,7 @@ static int setup_derive_output(struct smw_derive_key_args *args,
 
 /**
  * setup_derive_base() - Setup the key derivation base argument.
- * @params: Pointer to json parameters.
- * @key_identifiers: Test key identifiers list.
+ * @subtest: Subtest data.
  * @key_base: Test keypair operation's base.
  * @base_buffer: Pointer to base keypair buffer structure.
  *
@@ -464,17 +455,18 @@ static int setup_derive_output(struct smw_derive_key_args *args,
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
  * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
  */
-static int setup_derive_base(json_object *params, struct llist *key_identifiers,
+static int setup_derive_base(struct subtest_data *subtest,
 			     struct keypair_ops *key_base,
 			     struct smw_keypair_buffer *base_buffer)
 {
 	int res = ERR_CODE(FAILED);
-	int status;
 	int key_id = INT_MAX;
 	json_object *base_args = NULL;
 
-	res = util_read_json_type(&base_args, OP_INPUT_OBJ, t_object, params);
+	res = util_read_json_type(&base_args, OP_INPUT_OBJ, t_object,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -493,7 +485,8 @@ static int setup_derive_base(json_object *params, struct llist *key_identifiers,
 
 	if (key_id != INT_MAX) {
 		/* Key ID is defined, try to find it */
-		res = util_key_find_key_node(key_identifiers, key_id, key_base);
+		res = util_key_find_key_node(list_keys(subtest), key_id,
+					     key_base);
 		if (res != ERR_CODE(PASSED))
 			return res;
 
@@ -502,9 +495,10 @@ static int setup_derive_base(json_object *params, struct llist *key_identifiers,
 		 * identifier
 		 */
 		if (!util_key_is_security_set(key_base)) {
-			status = smw_get_security_size(&key_base->desc);
-			if (status != SMW_STATUS_OK)
-				res = ERR_CODE(BAD_RESULT);
+			subtest->smw_status =
+				smw_get_security_size(&key_base->desc);
+			if (subtest->smw_status != SMW_STATUS_OK)
+				res = ERR_CODE(API_STATUS_NOK);
 		}
 	} else {
 		/*
@@ -522,10 +516,9 @@ static int setup_derive_base(json_object *params, struct llist *key_identifiers,
 
 /**
  * end_derive_operation() - End key derivation operations.
+ * @subtest: Subtest data
  * @args: Pointer to SMW's derive key arguments
  * @key_derived: Key derived result
- * @key_identifiers: Test key identifiers list
- * @params: Pointer to json parameters
  *
  * Return:
  * PASSED                   - Success.
@@ -535,10 +528,9 @@ static int setup_derive_base(json_object *params, struct llist *key_identifiers,
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  * -FAILED                  - Error in definition file
  */
-static int end_derive_operation(struct smw_derive_key_args *args,
-				struct keypair_ops *key_derived,
-				struct llist *key_identifiers,
-				json_object *params)
+static int end_derive_operation(struct subtest_data *subtest,
+				struct smw_derive_key_args *args,
+				struct keypair_ops *key_derived)
 {
 	int res = ERR_CODE(FAILED);
 
@@ -547,8 +539,7 @@ static int end_derive_operation(struct smw_derive_key_args *args,
 	kdf_op = get_kdf_op(args->kdf_name);
 
 	if (kdf_op && kdf_op->end_operation)
-		res = kdf_op->end_operation(args, key_derived, key_identifiers,
-					    params);
+		res = kdf_op->end_operation(subtest, args, key_derived);
 
 	return res;
 }
@@ -595,10 +586,6 @@ static int derive_bad_params(json_object *params,
 		(*args)->key_descriptor_derived = NULL;
 		break;
 
-	case FAKE_KEY_ID:
-		(*args)->key_descriptor_base->id = FAKE_KEY_ID_NIST_256_0_ID;
-		break;
-
 	case TLS12_KDF_ARGS_NULL:
 		(*args)->kdf_name = "TLS12_KEY_EXCHANGE";
 		(*args)->kdf_arguments = NULL;
@@ -612,8 +599,7 @@ static int derive_bad_params(json_object *params,
 	return ret;
 }
 
-int derive_key(json_object *params, struct cmn_params *cmn_params,
-	       enum smw_status_code *ret_status)
+int derive_key(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(FAILED);
 	struct keypair_ops key_base = { 0 };
@@ -622,30 +608,29 @@ int derive_key(json_object *params, struct cmn_params *cmn_params,
 	struct smw_derive_key_args args = { 0 };
 	struct smw_derive_key_args *smw_args = &args;
 
-	if (!params || !ret_status || !cmn_params) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = cmn_params->version;
+	args.version = subtest->version;
 
-	if (cmn_params->subsystem && !strcmp(cmn_params->subsystem, "DEFAULT"))
+	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = cmn_params->subsystem;
+		args.subsystem_name = subtest->subsystem;
 
 	args.key_descriptor_base = &key_base.desc;
 	args.key_descriptor_derived = &key_derived.desc;
 
 	/* Setup key descitpor or the key base */
-	res = setup_derive_base(params, list_keys(cmn_params), &key_base,
-				&base_buffer);
-	if (res != ERR_CODE(PASSED) && !is_api_test(cmn_params))
+	res = setup_derive_base(subtest, &key_base, &base_buffer);
+	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))
 		goto exit;
 
 	/* Setup optional parameters */
-	res = setup_derive_opt_params(&args, params);
-	if (res != ERR_CODE(PASSED) && !is_api_test(cmn_params))
+	res = setup_derive_opt_params(&args, subtest->params);
+	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))
 		goto exit;
 
 	/*
@@ -657,21 +642,20 @@ int derive_key(json_object *params, struct cmn_params *cmn_params,
 		goto exit;
 
 	/* Setup the output arguments */
-	res = setup_derive_output(&args, &key_derived, params);
-	if (res != ERR_CODE(PASSED) && !is_api_test(cmn_params))
+	res = setup_derive_output(&args, &key_derived, subtest->params);
+	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))
 		goto exit;
 
-	res = derive_bad_params(params, &smw_args);
+	res = derive_bad_params(subtest->params, &smw_args);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	*ret_status = smw_derive_key(smw_args);
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
-		res = ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_derive_key(smw_args);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		res = ERR_CODE(API_STATUS_NOK);
 
-	if (*ret_status == SMW_STATUS_OK)
-		res = end_derive_operation(&args, &key_derived,
-					   list_keys(cmn_params), params);
+	if (subtest->smw_status == SMW_STATUS_OK)
+		res = end_derive_operation(subtest, &args, &key_derived);
 
 exit:
 	util_key_free_key(&key_base);

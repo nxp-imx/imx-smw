@@ -4,13 +4,12 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
-#include "json.h"
+#include <smw_config.h>
+
 #include "util.h"
-#include "types.h"
-#include "json_types.h"
 #include "paths.h"
-#include "smw_config.h"
 
 static int read_config_file(char *file_name, char **buffer, unsigned int *size)
 {
@@ -74,10 +73,9 @@ end:
 	return res;
 }
 
-int config_load(json_object *params, struct cmn_params *cmn_params,
-		enum smw_status_code *ret_status)
+int config_load(struct subtest_data *subtest)
 {
-	int res = ERR_CODE(PASSED);
+	int res = ERR_CODE(BAD_ARGS);
 
 	char *file_path = NULL;
 	char *file_name = NULL;
@@ -86,16 +84,16 @@ int config_load(json_object *params, struct cmn_params *cmn_params,
 	unsigned int size = 0;
 	unsigned int offset = 0;
 
-	if (!params || !ret_status || !cmn_params) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
-	res = util_read_hex_buffer((unsigned char **)&buffer, &size, params,
-				   INPUT_OBJ);
+	res = util_read_hex_buffer((unsigned char **)&buffer, &size,
+				   subtest->params, INPUT_OBJ);
 	if (res == ERR_CODE(MISSING_PARAMS)) {
 		res = util_read_json_type(&file_name, FILEPATH_OBJ, t_string,
-					  params);
+					  subtest->params);
 		if (res != ERR_CODE(PASSED)) {
 			DBG_PRINT_MISS_PARAM("filepath");
 			DBG_PRINT_MISS_PARAM("input");
@@ -123,10 +121,9 @@ int config_load(json_object *params, struct cmn_params *cmn_params,
 	}
 
 	/* Call configuration load function */
-	*ret_status = smw_config_load((char *)buffer, size, &offset);
-
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
-		res = ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_config_load((char *)buffer, size, &offset);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		res = ERR_CODE(API_STATUS_NOK);
 
 end:
 	if (buffer)
@@ -138,21 +135,22 @@ end:
 	return res;
 }
 
-int config_unload(json_object *params, struct cmn_params *cmn_params,
-		  enum smw_status_code *ret_status)
+int config_unload(struct subtest_data *subtest)
 {
-	int res = ERR_CODE(PASSED);
+	int res = ERR_CODE(BAD_ARGS);
 
-	if (!params || !ret_status || !cmn_params) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	/* Call configuration unload function */
-	*ret_status = smw_config_unload();
+	subtest->smw_status = smw_config_unload();
 
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
-		res = ERR_CODE(BAD_RESULT);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		res = ERR_CODE(API_STATUS_NOK);
+	else
+		res = ERR_CODE(PASSED);
 
 	return res;
 }

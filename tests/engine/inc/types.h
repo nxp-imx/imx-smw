@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <stdio.h>
 
+#include <smw_status.h>
+
 /* List of key type */
 #define BR1_KEY	       "BRAINPOOL_R1"
 #define BT1_KEY	       "BRAINPOOL_T1"
@@ -25,7 +27,7 @@ enum err_num {
 	UNDEFINED_CMD,
 	MISSING_PARAMS, /* 5 */
 	UNKNOWN_RESULT,
-	BAD_RESULT, /* Result differs from expected */
+	API_STATUS_NOK, /* SMW Call return a status not ok */
 	BAD_ARGS,
 	SUBSYSTEM,
 	NOT_RUN, /* 10 */
@@ -38,6 +40,7 @@ enum err_num {
 	COND_DESTROY,
 	TIMEOUT,
 	THREAD_CANCELED,
+	BAD_SUBSYSTEM,	/* 20 */
 	MAX_TEST_ERROR, /* Maximum test error constant - keep last item */
 };
 
@@ -95,50 +98,56 @@ struct app_data {
 };
 
 /**
- * struct cmn_params - Parameters common to commands.
+ * struct subtest_data - Subtest data object
+ * @param: JSON-C Subtest parameters object
  * @app: Application data.
- * @expected_res: Expected result of the command.
+ * @name: Name of the subtest running
+ * @status: Subtest status
+ * @smw_status: SMW API call status
  * @subsystem: Subsystem to use for the command.
  * @version: Version of the SMW API.
  */
-struct cmn_params {
+struct subtest_data {
+	struct json_object *params;
 	struct app_data *app;
-	int expected_res;
+	char *name;
+	int status;
+	enum smw_status_code smw_status;
 	char *subsystem;
 	unsigned int version;
 };
 
 #define is_api_test(this)                                                      \
 	({                                                                     \
-		struct cmn_params *_this = (this);                             \
+		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
 		_this->app->is_api_test;                                       \
 	})
 
 #define list_keys(this)                                                        \
 	({                                                                     \
-		struct cmn_params *_this = (this);                             \
+		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
 		_this->app->key_identifiers;                                   \
 	})
 
 #define list_op_ctxs(this)                                                     \
 	({                                                                     \
-		struct cmn_params *_this = (this);                             \
+		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
 		_this->app->op_contexts;                                       \
 	})
 
 #define list_ciphers(this)                                                     \
 	({                                                                     \
-		struct cmn_params *_this = (this);                             \
+		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
 		_this->app->ciphers;                                           \
 	})
 
 #define list_signatures(this)                                                  \
 	({                                                                     \
-		struct cmn_params *_this = (this);                             \
+		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
 		_this->app->signatures;                                        \
 	})

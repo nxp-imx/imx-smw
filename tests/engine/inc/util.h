@@ -114,7 +114,7 @@ int util_destroy_app(void);
  * -UNKNOWN_RESULT	- @string is not present in status codes array.
  * -BAD_ARGS		- One of the argument is bad.
  */
-int get_smw_int_status(int *smw_status, const char *string);
+int get_smw_int_status(enum smw_status_code *smw_status, const char *string);
 
 /**
  * get_smw_string_status() - Convert SMW status integer value into string value.

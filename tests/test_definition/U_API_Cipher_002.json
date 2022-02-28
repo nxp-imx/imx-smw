@@ -1,0 +1,132 @@
+{
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_type": "AES",
+		"security_size": 256,
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_type": "DES",
+		"security_size": 56,
+		"key_id": 1
+	},
+	"subtest 3": {
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"input": "5555555555",
+		"test_error": "KEY_DESC_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": { // Nb Keys = 0
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"input": "5555555555",
+		"nb_keys": 0,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Key Format is undefined
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"input": "5555555555",
+		"format": "UNDEFINED",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 6": { // ID set and wrong key type
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"input": "5555555555",
+		"key_type": "DES",
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 7": { // ID set and wrong key security size
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"input": "5555555555",
+		"security_size": 128,
+		"key_id": 0,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 8": { // Wrong number of keys
+		"command": "CIPHER",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"input": "5555555555",
+		"priv_key": [
+			"a1b90cba3f06ac353b2c343876081762",
+			"090923026e91771815f29dab01932f2f"
+		],
+		"key_type": "AES",
+		"security_size": 128,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 9": { // No key is set
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"input": "5555555555",
+		"test_error": "KEY_BUFFER_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": { // Key type is missing
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"input": "5555555555",
+		"priv_key": [
+			"a1b90cba3f06ac353b2c343876081762",
+			"090923026e91771815f29dab01932f2f"
+		],
+		"security_size": 128,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": { // Security size is 0
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"input": "5555555555",
+		"priv_key": [
+			"a1b90cba3f06ac353b2c343876081762",
+			"090923026e91771815f29dab01932f2f"
+		],
+		"security_size": 0,
+		"key_type": "AES",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 12": { // Not same key type
+		"command": "CIPHER",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"nb_keys": 2,
+		"key_id": [
+			0,
+			1
+		],
+		"input": "5555555555",
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": [
+			1,
+			2
+		]
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_id": 1,
+		"depends": 2
+	}
+}

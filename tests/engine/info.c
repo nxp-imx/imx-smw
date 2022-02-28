@@ -4,14 +4,13 @@
  */
 
 #include <string.h>
+
 #include <smw_info.h>
 
 #include "info.h"
-#include "json_types.h"
 #include "util.h"
 
-static int check_version(struct json_object *params,
-			 enum smw_status_code *ret_status)
+static int check_version(struct subtest_data *subtest)
 {
 	int ret;
 	unsigned int major = 255;
@@ -19,10 +18,12 @@ static int check_version(struct json_object *params,
 	double exp_version = 0;
 	double lib_version = 0;
 
-	*ret_status = smw_get_version(&major, &minor);
+	subtest->smw_status = smw_get_version(&major, &minor);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		return ERR_CODE(API_STATUS_NOK);
 
 	ret = util_read_json_type(&exp_version, LIB_VERSION_OBJ, t_double,
-				  params);
+				  subtest->params);
 	if (ret != ERR_CODE(PASSED))
 		return ret;
 
@@ -46,38 +47,35 @@ static int check_version(struct json_object *params,
 	return ret;
 }
 
-int get_info(json_object *params, struct cmn_params *cmn_params,
-	     enum smw_status_code *ret_status)
+int get_info(struct subtest_data *subtest)
 {
 	int ret;
-	enum arguments_test_err_case error;
+	enum arguments_test_err_case error = NOT_DEFINED;
 
-	if (!params || !ret_status || !cmn_params) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	ret = util_read_test_error(&error, params);
+	ret = util_read_test_error(&error, subtest->params);
 	if (ret != ERR_CODE(PASSED))
 		return ret;
 
 	switch (error) {
 	case NOT_DEFINED:
-		ret = check_version(params, ret_status);
+		ret = check_version(subtest);
 		break;
 
 	case ARGS_NULL:
-		*ret_status = smw_get_version(NULL, NULL);
+		subtest->smw_status = smw_get_version(NULL, NULL);
+		if (subtest->smw_status != SMW_STATUS_OK)
+			ret = ERR_CODE(API_STATUS_NOK);
 		break;
 
 	default:
 		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
 	}
-
-	if (ret == ERR_CODE(PASSED) &&
-	    CHECK_RESULT(*ret_status, cmn_params->expected_res))
-		ret = ERR_CODE(BAD_RESULT);
 
 	return ret;
 }

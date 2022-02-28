@@ -19,10 +19,15 @@ int util_context_init(struct llist **list)
 int util_context_add_node(struct llist *list, unsigned int id,
 			  struct smw_op_context *smw_context)
 {
-	if (!list)
-		return ERR_CODE(BAD_ARGS);
+	int res = ERR_CODE(BAD_ARGS);
 
-	return util_list_add_node(list, id, smw_context);
+	if (list)
+		res = util_list_add_node(list, id, smw_context);
+
+	if (res != ERR_CODE(PASSED))
+		DBG_PRINT("Failed to add context node");
+
+	return res;
 }
 
 int util_context_find_node(struct llist *list, unsigned int id,

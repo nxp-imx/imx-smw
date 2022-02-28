@@ -5,7 +5,6 @@
 
 #include <string.h>
 
-#include "smw_status.h"
 #include "util.h"
 
 /**
@@ -18,7 +17,7 @@ static const struct smw_status {
 	char *string;
 } status_codes[] = { @SMW_STATUS_STR_LIST@ };
 
-int get_smw_int_status(int *smw_status, const char *string)
+int get_smw_int_status(enum smw_status_code *smw_status, const char *string)
 {
 	unsigned int i = 0;
 

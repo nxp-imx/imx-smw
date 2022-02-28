@@ -3,34 +3,23 @@
  * Copyright 2020-2022 NXP
  */
 
+#include <stdlib.h>
 #include <string.h>
 
-#include "json.h"
+#include <json.h>
+
+#include <smw_keymgr.h>
+
+#include "keymgr.h"
 #include "util.h"
 #include "util_key.h"
 #include "util_tlv.h"
-#include "types.h"
-#include "keymgr.h"
-
-#include "smw_keymgr.h"
-#include "smw_status.h"
-
-/*
- * This identifier is used for test error tests.
- * It represents the following key:
- *  - Generated/Imported by subsystem ID 0
- *  - Type is NIST
- *  - Parity is Public
- *  - Security size is 192
- *  - Subsystem Key ID is 1
- */
-#define FAKE_KEY_NIST_192_ID INT64_C(0x00C000000001)
 
 #define KEY_JSON_OBJECT_STRING_MAX_LEN 10
 
 /**
  * set_gen_opt_params() - Set key generation optional parameters.
- * @params: Pointer to json parameters.
+ * @subtest: Subtest data
  * @args: Pointer to smw generate key args structure to update.
  * @key_test: Test keypair structure with operations
  *
@@ -41,23 +30,24 @@
  * -BAD_ARGS                - One of the arguments is bad.
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
  */
-static int set_gen_opt_params(json_object *params,
+static int set_gen_opt_params(struct subtest_data *subtest,
 			      struct smw_generate_key_args *args,
 			      struct keypair_ops *key_test)
 {
 	int res;
-	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 	struct smw_key_descriptor *desc;
 	unsigned int public_length = 0;
 	unsigned int modulus_length = 0;
 
-	if (!params || !args || !key_test || !key_test->keys)
+	if (!subtest || !args || !key_test || !key_test->keys)
 		return ERR_CODE(BAD_ARGS);
 
 	/* Get 'attributes_list' optional parameter */
 	res = util_tlv_read_attrs((unsigned char **)&args->key_attributes_list,
-				  &args->key_attributes_list_length, params);
+				  &args->key_attributes_list_length,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -73,10 +63,10 @@ static int set_gen_opt_params(json_object *params,
 	if (util_key_is_public_len_set(key_test)) {
 		public_length = *key_public_length(key_test);
 		if (public_length == 1) {
-			status = smw_get_key_buffers_lengths(desc);
-			if (status != SMW_STATUS_OK) {
+			subtest->smw_status = smw_get_key_buffers_lengths(desc);
+			if (subtest->smw_status != SMW_STATUS_OK) {
 				DBG_PRINT("Error public key buffer len");
-				return ERR_CODE(BAD_RESULT);
+				return ERR_CODE(API_STATUS_NOK);
 			}
 		}
 
@@ -98,10 +88,10 @@ static int set_gen_opt_params(json_object *params,
 	if (util_key_is_modulus(key_test)) {
 		modulus_length = *key_modulus_length(key_test);
 		if (modulus_length == 1) {
-			status = smw_get_key_buffers_lengths(desc);
-			if (status != SMW_STATUS_OK) {
+			subtest->smw_status = smw_get_key_buffers_lengths(desc);
+			if (subtest->smw_status != SMW_STATUS_OK) {
 				DBG_PRINT("Error modulus buffer len");
-				return ERR_CODE(BAD_RESULT);
+				return ERR_CODE(API_STATUS_NOK);
 			}
 		}
 
@@ -124,7 +114,7 @@ static int set_gen_opt_params(json_object *params,
 
 /**
  * set_export_opt_params() - Set key export optional parameters.
- * @params: Pointer to json parameters.
+ * @subtest: Subtest data
  * @args: Pointer to smw export key args structure to update.
  * @key_test: Test exported keypair structure with operations
  * @exp_key_test: Test expected exported keypair structure with operations
@@ -137,23 +127,24 @@ static int set_gen_opt_params(json_object *params,
  * -BAD_RESULT              - Function from SMW API returned a bad result.
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
  */
-static int set_export_opt_params(json_object *params,
+static int set_export_opt_params(struct subtest_data *subtest,
 				 struct smw_export_key_args *args,
 				 struct keypair_ops *key_test,
 				 struct keypair_ops *exp_key_test,
 				 enum export_type export_type)
 {
 	int res = ERR_CODE(PASSED);
-	enum smw_status_code status;
 	struct smw_key_descriptor tmp_key_desc = { 0 };
 
-	if (!params || !args || !key_test || !exp_key_test)
+	if (!subtest || !args || !key_test || !exp_key_test)
 		return ERR_CODE(BAD_ARGS);
 
 	/* Get 'attributes_list' optional parameter */
 	res = util_tlv_read_attrs((unsigned char **)&args->key_attributes_list,
-				  &args->key_attributes_list_length, params);
+				  &args->key_attributes_list_length,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -172,22 +163,25 @@ static int set_export_opt_params(json_object *params,
 	tmp_key_desc.id = args->key_descriptor->id;
 	tmp_key_desc.buffer = args->key_descriptor->buffer;
 
-	status = smw_get_security_size(&tmp_key_desc);
-	if (status != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Get security size returned %d", status);
-		return ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_get_security_size(&tmp_key_desc);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		DBG_PRINT("SMW Get security size returned %d",
+			  subtest->smw_status);
+		return ERR_CODE(API_STATUS_NOK);
 	}
 
-	status = smw_get_key_type_name(&tmp_key_desc);
-	if (status != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Get key type name returned %d", status);
-		return ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_get_key_type_name(&tmp_key_desc);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		DBG_PRINT("SMW Get key type name returned %d",
+			  subtest->smw_status);
+		return ERR_CODE(API_STATUS_NOK);
 	}
 
-	status = smw_get_key_buffers_lengths(&tmp_key_desc);
-	if (status != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Get key buffers lengths returned %d", status);
-		return ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_get_key_buffers_lengths(&tmp_key_desc);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		DBG_PRINT("SMW Get key buffers lengths returned %d",
+			  subtest->smw_status);
+		return ERR_CODE(API_STATUS_NOK);
 	}
 
 	/* Reset the key buffer length not query */
@@ -297,7 +291,7 @@ static int set_common_bad_args(json_object *params, void **args,
 
 	case KEY_DESC_ID_SET:
 		/* Key descriptor @id field is set */
-		(*key)->id = FAKE_KEY_NIST_192_ID;
+		(*key)->id = 1;
 		break;
 
 	case KEY_DESC_ID_NOT_SET:
@@ -418,7 +412,7 @@ static int set_import_bad_args(json_object *params,
 
 /**
  * set_export_bad_args() - Set export key parameters for specific test cases.
- * @params: json-c parameters
+ * @subtest: Subtest data
  * @args: Pointer to smw export key args buffer structure.
  * @exp_key: Pointer to expected key buffer defined in test definition file.
  * @is_api_test: Test concerns the API validation.
@@ -431,10 +425,9 @@ static int set_import_bad_args(json_object *params,
  * -BAD_ARGS                - One of the arguments is bad.
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  */
-static int set_export_bad_args(json_object *params,
+static int set_export_bad_args(struct subtest_data *subtest,
 			       struct smw_export_key_args **args,
-			       struct smw_keypair_buffer *exp_key,
-			       int is_api_test)
+			       struct smw_keypair_buffer *exp_key)
 {
 	int ret;
 
@@ -444,7 +437,7 @@ static int set_export_bad_args(json_object *params,
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	ret = set_common_bad_args(params, (void **)args,
+	ret = set_common_bad_args(subtest->params, (void **)args,
 				  &(*args)->key_descriptor);
 
 	if (ret == ERR_CODE(ERROR_NOT_DEFINED)) {
@@ -454,7 +447,7 @@ static int set_export_bad_args(json_object *params,
 		 * argument is defined by the parameters
 		 * 'pub_key' and 'priv_key' in the test definition file.
 		 */
-		if (is_api_test)
+		if (is_api_test(subtest))
 			(*args)->key_descriptor->buffer = exp_key;
 
 		ret = ERR_CODE(PASSED);
@@ -668,7 +661,7 @@ exit:
 /**
  * restore_key_ids_from_json_file() - Restore key ids from a json file to a key
  *                                    identifier linked list.
- * @key_list: Key identifier linked list to update.
+ * @subtest: Subtest data
  * @filepath: Path of the file.
  *
  * Return:
@@ -676,19 +669,19 @@ exit:
  * -BAD_ARGS               - One of the arguments is bad.
  * -MISSING_PARAMS         - Missing mandatory parameters in @filepath.
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -API_STATUS_NOK         - SMW API Call return error
  * Error code from file_to_json_object().
  */
-static int restore_key_ids_from_json_file(struct llist *key_list,
+static int restore_key_ids_from_json_file(struct subtest_data *subtest,
 					  char *filepath)
 {
 	int res = ERR_CODE(FAILED);
 	int id = 0;
-	enum smw_status_code status;
 	json_object *restore_obj = NULL;
 	struct json_object_iter iter = { 0 };
 	struct keypair_ops key = { 0 };
 
-	if (!key_list || !filepath) {
+	if (!subtest || !filepath) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -715,13 +708,13 @@ static int restore_key_ids_from_json_file(struct llist *key_list,
 		if (res != ERR_CODE(PASSED))
 			break;
 
-		status = smw_get_security_size(&key.desc);
-		if (status != SMW_STATUS_OK) {
-			res = ERR_CODE(BAD_ARGS);
+		subtest->smw_status = smw_get_security_size(&key.desc);
+		if (subtest->smw_status != SMW_STATUS_OK) {
+			res = ERR_CODE(API_STATUS_NOK);
 			break;
 		}
 
-		res = util_key_add_node(key_list, id, &key);
+		res = util_key_add_node(list_keys(subtest), id, &key);
 		if (res != ERR_CODE(PASSED))
 			break;
 	}
@@ -731,8 +724,7 @@ static int restore_key_ids_from_json_file(struct llist *key_list,
 	return res;
 }
 
-int generate_key(json_object *params, struct cmn_params *cmn_params,
-		 enum smw_status_code *ret_status)
+int generate_key(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test;
@@ -741,17 +733,17 @@ int generate_key(json_object *params, struct cmn_params *cmn_params,
 	struct smw_generate_key_args *smw_gen_args = &args;
 	int key_id = INT_MAX;
 
-	if (!params || !ret_status || !cmn_params) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = cmn_params->version;
+	args.version = subtest->version;
 
-	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
+	if (!strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = cmn_params->subsystem;
+		args.subsystem_name = subtest->subsystem;
 
 	args.key_descriptor = &key_test.desc;
 
@@ -761,7 +753,7 @@ int generate_key(json_object *params, struct cmn_params *cmn_params,
 		goto exit;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -780,26 +772,23 @@ int generate_key(json_object *params, struct cmn_params *cmn_params,
 	}
 
 	/* Set optional parameters */
-	res = set_gen_opt_params(params, smw_gen_args, &key_test);
+	res = set_gen_opt_params(subtest, smw_gen_args, &key_test);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Specific test cases */
-	res = set_gen_bad_args(params, &smw_gen_args);
+	res = set_gen_bad_args(subtest->params, &smw_gen_args);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Call generate key function and compare result with expected one */
-	*ret_status = smw_generate_key(smw_gen_args);
-
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
-		res = ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_generate_key(smw_gen_args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
 		goto exit;
 	}
 
-	if (*ret_status == SMW_STATUS_OK)
-		res = util_key_add_node(list_keys(cmn_params), key_id,
-					&key_test);
+	res = util_key_add_node(list_keys(subtest), key_id, &key_test);
 
 exit:
 	util_key_free_key(&key_test);
@@ -810,8 +799,7 @@ exit:
 	return res;
 }
 
-int delete_key(json_object *params, struct cmn_params *cmn_params,
-	       enum smw_status_code *ret_status)
+int delete_key(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(FAILED);
 	struct keypair_ops key_test;
@@ -819,12 +807,12 @@ int delete_key(json_object *params, struct cmn_params *cmn_params,
 	struct smw_delete_key_args *smw_del_args = &args;
 	int key_id = INT_MAX;
 
-	if (!params || !ret_status || !cmn_params) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = cmn_params->version;
+	args.version = subtest->version;
 	args.key_descriptor = &key_test.desc;
 
 	/* Initialize key descriptor, no key buffer */
@@ -833,7 +821,7 @@ int delete_key(json_object *params, struct cmn_params *cmn_params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -844,20 +832,19 @@ int delete_key(json_object *params, struct cmn_params *cmn_params,
 	}
 
 	/* Fill key descriptor field saved */
-	res = util_key_find_key_node(list_keys(cmn_params), key_id, &key_test);
+	res = util_key_find_key_node(list_keys(subtest), key_id, &key_test);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Specific test cases */
-	res = set_del_bad_args(params, &smw_del_args);
+	res = set_del_bad_args(subtest->params, &smw_del_args);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Call delete key function and compare result with expected one */
-	*ret_status = smw_delete_key(smw_del_args);
-
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
-		return ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_delete_key(smw_del_args);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		return ERR_CODE(API_STATUS_NOK);
 
 	/*
 	 * Key node of the key identifiers linked is freed when the list is
@@ -869,8 +856,7 @@ int delete_key(json_object *params, struct cmn_params *cmn_params,
 	return ERR_CODE(PASSED);
 }
 
-int import_key(json_object *params, struct cmn_params *cmn_params,
-	       enum smw_status_code *ret_status)
+int import_key(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test;
@@ -879,17 +865,17 @@ int import_key(json_object *params, struct cmn_params *cmn_params,
 	struct smw_import_key_args *smw_import_args = &args;
 	int key_id = INT_MAX;
 
-	if (!params || !cmn_params || !ret_status) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = cmn_params->version;
+	args.version = subtest->version;
 
-	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
+	if (!strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = cmn_params->subsystem;
+		args.subsystem_name = subtest->subsystem;
 
 	args.key_descriptor = &key_test.desc;
 
@@ -899,7 +885,7 @@ int import_key(json_object *params, struct cmn_params *cmn_params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -919,26 +905,24 @@ int import_key(json_object *params, struct cmn_params *cmn_params,
 
 	/* Get 'attributes_list' optional parameter */
 	res = util_tlv_read_attrs((unsigned char **)&args.key_attributes_list,
-				  &args.key_attributes_list_length, params);
+				  &args.key_attributes_list_length,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Specific test cases */
-	res = set_import_bad_args(params, &smw_import_args);
+	res = set_import_bad_args(subtest->params, &smw_import_args);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Call import key function and compare result with expected one */
-	*ret_status = smw_import_key(smw_import_args);
-
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
-		res = ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_import_key(smw_import_args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
 		goto exit;
 	}
 
-	if (*ret_status == SMW_STATUS_OK)
-		res = util_key_add_node(list_keys(cmn_params), key_id,
-					&key_test);
+	res = util_key_add_node(list_keys(subtest), key_id, &key_test);
 
 exit:
 	util_key_free_key(&key_test);
@@ -949,25 +933,23 @@ exit:
 	return res;
 }
 
-int export_key(json_object *params, struct cmn_params *cmn_params,
-	       enum export_type export_type, enum smw_status_code *ret_status)
+int export_key(struct subtest_data *subtest, enum export_type export_type)
 {
 	int res = ERR_CODE(PASSED);
-	enum smw_status_code status = SMW_STATUS_OPERATION_FAILURE;
-	struct keypair_ops key_test;
-	struct keypair_ops exp_key_test;
+	struct keypair_ops key_test = { 0 };
+	struct keypair_ops exp_key_test = { 0 };
 	struct smw_export_key_args args = { 0 };
 	struct smw_export_key_args *smw_export_args = &args;
-	struct smw_keypair_buffer key_buffer;
-	struct smw_keypair_buffer exp_key_buffer;
+	struct smw_keypair_buffer key_buffer = { 0 };
+	struct smw_keypair_buffer exp_key_buffer = { 0 };
 	int key_id = INT_MAX;
 
-	if (!params || !cmn_params || !ret_status) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = cmn_params->version;
+	args.version = subtest->version;
 	args.key_descriptor = &key_test.desc;
 
 	/*
@@ -982,7 +964,8 @@ int export_key(json_object *params, struct cmn_params *cmn_params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&exp_key_test, &key_id, 0, params);
+	res = util_key_read_descriptor(&exp_key_test, &key_id, 0,
+				       subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -997,7 +980,7 @@ int export_key(json_object *params, struct cmn_params *cmn_params,
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, params);
+	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -1008,15 +991,15 @@ int export_key(json_object *params, struct cmn_params *cmn_params,
 		goto exit;
 	}
 
-	res = util_key_find_key_node(list_keys(cmn_params), key_id, &key_test);
+	res = util_key_find_key_node(list_keys(subtest), key_id, &key_test);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* If Security size not set get it from the SMW key identifier */
 	if (!util_key_is_security_set(&key_test)) {
-		status = smw_get_security_size(&key_test.desc);
-		if (status != SMW_STATUS_OK) {
-			res = ERR_CODE(BAD_RESULT);
+		subtest->smw_status = smw_get_security_size(&key_test.desc);
+		if (subtest->smw_status != SMW_STATUS_OK) {
+			res = ERR_CODE(API_STATUS_NOK);
 			goto exit;
 		}
 	}
@@ -1029,26 +1012,22 @@ int export_key(json_object *params, struct cmn_params *cmn_params,
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	res = set_export_opt_params(params, &args, &key_test, &exp_key_test,
+	res = set_export_opt_params(subtest, &args, &key_test, &exp_key_test,
 				    export_type);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Specific test cases */
-	res = set_export_bad_args(params, &smw_export_args, &exp_key_buffer,
-				  is_api_test(cmn_params));
+	res = set_export_bad_args(subtest, &smw_export_args, &exp_key_buffer);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Call export key function and compare result with expected one */
-	*ret_status = smw_export_key(smw_export_args);
+	subtest->smw_status = smw_export_key(smw_export_args);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		res = ERR_CODE(API_STATUS_NOK);
 
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
-		res = ERR_CODE(BAD_RESULT);
-		goto exit;
-	}
-
-	if (*ret_status == SMW_STATUS_OK)
+	if (subtest->smw_status == SMW_STATUS_OK)
 		res = compare_keys(&key_test, &exp_key_test);
 
 exit:
@@ -1061,54 +1040,40 @@ exit:
 	return res;
 }
 
-int save_key_ids_to_file(struct json_object *params,
-			 struct cmn_params *cmn_params,
-			 enum smw_status_code *ret_status)
+int save_key_ids_to_file(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	char *filename = NULL;
 
-	if (!params || !cmn_params || !ret_status) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
 	/* 'filepath' is a mandatory parameter */
-	res = util_read_json_type(&filename, FILEPATH_OBJ, t_string, params);
+	res = util_read_json_type(&filename, FILEPATH_OBJ, t_string,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	*ret_status =
-		save_key_ids_to_json_file(list_keys(cmn_params), filename);
-
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
-		return ERR_CODE(BAD_RESULT);
-
-	return ERR_CODE(PASSED);
+	return save_key_ids_to_json_file(list_keys(subtest), filename);
 }
 
-int restore_key_ids_from_file(struct json_object *params,
-			      struct cmn_params *cmn_params,
-			      enum smw_status_code *ret_status)
+int restore_key_ids_from_file(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	char *filename;
+	char *filename = NULL;
 
-	if (!params || !cmn_params || !ret_status) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
 	/* 'filepath' is a mandatory parameter */
-	res = util_read_json_type(&filename, FILEPATH_OBJ, t_string, params);
+	res = util_read_json_type(&filename, FILEPATH_OBJ, t_string,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	*ret_status =
-		restore_key_ids_from_json_file(list_keys(cmn_params), filename);
-
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res))
-		return ERR_CODE(BAD_RESULT);
-
-	return ERR_CODE(PASSED);
+	return restore_key_ids_from_json_file(subtest, filename);
 }

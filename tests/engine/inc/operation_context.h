@@ -6,40 +6,36 @@
 #ifndef __OPERATION_CONTEXT_H__
 #define __OPERATION_CONTEXT_H__
 
+#include "types.h"
+
 /**
  * cancel_operation() - Cancel operation
- * @params: Cancel operation parameters.
- * @cmn_params: Some parameters common to commands.
- * @ret_status: Status returned by SMW API.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED
- * -BAD_ARGS		- One of the arguments is bad
- * -BAD_PARAM_TYPE	- A parameter value is undefined.
- * -MISSING_PARAMS	- Missing mandatory parameters in @params
- * -BAD_RESULT		- SMW API status differs from expected one
- * -FAILED		- Operation context is not found
+ * -BAD_ARGS               - One of the arguments is bad
+ * -BAD_PARAM_TYPE         - A parameter value is undefined.
+ * -MISSING_PARAMS         - Missing mandatory parameters in @params
+ * -API_STATUS_NOK         - SMW API Call return error
+ * -FAILED                 - Operation context is not found
  */
-int cancel_operation(json_object *params, struct cmn_params *cmn_params,
-		     enum smw_status_code *ret_status);
+int cancel_operation(struct subtest_data *subtest);
 
 /**
  * copy_context() - Copy operation context
- * @params: Cancel operation parameters.
- * @cmn_params: Some parameters common to commands.
- * @ret_status: Status returned by SMW API.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED                  - Success
  * -BAD_ARGS               - One of the arguments is bad
  * -BAD_PARAM_TYPE         - A parameter value is undefined.
  * -MISSING_PARAMS         - Missing mandatory parameters in @params
- * -BAD_RESULT             - SMW API status differs from expected one
+ * -API_STATUS_NOK         - SMW API Call return error
  * -FAILED                 - Operation context is not found
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed
  * -INTERNAL               - Internal error
  */
-int copy_context(json_object *params, struct cmn_params *cmn_params,
-		 enum smw_status_code *ret_status);
+int copy_context(struct subtest_data *subtest);
 
 #endif /* __OPERATION_CONTEXT_H__ */

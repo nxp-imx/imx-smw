@@ -59,6 +59,6 @@
 		"command": "EXPORT_PUBLIC",
 		"key_id": 1,
 		"depends": 9,
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+		"result": "SMW_STATUS_UNKNOWN_ID"
 	}
 }

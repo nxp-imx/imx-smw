@@ -274,7 +274,7 @@ static void subtest_log(struct thread_data *thr)
 	if (nb_char < 0)
 		DBG_PRINT("Error (%d) %s", nb_char, util_get_strerr());
 
-	if (thr->subtest->status == ERR_CODE(BAD_RESULT))
+	if (thr->subtest->status == ERR_CODE(API_STATUS_NOK))
 		error = get_smw_string_status(thr->subtest->smw_status);
 
 	(void)sprintf(&str[nb_char], "%s: %s", thr->subtest->name,

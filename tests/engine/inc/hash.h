@@ -3,8 +3,10 @@
  * Copyright 2020-2022 NXP
  */
 
-#ifndef __CRYPTO_H__
-#define __CRYPTO_H__
+#ifndef __HASH_H__
+#define __HASH_H__
+
+#include "types.h"
 
 /**
  * get_hash_digest_len() - Return digest byte length switch algorithm.
@@ -22,14 +24,12 @@ int get_hash_digest_len(char *algo, unsigned int *len);
 
 /**
  * hash() - Do a hash operation.
- * @params: Hash parameters.
- * @cmn_params: Some parameters common to commands.
- * @ret_status: Status returned by SMW API.
+ * @subtest: Subtest data.
  *
  * Return:
  * PASSED			- Success.
  * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -BAD_RESULT			- SMW API status differs from expected one.
+ * -API_STATUS_NOK              - SMW API Call return error
  * -BAD_ARGS			- One of the arguments is bad.
  * -SUBSYSTEM			- Hash operation failed (bad hash digest).
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
@@ -37,7 +37,6 @@ int get_hash_digest_len(char *algo, unsigned int *len);
  * Error code from get_hash_digest_len().
  * Error code from set_hash_bad_args().
  */
-int hash(json_object *params, struct cmn_params *cmn_params,
-	 enum smw_status_code *ret_status);
+int hash(struct subtest_data *subtest);
 
-#endif /* __CRYPTO_H__ */
+#endif /* __HASH_H__ */

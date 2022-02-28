@@ -3,15 +3,14 @@
  * Copyright 2020-2022 NXP
  */
 
+#include <stdlib.h>
 #include <string.h>
 
-#include "json.h"
-#include "util.h"
-#include "types.h"
+#include <smw_crypto.h>
+
 #include "hash.h"
 #include "json_types.h"
-#include "smw_crypto.h"
-#include "smw_status.h"
+#include "util.h"
 
 /**
  * struct hash
@@ -54,11 +53,10 @@ int get_hash_digest_len(char *algo, unsigned int *len)
 
 /**
  * set_hash_bad_args() - Set hash bad parameters function of the test error.
- * @params: json-c object.
+ * @subtest: Subtest data
  * @args: SMW Hash parameters.
  * @digest_hex: expected digest buffer argument parameter.
  * @digest_len: expected digest length argument parameter.
- * @is_api_test: Test concerns the API validation.
  *
  * Return:
  * PASSED			- Success.
@@ -66,17 +64,17 @@ int get_hash_digest_len(char *algo, unsigned int *len)
  * -BAD_ARGS			- One of the arguments is bad.
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
  */
-static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
-			     unsigned char *digest_hex, unsigned int digest_len,
-			     int is_api_test)
+static int set_hash_bad_args(struct subtest_data *subtest,
+			     struct smw_hash_args **args,
+			     unsigned char *digest_hex, unsigned int digest_len)
 {
 	int ret = ERR_CODE(PASSED);
-	enum arguments_test_err_case error;
+	enum arguments_test_err_case error = NOT_DEFINED;
 
-	if (!params || !args)
+	if (!subtest || !args)
 		return ERR_CODE(BAD_ARGS);
 
-	ret = util_read_test_error(&error, params);
+	ret = util_read_test_error(&error, subtest->params);
 	if (ret != ERR_CODE(PASSED))
 		return ret;
 
@@ -88,7 +86,7 @@ static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
 		 * and length are defined by the parameter 'digest'
 		 * in the test definition file.
 		 */
-		if (is_api_test) {
+		if (is_api_test(subtest)) {
 			(*args)->output = digest_hex;
 			(*args)->output_length = digest_len;
 		}
@@ -107,8 +105,7 @@ static int set_hash_bad_args(json_object *params, struct smw_hash_args **args,
 	return ret;
 }
 
-int hash(json_object *params, struct cmn_params *cmn_params,
-	 enum smw_status_code *ret_status)
+int hash(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
 	unsigned int input_len = 0;
@@ -120,24 +117,26 @@ int hash(json_object *params, struct cmn_params *cmn_params,
 	struct smw_hash_args args = { 0 };
 	struct smw_hash_args *smw_hash_args = &args;
 
-	if (!params || !ret_status || !cmn_params) {
+	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	args.version = cmn_params->version;
+	args.version = subtest->version;
 
-	if (!strcmp(cmn_params->subsystem, "DEFAULT"))
+	if (!strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
-		args.subsystem_name = cmn_params->subsystem;
+		args.subsystem_name = subtest->subsystem;
 
 	/* Algorithm is mandatory */
-	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string, params);
+	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	res = util_read_hex_buffer(&input_hex, &input_len, params, INPUT_OBJ);
+	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
+				   INPUT_OBJ);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -152,7 +151,7 @@ int hash(json_object *params, struct cmn_params *cmn_params,
 	 * Read expected digest buffer if any.
 	 * Test definition might not set the expected digest buffer.
 	 */
-	res = util_read_hex_buffer(&digest_hex, &digest_len, params,
+	res = util_read_hex_buffer(&digest_hex, &digest_len, subtest->params,
 				   DIGEST_OBJ);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
 		goto exit;
@@ -180,16 +179,15 @@ int hash(json_object *params, struct cmn_params *cmn_params,
 	args.output_length = output_len;
 
 	/* Specific test cases */
-	res = set_hash_bad_args(params, &smw_hash_args, digest_hex, digest_len,
-				is_api_test(cmn_params));
+	res = set_hash_bad_args(subtest, &smw_hash_args, digest_hex,
+				digest_len);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Call hash function and compare result with expected one */
-	*ret_status = smw_hash(smw_hash_args);
-
-	if (CHECK_RESULT(*ret_status, cmn_params->expected_res)) {
-		res = ERR_CODE(BAD_RESULT);
+	subtest->smw_status = smw_hash(smw_hash_args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
 		goto exit;
 	}
 
@@ -197,9 +195,8 @@ int hash(json_object *params, struct cmn_params *cmn_params,
 	 * If Hash operation succeeded and expected digest or digest length
 	 * is set in the test definition file then compare operation result.
 	 */
-	if (*ret_status == SMW_STATUS_OK)
-		res = util_compare_buffers(args.output, args.output_length,
-					   digest_hex, digest_len);
+	res = util_compare_buffers(args.output, args.output_length, digest_hex,
+				   digest_len);
 
 exit:
 	if (input_hex)

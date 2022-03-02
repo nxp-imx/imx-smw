@@ -90,7 +90,7 @@ int util_log_find(struct app_data *app, const char *str)
 		if (nl)
 			*nl = '\0';
 
-		if (strlen(buf) && !strstr(buf, str)) {
+		if (strlen(buf) && !strncmp(buf, str, strlen(buf))) {
 			found = 1;
 			break;
 		}

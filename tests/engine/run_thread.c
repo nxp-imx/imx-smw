@@ -500,10 +500,10 @@ static int is_subtest_passed(struct thread_data *thr, int id)
 	char str[256] = { 0 };
 
 	if (strlen(thr->name))
-		(void)sprintf(str, "[%s] %s %d %s", thr->name, SUBTEST_OBJ, id,
+		(void)sprintf(str, "[%s] %s%d: %s", thr->name, SUBTEST_OBJ, id,
 			      util_get_err_code_str(ERR_CODE(PASSED)));
 	else
-		(void)sprintf(str, "%s %d %s", SUBTEST_OBJ, id,
+		(void)sprintf(str, "%s%d: %s", SUBTEST_OBJ, id,
 			      util_get_err_code_str(ERR_CODE(PASSED)));
 
 	return util_log_find(thr->app, str);
@@ -573,7 +573,7 @@ static int get_depends_status(struct thread_data *thr, struct json_object *def)
 				return ERR_CODE(BAD_PARAM_TYPE);
 			}
 
-			dep_id = json_object_get_int(depends_obj);
+			dep_id = json_object_get_int(oval);
 			res = is_subtest_passed(thr, dep_id);
 			if (res == ERR_CODE(FAILED)) {
 				res = ERR_CODE(NOT_RUN);

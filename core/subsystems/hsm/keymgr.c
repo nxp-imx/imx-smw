@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "smw_status.h"
@@ -15,15 +15,6 @@
 #include "keymgr.h"
 
 #include "common.h"
-
-/*
- * Hardcoded values due to limitation of SMW's HSM subsystem support. Transient
- * and persistent keys can't be part of the same key group and user can't set
- * the key group ID.
- * May have to be change in other version.
- */
-#define PERSISTENT_KEY_GROUP 0
-#define TRANSIENT_KEY_GROUP  1
 
 /* Key type IDs must be ordered from lowest to highest.
  * Security sizes must be ordered from lowest to highest

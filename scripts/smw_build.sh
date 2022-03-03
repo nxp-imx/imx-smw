@@ -11,6 +11,8 @@ opt_coverage="-DCODE_COVERAGE=OFF"
 opt_buildtype="-DCMAKE_BUILD_TYPE=Release"
 opt_verbose="-DVERBOSE=0"
 opt_format="-DFORMAT=html"
+opt_psa="-DENABLE_PSA_DEFAULT=OFF"
+opt_tls12="-DENABLE_TLS12=OFF"
 
 #
 # Get script name and path
@@ -197,6 +199,8 @@ function configure()
     cmd_script="${cmd_script} ${opt_zlib} ${opt_seco}"
     cmd_script="${cmd_script} ${opt_teec} ${opt_tadevkit}"
     cmd_script="${cmd_script} ${opt_jsonc}"
+    cmd_script="${cmd_script} ${opt_psa}"
+    cmd_script="${cmd_script} ${opt_tls12}"
 
     mkdir -p "${opt_out}"
     cd "${opt_out}"
@@ -437,7 +441,7 @@ function usage_configure()
     printf "  %s configure out=[dir] coverage debug " "${script_name}"
     printf "verbose=[lvl] zlib=[dir] seco=[dir] teec=[dir] tadevkit=[dir] "
     printf "arch=[arch] toolpath=[dir] toolname=[name] json=[dir] "
-    printf "format=[name]\n"
+    printf "format=[name] ...\n"
     printf "    out      = Build directory\n"
     printf "    coverage = [optional] if set enable code coverage tool\n"
     printf "    debug    = [optional] if set build type to debug\n"
@@ -453,6 +457,10 @@ function usage_configure()
     printf "    tadevkit = OPTEE TA Development Kit export directory\n"
     printf "  To enable tests [optionnal]\n"
     printf "    jsonc = JSON-C export directory\n"
+    printf "  To enable library option off by default\n"
+    printf "    all_options     = [optional] Enable all options described below\n"
+    printf "    tls12           = [optional] Enable TLS1.2\n"
+    printf "    psa_default_alt = [optional] Enable PSA interface\n"
     printf "\n"
 }
 
@@ -647,6 +655,19 @@ do
         format=*)
             opt_format="${arg#*=}"
             opt_format="-DFORMAT=${opt_format}"
+            ;;
+
+        psa_default_alt)
+            opt_psa="-DENABLE_PSA_DEFAULT_ALT=ON"
+            ;;
+
+        tls12)
+            opt_tls12="-DENABLE_TLS12=ON"
+            ;;
+
+        all_options)
+            opt_psa="-DENABLE_PSA_DEFAULT_ALT=ON"
+            opt_tls12="-DENABLE_TLS12=ON"
             ;;
 
         #

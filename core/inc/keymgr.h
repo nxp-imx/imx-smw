@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __KEYMGR_H__
@@ -8,6 +8,15 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+/*
+ * Hardcoded values due to limitation of SMW's HSM subsystem support. Transient
+ * and persistent keys can't be part of the same key group and user can't set
+ * the key group ID.
+ * May have to be change in other version.
+ */
+#define PERSISTENT_KEY_GROUP 0
+#define TRANSIENT_KEY_GROUP  1
 
 /* Default RSA public exponent is 65537, which has a length of 3 bytes */
 #define DEFAULT_RSA_PUB_EXP_LEN 3

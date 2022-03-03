@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include "smw_status.h"
@@ -185,6 +185,8 @@ static int build_mac_key_id(unsigned long long *id,
 		identifier.id = hsm_id;
 		identifier.security_size = kdf_info->mac_security_size;
 		identifier.subsystem_id = SUBSYSTEM_ID_HSM;
+		/* Only transient key are generated */
+		identifier.persistent = false;
 
 		*id = smw_keymgr_build_key_id(&identifier);
 	}
@@ -205,6 +207,8 @@ static int build_master_key_id(unsigned long long *id, unsigned int hsm_id)
 		identifier.id = hsm_id;
 		identifier.security_size = TLS12_MASTER_SECRET_SEC_SIZE;
 		identifier.subsystem_id = SUBSYSTEM_ID_HSM;
+		/* Only transient key are generated */
+		identifier.persistent = false;
 
 		*id = smw_keymgr_build_key_id(&identifier);
 	}
@@ -227,6 +231,8 @@ static int build_enc_key_id(unsigned long long *id,
 		identifier.id = hsm_id;
 		identifier.security_size = kdf_info->enc_security_size;
 		identifier.subsystem_id = SUBSYSTEM_ID_HSM;
+		/* Only transient key are generated */
+		identifier.persistent = false;
 
 		*id = smw_keymgr_build_key_id(&identifier);
 	}
@@ -420,7 +426,9 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 		op_hsm_args.ke_input_size = key_base_len;
 	}
 
+	/* Only Transient keys generated */
 	op_hsm_args.shared_key_info = HSM_KEY_INFO_TRANSIENT;
+	op_hsm_args.shared_key_group = TRANSIENT_KEY_GROUP;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_key_exchange()\n"

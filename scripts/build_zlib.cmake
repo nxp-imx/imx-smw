@@ -31,6 +31,7 @@ set(ZLIB_AR_DIR "${ZLIB_NAME}-${ZLIB_VERSION}")
 set(ZLIB_ARCHIVE "${ZLIB_AR_DIR}.tar.xz")
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
+include(GNUInstallDirs)
 find_package(ZLIBLight)
 
 if(ZLIB_FOUND)

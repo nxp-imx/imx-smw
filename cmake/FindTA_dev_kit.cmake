@@ -41,7 +41,7 @@ endif()
 
 find_path(TA_DEV_KIT_INCLUDE_DIR tee_internal_api.h
           PATHS ${TA_DEV_KIT_ROOT}
-          PATH_SUFFIXES usr/include include)
+          PATH_SUFFIXES usr/${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR})
 find_path(TA_DEV_KIT_MK_DIR ta_dev_kit.mk
           PATHS ${TA_DEV_KIT_ROOT}
           PATH_SUFFIXES mk)

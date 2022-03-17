@@ -11,6 +11,7 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
 include(${CMAKE_TOOLCHAIN_FILE})
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
+include(GNUInstallDirs)
 find_package(Seco)
 find_package(ZLIBLight)
 

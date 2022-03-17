@@ -21,6 +21,7 @@ endif()
 include(${CMAKE_TOOLCHAIN_FILE})
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
+include(GNUInstallDirs)
 find_package(Jsonc)
 
 if(JSONC_FOUND)

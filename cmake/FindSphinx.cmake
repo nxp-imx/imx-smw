@@ -22,7 +22,7 @@ The name of the Sphinx executable
 #]=======================================================================]
 find_program(SPHINX_EXECUTABLE
              NAMES sphinx-build
-             PATHS usr/bin bin
+             PATHS usr/${CMAKE_INSTALL_BINDIR} ${CMAKE_INSTALL_BINDIR}
              DOC "Sphinx documentation generator")
 
 include(FindPackageHandleStandardArgs)

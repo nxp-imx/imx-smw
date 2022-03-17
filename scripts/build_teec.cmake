@@ -12,6 +12,7 @@ set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
+include(GNUInstallDirs)
 find_package(Teec)
 
 if(TEEC_FOUND)

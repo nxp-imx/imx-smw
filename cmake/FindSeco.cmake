@@ -41,16 +41,16 @@ endif()
 
 find_file(SECO_NVM_LIBRARY seco_nvm_manager.a
           PATHS ${SECO_ROOT}
-          PATH_SUFFIXES usr/lib lib)
+          PATH_SUFFIXES usr/${CMAKE_INSTALL_LIBDIR} ${CMAKE_INSTALL_LIBDIR})
 find_path(SECO_NVM_INCLUDE_DIR seco_nvm.h
           PATHS ${SECO_ROOT}
-          PATH_SUFFIXES usr/include include)
+          PATH_SUFFIXES usr/${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR})
 find_file(SECO_HSM_LIBRARY hsm_lib.a
           PATHS ${SECO_ROOT}
-          PATH_SUFFIXES usr/lib lib)
+          PATH_SUFFIXES usr/${CMAKE_INSTALL_LIBDIR} ${CMAKE_INSTALL_LIBDIR})
 find_path(SECO_HSM_INCLUDE_DIR hsm_api.h
           PATHS ${SECO_ROOT}
-          PATH_SUFFIXES usr/include/hsm include/hsm)
+          PATH_SUFFIXES usr/${CMAKE_INSTALL_INCLUDEDIR}/hsm ${CMAKE_INSTALL_INCLUDEDIR}/hsm)
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS

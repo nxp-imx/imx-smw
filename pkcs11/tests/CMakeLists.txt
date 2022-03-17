@@ -85,7 +85,7 @@ enable_testing()
 #
 macro(pkcs11_test name)
     add_test(NAME pkcs11_${name}
-             COMMAND ${CMAKE_INSTALL_PREFIX}/bin/${PROJECT_NAME} -t ${name})
+             COMMAND ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME} -t ${name})
     set_tests_properties(pkcs11_${name} PROPERTIES LABELS "pkcs11;${name}")
 endmacro()
 

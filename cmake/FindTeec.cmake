@@ -37,11 +37,11 @@ endif()
 
 find_library(TEEC_LIBRARY teec
              PATHS ${TEEC_ROOT}
-             PATH_SUFFIXES usr/lib lib
+             PATH_SUFFIXES usr/${CMAKE_INSTALL_LIBDIR} ${CMAKE_INSTALL_LIBDIR}
              CMAKE_FIND_ROOT_PATH_BOTH)
 find_path(TEEC_INCLUDE_DIR tee_client_api.h
           PATHS ${TEEC_ROOT}
-          PATH_SUFFIXES usr/include include
+          PATH_SUFFIXES usr/${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}
           CMAKE_FIND_ROOT_PATH_BOTH)
 
 include(FindPackageHandleStandardArgs)

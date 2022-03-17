@@ -38,11 +38,11 @@ endif()
 
 find_library(ZLIB_LIBRARY z
              PATHS ${ZLIB_ROOT}
-             PATH_SUFFIXES usr/lib lib
+             PATH_SUFFIXES usr/${CMAKE_INSTALL_LIBDIR} ${CMAKE_INSTALL_LIBDIR}
              CMAKE_FIND_ROOT_PATH_BOTH)
 find_path(ZLIB_INCLUDE_DIR zlib.h
           PATHS ${ZLIB_ROOT}
-          PATH_SUFFIXES usr/include include
+          PATH_SUFFIXES usr/${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR} 
           CMAKE_FIND_ROOT_PATH_BOTH)
 
 include(FindPackageHandleStandardArgs)

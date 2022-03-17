@@ -22,7 +22,7 @@ The name of the latexmk executable
 #]=======================================================================]
 find_program(LATEXMK_EXECUTABLE
              NAMES latexmk
-             PATHS usr/bin bin
+             PATHS usr/${CMAKE_INSTALL_BINDIR} ${CMAKE_INSTALL_BINDIR}
              DOC "latexmk executable")
 
 include(FindPackageHandleStandardArgs)

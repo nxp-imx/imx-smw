@@ -37,11 +37,11 @@ endif()
 
 find_library(JSONC_LIBRARY json-c
              PATHS ${JSONC_ROOT} ${JSONC_ROOT}/usr
-             PATH_SUFFIXES lib
+             PATH_SUFFIXES ${CMAKE_INSTALL_LIBDIR}
              CMAKE_FIND_ROOT_PATH_BOTH)
 find_path(JSONC_INCLUDE_DIR NAMES json.h json_config.h
           PATHS ${JSONC_ROOT} ${JSONC_ROOT}/usr
-          PATH_SUFFIXES include include/json-c
+          PATH_SUFFIXES ${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}/json-c
           CMAKE_FIND_ROOT_PATH_BOTH)
 
 include(FindPackageHandleStandardArgs)

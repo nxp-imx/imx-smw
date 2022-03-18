@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "hsm_api.h"
@@ -335,6 +335,10 @@ static int verify(struct hdl *hdl, void *args)
 
 	key_type_id = key_descriptor->identifier.type_id;
 	security_size = key_descriptor->identifier.security_size;
+	if (!security_size) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	op_verify_sign_args.key = key;
 	op_verify_sign_args.message = smw_sign_verify_get_msg_buf(verify_args);

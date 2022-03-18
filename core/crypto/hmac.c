@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include "smw_status.h"
@@ -102,7 +102,7 @@ enum smw_status_code smw_hmac(struct smw_hmac_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_crypto_hmac_args hmac_args;
+	struct smw_crypto_hmac_args hmac_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	struct smw_keymgr_descriptor *key_descriptor;
 	enum smw_keymgr_format_id format_id;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "smw_status.h"
@@ -286,7 +286,7 @@ static int smw_sign_verify(enum operation_id operation_id,
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_crypto_sign_verify_args sign_verify_args;
+	struct smw_crypto_sign_verify_args sign_verify_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	struct smw_keymgr_descriptor *key_descriptor;
 	enum smw_keymgr_format_id format_id;

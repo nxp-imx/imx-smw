@@ -75,8 +75,8 @@ static int get_thread_definition(struct json_object *def_obj,
 	res = util_read_json_type(&def_file, FILEPATH_OBJ, t_string, def_obj);
 	if (res == ERR_CODE(PASSED)) {
 		/* Read the thread file definition */
-		res = util_read_json_file(thr->app->dir_def_file, def_file,
-					  &thr->def);
+		res = util_read_json_file(thr->app->test->dir_def_file,
+					  def_file, &thr->def);
 	} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
 		/*
 		 * Increment reference to application test definition
@@ -267,9 +267,17 @@ exit:
 
 static void subtest_log(struct thread_data *thr)
 {
+	struct test_data *test = NULL;
 	int nb_char = 0;
 	char str[256] = { 0 };
 	const char *error = NULL;
+
+	if (!thr->app || !thr->app->test) {
+		DBG_PRINT_BAD_ARGS();
+		return;
+	}
+
+	test = thr->app->test;
 
 	if (strlen(thr->name))
 		nb_char = sprintf(str, "[%s] ", thr->name);
@@ -284,9 +292,9 @@ static void subtest_log(struct thread_data *thr)
 		      util_get_err_code_str(*thr->subtest->status));
 	/* Additional error message if any */
 	if (error)
-		util_log_status(thr->app, "%s (%s)\n", str, error);
+		util_log_status(test, "%s (%s)\n", str, error);
 	else
-		util_log_status(thr->app, "%s\n", str);
+		util_log_status(test, "%s\n", str);
 }
 
 int util_thread_init(struct llist **list)
@@ -511,11 +519,19 @@ int util_thread_ends_wait(struct app_data *app)
 
 void util_thread_log(struct thread_data *thr)
 {
+	struct test_data *test = NULL;
 	int nb_char = 0;
 	char str[256] = { 0 };
 	int rate_passed = 0;
 	int total = 0;
 	int fails = 0;
+
+	if (!thr->app || !thr->app->test) {
+		DBG_PRINT_BAD_ARGS();
+		return;
+	}
+
+	test = thr->app->test;
 
 	if (thr->subtest) {
 		subtest_log(thr);
@@ -565,5 +581,5 @@ void util_thread_log(struct thread_data *thr)
 	else
 		(void)sprintf(&str[nb_char], "\n");
 
-	util_log_status(thr->app, "%s\n", str);
+	util_log_status(test, "%s\n", str);
 }

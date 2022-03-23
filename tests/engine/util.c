@@ -16,15 +16,10 @@
 
 #include "json_util.h"
 #include "util.h"
-#include "util_cipher.h"
-#include "util_key.h"
+#include "util_app.h"
 #include "util_list.h"
 #include "util_file.h"
 #include "util_mutex.h"
-#include "util_context.h"
-#include "util_sem.h"
-#include "util_sign.h"
-#include "util_thread.h"
 
 /**
  * struct - test_err_case
@@ -75,127 +70,70 @@ const struct error list_err[MAX_TEST_ERROR] = {
 
 #undef SET_ERR_CODE_AND_NAME
 
-static struct app_data *app_data;
+static struct test_data *test_data;
 
-struct app_data *util_setup_app(void)
+struct test_data *util_get_test(void)
 {
-	int err;
+	return test_data;
+}
 
-	app_data = calloc(1, sizeof(*app_data));
-	if (!app_data)
+struct test_data *util_setup_test(void)
+{
+	int err = 1;
+	struct test_data *test = NULL;
+
+	test = calloc(1, sizeof(*test));
+	if (!test)
 		return NULL;
 
-	err = util_key_init(&app_data->key_identifiers);
-	if (err != ERR_CODE(PASSED))
+	test->lock_dbg = util_mutex_create();
+	if (!test->lock_dbg)
 		goto exit;
 
-	err = util_context_init(&app_data->op_contexts);
-	if (err != ERR_CODE(PASSED))
+	test->lock_log = util_mutex_create();
+	if (!test->lock_log)
 		goto exit;
 
-	err = util_cipher_init(&app_data->ciphers);
-	if (err != ERR_CODE(PASSED))
-		goto exit;
-
-	err = util_sign_init(&app_data->signatures);
-	if (err != ERR_CODE(PASSED))
-		goto exit;
-
-	err = util_thread_init(&app_data->threads);
-	if (err != ERR_CODE(PASSED))
-		goto exit;
-
-	err = util_sem_init(&app_data->semaphores);
-	if (err != ERR_CODE(PASSED))
-		goto exit;
-
-	app_data->lock_dbg = util_mutex_create();
-	if (!app_data->lock_dbg) {
-		err = ERR_CODE(FAILED);
-		goto exit;
-	}
-
-	app_data->lock_log = util_mutex_create();
-	if (!app_data->lock_log)
-		err = ERR_CODE(FAILED);
+	err = util_app_init(&test->apps);
 
 exit:
-	if (err != ERR_CODE(PASSED))
-		util_destroy_app();
+	if (err) {
+		util_destroy_test(test);
+		test = NULL;
+	}
 
-	return app_data;
+	test_data = test;
+
+	return test;
 }
 
-struct app_data *util_get_app(void)
-{
-	return app_data;
-}
-
-int util_destroy_app(void)
+void util_destroy_test(struct test_data *test)
 {
 	int res = 0;
-	int err;
 
-	if (!app_data)
-		return ERR_CODE(FAILED);
+	if (!test)
+		return;
 
-	res = util_list_clear(app_data->key_identifiers);
-	if (res != ERR_CODE(PASSED))
-		DBG_PRINT("Clear list key identiers error %d", res);
-
-	err = util_list_clear(app_data->op_contexts);
-	if (err != ERR_CODE(PASSED)) {
-		DBG_PRINT("Clear list operation contexts error %d", err);
-		res = (res == ERR_CODE(PASSED)) ? err : res;
-	}
-
-	err = util_list_clear(app_data->ciphers);
-	if (err != ERR_CODE(PASSED)) {
-		DBG_PRINT("Clear list ciphers error %d", err);
-		res = (res == ERR_CODE(PASSED)) ? err : res;
-	}
-
-	err = util_list_clear(app_data->signatures);
-	if (err != ERR_CODE(PASSED)) {
-		DBG_PRINT("Clear list signatures error %d", err);
-		res = (res == ERR_CODE(PASSED)) ? err : res;
-	}
-
-	err = util_list_clear(app_data->threads);
-	if (err != ERR_CODE(PASSED)) {
-		DBG_PRINT("Clear list threads error %d", err);
-		res = (res == ERR_CODE(PASSED)) ? err : res;
-	}
-
-	err = util_list_clear(app_data->semaphores);
-	if (err != ERR_CODE(PASSED)) {
-		DBG_PRINT("Clear list semaphores error %d", err);
-		res = (res == ERR_CODE(PASSED)) ? err : res;
-	}
-
-	/* Destroy the thread completion mutex and condition */
-	err = util_thread_ends_destroy(app_data);
-	if (err != ERR_CODE(PASSED))
-		res = (res == ERR_CODE(PASSED)) ? err : res;
+	test_data = NULL;
 
 	/* Destroy the debug print mutex and abort if failure */
-	res = util_mutex_destroy(&app_data->lock_dbg);
+	res = util_mutex_destroy(&test->lock_dbg);
 	assert(res == ERR_CODE(PASSED));
 
-	if (app_data->log)
-		(void)fclose(app_data->log);
+	if (test->log)
+		(void)fclose(test->log);
 
 	/* Destroy the log file mutex and abort if failure */
-	res = util_mutex_destroy(&app_data->lock_log);
+	res = util_mutex_destroy(&test->lock_log);
+	assert(res == ERR_CODE(PASSED));
 
-	if (app_data->definition)
-		json_object_put(app_data->definition);
+	if (test->definition)
+		json_object_put(test->definition);
 
-	free(app_data);
+	res = util_list_clear(test->apps);
+	assert(res == ERR_CODE(PASSED));
 
-	app_data = NULL;
-
-	return res;
+	free(test);
 }
 
 int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)

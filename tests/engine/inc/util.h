@@ -78,30 +78,29 @@
 	})
 
 /**
- * util_setup_app() - Setup the application global data
+ * util_get_test() - Return the reference to test data object
+ *
+ * return:
+ * Reference to the test data object
+ */
+struct test_data *util_get_test(void);
+
+/**
+ * util_setup_test() - Setup the overall test global data
  *
  * Return:
- * Pointer to the application data object
+ * Pointer to the test data object
  * Otherwise NULL if error
  */
-struct app_data *util_setup_app(void);
+struct test_data *util_setup_test(void);
 
 /**
- * util_get_app() - Get the application global data
+ * util_destroy_test() - Destroy the overall test global data
+ * @test: Overall test global data object
  *
- * Return:
- * Pointer to the application data object
+ * If there is an error during the function, the application aborts.
  */
-struct app_data *util_get_app(void);
-
-/**
- * util_destroy_app() - Destroy the application global data
- *
- * Return:
- * PASSED                  - Success.
- * -MUTEX_DESTROY          - Mutex destroy failed.
- */
-int util_destroy_app(void);
+void util_destroy_test(struct test_data *test);
 
 /**
  * get_smw_int_status() - Convert SMW status string value into integer value.

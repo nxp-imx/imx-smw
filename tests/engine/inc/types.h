@@ -11,6 +11,8 @@
 
 #include <smw_status.h>
 
+#include "util_app.h"
+
 /* List of key type */
 #define BR1_KEY	       "BRAINPOOL_R1"
 #define BT1_KEY	       "BRAINPOOL_T1"
@@ -62,39 +64,23 @@ extern const struct error list_err[MAX_TEST_ERROR];
 struct thread_ends;
 
 /**
- * struct app_data - Application data structure
+ * struct test_data - Overall test data
  * @dir_def_file:    Folder of the test definition file
- * @key_identifiers: Key identifiers list
- * @op_contexts:     Operation context list
- * @ciphers:         Cipher to verify list
- * @signatures:      Signatures to verify list
- * @threads:         Application threads list
- * @semaphores:      Semaphores list
  * @log:             Application log file
- * @is_multithread:  Application is multithread
- * @is_api_test:     Flag if test only SMW's API
- * @definition:      Application test definition
- * @lock_dbg:        Debug Printf protector
  * @lock_log:        Log into file protector
- * @thr_ends:        Thread waiting all test threads
- * @timeout:         Application timeout in seconds
+ * @lock_dbg:        Debug printf protector
+ * @is_api_test:     Flag if test only SMW's API
+ * @definition:      Test definition
+ * @apps:            Application list object
  */
-struct app_data {
+struct test_data {
 	char *dir_def_file;
-	struct llist *key_identifiers;
-	struct llist *op_contexts;
-	struct llist *ciphers;
-	struct llist *signatures;
-	struct llist *threads;
-	struct llist *semaphores;
 	FILE *log;
-	int is_multithread;
+	void *lock_log;
+	void *lock_dbg;
 	int is_api_test;
 	struct json_object *definition;
-	void *lock_dbg;
-	void *lock_log;
-	struct thread_ends *thr_ends;
-	unsigned int timeout;
+	struct llist *apps;
 };
 
 /**
@@ -121,7 +107,8 @@ struct subtest_data {
 	({                                                                     \
 		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
-		_this->app->is_api_test;                                       \
+		assert(_this->app->test);                                      \
+		_this->app->test->is_api_test;                                 \
 	})
 
 #define list_keys(this)                                                        \

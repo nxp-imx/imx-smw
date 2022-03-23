@@ -8,6 +8,7 @@
 
 /* List of parameters present in JSON test definition file */
 #define ALGO_OBJ	  "algo"
+#define APP_OBJ		  "App"
 #define ATTR_LIST_OBJ	  "attributes_list"
 #define CMD_OBJ		  "command"
 #define COPY_CIPHER_CTX	  "copy_cipher_ctx"

@@ -7,11 +7,11 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "smw_osal.h"
 
 #include "util.h"
+#include "util_app.h"
 #include "util_file.h"
 #include "util_log.h"
 #include "util_thread.h"
@@ -376,6 +376,48 @@ static const struct test_type *get_test_type(struct app_data *app)
 }
 
 /**
+ * run_singleapp() - Run a single application test
+ * @test_data: Overall test data
+ *
+ * Return
+ * PASSED  - Application test passed
+ * or any error code (see enum err_num)
+ */
+static int run_singleapp(struct test_data *test_data)
+{
+	int test_status = ERR_CODE(FAILED);
+	const struct test_type *test;
+	struct app_data *app = NULL;
+
+	/* Single application */
+	test_status = util_app_register(test_data, 1, &app);
+	if (test_status != ERR_CODE(PASSED))
+		return test_status;
+
+	app->pid = getpid();
+
+	/*
+	 * Increment reference to test definition
+	 * the process_thread call json_object_put() regardless
+	 * if it's a multiple application test or not.
+	 */
+	app->definition = json_object_get(test_data->definition);
+
+	test_status = init_smwlib(app);
+	if (test_status != ERR_CODE(PASSED))
+		goto exit;
+
+	test = get_test_type(app);
+	if (test)
+		test_status = test->run(app);
+	else
+		test_status = ERR_CODE(FAILED);
+
+exit:
+	return test_status;
+}
+
+/**
  * run_test() - Run a test.
  * @def_file: Name of the test definition file.
  * @test_name: Test name.
@@ -391,14 +433,12 @@ static const struct test_type *get_test_type(struct app_data *app)
 static int run_test(char *def_file, char *test_name, char *output_dir)
 {
 	int test_status = ERR_CODE(FAILED);
-	int err;
 	char *dir = output_dir;
 	char *name = NULL;
-	const struct test_type *test;
-	struct app_data *app;
+	struct test_data *test_data;
 
-	app = util_setup_app();
-	if (!app)
+	test_data = util_setup_test();
+	if (!test_data)
 		return ERR_CODE(INTERNAL);
 
 	if (!def_file || !test_name) {
@@ -420,11 +460,12 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 	strcpy(name, test_name);
 	strcat(name, TEST_STATUS_EXTENSION);
 
-	test_status = util_file_open(dir, name, "w+", &app->log);
+	test_status = util_file_open(dir, name, "w+", &test_data->log);
 	if (test_status != ERR_CODE(PASSED))
 		goto exit;
 
-	test_status = util_read_json_file(NULL, def_file, &app->definition);
+	test_status =
+		util_read_json_file(NULL, def_file, &test_data->definition);
 	if (test_status != ERR_CODE(PASSED))
 		goto exit;
 
@@ -433,38 +474,29 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 	name = NULL;
 
 	/* Get the test definition folder path */
-	app->dir_def_file = dirname(def_file);
-
-	test_status = init_smwlib(app);
-	if (test_status != ERR_CODE(PASSED))
-		goto exit;
+	test_data->dir_def_file = dirname(def_file);
 
 	/*
 	 * Check from test name if it's a test to verify the API only
 	 */
 	if (strstr(test_name, TEST_API_TYPE))
-		app->is_api_test = 1;
+		test_data->is_api_test = 1;
 
-	test = get_test_type(app);
-
-	if (test)
-		test_status = test->run(app);
+	test_status = run_singleapp(test_data);
 
 exit:
 	if (name)
 		free(name);
 
 	if (test_status == ERR_CODE(PASSED))
-		util_log(app, "%s: %s\n", test_name,
+		util_log(test_data, "%s: %s\n", test_name,
 			 util_get_err_code_str(test_status));
 	else
-		util_log(app, "%s: %s (%s)\n", test_name,
+		util_log(test_data, "%s: %s (%s)\n", test_name,
 			 util_get_err_code_str(ERR_CODE(FAILED)),
 			 util_get_err_code_str(test_status));
 
-	err = util_destroy_app();
-	if (test_status == ERR_CODE(PASSED))
-		test_status = err;
+	util_destroy_test(test_data);
 
 	return test_status;
 }

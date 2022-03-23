@@ -19,9 +19,9 @@ void util_dbg_printf(const char *function, int line, const char *fmt, ...)
 
 	va_start(args, fmt);
 
-	app = util_get_app();
-	if (app)
-		util_mutex_lock(app->lock_dbg);
+	app = util_app_get_active_data();
+	if (app && app->test)
+		util_mutex_lock(app->test->lock_dbg);
 
 	(void)util_get_thread_name(app, &thr_name);
 
@@ -33,8 +33,8 @@ void util_dbg_printf(const char *function, int line, const char *fmt, ...)
 	vprintf(fmt, args);
 	printf("\n");
 
-	if (app)
-		util_mutex_unlock(app->lock_dbg);
+	if (app && app->test)
+		util_mutex_unlock(app->test->lock_dbg);
 
 	va_end(args);
 }
@@ -48,9 +48,9 @@ void util_dbg_dumphex(const char *function, int line, char *msg, void *buf,
 	char out[256];
 	int off = 0;
 
-	app = util_get_app();
-	if (app)
-		util_mutex_lock(app->lock_dbg);
+	app = util_app_get_active_data();
+	if (app && app->test)
+		util_mutex_lock(app->test->lock_dbg);
 
 	(void)util_get_thread_name(app, &thr_name);
 
@@ -74,6 +74,6 @@ void util_dbg_dumphex(const char *function, int line, char *msg, void *buf,
 
 	(void)fflush(stdout);
 
-	if (app)
-		util_mutex_unlock(app->lock_dbg);
+	if (app && app->test)
+		util_mutex_unlock(app->test->lock_dbg);
 }

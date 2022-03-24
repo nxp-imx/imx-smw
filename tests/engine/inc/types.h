@@ -102,7 +102,7 @@ struct app_data {
  * @param: JSON-C Subtest parameters object
  * @app: Application data.
  * @name: Name of the subtest running
- * @status: Subtest status
+ * @status: Subtest status (reference to subtests_stat.status_array entry)
  * @smw_status: SMW API call status
  * @subsystem: Subsystem to use for the command.
  * @version: Version of the SMW API.
@@ -111,7 +111,7 @@ struct subtest_data {
 	struct json_object *params;
 	struct app_data *app;
 	char *name;
-	int status;
+	int *status;
 	enum smw_status_code smw_status;
 	char *subsystem;
 	unsigned int version;

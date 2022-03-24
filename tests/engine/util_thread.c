@@ -53,6 +53,9 @@ static void thr_free_data(void *data)
 	    thr_data->state == STATE_WAITING)
 		pthread_cancel(thr_data->id);
 
+	if (thr_data->stat.status_array)
+		free(thr_data->stat.status_array);
+
 	free(thr_data);
 }
 
@@ -274,11 +277,11 @@ static void subtest_log(struct thread_data *thr)
 	if (nb_char < 0)
 		DBG_PRINT("Error (%d) %s", nb_char, util_get_strerr());
 
-	if (thr->subtest->status == ERR_CODE(API_STATUS_NOK))
+	if (*thr->subtest->status == ERR_CODE(API_STATUS_NOK))
 		error = get_smw_string_status(thr->subtest->smw_status);
 
 	(void)sprintf(&str[nb_char], "%s: %s", thr->subtest->name,
-		      util_get_err_code_str(thr->subtest->status));
+		      util_get_err_code_str(*thr->subtest->status));
 	/* Additional error message if any */
 	if (error)
 		util_log_status(thr->app, "%s (%s)\n", str, error);
@@ -511,6 +514,8 @@ void util_thread_log(struct thread_data *thr)
 	int nb_char = 0;
 	char str[256] = { 0 };
 	int rate_passed = 0;
+	int total = 0;
+	int fails = 0;
 
 	if (thr->subtest) {
 		subtest_log(thr);
@@ -536,16 +541,24 @@ void util_thread_log(struct thread_data *thr)
 	}
 
 	/* Print the subtests statistic */
-	if (thr->subtests_total) {
-		rate_passed = 100 * thr->subtests_passed;
-		rate_passed /= thr->subtests_total;
+	total = thr->stat.number;
+	if (thr->loop)
+		total *= thr->loop;
+
+	fails = total - thr->stat.passed;
+
+	if (thr->stat.ran && total) {
+		rate_passed = 100 * thr->stat.passed;
+		rate_passed /= total;
 	}
 
-	nb_char +=
-		sprintf(&str[nb_char],
-			"\n\t%d%% subtests passed, %d failed out of %d",
-			rate_passed, thr->subtests_total - thr->subtests_passed,
-			thr->subtests_total);
+	nb_char += sprintf(&str[nb_char],
+			   "\n\t%d%% subtests passed, %d failed out of %d",
+			   rate_passed, fails, total);
+
+	if (total - thr->stat.ran)
+		nb_char += sprintf(&str[nb_char], " (missing %d)",
+				   total - thr->stat.ran);
 
 	if (thr->loop)
 		(void)sprintf(&str[nb_char], " in %d loops\n", thr->loop);

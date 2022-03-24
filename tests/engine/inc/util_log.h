@@ -30,16 +30,4 @@ void util_log(struct app_data *app, const char *fmt, ...);
  */
 void util_log_status(struct app_data *app, const char *fmt, ...);
 
-/**
- * util_log_find() - Find a string in opened application log file
- * @app: Application data
- * @str: String to find
- *
- * Return:
- * PASSED          - Message found
- * -FAILED         - Message not found
- * -INTERNAL       - Internal error when accessing the log
- */
-int util_log_find(struct app_data *app, const char *str);
-
 #endif /* __UTIL_LOG_H__ */

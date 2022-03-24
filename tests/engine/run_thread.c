@@ -415,30 +415,26 @@ static int execute_command(char *cmd, struct subtest_data *subtest)
  * @thr: Thread data
  * @id: Subtest id
  *
- * Read the application log file and retrieve if the subtest @id passed
- * or not.
- *
  * Return:
  * PASSED          - Subtest passed
  * -FAILED         - Subtest failed
- * -INTERNAL       - Internal error when accessing the log
+ * -INTERNAL       - Internal error if subtest id out of range
  */
 static int is_subtest_passed(struct thread_data *thr, int id)
 {
-	char str[256] = { 0 };
+	int res = ERR_CODE(INTERNAL);
 
-	if (strlen(thr->name))
-		(void)sprintf(str, "[%s] %s%d: %s", thr->name, SUBTEST_OBJ, id,
-			      util_get_err_code_str(ERR_CODE(PASSED)));
-	else
-		(void)sprintf(str, "%s%d: %s", SUBTEST_OBJ, id,
-			      util_get_err_code_str(ERR_CODE(PASSED)));
+	if (id && id < thr->stat.number) {
+		res = thr->stat.status_array[id - 1];
+		if (res != ERR_CODE(PASSED))
+			res = ERR_CODE(FAILED);
+	}
 
-	return util_log_find(thr->app, str);
+	return res;
 }
 
 /**
- * get_depends_status() - Handle 'depends' test definition parameter.
+ * run_subtest_vs_depends() - Check if subtest can be run vs its dependency.
  * @thr: Thread data
  * @def: Test definition parameters.
  *
@@ -455,7 +451,8 @@ static int is_subtest_passed(struct thread_data *thr, int id)
  * -NOT_RUN         - Subtest is skipped.
  * -FAILED          - Failure
  */
-static int get_depends_status(struct thread_data *thr, struct json_object *def)
+static int run_subtest_vs_depends(struct thread_data *thr,
+				  struct json_object *def)
 {
 	int res;
 	int dep_id;
@@ -521,7 +518,6 @@ static int get_depends_status(struct thread_data *thr, struct json_object *def)
 /**
  * run_subtest() - Run a subtest.
  * @thr: Thread data
- * @obj: Operation object data
  */
 static void run_subtest(struct thread_data *thr)
 {
@@ -565,7 +561,7 @@ static void run_subtest(struct thread_data *thr)
 		goto exit;
 
 	/* Check dependent subtest(s) status */
-	res = get_depends_status(thr, subtest->params);
+	res = run_subtest_vs_depends(thr, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -646,10 +642,10 @@ static void run_subtest(struct thread_data *thr)
 	}
 
 exit:
-	subtest->status = res;
+	*thr->subtest->status = res;
 
 	if (res == ERR_CODE(PASSED))
-		thr->subtests_passed++;
+		thr->stat.passed++;
 
 	if (thr->status == ERR_CODE(PASSED))
 		thr->status = res;
@@ -660,7 +656,9 @@ exit:
 void *process_thread(void *arg)
 {
 	int err = ERR_CODE(BAD_ARGS);
-	int i;
+	int total = 0;
+	int nb_loops = 1;
+	int idx_stat;
 	struct thread_data *thr = arg;
 	struct json_object_iter obj;
 	struct subtest_data subtest = { 0 };
@@ -670,9 +668,28 @@ void *process_thread(void *arg)
 		exit(ERR_CODE(BAD_ARGS));
 	}
 
+	thr->stat.status_array = NULL;
+	thr->stat.number = 0;
+	thr->stat.ran = 0;
+	thr->stat.passed = 0;
+
 	if (!json_object_get_object(thr->def)) {
 		DBG_PRINT("Thread definition json_object_get_object error");
 		thr->status = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	/*
+	 * Get the number of subtests defined and allocate the
+	 * subtest status array.
+	 */
+	thr->stat.number = json_object_get_object(thr->def)->count;
+	total = thr->stat.number;
+	thr->stat.status_array =
+		malloc(thr->stat.number * sizeof(*thr->stat.status_array));
+	if (!thr->stat.status_array) {
+		DBG_PRINT_ALLOC_FAILURE();
+		thr->status = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		goto exit;
 	}
 
@@ -692,19 +709,23 @@ void *process_thread(void *arg)
 		goto exit;
 	}
 
-	thr->subtests_total = 0;
-	thr->subtests_passed = 0;
+	if (thr->loop) {
+		nb_loops = thr->loop;
+		total *= thr->loop;
+	}
 
 	thr->subtest = &subtest;
 
-	for (i = 0; i < thr->loop + 1; i++) {
+	for (; nb_loops; nb_loops--) {
+		for (idx_stat = 0; idx_stat < thr->stat.number; idx_stat++)
+			thr->stat.status_array[idx_stat] = ERR_CODE(FAILED);
+
+		idx_stat = 0;
 		json_object_object_foreachC(thr->def, obj)
 		{
 			/* Run the JSON-C "subtest" object, other tag is ignored */
 			if (strncmp(obj.key, SUBTEST_OBJ, strlen(SUBTEST_OBJ)))
 				continue;
-
-			thr->subtests_total++;
 
 			/* Reset the subtest data */
 			memset(&subtest, 0, sizeof(subtest));
@@ -712,6 +733,9 @@ void *process_thread(void *arg)
 			subtest.app = thr->app;
 			subtest.name = obj.key;
 			subtest.params = obj.val;
+			subtest.status = &thr->stat.status_array[idx_stat++];
+
+			thr->stat.ran++;
 			run_subtest(thr);
 		}
 	}
@@ -719,7 +743,7 @@ void *process_thread(void *arg)
 	thr->subtest = NULL;
 
 	/* If no subtests ran - Failure */
-	if (!thr->subtests_total)
+	if (!thr->stat.ran || thr->stat.ran != total)
 		thr->status = ERR_CODE(FAILED);
 
 	/* Last wait and post semaphore if multi-thread test */
@@ -740,6 +764,11 @@ exit:
 	/* Decrement (free) the thread JSON-C definition */
 	if (thr->def)
 		json_object_put(thr->def);
+
+	if (thr->stat.status_array) {
+		free(thr->stat.status_array);
+		thr->stat.status_array = NULL;
+	}
 
 	return &thr->status;
 }

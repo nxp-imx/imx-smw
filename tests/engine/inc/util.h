@@ -338,4 +338,42 @@ char *util_get_strerr(void);
  */
 const char *util_get_err_code_str(int err);
 
+/**
+ * util_get_json_obj_ids() - Get the JSON Object ids from the given name
+ * @name: JSON Object name
+ * @key: JSON Object key name (prefix)
+ * @first: First thread id
+ * @last: Last thread id
+ *
+ * The JSON Object name must be "@key x:y" or "@key x"
+ * The function extracts the first (x) and last (y) ids defined in the
+ * object name. If the object name define a single id, the @last id
+ * returned is equal to the @first id.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -FAILED                  - Last id is less than first id
+ * -INTERNAL                - Object name is badly defined (@key not found)
+ * -BAD_ARGS                - One of the argument is not correct.
+ */
+int util_get_json_obj_ids(const char *name, const char *key,
+			  unsigned int *first, unsigned int *last);
+
+/**
+ * util_get_subdef() - Get the sub definition json object
+ * @subdef: Output the sub definition json object
+ * @topdef: Top object to read
+ * @test: Overall test data
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_PARAM_TYPE          - Parameter type is not correct or not supported.
+ * -INTERNAL                - json_tokener_parse() failed.
+ * -BAD_ARGS                - One of the argument is bad.
+ * -FAILED                  - Error in definition file
+
+ */
+int util_get_subdef(struct json_object **subdef, struct json_object *topdef,
+		    struct test_data *test);
+
 #endif /* __UTIL_H__ */

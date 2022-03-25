@@ -111,26 +111,6 @@ int util_thread_start(struct app_data *app, struct json_object_iter *obj,
 		      unsigned int thr_num);
 
 /**
- * util_thread_get_ids() - Get the Thread ids from the thread name
- * @name: Thread name (test definition thread object)
- * @first: First thread id
- * @last: Last thread id
- *
- * The thread name must be "Thread x:y" or "Thread x"
- * The function extracts the first (x) and last (y) thread ids defined in the
- * thread name. If the thread name define a single thread id, the @last
- * thread id returned is equal to the @first thread id.
- *
- * Return:
- * PASSED                   - Success.
- * -FAILED                  - Last thread id is less than first thread id
- * -INTERNAL                - Thread name is badly defined
- * -BAD_ARGS                - One of the argument is not correct.
- */
-int util_thread_get_ids(const char *name, unsigned int *first,
-			unsigned int *last);
-
-/**
  * util_get_thread_name() - Get the thread name
  * @app: Application data
  * @name: Thread name

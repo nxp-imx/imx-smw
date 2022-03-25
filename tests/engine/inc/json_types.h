@@ -36,6 +36,8 @@
 #define OUTPUT_OBJ	  "output"
 #define POST_AFTER	  "post_after"
 #define POST_BEFORE	  "post_before"
+#define POST_TO_AFTER	  "post_to_after"
+#define POST_TO_BEFORE	  "post_to_before"
 #define PRIV_KEY_OBJ	  "priv_key"
 #define PUB_KEY_OBJ	  "pub_key"
 #define RANDOM_OBJ	  "random"

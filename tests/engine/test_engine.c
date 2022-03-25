@@ -5,375 +5,30 @@
 
 #include <json.h>
 #include <libgen.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include "smw_osal.h"
-
 #include "util.h"
-#include "util_app.h"
 #include "util_file.h"
 #include "util_log.h"
-#include "util_thread.h"
 #include "paths.h"
-#include "run_thread.h"
+#include "run_app.h"
 
-static const struct tee_info tee_default_info = {
-	{ "11b5c4aa-6d20-11ea-bc55-0242ac130003" }
-};
-
-static const struct se_info se_default_info = { 0x534d5754, 0x444546,
-						1000 }; // SMWT, DEF
-
-#define DEFAULT_KEY_DB "/var/tmp/key_db_smw_test.dat"
-
-/**
- * setup_tee_info() - Read and setup TEE Information
- * @test_def: JSON-C test definition of the application
- *
- * Function extracts TEE information from the test definition of
- * the application configuration and calls the SMW Library TEE Information
- * setup API.
- *
- * TEE info is defined with a JSON-C object "tee_info".
- *
- * Return:
- * PASSED              - Success.
- * -BAD_PARAM_TYPE     - Parameter type is not correct or not supported.
- * -BAD_ARGS           - One of the argument is bad.
- * -FAILED             - Error in definition file
- * -ERROR_SMWLIB_INIT  - SMW Library initialization error
- */
-static int setup_tee_info(json_object *test_def)
-{
-	int res;
-	struct tee_info info = tee_default_info;
-	json_object *oinfo = NULL;
-	char *ta_uuid = NULL;
-
-	res = util_read_json_type(&oinfo, TEE_INFO_OBJ, t_object, test_def);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
-	    !oinfo)
-		return res;
-
-	if (res == ERR_CODE(PASSED)) {
-		res = util_read_json_type(&ta_uuid, TA_UUID, t_string, oinfo);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			return res;
-
-		if (strlen(ta_uuid) + 1 > sizeof(info.ta_uuid))
-			return ERR_CODE(BAD_PARAM_TYPE);
-
-		memcpy(info.ta_uuid, ta_uuid, strlen(ta_uuid) + 1);
-	}
-
-	res = smw_osal_set_subsystem_info("TEE", &info, sizeof(info));
-	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Set TEE Info failed %s",
-			  get_smw_string_status(res));
-		res = ERR_CODE(ERROR_SMWLIB_INIT);
-	} else {
-		res = ERR_CODE(PASSED);
-	}
-
-	return res;
-}
-
-/**
- * setup_hsm_info() - Read and setup HSM Secure Enclave Information
- * @test_def: JSON-C test definition of the application
- *
- * Function extracts HSM information from the test definition of
- * the application configuration and calls the SMW Library HSM Information
- * setup API.
- *
- * SE info is defined with a JSON-C object "hsm_info".
- *
- * Return:
- * PASSED              - Success.
- * -BAD_PARAM_TYPE     - Parameter type is not correct or not supported.
- * -BAD_ARGS           - One of the argument is bad.
- * -FAILED             - Error in definition file
- * -ERROR_SMWLIB_INIT  - SMW Library initialization error
- */
-static int setup_hsm_info(json_object *test_def)
-{
-	int res;
-	struct se_info info = se_default_info;
-	json_object *oinfo = NULL;
-
-	res = util_read_json_type(&oinfo, HSM_INFO_OBJ, t_object, test_def);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
-	    !oinfo)
-		return res;
-
-	if (res == ERR_CODE(PASSED)) {
-		res = UTIL_READ_JSON_ST_FIELD(&info, storage_id, int, oinfo);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			return res;
-
-		res = UTIL_READ_JSON_ST_FIELD(&info, storage_nonce, int, oinfo);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			return res;
-
-		res = UTIL_READ_JSON_ST_FIELD(&info, storage_replay, int,
-					      oinfo);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			return res;
-	}
-
-	res = smw_osal_set_subsystem_info("HSM", &info, sizeof(info));
-	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Set HSM Info failed %s",
-			  get_smw_string_status(res));
-		res = ERR_CODE(ERROR_SMWLIB_INIT);
-	} else {
-		res = ERR_CODE(PASSED);
-	}
-
-	return res;
-}
-
-/**
- * setup_key_db() -  Open/Create the application key database
- * @test_def: JSON-C test definition of the application
- *
- * Return:
- * PASSED              - Success.
- * -BAD_PARAM_TYPE     - Parameter type is not correct or not supported.
- * -BAD_ARGS           - One of the argument is bad.
- * -FAILED             - Error in definition file
- * -ERROR_SMWLIB_INIT  - SMW Library initialization error
- */
-static int setup_key_db(json_object *test_def)
-{
-	int res;
-	char *filepath = DEFAULT_KEY_DB;
-	json_object *oinfo = NULL;
-
-	res = util_read_json_type(&oinfo, KEY_DB_OBJ, t_object, test_def);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
-	    !oinfo)
-		return res;
-
-	if (res == ERR_CODE(PASSED)) {
-		res = util_read_json_type(&filepath, FILEPATH_OBJ, t_string,
-					  oinfo);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			return res;
-	}
-
-	res = smw_osal_open_key_db(filepath, strlen(filepath) + 1);
-	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Create Key database failed %s",
-			  get_smw_string_status(res));
-		res = ERR_CODE(ERROR_SMWLIB_INIT);
-	} else {
-		res = ERR_CODE(PASSED);
-	}
-
-	return res;
-}
-
-/**
- * init_smwlib() - Initialize the SMW Library
- * @app: Application data object
- *
- * Function extracts from the test definition the application configuration
- * and call the SMW Library inilization API.
- *
- * Return:
- * PASSED              - Success.
- * -ERROR_SMWLIB_INIT  - SMW Library initialization error
- */
-static int init_smwlib(struct app_data *app)
-{
-	int res;
-
-	res = setup_tee_info(app->definition);
-	if (res != ERR_CODE(PASSED))
-		goto end;
-
-	res = setup_hsm_info(app->definition);
-	if (res != ERR_CODE(PASSED))
-		goto end;
-
-	res = setup_key_db(app->definition);
-	if (res != ERR_CODE(PASSED))
-		goto end;
-
-	res = smw_osal_lib_init();
-	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Library initialization failed %s",
-			  get_smw_string_status(res));
-		res = ERR_CODE(ERROR_SMWLIB_INIT);
-	} else {
-		res = ERR_CODE(PASSED);
-	}
-
-end:
-	if (res != ERR_CODE(PASSED))
-		res = ERR_CODE(ERROR_SMWLIB_INIT);
-
-	return res;
-}
+static int run_singleapp(struct test_data *test);
+static int run_multiapp(struct test_data *test);
 
 /*
- * run_multithread() - Run a multi-thread test
- * @app: Application data
- *
- * Return
- * PASSED  - Success
- * or any error code (see enum err_num)
- */
-static int run_multithread(struct app_data *app)
-{
-	int status = ERR_CODE(PASSED);
-	int res;
-	struct json_object_iter obj;
-	unsigned int thr_counter = 1;
-	unsigned int first, last;
-
-	if (!app || !app->definition)
-		return ERR_CODE(FAILED);
-
-	if (!json_object_get_object(app->definition))
-		return ERR_CODE(FAILED);
-
-	app->timeout = 10;
-	app->is_multithread = 1;
-
-	json_object_object_foreachC(app->definition, obj)
-	{
-		first = 0;
-		last = 0;
-
-		/* Run the JSON-C "Thread" object, other tag is ignored */
-		if (strncmp(obj.key, THREAD_OBJ, strlen(THREAD_OBJ)))
-			continue;
-
-		/* Get Thread ID */
-		res = util_thread_get_ids(obj.key, &first, &last);
-		if (res != ERR_CODE(PASSED)) {
-			status = ERR_CODE(FAILED);
-			break;
-		}
-
-		/*
-		 * Check if the first thread ID is the contiguous to the
-		 * thread counter.
-		 */
-		if (first != thr_counter) {
-			DBG_PRINT("\"%s\" first ID is not contiguous", obj.key);
-			status = ERR_CODE(FAILED);
-			break;
-		}
-
-		/* Create and start all threads */
-		for (; thr_counter < last + 1; thr_counter++) {
-			res = util_thread_start(app, &obj, thr_counter);
-			status = (status == ERR_CODE(PASSED)) ? res : status;
-		}
-	}
-
-	res = util_thread_ends_wait(app);
-
-	status = (status == ERR_CODE(PASSED)) ? res : status;
-
-	return status;
-}
-
-/**
- * run_singlethread() - Run a single thread test
- * @app: Application data
- *
- * Execute a single thread test described with JSON-C "subtest" object.
- *
- * Return
- * PASSED  - Single Thread test passed
- * or any error code (see enum err_num)
- */
-static int run_singlethread(struct app_data *app)
-{
-	int *status;
-	struct thread_data thr = { 0 };
-
-	if (!app || !app->definition)
-		return ERR_CODE(FAILED);
-
-	thr.app = app;
-
-	/*
-	 * Increment reference to application test definition
-	 * the process_thread call json_object_put() regardless
-	 * if it's a thread test or not.
-	 */
-	thr.def = json_object_get(app->definition);
-
-	status = process_thread(&thr);
-
-	return *status;
-}
-
-/*
- * List of the tests type function of the test definition top tag/value.
+ * List of the application type function of the test definition top tag/value.
  * The subsystem definition defined with the tag "TEE_INFO_OBJ" and
  * "HSM_INFO_OBJ" are ignored.
  */
-const struct test_type {
+const struct app_type {
 	const char *name;
-	int (*run)(struct app_data *app);
-} test_types[] = { { TEE_INFO_OBJ, NULL },
-		   { HSM_INFO_OBJ, NULL },
-		   { SUBTEST_OBJ, &run_singlethread },
-		   { THREAD_OBJ, &run_multithread },
-		   { NULL, NULL } };
-
-/**
- * get_test_type() - Get the test type to run
- * @app: Application data
- *
- * Application test definition can be either single or multi threads.
- * If the application definition file top object(s) is(are) "subtest",
- * this is a single application/thread test.
- * Else if the top object(s) is(are) "Thread", this is a single
- * application with at least one thread.
- *
- * Return:
- * The test type object if found else NULL
- */
-static const struct test_type *get_test_type(struct app_data *app)
-{
-	const struct test_type *test;
-	struct json_object_iter obj;
-
-	if (!app || !app->definition)
-		return NULL;
-
-	if (!json_object_get_object(app->definition))
-		return NULL;
-
-	json_object_object_foreachC(app->definition, obj)
-	{
-		for (test = test_types; test->name; test++) {
-			if (!strncmp(obj.key, test->name, strlen(test->name))) {
-				if (!test->run)
-					break;
-
-				return test;
-			}
-		}
-
-		if (!test->name) {
-			FPRINT_MESSAGE(app, "JSON-C tag name %s ignored\n",
-				       obj.key);
-			DBG_PRINT("WARNING: JSON-C object tag %s ignored",
-				  obj.key);
-		}
-	}
-
-	return NULL;
-}
+	int (*run_app)(struct test_data *test);
+} app_types[] = {
+	{ TEE_INFO_OBJ, NULL },		{ HSM_INFO_OBJ, NULL },
+	{ APP_OBJ, &run_multiapp },	{ SUBTEST_OBJ, &run_singleapp },
+	{ THREAD_OBJ, &run_singleapp }, { NULL, NULL }
+};
 
 /**
  * run_singleapp() - Run a single application test
@@ -383,38 +38,134 @@ static const struct test_type *get_test_type(struct app_data *app)
  * PASSED  - Application test passed
  * or any error code (see enum err_num)
  */
-static int run_singleapp(struct test_data *test_data)
+static int run_singleapp(struct test_data *test)
 {
-	int test_status = ERR_CODE(FAILED);
-	const struct test_type *test;
-	struct app_data *app = NULL;
+	int status = ERR_CODE(FAILED);
 
-	/* Single application */
-	test_status = util_app_register(test_data, 1, &app);
-	if (test_status != ERR_CODE(PASSED))
-		return test_status;
-
-	app->pid = getpid();
+	test->is_multi_apps = 0;
+	test->nb_apps = 1;
 
 	/*
-	 * Increment reference to test definition
-	 * the process_thread call json_object_put() regardless
-	 * if it's a multiple application test or not.
+	 * Create a single application in the test list.
+	 * Application definition is the test input definition file.
 	 */
-	app->definition = json_object_get(test_data->definition);
+	status = util_app_create(test, 1, test->definition);
+	if (status == ERR_CODE(PASSED))
+		status = run_apps(test);
 
-	test_status = init_smwlib(app);
-	if (test_status != ERR_CODE(PASSED))
+	return status;
+}
+
+/**
+ * run_multiapp() - Run a multiple application test
+ * @test: Overall test data
+ *
+ * Return
+ * PASSED  - All applications test passed
+ * or any error code (see enum err_num)
+ */
+static int run_multiapp(struct test_data *test)
+{
+	int status = ERR_CODE(FAILED);
+	int res;
+	struct json_object_iter obj;
+	unsigned int app_counter = 1;
+	unsigned int first, last;
+
+	if (!json_object_get_object(test->definition)) {
+		DBG_PRINT("Test definition json_object_get_object error");
+		status = ERR_CODE(INTERNAL);
 		goto exit;
+	}
 
-	test = get_test_type(app);
-	if (test)
-		test_status = test->run(app);
-	else
-		test_status = ERR_CODE(FAILED);
+	test->is_multi_apps = 1;
+
+	json_object_object_foreachC(test->definition, obj)
+	{
+		first = 0;
+		last = 0;
+
+		/* Get Application ID */
+		status = util_get_json_obj_ids(obj.key, APP_OBJ, &first, &last);
+		if (status != ERR_CODE(PASSED)) {
+			status = ERR_CODE(FAILED);
+			goto exit;
+		}
+
+		/*
+		 * Check if the first application ID is the contiguous to the
+		 * application counter.
+		 */
+		if (first != app_counter) {
+			DBG_PRINT("\"%s\" first ID is not contiguous", obj.key);
+			status = ERR_CODE(FAILED);
+			goto exit;
+		}
+
+		for (; app_counter < last + 1; app_counter++) {
+			status = util_app_create(test, app_counter, obj.val);
+			if (status != ERR_CODE(PASSED))
+				goto exit;
+		}
+	}
+
+	test->nb_apps = app_counter - 1;
+
+	status = run_apps(test);
+
+	res = util_app_wait(test);
+	status = (status == ERR_CODE(PASSED)) ? res : status;
 
 exit:
-	return test_status;
+	return status;
+}
+
+/**
+ * get_app_type() - Get the test application type to run
+ * @test: Overall test data
+ *
+ * Test definition can be either:
+ *  - single or multiple application.
+ *  - single or multiple thread.
+ *
+ * If the test object definition is to check application type:
+ *  - "App xxx" tag goes to multiple application test
+ *  - Else this is a single application test
+ *
+ * Return:
+ * The test type object if found else NULL
+ */
+static const struct app_type *get_app_type(struct test_data *test_data)
+{
+	const struct app_type *test;
+	struct json_object_iter obj;
+
+	if (!test_data || !test_data->definition)
+		return NULL;
+
+	if (!json_object_get_object(test_data->definition))
+		return NULL;
+
+	json_object_object_foreachC(test_data->definition, obj)
+	{
+		for (test = app_types; test->name; test++) {
+			if (!strncmp(obj.key, test->name, strlen(test->name))) {
+				if (!test->run_app)
+					break;
+
+				return test;
+			}
+		}
+
+		if (!test->name) {
+			util_log(test_data, "JSON-C tag name %s ignored\n",
+				 obj.key);
+			DBG_PRINT("WARNING: JSON-C object tag %s ignored",
+				  obj.key);
+		}
+	}
+
+	return NULL;
 }
 
 /**
@@ -436,6 +187,7 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 	char *dir = output_dir;
 	char *name = NULL;
 	struct test_data *test_data;
+	const struct app_type *test;
 
 	test_data = util_setup_test();
 	if (!test_data)
@@ -446,6 +198,8 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 		test_status = ERR_CODE(BAD_ARGS);
 		goto exit;
 	}
+
+	test_data->name = test_name;
 
 	if (!dir)
 		dir = DEFAULT_OUT_STATUS_PATH;
@@ -482,19 +236,26 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 	if (strstr(test_name, TEST_API_TYPE))
 		test_data->is_api_test = 1;
 
-	test_status = run_singleapp(test_data);
+	/* Check if it's a single or multiple application */
+	test = get_app_type(test_data);
+	if (test)
+		test_status = test->run_app(test_data);
+	else
+		test_status = ERR_CODE(FAILED);
 
 exit:
 	if (name)
 		free(name);
 
-	if (test_status == ERR_CODE(PASSED))
+	if (test_status == ERR_CODE(PASSED)) {
 		util_log(test_data, "%s: %s\n", test_name,
 			 util_get_err_code_str(test_status));
-	else
+	} else {
 		util_log(test_data, "%s: %s (%s)\n", test_name,
 			 util_get_err_code_str(ERR_CODE(FAILED)),
 			 util_get_err_code_str(test_status));
+		test_status = ERR_CODE(FAILED);
+	}
 
 	util_destroy_test(test_data);
 

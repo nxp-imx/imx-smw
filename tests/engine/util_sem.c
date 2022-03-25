@@ -10,13 +10,11 @@
 #include <time.h>
 
 #include "util.h"
+#include "util_ipc.h"
 #include "util_sem.h"
 
-struct app_sem {
-	char *name;
-	sem_t handle;
-	bool init;
-};
+/* Semaphore string list delimiter */
+#define SEM_LIST_DELIMITER ";"
 
 /**
  * free_sem() - Free a semaphore object
@@ -26,7 +24,7 @@ struct app_sem {
  */
 static void free_sem(void *arg)
 {
-	struct app_sem *sem = arg;
+	struct sem_obj *sem = arg;
 
 	if (!sem)
 		return;
@@ -49,9 +47,9 @@ static void free_sem(void *arg)
  * Pointer to the semaphore object if found,
  * otherwise NULL
  */
-static struct app_sem *find_sem(struct llist *lsem, const char *name)
+static struct sem_obj *find_sem(struct llist *lsem, const char *name)
 {
-	struct app_sem *sem = NULL;
+	struct sem_obj *sem = NULL;
 	struct node *node = NULL;
 
 	if (!name)
@@ -86,10 +84,10 @@ static struct app_sem *find_sem(struct llist *lsem, const char *name)
  * -BAD_ARGS               - One of the argument is not correct.
  */
 static int register_sem(struct llist *lsem, const char *name,
-			struct app_sem **new_sem)
+			struct sem_obj **new_sem)
 {
 	int res = ERR_CODE(PASSED);
-	struct app_sem *sem = NULL;
+	struct sem_obj *sem = NULL;
 	size_t len;
 
 	if (!name || !lsem || !new_sem) {
@@ -110,7 +108,7 @@ static int register_sem(struct llist *lsem, const char *name,
 		goto exit;
 	}
 
-	if (sem_init(&sem->handle, 1, 0)) {
+	if (sem_init(&sem->handle, 0, 0)) {
 		DBG_PRINT("Semaphore %s failure %s", name, util_get_strerr());
 		res = ERR_CODE(FAILED);
 		goto exit;
@@ -162,7 +160,7 @@ exit:
  * -BAD_ARGS  - One of the argument is not correct.
  * -FAILED    - Wait semaphore failed on timeout.
  */
-static int wait_sem(struct thread_data *thr, struct app_sem *sem,
+static int wait_sem(struct thread_data *thr, struct sem_obj *sem,
 		    unsigned int timeout)
 {
 	int res = ERR_CODE(PASSED);
@@ -227,7 +225,7 @@ static int get_wait_sem(struct thread_data *thr, struct json_object *obj,
 			const char *tag)
 {
 	int err;
-	struct app_sem *sem = NULL;
+	struct sem_obj *sem = NULL;
 	struct json_object *sem_obj = NULL;
 	struct json_object *oval = NULL;
 	const char *sem_name = NULL;
@@ -319,7 +317,7 @@ static int get_wait_sem(struct thread_data *thr, struct json_object *obj,
 static int post_sem_all(struct app_data *app)
 {
 	int res = ERR_CODE(PASSED);
-	struct app_sem *sem = NULL;
+	struct sem_obj *sem = NULL;
 	struct node *node = NULL;
 
 	util_list_lock(app->semaphores);
@@ -362,7 +360,7 @@ static int post_sem(struct app_data *app, const char *sem_name)
 {
 	int res;
 	int err;
-	struct app_sem *sem = NULL;
+	struct sem_obj *sem = NULL;
 
 	if (!sem_name) {
 		DBG_PRINT_BAD_ARGS();
@@ -462,6 +460,237 @@ static int get_post_sem(struct thread_data *thr, struct json_object *obj,
 			}
 			sem_name = json_object_get_string(oval);
 			err = post_sem(thr->app, sem_name);
+			if (err != ERR_CODE(PASSED))
+				break;
+		}
+
+		break;
+
+	default:
+		return ERR_CODE(FAILED);
+	}
+
+	return err;
+}
+
+/**
+ * post_to_sem() - Post a or all semaphore(s) to an application
+ * @app: Active appplication data.
+ * @obj: JSON-C semaphore object definition.
+ *
+ * Coding format of the semaphore object @obj is:
+ * - ["app 1", "name"]
+ * - ["app 1", ["name 1", "name 2"]]
+ * - ["app 1", "all"]
+ * - ["all", "all"]
+ *
+ * Return:
+ * PASSED                   - Success.
+ * or any error code (see enum err_num)
+ */
+static int post_to_sem(struct app_data *app, struct json_object *obj)
+{
+	int err = ERR_CODE(FAILED);
+	struct ipc_op op = { .cmd = IPC_POST_SEM };
+	struct json_object *sem_obj = NULL;
+	struct json_object *oval = NULL;
+	const char *app_name = NULL;
+	const char *sem_name = NULL;
+	char *op_name = op.args.name;
+	size_t cnt_char = 0;
+	int nb_char = 0;
+	int nb_elem = 0;
+	int idx;
+
+	/* First element of the @obj must be the application name or "all" */
+	sem_obj = json_object_array_get_idx(obj, 0);
+	if (json_object_get_type(sem_obj) != json_type_string)
+		return ERR_CODE(BAD_PARAM_TYPE);
+
+	app_name = json_object_get_string(sem_obj);
+
+	/* Second element of the @obj must be a string or an array of strings */
+	sem_obj = json_object_array_get_idx(obj, 1);
+	switch (json_object_get_type(sem_obj)) {
+	case json_type_string:
+		sem_name = json_object_get_string(sem_obj);
+		if (strlen(sem_name) + 1 <= sizeof(op.args.name)) {
+			(void)sprintf(op_name, "%s", sem_name);
+			err = util_ipc_send(app, app_name, &op);
+		}
+		break;
+
+	case json_type_array:
+		nb_elem = json_object_array_length(sem_obj);
+
+		if (!nb_elem)
+			break;
+
+		err = ERR_CODE(PASSED);
+
+		for (idx = 0; idx < nb_elem; idx++) {
+			/* Get the semaphore name */
+			oval = json_object_array_get_idx(sem_obj, idx);
+			if (json_object_get_type(oval) != json_type_string) {
+				DBG_PRINT("%s index %d must be a name",
+					  app_name, idx);
+				err = ERR_CODE(BAD_PARAM_TYPE);
+				break;
+			}
+
+			sem_name = json_object_get_string(oval);
+
+			/*
+			 * Calculate the remaining operation name length
+			 * to contain the "sem_name" + null termination and
+			 * if not the last semaphore list, the delimiter.
+			 */
+			cnt_char += strlen(sem_name) + 1;
+			if (idx < nb_elem - 1)
+				cnt_char += 1;
+
+			if (cnt_char > sizeof(op.args.name)) {
+				DBG_PRINT("Operation name too short");
+				err = ERR_CODE(FAILED);
+				break;
+			}
+
+			nb_char = sprintf(op_name, "%s", sem_name);
+			if (nb_char >= 0) {
+				op_name += nb_char;
+				if (idx < nb_elem - 1) {
+					nb_char = sprintf(op_name, "%s",
+							  SEM_LIST_DELIMITER);
+					if (nb_char >= 0)
+						op_name += nb_char;
+				}
+			}
+
+			if (nb_char < 0) {
+				DBG_PRINT("sprintf returned %d", nb_char);
+				err = ERR_CODE(FAILED);
+				break;
+			}
+		}
+
+		if (err == ERR_CODE(PASSED))
+			err = util_ipc_send(app, app_name, &op);
+		break;
+
+	default:
+		DBG_PRINT("%s semaphore(s) bad definition", app_name);
+		err = ERR_CODE(BAD_PARAM_TYPE);
+	}
+
+	return err;
+}
+
+/**
+ * get_post_to_sem() - Post a semaphore to application(s) before/after
+ * @app: Current Application data
+ * @obj: JSON-C definition application, thread or operation.
+ * @tag: JSON-C semaphore tag name.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * or any error code (see enum err_num)
+ */
+static int get_post_to_sem(struct app_data *app, struct json_object *obj,
+			   const char *tag)
+{
+	int err;
+	struct json_object *sem_obj = NULL;
+	struct json_object *oapp = NULL;
+	int nb_elem = 0;
+	int nb_apps = 0;
+	int idx;
+
+	if (!app || !app->test) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	if (app->test->nb_apps < 2)
+		return ERR_CODE(PASSED);
+
+	if (!obj || !tag) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	/*
+	 * Posting semaphore to application(s) format possible are:
+	 * - ["app 1", "name"]
+	 * - ["app 1", ["name 1", "name 2"]]
+	 * - ["app 1", "all"]
+	 * - [
+	 *     ["app 1", "name"],
+	 *     ["app 2", ["name 1", "name 2"]
+	 *   ]
+	 * - ["all", "all"]
+	 */
+	err = util_read_json_type(&sem_obj, tag, t_sem, obj);
+
+	if (err != ERR_CODE(PASSED)) {
+		/* If JSON tag not found, return with no error */
+		if (err == ERR_CODE(VALUE_NOTFOUND))
+			err = ERR_CODE(PASSED);
+
+		return err;
+	}
+
+	if (json_object_get_type(sem_obj) != json_type_array) {
+		DBG_PRINT("%s index %d must be an array of at least 2 elements",
+			  tag);
+		return ERR_CODE(FAILED);
+	}
+
+	/* At least array is 2 elements */
+	nb_elem = json_object_array_length(sem_obj);
+	if (nb_elem < 2) {
+		DBG_PRINT("%s index %d must be at least 2 elements", tag);
+		return ERR_CODE(FAILED);
+	}
+
+	/*
+	 * Get if this is an array of array:
+	 *   [
+	 *     ["app 1", "name"],
+	 *     ["app 2", ["name 1", "name 2"]
+	 *   ]
+	 *
+	 * Or if this a single or all application post
+	 *  ["app 1", ...]
+	 *  ["all", "all"]
+	 */
+
+	oapp = json_object_array_get_idx(sem_obj, 0);
+	switch (json_object_get_type(oapp)) {
+	case json_type_string:
+		err = post_to_sem(app, sem_obj);
+		break;
+
+	case json_type_array:
+		nb_apps = json_object_array_length(oapp);
+
+		for (idx = 0; idx < nb_apps; idx++) {
+			/* Get the first application's semaphores
+			 *   [
+			 *     ["app 1", "name"],
+			 *     ["app 2", ["name 1", "name 2"]
+			 *   ]
+			 */
+			sem_obj = json_object_array_get_idx(oapp, idx);
+			if (json_object_get_type(sem_obj) != json_type_array) {
+				DBG_PRINT("%s index %d must be an array", tag,
+					  idx);
+				err = ERR_CODE(BAD_PARAM_TYPE);
+				break;
+			}
+
+			err = post_to_sem(app, sem_obj);
+			if (err != ERR_CODE(PASSED))
+				break;
 		}
 
 		break;
@@ -499,4 +728,31 @@ int util_sem_post_before(struct thread_data *thr, struct json_object *obj)
 int util_sem_post_after(struct thread_data *thr, struct json_object *obj)
 {
 	return get_post_sem(thr, obj, POST_AFTER);
+}
+
+int util_sem_post_to_before(struct app_data *app, struct json_object *obj)
+{
+	return get_post_to_sem(app, obj, POST_TO_BEFORE);
+}
+
+int util_sem_post_to_after(struct app_data *app, struct json_object *obj)
+{
+	return get_post_to_sem(app, obj, POST_TO_AFTER);
+}
+
+void util_sem_ipc_post(struct app_data *app, const char *sem_name)
+{
+	char *sem = NULL;
+
+	if (!app || !sem_name) {
+		DBG_PRINT_BAD_ARGS();
+		return;
+	}
+
+	/* Get the first thread id */
+	sem = strtok((char *)sem_name, SEM_LIST_DELIMITER);
+	while (sem) {
+		(void)post_sem(app, sem);
+		sem = strtok(NULL, SEM_LIST_DELIMITER);
+	}
 }

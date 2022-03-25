@@ -65,21 +65,27 @@ struct thread_ends;
 
 /**
  * struct test_data - Overall test data
+ * @name:            Test name
  * @dir_def_file:    Folder of the test definition file
  * @log:             Application log file
  * @lock_log:        Log into file protector
  * @lock_dbg:        Debug printf protector
  * @is_api_test:     Flag if test only SMW's API
+ * @is_multi_app:    Flag if test is multiple applications
  * @definition:      Test definition
+ * @nb_apps:         Number of applications
  * @apps:            Application list object
  */
 struct test_data {
+	char *name;
 	char *dir_def_file;
 	FILE *log;
 	void *lock_log;
 	void *lock_dbg;
 	int is_api_test;
+	int is_multi_apps;
 	struct json_object *definition;
+	size_t nb_apps;
 	struct llist *apps;
 };
 

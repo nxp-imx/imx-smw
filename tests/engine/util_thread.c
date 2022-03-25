@@ -11,6 +11,7 @@
 #include "util_list.h"
 #include "util_log.h"
 #include "util_mutex.h"
+#include "util_sem.h"
 #include "util_thread.h"
 #include "run_thread.h"
 
@@ -57,41 +58,6 @@ static void thr_free_data(void *data)
 		free(thr_data->stat.status_array);
 
 	free(thr_data);
-}
-
-static int get_thread_definition(struct json_object *def_obj,
-				 struct thread_data *thr)
-{
-	int res;
-	char *def_file = NULL;
-
-	if (!def_obj || !thr)
-		return ERR_CODE(BAD_ARGS);
-
-	/*
-	 * Check if the Thread is defined with a test definition file
-	 * or a detailled subtests
-	 */
-	res = util_read_json_type(&def_file, FILEPATH_OBJ, t_string, def_obj);
-	if (res == ERR_CODE(PASSED)) {
-		/* Read the thread file definition */
-		res = util_read_json_file(thr->app->test->dir_def_file,
-					  def_file, &thr->def);
-	} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
-		/*
-		 * Increment reference to application test definition
-		 * in order to align with the thread file definition
-		 * and call json_object_put() regardless how thread
-		 * test is defined.
-		 */
-		thr->def = json_object_get(def_obj);
-		res = ERR_CODE(PASSED);
-	}
-
-	if (res != ERR_CODE(PASSED))
-		DBG_PRINT("Error %d", res);
-
-	return res;
 }
 
 static int read_thread_loop(struct json_object_iter *thr_obj, int *loop,
@@ -265,6 +231,40 @@ exit:
 	return res;
 }
 
+static int log_header(struct thread_data *thr, char *str)
+{
+	struct app_data *app = NULL;
+	struct test_data *test = NULL;
+	int nb_char = 0;
+	int err = 0;
+
+	app = thr->app;
+	if (app && app->test)
+		test = app->test;
+
+	if (app && test && test->is_multi_apps && strlen(app->name)) {
+		err = sprintf(str, "(%s) ", app->name);
+		if (err < 0) {
+			DBG_PRINT("Error (%d) %s", err, util_get_strerr());
+			return err;
+		}
+
+		nb_char += err;
+	}
+
+	if (strlen(thr->name)) {
+		err = sprintf(&str[nb_char], "[%s] ", thr->name);
+		if (err < 0) {
+			DBG_PRINT("Error (%d) %s", err, util_get_strerr());
+			return err;
+		}
+
+		nb_char += err;
+	}
+
+	return nb_char;
+}
+
 static void subtest_log(struct thread_data *thr)
 {
 	struct test_data *test = NULL;
@@ -278,23 +278,109 @@ static void subtest_log(struct thread_data *thr)
 	}
 
 	test = thr->app->test;
-
-	if (strlen(thr->name))
-		nb_char = sprintf(str, "[%s] ", thr->name);
-
+	nb_char = log_header(thr, str);
 	if (nb_char < 0)
-		DBG_PRINT("Error (%d) %s", nb_char, util_get_strerr());
+		return;
 
 	if (*thr->subtest->status == ERR_CODE(API_STATUS_NOK))
 		error = get_smw_string_status(thr->subtest->smw_status);
 
 	(void)sprintf(&str[nb_char], "%s: %s", thr->subtest->name,
 		      util_get_err_code_str(*thr->subtest->status));
+
 	/* Additional error message if any */
 	if (error)
 		util_log_status(test, "%s (%s)\n", str, error);
 	else
 		util_log_status(test, "%s\n", str);
+}
+
+static void thread_log(struct thread_data *thr)
+{
+	struct test_data *test = NULL;
+	int nb_char = 0;
+	char str[256] = { 0 };
+
+	if (!thr->app || !thr->app->test) {
+		DBG_PRINT_BAD_ARGS();
+		return;
+	}
+
+	test = thr->app->test;
+
+	nb_char = log_header(thr, str);
+	if (nb_char < 0)
+		return;
+
+	/* This is the status of the thread */
+	if (thr->status == ERR_CODE(PASSED))
+		(void)sprintf(&str[nb_char], "%s\n",
+			      util_get_err_code_str(thr->status));
+	else
+		(void)sprintf(&str[nb_char], "%s (%s)\n",
+			      util_get_err_code_str(ERR_CODE(FAILED)),
+			      util_get_err_code_str(thr->status));
+
+	util_log_status(test, "%s\n", str);
+}
+
+static void thread_stat_log(struct thread_data *thr)
+{
+	struct test_data *test = NULL;
+	int nb_char = 0;
+	int err = 0;
+	char str[256] = { 0 };
+	int rate_passed = 0;
+	int total = 0;
+	int fails = 0;
+
+	if (!thr->app || !thr->app->test) {
+		DBG_PRINT_BAD_ARGS();
+		return;
+	}
+
+	test = thr->app->test;
+
+	nb_char = log_header(thr, str);
+	if (nb_char < 0)
+		return;
+
+	/* Print the subtests statistic */
+	total = thr->stat.number;
+	if (thr->loop)
+		total *= thr->loop;
+
+	fails = total - thr->stat.passed;
+
+	if (thr->stat.ran && total) {
+		rate_passed = 100 * thr->stat.passed;
+		rate_passed /= total;
+	}
+
+	err = sprintf(&str[nb_char],
+		      "\t%d%% subtests passed, %d failed out of %d",
+		      rate_passed, fails, total);
+
+	if (err >= 0)
+		nb_char += err;
+	else
+		DBG_PRINT("Error (%d) %s", err, util_get_strerr());
+
+	if (total - thr->stat.ran) {
+		err = sprintf(&str[nb_char], " (missing %d)",
+			      total - thr->stat.ran);
+		if (err >= 0)
+			nb_char += err;
+		else
+			DBG_PRINT("Error (%d) %s", err, util_get_strerr());
+	}
+
+	if (thr->loop)
+		(void)sprintf(&str[nb_char], " in %d loops\n", thr->loop);
+	else
+		(void)sprintf(&str[nb_char], "\n");
+
+	util_log_status(test, "%s\n", str);
 }
 
 int util_thread_init(struct llist **list)
@@ -361,7 +447,7 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 	(void)sprintf(thr->name, "Thread %d", thr_num);
 	thr->loop = loop;
 
-	err = get_thread_definition(def_obj, thr);
+	err = util_get_subdef(&thr->def, def_obj, thr->app->test);
 	if (err == ERR_CODE(PASSED)) {
 		err = util_list_add_node(app->threads, thr_num, thr);
 		if (err == ERR_CODE(PASSED)) {
@@ -376,67 +462,6 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 	}
 
 	thr_free_data(thr);
-
-	return err;
-}
-
-int util_thread_get_ids(const char *name, unsigned int *first,
-			unsigned int *last)
-{
-	int err = ERR_CODE(INTERNAL);
-	static const char delim[2] = ":";
-	long val;
-	char *tmp = NULL;
-	char *field = NULL;
-
-	if (!name || !first || !last)
-		return ERR_CODE(BAD_ARGS);
-
-	tmp = malloc(strlen(name) - strlen(THREAD_OBJ) + 1);
-	if (!tmp) {
-		DBG_PRINT_ALLOC_FAILURE();
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-	}
-
-	strcpy(tmp, name + strlen(THREAD_OBJ));
-
-	/* Get the first thread id */
-	field = strtok(tmp, delim);
-	if (!field) {
-		DBG_PRINT("Missing Thread ID in %s", name);
-		goto exit;
-	}
-
-	val = strtol(field, NULL, 10);
-	if (!val) {
-		DBG_PRINT("Thread ID not valid in %s", name);
-		goto exit;
-	}
-
-	*first = *last = val;
-
-	/* Get the last thread id if any */
-	field = strtok(NULL, delim);
-	if (field) {
-		val = strtol(field, NULL, 10);
-		if (!val) {
-			DBG_PRINT("Thread ID not valid in %s", name);
-			goto exit;
-		}
-
-		*last = val;
-	}
-
-	if (*last < *first) {
-		DBG_PRINT("Wrong Thread ID (%s) first = %u > last %u", name,
-			  *first, *last);
-		err = ERR_CODE(FAILED);
-	}
-
-	err = ERR_CODE(PASSED);
-
-exit:
-	free(tmp);
 
 	return err;
 }
@@ -519,67 +544,18 @@ int util_thread_ends_wait(struct app_data *app)
 
 void util_thread_log(struct thread_data *thr)
 {
-	struct test_data *test = NULL;
-	int nb_char = 0;
-	char str[256] = { 0 };
-	int rate_passed = 0;
-	int total = 0;
-	int fails = 0;
-
-	if (!thr->app || !thr->app->test) {
+	if (!thr) {
 		DBG_PRINT_BAD_ARGS();
 		return;
 	}
-
-	test = thr->app->test;
 
 	if (thr->subtest) {
 		subtest_log(thr);
 		return;
 	}
 
-	if (strlen(thr->name))
-		nb_char = sprintf(str, "[%s] ", thr->name);
+	if (thr->app && thr->app->is_multithread)
+		thread_log(thr);
 
-	if (nb_char < 0)
-		DBG_PRINT("Error (%d) %s", nb_char, util_get_strerr());
-
-	if (thr->app->is_multithread) {
-		/* This is the status of the thread */
-		if (thr->status == ERR_CODE(PASSED))
-			nb_char += sprintf(&str[nb_char], "%s\n",
-					   util_get_err_code_str(thr->status));
-		else
-			nb_char +=
-				sprintf(&str[nb_char], "%s (%s)\n",
-					util_get_err_code_str(ERR_CODE(FAILED)),
-					util_get_err_code_str(thr->status));
-	}
-
-	/* Print the subtests statistic */
-	total = thr->stat.number;
-	if (thr->loop)
-		total *= thr->loop;
-
-	fails = total - thr->stat.passed;
-
-	if (thr->stat.ran && total) {
-		rate_passed = 100 * thr->stat.passed;
-		rate_passed /= total;
-	}
-
-	nb_char += sprintf(&str[nb_char],
-			   "\n\t%d%% subtests passed, %d failed out of %d",
-			   rate_passed, fails, total);
-
-	if (total - thr->stat.ran)
-		nb_char += sprintf(&str[nb_char], " (missing %d)",
-				   total - thr->stat.ran);
-
-	if (thr->loop)
-		(void)sprintf(&str[nb_char], " in %d loops\n", thr->loop);
-	else
-		(void)sprintf(&str[nb_char], "\n");
-
-	util_log_status(test, "%s\n", str);
+	thread_stat_log(thr);
 }

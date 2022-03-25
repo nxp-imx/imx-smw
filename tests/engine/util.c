@@ -109,7 +109,7 @@ exit:
 
 void util_destroy_test(struct test_data *test)
 {
-	int res = 0;
+	int res;
 
 	if (!test)
 		return;
@@ -118,20 +118,29 @@ void util_destroy_test(struct test_data *test)
 
 	/* Destroy the debug print mutex and abort if failure */
 	res = util_mutex_destroy(&test->lock_dbg);
-	assert(res == ERR_CODE(PASSED));
+	if (res != ERR_CODE(PASSED)) {
+		DBG_PRINT("Destroy mutex error %d", res);
+		assert(res == ERR_CODE(PASSED));
+	}
 
 	if (test->log)
 		(void)fclose(test->log);
 
 	/* Destroy the log file mutex and abort if failure */
 	res = util_mutex_destroy(&test->lock_log);
-	assert(res == ERR_CODE(PASSED));
+	if (res != ERR_CODE(PASSED)) {
+		DBG_PRINT("Destroy mutex error %d", res);
+		assert(res == ERR_CODE(PASSED));
+	}
 
 	if (test->definition)
 		json_object_put(test->definition);
 
 	res = util_list_clear(test->apps);
-	assert(res == ERR_CODE(PASSED));
+	if (res != ERR_CODE(PASSED)) {
+		DBG_PRINT("Clear applications list error %d", res);
+		assert(res == ERR_CODE(PASSED));
+	}
 
 	free(test);
 }
@@ -567,4 +576,99 @@ __weak void util_dbg_dumphex(const char *function, int line, char *msg,
 	(void)msg;
 	(void)buf;
 	(void)len;
+}
+
+int util_get_json_obj_ids(const char *name, const char *key,
+			  unsigned int *first, unsigned int *last)
+{
+	int err = ERR_CODE(INTERNAL);
+	static const char delim[2] = ":";
+	long val;
+	char *tmp = NULL;
+	char *field = NULL;
+
+	if (!name || !first || !last)
+		return ERR_CODE(BAD_ARGS);
+
+	tmp = malloc(strlen(name) - strlen(key) + 1);
+	if (!tmp) {
+		DBG_PRINT_ALLOC_FAILURE();
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+	}
+
+	strcpy(tmp, name + strlen(key));
+
+	/* Get the first thread id */
+	field = strtok(tmp, delim);
+	if (!field) {
+		DBG_PRINT("Missing %s ID in %s", key, name);
+		goto exit;
+	}
+
+	val = strtol(field, NULL, 10);
+	if (!val) {
+		DBG_PRINT("%s ID not valid in %s", key, name);
+		goto exit;
+	}
+
+	*first = *last = val;
+
+	/* Get the last thread id if any */
+	field = strtok(NULL, delim);
+	if (field) {
+		val = strtol(field, NULL, 10);
+		if (!val) {
+			DBG_PRINT("%s ID not valid in %s", key, name);
+			goto exit;
+		}
+
+		*last = val;
+	}
+
+	if (*last < *first) {
+		DBG_PRINT("Wrong %s ID (%s) first = %u > last %u", key, name,
+			  *first, *last);
+		err = ERR_CODE(FAILED);
+	}
+
+	err = ERR_CODE(PASSED);
+
+exit:
+	free(tmp);
+
+	return err;
+}
+
+int util_get_subdef(struct json_object **subdef, struct json_object *topdef,
+		    struct test_data *test)
+{
+	int res;
+	char *def_file = NULL;
+
+	if (!subdef || !topdef || !test)
+		return ERR_CODE(BAD_ARGS);
+
+	/*
+	 * Check if the top definition object is defined with a test
+	 * definition file or a detailled json_object definition.
+	 */
+	res = util_read_json_type(&def_file, FILEPATH_OBJ, t_string, topdef);
+	if (res == ERR_CODE(PASSED)) {
+		/* Read the file definition */
+		res = util_read_json_file(test->dir_def_file, def_file, subdef);
+	} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
+		/*
+		 * Increment reference to the top test definition
+		 * in order to align with the file definition
+		 * and call json_object_put() regardless how top definition
+		 * test is defined.
+		 */
+		*subdef = json_object_get(topdef);
+		res = ERR_CODE(PASSED);
+	}
+
+	if (res != ERR_CODE(PASSED))
+		DBG_PRINT("Error %d", res);
+
+	return res;
 }

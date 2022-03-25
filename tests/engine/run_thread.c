@@ -600,12 +600,20 @@ static void run_subtest(struct thread_data *thr)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
-	/* First wait and post semaphore */
-	res = util_sem_wait_before(thr, subtest->params);
+	/*
+	 * In case of multi-application, post semaphores to
+	 * application(s).
+	 */
+	res = util_sem_post_to_before(thr->app, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
+	/* First wait and post semaphore */
 	res = util_sem_post_before(thr, subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	res = util_sem_wait_before(thr, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -616,6 +624,14 @@ static void run_subtest(struct thread_data *thr)
 	    !CHECK_RESULT(subtest->smw_status, exp_smw_status))
 		res = ERR_CODE(PASSED);
 
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/*
+	 * In case of multi-application, post semaphores to
+	 * application(s).
+	 */
+	res = util_sem_post_to_after(thr->app, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -696,6 +712,18 @@ void *process_thread(void *arg)
 	thr->state = STATE_RUNNING;
 	thr->status = ERR_CODE(PASSED);
 
+	/*
+	 * In case of multi-application, post semaphores to
+	 * application(s).
+	 */
+	if (thr->parent_def) {
+		err = util_sem_post_to_before(thr->app, thr->parent_def);
+		if (err != ERR_CODE(PASSED)) {
+			thr->status = err;
+			goto exit;
+		}
+	}
+
 	/* First wait and post semaphore if multi-thread test */
 	err = util_sem_wait_before(thr, thr->parent_def);
 	if (err != ERR_CODE(PASSED)) {
@@ -745,6 +773,18 @@ void *process_thread(void *arg)
 	/* If no subtests ran - Failure */
 	if (!thr->stat.ran || thr->stat.ran != total)
 		thr->status = ERR_CODE(FAILED);
+
+	/*
+	 * In case of multi-application, post semaphores to
+	 * application(s).
+	 */
+	if (thr->parent_def) {
+		err = util_sem_post_to_after(thr->app, thr->parent_def);
+		if (err != ERR_CODE(PASSED)) {
+			thr->status = err;
+			goto exit;
+		}
+	}
 
 	/* Last wait and post semaphore if multi-thread test */
 	err = util_sem_post_after(thr, thr->parent_def);

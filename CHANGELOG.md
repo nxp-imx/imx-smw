@@ -38,6 +38,7 @@ This version introduces the support of the ARM PSA APIs in addition to the SMW A
 * Change the library initialization to not be done at the library instanciation.
 * Add `smw_osal_set_subsystem_info()` API to define the subsystems information in order to create key storage per application.
 * Add `smw_osal_lib_init()` API to be called by the application when library is ready to load the configuration file.
+* Implementation of a OSAL's key database to store key information and return a 32 bits key identifier (compatible with PSA APIs). The key database is handled by a binary file created/opened by the application when calling the OSAL's API `smw_osal_open_key_db()`.
 
 3. Subsystems
 

@@ -12,6 +12,7 @@
 
 struct key_db_obj {
 	FILE *fp;
+	void *mutex;
 };
 
 __weak void dbg_entry(struct key_entry *entry)
@@ -32,7 +33,7 @@ static int lock_db(struct key_db_obj *db)
 		return -1;
 	}
 
-	return 0;
+	return mutex_lock(db->mutex);
 }
 
 static int unlock_db(struct key_db_obj *db)
@@ -42,7 +43,7 @@ static int unlock_db(struct key_db_obj *db)
 		return -1;
 	}
 
-	return 0;
+	return mutex_unlock(db->mutex);
 }
 
 /**
@@ -196,6 +197,8 @@ static void close_db_file(void)
 		return;
 
 	if (db->fp) {
+		(void)mutex_destroy(&db->mutex);
+
 		(void)fclose(db->fp);
 
 		db->fp = NULL;
@@ -241,7 +244,7 @@ int key_db_open(const char *key_db)
 		return -1;
 	}
 
-	return 0;
+	return mutex_init(&db->mutex);
 }
 
 void key_db_close(void)

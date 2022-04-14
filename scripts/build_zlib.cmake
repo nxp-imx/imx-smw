@@ -25,10 +25,10 @@ include(${CMAKE_TOOLCHAIN_FILE})
 
 set(ZLIB_NAME "zlib")
 set(ZLIB_VERSION "1.2.11" CACHE STRING "Default zlib Version")
-set(ZLIB_HASH "SHA256=4ff941449631ace0d4d203e3483be9dbc9da454084111f97ea0a2114e19bf066")
-set(ZLIB_URL "http://www.zlib.net")
+set(ZLIB_HASH "SHA256=c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1")
+set(ZLIB_URL "http://www.zlib.net/fossils")
 set(ZLIB_AR_DIR "${ZLIB_NAME}-${ZLIB_VERSION}")
-set(ZLIB_ARCHIVE "${ZLIB_AR_DIR}.tar.xz")
+set(ZLIB_ARCHIVE "${ZLIB_AR_DIR}.tar.gz")
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
 include(GNUInstallDirs)

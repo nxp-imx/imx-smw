@@ -1,0 +1,49 @@
+{
+	"Thread 1": {
+		"subtest 1": {
+			"command": "GENERATE",
+			"subsystem": "TEE",
+			"key_type": "AES",
+			"security_size": 256,
+			"key_id": 0
+		},
+		"subtest 2": {
+			"command": "CIPHER",
+			"mode": "ECB",
+			"op_type": "ENCRYPT",
+			"input": "ebabce95b14d3c8d6fb350390790311c",
+			"key_id": 0,
+			"depend": 1
+		},
+		"subtest 3": {
+			"command": "DELETE",
+			"key_id": 0,
+			"depend": 1
+		}
+	},
+	"Thread 2": {
+		"subtest 1": {
+			"command": "GENERATE",
+			"subsystem": "TEE",
+			"key_type": "NIST",
+			"security_size": 256,
+			"key_id": 1
+		},
+		"subtest 2": {
+			"command": "SIGN",
+			"subsystem": "TEE",
+			"message": [
+				"54686973207068726173652069732033",
+				"32206279746573206c6f6e6720212121"
+			],
+			"sign_id": 0,
+			"key_id": 1,
+			"depend": 1
+		},
+		"subtest 3": {
+			"command": "DELETE",
+			"key_id": 1,
+			"depend": 1
+		}
+	}
+}

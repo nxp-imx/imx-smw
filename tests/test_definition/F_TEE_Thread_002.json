@@ -1,0 +1,50 @@
+{
+	"Thread 1": {
+		"subtest 1": {
+			"command": "GENERATE",
+			"subsystem": "TEE",
+			"key_type": "AES",
+			"security_size": 256,
+			"key_id": 0
+		},
+		"subtest 2": {
+			"command": "GENERATE",
+			"subsystem": "TEE",
+			"key_type": "NIST",
+			"security_size": 256,
+			"key_id": 1
+		},
+		"subtest 3": {
+			"post_before": "sem_t2",
+			"wait_before": "sem_t1",
+			"command": "DELETE",
+			"key_id": 0,
+			"result": "SMW_STATUS_UNKNOWN_ID",
+			"depend": 1
+		},
+		"subtest 4": {
+			"command": "DELETE",
+			"key_id": 1,
+			"depend": 2
+		}
+	},
+	"Thread 2": {
+		"subtest 1": {
+			"wait_before": "sem_t2",
+			"command": "SIGN",
+			"subsystem": "TEE",
+			"message": [
+				"54686973207068726173652069732033",
+				"32206279746573206c6f6e6720212121"
+			],
+			"sign_id": 0,
+			"key_id": 1
+		},
+		"subtest 2": {
+			"post_after": "sem_t1",
+			"command": "DELETE",
+			"key_id": 0
+		}
+	}
+}
+}

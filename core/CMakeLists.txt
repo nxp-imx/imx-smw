@@ -81,6 +81,7 @@ configure_file(${CORE_SRC_INC}/info.h.in ${CORE_BIN_INC}/info.h)
 
 add_subdirectory(utils)
 add_subdirectory(init)
+add_subdirectory(subsystems/ele)
 add_subdirectory(subsystems/hsm)
 add_subdirectory(subsystems/tee)
 add_subdirectory(keymgr)

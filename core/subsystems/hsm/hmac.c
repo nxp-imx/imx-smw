@@ -27,7 +27,7 @@
  * This sorting is required to simplify the implementation of
  * get_hmac_algo_info().
  */
-struct hmac_algo_info {
+static struct hmac_algo_info {
 	enum smw_config_hmac_algo_id algo_id;
 	hsm_op_mac_one_go_algo_t hsm_algo;
 	uint32_t length;

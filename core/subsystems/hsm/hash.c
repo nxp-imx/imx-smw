@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "hsm_api.h"
@@ -26,7 +26,7 @@
 /* Algo IDs must be ordered from lowest to highest.
  * This sorting is required to simplify the implementation of get_hash_algo_info().
  */
-struct hash_algo_info {
+static struct hash_algo_info {
 	enum smw_config_hash_algo_id algo_id;
 	hsm_hash_algo_t hsm_hash_algo;
 	uint32_t length;

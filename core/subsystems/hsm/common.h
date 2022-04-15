@@ -35,26 +35,6 @@ struct hdl {
 };
 
 /**
- * load() - Load the HSM library.
- *
- * This function loads the HSM library.
- *
- * Return:
- * error code.
- */
-int load(void);
-
-/**
- * unload() - Unload the HSM library.
- *
- * This function unloads the HSM library.
- *
- * Return:
- * error code.
- */
-int unload(void);
-
-/**
  * hsm_key_handle() - Handle the Key operations.
  * @hdl: Pointer to the HSM handles structure.
  * @operation_id: Security Operation ID.

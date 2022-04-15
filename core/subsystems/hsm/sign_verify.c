@@ -37,7 +37,7 @@
  * HASH algo must be ordered from lowest to highest
  * for 1 given Key type ID / Security size
  */
-struct {
+static struct {
 	enum smw_config_key_type_id key_type_id;
 	unsigned int security_size;
 	enum smw_config_hash_algo_id algo_id;

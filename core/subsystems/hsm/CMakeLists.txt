@@ -22,7 +22,7 @@ add_library(hsm OBJECT "")
 set_target_properties(hsm PROPERTIES C_VISIBILITY_PRESET hidden)
 
 target_sources(hsm PRIVATE
-               entry.c common.h
+               entry.c
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c keymgr_derive.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_HMAC}>:hmac.c>

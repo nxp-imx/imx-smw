@@ -446,7 +446,7 @@ static int stop_storage_manager(void)
 	return status;
 }
 
-int unload(void)
+static int unload(void)
 {
 	int status = SMW_STATUS_OK;
 
@@ -469,7 +469,7 @@ end:
 	return status;
 }
 
-int load(void)
+static int load(void)
 {
 	int status = SMW_STATUS_OK;
 

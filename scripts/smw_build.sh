@@ -133,6 +133,30 @@ function seco()
     eval "${cmd_script}"
 }
 
+function ele()
+{
+    cmd_script="cmake ${opt_toolchain} ${opt_zlib}"
+    ele_script="${script_dir}/build_ele.cmake"
+
+    printf "\033[0;32m\n"
+    printf "***************************************\n"
+    printf " Install EdgeLock Enclave (ELE) to %s\n" "${opt_export}"
+    printf "***************************************\n"
+    printf "\033[0m\n"
+
+    if [[ -z ${opt_export} || -z ${opt_src} ]]; then
+        usage_ele
+        exit 1
+    fi
+
+    cmd_script="${cmd_script} -DELE_SRC_PATH=${opt_src}"
+    cmd_script="${cmd_script} -DELE_ROOT=${opt_export} -P ${ele_script}"
+
+    printf "Execute %s\n" "${cmd_script}"
+    eval "${cmd_script}"
+}
+
+
 function teec()
 {
     cmd_script="cmake ${opt_toolchain} ${opt_builddir}"
@@ -219,7 +243,7 @@ function configure()
     cmd_script="cmake .. ${opt_toolchain}"
     cmd_script="${cmd_script} ${opt_coverage}"
     cmd_script="${cmd_script} ${opt_buildtype} ${opt_verbose}"
-    cmd_script="${cmd_script} ${opt_zlib} ${opt_seco}"
+    cmd_script="${cmd_script} ${opt_zlib} ${opt_seco} ${opt_ele}"
     cmd_script="${cmd_script} ${opt_teec} ${opt_tadevkit}"
     cmd_script="${cmd_script} ${opt_jsonc} ${opt_psaarchtests}"
     cmd_script="${cmd_script} ${opt_psa}"
@@ -425,6 +449,22 @@ function usage_seco()
     printf "\n"
 }
 
+function usage_ele()
+{
+    printf "\n"
+    printf "To build and install the EdgeLock Enclave libraries\n"
+    printf "  %s ele export=[dir] src=[dir] zlib=[root] " "${script_name}"
+    printf "arch=[arch] toolpath=[dir] toolname=[name]\n"
+    printf "    export   = Export directory\n"
+    printf "    src      = Source directory\n"
+    printf "    zlib     = [optional] ZLIB library root directory\n"
+    printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
+    printf "    toolpath = [optional] Toolchain path where installed\n"
+    printf "    toolname = [optional] Toolchain name\n"
+    printf "\n"
+}
+
+
 function usage_teec()
 {
     printf "\n"
@@ -471,7 +511,9 @@ function usage_configure()
     printf "To configure the Secure Middleware\n"
     printf " - Note: all dependencies must be present\n"
     printf "  %s configure out=[dir] coverage debug " "${script_name}"
-    printf "verbose=[lvl] zlib=[dir] seco=[dir] teec=[dir] tadevkit=[dir] "
+    printf "verbose=[lvl] zlib=[dir] seco=[dir] "
+    printf "ele=[dir] "
+    printf "teec=[dir] tadevkit=[dir] "
     printf "arch=[arch] toolpath=[dir] toolname=[name] jsonc=[dir] "
     printf "psaarchtests=[dir]"
     printf "format=[name] ...\n"
@@ -485,6 +527,9 @@ function usage_configure()
     printf "  To enable HSM subsystem [optional]\n"
     printf "    zlib     = ZLIB library root directory\n"
     printf "    seco     = SECO export directory\n"
+    printf "  To enable ELE subsystem [optional]\n"
+    printf "    zlib     = ZLIB library root directory\n"
+    printf "    ele      = ELE export directory\n"
     printf "  To enable TEE subsystem [optional]\n"
     printf "    teec     = OPTEE Client export directory\n"
     printf "    tadevkit = OPTEE TA Development Kit export directory\n"
@@ -570,6 +615,7 @@ function usage()
     usage_toolchain
     usage_zlib
     usage_seco
+    usage_ele
     usage_teec
     usage_tadevkit
     usage_psaarchtests
@@ -647,6 +693,11 @@ do
         seco=*)
             opt_seco="${arg#*=}"
             opt_seco="-DSECO_ROOT=${opt_seco}"
+            ;;
+
+        ele=*)
+            opt_ele="${arg#*=}"
+            opt_ele="-DELE_ROOT=${opt_ele}"
             ;;
 
         teec=*)
@@ -753,6 +804,10 @@ case ${opt_action} in
 
     seco)
         seco
+        ;;
+
+    ele)
+        ele
         ;;
 
     teec)

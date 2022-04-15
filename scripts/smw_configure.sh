@@ -39,14 +39,16 @@ platform="$3"
 #
 optee_plat=
 opt_seco=0
+opt_ele=0
 case ${platform} in
     imx8qxpc0mek)
         optee_plat="imx-mx8qxpmek"
-	opt_seco=1
+        opt_seco=1
 	;;
 
     imx8ulpevk)
         optee_plat="imx-mx8ulpevk"
+        opt_ele=1
 	;;
 
     imx8mmevk)
@@ -81,6 +83,14 @@ eval "./scripts/smw_build.sh seco export=${export} \
       src=../seco_libs zlib=${export}/usr ${arch} ${toolpath}"
 fi
 
+if [[ ${opt_ele} -eq 1 ]]; then
+eval "./scripts/smw_build.sh zlib export=${export}/usr \
+       	src=../zlib ${arch} ${toolpath}"
+eval "./scripts/smw_build.sh ele export=${export} \
+      src=../secure_enclave zlib=${export}/usr ${arch} ${toolpath}"
+fi
+
+
 eval "./scripts/smw_build.sh jsonc export=${export} \
       src=../jsonc ${arch} ${toolpath}"
 eval "./scripts/smw_build.sh teec export=${export} \
@@ -98,6 +108,12 @@ conf_opts="${arch} ${toolpath}"
 if [[ ${opt_seco} -eq 1 ]]; then
     conf_opts="${conf_opts} zlib=${export}/usr seco=${export}"
 fi
+
+# Enable ELE if supported
+if [[ ${opt_ele} -eq 1 ]]; then
+    conf_opts="${conf_opts} zlib=${export}/usr ele=${export}"
+fi
+
 
 # Enable optee
 conf_opts="${conf_opts} teec=${export} tadevkit=${ta_export}"

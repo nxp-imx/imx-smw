@@ -1,0 +1,35 @@
+/* Configuration file */
+VERSION=1;
+[SECURE_SUBSYSTEM]
+    ELE;
+    /* No Start/Stop method specified. Default is 1. */
+    [SECURITY_OPERATION]
+        GENERATE_KEY;
+    [SECURITY_OPERATION]
+        DERIVE_KEY;
+    [SECURITY_OPERATION]
+        UPDATE_KEY;
+    [SECURITY_OPERATION]
+        IMPORT_KEY;
+    [SECURITY_OPERATION]
+        EXPORT_KEY;
+    [SECURITY_OPERATION]
+        DELETE_KEY;
+    [SECURITY_OPERATION]
+        HASH;
+    [SECURITY_OPERATION]
+        SIGN;
+        KEY_TYPE_VALUES=NIST;
+        SIGN_TYPE_VALUES=DEFAULT;
+    [SECURITY_OPERATION]
+        VERIFY;
+        KEY_TYPE_VALUES=NIST;
+        SIGN_TYPE_VALUES=DEFAULT;
+    [SECURITY_OPERATION]
+        RNG;
+    [SECURITY_OPERATION]
+        CIPHER;
+        KEY_TYPE_VALUES=AES;
+        MODE_VALUES=CBC:ECB:CTR;
+    [SECURITY_OPERATION]
+        HMAC;

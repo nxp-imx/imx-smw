@@ -1,0 +1,60 @@
+{
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_type": "AES",
+		"security_size": 128,
+		"key_policy": {
+			"encrypt": [
+				[
+					"ECB_NO_PADDING"
+				]
+			]
+		},
+		"key_id": 0,
+		"attributes_list": [
+			"PERSISTENT"
+		]
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_type": "NIST",
+		"security_size": 256,
+		"key_policy": {
+			"sign_message": [
+				[
+					"ECDSA",
+					"HASH=SHA256"
+				]
+			]
+		},
+		"key_id": 1,
+		"attributes_list": [
+			[
+				"PERSISTENT"
+			],
+			[
+				"FLUSH_KEY"
+			]
+		]
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_type": "AES",
+		"security_size": 256,
+		"key_policy": {
+			"encrypt": [
+				[
+					"ECB_NO_PADDING"
+				]
+			]
+		},
+		"key_id": 2
+	},
+	"subtest 4": {
+		"command": "SAVE_KEY_IDS",
+		"filepath": "/usr/share/smw/tests/F_ELE_Keymgr_001_ids.json"
+	}
+}

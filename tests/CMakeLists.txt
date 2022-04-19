@@ -120,6 +120,13 @@ if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco AND
     include(${CMAKE_SOURCE_DIR}/tests/cmake/hsm_tests.cmake)
 endif()
 
+# If ELE subsystem defined, include tests
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Ele AND
+   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_ZLIBLight)
+    set(ELE_TESTS_ENABLED ON)
+    include(${CMAKE_SOURCE_DIR}/tests/cmake/ele_tests.cmake)
+endif()
+
 # If HSM subsystem and TEE subsystem defined, include tests
 if(TEE_TESTS_ENABLED AND HSM_TESTS_ENABLED)
     set(HSMTEE_TESTS ON)

@@ -4,8 +4,8 @@ HSM capabilities
 Key manager
 ^^^^^^^^^^^
 
-.. table::
-   :align: left
+.. table:: HSM Key type
+   :align: center
    :class: wrap-table
 
    +--------------+---------------------------------+
@@ -51,17 +51,27 @@ returns the warning `SMW_STATUS_KEY_POLICY_WARNING_IGNORED`.
 Hash
 ^^^^
 
-Algorithm:
- - SHA224
- - SHA256
- - SHA384
- - SHA512
+.. table:: HSM Hash
+   :align: center
+   :class: wrap-table
+
+   +--------------------+
+   | **Hash Algorithm** |
+   +====================+
+   | SHA224             |
+   +--------------------+
+   | SHA256             |
+   +--------------------+
+   | SHA384             |
+   +--------------------+
+   | SHA512             |
+   +--------------------+
 
 Signature
 ^^^^^^^^^
 
-.. table::
-   :align: left
+.. table:: HSM Signature
+   :align: center
    :class: wrap-table
 
    +--------------+--------------------------+--------------------+
@@ -90,8 +100,8 @@ Length: 1 to UINT32_MAX
 HMAC
 ^^^^
 
-.. table::
-   :align: left
+.. table:: HSM Hmac
+   :align: center
    :class: wrap-table
 
    +--------------+--------------------------+--------------------+
@@ -112,10 +122,8 @@ and may return ``SMW_STATUS_SUBSYSTEM_FAILURE``.
 Cipher
 ^^^^^^
 
-.. tabularcolumns:: |\Y{0.2}|\Y{0.2}|
-
-.. table::
-   :align: left
+.. table:: HSM Cipher
+   :align: center
    :class: wrap-table
 
    +--------------+----------+

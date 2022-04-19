@@ -82,6 +82,10 @@ List of Secure Subsystems:
    | TEE                              | Use the Secure OS called OPTEE and running                      |
    |                                  | in ARM Trustzone Secure world.                                  |
    +----------------------------------+-----------------------------------------------------------------+
+   | ELE                              | Use the ELE (EdgeLock Enclave) protected secure mode on:        |
+   |                                  |  - i.MX8ULP                                                     |
+   |                                  |  - i.MX9x                                                       |
+   +----------------------------------+-----------------------------------------------------------------+
 
 A different load and unload method can be specified for each Secure Subsystem thru the <string: load/unload method> string following the subsystem’s string name. The following table defines the possible string value of the load/unload method.
 

@@ -5,6 +5,7 @@ table.wrap-table {
 
 table.wrap-table th {
         text-align: center;
+        vertical-align: top;
         background-color: lightgray;
         border: 1px solid black !important;
         border-bottom: 2px solid black !important;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -57,6 +57,11 @@ const struct test_slots exp_slots[] = { {
 						.num = 2,
 						.label = "OPTEE",
 						.flags_slot = 0,
+					},
+					{
+						.num = 3,
+						.label = "ELE",
+						.flags_slot = CKF_HW_SLOT,
 					} };
 
 #ifdef SMW_DEVICE_ONLY

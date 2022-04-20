@@ -78,6 +78,36 @@ static CK_RV create_hsm_info(CK_SESSION_HANDLE_PTR sess,
 	return ret;
 }
 
+static CK_RV create_ele_info(CK_SESSION_HANDLE_PTR sess,
+			     CK_FUNCTION_LIST_PTR pfunc)
+{
+	CK_RV ret;
+	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
+	CK_OBJECT_CLASS data_class = CKO_DATA;
+	CK_BBOOL token = true;
+	CK_UTF8CHAR label[] = "ELE Info";
+
+	CK_ATTRIBUTE data_template[] = {
+		{ CKA_CLASS, &data_class, sizeof(data_class) },
+		{ CKA_LABEL, &label, sizeof(label) - 1 },
+		{ CKA_VALUE, &se_default_info, sizeof(struct se_info) },
+		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+	};
+
+	TEST_OUT("Create %sELE Info (Storage ID=0x%x) data object\n",
+		 token ? "Token " : "", se_default_info.storage_id);
+
+	ret = pfunc->C_CreateObject(*sess, data_template,
+				    ARRAY_SIZE(data_template), &hdata);
+	if (!CHECK_EXPECTED(ret == CKR_OK || ret == CKR_FUNCTION_FAILED,
+			    "C_CreateObject returned 0x%lx", ret)) {
+		TEST_OUT("ELE Info created #%lu\n", hdata);
+		ret = CKR_OK;
+	}
+
+	return ret;
+}
+
 static CK_RV create_key_db(CK_SESSION_HANDLE_PTR sess,
 			   CK_FUNCTION_LIST_PTR pfunc)
 {
@@ -167,13 +197,17 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 		goto end;
 	TEST_OUT("Opened Session #%lu\n", *sess);
 
-	TEST_OUT("Create TEE and HSM Data objects\n");
+	TEST_OUT("Create subsytems configuration Data objects\n");
 	ret = create_tee_info(sess, pfunc);
 	if (CHECK_CK_RV(CKR_OK, "create_tee_info"))
 		goto end;
 
 	ret = create_hsm_info(sess, pfunc);
 	if (CHECK_CK_RV(CKR_OK, "create_hsm_info"))
+		goto end;
+
+	ret = create_ele_info(sess, pfunc);
+	if (CHECK_CK_RV(CKR_OK, "create_ele_info"))
 		goto end;
 
 	ret = create_key_db(sess, pfunc);

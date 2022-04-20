@@ -53,18 +53,21 @@
  * Define the configuration flags ids
  */
 #define CONFIG_TEE BIT(0)
-#define CONFIG_SE  BIT(1)
+#define CONFIG_HSM BIT(1)
+#define CONFIG_ELE BIT(2)
 
 /**
  * struct lib_config_args - Library configuration arguments
  * @config_flags: Flags the library configuration set
  * @tee_info: TEE subsystem configuration
- * @se_info: Secure Enclave subsystem configuration
+ * @se_hsm_info: Secure Enclave HSM subsystem configuration
+ * @se_ele_info: Secure Enclave ELE subsystem configuration
  */
 struct lib_config_args {
 	unsigned int config_flags;
 	struct tee_info tee_info;
-	struct se_info se_info;
+	struct se_info se_hsm_info;
+	struct se_info se_ele_info;
 };
 
 struct osal_priv {

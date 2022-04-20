@@ -144,8 +144,8 @@ static int set_hsm_info(void *info, size_t info_size)
 	if (info_size != sizeof(struct se_info))
 		return SMW_STATUS_INVALID_PARAM;
 
-	osal_priv.config.se_info = *((struct se_info *)info);
-	osal_priv.config.config_flags |= CONFIG_SE;
+	osal_priv.config.se_hsm_info = *((struct se_info *)info);
+	osal_priv.config.config_flags |= CONFIG_HSM;
 
 	return SMW_STATUS_OK;
 }
@@ -158,14 +158,40 @@ static int get_hsm_info(struct se_info *info)
 	 * Copy the Storage Nonce configuration if value set
 	 * in the library instance
 	 */
-	if (osal_priv.config.config_flags & CONFIG_SE) {
-		*info = osal_priv.config.se_info;
+	if (osal_priv.config.config_flags & CONFIG_HSM) {
+		*info = osal_priv.config.se_hsm_info;
 		ret = 0;
 	}
 
 	return ret;
 }
 
+static int set_ele_info(void *info, size_t info_size)
+{
+	if (info_size != sizeof(struct se_info))
+		return SMW_STATUS_INVALID_PARAM;
+
+	osal_priv.config.se_ele_info = *((struct se_info *)info);
+	osal_priv.config.config_flags |= CONFIG_ELE;
+
+	return SMW_STATUS_OK;
+}
+
+static int get_ele_info(struct se_info *info)
+{
+	int ret = -1;
+
+	/*
+	 * Copy the Storage Nonce configuration if value set
+	 * in the library instance
+	 */
+	if (osal_priv.config.config_flags & CONFIG_ELE) {
+		*info = osal_priv.config.se_ele_info;
+		ret = 0;
+	}
+
+	return ret;
+}
 static int get_subsystem_info(const char *subsystem_name, void *info)
 {
 	TRACE_FUNCTION_CALL;
@@ -178,6 +204,9 @@ static int get_subsystem_info(const char *subsystem_name, void *info)
 
 	if (!strcmp(subsystem_name, "HSM"))
 		return get_hsm_info(info);
+
+	if (!strcmp(subsystem_name, "ELE"))
+		return get_ele_info(info);
 
 	DBG_PRINTF(VERBOSE, "%s unknown %s subsystem\n", __func__,
 		   subsystem_name);
@@ -311,6 +340,8 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 			status = set_tee_info(info, info_size);
 		else if (!strcmp(subsystem, "HSM"))
 			status = set_hsm_info(info, info_size);
+		else if (!strcmp(subsystem, "ELE"))
+			status = set_ele_info(info, info_size);
 		else
 			status = SMW_STATUS_UNKNOWN_NAME;
 	}

@@ -81,8 +81,12 @@ int util_cond_wait(void *cond, void *mutex, unsigned int timeout)
 
 	err = pthread_cond_timedwait(cond, mutex, &ts);
 	if (err) {
-		DBG_PRINT("Wait (%p) failed: %s", cond, util_get_strerr());
-		res = (err == ETIMEDOUT) ? ERR_CODE(TIMEOUT) : res;
+		if (err == ETIMEDOUT) {
+			DBG_PRINT("Wait (%p) failed: Timeout", cond);
+			res = ERR_CODE(TIMEOUT);
+		} else {
+			DBG_PRINT("Wait (%p) failed %d", cond, err);
+		}
 	} else {
 		res = ERR_CODE(PASSED);
 	}

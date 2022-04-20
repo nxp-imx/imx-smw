@@ -97,14 +97,16 @@ static int setup_tee_info(json_object *test_def)
 }
 
 /**
- * setup_hsm_info() - Read and setup HSM Secure Enclave Information
+ * setup_hsm_ele_info() - Read and setup HSM or ELE Secure Enclave Information
  * @test_def: JSON-C test definition of the application
+ * @is_ele: Get the ELE tag information if value is 1
  *
- * Function extracts HSM information from the test definition of
- * the application configuration and calls the SMW Library HSM Information
- * setup API.
+ * Function extracts HSM or ELE information from the test definition of
+ * the application configuration and calls the SMW Library HSM or ELE
+ * Information setup API.
  *
- * SE info is defined with a JSON-C object "hsm_info".
+ * SE info is defined with a JSON-C object "hsm_info" for the HSM subsytem
+ * or "ele_info" for the ELE subsystem.
  *
  * Return:
  * PASSED              - Success.
@@ -113,13 +115,19 @@ static int setup_tee_info(json_object *test_def)
  * -FAILED             - Error in definition file
  * -ERROR_SMWLIB_INIT  - SMW Library initialization error
  */
-static int setup_hsm_info(json_object *test_def)
+static int setup_hsm_ele_info(json_object *test_def, int is_ele)
 {
 	int res;
 	struct se_info info = se_default_info;
 	json_object *oinfo = NULL;
 
-	res = util_read_json_type(&oinfo, HSM_INFO_OBJ, t_object, test_def);
+	if (is_ele)
+		res = util_read_json_type(&oinfo, ELE_INFO_OBJ, t_object,
+					  test_def);
+	else
+		res = util_read_json_type(&oinfo, HSM_INFO_OBJ, t_object,
+					  test_def);
+
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
 	    !oinfo)
 		return res;
@@ -139,9 +147,13 @@ static int setup_hsm_info(json_object *test_def)
 			return res;
 	}
 
-	res = smw_osal_set_subsystem_info("HSM", &info, sizeof(info));
+	if (is_ele)
+		res = smw_osal_set_subsystem_info("ELE", &info, sizeof(info));
+	else
+		res = smw_osal_set_subsystem_info("HSM", &info, sizeof(info));
+
 	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Set HSM Info failed %s",
+		DBG_PRINT("SMW Set %s Info failed %s", (is_ele) ? "ELE" : "HSM",
 			  get_smw_string_status(res));
 		res = ERR_CODE(ERROR_SMWLIB_INIT);
 	} else {
@@ -211,7 +223,11 @@ static int init_smwlib(struct app_data *app)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	res = setup_hsm_info(app->parent_def);
+	res = setup_hsm_ele_info(app->parent_def, 0);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	res = setup_hsm_ele_info(app->parent_def, 1);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 

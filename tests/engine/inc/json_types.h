@@ -15,6 +15,7 @@
 #define CTX_ID_OBJ	  "context_id"
 #define DEPENDS_OBJ	  "depends"
 #define DIGEST_OBJ	  "digest"
+#define ELE_INFO_OBJ	  "ele_info"
 #define FILEPATH_OBJ	  "filepath"
 #define HSM_INFO_OBJ	  "hsm_info"
 #define INPUT_OBJ	  "input"

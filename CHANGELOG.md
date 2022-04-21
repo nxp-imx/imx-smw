@@ -32,6 +32,10 @@ The releases are listed from the most recent to the first one.
 * When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
+#### SMW Library - _version 2.2_
+##### 1. Subsystem
+* Add EdgeLock Enclave (ELE) subsystem.
+
 
 ### <a id ="rel_2_1"></a></br>**Release 2.1**
 ---

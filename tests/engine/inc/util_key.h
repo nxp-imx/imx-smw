@@ -110,7 +110,7 @@ struct keypair_ops {
  * @pub_key: Public key data buffer structure. Used for ephemeral keys.
  */
 struct key_identifier_data {
-	unsigned long long key_identifier;
+	unsigned int key_identifier;
 	unsigned int security_size;
 	struct tbuffer pub_key;
 };

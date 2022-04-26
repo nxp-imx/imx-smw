@@ -609,8 +609,8 @@ static int save_key_ids_to_json_file(struct llist *key_list, char *filepath)
 			goto exit;
 		}
 
-		if (!json_object_set_int64(key_identifier_obj,
-					   data->key_identifier)) {
+		if (!json_object_set_int(key_identifier_obj,
+					 data->key_identifier)) {
 			DBG_PRINT("json_object_set_int64() failed");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
@@ -703,8 +703,8 @@ static int restore_key_ids_from_json_file(struct subtest_data *subtest,
 		if (res != ERR_CODE(PASSED))
 			break;
 
-		res = util_read_json_type(&key.desc.id, "key_identifier",
-					  t_int64, iter.val);
+		res = util_read_json_type(&key.desc.id, "key_identifier", t_int,
+					  iter.val);
 		if (res != ERR_CODE(PASSED))
 			break;
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <stdlib.h>
@@ -172,7 +172,7 @@ CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		goto end;
 
 	ret = libdev_import_key(hsession, obj);
-	DBG_TRACE("Public Key ID 0x%llX", new_key->key_id);
+	DBG_TRACE("Public Key ID 0x%X", new_key->key_id);
 
 end:
 	if (ret != CKR_OK)
@@ -245,7 +245,7 @@ CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		goto end;
 
 	ret = libdev_import_key(hsession, obj);
-	DBG_TRACE("Private Key ID 0x%llX", new_key->key_id);
+	DBG_TRACE("Private Key ID 0x%X", new_key->key_id);
 
 end:
 	if (ret != CKR_OK)
@@ -327,7 +327,7 @@ CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		goto end;
 
 	ret = libdev_operate_mechanism(hsession, mech, priv_obj);
-	DBG_TRACE("Key Pair ID 0x%llX", keypair->key_id);
+	DBG_TRACE("Key Pair ID 0x%X", keypair->key_id);
 
 end:
 	if (ret != CKR_OK) {
@@ -353,7 +353,7 @@ CK_RV key_ec_get_id(struct libbytes *id, struct libobj_obj *obj,
 	if (!id->array)
 		return CKR_HOST_MEMORY;
 
-	DBG_TRACE("EC Key ID 0x%llX", keypair->key_id);
+	DBG_TRACE("EC Key ID 0x%X", keypair->key_id);
 
 	TO_CK_BYTES(&id->array[prefix_len], keypair->key_id);
 

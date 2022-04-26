@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <stdlib.h>
@@ -91,7 +91,7 @@ CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 	/* Import the secret key in the SMW library session's subsystem */
 	ret = libdev_import_key(hsession, obj);
-	DBG_TRACE("Cipher Key ID 0x%llX", new_key->key_id);
+	DBG_TRACE("Cipher Key ID 0x%X", new_key->key_id);
 
 end:
 	if (ret != CKR_OK)
@@ -161,7 +161,7 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 	/* Generate the secret key with SMW library */
 	ret = libdev_operate_mechanism(hsession, mech, obj);
-	DBG_TRACE("Cipher Key ID 0x%llX", key->key_id);
+	DBG_TRACE("Cipher Key ID 0x%X", key->key_id);
 
 end:
 	if (ret != CKR_OK)
@@ -185,7 +185,7 @@ CK_RV key_cipher_get_id(struct libbytes *id, struct libobj_obj *obj,
 	if (!id->array)
 		return CKR_HOST_MEMORY;
 
-	DBG_TRACE("Cipher Key ID 0x%llX", key_cipher->key_id);
+	DBG_TRACE("Cipher Key ID 0x%X", key_cipher->key_id);
 
 	TO_CK_BYTES(&id->array[prefix_len], key_cipher->key_id);
 

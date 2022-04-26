@@ -1078,14 +1078,14 @@ end:
 	return ret;
 }
 
-CK_RV libdev_delete_key(unsigned long long key_id)
+CK_RV libdev_delete_key(unsigned int key_id)
 {
 	CK_RV ret;
 	enum smw_status_code status;
 	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_delete_key_args key_args = { 0 };
 
-	DBG_TRACE("Delete Key ID %llx", key_id);
+	DBG_TRACE("Delete Key ID %X", key_id);
 	if (!key_id)
 		return CKR_ARGUMENTS_BAD;
 

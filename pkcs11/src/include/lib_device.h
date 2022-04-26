@@ -287,7 +287,7 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj);
  * CKR_DEVICE_ERROR              - Device failure
  * CKR_OK                        - Success
  */
-CK_RV libdev_delete_key(unsigned long long key_id);
+CK_RV libdev_delete_key(unsigned int key_id);
 
 /**
  * libdev_mechanisms_init() - Initialize the device mechanism information

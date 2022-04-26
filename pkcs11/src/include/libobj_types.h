@@ -144,7 +144,7 @@ struct libobj_key {
 	})
 
 struct libobj_key_ec_pair {
-	unsigned long long key_id;
+	unsigned int key_id;
 	unsigned int type;
 	struct libbytes params;
 	struct libbytes point_q;     // Public Key point
@@ -152,7 +152,7 @@ struct libobj_key_ec_pair {
 };
 
 struct libobj_key_rsa_pair {
-	unsigned long long key_id;
+	unsigned int key_id;
 	unsigned int type;
 	struct libbignumber modulus;  // Modulus n
 	CK_ULONG modulus_length;      // Modulus length in bits
@@ -166,7 +166,7 @@ struct libobj_key_rsa_pair {
 };
 
 struct libobj_key_cipher {
-	unsigned long long key_id;
+	unsigned int key_id;
 	struct libbytes value;
 	size_t value_len;
 };

@@ -212,7 +212,7 @@ int smw_keymgr_free_keypair_buffer(struct smw_keymgr_descriptor *descriptor);
  * Return:
  * key descriptor id
  */
-unsigned long long
+unsigned int
 smw_keymgr_get_api_key_id(struct smw_keymgr_descriptor *descriptor);
 
 /**

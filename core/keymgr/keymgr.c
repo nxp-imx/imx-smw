@@ -623,7 +623,7 @@ end:
 	return status;
 }
 
-inline unsigned long long
+inline unsigned int
 smw_keymgr_get_api_key_id(struct smw_keymgr_descriptor *descriptor)
 {
 	SMW_DBG_ASSERT(descriptor && descriptor->pub);

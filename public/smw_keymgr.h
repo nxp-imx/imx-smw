@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __SMW_KEYMGR_H__
@@ -71,7 +71,7 @@ struct smw_keypair_buffer {
 struct smw_key_descriptor {
 	smw_key_type_t type_name;
 	unsigned int security_size;
-	unsigned long long id;
+	unsigned int id;
 	struct smw_keypair_buffer *buffer;
 };
 
@@ -187,11 +187,11 @@ struct smw_kdf_tls12_args {
 	unsigned char *kdf_input;
 	unsigned int kdf_input_length;
 	// Output parameters
-	unsigned long long master_sec_key_id;
-	unsigned long long client_w_enc_key_id;
-	unsigned long long server_w_enc_key_id;
-	unsigned long long client_w_mac_key_id;
-	unsigned long long server_w_mac_key_id;
+	unsigned int master_sec_key_id;
+	unsigned int client_w_enc_key_id;
+	unsigned int server_w_enc_key_id;
+	unsigned int client_w_mac_key_id;
+	unsigned int server_w_mac_key_id;
 	unsigned char *client_w_iv;
 	unsigned int client_w_iv_length;
 	unsigned char *server_w_iv;

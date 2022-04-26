@@ -53,6 +53,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 4. SMW APIs
 
 * Add `smw_config_subsystem_loaded()` API to get the subsystem status loaded or not.
+* Change key identifier to 32 bits
 
 ##### 5. ARM PSA APIs
 

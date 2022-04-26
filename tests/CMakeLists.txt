@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(smwtest VERSION 2.0 LANGUAGES C)
+project(smwtest VERSION 2.1 LANGUAGES C)
 
 if(NOT DEFINED JSONC_ROOT)
     message(STATUS "Tests not enabled, JSONC_ROOT not defined")

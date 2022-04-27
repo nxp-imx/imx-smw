@@ -530,7 +530,7 @@ static void run_subtest(struct thread_data *thr)
 	struct subtest_data *subtest;
 
 	subtest = thr->subtest;
-	subtest->smw_status = SMW_STATUS_OPERATION_FAILURE;
+	subtest->smw_status = SMW_STATUS_OK;
 
 	/* Verify the type of the subtest tag/value is json object */
 	if (json_object_get_type(subtest->params) != json_type_object) {
@@ -620,9 +620,12 @@ static void run_subtest(struct thread_data *thr)
 	/* Execute subtest command */
 	res = execute_command(cmd_name, subtest);
 
-	if (res == ERR_CODE(API_STATUS_NOK) &&
-	    !CHECK_RESULT(subtest->smw_status, exp_smw_status))
+	if (CHECK_RESULT(subtest->smw_status, exp_smw_status)) {
+		if (res == ERR_CODE(PASSED))
+			res = ERR_CODE(FAILED);
+	} else if (res == ERR_CODE(API_STATUS_NOK)) {
 		res = ERR_CODE(PASSED);
+	}
 
 	if (res != ERR_CODE(PASSED))
 		goto exit;

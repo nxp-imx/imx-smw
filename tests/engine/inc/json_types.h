@@ -22,6 +22,7 @@
 #define KEY_DB_OBJ	  "key_db"
 #define KEY_FORMAT_OBJ	  "format"
 #define KEY_ID_OBJ	  "key_id"
+#define KEY_POLICY_OBJ	  "key_policy"
 #define KEY_TYPE_OBJ	  "key_type"
 #define LIB_VERSION_OBJ	  "lib_version"
 #define MAC_OBJ		  "mac"

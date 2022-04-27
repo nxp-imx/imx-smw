@@ -40,14 +40,22 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 	struct smw_key_descriptor *desc;
 	unsigned int public_length = 0;
 	unsigned int modulus_length = 0;
+	unsigned char **attrs;
+	unsigned int *attrs_len;
 
 	if (!subtest || !args || !key_test || !key_test->keys)
 		return ERR_CODE(BAD_ARGS);
 
+	attrs = (unsigned char **)&args->key_attributes_list;
+	attrs_len = &args->key_attributes_list_length;
+
+	/* Get the key policy */
+	res = util_tlv_read_key_policy(attrs, attrs_len, subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
 	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs((unsigned char **)&args->key_attributes_list,
-				  &args->key_attributes_list_length,
-				  subtest->params);
+	res = util_tlv_read_attrs(attrs, attrs_len, subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -110,6 +118,42 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 	}
 
 	return ERR_CODE(PASSED);
+}
+
+/**
+ * set_import_opt_params() - Set key import optional parameters.
+ * @subtest: Subtest data
+ * @args: Pointer to smw import key args structure to update.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -FAILED                  - Error in definition file
+ */
+static int set_import_opt_params(struct subtest_data *subtest,
+				 struct smw_import_key_args *args)
+{
+	int res;
+	unsigned char **attrs;
+	unsigned int *attrs_len;
+
+	if (!subtest || !args)
+		return ERR_CODE(BAD_ARGS);
+
+	attrs = (unsigned char **)&args->key_attributes_list;
+	attrs_len = &args->key_attributes_list_length;
+
+	/* Get the key policy */
+	res = util_tlv_read_key_policy(attrs, attrs_len, subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	/* Get 'attributes_list' optional parameter */
+	res = util_tlv_read_attrs(attrs, attrs_len, subtest->params);
+
+	return res;
 }
 
 /**
@@ -896,10 +940,7 @@ int import_key(struct subtest_data *subtest)
 		goto exit;
 	}
 
-	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs((unsigned char **)&args.key_attributes_list,
-				  &args.key_attributes_list_length,
-				  subtest->params);
+	res = set_import_opt_params(subtest, smw_import_args);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 

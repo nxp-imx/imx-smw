@@ -406,6 +406,7 @@ static const unsigned int t_data_2_json_type[] = {
 	[t_double] = BIT(json_type_double),
 	[t_sem] = BIT(json_type_string) | BIT(json_type_array),
 	[t_ints] = BIT(json_type_int) | BIT(json_type_array),
+	[t_array] = BIT(json_type_array),
 };
 
 int util_read_json_type(void *value, const char *key, enum t_data_type type,
@@ -468,6 +469,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 		case t_sem:
 		case t_buffer:
 		case t_ints:
+		case t_array:
 			*((json_object **)value) = obj;
 			ret = ERR_CODE(PASSED);
 			break;
@@ -673,4 +675,16 @@ int util_get_subdef(struct json_object **subdef, struct json_object *topdef,
 		DBG_PRINT("Error %d", res);
 
 	return res;
+}
+
+char *util_string_to_upper(char *str)
+{
+	size_t idx;
+
+	for (idx = 0; idx < strlen(str); idx++) {
+		if (str[idx] >= 'a' && str[idx] <= 'z')
+			str[idx] -= 'a' - 'A';
+	}
+
+	return str;
 }

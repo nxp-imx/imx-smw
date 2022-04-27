@@ -165,7 +165,8 @@ enum t_data_type {
 	t_int64,
 	t_double,
 	t_sem,
-	t_ints
+	t_ints,
+	t_array
 };
 
 #endif /* __TYPES_H__ */

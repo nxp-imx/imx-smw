@@ -376,4 +376,15 @@ int util_get_json_obj_ids(const char *name, const char *key,
 int util_get_subdef(struct json_object **subdef, struct json_object *topdef,
 		    struct test_data *test);
 
+/**
+ * util_string_to_upper() - Converts string lowercase to uppercase
+ * @str: Input/Output string
+ *
+ * The function overwrites the input string value.
+ *
+ * Return:
+ * Pointer to output string (@str)
+ */
+char *util_string_to_upper(char *str);
+
 #endif /* __UTIL_H__ */

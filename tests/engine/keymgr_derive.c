@@ -397,10 +397,22 @@ static int setup_derive_opt_params(struct smw_derive_key_args *args,
 				   json_object *params)
 {
 	int res;
+	unsigned char **attrs;
+	unsigned int *attrs_len;
+
+	if (!args || !params)
+		return ERR_CODE(BAD_ARGS);
+
+	attrs = (unsigned char **)&args->key_attributes_list;
+	attrs_len = &args->key_attributes_list_length;
+
+	/* Get the key policy */
+	res = util_tlv_read_key_policy(attrs, attrs_len, params);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs((unsigned char **)&args->key_attributes_list,
-				  &args->key_attributes_list_length, params);
+	res = util_tlv_read_attrs(attrs, attrs_len, params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -653,8 +665,7 @@ int derive_key(struct subtest_data *subtest)
 	subtest->smw_status = smw_derive_key(smw_args);
 	if (subtest->smw_status != SMW_STATUS_OK)
 		res = ERR_CODE(API_STATUS_NOK);
-
-	if (subtest->smw_status == SMW_STATUS_OK)
+	else
 		res = end_derive_operation(subtest, &args, &key_derived);
 
 exit:

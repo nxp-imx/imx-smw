@@ -3,6 +3,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"c9806898a0334916c860748880a541f0",

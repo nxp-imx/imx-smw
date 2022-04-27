@@ -3,6 +3,10 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "BRAINPOOL_R1",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
 		"security_size": 160,
 		"priv_key": [
 			"01234567890123456789012345678901",
@@ -20,6 +24,10 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
 		"security_size": 192,
 		"priv_key": [
 			"01234567890123456789012345678901",
@@ -32,6 +40,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "AES",
+		"key_policy": {
+			"encrypt": []
+		},
 		"security_size": 128,
 		"pub_key": "0123456789",
 		"key_id": 0,
@@ -41,6 +52,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "AES",
+		"key_policy": {
+			"encrypt": []
+		},
 		"security_size": 128,
 		"priv_key": "0123456789",
 		"pub_key": "0123456789",
@@ -51,6 +65,10 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 512,
 		"pub_key": [
 			"01234567890123456789012345678901",
@@ -69,6 +87,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "AES",
+		"key_policy": {
+			"encrypt": []
+		},
 		"security_size": 128,
 		"priv_key": "0123456789",
 		"key_id": 0,
@@ -78,6 +99,10 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 192,
 		"pub_key": "0123456789",
 		"key_id": 0,
@@ -87,6 +112,10 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"890108895a7c27cedab50179f31e1052",
@@ -103,6 +132,10 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
 		"security_size": 256,
 		"pub_key": [
 			"010001"

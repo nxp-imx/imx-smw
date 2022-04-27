@@ -3,6 +3,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_hash": []
+		},
 		"security_size": 2048,
 		"pub_key": [
 			"010001"
@@ -49,6 +52,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"verify_hash": []
+		},
 		"security_size": 2048,
 		"pub_key": [
 			"010001"
@@ -77,6 +83,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"verify_hash": []
+		},
 		"security_size": 2048,
 		"format": "BASE64",
 		"pub_key": "AQAB",

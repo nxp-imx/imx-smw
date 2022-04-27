@@ -306,17 +306,23 @@
 			"55555555555555555555555555555555",
 			"55555555555555555555555555555555"
 		],
-		"attributes_list": ["undefined"],
+		"attributes_list": [
+			"undefined"
+		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 11": { // Add a keypair for the test
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 256,
 		"key_id": 0
 	},
-	"subtest 12": { // Get the signature length
+	"subtest 12": { // Signature length not valid
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",

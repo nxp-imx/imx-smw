@@ -73,7 +73,10 @@
 			"a03ec5f73c4c2f420728220fe9e9efc3"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PKCS1-V1_5"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PKCS1-V1_5"
+			]
 		],
 		"sign_id": 1,
 		"key_type": "RSA",
@@ -165,7 +168,10 @@
 			"a03ec5f73c4c2f420728220fe9e9efc3"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PKCS1-V1_5"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PKCS1-V1_5"
+			]
 		],
 		"sign_id": 1,
 		"key_type": "RSA",

@@ -3,6 +3,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 512,
 		"pub_key": [
 			"010001"
@@ -56,16 +59,28 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 1024,
 		"key_id": 1,
 		"attributes_list": [
-			["RSA_PUB_EXP", [9, "4000000041CB995001"]]
+			[
+				"RSA_PUB_EXP",
+				[
+					9,
+					"4000000041CB995001"
+				]
+			]
 		]
 	},
 	"subtest 6": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 4096,
 		"key_id": 2
 	},

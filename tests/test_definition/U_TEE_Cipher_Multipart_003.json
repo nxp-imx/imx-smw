@@ -3,6 +3,10 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "AES",
+		"key_policy": {
+			"encrypt": [],
+			"decrypt": []
+		},
 		"security_size": 256,
 		"key_id": 0
 	},
@@ -10,6 +14,10 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "AES",
+		"key_policy": {
+			"encrypt": [],
+			"decrypt": []
+		},
 		"security_size": 256,
 		"key_id": 1
 	},
@@ -75,7 +83,7 @@
 		"context_id": 0,
 		"depends": 3
 	},
-	"subtest 7": { // Input is bigger than AES block size
+	"subtest 7": {
 		"command": "CIPHER_UPDATE",
 		"input": "d083f37a6160ac25c3229800ae0721d94b",
 		"context_id": 1,

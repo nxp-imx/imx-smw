@@ -3,6 +3,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"derive": []
+		},
 		"security_size": 256,
 		"key_id": 0
 	},
@@ -71,6 +74,9 @@
 		"op_input": {
 			"key_type": "ECDH_NIST",
 			"security_size": 256,
+			"key_policy": {
+				"derive": []
+			},
 			"priv_key": [
 				"76e656a9ea0d51412b83a48891bfb1e7",
 				"0cbb8e2125c620e32636222c32ec2810"
@@ -87,6 +93,9 @@
 		"op_input": {
 			"key_type": "UNDEFINED",
 			"security_size": 256,
+			"key_policy": {
+				"derive": []
+			},
 			"priv_key": [
 				"76e656a9ea0d51412b83a48891bfb1e7",
 				"0cbb8e2125c620e32636222c32ec2810"
@@ -101,6 +110,9 @@
 			"key_type": "ECDH_NIST",
 			"format": "UNDEFINED",
 			"security_size": 256,
+			"key_policy": {
+				"derive": []
+			},
 			"priv_key": [
 				"76e656a9ea0d51412b83a48891bfb1e7",
 				"0cbb8e2125c620e32636222c32ec2810"
@@ -135,7 +147,10 @@
 		"subsystem": "DEFAULT",
 		"op_input": {
 			"key_type": "ECDH_NIST",
-			"security_size": 256
+			"security_size": 256,
+			"key_policy": {
+				"derive": []
+			}
 		},
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
@@ -145,6 +160,9 @@
 		"op_input": {
 			"key_type": "ECDH_NIST",
 			"security_size": 256,
+			"key_policy": {
+				"derive": []
+			},
 			"pub_key": [
 				"76e656a9ea0d51412b83a48891bfb1e7",
 				"0cbb8e2125c620e32636222c32ec2810",

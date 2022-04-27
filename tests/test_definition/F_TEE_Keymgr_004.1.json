@@ -3,22 +3,35 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "AES",
+		"key_policy": {
+			"encrypt": []
+		},
 		"security_size": 128,
 		"key_id": 0,
-		"attributes_list": ["PERSISTENT"]
+		"attributes_list": [
+			"PERSISTENT"
+		]
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 521,
 		"key_id": 1,
-		"attributes_list": ["PERSISTENT"]
+		"attributes_list": [
+			"PERSISTENT"
+		]
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "AES",
+		"key_policy": {
+			"encrypt": []
+		},
 		"security_size": 256,
 		"key_id": 2
 	},
@@ -26,9 +39,14 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 1024,
 		"key_id": 3,
-		"attributes_list": ["PERSISTENT"]
+		"attributes_list": [
+			"PERSISTENT"
+		]
 	},
 	"subtest 5": {
 		"command": "SAVE_KEY_IDS",

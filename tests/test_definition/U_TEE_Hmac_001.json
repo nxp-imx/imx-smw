@@ -3,6 +3,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "HMAC_MD5",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -14,6 +17,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA1",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -25,6 +31,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA224",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -36,6 +45,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA256",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -47,6 +59,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA384",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -58,6 +73,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA512",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",
@@ -69,6 +87,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SM3",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"6ed76d2d97c69fd1339589523931f2a6",

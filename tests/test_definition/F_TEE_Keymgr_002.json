@@ -3,6 +3,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 192,
 		"priv_key": [
 			"e5ce89a34adddf25ff3bf1ffe6803f57",
@@ -44,6 +47,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 224,
 		"priv_key": [
 			"e7c92383846a4e6887a10498d8eaca2b",
@@ -89,6 +95,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"priv_key": [
 			"c9806898a0334916c860748880a541f0",
@@ -134,6 +143,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 384,
 		"priv_key": [
 			"5394f7973ea868c52bf3ff8d8ceeb4db",
@@ -185,6 +197,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 521,
 		"priv_key": [
 			"0184258ea667ab99d09d4363b3f51384",
@@ -252,6 +267,9 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 192,
 		"pub_key": [
 			"39dc723b19527daa1e80425209c56463",
@@ -259,7 +277,9 @@
 			"834fabaf6b7d2341669512951f1672ad"
 		],
 		"key_id": 5,
-		"attributes_list": ["PERSISTENT"]
+		"attributes_list": [
+			"PERSISTENT"
+		]
 	},
 	"subtest 23": {
 		"command": "EXPORT_PUBLIC",

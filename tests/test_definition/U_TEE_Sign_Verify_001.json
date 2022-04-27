@@ -3,6 +3,12 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": [],
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 192,
 		"key_id": 0
 	},
@@ -10,6 +16,12 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": [],
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 224,
 		"key_id": 1
 	},
@@ -17,6 +29,12 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": [],
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 256,
 		"key_id": 2
 	},
@@ -24,6 +42,12 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": [],
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 384,
 		"key_id": 3
 	},
@@ -31,6 +55,12 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": [],
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 521,
 		"key_id": 4
 	},

@@ -1,0 +1,71 @@
+{
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
+		"security_size": 256,
+		"key_id": 0
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_type": "NIST",
+		"key_policy": {
+			"verify_hash": [],
+			"verify_message": []
+		},
+		"security_size": 256,
+		"key_id": 1
+	},
+	"subtest 3": {
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"message": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"sign_id": 0,
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 4": { // Verify with bad verification key
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"message": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"sign_id": 0,
+		"key_id": 1,
+		"result": "SMW_STATUS_SIGNATURE_INVALID",
+		"depends": 3
+	},
+	"subtest 5": { // Verify with non-verification key
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"message": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"sign_id": 0,
+		"key_id": 0,
+		"result": "SMW_STATUS_SUBSYSTEM_FAILURE",
+		"depends": 3
+	},
+	"subtest 6": {
+		"command": "DELETE",
+		"key_id": 0,
+		"result": "SMW_STATUS_SUBSYSTEM_FAILURE",
+		"depends": 1
+	},
+	"subtest 7": {
+		"command": "DELETE",
+		"key_id": 1,
+		"result": "SMW_STATUS_SUBSYSTEM_FAILURE",
+		"depends": 2
+	}
+}

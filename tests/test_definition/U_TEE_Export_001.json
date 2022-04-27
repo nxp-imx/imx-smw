@@ -3,6 +3,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "AES",
+		"key_policy": {
+			"encrypt": []
+		},
 		"security_size": 128,
 		"key_id": 0
 	},
@@ -10,6 +13,10 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
 		"security_size": 224,
 		"key_id": 1
 	},
@@ -65,6 +72,10 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
 		"security_size": 512,
 		"key_id": 2
 	},

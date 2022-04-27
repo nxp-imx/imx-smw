@@ -3,6 +3,10 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "DES3",
+		"key_policy": {
+			"encrypt": [],
+			"decrypt": []
+		},
 		"security_size": 112,
 		"key_id": 0
 	},
@@ -16,6 +20,7 @@
 	},
 	"subtest 3": {
 		"command": "CIPHER_INIT",
+		"subsystem": "TEE",
 		"mode": "CBC",
 		"op_type": "DECRYPT",
 		"priv_key": [
@@ -53,7 +58,7 @@
 			"3dfeecb89e59ce0cb8bd0a495ef76cf0"
 		],
 		"context_id": 1,
-		"depends": 2
+		"depends": 3
 	},
 	"subtest 8": {
 		"command": "DELETE",

@@ -3,6 +3,12 @@
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": [],
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 4096,
 		"pub_key": [
 			"010001"
@@ -126,7 +132,10 @@
 			"070f156e31a6875122993e1d94fc3568"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PKCS1-V1_5"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PKCS1-V1_5"
+			]
 		],
 		"sign_id": 0,
 		"key_id": 0,
@@ -147,7 +156,10 @@
 			"a03ec5f73c4c2f420728220fe9e9efc3"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PKCS1-V1_5"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PKCS1-V1_5"
+			]
 		],
 		"sign_id": 0,
 		"key_id": 0,
@@ -168,7 +180,10 @@
 			"a03ec5f73c4c2f420728220fe9e9efc3"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PSS"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PSS"
+			]
 		],
 		"sign_id": 1,
 		"key_id": 0,
@@ -189,7 +204,10 @@
 			"a03ec5f73c4c2f420728220fe9e9efc3"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PSS"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PSS"
+			]
 		],
 		"sign_id": 1,
 		"key_id": 0,

@@ -3,6 +3,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "AES",
+		"key_policy": {
+			"encrypt": []
+		},
 		"security_size": 128,
 		"key_id": 0
 	},

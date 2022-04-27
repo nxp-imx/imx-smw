@@ -3,6 +3,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "HMAC_MD5",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 0
 	},
@@ -10,6 +13,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA1",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 1
 	},
@@ -17,6 +23,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA224",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 2
 	},
@@ -24,6 +33,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA256",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 3
 	},
@@ -31,6 +43,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA384",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 4
 	},
@@ -38,6 +53,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SHA512",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 5
 	},
@@ -45,6 +63,9 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "HMAC_SM3",
+		"key_policy": {
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 6
 	},

@@ -3,6 +3,12 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": [],
+			"verify_hash": [],
+			"verify_message": []
+		},
 		"security_size": 1536,
 		"key_id": 0
 	},
@@ -46,7 +52,10 @@
 			"060c9a"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PSS"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PSS"
+			]
 		],
 		"sign_id": 1,
 		"key_id": 0,
@@ -71,8 +80,17 @@
 			"060c9a"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PKCS1-V1_5"],
-			["SALT_LEN", [1, "60"]]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PKCS1-V1_5"
+			],
+			[
+				"SALT_LEN",
+				[
+					1,
+					"60"
+				]
+			]
 		],
 		"sign_id": 2,
 		"key_id": 0,
@@ -97,7 +115,10 @@
 			"060c9a"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PSS"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PSS"
+			]
 		],
 		"sign_id": 3,
 		"key_id": 0,
@@ -121,7 +142,10 @@
 			"060c9a"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PKCS1-V1_5"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PKCS1-V1_5"
+			]
 		],
 		"sign_id": 3,
 		"key_id": 0,
@@ -146,7 +170,10 @@
 			"060c9a"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PSS"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PSS"
+			]
 		],
 		"sign_id": 3,
 		"key_id": 0,
@@ -161,7 +188,10 @@
 			"32206279746573206c6f6e67202121"
 		],
 		"attributes_list": [
-			["SIGNATURE_TYPE", "RSASSA-PKCS1-V1_5"]
+			[
+				"SIGNATURE_TYPE",
+				"RSASSA-PKCS1-V1_5"
+			]
 		],
 		"sign_id": 4,
 		"key_id": 0,

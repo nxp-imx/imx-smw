@@ -3,6 +3,10 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "NIST",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 0
 	},
@@ -168,6 +172,10 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 1
 	},
@@ -254,10 +262,20 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "RSA",
+		"key_policy": {
+			"sign_hash": [],
+			"sign_message": []
+		},
 		"security_size": 256,
 		"key_id": 2,
 		"attributes_list": [
-			["RSA_PUB_EXP", [9, "4000000041CB995001"]]
+			[
+				"RSA_PUB_EXP",
+				[
+					9,
+					"4000000041CB995001"
+				]
+			]
 		]
 	},
 	"subtest 24": { // Public buffer length is too small (user public exponent)

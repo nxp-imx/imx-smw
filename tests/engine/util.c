@@ -405,6 +405,7 @@ static const unsigned int t_data_2_json_type[] = {
 	[t_int64] = BIT(json_type_int),
 	[t_double] = BIT(json_type_double),
 	[t_sem] = BIT(json_type_string) | BIT(json_type_array),
+	[t_ints] = BIT(json_type_int) | BIT(json_type_array),
 };
 
 int util_read_json_type(void *value, const char *key, enum t_data_type type,
@@ -466,6 +467,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 		case t_object:
 		case t_sem:
 		case t_buffer:
+		case t_ints:
 			*((json_object **)value) = obj;
 			ret = ERR_CODE(PASSED);
 			break;

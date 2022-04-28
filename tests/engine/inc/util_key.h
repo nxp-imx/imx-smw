@@ -318,17 +318,6 @@ int util_key_desc_set_key(struct keypair_ops *key_test,
 			  struct smw_keypair_buffer *key);
 
 /**
- * util_key_set_ops() - Set a SMW keypair to the key descriptor
- * @key_test: Test keypair structure with operations
- *
- * Setup the test keypair operations.
- *
- * Return:
- * None.
- */
-void util_key_set_ops(struct keypair_ops *key_test);
-
-/**
  * util_key_free_key() - Free test keypair buffer
  * @key_test: Test keypair structure with operations
  */

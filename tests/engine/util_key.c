@@ -90,7 +90,16 @@ static unsigned int *get_modulus_length_rsa(struct keypair_ops *this)
 	return &key->modulus_length;
 }
 
-void util_key_set_ops(struct keypair_ops *key_test)
+/**
+ * set_key_ops() - Set a SMW keypair to the key descriptor
+ * @key_test: Test keypair structure with operations
+ *
+ * Setup the test keypair operations.
+ *
+ * Return:
+ * None.
+ */
+static void set_key_ops(struct keypair_ops *key_test)
 {
 	if (!key_test->keys) {
 		key_test->public_data = NULL;
@@ -291,6 +300,56 @@ static void util_key_free_data(void *data)
 		free(key_identifier_data->pub_key.data);
 }
 
+static int get_key_id(int *key_id, unsigned int key_idx, json_object *params)
+{
+	int err;
+	struct json_object *obj = NULL;
+	struct json_object *oval = NULL;
+	unsigned int nb_elem = 1;
+
+	if (!key_id)
+		return ERR_CODE(PASSED);
+
+	/*
+	 * Key id format possible are:
+	 * - id
+	 * - [id]
+	 * - [id 1, id 2]
+	 */
+	err = util_read_json_type(&obj, KEY_ID_OBJ, t_ints, params);
+	if (err != ERR_CODE(PASSED)) {
+		/* If JSON tag not found, return with no error */
+		if (err == ERR_CODE(VALUE_NOTFOUND))
+			err = ERR_CODE(PASSED);
+		return err;
+	}
+
+	switch (json_object_get_type(obj)) {
+	case json_type_int:
+		if (key_idx < nb_elem)
+			*key_id = json_object_get_int(obj);
+		break;
+
+	case json_type_array:
+		nb_elem = json_object_array_length(obj);
+		if (key_idx >= nb_elem)
+			break;
+
+		oval = json_object_array_get_idx(obj, key_idx);
+		if (json_object_get_type(oval) != json_type_int) {
+			DBG_PRINT("%s must be array of integer", KEY_ID_OBJ);
+			return ERR_CODE(BAD_PARAM_TYPE);
+		}
+		*key_id = json_object_get_int(oval);
+		break;
+
+	default:
+		return ERR_CODE(FAILED);
+	}
+
+	return ERR_CODE(PASSED);
+}
+
 int util_key_init(struct llist **list)
 {
 	if (!list)
@@ -376,7 +435,7 @@ int util_key_desc_init(struct keypair_ops *key_test,
 	key_test->keys = key;
 
 	/* Initialize the keypair buffer and operations */
-	util_key_set_ops(key_test);
+	set_key_ops(key_test);
 
 	return ERR_CODE(PASSED);
 }
@@ -385,7 +444,6 @@ int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 			     unsigned int key_idx, json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
-	json_object *obj;
 	struct smw_key_descriptor *desc;
 
 	if (!params || !key_test) {
@@ -396,28 +454,24 @@ int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
 	desc = &key_test->desc;
 
 	/* Read 'key_type' parameter if defined */
-	if (json_object_object_get_ex(params, KEY_TYPE_OBJ, &obj))
-		desc->type_name = json_object_get_string(obj);
+	ret = util_read_json_type(&desc->type_name, KEY_TYPE_OBJ, t_string,
+				  params);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
 
 	/* Read 'security_size' parameter if defined */
-	if (json_object_object_get_ex(params, SEC_SIZE_OBJ, &obj))
-		desc->security_size = json_object_get_int(obj);
+	ret = util_read_json_type(&desc->security_size, SEC_SIZE_OBJ, t_int,
+				  params);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
 
 	/* Read test 'key_id' value if defined */
-	if (key_id) {
-		if (json_object_object_get_ex(params, KEY_ID_OBJ, &obj)) {
-			/* If multiple keys are used 'key_id' is an array */
-			if (json_object_get_type(obj) == json_type_array) {
-				obj = json_object_array_get_idx(obj, key_idx);
-				*key_id = json_object_get_int(obj);
-			} else {
-				*key_id = json_object_get_int(obj);
-			}
-		}
-	}
+	ret = get_key_id(key_id, key_idx, params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
 
 	/* Setup the key ops function of the key type */
-	util_key_set_ops(key_test);
+	set_key_ops(key_test);
 
 	if (key_test->keys)
 		ret = keypair_read(key_test, key_idx, params);
@@ -437,7 +491,7 @@ int util_key_desc_set_key(struct keypair_ops *key_test,
 	key_test->keys = key;
 
 	/* Initialize the keypair buffer and operations */
-	util_key_set_ops(key_test);
+	set_key_ops(key_test);
 
 	return ERR_CODE(PASSED);
 }

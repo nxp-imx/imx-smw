@@ -56,9 +56,14 @@
 		"op_type": "ENCRYPT",
 		"nb_keys": 2,
 		"priv_key": [
-			"d6c4cf73c639e025654dd3232fe3aa71",
-			"38f21bc8922271b4a6c0af999100b6b5"
+			[],
+			[
+				"d6c4cf73c639e025654dd3232fe3aa71",
+				"38f21bc8922271b4a6c0af999100b6b5"
+			]
 		],
+		"key_type": "AES",
+		"security_size": 256,
 		"key_id": 0,
 		"iv": "041f41fa30b78898040b5e0ecba27d2b",
 		"context_id": 2,

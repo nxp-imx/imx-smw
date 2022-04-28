@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <tee_client_api.h>
@@ -71,48 +71,18 @@ static int get_tee_cipher_operation(enum smw_config_cipher_op_type_id smw_op,
 	return SMW_STATUS_OK;
 }
 
-static unsigned int get_nb_key_id(struct smw_crypto_cipher_args *args)
-{
-	unsigned int i;
-	unsigned int nb_ids = 0;
-
-	for (i = 0; i < args->nb_keys; i++) {
-		if (args->keys_desc[i]->identifier.id)
-			nb_ids++;
-	}
-
-	return nb_ids;
-}
-
-static int import_key_buffer(struct smw_crypto_cipher_args *args,
-			     enum smw_config_key_type_id key_type,
-			     uint32_t **key_ids, unsigned int *nb_ids)
+static int import_key_buffer(struct smw_keymgr_descriptor *key,
+			     unsigned int *key_id)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_OK;
-	unsigned int i;
 	struct keymgr_shared_params import_shared_params = { 0 };
-	uint32_t *ids_array = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	*nb_ids = smw_crypto_get_cipher_nb_key_buffer(args);
-
-	/* No key is defined as buffer, no key to import */
-	if (!*nb_ids)
-		goto end;
-
-	/* Caller must free this memory */
-	ids_array = SMW_UTILS_MALLOC(*nb_ids * sizeof(uint32_t));
-	if (!ids_array) {
-		status = SMW_STATUS_ALLOC_FAILURE;
-		goto end;
-	}
-
-	*key_ids = ids_array;
-
 	/* Key type is common for all keys */
-	status = tee_convert_key_type(key_type, &import_shared_params.key_type);
+	status = tee_convert_key_type(key->identifier.type_id,
+				      &import_shared_params.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -128,51 +98,43 @@ static int import_key_buffer(struct smw_crypto_cipher_args *args,
 	op.params[0].tmpref.buffer = &import_shared_params;
 	op.params[0].tmpref.size = sizeof(import_shared_params);
 
-	for (i = 0; i < *nb_ids; i++) {
-		import_shared_params.security_size =
-			args->keys_desc[i]->identifier.security_size;
+	import_shared_params.security_size = key->identifier.security_size;
 
-		op.params[1].tmpref.buffer = smw_crypto_get_cipher_key(args, i);
-		op.params[1].tmpref.size =
-			smw_crypto_get_cipher_key_len(args, i);
+	op.params[1].tmpref.buffer = smw_keymgr_get_private_data(key);
+	op.params[1].tmpref.size = smw_keymgr_get_private_length(key);
 
-		/* Invoke TA */
-		status = execute_tee_cmd(CMD_IMPORT_KEY, &op);
-		if (status != SMW_STATUS_OK) {
-			SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n",
-				       __func__);
-			goto end;
-		}
-
-		ids_array[i] = import_shared_params.id;
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_IMPORT_KEY, &op);
+	if (status != SMW_STATUS_OK) {
+		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
+		goto end;
 	}
+
+	*key_id = import_shared_params.id;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-static int delete_imported_keys(uint32_t *key_ids, unsigned int nb_keys)
+static int delete_imported_keys(unsigned int key_id)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_OK;
-	unsigned int i;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!key_ids)
+	if (key_id == INVALID_KEY_ID)
 		goto end;
 
 	/* params[0] = Key ID */
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_NONE, TEEC_NONE,
 					 TEEC_NONE);
 
-	for (i = 0; i < nb_keys; i++) {
-		op.params[0].value.a = key_ids[i];
+	op.params[0].value.a = key_id;
 
-		/* Invoke TA */
-		status = execute_tee_cmd(CMD_DELETE_KEY, &op);
-	}
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_DELETE_KEY, &op);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -182,18 +144,28 @@ end:
 static int cipher_init(struct smw_crypto_cipher_args *args)
 {
 	TEEC_Operation op = { 0 };
-	int status;
-	unsigned int nb_key_ids;
-	unsigned int nb_ephemeral_ids = 0;
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int res;
+	unsigned int key_idx;
+	unsigned int key_id;
 	uint32_t param2_type = TEEC_NONE;
-	uint32_t *ephemeral_key_ids = NULL;
 	enum smw_config_key_type_id key_type;
 	struct shared_context context = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	if (args->nb_keys > 2)
+		goto end;
+
 	/* Get 1st key type as reference */
 	key_type = args->keys_desc[0]->identifier.type_id;
+
+	/*
+	 * params[0] = TEE Algo ID, TEE Operation
+	 * params[1] = Key ids as integer or as integer array
+	 * params[2] = IV or none
+	 * params[3] = Operation handle
+	 */
 
 	/* Get OPTEE algorithm */
 	status = get_tee_cipher_algo_id(key_type, args->mode_id,
@@ -206,44 +178,32 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	/* If some keys are defined as buffer import them */
-	status = import_key_buffer(args, key_type, &ephemeral_key_ids,
-				   &nb_ephemeral_ids);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	for (key_idx = 0; key_idx < args->nb_keys; key_idx++) {
+		key_id = smw_crypto_get_cipher_key_id(args, key_idx);
 
-	/* Get number of keys defined as key ID */
-	nb_key_ids = get_nb_key_id(args);
-
-	/*
-	 * params[0] = TEE Algo ID, TEE Operation
-	 * params[1] = Key ids as integer or as integer array
-	 * params[2] = IV or none
-	 * params[3] = Operation handle
-	 */
-
-	/*
-	 * For one or two key, IDs are shared as integer.
-	 * If in the future, more keys are used this parameter can be used as a
-	 * key IDs array.
-	 */
-	if (args->nb_keys <= 2) {
-		if (nb_ephemeral_ids) {
-			op.params[1].value.a = ephemeral_key_ids[0];
-
-			if (nb_ephemeral_ids == 2)
-				op.params[1].value.b = ephemeral_key_ids[1];
+		/*
+		 * If the key id is not valid, import the key first in
+		 * TEE, then imported key is removed before leaving.
+		 */
+		if (key_id == INVALID_KEY_ID) {
+			/* If some keys are defined as buffer import them */
+			status = import_key_buffer(args->keys_desc[key_idx],
+						   &key_id);
+			if (status != SMW_STATUS_OK)
+				goto end;
 		}
 
-		if (nb_key_ids) {
-			if (!nb_ephemeral_ids)
-				op.params[1].value.a =
-					smw_crypto_get_cipher_key_id(args, 0);
-
-			if (nb_key_ids == 2)
-				op.params[1].value.b =
-					smw_crypto_get_cipher_key_id(args, 1);
-		}
+		/*
+		 * Only 2 keys maximum can be handled in the TEE TA Cipher
+		 * operation.
+		 * The op.params[1].value (a or b) are re-used to delete
+		 * imported key. As this TA operation parameter is an
+		 * input, it can't be overwritten.
+		 */
+		if (key_idx)
+			op.params[1].value.b = key_id;
+		else
+			op.params[1].value.a = key_id;
 	}
 
 	if (smw_crypto_get_cipher_iv(args)) {
@@ -263,22 +223,30 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 	SMW_DBG_PRINTF_COND(ERROR, status != SMW_STATUS_OK,
 			    "%s: Operation failed\n", __func__);
 
-	/* Delete imported ephemeral keys and update operation context */
-	if (status != SMW_STATUS_OK) {
-		/* TA cipher initialization error code is returned */
-		(void)delete_imported_keys(ephemeral_key_ids, nb_ephemeral_ids);
-	} else {
+	if (status == SMW_STATUS_OK) {
 		smw_crypto_set_cipher_init_handle(args, context.handle);
 		smw_crypto_set_cipher_ctx_reserved(args, tee_get_ctx_ops());
+	}
 
-		status = delete_imported_keys(ephemeral_key_ids,
-					      nb_ephemeral_ids);
+	/* Delete imported ephemeral keys and update operation context */
+	for (key_idx = 0; key_idx < args->nb_keys; key_idx++) {
+		key_id = smw_crypto_get_cipher_key_id(args, key_idx);
+		if (key_id == INVALID_KEY_ID) {
+			/*
+			 * The op.params[1].value (a or b) are re-used to get
+			 * imported key id.
+			 */
+			if (key_idx)
+				key_id = op.params[1].value.b;
+			else
+				key_id = op.params[1].value.a;
+
+			res = delete_imported_keys(key_id);
+			status = (status == SMW_STATUS_OK) ? res : status;
+		}
 	}
 
 end:
-	if (ephemeral_key_ids)
-		SMW_UTILS_FREE(ephemeral_key_ids);
-
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

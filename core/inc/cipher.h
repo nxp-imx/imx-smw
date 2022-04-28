@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __CIPHER_H__
@@ -51,30 +51,6 @@ unsigned char *smw_crypto_get_cipher_iv(struct smw_crypto_cipher_args *args);
  * 0
  */
 unsigned int smw_crypto_get_cipher_iv_len(struct smw_crypto_cipher_args *args);
-
-/**
- * smw_crypto_get_cipher_key() - Get the cipher key buffer address
- * @args: Pointer to internal cipher arguments.
- * @idx: Index of the key in the key descriptors array.
- *
- * Return:
- * address of cipher key buffer
- * NULL
- */
-unsigned char *smw_crypto_get_cipher_key(struct smw_crypto_cipher_args *args,
-					 unsigned int idx);
-
-/**
- * smw_crypto_get_cipher_key_len() - Get the cipher key buffer length
- * @args: Pointer to internal cipher arguments.
- * @idx: Index of the key in the key descriptors array.
- *
- * Return:
- * cipher key buffer length
- * 0
- */
-unsigned int smw_crypto_get_cipher_key_len(struct smw_crypto_cipher_args *args,
-					   unsigned int idx);
 
 /**
  * smw_crypto_get_cipher_key_id() - Get cipher key ID set by subsystem

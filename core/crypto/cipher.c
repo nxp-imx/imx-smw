@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include "smw_status.h"
@@ -474,25 +474,6 @@ smw_crypto_get_cipher_iv_len(struct smw_crypto_cipher_args *args)
 	return 0;
 }
 
-inline unsigned char *
-smw_crypto_get_cipher_key(struct smw_crypto_cipher_args *args, unsigned int idx)
-{
-	if (args)
-		return smw_keymgr_get_private_data(args->keys_desc[idx]);
-
-	return NULL;
-}
-
-inline unsigned int
-smw_crypto_get_cipher_key_len(struct smw_crypto_cipher_args *args,
-			      unsigned int idx)
-{
-	if (args)
-		return smw_keymgr_get_private_length(args->keys_desc[idx]);
-
-	return 0;
-}
-
 inline uint32_t
 smw_crypto_get_cipher_key_id(struct smw_crypto_cipher_args *args,
 			     unsigned int idx)
@@ -597,7 +578,7 @@ smw_crypto_get_cipher_nb_key_buffer(struct smw_crypto_cipher_args *args)
 	/* Key is defined as buffer if ID is not set and buffer set */
 	for (i = 0; i < args->nb_keys; i++) {
 		if (!args->keys_desc[i]->identifier.id &&
-		    smw_crypto_get_cipher_key(args, i))
+		    smw_keymgr_get_private_data(args->keys_desc[i]))
 			nb_buffers++;
 	}
 

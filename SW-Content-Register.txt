@@ -44,11 +44,11 @@ Origin:             NXP
 Description:        Tests suite of the SMW Library.
 Location:           tests/*
 Except:             tests/psa/crypto/testsuite.db
+Except:             tests/psa/crypto/*
 License:            BSD 3-Clause
 Origin:             NXP
 --------------------------------------------------------------------------------
-Description:        ARM PSA Tests suite list.
-Location:           tests/psa/crypto/testsuite.db
+Location:           tests/psa/crypto/*
 License:            Apache-2.0
 Origin:             ARM
 --------------------------------------------------------------------------------

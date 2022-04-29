@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -70,7 +70,8 @@ const CK_BYTE rsa_priv_exp[] = {
 	0x24, 0x4d, 0x06, 0x8f,
 };
 
-static int object_rsa_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
+static int object_rsa_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
+				 CK_BBOOL bverify)
 {
 	int status;
 
@@ -80,13 +81,18 @@ static int object_rsa_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
 	CK_KEY_TYPE key_type = CKK_RSA;
 
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_RSA_PKCS,
+						 CKM_SHA256_RSA_PKCS };
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+		{ CKA_VERIFY, &bverify, sizeof(bverify) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_MODULUS, (CK_BYTE_PTR)rsa_modulus, sizeof(rsa_modulus) },
 		{ CKA_PUBLIC_EXPONENT, (CK_BYTE_PTR)rsa_pub_exp,
 		  sizeof(rsa_pub_exp) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START(status);
@@ -97,14 +103,21 @@ static int object_rsa_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	TEST_OUT("Create RSA %sKey Public\n", token ? "Token " : "");
 	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    &hkey);
-	if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
-		goto end;
-	TEST_OUT("RSA Key public created #%lu\n", hkey);
 
-	TEST_OUT("Key Destroy #%lu\n", hkey);
-	ret = pfunc->C_DestroyObject(sess, hkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-		goto end;
+	if (bverify) {
+		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
+			goto end;
+
+		TEST_OUT("RSA Key public created #%lu\n", hkey);
+
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+	} else {
+		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
+			goto end;
+	}
 
 	status = TEST_PASS;
 end:
@@ -114,7 +127,8 @@ end:
 	return status;
 }
 
-static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
+static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
+				  CK_BBOOL bsign)
 {
 	int status;
 
@@ -124,15 +138,20 @@ static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
 	CK_KEY_TYPE key_type = CKK_RSA;
 
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_RSA_PKCS_PSS,
+						 CKM_SHA256_RSA_PKCS_PSS };
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+		{ CKA_SIGN, &bsign, sizeof(bsign) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_MODULUS, (CK_BYTE_PTR)rsa_modulus, sizeof(rsa_modulus) },
 		{ CKA_PUBLIC_EXPONENT, (CK_BYTE_PTR)rsa_pub_exp,
 		  sizeof(rsa_pub_exp) },
 		{ CKA_PRIVATE_EXPONENT, (CK_BYTE_PTR)rsa_priv_exp,
 		  sizeof(rsa_priv_exp) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START(status);
@@ -148,9 +167,16 @@ static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	TEST_OUT("Create RSA %sKey Private\n", token ? "Token " : "");
 	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    &hkey);
-	if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
-		goto end;
-	TEST_OUT("RSA Key private created #%lu\n", hkey);
+
+	if (bsign) {
+		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
+			goto end;
+
+		TEST_OUT("RSA Key private created #%lu\n", hkey);
+	} else {
+		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
+			goto end;
+	}
 
 	status = TEST_PASS;
 end:
@@ -171,16 +197,26 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_OBJECT_HANDLE hprivkey;
 	CK_MECHANISM genmech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
 	CK_ULONG modulus_bits = 0;
+	CK_BBOOL btrue = CK_TRUE;
+
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_RSA_PKCS_PSS,
+						 CKM_SHA256_RSA_PKCS_PSS };
 	CK_ATTRIBUTE pubkey_attrs[] = {
+		{ CKA_VERIFY, &btrue, sizeof(btrue) },
 		{ CKA_MODULUS_BITS, &modulus_bits, sizeof(CK_ULONG) },
 		{ CKA_PUBLIC_EXPONENT, (CK_BYTE_PTR)rsa_pub_exp,
 		  sizeof(rsa_pub_exp) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_ULONG nb_pubkey_attrs = 0;
 	CK_ATTRIBUTE *privkey_attrs = NULL;
 	CK_ULONG nb_privkey_attrs = 0;
 	CK_ATTRIBUTE privkey_token[] = {
+		{ CKA_SIGN, &btrue, sizeof(btrue) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START(status);
@@ -228,6 +264,94 @@ end:
 	return status;
 }
 
+static int object_rsa_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
+
+{
+	int status;
+
+	CK_RV ret;
+	CK_SESSION_HANDLE sess = 0;
+	CK_OBJECT_HANDLE hpubkey;
+	CK_OBJECT_HANDLE hprivkey;
+	CK_MECHANISM genmech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
+	CK_ULONG modulus_bits = 0;
+	CK_BBOOL bverify = CK_FALSE;
+	CK_BBOOL bsign = CK_FALSE;
+
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA256_RSA_PKCS_PSS,
+						 CKM_SHA384_RSA_PKCS };
+	CK_ATTRIBUTE pubkey_attrs[] = {
+		{ CKA_VERIFY, &bverify, sizeof(bverify) },
+		{ CKA_MODULUS_BITS, &modulus_bits, sizeof(CK_ULONG) },
+		{ CKA_PUBLIC_EXPONENT, (CK_BYTE_PTR)rsa_pub_exp,
+		  sizeof(rsa_pub_exp) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
+	};
+	CK_ATTRIBUTE privkey_attrs[] = {
+		{ CKA_SIGN, &bsign, sizeof(bsign) },
+		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
+	};
+
+	SUBTEST_START(status);
+
+	modulus_bits = sizeof(rsa_modulus) * 8;
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	TEST_OUT("Generate RSA %sKeypair with no usage\n",
+		 token ? "Token " : "");
+	ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
+				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
+
+	if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_GenerateKeyPair"))
+		goto end;
+
+	TEST_OUT("Generate RSA %sKeypair with only sign usage\n",
+		 token ? "Token " : "");
+
+	bsign = CK_TRUE;
+
+	ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
+				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
+
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+		goto end;
+
+	TEST_OUT("Generate RSA %sKeypair with only verify usage\n",
+		 token ? "Token " : "");
+
+	bsign = CK_FALSE;
+	bverify = CK_TRUE;
+
+	ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
+				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
+
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+		goto end;
+
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &sess);
+
+	SUBTEST_END(status);
+	return status;
+}
 void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -247,10 +371,16 @@ void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 
-	if (object_rsa_key_public(pfunc, false) == TEST_FAIL)
+	if (object_rsa_key_public(pfunc, false, true) == TEST_FAIL)
 		goto end;
 
-	if (object_rsa_key_private(pfunc, false) == TEST_FAIL)
+	if (object_rsa_key_public(pfunc, false, false) == TEST_FAIL)
+		goto end;
+
+	if (object_rsa_key_private(pfunc, false, true) == TEST_FAIL)
+		goto end;
+
+	if (object_rsa_key_private(pfunc, false, false) == TEST_FAIL)
 		goto end;
 
 	if (object_generate_rsa_keypair(pfunc, false, false) == TEST_FAIL)
@@ -259,16 +389,28 @@ void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	if (object_generate_rsa_keypair(pfunc, false, true) == TEST_FAIL)
 		goto end;
 
-	if (object_rsa_key_public(pfunc, true) == TEST_FAIL)
+	if (object_rsa_keypair_usage(pfunc, false) == TEST_FAIL)
 		goto end;
 
-	if (object_rsa_key_private(pfunc, true) == TEST_FAIL)
+	if (object_rsa_key_public(pfunc, true, true) == TEST_FAIL)
+		goto end;
+
+	if (object_rsa_key_public(pfunc, true, false) == TEST_FAIL)
+		goto end;
+
+	if (object_rsa_key_private(pfunc, true, true) == TEST_FAIL)
+		goto end;
+
+	if (object_rsa_key_private(pfunc, true, false) == TEST_FAIL)
 		goto end;
 
 	if (object_generate_rsa_keypair(pfunc, true, false) == TEST_FAIL)
 		goto end;
 
-	status = object_generate_rsa_keypair(pfunc, true, true);
+	if (object_generate_rsa_keypair(pfunc, true, true) == TEST_FAIL)
+		goto end;
+
+	status = object_rsa_keypair_usage(pfunc, true);
 
 end:
 	ret = pfunc->C_Finalize(NULL);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -717,6 +717,117 @@ end:
 	return status;
 }
 
+static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status;
+
+	CK_RV ret;
+	CK_SESSION_HANDLE sess = 0;
+	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_ECDSA_SHA256 };
+	CK_ULONG msg_len = strlen((const char *)msg);
+	CK_BYTE_PTR signature = NULL_PTR;
+	CK_ULONG signature_len;
+
+	CK_OBJECT_HANDLE hpubkey_sign;
+	CK_OBJECT_HANDLE hprivkey_sign;
+	CK_OBJECT_HANDLE hpubkey_verify;
+	CK_OBJECT_HANDLE hprivkey_verify;
+
+	CK_MECHANISM key_mech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_BBOOL ec_verify = CK_FALSE;
+	CK_ATTRIBUTE pubkey_attrs[] = {
+		{ CKA_EC_PARAMS, NULL_PTR, 0 },
+		{ CKA_VERIFY, &ec_verify, sizeof(CK_BBOOL) },
+	};
+	CK_BBOOL ec_sign = CK_TRUE;
+	CK_ATTRIBUTE privkey_attrs[] = {
+		{ CKA_SIGN, &ec_sign, sizeof(CK_BBOOL) },
+	};
+
+	SUBTEST_START(status);
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	TEST_OUT("Generate signature EC Keypair by curve name\n");
+	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
+					       ec_curves[0].name),
+			   "ASN1 Conversion"))
+		goto end;
+
+	ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,
+				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
+				       ARRAY_SIZE(privkey_attrs), &hpubkey_sign,
+				       &hprivkey_sign);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+		goto end;
+
+	TEST_OUT("Generate verification EC Keypair by curve name\n");
+	ec_sign = CK_FALSE;
+	ec_verify = CK_TRUE;
+	ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,
+				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
+				       ARRAY_SIZE(privkey_attrs),
+				       &hpubkey_verify, &hprivkey_verify);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation with non sign private key\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, hprivkey_verify);
+	if (CHECK_CK_RV(CKR_KEY_FUNCTION_NOT_PERMITTED, "C_SignInit"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation with sign private key\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, hprivkey_sign);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	signature_len = 64;
+	signature = malloc(signature_len);
+	if (CHECK_EXPECTED(signature, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Sign message\n");
+	ret = pfunc->C_Sign(sess, (CK_BYTE_PTR)msg, msg_len, signature,
+			    &signature_len);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize verify operation with non verify public key\n");
+	ret = pfunc->C_VerifyInit(sess, &sign_verify_mech, hpubkey_sign);
+	if (CHECK_CK_RV(CKR_KEY_FUNCTION_NOT_PERMITTED, "C_VerifyInit"))
+		goto end;
+
+	TEST_OUT("Initialize verify operation with a bad verify public key\n");
+	ret = pfunc->C_VerifyInit(sess, &sign_verify_mech, hpubkey_verify);
+	if (CHECK_CK_RV(CKR_OK, "C_VerifyInit"))
+		goto end;
+
+	TEST_OUT("Verify signature with public key no verify usage\n");
+	ret = pfunc->C_Verify(sess, (CK_BYTE_PTR)msg, msg_len, signature,
+			      signature_len);
+	if (CHECK_CK_RV(CKR_SIGNATURE_INVALID, "C_Verify"))
+		goto end;
+
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &sess);
+
+	if (pubkey_attrs[0].pValue)
+		free(pubkey_attrs[0].pValue);
+
+	if (signature)
+		free(signature);
+
+	SUBTEST_END(status);
+	return status;
+}
 void tests_pkcs11_sign_verify(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -755,6 +866,9 @@ void tests_pkcs11_sign_verify(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	if (sign_verify_ecdsa(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (sign_verify_key_usage(pfunc) == TEST_FAIL)
 		goto end;
 
 	status = sign_verify_rsa(pfunc);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -73,14 +73,22 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_OBJECT_HANDLE hpubkey;
 	CK_OBJECT_HANDLE hprivkey;
 	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_BBOOL btrue = CK_TRUE;
 
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA };
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_VERIFY, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_ATTRIBUTE *privkey_attrs = NULL;
 	CK_ULONG nb_privkey_attrs = 0;
 	CK_ATTRIBUTE privkey_token[] = {
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_SIGN, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	if (token) {

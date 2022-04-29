@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -9,7 +9,8 @@
 #include "os_mutex.h"
 #include "util_session.h"
 
-static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
+static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
+			     CK_BBOOL bencrypt)
 {
 	int status;
 
@@ -25,6 +26,7 @@ static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
 		{ CKA_VALUE, &key, sizeof(key) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &bencrypt, sizeof(bencrypt) },
 	};
 
 	SUBTEST_START(status);
@@ -40,9 +42,15 @@ static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	TEST_OUT("Create %sKey Secret key\n", token ? "Token " : "");
 	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    &hkey);
-	if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
-		goto end;
-	TEST_OUT("Key secret created #%lu\n", hkey);
+	if (bencrypt) {
+		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
+			goto end;
+
+		TEST_OUT("Key secret created #%lu\n", hkey);
+	} else {
+		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
+			goto end;
+	}
 
 	status = TEST_PASS;
 
@@ -54,7 +62,7 @@ end:
 }
 
 static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
-				      CK_BBOOL token)
+				      CK_BBOOL token, CK_BBOOL bencrypt)
 {
 	int status;
 
@@ -63,9 +71,11 @@ static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 	CK_OBJECT_HANDLE hkey;
 	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
 	CK_ULONG key_len = 16;
+
 	CK_ATTRIBUTE key_attrs[] = {
 		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &bencrypt, sizeof(bencrypt) },
 	};
 
 	SUBTEST_START(status);
@@ -79,16 +89,18 @@ static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Generate %sCipher key\n", token ? "Token " : "");
-	if (!ARRAY_SIZE(key_attrs))
-		ret = pfunc->C_GenerateKey(sess, &genmech, NULL, 0, &hkey);
-	else
-		ret = pfunc->C_GenerateKey(sess, &genmech, key_attrs,
-					   ARRAY_SIZE(key_attrs), &hkey);
+	ret = pfunc->C_GenerateKey(sess, &genmech, key_attrs,
+				   ARRAY_SIZE(key_attrs), &hkey);
 
-	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
-		goto end;
+	if (bencrypt) {
+		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+			goto end;
 
-	TEST_OUT("Key generated #%lu\n", hkey);
+		TEST_OUT("Key generated #%lu\n", hkey);
+	} else {
+		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_GenerateKey"))
+			goto end;
+	}
 
 	status = TEST_PASS;
 end:
@@ -117,6 +129,8 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
 		{ CKA_VALUE, &key, sizeof(key) },
+		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
+		{ CKA_DECRYPT, &btrue, sizeof(btrue) },
 	};
 
 	CK_ATTRIBUTE getkeyAttr[] = {
@@ -255,16 +269,28 @@ void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 
-	if (object_cipher_key(pfunc, false) == TEST_FAIL)
+	if (object_cipher_key(pfunc, false, true) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_cipher_key(pfunc, false) == TEST_FAIL)
+	if (object_cipher_key(pfunc, false, false) == TEST_FAIL)
 		goto end;
 
-	if (object_cipher_key(pfunc, true) == TEST_FAIL)
+	if (object_generate_cipher_key(pfunc, false, true) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_cipher_key(pfunc, true) == TEST_FAIL)
+	if (object_generate_cipher_key(pfunc, false, false) == TEST_FAIL)
+		goto end;
+
+	if (object_cipher_key(pfunc, true, true) == TEST_FAIL)
+		goto end;
+
+	if (object_cipher_key(pfunc, true, false) == TEST_FAIL)
+		goto end;
+
+	if (object_generate_cipher_key(pfunc, true, true) == TEST_FAIL)
+		goto end;
+
+	if (object_generate_cipher_key(pfunc, true, false) == TEST_FAIL)
 		goto end;
 
 	status = object_attribute_cipher_key(pfunc);

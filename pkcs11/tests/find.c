@@ -25,13 +25,18 @@ static int create_ec_key_public(CK_FUNCTION_LIST_PTR pfunc,
 	CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
 	CK_KEY_TYPE key_type = CKK_EC;
 	CK_BYTE pubkey[65] = {};
+	CK_BBOOL btrue = CK_TRUE;
 
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA };
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
 		{ CKA_EC_PARAMS, NULL, 0 },
 		{ CKA_EC_POINT, &pubkey, sizeof(pubkey) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_VERIFY, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START(status);
@@ -75,7 +80,9 @@ static int create_ec_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	CK_KEY_TYPE key_type = CKK_EC;
 	CK_BYTE privkey[32] = {};
 	CK_BYTE pubkey[65] = {};
+	CK_BBOOL btrue = CK_TRUE;
 
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA };
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
@@ -83,6 +90,9 @@ static int create_ec_key_private(CK_FUNCTION_LIST_PTR pfunc,
 		{ CKA_VALUE, &privkey, sizeof(privkey) },
 		{ CKA_EC_POINT, &pubkey, sizeof(pubkey) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_SIGN, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START(status);
@@ -138,14 +148,22 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_OBJECT_HANDLE hpubkey;
 	CK_OBJECT_HANDLE hprivkey;
 	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_BBOOL btrue = CK_TRUE;
 
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA256 };
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_VERIFY, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_ATTRIBUTE *privkey_attrs = NULL;
 	CK_ULONG nb_privkey_attrs = 0;
 	CK_ATTRIBUTE privkey_token[] = {
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_SIGN, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START(status);
@@ -201,12 +219,14 @@ static int create_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 	CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
 	CK_KEY_TYPE key_type = CKK_AES;
 	CK_BYTE key[32] = {};
+	CK_BBOOL btrue = CK_TRUE;
 
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
 		{ CKA_VALUE, &key, sizeof(key) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
 	};
 
 	SUBTEST_START(status);
@@ -245,9 +265,12 @@ static int generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 	CK_RV ret;
 	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
 	CK_ULONG key_len = 16;
+	CK_BBOOL btrue = CK_TRUE;
+
 	CK_ATTRIBUTE key_attrs[] = {
 		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
 	};
 
 	SUBTEST_START(status);

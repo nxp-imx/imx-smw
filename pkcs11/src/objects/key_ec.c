@@ -10,13 +10,8 @@
 
 #include "lib_device.h"
 #include "libobj_types.h"
-#include "util.h"
 
 #include "trace.h"
-
-#define EC_KEY_PUBLIC  BIT(0)
-#define EC_KEY_PRIVATE BIT(1)
-#define EC_KEY_PAIR    (EC_KEY_PUBLIC | EC_KEY_PRIVATE)
 
 enum attr_key_ec_public_list {
 	PUB_PARAMS = 0,
@@ -51,9 +46,9 @@ const struct template_attr attr_key_ec_private[] = {
  * @type: Type of Key to allocate
  *
  * Allocation and set the @type of key to allocate which is:
- *   EC_KEY_PUBLIC
- *   EC_KEY_PRIVATE
- *   EC_KEY_PAIR
+ *   LIBOBJ_KEY_PUBLIC
+ *   LIBOBJ_KEY_PRIVATE
+ *   LIBOBJ_KEY_PAIR
  *
  * return:
  * Key allocated if success
@@ -69,11 +64,13 @@ static struct libobj_key_ec_pair *key_ec_allocate(struct libobj_obj *pub_obj,
 	if (key) {
 		key->type = type;
 
-		if (type & EC_KEY_PUBLIC)
+		if (type & LIBOBJ_KEY_PUBLIC)
 			set_subkey_to(pub_obj, key);
 
-		if (type & EC_KEY_PRIVATE)
+		if (type & LIBOBJ_KEY_PRIVATE) {
 			set_subkey_to(priv_obj, key);
+			key->pub_obj = pub_obj;
+		}
 	}
 
 	DBG_TRACE("Allocated a new EC key (%p) of type %d", key, type);
@@ -104,19 +101,19 @@ static void key_ec_free(struct libobj_obj *obj, unsigned int type)
 		return;
 
 	switch (type) {
-	case EC_KEY_PUBLIC:
+	case LIBOBJ_KEY_PUBLIC:
 		if (key->point_q.array) {
 			free(key->point_q.array);
 			key->point_q.array = NULL;
 		}
 		break;
 
-	case EC_KEY_PRIVATE:
+	case LIBOBJ_KEY_PRIVATE:
 		if (key->value_d.value) {
 			free(key->value_d.value);
 			key->value_d.value = NULL;
 		}
-		if (key->type == EC_KEY_PRIVATE && key->point_q.array) {
+		if (key->type == LIBOBJ_KEY_PRIVATE && key->point_q.array) {
 			free(key->point_q.array);
 			key->point_q.array = NULL;
 		}
@@ -134,6 +131,7 @@ static void key_ec_free(struct libobj_obj *obj, unsigned int type)
 		free(key);
 	} else {
 		key->type &= ~type;
+		key->pub_obj = NULL;
 	}
 
 	set_subkey_to(obj, NULL);
@@ -141,12 +139,12 @@ static void key_ec_free(struct libobj_obj *obj, unsigned int type)
 
 void key_ec_public_free(struct libobj_obj *obj)
 {
-	key_ec_free(obj, EC_KEY_PUBLIC);
+	key_ec_free(obj, LIBOBJ_KEY_PUBLIC);
 }
 
 void key_ec_private_free(struct libobj_obj *obj)
 {
-	key_ec_free(obj, EC_KEY_PRIVATE);
+	key_ec_free(obj, LIBOBJ_KEY_PRIVATE);
 }
 
 CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
@@ -155,7 +153,7 @@ CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	CK_RV ret;
 	struct libobj_key_ec_pair *new_key;
 
-	new_key = key_ec_allocate(obj, NULL, EC_KEY_PUBLIC);
+	new_key = key_ec_allocate(obj, NULL, LIBOBJ_KEY_PUBLIC);
 	if (!new_key)
 		return CKR_HOST_MEMORY;
 
@@ -219,7 +217,7 @@ CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	CK_RV ret;
 	struct libobj_key_ec_pair *new_key;
 
-	new_key = key_ec_allocate(NULL, obj, EC_KEY_PRIVATE);
+	new_key = key_ec_allocate(NULL, obj, LIBOBJ_KEY_PRIVATE);
 	if (!new_key)
 		return CKR_HOST_MEMORY;
 
@@ -298,7 +296,7 @@ CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	CK_RV ret;
 	struct libobj_key_ec_pair *keypair;
 
-	keypair = key_ec_allocate(pub_obj, priv_obj, EC_KEY_PAIR);
+	keypair = key_ec_allocate(pub_obj, priv_obj, LIBOBJ_KEY_PAIR);
 	if (!keypair)
 		return CKR_HOST_MEMORY;
 

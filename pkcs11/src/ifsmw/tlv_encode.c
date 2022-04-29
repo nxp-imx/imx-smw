@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include <stdlib.h>
@@ -14,18 +14,23 @@
 
 static CK_RV tlv_realloc(struct smw_tlv *tlv, size_t length)
 {
+	size_t add_length;
+
+	add_length = tlv->length_max - tlv->length + length;
+
 	if (!tlv->string) {
 		tlv->string = malloc(length);
 		if (!tlv->string)
 			return CKR_HOST_MEMORY;
 
 		tlv->length_max = length;
-	} else if (tlv->length_max < tlv->length + length) {
-		tlv->string = realloc(tlv->string, tlv->length_max + length);
+	} else if (add_length) {
+		tlv->string =
+			realloc(tlv->string, tlv->length_max + add_length);
 		if (!tlv->string)
 			return CKR_HOST_MEMORY;
 
-		tlv->length_max += length;
+		tlv->length_max += add_length;
 	}
 
 	return CKR_OK;
@@ -183,8 +188,82 @@ CK_RV tlv_encode_numeral(struct smw_tlv *tlv, const char *type, long long num)
 	return CKR_OK;
 }
 
+CK_RV tlv_encode_concat_string(struct smw_tlv *tlv, const char *type,
+			       const char *value, struct smw_tlv *concat_tlv)
+{
+	CK_RV ret;
+	size_t len_add;
+	size_t value_length = strlen(value) + 1;
+	size_t tlv_length;
+
+	/*
+	 * Concat string is TLV encoded with:
+	 *   - Type = null terminated string @type
+	 *   - Length = 2 bytes (@value length, null character included) +
+	 *              length of the string value to concatenate
+	 *   - Value = null terminated string @value
+	 *   - String value to add after field Value
+	 */
+
+	len_add = strlen(type) + 1 + TLV_LENGTH_SIZE + value_length;
+	tlv_length = value_length + concat_tlv->length_max;
+	ret = tlv_realloc(tlv, len_add + concat_tlv->length_max);
+	if (ret != CKR_OK)
+		return ret;
+
+	/* Set type */
+	set_tlv_type(tlv, type);
+
+	/* Set length */
+	set_tlv_length(tlv, tlv_length);
+
+	/* Set value - Input @value */
+	set_tlv_value(tlv, value, value_length);
+
+	/* Concatenate the string value */
+	if (concat_tlv->string)
+		set_tlv_value(tlv, concat_tlv->string, concat_tlv->length_max);
+
+	return CKR_OK;
+}
+
+CK_RV tlv_encode_tlv(struct smw_tlv *tlv, const char *type,
+		     struct smw_tlv *tlv_value)
+{
+	CK_RV ret;
+	size_t len_add;
+
+	/*
+	 * Build a TLV of TLV is TLV encoded with:
+	 *   - Type = null terminated string @type
+	 *   - Length = 2 bytes (@tlv_value->length_max)
+	 *   - Value = @tlv_value->string
+	 */
+
+	len_add = strlen(type) + 1 + TLV_LENGTH_SIZE;
+	ret = tlv_realloc(tlv, len_add + tlv_value->length_max);
+	if (ret != CKR_OK)
+		return ret;
+
+	/* Set type */
+	set_tlv_type(tlv, type);
+
+	/* Set length */
+	set_tlv_length(tlv, tlv_value->length_max);
+
+	/* Concatenate the string value */
+	if (tlv_value->string)
+		set_tlv_value(tlv, tlv_value->string, tlv_value->length_max);
+
+	return CKR_OK;
+}
+
 void tlv_encode_free(struct smw_tlv *tlv)
 {
 	if (tlv->string)
 		free(tlv->string);
+
+	tlv->string = NULL;
+	tlv->length = 0;
+	tlv->length_max = 0;
 }

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 #ifndef __TLV_ENCODE_H__
 #define __TLV_ENCODE_H__
@@ -84,6 +84,37 @@ CK_RV tlv_encode_enum(struct smw_tlv *tlv, const char *type, const char *value);
  * CKR_OK                        - Success
  */
 CK_RV tlv_encode_numeral(struct smw_tlv *tlv, const char *type, long long num);
+
+/**
+ * tlv_encode_concat_string() - Add a TLV's string and concatenate TLVs
+ * @tlv: TLV's string to be updated
+ * @type: String data name
+ * @value: String value
+ * @concat_tlv: String value to concatenate
+ *
+ * Add to @tlv a string @type with the @value. Then concatenate the
+ * @concat_tlv->string to the added TLV and set the TLV's length equal
+ * the total length of both string @value and @concat_tlv->string.
+ *
+ * Return:
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_OK                        - Success
+ */
+CK_RV tlv_encode_concat_string(struct smw_tlv *tlv, const char *type,
+			       const char *value, struct smw_tlv *concat_tlv);
+
+/**
+ * tlv_encode_tlv() - Add a string of TLVs tagged with @type
+ * @tlv: TLV's string to be updated
+ * @type: String data name
+ * @tlv_value: Value of type tlv string
+ *
+ * Return:
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_OK                        - Success
+ */
+CK_RV tlv_encode_tlv(struct smw_tlv *tlv, const char *type,
+		     struct smw_tlv *tlv_value);
 
 /**
  * tlv_encode_free() - Free the TLV's string

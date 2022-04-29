@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <stdlib.h>
@@ -45,17 +45,6 @@ const struct template_attr attr_key_common[] = {
 		TATTR(key, mech, ALLOWED_MECHANISMS, 0, OPTIONAL, mech_list),
 };
 
-struct libobj_key_public {
-	struct libbytes subject;
-	bool encrypt;
-	bool verify;
-	bool verify_recover;
-	bool wrap;
-	bool trusted;
-	struct libattr_list wrap_attrs;
-	struct libbytes info;
-};
-
 enum attr_key_public_list {
 	PUB_SUBJECT = 0,
 	PUB_ENCRYPT,
@@ -85,22 +74,6 @@ const struct template_attr attr_key_public[] = {
 				    OPTIONAL, attr_list),
 	[PUB_INFO] = TATTR(key_public, info, PUBLIC_KEY_INFO, 0, OPTIONAL,
 			   byte_array),
-};
-
-struct libobj_key_private {
-	struct libbytes subject;
-	bool sensitive;
-	bool always_sensitive;
-	bool decrypt;
-	bool sign;
-	bool sign_recover;
-	bool extractable;
-	bool never_extractable;
-	bool wrap_with_trusted;
-	bool unwrap;
-	struct libattr_list unwrap_attrs;
-	bool always_authenticate;
-	struct libbytes info;
 };
 
 enum attr_key_private_list {
@@ -152,24 +125,6 @@ const struct template_attr attr_key_private[] = {
 		      sizeof(CK_BBOOL), OPTIONAL, boolean),
 	[PRIV_INFO] = TATTR_M(key_private, info, PUBLIC_KEY_INFO, 0, OPTIONAL,
 			      byte_array),
-};
-
-struct libobj_key_secret {
-	bool sensitive;
-	bool always_sensitive;
-	bool encrypt;
-	bool decrypt;
-	bool sign;
-	bool verify;
-	bool extractable;
-	bool never_extractable;
-	bool wrap;
-	struct libattr_list wrap_attrs;
-	bool wrap_with_trusted;
-	bool unwrap;
-	struct libattr_list unwrap_attrs;
-	bool trusted;
-	struct libbytes checksum;
 };
 
 enum attr_key_secret_list {

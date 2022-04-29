@@ -10,13 +10,8 @@
 
 #include "lib_device.h"
 #include "libobj_types.h"
-#include "util.h"
 
 #include "trace.h"
-
-#define RSA_KEY_PUBLIC	BIT(0)
-#define RSA_KEY_PRIVATE BIT(1)
-#define RSA_KEY_PAIR	(RSA_KEY_PUBLIC | RSA_KEY_PRIVATE)
 
 enum attr_key_rsa_public_list {
 	PUB_MODULUS = 0,
@@ -70,9 +65,9 @@ const struct template_attr attr_key_rsa_private[] = {
  * @type: Type of Key to allocate
  *
  * Allocation and set the @type of key to allocate which is:
- *   RSA_KEY_PUBLIC
- *   RSA_KEY_PRIVATE
- *   RSA_KEY_PAIR
+ *   LIBOBJ_KEY_PUBLIC
+ *   LIBOBJ_KEY_PRIVATE
+ *   LIBOBJ_KEY_PAIR
  *
  * return:
  * Key allocated if success
@@ -88,11 +83,13 @@ static struct libobj_key_rsa_pair *key_rsa_allocate(struct libobj_obj *pub_obj,
 	if (key) {
 		key->type = type;
 
-		if (type & RSA_KEY_PUBLIC)
+		if (type & LIBOBJ_KEY_PUBLIC)
 			set_subkey_to(pub_obj, key);
 
-		if (type & RSA_KEY_PRIVATE)
+		if (type & LIBOBJ_KEY_PRIVATE) {
 			set_subkey_to(priv_obj, key);
+			key->pub_obj = pub_obj;
+		}
 	}
 
 	DBG_TRACE("Allocated a new RSA key (%p) of type %d", key, type);
@@ -123,10 +120,10 @@ static void key_rsa_free(struct libobj_obj *obj, unsigned int type)
 		return;
 
 	switch (type) {
-	case RSA_KEY_PUBLIC:
+	case LIBOBJ_KEY_PUBLIC:
 		break;
 
-	case RSA_KEY_PRIVATE:
+	case LIBOBJ_KEY_PRIVATE:
 		if (key->priv_exp.value) {
 			free(key->priv_exp.value);
 			key->priv_exp.value = NULL;
@@ -168,6 +165,7 @@ static void key_rsa_free(struct libobj_obj *obj, unsigned int type)
 		free(key);
 	} else {
 		key->type &= ~type;
+		key->pub_obj = NULL;
 	}
 
 	set_subkey_to(obj, NULL);
@@ -175,12 +173,12 @@ static void key_rsa_free(struct libobj_obj *obj, unsigned int type)
 
 void key_rsa_public_free(struct libobj_obj *obj)
 {
-	key_rsa_free(obj, RSA_KEY_PUBLIC);
+	key_rsa_free(obj, LIBOBJ_KEY_PUBLIC);
 }
 
 void key_rsa_private_free(struct libobj_obj *obj)
 {
-	key_rsa_free(obj, RSA_KEY_PRIVATE);
+	key_rsa_free(obj, LIBOBJ_KEY_PRIVATE);
 }
 
 CK_RV key_rsa_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
@@ -189,7 +187,7 @@ CK_RV key_rsa_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	CK_RV ret;
 	struct libobj_key_rsa_pair *new_key;
 
-	new_key = key_rsa_allocate(obj, NULL, RSA_KEY_PUBLIC);
+	new_key = key_rsa_allocate(obj, NULL, LIBOBJ_KEY_PUBLIC);
 	if (!new_key)
 		return CKR_HOST_MEMORY;
 
@@ -258,7 +256,7 @@ CK_RV key_rsa_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	CK_RV ret;
 	struct libobj_key_rsa_pair *new_key;
 
-	new_key = key_rsa_allocate(NULL, obj, RSA_KEY_PRIVATE);
+	new_key = key_rsa_allocate(NULL, obj, LIBOBJ_KEY_PRIVATE);
 	if (!new_key)
 		return CKR_HOST_MEMORY;
 
@@ -369,7 +367,7 @@ CK_RV key_rsa_keypair_generate(CK_SESSION_HANDLE hsession,
 	CK_RV ret;
 	struct libobj_key_rsa_pair *keypair;
 
-	keypair = key_rsa_allocate(pub_obj, priv_obj, RSA_KEY_PAIR);
+	keypair = key_rsa_allocate(pub_obj, priv_obj, LIBOBJ_KEY_PAIR);
 	if (!keypair)
 		return CKR_HOST_MEMORY;
 

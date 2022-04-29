@@ -8,6 +8,7 @@
 
 #include <assert.h>
 
+#include "util.h"
 #include "types.h"
 
 /**
@@ -72,6 +73,13 @@ struct libobj_storage {
 		struct libobj_##type *_obj_type = get_object_from(obj);        \
 		assert(_obj_type);                                             \
 		_obj_type->destroyable;                                        \
+	})
+
+#define is_copyable_obj(obj, type)                                             \
+	({                                                                     \
+		struct libobj_##type *_obj_type = get_object_from(obj);        \
+		assert(_obj_type);                                             \
+		_obj_type->copyable;                                           \
 	})
 
 #define is_modifiable_obj(obj, type)                                           \
@@ -143,9 +151,31 @@ struct libobj_key {
 		_key->subkey;                                                  \
 	})
 
+#define is_derive_key(obj)                                                     \
+	({                                                                     \
+		struct libobj_key *_key = get_subobj_from(obj, storage);       \
+		assert(_key);                                                  \
+		_key->derive;                                                  \
+	})
+
+#define get_key_mech(obj)                                                      \
+	({                                                                     \
+		struct libobj_key *_key = get_subobj_from(obj, storage);       \
+		assert(_key);                                                  \
+		&_key->mech;                                                   \
+	})
+
+/*
+ * Define the libobj public/private/keypair type
+ */
+#define LIBOBJ_KEY_PUBLIC  BIT(0)
+#define LIBOBJ_KEY_PRIVATE BIT(1)
+#define LIBOBJ_KEY_PAIR	   (LIBOBJ_KEY_PUBLIC | LIBOBJ_KEY_PRIVATE)
+
 struct libobj_key_ec_pair {
 	unsigned int key_id;
 	unsigned int type;
+	struct libobj_obj *pub_obj; // Reference to public key obj
 	struct libbytes params;
 	struct libbytes point_q;     // Public Key point
 	struct libbignumber value_d; // Secure Key scalar
@@ -154,6 +184,7 @@ struct libobj_key_ec_pair {
 struct libobj_key_rsa_pair {
 	unsigned int key_id;
 	unsigned int type;
+	struct libobj_obj *pub_obj;   // Reference to public key obj
 	struct libbignumber modulus;  // Modulus n
 	CK_ULONG modulus_length;      // Modulus length in bits
 	struct libbignumber pub_exp;  // Public Exponent e
@@ -182,6 +213,51 @@ struct libobj_data {
 	struct librfc2279 application; // Application managing object
 	struct libbytes id;	       // Object identifier
 	struct libbytes value;	       // Value of the object
+};
+
+struct libobj_key_public {
+	struct libbytes subject;
+	bool encrypt;
+	bool verify;
+	bool verify_recover;
+	bool wrap;
+	bool trusted;
+	struct libattr_list wrap_attrs;
+	struct libbytes info;
+};
+
+struct libobj_key_private {
+	struct libbytes subject;
+	bool sensitive;
+	bool always_sensitive;
+	bool decrypt;
+	bool sign;
+	bool sign_recover;
+	bool extractable;
+	bool never_extractable;
+	bool wrap_with_trusted;
+	bool unwrap;
+	struct libattr_list unwrap_attrs;
+	bool always_authenticate;
+	struct libbytes info;
+};
+
+struct libobj_key_secret {
+	bool sensitive;
+	bool always_sensitive;
+	bool encrypt;
+	bool decrypt;
+	bool sign;
+	bool verify;
+	bool extractable;
+	bool never_extractable;
+	bool wrap;
+	struct libattr_list wrap_attrs;
+	bool wrap_with_trusted;
+	bool unwrap;
+	struct libattr_list unwrap_attrs;
+	bool trusted;
+	struct libbytes checksum;
 };
 
 #endif /* __LIBOBJ_TYPES_H__ */

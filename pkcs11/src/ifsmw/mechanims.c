@@ -75,12 +75,14 @@ const char *smw_ec_name[] = { "NIST", "BRAINPOOL_R1", "BRAINPOOL_T1" };
  * @slot_flag: Bit mask flag of a device supporting the mechanism
  * @nb_smw_algo: Number of SMW algorithm for this mechanism
  * @smw_algo: Mechanism's algorithm(s) definition corresponding to SMW
+ * @smw_hash: Digest algorithm name used for the mechanism (SMW name)
  */
 struct mentry {
 	CK_MECHANISM_TYPE type;
 	CK_FLAGS slot_flag;
 	unsigned int nb_smw_algo;
 	void *smw_algo;
+	void *smw_hash;
 };
 
 /**
@@ -105,11 +107,15 @@ struct mgroup {
 	CK_RV (*op)(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 };
 
-/* Macro filling a struct mentry for a hash algo */
-#define M_ALGO_SINGLE(name, id)                                                \
+/* Macro filling a struct mentry for a single algo without hash */
+#define M_ALGO_NO_HASH(name, id)    M_ALGO(STR(name), NULL_PTR, id)
+#define M_ALGO_HASH(name, hash, id) M_ALGO(STR(name), STR(hash), id)
+
+/* Macro filling a struct mentry for a single algo using a hash */
+#define M_ALGO(_name, _hash, id)                                               \
 	{                                                                      \
 		.type = CKM_##id, .slot_flag = 0, .nb_smw_algo = 1,            \
-		.smw_algo = STR(name),                                         \
+		.smw_algo = _name, .smw_hash = _hash                           \
 	}
 
 /* Macro filling a struct mentry for an algo or a list of algo */
@@ -130,9 +136,9 @@ struct mgroup {
  * Digest mechanisms
  */
 static struct mentry mdigest[] = {
-	M_ALGO_SINGLE(SHA1, SHA_1),    M_ALGO_SINGLE(SHA224, SHA224),
-	M_ALGO_SINGLE(SHA256, SHA256), M_ALGO_SINGLE(SHA384, SHA384),
-	M_ALGO_SINGLE(SHA512, SHA512),
+	M_ALGO_NO_HASH(SHA1, SHA_1),	M_ALGO_NO_HASH(SHA224, SHA224),
+	M_ALGO_NO_HASH(SHA256, SHA256), M_ALGO_NO_HASH(SHA384, SHA384),
+	M_ALGO_NO_HASH(SHA512, SHA512),
 };
 
 /*
@@ -147,40 +153,40 @@ static struct mentry meckeygen[] = {
  * Cipher and RSA keys
  */
 static struct mentry mkeygen[] = {
-	M_ALGO_SINGLE(AES, AES_KEY_GEN),
-	M_ALGO_SINGLE(DES, DES_KEY_GEN),
-	M_ALGO_SINGLE(DES3, DES3_KEY_GEN),
-	M_ALGO_SINGLE(RSA, RSA_PKCS_KEY_PAIR_GEN),
+	M_ALGO_NO_HASH(AES, AES_KEY_GEN),
+	M_ALGO_NO_HASH(DES, DES_KEY_GEN),
+	M_ALGO_NO_HASH(DES3, DES3_KEY_GEN),
+	M_ALGO_NO_HASH(RSA, RSA_PKCS_KEY_PAIR_GEN),
 };
 
 /*
  * Signature mechanism
  */
 static struct mentry msign_ecdsa[] = {
-	M_ALGO_SINGLE(, ECDSA),
-	M_ALGO_SINGLE(SHA1, ECDSA_SHA1),
-	M_ALGO_SINGLE(SHA224, ECDSA_SHA224),
-	M_ALGO_SINGLE(SHA256, ECDSA_SHA256),
-	M_ALGO_SINGLE(SHA384, ECDSA_SHA384),
-	M_ALGO_SINGLE(SHA512, ECDSA_SHA512),
+	M_ALGO_NO_HASH(ECDSA, ECDSA),
+	M_ALGO_HASH(ECDSA, SHA1, ECDSA_SHA1),
+	M_ALGO_HASH(ECDSA, SHA224, ECDSA_SHA224),
+	M_ALGO_HASH(ECDSA, SHA256, ECDSA_SHA256),
+	M_ALGO_HASH(ECDSA, SHA384, ECDSA_SHA384),
+	M_ALGO_HASH(ECDSA, SHA512, ECDSA_SHA512),
 };
 
 static struct mentry msign_rsa_pkcs_v1_5[] = {
-	M_ALGO_SINGLE(, RSA_PKCS),
-	M_ALGO_SINGLE(SHA1, SHA1_RSA_PKCS),
-	M_ALGO_SINGLE(SHA224, SHA224_RSA_PKCS),
-	M_ALGO_SINGLE(SHA256, SHA256_RSA_PKCS),
-	M_ALGO_SINGLE(SHA384, SHA384_RSA_PKCS),
-	M_ALGO_SINGLE(SHA512, SHA512_RSA_PKCS),
+	M_ALGO_NO_HASH(RSA_PKCS1V15, RSA_PKCS),
+	M_ALGO_HASH(RSA_PKCS1V15, SHA1, SHA1_RSA_PKCS),
+	M_ALGO_HASH(RSA_PKCS1V15, SHA224, SHA224_RSA_PKCS),
+	M_ALGO_HASH(RSA_PKCS1V15, SHA256, SHA256_RSA_PKCS),
+	M_ALGO_HASH(RSA_PKCS1V15, SHA384, SHA384_RSA_PKCS),
+	M_ALGO_HASH(RSA_PKCS1V15, SHA512, SHA512_RSA_PKCS),
 };
 
 static struct mentry msign_rsa_pss[] = {
-	M_ALGO_SINGLE(, RSA_PKCS_PSS),
-	M_ALGO_SINGLE(SHA1, SHA1_RSA_PKCS_PSS),
-	M_ALGO_SINGLE(SHA224, SHA224_RSA_PKCS_PSS),
-	M_ALGO_SINGLE(SHA256, SHA256_RSA_PKCS_PSS),
-	M_ALGO_SINGLE(SHA384, SHA384_RSA_PKCS_PSS),
-	M_ALGO_SINGLE(SHA512, SHA512_RSA_PKCS_PSS),
+	M_ALGO_NO_HASH(RSA_PSS, RSA_PKCS_PSS),
+	M_ALGO_HASH(RSA_PSS, SHA1, SHA1_RSA_PKCS_PSS),
+	M_ALGO_HASH(RSA_PSS, SHA224, SHA224_RSA_PKCS_PSS),
+	M_ALGO_HASH(RSA_PSS, SHA256, SHA256_RSA_PKCS_PSS),
+	M_ALGO_HASH(RSA_PSS, SHA384, SHA384_RSA_PKCS_PSS),
+	M_ALGO_HASH(RSA_PSS, SHA512, SHA512_RSA_PKCS_PSS),
 };
 
 /*
@@ -221,6 +227,7 @@ static CK_RV smw_status_to_ck_rv(enum smw_status_code status)
 {
 	switch (status) {
 	case SMW_STATUS_OK:
+	case SMW_STATUS_KEY_POLICY_WARNING_IGNORED:
 		return CKR_OK;
 
 	case SMW_STATUS_ALLOC_FAILURE:
@@ -481,12 +488,50 @@ static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return info_keygen_common(slotid, type, entry, info);
 }
 
+static CK_RV build_key_allowed_algos(struct smw_tlv *tlv_algos,
+				     CK_SLOT_ID slotid, struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+	size_t idx;
+	struct libmech_list *mech;
+	struct mentry *entry;
+	struct smw_tlv tlv_algo_params = { 0 };
+
+	mech = get_key_mech(obj);
+
+	for (idx = 0; idx < mech->number && ret == CKR_OK; idx++) {
+		ret = find_mechanism(slotid, mech->mech[idx], NULL, &entry);
+		if (ret != CKR_OK) {
+			DBG_TRACE("Key allowed mechanism 0x%lx error %ld",
+				  mech->mech[idx], ret);
+			return ret;
+		}
+
+		DBG_TRACE("Key allowed mechanism %s", (char *)entry->smw_algo);
+		if (entry->smw_hash) {
+			DBG_TRACE("\t with HASH=%s", (char *)entry->smw_hash);
+			ret = tlv_encode_string(&tlv_algo_params, SMW_ATTR_HASH,
+						entry->smw_hash);
+		}
+
+		if (ret == CKR_OK)
+			ret = tlv_encode_concat_string(tlv_algos, SMW_ATTR_ALGO,
+						       entry->smw_algo,
+						       &tlv_algo_params);
+
+		tlv_encode_free(&tlv_algo_params);
+	}
+
+	return CKR_OK;
+}
+
 static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 {
 	CK_RV ret;
 	const struct libdev *devinfo;
 	enum smw_status_code status;
 	struct smw_tlv key_attr = { 0 };
+	struct smw_tlv allowed_algos = { 0 };
 	struct smw_generate_key_args gen_args = { 0 };
 	struct smw_key_descriptor key = { 0 };
 
@@ -499,6 +544,14 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	if (ret != CKR_OK)
 		return ret;
 
+	ret = build_key_allowed_algos(&allowed_algos, slotid, obj);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = args_attrs_key_policy(&key_attr, obj, &allowed_algos);
+	if (ret != CKR_OK)
+		goto end;
+
 	gen_args.subsystem_name = devinfo->name;
 	gen_args.key_descriptor = &key;
 
@@ -506,7 +559,7 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	if (ret != CKR_OK)
 		goto end;
 
-	gen_args.key_attributes_list = (const unsigned char *)key_attr.string;
+	gen_args.key_attributes_list = (unsigned char *)key_attr.string;
 	gen_args.key_attributes_list_length = key_attr.length;
 
 	status = smw_generate_key(&gen_args);
@@ -520,6 +573,7 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 		key_desc_copy_key_id(obj, &key);
 
 end:
+	tlv_encode_free(&allowed_algos);
 	tlv_encode_free(&key_attr);
 
 	return ret;
@@ -563,8 +617,8 @@ static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
 	slot_flag = BIT(slotid);
 	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
 	     idx++, entry++) {
-		if (strlen(entry->smw_algo))
-			info.hash_algo = entry->smw_algo;
+		if (entry->smw_hash)
+			info.hash_algo = entry->smw_hash;
 
 		for (ecdsa_idx = 0; ecdsa_idx < ARRAY_SIZE(smw_ec_name);
 		     ecdsa_idx++) {
@@ -607,8 +661,8 @@ static void check_msign_rsa_common(CK_SLOT_ID slotid, const char *subsystem,
 	slot_flag = BIT(slotid);
 	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
 	     idx++, entry++) {
-		if (strlen(entry->smw_algo))
-			info->hash_algo = entry->smw_algo;
+		if (entry->smw_hash)
+			info->hash_algo = entry->smw_hash;
 
 		status = smw_config_check_sign(subsystem, info);
 		DBG_TRACE("%s sign mechanism %lu: %d", subsystem, entry->type,
@@ -669,8 +723,8 @@ static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	info->ulMinKeySize = 0;
 	info->flags = 0;
 
-	if (strlen(entry->smw_algo))
-		sign_verify_info.hash_algo = entry->smw_algo;
+	if (entry->smw_hash)
+		sign_verify_info.hash_algo = entry->smw_hash;
 
 	/*
 	 * @info flag is set with Sign flag or Verify flag or both
@@ -724,8 +778,8 @@ static CK_RV info_msign_rsa_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 
 	sign_verify_info->key_type_name = "RSA";
 
-	if (strlen(entry->smw_algo))
-		sign_verify_info->hash_algo = entry->smw_algo;
+	if (entry->smw_hash)
+		sign_verify_info->hash_algo = entry->smw_hash;
 	else
 		sign_verify_info->hash_algo = NULL_PTR;
 
@@ -793,8 +847,8 @@ static CK_RV op_msign_common(struct smw_sign_verify_args *smw_args,
 	smw_args->signature_length = params->ulsignaturelen;
 
 	/* Get hash algorithm */
-	if (strlen(entry->smw_algo)) {
-		smw_args->algo_name = entry->smw_algo;
+	if (entry->smw_hash) {
+		smw_args->algo_name = entry->smw_hash;
 	} else if (ctx->hash_mech) {
 		for (i = 0; i < ARRAY_SIZE(mdigest); i++) {
 			if (ctx->hash_mech == mdigest[i].type) {
@@ -1029,6 +1083,7 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	CK_SLOT_ID slotid;
 	const struct libdev *devinfo;
 	struct smw_tlv key_attr = { 0 };
+	struct smw_tlv allowed_algos = { 0 };
 	struct smw_import_key_args imp_args = { 0 };
 	struct smw_key_descriptor key = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
@@ -1053,6 +1108,14 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	if (ret != CKR_OK)
 		return ret;
 
+	ret = build_key_allowed_algos(&allowed_algos, slotid, obj);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = args_attrs_key_policy(&key_attr, obj, &allowed_algos);
+	if (ret != CKR_OK)
+		goto end;
+
 	imp_args.subsystem_name = devinfo->name;
 	imp_args.key_descriptor = &key;
 
@@ -1060,7 +1123,7 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	if (ret != CKR_OK)
 		goto end;
 
-	imp_args.key_attributes_list = (const unsigned char *)key_attr.string;
+	imp_args.key_attributes_list = (unsigned char *)key_attr.string;
 	imp_args.key_attributes_list_length = key_attr.length;
 
 	status = smw_import_key(&imp_args);
@@ -1073,6 +1136,7 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 		key_desc_copy_key_id(obj, &key);
 
 end:
+	tlv_encode_free(&allowed_algos);
 	tlv_encode_free(&key_attr);
 
 	return ret;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <stdlib.h>
@@ -337,7 +337,7 @@ CK_RV attr_to_mech_list(void *dest, CK_ATTRIBUTE_PTR attr)
 	if (!attr->pValue || !attr->ulValueLen)
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 
-	out->number = attr->ulValueLen;
+	out->number = attr->ulValueLen / sizeof(*out->mech);
 	out->mech = malloc(out->number * sizeof(*out->mech));
 	if (!out->mech)
 		return CKR_HOST_MEMORY;

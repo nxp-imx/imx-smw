@@ -3,7 +3,7 @@
  * Copyright 2022 NXP
  */
 
-#include "psa/status.h"
+#include "psa/error.h"
 
 #include "smw_status.h"
 

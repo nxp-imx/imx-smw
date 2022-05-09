@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "psa/status.h"
+#include "psa/error.h"
 #include "psa/crypto.h"
 
 /**

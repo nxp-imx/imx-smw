@@ -9,6 +9,11 @@
 #include <stdint.h>
 
 /**
+ * DOC:
+ * This file defines the error codes returned by the PSA Cryptography API
+ */
+
+/**
  * DOC: Reference
  * Documentation:
  *	PSA Cryptography API v1.0.1

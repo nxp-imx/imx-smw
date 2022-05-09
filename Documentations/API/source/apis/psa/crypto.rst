@@ -1,4 +1,13 @@
 Cryptography APIs
 =================
 
-.. kernel-doc:: ../../../../../public/psa/crypto.h
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
+   :glob:
+
+   crypto/values
+   crypto/sizes
+   crypto/types
+   crypto/struct
+   crypto/functions

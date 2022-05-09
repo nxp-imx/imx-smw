@@ -68,6 +68,8 @@ latex_elements = {
   , 'preamble': r'''
 \usepackage[none]{hyphenat}
 \usepackage[document]{ragged2e}
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{5}
 \makeatletter
   \fancypagestyle{normal}{
     \fancyhf{}

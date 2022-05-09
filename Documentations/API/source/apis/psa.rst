@@ -9,4 +9,4 @@ PSA APIs
    psa/crypto
    psa/initial_attestation
    psa/storage
-   psa/status
+   psa/error

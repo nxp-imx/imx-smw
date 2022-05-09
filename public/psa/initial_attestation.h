@@ -13,6 +13,18 @@
 #include "psa/crypto.h"
 
 /**
+ * DOC:
+ * The PSA Attestation API is a standard interface provided by the PSA Root of Trust. The
+ * definition of the PSA Root of Trust is described in the PSA Security Model
+ * (PSA-SM - https://www.arm.com/architecture/security-features).
+ *
+ * The API can be used either to directly sign data or as a way to bootstrap trust in other
+ * attestation schemes. PSA provides a framework and the minimal generic security features allowing
+ * OEM and service providers to integrate various attestation schemes on top of the PSA Root of
+ * Trust.
+ */
+
+/**
  * DOC: Reference
  * Documentation:
  *	PSA Attestation API v1.0.2

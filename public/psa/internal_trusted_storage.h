@@ -9,6 +9,14 @@
 #include "psa/storage_common.h"
 
 /**
+ * DOC:
+ * The PSA Internal Trusted Storage API (PITS API) is a more specialized API. Uses of this API will
+ * be less common. It is intended to be used for assets that must be placed inside internal flash.
+ * Some examples of assets that require this are replay protection values for external storage and
+ * keys for use by components of the PSA Root of Trust.
+ */
+
+/**
  * DOC: Reference
  * Documentation:
  *	PSA Storage API v1.0.0 section 5.2 Internal Trusted Storage API
@@ -58,7 +66,7 @@
  *	The operation failed because the physical storage has failed (Fatal error).
  * * PSA_ERROR_INVALID_ARGUMENT:
  *	The operation failed because one of the provided pointers (e.g. @p_data) is invalid, for
- *  example is NULL or references memory the caller cannot access.
+ *	example is NULL or references memory the caller cannot access.
  */
 psa_status_t psa_its_set(psa_storage_uid_t uid, size_t data_length,
 			 const void *p_data,
@@ -114,7 +122,7 @@ psa_status_t psa_its_get(psa_storage_uid_t uid, size_t data_offset,
  *	The operation failed because the physical storage has failed (Fatal error).
  * * PSA_ERROR_INVALID_ARGUMENT:
  *	The operation failed because one of the provided pointers (e.g. @p_info) is invalid, for
- *  example is NULL or references memory the caller cannot access.
+ *	example is NULL or references memory the caller cannot access.
  */
 psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 			      struct psa_storage_info_t *p_info);

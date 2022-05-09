@@ -254,7 +254,6 @@ typedef struct psa_hash_operation psa_hash_operation_t;
  * The actual key material is not considered an attribute of a key. Key attributes do not contain
  * information that is generally considered highly confidential.
  *
- * Note:
  * This is an implementation-defined type. Application should not make any assumptions about the
  * content of this object.
  *
@@ -706,6 +705,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * A sufficient ciphertext buffer size for psa_aead_finish(), for any of the supported key types
  * and AEAD algorithms.
  *
+ * **Warning: Not supported**
+ *
  * See also PSA_AEAD_FINISH_OUTPUT_SIZE().
  */
 #define PSA_AEAD_FINISH_OUTPUT_MAX_SIZE /* implementation-defined value */
@@ -756,6 +757,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * DOC: PSA_AEAD_NONCE_MAX_SIZE
  * The maximum nonce size for all supported AEAD algorithms, in bytes.
  *
+ * **Warning: Not supported**
+ *
  * See also PSA_AEAD_NONCE_LENGTH().
  */
 #define PSA_AEAD_NONCE_MAX_SIZE /* implementation-defined value */
@@ -792,6 +795,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
 /**
  * DOC: PSA_AEAD_TAG_MAX_SIZE
  * The maximum tag size for all supported AEAD algorithms, in bytes.
+ *
+ * **Warning: Not supported**
  *
  * See also PSA_AEAD_TAG_LENGTH().
  */
@@ -839,6 +844,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * DOC: PSA_AEAD_VERIFY_OUTPUT_MAX_SIZE
  * A sufficient plaintext buffer size for psa_aead_verify(), for any of the supported key types and
  * AEAD algorithms.
+ *
+ * **Warning: Not supported**
  *
  * See also PSA_AEAD_VERIFY_OUTPUT_SIZE().
  */
@@ -1422,7 +1429,7 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * **Warning: Not supported**
  *
  * Return:
- * 1 if @alg is a signature algorithm that can be used to sign a hash. 0 @alg alg is a signature
+ * 1 if @alg is a signature algorithm that can be used to sign a hash. 0 if @alg is a signature
  * algorithm that can only be used to sign a message. 0 if @alg is not a signature algorithm. This
  * macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
@@ -1745,6 +1752,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * A sufficient output buffer size for psa_asymmetric_decrypt(), for any supported asymmetric
  * decryption.
  *
+ * **Warning: Not supported**
+ *
  * See also PSA_ASYMMETRIC_DECRYPT_OUTPUT_SIZE().
  */
 #define PSA_ASYMMETRIC_DECRYPT_OUTPUT_MAX_SIZE                                 \
@@ -1783,6 +1792,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * DOC: PSA_ASYMMETRIC_ENCRYPT_OUTPUT_MAX_SIZE
  * A sufficient output buffer size for psa_asymmetric_encrypt(), for any supported asymmetric
  * encryption.
+ *
+ * **Warning: Not supported**
  *
  * See also PSA_ASYMMETRIC_ENCRYPT_OUTPUT_SIZE().
  */
@@ -1847,6 +1858,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
 /**
  * DOC: PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE
  * The maximum size of a block cipher supported by the implementation.
+ *
+ * **Warning: Not supported**
  *
  * See also PSA_BLOCK_CIPHER_BLOCK_LENGTH().
  */
@@ -1936,6 +1949,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * A sufficient ciphertext buffer size for psa_cipher_finish(), for any of the supported key types
  * and cipher algorithms.
  *
+ * **Warning: Not supported**
+ *
  * See also PSA_CIPHER_FINISH_OUTPUT_SIZE().
  */
 #define PSA_CIPHER_FINISH_OUTPUT_MAX_SIZE /* implementation-defined value */
@@ -1988,6 +2003,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
 /**
  * DOC: PSA_CIPHER_IV_MAX_SIZE
  * The maximum IV size for all supported cipher algorithms, in bytes.
+ *
+ * **Warning: Not supported**
  *
  * See also PSA_CIPHER_IV_LENGTH().
  */
@@ -2268,6 +2285,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * DOC: PSA_EXPORT_KEY_PAIR_MAX_SIZE
  * Sufficient buffer size for exporting any asymmetric key pair.
  *
+ * **Warning: Not supported**
+ *
  * This macro must expand to a compile-time constant integer. This value must be a sufficient buffer
  * size when calling psa_export_key() to export any asymmetric key pair that is supported by the
  * implementation, regardless of the exact key type and key size.
@@ -2279,6 +2298,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
 /**
  * DOC: PSA_EXPORT_PUBLIC_KEY_MAX_SIZE
  * Sufficient buffer size for exporting any asymmetric public key.
+ *
+ * **Warning: Not supported**
  *
  * This macro must expand to a compile-time constant integer. This value must be a sufficient buffer
  * size when calling psa_export_key() or psa_export_public_key() to export any asymmetric public key
@@ -2377,6 +2398,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * DOC: PSA_HASH_MAX_SIZE
  * Maximum size of a hash.
  *
+ * **Warning: Not supported**
+ *
  * This macro must expand to a compile-time constant integer. It is recommended that this value is
  * the maximum size of a hash supported by the implementation, in bytes. The value must not be
  * smaller than this maximum.
@@ -2395,6 +2418,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
 /**
  * DOC: PSA_HASH_SUSPEND_ALGORITHM_FIELD_LENGTH
  * The size of the algorithm field that is part of the output of psa_hash_suspend(), in bytes.
+ *
+ * **Warning: Not supported**
  *
  * Applications can use this value to unpack the hash suspend state that is output by
  * psa_hash_suspend().
@@ -2441,6 +2466,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * DOC: PSA_HASH_SUSPEND_OUTPUT_MAX_SIZE
  * A sufficient hash suspend state buffer size for psa_hash_suspend(), for any supported hash
  * algorithms.
+ *
+ * **Warning: Not supported**
  *
  * See also PSA_HASH_SUSPEND_OUTPUT_SIZE().
  */
@@ -3285,6 +3312,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * DOC: PSA_MAC_MAX_SIZE
  * Maximum size of a MAC.
  *
+ * **Warning: Not supported**
+ *
  * This macro must expand to a compile-time constant integer. It is recommended that this value is
  * the maximum size of a MAC supported by the implementation, in bytes. The value must not be
  * smaller than this maximum.
@@ -3303,6 +3332,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
 /**
  * DOC: PSA_RAW_KEY_AGREEMENT_OUTPUT_MAX_SIZE
  * Maximum size of the output from psa_raw_key_agreement().
+ *
+ * **Warning: Not supported**
  *
  * This macro must expand to a compile-time constant integer. It is recommended that this value is
  * the maximum size of the output any raw key agreement algorithm supported by the implementation,
@@ -3339,6 +3370,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
 /**
  * DOC: PSA_SIGNATURE_MAX_SIZE
  * Maximum size of an asymmetric signature.
+ *
+ * **Warning: Not supported**
  *
  * This macro must expand to a compile-time constant integer. It is recommended that this value is
  * the maximum size of an asymmetric signature supported by the implementation, in bytes. The value
@@ -3379,6 +3412,8 @@ typedef struct psa_mac_operation psa_mac_operation_t;
  * DOC: PSA_TLS12_PSK_TO_MS_PSK_MAX_SIZE
  * This macro returns the maximum supported length of the PSK for the TLS-1.2 PSK-to-MS key
  * derivation.
+ *
+ * **Warning: Not supported**
  *
  * This implementation-defined value specifies the maximum length for the PSK input used with a
  * PSA_ALG_TLS12_PSK_TO_MS() key agreement algorithm.
@@ -3818,6 +3853,8 @@ psa_status_t psa_aead_generate_nonce(psa_aead_operation_t *operation,
 
 /**
  * psa_aead_operation_init() - Return an initial value for an AEAD operation object.
+ *
+ * **Warning: Not supported**
  *
  * Return:
  * &typedef psa_aead_operation_t
@@ -4960,7 +4997,7 @@ psa_status_t psa_destroy_key(psa_key_id_t key);
  *   encoding of the representation defined by in PKCS #1: RSA Cryptography Specifications Version
  *   2.2 [RFC8017] as RSAPrivateKey, version 0.
  *
- *     .. code-block::
+ *     .. code-block:: none
  *
  *        RSAPrivateKey ::= SEQUENCE {
  *            version             INTEGER,  -- must be 0
@@ -5066,7 +5103,7 @@ psa_status_t psa_export_key(psa_key_id_t key, uint8_t *data, size_t data_size,
  *   Infrastructure Certificate and Certificate Revocation List (CRL) Profile [RFC3279] §2.3.1 as
  *   RSAPublicKey.
  *
- *   .. code-block::
+ *   .. code-block:: none
  *
  *      RSAPublicKey ::= SEQUENCE {
  *         modulus            INTEGER,    -- n
@@ -6303,14 +6340,14 @@ psa_key_derivation_output_bytes(psa_key_derivation_operation_t *operation,
  *   |                                  |                                                         |
  *   |                                  | This method allows compliance to NIST standards,        |
  *   |                                  | specifically the methods titled Key-Pair Generation by  |
- *   |                                  | Testing Candidates in the following publications\:      |
+ *   |                                  | Testing Candidates in the following publications:       |
  *   |                                  |                                                         |
  *   |                                  | - NIST Special Publication 800-56A: Recommendation for  |
  *   |                                  |   Pair-Wise Key-Establishment Schemes Using Discrete    |
  *   |                                  |   Logarithm Cryptography [SP800-56A] §5.6.1.1.4 for     |
  *   |                                  |   Diffie-Hellman keys.                                  |
  *   |                                  |                                                         |
- *   |                                  | - [SP800-56A] §5.6.1.2.2 or FIPS Publication 186-4\:    |
+ *   |                                  | - [SP800-56A] §5.6.1.2.2 or FIPS Publication 186-4:     |
  *   |                                  |   Digital Signature Standard (DSS) [FIPS186-4] §B.4.2   |
  *   |                                  |   for elliptic curve keys.                              |
  *   +----------------------------------+---------------------------------------------------------+
@@ -6326,7 +6363,7 @@ psa_key_derivation_output_bytes(psa_key_derivation_operation_t *operation,
  *   |                                  |                                                         |
  *   |                                  | - Curve448 (PSA_ECC_FAMILY_MONTGOMERY, 448 bits): draw  |
  *   |                                  |   a 56-byte string and process it as specified in       |
- *   |                                  | [RFC7748] §5.                                           |
+ *   |                                  |   [RFC7748] §5.                                         |
  *   +----------------------------------+---------------------------------------------------------+
  *   | Other key types                  | This includes PSA_KEY_TYPE_RSA_KEY_PAIR.                |
  *   |                                  |                                                         |
@@ -7352,16 +7389,16 @@ psa_status_t psa_sign_message(psa_key_id_t key, psa_algorithm_t alg,
  * * PSA_ERROR_INVALID_SIGNATURE:
  *	The calculation was performed successfully, but the passed signature is not a valid
  *	signature.
- *  * PSA_ERROR_NOT_SUPPORTED
- *  * PSA_ERROR_INVALID_ARGUMENT
- *  * PSA_ERROR_INSUFFICIENT_MEMORY
- *  * PSA_ERROR_COMMUNICATION_FAILURE
- *  * PSA_ERROR_HARDWARE_FAILURE
- *  * PSA_ERROR_CORRUPTION_DETECTED
- *  * PSA_ERROR_STORAGE_FAILURE
- *  * PSA_ERROR_DATA_CORRUPT
- *  * PSA_ERROR_DATA_INVALID
- *  * PSA_ERROR_BAD_STATE:
+ * * PSA_ERROR_NOT_SUPPORTED
+ * * PSA_ERROR_INVALID_ARGUMENT
+ * * PSA_ERROR_INSUFFICIENT_MEMORY
+ * * PSA_ERROR_COMMUNICATION_FAILURE
+ * * PSA_ERROR_HARDWARE_FAILURE
+ * * PSA_ERROR_CORRUPTION_DETECTED
+ * * PSA_ERROR_STORAGE_FAILURE
+ * * PSA_ERROR_DATA_CORRUPT
+ * * PSA_ERROR_DATA_INVALID
+ * * PSA_ERROR_BAD_STATE:
  *	The library has not been previously initialized by psa_crypto_init(). It is
  *	implementation-dependent whether a failure to initialize results in this error code.
  */

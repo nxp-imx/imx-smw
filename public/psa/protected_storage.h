@@ -9,6 +9,12 @@
 #include "psa/storage_common.h"
 
 /**
+ * DOC:
+ * The PSA Protected Storage API (PS API) is the general-purpose API that most developers should
+ * use. It is intended to be used to protect storage media that are external to the MCU package.
+ */
+
+/**
  * DOC: Reference
  * Documentation:
  *	PSA Storage API v1.0.0 section 5.3 Protected Storage API
@@ -159,7 +165,7 @@ psa_status_t psa_ps_get_info(psa_storage_uid_t uid,
 psa_status_t psa_ps_remove(psa_storage_uid_t uid);
 
 /**
- * psa_ps_create()
+ * psa_ps_create() - Create an asset based on parameters.
  * @uid: A unique identifier for the asset.
  * @capacity: The allocated capacity, in bytes, of the @uid.
  * @create_flags: Flags indicating properties of the storage.
@@ -200,7 +206,7 @@ psa_status_t psa_ps_create(psa_storage_uid_t uid, size_t capacity,
 			   psa_storage_create_flags_t create_flags);
 
 /**
- * psa_ps_set_extended()
+ * psa_ps_set_extended() - Set partial data into an asset based on parameters
  * @uid: The unique identifier for the asset.
  * @data_offset: Offset within the asset to start the write.
  * @data_length: The size in bytes of the data in @p_data to write.
@@ -260,7 +266,7 @@ psa_status_t psa_ps_set_extended(psa_storage_uid_t uid, size_t data_offset,
 				 size_t data_length, const void *p_data);
 
 /**
- * psa_ps_get_support()
+ * psa_ps_get_support() - Get implemented optional features
  *
  * **Warning: Not supported**
  *

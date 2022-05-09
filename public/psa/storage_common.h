@@ -12,6 +12,11 @@
 #include "psa/status.h"
 
 /**
+ * DOC:
+ * This file defines common definitions for PSA storage.
+ */
+
+/**
  * DOC: Reference
  * Documentation:
  *	PSA Storage API v1.0.0 section 5.1 General Definitions

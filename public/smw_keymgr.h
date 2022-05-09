@@ -173,6 +173,7 @@ struct smw_derive_key_args {
  * The key derivation &smw_derive_key_args->key_descriptor_derived is filled
  * only if the @key_exchange_name request for an ephemeral public key.
  * Following &smw_derive_key_args->key_descriptor_derived fields are filled:
+ *
  *  - @id: set to 0
  *  - @type_name: Set the key type name
  *  - @security_size: Size in bits of the derived key

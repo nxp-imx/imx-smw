@@ -1,0 +1,58 @@
+{
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_type": "HMAC_MD5",
+		"security_size": 128,
+		"key_id": 0,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_type": "HMAC_SHA1",
+		"security_size": 160,
+		"key_id": 1,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_type": "HMAC_SHA224",
+		"security_size": 224,
+		"key_id": 2,
+		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+	},
+	"subtest 4": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_type": "HMAC_SHA256",
+		"security_size": 256,
+		"key_id": 3,
+		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+	},
+	"subtest 5": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_type": "HMAC_SHA384",
+		"security_size": 384,
+		"key_id": 4,
+		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+	},
+	"subtest 6": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_type": "HMAC_SHA512",
+		"security_size": 512,
+		"key_id": 5,
+		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_type": "HMAC_SM3",
+		"security_size": 256,
+		"key_id": 6,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	}
+}

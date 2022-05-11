@@ -36,7 +36,7 @@ executes a strict operation and all keys defined as persistent are flushed. Note
 that HSM uses a strict operation counter which is a replay attack counter, then
 the number of strict operation is limited. So when possible it's better to
 perform multiple persistent key operations (generate, import) before setting the
-"FLUSH_KEY" attribute. 
+"FLUSH_KEY" attribute.
 
 .. [1] Only TLS12_KEY_EXCHANGE when hardware supports it
 
@@ -78,3 +78,25 @@ Random
 ^^^^^^
 
 Length: 1 to UINT32_MAX
+
+HMAC
+^^^^
+
+.. table::
+   :align: left
+   :widths: auto
+
+   +--------------+--------------------------+--------------------+
+   | **Key type** | **Key security size(s)** | **Hash algorithm** |
+   +==============+==========================+====================+
+   | HMAC_SHA224  | 224 bits                 | SHA224             |
+   +--------------+--------------------------+--------------------+
+   | HMAC_SHA256  | 256 bits                 | SHA256             |
+   +--------------+--------------------------+--------------------+
+   | HMAC_SHA384  | 384 bits                 | SHA384             |
+   +--------------+--------------------------+--------------------+
+   | HMAC_SHA512  | 512 bits                 | SHA512             |
+   +--------------+--------------------------+--------------------+
+
+HMAC Key generation and HMAC generation is not working on all HSM Firmware
+and may return ``SMW_STATUS_SUBSYSTEM_FAILURE``.

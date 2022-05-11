@@ -41,7 +41,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Changed linux OSAL key database primitives to use `fcntl()` function in order to lock file access. This function guaranties file locking in case of multi-process and even with NFS file system.
 
-##### 3. SMW APIs
+##### 3. Subsystem
+
+* Add HMAC Key generation and HMAC generation for the HSM subsystem.
+
+##### 4. SMW APIs
 
 * Remove fields `key_attributes_list` and `key_attributes_list_length` from `struct smw_export_key_args`.
 

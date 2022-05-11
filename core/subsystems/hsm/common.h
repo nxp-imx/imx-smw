@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __COMMON_H__
@@ -72,7 +72,7 @@ bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		    int *status);
 
 /**
- * hash_handle() - Handle the Hash operation.
+ * hsm_hash_handle() - Handle the Hash operation.
  * @hdl: Pointer to the HSM handles structure.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.
@@ -85,11 +85,11 @@ bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
  * * true:	- the Security Operation has been handled.
  * * false:	- the Security Operation has not been handled.
  */
-bool hash_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
-		 int *status);
+bool hsm_hash_handle(struct hdl *hdl, enum operation_id operation_id,
+		     void *args, int *status);
 
 /**
- * sign_verify_handle() - Handle the Sign and Verify operations.
+ * hsm_sign_verify_handle() - Handle the Sign and Verify operations.
  * @hdl: Pointer to the HSM handles structure.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.
@@ -102,8 +102,8 @@ bool hash_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
  * * true:	- the Security Operation has been handled.
  * * false:	- the Security Operation has not been handled.
  */
-bool sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
-			void *args, int *status);
+bool hsm_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
+			    void *args, int *status);
 
 /**
  * derive_key() - HSM key derivation operation.
@@ -115,6 +115,22 @@ bool sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
  */
 int derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args);
 
+/**
+ * hsm_hmac_handle() - Handle the HMAC operation.
+ * @hdl: Pointer to the HSM handles structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the HMAC operation.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool hsm_hmac_handle(struct hdl *hdl, enum operation_id operation_id,
+		     void *args, int *status);
 /**
  * convert_hsm_err() - Convert HSM error into SMW status.
  * @err: HSM error code.

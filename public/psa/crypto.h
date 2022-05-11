@@ -21,9 +21,9 @@
 /**
  * DOC: Reference
  * Documentation:
- *	PSA Cryptography API v1.0.1
+ *	PSA Cryptography API v1.1.0
  * Link:
- *	https://developer.arm.com/documentation/ihi0086/a
+ *	https://developer.arm.com/documentation/ihi0086/b
  */
 
 /**
@@ -353,7 +353,7 @@ typedef struct psa_mac_operation_s psa_mac_operation_t;
  * DOC: PSA_CRYPTO_API_VERSION_MINOR
  * The minor version of this implementation of the PSA Crypto API.
  */
-#define PSA_CRYPTO_API_VERSION_MINOR 0
+#define PSA_CRYPTO_API_VERSION_MINOR 1
 
 /**
  * DOC: PSA_KEY_DERIVATION_UNLIMITED_CAPACITY
@@ -2980,6 +2980,58 @@ psa_key_derivation_input_bytes(psa_key_derivation_operation_t *operation,
 			       const uint8_t *data, size_t data_length);
 
 /**
+ * psa_key_derivation_input_integer() - Provide a numeric input for key derivation or key
+ * agreement.
+ * @operation: The key derivation operation object to use. It must have been set up with
+ *             psa_key_derivation_setup() and must not have produced any output yet.
+ * @step: Which step the input data is for.
+ * @value: The value of the numeric input.
+ *
+ * **Warning: Not supported**
+ *
+ * Which inputs are required and in what order depends on the algorithm. However, when an algorithm
+ * requires a particular order, numeric inputs usually come first as they tend to be configuration
+ * parameters.
+ * Refer to the documentation of each key derivation or key agreement algorithm for information.
+ *
+ * This function is used for inputs which are fixed-size non-negative integers.
+ *
+ * If this function returns an error status, the operation enters an error state and must be
+ * aborted by calling psa_key_derivation_abort().
+ *
+ * Return:
+ * * PSA_SUCCESS:
+ *	Success.
+ * * PSA_ERROR_BAD_STATE:
+ *	The following conditions can result in this error\:
+ *
+ *	- The operation state is not valid for this input @step. This can happen if the application
+ *	  provides a step out of order or repeats a step that may not be repeated.
+ *	- The library requires initializing by a call to psa_crypto_init().
+ * * PSA_ERROR_INVALID_ARGUMENT:
+ *	The following conditions can result in this error\:
+ *
+ *	- @step is not compatible with the operation’s algorithm.
+ *	- @step does not allow numerical inputs.
+ *	- @value is not valid for @step in the operation’s algorithm.
+ * * PSA_ERROR_NOT_SUPPORTED:
+ *	The following conditions can result in this error\:
+ *
+ *	- @step is not supported with the operation’s algorithm.
+ *	- @value is not supported for @step in the operation’s algorithm.
+ * * PSA_ERROR_INSUFFICIENT_MEMORY
+ * * PSA_ERROR_COMMUNICATION_FAILURE
+ * * PSA_ERROR_CORRUPTION_DETECTED
+ * * PSA_ERROR_STORAGE_FAILURE
+ * * PSA_ERROR_DATA_CORRUPT
+ * * PSA_ERROR_DATA_INVALID
+ */
+psa_status_t
+psa_key_derivation_input_integer(psa_key_derivation_operation_t *operation,
+				 psa_key_derivation_step_t step,
+				 uint64_t value);
+
+/**
  * psa_key_derivation_input_key() - Provide an input for key derivation in the form of a key.
  * @operation: The key derivation operation object to use. It must have been set up with
  *             psa_key_derivation_setup() and must not have produced any output yet.
@@ -3446,6 +3498,136 @@ psa_key_derivation_set_capacity(psa_key_derivation_operation_t *operation,
  */
 psa_status_t psa_key_derivation_setup(psa_key_derivation_operation_t *operation,
 				      psa_algorithm_t alg);
+
+/**
+ * psa_key_derivation_verify_bytes - Compare output data from a key derivation operation to an
+ * expected value.
+ * @operation: The key derivation operation object to read from.
+ * @expected_output: Buffer containing the expected derivation output.
+ * @output_length: Length ot the expected output. This is also the number of bytes that will be
+ *                 read.
+ *
+ * **Warning: Not supported**
+ *
+ * This function calculates output bytes from a key derivation algorithm and compares those bytes
+ * to an expected value. If the key derivation’s output is viewed as a stream of bytes, this
+ * function destructively reads output_length bytes from the stream before comparing them with
+ * @expected_output. The operation’s capacity decreases by the number of bytes read.
+ *
+ * This is functionally equivalent to the following code\:
+ *
+ *   .. code-block:: c
+ *
+ *      uint8_t tmp[output_length];
+ *      psa_key_derivation_output_bytes(operation, tmp, output_length);
+ *      if (memcmp(expected_output, tmp, output_length) != 0)
+ *      return PSA_ERROR_INVALID_SIGNATURE;
+ *
+ * However, calling psa_key_derivation_verify_bytes() works even if the key’s policy does not
+ * allow output of the bytes.
+ *
+ * If this function returns an error status other than PSA_ERROR_INSUFFICIENT_DATA or
+ * PSA_ERROR_INVALID_SIGNATURE, the operation enters an error state and must be aborted by calling
+ * psa_key_derivation_abort().
+ *
+ * **Note**:
+ *	Implementations must make the best effort to ensure that the comparison between the actual
+ *	key derivation output and the expected output is performed in constant time.
+ *
+ * Return:
+ * * PSA_SUCCESS:
+ *	Success. The output of the key derivation operation matches @expected_output.
+ * * PSA_ERROR_BAD_STATE:
+ *	The following conditions can result in this error\:
+ *
+ *	- The operation state is not valid: it must be active, with all required input steps
+ *	  complete.
+ *	- The library requires initializing by a call to psa_crypto_init().
+ * * PSA_ERROR_NOT_PERMITTED:
+ *	One of the inputs is a key whose policy does not permit PSA_KEY_USAGE_VERIFY_DERIVATION.
+ * * PSA_ERROR_INVALID_SIGNATURE:
+ *	The output of the key derivation operation does not match the value in @expected_output.
+ * * PSA_ERROR_INSUFFICIENT_DATA:
+ *	The operation’s capacity was less than @output_length bytes. In this case, the
+ *	operation’s capacity is set to zero — subsequent calls to this function will not
+ *	succeed, even with a smaller expected output length.
+ * * PSA_ERROR_INSUFFICIENT_MEMORY
+ * * PSA_ERROR_COMMUNICATION_FAILURE
+ * * PSA_ERROR_CORRUPTION_DETECTED
+ * * PSA_ERROR_STORAGE_FAILURE
+ * * PSA_ERROR_DATA_CORRUPT
+ * * PSA_ERROR_DATA_INVALID
+ */
+psa_status_t
+psa_key_derivation_verify_bytes(psa_key_derivation_operation_t *operation,
+				const uint8_t *expected_output,
+				size_t output_length);
+
+/**
+ * psa_key_derivation_verify_key() - Compare output data from a key derivation operation to an
+ * expected value stored in a key.
+ * @operation: The key derivation operation object to read from.
+ * @expected: A key of type PSA_KEY_TYPE_PASSWORD_HASH containing the expected output. The key must
+ *            allow the usage PSA_KEY_USAGE_VERIFY_DERIVATION, and the permitted algorithm must
+ *            match the operation’s algorithm. The value of this key is typically computed by a
+ *            previous call to psa_key_derivation_output_key().
+ *
+ * **Warning: Not supported**
+ *
+ * This function calculates output bytes from a key derivation algorithm and compares those bytes
+ * to an expected value, provided as key of type PSA_KEY_TYPE_PASSWORD_HASH. If the key
+ * derivation’s output is viewed as a stream of bytes, this function destructively reads the
+ * number of bytes corresponding to the length of the expected key from the stream before
+ * comparing them with the key value. The operation’s capacity decreases by the number of bytes
+ * read.
+ *
+ * This is functionally equivalent to exporting the expected key and calling
+ * psa_key_derivation_verify_bytes() on the result, except that it works when the key cannot be
+ * exported.
+ *
+ * If this function returns an error status other than PSA_ERROR_INSUFFICIENT_DATA or
+ * PSA_ERROR_INVALID_SIGNATURE, the operation enters an error state and must be aborted by calling
+ * psa_key_derivation_abort().
+ *
+ * **Note**:
+ *	Implementations must make the best effort to ensure that the comparison between the actual
+ *	key derivation output and the expected output is performed in constant time.
+ *
+ * Return:
+ * * PSA_SUCCESS:
+ *	Success. The output of the key derivation operation matches the expected key value.
+ * * PSA_ERROR_BAD_STATE:
+ *	The following conditions can result in this error\:
+ *
+ *	- The operation state is not valid: it must be active, with all required input steps
+ *	  complete.
+ *	- The library requires initializing by a call to psa_crypto_init().
+ * * PSA_ERROR_INVALID_HANDLE:
+ *	@expected is not a valid key identifier.
+ * * PSA_ERROR_NOT_PERMITTED:
+ *	The following conditions can result in this error\:
+ *
+ *	- The key does not have the PSA_KEY_USAGE_VERIFY_DERIVATION flag, or it does not permit the
+ *	  requested algorithm.
+ *	- One of the inputs is a key whose policy does not permit PSA_KEY_USAGE_VERIFY_DERIVATION.
+ * * PSA_ERROR_INVALID_SIGNATURE:
+ *	The output of the key derivation operation does not match the value of the expected key.
+ * * PSA_ERROR_INSUFFICIENT_DATA:
+ *	The operation’s capacity was less than the length of the expected key.
+ *	In this case, the operation’s capacity is set to zero — subsequent calls to this
+ *	function will not succeed, even with a smaller expected key length.
+ * * PSA_ERROR_INVALID_ARGUMENT:
+ *	The key type is not PSA_KEY_TYPE_PASSWORD_HASH.
+ * * PSA_ERROR_INSUFFICIENT_MEMORY
+ * * PSA_ERROR_COMMUNICATION_FAILURE
+ * * PSA_ERROR_CORRUPTION_DETECTED
+ * * PSA_ERROR_STORAGE_FAILURE
+ * * PSA_ERROR_DATA_CORRUPT
+ * * PSA_ERROR_DATA_INVALID
+ */
+psa_status_t
+psa_key_derivation_verify_key(psa_key_derivation_operation_t *operation,
+			      psa_key_id_t expected);
 
 /**
  * psa_mac_abort() - Abort a MAC operation.

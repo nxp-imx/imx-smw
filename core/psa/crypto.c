@@ -159,13 +159,6 @@ __export psa_status_t psa_aead_generate_nonce(psa_aead_operation_t *operation,
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
-__export psa_aead_operation_t psa_aead_operation_init(void)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_AEAD_OPERATION_INIT;
-}
-
 __export psa_status_t psa_aead_set_lengths(psa_aead_operation_t *operation,
 					   size_t ad_length,
 					   size_t plaintext_length)
@@ -384,13 +377,6 @@ __export psa_status_t psa_cipher_generate_iv(psa_cipher_operation_t *operation,
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
-__export psa_cipher_operation_t psa_cipher_operation_init(void)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_CIPHER_OPERATION_INIT;
-}
-
 __export psa_status_t psa_cipher_set_iv(psa_cipher_operation_t *operation,
 					const uint8_t *iv, size_t iv_length)
 {
@@ -515,16 +501,6 @@ __export psa_status_t psa_generate_random(uint8_t *output, size_t output_size)
 	return util_smw_to_psa_status(status);
 }
 
-__export psa_algorithm_t
-psa_get_key_algorithm(const psa_key_attributes_t *attributes)
-{
-	(void)attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_ERROR_NOT_SUPPORTED;
-}
-
 __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
 					     psa_key_attributes_t *attributes)
 {
@@ -534,53 +510,6 @@ __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return PSA_ERROR_NOT_SUPPORTED;
-}
-
-__export size_t psa_get_key_bits(const psa_key_attributes_t *attributes)
-{
-	(void)attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return 0;
-}
-
-__export psa_key_id_t psa_get_key_id(const psa_key_attributes_t *attributes)
-{
-	(void)attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return 0;
-}
-
-__export psa_key_lifetime_t
-psa_get_key_lifetime(const psa_key_attributes_t *attributes)
-{
-	(void)attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return 0;
-}
-
-__export psa_key_type_t psa_get_key_type(const psa_key_attributes_t *attributes)
-{
-	(void)attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return 0;
-}
-
-__export psa_key_usage_t
-psa_get_key_usage_flags(const psa_key_attributes_t *attributes)
-{
-	(void)attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return 0;
 }
 
 __export psa_status_t psa_hash_abort(psa_hash_operation_t *operation)
@@ -649,13 +578,6 @@ __export psa_status_t psa_hash_finish(psa_hash_operation_t *operation,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return PSA_ERROR_NOT_SUPPORTED;
-}
-
-__export psa_hash_operation_t psa_hash_operation_init(void)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_HASH_OPERATION_INIT;
 }
 
 __export psa_status_t psa_hash_resume(psa_hash_operation_t *operation,
@@ -735,13 +657,6 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
-__export psa_key_attributes_t psa_key_attributes_init(void)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_KEY_ATTRIBUTES_INIT;
-}
-
 __export psa_status_t
 psa_key_derivation_abort(psa_key_derivation_operation_t *operation)
 {
@@ -811,13 +726,6 @@ psa_key_derivation_key_agreement(psa_key_derivation_operation_t *operation,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return PSA_ERROR_NOT_SUPPORTED;
-}
-
-__export psa_key_derivation_operation_t psa_key_derivation_operation_init(void)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_KEY_DERIVATION_OPERATION_INIT;
 }
 
 __export psa_status_t
@@ -899,13 +807,6 @@ __export psa_status_t psa_mac_compute(psa_key_id_t key, psa_algorithm_t alg,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	return PSA_ERROR_NOT_SUPPORTED;
-}
-
-__export psa_mac_operation_t psa_mac_operation_init(void)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_MAC_OPERATION_INIT;
 }
 
 __export psa_status_t psa_mac_sign_finish(psa_mac_operation_t *operation,
@@ -1020,58 +921,6 @@ __export psa_status_t psa_raw_key_agreement(psa_algorithm_t alg,
 __export void psa_reset_key_attributes(psa_key_attributes_t *attributes)
 {
 	(void)attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-}
-
-__export void psa_set_key_algorithm(psa_key_attributes_t *attributes,
-				    psa_algorithm_t alg)
-{
-	(void)attributes;
-	(void)alg;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-}
-
-__export void psa_set_key_bits(psa_key_attributes_t *attributes, size_t bits)
-{
-	(void)attributes;
-	(void)bits;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-}
-
-__export void psa_set_key_id(psa_key_attributes_t *attributes, psa_key_id_t id)
-{
-	(void)attributes;
-	(void)id;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-}
-
-__export void psa_set_key_lifetime(psa_key_attributes_t *attributes,
-				   psa_key_lifetime_t lifetime)
-{
-	(void)attributes;
-	(void)lifetime;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-}
-
-__export void psa_set_key_type(psa_key_attributes_t *attributes,
-			       psa_key_type_t type)
-{
-	(void)attributes;
-	(void)type;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-}
-
-__export void psa_set_key_usage_flags(psa_key_attributes_t *attributes,
-				      psa_key_usage_t usage_flags)
-{
-	(void)attributes;
-	(void)usage_flags;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 }

@@ -61,7 +61,7 @@
  * This is an implementation-defined type. Application should not make any assumptions about the
  * content of this object.
  */
-typedef struct psa_aead_operation psa_aead_operation_t;
+typedef struct psa_aead_operation_s psa_aead_operation_t;
 
 /**
  * typedef psa_cipher_operation_t - The type of the state object for multi-part cipher operations.
@@ -99,7 +99,7 @@ typedef struct psa_aead_operation psa_aead_operation_t;
  * This is an implementation-defined type. Application should not make any assumptions about the
  * content of this object.
  */
-typedef struct psa_cipher_operation psa_cipher_operation_t;
+typedef struct psa_cipher_operation_s psa_cipher_operation_t;
 
 /**
  * typedef psa_hash_operation_t - The type of the state object for multi-part hash operations.
@@ -137,7 +137,7 @@ typedef struct psa_cipher_operation psa_cipher_operation_t;
  * This is an implementation-defined type. Application should not make any assumptions about the
  * content of this object.
  */
-typedef struct psa_hash_operation psa_hash_operation_t;
+typedef struct psa_hash_operation_s psa_hash_operation_t;
 
 /**
  * typedef psa_key_attributes_t - The type of an object containing key attributes.
@@ -263,7 +263,7 @@ typedef struct psa_hash_operation psa_hash_operation_t;
  *
  * Once a key has been created, it is impossible to change its attributes.
  */
-typedef struct psa_key_attributes psa_key_attributes_t;
+typedef struct psa_key_attributes_s psa_key_attributes_t;
 
 /**
  * typedef psa_key_derivation_operation_t - The type of the state object for key derivation
@@ -303,7 +303,7 @@ typedef struct psa_key_attributes psa_key_attributes_t;
  * This is an implementation-defined type. Application should not make any assumptions about the
  * content of this object.
  */
-typedef struct psa_key_derivation_operation psa_key_derivation_operation_t;
+typedef struct psa_key_derivation_operation_s psa_key_derivation_operation_t;
 
 /**
  * typedef psa_mac_operation_t - The type of the state object for multi-part MAC operations.
@@ -341,7 +341,7 @@ typedef struct psa_key_derivation_operation psa_key_derivation_operation_t;
  * This is an implementation-defined type. Application should not make any assumptions about the
  * content of this object.
  */
-typedef struct psa_mac_operation psa_mac_operation_t;
+typedef struct psa_mac_operation_s psa_mac_operation_t;
 
 /**
  * DOC: PSA_CRYPTO_API_VERSION_MAJOR
@@ -795,7 +795,7 @@ psa_status_t psa_aead_generate_nonce(psa_aead_operation_t *operation,
  * Return:
  * &typedef psa_aead_operation_t
  */
-psa_aead_operation_t psa_aead_operation_init(void);
+static psa_aead_operation_t psa_aead_operation_init(void);
 
 /**
  * psa_aead_set_lengths() - Declare the lengths of the message and additional data for AEAD.
@@ -1607,12 +1607,10 @@ psa_status_t psa_cipher_generate_iv(psa_cipher_operation_t *operation,
 /**
  * psa_cipher_operation_init() - Return an initial value for a cipher operation object.
  *
- * **Warning: Not supported**
- *
  * Return:
  * &typedef psa_cipher_operation_t
  */
-psa_cipher_operation_t psa_cipher_operation_init(void);
+static psa_cipher_operation_t psa_cipher_operation_init(void);
 
 /**
  * psa_cipher_set_iv() - Set the initialization vector (IV) for a symmetric encryption or decryption
@@ -2204,8 +2202,6 @@ psa_status_t psa_generate_random(uint8_t *output, size_t output_size);
  * psa_get_key_algorithm() - Retrieve the permitted algorithm policy from key attributes.
  * @attributes: The key attribute object to query.
  *
- * **Warning: Not supported**
- *
  * **Implementation note**:
  *	This is a simple accessor function that is not required to validate its inputs. The
  *	following approaches can be used to provide an efficient implementation\:
@@ -2221,7 +2217,8 @@ psa_status_t psa_generate_random(uint8_t *output, size_t output_size);
  *
  * The algorithm stored in the attribute object.
  */
-psa_algorithm_t psa_get_key_algorithm(const psa_key_attributes_t *attributes);
+static psa_algorithm_t
+psa_get_key_algorithm(const psa_key_attributes_t *attributes);
 
 /**
  * psa_get_key_attributes() - Retrieve the attributes of a key.
@@ -2264,8 +2261,6 @@ psa_status_t psa_get_key_attributes(psa_key_id_t key,
  * psa_get_key_bits() - Retrieve the key size from key attributes.
  * @attributes: The key attribute object to query.
  *
- * **Warning: Not supported**
- *
  * **Implementation note**:
  *	This is a simple accessor function that is not required to validate its inputs. The
  *	following approaches can be used to provide an efficient implementation\:
@@ -2281,13 +2276,11 @@ psa_status_t psa_get_key_attributes(psa_key_id_t key,
  *
  * The key size stored in the attribute object, in bits.
  */
-size_t psa_get_key_bits(const psa_key_attributes_t *attributes);
+static size_t psa_get_key_bits(const psa_key_attributes_t *attributes);
 
 /**
  * psa_get_key_id() - Retrieve the key identifier from key attributes.
  * @attributes: The key attribute object to query.
- *
- * **Warning: Not supported**
  *
  * **Implementation note**:
  *	This is a simple accessor function that is not required to validate its inputs. The
@@ -2305,13 +2298,11 @@ size_t psa_get_key_bits(const psa_key_attributes_t *attributes);
  * The persistent identifier stored in the attribute object. This value is unspecified if the
  * attribute object declares the key as volatile.
  */
-psa_key_id_t psa_get_key_id(const psa_key_attributes_t *attributes);
+static psa_key_id_t psa_get_key_id(const psa_key_attributes_t *attributes);
 
 /**
  * psa_get_key_lifetime() - Retrieve the lifetime from key attributes.
  * @attributes: The key attribute object to query.
- *
- * **Warning: Not supported**
  *
  * **Implementation note**:
  *	This is a simple accessor function that is not required to validate its inputs. The
@@ -2328,13 +2319,12 @@ psa_key_id_t psa_get_key_id(const psa_key_attributes_t *attributes);
  *
  * The lifetime value stored in the attribute object.
  */
-psa_key_lifetime_t psa_get_key_lifetime(const psa_key_attributes_t *attributes);
+static psa_key_lifetime_t
+psa_get_key_lifetime(const psa_key_attributes_t *attributes);
 
 /**
  * psa_get_key_type() - Retrieve the key type from key attributes.
  * @attributes: The key attribute object to query.
- *
- * **Warning: Not supported**
  *
  * **Implementation note**:
  *	This is a simple accessor function that is not required to validate its inputs. The
@@ -2351,13 +2341,11 @@ psa_key_lifetime_t psa_get_key_lifetime(const psa_key_attributes_t *attributes);
  *
  * The key type stored in the attribute object.
  */
-psa_key_type_t psa_get_key_type(const psa_key_attributes_t *attributes);
+static psa_key_type_t psa_get_key_type(const psa_key_attributes_t *attributes);
 
 /**
  * psa_get_key_usage_flags() - Retrieve the usage flags from key attributes.
  * @attributes: The key attribute object to query.
- *
- * **Warning: Not supported**
  *
  * **Implementation note**:
  *	This is a simple accessor function that is not required to validate its inputs. The
@@ -2374,7 +2362,8 @@ psa_key_type_t psa_get_key_type(const psa_key_attributes_t *attributes);
  *
  * The usage flags stored in the attribute object.
  */
-psa_key_usage_t psa_get_key_usage_flags(const psa_key_attributes_t *attributes);
+static psa_key_usage_t
+psa_get_key_usage_flags(const psa_key_attributes_t *attributes);
 
 /**
  * psa_hash_abort() - Abort a hash operation.
@@ -2554,12 +2543,10 @@ psa_status_t psa_hash_finish(psa_hash_operation_t *operation, uint8_t *hash,
 /**
  * psa_hash_operation_init() - Return an initial value for a hash operation object.
  *
- * **Warning: Not supported**
- *
  * Return:
  * &typedef psa_hash_operation_t
  */
-psa_hash_operation_t psa_hash_operation_init(void);
+static psa_hash_operation_t psa_hash_operation_init(void);
 
 /**
  * psa_hash_resume() - Set up a multi-part hash operation using the hash suspend state from a
@@ -2878,12 +2865,10 @@ psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 /**
  * psa_key_attributes_init() - Return an initial value for a key attribute object.
  *
- * **Warning: Not supported**
- *
  * Return:
  * &typedef psa_key_attributes_t
  */
-psa_key_attributes_t psa_key_attributes_init(void);
+static psa_key_attributes_t psa_key_attributes_init(void);
 
 /**
  * psa_key_derivation_abort() - Abort a key derivation operation.
@@ -3114,12 +3099,10 @@ psa_key_derivation_key_agreement(psa_key_derivation_operation_t *operation,
  * psa_key_derivation_operation_init() - Return an initial value for a key derivation operation
  * object.
  *
- * **Warning: Not supported**
- *
  * Return:
  * &typedef psa_key_derivation_operation_t
  */
-psa_key_derivation_operation_t psa_key_derivation_operation_init(void);
+static psa_key_derivation_operation_t psa_key_derivation_operation_init(void);
 
 /**
  * psa_key_derivation_output_bytes() - Read some data from a key derivation operation.
@@ -3553,12 +3536,10 @@ psa_status_t psa_mac_compute(psa_key_id_t key, psa_algorithm_t alg,
 /**
  * psa_mac_operation_init() - Return an initial value for a MAC operation object.
  *
- * **Warning: Not supported**
- *
  * Return:
  * &typedef psa_mac_operation_t
  */
-psa_mac_operation_t psa_mac_operation_init(void);
+static psa_mac_operation_t psa_mac_operation_init(void);
 
 /**
  * psa_mac_sign_finish() - Finish the calculation of the MAC of a message.
@@ -3995,8 +3976,6 @@ void psa_reset_key_attributes(psa_key_attributes_t *attributes);
  * @attributes: The attribute object to write to.
  * @alg: The permitted algorithm to write.
  *
- * **Warning: Not supported**
- *
  * The permitted algorithm policy of a key encodes which algorithm or algorithms are permitted to be
  * used with this key.
  *
@@ -4015,16 +3994,14 @@ void psa_reset_key_attributes(psa_key_attributes_t *attributes);
  * Return:
  * void
  */
-void psa_set_key_algorithm(psa_key_attributes_t *attributes,
-			   psa_algorithm_t alg);
+static void psa_set_key_algorithm(psa_key_attributes_t *attributes,
+				  psa_algorithm_t alg);
 
 /**
  * psa_set_key_bits() - Declare the size of a key.
  * @attributes: The attribute object to write to.
  * @bits: The key size in bits. If this is 0, the key size in @attributes becomes unspecified. Keys
  *        of size 0 are not supported.
- *
- * **Warning: Not supported**
  *
  * This function overwrites any key size previously set in @attributes.
  *
@@ -4041,14 +4018,12 @@ void psa_set_key_algorithm(psa_key_attributes_t *attributes,
  * Return:
  * void
  */
-void psa_set_key_bits(psa_key_attributes_t *attributes, size_t bits);
+static void psa_set_key_bits(psa_key_attributes_t *attributes, size_t bits);
 
 /**
  * psa_set_key_id() - Declare a key as persistent and set its key identifier.
  * @attributes: The attribute object to write to.
  * @id: The persistent identifier for the key.
- *
- * **Warning: Not supported**
  *
  * The application must choose a value for @id between PSA_KEY_ID_USER_MIN and PSA_KEY_ID_USER_MAX.
  *
@@ -4073,15 +4048,13 @@ void psa_set_key_bits(psa_key_attributes_t *attributes, size_t bits);
  * Return:
  * void
  */
-void psa_set_key_id(psa_key_attributes_t *attributes, psa_key_id_t id);
+static void psa_set_key_id(psa_key_attributes_t *attributes, psa_key_id_t id);
 
 /**
  * psa_set_key_lifetime() - Set the location of a persistent key.
  * @attributes: The attribute object to write to.
  * @lifetime: The lifetime for the key. If this is PSA_KEY_LIFETIME_VOLATILE, the key will be
  *            volatile, and the key identifier attribute is reset to PSA_KEY_ID_NULL.
- *
- * **Warning: Not supported**
  *
  * To make a key persistent, give it a persistent key identifier by using psa_set_key_id(). By
  * default, a key that has a persistent identifier is stored in the default storage area identifier
@@ -4106,16 +4079,14 @@ void psa_set_key_id(psa_key_attributes_t *attributes, psa_key_id_t id);
  * Return:
  * void
  */
-void psa_set_key_lifetime(psa_key_attributes_t *attributes,
-			  psa_key_lifetime_t lifetime);
+static void psa_set_key_lifetime(psa_key_attributes_t *attributes,
+				 psa_key_lifetime_t lifetime);
 
 /**
  * psa_set_key_type() - Declare the type of a key.
  * @attributes: The attribute object to write to.
  * @type: The key type to write. If this is PSA_KEY_TYPE_NONE, the key type in @attributes becomes
  *        unspecified.
- *
- * **Warning: Not supported**
  *
  * This function overwrites any key type previously set in @attributes.
  *
@@ -4132,14 +4103,13 @@ void psa_set_key_lifetime(psa_key_attributes_t *attributes,
  * Return:
  * void
  */
-void psa_set_key_type(psa_key_attributes_t *attributes, psa_key_type_t type);
+static void psa_set_key_type(psa_key_attributes_t *attributes,
+			     psa_key_type_t type);
 
 /**
  * psa_set_key_usage_flags() - Declare usage flags for a key.
  * @attributes: The attribute object to write to.
  * @usage_flags:psa_set_key_usage_flags The usage flags to write.
- *
- * **Warning: Not supported**
  *
  * Usage flags are part of a key’s policy. They encode what kind of operations are permitted on
  * the key. For more details, see Key policies.
@@ -4159,8 +4129,8 @@ void psa_set_key_type(psa_key_attributes_t *attributes, psa_key_type_t type);
  * Return:
  * void
  */
-void psa_set_key_usage_flags(psa_key_attributes_t *attributes,
-			     psa_key_usage_t usage_flags);
+static void psa_set_key_usage_flags(psa_key_attributes_t *attributes,
+				    psa_key_usage_t usage_flags);
 
 /**
  * psa_sign_hash() - Sign an already-calculated hash with a private key.

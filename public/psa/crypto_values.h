@@ -1197,6 +1197,9 @@
 #define PSA_KEY_LIFETIME_FROM_PERSISTENCE_AND_LOCATION(persistence, location)  \
 	((location) << 8 | (persistence))
 
+#define PSA_KEY_LIFETIME_GET_LIFETIME(persistence, location)                   \
+	PSA_KEY_LIFETIME_FROM_PERSISTENCE_AND_LOCATION(persistence, location)
+
 /**
  * PSA_KEY_LIFETIME_GET_LOCATION() - Extract the location indicator from a key lifetime.
  * @lifetime: The lifetime value to query (value of &typedef psa_key_lifetime_t).

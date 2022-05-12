@@ -730,8 +730,6 @@
  * output of psa_hash_suspend(), in bytes.
  * @alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true).
  *
- * **Warning: Not supported**
- *
  * Applications can use this value to unpack the hash suspend state that is output by
  * psa_hash_suspend().
  *
@@ -740,15 +738,28 @@
  * algorithm. If the hash algorithm is not recognized, return 0. An implementation can return either
  * 0 or the correct size for a hash algorithm that it recognizes, but does not support.
  */
-#define PSA_HASH_SUSPEND_HASH_STATE_FIELD_LENGTH(alg)                          \
-/* specification-defined value */
+#define PSA_HASH_SUSPEND_HASH_STATE_FIELD_LENGTH(alg)                                           \
+	({                                                                                      \
+		typeof(alg) _alg = (alg);                                                       \
+		((_alg == PSA_ALG_MD2) ?                                                        \
+			 64 :                                                                   \
+			 _alg == PSA_ALG_MD4 || _alg == PSA_ALG_MD5 ?                           \
+			 16 :                                                                   \
+			 _alg == PSA_ALG_RIPEMD160 || _alg == PSA_ALG_SHA_1 ?                   \
+			 20 :                                                                   \
+			 _alg == PSA_ALG_SHA_224 || _alg == PSA_ALG_SHA_256 ?                   \
+			 32 :                                                                   \
+			 _alg == PSA_ALG_SHA_512 || _alg == PSA_ALG_SHA_384 ||                  \
+								 _alg == PSA_ALG_SHA_512_224 || \
+								 _alg == PSA_ALG_SHA_512_256 ?  \
+			 64 :                                                                   \
+			 0);                                                                    \
+	})
 
 /**
  * PSA_HASH_SUSPEND_INPUT_LENGTH_FIELD_LENGTH() - The size of the input-length field that is part of
  * the output of psa_hash_suspend(), in bytes.
  * @alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true).
- *
- * **Warning: Not supported**
  *
  * Applications can use this value to unpack the hash suspend state that is output by
  * psa_hash_suspend().
@@ -758,8 +769,23 @@
  * algorithm. If the hash algorithm is not recognized, return 0. An implementation can return either
  * 0 or the correct size for a hash algorithm that it recognizes, but does not support.
  */
-#define PSA_HASH_SUSPEND_INPUT_LENGTH_FIELD_LENGTH(alg)                        \
-/* specification-defined value */
+#define PSA_HASH_SUSPEND_INPUT_LENGTH_FIELD_LENGTH(alg)                         \
+	({                                                                      \
+		typeof(alg) _alg = (alg);                                       \
+		(_alg == PSA_ALG_MD2 ?                                          \
+			 1 :                                                    \
+			 _alg == PSA_ALG_MD4 || _alg == PSA_ALG_MD5 ||          \
+					 _alg == PSA_ALG_RIPEMD160 ||           \
+					 _alg == PSA_ALG_SHA_1 ||               \
+					 _alg == PSA_ALG_SHA_224 ||             \
+					 _alg == PSA_ALG_SHA_256 ?              \
+			 8 :                                                    \
+			 _alg == PSA_ALG_SHA_512 || _alg == PSA_ALG_SHA_384 ||  \
+						 _alg == PSA_ALG_SHA_512_224 || \
+						 _alg == PSA_ALG_SHA_512_256 ?  \
+			 16 :                                                   \
+			 0);                                                    \
+	})
 
 /**
  * DOC: PSA_HASH_SUSPEND_OUTPUT_MAX_SIZE
@@ -776,8 +802,6 @@
  * PSA_HASH_SUSPEND_OUTPUT_SIZE() - A sufficient hash suspend state buffer size for
  * psa_hash_suspend().
  * @alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true).
- *
- * **Warning: Not supported**
  *
  * If the size of the hash state buffer is at least this large, it is guaranteed that
  * psa_hash_suspend() will not fail due to an insufficient buffer size. The actual size of the
@@ -799,7 +823,14 @@
  *                                         PSA_HASH_SUSPEND_HASH_STATE_FIELD_LENGTH(alg) +
  *                                         PSA_HASH_BLOCK_LENGTH(alg) - 1
  */
-#define PSA_HASH_SUSPEND_OUTPUT_SIZE(alg) /* specification-defined value */
+#define PSA_HASH_SUSPEND_OUTPUT_SIZE(alg)                                      \
+	({                                                                     \
+		typeof(alg) _alg = (alg);                                      \
+		(PSA_HASH_SUSPEND_ALGORITHM_FIELD_LENGTH +                     \
+		 PSA_HASH_SUSPEND_INPUT_LENGTH_FIELD_LENGTH(_alg) +            \
+		 PSA_HASH_SUSPEND_HASH_STATE_FIELD_LENGTH(_alg) +              \
+		 PSA_HASH_BLOCK_LENGTH(_alg) - 1);                             \
+	})
 
 /**
  * PSA_MAC_LENGTH() - The size of the output of psa_mac_compute() and psa_mac_sign_finish(), in

@@ -20,6 +20,7 @@
  *	https://developer.arm.com/documentation/ihi0086/a
  */
 
+#define PSA_ALG_HASH_MASK	      ((psa_algorithm_t)0x000000ff)
 #define PSA_ALG_ANY_HASH	      ((psa_algorithm_t)0x020000ff)
 #define PSA_ALG_CBC_MAC		      ((psa_algorithm_t)0x03c00100)
 #define PSA_ALG_CBC_NO_PADDING	      ((psa_algorithm_t)0x04404000)
@@ -57,11 +58,60 @@
 #define PSA_ALG_STREAM_CIPHER	      ((psa_algorithm_t)0x04800100)
 #define PSA_ALG_XTS		      ((psa_algorithm_t)0x0440ff00)
 
+#define PSA_ALG_AEAD_TAG_LENGTH_MASK ((psa_algorithm_t)0x003f0000)
+#define PSA_AEAD_TAG_LENGTH_OFFSET   16
+
+#define PSA_ALG_MAC_TRUNCATION_MASK ((psa_algorithm_t)0x003f0000)
+#define PSA_MAC_TRUNCATION_OFFSET   16
+
+#define PSA_ALG_CIPHER_MAC_BASE		 ((psa_algorithm_t)0x03c00000)
+#define PSA_ALG_DETERMINISTIC_ECDSA_BASE ((psa_algorithm_t)0x06000700)
+#define PSA_ALG_ECDSA_BASE		 ((psa_algorithm_t)0x06000600)
+#define PSA_ALG_HKDF_BASE		 ((psa_algorithm_t)0x08000100)
+#define PSA_ALG_HMAC_BASE		 ((psa_algorithm_t)0x03800000)
+#define PSA_ALG_RSA_OAEP_BASE		 ((psa_algorithm_t)0x07000300)
+#define PSA_ALG_RSA_PKCS1V15_SIGN_BASE	 ((psa_algorithm_t)0x06000200)
+#define PSA_ALG_RSA_PSS_BASE		 ((psa_algorithm_t)0x06000300)
+#define PSA_ALG_TLS12_PRF_BASE		 ((psa_algorithm_t)0x08000200)
+#define PSA_ALG_TLS12_PSK_TO_MS_BASE	 ((psa_algorithm_t)0x08000300)
+
+#define PSA_ALG_CATEGORY_MASK		       ((psa_algorithm_t)0x7f000000)
+#define PSA_ALG_CATEGORY_AEAD		       ((psa_algorithm_t)0x05000000)
+#define PSA_ALG_CATEGORY_ASYMMETRIC_ENCRYPTION ((psa_algorithm_t)0x07000000)
+#define PSA_ALG_CATEGORY_CIPHER		       ((psa_algorithm_t)0x04000000)
+#define PSA_ALG_CATEGORY_HASH		       ((psa_algorithm_t)0x02000000)
+#define PSA_ALG_CATEGORY_KEY_AGREEMENT	       ((psa_algorithm_t)0x09000000)
+#define PSA_ALG_CATEGORY_KEY_DERIVATION	       ((psa_algorithm_t)0x08000000)
+#define PSA_ALG_CATEGORY_MAC		       ((psa_algorithm_t)0x03000000)
+#define PSA_ALG_CATEGORY_SIGN		       ((psa_algorithm_t)0x06000000)
+
+#define PSA_ALG_AEAD_FROM_BLOCK_FLAG ((psa_algorithm_t)0x00400000)
+#define PSA_ALG_CIPHER_STREAM_FLAG   ((psa_algorithm_t)0x00800000)
+
+#define PSA_ALG_KEY_DERIVATION_MASK  ((psa_algorithm_t)0xfe00ffff)
+#define PSA_ALG_KEY_AGREEMENT_MASK   ((psa_algorithm_t)0xffff0000)
+#define PSA_ALG_MAC_SUBCATEGORY_MASK ((psa_algorithm_t)0x00c00000)
+
+#define PSA_KEY_TYPE_CATEGORY_MASK	 ((psa_key_type_t)0x7000)
+#define PSA_KEY_TYPE_CATEGORY_RAW	 ((psa_key_type_t)0x1000)
+#define PSA_KEY_TYPE_CATEGORY_SYMMETRIC	 ((psa_key_type_t)0x2000)
+#define PSA_KEY_TYPE_CATEGORY_FLAG_PAIR	 ((psa_key_type_t)0x3000)
+#define PSA_KEY_TYPE_CATEGORY_PUBLIC_KEY ((psa_key_type_t)0x4000)
+#define PSA_KEY_TYPE_CATEGORY_KEY_PAIR	 ((psa_key_type_t)0x7000)
+
+#define PSA_KEY_TYPE_DH_GROUP_MASK	((psa_key_type_t)0x00ff)
+#define PSA_KEY_TYPE_DH_KEY_PAIR_BASE	((psa_key_type_t)0x7200)
+#define PSA_KEY_TYPE_DH_PUBLIC_KEY_BASE ((psa_key_type_t)0x4200)
+
+#define PSA_KEY_TYPE_ECC_CURVE_MASK	 ((psa_key_type_t)0x00ff)
+#define PSA_KEY_TYPE_ECC_KEY_PAIR_BASE	 ((psa_key_type_t)0x7100)
+#define PSA_KEY_TYPE_ECC_PUBLIC_KEY_BASE ((psa_key_type_t)0x4100)
+
+#define PSA_ALG_ECDSA_DETERMINISTIC_FLAG ((psa_algorithm_t)0x00000100)
+
 /**
  * PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG() - An AEAD algorithm with the default tag length.
  * @aead_alg: An AEAD algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_AEAD(aead_alg) is true).
- *
- * **Warning: Not supported**
  *
  * This macro can be used to construct the AEAD algorithm with default tag length from an AEAD
  * algorithm with a shortened tag. See also PSA_ALG_AEAD_WITH_SHORTENED_TAG().
@@ -70,15 +120,23 @@
  * The corresponding AEAD algorithm with the default tag length for that algorithm.
  */
 #define PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(aead_alg)                         \
-/* specification-defined value */
+	((PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, 0) ==                      \
+	  PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CCM, 0)) ?                   \
+		 PSA_ALG_CCM :                                                 \
+		 (PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, 0) ==              \
+		  PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_GCM, 0)) ?           \
+		 PSA_ALG_GCM :                                                 \
+		 (PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, 0) ==              \
+		  PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CHACHA20_POLY1305,   \
+						  0)) ?                        \
+		 PSA_ALG_CHACHA20_POLY1305 :                                   \
+		 PSA_ALG_NONE)
 
 /**
  * PSA_ALG_AEAD_WITH_SHORTENED_TAG() - Macro to build a AEAD algorithm with a shortened tag.
  * @aead_alg: An AEAD algorithm identifier (value of &typedef psa_algorithm_t such that
  *            PSA_ALG_IS_AEAD(aead_alg) is true).
  * @tag_length: Desired length of the authentication tag in bytes.
- *
- * **Warning: Not supported**
  *
  * An AEAD algorithm with a shortened tag is similar to the corresponding AEAD algorithm, but has
  * an authentication tag that consists of fewer bytes. Depending on the algorithm, the tag length
@@ -94,14 +152,14 @@
  * the specified AEAD algorithm.
  */
 #define PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, tag_length)                  \
-	/* specification-defined value */
+	((psa_algorithm_t)(((aead_alg) & ~PSA_ALG_AEAD_TAG_LENGTH_MASK) |      \
+			   (((tag_length) << PSA_AEAD_TAG_LENGTH_OFFSET) &     \
+			    PSA_ALG_AEAD_TAG_LENGTH_MASK)))
 
 /**
  * PSA_ALG_DETERMINISTIC_ECDSA() - Deterministic ECDSA signature scheme, with hashing.
  * @hash_alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true).
  *            This includes PSA_ALG_ANY_HASH when specifying the algorithm in a key policy.
- *
- * **Warning: Not supported**
  *
  * This algorithm can be used with both the message and hash signature functions.
  *
@@ -127,14 +185,14 @@
  *
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
-#define PSA_ALG_DETERMINISTIC_ECDSA(hash_alg) /* specification-defined value */
+#define PSA_ALG_DETERMINISTIC_ECDSA(hash_alg)                                  \
+	((psa_algorithm_t)(PSA_ALG_DETERMINISTIC_ECDSA_BASE |                  \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_ECDSA() - The randomized ECDSA signature scheme, with hashing.
  * @hash_alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true).
  *            This includes PSA_ALG_ANY_HASH when specifying the algorithm in a key policy.
- *
- * **Warning: Not supported**
  *
  * This algorithm can be used with both the message and hash signature functions.
  *
@@ -165,7 +223,9 @@
  *
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
-#define PSA_ALG_ECDSA(hash_alg) /* specification-defined value */
+#define PSA_ALG_ECDSA(hash_alg)                                                \
+	((psa_algorithm_t)(PSA_ALG_ECDSA_BASE |                                \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_FULL_LENGTH_MAC() - Macro to construct the MAC algorithm with a full length MAC, from a
@@ -174,20 +234,17 @@
  *           PSA_ALG_IS_MAC(mac_alg) is true). This can be a truncated or untruncated MAC
  *           algorithm.
  *
- * **Warning: Not supported**
- *
  * Return:
  * The corresponding MAC algorithm with a full length MAC.
  *
  * Unspecified if alg is not a supported MAC algorithm.
  */
-#define PSA_ALG_FULL_LENGTH_MAC(mac_alg) /* specification-defined value */
+#define PSA_ALG_FULL_LENGTH_MAC(mac_alg)                                       \
+	((psa_algorithm_t)((mac_alg) & ~PSA_ALG_MAC_TRUNCATION_MASK))
 
 /**
  * PSA_ALG_GET_HASH() - Get the hash used by a composite algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * The following composite algorithms require a hash algorithm\:
  *
@@ -205,13 +262,17 @@
  *
  * PSA_ALG_NONE if @alg is not a composite algorithm that uses a hash.
  */
-#define PSA_ALG_GET_HASH(alg) /* specification-defined value */
+#define PSA_ALG_GET_HASH(alg)                                                  \
+	({                                                                     \
+		typeof(alg) _alg = (alg);                                      \
+		((_alg & PSA_ALG_HASH_MASK) == 0 ?                             \
+			 PSA_ALG_NONE :                                        \
+			 PSA_ALG_CATEGORY_HASH | (_alg & PSA_ALG_HASH_MASK));  \
+	})
 
 /**
  * PSA_ALG_HKDF() - Macro to build an HKDF algorithm.
  * @hash_alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true).
- *
- * **Warning: Not supported**
  *
  * This is the HMAC-based Extract-and-Expand Key Derivation Function (HKDF) specified by HMAC-based
  * Extract-and-Expand Key Derivation Function (HKDF) [RFC5869].
@@ -237,14 +298,14 @@
  *
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
-#define PSA_ALG_HKDF(hash_alg) /* specification-defined value */
+#define PSA_ALG_HKDF(hash_alg)                                                 \
+	((psa_algorithm_t)(PSA_ALG_HKDF_BASE |                                 \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_HMAC() - Macro to build an HMAC message-authentication-code algorithm from an underlying
  * hash algorithm.
  * @hash_alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true).
- *
- * **Warning: Not supported**
  *
  * For example, PSA_ALG_HMAC(PSA_ALG_SHA_256) is HMAC-SHA-256.
  *
@@ -255,79 +316,77 @@
  *
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
-#define PSA_ALG_HMAC(hash_alg) /* specification-defined value */
+#define PSA_ALG_HMAC(hash_alg)                                                 \
+	((psa_algorithm_t)(PSA_ALG_HMAC_BASE |                                 \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_IS_AEAD() - Whether the specified algorithm is an authenticated encryption with
  * associated data (AEAD) algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is an AEAD algorithm, 0 otherwise. This macro can return either 0 or 1 if @alg is not a
  * supported algorithm identifier.
  *
  */
-#define PSA_ALG_IS_AEAD(alg) /* specification-defined value */
+#define PSA_ALG_IS_AEAD(alg)                                                   \
+	(((alg) & (PSA_ALG_CATEGORY_MASK)) == PSA_ALG_CATEGORY_AEAD)
 
 /**
  * PSA_ALG_IS_AEAD_ON_BLOCK_CIPHER() - Whether the specified algorithm is an AEAD mode on a block
  * cipher.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is an AEAD algorithm which is an AEAD mode based on a block cipher, 0 otherwise.
  *
  * This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_AEAD_ON_BLOCK_CIPHER(alg) /* specification-defined value */
+#define PSA_ALG_IS_AEAD_ON_BLOCK_CIPHER(alg)                                   \
+	(((alg) & (PSA_ALG_CATEGORY_MASK | PSA_ALG_AEAD_FROM_BLOCK_FLAG)) ==   \
+	 (PSA_ALG_CATEGORY_AEAD | PSA_ALG_AEAD_FROM_BLOCK_FLAG))
 
 /**
  * PSA_ALG_IS_ASYMMETRIC_ENCRYPTION() - Whether the specified algorithm is an asymmetric encryption
  * algorithm, also known as public-key encryption algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is an asymmetric encryption algorithm, 0 otherwise. This macro can return either 0 or 1
  * if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_ASYMMETRIC_ENCRYPTION(alg) /* specification-defined value */
+#define PSA_ALG_IS_ASYMMETRIC_ENCRYPTION(alg)                                  \
+	(((alg) & (PSA_ALG_CATEGORY_MASK)) ==                                  \
+	 PSA_ALG_CATEGORY_ASYMMETRIC_ENCRYPTION)
 
 /**
  * PSA_ALG_IS_BLOCK_CIPHER_MAC() - Whether the specified algorithm is a MAC algorithm based on a
  * block cipher.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is a MAC algorithm based on a block cipher, 0 otherwise. This macro can return either 0
  * or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_BLOCK_CIPHER_MAC(alg) /* specification-defined value */
+#define PSA_ALG_IS_BLOCK_CIPHER_MAC(alg)                                       \
+	(((alg) & (PSA_ALG_CATEGORY_MASK | PSA_ALG_MAC_SUBCATEGORY_MASK)) ==   \
+	 PSA_ALG_CIPHER_MAC_BASE)
 
 /**
  * PSA_ALG_IS_CIPHER() - Whether the specified algorithm is a symmetric cipher algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is a symmetric cipher algorithm, 0 otherwise. This macro can return either 0 or 1 if
  * @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_CIPHER(alg) /* specification-defined value */
+#define PSA_ALG_IS_CIPHER(alg)                                                 \
+	(((alg) & (PSA_ALG_CATEGORY_MASK)) == PSA_ALG_CATEGORY_CIPHER)
 
 /**
  * PSA_ALG_IS_DETERMINISTIC_ECDSA() - Whether the specified algorithm is deterministic ECDSA.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * See also PSA_ALG_IS_ECDSA() and PSA_ALG_IS_RANDOMIZED_ECDSA().
  *
@@ -336,14 +395,13 @@
  *
  * This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_DETERMINISTIC_ECDSA(alg) /* specification-defined value */
+#define PSA_ALG_IS_DETERMINISTIC_ECDSA(alg)                                    \
+	(((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_DETERMINISTIC_ECDSA_BASE)
 
 /**
  * PSA_ALG_IS_ECDH() - Whether the specified algorithm is an elliptic curve Diffie-Hellman
  * algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * This includes the raw elliptic curve Diffie-Hellman algorithm as well as elliptic curve
  * Diffie-Hellman followed by any supporter key derivation algorithm.
@@ -352,26 +410,25 @@
  * 1 if @alg is an elliptic curve Diffie-Hellman algorithm, 0 otherwise. This macro can return
  * either 0 or 1 if @alg is not a supported key agreement algorithm identifier.
  */
-#define PSA_ALG_IS_ECDH(alg) /* specification-defined value */
+#define PSA_ALG_IS_ECDH(alg)                                                   \
+	(PSA_ALG_KEY_AGREEMENT_GET_BASE(alg) == PSA_ALG_ECDH)
 
 /**
  * PSA_ALG_IS_ECDSA() - Whether the specified algorithm is ECDSA.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * Return:
  * 1 if @alg is an ECDSA algorithm, 0 otherwise.
  *
  * This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_ECDSA(alg) /* specification-defined value */
+#define PSA_ALG_IS_ECDSA(alg)                                                  \
+	(((alg) & ~PSA_ALG_HASH_MASK & ~PSA_ALG_ECDSA_DETERMINISTIC_FLAG) ==   \
+	 PSA_ALG_ECDSA_BASE)
 
 /**
  * PSA_ALG_IS_FFDH() - Whether the specified algorithm is a finite field Diffie-Hellman algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * This includes the raw finite field Diffie-Hellman algorithm as well as finite-field
  * Diffie-Hellman followed by any supporter key derivation algorithm.
@@ -381,13 +438,12 @@
  * or 1 if @alg is not a supported key agreement algorithm identifier.
  *
  */
-#define PSA_ALG_IS_FFDH(alg) /* specification-defined value */
+#define PSA_ALG_IS_FFDH(alg)                                                   \
+	(PSA_ALG_KEY_AGREEMENT_GET_BASE(alg) == PSA_ALG_FFDH)
 
 /**
  * PSA_ALG_IS_HASH() - Whether the specified algorithm is a hash algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * See Hash algorithms for a list of defined hash algorithms.
  *
@@ -395,14 +451,13 @@
  * 1 if @alg is a hash algorithm, 0 otherwise. This macro can return either 0 or 1 if @alg is not a
  * supported algorithm identifier.
  */
-#define PSA_ALG_IS_HASH(alg) /* specification-defined value */
+#define PSA_ALG_IS_HASH(alg)                                                   \
+	(((alg) & (PSA_ALG_CATEGORY_MASK)) == PSA_ALG_CATEGORY_HASH)
 
 /**
  * PSA_ALG_IS_HASH_AND_SIGN() - Whether the specified algorithm is a hash-and-sign algorithm that
  * signs exactly the hash value.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * This macro identifies algorithms that can be used with psa_sign_hash() that use the exact message
  * hash value as an input the signature operation. This excludes hash-and-sign algorithms that
@@ -413,13 +468,17 @@
  * 1 if @alg is a hash-and-sign algorithm that signs exactly the hash value, 0 otherwise. This macro
  * can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_HASH_AND_SIGN(alg) /* specification-defined value */
+#define PSA_ALG_IS_HASH_AND_SIGN(alg)                                          \
+	({                                                                     \
+		typeof(alg) _alg = (alg);                                      \
+		(PSA_ALG_IS_RSA_PSS(_alg) ||                                   \
+		 PSA_ALG_IS_RSA_PKCS1V15_SIGN(_alg) ||                         \
+		 PSA_ALG_IS_ECDSA(_alg));                                      \
+	})
 
 /**
  * PSA_ALG_IS_HKDF() - Whether the specified algorithm is an HKDF algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * HKDF is a family of key derivation algorithms that are based on a hash function and the HMAC
  * construction.
@@ -428,13 +487,11 @@
  * 1 if @alg is an HKDF algorithm, 0 otherwise. This macro can return either 0 or 1 if @alg is not a
  * supported key derivation algorithm identifier.
  */
-#define PSA_ALG_IS_HKDF(alg) /* specification-defined value */
+#define PSA_ALG_IS_HKDF(alg) (((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_HKDF_BASE)
 
 /**
  * PSA_ALG_IS_HMAC() - Whether the specified algorithm is an HMAC algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * HMAC is a family of MAC algorithms that are based on a hash function.
  *
@@ -442,49 +499,46 @@
  * 1 if alg is an HMAC algorithm, 0 otherwise. This macro can return either 0 or 1 if alg is not a
  * supported algorithm identifier.
  */
-#define PSA_ALG_IS_HMAC(alg) /* specification-defined value */
+#define PSA_ALG_IS_HMAC(alg)                                                   \
+	(((alg) & (PSA_ALG_CATEGORY_MASK | PSA_ALG_MAC_SUBCATEGORY_MASK)) ==   \
+	 PSA_ALG_HMAC_BASE)
 
 /**
  * PSA_ALG_IS_KEY_AGREEMENT() - Whether the specified algorithm is a key agreement algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is a key agreement algorithm, 0 otherwise. This macro can return either 0 or 1 if @alg
  * is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_KEY_AGREEMENT(alg) /* specification-defined value */
+#define PSA_ALG_IS_KEY_AGREEMENT(alg)                                          \
+	(((alg) & (PSA_ALG_CATEGORY_MASK)) == PSA_ALG_CATEGORY_KEY_AGREEMENT)
 
 /**
  * PSA_ALG_IS_KEY_DERIVATION() - Whether the specified algorithm is a key derivation algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is a key derivation algorithm, 0 otherwise. This macro can return either 0 or 1 if @alg
  * is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_KEY_DERIVATION(alg) /* specification-defined value */
+#define PSA_ALG_IS_KEY_DERIVATION(alg)                                         \
+	(((alg) & (PSA_ALG_CATEGORY_MASK)) == PSA_ALG_CATEGORY_KEY_DERIVATION)
 
 /**
  * PSA_ALG_IS_MAC() - Whether the specified algorithm is a MAC algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is a MAC algorithm, 0 otherwise. This macro can return either 0 or 1 if @alg is not a
  * supported algorithm identifier.
  */
-#define PSA_ALG_IS_MAC(alg) /* specification-defined value */
+#define PSA_ALG_IS_MAC(alg)                                                    \
+	(((alg) & (PSA_ALG_CATEGORY_MASK)) == PSA_ALG_CATEGORY_MAC)
 
 /**
  * PSA_ALG_IS_RANDOMIZED_ECDSA() - Whether the specified algorithm is randomized ECDSA.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * See also PSA_ALG_IS_ECDSA() and PSA_ALG_IS_DETERMINISTIC_ECDSA().
  *
@@ -493,14 +547,13 @@
  *
  * This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_RANDOMIZED_ECDSA(alg) /* specification-defined value */
+#define PSA_ALG_IS_RANDOMIZED_ECDSA(alg)                                       \
+	(((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_ECDSA_BASE)
 
 /**
  * PSA_ALG_IS_RAW_KEY_AGREEMENT() - Whether the specified algorithm is a raw key agreement
  * algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * A raw key agreement algorithm is one that does not specify a key derivation function. Usually,
  * raw key agreement algorithms are constructed directly with a PSA_ALG_xxx macro while non-raw key
@@ -513,94 +566,94 @@
  * 1 if @alg is a raw key agreement algorithm, 0 otherwise. This macro can return either 0 or 1 if
  * @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_RAW_KEY_AGREEMENT(alg) /* specification-defined value */
-
+#define PSA_ALG_IS_RAW_KEY_AGREEMENT(alg)                                      \
+	({                                                                     \
+		typeof(alg) _alg = (alg);                                      \
+		(PSA_ALG_IS_KEY_AGREEMENT(_alg) &&                             \
+		 PSA_ALG_KEY_AGREEMENT_GET_KDF(_alg) ==                        \
+			 PSA_ALG_CATEGORY_KEY_DERIVATION);                     \
+	})
 /**
  * PSA_ALG_IS_RSA_OAEP() - Whether the specified algorithm is an RSA OAEP encryption algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * Return:
  * 1 if @alg is an RSA OAEP algorithm, 0 otherwise.
  *
  * This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_RSA_OAEP(alg) /* specification-defined value */
+#define PSA_ALG_IS_RSA_OAEP(alg)                                               \
+	(((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_RSA_OAEP_BASE)
 
 /**
  * PSA_ALG_IS_RSA_PKCS1V15_SIGN() - Whether the specified algorithm is an RSA PKCS#1 v1.5 signature
  * algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is an RSA PKCS#1 v1.5 signature algorithm, 0 otherwise.
  *
  * This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_RSA_PKCS1V15_SIGN(alg) /* specification-defined value */
+#define PSA_ALG_IS_RSA_PKCS1V15_SIGN(alg)                                      \
+	(((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_RSA_PKCS1V15_SIGN_BASE)
 
 /**
  * PSA_ALG_IS_RSA_PSS() - Whether the specified algorithm is an RSA PSS signature algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * Return:
  * 1 if @alg is an RSA PSS signature algorithm, 0 otherwise.
  *
  * This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_RSA_PSS(alg) /* specification-defined value */
+#define PSA_ALG_IS_RSA_PSS(alg)                                                \
+	(((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_RSA_PSS_BASE)
 
 /**
  * PSA_ALG_IS_SIGN() - Whether the specified algorithm is an asymmetric signature algorithm, also
  * known as public-key signature algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is an asymmetric signature algorithm, 0 otherwise. This macro can return either 0 or 1
  * if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_SIGN(alg) /* specification-defined value */
+#define PSA_ALG_IS_SIGN(alg)                                                   \
+	(((alg) & (PSA_ALG_CATEGORY_MASK)) == PSA_ALG_CATEGORY_SIGN)
 
 /**
  * PSA_ALG_IS_SIGN_HASH() - Whether the specified algorithm is a signature algorithm that can be
  * used with psa_sign_hash() and psa_verify_hash().
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is a signature algorithm that can be used to sign a hash. 0 @alg alg is a signature
  * algorithm that can only be used to sign a message. 0 if @alg is not a signature algorithm. This
  * macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_SIGN_HASH(alg) /* specification-defined value */
+#define PSA_ALG_IS_SIGN_HASH(alg) PSA_ALG_IS_SIGN(alg)
 
 /**
  * PSA_ALG_IS_SIGN_MESSAGE() - Whether the specified algorithm is a signature algorithm that can be
  * used with psa_sign_message() and psa_verify_message().
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is a signature algorithm that can be used to sign a message. 0 if @alg is a signature
  * algorithm that can only be used to sign an already-calculated hash. 0 if @alg is not a signature
  * algorithm. This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_SIGN_MESSAGE(alg) /* specification-defined value */
+#define PSA_ALG_IS_SIGN_MESSAGE(alg)                                           \
+	({                                                                     \
+		typeof(alg) _alg = (alg);                                      \
+		(PSA_ALG_IS_SIGN(_alg) && _alg != PSA_ALG_ECDSA_ANY &&         \
+		 _alg != PSA_ALG_RSA_PKCS1V15_SIGN_RAW);                       \
+	})
 
 /**
  * PSA_ALG_IS_STREAM_CIPHER() - Whether the specified algorithm is a stream cipher.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * A stream cipher is a symmetric cipher that encrypts or decrypts messages by applying a
  * bitwise-xor with a stream of bytes that is generated from a key.
@@ -609,37 +662,35 @@
  * 1 if @alg is a stream cipher algorithm, 0 otherwise. This macro can return either 0 or 1 if @alg
  * is not a supported algorithm identifier or if it is not a symmetric cipher algorithm.
  */
-#define PSA_ALG_IS_STREAM_CIPHER(alg) /* specification-defined value */
+#define PSA_ALG_IS_STREAM_CIPHER(alg)                                          \
+	(((alg) & (PSA_ALG_CATEGORY_MASK | PSA_ALG_CIPHER_STREAM_FLAG)) ==     \
+	 (PSA_ALG_CATEGORY_CIPHER | PSA_ALG_CIPHER_STREAM_FLAG))
 
 /**
  * PSA_ALG_IS_TLS12_PRF() - Whether the specified algorithm is a TLS-1.2 PRF algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is a TLS-1.2 PRF algorithm, 0 otherwise. This macro can return either 0 or 1 if @alg is
  * not a supported key derivation algorithm identifier.
  */
-#define PSA_ALG_IS_TLS12_PRF(alg) /* specification-defined value */
+#define PSA_ALG_IS_TLS12_PRF(alg)                                              \
+	(((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_TLS12_PRF_BASE)
 
 /**
  * PSA_ALG_IS_TLS12_PSK_TO_MS() - Whether the specified algorithm is a TLS-1.2 PSK to MS algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
- * **Warning: Not supported**
- *
  * Return:
  * 1 if @alg is a TLS-1.2 PSK to MS algorithm, 0 otherwise. This macro can return either 0 or 1 if
  * @alg is not a supported key derivation algorithm identifier.
  */
-#define PSA_ALG_IS_TLS12_PSK_TO_MS(alg) /* specification-defined value */
+#define PSA_ALG_IS_TLS12_PSK_TO_MS(alg)                                        \
+	(((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_TLS12_PSK_TO_MS_BASE)
 
 /**
  * PSA_ALG_IS_WILDCARD() - Whether the specified algorithm encoding is a wildcard.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
- *
- * **Warning: Not supported**
  *
  * Wildcard algorithm values can only be used to set the permitted algorithm field in a key policy,
  * wildcard values cannot be used to perform an operation.
@@ -653,7 +704,7 @@
  *
  * This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
-#define PSA_ALG_IS_WILDCARD(alg) /* specification-defined value */
+#define PSA_ALG_IS_WILDCARD(alg) (PSA_ALG_GET_HASH(alg) == PSA_ALG_ANY_HASH)
 
 /**
  * PSA_ALG_KEY_AGREEMENT() - Macro to build a combined algorithm that chains a key agreement with a
@@ -662,8 +713,6 @@
  *          is true).
  * @kdf_alg: A key derivation algorithm (PSA_ALG_XXX value such that
  *           PSA_ALG_IS_KEY_DERIVATION(kdf_alg) is true).
- *
- * **Warning: Not supported**
  *
  * A combined key agreement algorithm is used with a multi-part key derivation operation, using a
  * call to psa_key_derivation_key_agreement().
@@ -677,15 +726,13 @@
  * Unspecified if @ka_alg is not a supported key agreement algorithm or @kdf_alg is not a supported
  * key derivation algorithm.
  */
-#define PSA_ALG_KEY_AGREEMENT(ka_alg, kdf_alg) /* specification-defined value */
+#define PSA_ALG_KEY_AGREEMENT(ka_alg, kdf_alg) ((ka_alg) | (kdf_alg))
 
 /**
  * PSA_ALG_KEY_AGREEMENT_GET_BASE() - Get the raw key agreement algorithm from a full key agreement
  * algorithm.
  * @alg: A key agreement algorithm identifier (value of &typedef psa_algorithm_t such that
  *       PSA_ALG_IS_KEY_AGREEMENT(alg) is true).
- *
- * **Warning: Not supported**
  *
  * See also PSA_ALG_KEY_AGREEMENT() and PSA_ALG_KEY_AGREEMENT_GET_KDF().
  *
@@ -695,15 +742,14 @@
  * Unspecified if @alg is not a key agreement algorithm or if it is not supported by the
  * implementation.
  */
-#define PSA_ALG_KEY_AGREEMENT_GET_BASE(alg) /* specification-defined value */
+#define PSA_ALG_KEY_AGREEMENT_GET_BASE(alg)                                    \
+	((psa_algorithm_t)((alg) & (PSA_ALG_KEY_AGREEMENT_MASK)))
 
 /**
  * PSA_ALG_KEY_AGREEMENT_GET_KDF() - Get the key derivation algorithm used in a full key agreement
  * algorithm.
  * @alg: A key agreement algorithm identifier (value of &typedef psa_algorithm_t such that
  *       PSA_ALG_IS_KEY_AGREEMENT(alg) is true).
- *
- * **Warning: Not supported**
  *
  * See also PSA_ALG_KEY_AGREEMENT() and PSA_ALG_KEY_AGREEMENT_GET_BASE().
  *
@@ -713,14 +759,13 @@
  * Unspecified if @alg is not a key agreement algorithm or if it is not supported by the
  * implementation.
  */
-#define PSA_ALG_KEY_AGREEMENT_GET_KDF(alg) /* specification-defined value */
+#define PSA_ALG_KEY_AGREEMENT_GET_KDF(alg)                                     \
+	((psa_algorithm_t)((alg) & (PSA_ALG_KEY_DERIVATION_MASK)))
 
 /**
  * PSA_ALG_RSA_OAEP() - The RSA OAEP asymmetric encryption algorithm.
  * @hash_alg: The hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true) to
  *            use for MGF1.
- *
- * **Warning: Not supported**
  *
  * This encryption scheme is defined by [RFC8017] §7.1 under the name RSAES-OAEP, with the mask
  * generation function MGF1 defined in [RFC8017] Appendix B.
@@ -730,14 +775,14 @@
  *
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
-#define PSA_ALG_RSA_OAEP(hash_alg) /* specification-defined value */
+#define PSA_ALG_RSA_OAEP(hash_alg)                                             \
+	((psa_algorithm_t)(PSA_ALG_RSA_OAEP_BASE |                             \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_RSA_PKCS1V15_SIGN() - The RSA PKCS#1 v1.5 message signature scheme, with hashing.
  * @hash_alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true).
  *            This includes PSA_ALG_ANY_HASH when specifying the algorithm in a key policy.
- *
- * **Warning: Not supported**
  *
  * This algorithm can be used with both the message and hash signature functions.
  *
@@ -753,14 +798,14 @@
  *
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
-#define PSA_ALG_RSA_PKCS1V15_SIGN(hash_alg) /* specification-defined value */
+#define PSA_ALG_RSA_PKCS1V15_SIGN(hash_alg)                                    \
+	((psa_algorithm_t)(PSA_ALG_RSA_PKCS1V15_SIGN_BASE |                    \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_RSA_PSS() - The RSA PSS message signature scheme, with hashing.
  * @hash_alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true).
  *            This includes PSA_ALG_ANY_HASH when specifying the algorithm in a key policy.
- *
- * **Warning: Not supported**
  *
  * This algorithm can be used with both the message and hash signature functions.
  *
@@ -782,13 +827,13 @@
  * Unspecified if @hash_alg is not a supported hash algorithm.
  *
  */
-#define PSA_ALG_RSA_PSS(hash_alg) /* specification-defined value */
+#define PSA_ALG_RSA_PSS(hash_alg)                                              \
+	((psa_algorithm_t)(PSA_ALG_RSA_PSS_BASE |                              \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_TLS12_PRF() - Macro to build a TLS-1.2 PRF algorithm.
  * @hash_alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true).
- *
- * **Warning: Not supported**
  *
  * TLS 1.2 uses a custom pseudorandom function (PRF) for key schedule, specified in The Transport
  * Layer Security (TLS) Protocol Version 1.2 [RFC5246] §5. It is based on HMAC and can be used with
@@ -817,13 +862,13 @@
  *
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
-#define PSA_ALG_TLS12_PRF(hash_alg) /* specification-defined value */
+#define PSA_ALG_TLS12_PRF(hash_alg)                                            \
+	((psa_algorithm_t)(PSA_ALG_TLS12_PRF_BASE |                            \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_TLS12_PSK_TO_MS() - Macro to build a TLS-1.2 PSK-to-MasterSecret algorithm.
  * @hash_alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true).
- *
- * **Warning: Not supported**
  *
  * In a pure-PSK handshake in TLS 1.2, the master secret (MS) is derived from the pre-shared key
  * (PSK) through the application of padding (Pre-Shared Key Ciphersuites for Transport Layer
@@ -857,7 +902,9 @@
  *
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
-#define PSA_ALG_TLS12_PSK_TO_MS(hash_alg) /* specification-defined value */
+#define PSA_ALG_TLS12_PSK_TO_MS(hash_alg)                                      \
+	((psa_algorithm_t)(PSA_ALG_TLS12_PSK_TO_MS_BASE |                      \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_TRUNCATED_MAC() - Macro to build a truncated MAC algorithm.
@@ -866,8 +913,6 @@
  * @mac_length: Desired length of the truncated MAC in bytes. This must be at most the full length
  *              of the MAC and must be at least an implementation-specified minimum. The
  *              implementation-specified minimum must not be zero.
- *
- * **Warning: Not supported**
  *
  * A truncated MAC algorithm is identical to the corresponding MAC algorithm except that the MAC
  * value for the truncated algorithm consists of only the first @mac_length bytes of the MAC value
@@ -892,13 +937,13 @@
  * for the specified MAC algorithm.
  */
 #define PSA_ALG_TRUNCATED_MAC(mac_alg, mac_length)                             \
-/* specification-defined value */
+	((psa_algorithm_t)(((mac_alg) & ~PSA_ALG_MAC_TRUNCATION_MASK) |        \
+			   (((mac_length) << PSA_MAC_TRUNCATION_OFFSET) &      \
+			    PSA_ALG_MAC_TRUNCATION_MASK)))
 
 /**
  * PSA_BLOCK_CIPHER_BLOCK_LENGTH() - The block size of a block cipher.
  * @type: A cipher key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  *
  * **Note**:
  *	It is possible to build stream cipher algorithms on top of a block cipher, for example CTR
@@ -918,7 +963,7 @@
  * The block size for a block cipher, or 1 for a stream cipher. The return value is undefined if
  * @type is not a supported cipher key type.
  */
-#define PSA_BLOCK_CIPHER_BLOCK_LENGTH(type) /* specification-defined value */
+#define PSA_BLOCK_CIPHER_BLOCK_LENGTH(type) (1u << (((type) >> 8) & 7))
 
 /**
  * DOC: PSA_DH_FAMILY_RFC7919
@@ -1420,41 +1465,36 @@
  * @type: A Diffie-Hellman key type (value of &typedef psa_key_type_t such that
  *        PSA_KEY_TYPE_IS_DH(type) is true).
  *
- * **Warning: Not supported**
- *
  * Return:
  * &typedef psa_dh_family_t
  *
  * The Diffie-Hellman group family id, if @type is a supported Diffie-Hellman key. Unspecified if
  * @type is not a supported Diffie-Hellman key.
  */
-#define PSA_KEY_TYPE_DH_GET_FAMILY(type) /* specification-defined value */
+#define PSA_KEY_TYPE_DH_GET_FAMILY(type)                                       \
+	((psa_dh_family_t)((type) & (PSA_KEY_TYPE_DH_GROUP_MASK)))
 
 /**
  * PSA_KEY_TYPE_DH_KEY_PAIR() - Finite-field Diffie-Hellman key pair: both the private key and
  * public key.
  * @group: A value of &typedef psa_dh_family_t that identifies the Diffie-Hellman group family to
  *         be used.
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_DH_KEY_PAIR(group) /* specification-defined value */
+#define PSA_KEY_TYPE_DH_KEY_PAIR(group)                                        \
+	((psa_key_type_t)(PSA_KEY_TYPE_DH_KEY_PAIR_BASE | (group)))
 
 /**
  * PSA_KEY_TYPE_DH_PUBLIC_KEY() - Finite-field Diffie-Hellman public key.
  * @group: A value of &typedef psa_dh_family_t that identifies the Diffie-Hellman group family to
  *         be used.
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_DH_PUBLIC_KEY(group) /* specification-defined value */
+#define PSA_KEY_TYPE_DH_PUBLIC_KEY(group)                                      \
+	((psa_key_type_t)(PSA_KEY_TYPE_DH_PUBLIC_KEY_BASE | (group)))
 
 /**
  * PSA_KEY_TYPE_ECC_GET_FAMILY() - Extract the curve family from an elliptic curve key type.
  * @type: An elliptic curve key type (value of &typedef psa_key_type_t such that
  *        PSA_KEY_TYPE_IS_ECC(type) is true).
- *
- * **Warning: Not supported**
  *
  * Return:
  * &typedef psa_ecc_family_t
@@ -1462,23 +1502,22 @@
  * The elliptic curve family id, if @type is a supported elliptic curve key. Unspecified if @type is
  * not a supported elliptic curve key.
  */
-#define PSA_KEY_TYPE_ECC_GET_FAMILY(type) /* specification-defined value */
+#define PSA_KEY_TYPE_ECC_GET_FAMILY(type)                                      \
+	((psa_ecc_family_t)((type) & (PSA_KEY_TYPE_ECC_CURVE_MASK)))
 
 /**
  * PSA_KEY_TYPE_ECC_KEY_PAIR() - Elliptic curve key pair: both the private and public key.
  * @curve: A value of &typedef psa_ecc_family_t that identifies the ECC curve family to be used.
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_ECC_KEY_PAIR(curve) /* specification-defined value */
+#define PSA_KEY_TYPE_ECC_KEY_PAIR(curve)                                       \
+	((psa_key_type_t)(PSA_KEY_TYPE_ECC_KEY_PAIR_BASE | (curve)))
 
 /**
  * PSA_KEY_TYPE_ECC_PUBLIC_KEY() - Elliptic curve public key.
  * @curve: A value of &typedef psa_ecc_family_t that identifies the ECC curve family to be used.
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_ECC_PUBLIC_KEY(curve) /* specification-defined value */
+#define PSA_KEY_TYPE_ECC_PUBLIC_KEY(curve)                                     \
+	((psa_key_type_t)(PSA_KEY_TYPE_ECC_PUBLIC_KEY_BASE | (curve)))
 
 /**
  * DOC: PSA_KEY_TYPE_HMAC
@@ -1507,105 +1546,105 @@
  * key.
  * @type: A key type (value of &typedef psa_key_type_t).
  *
- * **Warning: Not supported**
- *
  * See RSA keys for a list of asymmetric key types.
  */
-#define PSA_KEY_TYPE_IS_ASYMMETRIC(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_ASYMMETRIC(type)                                       \
+	(((type) & (PSA_KEY_TYPE_CATEGORY_MASK) &                              \
+	  ~PSA_KEY_TYPE_CATEGORY_FLAG_PAIR) ==                                 \
+	 PSA_KEY_TYPE_CATEGORY_PUBLIC_KEY)
 
 /**
  * PSA_KEY_TYPE_IS_DH() - Whether a key type is a Diffie-Hellman key, either a key pair or a public
  * key.
  * @type: A key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_IS_DH(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_DH(type)                                               \
+	((PSA_KEY_TYPE_PUBLIC_KEY_OF_KEY_PAIR(type) &                          \
+	  ~PSA_KEY_TYPE_DH_GROUP_MASK) == PSA_KEY_TYPE_DH_PUBLIC_KEY_BASE)
 
 /**
  * PSA_KEY_TYPE_IS_DH_KEY_PAIR() - Whether a key type is a Diffie-Hellman key pair.
  * @type: A key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_IS_DH_KEY_PAIR(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_DH_KEY_PAIR(type)                                      \
+	(((type) & ~PSA_KEY_TYPE_DH_GROUP_MASK) ==                             \
+	 PSA_KEY_TYPE_DH_KEY_PAIR_BASE)
 
 /**
  * PSA_KEY_TYPE_IS_DH_PUBLIC_KEY() - Whether a key type is a Diffie-Hellman public key.
  * @type: A key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_IS_DH_PUBLIC_KEY(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_DH_PUBLIC_KEY(type)                                    \
+	(((type) & ~PSA_KEY_TYPE_DH_GROUP_MASK) ==                             \
+	 PSA_KEY_TYPE_DH_PUBLIC_KEY_BASE)
 
 /**
  * PSA_KEY_TYPE_IS_ECC() - Whether a key type is an elliptic curve key, either a key pair or a
  * public key.
  * @type: A key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_IS_ECC(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_ECC(type)                                              \
+	((PSA_KEY_TYPE_PUBLIC_KEY_OF_KEY_PAIR(type) &                          \
+	  ~PSA_KEY_TYPE_ECC_CURVE_MASK) == PSA_KEY_TYPE_ECC_PUBLIC_KEY_BASE)
 
 /**
  * PSA_KEY_TYPE_IS_ECC_KEY_PAIR() - Whether a key type is an elliptic curve key pair.
  * @type: A key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_IS_ECC_KEY_PAIR(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_ECC_KEY_PAIR(type)                                     \
+	(((type) & ~PSA_KEY_TYPE_ECC_CURVE_MASK) ==                            \
+	 PSA_KEY_TYPE_ECC_KEY_PAIR_BASE)
 
 /**
  * PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY() - Whether a key type is an elliptic curve key pair.
  * @type: A key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY(type)                                   \
+	(((type) & ~PSA_KEY_TYPE_ECC_CURVE_MASK) ==                            \
+	 PSA_KEY_TYPE_ECC_PUBLIC_KEY_BASE)
 
 /**
  * PSA_KEY_TYPE_IS_KEY_PAIR() - Whether a key type is a key pair containing a private part and a
  * public part.
  * @type: A key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_IS_KEY_PAIR(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_KEY_PAIR(type)                                         \
+	(((type) & (PSA_KEY_TYPE_CATEGORY_MASK)) ==                            \
+	 PSA_KEY_TYPE_CATEGORY_KEY_PAIR)
 
 /**
  * PSA_KEY_TYPE_IS_PUBLIC_KEY() - Whether a key type is the public part of a key pair.
  * @type: A key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_IS_PUBLIC_KEY(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_PUBLIC_KEY(type)                                       \
+	(((type) & (PSA_KEY_TYPE_CATEGORY_MASK)) ==                            \
+	 PSA_KEY_TYPE_CATEGORY_PUBLIC_KEY)
 
 /**
  * PSA_KEY_TYPE_IS_RSA() - Whether a key type is an RSA key. This includes both key pairs and public
  * keys.
  * @type: A key type (value of &typedef psa_key_type_t).
- *
- * **Warning: Not supported**
  */
-#define PSA_KEY_TYPE_IS_RSA(type) /* specification-defined value */
+#define PSA_KEY_TYPE_IS_RSA(type)                                              \
+	(PSA_KEY_TYPE_PUBLIC_KEY_OF_KEY_PAIR(type) ==                          \
+	 PSA_KEY_TYPE_RSA_PUBLIC_KEY)
 
 /**
  * PSA_KEY_TYPE_IS_UNSTRUCTURED() - Whether a key type is an unstructured array of bytes.
  * @type: A key type (value of &typedef psa_key_type_t).
  *
- * **Warning: Not supported**
- *
  * This encompasses both symmetric keys and non-key data.
  *
  * See Symmetric keys for a list of symmetric key types.
  */
-#define PSA_KEY_TYPE_IS_UNSTRUCTURED(type) /* specification-defined value */
-
+#define PSA_KEY_TYPE_IS_UNSTRUCTURED(type)                                     \
+	(((type) & (PSA_KEY_TYPE_CATEGORY_MASK)) ==                            \
+		 PSA_KEY_TYPE_CATEGORY_RAW ||                                  \
+	 ((type) & (PSA_KEY_TYPE_CATEGORY_MASK)) ==                            \
+		 PSA_KEY_TYPE_CATEGORY_SYMMETRIC)
 /**
  * PSA_KEY_TYPE_KEY_PAIR_OF_PUBLIC_KEY() - The key pair type corresponding to a public key type.
  * @type: A public key type or key pair type.
- *
- * **Warning: Not supported**
  *
  * If type is a key pair type, it will be left unchanged.
  *
@@ -1614,7 +1653,7 @@
  * undefined.
  */
 #define PSA_KEY_TYPE_KEY_PAIR_OF_PUBLIC_KEY(type)                              \
-/* specification-defined value */
+	((psa_key_type_t)((type) | PSA_KEY_TYPE_CATEGORY_FLAG_PAIR))
 
 /**
  * DOC: PSA_KEY_TYPE_NONE
@@ -1628,8 +1667,6 @@
  * PSA_KEY_TYPE_PUBLIC_KEY_OF_KEY_PAIR() - The public key type corresponding to a key pair type.
  * @type: A public key type or key pair type.
  *
- * **Warning: Not supported**
- *
  * If type is a public key type, it will be left unchanged.
  *
  * Return:
@@ -1637,7 +1674,7 @@
  * is undefined.
  */
 #define PSA_KEY_TYPE_PUBLIC_KEY_OF_KEY_PAIR(type)                              \
-/* specification-defined value */
+	((psa_key_type_t)((type) & ~PSA_KEY_TYPE_CATEGORY_FLAG_PAIR))
 
 /**
  * DOC: PSA_KEY_TYPE_RAW_DATA

@@ -217,4 +217,10 @@ void dbg_entry(struct key_entry *entry);
  */
 void dbg_entry_info(void *buf, size_t len);
 
+/**
+ * dbg_get_lock_file - Debug print the lock status of file
+ * @fp: File id opened
+ */
+void dbg_get_lock_file(int fp);
+
 #endif /* __LOCAL_H__ */

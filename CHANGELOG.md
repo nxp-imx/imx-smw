@@ -37,6 +37,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Upgrade ARM PSA Crypto API to version 1.1.0.
 * Implement Hash one go
 
+##### 2. OSAL
+
+* Changed linux OSAL key database primitives to use `fcntl()` function in order to lock file access. This function guaranties file locking in case of multi-process and even with NFS file system.
+
 ### <a id ="rel_2_0"></a></br>**Release 2.0**
 ---
 This version introduces the support of the ARM PSA APIs in addition to the SMW APIs. The PSA operations are routed to a dedicated subsystem, if the subsystem doesn't support the operation an error is returned.
@@ -46,6 +50,8 @@ This version introduces the support of the ARM PSA APIs in addition to the SMW A
 
 * When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+* In multi-process mode, when sharing the same key database file, file locking (against processes) is not working properly in some cases.
 
 #### SMW Library - _version 2.0_
 ##### 1. Configuration file

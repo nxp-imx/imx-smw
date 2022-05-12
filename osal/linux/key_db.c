@@ -11,7 +11,7 @@
 #define PRIxID "0x%08X"
 
 struct key_db_obj {
-	FILE *fp;
+	int fp;
 	void *mutex;
 };
 
@@ -26,9 +26,18 @@ __weak void dbg_entry_info(void *buf, size_t len)
 	(void)len;
 }
 
+__weak void dbg_get_lock_file(int fp)
+{
+	(void)fp;
+}
+
 static int lock_db(struct key_db_obj *db)
 {
-	if (flock(fileno(db->fp), LOCK_EX)) {
+	struct flock lock = { 0 };
+
+	lock.l_type = F_WRLCK;
+	if (fcntl(db->fp, F_SETLKW, &lock)) {
+		dbg_get_lock_file(db->fp);
 		DBG_PRINTF(DEBUG, "Unable to lock: %s\n", get_strerr());
 		return -1;
 	}
@@ -38,7 +47,10 @@ static int lock_db(struct key_db_obj *db)
 
 static int unlock_db(struct key_db_obj *db)
 {
-	if (flock(fileno(db->fp), LOCK_UN)) {
+	struct flock lock = { 0 };
+
+	lock.l_type = F_UNLCK;
+	if (fcntl(db->fp, F_SETLKW, &lock)) {
 		DBG_PRINTF(DEBUG, "Unable to unlock: %s\n", get_strerr());
 		return -1;
 	}
@@ -60,22 +72,25 @@ static long find_db_key_id(struct key_db_obj *db, unsigned int id,
 			   struct key_entry *key)
 {
 	long pos = -1;
+	long cur_pos = 0;
+	ssize_t off;
 
-	if (fseek(db->fp, 0, SEEK_SET))
+	if (lseek(db->fp, 0, SEEK_SET))
 		return pos;
 
-	while (fread(key, sizeof(*key), 1, db->fp) == 1) {
+	while (read(db->fp, key, sizeof(*key)) == sizeof(*key)) {
+		cur_pos += sizeof(*key);
 		if (key->id != id) {
 			/* Go to the next entry */
-			if (fseek(db->fp, key->info_size, SEEK_CUR))
+			off = lseek(db->fp, key->info_size, SEEK_CUR);
+			cur_pos += key->info_size;
+			if (off != cur_pos)
 				break;
 
 			continue;
 		}
 
-		pos = ftell(db->fp);
-		if (pos != -1)
-			pos -= sizeof(*key);
+		pos = cur_pos - sizeof(*key);
 
 		dbg_entry(key);
 		break;
@@ -102,11 +117,14 @@ static long find_db_key_id(struct key_db_obj *db, unsigned int id,
 static long find_db_key_free(struct key_db_obj *db, struct osal_key *key,
 			     unsigned int *free_id)
 {
+	long cur_pos = 0;
 	long pos = -1;
+	ssize_t off;
 	struct key_entry rd_key;
 	unsigned int last_id = 0;
 
-	while (fread(&rd_key, sizeof(rd_key), 1, db->fp) == 1) {
+	while (read(db->fp, &rd_key, sizeof(rd_key)) == sizeof(rd_key)) {
+		cur_pos += sizeof(rd_key);
 		/*
 		 * If the key id read is the requested range
 		 * set the last_id value
@@ -117,16 +135,15 @@ static long find_db_key_free(struct key_db_obj *db, struct osal_key *key,
 		if (last_id != rd_key.id || rd_key.flags != ENTRY_FREE ||
 		    rd_key.info_size < key->info_size) {
 			/* Go to the next entry */
-			if (fseek(db->fp, rd_key.info_size, SEEK_CUR))
+			off = lseek(db->fp, rd_key.info_size, SEEK_CUR);
+			cur_pos += rd_key.info_size;
+			if (off != cur_pos)
 				break;
 
 			continue;
 		}
 
-		pos = ftell(db->fp);
-		if (pos != -1)
-			pos -= sizeof(rd_key);
-
+		pos = cur_pos - sizeof(rd_key);
 		*free_id = rd_key.id;
 
 		return pos;
@@ -153,40 +170,30 @@ static long find_db_key_free(struct key_db_obj *db, struct osal_key *key,
 static int write_key_db(struct key_db_obj *db, struct key_entry *key,
 			void *info, long pos)
 {
-	int ret = -1;
-
 	DBG_PRINTF(DEBUG, "%s (%d) pos = %ld\n", __func__, __LINE__, pos);
-	if (pos < 0 || fseek(db->fp, pos, SEEK_SET))
+	if (pos < 0 || lseek(db->fp, pos, SEEK_SET) != pos)
 		return -1;
 
 	dbg_entry(key);
 
-	if (fwrite(key, sizeof(*key), 1, db->fp) != 1) {
+	if (write(db->fp, key, sizeof(*key)) != sizeof(*key)) {
 		DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
 			   __LINE__);
-		goto end;
+		return -1;
 	}
 
-	if (!info) {
-		ret = 0;
-		goto end;
-	}
+	if (!info)
+		return 0;
 
 	dbg_entry_info(info, key->info_size);
 
-	if (fwrite(info, key->info_size, 1, db->fp) != 1) {
+	if (write(db->fp, info, key->info_size) != (ssize_t)key->info_size) {
 		DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
 			   __LINE__);
-		goto end;
+		return -1;
 	}
 
-	ret = 0;
-
-end:
-	if (fflush(db->fp))
-		ret = -1;
-
-	return ret;
+	return 0;
 }
 
 static void close_db_file(void)
@@ -199,9 +206,9 @@ static void close_db_file(void)
 	if (db->fp) {
 		(void)mutex_destroy(&db->mutex);
 
-		(void)fclose(db->fp);
+		(void)close(db->fp);
 
-		db->fp = NULL;
+		db->fp = 0;
 	}
 }
 
@@ -230,10 +237,7 @@ int key_db_open(const char *key_db)
 	 * Try to open it for read/write assuming file exist, if
 	 * file doesn't exist create a new file.
 	 */
-	db->fp = fopen(key_db, "r+");
-	if (!db->fp)
-		db->fp = fopen(key_db, "w+");
-
+	db->fp = open(key_db, O_RDWR | O_SYNC | O_CREAT, 777);
 	if (!db->fp) {
 		DBG_PRINTF(ERROR, "%s (%d): %s\n", __func__, __LINE__,
 			   get_strerr());
@@ -301,17 +305,12 @@ int key_db_get_info(struct osal_key *key)
 	}
 
 	/* Read the key information and exit */
-	ret = fseek(db->fp, pos + sizeof(entry), SEEK_SET);
-	if (ret) {
-		ret = -1;
-		goto end;
-	}
-
-	if (fread(key->info, entry.info_size, 1, db->fp) != 1) {
-		DBG_PRINTF(ERROR, "%s (%d) bad info\n", __func__, __LINE__);
-		ret = -1;
-	} else {
+	if (pread(db->fp, key->info, entry.info_size, pos + sizeof(entry)) ==
+	    (ssize_t)entry.info_size) {
 		dbg_entry_info(key->info, entry.info_size);
+		ret = 0;
+	} else {
+		DBG_PRINTF(ERROR, "%s (%d) bad info\n", __func__, __LINE__);
 	}
 
 end:
@@ -341,7 +340,7 @@ int key_db_add(struct osal_key *key)
 		return ret;
 
 	/* Place the file pointer to the beginning of the file */
-	if (fseek(db->fp, 0, SEEK_SET))
+	if (lseek(db->fp, 0, SEEK_SET))
 		goto end;
 
 	entry.id = key->range.min;
@@ -358,8 +357,7 @@ int key_db_add(struct osal_key *key)
 		if (free_id > key->range.max)
 			goto end;
 
-		(void)fseek(db->fp, 0, SEEK_END);
-		pos = ftell(db->fp);
+		pos = lseek(db->fp, 0, SEEK_END);
 	}
 
 	entry.id = free_id;

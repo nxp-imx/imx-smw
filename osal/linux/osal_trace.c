@@ -4,6 +4,7 @@
  */
 
 #include <errno.h>
+#include <sys/file.h>
 
 #include "local.h"
 
@@ -47,4 +48,20 @@ void dbg_entry_info(void *buf, size_t len)
 		printf("%s\n", out);
 
 	(void)fflush(stdout);
+}
+
+void dbg_get_lock_file(int fp)
+{
+	struct flock lock = { 0 };
+
+	if (fcntl(fp, F_GETLK, &lock) != -1) {
+		if (lock.l_type == F_UNLCK)
+			DBG_PRINTF(DEBUG, "%s: no lock on this region\n",
+				   __func__);
+		else
+			DBG_PRINTF(DEBUG, "%s: process %d holds the lock\n",
+				   __func__, lock.l_pid);
+	} else {
+		DBG_PRINTF(DEBUG, "%s: %s\n", __func__, get_strerr());
+	}
 }

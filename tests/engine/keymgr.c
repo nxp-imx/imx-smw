@@ -802,7 +802,7 @@ exit:
 int delete_key(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(FAILED);
-	struct keypair_ops key_test;
+	struct keypair_ops key_test = { 0 };
 	struct smw_delete_key_args args = { 0 };
 	struct smw_delete_key_args *smw_del_args = &args;
 	int key_id = INT_MAX;

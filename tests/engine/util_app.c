@@ -218,7 +218,7 @@ int util_app_fork(struct app_data *app)
 int util_app_wait(struct test_data *test)
 {
 	int res = ERR_CODE(PASSED);
-	int wstatus;
+	int wstatus = ERR_CODE(FAILED);
 	struct node *node = NULL;
 	struct app_data *app = NULL;
 

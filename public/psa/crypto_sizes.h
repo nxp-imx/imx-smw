@@ -664,11 +664,11 @@
 #define PSA_EXPORT_PUBLIC_KEY_OUTPUT_SIZE(key_type, key_bits)                  \
 	/* implementation-defined value */
 
+size_t psa_hash_block_length(psa_algorithm_t alg);
+
 /**
  * PSA_HASH_BLOCK_LENGTH() - The input block size of a hash algorithm, in bytes.
  * @alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true).
- *
- * **Warning: Not supported**
  *
  * Hash algorithms process their input data in blocks. Hash operations will retain any partial
  * blocks until they have enough input to fill the block or until the operation is finished.
@@ -680,14 +680,14 @@
  * recognized, return 0. An implementation can return either 0 or the correct size for a hash
  * algorithm that it recognizes, but does not support.
  */
-#define PSA_HASH_BLOCK_LENGTH(alg) /* implementation-defined value */
+#define PSA_HASH_BLOCK_LENGTH(alg) psa_hash_block_length(alg)
+
+size_t psa_hash_length(psa_algorithm_t alg);
 
 /**
  * PSA_HASH_LENGTH() - The size of the output of psa_hash_compute() and psa_hash_finish(), in bytes.
  * @alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true), or an HMAC
  * algorithm (PSA_ALG_HMAC(hash_alg) where hash_alg is a hash algorithm).
- *
- * **Warning: Not supported**
  *
  * This is also the hash length that psa_hash_compare() and psa_hash_verify() expect.
  *
@@ -698,13 +698,11 @@
  * 0. An implementation can return either 0 or the correct size for a hash algorithm that it
  * recognizes, but does not support.
  */
-#define PSA_HASH_LENGTH(alg) /* implementation-defined value */
+#define PSA_HASH_LENGTH(alg) psa_hash_length(alg)
 
 /**
  * DOC: PSA_HASH_MAX_SIZE
  * Maximum size of a hash.
- *
- * **Warning: Not supported**
  *
  * This macro must expand to a compile-time constant integer. It is recommended that this value is
  * the maximum size of a hash supported by the implementation, in bytes. The value must not be
@@ -712,7 +710,7 @@
  *
  * See also PSA_HASH_LENGTH().
  */
-#define PSA_HASH_MAX_SIZE /* implementation-defined value */
+#define PSA_HASH_MAX_SIZE 64
 
 /**
  * DOC: PSA_HASH_SUSPEND_ALGORITHM_FIELD_LENGTH

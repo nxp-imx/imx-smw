@@ -2432,8 +2432,6 @@ psa_status_t psa_hash_clone(const psa_hash_operation_t *source_operation,
  * @hash: Buffer containing the expected hash value.
  * @hash_length: Size of the @hash buffer in bytes.
  *
- * **Warning: Not supported**
- *
  * Return:
  * * PSA_SUCCESS:
  *	The expected hash is identical to the actual hash of the input.
@@ -2465,8 +2463,6 @@ psa_status_t psa_hash_compare(psa_algorithm_t alg, const uint8_t *input,
  * @hash_size: Size of the @hash buffer in bytes. This must be at least PSA_HASH_LENGTH(alg).
  * @hash_length: On success, the number of bytes that make up the hash value. This is always
  *               PSA_HASH_LENGTH(alg).
- *
- * **Warning: Not supported**
  *
  * **Note**:
  *	To verify the hash of a message against an expected value, use psa_hash_compare() instead.

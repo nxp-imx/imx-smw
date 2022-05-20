@@ -35,6 +35,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 1. ARM PSA APIs
 
 * Upgrade ARM PSA Crypto API to version 1.1.0.
+* Implement Hash one go
 
 ### <a id ="rel_2_0"></a></br>**Release 2.0**
 ---

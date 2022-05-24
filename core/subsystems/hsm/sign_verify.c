@@ -250,7 +250,6 @@ set_export_key_args(struct smw_keymgr_descriptor *key_descriptor,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	smw_keymgr_set_default_attributes(&export_key_args->key_attributes);
 	*export_key_descriptor = *key_descriptor;
 	export_key_descriptor->pub = NULL;
 	export_key_descriptor->format_id = SMW_KEYMGR_FORMAT_ID_HEX;

@@ -157,12 +157,10 @@ struct smw_keymgr_import_key_args {
 
 /**
  * struct smw_keymgr_export_key_args - Key export arguments
- * @key_attributes: Key attributes
  * @key_descriptor: Descriptor of the exported Key
  *
  */
 struct smw_keymgr_export_key_args {
-	struct smw_keymgr_attributes key_attributes;
 	struct smw_keymgr_descriptor key_descriptor;
 };
 

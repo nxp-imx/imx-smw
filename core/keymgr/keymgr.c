@@ -413,13 +413,6 @@ export_key_convert_args(struct smw_export_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	/* Initialize key_attributes parameters to default values */
-	smw_keymgr_set_default_attributes(&converted_args->key_attributes);
-
-	status = smw_keymgr_read_attributes(&converted_args->key_attributes,
-					    args->key_attributes_list,
-					    args->key_attributes_list_length);
-
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

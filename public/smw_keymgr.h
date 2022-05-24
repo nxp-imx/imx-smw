@@ -242,9 +242,6 @@ struct smw_import_key_args {
 /**
  * struct smw_export_key_args - Key export arguments
  * @version: Version of this structure
- * @key_attributes_list: Key attributes list.
- *			 See &typedef smw_attribute_type_t
- * @key_attributes_list_length: Length of the Key attributes list
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
  *
@@ -260,8 +257,6 @@ struct smw_import_key_args {
  */
 struct smw_export_key_args {
 	unsigned char version;
-	const unsigned char *key_attributes_list;
-	unsigned int key_attributes_list_length;
 	struct smw_key_descriptor *key_descriptor;
 };
 

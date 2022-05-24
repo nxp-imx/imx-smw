@@ -141,13 +141,6 @@ static int set_export_opt_params(struct subtest_data *subtest,
 	if (!subtest || !args || !key_test || !exp_key_test)
 		return ERR_CODE(BAD_ARGS);
 
-	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs((unsigned char **)&args->key_attributes_list,
-				  &args->key_attributes_list_length,
-				  subtest->params);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
 	/*
 	 * Prepare key buffers to get the exported keys.
 	 * Get key buffers size exportable from SMW and
@@ -1033,9 +1026,6 @@ int export_key(struct subtest_data *subtest, enum export_type export_type)
 exit:
 	util_key_free_key(&key_test);
 	util_key_free_key(&exp_key_test);
-
-	if (args.key_attributes_list)
-		free((void *)args.key_attributes_list);
 
 	return res;
 }

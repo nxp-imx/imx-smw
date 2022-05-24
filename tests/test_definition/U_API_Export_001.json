@@ -146,20 +146,7 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 15": { // Attributes list is undefined
-		"command": "EXPORT_PUBLIC",
-		"key_id": 0,
-		"pub_key": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
-		"attributes_list": ["undefined"],
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 1
-	},
-	"subtest 16": { // Public key buffer is too small
+	"subtest 15": { // Public key buffer is too small
 		"command": "EXPORT_PUBLIC",
 		"key_id": 0,
 		"pub_key": [
@@ -172,19 +159,19 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 17": {
+	"subtest 16": {
 		"command": "DELETE",
 		"key_id": 0,
 		"depends": 1
 	},
-	"subtest 18": { // Generate RSA key
+	"subtest 17": { // Generate RSA key
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "RSA",
 		"security_size": 256,
 		"key_id": 1
 	},
-	"subtest 19": { // Modulus length not set
+	"subtest 18": { // Modulus length not set
 		"command": "EXPORT_PUBLIC",
 		"key_type": "RSA",
 		"key_id": 1,
@@ -199,9 +186,9 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 18
+		"depends": 17
 	},
-	"subtest 20": { // Modulus length not set
+	"subtest 19": { // Modulus length not set
 		"command": "EXPORT_KEYPAIR",
 		"key_type": "RSA",
 		"key_id": 1,
@@ -222,9 +209,9 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 18
+		"depends": 17
 	},
-	"subtest 21": { // Modulus buffer is too small
+	"subtest 20": { // Modulus buffer is too small
 		"command": "EXPORT_PUBLIC",
 		"key_type": "RSA",
 		"key_id": 1,
@@ -239,9 +226,9 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 18
+		"depends": 17
 	},
-	"subtest 22": { // Public buffer length is too small (default public exponent)
+	"subtest 21": { // Public buffer length is too small (default public exponent)
 		"command": "EXPORT_PUBLIC",
 		"key_type": "RSA",
 		"key_id": 1,
@@ -256,14 +243,14 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 18
+		"depends": 17
 	},
-	"subtest 23": {
+	"subtest 22": {
 		"command": "DELETE",
 		"key_id": 1,
-		"depends": 18
+		"depends": 17
 	},
-	"subtest 24": { // Generate RSA key
+	"subtest 23": { // Generate RSA key
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_type": "RSA",
@@ -273,7 +260,7 @@
 			["RSA_PUB_EXP", [9, "4000000041CB995001"]]
 		]
 	},
-	"subtest 25": { // Public buffer length is too small (user public exponent)
+	"subtest 24": { // Public buffer length is too small (user public exponent)
 		"command": "EXPORT_PUBLIC",
 		"key_type": "RSA",
 		"key_id": 2,
@@ -288,11 +275,11 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 24
+		"depends": 23
 	},
-	"subtest 26": {
+	"subtest 25": {
 		"command": "DELETE",
 		"key_id": 2,
-		"depends": 24
+		"depends": 23
 	}
 }

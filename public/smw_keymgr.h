@@ -98,7 +98,7 @@ struct smw_key_descriptor {
 struct smw_generate_key_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
-	const unsigned char *key_attributes_list;
+	unsigned char *key_attributes_list;
 	unsigned int key_attributes_list_length;
 	struct smw_key_descriptor *key_descriptor;
 };
@@ -136,7 +136,7 @@ struct smw_derive_key_args {
 	smw_kdf_t kdf_name;
 	void *kdf_arguments;
 	struct smw_key_descriptor *key_descriptor_base;
-	const unsigned char *key_attributes_list;
+	unsigned char *key_attributes_list;
 	unsigned int key_attributes_list_length;
 	struct smw_key_descriptor *key_descriptor_derived;
 };
@@ -234,7 +234,7 @@ struct smw_update_key_args {
 struct smw_import_key_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
-	const unsigned char *key_attributes_list;
+	unsigned char *key_attributes_list;
 	unsigned int key_attributes_list_length;
 	struct smw_key_descriptor *key_descriptor;
 };

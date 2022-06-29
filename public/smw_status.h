@@ -63,6 +63,10 @@
  * @SMW_STATUS_KEY_DB_DELETE: Key database delete error.
  * @SMW_STATUS_KEY_DB_GET_INFO: Key database get information error.
  *
+ *
+ * @SMW_STATUS_KEY_POLICY_ERROR: The key policy is syntactically wrong.
+ * @SMW_STATUS_KEY_POLICY_WARNING_IGNORED: At least one element of the key policy is ignored.
+ *
  * Status code classification:
  ** Common return codes
  *
@@ -120,6 +124,10 @@
  *	- SMW_STATUS_ERROR_KEY_DB_UPDATE
  *	- SMW_STATUS_ERROR_KEY_DB_DELETE
  *	- SMW_STATUS_ERROR_KEY_DB_GET_INFO
+ *
+ ** Specific return codes - Key manager
+ *	- SMW_STATUS_KEY_POLICY_ERROR
+ *	- SMW_STATUS_KEY_POLICY_WARNING_IGNORED
  */
 
 /* Status codes */
@@ -166,7 +174,9 @@ enum smw_status_code {
 	SMW_STATUS_KEY_DB_CREATE,
 	SMW_STATUS_KEY_DB_UPDATE, /* 40 */
 	SMW_STATUS_KEY_DB_DELETE,
-	SMW_STATUS_KEY_DB_GET_INFO
+	SMW_STATUS_KEY_DB_GET_INFO,
+	SMW_STATUS_KEY_POLICY_ERROR,
+	SMW_STATUS_KEY_POLICY_WARNING_IGNORED
 };
 
 #endif /* __SMW_STATUS_H__ */

@@ -52,16 +52,19 @@ static int get_tee_cipher_algo_id(enum smw_config_key_type_id key_type,
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-static int get_tee_cipher_operation(enum smw_config_cipher_op_type_id smw_op,
-				    uint32_t *tee_op)
+static int
+get_tee_cipher_operation_and_usage(enum smw_config_cipher_op_type_id smw_op,
+				   uint32_t *tee_op, unsigned int *key_usage)
 {
 	switch (smw_op) {
 	case SMW_CONFIG_CIPHER_OP_ID_ENCRYPT:
 		*tee_op = TEE_MODE_ENCRYPT;
+		*key_usage = TEE_KEY_USAGE_ENCRYPT;
 		break;
 
 	case SMW_CONFIG_CIPHER_OP_ID_DECRYPT:
 		*tee_op = TEE_MODE_DECRYPT;
+		*key_usage = TEE_KEY_USAGE_DECRYPT;
 		break;
 
 	default:
@@ -72,7 +75,7 @@ static int get_tee_cipher_operation(enum smw_config_cipher_op_type_id smw_op,
 }
 
 static int import_key_buffer(struct smw_keymgr_descriptor *key,
-			     unsigned int *key_id)
+			     unsigned int *key_id, unsigned int key_usage)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_OK;
@@ -99,6 +102,7 @@ static int import_key_buffer(struct smw_keymgr_descriptor *key,
 	op.params[0].tmpref.size = sizeof(import_shared_params);
 
 	import_shared_params.security_size = key->identifier.security_size;
+	import_shared_params.key_usage = key_usage;
 
 	op.params[1].tmpref.buffer = smw_keymgr_get_private_data(key);
 	op.params[1].tmpref.size = smw_keymgr_get_private_length(key);
@@ -151,6 +155,7 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 	uint32_t param2_type = TEEC_NONE;
 	enum smw_config_key_type_id key_type;
 	struct shared_context context = { 0 };
+	unsigned int key_usage = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -173,8 +178,10 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	/* Get OPTEE operation */
-	status = get_tee_cipher_operation(args->op_id, &op.params[0].value.b);
+	/* Get OPTEE operation and key usage */
+	status = get_tee_cipher_operation_and_usage(args->op_id,
+						    &op.params[0].value.b,
+						    &key_usage);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -188,7 +195,7 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 		if (key_id == INVALID_KEY_ID) {
 			/* If some keys are defined as buffer import them */
 			status = import_key_buffer(args->keys_desc[key_idx],
-						   &key_id);
+						   &key_id, key_usage);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		}

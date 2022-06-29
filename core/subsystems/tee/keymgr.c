@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include <tee_client_api.h>
@@ -10,12 +10,15 @@
 #include "debug.h"
 #include "utils.h"
 #include "base64.h"
+#include "tlv.h"
 #include "config.h"
 #include "keymgr.h"
 #include "tee.h"
 #include "smw_status.h"
 
 #define SECURITY_SIZE_RANGE UINT_MAX
+
+#define POLICY_TL_LENGTH (SMW_UTILS_STRLEN(POLICY_STR) + 3)
 
 /**
  * struct security_size_range - Security size range
@@ -169,6 +172,28 @@ static const struct key_info {
 			},
 		   .symmetric = false } };
 
+/**
+ * struct - Key usage
+ * @usage_str: SMW usage.
+ * @tee_usage: TEE key usage.
+ */
+static const struct {
+	const char *usage_str;
+	unsigned int tee_usage;
+} key_usage[] = {
+	{ .usage_str = EXPORT_STR, .tee_usage = TEE_KEY_USAGE_EXPORTABLE },
+	{ .usage_str = COPY_STR, .tee_usage = TEE_KEY_USAGE_COPYABLE },
+	{ .usage_str = ENCRYPT_STR, .tee_usage = TEE_KEY_USAGE_ENCRYPT },
+	{ .usage_str = DECRYPT_STR, .tee_usage = TEE_KEY_USAGE_DECRYPT },
+	{ .usage_str = SIGN_MESSAGE_STR,
+	  .tee_usage = TEE_KEY_USAGE_SIGN | TEE_KEY_USAGE_MAC },
+	{ .usage_str = VERIFY_MESSAGE_STR,
+	  .tee_usage = TEE_KEY_USAGE_VERIFY | TEE_KEY_USAGE_MAC },
+	{ .usage_str = SIGN_HASH_STR, .tee_usage = TEE_KEY_USAGE_SIGN },
+	{ .usage_str = VERIFY_HASH_STR, .tee_usage = TEE_KEY_USAGE_VERIFY },
+	{ .usage_str = DERIVE_STR, .tee_usage = TEE_KEY_USAGE_DERIVE }
+};
+
 int tee_convert_key_type(enum smw_config_key_type_id smw_key_type,
 			 enum tee_key_type *tee_key_type)
 {
@@ -189,6 +214,100 @@ int tee_convert_key_type(enum smw_config_key_type_id smw_key_type,
 			break;
 		}
 	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static bool convert_usage(const char *value, unsigned int *usage)
+{
+	unsigned int i;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (i = 0; i < ARRAY_SIZE(key_usage); i++) {
+		if (!SMW_UTILS_STRCMP(key_usage[i].usage_str, value)) {
+			SMW_DBG_PRINTF(DEBUG, "Key usage: %s\n", value);
+			*usage |= key_usage[i].tee_usage;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static int tee_set_key_usage(unsigned char *policy, unsigned int policy_len,
+			     unsigned int *tee_usage,
+			     unsigned char *actual_policy,
+			     unsigned int *actual_policy_len)
+{
+	int status = SMW_STATUS_OK;
+
+	unsigned int value_size = 0;
+	unsigned char *type = NULL;
+	unsigned char *value = NULL;
+	const unsigned char *p = policy;
+	const unsigned char *end = policy + policy_len;
+	unsigned char *actual_policy_len_field;
+	unsigned char *q = actual_policy;
+	bool policy_ignored = false;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!actual_policy) {
+		*tee_usage = TEE_KEY_USAGE_ALL;
+		return status;
+	}
+
+	*tee_usage = 0;
+
+	SMW_UTILS_MEMCPY(q, POLICY_STR, SMW_UTILS_STRLEN(POLICY_STR));
+	q += SMW_UTILS_STRLEN(POLICY_STR);
+	*q = 0;
+	q++;
+
+	actual_policy_len_field = q;
+	q += 2;
+
+	while (p < end) {
+		status = smw_tlv_read_element(&p, end, &type, &value,
+					      &value_size);
+
+		if (status != SMW_STATUS_OK) {
+			SMW_DBG_PRINTF(ERROR, "%s: Parsing policy failed\n",
+				       __func__);
+
+			if (status == SMW_STATUS_INVALID_PARAM)
+				status = SMW_STATUS_KEY_POLICY_ERROR;
+
+			return status;
+		}
+
+		if (SMW_UTILS_STRCMP((char *)type, USAGE_STR))
+			continue;
+
+		if (!convert_usage((char *)value, tee_usage)) {
+			policy_ignored = true;
+			continue;
+		}
+
+		if (SMW_UTILS_STRLEN((char *)value) < value_size - 1)
+			policy_ignored = true;
+
+		smw_tlv_set_string(&q, USAGE_STR, (char *)value);
+	}
+
+	*actual_policy_len = q - actual_policy_len_field - 2;
+
+	*actual_policy_len_field = *actual_policy_len >> 8;
+	*(actual_policy_len_field + 1) = *actual_policy_len;
+
+	SMW_DBG_ASSERT(*actual_policy_len <= policy_len);
+
+	*actual_policy_len += POLICY_TL_LENGTH;
+
+	if (policy_ignored)
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -563,12 +682,15 @@ static int generate_key(void *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
+	int usage_status = SMW_STATUS_OK;
 	struct smw_keymgr_generate_key_args *key_args = args;
 	struct smw_keymgr_identifier *key_identifier =
 		&key_args->key_descriptor.identifier;
 	struct smw_keymgr_attributes *key_attrs;
 	const struct key_info *key = NULL;
 	struct keymgr_shared_params shared_params = { 0 };
+	unsigned char *actual_policy = NULL;
+	unsigned int actual_policy_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -588,6 +710,15 @@ static int generate_key(void *args)
 
 	key_attrs = &key_args->key_attributes;
 
+	if (key_attrs->policy && key_attrs->policy_len) {
+		actual_policy = SMW_UTILS_MALLOC(key_attrs->policy_len +
+						 POLICY_TL_LENGTH);
+		if (!actual_policy) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto exit;
+		}
+	}
+
 	/* Set shared buffers parameters if needed */
 	status = set_params_gen_key(key_args, &op);
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
@@ -599,6 +730,16 @@ static int generate_key(void *args)
 
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->tee_key_type;
+	usage_status =
+		tee_set_key_usage(key_attrs->policy, key_attrs->policy_len,
+				  &shared_params.key_usage, actual_policy,
+				  &actual_policy_len);
+	if (usage_status != SMW_STATUS_OK &&
+	    usage_status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
+		status = usage_status;
+		goto exit;
+	}
+
 	op.params[0].tmpref.buffer = &shared_params;
 	op.params[0].tmpref.size = sizeof(shared_params);
 
@@ -648,6 +789,18 @@ exit:
 
 		/* Free HEX modulus buffer allocated */
 		free_tmpref_buffer(GEN_MOD_PARAM_IDX, &op);
+	}
+
+	if (status == SMW_STATUS_OK &&
+	    usage_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+		status = usage_status;
+
+	if (actual_policy) {
+		if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+			smw_keymgr_set_attributes_list(key_attrs, actual_policy,
+						       actual_policy_len);
+
+		SMW_UTILS_FREE(actual_policy);
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1093,11 +1246,15 @@ static int import_key(void *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
+	int usage_status = SMW_STATUS_OK;
 	unsigned int key_size_bytes = 0;
 	struct smw_keymgr_import_key_args *key_args = args;
 	struct smw_keymgr_identifier *key_identifier = NULL;
+	struct smw_keymgr_attributes *key_attrs;
 	const struct key_info *key = NULL;
 	struct keymgr_shared_params shared_params = { 0 };
+	unsigned char *actual_policy = NULL;
+	unsigned int actual_policy_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1115,6 +1272,17 @@ static int import_key(void *args)
 			       __func__);
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto exit;
+	}
+
+	key_attrs = &key_args->key_attributes;
+
+	if (key_attrs->policy && key_attrs->policy_len) {
+		actual_policy = SMW_UTILS_MALLOC(key_attrs->policy_len +
+						 POLICY_TL_LENGTH);
+		if (!actual_policy) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto exit;
+		}
 	}
 
 	key_size_bytes = BITS_TO_BYTES_SIZE(key_identifier->security_size);
@@ -1139,8 +1307,16 @@ static int import_key(void *args)
 
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->tee_key_type;
-	shared_params.persistent_storage =
-		key_args->key_attributes.persistent_storage;
+	shared_params.persistent_storage = key_attrs->persistent_storage;
+	usage_status =
+		tee_set_key_usage(key_attrs->policy, key_attrs->policy_len,
+				  &shared_params.key_usage, actual_policy,
+				  &actual_policy_len);
+	if (usage_status != SMW_STATUS_OK &&
+	    usage_status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
+		status = usage_status;
+		goto exit;
+	}
 
 	/*
 	 * params[0]: Pointer to import shared params structure.
@@ -1187,6 +1363,18 @@ exit:
 
 		/* Free HEX modulus buffer allocated */
 		free_tmpref_buffer(IMP_MOD_PARAM_IDX, &op);
+	}
+
+	if (status == SMW_STATUS_OK &&
+	    usage_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+		status = usage_status;
+
+	if (actual_policy) {
+		if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+			smw_keymgr_set_attributes_list(key_attrs, actual_policy,
+						       actual_policy_len);
+
+		SMW_UTILS_FREE(actual_policy);
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

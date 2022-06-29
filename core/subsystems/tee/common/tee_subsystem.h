@@ -36,6 +36,21 @@ enum tee_key_type {
 	TEE_KEY_TYPE_ID_INVALID
 };
 
+/* TEE key usage */
+#define TEE_KEY_USAGE_EXPORTABLE 0x00000001
+#define TEE_KEY_USAGE_COPYABLE	 0x00000002
+#define TEE_KEY_USAGE_ENCRYPT	 0x00000100
+#define TEE_KEY_USAGE_DECRYPT	 0x00000200
+#define TEE_KEY_USAGE_SIGN	 0x00000401
+#define TEE_KEY_USAGE_VERIFY	 0x00000800
+#define TEE_KEY_USAGE_DERIVE	 0x00001000
+#define TEE_KEY_USAGE_MAC	 0x00002000
+
+#define TEE_KEY_USAGE_ALL                                                      \
+	(TEE_KEY_USAGE_EXPORTABLE | TEE_KEY_USAGE_COPYABLE |                   \
+	 TEE_KEY_USAGE_ENCRYPT | TEE_KEY_USAGE_DECRYPT | TEE_KEY_USAGE_SIGN |  \
+	 TEE_KEY_USAGE_VERIFY | TEE_KEY_USAGE_DERIVE | TEE_KEY_USAGE_MAC)
+
 /* TEE algorithm ID */
 enum tee_algorithm_id {
 	TEE_ALGORITHM_ID_MD5,
@@ -81,12 +96,14 @@ struct hmac_shared_params {
  * struct keymgr_shared_params - Key manager operation shared parameters.
  * @security_size: Key security size.
  * @key_type: Key type.
+ * @key_usage: Key usage.
  * @id: Key ID set by the TA.
  * @persistent_storage: Use persistent subsystem storage or not.
  */
 struct keymgr_shared_params {
 	unsigned int security_size;
 	enum tee_key_type key_type;
+	unsigned int key_usage;
 	uint32_t id;
 	bool persistent_storage;
 };

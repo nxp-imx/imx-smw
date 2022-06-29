@@ -58,12 +58,30 @@ struct key_list {
 static struct key_list *key_linked_list;
 
 /**
+ * struct - Key usage conversion
+ * @usage: Input key usage value
+ * @tee_usage: TEE key usage constant
+ *
+ * Array of the TEE versus TA input key usage definition
+ */
+struct {
+	unsigned int usage;
+	uint32_t tee_usage;
+} conv_key_usage[] = { { TEE_KEY_USAGE_EXPORTABLE, 0 },
+		       { TEE_KEY_USAGE_COPYABLE, 0 },
+		       { TEE_KEY_USAGE_ENCRYPT, TEE_USAGE_ENCRYPT },
+		       { TEE_KEY_USAGE_DECRYPT, TEE_USAGE_DECRYPT },
+		       { TEE_KEY_USAGE_SIGN, TEE_USAGE_SIGN },
+		       { TEE_KEY_USAGE_VERIFY, TEE_USAGE_VERIFY },
+		       { TEE_KEY_USAGE_DERIVE, TEE_USAGE_DERIVE },
+		       { TEE_KEY_USAGE_MAC, TEE_USAGE_MAC } };
+
+/**
  * struct - Key info
  * @key_type: TEE key type.
  * @security_size: Key security size in bits.
  * @obj_type: Key TEE object type.
  * @ecc_curve: Type of ecc curve if needed.
- * @usage: TEE key cryptographic operations.
  *
  * key_info must be ordered from lowest to highest.
  * Security sizes must be ordered from lowest to highest for one given
@@ -76,90 +94,70 @@ struct {
 	unsigned int security_size;
 	unsigned int obj_type;
 	unsigned int ecc_curve;
-	uint32_t usage;
-} key_info[] = {
-	{ .key_type = TEE_KEY_TYPE_ID_ECDSA,
-	  .security_size = 192,
-	  .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
-	  .ecc_curve = TEE_ECC_CURVE_NIST_P192,
-	  .usage = TEE_USAGE_SIGN | TEE_USAGE_VERIFY },
-	{ .key_type = TEE_KEY_TYPE_ID_ECDSA,
-	  .security_size = 224,
-	  .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
-	  .ecc_curve = TEE_ECC_CURVE_NIST_P224,
-	  .usage = TEE_USAGE_SIGN | TEE_USAGE_VERIFY },
-	{ .key_type = TEE_KEY_TYPE_ID_ECDSA,
-	  .security_size = 256,
-	  .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
-	  .ecc_curve = TEE_ECC_CURVE_NIST_P256,
-	  .usage = TEE_USAGE_SIGN | TEE_USAGE_VERIFY },
-	{ .key_type = TEE_KEY_TYPE_ID_ECDSA,
-	  .security_size = 384,
-	  .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
-	  .ecc_curve = TEE_ECC_CURVE_NIST_P384,
-	  .usage = TEE_USAGE_SIGN | TEE_USAGE_VERIFY },
-	{ .key_type = TEE_KEY_TYPE_ID_ECDSA,
-	  .security_size = 521,
-	  .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
-	  .ecc_curve = TEE_ECC_CURVE_NIST_P521,
-	  .usage = TEE_USAGE_SIGN | TEE_USAGE_VERIFY },
-	{ .key_type = TEE_KEY_TYPE_ID_AES,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_AES,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_DES,
-	  .security_size = 56,
-	  .obj_type = TEE_TYPE_DES,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_DES3,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_DES3,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_HMAC_MD5,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_HMAC_MD5,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA1,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_HMAC_SHA1,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA224,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_HMAC_SHA224,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA256,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_HMAC_SHA256,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA384,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_HMAC_SHA384,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SHA512,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_HMAC_SHA512,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_HMAC_SM3,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_HMAC_SM3,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_MAC },
-	{ .key_type = TEE_KEY_TYPE_ID_RSA,
-	  .security_size = SECURITY_SIZE_RANGE,
-	  .obj_type = TEE_TYPE_RSA_KEYPAIR,
-	  .ecc_curve = 0,
-	  .usage = TEE_USAGE_ENCRYPT | TEE_USAGE_DECRYPT | TEE_USAGE_SIGN |
-		   TEE_USAGE_VERIFY }
-};
+} key_info[] = { { .key_type = TEE_KEY_TYPE_ID_ECDSA,
+		   .security_size = 192,
+		   .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
+		   .ecc_curve = TEE_ECC_CURVE_NIST_P192 },
+		 { .key_type = TEE_KEY_TYPE_ID_ECDSA,
+		   .security_size = 224,
+		   .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
+		   .ecc_curve = TEE_ECC_CURVE_NIST_P224 },
+		 { .key_type = TEE_KEY_TYPE_ID_ECDSA,
+		   .security_size = 256,
+		   .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
+		   .ecc_curve = TEE_ECC_CURVE_NIST_P256 },
+		 { .key_type = TEE_KEY_TYPE_ID_ECDSA,
+		   .security_size = 384,
+		   .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
+		   .ecc_curve = TEE_ECC_CURVE_NIST_P384 },
+		 { .key_type = TEE_KEY_TYPE_ID_ECDSA,
+		   .security_size = 521,
+		   .obj_type = TEE_TYPE_ECDSA_KEYPAIR,
+		   .ecc_curve = TEE_ECC_CURVE_NIST_P521 },
+		 { .key_type = TEE_KEY_TYPE_ID_AES,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_AES,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_DES,
+		   .security_size = 56,
+		   .obj_type = TEE_TYPE_DES,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_DES3,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_DES3,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_HMAC_MD5,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_HMAC_MD5,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_HMAC_SHA1,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_HMAC_SHA1,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_HMAC_SHA224,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_HMAC_SHA224,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_HMAC_SHA256,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_HMAC_SHA256,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_HMAC_SHA384,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_HMAC_SHA384,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_HMAC_SHA512,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_HMAC_SHA512,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_HMAC_SM3,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_HMAC_SM3,
+		   .ecc_curve = 0 },
+		 { .key_type = TEE_KEY_TYPE_ID_RSA,
+		   .security_size = SECURITY_SIZE_RANGE,
+		   .obj_type = TEE_TYPE_RSA_KEYPAIR,
+		   .ecc_curve = 0 } };
 
 /**
  * get_key_obj_type() - Get key's object type.
@@ -476,8 +474,39 @@ static TEE_Result conf_key_ecc_attribute(enum tee_key_type key_type,
 }
 
 /**
+ * convert_key_usage() - Convert a TA param key usage to TEE key usage
+ * @key_usage: Key usage to convert
+ * @tee_key_usage: TEE key usage value
+ *
+ * Return:
+ * TEE_SUCCESS                - Success.
+ * TEE_ERROR_BAD_PARAMETERS   - Bad key type.
+ */
+static TEE_Result convert_key_usage(unsigned int key_usage,
+				    uint32_t *tee_key_usage)
+{
+	unsigned int i;
+
+	FMSG("Executing %s", __func__);
+
+	if (!key_usage)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	*tee_key_usage = 0;
+	for (i = 0; i < ARRAY_SIZE(conv_key_usage); i++) {
+		if (conv_key_usage[i].usage & key_usage)
+			*tee_key_usage |= conv_key_usage[i].tee_usage;
+	}
+
+	if (!*tee_key_usage)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	return TEE_SUCCESS;
+}
+
+/**
  * set_key_usage() - Set key usage (cryptographic operations).
- * @key_type: Key type.
+ * @key_usage: Key usage definition.
  * @key_handle: Key handle.
  *
  * Key are not set as extractable.
@@ -487,21 +516,14 @@ static TEE_Result conf_key_ecc_attribute(enum tee_key_type key_type,
  * TEE_ERROR_BAD_PARAMETERS	- Bad key type.
  * Error code from TEE_RestrictObjectUsage1().
  */
-static TEE_Result set_key_usage(enum tee_key_type key_type,
-				TEE_ObjectHandle key_handle)
+static TEE_Result set_key_usage(uint32_t key_usage, TEE_ObjectHandle key_handle)
 {
-	unsigned int i = 0;
-	unsigned int array_size = ARRAY_SIZE(key_info);
-
 	FMSG("Executing %s", __func__);
 
-	for (; i < array_size; i++) {
-		if (key_info[i].key_type == key_type)
-			return TEE_RestrictObjectUsage1(key_handle,
-							key_info[i].usage);
-	}
+	if (!key_usage)
+		return TEE_ERROR_BAD_PARAMETERS;
 
-	return TEE_ERROR_BAD_PARAMETERS;
+	return TEE_RestrictObjectUsage1(key_handle, key_usage);
 }
 
 /**
@@ -1015,6 +1037,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	struct key_data *key_data = NULL;
 	struct keymgr_shared_params *shared_params = NULL;
 	enum tee_key_type key_type = 0;
+	uint32_t key_usage = 0;
 
 	FMSG("Executing %s", __func__);
 
@@ -1100,6 +1123,12 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		attr_count = 1;
 	}
 
+	res = convert_key_usage(shared_params->key_usage, &key_usage);
+	if (res) {
+		EMSG("Key usage 0x%08X is not valid", shared_params->key_usage);
+		return res;
+	}
+
 	/* Allocate a transient object */
 	res = TEE_AllocateTransientObject(object_type, security_size,
 					  &key_handle);
@@ -1116,7 +1145,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	}
 
 	/* Set key usage. Make it non extractable */
-	res = set_key_usage(key_type, key_handle);
+	res = set_key_usage(key_usage, key_handle);
 	if (res) {
 		EMSG("Failed to set key usage: 0x%x", res);
 		goto err;
@@ -1258,9 +1287,10 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 
 TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 			 enum tee_key_type key_type, unsigned int security_size,
-			 unsigned char *priv_key, unsigned int priv_key_len,
-			 unsigned char *pub_key, unsigned int pub_key_len,
-			 unsigned char *modulus, unsigned int modulus_len)
+			 uint32_t key_usage, unsigned char *priv_key,
+			 unsigned int priv_key_len, unsigned char *pub_key,
+			 unsigned int pub_key_len, unsigned char *modulus,
+			 unsigned int modulus_len)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_Attribute *key_attr = NULL;
@@ -1300,7 +1330,7 @@ TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 	}
 
 	/* Set key usage. Make it non extractable */
-	res = set_key_usage(key_type, *key_handle);
+	res = set_key_usage(key_usage, *key_handle);
 	if (res)
 		EMSG("Failed to set key usage: 0x%x", res);
 
@@ -1328,6 +1358,7 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	struct key_data *key_data = NULL;
 	struct keymgr_shared_params *shared_params = NULL;
 	enum tee_key_type key_type = 0;
+	uint32_t key_usage = 0;
 
 	FMSG("Executing %s", __func__);
 
@@ -1381,9 +1412,15 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	if (res)
 		return res;
 
-	res = ta_import_key(&key_handle, key_type, security_size, priv_key,
-			    priv_key_len, pub_key, pub_key_len, modulus,
-			    modulus_len);
+	res = convert_key_usage(shared_params->key_usage, &key_usage);
+	if (res) {
+		EMSG("Key usage 0x%08X is not valid", shared_params->key_usage);
+		return res;
+	}
+
+	res = ta_import_key(&key_handle, key_type, security_size, key_usage,
+			    priv_key, priv_key_len, pub_key, pub_key_len,
+			    modulus, modulus_len);
 	if (res) {
 		EMSG("Failed to import key: 0x%x", res);
 		goto exit;

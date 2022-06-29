@@ -175,6 +175,7 @@ static TEE_Result set_key(uint32_t cmd_id, TEE_Param ta_param,
 	unsigned int modulus_len = 0;
 	unsigned int key_size =
 		BITS_TO_BYTES_SIZE(shared_params->security_size);
+	uint32_t key_usage = 0;
 
 	FMSG("Executing %s", __func__);
 
@@ -189,6 +190,9 @@ static TEE_Result set_key(uint32_t cmd_id, TEE_Param ta_param,
 			priv_key = ptr;
 			priv_key_len = key_size;
 			ptr = priv_key + priv_key_len;
+			key_usage = TEE_USAGE_SIGN;
+		} else {
+			key_usage = TEE_USAGE_VERIFY;
 		}
 
 		if (shared_params->key_type == TEE_KEY_TYPE_ID_RSA) {
@@ -198,8 +202,8 @@ static TEE_Result set_key(uint32_t cmd_id, TEE_Param ta_param,
 
 		/* Import key */
 		res = ta_import_key(key_handle, shared_params->key_type,
-				    shared_params->security_size, priv_key,
-				    priv_key_len, pub_key,
+				    shared_params->security_size, key_usage,
+				    priv_key, priv_key_len, pub_key,
 				    shared_params->pub_key_len, modulus,
 				    modulus_len);
 		if (res)

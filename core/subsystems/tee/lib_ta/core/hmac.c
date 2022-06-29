@@ -91,8 +91,8 @@ TEE_Result hmac(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		priv_key = params[0].memref.buffer;
 		priv_key_len = params[0].memref.size;
 		res = ta_import_key(&key_handle, shared_params->tee_key_type,
-				    shared_params->security_size, priv_key,
-				    priv_key_len, NULL, 0, NULL, 0);
+				    shared_params->security_size, TEE_USAGE_MAC,
+				    priv_key, priv_key_len, NULL, 0, NULL, 0);
 		if (res) {
 			EMSG("Failed to import key: 0x%x", res);
 			goto exit;

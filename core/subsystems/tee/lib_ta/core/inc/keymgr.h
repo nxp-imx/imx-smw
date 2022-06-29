@@ -45,6 +45,7 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
  * @key_handle: Key handle.
  * @key_type: Key type.
  * @security_size: Key security size.
+ * @key_usage: Key usage.
  * @priv_key: Pointer to private key buffer.
  * @priv_key_len: @priv_key length in bytes.
  * @pub_key: Pointer to public key buffer.
@@ -62,9 +63,10 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
  */
 TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 			 enum tee_key_type key_type, unsigned int security_size,
-			 unsigned char *priv_key, unsigned int priv_key_len,
-			 unsigned char *pub_key, unsigned int pub_key_len,
-			 unsigned char *modulus, unsigned int modulus_len);
+			 unsigned int key_usage, unsigned char *priv_key,
+			 unsigned int priv_key_len, unsigned char *pub_key,
+			 unsigned int pub_key_len, unsigned char *modulus,
+			 unsigned int modulus_len);
 
 /**
  * import_key() - Import a key or keypair.

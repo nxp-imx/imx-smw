@@ -140,4 +140,13 @@ bool hsm_hmac_handle(struct hdl *hdl, enum operation_id operation_id,
  */
 int convert_hsm_err(hsm_err_t err);
 
+/**
+ * hsm_set_empty_key_policy() - Set empty key policy.
+ * @key_attributes: Key attributes.
+ *
+ * Return:
+ * None.
+ */
+void hsm_set_empty_key_policy(struct smw_keymgr_attributes *key_attributes);
+
 #endif /* __COMMON_H__ */

@@ -616,6 +616,12 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	/* Update the key database with the shared key ids */
 	status = add_update_db_shared_keys(args, nb_shared_keys, new_key_ids,
 					   shared_key_ids);
+
+	if (args->key_attributes.policy) {
+		hsm_set_empty_key_policy(&args->key_attributes);
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	}
+
 end:
 	if (new_key_ids)
 		SMW_UTILS_FREE(new_key_ids);

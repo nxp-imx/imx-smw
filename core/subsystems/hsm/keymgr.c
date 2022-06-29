@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "utils.h"
 #include "base64.h"
+#include "tlv.h"
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
@@ -92,6 +93,23 @@ static int set_key_type(enum smw_config_key_type_id key_type_id,
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+void hsm_set_empty_key_policy(struct smw_keymgr_attributes *key_attributes)
+{
+	unsigned char *attributes_list =
+		key_attributes->pub_key_attributes_list;
+
+	SMW_DBG_ASSERT(attributes_list);
+
+	smw_tlv_set_string(&attributes_list, POLICY_STR, NULL);
+
+	SMW_DBG_ASSERT(*key_attributes->pub_key_attributes_list_length >=
+		       attributes_list -
+			       key_attributes->pub_key_attributes_list);
+
+	*key_attributes->pub_key_attributes_list_length =
+		attributes_list - key_attributes->pub_key_attributes_list;
 }
 
 static int generate_key(struct hdl *hdl, void *args)
@@ -213,6 +231,11 @@ static int generate_key(struct hdl *hdl, void *args)
 	}
 
 	smw_keymgr_set_public_length(key_descriptor, out_size);
+
+	if (generate_key_args->key_attributes.policy) {
+		hsm_set_empty_key_policy(&generate_key_args->key_attributes);
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	}
 
 end:
 	if (out_key && out_key != public_data)

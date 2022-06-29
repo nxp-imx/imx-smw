@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __DEBUG_H__
@@ -63,7 +63,7 @@
 		if (SMW_DBG_LEVEL_##level > SMW_DBG_LEVEL)                     \
 			break;                                                 \
 		__typeof__(size) i;                                            \
-		unsigned char *_addr = addr;                                   \
+		const unsigned char *_addr = addr;                             \
 		__typeof__(size) _size = (size);                               \
 		__typeof__(align) _align = (align);                            \
 		_size--;                                                       \

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #include "smw_status.h"
@@ -78,6 +78,9 @@ int read_attributes(const unsigned char *attributes_list,
 		status = SMW_STATUS_OK;
 		goto end;
 	}
+
+	SMW_DBG_PRINTF(DEBUG, "Attributes list:\n");
+	SMW_DBG_HEX_DUMP(DEBUG, attributes_list, attributes_length, 4);
 
 	while (p < end) {
 		/* Parse attribute */

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 /* TLV defines */
@@ -75,6 +75,8 @@ int smw_tlv_verify_enumeration(unsigned int length, unsigned char *value);
 /**
  * smw_tlv_verify_large_numeral() - Verify that TLV length and value correspond
  *                                  to large numeral type.
+ * @length: Length of @value in bytes.
+ * @value: Value buffer.
  *
  * Length and value must be set.
  *
@@ -99,6 +101,21 @@ int smw_tlv_verify_large_numeral(unsigned int length, unsigned char *value);
 int smw_tlv_verify_numeral(unsigned int length, unsigned char *value);
 
 /**
+ * smw_tlv_verify_variable_length_list() - Verify that TLV length and value correspond
+ *                                         to variable-length list type.
+ * @length: Length of @value in bytes.
+ * @value: Value buffer.
+ *
+ * Length and value must be set.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- One of the parameter is invalid.
+ */
+int smw_tlv_verify_variable_length_list(unsigned int length,
+					unsigned char *value);
+
+/**
  * smw_tlv_convert_numeral() - Convert TLV numeral value in uint64_t.
  * @length: Length of @value in bytes.
  * @value: Value buffer.
@@ -109,3 +126,16 @@ int smw_tlv_verify_numeral(unsigned int length, unsigned char *value);
  */
 unsigned long long smw_tlv_convert_numeral(unsigned int length,
 					   unsigned char *value);
+
+/**
+ * smw_tlv_set_string() - Encode TLV string in a buffer.
+ * @buffer: Pointer to the buffer.
+ * @type: Type of the string.
+ * @value: String to be encoded.
+ *
+ * Type and value must be null-terminated strings.
+ *
+ * Return:
+ * None.
+ */
+void smw_tlv_set_string(unsigned char **buffer, char *type, char *value);

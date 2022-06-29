@@ -26,9 +26,20 @@
 /* Default RSA public exponent is 65537, which has a length of 3 bytes */
 #define DEFAULT_RSA_PUB_EXP_LEN 3
 
-#define PERSISTENT_STR	"PERSISTENT"
-#define RSA_PUB_EXP_STR "RSA_PUB_EXP"
-#define FLUSH_KEY_STR	"FLUSH_KEY"
+#define PERSISTENT_STR	   "PERSISTENT"
+#define RSA_PUB_EXP_STR	   "RSA_PUB_EXP"
+#define FLUSH_KEY_STR	   "FLUSH_KEY"
+#define POLICY_STR	   "POLICY"
+#define USAGE_STR	   "USAGE"
+#define EXPORT_STR	   "EXPORT"
+#define COPY_STR	   "COPY"
+#define ENCRYPT_STR	   "ENCRYPT"
+#define DECRYPT_STR	   "DECRYPT"
+#define SIGN_MESSAGE_STR   "SIGN_MESSAGE"
+#define VERIFY_MESSAGE_STR "VERIFY_MESSAGE"
+#define SIGN_HASH_STR	   "SIGN_HASH"
+#define VERIFY_HASH_STR	   "VERIFY_HASH"
+#define DERIVE_STR	   "DERIVE"
 
 enum smw_keymgr_privacy_id {
 	/* Key privacy */
@@ -116,12 +127,20 @@ struct smw_keymgr_descriptor {
  * @rsa_pub_exp: Pointer to rsa public exponent.
  * @rsa_pub_exp_len: @rsa_pub_exp length in bytes.
  * @flush_key: Flush persistent key(s)
+ * @policy: Key policy encoded as variable-length list TLV.
+ * @policy_len: @policy length in bytes.
+ * @pub_key_attributes_list: Key attributes list from the public API
+ * @pub_key_attributes_list_length: Length of @pub_key_attributes_list
  */
 struct smw_keymgr_attributes {
 	bool persistent_storage;
 	unsigned char *rsa_pub_exp;
 	unsigned int rsa_pub_exp_len;
 	bool flush_key;
+	unsigned char *policy;
+	unsigned int policy_len;
+	unsigned char *pub_key_attributes_list;
+	unsigned int *pub_key_attributes_list_length;
 };
 
 /**
@@ -418,7 +437,7 @@ void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr);
 /**
  * smw_keymgr_read_attributes() - Read key attributes from list
  * @key_attrs: Key attributes read.
- * @attr_list: List (TLV string format) of attribute to read.
+ * @attr_list: List (TLV string format) of attributes to read.
  * @attr_length: Length of the @att_list string.
  *
  * This function reads the TLV string @attr_list and set appropriate
@@ -429,8 +448,23 @@ void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr);
  * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
  */
 int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
-			       const unsigned char *attr_list,
-			       unsigned int attr_length);
+			       unsigned char *attr_list,
+			       unsigned int *attr_length);
+
+/**
+ * smw_keymgr_set_attributes_list() - Set Key attributes.
+ * @key_attrs: Key attributes.
+ * @attr_list: List (TLV string format) of attributes to write.
+ * @attr_length: Length of the @att_list string.
+ *
+ * This function sets the Key attributes list.
+ *
+ * Return:
+ * None.
+ */
+void smw_keymgr_set_attributes_list(struct smw_keymgr_attributes *key_attrs,
+				    unsigned char *attr_list,
+				    unsigned int attr_length);
 
 /**
  * smw_keymgr_get_privacy_id() - Get the Key privacy ID.

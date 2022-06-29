@@ -34,7 +34,7 @@ static const char *const format_names[] = { [SMW_KEYMGR_FORMAT_ID_HEX] = "HEX",
  *
  * Return:
  * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- key_attributes is NULL.
+ * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
  */
 static int store_persistent(void *attributes, unsigned char *value,
 			    unsigned int length);
@@ -47,7 +47,7 @@ static int store_persistent(void *attributes, unsigned char *value,
  *
  * Return:
  * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- @key_attributes is NULL.
+ * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
  */
 static int store_rsa_pub_exp(void *attributes, unsigned char *value,
 			     unsigned int length);
@@ -60,11 +60,28 @@ static int store_rsa_pub_exp(void *attributes, unsigned char *value,
  *
  * Return:
  * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- key_attributes is NULL.
+ * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
  */
 static int store_flush_key(void *attributes, unsigned char *value,
 			   unsigned int length);
 
+/**
+ * store_policy() - Store key policy.
+ * @attributes: Pointer to attribute structure to fill.
+ * @value: Pointer to the key policy.
+ * @length: Length of @value in bytes.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
+ */
+static int store_policy(void *attributes, unsigned char *value,
+			unsigned int length);
+
+/*
+ * Key policy is encoded as variable-length list TLV.
+ * The syntax is verified by the Secure Subsystem when it is decoded.
+ */
 static const struct attribute_tlv keymgr_attributes_tlv_array[] = {
 	{ .type = (const unsigned char *)PERSISTENT_STR,
 	  .verify = smw_tlv_verify_boolean,
@@ -74,7 +91,10 @@ static const struct attribute_tlv keymgr_attributes_tlv_array[] = {
 	  .store = store_rsa_pub_exp },
 	{ .type = (const unsigned char *)FLUSH_KEY_STR,
 	  .verify = smw_tlv_verify_boolean,
-	  .store = store_flush_key }
+	  .store = store_flush_key },
+	{ .type = (const unsigned char *)POLICY_STR,
+	  .verify = smw_tlv_verify_variable_length_list,
+	  .store = store_policy }
 };
 
 static int get_format_id(const char *name, enum smw_keymgr_format_id *id)
@@ -275,19 +295,46 @@ void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr)
 	attr->rsa_pub_exp = NULL;
 	attr->rsa_pub_exp_len = 0;
 	attr->flush_key = false;
+	attr->policy = NULL;
+	attr->policy = 0;
+	attr->pub_key_attributes_list = NULL;
+	attr->pub_key_attributes_list_length = 0;
 }
 
 int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
-			       const unsigned char *attr_list,
-			       unsigned int attr_length)
+			       unsigned char *attr_list,
+			       unsigned int *attr_length)
 {
 	int status;
 
-	status = read_attributes(attr_list, attr_length, key_attrs,
+	status = read_attributes(attr_list, *attr_length, key_attrs,
 				 keymgr_attributes_tlv_array,
 				 ARRAY_SIZE(keymgr_attributes_tlv_array));
 
+	key_attrs->pub_key_attributes_list = attr_list;
+	key_attrs->pub_key_attributes_list_length = attr_length;
+
 	return status;
+}
+
+void smw_keymgr_set_attributes_list(struct smw_keymgr_attributes *key_attrs,
+				    unsigned char *attr_list,
+				    unsigned int attr_length)
+{
+	SMW_DBG_ASSERT(key_attrs->pub_key_attributes_list);
+	SMW_DBG_ASSERT(*key_attrs->pub_key_attributes_list_length >=
+		       attr_length);
+
+	SMW_DBG_PRINTF(DEBUG, "Attributes list set by caller:\n");
+	SMW_DBG_HEX_DUMP(DEBUG, key_attrs->pub_key_attributes_list,
+			 *key_attrs->pub_key_attributes_list_length, 4);
+
+	SMW_DBG_PRINTF(DEBUG, "Attributes list returned:\n");
+	SMW_DBG_HEX_DUMP(DEBUG, attr_list, attr_length, 4);
+
+	SMW_UTILS_MEMCPY(key_attrs->pub_key_attributes_list, attr_list,
+			 attr_length);
+	*key_attrs->pub_key_attributes_list_length = attr_length;
 }
 
 static int
@@ -318,7 +365,7 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 
 	status = smw_keymgr_read_attributes(&converted_args->key_attributes,
 					    args->key_attributes_list,
-					    args->key_attributes_list_length);
+					    &args->key_attributes_list_length);
 
 	if (status == SMW_STATUS_OK) {
 		/* RSA_PUB_EXP attribute must only be set for RSA key type */
@@ -388,7 +435,7 @@ import_key_convert_args(struct smw_import_key_args *args,
 
 	status = smw_keymgr_read_attributes(&converted_args->key_attributes,
 					    args->key_attributes_list,
-					    args->key_attributes_list_length);
+					    &args->key_attributes_list_length);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -496,6 +543,24 @@ static int store_flush_key(void *attributes, unsigned char *value,
 
 	if (attr) {
 		attr->flush_key = true;
+		status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int store_policy(void *attributes, unsigned char *value,
+			unsigned int length)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keymgr_attributes *attr = attributes;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (attr) {
+		attr->policy = value;
+		attr->policy_len = length;
 		status = SMW_STATUS_OK;
 	}
 
@@ -925,6 +990,7 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+	int ret;
 
 	struct smw_keymgr_generate_key_args generate_key_args = { 0 };
 	struct smw_keymgr_descriptor *key_desc;
@@ -1009,7 +1075,8 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 
 	status = smw_utils_execute_operation(OPERATION_ID_GENERATE_KEY,
 					     &generate_key_args, subsystem_id);
-	if (status != SMW_STATUS_OK) {
+	if (status != SMW_STATUS_OK &&
+	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
 		/* Delete the key from the database */
 		(void)smw_keymgr_db_delete(new_id, &key_desc->identifier);
 		goto end;
@@ -1020,9 +1087,11 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 	else
 		key_desc->identifier.persistent = false;
 
-	status = set_key_identifier(new_id, key_desc);
-	if (status == SMW_STATUS_OK)
+	ret = set_key_identifier(new_id, key_desc);
+	if (ret == SMW_STATUS_OK)
 		set_key_buffer_format(key_desc);
+	else
+		status = ret;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1058,6 +1127,7 @@ end:
 enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 {
 	int status = SMW_STATUS_OK;
+	int ret;
 
 	struct smw_keymgr_import_key_args import_key_args = { 0 };
 	struct smw_keymgr_descriptor *key_desc;
@@ -1129,7 +1199,8 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 
 	status = smw_utils_execute_operation(OPERATION_ID_IMPORT_KEY,
 					     &import_key_args, subsystem_id);
-	if (status != SMW_STATUS_OK) {
+	if (status != SMW_STATUS_OK &&
+	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
 		/* Delete the key from the database */
 		(void)smw_keymgr_db_delete(new_id, &key_desc->identifier);
 		goto end;
@@ -1148,9 +1219,11 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	else
 		key_desc->identifier.persistent = false;
 
-	status = set_key_identifier(new_id, key_desc);
-	if (status == SMW_STATUS_OK)
+	ret = set_key_identifier(new_id, key_desc);
+	if (ret == SMW_STATUS_OK)
 		set_key_buffer_format(key_desc);
+	else
+		status = ret;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

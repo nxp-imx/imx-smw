@@ -520,7 +520,7 @@ static int derive_key_convert_args(struct smw_derive_key_args *args,
 
 	status = smw_keymgr_read_attributes(&conv_args->key_attributes,
 					    args->key_attributes_list,
-					    args->key_attributes_list_length);
+					    &args->key_attributes_list_length);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

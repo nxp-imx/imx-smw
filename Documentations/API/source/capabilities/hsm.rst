@@ -6,7 +6,7 @@ Key manager
 
 .. table::
    :align: left
-   :widths: auto
+   :class: wrap-table
 
    +--------------+---------------------------------+
    | **Key type** | **Key security size(s)**        |
@@ -54,7 +54,7 @@ Signature
 
 .. table::
    :align: left
-   :widths: auto
+   :class: wrap-table
 
    +--------------+--------------------------+--------------------+
    | **Key type** | **Key security size(s)** | **Hash algorithm** |
@@ -84,7 +84,7 @@ HMAC
 
 .. table::
    :align: left
-   :widths: auto
+   :class: wrap-table
 
    +--------------+--------------------------+--------------------+
    | **Key type** | **Key security size(s)** | **Hash algorithm** |
@@ -100,3 +100,24 @@ HMAC
 
 HMAC Key generation and HMAC generation is not working on all HSM Firmware
 and may return ``SMW_STATUS_SUBSYSTEM_FAILURE``.
+
+Cipher
+^^^^^^
+
+.. tabularcolumns:: |\Y{0.2}|\Y{0.2}|
+
+.. table::
+   :align: left
+   :class: wrap-table
+
+   +--------------+----------+
+   | **Key type** | **Mode** |
+   +==============+==========+
+   | AES          |   CBC    |
+   +              +          +
+   |              |   ECB    |
+   +--------------+----------+
+
+One-shot operations supported:
+ - Encrypt
+ - Decrypt

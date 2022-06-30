@@ -37,7 +37,7 @@ The configuration format must respect following rules:
 
 - The load/unload method **<string: load/unload method>** is optional. Only one occurrence is allowed if present.
 
-- There must be at least one occurrence of **[SECURITY_OPERATION]** per **[SECURE_SUBSYSTEM]**. 
+- There must be at least one occurrence of **[SECURITY_OPERATION]** per **[SECURE_SUBSYSTEM]**.
 
 - There must be one **<string: name of operation>** set in **[SECURITY_OPERATION]**. The possible values of string correspond to the external interfaces of each module as listed in `List of Security Operations`_.
 
@@ -72,7 +72,7 @@ List of Secure Subsystems:
 
 .. table::
    :align: left
-   :widths: auto
+   :class: wrap-table
 
    +----------------------------------+-----------------------------------------------------------------+
    | **Secure Subsystem string name** | **Description**                                                 |
@@ -91,7 +91,7 @@ List of Secure Subsystem load/unload methods:
 
 .. table::
    :align: left
-   :widths: auto
+   :class: wrap-table
 
    +---------------------------------+-----------------------------------------------------------------------+
    | **Load/Unload string method**   | **Description**                                                       |
@@ -129,7 +129,7 @@ List of Security Operations:
 
 .. table::
    :align: left
-   :widths: auto
+   :class: wrap-table
 
    +------------------------------------+------------------------------------------------------------------+
    | **Security Operation string name** | **Description**                                                  |
@@ -181,7 +181,7 @@ List of Security Operation values tag:
 
 .. table::
    :align: left
-   :widths: auto
+   :class: wrap-table
 
    +------------------+----------------------------------------------------------------------------------+
    | **Tag Values**   | **Description**                                                                  |
@@ -208,12 +208,11 @@ List of Security Operation range tag:
 
 .. table::
    :align: left
-   :widths: auto
+   :class: wrap-table
 
    +------------------------------+---------------------------------------------------+
    | **Tag Range**                | **Description**                                   |
    +==============================+===================================================+
-   +------------------------------+---------------------------------------------------+
    | <KEY_TYPE>_SIZE_RANGE        | Define the minimum and maximum key size bits of   |
    |                              | a key type listed by the **KEY_TYPE_VALUES** tag. |
    +------------------------------+---------------------------------------------------+

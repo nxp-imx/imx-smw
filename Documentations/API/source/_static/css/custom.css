@@ -1,0 +1,22 @@
+table.wrap-table {
+        table-layout: fixed;
+        border: 2px solid black !important;
+}
+
+table.wrap-table th {
+        text-align: center;
+        background-color: lightgray;
+        border: 1px solid black !important;
+        border-bottom: 2px solid black !important;
+}
+
+table.wrap-table td {
+        word-wrap: normal;
+        white-space: normal;
+        border: 1px solid black !important;
+}
+
+table.wrap-table tr {
+        background-color: #f3f6f6;
+        border: 1px solid black !important;
+}

@@ -8,3 +8,5 @@ tests/scripts
 inc/compiler.h
 *.rst
 tests/psa/psa-arch-tests/crypto
+*.png
+*.pub

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
 
 #ifndef __SMW_STRINGS_H__
@@ -82,6 +82,11 @@ typedef smw_string_t smw_key_format_t;
 
 /**
  * typedef smw_attribute_type_t - Attribute type name
+ *
+ * An attribute is encoded with a Type-Length-Value (TLV) format.
+ * Function of the attribute type, the TLV scheme varies.
+ * Refer to :doc:`/tlv/tlv`
+ *
  * Values:
  *	- PERSISTENT
  *	- SIGNATURE_TYPE

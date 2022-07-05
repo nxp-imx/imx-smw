@@ -12,12 +12,25 @@
 #include "smw_status.h"
 
 /**
+ * DOC:
+ * The OSAL module must refer to the following structures and functions to
+ * be linked with the SMW core library.
+ * The content and prototype of the structures and functions can't be changed
+ * otherwise the core library may not build or work correctly.
+ */
+
+/**
  * struct osal_key - OSAL Key database operation parameters
  * @id: Key id output when key added, else input
- * @range: Key id range to generate
- * @persistent: Key is persistent
- * @info: Key information to store
+ * @range: Key id range to generate (information set by SMW at key creation)
+ * @range.min: Minimum value
+ * @range.max: Maximum value
+ * @persistent: Key is persistent (information set by SMW at key creation)
+ * @info: Key information to store or restore
  * @info_size: Size of the key information
+ *
+ * This structure defines the key information to be handled by the OSAL
+ * key database if needed.
  *
  * Note: if key range min and max are equal, the key id is not generated
  * by the Key database manager.
@@ -35,7 +48,7 @@ struct osal_key {
 };
 
 /**
- * struct smw_ops - SMW OSAL
+ * struct smw_ops - SMW OSAL operations
  * @critical_section_start: [optional] Start critical section
  * @critical_section_stop: [optional] Stop critical section
  * @mutex_init: [optional] Initialize a mutex
@@ -95,9 +108,10 @@ struct smw_ops {
  * then initializes SMW modules.
  *
  * Return:
- * SMW_STATUS_OK			- Initialization is successful
- * SMW_STATUS_OPS_INVALID		- @ops is invalid
- * SMW_STATUS_MUTEX_INIT_FAILURE	- Mutex initialization has failed
+ * See &enum smw_status_code
+ *  - SMW_STATUS_OK                  - Initialization is successful
+ *  - SMW_STATUS_OPS_INVALID         - @ops is invalid
+ *  - SMW_STATUS_MUTEX_INIT_FAILURE  - Mutex initialization has failed
  */
 enum smw_status_code smw_init(const struct smw_ops *ops);
 
@@ -108,8 +122,9 @@ enum smw_status_code smw_init(const struct smw_ops *ops);
  * It frees all memory dynamically allocated by SMW.
  *
  * Return:
- * SMW_STATUS_OK			- Deinitialization is successful
- * SMW_STATUS_MUTEX_DESTROY_FAILURE	- Mutex destruction has failed
+ * See &enum smw_status_code
+ *  - SMW_STATUS_OK                     - Deinitialization is successful
+ *  - SMW_STATUS_MUTEX_DESTROY_FAILURE  - Mutex destruction has failed
  */
 enum smw_status_code smw_deinit(void);
 

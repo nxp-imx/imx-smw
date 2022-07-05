@@ -12,3 +12,4 @@ User API documentation (release |release|)
    public_apis
    capabilities
    tlv/tlv
+   osal/osal

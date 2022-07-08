@@ -39,15 +39,28 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. OSAL
 
-* Changed linux OSAL key database primitives to use `fcntl()` function in order to lock file access. This function guaranties file locking in case of multi-process and even with NFS file system.
+* Change linux OSAL key database primitives to use `fcntl()` function in order to lock file access. This function guaranties file locking in case of multi-process and even with NFS file system.
 
 ##### 3. Subsystem
 
 * Add HMAC Key generation and HMAC generation for the HSM subsystem.
+* Add handling of key policy
 
 ##### 4. SMW APIs
 
 * Remove fields `key_attributes_list` and `key_attributes_list_length` from `struct smw_export_key_args`.
+
+##### 5. Key manager
+
+* Add support of key policy in key attributes list.
+
+#### SMW Tests - _version 2.1_
+
+* Add key policy tag in the test definition.
+
+#### PKCS#11 Library - _version 2.1_
+
+* Set the key policy in the key template when generating/importing keys.
 
 ### <a id ="rel_2_0"></a></br>**Release 2.0**
 ---

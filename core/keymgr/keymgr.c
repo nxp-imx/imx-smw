@@ -1065,6 +1065,11 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 		}
 	}
 
+	if (generate_key_args.key_attributes.persistent_storage)
+		key_desc->identifier.persistent = true;
+	else
+		key_desc->identifier.persistent = false;
+
 	/*
 	 * Try to create the key in the database before
 	 * generating the key.
@@ -1081,11 +1086,6 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 		(void)smw_keymgr_db_delete(new_id, &key_desc->identifier);
 		goto end;
 	}
-
-	if (generate_key_args.key_attributes.persistent_storage)
-		key_desc->identifier.persistent = true;
-	else
-		key_desc->identifier.persistent = false;
 
 	ret = set_key_identifier(new_id, key_desc);
 	if (ret == SMW_STATUS_OK)

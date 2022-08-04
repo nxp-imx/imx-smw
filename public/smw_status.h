@@ -34,6 +34,7 @@
  * @SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT: An object stored in the secure subsystem is corrupted.
  * @SMW_STATUS_SUBSYSTEM_LOADED: Secure Subsystem is loaded
  * @SMW_STATUS_SUBSYSTEM_NOT_LOADED: Secure Subsystem is not loaded
+ * @SMW_STATUS_KEY_INVALID: Key used for the operation is not valid
  *
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
@@ -91,6 +92,7 @@
  *	- SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT
  *	- SMW_STATUS_SUBSYSTEM_LOADED
  *	- SMW_STATUS_SUBSYSTEM_NOT_LOADED
+ *      - SMW_STATUS_KEY_INVALID
  *
  ** Specific return codes - Library initialization
  *
@@ -176,7 +178,8 @@ enum smw_status_code {
 	SMW_STATUS_KEY_DB_DELETE,
 	SMW_STATUS_KEY_DB_GET_INFO,
 	SMW_STATUS_KEY_POLICY_ERROR,
-	SMW_STATUS_KEY_POLICY_WARNING_IGNORED
+	SMW_STATUS_KEY_POLICY_WARNING_IGNORED,
+	SMW_STATUS_KEY_INVALID /* 45 */
 };
 
 #endif /* __SMW_STATUS_H__ */

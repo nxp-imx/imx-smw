@@ -40,6 +40,27 @@
 #define SIGN_HASH_STR	   "SIGN_HASH"
 #define VERIFY_HASH_STR	   "VERIFY_HASH"
 #define DERIVE_STR	   "DERIVE"
+#define ALGO_STR	   "ALGO"
+#define HASH_STR	   "HASH"
+#define LENGTH_STR	   "LENGTH"
+#define MIN_LENGTH_STR	   "MIN_LENGTH"
+
+#define ANY_STR		   "ANY"
+#define ALL_CIPHER_STR	   "ALL_CIPHER"
+#define HMAC_STR	   "HMAC"
+#define CMAC_STR	   "CMAC"
+#define CTR_STR		   "CTR"
+#define ECB_NO_PADDING_STR "ECB_NO_PADDING"
+#define CBC_NO_PADDING_STR "CBC_NO_PADDING"
+#define CCM_STR		   "CCM"
+#define RSA_PKCS1V15_STR   "RSA_PKCS1V15"
+#define RSA_PSS_STR	   "RSA_PSS"
+#define ECDSA_STR	   "ECDSA"
+#define SHA_1_STR	   "SHA1"
+#define SHA_224_STR	   "SHA224"
+#define SHA_256_STR	   "SHA256"
+#define SHA_384_STR	   "SHA384"
+#define SHA_512_STR	   "SHA512"
 
 enum smw_keymgr_privacy_id {
 	/* Key privacy */

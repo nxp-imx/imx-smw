@@ -3,11 +3,12 @@
  * Copyright 2020-2022 NXP
  */
 
-#include "tlv.h"
 #include "smw_status.h"
+
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
+#include "tlv.h"
 
 int smw_tlv_read_element(const unsigned char **attribute,
 			 const unsigned char *end, unsigned char **type,
@@ -171,29 +172,53 @@ unsigned long long smw_tlv_convert_numeral(unsigned int length,
 	return numeral;
 }
 
-void smw_tlv_set_string(unsigned char **buffer, char *type, char *value)
+void smw_tlv_set_element(unsigned char **buffer, const char *type,
+			 const unsigned char *value, unsigned int value_size)
 {
 	unsigned char *p = *buffer;
 
-	SMW_UTILS_MEMCPY(p, type, SMW_UTILS_STRLEN(type));
-	p += SMW_UTILS_STRLEN(type);
-	*p = 0;
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_UTILS_MEMCPY(p, type, SMW_UTILS_STRLEN(type) + 1);
+	p += SMW_UTILS_STRLEN(type) + 1;
+
+	*p = value_size >> 8;
 	p++;
-	if (value) {
-		*p = SMW_UTILS_STRLEN((char *)value) >> 8;
-		p++;
-		*p = SMW_UTILS_STRLEN((char *)value);
-		p++;
-		SMW_UTILS_MEMCPY(p, value, SMW_UTILS_STRLEN((char *)value));
-		p += SMW_UTILS_STRLEN((char *)value);
-		*p = 0;
-		p++;
-	} else {
-		*p = 0;
-		p++;
-		*p = 0;
-		p++;
+	*p = value_size;
+	p++;
+
+	if (value && value_size) {
+		SMW_UTILS_MEMCPY(p, value, value_size);
+		p += value_size;
 	}
 
 	*buffer = p;
+}
+
+void smw_tlv_set_string(unsigned char **buffer, const char *type,
+			const char *value)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (value)
+		smw_tlv_set_element(buffer, type, (const unsigned char *)value,
+				    (unsigned int)SMW_UTILS_STRLEN(value) + 1);
+	else
+		smw_tlv_set_element(buffer, type, NULL, 0);
+}
+
+void smw_tlv_set_element_length(unsigned char *element, unsigned char *end)
+{
+	unsigned char *p;
+	unsigned int value_size;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	p = element + SMW_UTILS_STRLEN((char *)element) + 1;
+
+	value_size = (unsigned int)(end - p - SMW_TLV_LENGTH_FIELD_SIZE);
+
+	*p = value_size >> 8;
+	p++;
+	*p = value_size;
 }

@@ -3,8 +3,14 @@
  * Copyright 2020-2022 NXP
  */
 
+#ifndef __TLV_H__
+#define __TLV_H__
+
 /* TLV defines */
 #define SMW_TLV_LENGTH_FIELD_SIZE 2 /* TLV length encoded with 2 bytes */
+#define SMW_TLV_ELEMENT_LENGTH(_type, _value_size)                             \
+	(SMW_UTILS_STRLEN(_type) + 1 /* Type */ +                              \
+	 SMW_TLV_LENGTH_FIELD_SIZE /* Length */ + (_value_size) /* Value */)
 
 /**
  * smw_tlv_read_element() - Read one Type-Length-Value encoded element.
@@ -128,14 +134,48 @@ unsigned long long smw_tlv_convert_numeral(unsigned int length,
 					   unsigned char *value);
 
 /**
+ * smw_tlv_set_element() - Encode TLV element in a buffer.
+ * @buffer: Pointer to the buffer.
+ * @type: Type of the element.
+ * @value: Pointer to the element.
+ * @value_size: Size in bytes the element.
+ *
+ * Type must be a null-terminated string.
+ * The pointer @buffer is incremented to point to the next entry in the TLV
+ * buffer.
+ *
+ * Return:
+ * None.
+ */
+void smw_tlv_set_element(unsigned char **buffer, const char *type,
+			 const unsigned char *value, unsigned int value_size);
+
+/**
  * smw_tlv_set_string() - Encode TLV string in a buffer.
  * @buffer: Pointer to the buffer.
  * @type: Type of the string.
  * @value: String to be encoded.
  *
  * Type and value must be null-terminated strings.
+ * The pointer @buffer is incremented to point to the next entry in the TLV
+ * buffer.
  *
  * Return:
  * None.
  */
-void smw_tlv_set_string(unsigned char **buffer, char *type, char *value);
+void smw_tlv_set_string(unsigned char **buffer, const char *type,
+			const char *value);
+
+/**
+ * smw_tlv_set_element_length() - Encode length of a TLV element.
+ * @element: Pointer to a valid TLV element.
+ * @end: Pointer to the end of a valid TLV element.
+ *
+ * Type and Value fields of the TLV element must be set.
+ *
+ * Return:
+ * None.
+ */
+void smw_tlv_set_element_length(unsigned char *element, unsigned char *end);
+
+#endif /* __TLV_H__ */

@@ -238,7 +238,7 @@ int key_db_open(const char *key_db)
 	 * file doesn't exist create a new file.
 	 */
 	db->fp = open(key_db, O_RDWR | O_SYNC | O_CREAT, 777);
-	if (!db->fp) {
+	if (db->fp < 0) {
 		DBG_PRINTF(ERROR, "%s (%d): %s\n", __func__, __LINE__,
 			   get_strerr());
 

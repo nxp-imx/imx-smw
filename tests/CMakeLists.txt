@@ -33,9 +33,13 @@ message(STATUS "Tests enabled")
 message(STATUS "    JSON C Library: ${JSONC_LIBRARY}")
 message(STATUS "    JSON C Include dir: ${JSONC_INCLUDE_DIR}")
 
+set(TEST_CMD ${CMAKE_INSTALL_PREFIX}/${SMW_TESTS_TARGET_SCRIPTS_DIR}/run_simple_test.sh)
+set(TEST_KEYMGR_SUSPEND_RESUME_CMD
+    ${CMAKE_INSTALL_PREFIX}/${SMW_TESTS_TARGET_SCRIPTS_DIR}/run_keymgr_suspend_resume.sh)
+
 configure_file(${TEST_SRC_INC}/paths.h.in ${TEST_BIN_INC}/paths.h)
 configure_file(${TEST_SCRIPTS_SRC}/run_simple_test.sh.in
-               ${TEST_SCRIPTS_BIN}/run_simple_test.sh)
+               ${TEST_SCRIPTS_BIN}/run_simple_test.sh @ONLY)
 configure_file(${TEST_SCRIPTS_SRC}/run_keymgr_suspend_resume.sh.in
                ${TEST_SCRIPTS_BIN}/run_keymgr_suspend_resume.sh
                @ONLY)
@@ -95,10 +99,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONC_LIBRARY})
 target_link_libraries(${PROJECT_NAME} PRIVATE pthread rt)
 target_link_libraries(${PROJECT_NAME} PRIVATE smw)
-
-set(TEST_CMD ${CMAKE_INSTALL_PREFIX}/${SMW_TESTS_TARGET_SCRIPTS_DIR}/run_simple_test.sh)
-set(TEST_KEYMGR_SUSPEND_RESUME_CMD
-    ${CMAKE_INSTALL_PREFIX}/${SMW_TESTS_TARGET_SCRIPTS_DIR}/run_keymgr_suspend_resume.sh)
 
 # Include utils
 include(${CMAKE_SOURCE_DIR}/tests/cmake/utils.cmake)

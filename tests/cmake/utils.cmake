@@ -113,21 +113,6 @@ function(pop_front_list list out_list out_value)
 endfunction()
 
 #
-# intall_definition_files() - Install definition files present in a list
-# @definition_list: [Input] List of test definition files
-#
-# Destination directory is CMAKE_INSTALL_PREFIX/SMW_TESTS_TARGET_DEF_DIR.
-#
-macro(install_definition_files definition_list)
-	foreach(file ${definition_list})
-		install(FILES ${file}
-			DESTINATION ${SMW_TESTS_TARGET_DEF_DIR}
-			EXCLUDE_FROM_ALL
-			COMPONENT ${PROJECT_NAME})
-	endforeach()
-endmacro()
-
-#
 # add_tests() - Add tests to the project
 # @definition_list: [Input] List of test definition files
 # @cmd: [Input] Test command common to all tests
@@ -167,10 +152,22 @@ endmacro()
 #
 # add_and_install_tests() - Add tests to the project and install test definition
 #                           files
-# @test_definition_list: [Input] List of test definition files.
+# @def_list: [Input] List of test definition files.
+# @cfg_list: [Input] List of test configuration files.
 # @cmd: [Input] Test command common to all tests.
 #
-macro(add_and_install_tests test_definition_list cmd)
-	add_tests("${test_definition_list}" "${cmd}")
-	install_definition_files("${test_definition_list}")
+macro(add_and_install_tests def_list cfg_list cmd)
+	add_tests("${def_list}" "${cmd}")
+
+	# Install the test definition files
+	install(FILES ${def_list}
+		DESTINATION ${SMW_TESTS_TARGET_DEF_DIR}
+		EXCLUDE_FROM_ALL
+		COMPONENT ${PROJECT_NAME})
+
+	# Install the test configuration files
+	install(FILES ${cfg_list}
+		DESTINATION ${SMW_TESTS_TARGET_CONFIG_DIR}
+		EXCLUDE_FROM_ALL
+		COMPONENT ${PROJECT_NAME})
 endmacro()

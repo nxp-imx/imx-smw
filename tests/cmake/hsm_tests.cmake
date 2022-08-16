@@ -1,15 +1,10 @@
-set(HSM_CONFIG_FILE hsm_config.txt)
-set(HSM_COMMAND ${TEST_CMD} ${HSM_CONFIG_FILE})
-set(HSM_TEST_KEYMGR_SUSPEND_RESUME_COMMAND ${TEST_KEYMGR_SUSPEND_RESUME_CMD} ${HSM_CONFIG_FILE})
+set(GROUP HSM)
+set(CFG_FILE hsm_config.txt)
+set(CMD ${TEST_CMD} ${CFG_FILE})
+set(CMD_SUSPEND ${TEST_KEYMGR_SUSPEND_RESUME_CMD} ${CFG_FILE})
 
-# Install config file
-install(FILES ${SMW_CONFIG_SRC_DIR}/${HSM_CONFIG_FILE}
-	DESTINATION ${SMW_TESTS_TARGET_CONFIG_DIR}
-	EXCLUDE_FROM_ALL
-	COMPONENT ${PROJECT_NAME})
-
-# Get all HSM test definition files except those in multiple parts
-FILE(GLOB HSM_TESTS ${TEST_DEF_SRC_DIR}/*_HSM_*_???.json)
+# Get all test definition files except those in multiple parts
+file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}_*_???.json)
 
 if(ENABLE_TLS12)
 	list(APPEND REM_TESTS_LIST U_HSM_TLS_001.json)
@@ -22,17 +17,13 @@ else()
 endif()
 
 foreach(REM_TESTS IN LISTS REM_TESTS_LIST)
-    list(REMOVE_ITEM HSM_TESTS ${TEST_DEF_SRC_DIR}/${REM_TESTS})
+    list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/${REM_TESTS})
 endforeach()
 
-add_and_install_tests("${HSM_TESTS}" "${HSM_COMMAND}")
+set(CFG_FILES ${SMW_CONFIG_SRC_DIR}/${CFG_FILE})
+add_and_install_tests("${TESTS}" "${CFG_FILES}" "${CMD}")
 
 # Create suspend resume test definition files list and install test
-set(F_KEYMGR_001_1 F_HSM_Keymgr_001.1.json)
-set(F_KEYMGR_001_2 F_HSM_Keymgr_001.2.json)
+file(GLOB TESTS ${TEST_DEF_SRC_DIR}/F_${GROUP}_Keymgr_001.?.json)
 
-list(APPEND HSM_SUSPEND_RESUME_TESTS ${TEST_DEF_SRC_DIR}/${F_KEYMGR_001_1})
-list(APPEND HSM_SUSPEND_RESUME_TESTS ${TEST_DEF_SRC_DIR}/${F_KEYMGR_001_2})
-
-add_and_install_tests("${HSM_SUSPEND_RESUME_TESTS}"
-		      "${HSM_TEST_KEYMGR_SUSPEND_RESUME_COMMAND}")
+add_and_install_tests("${TESTS}" "${CFG_FILES}" "${CMD_SUSPEND}")

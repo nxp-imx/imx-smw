@@ -1,6 +1,8 @@
 #! /bin/bash
 
-config_file="@CMAKE_INSTALL_PREFIX@/@SMW_TESTS_TARGET_CONFIG_DIR@/"
+set -u
+
+cfg_path="@CMAKE_INSTALL_PREFIX@/@SMW_TESTS_TARGET_CONFIG_DIR@/"
 status_file_prefix="@DEFAULT_OUT_STATUS_DIR@/"
 definition_file_prefix="@SMW_TESTS_TARGET_DEF_DIR_FULL_PATH@/"
 definition_file_suffix=".json"
@@ -8,20 +10,18 @@ status_file_suffix=".txt"
 ids_file_suffix="_ids.json"
 res=0
 
-if [ $# -ne 3 ]
+if [ $# -lt 3 ]
 then
-	echo "This script needs 3 arguments:"
-	echo " - 1st: SMW configuration file name. Must be located in: $config_file directory"
-	echo " - 2nd: 1st test definition file path"
-	echo " - 3rd: 2nd test definition file path"
-	echo "This test:"
-	echo " - runs the 1st test (1st test definition file)"
-	echo " - runs suspend resume script"
-	echo " - runs the 2nd test (2nd test definition file)"
-	exit 1
+  echo "This script needs 3 arguments:"
+  echo " - 1st: SMW configuration file name. Must be located in: ${cfg_path} directory"
+  echo " - 2nd: 1st test definition file path"
+  echo " - 3rd: 2nd test definition file path"
+  echo "This test:"
+  echo " - runs the 1st test (1st test definition file)"
+  echo " - runs suspend resume script"
+  echo " - runs the 2nd test (2nd test definition file)"
+  exit 1
 fi
-
-config_file+=$1
 
 test1_name=$2
 test1_name=${test1_name#$definition_file_prefix}
@@ -47,9 +47,7 @@ test2_status_file+=$status_file_suffix
 ids_file_name=$main_test_name
 ids_file_name+=$ids_file_suffix
 
-export SMW_CONFIG_FILE=$config_file
-
-@PROJECT_NAME@ -d $2
+@TEST_CMD@ "$1" "$2"
 res=$?
 if [ $res -ne 0 ]
 then
@@ -65,7 +63,7 @@ then
 	exit $res
 fi
 
-@PROJECT_NAME@ -d $3
+@TEST_CMD@ "$1" "$3"
 res=$?
 if [ $res -ne 0 ]
 then

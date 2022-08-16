@@ -1,14 +1,29 @@
 #! /bin/bash
 
-config_file="${CMAKE_INSTALL_PREFIX}/${SMW_TESTS_TARGET_CONFIG_DIR}"
+set -u
+
+res=0
+error=0
+cfg_path="@CMAKE_INSTALL_PREFIX@/@SMW_TESTS_TARGET_CONFIG_DIR@"
 
 if [ $# -lt 1 ]
 then
-	echo "This script needs 1 argument:"
-	echo " - SMW configuration file name. Must be located in: $config_file directory"
-	exit 1
+  echo "This script needs 1 argument:"
+  echo " - SMW configuration file name. Must be located in: ${cfg_path} directory"
+  exit 1
 fi
 
-config_file+="/$1"
-export SMW_CONFIG_FILE=$config_file
-${PROJECT_NAME}
+#
+# Set the SMW configuration file and run the test
+#
+export SMW_CONFIG_FILE="${cfg_path}/$1"
+
+@PROJECT_NAME@
+res=$?
+if [ $res -ne 0 ]
+then
+  echo "$2 test failed (${res})"
+  error=1
+fi
+
+exit ${error}

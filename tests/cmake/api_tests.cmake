@@ -1,17 +1,11 @@
-set(API_CONFIG_FILE api_config.txt)
-set(API_COMMAND ${TEST_CMD} ${API_CONFIG_FILE})
+set(GROUP API)
+set(CFG_FILE api_config.txt)
+set(CMD ${TEST_CMD} ${CFG_FILE})
 
 # Install config files
-FILE(GLOB U_API_TEST_CONFIG_FILES ${SMW_CONFIG_SRC_DIR}/config_*.txt)
-list(APPEND U_API_TEST_CONFIG_FILES ${SMW_CONFIG_SRC_DIR}/${API_CONFIG_FILE})
+file(GLOB CFG_FILES ${SMW_CONFIG_SRC_DIR}/config_*.txt)
+list(APPEND CFG_FILES ${SMW_CONFIG_SRC_DIR}/${CFG_FILE})
 
-foreach(file IN LISTS U_API_TEST_CONFIG_FILES)
-	install(FILES ${file}
-		DESTINATION ${SMW_TESTS_TARGET_CONFIG_DIR}
-		EXCLUDE_FROM_ALL
-		COMPONENT ${PROJECT_NAME})
-endforeach()
+file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}*.json)
 
-FILE(GLOB API_TESTS ${TEST_DEF_SRC_DIR}/*_API*.json)
-
-add_and_install_tests("${API_TESTS}" "${API_COMMAND}")
+add_and_install_tests("${TESTS}" "${CFG_FILES}" "${CMD}")

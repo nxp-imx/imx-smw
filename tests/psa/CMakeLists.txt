@@ -5,7 +5,8 @@ project(psatest VERSION 1.0 LANGUAGES C)
 enable_testing()
 
 configure_file(${TEST_SCRIPTS_SRC}/run_psa_test.sh.in
-               ${TEST_SCRIPTS_BIN}/run_psa_test.sh)
+               ${TEST_SCRIPTS_BIN}/run_psa_test.sh
+               @ONLY)
 
 add_executable(${PROJECT_NAME}
                EXCLUDE_FROM_ALL

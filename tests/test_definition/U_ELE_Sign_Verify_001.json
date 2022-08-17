@@ -68,147 +68,101 @@
 	"subtest 3": {
 		"command": "SIGN",
 		"subsystem": "ELE",
+		"algo": "SHA256",
 		"message": [
-			"3c593aa539fdcdae516cdf2f15000f66",
-			"34185c88f505b39775fb9ab137a10aa2"
+			"451101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8",
+			"5c8a61ac8924711f895c5ed90ef17745",
+			"ed2d728abd22a5f7a13479a462d71b56",
+			"c19a74a40b655c58edfe0a188ad2cf46",
+			"cbf30524f65d423c837dd1ff2bf462ac",
+			"4198007345bb44dbb7b1c861298cdf61",
+			"982a833afc728fae1eda2f87aa2c9480",
+			"858bec"
 		],
-		"sign_id": 0,
+		"sign_id": 1,
 		"key_id": 0,
 		"depends": 1
 	},
 	"subtest 4": {
 		"command": "VERIFY",
 		"subsystem": "ELE",
+		"algo": "SHA256",
 		"message": [
-			"3c593aa539fdcdae516cdf2f15000f66",
-			"34185c88f505b39775fb9ab137a10aa2"
+			"451101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8",
+			"5c8a61ac8924711f895c5ed90ef17745",
+			"ed2d728abd22a5f7a13479a462d71b56",
+			"c19a74a40b655c58edfe0a188ad2cf46",
+			"cbf30524f65d423c837dd1ff2bf462ac",
+			"4198007345bb44dbb7b1c861298cdf61",
+			"982a833afc728fae1eda2f87aa2c9480",
+			"858bec"
 		],
-		"sign_id": 0,
+		"sign_id": 1,
 		"key_id": 0,
-		"depends": 3
+		"depends": 2
 	},
 	"subtest 5": {
 		"command": "SIGN",
 		"subsystem": "ELE",
-		"algo": "SHA256",
+		"algo": "SHA384",
 		"message": [
-			"451101250ec6f26652249d59dc974b73",
-			"61d571a8101cdfd36aba3b5854d3ae08",
-			"6b5fdd4597721b66e3c0dc5d8c606d96",
-			"57d0e323283a5217d1f53f2f284f57b8",
-			"5c8a61ac8924711f895c5ed90ef17745",
-			"ed2d728abd22a5f7a13479a462d71b56",
-			"c19a74a40b655c58edfe0a188ad2cf46",
-			"cbf30524f65d423c837dd1ff2bf462ac",
-			"4198007345bb44dbb7b1c861298cdf61",
-			"982a833afc728fae1eda2f87aa2c9480",
-			"858bec"
+			"62c6a169b9be02b3d7b471a964fc0bcc",
+			"72b480d26aecb2ed460b7f50016ddaf0",
+			"4c51218783f3aadfdff5a04ded030d7b",
+			"3fb7376b61ba30b90e2da921a4470740",
+			"d63fb99fa16cc8ed81abaf8ce4016e50",
+			"df81da832070372c24a80890aa3a26fa",
+			"675710b8fb718266249d496f313c55d0",
+			"bada101f8f56eeccee4345a8f98f60a3",
+			"6662cfda794900d12f9414fcbdfdeb85",
+			"388a814996b47e24d5c8086e7a8edcc5",
+			"3d299d0d033e6bb60c58b83d6e8b57f6",
+			"c258d6081dd10eb942fdf8ec157ec3e7",
+			"5371235a8196eb9d22b1de3a2d30c2ab",
+			"be0db7650cf6c7159bacbe29b3a93c92",
+			"100508"
 		],
-		"sign_id": 1,
-		"key_id": 0,
-		"depends": 1
+		"sign_id": 2,
+		"key_id": 1,
+		"depends": 2
 	},
 	"subtest 6": {
 		"command": "VERIFY",
 		"subsystem": "ELE",
-		"algo": "SHA256",
+		"algo": "SHA384",
 		"message": [
-			"451101250ec6f26652249d59dc974b73",
-			"61d571a8101cdfd36aba3b5854d3ae08",
-			"6b5fdd4597721b66e3c0dc5d8c606d96",
-			"57d0e323283a5217d1f53f2f284f57b8",
-			"5c8a61ac8924711f895c5ed90ef17745",
-			"ed2d728abd22a5f7a13479a462d71b56",
-			"c19a74a40b655c58edfe0a188ad2cf46",
-			"cbf30524f65d423c837dd1ff2bf462ac",
-			"4198007345bb44dbb7b1c861298cdf61",
-			"982a833afc728fae1eda2f87aa2c9480",
-			"858bec"
+			"62c6a169b9be02b3d7b471a964fc0bcc",
+			"72b480d26aecb2ed460b7f50016ddaf0",
+			"4c51218783f3aadfdff5a04ded030d7b",
+			"3fb7376b61ba30b90e2da921a4470740",
+			"d63fb99fa16cc8ed81abaf8ce4016e50",
+			"df81da832070372c24a80890aa3a26fa",
+			"675710b8fb718266249d496f313c55d0",
+			"bada101f8f56eeccee4345a8f98f60a3",
+			"6662cfda794900d12f9414fcbdfdeb85",
+			"388a814996b47e24d5c8086e7a8edcc5",
+			"3d299d0d033e6bb60c58b83d6e8b57f6",
+			"c258d6081dd10eb942fdf8ec157ec3e7",
+			"5371235a8196eb9d22b1de3a2d30c2ab",
+			"be0db7650cf6c7159bacbe29b3a93c92",
+			"100508"
 		],
-		"sign_id": 1,
-		"key_id": 0,
-		"depends": 5
+		"sign_id": 2,
+		"key_id": 1,
+		"depends": 4
 	},
 	"subtest 7": {
-		"command": "SIGN",
-		"subsystem": "ELE",
-		"message": [
-			"0730e184e7795575569f87030260bb8e",
-			"54498e0e5d096b18285e988d245b6f34",
-			"86d1f2447d5f85bcbe59d5689fc49425"
-		],
-		"sign_id": 2,
-		"key_id": 1,
-		"depends": 2
-	},
-	"subtest 8": {
-		"command": "VERIFY",
-		"subsystem": "ELE",
-		"message": [
-			"0730e184e7795575569f87030260bb8e",
-			"54498e0e5d096b18285e988d245b6f34",
-			"86d1f2447d5f85bcbe59d5689fc49425"
-		],
-		"sign_id": 2,
-		"key_id": 1,
-		"depends": 7
-	},
-	"subtest 9": {
-		"command": "SIGN",
-		"subsystem": "ELE",
-		"algo": "SHA384",
-		"message": [
-			"62c6a169b9be02b3d7b471a964fc0bcc",
-			"72b480d26aecb2ed460b7f50016ddaf0",
-			"4c51218783f3aadfdff5a04ded030d7b",
-			"3fb7376b61ba30b90e2da921a4470740",
-			"d63fb99fa16cc8ed81abaf8ce4016e50",
-			"df81da832070372c24a80890aa3a26fa",
-			"675710b8fb718266249d496f313c55d0",
-			"bada101f8f56eeccee4345a8f98f60a3",
-			"6662cfda794900d12f9414fcbdfdeb85",
-			"388a814996b47e24d5c8086e7a8edcc5",
-			"3d299d0d033e6bb60c58b83d6e8b57f6",
-			"c258d6081dd10eb942fdf8ec157ec3e7",
-			"5371235a8196eb9d22b1de3a2d30c2ab",
-			"be0db7650cf6c7159bacbe29b3a93c92",
-			"100508"
-		],
-		"sign_id": 3,
-		"key_id": 1,
-		"depends": 2
-	},
-	"subtest 10": {
-		"command": "VERIFY",
-		"subsystem": "ELE",
-		"algo": "SHA384",
-		"message": [
-			"62c6a169b9be02b3d7b471a964fc0bcc",
-			"72b480d26aecb2ed460b7f50016ddaf0",
-			"4c51218783f3aadfdff5a04ded030d7b",
-			"3fb7376b61ba30b90e2da921a4470740",
-			"d63fb99fa16cc8ed81abaf8ce4016e50",
-			"df81da832070372c24a80890aa3a26fa",
-			"675710b8fb718266249d496f313c55d0",
-			"bada101f8f56eeccee4345a8f98f60a3",
-			"6662cfda794900d12f9414fcbdfdeb85",
-			"388a814996b47e24d5c8086e7a8edcc5",
-			"3d299d0d033e6bb60c58b83d6e8b57f6",
-			"c258d6081dd10eb942fdf8ec157ec3e7",
-			"5371235a8196eb9d22b1de3a2d30c2ab",
-			"be0db7650cf6c7159bacbe29b3a93c92",
-			"100508"
-		],
-		"sign_id": 3,
-		"key_id": 1,
-		"depends": 9
-	},
-	"subtest 11": {
 		"command": "DELETE",
 		"key_id": 0,
 		"depends": 1
 	},
-	"subtest 12": {
+	"subtest 8": {
 		"command": "DELETE",
 		"key_id": 1,
 		"depends": 2

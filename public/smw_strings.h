@@ -87,11 +87,63 @@ typedef smw_string_t smw_key_format_t;
  * Function of the attribute type, the TLV scheme varies.
  * Refer to :doc:`/tlv/tlv`
  *
- * Values:
- *	- PERSISTENT
- *	- SIGNATURE_TYPE
- *	- RSA_PUB_EXP
- *	- TLS_MAC_FINISH
+ * Key Manager attributes:
+ *
+ * The following :numref:`key_manager_attributes` lists all TLV attributes
+ * supported by key manager operations like generate, import, derive, delete.
+ *
+ * .. table:: Key manager attributes
+ *    :name: key_manager_attributes
+ *    :align: center
+ *    :widths: 25 14 62
+ *    :width: 100%
+ *    :class: wrap-table
+ *
+ *    +-----------------+--------------+---------------------------------------+
+ *    | **Type Value**  | **Encoding** | **Description**                       |
+ *    +=================+==============+=======================================+
+ *    | PERSISTENT      | boolean      | If present key is persistent.         |
+ *    +-----------------+--------------+---------------------------------------+
+ *    | RSA_PUB_EXP     | numeral      | Setup the RSA Public exponent value.  |
+ *    |                 |              | The default value is 65537 if this    |
+ *    |                 |              | attribute is not defined.             |
+ *    +-----------------+--------------+---------------------------------------+
+ *    | FLUSH_KEY       | boolean      | If present, ensure that the key       |
+ *    |                 |              | storage is up to date.                |
+ *    +-----------------+--------------+---------------------------------------+
+ *
+ * Signature attributes:
+ *
+ * The following :numref:`signature_attributes` lists all TLV attributes
+ * supported by sign and verify operations.
+ *
+ * .. table:: Signature attributes
+ *    :name: signature_attributes
+ *    :align: center
+ *    :widths: 25 14 62
+ *    :width: 100%
+ *    :class: wrap-table
+ *
+ *    +-----------------+--------------+---------------------------------------+
+ *    | **Type Value**  | **Encoding** | **Description**                       |
+ *    +=================+==============+=======================================+
+ *    | SIGNATURE_TYPE  | string       | Define the type of signature in case  |
+ *    |                 |              | multiple options are possible.        |
+ *    |                 |              | Otherwise the signature type is       |
+ *    |                 |              | function of the key type.             |
+ *    |                 |              | Refer to `smw_signature_type_t`_      |
+ *    |                 |              | to get the possible attribute value.  |
+ *    +-----------------+--------------+---------------------------------------+
+ *    | SALT_LENGTH     | string       | If signature is RSASSA-PSS, set the   |
+ *    |                 |              | salt length of the signature.         |
+ *    +-----------------+--------------+---------------------------------------+
+ *    | TLS_MAC_FINISH  | string       | Define the TLS finish message         |
+ *    |                 |              | signature type to generate. Value is  |
+ *    |                 |              | either "CLIENT" or "SERVER"           |
+ *    |                 |              | corresponding to client or server     |
+ *    |                 |              | finish signature.                     |
+ *    +-----------------+--------------+---------------------------------------+
+ *
  */
 typedef smw_string_t smw_attribute_type_t;
 

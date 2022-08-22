@@ -1,3 +1,5 @@
+.. _tlv_variable-length-list:
+
 Variable Length list
 ====================
 Definition

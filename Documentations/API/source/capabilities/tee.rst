@@ -45,6 +45,50 @@ Operations supported:
 .. [1] multiple of 2 bits
 .. [2] multiple of 8 bits
 
+
+Key policy
+""""""""""
+When creating a new key, the key policy must be specified through the operation
+key attributes list. The key policy definition is defined with a **POLICY** TLV
+:ref:`tlv_variable-length-list`.
+
+The following :numref:`tee_key_usage` lists all key usages applicable in TEE
+subsystem. A key policy defines one or more key usage.
+
+.. table:: TEE Key usages
+   :name: tee_key_usage
+   :align: center
+   :width: 100%
+   :class: wrap-table
+
+   +----------------+------------------------------------------------------+
+   | **USAGE**      | **Description**                                      |
+   +================+======================================================+
+   | ENCRYPT        | Permission to encrypt a message                      |
+   +----------------+------------------------------------------------------+
+   | DECRYPT        | Permission to decrypt a message                      |
+   +----------------+------------------------------------------------------+
+   | SIGN_MESSAGE   | Permission to sign a message                         |
+   +----------------+------------------------------------------------------+
+   | SIGN_HASH      | Permission to sign a message hashed                  |
+   +----------------+------------------------------------------------------+
+   | VERIFY_MESSAGE | Permission to verify the signature of a message      |
+   +----------------+------------------------------------------------------+
+   | VERIFY_HASH    | Permission to verify the signature of message hashed |
+   +----------------+------------------------------------------------------+
+   | DERIVE         | Permission to derive other keys from this key        |
+   +----------------+------------------------------------------------------+
+   | EXPORT         | Permission to export the public key only             |
+   +----------------+------------------------------------------------------+
+
+The TEE subsystem doesn't define algorithm restriction per key usage.
+Defining permitted algorithm(s) will not be taken into account and operation
+will return the warning status `SMW_STATUS_KEY_POLICY_WARNING_IGNORED`.
+
+.. caution::
+   If key attribute **POLICY** is not specified, all key usages listed in
+   the :numref:`tee_key_usage` are attributed to the created key.
+
 Hash
 ^^^^
 

@@ -40,6 +40,14 @@ perform multiple persistent key operations (generate, import) before setting the
 
 .. [1] Only TLS12_KEY_EXCHANGE when hardware supports it
 
+
+Key policy
+""""""""""
+The HSM subsystem doesn't support key policy attribute. Defining the key
+attribute **POLICY** will be ignored and if attribute is defined the API
+returns the warning `SMW_STATUS_KEY_POLICY_WARNING_IGNORED`.
+
+
 Hash
 ^^^^
 

@@ -111,6 +111,20 @@ typedef smw_string_t smw_key_format_t;
  *    | FLUSH_KEY       | boolean      | If present, ensure that the key       |
  *    |                 |              | storage is up to date.                |
  *    +-----------------+--------------+---------------------------------------+
+ *    | POLICY          | variable     | This attribute is used to restrict    |
+ *    |                 | length list  | the key usage(s) and algorithm(s).    |
+ *    |                 |              | The following `Key policy`_ details   |
+ *    |                 |              | how a key policy is defined.          |
+ *    +-----------------+--------------+---------------------------------------+
+ *
+ * Key policy
+ * """"""""""
+ * The key policy is built with a TLV variable length list in which one or more
+ * key usage(s) are listed. To each key usage, algorithm(s) might be restricted.
+ *
+ * This attribute may or may not be significative (fully or partially) function
+ * of the subsystem handling the key. Refer to the :doc:`/capabilities`
+ * for more details.
  *
  * Signature attributes:
  *

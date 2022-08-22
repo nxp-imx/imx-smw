@@ -67,7 +67,7 @@ static struct key_list *key_linked_list;
 struct {
 	unsigned int usage;
 	uint32_t tee_usage;
-} conv_key_usage[] = { { TEE_KEY_USAGE_EXPORTABLE, 0 },
+} conv_key_usage[] = { { TEE_KEY_USAGE_EXPORTABLE, TEE_USAGE_EXTRACTABLE },
 		       { TEE_KEY_USAGE_COPYABLE, 0 },
 		       { TEE_KEY_USAGE_ENCRYPT, TEE_USAGE_ENCRYPT },
 		       { TEE_KEY_USAGE_DECRYPT, TEE_USAGE_DECRYPT },

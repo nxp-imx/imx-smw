@@ -67,9 +67,11 @@ esac
 optee_plat="platform=${optee_plat}"
 
 toolpath="toolpath=/opt/toolchains"
-export="./export"
+export="${out}/export"
 ta_export="${export}/export-ta_arm""${arch//[^0-9]/}"
+tee_build="../build_arm""${arch//[^0-9]/}"
 psaarchtests_src_path="../psa-arch-tests"
+
 
 #
 # Build/Prepare external dependencies
@@ -94,9 +96,9 @@ fi
 eval "./scripts/smw_build.sh jsonc export=${export} \
       src=../jsonc ${arch} ${toolpath}"
 eval "./scripts/smw_build.sh teec export=${export} \
-      src=../optee-client out=../build ${arch} ${toolpath}"
+      src=../optee-client out=${tee_build} ${arch} ${toolpath}"
 eval "./scripts/smw_build.sh tadevkit export=${ta_export} \
-      src=../optee-os out=../build ${arch} ${optee_plat} ${toolpath}"
+      src=../optee-os out=${tee_build} ${arch} ${optee_plat} ${toolpath}"
 eval "./scripts/smw_build.sh psaarchtests src=${psaarchtests_src_path}"
 
 #

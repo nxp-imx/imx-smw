@@ -13,6 +13,7 @@ opt_verbose="-DVERBOSE=0"
 opt_format="-DFORMAT=html"
 opt_psa="-DENABLE_PSA_DEFAULT_ALT=OFF"
 opt_tls12="-DENABLE_TLS12=OFF"
+opt_cmake_ver="3.13"
 
 #
 # Get script name and path
@@ -28,6 +29,41 @@ function pr_err()
     printf "\033[0m\n"
 }
 
+function check_cmake_version()
+{
+    #
+    # Check if cmake is installed and minimum version is expected
+    #
+    if [[ ! -x $(command -v cmake) ]]; then
+        pr_err "cmake not installed\n"
+        pr_err "cmake version required is minimum ${opt_cmake_ver}\n"
+        exit 1
+    fi
+
+    # Get the current cmake version installed
+    cmake_ver=$(cmake -version 2>&1 | grep -Eo "cmake version [0-9]\.[0-9]+")
+    cmake_ver=$(echo "${cmake_ver}" | grep -Eo '[0-9]\.[0-9]+')
+
+    IFS='.' read -ra acmake_ver <<< "${cmake_ver}"
+    IFS='.' read -ra aexp_ver <<< "${opt_cmake_ver}"
+
+    match=${#aexp_ver[@]}
+    if [[ ${#acmake_ver[@]} -eq ${#aexp_ver[@]} ]]; then
+        for (( i=0; i<${#aexp_ver[@]}; i++ )); do
+            if [[ ${acmake_ver[$i]} -lt ${aexp_ver[$i]} ]]; then
+                break;
+            fi
+            match=$((match-1))
+        done
+    fi
+
+    if [[ ${match} -ne 0 ]]; then
+        printf "Bad cmake version got %s expected %s or newer\n" \
+               "${cmake_ver}" "${opt_cmake_ver}"
+        exit 1
+    fi
+}
+
 function get_cmakecache()
 {
     local pattern="$2"
@@ -40,12 +76,12 @@ function get_cmakecache()
                 break
                 ;;
         esac
-    done < CMakeCache.txt
+    done < "${opt_out}/CMakeCache.txt"
 
     if [[ ${#split_line[@]} -ge 2 ]]; then
         eval "$1=${split_line[1]}"
     else
-        pr_err "${pattern} not found in CMakeCache.txt"
+        pr_err "${pattern} not found in ${opt_out}/CMakeCache.txt"
     fi
 }
 
@@ -100,7 +136,7 @@ function zlib()
         exit 1
     fi
 
-    if [[ ! -z ${opt_src} ]]; then
+    if [[ -n ${opt_src} ]]; then
         cmd_script="${cmd_script} -DZLIB_SRC_PATH=${opt_src}"
     fi
 
@@ -240,7 +276,7 @@ function configure()
         exit 1
     fi
 
-    cmd_script="cmake .. ${opt_toolchain}"
+    cmd_script="cmake -S . -B ${opt_out} ${opt_toolchain}"
     cmd_script="${cmd_script} ${opt_coverage}"
     cmd_script="${cmd_script} ${opt_buildtype} ${opt_verbose}"
     cmd_script="${cmd_script} ${opt_zlib} ${opt_seco} ${opt_ele}"
@@ -249,30 +285,28 @@ function configure()
     cmd_script="${cmd_script} ${opt_psa}"
     cmd_script="${cmd_script} ${opt_tls12}"
 
-    mkdir -p "${opt_out}"
-    cd "${opt_out}"
     printf "Execute %s\n" "${cmd_script}"
     eval "${cmd_script}"
 }
 
 function build_tests()
 {
-    if [[ ! -z ${opt_jsonc} ]]; then
-        eval "cmake .. ${opt_jsonc}"
+    if [[ -n ${opt_jsonc} ]]; then
+        eval "cmake ${opt_out} ${opt_jsonc}"
     else
         get_cmakecache_err opt_jsonc_lib "JSONC_LIBRARY"
     fi
 
-    eval "make build_tests"
+    eval "make -C ${opt_out} build_tests"
 }
 
 function build_docs()
 {
-    if [[ ! -z ${opt_format} ]]; then
-        eval "cmake .. ${opt_format}"
+    if [[ -n ${opt_format} ]]; then
+        eval "cmake ${opt_out} ${opt_format}"
     fi
 
-    eval "make docs"
+    eval "make -C ${opt_out} docs"
 }
 
 function build()
@@ -288,19 +322,19 @@ function build()
         exit 1
     fi
 
-    cd "${opt_out}"
+    cmd_make="make -C ${opt_out}"
 
     case ${opt_build} in
         all)
-            eval "make"
-            eval "make smw_pkcs11"
+            eval "${cmd_make}"
+            eval "${cmd_make} smw_pkcs11"
             build_tests
             ;;
         smw)
-            eval "make"
+            eval "${cmd_make}"
             ;;
         pkcs11)
-            eval "make smw_pkcs11"
+            eval "${cmd_make} smw_pkcs11"
             ;;
         tests)
             build_tests
@@ -329,19 +363,18 @@ function install()
         exit 1
     fi
 
-    cd "${opt_out}"
+    cmd_make="make -C ${opt_out}"
 
     get_cmakecache opt_jsonc_lib "JSONC_LIBRARY"
 
     cmd_script=""
-    if [[ ! -z ${opt_dest} ]]; then
-        mkdir -p "${opt_dest}"
+    if [[ -n ${opt_dest} ]]; then
         cmd_script="DESTDIR=${opt_dest}"
     fi
-    eval "make install ${cmd_script}"
+    eval "${cmd_make} install ${cmd_script}"
 
-    if [[ ! -z ${opt_jsonc_lib} ]]; then
-    	eval "make install_tests ${cmd_script}"
+    if [[ -n ${opt_jsonc_lib} ]]; then
+    	eval "${cmd_make} install_tests ${cmd_script}"
     fi
 }
 
@@ -361,23 +394,18 @@ function package()
         exit 1
     fi
 
-    cd "${opt_out}"
+    # First do the installation
+    opt_dest="${tmp_inst_dir}"
+    install
 
-    get_cmakecache opt_jsonc_lib "JSONC_LIBRARY"
+    opt_dest="${opt_out}/${opt_dest}"
 
-    cmd_script="DESTDIR=${tmp_inst_dir}"
-    eval "make install ${cmd_script}"
-
-    if [[ ! -z ${opt_jsonc_lib} ]]; then
-    	eval "make install_tests ${cmd_script}"
+    if [[ -n ${opt_jsonc_lib} ]]; then
+        eval "cp -P ${opt_jsonc_lib}.* ${opt_dest}/usr/lib/."
     fi
 
-    if [[ ! -z ${opt_jsonc_lib} ]]; then
-        eval "cp -P ${opt_jsonc_lib}.* ${tmp_inst_dir}/usr/lib/."
-    fi
-
-    eval "cd ${tmp_inst_dir} && tar -czf ../${package_name} . && cd .."
-    rm -rf "${tmp_inst_dir}"
+    eval "cd ${opt_dest} && tar -czf ../${package_name} ."
+    rm -rf "${opt_dest}"
 }
 
 function jsonc()
@@ -628,6 +656,8 @@ function usage()
     exit 1
 }
 
+check_cmake_version
+
 if [[ $# -eq 0 ]]; then
     usage
 fi
@@ -846,5 +876,3 @@ case ${opt_action} in
         usage
         ;;
 esac
-
-

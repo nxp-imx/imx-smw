@@ -13,11 +13,12 @@ psa_status_t util_smw_to_psa_status(enum smw_status_code status)
 
 	switch (status) {
 	case SMW_STATUS_OK:
+	case SMW_STATUS_KEY_POLICY_WARNING_IGNORED:
 		psa_status = PSA_SUCCESS;
 		break;
 
 	case SMW_STATUS_UNKNOWN_ID:
-		psa_status = PSA_ERROR_DOES_NOT_EXIST;
+		psa_status = PSA_ERROR_INVALID_HANDLE;
 		break;
 
 	case SMW_STATUS_ALLOC_FAILURE:

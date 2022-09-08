@@ -5,9 +5,12 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 
 #include <smw_status.h>
 #include <smw_osal.h>
+
+#define DEFAULT_KEY_DB "/var/tmp/key_db_smw_psa_test.dat"
 
 int32_t val_entry(void);
 
@@ -22,6 +25,7 @@ int32_t val_entry(void);
 int main(int argc, char **argv)
 {
 	enum smw_status_code status;
+	char *filepath = DEFAULT_KEY_DB;
 
 	(void)argc;
 	(void)argv;
@@ -36,13 +40,17 @@ int main(int argc, char **argv)
 		char ta_uuid[37];
 	} tee_default_info = { { "1682dada-20de-4b02-9eaa-284776931233" } };
 
-	status = smw_osal_set_subsystem_info("HSM", &se_default_info,
+	status = smw_osal_set_subsystem_info("ELE", &se_default_info,
 					     sizeof(se_default_info));
 	if (status != SMW_STATUS_OK)
 		return -1;
 
 	status = smw_osal_set_subsystem_info("TEE", &tee_default_info,
 					     sizeof(tee_default_info));
+	if (status != SMW_STATUS_OK)
+		return -1;
+
+	status = smw_osal_open_key_db(filepath, strlen(filepath) + 1);
 	if (status != SMW_STATUS_OK)
 		return -1;
 

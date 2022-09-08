@@ -162,12 +162,10 @@ unsigned long long smw_tlv_convert_numeral(unsigned int length,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!value)
-		return numeral;
-
-	for (i = 0; i < length; i++)
-		numeral |= (unsigned long long)value[i]
-			   << ((length - 1 - i) * 8);
+	if (value)
+		for (i = 0; i < length; i++)
+			numeral |= (unsigned long long)value[i]
+				   << ((length - 1 - i) * 8);
 
 	return numeral;
 }
@@ -195,6 +193,13 @@ void smw_tlv_set_element(unsigned char **buffer, const char *type,
 	*buffer = p;
 }
 
+void smw_tlv_set_boolean(unsigned char **buffer, const char *type)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	smw_tlv_set_element(buffer, type, NULL, 0);
+}
+
 void smw_tlv_set_string(unsigned char **buffer, const char *type,
 			const char *value)
 {
@@ -203,11 +208,54 @@ void smw_tlv_set_string(unsigned char **buffer, const char *type,
 	if (value)
 		smw_tlv_set_element(buffer, type, (const unsigned char *)value,
 				    (unsigned int)SMW_UTILS_STRLEN(value) + 1);
-	else
-		smw_tlv_set_element(buffer, type, NULL, 0);
 }
 
-void smw_tlv_set_element_length(unsigned char *element, unsigned char *end)
+void smw_tlv_set_numeral(unsigned char **buffer, const char *type,
+			 uint64_t value)
+{
+	unsigned char *p = *buffer;
+
+	unsigned int value_size = 1;
+	unsigned int size;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (value >> 32)
+		value_size = 8;
+	else if (value >> 16)
+		value_size = 4;
+	else if (value >> 8)
+		value_size = 2;
+
+	SMW_UTILS_MEMCPY(p, type, SMW_UTILS_STRLEN(type) + 1);
+	p += SMW_UTILS_STRLEN(type) + 1;
+
+	*p = value_size >> 8;
+	p++;
+	*p = value_size;
+	p++;
+
+	size = value_size;
+
+	while (size) {
+		*(p + size - 1) = value;
+		value >>= 8;
+		size--;
+	}
+
+	p += value_size;
+
+	*buffer = p;
+}
+
+void smw_tlv_set_type(unsigned char **buffer, const char *type)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	smw_tlv_set_element(buffer, type, NULL, 0);
+}
+
+void smw_tlv_set_length(unsigned char *element, unsigned char *end)
 {
 	unsigned char *p;
 	unsigned int value_size;

@@ -6,6 +6,8 @@
 #ifndef __TLV_H__
 #define __TLV_H__
 
+#include <stdint.h>
+
 /* TLV defines */
 #define SMW_TLV_LENGTH_FIELD_SIZE 2 /* TLV length encoded with 2 bytes */
 #define SMW_TLV_ELEMENT_LENGTH(_type, _value_size)                             \
@@ -151,6 +153,20 @@ void smw_tlv_set_element(unsigned char **buffer, const char *type,
 			 const unsigned char *value, unsigned int value_size);
 
 /**
+ * smw_tlv_set_boolean() - Encode TLV boolean in a buffer.
+ * @buffer: Pointer to the buffer.
+ * @type: Type of the boolean.
+ *
+ * Type must be a null-terminated string.
+ * The pointer @buffer is incremented to point to the next entry in the TLV
+ * buffer.
+ *
+ * Return:
+ * None.
+ */
+void smw_tlv_set_boolean(unsigned char **buffer, const char *type);
+
+/**
  * smw_tlv_set_string() - Encode TLV string in a buffer.
  * @buffer: Pointer to the buffer.
  * @type: Type of the string.
@@ -167,15 +183,43 @@ void smw_tlv_set_string(unsigned char **buffer, const char *type,
 			const char *value);
 
 /**
- * smw_tlv_set_element_length() - Encode length of a TLV element.
- * @element: Pointer to a valid TLV element.
- * @end: Pointer to the end of a valid TLV element.
+ * smw_tlv_set_numeral() - Encode TLV numeral in a buffer.
+ * @buffer: Pointer to the buffer.
+ * @type: Type of the numeral.
+ * @value: Numeral to be encoded.
  *
- * Type and Value fields of the TLV element must be set.
+ * Type must be null-terminated string.
+ * The pointer @buffer is incremented to point to the next entry in the TLV
+ * buffer.
  *
  * Return:
  * None.
  */
-void smw_tlv_set_element_length(unsigned char *element, unsigned char *end);
+void smw_tlv_set_numeral(unsigned char **buffer, const char *type,
+			 uint64_t value);
+
+/**
+ * smw_tlv_set_type() - Encode type of a TLV element.
+ * @buffer: Pointer to the buffer.
+ * @type: Type of the numeral.
+ *
+ * Length field is initialized to 0.
+ * The pointer @buffer is incremented to point to the next entry in the TLV
+ * buffer.
+ *
+ * Return:
+ * None.
+ */
+void smw_tlv_set_type(unsigned char **buffer, const char *type);
+
+/**
+ * smw_tlv_set_length() - Encode length of a TLV element.
+ * @element: Pointer to a valid TLV element.
+ * @end: Pointer to the end of a valid TLV element.
+ *
+ * Return:
+ * None.
+ */
+void smw_tlv_set_length(unsigned char *element, unsigned char *end);
 
 #endif /* __TLV_H__ */

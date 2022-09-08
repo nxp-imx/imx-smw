@@ -6,6 +6,18 @@
 #ifndef __PSA_CRYPTO_SIZES_H__
 #define __PSA_CRYPTO_SIZES_H__
 
+#define PSA_BITS_TO_BYTES(bits) (((bits) + 7) / 8)
+
+#ifndef MAX
+#define MAX_WAS_NOT_DEFINED
+#define MAX(a, b)                                                              \
+	({                                                                     \
+		__typeof__(a) _a = (a);                                        \
+		__typeof__(b) _b = (b);                                        \
+		_a < _b ? _b : _a;                                             \
+	})
+#endif /* MAX */
+
 /**
  * DOC:
  * This file contains the definitions of macros that are useful to compute buffer sizes. The
@@ -540,18 +552,84 @@
 #define PSA_CIPHER_UPDATE_OUTPUT_SIZE(key_type, alg, input_length)             \
 	/* implementation-defined value */
 
+#define PSA_VENDOR_RSA_MAX_KEY_BITS   4096
+#define PSA_VENDOR_ECC_MAX_CURVE_BITS 521
+
+/* Maximum size in bytes of the ASN.1 encoding of an INTEGER with the specified
+ * number of bits.
+ *
+ * This definition assumes that bits <= 2^19 - 9 so that the length field
+ * is at most 3 bytes. The length of the encoding is the length of the
+ * bit string padded to a whole number of bytes plus:
+ * - 1 type byte;
+ * - 1 to 3 length bytes;
+ * - 0 to 1 bytes of leading 0 due to the sign bit.
+ */
+#define PSA_KEY_EXPORT_ASN1_INTEGER_MAX_SIZE(bits) (PSA_BITS_TO_BYTES(bits) + 5)
+
+/* Maximum size of the export encoding of an RSA public key.
+ * Assumes that the public exponent is less than 2^32.
+ *
+ * RSAPublicKey  ::=  SEQUENCE  {
+ *    modulus            INTEGER,    -- n
+ *    publicExponent     INTEGER  }  -- e
+ *
+ * - 4 bytes of SEQUENCE overhead;
+ * - n : INTEGER;
+ * - 7 bytes for the public exponent.
+ */
+#define PSA_KEY_EXPORT_RSA_PUBLIC_KEY_MAX_SIZE(key_bits)                       \
+	(PSA_KEY_EXPORT_ASN1_INTEGER_MAX_SIZE(key_bits) + 11)
+
+/* Maximum size of the export encoding of an RSA key pair.
+ * Assumes that the public exponent is less than 2^32 and that the size
+ * difference between the two primes is at most 1 bit.
+ *
+ * RSAPrivateKey ::= SEQUENCE {
+ *     version           Version,  -- 0
+ *     modulus           INTEGER,  -- N-bit
+ *     publicExponent    INTEGER,  -- 32-bit
+ *     privateExponent   INTEGER,  -- N-bit
+ *     prime1            INTEGER,  -- N/2-bit
+ *     prime2            INTEGER,  -- N/2-bit
+ *     exponent1         INTEGER,  -- N/2-bit
+ *     exponent2         INTEGER,  -- N/2-bit
+ *     coefficient       INTEGER,  -- N/2-bit
+ * }
+ *
+ * - 4 bytes of SEQUENCE overhead;
+ * - 3 bytes of version;
+ * - 7 half-size INTEGERs plus 2 full-size INTEGERs,
+ *   overapproximated as 9 half-size INTEGERS;
+ * - 7 bytes for the public exponent.
+ */
+#define PSA_KEY_EXPORT_RSA_KEY_PAIR_MAX_SIZE(key_bits)                         \
+	(9 * PSA_KEY_EXPORT_ASN1_INTEGER_MAX_SIZE((key_bits) / 2 + 1) + 14)
+
+/* Maximum size of the export encoding of an ECC public key.
+ *
+ * The representation of an ECC public key is:
+ *      - The byte 0x04;
+ *      - `x_P` as a `ceiling(m/8)`-byte string, big-endian;
+ *      - `y_P` as a `ceiling(m/8)`-byte string, big-endian;
+ *      - where m is the bit size associated with the curve.
+ *
+ * - 1 byte + 2 * point size.
+ */
+#define PSA_KEY_EXPORT_ECC_PUBLIC_KEY_MAX_SIZE(key_bits)                       \
+	(2 * PSA_BITS_TO_BYTES(key_bits) + 1)
+
+/* Maximum size of the export encoding of an ECC key pair.
+ *
+ * An ECC key pair is represented by the secret value.
+ */
+#define PSA_KEY_EXPORT_ECC_KEY_PAIR_MAX_SIZE(key_bits)                         \
+	(PSA_BITS_TO_BYTES(key_bits))
+
 /**
  * PSA_EXPORT_KEY_OUTPUT_SIZE() - Sufficient output buffer size for psa_export_key().
  * @key_type: A supported key type.
  * @key_bits: The size of the key in bits.
- *
- * **Warning: Not supported**
- *
- * This macro returns a compile-time constant if its arguments are compile-time constants.
- *
- * **Warning**:
- *	This function can evaluate its arguments multiple times or zero times. Providing arguments
- *	that have side effects will result in implementation-specific behavior, and is non-portable.
  *
  * The following code illustrates how to allocate enough memory to export a key by querying the key
  * type and size at runtime.
@@ -585,48 +663,53 @@
  * unspecified.
  */
 #define PSA_EXPORT_KEY_OUTPUT_SIZE(key_type, key_bits)                         \
-/* implementation-defined value */
+	(PSA_KEY_TYPE_IS_UNSTRUCTURED(key_type) ?                              \
+		 PSA_BITS_TO_BYTES(key_bits) :                                 \
+		 PSA_KEY_TYPE_IS_RSA_KEY_PAIR(key_type) ?                      \
+		 PSA_KEY_EXPORT_RSA_KEY_PAIR_MAX_SIZE(key_bits) :              \
+		 PSA_KEY_TYPE_IS_RSA_PUBLIC_KEY(key_type) ?                    \
+		 PSA_KEY_EXPORT_RSA_PUBLIC_KEY_MAX_SIZE(key_bits) :            \
+		 PSA_KEY_TYPE_IS_ECC_KEY_PAIR(key_type) ?                      \
+		 PSA_KEY_EXPORT_ECC_KEY_PAIR_MAX_SIZE(key_bits) :              \
+		 PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY(key_type) ?                    \
+		 PSA_KEY_EXPORT_ECC_PUBLIC_KEY_MAX_SIZE(key_bits) :            \
+		 0)
 
 /**
  * DOC: PSA_EXPORT_KEY_PAIR_MAX_SIZE
  * Sufficient buffer size for exporting any asymmetric key pair.
  *
- * **Warning: Not supported**
- *
- * This macro must expand to a compile-time constant integer. This value must be a sufficient buffer
- * size when calling psa_export_key() to export any asymmetric key pair that is supported by the
- * implementation, regardless of the exact key type and key size.
+ * This value must be a sufficient buffer size when calling psa_export_key() to export any
+ * asymmetric key pair that is supported by the implementation, regardless of the exact key type and
+ * key size.
  *
  * See also PSA_EXPORT_KEY_OUTPUT_SIZE().
  */
-#define PSA_EXPORT_KEY_PAIR_MAX_SIZE /* implementation-defined value */
+#define PSA_EXPORT_KEY_PAIR_MAX_SIZE                                           \
+	MAX(PSA_KEY_EXPORT_RSA_KEY_PAIR_MAX_SIZE(PSA_VENDOR_RSA_MAX_KEY_BITS), \
+	    PSA_KEY_EXPORT_ECC_KEY_PAIR_MAX_SIZE(                              \
+		    PSA_VENDOR_ECC_MAX_CURVE_BITS))
 
 /**
  * DOC: PSA_EXPORT_PUBLIC_KEY_MAX_SIZE
  * Sufficient buffer size for exporting any asymmetric public key.
  *
- * **Warning: Not supported**
- *
- * This macro must expand to a compile-time constant integer. This value must be a sufficient buffer
- * size when calling psa_export_key() or psa_export_public_key() to export any asymmetric public key
- * that is supported by the implementation, regardless of the exact key type and key size.
+ * This value must be a sufficient buffer size when calling psa_export_key() or
+ * psa_export_public_key() to export any asymmetric public key that is supported by the
+ * implementation, regardless of the exact key type and key size.
  *
  * See also PSA_EXPORT_PUBLIC_KEY_OUTPUT_SIZE().
  */
-#define PSA_EXPORT_PUBLIC_KEY_MAX_SIZE /* implementation-defined value */
+#define PSA_EXPORT_PUBLIC_KEY_MAX_SIZE                                         \
+	MAX(PSA_KEY_EXPORT_RSA_PUBLIC_KEY_MAX_SIZE(                            \
+		    PSA_VENDOR_RSA_MAX_KEY_BITS),                              \
+	    PSA_KEY_EXPORT_ECC_PUBLIC_KEY_MAX_SIZE(                            \
+		    PSA_VENDOR_ECC_MAX_CURVE_BITS))
 
 /**
  * PSA_EXPORT_PUBLIC_KEY_OUTPUT_SIZE() - Sufficient output buffer size for psa_export_public_key().
  * @key_type: A public key or key pair key type.
  * @key_bits: The size of the key in bits.
- *
- * **Warning: Not supported**
- *
- * This macro returns a compile-time constant if its arguments are compile-time constants.
- *
- * **Warning**:
- *	This function can evaluate its arguments multiple times or zero times. Providing arguments
- *	that have side effects will result in implementation-specific behavior, and is non-portable.
  *
  * The following code illustrates how to allocate enough memory to export a public key by querying
  * the key type and size at runtime.
@@ -662,7 +745,11 @@
  * result as PSA_EXPORT_KEY_OUTPUT_SIZE(PSA_KEY_TYPE_PUBLIC_KEY_OF_KEY_PAIR(key_type), key_bits).
  */
 #define PSA_EXPORT_PUBLIC_KEY_OUTPUT_SIZE(key_type, key_bits)                  \
-	/* implementation-defined value */
+	(PSA_KEY_TYPE_IS_RSA(key_type) ?                                       \
+		 PSA_KEY_EXPORT_RSA_PUBLIC_KEY_MAX_SIZE(key_bits) :            \
+		 PSA_KEY_TYPE_IS_ECC(key_type) ?                               \
+		 PSA_KEY_EXPORT_ECC_PUBLIC_KEY_MAX_SIZE(key_bits) :            \
+		 0)
 
 size_t psa_hash_block_length(psa_algorithm_t alg);
 
@@ -969,5 +1056,10 @@ size_t psa_hash_length(psa_algorithm_t alg);
  * value greater than or equal to 64.
  */
 #define PSA_TLS12_PSK_TO_MS_PSK_MAX_SIZE /* implementation-defined value */
+
+#ifdef MAX_WAS_NOT_DEFINED
+#undef MAX_WAS_NOT_DEFINED
+#undef MAX
+#endif /* MAX_WAS_NOT_DEFINED */
 
 #endif /* __PSA_CRYPTO_SIZES_H__ */

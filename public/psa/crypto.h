@@ -1734,8 +1734,7 @@ psa_status_t psa_cipher_update(psa_cipher_operation_t *operation,
  * This function is primarily useful to copy a key from one location to another, as it populates a
  * key using the material from another key which can have a different lifetime.
  *
- * This function can be used to share a key with a different party, subject to
- * implementation-defined restrictions on key sharing.
+ * This function can be used to share a key with a different party.
  *
  * The policy on the source key must have the usage flag PSA_KEY_USAGE_COPY set. This flag is
  * sufficient to permit the copy if the key has the lifetime PSA_KEY_LIFETIME_VOLATILE or
@@ -1847,8 +1846,6 @@ psa_status_t psa_crypto_init(void);
  * @key: Identifier of the key to erase. If this is PSA_KEY_ID_NULL, do nothing and return
  *       PSA_SUCCESS.
  *
- * **Warning: Not supported**
- *
  * This function destroys a key from both volatile memory and, if applicable, non-volatile storage.
  * Implementations must make a best effort to ensure that the key material cannot be recovered.
  *
@@ -1899,7 +1896,7 @@ psa_status_t psa_destroy_key(psa_key_id_t key);
  * @data_size: Size of the @data buffer in bytes.
  * @data_length: On success, the number of bytes that make up the key data.
  *
- * **Warning: Not supported**
+ * **Warning: Export of any private key is not supported for now.**
  *
  * The output of this function can be passed to psa_import_key() to create an equivalent object.
  *
@@ -2109,8 +2106,6 @@ psa_status_t psa_export_public_key(psa_key_id_t key, uint8_t *data,
  * psa_generate_key() - Generate a key or key pair.
  * @attributes: The attributes for the new key.
  * @key: On success, an identifier for the newly created key. PSA_KEY_ID_NULL on failure.
- *
- * **Warning: Not supported**
  *
  * The key is generated randomly. Its location, policy, type and size are taken from attributes.
  *
@@ -2784,7 +2779,7 @@ psa_status_t psa_hash_verify(psa_hash_operation_t *operation,
  * @data_length: Size of the @data buffer in bytes.
  * @key: On success, an identifier for the newly created key. PSA_KEY_ID_NULL on failure.
  *
- * **Warning: Not supported**
+ * **Warning: Import of private key may be not supported depending on the secure subsystem in use.**
  *
  * This function supports any output from psa_export_key(). Refer to the documentation of
  * psa_export_public_key() for the format of public keys and to the documentation of
@@ -4135,8 +4130,6 @@ psa_status_t psa_raw_key_agreement(psa_algorithm_t alg,
 /**
  * psa_reset_key_attributes() - Reset a key attribute object to a freshly initialized state.
  * @attributes: The attribute object to reset.
- *
- * **Warning: Not supported**
  *
  * The attribute object must be initialized as described in the documentation of the type
  * &typedef psa_key_attributes_t before calling this function. Once the object has been initialized,

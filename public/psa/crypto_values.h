@@ -98,7 +98,7 @@
 #define PSA_ALG_AEAD_FROM_BLOCK_FLAG ((psa_algorithm_t)0x00400000)
 #define PSA_ALG_CIPHER_STREAM_FLAG   ((psa_algorithm_t)0x00800000)
 
-#define PSA_ALG_KEY_DERIVATION_MASK  ((psa_algorithm_t)0xfe00ffff)
+#define PSA_ALG_KEY_DERIVATION_MASK  ((psa_algorithm_t)0xfe80ffff)
 #define PSA_ALG_KEY_AGREEMENT_MASK   ((psa_algorithm_t)0xffff0000)
 #define PSA_ALG_MAC_SUBCATEGORY_MASK ((psa_algorithm_t)0x00c00000)
 
@@ -1933,7 +1933,7 @@
 	 PSA_KEY_TYPE_ECC_KEY_PAIR_BASE)
 
 /**
- * PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY() - Whether a key type is an elliptic curve key pair.
+ * PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY() - Whether a key type is an elliptic curve public key.
  * @type: A key type (value of &typedef psa_key_type_t).
  */
 #define PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY(type)                                   \
@@ -1965,6 +1965,19 @@
 #define PSA_KEY_TYPE_IS_RSA(type)                                              \
 	(PSA_KEY_TYPE_PUBLIC_KEY_OF_KEY_PAIR(type) ==                          \
 	 PSA_KEY_TYPE_RSA_PUBLIC_KEY)
+
+/**
+ * PSA_KEY_TYPE_IS_RSA_KEY_PAIR() - Whether a key type is an RSA key pair.
+ * @type: A key type (value of &typedef psa_key_type_t).
+ */
+#define PSA_KEY_TYPE_IS_RSA_KEY_PAIR(type) ((type) == PSA_KEY_TYPE_RSA_KEY_PAIR)
+
+/**
+ * PSA_KEY_TYPE_IS_RSA_PUBLIC_KEY() - Whether a key type is an RSA public key.
+ * @type: A key type (value of &typedef psa_key_type_t).
+ */
+#define PSA_KEY_TYPE_IS_RSA_PUBLIC_KEY(type)                                   \
+	((type) == PSA_KEY_TYPE_RSA_PUBLIC_KEY)
 
 /**
  * PSA_KEY_TYPE_IS_UNSTRUCTURED() - Whether a key type is an unstructured array of bytes.

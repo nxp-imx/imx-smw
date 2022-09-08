@@ -70,7 +70,6 @@ static inline struct psa_hash_operation_s psa_hash_operation_init(void)
 	return PSA_HASH_OPERATION_INIT;
 }
 
-/* To be defined */
 struct psa_key_attributes_s {
 	psa_key_id_t id;
 	psa_key_lifetime_t lifetime;

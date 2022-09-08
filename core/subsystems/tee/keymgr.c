@@ -18,8 +18,6 @@
 
 #define SECURITY_SIZE_RANGE UINT_MAX
 
-#define POLICY_TL_LENGTH (SMW_UTILS_STRLEN(POLICY_STR) + 3)
-
 /**
  * struct security_size_range - Security size range
  * @min: Minimum key security size in bits.
@@ -248,7 +246,6 @@ static int tee_set_key_usage(unsigned char *policy, unsigned int policy_len,
 	unsigned char *value = NULL;
 	const unsigned char *p = policy;
 	const unsigned char *end = policy + policy_len;
-	unsigned char *actual_policy_len_field;
 	unsigned char *q = actual_policy;
 	bool policy_ignored = false;
 
@@ -261,13 +258,7 @@ static int tee_set_key_usage(unsigned char *policy, unsigned int policy_len,
 
 	*tee_usage = 0;
 
-	SMW_UTILS_MEMCPY(q, POLICY_STR, SMW_UTILS_STRLEN(POLICY_STR));
-	q += SMW_UTILS_STRLEN(POLICY_STR);
-	*q = 0;
-	q++;
-
-	actual_policy_len_field = q;
-	q += 2;
+	smw_tlv_set_type(&q, POLICY_STR);
 
 	while (p < end) {
 		status = smw_tlv_read_element(&p, end, &type, &value,
@@ -280,7 +271,7 @@ static int tee_set_key_usage(unsigned char *policy, unsigned int policy_len,
 			if (status == SMW_STATUS_INVALID_PARAM)
 				status = SMW_STATUS_KEY_POLICY_ERROR;
 
-			return status;
+			goto exit;
 		}
 
 		if (SMW_UTILS_STRCMP((char *)type, USAGE_STR))
@@ -291,24 +282,21 @@ static int tee_set_key_usage(unsigned char *policy, unsigned int policy_len,
 			continue;
 		}
 
-		if (SMW_UTILS_STRLEN((char *)value) < value_size - 1)
+		if (SMW_UTILS_STRLEN((char *)value) + 1 < value_size)
 			policy_ignored = true;
 
 		smw_tlv_set_string(&q, USAGE_STR, (char *)value);
 	}
 
-	*actual_policy_len = q - actual_policy_len_field - 2;
+	smw_tlv_set_length(actual_policy, q);
 
-	*actual_policy_len_field = *actual_policy_len >> 8;
-	*(actual_policy_len_field + 1) = *actual_policy_len;
-
-	SMW_DBG_ASSERT(*actual_policy_len <= policy_len);
-
-	*actual_policy_len += POLICY_TL_LENGTH;
+	SMW_DBG_ASSERT((unsigned int)(q - actual_policy) <= *actual_policy_len);
+	*actual_policy_len = q - actual_policy;
 
 	if (policy_ignored)
 		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 
+exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -571,6 +559,7 @@ static int set_hex_exp_buffer(enum smw_keymgr_format_id format_id,
 	}
 
 	status = SMW_STATUS_OK;
+
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -711,8 +700,10 @@ static int generate_key(void *args)
 	key_attrs = &key_args->key_attributes;
 
 	if (key_attrs->policy && key_attrs->policy_len) {
-		actual_policy = SMW_UTILS_MALLOC(key_attrs->policy_len +
-						 POLICY_TL_LENGTH);
+		actual_policy_len =
+			SMW_TLV_ELEMENT_LENGTH(POLICY_STR,
+					       key_attrs->policy_len);
+		actual_policy = SMW_UTILS_MALLOC(actual_policy_len);
 		if (!actual_policy) {
 			status = SMW_STATUS_ALLOC_FAILURE;
 			goto exit;
@@ -1277,8 +1268,10 @@ static int import_key(void *args)
 	key_attrs = &key_args->key_attributes;
 
 	if (key_attrs->policy && key_attrs->policy_len) {
-		actual_policy = SMW_UTILS_MALLOC(key_attrs->policy_len +
-						 POLICY_TL_LENGTH);
+		actual_policy_len =
+			SMW_TLV_ELEMENT_LENGTH(POLICY_STR,
+					       key_attrs->policy_len);
+		actual_policy = SMW_UTILS_MALLOC(actual_policy_len);
 		if (!actual_policy) {
 			status = SMW_STATUS_ALLOC_FAILURE;
 			goto exit;

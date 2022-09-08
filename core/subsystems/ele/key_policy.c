@@ -279,7 +279,7 @@ static int set_key_algo_params(const unsigned char *buffer,
 	 * parsed.
 	 * Step 3. Set the L field value of the algorithm TLV entry.
 	 */
-	smw_tlv_set_element_length(*actual_policy, out_policy);
+	smw_tlv_set_length(*actual_policy, out_policy);
 
 	if (ignored)
 		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
@@ -458,7 +458,7 @@ int ele_set_key_policy(const unsigned char *policy, unsigned int policy_len,
 	 *         changed to add the key usage(s) and its algorithm/parameters.
 	 */
 	out_policy = *actual_policy;
-	smw_tlv_set_string(&out_policy, POLICY_STR, NULL);
+	smw_tlv_set_type(&out_policy, POLICY_STR);
 
 	while (p < end) {
 		status = smw_tlv_read_element(&p, end, &type, &value,
@@ -507,14 +507,14 @@ int ele_set_key_policy(const unsigned char *policy, unsigned int policy_len,
 		 * Build the output usage attribute correctly parsed.
 		 * Step 3. Set the L field value of the usage TLV entry.
 		 */
-		smw_tlv_set_element_length(out_usage, out_policy);
+		smw_tlv_set_length(out_usage, out_policy);
 	}
 
 	/*
 	 * Build the output policy attribute
 	 * Step 3. Set the L field value of the policy TLV element.
 	 */
-	smw_tlv_set_element_length(*actual_policy, out_policy);
+	smw_tlv_set_length(*actual_policy, out_policy);
 
 	if (ignored)
 		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;

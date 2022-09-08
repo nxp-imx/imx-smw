@@ -102,7 +102,7 @@ void hsm_set_empty_key_policy(struct smw_keymgr_attributes *key_attributes)
 
 	SMW_DBG_ASSERT(attributes_list);
 
-	smw_tlv_set_string(&attributes_list, POLICY_STR, NULL);
+	smw_tlv_set_type(&attributes_list, POLICY_STR);
 
 	SMW_DBG_ASSERT(*key_attributes->pub_key_attributes_list_length >=
 		       attributes_list -

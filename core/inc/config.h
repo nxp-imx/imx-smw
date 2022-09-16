@@ -100,6 +100,12 @@ enum smw_config_tls_finish_label_id {
 	SMW_CONFIG_TLS_FINISH_ID_INVALID
 };
 
+/**
+ * struct smw_config_psa_config - PSA configuration
+ * @subsystem_id: Default subsystem ID invoked with PSA API
+ * @alt: Whether or not, subsystem fallback is enabled
+ *
+ */
 struct smw_config_psa_config {
 	enum subsystem_id subsystem_id;
 	bool alt;

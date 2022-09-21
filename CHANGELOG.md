@@ -2,7 +2,7 @@
 
 This file briefly describes the features/changes and fixes in each release of the Security Middleware project.
 The project delivers 4 components:
-* SMW Library: The core library itself including the OSAL part.
+* SMW Library: The core library itself including the OSAL part. It exposes two public APIs: the SMW API and the PSA API.
 * SMW Tests: Tests validating the core library.
 * PKCS#11 Library: The pkcs#11 library interfacing with the SMW library.
 * PKCS#11 Tests: Tests validating the PKCS#11 library
@@ -36,6 +36,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 1. Subsystem
 * Add EdgeLock Enclave (ELE) subsystem.
 
+##### 1. ARM PSA APIs
+
+* Implement Key manager (Generate, Import, Export, Delete)
 
 ### <a id ="rel_2_1"></a></br>**Release 2.1**
 ---

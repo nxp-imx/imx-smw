@@ -102,27 +102,25 @@ int hash_psa(struct subtest_data *subtest)
 	 */
 	res = util_read_hex_buffer(&digest_hex, &digest_len, subtest->params,
 				   DIGEST_OBJ);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
-		goto exit;
-
-	if (res == ERR_CODE(MISSING_PARAMS) || (hash_size && digest_hex)) {
-		hash = malloc(hash_size);
-		if (!hash) {
-			DBG_PRINT_ALLOC_FAILURE();
-			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-			goto exit;
+	if (res == ERR_CODE(PASSED)) {
+		if (digest_hex) {
+			hash = malloc(hash_size);
+			if (!hash) {
+				DBG_PRINT_ALLOC_FAILURE();
+				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+				goto exit;
+			}
 		}
-	}
 
-	if (res == ERR_CODE(PASSED))
 		hash_size = digest_len;
-
-	if (res == ERR_CODE(MISSING_PARAMS)) {
+	} else if (res == ERR_CODE(MISSING_PARAMS)) {
 		if (SET_OVERFLOW(hash_size, digest_len)) {
 			DBG_PRINT_BAD_PARAM(ALGO_OBJ);
 			res = ERR_CODE(BAD_ARGS);
 			goto exit;
 		}
+	} else {
+		goto exit;
 	}
 
 	/* Call hash function and compare result with expected one */
@@ -137,6 +135,16 @@ int hash_psa(struct subtest_data *subtest)
 	 * If Hash operation succeeded and expected digest or digest length
 	 * is set in the test definition file then compare operation result.
 	 */
+	hash_size = get_hash_length(alg_name);
+
+	if (hash_size < digest_len) {
+		if (SET_OVERFLOW(hash_size, digest_len)) {
+			DBG_PRINT_BAD_PARAM(ALGO_OBJ);
+			res = ERR_CODE(BAD_ARGS);
+			goto exit;
+		}
+	}
+
 	res = util_compare_buffers(hash, hash_len, digest_hex, digest_len);
 
 exit:

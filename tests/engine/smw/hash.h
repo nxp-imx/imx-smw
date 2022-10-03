@@ -20,7 +20,7 @@
  * PASSED	- Success.
  * -BAD_ARGS	- One of the arguments is bad.
  */
-int get_hash_digest_len(char *algo, unsigned int *len);
+int get_hash_digest_len(const char *algo, unsigned int *len);
 
 /**
  * hash() - Do a hash operation.

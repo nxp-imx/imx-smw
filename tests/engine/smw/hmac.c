@@ -145,7 +145,7 @@ int hmac(struct subtest_data *subtest)
 	args.input = input_hex;
 	args.input_length = input_len;
 
-	res = get_hash_digest_len((char *)args.algo_name, &output_len);
+	res = get_hash_digest_len(args.algo_name, &output_len);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 

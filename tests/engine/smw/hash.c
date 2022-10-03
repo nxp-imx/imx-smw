@@ -29,12 +29,12 @@ static struct hash {
 		  { .algo_name = "SM3", .digest_len = 32 },
 		  { .algo_name = "UNDEFINED", .digest_len = 20 } };
 
-int get_hash_digest_len(char *algo, unsigned int *len)
+int get_hash_digest_len(const char *algo_name, unsigned int *len)
 {
 	unsigned int i = 0;
 	unsigned int array_size = ARRAY_SIZE(hash_size);
 
-	if (!algo || !len) {
+	if (!algo_name || !len) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -42,7 +42,7 @@ int get_hash_digest_len(char *algo, unsigned int *len)
 	*len = 0;
 
 	for (; i < array_size; i++) {
-		if (!strcmp(algo, hash_size[i].algo_name)) {
+		if (!strcmp(algo_name, hash_size[i].algo_name)) {
 			*len = hash_size[i].digest_len;
 			break;
 		}
@@ -143,7 +143,7 @@ int hash(struct subtest_data *subtest)
 	args.input = input_hex;
 	args.input_length = input_len;
 
-	res = get_hash_digest_len((char *)args.algo_name, &output_len);
+	res = get_hash_digest_len(args.algo_name, &output_len);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -153,26 +153,20 @@ int hash(struct subtest_data *subtest)
 	 */
 	res = util_read_hex_buffer(&digest_hex, &digest_len, subtest->params,
 				   DIGEST_OBJ);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
+	if (res == ERR_CODE(PASSED))
+		output_len = digest_len;
+	else if (res == ERR_CODE(MISSING_PARAMS))
+		digest_len = output_len;
+	else
 		goto exit;
 
-	if (res == ERR_CODE(PASSED) && !digest_hex) {
-		output_len = 0;
-	} else {
-		/*
-		 * Output length can be 0. For example: test with a bad algo name
-		 * config. In this case don't need to allocate output buffer.
-		 */
-		if (output_len) {
-			output_hex = malloc(output_len);
-			if (!output_hex) {
-				DBG_PRINT_ALLOC_FAILURE();
-				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-				goto exit;
-			}
+	if (output_len) {
+		output_hex = malloc(output_len);
+		if (!output_hex) {
+			DBG_PRINT_ALLOC_FAILURE();
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto exit;
 		}
-
-		res = ERR_CODE(PASSED);
 	}
 
 	args.output = output_hex;
@@ -195,6 +189,13 @@ int hash(struct subtest_data *subtest)
 	 * If Hash operation succeeded and expected digest or digest length
 	 * is set in the test definition file then compare operation result.
 	 */
+	res = get_hash_digest_len(args.algo_name, &output_len);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	if (output_len < digest_len)
+		digest_len = output_len;
+
 	res = util_compare_buffers(args.output, args.output_length, digest_hex,
 				   digest_len);
 

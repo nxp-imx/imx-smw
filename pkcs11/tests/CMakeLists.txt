@@ -20,6 +20,7 @@ endif()
 set(PKCS11_SHARE_TARGET_DIR share/smw/pkcs11)
 set(PKCS11_TESTS_TARGET_DATA_DIR ${PKCS11_SHARE_TARGET_DIR}/tests)
 set(PKCS11_TARGET_CONFIG_DIR ${PKCS11_SHARE_TARGET_DIR}/config)
+set(PKCS11_TARGET_SCRIPTS_DIR ${PKCS11_SHARE_TARGET_DIR}/scripts)
 
 message(STATUS "Default PKCS11 Library: ${DEFAULT_PKCS11_LIB}")
 
@@ -64,6 +65,12 @@ install(DIRECTORY config
         COMPONENT ${PROJECT_NAME}
         EXCLUDE_FROM_ALL)
 
+install(DIRECTORY scripts
+        DESTINATION ${PKCS11_SHARE_TARGET_DIR}
+        FILE_PERMISSIONS OWNER_READ OWNER_WRITE WORLD_EXECUTE
+        COMPONENT ${PROJECT_NAME}
+        EXCLUDE_FROM_ALL)
+
 add_custom_target(install_${PROJECT_NAME}
         COMMAND "${CMAKE_COMMAND}" -DCOMPONENT=${PROJECT_NAME}
                 -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake"
@@ -85,7 +92,8 @@ enable_testing()
 #
 macro(pkcs11_test name)
     add_test(NAME pkcs11_${name}
-             COMMAND ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME} -t ${name})
+             COMMAND ${CMAKE_INSTALL_PREFIX}/${PKCS11_TARGET_SCRIPTS_DIR}/run_test.sh
+                "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME} -t ${name}")
     set_tests_properties(pkcs11_${name} PROPERTIES LABELS "pkcs11;${name}")
 endmacro()
 

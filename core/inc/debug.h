@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "global.h"
 
@@ -32,12 +33,26 @@
 
 #define SMW_DBG_LEVEL TRACE_LEVEL
 
+static inline void dbg_printf(const char *fmt, ...)
+{
+	struct smw_ops *ops = get_smw_ops();
+	va_list args;
+
+	if (ops && ops->vprint) {
+		va_start(args, fmt);
+
+		ops->vprint(fmt, args);
+
+		va_end(args);
+	}
+}
+
 #define SMW_PRINTF(...)                                                        \
 	do {                                                                   \
-		if (g_smw_ctx.ops.thread_self)                                 \
-			printf("(%lx) ", g_smw_ctx.ops.thread_self());         \
-		printf(__VA_ARGS__);                                           \
+		dbg_printf(__VA_ARGS__);                                       \
 	} while (0)
+
+#define SMW_FFLUSH fflush
 
 #define SMW_DBG_TRACE_FUNCTION_CALL                                            \
 	do {                                                                   \
@@ -58,35 +73,25 @@
 				SMW_PRINTF(__VA_ARGS__);                       \
 	} while (0)
 
+static inline void dbg_hex_dump(const unsigned char *addr, unsigned int size,
+				unsigned int align)
+{
+	struct smw_ops *ops = get_smw_ops();
+
+	if (ops && ops->hex_dump)
+		ops->hex_dump(addr, size, align);
+}
+
 #define SMW_DBG_HEX_DUMP(level, addr, size, align)                             \
 	do {                                                                   \
-		if (SMW_DBG_LEVEL_##level > SMW_DBG_LEVEL)                     \
-			break;                                                 \
-		__typeof__(size) i;                                            \
-		const unsigned char *_addr = addr;                             \
-		__typeof__(size) _size = (size);                               \
-		__typeof__(align) _align = (align);                            \
-		_size--;                                                       \
-		if (_align > 4)                                                \
-			_align = 4;                                            \
-		if (_align)                                                    \
-			_align = 1 << _align;                                  \
-		if (g_smw_ctx.ops.thread_self)                                 \
-			printf("(%lx)\n", g_smw_ctx.ops.thread_self());        \
-		if (!_addr) {                                                  \
-			printf("buffer address is NULL");                      \
-			break;                                                 \
-		}                                                              \
-		for (i = 0; i < _size; i++) {                                  \
-			printf("%.2x%s", (_addr)[i],                           \
-			       (i + 1) & (_align - 1) ? " " : "\n");           \
-		}                                                              \
-		printf("%.2x\n", (_addr)[_size]);                              \
+		if (SMW_DBG_LEVEL_##level <= SMW_DBG_LEVEL)                    \
+			dbg_hex_dump(addr, size, align);                       \
 	} while (0)
 
 #else /* ENABLE_TRACE */
 
 #define SMW_PRINTF(...)
+#define SMW_FFLUSH(...)
 #define SMW_DBG_TRACE_FUNCTION_CALL
 #define SMW_DBG_PRINTF(level, ...)
 #define SMW_DBG_PRINTF_COND(level, cond, ...)
@@ -101,6 +106,7 @@
 		SMW_PRINTF("Assertion \"%s\" failed: file \"%s\","             \
 			   "line %d\n",                                        \
 			   #exp, __FILE__, __LINE__);                          \
+		SMW_FFLUSH(stdout);                                            \
 		SMW_ABORT();                                                   \
 	} while (0)
 

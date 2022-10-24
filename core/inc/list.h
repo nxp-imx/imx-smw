@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
+
+#ifndef __LIST_H__
+#define __LIST_H__
 
 #include <stdbool.h>
 
@@ -129,3 +132,5 @@ void *smw_utils_list_get_data(struct node *node);
  * none.
  */
 void smw_utils_list_print(struct smw_utils_list *list);
+
+#endif /* __LIST_H__ */

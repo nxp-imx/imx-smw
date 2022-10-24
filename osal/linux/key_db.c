@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 
 #include "local.h"
 
@@ -33,16 +34,21 @@ __weak void dbg_get_lock_file(int fp)
 
 static int lock_db(struct key_db_obj *db)
 {
+	int ret;
 	struct flock lock = { 0 };
+
+	ret = mutex_lock(db->mutex);
+	if (ret)
+		return ret;
 
 	lock.l_type = F_WRLCK;
 	if (fcntl(db->fp, F_SETLKW, &lock)) {
 		dbg_get_lock_file(db->fp);
 		DBG_PRINTF(DEBUG, "Unable to lock: %s\n", get_strerr());
-		return -1;
+		ret = -1;
 	}
 
-	return mutex_lock(db->mutex);
+	return ret;
 }
 
 static int unlock_db(struct key_db_obj *db)
@@ -63,40 +69,29 @@ static int unlock_db(struct key_db_obj *db)
  * @db: Key database
  * @id: Key id to find
  * @key: Key entry found
+ * @pos: File position to the key header if key id found, else -1
  *
- * Return:
- * File position to the key header if key id found,
- * Otherwise -1
  */
-static long find_db_key_id(struct key_db_obj *db, unsigned int id,
-			   struct key_entry *key)
+static void find_db_key_id(struct key_db_obj *db, unsigned int id,
+			   struct key_entry *key, long *pos)
 {
-	long pos = -1;
-	long cur_pos = 0;
-	ssize_t off;
+	ssize_t off = 0;
 
-	if (lseek(db->fp, 0, SEEK_SET))
-		return pos;
+	*pos = -1;
 
-	while (read(db->fp, key, sizeof(*key)) == sizeof(*key)) {
-		cur_pos += sizeof(*key);
+	while (pread(db->fp, key, sizeof(*key), off) == sizeof(*key)) {
+		DBG_PRINTF(DEBUG, "%s ID=%u vs %u\n", __func__, key->id, id);
 		if (key->id != id) {
 			/* Go to the next entry */
-			off = lseek(db->fp, key->info_size, SEEK_CUR);
-			cur_pos += key->info_size;
-			if (off != cur_pos)
-				break;
-
+			off += sizeof(*key) + key->info_size;
 			continue;
 		}
 
-		pos = cur_pos - sizeof(*key);
+		*pos = off;
 
 		dbg_entry(key);
 		break;
 	}
-
-	return pos;
 }
 
 /**
@@ -104,27 +99,24 @@ static long find_db_key_id(struct key_db_obj *db, unsigned int id,
  * @db: Key database
  * @key: OSAL key object
  * @free_id: Free key id in range
+ * @pos: File position to the key header if key id found, else -1
  *
  * The @free_id value is the key id free in the database matching
  * the OSAL key range given if the free entry found.
  * If no key free entry found, the @free_id is the next key id
  * free in the given OSAL key range.
  *
- * Return:
- * File position to the key header if key id found,
- * Otherwise -1
  */
-static long find_db_key_free(struct key_db_obj *db, struct osal_key *key,
-			     unsigned int *free_id)
+static void find_db_key_free(struct key_db_obj *db, struct osal_key *key,
+			     unsigned int *free_id, long *pos)
 {
-	long cur_pos = 0;
-	long pos = -1;
-	ssize_t off;
+	ssize_t off = 0;
 	struct key_entry rd_key;
 	unsigned int last_id = 0;
 
-	while (read(db->fp, &rd_key, sizeof(rd_key)) == sizeof(rd_key)) {
-		cur_pos += sizeof(rd_key);
+	*pos = -1;
+
+	while (pread(db->fp, &rd_key, sizeof(rd_key), off) == sizeof(rd_key)) {
 		/*
 		 * If the key id read is the requested range
 		 * set the last_id value
@@ -135,26 +127,20 @@ static long find_db_key_free(struct key_db_obj *db, struct osal_key *key,
 		if (last_id != rd_key.id || rd_key.flags != ENTRY_FREE ||
 		    rd_key.info_size < key->info_size) {
 			/* Go to the next entry */
-			off = lseek(db->fp, rd_key.info_size, SEEK_CUR);
-			cur_pos += rd_key.info_size;
-			if (off != cur_pos)
-				break;
-
+			off += sizeof(rd_key) + rd_key.info_size;
 			continue;
 		}
 
-		pos = cur_pos - sizeof(rd_key);
+		*pos = off;
 		*free_id = rd_key.id;
 
-		return pos;
+		return;
 	}
 
 	if (!last_id)
 		*free_id = key->range.min;
 	else
 		*free_id = last_id + 1;
-
-	return pos;
 }
 
 /**
@@ -170,30 +156,51 @@ static long find_db_key_free(struct key_db_obj *db, struct osal_key *key,
 static int write_key_db(struct key_db_obj *db, struct key_entry *key,
 			void *info, long pos)
 {
+	int err = -1;
+	off_t off = pos;
+	struct stat f_stat = { 0 };
+
 	DBG_PRINTF(DEBUG, "%s (%d) pos = %ld\n", __func__, __LINE__, pos);
-	if (pos < 0 || lseek(db->fp, pos, SEEK_SET) != pos)
-		return -1;
 
 	dbg_entry(key);
 
-	if (write(db->fp, key, sizeof(*key)) != sizeof(*key)) {
-		DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
-			   __LINE__);
-		return -1;
+	if (off < 0) {
+		if (fstat(db->fp, &f_stat)) {
+			DBG_PRINTF(ERROR, "%s (%d) DB fstat error\n", __func__,
+				   __LINE__);
+			goto end;
+		}
+		off = f_stat.st_size;
 	}
 
-	if (!info)
-		return 0;
-
-	dbg_entry_info(info, key->info_size);
-
-	if (write(db->fp, info, key->info_size) != (ssize_t)key->info_size) {
+	if (pwrite(db->fp, key, sizeof(*key), off) != sizeof(*key)) {
 		DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
 			   __LINE__);
-		return -1;
+		goto end;
 	}
 
-	return 0;
+	if (info) {
+		dbg_entry_info(info, key->info_size);
+
+		off += sizeof(*key);
+		if (pwrite(db->fp, info, key->info_size, off) !=
+		    (ssize_t)key->info_size) {
+			DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
+				   __LINE__);
+			goto end;
+		}
+
+		if (fsync(db->fp)) {
+			DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
+				   __LINE__);
+			goto end;
+		}
+	}
+
+	err = 0;
+
+end:
+	return err;
 }
 
 static void close_db_file(void)
@@ -268,7 +275,7 @@ void key_db_close(void)
 int key_db_get_info(struct osal_key *key)
 {
 	int ret = -1;
-	long pos;
+	long pos = -1;
 	struct key_db_obj *db = osal_priv.key_db_obj;
 	struct key_entry entry = { 0 };
 
@@ -283,12 +290,13 @@ int key_db_get_info(struct osal_key *key)
 	if (lock_db(db))
 		return ret;
 
-	pos = find_db_key_id(db, key->id, &entry);
-	if (pos == -1)
-		goto end;
+	find_db_key_id(db, key->id, &entry, &pos);
 
 	DBG_PRINTF(INFO, "%s (%d) key id " PRIxID " @%ld\n", __func__, __LINE__,
 		   key->id, pos);
+
+	if (pos < 0)
+		goto end;
 
 	if (entry.flags != ENTRY_USE) {
 		DBG_PRINTF(ERROR, "%s (%d) key id " PRIxID " not valid\n",
@@ -339,33 +347,26 @@ int key_db_add(struct osal_key *key)
 	if (lock_db(db))
 		return ret;
 
-	/* Place the file pointer to the beginning of the file */
-	if (lseek(db->fp, 0, SEEK_SET))
-		goto end;
-
 	entry.id = key->range.min;
 
 	/* Try to find a key entry free */
-	pos = find_db_key_free(db, key, &free_id);
-	if (pos == -1) {
-		/*
-		 * No free key entry found add the key entry at the end.
-		 * Key ID must be in the given key range.
-		 * Note the free_id value has been incremented by the
-		 * function find_db_key_free()
-		 */
-		if (free_id > key->range.max)
-			goto end;
+	find_db_key_free(db, key, &free_id, &pos);
 
-		pos = lseek(db->fp, 0, SEEK_END);
-	}
+	/*
+	 * No free key entry found add the key entry at the end.
+	 * Key ID must be in the given key range.
+	 * Note the free_id value has been incremented by the
+	 * function find_db_key_free()
+	 */
+	if (pos == -1 && free_id > key->range.max)
+		goto end;
 
 	entry.id = free_id;
 	entry.flags = ENTRY_USE;
 	entry.persitent = key->persistent;
 	entry.info_size = key->info_size;
-	if (pos >= 0)
-		ret = write_key_db(db, &entry, key->info, pos);
+
+	ret = write_key_db(db, &entry, key->info, pos);
 
 end:
 	if (!ret) {
@@ -383,7 +384,7 @@ end:
 int key_db_update(struct osal_key *key)
 {
 	int ret = -1;
-	long pos;
+	long pos = -1;
 	struct key_db_obj *db = osal_priv.key_db_obj;
 	struct key_entry entry = { 0 };
 
@@ -398,12 +399,13 @@ int key_db_update(struct osal_key *key)
 	if (lock_db(db))
 		return ret;
 
-	pos = find_db_key_id(db, key->id, &entry);
-	if (pos == -1)
-		goto end;
+	find_db_key_id(db, key->id, &entry, &pos);
 
 	DBG_PRINTF(INFO, "%s (%d) key id " PRIxID " @%ld\n", __func__, __LINE__,
 		   key->id, pos);
+
+	if (pos < 0)
+		goto end;
 
 	if (entry.flags != ENTRY_USE) {
 		DBG_PRINTF(ERROR, "%s (%d) key id " PRIxID " not valid\n",
@@ -430,7 +432,7 @@ end:
 int key_db_delete(struct osal_key *key)
 {
 	int ret = -1;
-	long pos;
+	long pos = -1;
 	struct key_db_obj *db = osal_priv.key_db_obj;
 	struct key_entry entry = { 0 };
 
@@ -445,17 +447,16 @@ int key_db_delete(struct osal_key *key)
 	if (lock_db(db))
 		return ret;
 
-	pos = find_db_key_id(db, key->id, &entry);
-	if (pos == -1)
-		goto end;
+	find_db_key_id(db, key->id, &entry, &pos);
 
 	DBG_PRINTF(INFO, "%s (%d) key id " PRIxID " @%ld\n", __func__, __LINE__,
 		   key->id, pos);
 
-	entry.flags = ENTRY_FREE;
-	ret = write_key_db(db, &entry, NULL, pos);
+	if (pos >= 0) {
+		entry.flags = ENTRY_FREE;
+		ret = write_key_db(db, &entry, NULL, pos);
+	}
 
-end:
 	if (unlock_db(db))
 		ret = -1;
 

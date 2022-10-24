@@ -48,6 +48,8 @@ enum smw_status_code smw_config_subsystem_present(smw_subsystem_t subsystem);
  *		@subsystem is NULL
  *	- SMW_STATUS_UNKNOWN_NAME:
  *		@subsystem is not a valid string
+ *	- SMW_STATUS_INVALID_LIBRARY_CONTEXT:
+ *		Library context is not valid
  */
 enum smw_status_code smw_config_subsystem_loaded(smw_subsystem_t subsystem);
 
@@ -246,6 +248,7 @@ enum smw_status_code smw_config_check_cipher(smw_subsystem_t subsystem,
  *
  * Return:
  * SMW_STATUS_OK			- Configuration load is successful
+ * SMW_STATUS_INVALID_LIBRARY_CONTEXT	- Library context is not valid
  * SMW_STATUS_INVALID_BUFFER		- @buffer is NULL or @size is 0
  * SMW_STATUS_CONFIG_ALREADY_LOADED	- A configuration is already loaded
  * error code otherwise
@@ -260,8 +263,9 @@ enum smw_status_code smw_config_load(char *buffer, unsigned int size,
  * It frees all memory dynamically allocated by SMW.
  *
  * Return:
- * SMW_STATUS_OK		- Configuration unload is successful
- * SMW_STATUS_NO_CONFIG_LOADED	- No configuration is loaded
+ * SMW_STATUS_OK			- Configuration unload is successful
+ * SMW_STATUS_INVALID_LIBRARY_CONTEXT	- Library context is not valid
+ * SMW_STATUS_NO_CONFIG_LOADED		- No configuration is loaded
  */
 enum smw_status_code smw_config_unload(void);
 

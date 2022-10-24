@@ -39,7 +39,11 @@
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
  * @SMW_STATUS_MUTEX_DESTROY_FAILURE: Mutex destruction has failed.
- * @SMW_STATUS_LIBRARY_ALREADY_INIT: Library already initialized.
+ * @SMW_STATUS_LIBRARY_ALREADY_INIT: Library is already initialized.
+ * @SMW_STATUS_MUTEX_LOCK_FAILURE: Mutex lock has failed.
+ * @SMW_STATUS_MUTEX_UNLOCK_FAILURE: Mutex unlock has failed.
+ * @SMW_STATUS_INVALID_LIBRARY_CONTEXT: Library context is not valid.
+ * @SMW_STATUS_INVALID_CONFIG_DATABASE: Configuration database is not valid.
  *
  * @SMW_STATUS_INVALID_VERSION: The version of the configuration file is not supported.
  * @SMW_STATUS_INVALID_BUFFER: The configuration file passed by OSAL to the library is not valid.
@@ -96,10 +100,14 @@
  *
  ** Specific return codes - Library initialization
  *
- *	- SMW_STATUS_OPS_INVALID,
- *	- SMW_STATUS_MUTEX_INIT_FAILURE,
+ *	- SMW_STATUS_OPS_INVALID
+ *	- SMW_STATUS_MUTEX_INIT_FAILURE
  *	- SMW_STATUS_MUTEX_DESTROY_FAILURE
  *	- SMW_STATUS_LIBRARY_ALREADY_INIT
+ *	- SMW_STATUS_MUTEX_LOCK_FAILURE
+ *	- SMW_STATUS_MUTEX_UNLOCK_FAILURE
+ *	- SMW_STATUS_INVALID_LIBRARY_CONTEXT
+ *	- SMW_STATUS_INVALID_CONFIG_DATABASE
  *
  ** Specific return codes - Configuration file
  *
@@ -179,7 +187,11 @@ enum smw_status_code {
 	SMW_STATUS_KEY_DB_GET_INFO,
 	SMW_STATUS_KEY_POLICY_ERROR,
 	SMW_STATUS_KEY_POLICY_WARNING_IGNORED,
-	SMW_STATUS_KEY_INVALID /* 45 */
+	SMW_STATUS_KEY_INVALID, /* 45 */
+	SMW_STATUS_MUTEX_LOCK_FAILURE,
+	SMW_STATUS_MUTEX_UNLOCK_FAILURE,
+	SMW_STATUS_INVALID_LIBRARY_CONTEXT,
+	SMW_STATUS_INVALID_CONFIG_DATABASE
 };
 
 #endif /* __SMW_STATUS_H__ */

@@ -10,83 +10,89 @@
 
 __attribute__((destructor)) static void destructor(void);
 
-struct osal_priv osal_priv = { 0 };
+static struct osal_ctx *osal_ctx;
+
+inline struct osal_ctx *get_osal_ctx(void)
+{
+	return osal_ctx;
+}
+
+static inline int alloc_context(void)
+{
+	if (!osal_ctx) {
+		DBG_PRINTF(DEBUG, "OSAL context allocation\n");
+		osal_ctx = calloc(1, sizeof(struct osal_ctx));
+		if (!osal_ctx) {
+			DBG_PRINTF(DEBUG, "OSAL context allocation failed\n");
+			return SMW_STATUS_ALLOC_FAILURE;
+		}
+	}
+
+	return SMW_STATUS_OK;
+}
+
+static inline void free_context(void)
+{
+	free(osal_ctx);
+	osal_ctx = NULL;
+}
 
 int mutex_init(void **mutex)
 {
-	int status = -1;
-
 	TRACE_FUNCTION_CALL;
 
 	if (!mutex)
-		goto end;
+		return -1;
+
 	if (*mutex)
-		goto end;
+		return -1;
 
 	*mutex = malloc(sizeof(pthread_mutex_t));
 	if (!*mutex)
-		goto end;
+		return -1;
 
-	status = pthread_mutex_init((pthread_mutex_t *)*mutex, NULL);
-
-end:
 	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
 
-	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return pthread_mutex_init((pthread_mutex_t *)*mutex, NULL);
 }
 
 int mutex_destroy(void **mutex)
 {
-	int status = -1;
-
 	TRACE_FUNCTION_CALL;
 
 	if (!mutex)
-		goto end;
-	if (!*mutex)
-		goto end;
+		return -1;
 
-	status = pthread_mutex_destroy((pthread_mutex_t *)*mutex);
-	if (status)
-		goto end;
+	if (!*mutex)
+		return -1;
+
+	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
+
+	if (pthread_mutex_destroy((pthread_mutex_t *)*mutex))
+		return -1;
 
 	free(*mutex);
 	*mutex = NULL;
 
-end:
-	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
-
-	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return 0;
 }
 
 int mutex_lock(void *mutex)
 {
-	int status = -1;
-
 	TRACE_FUNCTION_CALL;
-
-	status = pthread_mutex_lock((pthread_mutex_t *)mutex);
 
 	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
 
-	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return pthread_mutex_lock((pthread_mutex_t *)mutex);
 }
 
 int mutex_unlock(void *mutex)
 {
-	int status = -1;
-
 	TRACE_FUNCTION_CALL;
-
-	status = pthread_mutex_unlock((pthread_mutex_t *)mutex);
 
 	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
 
-	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return pthread_mutex_unlock((pthread_mutex_t *)mutex);
 }
 
 static int thread_create(unsigned long *thread, void *(*start_routine)(void *),
@@ -100,25 +106,98 @@ static int thread_cancel(unsigned long thread)
 	return pthread_cancel(thread);
 }
 
-static unsigned long thread_self(void)
+static void vprint(const char *format, va_list arg)
 {
-	return (unsigned long)pthread_self();
+	printf("(%d) [0x%lx] ", getpid(), pthread_self());
+
+	vprintf(format, arg);
+
+	(void)fflush(stdout);
+}
+
+static int fill_dbg_buffer(char *out, size_t size, unsigned int *off,
+			   const char *fmt, size_t fmt_size, char c)
+{
+	int ret;
+
+	if (*off >= size)
+		return -1;
+
+	if (fmt_size >= size)
+		printf(fmt, c);
+
+	if (fmt_size >= size - *off) {
+		printf("%.*s", *off, out);
+		*off = 0;
+	}
+
+	ret = snprintf(out + *off, size - *off, fmt, c);
+	if (ret >= 0 && ret <= (int)fmt_size) {
+		*off += ret;
+		ret = 0;
+	}
+
+	return ret;
+}
+
+static void hex_dump(const unsigned char *addr, unsigned int size,
+		     unsigned int align)
+{
+	unsigned int i;
+	/* Size of out must be at least equal to 3. */
+	char out[256] = { 0 };
+	unsigned int off = 0;
+
+	printf("(%d) [0x%lx] (%p-%u)\n", getpid(), pthread_self(), addr, size);
+
+	if (!addr) {
+		printf("Buffer address is NULL\n");
+		return;
+	}
+
+	if (align > 4)
+		align = 4;
+	if (align)
+		align = 1 << align;
+
+	for (i = 0; i < size; i++) {
+		if (fill_dbg_buffer(out, sizeof(out), &off, "%.2x ", 3,
+				    addr[i]))
+			break;
+
+		if (!((i + 1) & (align - 1))) {
+			if (fill_dbg_buffer(out, sizeof(out), &off, "%c", 1,
+					    '\n'))
+				break;
+		}
+	}
+	printf("%.*s\n", off, out);
+
+	(void)fflush(stdout);
 }
 
 static void register_active_subsystem(const char *subsystem_name)
 {
+	struct osal_ctx *ctx = get_osal_ctx();
+
 	TRACE_FUNCTION_CALL;
 
-	osal_priv.active_subsystem_name = subsystem_name;
+	if (ctx)
+		ctx->active_subsystem_name = subsystem_name;
 }
 
 static int set_tee_info(void *info, size_t info_size)
 {
+	struct osal_ctx *ctx = get_osal_ctx();
+
+	if (!ctx)
+		return SMW_STATUS_ALLOC_FAILURE;
+
 	if (info_size != sizeof(struct tee_info))
 		return SMW_STATUS_INVALID_PARAM;
 
-	osal_priv.config.tee_info = *((struct tee_info *)info);
-	osal_priv.config.config_flags |= CONFIG_TEE;
+	ctx->config.tee_info = *((struct tee_info *)info);
+	ctx->config.config_flags |= CONFIG_TEE;
 
 	return SMW_STATUS_OK;
 }
@@ -127,12 +206,14 @@ static int get_tee_info(struct tee_info *info)
 {
 	int ret = -1;
 
+	struct osal_ctx *ctx = get_osal_ctx();
+
 	/*
 	 * Copy the TEE configuration if value set
 	 * in the library instance
 	 */
-	if (osal_priv.config.config_flags & CONFIG_TEE) {
-		*info = osal_priv.config.tee_info;
+	if (ctx && ctx->config.config_flags & CONFIG_TEE) {
+		*info = ctx->config.tee_info;
 		ret = 0;
 	}
 
@@ -141,11 +222,16 @@ static int get_tee_info(struct tee_info *info)
 
 static int set_hsm_info(void *info, size_t info_size)
 {
+	struct osal_ctx *ctx = get_osal_ctx();
+
+	if (!ctx)
+		return SMW_STATUS_ALLOC_FAILURE;
+
 	if (info_size != sizeof(struct se_info))
 		return SMW_STATUS_INVALID_PARAM;
 
-	osal_priv.config.se_hsm_info = *((struct se_info *)info);
-	osal_priv.config.config_flags |= CONFIG_HSM;
+	ctx->config.se_hsm_info = *((struct se_info *)info);
+	ctx->config.config_flags |= CONFIG_HSM;
 
 	return SMW_STATUS_OK;
 }
@@ -154,12 +240,14 @@ static int get_hsm_info(struct se_info *info)
 {
 	int ret = -1;
 
+	struct osal_ctx *ctx = get_osal_ctx();
+
 	/*
 	 * Copy the Storage Nonce configuration if value set
 	 * in the library instance
 	 */
-	if (osal_priv.config.config_flags & CONFIG_HSM) {
-		*info = osal_priv.config.se_hsm_info;
+	if (ctx && ctx->config.config_flags & CONFIG_HSM) {
+		*info = ctx->config.se_hsm_info;
 		ret = 0;
 	}
 
@@ -168,11 +256,16 @@ static int get_hsm_info(struct se_info *info)
 
 static int set_ele_info(void *info, size_t info_size)
 {
+	struct osal_ctx *ctx = get_osal_ctx();
+
+	if (!ctx)
+		return SMW_STATUS_ALLOC_FAILURE;
+
 	if (info_size != sizeof(struct se_info))
 		return SMW_STATUS_INVALID_PARAM;
 
-	osal_priv.config.se_ele_info = *((struct se_info *)info);
-	osal_priv.config.config_flags |= CONFIG_ELE;
+	ctx->config.se_ele_info = *((struct se_info *)info);
+	ctx->config.config_flags |= CONFIG_ELE;
 
 	return SMW_STATUS_OK;
 }
@@ -181,12 +274,14 @@ static int get_ele_info(struct se_info *info)
 {
 	int ret = -1;
 
+	struct osal_ctx *ctx = get_osal_ctx();
+
 	/*
 	 * Copy the Storage Nonce configuration if value set
 	 * in the library instance
 	 */
-	if (osal_priv.config.config_flags & CONFIG_ELE) {
-		*info = osal_priv.config.se_ele_info;
+	if (ctx && ctx->config.config_flags & CONFIG_ELE) {
+		*info = ctx->config.se_ele_info;
 		ret = 0;
 	}
 
@@ -216,7 +311,9 @@ static int get_subsystem_info(const char *subsystem_name, void *info)
 
 static bool is_lib_initialized(void)
 {
-	return osal_priv.lib_initialized;
+	struct osal_ctx *ctx = get_osal_ctx();
+
+	return ctx ? ctx->lib_initialized : false;
 }
 
 static int get_default_config(char **buffer, unsigned int *size)
@@ -296,23 +393,24 @@ end:
 	return status;
 }
 
-static int stop(void)
+static void stop(void)
 {
-	int status = 0;
+	int __maybe_unused status = 0;
 
 	TRACE_FUNCTION_CALL;
 
-	status = smw_config_unload();
-	if (status)
-		goto end;
+	if (osal_ctx) {
+		status = smw_config_unload();
+		DBG_PRINTF(VERBOSE, "Unload configuration status: %d\n",
+			   status);
 
-	status = smw_deinit();
+		status = smw_deinit();
+		DBG_PRINTF(VERBOSE, "SMW deinit status: %d\n", status);
 
-	key_db_close();
+		key_db_close();
 
-end:
-	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+		free_context();
+	}
 }
 
 static void destructor(void)
@@ -329,7 +427,13 @@ __export enum smw_status_code
 smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 			    size_t info_size)
 {
-	int status;
+	enum smw_status_code status;
+
+	TRACE_FUNCTION_CALL;
+
+	status = alloc_context();
+	if (status != SMW_STATUS_OK)
+		return status;
 
 	if (!subsystem || !info)
 		return SMW_STATUS_INVALID_PARAM;
@@ -352,7 +456,15 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 __export enum smw_status_code smw_osal_open_key_db(const char *file,
 						   size_t len __maybe_unused)
 {
+	enum smw_status_code status;
+
+	TRACE_FUNCTION_CALL;
+
 	DBG_PRINTF(INFO, "Open Key database %s (%zu)\n", file, len);
+
+	status = alloc_context();
+	if (status != SMW_STATUS_OK)
+		return status;
 
 	if (key_db_open(file)) {
 		DBG_PRINTF(ERROR, "Error opening/creating key db %s\n", file);
@@ -364,8 +476,9 @@ __export enum smw_status_code smw_osal_open_key_db(const char *file,
 
 __export enum smw_status_code smw_osal_lib_init(void)
 {
-	int status;
+	enum smw_status_code status;
 
+	struct osal_ctx *ctx;
 	struct smw_ops ops = { 0 };
 	char *buffer = NULL;
 	unsigned int size = 0;
@@ -373,7 +486,17 @@ __export enum smw_status_code smw_osal_lib_init(void)
 
 	TRACE_FUNCTION_CALL;
 
-	if (osal_priv.lib_initialized)
+	status = alloc_context();
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	ctx = get_osal_ctx();
+	if (!ctx) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+
+	if (ctx->lib_initialized)
 		return SMW_STATUS_LIBRARY_ALREADY_INIT;
 
 	ops.mutex_init = mutex_init;
@@ -382,7 +505,8 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	ops.mutex_unlock = mutex_unlock;
 	ops.thread_create = thread_create;
 	ops.thread_cancel = thread_cancel;
-	ops.thread_self = thread_self;
+	ops.vprint = vprint;
+	ops.hex_dump = hex_dump;
 	ops.register_active_subsystem = register_active_subsystem;
 	ops.get_subsystem_info = get_subsystem_info;
 	ops.is_lib_initialized = is_lib_initialized;
@@ -394,19 +518,21 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	ops.delete_key_info = key_db_delete;
 
 	status = smw_init(&ops);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
-	if (status == SMW_STATUS_OK) {
-		status = get_default_config(&buffer, &size);
+	status = get_default_config(&buffer, &size);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
-		if (status == SMW_STATUS_OK)
-			status = smw_config_load(buffer, size, &offset);
-	}
+	status = smw_config_load(buffer, size, &offset);
 
+end:
 	if (buffer)
 		free(buffer);
 
 	if (status == SMW_STATUS_OK)
-		osal_priv.lib_initialized = 1;
+		ctx->lib_initialized = 1;
 
 	DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

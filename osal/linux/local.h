@@ -33,7 +33,7 @@
 #define DBG_PRINTF(level, ...)                                                 \
 	do {                                                                   \
 		if (DBG_LEVEL_##level <= DBG_LEVEL) {                          \
-			printf("(%lx) ", pthread_self());                      \
+			printf("(%d) [0x%lx] ", getpid(), pthread_self());     \
 			printf(__VA_ARGS__);                                   \
 		}                                                              \
 	} while (0)
@@ -70,14 +70,12 @@ struct lib_config_args {
 	struct se_info se_ele_info;
 };
 
-struct osal_priv {
+struct osal_ctx {
 	int lib_initialized;
 	struct lib_config_args config;
 	const char *active_subsystem_name;
 	void *key_db_obj;
 };
-
-extern struct osal_priv osal_priv;
 
 enum key_flags {
 	ENTRY_FREE = 0,
@@ -109,6 +107,14 @@ struct key_entry {
 	size_t info_size;
 	/* Info data block is right after the key entry header */
 };
+
+/**
+ * get_osal_ctx() - Get the OSAL context
+ *
+ * Return:
+ * Pointer to the OSAL context
+ */
+struct osal_ctx *get_osal_ctx(void);
 
 /**
  * mutex_init() - Create and initialize a mutex

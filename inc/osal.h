@@ -8,6 +8,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdarg.h>
 
 #include "smw_status.h"
 
@@ -51,13 +52,14 @@ struct osal_key {
  * struct smw_ops - SMW OSAL operations
  * @critical_section_start: [optional] Start critical section
  * @critical_section_stop: [optional] Stop critical section
- * @mutex_init: [optional] Initialize a mutex
- * @mutex_destroy: [optional] Destroy a mutex
- * @mutex_lock: [optional] Lock a mutex
- * @mutex_unlock: [optional] Unlock a mutex
+ * @mutex_init: [mandatory] Initialize a mutex
+ * @mutex_destroy: [mandatory] Destroy a mutex
+ * @mutex_lock: [mandatory] Lock a mutex
+ * @mutex_unlock: [mandatory] Unlock a mutex
  * @thread_create: [mandatory] Create a thread
  * @thread_cancel: [mandatory] Cancel a thread
- * @thread_self: [optional] Return the ID of the thread being executed
+ * @vprint: [optional] Print debug trace
+ * @hex_dump: [optional] Print buffer content
  * @register_active_subsystem: [optional] Register the active Secure Subsystem
  * @get_subsystem_info: [mandatory] Get Subsystem configuration info
  * @is_lib_initialized: [mandatory] Check if the library was successfully initialized by OSAL
@@ -85,7 +87,9 @@ struct smw_ops {
 			     void *(*start_routine)(void *), void *arg);
 	int (*thread_cancel)(unsigned long thread);
 
-	unsigned long (*thread_self)(void);
+	void (*vprint)(const char *format, va_list arg);
+	void (*hex_dump)(const unsigned char *addr, unsigned int size,
+			 unsigned int align);
 
 	void (*register_active_subsystem)(const char *subsystem_name);
 
@@ -109,9 +113,9 @@ struct smw_ops {
  *
  * Return:
  * See &enum smw_status_code
- *  - SMW_STATUS_OK                  - Initialization is successful
- *  - SMW_STATUS_OPS_INVALID         - @ops is invalid
- *  - SMW_STATUS_MUTEX_INIT_FAILURE  - Mutex initialization has failed
+ *  - SMW_STATUS_OK                 - Initialization is successful
+ *  - SMW_STATUS_OPS_INVALID        - @ops is invalid
+ *  - SMW_STATUS_MUTEX_INIT_FAILURE - Mutex initialization has failed
  */
 enum smw_status_code smw_init(const struct smw_ops *ops);
 
@@ -123,8 +127,9 @@ enum smw_status_code smw_init(const struct smw_ops *ops);
  *
  * Return:
  * See &enum smw_status_code
- *  - SMW_STATUS_OK                     - Deinitialization is successful
- *  - SMW_STATUS_MUTEX_DESTROY_FAILURE  - Mutex destruction has failed
+ *  - SMW_STATUS_OK                         - Deinitialization is successful
+ *  - SMW_STATUS_INVALID_LIBRARY_CONTEXT    - Library context is not valid
+ *  - SMW_STATUS_MUTEX_DESTROY_FAILURE      - Mutex destruction has failed
  */
 enum smw_status_code smw_deinit(void);
 

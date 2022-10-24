@@ -7,7 +7,12 @@
 
 __export const char *smw_osal_latest_subsystem_name(void)
 {
+	struct osal_ctx *ctx = get_osal_ctx();
+
 	TRACE_FUNCTION_CALL;
 
-	return osal_priv.active_subsystem_name;
+	if (!ctx)
+		return NULL;
+
+	return ctx->active_subsystem_name;
 }

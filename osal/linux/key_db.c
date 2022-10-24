@@ -45,6 +45,7 @@ static int lock_db(struct key_db_obj *db)
 	if (fcntl(db->fp, F_SETLKW, &lock)) {
 		dbg_get_lock_file(db->fp);
 		DBG_PRINTF(DEBUG, "Unable to lock: %s\n", get_strerr());
+		(void)mutex_unlock(db->mutex);
 		ret = -1;
 	}
 
@@ -203,13 +204,8 @@ end:
 	return err;
 }
 
-static void close_db_file(void)
+static void close_db_file(struct key_db_obj *db)
 {
-	struct key_db_obj *db = osal_priv.key_db_obj;
-
-	if (!db)
-		return;
-
 	if (db->fp) {
 		(void)mutex_destroy(&db->mutex);
 
@@ -221,7 +217,13 @@ static void close_db_file(void)
 
 int key_db_open(const char *key_db)
 {
-	struct key_db_obj *db = osal_priv.key_db_obj;
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct key_db_obj *db;
+
+	if (!ctx)
+		return -1;
+
+	db = ctx->key_db_obj;
 
 	if (!db) {
 		/*
@@ -233,11 +235,11 @@ int key_db_open(const char *key_db)
 			return -1;
 		}
 
-		osal_priv.key_db_obj = db;
+		ctx->key_db_obj = db;
 	}
 
 	if (db->fp)
-		close_db_file();
+		close_db_file(db);
 
 	/*
 	 * Open the application key database file.
@@ -250,7 +252,7 @@ int key_db_open(const char *key_db)
 			   get_strerr());
 
 		free(db);
-		osal_priv.key_db_obj = NULL;
+		ctx->key_db_obj = NULL;
 
 		return -1;
 	}
@@ -260,24 +262,36 @@ int key_db_open(const char *key_db)
 
 void key_db_close(void)
 {
-	struct key_db_obj *db = osal_priv.key_db_obj;
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct key_db_obj *db;
+
+	if (!ctx)
+		return;
+
+	db = ctx->key_db_obj;
 
 	if (!db)
 		return;
 
-	close_db_file();
+	close_db_file(db);
 
 	free(db);
 
-	osal_priv.key_db_obj = NULL;
+	ctx->key_db_obj = NULL;
 }
 
 int key_db_get_info(struct osal_key *key)
 {
 	int ret = -1;
 	long pos = -1;
-	struct key_db_obj *db = osal_priv.key_db_obj;
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct key_db_obj *db;
 	struct key_entry entry = { 0 };
+
+	if (!ctx)
+		return ret;
+
+	db = ctx->key_db_obj;
 
 	if (!db || !db->fp) {
 		DBG_PRINTF(ERROR, "Key database not valid");
@@ -330,11 +344,17 @@ end:
 
 int key_db_add(struct osal_key *key)
 {
-	struct key_db_obj *db = osal_priv.key_db_obj;
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct key_db_obj *db;
 	int ret = -1;
 	long pos = -1;
 	unsigned int free_id = 0;
 	struct key_entry entry = { 0 };
+
+	if (!ctx)
+		return ret;
+
+	db = ctx->key_db_obj;
 
 	if (!db || !db->fp) {
 		DBG_PRINTF(ERROR, "Key database not valid");
@@ -385,8 +405,14 @@ int key_db_update(struct osal_key *key)
 {
 	int ret = -1;
 	long pos = -1;
-	struct key_db_obj *db = osal_priv.key_db_obj;
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct key_db_obj *db;
 	struct key_entry entry = { 0 };
+
+	if (!ctx)
+		return ret;
+
+	db = ctx->key_db_obj;
 
 	if (!db || !db->fp) {
 		DBG_PRINTF(ERROR, "Key database not valid");
@@ -433,8 +459,14 @@ int key_db_delete(struct osal_key *key)
 {
 	int ret = -1;
 	long pos = -1;
-	struct key_db_obj *db = osal_priv.key_db_obj;
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct key_db_obj *db;
 	struct key_entry entry = { 0 };
+
+	if (!ctx)
+		return ret;
+
+	db = ctx->key_db_obj;
 
 	if (!db || !db->fp) {
 		DBG_PRINTF(ERROR, "Key database not valid");

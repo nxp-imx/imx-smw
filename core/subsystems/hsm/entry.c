@@ -25,17 +25,17 @@ static struct {
 	uint32_t nvm_status;
 	unsigned long tid;
 	void *mutex;
-} ctx = { .hdl = { .session = 0,
-		   .key_store = 0,
-		   .key_management = 0,
-		   .signature_gen = 0,
-		   .signature_ver = 0,
-		   .hash = 0,
-		   .rng = 0,
-		   .cipher = 0 },
-	  .nvm_status = NVM_STATUS_UNDEF,
-	  .tid = 0,
-	  .mutex = NULL };
+} hsm_ctx = { .hdl = { .session = 0,
+		       .key_store = 0,
+		       .key_management = 0,
+		       .signature_gen = 0,
+		       .signature_ver = 0,
+		       .hash = 0,
+		       .rng = 0,
+		       .cipher = 0 },
+	      .nvm_status = NVM_STATUS_UNDEF,
+	      .tid = 0,
+	      .mutex = NULL };
 
 static int open_session(hsm_hdl_t *session_hdl)
 {
@@ -336,7 +336,7 @@ static void close_cipher_service(hsm_hdl_t cipher_hdl)
 
 static void reset_handles(void)
 {
-	struct hdl *hdl = &ctx.hdl;
+	struct hdl *hdl = &hsm_ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -373,16 +373,17 @@ static void *storage_thread(void *arg)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	seco_nvm_manager(NVM_FLAGS_HSM, &ctx.nvm_status);
+	seco_nvm_manager(NVM_FLAGS_HSM, &hsm_ctx.nvm_status);
 
-	if (ctx.nvm_status >= NVM_STATUS_STOPPED)
+	if (hsm_ctx.nvm_status >= NVM_STATUS_STOPPED)
 		smw_config_notify_subsystem_failure(SUBSYSTEM_ID_HSM);
 
-	smw_utils_mutex_lock(ctx.mutex);
+	if (smw_utils_mutex_lock(hsm_ctx.mutex))
+		return NULL;
 
 	reset_handles();
 
-	smw_utils_mutex_unlock(ctx.mutex);
+	(void)smw_utils_mutex_unlock(hsm_ctx.mutex);
 
 	return NULL;
 }
@@ -395,33 +396,42 @@ static int start_storage_manager(void)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	ctx.nvm_status = NVM_STATUS_UNDEF;
+	hsm_ctx.nvm_status = NVM_STATUS_UNDEF;
 
-	if (smw_utils_thread_create(&ctx.tid, storage_thread, NULL)) {
+	if (smw_utils_thread_create(&hsm_ctx.tid, storage_thread, NULL)) {
 		status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
 		goto end;
 	}
 
-	SMW_DBG_PRINTF(DEBUG, "tid: %lx\n", ctx.tid);
+	SMW_DBG_PRINTF(DEBUG, "tid: %lx\n", hsm_ctx.tid);
 
-	while (ctx.nvm_status <= NVM_STATUS_STARTING) {
-		smw_utils_mutex_lock(ctx.mutex);
+	while (hsm_ctx.nvm_status <= NVM_STATUS_STARTING) {
+		if (smw_utils_mutex_lock(hsm_ctx.mutex)) {
+			status = SMW_STATUS_MUTEX_LOCK_FAILURE;
+			goto end;
+		}
+
 		SMW_DBG_PRINTF(DEBUG, "Storage manager status: %d\n",
-			       ctx.nvm_status);
-		smw_utils_mutex_unlock(ctx.mutex);
+			       hsm_ctx.nvm_status);
+
+		if (smw_utils_mutex_unlock(hsm_ctx.mutex)) {
+			status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
+			goto end;
+		}
+
 		if (smw_utils_time(start_time) >= STORAGE_MANAGER_TIMEOUT) {
 			SMW_DBG_PRINTF(DEBUG,
 				       "Storage manager failed to start (%d)\n",
-				       ctx.nvm_status);
-			(void)smw_utils_thread_cancel(ctx.tid);
+				       hsm_ctx.nvm_status);
+			(void)smw_utils_thread_cancel(hsm_ctx.tid);
 			status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
 			goto end;
 		}
 	}
 
-	if (ctx.nvm_status >= NVM_STATUS_STOPPED) {
+	if (hsm_ctx.nvm_status >= NVM_STATUS_STOPPED) {
 		SMW_DBG_PRINTF(DEBUG, "Storage manager stopped (%d)\n",
-			       ctx.nvm_status);
+			       hsm_ctx.nvm_status);
 		status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
 		goto end;
 	}
@@ -437,10 +447,10 @@ static int stop_storage_manager(void)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_PRINTF(DEBUG, "tid: %lx\n", ctx.tid);
+	SMW_DBG_PRINTF(DEBUG, "tid: %lx\n", hsm_ctx.tid);
 
-	if (ctx.nvm_status != NVM_STATUS_STOPPED)
-		if (smw_utils_thread_cancel(ctx.tid))
+	if (hsm_ctx.nvm_status != NVM_STATUS_STOPPED)
+		if (smw_utils_thread_cancel(hsm_ctx.tid))
 			status = SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -459,7 +469,7 @@ static int unload(void)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (smw_utils_mutex_destroy(&ctx.mutex))
+	if (smw_utils_mutex_destroy(&hsm_ctx.mutex))
 		status = SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE;
 
 	/* Close Seco Session */
@@ -473,13 +483,14 @@ end:
 static int load(void)
 {
 	int status = SMW_STATUS_OK;
+	int status_mutex = SMW_STATUS_OK;
 
-	struct hdl *hdl = &ctx.hdl;
+	struct hdl *hdl = &hsm_ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (smw_utils_mutex_init(&ctx.mutex)) {
-		status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
+	if (smw_utils_mutex_init(&hsm_ctx.mutex)) {
+		status = SMW_STATUS_MUTEX_INIT_FAILURE;
 		goto end;
 	}
 
@@ -487,9 +498,12 @@ static int load(void)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	smw_utils_mutex_lock(ctx.mutex);
+	if (smw_utils_mutex_lock(hsm_ctx.mutex)) {
+		status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
+		goto err;
+	}
 
-	if (ctx.nvm_status >= NVM_STATUS_STOPPED)
+	if (hsm_ctx.nvm_status >= NVM_STATUS_STOPPED)
 		goto err;
 
 	status = open_session(&hdl->session);
@@ -525,10 +539,14 @@ static int load(void)
 	status = open_cipher_service(hdl->key_store, &hdl->cipher);
 
 err:
-	smw_utils_mutex_unlock(ctx.mutex);
+	if (status_mutex == SMW_STATUS_OK)
+		status_mutex = smw_utils_mutex_unlock(hsm_ctx.mutex);
 
 	if (status != SMW_STATUS_OK)
 		status = unload();
+
+	if (status == SMW_STATUS_OK)
+		status = status_mutex;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -606,7 +624,7 @@ static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	struct hdl *hdl = &ctx.hdl;
+	struct hdl *hdl = &hsm_ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

@@ -17,7 +17,7 @@
 static struct {
 	struct hdl hdl;
 	unsigned long tid;
-} ctx = {
+} ele_ctx = {
 	.hdl = { .session = 0, .key_store = 0 },
 	.tid = 0,
 };
@@ -109,7 +109,7 @@ static void close_key_store_service(hsm_hdl_t key_store_hdl)
 
 static void reset_handles(void)
 {
-	struct hdl *hdl = &ctx.hdl;
+	struct hdl *hdl = &ele_ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -138,7 +138,7 @@ static int load(void)
 {
 	int status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
 
-	struct hdl *hdl = &ctx.hdl;
+	struct hdl *hdl = &ele_ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -227,7 +227,7 @@ static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	struct hdl *hdl = &ctx.hdl;
+	struct hdl *hdl = &ele_ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

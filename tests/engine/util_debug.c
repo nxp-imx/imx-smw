@@ -18,7 +18,7 @@ static void dbg_func_printf(const char *function, int line, const char *app,
 		printf("(%s) ", app);
 
 	if (thr)
-		printf("(%s) [%s:%d] ", thr, function, line);
+		printf("[%s] [%s:%d] ", thr, function, line);
 	else
 		printf("[%s:%d] ", function, line);
 }

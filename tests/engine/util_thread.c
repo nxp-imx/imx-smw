@@ -31,7 +31,7 @@ static int get_active_thread_data(struct app_data *app,
 	while (node) {
 		*thr = util_list_data(node);
 
-		if (*thr && (*thr)->id == tid)
+		if (*thr && !pthread_equal((*thr)->id, tid))
 			break;
 
 		node = util_list_next(app->threads, node, NULL);
@@ -243,7 +243,7 @@ static int log_header(struct thread_data *thr, char *str)
 		test = app->test;
 
 	if (app && test && test->is_multi_apps && strlen(app->name)) {
-		err = sprintf(str, "(%s) ", app->name);
+		err = sprintf(str, "(%s - %d) ", app->name, getpid());
 		if (err < 0) {
 			DBG_PRINT("Error (%d) %s", err, util_get_strerr());
 			return err;
@@ -253,7 +253,8 @@ static int log_header(struct thread_data *thr, char *str)
 	}
 
 	if (strlen(thr->name)) {
-		err = sprintf(&str[nb_char], "[%s] ", thr->name);
+		err = sprintf(&str[nb_char], "[%s - 0x%lx] ", thr->name,
+			      thr->id);
 		if (err < 0) {
 			DBG_PRINT("Error (%d) %s", err, util_get_strerr());
 			return err;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #include "smw_status.h"
@@ -9,7 +9,6 @@
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
-#include "list.h"
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"

@@ -9,7 +9,6 @@
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
-#include "list.h"
 #include "name.h"
 #include "operations.h"
 #include "subsystems.h"
@@ -34,13 +33,71 @@
 			       (_id != OPERATION_ID_INVALID));                 \
 	} while (0)
 
-struct database database;
-
 static const char *const load_method_names[] = {
 	[LOAD_METHOD_ID_AT_FIRST_CALL_LOAD] = "AT_FIRST_CALL_LOAD",
 	[LOAD_METHOD_ID_AT_CONTEXT_CREATION_DESTRUCTION] =
 		"AT_CONTEXT_CREATION_DESTRUCTION"
 };
+
+inline struct database *get_database(void)
+{
+	struct database *db = NULL;
+	struct smw_ctx *ctx = get_smw_ctx();
+
+	SMW_DBG_ASSERT(ctx);
+	SMW_DBG_ASSERT(ctx->config_db);
+
+	if (ctx) {
+		db = ctx->config_db;
+		SMW_DBG_PRINTF_COND(ERROR, !db,
+				    "Configuration database not allocated\n");
+	}
+
+	return db;
+}
+
+static int config_db_mutex_lock(void)
+{
+	struct smw_ctx *ctx;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	ctx = get_smw_ctx();
+
+	SMW_DBG_ASSERT(ctx);
+
+	if (!ctx)
+		return SMW_STATUS_INVALID_LIBRARY_CONTEXT;
+
+	if (smw_utils_mutex_lock(ctx->config_mutex)) {
+		SMW_DBG_PRINTF(ERROR, "Lock the configuration mutex failed\n");
+		return SMW_STATUS_MUTEX_LOCK_FAILURE;
+	}
+
+	return SMW_STATUS_OK;
+}
+
+static int config_db_mutex_unlock(void)
+{
+	struct smw_ctx *ctx;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	ctx = get_smw_ctx();
+
+	SMW_DBG_ASSERT(ctx);
+
+	if (!ctx)
+		return SMW_STATUS_INVALID_LIBRARY_CONTEXT;
+
+	if (smw_utils_mutex_unlock(ctx->config_mutex)) {
+		SMW_DBG_PRINTF(ERROR,
+			       "Unlock the configuration mutex failed\n");
+		return SMW_STATUS_MUTEX_UNLOCK_FAILURE;
+	}
+
+	return SMW_STATUS_OK;
+}
 
 void init_key_params(struct op_key *key)
 {
@@ -86,33 +143,57 @@ static void init_psa_config(struct smw_config_psa_config *psa)
 
 void init_database(bool reset)
 {
+	struct database *database = NULL;
 	unsigned int i;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	init_psa_config(&database.psa);
+	database = get_database();
+
+	if (!database)
+		return;
+
+	init_psa_config(&database->psa);
 
 	for (i = 0; i < SUBSYSTEM_ID_NB; i++)
-		init_subsystem(&database.subsystem[i]);
+		init_subsystem(&database->subsystem[i]);
 
 	for (i = 0; i < OPERATION_ID_NB; i++)
-		init_operation(&database.operation[i], reset);
+		init_operation(&database->operation[i], reset);
 }
 
 void set_psa_config(struct smw_config_psa_config *config)
 {
+	struct database *database = NULL;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	database = get_database();
+
+	if (!database)
+		return;
 
 	SUBSYSTEM_ID_ASSERT(config->subsystem_id);
 
-	database.psa = *config;
+	database->psa = *config;
 }
 
 void smw_config_get_psa_config(struct smw_config_psa_config *config)
 {
+	struct database *database = NULL;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	*config = database.psa;
+	database = get_database();
+
+	if (!database) {
+		*config = (struct smw_config_psa_config){
+			.subsystem_id = SUBSYSTEM_ID_INVALID, .alt = false
+		};
+		return;
+	}
+
+	*config = database->psa;
 }
 
 void set_bit(unsigned long *bitmap, unsigned int size, unsigned int offset)
@@ -134,62 +215,93 @@ static bool get_bit(unsigned long bitmap, unsigned int size,
 
 void set_subsystem_configured(enum subsystem_id id)
 {
+	struct database *database = NULL;
 	unsigned int index = id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	database = get_database();
+
+	if (!database)
+		return;
+
 	SUBSYSTEM_ID_ASSERT(id);
 
-	database.subsystem[index].configured = true;
+	database->subsystem[index].configured = true;
 }
 
 bool is_subsystem_configured(enum subsystem_id id)
 {
+	struct database *database = NULL;
 	unsigned int index = id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	database = get_database();
+
+	if (!database)
+		return false;
+
 	SUBSYSTEM_ID_ASSERT(id);
 
-	return database.subsystem[index].configured;
+	return database->subsystem[index].configured;
 }
 
 static void set_subsystem_state(enum subsystem_id id,
 				enum subsystem_state state)
 {
+	struct database *database = NULL;
 	unsigned int index = id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SUBSYSTEM_ID_ASSERT(id);
-	SMW_DBG_ASSERT(state != database.subsystem[index].state);
+	database = get_database();
 
-	database.subsystem[index].state = state;
+	if (!database)
+		return;
+
+	SUBSYSTEM_ID_ASSERT(id);
+	SMW_DBG_ASSERT(state != database->subsystem[index].state);
+
+	database->subsystem[index].state = state;
 }
 
 enum subsystem_state get_subsystem_state(enum subsystem_id id)
 {
+	struct database *database = NULL;
 	unsigned int index = id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	database = get_database();
+
+	if (!database)
+		return SUBSYSTEM_STATE_UNLOADED;
+
 	SUBSYSTEM_ID_ASSERT(id);
 
-	return database.subsystem[index].state;
+	return database->subsystem[index].state;
 }
 
 int set_subsystem_load_method(enum subsystem_id id,
 			      enum load_method_id load_method_id)
 {
 	int status = SMW_STATUS_OK;
+
+	struct database *database = NULL;
 	unsigned int index = id;
 	struct subsystem *subsystem;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	database = get_database();
+
+	if (!database)
+		return SMW_STATUS_INVALID_CONFIG_DATABASE;
+
 	SUBSYSTEM_ID_ASSERT(id);
 
-	subsystem = &database.subsystem[index];
+	subsystem = &database->subsystem[index];
 
 	if (load_method_id != LOAD_METHOD_ID_INVALID) {
 		if (subsystem->load_method_id == LOAD_METHOD_ID_INVALID)
@@ -207,13 +319,19 @@ int set_subsystem_load_method(enum subsystem_id id,
 static enum load_method_id get_subsystem_load_method_id(enum subsystem_id id)
 {
 	enum load_method_id load_method_id;
+	struct database *database = NULL;
 	unsigned int index = id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	database = get_database();
+
+	if (!database)
+		return LOAD_METHOD_ID_INVALID;
+
 	SUBSYSTEM_ID_ASSERT(id);
 
-	load_method_id = database.subsystem[index].load_method_id;
+	load_method_id = database->subsystem[index].load_method_id;
 	if (load_method_id == LOAD_METHOD_ID_INVALID)
 		load_method_id = LOAD_METHOD_ID_DEFAULT;
 
@@ -222,18 +340,22 @@ static enum load_method_id get_subsystem_load_method_id(enum subsystem_id id)
 
 void smw_config_notify_subsystem_failure(enum subsystem_id id)
 {
+	int status_mutex;
+
 	unsigned int index = id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SUBSYSTEM_ID_ASSERT(id);
 
-	smw_utils_mutex_lock(ctx.mutex);
+	status_mutex = config_db_mutex_lock();
+	if (status_mutex != SMW_STATUS_OK)
+		return;
 
 	if (get_subsystem_state(id) != SUBSYSTEM_STATE_UNLOADED)
 		set_subsystem_state(index, SUBSYSTEM_STATE_UNLOADED);
 
-	smw_utils_mutex_unlock(ctx.mutex);
+	(void)config_db_mutex_unlock();
 }
 
 int store_operation_params(enum operation_id operation_id, void *params,
@@ -242,16 +364,22 @@ int store_operation_params(enum operation_id operation_id, void *params,
 {
 	int status = SMW_STATUS_OK;
 
+	struct database *database = NULL;
 	unsigned int index = operation_id;
 	struct smw_utils_list *list;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	database = get_database();
+
+	if (!database)
+		return SMW_STATUS_INVALID_CONFIG_DATABASE;
+
 	SUBSYSTEM_ID_ASSERT(subsystem_id);
 	OPERATION_ID_ASSERT(operation_id);
 	SMW_DBG_ASSERT(func);
 
-	list = &database.operation[index].subsystems_list;
+	list = &database->operation[index].subsystems_list;
 	if (!smw_utils_list_append_data(list, params, subsystem_id,
 					func->print))
 		status = SMW_STATUS_ALLOC_FAILURE;
@@ -346,8 +474,10 @@ void merge_key_params(struct op_key *key_caps, struct op_key *key_params)
 int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 				enum subsystem_id *subsystem_id)
 {
-	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	int status = SMW_STATUS_OK;
+	int status_mutex;
 
+	struct database *database = NULL;
 	struct operation_func *operation_func;
 	int (*check_subsystem_caps)(void *args, void *params);
 	unsigned int index = operation_id;
@@ -358,6 +488,11 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	database = get_database();
+
+	if (!database)
+		return SMW_STATUS_INVALID_CONFIG_DATABASE;
+
 	SMW_DBG_ASSERT(subsystem_id);
 
 	operation_func = get_operation_func(operation_id);
@@ -366,12 +501,16 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 	check_subsystem_caps = operation_func->check_subsystem_caps;
 	SMW_DBG_ASSERT(check_subsystem_caps);
 
-	list = &database.operation[index].subsystems_list;
+	list = &database->operation[index].subsystems_list;
 
 	if (*subsystem_id != SUBSYSTEM_ID_INVALID)
 		ref = subsystem_id;
 
-	smw_utils_mutex_lock(ctx.mutex);
+	status_mutex = config_db_mutex_lock();
+	if (status_mutex != SMW_STATUS_OK)
+		goto end;
+
+	status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	node = smw_utils_list_find_first(list, ref);
 	while (node) {
@@ -386,7 +525,11 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 		node = smw_utils_list_find_next(node, ref);
 	}
 
-	smw_utils_mutex_unlock(ctx.mutex);
+end:
+	if (status_mutex == SMW_STATUS_OK)
+		status_mutex = config_db_mutex_unlock();
+	if (status == SMW_STATUS_OK)
+		status = status_mutex;
 
 	return status;
 }
@@ -394,8 +537,10 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 int get_operation_params(enum operation_id operation_id,
 			 enum subsystem_id subsystem_id, void *params)
 {
-	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	int status = SMW_STATUS_OK;
+	int status_mutex;
 
+	struct database *database = NULL;
 	struct operation_func *operation_func;
 	unsigned int index = operation_id;
 
@@ -405,6 +550,11 @@ int get_operation_params(enum operation_id operation_id,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	database = get_database();
+
+	if (!database)
+		return SMW_STATUS_INVALID_CONFIG_DATABASE;
+
 	SMW_DBG_ASSERT(params);
 	OPERATION_ID_ASSERT(operation_id);
 
@@ -413,12 +563,16 @@ int get_operation_params(enum operation_id operation_id,
 
 	operation_func = get_operation_func(operation_id);
 
-	list = &database.operation[index].subsystems_list;
+	list = &database->operation[index].subsystems_list;
 
 	if (subsystem_id != SUBSYSTEM_ID_INVALID)
 		key = &subsystem_id;
 
-	smw_utils_mutex_lock(ctx.mutex);
+	status_mutex = config_db_mutex_lock();
+	if (status_mutex != SMW_STATUS_OK)
+		goto end;
+
+	status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	node = smw_utils_list_find_first(list, key);
 	if (node)
@@ -430,7 +584,11 @@ int get_operation_params(enum operation_id operation_id,
 		node = smw_utils_list_find_next(node, key);
 	}
 
-	smw_utils_mutex_unlock(ctx.mutex);
+end:
+	if (status_mutex == SMW_STATUS_OK)
+		status_mutex = config_db_mutex_unlock();
+	if (status == SMW_STATUS_OK)
+		status = status_mutex;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -541,6 +699,7 @@ void unload_subsystems(void)
 int smw_config_load_subsystem(enum subsystem_id id)
 {
 	int status = SMW_STATUS_OK;
+	int status_mutex;
 
 	enum subsystem_state state;
 	enum load_method_id load_method_id;
@@ -550,7 +709,9 @@ int smw_config_load_subsystem(enum subsystem_id id)
 
 	SUBSYSTEM_ID_ASSERT(id);
 
-	smw_utils_mutex_lock(ctx.mutex);
+	status_mutex = config_db_mutex_lock();
+	if (status_mutex != SMW_STATUS_OK)
+		goto end;
 
 	state = get_subsystem_state(id);
 	load_method_id = get_subsystem_load_method_id(id);
@@ -586,11 +747,13 @@ int smw_config_load_subsystem(enum subsystem_id id)
 			       state);
 		SMW_DBG_ASSERT(0);
 		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
-		goto end;
 	}
 
 end:
-	smw_utils_mutex_unlock(ctx.mutex);
+	if (status_mutex == SMW_STATUS_OK)
+		status_mutex = config_db_mutex_unlock();
+	if (status == SMW_STATUS_OK)
+		status = status_mutex;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -599,6 +762,7 @@ end:
 int smw_config_unload_subsystem(enum subsystem_id id)
 {
 	int status = SMW_STATUS_OK;
+	int status_mutex;
 
 	enum subsystem_state state;
 	enum load_method_id load_method_id;
@@ -608,7 +772,9 @@ int smw_config_unload_subsystem(enum subsystem_id id)
 
 	SUBSYSTEM_ID_ASSERT(id);
 
-	smw_utils_mutex_lock(ctx.mutex);
+	status_mutex = config_db_mutex_lock();
+	if (status_mutex != SMW_STATUS_OK)
+		goto end;
 
 	state = get_subsystem_state(id);
 	load_method_id = get_subsystem_load_method_id(id);
@@ -646,11 +812,13 @@ int smw_config_unload_subsystem(enum subsystem_id id)
 			       state);
 		SMW_DBG_ASSERT(0);
 		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
-		goto end;
 	}
 
 end:
-	smw_utils_mutex_unlock(ctx.mutex);
+	if (status_mutex == SMW_STATUS_OK)
+		status_mutex = config_db_mutex_unlock();
+	if (status == SMW_STATUS_OK)
+		status = status_mutex;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

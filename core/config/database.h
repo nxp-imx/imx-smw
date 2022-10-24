@@ -3,6 +3,11 @@
  * Copyright 2020-2022 NXP
  */
 
+#ifndef __DATABASE_H__
+#define __DATABASE_H__
+
+#include "list.h"
+
 #define LOAD_METHOD_ID_DEFAULT LOAD_METHOD_ID_AT_FIRST_CALL_LOAD
 
 struct subsystem {
@@ -21,4 +26,12 @@ struct database {
 	struct operation operation[OPERATION_ID_NB];
 };
 
-extern struct database database;
+/**
+ * get_database() - Get the Configuration database
+ *
+ * Return:
+ * Pointer to the Configuration database
+ */
+struct database *get_database(void);
+
+#endif /* __DATABASE_H__ */

@@ -9,6 +9,8 @@
 #include "smw_status.h"
 
 #include "compiler.h"
+#include "global.h"
+#include "debug.h"
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
@@ -19,6 +21,8 @@ __export enum smw_status_code
 smw_config_subsystem_present(smw_subsystem_t subsystem)
 {
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!subsystem)
 		return SMW_STATUS_INVALID_PARAM;
@@ -32,12 +36,16 @@ smw_config_subsystem_loaded(smw_subsystem_t subsystem)
 	int status;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
 
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
 	if (!subsystem)
 		return SMW_STATUS_INVALID_PARAM;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);
 	if (status == SMW_STATUS_OK) {
-		if (get_subsystem_state(id) == SUBSYSTEM_STATE_LOADED)
+		if (!get_smw_ctx())
+			status = SMW_STATUS_INVALID_LIBRARY_CONTEXT;
+		else if (get_subsystem_state(id) == SUBSYSTEM_STATE_LOADED)
 			status = SMW_STATUS_SUBSYSTEM_LOADED;
 		else
 			status = SMW_STATUS_SUBSYSTEM_NOT_LOADED;
@@ -53,6 +61,8 @@ __export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
 	enum smw_config_hash_algo_id algo_id;
 	struct hash_params params = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!algo)
 		return SMW_STATUS_INVALID_PARAM;
@@ -84,6 +94,8 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 	enum smw_config_key_type_id key_type_id;
 	struct key_operation_params params = { 0 };
 	struct range *key_size_range;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!info || !info->key_type_name)
 		return SMW_STATUS_INVALID_PARAM;
@@ -125,6 +137,8 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	enum smw_config_hash_algo_id algo_id;
 	enum smw_config_sign_type_id sign_type_id;
 	struct sign_verify_params params = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!info || !info->key_type_name)
 		return SMW_STATUS_INVALID_PARAM;
@@ -193,6 +207,8 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	enum smw_config_cipher_mode_id mode_id;
 	enum operation_id op_id;
 	struct cipher_params params = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!info || !info->key_type_name || !info->mode || !info->op_type)
 		return SMW_STATUS_INVALID_PARAM;

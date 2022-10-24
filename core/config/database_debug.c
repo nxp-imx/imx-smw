@@ -8,7 +8,6 @@
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
-#include "list.h"
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
@@ -32,7 +31,8 @@ void print_key_params(struct op_key *key)
 
 void print_database(void)
 {
-	struct smw_config_psa_config *psa = &database.psa;
+	struct database *database = get_database();
+	struct smw_config_psa_config *psa;
 	unsigned int i;
 	struct subsystem *subsystem;
 	bool configured;
@@ -40,12 +40,17 @@ void print_database(void)
 	enum load_method_id load_method_id;
 	struct operation *operation;
 
+	if (!database)
+		return;
+
+	psa = &database->psa;
+
 	SMW_DBG_PRINTF(INFO, "PSA default subsystem: %d, alternative: %s\n",
 		       psa->subsystem_id, psa->alt ? "ENABLED" : "DISABLED");
 
 	SMW_DBG_PRINTF(INFO, "Secure subsystems:\n");
 	for (i = 0; i < SUBSYSTEM_ID_NB; i++) {
-		subsystem = &database.subsystem[i];
+		subsystem = &database->subsystem[i];
 		configured = subsystem->configured;
 		state = subsystem->state;
 		load_method_id = subsystem->load_method_id;
@@ -66,7 +71,7 @@ void print_database(void)
 	for (i = 0; i < OPERATION_ID_NB; i++) {
 		SMW_DBG_PRINTF(INFO, "%s%s\n", "    operation: ",
 			       smw_config_get_operation_name(i));
-		operation = &database.operation[i];
+		operation = &database->operation[i];
 		smw_utils_list_print(&operation->subsystems_list);
 	}
 }

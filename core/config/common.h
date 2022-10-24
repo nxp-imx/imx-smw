@@ -3,6 +3,9 @@
  * Copyright 2020-2022 NXP
  */
 
+#ifndef __COMMON_H__
+#define __COMMON_H__
+
 #include "config.h"
 #include "keymgr.h"
 
@@ -30,11 +33,6 @@ enum subsystem_state { SUBSYSTEM_STATE_UNLOADED, SUBSYSTEM_STATE_LOADED };
 	{                                                                      \
 		return &operation##_func;                                      \
 	}
-
-struct ctx {
-	void *mutex;
-	bool config_loaded;
-};
 
 enum load_method_id {
 	/* Load / unload methods */
@@ -83,8 +81,6 @@ struct cipher_params {
 	unsigned long op_bitmap;
 	struct op_key key;
 };
-
-extern struct ctx ctx;
 
 /**
  * get_tag_prefix() - Get a tag prefix.
@@ -526,3 +522,5 @@ void unload_subsystems(void);
  * * false: - ENABLE_PSA_DEFAULT_ALT is not enabled.
  */
 bool is_psa_default_alt_enabled(void);
+
+#endif /* __COMMON_H__ */

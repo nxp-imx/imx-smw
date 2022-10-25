@@ -377,7 +377,7 @@ static int set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
 	uint8_t length = 0;
 	uint8_t min_length = 0;
 	unsigned char *p;
-	unsigned char *kdf_tlv;
+	unsigned char *kdf_tlv = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

@@ -197,7 +197,7 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 		goto end;
 	TEST_OUT("Opened Session #%lu\n", *sess);
 
-	TEST_OUT("Create subsytems configuration Data objects\n");
+	TEST_OUT("Create subsystems configuration Data objects\n");
 	ret = create_tee_info(sess, pfunc);
 	if (CHECK_CK_RV(CKR_OK, "create_tee_info"))
 		goto end;

@@ -17,7 +17,7 @@
  * given @identifier is stored in the key entry.
  * Objective of the function is to ensure that key can be
  * created in the database before creating/importing key in
- * the subsytem.
+ * the subsystem.
  *
  * Return:
  * SMW_STATUS_OK                - Success

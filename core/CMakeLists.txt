@@ -28,13 +28,13 @@ set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/public
 # Initialize Cache variables use to build source files
 #
 define_property(GLOBAL PROPERTY PROP_SUBSYSTEM_ID
-    BRIEF_DOCS "Subsytem" FULL_DOCS "Subsystem IDs")
+    BRIEF_DOCS "Subsystem" FULL_DOCS "Subsystem IDs")
 define_property(GLOBAL PROPERTY PROP_SUBSYSTEM_EXPORT
-    BRIEF_DOCS "Subsytem" FULL_DOCS "Subsystem exports")
+    BRIEF_DOCS "Subsystem" FULL_DOCS "Subsystem exports")
 define_property(GLOBAL PROPERTY PROP_SUBSYSTEM_NAME
     BRIEF_DOCS "Subsystem" FULL_DOCS "Subsystem names")
 define_property(GLOBAL PROPERTY PROP_SUBSYSTEM_FUNC
-    BRIEF_DOCS "Subsystem" FULL_DOCS "Subsytem functions")
+    BRIEF_DOCS "Subsystem" FULL_DOCS "Subsystem functions")
 define_property(GLOBAL PROPERTY PROP_OPERATION_ID
     BRIEF_DOCS "Operation" FULL_DOCS "Operation IDs")
 define_property(GLOBAL PROPERTY PROP_OPERATION_EXPORT

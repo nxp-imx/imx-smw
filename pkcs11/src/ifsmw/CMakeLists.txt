@@ -20,7 +20,7 @@ message(STATUS "    SMW devices: ${list_ifsmw}")
 message(STATUS "    Nb SMW devices: ${NB_IFSWM_DEV}")
 
 #
-# For each defined devices (SMW's Secure Subsytem name)
+# For each defined devices (SMW's Secure Subsystem name)
 # Build:
 #    - list of device information
 #    - list of cryptoki mechanism information function

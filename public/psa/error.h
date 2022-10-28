@@ -258,14 +258,6 @@
  *	It is recommended to only use this error code to report a permanent storage corruption.
  *	However application writers must keep in mind that transient errors while reading the
  *	storage might be reported using this error code.
- * * PSA_ERROR_INVALID_SIGNATURE:
- *	A PSA storage specific error code.
- *
- *	The signature on the data is invalid.
- * * PSA_ERROR_DATA_CORRUPT:
- *	A PSA storage specific error code.
- *
- *	The data on the underlying storage is corrupt.
  */
 typedef int32_t psa_status_t;
 
@@ -291,7 +283,5 @@ typedef int32_t psa_status_t;
 #define PSA_ERROR_NOT_PERMITTED		((psa_status_t)-133)
 #define PSA_ERROR_NOT_SUPPORTED		((psa_status_t)-134)
 #define PSA_ERROR_STORAGE_FAILURE	((psa_status_t)-146)
-#define PSA_ERROR_INVALID_SIGNATURE	((psa_status_t)-149)
-#define PSA_ERROR_DATA_CORRUPT		((psa_status_t)-152)
 
 #endif /* __PSA_STATUS_H__ */

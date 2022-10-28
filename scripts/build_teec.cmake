@@ -13,6 +13,13 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
 
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
 include(GNUInstallDirs)
+
+if(NOT DEFINED LIBUUID_CONFIG_ROOT)
+    get_filename_component(LIBUUID_CONFIG_PATH ${TOOLCHAIN_BIN_PATH} DIRECTORY)
+else()
+    set(LIBUUID_CONFIG_PATH ${LIBUUID_CONFIG_ROOT})
+endif()
+
 find_package(Teec)
 
 if(TEEC_FOUND)
@@ -39,6 +46,21 @@ if(NOT DEFINED TEEC_ROOT OR NOT DEFINED TEEC_SRC_PATH)
     return()
 endif()
 
+find_file(LIBUUID_CONFIG NAMES uuid.pc PATHS ${LIBUUID_CONFIG_PATH}
+          PATH_SUFFIXES lib/pkgconfig pkgconfig)
+
+if(LIBUUID_CONFIG)
+    get_filename_component(LIBUUID_CONFIG_DIR ${LIBUUID_CONFIG} DIRECTORY)
+else()
+    if(NOT DEFINED LIBUUID_CONFIG_ROOT)
+        message(WARNING "-DLIBUUID_CONFIG_ROOT=<OPTEE Client library uuid"
+                         " configuration path> missing")
+    else()
+        message(WARNING "Configuration of libuuid (uuid.pc) not found in"
+                        " ${LIBUUID_CONFIG_ROOT}")
+    endif()
+endif()
+
 if(NOT IS_ABSOLUTE ${TEEC_ROOT})
     set(TEEC_ROOT "${CMAKE_SOURCE_DIR}/${TEEC_ROOT}")
 endif()
@@ -52,6 +74,8 @@ find_file(TEEC_MAKEFILE Makefile ${TEEC_SRC_PATH})
 if(TEEC_MAKEFILE)
     set(ENV{CC} ${CMAKE_C_COMPILER})
     set(ENV{AR} ${CMAKE_AR})
+    set(ENV{PKG_CONFIG_PATH} "${LIBUUID_CONFIG_DIR}:$ENV{PKG_CONFIG_PATH}")
+
     set(OUTPUT_DIR ${BUILD_DIR}/optee-client)
 
     message(STATUS "Building OPTEE Client")

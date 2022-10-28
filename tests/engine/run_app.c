@@ -105,7 +105,7 @@ static int setup_tee_info(json_object *test_def)
  * the application configuration and calls the SMW Library HSM or ELE
  * Information setup API.
  *
- * SE info is defined with a JSON-C object "hsm_info" for the HSM subsytem
+ * SE info is defined with a JSON-C object "hsm_info" for the HSM subsystem
  * or "ele_info" for the ELE subsystem.
  *
  * Return:

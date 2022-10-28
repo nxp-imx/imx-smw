@@ -16,9 +16,9 @@
 
 /**
  * smw_tlv_read_element() - Read one Type-Length-Value encoded element.
- * @attribute: [in/out] pointer to the element to read and pointing to the next
+ * @element: [in/out] pointer to the element to read and pointing to the next
  *                      element when function returns.
- * @end: Pointer to @attribute end address.
+ * @end: Pointer to @element end address.
  * @type: Pointer to type buffer.
  * @value: Pointer to value buffer.
  * @value_size: Pointer to value buffer size (in bytes).
@@ -33,7 +33,7 @@
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Failed to read buffer.
  */
-int smw_tlv_read_element(const unsigned char **attribute,
+int smw_tlv_read_element(const unsigned char **element,
 			 const unsigned char *end, unsigned char **type,
 			 unsigned char **value, unsigned int *value_size);
 

@@ -10,17 +10,17 @@
 #include "utils.h"
 #include "tlv.h"
 
-int smw_tlv_read_element(const unsigned char **attribute,
+int smw_tlv_read_element(const unsigned char **element,
 			 const unsigned char *end, unsigned char **type,
 			 unsigned char **value, unsigned int *value_size)
 {
 	int status = SMW_STATUS_OK;
 	unsigned int j = 1;
-	unsigned char *p = (unsigned char *)*attribute;
+	unsigned char *p = (unsigned char *)*element;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_ASSERT(attribute && end && type && value && value_size);
+	SMW_DBG_ASSERT(element && end && type && value && value_size);
 
 	/* Parse type */
 	while ((p < end) && (*p != '\0'))
@@ -32,12 +32,11 @@ int smw_tlv_read_element(const unsigned char **attribute,
 		goto exit;
 	}
 
-	*type = (unsigned char *)*attribute;
+	*type = (unsigned char *)*element;
 	p++;
 
 	if ((end - p) < SMW_TLV_LENGTH_FIELD_SIZE) {
-		SMW_DBG_PRINTF(ERROR,
-			       "%s (%d): attributes_length is too small\n",
+		SMW_DBG_PRINTF(ERROR, "%s (%d): Buffer is too small\n",
 			       __func__, __LINE__);
 		status = SMW_STATUS_INVALID_PARAM;
 		goto exit;
@@ -51,15 +50,14 @@ int smw_tlv_read_element(const unsigned char **attribute,
 	}
 
 	if (!*value_size) {
-		SMW_DBG_PRINTF(DEBUG, "%s: Attribute is boolean\n", __func__);
+		SMW_DBG_PRINTF(DEBUG, "%s: Element length is 0\n", __func__);
 		*value = NULL;
-		*attribute = p;
+		*element = p;
 		goto exit;
 	}
 
 	if ((unsigned int)(end - p) < *value_size) {
-		SMW_DBG_PRINTF(ERROR,
-			       "%s (%d): attributes_length is too small\n",
+		SMW_DBG_PRINTF(ERROR, "%s (%d): Buffer is too small\n",
 			       __func__, __LINE__);
 		status = SMW_STATUS_INVALID_PARAM;
 		goto exit;
@@ -68,8 +66,8 @@ int smw_tlv_read_element(const unsigned char **attribute,
 	/* Parse value */
 	*value = p;
 
-	/* Update attribute pointer to next element to handle */
-	*attribute = p + *value_size;
+	/* Update element pointer to next element to handle */
+	*element = p + *value_size;
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

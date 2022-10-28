@@ -65,9 +65,10 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_ELE);
 
-	status = smw_utils_get_subsystem_info(subsystem_name, &info);
-	if (status != SMW_STATUS_OK)
+	if (smw_utils_get_subsystem_info(subsystem_name, &info)) {
+		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 		goto end;
+	}
 
 	open_svc_key_store_args.key_store_identifier = info.storage_id;
 	open_svc_key_store_args.authentication_nonce = info.storage_nonce;

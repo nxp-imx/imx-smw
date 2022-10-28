@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 enum smw_op_step {
@@ -16,7 +16,7 @@ enum smw_op_step {
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @subsystem_id: Secure Subsystem ID.
  *
- * This function calls the API of a Secure Subsytem to perform
+ * This function calls the API of a Secure Subsystem to perform
  * the required Security Operation.
  * The Secure Subsystem is either an argument or the default Secure Subsystem
  * configured for this Security Operation.
@@ -33,7 +33,7 @@ int smw_utils_execute_operation(enum operation_id operation_id, void *args,
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @subsystem_id: Secure Subsystem ID.
  *
- * This function calls the API of a Secure Subsytem to perform
+ * This function calls the API of a Secure Subsystem to perform
  * the required initialization Security Operation.
  * The Secure Subsystem is either an argument or the default Secure Subsystem
  * configured for this Security Operation.
@@ -50,7 +50,7 @@ int smw_utils_execute_init(enum operation_id operation_id, void *args,
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @subsystem_id: Secure Subsystem ID.
  *
- * This function calls the API of a Secure Subsytem to perform
+ * This function calls the API of a Secure Subsystem to perform
  * the required update Security Operation.
  * The Secure Subsystem is either an argument or the default Secure Subsystem
  * configured for this Security Operation.
@@ -67,7 +67,7 @@ int smw_utils_execute_update(enum operation_id operation_id, void *args,
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @subsystem_id: Secure Subsystem ID.
  *
- * This function calls the API of a Secure Subsytem to perform
+ * This function calls the API of a Secure Subsystem to perform
  * the required final Security Operation.
  * The Secure Subsystem is either an argument or the default Secure Subsystem
  * configured for this Security Operation.

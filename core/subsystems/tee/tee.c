@@ -248,9 +248,10 @@ static int load(void)
 
 	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_TEE);
 
-	status = smw_utils_get_subsystem_info(subsystem_name, &info);
-	if (status != SMW_STATUS_OK)
+	if (smw_utils_get_subsystem_info(subsystem_name, &info)) {
+		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 		goto exit;
+	}
 
 	status = ta_uuid_string_to_uuid(info.ta_uuid, &ta_uuid);
 	if (status != SMW_STATUS_OK)

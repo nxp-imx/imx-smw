@@ -16,7 +16,7 @@ function usage()
     this script and dependencies built as well.
 
     $(basename "$0") <dir>
-      <dir> : Mandatory putput build directory
+      <dir> : Mandatory build directory
 
 EOF
     exit 1

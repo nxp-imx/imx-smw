@@ -91,7 +91,7 @@ struct test_data {
 
 /**
  * struct subtest_data - Subtest data object
- * @param: JSON-C Subtest parameters object
+ * @params: JSON-C Subtest parameters object
  * @app: Application data.
  * @name: Name of the subtest running
  * @status: Subtest status (reference to subtests_stat.status_array entry)

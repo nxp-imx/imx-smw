@@ -64,7 +64,7 @@ static int store_salt_len(void *attributes, unsigned char *value,
 static int store_tls_mac_finish_label(void *attributes, unsigned char *value,
 				      unsigned int length);
 
-static struct attribute_tlv sign_verify_attributes_tlv_array[] = {
+static const struct attribute_tlv sign_verify_attributes_tlv_array[] = {
 	{ .type = (const unsigned char *)SIGNATURE_TYPE_STR,
 	  .verify = smw_tlv_verify_enumeration,
 	  .store = store_signature_type },

@@ -20,7 +20,7 @@
 		.block_size = _block_size                                      \
 	}
 
-static struct hash_algo_info {
+static const struct hash_algo_info {
 	psa_algorithm_t psa_alg_id;
 	smw_hash_algo_t smw_alg_name;
 	size_t length;
@@ -33,7 +33,7 @@ static struct hash_algo_info {
 		       HASH_ALGO(PSA_ALG_SHA_512, "SHA512", 64, 128),
 		       HASH_ALGO(PSA_ALG_SM3, "SM3", 32, 64) };
 
-static struct hash_algo_info *get_hash_algo_info(psa_algorithm_t alg)
+static const struct hash_algo_info *get_hash_algo_info(psa_algorithm_t alg)
 {
 	unsigned int i;
 	unsigned int size = ARRAY_SIZE(hash_algo_info);
@@ -50,7 +50,7 @@ static struct hash_algo_info *get_hash_algo_info(psa_algorithm_t alg)
 
 static smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
 {
-	struct hash_algo_info *info = get_hash_algo_info(alg);
+	const struct hash_algo_info *info = get_hash_algo_info(alg);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -62,7 +62,7 @@ static smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
 
 __export size_t psa_hash_block_length(psa_algorithm_t alg)
 {
-	struct hash_algo_info *info = get_hash_algo_info(alg);
+	const struct hash_algo_info *info = get_hash_algo_info(alg);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -74,7 +74,7 @@ __export size_t psa_hash_block_length(psa_algorithm_t alg)
 
 __export size_t psa_hash_length(psa_algorithm_t alg)
 {
-	struct hash_algo_info *info = get_hash_algo_info(alg);
+	const struct hash_algo_info *info = get_hash_algo_info(alg);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

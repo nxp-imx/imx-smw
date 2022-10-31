@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
-
-#include "hsm_api.h"
 
 #include "smw_status.h"
 
@@ -16,63 +14,76 @@
 
 #include "common.h"
 
-#define CIPHER_ONE_GO_ALGO_ID(_key_type, _cipher_mode)                         \
-	{                                                                      \
-		.key_type = SMW_CONFIG_KEY_TYPE_ID_##_key_type,                \
-		.cipher_mode = SMW_CONFIG_CIPHER_MODE_ID_##_cipher_mode,       \
-		.hsm_algo =                                                    \
-			HSM_CIPHER_ONE_GO_ALGO_##_key_type##_##_cipher_mode    \
+#define CIPHER_ALGO(_key_type_id, _cipher_mode_id)                                \
+	{                                                                         \
+		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,             \
+		.cipher_mode_id = SMW_CONFIG_CIPHER_MODE_ID_##_cipher_mode_id,    \
+		.hsm_algo =                                                       \
+			HSM_CIPHER_ONE_GO_ALGO_##_key_type_id##_##_cipher_mode_id \
 	}
 
 static const struct {
-	enum smw_config_key_type_id key_type;
-	enum smw_config_cipher_mode_id cipher_mode;
+	enum smw_config_key_type_id key_type_id;
+	enum smw_config_cipher_mode_id cipher_mode_id;
 	hsm_op_cipher_one_go_algo_t hsm_algo;
-} CIPHER_ONE_GO_ALGO_ID[] = { CIPHER_ONE_GO_ALGO_ID(AES, CBC),
-			      CIPHER_ONE_GO_ALGO_ID(AES, ECB) };
+} cipher_algos[] = { CIPHER_ALGO(AES, CBC), CIPHER_ALGO(AES, ECB) };
 
-static int get_cipher_one_go_algo(enum smw_config_key_type_id key_type,
-				  enum smw_config_cipher_mode_id cipher_mode,
-				  hsm_op_cipher_one_go_algo_t *hsm_algo)
+static int set_cipher_algo(enum smw_config_key_type_id key_type_id,
+			   enum smw_config_cipher_mode_id cipher_mode_id,
+			   hsm_op_cipher_one_go_algo_t *hsm_algo)
 {
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	unsigned int i;
 
-	for (i = 0; i < ARRAY_SIZE(CIPHER_ONE_GO_ALGO_ID); i++) {
-		if (key_type == CIPHER_ONE_GO_ALGO_ID[i].key_type &&
-		    cipher_mode == CIPHER_ONE_GO_ALGO_ID[i].cipher_mode) {
-			*hsm_algo = CIPHER_ONE_GO_ALGO_ID[i].hsm_algo;
-			return SMW_STATUS_OK;
+	for (i = 0; i < ARRAY_SIZE(cipher_algos); i++) {
+		if (key_type_id == cipher_algos[i].key_type_id &&
+		    cipher_mode_id == cipher_algos[i].cipher_mode_id) {
+			*hsm_algo = cipher_algos[i].hsm_algo;
+			status = SMW_STATUS_OK;
+			break;
 		}
 	}
 
-	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
-static int get_cipher_one_go_flags(enum smw_config_cipher_op_type_id smw_op,
-				   hsm_op_cipher_one_go_flags_t *hsm_op)
-{
-	switch (smw_op) {
-	case SMW_CONFIG_CIPHER_OP_ID_ENCRYPT:
-		*hsm_op = HSM_CIPHER_ONE_GO_FLAGS_ENCRYPT;
-		break;
-
-	case SMW_CONFIG_CIPHER_OP_ID_DECRYPT:
-		*hsm_op = HSM_CIPHER_ONE_GO_FLAGS_DECRYPT;
-		break;
-
-	default:
-		return SMW_STATUS_INVALID_PARAM;
+#define CIPHER_FLAG(_op_type_id)                                               \
+	{                                                                      \
+		.smw_op_type_id = SMW_CONFIG_CIPHER_OP_ID_##_op_type_id,       \
+		.hsm_flags = HSM_CIPHER_ONE_GO_FLAGS_##_op_type_id             \
 	}
 
-	return SMW_STATUS_OK;
+static const struct {
+	enum smw_config_cipher_op_type_id smw_op_type_id;
+	hsm_op_cipher_one_go_flags_t hsm_flags;
+} cipher_flags[] = { CIPHER_FLAG(ENCRYPT), CIPHER_FLAG(DECRYPT) };
+
+static int set_cipher_flags(enum smw_config_cipher_op_type_id smw_op_type_id,
+			    hsm_op_cipher_one_go_flags_t *hsm_flags)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(cipher_flags); i++) {
+		if (smw_op_type_id == cipher_flags[i].smw_op_type_id) {
+			*hsm_flags = cipher_flags[i].hsm_flags;
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 static int cipher(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	hsm_err_t err = HSM_NO_ERROR;
+
+	hsm_err_t err;
 	op_cipher_one_go_args_t op_cipher_args = { 0 };
-	enum smw_config_key_type_id key_type;
+	enum smw_config_key_type_id key_type_id;
 	struct smw_crypto_cipher_args *cipher_args = args;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -84,17 +95,16 @@ static int cipher(struct hdl *hdl, void *args)
 	}
 
 	/* Get 1st key type as reference */
-	key_type = cipher_args->keys_desc[0]->identifier.type_id;
+	key_type_id = cipher_args->keys_desc[0]->identifier.type_id;
 
 	/* Get HSM algorithm */
-	status = get_cipher_one_go_algo(key_type, cipher_args->mode_id,
-					&op_cipher_args.cipher_algo);
+	status = set_cipher_algo(key_type_id, cipher_args->mode_id,
+				 &op_cipher_args.cipher_algo);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	/* Get HSM operation */
-	status = get_cipher_one_go_flags(cipher_args->op_id,
-					 &op_cipher_args.flags);
+	status = set_cipher_flags(cipher_args->op_id, &op_cipher_args.flags);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -107,6 +117,7 @@ static int cipher(struct hdl *hdl, void *args)
 		/* Cipher output length is equal to input length */
 		smw_crypto_set_cipher_output_len(cipher_args,
 						 op_cipher_args.input_size);
+		status = SMW_STATUS_OK;
 		goto end;
 	}
 

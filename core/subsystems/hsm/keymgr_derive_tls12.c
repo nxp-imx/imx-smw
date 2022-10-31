@@ -632,6 +632,6 @@ end:
 	if (hex_key_derived)
 		SMW_UTILS_FREE(hex_key_derived);
 
-	SMW_DBG_PRINTF(DEBUG, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

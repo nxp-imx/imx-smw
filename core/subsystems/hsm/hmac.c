@@ -3,8 +3,6 @@
  * Copyright 2022 NXP
  */
 
-#include "hsm_api.h"
-
 #include "smw_status.h"
 
 #include "debug.h"
@@ -27,7 +25,7 @@
  * This sorting is required to simplify the implementation of
  * get_hmac_algo_info().
  */
-static struct hmac_algo_info {
+static const struct hmac_algo_info {
 	enum smw_config_hmac_algo_id algo_id;
 	hsm_op_mac_one_go_algo_t hsm_algo;
 	uint32_t length;
@@ -36,10 +34,10 @@ static struct hmac_algo_info {
 		       HMAC_ALGO(SHA384, SHA_384, 48),
 		       HMAC_ALGO(SHA512, SHA_512, 64) };
 
-static struct hmac_algo_info *
+static const struct hmac_algo_info *
 get_hmac_algo_info(enum smw_config_hmac_algo_id algo_id)
 {
-	struct hmac_algo_info *info = NULL;
+	const struct hmac_algo_info *info = NULL;
 
 	unsigned int i;
 	unsigned int size = ARRAY_SIZE(hmac_algo_info);
@@ -99,7 +97,7 @@ static int hmac(struct hdl *hdl, void *args)
 	op_mac_one_go_args_t op_hsm_args = { 0 };
 
 	struct smw_crypto_hmac_args *hmac_args = args;
-	struct hmac_algo_info *hmac_algo_info;
+	const struct hmac_algo_info *hmac_algo_info;
 	struct smw_keymgr_descriptor *key_descriptor;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

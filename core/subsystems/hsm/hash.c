@@ -3,8 +3,6 @@
  * Copyright 2020-2022 NXP
  */
 
-#include "hsm_api.h"
-
 #include "smw_status.h"
 
 #include "global.h"
@@ -26,7 +24,7 @@
 /* Algo IDs must be ordered from lowest to highest.
  * This sorting is required to simplify the implementation of get_hash_algo_info().
  */
-static struct hash_algo_info {
+static const struct hash_algo_info {
 	enum smw_config_hash_algo_id algo_id;
 	hsm_hash_algo_t hsm_hash_algo;
 	uint32_t length;
@@ -35,10 +33,10 @@ static struct hash_algo_info {
 		       HASH_ALGO(SHA384, SHA_384, 48),
 		       HASH_ALGO(SHA512, SHA_512, 64) };
 
-static struct hash_algo_info *
+static const struct hash_algo_info *
 get_hash_algo_info(enum smw_config_hash_algo_id algo_id)
 {
-	struct hash_algo_info *info = NULL;
+	const struct hash_algo_info *info = NULL;
 
 	unsigned int i;
 	unsigned int size = ARRAY_SIZE(hash_algo_info);
@@ -66,7 +64,7 @@ static int hash(struct hdl *hdl, void *args)
 	op_hash_one_go_args_t op_hash_one_go_args = { 0 };
 
 	struct smw_crypto_hash_args *hash_args = args;
-	struct hash_algo_info *hash_algo_info;
+	const struct hash_algo_info *hash_algo_info;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

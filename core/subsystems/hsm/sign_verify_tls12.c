@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2022 NXP
  */
-
-#include "hsm_api.h"
 
 #include "smw_status.h"
 #include "smw_crypto.h"
 
 #include "global.h"
 #include "debug.h"
+#include "utils.h"
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
@@ -19,38 +18,65 @@
 #include "common.h"
 #include "sign_verify_tls12.h"
 
-static hsm_op_tls_finish_flags_t
-get_hsm_finish_flag(enum smw_config_tls_finish_label_id label)
+#define TLS_FINISH_FLAG(_label)                                                \
+	{                                                                      \
+		.tls_finish_label_id = SMW_CONFIG_TLS_FINISH_ID_##_label,      \
+		.hsm_tls_finish_flag = HSM_OP_TLS_FINISH_FLAGS_##_label        \
+	}
+
+static const struct {
+	enum smw_config_tls_finish_label_id tls_finish_label_id;
+	hsm_op_tls_finish_flags_t hsm_tls_finish_flag;
+} tls_finish_flags[] = { TLS_FINISH_FLAG(CLIENT), TLS_FINISH_FLAG(SERVER) };
+
+static void
+set_hsm_tls_finish_flag(enum smw_config_tls_finish_label_id tls_finish_label_id,
+			hsm_op_tls_finish_flags_t *hsm_tls_finish_flag)
 {
-	switch (label) {
-	case SMW_CONFIG_TLS_FINISH_ID_CLIENT:
-		return HSM_OP_TLS_FINISH_FLAGS_CLIENT;
+	unsigned int i;
 
-	case SMW_CONFIG_TLS_FINISH_ID_SERVER:
-		return HSM_OP_TLS_FINISH_FLAGS_SERVER;
+	*hsm_tls_finish_flag = 0;
 
-	default:
-		return 0;
+	for (i = 0; i < ARRAY_SIZE(tls_finish_flags); i++) {
+		if (tls_finish_label_id ==
+		    tls_finish_flags[i].tls_finish_label_id) {
+			*hsm_tls_finish_flag =
+				tls_finish_flags[i].hsm_tls_finish_flag;
+			break;
+		}
 	}
 }
 
-static int get_hsm_finish_algo_id(hsm_op_tls_finish_algo_id_t *id,
-				  enum smw_config_hash_algo_id hash_id)
-{
-	switch (hash_id) {
-	case SMW_CONFIG_HASH_ALGO_ID_SHA256:
-		*id = HSM_OP_TLS_FINISH_HASH_ALGO_SHA256;
-		break;
-
-	case SMW_CONFIG_HASH_ALGO_ID_SHA384:
-		*id = HSM_OP_TLS_FINISH_HASH_ALGO_SHA384;
-		break;
-
-	default:
-		return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+#define TLS_FINISH_ALGO(_algo_id)                                              \
+	{                                                                      \
+		.hash_algo_id = SMW_CONFIG_HASH_ALGO_ID_##_algo_id,            \
+		.hsm_tls_finish_algo_id =                                      \
+			HSM_OP_TLS_FINISH_HASH_ALGO_##_algo_id                 \
 	}
 
-	return SMW_STATUS_OK;
+static const struct {
+	enum smw_config_hash_algo_id hash_algo_id;
+	hsm_op_tls_finish_algo_id_t hsm_tls_finish_algo_id;
+} tls_finish_algos[] = { TLS_FINISH_ALGO(SHA256), TLS_FINISH_ALGO(SHA384) };
+
+static int
+set_hsm_tls_finish_algo_id(enum smw_config_hash_algo_id hash_algo_id,
+			   hsm_op_tls_finish_algo_id_t *hsm_tls_finish_algo_id)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(tls_finish_algos); i++) {
+		if (hash_algo_id == tls_finish_algos[i].hash_algo_id) {
+			*hsm_tls_finish_algo_id =
+				tls_finish_algos[i].hsm_tls_finish_algo_id;
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 int tls_mac_finish(struct hdl *hdl, void *args)
@@ -71,8 +97,8 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 
 	SMW_DBG_ASSERT(smw_args);
 
-	status = get_hsm_finish_algo_id(&op_tls_args.hash_algorithm,
-					smw_args->algo_id);
+	status = set_hsm_tls_finish_algo_id(smw_args->algo_id,
+					    &op_tls_args.hash_algorithm);
 	if (status != SMW_STATUS_OK)
 		return status;
 
@@ -88,7 +114,8 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	op_tls_args.handshake_hash_input_size =
 		smw_sign_verify_get_msg_len(smw_args);
 	op_tls_args.verify_data_output = smw_sign_verify_get_sign_buf(smw_args);
-	op_tls_args.flags = get_hsm_finish_flag(smw_args->attributes.tls_label);
+	set_hsm_tls_finish_flag(smw_args->attributes.tls_label,
+				&op_tls_args.flags);
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_tls_finish()\n"

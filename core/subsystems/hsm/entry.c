@@ -628,11 +628,11 @@ end:
 	return status;
 }
 
-static struct subsystem_func func = { .load = load,
-				      .unload = unload,
-				      .execute = execute };
+static const struct subsystem_func func = { .load = load,
+					    .unload = unload,
+					    .execute = execute };
 
-struct subsystem_func *smw_hsm_get_func(void)
+const struct subsystem_func *smw_hsm_get_func(void)
 {
 	return &func;
 }

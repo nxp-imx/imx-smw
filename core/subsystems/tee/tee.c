@@ -441,11 +441,11 @@ TEEC_Context *get_tee_context_ptr(void)
 	return &tee_ctx.context;
 }
 
-static struct subsystem_func func = { .load = load,
-				      .unload = unload,
-				      .execute = execute };
+static const struct subsystem_func func = { .load = load,
+					    .unload = unload,
+					    .execute = execute };
 
-struct subsystem_func *smw_tee_get_func(void)
+const struct subsystem_func *smw_tee_get_func(void)
 {
 	return &func;
 }

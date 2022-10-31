@@ -32,7 +32,7 @@
  * Security size must be ordered from lowest to highest
  * for 1 given Key type ID
  */
-static struct {
+static const struct {
 	enum tee_key_type key_type_id;
 	unsigned int security_size;
 	uint32_t tee_algorithm_id;
@@ -44,7 +44,7 @@ static struct {
  * RSA algo must be ordered from lowest to highest.
  * Hash algo muste be ordered from lowest to hioghest for one given RSA algo.
  */
-static struct {
+static const struct {
 	enum tee_signature_type signature_type;
 	enum tee_algorithm_id hash_algo;
 	uint32_t tee_algorithm_id;

@@ -18,7 +18,7 @@
 	}
 
 /* Algorithm IDs must be ordered from lowest to highest. */
-static struct algorithm_info {
+static const struct algorithm_info {
 	enum tee_algorithm_id ca_id;
 	uint32_t ta_id;
 	uint32_t length;
@@ -28,7 +28,7 @@ static struct algorithm_info {
 			ALGORITHM_INFO(SM3) };
 
 static TEE_Result get_algorithm_info(enum tee_algorithm_id ca_id,
-				     struct algorithm_info **info)
+				     const struct algorithm_info **info)
 {
 	unsigned int i;
 	unsigned int size = ARRAY_SIZE(algorithm_infos);
@@ -55,7 +55,7 @@ TEE_Result ta_get_digest_length(enum tee_algorithm_id tee_algorithm_id,
 				uint32_t *digest_len)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	struct algorithm_info *info = NULL;
+	const struct algorithm_info *info = NULL;
 
 	FMSG("Executing %s", __func__);
 
@@ -98,7 +98,7 @@ TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_OperationHandle operation = TEE_HANDLE_NULL;
-	struct algorithm_info *algorithm_info = NULL;
+	const struct algorithm_info *algorithm_info = NULL;
 
 	FMSG("Executing %s", __func__);
 

@@ -19,7 +19,7 @@
 		.hsm_algo = PERMITTED_ALGO_HMAC_##_hsm_id, .length = _length   \
 	}
 
-static struct hmac_algo {
+static const struct hmac_algo {
 	enum smw_config_hmac_algo_id algo_id;
 	hsm_op_mac_one_go_algo_t hsm_algo;
 	uint32_t length;
@@ -28,9 +28,10 @@ static struct hmac_algo {
 	HMAC_ALGO(SHA384, SHA384, 48),
 };
 
-static struct hmac_algo *get_hmac_algo(enum smw_config_hmac_algo_id algo_id)
+static const struct hmac_algo *
+get_hmac_algo(enum smw_config_hmac_algo_id algo_id)
 {
-	struct hmac_algo *info = NULL;
+	const struct hmac_algo *info = NULL;
 	unsigned int i;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -53,7 +54,7 @@ static int hmac(struct hdl *hdl, void *args)
 	op_mac_one_go_args_t op_args = { 0 };
 
 	struct smw_crypto_hmac_args *hmac_args = args;
-	struct hmac_algo *hmac_algo;
+	const struct hmac_algo *hmac_algo;
 	struct smw_keymgr_descriptor *key_descriptor;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

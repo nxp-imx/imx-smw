@@ -20,7 +20,7 @@
 		.hsm_hash_algo = HSM_HASH_ALGO_##_hsm_id, .length = _length    \
 	}
 
-static struct hash_algo {
+static const struct hash_algo {
 	enum smw_config_hash_algo_id algo_id;
 	hsm_hash_algo_t hsm_hash_algo;
 	uint32_t length;
@@ -29,9 +29,10 @@ static struct hash_algo {
 		   HASH_ALGO(SHA384, SHA_384, 48),
 		   HASH_ALGO(SHA512, SHA_512, 64) };
 
-static struct hash_algo *get_hash_algo(enum smw_config_hash_algo_id algo_id)
+static const struct hash_algo *
+get_hash_algo(enum smw_config_hash_algo_id algo_id)
 {
-	struct hash_algo *hash_algo = NULL;
+	const struct hash_algo *hash_algo = NULL;
 	unsigned int i;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -54,7 +55,7 @@ static int hash(struct hdl *hdl, void *args)
 	op_hash_one_go_args_t op_args = { 0 };
 
 	struct smw_crypto_hash_args *hash_args = args;
-	struct hash_algo *hash_algo = NULL;
+	const struct hash_algo *hash_algo = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

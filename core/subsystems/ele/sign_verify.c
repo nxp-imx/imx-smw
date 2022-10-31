@@ -35,7 +35,7 @@
 static const unsigned int ecdsa_nist_key_sizes[] = { 224, 256, 384, 521, 0 };
 static const unsigned int ecdsa_r1_key_sizes[] = { 224, 256, 384, 0 };
 
-static struct signature_scheme {
+static const struct signature_scheme {
 	enum smw_config_key_type_id key_type_id;
 	enum smw_config_hash_algo_id algo_id;
 	const unsigned int *security_sizes;
@@ -62,7 +62,7 @@ static struct signature_scheme {
 };
 
 static bool check_security_size(unsigned int security_size,
-				struct signature_scheme *scheme)
+				const struct signature_scheme *scheme)
 {
 	const unsigned int *check_size = scheme->security_sizes;
 
@@ -84,7 +84,7 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	unsigned int i;
-	struct signature_scheme *scheme = signature_schemes;
+	const struct signature_scheme *scheme = signature_schemes;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

@@ -873,7 +873,7 @@
 	({                                                                     \
 		typeof(alg) _alg = (alg);                                      \
 		(PSA_ALG_IS_HASH_AND_SIGN(_alg) ?                              \
-			 PSA_ALG_SIGN_GET_HASH(_alg) == PSA_ALG_ANY_HASH :     \
+			 PSA_ALG_GET_HASH(_alg) == PSA_ALG_ANY_HASH :          \
 			 PSA_ALG_IS_MAC(_alg) ?                                \
 			 (_alg & (PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG)) !=   \
 					 0 :                                   \

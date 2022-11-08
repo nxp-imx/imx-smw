@@ -293,7 +293,7 @@ The following key policies must defined:
     - ALL_CIPHER (any cipher mode)
 
 Decrypt operation
-""""""""""""""""
+"""""""""""""""""
 The following key policies must defined if a key identifier is used:
 
   - Usage: DECRYPT

@@ -14,13 +14,9 @@
 #include "config.h"
 #include "keymgr.h"
 
+#include "asn1.h"
 #include "common.h"
 #include "util_status.h"
-
-#define ASN1_TAG_SEQUENCE	 0x30 /* (16 | 0x20) */
-#define ASN1_TAG_INTEGER	 2
-#define ASN1_LENGTH_FIELD_LENGTH 1
-#define ASN1_TAG_FIELD_LENGTH	 1
 
 #define KEY_TYPE(_smw, _psa)                                                   \
 	{                                                                      \
@@ -166,6 +162,175 @@ static const struct {
 	KEY_HASH(SHAKE256_512), KEY_HASH(SM3)
 };
 
+static bool is_ecc_key_type(smw_key_type_t type_name)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!type_name)
+		return false;
+
+	if (!SMW_UTILS_STRCMP(type_name, "NIST") ||
+	    !SMW_UTILS_STRCMP(type_name, "BRAINPOOL_R1") ||
+	    !SMW_UTILS_STRCMP(type_name, "BRAINPOOL_T1") ||
+	    !SMW_UTILS_STRCMP(type_name, "ECDH_NIST") ||
+	    !SMW_UTILS_STRCMP(type_name, "ECDH_BRAINPOOL_R1") ||
+	    !SMW_UTILS_STRCMP(type_name, "ECDH_BRAINPOOL_T1"))
+		return true;
+
+	return false;
+}
+
+static psa_status_t set_rsa_key_pair_buffer(const uint8_t *data,
+					    size_t data_length,
+					    struct smw_keypair_rsa *keypair_rsa)
+{
+	struct asn1_integer sequence[9] = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!data || !data_length || !keypair_rsa)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	/*
+	 *	RSAPrivateKey ::= SEQUENCE {
+	 *	    version             INTEGER,  -- must be 0
+	 *	    modulus             INTEGER,  -- n
+	 *	    publicExponent      INTEGER,  -- e
+	 *	    privateExponent     INTEGER,  -- d
+	 *	    prime1              INTEGER,  -- p
+	 *	    prime2              INTEGER,  -- q
+	 *	    exponent1           INTEGER,  -- d mod (p-1)
+	 *	    exponent2           INTEGER,  -- d mod (q-1)
+	 *	    coefficient         INTEGER,  -- (inverse of q) mod p
+	 *	}
+	 */
+
+	if (asn1_decode_sequence_integer(data, data_length, sequence,
+					 ARRAY_SIZE(sequence)))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	/* Check version is 0 */
+	if (sequence[0].length != 1 || !sequence[0].value || *sequence[0].value)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	keypair_rsa->modulus = sequence[1].value;
+	keypair_rsa->modulus_length = sequence[1].length;
+	keypair_rsa->public_data = sequence[2].value;
+	keypair_rsa->public_length = sequence[2].length;
+	keypair_rsa->private_data = sequence[3].value;
+	keypair_rsa->private_length = sequence[3].length;
+
+	return PSA_SUCCESS;
+}
+
+static psa_status_t
+set_rsa_public_key_buffer(const uint8_t *data, size_t data_length,
+			  struct smw_keypair_rsa *keypair_rsa)
+{
+	struct asn1_integer sequence[2] = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!data || !data_length || !keypair_rsa)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	/*
+	 *	RSAPublicKey ::= SEQUENCE {
+	 *	   modulus            INTEGER,    -- n
+	 *	   publicExponent     INTEGER  }  -- e
+	 */
+
+	if (asn1_decode_sequence_integer(data, data_length, sequence,
+					 ARRAY_SIZE(sequence)))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	keypair_rsa->modulus = sequence[0].value;
+	keypair_rsa->modulus_length = sequence[0].length;
+	keypair_rsa->public_data = sequence[1].value;
+	keypair_rsa->public_length = sequence[1].length;
+
+	return PSA_SUCCESS;
+}
+
+static psa_status_t set_rsa_key_buffer(psa_key_type_t key_type,
+				       const uint8_t *data, size_t data_length,
+				       struct smw_keypair_rsa *keypair_rsa)
+{
+	psa_status_t psa_status = PSA_ERROR_INVALID_ARGUMENT;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!data || !data_length || !keypair_rsa)
+		return psa_status;
+
+	if (!PSA_KEY_TYPE_IS_RSA(key_type))
+		return psa_status;
+
+	if (PSA_KEY_TYPE_IS_KEY_PAIR(key_type)) {
+		psa_status =
+			set_rsa_key_pair_buffer(data, data_length, keypair_rsa);
+	} else if (PSA_KEY_TYPE_IS_PUBLIC_KEY(key_type)) {
+		psa_status = set_rsa_public_key_buffer(data, data_length,
+						       keypair_rsa);
+	} else {
+		psa_status = PSA_ERROR_NOT_SUPPORTED;
+	}
+
+	return psa_status;
+}
+
+static void set_gen_private_key_buffer(const uint8_t *data, size_t data_length,
+				       struct smw_keypair_gen *keypair_gen)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	keypair_gen->private_data = (unsigned char *)data;
+	keypair_gen->private_length = data_length;
+}
+
+static void set_gen_public_key_buffer(const uint8_t *data, size_t data_length,
+				      struct smw_keypair_gen *keypair_gen)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	keypair_gen->public_data = (unsigned char *)data;
+	keypair_gen->public_length = data_length;
+}
+
+static void set_gen_key_buffer(psa_key_type_t key_type, const uint8_t *data,
+			       size_t data_length,
+			       struct smw_keypair_gen *keypair_gen)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+	if (PSA_KEY_TYPE_IS_PUBLIC_KEY(key_type))
+		set_gen_public_key_buffer(data, data_length, keypair_gen);
+	else
+		set_gen_private_key_buffer(data, data_length, keypair_gen);
+}
+
+static void set_ecc_public_key_buffer(const uint8_t *data, size_t data_length,
+				      struct smw_keypair_gen *keypair_gen)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/* Remove byte 0x04 */
+	keypair_gen->public_data = (unsigned char *)data + 1;
+	keypair_gen->public_length = data_length - 1;
+}
+
+static void set_ecc_key_buffer(psa_key_type_t key_type, const uint8_t *data,
+			       size_t data_length,
+			       struct smw_keypair_gen *keypair_gen)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY(key_type)) {
+		set_ecc_public_key_buffer(data, data_length, keypair_gen);
+	} else {
+		set_gen_private_key_buffer(data, data_length, keypair_gen);
+	}
+}
+
 static smw_key_type_t get_hmac_key_type(psa_algorithm_t psa_hash)
 {
 	unsigned int i;
@@ -189,7 +354,7 @@ static smw_key_type_t get_ecc_key_type(psa_ecc_family_t ecc_family,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (PSA_ALG_IS_ECDSA(psa_hash)) {
+	if (!psa_hash || PSA_ALG_IS_ECDSA(psa_hash)) {
 		array_size = ARRAY_SIZE(ecdsa_key_type);
 		array = ecdsa_key_type;
 	} else if (PSA_ALG_IS_ECDH(psa_hash)) {
@@ -210,7 +375,7 @@ static smw_key_type_t get_key_type(const psa_key_attributes_t *attributes)
 	unsigned int i;
 
 	psa_key_type_t psa_key_type;
-	psa_algorithm_t hash;
+	psa_algorithm_t alg;
 	psa_ecc_family_t ecc_family;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -219,24 +384,26 @@ static smw_key_type_t get_key_type(const psa_key_attributes_t *attributes)
 		return NULL;
 
 	psa_key_type = psa_get_key_type(attributes);
+	alg = psa_get_key_algorithm(attributes);
 
 	if (PSA_KEY_TYPE_IS_DH(psa_key_type))
 		psa_key_type = PSA_KEY_TYPE_DH_KEY_PAIR_BASE;
 
 	for (i = 0; i < ARRAY_SIZE(key_type); i++) {
-		if (key_type[i].psa_key_type == psa_key_type)
+		if (key_type[i].psa_key_type == psa_key_type) {
+			SMW_DBG_PRINTF(DEBUG, "Key type: %s\n",
+				       key_type[i].smw_key_type);
 			return key_type[i].smw_key_type;
+		}
 	}
 
-	if (psa_key_type == PSA_KEY_TYPE_HMAC) {
-		hash = PSA_ALG_GET_HASH(psa_get_key_algorithm(attributes));
-		return get_hmac_key_type(hash);
-	}
+	if (psa_key_type == PSA_KEY_TYPE_HMAC)
+		return get_hmac_key_type(PSA_ALG_GET_HASH(alg));
 
 	if (PSA_KEY_TYPE_IS_ECC(psa_key_type)) {
 		ecc_family = PSA_KEY_TYPE_ECC_GET_FAMILY(psa_key_type);
-		hash = PSA_ALG_GET_HASH(psa_get_key_algorithm(attributes));
-		return get_ecc_key_type(ecc_family, hash);
+
+		return get_ecc_key_type(ecc_family, alg);
 	}
 
 	return NULL;
@@ -567,6 +734,137 @@ end:
 	return status;
 }
 
+static psa_status_t
+encode_asn1_rsa_public_key(uint8_t *data, size_t data_size, size_t *data_length,
+			   struct smw_keypair_rsa *keypair_rsa)
+{
+	struct asn1_integer sequence[2] = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!data || !data_size || !data_length || !keypair_rsa)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	/* RSA KEY */
+	sequence[0].length = keypair_rsa->modulus_length;
+	sequence[0].value = keypair_rsa->modulus;
+	sequence[1].length = keypair_rsa->public_length;
+	sequence[1].value = keypair_rsa->public_data;
+
+	/*
+	 *	RSAPublicKey ::= SEQUENCE {
+	 *	   modulus            INTEGER,    -- n
+	 *	   publicExponent     INTEGER  }  -- e
+	 */
+	*data_length = asn1_encode_sequence_integer(data, data_size, sequence,
+						    ARRAY_SIZE(sequence));
+
+	return *data_length ? PSA_SUCCESS : PSA_ERROR_BUFFER_TOO_SMALL;
+}
+
+static psa_status_t export_rsa_public_key(uint8_t *data, size_t data_size,
+					  size_t *data_length,
+					  struct smw_export_key_args *args)
+{
+	psa_status_t psa_status;
+	enum smw_status_code status;
+	struct smw_keypair_rsa *keypair_rsa;
+	uint8_t *modulus = NULL;
+	uint8_t *public_data = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!data || !data_size || !data_length || !args ||
+	    !args->key_descriptor || !args->key_descriptor->buffer)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	keypair_rsa = &args->key_descriptor->buffer->rsa;
+
+	modulus = SMW_UTILS_MALLOC(keypair_rsa->modulus_length);
+	if (!modulus)
+		return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+	public_data = SMW_UTILS_MALLOC(keypair_rsa->public_length);
+	if (!public_data) {
+		psa_status = PSA_ERROR_INSUFFICIENT_MEMORY;
+		goto end;
+	}
+
+	keypair_rsa->modulus = modulus;
+	keypair_rsa->public_data = public_data;
+
+	status = smw_export_key(args);
+	if (status != SMW_STATUS_OK) {
+		psa_status = util_smw_to_psa_status(status);
+		goto end;
+	}
+
+	psa_status = encode_asn1_rsa_public_key(data, data_size, data_length,
+						keypair_rsa);
+
+end:
+	if (modulus)
+		SMW_UTILS_FREE(modulus);
+
+	if (public_data)
+		SMW_UTILS_FREE(public_data);
+
+	return psa_status;
+}
+
+static psa_status_t export_ecc_public_key(uint8_t *data, size_t data_size,
+					  size_t *data_length,
+					  struct smw_export_key_args *args)
+{
+	enum smw_status_code status;
+	struct smw_keypair_gen *keypair_gen;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!data || !data_size || !data_length || !args ||
+	    !args->key_descriptor || !args->key_descriptor->buffer)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	keypair_gen = &args->key_descriptor->buffer->gen;
+
+	*data_length = keypair_gen->public_length + 1;
+	keypair_gen->public_data = data + 1;
+	*data = 0x04;
+
+	if (data_size < *data_length)
+		return PSA_ERROR_BUFFER_TOO_SMALL;
+
+	status = smw_export_key(args);
+
+	return util_smw_to_psa_status(status);
+}
+
+static psa_status_t export_gen_public_key(uint8_t *data, size_t data_size,
+					  size_t *data_length,
+					  struct smw_export_key_args *args)
+{
+	enum smw_status_code status;
+	struct smw_keypair_gen *keypair_gen;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!data || !data_size || !data_length || !args ||
+	    !args->key_descriptor || !args->key_descriptor->buffer)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	keypair_gen = &args->key_descriptor->buffer->gen;
+
+	*data_length = keypair_gen->public_length;
+	keypair_gen->public_data = data;
+
+	if (data_size < *data_length)
+		return PSA_ERROR_BUFFER_TOO_SMALL;
+
+	status = smw_export_key(args);
+
+	return util_smw_to_psa_status(status);
+}
+
 static psa_status_t export_key_common(psa_key_id_t key, uint8_t *data,
 				      size_t data_size, size_t *data_length)
 {
@@ -574,17 +872,22 @@ static psa_status_t export_key_common(psa_key_id_t key, uint8_t *data,
 	struct smw_export_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
-	unsigned int public_length = 0;
-	unsigned int modulus_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
 		return PSA_ERROR_BAD_STATE;
 
+	if (!data || !data_size || !data_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	key_descriptor.id = key;
 
 	status = smw_get_key_type_name(&key_descriptor);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_get_security_size(&key_descriptor);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -593,84 +896,23 @@ static psa_status_t export_key_common(psa_key_id_t key, uint8_t *data,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (!SMW_UTILS_STRCMP(key_descriptor.type_name, "RSA")) {
-		/* RSA KEY */
-		public_length = keypair_buffer.rsa.public_length;
-		modulus_length = keypair_buffer.rsa.modulus_length;
-		*data_length = modulus_length +
-			       public_length
-			       /* SEQUENCE */
-			       + ASN1_TAG_FIELD_LENGTH +
-			       ASN1_LENGTH_FIELD_LENGTH
-			       /* INTEGER - modulus */
-			       + ASN1_TAG_FIELD_LENGTH +
-			       ASN1_LENGTH_FIELD_LENGTH
-			       /* INTEGER - publicExponent */
-			       + ASN1_TAG_FIELD_LENGTH +
-			       ASN1_LENGTH_FIELD_LENGTH;
-
-		if (data_size < *data_length)
-			return PSA_ERROR_BUFFER_TOO_SMALL;
-
-		/*
-		 *	RSAPublicKey ::= SEQUENCE {
-		 *	   modulus            INTEGER,    -- n
-		 *	   publicExponent     INTEGER  }  -- e
-		 */
-
-		keypair_buffer.rsa.modulus = data
-					     /* SEQUENCE */
-					     + ASN1_TAG_FIELD_LENGTH +
-					     ASN1_LENGTH_FIELD_LENGTH
-					     /* INTEGER - modulus */
-					     + ASN1_TAG_FIELD_LENGTH +
-					     ASN1_LENGTH_FIELD_LENGTH;
-
-		keypair_buffer.rsa.public_data = keypair_buffer.rsa.modulus
-						 /* INTEGER  - publicExponent */
-						 + ASN1_TAG_FIELD_LENGTH +
-						 ASN1_LENGTH_FIELD_LENGTH +
-						 modulus_length;
-
-		/* Tag SEQUENCE */
-		data[0] = ASN1_TAG_SEQUENCE;
-
-		/* Length */
-		data[1] =
-			/* INTEGER - modulus */
-			ASN1_TAG_FIELD_LENGTH +
-			ASN1_LENGTH_FIELD_LENGTH
-			/* INTEGER - publicExponent */
-			+ ASN1_TAG_FIELD_LENGTH + ASN1_LENGTH_FIELD_LENGTH +
-			modulus_length + public_length;
-
-		/* Tag INTEGER */
-		data[2] = ASN1_TAG_INTEGER;
-
-		/* Length */
-		data[3] = modulus_length;
-
-		/* Tag INTEGER */
-		data[4 + modulus_length] = ASN1_TAG_INTEGER;
-
-		/* Length */
-		data[5 + modulus_length] = public_length;
-
-	} else {
-		if (!keypair_buffer.gen.public_length)
-			return PSA_ERROR_NOT_SUPPORTED;
-
-		*data_length = keypair_buffer.gen.public_length;
-
-		if (data_size < *data_length)
-			return PSA_ERROR_BUFFER_TOO_SMALL;
-
-		keypair_buffer.gen.public_data = data;
-	}
-
 	args.key_descriptor = &key_descriptor;
 
-	status = smw_export_key(&args);
+	if (!SMW_UTILS_STRCMP(key_descriptor.type_name, "RSA")) {
+		return export_rsa_public_key(data, data_size, data_length,
+					     &args);
+	} else {
+		if (!keypair_buffer.gen.public_length)
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		if (is_ecc_key_type(key_descriptor.type_name)) {
+			return export_ecc_public_key(data, data_size,
+						     data_length, &args);
+		} else {
+			return export_gen_public_key(data, data_size,
+						     data_length, &args);
+		}
+	}
 
 end:
 	return util_smw_to_psa_status(status);
@@ -737,7 +979,7 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 	if (!smw_utils_is_lib_initialized())
 		return PSA_ERROR_BAD_STATE;
 
-	if (!attributes)
+	if (!attributes || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	smw_config_get_psa_config(&config);
@@ -762,6 +1004,8 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 	if (status == SMW_STATUS_OK ||
 	    status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
 		*key = key_descriptor.id;
+	else
+		*key = PSA_KEY_ID_NULL;
 
 end:
 	if (args.key_attributes_list)
@@ -785,21 +1029,22 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 				     const uint8_t *data, size_t data_length,
 				     psa_key_id_t *key)
 {
+	psa_status_t psa_status;
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_import_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
+	struct smw_keypair_gen *keypair_gen;
 	struct smw_config_psa_config config;
 	psa_key_type_t key_type;
-	unsigned int modulus_length_offset;
-	unsigned int version_length_offset;
+	unsigned int security_size;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
 		return PSA_ERROR_BAD_STATE;
 
-	if (!attributes)
+	if (!attributes || !data || !data_length || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	smw_config_get_psa_config(&config);
@@ -814,97 +1059,37 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 
 	key_type = psa_get_key_type(attributes);
 	if (PSA_KEY_TYPE_IS_RSA(key_type)) {
-		if (PSA_KEY_TYPE_IS_KEY_PAIR(key_type)) {
-			/*
-			 *	RSAPrivateKey ::= SEQUENCE {
-			 *	    version             INTEGER,  -- must be 0
-			 *	    modulus             INTEGER,  -- n
-			 *	    publicExponent      INTEGER,  -- e
-			 *	    privateExponent     INTEGER,  -- d
-			 *	    prime1              INTEGER,  -- p
-			 *	    prime2              INTEGER,  -- q
-			 *	    exponent1           INTEGER,  -- d mod (p-1)
-			 *	    exponent2           INTEGER,  -- d mod (q-1)
-			 *	    coefficient         INTEGER,  -- (inverse of q) mod p
-			 *	}
-			 */
+		psa_status = set_rsa_key_buffer(key_type, data, data_length,
+						&keypair_buffer.rsa);
+		if (psa_status != PSA_SUCCESS)
+			return psa_status;
 
-			version_length_offset = /* SEQUENCE */
-				ASN1_TAG_FIELD_LENGTH +
-				ASN1_LENGTH_FIELD_LENGTH
-				/* INTEGER - version */
-				+ ASN1_TAG_FIELD_LENGTH;
+		security_size =
+			BYTES_TO_BITS(keypair_buffer.rsa.modulus_length);
+	} else if (PSA_KEY_TYPE_IS_ECC(key_type)) {
+		keypair_gen = &keypair_buffer.gen;
 
-			modulus_length_offset = /* SEQUENCE */
-				ASN1_TAG_FIELD_LENGTH +
-				ASN1_LENGTH_FIELD_LENGTH
-				/* INTEGER - version */
-				+ ASN1_TAG_FIELD_LENGTH +
-				ASN1_LENGTH_FIELD_LENGTH +
-				data[version_length_offset]
-				/* INTEGER - modulus */
-				+ ASN1_TAG_FIELD_LENGTH;
+		set_ecc_key_buffer(key_type, data, data_length, keypair_gen);
 
-			keypair_buffer.rsa.modulus_length =
-				data[modulus_length_offset];
-			keypair_buffer.rsa.modulus = (unsigned char *)data +
-						     modulus_length_offset +
-						     ASN1_LENGTH_FIELD_LENGTH;
-			keypair_buffer.rsa.public_length =
-				*(keypair_buffer.rsa.modulus +
-				  keypair_buffer.rsa.modulus_length +
-				  ASN1_TAG_FIELD_LENGTH);
-			keypair_buffer.rsa.public_data =
-				(unsigned char *)keypair_buffer.rsa.modulus +
-				keypair_buffer.rsa.modulus_length +
-				ASN1_TAG_FIELD_LENGTH +
-				ASN1_LENGTH_FIELD_LENGTH;
-			keypair_buffer.rsa.private_length =
-				*(keypair_buffer.rsa.public_data +
-				  keypair_buffer.rsa.public_length +
-				  ASN1_TAG_FIELD_LENGTH);
-			keypair_buffer.rsa.private_data =
-				(unsigned char *)keypair_buffer.rsa.public_data +
-				keypair_buffer.rsa.public_length +
-				ASN1_TAG_FIELD_LENGTH +
-				ASN1_LENGTH_FIELD_LENGTH;
-		} else if (PSA_KEY_TYPE_IS_PUBLIC_KEY(key_type)) {
-			/*
-			 *	RSAPublicKey ::= SEQUENCE {
-			 *	   modulus            INTEGER,    -- n
-			 *	   publicExponent     INTEGER  }  -- e
-			 */
+		if (PSA_KEY_TYPE_ECC_GET_FAMILY(key_type) ==
+			    PSA_ECC_FAMILY_SECP_R1 &&
+		    keypair_gen->private_length == 66)
+			security_size = 521;
+		else
+			security_size =
+				BYTES_TO_BITS(keypair_gen->private_length);
+	} else if (PSA_KEY_TYPE_IS_UNSTRUCTURED(key_type)) {
+		keypair_gen = &keypair_buffer.gen;
 
-			modulus_length_offset = /* SEQUENCE */
-				ASN1_TAG_FIELD_LENGTH +
-				ASN1_LENGTH_FIELD_LENGTH
-				/* INTEGER - modulus */
-				+ ASN1_TAG_FIELD_LENGTH;
+		set_gen_key_buffer(key_type, data, data_length, keypair_gen);
 
-			keypair_buffer.rsa.modulus_length =
-				data[modulus_length_offset];
-			keypair_buffer.rsa.modulus = (unsigned char *)data +
-						     modulus_length_offset +
-						     ASN1_LENGTH_FIELD_LENGTH;
-			keypair_buffer.rsa.public_length =
-				*(keypair_buffer.rsa.modulus +
-				  keypair_buffer.rsa.modulus_length +
-				  ASN1_TAG_FIELD_LENGTH);
-			keypair_buffer.rsa.public_data =
-				(unsigned char *)keypair_buffer.rsa.modulus +
-				keypair_buffer.rsa.modulus_length +
-				ASN1_TAG_FIELD_LENGTH +
-				ASN1_LENGTH_FIELD_LENGTH;
-		} else {
-			return PSA_ERROR_NOT_SUPPORTED;
-		}
-	} else if (PSA_KEY_TYPE_IS_UNSTRUCTURED(key_type) ||
-		   PSA_KEY_TYPE_IS_ECC(key_type)) {
-		keypair_buffer.gen.private_data = (unsigned char *)data;
-		keypair_buffer.gen.private_length = data_length;
+		security_size = BYTES_TO_BITS(keypair_gen->private_length);
 	} else {
 		return PSA_ERROR_NOT_SUPPORTED;
 	}
+
+	if (!key_descriptor.security_size)
+		key_descriptor.security_size = security_size;
 
 	args.subsystem_name = get_subsystem_name(&config);
 	status = set_key_attributes_list(attributes, &args.key_attributes_list,
@@ -920,6 +1105,8 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	if (status == SMW_STATUS_OK ||
 	    status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
 		*key = key_descriptor.id;
+	else
+		*key = PSA_KEY_ID_NULL;
 
 end:
 	if (args.key_attributes_list)

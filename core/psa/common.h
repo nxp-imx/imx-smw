@@ -8,6 +8,8 @@
 
 #include "config.h"
 
+#define BYTES_TO_BITS(size) ((size) << 3)
+
 /**
  * call_smw_api() - Call SMW API.
  * @api: SMW API.

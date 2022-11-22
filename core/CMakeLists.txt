@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(smw VERSION 2.2 LANGUAGES C)
+project(smw VERSION 2.3 LANGUAGES C)
 
 add_library(${PROJECT_NAME} SHARED "")
 

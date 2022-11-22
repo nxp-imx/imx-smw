@@ -12,7 +12,6 @@
 #include "utils.h"
 
 #include "common.h"
-#include "util_status.h"
 
 #define HASH_ALGO(_id, _name, _length, _block_size)                            \
 	{                                                                      \
@@ -460,26 +459,21 @@ __export psa_status_t psa_crypto_init(void)
 
 __export psa_status_t psa_generate_random(uint8_t *output, size_t output_size)
 {
-	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_rng_args args = { 0 };
-	struct smw_config_psa_config config;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
 		return PSA_ERROR_BAD_STATE;
 
-	smw_config_get_psa_config(&config);
-
-	args.subsystem_name = get_subsystem_name(&config);
 	args.output = output;
 	args.output_length = output_size;
 
 	if (output_size)
-		status = call_smw_api((enum smw_status_code(*)(void *))smw_rng,
-				      &args, &config, &args.subsystem_name);
+		return call_smw_api((enum smw_status_code(*)(void *))smw_rng,
+				    &args, &args.subsystem_name);
 
-	return util_smw_to_psa_status(status);
+	return PSA_SUCCESS;
 }
 
 __export psa_status_t psa_hash_abort(psa_hash_operation_t *operation)
@@ -537,9 +531,8 @@ __export psa_status_t psa_hash_compute(psa_algorithm_t alg,
 				       size_t input_length, uint8_t *hash,
 				       size_t hash_size, size_t *hash_length)
 {
-	enum smw_status_code status = SMW_STATUS_OK;
+	psa_status_t psa_status;
 	struct smw_hash_args args = { 0 };
-	struct smw_config_psa_config config;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -550,20 +543,17 @@ __export psa_status_t psa_hash_compute(psa_algorithm_t alg,
 	if (!args.algo_name)
 		return PSA_ERROR_NOT_SUPPORTED;
 
-	smw_config_get_psa_config(&config);
-
-	args.subsystem_name = get_subsystem_name(&config);
 	args.input = (unsigned char *)input;
 	args.input_length = input_length;
 	args.output = hash;
 	args.output_length = hash_size;
 
-	status = call_smw_api((enum smw_status_code(*)(void *))smw_hash, &args,
-			      &config, &args.subsystem_name);
+	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_hash,
+				  &args, &args.subsystem_name);
 
 	*hash_length = args.output_length;
 
-	return util_smw_to_psa_status(status);
+	return psa_status;
 }
 
 __export psa_status_t psa_hash_finish(psa_hash_operation_t *operation,

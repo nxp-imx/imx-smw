@@ -11,7 +11,6 @@
 #include "debug.h"
 #include "utils.h"
 #include "tlv.h"
-#include "config.h"
 #include "keymgr.h"
 
 #include "asn1.h"
@@ -530,11 +529,9 @@ static void get_alg_name(psa_algorithm_t alg, const char **alg_str,
 	}
 }
 
-static int set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
-			unsigned int *tlv_length)
+static psa_status_t set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
+				 unsigned int *tlv_length)
 {
-	int status = SMW_STATUS_OK;
-
 	const char *alg_str = NULL;
 	const char *hash_str = NULL;
 	const char *kdf_str = NULL;
@@ -552,17 +549,15 @@ static int set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
 	*tlv_length = 0;
 
 	if (!alg)
-		goto end;
+		return PSA_SUCCESS;
 
 	get_alg_name(alg, &alg_str, &hash_str, &kdf_str, &length, &min_length);
 
 	if (alg_str)
 		alg_len = SMW_UTILS_STRLEN(alg_str);
 
-	if (!alg_str || !alg_len) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
+	if (!alg_str || !alg_len)
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	if (hash_str)
 		hash_len = SMW_UTILS_STRLEN(hash_str);
@@ -587,10 +582,8 @@ static int set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
 						      sizeof(min_length));
 
 	*tlv = SMW_UTILS_MALLOC(*tlv_length);
-	if (!*tlv) {
-		status = SMW_STATUS_ALLOC_FAILURE;
-		goto end;
-	}
+	if (!*tlv)
+		return PSA_ERROR_INSUFFICIENT_MEMORY;
 
 	p = *tlv;
 	SMW_UTILS_MEMCPY(p, alg_str, alg_len + 1);
@@ -613,9 +606,7 @@ static int set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
 	if (kdf_len)
 		smw_tlv_set_length(kdf_tlv, p);
 
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return PSA_SUCCESS;
 }
 
 static unsigned int get_usage_tlv_length(psa_key_usage_t usage_flags,
@@ -642,12 +633,12 @@ static unsigned int get_usage_tlv_length(psa_key_usage_t usage_flags,
 	return usage_tlv_length;
 }
 
-static int set_key_attributes_list(const psa_key_attributes_t *attributes,
-				   unsigned char **key_attributes_list,
-				   unsigned int *key_attributes_list_length)
+static psa_status_t
+set_key_attributes_list(const psa_key_attributes_t *attributes,
+			unsigned char **key_attributes_list,
+			unsigned int *key_attributes_list_length)
 {
-	int status = SMW_STATUS_OK;
-
+	psa_status_t psa_status;
 	unsigned char *p;
 	unsigned int i;
 	psa_key_usage_t usage_flags;
@@ -663,17 +654,15 @@ static int set_key_attributes_list(const psa_key_attributes_t *attributes,
 	*key_attributes_list = NULL;
 	*key_attributes_list_length = 0;
 
-	if (!attributes) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
+	if (!attributes)
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	usage_flags = psa_get_key_usage_flags(attributes);
 
-	status = set_key_algo(psa_get_key_algorithm(attributes), &algo_v,
-			      &algo_v_length);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	psa_status = set_key_algo(psa_get_key_algorithm(attributes), &algo_v,
+				  &algo_v_length);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
 
 	if (algo_v_length)
 		algo_tlv_length =
@@ -690,7 +679,7 @@ static int set_key_attributes_list(const psa_key_attributes_t *attributes,
 
 	*key_attributes_list = SMW_UTILS_MALLOC(*key_attributes_list_length);
 	if (!*key_attributes_list) {
-		status = SMW_STATUS_ALLOC_FAILURE;
+		psa_status = PSA_ERROR_INSUFFICIENT_MEMORY;
 		goto end;
 	}
 
@@ -722,7 +711,7 @@ static int set_key_attributes_list(const psa_key_attributes_t *attributes,
 		       (unsigned int)(p - *key_attributes_list));
 
 end:
-	if (status != SMW_STATUS_OK) {
+	if (psa_status != PSA_SUCCESS) {
 		if (*key_attributes_list)
 			SMW_UTILS_FREE(*key_attributes_list);
 	}
@@ -730,8 +719,7 @@ end:
 	if (algo_v)
 		SMW_UTILS_FREE(algo_v);
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return psa_status;
 }
 
 static psa_status_t
@@ -868,7 +856,7 @@ static psa_status_t export_gen_public_key(uint8_t *data, size_t data_size,
 static psa_status_t export_key_common(psa_key_id_t key, uint8_t *data,
 				      size_t data_size, size_t *data_length)
 {
-	enum smw_status_code status = SMW_STATUS_OK;
+	enum smw_status_code status;
 	struct smw_export_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
@@ -933,7 +921,7 @@ __export psa_status_t psa_copy_key(psa_key_id_t source_key,
 
 __export psa_status_t psa_destroy_key(psa_key_id_t key)
 {
-	enum smw_status_code status = SMW_STATUS_OK;
+	enum smw_status_code status;
 	struct smw_delete_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 
@@ -969,10 +957,9 @@ __export psa_status_t psa_export_public_key(psa_key_id_t key, uint8_t *data,
 __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 				       psa_key_id_t *key)
 {
-	enum smw_status_code status = SMW_STATUS_OK;
+	psa_status_t psa_status;
 	struct smw_generate_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
-	struct smw_config_psa_config config;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -982,36 +969,33 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 	if (!attributes || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	smw_config_get_psa_config(&config);
-
 	key_descriptor.type_name = get_key_type(attributes);
 	if (!key_descriptor.type_name)
 		return PSA_ERROR_NOT_SUPPORTED;
 
 	key_descriptor.security_size = psa_get_key_bits(attributes);
 
-	args.subsystem_name = get_subsystem_name(&config);
-	status = set_key_attributes_list(attributes, &args.key_attributes_list,
-					 &args.key_attributes_list_length);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	psa_status =
+		set_key_attributes_list(attributes, &args.key_attributes_list,
+					&args.key_attributes_list_length);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
 
 	args.key_descriptor = &key_descriptor;
 
-	status = call_smw_api((enum smw_status_code(*)(void *))smw_generate_key,
-			      &args, &config, &args.subsystem_name);
+	psa_status =
+		call_smw_api((enum smw_status_code(*)(void *))smw_generate_key,
+			     &args, &args.subsystem_name);
 
-	if (status == SMW_STATUS_OK ||
-	    status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+	if (psa_status == PSA_SUCCESS)
 		*key = key_descriptor.id;
 	else
 		*key = PSA_KEY_ID_NULL;
 
-end:
 	if (args.key_attributes_list)
 		SMW_UTILS_FREE(args.key_attributes_list);
 
-	return util_smw_to_psa_status(status);
+	return psa_status;
 }
 
 __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
@@ -1030,12 +1014,10 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 				     psa_key_id_t *key)
 {
 	psa_status_t psa_status;
-	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_import_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
 	struct smw_keypair_gen *keypair_gen;
-	struct smw_config_psa_config config;
 	psa_key_type_t key_type;
 	unsigned int security_size;
 
@@ -1046,8 +1028,6 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 
 	if (!attributes || !data || !data_length || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
-
-	smw_config_get_psa_config(&config);
 
 	key_descriptor.type_name = get_key_type(attributes);
 	if (!key_descriptor.type_name)
@@ -1091,28 +1071,27 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	if (!key_descriptor.security_size)
 		key_descriptor.security_size = security_size;
 
-	args.subsystem_name = get_subsystem_name(&config);
-	status = set_key_attributes_list(attributes, &args.key_attributes_list,
-					 &args.key_attributes_list_length);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	psa_status =
+		set_key_attributes_list(attributes, &args.key_attributes_list,
+					&args.key_attributes_list_length);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
 
 	args.key_descriptor = &key_descriptor;
 
-	status = call_smw_api((enum smw_status_code(*)(void *))smw_import_key,
-			      &args, &config, &args.subsystem_name);
+	psa_status =
+		call_smw_api((enum smw_status_code(*)(void *))smw_import_key,
+			     &args, &args.subsystem_name);
 
-	if (status == SMW_STATUS_OK ||
-	    status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+	if (psa_status == PSA_SUCCESS)
 		*key = key_descriptor.id;
 	else
 		*key = PSA_KEY_ID_NULL;
 
-end:
 	if (args.key_attributes_list)
 		SMW_UTILS_FREE(args.key_attributes_list);
 
-	return util_smw_to_psa_status(status);
+	return psa_status;
 }
 
 __export psa_status_t

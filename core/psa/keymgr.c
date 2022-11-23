@@ -557,11 +557,11 @@ static int set_key_attributes_list(const psa_key_attributes_t *attributes,
 end:
 	if (status != SMW_STATUS_OK) {
 		if (*key_attributes_list)
-			free(*key_attributes_list);
+			SMW_UTILS_FREE(*key_attributes_list);
 	}
 
 	if (algo_v)
-		free(algo_v);
+		SMW_UTILS_FREE(algo_v);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -764,6 +764,9 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 		*key = key_descriptor.id;
 
 end:
+	if (args.key_attributes_list)
+		SMW_UTILS_FREE(args.key_attributes_list);
+
 	return util_smw_to_psa_status(status);
 }
 
@@ -919,6 +922,9 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 		*key = key_descriptor.id;
 
 end:
+	if (args.key_attributes_list)
+		SMW_UTILS_FREE(args.key_attributes_list);
+
 	return util_smw_to_psa_status(status);
 }
 

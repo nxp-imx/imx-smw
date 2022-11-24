@@ -31,6 +31,8 @@ The releases are listed from the most recent to the first one.
 ##### 1. ARM PSA APIs
 
 * Fix memory leak caused by key generation and key import
+* Fix export of RSA, ECC and symmetric keys.
+* Fix import of RSA keys and ECC keys.
 
 #### Known Issues
 ##### 1. HSM Subsystem
@@ -51,6 +53,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. ARM PSA APIs
 
 * Key generation and key import cause memory leak.
+* Export of any type of key fails.
+* Import of RSA keys and ECC keys fails.
 
 #### SMW Library - _version 2.2_
 ##### 1. Subsystem

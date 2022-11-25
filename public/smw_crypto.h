@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
 
 #ifndef __SMW_CRYPTO_H__
@@ -64,7 +64,7 @@ struct smw_sign_verify_args {
 	unsigned int message_length;
 	unsigned char *signature;
 	unsigned int signature_length;
-	const unsigned char *attributes_list;
+	unsigned char *attributes_list;
 	unsigned int attributes_list_length;
 };
 

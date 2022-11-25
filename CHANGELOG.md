@@ -33,6 +33,7 @@ The releases are listed from the most recent to the first one.
 * Fix memory leak caused by key generation and key import
 * Fix export of RSA, ECC and symmetric keys.
 * Fix import of RSA keys and ECC keys.
+* Implement Sign and Verify operations
 
 #### Known Issues
 ##### 1. HSM Subsystem

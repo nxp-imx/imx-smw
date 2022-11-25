@@ -349,12 +349,9 @@
  * PSA_ALG_NONE if @alg is not a composite algorithm that uses a hash.
  */
 #define PSA_ALG_GET_HASH(alg)                                                  \
-	({                                                                     \
-		typeof(alg) _alg = (alg);                                      \
-		((_alg & PSA_ALG_HASH_MASK) == 0 ?                             \
-			 PSA_ALG_NONE :                                        \
-			 PSA_ALG_CATEGORY_HASH | (_alg & PSA_ALG_HASH_MASK));  \
-	})
+	((alg & PSA_ALG_HASH_MASK) == 0 ?                                      \
+		 PSA_ALG_NONE :                                                \
+		 PSA_ALG_CATEGORY_HASH | (alg & PSA_ALG_HASH_MASK))
 
 /**
  * PSA_ALG_HKDF() - Macro to build an HKDF algorithm.
@@ -555,12 +552,8 @@
  * can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
 #define PSA_ALG_IS_HASH_AND_SIGN(alg)                                          \
-	({                                                                     \
-		typeof(alg) _alg = (alg);                                      \
-		(PSA_ALG_IS_RSA_PSS(_alg) ||                                   \
-		 PSA_ALG_IS_RSA_PKCS1V15_SIGN(_alg) ||                         \
-		 PSA_ALG_IS_ECDSA(_alg) || PSA_ALG_IS_HASH_EDDSA(_alg));       \
-	})
+	(PSA_ALG_IS_RSA_PSS(alg) || PSA_ALG_IS_RSA_PKCS1V15_SIGN(alg) ||       \
+	 PSA_ALG_IS_ECDSA(alg) || PSA_ALG_IS_HASH_EDDSA(alg))
 
 /**
  * PSA_ALG_IS_HASH_EDDSA() - Whether the specified algorithm is HashEdDSA.
@@ -637,11 +630,8 @@
  * either 0 or 1 if alg is not a supported key derivation algorithm identifier.
  */
 #define PSA_ALG_IS_KEY_DERIVATION_STRETCHING(alg)                              \
-	({                                                                     \
-		typeof(alg) _alg = (alg);                                      \
-		PSA_ALG_IS_KEY_DERIVATION(_alg) &&                             \
-			(_alg & (PSA_ALG_KEY_DERIVATION_STRETCHING_FLAG));     \
-	})
+	(PSA_ALG_IS_KEY_DERIVATION(alg) &&                                     \
+	 (alg & (PSA_ALG_KEY_DERIVATION_STRETCHING_FLAG)))
 
 /**
  * PSA_ALG_IS_MAC() - Whether the specified algorithm is a MAC algorithm.
@@ -696,12 +686,9 @@
  * @alg is not a supported algorithm identifier.
  */
 #define PSA_ALG_IS_RAW_KEY_AGREEMENT(alg)                                      \
-	({                                                                     \
-		typeof(alg) _alg = (alg);                                      \
-		(PSA_ALG_IS_KEY_AGREEMENT(_alg) &&                             \
-		 PSA_ALG_KEY_AGREEMENT_GET_KDF(_alg) ==                        \
-			 PSA_ALG_CATEGORY_KEY_DERIVATION);                     \
-	})
+	(PSA_ALG_IS_KEY_AGREEMENT(alg) &&                                      \
+	 PSA_ALG_KEY_AGREEMENT_GET_KDF(alg) ==                                 \
+		 PSA_ALG_CATEGORY_KEY_DERIVATION)
 /**
  * PSA_ALG_IS_RSA_OAEP() - Whether the specified algorithm is an RSA OAEP encryption algorithm.
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
@@ -810,11 +797,7 @@
  * algorithm. This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
 #define PSA_ALG_IS_SIGN_MESSAGE(alg)                                           \
-	({                                                                     \
-		typeof(alg) _alg = (alg);                                      \
-		(PSA_ALG_IS_HASH_AND_SIGN(_alg) ||                             \
-		 _alg == PSA_ALG_PURE_EDDSA);                                  \
-	})
+	(PSA_ALG_IS_HASH_AND_SIGN(alg) || (alg == PSA_ALG_PURE_EDDSA))
 
 /**
  * PSA_ALG_IS_STREAM_CIPHER() - Whether the specified algorithm is a stream cipher.
@@ -870,18 +853,13 @@
  * This macro can return either 0 or 1 if @alg is not a supported algorithm identifier.
  */
 #define PSA_ALG_IS_WILDCARD(alg)                                               \
-	({                                                                     \
-		typeof(alg) _alg = (alg);                                      \
-		(PSA_ALG_IS_HASH_AND_SIGN(_alg) ?                              \
-			 PSA_ALG_GET_HASH(_alg) == PSA_ALG_ANY_HASH :          \
-			 PSA_ALG_IS_MAC(_alg) ?                                \
-			 (_alg & (PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG)) !=   \
-					 0 :                                   \
-			 PSA_ALG_IS_AEAD(_alg) ?                               \
-			 (_alg & (PSA_ALG_AEAD_AT_LEAST_THIS_LENGTH_FLAG)) !=  \
-						 0 :                           \
-			 _alg == PSA_ALG_ANY_HASH);                            \
-	})
+	(PSA_ALG_IS_HASH_AND_SIGN(alg) ?                                       \
+		 PSA_ALG_GET_HASH(alg) == PSA_ALG_ANY_HASH :                   \
+		 PSA_ALG_IS_MAC(alg) ?                                         \
+		 (alg & (PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG)) != 0 :        \
+		 PSA_ALG_IS_AEAD(alg) ?                                        \
+		 (alg & (PSA_ALG_AEAD_AT_LEAST_THIS_LENGTH_FLAG)) != 0 :       \
+		 alg == PSA_ALG_ANY_HASH)
 
 /**
  * PSA_ALG_KEY_AGREEMENT() - Macro to build a combined algorithm that chains a key agreement with a

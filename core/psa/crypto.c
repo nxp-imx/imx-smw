@@ -3,6 +3,7 @@
  * Copyright 2022 NXP
  */
 
+#include "smw_keymgr.h"
 #include "smw_crypto.h"
 
 #include "psa/crypto.h"
@@ -10,8 +11,11 @@
 #include "compiler.h"
 #include "debug.h"
 #include "utils.h"
+#include "tlv.h"
+#include "sign_verify.h"
 
 #include "common.h"
+#include "util_status.h"
 
 #define HASH_ALGO(_id, _name, _length, _block_size)                            \
 	{                                                                      \
@@ -81,6 +85,44 @@ __export size_t psa_hash_length(psa_algorithm_t alg)
 		return 0;
 
 	return info->length;
+}
+
+static psa_status_t
+set_signature_attributes_list(psa_algorithm_t alg,
+			      unsigned char **attributes_list,
+			      unsigned int *attributes_list_length)
+{
+	unsigned char *p;
+	const char *sign_type_str;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*attributes_list = NULL;
+	*attributes_list_length = 0;
+
+	if (PSA_ALG_IS_RSA_PKCS1V15_SIGN(alg))
+		sign_type_str = RSASSA_PKCS1_V1_5_STR;
+	else if (PSA_ALG_IS_RSA_PSS(alg))
+		sign_type_str = RSASSA_PSS_STR;
+	else
+		return PSA_SUCCESS;
+
+	*attributes_list_length +=
+		SMW_TLV_ELEMENT_LENGTH(SIGNATURE_TYPE_STR,
+				       SMW_UTILS_STRLEN(sign_type_str) + 1);
+
+	*attributes_list = SMW_UTILS_MALLOC(*attributes_list_length);
+	if (!*attributes_list)
+		return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+	p = *attributes_list;
+
+	smw_tlv_set_string(&p, SIGNATURE_TYPE_STR, sign_type_str);
+
+	SMW_DBG_ASSERT(*attributes_list_length ==
+		       (unsigned int)(p - *attributes_list));
+
+	return PSA_SUCCESS;
 }
 
 __export psa_status_t psa_aead_abort(psa_aead_operation_t *operation)
@@ -769,22 +811,84 @@ __export psa_status_t psa_raw_key_agreement(psa_algorithm_t alg,
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
+static psa_status_t
+set_sign_verify_args(psa_key_id_t key, psa_algorithm_t alg,
+		     const uint8_t *message, size_t message_length,
+		     uint8_t *signature, size_t signature_size, bool hashed,
+		     struct smw_key_descriptor *key_descriptor,
+		     struct smw_sign_verify_args *args)
+{
+	enum smw_status_code status;
+	const char *algo_name = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key_descriptor->id = key;
+
+	status = smw_get_key_type_name(key_descriptor);
+	if (status != SMW_STATUS_OK)
+		return util_smw_to_psa_status(status);
+
+	if ((!hashed && !PSA_ALG_IS_SIGN_MESSAGE(alg)) ||
+	    (hashed && !PSA_ALG_IS_SIGN_HASH(alg)))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	if (!hashed) {
+		algo_name = get_hash_algo_name(PSA_ALG_GET_HASH(alg));
+		if (!algo_name)
+			return PSA_ERROR_INVALID_ARGUMENT;
+	}
+
+	args->key_descriptor = key_descriptor;
+	args->algo_name = algo_name;
+	args->message = (unsigned char *)message;
+	args->message_length = message_length;
+	args->signature = signature;
+	args->signature_length = signature_size;
+
+	return set_signature_attributes_list(alg, &args->attributes_list,
+					     &args->attributes_list_length);
+}
+
+static psa_status_t sign_common(psa_key_id_t key, psa_algorithm_t alg,
+				const uint8_t *message, size_t message_length,
+				uint8_t *signature, size_t signature_size,
+				size_t *signature_length, bool hashed)
+{
+	psa_status_t psa_status;
+	struct smw_sign_verify_args args = { 0 };
+	struct smw_key_descriptor key_descriptor = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	psa_status = set_sign_verify_args(key, alg, message, message_length,
+					  signature, signature_size, hashed,
+					  &key_descriptor, &args);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_sign,
+				  &args, &args.subsystem_name);
+
+	if (psa_status == PSA_SUCCESS && signature_length)
+		*signature_length = args.signature_length;
+
+	if (args.attributes_list)
+		SMW_UTILS_FREE(args.attributes_list);
+
+	return psa_status;
+}
+
 __export psa_status_t psa_sign_hash(psa_key_id_t key, psa_algorithm_t alg,
 				    const uint8_t *hash, size_t hash_length,
 				    uint8_t *signature, size_t signature_size,
 				    size_t *signature_length)
 {
-	(void)key;
-	(void)alg;
-	(void)hash;
-	(void)hash_length;
-	(void)signature;
-	(void)signature_size;
-	(void)signature_length;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_ERROR_NOT_SUPPORTED;
+	return sign_common(key, alg, hash, hash_length, signature,
+			   signature_size, signature_length, true);
 }
 
 __export psa_status_t psa_sign_message(psa_key_id_t key, psa_algorithm_t alg,
@@ -793,17 +897,41 @@ __export psa_status_t psa_sign_message(psa_key_id_t key, psa_algorithm_t alg,
 				       size_t signature_size,
 				       size_t *signature_length)
 {
-	(void)key;
-	(void)alg;
-	(void)input;
-	(void)input_length;
-	(void)signature;
-	(void)signature_size;
-	(void)signature_length;
+	return sign_common(key, alg, input, input_length, signature,
+			   signature_size, signature_length, false);
+}
+
+static psa_status_t verify_common(psa_key_id_t key, psa_algorithm_t alg,
+				  const uint8_t *message, size_t message_length,
+				  const uint8_t *signature,
+				  size_t signature_length, bool hashed)
+{
+	psa_status_t psa_status;
+	struct smw_sign_verify_args args = { 0 };
+	struct smw_key_descriptor key_descriptor = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	if (!signature || !signature_length)
+		return PSA_ERROR_INVALID_SIGNATURE;
+
+	psa_status =
+		set_sign_verify_args(key, alg, message, message_length,
+				     (uint8_t *)signature, signature_length,
+				     hashed, &key_descriptor, &args);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_verify,
+				  &args, &args.subsystem_name);
+
+	if (args.attributes_list)
+		SMW_UTILS_FREE(args.attributes_list);
+
+	return psa_status;
 }
 
 __export psa_status_t psa_verify_hash(psa_key_id_t key, psa_algorithm_t alg,
@@ -811,16 +939,8 @@ __export psa_status_t psa_verify_hash(psa_key_id_t key, psa_algorithm_t alg,
 				      const uint8_t *signature,
 				      size_t signature_length)
 {
-	(void)key;
-	(void)alg;
-	(void)hash;
-	(void)hash_length;
-	(void)signature;
-	(void)signature_length;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_ERROR_NOT_SUPPORTED;
+	return verify_common(key, alg, hash, hash_length, signature,
+			     signature_length, true);
 }
 
 __export psa_status_t psa_verify_message(psa_key_id_t key, psa_algorithm_t alg,
@@ -829,14 +949,6 @@ __export psa_status_t psa_verify_message(psa_key_id_t key, psa_algorithm_t alg,
 					 const uint8_t *signature,
 					 size_t signature_length)
 {
-	(void)key;
-	(void)alg;
-	(void)input;
-	(void)input_length;
-	(void)signature;
-	(void)signature_length;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return PSA_ERROR_NOT_SUPPORTED;
+	return verify_common(key, alg, input, input_length, signature,
+			     signature_length, false);
 }

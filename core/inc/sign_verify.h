@@ -1,7 +1,13 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2022 NXP
  */
+
+#ifndef __SIGN_VERIFY_H__
+#define __SIGN_VERIFY_H__
+
+#include "keymgr.h"
+#include "config.h"
 
 /* Signature type string */
 #define SIGNATURE_TYPE_STR    "SIGNATURE_TYPE"
@@ -126,3 +132,5 @@ void smw_sign_verify_copy_sign_buf(struct smw_crypto_sign_verify_args *args,
  */
 void smw_sign_verify_set_sign_len(struct smw_crypto_sign_verify_args *args,
 				  unsigned int signature_length);
+
+#endif /* __SIGN_VERIFY_H__ */

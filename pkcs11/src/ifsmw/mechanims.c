@@ -865,7 +865,7 @@ static CK_RV op_msign_common(struct smw_sign_verify_args *smw_args,
 		goto end;
 
 	if (attr.string) {
-		smw_args->attributes_list = (const unsigned char *)attr.string;
+		smw_args->attributes_list = (unsigned char *)attr.string;
 		smw_args->attributes_list_length = attr.length;
 	}
 

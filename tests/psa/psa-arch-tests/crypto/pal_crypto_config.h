@@ -1,5 +1,5 @@
 /** @file
- * Copyright (c) 2021, Arm Limited or its affiliates. All rights reserved.
+ * Copyright (c) 2022, Arm Limited or its affiliates. All rights reserved.
  * Copyright 2022 NXP
  * SPDX-License-Identifier : Apache-2.0
  *
@@ -252,6 +252,15 @@
  * Requires: ARCH_TEST_HASH
 */
 #define ARCH_TEST_HKDF
+
+/**
+ * \def ARCH_TEST_TLS12_PRF
+ *
+ * Enable the TLS-1.2 PRF algorithm (RFC 5246).
+ *
+ * Requires: ARCH_TEST_HASH
+*/
+#define ARCH_TEST_TLS12_PRF
 
 /**
  * \def ARCH_TEST_xMAC

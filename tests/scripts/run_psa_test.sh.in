@@ -46,17 +46,4 @@ then
   error=1
 fi
 
-if [[ -e /etc/systemd/system/nvm_daemon.service ]]; then
-  res=$(systemctl is-active nvm_daemon)
-  if [[ ${res} == "active" ]]; then
-    systemctl stop nvm_daemon
-    res=$(systemctl is-active nvm_daemon)
-    if [[ ${res} == "active" ]]; then
-      echo "NVM Daemon stop failure"
-      systemctl -l status nvm_daemon
-      error=1
-    fi
-  fi
-fi
-
 exit ${error}

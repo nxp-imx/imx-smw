@@ -1,0 +1,41 @@
+{
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_type": "NIST",
+		"key_policy": {
+			"sign_message": [
+				[
+					"ECDSA",
+					"HASH=SHA256"
+				]
+			],
+			"verify_message": [
+				[
+					"ECDSA",
+					"HASH=SHA256"
+				]
+			]
+		},
+		"security_size": 256,
+		"key_id": 0,
+		"attributes_list": [
+			[
+				"PERSISTENT"
+			],
+			[
+				"FLUSH_KEY"
+			]
+		],
+		"pub_key": 64
+	},
+	"subtest 2": {
+		"command": "EXPORT_PUBLIC",
+		"key_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "SAVE_KEY_IDS",
+		"filepath": "/usr/share/smw/tests/F_ELE_Generate_002_ids.json"
+	}
+}

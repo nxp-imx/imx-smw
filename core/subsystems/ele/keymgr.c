@@ -195,7 +195,7 @@ static int generate_key(struct hdl *hdl, void *args)
 	}
 
 	if (key_args->key_attributes.persistent_storage) {
-		op_args.key_lifetime = HSM_HW_INTERN_STORARE_PERSISTENT;
+		op_args.key_lifetime = HSM_HW_INTERN_STORAGE_PERSISTENT;
 		op_args.key_group = PERSISTENT_KEY_GROUP;
 	} else {
 		op_args.key_lifetime = HSM_HW_INTERN_STORAGE_VOLATILE;

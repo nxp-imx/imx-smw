@@ -396,7 +396,10 @@ function package()
     fi
 
     # First do the installation
-    opt_dest="${tmp_inst_dir}"
+    if [[ -z ${opt_dest} ]]; then
+      opt_dest="${tmp_inst_dir}"
+    fi
+
     install
 
     opt_dest="${opt_out}/${opt_dest}"
@@ -632,8 +635,9 @@ function usage_package()
 {
     printf "\n"
     printf "To package the Security Middleware objects\n"
-    printf "  %s package out=[dir]\n" "${script_name}"
+    printf "  %s package out=[dir] dest=[dir]\n" "${script_name}"
     printf "    out      = Build directory\n"
+    printf "    dest     = [optional] Installation directory\n"
     printf "\n"
 }
 

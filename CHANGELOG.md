@@ -26,6 +26,11 @@ The releases are listed from the most recent to the first one.
 
 ### <a id ="rel_2_3"></a></br>**Release 2.3**
 ---
+#### Known Issues
+##### 1. HSM Subsystem
+
+* When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
+The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
 #### SMW Library - _version 2.3_
 ##### 1. ARM PSA APIs
@@ -35,12 +40,9 @@ The releases are listed from the most recent to the first one.
 * Fix import of RSA keys and ECC keys.
 * Implement Sign and Verify operations
 
-#### Known Issues
-##### 1. HSM Subsystem
+#### SMW Tests - _version 2.3_
 
-* When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
-The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
-
+* Add suspend command to switch device in sleep to memory mode (remove dedicated script to run suspend/resume test).
 
 ### <a id ="rel_2_2"></a></br>**Release 2.2**
 ---

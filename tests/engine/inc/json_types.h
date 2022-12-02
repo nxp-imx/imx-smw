@@ -45,6 +45,7 @@
 #define RANDOM_OBJ	  "random"
 #define RES_OBJ		  "result"
 #define SAVE_OUT_OBJ	  "save_output"
+#define SECONDS_OBJ	  "seconds"
 #define SEC_SIZE_OBJ	  "security_size"
 #define SIGN_ID_OBJ	  "sign_id"
 #define SIGN_OBJ	  "signature"
@@ -90,6 +91,7 @@
 #define RNG		"RNG"
 #define SAVE_KEY_IDS	"SAVE_KEY_IDS"
 #define SIGN		"SIGN"
+#define SUSPEND		"SUSPEND"
 #define VERIFY		"VERIFY"
 
 /* 'test_error' parameter values */

@@ -11,6 +11,7 @@
 #include "util_log.h"
 #include "util_sem.h"
 #include "util_thread.h"
+#include "util_rtcwake.h"
 #include "keymgr.h"
 #include "hash.h"
 #include "sign_verify.h"
@@ -367,6 +368,33 @@ static int execute_get_version_cmd(char *cmd, struct subtest_data *subtest)
 }
 
 /**
+ * execute_suspend_cmd() - Suspend the system
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_PARAM_TYPE          - Parameter type is not correct or not supported.
+ * -BAD_ARGS                - One of the argument is bad.
+ * -INTERNAL                - Internal function failed.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -VALUE_NOTFOUND          - Value not found.
+ * -FAILED                  - Error in definition file
+ */
+static int execute_suspend_cmd(char *cmd, struct subtest_data *subtest)
+{
+	(void)cmd;
+	int res;
+	int sec = 0;
+
+	res = util_read_json_type(&sec, SECONDS_OBJ, t_int, subtest->params);
+	if (res == ERR_CODE(PASSED))
+		res = util_rtcwake_suspend_to_mem(sec);
+
+	return res;
+}
+
+/**
  * execute_command() - Execute a subtest command.
  * @cmd: Command name.
  * @subtest: Subtest data.
@@ -398,6 +426,7 @@ static int execute_command(char *cmd, struct subtest_data *subtest)
 		{ SAVE_KEY_IDS, &execute_save_keys_cmd },
 		{ RESTORE_KEY_IDS, &execute_restore_keys_cmd },
 		{ GET_VERSION, &execute_get_version_cmd },
+		{ SUSPEND, &execute_suspend_cmd },
 	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {

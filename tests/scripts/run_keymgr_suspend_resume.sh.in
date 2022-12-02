@@ -7,7 +7,6 @@ status_file_prefix="@DEFAULT_OUT_STATUS_DIR@/"
 definition_file_prefix="@SMW_TESTS_TARGET_DEF_DIR_FULL_PATH@/"
 definition_file_suffix=".json"
 status_file_suffix=".txt"
-ids_file_suffix="_ids.json"
 res=0
 
 if [ $# -lt 3 ]
@@ -43,9 +42,6 @@ test2_name=${test2_name%$definition_file_suffix}
 test2_status_file=$status_file_prefix
 test2_status_file+=$test2_name
 test2_status_file+=$status_file_suffix
-
-ids_file_name=$main_test_name
-ids_file_name+=$ids_file_suffix
 
 @TEST_CMD@ "$1" "$2"
 res=$?
@@ -85,7 +81,7 @@ fi
 #
 # Delete test1 and test2 status files and key ids file
 #
-rm $test1_status_file $test2_status_file $ids_file_name
+rm $test1_status_file $test2_status_file
 res=$?
 if [ $res -ne 0 ]
 then

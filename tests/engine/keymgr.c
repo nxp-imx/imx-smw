@@ -12,6 +12,7 @@
 
 #include "keymgr.h"
 #include "util.h"
+#include "util_file.h"
 #include "util_key.h"
 #include "util_tlv.h"
 
@@ -1106,5 +1107,10 @@ int restore_key_ids_from_file(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	return restore_key_ids_from_json_file(subtest, filename);
+	res = restore_key_ids_from_json_file(subtest, filename);
+
+	if (res == ERR_CODE(PASSED))
+		util_file_remove(filename);
+
+	return res;
 }

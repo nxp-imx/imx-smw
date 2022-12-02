@@ -36,4 +36,10 @@ int util_file_open(char *dir, char *name, const char *restrict mode, FILE **f);
  */
 int util_file_to_buffer(char *dir, char *name, char **buffer);
 
+/**
+ * util_file_remove() - Remove a file
+ * @filename: Full filename
+ */
+void util_file_remove(const char *filename);
+
 #endif /* __UTIL_FILE_H__ */

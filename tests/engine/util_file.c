@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "util.h"
 #include "util_file.h"
@@ -107,4 +108,10 @@ exit:
 	}
 
 	return res;
+}
+
+void util_file_remove(const char *filename)
+{
+	if (unlink(filename))
+		DBG_PRINT("unlink(%s) %s", filename, util_get_strerr());
 }

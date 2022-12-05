@@ -39,6 +39,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix export of RSA, ECC and symmetric keys.
 * Fix import of RSA keys and ECC keys.
 * Implement Sign and Verify operations
+* Fix generation and import of DES keys and DES3 keys.
 
 #### SMW Tests - _version 2.3_
 
@@ -58,6 +59,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Key generation and key import cause memory leak.
 * Export of any type of key fails.
 * Import of RSA keys and ECC keys fails.
+* Generation and import of DES keys and DES3 keys fail.
 
 #### SMW Library - _version 2.2_
 ##### 1. Subsystem

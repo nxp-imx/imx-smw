@@ -30,12 +30,7 @@
 static const struct key_type {
 	smw_key_type_t smw_key_type;
 	psa_key_type_t psa_key_type;
-} key_type[] = { KEY_TYPE("AES", AES),
-		 KEY_TYPE("DES", DES),
-		 KEY_TYPE("SM4", SM4),
-		 KEY_TYPE("RSA", RSA_KEY_PAIR),
-		 KEY_TYPE("RSA", RSA_PUBLIC_KEY),
-		 KEY_TYPE("DH", DH_KEY_PAIR_BASE) };
+} key_type[] = { KEY_TYPE("AES", AES), KEY_TYPE("SM4", SM4) };
 
 #define HMAC_HASH(_smw, _psa)                                                  \
 	{                                                                      \
@@ -287,26 +282,6 @@ static void set_gen_private_key_buffer(const uint8_t *data, size_t data_length,
 	keypair_gen->private_length = data_length;
 }
 
-static void set_gen_public_key_buffer(const uint8_t *data, size_t data_length,
-				      struct smw_keypair_gen *keypair_gen)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	keypair_gen->public_data = (unsigned char *)data;
-	keypair_gen->public_length = data_length;
-}
-
-static void set_gen_key_buffer(psa_key_type_t key_type, const uint8_t *data,
-			       size_t data_length,
-			       struct smw_keypair_gen *keypair_gen)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-	if (PSA_KEY_TYPE_IS_PUBLIC_KEY(key_type))
-		set_gen_public_key_buffer(data, data_length, keypair_gen);
-	else
-		set_gen_private_key_buffer(data, data_length, keypair_gen);
-}
-
 static void set_ecc_public_key_buffer(const uint8_t *data, size_t data_length,
 				      struct smw_keypair_gen *keypair_gen)
 {
@@ -323,14 +298,13 @@ static void set_ecc_key_buffer(psa_key_type_t key_type, const uint8_t *data,
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY(key_type)) {
+	if (PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY(key_type))
 		set_ecc_public_key_buffer(data, data_length, keypair_gen);
-	} else {
+	else
 		set_gen_private_key_buffer(data, data_length, keypair_gen);
-	}
 }
 
-static smw_key_type_t get_hmac_key_type(psa_algorithm_t psa_hash)
+static smw_key_type_t get_hmac_smw_key_type(psa_algorithm_t psa_hash)
 {
 	unsigned int i;
 
@@ -344,8 +318,8 @@ static smw_key_type_t get_hmac_key_type(psa_algorithm_t psa_hash)
 	return NULL;
 }
 
-static smw_key_type_t get_ecc_key_type(psa_ecc_family_t ecc_family,
-				       psa_algorithm_t psa_hash)
+static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family,
+					   psa_algorithm_t psa_hash)
 {
 	unsigned int i;
 	unsigned int array_size = 0;
@@ -369,7 +343,8 @@ static smw_key_type_t get_ecc_key_type(psa_ecc_family_t ecc_family,
 	return NULL;
 }
 
-static smw_key_type_t get_key_type(const psa_key_attributes_t *attributes)
+static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
+				       unsigned int security_size)
 {
 	unsigned int i;
 
@@ -386,7 +361,28 @@ static smw_key_type_t get_key_type(const psa_key_attributes_t *attributes)
 	alg = psa_get_key_algorithm(attributes);
 
 	if (PSA_KEY_TYPE_IS_DH(psa_key_type))
-		psa_key_type = PSA_KEY_TYPE_DH_KEY_PAIR_BASE;
+		return "DH";
+
+	if (PSA_KEY_TYPE_IS_RSA(psa_key_type))
+		return "RSA";
+
+	if (psa_key_type == PSA_KEY_TYPE_DES) {
+		if (security_size == 56)
+			return "DES";
+		else if (security_size == 112 || security_size == 168)
+			return "DES3";
+		else
+			return NULL;
+	}
+
+	if (psa_key_type == PSA_KEY_TYPE_HMAC)
+		return get_hmac_smw_key_type(PSA_ALG_GET_HASH(alg));
+
+	if (PSA_KEY_TYPE_IS_ECC(psa_key_type)) {
+		ecc_family = PSA_KEY_TYPE_ECC_GET_FAMILY(psa_key_type);
+
+		return get_ecc_smw_key_type(ecc_family, alg);
+	}
 
 	for (i = 0; i < ARRAY_SIZE(key_type); i++) {
 		if (key_type[i].psa_key_type == psa_key_type) {
@@ -394,15 +390,6 @@ static smw_key_type_t get_key_type(const psa_key_attributes_t *attributes)
 				       key_type[i].smw_key_type);
 			return key_type[i].smw_key_type;
 		}
-	}
-
-	if (psa_key_type == PSA_KEY_TYPE_HMAC)
-		return get_hmac_key_type(PSA_ALG_GET_HASH(alg));
-
-	if (PSA_KEY_TYPE_IS_ECC(psa_key_type)) {
-		ecc_family = PSA_KEY_TYPE_ECC_GET_FAMILY(psa_key_type);
-
-		return get_ecc_key_type(ecc_family, alg);
 	}
 
 	return NULL;
@@ -969,11 +956,12 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 	if (!attributes || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	key_descriptor.type_name = get_key_type(attributes);
+	key_descriptor.security_size = psa_get_key_bits(attributes);
+
+	key_descriptor.type_name =
+		get_smw_key_type(attributes, key_descriptor.security_size);
 	if (!key_descriptor.type_name)
 		return PSA_ERROR_NOT_SUPPORTED;
-
-	key_descriptor.security_size = psa_get_key_bits(attributes);
 
 	psa_status =
 		set_key_attributes_list(attributes, &args.key_attributes_list,
@@ -1029,12 +1017,6 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	if (!attributes || !data || !data_length || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	key_descriptor.type_name = get_key_type(attributes);
-	if (!key_descriptor.type_name)
-		return PSA_ERROR_NOT_SUPPORTED;
-
-	key_descriptor.security_size = psa_get_key_bits(attributes);
-
 	key_descriptor.buffer = &keypair_buffer;
 
 	key_type = psa_get_key_type(attributes);
@@ -1051,25 +1033,40 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 
 		set_ecc_key_buffer(key_type, data, data_length, keypair_gen);
 
-		if (PSA_KEY_TYPE_ECC_GET_FAMILY(key_type) ==
-			    PSA_ECC_FAMILY_SECP_R1 &&
-		    keypair_gen->private_length == 66)
-			security_size = 521;
+		if (PSA_KEY_TYPE_IS_ECC_PUBLIC_KEY(key_type))
+			security_size =
+				BYTES_TO_BITS(keypair_gen->public_length / 2);
 		else
 			security_size =
 				BYTES_TO_BITS(keypair_gen->private_length);
 	} else if (PSA_KEY_TYPE_IS_UNSTRUCTURED(key_type)) {
 		keypair_gen = &keypair_buffer.gen;
 
-		set_gen_key_buffer(key_type, data, data_length, keypair_gen);
+		set_gen_private_key_buffer(data, data_length, keypair_gen);
 
 		security_size = BYTES_TO_BITS(keypair_gen->private_length);
 	} else {
 		return PSA_ERROR_NOT_SUPPORTED;
 	}
 
-	if (!key_descriptor.security_size)
-		key_descriptor.security_size = security_size;
+	if (psa_get_key_bits(attributes) &&
+	    security_size != psa_get_key_bits(attributes))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	if (key_type == PSA_KEY_TYPE_DES)
+		security_size = security_size / 8 * 7;
+
+	if (PSA_KEY_TYPE_IS_ECC(key_type) &&
+	    PSA_KEY_TYPE_ECC_GET_FAMILY(key_type) == PSA_ECC_FAMILY_SECP_R1 &&
+	    security_size == 528)
+		security_size = 521;
+
+	key_descriptor.security_size = security_size;
+
+	key_descriptor.type_name =
+		get_smw_key_type(attributes, key_descriptor.security_size);
+	if (!key_descriptor.type_name)
+		return PSA_ERROR_NOT_SUPPORTED;
 
 	psa_status =
 		set_key_attributes_list(attributes, &args.key_attributes_list,

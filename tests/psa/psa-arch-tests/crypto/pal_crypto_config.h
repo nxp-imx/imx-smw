@@ -191,7 +191,7 @@
  *
  * Comment macros to disable the types
  */
-#define ARCH_TEST_CBC_PKCS7
+//#define ARCH_TEST_CBC_PKCS7
 
 /**
  * \def ARCH_TEST_ASYMMETRIC_ENCRYPTION

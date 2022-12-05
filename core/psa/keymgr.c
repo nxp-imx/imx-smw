@@ -1134,6 +1134,20 @@ psa_key_derivation_input_bytes(psa_key_derivation_operation_t *operation,
 }
 
 __export psa_status_t
+/* Without this comment clang-format does not meet the checkpatch requirement. */
+psa_key_derivation_input_integer(psa_key_derivation_operation_t *operation,
+				 psa_key_derivation_step_t step, uint64_t value)
+{
+	(void)operation;
+	(void)step;
+	(void)value;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return PSA_ERROR_NOT_SUPPORTED;
+}
+
+__export psa_status_t
 psa_key_derivation_input_key(psa_key_derivation_operation_t *operation,
 			     psa_key_derivation_step_t step, psa_key_id_t key)
 {

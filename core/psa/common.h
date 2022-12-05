@@ -6,7 +6,10 @@
 #ifndef __COMMON__H__
 #define __COMMON__H__
 
-#include "config.h"
+#include "smw_status.h"
+#include "smw_strings.h"
+
+#include "psa/error.h"
 
 #define BYTES_TO_BITS(size) ((size) << 3)
 

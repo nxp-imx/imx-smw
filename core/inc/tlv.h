@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+#include "tlv_strings.h"
+
 /* TLV defines */
 #define SMW_TLV_LENGTH_FIELD_SIZE 2 /* TLV length encoded with 2 bytes */
 #define SMW_TLV_ELEMENT_LENGTH(_type, _value_size)                             \

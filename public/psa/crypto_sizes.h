@@ -8,6 +8,12 @@
 
 #define PSA_BITS_TO_BYTES(bits) (((bits) + 7) / 8)
 
+#define PSA_ROUND_UP_TO_MULTIPLE(block_size, length)                           \
+	({                                                                     \
+		__typeof__(block_size) _block_size = (block_size);             \
+		((((length) + _block_size - 1) / _block_size) * _block_size)   \
+	})
+
 #ifndef MAX
 #define MAX_WAS_NOT_DEFINED
 #define MAX(a, b)                                                              \
@@ -363,26 +369,21 @@
  * DOC: PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE
  * The maximum size of a block cipher supported by the implementation.
  *
- * **Warning: Not supported**
- *
  * See also PSA_BLOCK_CIPHER_BLOCK_LENGTH().
  */
-#define PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE /* implementation-defined value */
+#define PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE 16
 
 /**
  * PSA_CIPHER_DECRYPT_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_cipher_decrypt(),
  * for any of the supported key types and cipher algorithms.
  * @input_length: Size of the input in bytes.
  *
- * **Warning: Not supported**
- *
  * If the size of the output buffer is at least this large, it is guaranteed that
  * psa_cipher_decrypt() will not fail due to an insufficient buffer size.
  *
  * See also PSA_CIPHER_DECRYPT_OUTPUT_SIZE().
  */
-#define PSA_CIPHER_DECRYPT_OUTPUT_MAX_SIZE(input_length)                       \
-/* implementation-defined value */
+#define PSA_CIPHER_DECRYPT_OUTPUT_MAX_SIZE(input_length) (input_length)
 
 /**
  * PSA_CIPHER_DECRYPT_OUTPUT_SIZE() - The maximum size of the output of psa_cipher_decrypt(), in
@@ -390,8 +391,6 @@
  * @key_type: A symmetric key type that is compatible with algorithm @alg.
  * @alg: A cipher algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_CIPHER(alg) is true).
  * @input_length: Size of the input in bytes.
- *
- * **Warning: Not supported**
  *
  * If the size of the output buffer is at least this large, it is guaranteed that
  * psa_cipher_decrypt() will not fail due to an insufficient buffer size. Depending on the
@@ -406,14 +405,16 @@
  * does not support.
  */
 #define PSA_CIPHER_DECRYPT_OUTPUT_SIZE(key_type, alg, input_length)            \
-/* implementation-defined value */
+	(PSA_ALG_IS_CIPHER(alg) &&                                             \
+			 ((key_type) & (PSA_KEY_TYPE_CATEGORY_MASK)) ==        \
+				 PSA_KEY_TYPE_CATEGORY_SYMMETRIC ?             \
+		 (input_length) :                                              \
+		 0)
 
 /**
  * PSA_CIPHER_ENCRYPT_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_cipher_encrypt(),
  * for any of the supported key types and cipher algorithms.
  * @input_length: Size of the input in bytes.
- *
- * **Warning: Not supported**
  *
  * If the size of the output buffer is at least this large, it is guaranteed that
  * psa_cipher_encrypt() will not fail due to an insufficient buffer size.
@@ -422,7 +423,12 @@
  *
  */
 #define PSA_CIPHER_ENCRYPT_OUTPUT_MAX_SIZE(input_length)                       \
-/* implementation-defined value */
+	(PSA_ROUND_UP_TO_MULTIPLE(PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE,             \
+				  (input_length) + 1) +                        \
+	 PSA_CIPHER_IV_MAX_SIZE)
+
+size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
+				      psa_algorithm_t alg, size_t input_length);
 
 /**
  * PSA_CIPHER_ENCRYPT_OUTPUT_SIZE() - The maximum size of the output of psa_cipher_encrypt(), in
@@ -430,8 +436,6 @@
  * @key_type: A symmetric key type that is compatible with algorithm @alg.
  * @alg: A cipher algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_CIPHER(alg) is true).
  * @input_length: Size of the input in bytes.
- *
- * **Warning: Not supported**
  *
  * If the size of the output buffer is at least this large, it is guaranteed that
  * psa_cipher_encrypt() will not fail due to an insufficient buffer size. Depending on the
@@ -446,7 +450,7 @@
  * does not support.
  */
 #define PSA_CIPHER_ENCRYPT_OUTPUT_SIZE(key_type, alg, input_length)            \
-/* implementation-defined value */
+	psa_cipher_encrypt_output_size(key_type, alg, input_length)
 
 /**
  * DOC: PSA_CIPHER_FINISH_OUTPUT_MAX_SIZE
@@ -479,14 +483,14 @@
  * does not support.
  */
 #define PSA_CIPHER_FINISH_OUTPUT_SIZE(key_type, alg)                           \
-/* implementation-defined value */
+	/* implementation-defined value */
+
+size_t psa_cipher_iv_length(psa_key_type_t key_type, psa_algorithm_t alg);
 
 /**
  * PSA_CIPHER_IV_LENGTH() - The default IV size for a cipher algorithm, in bytes.
  * @key_type: A symmetric key type that is compatible with algorithm @alg.
  * @alg: A cipher algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_CIPHER(alg) is true).
- *
- * **Warning: Not supported**
  *
  * The IV that is generated as part of a call to psa_cipher_encrypt() is always the default IV
  * length for the algorithm.
@@ -502,17 +506,15 @@
  * incompatible, return 0. An implementation can return either 0 or a correct size for a key type
  * and cipher algorithm that it recognizes, but does not support.
  */
-#define PSA_CIPHER_IV_LENGTH(key_type, alg) /* implementation-defined value */
+#define PSA_CIPHER_IV_LENGTH(key_type, alg) psa_cipher_iv_length(key_type, alg)
 
 /**
  * DOC: PSA_CIPHER_IV_MAX_SIZE
  * The maximum IV size for all supported cipher algorithms, in bytes.
  *
- * **Warning: Not supported**
- *
  * See also PSA_CIPHER_IV_LENGTH().
  */
-#define PSA_CIPHER_IV_MAX_SIZE /* implementation-defined value */
+#define PSA_CIPHER_IV_MAX_SIZE 16
 
 /**
  * PSA_CIPHER_UPDATE_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_cipher_update(),

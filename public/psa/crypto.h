@@ -1242,8 +1242,6 @@ psa_status_t psa_cipher_abort(psa_cipher_operation_t *operation);
  * @output_size: Size of the @output buffer in bytes.
  * @output_length: On success, the number of bytes that make up the output.
  *
- * **Warning: Not supported**
- *
  * This function decrypts a message encrypted with a symmetric cipher.
  *
  * The input to this function must contain the IV followed by the ciphertext, as output by
@@ -1372,8 +1370,6 @@ psa_status_t psa_cipher_decrypt_setup(psa_cipher_operation_t *operation,
  *          ciphertext proper.
  * @output_size: Size of the @output buffer in bytes.
  * @output_length: On success, the number of bytes that make up the output.
- *
- * **Warning: Not supported**
  *
  * This function encrypts a message with a random initialization vector (IV). The length of the IV
  * is PSA_CIPHER_IV_LENGTH(key_type, alg) where key_type is the type of @key. The output of

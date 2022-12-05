@@ -4318,8 +4318,6 @@ static void psa_set_key_usage_flags(psa_key_attributes_t *attributes,
  * @signature_size: Size of the @signature buffer in bytes.
  * @signature_length: On success, the number of bytes that make up the returned signature value.
  *
- * **Warning: Not supported**
- *
  * With most signature mechanisms that follow the hash-and-sign paradigm, the hash input to this
  * function is the hash of the message to sign. The hash algorithm is encoded in the signature
  * algorithm.
@@ -4383,8 +4381,6 @@ psa_status_t psa_sign_hash(psa_key_id_t key, psa_algorithm_t alg,
  * @signature_size: Size of the @signature buffer in bytes.
  * @signature_length: On success, the number of bytes that make up the returned signature value.
  *
- * **Warning: Not supported**
- *
  * **Note**:
  *	To perform a multi-part hash-and-sign signature algorithm, first use a multi-part hash
  *	operation and then pass the resulting hash to psa_sign_hash(). PSA_ALG_GET_HASH(alg) can be
@@ -4440,8 +4436,6 @@ psa_status_t psa_sign_message(psa_key_id_t key, psa_algorithm_t alg,
  * @signature: Buffer containing the signature to verify.
  * @signature_length: Size of the signature buffer in bytes.
  *
- * **Warning: Not supported**
- *
  * With most signature mechanisms that follow the hash-and-sign paradigm, the hash input to this
  * function is the hash of the message to sign. The hash algorithm is encoded in the signature
  * algorithm.
@@ -4494,8 +4488,6 @@ psa_status_t psa_verify_hash(psa_key_id_t key, psa_algorithm_t alg,
  * @input_length: Size of the @input buffer in bytes.
  * @signature: Buffer containing the signature to verify.
  * @signature_length: Size of the @signature buffer in bytes.
- *
- * **Warning: Not supported**
  *
  * **Note**:
  *	To perform a multi-part hash-and-sign signature verification algorithm, first use a

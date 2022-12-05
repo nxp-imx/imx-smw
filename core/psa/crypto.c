@@ -5,6 +5,7 @@
 
 #include "smw_keymgr.h"
 #include "smw_crypto.h"
+#include "smw_keymgr.h"
 
 #include "psa/crypto.h"
 
@@ -16,11 +17,40 @@
 
 #include "common.h"
 #include "util_status.h"
+#include "keymgr.h"
+
+#define CIPHER_ALGO(_id, _name)                                                \
+	{                                                                      \
+		.psa_alg_id = PSA_ALG_##_id, .smw_mode_name = _name            \
+	}
+
+static const struct cipher_algo_info {
+	psa_algorithm_t psa_alg_id;
+	smw_cipher_mode_t smw_mode_name;
+} cipher_algo_info[] = { CIPHER_ALGO(CBC_NO_PADDING, "CBC"),
+			 CIPHER_ALGO(CTR, "CTR"),
+			 CIPHER_ALGO(ECB_NO_PADDING, "ECB"),
+			 CIPHER_ALGO(XTS, "XTS") };
+
+static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)
+{
+	unsigned int i;
+	unsigned int size = ARRAY_SIZE(cipher_algo_info);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (i = 0; i < size; i++) {
+		if (cipher_algo_info[i].psa_alg_id == alg)
+			return cipher_algo_info[i].smw_mode_name;
+	}
+
+	return NULL;
+}
 
 #define HASH_ALGO(_id, _name, _length, _block_size)                            \
 	{                                                                      \
-		.psa_alg_id = _id, .smw_alg_name = _name, .length = _length,   \
-		.block_size = _block_size                                      \
+		.psa_alg_id = PSA_ALG_##_id, .smw_alg_name = _name,            \
+		.length = _length, .block_size = _block_size                   \
 	}
 
 static const struct hash_algo_info {
@@ -28,13 +58,13 @@ static const struct hash_algo_info {
 	smw_hash_algo_t smw_alg_name;
 	size_t length;
 	size_t block_size;
-} hash_algo_info[] = { HASH_ALGO(PSA_ALG_MD5, "MD5", 16, 64),
-		       HASH_ALGO(PSA_ALG_SHA_1, "SHA1", 20, 64),
-		       HASH_ALGO(PSA_ALG_SHA_224, "SHA224", 28, 64),
-		       HASH_ALGO(PSA_ALG_SHA_256, "SHA256", 32, 64),
-		       HASH_ALGO(PSA_ALG_SHA_384, "SHA384", 48, 128),
-		       HASH_ALGO(PSA_ALG_SHA_512, "SHA512", 64, 128),
-		       HASH_ALGO(PSA_ALG_SM3, "SM3", 32, 64) };
+} hash_algo_info[] = { HASH_ALGO(MD5, "MD5", 16, 64),
+		       HASH_ALGO(SHA_1, "SHA1", 20, 64),
+		       HASH_ALGO(SHA_224, "SHA224", 28, 64),
+		       HASH_ALGO(SHA_256, "SHA256", 32, 64),
+		       HASH_ALGO(SHA_384, "SHA384", 48, 128),
+		       HASH_ALGO(SHA_512, "SHA512", 64, 128),
+		       HASH_ALGO(SM3, "SM3", 32, 64) };
 
 static const struct hash_algo_info *get_hash_algo_info(psa_algorithm_t alg)
 {
@@ -61,6 +91,33 @@ static smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
 		return NULL;
 
 	return info->smw_alg_name;
+}
+
+__export size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
+					       psa_algorithm_t alg,
+					       size_t input_length)
+{
+	if (PSA_ALG_IS_CIPHER(alg))
+		return input_length + psa_cipher_iv_length(key_type, alg);
+
+	return 0;
+}
+
+__export size_t psa_cipher_iv_length(psa_key_type_t key_type,
+				     psa_algorithm_t alg)
+{
+	size_t iv_length = PSA_BLOCK_CIPHER_BLOCK_LENGTH(key_type);
+
+	if (iv_length > 1 &&
+	    (alg == PSA_ALG_CTR || alg == PSA_ALG_CFB || alg == PSA_ALG_OFB ||
+	     alg == PSA_ALG_XTS || alg == PSA_ALG_CBC_NO_PADDING ||
+	     alg == PSA_ALG_CBC_PKCS7))
+		return iv_length;
+	else if (key_type == PSA_KEY_TYPE_CHACHA20 &&
+		 alg == PSA_ALG_STREAM_CIPHER)
+		return 12;
+
+	return 0;
 }
 
 __export size_t psa_hash_block_length(psa_algorithm_t alg)
@@ -367,23 +424,139 @@ __export psa_status_t psa_cipher_abort(psa_cipher_operation_t *operation)
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
+static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
+				    const uint8_t *input, size_t input_length,
+				    uint8_t *output, size_t output_size,
+				    size_t *output_length,
+				    const char *operation_name,
+				    struct smw_key_descriptor *key_descriptor,
+				    struct smw_cipher_args *args)
+{
+	psa_status_t psa_status = PSA_SUCCESS;
+	enum smw_status_code status;
+	struct smw_cipher_init_args *init = &args->init;
+	struct smw_cipher_data_args *data = &args->data;
+	psa_key_type_t key_type = 0;
+	unsigned char *iv = NULL;
+
+	if (!PSA_ALG_IS_CIPHER(alg) || !input || !input_length || !output ||
+	    !output_size || !output_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	key_descriptor->id = key;
+
+	status = smw_get_key_type_name(key_descriptor);
+	if (status != SMW_STATUS_OK)
+		return util_smw_to_psa_status(status);
+
+	key_type = get_psa_key_type(key_descriptor->type_name);
+	if (key_type == PSA_KEY_TYPE_NONE)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	if ((alg == PSA_ALG_CBC_NO_PADDING || alg == PSA_ALG_ECB_NO_PADDING) &&
+	    input_length % PSA_BLOCK_CIPHER_BLOCK_LENGTH(key_type))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	init->mode_name = get_cipher_mode_name(alg);
+	if (!init->mode_name)
+		return PSA_ERROR_NOT_SUPPORTED;
+
+	init->iv_length = PSA_CIPHER_IV_LENGTH(key_type, alg);
+
+	if (!SMW_UTILS_STRCMP(operation_name, "ENCRYPT")) {
+		if (output_size <= init->iv_length)
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		if (init->iv_length) {
+			iv = SMW_UTILS_MALLOC(init->iv_length);
+			if (!iv)
+				return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+			psa_status = psa_generate_random(iv, init->iv_length);
+			if (psa_status != PSA_SUCCESS)
+				goto end;
+		}
+		init->iv = iv;
+
+		data->input = (unsigned char *)input;
+		data->input_length = input_length;
+
+		data->output = output + init->iv_length;
+		data->output_length = output_size - init->iv_length;
+	} else if (!SMW_UTILS_STRCMP(operation_name, "DECRYPT")) {
+		if (input_length < init->iv_length)
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		init->iv = (unsigned char *)input;
+
+		data->input = (unsigned char *)input + init->iv_length;
+		data->input_length = input_length - init->iv_length;
+
+		data->output = output;
+		data->output_length = output_size;
+
+		if (!data->input_length)
+			return PSA_SUCCESS;
+	} else {
+		return PSA_ERROR_INVALID_ARGUMENT;
+	}
+
+	init->nb_keys = 1;
+	init->keys_desc =
+		SMW_UTILS_MALLOC(init->nb_keys * sizeof(init->keys_desc[0]));
+	if (!init->keys_desc) {
+		psa_status = PSA_ERROR_INSUFFICIENT_MEMORY;
+		goto end;
+	}
+
+	init->keys_desc[0] = key_descriptor;
+
+	init->operation_name = operation_name;
+
+end:
+	if (psa_status != PSA_SUCCESS)
+		if (iv)
+			SMW_UTILS_FREE(iv);
+
+	return psa_status;
+}
+
 __export psa_status_t psa_cipher_decrypt(psa_key_id_t key, psa_algorithm_t alg,
 					 const uint8_t *input,
 					 size_t input_length, uint8_t *output,
 					 size_t output_size,
 					 size_t *output_length)
 {
-	(void)key;
-	(void)alg;
-	(void)input;
-	(void)input_length;
-	(void)output;
-	(void)output_size;
-	(void)output_length;
+	psa_status_t psa_status;
+	struct smw_cipher_args args = { 0 };
+	struct smw_key_descriptor key_descriptor = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	psa_status = set_cipher_args(key, alg, input, input_length, output,
+				     output_size, output_length, "DECRYPT",
+				     &key_descriptor, &args);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	if (!args.data.input_length) {
+		*output_length = 0;
+		return PSA_SUCCESS;
+	}
+
+	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_cipher,
+				  &args, &args.init.subsystem_name);
+
+	if (psa_status == PSA_SUCCESS)
+		*output_length = args.data.output_length;
+
+	if (args.init.keys_desc)
+		SMW_UTILS_FREE(args.init.keys_desc);
+
+	return psa_status;
 }
 
 __export psa_status_t psa_cipher_decrypt_setup(psa_cipher_operation_t *operation,
@@ -405,17 +578,39 @@ __export psa_status_t psa_cipher_encrypt(psa_key_id_t key, psa_algorithm_t alg,
 					 size_t output_size,
 					 size_t *output_length)
 {
-	(void)key;
-	(void)alg;
-	(void)input;
-	(void)input_length;
-	(void)output;
-	(void)output_size;
-	(void)output_length;
+	psa_status_t psa_status;
+	struct smw_cipher_args args = { 0 };
+	struct smw_key_descriptor key_descriptor = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	psa_status = set_cipher_args(key, alg, input, input_length, output,
+				     output_size, output_length, "ENCRYPT",
+				     &key_descriptor, &args);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_cipher,
+				  &args, &args.init.subsystem_name);
+
+	if (psa_status == PSA_SUCCESS) {
+		*output_length = args.data.output_length + args.init.iv_length;
+		if (args.init.iv_length)
+			SMW_UTILS_MEMCPY(output, args.init.iv,
+					 args.init.iv_length);
+	}
+
+end:
+	if (args.init.iv)
+		SMW_UTILS_FREE(args.init.iv);
+
+	if (args.init.keys_desc)
+		SMW_UTILS_FREE(args.init.keys_desc);
+
+	return psa_status;
 }
 
 __export psa_status_t psa_cipher_encrypt_setup(psa_cipher_operation_t *operation,

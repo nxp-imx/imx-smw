@@ -11,7 +11,6 @@
 #include "debug.h"
 #include "utils.h"
 #include "tlv.h"
-#include "keymgr.h"
 
 #include "asn1.h"
 #include "common.h"
@@ -30,7 +29,8 @@
 static const struct key_type {
 	smw_key_type_t smw_key_type;
 	psa_key_type_t psa_key_type;
-} key_type[] = { KEY_TYPE("AES", AES), KEY_TYPE("SM4", SM4) };
+} key_type[] = { KEY_TYPE("AES", AES), KEY_TYPE("DES", DES),
+		 KEY_TYPE("DES3", DES), KEY_TYPE("SM4", SM4) };
 
 #define HMAC_HASH(_smw, _psa)                                                  \
 	{                                                                      \
@@ -341,6 +341,23 @@ static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family,
 	}
 
 	return NULL;
+}
+
+psa_key_type_t get_psa_key_type(smw_key_type_t smw_key_type)
+{
+	unsigned int i;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (i = 0; i < ARRAY_SIZE(key_type); i++) {
+		if (!SMW_UTILS_STRCMP(key_type[i].smw_key_type, smw_key_type)) {
+			SMW_DBG_PRINTF(DEBUG, "Key type name: %s\n",
+				       key_type[i].smw_key_type);
+			return key_type[i].psa_key_type;
+		}
+	}
+
+	return PSA_KEY_TYPE_NONE;
 }
 
 static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,

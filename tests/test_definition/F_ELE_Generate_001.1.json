@@ -36,6 +36,6 @@
 	},
 	"subtest 3": {
 		"command": "SAVE_KEY_IDS",
-		"filepath": "/usr/share/smw/tests/F_ELE_Generate_002_ids.json"
+		"filepath": "/usr/share/smw/tests/F_ELE_Generate_001_ids.json"
 	}
 }

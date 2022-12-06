@@ -1,7 +1,7 @@
 {
 	"subtest 1": {
 		"command": "RESTORE_KEY_IDS",
-		"filepath": "/usr/share/smw/tests/F_ELE_Generate_002_ids.json"
+		"filepath": "/usr/share/smw/tests/F_ELE_Generate_001_ids.json"
 	},
 	"subtest 2": {
 		"command": "EXPORT_PUBLIC",

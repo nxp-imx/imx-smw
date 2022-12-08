@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "debug.h"
@@ -101,7 +101,10 @@ static int permitted_algo_length(hsm_permitted_algo_t *algo,
 	return true;
 }
 
-#define PERMITTED_ALGO_HMAC_ANY_HASH (PERMITTED_ALGO_HMAC_SHA256 | 0xFF)
+#define PERMITTED_ALGO_HMAC_ANY_HASH		   (PERMITTED_ALGO_HMAC_SHA256 | 0xFF)
+#define PERMITTED_ALGO_ECDSA_ANY_HASH		   (PERMITTED_ALGO_ECDSA_SHA256 | 0xFF)
+#define PERMITTED_ALGO_RSA_PKCS1_V15_ANY_HASH	   (0x060002FF)
+#define PERMITTED_ALGO_RSA_PKCS1_PSS_MGF1_ANY_HASH (0x060003FF)
 
 #define PERM_ALGO_PARAM(_name, _shift, _mask, _min_bit, _encode)               \
 	{                                                                      \
@@ -147,7 +150,8 @@ static const struct {
 	PERM_ALGO(CCM, CCM, NULL),
 	PERM_ALGO(RSA_PKCS1V15, RSA_PKCS1_V15_ANY_HASH, perm_hash_algo),
 	PERM_ALGO(RSA_PSS, RSA_PKCS1_PSS_MGF1_ANY_HASH, perm_hash_algo),
-	PERM_ALGO(ECDSA, ECDSA_ANY_HASH, perm_hash_algo)
+	PERM_ALGO(ECDSA, ECDSA_ANY_HASH, perm_hash_algo),
+	PERM_ALGO(ALL_AEAD, ALL_AEAD, NULL)
 };
 
 static int convert_algo_param(hsm_permitted_algo_t *algo,

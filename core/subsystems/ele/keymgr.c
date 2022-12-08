@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "smw_status.h"
@@ -29,46 +29,46 @@ static const struct ele_key_def {
 } ele_key_def_list[] = {
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 	  .security_size = 224,
-	  .ele_key_type = HSM_KEY_TYPE_ECDSA_NIST_P224 },
+	  .ele_key_type = HSM_KEY_TYPE_ECC_NIST },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 	  .security_size = 256,
-	  .ele_key_type = HSM_KEY_TYPE_ECDSA_NIST_P256 },
+	  .ele_key_type = HSM_KEY_TYPE_ECC_NIST },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 	  .security_size = 384,
-	  .ele_key_type = HSM_KEY_TYPE_ECDSA_NIST_P384 },
+	  .ele_key_type = HSM_KEY_TYPE_ECC_NIST },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 	  .security_size = 521,
-	  .ele_key_type = HSM_KEY_TYPE_ECDSA_NIST_P521 },
+	  .ele_key_type = HSM_KEY_TYPE_ECC_NIST },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
 	  .security_size = 224,
-	  .ele_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_224 },
+	  .ele_key_type = HSM_KEY_TYPE_ECC_BP_R1 },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
 	  .security_size = 256,
-	  .ele_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_256 },
+	  .ele_key_type = HSM_KEY_TYPE_ECC_BP_R1 },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
 	  .security_size = 384,
-	  .ele_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_384 },
+	  .ele_key_type = HSM_KEY_TYPE_ECC_BP_R1 },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 	  .security_size = 128,
-	  .ele_key_type = HSM_KEY_TYPE_AES_128 },
+	  .ele_key_type = HSM_KEY_TYPE_AES },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 	  .security_size = 192,
-	  .ele_key_type = HSM_KEY_TYPE_AES_192 },
+	  .ele_key_type = HSM_KEY_TYPE_AES },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 	  .security_size = 256,
-	  .ele_key_type = HSM_KEY_TYPE_AES_256 },
+	  .ele_key_type = HSM_KEY_TYPE_AES },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224,
 	  .security_size = 224,
-	  .ele_key_type = HSM_KEY_TYPE_HMAC_224 },
+	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
 	  .security_size = 256,
-	  .ele_key_type = HSM_KEY_TYPE_HMAC_256 },
+	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
 	  .security_size = 384,
-	  .ele_key_type = HSM_KEY_TYPE_HMAC_384 },
+	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512,
 	  .security_size = 512,
-	  .ele_key_type = HSM_KEY_TYPE_HMAC_512 },
+	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 };
 
 static int get_key_definition(enum smw_config_key_type_id key_type_id,
@@ -195,10 +195,10 @@ static int generate_key(struct hdl *hdl, void *args)
 	}
 
 	if (key_args->key_attributes.persistent_storage) {
-		op_args.key_lifetime = HSM_HW_INTERN_STORAGE_PERSISTENT;
+		op_args.key_lifetime = HSM_SE_INTERN_STORAGE_PERSISTENT;
 		op_args.key_group = PERSISTENT_KEY_GROUP;
 	} else {
-		op_args.key_lifetime = HSM_HW_INTERN_STORAGE_VOLATILE;
+		op_args.key_lifetime = HSM_SE_INTERN_STORAGE_VOLATILE;
 		op_args.key_group = TRANSIENT_KEY_GROUP;
 	}
 

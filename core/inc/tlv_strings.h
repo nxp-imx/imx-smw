@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __TLV_STRINGS_H__
@@ -27,6 +27,7 @@
 #define MIN_LENGTH_STR	   "MIN_LENGTH"
 
 #define ANY_STR			    "ANY"
+#define ALL_AEAD_STR		    "ALL_AEAD"
 #define ALL_CIPHER_STR		    "ALL_CIPHER"
 #define HMAC_STR		    "HMAC"
 #define CBC_MAC_STR		    "CBC_MAC"

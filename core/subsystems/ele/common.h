@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __COMMON_H__
@@ -145,17 +145,16 @@ int ele_derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args);
 int ele_convert_err(hsm_err_t err);
 
 /**
- * ele_set_key_type() - Set the ELE key type
+ * ele_set_pubkey_type() - Set the ELE public key type
  * @key_type_id: SMW Key type id
- * @security_size: Key security size
  * @ele_type: ELE key type corresponding
  *
  * Return:
  * SMW_STATUS_OK                       - Success
  * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Key type not supported
  */
-int ele_set_key_type(enum smw_config_key_type_id key_type_id,
-		     unsigned short security_size, hsm_key_type_t *ele_type);
+int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
+			hsm_pubkey_type_t *ele_type);
 
 /**
  * ele_set_key_policy() - Convert the user key policy to ELE key policy

@@ -18,62 +18,45 @@
 /**
  * struct ele_key_def - ELE Key definition
  * @key_type_id: SMW Key type ID
- * @security_size: Key security size
  * @ele_key_type: ELE Key type ID
- * @ele_perm_alg_def: ELE default permitted algorithm
  */
 static const struct ele_key_def {
 	enum smw_config_key_type_id key_type_id;
-	unsigned int security_size;
 	hsm_key_type_t ele_key_type;
 } ele_key_def_list[] = {
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-	  .security_size = 224,
-	  .ele_key_type = HSM_KEY_TYPE_ECC_NIST },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-	  .security_size = 256,
-	  .ele_key_type = HSM_KEY_TYPE_ECC_NIST },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-	  .security_size = 384,
-	  .ele_key_type = HSM_KEY_TYPE_ECC_NIST },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-	  .security_size = 521,
 	  .ele_key_type = HSM_KEY_TYPE_ECC_NIST },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-	  .security_size = 224,
-	  .ele_key_type = HSM_KEY_TYPE_ECC_BP_R1 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-	  .security_size = 256,
-	  .ele_key_type = HSM_KEY_TYPE_ECC_BP_R1 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-	  .security_size = 384,
 	  .ele_key_type = HSM_KEY_TYPE_ECC_BP_R1 },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-	  .security_size = 128,
-	  .ele_key_type = HSM_KEY_TYPE_AES },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-	  .security_size = 192,
-	  .ele_key_type = HSM_KEY_TYPE_AES },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-	  .security_size = 256,
 	  .ele_key_type = HSM_KEY_TYPE_AES },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224,
-	  .security_size = 224,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
-	  .security_size = 256,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
-	  .security_size = 384,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512,
-	  .security_size = 512,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 };
 
-static int get_key_definition(enum smw_config_key_type_id key_type_id,
-			      unsigned short security_size,
-			      const struct ele_key_def **key_def)
+/**
+ * struct ele_pubkey_def - ELE Pulbic Key definition
+ * @key_type_id: SMW Key type ID
+ * @ele_key_type: ELE Key type ID
+ */
+static const struct ele_pubkey_def {
+	enum smw_config_key_type_id key_type_id;
+	hsm_pubkey_type_t ele_key_type;
+} ele_pubkey_def_list[] = {
+	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
+	  .ele_key_type = HSM_PUBKEY_TYPE_ECC_NIST },
+	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
+	  .ele_key_type = HSM_PUBKEY_TYPE_ECC_BP_R1 },
+};
+
+static int ele_set_key_type(enum smw_config_key_type_id key_type_id,
+			    hsm_key_type_t *ele_type)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
@@ -85,10 +68,7 @@ static int get_key_definition(enum smw_config_key_type_id key_type_id,
 
 	for (i = 0; i < size; i++, key++) {
 		if (key->key_type_id == key_type_id) {
-			if (key->security_size != security_size)
-				continue;
-
-			*key_def = key;
+			*ele_type = key->ele_key_type;
 			status = SMW_STATUS_OK;
 			break;
 		}
@@ -155,9 +135,7 @@ static int generate_key(struct hdl *hdl, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = ele_set_key_type(key_identifier->type_id,
-				  key_identifier->security_size,
-				  &op_args.key_type);
+	status = ele_set_key_type(key_identifier->type_id, &op_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -183,6 +161,7 @@ static int generate_key(struct hdl *hdl, void *args)
 
 	op_args.key_identifier = &key_id;
 	op_args.out_size = out_size;
+	op_args.bit_key_sz = key_identifier->security_size;
 
 	policy_status =
 		ele_set_key_policy(key_attrs->policy, key_attrs->policy_len,
@@ -221,6 +200,7 @@ static int generate_key(struct hdl *hdl, void *args)
 		       "    key identifier: %p\n"
 		       "    key policy\n"
 		       "      - type: 0x%04X\n"
+		       "      - size (bits): %d\n"
 		       "      - group: %d\n"
 		       "      - lifetime: 0x%X\n"
 		       "      - usage: 0x%04X\n"
@@ -230,9 +210,10 @@ static int generate_key(struct hdl *hdl, void *args)
 		       "      - size: %d\n",
 		       __func__, __LINE__, key_mgt_hdl, op_args.flags,
 		       op_args.key_identifier, op_args.key_type,
-		       op_args.key_group, op_args.key_lifetime,
-		       op_args.key_usage, op_args.permitted_algo,
-		       op_args.out_key, op_args.out_size);
+		       op_args.bit_key_sz, op_args.key_group,
+		       op_args.key_lifetime, op_args.key_usage,
+		       op_args.permitted_algo, op_args.out_key,
+		       op_args.out_size);
 
 	err = hsm_generate_key(key_mgt_hdl, &op_args);
 	SMW_DBG_PRINTF(DEBUG, "hsm_generate_key returned %d\n", err);
@@ -371,25 +352,17 @@ static int export_key(struct hdl *hdl, void *args)
 	op_args.out_key = out_key;
 	op_args.out_key_size = out_size;
 
-	status = ele_set_key_type(key_identifier->type_id,
-				  key_identifier->security_size,
-				  &op_args.key_type);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_pub_key_recovery()\n"
 		       "  key_store_hdl: %u\n"
 		       "  op_pub_key_recovery_args_t\n"
 		       "    key identifier: 0x%08X\n"
-		       "    flags: 0x%X\n"
 		       "    Public Key\n"
-		       "      - type: 0x%04X\n"
 		       "      - buffer: %p\n"
 		       "      - size: %d\n",
 		       __func__, __LINE__, hdl->key_store,
-		       op_args.key_identifier, op_args.flags, op_args.key_type,
-		       op_args.out_key, op_args.out_key_size);
+		       op_args.key_identifier, op_args.out_key,
+		       op_args.out_key_size);
 
 	err = hsm_pub_key_recovery(hdl->key_store, &op_args);
 	SMW_DBG_PRINTF(DEBUG, "hsm_pub_key_recovery returned %d\n", err);
@@ -439,7 +412,7 @@ static int delete_key(struct hdl *hdl, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	op_args.key_identifier = &key_desc->identifier.id;
+	op_args.key_identifier = key_desc->identifier.id;
 
 	err = open_key_mgmt_service(hdl, &key_mgt_hdl);
 	if (err != HSM_NO_ERROR) {
@@ -452,10 +425,9 @@ static int delete_key(struct hdl *hdl, void *args)
 		       "  key_management_hdl: %u\n"
 		       "  op_delete_key_args_t\n"
 		       "    key_identifier: 0x%08X\n"
-		       "    flags: 0x%X\n"
-		       "    key_group: %d\n",
-		       __func__, __LINE__, key_mgt_hdl, *op_args.key_identifier,
-		       op_args.flags, op_args.key_group);
+		       "    flags: 0x%X\n",
+		       __func__, __LINE__, key_mgt_hdl, op_args.key_identifier,
+		       op_args.flags);
 
 	err = hsm_delete_key(key_mgt_hdl, &op_args);
 	SMW_DBG_PRINTF(DEBUG, "hsm_delete_key returned %d\n", err);
@@ -472,16 +444,26 @@ end:
 	return status;
 }
 
-int ele_set_key_type(enum smw_config_key_type_id key_type_id,
-		     unsigned short security_size, hsm_key_type_t *ele_type)
+int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
+			hsm_pubkey_type_t *ele_type)
 {
-	int status;
-	const struct ele_key_def *key_def = NULL;
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	status = get_key_definition(key_type_id, security_size, &key_def);
-	if (status == SMW_STATUS_OK)
-		*ele_type = key_def->ele_key_type;
+	unsigned int i;
+	unsigned int size = ARRAY_SIZE(ele_pubkey_def_list);
+	const struct ele_pubkey_def *key = ele_pubkey_def_list;
 
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (i = 0; i < size; i++, key++) {
+		if (key->key_type_id == key_type_id) {
+			*ele_type = key->ele_key_type;
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 

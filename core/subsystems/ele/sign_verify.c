@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "smw_status.h"
@@ -272,10 +272,10 @@ static int verify(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	status =
-		ele_set_key_type(key_type_id, security_size, &op_args.key_type);
+	status = ele_set_pubkey_type(key_type_id, &op_args.pkey_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
+	op_args.key_sz = security_size;
 
 	op_args.key = key_buf;
 	op_args.message = smw_sign_verify_get_msg_buf(verify_args);
@@ -301,6 +301,7 @@ static int verify(struct hdl *hdl, void *args)
 		       "    flags: 0x%X\n"
 		       "    Public Key\n"
 		       "      - type: 0x%04X\n"
+		       "      - security size: %d\n"
 		       "      - buffer: %p\n"
 		       "      - size: %d\n"
 		       "    Message\n"
@@ -310,9 +311,9 @@ static int verify(struct hdl *hdl, void *args)
 		       "      - buffer: %p\n"
 		       "      - size: %d\n",
 		       __func__, __LINE__, op_args.scheme_id, op_args.flags,
-		       op_args.key_type, op_args.key, op_args.key_size,
-		       op_args.message, op_args.message_size, op_args.signature,
-		       op_args.signature_size);
+		       op_args.pkey_type, op_args.key_sz, op_args.key,
+		       op_args.key_size, op_args.message, op_args.message_size,
+		       op_args.signature, op_args.signature_size);
 
 	err = hsm_verify_sign(hdl->session, &op_args, &hsm_verification_status);
 

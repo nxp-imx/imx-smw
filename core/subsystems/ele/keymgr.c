@@ -30,6 +30,8 @@ static const struct ele_key_def {
 	  .ele_key_type = HSM_KEY_TYPE_ECC_BP_R1 },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 	  .ele_key_type = HSM_KEY_TYPE_AES },
+	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC,
+	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC },
 	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,

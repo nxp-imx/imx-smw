@@ -2,7 +2,7 @@
         "subtest 1": {
                 "command": "GENERATE",
                 "subsystem": "ELE",
-                "key_type": "HMAC_SHA256",
+                "key_type": "HMAC",
                 "security_size": 256,
                 "key_policy": {
                         "sign_message": [
@@ -17,7 +17,7 @@
         "subtest 2": {
                 "command": "GENERATE",
                 "subsystem": "ELE",
-                "key_type": "HMAC_SHA384",
+                "key_type": "HMAC",
                 "security_size": 384,
                 "key_policy": {
                         "sign_message": [

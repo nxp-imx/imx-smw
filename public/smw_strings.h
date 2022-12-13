@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #ifndef __SMW_STRINGS_H__
@@ -27,6 +27,7 @@ typedef smw_string_t smw_subsystem_t;
  *	- DES3
  *	- DSA_SM2_FP
  *	- SM4
+ *	- HMAC
  *	- HMAC_MD5
  *	- HMAC_SHA1
  *	- HMAC_SHA224

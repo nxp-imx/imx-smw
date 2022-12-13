@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include "smw_status.h"
@@ -885,6 +885,7 @@ int smw_keymgr_get_buffers_lengths(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_DES:
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
@@ -966,6 +967,7 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 	case SMW_CONFIG_KEY_TYPE_ID_DES:
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:

@@ -41,27 +41,32 @@ optee_plat=
 opt_seco=0
 opt_ele=0
 case ${platform} in
-    imx8qxpc0mek)
-        optee_plat="imx-mx8qxpmek"
-        opt_seco=1
-	;;
+  imx93evk)
+    optee_plat="imx-mx93evk"
+    opt_ele=1
+    ;;
 
-    imx8ulpevk)
-        optee_plat="imx-mx8ulpevk"
-        opt_ele=1
-	;;
+  imx8qxpc0mek)
+    optee_plat="imx-mx8qxpmek"
+    opt_seco=1
+    ;;
 
-    imx8mmevk)
-        optee_plat="imx-mx8mmevk"
-	;;
+  imx8ulpevk)
+    optee_plat="imx-mx8ulpevk"
+    opt_ele=1
+    ;;
 
-    imx7dsabresd)
-        optee_plat="imx-mx7dsabresd"
-	;;
+  imx8mmevk)
+    optee_plat="imx-mx8mmevk"
+    ;;
 
-    *)
-	echo "ERROR Unknown plaform: \"${platform}\""
-        ;;
+  imx7dsabresd)
+    optee_plat="imx-mx7dsabresd"
+    ;;
+
+  *)
+    echo "ERROR Unknown plaform: \"${platform}\""
+    ;;
 esac
 
 optee_plat="platform=${optee_plat}"

@@ -62,6 +62,22 @@ enum smw_config_hmac_algo_id {
 	SMW_CONFIG_HMAC_ALGO_ID_INVALID
 };
 
+enum smw_config_mac_algo_id {
+	SMW_CONFIG_MAC_ALGO_ID_CMAC,
+	SMW_CONFIG_MAC_ALGO_ID_CMAC_TRUNCATED,
+	SMW_CONFIG_MAC_ALGO_ID_HMAC,
+	SMW_CONFIG_MAC_ALGO_ID_HMAC_TRUNCATED,
+	SMW_CONFIG_MAC_ALGO_ID_NB,
+	SMW_CONFIG_MAC_ALGO_ID_INVALID
+};
+
+enum smw_config_mac_op_type_id {
+	SMW_CONFIG_MAC_OP_ID_COMPUTE,
+	SMW_CONFIG_MAC_OP_ID_VERIFY,
+	SMW_CONFIG_MAC_OP_ID_NB,
+	SMW_CONFIG_MAC_OP_ID_INVALID
+};
+
 enum smw_config_sign_type_id {
 	SMW_CONFIG_SIGN_TYPE_ID_DEFAULT,
 	SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PKCS1_V1_5,
@@ -344,6 +360,18 @@ int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id);
 int smw_config_get_tls_label_id(const char *name,
 				enum smw_config_tls_finish_label_id *id);
 
+/**
+ * smw_config_get_mac_algo_id() - Get MAC algo ID associated to a name.
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * This function gets the MAC algo ID associated to a name.
+ *
+ * Return:
+ * error code.
+ */
+int smw_config_get_mac_algo_id(const char *name,
+			       enum smw_config_mac_algo_id *id);
 /**
  * smw_config_get_psa_config() - Get the PSA configuration.
  * @config: PSA configuration.

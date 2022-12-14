@@ -14,6 +14,7 @@ target_sources(config PRIVATE
                $<$<BOOL:${ENABLE_HMAC}>:hmac.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
                $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
+               $<$<BOOL:${ENABLE_MAC}>:mac.c>
                $<$<BOOL:${ENABLE_PSA_DEFAULT_ALT}>:parser_psa_alt.c>)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
 target_sources(config PRIVATE
@@ -23,7 +24,8 @@ target_sources(config PRIVATE
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify_debug.c>
                $<$<BOOL:${ENABLE_HMAC}>:hmac_debug.c>
                $<$<BOOL:${ENABLE_RNG}>:rng_debug.c>
-               $<$<BOOL:${ENABLE_CIPHER}>:cipher_debug.c>)
+               $<$<BOOL:${ENABLE_CIPHER}>:cipher_debug.c>
+               $<$<BOOL:${ENABLE_MAC}>:mac_debug.c>)
 endif()
 target_include_directories(config PRIVATE ${INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 

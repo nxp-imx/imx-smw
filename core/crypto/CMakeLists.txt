@@ -22,6 +22,10 @@ add_operation(CIPHER)
 add_operation(CIPHER_MULTI_PART)
 endif()
 
+if(ENABLE_MAC)
+add_operation(MAC)
+endif()
+
 #
 # If at least one of the operation that supports MULTI_PART is enabled, context
 # features are enabled

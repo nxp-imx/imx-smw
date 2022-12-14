@@ -1,0 +1,105 @@
+{
+	"subtest 1": {
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_type": "AES",
+		"key_policy": {
+			"sign_message": []
+		},
+		"security_size": 256,
+		"priv_key": [
+			"603deb1015ca71be2b73aef0857d7781",
+			"1f352c073b6108d72d9810a30914dff4"
+		],
+		"key_id": 0
+	},
+	"subtest 2": { // Get the MAC size - Output buffer is NULL
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"depends": 1,
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 3": { // Buffer too short
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": [
+			15,
+			"28a7023f452e8f82bd4bf28d8c37c35c"
+		],
+		"depends": 1,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 4": {
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": 16,
+		"mac": [
+			"28a7023f452e8f82bd4bf28d8c37c35c"
+		],
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": 0,
+		"output": 16,
+		"mac": [
+			"028962f61b7bf89efc6b551f4667d983"
+		],
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "MAC_VERIFY",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": 16,
+		"mac": [
+			"28a7023f452e8f82bd4bf28d8c37c35c"
+		],
+		"depends": 1
+	},
+	"subtest 7": {
+		"command": "MAC_VERIFY",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": 0,
+		"output": 16,
+		"mac": [
+			"028962f61b7bf89efc6b551f4667d983"
+		],
+		"depends": 1
+	},
+	"subtest 8": {
+		"command": "MAC_VERIFY",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": 0,
+		"output": 16,
+		"mac": [
+			"bad962f61b7bf89efc6b551f4667d983"
+		],
+		"result": "SMW_STATUS_SIGNATURE_INVALID",
+		"depends": 1
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	}
+}

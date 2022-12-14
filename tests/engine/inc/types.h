@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __TYPES_H__
@@ -8,6 +8,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include <smw_status.h>
 
@@ -143,6 +144,13 @@ struct subtest_data {
 		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
 		_this->app->signatures;                                        \
+	})
+
+#define list_macs(this)                                                        \
+	({                                                                     \
+		struct subtest_data *_this = (this);                           \
+		assert(_this->app);                                            \
+		_this->app->macs;                                              \
 	})
 
 /**

@@ -63,6 +63,10 @@ VERSION=1;
         CIPHER_MULTI_PART;
         KEY_TYPE_VALUES=AES:DES:DES3;
         MODE_VALUES=CBC:CTR:CTS:ECB:XTS;
+    [SECURITY_OPERATION]
+        MAC;
+        MAC_ALGO_VALUES=CMAC:CMAC_TRUNCATED;
+        KEY_TYPE_VALUES=AES;
 [SECURE_SUBSYSTEM]
     ELE;
     /* No Start/Stop method specified. Default is 1. */

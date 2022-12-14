@@ -1,0 +1,76 @@
+{
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_type": "AES",
+		"security_size": 256,
+		"key_id": 0
+	},
+	"subtest 2": { // Get the MAC size - Output buffer is NULL
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"depends": 1,
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 3": { // Buffer too short
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": [
+			2,
+			"012345"
+		],
+		"depends": 1,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 4": {
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": 16,
+		"mac_id": 1,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": 0,
+		"output": 16,
+		"mac_id": 2,
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "MAC_VERIFY",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"mac_id": 1,
+		"depends": 4
+	},
+	"subtest 7": {
+		"command": "MAC_VERIFY",
+		"algo": "CMAC",
+		"key_id": 0,
+		"input": 0,
+		"mac_id": 2,
+		"depends": 5
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_id": 0,
+		"depends": 1
+	}
+}

@@ -56,6 +56,7 @@ add_executable(${PROJECT_NAME}
                engine/config.c
                engine/hash.c
                engine/hmac.c
+               engine/mac.c
                engine/info.c
                engine/keymgr.c
                engine/keymgr_derive.c
@@ -68,6 +69,7 @@ add_executable(${PROJECT_NAME}
                engine/util_app.c
                engine/util_list.c
                engine/util_key.c
+               engine/util_mac.c
                engine/util_sign.c
                engine/util_tlv.c
                engine/util_context.c

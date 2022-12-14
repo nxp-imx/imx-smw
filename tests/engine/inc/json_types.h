@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __JSON_TYPES_H__
@@ -17,6 +17,7 @@
 #define DIGEST_OBJ	  "digest"
 #define ELE_INFO_OBJ	  "ele_info"
 #define FILEPATH_OBJ	  "filepath"
+#define HASH_OBJ	  "hash"
 #define HSM_INFO_OBJ	  "hsm_info"
 #define INPUT_OBJ	  "input"
 #define IV_OBJ		  "iv"
@@ -26,6 +27,7 @@
 #define KEY_POLICY_OBJ	  "key_policy"
 #define KEY_TYPE_OBJ	  "key_type"
 #define LIB_VERSION_OBJ	  "lib_version"
+#define MAC_ID_OBJ	  "mac_id"
 #define MAC_OBJ		  "mac"
 #define MESS_OBJ	  "message"
 #define MODE_OBJ	  "mode"
@@ -67,9 +69,9 @@
 
 /* List of commands */
 #define CIPHER		"CIPHER"
+#define CIPHER_FINAL	"CIPHER_FINAL"
 #define CIPHER_INIT	"CIPHER_INIT"
 #define CIPHER_UPDATE	"CIPHER_UPDATE"
-#define CIPHER_FINAL	"CIPHER_FINAL"
 #define CONFIG		"CONFIG"
 #define CONFIG_LOAD	"CONFIG_LOAD"
 #define CONFIG_UNLOAD	"CONFIG_UNLOAD"
@@ -84,6 +86,9 @@
 #define HASH		"HASH"
 #define HMAC		"HMAC"
 #define IMPORT		"IMPORT"
+#define MAC		"MAC"
+#define MAC_COMPUTE	"MAC_COMPUTE"
+#define MAC_VERIFY	"MAC_VERIFY"
 #define OP_CTX		"OP_CONTEXT"
 #define OP_CTX_CANCEL	"OP_CONTEXT_CANCEL"
 #define OP_CTX_COPY	"OP_CONTEXT_COPY"

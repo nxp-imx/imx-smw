@@ -34,3 +34,5 @@ VERSION=1;
         CIPHER;
         KEY_TYPE_VALUES=AES;
         MODE_VALUES=CBC:ECB;
+    [SECURITY_OPERATION]
+        MAC;

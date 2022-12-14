@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 #ifndef __UTIL_APP_H__
 #define __UTIL_APP_H__
@@ -20,6 +20,7 @@
  * @op_contexts:     Operation context list
  * @ciphers:         Cipher to verify list
  * @signatures:      Signatures to verify list
+ * @macs:            MACs to verify list
  * @threads:         Application threads list
  * @semaphores:      Semaphores list
  * @is_multithread:  Application is multithread
@@ -38,6 +39,7 @@ struct app_data {
 	struct llist *op_contexts;
 	struct llist *ciphers;
 	struct llist *signatures;
+	struct llist *macs;
 	struct llist *threads;
 	struct llist *semaphores;
 	int is_multithread;

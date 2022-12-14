@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <stdlib.h>
@@ -12,6 +12,7 @@
 #include "util_context.h"
 #include "util_key.h"
 #include "util_list.h"
+#include "util_mac.h"
 #include "util_sem.h"
 #include "util_sign.h"
 #include "util_thread.h"
@@ -62,6 +63,10 @@ static void util_app_destroy(void *data)
 	err = util_list_clear(app_data->signatures);
 	if (err != ERR_CODE(PASSED))
 		DBG_PRINT("Clear list signatures error %d", err);
+
+	err = util_list_clear(app_data->macs);
+	if (err != ERR_CODE(PASSED))
+		DBG_PRINT("Clear list MACs error %d", err);
 
 	err = util_list_clear(app_data->threads);
 	if (err != ERR_CODE(PASSED))
@@ -131,6 +136,10 @@ static int app_register(struct test_data *test, unsigned int id,
 		goto exit;
 
 	err = util_sign_init(&app_data->signatures);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_mac_init(&app_data->macs);
 	if (err != ERR_CODE(PASSED))
 		goto exit;
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __SMW_CRYPTO_H__
@@ -94,6 +94,37 @@ struct smw_hmac_args {
 	/* Outputs */
 	unsigned char *output;
 	unsigned int output_length;
+};
+
+/**
+ * struct smw_mac_args - MAC arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @key_descriptor: Pointer to a Key descriptor object.
+ *		    See &struct smw_key_descriptor
+ * @algo_name: MAC algorithm name. See &typedef smw_mac_algo_t
+ * @hash_name: Hash algorithm name. See &typedef smw_hash_algo_t
+ * @input: Location of the message to be authenticated
+ * @input_length: Length of the message
+ * @mac: Location where the MAC has to be written or compared
+ * @mac_length: Length of the MAC
+ *
+ * @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is NULL, the default configured Secure Subsystem is used or
+ * the Secure Subsystem handling the key specified.
+ */
+struct smw_mac_args {
+	/* Inputs */
+	unsigned char version;
+	smw_subsystem_t subsystem_name;
+	struct smw_key_descriptor *key_descriptor;
+	smw_mac_algo_t algo_name;
+	smw_hash_algo_t hash_name;
+	unsigned char *input;
+	unsigned int input_length;
+	/* MAC either inputs or outputs */
+	unsigned char *mac;
+	unsigned int mac_length;
 };
 
 /**
@@ -361,6 +392,30 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args);
  *	- Common return codes
  */
 enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args);
+
+/**
+ * smw_mac() - Compute a MAC.
+ * @args: Pointer to the structure that contains the MAC arguments.
+ *
+ * This function computes a Message Authentication Code.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_mac(struct smw_mac_args *args);
+
+/**
+ * smw_mac_verify() - Compute and verify a MAC.
+ * @args: Pointer to the structure that contains the MAC arguments.
+ *
+ * This function computes then verifies a Message Authentication Code.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_mac_verify(struct smw_mac_args *args);
 
 /**
  * smw_cancel_operation() - Cancel on-going cryptographic multi-part operation

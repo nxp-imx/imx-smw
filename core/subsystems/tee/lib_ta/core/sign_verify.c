@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <util.h>
 #include <string.h>
-#include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
 
+#include "common.h"
 #include "tee_subsystem.h"
 #include "keymgr.h"
 #include "hash.h"
@@ -232,6 +232,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	TEE_OperationHandle operation = TEE_HANDLE_NULL;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
 	TEE_Attribute sign_verify_attr = { 0 };
+	TEE_ObjectInfo key_info = { 0 };
 	uint32_t param0_type = TEE_PARAM_TYPE_GET(param_types, 0);
 	uint32_t exp_param3_type;
 	uint32_t mode;
@@ -331,6 +332,16 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 		EMSG("Failed to alloc operation: 0x%x", res);
 		goto err;
 	}
+
+	res = TEE_GetObjectInfo1(key_handle, &key_info);
+	if (res != TEE_SUCCESS) {
+		EMSG("Failed to get key info (0x%x)", res);
+		goto err;
+	}
+
+	res = check_operation_keys_usage(operation, &key_info, 1);
+	if (res)
+		goto err;
 
 	res = TEE_SetOperationKey(operation, key_handle);
 	if (res) {

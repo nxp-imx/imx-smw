@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <tee_client_api.h>
@@ -15,7 +15,7 @@
 #include "smw_status.h"
 
 /**
- * hmac() - Call TA RNG operation.
+ * rng() - Call TA RNG operation.
  * @args: RNG arguments.
  *
  * Return:

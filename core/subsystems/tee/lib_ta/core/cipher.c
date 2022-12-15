@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <util.h>
-#include <tee_internal_api.h>
 
+#include "common.h"
 #include "tee_subsystem.h"
 #include "cipher.h"
 #include "keymgr.h"
@@ -26,7 +26,7 @@ TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_OperationHandle op_handle = TEE_HANDLE_NULL;
-	TEE_ObjectInfo key_info;
+	TEE_ObjectInfo key_info[2] = { 0 };
 	struct key_handle keys_handle[MAX_CIPHER_KEYS] = { 0 };
 	void *iv = NULL;
 	size_t iv_len = 0;
@@ -78,15 +78,15 @@ TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		goto end;
 	}
 
-	res = TEE_GetObjectInfo1(keys_handle[0].handle, &key_info);
+	res = TEE_GetObjectInfo1(keys_handle[0].handle, &key_info[0]);
 	if (res != TEE_SUCCESS) {
 		EMSG("Failed to get key info (0x%x)", res);
 		goto end;
 	}
 
-	max_key_size = key_info.maxKeySize;
+	max_key_size = key_info[0].maxKeySize;
 
-	if (nb_ids == 2) {
+	if (nb_ids == MAX_CIPHER_KEYS) {
 		res = ta_get_key_handle(&keys_handle[1].handle,
 					params[1].value.b,
 					&keys_handle[1].persistent);
@@ -95,13 +95,13 @@ TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 			goto end;
 		}
 
-		res = TEE_GetObjectInfo1(keys_handle[1].handle, &key_info);
+		res = TEE_GetObjectInfo1(keys_handle[1].handle, &key_info[1]);
 		if (res != TEE_SUCCESS) {
 			EMSG("Failed to get key info (0x%x)", res);
 			goto end;
 		}
 
-		max_key_size = MAX(max_key_size, key_info.maxKeySize);
+		max_key_size = MAX(max_key_size, key_info[1].maxKeySize);
 		max_key_size *= 2;
 	}
 
@@ -117,27 +117,29 @@ TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		goto end;
 	}
 
-	/* Set operation key(s) */
+	res = check_operation_keys_usage(op_handle, key_info, nb_ids);
+	if (res)
+		goto end;
+
 	if (nb_ids == 1)
 		res = TEE_SetOperationKey(op_handle, keys_handle[0].handle);
 	else if (nb_ids == 2)
 		res = TEE_SetOperationKey2(op_handle, keys_handle[0].handle,
 					   keys_handle[1].handle);
 
-	if (res != TEE_SUCCESS) {
-		EMSG("Failed to set operation key(s)");
-		TEE_FreeOperation(op_handle);
-		goto end;
+	if (res == TEE_SUCCESS) {
+		/* Cipher initialization */
+		TEE_CipherInit(op_handle, iv, iv_len);
+
+		/* Share operation handle */
+		context = params[3].memref.buffer;
+		context->handle = op_handle;
 	}
 
-	/* Cipher initialization */
-	TEE_CipherInit(op_handle, iv, iv_len);
-
-	/* Share operation handle */
-	context = params[3].memref.buffer;
-	context->handle = op_handle;
-
 end:
+	if (res != TEE_SUCCESS)
+		TEE_FreeOperation(op_handle);
+
 	/* Close persistent key(s) opened */
 	for (i = 0; i < nb_ids; i++) {
 		if (keys_handle[i].handle && keys_handle[i].persistent)

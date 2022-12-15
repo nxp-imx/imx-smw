@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <tee_client_api.h>
@@ -26,7 +26,7 @@
  * @smw_id: HMAC algorithm ID as defined in SMW.
  * @tee_id: HMAC algorithm ID as defined in TEE subsystem.
  */
-struct {
+static const struct {
 	enum smw_config_hmac_algo_id smw_id;
 	enum tee_algorithm_id tee_id;
 } algorithm_ids[] = { ALGORITHM_ID(MD5),    ALGORITHM_ID(SHA1),
@@ -79,7 +79,7 @@ static int hmac(void *args)
 
 	uint32_t param0_type;
 
-	struct hmac_shared_params shared_params = { 0 };
+	struct mac_shared_params shared_params = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

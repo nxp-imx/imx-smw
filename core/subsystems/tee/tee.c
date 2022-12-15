@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <tee_client_api.h>
@@ -64,6 +64,16 @@ __weak bool tee_sign_verify_handle(enum operation_id operation_id, void *args,
 
 __weak bool tee_hmac_handle(enum operation_id operation_id, void *args,
 			    int *status)
+{
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
+__weak bool tee_mac_handle(enum operation_id operation_id, void *args,
+			   int *status)
 {
 	(void)operation_id;
 	(void)args;
@@ -326,6 +336,8 @@ static int execute(enum operation_id op_id, void *args)
 		goto end;
 	else if (tee_hmac_handle(op_id, args, &status))
 		goto end;
+	else if (tee_mac_handle(op_id, args, &status))
+		goto end;
 	else if (tee_rng_handle(op_id, args, &status))
 		goto end;
 
@@ -369,6 +381,7 @@ int convert_tee_result(TEEC_Result result)
 		break;
 
 	case TEE_ERROR_SIGNATURE_INVALID:
+	case TEE_ERROR_MAC_INVALID:
 		status = SMW_STATUS_SIGNATURE_INVALID;
 		break;
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef TEE_SUBSYSTEM_H
@@ -60,6 +60,7 @@ enum tee_algorithm_id {
 	TEE_ALGORITHM_ID_SHA384,
 	TEE_ALGORITHM_ID_SHA512,
 	TEE_ALGORITHM_ID_SM3,
+	TEE_ALGORITHM_ID_CMAC,
 	TEE_ALGORITHM_ID_INVALID
 };
 
@@ -85,8 +86,10 @@ enum tee_signature_type {
 #define CMD_CIPHER_FINAL  11
 #define CMD_CANCEL_OP	  12
 #define CMD_COPY_CTX	  13
+#define CMD_MAC_COMPUTE	  14
+#define CMD_MAC_VERIFY	  15
 
-struct hmac_shared_params {
+struct mac_shared_params {
 	enum tee_key_type tee_key_type;
 	enum tee_algorithm_id tee_algorithm_id;
 	unsigned int security_size;

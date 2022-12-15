@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <tee_internal_api.h>
@@ -11,7 +11,7 @@
 #include "keymgr.h"
 #include "hash.h"
 #include "sign_verify.h"
-#include "hmac.h"
+#include "mac.h"
 #include "rng.h"
 #include "cipher.h"
 #include "operation_context.h"
@@ -63,7 +63,12 @@ TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 		break;
 
 	case CMD_HMAC:
-		res = hmac(param_types, params);
+	case CMD_MAC_COMPUTE:
+		res = mac_compute(param_types, params);
+		break;
+
+	case CMD_MAC_VERIFY:
+		res = mac_verify(param_types, params);
 		break;
 
 	case CMD_RNG:

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <tee_client_api.h>
@@ -1530,7 +1530,8 @@ static int get_shared_key_size(struct smw_keymgr_descriptor *key_descriptor,
 			       enum smw_keymgr_privacy_id privacy,
 			       unsigned int *memory_size)
 {
-	unsigned int size = smw_keymgr_get_modulus_length(key_descriptor);
+	unsigned int pub_size = 0;
+	unsigned int priv_size = 0;
 
 	switch (privacy) {
 	case SMW_KEYMGR_PRIVACY_ID_PAIR:
@@ -1538,29 +1539,39 @@ static int get_shared_key_size(struct smw_keymgr_descriptor *key_descriptor,
 		    !smw_keymgr_get_private_data(key_descriptor))
 			return SMW_STATUS_INVALID_PARAM;
 
-		size += smw_keymgr_get_public_length(key_descriptor);
-		size += smw_keymgr_get_private_length(key_descriptor);
+		pub_size = smw_keymgr_get_public_length(key_descriptor);
+		priv_size = smw_keymgr_get_private_length(key_descriptor);
+
+		if (!pub_size || !priv_size)
+			return SMW_STATUS_INVALID_PARAM;
 		break;
 
 	case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
 		if (!smw_keymgr_get_private_data(key_descriptor))
 			return SMW_STATUS_INVALID_PARAM;
 
-		size += smw_keymgr_get_private_length(key_descriptor);
+		priv_size = smw_keymgr_get_private_length(key_descriptor);
+		if (!priv_size)
+			return SMW_STATUS_INVALID_PARAM;
+
 		break;
 
 	case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
 		if (!smw_keymgr_get_public_data(key_descriptor))
 			return SMW_STATUS_INVALID_PARAM;
 
-		size += smw_keymgr_get_public_length(key_descriptor);
+		pub_size = smw_keymgr_get_public_length(key_descriptor);
+		if (!pub_size)
+			return SMW_STATUS_INVALID_PARAM;
+
 		break;
 
 	default:
 		return SMW_STATUS_INVALID_PARAM;
 	}
 
-	*memory_size = size;
+	*memory_size = smw_keymgr_get_modulus_length(key_descriptor) +
+		       pub_size + priv_size;
 
 	return SMW_STATUS_OK;
 }
@@ -1580,60 +1591,59 @@ static int fill_shared_key_memory(struct smw_keymgr_descriptor *key_descriptor,
 				  TEEC_SharedMemory *shared_key)
 {
 	void *key_buffer = shared_key->buffer;
+	unsigned char *public_data = NULL;
+	unsigned char *private_data = NULL;
+	unsigned int public_length = 0;
+	unsigned int private_length = 0;
 
 	switch (privacy) {
 	case SMW_KEYMGR_PRIVACY_ID_PAIR:
-		if (!smw_keymgr_get_public_data(key_descriptor) ||
-		    !smw_keymgr_get_private_data(key_descriptor))
+		public_data = smw_keymgr_get_public_data(key_descriptor);
+		public_length = smw_keymgr_get_public_length(key_descriptor);
+		private_data = smw_keymgr_get_private_data(key_descriptor);
+		private_length = smw_keymgr_get_private_length(key_descriptor);
+
+		if (!public_data || !public_length || !private_data ||
+		    !private_length)
 			return SMW_STATUS_INVALID_PARAM;
 
-		memcpy(key_buffer, smw_keymgr_get_public_data(key_descriptor),
-		       smw_keymgr_get_public_length(key_descriptor));
-		key_buffer += smw_keymgr_get_public_length(key_descriptor);
-
-		memcpy(key_buffer, smw_keymgr_get_private_data(key_descriptor),
-		       smw_keymgr_get_private_length(key_descriptor));
-		key_buffer += smw_keymgr_get_private_length(key_descriptor);
-
-		if (smw_keymgr_get_modulus(key_descriptor)) {
-			memcpy(key_buffer,
-			       smw_keymgr_get_modulus(key_descriptor),
-			       smw_keymgr_get_modulus_length(key_descriptor));
-		}
 		break;
 
 	case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
-		if (!smw_keymgr_get_private_data(key_descriptor))
+		private_data = smw_keymgr_get_private_data(key_descriptor);
+		private_length = smw_keymgr_get_private_length(key_descriptor);
+
+		if (!private_data || !private_length)
 			return SMW_STATUS_INVALID_PARAM;
 
-		memcpy(key_buffer, smw_keymgr_get_private_data(key_descriptor),
-		       smw_keymgr_get_private_length(key_descriptor));
-		key_buffer += smw_keymgr_get_private_length(key_descriptor);
-
-		if (smw_keymgr_get_modulus(key_descriptor)) {
-			memcpy(key_buffer,
-			       smw_keymgr_get_modulus(key_descriptor),
-			       smw_keymgr_get_modulus_length(key_descriptor));
-		}
 		break;
 
 	case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
-		if (!smw_keymgr_get_public_data(key_descriptor))
+		public_data = smw_keymgr_get_public_data(key_descriptor);
+		public_length = smw_keymgr_get_public_length(key_descriptor);
+		if (!public_data || !public_length)
 			return SMW_STATUS_INVALID_PARAM;
 
-		memcpy(key_buffer, smw_keymgr_get_public_data(key_descriptor),
-		       smw_keymgr_get_public_length(key_descriptor));
-		key_buffer += smw_keymgr_get_public_length(key_descriptor);
-
-		if (smw_keymgr_get_modulus(key_descriptor)) {
-			memcpy(key_buffer,
-			       smw_keymgr_get_modulus(key_descriptor),
-			       smw_keymgr_get_modulus_length(key_descriptor));
-		}
 		break;
 
 	default:
 		return SMW_STATUS_INVALID_PARAM;
+	}
+
+	if (public_data) {
+		SMW_UTILS_MEMCPY(key_buffer, public_data, public_length);
+		key_buffer += public_length;
+	}
+
+	if (private_data) {
+		SMW_UTILS_MEMCPY(key_buffer, private_data, private_length);
+		key_buffer += private_length;
+	}
+
+	if (smw_keymgr_get_modulus(key_descriptor)) {
+		SMW_UTILS_MEMCPY(key_buffer,
+				 smw_keymgr_get_modulus(key_descriptor),
+				 smw_keymgr_get_modulus_length(key_descriptor));
 	}
 
 	return SMW_STATUS_OK;

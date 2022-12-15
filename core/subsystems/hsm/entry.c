@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <seco_nvm.h>
@@ -620,6 +620,17 @@ __weak bool hsm_hmac_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
+__weak bool hsm_mac_handle(struct hdl *hdl, enum operation_id operation_id,
+			   void *args, int *status)
+{
+	(void)hdl;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
 static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -638,8 +649,10 @@ static int execute(enum operation_id operation_id, void *args)
 		goto end;
 	else if (hsm_cipher_handle(hdl, operation_id, args, &status))
 		goto end;
+	else if (hsm_hmac_handle(hdl, operation_id, args, &status))
+		goto end;
 
-	hsm_hmac_handle(hdl, operation_id, args, &status);
+	hsm_mac_handle(hdl, operation_id, args, &status);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

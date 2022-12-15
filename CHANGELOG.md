@@ -42,8 +42,16 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix generation and import of DES keys and DES3 keys.
 * Implement Cipher single part operation
 
-##### 2. Subsystem
+##### 2. SMW APIs
+
+* Implement MAC single part operation (compute and verify).
+* Deprecate HMAC compute operation. Merge with MAC operation.
+
+##### 3. Subsystems
+
 * Remove dependence of ELE on zLib.
+* Add AES CMAC algorithm in HSM, ELE and TEE subsystems.
+* Update TEE TA Library to check key usages preventing TA panic.
 
 #### SMW Tests - _version 2.3_
 

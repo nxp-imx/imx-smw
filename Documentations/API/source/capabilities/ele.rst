@@ -146,6 +146,8 @@ The key permitted algorithm definition:
    +                +----------+--------------------------+-------------------------------------+
    |                | SHA512   | N/A                      |                                     |
    +----------------+----------+--------------------------+-------------------------------------+
+   | CMAC           | N/A      | N/A                      |                                     |
+   +----------------+----------+--------------------------+-------------------------------------+
 
 
 Hash
@@ -236,28 +238,125 @@ Random
 
 Length: 1 to UINT32_MAX
 
-HMAC
-^^^^
+MAC
+^^^
 
-.. table:: ELE Hmac
+.. table:: ELE MAC
    :align: center
    :class: wrap-table
 
-   +--------------+--------------------+
-   | **Key type** | **Hash algorithm** |
-   +==============+====================+
-   | HMAC         | SHA256             |
-   +              +--------------------+
-   |              | SHA384             |
-   +--------------+--------------------+
-
-The key policy must defined:
-
-  - Usage: SIGN_MESSAGE
-  - Algorithm: HMAC with SHA256 or SHA384
+   +--------------+--------------------------+----------------+
+   | **Key type** | **Key security size(s)** | **Algorithm**  |
+   +==============+==========================+================+
+   | AES          | 128 / 192 / 256          | CMAC           |
+   +              +                          +                +
+   |              |                          | CMAC_TRUNCATED |
+   +--------------+--------------------------+----------------+
+   | HMAC         | 224 / 256 / 384 / 512    | HMAC           |
+   +              +                          +                +
+   |              |                          | HMAC_TRUNCATED |
+   +--------------+--------------------------+----------------+
 
 The MAC size can be truncated if the key permitted algorithm limits the
 MAC output length.
+
+Operations supported:
+ - Compute MAC
+ - Verify MAC
+
+Compute MAC operation
+"""""""""""""""""""""
+MAC generation operation can compute either a full MAC length or a truncated
+MAC length. The operation algorithm and key permitted algorithm allows to
+select the MAC length to be generated.
+
+ .. table:: ELE MAC - Compute
+   :align: center
+   :widths: 22 30 13 35
+   :width: 100%
+   :class: wrap-table
+
+   +----------------+----------------+----------+-----------------------------+
+   | **MAC Length** | **Algorithm**  | **Hash** | **Key policy**              |
+   +================+================+==========+=============================+
+   | Full MAC       | CMAC           | N/A      | Usage: SIGN_MESSAGE         |
+   +                +                +          +                             +
+   |                |                |          | Algorithm: CMAC             |
+   +                +----------------+----------+-----------------------------+
+   |                | HMAC           | SHA256   | Usage: SIGN_MESSAGE         |
+   +                +                +          +                             +
+   |                |                | SHA384   | Algorithm: HMAC with        |
+   |                |                |          | HASH=[256/384]              |
+   +----------------+----------------+----------+-----------------------------+
+   | Truncated MAC  | CMAC_TRUNCATED | N/A      | Usage: SIGN_MESSAGE         |
+   +                +                +          +                             +
+   | Minimum length |                |          | Algorithm: CMAC with        |
+   |                |                |          | MIN_LENGTH=[min]            |
+   +                +----------------+----------+-----------------------------+
+   |                | HMAC_TRUNCATED | SHA256   | Usage: SIGN_MESSAGE         |
+   +                +                +          +                             +
+   |                |                | SHA384   | Algorithm: HMAC with        |
+   |                |                |          | HASH=[256/384]              |
+   |                |                |          | and MIN_LENGTH=[min]        |
+   +----------------+----------------+----------+-----------------------------+
+   | Truncated MAC  | CMAC_TRUNCATED | N/A      | Usage: SIGN_MESSAGE         |
+   +                +                +          +                             +
+   | Fix length     |                |          | Algorithm: CMAC with        |
+   |                |                |          | LENGTH=[length]             |
+   +----------------+----------------+----------+-----------------------------+
+   |                | HMAC_TRUNCATED | SHA256   | Usage: SIGN_MESSAGE         |
+   +                +                +          +                             +
+   |                |                | SHA384   | Algorithm: HMAC with        |
+   |                |                |          | HASH=[256/384]              |
+   |                |                |          | and LENGTH=[min]            |
+   +----------------+----------------+----------+-----------------------------+
+
+Verify MAC operation
+""""""""""""""""""""
+MAC verification operation can verify either a full MAC length or a truncated
+MAC length. The operation algorithm and key permitted algorithm allows to
+select the MAC length to be generated.
+
+ .. table:: ELE MAC - Verify
+   :align: center
+   :widths: 22 30 13 35
+   :width: 100%
+   :class: wrap-table
+
+   +----------------+----------------+----------+-----------------------------+
+   | **MAC Length** | **Algorithm**  | **Hash** | **Key policy**              |
+   +================+================+==========+=============================+
+   | Full MAC       | CMAC           | N/A      | Usage: VERIFY_MESSAGE       |
+   +                +                +          +                             +
+   |                |                |          | Algorithm: CMAC             |
+   +                +----------------+----------+-----------------------------+
+   |                | HMAC           | SHA256   | Usage: VERIFY_MESSAGE       |
+   +                +                +          +                             +
+   |                |                | SHA384   | Algorithm: HMAC with        |
+   |                |                |          | HASH=[256/384]              |
+   +----------------+----------------+----------+-----------------------------+
+   | Truncated MAC  | CMAC_TRUNCATED | N/A      | Usage: VERIFY_MESSAGE       |
+   +                +                +          +                             +
+   | Minimum length |                |          | Algorithm: CMAC with        |
+   |                |                |          | MIN_LENGTH=[min]            |
+   +                +----------------+----------+-----------------------------+
+   |                | HMAC_TRUNCATED | SHA256   | Usage: VERIFY_MESSAGE       |
+   +                +                +          +                             +
+   |                |                | SHA384   | Algorithm: HMAC with        |
+   |                |                |          | HASH=[256/384]              |
+   |                |                |          | and MIN_LENGTH=[min]        |
+   +----------------+----------------+----------+-----------------------------+
+   | Truncated MAC  | CMAC_TRUNCATED | N/A      | Usage: VERIFY_MESSAGE       |
+   +                +                +          +                             +
+   | Fix length     |                |          | Algorithm: CMAC with        |
+   |                |                |          | LENGTH=[length]             |
+   +----------------+----------------+----------+-----------------------------+
+   |                | HMAC_TRUNCATED | SHA256   | Usage: VERIFY_MESSAGE       |
+   +                +                +          +                             +
+   |                |                | SHA384   | Algorithm: HMAC with        |
+   |                |                |          | HASH=[256/384]              |
+   |                |                |          | and LENGTH=[min]            |
+   +----------------+----------------+----------+-----------------------------+
 
 Cipher
 ^^^^^^

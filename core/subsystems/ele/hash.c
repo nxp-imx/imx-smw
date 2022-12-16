@@ -17,35 +17,13 @@
 #define HASH_ALGO(_id, _hsm_id, _length)                                       \
 	{                                                                      \
 		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_id,                      \
-		.hsm_hash_algo = HSM_HASH_ALGO_##_hsm_id, .length = _length    \
+		.ele_algo = HSM_HASH_ALGO_##_hsm_id, .length = _length         \
 	}
 
-static const struct hash_algo {
-	enum smw_config_hash_algo_id algo_id;
-	hsm_hash_algo_t hsm_hash_algo;
-	uint32_t length;
-} hash_algos[] = { HASH_ALGO(SHA224, SHA_224, 28),
-		   HASH_ALGO(SHA256, SHA_256, 32),
-		   HASH_ALGO(SHA384, SHA_384, 48),
-		   HASH_ALGO(SHA512, SHA_512, 64) };
-
-static const struct hash_algo *
-get_hash_algo(enum smw_config_hash_algo_id algo_id)
-{
-	const struct hash_algo *hash_algo = NULL;
-	unsigned int i;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	for (i = 0; i < ARRAY_SIZE(hash_algos); i++) {
-		if (hash_algos[i].algo_id == algo_id) {
-			hash_algo = &hash_algos[i];
-			break;
-		}
-	}
-
-	return hash_algo;
-}
+static const struct ele_hash_algo hash_algos[] = {
+	HASH_ALGO(SHA224, SHA_224, 28), HASH_ALGO(SHA256, SHA_256, 32),
+	HASH_ALGO(SHA384, SHA_384, 48), HASH_ALGO(SHA512, SHA_512, 64)
+};
 
 static int hash(struct hdl *hdl, void *args)
 {
@@ -55,11 +33,11 @@ static int hash(struct hdl *hdl, void *args)
 	op_hash_one_go_args_t op_args = { 0 };
 
 	struct smw_crypto_hash_args *hash_args = args;
-	const struct hash_algo *hash_algo = NULL;
+	const struct ele_hash_algo *hash_algo = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	hash_algo = get_hash_algo(hash_args->algo_id);
+	hash_algo = ele_get_hash_algo(hash_args->algo_id);
 	if (!hash_algo)
 		goto end;
 
@@ -67,7 +45,7 @@ static int hash(struct hdl *hdl, void *args)
 	op_args.output = smw_crypto_get_hash_output_data(hash_args);
 	op_args.input_size = smw_crypto_get_hash_input_length(hash_args);
 	op_args.output_size = smw_crypto_get_hash_output_length(hash_args);
-	op_args.algo = hash_algo->hsm_hash_algo;
+	op_args.algo = hash_algo->ele_algo;
 
 	/* Get output length feature */
 	if (!op_args.output) {
@@ -100,6 +78,24 @@ static int hash(struct hdl *hdl, void *args)
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+const struct ele_hash_algo *
+ele_get_hash_algo(enum smw_config_hash_algo_id algo_id)
+{
+	const struct ele_hash_algo *hash_algo = NULL;
+	unsigned int i;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (i = 0; i < ARRAY_SIZE(hash_algos); i++) {
+		if (hash_algos[i].algo_id == algo_id) {
+			hash_algo = &hash_algos[i];
+			break;
+		}
+	}
+
+	return hash_algo;
 }
 
 bool ele_hash_handle(struct hdl *hdl, enum operation_id operation_id,

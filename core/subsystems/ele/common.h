@@ -23,6 +23,23 @@ struct hdl {
 	hsm_hdl_t key_store;
 };
 
+struct ele_hash_algo {
+	enum smw_config_hash_algo_id algo_id;
+	hsm_hash_algo_t ele_algo;
+	uint32_t length;
+};
+
+/**
+ * get_hash_algo() - Get the ELE hash algorithm information
+ * @algo_id: SMW Hash algorithm id.
+ *
+ * Return:
+ * NULL if algorithm not found, otherwise reference to the hash algorithm
+ * information.
+ */
+const struct ele_hash_algo *
+ele_get_hash_algo(enum smw_config_hash_algo_id algo_id);
+
 /**
  * ele_key_handle() - Handle the Key operations.
  * @hdl: Pointer to the ELE handles structure.
@@ -73,6 +90,23 @@ bool ele_hash_handle(struct hdl *hdl, enum operation_id operation_id,
  */
 bool ele_hmac_handle(struct hdl *hdl, enum operation_id operation_id,
 		     void *args, int *status);
+
+/**
+ * ele_mac_handle() - Handle the MAC operation.
+ * @hdl: Pointer to the ELE handles structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the MAC operation.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool ele_mac_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
+		    int *status);
 
 /**
  * ele_sign_verify_handle() - Handle the Sign and Verify operation.

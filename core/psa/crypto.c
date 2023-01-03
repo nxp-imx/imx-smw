@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "smw_keymgr.h"
@@ -19,6 +19,23 @@
 #include "util_status.h"
 #include "keymgr.h"
 
+#define GET_ALGO_INFO(_algo, _array)                                           \
+	({                                                                     \
+		typeof(_array[0]) *_ret = NULL;                                \
+		do {                                                           \
+			typeof(_array[0]) *_elm = (_array);                    \
+			typeof(_algo) _alg = (_algo);                          \
+			while (_elm->psa_alg_id != PSA_ALG_NONE) {             \
+				if ((_elm->psa_alg_id & (_alg)) == (_alg)) {   \
+					_ret = _elm;                           \
+					break;                                 \
+				}                                              \
+				_elm++;                                        \
+			}                                                      \
+		} while (0);                                                   \
+		_ret;                                                          \
+	})
+
 #define CIPHER_ALGO(_id, _name)                                                \
 	{                                                                      \
 		.psa_alg_id = PSA_ALG_##_id, .smw_mode_name = _name            \
@@ -30,19 +47,18 @@ static const struct cipher_algo_info {
 } cipher_algo_info[] = { CIPHER_ALGO(CBC_NO_PADDING, "CBC"),
 			 CIPHER_ALGO(CTR, "CTR"),
 			 CIPHER_ALGO(ECB_NO_PADDING, "ECB"),
-			 CIPHER_ALGO(XTS, "XTS") };
+			 CIPHER_ALGO(XTS, "XTS"), CIPHER_ALGO(NONE, NULL) };
 
 static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)
 {
-	unsigned int i;
-	unsigned int size = ARRAY_SIZE(cipher_algo_info);
+	const struct cipher_algo_info *info;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < size; i++) {
-		if (cipher_algo_info[i].psa_alg_id == alg)
-			return cipher_algo_info[i].smw_mode_name;
-	}
+	info = GET_ALGO_INFO(alg, cipher_algo_info);
+
+	if (info)
+		return info->smw_mode_name;
 
 	return NULL;
 }
@@ -64,21 +80,14 @@ static const struct hash_algo_info {
 		       HASH_ALGO(SHA_256, "SHA256", 32, 64),
 		       HASH_ALGO(SHA_384, "SHA384", 48, 128),
 		       HASH_ALGO(SHA_512, "SHA512", 64, 128),
-		       HASH_ALGO(SM3, "SM3", 32, 64) };
+		       HASH_ALGO(SM3, "SM3", 32, 64),
+		       HASH_ALGO(NONE, NULL, 0, 0) };
 
 static const struct hash_algo_info *get_hash_algo_info(psa_algorithm_t alg)
 {
-	unsigned int i;
-	unsigned int size = ARRAY_SIZE(hash_algo_info);
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < size; i++) {
-		if (hash_algo_info[i].psa_alg_id == alg)
-			return &hash_algo_info[i];
-	}
-
-	return NULL;
+	return GET_ALGO_INFO(alg, hash_algo_info);
 }
 
 static smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
@@ -91,6 +100,33 @@ static smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
 		return NULL;
 
 	return info->smw_alg_name;
+}
+
+static const struct mac_algo_info {
+	psa_algorithm_t psa_alg_id;
+	const smw_mac_algo_t smw_alg_name;
+} mac_algo_info[] = {
+	{ PSA_ALG_HMAC_BASE, "HMAC" },
+	{ PSA_ALG_HMAC_BASE | PSA_ALG_MAC_TRUNCATION_MASK, "HMAC_TRUNCATED" },
+	{ PSA_ALG_CMAC, "CMAC" },
+	{ PSA_ALG_CMAC | PSA_ALG_MAC_TRUNCATION_MASK, "CMAC_TRUNCATED" },
+	{ PSA_ALG_NONE, NULL }
+};
+
+static smw_mac_algo_t get_mac_algo_name(psa_algorithm_t alg)
+{
+	const struct mac_algo_info *info;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	info = GET_ALGO_INFO(alg & ~(PSA_ALG_HASH_MASK |
+				     PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG),
+			     mac_algo_info);
+
+	if (info)
+		return info->smw_alg_name;
+
+	return NULL;
 }
 
 __export size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
@@ -884,17 +920,37 @@ __export psa_status_t psa_mac_compute(psa_key_id_t key, psa_algorithm_t alg,
 				      uint8_t *mac, size_t mac_size,
 				      size_t *mac_length)
 {
-	(void)key;
-	(void)alg;
-	(void)input;
-	(void)input_length;
-	(void)mac;
-	(void)mac_size;
-	(void)mac_length;
+	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
+
+	struct smw_mac_args op_args = { 0 };
+	struct smw_key_descriptor op_key = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	if (!mac_length)
+		return PSA_ERROR_INVALID_SIGNATURE;
+
+	op_key.id = key;
+	op_args.key_descriptor = &op_key;
+	op_args.algo_name = get_mac_algo_name(alg);
+	op_args.hash_name = get_hash_algo_name(PSA_ALG_GET_HASH(alg));
+	op_args.input = (unsigned char *)input;
+	op_args.input_length = input_length;
+	op_args.mac = mac;
+	op_args.mac_length = mac_size;
+
+	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_mac,
+				  &op_args, &op_args.subsystem_name);
+
+	if ((psa_status == PSA_SUCCESS ||
+	     psa_status == PSA_ERROR_BUFFER_TOO_SMALL) &&
+	    mac_length)
+		*mac_length = op_args.mac_length;
+
+	return psa_status;
 }
 
 __export psa_status_t psa_mac_sign_finish(psa_mac_operation_t *operation,
@@ -939,16 +995,33 @@ __export psa_status_t psa_mac_verify(psa_key_id_t key, psa_algorithm_t alg,
 				     const uint8_t *input, size_t input_length,
 				     const uint8_t *mac, size_t mac_length)
 {
-	(void)key;
-	(void)alg;
-	(void)input;
-	(void)input_length;
-	(void)mac;
-	(void)mac_length;
+	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
+
+	struct smw_mac_args op_args = { 0 };
+	struct smw_key_descriptor op_key = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	if (!mac_length)
+		return PSA_ERROR_INVALID_SIGNATURE;
+
+	op_key.id = key;
+	op_args.key_descriptor = &op_key;
+	op_args.algo_name = get_mac_algo_name(alg);
+	op_args.hash_name = get_hash_algo_name(PSA_ALG_GET_HASH(alg));
+	op_args.input = (unsigned char *)input;
+	op_args.input_length = input_length;
+	op_args.mac = (unsigned char *)mac;
+	op_args.mac_length = mac_length;
+
+	psa_status =
+		call_smw_api((enum smw_status_code(*)(void *))smw_mac_verify,
+			     &op_args, &op_args.subsystem_name);
+
+	return psa_status;
 }
 
 __export psa_status_t psa_mac_verify_finish(psa_mac_operation_t *operation,

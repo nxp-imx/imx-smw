@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "smw_keymgr.h"
@@ -46,10 +46,10 @@ static const struct {
 	smw_key_type_t smw_key_type;
 	psa_algorithm_t psa_hash;
 } hmac_hash[] = {
-	HMAC_HASH("HMAC_MD5", MD5),	   HMAC_HASH("HMAC_SHA1", SHA_1),
-	HMAC_HASH("HMAC_SHA224", SHA_224), HMAC_HASH("HMAC_SHA256", SHA_256),
-	HMAC_HASH("HMAC_SHA384", SHA_384), HMAC_HASH("HMAC_SHA512", SHA_512),
-	HMAC_HASH("HMAC_SM3", SM3)
+	HMAC_HASH("HMAC", NONE),	   HMAC_HASH("HMAC_MD5", MD5),
+	HMAC_HASH("HMAC_SHA1", SHA_1),	   HMAC_HASH("HMAC_SHA224", SHA_224),
+	HMAC_HASH("HMAC_SHA256", SHA_256), HMAC_HASH("HMAC_SHA384", SHA_384),
+	HMAC_HASH("HMAC_SHA512", SHA_512), HMAC_HASH("HMAC_SM3", SM3)
 };
 
 #define ECC_KEY_TYPE(_smw, _family)                                            \

@@ -91,10 +91,8 @@ eval "./scripts/smw_build.sh seco export=${export} \
 fi
 
 if [[ ${opt_ele} -eq 1 ]]; then
-eval "./scripts/smw_build.sh zlib export=${export}/usr \
-       	src=../zlib ${arch} ${toolpath}"
 eval "./scripts/smw_build.sh ele export=${export} \
-      src=../secure_enclave zlib=${export}/usr ${arch} ${toolpath}"
+      src=../secure_enclave ${arch} ${toolpath}"
 fi
 
 
@@ -118,7 +116,7 @@ fi
 
 # Enable ELE if supported
 if [[ ${opt_ele} -eq 1 ]]; then
-    conf_opts="${conf_opts} zlib=${export}/usr ele=${export}"
+    conf_opts="${conf_opts} ele=${export}"
 fi
 
 

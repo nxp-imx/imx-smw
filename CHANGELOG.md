@@ -42,6 +42,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix generation and import of DES keys and DES3 keys.
 * Implement Cipher single part operation
 
+##### 2. Subsystem
+* Remove dependence of ELE on zLib.
+
 #### SMW Tests - _version 2.3_
 
 * Add suspend command to switch device in sleep to memory mode (remove dedicated script to run suspend/resume test).

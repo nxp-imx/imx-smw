@@ -3,7 +3,6 @@ if(NOT DEFINED ELE_ROOT)
     return()
 endif()
 
-find_package(ZLIBLight REQUIRED)
 find_package(Ele REQUIRED)
 
 #
@@ -15,8 +14,6 @@ set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:ele> PARENT_SCOPE)
 
 message(STATUS "    ELE  Libraries: ${ELE_LIBRARIES}")
 message(STATUS "    ELE  Headers  : ${ELE_INCLUDE_DIRS}")
-message(STATUS "    ZLIB Library  : ${ZLIB_LIBRARY}")
-message(STATUS "    ZLIB Header   : ${ZLIB_INCLUDE_DIR}")
 
 add_library(ele OBJECT "")
 set_target_properties(ele PROPERTIES C_VISIBILITY_PRESET hidden)
@@ -34,4 +31,4 @@ target_include_directories(ele PRIVATE
                            ${INCLUDE_DIR}
                            ${ELE_INCLUDE_DIRS})
 
-set(EXT_LIBS ${EXT_LIBS} ${ELE_LIBRARIES} ${ZLIB_LIBRARY} PARENT_SCOPE)
+set(EXT_LIBS ${EXT_LIBS} ${ELE_LIBRARIES} PARENT_SCOPE)

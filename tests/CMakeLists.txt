@@ -115,8 +115,7 @@ if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco AND
 endif()
 
 # If ELE subsystem defined, include tests
-if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Ele AND
-   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_ZLIBLight)
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Ele)
     set(ELE_TESTS_ENABLED ON)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/ele_tests.cmake)
 endif()

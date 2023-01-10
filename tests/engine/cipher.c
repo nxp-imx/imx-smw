@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <string.h>
@@ -548,6 +548,10 @@ int cipher(struct subtest_data *subtest)
 
 	subtest->smw_status = smw_cipher(cipher_args);
 	if (subtest->smw_status != SMW_STATUS_OK) {
+		if (subtest->smw_status == SMW_STATUS_OUTPUT_TOO_SHORT)
+			DBG_PRINT("Buffer too short, expected %u",
+				  cipher_args->data.output_length);
+
 		res = ERR_CODE(API_STATUS_NOK);
 		goto end;
 	}

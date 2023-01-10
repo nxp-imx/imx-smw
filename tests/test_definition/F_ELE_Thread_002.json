@@ -19,7 +19,7 @@
 			"subsystem": "ELE",
 			"key_type": "NIST",
 			"key_policy": {
-				"sign_message": [
+				"sign_hash": [
 					[
 						"ECDSA",
 						"HASH=SHA256"
@@ -35,7 +35,7 @@
 			"command": "DELETE",
 			"key_id": 0,
 			"result": "SMW_STATUS_UNKNOWN_ID",
-			"depend": 1
+			"depend": [1, 2]
 		},
 		"subtest 4": {
 			"command": "DELETE",

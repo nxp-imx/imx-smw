@@ -30,7 +30,7 @@
 			]
 		},
 		"security_size": 256,
-		"key_id": 0
+		"key_id": 1
 	},
 	"subtest 2": {
 		"command": "GENERATE",
@@ -63,32 +63,33 @@
 			]
 		},
 		"security_size": 384,
-		"key_id": 1
+		"key_id": 2
 	},
 	"subtest 3": {
 		"command": "SIGN",
 		"subsystem": "ELE",
-		"algo": "SHA256",
 		"message": [
-			"451101250ec6f26652249d59dc974b73",
-			"61d571a8101cdfd36aba3b5854d3ae08",
-			"6b5fdd4597721b66e3c0dc5d8c606d96",
-			"57d0e323283a5217d1f53f2f284f57b8",
-			"5c8a61ac8924711f895c5ed90ef17745",
-			"ed2d728abd22a5f7a13479a462d71b56",
-			"c19a74a40b655c58edfe0a188ad2cf46",
-			"cbf30524f65d423c837dd1ff2bf462ac",
-			"4198007345bb44dbb7b1c861298cdf61",
-			"982a833afc728fae1eda2f87aa2c9480",
-			"858bec"
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
 		],
-		"sign_id": 1,
-		"key_id": 0,
+		"sign_id": 0,
+		"key_id": 1,
 		"depends": 1
 	},
 	"subtest 4": {
 		"command": "VERIFY",
 		"subsystem": "ELE",
+		"message": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"sign_id": 0,
+		"key_id": 1,
+		"depends": 3
+	},
+	"subtest 5": {
+		"command": "SIGN",
+		"subsystem": "ELE",
 		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
@@ -104,10 +105,56 @@
 			"858bec"
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_id": 1,
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"algo": "SHA256",
+		"message": [
+			"451101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8",
+			"5c8a61ac8924711f895c5ed90ef17745",
+			"ed2d728abd22a5f7a13479a462d71b56",
+			"c19a74a40b655c58edfe0a188ad2cf46",
+			"cbf30524f65d423c837dd1ff2bf462ac",
+			"4198007345bb44dbb7b1c861298cdf61",
+			"982a833afc728fae1eda2f87aa2c9480",
+			"858bec"
+		],
+		"sign_id": 1,
+		"key_id": 1,
+		"depends": 5
+	},
+	"subtest 7": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"message": [
+			"0730e184e7795575569f87030260bb8e",
+			"54498e0e5d096b18285e988d245b6f34",
+			"86d1f2447d5f85bcbe59d5689fc49425"
+		],
+		"sign_id": 2,
+		"key_id": 2,
 		"depends": 2
 	},
-	"subtest 5": {
+	"subtest 8": {
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"message": [
+			"0730e184e7795575569f87030260bb8e",
+			"54498e0e5d096b18285e988d245b6f34",
+			"86d1f2447d5f85bcbe59d5689fc49425"
+		],
+		"sign_id": 2,
+		"key_id": 2,
+		"depends": 7
+	},
+
+	"subtest 9": {
 		"command": "SIGN",
 		"subsystem": "ELE",
 		"algo": "SHA384",
@@ -128,11 +175,11 @@
 			"be0db7650cf6c7159bacbe29b3a93c92",
 			"100508"
 		],
-		"sign_id": 2,
-		"key_id": 1,
+		"sign_id": 3,
+		"key_id": 2,
 		"depends": 2
 	},
-	"subtest 6": {
+	"subtest 10": {
 		"command": "VERIFY",
 		"subsystem": "ELE",
 		"algo": "SHA384",
@@ -153,18 +200,40 @@
 			"be0db7650cf6c7159bacbe29b3a93c92",
 			"100508"
 		],
-		"sign_id": 2,
-		"key_id": 1,
-		"depends": 4
+		"sign_id": 3,
+		"key_id": 2,
+		"depends": 9
 	},
-	"subtest 7": {
+	"subtest 11": { // Invalid signature verify
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"algo": "SHA256",
+		"message": [
+			"bad101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8",
+			"5c8a61ac8924711f895c5ed90ef17745",
+			"ed2d728abd22a5f7a13479a462d71b56",
+			"c19a74a40b655c58edfe0a188ad2cf46",
+			"cbf30524f65d423c837dd1ff2bf462ac",
+			"4198007345bb44dbb7b1c861298cdf61",
+			"982a833afc728fae1eda2f87aa2c9480",
+			"858bec"
+		],
+		"sign_id": 1,
+		"key_id": 1,
+		"depends": 5,
+		"result": "SMW_STATUS_SIGNATURE_INVALID"
+	},
+	"subtest 12": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_id": 1,
 		"depends": 1
 	},
-	"subtest 8": {
+	"subtest 13": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_id": 2,
 		"depends": 2
 	}
 }

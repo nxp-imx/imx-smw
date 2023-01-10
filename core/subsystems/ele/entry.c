@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "smw_osal.h"
@@ -301,6 +301,14 @@ int ele_convert_err(hsm_err_t err)
 	case HSM_KEY_STORE_CONFLICT:
 	case HSM_KEY_STORE_AUTH:
 		status = SMW_STATUS_SUBSYSTEM_STORAGE_ERROR;
+		break;
+
+	case HSM_OUT_TOO_SMALL:
+		status = SMW_STATUS_OUTPUT_TOO_SHORT;
+		break;
+
+	case HSM_KEY_NOT_SUPPORTED:
+		status = SMW_STATUS_KEY_INVALID;
 		break;
 
 	default:

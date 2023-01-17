@@ -40,6 +40,7 @@ target_sources(crypto PRIVATE
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
                $<$<BOOL:${ENABLE_HMAC}>:hmac.c>
+               $<$<BOOL:${ENABLE_MAC}>:mac.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
                $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
                $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>)

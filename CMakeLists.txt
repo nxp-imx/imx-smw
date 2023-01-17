@@ -8,6 +8,7 @@ include(CMakeDependentOption)
 if(NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Configs" FORCE)
 endif()
+
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Set default build type Release.")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
@@ -16,10 +17,12 @@ else()
 endif()
 
 option(CODE_COVERAGE "Enable Code Coverage analysis" OFF)
+
 if(CODE_COVERAGE)
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(FATAL_ERROR "Code coverage required build type \"Debug\"")
     endif()
+
     message(STATUS "Code Coverage enabled, force all traces ON")
     set(VERBOSE 4)
 endif()
@@ -32,17 +35,21 @@ if(VERBOSE)
     if(NOT VERBOSE MATCHES "^[0-9]$")
         message(FATAL_ERROR "VERBOSE must be an integer")
     endif()
+
     if(NOT VERBOSE EQUAL 0)
         add_definitions(-DENABLE_TRACE)
     endif()
+
     if(${VERBOSE} GREATER 4)
         set(VERBOSE 4)
     endif()
+
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         if(${VERBOSE} GREATER 2)
             set(VERBOSE 2)
         endif()
     endif()
+
     add_definitions(-DTRACE_LEVEL=${VERBOSE})
     message(STATUS TRACE_LEVEL: ${VERBOSE})
 else()
@@ -78,10 +85,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 #
 # Define tests build and install targets
 # Building SMW and/or PKCS11 tests with make command
-#     "make build_tests"
+# "make build_tests"
 #
 # Installing SMW and/PKCS11 tests with make command
-#     "make install_tests [DESTDIR=dir]"
+# "make install_tests [DESTDIR=dir]"
 #
 add_custom_target(build_tests)
 add_custom_target(install_tests)
@@ -101,3 +108,34 @@ add_subdirectory(pkcs11)
 
 # Include SMW Documentations
 add_subdirectory(Documentations)
+
+if(NOT DISABLE_CMAKE_CONFIG)
+    # Create the SMW Package configuration
+    include(CMakePackageConfigHelpers)
+
+    configure_package_config_file(cmake/NXP_SMWConfig.cmake.in
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/NXP_SMWConfig.cmake
+        INSTALL_DESTINATION cmake)
+
+    write_basic_package_version_file(
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/NXP_SMWConfigVersion.cmake
+        COMPATIBILITY SameMajorVersion)
+
+    install(FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/NXP_SMWConfig.cmake
+        ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/NXP_SMWConfigVersion.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
+
+    export(EXPORT SMWTargets
+        NAMESPACE NXP_SMW::
+        FILE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/NXP_SMWTargets.cmake")
+
+    install(EXPORT SMWTargets
+        NAMESPACE NXP_SMW::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake"
+        FILE "NXP_SMWTargets.cmake")
+
+    install(FILES ${CMAKE_SOURCE_DIR}/cmake/FindSeco.cmake
+                  ${CMAKE_SOURCE_DIR}/cmake/FindEle.cmake
+                  ${CMAKE_SOURCE_DIR}/cmake/FindTeec.cmake
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake")
+endif()

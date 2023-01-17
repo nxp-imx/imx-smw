@@ -137,13 +137,16 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR})
 # Define the library header interface, when the library is included
 # in another target in the same build.
 # Else header files are installed in system include path.
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/public)
+target_include_directories(${PROJECT_NAME}
+	PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/public>
+	       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>)
+
 
 # Add external library dependency as target interface but
 # don't use them to link the target
 target_link_libraries(${PROJECT_NAME} INTERFACE ${EXT_LIBS})
 
-install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ${PROJECT_NAME} EXPORT SMWTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_SOURCE_DIR}/osal/${OS}/config/default_config.txt
         DESTINATION share/smw)
 

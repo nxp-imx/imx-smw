@@ -30,7 +30,8 @@ add_subdirectory(src)
 # in another target in the same build.
 # Else header files are installed in system include path.
 target_include_directories(${PROJECT_NAME}
-	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/import)
+	PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/import>
+	       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>)
 
 #
 # Link with SMW Library
@@ -48,7 +49,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
 
-install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} OPTIONAL)
+install(TARGETS ${PROJECT_NAME} EXPORT SMWTargets
+  DESTINATION ${CMAKE_INSTALL_LIBDIR} OPTIONAL)
 
 # Install library headers interface
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/import/

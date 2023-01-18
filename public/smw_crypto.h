@@ -80,6 +80,10 @@ struct smw_sign_verify_args {
  * @output: Location where the MAC has to be written
  * @output_length: Length of the MAC
  *
+ * **Deprecated. Will be removed in library version 3.x.**
+ * Use smw_mac() or smw_mac_verify().
+
+ *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default configured Secure Subsystem is used.
  */
@@ -268,6 +272,9 @@ enum smw_status_code smw_verify(struct smw_sign_verify_args *args);
 /**
  * smw_hmac() - Compute a HASH-MAC.
  * @args: Pointer to the structure that contains the HMAC arguments.
+ *
+ * **Deprecated. Will be removed in library version 3.x.**
+ * Use smw_mac() or smw_mac_verify().
  *
  * This function computes a Keyed-Hash Message Authentication Code.
  *

@@ -212,17 +212,6 @@ __weak bool ele_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
-__weak bool ele_hmac_handle(struct hdl *hdl, enum operation_id operation_id,
-			    void *args, int *status)
-{
-	(void)hdl;
-	(void)operation_id;
-	(void)args;
-	(void)status;
-
-	return false;
-}
-
 __weak bool ele_mac_handle(struct hdl *hdl, enum operation_id operation_id,
 			   void *args, int *status)
 {
@@ -251,8 +240,6 @@ static int execute(enum operation_id operation_id, void *args)
 	else if (ele_rng_handle(hdl, operation_id, args, &status))
 		goto end;
 	else if (ele_cipher_handle(hdl, operation_id, args, &status))
-		goto end;
-	else if (ele_hmac_handle(hdl, operation_id, args, &status))
 		goto end;
 
 	ele_mac_handle(hdl, operation_id, args, &status);

@@ -62,16 +62,6 @@ __weak bool tee_sign_verify_handle(enum operation_id operation_id, void *args,
 	return false;
 }
 
-__weak bool tee_hmac_handle(enum operation_id operation_id, void *args,
-			    int *status)
-{
-	(void)operation_id;
-	(void)args;
-	(void)status;
-
-	return false;
-}
-
 __weak bool tee_mac_handle(enum operation_id operation_id, void *args,
 			   int *status)
 {
@@ -333,8 +323,6 @@ static int execute(enum operation_id op_id, void *args)
 	else if (tee_hash_handle(op_id, args, &status))
 		goto end;
 	else if (tee_sign_verify_handle(op_id, args, &status))
-		goto end;
-	else if (tee_hmac_handle(op_id, args, &status))
 		goto end;
 	else if (tee_mac_handle(op_id, args, &status))
 		goto end;

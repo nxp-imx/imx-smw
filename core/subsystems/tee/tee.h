@@ -100,18 +100,6 @@ bool tee_sign_verify_handle(enum operation_id operation_id, void *args,
 			    int *status);
 
 /**
- * tee_hmac_handle() - Handle the HMAC operation.
- * @operation_id: Security Operation ID.
- * @args: Pointer to a structure of arguments defined by the internal API.
- * @status: Error code set only if the Security Operation is handled.
- *
- * Return:
- * true		- the Security Operation has been handled.
- * false	- the Security Operation has not been handled.
- */
-bool tee_hmac_handle(enum operation_id operation_id, void *args, int *status);
-
-/**
  * tee_mac_handle() - Handle the MAC operation.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.

@@ -609,17 +609,6 @@ __weak bool hsm_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
-__weak bool hsm_hmac_handle(struct hdl *hdl, enum operation_id operation_id,
-			    void *args, int *status)
-{
-	(void)hdl;
-	(void)operation_id;
-	(void)args;
-	(void)status;
-
-	return false;
-}
-
 __weak bool hsm_mac_handle(struct hdl *hdl, enum operation_id operation_id,
 			   void *args, int *status)
 {
@@ -648,8 +637,6 @@ static int execute(enum operation_id operation_id, void *args)
 	else if (hsm_rng_handle(hdl, operation_id, args, &status))
 		goto end;
 	else if (hsm_cipher_handle(hdl, operation_id, args, &status))
-		goto end;
-	else if (hsm_hmac_handle(hdl, operation_id, args, &status))
 		goto end;
 
 	hsm_mac_handle(hdl, operation_id, args, &status);

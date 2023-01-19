@@ -52,7 +52,7 @@
                         "a4f7bb"
                 ],
                 "mac": 28,
-                "result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+                "result": "SMW_STATUS_KEY_INVALID",
                 "depends": 1
         },
         "subtest 4": { // SHA256
@@ -128,7 +128,7 @@
                         "a4f7bb"
                 ],
                 "mac": 64,
-                "result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+                "result": "SMW_STATUS_KEY_INVALID",
                 "depends": 2
         },
         "subtest 7": {

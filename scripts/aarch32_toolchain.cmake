@@ -21,4 +21,4 @@ if(NOT TOOLCHAIN_NAME)
 endif()
 
 # Define the toolchain name
-include(${CMAKE_SOURCE_DIR}/scripts/common_toolchain.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/common_toolchain.cmake)

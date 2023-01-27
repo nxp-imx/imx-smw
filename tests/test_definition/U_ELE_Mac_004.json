@@ -1,28 +1,32 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "HMAC",
+			"security_size": 256,
+			"policy":{
+				"sign_message": [
+					[
+						"HMAC", "HASH=SHA256", "MIN_LENGTH=8"
+					]
+				],
+				"verify_message": [
+					[
+						"HMAC", "HASH=SHA256", "MIN_LENGTH=8"
+					]
+				]
+			}
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_type": "HMAC",
-		"security_size": 256,
-		"key_policy":{
-			"sign_message": [
-				[
-					"HMAC", "HASH=SHA256", "MIN_LENGTH=8"
-				]
-			],
-			"verify_message": [
-				[
-					"HMAC", "HASH=SHA256", "MIN_LENGTH=8"
-				]
-			]
-		},
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": { // Get the MAC size - Output buffer is NULL
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "SHA256",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -33,7 +37,7 @@
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "SHA256",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -48,7 +52,7 @@
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC_TRUNCATED",
 		"hash": "SHA256",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -60,7 +64,7 @@
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "SHA256",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": 0,
 		"output": 32,
 		"mac_id": 2,
@@ -70,7 +74,7 @@
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC_TRUNCATED",
 		"hash": "SHA256",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -82,7 +86,7 @@
 		"command": "MAC_VERIFY",
 		"algo": "HMAC_TRUNCATED",
 		"hash": "SHA256",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -93,7 +97,7 @@
 		"command": "MAC_VERIFY",
 		"algo": "HMAC_TRUNCATED",
 		"hash": "SHA256",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"bad1bee22e409f96e93d7e117393172a"
 		],
@@ -105,7 +109,7 @@
 		"command": "MAC_VERIFY",
 		"algo": "HMAC_TRUNCATED",
 		"hash": "SHA256",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": 0,
 		"mac_id": 2,
 		"depends": 5
@@ -114,7 +118,7 @@
 		"command": "MAC_VERIFY",
 		"algo": "HMAC_TRUNCATED",
 		"hash": "SHA256",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -123,7 +127,7 @@
 	},
 	"subtest 11": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	}
 }

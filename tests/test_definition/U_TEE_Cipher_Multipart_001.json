@@ -1,19 +1,23 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": []
+			}
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"key_id": 0,
+		"key_name": "key 1",
 		"context_id": 0,
 		"depends": 1
 	},
@@ -52,7 +56,7 @@
 	},
 	"subtest 8": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	}
 }

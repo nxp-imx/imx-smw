@@ -1,167 +1,191 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 192,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 4": {
+			"type": "DES",
+			"security_size": 56,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 5": {
+			"type": "DES3",
+			"security_size": 112,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 6": {
+			"type": "DES3",
+			"security_size": 168,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 7": {
+			"type": "NIST",
+			"security_size": 192,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 8": {
+			"type": "NIST",
+			"security_size": 224,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 9": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 10": {
+			"type": "NIST",
+			"security_size": 384,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 11": {
+			"type": "NIST",
+			"security_size": 521,
+			"policy": {
+				"sign_message": []
+			}
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 128,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 192,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 256,
-		"key_id": 2
+		"key_name": "key 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "DES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 56,
-		"key_id": 3
+		"key_name": "key 4"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "DES3",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 112,
-		"key_id": 4
+		"key_name": "key 5"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "DES3",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 168,
-		"key_id": 5
+		"key_name": "key 6"
 	},
 	"subtest 7": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 192,
-		"key_id": 6
+		"key_name": "key 7"
 	},
 	"subtest 8": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 224,
-		"key_id": 7
+		"key_name": "key 8"
 	},
 	"subtest 9": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 8
+		"key_name": "key 9"
 	},
 	"subtest 10": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 384,
-		"key_id": 9
+		"key_name": "key 10"
 	},
 	"subtest 11": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 521,
-		"key_id": 10
+		"key_name": "key 11"
 	},
 	"subtest 12": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 13": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 14": {
 		"command": "DELETE",
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 3
 	},
 	"subtest 15": {
 		"command": "DELETE",
-		"key_id": 3,
+		"key_name": "key 4",
 		"depends": 4
 	},
 	"subtest 16": {
 		"command": "DELETE",
-		"key_id": 4,
+		"key_name": "key 5",
 		"depends": 5
 	},
 	"subtest 17": {
 		"command": "DELETE",
-		"key_id": 5,
+		"key_name": "key 6",
 		"depends": 6
 	},
 	"subtest 18": {
 		"command": "DELETE",
-		"key_id": 6,
+		"key_name": "key 7",
 		"depends": 7
 	},
 	"subtest 19": {
 		"command": "DELETE",
-		"key_id": 7,
+		"key_name": "key 8",
 		"depends": 8
 	},
 	"subtest 20": {
 		"command": "DELETE",
-		"key_id": 8,
+		"key_name": "key 9",
 		"depends": 9
 	},
 	"subtest 21": {
 		"command": "DELETE",
-		"key_id": 9,
+		"key_name": "key 10",
 		"depends": 10
 	},
 	"subtest 22": {
 		"command": "DELETE",
-		"key_id": 10,
+		"key_name": "key 11",
 		"depends": 11
 	}
 }

@@ -1,57 +1,65 @@
 {
-	"subtest 1": {
-		"command": "GENERATE",
-		"subsystem": "ELE",
-		"key_type": "AES",
-		"security_size": 128,
-		"key_policy": {
-			"encrypt": [
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			},
+			"attributes_list": [
+				"PERSISTENT"
+			]
+		},
+		"key 2": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			},
+			"attributes_list": [
 				[
-					"ECB_NO_PADDING"
+					"PERSISTENT"
+				],
+				[
+					"FLUSH_KEY"
 				]
 			]
 		},
-		"key_id": 0,
-		"attributes_list": [
-			"PERSISTENT"
-		]
+		"key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_type": "NIST",
-		"security_size": 256,
-		"key_policy": {
-			"sign_message": [
-				[
-					"ECDSA",
-					"HASH=SHA256"
-				]
-			]
-		},
-		"key_id": 1,
-		"attributes_list": [
-			[
-				"PERSISTENT"
-			],
-			[
-				"FLUSH_KEY"
-			]
-		]
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_type": "AES",
-		"security_size": 256,
-		"key_policy": {
-			"encrypt": [
-				[
-					"ECB_NO_PADDING"
-				]
-			]
-		},
-		"key_id": 2
+		"key_name": "key 3"
 	},
 	"subtest 4": {
 		"command": "SAVE_KEY_IDS",

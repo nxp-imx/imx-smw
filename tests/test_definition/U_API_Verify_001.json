@@ -1,16 +1,29 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "NIST",
+			"security_size": 256,
+			"pub_key": [
+				"d0720dc691aa80096ba32fed1cb97c2b",
+				"620690d06de0317b8618d5ce65eb728f",
+				"9681b517b1cda17d0d83d335d9c4a8a9",
+				"a9b0b1b3c7106d8f3c72bc5093dc275f"
+			]
+		},
+		"key 2": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"verify_hash": [],
+				"verify_message": []
+			}
+		}
+	},
 	"subtest 1": { // Verify args pointer is NULL
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -38,14 +51,7 @@
 		"subsystem": "DEFAULT",
 		"version": 255,
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -71,14 +77,7 @@
 		"command": "VERIFY",
 		"subsystem": "UNDEFINED",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -104,14 +103,7 @@
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -138,14 +130,7 @@
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "UNDEFINED",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -171,14 +156,7 @@
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": 163,
 		"signature": [
 			"55555555555555555555555555555555",
@@ -192,14 +170,7 @@
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": [
 			0,
 			"54686973207068726173652069732033",
@@ -217,14 +188,7 @@
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -245,14 +209,7 @@
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -279,14 +236,7 @@
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"pub_key": [
-			"d0720dc691aa80096ba32fed1cb97c2b",
-			"620690d06de0317b8618d5ce65eb728f",
-			"9681b517b1cda17d0d83d335d9c4a8a9",
-			"a9b0b1b3c7106d8f3c72bc5093dc275f"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -314,18 +264,13 @@
 	"subtest 11": { // Add a keypair for the test
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"verify_hash": [],
-			"verify_message": []
-		},
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 2"
 	},
 	"subtest 12": { // Signature length not valid
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
+		"key_name": "key 2",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -346,13 +291,12 @@
 			"55555555555555555555555555555555",
 			"55555555555555555555555555555555"
 		],
-		"key_id": 0,
 		"result": "SMW_STATUS_SIGNATURE_LEN_INVALID",
 		"depends": 11
 	},
 	"subtest 13": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 2",
 		"depends": 11
 	}
 }

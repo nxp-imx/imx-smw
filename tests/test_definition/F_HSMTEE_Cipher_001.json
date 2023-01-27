@@ -1,29 +1,34 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 128
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 128,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "AES",
-		"security_size": 128,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
-		"nb_keys": 2,
-		"key_id": [
-			0,
-			1
+		"key_name": [
+			"key 1",
+			"key 2"
 		],
 		"input": "5555555555",
 		"result": "SMW_STATUS_INVALID_PARAM",
@@ -34,12 +39,12 @@
 	},
 	"subtest 4": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 5": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	}
 }

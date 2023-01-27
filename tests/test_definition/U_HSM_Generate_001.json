@@ -1,86 +1,102 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 192
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 256
+		},
+		"key 4": {
+			"type": "NIST",
+			"security_size": 256
+		},
+		"key 5": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key 6": {
+			"type": "BRAINPOOL_R1",
+			"security_size": 256
+		},
+		"key 7": {
+			"type": "BRAINPOOL_R1",
+			"security_size": 384
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "AES",
-		"security_size": 128,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "AES",
-		"security_size": 192,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "AES",
-		"security_size": 256,
-		"key_id": 2
+		"key_name": "key 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "NIST",
-		"security_size": 256,
-		"key_id": 3
+		"key_name": "key 4"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "NIST",
-		"security_size": 384,
-		"key_id": 4
+		"key_name": "key 5"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "BRAINPOOL_R1",
-		"security_size": 256,
-		"key_id": 5
+		"key_name": "key 6"
 	},
 	"subtest 7": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "BRAINPOOL_R1",
-		"security_size": 384,
-		"key_id": 6
+		"key_name": "key 7"
 	},
 	"subtest 8": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 9": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 10": {
 		"command": "DELETE",
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 3
 	},
 	"subtest 11": {
 		"command": "DELETE",
-		"key_id": 3,
+		"key_name": "key 4",
 		"depends": 4
 	},
 	"subtest 12": {
 		"command": "DELETE",
-		"key_id": 4,
+		"key_name": "key 5",
 		"depends": 5
 	},
 	"subtest 13": {
 		"command": "DELETE",
-		"key_id": 5,
+		"key_name": "key 6",
 		"depends": 6
 	},
 	"subtest 14": {
 		"command": "DELETE",
-		"key_id": 6,
+		"key_name": "key 7",
 		"depends": 7
 	}
 }

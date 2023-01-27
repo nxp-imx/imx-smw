@@ -1,16 +1,20 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 4096,
+			"policy": {
+				"sign_hash": [],
+				"sign_message": [],
+				"verify_hash": [],
+				"verify_message": []
+			}
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "RSA",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": [],
-			"verify_hash": [],
-			"verify_message": []
-		},
-		"security_size": 4096,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "SIGN",
@@ -36,7 +40,7 @@
 			]
 		],
 		"sign_id": 0,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 3": {
@@ -63,7 +67,7 @@
 			]
 		],
 		"sign_id": 0,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 2
 	},
 	"subtest 4": { // Already hashed message (SHA256)
@@ -80,7 +84,7 @@
 			]
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 5": {
@@ -97,12 +101,12 @@
 			]
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 4
 	},
 	"subtest 6": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	}
 }

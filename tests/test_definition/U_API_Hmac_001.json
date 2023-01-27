@@ -1,14 +1,19 @@
 {
+	"keys": {
+		"key 1" : {
+			"type": "HMAC_SHA256",
+			"security_size": 256,
+			"priv_key": [
+				"6ed76d2d97c69fd1339589523931f2a6",
+				"cff554b15f738f21ec72dd97a7330907"
+			]
+		}
+	},
 	"subtest 1": { // HMAC args pointer is NULL
 		"command": "HMAC",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"priv_key": [
-			"6ed76d2d97c69fd1339589523931f2a6",
-			"cff554b15f738f21ec72dd97a7330907"
-		],
+		"key_name": "key 1",
 		"input": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -34,12 +39,7 @@
 		"subsystem": "DEFAULT",
 		"version": 255,
 		"algo": "SHA256",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"priv_key": [
-			"6ed76d2d97c69fd1339589523931f2a6",
-			"cff554b15f738f21ec72dd97a7330907"
-		],
+		"key_name": "key 1",
 		"input": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -63,12 +63,7 @@
 		"command": "HMAC",
 		"subsystem": "UNDEFINED",
 		"algo": "SHA256",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"priv_key": [
-			"6ed76d2d97c69fd1339589523931f2a6",
-			"cff554b15f738f21ec72dd97a7330907"
-		],
+		"key_name": "key 1",
 		"input": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -92,12 +87,7 @@
 		"command": "HMAC",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"priv_key": [
-			"6ed76d2d97c69fd1339589523931f2a6",
-			"cff554b15f738f21ec72dd97a7330907"
-		],
+		"key_name": "key 1",
 		"input": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -122,12 +112,7 @@
 		"command": "HMAC",
 		"subsystem": "DEFAULT",
 		"algo": "UNDEFINED",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"priv_key": [
-			"6ed76d2d97c69fd1339589523931f2a6",
-			"cff554b15f738f21ec72dd97a7330907"
-		],
+		"key_name": "key 1",
 		"input": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -151,12 +136,7 @@
 		"command": "HMAC",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"priv_key": [
-			"6ed76d2d97c69fd1339589523931f2a6",
-			"cff554b15f738f21ec72dd97a7330907"
-		],
+		"key_name": "key 1",
 		"input": 163,
 		"mac": [
 			"55555555555555555555555555555555",
@@ -168,12 +148,7 @@
 		"command": "HMAC",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"priv_key": [
-			"6ed76d2d97c69fd1339589523931f2a6",
-			"cff554b15f738f21ec72dd97a7330907"
-		],
+		"key_name": "key 1",
 		"input": [
 			0,
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -198,12 +173,7 @@
 		"command": "HMAC",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"priv_key": [
-			"6ed76d2d97c69fd1339589523931f2a6",
-			"cff554b15f738f21ec72dd97a7330907"
-		],
+		"key_name": "key 1",
 		"input": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -224,12 +194,7 @@
 		"command": "HMAC",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"priv_key": [
-			"6ed76d2d97c69fd1339589523931f2a6",
-			"cff554b15f738f21ec72dd97a7330907"
-		],
+		"key_name": "key 1",
 		"input": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",

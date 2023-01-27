@@ -1,303 +1,328 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		},
+		"key 2": {
+			"key_name": "key 1",
+			"id": 0
+		},
+		"key 3": {
+			"key_name": "key 1",
+			"priv_key": 32,
+			"pub_key": 64
+		},
+		"key 4": {
+			"key_name": "key 1",
+			"priv_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			],
+			"pub_key": [
+				0,
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 5": {
+			"key_name": "key 1",
+			"pub_key": 64,
+			"priv_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			],
+		},
+		"key 6": {
+			"key_name": "key 1",
+			"priv_key": [
+				0,
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			],
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 7": {
+			"key_name": "key 1",
+			"priv_key": 32,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 8": {
+			"key_name": "key 1",
+			"format": "UNDEFINED",
+		},
+		"key 9": {
+			"key_name": "key 1",
+			"type": "AES",
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 10": {
+			"key_name": "key 1",
+			"security_size": 255,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 11": {
+			"key_name": "key 1",
+			"pub_key": [
+				63,
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 12": {
+			"type": "RSA",
+			"security_size": 256,
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		},
+		"key 13": {
+			"key_name": "key 12",
+			"priv_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				0,
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 14": {
+			"key_name": "key 12",
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				30,
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 15": {
+			"key_name": "key 12",
+			"pub_key": [
+				2,
+				"010001"
+			],
+			"modulus": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 16": {
+			"type": "RSA",
+			"security_size": 256,
+			"attributes_list": [
+				[
+					"RSA_PUB_EXP",
+					[
+						9,
+						"4000000041CB995001"
+					]
+				]
+			],
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		},
+		"key 17": {
+			"key_name": "key 16",
+			"pub_key": [
+				7,
+				"4000000041CB995001"
+			],
+			"modulus": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		}
+	},
 	"subtest 1": { // Generate a keypair for the test
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": { // Export args pointer is NULL
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 0,
+		"key_name": "key 1",
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 3": { // Key descriptor pointer is NULL
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 0,
+		"key_name": "key 1",
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 4": { // Key descriptor ID is not set
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 0,
-		"test_error": "KEY_DESC_ID_NOT_SET",
+		"key_name": "key 2",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 5": { // Key descriptor buffer is NULL
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 0,
+		"key_name": "key 1",
 		"test_error": "KEY_BUFFER_NULL",
 		"result": "SMW_STATUS_NO_KEY_BUFFER",
 		"depends": 1
 	},
 	"subtest 6": { // No buffers are set
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 0,
-		"pub_key": 64,
-		"priv_key": 32,
+		"key_name": "key 3",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 7": { // Public data length is not set
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 0,
-		"pub_key": [
-			0,
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
-		"priv_key": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 4",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 8": { // Public data is not set and public data length is set
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 0,
-		"pub_key": 64,
-		"priv_key": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 5",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 9": { // Private data length is not set
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 0,
-		"pub_key": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
-		"priv_key": [
-			0,
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 10": { // Private data is not set and private data length is set
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 0,
-		"pub_key": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
-		"priv_key": 32,
+		"key_name": "key 7",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 11": { // Bad version
 		"command": "EXPORT_PUBLIC",
 		"version": 255,
-		"key_id": 0,
-		"pub_key": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 1",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"depends": 1
 	},
 	"subtest 12": { // Buffer key format is undefined
 		"command": "EXPORT_PUBLIC",
-		"key_id": 0,
-		"test_error": "BAD_FORMAT",
+		"key_name": "key 8",
 		"result": "SMW_STATUS_UNKNOWN_NAME",
 		"depends": 1
 	},
 	"subtest 13": { // Key descriptor type name doesn't match key identifier
 		"command": "EXPORT_PUBLIC",
-		"key_id": 0,
-		"key_type": "AES",
-		"pub_key": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 9",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 14": { // Key descriptor security size doesn't match key identifier
 		"command": "EXPORT_PUBLIC",
-		"key_id": 0,
-		"security_size": 255,
-		"pub_key": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 10",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 15": { // Public key buffer is too small
 		"command": "EXPORT_PUBLIC",
-		"key_id": 0,
-		"pub_key": [
-			63,
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 11",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
 	"subtest 16": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 17": { // Generate RSA key
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "RSA",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 1
+		"key_name": "key 12"
 	},
 	"subtest 18": { // Modulus length not set
 		"command": "EXPORT_PUBLIC",
-		"key_type": "RSA",
-		"key_id": 1,
-		"pub_key": [
-			"010001"
-		],
-		"modulus": [
-			0,
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 13",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 17
 	},
 	"subtest 19": { // Modulus length not set
 		"command": "EXPORT_KEYPAIR",
-		"key_type": "RSA",
-		"key_id": 1,
-		"pub_key": [
-			"010001"
-		],
-		"priv_key": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
-		"modulus": [
-			0,
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 13",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 17
 	},
 	"subtest 20": { // Modulus buffer is too small
 		"command": "EXPORT_PUBLIC",
-		"key_type": "RSA",
-		"key_id": 1,
-		"pub_key": [
-			"010001"
-		],
-		"modulus": [
-			30,
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 14",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 17
 	},
 	"subtest 21": { // Public buffer length is too small (default public exponent)
 		"command": "EXPORT_PUBLIC",
-		"key_type": "RSA",
-		"key_id": 1,
-		"pub_key": [
-			2,
-			"010001"
-		],
-		"modulus": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 15",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 17
 	},
 	"subtest 22": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 12",
 		"depends": 17
 	},
 	"subtest 23": { // Generate RSA key
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "RSA",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 2,
-		"attributes_list": [
-			[
-				"RSA_PUB_EXP",
-				[
-					9,
-					"4000000041CB995001"
-				]
-			]
-		]
+		"key_name": "key 16"
 	},
 	"subtest 24": { // Public buffer length is too small (user public exponent)
 		"command": "EXPORT_PUBLIC",
-		"key_type": "RSA",
-		"key_id": 2,
-		"pub_key": [
-			7,
-			"4000000041CB995001"
-		],
-		"modulus": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
+		"key_name": "key 17",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 23
 	},
 	"subtest 25": {
 		"command": "DELETE",
-		"key_id": 2,
+		"key_name": "key 16",
 		"depends": 23
 	}
 }

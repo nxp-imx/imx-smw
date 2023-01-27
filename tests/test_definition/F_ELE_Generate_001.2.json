@@ -5,7 +5,7 @@
 	},
 	"subtest 2": {
 		"command": "EXPORT_PUBLIC",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 3": {
@@ -26,7 +26,7 @@
 			"858bec"
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 4": {
@@ -47,7 +47,11 @@
 			"858bec"
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 3
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"key_name": "key 1",
 	}
 }

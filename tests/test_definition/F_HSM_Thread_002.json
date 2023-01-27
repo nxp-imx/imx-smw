@@ -1,30 +1,36 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256
+		},
+		"key 2": {
+			"type": "NIST",
+			"security_size": 256
+		}
+	},
 	"Thread 1": {
 		"subtest 1": {
 			"command": "GENERATE",
 			"subsystem": "HSM",
-			"key_type": "AES",
-			"security_size": 256,
-			"key_id": 0
+			"key_name": "key 1"
 		},
 		"subtest 2": {
 			"command": "GENERATE",
 			"subsystem": "HSM",
-			"key_type": "NIST",
-			"security_size": 256,
-			"key_id": 1
+			"key_name": "key 2"
 		},
 		"subtest 3": {
 			"post_before": "sem_t2",
 			"wait_before": "sem_t1",
 			"command": "DELETE",
-			"key_id": 0,
+			"key_name": "key 1",
 			"result": "SMW_STATUS_UNKNOWN_ID",
 			"depend": 1
 		},
 		"subtest 4": {
 			"command": "DELETE",
-			"key_id": 1,
+			"key_name": "key 2",
 			"depend": 2
 		}
 	},
@@ -38,13 +44,12 @@
 				"32206279746573206c6f6e6720212121"
 			],
 			"sign_id": 0,
-			"key_id": 1
+			"key_name": "key 2"
 		},
 		"subtest 2": {
 			"post_after": "sem_t1",
 			"command": "DELETE",
-			"key_id": 0
+			"key_name": "key 1"
 		}
 	}
-}
 }

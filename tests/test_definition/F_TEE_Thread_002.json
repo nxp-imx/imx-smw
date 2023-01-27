@@ -1,36 +1,42 @@
 {
+	"keys": {
+		"key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 4": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_hash": []
+			}
+		}
+	},
 	"Thread 1": {
 		"subtest 1": {
 			"command": "GENERATE",
 			"subsystem": "TEE",
-			"key_type": "AES",
-			"key_policy": {
-				"encrypt": []
-			},
-			"security_size": 256,
-			"key_id": 0
+			"key_name": "key 3"
 		},
 		"subtest 2": {
 			"command": "GENERATE",
 			"subsystem": "TEE",
-			"key_type": "NIST",
-			"key_policy": {
-				"sign_hash": []
-			},
-			"security_size": 256,
-			"key_id": 1
+			"key_name": "key 4"
 		},
 		"subtest 3": {
 			"post_before": "sem_t2",
 			"wait_before": "sem_t1",
 			"command": "DELETE",
-			"key_id": 0,
+			"key_name": "key 3",
 			"result": "SMW_STATUS_UNKNOWN_ID",
 			"depend": [1, 2]
 		},
 		"subtest 4": {
 			"command": "DELETE",
-			"key_id": 1,
+			"key_name": "key 4",
 			"depend": 2
 		}
 	},
@@ -44,12 +50,12 @@
 				"32206279746573206c6f6e6720212121"
 			],
 			"sign_id": 0,
-			"key_id": 1
+			"key_name": "key 4"
 		},
 		"subtest 2": {
 			"post_after": "sem_t1",
 			"command": "DELETE",
-			"key_id": 0
+			"key_name": "key 3"
 		}
 	}
 }

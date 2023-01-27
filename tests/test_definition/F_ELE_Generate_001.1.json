@@ -1,37 +1,40 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				],
+				"verify_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			},
+			"attributes_list": [
+				[
+					"PERSISTENT"
+				],
+				[
+					"FLUSH_KEY"
+				]
+			]
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_message": [
-				[
-					"ECDSA",
-					"HASH=SHA256"
-				]
-			],
-			"verify_message": [
-				[
-					"ECDSA",
-					"HASH=SHA256"
-				]
-			]
-		},
-		"security_size": 256,
-		"key_id": 0,
-		"attributes_list": [
-			[
-				"PERSISTENT"
-			],
-			[
-				"FLUSH_KEY"
-			]
-		],
-		"pub_key": 64
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "EXPORT_PUBLIC",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 3": {

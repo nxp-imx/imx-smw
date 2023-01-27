@@ -1,16 +1,20 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 1536,
+			"policy": {
+				"sign_hash": [],
+				"sign_message": [],
+				"verify_hash": [],
+				"verify_message": []
+			}
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "RSA",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": [],
-			"verify_hash": [],
-			"verify_message": []
-		},
-		"security_size": 1536,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": { // No attributes are set
 		"command": "SIGN",
@@ -30,7 +34,7 @@
 			"060c9a"
 		],
 		"sign_id": 0,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
@@ -58,7 +62,7 @@
 			]
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
@@ -93,7 +97,7 @@
 			]
 		],
 		"sign_id": 2,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
@@ -121,7 +125,7 @@
 			]
 		],
 		"sign_id": 3,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 6": { // Signature type different from the one use for signature operation
@@ -148,7 +152,7 @@
 			]
 		],
 		"sign_id": 3,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 5,
 		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	},
@@ -176,7 +180,7 @@
 			]
 		],
 		"sign_id": 3,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 5,
 		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	},
@@ -194,13 +198,13 @@
 			]
 		],
 		"sign_id": 4,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 9": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	}
 }

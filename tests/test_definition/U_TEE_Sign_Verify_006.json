@@ -1,87 +1,91 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 4096,
+			"priv_key": [
+				"25e0b881e32da938611b4156525ce242",
+				"16c168837fa84479ecb72207e9984adb",
+				"6eb7393bb3d607b1469d9b7c3f4fdbbe",
+				"faa4b0218850919a7d66a954b315129c",
+				"39eb99f7dc08df5c4c8c90968f3ce37b",
+				"66ee184ef3d485f83d308521aa2649d2",
+				"8c319eafa2aec87031a1ff5d7e933ca5",
+				"6a2410593425fb865981b7976fca021b",
+				"9d7c3198312fcfea5d0093a62b4a7c49",
+				"a985c005c3a7ad816e270b25c507fc36",
+				"be1c4cc0a07cb7c6fa130240062793b1",
+				"8047189aa5e79b16fe80a6955191f591",
+				"0b701bc1aee6dcd5cefd57194bf54d8e",
+				"208ae41202744190d5ec8bcc2f977f11",
+				"461a5cb4306fc9b73afff2863a7b580d",
+				"454bb1fb8dccb1cbef27945109a8f5a3",
+				"d2b1a32566aa4e8c01a62a1d735117ff",
+				"5a6a3cc7e70756e7df10e97ee75c5f8e",
+				"f89fb0a97d7a35698069f59a9f365d43",
+				"96ab9a764c2fbefb840faf5f57737801",
+				"b73ac6f9f524167b4f3a567aff999a0d",
+				"b10d55d82155720a5ddc63c35b6a632a",
+				"3da59c16bd0c143c437661dcd339652a",
+				"e42f54f8b2d8e52672613772abfe8cf0",
+				"d6ebbbccc764b51b3eda2ae28d4ba874",
+				"7a430ccc32c73baea63d050b86210c48",
+				"5ac9554606070764cd06b423efdda405",
+				"9fc45ffd7193f7123d14014d5bbe5b54",
+				"2476e7bfdc4905731a0d9987fe4a68cf",
+				"6077c3df63778af08a1f4eb8f00a4a8e",
+				"03aa8726f43fa829d87c2d0a32e16b47",
+				"a3f0472a6368ec50a144234c802e6919"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"b10935650754c1a27e54f9ee525c7704",
+				"5d1a056baedc8c1ba05a3d66322c8e2e",
+				"41689ca02b8e6ec55d3331cd714e161b",
+				"35c774311540c6410cc3b130e65cec32",
+				"5377ccf18a5d77054afaa737e65b6866",
+				"2327627f5d1092df98c08b60a3ba6759",
+				"9b1406986f441528d2f1f5d6fe5ec6b8",
+				"aa797dbdb3162876b08298237af81c70",
+				"04863576af572ddd66c487cf32a82d0f",
+				"9fe260f8f2681613208aec55723622f5",
+				"0d3cb3bd33b1226d5b5b9ea2c97a2c59",
+				"054e31536849ec2f0f2597c077e621dd",
+				"ea0a22ddfb1df925c9f1941cd431afce",
+				"0398d28e736cfeab3dd7f062a65a2a4c",
+				"1ddca1f32afa03b4ddfd8b7ca40cc0ce",
+				"2ed42229d753f03cc6d8bcdca76ab7c2",
+				"703c5ddad08aa9bf9a27740a8b23168c",
+				"6b55917bd3d5c1c057c34d1efb1411da",
+				"51ab745519bd92b9432fea8fadcb9a70",
+				"e5dc3adcd3081d3333507b7b998886e9",
+				"88296628dd7265e64eab557712556cc4",
+				"92377f15a078dcb620a6e7f051a1fb87",
+				"54efdca3de253dd0aad4205b032659e4",
+				"a4fb307f074fbde340702b5911acb347",
+				"37d7834600cf2ac77f62f83ccc9ba78f",
+				"f911021b9f8ad1bf421430ae0d649169",
+				"44b504542c0f6263c48e5e233ef1869d",
+				"f1efc2ccf6f4a95e4db2de7b4cb1a992",
+				"bef6573511bab4bf2cd58e72a0c235f5",
+				"6dfc182df4dfffb69433a5677415f35d",
+				"84f5125f5200eb57868cce6b74c58334",
+				"17990e318372c9239a36dca1a0b28809"
+			],
+			"policy": {
+				"sign_hash": [],
+				"sign_message": [],
+				"verify_hash": [],
+				"verify_message": []
+			}
+		}
+	},
 	"subtest 1": {
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "RSA",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": [],
-			"verify_hash": [],
-			"verify_message": []
-		},
-		"security_size": 4096,
-		"pub_key": [
-			"010001"
-		],
-		"priv_key": [
-			"25e0b881e32da938611b4156525ce242",
-			"16c168837fa84479ecb72207e9984adb",
-			"6eb7393bb3d607b1469d9b7c3f4fdbbe",
-			"faa4b0218850919a7d66a954b315129c",
-			"39eb99f7dc08df5c4c8c90968f3ce37b",
-			"66ee184ef3d485f83d308521aa2649d2",
-			"8c319eafa2aec87031a1ff5d7e933ca5",
-			"6a2410593425fb865981b7976fca021b",
-			"9d7c3198312fcfea5d0093a62b4a7c49",
-			"a985c005c3a7ad816e270b25c507fc36",
-			"be1c4cc0a07cb7c6fa130240062793b1",
-			"8047189aa5e79b16fe80a6955191f591",
-			"0b701bc1aee6dcd5cefd57194bf54d8e",
-			"208ae41202744190d5ec8bcc2f977f11",
-			"461a5cb4306fc9b73afff2863a7b580d",
-			"454bb1fb8dccb1cbef27945109a8f5a3",
-			"d2b1a32566aa4e8c01a62a1d735117ff",
-			"5a6a3cc7e70756e7df10e97ee75c5f8e",
-			"f89fb0a97d7a35698069f59a9f365d43",
-			"96ab9a764c2fbefb840faf5f57737801",
-			"b73ac6f9f524167b4f3a567aff999a0d",
-			"b10d55d82155720a5ddc63c35b6a632a",
-			"3da59c16bd0c143c437661dcd339652a",
-			"e42f54f8b2d8e52672613772abfe8cf0",
-			"d6ebbbccc764b51b3eda2ae28d4ba874",
-			"7a430ccc32c73baea63d050b86210c48",
-			"5ac9554606070764cd06b423efdda405",
-			"9fc45ffd7193f7123d14014d5bbe5b54",
-			"2476e7bfdc4905731a0d9987fe4a68cf",
-			"6077c3df63778af08a1f4eb8f00a4a8e",
-			"03aa8726f43fa829d87c2d0a32e16b47",
-			"a3f0472a6368ec50a144234c802e6919"
-		],
-		"modulus": [
-			"b10935650754c1a27e54f9ee525c7704",
-			"5d1a056baedc8c1ba05a3d66322c8e2e",
-			"41689ca02b8e6ec55d3331cd714e161b",
-			"35c774311540c6410cc3b130e65cec32",
-			"5377ccf18a5d77054afaa737e65b6866",
-			"2327627f5d1092df98c08b60a3ba6759",
-			"9b1406986f441528d2f1f5d6fe5ec6b8",
-			"aa797dbdb3162876b08298237af81c70",
-			"04863576af572ddd66c487cf32a82d0f",
-			"9fe260f8f2681613208aec55723622f5",
-			"0d3cb3bd33b1226d5b5b9ea2c97a2c59",
-			"054e31536849ec2f0f2597c077e621dd",
-			"ea0a22ddfb1df925c9f1941cd431afce",
-			"0398d28e736cfeab3dd7f062a65a2a4c",
-			"1ddca1f32afa03b4ddfd8b7ca40cc0ce",
-			"2ed42229d753f03cc6d8bcdca76ab7c2",
-			"703c5ddad08aa9bf9a27740a8b23168c",
-			"6b55917bd3d5c1c057c34d1efb1411da",
-			"51ab745519bd92b9432fea8fadcb9a70",
-			"e5dc3adcd3081d3333507b7b998886e9",
-			"88296628dd7265e64eab557712556cc4",
-			"92377f15a078dcb620a6e7f051a1fb87",
-			"54efdca3de253dd0aad4205b032659e4",
-			"a4fb307f074fbde340702b5911acb347",
-			"37d7834600cf2ac77f62f83ccc9ba78f",
-			"f911021b9f8ad1bf421430ae0d649169",
-			"44b504542c0f6263c48e5e233ef1869d",
-			"f1efc2ccf6f4a95e4db2de7b4cb1a992",
-			"bef6573511bab4bf2cd58e72a0c235f5",
-			"6dfc182df4dfffb69433a5677415f35d",
-			"84f5125f5200eb57868cce6b74c58334",
-			"17990e318372c9239a36dca1a0b28809"
-		],
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": { // NIST SigVer15_186-3.rsp
 		"command": "SIGN",
@@ -138,7 +142,7 @@
 			]
 		],
 		"sign_id": 0,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 3": {
@@ -162,7 +166,7 @@
 			]
 		],
 		"sign_id": 0,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 2
 	},
 	"subtest 4": {
@@ -186,7 +190,7 @@
 			]
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 5": {
@@ -210,12 +214,12 @@
 			]
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 4
 	},
 	"subtest 6": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	}
 }

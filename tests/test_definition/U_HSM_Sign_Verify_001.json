@@ -1,31 +1,41 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "NIST",
+			"security_size": 256
+		},
+		"key 2": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key 3": {
+			"type": "BRAINPOOL_R1",
+			"security_size": 256
+		},
+		"key 4": {
+			"type": "BRAINPOOL_R1",
+			"security_size": 384
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "NIST",
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "NIST",
-		"security_size": 384,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "BRAINPOOL_R1",
-		"security_size": 256,
-		"key_id": 2
+		"key_name": "key 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "BRAINPOOL_R1",
-		"security_size": 384,
-		"key_id": 3
+		"key_name": "key 4"
 	},
 	"subtest 5": {
 		"command": "SIGN",
@@ -35,7 +45,7 @@
 			"34185c88f505b39775fb9ab137a10aa2"
 		],
 		"sign_id": 0,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 6": {
@@ -46,7 +56,7 @@
 			"34185c88f505b39775fb9ab137a10aa2"
 		],
 		"sign_id": 0,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 5
 	},
 	"subtest 7": {
@@ -67,7 +77,7 @@
 			"858bec"
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 8": {
@@ -88,7 +98,7 @@
 			"858bec"
 		],
 		"sign_id": 1,
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 7
 	},
 	"subtest 9": {
@@ -100,7 +110,7 @@
 			"86d1f2447d5f85bcbe59d5689fc49425"
 		],
 		"sign_id": 2,
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 10": {
@@ -112,7 +122,7 @@
 			"86d1f2447d5f85bcbe59d5689fc49425"
 		],
 		"sign_id": 2,
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 9
 	},
 	"subtest 11": {
@@ -137,7 +147,7 @@
 			"100508"
 		],
 		"sign_id": 3,
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 12": {
@@ -162,7 +172,7 @@
 			"100508"
 		],
 		"sign_id": 3,
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 11
 	},
 	"subtest 13": {
@@ -173,7 +183,7 @@
 			"34185c88f505b39775fb9ab137a10aa2"
 		],
 		"sign_id": 4,
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 3
 	},
 	"subtest 14": {
@@ -184,7 +194,7 @@
 			"34185c88f505b39775fb9ab137a10aa2"
 		],
 		"sign_id": 4,
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 13
 	},
 	"subtest 15": {
@@ -205,7 +215,7 @@
 			"858bec"
 		],
 		"sign_id": 5,
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 3
 	},
 	"subtest 16": {
@@ -226,7 +236,7 @@
 			"858bec"
 		],
 		"sign_id": 5,
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 15
 	},
 	"subtest 17": {
@@ -238,7 +248,7 @@
 			"86d1f2447d5f85bcbe59d5689fc49425"
 		],
 		"sign_id": 6,
-		"key_id": 3,
+		"key_name": "key 4",
 		"depends": 4
 	},
 	"subtest 18": {
@@ -250,7 +260,7 @@
 			"86d1f2447d5f85bcbe59d5689fc49425"
 		],
 		"sign_id": 6,
-		"key_id": 3,
+		"key_name": "key 4",
 		"depends": 17
 	},
 	"subtest 19": {
@@ -275,7 +285,7 @@
 			"100508"
 		],
 		"sign_id": 7,
-		"key_id": 3,
+		"key_name": "key 4",
 		"depends": 4
 	},
 	"subtest 20": {
@@ -300,27 +310,27 @@
 			"100508"
 		],
 		"sign_id": 7,
-		"key_id": 3,
+		"key_name": "key 4",
 		"depends": 19
 	},
 	"subtest 21": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 22": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 23": {
 		"command": "DELETE",
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 3
 	},
 	"subtest 24": {
 		"command": "DELETE",
-		"key_id": 3,
+		"key_name": "key 4",
 		"depends": 4
 	}
 }

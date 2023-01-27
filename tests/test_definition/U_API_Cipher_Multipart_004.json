@@ -1,23 +1,55 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 2": {
+			"type": "DES",
+			"security_size": 56,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 3": {
+			"format": "UNDEFINED"
+		},
+		"key 4": {
+			"key_name": "key 1",
+			"type": "DES"
+		},
+		"key 5": {
+			"key_name": "key 1",
+			"security_size": 128
+		},
+		"key 6": {
+			"security_size": 128,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		},
+		"key 7": {
+			"type": "AES",
+			"security_size": 0,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "DES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 56,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "CIPHER_INIT",
@@ -30,22 +62,20 @@
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"nb_keys": 0,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": { // Key Format is undefined
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"format": "UNDEFINED",
+		"key_name": "key 3",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 6": { // ID set and wrong key type
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"key_type": "DES",
-		"key_id": 0,
+		"key_name": "key 4",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
@@ -53,8 +83,7 @@
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"security_size": 128,
-		"key_id": 0,
+		"key_name": "key 5",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
@@ -62,12 +91,7 @@
 		"command": "CIPHER_INIT",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
-		"priv_key": [
-			"a1b90cba3f06ac353b2c343876081762",
-			"090923026e91771815f29dab01932f2f"
-		],
-		"key_type": "AES",
-		"security_size": 128,
+		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 9": { // No key is set
@@ -81,33 +105,23 @@
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"priv_key": [
-			"a1b90cba3f06ac353b2c343876081762",
-			"090923026e91771815f29dab01932f2f"
-		],
-		"security_size": 128,
+		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 11": { // Security size is 0
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"priv_key": [
-			"a1b90cba3f06ac353b2c343876081762",
-			"090923026e91771815f29dab01932f2f"
-		],
-		"security_size": 0,
-		"key_type": "AES",
+		"key_name": "key 7",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 12": { // Not same key type
 		"command": "CIPHER_INIT",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
-		"nb_keys": 2,
-		"key_id": [
-			0,
-			1
+		"key_name": [
+			"key 1",
+			"key 2"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": [
@@ -117,12 +131,12 @@
 	},
 	"subtest 13": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 14": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	}
 }

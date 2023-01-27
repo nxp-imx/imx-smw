@@ -1,23 +1,37 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256
+		},
+		"key 2": {
+			"type": "NIST",
+			"security_size": 256
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"d6c4cf73c639e025654dd3232fe3aa71",
+				"38f21bc8922271b4a6c0af999100b6b5"
+			]
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "AES",
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "NIST",
-		"security_size": 256,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": { // Key type not supported
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"key_id": 1,
+		"key_name": "key 2",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
@@ -26,7 +40,7 @@
 		"command": "CIPHER",
 		"mode": "CTS",
 		"op_type": "ENCRYPT",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
 		"depends": 1,
@@ -37,12 +51,7 @@
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
 		"subsystem": "HSM",
-		"priv_key": [
-			"d6c4cf73c639e025654dd3232fe3aa71",
-			"38f21bc8922271b4a6c0af999100b6b5"
-		],
-		"key_type": "AES",
-		"security_size": 256,
+		"key_name": "key 3",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
@@ -50,7 +59,7 @@
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 1
 	},
@@ -58,7 +67,7 @@
 		"command": "CIPHER",
 		"mode": "CBC",
 		"op_type": "DECRYPT",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
 		"depends": 1
@@ -67,7 +76,7 @@
 		"command": "CIPHER",
 		"mode": "CBC",
 		"op_type": "ENCRYPT",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
 		"output": 0,
@@ -77,7 +86,7 @@
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"output": 8,
 		"depends": 1,
@@ -85,12 +94,12 @@
 	},
 	"subtest 10": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 11": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	}
 }

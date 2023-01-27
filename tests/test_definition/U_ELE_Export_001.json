@@ -1,78 +1,92 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		},
+		"key 2": {
+			"type": "NIST",
+			"security_size": 384,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA384"
+					]
+				]
+			}
+		},
+		"key 3": {
+			"key_name": "key 1",
+			"priv_key": 16
+		},
+		"key 4": {
+			"key_name": "key 2",
+			"priv_key": 48
+		},
+		"key 5": {
+			"key_name": "key 2",
+			"format": "BASE64"
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": [
-				[
-					"ECB_NO_PADDING"
-				]
-			]
-		},
-		"security_size": 128,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_message": [
-				[
-					"ECDSA",
-					"HASH=SHA384"
-				]
-			]
-		},
-		"security_size": 384,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": { // Export symmetric key
 		"command": "EXPORT_PRIVATE",
-		"key_id": 0,
-		"priv_key": 16, // Force private key length
+		"key_name": "key 3",
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 4": { // Export ECDSA keypair
 		"command": "EXPORT_KEYPAIR",
-		"key_id": 1,
-		"priv_key": 48, // Force private key length
+		"key_name": "key 4",
 		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 5": { // Export ECDSA private key
 		"command": "EXPORT_PRIVATE",
-		"key_id": 1,
-		"priv_key": 48, // Force private key length
+		"key_name": "key 4",
 		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 6": { // Export ECDSA public key in HEX format
 		"command": "EXPORT_PUBLIC",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 7": { // Export ECDSA public key in BASE64 format
 		"command": "EXPORT_PUBLIC",
-		"key_id": 1,
-		"depends": 2,
-		"format": "BASE64"
+		"key_name": "key 5",
+		"depends": 2
 	},
 	"subtest 8": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 9": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 10": {
 		"command": "EXPORT_PUBLIC",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 9,
 		"result": "SMW_STATUS_UNKNOWN_ID"
 	}

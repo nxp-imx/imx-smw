@@ -1,34 +1,55 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": [],
+				"decrypt": []
+			}
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": [],
+				"decrypt": []
+			}
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"d6c4cf73c639e025654dd3232fe3aa71",
+				"38f21bc8922271b4a6c0af999100b6b5"
+			]
+		},
+		"key 4": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"e380ec7ec8da88e6816cd7f4f26e7ac0",
+				"f86e4caac3be55234ebcd4347cda2fa5"
+			]
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": [],
-			"decrypt": []
-		},
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": [],
-			"decrypt": []
-		},
-		"security_size": 256,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "CIPHER_INIT",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
-		"nb_keys": 2,
-		"key_id": [
-			0,
-			1
+		"key_name": [
+			"key 1",
+			"key 2"
 		],
 		"iv": "041f41fa30b78898040b5e0ecba27d2b",
 		"context_id": 0,
@@ -42,19 +63,10 @@
 		"mode": "XTS",
 		"op_type": "DECRYPT",
 		"subsystem": "TEE",
-		"nb_keys": 2,
-		"priv_key": [
-			[
-				"d6c4cf73c639e025654dd3232fe3aa71",
-				"38f21bc8922271b4a6c0af999100b6b5"
-			],
-			[
-				"e380ec7ec8da88e6816cd7f4f26e7ac0",
-				"f86e4caac3be55234ebcd4347cda2fa5"
-			]
+		"key_name": [
+			"key 3",
+			"key 4"
 		],
-		"key_type": "AES",
-		"security_size": 256,
 		"iv": "041f41fa30b78898040b5e0ecba27d2b",
 		"context_id": 1
 	},
@@ -62,17 +74,10 @@
 		"command": "CIPHER_INIT",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
-		"nb_keys": 2,
-		"priv_key": [
-			[],
-			[
-				"d6c4cf73c639e025654dd3232fe3aa71",
-				"38f21bc8922271b4a6c0af999100b6b5"
-			]
+		"key_name": [
+			"key 1",
+			"key 3"
 		],
-		"key_type": "AES",
-		"security_size": 256,
-		"key_id": 0,
 		"iv": "041f41fa30b78898040b5e0ecba27d2b",
 		"context_id": 2,
 		"depends": 1
@@ -120,12 +125,12 @@
 	},
 	"subtest 12": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 13": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	}
 }

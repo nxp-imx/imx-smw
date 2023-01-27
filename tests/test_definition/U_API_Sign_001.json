@@ -1,14 +1,27 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "NIST",
+			"security_size": 256,
+			"priv_key": [
+				"c9806898a0334916c860748880a541f0",
+				"93b579a9b1f32934d86c363c39800357"
+			]
+		},
+		"key 2": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		}
+	},
 	"subtest 1": { // Sign args pointer is NULL
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -36,12 +49,7 @@
 		"subsystem": "DEFAULT",
 		"version": 255,
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -67,12 +75,7 @@
 		"command": "SIGN",
 		"subsystem": "UNDEFINED",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -98,12 +101,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -130,12 +128,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"algo": "UNDEFINED",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -161,12 +154,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
+		"key_name": "key 1",
 		"message": 163,
 		"signature": [
 			"55555555555555555555555555555555",
@@ -180,12 +168,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
+		"key_name": "key 1",
 		"message": [
 			0,
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -212,12 +195,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -244,12 +222,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
-		"key_type": "NIST",
-		"security_size": 256,
-		"priv_key": [
-			"c9806898a0334916c860748880a541f0",
-			"93b579a9b1f32934d86c363c39800357"
-		],
+		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -277,25 +250,19 @@
 	"subtest 10": { // Add a keypair for the test
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 2"
 	},
 	"subtest 11": { // Get the signature length
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
 		"signature": 64,
-		"key_id": 0,
+		"key_name": "key 2",
 		"depends": 10
 	},
 	"subtest 12": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 2",
 		"depends": 10
 	}
 }

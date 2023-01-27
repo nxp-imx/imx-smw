@@ -1,4 +1,34 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"key 2": {
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"client write encryption key": {
+		},
+		"server write encryption key": {
+		},
+		"master secret key": {
+		},
+		"key 6": {
+			"type": "NIST",
+			"security_size": 384
+		}
+	},
 	"subtest 1": { // Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
@@ -18,37 +48,18 @@
 			],
 			"client_write_iv": "55555555",
 			"server_write_iv": "55555555",
-			"client_w_enc_key_id": 1,
-			"server_w_enc_key_id": 2,
-			"master_sec_key_id": 3
+			"client_w_enc_key_name": "client write encryption key",
+			"server_w_enc_key_name": "server write encryption key",
+			"master_sec_key_name": "master secret key"
 		},
-		"op_output": {
-			"key_id": 0,
-			"pub_key": [
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555"
-			]
-		},
-		"op_input": {
-			"key_type": "ECDH_NIST",
-			"security_size": 256,
-			"pub_key": [
-				"76e656a9ea0d51412b83a48891bfb1e7",
-				"0cbb8e2125c620e32636222c32ec2810",
-				"afca3d1d3766f351f44232d0a6f6a6e4",
-				"8d20e493a01abeca121e719215df0541"
-			]
-		},
+		"op_output": "key 2",
+		"op_input": "key 1",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 2": { // Generate a "fake key"
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "NIST",
-		"security_size": 384,
-		"key_id": 0
+		"key_name": "key 6"
 	},
 	"subtest 3": {
 		"command": "SIGN",
@@ -62,13 +73,13 @@
 			["TLS_MAC_FINISH", "CLIENT"]
 		],
 		"sign_id": 0,
-		"key_id": 0,
+		"key_name": "key 6",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
 		"depends": 2
 	},
 	"subtest 4": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 6",
 		"depends": 2
 	}
 }

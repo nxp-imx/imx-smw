@@ -1,15 +1,19 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "AES",
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": { // Get the MAC size - Output buffer is NULL
 		"command": "MAC_COMPUTE",
 		"algo": "CMAC",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -19,7 +23,7 @@
 	"subtest 3": { // Buffer too short
 		"command": "MAC_COMPUTE",
 		"algo": "CMAC",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -33,7 +37,7 @@
 	"subtest 4": {
 		"command": "MAC_COMPUTE",
 		"algo": "CMAC",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -44,7 +48,7 @@
 	"subtest 5": {
 		"command": "MAC_COMPUTE",
 		"algo": "CMAC",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": 0,
 		"output": 16,
 		"mac_id": 2,
@@ -53,7 +57,7 @@
 	"subtest 6": {
 		"command": "MAC_VERIFY",
 		"algo": "CMAC",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
@@ -63,14 +67,14 @@
 	"subtest 7": {
 		"command": "MAC_VERIFY",
 		"algo": "CMAC",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": 0,
 		"mac_id": 2,
 		"depends": 5
 	},
 	"subtest 8": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	}
 }

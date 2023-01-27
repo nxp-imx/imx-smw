@@ -1,144 +1,150 @@
 {
-        "subtest 1": {
-                "command": "GENERATE",
-                "subsystem": "ELE",
-                "key_type": "HMAC",
-                "security_size": 256,
-                "key_policy": {
-                        "sign_message": [
-                                [
-                                        "HMAC",
-                                        "HASH=SHA256"
-                                ]
-                        ]
-                },
-                "key_id": 0
-        },
-        "subtest 2": {
-                "command": "GENERATE",
-                "subsystem": "ELE",
-                "key_type": "HMAC",
-                "security_size": 384,
-                "key_policy": {
-                        "sign_message": [
-                                [
-                                        "HMAC",
-                                        "HASH=SHA384"
-                                ]
-                        ]
-                },
-                "key_id": 1
-        },
-        "subtest 3": { // SHA224
-                "command": "HMAC",
-                "subsystem": "ELE",
-                "algo": "SHA224",
-                "key_id": 0,
-                "input": [
-                        "4f05600950664d5190a2ebc29c9edb89",
-                        "c20079a4d3e6bc3b27d75e34e2fa3d02",
-                        "768502bd69790078598d5fcf3d6779bf",
-                        "ed1284bbe5ad72fb456015181d9587d6",
-                        "e864c940564eaafb4f2fead4346ea09b",
-                        "6877d9340f6b82eb1515880872213da3",
-                        "ad88feba9f4f13817a71d6f90a1a17c4",
-                        "3a15c038d988b5b29edffe2d6a062813",
-                        "cedbe852cde302b3e33b696846d2a8e3",
-                        "6bd680efcc6cd3f9e9a4c1ae8cac10cc",
-                        "5244d131677140399176ed46700019a0",
-                        "04a163806f7fa467fc4e17b4617bbd76",
-                        "41aaff7ff56396ba8c08a8be100b33a2",
-                        "0b5daf134a2aefa5e1c3496770dcf6ba",
-                        "a4f7bb"
-                ],
-                "mac": 28,
-                "result": "SMW_STATUS_KEY_INVALID",
-                "depends": 1
-        },
-        "subtest 4": { // SHA256
-                "command": "HMAC",
-                "subsystem": "ELE",
-                "algo": "SHA256",
-                "key_id": 0,
-                "input": [
-                        "4f05600950664d5190a2ebc29c9edb89",
-                        "c20079a4d3e6bc3b27d75e34e2fa3d02",
-                        "768502bd69790078598d5fcf3d6779bf",
-                        "ed1284bbe5ad72fb456015181d9587d6",
-                        "e864c940564eaafb4f2fead4346ea09b",
-                        "6877d9340f6b82eb1515880872213da3",
-                        "ad88feba9f4f13817a71d6f90a1a17c4",
-                        "3a15c038d988b5b29edffe2d6a062813",
-                        "cedbe852cde302b3e33b696846d2a8e3",
-                        "6bd680efcc6cd3f9e9a4c1ae8cac10cc",
-                        "5244d131677140399176ed46700019a0",
-                        "04a163806f7fa467fc4e17b4617bbd76",
-                        "41aaff7ff56396ba8c08a8be100b33a2",
-                        "0b5daf134a2aefa5e1c3496770dcf6ba",
-                        "a4f7bb"
-                ],
-                "mac": 32,
-                "depends": 1
-        },
-        "subtest 5": { // SHA384
-                "command": "HMAC",
-                "subsystem": "ELE",
-                "algo": "SHA384",
-                "key_id": 1,
-                "input": [
-                        "62c6a169b9be02b3d7b471a964fc0bcc",
-                        "72b480d26aecb2ed460b7f50016ddaf0",
-                        "4c51218783f3aadfdff5a04ded030d7b",
-                        "3fb7376b61ba30b90e2da921a4470740",
-                        "d63fb99fa16cc8ed81abaf8ce4016e50",
-                        "df81da832070372c24a80890aa3a26fa",
-                        "675710b8fb718266249d496f313c55d0",
-                        "bada101f8f56eeccee4345a8f98f60a3",
-                        "6662cfda794900d12f9414fcbdfdeb85",
-                        "388a814996b47e24d5c8086e7a8edcc5",
-                        "3d299d0d033e6bb60c58b83d6e8b57f6",
-                        "c258d6081dd10eb942fdf8ec157ec3e7",
-                        "5371235a8196eb9d22b1de3a2d30c2ab",
-                        "be0db7650cf6c7159bacbe29b3a93c92",
-                        "100508"
-                ],
-                "mac": 48,
-                "depends": 2
-        },
-        "subtest 6": { // SHA512
-                "command": "HMAC",
-                "subsystem": "ELE",
-                "algo": "SHA512",
-                "key_id": 1,
-                "input": [
-                        "4f05600950664d5190a2ebc29c9edb89",
-                        "c20079a4d3e6bc3b27d75e34e2fa3d02",
-                        "768502bd69790078598d5fcf3d6779bf",
-                        "ed1284bbe5ad72fb456015181d9587d6",
-                        "e864c940564eaafb4f2fead4346ea09b",
-                        "6877d9340f6b82eb1515880872213da3",
-                        "ad88feba9f4f13817a71d6f90a1a17c4",
-                        "3a15c038d988b5b29edffe2d6a062813",
-                        "cedbe852cde302b3e33b696846d2a8e3",
-                        "6bd680efcc6cd3f9e9a4c1ae8cac10cc",
-                        "5244d131677140399176ed46700019a0",
-                        "04a163806f7fa467fc4e17b4617bbd76",
-                        "41aaff7ff56396ba8c08a8be100b33a2",
-                        "0b5daf134a2aefa5e1c3496770dcf6ba",
-                        "a4f7bb"
-                ],
-                "mac": 64,
-                "result": "SMW_STATUS_KEY_INVALID",
-                "depends": 2
-        },
-        "subtest 7": {
-                "command": "DELETE",
-                "key_id": 0,
-                "depends": 1
-        },
-        "subtest 8": {
-                "command": "DELETE",
-                "key_id": 1,
-                "depends": 2
-        }
+	"keys": {
+		"key 1": {
+			"type": "HMAC",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"HMAC",
+						"HASH=SHA256"
+					]
+				]
+			}
+		},
+		"key 2": {
+			"type": "HMAC",
+			"security_size": 384,
+			"policy": {
+				"sign_message": [
+					[
+						"HMAC",
+						"HASH=SHA384"
+					]
+				]
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 2"
+	},
+	"subtest 3": { // SHA224
+		"command": "HMAC",
+		"subsystem": "ELE",
+		"algo": "SHA224",
+		"key_name": "key 1",
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"mac": 28,
+		"result": "SMW_STATUS_KEY_INVALID",
+		"depends": 1
+	},
+	"subtest 4": { // SHA256
+		"command": "HMAC",
+		"subsystem": "ELE",
+		"algo": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"mac": 32,
+		"depends": 1
+	},
+	"subtest 5": { // SHA384
+		"command": "HMAC",
+		"subsystem": "ELE",
+		"algo": "SHA384",
+		"key_name": "key 2",
+		"input": [
+			"62c6a169b9be02b3d7b471a964fc0bcc",
+			"72b480d26aecb2ed460b7f50016ddaf0",
+			"4c51218783f3aadfdff5a04ded030d7b",
+			"3fb7376b61ba30b90e2da921a4470740",
+			"d63fb99fa16cc8ed81abaf8ce4016e50",
+			"df81da832070372c24a80890aa3a26fa",
+			"675710b8fb718266249d496f313c55d0",
+			"bada101f8f56eeccee4345a8f98f60a3",
+			"6662cfda794900d12f9414fcbdfdeb85",
+			"388a814996b47e24d5c8086e7a8edcc5",
+			"3d299d0d033e6bb60c58b83d6e8b57f6",
+			"c258d6081dd10eb942fdf8ec157ec3e7",
+			"5371235a8196eb9d22b1de3a2d30c2ab",
+			"be0db7650cf6c7159bacbe29b3a93c92",
+			"100508"
+		],
+		"mac": 48,
+		"depends": 2
+	},
+	"subtest 6": { // SHA512
+		"command": "HMAC",
+		"subsystem": "ELE",
+		"algo": "SHA512",
+		"key_name": "key 2",
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"mac": 64,
+		"result": "SMW_STATUS_KEY_INVALID",
+		"depends": 2
+	},
+	"subtest 7": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	}
 }

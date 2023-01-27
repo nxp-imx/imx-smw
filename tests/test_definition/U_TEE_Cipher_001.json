@@ -1,53 +1,90 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": [],
+				"decrypt": []
+			}
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": [],
+				"decrypt": []
+			}
+		},
+		"key 3": {
+			"type": "DES",
+			"security_size": 56,
+			"policy": {
+				"encrypt": [],
+				"decrypt": []
+			}
+		},
+		"key 4": {
+			"type": "NIST",
+			"security_size": 128,
+			"priv_key": "30313233343536373839414243444546"
+		},
+		"key 5": {
+			"type": "DES3",
+			"security_size": 168,
+			"priv_key": [
+				"30313233343536373839414243444546",
+				"3132333435363738"
+			]
+		},
+		"key 6": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": "11111111111111111111111111111111"
+		},
+		"key 7": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": "22222222222222222222222222222222"
+		},
+		"key 8": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"11111111111111111111111111111111",
+				"22222222222222222222222222222222"
+			]
+		}
+	},
 	"subtest 1": { // Key type not supported
 		"command": "CIPHER",
 		"mode": "ECB",
 		"subsystem": "TEE",
 		"op_type": "ENCRYPT",
+		"key_name": "key 4",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
-		"priv_key": "30313233343536373839414243444546",
-		"key_type": "NIST",
-		"security_size": 128,
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": [],
-			"decrypt": []
-		},
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": [],
-			"decrypt": []
-		},
-		"security_size": 256,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "DES",
-		"key_policy": {
-			"encrypt": [],
-			"decrypt": []
-		},
-		"security_size": 56,
-		"key_id": 2
+		"key_name": "key 3"
 	},
 	"subtest 5": { // Encrypt with key ID
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"key_id": 2,
+		"key_name": "key 3",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 4
 	},
@@ -55,7 +92,7 @@
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "DECRYPT",
-		"key_id": 2,
+		"key_name": "key 3",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 4
 	},
@@ -64,9 +101,7 @@
 		"mode": "CBC",
 		"op_type": "ENCRYPT",
 		"subsystem": "TEE",
-		"priv_key": "303132333435363738394142434445463132333435363738",
-		"key_type": "DES3",
-		"security_size": 168,
+		"key_name": "key 5",
 		"input": [
 			"323334353637383941424344454630313334353637383941",
 			"424344454630313234353637383941424344454630313233"
@@ -82,9 +117,7 @@
 		"mode": "CBC",
 		"op_type": "DECRYPT",
 		"subsystem": "TEE",
-		"priv_key": "303132333435363738394142434445463132333435363738",
-		"key_type": "DES3",
-		"security_size": 168,
+		"key_name": "key 5",
 		"input": [
 			"1809eb98e45872113058ab38b0c92beddac5e8a9f68aa780",
 			"be541f63f6eea24c7ceb847ddaca1eb2ed5e96b8014b7702"
@@ -99,10 +132,9 @@
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
-		"nb_keys": 2,
-		"key_id": [
-			0,
-			1
+		"key_name": [
+			"key 1",
+			"key 2"
 		],
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "33333333330000000000000000000000",
@@ -115,10 +147,9 @@
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "DECRYPT",
-		"nb_keys": 2,
-		"key_id": [
-			0,
-			1
+		"key_name": [
+			"key 1",
+			"key 2"
 		],
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "33333333330000000000000000000000",
@@ -132,17 +163,10 @@
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
 		"subsystem": "TEE",
-		"nb_keys": 2,
-		"priv_key": [
-			[
-				"11111111111111111111111111111111"
-			],
-			[
-				"22222222222222222222222222222222"
-			]
+		"key_name": [
+			"key 6",
+			"key 7"
 		],
-		"key_type": "AES",
-		"security_size": 128,
 		"input": [
 			"44444444444444444444444444444444",
 			"44444444444444444444444444444444"
@@ -158,17 +182,10 @@
 		"mode": "XTS",
 		"op_type": "DECRYPT",
 		"subsystem": "TEE",
-		"nb_keys": 2,
-		"priv_key": [
-			[
-				"11111111111111111111111111111111"
-			],
-			[
-				"22222222222222222222222222222222"
-			]
+		"key_name": [
+			"key 6",
+			"key 7"
 		],
-		"key_type": "AES",
-		"security_size": 128,
 		"input": [
 			"c454185e6a16936e39334038acef838b",
 			"fb186fff7480adc4289382ecd6d394f0"
@@ -183,17 +200,10 @@
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
-		"nb_keys": 2,
-		"priv_key": [
-			[],
-			[
-				"11111111111111111111111111111111",
-				"22222222222222222222222222222222"
-			]
+		"key_name": [
+			"key 1",
+			"key 8"
 		],
-		"key_type": "AES",
-		"security_size": 256,
-		"key_id": 0,
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "33333333330000000000000000000000",
 		"depends": 2
@@ -202,17 +212,10 @@
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "DECRYPT",
-		"nb_keys": 2,
-		"priv_key": [
-			[],
-			[
-				"11111111111111111111111111111111",
-				"22222222222222222222222222222222"
-			]
+		"key_name": [
+			"key 1",
+			"key 8"
 		],
-		"key_type": "AES",
-		"security_size": 256,
-		"key_id": 0,
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"iv": "33333333330000000000000000000000",
 		"depends": 2
@@ -221,7 +224,7 @@
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"output": 2,
 		"depends": 2,
@@ -231,24 +234,24 @@
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"key_id": 0,
+		"key_name": "key 1",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"output": 0,
 		"depends": 2
 	},
 	"subtest 17": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 2
 	},
 	"subtest 18": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 3
 	},
 	"subtest 19": {
 		"command": "DELETE",
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 4
 	}
 }

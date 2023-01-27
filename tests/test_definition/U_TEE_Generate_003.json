@@ -1,107 +1,123 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "HMAC_MD5",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 2": {
+			"type": "HMAC_SHA1",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 3": {
+			"type": "HMAC_SHA224",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 4": {
+			"type": "HMAC_SHA256",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 5": {
+			"type": "HMAC_SHA384",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 6": {
+			"type": "HMAC_SHA512",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 7": {
+			"type": "HMAC_SM3",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			}
+		},
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "HMAC_MD5",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "HMAC_SHA1",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "HMAC_SHA224",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 2
+		"key_name": "key 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "HMAC_SHA256",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 3
+		"key_name": "key 4"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "HMAC_SHA384",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 4
+		"key_name": "key 5"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "HMAC_SHA512",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 5
+		"key_name": "key 6"
 	},
 	"subtest 7": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "HMAC_SM3",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 6
+		"key_name": "key 7"
 	},
 	"subtest 8": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 9": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 10": {
 		"command": "DELETE",
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 3
 	},
 	"subtest 11": {
 		"command": "DELETE",
-		"key_id": 3,
+		"key_name": "key 4",
 		"depends": 4
 	},
 	"subtest 12": {
 		"command": "DELETE",
-		"key_id": 4,
+		"key_name": "key 5",
 		"depends": 5
 	},
 	"subtest 13": {
 		"command": "DELETE",
-		"key_id": 5,
+		"key_name": "key 6",
 		"depends": 6
 	},
 	"subtest 14": {
 		"command": "DELETE",
-		"key_id": 6,
+		"key_name": "key 7",
 		"depends": 7
 	}
 }

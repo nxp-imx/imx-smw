@@ -1,15 +1,20 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"dce26c6b4cfb286510da4eecd2cffe6c",
+				"df430f33db9b5f77b460679bd49d13ae"
+			]
+		}
+	},
 	"subtest 1": {
 		"command": "CIPHER_INIT",
 		"subsystem": "TEE",
 		"mode": "CBC",
 		"op_type": "ENCRYPT",
-		"priv_key": [
-			"dce26c6b4cfb286510da4eecd2cffe6c",
-			"df430f33db9b5f77b460679bd49d13ae"
-		],
-		"key_type": "AES",
-		"security_size": 256,
+		"key_name": "key 1",
 		"iv": "fdeaa134c8d7379d457175fd1a57d3fc",
 		"context_id": 0
 	},

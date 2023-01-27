@@ -1,74 +1,90 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "HMAC_MD5",
+			"security_size": 128
+		},
+		"key 2": {
+			"type": "HMAC_SHA1",
+			"security_size": 160
+		},
+		"key 3": {
+			"type": "HMAC_SHA224",
+			"security_size": 224
+		},
+		"key 4": {
+			"type": "HMAC_SHA256",
+			"security_size": 256
+		},
+		"key 5": {
+			"type": "HMAC_SHA384",
+			"security_size": 384
+		},
+		"key 6": {
+			"type": "HMAC_SHA512",
+			"security_size": 512
+		},
+		"key 7": {
+			"type": "HMAC_SM3",
+			"security_size": 256
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "HMAC_MD5",
-		"security_size": 128,
-		"key_id": 0,
+		"key_name": "key 1",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "HMAC_SHA1",
-		"security_size": 160,
-		"key_id": 1,
+		"key_name": "key 2",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "HMAC_SHA224",
-		"security_size": 224,
-		"key_id": 2
+		"key_name": "key 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "HMAC_SHA256",
-		"security_size": 256,
-		"key_id": 3
+		"key_name": "key 4"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "HMAC_SHA384",
-		"security_size": 384,
-		"key_id": 4
+		"key_name": "key 5"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "HMAC_SHA512",
-		"security_size": 512,
-		"key_id": 5
+		"key_name": "key 6"
 	},
 	"subtest 7": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "HMAC_SM3",
-		"security_size": 256,
-		"key_id": 6,
+		"key_name": "key 7",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 8": {
 		"command": "DELETE",
-		"key_id": 2,
+		"key_name": "key 3",
 		"depends": 3
 	},
 	"subtest 9": {
 		"command": "DELETE",
-		"key_id": 3,
+		"key_name": "key 4",
 		"depends": 4
 	},
 	"subtest 10": {
 		"command": "DELETE",
-		"key_id": 4,
+		"key_name": "key 5",
 		"depends": 5
 	},
 	"subtest 11": {
 		"command": "DELETE",
-		"key_id": 5,
+		"key_name": "key 6",
 		"depends": 6
 	}
 }

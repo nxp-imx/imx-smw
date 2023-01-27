@@ -1,4 +1,14 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		}
+	},
 	"subtest 1": {
 		"command": "CIPHER_INIT",
 		"test_error": "ARGS_NULL",
@@ -51,12 +61,7 @@
 		"command": "CIPHER_INIT",
 		"mode": "CBC",
 		"op_type": "ENCRYPT",
-		"priv_key": [
-			"a1b90cba3f06ac353b2c343876081762",
-			"090923026e91771815f29dab01932f2f"
-		],
-		"security_size": 128,
-		"key_type": "AES",
+		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

@@ -1,150 +1,170 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "BRAINPOOL_R1",
+			"security_size": 160,
+			"priv_key": [
+				"01234567890123456789012345678901",
+				"23456789"
+			],
+			"pub_key": [
+				"01234567890123456789012345678901",
+				"23456789012345678901234567890123",
+				"4567890123456789"
+			],
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		},
+		"key 2": {
+			"type": "NIST",
+			"security_size": 192,
+			"priv_key": [
+				"01234567890123456789012345678901",
+				"2345678901234567"
+			],
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 128,
+			"pub_key": "0123456789",
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 4": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": "0123456789",
+			"pub_key": "0123456789",
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 5": {
+			"type": "NIST",
+			"security_size": 512,
+			"pub_key": [
+				"01234567890123456789012345678901",
+				"23456789012345678901234567890123",
+				"45678901234567890123456789012345",
+				"67890123456789012345678901233456",
+				"01234567890123456789012345678901",
+				"23456789012345678901234567890123",
+				"45678901234567890123456789012345",
+				"67890123456789012345678901233456"
+			],
+			"policy": {
+				"verify_hash": [],
+				"verify_message": []
+			}
+		},
+		"key 6": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": "0123456789",
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 7": {
+			"type": "NIST",
+			"security_size": 192,
+			"pub_key": "0123456789",
+			"policy": {
+				"verify_hash": [],
+				"verify_message": []
+			}
+		},
+		"key 8": {
+			"type": "RSA",
+			"security_size": 256,
+			"priv_key": [
+				"890108895a7c27cedab50179f31e1052",
+				"37b7b5b3b075de6a40dB8b4d4b579721"
+			],
+			"modulus": [
+				"96798eefa1fb273c08150eb1a75cfc1a",
+				"671c4cb93897a5abf5ac2dbac912d3af"
+			],
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		},
+		"key 9": {
+			"type": "RSA",
+			"security_size": 256,
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"96798eefa1fb273c08150eb1a75cfc1a",
+				"671c4cb93897a5abf5ac2dbac912"
+			],
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		}
+	},
 	"subtest 1": { // Key type is not supported
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "BRAINPOOL_R1",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": []
-		},
-		"security_size": 160,
-		"priv_key": [
-			"01234567890123456789012345678901",
-			"23456789"
-		],
-		"pub_key": [
-			"01234567890123456789012345678901",
-			"23456789012345678901234567890123",
-			"4567890123456789"
-		],
-		"key_id": 0,
+		"key_name": "key 1",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 2": { // Import only ECDSA private key
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": []
-		},
-		"security_size": 192,
-		"priv_key": [
-			"01234567890123456789012345678901",
-			"2345678901234567"
-		],
-		"key_id": 0,
+		"key_name": "key 2",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Import symmetric key without private key set
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 128,
-		"pub_key": "0123456789",
-		"key_id": 0,
+		"key_name": "key 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 4": { // Import symmetric key with public key set
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 128,
-		"priv_key": "0123456789",
-		"pub_key": "0123456789",
-		"key_id": 0,
+		"key_name": "key 4",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": { // Key size is not supported by TEE
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"verify_hash": [],
-			"verify_message": []
-		},
-		"security_size": 512,
-		"pub_key": [
-			"01234567890123456789012345678901",
-			"23456789012345678901234567890123",
-			"45678901234567890123456789012345",
-			"67890123456789012345678901233456",
-			"01234567890123456789012345678901",
-			"23456789012345678901234567890123",
-			"45678901234567890123456789012345",
-			"67890123456789012345678901233456"
-		],
-		"key_id": 0,
+		"key_name": "key 5",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 6": { // Private buffer size doesn't match key security size
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 128,
-		"priv_key": "0123456789",
-		"key_id": 0,
+		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": { // Public buffer size doesn't match key security size
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"verify_hash": [],
-			"verify_message": []
-		},
-		"security_size": 192,
-		"pub_key": "0123456789",
-		"key_id": 0,
+		"key_name": "key 7",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 8": { // Import RSA private key only
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "RSA",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": []
-		},
-		"security_size": 256,
-		"priv_key": [
-			"890108895a7c27cedab50179f31e1052",
-			"37b7b5b3b075de6a40dB8b4d4b579721"
-		],
-		"modulus": [
-			"96798eefa1fb273c08150eb1a75cfc1a",
-			"671c4cb93897a5abf5ac2dbac912d3af"
-		],
-		"key_id": 0,
+		"key_name": "key 8",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 9": { // Wrong modulus length
 		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_type": "RSA",
-		"key_policy": {
-			"sign_hash": [],
-			"sign_message": []
-		},
-		"security_size": 256,
-		"pub_key": [
-			"010001"
-		],
-		"modulus": [
-			"96798eefa1fb273c08150eb1a75cfc1a",
-			"671c4cb93897a5abf5ac2dbac912"
-		],
-		"key_id": 0,
+		"key_name": "key 9",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

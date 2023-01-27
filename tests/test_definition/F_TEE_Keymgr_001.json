@@ -1,38 +1,44 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"policy": {
+				"encrypt": []
+			},
+			"security_size": 128
+		},
+		"key 2": {
+			"type": "NIST",
+			"policy": {
+				"sign_message": []
+			},
+			"security_size": 256
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "AES",
-		"key_policy": {
-			"encrypt": []
-		},
-		"security_size": 128,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "NIST",
-		"key_policy": {
-			"sign_message": []
-		},
-		"security_size": 256,
-		"key_id": 1
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 4": { // Try to delete a key already deleted
 		"command": "DELETE",
-		"key_id": 1,
+		"key_name": "key 2",
 		"result": "SMW_STATUS_UNKNOWN_ID",
 		"depends": 3
 	},
 	"subtest 5": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	}
 }

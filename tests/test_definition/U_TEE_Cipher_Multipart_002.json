@@ -1,20 +1,32 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "DES3",
+			"security_size": 112,
+			"policy": {
+				"encrypt": [],
+				"decrypt": []
+			}
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"addf88c1ab997eb58c0455288c3a4fa3",
+				"20ada8c18a69cc90aa99c73b174dfde6"
+			]
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_type": "DES3",
-		"key_policy": {
-			"encrypt": [],
-			"decrypt": []
-		},
-		"security_size": 112,
-		"key_id": 0
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
-		"key_id": 0,
+		"key_name": "key 1",
 		"context_id": 0,
 		"depends": 1
 	},
@@ -23,12 +35,7 @@
 		"subsystem": "TEE",
 		"mode": "CBC",
 		"op_type": "DECRYPT",
-		"priv_key": [
-			"addf88c1ab997eb58c0455288c3a4fa3",
-			"20ada8c18a69cc90aa99c73b174dfde6"
-		],
-		"key_type": "AES",
-		"security_size": 256,
+		"key_name": "key 2",
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
 		"context_id": 1
 	},
@@ -62,7 +69,7 @@
 	},
 	"subtest 8": {
 		"command": "DELETE",
-		"key_id": 0,
+		"key_name": "key 1",
 		"depends": 1
 	}
 }

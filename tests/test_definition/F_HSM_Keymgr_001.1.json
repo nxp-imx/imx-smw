@@ -1,37 +1,47 @@
 {
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": ["PERSISTENT"]
+		},
+		"key 2": {
+			"type": "NIST",
+			"security_size": 256,
+			"attributes_list": ["PERSISTENT"]
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 256
+		},
+		"key 4": {
+			"type": "BRAINPOOL_R1",
+			"security_size": 384,
+			"attributes_list": [
+				["PERSISTENT"],
+				["FLUSH_KEY"]
+			]
+		}
+	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "AES",
-		"security_size": 128,
-		"key_id": 0,
-		"attributes_list": ["PERSISTENT"]
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "NIST",
-		"security_size": 256,
-		"key_id": 1,
-		"attributes_list": ["PERSISTENT"]
+		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "AES",
-		"security_size": 256,
-		"key_id": 2
+		"key_name": "key 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
-		"key_type": "BRAINPOOL_R1",
-		"security_size": 384,
-		"key_id": 3,
-		"attributes_list": [
-			["PERSISTENT"],
-			["FLUSH_KEY"]
-		]
+		"key_name": "key 4"
 	},
 	"subtest 5": {
 		"command": "SAVE_KEY_IDS",

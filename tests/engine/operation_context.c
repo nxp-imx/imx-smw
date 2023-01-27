@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -15,7 +15,7 @@
 #include "util_cipher.h"
 #include "util_context.h"
 
-static int bad_params(json_object *params, struct smw_op_context **args,
+static int bad_params(struct json_object *params, struct smw_op_context **args,
 		      struct smw_op_context **dst)
 {
 	int ret;
@@ -102,8 +102,8 @@ int copy_context(struct subtest_data *subtest)
 	int dst_ctx_id = 0;
 	int src_ctx_id = 0;
 	int op_copy_ctx = 0;
-	json_object *obj = NULL;
-	json_object *array_member;
+	struct json_object *obj = NULL;
+	struct json_object *array_member;
 	struct smw_op_context *dst_args_ptr = NULL;
 	struct smw_op_context *src_args_ptr = NULL;
 	struct smw_op_context empty_ctx = { .handle = &empty_ctx,

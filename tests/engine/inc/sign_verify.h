@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #ifndef __SIGN_VERIFY_H__
@@ -27,7 +27,6 @@
  * -UNDEFINED_CMD               - Command is neither Sign nor Verify
  * Error code from util_key_desc_init().
  * Error code from util_key_read_descriptor().
- * Error code from util_key_find_key_node().
  * Error code from util_read_hex_buffer().
  * Error code from util_sign_find_node().
  * Error code from set_sign_verify_bad_args().

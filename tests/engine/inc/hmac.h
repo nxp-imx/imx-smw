@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #ifndef __HMAC_H__
@@ -21,7 +21,6 @@
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
  * Error code from util_key_desc_init().
  * Error code from util_key_read_descriptor().
- * Error code from util_key_find_key_node().
  * Error code from util_read_hex_buffer().
  * Error code from get_hash_digest_len().
  * Error code from set_hmac_bad_args().

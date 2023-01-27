@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -22,7 +22,8 @@
  * -BAD_ARGS			- One of the arguments is bad.
  * -BAD_PARAM_TYPE		- A parameter value is undefined.
  */
-static int set_rng_bad_args(json_object *params, struct smw_rng_args **args)
+static int set_rng_bad_args(struct json_object *params,
+			    struct smw_rng_args **args)
 {
 	int ret = ERR_CODE(PASSED);
 	enum arguments_test_err_case error;

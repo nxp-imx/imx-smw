@@ -122,7 +122,7 @@ struct subtest_data {
 	({                                                                     \
 		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
-		_this->app->key_identifiers;                                   \
+		_this->app->keys;                                              \
 	})
 
 #define list_op_ctxs(this)                                                     \

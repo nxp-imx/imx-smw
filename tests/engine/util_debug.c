@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <stdarg.h>
@@ -86,17 +86,19 @@ void util_dbg_dumphex(const char *function, int line, char *msg, void *buf,
 	dbg_func_printf(function, line, app_name, thr_name);
 	printf(" %s (%p-%zu)\n", msg, buf, len);
 
-	for (idx = 0; idx < len; idx++) {
-		if (((idx % 16) == 0) && idx > 0) {
-			printf("%s\n", out);
-			off = 0;
+	if (buf) {
+		for (idx = 0; idx < len; idx++) {
+			if (((idx % 16) == 0) && idx > 0) {
+				printf("%s\n", out);
+				off = 0;
+			}
+			off += snprintf(out + off, (sizeof(out) - off), "%02X ",
+					((char *)buf)[idx]);
 		}
-		off += snprintf(out + off, (sizeof(out) - off), "%02X ",
-				((char *)buf)[idx]);
-	}
 
-	if (off > 0)
-		printf("%s\n", out);
+		if (off > 0)
+			printf("%s\n", out);
+	}
 
 	(void)fflush(stdout);
 

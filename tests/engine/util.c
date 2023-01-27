@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <assert.h>
@@ -17,6 +17,7 @@
 #include "json_util.h"
 #include "util.h"
 #include "util_app.h"
+#include "util_key.h"
 #include "util_list.h"
 #include "util_file.h"
 #include "util_mutex.h"
@@ -31,12 +32,11 @@ static const struct test_err_case {
 	enum arguments_test_err_case status;
 	char *string;
 } args_test_err_case[] = {
-	ENUM_TO_STRING(ARGS_NULL),	   ENUM_TO_STRING(BAD_FORMAT),
-	ENUM_TO_STRING(KEY_BUFFER_NULL),   ENUM_TO_STRING(KEY_DESC_ID_NOT_SET),
-	ENUM_TO_STRING(KEY_DESC_ID_SET),   ENUM_TO_STRING(KEY_DESC_NULL),
-	ENUM_TO_STRING(KEY_DESC_OUT_NULL), ENUM_TO_STRING(NB_ERROR_CASE),
-	ENUM_TO_STRING(CTX_NULL),	   ENUM_TO_STRING(CTX_HANDLE_NULL),
-	ENUM_TO_STRING(DST_CPY_ARGS_NULL), ENUM_TO_STRING(TLS12_KDF_ARGS_NULL),
+	ENUM_TO_STRING(ARGS_NULL),	     ENUM_TO_STRING(KEY_BUFFER_NULL),
+	ENUM_TO_STRING(KEY_DESC_NULL),	     ENUM_TO_STRING(KEY_DESC_OUT_NULL),
+	ENUM_TO_STRING(NB_ERROR_CASE),	     ENUM_TO_STRING(CTX_NULL),
+	ENUM_TO_STRING(CTX_HANDLE_NULL),     ENUM_TO_STRING(DST_CPY_ARGS_NULL),
+	ENUM_TO_STRING(TLS12_KDF_ARGS_NULL),
 };
 
 #define SET_ERR_CODE_AND_NAME(err, name)                                       \
@@ -79,7 +79,7 @@ struct test_data *util_get_test(void)
 
 struct test_data *util_setup_test(void)
 {
-	int err = 1;
+	int err = ERR_CODE(INTERNAL);
 	struct test_data *test = NULL;
 
 	test = calloc(1, sizeof(*test));
@@ -97,7 +97,7 @@ struct test_data *util_setup_test(void)
 	err = util_app_init(&test->apps);
 
 exit:
-	if (err) {
+	if (err != ERR_CODE(PASSED)) {
 		util_destroy_test(test);
 		test = NULL;
 	}
@@ -182,9 +182,9 @@ int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 }
 
 int util_read_json_buffer(char **buf, unsigned int *buf_len,
-			  unsigned int *json_len, json_object *obuf)
+			  unsigned int *json_len, struct json_object *obuf)
 {
-	json_object *otmp;
+	struct json_object *otmp;
 	char *buf_tmp = NULL;
 	int idx = 0;
 	int idx_string = 0;
@@ -264,10 +264,10 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 }
 
 int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
-			 json_object *params, const char *field)
+			 struct json_object *params, const char *field)
 {
 	int ret = ERR_CODE(MISSING_PARAMS);
-	json_object *obj;
+	struct json_object *obj;
 	char *str = NULL;
 	unsigned int len = 0;
 	unsigned int json_len = UINT_MAX;
@@ -345,7 +345,7 @@ int get_test_name(char **test_name, char *test_definition_file)
 }
 
 int util_read_test_error(enum arguments_test_err_case *error,
-			 json_object *params)
+			 struct json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
 	size_t idx;
@@ -410,13 +410,13 @@ static const unsigned int t_data_2_json_type[] = {
 };
 
 int util_read_json_type(void *value, const char *key, enum t_data_type type,
-			json_object *params)
+			struct json_object *params)
 {
 	int ret = ERR_CODE(BAD_PARAM_TYPE);
 	struct tbuffer *buf;
 
 	json_type val_type;
-	json_object *obj = NULL;
+	struct json_object *obj = NULL;
 
 	if (!params || !key) {
 		DBG_PRINT_BAD_ARGS();
@@ -495,7 +495,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 	return ret;
 }
 
-int util_read_json_file(char *dir, char *name, json_object **json_obj)
+int util_read_json_file(char *dir, char *name, struct json_object **json_obj)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	char *definition_buffer = NULL;
@@ -530,18 +530,18 @@ int check_file_extension(char *filename, char *extension)
 		return ERR_CODE(BAD_ARGS);
 
 	file_extension = strrchr(filename, '.');
-	if (file_extension) {
-		if (strcmp(file_extension, extension)) {
-			DBG_PRINT("%s: Expected %s file extension", filename,
-				  extension);
-			return ERR_CODE(FAILED);
-		} else {
-			return ERR_CODE(PASSED);
-		}
+	if (!file_extension) {
+		DBG_PRINT("strrchr returned NULL pointer");
+		return ERR_CODE(INTERNAL);
 	}
 
-	DBG_PRINT("strrchr returned NULL pointer");
-	return ERR_CODE(INTERNAL);
+	if (strcmp(file_extension, extension)) {
+		DBG_PRINT("%s: Expected %s file extension", filename,
+			  extension);
+		return ERR_CODE(FAILED);
+	}
+
+	return ERR_CODE(PASSED);
 }
 
 char *util_get_strerr(void)
@@ -594,6 +594,12 @@ int util_get_json_obj_ids(const char *name, const char *key,
 	if (!name || !first || !last)
 		return ERR_CODE(BAD_ARGS);
 
+	if (strlen(name) <= strlen(key))
+		return ERR_CODE(BAD_ARGS);
+
+	if (strncmp(name, key, strlen(key)))
+		return ERR_CODE(BAD_ARGS);
+
 	tmp = malloc(strlen(name) - strlen(key) + 1);
 	if (!tmp) {
 		DBG_PRINT_ALLOC_FAILURE();
@@ -602,7 +608,7 @@ int util_get_json_obj_ids(const char *name, const char *key,
 
 	strcpy(tmp, name + strlen(key));
 
-	/* Get the first thread id */
+	/* Get the first id */
 	field = strtok(tmp, delim);
 	if (!field) {
 		DBG_PRINT("Missing %s ID in %s", key, name);

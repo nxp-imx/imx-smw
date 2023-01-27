@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -13,7 +13,7 @@ int util_context_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(FAILED);
 
-	return util_list_init(list, NULL);
+	return util_list_init(list, NULL, LIST_ID_TYPE_UINT);
 }
 
 int util_context_add_node(struct llist *list, unsigned int id,

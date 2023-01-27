@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __UTIL_H__
@@ -199,7 +199,7 @@ int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len);
  * -FAILED                  - Error in definition file
  */
 int util_read_json_buffer(char **buf, unsigned int *buf_len,
-			  unsigned int *json_len, json_object *obuf);
+			  unsigned int *json_len, struct json_object *obuf);
 
 /**
  * util_read_hex_buffers() - Read an hexadecimal buffer definition
@@ -225,7 +225,7 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
  * -FAILED                  - Error in definition file
  */
 int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
-			 json_object *params, const char *field);
+			 struct json_object *params, const char *field);
 
 /**
  * util_read_test_error() - Get the test error type if defined
@@ -242,7 +242,7 @@ int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
  * -BAD_ARGS        - One of the argument is bad.
  */
 int util_read_test_error(enum arguments_test_err_case *error,
-			 json_object *params);
+			 struct json_object *params);
 
 /**
  * util_compare_buffers() - Compare two buffers
@@ -266,7 +266,7 @@ int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
  * @value: Pointer to the output value read (can be NULL)
  * @key: Key value to read
  * @type: data type to read
- * @params: json-c object where is the @key value
+ * @params: json-c object where the @key value is
  *
  * Searches if the @key value is defined in json-c @params.
  * Then if @key found, verifies if the @key value type is supported and
@@ -285,7 +285,7 @@ int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
  * -FAILED          - Error in definition file
  */
 int util_read_json_type(void *value, const char *key, enum t_data_type type,
-			json_object *params);
+			struct json_object *params);
 
 /**
  * util_read_json_file() - Fill a json object with file content.
@@ -302,7 +302,7 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
  * -INTERNAL	- json_tokener_parse() failed.
  * Error code from copy_file_into_buffer().
  */
-int util_read_json_file(char *dir, char *name, json_object **json_obj);
+int util_read_json_file(char *dir, char *name, struct json_object **json_obj);
 
 /**
  * check_file_extension() - Check a filename extension.

@@ -332,7 +332,7 @@ static int execute_config_cmd(char *cmd, struct subtest_data *subtest)
 }
 
 /**
- * execute_save_keys_cmd() - Execute backup keys ids in a file
+ * execute_save_keys_cmd() - Execute backup keys in a file
  * @cmd: Command name.
  * @subtest: Subtest data.
  *
@@ -347,11 +347,11 @@ static int execute_save_keys_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	return save_key_ids_to_file(subtest);
+	return save_keys_to_file(subtest);
 }
 
 /**
- * execute_restore_keys_cmd() - Execute restore keys ids from a file
+ * execute_restore_keys_cmd() - Execute restore keys from a file
  * @cmd: Command name.
  * @subtest: Subtest data.
  *
@@ -366,7 +366,7 @@ static int execute_restore_keys_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	return restore_key_ids_from_file(subtest);
+	return restore_keys_from_file(subtest);
 }
 
 /**
@@ -509,8 +509,8 @@ static int run_subtest_vs_depends(struct thread_data *thr,
 	int res;
 	int dep_id;
 	int nb_members = 1;
-	json_object *depends_obj = NULL;
-	json_object *oval = NULL;
+	struct json_object *depends_obj = NULL;
+	struct json_object *oval = NULL;
 
 	res = util_read_json_type(&depends_obj, DEPENDS_OBJ, t_buffer, def);
 	if (res != ERR_CODE(PASSED)) {
@@ -754,7 +754,13 @@ void *process_thread(void *arg)
 	 * Get the number of subtests defined and allocate the
 	 * subtest status array.
 	 */
-	thr->stat.number = json_object_get_object(thr->def)->count;
+	json_object_object_foreachC(thr->def, obj)
+	{
+		/* Count the JSON-C "subtest" objects, other tags are ignored */
+		if (!strncmp(obj.key, SUBTEST_OBJ, strlen(SUBTEST_OBJ)))
+			thr->stat.number++;
+	}
+
 	total = thr->stat.number;
 	thr->stat.status_array =
 		malloc(thr->stat.number * sizeof(*thr->stat.status_array));

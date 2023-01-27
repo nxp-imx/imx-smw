@@ -48,9 +48,9 @@ static void util_app_destroy(void *data)
 	if (!app_data)
 		return;
 
-	err = util_list_clear(app_data->key_identifiers);
+	err = util_list_clear(app_data->keys);
 	if (err != ERR_CODE(PASSED))
-		DBG_PRINT("Clear list key identifiers error %d", err);
+		DBG_PRINT("Clear list keys error %d", err);
 
 	err = util_list_clear(app_data->op_contexts);
 	if (err != ERR_CODE(PASSED))
@@ -123,7 +123,13 @@ static int app_register(struct test_data *test, unsigned int id,
 	(void)sprintf(app_data->name, "App %d", id);
 	app_data->test = test;
 
-	err = util_key_init(&app_data->key_identifiers);
+	err = util_key_init(&app_data->keys);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Build the keys list */
+	err = util_key_build_keys_list(test->dir_def_file, test->definition,
+				       app_data->keys);
 	if (err != ERR_CODE(PASSED))
 		goto exit;
 
@@ -167,7 +173,7 @@ int util_app_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, util_app_destroy);
+	return util_list_init(list, util_app_destroy, LIST_ID_TYPE_UINT);
 }
 
 struct app_data *util_app_get_active_data(void)

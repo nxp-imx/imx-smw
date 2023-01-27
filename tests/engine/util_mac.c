@@ -31,7 +31,7 @@ int util_mac_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, &mac_free_data);
+	return util_list_init(list, &mac_free_data, LIST_ID_TYPE_UINT);
 }
 
 int util_mac_add_node(struct llist *list, unsigned int id, unsigned char *mac,

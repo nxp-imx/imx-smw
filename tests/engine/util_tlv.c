@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <ctype.h>
@@ -61,12 +61,12 @@ static int get_tlv_numeral_byte(long value)
 	return nb_bytes;
 }
 
-static int read_tlv(struct tlv *tlv, unsigned int *len, json_object *obj)
+static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 {
 	int ret = ERR_CODE(FAILED);
 	int nb_elem = 0;
-	json_object *ovalue;
-	json_object *oidx;
+	struct json_object *ovalue;
+	struct json_object *oidx;
 	enum json_type type;
 
 	nb_elem = json_object_array_length(obj);
@@ -266,7 +266,7 @@ end:
 	return ret;
 }
 
-static int read_key_algo_param(struct tlv *tlv, json_object *oval)
+static int read_key_algo_param(struct tlv *tlv, struct json_object *oval)
 {
 	int err = ERR_CODE(FAILED);
 	static const char delim[2] = "=";
@@ -333,7 +333,7 @@ end:
 }
 
 static int read_key_usage_algo(struct tlv **tlv, unsigned int *policy_len,
-			       json_object_iter *usage)
+			       struct json_object_iter *usage)
 {
 	int err = ERR_CODE(PASSED);
 	struct json_object *oalgo = NULL;
@@ -410,7 +410,7 @@ static int read_key_usage_algo(struct tlv **tlv, unsigned int *policy_len,
 	return err;
 }
 
-static int count_tlv_key_usage_algo(int *nb_tlv, json_object_iter *usage)
+static int count_tlv_key_usage_algo(int *nb_tlv, struct json_object_iter *usage)
 {
 	struct json_object *oalgo = NULL;
 	struct json_object *oval = NULL;
@@ -539,12 +539,12 @@ static int concat_policy_attr(unsigned char **attr, unsigned int *len,
 }
 
 int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
-			json_object *params)
+			struct json_object *params)
 {
 	int ret;
 	struct tlv *tlv = NULL;
-	json_object *oattr_list;
-	json_object *oattr;
+	struct json_object *oattr_list;
+	struct json_object *oattr;
 	unsigned char *new_attr = NULL;
 	unsigned int new_attr_len = 0;
 	int nb_attrs = 0;
@@ -607,7 +607,7 @@ end:
 }
 
 int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
-			     json_object *params)
+			     struct json_object *okey)
 {
 	int err;
 	struct json_object *obj = NULL;
@@ -618,7 +618,7 @@ int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
 	unsigned char *usages_attr = NULL;
 	unsigned int usages_len = 0;
 
-	if (!params || !attr || !len) {
+	if (!okey || !attr || !len) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
@@ -629,7 +629,7 @@ int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
 	 * permitted algorithm(s).
 	 *
 	 * Definition is as below:
-	 * "key_policy" : {
+	 * "policy" : {
 	 *     "usage_1" : [],
 	 *     "usage_2" : [
 	 *         ["algo_1", "MIN_LENGTH=32"],
@@ -637,7 +637,7 @@ int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
 	 *     ]
 	 * }
 	 */
-	err = util_read_json_type(&obj, KEY_POLICY_OBJ, t_object, params);
+	err = util_read_json_type(&obj, POLICY_OBJ, t_object, okey);
 	if (err != ERR_CODE(PASSED)) {
 		/* If JSON tag not found, return with no error */
 		if (err == ERR_CODE(VALUE_NOTFOUND))

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -23,10 +23,12 @@ static void cipher_free_data(void *data)
 {
 	struct cipher_output_data *cipher_output_data = data;
 
-	if (cipher_output_data && cipher_output_data->output)
-		free(cipher_output_data->output);
+	if (cipher_output_data) {
+		if (cipher_output_data->output)
+			free(cipher_output_data->output);
 
-	free(data);
+		free(data);
+	}
 }
 
 int util_cipher_init(struct llist **list)
@@ -34,7 +36,7 @@ int util_cipher_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, &cipher_free_data);
+	return util_list_init(list, &cipher_free_data, LIST_ID_TYPE_UINT);
 }
 
 int util_cipher_add_out_data(struct llist *list, unsigned int ctx_id,

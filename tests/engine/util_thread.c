@@ -63,7 +63,7 @@ static void thr_free_data(void *data)
 static int read_thread_loop(struct json_object_iter *thr_obj, int *loop,
 			    struct json_object **thr_def)
 {
-	json_object *otmp;
+	struct json_object *otmp;
 
 	if (json_object_array_length(thr_obj->val) != 2) {
 		DBG_PRINT("\"%s\" is more than 2 array entries", thr_obj->key);
@@ -389,7 +389,7 @@ int util_thread_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, &thr_free_data);
+	return util_list_init(list, &thr_free_data, LIST_ID_TYPE_UINT);
 }
 
 int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,

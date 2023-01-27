@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #ifndef __UTIL_TLV_H__
@@ -12,7 +12,7 @@
  * util_tlv_read_attrs() - Read the attributes list encoded in TLV format.
  * @attr: attributes list TLV string result
  * @len: Length of the attributes list string
- * @params: json-c object
+ * @params: Parameters json-c object
  *
  * Return:
  * PASSED                   - Success.
@@ -22,13 +22,13 @@
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  */
 int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
-			json_object *params);
+			struct json_object *params);
 
 /**
  * util_tlv_read_key_policy() - Read the key policy encoded in TLV format.
  * @attr: attributes list TLV string result
  * @len: Length of the attributes list string
- * @params: json-c object
+ * @okey: Key json-c object
  *
  * Return:
  * PASSED                   - Success.
@@ -38,6 +38,6 @@ int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  */
 int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
-			     json_object *params);
+			     struct json_object *okey);
 
 #endif /* __UTIL_TLV_H__ */

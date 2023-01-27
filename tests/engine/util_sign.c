@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -22,8 +22,12 @@ static void sign_free_data(void *data)
 {
 	struct signature_data *signature_data = data;
 
-	if (signature_data && signature_data->signature)
-		free(signature_data->signature);
+	if (signature_data) {
+		if (signature_data->signature)
+			free(signature_data->signature);
+
+		free(signature_data);
+	}
 }
 
 int util_sign_init(struct llist **list)
@@ -31,7 +35,7 @@ int util_sign_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, &sign_free_data);
+	return util_list_init(list, &sign_free_data, LIST_ID_TYPE_UINT);
 }
 
 int util_sign_add_node(struct llist *list, unsigned int id,

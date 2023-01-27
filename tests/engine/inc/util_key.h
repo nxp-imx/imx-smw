@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 #ifndef __UTIL_KEY_H__
 #define __UTIL_KEY_H__
@@ -16,9 +16,8 @@
 /*
  * Key format values
  */
-#define KEY_FORMAT_BASE64    "BASE64"
-#define KEY_FORMAT_HEX	     "HEX"
-#define KEY_FORMAT_UNDEFINED "UNDEFINED"
+#define KEY_FORMAT_BASE64 "BASE64"
+#define KEY_FORMAT_HEX	  "HEX"
 
 /*
  * Definition of the key descriptor fields not set
@@ -104,15 +103,15 @@ struct keypair_ops {
 	})
 
 /**
- * struct key_identifier_data - Data of key identifier linked list node.
- * @key_identifier: Key identifier assigned by SMW.
- * @security_size: Key security size.
+ * struct key_data - Data of key linked list node.
+ * @identifier: Key identifier assigned by SMW.
  * @pub_key: Public key data buffer structure. Used for ephemeral keys.
+ * @okey_params: Pointer to the JSON-C object of key parameters.
  */
-struct key_identifier_data {
-	unsigned int key_identifier;
-	unsigned int security_size;
+struct key_data {
+	unsigned int identifier;
 	struct tbuffer pub_key;
+	struct json_object *okey_params;
 };
 
 /**
@@ -238,9 +237,23 @@ static inline int util_key_is_modulus(struct keypair_ops *key_test)
 int util_key_init(struct llist **list);
 
 /**
- * util_key_add_node() - Add a new node in a key identifier linked list.
- * @key_identifiers: Pointer to linked list.
- * @id: Local ID of the key identifier. Comes from test definition file.
+ * util_key_add_node() - Add a new node in a key linked list.
+ * @keys: Pointer to linked list.
+ * @key_name: Key name.
+ * @okey_params: Pointer to the JSON-C object of key parameters.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -BAD_ARGS               - One of the argument is not correct.
+ */
+int util_key_add_node(struct llist *keys, const char *key_name,
+		      void *okey_params);
+
+/**
+ * util_key_update_node() - Update a node in a key linked list.
+ * @keys: Pointer to linked list.
+ * @key_name: Key name.
  * @key_test: Test keypair structure with operations to save
  *
  * Return:
@@ -248,22 +261,8 @@ int util_key_init(struct llist **list);
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  * -BAD_ARGS               - One of the argument is not correct.
  */
-int util_key_add_node(struct llist *key_identifiers, unsigned int id,
-		      struct keypair_ops *key_test);
-
-/**
- * util_key_find_key_node() - Search a key identifier node.
- * @key_identifiers: Key identifier linked list where the research is done.
- * @id: Id of the key identifier.
- * @key_test: Test keypair structure with operations to fill
- *
- * Return:
- * PASSED                  - Success.
- * -KEY_NOTFOUND           - @id is not found.
- * -BAD_ARGS               - One of the argument is not correct.
- */
-int util_key_find_key_node(struct llist *key_identifiers, unsigned int id,
-			   struct keypair_ops *key_test);
+int util_key_update_node(struct llist *keys, const char *key_name,
+			 struct keypair_ops *key_test);
 
 /**
  * util_key_desc_init() - Initialize SMW key descriptor fields
@@ -283,12 +282,11 @@ int util_key_desc_init(struct keypair_ops *key_test,
 
 /**
  * util_key_read_descriptor() - Read the key descriptor definition
- * @key_test: Test keypair structure with operations
- * @key_id: Test application key id
- * @key_idx: Key index if @params contains multiple keys
- * @params: json-c object
+ * @keys: Keys list.
+ * @key_test: Test keypair structure with operations.
+ * @key_name: Key name.
  *
- * Read the test definition @param to extract SMW key descriptor field.
+ * Read the test definition to extract SMW key descriptor fields.
  * Caller is in charge of checking if mandatory fields are set or not.
  * If the @desc->buffer is set, read the keys definition (format, public
  * and private keys if defined).
@@ -299,13 +297,13 @@ int util_key_desc_init(struct keypair_ops *key_test,
  * -BAD_ARGS                - One of the arguments is bad.
  * -FAILED                  - Error in definition file
  */
-int util_key_read_descriptor(struct keypair_ops *key_test, int *key_id,
-			     unsigned int key_idx, json_object *params);
+int util_key_read_descriptor(struct llist *keys, struct keypair_ops *key_test,
+			     const char *key_name);
 
 /**
  * util_key_desc_set_key() - Set a SMW keypair to the key descriptor
- * @key_test: Test keypair structure with operations
- * @key: SMW keypair buffer
+ * @key_test: Test keypair structure with operations.
+ * @key: SMW keypair buffer.
  *
  * Setup the test keypair to use the @key SMW keypair buffer.
  * Initialize the @key with default unset value.
@@ -322,5 +320,33 @@ int util_key_desc_set_key(struct keypair_ops *key_test,
  * @key_test: Test keypair structure with operations
  */
 void util_key_free_key(struct keypair_ops *key_test);
+
+/**
+ * util_key_build_keys_list() - Build the keys list.
+ * @dir_def_file: Folder of the test definition file.
+ * @definition: JSON-C object to be parsed.
+ * @keys: Keys list.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
+ * -BAD_ARGS               - One of the argument is not correct.
+ */
+int util_key_build_keys_list(char *dir_def_file, struct json_object *definition,
+			     struct llist *keys);
+
+/**
+ * util_key_get_key_params() - Get the key params.
+ * @subtest: Subtest data.
+ * @key_name: JSON-C key name.
+ * @okey_params: Pointer to the JSON-C object of key parameters.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -KEY_NOTFOUND           - @id is not found.
+ * -BAD_ARGS               - One of the argument is not correct.
+ */
+int util_key_get_key_params(struct subtest_data *subtest, const char *key_name,
+			    struct json_object **okey_params);
 
 #endif /* __UTIL_KEY_H__ */

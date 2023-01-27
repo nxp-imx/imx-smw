@@ -1,26 +1,35 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 #ifndef __UTIL_LIST_H__
 #define __UTIL_LIST_H__
+
+enum list_id_type { LIST_ID_TYPE_UINT = 0, LIST_ID_TYPE_STRING };
 
 /**
  * struct llist - Linked list.
  * @head: Pointer to the head of the linked list
  * @lock: List protector
- * @free: Pointer to the function to free node data.
+ * @free_data: Pointer to the function to free node data.
+ * @wwrite_id: Pointer to the function to write node ID.
+ * @free_id: Pointer to the function to free node ID.
+ * @match_id: Pointer to the function to match node ID.
  */
 struct llist {
 	struct node *head;
 	void *lock;
-	void (*free)(void *data);
+	void (*free_data)(void *data);
+	int (*write_id)(struct node *node, uintptr_t id);
+	void (*free_id)(uintptr_t id);
+	int (*match_id)(uintptr_t node_id, uintptr_t id);
 };
 
 /**
  * util_list_init() - Init a link list.
  * @list: Pointer to linked list.
- * @free: Pointer to a function to free a node data.
+ * @free_data: Pointer to a function to free a node data.
+ * @id_type: Node ID type.
  *
  * Return:
  * PASSED                  - Success.
@@ -28,12 +37,13 @@ struct llist {
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  * -FAILED                 - Failure
  */
-int util_list_init(struct llist **list, void (*free)(void *));
+int util_list_init(struct llist **list, void (*free_data)(void *),
+		   enum list_id_type id_type);
 
 /**
  * util_list_add_node() - Add a new node in a linked list.
  * @list: Linked list.
- * @id: Local ID of the data. Comes from test definition file.
+ * @id: Local ID of the data.
  * @data: Buffer stored by the node.
  *
  * Return:
@@ -41,12 +51,12 @@ int util_list_init(struct llist **list, void (*free)(void *));
  * -BAD_ARG                - @list is NULL.
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  */
-int util_list_add_node(struct llist *list, unsigned int id, void *data);
+int util_list_add_node(struct llist *list, uintptr_t id, void *data);
 
 /**
  * util_list_add_node_nl() - Add a new node in a linked list without locking.
  * @list: Linked list.
- * @id: Local ID of the data. Comes from test definition file.
+ * @id: Local ID of the data.
  * @data: Buffer stored by the node.
  *
  * Return:
@@ -54,7 +64,7 @@ int util_list_add_node(struct llist *list, unsigned int id, void *data);
  * -BAD_ARG                - @list is NULL.
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  */
-int util_list_add_node_nl(struct llist *list, unsigned int id, void *data);
+int util_list_add_node_nl(struct llist *list, uintptr_t id, void *data);
 
 /**
  * util_list_clear() - Clear linked list.
@@ -76,7 +86,7 @@ int util_list_clear(struct llist *list);
  * PASSED                  - Success.
  * -BAD_ARG                - @list is NULL.
  */
-int util_list_find_node(struct llist *list, unsigned int id, void **data);
+int util_list_find_node(struct llist *list, uintptr_t id, void **data);
 
 /**
  * util_list_next() - Return address of the next node.
@@ -90,7 +100,7 @@ int util_list_find_node(struct llist *list, unsigned int id, void **data);
  * Address of the next node
  */
 struct node *util_list_next(struct llist *list, struct node *node,
-			    unsigned int *id);
+			    uintptr_t *id);
 
 /**
  * util_list_data() - Return address of the node data.

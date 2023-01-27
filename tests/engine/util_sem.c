@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <semaphore.h>
@@ -707,7 +707,7 @@ int util_sem_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, free_sem);
+	return util_list_init(list, free_sem, LIST_ID_TYPE_UINT);
 }
 
 int util_sem_wait_before(struct thread_data *thr, struct json_object *obj)

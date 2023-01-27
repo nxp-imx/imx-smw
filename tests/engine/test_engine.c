@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <json.h>
@@ -222,10 +222,6 @@ static int run_test(char *def_file, char *test_name, char *output_dir)
 		util_read_json_file(NULL, def_file, &test_data->definition);
 	if (test_status != ERR_CODE(PASSED))
 		goto exit;
-
-	/* Free the file name no more used */
-	free(name);
-	name = NULL;
 
 	/* Get the test definition folder path */
 	test_data->dir_def_file = dirname(def_file);

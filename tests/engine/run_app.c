@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <json.h>
@@ -39,6 +39,7 @@ const struct thread_type {
 	int (*run_thread)(struct app_data *app);
 } thread_types[] = { { TEE_INFO_OBJ, NULL },
 		     { HSM_INFO_OBJ, NULL },
+		     { KEYS_OBJ, NULL },
 		     { SUBTEST_OBJ, &run_singlethread },
 		     { THREAD_OBJ, &run_multithread },
 		     { FILEPATH_OBJ, &run_multithread },
@@ -61,11 +62,11 @@ const struct thread_type {
  * -FAILED             - Error in definition file
  * -ERROR_SMWLIB_INIT  - SMW Library initialization error
  */
-static int setup_tee_info(json_object *test_def)
+static int setup_tee_info(struct json_object *test_def)
 {
 	int res;
 	struct tee_info info = tee_default_info;
-	json_object *oinfo = NULL;
+	struct json_object *oinfo = NULL;
 	char *ta_uuid = NULL;
 
 	res = util_read_json_type(&oinfo, TEE_INFO_OBJ, t_object, test_def);
@@ -115,11 +116,11 @@ static int setup_tee_info(json_object *test_def)
  * -FAILED             - Error in definition file
  * -ERROR_SMWLIB_INIT  - SMW Library initialization error
  */
-static int setup_hsm_ele_info(json_object *test_def, int is_ele)
+static int setup_hsm_ele_info(struct json_object *test_def, int is_ele)
 {
 	int res;
 	struct se_info info = se_default_info;
-	json_object *oinfo = NULL;
+	struct json_object *oinfo = NULL;
 
 	if (is_ele)
 		res = util_read_json_type(&oinfo, ELE_INFO_OBJ, t_object,
@@ -174,11 +175,11 @@ static int setup_hsm_ele_info(json_object *test_def, int is_ele)
  * -FAILED             - Error in definition file
  * -ERROR_SMWLIB_INIT  - SMW Library initialization error
  */
-static int setup_key_db(json_object *test_def)
+static int setup_key_db(struct json_object *test_def)
 {
 	int res;
 	char *filepath = DEFAULT_KEY_DB;
-	json_object *oinfo = NULL;
+	struct json_object *oinfo = NULL;
 
 	res = util_read_json_type(&oinfo, KEY_DB_OBJ, t_object, test_def);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&

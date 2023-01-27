@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -14,7 +14,7 @@
 #include "util_tlv.h"
 
 /**
- * kdf_args_tls12_read() - Read the TLS 1.2 function arguments
+ * kdf_tls12_read_args() - Read the TLS 1.2 function arguments
  * @kdf_args: SMW's TLS 1.2 arguments read
  * @oargs: Reference to the test definition json-c arguments array
  *
@@ -27,7 +27,7 @@
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int kdf_tls12_args_read(void **kdf_args, json_object *oargs)
+static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 {
 	int res;
 	struct tbuffer buf = { 0 };
@@ -103,6 +103,7 @@ end:
 
 /**
  * kdf_tls12_prepare_result() - Prepare the TLS 1.2 results
+ * @subtest: Subtest data
  * @key: Test keypair operation's result
  * @oargs: Reference to the json-c test output arguments definition
  *
@@ -113,25 +114,36 @@ end:
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  * -FAILED                  - Error in definition file
  */
-static int kdf_tls12_prepare_result(struct keypair_ops *key, json_object *oargs)
+static int kdf_tls12_prepare_result(struct subtest_data *subtest,
+				    struct keypair_ops *key,
+				    struct json_object *okey_params)
 {
 	int res = ERR_CODE(PASSED);
 	struct smw_keypair_buffer *buf;
+	const char *key_name = NULL;
 
 	/*
 	 * If there is a "pub_key" argument, allocate a SMW's keypair
 	 * and read the key definition.
 	 */
-	if (util_read_json_type(NULL, PUB_KEY_OBJ, t_buffer, oargs) ==
-	    ERR_CODE(PASSED)) {
-		buf = malloc(sizeof(*buf));
-		if (!buf)
-			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+	res = util_read_json_type(NULL, PUB_KEY_OBJ, t_buffer, okey_params);
+	if (res != ERR_CODE(PASSED))
+		return ERR_CODE(PASSED);
 
-		res = util_key_desc_set_key(key, buf);
-		if (res == ERR_CODE(PASSED))
-			res = util_key_read_descriptor(key, NULL, 0, oargs);
-	}
+	buf = malloc(sizeof(*buf));
+	if (!buf)
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+
+	res = util_key_desc_set_key(key, buf);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = util_read_json_type(&key_name, OP_OUTPUT_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = util_key_read_descriptor(list_keys(subtest), key, key_name);
 
 	return res;
 }
@@ -155,8 +167,29 @@ static bool kdf_tls12_is_mac_key_expected(const char *encryption_name)
 	return false;
 }
 
+static int store_key_identifier(struct llist *keys, const char *key,
+				struct keypair_ops *key_test,
+				struct json_object *params)
+{
+	int res;
+	const char *key_name = NULL;
+
+	if (!key || !key_test || !params) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	res = util_read_json_type(&key_name, key, t_string, params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = util_key_update_node(keys, key_name, key_test);
+
+	return res;
+}
+
 /**
- * kdf_tls12_end() - Finalize the TLS 1.2 operation
+ * kdf_tls12_end_operation() - Finalize the TLS 1.2 operation
  * @subtest: Subtest data
  * @args: SMW's Key derivation arguments
  * @key_derived: Key derived result
@@ -169,26 +202,25 @@ static bool kdf_tls12_is_mac_key_expected(const char *encryption_name)
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  * -FAILED                  - Error in definition file
  */
-int kdf_tls12_end(struct subtest_data *subtest,
-		  struct smw_derive_key_args *args,
-		  struct keypair_ops *key_derived)
+int kdf_tls12_end_operation(struct subtest_data *subtest,
+			    struct smw_derive_key_args *args,
+			    struct keypair_ops *key_derived)
 {
 	int res;
-	json_object *oargs = NULL;
-	int key_id;
+	struct json_object *oargs = NULL;
 	struct keypair_ops key_test = { 0 };
 	struct smw_kdf_tls12_args *tls_args;
-	struct llist *key_identifiers;
+	struct llist *keys;
 
 	if (!args || !subtest || !args->kdf_arguments) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	key_identifiers = list_keys(subtest);
+	keys = list_keys(subtest);
 	tls_args = args->kdf_arguments;
 
-	/* Registers all generated keys in the test key identifiers list */
+	/* Registers all generated keys in the test keys list */
 	res = util_read_json_type(&oargs, OP_ARGS_OBJ, t_object,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED))
@@ -199,65 +231,39 @@ int kdf_tls12_end(struct subtest_data *subtest,
 
 	/* Even if it should not occur at this stage, check oargs */
 	if (kdf_tls12_is_mac_key_expected(tls_args->encryption_name)) {
-		res = util_read_json_type(&key_id, "client_w_mac_key_id", t_int,
-					  oargs);
-		if (res != ERR_CODE(PASSED))
-			return res;
-
 		key_test.desc.id = tls_args->client_w_mac_key_id;
-		res = util_key_add_node(key_identifiers, key_id, &key_test);
-		if (res != ERR_CODE(PASSED))
-			return res;
-
-		res = util_read_json_type(&key_id, "server_w_mac_key_id", t_int,
-					  oargs);
+		res = store_key_identifier(keys, CLIENT_W_MAC_KEY_NAME_OBJ,
+					   &key_test, oargs);
 		if (res != ERR_CODE(PASSED))
 			return res;
 
 		key_test.desc.id = tls_args->server_w_mac_key_id;
-		res = util_key_add_node(key_identifiers, key_id, &key_test);
+		res = store_key_identifier(keys, SERVER_W_MAC_KEY_NAME_OBJ,
+					   &key_test, oargs);
 		if (res != ERR_CODE(PASSED))
 			return res;
 	}
 
-	res = util_read_json_type(&key_id, "client_w_enc_key_id", t_int, oargs);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
 	key_test.desc.id = tls_args->client_w_enc_key_id;
-	res = util_key_add_node(key_identifiers, key_id, &key_test);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	res = util_read_json_type(&key_id, "server_w_enc_key_id", t_int, oargs);
+	res = store_key_identifier(keys, CLIENT_W_ENC_KEY_NAME_OBJ, &key_test,
+				   oargs);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	key_test.desc.id = tls_args->server_w_enc_key_id;
-	res = util_key_add_node(key_identifiers, key_id, &key_test);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	res = util_read_json_type(&key_id, "master_sec_key_id", t_int, oargs);
+	res = store_key_identifier(keys, SERVER_W_ENC_KEY_NAME_OBJ, &key_test,
+				   oargs);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	key_test.desc.id = tls_args->master_sec_key_id;
-	res = util_key_add_node(key_identifiers, key_id, &key_test);
+	res = store_key_identifier(keys, MASTER_SEC_KEY_NAME_OBJ, &key_test,
+				   oargs);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	res = util_read_json_type(&oargs, OP_OUTPUT_OBJ, t_object,
-				  subtest->params);
-	if (res == ERR_CODE(PASSED) && oargs) {
-		res = util_read_json_type(&key_id, "key_id", t_int, oargs);
-		if (res != ERR_CODE(PASSED))
-			return res;
-
-		res = util_key_add_node(key_identifiers, key_id, key_derived);
-		if (res != ERR_CODE(PASSED))
-			return res;
-	}
+	res = store_key_identifier(keys, OP_OUTPUT_OBJ, key_derived,
+				   subtest->params);
 
 	return res;
 }
@@ -292,17 +298,19 @@ static void kdf_tls12_free(struct smw_derive_key_args *args)
 
 static const struct kdf_op {
 	const char *name;
-	int (*read_args)(void **kdf_args, json_object *oargs);
-	int (*prepare_result)(struct keypair_ops *key, json_object *params);
+	int (*read_args)(void **kdf_args, struct json_object *oargs);
+	int (*prepare_result)(struct subtest_data *subtest,
+			      struct keypair_ops *key,
+			      struct json_object *params);
 	int (*end_operation)(struct subtest_data *subtest,
 			     struct smw_derive_key_args *args,
 			     struct keypair_ops *key_derived);
 	void (*free)(struct smw_derive_key_args *args);
 } kdf_ops[] = { {
 			.name = "TLS12_KEY_EXCHANGE",
-			.read_args = &kdf_tls12_args_read,
+			.read_args = &kdf_tls12_read_args,
 			.prepare_result = &kdf_tls12_prepare_result,
-			.end_operation = &kdf_tls12_end,
+			.end_operation = &kdf_tls12_end_operation,
 			.free = &kdf_tls12_free,
 		},
 		{ 0 } };
@@ -348,12 +356,13 @@ static const struct kdf_op *get_kdf_op(const char *kdf_name)
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int kdf_args_read(struct smw_derive_key_args *args, json_object *params)
+static int kdf_args_read(struct smw_derive_key_args *args,
+			 struct json_object *params)
 {
 	int res;
 
 	const struct kdf_op *kdf_op;
-	json_object *oargs = NULL;
+	struct json_object *oargs = NULL;
 
 	/* Get the key derivation function if any */
 	res = util_read_json_type(&args->kdf_name, OP_TYPE_OBJ, t_string,
@@ -384,8 +393,8 @@ static int kdf_args_read(struct smw_derive_key_args *args, json_object *params)
 
 /**
  * setup_derive_opt_params() - Setup key derive optional parameters.
+ * @subtest: Subtest data
  * @args: Pointer to SMW's derive key arguments
- * @params: Pointer to json parameters
  *
  * Return:
  * PASSED                   - Success.
@@ -393,40 +402,48 @@ static int kdf_args_read(struct smw_derive_key_args *args, json_object *params)
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int setup_derive_opt_params(struct smw_derive_key_args *args,
-				   json_object *params)
+static int setup_derive_opt_params(struct subtest_data *subtest,
+				   struct smw_derive_key_args *args)
 {
 	int res;
+	struct json_object *okey_params = NULL;
+
 	unsigned char **attrs;
 	unsigned int *attrs_len;
 
-	if (!args || !params)
+	if (!subtest || !args) {
+		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
+	}
+
+	res = util_key_get_key_params(subtest, OP_INPUT_OBJ, &okey_params);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	attrs = (unsigned char **)&args->key_attributes_list;
 	attrs_len = &args->key_attributes_list_length;
 
 	/* Get the key policy */
-	res = util_tlv_read_key_policy(attrs, attrs_len, params);
+	res = util_tlv_read_key_policy(attrs, attrs_len, okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs(attrs, attrs_len, params);
+	res = util_tlv_read_attrs(attrs, attrs_len, okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Read (if any) the key derivation function name and arguments */
-	res = kdf_args_read(args, params);
+	res = kdf_args_read(args, subtest->params);
 
 	return res;
 }
 
 /**
  * setup_derive_output() - Setup the key derivation output arguments.
+ * @subtest: Subtest data
  * @args: Pointer to SMW's derive key arguments
  * @key: Test keypair operation's result
- * @params: Pointer to json parameters
  *
  * Return:
  * PASSED                   - Success.
@@ -435,21 +452,25 @@ static int setup_derive_opt_params(struct smw_derive_key_args *args,
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  * -FAILED                  - Error in definition file
  */
-static int setup_derive_output(struct smw_derive_key_args *args,
-			       struct keypair_ops *key, json_object *params)
+static int setup_derive_output(struct subtest_data *subtest,
+			       struct smw_derive_key_args *args,
+			       struct keypair_ops *key)
 {
 	int res = ERR_CODE(PASSED);
 
 	const struct kdf_op *kdf_op;
-	json_object *oargs = NULL;
+	struct json_object *okey_params = NULL;
 
 	kdf_op = get_kdf_op(args->kdf_name);
 
 	if (kdf_op && kdf_op->prepare_result) {
-		res = util_read_json_type(&oargs, OP_OUTPUT_OBJ, t_object,
-					  params);
-		if (res == ERR_CODE(PASSED) && oargs)
-			res = kdf_op->prepare_result(key, oargs);
+		res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ,
+					      &okey_params);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		if (res == ERR_CODE(PASSED) && okey_params)
+			res = kdf_op->prepare_result(subtest, key, okey_params);
 	}
 
 	return res;
@@ -474,54 +495,20 @@ static int setup_derive_base(struct subtest_data *subtest,
 			     struct smw_keypair_buffer *base_buffer)
 {
 	int res = ERR_CODE(FAILED);
-	int key_id = INT_MAX;
-	json_object *base_args = NULL;
+	const char *key_name = NULL;
 
-	res = util_read_json_type(&base_args, OP_INPUT_OBJ, t_object,
+	/* Initialize key descriptor */
+	res = util_key_desc_init(key_base, base_buffer);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = util_read_json_type(&key_name, OP_INPUT_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	/*
-	 * Initialize key descriptor of the key base
-	 * No key buffer and type of key unknown
-	 */
-	res = util_key_desc_init(key_base, NULL);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(key_base, &key_id, 0, base_args);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	if (key_id != INT_MAX) {
-		/* Key ID is defined, try to find it */
-		res = util_key_find_key_node(list_keys(subtest), key_id,
-					     key_base);
-		if (res != ERR_CODE(PASSED))
-			return res;
-
-		/*
-		 * If Security size is not set get it from the SMW key
-		 * identifier
-		 */
-		if (!util_key_is_security_set(key_base)) {
-			subtest->smw_status =
-				smw_get_security_size(&key_base->desc);
-			if (subtest->smw_status != SMW_STATUS_OK)
-				res = ERR_CODE(API_STATUS_NOK);
-		}
-	} else {
-		/*
-		 * Key ID not set, read the key base buffer from test
-		 * definition file.
-		 */
-		res = util_key_desc_set_key(key_base, base_buffer);
-		if (res == ERR_CODE(PASSED))
-			res = util_key_read_descriptor(key_base, NULL, 0,
-						       base_args);
-	}
+	res = util_key_read_descriptor(list_keys(subtest), key_base, key_name);
 
 	return res;
 }
@@ -569,7 +556,7 @@ static void kdf_args_free(struct smw_derive_key_args *args)
 		kdf_op->free(args);
 }
 
-static int derive_bad_params(json_object *params,
+static int derive_bad_params(struct json_object *params,
 			     struct smw_derive_key_args **args)
 {
 	int ret;
@@ -599,7 +586,6 @@ static int derive_bad_params(json_object *params,
 		break;
 
 	case TLS12_KDF_ARGS_NULL:
-		(*args)->kdf_name = "TLS12_KEY_EXCHANGE";
 		(*args)->kdf_arguments = NULL;
 		break;
 
@@ -635,13 +621,13 @@ int derive_key(struct subtest_data *subtest)
 	args.key_descriptor_base = &key_base.desc;
 	args.key_descriptor_derived = &key_derived.desc;
 
-	/* Setup key descitpor or the key base */
+	/* Setup key descriptor or the key base */
 	res = setup_derive_base(subtest, &key_base, &base_buffer);
 	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))
 		goto exit;
 
 	/* Setup optional parameters */
-	res = setup_derive_opt_params(&args, subtest->params);
+	res = setup_derive_opt_params(subtest, &args);
 	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))
 		goto exit;
 
@@ -654,7 +640,7 @@ int derive_key(struct subtest_data *subtest)
 		goto exit;
 
 	/* Setup the output arguments */
-	res = setup_derive_output(&args, &key_derived, subtest->params);
+	res = setup_derive_output(subtest, &args, &key_derived);
 	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))
 		goto exit;
 
@@ -672,7 +658,7 @@ exit:
 	util_key_free_key(&key_base);
 
 	/*
-	 * Don't free key data if it's present in key identifiers linked list
+	 * Don't free key data if it's present in key linked list
 	 * (ephemeral keys)
 	 */
 	if (util_key_is_id_set(&key_derived))

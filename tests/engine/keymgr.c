@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <stdlib.h>
@@ -38,6 +38,7 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 			      struct keypair_ops *key_test)
 {
 	int res;
+	struct json_object *okey_params = NULL;
 	struct smw_key_descriptor *desc;
 	unsigned int public_length = 0;
 	unsigned int modulus_length = 0;
@@ -47,16 +48,20 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 	if (!subtest || !args || !key_test || !key_test->keys)
 		return ERR_CODE(BAD_ARGS);
 
+	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
 	attrs = (unsigned char **)&args->key_attributes_list;
 	attrs_len = &args->key_attributes_list_length;
 
 	/* Get the key policy */
-	res = util_tlv_read_key_policy(attrs, attrs_len, subtest->params);
+	res = util_tlv_read_key_policy(attrs, attrs_len, okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs(attrs, attrs_len, subtest->params);
+	res = util_tlv_read_attrs(attrs, attrs_len, okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -137,22 +142,27 @@ static int set_import_opt_params(struct subtest_data *subtest,
 				 struct smw_import_key_args *args)
 {
 	int res;
+	struct json_object *okey_params = NULL;
 	unsigned char **attrs;
 	unsigned int *attrs_len;
 
 	if (!subtest || !args)
 		return ERR_CODE(BAD_ARGS);
 
+	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
 	attrs = (unsigned char **)&args->key_attributes_list;
 	attrs_len = &args->key_attributes_list_length;
 
 	/* Get the key policy */
-	res = util_tlv_read_key_policy(attrs, attrs_len, subtest->params);
+	res = util_tlv_read_key_policy(attrs, attrs_len, okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs(attrs, attrs_len, subtest->params);
+	res = util_tlv_read_attrs(attrs, attrs_len, okey_params);
 
 	return res;
 }
@@ -185,6 +195,9 @@ static int set_export_opt_params(struct subtest_data *subtest,
 
 	if (!subtest || !args || !key_test || !exp_key_test)
 		return ERR_CODE(BAD_ARGS);
+
+	if (!args->key_descriptor->id)
+		return ERR_CODE(PASSED);
 
 	/*
 	 * Prepare key buffers to get the exported keys.
@@ -325,24 +338,6 @@ static int set_common_bad_args(json_object *params, void **args,
 	case KEY_BUFFER_NULL:
 		/* Key buffer is NULL */
 		(*key)->buffer = NULL;
-		break;
-
-	case KEY_DESC_ID_SET:
-		/* Key descriptor @id field is set */
-		(*key)->id = 1;
-		break;
-
-	case KEY_DESC_ID_NOT_SET:
-		/* Key descriptor @id field is not set */
-		(*key)->id = 0;
-		break;
-
-	case BAD_FORMAT:
-		/* key format is undefined */
-		if (!(*key)->buffer)
-			ret = ERR_CODE(BAD_ARGS);
-		else
-			(*key)->buffer->format_name = KEY_FORMAT_UNDEFINED;
 		break;
 
 	default:
@@ -538,8 +533,8 @@ static int compare_keys(struct keypair_ops *key_test,
 }
 
 /**
- * save_key_ids_to_json_file() - Save key ids from a linked list in a json file.
- * @key_list: Key identifier linked list.
+ * save_keys_to_json_file() - Save key from a linked list in a json file.
+ * @key_list: Key linked list.
  * @filepath: Path of the json file.
  *
  * Return:
@@ -548,18 +543,16 @@ static int compare_keys(struct keypair_ops *key_test,
  * -INTERNAL	- Internal function failure.
  * Error code from check_file_extension().
  */
-static int save_key_ids_to_json_file(struct llist *key_list, char *filepath)
+static int save_keys_to_json_file(struct llist *key_list, char *filepath)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	unsigned int counter = 1;
-	char key_object_string[KEY_JSON_OBJECT_STRING_MAX_LEN];
 	void *node = NULL;
-	unsigned int id;
-	struct key_identifier_data *data = NULL;
+	uintptr_t key_name;
+	struct key_data *data = NULL;
 	struct json_object *global_obj = NULL;
-	struct json_object *id_obj = NULL;
-	struct json_object *key_identifier_obj = NULL;
+	struct json_object *keys_obj = NULL;
 	struct json_object *key_obj = NULL;
+	struct json_object *key_identifier_obj = NULL;
 	FILE *json_file = NULL;
 	int nb_char;
 
@@ -585,100 +578,73 @@ static int save_key_ids_to_json_file(struct llist *key_list, char *filepath)
 		goto exit;
 	}
 
-	id_obj = json_object_new_int(0);
-	if (!id_obj) {
+	keys_obj = json_object_new_object();
+	if (!keys_obj) {
 		DBG_PRINT("Can't create a new json object");
 		res = ERR_CODE(INTERNAL);
 		goto exit;
 	}
 
-	/* Add id_obj to global_obj */
-	if (json_object_object_add(global_obj, "id", id_obj)) {
+	if (json_object_object_add(global_obj, KEYS_OBJ, keys_obj)) {
 		DBG_PRINT("Can't add a json object");
 		res = ERR_CODE(INTERNAL);
 		goto exit;
 	}
 
-	key_identifier_obj = json_object_new_int64(0);
-	if (!key_identifier_obj) {
-		DBG_PRINT("Can't create a new json object");
-		res = ERR_CODE(INTERNAL);
-		goto exit;
-	}
-
-	/* Add key_identifier_obj to global_obj */
-	if (json_object_object_add(global_obj, "key_identifier",
-				   key_identifier_obj)) {
-		DBG_PRINT("Can't add a json object");
-		res = ERR_CODE(INTERNAL);
-		goto exit;
-	}
-
-	key_obj = json_object_new_string(key_object_string);
-	if (!key_obj) {
-		DBG_PRINT("Can't create a new json object");
-		res = ERR_CODE(INTERNAL);
-		goto exit;
-	}
-
-	nb_char = fprintf(json_file, "{\n");
-	if (nb_char < 0)
-		DBG_PRINT("error %s", util_get_strerr());
-
-	node = util_list_next(key_list, node, &id);
+	node = util_list_next(key_list, node, &key_name);
 
 	while (node) {
 		data = util_list_data(node);
 		if (!data) {
-			DBG_PRINT("Can't get the key identifier data");
+			DBG_PRINT("Can't get the key data");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
 		}
 
-		if (counter > 1) {
-			nb_char = fprintf(json_file, ",\n");
-			if (nb_char < 0)
-				DBG_PRINT("error %s", util_get_strerr());
+		key_obj = json_object_new_object();
+		if (!key_obj) {
+			DBG_PRINT("Can't create a new json object");
+			res = ERR_CODE(INTERNAL);
+			goto exit;
 		}
 
-		if (!json_object_set_int(id_obj, id)) {
-			DBG_PRINT("json_object_set_int() failed");
+		key_identifier_obj = json_object_new_int(0);
+		if (!key_identifier_obj) {
+			DBG_PRINT("Can't create a new json object");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
 		}
 
 		if (!json_object_set_int(key_identifier_obj,
-					 data->key_identifier)) {
-			DBG_PRINT("json_object_set_int64() failed");
+					 data->identifier)) {
+			DBG_PRINT("json_object_set_int() failed");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
 		}
 
-		if (sprintf(key_object_string, "key %d", counter++) < 0) {
+		if (json_object_object_add(key_obj, ID_OBJ,
+					   key_identifier_obj)) {
+			DBG_PRINT("Can't add a json object");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
 		}
 
-		if (!json_object_set_string(key_obj, key_object_string)) {
-			DBG_PRINT("json_object_set_string() failed");
+		key_identifier_obj = NULL;
+
+		if (json_object_object_add(keys_obj, (const char *)key_name,
+					   key_obj)) {
+			DBG_PRINT("Can't add a json object");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
 		}
 
-		/*
-		 * Fill json file with the following template:
-		 * "key X":{ "id": XX, "key_identifier": XX}
-		 */
-		nb_char = fprintf(json_file, "%s:%s",
-				  json_object_to_json_string(key_obj),
-				  json_object_to_json_string(global_obj));
-		if (nb_char < 0)
-			DBG_PRINT("error %s", util_get_strerr());
+		key_obj = NULL;
 
-		node = util_list_next(key_list, node, &id);
+		node = util_list_next(key_list, node, &key_name);
 	}
 
-	nb_char = fprintf(json_file, "\n}");
+	nb_char = fprintf(json_file, "%s\n",
+			  json_object_to_json_string(global_obj));
 	if (nb_char < 0)
 		DBG_PRINT("error %s", util_get_strerr());
 
@@ -693,12 +659,15 @@ exit:
 	if (key_obj)
 		json_object_put(key_obj);
 
+	if (key_identifier_obj)
+		json_object_put(key_identifier_obj);
+
 	return res;
 }
 
 /**
- * restore_key_ids_from_json_file() - Restore key ids from a json file to a key
- *                                    identifier linked list.
+ * restore_keys_from_json_file() - Restore keys from a json file to a key
+ *                                 linked list.
  * @subtest: Subtest data
  * @filepath: Path of the file.
  *
@@ -710,14 +679,14 @@ exit:
  * -API_STATUS_NOK         - SMW API Call return error
  * Error code from file_to_json_object().
  */
-static int restore_key_ids_from_json_file(struct subtest_data *subtest,
-					  char *filepath)
+static int restore_keys_from_json_file(struct subtest_data *subtest,
+				       char *filepath)
 {
 	int res = ERR_CODE(FAILED);
-	int id = 0;
-	json_object *restore_obj = NULL;
-	struct json_object_iter iter = { 0 };
-	struct keypair_ops key = { 0 };
+	struct json_object *restore_obj = NULL;
+	struct json_object *okeys = NULL;
+	struct json_object_iter okey_params;
+	struct keypair_ops key_test = { 0 };
 
 	if (!subtest || !filepath) {
 		DBG_PRINT_BAD_ARGS();
@@ -732,29 +701,29 @@ static int restore_key_ids_from_json_file(struct subtest_data *subtest,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	if (!restore_obj || !json_object_get_object(restore_obj))
-		return ERR_CODE(INTERNAL);
+	res = util_read_json_type(&okeys, KEYS_OBJ, t_object, restore_obj);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
-	json_object_object_foreachC(restore_obj, iter)
+	if (!json_object_get_object(okeys))
+		return ERR_CODE(BAD_ARGS);
+
+	json_object_object_foreachC(okeys, okey_params)
 	{
-		res = util_read_json_type(&id, "id", t_int, iter.val);
+		res = util_key_add_node(list_keys(subtest), okey_params.key,
+					NULL);
 		if (res != ERR_CODE(PASSED))
-			break;
+			return res;
 
-		res = util_read_json_type(&key.desc.id, "key_identifier", t_int,
-					  iter.val);
+		res = util_read_json_type(&key_test.desc.id, ID_OBJ, t_int,
+					  okey_params.val);
 		if (res != ERR_CODE(PASSED))
-			break;
+			return res;
 
-		subtest->smw_status = smw_get_security_size(&key.desc);
-		if (subtest->smw_status != SMW_STATUS_OK) {
-			res = ERR_CODE(API_STATUS_NOK);
-			break;
-		}
-
-		res = util_key_add_node(list_keys(subtest), id, &key);
+		res = util_key_update_node(list_keys(subtest), okey_params.key,
+					   &key_test);
 		if (res != ERR_CODE(PASSED))
-			break;
+			return res;
 	}
 
 	json_object_put(restore_obj);
@@ -765,11 +734,11 @@ static int restore_key_ids_from_json_file(struct subtest_data *subtest,
 int generate_key(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
-	struct keypair_ops key_test;
+	struct keypair_ops key_test = { 0 };
 	struct smw_keypair_buffer key_buffer;
 	struct smw_generate_key_args args = { 0 };
 	struct smw_generate_key_args *smw_gen_args = &args;
-	int key_id = INT_MAX;
+	const char *key_name = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -785,22 +754,21 @@ int generate_key(struct subtest_data *subtest)
 
 	args.key_descriptor = &key_test.desc;
 
+	/* Key name is mandatory */
+	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
 	/* Initialize key descriptor */
 	res = util_key_desc_init(&key_test, &key_buffer);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
+	res = util_key_read_descriptor(list_keys(subtest), &key_test, key_name);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
-
-	/* Key ID is mandatory */
-	if (key_id == INT_MAX) {
-		DBG_PRINT_MISS_PARAM("key_id");
-		res = ERR_CODE(MISSING_PARAMS);
-		goto exit;
-	}
 
 	/* Security size is mandatory */
 	if (!util_key_is_security_set(&key_test)) {
@@ -826,7 +794,7 @@ int generate_key(struct subtest_data *subtest)
 		goto exit;
 	}
 
-	res = util_key_add_node(list_keys(subtest), key_id, &key_test);
+	res = util_key_update_node(list_keys(subtest), key_name, &key_test);
 
 exit:
 	util_key_free_key(&key_test);
@@ -843,7 +811,7 @@ int delete_key(struct subtest_data *subtest)
 	struct keypair_ops key_test = { 0 };
 	struct smw_delete_key_args args = { 0 };
 	struct smw_delete_key_args *smw_del_args = &args;
-	int key_id = INT_MAX;
+	const char *key_name = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -853,24 +821,19 @@ int delete_key(struct subtest_data *subtest)
 	args.version = subtest->version;
 	args.key_descriptor = &key_test.desc;
 
+	/* Key name is mandatory */
+	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
 	/* Initialize key descriptor, no key buffer */
 	res = util_key_desc_init(&key_test, NULL);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	/* Key ID is mandatory */
-	if (key_id == INT_MAX) {
-		DBG_PRINT_MISS_PARAM("key_id");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	/* Fill key descriptor field saved */
-	res = util_key_find_key_node(list_keys(subtest), key_id, &key_test);
+	res = util_key_read_descriptor(list_keys(subtest), &key_test, key_name);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -885,10 +848,9 @@ int delete_key(struct subtest_data *subtest)
 		return ERR_CODE(API_STATUS_NOK);
 
 	/*
-	 * Key node of the key identifiers linked is freed when the list is
-	 * freed (at the of the test). Even if the key is deleted by the
-	 * subsystem a test scenario can try to delete/use it after this
-	 * operation.
+	 * Key node is freed when the list is freed (at the of the test).
+	 * Even if the key is deleted by the subsystem a test scenario
+	 * can try to delete/use it after this operation.
 	 */
 
 	return ERR_CODE(PASSED);
@@ -897,11 +859,11 @@ int delete_key(struct subtest_data *subtest)
 int import_key(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
-	struct keypair_ops key_test;
+	struct keypair_ops key_test = { 0 };
 	struct smw_keypair_buffer key_buffer;
 	struct smw_import_key_args args = { 0 };
 	struct smw_import_key_args *smw_import_args = &args;
-	int key_id = INT_MAX;
+	const char *key_name = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -917,22 +879,21 @@ int import_key(struct subtest_data *subtest)
 
 	args.key_descriptor = &key_test.desc;
 
+	/* Key name is mandatory */
+	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
 	/* Initialize key descriptor */
 	res = util_key_desc_init(&key_test, &key_buffer);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
+	res = util_key_read_descriptor(list_keys(subtest), &key_test, key_name);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
-
-	/* Key ID is mandatory */
-	if (key_id == INT_MAX) {
-		DBG_PRINT_MISS_PARAM("key_id");
-		res = ERR_CODE(MISSING_PARAMS);
-		goto exit;
-	}
 
 	/* Security size is mandatory */
 	if (!util_key_is_security_set(&key_test)) {
@@ -957,7 +918,7 @@ int import_key(struct subtest_data *subtest)
 		goto exit;
 	}
 
-	res = util_key_add_node(list_keys(subtest), key_id, &key_test);
+	res = util_key_update_node(list_keys(subtest), key_name, &key_test);
 
 exit:
 	util_key_free_key(&key_test);
@@ -977,7 +938,7 @@ int export_key(struct subtest_data *subtest, enum export_type export_type)
 	struct smw_export_key_args *smw_export_args = &args;
 	struct smw_keypair_buffer key_buffer = { 0 };
 	struct smw_keypair_buffer exp_key_buffer = { 0 };
-	int key_id = INT_MAX;
+	const char *key_name = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -986,6 +947,12 @@ int export_key(struct subtest_data *subtest, enum export_type export_type)
 
 	args.version = subtest->version;
 	args.key_descriptor = &key_test.desc;
+
+	/* Key name is mandatory */
+	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
 
 	/*
 	 * Initialize 2 key descriptors:
@@ -999,8 +966,8 @@ int export_key(struct subtest_data *subtest, enum export_type export_type)
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&exp_key_test, &key_id, 0,
-				       subtest->params);
+	res = util_key_read_descriptor(list_keys(subtest), &exp_key_test,
+				       key_name);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -1015,29 +982,9 @@ int export_key(struct subtest_data *subtest, enum export_type export_type)
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
+	res = util_key_read_descriptor(list_keys(subtest), &key_test, key_name);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
-
-	/* Key ID is mandatory */
-	if (key_id == INT_MAX) {
-		DBG_PRINT_MISS_PARAM("key_id");
-		res = ERR_CODE(MISSING_PARAMS);
-		goto exit;
-	}
-
-	res = util_key_find_key_node(list_keys(subtest), key_id, &key_test);
-	if (res != ERR_CODE(PASSED))
-		goto exit;
-
-	/* If Security size not set get it from the SMW key identifier */
-	if (!util_key_is_security_set(&key_test)) {
-		subtest->smw_status = smw_get_security_size(&key_test.desc);
-		if (subtest->smw_status != SMW_STATUS_OK) {
-			res = ERR_CODE(API_STATUS_NOK);
-			goto exit;
-		}
-	}
 
 	/*
 	 * Set the empty key buffer to get exported key and do key allocation
@@ -1072,7 +1019,7 @@ exit:
 	return res;
 }
 
-int save_key_ids_to_file(struct subtest_data *subtest)
+int save_keys_to_file(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	char *filename = NULL;
@@ -1088,10 +1035,10 @@ int save_key_ids_to_file(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	return save_key_ids_to_json_file(list_keys(subtest), filename);
+	return save_keys_to_json_file(list_keys(subtest), filename);
 }
 
-int restore_key_ids_from_file(struct subtest_data *subtest)
+int restore_keys_from_file(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	char *filename = NULL;
@@ -1107,7 +1054,7 @@ int restore_key_ids_from_file(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	res = restore_key_ids_from_json_file(subtest, filename);
+	res = restore_keys_from_json_file(subtest, filename);
 
 	if (res == ERR_CODE(PASSED))
 		util_file_remove(filename);

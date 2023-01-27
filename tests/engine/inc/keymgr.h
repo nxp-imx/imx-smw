@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __KEYMGR_H__
@@ -22,7 +22,7 @@
  * Error code from get_test_err_status().
  * Error code from set_gen_bad_args().
  * Error code from set_gen_opt_params().
- * Error code from key_identifier_add_list().
+ * Error code from util_key_add_node().
  */
 int generate_key(struct subtest_data *subtest);
 
@@ -53,7 +53,7 @@ int delete_key(struct subtest_data *subtest);
  * Error code from get_test_err_status().
  * Error code from set_import_bad_args().
  * Error code from set_import_opt_params().
- * Error code from key_identifier_add_list().
+ * Error code from util_key_add_node().
  */
 int import_key(struct subtest_data *subtest);
 
@@ -89,7 +89,7 @@ int export_key(struct subtest_data *subtest, enum export_type export_type);
 int derive_key(struct subtest_data *subtest);
 
 /**
- * save_key_ids_to_file() - Save key ids from a linked list in a file.
+ * save_keys_to_file() - Save keys from a linked list in a file.
  * @subtest: Subtest data.
  *
  * The file where values are saved is a parameter from @params.
@@ -99,10 +99,10 @@ int derive_key(struct subtest_data *subtest);
  * -MISSING_PARAMS              - Missing mandatory parameters in @params.
  * -BAD_ARGS                    - One of the arguments is bad.
  */
-int save_key_ids_to_file(struct subtest_data *subtest);
+int save_keys_to_file(struct subtest_data *subtest);
 
 /**
- * restore_key_ids_from_file() - Restore key ids from a file to a linked list.
+ * restore_keys_from_file() - Restore keys from a file to a linked list.
  * @subtest: Subtest data.
  *
  * The file where values are coming from is a parameter from @params.
@@ -114,6 +114,6 @@ int save_key_ids_to_file(struct subtest_data *subtest);
  * -BAD_ARGS                    - One of the arguments is bad.
  * -INTERNAL_OUT_OF_MEMORY      - Memory allocation failed.
  */
-int restore_key_ids_from_file(struct subtest_data *subtest);
+int restore_keys_from_file(struct subtest_data *subtest);
 
 #endif /* __KEYMGR_H__ */

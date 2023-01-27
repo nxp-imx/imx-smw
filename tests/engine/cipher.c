@@ -26,14 +26,12 @@
 /**
  * struct cipher_keys - Group of structures representing keys
  * @nb_keys: Number of keys
- * @keys_id: Pointer to an array of local key ids
  * @keys_test: Pointer to an array of test keypair structures
  * @keys_desc: Pointer to an array of SMW key descriptor pointers
  * @keys_buffer: Pointer to an array of key buffer
  */
 struct cipher_keys {
 	unsigned int nb_keys;
-	int *keys_id;
 	struct keypair_ops *keys_test;
 	struct smw_key_descriptor **keys_desc;
 	struct smw_keypair_buffer *keys_buffer;
@@ -52,7 +50,7 @@ struct cipher_keys {
  * -BAD_PARAM_TYPE	- Test error is not suuported.
  * -BAD_ARGS		- One of the argument is bad.
  */
-static int cipher_bad_params(json_object *params,
+static int cipher_bad_params(struct json_object *params,
 			     struct smw_cipher_args **oneshot,
 			     struct smw_cipher_init_args **init,
 			     struct smw_cipher_data_args **data,
@@ -122,7 +120,6 @@ static int cipher_bad_params(json_object *params,
  */
 static int allocate_keys(struct cipher_keys *keys)
 {
-	int *keys_id = NULL;
 	struct keypair_ops *keys_test = NULL;
 	struct smw_key_descriptor **keys_desc = NULL;
 	struct smw_keypair_buffer *keys_buffer = NULL;
@@ -145,15 +142,9 @@ static int allocate_keys(struct cipher_keys *keys)
 	if (!keys_buffer)
 		goto err;
 
-	/* Allocate keys id array */
-	keys_id = malloc(keys->nb_keys * sizeof(int));
-	if (!keys_id)
-		goto err;
-
 	keys->keys_test = keys_test;
 	keys->keys_desc = keys_desc;
 	keys->keys_buffer = keys_buffer;
-	keys->keys_id = keys_id;
 
 	return ERR_CODE(PASSED);
 
@@ -163,9 +154,6 @@ err:
 
 	if (keys_desc)
 		free(keys_desc);
-
-	if (keys_buffer)
-		free(keys_buffer);
 
 	return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 }
@@ -183,9 +171,6 @@ static void free_keys(struct cipher_keys *keys)
 
 	if (keys->keys_desc)
 		free(keys->keys_desc);
-
-	if (keys->keys_id)
-		free(keys->keys_id);
 
 	for (i = 0; i < keys->nb_keys; i++)
 		util_key_free_key(&keys->keys_test[i]);
@@ -213,7 +198,6 @@ static void free_keys(struct cipher_keys *keys)
  * Error code from allocate_keys
  * Error code from util_key_desc_init
  * Error code from util_key_read_descriptor
- * Error code from util_key_find_key_node
  */
 static int set_keys(struct subtest_data *subtest,
 		    struct smw_cipher_init_args *args, struct cipher_keys *keys)
@@ -221,15 +205,23 @@ static int set_keys(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(BAD_ARGS);
 	unsigned int i;
-	struct smw_key_descriptor *desc;
 	struct keypair_ops *key_test;
+	struct json_object *okey_name = NULL;
+	struct json_object *obj = NULL;
+	const char *key_name = NULL;
 
-	/* Get number of keys parameter. Default is 1 */
-	args->nb_keys = 1;
-	res = util_read_json_type(&args->nb_keys, NB_KEYS_OBJ, t_int,
+	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
 				  subtest->params);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-		return res;
+	if (res == ERR_CODE(PASSED) || res == ERR_CODE(VALUE_NOTFOUND)) {
+		args->nb_keys = 1;
+	} else if (res == ERR_CODE(BAD_PARAM_TYPE)) {
+		res = util_read_json_type(&okey_name, KEY_NAME_OBJ, t_array,
+					  subtest->params);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		args->nb_keys = json_object_array_length(okey_name);
+	}
 
 	/*
 	 * If this is API test number of keys = 0, need to allocate
@@ -243,66 +235,43 @@ static int set_keys(struct subtest_data *subtest,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	if (!keys->keys_test || !keys->keys_desc || !keys->keys_buffer ||
-	    !keys->keys_id)
+	if (!keys->keys_test || !keys->keys_desc || !keys->keys_buffer)
 		return ERR_CODE(INTERNAL);
 
 	for (i = 0; i < keys->nb_keys; i++) {
 		key_test = &keys->keys_test[i];
 
-		keys->keys_id[i] = INT_MAX;
-
 		/* Initialize key descriptor */
-		res = util_key_desc_init(key_test, NULL);
+		res = util_key_desc_init(key_test, &keys->keys_buffer[i]);
 		if (res != ERR_CODE(PASSED))
 			return res;
 
-		/* Read the json-c key description */
-		res = util_key_read_descriptor(key_test, &keys->keys_id[i], i,
-					       subtest->params);
-		if (res != ERR_CODE(PASSED))
-			return res;
-
-		if (keys->keys_id[i] != INT_MAX) {
-			res = util_key_find_key_node(list_keys(subtest),
-						     keys->keys_id[i],
-						     key_test);
-			if (res != ERR_CODE(PASSED))
-				return res;
-
-			/*
-			 * If Security size not set,
-			 * get it from the SMW key identifier
-			 */
-			if (!util_key_is_security_set(key_test)) {
-				desc = &key_test->desc;
-				subtest->smw_status =
-					smw_get_security_size(desc);
-				if (subtest->status != SMW_STATUS_OK) {
-					res = ERR_CODE(API_STATUS_NOK);
-					return res;
-				}
-			}
-		} else {
-			res = util_key_desc_set_key(key_test,
-						    &keys->keys_buffer[i]);
-			if (res == ERR_CODE(PASSED))
-				res = util_key_read_descriptor(key_test, NULL,
-							       i,
-							       subtest->params);
-
-			if (res != ERR_CODE(PASSED))
-				return res;
-
-			if (!is_api_test(subtest) &&
-			    (!util_key_is_type_set(key_test) ||
-			     !util_key_is_security_set(key_test) ||
-			     !util_key_is_private_key_defined(key_test))) {
-				DBG_PRINT_MISS_PARAM("Key description");
-				res = ERR_CODE(MISSING_PARAMS);
-				return res;
-			}
+		if (okey_name) {
+			obj = json_object_array_get_idx(okey_name, i);
+			if (obj)
+				key_name = json_object_get_string(obj);
 		}
+
+		if (key_name) {
+			res = util_key_read_descriptor(list_keys(subtest),
+						       key_test, key_name);
+
+			if (res != ERR_CODE(PASSED))
+				return res;
+
+			if (util_key_is_id_set(key_test))
+				util_key_free_key(key_test);
+		}
+
+		if (!util_key_is_id_set(key_test) && !is_api_test(subtest) &&
+		    (!util_key_is_type_set(key_test) ||
+		     !util_key_is_security_set(key_test) ||
+		     !util_key_is_private_key_defined(key_test))) {
+			DBG_PRINT_MISS_PARAM("Key description");
+			return ERR_CODE(MISSING_PARAMS);
+		}
+
+		key_name = NULL;
 
 		keys->keys_desc[i] = &key_test->desc;
 	}

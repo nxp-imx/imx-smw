@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __PSA_CRYPTO_H__
@@ -3654,8 +3654,6 @@ psa_status_t psa_mac_abort(psa_mac_operation_t *operation);
  * @mac_size: Size of the @mac buffer in bytes.
  * @mac_length: On success, the number of bytes that make up the MAC value.
  *
- * **Warning: Not supported**
- *
  * **Note**:
  *	To verify the MAC of a message against an expected value, use psa_mac_verify() instead.
  *	Beware that comparing integrity or authenticity data such as MAC values with a function such
@@ -3879,8 +3877,6 @@ psa_status_t psa_mac_update(psa_mac_operation_t *operation,
  * @input_length: Size of the @input buffer in bytes.
  * @mac: Buffer containing the expected MAC value.
  * @mac_length: Size of the @mac buffer in bytes.
- *
- * **Warning: Not supported**
  *
  * Return:
  * * PSA_SUCCESS:

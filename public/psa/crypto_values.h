@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __PSA_CRYPTO_VALUES_H__
@@ -638,11 +638,26 @@
  * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
  *
  * Return:
- * 1 if @alg is a MAC algorithm, 0 otherwise. This macro can return either 0 or 1 if @alg is not a
- * supported algorithm identifier.
+ * 1 if @alg is a MAC algorithm, 0 otherwise.
  */
 #define PSA_ALG_IS_MAC(alg)                                                    \
 	(((alg) & (PSA_ALG_CATEGORY_MASK)) == PSA_ALG_CATEGORY_MAC)
+
+/**
+ * PSA_ALG_IS_MAC_TRUNCATED() - Whether the specified algorithm is a MAC
+ * truncated algorithm.
+ * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
+ *
+ * Return:
+ * 1 if @alg is a MAC truncated algorithm, 0 otherwise.
+ */
+#define PSA_ALG_IS_MAC_TRUNCATED(alg)                                          \
+	({                                                                     \
+		typeof(alg) _alg = (alg);                                      \
+		PSA_ALG_IS_MAC(_alg) ?                                         \
+			((_alg & PSA_ALG_MAC_TRUNCATION_MASK) ? 1 : 0) :       \
+			0;                                                     \
+	})
 
 /**
  * PSA_ALG_IS_PBKDF2_HMAC() - Whether the specified algorithm is a PBKDF2-HMAC algorithm.

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __PSA_CRYPTO_SIZES_H__
@@ -11,18 +11,15 @@
 #define PSA_ROUND_UP_TO_MULTIPLE(block_size, length)                           \
 	({                                                                     \
 		__typeof__(block_size) _block_size = (block_size);             \
-		((((length) + _block_size - 1) / _block_size) * _block_size)   \
+		((((length) + _block_size - 1) / _block_size) * _block_size);  \
 	})
 
-#ifndef MAX
-#define MAX_WAS_NOT_DEFINED
-#define MAX(a, b)                                                              \
+#define PSA_MAX(a, b)                                                          \
 	({                                                                     \
 		__typeof__(a) _a = (a);                                        \
 		__typeof__(b) _b = (b);                                        \
 		_a < _b ? _b : _a;                                             \
 	})
-#endif /* MAX */
 
 /**
  * DOC:
@@ -688,9 +685,10 @@ size_t psa_cipher_iv_length(psa_key_type_t key_type, psa_algorithm_t alg);
  * See also PSA_EXPORT_KEY_OUTPUT_SIZE().
  */
 #define PSA_EXPORT_KEY_PAIR_MAX_SIZE                                           \
-	MAX(PSA_KEY_EXPORT_RSA_KEY_PAIR_MAX_SIZE(PSA_VENDOR_RSA_MAX_KEY_BITS), \
-	    PSA_KEY_EXPORT_ECC_KEY_PAIR_MAX_SIZE(                              \
-		    PSA_VENDOR_ECC_MAX_CURVE_BITS))
+	PSA_MAX(PSA_KEY_EXPORT_RSA_KEY_PAIR_MAX_SIZE(                          \
+			PSA_VENDOR_RSA_MAX_KEY_BITS),                          \
+		PSA_KEY_EXPORT_ECC_KEY_PAIR_MAX_SIZE(                          \
+			PSA_VENDOR_ECC_MAX_CURVE_BITS))
 
 /**
  * DOC: PSA_EXPORT_PUBLIC_KEY_MAX_SIZE
@@ -703,10 +701,10 @@ size_t psa_cipher_iv_length(psa_key_type_t key_type, psa_algorithm_t alg);
  * See also PSA_EXPORT_PUBLIC_KEY_OUTPUT_SIZE().
  */
 #define PSA_EXPORT_PUBLIC_KEY_MAX_SIZE                                         \
-	MAX(PSA_KEY_EXPORT_RSA_PUBLIC_KEY_MAX_SIZE(                            \
-		    PSA_VENDOR_RSA_MAX_KEY_BITS),                              \
-	    PSA_KEY_EXPORT_ECC_PUBLIC_KEY_MAX_SIZE(                            \
-		    PSA_VENDOR_ECC_MAX_CURVE_BITS))
+	PSA_MAX(PSA_KEY_EXPORT_RSA_PUBLIC_KEY_MAX_SIZE(                        \
+			PSA_VENDOR_RSA_MAX_KEY_BITS),                          \
+		PSA_KEY_EXPORT_ECC_PUBLIC_KEY_MAX_SIZE(                        \
+			PSA_VENDOR_ECC_MAX_CURVE_BITS))
 
 /**
  * PSA_EXPORT_PUBLIC_KEY_OUTPUT_SIZE() - Sufficient output buffer size for psa_export_public_key().
@@ -920,15 +918,69 @@ size_t psa_hash_length(psa_algorithm_t alg);
 	})
 
 /**
- * PSA_MAC_LENGTH() - The size of the output of psa_mac_compute() and psa_mac_sign_finish(), in
- * bytes.
+ * PSA_MAC_TRUNCATED_LENGTH() - Size of the truncated MAC algorithm
+ * in bytes.
+ * @alg: A MAC algorithm (such that PSA_ALG_IS_MAC_TRUNCATED(alg) is true).
+ *
+ * Return:
+ * The MAC truncated length for the specified algorithm.
+ * 0 if the algorithm is not a MAC or a truncated MAC algorithm.
+ */
+#define PSA_MAC_TRUNCATED_LENGTH(alg)                                          \
+	({                                                                     \
+		typeof(alg) _alg = (alg);                                      \
+		PSA_ALG_IS_MAC_TRUNCATED(_alg) ?                               \
+			(_alg & PSA_ALG_MAC_TRUNCATION_MASK) >>                \
+				PSA_MAC_TRUNCATION_OFFSET :                    \
+			0;                                                     \
+	})
+
+/**
+ * PSA_HMAC_LENGTH() - Size of the HMAC output length in bytes.
+ * @alg: A MAC algorithm (such that PSA_ALG_IS_HMAC(alg) is true).
+ *
+ * Return:
+ * The MAC length for the specified algorithm.
+ * 0 if the MAC algorithm is not HMAC.
+ */
+#define PSA_HMAC_LENGTH(alg)                                                   \
+	({                                                                     \
+		typeof(alg) _alg = (alg);                                      \
+		PSA_ALG_IS_HMAC(_alg) ?                                        \
+			(PSA_MAC_TRUNCATED_LENGTH(_alg) ?                      \
+				 PSA_MAC_TRUNCATED_LENGTH(_alg) :              \
+				 PSA_MAC_MAX_SIZE) :                           \
+			0;                                                     \
+	})
+
+/*
+ * PSA_BLOCK_CIPHER_MAC_LENGTH() - Size of the block cipher MAC output length
+ * in bytes.
+ * @alg: A MAC algorithm (such that PSA_ALG_IS_BLOCK_CIPHER_MAC(alg) is true).
+ *
+ * Return:
+ * The MAC length for the specified algorithm.
+ * 0 if the MAC algorithm is not a block cipher MAC.
+ */
+#define PSA_BLOCK_CIPHER_MAC_LENGTH(alg)                                       \
+	({                                                                     \
+		typeof(alg) _alg = (alg);                                      \
+		PSA_ALG_IS_BLOCK_CIPHER_MAC(_alg) ?                            \
+			(PSA_MAC_TRUNCATED_LENGTH(_alg) ?                      \
+				 PSA_MAC_TRUNCATED_LENGTH(_alg) :              \
+				 PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE) :            \
+			0;                                                     \
+	})
+
+/**
+ * PSA_MAC_LENGTH() - The size of the output of psa_mac_compute() and
+ * psa_mac_sign_finish(), in bytes.
  * @key_type: The type of the MAC key.
  * @key_bits: The size of the MAC key in bits.
- * @alg: A MAC algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_MAC(alg) is true).
+ * @alg: A MAC algorithm (such that PSA_ALG_IS_MAC(alg) is true).
  *
- * **Warning: Not supported**
- *
- * This is also the MAC length that psa_mac_verify() and psa_mac_verify_finish() expects.
+ * This is also the MAC length that psa_mac_verify() and
+ * psa_mac_verify_finish() expect.
  *
  * See also PSA_MAC_MAX_SIZE.
  *
@@ -937,27 +989,24 @@ size_t psa_hash_length(psa_algorithm_t alg);
  *
  * 0 if the MAC algorithm is not recognized.
  *
- * Either 0 or the correct length for a MAC algorithm that the implementation recognizes, but does
- * not support.
- *
- * Unspecified if the key parameters are not consistent with the algorithm.
+ * Either 0 or the correct length for a MAC algorithm that the implementation
+ * recognizes, but does not support.
  */
 #define PSA_MAC_LENGTH(key_type, key_bits, alg)                                \
-/* implementation-defined value */
+	(PSA_ALG_IS_HMAC(alg) ? PSA_HMAC_LENGTH(alg) :                         \
+				PSA_BLOCK_CIPHER_MAC_LENGTH(alg))
 
 /**
  * DOC: PSA_MAC_MAX_SIZE
  * Maximum size of a MAC.
  *
- * **Warning: Not supported**
- *
- * This macro must expand to a compile-time constant integer. It is recommended that this value is
- * the maximum size of a MAC supported by the implementation, in bytes. The value must not be
- * smaller than this maximum.
+ * This macro must expand to a compile-time constant integer.
+ * The maximum MAC size is based on the maximum hash size supported by HMAC
  *
  * See also PSA_MAC_LENGTH().
  */
-#define PSA_MAC_MAX_SIZE /* implementation-defined value */
+#define PSA_MAC_MAX_SIZE                                                       \
+	PSA_MAX(PSA_HASH_MAX_SIZE, PSA_BLOCK_CIPHER_BLOCK_MAX_SIZE)
 
 /**
  * DOC: PSA_RAW_KEY_AGREEMENT_OUTPUT_MAX_SIZE
@@ -1058,10 +1107,5 @@ size_t psa_hash_length(psa_algorithm_t alg);
  * value greater than or equal to 64.
  */
 #define PSA_TLS12_PSK_TO_MS_PSK_MAX_SIZE /* implementation-defined value */
-
-#ifdef MAX_WAS_NOT_DEFINED
-#undef MAX_WAS_NOT_DEFINED
-#undef MAX
-#endif /* MAX_WAS_NOT_DEFINED */
 
 #endif /* __PSA_CRYPTO_SIZES_H__ */

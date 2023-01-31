@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <pthread.h>
@@ -32,8 +32,8 @@ int util_mutex_destroy(void **mutex)
 	/* Warning: don't use the DBG_PRINT_XXX macro */
 	if (*mutex) {
 		/* Wait the mutex to be available */
-		pthread_mutex_lock(*mutex);
-		pthread_mutex_unlock(*mutex);
+		(void)pthread_mutex_lock(*mutex);
+		(void)pthread_mutex_unlock(*mutex);
 
 		if (pthread_mutex_destroy(*mutex))
 			return ERR_CODE(MUTEX_DESTROY);
@@ -50,12 +50,12 @@ void util_mutex_lock(void *mutex)
 {
 	/* Warning: don't use the DBG_PRINT_XXX macro */
 	if (mutex)
-		pthread_mutex_lock(mutex);
+		(void)pthread_mutex_lock(mutex);
 }
 
 void util_mutex_unlock(void *mutex)
 {
 	/* Warning: don't use the DBG_PRINT_XXX macro */
 	if (mutex)
-		pthread_mutex_unlock(mutex);
+		(void)pthread_mutex_unlock(mutex);
 }

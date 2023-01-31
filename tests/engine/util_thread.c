@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <stdlib.h>
@@ -52,7 +52,7 @@ static void thr_free_data(void *data)
 
 	if (thr_data->state == STATE_RUNNING ||
 	    thr_data->state == STATE_WAITING)
-		pthread_cancel(thr_data->id);
+		(void)pthread_cancel(thr_data->id);
 
 	if (thr_data->stat.status_array)
 		free(thr_data->stat.status_array);

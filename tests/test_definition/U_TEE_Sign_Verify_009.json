@@ -53,19 +53,17 @@
 		],
 		"sign_id": 0,
 		"key_id": 0,
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE",
+		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 3
 	},
 	"subtest 6": {
 		"command": "DELETE",
 		"key_id": 0,
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE",
 		"depends": 1
 	},
 	"subtest 7": {
 		"command": "DELETE",
 		"key_id": 1,
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE",
 		"depends": 2
 	}
 }

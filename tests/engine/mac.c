@@ -79,8 +79,8 @@ int mac(struct subtest_data *subtest, bool verify)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test;
+	const char *key_name = NULL;
 	struct smw_keypair_buffer key_buffer;
-	int key_id = INT_MAX;
 	int mac_id = INT_MAX;
 	unsigned int input_len = 0;
 	unsigned int output_len = 0;
@@ -105,40 +105,29 @@ int mac(struct subtest_data *subtest, bool verify)
 
 	args.key_descriptor = &key_test.desc;
 
+	/* Key name is mandatory */
+	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
 	/* Initialize key descriptor */
 	res = util_key_desc_init(&key_test, &key_buffer);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Read the json-c key description */
-	res = util_key_read_descriptor(&key_test, &key_id, 0, subtest->params);
+	res = util_key_read_descriptor(list_keys(subtest), &key_test, key_name);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	if (key_id != INT_MAX) {
+	if (util_key_is_id_set(&key_test))
 		util_key_free_key(&key_test);
 
-		/* Fill key descriptor field saved */
-		res = util_key_find_key_node(list_keys(subtest), key_id,
-					     &key_test);
-		if (res != ERR_CODE(PASSED))
-			goto exit;
-
-		/*
-		 * If Security size not set,
-		 * get it from the SMW key identifier
-		 */
-		if (!util_key_is_security_set(&key_test)) {
-			subtest->smw_status =
-				smw_get_security_size(&key_test.desc);
-			if (subtest->status != SMW_STATUS_OK) {
-				res = ERR_CODE(API_STATUS_NOK);
-				goto exit;
-			}
-		}
-	} else if (!util_key_is_type_set(&key_test) ||
-		   !util_key_is_security_set(&key_test) ||
-		   !util_key_is_private_key_defined(&key_test)) {
+	if (!util_key_is_id_set(&key_test) &&
+	    (!util_key_is_type_set(&key_test) ||
+	     !util_key_is_security_set(&key_test) ||
+	     !util_key_is_private_key_defined(&key_test))) {
 		DBG_PRINT_MISS_PARAM("Key description");
 		res = ERR_CODE(MISSING_PARAMS);
 		goto exit;

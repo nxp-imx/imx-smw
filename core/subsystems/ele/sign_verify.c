@@ -181,7 +181,7 @@ static int sign(struct hdl *hdl, void *args)
 
 	status = ele_convert_err(err);
 
-	smw_sign_verify_set_sign_len(sign_args, op_args.signature_size);
+	smw_sign_verify_set_sign_len(sign_args, op_args.exp_signature_size);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

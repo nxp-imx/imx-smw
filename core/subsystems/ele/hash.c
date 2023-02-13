@@ -73,7 +73,7 @@ static int hash(struct hdl *hdl, void *args)
 	status = ele_convert_err(err);
 
 	/* Update Digest size */
-	smw_crypto_set_hash_output_length(hash_args, op_args.output_size);
+	smw_crypto_set_hash_output_length(hash_args, op_args.exp_output_size);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

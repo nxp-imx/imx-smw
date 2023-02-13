@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <util.h>
@@ -561,11 +561,11 @@ static void shift_public_key(unsigned int key_size, unsigned int size,
 static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 				     unsigned int security_size,
 				     unsigned char *pub_key,
-				     unsigned int *pub_key_size)
+				     size_t *pub_key_size)
 {
 	TEE_Result res = TEE_ERROR_NO_DATA;
-	unsigned int key_size_bytes = 0;
-	unsigned int size = 0;
+	size_t key_size_bytes = 0;
+	size_t size = 0;
 
 	FMSG("Executing %s", __func__);
 
@@ -576,7 +576,7 @@ static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 
 	/* Public key size is twice private key size */
 	if (*pub_key_size != 2 * key_size_bytes) {
-		EMSG("Invalid pub key size: %d (%d expected)", *pub_key_size,
+		EMSG("Invalid pub key size: %zu (%zu expected)", *pub_key_size,
 		     2 * key_size_bytes);
 		return res;
 	}
@@ -989,9 +989,9 @@ static TEE_Result set_key_rsa_attribute(unsigned char *pub_exp,
  */
 static TEE_Result export_pub_key_rsa(TEE_ObjectHandle handle,
 				     unsigned char *modulus,
-				     unsigned int *modulus_len,
+				     size_t *modulus_len,
 				     unsigned char *pub_exp,
-				     unsigned int *pub_exp_len)
+				     size_t *pub_exp_len)
 {
 	TEE_Result res = TEE_ERROR_NO_DATA;
 
@@ -1030,8 +1030,8 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	unsigned char *pub_key = NULL;
 	unsigned char *modulus = NULL;
 	unsigned char *rsa_pub_exp_attr = NULL;
-	uint32_t *pub_key_size = NULL;
-	uint32_t *modulus_size = NULL;
+	size_t *pub_key_size = NULL;
+	size_t *modulus_size = NULL;
 	size_t rsa_pub_exp_attr_len = 0;
 	bool persistent = false;
 	struct key_data *key_data = NULL;
@@ -1513,8 +1513,8 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
 	TEE_ObjectInfo obj_info = { 0 };
 	bool persistent = false;
-	uint32_t *modulus_len = NULL;
-	uint32_t *pub_len = NULL;
+	size_t *modulus_len = NULL;
+	size_t *pub_len = NULL;
 	unsigned char *modulus = NULL;
 	unsigned char *pub_data = NULL;
 

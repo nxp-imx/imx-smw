@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <util.h>
@@ -21,7 +21,7 @@
 static const struct algorithm_info {
 	enum tee_algorithm_id ca_id;
 	uint32_t ta_id;
-	uint32_t length;
+	size_t length;
 } algorithm_infos[] = { ALGORITHM_INFO(MD5),	ALGORITHM_INFO(SHA1),
 			ALGORITHM_INFO(SHA224), ALGORITHM_INFO(SHA256),
 			ALGORITHM_INFO(SHA384), ALGORITHM_INFO(SHA512),
@@ -52,7 +52,7 @@ static TEE_Result get_algorithm_info(enum tee_algorithm_id ca_id,
 }
 
 TEE_Result ta_get_digest_length(enum tee_algorithm_id tee_algorithm_id,
-				uint32_t *digest_len)
+				size_t *digest_len)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	const struct algorithm_info *info = NULL;
@@ -94,7 +94,7 @@ TEE_Result ta_get_hash_ca_id(uint32_t digest_len, enum tee_algorithm_id *ca_id)
 
 TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 			     const void *chunk, uint32_t chunk_len, void *hash,
-			     uint32_t *hash_len)
+			     size_t *hash_len)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_OperationHandle operation = TEE_HANDLE_NULL;

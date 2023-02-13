@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef TA_HASH_H
@@ -29,7 +29,7 @@ TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
  * TEE_ERROR_NOT_SUPPORTED	- Hash algorithm is not supported.
  */
 TEE_Result ta_get_digest_length(enum tee_algorithm_id tee_algorithm_id,
-				uint32_t *digest_len);
+				size_t *digest_len);
 
 /**
  * ta_get_hash_ca_id() - Get CA hash ID from digest length.
@@ -58,6 +58,6 @@ TEE_Result ta_get_hash_ca_id(uint32_t digest_len, enum tee_algorithm_id *ca_id);
  */
 TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 			     const void *chunk, uint32_t chunk_len, void *hash,
-			     uint32_t *hash_len);
+			     size_t *hash_len);
 
 #endif /* TA_HASH_H */

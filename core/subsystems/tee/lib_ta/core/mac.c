@@ -64,7 +64,7 @@ static TEE_Result mac_operate(uint32_t param_types,
 	void *message;
 	uint32_t message_len;
 	void *mac;
-	uint32_t mac_len;
+	size_t mac_len;
 	const struct algo_info *alg = NULL;
 
 	bool persistent = false;

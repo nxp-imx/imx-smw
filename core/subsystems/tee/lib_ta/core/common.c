@@ -12,7 +12,7 @@ TEE_Result check_operation_keys_usage(TEE_OperationHandle op,
 	TEE_Result res = TEE_SUCCESS;
 	TEE_OperationInfoMultiple *op_info = NULL;
 	TEE_OperationInfoKey *op_key_info = NULL;
-	uint32_t op_info_size;
+	size_t op_info_size;
 
 	if (!key_info && nb_keys) {
 		res = TEE_ERROR_BAD_PARAMETERS;

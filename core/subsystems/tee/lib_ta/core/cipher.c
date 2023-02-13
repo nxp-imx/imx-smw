@@ -84,7 +84,7 @@ TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		goto end;
 	}
 
-	max_key_size = key_info[0].maxKeySize;
+	max_key_size = key_info[0].maxObjectSize;
 
 	if (nb_ids == MAX_CIPHER_KEYS) {
 		res = ta_get_key_handle(&keys_handle[1].handle,
@@ -101,7 +101,7 @@ TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 			goto end;
 		}
 
-		max_key_size = MAX(max_key_size, key_info[1].maxKeySize);
+		max_key_size = MAX(max_key_size, key_info[1].maxObjectSize);
 		max_key_size *= 2;
 	}
 

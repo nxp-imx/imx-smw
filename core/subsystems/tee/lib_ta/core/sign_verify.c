@@ -238,7 +238,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	uint32_t mode;
 	uint32_t algorithm_id = 0;
 	void *digest = NULL;
-	uint32_t digest_len = 0;
+	size_t digest_len = 0;
 	bool persistent = false;
 	uint32_t attr_count = 0;
 	struct sign_verify_shared_params *shared_params = NULL;

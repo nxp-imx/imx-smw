@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include "smw_status.h"
@@ -21,7 +21,7 @@ int smw_utils_get_string_index(const char *name, const char *const array[],
 	SMW_DBG_ASSERT(name);
 
 	for (i = 0; i < size; i++) {
-		if (*array[i]) {
+		if (array[i] && *array[i]) {
 			if (!SMW_UTILS_STRCMP(array[i], name)) {
 				status = SMW_STATUS_OK;
 				*id = i;

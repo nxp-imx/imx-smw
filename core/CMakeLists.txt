@@ -59,7 +59,7 @@ set(RETURN_OPERATION_FUNC "${STRUCT_OPERATION_FUNC} \*")
 macro(add_subsystem subsystem)
     MATH(EXPR NB_SUBSYSTEM "${NB_SUBSYSTEM} + 1")
     SET(NB_SUBSYSTEM ${NB_SUBSYSTEM} PARENT_SCOPE)
-    add_component(${subsystem} ${SUBSYSTEM_ID} RETURN_SUBSYSTEM_FUNC
+    add_component(0 ${subsystem} ${SUBSYSTEM_ID} RETURN_SUBSYSTEM_FUNC
                   PROP_SUBSYSTEM_ID
                   PROP_SUBSYSTEM_EXPORT
                   PROP_SUBSYSTEM_NAME
@@ -69,7 +69,17 @@ endmacro()
 macro(add_operation operation)
     MATH(EXPR NB_OPERATION "${NB_OPERATION} + 1")
     SET(NB_OPERATION ${NB_OPERATION} PARENT_SCOPE)
-    add_component(${operation} ${OPERATION_ID} RETURN_OPERATION_FUNC
+    add_component(0 ${operation} ${OPERATION_ID} RETURN_OPERATION_FUNC
+                  PROP_OPERATION_ID
+                  PROP_OPERATION_EXPORT
+                  PROP_OPERATION_NAME
+                  PROP_OPERATION_FUNC)
+endmacro()
+
+macro(add_operation_implicit operation)
+    MATH(EXPR NB_OPERATION "${NB_OPERATION} + 1")
+    SET(NB_OPERATION ${NB_OPERATION} PARENT_SCOPE)
+    add_component(1 ${operation} ${OPERATION_ID} RETURN_OPERATION_FUNC
                   PROP_OPERATION_ID
                   PROP_OPERATION_EXPORT
                   PROP_OPERATION_NAME

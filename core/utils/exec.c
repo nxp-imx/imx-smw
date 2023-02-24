@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include "smw_status.h"
@@ -16,7 +16,7 @@
 
 static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 				    enum subsystem_id subsystem_id,
-				    enum smw_op_step op_step)
+				    enum smw_op_step op_step, bool implicit)
 {
 	int status = SMW_STATUS_OK;
 
@@ -30,15 +30,22 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 		       operation_id);
 
 	/*
-	 * For update and final operation no need to check subsystem
-	 * capabilities and load subsystem. This is done at initialization
+	 * For implicit operation, no need to check subsystem capabilities.
+	 * If subsytem enabled, the operation must be supported or returned
+	 * not supported.
 	 */
-	if (op_step == SMW_OP_STEP_INIT || op_step == SMW_OP_STEP_ONESHOT) {
+	if (!implicit) {
 		status = smw_config_select_subsystem(operation_id, args,
 						     &subsystem_id);
 		if (status != SMW_STATUS_OK)
 			return status;
+	}
 
+	/*
+	 * For update and final no need to load subsystem.
+	 * This is done at initialization
+	 */
+	if (op_step == SMW_OP_STEP_INIT || op_step == SMW_OP_STEP_ONESHOT) {
 		status = smw_config_load_subsystem(subsystem_id);
 		if (status != SMW_STATUS_OK)
 			return status;
@@ -79,7 +86,7 @@ int smw_utils_execute_operation(enum operation_id operation_id, void *args,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	status = smw_utils_execute_common(operation_id, args, subsystem_id,
-					  SMW_OP_STEP_ONESHOT);
+					  SMW_OP_STEP_ONESHOT, false);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -93,7 +100,7 @@ int smw_utils_execute_init(enum operation_id operation_id, void *args,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	status = smw_utils_execute_common(operation_id, args, subsystem_id,
-					  SMW_OP_STEP_INIT);
+					  SMW_OP_STEP_INIT, false);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -107,7 +114,7 @@ int smw_utils_execute_update(enum operation_id operation_id, void *args,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	status = smw_utils_execute_common(operation_id, args, subsystem_id,
-					  SMW_OP_STEP_UPDATE);
+					  SMW_OP_STEP_UPDATE, true);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -121,7 +128,21 @@ int smw_utils_execute_final(enum operation_id operation_id, void *args,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	status = smw_utils_execute_common(operation_id, args, subsystem_id,
-					  SMW_OP_STEP_FINAL);
+					  SMW_OP_STEP_FINAL, true);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_utils_execute_implicit(enum operation_id operation_id, void *args,
+			       enum subsystem_id subsystem_id)
+{
+	int status;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = smw_utils_execute_common(operation_id, args, subsystem_id,
+					  SMW_OP_STEP_ONESHOT, true);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

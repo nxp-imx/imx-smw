@@ -217,6 +217,27 @@ int tee_convert_key_type(enum smw_config_key_type_id smw_key_type,
 	return status;
 }
 
+static enum smw_config_key_type_id
+key_type_tee_to_smw(enum tee_key_type tee_key_type)
+{
+	enum smw_config_key_type_id ret_type = SMW_CONFIG_KEY_TYPE_ID_INVALID;
+
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(key_info);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < size; i++) {
+		if (key_info[i].tee_key_type == tee_key_type) {
+			SMW_DBG_PRINTF(DEBUG, "Key type: %d\n", ret_type);
+			ret_type = key_info[i].smw_key_type;
+			break;
+		}
+	}
+
+	return ret_type;
+}
+
 static bool convert_usage(const char *value, unsigned int *usage)
 {
 	unsigned int i;
@@ -409,113 +430,60 @@ static inline void free_tmpref_buffer(unsigned int param_idx,
 }
 
 /**
- * update_exported_buffer() - Update exported buffer and/or buffer length.
- * @format_id: Buffer format set by the user.
- * @hex_buffer: HEX buffer returned by the TA.
- * @hex_buffer_len: @hex_buffer length in bytes, rerturned by the TA.
- * @buffer: Pointer to buffer set by the user.
- * @buffer_len: Pointer to @buffer length in bytes to update.
+ * update_public_buffers() - Update public key buffers.
+ * @key_desc: Pointer to key descriptor.
+ * @cmd: OPTEE command operation.
+ * @op: Pointer to operation structure to update.
+ * @only_length: if true, update only the buffer length.
  *
- * If @format_id is BASE64, @hex_buffer in encoded and @buffer is filled with
- * the encoded buffer. @buffer_len is set to BASE64 buffer length.
- * Else, @buffer_len is set to @hex_buffer_len.
+ * In case of SMW_STATUS_OUTPUT_TOO_SHORT, public buffers length are updated
+ * with expected length.
  *
  * Return:
- * SMW_STATUS_OK	- Success.
- * Error code from smw_utils_base64_encode().
+ * SMW_STATUS_OK                - Success.
+ * SMW_STATUS_INVALID_PARAM     - One of the parameter is invalid.
+ * SMW_STATUS_OUTPUT_TOO_SHORT  - Output buffer is too short
+ * SMW_STATUS_OPERATION_FAILURE - No exported buffer
  */
-static int update_exported_buffer(enum smw_keymgr_format_id format_id,
-				  unsigned char *hex_buffer,
-				  unsigned int hex_buffer_len,
-				  unsigned char *buffer,
-				  unsigned int *buffer_len)
+static int update_public_buffers(struct smw_keymgr_descriptor *key_desc,
+				 uint32_t cmd, TEEC_Operation *op,
+				 bool only_length)
 {
 	int status = SMW_STATUS_OPERATION_FAILURE;
+	int status_mod = SMW_STATUS_OPERATION_FAILURE;
+	unsigned char *data = NULL;
+	unsigned int length = 0;
+	unsigned int param_idx = GEN_PUB_KEY_PARAM_IDX;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
-		/* Encode hex_buffer in BASE64 buffer */
-		status = smw_utils_base64_encode(hex_buffer, hex_buffer_len,
-						 buffer, buffer_len);
-		if (status != SMW_STATUS_OK)
-			goto exit;
-	} else {
-		*buffer_len = hex_buffer_len;
-		status = SMW_STATUS_OK;
-	}
+	/* Export public key buffer */
+	if (cmd == CMD_EXPORT_KEY)
+		param_idx = EXP_PUB_KEY_PARAM_IDX;
 
-exit:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
+	if (!only_length)
+		data = op->params[param_idx].tmpref.buffer;
 
-/**
- * export_pub_key() - Export public key.
- * @key_descriptor: Pointer to key descriptor.
- * @op: Pointer to operation structure to update.
- * @pub_key_idx: Index of the public buffer in @op structure.
- * @modulus_idx: Index of the modulus buffer in @op structure.
- *
- * Return:
- * SMW_STATUS_OK	- Success.
- * Error code from update_exported_buffer().
- */
-static int export_pub_key(struct smw_keymgr_descriptor *key_descriptor,
-			  TEEC_Operation *op, unsigned int pub_key_idx,
-			  unsigned int modulus_idx)
-{
-	int status = SMW_STATUS_OK;
-	unsigned char *pub_data;
-	unsigned char *modulus;
-	unsigned char *hex_pub = op->params[pub_key_idx].tmpref.buffer;
-	unsigned char *hex_modulus = op->params[modulus_idx].tmpref.buffer;
-	unsigned int pub_data_len;
-	unsigned int modulus_len;
-	unsigned int hex_pub_len = op->params[pub_key_idx].tmpref.size;
-	unsigned int hex_modulus_len = op->params[modulus_idx].tmpref.size;
+	length = op->params[param_idx].tmpref.size;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	status = smw_keymgr_update_public_buffer(key_desc, data, length);
 
-	if (hex_pub) {
-		pub_data = smw_keymgr_get_public_data(key_descriptor);
-		pub_data_len = smw_keymgr_get_public_length(key_descriptor);
-
-		status = update_exported_buffer(key_descriptor->format_id,
-						hex_pub, hex_pub_len, pub_data,
-						&pub_data_len);
-		if (status != SMW_STATUS_OK)
-			goto exit;
-
-		/* Update key descriptor public length */
-		smw_keymgr_set_public_length(key_descriptor, pub_data_len);
-
-		SMW_DBG_PRINTF(DEBUG, "Public key:\n");
-		SMW_DBG_HEX_DUMP(DEBUG, pub_data, pub_data_len, 4);
-	} else {
-		/*
-		 * If public buffer is not set, modulus buffer can't be set for
-		 * RSA key type. This check is done in smw_generate_key().
-		 */
+	if (key_desc->identifier.type_id != SMW_CONFIG_KEY_TYPE_ID_RSA)
 		goto exit;
-	}
 
-	if (hex_modulus) {
-		modulus = smw_keymgr_get_modulus(key_descriptor);
-		modulus_len = smw_keymgr_get_modulus_length(key_descriptor);
+	param_idx = GEN_MOD_PARAM_IDX;
+	if (cmd == CMD_EXPORT_KEY)
+		param_idx = EXP_MOD_PARAM_IDX;
 
-		status = update_exported_buffer(key_descriptor->format_id,
-						hex_modulus, hex_modulus_len,
-						modulus, &modulus_len);
-		if (status != SMW_STATUS_OK)
-			goto exit;
+	if (!only_length)
+		data = op->params[param_idx].tmpref.buffer;
 
-		/* Update key descriptor modulus length */
-		smw_keymgr_set_modulus_length(key_descriptor, modulus_len);
+	if (op->params[param_idx].tmpref.size < UINT_MAX)
+		length = op->params[param_idx].tmpref.size;
 
-		SMW_DBG_PRINTF(DEBUG, "Modulus:\n");
-		SMW_DBG_HEX_DUMP(DEBUG, modulus, modulus_len, 4);
-	}
+	status_mod = smw_keymgr_update_modulus_buffer(key_desc, data, length);
+	if (status == SMW_STATUS_OK)
+		status = status_mod;
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -566,6 +534,79 @@ exit:
 }
 
 /**
+ * set_params_exp_public_keys() - Set shared buffers parameters with
+ *                                exported public keys.
+ * @key_desc: Key descriptor.
+ * @cmd: OPTEE command operation
+ * @op: Pointer to operation structure to update.
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success.
+ * SMW_STATUS_NO_KEY_BUFFER  - No key buffer defined
+ * SMW_STATUS_INVALID_PARAM  - Invalid parameter
+ * SMW_STATUS_ALLOC_FAILURE  - Memory allocation failure.
+ */
+static int set_params_exp_public_keys(struct smw_keymgr_descriptor *key_desc,
+				      uint32_t cmd, TEEC_Operation *op)
+{
+	int status = SMW_STATUS_NO_KEY_BUFFER;
+
+	unsigned char *pub_data = NULL;
+	unsigned char *modulus = NULL;
+	unsigned char *hex_modulus = NULL;
+	unsigned char *hex_pub_data = NULL;
+	unsigned int pub_len = 0;
+	unsigned int modulus_len = 0;
+	unsigned int param_idx = 0;
+
+	pub_data = smw_keymgr_get_public_data(key_desc);
+	if (!pub_data)
+		goto exit;
+
+	pub_len = smw_keymgr_get_public_length(key_desc);
+
+	if (key_desc->identifier.type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
+		modulus = smw_keymgr_get_modulus(key_desc);
+		if (!modulus)
+			goto exit;
+
+		modulus_len = smw_keymgr_get_modulus_length(key_desc);
+
+		/* Set modulus buffer */
+		status = set_hex_exp_buffer(key_desc->format_id, modulus,
+					    &hex_modulus, modulus_len);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+
+		param_idx = GEN_MOD_PARAM_IDX;
+		if (cmd == CMD_EXPORT_KEY)
+			param_idx = EXP_MOD_PARAM_IDX;
+
+		status = set_tmpref_buffer(TEEC_MEMREF_TEMP_OUTPUT, param_idx,
+					   hex_modulus, modulus_len, op);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+	}
+
+	/* Set public buffer */
+	status = set_hex_exp_buffer(key_desc->format_id, pub_data,
+				    &hex_pub_data, pub_len);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	param_idx = GEN_PUB_KEY_PARAM_IDX;
+	if (cmd == CMD_EXPORT_KEY)
+		param_idx = EXP_PUB_KEY_PARAM_IDX;
+
+	status = set_tmpref_buffer(TEEC_MEMREF_TEMP_OUTPUT, param_idx,
+				   hex_pub_data, pub_len, op);
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
  * set_params_gen_key() - Set shared buffers parameters for generate key
  *                        operation.
  * @key_args: Key generation arguments.
@@ -573,23 +614,14 @@ exit:
  *
  * Return:
  * SMW_STATUS_OK		- Success.
- * SMW_STATUS_NO_KEY_BUFFER	- No parameter to set.
- * Error code from set_tmpref_buffer().
- * Error code from smw_keymgr_get_buffers_lengths().
- * Error code from set_hex_exp_buffer().
+ * SMW_STATUS_INVALID_PARAM	- Invalid parameter
+ * SMW_STATUS_ALLOC_FAILURE	- Memory allocation failure.
  */
 static int set_params_gen_key(struct smw_keymgr_generate_key_args *key_args,
 			      TEEC_Operation *op)
 {
-	int status = SMW_STATUS_NO_KEY_BUFFER;
-	struct smw_keymgr_descriptor *key_descriptor;
+	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_attributes *key_attrs = &key_args->key_attributes;
-	unsigned char *pub_data;
-	unsigned char *modulus;
-	unsigned char *hex_modulus = NULL;
-	unsigned char *hex_pub_data = NULL;
-	unsigned int hex_pub_len;
-	unsigned int hex_modulus_len;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -603,52 +635,44 @@ static int set_params_gen_key(struct smw_keymgr_generate_key_args *key_args,
 			goto exit;
 	}
 
-	key_descriptor = &key_args->key_descriptor;
-	pub_data = smw_keymgr_get_public_data(key_descriptor);
+	status = set_params_exp_public_keys(&key_args->key_descriptor,
+					    CMD_GENERATE_KEY, op);
+	if (status == SMW_STATUS_NO_KEY_BUFFER)
+		status = SMW_STATUS_OK;
 
-	/*
-	 * For RSA key type, modulus buffer can't be set without public
-	 * buffer (check done in smw_generate_key())
-	 */
-	if (!pub_data)
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
+ * cmd_ta_delete_key() - Delete a key in TEE subsystem storage.
+ * @id: Key id to delete.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid.
+ * SMW_STATUS_SUBSYSTEM_FAILURE	- Operation failed.
+ */
+static int cmd_ta_delete_key(uint32_t id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	TEEC_Operation op = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!id)
 		goto exit;
 
-	status = smw_keymgr_get_buffers_lengths(&key_descriptor->identifier,
-						SMW_KEYMGR_FORMAT_ID_HEX,
-						&hex_pub_len, NULL,
-						&hex_modulus_len);
-	if (status != SMW_STATUS_OK)
-		goto exit;
+	/* params[0] = Key ID */
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_NONE, TEEC_NONE,
+					 TEEC_NONE);
 
-	if (key_descriptor->identifier.type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
-		/* Update public buffer length with the one set by the user */
-		if (key_attrs->rsa_pub_exp)
-			hex_pub_len = key_attrs->rsa_pub_exp_len;
+	/* Key research is done with Key ID */
+	op.params[0].value.a = id;
 
-		modulus = smw_keymgr_get_modulus(key_descriptor);
-
-		/* Set modulus buffer */
-		status = set_hex_exp_buffer(key_descriptor->format_id, modulus,
-					    &hex_modulus, hex_modulus_len);
-		if (status != SMW_STATUS_OK)
-			goto exit;
-
-		status = set_tmpref_buffer(TEEC_MEMREF_TEMP_OUTPUT,
-					   GEN_MOD_PARAM_IDX, hex_modulus,
-					   hex_modulus_len, op);
-		if (status != SMW_STATUS_OK)
-			goto exit;
-	}
-
-	/* Set public buffer */
-	status = set_hex_exp_buffer(key_descriptor->format_id, pub_data,
-				    &hex_pub_data, hex_pub_len);
-	if (status != SMW_STATUS_OK)
-		goto exit;
-
-	status = set_tmpref_buffer(TEEC_MEMREF_TEMP_OUTPUT,
-				   GEN_PUB_KEY_PARAM_IDX, hex_pub_data,
-				   hex_pub_len, op);
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_DELETE_KEY, &op);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -665,16 +689,19 @@ exit:
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid.
- * SMW_STATUS_SUBSYSTEM_FAILURE	- Operation failed.
+ * SMW_STATUS_ALLOC_FAILURE	- Memory allocation failure.
+ * SMW_STATUS_OUTPUT_TOO_SHORT	- Output buffer is too short
+ * SMW_STATUS_OPERATION_FAILURE	- Operation failed
+ * SMW_STATUS_SUBSYSTEM_FAILURE	- Subsytem failed.
  */
 static int generate_key(void *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
+	int tmp_status = SMW_STATUS_INVALID_PARAM;
 	int usage_status = SMW_STATUS_OK;
 	struct smw_keymgr_generate_key_args *key_args = args;
-	struct smw_keymgr_identifier *key_identifier =
-		&key_args->key_descriptor.identifier;
+	struct smw_keymgr_identifier *key_identifier = NULL;
 	struct smw_keymgr_attributes *key_attrs;
 	const struct key_info *key = NULL;
 	struct keymgr_shared_params shared_params = { 0 };
@@ -685,6 +712,8 @@ static int generate_key(void *args)
 
 	if (!key_args)
 		goto exit;
+
+	key_identifier = &key_args->key_descriptor.identifier;
 
 	/* Get key info and check key type and key security size */
 	key = find_check_key_info(key_identifier->type_id,
@@ -712,7 +741,7 @@ static int generate_key(void *args)
 
 	/* Set shared buffers parameters if needed */
 	status = set_params_gen_key(key_args, &op);
-	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
+	if (status != SMW_STATUS_OK)
 		goto exit;
 
 	if (key_attrs->persistent_storage)
@@ -744,10 +773,15 @@ static int generate_key(void *args)
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_GENERATE_KEY, &op);
-	if (status != SMW_STATUS_OK) {
-		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
-		goto exit;
+	if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+		tmp_status = update_public_buffers(&key_args->key_descriptor,
+						   CMD_GENERATE_KEY, &op, true);
+		if (tmp_status != SMW_STATUS_OK)
+			status = tmp_status;
 	}
+
+	if (status != SMW_STATUS_OK)
+		goto exit;
 
 	/* Update key_identifier struct */
 	status = smw_keymgr_get_privacy_id(key_identifier->type_id,
@@ -760,17 +794,9 @@ static int generate_key(void *args)
 	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated\n", __func__,
 		       key_identifier->id);
 
-	/* For RSA key type attribute is the public exponent length in bytes */
-	if (key->tee_key_type == TEE_KEY_TYPE_ID_RSA) {
-		if (key_attrs->rsa_pub_exp_len)
-			key_identifier->attribute = key_attrs->rsa_pub_exp_len;
-		else
-			key_identifier->attribute = DEFAULT_RSA_PUB_EXP_LEN;
-	}
-
-	/* Export public key if needed */
-	status = export_pub_key(&key_args->key_descriptor, &op,
-				GEN_PUB_KEY_PARAM_IDX, GEN_MOD_PARAM_IDX);
+	if (smw_keymgr_get_public_data(&key_args->key_descriptor))
+		status = update_public_buffers(&key_args->key_descriptor,
+					       CMD_GENERATE_KEY, &op, false);
 
 exit:
 	if (key_args &&
@@ -782,17 +808,19 @@ exit:
 		free_tmpref_buffer(GEN_MOD_PARAM_IDX, &op);
 	}
 
-	if (status == SMW_STATUS_OK &&
-	    usage_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
-		status = usage_status;
+	if (status != SMW_STATUS_OK) {
+		(void)cmd_ta_delete_key(shared_params.id);
 
-	if (actual_policy) {
-		if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+	} else if (usage_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
+		if (actual_policy)
 			smw_keymgr_set_attributes_list(key_attrs, actual_policy,
 						       actual_policy_len);
 
-		SMW_UTILS_FREE(actual_policy);
+		status = usage_status;
 	}
+
+	if (actual_policy)
+		SMW_UTILS_FREE(actual_policy);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -809,7 +837,6 @@ exit:
  */
 static int delete_key(void *args)
 {
-	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_delete_key_args *key_args = args;
 
@@ -818,15 +845,7 @@ static int delete_key(void *args)
 	if (!key_args)
 		goto exit;
 
-	/* params[0] = Key ID */
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_NONE, TEEC_NONE,
-					 TEEC_NONE);
-
-	/* Key research is done with Key ID */
-	op.params[0].value.a = key_args->key_descriptor.identifier.id;
-
-	/* Invoke TA */
-	status = execute_tee_cmd(CMD_DELETE_KEY, &op);
+	status = cmd_ta_delete_key(key_args->key_descriptor.identifier.id);
 
 	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is %sdeleted\n", __func__,
 		       key_args->key_descriptor.identifier.id,
@@ -1386,17 +1405,13 @@ exit:
  * SMW_STATUS_INVALID_PARAM		- One of the parameter is invalid.
  * SMW_STATUS_ALLOC_FAILURE		- Memory allocation failed.
  * SMW_STATUS_SUBSYSTEM_FAILURE		- Trusted application failed.
+ * SMW_STATUS_NO_KEY_BUFFER		- No key buffer defined.
  */
 static int export_key(void *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
-	unsigned int hex_pub_len = 0;
-	unsigned int hex_modulus_len = 0;
-	unsigned char *hex_pub = NULL;
-	unsigned char *pub_data = NULL;
-	unsigned char *modulus = NULL;
-	unsigned char *hex_modulus = NULL;
+	int tmp_status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_export_key_args *key_args = args;
 	struct smw_keymgr_descriptor *key_descriptor = NULL;
 
@@ -1411,38 +1426,10 @@ static int export_key(void *args)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	pub_data = smw_keymgr_get_public_data(key_descriptor);
-	modulus = smw_keymgr_get_modulus(key_descriptor);
-
-	/* Get public key buffer length for HEX format */
-	status = smw_keymgr_get_buffers_lengths(&key_descriptor->identifier,
-						SMW_KEYMGR_FORMAT_ID_HEX,
-						&hex_pub_len, NULL,
-						&hex_modulus_len);
+	status =
+		set_params_exp_public_keys(key_descriptor, CMD_EXPORT_KEY, &op);
 	if (status != SMW_STATUS_OK)
 		goto exit;
-
-	/* Set public HEX buffer */
-	status = set_hex_exp_buffer(key_descriptor->format_id, pub_data,
-				    &hex_pub, hex_pub_len);
-	if (status != SMW_STATUS_OK)
-		goto exit;
-
-	/* Set modulus HEX buffer */
-	if (key_descriptor->identifier.type_id == SMW_CONFIG_KEY_TYPE_ID_RSA &&
-	    modulus) {
-		status = set_hex_exp_buffer(key_descriptor->format_id, modulus,
-					    &hex_modulus, hex_modulus_len);
-		if (status != SMW_STATUS_OK)
-			goto exit;
-
-		status = set_tmpref_buffer(TEEC_MEMREF_TEMP_OUTPUT,
-					   EXP_MOD_PARAM_IDX, hex_modulus,
-					   hex_modulus_len, &op);
-		if (status != SMW_STATUS_OK)
-			goto exit;
-	}
-
 	/*
 	 * params[0] = TEE Key ID, Key security size.
 	 * params[1] = Public key buffer.
@@ -1453,22 +1440,21 @@ static int export_key(void *args)
 	op.params[0].value.a = key_descriptor->identifier.id;
 	op.params[0].value.b = key_descriptor->identifier.security_size;
 
-	status = set_tmpref_buffer(TEEC_MEMREF_TEMP_OUTPUT,
-				   EXP_PUB_KEY_PARAM_IDX, hex_pub, hex_pub_len,
-				   &op);
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_EXPORT_KEY, &op);
+	if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+		tmp_status = update_public_buffers(key_descriptor,
+						   CMD_EXPORT_KEY, &op, true);
+		if (tmp_status != SMW_STATUS_OK)
+			status = tmp_status;
+	}
+
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	/* Invoke TA */
-	status = execute_tee_cmd(CMD_EXPORT_KEY, &op);
-	if (status != SMW_STATUS_OK) {
-		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
-		goto exit;
-	}
-
 	/* Export public key */
-	status = export_pub_key(key_descriptor, &op, EXP_PUB_KEY_PARAM_IDX,
-				EXP_MOD_PARAM_IDX);
+	status = update_public_buffers(key_descriptor, CMD_EXPORT_KEY, &op,
+				       false);
 
 exit:
 	if (key_descriptor &&
@@ -1484,34 +1470,89 @@ exit:
 	return status;
 }
 
-bool tee_key_handle(enum operation_id op_id, void *args, int *status)
+/**
+ * get_key_lengths() - Get the key buffer lengths of a key handles by OPTEE.
+ * @args: Key descriptor.
+ *
+ * Return:
+ * SMW_STATUS_OK                 - Success.
+ * SMW_STATUS_INVALID_PARAM      - One of the parameter is invalid.
+ * SMW_STATUS_SUBSYSTEM_FAILURE  - Trusted application failed.
+ */
+static int get_key_lengths(void *args)
 {
+	TEEC_Operation op = { 0 };
+	int status = SMW_STATUS_INVALID_PARAM;
+	int tmp_status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keymgr_descriptor *key_desc = NULL;
+	enum smw_config_key_type_id key_type = SMW_CONFIG_KEY_TYPE_ID_INVALID;
+	enum tee_key_type tee_key_type = TEE_KEY_TYPE_ID_INVALID;
+	unsigned int length = 0;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	switch (op_id) {
-	case OPERATION_ID_GENERATE_KEY:
-		*status = generate_key(args);
-		break;
-	case OPERATION_ID_DELETE_KEY:
-		*status = delete_key(args);
-		break;
-	case OPERATION_ID_DERIVE_KEY:
-		*status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
-		break;
-	case OPERATION_ID_UPDATE_KEY:
-		*status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
-		break;
-	case OPERATION_ID_IMPORT_KEY:
-		*status = import_key(args);
-		break;
-	case OPERATION_ID_EXPORT_KEY:
-		*status = export_key(args);
-		break;
-	default:
-		return false;
+	if (!args)
+		goto exit;
+
+	key_desc = args;
+
+	/*
+	 * params[0].value.a = TEE Key ID.
+	 * params[0].value.b = TEE Key type returned.
+	 * params[1].value.a = Public key buffer length.
+	 * params[1].value.b = Modulus buffer (RSA key) length.
+	 * params[2].value.a = Private key buffer length.
+	 */
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_VALUE_OUTPUT,
+					 TEEC_VALUE_OUTPUT, TEEC_NONE);
+
+	op.params[GET_KEY_LENGTHS_KEY_ID_IDX].value.a = key_desc->identifier.id;
+
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_GET_KEY_LENGTHS, &op);
+
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	if (op.params[GET_KEY_LENGTHS_KEY_ID_IDX].value.b >
+	    TEE_KEY_TYPE_ID_NB) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
 	}
 
-	return true;
+	tee_key_type = op.params[GET_KEY_LENGTHS_KEY_ID_IDX].value.b;
+	key_type = key_type_tee_to_smw(tee_key_type);
+	if (key_desc->identifier.type_id != key_type) {
+		SMW_DBG_PRINTF(DEBUG, "User/TEE key type error %d != %d\n",
+			       key_type, tee_key_type);
+		status = SMW_STATUS_INVALID_PARAM;
+	} else {
+		/*
+		 * No need to check if it's an asymmetric key and the
+		 * type of the key RSA or not.
+		 * Key function setting the buffer length is setup
+		 * according to key type.
+		 */
+		length = op.params[GET_KEY_LENGTHS_PUBKEYS_IDX].value.a;
+		status =
+			smw_keymgr_update_public_buffer(key_desc, NULL, length);
+
+		length = op.params[GET_KEY_LENGTHS_PUBKEYS_IDX].value.b;
+		tmp_status = smw_keymgr_update_modulus_buffer(key_desc, NULL,
+							      length);
+		if (status == SMW_STATUS_OK)
+			status = tmp_status;
+
+		length = op.params[GET_KEY_LENGTHS_PRIVKEY_IDX].value.a;
+		tmp_status = smw_keymgr_update_private_buffer(key_desc, NULL,
+							      length);
+		if (status == SMW_STATUS_OK)
+			status = tmp_status;
+	}
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 /**
@@ -1680,4 +1721,37 @@ int copy_keys_to_shm(TEEC_SharedMemory *shm,
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+bool tee_key_handle(enum operation_id op_id, void *args, int *status)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	switch (op_id) {
+	case OPERATION_ID_GENERATE_KEY:
+		*status = generate_key(args);
+		break;
+	case OPERATION_ID_DELETE_KEY:
+		*status = delete_key(args);
+		break;
+	case OPERATION_ID_DERIVE_KEY:
+		*status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+		break;
+	case OPERATION_ID_UPDATE_KEY:
+		*status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+		break;
+	case OPERATION_ID_IMPORT_KEY:
+		*status = import_key(args);
+		break;
+	case OPERATION_ID_EXPORT_KEY:
+		*status = export_key(args);
+		break;
+	case OPERATION_ID_GET_KEY_LENGTHS:
+		*status = get_key_lengths(args);
+		break;
+	default:
+		return false;
+	}
+
+	return true;
 }

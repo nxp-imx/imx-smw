@@ -9,14 +9,17 @@
 #include <tee_api_types.h>
 
 /* Index of operation shared buffers parameters */
-#define GEN_PUB_KEY_PARAM_IDX  1
-#define GEN_PUB_EXP_PARAM_IDX  3
-#define GEN_MOD_PARAM_IDX      2
-#define IMP_PUB_KEY_PARAM_IDX  2
-#define IMP_PRIV_KEY_PARAM_IDX 1
-#define IMP_MOD_PARAM_IDX      3
-#define EXP_PUB_KEY_PARAM_IDX  1
-#define EXP_MOD_PARAM_IDX      2
+#define GEN_PUB_KEY_PARAM_IDX	    1
+#define GEN_PUB_EXP_PARAM_IDX	    3
+#define GEN_MOD_PARAM_IDX	    2
+#define IMP_PUB_KEY_PARAM_IDX	    2
+#define IMP_PRIV_KEY_PARAM_IDX	    1
+#define IMP_MOD_PARAM_IDX	    3
+#define EXP_PUB_KEY_PARAM_IDX	    1
+#define EXP_MOD_PARAM_IDX	    2
+#define GET_KEY_LENGTHS_KEY_ID_IDX  0
+#define GET_KEY_LENGTHS_PUBKEYS_IDX 1
+#define GET_KEY_LENGTHS_PRIVKEY_IDX 2
 
 /* TEE key type */
 enum tee_key_type {
@@ -72,22 +75,25 @@ enum tee_signature_type {
 };
 
 /* TA commands */
-#define CMD_GENERATE_KEY  0
-#define CMD_DELETE_KEY	  1
-#define CMD_IMPORT_KEY	  2
-#define CMD_EXPORT_KEY	  3
-#define CMD_HASH	  4
-#define CMD_SIGN	  5
-#define CMD_VERIFY	  6
-#define CMD_HMAC	  7
-#define CMD_RNG		  8
-#define CMD_CIPHER_INIT	  9
-#define CMD_CIPHER_UPDATE 10
-#define CMD_CIPHER_FINAL  11
-#define CMD_CANCEL_OP	  12
-#define CMD_COPY_CTX	  13
-#define CMD_MAC_COMPUTE	  14
-#define CMD_MAC_VERIFY	  15
+enum ta_commands {
+	CMD_GENERATE_KEY,
+	CMD_DELETE_KEY,
+	CMD_IMPORT_KEY,
+	CMD_EXPORT_KEY,
+	CMD_HASH,
+	CMD_SIGN,
+	CMD_VERIFY,
+	CMD_HMAC,
+	CMD_RNG,
+	CMD_CIPHER_INIT,
+	CMD_CIPHER_UPDATE,
+	CMD_CIPHER_FINAL,
+	CMD_CANCEL_OP,
+	CMD_COPY_CTX,
+	CMD_MAC_COMPUTE,
+	CMD_MAC_VERIFY,
+	CMD_GET_KEY_LENGTHS
+};
 
 struct mac_shared_params {
 	enum tee_key_type tee_key_type;

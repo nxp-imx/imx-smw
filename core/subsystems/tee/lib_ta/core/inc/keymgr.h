@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef TA_KEYMGR_H
@@ -125,5 +125,18 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
  * Error code from key_del_list() function.
  */
 TEE_Result clear_key_linked_list(void);
+
+/**
+ * get_key_lengths() - Get the key buffer lengths
+ * @param_types: Parameters types.
+ * @params: Shared parameters between Secure and Normal world.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
+ */
+TEE_Result get_key_lengths(uint32_t param_types,
+			   TEE_Param params[TEE_NUM_PARAMS]);
 
 #endif /* TA_KEYMGR_H */

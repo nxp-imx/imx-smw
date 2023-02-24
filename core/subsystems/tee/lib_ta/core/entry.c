@@ -32,7 +32,7 @@ TEE_Result libsmw_detach(void)
 TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 			     TEE_Param params[TEE_NUM_PARAMS])
 {
-	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_Result res = TEE_ERROR_NOT_IMPLEMENTED;
 
 	FMSG("Executing %s", __func__);
 
@@ -93,6 +93,10 @@ TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 
 	case CMD_COPY_CTX:
 		res = copy_context(param_types, params);
+		break;
+
+	case CMD_GET_KEY_LENGTHS:
+		res = get_key_lengths(param_types, params);
 		break;
 
 	default:

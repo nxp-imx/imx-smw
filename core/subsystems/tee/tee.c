@@ -420,7 +420,7 @@ int convert_tee_result(TEEC_Result result)
 	return status;
 }
 
-int execute_tee_cmd(uint32_t cmd_id, TEEC_Operation *op)
+int execute_tee_cmd(enum ta_commands cmd_id, TEEC_Operation *op)
 {
 	TEEC_Result tee_res = TEEC_ERROR_GENERIC;
 	int status = SMW_STATUS_SUBSYSTEM_FAILURE;

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __KEYMGR_H__
@@ -376,23 +376,76 @@ void smw_keymgr_set_modulus_length(struct smw_keymgr_descriptor *descriptor,
 				   unsigned int modulus_length);
 
 /**
- * smw_keymgr_get_buffers_lengths() - Get the lengths of the Key buffers.
- * @identifier: Pointer to key identifier structure.
- * @format_id: Format ID.
- * @public_buffer_length: Pointer to the public buffer length.
- * @private_buffer_length: Pointer to the private buffer length.
- * @modulus_buffer_length: Pointer to the modulus buffer length (RSA key).
+ * smw_keymgr_update_public_buffer() - Update the public buffer fields
+ * @descriptor: Key descriptor.
+ * @data: Data to be converted in base64 if key buffer's format is base64.
+ * @length: Length of the @data.
  *
- * This function computes the lengths of the Key buffers.
+ * If the key buffer format is base64, the function converts the @data to
+ * base64 and update the key buffer's data field. Otherwise, the key buffer's
+ * data is assumed to be the same as the @data.
+ *
+ * Key buffer's length is updated if function success of return
+ * SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * If @data = NULL, only the key buffer's length is updated.
  *
  * Return:
- * error code.
+ * SMW_STATUS_OK                 - Success
+ * SMW_STATUS_OPERATION_FAILURE  - Operation failed
+ * SMW_STATUS_OUTPUT_TOO_SHORT   - Output buffer is too short
+ * SMW_STATUS_INVALID_PARAM      - One of the parameter is invalid.
  */
-int smw_keymgr_get_buffers_lengths(struct smw_keymgr_identifier *identifier,
-				   enum smw_keymgr_format_id format_id,
-				   unsigned int *public_buffer_length,
-				   unsigned int *private_buffer_length,
-				   unsigned int *modulus_buffer_length);
+int smw_keymgr_update_public_buffer(struct smw_keymgr_descriptor *descriptor,
+				    unsigned char *data, unsigned int length);
+
+/**
+ * smw_keymgr_update_modulus_buffer() - Update the modulus buffer fields
+ * @descriptor: key descriptor.
+ * @data: Data to be converted in base64 if key buffer's format is base64.
+ * @length: Length of the @data.
+ *
+ * If the key buffer format is base64, the function converts the @data to
+ * base64 and update the key buffer's data field. Otherwise, the key buffer's
+ * data is assumed to be the same as the @data.
+ *
+ * Key buffer's length is updated if function success of return
+ * SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * If @data = NULL, only the key buffer's length is updated.
+ *
+ * Return:
+ * SMW_STATUS_OK                 - Success
+ * SMW_STATUS_OPERATION_FAILURE  - Operation failed
+ * SMW_STATUS_OUTPUT_TOO_SHORT   - Output buffer is too short
+ * SMW_STATUS_INVALID_PARAM      - One of the parameter is invalid.
+ */
+int smw_keymgr_update_modulus_buffer(struct smw_keymgr_descriptor *descriptor,
+				     unsigned char *data, unsigned int length);
+
+/**
+ * smw_keymgr_update_private_buffer() - Update the private buffer fields
+ * @descriptor: key descriptor.
+ * @data: Data to be converted in base64 if key buffer's format is base64.
+ * @length: Length of the @data.
+ *
+ * If the key buffer format is base64, the function converts the @data to
+ * base64 and update the key buffer's data field. Otherwise, the key buffer's
+ * data is assumed to be the same as the @data.
+ *
+ * Key buffer's length is updated if function success of return
+ * SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * If @data = NULL, only the key buffer's length is updated.
+ *
+ * Return:
+ * SMW_STATUS_OK                 - Success
+ * SMW_STATUS_OPERATION_FAILURE  - Operation failed
+ * SMW_STATUS_OUTPUT_TOO_SHORT   - Output buffer is too short
+ * SMW_STATUS_INVALID_PARAM      - One of the parameter is invalid.
+ */
+int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
+				     unsigned char *data, unsigned int length);
 
 /**
  * smw_keymgr_convert_descriptor() - Key descriptor conversion.

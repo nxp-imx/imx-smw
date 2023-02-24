@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include "smw_keymgr.h"
@@ -387,11 +387,10 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
-	struct smw_key_descriptor *key_base;
-	struct smw_key_descriptor *key_out;
-	struct smw_keymgr_tls12_args *tls_args;
-	struct smw_keymgr_descriptor *key_desc;
-	unsigned int exp_pub_length = 0;
+	struct smw_key_descriptor *key_base = NULL;
+	struct smw_key_descriptor *key_out = NULL;
+	struct smw_keymgr_tls12_args *tls_args = NULL;
+	struct smw_keymgr_descriptor *key_desc = NULL;
 
 	key_base = args->key_descriptor_base;
 	key_out = args->key_descriptor_derived;
@@ -400,8 +399,6 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 		goto end;
 
 	tls_args = conv_args->kdf_args;
-
-	status = SMW_STATUS_OK;
 
 	if (tls_args->ephemeral_key) {
 		/*
@@ -416,17 +413,8 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 		key_desc = &conv_args->key_derived;
 		/* Input base key defined the key type and size */
 		status = smw_keymgr_convert_descriptor(key_out, key_desc);
-		if (status != SMW_STATUS_OK)
-			goto end;
-
-		status = smw_keymgr_get_buffers_lengths(&key_desc->identifier,
-							key_desc->format_id,
-							&exp_pub_length, NULL,
-							NULL);
-
-		if (smw_keymgr_get_public_data(key_desc) &&
-		    smw_keymgr_get_public_length(key_desc) < exp_pub_length)
-			status = SMW_STATUS_INVALID_PARAM;
+	} else {
+		status = SMW_STATUS_OK;
 	}
 
 end:

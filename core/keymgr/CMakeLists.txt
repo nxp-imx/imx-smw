@@ -7,6 +7,7 @@ if(ENABLE_KEYMGR_MODULE)
     add_operation(IMPORT_KEY)
     add_operation(EXPORT_KEY)
     add_operation(DELETE_KEY)
+    add_operation_implicit(GET_KEY_LENGTHS)
 endif()
 
 add_library(keymgr OBJECT "")

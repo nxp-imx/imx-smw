@@ -20,6 +20,13 @@
 #include "base64.h"
 #include "attr.h"
 
+#define FORMAT_ID_ASSERT(id)                                                   \
+	do {                                                                   \
+		typeof(id) _id = (id);                                         \
+		SMW_DBG_ASSERT((_id < SMW_KEYMGR_FORMAT_ID_NB) &&              \
+			       (_id != SMW_KEYMGR_FORMAT_ID_INVALID));         \
+	} while (0)
+
 #define SMW_KEYMGR_FORMAT_ID_DEFAULT SMW_KEYMGR_FORMAT_ID_HEX
 
 static const char *const format_names[] = { [SMW_KEYMGR_FORMAT_ID_HEX] = "HEX",
@@ -175,6 +182,258 @@ static unsigned int *modulus_length_key_rsa(struct smw_keymgr_key_ops *this)
 }
 
 /**
+ * get_standard_private_length() - Get the private buffer standard length.
+ * @identifier: Pointer to key identifier structure.
+ * @format_id: Format ID.
+ * @length: Pointer to the buffer length in bytes.
+ *
+ * This function computes the private key length depending of the
+ * key type and format. The length is based on the cryptographic standard
+ * and may be different on subsystem.
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success.
+ * SMW_STATUS_INVALID_PARAM  - Key type or format not valid
+ */
+static int get_standard_private_length(struct smw_keymgr_identifier *identifier,
+				       enum smw_keymgr_format_id format_id,
+				       unsigned int *length)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(identifier && length);
+
+	*length = 0;
+
+	switch (identifier->type_id) {
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_AES:
+	case SMW_CONFIG_KEY_TYPE_ID_DES3:
+	case SMW_CONFIG_KEY_TYPE_ID_SM4:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
+	case SMW_CONFIG_KEY_TYPE_ID_RSA:
+		*length = BITS_TO_BYTES_SIZE(identifier->security_size);
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
+		*length = 32;
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_DES:
+		*length = 56;
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_DH:
+		break;
+
+	default:
+		SMW_DBG_PRINTF(ERROR, "Unknown type ID: %d\n",
+			       identifier->type_id);
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	switch (format_id) {
+	case SMW_KEYMGR_FORMAT_ID_HEX:
+		break;
+
+	case SMW_KEYMGR_FORMAT_ID_BASE64:
+		*length = smw_utils_get_base64_len(*length);
+		break;
+
+	default:
+		SMW_DBG_PRINTF(ERROR, "Unknown format ID: %d\n", format_id);
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
+ * get_standard_public_length() - Get the public buffer standard length.
+ * @identifier: Pointer to key identifier structure.
+ * @format_id: Format ID.
+ * @length: Pointer to the buffer length in bytes.
+ *
+ * This function computes the public key length depending of the
+ * key type and format. The length is based on the cryptographic standard
+ * and may be different on subsystem.
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success.
+ * SMW_STATUS_INVALID_PARAM  - Key type or format not valid
+ */
+static int get_standard_public_length(struct smw_keymgr_identifier *identifier,
+				      enum smw_keymgr_format_id format_id,
+				      unsigned int *length)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(identifier && length);
+
+	*length = 0;
+
+	switch (identifier->type_id) {
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
+		*length = BITS_TO_BYTES_SIZE(identifier->security_size) * 2;
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_DH:
+		*length = BITS_TO_BYTES_SIZE(identifier->security_size);
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
+		*length = 64;
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_AES:
+	case SMW_CONFIG_KEY_TYPE_ID_DES:
+	case SMW_CONFIG_KEY_TYPE_ID_DES3:
+	case SMW_CONFIG_KEY_TYPE_ID_SM4:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_RSA:
+		*length = DEFAULT_RSA_PUB_EXP_LEN;
+		break;
+
+	default:
+		SMW_DBG_PRINTF(ERROR, "Unknown type ID: %d\n",
+			       identifier->type_id);
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	switch (format_id) {
+	case SMW_KEYMGR_FORMAT_ID_HEX:
+		break;
+
+	case SMW_KEYMGR_FORMAT_ID_BASE64:
+		*length = smw_utils_get_base64_len(*length);
+		break;
+
+	default:
+		SMW_DBG_PRINTF(ERROR, "Unknown format ID: %d\n", format_id);
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
+ * get_standard_modulus_length() - Get the modulus buffer standard length.
+ * @identifier: Pointer to key identifier structure.
+ * @format_id: Format ID.
+ * @length: Pointer to the buffer length in bytes.
+ *
+ * This function computes the modulus key length depending of the
+ * key type and format. The length is based on the cryptographic standard
+ * and may be different on subsystem.
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success.
+ * SMW_STATUS_INVALID_PARAM  - Key type or format not valid
+ */
+static int get_standard_modulus_length(struct smw_keymgr_identifier *identifier,
+				       enum smw_keymgr_format_id format_id,
+				       unsigned int *length)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(identifier && length);
+
+	*length = 0;
+
+	switch (identifier->type_id) {
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_DH:
+	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
+	case SMW_CONFIG_KEY_TYPE_ID_AES:
+	case SMW_CONFIG_KEY_TYPE_ID_DES:
+	case SMW_CONFIG_KEY_TYPE_ID_DES3:
+	case SMW_CONFIG_KEY_TYPE_ID_SM4:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
+	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_RSA:
+		*length = BITS_TO_BYTES_SIZE(identifier->security_size);
+		break;
+
+	default:
+		SMW_DBG_PRINTF(ERROR, "Unknown type ID: %d\n",
+			       identifier->type_id);
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	switch (format_id) {
+	case SMW_KEYMGR_FORMAT_ID_HEX:
+		break;
+
+	case SMW_KEYMGR_FORMAT_ID_BASE64:
+		*length = smw_utils_get_base64_len(*length);
+		break;
+
+	default:
+		SMW_DBG_PRINTF(ERROR, "Unknown format ID: %d\n", format_id);
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
  * setup_key_ops() - Setup the key operations in the key descriptor
  * @descriptor: key descriptor
  *
@@ -224,6 +483,151 @@ static int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
 		}
 	}
 
+	return status;
+}
+
+static int check_public_key_buffer(struct smw_keymgr_descriptor *key_desc,
+				   bool mandatory)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	unsigned char *public_data = NULL;
+	unsigned char *modulus = NULL;
+	unsigned int public_length = 0;
+	unsigned int modulus_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	public_data = smw_keymgr_get_public_data(key_desc);
+	public_length = smw_keymgr_get_public_length(key_desc);
+
+	SMW_DBG_PRINTF(DEBUG, "public data=%p-%d\n", public_data,
+		       public_length);
+
+	if (!public_data && !mandatory) {
+		status = SMW_STATUS_OK;
+		goto end;
+	} else if (public_data && !public_length) {
+		goto end;
+	}
+
+	if (key_desc->identifier.type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
+		modulus = smw_keymgr_get_modulus(key_desc);
+		modulus_length = smw_keymgr_get_modulus_length(key_desc);
+
+		SMW_DBG_PRINTF(DEBUG, "modulus data=%p-%d\n", modulus,
+			       modulus_length);
+
+		/*
+		 * If the public data buffer is present, the modulus buffer
+		 * must be set.
+		 */
+		if (!modulus || !modulus_length)
+			goto end;
+	}
+
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int check_private_key_buffer(struct smw_keymgr_descriptor *key_desc,
+				    bool mandatory)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	unsigned char *private_data = NULL;
+	unsigned int private_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	private_data = smw_keymgr_get_private_data(key_desc);
+	private_length = smw_keymgr_get_private_length(key_desc);
+
+	SMW_DBG_PRINTF(DEBUG, "private data=%p-%d\n", private_data,
+		       private_length);
+
+	if (!private_data && !mandatory)
+		status = SMW_STATUS_OK;
+	else if (private_data && private_length)
+		status = SMW_STATUS_OK;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int check_generate_key_buffer(struct smw_keymgr_descriptor *key_desc)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	unsigned char *private_data = NULL;
+	unsigned int private_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!key_desc->pub || !key_desc->pub->buffer) {
+		status = SMW_STATUS_OK;
+		goto end;
+	}
+
+	/*
+	 *  - private buffer must not be set
+	 *  - public buffer must be set if user set the buffer argument.
+	 */
+	private_data = smw_keymgr_get_private_data(key_desc);
+	private_length = smw_keymgr_get_private_length(key_desc);
+
+	if (!private_data && !private_length)
+		status = check_public_key_buffer(key_desc, true);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int check_import_key_buffer(struct smw_keymgr_descriptor *key_desc)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/*
+	 * Either or both private and public buffer can be set
+	 * (subsystem to check).
+	 * If none is set, return in error.
+	 */
+	if (smw_keymgr_get_private_data(key_desc) ||
+	    smw_keymgr_get_public_data(key_desc)) {
+		status = check_private_key_buffer(key_desc, false);
+		if (status == SMW_STATUS_OK)
+			status = check_public_key_buffer(key_desc, false);
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int check_export_key_buffer(struct smw_keymgr_descriptor *key_desc)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/*
+	 * Either or both private and public buffer can be set
+	 * (subsystem to check).
+	 * If none is set, return in error.
+	 */
+	if (smw_keymgr_get_private_data(key_desc) ||
+	    smw_keymgr_get_public_data(key_desc)) {
+		status = check_private_key_buffer(key_desc, false);
+		if (status == SMW_STATUS_OK)
+			status = check_public_key_buffer(key_desc, false);
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -388,7 +792,7 @@ update_key_convert_args(struct smw_update_key_args *args,
 {
 	(void)converted_args;
 
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -810,6 +1214,166 @@ smw_keymgr_set_modulus_length(struct smw_keymgr_descriptor *descriptor,
 		*ops->modulus_length(ops) = modulus_length;
 }
 
+int smw_keymgr_update_public_buffer(struct smw_keymgr_descriptor *descriptor,
+				    unsigned char *data, unsigned int length)
+{
+	int status = SMW_STATUS_OPERATION_FAILURE;
+	unsigned char *pub_data = NULL;
+	unsigned int pub_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	pub_data = smw_keymgr_get_public_data(descriptor);
+	pub_length = smw_keymgr_get_public_length(descriptor);
+
+	if (!length) {
+		smw_keymgr_set_public_length(descriptor, length);
+		SMW_DBG_PRINTF(DEBUG, "Public buffer length = %u\n", length);
+
+		status = SMW_STATUS_OK;
+	} else if (data && pub_data) {
+		/* Update buffer data and length */
+		if (descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+			/* Encode hex_buffer in BASE64 buffer */
+			status = smw_utils_base64_encode(data, length, pub_data,
+							 &pub_length);
+		} else {
+			pub_length = length;
+			status = SMW_STATUS_OK;
+		}
+
+		if (status == SMW_STATUS_OK ||
+		    status == SMW_STATUS_OUTPUT_TOO_SHORT)
+			smw_keymgr_set_public_length(descriptor, pub_length);
+
+		if (status == SMW_STATUS_OK) {
+			SMW_DBG_PRINTF(DEBUG, "Public buffer:\n");
+			SMW_DBG_HEX_DUMP(DEBUG, pub_data, pub_length, 4);
+		}
+	} else if (!data) {
+		/* Update only the buffer length */
+		pub_length = length;
+		if (descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
+			pub_length = smw_utils_get_base64_len(length);
+
+		smw_keymgr_set_public_length(descriptor, pub_length);
+		SMW_DBG_PRINTF(DEBUG, "Public buffer length = %u\n",
+			       pub_length);
+
+		status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_keymgr_update_modulus_buffer(struct smw_keymgr_descriptor *descriptor,
+				     unsigned char *data, unsigned int length)
+{
+	int status = SMW_STATUS_OPERATION_FAILURE;
+	unsigned char *mod_data = NULL;
+	unsigned int mod_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	mod_data = smw_keymgr_get_modulus(descriptor);
+	mod_length = smw_keymgr_get_modulus_length(descriptor);
+
+	if (!length) {
+		smw_keymgr_set_modulus_length(descriptor, length);
+		SMW_DBG_PRINTF(DEBUG, "Modulus buffer length = %u\n", length);
+
+		status = SMW_STATUS_OK;
+	} else if (data && mod_data) {
+		/* Update buffer data and length */
+		if (descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+			/* Encode hex_buffer in BASE64 buffer */
+			status = smw_utils_base64_encode(data, length, mod_data,
+							 &mod_length);
+		} else {
+			mod_length = length;
+			status = SMW_STATUS_OK;
+		}
+
+		if (status == SMW_STATUS_OK ||
+		    status == SMW_STATUS_OUTPUT_TOO_SHORT)
+			smw_keymgr_set_modulus_length(descriptor, mod_length);
+
+		if (status == SMW_STATUS_OK) {
+			SMW_DBG_PRINTF(DEBUG, "Modulus buffer:\n");
+			SMW_DBG_HEX_DUMP(DEBUG, mod_data, mod_length, 4);
+		}
+	} else if (!data) {
+		/* Update only the buffer length */
+		mod_length = length;
+		if (descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
+			mod_length = smw_utils_get_base64_len(length);
+
+		smw_keymgr_set_modulus_length(descriptor, mod_length);
+		SMW_DBG_PRINTF(DEBUG, "Modulus buffer length = %u\n",
+			       mod_length);
+
+		status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
+				     unsigned char *data, unsigned int length)
+{
+	int status = SMW_STATUS_OPERATION_FAILURE;
+	unsigned char *priv_data = NULL;
+	unsigned int priv_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	priv_data = smw_keymgr_get_private_data(descriptor);
+	priv_length = smw_keymgr_get_private_length(descriptor);
+
+	if (!length) {
+		smw_keymgr_set_private_length(descriptor, length);
+		SMW_DBG_PRINTF(DEBUG, "Private buffer length = %u\n", length);
+
+		status = SMW_STATUS_OK;
+	} else if (data && priv_data) {
+		/* Update buffer data and length */
+		if (descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+			/* Encode hex_buffer in BASE64 buffer */
+			status =
+				smw_utils_base64_encode(data, length, priv_data,
+							&priv_length);
+		} else {
+			priv_length = length;
+			status = SMW_STATUS_OK;
+		}
+
+		if (status == SMW_STATUS_OK ||
+		    status == SMW_STATUS_OUTPUT_TOO_SHORT)
+			smw_keymgr_set_private_length(descriptor, priv_length);
+
+		if (status == SMW_STATUS_OK) {
+			SMW_DBG_PRINTF(DEBUG, "Private buffer:\n");
+			SMW_DBG_HEX_DUMP(DEBUG, priv_data, priv_length, 4);
+		}
+	} else if (!data) {
+		/* Update only the buffer length */
+		priv_length = length;
+		if (descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
+			priv_length = smw_utils_get_base64_len(length);
+
+		smw_keymgr_set_private_length(descriptor, priv_length);
+		SMW_DBG_PRINTF(DEBUG, "Private buffer length = %u\n",
+			       priv_length);
+
+		status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static int set_key_identifier(unsigned int id,
 			      struct smw_keymgr_descriptor *descriptor)
 {
@@ -820,17 +1384,21 @@ static int set_key_identifier(unsigned int id,
 	if (!descriptor || !descriptor->pub)
 		return SMW_STATUS_INVALID_PARAM;
 
-	status = smw_keymgr_db_update(id, &descriptor->identifier);
+	if (descriptor->identifier.id != INVALID_KEY_ID) {
+		status = smw_keymgr_db_update(id, &descriptor->identifier);
 
-	if (status == SMW_STATUS_OK)
-		descriptor->pub->id = id;
+		if (status == SMW_STATUS_OK)
+			descriptor->pub->id = id;
+	} else {
+		status = smw_keymgr_db_delete(id, &descriptor->identifier);
+	}
 
 	return status;
 }
 
 static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
 {
-	unsigned int format_index;
+	unsigned int index;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -842,109 +1410,10 @@ static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
 	if (!descriptor->pub->buffer)
 		return;
 
-	SMW_DBG_ASSERT(descriptor->format_id < SMW_KEYMGR_FORMAT_ID_NB &&
-		       descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID);
-	format_index = descriptor->format_id;
-	descriptor->pub->buffer->format_name = format_names[format_index];
-}
+	FORMAT_ID_ASSERT(descriptor->format_id);
 
-int smw_keymgr_get_buffers_lengths(struct smw_keymgr_identifier *identifier,
-				   enum smw_keymgr_format_id format_id,
-				   unsigned int *public_buffer_length,
-				   unsigned int *private_buffer_length,
-				   unsigned int *modulus_buffer_length)
-{
-	int status = SMW_STATUS_OK;
-	unsigned int public_length = 0;
-	unsigned int modulus_length = 0;
-
-	SMW_DBG_ASSERT(identifier);
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	switch (identifier->type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
-		public_length =
-			BITS_TO_BYTES_SIZE(identifier->security_size) * 2;
-		break;
-
-	case SMW_CONFIG_KEY_TYPE_ID_DH:
-		public_length = BITS_TO_BYTES_SIZE(identifier->security_size);
-		break;
-
-	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
-		public_length = 64;
-		break;
-
-	case SMW_CONFIG_KEY_TYPE_ID_AES:
-	case SMW_CONFIG_KEY_TYPE_ID_DES:
-	case SMW_CONFIG_KEY_TYPE_ID_DES3:
-	case SMW_CONFIG_KEY_TYPE_ID_SM4:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
-		public_length = 0;
-		break;
-
-	case SMW_CONFIG_KEY_TYPE_ID_RSA:
-		modulus_length = BITS_TO_BYTES_SIZE(identifier->security_size);
-
-		/*
-		 * If attribute field is set, it represents the public
-		 * exponent length in bytes.
-		 * Else, public length is set to the default value.
-		 */
-		if (identifier->attribute)
-			public_length = identifier->attribute;
-		else
-			public_length = DEFAULT_RSA_PUB_EXP_LEN;
-		break;
-
-	default:
-		SMW_DBG_PRINTF(ERROR, "Unknown type ID: %d\n",
-			       identifier->type_id);
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
-
-	switch (format_id) {
-	case SMW_KEYMGR_FORMAT_ID_HEX:
-		break;
-
-	case SMW_KEYMGR_FORMAT_ID_BASE64:
-		public_length = smw_utils_get_base64_len(public_length);
-		modulus_length = smw_utils_get_base64_len(modulus_length);
-		break;
-
-	default:
-		SMW_DBG_PRINTF(ERROR, "Unknown format ID: %d\n", format_id);
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
-
-	if (public_buffer_length)
-		*public_buffer_length = public_length;
-
-	if (private_buffer_length)
-		//TODO: export of pivate key is not supported now
-		*private_buffer_length = 0;
-
-	if (modulus_buffer_length)
-		*modulus_buffer_length = modulus_length;
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	index = descriptor->format_id;
+	descriptor->pub->buffer->format_name = format_names[index];
 }
 
 int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
@@ -992,20 +1461,11 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	int ret;
+	int ret = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_keymgr_generate_key_args generate_key_args = { 0 };
-	struct smw_keymgr_descriptor *key_desc;
-	struct smw_keymgr_attributes *key_attr;
+	struct smw_keymgr_descriptor *key_desc = NULL;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	unsigned char *public_data;
-	unsigned char *private_data;
-	unsigned char *modulus;
-	unsigned int private_length;
-	unsigned int public_length;
-	unsigned int modulus_length;
-	unsigned int exp_pub_length;
-	unsigned int exp_modulus_length;
 	unsigned int new_id = INVALID_KEY_ID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1023,49 +1483,10 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 		goto end;
 
 	key_desc = &generate_key_args.key_descriptor;
-	key_attr = &generate_key_args.key_attributes;
 
-	if (args->key_descriptor->buffer) {
-		status = smw_keymgr_get_buffers_lengths(&key_desc->identifier,
-							key_desc->format_id,
-							&exp_pub_length, NULL,
-							&exp_modulus_length);
-		if (status != SMW_STATUS_OK)
-			goto end;
-
-		/* Case where RSA public exponent is set by the user */
-		if (key_desc->identifier.type_id ==
-			    SMW_CONFIG_KEY_TYPE_ID_RSA &&
-		    key_attr->rsa_pub_exp_len)
-			exp_pub_length = key_attr->rsa_pub_exp_len;
-
-		public_data = smw_keymgr_get_public_data(key_desc);
-		public_length = smw_keymgr_get_public_length(key_desc);
-		private_data = smw_keymgr_get_private_data(key_desc);
-		private_length = smw_keymgr_get_private_length(key_desc);
-		modulus = smw_keymgr_get_modulus(key_desc);
-		modulus_length = smw_keymgr_get_modulus_length(key_desc);
-
-		if ((public_data && public_length < exp_pub_length) ||
-		    (modulus && modulus_length < exp_modulus_length) ||
-		    private_data || private_length) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto end;
-		}
-
-		if (key_desc->identifier.type_id ==
-		    SMW_CONFIG_KEY_TYPE_ID_RSA) {
-			/*
-			 * For RSA keys, public data and modulus must be set to
-			 * export the public key
-			 */
-			if ((modulus && !public_data) ||
-			    (!modulus && public_data)) {
-				status = SMW_STATUS_INVALID_PARAM;
-				goto end;
-			}
-		}
-	}
+	status = check_generate_key_buffer(key_desc);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	if (generate_key_args.key_attributes.persistent_storage)
 		key_desc->identifier.persistent = true;
@@ -1128,28 +1549,20 @@ end:
 
 enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 {
-	int status = SMW_STATUS_OK;
-	int ret;
+	int status = SMW_STATUS_INVALID_PARAM;
+	int ret = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_keymgr_import_key_args import_key_args = { 0 };
-	struct smw_keymgr_descriptor *key_desc;
+	struct smw_keymgr_descriptor *key_desc = NULL;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	unsigned char *public_data;
-	unsigned char *private_data;
-	unsigned char *modulus;
-	unsigned int private_length;
-	unsigned int public_length;
-	unsigned int modulus_length;
 	unsigned int new_id = INVALID_KEY_ID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!args || !args->key_descriptor ||
 	    !args->key_descriptor->type_name ||
-	    !args->key_descriptor->security_size || args->key_descriptor->id) {
-		status = SMW_STATUS_INVALID_PARAM;
+	    !args->key_descriptor->security_size || args->key_descriptor->id)
 		goto end;
-	}
 
 	if (!args->key_descriptor->buffer) {
 		status = SMW_STATUS_NO_KEY_BUFFER;
@@ -1162,34 +1575,9 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 
 	key_desc = &import_key_args.key_descriptor;
 
-	public_data = smw_keymgr_get_public_data(key_desc);
-	public_length = smw_keymgr_get_public_length(key_desc);
-	private_data = smw_keymgr_get_private_data(key_desc);
-	private_length = smw_keymgr_get_private_length(key_desc);
-
-	if ((!public_data && !private_data) ||
-	    (public_data && !public_length) ||
-	    (!public_data && public_length) ||
-	    (private_data && !private_length) ||
-	    (!private_data && private_length)) {
-		status = SMW_STATUS_INVALID_PARAM;
+	status = check_import_key_buffer(key_desc);
+	if (status != SMW_STATUS_OK)
 		goto end;
-	}
-
-	if (import_key_args.key_descriptor.identifier.type_id ==
-	    SMW_CONFIG_KEY_TYPE_ID_RSA) {
-		modulus = smw_keymgr_get_modulus(key_desc);
-		modulus_length = smw_keymgr_get_modulus_length(key_desc);
-
-		/*
-		 * Regardless to the key type to import (public key, private key
-		 * or keypair) modulus must be set
-		 */
-		if (!modulus || !modulus_length) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto end;
-		}
-	}
 
 	/*
 	 * Try to create the key in the database before
@@ -1208,13 +1596,16 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 		goto end;
 	}
 
-	if (public_data && private_data)
+	if (smw_keymgr_get_public_data(key_desc) &&
+	    smw_keymgr_get_private_data(key_desc))
 		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PAIR;
-	else if (public_data)
+	else if (smw_keymgr_get_public_data(key_desc))
 		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
-	else
+	else if (smw_keymgr_get_private_data(key_desc))
 		/* Only private data is set */
 		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+	else
+		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_INVALID;
 
 	if (import_key_args.key_attributes.persistent_storage)
 		key_desc->identifier.persistent = true;
@@ -1238,16 +1629,7 @@ enum smw_status_code smw_export_key(struct smw_export_key_args *args)
 
 	struct smw_keymgr_export_key_args export_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	struct smw_keymgr_descriptor *key_desc;
-	unsigned char *public_data;
-	unsigned char *private_data;
-	unsigned char *modulus = NULL;
-	unsigned int private_length;
-	unsigned int public_length;
-	unsigned int modulus_length = 0;
-	unsigned int exp_pub_length;
-	unsigned int exp_priv_length;
-	unsigned int exp_modulus_length;
+	struct smw_keymgr_descriptor *key_desc = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1267,50 +1649,11 @@ enum smw_status_code smw_export_key(struct smw_export_key_args *args)
 
 	key_desc = &export_key_args.key_descriptor;
 
-	public_data = smw_keymgr_get_public_data(key_desc);
-	public_length = smw_keymgr_get_public_length(key_desc);
-	private_data = smw_keymgr_get_private_data(key_desc);
-	private_length = smw_keymgr_get_private_length(key_desc);
-
-	if ((!public_data && !private_data) ||
-	    (public_data && !public_length) ||
-	    (!public_data && public_length) ||
-	    (private_data && !private_length) ||
-	    (!private_data && private_length)) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
-
-	if (key_desc->identifier.type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
-		modulus = smw_keymgr_get_modulus(key_desc);
-		modulus_length = smw_keymgr_get_modulus_length(key_desc);
-
-		/*
-		 * Regardless to the key type to import (public key, private key
-		 * or keypair) modulus must be set
-		 */
-		if (!modulus || !modulus_length) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto end;
-		}
-	}
-
-	subsystem_id = key_desc->identifier.subsystem_id;
-
-	status = smw_keymgr_get_buffers_lengths(&key_desc->identifier,
-						key_desc->format_id,
-						&exp_pub_length,
-						&exp_priv_length,
-						&exp_modulus_length);
+	status = check_export_key_buffer(key_desc);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if ((public_data && public_length < exp_pub_length) ||
-	    (private_data && private_length < exp_priv_length) ||
-	    (modulus && modulus_length < exp_modulus_length)) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
+	subsystem_id = key_desc->identifier.subsystem_id;
 
 	status = smw_utils_execute_operation(OPERATION_ID_EXPORT_KEY,
 					     &export_key_args, subsystem_id);
@@ -1360,24 +1703,20 @@ end:
 enum smw_status_code
 smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_keymgr_descriptor key_desc = { 0 };
-	unsigned int public_length;
-	unsigned int private_length;
-	unsigned int modulus_length;
+	unsigned int public_length = 0;
+	unsigned int private_length = 0;
+	unsigned int modulus_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!descriptor) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!descriptor)
 		goto end;
-	}
 
-	if (!descriptor->type_name || !descriptor->security_size) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!descriptor->type_name || !descriptor->security_size)
 		goto end;
-	}
 
 	if (!descriptor->buffer) {
 		status = SMW_STATUS_NO_KEY_BUFFER;
@@ -1388,16 +1727,35 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_keymgr_get_buffers_lengths(&key_desc.identifier,
-						key_desc.format_id,
-						&public_length, &private_length,
-						&modulus_length);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	if (key_desc.identifier.id == INVALID_KEY_ID) {
+		status = get_standard_public_length(&key_desc.identifier,
+						    key_desc.format_id,
+						    &public_length);
+		if (status != SMW_STATUS_OK)
+			goto end;
 
-	smw_keymgr_set_public_length(&key_desc, public_length);
-	smw_keymgr_set_private_length(&key_desc, private_length);
-	smw_keymgr_set_modulus_length(&key_desc, modulus_length);
+		status = get_standard_modulus_length(&key_desc.identifier,
+						     key_desc.format_id,
+						     &modulus_length);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		status = get_standard_private_length(&key_desc.identifier,
+						     key_desc.format_id,
+						     &private_length);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		smw_keymgr_set_public_length(&key_desc, public_length);
+		smw_keymgr_set_private_length(&key_desc, private_length);
+		smw_keymgr_set_modulus_length(&key_desc, modulus_length);
+
+		goto end;
+	}
+
+	status = smw_utils_execute_implicit(OPERATION_ID_GET_KEY_LENGTHS,
+					    &key_desc,
+					    key_desc.identifier.subsystem_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

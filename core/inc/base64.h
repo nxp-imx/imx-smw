@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2023 NXP
  */
+
+#ifndef __BASE64_H__
+#define __BASE64_H__
 
 /**
  * smw_utils_get_base64_len() - Calculate the base64 length of a hex buffer.
@@ -19,9 +22,13 @@ unsigned int smw_utils_get_base64_len(unsigned int hex_len);
  * @base64: Output base64 buffer.
  * @base64_len: Length of the output base64 buffer.
  *
+ * In case of error code SMW_STATUS_OUTPUT_TOO_SHORT, the @base64_len
+ * is updated with the expected length.
+ *
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- One of the parameter is invalid.
+ * SMW_STATUS_OUTPUT_TOO_SHORT	- Ouptut buffer is too short
  */
 int smw_utils_base64_encode(const unsigned char *in, unsigned int in_len,
 			    unsigned char *base64, unsigned int *base64_len);
@@ -43,3 +50,5 @@ int smw_utils_base64_encode(const unsigned char *in, unsigned int in_len,
 int smw_utils_base64_decode(const unsigned char *base64,
 			    unsigned int base64_len, unsigned char **hex,
 			    unsigned int *hex_len);
+
+#endif /* __BASE64_H__ */

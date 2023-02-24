@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include "smw_status.h"
@@ -109,6 +109,8 @@ int smw_utils_base64_encode(const unsigned char *in, unsigned int in_len,
 	if (*base64_len < len) {
 		SMW_DBG_PRINTF(ERROR, "%s: Base64 buffer too small (%d / %d)\n",
 			       __func__, *base64_len, len);
+		*base64_len = len;
+		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		goto exit;
 	}
 

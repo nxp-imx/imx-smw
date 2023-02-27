@@ -506,6 +506,7 @@ static int compare_keys(struct keypair_ops *key_test,
 			struct keypair_ops *exp_key_test)
 {
 	int res = ERR_CODE(PASSED);
+	int tmp_res = ERR_CODE(PASSED);
 
 	/*
 	 * If test is to compare exported key with
@@ -519,16 +520,23 @@ static int compare_keys(struct keypair_ops *key_test,
 					   *key_private_length(exp_key_test));
 
 	if (*key_public_length(exp_key_test))
-		res = util_compare_buffers(*key_public_data(key_test),
-					   *key_public_length(key_test),
-					   *key_public_data(exp_key_test),
-					   *key_public_length(exp_key_test));
+		tmp_res =
+			util_compare_buffers(*key_public_data(key_test),
+					     *key_public_length(key_test),
+					     *key_public_data(exp_key_test),
+					     *key_public_length(exp_key_test));
+
+	if (res == ERR_CODE(PASSED))
+		res = tmp_res;
 
 	if (exp_key_test->modulus_length && *key_modulus_length(exp_key_test))
-		res = util_compare_buffers(*key_modulus(key_test),
-					   *key_modulus_length(key_test),
-					   *key_modulus(exp_key_test),
-					   *key_modulus_length(exp_key_test));
+		tmp_res =
+			util_compare_buffers(*key_modulus(key_test),
+					     *key_modulus_length(key_test),
+					     *key_modulus(exp_key_test),
+					     *key_modulus_length(exp_key_test));
+	if (res == ERR_CODE(PASSED))
+		res = tmp_res;
 
 	return res;
 }

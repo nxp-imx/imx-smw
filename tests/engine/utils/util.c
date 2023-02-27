@@ -394,7 +394,7 @@ int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
 			 unsigned char *expected_buffer,
 			 unsigned int expected_len)
 {
-	if (buffer_len != expected_len) {
+	if (buffer_len > expected_len) {
 		DBG_PRINT("Bad length, got %d expected %d", buffer_len,
 			  expected_len);
 		return ERR_CODE(SUBSYSTEM);

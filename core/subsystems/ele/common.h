@@ -194,4 +194,25 @@ int ele_set_key_policy(const unsigned char *policy, unsigned int policy_len,
 		       unsigned char **actual_policy,
 		       unsigned int *actual_policy_len);
 
+/**
+ * ele_export_public_key() - Export the ELE public key
+ * @hdl: Pointer to the ELE handles structure.
+ * @key_desc: Key descriptor
+ *
+ * The function exports the public key of the given @key_desc->identifier.id.
+ * The following fields of @key_desc parameters are output:
+ *  - identifier.type_id
+ *  - identifier.security_size
+ *  - format_id
+ *  - pub (if operation success)
+ *  - ops (if operation success)
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Key type not supported
+ * Other SMW status error.
+ */
+int ele_export_public_key(struct hdl *hdl,
+			  struct smw_keymgr_descriptor *key_desc);
+
 #endif /* __COMMON_H__ */

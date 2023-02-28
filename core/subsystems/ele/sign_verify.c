@@ -188,51 +188,6 @@ end:
 	return status;
 }
 
-static int export_key_args(struct hdl *hdl,
-			   struct smw_keymgr_descriptor *key_descriptor,
-			   struct smw_keymgr_descriptor *export_key_desc)
-{
-	int status = SMW_STATUS_OK;
-
-	struct smw_keymgr_export_key_args export_args = { 0 };
-	struct smw_keymgr_descriptor *key_desc = &export_args.key_descriptor;
-
-	unsigned int public_length = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	*key_desc = *key_descriptor;
-	key_desc->pub = NULL;
-	key_desc->format_id = SMW_KEYMGR_FORMAT_ID_HEX;
-
-	status = smw_keymgr_get_buffers_lengths(&key_desc->identifier,
-						SMW_KEYMGR_FORMAT_ID_HEX,
-						&public_length, NULL, NULL);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = smw_keymgr_alloc_keypair_buffer(key_desc, public_length, 0);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	ele_key_handle(hdl, OPERATION_ID_EXPORT_KEY, &export_args, &status);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	*export_key_desc = *key_desc;
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static void clear_exported_key(struct smw_keymgr_descriptor *key_descriptor)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	(void)smw_keymgr_free_keypair_buffer(key_descriptor);
-}
-
 static int verify(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -254,19 +209,22 @@ static int verify(struct hdl *hdl, void *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_INVALID) {
-		status = export_key_args(hdl, key_desc, &export_key_desc);
+		export_key_desc.identifier.id = key_desc->identifier.id;
+		status = ele_export_public_key(hdl, &export_key_desc);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
 		key_size = smw_keymgr_get_public_length(&export_key_desc);
 		key_buf = smw_keymgr_get_public_data(&export_key_desc);
+		security_size = export_key_desc.identifier.security_size;
+		key_type_id = export_key_desc.identifier.type_id;
 	} else {
 		key_size = smw_keymgr_get_public_length(key_desc);
 		key_buf = smw_keymgr_get_public_data(key_desc);
+		security_size = key_desc->identifier.security_size;
+		key_type_id = key_desc->identifier.type_id;
 	}
 
-	key_type_id = key_desc->identifier.type_id;
-	security_size = key_desc->identifier.security_size;
 	if (!security_size) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
@@ -275,12 +233,12 @@ static int verify(struct hdl *hdl, void *args)
 	status = ele_set_pubkey_type(key_type_id, &op_args.pkey_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
-	op_args.key_sz = security_size;
 
+	op_args.key_sz = security_size;
 	op_args.key = key_buf;
+	op_args.key_size = key_size;
 	op_args.message = smw_sign_verify_get_msg_buf(verify_args);
 	op_args.signature = smw_sign_verify_get_sign_buf(verify_args);
-	op_args.key_size = key_size;
 	op_args.signature_size = smw_sign_verify_get_sign_len(verify_args);
 	op_args.message_size = smw_sign_verify_get_msg_len(verify_args);
 
@@ -324,7 +282,8 @@ static int verify(struct hdl *hdl, void *args)
 		status = SMW_STATUS_SIGNATURE_INVALID;
 
 end:
-	clear_exported_key(&export_key_desc);
+	if (export_key_desc.pub)
+		(void)smw_keymgr_free_keypair_buffer(&export_key_desc);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

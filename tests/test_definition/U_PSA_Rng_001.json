@@ -1,0 +1,42 @@
+{
+	"subtest 1": {
+		"command": "RNG",
+		"api": "PSA",
+		"random": 16
+	},
+	"subtest 2": {
+		"command": "RNG",
+		"api": "PSA",
+		"random": 32
+	},
+	"subtest 3": {
+		"command": "RNG",
+		"api": "PSA",
+		"random": 64
+	},
+	"subtest 4": {
+		"command": "RNG",
+		"api": "PSA",
+		"random": 256
+	},
+	"subtest 5": {
+		"command": "RNG",
+		"api": "PSA",
+		"random": 1024
+	},
+	"subtest 6": {
+		"command": "RNG",
+		"api": "PSA",
+		"random": 4096
+	},
+	"subtest 7": {
+		"command": "RNG",
+		"api": "PSA",
+		"random": 16384
+	},
+	"subtest 8": {
+		"command": "RNG",
+		"api": "PSA",
+		"random": 65535
+	}
+}

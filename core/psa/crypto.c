@@ -25,12 +25,15 @@
 		do {                                                           \
 			typeof(_array[0]) *_elm = (_array);                    \
 			typeof(_algo) _alg = (_algo);                          \
-			while (_elm->psa_alg_id != PSA_ALG_NONE) {             \
-				if ((_elm->psa_alg_id & (_alg)) == (_alg)) {   \
-					_ret = _elm;                           \
-					break;                                 \
+			if (_alg != PSA_ALG_NONE) {                            \
+				while (_elm->psa_alg_id != PSA_ALG_NONE) {     \
+					if ((_elm->psa_alg_id & (_alg)) ==     \
+					    (_alg)) {                          \
+						_ret = _elm;                   \
+						break;                         \
+					}                                      \
+					_elm++;                                \
 				}                                              \
-				_elm++;                                        \
 			}                                                      \
 		} while (0);                                                   \
 		_ret;                                                          \

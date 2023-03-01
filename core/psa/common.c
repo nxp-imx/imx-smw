@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "smw_status.h"
@@ -26,7 +26,12 @@ psa_status_t call_smw_api(enum smw_status_code (*api)(void *a), void *args,
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	smw_config_get_psa_config(&config);
-	*subsystem_name = smw_config_get_subsystem_name(config.subsystem_id);
+
+	if (config.subsystem_id == SUBSYSTEM_ID_INVALID)
+		*subsystem_name = NULL;
+	else
+		*subsystem_name =
+			smw_config_get_subsystem_name(config.subsystem_id);
 
 	status = api(args);
 	if (config.alt && status == SMW_STATUS_OPERATION_NOT_SUPPORTED &&

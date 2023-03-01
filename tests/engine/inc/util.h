@@ -9,11 +9,10 @@
 #include <limits.h>
 #include <json_object.h>
 
-#include <smw_status.h>
-
 #include "json_types.h"
 #include "types.h"
 #include "util_debug.h"
+#include "util_status.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
@@ -59,23 +58,33 @@
 		.status = name, .string = #name                                \
 	}
 
-/* Compare @got and @exp. Return 0 if equal, 1 otherwise */
-#define CHECK_RESULT(got, exp)                                                 \
+#define CONST_TO_STRING ENUM_TO_STRING
+
+#define GET_INFO(_elm_name, _array)                                            \
 	({                                                                     \
-		int __ret = 0;                                                 \
-		enum smw_status_code got_res = got;                            \
-		enum smw_status_code exp_res = exp;                            \
+		typeof(_array[0]) *_ret = NULL;                                \
 		do {                                                           \
-			if (got_res != exp_res) {                              \
-				DBG_PRINT("Expected result is %s, got %s",     \
-					  get_smw_string_status(exp_res),      \
-					  get_smw_string_status(got_res));     \
-				__ret = 1;                                     \
+			typeof(_array[0]) *_elm = (_array);                    \
+			typeof(_elm_name) _name = (_elm_name);                 \
+			while (_elm->name) {                                   \
+				if (!strcmp(_elm->name, _name)) {              \
+					_ret = _elm;                           \
+					break;                                 \
+				}                                              \
+				_elm++;                                        \
 			}                                                      \
-			break;                                                 \
 		} while (0);                                                   \
-		__ret;                                                         \
+		_ret;                                                          \
 	})
+
+/**
+ * util_check_result() - Compare API status with expected status
+ *
+ * return:
+ * 1	- Status match.
+ * 0	- Otherwise.
+ */
+int util_check_result(struct subtest_data *subtest, int exp_status);
 
 /**
  * util_get_test() - Return the reference to test data object
@@ -101,29 +110,6 @@ struct test_data *util_setup_test(void);
  * If there is an error during the function, the application aborts.
  */
 void util_destroy_test(struct test_data *test);
-
-/**
- * get_smw_int_status() - Convert SMW status string value into integer value.
- * @smw_status: Pointer to integer smw status to update. Not updated if an error
- *              is returned.
- * @string: SMW status string.
- *
- * Return:
- * PASSED		- Success.
- * -UNKNOWN_RESULT	- @string is not present in status codes array.
- * -BAD_ARGS		- One of the argument is bad.
- */
-int get_smw_int_status(enum smw_status_code *smw_status, const char *string);
-
-/**
- * get_smw_string_status() - Convert SMW status integer value into string value.
- * @status: SMW status integer.
- *
- * Return:
- * NULL	- Status doesn't exist.
- * SMW status string value otherwise.
- */
-char *get_smw_string_status(enum smw_status_code status);
 
 /**
  * get_test_name() - Get test name from test definition file.

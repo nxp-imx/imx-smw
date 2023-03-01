@@ -45,9 +45,9 @@ function (conv_enum_string enum infile outlist)
         endif()
     endforeach()
 
-    set(${outlist} ${list_status} PARENT_SCOPE)
+    set(${${outlist}} ${list_status} PARENT_SCOPE)
 
 endfunction()
 
-conv_enum_string(${ENUM} ${INPUT} SMW_STATUS_STR_LIST)
+conv_enum_string(${ENUM} ${INPUT} OUTPUT_LIST)
 configure_file(${SRC} ${DST} @ONLY)

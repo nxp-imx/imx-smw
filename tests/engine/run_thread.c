@@ -7,329 +7,16 @@
 
 #include <smw_osal.h>
 
+#include "compiler.h"
 #include "util.h"
 #include "util_log.h"
 #include "util_sem.h"
 #include "util_thread.h"
 #include "util_rtcwake.h"
-#include "keymgr.h"
-#include "hash.h"
-#include "sign_verify.h"
-#include "hmac.h"
-#include "rng.h"
-#include "cipher.h"
-#include "operation_context.h"
-#include "config.h"
-#include "info.h"
-#include "mac.h"
-
-/**
- * execute_delete_key_cmd() - Execute delete key command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * Error code from delete_key().
- */
-static int execute_delete_key_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	return delete_key(subtest);
-}
-
-/**
- * execute_generate_cmd() - Execute generate key command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED          - Passed.
- * -MISSING_PARAMS - Subsystem missing
- * Error code from generate_key().
- */
-static int execute_generate_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM("subsystem");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	return generate_key(subtest);
-}
-
-/**
- * execute_hash_cmd() - Execute hash command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from hash().
- */
-static int execute_hash_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM("subsystem");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	return hash(subtest);
-}
-
-/**
- * execute_hmac_cmd() - Execute hmac command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from hmac().
- */
-static int execute_hmac_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM("subsystem");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	return hmac(subtest);
-}
-
-/**
- * execute_mac_cmd() - Execute cmac command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from mac().
- */
-static int execute_mac_cmd(char *cmd, struct subtest_data *subtest)
-{
-	if (!strcmp(cmd, MAC_COMPUTE))
-		return mac(subtest, false);
-	else if (!strcmp(cmd, MAC_VERIFY))
-		return mac(subtest, true);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
-}
-
-/**
- * execute_import_cmd() - Execute import key command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from import_key().
- */
-static int execute_import_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM("subsystem");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	return import_key(subtest);
-}
-
-/**
- * execute_export_cmd() - Execute export command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from export_key().
- */
-static int execute_export_cmd(char *cmd, struct subtest_data *subtest)
-{
-	if (!strcmp(cmd, EXPORT_KEYPAIR))
-		return export_key(subtest, EXP_KEYPAIR);
-	else if (!strcmp(cmd, EXPORT_PRIVATE))
-		return export_key(subtest, EXP_PRIV);
-	else if (!strcmp(cmd, EXPORT_PUBLIC))
-		return export_key(subtest, EXP_PUB);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
-}
-
-/**
- * execute_derive_cmd() - Execute derive command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from derive_key().
- */
-static int execute_derive_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	return derive_key(subtest);
-}
-
-/**
- * execute_sign_cmd() - Execute sign command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from sign_verify().
- */
-static int execute_sign_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM("subsystem");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	return sign_verify(subtest, SIGN_OPERATION);
-}
-
-/**
- * execute_sign_verify_cmd() - Execute sign or verify command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from sign_verify().
- */
-static int execute_verify_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM("subsystem");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	return sign_verify(subtest, VERIFY_OPERATION);
-}
-
-/**
- * execute_rng_cmd() - Execute RNG command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from hash().
- */
-static int execute_rng_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM("subsystem");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	return rng(subtest);
-}
-
-/**
- * execute_cipher_cmd() - Execute cipher command
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from cipher().
- * Error code from cipher_init().
- * Error code from cipher_update().
- * Error code from cipher_final().
- */
-static int execute_cipher_cmd(char *cmd, struct subtest_data *subtest)
-{
-	if (!strcmp(cmd, CIPHER))
-		return cipher(subtest);
-	else if (!strcmp(cmd, CIPHER_INIT))
-		return cipher_init(subtest);
-	else if (!strcmp(cmd, CIPHER_UPDATE))
-		return cipher_update(subtest);
-	else if (!strcmp(cmd, CIPHER_FINAL))
-		return cipher_final(subtest);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
-}
-
-/**
- * execute_operation_context() - Execute an operation context operation
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from cancel_operation().
- * Error code from copy_context().
- */
-static int execute_op_context_cmd(char *cmd, struct subtest_data *subtest)
-{
-	if (!strcmp(cmd, OP_CTX_CANCEL))
-		return cancel_operation(subtest);
-	else if (!strcmp(cmd, OP_CTX_COPY))
-		return copy_context(subtest);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
-}
-
-/**
- * execute_config_cmd() - Execute configuration load or unload command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from smw_config_load() and smw_config_unload().
- */
-static int execute_config_cmd(char *cmd, struct subtest_data *subtest)
-{
-	if (!strcmp(cmd, CONFIG_LOAD))
-		return config_load(subtest);
-	if (!strcmp(cmd, CONFIG_UNLOAD))
-		return config_unload(subtest);
-
-	DBG_PRINT("Undefined command");
-	return ERR_CODE(UNDEFINED_CMD);
-}
+#include "util_key.h"
+#include "util_file.h"
+#include "exec_smw.h"
+#include "exec_psa.h"
 
 /**
  * execute_save_keys_cmd() - Execute backup keys in a file
@@ -347,7 +34,7 @@ static int execute_save_keys_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	return save_keys_to_file(subtest);
+	return util_key_save_keys_to_file(subtest);
 }
 
 /**
@@ -366,27 +53,7 @@ static int execute_restore_keys_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	return restore_keys_from_file(subtest);
-}
-
-/**
- * execute_get_version_cmd() - Execute get version commands
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Success.
- * -BAD_RESULT		- SMW API status differs from expected one.
- * -BAD_ARGS		- One of the arguments is bad.
- * -BAD_PARAM_TYPE	- A parameter value is undefined.
- * -VALUE_NOTFOUND	- Test definition Value not found.
- * -FAILED		- Test failed
- */
-static int execute_get_version_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	return get_info(subtest);
+	return util_key_restore_keys_from_file(subtest);
 }
 
 /**
@@ -406,7 +73,8 @@ static int execute_get_version_cmd(char *cmd, struct subtest_data *subtest)
 static int execute_suspend_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
-	int res;
+
+	int res = ERR_CODE(PASSED);
 	int sec = 0;
 
 	res = util_read_json_type(&sec, SECONDS_OBJ, t_int, subtest->params);
@@ -414,6 +82,22 @@ static int execute_suspend_cmd(char *cmd, struct subtest_data *subtest)
 		res = util_rtcwake_suspend_to_mem(sec);
 
 	return res;
+}
+
+__weak int execute_command_smw(char *cmd, struct subtest_data *subtest)
+{
+	(void)cmd;
+	(void)subtest;
+
+	return ERR_CODE(UNDEFINED_API);
+}
+
+__weak int execute_command_psa(char *cmd, struct subtest_data *subtest)
+{
+	(void)cmd;
+	(void)subtest;
+
+	return ERR_CODE(UNDEFINED_API);
 }
 
 /**
@@ -432,23 +116,8 @@ static int execute_command(char *cmd, struct subtest_data *subtest)
 		const char *cmd_prefix;
 		int (*op)(char *cmd, struct subtest_data *subtest);
 	} cmd_list[] = {
-		{ DELETE, &execute_delete_key_cmd },
-		{ GENERATE, &execute_generate_cmd },
-		{ IMPORT, &execute_import_cmd },
-		{ EXPORT, &execute_export_cmd },
-		{ DERIVE, &execute_derive_cmd },
-		{ HASH, &execute_hash_cmd },
-		{ HMAC, &execute_hmac_cmd },
-		{ MAC, &execute_mac_cmd },
-		{ SIGN, &execute_sign_cmd },
-		{ VERIFY, &execute_verify_cmd },
-		{ RNG, &execute_rng_cmd },
-		{ CIPHER, &execute_cipher_cmd },
-		{ OP_CTX, &execute_op_context_cmd },
-		{ CONFIG, &execute_config_cmd },
 		{ SAVE_KEY_IDS, &execute_save_keys_cmd },
 		{ RESTORE_KEY_IDS, &execute_restore_keys_cmd },
-		{ GET_VERSION, &execute_get_version_cmd },
 		{ SUSPEND, &execute_suspend_cmd },
 	};
 
@@ -458,7 +127,14 @@ static int execute_command(char *cmd, struct subtest_data *subtest)
 			return cmd_list[idx].op(cmd, subtest);
 	}
 
-	DBG_PRINT("Undefined command");
+	if (!strcmp(subtest->api, "SMW"))
+		return execute_command_smw(cmd, subtest);
+
+	if (!strcmp(subtest->api, "PSA"))
+		return execute_command_psa(cmd, subtest);
+
+	DBG_PRINT("Undefined API type %s", subtest->api);
+
 	return ERR_CODE(UNDEFINED_CMD);
 }
 
@@ -578,11 +254,12 @@ static void run_subtest(struct thread_data *thr)
 	const char *sub_used = NULL;
 	const char *sub_exp = NULL;
 	const char *exp_res_st = NULL;
-	enum smw_status_code exp_smw_status = SMW_STATUS_OK;
+	int exp_status = 0;
 	struct subtest_data *subtest;
 
 	subtest = thr->subtest;
-	subtest->smw_status = SMW_STATUS_OK;
+	subtest->api_status = 0;
+	subtest->api = "SMW";
 
 	/* Verify the type of the subtest tag/value is json object */
 	if (json_object_get_type(subtest->params) != json_type_object) {
@@ -612,6 +289,11 @@ static void run_subtest(struct thread_data *thr)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
+	res = util_read_json_type(&subtest->api, API_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
 	/* Check dependent subtest(s) status */
 	res = run_subtest_vs_depends(thr, subtest->params);
 	if (res != ERR_CODE(PASSED))
@@ -627,7 +309,7 @@ static void run_subtest(struct thread_data *thr)
 		goto exit;
 
 	if (exp_res_st) {
-		res = get_smw_int_status(&exp_smw_status, exp_res_st);
+		res = get_int_status(&exp_status, exp_res_st, subtest->api);
 
 		if (res != ERR_CODE(PASSED))
 			goto exit;
@@ -672,7 +354,7 @@ static void run_subtest(struct thread_data *thr)
 	/* Execute subtest command */
 	res = execute_command(cmd_name, subtest);
 
-	if (CHECK_RESULT(subtest->smw_status, exp_smw_status)) {
+	if (util_check_result(subtest, exp_status)) {
 		if (res == ERR_CODE(PASSED))
 			res = ERR_CODE(FAILED);
 	} else if (res == ERR_CODE(API_STATUS_NOK)) {

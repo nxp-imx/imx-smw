@@ -5,6 +5,8 @@
 #ifndef __UTIL_LIST_H__
 #define __UTIL_LIST_H__
 
+#include <stdint.h>
+
 enum list_id_type { LIST_ID_TYPE_UINT = 0, LIST_ID_TYPE_STRING };
 
 /**

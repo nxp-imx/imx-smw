@@ -88,7 +88,7 @@ static int setup_tee_info(struct json_object *test_def)
 	res = smw_osal_set_subsystem_info("TEE", &info, sizeof(info));
 	if (res != SMW_STATUS_OK) {
 		DBG_PRINT("SMW Set TEE Info failed %s",
-			  get_smw_string_status(res));
+			  get_string_status(res, "SMW"));
 		res = ERR_CODE(ERROR_SMWLIB_INIT);
 	} else {
 		res = ERR_CODE(PASSED);
@@ -155,7 +155,7 @@ static int setup_hsm_ele_info(struct json_object *test_def, int is_ele)
 
 	if (res != SMW_STATUS_OK) {
 		DBG_PRINT("SMW Set %s Info failed %s", (is_ele) ? "ELE" : "HSM",
-			  get_smw_string_status(res));
+			  get_string_status(res, "SMW"));
 		res = ERR_CODE(ERROR_SMWLIB_INIT);
 	} else {
 		res = ERR_CODE(PASSED);
@@ -196,7 +196,7 @@ static int setup_key_db(struct json_object *test_def)
 	res = smw_osal_open_key_db(filepath, strlen(filepath) + 1);
 	if (res != SMW_STATUS_OK) {
 		DBG_PRINT("SMW Create Key database failed %s",
-			  get_smw_string_status(res));
+			  get_string_status(res, "SMW"));
 		res = ERR_CODE(ERROR_SMWLIB_INIT);
 	} else {
 		res = ERR_CODE(PASSED);
@@ -239,7 +239,7 @@ static int init_smwlib(struct app_data *app)
 	res = smw_osal_lib_init();
 	if (res != SMW_STATUS_OK) {
 		DBG_PRINT("SMW Library initialization failed %s",
-			  get_smw_string_status(res));
+			  get_string_status(res, "SMW"));
 		res = ERR_CODE(ERROR_SMWLIB_INIT);
 	} else {
 		res = ERR_CODE(PASSED);

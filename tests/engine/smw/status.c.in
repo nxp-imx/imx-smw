@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright 2021-2023 NXP
+ */
+
+#include <smw_status.h>
+
+#include "util.h"
+
+const struct api_status_codes smw_status_codes[] = {
+@SMW_STATUS_STR_LIST@
+	{.status = 0, .string = NULL}
+};
+
+const struct api_status_codes *get_smw_status_codes(void)
+{
+    return smw_status_codes;
+}
+

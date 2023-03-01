@@ -37,60 +37,21 @@ configure_file(${TEST_SRC_INC}/paths.h.in ${TEST_BIN_INC}/paths.h)
 configure_file(${TEST_SCRIPTS_SRC}/run_simple_test.sh.in
                ${TEST_SCRIPTS_BIN}/run_simple_test.sh @ONLY)
 
-#
-# Use custom command with dependency to ensure that the
-# util_status.c is regrenerated each time smw_status.h change
-#
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c
-       COMMAND "${CMAKE_COMMAND}" -DENUM="smw_status_code"
-               -DINPUT="${CMAKE_SOURCE_DIR}/public/smw_status.h"
-               -DSRC="${CMAKE_CURRENT_SOURCE_DIR}/engine/util_status.c.in"
-               -DDST="${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c"
-               -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/enum_to_string.cmake
-       DEPENDS ${CMAKE_SOURCE_DIR}/public/smw_status.h
-       WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR})
-
 add_executable(${PROJECT_NAME}
                EXCLUDE_FROM_ALL
-               engine/cipher.c
-               engine/config.c
-               engine/hash.c
-               engine/hmac.c
-               engine/mac.c
-               engine/info.c
-               engine/keymgr.c
-               engine/keymgr_derive.c
-               engine/rng.c
                engine/run_app.c
                engine/run_thread.c
-               engine/sign_verify.c
-               engine/test_engine.c
-               engine/util.c
-               engine/util_app.c
-               engine/util_list.c
-               engine/util_key.c
-               engine/util_mac.c
-               engine/util_sign.c
-               engine/util_tlv.c
-               engine/util_context.c
-               engine/util_cipher.c
-               engine/util_thread.c
-               engine/util_file.c
-               engine/util_mutex.c
-               engine/util_sem.c
-               engine/util_log.c
-               engine/util_cond.c
-               engine/util_ipc.c
-               engine/util_rtcwake.c
-               engine/operation_context.c
-               ${CMAKE_CURRENT_BINARY_DIR}/engine/util_status.c
-               $<$<CONFIG:Debug>:engine/util_debug.c>)
+               engine/test_engine.c)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
                            ${TEST_SRC_INC}
                            ${TEST_BIN_INC}
                            ${JSONC_INCLUDE_DIR}
                            ${CMAKE_SOURCE_DIR}/inc)
+
+add_subdirectory(engine/utils)
+add_subdirectory(engine/psa)
+add_subdirectory(engine/smw)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONC_LIBRARY})
 target_link_libraries(${PROJECT_NAME} PRIVATE pthread rt)

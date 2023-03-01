@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <smw_status.h>
-
 #include "util_app.h"
 
 /* List of key type */
@@ -43,7 +41,8 @@ enum err_num {
 	COND_DESTROY,
 	TIMEOUT,
 	THREAD_CANCELED,
-	BAD_SUBSYSTEM,	/* 20 */
+	BAD_SUBSYSTEM, /* 20 */
+	UNDEFINED_API,
 	MAX_TEST_ERROR, /* Maximum test error constant - keep last item */
 };
 
@@ -96,17 +95,25 @@ struct test_data {
  * @app: Application data.
  * @name: Name of the subtest running
  * @status: Subtest status (reference to subtests_stat.status_array entry)
+ * @api_status: API call status
  * @smw_status: SMW API call status
- * @subsystem: Subsystem to use for the command.
- * @version: Version of the SMW API.
+ * @psa_status: PSA API call status
+ * @subsystem: Subsystem to use for the command
+ * @api: API to use for the command
+ * @version: Version of the SMW API
  */
 struct subtest_data {
 	struct json_object *params;
 	struct app_data *app;
 	char *name;
 	int *status;
-	enum smw_status_code smw_status;
+	union {
+		int api_status;
+		int smw_status;
+		int psa_status;
+	};
 	char *subsystem;
+	char *api;
 	unsigned int version;
 };
 

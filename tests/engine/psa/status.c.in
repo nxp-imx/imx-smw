@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright 2023 NXP
+ */
+
+#include <psa/error.h>
+
+#include "util.h"
+
+const struct api_status_codes psa_status_codes[] = {
+@PSA_STATUS_STR_LIST@
+	{.status = 0, .string = NULL}
+};
+
+const struct api_status_codes *get_psa_status_codes(void)
+{
+    return psa_status_codes;
+}
+

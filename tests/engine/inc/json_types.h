@@ -8,6 +8,7 @@
 
 /* List of parameters present in JSON test definition file */
 #define ALGO_OBJ		  "algo"
+#define API_OBJ			  "api"
 #define APP_OBJ			  "App"
 #define ATTR_LIST_OBJ		  "attributes_list"
 #define CLIENT_W_ENC_KEY_NAME_OBJ "client_w_enc_key_name"

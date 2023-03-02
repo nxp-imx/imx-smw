@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __SMW_KEYMGR_H__
@@ -351,12 +351,15 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args);
  * smw_get_key_buffers_lengths() - Gets Key buffers lengths.
  * @descriptor: Pointer to the Key descriptor.
  *
- * This function gets the Key buffers lengths given the Key type name
- * and the security size.
- * The @descriptor fields @type_name and @security_size must be given as input.
+ * This function calculates either:
+ *  - The subsystem key buffers' lengths of the given @descriptor
+ *    field @id. Only the exportable buffer lengths are returned.
+ *  - The standard key buffers's lengths of the given @descriptor
+ *    fields @type_name, @security_size.
+ *
  * The @descriptor field @buffer is mandatory.
  * The @buffer field @format_name is optional.
- * The @buffer fields @public_length and @private_length are updated.
+ * The @buffer fields @public_length, @modulus and @private_length are updated.
  *
  * Return:
  * See &enum smw_status_code

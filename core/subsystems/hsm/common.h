@@ -129,4 +129,27 @@ int convert_hsm_err(hsm_err_t err);
  */
 void hsm_set_empty_key_policy(struct smw_keymgr_attributes *key_attributes);
 
+/**
+ * hsm_export_public_key() - Export the HSM public key
+ * @hdl: Pointer to the HSM handles structure.
+ * @key_desc: Key descriptor
+ *
+ * The function exports the public key of the given @key_desc->identifier.id.
+ * The following fields of @key_desc parameters must be set as input:
+ *  - identifier.type_id
+ *  - identifier.security_size
+ *
+ * The following fields of @key_desc parameters are output:
+ *  - format_id
+ *  - pub (if operation success)
+ *  - ops (if operation success)
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Key type not supported
+ * Other SMW status error.
+ */
+int hsm_export_public_key(struct hdl *hdl,
+			  struct smw_keymgr_descriptor *key_desc);
+
 #endif /* __COMMON_H__ */

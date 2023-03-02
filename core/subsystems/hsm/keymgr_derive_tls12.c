@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include "smw_status.h"
@@ -99,12 +99,12 @@ static const struct tls12_kdf_info {
 	},
 };
 
-static const struct {
+static const struct tls_key_def {
 	enum smw_config_key_type_id key_type_id;
 	unsigned int security_size;
 	hsm_key_type_t hsm_key_initiator;
 	hsm_key_exchange_scheme_id_t hsm_key_exchange;
-} hsm_tls12_key_ids[] = {
+} hsm_tls_key_def_list[] = {
 	{
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST,
 		.security_size = 256,
@@ -131,29 +131,120 @@ static const struct {
 	},
 };
 
-static int get_hsm_tls_key_exchange_ids(struct smw_keymgr_identifier *key,
-					op_key_exchange_args_t *op_args)
+static const struct tls_key_def *
+get_tls_key_def(struct smw_keymgr_identifier *key)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	const struct tls_key_def *key_def = hsm_tls_key_def_list;
+	const struct tls_key_def *ret_key = NULL;
+	unsigned int i = 0;
 
-	enum smw_config_key_type_id type_id = key->type_id;
-	unsigned short security_size = key->security_size;
-	unsigned int i;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	for (i = 0; i < ARRAY_SIZE(hsm_tls12_key_ids); i++) {
-		if (hsm_tls12_key_ids[i].key_type_id == type_id &&
-		    hsm_tls12_key_ids[i].security_size == security_size) {
-			op_args->initiator_public_data_type =
-				hsm_tls12_key_ids[i].hsm_key_initiator;
-			op_args->key_exchange_scheme =
-				hsm_tls12_key_ids[i].hsm_key_exchange;
-			status = SMW_STATUS_OK;
+	for (i = 0; i < ARRAY_SIZE(hsm_tls_key_def_list); i++, key_def++) {
+		if (key_def->key_type_id == key->type_id &&
+		    key_def->security_size == key->security_size) {
+			ret_key = key_def;
 			break;
 		}
 	}
 
+	return ret_key;
+}
+
+static int get_hsm_tls_key_exchange_ids(struct smw_keymgr_identifier *key,
+					op_key_exchange_args_t *op_args)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	const struct tls_key_def *key_def = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key_def = get_tls_key_def(key);
+	if (key_def) {
+		op_args->initiator_public_data_type =
+			key_def->hsm_key_initiator;
+		op_args->key_exchange_scheme = key_def->hsm_key_exchange;
+		status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static unsigned short hsm_key_exchange_length(struct smw_keymgr_identifier *key)
+{
+	unsigned short length = 0;
+	const struct tls_key_def *key_def = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (BITS_TO_BYTES_SIZE(key->security_size) * 2 <= UINT16_MAX) {
+		key_def = get_tls_key_def(key);
+		if (key_def)
+			length = BITS_TO_BYTES_SIZE(key->security_size) * 2;
+	}
+
+	return length;
+}
+
+static int
+check_reallocate_key_exchange_buffer(unsigned char **data,
+				     unsigned short *length,
+				     struct smw_keymgr_descriptor *key_desc)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	unsigned char *public_data = NULL;
+	unsigned int public_length = 0;
+	unsigned char *tmp_key = NULL;
+	unsigned short hsm_key_size = 0;
+	unsigned int max_public_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	public_data = smw_keymgr_get_public_data(key_desc);
+
+	/* HSM require exact asymmetric public key size */
+	hsm_key_size = hsm_key_exchange_length(&key_desc->identifier);
+	if (!hsm_key_size) {
+		if (public_data) {
+			SMW_DBG_PRINTF(ERROR,
+				       "Only public key can be exported\n");
+			status = SMW_STATUS_INVALID_PARAM;
+		} else {
+			status = SMW_STATUS_OK;
+		}
+
+		goto end;
+	}
+
+	public_length = smw_keymgr_get_public_length(key_desc);
+
+	/* First check if the user public buffer size is big enough */
+	max_public_length = hsm_key_size;
+	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
+		max_public_length = smw_utils_get_base64_len(max_public_length);
+
+	if (public_length < max_public_length) {
+		smw_keymgr_set_public_length(key_desc, max_public_length);
+		status = SMW_STATUS_OUTPUT_TOO_SHORT;
+	} else if (public_data) {
+		if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+			tmp_key = SMW_UTILS_MALLOC(max_public_length);
+			if (!tmp_key) {
+				SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
+				status = SMW_STATUS_ALLOC_FAILURE;
+				goto end;
+			}
+		} else {
+			tmp_key = public_data;
+		}
+
+		*length = hsm_key_size;
+		*data = tmp_key;
+
+		status = SMW_STATUS_OK;
+	}
+
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -400,21 +491,19 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	struct smw_keymgr_identifier *key_derived_id;
-	struct smw_keymgr_tls12_args *tls_args;
-	const struct tls12_kdf_info *kdf_info;
+	struct smw_keymgr_identifier *key_derived_id = NULL;
+	struct smw_keymgr_tls12_args *tls_args = NULL;
+	const struct tls12_kdf_info *kdf_info = NULL;
 
 	unsigned char kdf_output[TLS12_KDF_OUTPUT_SIZE] = { 0 };
-	unsigned char *key_base;
+	unsigned char *key_base = NULL;
 	unsigned char *hex_key_base = NULL;
-	unsigned char *key_derived = NULL;
-	unsigned char *hex_key_derived = NULL;
+	unsigned char *tmp_key_exchange = NULL;
 	unsigned int *shared_key_ids = NULL;
 	unsigned int *new_key_ids = NULL;
-	unsigned int key_base_len;
-	unsigned int key_derived_len;
-	unsigned int hex_key_base_len;
-	unsigned int hex_key_derived_len;
+	unsigned int key_base_len = 0;
+	unsigned int hex_key_base_len = 0;
+	unsigned short hsm_key_size = 0;
 	int nb_shared_keys = 0;
 
 	hsm_err_t hsm_err;
@@ -433,6 +522,12 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	status = check_reallocate_key_exchange_buffer(&tmp_key_exchange,
+						      &hsm_key_size,
+						      &args->key_derived);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	if (smw_keymgr_tls12_is_encryption_aead(tls_args->encryption_id)) {
 		status = check_ivs_length(tls_args);
 		if (status != SMW_STATUS_OK)
@@ -446,37 +541,8 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	op_hsm_args.kdf_output_size = sizeof(kdf_output);
 	op_hsm_args.kdf_output = kdf_output;
 
-	key_derived = smw_keymgr_get_public_data(&args->key_derived);
-	key_derived_len = smw_keymgr_get_public_length(&args->key_derived);
-
-	/* Key derived public output pointer must be defined */
-	if (!key_derived) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
-
-	/* Get HEX derived key length */
-	status = smw_keymgr_get_buffers_lengths(key_derived_id,
-						SMW_KEYMGR_FORMAT_ID_HEX,
-						&hex_key_derived_len, NULL,
-						NULL);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	if (args->key_derived.format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
-		hex_key_derived = SMW_UTILS_MALLOC(hex_key_derived_len);
-		if (!hex_key_derived) {
-			SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
-			status = SMW_STATUS_ALLOC_FAILURE;
-			goto end;
-		}
-
-		op_hsm_args.ke_output = hex_key_derived;
-		op_hsm_args.ke_output_size = hex_key_derived_len;
-	} else {
-		op_hsm_args.ke_output = key_derived;
-		op_hsm_args.ke_output_size = hex_key_derived_len;
-	}
+	op_hsm_args.ke_output = tmp_key_exchange;
+	op_hsm_args.ke_output_size = hsm_key_size;
 
 	op_hsm_args.kdf_algorithm = kdf_info->hsm_kdf;
 	op_hsm_args.shared_key_identifier_array_size =
@@ -584,20 +650,12 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 		goto end;
 	}
 
-	/* Convert output derived key in BASE64 format */
-	if (hex_key_derived) {
-		status = smw_utils_base64_encode(hex_key_derived,
-						 hex_key_derived_len,
-						 key_derived, &key_derived_len);
-		if (status != SMW_STATUS_OK)
-			goto end;
-
-		smw_keymgr_set_public_length(&args->key_derived,
-					     key_derived_len);
-	} else {
-		smw_keymgr_set_public_length(&args->key_derived,
-					     hex_key_derived_len);
-	}
+	/* Update the ephemeral key exchange public buffer */
+	status =
+		smw_keymgr_update_public_buffer(&args->key_derived,
+						tmp_key_exchange, hsm_key_size);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	/* Extract Client and Server write IVs */
 	if (smw_keymgr_tls12_is_encryption_aead(tls_args->encryption_id)) {
@@ -626,11 +684,12 @@ end:
 	if (new_key_ids)
 		SMW_UTILS_FREE(new_key_ids);
 
+	if (tmp_key_exchange &&
+	    tmp_key_exchange != smw_keymgr_get_public_data(&args->key_derived))
+		SMW_UTILS_FREE(tmp_key_exchange);
+
 	if (hex_key_base)
 		SMW_UTILS_FREE(hex_key_base);
-
-	if (hex_key_derived)
-		SMW_UTILS_FREE(hex_key_derived);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

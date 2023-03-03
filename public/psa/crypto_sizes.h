@@ -9,17 +9,9 @@
 #define PSA_BITS_TO_BYTES(bits) (((bits) + 7) / 8)
 
 #define PSA_ROUND_UP_TO_MULTIPLE(block_size, length)                           \
-	({                                                                     \
-		__typeof__(block_size) _block_size = (block_size);             \
-		((((length) + _block_size - 1) / _block_size) * _block_size);  \
-	})
+	((((length) + (block_size) - (1)) / (block_size)) * (block_size))
 
-#define PSA_MAX(a, b)                                                          \
-	({                                                                     \
-		__typeof__(a) _a = (a);                                        \
-		__typeof__(b) _b = (b);                                        \
-		_a < _b ? _b : _a;                                             \
-	})
+#define PSA_MAX(a, b) ((a) < (b) ? (b) : (a))
 
 /*
  * Define the maximum capabilities supported by the SMW's subsystems
@@ -1074,9 +1066,7 @@ size_t psa_hash_length(psa_algorithm_t alg);
  * must not be smaller than this maximum.
  */
 #define PSA_SIGNATURE_MAX_SIZE                                                 \
-	((PSA_ECC_SIGNATURE_MAX_SIZE > PSA_RSA_SIGNATURE_MAX_SIZE) ?           \
-		 PSA_ECC_SIGNATURE_MAX_SIZE :                                  \
-		 PSA_RSA_SIGNATURE_MAX_SIZE)
+	PSA_MAX(PSA_ECC_SIGNATURE_MAX_SIZE, PSA_RSA_SIGNATURE_MAX_SIZE)
 
 /**
  * PSA_SIGN_OUTPUT_SIZE() - Sufficient signature buffer size for psa_sign_message() and

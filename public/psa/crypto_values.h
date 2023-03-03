@@ -1425,21 +1425,17 @@
  * DOC: PSA_KEY_DERIVATION_INPUT_INFO
  * An information string for key derivation.
  *
- * **Warning: Not supported**
- *
  * This is typically a direct input. It can also be a key of type PSA_KEY_TYPE_RAW_DATA.
  */
-#define PSA_KEY_DERIVATION_INPUT_INFO /* implementation-defined value */
+#define PSA_KEY_DERIVATION_INPUT_INFO ((psa_key_derivation_step_t)0x0203)
 
 /**
  * DOC: PSA_KEY_DERIVATION_INPUT_LABEL
  * A label for key derivation.
  *
- * **Warning: Not supported**
- *
  * This is typically a direct input. It can also be a key of type PSA_KEY_TYPE_RAW_DATA.
  */
-#define PSA_KEY_DERIVATION_INPUT_LABEL /* implementation-defined value */
+#define PSA_KEY_DERIVATION_INPUT_LABEL ((psa_key_derivation_step_t)0x0201)
 
 /**
  * DOC: PSA_KEY_DERIVATION_INPUT_PASSWORD
@@ -1461,17 +1457,13 @@
  * DOC: PSA_KEY_DERIVATION_INPUT_SALT
  * A salt for key derivation.
  *
- * **Warning: Not supported**
- *
  * This is typically a direct input. It can also be a key of type PSA_KEY_TYPE_RAW_DATA.
  */
-#define PSA_KEY_DERIVATION_INPUT_SALT /* implementation-defined value */
+#define PSA_KEY_DERIVATION_INPUT_SALT ((psa_key_derivation_step_t)0x0202)
 
 /**
  * DOC: PSA_KEY_DERIVATION_INPUT_SECRET
  * A secret input for key derivation.
- *
- * **Warning: Not supported**
  *
  * This is typically a key of type PSA_KEY_TYPE_DERIVE passed to psa_key_derivation_input_key(), or
  * the shared secret resulting from a key agreement obtained via psa_key_derivation_key_agreement().
@@ -1480,17 +1472,15 @@
  * the derivation operation cannot be used to derive keys: the operation will only allow
  * psa_key_derivation_output_bytes(), not psa_key_derivation_output_key().
  */
-#define PSA_KEY_DERIVATION_INPUT_SECRET /* implementation-defined value */
+#define PSA_KEY_DERIVATION_INPUT_SECRET ((psa_key_derivation_step_t)0x0101)
 
 /**
  * DOC: PSA_KEY_DERIVATION_INPUT_SEED
  * A seed for key derivation.
  *
- * **Warning: Not supported**
- *
  * This is typically a direct input. It can also be a key of type PSA_KEY_TYPE_RAW_DATA.
  */
-#define PSA_KEY_DERIVATION_INPUT_SEED /* implementation-defined value */
+#define PSA_KEY_DERIVATION_INPUT_SEED ((psa_key_derivation_step_t)0x0204)
 
 /**
  * DOC: PSA_KEY_ID_NULL

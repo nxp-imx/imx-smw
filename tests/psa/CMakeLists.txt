@@ -4,6 +4,12 @@ project(psatest VERSION 1.0 LANGUAGES C)
 
 enable_testing()
 
+set(PSA_CUSTOM_TEST_LIST "custom_test_list.txt")
+set(PSA_ARCH_TESTS_SUITE CRYPTO)
+string(TOLOWER ${PSA_ARCH_TESTS_SUITE} PSA_ARCH_TESTS_API_DIR)
+
+add_subdirectory(psa-arch-tests)
+
 configure_file(${TEST_SCRIPTS_SRC}/run_psa_test.sh.in
                ${TEST_SCRIPTS_BIN}/run_psa_test.sh
                @ONLY)
@@ -11,8 +17,6 @@ configure_file(${TEST_SCRIPTS_SRC}/run_psa_test.sh.in
 add_executable(${PROJECT_NAME}
                EXCLUDE_FROM_ALL
                main.c)
-
-add_subdirectory(psa-arch-tests)
 
 add_dependencies(${PROJECT_NAME} ${PSA_ARCH_TESTS})
 
@@ -26,6 +30,11 @@ if(TEE_TESTS_ENABLED)
 endif()
 
 # Add PSA testsuite
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${PSA_ARCH_TESTS}/${PSA_ARCH_TESTS_API_DIR}/${PSA_CUSTOM_TEST_LIST}
+        DESTINATION ${SMW_TESTS_TARGET_PSA_DIR}/${PSA_ARCH_TESTS}/${PSA_ARCH_TESTS_API_DIR}
+        EXCLUDE_FROM_ALL
+        COMPONENT ${PROJECT_NAME})
+
 install(FILES ${TEST_SCRIPTS_BIN}/run_psa_test.sh
         DESTINATION ${SMW_TESTS_TARGET_SCRIPTS_DIR}
         PERMISSIONS WORLD_EXECUTE OWNER_READ

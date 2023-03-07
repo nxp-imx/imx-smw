@@ -238,22 +238,9 @@ static int set_export_opt_params(struct subtest_data *subtest,
 
 	/* Reset the key buffer length not query */
 	switch (export_type) {
-	case EXP_KEYPAIR:
 	case EXP_PRIV:
-		/*
-		 * In case the test ask for a private key but SMW returned
-		 * a private key length of 0, force the private key length
-		 * to be exported with expected private key length
-		 */
-		if (*key_private_length(exp_key_test) &&
-		    !*key_private_length(key_test))
-			*key_private_length(key_test) =
-				*key_private_length(exp_key_test);
-
-		if (export_type == EXP_PRIV) {
-			*key_public_length(key_test) = 0;
-			*key_public_data(key_test) = NULL;
-		}
+		*key_public_length(key_test) = 0;
+		*key_public_data(key_test) = NULL;
 		break;
 
 	case EXP_PUB:
@@ -263,6 +250,24 @@ static int set_export_opt_params(struct subtest_data *subtest,
 
 	default:
 		break;
+	}
+
+	/*
+	 * Input key_desc is setup for key's id buffer length.
+	 * If exp_key_test defines other key's buffer length, overwrites
+	 * key_desc length regardless the export key type.
+	 */
+	if (*key_private_length(exp_key_test))
+		*key_private_length(key_test) =
+			*key_private_length(exp_key_test);
+
+	if (*key_public_length(exp_key_test))
+		*key_public_length(key_test) = *key_public_length(exp_key_test);
+
+	if (!strcmp(tmp_key_desc.type_name, RSA_KEY) &&
+	    *key_modulus_length(exp_key_test)) {
+		*key_modulus_length(key_test) =
+			*key_modulus_length(exp_key_test);
 	}
 
 	/* Allocate buffers function of the requested key */

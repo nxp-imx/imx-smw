@@ -316,6 +316,7 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 
 		set_key_ops(key_test);
 
+		set_key_ops(key_test);
 		return ERR_CODE(PASSED);
 	}
 

@@ -1,0 +1,179 @@
+{
+	"keys": {
+		"key AES": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": []
+			},
+			"pub_key": 16
+		},
+		"key NIST 1": {
+			"type": "NIST",
+			"security_size": 192,
+			"policy": {
+				"sign_message": []
+			},
+			"pub_key": 40
+		},
+		"key NIST 2": {
+			"type": "NIST",
+			"security_size": 192,
+			"policy": {
+				"sign_message": []
+			},
+			"format": "BASE64",
+			"pub_key": 40
+		},
+		"key RSA 1": {
+			"type": "RSA",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			},
+			"pub_key": 3
+		},
+		"key RSA 2": {
+			"type": "RSA",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			},
+			"modulus": 32
+		},
+		"key RSA 3": {
+			"type": "RSA",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			},
+			"pub_key": 2,
+			"modulus": 32
+		},
+		"key RSA 4": {
+			"type": "RSA",
+			"security_size": 256,
+			"pub_key": 6,
+			"modulus": 32,
+			"attributes_list": [
+				["RSA_PUB_EXP", [9, "4000000041CB995001"]]
+			]
+		},
+		"key RSA 5": {
+			"type": "RSA",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			},
+			"pub_key": 3,
+			"modulus": 30
+		},
+		"key RSA 6": {
+			"type": "RSA",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			},
+			"format": "BASE64",
+			"pub_key": 3,
+			"modulus": 44
+		},
+		"key RSA 7": {
+			"type": "RSA",
+			"security_size": 256,
+			"format": "BASE64",
+			"pub_key": 9,
+			"modulus": 44,
+			"attributes_list": [
+				["RSA_PUB_EXP", [9, "4000000041CB995001"]]
+			]
+		},
+		"key RSA 8": {
+			"type": "RSA",
+			"security_size": 256,
+			"policy": {
+				"sign_message": []
+			},
+			"format": "BASE64",
+			"pub_key": 4,
+			"modulus": 40
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key AES",
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 2": { // Public length is too short
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key NIST 1",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 3": { // Base64 public length is too short
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key NIST 2",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 4": { // Public buffer set but not modulus
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key RSA 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Modulus buffer set but not public buffer
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key RSA 2",
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 6": { // Public buffer len is too small
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key RSA 3",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 7": { // Public buffer len too small (with RSA attribute set)
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key RSA 4",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 8": { // Modulus buffer len is too small
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key RSA 5",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 9": { // Public buffer len is too small (base64)
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key RSA 6",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 10": { // Public buffer len too small (base64) (with RSA attribute set)
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key RSA 7",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 11": { // Modulus buffer len is too small (base64)
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key RSA 8",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "key AES",
+		"depends": 1
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "key RSA 2",
+		"depends": 5
+	}
+}
+

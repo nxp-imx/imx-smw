@@ -25,9 +25,35 @@
 		},
 		"key 5": {
 			"key_name": "key 2",
-			"format": "BASE64"
+			"pub_key": 56
 		},
 		"key 6": {
+			"key_name": "key 2",
+			"format": "BASE64",
+			"pub_key": 76
+		},
+		"key 7": {
+			"key_name": "key 2",
+			"pub_key": 128
+		},
+		"key 8": {
+			"key_name": "key 2",
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"555555555555"
+			]
+		},
+		"key 9": {
+			"key_name": "key 2",
+			"format": "BASE64",
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 10": {
 			"type": "RSA",
 			"security_size": 512,
 			"policy": {
@@ -35,10 +61,10 @@
 				"sign_message": []
 			},
 		},
-		"key 7": {
-			"key_name": "key 6",
+		"key 11": {
+			"key_name": "key 10",
 			"priv_key": 64
-		}
+		},
 	},
 	"subtest 1": {
 		"command": "GENERATE",
@@ -70,50 +96,68 @@
 	},
 	"subtest 6": { // Export ECDSA public key in HEX format
 		"command": "EXPORT_PUBLIC",
-		"key_name": "key 2",
+		"key_name": "key 5",
 		"depends": 2
 	},
 	"subtest 7": { // Export ECDSA public key in BASE64 format
 		"command": "EXPORT_PUBLIC",
-		"key_name": "key 5",
+		"key_name": "key 6",
 		"depends": 2
 	},
-	"subtest 8": {
+	"subtest 8": { // Public data length is bigger than needed
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 7",
+		"result": "SMW_STATUS_OK",
+		"depends": 2
+	},
+	"subtest 9": { // Public data set, public data length too short
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 8",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
+		"depends": 2
+	},
+	"subtest 10": { // Public data set, public data length base 64 too short
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 9",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
+		"depends": 2
+	},
+	"subtest 11": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 9": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 10": {
+	"subtest 13": {
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 2",
-		"depends": 9,
+		"depends": 12,
 		"result": "SMW_STATUS_UNKNOWN_ID"
 	},
-	"subtest 11": {
+	"subtest 14": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_name": "key 6"
+		"key_name": "key 10"
 	},
-	"subtest 12": {
+	"subtest 15": {
 		"command": "EXPORT_KEYPAIR",
-		"key_name": "key 7",
-		"depends": 11,
+		"key_name": "key 11",
+		"depends": 14,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 13": {
+	"subtest 16": {
 		"command": "EXPORT_PRIVATE",
-		"key_name": "key 7",
-		"depends": 11,
+		"key_name": "key 11",
+		"depends": 14,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 14": {
+	"subtest 17": {
 		"command": "DELETE",
-		"key_name": "key 6",
-		"depends": 11
+		"key_name": "key 10",
+		"depends": 14
 	}
 }

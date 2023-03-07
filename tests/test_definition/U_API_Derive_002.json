@@ -69,14 +69,6 @@
 				"8d20e493a01abeca121e719215df0541"
 			]
 		},
-		"key 9": {
-			"type": "ECDH_NIST",
-			"security_size": 256,
-			"priv_key": [
-				"76e656a9ea0d51412b83a48891bfb1e7",
-				"0cbb8e2125c620e32636222c32ec2810"
-			]
-		},
 		"key 10": {
 			"type": "ECDH_NIST",
 			"security_size": 256,
@@ -120,16 +112,7 @@
 				"377fbb316f1e69a763b1ec1265454e60",
 				"bf18ea22e64bf5142b3bcb8833800abd"
 			]
-		},
-		"key 13": {
-			"pub_key": [
-				32,
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555"
-			]
-		},
+		}
 	},
 	"subtest 1": { // TLS 1.2 operation arguments is NULL
 		"command": "DERIVE",
@@ -565,34 +548,7 @@
 		"op_input": "key 8",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 18": { // Key base private buffer set
-		"command": "DERIVE",
-		"subsystem": "DEFAULT",
-		"op_type": "TLS12_KEY_EXCHANGE",
-		"op_args": {
-			"key_exchange_name": "ECDHE_ECDSA",
-			"encryption_name": "AES_128_GCM",
-			"prf_name": "SHA256",
-			"ext_master_key": true,
-			"kdf_input": [
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607"
-			],
-			"client_write_iv": "55555555",
-			"server_write_iv": "55555555",
-			"client_w_enc_key_name": "client write encryption key",
-			"server_w_enc_key_name": "server write encryption key",
-			"master_sec_key_name": "master secret key"
-		},
-		"op_output": "key 2",
-		"op_input": "key 9",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 19": { // Key base public buffer length set to 0
+	"subtest 18": { // Key base public buffer length set to 0
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -619,7 +575,7 @@
 		"op_input": "key 10",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 20": { // RSA modulus is missing
+	"subtest 19": { // RSA modulus is missing
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -646,7 +602,7 @@
 		"op_input": "key 11",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 21": { // RSA modulus length is set to 0
+	"subtest 20": { // RSA modulus length is set to 0
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -671,33 +627,6 @@
 		},
 		"op_output": "key 2",
 		"op_input": "key 12",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 22": { // Key derived public length too short
-		"command": "DERIVE",
-		"subsystem": "DEFAULT",
-		"op_type": "TLS12_KEY_EXCHANGE",
-		"op_args": {
-			"key_exchange_name": "ECDHE_ECDSA",
-			"encryption_name": "AES_128_GCM",
-			"prf_name": "SHA256",
-			"ext_master_key": true,
-			"kdf_input": [
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607",
-				"00010203040506070001020304050607"
-			],
-			"client_write_iv": "55555555",
-			"server_write_iv": "55555555",
-			"client_w_enc_key_name": "client write encryption key",
-			"server_w_enc_key_name": "server write encryption key",
-			"master_sec_key_name": "master secret key"
-		},
-		"op_output": "key 13",
-		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

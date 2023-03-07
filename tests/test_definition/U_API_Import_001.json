@@ -50,15 +50,6 @@
 			"type": "NIST",
 			"security_size": 192,
 			"priv_key": [
-				"e5ce89a34adddf25ff3bf1ffe6803f57",
-				"d0220de3118798ea"
-			],
-			"pub_key": 48
-		},
-		"key 8": {
-			"type": "NIST",
-			"security_size": 192,
-			"priv_key": [
 				0,
 				"e5ce89a34adddf25ff3bf1ffe6803f57",
 				"d0220de3118798ea"
@@ -69,34 +60,24 @@
 				"a061f81f7da393e7cffd5e0738c6b245"
 			]
 		},
-		"key 9": {
-			"type": "NIST",
-			"security_size": 192,
-			"priv_key": 24,
-			"pub_key": [
-				"8abf7b3ceb2b02438af19543d3e5b1d5",
-				"73fa9ac60085840fa87f80182dcd56a6",
-				"a061f81f7da393e7cffd5e0738c6b245"
-			]
-		},
-		"key 10": {
+		"key 8": {
 			"type": "UNDEFINED",
 			"security_size": 128,
 			"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17"
 		},
-		"key 11": {
+		"key 9": {
 			"type": "AES",
 			"security_size": 128,
 			"format": "UNDEFINED",
 			"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17"
 		},
-		"key 12": {
+		"key 10": {
 			"type": "AES",
 			"security_size": 128,
 			"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
-			"attributes_list": ["undefined"]
+			"attributes_list": ["UNDEFINED"]
 		},
-		"key 13": {
+		"key 11": {
 			"type": "RSA",
 			"security_size": 256,
 			"priv_key": [
@@ -109,7 +90,7 @@
 				"010001"
 			]
 		},
-		"key 14": {
+		"key 12": {
 			"type": "RSA",
 			"security_size": 256,
 			"priv_key": [
@@ -179,65 +160,53 @@
 		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 9": { // Public data is not set and public data length is set
+	"subtest 9": { // Private data length is not set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 7",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Private data length is not set
-		"command": "IMPORT",
-		"subsystem": "DEFAULT",
-		"key_name": "key 8",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 11": { // Private data is not set and private data length is set
-		"command": "IMPORT",
-		"subsystem": "DEFAULT",
-		"key_name": "key 9",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 12": { // Version not supported
+	"subtest 10": { // Version not supported
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 1",
 		"version": 255,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
-	"subtest 13": { // Subsystem is not set in the config file
+	"subtest 11": { // Subsystem is not set in the config file
 		"command": "IMPORT",
 		"subsystem": "UNDEFINED",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 14": { // Key type is undefined
+	"subtest 12": { // Key type is undefined
+		"command": "IMPORT",
+		"subsystem": "DEFAULT",
+		"key_name": "key 8",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 13": { // Buffer key format is undefined
+		"command": "IMPORT",
+		"subsystem": "DEFAULT",
+		"key_name": "key 9",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 14": { // Attributes list is undefined
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 10",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 15": { // Buffer key format is undefined
+	"subtest 15": { // Modulus buffer not set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 11",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 16": { // Attributes list is undefined
+	"subtest 16": { // Modulus length is not set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 12",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 17": { // Modulus buffer not set
-		"command": "IMPORT",
-		"subsystem": "DEFAULT",
-		"key_name": "key 13",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 18": { // Modulus length is not set
-		"command": "IMPORT",
-		"subsystem": "DEFAULT",
-		"key_name": "key 14",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

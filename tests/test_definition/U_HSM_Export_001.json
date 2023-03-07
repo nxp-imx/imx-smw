@@ -19,6 +19,30 @@
 		"key 5": {
 			"key_name": "key 2",
 			"format": "BASE64"
+		},
+		"key 6": {
+			"key_name": "key 2",
+			"pub_key": 128
+		},
+		"key 7": {
+			"key_name": "key 2",
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		},
+		"key 8": {
+			"key_name": "key 2",
+			"format": "BASE64",
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"5555555555555555555555555555"
+			]
 		}
 	},
 	"subtest 1": {
@@ -59,20 +83,38 @@
 		"key_name": "key 5",
 		"depends": 2
 	},
-	"subtest 8": {
+	"subtest 8": { // Public data length is bigger than needed
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 6",
+		"result": "SMW_STATUS_OK",
+		"depends": 2
+	},
+	"subtest 9": { // Public data set, public data length too short
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 7",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
+		"depends": 2
+	},
+	"subtest 10": { // Public data set, public data length base 64 too short
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 8",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
+		"depends": 2
+	},
+	"subtest 11": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 9": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 10": {
+	"subtest 13": {
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 2",
-		"depends": 9,
+		"depends": 12,
 		"result": "SMW_STATUS_UNKNOWN_ID"
 	}
 }

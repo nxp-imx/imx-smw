@@ -18,7 +18,7 @@
 	"subtest 5": {
 		"command": "DELETE",
 		"key_name": "key 3",
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+		"result": "SMW_STATUS_UNKNOWN_ID"
 	},
 	"subtest 6": {
 		"command": "DELETE",

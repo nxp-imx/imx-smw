@@ -31,14 +31,6 @@
 				"55555555555555555555555555555555"
 			]
 		},
-		"key 5": {
-			"key_name": "key 1",
-			"pub_key": 64,
-			"priv_key": [
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555"
-			],
-		},
 		"key 6": {
 			"key_name": "key 1",
 			"priv_key": [
@@ -46,16 +38,6 @@
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555"
 			],
-			"pub_key": [
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555"
-			]
-		},
-		"key 7": {
-			"key_name": "key 1",
-			"priv_key": 32,
 			"pub_key": [
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555",
@@ -221,108 +203,62 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 8": { // Public data is not set and public data length is set
-		"command": "EXPORT_KEYPAIR",
-		"key_name": "key 5",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 1
-	},
-	"subtest 9": { // Private data length is not set
+	"subtest 8": { // Private data length is not set
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 10": { // Private data is not set and private data length is set
-		"command": "EXPORT_KEYPAIR",
-		"key_name": "key 7",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 1
-	},
-	"subtest 11": { // Bad version
+	"subtest 9": { // Bad version
 		"command": "EXPORT_PUBLIC",
 		"version": 255,
 		"key_name": "key 1",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"depends": 1
 	},
-	"subtest 12": { // Buffer key format is undefined
+	"subtest 10": { // Buffer key format is undefined
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 8",
 		"result": "SMW_STATUS_UNKNOWN_NAME",
 		"depends": 1
 	},
-	"subtest 13": { // Key descriptor type name doesn't match key identifier
+	"subtest 11": { // Key descriptor type name doesn't match key identifier
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 9",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 14": { // Key descriptor security size doesn't match key identifier
+	"subtest 12": { // Key descriptor security size doesn't match key identifier
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 10",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 15": { // Public key buffer is too small
-		"command": "EXPORT_PUBLIC",
-		"key_name": "key 11",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 1
-	},
-	"subtest 16": {
+	"subtest 13": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 17": { // Generate RSA key
+	"subtest 14": { // Generate RSA key
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key 12"
 	},
-	"subtest 18": { // Modulus length not set
+	"subtest 15": { // Modulus length not set
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 13",
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 17
+		"depends": 14
 	},
-	"subtest 19": { // Modulus length not set
+	"subtest 16": { // Modulus length not set
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 13",
 		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 17
+		"depends": 14
 	},
-	"subtest 20": { // Modulus buffer is too small
-		"command": "EXPORT_PUBLIC",
-		"key_name": "key 14",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 17
-	},
-	"subtest 21": { // Public buffer length is too small (default public exponent)
-		"command": "EXPORT_PUBLIC",
-		"key_name": "key 15",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 17
-	},
-	"subtest 22": {
+	"subtest 17": {
 		"command": "DELETE",
 		"key_name": "key 12",
-		"depends": 17
-	},
-	"subtest 23": { // Generate RSA key
-		"command": "GENERATE",
-		"subsystem": "TEE",
-		"key_name": "key 16"
-	},
-	"subtest 24": { // Public buffer length is too small (user public exponent)
-		"command": "EXPORT_PUBLIC",
-		"key_name": "key 17",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 23
-	},
-	"subtest 25": {
-		"command": "DELETE",
-		"key_name": "key 16",
-		"depends": 23
+		"depends": 14
 	}
 }

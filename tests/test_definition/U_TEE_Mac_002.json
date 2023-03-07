@@ -56,7 +56,7 @@
 			}
 		},
 		"key 6": {
-		"type": "HMAC_SHA512",
+			"type": "HMAC_SHA512",
 			"security_size": 256,
 			"priv_key": [
 				"6ed76d2d97c69fd1339589523931f2a6",
@@ -67,7 +67,7 @@
 			}
 		},
 		"key 7": {
-		"type": "HMAC_SM3",
+			"type": "HMAC_SM3",
 			"security_size": 256,
 			"priv_key": [
 				"6ed76d2d97c69fd1339589523931f2a6",

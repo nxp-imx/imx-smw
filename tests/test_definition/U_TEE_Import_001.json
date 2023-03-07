@@ -111,7 +111,35 @@
 				"sign_hash": [],
 				"sign_message": []
 			}
-		}
+		},
+		"key 10": {
+			"type": "NIST",
+			"security_size": 256,
+			"priv_key": [
+				"01234567890123456789012345678901",
+				"01234567890123456789012345678901"
+			],
+			"pub_key": 64,
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		},
+		"key 11": {
+			"type": "NIST",
+			"security_size": 256,
+			"priv_key": 32,
+			"pub_key": [
+				"01234567890123456789012345678901",
+				"01234567890123456789012345678901",
+				"01234567890123456789012345678901",
+				"01234567890123456789012345678901"
+			],
+			"policy": {
+				"sign_hash": [],
+				"sign_message": []
+			}
+		},
 	},
 	"subtest 1": { // Key type is not supported
 		"command": "IMPORT",
@@ -166,5 +194,22 @@
 		"subsystem": "TEE",
 		"key_name": "key 9",
 		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": { // Import asymmetric key with public buffer NULL
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key 10",
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 11": { // Import asymmetric key with private buffer NULL
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key 11",
+		"result": "SMW_STATUS_OK"
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "key 11",
+		"depends": 11
 	}
 }

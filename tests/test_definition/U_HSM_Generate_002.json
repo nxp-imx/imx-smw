@@ -45,25 +45,25 @@
 		"command": "GENERATE",
 		"subsystem": "HSM",
 		"key_name": "key 3",
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
 		"key_name": "key 4",
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
 		"key_name": "key 5",
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
 		"subsystem": "HSM",
 		"key_name": "key 6",
-		"result": "SMW_STATUS_SUBSYSTEM_FAILURE"
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": {
 		"command": "GENERATE",

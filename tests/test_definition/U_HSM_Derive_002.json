@@ -1,0 +1,56 @@
+{
+	"keys":{
+		"key base":{
+			"type": "ECDH_NIST",
+			"security_size": 256,
+			"pub_key": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"client write encryption":{
+		},
+		"server write encryption":{
+		},
+		"master secret":{
+		},
+		"key derived 1": {
+			"pub_key": [
+				32,
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		}
+	},
+	"subtest 1": { // Key derived public length too short
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_KEY_EXCHANGE",
+		"op_args": {
+			"key_exchange_name": "ECDHE_ECDSA",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"kdf_input": [
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607",
+				"00010203040506070001020304050607"
+			],
+			"client_write_iv": "55555555",
+			"server_write_iv": "55555555",
+			"client_w_enc_key_name": "client write encryption key",
+			"server_w_enc_key_name": "server write encryption key",
+			"master_sec_key_name": "master secret key"
+		},
+		"op_output": "key derived 1",
+		"op_input": "key base",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	}
+}

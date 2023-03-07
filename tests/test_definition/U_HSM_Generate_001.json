@@ -27,6 +27,25 @@
 		"key 7": {
 			"type": "BRAINPOOL_R1",
 			"security_size": 384
+		},
+		"key 8": {
+			"type": "NIST",
+			"security_size": 256,
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"555555555555555555555555555555"
+			]
+		},
+		"key 9": {
+			"type": "NIST",
+			"security_size": 256,
+			"format": "BASE64",
+			"pub_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
 		}
 	},
 	"subtest 1": {
@@ -64,37 +83,49 @@
 		"subsystem": "HSM",
 		"key_name": "key 7"
 	},
-	"subtest 8": {
+	"subtest 8": { // Public buffer is set, but length is too small
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key 8",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 9": { // Public buffer is set, but length is too small base64
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key 9",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 10": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 9": {
+	"subtest 11": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 10": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 3
 	},
-	"subtest 11": {
+	"subtest 13": {
 		"command": "DELETE",
 		"key_name": "key 4",
 		"depends": 4
 	},
-	"subtest 12": {
+	"subtest 14": {
 		"command": "DELETE",
 		"key_name": "key 5",
 		"depends": 5
 	},
-	"subtest 13": {
+	"subtest 15": {
 		"command": "DELETE",
 		"key_name": "key 6",
 		"depends": 6
 	},
-	"subtest 14": {
+	"subtest 16": {
 		"command": "DELETE",
 		"key_name": "key 7",
 		"depends": 7

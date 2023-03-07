@@ -1,0 +1,61 @@
+{
+	"keys": {
+		"key AES": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			},
+			"pub_key": 16
+		},
+		"key NIST 1": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			},
+			"pub_key": 40
+		},
+		"key NIST 2": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			},
+			"format": "BASE64",
+			"pub_key": 80
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key AES",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Public length is too short
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 1",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 3": { // Base64 public length is too short
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 2",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	}
+}

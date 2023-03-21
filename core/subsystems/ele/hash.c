@@ -41,6 +41,7 @@ static int hash(struct hdl *hdl, void *args)
 	if (!hash_algo)
 		goto end;
 
+	op_args.svc_flags = HSM_HASH_FLAG_ONE_SHOT;
 	op_args.input = smw_crypto_get_hash_input_data(hash_args);
 	op_args.output = smw_crypto_get_hash_output_data(hash_args);
 	op_args.input_size = smw_crypto_get_hash_input_length(hash_args);
@@ -58,14 +59,16 @@ static int hash(struct hdl *hdl, void *args)
 		       "[%s (%d)] Call hsm_do_hash()\n"
 		       "op_args_t\n"
 		       "    algo: 0x%08X\n"
+		       "    flags: 0x%02X\n"
 		       "    Input\n"
 		       "      - buffer: %p\n"
 		       "      - size: %d\n"
 		       "    Output\n"
 		       "      - buffer: %p\n"
 		       "      - size: %d\n",
-		       __func__, __LINE__, op_args.algo, op_args.input,
-		       op_args.input_size, op_args.output, op_args.output_size);
+		       __func__, __LINE__, op_args.algo, op_args.svc_flags,
+		       op_args.input, op_args.input_size, op_args.output,
+		       op_args.output_size);
 
 	err = hsm_do_hash(hdl->session, &op_args);
 	SMW_DBG_PRINTF(DEBUG, "hsm_do_hash returned %d\n", err);

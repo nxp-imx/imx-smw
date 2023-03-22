@@ -165,10 +165,13 @@ static void set_key_ops(struct keypair_ops *key_test)
 static int read_key(unsigned char **key, unsigned int *length,
 		    const char *format, struct json_object *okey)
 {
-	int ret = ERR_CODE(PASSED);
+	int ret = ERR_CODE(INTERNAL);
 	char *buf = NULL;
 	unsigned int len = 0;
 	unsigned int json_len = UINT_MAX;
+
+	if (!key || !length)
+		return ret;
 
 	ret = util_read_json_buffer(&buf, &len, &json_len, okey);
 	if (ret != ERR_CODE(PASSED)) {
@@ -176,6 +179,13 @@ static int read_key(unsigned char **key, unsigned int *length,
 			free(buf);
 		return ret;
 	}
+
+	/* If key buffer was already defined, overwrite it with the new definition. */
+	if (*key)
+		free(*key);
+
+	*key = NULL;
+	*length = 0;
 
 	/* Either test definition specify:
 	 * - length != 0 but no data
@@ -259,6 +269,20 @@ static int keypair_read(struct keypair_ops *key_test,
 	return ret;
 }
 
+static void key_free_key_buffers(struct keypair_ops *key_test)
+{
+	if (key_test && key_test->keys) {
+		if (*key_public_data(key_test))
+			free(*key_public_data(key_test));
+
+		if (*key_private_data(key_test))
+			free(*key_private_data(key_test));
+
+		if (key_test->modulus && *key_modulus(key_test))
+			free(*key_modulus(key_test));
+	}
+}
+
 static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 			   const char *key_name, struct llist *key_names)
 {
@@ -266,12 +290,15 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 	struct key_data *data = NULL;
 	const char *parent_key_name = NULL;
 	struct smw_key_descriptor *desc;
+	smw_key_type_t type_name = NULL;
 	void *dummy = NULL;
 
 	if (!key_test || !key_name) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
+
+	desc = &key_test->desc;
 
 	ret = util_list_find_node(keys, (uintptr_t)key_name, (void **)&data);
 	if (ret != ERR_CODE(PASSED))
@@ -281,11 +308,13 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 		return ERR_CODE(KEY_NOTFOUND);
 
 	if (data->identifier) {
-		key_test->desc.id = data->identifier;
-		key_test->desc.security_size = 0;
+		desc->id = data->identifier;
+		desc->security_size = 0;
 
-		(void)smw_get_key_type_name(&key_test->desc);
-		(void)smw_get_security_size(&key_test->desc);
+		(void)smw_get_key_type_name(desc);
+		(void)smw_get_security_size(desc);
+
+		set_key_ops(key_test);
 
 		return ERR_CODE(PASSED);
 	}
@@ -329,13 +358,18 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 		return ret;
 	}
 
-	desc = &key_test->desc;
-
 	/* Read 'type' parameter if defined */
-	ret = util_read_json_type(&desc->type_name, TYPE_OBJ, t_string,
+	ret = util_read_json_type(&type_name, TYPE_OBJ, t_string,
 				  data->okey_params);
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
+
+	if (ret == ERR_CODE(PASSED)) {
+		if (desc->type_name)
+			key_free_key_buffers(key_test);
+
+		desc->type_name = type_name;
+	}
 
 	/* Read 'security_size' parameter if defined */
 	ret = util_read_json_type(&desc->security_size, SEC_SIZE_OBJ, t_int,
@@ -422,16 +456,7 @@ int key_desc_set_key(struct keypair_ops *key_test,
 
 void key_free_key(struct keypair_ops *key_test)
 {
-	if (key_test && key_test->keys) {
-		if (*key_public_data(key_test))
-			free(*key_public_data(key_test));
-
-		if (*key_private_data(key_test))
-			free(*key_private_data(key_test));
-
-		if (key_test->modulus && *key_modulus(key_test))
-			free(*key_modulus(key_test));
-	}
+	key_free_key_buffers(key_test);
 
 	(void)key_desc_set_key(key_test, NULL);
 }

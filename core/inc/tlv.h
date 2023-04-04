@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __TLV_H__
@@ -183,6 +183,15 @@ void smw_tlv_set_boolean(unsigned char **buffer, const char *type);
  */
 void smw_tlv_set_string(unsigned char **buffer, const char *type,
 			const char *value);
+
+/**
+ * smw_tlv_numeral_length() - Get the numeral TLV's length.
+ * @value: Numeral to be encoded.
+ *
+ * Return:
+ * Number of bytes needed to encode the @value.
+ */
+unsigned int smw_tlv_numeral_length(uint64_t value);
 
 /**
  * smw_tlv_set_numeral() - Encode TLV numeral in a buffer.

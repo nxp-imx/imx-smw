@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include "smw_status.h"
@@ -208,22 +208,31 @@ void smw_tlv_set_string(unsigned char **buffer, const char *type,
 				    (unsigned int)SMW_UTILS_STRLEN(value) + 1);
 }
 
+unsigned int smw_tlv_numeral_length(uint64_t value)
+{
+	unsigned int length = 1;
+
+	if (value >> 32)
+		length = 8;
+	else if (value >> 16)
+		length = 4;
+	else if (value >> 8)
+		length = 2;
+
+	return length;
+}
+
 void smw_tlv_set_numeral(unsigned char **buffer, const char *type,
 			 uint64_t value)
 {
 	unsigned char *p = *buffer;
 
-	unsigned int value_size = 1;
-	unsigned int size;
+	unsigned int value_size = 0;
+	unsigned int size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (value >> 32)
-		value_size = 8;
-	else if (value >> 16)
-		value_size = 4;
-	else if (value >> 8)
-		value_size = 2;
+	value_size = smw_tlv_numeral_length(value);
 
 	SMW_UTILS_MEMCPY(p, type, SMW_UTILS_STRLEN(type) + 1);
 	p += SMW_UTILS_STRLEN(type) + 1;

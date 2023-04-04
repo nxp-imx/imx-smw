@@ -334,7 +334,8 @@ static int delete_key_operation(struct hdl *hdl,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (key_desc->identifier.persistent)
+	if (key_desc->identifier.persistence_id ==
+	    SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT)
 		manage_key_args.key_group = PERSISTENT_KEY_GROUP;
 	else
 		manage_key_args.key_group = TRANSIENT_KEY_GROUP;
@@ -405,7 +406,8 @@ static int generate_key(struct hdl *hdl, void *args)
 	op_generate_key_args.out_key = tmp_key;
 	op_generate_key_args.out_size = hsm_key_size;
 
-	if (generate_key_args->key_attributes.persistent_storage) {
+	if (generate_key_args->key_attributes.persistence ==
+	    SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT) {
 		op_generate_key_args.key_info = HSM_KEY_INFO_PERSISTENT;
 		op_generate_key_args.key_group = PERSISTENT_KEY_GROUP;
 	} else {
@@ -577,6 +579,19 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 	return status;
 }
 
+static int get_key_attributes(struct hdl *hdl, void *args)
+{
+	(void)hdl;
+	(void)args;
+
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 int hsm_export_public_key(struct hdl *hdl,
 			  struct smw_keymgr_descriptor *key_desc)
 {
@@ -649,6 +664,9 @@ bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		break;
 	case OPERATION_ID_GET_KEY_LENGTHS:
 		*status = get_key_lengths(hdl, args);
+		break;
+	case OPERATION_ID_GET_KEY_ATTRIBUTES:
+		*status = get_key_attributes(hdl, args);
 		break;
 	default:
 		return false;

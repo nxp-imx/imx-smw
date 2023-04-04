@@ -272,7 +272,7 @@ static void delete_db_shared_keys(unsigned int *ids_array, int nb_shared_keys)
 	identifier.id = INVALID_KEY_ID;
 	identifier.subsystem_id = SUBSYSTEM_ID_HSM;
 	/* Only transient key are generated */
-	identifier.persistent = false;
+	identifier.persistence_id = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
 
 	/* Delete all keys from the database */
 	for (idx = 0; idx < nb_shared_keys && ids_array[idx] != INVALID_KEY_ID;
@@ -306,7 +306,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	identifier.id = INVALID_KEY_ID;
 	identifier.subsystem_id = SUBSYSTEM_ID_HSM;
 	/* Only transient key are generated */
-	identifier.persistent = false;
+	identifier.persistence_id = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
 
 	if (nb_shared_keys == TLS12_NB_KEYS_WITH_MAC) {
 		/*

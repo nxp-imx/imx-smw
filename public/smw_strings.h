@@ -40,6 +40,24 @@ typedef smw_string_t smw_subsystem_t;
 typedef smw_string_t smw_key_type_t;
 
 /**
+ * typedef smw_key_privacy_t - Key privacy name
+ * Values:
+ *	- PUBLIC
+ *	- PRIVATE
+ *	- KEYPAIR
+ */
+typedef smw_string_t smw_keymgr_privacy_t;
+
+/**
+ * typedef smw_key_persistence_t - Key persistence name
+ * Values:
+ *	- TRANSIENT
+ *	- PERSISTENT
+ *	- PERMANENT
+ */
+typedef smw_string_t smw_keymgr_persistence_t;
+
+/**
  * typedef smw_hash_algo_t - Hash algorithm name
  * Values:
  *	- MD5

@@ -275,6 +275,38 @@ struct smw_delete_key_args {
 };
 
 /**
+ * struct smw_key_get_attributes_args - Get key attributes arguments
+ * @version: Version of this structure
+ * @key_descriptor: Pointer to a Key descriptor object.
+ *		    See &struct smw_key_descriptor
+ * @key_privacy: Key privacy type.
+ * @persistence: Key persistence.
+ * @policy_list: Key policy list. More details on `Key policy`_
+ * @policy_list_length: Length of the @policy_list string.
+ * @lifecycle_list: Key lifecycle list.
+ * @lifecycle_list_length: Length of the @lifecycle_list.
+ * @storage: Key storage identifier
+ *
+ * The @key_descriptor fields @id must be given as input.
+ * The @key_descriptor fields @buffer is ignored.
+ * The @key_descriptor fields @type_name and @security_size are output.
+ *
+ * Both @policy_list and @lifecycle_list are allocated by the operation
+ * smw_get_key_attributes() if retrieved and must be freed by user.
+ */
+struct smw_get_key_attributes_args {
+	unsigned char version;
+	struct smw_key_descriptor *key_descriptor;
+	smw_keymgr_privacy_t key_privacy;
+	smw_keymgr_persistence_t persistence;
+	unsigned char *policy_list;
+	unsigned int policy_list_length;
+	unsigned char *lifecycle_list;
+	unsigned int lifecycle_list_length;
+	unsigned int storage;
+};
+
+/**
  * smw_generate_key() - Generate a Key.
  * @args: Pointer to the structure that contains the Key generation arguments.
  *
@@ -397,5 +429,20 @@ smw_get_key_type_name(struct smw_key_descriptor *descriptor);
  */
 enum smw_status_code
 smw_get_security_size(struct smw_key_descriptor *descriptor);
+
+/**
+ * smw_get_key_attributes() - Get the key attributes.
+ * @args: Pointer to the structure that contains the Key attributes arguments.
+ *
+ * This function gets the Key attributes retrieved for the subsystem owning the
+ * given key identifier.
+ * If some key attributes are not supported, the output values are empty.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code
+smw_get_key_attributes(struct smw_get_key_attributes_args *args);
 
 #endif /* __SMW_KEYMGR_H__ */

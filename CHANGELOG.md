@@ -47,6 +47,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Implement MAC single part operation (compute and verify).
 * Deprecate HMAC compute operation. Merge with MAC operation.
 * Clarify the smw_get_key_buffers_lengths() API usage.
+* Implement get key attributes API.
 
 ##### 3. Subsystems
 

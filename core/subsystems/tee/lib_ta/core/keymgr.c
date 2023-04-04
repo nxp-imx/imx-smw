@@ -28,6 +28,9 @@
 
 #define SECURITY_SIZE_RANGE UINT_MAX
 
+/* TEE Key type is keypair */
+#define TEE_TYPE_KEYPAIR BIT(24)
+
 /**
  * struct key_data - Key data.
  * @key_id: Key ID.
@@ -162,6 +165,7 @@ struct {
 /**
  * key_obj_type_to_ta_type() - Get SMW key type of an object type.
  * @key_type: Key type returned.
+ * @key_privacy: Key privacy returned.
  * @obj_type: Object type to convert.
  *
  * Return:
@@ -170,6 +174,7 @@ struct {
  * TEE_ERROR_ITEM_NOT_FOUND	- Key type isn't present.
  */
 static TEE_Result key_obj_type_to_ta_type(enum tee_key_type *key_type,
+					  enum tee_key_privacy *key_privacy,
 					  uint32_t obj_type)
 {
 	unsigned int i = 0;
@@ -177,12 +182,29 @@ static TEE_Result key_obj_type_to_ta_type(enum tee_key_type *key_type,
 
 	FMSG("Executing %s", __func__);
 
-	if (!key_type)
+	if (!key_type || !key_privacy)
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	for (; i < array_size; i++) {
 		if ((key_info[i].obj_type & obj_type) == obj_type) {
 			*key_type = key_info[i].key_type;
+
+			/*
+			 * @obj_type is the TEE retrieved object type, then:
+			 *  - If the TEE_TYPE_KEYPAIR is set in @obj_type, it's
+			 *    a key pair object.
+			 *  - Else if TA defined key_info[i].obj_type is a
+			 *    key pair object, then TEE @obj_type is a public
+			 *    key object.
+			 * Otherwise, it's a private key (symmetric key).
+			 */
+			if (obj_type & TEE_TYPE_KEYPAIR)
+				*key_privacy = TEE_KEY_PAIR;
+			else if (key_info[i].obj_type & TEE_KEY_PAIR)
+				*key_privacy = TEE_KEY_PUBLIC;
+			else
+				*key_privacy = TEE_KEY_PRIVATE;
+
 			return TEE_SUCCESS;
 		}
 	}
@@ -505,7 +527,7 @@ static TEE_Result conf_key_ecc_attribute(enum tee_key_type key_type,
 }
 
 /**
- * convert_key_usage() - Convert a TA param key usage to TEE key usage
+ * key_usage_to_tee() - Convert a TA param key usage to TEE key usage
  * @key_usage: Key usage to convert
  * @tee_key_usage: TEE key usage value
  *
@@ -513,8 +535,8 @@ static TEE_Result conf_key_ecc_attribute(enum tee_key_type key_type,
  * TEE_SUCCESS                - Success.
  * TEE_ERROR_BAD_PARAMETERS   - Bad key type.
  */
-static TEE_Result convert_key_usage(unsigned int key_usage,
-				    uint32_t *tee_key_usage)
+static TEE_Result key_usage_to_tee(unsigned int key_usage,
+				   uint32_t *tee_key_usage)
 {
 	unsigned int i;
 
@@ -533,6 +555,27 @@ static TEE_Result convert_key_usage(unsigned int key_usage,
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	return TEE_SUCCESS;
+}
+
+/**
+ * key_usage_to_ta() - Convert a TEE key usage to TA param key usage
+ * @key_usage: Key usage bit mask result
+ * @tee_key_usage: TEE key usage value to convert
+ *
+ * Return:
+ * None.
+ */
+static void key_usage_to_ta(unsigned int *key_usage, uint32_t tee_key_usage)
+{
+	unsigned int i;
+
+	FMSG("Executing %s", __func__);
+
+	*key_usage = 0;
+	for (i = 0; i < ARRAY_SIZE(conv_key_usage); i++) {
+		if (conv_key_usage[i].tee_usage & tee_key_usage)
+			*key_usage |= conv_key_usage[i].usage;
+	}
 }
 
 /**
@@ -1205,7 +1248,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		attr_count = 1;
 	}
 
-	res = convert_key_usage(shared_params->key_usage, &key_usage);
+	res = key_usage_to_tee(shared_params->key_usage, &key_usage);
 	if (res) {
 		EMSG("Key usage 0x%08X is not valid", shared_params->key_usage);
 		return res;
@@ -1493,7 +1536,7 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	if (res)
 		return res;
 
-	res = convert_key_usage(shared_params->key_usage, &key_usage);
+	res = key_usage_to_tee(shared_params->key_usage, &key_usage);
 	if (res) {
 		EMSG("Key usage 0x%08X is not valid", shared_params->key_usage);
 		return res;
@@ -1686,6 +1729,7 @@ TEE_Result get_key_lengths(uint32_t param_types,
 	size_t public_length = 0;
 	size_t modulus_length = 0;
 	enum tee_key_type smw_key_type = TEE_KEY_TYPE_ID_INVALID;
+	enum tee_key_privacy key_privacy = TEE_KEY_PUBLIC;
 
 	FMSG("Executing %s", __func__);
 
@@ -1716,7 +1760,8 @@ TEE_Result get_key_lengths(uint32_t param_types,
 		goto exit;
 	}
 
-	res = key_obj_type_to_ta_type(&smw_key_type, obj_info.objectType);
+	res = key_obj_type_to_ta_type(&smw_key_type, &key_privacy,
+				      obj_info.objectType);
 	if (res) {
 		EMSG("Key type (0x%08x) not found 0x%x", obj_info.objectType,
 		     res);
@@ -1747,6 +1792,68 @@ TEE_Result get_key_lengths(uint32_t param_types,
 
 	/* Private key is protected, hence length can't retrieved */
 	params[GET_KEY_LENGTHS_PRIVKEY_IDX].value.a = 0;
+
+exit:
+	if (persistent)
+		TEE_CloseObject(key_handle);
+
+	return res;
+}
+
+TEE_Result get_key_attributes(uint32_t param_types,
+			      TEE_Param params[TEE_NUM_PARAMS])
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
+	TEE_ObjectInfo obj_info = { 0 };
+	bool persistent = false;
+	enum tee_key_type key_type = TEE_KEY_TYPE_ID_INVALID;
+	enum tee_key_privacy key_privacy = TEE_KEY_PUBLIC;
+	unsigned int key_usage = 0;
+
+	FMSG("Executing %s", __func__);
+
+	/*
+	 * params[0].value.a = TEE Key ID.
+	 * params[1].value.a = TEE Key type returned.
+	 * params[1].value.b = TEE Key usage returned.
+	 * params[2].value.a = TEE Key keypair (1) /public (0) flag returned.
+	 * params[2].value.b = TEE Key persistent flag returned.
+	 */
+	if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
+					   TEE_PARAM_TYPE_VALUE_OUTPUT,
+					   TEE_PARAM_TYPE_VALUE_OUTPUT,
+					   TEE_PARAM_TYPE_NONE))
+		return res;
+
+	res = ta_get_key_handle(&key_handle,
+				params[GET_KEY_ATTRS_KEY_ID_IDX].value.a,
+				&persistent);
+	if (res) {
+		EMSG("Key not found: 0x%x", res);
+		return res;
+	}
+
+	res = TEE_GetObjectInfo1(key_handle, &obj_info);
+	if (res) {
+		EMSG("Failed to get object info: 0x%x", res);
+		goto exit;
+	}
+
+	res = key_obj_type_to_ta_type(&key_type, &key_privacy,
+				      obj_info.objectType);
+	if (res) {
+		EMSG("Key type (0x%08x) not found 0x%x", obj_info.objectType,
+		     res);
+		goto exit;
+	}
+
+	key_usage_to_ta(&key_usage, obj_info.objectUsage);
+
+	params[GET_KEY_ATTRS_KEY_TYPE_IDX].value.a = key_type;
+	params[GET_KEY_ATTRS_KEY_USAGE_IDX].value.b = key_usage;
+	params[GET_KEY_ATTRS_KEYPAIR_FLAG_IDX].value.a = key_privacy;
+	params[GET_KEY_ATTRS_PERSISTENT_FLAG_IDX].value.b = persistent;
 
 exit:
 	if (persistent)

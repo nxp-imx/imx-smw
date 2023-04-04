@@ -238,7 +238,7 @@ key_type_tee_to_smw(enum tee_key_type tee_key_type)
 	return ret_type;
 }
 
-static bool convert_usage(const char *value, unsigned int *usage)
+static bool key_usage_to_value(const char *value, unsigned int *usage)
 {
 	unsigned int i;
 
@@ -298,7 +298,7 @@ static int tee_set_key_usage(unsigned char *policy, unsigned int policy_len,
 		if (SMW_UTILS_STRCMP((char *)type, USAGE_STR))
 			continue;
 
-		if (!convert_usage((char *)value, tee_usage)) {
+		if (!key_usage_to_value((char *)value, tee_usage)) {
 			policy_ignored = true;
 			continue;
 		}
@@ -318,6 +318,106 @@ static int tee_set_key_usage(unsigned char *policy, unsigned int policy_len,
 		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 
 exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
+ * key_usage_to_string() - Convert TEE key usage value(s) to SMW's policy string
+ * @str: String value of @usage bitmask (if NULL, calculates expected length)
+ * @length: Maximum length of the @str
+ * @usage: TEE key usage bitmask
+ *
+ * Return:
+ * If @str is NULL, the expected length of @str
+ * If @str is not NULL, the length of @str built
+ * -1 in case of error (@str's length too small
+ */
+static int key_usage_to_string(unsigned char **str, int length,
+			       unsigned int usage)
+{
+	unsigned char *p = NULL;
+	int out_len = 0;
+	int rem_len = length;
+	int usage_len = 0;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (str)
+		p = *str;
+
+	for (i = 0; i < ARRAY_SIZE(key_usage); i++) {
+		if ((usage & key_usage[i].tee_usage) != key_usage[i].tee_usage)
+			continue;
+
+		usage_len = SMW_UTILS_STRLEN(key_usage[i].usage_str) + 1;
+		usage_len = SMW_TLV_ELEMENT_LENGTH(USAGE_STR, usage_len);
+		SMW_DBG_PRINTF(DEBUG, "Key usage (len=%u): USAGE=%s\n",
+			       usage_len, key_usage[i].usage_str);
+		if (p) {
+			if (rem_len >= usage_len) {
+				smw_tlv_set_string(&p, USAGE_STR,
+						   key_usage[i].usage_str);
+				rem_len -= usage_len;
+			} else {
+				out_len = -1;
+				p = *str;
+				break;
+			}
+		}
+
+		out_len += usage_len;
+	}
+
+	if (str)
+		*str = p;
+
+	SMW_DBG_PRINTF(DEBUG, "%s return length %u\n", __func__, out_len);
+	return out_len;
+}
+
+static int tee_set_key_policy(unsigned char **policy, unsigned int *policy_len,
+			      unsigned int tee_usage)
+{
+	int status = SMW_STATUS_KEY_POLICY_ERROR;
+
+	unsigned char *p = NULL;
+	int usage_str_len = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/* Get the expected usage(s) string length */
+	usage_str_len = key_usage_to_string(NULL, usage_str_len, tee_usage);
+	if (usage_str_len == -1)
+		goto exit;
+
+	/* Calculate policy length and allocate the policy string */
+	*policy_len = SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_str_len);
+
+	*policy = SMW_UTILS_CALLOC(1, *policy_len);
+	if (!*policy) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto exit;
+	}
+
+	p = *policy;
+	smw_tlv_set_type(&p, POLICY_STR);
+
+	/* Build the policy string composed of the key usage */
+	if (key_usage_to_string(&p, usage_str_len, tee_usage) ==
+	    usage_str_len) {
+		smw_tlv_set_length(*policy, p);
+		status = SMW_STATUS_OK;
+	}
+
+exit:
+	if (status != SMW_STATUS_OK && *policy) {
+		SMW_UTILS_FREE(*policy);
+		*policy = NULL;
+		*policy_len = 0;
+	}
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -744,9 +844,8 @@ static int generate_key(void *args)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	if (key_attrs->persistent_storage)
-		shared_params.persistent_storage =
-			key_attrs->persistent_storage;
+	if (key_attrs->persistence == SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT)
+		shared_params.persistent_storage = true;
 
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->tee_key_type;
@@ -1319,7 +1418,10 @@ static int import_key(void *args)
 
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->tee_key_type;
-	shared_params.persistent_storage = key_attrs->persistent_storage;
+
+	if (key_attrs->persistence == SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT)
+		shared_params.persistent_storage = true;
+
 	usage_status =
 		tee_set_key_usage(key_attrs->policy, key_attrs->policy_len,
 				  &shared_params.key_usage, actual_policy,
@@ -1556,6 +1658,100 @@ exit:
 }
 
 /**
+ * get_key_attributes() - Get the key attributes of a key handles by OPTEE.
+ * @args: Key attributes parameters.
+ *
+ * Return:
+ * SMW_STATUS_OK                 - Success.
+ * SMW_STATUS_INVALID_PARAM      - One of the parameter is invalid.
+ * SMW_STATUS_SUBSYSTEM_FAILURE  - Trusted application failed.
+ */
+static int get_key_attributes(void *args)
+{
+	TEEC_Operation op = { 0 };
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct smw_keymgr_get_key_attributes_args *key_attrs = NULL;
+	enum tee_key_type tee_type = TEE_KEY_TYPE_ID_INVALID;
+	unsigned int tee_usage = 0;
+	unsigned char *policy_list = NULL;
+	unsigned int policy_list_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args)
+		goto exit;
+
+	key_attrs = args;
+
+	/*
+	 * params[0].value.a = TEE Key ID.
+	 * params[1].value.a = TEE Key type returned.
+	 * params[1].value.b = TEE Key usage returned.
+	 * params[2].value.a = TEE keypair/public type returned.
+	 * params[2].value.b = TEE key persistent flag returned.
+	 */
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT,
+					 TEEC_VALUE_OUTPUT, TEEC_NONE);
+
+	op.params[GET_KEY_ATTRS_KEY_ID_IDX].value.a = key_attrs->identifier.id;
+
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_GET_KEY_ATTRIBUTES, &op);
+
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	if (op.params[GET_KEY_ATTRS_KEY_TYPE_IDX].value.a >
+	    TEE_KEY_TYPE_ID_NB) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
+	}
+
+	tee_type = op.params[GET_KEY_ATTRS_KEY_TYPE_IDX].value.a;
+	tee_usage = op.params[GET_KEY_ATTRS_KEY_USAGE_IDX].value.b;
+
+	switch (op.params[GET_KEY_ATTRS_KEYPAIR_FLAG_IDX].value.a) {
+	case TEE_KEY_PAIR:
+		key_attrs->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PAIR;
+		break;
+
+	case TEE_KEY_PRIVATE:
+		key_attrs->identifier.privacy_id =
+			SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+		break;
+
+	case TEE_KEY_PUBLIC:
+		key_attrs->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
+		break;
+
+	default:
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
+	}
+
+	if (op.params[GET_KEY_ATTRS_PERSISTENT_FLAG_IDX].value.b)
+		key_attrs->identifier.persistence_id =
+			SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT;
+	else
+		key_attrs->identifier.persistence_id =
+			SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
+
+	key_attrs->identifier.storage_id = 0;
+	key_attrs->identifier.type_id = key_type_tee_to_smw(tee_type);
+
+	status = tee_set_key_policy(&policy_list, &policy_list_length,
+				    tee_usage);
+	if (status == SMW_STATUS_OK)
+		smw_keymgr_set_policy(key_attrs, policy_list,
+				      policy_list_length);
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
  * get_shared_key_size() - Get shared key memory size.
  * @key_descriptor: Pointer to key descriptor.
  * @privacy: Key privacy.
@@ -1748,6 +1944,9 @@ bool tee_key_handle(enum operation_id op_id, void *args, int *status)
 		break;
 	case OPERATION_ID_GET_KEY_LENGTHS:
 		*status = get_key_lengths(args);
+		break;
+	case OPERATION_ID_GET_KEY_ATTRIBUTES:
+		*status = get_key_attributes(args);
 		break;
 	default:
 		return false;

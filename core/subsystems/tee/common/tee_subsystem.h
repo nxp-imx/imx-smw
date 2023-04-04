@@ -9,17 +9,29 @@
 #include <tee_api_types.h>
 
 /* Index of operation shared buffers parameters */
-#define GEN_PUB_KEY_PARAM_IDX	    1
-#define GEN_PUB_EXP_PARAM_IDX	    3
-#define GEN_MOD_PARAM_IDX	    2
-#define IMP_PUB_KEY_PARAM_IDX	    2
-#define IMP_PRIV_KEY_PARAM_IDX	    1
-#define IMP_MOD_PARAM_IDX	    3
-#define EXP_PUB_KEY_PARAM_IDX	    1
-#define EXP_MOD_PARAM_IDX	    2
-#define GET_KEY_LENGTHS_KEY_ID_IDX  0
-#define GET_KEY_LENGTHS_PUBKEYS_IDX 1
-#define GET_KEY_LENGTHS_PRIVKEY_IDX 2
+#define GEN_PUB_KEY_PARAM_IDX		  1
+#define GEN_PUB_EXP_PARAM_IDX		  3
+#define GEN_MOD_PARAM_IDX		  2
+#define IMP_PUB_KEY_PARAM_IDX		  2
+#define IMP_PRIV_KEY_PARAM_IDX		  1
+#define IMP_MOD_PARAM_IDX		  3
+#define EXP_PUB_KEY_PARAM_IDX		  1
+#define EXP_MOD_PARAM_IDX		  2
+#define GET_KEY_LENGTHS_KEY_ID_IDX	  0
+#define GET_KEY_LENGTHS_PUBKEYS_IDX	  1
+#define GET_KEY_LENGTHS_PRIVKEY_IDX	  2
+#define GET_KEY_ATTRS_KEY_ID_IDX	  0
+#define GET_KEY_ATTRS_KEY_TYPE_IDX	  1
+#define GET_KEY_ATTRS_KEY_USAGE_IDX	  1
+#define GET_KEY_ATTRS_KEYPAIR_FLAG_IDX	  2
+#define GET_KEY_ATTRS_PERSISTENT_FLAG_IDX 2
+
+/* TEE key privacy */
+enum tee_key_privacy {
+	TEE_KEY_PUBLIC = 0,
+	TEE_KEY_PRIVATE,
+	TEE_KEY_PAIR,
+};
 
 /* TEE key type */
 enum tee_key_type {
@@ -44,7 +56,7 @@ enum tee_key_type {
 #define TEE_KEY_USAGE_COPYABLE	 0x00000002
 #define TEE_KEY_USAGE_ENCRYPT	 0x00000100
 #define TEE_KEY_USAGE_DECRYPT	 0x00000200
-#define TEE_KEY_USAGE_SIGN	 0x00000401
+#define TEE_KEY_USAGE_SIGN	 0x00000400
 #define TEE_KEY_USAGE_VERIFY	 0x00000800
 #define TEE_KEY_USAGE_DERIVE	 0x00001000
 #define TEE_KEY_USAGE_MAC	 0x00002000
@@ -92,7 +104,8 @@ enum ta_commands {
 	CMD_COPY_CTX,
 	CMD_MAC_COMPUTE,
 	CMD_MAC_VERIFY,
-	CMD_GET_KEY_LENGTHS
+	CMD_GET_KEY_LENGTHS,
+	CMD_GET_KEY_ATTRIBUTES
 };
 
 struct mac_shared_params {

@@ -99,6 +99,10 @@ TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 		res = get_key_lengths(param_types, params);
 		break;
 
+	case CMD_GET_KEY_ATTRIBUTES:
+		res = get_key_attributes(param_types, params);
+		break;
+
 	default:
 		break;
 	}

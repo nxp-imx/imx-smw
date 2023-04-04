@@ -22,6 +22,15 @@
 #define BIT(n) (1 << (n))
 #endif /* BIT */
 
+#ifndef MIN
+#define MIN(a, b)                                                              \
+	({                                                                     \
+		__typeof__(a) _a = (a);                                        \
+		__typeof__(b) _b = (b);                                        \
+		_a < _b ? _a : _b;                                             \
+	})
+#endif /* MIN */
+
 #define UCHAR_SHIFT_BYTE(val, byte) ((val) >> ((byte) * (CHAR_BIT)) & UCHAR_MAX)
 
 #ifndef BITS_TO_BYTES_SIZE

@@ -605,13 +605,14 @@ int generate_key(struct subtest_data *subtest)
 
 	/* Call generate key function and compare result with expected one */
 	subtest->smw_status = smw_generate_key(smw_gen_args);
-	if (subtest->smw_status != SMW_STATUS_OK) {
+	if (subtest->smw_status == SMW_STATUS_OK ||
+	    subtest->smw_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
+		key_prepare_key_data(&key_test, &key_data);
+		res = util_key_update_node(list_keys(subtest), key_name,
+					   &key_data);
+	} else {
 		res = ERR_CODE(API_STATUS_NOK);
-		goto exit;
 	}
-
-	key_prepare_key_data(&key_test, &key_data);
-	res = util_key_update_node(list_keys(subtest), key_name, &key_data);
 
 exit:
 	key_free_key(&key_test);
@@ -833,6 +834,92 @@ int export_key(struct subtest_data *subtest, enum export_type export_type)
 exit:
 	key_free_key(&key_test);
 	key_free_key(&exp_key_test);
+
+	return res;
+}
+
+int get_key_attributes(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(FAILED);
+	int error = 0;
+	struct keypair_ops key_test = { 0 };
+	struct keypair_ops key_ref = { 0 };
+	struct smw_get_key_attributes_args args = { 0 };
+	const char *key_name = NULL;
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	args.version = subtest->version;
+	args.key_descriptor = &key_test.desc;
+
+	/* Key name is mandatory */
+	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Initialize key descriptor, no key buffer */
+	res = key_desc_init(&key_test, NULL);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = key_desc_init(&key_ref, NULL);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	/* Read the json-c key description */
+	res = key_read_descriptor(list_keys(subtest), &key_ref, key_name);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Set only the key identifier */
+	key_test.desc.id = key_ref.desc.id;
+
+	subtest->smw_status = smw_get_key_attributes(&args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
+		goto exit;
+	}
+
+	/*
+	 * Validate the key attributes
+	 */
+	if (key_test.desc.security_size != key_ref.desc.security_size) {
+		DBG_PRINT("Invalid security size got %u expected %u",
+			  key_test.desc.security_size,
+			  key_ref.desc.security_size);
+		error++;
+	}
+
+	if (strcmp(key_test.desc.type_name, key_ref.desc.type_name)) {
+		DBG_PRINT("Invalid key type got %s expected %s",
+			  key_test.desc.type_name, key_ref.desc.type_name);
+		error++;
+	}
+
+	if (error) {
+		res = ERR_CODE(FAILED);
+		goto exit;
+	}
+
+	res = util_tlv_check_key_policy(subtest, args.policy_list,
+					args.policy_list_length);
+
+	if (res == ERR_CODE(PASSED))
+		res = util_tlv_check_lifecycle(args.lifecycle_list,
+					       args.lifecycle_list_length);
+
+exit:
+	if (args.policy_list)
+		free(args.policy_list);
+
+	if (args.lifecycle_list)
+		free(args.lifecycle_list);
+
+	key_free_key(&key_test);
 
 	return res;
 }

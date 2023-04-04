@@ -346,6 +346,26 @@ static int execute_get_version_cmd(char *cmd, struct subtest_data *subtest)
 	return get_info(subtest);
 }
 
+/**
+ * execute_get_key_attrs_cmd() - Execute get key attibutes command
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED		- Success.
+ * -BAD_RESULT		- SMW API status differs from expected one.
+ * -BAD_ARGS		- One of the arguments is bad.
+ * -BAD_PARAM_TYPE	- A parameter value is undefined.
+ * -VALUE_NOTFOUND	- Test definition Value not found.
+ * -FAILED		- Test failed
+ */
+static int execute_get_key_attrs_cmd(char *cmd, struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	return get_key_attributes(subtest);
+}
+
 int execute_command_smw(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
@@ -367,6 +387,7 @@ int execute_command_smw(char *cmd, struct subtest_data *subtest)
 		{ OP_CTX, &execute_op_context_cmd },
 		{ CONFIG, &execute_config_cmd },
 		{ GET_VERSION, &execute_get_version_cmd },
+		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
 	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {

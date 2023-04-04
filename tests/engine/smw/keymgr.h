@@ -88,4 +88,17 @@ int export_key(struct subtest_data *subtest, enum export_type export_type);
  */
 int derive_key(struct subtest_data *subtest);
 
+/**
+ * get_key_attributes() - Get the key attributes.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED                       - Success.
+ * -INTERNAL_OUT_OF_MEMORY      - Memory allocation failed.
+ * -MISSING_PARAMS              - Missing mandatory parameters in @params.
+ * -API_STATUS_NOK              - SMW API Call return error
+ * -BAD_ARGS                    - One of the arguments is bad.
+ */
+int get_key_attributes(struct subtest_data *subtest);
+
 #endif /* __KEYMGR_H__ */

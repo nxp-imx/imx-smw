@@ -12,6 +12,7 @@
 #include "json_types.h"
 #include "types.h"
 #include "util.h"
+#include "util_key.h"
 #include "util_tlv.h"
 
 #define TLV_NUMERAL_ARRAY_NB_ELEM 2
@@ -19,6 +20,10 @@
 #define TLV_KEY_POLICY "POLICY"
 #define TLV_KEY_USAGE  "USAGE"
 #define TLV_KEY_ALGO   "ALGO"
+#define TLV_LIFECYCLE  "LIFECYCLE"
+
+/* TLV defines */
+#define TLV_LENGTH_FIELD_SIZE 2 /* TLV length encoded with 2 bytes */
 
 /**
  * struct tlv - TLV structure
@@ -39,6 +44,20 @@ struct tlv {
 		long num;
 		const char *str;
 	} value;
+};
+
+/**
+ * struct tlv_list - List of TLV entries (variable-length list)
+ * @verified: TLV entry verified
+ * @tlv: TLV entry
+ * @tlv_list: Sub list of TLVs entries
+ * @next: Next TLV entry
+ */
+struct tlv_list {
+	bool verified;
+	struct tlv *tlv;
+	struct tlv_list *tlv_list;
+	struct tlv_list *next;
 };
 
 static int get_tlv_numeral_byte(long value)
@@ -538,6 +557,324 @@ static int concat_policy_attr(unsigned char **attr, unsigned int *len,
 	return err;
 }
 
+static void free_tlv_list(struct tlv_list **tlv_list)
+{
+	struct tlv_list *entry = NULL;
+	struct tlv_list *next = NULL;
+
+	if (tlv_list) {
+		entry = *tlv_list;
+		while (entry) {
+			if (entry->tlv) {
+				free(entry->tlv);
+				entry->tlv = NULL;
+			}
+
+			if (entry->tlv_list)
+				free_tlv_list(&entry->tlv_list);
+
+			next = entry->next;
+			free(entry);
+
+			entry = next;
+		}
+
+		tlv_list = NULL;
+	}
+}
+
+static int tlv_convert_numeral(long *numeral, unsigned int length,
+			       const unsigned char *value)
+{
+	int err = ERR_CODE(FAILED);
+	unsigned int i;
+
+	*numeral = 0;
+
+	if (length <= sizeof(*numeral)) {
+		for (i = 0; i < length; i++)
+			*numeral |= (long)value[i] << ((length - 1 - i) * 8);
+
+		err = ERR_CODE(PASSED);
+	} else {
+		DBG_PRINT("TLV numeral decoding error\n");
+	}
+
+	return err;
+}
+
+static unsigned int tlv_length(const unsigned char **str)
+{
+	int j = 1;
+	unsigned int value_length = 0;
+	const unsigned char *p = *str;
+
+	value_length = *p++;
+	for (; j < TLV_LENGTH_FIELD_SIZE; j++) {
+		value_length <<= 8;
+		value_length |= *p++;
+	}
+
+	*str = p;
+
+	return value_length;
+}
+
+static int parse_tlv_list(struct tlv_list **tlv_list, const unsigned char **str,
+			  const unsigned char *end)
+{
+	int err = ERR_CODE(INTERNAL);
+
+	struct tlv *entry = NULL;
+	struct tlv_list **list_elem = NULL;
+	const unsigned char *p = *str;
+	const unsigned char *p_end = NULL;
+	unsigned int value_length = 0;
+	unsigned int tmp_len = 0;
+
+	if (!tlv_list)
+		return err;
+
+	*tlv_list = calloc(1, sizeof(**tlv_list));
+	if (!*tlv_list) {
+		DBG_PRINT_ALLOC_FAILURE();
+		err = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto exit;
+	}
+
+	entry = calloc(1, sizeof(*entry));
+	if (!entry) {
+		DBG_PRINT_ALLOC_FAILURE();
+		err = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto exit;
+	}
+
+	/*
+	 * TLV list entry is defined:
+	 *   TYPE | LENGTH | VALUE
+	 * TYPE is a string
+	 * LENGTH is the nummber of bytes of VALUE
+	 * VALUE is either:
+	 *  - one string
+	 *  - one numeral
+	 *  - one string + other TLV(s)
+	 *
+	 * The input @str may not be a null-terminated string in case
+	 * last type is string is a numeral value.
+	 * note: numeral is either 1, 2, 4, 8 bytes (limit is 64 bits value)
+	 *
+	 * If VALUE is:
+	 *  - one string,
+	 *       LENGTH = strlen(VALUE) + 1
+	 *  - one numeral,
+	 *       LENGTH = nb bytes defining the numeral
+	 *  - one string + other TLV(s),
+	 *       LENGTH = strlen(TYPE) + 1 + nb bytes defining other TLV(s)
+	 */
+	(*tlv_list)->tlv = entry;
+	entry->type = (const char *)p;
+	entry->type_len = strlen(entry->type) + 1;
+
+	p += entry->type_len;
+	if (p > end || !entry->type_len) {
+		err = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	value_length = tlv_length(&p);
+
+	DBG_PRINT("Decoding TYPE=%s LENGTH=%d", entry->type, value_length);
+
+	if ((unsigned int)(end - p) < value_length - 1) {
+		DBG_PRINT("TLV string is too small p=%p end=%p", p, end);
+		err = ERR_CODE(FAILED);
+		goto exit;
+	}
+
+	/* Determine how VALUE is encoded */
+	tmp_len = strlen((const char *)p);
+
+	if (tmp_len >= value_length) {
+		/* It's one numeral */
+		err = tlv_convert_numeral(&entry->value.num, value_length, p);
+		if (err != ERR_CODE(PASSED))
+			goto exit;
+
+		entry->val_len = value_length;
+		entry->val_type = json_type_int;
+		DBG_PRINT("VALUE is numeral %s=%lu", entry->type,
+			  entry->value.num);
+
+		p += entry->val_len;
+
+		err = ERR_CODE(PASSED);
+
+	} else if (tmp_len + 1 == value_length) {
+		/* It's one string */
+		entry->value.str = (const char *)p;
+		entry->val_len = value_length;
+		entry->val_type = json_type_string;
+		DBG_PRINT("VALUE is string %s=%s", entry->type,
+			  entry->value.str);
+
+		p += entry->val_len;
+
+		err = ERR_CODE(PASSED);
+	} else {
+		entry->value.str = (const char *)p;
+		entry->val_len = tmp_len + 1;
+		entry->val_type = json_type_string;
+		DBG_PRINT("VALUE is string + other TLVs %s=%s", entry->type,
+			  entry->value.str);
+
+		/* It's other TLV(s) */
+		p_end = p + value_length;
+		p += entry->val_len;
+		list_elem = &(*tlv_list)->tlv_list;
+
+		do {
+			err = parse_tlv_list(list_elem, &p, p_end);
+			if (err == ERR_CODE(PASSED))
+				list_elem = &(*list_elem)->next;
+		} while (err == ERR_CODE(PASSED) && p < p_end);
+	}
+
+exit:
+	if (err == ERR_CODE(PASSED))
+		*str = p;
+
+	return err;
+}
+
+static bool check_tlvs(struct tlv *ref_tlv, struct tlv *tlv)
+{
+	bool ret = false;
+
+	if (!ref_tlv || !tlv)
+		goto exit;
+
+	/* Compare the Type of the TLV */
+	if (ref_tlv->type_len != tlv->type_len)
+		goto exit;
+
+	if (strcmp(ref_tlv->type, tlv->type))
+		goto exit;
+
+	/* Compare the Value */
+	if (ref_tlv->val_type == tlv->val_type) {
+		switch (ref_tlv->val_type) {
+		case json_type_int:
+			if (ref_tlv->value.num == tlv->value.num) {
+				DBG_PRINT("Found %s=%lu", tlv->type,
+					  tlv->value.num);
+				ret = true;
+			}
+			break;
+
+		case json_type_string:
+			if (ref_tlv->val_len == tlv->val_len &&
+			    !strcmp(ref_tlv->value.str, tlv->value.str)) {
+				DBG_PRINT("Found %s=%s", tlv->type,
+					  tlv->value.str);
+				ret = true;
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+
+exit:
+	return ret;
+}
+
+static void check_tlv_lists(struct tlv_list *ref_policy,
+			    struct tlv_list *policy)
+{
+	struct tlv_list *ref_entry = ref_policy;
+	struct tlv_list *entry = NULL;
+
+	for (; ref_entry; ref_entry = ref_entry->next) {
+		for (entry = policy; entry && !ref_entry->verified;
+		     entry = entry->next) {
+			if (entry->verified)
+				continue;
+
+			ref_entry->verified =
+				check_tlvs(ref_entry->tlv, entry->tlv);
+
+			if (!ref_entry->verified)
+				continue;
+
+			entry->verified = true;
+
+			if (ref_entry->tlv_list && entry->tlv_list) {
+				check_tlv_lists(ref_entry->tlv_list,
+						entry->tlv_list);
+			}
+		}
+	}
+}
+
+static int report_policy_comparison(struct tlv_list *list)
+{
+	int error = 0;
+	struct tlv_list *entry = list;
+
+	for (; entry; entry = entry->next) {
+		if (!entry->verified && entry->tlv) {
+			error++;
+			switch (entry->tlv->val_type) {
+			case json_type_int:
+				DBG_PRINT("Policy %s=%s not verified",
+					  entry->tlv->type,
+					  entry->tlv->value.str);
+				break;
+
+			case json_type_string:
+				DBG_PRINT("Policy %s=%s not verified",
+					  entry->tlv->type,
+					  entry->tlv->value.str);
+				break;
+
+			default:
+				DBG_PRINT("Policy %s unknown type",
+					  entry->tlv->type);
+				break;
+			}
+		}
+
+		if (entry->tlv_list)
+			error += report_policy_comparison(entry->tlv_list);
+	}
+
+	return error;
+}
+
+static int compare_policy_lists(struct tlv_list *ref_policy,
+				struct tlv_list *policy)
+{
+	int res = ERR_CODE(FAILED);
+	int ref_error = 0;
+	int error = 0;
+
+	check_tlv_lists(ref_policy, policy);
+
+	DBG_PRINT("Report missing value(s) in policy reference");
+	ref_error = report_policy_comparison(ref_policy);
+	DBG_PRINT("Missing %d value(s) in policy reference", ref_error);
+
+	DBG_PRINT("Report missing value(s) in policy retrieved");
+	error = report_policy_comparison(policy);
+	DBG_PRINT("Missing %d value(s) in policy retrieved", error);
+
+	if (!error && !ref_error)
+		res = ERR_CODE(PASSED);
+
+	return res;
+}
+
 int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
 			struct json_object *params)
 {
@@ -698,4 +1035,170 @@ int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
 		free(usages_attr);
 
 	return err;
+}
+
+int util_tlv_check_key_policy(struct subtest_data *subtest,
+			      const unsigned char *policy,
+			      unsigned int policy_len)
+{
+	int res = ERR_CODE(INTERNAL);
+
+	int error = 0;
+	struct json_object *okey_params = NULL;
+	unsigned char *ref_policy = NULL;
+	unsigned int ref_policy_len = 0;
+	const unsigned char *p = NULL;
+	const unsigned char *p_end = NULL;
+	unsigned int p_len = 0;
+	struct tlv_list *tlv_list = NULL;
+	struct tlv_list *ref_tlv_list = NULL;
+	struct tlv_list **list_elem = NULL;
+
+	if (!policy || !policy_len) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	res = util_tlv_read_key_policy(&ref_policy, &ref_policy_len,
+				       okey_params);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	if (policy_len > ref_policy_len) {
+		DBG_PRINT("Policy length is %u expected maximum %u bytes",
+			  policy_len, ref_policy_len);
+		error++;
+	}
+
+	/* Check first if policy is starting with POLICY string */
+	if (strncmp((const char *)policy, TLV_KEY_POLICY,
+		    MIN(policy_len, strlen(TLV_KEY_POLICY)))) {
+		DBG_PRINT("Policy string is not starting with %s",
+			  TLV_KEY_POLICY);
+		error++;
+		goto exit;
+	}
+
+	DBG_DHEX("POLICY Reference", (void *)ref_policy, ref_policy_len);
+	DBG_DHEX("POLICY Retrieved", (void *)policy, policy_len);
+
+	/*
+	 * Build the TLV list of the key policy given
+	 */
+	p = policy + strlen(TLV_KEY_POLICY) + 1;
+	p_end = policy + policy_len;
+
+	p_len = tlv_length(&p);
+	if (!p_len) {
+		DBG_PRINT("Policy variable list is empty");
+		error++;
+		goto exit;
+	}
+
+	if (p_len != (unsigned int)(p_end - p)) {
+		DBG_PRINT("Policy buffer and list lengths not equal");
+		error++;
+		goto exit;
+	}
+
+	list_elem = &tlv_list;
+	do {
+		res = parse_tlv_list(list_elem, &p, p_end);
+		list_elem = &(*list_elem)->next;
+	} while (res == ERR_CODE(PASSED) && p < p_end);
+
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/*
+	 * Build the TLV list of the key policy reference
+	 */
+	p = ref_policy + strlen(TLV_KEY_POLICY) + 1;
+
+	p_len = tlv_length(&p);
+	if (!p_len) {
+		DBG_PRINT("Reference Policy variable list is empty");
+		error++;
+		goto exit;
+	}
+
+	p_end = p + p_len;
+	list_elem = &ref_tlv_list;
+	do {
+		res = parse_tlv_list(list_elem, &p, p_end);
+		if (res == ERR_CODE(PASSED))
+			list_elem = &(*list_elem)->next;
+	} while (res == ERR_CODE(PASSED) && p < p_end);
+
+	if (res == ERR_CODE(PASSED))
+		res = compare_policy_lists(ref_tlv_list, tlv_list);
+
+exit:
+	if (error)
+		res = ERR_CODE(FAILED);
+
+	if (ref_policy)
+		free(ref_policy);
+
+	free_tlv_list(&tlv_list);
+	free_tlv_list(&ref_tlv_list);
+
+	return res;
+}
+
+int util_tlv_check_lifecycle(const unsigned char *lifecyle,
+			     unsigned int lifecycle_len)
+{
+	const unsigned char *p = lifecyle;
+	const unsigned char *p_end = NULL;
+	unsigned int p_len = 0;
+
+	if (!lifecyle && !lifecycle_len)
+		return ERR_CODE(PASSED);
+
+	if (!lifecyle && lifecycle_len) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	if (lifecyle && !lifecycle_len) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	/* Check first if policy is starting with POLICY string */
+	if (strncmp((const char *)lifecyle, TLV_LIFECYCLE,
+		    MIN(lifecycle_len, strlen(TLV_LIFECYCLE)))) {
+		DBG_PRINT("Lifecycle string is not starting with %s",
+			  TLV_LIFECYCLE);
+		return ERR_CODE(FAILED);
+	}
+
+	DBG_DHEX("LIFECYCLE Retrieved", (void *)lifecyle, lifecycle_len);
+
+	p_end = p + lifecycle_len;
+	p += strlen(TLV_LIFECYCLE) + 1;
+
+	p_len = tlv_length(&p);
+	if (!p_len) {
+		DBG_PRINT("Lifecycle variable list is empty");
+		return ERR_CODE(FAILED);
+	}
+
+	if (p_len != (unsigned int)(p_end - p)) {
+		DBG_PRINT("Lifecycle buffer and list length not equal");
+		return ERR_CODE(FAILED);
+	}
+
+	DBG_PRINT("Lifecycle(s):");
+	while (p < p_end) {
+		DBG_PRINT("\t - %s", p);
+		p += strlen((const char *)p) + 1;
+	}
+
+	return ERR_CODE(PASSED);
 }

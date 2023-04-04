@@ -20,7 +20,8 @@ set_target_properties(ele PROPERTIES C_VISIBILITY_PRESET hidden)
 
 target_sources(ele PRIVATE
                entry.c
-               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c keymgr_derive.c key_policy.c>
+               $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c keymgr_derive.c
+                    key_policy.c lifecycle.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_MAC}>:mac.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>

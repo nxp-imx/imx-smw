@@ -29,6 +29,22 @@ static int ecc_public_key_length(unsigned int security_size);
 #define ELE_RAW_KEY_TYPE_MASK	      BIT(12)
 
 /*
+ * Key lifetime encoding
+ */
+#define ELE_KEY_TRANSIENT  0x0
+#define ELE_KEY_PERSISTENT 0x1
+#define ELE_KEY_PERMANENT  0xFF
+
+#define ELE_KEY_LIFETIME_PERSISTENCE_MASK 0xFF
+#define ELE_KEY_LIFETIME_PERSISTENCE_GET(val)                                  \
+	((val) & (ELE_KEY_LIFETIME_PERSISTENCE_MASK))
+#define ELE_KEY_LIFETIME_LOCATION_MASK	0xFFFFFF
+#define ELE_KEY_LIFETIME_LOCATION_SHIFT 8
+#define ELE_KEY_LIFETIME_LOCATION_GET(val)                                     \
+	(((val) >> ELE_KEY_LIFETIME_LOCATION_SHIFT) &                          \
+	 ELE_KEY_LIFETIME_LOCATION_MASK)
+
+/*
  * Macro setting the ELE key type category
  */
 #define ELE_ASYM_PUBLIC_KEY_TYPE(type)                                         \
@@ -120,6 +136,19 @@ static const struct ele_key_def *get_key_def_by_ele_type(unsigned int key_type)
 	return ret_key;
 }
 
+static enum smw_keymgr_privacy_id
+get_key_privacy_by_ele_type(unsigned int key_type)
+{
+	enum smw_keymgr_privacy_id privacy = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+
+	if (key_type & ELE_ASYM_KEYPAIR_TYPE_MASK)
+		privacy = SMW_KEYMGR_PRIVACY_ID_PAIR;
+	else if (key_type & ELE_ASYM_PUBLIC_KEY_TYPE_MASK)
+		privacy = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
+
+	return privacy;
+}
+
 static int get_full_ele_key_type(enum smw_config_key_type_id key_type_id,
 				 hsm_key_type_t *ele_type)
 {
@@ -137,6 +166,32 @@ static int get_full_ele_key_type(enum smw_config_key_type_id key_type_id,
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+static enum smw_keymgr_persistence_id
+get_key_persistence(hsm_key_lifetime_t lifetime)
+{
+	enum smw_keymgr_persistence_id persistence =
+		SMW_KEYMGR_PERSISTENCE_ID_INVALID;
+
+	switch (ELE_KEY_LIFETIME_PERSISTENCE_GET(lifetime)) {
+	case ELE_KEY_TRANSIENT:
+		persistence = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
+		break;
+
+	case ELE_KEY_PERSISTENT:
+		persistence = SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT;
+		break;
+
+	case ELE_KEY_PERMANENT:
+		persistence = SMW_KEYMGR_PERSISTENCE_ID_PERMANENT;
+		break;
+
+	default:
+		break;
+	}
+
+	return persistence;
 }
 
 /**
@@ -421,7 +476,8 @@ static int generate_key(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	if (key_args->key_attributes.persistent_storage) {
+	if (key_args->key_attributes.persistence ==
+	    SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT) {
 		op_args.key_lifetime = HSM_SE_KEY_STORAGE_PERSISTENT;
 		op_args.key_group = PERSISTENT_KEY_GROUP;
 	} else {
@@ -601,6 +657,70 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 	return status;
 }
 
+static int get_key_attributes(struct hdl *hdl, void *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct smw_keymgr_get_key_attributes_args *key_attrs = NULL;
+	op_get_key_attr_args_t op_key_attrs = { 0 };
+	const struct ele_key_def *key_def = NULL;
+	unsigned char *policy_list = NULL;
+	unsigned char *lifecycle_list = NULL;
+	unsigned int policy_list_length = 0;
+	unsigned int lifecycle_list_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key_attrs = args;
+
+	op_key_attrs.key_identifier = key_attrs->identifier.id;
+
+	status = get_key_attributes_operation(hdl, &op_key_attrs);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	key_def = get_key_def_by_ele_type(op_key_attrs.key_type);
+	if (!key_def) {
+		status = SMW_STATUS_KEY_INVALID;
+		goto end;
+	}
+
+	key_attrs->identifier.type_id = key_def->smw_key_type;
+	key_attrs->identifier.security_size = op_key_attrs.bit_key_sz;
+	key_attrs->identifier.privacy_id =
+		get_key_privacy_by_ele_type(op_key_attrs.key_type);
+	key_attrs->identifier.persistence_id =
+		get_key_persistence(op_key_attrs.key_lifetime);
+	key_attrs->identifier.storage_id =
+		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
+
+	status = ele_get_key_policy(&policy_list, &policy_list_length,
+				    op_key_attrs.key_usage,
+				    op_key_attrs.permitted_algo);
+
+	if (status == SMW_STATUS_OK)
+		status = ele_get_lifecycle(&lifecycle_list,
+					   &lifecycle_list_length,
+					   op_key_attrs.lifecycle);
+
+	if (status == SMW_STATUS_OK) {
+		smw_keymgr_set_policy(key_attrs, policy_list,
+				      policy_list_length);
+		smw_keymgr_set_lifecycle(key_attrs, lifecycle_list,
+					 lifecycle_list_length);
+	} else {
+		if (policy_list)
+			SMW_UTILS_FREE(policy_list);
+
+		if (lifecycle_list)
+			SMW_UTILS_FREE(lifecycle_list);
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
 			hsm_pubkey_type_t *ele_type)
 {
@@ -708,6 +828,9 @@ bool ele_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		break;
 	case OPERATION_ID_GET_KEY_LENGTHS:
 		*status = get_key_lengths(hdl, args);
+		break;
+	case OPERATION_ID_GET_KEY_ATTRIBUTES:
+		*status = get_key_attributes(hdl, args);
 		break;
 	default:
 		return false;

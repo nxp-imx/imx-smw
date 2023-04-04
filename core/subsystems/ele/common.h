@@ -195,6 +195,26 @@ int ele_set_key_policy(const unsigned char *policy, unsigned int policy_len,
 		       unsigned int *actual_policy_len);
 
 /**
+ * ele_get_key_policy() - Convert the ELE key policy to user key policy
+ * @policy: Pointer to the key policy
+ * @policy_len: Length of @policy
+ * @ele_usage: ELE key usage(s) bit mask
+ * @ele_algo: ELE key permitted algorithm
+ *
+ * On success, the function allocates the @policy buffer and returns its length
+ * in the @policy_len.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_INVALID_PARAM              - Invalid parameters
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
+ */
+int ele_get_key_policy(unsigned char **policy, unsigned int *policy_len,
+		       hsm_key_usage_t ele_usage,
+		       hsm_permitted_algo_t ele_algo);
+
+/**
  * ele_export_public_key() - Export the ELE public key
  * @hdl: Pointer to the ELE handles structure.
  * @key_desc: Key descriptor
@@ -214,5 +234,23 @@ int ele_set_key_policy(const unsigned char *policy, unsigned int policy_len,
  */
 int ele_export_public_key(struct hdl *hdl,
 			  struct smw_keymgr_descriptor *key_desc);
+
+/**
+ * ele_get_lifecycle() - Convert the ELE lifecycle to user lifecycle
+ * @lifecycle: Pointer to the lifecycle string
+ * @lifecycle_len: Length of @lifecycle
+ * @ele_lifecycle: ELE lifecycle(s) bit mask
+ *
+ * On success, the function allocates the @lifecycle buffer and returns its
+ * length in the @lifecycle_len.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_INVALID_PARAM              - Invalid parameters
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
+ */
+int ele_get_lifecycle(unsigned char **lifecycle, unsigned int *lifecycle_len,
+		      hsm_key_lifecycle_t ele_lifecycle);
 
 #endif /* __COMMON_H__ */

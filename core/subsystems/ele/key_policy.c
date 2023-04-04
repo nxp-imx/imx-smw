@@ -14,27 +14,38 @@ struct perm_algo_param {
 	int shift;
 	int mask;
 	int min_bit;
-	int (*encode)(hsm_permitted_algo_t *algo, const unsigned char *value,
-		      unsigned int value_size,
+	int (*to_value)(hsm_permitted_algo_t *algo, const unsigned char *value,
+			unsigned int value_size,
+			const struct perm_algo_param *param);
+	int (*to_str)(unsigned char **str, int str_length,
+		      hsm_permitted_algo_t algo,
 		      const struct perm_algo_param *param);
 };
 
-#define KEY_USAGE(_smw, _ele)                                                  \
+#define KEY_USAGE(_smw, _ele, _restricted)                                     \
 	{                                                                      \
-		.str = _smw##_STR, .ele = HSM_KEY_USAGE_##_ele                 \
+		.str = _smw##_STR, .ele = HSM_KEY_USAGE_##_ele,                \
+		.restricted = _restricted                                      \
 	}
 
+/**
+ * struct - Key usage
+ * @str: SMW usage name used for TLV encoding.
+ * @ele: ELE key usage value.
+ * @restricted: Is usage restricted to an algorithm.
+ */
 static const struct {
 	const char *str;
 	hsm_key_usage_t ele;
-} key_usage[] = { KEY_USAGE(EXPORT, EXPORT),
-		  KEY_USAGE(ENCRYPT, ENCRYPT),
-		  KEY_USAGE(DECRYPT, DECRYPT),
-		  KEY_USAGE(SIGN_MESSAGE, SIGN_MSG),
-		  KEY_USAGE(VERIFY_MESSAGE, VERIFY_MSG),
-		  KEY_USAGE(SIGN_HASH, SIGN_HASH),
-		  KEY_USAGE(VERIFY_HASH, VERIFY_HASH),
-		  KEY_USAGE(DERIVE, DERIVE) };
+	bool restricted;
+} key_usage[] = { KEY_USAGE(EXPORT, EXPORT, false),
+		  KEY_USAGE(ENCRYPT, ENCRYPT, true),
+		  KEY_USAGE(DECRYPT, DECRYPT, true),
+		  KEY_USAGE(SIGN_MESSAGE, SIGN_MSG, true),
+		  KEY_USAGE(VERIFY_MESSAGE, VERIFY_MSG, true),
+		  KEY_USAGE(SIGN_HASH, SIGN_HASH, true),
+		  KEY_USAGE(VERIFY_HASH, VERIFY_HASH, true),
+		  KEY_USAGE(DERIVE, DERIVE, true) };
 
 #define KEY_ALGO(_smw, _ele)                                                   \
 	{                                                                      \
@@ -48,18 +59,18 @@ static const struct {
 		   KEY_ALGO(SHA_256, 0x9), KEY_ALGO(SHA_384, 0xA),
 		   KEY_ALGO(SHA_512, 0xB), KEY_ALGO(ANY, 0xFF) };
 
-static int permitted_algo_hash(hsm_permitted_algo_t *algo,
-			       const unsigned char *value,
-			       unsigned int value_size,
-			       const struct perm_algo_param *param)
+static int perm_algo_hash_val(hsm_permitted_algo_t *algo,
+			      const unsigned char *value,
+			      unsigned int value_size,
+			      const struct perm_algo_param *param)
 {
 	(void)value_size;
 
-	size_t i;
+	size_t i = 0;
 
 	SMW_DBG_PRINTF(DEBUG, "%s(%d) HASH=%s\n", __func__, __LINE__, value);
 
-	for (i = 0; i < ARRAY_SIZE(hash_algos); i++) {
+	for (; i < ARRAY_SIZE(hash_algos); i++) {
 		if (SMW_UTILS_STRCMP(hash_algos[i].str, (char *)value))
 			continue;
 
@@ -79,12 +90,12 @@ static int permitted_algo_hash(hsm_permitted_algo_t *algo,
 	return false;
 }
 
-static int permitted_algo_length(hsm_permitted_algo_t *algo,
-				 const unsigned char *value,
-				 unsigned int value_size,
-				 const struct perm_algo_param *param)
+static int perm_algo_length_val(hsm_permitted_algo_t *algo,
+				const unsigned char *value,
+				unsigned int value_size,
+				const struct perm_algo_param *param)
 {
-	int len;
+	int len = 0;
 
 	len = smw_tlv_convert_numeral(value_size, (unsigned char *)value);
 	if (len > param->mask)
@@ -93,12 +104,106 @@ static int permitted_algo_length(hsm_permitted_algo_t *algo,
 	*algo = SET_CLEAR_MASK(*algo, len << param->shift,
 			       param->mask << param->shift);
 
-	*algo |= param->min_bit;
-
 	SMW_DBG_PRINTF(DEBUG, "%s(%d) algo=0x%08X\n", __func__, __LINE__,
 		       *algo);
 
 	return true;
+}
+
+static int perm_algo_minlength_val(hsm_permitted_algo_t *algo,
+				   const unsigned char *value,
+				   unsigned int value_size,
+				   const struct perm_algo_param *param)
+{
+	if (perm_algo_length_val(algo, value, value_size, param)) {
+		*algo |= param->min_bit;
+
+		SMW_DBG_PRINTF(DEBUG, "%s(%d) algo=0x%08X\n", __func__,
+			       __LINE__, *algo);
+		return true;
+	}
+
+	return false;
+}
+
+static int perm_algo_hash_str(unsigned char **str, int str_length,
+			      hsm_permitted_algo_t algo,
+			      const struct perm_algo_param *param)
+{
+	int out_len = 0;
+	size_t i = 0;
+	int hash_algo = 0;
+
+	hash_algo = (algo >> param->shift) & param->mask;
+
+	if (hash_algo) {
+		for (; i < ARRAY_SIZE(hash_algos); i++) {
+			if (hash_algos[i].value != hash_algo)
+				continue;
+
+			SMW_DBG_PRINTF(DEBUG, "%s(%d) %s=%s\n", __func__,
+				       __LINE__, param->str, hash_algos[i].str);
+
+			out_len = SMW_UTILS_STRLEN(hash_algos[i].str) + 1;
+			out_len = SMW_TLV_ELEMENT_LENGTH(param->str, out_len);
+
+			if (*str) {
+				if (str_length >= out_len)
+					smw_tlv_set_string(str, param->str,
+							   hash_algos[i].str);
+				else
+					out_len = -1;
+			}
+
+			break;
+		}
+	}
+
+	return out_len;
+}
+
+static int perm_algo_length_str(unsigned char **str, int str_length,
+				hsm_permitted_algo_t algo,
+				const struct perm_algo_param *param)
+{
+	uint64_t algo_length = 0;
+	int out_len = 0;
+
+	if (algo & param->min_bit)
+		return out_len;
+
+	algo_length = (algo >> param->shift) & param->mask;
+
+	if (algo_length) {
+		out_len = smw_tlv_numeral_length(algo_length);
+		out_len = SMW_TLV_ELEMENT_LENGTH(param->str, out_len);
+
+		SMW_DBG_PRINTF(DEBUG, "%s(%d) %s=%lu\n", __func__, __LINE__,
+			       param->str, algo_length);
+
+		if (*str) {
+			if (str_length >= out_len)
+				smw_tlv_set_numeral(str, param->str,
+						    algo_length);
+			else
+				out_len = -1;
+		}
+	}
+
+	return out_len;
+}
+
+static int perm_algo_minlength_str(unsigned char **str, int str_length,
+				   hsm_permitted_algo_t algo,
+				   const struct perm_algo_param *param)
+{
+	int out_len = 0;
+
+	if (algo & param->min_bit)
+		out_len = perm_algo_length_str(str, str_length,
+					       algo & ~param->min_bit, param);
+
+	return out_len;
 }
 
 #define PERMITTED_ALGO_HMAC_ANY_HASH		   (PERMITTED_ALGO_HMAC_SHA256 | 0xFF)
@@ -106,52 +211,59 @@ static int permitted_algo_length(hsm_permitted_algo_t *algo,
 #define PERMITTED_ALGO_RSA_PKCS1_V15_ANY_HASH	   (0x060002FF)
 #define PERMITTED_ALGO_RSA_PKCS1_PSS_MGF1_ANY_HASH (0x060003FF)
 
-#define PERM_ALGO_PARAM(_name, _shift, _mask, _min_bit, _encode)               \
+#define PERM_ALGO_PARAM(_name, _shift, _mask, _min_bit, _to_value, _to_str)    \
 	{                                                                      \
 		.str = _name##_STR, .shift = _shift, .mask = _mask,            \
-		.min_bit = _min_bit, .encode = _encode                         \
+		.min_bit = _min_bit, .to_value = _to_value, .to_str = _to_str  \
 	}
 
 static const struct perm_algo_param perm_hmac_algo[] = {
-	PERM_ALGO_PARAM(HASH, 0, 0xFF, 0, &permitted_algo_hash),
-	PERM_ALGO_PARAM(LENGTH, 16, 0x3F, 0, &permitted_algo_length),
-	PERM_ALGO_PARAM(MIN_LENGTH, 16, 0x3F, BIT(15), &permitted_algo_length),
+	PERM_ALGO_PARAM(HASH, 0, 0xFF, 0, &perm_algo_hash_val,
+			&perm_algo_hash_str),
+	PERM_ALGO_PARAM(LENGTH, 16, 0x3F, BIT(15), &perm_algo_length_val,
+			&perm_algo_length_str),
+	PERM_ALGO_PARAM(MIN_LENGTH, 16, 0x3F, BIT(15), &perm_algo_minlength_val,
+			&perm_algo_minlength_str),
 	{ 0 }
 };
 
 static const struct perm_algo_param perm_cmac_algo[] = {
-	PERM_ALGO_PARAM(LENGTH, 16, 0x3F, 0, &permitted_algo_length),
-	PERM_ALGO_PARAM(MIN_LENGTH, 16, 0x3F, BIT(15), &permitted_algo_length),
+	PERM_ALGO_PARAM(LENGTH, 16, 0x3F, BIT(15), &perm_algo_length_val,
+			&perm_algo_length_str),
+	PERM_ALGO_PARAM(MIN_LENGTH, 16, 0x3F, BIT(15), &perm_algo_minlength_val,
+			&perm_algo_minlength_str),
 	{ 0 }
 };
 
 static const struct perm_algo_param perm_hash_algo[] = {
-	PERM_ALGO_PARAM(HASH, 0, 0xFF, 0, &permitted_algo_hash),
+	PERM_ALGO_PARAM(HASH, 0, 0xFF, 0, &perm_algo_hash_val,
+			&perm_algo_hash_str),
 	{ 0 }
 };
 
-#define PERM_ALGO(_name, _base, _params)                                       \
+#define PERM_ALGO(_name, _base, _length_mask, _params)                         \
 	{                                                                      \
 		.str = _name##_STR, .algo_base = PERMITTED_ALGO_##_base,       \
-		.params = _params                                              \
+		.length_mask = _length_mask, .params = _params                 \
 	}
 
 static const struct {
 	const char *str;
 	int algo_base;
+	int length_mask;
 	const struct perm_algo_param *params;
 } perm_algos[] = {
-	PERM_ALGO(HMAC, HMAC_ANY_HASH, perm_hmac_algo),
-	PERM_ALGO(CMAC, CMAC, perm_cmac_algo),
-	PERM_ALGO(CTR, CTR, NULL),
-	PERM_ALGO(ECB_NO_PADDING, ECB_NO_PADDING, NULL),
-	PERM_ALGO(CBC_NO_PADDING, CBC_NO_PADDING, NULL),
-	PERM_ALGO(ALL_CIPHER, ALL_CIPHER, NULL),
-	PERM_ALGO(CCM, CCM, NULL),
-	PERM_ALGO(RSA_PKCS1V15, RSA_PKCS1_V15_ANY_HASH, perm_hash_algo),
-	PERM_ALGO(RSA_PSS, RSA_PKCS1_PSS_MGF1_ANY_HASH, perm_hash_algo),
-	PERM_ALGO(ECDSA, ECDSA_ANY_HASH, perm_hash_algo),
-	PERM_ALGO(ALL_AEAD, ALL_AEAD, NULL)
+	PERM_ALGO(HMAC, HMAC_ANY_HASH, (0x3F << 16) | BIT(15), perm_hmac_algo),
+	PERM_ALGO(CMAC, CMAC, (0x3F << 16) | BIT(15), perm_cmac_algo),
+	PERM_ALGO(CTR, CTR, 0, NULL),
+	PERM_ALGO(ECB_NO_PADDING, ECB_NO_PADDING, 0, NULL),
+	PERM_ALGO(CBC_NO_PADDING, CBC_NO_PADDING, 0, NULL),
+	PERM_ALGO(ALL_CIPHER, ALL_CIPHER, 0, NULL),
+	PERM_ALGO(CCM, CCM, 0, NULL),
+	PERM_ALGO(RSA_PKCS1V15, RSA_PKCS1_V15_ANY_HASH, 0, perm_hash_algo),
+	PERM_ALGO(RSA_PSS, RSA_PKCS1_PSS_MGF1_ANY_HASH, 0, perm_hash_algo),
+	PERM_ALGO(ECDSA, ECDSA_ANY_HASH, 0, perm_hash_algo),
+	PERM_ALGO(ALL_AEAD, ALL_AEAD, 0, NULL)
 };
 
 static int convert_algo_param(hsm_permitted_algo_t *algo,
@@ -166,7 +278,7 @@ static int convert_algo_param(hsm_permitted_algo_t *algo,
 			SMW_DBG_PRINTF(DEBUG, "%s(%d) Param=%s\n", __func__,
 				       __LINE__, type);
 
-			return param->encode(algo, value, value_size, param);
+			return param->to_value(algo, value, value_size, param);
 		}
 
 		param++;
@@ -296,14 +408,14 @@ exit:
 }
 
 /**
- * convert_usage() - Convert SMW to ELE key usage value
+ * convert_usage_to_value() - Convert SMW to ELE key usage value
  * @value: String value to convert
  * @usage: ELE key usage bitmask
  *
  * Return:
  * True if value supported, otherwise false.
  */
-static bool convert_usage(const char *value, hsm_key_usage_t *usage)
+static bool convert_usage_to_value(const char *value, hsm_key_usage_t *usage)
 {
 	unsigned int i;
 
@@ -316,6 +428,154 @@ static bool convert_usage(const char *value, hsm_key_usage_t *usage)
 	}
 
 	return false;
+}
+
+/**
+ * key_algo_to_string() - Convert ELE key algorithm value(s) to SMW's policy
+ *                        string
+ * @str: Pointer to string value of @algo bitmask
+ * @length: Maximum length of the @str
+ * @algo: ELE key algo bitmask
+ *
+ * Return:
+ * If @str is NULL, the expected length of @str
+ * If @str is not NULL, the length of @str built
+ * -1 in case of error (@str's length too small
+ */
+static int key_algo_to_string(unsigned char **str, int length,
+			      hsm_permitted_algo_t algo)
+{
+	const struct perm_algo_param *algo_params = NULL;
+	const char *algo_str = NULL;
+	unsigned char *p = *str;
+	int out_len = 0;
+	int rem_len = length;
+	int algo_len = 0;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (i = 0; i < ARRAY_SIZE(perm_algos); i++) {
+		if ((algo & perm_algos[i].algo_base) ==
+		    (algo & ~perm_algos[i].length_mask)) {
+			algo_str = perm_algos[i].str;
+			algo_params = perm_algos[i].params;
+			break;
+		}
+	}
+
+	if (!algo_str)
+		goto exit;
+
+	SMW_DBG_PRINTF(DEBUG, "Key algo %s\n", algo_str);
+
+	algo_len = SMW_UTILS_STRLEN(algo_str) + 1;
+	algo_len = SMW_TLV_ELEMENT_LENGTH(ALGO_STR, algo_len);
+
+	if (p) {
+		if (rem_len >= algo_len) {
+			smw_tlv_set_string(&p, ALGO_STR, algo_str);
+			rem_len -= algo_len;
+		} else {
+			out_len = -1;
+			goto exit;
+		}
+	}
+
+	out_len += algo_len;
+
+	while (algo_params && algo_params->str) {
+		algo_len = algo_params->to_str(&p, rem_len, algo, algo_params);
+
+		if (algo_len == -1) {
+			out_len = -1;
+			goto exit;
+		} else {
+			out_len += algo_len;
+		}
+
+		algo_params++;
+	}
+
+	if (p)
+		smw_tlv_set_length(p - out_len, p);
+
+exit:
+	if (out_len != -1 && *str)
+		*str = p;
+
+	SMW_DBG_PRINTF(DEBUG, "%s return length %u\n", __func__, out_len);
+	return out_len;
+}
+
+/**
+ * key_usage_algo_to_string() - Convert ELE key usage and algorithm value(s) to
+ *                              SMW's policy string
+ * @str: Pointer to string value of @usage and @algo bitmask
+ * @length: Maximum length of the @str
+ * @usage: ELE key usage bitmask
+ * @algo: ELE key algo bitmask
+ *
+ * Return:
+ * If @str is NULL, the expected length of @str
+ * If @str is not NULL, the length of @str built
+ * -1 in case of error (@str's length too small
+ */
+static int key_usage_algo_to_string(unsigned char **str, int length,
+				    hsm_key_usage_t usage,
+				    hsm_permitted_algo_t algo)
+{
+	unsigned char *p = *str;
+	int out_len = 0;
+	int rem_len = length;
+	int usage_len = 0;
+	int algo_len = 0;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (i = 0; i < ARRAY_SIZE(key_usage); i++) {
+		if (!(usage & key_usage[i].ele))
+			continue;
+
+		SMW_DBG_PRINTF(DEBUG, "Key usage: %s\n", key_usage[i].str);
+
+		usage_len = SMW_UTILS_STRLEN(key_usage[i].str) + 1;
+		usage_len = SMW_TLV_ELEMENT_LENGTH(USAGE_STR, usage_len);
+
+		if (p) {
+			if (rem_len >= usage_len) {
+				smw_tlv_set_string(&p, USAGE_STR,
+						   key_usage[i].str);
+				rem_len -= usage_len;
+			} else {
+				out_len = -1;
+				break;
+			}
+		}
+
+		if (key_usage[i].restricted) {
+			/* Get the expected algo string length */
+			algo_len = key_algo_to_string(&p, rem_len, algo);
+			if (algo_len == -1)
+				break;
+
+			usage_len += algo_len;
+
+			if (p) {
+				rem_len -= algo_len;
+				smw_tlv_set_length(p - usage_len, p);
+			}
+		}
+
+		out_len += usage_len;
+	}
+
+	if (out_len != 1 && *str)
+		*str = p;
+
+	SMW_DBG_PRINTF(DEBUG, "%s return length %u\n", __func__, out_len);
+	return out_len;
 }
 
 /**
@@ -479,7 +739,7 @@ int ele_set_key_policy(const unsigned char *policy, unsigned int policy_len,
 
 		usage_str = (char *)value;
 
-		if (!convert_usage(usage_str, ele_usage)) {
+		if (!convert_usage_to_value(usage_str, ele_usage)) {
 			ignored++;
 			continue;
 		}
@@ -536,6 +796,65 @@ exit:
 		}
 
 		*actual_policy_len = 0;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int ele_get_key_policy(unsigned char **policy, unsigned int *policy_len,
+		       hsm_key_usage_t ele_usage, hsm_permitted_algo_t ele_algo)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	int usage_str_len = 0;
+	unsigned char *p = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!policy || !policy_len)
+		goto exit;
+
+	/* Get the expected usage(s) and algo string length */
+	usage_str_len = key_usage_algo_to_string(&p, usage_str_len, ele_usage,
+						 ele_algo);
+	if (usage_str_len == -1) {
+		status = SMW_STATUS_OPERATION_FAILURE;
+		goto exit;
+	}
+
+	/* Calculate policy length and allocate the policy string */
+	*policy_len = SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_str_len);
+
+	*policy = SMW_UTILS_CALLOC(1, *policy_len);
+	if (!*policy) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto exit;
+	}
+
+	p = *policy;
+	smw_tlv_set_type(&p, POLICY_STR);
+
+	/* Get the expected usage(s) and algo string */
+	usage_str_len = key_usage_algo_to_string(&p, usage_str_len, ele_usage,
+						 ele_algo);
+	if (usage_str_len == -1) {
+		status = SMW_STATUS_OPERATION_FAILURE;
+	} else {
+		smw_tlv_set_length(*policy, p);
+		status = SMW_STATUS_OK;
+	}
+
+exit:
+	if (status != SMW_STATUS_OK) {
+		if (policy && *policy) {
+			SMW_UTILS_FREE(*policy);
+
+			*policy = NULL;
+		}
+
+		if (policy_len)
+			*policy_len = 0;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

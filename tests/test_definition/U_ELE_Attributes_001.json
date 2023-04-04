@@ -1,0 +1,116 @@
+{
+	"keys": {
+		"key AES": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": [
+					[ "ECB_NO_PADDING" ]
+				],
+				"decrypt": [
+					[ "ECB_NO_PADDING" ]
+				]
+			}
+		},
+		"key ECDSA sign": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_hash": [
+					[ "ECDSA", "HASH=SHA256" ]
+				],
+				"sign_message": [
+					[ "ECDSA", "HASH=SHA256" ]
+				]
+			}
+		},
+		"key ECDSA verify": {
+			"type": "NIST",
+			"security_size": 384,
+			"policy": {
+				"verify_hash": [
+					[ "ECDSA", "HASH=SHA384" ]
+				],
+				"verify_message": [
+					[ "ECDSA", "HASH=SHA384" ]
+				]
+			}
+		},
+		"key MAC": {
+			"type": "AES",
+			"security_size": 256,
+			"policy":{
+				"sign_message": [
+					[ "CMAC", "MIN_LENGTH=8" ]
+				],
+				"verify_message": [
+					[ "CMAC", "MIN_LENGTH=8" ]
+				]
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key AES"
+	},
+	"subtest 2": {
+		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem": "ELE",
+		"key_name": "key AES",
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "DELETE",
+		"key_name": "key AES",
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key ECDSA sign"
+	},
+	"subtest 5": {
+		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem": "ELE",
+		"key_name": "key ECDSA sign",
+		"depends": 4
+	},
+	"subtest 6": {
+		"command": "DELETE",
+		"key_name": "key ECDSA sign",
+		"depends": 4
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key ECDSA verify"
+	},
+	"subtest 8": {
+		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem": "ELE",
+		"key_name": "key ECDSA verify",
+		"depends": 7
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "key ECDSA verify",
+		"depends": 7
+	},
+	"subtest 10": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key MAC"
+	},
+	"subtest 11": {
+		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem": "ELE",
+		"key_name": "key MAC",
+		"depends": 10
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "key MAC",
+		"depends": 10
+	}
+}

@@ -43,6 +43,15 @@ enum smw_keymgr_format_id {
 	SMW_KEYMGR_FORMAT_ID_INVALID
 };
 
+enum smw_keymgr_persistence_id {
+	/* Key persistence */
+	SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT,
+	SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT,
+	SMW_KEYMGR_PERSISTENCE_ID_PERMANENT,
+	SMW_KEYMGR_PERSISTENCE_ID_NB,
+	SMW_KEYMGR_PERSISTENCE_ID_INVALID
+};
+
 /**
  * struct smw_keymgr_identifier - Key identifier
  * @subsystem_id: Secure Subsystem ID
@@ -51,7 +60,8 @@ enum smw_keymgr_format_id {
  * @attribute: Key attribute
  * @security_size: Security size in bits
  * @id: Key ID set by the subsystem
- * @persistent: Is persistent or transient key
+ * @persistence_id: Key persistence ID
+ * @storage_id: Key storage identifier
  *
  * The value of @attribute is key type dependent.
  * For RSA key type, it represents the public exponent length in bytes.
@@ -63,7 +73,8 @@ struct smw_keymgr_identifier {
 	unsigned int attribute;
 	unsigned int security_size;
 	uint32_t id;
-	bool persistent;
+	enum smw_keymgr_persistence_id persistence_id;
+	uint32_t storage_id;
 };
 
 /**
@@ -108,7 +119,7 @@ struct smw_keymgr_descriptor {
 
 /**
  * struct smw_keymgr_attributes - Key attributes list.
- * @persistent_storage: Use persistent subsystem storage or not.
+ * @persistence: Define key persistence.
  * @rsa_pub_exp: Pointer to rsa public exponent.
  * @rsa_pub_exp_len: @rsa_pub_exp length in bytes.
  * @flush_key: Flush persistent key(s)
@@ -118,7 +129,7 @@ struct smw_keymgr_descriptor {
  * @pub_key_attributes_list_length: Length of @pub_key_attributes_list
  */
 struct smw_keymgr_attributes {
-	bool persistent_storage;
+	enum smw_keymgr_persistence_id persistence;
 	unsigned char *rsa_pub_exp;
 	unsigned int rsa_pub_exp_len;
 	bool flush_key;
@@ -175,6 +186,17 @@ struct smw_keymgr_export_key_args {
  */
 struct smw_keymgr_delete_key_args {
 	struct smw_keymgr_descriptor key_descriptor;
+};
+
+/**
+ * struct smw_keymgr_get_key_attributes_args - Get Key attributes arguments
+ * @identifier: Key identifier
+ * @pub: Pointer to the public get key attributes arguments structure
+ *
+ */
+struct smw_keymgr_get_key_attributes_args {
+	struct smw_keymgr_identifier identifier;
+	struct smw_get_key_attributes_args *pub;
 };
 
 /**
@@ -516,5 +538,29 @@ void smw_keymgr_set_attributes_list(struct smw_keymgr_attributes *key_attrs,
  */
 int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 			      enum smw_keymgr_privacy_id *privacy_id);
+
+/**
+ * smw_keymgr_set_policy() - Set key attributes policy list
+ * @attrs: Pointer to get key attributes arguments.
+ * @policy: Pointer to the policy list buffer.
+ * @length: Policy list length.
+ *
+ * Return:
+ * none
+ */
+void smw_keymgr_set_policy(struct smw_keymgr_get_key_attributes_args *attrs,
+			   unsigned char *policy, unsigned int length);
+
+/**
+ * smw_keymgr_set_lifecycle() - Set key attributes lifecycle list
+ * @attrs: Pointer to get key attributes arguments.
+ * @lifecycle: Pointer to the lifecycle list buffer.
+ * @length: Lifecycle list length.
+ *
+ * Return:
+ * none
+ */
+void smw_keymgr_set_lifecycle(struct smw_keymgr_get_key_attributes_args *attrs,
+			      unsigned char *lifecycle, unsigned int length);
 
 #endif /* __KEYMGR_H__ */

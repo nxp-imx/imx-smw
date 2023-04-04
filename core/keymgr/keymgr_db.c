@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "smw_status.h"
@@ -12,7 +12,7 @@
 static void prepare_osal_key(struct smw_keymgr_identifier *identifier,
 			     struct osal_key *key)
 {
-	key->persistent = identifier->persistent;
+	key->persistent = identifier->persistence_id;
 	key->info = identifier;
 	key->info_size = sizeof(*identifier);
 

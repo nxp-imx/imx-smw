@@ -25,6 +25,11 @@
 #define KDF_STR		   "KDF"
 #define LENGTH_STR	   "LENGTH"
 #define MIN_LENGTH_STR	   "MIN_LENGTH"
+#define LIFECYCLE_STR	   "LIFECYCLE"
+
+#define LC_OPEN_STR	     "OPEN"
+#define LC_CLOSED_STR	     "CLOSED"
+#define LC_CLOSED_LOCKED_STR "CLOSED_LOCKED"
 
 #define ANY_STR			    "ANY"
 #define ALL_AEAD_STR		    "ALL_AEAD"

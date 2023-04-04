@@ -33,6 +33,32 @@ static const char *const format_names[] = { [SMW_KEYMGR_FORMAT_ID_HEX] = "HEX",
 					    [SMW_KEYMGR_FORMAT_ID_BASE64] =
 						    "BASE64" };
 
+static const char *const key_privacy_names[] = {
+	[SMW_KEYMGR_PRIVACY_ID_PUBLIC] = "PUBLIC",
+	[SMW_KEYMGR_PRIVACY_ID_PRIVATE] = "PRIVATE",
+	[SMW_KEYMGR_PRIVACY_ID_PAIR] = "KEYPAIR",
+};
+
+#define KEY_PRIVACY_ID_ASSERT(id)                                              \
+	do {                                                                   \
+		typeof(id) _id = (id);                                         \
+		SMW_DBG_ASSERT((_id < SMW_KEYMGR_PRIVACY_ID_NB) &&             \
+			       (_id != SMW_KEYMGR_PRIVACY_ID_INVALID));        \
+	} while (0)
+
+static const char *const key_persistence_names[] = {
+	[SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT] = "TRANSIENT",
+	[SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT] = "PERSISTENT",
+	[SMW_KEYMGR_PERSISTENCE_ID_PERMANENT] = "PERMANENT",
+};
+
+#define KEY_PERSISTENCE_ID_ASSERT(id)                                          \
+	do {                                                                   \
+		typeof(id) _id = (id);                                         \
+		SMW_DBG_ASSERT((_id < SMW_KEYMGR_PERSISTENCE_ID_NB) &&         \
+			       (_id != SMW_KEYMGR_PERSISTENCE_ID_INVALID));    \
+	} while (0)
+
 /**
  * store_persistent() - Store persistent storage info.
  * @attributes: Pointer to attribute structure to fill.
@@ -695,7 +721,7 @@ end:
 
 void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr)
 {
-	attr->persistent_storage = false;
+	attr->persistence = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
 	attr->rsa_pub_exp = NULL;
 	attr->rsa_pub_exp_len = 0;
 	attr->flush_key = false;
@@ -908,7 +934,7 @@ static int store_persistent(void *attributes, unsigned char *value,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (attr) {
-		attr->persistent_storage = true;
+		attr->persistence = SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT;
 		status = SMW_STATUS_OK;
 	}
 
@@ -1488,10 +1514,8 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (generate_key_args.key_attributes.persistent_storage)
-		key_desc->identifier.persistent = true;
-	else
-		key_desc->identifier.persistent = false;
+	key_desc->identifier.persistence_id =
+		generate_key_args.key_attributes.persistence;
 
 	/*
 	 * Try to create the key in the database before
@@ -1607,10 +1631,8 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	else
 		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_INVALID;
 
-	if (import_key_args.key_attributes.persistent_storage)
-		key_desc->identifier.persistent = true;
-	else
-		key_desc->identifier.persistent = false;
+	key_desc->identifier.persistence_id =
+		import_key_args.key_attributes.persistence;
 
 	ret = set_key_identifier(new_id, key_desc);
 	if (ret == SMW_STATUS_OK)
@@ -1805,6 +1827,76 @@ smw_get_security_size(struct smw_key_descriptor *descriptor)
 
 	if (!key_identifier.security_size)
 		status = SMW_STATUS_INVALID_PARAM;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+void smw_keymgr_set_policy(struct smw_keymgr_get_key_attributes_args *attrs,
+			   unsigned char *policy, unsigned int length)
+{
+	if (attrs && attrs->pub) {
+		attrs->pub->policy_list = policy;
+		attrs->pub->policy_list_length = length;
+	}
+}
+
+void smw_keymgr_set_lifecycle(struct smw_keymgr_get_key_attributes_args *attrs,
+			      unsigned char *lifecycle, unsigned int length)
+{
+	if (attrs && attrs->pub) {
+		attrs->pub->lifecycle_list = lifecycle;
+		attrs->pub->lifecycle_list_length = length;
+	}
+}
+
+enum smw_status_code
+smw_get_key_attributes(struct smw_get_key_attributes_args *args)
+{
+	int status = SMW_STATUS_OK;
+
+	struct smw_keymgr_get_key_attributes_args attr_args = { 0 };
+	struct smw_keymgr_identifier *key_identifier = &attr_args.identifier;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (args->version != 0) {
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	status = smw_keymgr_db_get_info(args->key_descriptor->id,
+					key_identifier);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	attr_args.pub = args;
+	smw_keymgr_set_policy(&attr_args, NULL, 0);
+	smw_keymgr_set_lifecycle(&attr_args, NULL, 0);
+
+	status = smw_utils_execute_implicit(OPERATION_ID_GET_KEY_ATTRIBUTES,
+					    &attr_args,
+					    key_identifier->subsystem_id);
+
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	/* Convert the key type */
+	smw_config_get_key_type_name(key_identifier->type_id,
+				     &args->key_descriptor->type_name);
+
+	/* Set the key security size */
+	args->key_descriptor->security_size = key_identifier->security_size;
+
+	KEY_PRIVACY_ID_ASSERT(key_identifier->privacy_id);
+	args->key_privacy = key_privacy_names[key_identifier->privacy_id];
+
+	KEY_PERSISTENCE_ID_ASSERT(key_identifier->persistence_id);
+	args->persistence =
+		key_persistence_names[key_identifier->persistence_id];
+
+	args->storage = key_identifier->storage_id;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

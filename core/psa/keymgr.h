@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __KEYMGR__H__
@@ -11,14 +11,15 @@
 #include "psa/crypto_types.h"
 
 /**
- * get_psa_key_type() - Get PSA key type.
+ * get_cipher_psa_key_type() - Get Cipher PSA key type.
  * @smw_key_type: SMW key type name.
  *
- * This function returns the PSA key type corresponding to the SMW key type.
+ * This function returns the Cipher PSA key type corresponding to the Cipher
+ * SMW key type.
  *
  * Return:
- * PSA key type.
+ * Cipher PSA key type.
  */
-psa_key_type_t get_psa_key_type(smw_key_type_t smw_key_type);
+psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type);
 
 #endif /* __KEYMGR__H__ */

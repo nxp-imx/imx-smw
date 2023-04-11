@@ -488,7 +488,7 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 	if (status != SMW_STATUS_OK)
 		return util_smw_to_psa_status(status);
 
-	key_type = get_psa_key_type(key_descriptor->type_name);
+	key_type = get_cipher_psa_key_type(key_descriptor->type_name);
 	if (key_type == PSA_KEY_TYPE_NONE)
 		return PSA_ERROR_INVALID_ARGUMENT;
 

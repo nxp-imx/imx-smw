@@ -26,11 +26,11 @@
  * @smw_key_type: SMW key type name.
  * @psa_key_type: PSA key type.
  */
-static const struct key_type {
+static const struct cipher_key_type {
 	smw_key_type_t smw_key_type;
 	psa_key_type_t psa_key_type;
-} key_type[] = { KEY_TYPE("AES", AES), KEY_TYPE("DES", DES),
-		 KEY_TYPE("DES3", DES), KEY_TYPE("SM4", SM4) };
+} cipher_key_type[] = { KEY_TYPE("AES", AES), KEY_TYPE("DES", DES),
+			KEY_TYPE("DES3", DES), KEY_TYPE("SM4", SM4) };
 
 #define HMAC_HASH(_smw, _psa)                                                  \
 	{                                                                      \
@@ -154,6 +154,15 @@ static const struct {
 	KEY_HASH(SHA_512_224),	KEY_HASH(SHA_512_256), KEY_HASH(SHA3_224),
 	KEY_HASH(SHA3_256),	KEY_HASH(SHA3_384),    KEY_HASH(SHA3_512),
 	KEY_HASH(SHAKE256_512), KEY_HASH(SM3)
+};
+
+static const struct key_persistence {
+	const char *str;
+	psa_key_persistence_t persistence;
+} key_persistences[] = {
+	{ "TRANSIENT", PSA_KEY_PERSISTENCE_VOLATILE },
+	{ "PERSISTENT", PSA_KEY_PERSISTENCE_DEFAULT },
+	{ "PERMANENT", PSA_KEY_PERSISTENCE_READ_ONLY },
 };
 
 static bool is_ecc_key_type(smw_key_type_t type_name)
@@ -343,17 +352,93 @@ static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family,
 	return NULL;
 }
 
-psa_key_type_t get_psa_key_type(smw_key_type_t smw_key_type)
+static psa_key_type_t get_ecc_psa_key_type(smw_key_type_t smw_key_type,
+					   bool is_keypair)
+{
+	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
+	psa_ecc_family_t ecc_family = 0;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; !ecc_family && i < ARRAY_SIZE(ecdsa_key_type); i++) {
+		if (!SMW_UTILS_STRCMP(ecdsa_key_type[i].smw_key_type,
+				      smw_key_type))
+			ecc_family = ecdsa_key_type[i].ecc_family;
+	}
+
+	for (i = 0; !ecc_family && i < ARRAY_SIZE(ecdh_key_type); i++) {
+		if (!SMW_UTILS_STRCMP(ecdh_key_type[i].smw_key_type,
+				      smw_key_type))
+			ecc_family = ecdh_key_type[i].ecc_family;
+	}
+
+	if (!ecc_family)
+		return psa_key_type;
+
+	if (is_keypair)
+		psa_key_type = PSA_KEY_TYPE_ECC_KEY_PAIR(ecc_family);
+	else
+		psa_key_type = PSA_KEY_TYPE_ECC_PUBLIC_KEY(ecc_family);
+
+	return psa_key_type;
+}
+
+static psa_key_type_t get_dh_psa_key_type(smw_key_type_t smw_key_type,
+					  bool is_keypair)
+{
+	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
+
+	if (SMW_UTILS_STRCMP(smw_key_type, "DH"))
+		return psa_key_type;
+
+	if (is_keypair)
+		psa_key_type = PSA_KEY_TYPE_DH_KEY_PAIR(PSA_DH_FAMILY_RFC7919);
+	else
+		psa_key_type =
+			PSA_KEY_TYPE_DH_PUBLIC_KEY(PSA_DH_FAMILY_RFC7919);
+
+	return psa_key_type;
+}
+
+static psa_key_type_t get_rsa_psa_key_type(smw_key_type_t smw_key_type,
+					   bool is_keypair)
+{
+	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
+
+	if (SMW_UTILS_STRCMP(smw_key_type, "RSA"))
+		return psa_key_type;
+
+	if (is_keypair)
+		psa_key_type = PSA_KEY_TYPE_RSA_KEY_PAIR;
+	else
+		psa_key_type = PSA_KEY_TYPE_RSA_PUBLIC_KEY;
+
+	return psa_key_type;
+}
+
+static psa_key_type_t get_hmac_psa_key_type(smw_key_type_t smw_key_type)
+{
+	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
+
+	if (!SMW_UTILS_STRNCMP(smw_key_type, "HMAC", SMW_UTILS_STRLEN("HMAC")))
+		psa_key_type = PSA_KEY_TYPE_HMAC;
+
+	return psa_key_type;
+}
+
+psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type)
 {
 	unsigned int i;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < ARRAY_SIZE(key_type); i++) {
-		if (!SMW_UTILS_STRCMP(key_type[i].smw_key_type, smw_key_type)) {
+	for (i = 0; i < ARRAY_SIZE(cipher_key_type); i++) {
+		if (!SMW_UTILS_STRCMP(cipher_key_type[i].smw_key_type,
+				      smw_key_type)) {
 			SMW_DBG_PRINTF(DEBUG, "Key type name: %s\n",
-				       key_type[i].smw_key_type);
-			return key_type[i].psa_key_type;
+				       cipher_key_type[i].smw_key_type);
+			return cipher_key_type[i].psa_key_type;
 		}
 	}
 
@@ -401,15 +486,46 @@ static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 		return get_ecc_smw_key_type(ecc_family, alg);
 	}
 
-	for (i = 0; i < ARRAY_SIZE(key_type); i++) {
-		if (key_type[i].psa_key_type == psa_key_type) {
+	for (i = 0; i < ARRAY_SIZE(cipher_key_type); i++) {
+		if (cipher_key_type[i].psa_key_type == psa_key_type) {
 			SMW_DBG_PRINTF(DEBUG, "Key type: %s\n",
-				       key_type[i].smw_key_type);
-			return key_type[i].smw_key_type;
+				       cipher_key_type[i].smw_key_type);
+			return cipher_key_type[i].smw_key_type;
 		}
 	}
 
 	return NULL;
+}
+
+static psa_status_t get_psa_key_type(psa_key_type_t *psa_key_type,
+				     const smw_key_type_t smw_key_type,
+				     const char *privacy)
+{
+	psa_status_t status = PSA_ERROR_DATA_INVALID;
+	bool is_keypair = false;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (privacy && smw_key_type) {
+		if (!SMW_UTILS_STRCMP(privacy, "KEYPAIR"))
+			is_keypair = true;
+
+		*psa_key_type = get_dh_psa_key_type(smw_key_type, is_keypair);
+		if (*psa_key_type == PSA_KEY_TYPE_NONE)
+			*psa_key_type =
+				get_rsa_psa_key_type(smw_key_type, is_keypair);
+		if (*psa_key_type == PSA_KEY_TYPE_NONE)
+			*psa_key_type =
+				get_ecc_psa_key_type(smw_key_type, is_keypair);
+		if (*psa_key_type == PSA_KEY_TYPE_NONE)
+			*psa_key_type = get_hmac_psa_key_type(smw_key_type);
+		if (*psa_key_type == PSA_KEY_TYPE_NONE)
+			*psa_key_type = get_cipher_psa_key_type(smw_key_type);
+		if (*psa_key_type != PSA_KEY_TYPE_NONE)
+			status = PSA_SUCCESS;
+	}
+
+	return status;
 }
 
 static void get_hash_name(psa_algorithm_t hash, const char **hash_str)
@@ -428,6 +544,25 @@ static void get_hash_name(psa_algorithm_t hash, const char **hash_str)
 	}
 }
 
+static psa_algorithm_t get_hash_alg_from_name(const char *hash_str)
+{
+	psa_algorithm_t alg = PSA_ALG_NONE;
+	unsigned int i;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (i = 0; i < ARRAY_SIZE(key_hash); i++) {
+		if (!SMW_UTILS_STRCMP(key_hash[i].hash_str, hash_str)) {
+			alg = key_hash[i].psa_hash;
+			SMW_DBG_PRINTF(DEBUG, "Key hash: %s (0x%.8x)\n",
+				       hash_str, alg);
+			break;
+		}
+	}
+
+	return alg;
+}
+
 static void get_kdf_name(psa_algorithm_t kdf, const char **kdf_str)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -442,6 +577,30 @@ static void get_kdf_name(psa_algorithm_t kdf, const char **kdf_str)
 		*kdf_str = PBKDF2_HMAC_STR;
 	else if (kdf == PSA_ALG_PBKDF2_AES_CMAC_PRF_128)
 		*kdf_str = PBKDF2_AES_CMAC_PRF_128_STR;
+}
+
+static psa_algorithm_t get_kdf_alg_from_name(const char *kdf_str)
+{
+	psa_algorithm_t alg = PSA_ALG_NONE;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!SMW_UTILS_STRCMP(HKDF_STR, kdf_str))
+		alg = PSA_ALG_HKDF_BASE;
+
+	else if (!SMW_UTILS_STRCMP(TLS12_PRF_STR, kdf_str))
+		alg = PSA_ALG_TLS12_PRF_BASE;
+
+	else if (!SMW_UTILS_STRCMP(TLS12_PSK_TO_MS_STR, kdf_str))
+		alg = PSA_ALG_TLS12_PSK_TO_MS_BASE;
+
+	else if (!SMW_UTILS_STRCMP(PBKDF2_HMAC_STR, kdf_str))
+		alg = PSA_ALG_PBKDF2_HMAC_BASE;
+
+	else if (!SMW_UTILS_STRCMP(PBKDF2_AES_CMAC_PRF_128_STR, kdf_str))
+		alg = PSA_ALG_PBKDF2_AES_CMAC_PRF_128;
+
+	return alg;
 }
 
 static void get_aead_alg(psa_algorithm_t alg, const char **alg_str)
@@ -637,21 +796,227 @@ static unsigned int get_usage_tlv_length(psa_key_usage_t usage_flags,
 	return usage_tlv_length;
 }
 
+static psa_key_usage_t get_usage_from_smw(const char *usage)
+{
+	psa_key_usage_t psa_usage = 0;
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(key_usage) && !psa_usage; i++) {
+		if (!SMW_UTILS_STRCMP(usage, key_usage[i].usage_str)) {
+			psa_usage = key_usage[i].psa_usage;
+			break;
+		}
+	}
+
+	return psa_usage;
+}
+
+static void set_aead_tag_length(psa_algorithm_t *psa_algo, uint8_t length,
+				uint8_t min_length)
+{
+	if (min_length)
+		*psa_algo =
+			PSA_ALG_AEAD_WITH_AT_LEAST_THIS_LENGTH_TAG(*psa_algo,
+								   min_length);
+	else if (length)
+		*psa_algo = PSA_ALG_AEAD_WITH_SHORTENED_TAG(*psa_algo, length);
+}
+
+static void set_mac_length(psa_algorithm_t *psa_algo, uint8_t length,
+			   uint8_t min_length)
+{
+	if (min_length)
+		*psa_algo =
+			PSA_ALG_AT_LEAST_THIS_LENGTH_MAC(*psa_algo, min_length);
+	else if (length)
+		*psa_algo = PSA_ALG_TRUNCATED_MAC(*psa_algo, length);
+}
+
+static psa_status_t get_algo_from_smw(psa_algorithm_t *psa_algo,
+				      const char *algo,
+				      unsigned int algo_length)
+{
+	psa_status_t psa_status = PSA_ERROR_DATA_INVALID;
+	int status = SMW_STATUS_KEY_POLICY_ERROR;
+	const unsigned char *p = (const unsigned char *)algo;
+	const unsigned char *p_end = p + algo_length;
+	char *tlv_type = NULL;
+	unsigned char *tlv_value = NULL;
+	unsigned int tlv_length = 0;
+	const char *alg_str = NULL;
+	psa_algorithm_t alg_hash = PSA_ALG_NONE;
+	psa_algorithm_t alg_kdf = PSA_ALG_NONE;
+	uint8_t length = 0;
+	uint8_t min_length = 0;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*psa_algo = PSA_ALG_NONE;
+
+	status = smw_tlv_read_element(&p, p_end, (unsigned char **)&tlv_type,
+				      &tlv_value, &tlv_length);
+	if (status != SMW_STATUS_OK) {
+		SMW_DBG_PRINTF(ERROR, "%s Parsing policy failed\n", __func__);
+		goto end;
+	}
+
+	if (SMW_UTILS_STRCMP(tlv_type, ALGO_STR)) {
+		SMW_DBG_PRINTF(ERROR, "%s Parsing policy (algo) failed\n",
+			       __func__);
+		goto end;
+	}
+
+	alg_str = (const char *)tlv_value;
+
+	p = tlv_value + SMW_UTILS_STRLEN((char *)tlv_value) + 1;
+
+	while (p < p_end) {
+		status = smw_tlv_read_element(&p, p_end,
+					      (unsigned char **)&tlv_type,
+					      &tlv_value, &tlv_length);
+		if (status != SMW_STATUS_OK) {
+			SMW_DBG_PRINTF(ERROR, "%s Parsing policy failed\n",
+				       __func__);
+			goto end;
+		}
+
+		if (!SMW_UTILS_STRCMP(tlv_type, HASH_STR)) {
+			alg_hash =
+				get_hash_alg_from_name((const char *)tlv_value);
+		} else if (!SMW_UTILS_STRCMP(tlv_type, KDF_STR)) {
+			alg_kdf =
+				get_kdf_alg_from_name((const char *)tlv_value);
+		} else if (!SMW_UTILS_STRCMP(tlv_type, LENGTH_STR)) {
+			if (tlv_length > sizeof(length)) {
+				psa_status = PSA_ERROR_DATA_INVALID;
+				goto end;
+			}
+
+			length = smw_tlv_convert_numeral(tlv_length, tlv_value);
+		} else if (!SMW_UTILS_STRCMP(tlv_type, MIN_LENGTH_STR)) {
+			if (tlv_length > sizeof(min_length)) {
+				psa_status = PSA_ERROR_DATA_INVALID;
+				goto end;
+			}
+
+			min_length =
+				smw_tlv_convert_numeral(tlv_length, tlv_value);
+		} else {
+			SMW_DBG_PRINTF(ERROR, "%s Unknown type %s\n", __func__,
+				       tlv_type);
+			goto end;
+		}
+	}
+
+	for (; i < ARRAY_SIZE(key_algorithm); i++) {
+		if (!SMW_UTILS_STRCMP(key_algorithm[i].alg_str, alg_str)) {
+			*psa_algo = key_algorithm[i].psa_alg;
+			break;
+		}
+	}
+
+	if (*psa_algo == PSA_ALG_NONE) {
+		if (!SMW_UTILS_STRCMP(HMAC_STR, alg_str)) {
+			*psa_algo = PSA_ALG_HMAC_BASE;
+		} else if (!SMW_UTILS_STRCMP(HKDF_STR, alg_str)) {
+			*psa_algo = PSA_ALG_HKDF_BASE;
+		} else if (!SMW_UTILS_STRCMP(RSA_PKCS1V15_STR, alg_str)) {
+			*psa_algo = PSA_ALG_RSA_PKCS1V15_SIGN_BASE;
+		} else if (!SMW_UTILS_STRCMP(RSA_PSS_STR, alg_str)) {
+			*psa_algo = PSA_ALG_RSA_PSS_BASE;
+		} else if (!SMW_UTILS_STRCMP(RSA_PSS_ANY_SALT_STR, alg_str)) {
+			*psa_algo = PSA_ALG_RSA_PSS_ANY_SALT_BASE;
+		} else if (!SMW_UTILS_STRCMP(ECDSA_STR, alg_str)) {
+			*psa_algo = PSA_ALG_ECDSA_BASE;
+		} else if (!SMW_UTILS_STRCMP(DETERMINISTIC_ECDSA_STR,
+					     alg_str)) {
+			*psa_algo = PSA_ALG_DETERMINISTIC_ECDSA_BASE;
+		} else if (!SMW_UTILS_STRCMP(RSA_OAEP_STR, alg_str)) {
+			*psa_algo = PSA_ALG_RSA_OAEP_BASE;
+		} else {
+			SMW_DBG_PRINTF(ERROR, "%s Unknown algorithm %s\n",
+				       __func__, alg_str);
+			goto end;
+		}
+
+		if (alg_hash != PSA_ALG_NONE)
+			*psa_algo |= alg_hash;
+	}
+
+	SMW_DBG_PRINTF(DEBUG, "Key main algorithm: %s (0x%.8x)\n", alg_str,
+		       *psa_algo);
+
+	if (PSA_ALG_IS_HASH(*psa_algo) && alg_hash != PSA_ALG_NONE)
+		*psa_algo |= alg_hash;
+	else if (PSA_ALG_IS_KEY_AGREEMENT(*psa_algo))
+		*psa_algo |= alg_kdf;
+	else if (PSA_ALG_IS_AEAD(*psa_algo))
+		set_aead_tag_length(psa_algo, length, min_length);
+	else if (PSA_ALG_IS_MAC(*psa_algo))
+		set_mac_length(psa_algo, length, min_length);
+
+	psa_status = PSA_SUCCESS;
+
+end:
+	return psa_status;
+}
+
+static psa_status_t
+get_psa_key_persistence(psa_key_persistence_t *psa_persistence,
+			smw_keymgr_persistence_t persistence)
+{
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; persistence && i < ARRAY_SIZE(key_persistences); i++) {
+		if (!SMW_UTILS_STRCMP(key_persistences[i].str, persistence)) {
+			*psa_persistence = key_persistences[i].persistence;
+			return PSA_SUCCESS;
+		}
+	}
+
+	return PSA_ERROR_DATA_INVALID;
+}
+
+static psa_status_t
+get_smw_key_persistence(smw_keymgr_persistence_t *smw_persistence,
+			psa_key_lifetime_t lifetime)
+{
+	unsigned int i = 0;
+	psa_key_persistence_t persistence =
+		PSA_KEY_LIFETIME_GET_PERSISTENCE(lifetime);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(key_persistences); i++) {
+		if (key_persistences[i].persistence == persistence) {
+			*smw_persistence = key_persistences[i].str;
+			return PSA_SUCCESS;
+		}
+	}
+
+	return PSA_ERROR_DATA_INVALID;
+}
+
 static psa_status_t
 set_key_attributes_list(const psa_key_attributes_t *attributes,
 			unsigned char **key_attributes_list,
 			unsigned int *key_attributes_list_length)
 {
-	psa_status_t psa_status;
-	unsigned char *p;
-	unsigned int i;
-	psa_key_usage_t usage_flags;
+	psa_status_t psa_status = PSA_ERROR_INVALID_ARGUMENT;
+	unsigned char *p = NULL;
+	unsigned int i = 0;
+	psa_key_usage_t usage_flags = 0;
+	psa_key_lifetime_t lifetime = 0;
 	unsigned char *policy_tlv = NULL;
 	unsigned char *usage_tlv = NULL;
 	unsigned char *algo_v = NULL;
 	unsigned int algo_v_length = 0;
 	unsigned int algo_tlv_length = 0;
 	unsigned int usage_tlv_length = 0;
+	smw_keymgr_persistence_t key_persistence = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -659,12 +1024,17 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 	*key_attributes_list_length = 0;
 
 	if (!attributes)
-		return PSA_ERROR_INVALID_ARGUMENT;
+		return psa_status;
 
 	usage_flags = psa_get_key_usage_flags(attributes);
 
 	psa_status = set_key_algo(psa_get_key_algorithm(attributes), &algo_v,
 				  &algo_v_length);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	lifetime = psa_get_key_lifetime(attributes);
+	psa_status = get_smw_key_persistence(&key_persistence, lifetime);
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
 
@@ -677,9 +1047,9 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 	*key_attributes_list_length =
 		SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_tlv_length);
 
-	if (!PSA_KEY_LIFETIME_IS_VOLATILE(attributes->lifetime))
+	if (!PSA_KEY_LIFETIME_IS_VOLATILE(lifetime))
 		*key_attributes_list_length +=
-			SMW_TLV_ELEMENT_LENGTH(PERSISTENT_STR, 0);
+			SMW_TLV_ELEMENT_LENGTH(key_persistence, 0);
 
 	*key_attributes_list = SMW_UTILS_MALLOC(*key_attributes_list_length);
 	if (!*key_attributes_list) {
@@ -689,13 +1059,13 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 
 	p = *key_attributes_list;
 
-	if (!PSA_KEY_LIFETIME_IS_VOLATILE(attributes->lifetime))
-		smw_tlv_set_boolean(&p, PERSISTENT_STR);
+	if (!PSA_KEY_LIFETIME_IS_VOLATILE(lifetime))
+		smw_tlv_set_boolean(&p, key_persistence);
 
 	policy_tlv = p;
 	smw_tlv_set_type(&p, POLICY_STR);
 
-	for (i = 0; i < ARRAY_SIZE(key_usage); i++) {
+	for (; i < ARRAY_SIZE(key_usage); i++) {
 		if (usage_flags & key_usage[i].psa_usage) {
 			usage_tlv = p;
 			smw_tlv_set_string(&p, USAGE_STR,
@@ -723,6 +1093,79 @@ end:
 	if (algo_v)
 		SMW_UTILS_FREE(algo_v);
 
+	return psa_status;
+}
+
+static psa_status_t read_key_policy_list(psa_key_attributes_t *attributes,
+					 const unsigned char *policy,
+					 unsigned int policy_length)
+{
+	int psa_status = PSA_ERROR_DATA_INVALID;
+	int status = SMW_STATUS_KEY_POLICY_ERROR;
+	const unsigned char *p = policy;
+	const unsigned char *p_end = policy + policy_length;
+	unsigned int usage_str_len = 0;
+	char *tlv_type = NULL;
+	char *tlv_value = NULL;
+	unsigned int tlv_length = 0;
+	psa_key_usage_t usage_flags = 0;
+	psa_algorithm_t perm_algo = PSA_ALG_NONE;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!policy || !policy_length)
+		goto end;
+
+	status =
+		smw_tlv_read_element(&p, p_end, (unsigned char **)&tlv_type,
+				     (unsigned char **)&tlv_value, &tlv_length);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	/* Check first that policy is starting with POLICY_STR */
+	if (SMW_UTILS_STRCMP(tlv_type, POLICY_STR))
+		goto end;
+
+	/*
+	 * Parse all elements of the list, each element must start with
+	 * USAGE_STR
+	 */
+	p = (const unsigned char *)tlv_value;
+	while (p < p_end) {
+		status = smw_tlv_read_element(&p, p_end,
+					      (unsigned char **)&tlv_type,
+					      (unsigned char **)&tlv_value,
+					      &tlv_length);
+		if (status != SMW_STATUS_OK) {
+			SMW_DBG_PRINTF(ERROR, "%s Parsing policy failed\n",
+				       __func__);
+			goto end;
+		}
+
+		if (SMW_UTILS_STRCMP(tlv_type, USAGE_STR)) {
+			SMW_DBG_PRINTF(ERROR, "%s Expected type %s got %s\n",
+				       __func__, USAGE_STR, tlv_type);
+			goto end;
+		}
+
+		usage_flags |= get_usage_from_smw(tlv_value);
+		usage_str_len = SMW_UTILS_STRLEN(tlv_value) + 1;
+		if (usage_str_len < tlv_length && perm_algo == PSA_ALG_NONE) {
+			psa_status =
+				get_algo_from_smw(&perm_algo,
+						  tlv_value + usage_str_len,
+						  tlv_length - usage_str_len);
+			if (psa_status != PSA_SUCCESS)
+				goto end;
+		}
+	}
+
+	psa_set_key_usage_flags(attributes, usage_flags);
+	psa_set_key_algorithm(attributes, perm_algo);
+
+	psa_status = PSA_SUCCESS;
+
+end:
 	return psa_status;
 }
 
@@ -1006,12 +1449,64 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
 					     psa_key_attributes_t *attributes)
 {
-	(void)key;
-	(void)attributes;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
+	enum smw_status_code status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	struct smw_get_key_attributes_args args = { 0 };
+	struct smw_key_descriptor key_descriptor = { 0 };
+	psa_key_persistence_t key_persistence = PSA_KEY_PERSISTENCE_VOLATILE;
+	psa_key_type_t key_type = PSA_KEY_TYPE_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!smw_utils_is_lib_initialized())
+		return psa_status;
+
+	if (!attributes || !key)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	psa_reset_key_attributes(attributes);
+
+	key_descriptor.id = key;
+	args.key_descriptor = &key_descriptor;
+
+	status = smw_get_key_attributes(&args);
+	psa_status = util_smw_to_psa_status(status);
+	if (psa_status != PSA_SUCCESS)
+		goto exit;
+
+	psa_set_key_id(attributes, args.key_descriptor->id);
+
+	psa_status = get_psa_key_type(&key_type, key_descriptor.type_name,
+				      args.key_privacy);
+	if (psa_status != PSA_SUCCESS)
+		goto exit;
+
+	psa_set_key_type(attributes, key_type);
+
+	psa_set_key_bits(attributes, args.key_descriptor->security_size);
+
+	psa_status =
+		get_psa_key_persistence(&key_persistence, args.persistence);
+	if (psa_status != PSA_SUCCESS)
+		goto exit;
+
+	attributes->lifetime =
+		PSA_KEY_LIFETIME_GET_LIFETIME(key_persistence, args.storage);
+
+	psa_status = read_key_policy_list(attributes, args.policy_list,
+					  args.policy_list_length);
+
+exit:
+	if (args.policy_list)
+		free(args.policy_list);
+
+	if (args.lifecycle_list)
+		free(args.lifecycle_list);
+
+	if (psa_status != PSA_SUCCESS)
+		psa_reset_key_attributes(attributes);
+
+	return psa_status;
 }
 
 __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,

@@ -2218,8 +2218,6 @@ psa_get_key_algorithm(const psa_key_attributes_t *attributes);
  *              the attributes of the key. On failure, it is equivalent to a freshly-initialized
  *              attribute object.
  *
- * **Warning: Not supported**
- *
  * This function first resets the attribute object as with psa_reset_key_attributes(). It then
  * copies the attributes of the given key into the given attribute object.
  *

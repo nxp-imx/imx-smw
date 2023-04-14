@@ -41,6 +41,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Implement Sign and Verify operations
 * Fix generation and import of DES keys and DES3 keys.
 * Implement Cipher single part operation
+* Implement get key attributes.
 
 ##### 2. SMW APIs
 

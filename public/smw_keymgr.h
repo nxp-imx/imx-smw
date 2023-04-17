@@ -92,8 +92,9 @@ struct smw_key_descriptor {
  * as input to know the type of key to generate.
  * The @key_descriptor field @buffer is optional. Only the public key will be
  * returned if the corresponding pointer and size are set.
- * The @key_descriptor field @id is filled by the API
- * if the operation is successful.
+ * The @key_descriptor field @id, if set by the caller (other than 0) will be
+ * the created key identifier on operation success. Else the API will returned
+ * a new key identifier if @id is set as 0.
  */
 struct smw_generate_key_args {
 	unsigned char version;
@@ -227,8 +228,9 @@ struct smw_update_key_args {
  * as input to define the type of key to import.
  * The @key_descriptor field @buffer is mandatory. A public key, a private key
  * or a key pair is imported if the corresponding pointer and size is set.
- * The @key_descriptor field @id is filled by the API
- * if the operation is successful.
+ * The @key_descriptor field @id, if set by the caller (other than 0) will be
+ * the created key identifier on operation success. Else the API will returned
+ * a new key identifier if @id is set as 0.
  * The @buffer field @format_name is optional. The default value is "HEX".
  */
 struct smw_import_key_args {

@@ -145,6 +145,11 @@ typedef smw_string_t smw_key_format_t;
  *    |                 |              | The following `Key policy`_ details   |
  *    |                 |              | how a key policy is defined.          |
  *    +-----------------+--------------+---------------------------------------+
+ *    | STORAGE_ID      | numeral      | Subsystem storage identifier.         |
+ *    |                 |              | EdgeLock 2GO storage identifiers:     |
+ *    |                 |              |  - Key object: NXP_EL2GO_KEY          |
+ *    |                 |              |  - Data object: NXP_EL2GO_DATA        |
+ *    +-----------------+--------------+---------------------------------------+
  *
  * Key policy
  * """"""""""

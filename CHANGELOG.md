@@ -51,6 +51,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Clarify the smw_get_key_buffers_lengths() API usage.
 * Implement get key attributes API.
 * Key identifier can be set by caller in case of key creation.
+* Add STORAGE_ID key attributes.
 
 ##### 3. Subsystems
 
@@ -58,6 +59,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add AES CMAC algorithm in HSM, ELE and TEE subsystems.
 * Update TEE TA Library to check key usages preventing TA panic.
 * Update TEE TA Library to support user key identifier as input when key is created.
+* Support of the EdgeLock 2GO Key import in ELE subsystems
 
 #### SMW Tests - _version 2.3_
 

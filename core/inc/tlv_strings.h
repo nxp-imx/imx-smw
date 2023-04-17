@@ -26,6 +26,7 @@
 #define LENGTH_STR	   "LENGTH"
 #define MIN_LENGTH_STR	   "MIN_LENGTH"
 #define LIFECYCLE_STR	   "LIFECYCLE"
+#define STORAGE_ID_STR	   "STORAGE_ID"
 
 #define LC_OPEN_STR	     "OPEN"
 #define LC_CLOSED_STR	     "CLOSED"

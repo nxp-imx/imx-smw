@@ -127,6 +127,7 @@ struct smw_keymgr_descriptor {
  * @policy_len: @policy length in bytes.
  * @pub_key_attributes_list: Key attributes list from the public API
  * @pub_key_attributes_list_length: Length of @pub_key_attributes_list
+ * @storage_id: Key storage ID.
  */
 struct smw_keymgr_attributes {
 	enum smw_keymgr_persistence_id persistence;
@@ -137,6 +138,7 @@ struct smw_keymgr_attributes {
 	unsigned int policy_len;
 	unsigned char *pub_key_attributes_list;
 	unsigned int *pub_key_attributes_list_length;
+	unsigned int storage_id;
 };
 
 /**

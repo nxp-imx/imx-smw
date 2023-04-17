@@ -111,6 +111,19 @@ static int store_flush_key(void *attributes, unsigned char *value,
 static int store_policy(void *attributes, unsigned char *value,
 			unsigned int length);
 
+/**
+ * store_storage_id() - Store key storage ID.
+ * @attributes: Pointer to attribute structure to fill.
+ * @value: Pointer to the storage ID value.
+ * @length: Length of @value in bytes.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
+ */
+static int store_storage_id(void *attributes, unsigned char *value,
+			    unsigned int length);
+
 /*
  * Key policy is encoded as variable-length list TLV.
  * The syntax is verified by the Secure Subsystem when it is decoded.
@@ -127,7 +140,10 @@ static const struct attribute_tlv keymgr_attributes_tlv_array[] = {
 	  .store = store_flush_key },
 	{ .type = (const unsigned char *)POLICY_STR,
 	  .verify = smw_tlv_verify_variable_length_list,
-	  .store = store_policy }
+	  .store = store_policy },
+	{ .type = (const unsigned char *)STORAGE_ID_STR,
+	  .verify = smw_tlv_verify_numeral,
+	  .store = store_storage_id }
 };
 
 static int get_format_id(const char *name, enum smw_keymgr_format_id *id)
@@ -739,6 +755,7 @@ void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr)
 	attr->policy = 0;
 	attr->pub_key_attributes_list = NULL;
 	attr->pub_key_attributes_list_length = 0;
+	attr->storage_id = 0;
 }
 
 int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
@@ -813,6 +830,9 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 			    SMW_CONFIG_KEY_TYPE_ID_RSA &&
 		    converted_args->key_attributes.rsa_pub_exp_len)
 			status = SMW_STATUS_INVALID_PARAM;
+
+		converted_args->key_descriptor.identifier.storage_id =
+			converted_args->key_attributes.storage_id;
 	}
 
 end:
@@ -876,6 +896,10 @@ import_key_convert_args(struct smw_import_key_args *args,
 	status = smw_keymgr_read_attributes(&converted_args->key_attributes,
 					    args->key_attributes_list,
 					    &args->key_attributes_list_length);
+
+	if (status == SMW_STATUS_OK)
+		converted_args->key_descriptor.identifier.storage_id =
+			converted_args->key_attributes.storage_id;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1004,6 +1028,28 @@ static int store_policy(void *attributes, unsigned char *value,
 		attr->policy = value;
 		attr->policy_len = length;
 		status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int store_storage_id(void *attributes, unsigned char *value,
+			    unsigned int length)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keymgr_attributes *attr = attributes;
+	unsigned long long numeral = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (attr) {
+		numeral = smw_tlv_convert_numeral(length, value);
+		if (numeral < UINT32_MAX) {
+			attr->storage_id = numeral;
+
+			status = SMW_STATUS_OK;
+		}
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

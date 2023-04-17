@@ -581,6 +581,100 @@ end:
 	return status;
 }
 
+static int import_el2go_key(struct hdl *hdl,
+			    struct smw_keymgr_descriptor *key_desc)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int tmp_status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	hsm_err_t err = HSM_NO_ERROR;
+
+	hsm_hdl_t key_mgt_hdl = 0;
+	op_import_key_args_t op_args = { 0 };
+
+	status = open_key_mgmt_service(hdl, &key_mgt_hdl);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	op_args.input_lsb_addr = smw_keymgr_get_private_data(key_desc);
+	op_args.input_size = smw_keymgr_get_private_length(key_desc);
+	op_args.flags = HSM_OP_IMPORT_KEY_INPUT_E2GO_TLV |
+			HSM_OP_IMPORT_KEY_FLAGS_STRICT_OPERATION;
+
+	SMW_DBG_PRINTF(VERBOSE,
+		       "[%s (%d)] Call hsm_import_key()\n"
+		       "  key_store_hdl: 0x%x\n"
+		       "  op_import_key_args_t (EdgeLock 2GO)\n"
+		       "    Key\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n",
+		       __func__, __LINE__, key_mgt_hdl, op_args.input_lsb_addr,
+		       op_args.input_size);
+
+	err = hsm_import_key(key_mgt_hdl, &op_args);
+	SMW_DBG_PRINTF(DEBUG, "hsm_import_key returned %d\n", err);
+
+	status = ele_convert_err(err);
+	if (status == SMW_STATUS_OK) {
+		SMW_DBG_PRINTF(DEBUG, "hsm_import_key key id 0x%08X\n",
+			       op_args.key_identifier);
+		key_desc->identifier.id = op_args.key_identifier;
+	}
+
+exit:
+	if (key_mgt_hdl) {
+		tmp_status = close_key_mgt_service(key_mgt_hdl);
+		if (status == SMW_STATUS_OK)
+			status = tmp_status;
+	}
+
+	return status;
+}
+
+static int import_el2go_data(struct hdl *hdl,
+			     struct smw_keymgr_descriptor *key_desc)
+{
+	(void)hdl;
+	(void)key_desc;
+
+	SMW_DBG_PRINTF(ERROR, "EdgeLock 2GO data import not supported");
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+static int import_key(struct hdl *hdl, void *args)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	struct smw_keymgr_import_key_args *key_args = args;
+	struct smw_keymgr_descriptor *key_desc = NULL;
+	unsigned int storage_id = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key_desc = &key_args->key_descriptor;
+	storage_id = key_desc->identifier.storage_id;
+
+	if (!NXP_IS_EL2GO_OBJECT(storage_id)) {
+		SMW_DBG_PRINTF(ERROR,
+			       "Support only EdgeLock 2GO key/data import");
+		goto end;
+	}
+
+	if (!smw_keymgr_get_private_data(key_desc)) {
+		SMW_DBG_PRINTF(ERROR, "EdgeLock 2GO import key missing buffer");
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	if (NXP_IS_EL2GO_KEY(storage_id))
+		status = import_el2go_key(hdl, key_desc);
+	else
+		status = import_el2go_data(hdl, key_desc);
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static int export_key(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -825,7 +919,7 @@ bool ele_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		*status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		break;
 	case OPERATION_ID_IMPORT_KEY:
-		*status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		*status = import_key(hdl, args);
 		break;
 	case OPERATION_ID_EXPORT_KEY:
 		*status = export_key(hdl, args);

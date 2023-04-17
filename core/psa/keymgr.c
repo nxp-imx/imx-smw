@@ -1029,6 +1029,7 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 	unsigned int algo_v_length = 0;
 	unsigned int algo_tlv_length = 0;
 	unsigned int usage_tlv_length = 0;
+	unsigned int storage_id = 0;
 	smw_keymgr_persistence_t key_persistence = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1068,6 +1069,11 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 			SMW_TLV_ELEMENT_LENGTH(FLUSH_KEY_STR, 0);
 	}
 
+	storage_id = PSA_KEY_LIFETIME_GET_LOCATION(attributes->lifetime);
+	*key_attributes_list_length +=
+		SMW_TLV_ELEMENT_LENGTH(STORAGE_ID_STR,
+				       smw_tlv_numeral_length(storage_id));
+
 	*key_attributes_list = SMW_UTILS_MALLOC(*key_attributes_list_length);
 	if (!*key_attributes_list) {
 		psa_status = PSA_ERROR_INSUFFICIENT_MEMORY;
@@ -1081,6 +1087,8 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 
 		smw_tlv_set_boolean(&p, FLUSH_KEY_STR);
 	}
+
+	smw_tlv_set_numeral(&p, STORAGE_ID_STR, storage_id);
 
 	policy_tlv = p;
 	smw_tlv_set_type(&p, POLICY_STR);
@@ -1534,18 +1542,19 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 				     const uint8_t *data, size_t data_length,
 				     psa_key_id_t *key)
 {
-	psa_status_t psa_status;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_import_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
-	struct smw_keypair_gen *keypair_gen;
-	psa_key_type_t key_type;
-	unsigned int security_size;
+	struct smw_keypair_gen *keypair_gen = NULL;
+	psa_key_type_t key_type = 0;
+	unsigned int security_size = 0;
+	unsigned int location = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
-		return PSA_ERROR_BAD_STATE;
+		return psa_status;
 
 	if (!attributes || !data || !data_length || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
@@ -1555,7 +1564,19 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	key_descriptor.id = psa_get_key_id(attributes);
 
 	key_type = psa_get_key_type(attributes);
-	if (PSA_KEY_TYPE_IS_RSA(key_type)) {
+	location = PSA_KEY_LIFETIME_GET_LOCATION(attributes->lifetime);
+
+	/*
+	 * Check first if it's a NXP EdgeLock 2GO object to set
+	 * the import data as SMW key private buffer.
+	 * If it's not a NXP EdgeLock 2GO object set the SMW key buffers
+	 * function of the key type.
+	 */
+	if (NXP_IS_EL2GO_OBJECT(location)) {
+		keypair_gen = &keypair_buffer.gen;
+		set_gen_private_key_buffer(data, data_length, keypair_gen);
+		security_size = psa_get_key_bits(attributes);
+	} else if (PSA_KEY_TYPE_IS_RSA(key_type)) {
 		psa_status = set_rsa_key_buffer(key_type, data, data_length,
 						&keypair_buffer.rsa);
 		if (psa_status != PSA_SUCCESS)

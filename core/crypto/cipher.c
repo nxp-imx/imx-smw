@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include "smw_status.h"
@@ -126,7 +126,8 @@ convert_key_descriptors(struct smw_key_descriptor **keys_desc,
 			goto end;
 		}
 
-		status = smw_keymgr_convert_descriptor(key, keymgr_desc[i]);
+		status = smw_keymgr_convert_descriptor(key, keymgr_desc[i],
+						       false);
 		if (status != SMW_STATUS_OK &&
 		    status != SMW_STATUS_NO_KEY_BUFFER) {
 			free_keys_ptr_array(keymgr_desc,

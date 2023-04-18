@@ -28,7 +28,8 @@ static int mac_convert_args(struct smw_mac_args *args,
 		goto end;
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
-					       &converted_args->key_descriptor);
+					       &converted_args->key_descriptor,
+					       false);
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
 		goto end;
 

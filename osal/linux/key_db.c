@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <errno.h>
@@ -309,8 +309,11 @@ int key_db_get_info(struct osal_key *key)
 	DBG_PRINTF(INFO, "%s (%d) key id " PRIxID " @%ld\n", __func__, __LINE__,
 		   key->id, pos);
 
-	if (pos < 0)
+	if (pos < 0) {
+		/* Set key to 0 - invalid key id */
+		key->id = 0;
 		goto end;
+	}
 
 	if (entry.flags != ENTRY_USE) {
 		DBG_PRINTF(ERROR, "%s (%d) key id " PRIxID " not valid\n",

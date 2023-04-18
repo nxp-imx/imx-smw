@@ -14,20 +14,6 @@
 			"security_size": 0,
 			"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17"
 		},
-		"key 4": {
-			"id": 1,
-			"type": "NIST",
-			"security_size": 192,
-			"priv_key": [
-				"e5ce89a34adddf25ff3bf1ffe6803f57",
-				"d0220de3118798ea"
-			],
-			"pub_key": [
-				"8abf7b3ceb2b02438af19543d3e5b1d5",
-				"73fa9ac60085840fa87f80182dcd56a6",
-				"a061f81f7da393e7cffd5e0738c6b245"
-			]
-		},
 		"key 5": {
 			"type": "NIST",
 			"security_size": 192
@@ -135,75 +121,69 @@
 		"key_name": "key 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Key decriptor ID is set
-		"command": "IMPORT",
-		"subsystem": "DEFAULT",
-		"key_name": "key 4",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 6": { // Key descriptor buffer is NULL
+	"subtest 5": { // Key descriptor buffer is NULL
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 1",
 		"test_error": "KEY_BUFFER_NULL",
 		"result": "SMW_STATUS_NO_KEY_BUFFER"
 	},
-	"subtest 7": { // Neither private key nor public key buffer is set
+	"subtest 6": { // Neither private key nor public key buffer is set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 5",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Public data length is not set
+	"subtest 7": { // Public data length is not set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 9": { // Private data length is not set
+	"subtest 8": { // Private data length is not set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 7",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Version not supported
+	"subtest 9": { // Version not supported
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 1",
 		"version": 255,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
-	"subtest 11": { // Subsystem is not set in the config file
+	"subtest 10": { // Subsystem is not set in the config file
 		"command": "IMPORT",
 		"subsystem": "UNDEFINED",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 12": { // Key type is undefined
+	"subtest 11": { // Key type is undefined
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 8",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 13": { // Buffer key format is undefined
+	"subtest 12": { // Buffer key format is undefined
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 9",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 14": { // Attributes list is undefined
+	"subtest 13": { // Attributes list is undefined
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 10",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 15": { // Modulus buffer not set
+	"subtest 14": { // Modulus buffer not set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 11",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 16": { // Modulus length is not set
+	"subtest 15": { // Modulus length is not set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 12",

@@ -1,0 +1,48 @@
+{
+	"keys": {
+		"key NIST": {
+			"id": 805310466, // "0x30001002"
+			"type": "NIST",
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+				]
+			}
+		}
+	},
+	"subtest 1": { // Generate key persistent with correct ID
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key NIST"
+	},
+	"subtest 2": { // Generate key persistent again with correct ID
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key NIST",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": {
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"message": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"signature": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"key_name": "key NIST",
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"key_name": "key NIST",
+		"depends": 1
+	}
+}

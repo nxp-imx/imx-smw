@@ -1,0 +1,74 @@
+{
+	"keys": {
+		"key NIST 1": {
+			"id": 1342177279, // "0x4FFFFFFF"
+			"type": "NIST",
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			}
+		},
+		"key NIST 2": {
+			"id": 805310465, // "0x30001001"
+			"type": "NIST",
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			}
+		}
+	},
+	"subtest 1": { // Generate key persistent with wrong ID
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Generate key persistent with correct ID
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 2"
+	},
+	"subtest 3": { // Generate key persistent again with correct ID
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 2",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"message": [
+			"54686973207068726173652069732033",
+			"32206279746573206c6f6e6720212121"
+		],
+		"signature": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"key_name": "key NIST 2",
+		"depends": 2
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"key_name": "key NIST 2",
+		"depends": 2
+	}
+}

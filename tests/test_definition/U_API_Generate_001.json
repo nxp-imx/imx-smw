@@ -11,11 +11,6 @@
 			"type": "AES",
 			"security_size": 0
 		},
-		"key 4": {
-			"id": 1,
-			"type": "AES",
-			"security_size": 192
-		},
 		"key 5": {
 			"type": "UNDEFINED",
 			"security_size": 128,
@@ -83,62 +78,56 @@
 		"key_name": "key 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Key decriptor ID is set
-		"command": "GENERATE",
-		"subsystem": "DEFAULT",
-		"key_name": "key 4",
-		"result": "SMW_STATUS_INVALID_PARAM",
-	},
-	"subtest 6": { // Version is not supported
+	"subtest 5": { // Version is not supported
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"version": 255
 	},
-	"subtest 7": { // Subsystem is not set in the config file
+	"subtest 6": { // Subsystem is not set in the config file
 		"command": "GENERATE",
 		"subsystem": "UNDEFINED",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 8": { // Key type is undefined
+	"subtest 7": { // Key type is undefined
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 5",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 9": { // Attribute list in undefined
+	"subtest 8": { // Attribute list in undefined
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Key format is undefined
+	"subtest 9": { // Key format is undefined
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 7",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 11": { // Private key buffer is set
+	"subtest 10": { // Private key buffer is set
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 8",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 12": { // Private key buffer len is set (buffer NULL)
+	"subtest 11": { // Private key buffer len is set (buffer NULL)
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 9",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 13": { // RSA_PUB_EXP attribute set for non RSA key type
+	"subtest 12": { // RSA_PUB_EXP attribute set for non RSA key type
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 10",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 14": { // Public buffer set, modulus buffer not
+	"subtest 13": { // Public buffer set, modulus buffer not
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 11",

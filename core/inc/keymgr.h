@@ -473,6 +473,7 @@ int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
  * smw_keymgr_convert_descriptor() - Key descriptor conversion.
  * @in: Pointer to a public Key descriptor.
  * @out: Pointer to an internal Key descriptor.
+ * @new_key: True if it's a new key or false.
  *
  * This function converts a public Key descriptor
  * into an internal Key descriptor.
@@ -481,7 +482,8 @@ int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
  * error code.
  */
 int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
-				  struct smw_keymgr_descriptor *out);
+				  struct smw_keymgr_descriptor *out,
+				  bool new_key);
 
 /**
  * smw_keymgr_set_default_attributes() - Set default Key attributes.

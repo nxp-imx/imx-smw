@@ -12,12 +12,19 @@
 static void prepare_osal_key(struct smw_keymgr_identifier *identifier,
 			     struct osal_key *key)
 {
+	key->id = identifier->id;
 	key->persistent = identifier->persistence_id;
 	key->info = identifier;
 	key->info_size = sizeof(*identifier);
 
-	key->range.min = 1;
-	key->range.max = -1;
+	/* If key id is known, there is no key id range */
+	if (key->id == INVALID_KEY_ID) {
+		key->range.min = 1;
+		key->range.max = UINT32_MAX;
+	} else {
+		key->range.min = key->id;
+		key->range.max = key->id;
+	}
 }
 
 int smw_keymgr_db_create(unsigned int *id,

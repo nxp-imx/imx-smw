@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __KEYMGR_DB_H__
@@ -65,6 +65,7 @@ int smw_keymgr_db_delete(unsigned int id,
  * SMW_STATUS_OK                - Success
  * SMW_STATUS_OPS_INVALID       - OSAL operation invalid
  * SMW_STATUS_KEY_DB_GET_INFO   - Key get information error
+ * SMW_STATUS_UNKNOWN_ID        - Key ID is unknown
  */
 int smw_keymgr_db_get_info(unsigned int id,
 			   struct smw_keymgr_identifier *identifier);

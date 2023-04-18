@@ -412,7 +412,7 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 
 		key_desc = &conv_args->key_derived;
 		/* Input base key defined the key type and size */
-		status = smw_keymgr_convert_descriptor(key_out, key_desc);
+		status = smw_keymgr_convert_descriptor(key_out, key_desc, true);
 	} else {
 		status = SMW_STATUS_OK;
 	}
@@ -430,7 +430,7 @@ static int convert_input_args(struct smw_derive_key_args *args,
 
 	/* Get the input key base for the derivation */
 	status = smw_keymgr_convert_descriptor(args->key_descriptor_base,
-					       &conv_args->key_base);
+					       &conv_args->key_base, false);
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
 		return status;
 

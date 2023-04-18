@@ -463,6 +463,7 @@ static int generate_key(struct hdl *hdl, void *args)
 		op_args.out_key = tmp_key;
 	}
 
+	key_id = key_identifier->id;
 	op_args.key_identifier = &key_id;
 	op_args.bit_key_sz = key_identifier->security_size;
 
@@ -497,7 +498,7 @@ static int generate_key(struct hdl *hdl, void *args)
 		       "key_management_hdl: %u\n"
 		       "op_generate_key_args_t\n"
 		       "    flags: 0x%X\n"
-		       "    key identifier: %p\n"
+		       "    key identifier (%p): 0x%08X\n"
 		       "    key policy\n"
 		       "      - type: 0x%04X\n"
 		       "      - size (bits): %d\n"
@@ -509,8 +510,8 @@ static int generate_key(struct hdl *hdl, void *args)
 		       "      - buffer: %p\n"
 		       "      - size: %d\n",
 		       __func__, __LINE__, key_mgt_hdl, op_args.flags,
-		       op_args.key_identifier, op_args.key_type,
-		       op_args.bit_key_sz, op_args.key_group,
+		       op_args.key_identifier, *op_args.key_identifier,
+		       op_args.key_type, op_args.bit_key_sz, op_args.key_group,
 		       op_args.key_lifetime, op_args.key_usage,
 		       op_args.permitted_algo, op_args.out_key,
 		       op_args.out_size);

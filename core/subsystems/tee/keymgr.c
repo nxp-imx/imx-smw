@@ -847,6 +847,7 @@ static int generate_key(void *args)
 	if (key_attrs->persistence == SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT)
 		shared_params.persistent_storage = true;
 
+	shared_params.id = key_identifier->id;
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->tee_key_type;
 	usage_status =
@@ -1416,6 +1417,7 @@ static int import_key(void *args)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
+	shared_params.id = key_identifier->id;
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->tee_key_type;
 

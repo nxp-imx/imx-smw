@@ -468,26 +468,41 @@ static bool is_key_id_used(uint32_t id, bool persistent)
  * @id: ID to update. Not updated if an error is returned.
  * @persistent: Key storage information.
  *
+ * If the @id is 0, finds a free id in the list else checks if the
+ * given @id is not used.
+ *
  * Return:
  * TEE_SUCCESS			- Success.
  * TEE_ERROR_ITEM_NOT_FOUND	- Failed.
+ * TEE_ERROR_BAD_PARAMETERS	- Id already used.
  */
 static TEE_Result find_unused_id(uint32_t *id, bool persistent)
 {
+	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
 	uint32_t i = 1; /* IDs start at 1 */
 	uint32_t max_id = UINT32_MAX;
 
 	FMSG("Executing %s", __func__);
 
-	for (; i < max_id; i++) {
-		if (!is_key_id_used(i, persistent)) {
-			*id = i;
-			return TEE_SUCCESS;
+	if (*id) {
+		DMSG("Check if ID=0x%08" PRIx32 " is free", *id);
+		if (is_key_id_used(i, persistent))
+			res = TEE_ERROR_BAD_PARAMETERS;
+		else
+			res = TEE_SUCCESS;
+	} else {
+		for (; i < max_id; i++) {
+			if (!is_key_id_used(i, persistent)) {
+				*id = i;
+				DMSG("Found new ID=0x%08" PRIx32, *id);
+				res = TEE_SUCCESS;
+				break;
+			}
 		}
 	}
 
-	EMSG("Failed to find an unused ID");
-	return TEE_ERROR_ITEM_NOT_FOUND;
+	EMSG("returned 0x%" PRIx32, res);
+	return res;
 }
 
 /**
@@ -1219,7 +1234,8 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		return res;
 	}
 
-	/* Find an unused ID */
+	/* Find a new ID or if user ID is free */
+	id = shared_params->id;
 	res = find_unused_id(&id, persistent);
 	if (res)
 		return res;
@@ -1531,7 +1547,8 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	key_type = shared_params->key_type;
 	persistent = shared_params->persistent_storage;
 
-	/* Find an unused ID */
+	/* Find a new ID or if user ID is free */
+	id = shared_params->id;
 	res = find_unused_id(&id, persistent);
 	if (res)
 		return res;

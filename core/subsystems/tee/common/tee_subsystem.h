@@ -119,7 +119,7 @@ struct mac_shared_params {
  * @security_size: Key security size.
  * @key_type: Key type.
  * @key_usage: Key usage.
- * @id: Key ID set by the TA.
+ * @id: [in/out] Key ID set by the caller if not 0 and value returned by the TA.
  * @persistent_storage: Use persistent subsystem storage or not.
  */
 struct keymgr_shared_params {

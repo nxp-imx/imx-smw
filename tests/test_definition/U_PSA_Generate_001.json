@@ -1,0 +1,155 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 192,
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		},
+		"key 4": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			}
+		},
+		"key 5": {
+			"type": "NIST",
+			"security_size": 384,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA384"
+					]
+				]
+			}
+		},
+		"key 6": {
+			"type": "BRAINPOOL_R1",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			}
+		},
+		"key 7": {
+			"type": "BRAINPOOL_R1",
+			"security_size": 384,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA384"
+					]
+				]
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 3"
+	},
+	"subtest 4": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 4"
+	},
+	"subtest 5": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 5"
+	},
+	"subtest 6": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 6"
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 7"
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 11": {
+		"command": "DELETE",
+		"key_name": "key 4",
+		"depends": 4
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "key 5",
+		"depends": 5
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "key 6",
+		"depends": 6
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "key 7",
+		"depends": 7
+	}
+}

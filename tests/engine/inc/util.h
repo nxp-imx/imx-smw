@@ -253,9 +253,8 @@ int util_read_test_error(enum arguments_test_err_case *error,
  * PASSED	- Success
  * -SUBSYSTEM	- @buffer and @expected_buffer are different
  */
-int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
-			 unsigned char *expected_buffer,
-			 unsigned int expected_len);
+int util_compare_buffers(unsigned char *buffer, size_t buffer_len,
+			 unsigned char *expected_buffer, size_t expected_len);
 /**
  * util_read_json_type() - Read an json-c @key value of type @type
  * @value: Pointer to the output value read (can be NULL)

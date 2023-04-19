@@ -2,6 +2,8 @@ target_sources(${PROJECT_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/exec.c
                ${CMAKE_CURRENT_SOURCE_DIR}/hash.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/key.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/keymgr.c
                ${CMAKE_CURRENT_SOURCE_DIR}/rng.c
                ${CMAKE_CURRENT_BINARY_DIR}/status.c)
 

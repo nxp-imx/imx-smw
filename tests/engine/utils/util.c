@@ -390,9 +390,8 @@ int util_read_test_error(enum arguments_test_err_case *error,
 	return ret;
 }
 
-int util_compare_buffers(unsigned char *buffer, unsigned int buffer_len,
-			 unsigned char *expected_buffer,
-			 unsigned int expected_len)
+int util_compare_buffers(unsigned char *buffer, size_t buffer_len,
+			 unsigned char *expected_buffer, size_t expected_len)
 {
 	if (buffer_len > expected_len) {
 		DBG_PRINT("Bad length, got %d expected %d", buffer_len,

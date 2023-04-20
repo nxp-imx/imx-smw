@@ -22,6 +22,7 @@ Key manager
 
 Operations supported:
  - Generate
+ - Import (only EdgeLock 2GO object)
  - Export (only public key in HEX or Base64 format)
  - Delete
 

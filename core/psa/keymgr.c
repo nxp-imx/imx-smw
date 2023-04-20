@@ -616,6 +616,17 @@ static void get_aead_alg(psa_algorithm_t alg, const char **alg_str)
 		*alg_str = CHACHA20_POLY1305_STR;
 }
 
+static void get_mac_alg(psa_algorithm_t alg, const char **alg_str)
+{
+	alg = alg & ~(PSA_ALG_AEAD_TAG_LENGTH_MASK |
+		      PSA_ALG_AEAD_AT_LEAST_THIS_LENGTH_FLAG);
+
+	if (alg == PSA_ALG_CBC_MAC)
+		*alg_str = CBC_MAC_STR;
+	else if (alg == PSA_ALG_CMAC)
+		*alg_str = CMAC_STR;
+}
+
 static void get_alg_name(psa_algorithm_t alg, const char **alg_str,
 			 const char **hash_str, const char **kdf_str,
 			 uint8_t *length, uint8_t *min_length)
@@ -682,6 +693,8 @@ static void get_alg_name(psa_algorithm_t alg, const char **alg_str,
 		else
 			*length = l;
 	} else if (PSA_ALG_IS_MAC(alg)) {
+		get_mac_alg(alg, alg_str);
+
 		l = (alg & PSA_ALG_MAC_TRUNCATION_MASK) >>
 		    PSA_MAC_TRUNCATION_OFFSET;
 
@@ -1047,9 +1060,13 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 	*key_attributes_list_length =
 		SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_tlv_length);
 
-	if (!PSA_KEY_LIFETIME_IS_VOLATILE(lifetime))
+	if (!PSA_KEY_LIFETIME_IS_VOLATILE(lifetime)) {
 		*key_attributes_list_length +=
 			SMW_TLV_ELEMENT_LENGTH(key_persistence, 0);
+
+		*key_attributes_list_length +=
+			SMW_TLV_ELEMENT_LENGTH(FLUSH_KEY_STR, 0);
+	}
 
 	*key_attributes_list = SMW_UTILS_MALLOC(*key_attributes_list_length);
 	if (!*key_attributes_list) {
@@ -1059,8 +1076,11 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 
 	p = *key_attributes_list;
 
-	if (!PSA_KEY_LIFETIME_IS_VOLATILE(lifetime))
+	if (!PSA_KEY_LIFETIME_IS_VOLATILE(lifetime)) {
 		smw_tlv_set_boolean(&p, key_persistence);
+
+		smw_tlv_set_boolean(&p, FLUSH_KEY_STR);
+	}
 
 	policy_tlv = p;
 	smw_tlv_set_type(&p, POLICY_STR);

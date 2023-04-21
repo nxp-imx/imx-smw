@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __PSA_CRYPTO_TYPES_H__
 #define __PSA_CRYPTO_TYPES_H__
+
+#include <stdint.h>
 
 /**
  * DOC:

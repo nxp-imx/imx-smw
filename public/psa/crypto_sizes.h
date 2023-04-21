@@ -21,6 +21,12 @@
 		_a < _b ? _b : _a;                                             \
 	})
 
+/*
+ * Define the maximum capabilities supported by the SMW's subsystems
+ */
+#define PSA_VENDOR_MAX_RSA_KEY_BITS   4096
+#define PSA_VENDOR_MAX_ECC_CURVE_BITS 521
+
 /**
  * DOC:
  * This file contains the definitions of macros that are useful to compute buffer sizes. The
@@ -1047,16 +1053,30 @@ size_t psa_hash_length(psa_algorithm_t alg);
 	/* implementation-defined value */
 
 /**
+ * DOC: PSA_ECC_SIGNATURE_SIZE
+ * Size of an elliptic curve signature.
+ *
+ * @key_bits: The size of the key in bits.
+ */
+#define PSA_ECC_SIGNATURE_SIZE(key_bits) (PSA_BITS_TO_BYTES(key_bits) * 2)
+
+#define PSA_ECC_SIGNATURE_MAX_SIZE                                             \
+	PSA_ECC_SIGNATURE_SIZE(PSA_VENDOR_ECC_MAX_CURVE_BITS)
+#define PSA_RSA_SIGNATURE_MAX_SIZE                                             \
+	PSA_BITS_TO_BYTES(PSA_VENDOR_MAX_RSA_KEY_BITS)
+
+/**
  * DOC: PSA_SIGNATURE_MAX_SIZE
  * Maximum size of an asymmetric signature.
- *
- * **Warning: Not supported**
  *
  * This macro must expand to a compile-time constant integer. It is recommended that this value is
  * the maximum size of an asymmetric signature supported by the implementation, in bytes. The value
  * must not be smaller than this maximum.
  */
-#define PSA_SIGNATURE_MAX_SIZE /* implementation-defined value */
+#define PSA_SIGNATURE_MAX_SIZE                                                 \
+	((PSA_ECC_SIGNATURE_MAX_SIZE > PSA_RSA_SIGNATURE_MAX_SIZE) ?           \
+		 PSA_ECC_SIGNATURE_MAX_SIZE :                                  \
+		 PSA_RSA_SIGNATURE_MAX_SIZE)
 
 /**
  * PSA_SIGN_OUTPUT_SIZE() - Sufficient signature buffer size for psa_sign_message() and
@@ -1065,15 +1085,9 @@ size_t psa_hash_length(psa_algorithm_t alg);
  * @key_bits: The size of the key in bits.
  * @alg: The signature algorithm.
  *
- * **Warning: Not supported**
- *
  * This macro returns a sufficient buffer size for a signature using a key of the specified type and
  * size, with the specified algorithm. Note that the actual size of the signature might be smaller,
  * as some algorithms produce a variable-size signature.
- *
- * **Warning**:
- *	This function might evaluate its arguments multiple times or zero times. Providing arguments
- *	that have side effects will result in implementation-specific behavior, and is non-portable.
  *
  * See also PSA_SIGNATURE_MAX_SIZE.
  *
@@ -1085,7 +1099,11 @@ size_t psa_hash_length(psa_algorithm_t alg);
  * unspecified.
  */
 #define PSA_SIGN_OUTPUT_SIZE(key_type, key_bits, alg)                          \
-	/* implementation-defined value */
+	(PSA_KEY_TYPE_IS_RSA(key_type) ?                                       \
+		 ((void)alg, PSA_BITS_TO_BYTES(key_bits)) :                    \
+		 PSA_KEY_TYPE_IS_ECC(key_type) ?                               \
+		 PSA_ECC_SIGNATURE_SIZE(key_bits) :                            \
+		 ((void)alg, 0))
 
 /**
  * DOC: PSA_TLS12_PSK_TO_MS_PSK_MAX_SIZE

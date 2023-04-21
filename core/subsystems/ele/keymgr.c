@@ -486,6 +486,12 @@ static int generate_key(struct hdl *hdl, void *args)
 		op_args.key_group = TRANSIENT_KEY_GROUP;
 	}
 
+	if (key_args->key_attributes.persistence ==
+		    SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT ||
+	    key_args->key_attributes.persistence ==
+		    SMW_KEYMGR_PERSISTENCE_ID_PERMANENT)
+		key_args->key_attributes.flush_key = true;
+
 	if (key_args->key_attributes.flush_key)
 		op_args.flags |= HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
 

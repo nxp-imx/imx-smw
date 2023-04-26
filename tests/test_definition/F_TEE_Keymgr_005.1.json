@@ -1,0 +1,66 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "NIST",
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": []
+			}
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": []
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"algo": "SHA256",
+		"message": [
+			"451101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8",
+			"5c8a61ac8924711f895c5ed90ef17745",
+			"ed2d728abd22a5f7a13479a462d71b56",
+			"c19a74a40b655c58edfe0a188ad2cf46",
+			"cbf30524f65d423c837dd1ff2bf462ac",
+			"4198007345bb44dbb7b1c861298cdf61",
+			"982a833afc728fae1eda2f87aa2c9480",
+			"858bec"
+		],
+		"signature": [
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555",
+			"55555555555555555555555555555555"
+		],
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "SAVE_KEY_IDS",
+		"filepath": "/usr/share/smw/tests/F_TEE_Keymgr_005_ids.json"
+	}
+}

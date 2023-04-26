@@ -31,34 +31,38 @@
 /* TEE Key type is keypair */
 #define TEE_TYPE_KEYPAIR BIT(24)
 
-/**
- * struct key_data - Key data.
- * @key_id: Key ID.
- * @handle: Key handle (only for transient object).
- * @is_persistent: True if key object is persistent.
- * @key_type: TEE key type.
- * @security_size: Key security size in bits.
+/*
+ * Object ID ranges
+ * Object ID ranges can be split between transient and persistent by changing
+ * the below ranges definition.
  */
-struct key_data {
-	uint32_t key_id;
+#define OBJECT_ID_TRANSIENT_MIN	 1
+#define OBJECT_ID_TRANSIENT_MAX	 UINT32_MAX
+#define OBJECT_ID_PERSISTENT_MIN 1
+#define OBJECT_ID_PERSISTENT_MAX UINT32_MAX
+
+/**
+ * struct obj_data - Object data.
+ * @id: Object ID.
+ * @handle: Object Handle
+ */
+struct obj_data {
+	uint32_t id;
 	TEE_ObjectHandle handle;
-	bool is_persistent;
-	enum tee_key_type key_type;
-	unsigned int security_size;
 };
 
 /**
- * struct key_list - Key linked list structure.
- * @key_data: Current key data.
- * @next: Next key of the list.
+ * struct obj_list - Transient object list.
+ * @data: Object data.
+ * @next: Next object of the list.
  */
-struct key_list {
-	struct key_data *key_data;
-	struct key_list *next;
+struct obj_list {
+	struct obj_data *data;
+	struct obj_list *next;
 };
 
-/* Linked list containing transient objects and used persistent objects */
-static struct key_list *key_linked_list;
+/* Linked list containing transient objects */
+static struct obj_list *transient_object_list;
 
 /**
  * struct - Key usage conversion
@@ -283,222 +287,341 @@ static TEE_Result get_key_ecc_curve(enum tee_key_type key_type,
 }
 
 /**
- * key_add_list() - Add a new key to key linked list.
- * @key: Key to add to the list.
+ * find_and_open_persistent_id() - Find if object ID is persistent and open it.
+ * @id: ID to find.
+ * @handle: If not NULL and ID found, return the persistent object handle.
  *
  * Return:
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_BAD_PARAMETERS	- @key is NULL.
- * TEE_ERROR_OUT_OF_MEMORY	- Malloc failed.
+ * TEE_SUCCESS              - @id is present in the persistent storage
+ * TEE_ERROR_ITEM_NOT_FOUND - @id is not present in the persistent storage
+ * other error              - Unexpected error
  */
-static TEE_Result key_add_list(struct key_data *key)
+static TEE_Result find_and_open_persistent_id(uint32_t id,
+					      TEE_ObjectHandle *handle)
 {
-	struct key_list *new_key = NULL;
-	struct key_list *head = NULL;
+#define OBJECT_ID_BUFFER_MAX (TEE_OBJECT_ID_MAX_LEN / sizeof(uint32_t) + 1)
+
+	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
+	TEE_ObjectEnumHandle obj_enum = TEE_HANDLE_NULL;
+	TEE_ObjectInfo obj_info = { 0 };
+	uint32_t *obj_id = NULL;
+	size_t obj_id_length = 0;
+	bool found = false;
 
 	FMSG("Executing %s", __func__);
 
-	if (!key)
-		return TEE_ERROR_BAD_PARAMETERS;
+	res = TEE_AllocatePersistentObjectEnumerator(&obj_enum);
+	if (res == TEE_SUCCESS) {
+		obj_id = TEE_Malloc(OBJECT_ID_BUFFER_MAX,
+				    TEE_USER_MEM_HINT_NO_FILL_ZERO);
+		if (!obj_id)
+			return TEE_ERROR_OUT_OF_MEMORY;
 
-	new_key = TEE_Malloc(sizeof(struct key_list),
-			     TEE_USER_MEM_HINT_NO_FILL_ZERO);
-	if (!new_key) {
-		EMSG("TEE_Malloc failed");
-		return TEE_ERROR_OUT_OF_MEMORY;
+		DMSG("Enumerate all Persistent objects");
+		res = TEE_StartPersistentObjectEnumerator(obj_enum,
+							  SMW_TEE_STORAGE);
+
+		while (res == TEE_SUCCESS && !found) {
+			TEE_MemFill(&obj_info, 0, sizeof(obj_info));
+			TEE_MemFill(obj_id, 0, OBJECT_ID_BUFFER_MAX);
+			obj_id_length = 0;
+
+			res = TEE_GetNextPersistentObject(obj_enum, &obj_info,
+							  obj_id,
+							  &obj_id_length);
+			if (res == TEE_SUCCESS && obj_id_length == sizeof(id) &&
+			    id == obj_id[0])
+				found = true;
+		}
+
+		TEE_Free(obj_id);
 	}
 
-	new_key->key_data = key;
-	new_key->next = NULL;
-
-	if (!key_linked_list) {
-		/* New key is the first of the list */
-		key_linked_list = new_key;
-	} else {
-		head = key_linked_list;
-		while (head->next)
-			head = head->next;
-		/* New key is the last of the list */
-		head->next = new_key;
+	if (found) {
+		DMSG("Persistent object ID 0x%08" PRIx32 " found", id);
+		if (handle)
+			res = TEE_OpenPersistentObject(SMW_TEE_STORAGE, &id,
+						       sizeof(id),
+						       PERSISTENT_KEY_FLAGS,
+						       handle);
 	}
 
-	return TEE_SUCCESS;
+	TEE_FreePersistentObjectEnumerator(obj_enum);
+
+	return res;
 }
 
 /**
- * key_del_list() - Delete a key from key linked list.
- * @key: Key to remove from the list.
+ * register_persistent_object() - Create and close a persistent object
+ * @data: Transient object data
+ *
+ * Transforms a transient object into a persistent object and close it if
+ * success.
  *
  * Return:
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_BAD_PARAMETERS	- @key is NULL.
- * TEE_ERROR_ITEM_NOT_FOUND	- Key not found.
+ * TEE_SUCCESS              - @id found and deleted
+ * other error              - Unexpected error
  */
-static TEE_Result key_del_list(struct key_data *key)
+static TEE_Result register_persistent_object(struct obj_data *data)
 {
-	struct key_list *head = NULL;
-	struct key_list *prev = NULL;
-	struct key_list *next = NULL;
+	TEE_Result res = TEE_ERROR_GENERIC;
+	TEE_ObjectHandle handle = TEE_HANDLE_NULL;
 
 	FMSG("Executing %s", __func__);
 
-	if (!key)
+	res = TEE_CreatePersistentObject(SMW_TEE_STORAGE, &data->id,
+					 sizeof(data->id), PERSISTENT_KEY_FLAGS,
+					 data->handle, NULL, 0, &handle);
+
+	TEE_CloseObject(handle);
+
+	return res;
+}
+
+/**
+ * find_and_delete_persistent_id() - Find and delete ID in persistent storage
+ * @id: ID to find and delete.
+ *
+ * Checks if ID is persistent and if found, deletes it.
+ *
+ * Return:
+ * TEE_SUCCESS              - @id found and deleted
+ * TEE_ERROR_ITEM_NOT_FOUND - @id not found
+ * other error              - Unexpected error
+ */
+static TEE_Result find_and_delete_persistent_id(uint32_t id)
+{
+	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
+	TEE_ObjectHandle handle = TEE_HANDLE_NULL;
+
+	FMSG("Executing %s", __func__);
+
+	res = find_and_open_persistent_id(id, &handle);
+	if (res == TEE_SUCCESS)
+		res = TEE_CloseAndDeletePersistentObject1(handle);
+
+	return res;
+}
+
+/**
+ * find_and_get_transient_id() - Find if object ID is transient and return
+ *                               its handle.
+ * @id: ID to find.
+ * @handle: If not NULL and ID found, return the transient object handle.
+ *
+ * Return:
+ * TEE_SUCCESS              - @id is present in the transient id list
+ * TEE_ERROR_ITEM_NOT_FOUND - @id is not present in the transient id list
+ */
+static TEE_Result find_and_get_transient_id(uint32_t id,
+					    TEE_ObjectHandle *handle)
+{
+	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
+	struct obj_list *head = transient_object_list;
+
+	FMSG("Executing %s", __func__);
+
+	while (head && res != TEE_SUCCESS) {
+		if (head->data->id == id) {
+			res = TEE_SUCCESS;
+			if (handle)
+				*handle = head->data->handle;
+		}
+
+		head = head->next;
+	}
+
+	return res;
+}
+
+/**
+ * register_transient_object() - Add transient object in the list
+ * @data: Transient object data
+ *
+ * Create a new key data and push it in the transient object list.
+ *
+ * Return:
+ * TEE_SUCCESS              - Object registered
+ * other error              - Unexpected error
+ */
+static TEE_Result register_transient_object(struct obj_data *data)
+{
+	TEE_Result res = TEE_ERROR_GENERIC;
+	struct obj_data *new_data = NULL;
+	struct obj_list *new_obj = NULL;
+	struct obj_list *head = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	if (!data) {
+		res = TEE_ERROR_BAD_PARAMETERS;
+		goto exit;
+	}
+
+	new_data =
+		TEE_Malloc(sizeof(*new_data), TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!new_data) {
+		EMSG("TEE_Malloc failed");
+		res = TEE_ERROR_OUT_OF_MEMORY;
+		goto exit;
+	}
+
+	*new_data = *data;
+
+	new_obj = TEE_Malloc(sizeof(*new_obj), TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!new_obj) {
+		EMSG("TEE_Malloc failed");
+		TEE_Free(new_data);
+		res = TEE_ERROR_OUT_OF_MEMORY;
+		goto exit;
+	}
+
+	new_obj->data = new_data;
+	new_obj->next = NULL;
+
+	if (!transient_object_list) {
+		/* New key is the first of the list */
+		transient_object_list = new_obj;
+	} else {
+		head = transient_object_list;
+		while (head->next)
+			head = head->next;
+		/* New key is the last of the list */
+		head->next = new_obj;
+	}
+
+	res = TEE_SUCCESS;
+	data->handle = TEE_HANDLE_NULL;
+
+exit:
+	return res;
+}
+
+/**
+ * find_and_delete_transient_id() - Find and delete ID in transient storage
+ * @id: ID to find and delete.
+ *
+ * Checks if ID is transient and if found, deletes it.
+ *
+ * Return:
+ * TEE_SUCCESS              - @id found and deleted
+ * TEE_ERROR_ITEM_NOT_FOUND - @id not found
+ * other error              - Unexpected error
+ */
+static TEE_Result find_and_delete_transient_id(uint32_t id)
+{
+	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
+
+	struct obj_list *head = NULL;
+	struct obj_list *prev = NULL;
+	struct obj_list *next = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	if (!id)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	head = key_linked_list;
-	prev = key_linked_list;
+	head = transient_object_list;
+	prev = transient_object_list;
 
-	while (head) {
+	while (head && res != TEE_SUCCESS) {
 		next = head->next;
-		if (head->key_data == key) {
-			if (head == key_linked_list)
-				key_linked_list = next;
+		if (head->data->id == id) {
+			res = TEE_SUCCESS;
+
+			if (head == transient_object_list)
+				transient_object_list = next;
 			else
 				prev->next = next;
 
-			TEE_Free(head->key_data);
-			TEE_Free(head);
+			TEE_FreeTransientObject(head->data->handle);
 
-			return TEE_SUCCESS;
+			TEE_Free(head->data);
+			TEE_Free(head);
 		}
 
 		prev = head;
 		head = next;
 	};
 
-	return TEE_ERROR_ITEM_NOT_FOUND;
+	return res;
 }
 
 /**
- * key_find_list() - Check if a key is present in key linked list.
- * @id: Key ID to find.
+ * is_object_id_used() - Check if an ID is already used.
+ * @id: ID to check.
  *
  * Return:
- * Pointer to key_data structure	- Success.
- * NULL					- Key not found.
+ * TEE_SUCCESS              - @id is already used
+ * TEE_ERROR_ITEM_NOT_FOUND - @id is not used
+ * other error              - Unexpected error
  */
-static struct key_data *key_find_list(uint32_t id)
+static TEE_Result is_object_id_used(uint32_t id)
 {
-	struct key_list *head = key_linked_list;
+	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
 
 	FMSG("Executing %s", __func__);
 
-	while (head) {
-		if (head->key_data->key_id == id)
-			return head->key_data;
-
-		head = head->next;
-	}
-
-	return NULL;
-}
-
-/**
- * is_persistent_key() - Check if a key is a persistent object.
- * @id: Key Id.
- * @key_handle: Pointer to key TEE_ObjectHandle. Not updated if an error is
- *              returned.
- *
- * Return:
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_BAD_PARAMETERS	- @key_handle is NULL.
- * Error code from TEE_OpenPersistentObject().
- */
-static TEE_Result is_persistent_key(uint32_t id, TEE_ObjectHandle *key_handle)
-{
-	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_ObjectHandle tmp = { 0 };
-
-	FMSG("Executing %s", __func__);
-
-	if (!key_handle)
-		return res;
-
-	res = TEE_OpenPersistentObject(SMW_TEE_STORAGE, &id, sizeof(id),
-				       PERSISTENT_KEY_FLAGS, &tmp);
-	if (!res)
-		*key_handle = tmp;
+	res = find_and_open_persistent_id(id, NULL);
+	if (res == TEE_ERROR_ITEM_NOT_FOUND)
+		res = find_and_get_transient_id(id, NULL);
 
 	return res;
 }
 
 /**
- * is_key_id_used() - Check if an ID is already used.
- * @id: ID to check.
- * @persistent: Key storage information.
- *
- * If persistent is true, check that the ID is not used in the key linked list
- * and not used by a persistent object.
- *
- * Return:
- * true		- ID is used.
- * false	- ID is not used.
- */
-static bool is_key_id_used(uint32_t id, bool persistent)
-{
-	TEE_Result res = TEE_ERROR_GENERIC;
-	TEE_ObjectHandle tmp_handle = TEE_HANDLE_NULL;
-	struct key_data *key = NULL;
-
-	FMSG("Executing %s", __func__);
-
-	/* Check first in the key linked list */
-	key = key_find_list(id);
-	if (key)
-		return true;
-
-	if (!persistent)
-		return false;
-
-	/*
-	 * If !key and persistent check that ID isn't used by a
-	 * persistent object
-	 */
-	res = is_persistent_key(id, &tmp_handle);
-	if (!res) {
-		TEE_CloseObject(tmp_handle);
-		return true;
-	}
-
-	return false;
-}
-
-/**
- * find_unused_id() - Find an unused key ID.
- * @id: ID to update. Not updated if an error is returned.
+ * find_unused_object_id() - Find an unused object ID.
+ * @id: [in/out] input object ID to find, return new object ID
  * @persistent: Key storage information.
  *
  * If the @id is 0, finds a free id in the list else checks if the
  * given @id is not used.
  *
  * Return:
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_ITEM_NOT_FOUND	- Failed.
- * TEE_ERROR_BAD_PARAMETERS	- Id already used.
+ * TEE_SUCCESS                - Success.
+ * TEE_ERROR_ITEM_NOT_FOUND   - Failed.
+ * TEE_ERROR_BAD_PARAMETERS   - Id already used.
+ * TEE_ERROR_STORAGE_NO_SPACE - Not more storage place
+ * other error                - Unexpected error.
  */
-static TEE_Result find_unused_id(uint32_t *id, bool persistent)
+static TEE_Result find_unused_object_id(uint32_t *id, bool persistent)
 {
 	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
-	uint32_t i = 1; /* IDs start at 1 */
-	uint32_t max_id = UINT32_MAX;
+
+	uint32_t i = OBJECT_ID_TRANSIENT_MIN;
+	uint32_t max_id = OBJECT_ID_TRANSIENT_MAX;
 
 	FMSG("Executing %s", __func__);
 
 	if (*id) {
 		DMSG("Check if ID=0x%08" PRIx32 " is free", *id);
-		if (is_key_id_used(i, persistent))
+		res = is_object_id_used(*id);
+		if (res == TEE_SUCCESS)
 			res = TEE_ERROR_BAD_PARAMETERS;
-		else
+		else if (res == TEE_ERROR_ITEM_NOT_FOUND)
 			res = TEE_SUCCESS;
+
 	} else {
+		if (persistent) {
+			i = OBJECT_ID_PERSISTENT_MIN;
+			max_id = OBJECT_ID_PERSISTENT_MAX;
+		}
 		for (; i < max_id; i++) {
-			if (!is_key_id_used(i, persistent)) {
+			res = is_object_id_used(i);
+			if (res == TEE_SUCCESS)
+				continue;
+
+			if (res == TEE_ERROR_ITEM_NOT_FOUND) {
 				*id = i;
 				DMSG("Found new ID=0x%08" PRIx32, *id);
 				res = TEE_SUCCESS;
-				break;
 			}
+
+			break;
 		}
+
+		if (i == max_id)
+			res = TEE_ERROR_STORAGE_NO_SPACE;
 	}
 
 	EMSG("returned 0x%" PRIx32, res);
@@ -1160,13 +1283,10 @@ static TEE_Result export_pub_key_rsa(TEE_ObjectHandle handle,
 TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
-	TEE_ObjectHandle pers_key_handle = TEE_HANDLE_NULL;
 	TEE_Attribute key_attr = { 0 };
 	uint32_t object_type = 0;
 	uint32_t attr_count = 0;
 	unsigned int security_size = 0;
-	uint32_t id = 0;
 	unsigned char *pub_key = NULL;
 	unsigned char *modulus = NULL;
 	unsigned char *rsa_pub_exp_attr = NULL;
@@ -1174,7 +1294,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	size_t *modulus_size = NULL;
 	size_t rsa_pub_exp_attr_len = 0;
 	bool persistent = false;
-	struct key_data *key_data = NULL;
+	struct obj_data obj_data = { 0 };
 	struct keymgr_shared_params *shared_params = NULL;
 	enum tee_key_type key_type = 0;
 	uint32_t key_usage = 0;
@@ -1235,8 +1355,8 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	}
 
 	/* Find a new ID or if user ID is free */
-	id = shared_params->id;
-	res = find_unused_id(&id, persistent);
+	obj_data.id = shared_params->id;
+	res = find_unused_object_id(&obj_data.id, persistent);
 	if (res)
 		return res;
 
@@ -1272,92 +1392,52 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 
 	/* Allocate a transient object */
 	res = TEE_AllocateTransientObject(object_type, security_size,
-					  &key_handle);
+					  &obj_data.handle);
 	if (res) {
 		EMSG("Failed to allocate transient object: 0x%x", res);
 		return res;
 	}
 
 	/* Generate key */
-	res = TEE_GenerateKey(key_handle, security_size, &key_attr, attr_count);
+	res = TEE_GenerateKey(obj_data.handle, security_size, &key_attr,
+			      attr_count);
 	if (res) {
 		EMSG("Failed to generate key: 0x%x", res);
 		goto err;
 	}
 
 	/* Set key usage. Make it non extractable */
-	res = set_key_usage(key_usage, key_handle);
+	res = set_key_usage(key_usage, obj_data.handle);
 	if (res) {
 		EMSG("Failed to set key usage: 0x%x", res);
 		goto err;
 	}
 
-	/* Create a key data structure representing the generated key */
-	key_data = TEE_Malloc(sizeof(struct key_data),
-			      TEE_USER_MEM_HINT_NO_FILL_ZERO);
-	if (!key_data) {
-		EMSG("TEE_Malloc failed");
-		res = TEE_ERROR_OUT_OF_MEMORY;
-		goto err;
-	}
-
-	/* Update key data fields */
-	key_data->is_persistent = persistent;
-	key_data->key_id = id;
-	key_data->key_type = key_type;
-	key_data->security_size = security_size;
-
 	if (key_type == TEE_KEY_TYPE_ID_RSA)
 		/* Export RSA public key */
-		res = export_pub_key_rsa(key_handle, modulus, modulus_size,
+		res = export_pub_key_rsa(obj_data.handle, modulus, modulus_size,
 					 pub_key, pub_key_size);
 	else if (key_type == TEE_KEY_TYPE_ID_ECDSA)
 		/* Export ECDSA public key */
-		res = export_pub_key_ecc(key_handle, pub_key, pub_key_size);
+		res = export_pub_key_ecc(obj_data.handle, pub_key,
+					 pub_key_size);
 
 	if (res != TEE_SUCCESS && res != TEE_ERROR_NO_DATA) {
 		EMSG("Failed to export public key: 0x%x", res);
 		goto err;
 	}
 
-	if (persistent) {
-		/* Create a persistent object and free the transient object */
-		res = TEE_CreatePersistentObject(SMW_TEE_STORAGE, &id,
-						 sizeof(id),
-						 PERSISTENT_KEY_FLAGS,
-						 key_handle, NULL, 0,
-						 &pers_key_handle);
-		TEE_FreeTransientObject(key_handle);
-		key_handle = TEE_HANDLE_NULL;
+	if (persistent)
+		res = register_persistent_object(&obj_data);
+	else
+		res = register_transient_object(&obj_data);
 
-		if (res) {
-			EMSG("Failed to create a persistent key: 0x%x", res);
-			goto err;
-		}
-
-		key_data->handle = NULL;
-		TEE_CloseObject(pers_key_handle);
-	} else {
-		key_data->handle = key_handle;
-	}
-
-	/* Add key to the linked list */
-	res = key_add_list(key_data);
-	if (!res) {
-		/* Share key ID with Normal World */
-		shared_params->id = key_data->key_id;
-		return res;
-	}
+	/* Share key ID with Normal World in case of operation success */
+	if (res == TEE_SUCCESS)
+		shared_params->id = obj_data.id;
 
 err:
-	if (key_data)
-		TEE_Free(key_data);
-
-	if (key_handle != TEE_HANDLE_NULL)
-		TEE_FreeTransientObject(key_handle);
-
-	if (pers_key_handle != TEE_HANDLE_NULL)
-		res = TEE_CloseAndDeletePersistentObject1(pers_key_handle);
+	TEE_FreeTransientObject(obj_data.handle);
 
 	return res;
 }
@@ -1365,10 +1445,7 @@ err:
 TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_ObjectHandle hdl = { 0 };
 	uint32_t exp_param_types = 0;
-	uint32_t id = 0;
-	struct key_data *key = NULL;
 
 	FMSG("Executing %s", __func__);
 
@@ -1380,46 +1457,10 @@ TEE_Result delete_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	if (exp_param_types != param_types)
 		return res;
 
-	id = params[0].value.a;
-
-	/* Check if the key is present in the key linked list */
-	key = key_find_list(id);
-	if (key) {
-		/* If key is persisent, try to open it and close/delete it */
-		if (key->is_persistent) {
-			res = is_persistent_key(id, &hdl);
-			if (!res) {
-				res = TEE_CloseAndDeletePersistentObject1(hdl);
-				if (res) {
-					EMSG("Failed to delete key: 0x%x", res);
-					return res;
-				}
-			} else {
-				EMSG("Failed to open persistent object: 0x%x",
-				     res);
-				return res;
-			}
-		} else {
-			TEE_FreeTransientObject(key->handle);
-		}
-
-		/* Delete key from key linked list */
-		res = key_del_list(key);
-		if (res)
-			EMSG("Failed to delete key from linked list: 0x%x",
-			     res);
-
-		return res;
-	}
-
-	/* Close and delete persistent object not present in the list */
-	res = is_persistent_key(id, &hdl);
-	if (!res) {
-		res = TEE_CloseAndDeletePersistentObject1(hdl);
-		if (res)
-			EMSG("Failed to delete persistent key: 0x%x", res);
-	} else {
-		EMSG("Failed to open persistent object: 0x%x", res);
+	if (params[0].value.a) {
+		res = find_and_delete_persistent_id(params[0].value.a);
+		if (res == TEE_ERROR_ITEM_NOT_FOUND)
+			res = find_and_delete_transient_id(params[0].value.a);
 	}
 
 	return res;
@@ -1484,9 +1525,6 @@ exit:
 TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
-	TEE_ObjectHandle pers_handle = TEE_HANDLE_NULL;
-	uint32_t id = 0;
 	unsigned int security_size = 0;
 	unsigned int priv_key_len = 0;
 	unsigned int pub_key_len = 0;
@@ -1495,7 +1533,7 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	unsigned char *pub_key = NULL;
 	unsigned char *modulus = NULL;
 	bool persistent = false;
-	struct key_data *key_data = NULL;
+	struct obj_data obj_data = { 0 };
 	struct keymgr_shared_params *shared_params = NULL;
 	enum tee_key_type key_type = 0;
 	uint32_t key_usage = 0;
@@ -1548,8 +1586,8 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	persistent = shared_params->persistent_storage;
 
 	/* Find a new ID or if user ID is free */
-	id = shared_params->id;
-	res = find_unused_id(&id, persistent);
+	obj_data.id = shared_params->id;
+	res = find_unused_object_id(&obj_data.id, persistent);
 	if (res)
 		return res;
 
@@ -1559,67 +1597,25 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		return res;
 	}
 
-	res = ta_import_key(&key_handle, key_type, security_size, key_usage,
-			    priv_key, priv_key_len, pub_key, pub_key_len,
-			    modulus, modulus_len);
+	res = ta_import_key(&obj_data.handle, key_type, security_size,
+			    key_usage, priv_key, priv_key_len, pub_key,
+			    pub_key_len, modulus, modulus_len);
 	if (res) {
 		EMSG("Failed to import key: 0x%x", res);
 		goto exit;
 	}
 
-	/* Create a key data structure representing the imported key */
-	key_data = TEE_Malloc(sizeof(struct key_data),
-			      TEE_USER_MEM_HINT_NO_FILL_ZERO);
-	if (!key_data) {
-		EMSG("TEE_Malloc failed");
-		res = TEE_ERROR_OUT_OF_MEMORY;
-		goto exit;
-	}
+	if (persistent)
+		res = register_persistent_object(&obj_data);
+	else
+		res = register_transient_object(&obj_data);
 
-	/* Update key data fields */
-	key_data->is_persistent = persistent;
-	key_data->key_id = id;
-	key_data->key_type = key_type;
-	key_data->security_size = security_size;
-
-	if (persistent) {
-		/* Create a persistent object and free the transient object */
-		res = TEE_CreatePersistentObject(SMW_TEE_STORAGE, &id,
-						 sizeof(id),
-						 PERSISTENT_KEY_FLAGS,
-						 key_handle, NULL, 0,
-						 &pers_handle);
-		TEE_FreeTransientObject(key_handle);
-		key_handle = TEE_HANDLE_NULL;
-
-		if (res) {
-			EMSG("Failed to create a persistent key: 0x%x", res);
-			goto exit;
-		}
-
-		key_data->handle = NULL;
-		TEE_CloseObject(pers_handle);
-	} else {
-		key_data->handle = key_handle;
-	}
-
-	/* Add key to the linked list */
-	res = key_add_list(key_data);
+	/* Share key ID with Normal World in case of operation success */
+	if (res == TEE_SUCCESS)
+		shared_params->id = obj_data.id;
 
 exit:
-	if (res) {
-		if (key_data)
-			TEE_Free(key_data);
-
-		if (key_handle != TEE_HANDLE_NULL)
-			TEE_FreeTransientObject(key_handle);
-
-		if (pers_handle != TEE_HANDLE_NULL)
-			res = TEE_CloseAndDeletePersistentObject1(pers_handle);
-	} else {
-		/* Share key ID with Normal World */
-		shared_params->id = key_data->key_id;
-	}
+	TEE_FreeTransientObject(obj_data.handle);
 
 	return res;
 }
@@ -1628,22 +1624,17 @@ TEE_Result ta_get_key_handle(TEE_ObjectHandle *key_handle, uint32_t key_id,
 			     bool *persistent)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	struct key_data *key_data = NULL;
 
-	if (!key_handle || !persistent)
+	if (!key_handle || !persistent || !key_id)
 		return res;
 
 	*persistent = false;
 
-	key_data = key_find_list(key_id);
-	if (key_data && !key_data->is_persistent) {
-		*key_handle = key_data->handle;
-		res = TEE_SUCCESS;
-	} else {
-		res = is_persistent_key(key_id, key_handle);
-		if (!res)
-			*persistent = true;
-	}
+	res = find_and_open_persistent_id(key_id, key_handle);
+	if (res == TEE_SUCCESS)
+		*persistent = true;
+	else if (res == TEE_ERROR_ITEM_NOT_FOUND)
+		res = find_and_get_transient_id(key_id, key_handle);
 
 	return res;
 }
@@ -1691,7 +1682,7 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	res = TEE_GetObjectInfo1(key_handle, &obj_info);
 	if (res) {
 		EMSG("Failed to get object info: 0x%x", res);
-		return res;
+		goto exit;
 	}
 
 	pub_data = params[EXP_PUB_KEY_PARAM_IDX].memref.buffer;
@@ -1705,6 +1696,7 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		 obj_info.objectType == TEE_TYPE_ECDSA_KEYPAIR)
 		res = export_pub_key_ecc(key_handle, pub_data, pub_len);
 
+exit:
 	if (persistent)
 		TEE_CloseObject(key_handle);
 
@@ -1714,20 +1706,17 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 TEE_Result clear_key_linked_list(void)
 {
 	TEE_Result res = TEE_SUCCESS;
-	struct key_list *head = key_linked_list;
-	struct key_list *next = NULL;
+	struct obj_list *head = transient_object_list;
+	struct obj_list *next = NULL;
 
 	FMSG("Executing %s", __func__);
 
 	while (head) {
 		next = head->next;
-		if (!head->key_data->is_persistent)
-			TEE_FreeTransientObject(head->key_data->handle);
-
-		res = key_del_list(head->key_data);
+		res = find_and_delete_transient_id(head->data->id);
 		if (res) {
 			EMSG("Can't delete key from linked list: 0x%x", res);
-			return res;
+			break;
 		}
 
 		head = next;

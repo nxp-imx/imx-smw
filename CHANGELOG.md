@@ -60,6 +60,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update TEE TA Library to check key usages preventing TA panic.
 * Update TEE TA Library to support user key identifier as input when key is created.
 * Support of the EdgeLock 2GO Key import in ELE subsystems
+* Fix TEE TA Library key identifier list management.
 
 #### SMW Tests - _version 2.3_
 

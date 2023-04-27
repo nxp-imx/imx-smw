@@ -1436,6 +1436,7 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 	if (!attributes || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
+	key_descriptor.id = psa_get_key_id(attributes);
 	key_descriptor.security_size = psa_get_key_bits(attributes);
 
 	key_descriptor.type_name =
@@ -1550,6 +1551,8 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	key_descriptor.buffer = &keypair_buffer;
+
+	key_descriptor.id = psa_get_key_id(attributes);
 
 	key_type = psa_get_key_type(attributes);
 	if (PSA_KEY_TYPE_IS_RSA(key_type)) {

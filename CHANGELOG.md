@@ -42,6 +42,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix generation and import of DES keys and DES3 keys.
 * Implement Cipher single part operation
 * Implement get key attributes.
+* Key identifier can be set by caller in case of key creation.
 
 ##### 2. SMW APIs
 

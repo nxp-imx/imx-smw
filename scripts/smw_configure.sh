@@ -71,7 +71,7 @@ esac
 
 optee_plat="platform=${optee_plat}"
 
-toolpath="toolpath=/opt/toolchains"
+toolpath="toolpath=/toolchains"
 export="${out}/export"
 ta_export="${export}/export-ta_arm""${arch//[^0-9]/}"
 tee_build="../build_arm""${arch//[^0-9]/}"

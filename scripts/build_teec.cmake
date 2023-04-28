@@ -61,6 +61,17 @@ else()
     endif()
 endif()
 
+find_file(PKG_CONFIG_BIN NAMES pkg-config PATHS ${PKG_CONFIG_ROOT})
+
+if(PKG_CONFIG_BIN)
+    if(NOT DEFINED PKG_CONFIG_ROOT)
+        message(WARNING "-DPKG_CONFIG_ROOT=<pkg-config path> missing")
+    else()
+        message(WARNING "Tool pkg-config not found in ${PKG_CONFIG_ROOT}")
+    endif()
+endif()
+
+
 if(NOT IS_ABSOLUTE ${TEEC_ROOT})
     set(TEEC_ROOT "${CMAKE_SOURCE_DIR}/${TEEC_ROOT}")
 endif()
@@ -74,7 +85,8 @@ find_file(TEEC_MAKEFILE Makefile ${TEEC_SRC_PATH})
 if(TEEC_MAKEFILE)
     set(ENV{CC} ${CMAKE_C_COMPILER})
     set(ENV{AR} ${CMAKE_AR})
-    set(ENV{PKG_CONFIG_PATH} "${LIBUUID_CONFIG_DIR}:$ENV{PKG_CONFIG_PATH}")
+    set(ENV{PKG_CONFIG_PATH} "${LIBUUID_CONFIG_DIR}")
+    set(ENV{PKG_CONFIG} "${PKG_CONFIG_BIN}")
 
     set(OUTPUT_DIR ${BUILD_DIR}/optee-client)
 

@@ -211,6 +211,7 @@ function teec()
 
     cmd_script="${cmd_script} -DTEEC_SRC_PATH=${opt_src}"
     cmd_script="${cmd_script} ${opt_libuuid_config}"
+    cmd_script="${cmd_script} ${opt_pkg_config}"
     cmd_script="${cmd_script} -DTEEC_ROOT=${opt_export} -P ${teec_script}"
 
     printf "Execute %s\n" "${cmd_script}"
@@ -502,12 +503,13 @@ function usage_teec()
     printf "\n"
     printf "To build and install the OPTEE Client libraries\n"
     printf "  %s teec export=[dir] src=[dir] out=[dir] " "${script_name}"
-    printf "libuuid_config=[dir]"
+    printf "libuuid_config=[dir] pkg_config=[dir]"
     printf "arch=[arch] toolpath=[dir] toolname=[name]\n"
     printf "    export         = Export directory\n"
     printf "    src            = Source directory\n"
     printf "    out            = [optional] Build root directory\n"
     printf "    libuuid_config = [optional] Library UUID configuration path\n"
+    printf "    pkg_config     = [optional] pkg-config tool path\n"
     printf "    arch           = [optional] Toolchain architecture (aarch32|aarch64)\n"
     printf "    toolpath       = [optional] Toolchain path where installed\n"
     printf "    toolname       = [optional] Toolchain name\n"
@@ -747,6 +749,12 @@ do
             opt_libuuid_config="${arg#*=}"
             check_directory opt_libuuid_config
             opt_libuuid_config="-DLIBUUID_CONFIG_ROOT=${opt_libuuid_config}"
+            ;;
+
+        pkg_config=*)
+            opt_pkg_config="${arg#*=}"
+            check_directory opt_pkg_config
+            opt_pkg_config="-DPKG_CONFIG_ROOT=${opt_pk_config}"
             ;;
 
         tadevkit=*)

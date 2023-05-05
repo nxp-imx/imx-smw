@@ -14,6 +14,7 @@ static int mac_convert_args(struct smw_mac_args *args,
 			    enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_OK;
+	bool present_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -27,10 +28,13 @@ static int mac_convert_args(struct smw_mac_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	if (*subsystem_id != SUBSYSTEM_ID_INVALID)
+		present_key = true;
+
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       false);
-	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
+					       false, present_key);
+	if (status != SMW_STATUS_OK)
 		goto end;
 
 	status = smw_config_get_mac_algo_id(args->algo_name,

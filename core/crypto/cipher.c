@@ -94,9 +94,10 @@ convert_key_descriptors(struct smw_key_descriptor **keys_desc,
 			enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_ALLOC_FAILURE;
-	unsigned int i;
-	struct smw_keymgr_descriptor **keymgr_desc;
-	struct smw_key_descriptor *key;
+	unsigned int i = 0;
+	struct smw_keymgr_descriptor **keymgr_desc = NULL;
+	struct smw_key_descriptor *key = NULL;
+	bool present_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -109,7 +110,7 @@ convert_key_descriptors(struct smw_key_descriptor **keys_desc,
 	if (!keymgr_desc)
 		goto end;
 
-	for (i = 0; i < converted_args->nb_keys; i++) {
+	for (; i < converted_args->nb_keys; i++) {
 		key = keys_desc[i];
 
 		/*
@@ -126,10 +127,12 @@ convert_key_descriptors(struct smw_key_descriptor **keys_desc,
 			goto end;
 		}
 
+		if (*subsystem_id != SUBSYSTEM_ID_INVALID)
+			present_key = true;
+
 		status = smw_keymgr_convert_descriptor(key, keymgr_desc[i],
-						       false);
-		if (status != SMW_STATUS_OK &&
-		    status != SMW_STATUS_NO_KEY_BUFFER) {
+						       false, present_key);
+		if (status != SMW_STATUS_OK) {
 			free_keys_ptr_array(keymgr_desc,
 					    converted_args->nb_keys);
 			goto end;
@@ -142,10 +145,6 @@ convert_key_descriptors(struct smw_key_descriptor **keys_desc,
 		if (*subsystem_id == SUBSYSTEM_ID_INVALID && key->id)
 			*subsystem_id = keymgr_desc[i]->identifier.subsystem_id;
 	}
-
-	/* SMW_STATUS_NO_KEY_BUFFER is not an error of configuration */
-	if (status == SMW_STATUS_NO_KEY_BUFFER)
-		status = SMW_STATUS_OK;
 
 	converted_args->keys_desc = keymgr_desc;
 

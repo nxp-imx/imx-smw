@@ -401,6 +401,11 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 	tls_args = conv_args->kdf_args;
 
 	if (tls_args->ephemeral_key) {
+		if (!key_out->buffer) {
+			status = SMW_STATUS_NO_KEY_BUFFER;
+			goto end;
+		}
+
 		/*
 		 * Prepare key derived output value before doing the
 		 * key conversion to ensure that key converted into
@@ -411,8 +416,9 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 		key_out->security_size = key_base->security_size;
 
 		key_desc = &conv_args->key_derived;
-		/* Input base key defined the key type and size */
-		status = smw_keymgr_convert_descriptor(key_out, key_desc, true);
+		/* Input base key defines the key type and size */
+		status = smw_keymgr_convert_descriptor(key_out, key_desc, true,
+						       false);
 	} else {
 		status = SMW_STATUS_OK;
 	}
@@ -424,14 +430,20 @@ end:
 }
 
 static int convert_input_args(struct smw_derive_key_args *args,
-			      struct smw_keymgr_derive_key_args *conv_args)
+			      struct smw_keymgr_derive_key_args *conv_args,
+			      enum subsystem_id subsystem_id)
 {
 	int status;
+	bool present_key = false;
+
+	if (subsystem_id != SUBSYSTEM_ID_INVALID)
+		present_key = true;
 
 	/* Get the input key base for the derivation */
 	status = smw_keymgr_convert_descriptor(args->key_descriptor_base,
-					       &conv_args->key_base, false);
-	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
+					       &conv_args->key_base, false,
+					       present_key);
+	if (status != SMW_STATUS_OK)
 		return status;
 
 	/* Get the Key Derivation Function if any */
@@ -512,7 +524,7 @@ static int derive_key_convert_args(struct smw_derive_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = convert_input_args(args, conv_args);
+	status = convert_input_args(args, conv_args, *subsystem_id);
 
 	if (status == SMW_STATUS_OK)
 		status = convert_output_args(args, conv_args);

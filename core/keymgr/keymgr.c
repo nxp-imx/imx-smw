@@ -675,7 +675,7 @@ static int check_export_key_buffer(struct smw_keymgr_descriptor *key_desc)
 
 int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 				  struct smw_keymgr_descriptor *out,
-				  bool new_key)
+				  bool new_key, bool present_key)
 {
 	int status = SMW_STATUS_OK;
 
@@ -694,20 +694,6 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (in->id != INVALID_KEY_ID) {
-		status = smw_keymgr_db_get_info(in->id, &out->identifier);
-
-		if (new_key) {
-			if (status == SMW_STATUS_UNKNOWN_ID)
-				status = SMW_STATUS_OK;
-			else if (status == SMW_STATUS_OK)
-				status = SMW_STATUS_INVALID_PARAM;
-		}
-
-		if (status != SMW_STATUS_OK)
-			goto end;
-	}
-
 	if (!in->buffer) {
 		out->format_id = SMW_KEYMGR_FORMAT_ID_INVALID;
 	} else {
@@ -717,28 +703,32 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 			goto end;
 	}
 
-	if (!new_key && in->id != INVALID_KEY_ID && in->type_name) {
-		if (type_id != out->identifier.type_id) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto end;
-		}
-	}
+	out->identifier.id = in->id;
+	out->identifier.type_id = type_id;
+	out->identifier.security_size = in->security_size;
 
-	if (!new_key && in->id != INVALID_KEY_ID && in->security_size) {
-		if (in->security_size != out->identifier.security_size) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto end;
-		}
-	}
+	if (in->id != INVALID_KEY_ID) {
+		status = smw_keymgr_db_get_info(in->id, &out->identifier);
 
-	if (new_key || in->id == INVALID_KEY_ID) {
-		out->identifier.id = in->id;
-		out->identifier.type_id = type_id;
-		out->identifier.security_size = in->security_size;
+		if (status == SMW_STATUS_OK) {
+			if (new_key ||
+			    (in->type_name &&
+			     type_id != out->identifier.type_id) ||
+			    (in->security_size &&
+			     in->security_size !=
+				     out->identifier.security_size))
+				status = SMW_STATUS_INVALID_PARAM;
+		} else if (status == SMW_STATUS_UNKNOWN_ID) {
+			if (new_key || present_key)
+				status = SMW_STATUS_OK;
+		}
+
+		if (status != SMW_STATUS_OK)
+			goto end;
 	}
 
 	out->pub = in;
-	status = setup_key_ops(out);
+	(void)setup_key_ops(out);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -813,8 +803,8 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       true);
-	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
+					       true, false);
+	if (status != SMW_STATUS_OK)
 		goto end;
 
 	/* Initialize key_attributes parameters to default values */
@@ -886,7 +876,7 @@ import_key_convert_args(struct smw_import_key_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       true);
+					       true, false);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -921,9 +911,7 @@ export_key_convert_args(struct smw_export_key_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       false);
-	if (status != SMW_STATUS_OK)
-		goto end;
+					       false, false);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -946,8 +934,8 @@ delete_key_convert_args(struct smw_delete_key_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       false);
-	if (status != SMW_STATUS_OK && status != SMW_STATUS_NO_KEY_BUFFER)
+					       false, false);
+	if (status != SMW_STATUS_OK)
 		goto end;
 
 	*subsystem_id = converted_args->key_descriptor.identifier.subsystem_id;
@@ -1803,7 +1791,8 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 		goto end;
 	}
 
-	status = smw_keymgr_convert_descriptor(descriptor, &key_desc, false);
+	status = smw_keymgr_convert_descriptor(descriptor, &key_desc, false,
+					       false);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

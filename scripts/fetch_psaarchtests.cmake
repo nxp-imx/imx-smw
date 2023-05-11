@@ -20,7 +20,7 @@ endif()
 set(PSA_ARCH_TESTS psa-arch-tests)
 set(PSA_ARCH_TESTS_URL https://github.com/ARM-software/psa-arch-tests.git)
 set(PSA_ARCH_TESTS_BRANCH main)
-set(PSA_ARCH_TESTS_REV 2a1852252a9b9af655cbe02d5d3c930952d0d798)
+set(PSA_ARCH_TESTS_REV 463cb95ada820bc6f758d50066cf8c0ed5cc3a02)
 
 find_package(Git REQUIRED)
 

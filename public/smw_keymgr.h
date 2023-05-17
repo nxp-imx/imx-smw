@@ -297,6 +297,7 @@ struct smw_delete_key_args {
 /**
  * struct smw_key_get_attributes_args - Get key attributes arguments
  * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
  * @key_privacy: Key privacy type.
@@ -316,6 +317,7 @@ struct smw_delete_key_args {
  */
 struct smw_get_key_attributes_args {
 	unsigned char version;
+	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_descriptor;
 	smw_keymgr_privacy_t key_privacy;
 	smw_keymgr_persistence_t persistence;

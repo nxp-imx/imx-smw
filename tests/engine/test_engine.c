@@ -85,6 +85,10 @@ static int run_multiapp(struct test_data *test)
 		first = 0;
 		last = 0;
 
+		/* Run the JSON-C "App" object, other tag is ignored */
+		if (strncmp(obj.key, APP_OBJ, strlen(APP_OBJ)))
+			continue;
+
 		/* Get Application ID */
 		status = util_get_json_obj_ids(obj.key, APP_OBJ, &first, &last);
 		if (status != ERR_CODE(PASSED)) {

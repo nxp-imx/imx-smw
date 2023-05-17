@@ -1,0 +1,60 @@
+{
+	"keys": {
+		"key NIST": {
+			"id": 805310465, // "0x30001001"
+			"type": "NIST",
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [],
+				"sign_hash": []
+			}
+		}
+	},
+	"App 1": {
+		"key_db": {
+			"filepath": "/var/tmp/key_db_smw_test_F_TEE_App_002_App1.dat"
+		},
+		"Thread 1": {
+			"subtest 1": {
+				"command": "GENERATE",
+				"subsystem": "TEE",
+				"key_name": "key NIST",
+				"post_to_after": ["App 2", "sem_t1"],
+			},
+			"subtest 2": {
+				"command": "DELETE",
+				"key_name": "key NIST",
+				"wait_before": "sem_t2",
+				"post_to_after": ["App 2", "sem_t3"],
+				"depend": 1
+			}
+		}
+	},
+	"App 2": {
+		"key_db": {
+			"filepath": "/var/tmp/key_db_smw_test_F_TEE_App_002_App2.dat"
+		},
+		"Thread 1": {
+			"subtest 1": {
+				"command": "GET_KEY_ATTRIBUTES",
+				"subsystem": "TEE",
+				"key_name": "key NIST",
+				"wait_before": "sem_t1"
+			},
+			"subtest 2": {
+				"command": "EXPORT_PUBLIC",
+				"key_name": "key NIST",
+				"post_to_after": ["App 1", "sem_t2"]
+			},
+			"subtest 3": {
+				"command": "DELETE",
+				"key_name": "key NIST",
+				"wait_before": "sem_t3",
+				"depend": 1
+			}
+		}
+	}
+}

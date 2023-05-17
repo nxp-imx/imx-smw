@@ -853,6 +853,12 @@ int get_key_attributes(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+
+	if (!strcmp(subtest->subsystem, "DEFAULT"))
+		args.subsystem_name = NULL;
+	else
+		args.subsystem_name = subtest->subsystem;
+
 	args.key_descriptor = &key_test.desc;
 
 	/* Key name is mandatory */

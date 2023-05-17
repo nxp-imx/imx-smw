@@ -364,6 +364,12 @@ static int execute_get_key_attrs_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
+	/* Check mandatory params */
+	if (!subtest->subsystem) {
+		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
 	return get_key_attributes(subtest);
 }
 

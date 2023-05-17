@@ -1738,6 +1738,7 @@ end:
 enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 {
 	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	struct smw_keymgr_delete_key_args delete_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
@@ -1759,9 +1760,16 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 	status = smw_utils_execute_operation(OPERATION_ID_DELETE_KEY,
 					     &delete_key_args, subsystem_id);
 
-	if (status == SMW_STATUS_OK)
-		status = smw_keymgr_db_delete(args->key_descriptor->id,
-					      &key_desc->identifier);
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_UNKNOWN_ID)
+		goto end;
+
+	tmp_status = smw_keymgr_db_delete(args->key_descriptor->id,
+					  &key_desc->identifier);
+
+	if (status == SMW_STATUS_OK ||
+	    key_desc->identifier.persistence_id !=
+		    SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT)
+		status = tmp_status;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1905,6 +1913,9 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 
 	struct smw_keymgr_get_key_attributes_args attr_args = { 0 };
 	struct smw_keymgr_identifier *key_identifier = &attr_args.identifier;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	bool key_not_present = false;
+	unsigned int index = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1913,18 +1924,39 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 		goto end;
 	}
 
-	status = smw_keymgr_db_get_info(args->key_descriptor->id,
-					key_identifier);
+	status = smw_config_get_subsystem_id(args->subsystem_name,
+					     &subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	status = smw_keymgr_db_get_info(args->key_descriptor->id,
+					key_identifier);
+
+	if (status == SMW_STATUS_OK) {
+		if (subsystem_id == SUBSYSTEM_ID_INVALID) {
+			subsystem_id = key_identifier->subsystem_id;
+		} else if (subsystem_id != key_identifier->subsystem_id) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+	} else if (status == SMW_STATUS_UNKNOWN_ID) {
+		if (subsystem_id == SUBSYSTEM_ID_INVALID) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
+		key_identifier->id = args->key_descriptor->id;
+		key_not_present = true;
+	} else {
+		goto end;
+	}
 
 	attr_args.pub = args;
 	smw_keymgr_set_policy(&attr_args, NULL, 0);
 	smw_keymgr_set_lifecycle(&attr_args, NULL, 0);
 
 	status = smw_utils_execute_implicit(OPERATION_ID_GET_KEY_ATTRIBUTES,
-					    &attr_args,
-					    key_identifier->subsystem_id);
+					    &attr_args, subsystem_id);
 
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -1937,13 +1969,20 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	args->key_descriptor->security_size = key_identifier->security_size;
 
 	KEY_PRIVACY_ID_ASSERT(key_identifier->privacy_id);
-	args->key_privacy = key_privacy_names[key_identifier->privacy_id];
+	index = key_identifier->privacy_id;
+	args->key_privacy = key_privacy_names[index];
 
 	KEY_PERSISTENCE_ID_ASSERT(key_identifier->persistence_id);
-	args->persistence =
-		key_persistence_names[key_identifier->persistence_id];
+	index = key_identifier->persistence_id;
+	args->persistence = key_persistence_names[index];
 
 	args->storage = key_identifier->storage_id;
+
+	if (key_not_present) {
+		key_identifier->subsystem_id = subsystem_id;
+		status = smw_keymgr_db_create(&key_identifier->id,
+					      key_identifier);
+	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

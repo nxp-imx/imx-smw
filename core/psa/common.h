@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __COMMON__H__
@@ -12,6 +12,17 @@
 #include "psa/error.h"
 
 #define BYTES_TO_BITS(size) ((size) << 3)
+
+/**
+ * get_psa_default_subsystem() - Get the default subsystem name invoked with PSA API.
+ *
+ * This function returns the name of the default subsystem to be invoked
+ * with the PSA API.
+ *
+ * Return:
+ * The default subsystem name invoked with PSA API.
+ */
+smw_subsystem_t get_psa_default_subsystem(void);
 
 /**
  * call_smw_api() - Call SMW API.

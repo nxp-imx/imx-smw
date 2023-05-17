@@ -1335,6 +1335,7 @@ static psa_status_t export_key_common(psa_key_id_t key, uint8_t *data,
 	struct smw_export_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
+	struct smw_get_key_attributes_args attr_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1346,11 +1347,10 @@ static psa_status_t export_key_common(psa_key_id_t key, uint8_t *data,
 
 	key_descriptor.id = key;
 
-	status = smw_get_key_type_name(&key_descriptor);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	attr_args.subsystem_name = get_psa_default_subsystem();
+	attr_args.key_descriptor = &key_descriptor;
 
-	status = smw_get_security_size(&key_descriptor);
+	status = smw_get_key_attributes(&attr_args);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -1496,6 +1496,8 @@ __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
 	psa_reset_key_attributes(attributes);
 
 	key_descriptor.id = key;
+
+	args.subsystem_name = get_psa_default_subsystem();
 	args.key_descriptor = &key_descriptor;
 
 	status = smw_get_key_attributes(&args);

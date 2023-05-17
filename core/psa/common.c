@@ -14,6 +14,21 @@
 
 #include "util_status.h"
 
+smw_subsystem_t get_psa_default_subsystem(void)
+{
+	smw_subsystem_t subsystem_name = NULL;
+
+	struct smw_config_psa_config config;
+
+	smw_config_get_psa_config(&config);
+
+	if (config.subsystem_id != SUBSYSTEM_ID_INVALID)
+		subsystem_name =
+			smw_config_get_subsystem_name(config.subsystem_id);
+
+	return subsystem_name;
+}
+
 psa_status_t call_smw_api(enum smw_status_code (*api)(void *a), void *args,
 			  smw_subsystem_t *subsystem_name)
 {

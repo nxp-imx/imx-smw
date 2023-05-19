@@ -4,6 +4,8 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
+#include <limits.h>
 
 #include "smw_config.h"
 #include "smw_crypto.h"
@@ -18,6 +20,7 @@
 #include "pkcs11smw.h"
 #include "types.h"
 #include "lib_sign_verify.h"
+#include "lib_cipher.h"
 
 #include "args_attr.h"
 #include "key_desc.h"
@@ -27,6 +30,13 @@
 
 #define SMW_RSA_PKCS1_V1_5_SIGN_TYPE "RSASSA-PKCS1-V1_5"
 #define SMW_RSA_PSS_SIGN_TYPE	     "RSASSA-PSS"
+
+#define ENCRYPT_STR "ENCRYPT"
+#define DECRYPT_STR "DECRYPT"
+
+#define AES_STR	 "AES"
+#define DES_STR	 "DES"
+#define DES3_STR "DES3"
 
 struct mgroup;
 struct mentry;
@@ -66,6 +76,25 @@ static CK_RV info_msign_rsa_pss(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 				CK_MECHANISM_INFO_PTR info);
 static CK_RV op_msign_rsa_pss(CK_SLOT_ID slotid, struct mentry *entry,
 			      void *args);
+static void check_mcipher_aes(CK_SLOT_ID slotid, const char *subsystem,
+			      struct mgroup *mgroup);
+static CK_RV info_mcipher_aes(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_mcipher_aes(CK_SLOT_ID slotid, struct mentry *entry,
+			    void *args);
+static void check_mcipher_des(CK_SLOT_ID slotid, const char *subsystem,
+			      struct mgroup *mgroup);
+static CK_RV info_mcipher_des(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_mcipher_des(CK_SLOT_ID slotid, struct mentry *entry,
+			    void *args);
+static void check_mcipher_des3(CK_SLOT_ID slotid, const char *subsystem,
+			       struct mgroup *mgroup);
+static CK_RV info_mcipher_des3(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			       struct mentry *entry,
+			       CK_MECHANISM_INFO_PTR info);
+static CK_RV op_mcipher_des3(CK_SLOT_ID slotid, struct mentry *entry,
+			     void *args);
 
 const char *smw_ec_name[] = { "NIST", "BRAINPOOL_R1", "BRAINPOOL_T1" };
 
@@ -190,6 +219,23 @@ static struct mentry msign_rsa_pss[] = {
 };
 
 /*
+ * Cipher mechanisms
+ */
+static struct mentry mcipher_aes[] = { M_ALGO_NO_HASH(AES, AES_CBC),
+				       M_ALGO_NO_HASH(AES, AES_CTR),
+				       M_ALGO_NO_HASH(AES, AES_CTS),
+				       M_ALGO_NO_HASH(AES, AES_ECB),
+				       M_ALGO_NO_HASH(AES, AES_XTS) };
+
+static struct mentry mcipher_des[] = { M_ALGO_NO_HASH(DES, DES_CBC),
+				       M_ALGO_NO_HASH(DES, DES_ECB) };
+
+static struct mentry mcipher_des3[] = {
+	M_ALGO_NO_HASH(DES3, DES3_CBC),
+	M_ALGO_NO_HASH(DES3, DES3_ECB),
+};
+
+/*
  * All SMW mechanisms
  */
 static struct mgroup smw_mechanims[] = {
@@ -199,6 +245,9 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(msign_ecdsa), msign_ecdsa),
 	M_GROUP(ARRAY_SIZE(msign_rsa_pkcs_v1_5), msign_rsa_pkcs_v1_5),
 	M_GROUP(ARRAY_SIZE(msign_rsa_pss), msign_rsa_pss),
+	M_GROUP(ARRAY_SIZE(mcipher_aes), mcipher_aes),
+	M_GROUP(ARRAY_SIZE(mcipher_des), mcipher_des),
+	M_GROUP(ARRAY_SIZE(mcipher_des3), mcipher_des3),
 	{ 0 },
 };
 
@@ -209,6 +258,28 @@ static struct mgroup smw_mechanims[] = {
 			((const char **)_entry->smw_algo)[idx] :               \
 			_entry->smw_algo;                                      \
 	})
+
+#define CIPHER_ALGO(_key_type_, _cipher_mode_)                                 \
+	{                                                                      \
+		.mech_type = CKM_##_key_type_##_##_cipher_mode_,               \
+		.cipher_mode = #_cipher_mode_                                  \
+	}
+
+/**
+ * struct cipher_algo_info - Information about cipher algorithm
+ * @mech_type: Cipher mechanism
+ * @cipher_mode: Cipher mode
+ */
+struct cipher_algo_info {
+	CK_MECHANISM_TYPE mech_type;
+	smw_cipher_mode_t cipher_mode;
+};
+
+static struct cipher_algo_info cipher_algos[] = {
+	CIPHER_ALGO(AES, ECB), CIPHER_ALGO(AES, CBC),  CIPHER_ALGO(AES, CTR),
+	CIPHER_ALGO(AES, CTS), CIPHER_ALGO(AES, XTS),  CIPHER_ALGO(DES, ECB),
+	CIPHER_ALGO(DES, CBC), CIPHER_ALGO(DES3, ECB), CIPHER_ALGO(DES3, CBC)
+};
 
 /**
  * smw_status_to_ck_rv() - Converts a SMW status to CK_RV value
@@ -267,7 +338,7 @@ static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 		return CKR_TOKEN_NOT_PRESENT;
 	}
 
-	DBG_TRACE("Search for mechanism %lu", type);
+	DBG_TRACE("Search for mechanism 0x%lx", type);
 
 	slot_flag = BIT(slotid);
 	for (grp = smw_mechanims; grp->number; grp++) {
@@ -1221,5 +1292,433 @@ CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
 	ret = smw_status_to_ck_rv(status);
 
 	DBG_TRACE("RNG on %s status %d return %ld", devinfo->name, status, ret);
+	return ret;
+}
+
+static smw_cipher_mode_t get_cipher_mode(CK_MECHANISM_TYPE mech_type)
+{
+	smw_cipher_mode_t mode = NULL;
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(cipher_algos); i++) {
+		if (mech_type == cipher_algos[i].mech_type) {
+			mode = cipher_algos[i].cipher_mode;
+			break;
+		}
+	}
+
+	return mode;
+}
+
+static CK_RV info_mcipher_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+				 struct mentry *entry,
+				 CK_MECHANISM_INFO_PTR info,
+				 struct smw_cipher_info cipher_info)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_RV ret = CKR_OK;
+	const struct libdev *devinfo = NULL_PTR;
+
+	DBG_TRACE("info of 0x%lx cipher mechanism", type);
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	/*
+	 * Global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = 0;
+
+	cipher_info.mode = get_cipher_mode(entry->type);
+
+	cipher_info.op_type = ENCRYPT_STR;
+	status = smw_config_check_cipher(devinfo->name, &cipher_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_ENCRYPT;
+
+	cipher_info.op_type = DECRYPT_STR;
+	status = smw_config_check_cipher(devinfo->name, &cipher_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_DECRYPT;
+
+	/*
+	 * Call specific device mechanism information function
+	 * to complete the global setting.
+	 */
+	if (dev_mech_info[slotid])
+		ret = dev_mech_info[slotid](type, info);
+
+	return ret;
+}
+
+static void check_mcipher_common(CK_SLOT_ID slotid, const char *subsystem,
+				 struct mgroup *mgroup,
+				 struct smw_cipher_info info)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx;
+	CK_FLAGS slot_flag = 0;
+	struct mentry *entry = NULL_PTR;
+
+	/*
+	 * Slot flag is set if:
+	 * encryption or decryption operation is supported
+	 */
+
+	slot_flag = BIT(slotid);
+
+	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
+	     idx++, entry++) {
+		info.mode = get_cipher_mode(entry->type);
+		info.op_type = ENCRYPT_STR;
+		status = smw_config_check_cipher(subsystem, &info);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+
+		info.op_type = DECRYPT_STR;
+		status = smw_config_check_cipher(subsystem, &info);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+	}
+}
+
+static CK_RV cipher(struct lib_cipher_params *params,
+		    struct smw_cipher_init_args *smw_init_args,
+		    struct smw_cipher_data_args *smw_data_args)
+{
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_cipher_args smw_args = { 0 };
+	struct smw_op_context *op_ctx = NULL;
+
+	struct lib_cipher_ctx *ctx = NULL_PTR;
+
+	ctx = params->ctx;
+
+	smw_args.data = *smw_data_args;
+	smw_args.init = *smw_init_args;
+
+	switch (params->state) {
+	case OP_ONE_SHOT:
+		status = smw_cipher(&smw_args);
+		break;
+
+	case OP_UPDATE:
+		if (ctx->current_state == OP_INIT) {
+			op_ctx = calloc(1, sizeof(*op_ctx));
+			if (!op_ctx) {
+				status = SMW_STATUS_ALLOC_FAILURE;
+				goto end;
+			}
+
+			smw_init_args->context = op_ctx;
+			status = smw_cipher_init(smw_init_args);
+			if (status == SMW_STATUS_OK) {
+				ctx->context = smw_init_args->context;
+				smw_data_args->context = smw_init_args->context;
+				status = smw_cipher_update(smw_data_args);
+			}
+
+		} else if (ctx->current_state == OP_UPDATE) {
+			smw_data_args->context =
+				(struct smw_op_context *)ctx->context;
+			status = smw_cipher_update(smw_data_args);
+		}
+
+		break;
+
+	case OP_FINAL:
+		if (ctx->context) {
+			smw_data_args->context =
+				(struct smw_op_context *)ctx->context;
+			status = smw_cipher_final(smw_data_args);
+		} else {
+			status = SMW_STATUS_OK;
+			params->output_length = 0;
+			goto end;
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
+	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+		/* Update output data buffer length */
+		if (params->state == OP_ONE_SHOT)
+			params->output_length = smw_args.data.output_length;
+		else
+			params->output_length = smw_data_args->output_length;
+	}
+
+	/**
+	 * Release the smw op context if either of the below condition is met.
+	 * 1. if the final operation is successful and the
+	 * output buffer length is 0 (smw_cipher_final function
+	 * terminates the operation, if output buffer length is 0.)
+	 * 2.if the final operation is successful and
+	 * the pointer to output buffer is not null.
+	 */
+	if (status == SMW_STATUS_OK && params->state == OP_FINAL) {
+		if (params->poutput || params->output_length == 0) {
+			if (ctx->context) {
+				free(ctx->context);
+				ctx->context = NULL_PTR;
+			}
+
+			goto end;
+		}
+	}
+
+end:
+
+	ret = smw_status_to_ck_rv(status);
+	DBG_TRACE("%s on subsystem %s SMW status = 0x%x return = 0x%lx",
+		  params->op_flag == CKF_ENCRYPT ? ENCRYPT_STR : DECRYPT_STR,
+		  smw_init_args->subsystem_name, status, ret);
+	return ret;
+}
+
+static CK_RV set_smw_init_args(struct lib_cipher_ctx *ctx,
+			       struct smw_cipher_init_args **smw_init_args,
+			       struct smw_keypair_buffer **key_buffer,
+			       struct smw_key_descriptor ***keys_desc,
+			       struct smw_key_descriptor *key_desc_ptr,
+			       smw_subsystem_t subsystem_name, CK_FLAGS op_flag)
+{
+	CK_RV ret = CKR_HOST_MEMORY;
+
+	unsigned int i = 0;
+	unsigned int key_length = 0;
+	bool is_xts = false;
+
+	if (ctx->cipher_mech == CKM_AES_XTS) {
+		is_xts = true;
+		(*smw_init_args)->nb_keys = 2;
+		*key_buffer =
+			calloc((*smw_init_args)->nb_keys, sizeof(**key_buffer));
+		if (!*key_buffer)
+			return ret;
+
+	} else {
+		(*smw_init_args)->nb_keys = 1;
+	}
+
+	if (is_xts) {
+		if (SET_OVERFLOW(ctx->key_len / 2, key_length))
+			return CKR_ARGUMENTS_BAD;
+
+		(*key_buffer)[0].gen.private_data = &ctx->key_value[0];
+		(*key_buffer)[1].gen.private_data = &ctx->key_value[key_length];
+
+		for (; i < (*smw_init_args)->nb_keys; i++) {
+			(*key_buffer)[i].gen.private_length = key_length;
+			key_desc_ptr[i].buffer = &(*key_buffer)[i];
+			key_desc_ptr[i].type_name = "AES";
+			key_desc_ptr[i].security_size =
+				BYTES_TO_BITS(key_length);
+		}
+
+	} else {
+		key_desc_ptr[0].id =
+			get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
+	}
+
+	for (i = 0; i < (*smw_init_args)->nb_keys; i++)
+		(*keys_desc)[i] = &key_desc_ptr[i];
+
+	(*smw_init_args)->keys_desc = *keys_desc;
+	(*smw_init_args)->subsystem_name = subsystem_name;
+	(*smw_init_args)->mode_name = get_cipher_mode(ctx->cipher_mech);
+	(*smw_init_args)->iv = ctx->iv;
+
+	if (SET_OVERFLOW(ctx->iv_length, (*smw_init_args)->iv_length))
+		return CKR_ARGUMENTS_BAD;
+
+	DBG_TRACE("Cipher mode = %s", (*smw_init_args)->mode_name);
+
+	if (op_flag == CKF_ENCRYPT)
+		(*smw_init_args)->operation_name = ENCRYPT_STR;
+	else
+		(*smw_init_args)->operation_name = DECRYPT_STR;
+
+	return CKR_OK;
+}
+
+static CK_RV op_mcipher_common(CK_SLOT_ID slotid, void *args)
+{
+	CK_RV ret = CKR_OK;
+
+	const struct libdev *devinfo = NULL_PTR;
+	struct lib_cipher_ctx *ctx = NULL_PTR;
+	struct lib_cipher_params *params = NULL_PTR;
+
+	struct smw_keypair_buffer *key_buffer = NULL_PTR;
+	struct smw_cipher_init_args smw_init_args = { 0 };
+	struct smw_cipher_init_args *smw_init_args_ptr = NULL_PTR;
+	struct smw_cipher_data_args smw_data_args = { 0 };
+	struct smw_key_descriptor *keys_desc[2] = { NULL_PTR };
+	struct smw_key_descriptor key_descriptor[2] = { 0 };
+	struct smw_key_descriptor **keys_desc_ptr = NULL_PTR;
+
+	keys_desc_ptr = keys_desc;
+	smw_init_args_ptr = &smw_init_args;
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	params = (struct lib_cipher_params *)args;
+	ctx = params->ctx;
+
+	if ((params->state == OP_ONE_SHOT || OP_INIT) ||
+	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE)) {
+		if (set_smw_init_args(ctx, &smw_init_args_ptr, &key_buffer,
+				      &keys_desc_ptr, &key_descriptor[0],
+				      devinfo->name, params->op_flag) != CKR_OK)
+			goto end;
+	}
+
+	if (SET_OVERFLOW(params->input_length, smw_data_args.input_length)) {
+		if (params->op_flag == CKF_ENCRYPT)
+			ret = CKR_DATA_LEN_RANGE;
+		else
+			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
+
+		goto end;
+	}
+
+	if (SET_OVERFLOW(params->output_length, smw_data_args.output_length)) {
+		if (params->op_flag == CKF_ENCRYPT)
+			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
+		else
+			ret = CKR_DATA_LEN_RANGE;
+
+		goto end;
+	}
+
+	smw_data_args.input = params->pinput;
+	smw_data_args.output = params->poutput;
+	ret = cipher(params, &smw_init_args, &smw_data_args);
+
+end:
+	if (key_buffer)
+		free(key_buffer);
+
+	return ret;
+}
+
+static CK_RV info_mcipher_aes(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	CK_RV ret = CKR_OK;
+	struct smw_cipher_info cipher_info = { 0 };
+
+	DBG_TRACE("Return info of 0x%lx cipher mechanism", type);
+
+	cipher_info.key_type_name = AES_STR;
+
+	ret = info_mcipher_common(slotid, type, entry, info, cipher_info);
+
+	return ret;
+}
+
+static void check_mcipher_aes(CK_SLOT_ID slotid, const char *subsystem,
+			      struct mgroup *mgroup)
+{
+	struct smw_cipher_info info = { 0 };
+
+	info.key_type_name = AES_STR;
+
+	check_mcipher_common(slotid, subsystem, mgroup, info);
+}
+
+static CK_RV op_mcipher_aes(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	(void)entry;
+	return op_mcipher_common(slotid, args);
+}
+
+static CK_RV info_mcipher_des(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	CK_RV ret = CKR_OK;
+	struct smw_cipher_info cipher_info = { 0 };
+
+	DBG_TRACE("Return info of 0x%lx cipher mechanism", type);
+
+	cipher_info.key_type_name = DES_STR;
+
+	ret = info_mcipher_common(slotid, type, entry, info, cipher_info);
+
+	return ret;
+}
+
+static void check_mcipher_des(CK_SLOT_ID slotid, const char *subsystem,
+			      struct mgroup *mgroup)
+{
+	struct smw_cipher_info info = { 0 };
+
+	info.key_type_name = DES_STR;
+
+	check_mcipher_common(slotid, subsystem, mgroup, info);
+}
+
+static CK_RV op_mcipher_des(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	(void)entry;
+	return op_mcipher_common(slotid, args);
+}
+
+static CK_RV info_mcipher_des3(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			       struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	CK_RV ret = CKR_OK;
+	struct smw_cipher_info cipher_info = { 0 };
+
+	DBG_TRACE("Return info of 0x%lx cipher mechanism", type);
+
+	cipher_info.key_type_name = DES3_STR;
+
+	ret = info_mcipher_common(slotid, type, entry, info, cipher_info);
+
+	return ret;
+}
+
+static void check_mcipher_des3(CK_SLOT_ID slotid, const char *subsystem,
+			       struct mgroup *mgroup)
+{
+	struct smw_cipher_info info = { 0 };
+
+	info.key_type_name = DES3_STR;
+
+	check_mcipher_common(slotid, subsystem, mgroup, info);
+}
+
+static CK_RV op_mcipher_des3(CK_SLOT_ID slotid, struct mentry *entry,
+			     void *args)
+{
+	(void)entry;
+	return op_mcipher_common(slotid, args);
+}
+
+CK_RV libdev_cancel_operation(void **context)
+{
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+
+	status = smw_cancel_operation((struct smw_op_context *)*context);
+	ret = smw_status_to_ck_rv(status);
+
+	if (*context) {
+		free(*context);
+		*context = NULL_PTR;
+	}
+
+	DBG_TRACE(" smw cancel operation ret = %lx\n", ret);
 	return ret;
 }

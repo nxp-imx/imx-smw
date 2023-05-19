@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __LIB_DEVICE_H__
@@ -330,5 +330,17 @@ CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
  * CKR_OK                        - Success
  */
 CK_RV libdev_create_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj);
+
+/**
+ * libdev_cancel_operation() - Cancel an on-going cryptographic multi-part operation.
+ * @context - Double pointer to multi-part operation context.
+ *
+ * The multi-part operation context is released.
+ *
+ * Return:
+ * CKR_DEVICE_ERROR                - Device failure
+ * CKR_OK                          - Success
+ */
+CK_RV libdev_cancel_operation(void **context);
 
 #endif /* __LIB_DEVICE_H__ */

@@ -761,3 +761,33 @@ end:
 	LLIST_UNLOCK(&sess->opctx);
 	return ret;
 }
+
+CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
+			   void **context)
+{
+	CK_RV ret;
+	struct libsess *sess = (struct libsess *)hsession;
+	struct libopctx *opctx = NULL;
+
+	DBG_TRACE("Remove operation context (sess: %p, op: %lx)", sess,
+		  op_flag);
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = LLIST_LOCK(&sess->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_find(&sess->opctx, op_flag, &opctx);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (opctx)
+		ret = libopctx_cancel(&sess->opctx, opctx, context);
+
+end:
+	LLIST_UNLOCK(&sess->opctx);
+	return ret;
+}

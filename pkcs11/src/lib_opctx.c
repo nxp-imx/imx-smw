@@ -9,6 +9,7 @@
 #include "lib_mutex.h"
 #include "lib_session.h"
 #include "lib_opctx.h"
+#include "lib_device.h"
 
 #include "trace.h"
 
@@ -124,5 +125,18 @@ CK_RV libopctx_list_destroy(struct libopctx_list *list)
 	/* Close the list and destroy the list mutex */
 	LLIST_CLOSE(list);
 
+	return ret;
+}
+
+CK_RV libopctx_cancel(struct libopctx_list *list, struct libopctx *opctx,
+		      void **context)
+{
+	CK_RV ret = CKR_OK;
+
+	ret = libdev_cancel_operation(context);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_destroy(list, opctx);
 	return ret;
 }

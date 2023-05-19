@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 #ifndef __LIB_SESSION_H__
 #define __LIB_SESSION_H__
@@ -291,5 +291,21 @@ CK_RV libsess_find_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
  * CKR_OK                             - Success
  */
 CK_RV libsess_remove_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag);
+
+/**
+ * libsess_cancel_opctx() - Cancel an on-going multipart operation
+ * @hsession: Session handle
+ * @op_flag: Operation flag
+ * @context: Pointer to multi-part operation context
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_DEVICE_ERROR	                  - Device failure
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
+			   void **context);
 
 #endif /* __LIB_SESSION_H__ */

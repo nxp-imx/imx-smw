@@ -13,6 +13,8 @@
 #define SET_BITS(val, mask)   ((val) |= (mask))
 #define CLEAR_BITS(val, mask) ((val) &= ~(mask))
 
+#define BYTES_TO_BITS(size) ((size) << 3)
+
 /* Extract the byte @n of the value @val */
 #define GET_BYTE(val, n)                                                       \
 	({                                                                     \

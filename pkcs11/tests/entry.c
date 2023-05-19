@@ -142,22 +142,22 @@ struct test_def {
 #name, tests_pkcs11_##name,                                    \
 	}
 
-struct test_def test_list[] = {
-	TEST_DEF(get_info_ifs),
-	TEST_DEF(get_ifs),
-	TEST_DEF(initialize),
-	TEST_DEF(slot_token),
-	TEST_DEF(session),
-	TEST_DEF(object_key_ec),
-	TEST_DEF(object_key_cipher),
-	TEST_DEF(object_key_rsa),
-	TEST_DEF(find),
-	TEST_DEF(parallel),
-	TEST_DEF(callback),
-	TEST_DEF(digest),
-	TEST_DEF(sign_verify),
-	TEST_DEF(random),
-};
+struct test_def test_list[] = { TEST_DEF(get_info_ifs),
+				TEST_DEF(get_ifs),
+				TEST_DEF(initialize),
+				TEST_DEF(slot_token),
+				TEST_DEF(session),
+				TEST_DEF(object_key_ec),
+				TEST_DEF(object_key_cipher),
+				TEST_DEF(object_key_rsa),
+				TEST_DEF(find),
+				TEST_DEF(parallel),
+				TEST_DEF(callback),
+				TEST_DEF(digest),
+				TEST_DEF(sign_verify),
+				TEST_DEF(random),
+				TEST_DEF(encrypt_decrypt),
+				TEST_DEF(encrypt_decrypt_multipart) };
 
 void tests_pkcs11_list(void)
 {

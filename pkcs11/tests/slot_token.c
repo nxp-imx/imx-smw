@@ -41,6 +41,15 @@ static CK_MECHANISM_TYPE mlist[] = {
 	M(SHA256_RSA_PKCS_PSS),
 	M(SHA384_RSA_PKCS_PSS),
 	M(SHA512_RSA_PKCS_PSS),
+	M(AES_CBC),
+	M(AES_CTR),
+	M(AES_CTS),
+	M(AES_ECB),
+	M(AES_XTS),
+	M(DES_CBC),
+	M(DES_ECB),
+	M(DES3_CBC),
+	M(DES3_ECB),
 };
 
 const struct test_slots exp_slots[] = { {

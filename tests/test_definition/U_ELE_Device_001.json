@@ -1,0 +1,11 @@
+{
+	"subtest 1": {
+		"command": "DEVICE_ATTESTATION",
+		"subsystem": "ELE"
+	},
+	"subtest 2": {
+		"command": "DEVICE_UUID",
+		"subsystem": "ELE"
+	}
+
+}

@@ -17,6 +17,7 @@
 #include "config.h"
 #include "info.h"
 #include "mac.h"
+#include "device.h"
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -366,6 +367,29 @@ static int execute_get_key_attrs_cmd(char *cmd, struct subtest_data *subtest)
 	return get_key_attributes(subtest);
 }
 
+/**
+ * execute_device_cmd() - Execute device command
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED		- Success.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ */
+static int execute_device_cmd(char *cmd, struct subtest_data *subtest)
+{
+	if (!strcmp(cmd, DEVICE_ATTESTATION))
+		return device_attestation(subtest);
+	else if (!strcmp(cmd, DEVICE_UUID))
+		return device_uuid(subtest);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
 int execute_command_smw(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
@@ -388,6 +412,7 @@ int execute_command_smw(char *cmd, struct subtest_data *subtest)
 		{ CONFIG, &execute_config_cmd },
 		{ GET_VERSION, &execute_get_version_cmd },
 		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
+		{ DEVICE, &execute_device_cmd },
 	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {

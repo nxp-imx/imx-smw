@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2019-2022 NXP
+ * Copyright 2019-2023 NXP
  */
 
 #ifndef __UTILS_H__
@@ -24,6 +24,15 @@
 #if !defined ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #endif
+
+#ifndef MIN
+#define MIN(a, b)                                                              \
+	({                                                                     \
+		__typeof__(a) _a = (a);                                        \
+		__typeof__(b) _b = (b);                                        \
+		_a < _b ? _a : _b;                                             \
+	})
+#endif /* MIN */
 
 #define BITS_TO_BYTES_SIZE(security_size) (((security_size) + 7) / 8)
 

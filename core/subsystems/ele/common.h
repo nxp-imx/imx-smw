@@ -143,6 +143,23 @@ bool ele_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
 		       void *args, int *status);
 
 /**
+ * ele_device_handle() - Handle the device management operations.
+ * @hdl: Pointer to the ELE handles structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the device management operations.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool ele_device_handle(struct hdl *hdl, enum operation_id operation_id,
+		       void *args, int *status);
+
+/**
  * ele_derive_key() - ELE key derivation operation.
  * @hdl: Pointer to the ELE handles structure.
  * @args: Pointer to the derive key arguments.

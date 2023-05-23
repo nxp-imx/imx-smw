@@ -97,6 +97,7 @@ add_subdirectory(subsystems/tee)
 add_subdirectory(keymgr)
 add_subdirectory(crypto)
 add_subdirectory(psa)
+add_subdirectory(devmgr)
 
 get_property(LIST_SUBSYSTEM_ID GLOBAL PROPERTY PROP_SUBSYSTEM_ID)
 get_property(LIST_SUBSYSTEM_EXPORT GLOBAL PROPERTY PROP_SUBSYSTEM_EXPORT)

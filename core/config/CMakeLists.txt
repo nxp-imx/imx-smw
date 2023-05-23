@@ -15,7 +15,8 @@ target_sources(config PRIVATE
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
                $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
                $<$<BOOL:${ENABLE_MAC}>:mac.c>
-               $<$<BOOL:${ENABLE_PSA_DEFAULT_ALT}>:parser_psa_alt.c>)
+               $<$<BOOL:${ENABLE_PSA_DEFAULT_ALT}>:parser_psa_alt.c>
+               $<$<BOOL:${ENABLE_DEVMGR_MODULE}>:device.c>)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
 target_sources(config PRIVATE
                database_debug.c

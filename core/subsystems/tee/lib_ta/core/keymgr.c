@@ -1825,11 +1825,12 @@ TEE_Result get_key_attributes(uint32_t param_types,
 	 * params[1].value.b = TEE Key usage returned.
 	 * params[2].value.a = TEE Key keypair (1) /public (0) flag returned.
 	 * params[2].value.b = TEE Key persistent flag returned.
+	 * params[3].value.a = TEE Key size returned.
 	 */
 	if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
 					   TEE_PARAM_TYPE_VALUE_OUTPUT,
 					   TEE_PARAM_TYPE_VALUE_OUTPUT,
-					   TEE_PARAM_TYPE_NONE))
+					   TEE_PARAM_TYPE_VALUE_OUTPUT))
 		return res;
 
 	res = ta_get_key_handle(&key_handle,
@@ -1860,6 +1861,7 @@ TEE_Result get_key_attributes(uint32_t param_types,
 	params[GET_KEY_ATTRS_KEY_USAGE_IDX].value.b = key_usage;
 	params[GET_KEY_ATTRS_KEYPAIR_FLAG_IDX].value.a = key_privacy;
 	params[GET_KEY_ATTRS_PERSISTENT_FLAG_IDX].value.b = persistent;
+	params[GET_KEY_ATTRS_KEY_SIZE_IDX].value.a = obj_info.objectSize;
 
 exit:
 	if (persistent)

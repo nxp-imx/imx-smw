@@ -1692,9 +1692,10 @@ static int get_key_attributes(void *args)
 	 * params[1].value.b = TEE Key usage returned.
 	 * params[2].value.a = TEE keypair/public type returned.
 	 * params[2].value.b = TEE key persistent flag returned.
+	 * params[3].value.a = TEE Key size returned.
 	 */
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT,
-					 TEEC_VALUE_OUTPUT, TEEC_NONE);
+					 TEEC_VALUE_OUTPUT, TEEC_VALUE_OUTPUT);
 
 	op.params[GET_KEY_ATTRS_KEY_ID_IDX].value.a = key_attrs->identifier.id;
 
@@ -1741,6 +1742,8 @@ static int get_key_attributes(void *args)
 
 	key_attrs->identifier.storage_id = 0;
 	key_attrs->identifier.type_id = key_type_tee_to_smw(tee_type);
+	key_attrs->identifier.security_size =
+		op.params[GET_KEY_ATTRS_KEY_SIZE_IDX].value.a;
 
 	status = tee_set_key_policy(&policy_list, &policy_list_length,
 				    tee_usage);

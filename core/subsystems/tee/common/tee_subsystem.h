@@ -25,6 +25,7 @@
 #define GET_KEY_ATTRS_KEY_USAGE_IDX	  1
 #define GET_KEY_ATTRS_KEYPAIR_FLAG_IDX	  2
 #define GET_KEY_ATTRS_PERSISTENT_FLAG_IDX 2
+#define GET_KEY_ATTRS_KEY_SIZE_IDX	  3
 
 /* TEE key privacy */
 enum tee_key_privacy {

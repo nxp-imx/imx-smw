@@ -18,10 +18,10 @@
 #define NB_ATTR_RSA_KEYPAIR   3
 #define NB_ATTR_SYMM_KEY      1
 
-/* Persistent key object access flags */
-#define PERSISTENT_KEY_FLAGS                                                   \
+/* Persistent object access flags */
+#define PERSISTENT_OBJECT_FLAGS                                                \
 	(TEE_DATA_FLAG_ACCESS_READ | TEE_DATA_FLAG_ACCESS_WRITE |              \
-	 TEE_DATA_FLAG_ACCESS_WRITE_META)
+	 TEE_DATA_FLAG_SHARE_READ | TEE_DATA_FLAG_SHARE_WRITE)
 
 /* Trusted storage space used by SMW */
 #define SMW_TEE_STORAGE TEE_STORAGE_PRIVATE
@@ -290,14 +290,15 @@ static TEE_Result get_key_ecc_curve(enum tee_key_type key_type,
  * find_and_open_persistent_id() - Find if object ID is persistent and open it.
  * @id: ID to find.
  * @handle: If not NULL and ID found, return the persistent object handle.
+ * @shared: true if the access to the object can be shared, else false.
  *
  * Return:
  * TEE_SUCCESS              - @id is present in the persistent storage
  * TEE_ERROR_ITEM_NOT_FOUND - @id is not present in the persistent storage
  * other error              - Unexpected error
  */
-static TEE_Result find_and_open_persistent_id(uint32_t id,
-					      TEE_ObjectHandle *handle)
+static TEE_Result
+find_and_open_persistent_id(uint32_t id, TEE_ObjectHandle *handle, bool shared)
 {
 #define OBJECT_ID_BUFFER_MAX (TEE_OBJECT_ID_MAX_LEN / sizeof(uint32_t) + 1)
 
@@ -307,6 +308,9 @@ static TEE_Result find_and_open_persistent_id(uint32_t id,
 	uint32_t *obj_id = NULL;
 	size_t obj_id_length = 0;
 	bool found = false;
+	uint32_t persistent_object_flags =
+		PERSISTENT_OBJECT_FLAGS |
+		(shared ? 0 : TEE_DATA_FLAG_ACCESS_WRITE_META);
 
 	FMSG("Executing %s", __func__);
 
@@ -342,8 +346,10 @@ static TEE_Result find_and_open_persistent_id(uint32_t id,
 		if (handle)
 			res = TEE_OpenPersistentObject(SMW_TEE_STORAGE, &id,
 						       sizeof(id),
-						       PERSISTENT_KEY_FLAGS,
+						       persistent_object_flags,
 						       handle);
+	} else {
+		res = TEE_ERROR_ITEM_NOT_FOUND;
 	}
 
 	TEE_FreePersistentObjectEnumerator(obj_enum);
@@ -370,8 +376,9 @@ static TEE_Result register_persistent_object(struct obj_data *data)
 	FMSG("Executing %s", __func__);
 
 	res = TEE_CreatePersistentObject(SMW_TEE_STORAGE, &data->id,
-					 sizeof(data->id), PERSISTENT_KEY_FLAGS,
-					 data->handle, NULL, 0, &handle);
+					 sizeof(data->id),
+					 PERSISTENT_OBJECT_FLAGS, data->handle,
+					 NULL, 0, &handle);
 
 	TEE_CloseObject(handle);
 
@@ -396,7 +403,7 @@ static TEE_Result find_and_delete_persistent_id(uint32_t id)
 
 	FMSG("Executing %s", __func__);
 
-	res = find_and_open_persistent_id(id, &handle);
+	res = find_and_open_persistent_id(id, &handle, false);
 	if (res == TEE_SUCCESS)
 		res = TEE_CloseAndDeletePersistentObject1(handle);
 
@@ -562,7 +569,7 @@ static TEE_Result is_object_id_used(uint32_t id)
 
 	FMSG("Executing %s", __func__);
 
-	res = find_and_open_persistent_id(id, NULL);
+	res = find_and_open_persistent_id(id, NULL, true);
 	if (res == TEE_ERROR_ITEM_NOT_FOUND)
 		res = find_and_get_transient_id(id, NULL);
 
@@ -1630,7 +1637,7 @@ TEE_Result ta_get_key_handle(TEE_ObjectHandle *key_handle, uint32_t key_id,
 
 	*persistent = false;
 
-	res = find_and_open_persistent_id(key_id, key_handle);
+	res = find_and_open_persistent_id(key_id, key_handle, true);
 	if (res == TEE_SUCCESS)
 		*persistent = true;
 	else if (res == TEE_ERROR_ITEM_NOT_FOUND)

@@ -9,7 +9,9 @@
 			],
 			"policy": {
 				"sign_message": [],
-				"sign_hash": []
+				"sign_hash": [],
+				"verify_message": [],
+				"verify_hash": []
 			}
 		}
 	},
@@ -22,15 +24,69 @@
 				"command": "GENERATE",
 				"subsystem": "TEE",
 				"key_name": "key NIST",
-				"post_to_after": ["App 2", "sem_t1"],
+				"post_to_after": ["App 2", "sem_a2_t1_start"],
+				"post_after": "sem_a1_t2_start"
 			},
 			"subtest 2": {
 				"command": "DELETE",
 				"key_name": "key NIST",
-				"wait_before": "sem_t2",
-				"post_to_after": ["App 2", "sem_t3"],
+				"wait_before": "sem_a1_a2_done",
 				"depends": 1
 			}
+		},
+		"Thread 2": {
+			"wait_before": "sem_a1_t2_start",
+			"subtest 1": {
+				"command": "SIGN",
+				"subsystem": "TEE",
+				"algo": "SHA384",
+				"message": [
+					"62c6a169b9be02b3d7b471a964fc0bcc",
+					"72b480d26aecb2ed460b7f50016ddaf0",
+					"4c51218783f3aadfdff5a04ded030d7b",
+					"3fb7376b61ba30b90e2da921a4470740",
+					"d63fb99fa16cc8ed81abaf8ce4016e50",
+					"df81da832070372c24a80890aa3a26fa",
+					"675710b8fb718266249d496f313c55d0",
+					"bada101f8f56eeccee4345a8f98f60a3",
+					"6662cfda794900d12f9414fcbdfdeb85",
+					"388a814996b47e24d5c8086e7a8edcc5",
+					"3d299d0d033e6bb60c58b83d6e8b57f6",
+					"c258d6081dd10eb942fdf8ec157ec3e7",
+					"5371235a8196eb9d22b1de3a2d30c2ab",
+					"be0db7650cf6c7159bacbe29b3a93c92",
+					"100508"
+				],
+				"sign_id": 1,
+				"key_name": "key NIST"
+			},
+			"subtest 2": {
+				"command": "VERIFY",
+				"subsystem": "TEE",
+				"algo": "SHA384",
+				"message": [
+					"62c6a169b9be02b3d7b471a964fc0bcc",
+					"72b480d26aecb2ed460b7f50016ddaf0",
+					"4c51218783f3aadfdff5a04ded030d7b",
+					"3fb7376b61ba30b90e2da921a4470740",
+					"d63fb99fa16cc8ed81abaf8ce4016e50",
+					"df81da832070372c24a80890aa3a26fa",
+					"675710b8fb718266249d496f313c55d0",
+					"bada101f8f56eeccee4345a8f98f60a3",
+					"6662cfda794900d12f9414fcbdfdeb85",
+					"388a814996b47e24d5c8086e7a8edcc5",
+					"3d299d0d033e6bb60c58b83d6e8b57f6",
+					"c258d6081dd10eb942fdf8ec157ec3e7",
+					"5371235a8196eb9d22b1de3a2d30c2ab",
+					"be0db7650cf6c7159bacbe29b3a93c92",
+					"100508"
+				],
+				"sign_id": 1,
+				"key_name": "key NIST",
+				"depends": 1
+			},
+			"wait_after": "sem_a2_done",
+			"post_after": "sem_a1_a2_done"
 		}
 	},
 	"App 2": {
@@ -42,17 +98,72 @@
 				"command": "GET_KEY_ATTRIBUTES",
 				"subsystem": "TEE",
 				"key_name": "key NIST",
-				"wait_before": "sem_t1"
+				"wait_before": "sem_a2_t1_start",
+				"post_after": "sem_a2_t2_start"
 			},
 			"subtest 2": {
 				"command": "EXPORT_PUBLIC",
 				"key_name": "key NIST",
-				"post_to_after": ["App 1", "sem_t2"]
+				"depends": 1
 			},
 			"subtest 3": {
 				"command": "DELETE",
 				"key_name": "key NIST",
-				"wait_before": "sem_t3",
+				"wait_before": "sem_a2_t2_done",
+				"post_to_after": ["App 1", "sem_a2_done"],
+				"depends": 1
+			}
+		},
+		"Thread 2": {
+			"wait_before": "sem_a2_t2_start",
+			"subtest 1": {
+				"command": "SIGN",
+				"subsystem": "TEE",
+				"algo": "SHA512",
+				"message": [
+					"4f05600950664d5190a2ebc29c9edb89",
+					"c20079a4d3e6bc3b27d75e34e2fa3d02",
+					"768502bd69790078598d5fcf3d6779bf",
+					"ed1284bbe5ad72fb456015181d9587d6",
+					"e864c940564eaafb4f2fead4346ea09b",
+					"6877d9340f6b82eb1515880872213da3",
+					"ad88feba9f4f13817a71d6f90a1a17c4",
+					"3a15c038d988b5b29edffe2d6a062813",
+					"cedbe852cde302b3e33b696846d2a8e3",
+					"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+					"5244d131677140399176ed46700019a0",
+					"04a163806f7fa467fc4e17b4617bbd76",
+					"41aaff7ff56396ba8c08a8be100b33a2",
+					"0b5daf134a2aefa5e1c3496770dcf6ba",
+					"a4f7bb"
+				],
+				"sign_id": 1,
+				"key_name": "key NIST"
+			},
+			"subtest 2": {
+				"command": "VERIFY",
+				"subsystem": "TEE",
+				"algo": "SHA512",
+				"message": [
+					"4f05600950664d5190a2ebc29c9edb89",
+					"c20079a4d3e6bc3b27d75e34e2fa3d02",
+					"768502bd69790078598d5fcf3d6779bf",
+					"ed1284bbe5ad72fb456015181d9587d6",
+					"e864c940564eaafb4f2fead4346ea09b",
+					"6877d9340f6b82eb1515880872213da3",
+					"ad88feba9f4f13817a71d6f90a1a17c4",
+					"3a15c038d988b5b29edffe2d6a062813",
+					"cedbe852cde302b3e33b696846d2a8e3",
+					"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+					"5244d131677140399176ed46700019a0",
+					"04a163806f7fa467fc4e17b4617bbd76",
+					"41aaff7ff56396ba8c08a8be100b33a2",
+					"0b5daf134a2aefa5e1c3496770dcf6ba",
+					"a4f7bb"
+				],
+				"sign_id": 1,
+				"key_name": "key NIST",
+				"post_after": "sem_a2_t2_done",
 				"depends": 1
 			}
 		}

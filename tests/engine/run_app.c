@@ -275,7 +275,7 @@ static int run_multithread(struct app_data *app)
 	if (status != ERR_CODE(PASSED))
 		goto end;
 
-	app->timeout = 10;
+	app->timeout = 20;
 	app->is_multithread = 1;
 
 	if (!json_object_get_object(app->def)) {

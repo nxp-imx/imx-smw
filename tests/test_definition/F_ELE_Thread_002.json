@@ -31,12 +31,12 @@
 			"key_name": "key 1"
 		},
 		"subtest 2": {
+			"post_after": "sem_t2",
 			"command": "GENERATE",
 			"subsystem": "ELE",
 			"key_name": "key 2"
 		},
 		"subtest 3": {
-			"post_before": "sem_t2",
 			"wait_before": "sem_t1",
 			"command": "DELETE",
 			"key_name": "key 1",

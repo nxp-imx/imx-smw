@@ -795,26 +795,28 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 	key_attrs->identifier.storage_id =
 		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
 
-	status = ele_get_key_policy(&policy_list, &policy_list_length,
-				    op_key_attrs.key_usage,
-				    op_key_attrs.permitted_algo);
+	if (key_attrs->pub) {
+		status = ele_get_key_policy(&policy_list, &policy_list_length,
+					    op_key_attrs.key_usage,
+					    op_key_attrs.permitted_algo);
 
-	if (status == SMW_STATUS_OK)
-		status = ele_get_lifecycle(&lifecycle_list,
-					   &lifecycle_list_length,
-					   op_key_attrs.lifecycle);
+		if (status == SMW_STATUS_OK)
+			status = ele_get_lifecycle(&lifecycle_list,
+						   &lifecycle_list_length,
+						   op_key_attrs.lifecycle);
 
-	if (status == SMW_STATUS_OK) {
-		smw_keymgr_set_policy(key_attrs, policy_list,
-				      policy_list_length);
-		smw_keymgr_set_lifecycle(key_attrs, lifecycle_list,
-					 lifecycle_list_length);
-	} else {
-		if (policy_list)
-			SMW_UTILS_FREE(policy_list);
+		if (status == SMW_STATUS_OK) {
+			smw_keymgr_set_policy(key_attrs, policy_list,
+					      policy_list_length);
+			smw_keymgr_set_lifecycle(key_attrs, lifecycle_list,
+						 lifecycle_list_length);
+		} else {
+			if (policy_list)
+				SMW_UTILS_FREE(policy_list);
 
-		if (lifecycle_list)
-			SMW_UTILS_FREE(lifecycle_list);
+			if (lifecycle_list)
+				SMW_UTILS_FREE(lifecycle_list);
+		}
 	}
 
 end:

@@ -476,8 +476,7 @@ int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
  * @in: Pointer to a public Key descriptor.
  * @out: Pointer to an internal Key descriptor.
  * @new_key: True if it's a new key or false.
- * @present_key: True if the key is assumed to be present in
- *               the Secure Subsystem if defined, false otherwise.
+ * @subsystem_id: Secure Subsystem ID.
  *
  * This function converts a public Key descriptor
  * into an internal Key descriptor.
@@ -487,7 +486,7 @@ int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
  */
 int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 				  struct smw_keymgr_descriptor *out,
-				  bool new_key, bool present_key);
+				  bool new_key, enum subsystem_id subsystem_id);
 
 /**
  * smw_keymgr_set_default_attributes() - Set default Key attributes.

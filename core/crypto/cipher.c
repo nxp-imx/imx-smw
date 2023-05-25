@@ -97,7 +97,6 @@ convert_key_descriptors(struct smw_key_descriptor **keys_desc,
 	unsigned int i = 0;
 	struct smw_keymgr_descriptor **keymgr_desc = NULL;
 	struct smw_key_descriptor *key = NULL;
-	bool present_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -127,11 +126,8 @@ convert_key_descriptors(struct smw_key_descriptor **keys_desc,
 			goto end;
 		}
 
-		if (*subsystem_id != SUBSYSTEM_ID_INVALID)
-			present_key = true;
-
 		status = smw_keymgr_convert_descriptor(key, keymgr_desc[i],
-						       false, present_key);
+						       false, *subsystem_id);
 		if (status != SMW_STATUS_OK) {
 			free_keys_ptr_array(keymgr_desc,
 					    converted_args->nb_keys);

@@ -47,8 +47,6 @@ static int lifecycle_to_string(unsigned char **str, int str_length,
 					out_len = -1;
 				}
 			}
-
-			break;
 		}
 	}
 

@@ -211,6 +211,9 @@ int util_app_fork(struct app_data *app)
 		return ERR_CODE(BAD_ARGS);
 	}
 
+	/* Flush all user-space buffered data before duplicating the process */
+	(void)fflush(NULL);
+
 	pid = fork();
 	if (pid == -1) {
 		DBG_PRINT("%s ==> fork() error :%s", app->name,

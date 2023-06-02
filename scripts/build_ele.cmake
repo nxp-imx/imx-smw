@@ -3,7 +3,7 @@
 # ELE_ROOT
 #
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-   message(FATAL_ERROR "-DCMAKE_TOOLCHAIN_FILE=<toolchain file> missing")
+    message(FATAL_ERROR "-DCMAKE_TOOLCHAIN_FILE=<toolchain file> missing")
 endif()
 
 set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
@@ -13,7 +13,6 @@ include(${CMAKE_TOOLCHAIN_FILE})
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
 include(GNUInstallDirs)
 find_package(Ele)
-find_package(ZLIBLight)
 
 if(ELE_FOUND)
     message(STATUS "ELE libraries already installed")
@@ -33,6 +32,7 @@ if(NOT ELE_FOUND)
     endif()
 
     find_file(ELE_MAKEFILE Makefile ${ELE_SRC_PATH})
+
     if(ELE_MAKEFILE)
         set(ENV{CC} ${CMAKE_C_COMPILER})
         set(ENV{AR} ${CMAKE_AR})
@@ -40,15 +40,15 @@ if(NOT ELE_FOUND)
         message(STATUS "Building EdgeLock Enclave libs")
         set(ELE_MAKE_ARGS clean libs install PLAT=ele DESTDIR=${ELE_ROOT})
         execute_process(COMMAND make ${ELE_MAKE_ARGS}
-                        WORKING_DIRECTORY ${ELE_SRC_PATH}
-                        RESULT_VARIABLE res)
+            WORKING_DIRECTORY ${ELE_SRC_PATH}
+            RESULT_VARIABLE res)
 
         if(NOT ${res} EQUAL 0)
             message(FATAL_ERROR "\nFailed to build EdgeLock Enclave libs "
-                    "from ${ELE_SRC_PATH}\n")
+                "from ${ELE_SRC_PATH}\n")
         endif()
     else()
-         message(FATAL_ERROR "\nEdgeLock Enclave libs can't be built, "
-                 "Makefile not found in ${ELE_SRC_PATH}.\n")
+        message(FATAL_ERROR "\nEdgeLock Enclave libs can't be built, "
+            "Makefile not found in ${ELE_SRC_PATH}.\n")
     endif()
 endif()

@@ -46,6 +46,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix coverity in key manager module and ensure all variables are initialized.
 * Fix the SMW_DBG_ASSERT() macro to exit properly in release and debug mode.
 * Add device manager APIs: smw_device_attestation() and smw_device_get_uuid()
+* Add support to fetch the length of output buffer in smw_cipher_update api.
 
 ##### 3. Subsystems
 
@@ -64,14 +65,19 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Tests - _version 2.4_
 
 * Fix coverity and ensure all variables are initialized.
+* Remove the subtest where the output data buffer is NULL in U_API_Cipher_Multipart_002.json.
 
 #### PKCS#11 Library - _version 2.4_
 
 * Fix coverity and ensure all variables are initialized.
 
+* Implement encrypt/decrypt (single-part and multi-part) PKCS#11 APIs.
+
 #### PKCS#11 Tests - _version 2.4_
 
 * Fix coverity and ensure all variables are initialized.
+
+* Validation of encrypt/decrypt (single-part and multi-part) PKCS#11 APIs.
 
 ---
 ### <a id ="rel_2_3"></a></br>**Release 2.3**

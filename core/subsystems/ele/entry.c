@@ -72,7 +72,6 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 
 	open_svc_key_store_args.key_store_identifier = info.storage_id;
 	open_svc_key_store_args.authentication_nonce = info.storage_nonce;
-	open_svc_key_store_args.max_updates_number = info.storage_replay;
 
 	/* Key store may not exists. Try to create it */
 	open_svc_key_store_args.flags = HSM_SVC_KEY_STORE_FLAGS_CREATE;

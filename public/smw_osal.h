@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #ifndef __SMW_OSAL_H__
@@ -84,7 +84,7 @@ struct tee_info {
  * struct se_info - Secure Enclave information
  * @storage_id: Key storage identifier
  * @storage_nonce: Key storage nonce
- * @storage_replay: Replay attack counter
+ * @storage_replay: Replay attack counter (Not used on ELE)
  */
 struct se_info {
 	unsigned int storage_id;

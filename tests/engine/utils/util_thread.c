@@ -31,7 +31,7 @@ static int get_active_thread_data(struct app_data *app,
 	while (node) {
 		*thr = util_list_data(node);
 
-		if (*thr && !pthread_equal((*thr)->id, tid))
+		if (*thr && pthread_equal((*thr)->id, tid))
 			break;
 
 		node = util_list_next(app->threads, node, NULL);

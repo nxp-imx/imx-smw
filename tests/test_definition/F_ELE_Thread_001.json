@@ -36,12 +36,12 @@
 			"op_type": "ENCRYPT",
 			"input": "ebabce95b14d3c8d6fb350390790311c",
 			"key_name": "key 1",
-			"depend": 1
+			"depends": 1
 		},
 		"subtest 3": {
 			"command": "DELETE",
 			"key_name": "key 1",
-			"depend": 1
+			"depends": 1
 		}
 	},
 	"Thread 2": {
@@ -59,12 +59,12 @@
 			],
 			"sign_id": 0,
 			"key_name": "key 2",
-			"depend": 1
+			"depends": 1
 		},
 		"subtest 3": {
 			"command": "DELETE",
 			"key_name": "key 2",
-			"depend": 1
+			"depends": 1
 		}
 	}
 }

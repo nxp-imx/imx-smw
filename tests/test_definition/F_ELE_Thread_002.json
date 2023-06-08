@@ -41,12 +41,12 @@
 			"command": "DELETE",
 			"key_name": "key 1",
 			"result": "SMW_STATUS_UNKNOWN_ID",
-			"depend": [1, 2]
+			"depends": [1, 2]
 		},
 		"subtest 4": {
 			"command": "DELETE",
 			"key_name": "key 2",
-			"depend": 2
+			"depends": 2
 		}
 	},
 	"Thread 2": {

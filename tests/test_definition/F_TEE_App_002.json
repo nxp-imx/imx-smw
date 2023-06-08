@@ -29,7 +29,7 @@
 				"key_name": "key NIST",
 				"wait_before": "sem_t2",
 				"post_to_after": ["App 2", "sem_t3"],
-				"depend": 1
+				"depends": 1
 			}
 		}
 	},
@@ -53,7 +53,7 @@
 				"command": "DELETE",
 				"key_name": "key NIST",
 				"wait_before": "sem_t3",
-				"depend": 1
+				"depends": 1
 			}
 		}
 	}

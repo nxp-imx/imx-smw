@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef USER_TA_HEADER_DEFINES_H
@@ -15,7 +15,7 @@
 	}
 
 /* TA FLAGS */
-#define TA_FLAGS TA_FLAG_EXEC_DDR
+#define TA_FLAGS (TA_FLAG_SINGLE_INSTANCE | TA_FLAG_MULTI_SESSION)
 
 /* TA Stack size */
 #define TA_STACK_SIZE (2 * 1024)

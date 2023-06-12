@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <tee_internal_api.h>
@@ -31,7 +31,14 @@ TEE_Result TA_CreateEntryPoint(void)
  */
 void TA_DestroyEntryPoint(void)
 {
+	TEE_Result res;
+
 	FMSG("Executing %s", __func__);
+
+	/* Make sure to free transient resources */
+	res = libsmw_detach();
+	if (res)
+		EMSG("Error while detaching for the library");
 }
 
 /**
@@ -75,14 +82,7 @@ TA_OpenSessionEntryPoint(uint32_t param_types,
  */
 void TA_CloseSessionEntryPoint(void *sess_ctx __maybe_unused)
 {
-	TEE_Result res = TEE_ERROR_GENERIC;
-
 	FMSG("Executing %s", __func__);
-
-	/* Make sure to free transient resources */
-	res = libsmw_detach();
-	if (res)
-		EMSG("Error while detaching for the library");
 }
 
 /**

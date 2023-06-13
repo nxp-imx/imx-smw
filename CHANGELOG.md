@@ -18,12 +18,36 @@ Each component handles its own version number specified in each component main C
 
 The releases are listed from the most recent to the first one.
 
-1. [Release 2.3](#rel_2_3)
-2. [Release 2.2](#rel_2_2)
-3. [Release 2.1](#rel_2_1)
-4. [Release 2.0](#rel_2_0)
-5. [Release 1.0](#rel_1_0)
+1. [Release 2.4](#rel_2_4)
+2. [Release 2.3](#rel_2_3)
+3. [Release 2.2](#rel_2_2)
+4. [Release 2.1](#rel_2_1)
+5. [Release 2.0](#rel_2_0)
+6. [Release 1.0](#rel_1_0)
 
+---
+### <a id ="rel_2_4"></a></br>**Release 2.4**
+---
+#### Known Issues
+##### 1. HSM Subsystem
+
+* When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
+The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+#### SMW Library - _version 2.4_
+##### 1. ARM PSA APIs
+
+##### 2. SMW APIs
+
+##### 3. Subsystems
+
+#### SMW Tests - _version 2.4_
+
+#### PKCS#11 Library - _version 2.4_
+
+#### PKCS#11 Tests - _version 2.4_
+
+---
 ### <a id ="rel_2_3"></a></br>**Release 2.3**
 ---
 #### Known Issues
@@ -66,6 +90,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add suspend command to switch device in sleep to memory mode (remove dedicated script to run suspend/resume test).
 
+---
 ### <a id ="rel_2_2"></a></br>**Release 2.2**
 ---
 
@@ -90,6 +115,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Implement Key manager (Generate, Import, Export, Delete)
 
+---
 ### <a id ="rel_2_1"></a></br>**Release 2.1**
 ---
 
@@ -130,6 +156,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Set the key policy in the key template when generating/importing keys.
 
+---
 ### <a id ="rel_2_0"></a></br>**Release 2.0**
 ---
 This version introduces the support of the ARM PSA APIs in addition to the SMW APIs. The PSA operations are routed to a dedicated subsystem, if the subsystem doesn't support the operation an error is returned.
@@ -191,6 +218,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add OPTEE TAs to be loaded per test application.
 * Add TEE and HSM Data object to configure subsystems (TA UUID, Key storage)
 
+---
 ### <a id ="rel_1_0"></a></br>**Release 1.0**
 ---
 This is the first release version of the project.

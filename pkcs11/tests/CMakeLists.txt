@@ -1,4 +1,4 @@
-project(testsmw_pkcs11 VERSION 2.3 LANGUAGES C)
+project(testsmw_pkcs11 VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES C)
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   add_compile_options(-Wall -Wextra -Werror)

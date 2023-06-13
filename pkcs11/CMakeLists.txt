@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})
 
-project(smw_pkcs11 VERSION 2.3 LANGUAGES C)
+project(smw_pkcs11 VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES C)
 
 #
 # Define the Library compiler

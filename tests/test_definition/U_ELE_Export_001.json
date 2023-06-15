@@ -130,7 +130,7 @@
 	"subtest 13": {
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 2",
-		"depends": 9,
+		"depends": 12,
 		"result": "SMW_STATUS_UNKNOWN_ID"
 	}
 }

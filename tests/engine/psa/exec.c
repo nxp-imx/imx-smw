@@ -10,6 +10,7 @@
 #include "keymgr.h"
 #include "hash.h"
 #include "rng.h"
+#include "cipher.h"
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -119,6 +120,24 @@ static int execute_rng_cmd(char *cmd, struct subtest_data *subtest)
 }
 
 /**
+ * execute_cipher_cmd() - Execute cipher command
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from cipher_psa().
+ */
+static int execute_cipher_cmd(char *cmd, struct subtest_data *subtest)
+{
+	if (!strcmp(cmd, CIPHER))
+		return cipher_psa(subtest);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
+/**
  * execute_get_key_attrs_cmd() - Execute get key attibutes command
  * @cmd: Command name.
  * @subtest: Subtest data.
@@ -150,6 +169,7 @@ int execute_command_psa(char *cmd, struct subtest_data *subtest)
 		{ EXPORT, &execute_export_cmd },
 		{ HASH, &execute_hash_cmd },
 		{ RNG, &execute_rng_cmd },
+		{ CIPHER, &execute_cipher_cmd },
 		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
 	};
 

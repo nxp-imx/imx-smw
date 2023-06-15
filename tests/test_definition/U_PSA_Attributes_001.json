@@ -62,6 +62,7 @@
 	},
 	"subtest 3": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key AES",
 		"depends": 1
 	},
@@ -78,6 +79,7 @@
 	},
 	"subtest 6": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key ECDSA sign",
 		"depends": 4
 	},
@@ -94,6 +96,7 @@
 	},
 	"subtest 9": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key ECDSA verify",
 		"depends": 7
 	},
@@ -110,6 +113,7 @@
 	},
 	"subtest 12": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key MAC",
 		"depends": 10
 	}

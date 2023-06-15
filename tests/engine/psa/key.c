@@ -847,12 +847,19 @@ static int read_key(unsigned char **key, size_t *length, const char *format,
 		 * allocated to convert the string to hex
 		 */
 		free(buf);
+
+		if (ret != ERR_CODE(PASSED))
+			return ret;
 	}
 
-	if (json_len != UINT_MAX)
+	if (json_len != UINT_MAX) {
+		if (*key && json_len > len)
+			return ERR_CODE(BAD_ARGS);
+
 		*length = json_len;
-	else
+	} else {
 		*length = len;
+	}
 
 	return ret;
 }

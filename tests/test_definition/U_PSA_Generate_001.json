@@ -119,36 +119,43 @@
 	},
 	"subtest 8": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key 1",
 		"depends": 1
 	},
 	"subtest 9": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key 2",
 		"depends": 2
 	},
 	"subtest 10": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key 3",
 		"depends": 3
 	},
 	"subtest 11": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key 4",
 		"depends": 4
 	},
 	"subtest 12": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key 5",
 		"depends": 5
 	},
 	"subtest 13": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key 6",
 		"depends": 6
 	},
 	"subtest 14": {
 		"command": "DELETE",
+		"api": "PSA",
 		"key_name": "key 7",
 		"depends": 7
 	}

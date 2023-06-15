@@ -135,6 +135,9 @@ int generate_key_psa(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
+	if (key_test.data)
+		free(key_test.data);
+
 	/* Call generate key function and compare result with expected one */
 	subtest->psa_status =
 		psa_generate_key(&key_test.attributes, &key_test.attributes.id);
@@ -156,8 +159,6 @@ int delete_key_psa(struct subtest_data *subtest)
 	struct keypair_psa key_test = { 0 };
 	const char *key_name = NULL;
 
-	psa_key_id_t key = PSA_KEY_ID_NULL;
-
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
@@ -174,13 +175,16 @@ int delete_key_psa(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		return res;
 
+	if (key_test.data)
+		free(key_test.data);
+
 	/* Read the json-c key description */
 	res = key_read_descriptor_psa(list_keys(subtest), &key_test, key_name);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	/* Call delete key function and compare result with expected one */
-	subtest->psa_status = psa_destroy_key(key);
+	subtest->psa_status = psa_destroy_key(key_test.attributes.id);
 	if (subtest->psa_status != PSA_SUCCESS)
 		return ERR_CODE(API_STATUS_NOK);
 
@@ -199,11 +203,6 @@ int import_key_psa(struct subtest_data *subtest)
 	struct keypair_psa key_test = { 0 };
 	struct key_data key_data = { 0 };
 	const char *key_name = NULL;
-
-	psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
-	psa_key_id_t key = PSA_KEY_ID_NULL;
-	uint8_t *data = NULL;
-	size_t data_length = 0;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -228,7 +227,8 @@ int import_key_psa(struct subtest_data *subtest)
 
 	/* Call import key function and compare result with expected one */
 	subtest->psa_status =
-		psa_import_key(&attributes, data, data_length, &key);
+		psa_import_key(&key_test.attributes, key_test.data,
+			       key_test.data_length, &key_test.attributes.id);
 	if (subtest->psa_status != PSA_SUCCESS) {
 		res = ERR_CODE(API_STATUS_NOK);
 		goto exit;
@@ -304,9 +304,14 @@ int export_key_psa(struct subtest_data *subtest, enum export_type export_type)
 	if (subtest->psa_status != PSA_SUCCESS)
 		res = ERR_CODE(API_STATUS_NOK);
 
-	if (subtest->psa_status == PSA_SUCCESS)
+	if (subtest->psa_status == PSA_SUCCESS) {
+		if (exp_key_test.data && !exp_key_test.data[0]) {
+			free(exp_key_test.data);
+			exp_key_test.data = NULL;
+		}
 		res = compare_keys(key_test.data, key_test.data_length,
 				   exp_key_test.data, exp_key_test.data_length);
+	}
 
 exit:
 	if (key_test.data)
@@ -345,6 +350,9 @@ int get_key_attributes_psa(struct subtest_data *subtest)
 	res = key_read_descriptor_psa(list_keys(subtest), &key_test, key_name);
 	if (res != ERR_CODE(PASSED))
 		return res;
+
+	if (key_test.data)
+		free(key_test.data);
 
 	subtest->psa_status = psa_get_key_attributes(key_test.attributes.id,
 						     &psa_key_attributes);

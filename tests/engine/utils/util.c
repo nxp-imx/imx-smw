@@ -181,18 +181,24 @@ int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	*len = string_len / 2;
+	if (string_len)
+		*len = string_len / 2;
 
-	*hex = malloc(*len);
-	if (!*hex) {
-		DBG_PRINT_ALLOC_FAILURE();
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-	}
+	if (*len) {
+		*hex = malloc(*len);
+		if (!*hex) {
+			DBG_PRINT_ALLOC_FAILURE();
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
 
-	for (; i < string_len && j < *len; i += 2, j++) {
-		tmp[0] = string[i];
-		tmp[1] = string[i + 1];
-		(*hex)[j] = strtol(tmp, NULL, 16);
+		for (; i < string_len && j < *len; i += 2, j++) {
+			tmp[0] = string[i];
+			tmp[1] = string[i + 1];
+			(*hex)[j] = strtol(tmp, NULL, 16);
+		}
+
+		if (!string_len)
+			**hex = 0;
 	}
 
 	return ERR_CODE(PASSED);
@@ -201,7 +207,7 @@ int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 int util_read_json_buffer(char **buf, unsigned int *buf_len,
 			  unsigned int *json_len, struct json_object *obuf)
 {
-	struct json_object *otmp;
+	struct json_object *otmp = NULL;
 	char *buf_tmp = NULL;
 	int idx = 0;
 	int idx_string = 0;
@@ -233,6 +239,9 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 
 			len_tmp += json_object_get_string_len(otmp);
 		}
+
+		if (idx_string == 1 && *json_len > len_tmp)
+			len_tmp = *json_len;
 		break;
 
 	case json_type_string:
@@ -298,22 +307,33 @@ int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
 		return ret;
 
 	ret = util_read_json_buffer(&str, &len, &json_len, obj);
-	if (ret == ERR_CODE(PASSED)) {
-		/* Either test definition specify:
-		 * - length != 0 but no data
-		 * - length = 0 but data
-		 * - no length but data
-		 * - length and data
-		 */
-		if (str)
-			ret = util_string_to_hex(str, hex, &len);
+	if (ret != ERR_CODE(PASSED))
+		goto exit;
 
-		if (json_len != UINT_MAX)
-			*length = json_len;
-		else
-			*length = len;
+	/* Either test definition specify:
+	 * - length != 0 but no data
+	 * - length = 0 but data
+	 * - no length but data
+	 * - length and data
+	 */
+	if (str) {
+		ret = util_string_to_hex(str, hex, &len);
+		if (ret != ERR_CODE(PASSED))
+			goto exit;
 	}
 
+	if (json_len != UINT_MAX) {
+		if (*hex && json_len > len) {
+			ret = ERR_CODE(BAD_ARGS);
+			goto exit;
+		}
+
+		*length = json_len;
+	} else {
+		*length = len;
+	}
+
+exit:
 	if (str)
 		free(str);
 

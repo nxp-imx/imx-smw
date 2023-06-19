@@ -41,6 +41,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 3. Subsystems
 
+* The TEE TAs are compiled with TA flags TA_FLAG_SINGLE_INSTANCE and TA_FLAG_MULTI_SESSION. All TA instances can handle several sessions.
+
 #### SMW Tests - _version 2.4_
 
 #### PKCS#11 Library - _version 2.4_
@@ -55,6 +57,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+##### 2. TEE Subsystem
+
+* Two or more applications cannot have concurrent access to the same key storage because the TEE TAs only support one session.
 
 #### SMW Library - _version 2.3_
 ##### 1. ARM PSA APIs

@@ -5,7 +5,7 @@
 # SRC: project source file template (configure_file)
 # DST: project destination file (configure_file)
 #
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 
 #
 # conv_const_string() - build list of const to const/string table

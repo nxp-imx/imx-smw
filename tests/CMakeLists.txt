@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})
 
 project(smwtest VERSION ${CMAKE_PROJECT_VERSION} LANGUAGES C)
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include "smw_status.h"
@@ -19,11 +19,9 @@ int smw_config_init(void)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_ctx *ctx;
+	struct smw_ctx *ctx = get_smw_ctx();
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	ctx = get_smw_ctx();
 
 	SMW_DBG_ASSERT(ctx);
 
@@ -65,11 +63,9 @@ int smw_config_deinit(void)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_ctx *ctx;
+	struct smw_ctx *ctx = get_smw_ctx();
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	ctx = get_smw_ctx();
 
 	SMW_DBG_ASSERT(ctx);
 
@@ -105,11 +101,9 @@ __export enum smw_status_code smw_config_load(char *buffer, unsigned int size,
 	enum smw_status_code status = SMW_STATUS_OK;
 	enum smw_status_code status_mutex = SMW_STATUS_OK;
 
-	struct smw_ctx *ctx;
+	struct smw_ctx *ctx = get_smw_ctx();
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	ctx = get_smw_ctx();
 
 	if (!ctx)
 		return SMW_STATUS_INVALID_LIBRARY_CONTEXT;
@@ -152,11 +146,9 @@ __export enum smw_status_code smw_config_unload(void)
 	enum smw_status_code status = SMW_STATUS_OK;
 	enum smw_status_code status_mutex = SMW_STATUS_OK;
 
-	struct smw_ctx *ctx;
+	struct smw_ctx *ctx = get_smw_ctx();
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	ctx = get_smw_ctx();
 
 	if (!ctx)
 		return SMW_STATUS_INVALID_LIBRARY_CONTEXT;

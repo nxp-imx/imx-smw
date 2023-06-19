@@ -16,10 +16,11 @@
 
 #include "global.h"
 
-#define SMW_ALL_ONES (-1)
+#define SMW_ALL_ONES (-1UL)
 
 #define BIT(n)		 (1 << (n))
 #define BIT_MASK(length) ((1ULL << (length)) - 1)
+#define SHIFT_BIT(n)	 (1ULL << (n))
 
 #if !defined ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
@@ -33,6 +34,10 @@
 		_a < _b ? _a : _b;                                             \
 	})
 #endif /* MIN */
+
+#define ADD_OVERFLOW(a, b, res) __builtin_add_overflow(a, b, res)
+#define SUB_OVERFLOW(a, b, res) __builtin_sub_overflow(a, b, res)
+#define MUL_OVERFLOW(a, b, res) __builtin_mul_overflow(a, b, res)
 
 #define BITS_TO_BYTES_SIZE(security_size) (((security_size) + 7) / 8)
 

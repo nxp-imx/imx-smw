@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __DEBUG_H__
@@ -20,13 +20,9 @@
 #define SMW_DBG_LEVEL_VERBOSE 4 /* Maximum level of debugging information */
 
 #if defined(ENABLE_DEBUG)
-
 #define SMW_ABORT abort
-
 #else /* ENABLE_DEBUG */
-
 #define SMW_ABORT(...)
-
 #endif /* ENABLE_DEBUG */
 
 #if defined(ENABLE_TRACE)

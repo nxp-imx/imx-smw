@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include "smw_status.h"
@@ -18,6 +18,17 @@
 #include "tag.h"
 
 #define SMW_CONFIG_PARSER_VERSION 1
+
+static void print_parser_skip_string(__maybe_unused const char *msg,
+				     char *start, char *end)
+{
+	int count = 0;
+
+	if (SUB_OVERFLOW((uintptr_t)end, (uintptr_t)start, &count))
+		count = 0;
+
+	SMW_DBG_PRINTF(INFO, "%s: %.*s\n", msg, count, start);
+}
 
 static bool is_string_delimiter(char c)
 {
@@ -49,7 +60,7 @@ static bool detect_tag(char **start, char *end, const char *tag)
 {
 	bool match = false;
 
-	unsigned int tag_length = SMW_UTILS_STRLEN(tag);
+	size_t tag_length = SMW_UTILS_STRLEN(tag);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -65,11 +76,11 @@ static bool detect_tag(char **start, char *end, const char *tag)
 	return match;
 }
 
-bool get_tag_prefix(char *tag, unsigned int length, const char *suffix)
+bool get_tag_prefix(char *tag, size_t length, const char *suffix)
 {
 	bool match = false;
 
-	unsigned int suffix_length = SMW_UTILS_STRLEN(suffix);
+	size_t suffix_length = SMW_UTILS_STRLEN(suffix);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -111,11 +122,15 @@ static unsigned int skip_comments(char **start, char *end)
 			cur++;
 		}
 
-		SMW_DBG_PRINTF(DEBUG, "Skip comment: %.*s\n",
-			       (unsigned int)(cur - *start), *start);
+		if (SUB_OVERFLOW((uintptr_t)cur, (uintptr_t)*start, &count))
+			count = 0;
+
+		SMW_DBG_PRINTF(DEBUG, "Skip comment: %.*s\n", count, *start);
 	}
 
-	count = (unsigned int)(cur - *start);
+	if (SUB_OVERFLOW((uintptr_t)cur, (uintptr_t)*start, &count))
+		count = 0;
+
 	*start = cur;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned count: %d\n", __func__, count);
@@ -136,7 +151,9 @@ static unsigned int skip_whitespaces(char **start, char *end)
 		cur++;
 	}
 
-	count = (unsigned int)(cur - *start);
+	if (SUB_OVERFLOW((uintptr_t)cur, (uintptr_t)*start, &count))
+		count = 0;
+
 	*start = cur;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned count: %d\n", __func__, count);
@@ -183,8 +200,7 @@ static void skip_operation(char **start, char *end)
 		cur++;
 	}
 
-	SMW_DBG_PRINTF(INFO, "Skip security operation: %.*s\n",
-		       (unsigned int)(cur - *start), *start);
+	print_parser_skip_string("Skip security operation", *start, cur);
 
 	*start = cur;
 }
@@ -207,8 +223,7 @@ static void skip_subsystem(char **start, char *end)
 		cur++;
 	}
 
-	SMW_DBG_PRINTF(INFO, "Skip secure subsystem: %.*s\n",
-		       (unsigned int)(cur - *start), *start);
+	print_parser_skip_string("Skip secure subsystem", *start, cur);
 
 	*start = cur;
 }
@@ -218,7 +233,7 @@ int read_unsigned_integer(char **start, char *end, unsigned int *dest)
 	int status = SMW_STATUS_OK;
 
 	char *cur = *start;
-	unsigned int temp;
+	unsigned int temp = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -238,17 +253,15 @@ int read_unsigned_integer(char **start, char *end, unsigned int *dest)
 	}
 
 	while ((*cur >= '0') && (*cur <= '9') && (cur < end)) {
-		if (*dest > UINT_MAX / 10) {
+		if (MUL_OVERFLOW(*dest, 10, &temp)) {
 			status = SMW_STATUS_TOO_LARGE_NUMBER;
 			goto end;
 		}
-		temp = *dest * 10;
 
-		if (temp > UINT_MAX - (*cur - '0')) {
-			status = SMW_STATUS_TOO_LARGE_NUMBER;
+		if (ADD_OVERFLOW(temp, *cur++ - '0', &temp)) {
+			status = SMW_STATUS_SYNTAX_ERROR;
 			goto end;
 		}
-		temp += (*cur++ - '0');
 
 		*dest = temp;
 	}
@@ -320,24 +333,24 @@ end:
 	return status;
 }
 
-static int read_string(char **start, char *end, char *dest,
-		       unsigned int max_len, char separator)
+static int read_string(char **start, char *end, char *dest, size_t max_len,
+		       char separator)
 {
 	int status = SMW_STATUS_OK;
 
+	size_t length = 0;
 	char *cur = *start;
-	char *p = dest;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	while (((unsigned int)(p - dest) < max_len) &&
-	       !is_string_delimiter(*cur)) {
+	while (length < max_len && !is_string_delimiter(*cur)) {
 		if (cur >= end) {
 			status = SMW_STATUS_EOF;
 			goto end;
 		}
 
-		*p++ = *cur++;
+		dest[length] = *cur++;
+		length++;
 	}
 
 	skip_insignificant_chars(&cur, end);
@@ -350,7 +363,7 @@ static int read_string(char **start, char *end, char *dest,
 	*start = cur;
 
 end:
-	*p = 0;
+	dest[length] = 0;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s decoded %s\n", __func__, dest);
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -401,8 +414,8 @@ int read_names(char **start, char *end, unsigned long *bitmap,
 	int status = SMW_STATUS_OK;
 
 	char *cur = *start;
-	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1];
-	unsigned int id;
+	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1] = { 0 };
+	unsigned int id = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -443,9 +456,9 @@ static bool read_operation(char **start, char *end,
 
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
-	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1];
+	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1] = { 0 };
 	enum operation_id operation_id = OPERATION_ID_INVALID;
-	struct operation_func *func;
+	struct operation_func *func = NULL;
 	void *params = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -504,7 +517,7 @@ static bool read_subsystem(char **start, char *end, int *return_status)
 
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
-	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1];
+	char buffer[SMW_CONFIG_MAX_STRING_LENGTH + 1] = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	enum load_method_id load_method_id = LOAD_METHOD_ID_INVALID;
 
@@ -602,12 +615,12 @@ static int get_psa_default_subsystem(char **start, char *end)
 	int status = SMW_STATUS_OK;
 
 	char *cur = *start;
-	char buffer[SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH + 1];
+	char buffer[SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH + 1] = { 0 };
 	bool option_present = false;
 	struct smw_config_psa_config config = { .subsystem_id =
 							SUBSYSTEM_ID_INVALID,
 						.alt = false };
-	unsigned int alt_tag_len = SMW_UTILS_STRLEN(alt_tag);
+	size_t alt_tag_len = SMW_UTILS_STRLEN(alt_tag);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -774,7 +787,10 @@ int parse(char *buffer, unsigned int size, unsigned int *offset)
 end:
 	if (status != SMW_STATUS_OK) {
 		if (*offset) {
-			*offset = (unsigned int)(cur - buffer);
+			if (SUB_OVERFLOW((uintptr_t)cur, (uintptr_t)buffer,
+					 offset))
+				*offset = UINT_MAX;
+
 			SMW_DBG_PRINTF(ERROR,
 				       "Error detected nearly after offset:%d\n",
 				       *offset);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include "smw_status.h"
@@ -43,10 +43,10 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
 
-	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1];
-	unsigned int length;
+	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1] = { 0 };
+	size_t length = 0;
 
-	struct sign_verify_params *p;
+	struct sign_verify_params *p = NULL;
 	unsigned long key_size_range_bitmap = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

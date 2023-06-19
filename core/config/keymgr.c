@@ -61,7 +61,7 @@ static int read_key_size_range(char **start, char *end, const char *type_name,
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
 
-	enum smw_config_key_type_id id;
+	enum smw_config_key_type_id id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -99,8 +99,8 @@ end:
 static int read_key_op_names(char **start, char *end, enum operation_id op_id,
 			     unsigned long *bitmap)
 {
-	const char *const *op_names;
-	unsigned int nb_op_names;
+	const char *const *op_names = NULL;
+	unsigned int nb_op_names = 0;
 
 	switch (op_id) {
 	case OPERATION_ID_DERIVE_KEY:
@@ -115,7 +115,7 @@ static int read_key_op_names(char **start, char *end, enum operation_id op_id,
 	return read_names(start, end, bitmap, op_names, nb_op_names);
 }
 
-bool read_key(char *tag, unsigned int length, char **start, char *end,
+bool read_key(char *tag, size_t length, char **start, char *end,
 	      unsigned long *key_size_range_bitmap, struct op_key *key,
 	      int *status)
 {
@@ -147,10 +147,10 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
 
-	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1];
-	unsigned int length;
+	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1] = { 0 };
+	size_t length = 0;
 
-	struct key_operation_params *p;
+	struct key_operation_params *p = NULL;
 	unsigned long key_size_range_bitmap = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include "smw_status.h"
@@ -58,11 +58,9 @@ inline struct database *get_database(void)
 
 static int config_db_mutex_lock(void)
 {
-	struct smw_ctx *ctx;
+	struct smw_ctx *ctx = get_smw_ctx();
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	ctx = get_smw_ctx();
 
 	SMW_DBG_ASSERT(ctx);
 
@@ -79,11 +77,9 @@ static int config_db_mutex_lock(void)
 
 static int config_db_mutex_unlock(void)
 {
-	struct smw_ctx *ctx;
+	struct smw_ctx *ctx = get_smw_ctx();
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	ctx = get_smw_ctx();
 
 	SMW_DBG_ASSERT(ctx);
 
@@ -101,12 +97,12 @@ static int config_db_mutex_unlock(void)
 
 void init_key_params(struct op_key *key)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	key->type_bitmap = 0;
-	for (i = 0; i < ARRAY_SIZE(key->size_range); i++) {
+	for (; i < ARRAY_SIZE(key->size_range); i++) {
 		key->size_range[i].min = 0;
 		key->size_range[i].max = UINT_MAX;
 	}
@@ -144,7 +140,7 @@ static void init_psa_config(struct smw_config_psa_config *psa)
 void init_database(bool reset)
 {
 	struct database *database = NULL;
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -155,7 +151,7 @@ void init_database(bool reset)
 
 	init_psa_config(&database->psa);
 
-	for (i = 0; i < SUBSYSTEM_ID_NB; i++)
+	for (; i < SUBSYSTEM_ID_NB; i++)
 		init_subsystem(&database->subsystem[i]);
 
 	for (i = 0; i < OPERATION_ID_NB; i++)
@@ -201,7 +197,8 @@ void set_bit(unsigned long *bitmap, unsigned int size, unsigned int offset)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_ASSERT(offset < size);
-	*bitmap |= (1 << offset);
+
+	*bitmap |= SHIFT_BIT(offset);
 }
 
 static bool get_bit(unsigned long bitmap, unsigned int size,
@@ -210,7 +207,7 @@ static bool get_bit(unsigned long bitmap, unsigned int size,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_ASSERT(offset < size);
-	return (bitmap & (1 << offset)) ? true : false;
+	return (bitmap & SHIFT_BIT(offset)) ? true : false;
 }
 
 void set_subsystem_configured(enum subsystem_id id)
@@ -290,7 +287,7 @@ int set_subsystem_load_method(enum subsystem_id id,
 
 	struct database *database = NULL;
 	unsigned int index = id;
-	struct subsystem *subsystem;
+	struct subsystem *subsystem = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -318,7 +315,7 @@ int set_subsystem_load_method(enum subsystem_id id,
 
 static enum load_method_id get_subsystem_load_method_id(enum subsystem_id id)
 {
-	enum load_method_id load_method_id;
+	enum load_method_id load_method_id = LOAD_METHOD_ID_INVALID;
 	struct database *database = NULL;
 	unsigned int index = id;
 
@@ -327,7 +324,7 @@ static enum load_method_id get_subsystem_load_method_id(enum subsystem_id id)
 	database = get_database();
 
 	if (!database)
-		return LOAD_METHOD_ID_INVALID;
+		return load_method_id;
 
 	SUBSYSTEM_ID_ASSERT(id);
 
@@ -340,7 +337,8 @@ static enum load_method_id get_subsystem_load_method_id(enum subsystem_id id)
 
 void smw_config_notify_subsystem_failure(enum subsystem_id id)
 {
-	int status_mutex;
+	// coverity[assigned_value]
+	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
 
 	unsigned int index = id;
 
@@ -366,7 +364,7 @@ int store_operation_params(enum operation_id operation_id, void *params,
 
 	struct database *database = NULL;
 	unsigned int index = operation_id;
-	struct smw_utils_list *list;
+	struct smw_utils_list *list = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -428,7 +426,7 @@ int get_load_method_id(const char *name, enum load_method_id *id)
 
 int get_operation_id(const char *name, enum operation_id *id)
 {
-	int status;
+	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -453,9 +451,9 @@ void merge_key_params(struct op_key *key_caps, struct op_key *key_params)
 	struct range *caps_range = key_caps->size_range;
 	struct range *params_range = key_params->size_range;
 
-	unsigned int i;
+	unsigned int i = 0;
 
-	for (i = 0; i < SMW_CONFIG_KEY_TYPE_ID_NB; i++) {
+	for (; i < SMW_CONFIG_KEY_TYPE_ID_NB; i++) {
 		if (check_id(i, key_params->type_bitmap)) {
 			if (!check_id(i, key_caps->type_bitmap)) {
 				caps_range[i] = params_range[i];
@@ -475,16 +473,19 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 				enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_OK;
-	int status_mutex;
+
+	// coverity[assigned_value]
+	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
 
 	struct database *database = NULL;
-	struct operation_func *operation_func;
-	int (*check_subsystem_caps)(void *args, void *params);
+	struct operation_func *operation_func = NULL;
+	int (*check_subsystem_caps)(void *args, void *params) = NULL;
 	unsigned int index = operation_id;
 
-	struct smw_utils_list *list;
+	struct smw_utils_list *list = NULL;
 	unsigned int *ref = NULL;
 	struct node *node = NULL;
+	unsigned int node_ref = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -518,7 +519,9 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 					      smw_utils_list_get_data(node));
 
 		if (status == SMW_STATUS_OK) {
-			*subsystem_id = smw_utils_list_get_ref(node);
+			node_ref = smw_utils_list_get_ref(node);
+			if (node_ref < SUBSYSTEM_ID_NB)
+				*subsystem_id = node_ref;
 			break;
 		}
 
@@ -538,13 +541,15 @@ int get_operation_params(enum operation_id operation_id,
 			 enum subsystem_id subsystem_id, void *params)
 {
 	int status = SMW_STATUS_OK;
-	int status_mutex;
+
+	// coverity[assigned_value]
+	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
 
 	struct database *database = NULL;
-	struct operation_func *operation_func;
+	struct operation_func *operation_func = NULL;
 	unsigned int index = operation_id;
 
-	struct smw_utils_list *list;
+	struct smw_utils_list *list = NULL;
 	struct node *node = NULL;
 	unsigned int *key = NULL;
 
@@ -667,15 +672,15 @@ const char *smw_config_get_subsystem_name(enum subsystem_id id)
 
 void unload_subsystems(void)
 {
-	int status;
+	int status = SMW_STATUS_OK;
 
-	unsigned int i;
+	unsigned int i = 0;
 
-	struct subsystem_func *func;
+	struct subsystem_func *func = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < SUBSYSTEM_ID_NB; i++) {
+	for (; i < SUBSYSTEM_ID_NB; i++) {
 		if (is_subsystem_configured(i) &&
 		    get_subsystem_state(i) == SUBSYSTEM_STATE_LOADED) {
 			func = smw_config_get_subsystem_func(i);
@@ -699,11 +704,11 @@ void unload_subsystems(void)
 int smw_config_load_subsystem(enum subsystem_id id)
 {
 	int status = SMW_STATUS_OK;
-	int status_mutex;
 
-	enum subsystem_state state;
-	enum load_method_id load_method_id;
-	struct subsystem_func *func;
+	// coverity[assigned_value]
+	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
+
+	struct subsystem_func *func = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -713,27 +718,25 @@ int smw_config_load_subsystem(enum subsystem_id id)
 	if (status_mutex != SMW_STATUS_OK)
 		goto end;
 
-	state = get_subsystem_state(id);
-	load_method_id = get_subsystem_load_method_id(id);
-	func = smw_config_get_subsystem_func(id);
-
 	if (!is_subsystem_configured(id)) {
 		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 		goto end;
 	}
 
-	switch (state) {
+	switch (get_subsystem_state(id)) {
 	case SUBSYSTEM_STATE_LOADED:
 		break;
 
 	case SUBSYSTEM_STATE_UNLOADED:
-		switch (load_method_id) {
+		switch (get_subsystem_load_method_id(id)) {
 		case LOAD_METHOD_ID_AT_FIRST_CALL_LOAD:
 		case LOAD_METHOD_ID_AT_CONTEXT_CREATION_DESTRUCTION:
+			func = smw_config_get_subsystem_func(id);
 			if (func && func->load)
 				status = func->load();
 			if (status != SMW_STATUS_OK)
 				goto end;
+
 			set_subsystem_state(id, SUBSYSTEM_STATE_LOADED);
 			break;
 
@@ -744,7 +747,7 @@ int smw_config_load_subsystem(enum subsystem_id id)
 
 	default:
 		SMW_DBG_PRINTF(ERROR, "Unknown secure subsystem state: %d\n",
-			       state);
+			       get_subsystem_state(id));
 		SMW_DBG_ASSERT(0);
 		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 	}
@@ -762,11 +765,11 @@ end:
 int smw_config_unload_subsystem(enum subsystem_id id)
 {
 	int status = SMW_STATUS_OK;
-	int status_mutex;
 
-	enum subsystem_state state;
-	enum load_method_id load_method_id;
-	struct subsystem_func *func;
+	// coverity[assigned_value]
+	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
+
+	struct subsystem_func *func = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -776,26 +779,24 @@ int smw_config_unload_subsystem(enum subsystem_id id)
 	if (status_mutex != SMW_STATUS_OK)
 		goto end;
 
-	state = get_subsystem_state(id);
-	load_method_id = get_subsystem_load_method_id(id);
-	func = smw_config_get_subsystem_func(id);
-
 	if (!is_subsystem_configured(id)) {
 		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 		goto end;
 	}
 
-	switch (state) {
+	switch (get_subsystem_state(id)) {
 	case SUBSYSTEM_STATE_LOADED:
-		switch (load_method_id) {
+		switch (get_subsystem_load_method_id(id)) {
 		case LOAD_METHOD_ID_AT_FIRST_CALL_LOAD:
 			break;
 
 		case LOAD_METHOD_ID_AT_CONTEXT_CREATION_DESTRUCTION:
+			func = smw_config_get_subsystem_func(id);
 			if (func && func->unload)
 				status = func->unload();
 			if (status != SMW_STATUS_OK)
 				goto end;
+
 			set_subsystem_state(id, SUBSYSTEM_STATE_UNLOADED);
 			break;
 
@@ -809,7 +810,7 @@ int smw_config_unload_subsystem(enum subsystem_id id)
 
 	default:
 		SMW_DBG_PRINTF(ERROR, "Unknown secure subsystem state: %d\n",
-			       state);
+			       get_subsystem_state(id));
 		SMW_DBG_ASSERT(0);
 		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 	}

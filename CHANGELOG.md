@@ -39,6 +39,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. SMW APIs
 
+* Fix coverity in configuration module and ensure all variables are initialized.
+
 ##### 3. Subsystems
 
 * The TEE TAs are compiled with TA flags TA_FLAG_SINGLE_INSTANCE and TA_FLAG_MULTI_SESSION. All TA instances can handle several sessions.

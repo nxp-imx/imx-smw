@@ -32,10 +32,10 @@ static int mac_read_params(char **start, char *end, void **params)
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
 
-	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1];
-	unsigned int length;
+	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1] = { 0 };
+	size_t length = 0;
 
-	struct mac_params *p;
+	struct mac_params *p = NULL;
 	unsigned long key_size_range_bitmap = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

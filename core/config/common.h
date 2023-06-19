@@ -104,7 +104,7 @@ struct cipher_params {
  * * true:      - the suffix is detected.
  * * false:     - the suffix is not detected.
  */
-bool get_tag_prefix(char *tag, unsigned int length, const char *suffix);
+bool get_tag_prefix(char *tag, size_t length, const char *suffix);
 
 /**
  * skip_insignificant_chars() - Skip insignificant chars.
@@ -169,7 +169,7 @@ int read_range(char **start, char *end, struct range *range);
  * * true:      - @tag is related to Key configuration.
  * * false:     - @tag is not related to Key configuration.
  */
-bool read_key(char *tag, unsigned int length, char **start, char *end,
+bool read_key(char *tag, size_t length, char **start, char *end,
 	      unsigned long *key_size_range_bitmap, struct op_key *key,
 	      int *status);
 

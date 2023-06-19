@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include "smw_status.h"
@@ -99,8 +99,8 @@ static int cipher_common_read_params(char **start, char *end, void **params)
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
 
-	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1];
-	unsigned int length;
+	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1] = { 0 };
+	size_t length = 0;
 
 	struct cipher_params *p;
 	unsigned long key_size_range_bitmap = 0;
@@ -232,7 +232,7 @@ static void cipher_multi_part_print_params(void *params)
 static int check_common_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
-	unsigned int i;
+	unsigned int i = 0;
 	struct smw_crypto_cipher_args *cipher_args = args;
 	struct cipher_params *cipher_params = params;
 
@@ -242,7 +242,7 @@ static int check_common_subsystem_caps(void *args, void *params)
 	    !check_id(cipher_args->op_id, cipher_params->op_bitmap))
 		goto end;
 
-	for (i = 0; i < cipher_args->nb_keys; i++)
+	for (; i < cipher_args->nb_keys; i++)
 		if (!check_key(&cipher_args->keys_desc[i]->identifier,
 			       &cipher_params->key))
 			goto end;

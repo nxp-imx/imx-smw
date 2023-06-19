@@ -22,7 +22,7 @@ copyright = '${PROJECT_COPYRIGHT}'
 author = 'NXP'
 
 # The full version, including alpha/beta/rc tags
-release = '${PROJECT_VERSION}'
+release = '${CMAKE_PROJECT_VERSION}'
 
 
 # -- General configuration ---------------------------------------------------

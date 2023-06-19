@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "psa/error.h"
@@ -27,6 +27,7 @@ psa_status_t util_smw_to_psa_status(enum smw_status_code status)
 		break;
 
 	case SMW_STATUS_INVALID_PARAM:
+	case SMW_STATUS_KEY_INVALID:
 		psa_status = PSA_ERROR_INVALID_ARGUMENT;
 		break;
 

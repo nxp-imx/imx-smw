@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include "smw_status.h"
@@ -97,7 +97,7 @@ enum smw_status_code smw_hash(struct smw_hash_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_crypto_hash_args hash_args;
+	struct smw_crypto_hash_args hash_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

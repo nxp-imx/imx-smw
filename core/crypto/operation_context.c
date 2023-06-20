@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include "smw_status.h"
@@ -15,7 +15,7 @@ enum smw_status_code smw_cancel_operation(struct smw_op_context *context)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cancel_op_args args = { .ctx = context };
-	struct smw_crypto_context_ops *ops;
+	struct smw_crypto_context_ops *ops = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -46,7 +46,7 @@ enum smw_status_code smw_copy_context(struct smw_op_context *dst,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_copy_ctx_args args = { .src = src, .dst = dst };
-	struct smw_crypto_context_ops *ops;
+	struct smw_crypto_context_ops *ops = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

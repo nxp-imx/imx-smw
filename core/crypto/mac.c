@@ -57,10 +57,9 @@ static enum smw_status_code mac_operate(struct smw_mac_args *args,
 
 	struct smw_crypto_mac_args mac_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	struct smw_keymgr_descriptor *key_descriptor;
-	enum smw_keymgr_format_id format_id;
-	unsigned char *private_data;
-	unsigned int private_length;
+	struct smw_keymgr_descriptor *key_descriptor = NULL;
+	unsigned char *private_data = NULL;
+	unsigned int private_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -87,10 +86,9 @@ static enum smw_status_code mac_operate(struct smw_mac_args *args,
 		goto end;
 
 	key_descriptor = &mac_args.key_descriptor;
-	format_id = key_descriptor->format_id;
 	private_data = smw_keymgr_get_private_data(key_descriptor);
 	private_length = smw_keymgr_get_private_length(key_descriptor);
-	if (format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
+	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
 		if (!private_data || !private_length) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;

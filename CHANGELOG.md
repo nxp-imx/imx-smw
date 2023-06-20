@@ -40,6 +40,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. SMW APIs
 
 * Fix coverity in configuration module and ensure all variables are initialized.
+* Fix coverity in cryptography module and ensure all variables are initialized.
 
 ##### 3. Subsystems
 

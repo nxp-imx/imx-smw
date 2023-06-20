@@ -227,14 +227,18 @@ static int store_salt_len(void *attributes, unsigned char *value,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_sign_verify_attributes *attr = attributes;
+	unsigned long long numeral = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!value || !attr)
 		goto end;
 
-	attr->salt_length = (uint32_t)smw_tlv_convert_numeral(length, value);
-	status = SMW_STATUS_OK;
+	numeral = smw_tlv_convert_numeral(length, value);
+	if (numeral < UINT32_MAX) {
+		attr->salt_length = numeral;
+		status = SMW_STATUS_OK;
+	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -263,23 +267,35 @@ end:
 
 static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 {
+	unsigned long size = 0;
+
 	switch (key->identifier.type_id) {
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
 		/* Signature size is public key size */
-		return BITS_TO_BYTES_SIZE(key->identifier.security_size) * 2;
+		size = key->identifier.security_size;
+		size = BITS_TO_BYTES_SIZE(size) * 2;
+		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		/* Signature size is modulus size */
-		return BITS_TO_BYTES_SIZE(key->identifier.security_size);
+		size = key->identifier.security_size;
+		size = BITS_TO_BYTES_SIZE(size);
+		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY:
-		return TLS12_MAC_FINISH_DEFAULT_LEN;
+		size = TLS12_MAC_FINISH_DEFAULT_LEN;
+		break;
 
 	default:
-		return 0;
+		break;
 	}
+
+	if (size >= UINT32_MAX)
+		size = 0;
+
+	return size;
 }
 
 static int smw_sign_verify(enum operation_id operation_id,
@@ -289,12 +305,11 @@ static int smw_sign_verify(enum operation_id operation_id,
 
 	struct smw_crypto_sign_verify_args sign_verify_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	struct smw_keymgr_descriptor *key_descriptor;
-	enum smw_keymgr_format_id format_id;
-	unsigned char *public_data;
-	unsigned int public_length;
-	unsigned char *private_data;
-	unsigned int private_length;
+	struct smw_keymgr_descriptor *key_descriptor = NULL;
+	unsigned char *public_data = NULL;
+	unsigned int public_length = 0;
+	unsigned char *private_data = NULL;
+	unsigned int private_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -330,12 +345,11 @@ static int smw_sign_verify(enum operation_id operation_id,
 		}
 	}
 
-	format_id = key_descriptor->format_id;
 	public_data = smw_keymgr_get_public_data(key_descriptor);
 	public_length = smw_keymgr_get_public_length(key_descriptor);
 	private_data = smw_keymgr_get_private_data(key_descriptor);
 	private_length = smw_keymgr_get_private_length(key_descriptor);
-	if (format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
+	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
 		if (operation_id == OPERATION_ID_SIGN) {
 			if (!private_data || !private_length) {
 				status = SMW_STATUS_INVALID_PARAM;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include "smw_status.h"
@@ -63,7 +63,7 @@ enum smw_status_code smw_rng(struct smw_rng_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_crypto_rng_args rng_args;
+	struct smw_crypto_rng_args rng_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

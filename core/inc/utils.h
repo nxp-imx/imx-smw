@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-#include <time.h>
 
 #include "global.h"
 
@@ -38,6 +37,7 @@
 #define ADD_OVERFLOW(a, b, res) __builtin_add_overflow(a, b, res)
 #define SUB_OVERFLOW(a, b, res) __builtin_sub_overflow(a, b, res)
 #define MUL_OVERFLOW(a, b, res) __builtin_mul_overflow(a, b, res)
+#define INC_OVERFLOW(a, b)	__builtin_add_overflow(a, b, &(a))
 
 #define BITS_TO_BYTES_SIZE(security_size) (((security_size) + 7) / 8)
 
@@ -185,16 +185,6 @@ static inline bool smw_utils_is_lib_initialized(void)
 		is_initialized = ops->is_lib_initialized();
 
 	return is_initialized;
-}
-
-static inline unsigned long smw_utils_time(unsigned long ref)
-{
-	time_t t = time(NULL);
-
-	if (t)
-		return (unsigned long)difftime(t, ref);
-
-	return 0;
 }
 
 #endif /* __UTILS_H__ */

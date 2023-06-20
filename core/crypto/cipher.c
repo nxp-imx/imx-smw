@@ -24,11 +24,11 @@
 static void free_keys_ptr_array(struct smw_keymgr_descriptor **keys_desc,
 				unsigned int nb_keys)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < nb_keys; i++) {
+	for (; i < nb_keys; i++) {
 		if (keys_desc[i])
 			SMW_UTILS_FREE(keys_desc[i]);
 	}
@@ -53,7 +53,7 @@ cipher_get_ids_from_strings(struct smw_cipher_init_args *args,
 			    struct smw_crypto_cipher_args *converted_args,
 			    enum subsystem_id *subsystem_id)
 {
-	int status;
+	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -212,8 +212,7 @@ static int check_keys(struct smw_crypto_cipher_args *args,
 		      enum subsystem_id subsystem_id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	unsigned int i;
-	enum smw_config_key_type_id key_type;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -232,9 +231,7 @@ static int check_keys(struct smw_crypto_cipher_args *args,
 		break;
 	}
 
-	key_type = args->keys_desc[0]->identifier.type_id;
-
-	for (i = 0; i < args->nb_keys; i++) {
+	for (; i < args->nb_keys; i++) {
 		/* Key ID or key buffer must be set */
 		if (!args->keys_desc[i]->identifier.id &&
 		    !args->keys_desc[i]->pub->buffer)
@@ -255,7 +252,8 @@ static int check_keys(struct smw_crypto_cipher_args *args,
 			goto end;
 
 		/* Key type must be the same for all keys */
-		if (key_type != args->keys_desc[i]->identifier.type_id)
+		if (args->keys_desc[0]->identifier.type_id !=
+		    args->keys_desc[i]->identifier.type_id)
 			goto end;
 	}
 
@@ -297,7 +295,7 @@ enum smw_status_code smw_cipher(struct smw_cipher_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args cipher_args = { 0 };
-	enum subsystem_id subsystem_id;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -348,7 +346,7 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args init_args = { 0 };
-	enum subsystem_id subsystem_id;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -385,7 +383,7 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args update_args = { 0 };
-	struct smw_crypto_context_ops *ops;
+	struct smw_crypto_context_ops *ops = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -416,7 +414,7 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args final_args = { 0 };
-	struct smw_crypto_context_ops *ops;
+	struct smw_crypto_context_ops *ops = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -568,14 +566,17 @@ smw_crypto_set_cipher_init_handle(struct smw_crypto_cipher_args *args,
 unsigned int
 smw_crypto_get_cipher_nb_key_buffer(struct smw_crypto_cipher_args *args)
 {
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int nb_buffers = 0;
 
 	/* Key is defined as buffer if ID is not set and buffer set */
-	for (i = 0; i < args->nb_keys; i++) {
+	for (; i < args->nb_keys; i++) {
 		if (!args->keys_desc[i]->identifier.id &&
 		    smw_keymgr_get_private_data(args->keys_desc[i]))
-			nb_buffers++;
+			if (INC_OVERFLOW(nb_buffers, 1)) {
+				nb_buffers = 0;
+				break;
+			}
 	}
 
 	return nb_buffers;

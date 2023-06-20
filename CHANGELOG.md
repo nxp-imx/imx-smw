@@ -42,6 +42,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 3. Subsystems
 
 * The TEE TAs are compiled with TA flags TA_FLAG_SINGLE_INSTANCE and TA_FLAG_MULTI_SESSION. All TA instances can handle several sessions.
+* Fix TEE TA library retrieving ECC key buffer size.
 
 #### SMW Tests - _version 2.4_
 

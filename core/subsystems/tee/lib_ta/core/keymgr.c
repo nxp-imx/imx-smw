@@ -166,6 +166,18 @@ struct {
 		   .obj_type = TEE_TYPE_RSA_KEYPAIR,
 		   .ecc_curve = 0 } };
 
+static TEE_Result roundup_even_size(size_t *size)
+{
+	TEE_Result res = TEE_SUCCESS;
+
+	if (*size & 1) {
+		if (ADD_OVERFLOW(*size, 1, size))
+			res = TEE_ERROR_GENERIC;
+	}
+
+	return res;
+}
+
 /**
  * key_obj_type_to_ta_type() - Get SMW key type of an object type.
  * @key_type: Key type returned.
@@ -767,16 +779,22 @@ static TEE_Result get_ecc_public_key_size(TEE_ObjectHandle handle, size_t *size)
 					   NULL, &x_size);
 	if (res == TEE_ERROR_SHORT_BUFFER)
 		res = TEE_GetObjectBufferAttribute(handle,
-						   TEE_ATTR_ECC_PUBLIC_VALUE_X,
+						   TEE_ATTR_ECC_PUBLIC_VALUE_Y,
 						   NULL, &y_size);
 
 	if (!res) {
 		res = TEE_ERROR_GENERIC;
 	} else if (res == TEE_ERROR_SHORT_BUFFER) {
-		if (ADD_OVERFLOW(x_size, y_size, size))
-			res = TEE_ERROR_GENERIC;
-		else
-			res = TEE_SUCCESS;
+		res = roundup_even_size(&x_size);
+		if (!res)
+			res = roundup_even_size(&y_size);
+
+		if (!res) {
+			if (ADD_OVERFLOW(x_size, y_size, size))
+				res = TEE_ERROR_GENERIC;
+			else
+				res = TEE_SUCCESS;
+		}
 	}
 
 	return res;
@@ -859,6 +877,10 @@ static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 					   pub_key, &x_size);
 	if (!res) {
 		/* Get second part of the public key */
+		res = roundup_even_size(&x_size);
+		if (res)
+			return res;
+
 		y_size = *pub_key_size - x_size;
 
 		res = TEE_GetObjectBufferAttribute(handle,

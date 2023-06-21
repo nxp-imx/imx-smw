@@ -3,6 +3,8 @@
  * Copyright 2020-2023 NXP
  */
 
+#include <time.h>
+
 #include <seco_nvm.h>
 #include <hsm_api.h>
 
@@ -388,11 +390,21 @@ static void *storage_thread(void *arg)
 	return NULL;
 }
 
+static long time_elapse(long ref)
+{
+	time_t t = time(NULL);
+
+	if (t != (time_t)-1)
+		return difftime(t, ref);
+
+	return 0;
+}
+
 static int start_storage_manager(void)
 {
 	int status = SMW_STATUS_OK;
 
-	unsigned long start_time = smw_utils_time(0);
+	long start_time = time_elapse(0);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -419,7 +431,7 @@ static int start_storage_manager(void)
 			goto end;
 		}
 
-		if (smw_utils_time(start_time) >= STORAGE_MANAGER_TIMEOUT) {
+		if (time_elapse(start_time) >= STORAGE_MANAGER_TIMEOUT) {
 			SMW_DBG_PRINTF(DEBUG,
 				       "Storage manager failed to start (%d)\n",
 				       hsm_ctx.nvm_status);

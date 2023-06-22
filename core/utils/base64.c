@@ -26,9 +26,18 @@ static const unsigned char encoding_table[] = {
 
 unsigned int smw_utils_get_base64_len(unsigned int hex_len)
 {
+	size_t b64_len = 0;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return ((hex_len + 2) / 3) * 4;
+	b64_len = hex_len + 2;
+	b64_len /= 3;
+	b64_len *= 4;
+
+	if (b64_len > UINT_MAX)
+		b64_len = 0;
+
+	return b64_len;
 }
 
 /**
@@ -44,7 +53,7 @@ static unsigned int get_hex_len(const unsigned char *base64,
 				unsigned int base64_len)
 {
 	unsigned int hex_len = 0;
-	int i = base64_len;
+	unsigned int i = base64_len;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -55,7 +64,7 @@ static unsigned int get_hex_len(const unsigned char *base64,
 
 	hex_len = (base64_len / 4) * 3;
 
-	while (--i && base64[i] == PADDING_CHAR)
+	while (--i && base64[i] == PADDING_CHAR && hex_len)
 		hex_len--;
 
 	return hex_len;
@@ -94,6 +103,7 @@ int smw_utils_base64_encode(const unsigned char *in, unsigned int in_len,
 	unsigned int len = 0;
 	unsigned int rest = in_len;
 	unsigned char *p = NULL;
+	unsigned int index = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -118,13 +128,21 @@ int smw_utils_base64_encode(const unsigned char *in, unsigned int in_len,
 
 	while (rest >= 3) {
 		/* Convert 3 input bytes into 4 Base64 bytes */
-		*p++ = encoding_table[(*in >> 2) & ENC_MAX_ARRAY_MASK];
-		*p++ = encoding_table[(((*in & 0x03) << 4) | (*(in + 1) >> 4)) &
-				      ENC_MAX_ARRAY_MASK];
-		*p++ = encoding_table[(((*(in + 1) & 0x0F) << 2) |
-				       (*(in + 2) >> 6)) &
-				      ENC_MAX_ARRAY_MASK];
-		*p++ = encoding_table[(*(in + 2) & 0x3F) & ENC_MAX_ARRAY_MASK];
+		index = (*in >> 2) & ENC_MAX_ARRAY_MASK;
+		*p++ = encoding_table[index];
+
+		index = (*in & 0x03) << 4;
+		index |= *(in + 1) >> 4;
+		index &= ENC_MAX_ARRAY_MASK;
+		*p++ = encoding_table[index];
+
+		index = (*(in + 1) & 0x0F) << 2;
+		index |= (*(in + 2) >> 6);
+		index &= ENC_MAX_ARRAY_MASK;
+		*p++ = encoding_table[index];
+
+		index = (*(in + 2) & 0x3F) & ENC_MAX_ARRAY_MASK;
+		*p++ = encoding_table[index];
 
 		rest -= 3;
 		in += 3;
@@ -134,15 +152,18 @@ int smw_utils_base64_encode(const unsigned char *in, unsigned int in_len,
 	if (rest) {
 		*p++ = encoding_table[(*in >> 2) & ENC_MAX_ARRAY_MASK];
 		if (rest == 1) {
-			*p++ = encoding_table[((*in & 0x03) << 4) &
-					      ENC_MAX_ARRAY_MASK];
+			index = ((*in & 0x03) << 4) & ENC_MAX_ARRAY_MASK;
+			*p++ = encoding_table[index];
+
 			*p++ = PADDING_CHAR;
 		} else {
-			*p++ = encoding_table[(((*in & 0x03) << 4) |
-					       (*(in + 1) >> 4)) &
-					      ENC_MAX_ARRAY_MASK];
-			*p++ = encoding_table[((*(in + 1) & 0x0F) << 2) &
-					      ENC_MAX_ARRAY_MASK];
+			index = (*in & 0x03) << 4;
+			index |= *(in + 1) >> 4;
+			index &= ENC_MAX_ARRAY_MASK;
+			*p++ = encoding_table[index];
+
+			index = ((*(in + 1) & 0x0F) << 2) & ENC_MAX_ARRAY_MASK;
+			*p++ = encoding_table[index];
 		}
 		*p++ = PADDING_CHAR;
 	}
@@ -202,17 +223,23 @@ int smw_utils_base64_decode(const unsigned char *base64,
 			}
 		}
 
-		*p++ = (decode[0] << 2) | (decode[1] >> 4);
-		if (i > 2) {
-			*p++ = (decode[1] << 4) | (decode[2] >> 2);
+		*p = (decode[0] << 2) & UCHAR_MAX;
+		*p |= decode[1] >> 4;
+		p++;
 
-			if (i > 3)
-				*p++ = (decode[2] << 6) | decode[3];
-			else
-				break;
-		} else {
+		if (i <= 2)
 			break;
-		}
+
+		*p = (decode[1] << 4) & UCHAR_MAX;
+		*p |= decode[2] >> 2;
+		p++;
+
+		if (i <= 3)
+			break;
+
+		*p = (decode[2] << 6) & UCHAR_MAX;
+		*p |= decode[3];
+		p++;
 	}
 
 	*hex_len = len;

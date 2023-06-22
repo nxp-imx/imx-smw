@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #ifndef __KEYMGR_DERIVE_H__
@@ -212,7 +212,7 @@ smw_keymgr_tls12_get_ext_master_key(struct smw_keymgr_tls12_args *args)
  */
 static inline void
 smw_keymgr_tls12_set_client_w_mac_key_id(struct smw_keymgr_tls12_args *args,
-					 unsigned long long id)
+					 unsigned int id)
 {
 	SMW_DBG_ASSERT(args && args->pub_args);
 
@@ -227,7 +227,7 @@ smw_keymgr_tls12_set_client_w_mac_key_id(struct smw_keymgr_tls12_args *args,
  */
 static inline void
 smw_keymgr_tls12_set_server_w_mac_key_id(struct smw_keymgr_tls12_args *args,
-					 unsigned long long id)
+					 unsigned int id)
 {
 	SMW_DBG_ASSERT(args && args->pub_args);
 
@@ -243,7 +243,7 @@ smw_keymgr_tls12_set_server_w_mac_key_id(struct smw_keymgr_tls12_args *args,
  */
 static inline void
 smw_keymgr_tls12_set_client_w_enc_key_id(struct smw_keymgr_tls12_args *args,
-					 unsigned long long id)
+					 unsigned int id)
 {
 	SMW_DBG_ASSERT(args && args->pub_args);
 
@@ -259,7 +259,7 @@ smw_keymgr_tls12_set_client_w_enc_key_id(struct smw_keymgr_tls12_args *args,
  */
 static inline void
 smw_keymgr_tls12_set_server_w_enc_key_id(struct smw_keymgr_tls12_args *args,
-					 unsigned long long id)
+					 unsigned int id)
 {
 	SMW_DBG_ASSERT(args && args->pub_args);
 
@@ -274,7 +274,7 @@ smw_keymgr_tls12_set_server_w_enc_key_id(struct smw_keymgr_tls12_args *args,
  */
 static inline void
 smw_keymgr_tls12_set_master_sec_key_id(struct smw_keymgr_tls12_args *args,
-				       unsigned long long id)
+				       unsigned int id)
 {
 	SMW_DBG_ASSERT(args && args->pub_args);
 

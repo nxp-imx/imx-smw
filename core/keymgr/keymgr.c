@@ -489,7 +489,7 @@ end:
 static int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	struct smw_keymgr_key_ops *ops;
+	struct smw_keymgr_key_ops *ops = NULL;
 
 	if (descriptor->pub) {
 		ops = &descriptor->ops;
@@ -704,7 +704,7 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 {
 	int status = SMW_STATUS_OK;
 
-	enum smw_config_key_type_id type_id;
+	enum smw_config_key_type_id type_id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -780,11 +780,9 @@ int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
 			       unsigned char *attr_list,
 			       unsigned int *attr_length)
 {
-	int status;
-
-	status = read_attributes(attr_list, *attr_length, key_attrs,
-				 keymgr_attributes_tlv_array,
-				 ARRAY_SIZE(keymgr_attributes_tlv_array));
+	int status = read_attributes(attr_list, *attr_length, key_attrs,
+				     keymgr_attributes_tlv_array,
+				     ARRAY_SIZE(keymgr_attributes_tlv_array));
 
 	key_attrs->pub_key_attributes_list = attr_list;
 	key_attrs->pub_key_attributes_list_length = attr_length;
@@ -866,14 +864,12 @@ update_key_convert_args(struct smw_update_key_args *args,
 {
 	(void)converted_args;
 
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (args->version != 0) {
-		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+	if (args->version != 0)
 		goto end;
-	}
 
 	status =
 		smw_config_get_subsystem_id(args->subsystem_name, subsystem_id);
@@ -1152,7 +1148,7 @@ end:
 int smw_keymgr_free_keypair_buffer(struct smw_keymgr_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
-	unsigned char *data;
+	unsigned char *data = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1430,7 +1426,6 @@ int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	priv_data = smw_keymgr_get_private_data(descriptor);
-	priv_length = smw_keymgr_get_private_length(descriptor);
 
 	if (!length) {
 		smw_keymgr_set_private_length(descriptor, length);
@@ -1438,6 +1433,12 @@ int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
 
 		status = SMW_STATUS_OK;
 	} else if (data && priv_data) {
+		priv_length = smw_keymgr_get_private_length(descriptor);
+		if (!priv_length) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
 		/* Update buffer data and length */
 		if (descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
 			/* Encode hex_buffer in BASE64 buffer */
@@ -1470,6 +1471,7 @@ int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
 		status = SMW_STATUS_OK;
 	}
 
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -1477,12 +1479,12 @@ int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
 static int set_key_identifier(unsigned int id,
 			      struct smw_keymgr_descriptor *descriptor)
 {
-	int status;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!descriptor || !descriptor->pub)
-		return SMW_STATUS_INVALID_PARAM;
+		return status;
 
 	if (descriptor->identifier.id != INVALID_KEY_ID) {
 		status = smw_keymgr_db_update(id, &descriptor->identifier);
@@ -1498,7 +1500,7 @@ static int set_key_identifier(unsigned int id,
 
 static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
 {
-	unsigned int index;
+	unsigned int index = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1561,7 +1563,7 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	int ret = SMW_STATUS_INVALID_PARAM;
+	int ret = SMW_STATUS_OK;
 
 	struct smw_keymgr_generate_key_args generate_key_args = { 0 };
 	struct smw_keymgr_descriptor *key_desc = NULL;
@@ -1623,7 +1625,7 @@ enum smw_status_code smw_update_key(struct smw_update_key_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_update_key_args update_key_args;
+	struct smw_keymgr_update_key_args update_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1648,7 +1650,7 @@ end:
 enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	int ret = SMW_STATUS_INVALID_PARAM;
+	int ret = SMW_STATUS_OK;
 
 	struct smw_keymgr_import_key_args import_key_args = { 0 };
 	struct smw_keymgr_descriptor *key_desc = NULL;
@@ -1724,7 +1726,6 @@ enum smw_status_code smw_export_key(struct smw_export_key_args *args)
 	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_export_key_args export_key_args = { 0 };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	struct smw_keymgr_descriptor *key_desc = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1749,10 +1750,9 @@ enum smw_status_code smw_export_key(struct smw_export_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	subsystem_id = key_desc->identifier.subsystem_id;
-
 	status = smw_utils_execute_operation(OPERATION_ID_EXPORT_KEY,
-					     &export_key_args, subsystem_id);
+					     &export_key_args,
+					     key_desc->identifier.subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -1770,7 +1770,7 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 
 	struct smw_keymgr_delete_key_args delete_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	struct smw_keymgr_descriptor *key_desc;
+	struct smw_keymgr_descriptor *key_desc = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1873,7 +1873,7 @@ smw_get_key_type_name(struct smw_key_descriptor *descriptor)
 	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_identifier key_identifier = { 0 };
-	const char *name;
+	const char *name = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

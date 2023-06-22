@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include "smw_status.h"
@@ -32,14 +32,14 @@ static int fill_attributes(unsigned char *type, unsigned char *value,
 			   unsigned int tlv_array_size)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!type)
 		goto end;
 
-	for (i = 0; i < tlv_array_size; i++) {
+	for (; i < tlv_array_size; i++) {
 		if (!SMW_UTILS_STRCMP((char *)type,
 				      (char *)tlv_array[i].type)) {
 			status = tlv_array[i].verify(value_size, value);

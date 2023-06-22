@@ -152,8 +152,6 @@ static int tls12_validate_key_base(struct smw_keymgr_derive_key_args *args)
 				       tls_args->key_exchange_id);
 			goto end;
 		}
-
-		status = SMW_STATUS_OK;
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
@@ -164,7 +162,6 @@ static int tls12_validate_key_base(struct smw_keymgr_derive_key_args *args)
 		case SMW_TLS12_KEY_EXCHANGE_ID_ECDH_RSA:
 		case SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA:
 		case SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_RSA:
-			status = SMW_STATUS_OK;
 			break;
 
 		default:
@@ -181,7 +178,6 @@ static int tls12_validate_key_base(struct smw_keymgr_derive_key_args *args)
 		case SMW_TLS12_KEY_EXCHANGE_ID_DH_RSA:
 		case SMW_TLS12_KEY_EXCHANGE_ID_DHE_DSS:
 		case SMW_TLS12_KEY_EXCHANGE_ID_DHE_RSA:
-			status = SMW_STATUS_OK;
 			break;
 
 		default:
@@ -433,12 +429,10 @@ static int convert_input_args(struct smw_derive_key_args *args,
 			      struct smw_keymgr_derive_key_args *conv_args,
 			      enum subsystem_id subsystem_id)
 {
-	int status;
-
 	/* Get the input key base for the derivation */
-	status = smw_keymgr_convert_descriptor(args->key_descriptor_base,
-					       &conv_args->key_base, false,
-					       subsystem_id);
+	int status = smw_keymgr_convert_descriptor(args->key_descriptor_base,
+						   &conv_args->key_base, false,
+						   subsystem_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 
@@ -469,6 +463,7 @@ static int convert_input_args(struct smw_derive_key_args *args,
 		 */
 		status = check_key_definition(&conv_args->key_base,
 					      SMW_KEYMGR_PRIVACY_ID_PRIVATE);
+		break;
 	}
 
 	return status;
@@ -477,7 +472,7 @@ static int convert_input_args(struct smw_derive_key_args *args,
 static int convert_output_args(struct smw_derive_key_args *args,
 			       struct smw_keymgr_derive_key_args *conv_args)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 
 	/*
 	 * The output key derivation depends on the key derivation
@@ -489,7 +484,7 @@ static int convert_output_args(struct smw_derive_key_args *args,
 		break;
 
 	default:
-		status = SMW_STATUS_OK;
+		break;
 	}
 
 	return status;

@@ -102,11 +102,9 @@ int smw_tlv_verify_string(unsigned int length, unsigned char *value)
 
 int smw_tlv_verify_enumeration(unsigned int length, unsigned char *value)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_tlv_verify_string(length, value);
+	int status = smw_tlv_verify_string(length, value);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -155,13 +153,13 @@ int smw_tlv_verify_variable_length_list(unsigned int length,
 unsigned long long smw_tlv_convert_numeral(unsigned int length,
 					   unsigned char *value)
 {
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned long long numeral = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (value)
-		for (i = 0; i < length; i++)
+		for (; i < length; i++)
 			numeral |= (unsigned long long)value[i]
 				   << ((length - 1 - i) * 8);
 
@@ -175,12 +173,13 @@ void smw_tlv_set_element(unsigned char **buffer, const char *type,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_UTILS_MEMCPY(p, type, SMW_UTILS_STRLEN(type) + 1);
-	p += SMW_UTILS_STRLEN(type) + 1;
+	SMW_UTILS_MEMCPY(p, type, SMW_UTILS_STRLEN(type));
+	p += SMW_UTILS_STRLEN(type);
+	*p++ = 0;
 
-	*p = value_size >> 8;
+	*p = (value_size >> 8) & UCHAR_MAX;
 	p++;
-	*p = value_size;
+	*p = value_size & UCHAR_MAX;
 	p++;
 
 	if (value && value_size) {
@@ -201,11 +200,19 @@ void smw_tlv_set_boolean(unsigned char **buffer, const char *type)
 void smw_tlv_set_string(unsigned char **buffer, const char *type,
 			const char *value)
 {
+	size_t length = 0;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (value)
-		smw_tlv_set_element(buffer, type, (const unsigned char *)value,
-				    (unsigned int)SMW_UTILS_STRLEN(value) + 1);
+	if (value) {
+		length = SMW_UTILS_STRLEN(value);
+		if (length < UINT_MAX - 1) {
+			length++;
+			smw_tlv_set_element(buffer, type,
+					    (const unsigned char *)value,
+					    length);
+		}
+	}
 }
 
 unsigned int smw_tlv_numeral_length(uint64_t value)
@@ -234,8 +241,9 @@ void smw_tlv_set_numeral(unsigned char **buffer, const char *type,
 
 	value_size = smw_tlv_numeral_length(value);
 
-	SMW_UTILS_MEMCPY(p, type, SMW_UTILS_STRLEN(type) + 1);
-	p += SMW_UTILS_STRLEN(type) + 1;
+	SMW_UTILS_MEMCPY(p, type, SMW_UTILS_STRLEN(type));
+	p += SMW_UTILS_STRLEN(type);
+	*p++ = 0;
 
 	*p = value_size >> 8;
 	p++;
@@ -245,7 +253,7 @@ void smw_tlv_set_numeral(unsigned char **buffer, const char *type,
 	size = value_size;
 
 	while (size) {
-		*(p + size - 1) = value;
+		*(p + size - 1) = value & UCHAR_MAX;
 		value >>= 8;
 		size--;
 	}
@@ -264,16 +272,22 @@ void smw_tlv_set_type(unsigned char **buffer, const char *type)
 
 void smw_tlv_set_length(unsigned char *element, unsigned char *end)
 {
-	unsigned char *p;
-	unsigned int value_size;
+	unsigned char *p = NULL;
+	size_t value_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	p = element + SMW_UTILS_STRLEN((char *)element) + 1;
 
-	value_size = (unsigned int)(end - p - SMW_TLV_LENGTH_FIELD_SIZE);
+	if (SUB_OVERFLOW((uintptr_t)end, (uintptr_t)p, &value_size))
+		value_size = 0;
 
-	*p = value_size >> 8;
+	if (value_size < SMW_TLV_LENGTH_FIELD_SIZE)
+		value_size = 0;
+	else
+		value_size -= SMW_TLV_LENGTH_FIELD_SIZE;
+
+	*p = (value_size >> 8) & UCHAR_MAX;
 	p++;
-	*p = value_size;
+	*p = value_size & 0xFF;
 }

@@ -14,13 +14,13 @@ int smw_utils_get_string_index(const char *name, const char *const array[],
 {
 	int status = SMW_STATUS_UNKNOWN_NAME;
 
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_ASSERT(name);
 
-	for (i = 0; i < size; i++) {
+	for (; i < size; i++) {
 		if (array[i] && *array[i]) {
 			if (!SMW_UTILS_STRCMP(array[i], name)) {
 				status = SMW_STATUS_OK;

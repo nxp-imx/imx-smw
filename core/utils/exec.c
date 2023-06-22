@@ -20,8 +20,8 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 {
 	int status = SMW_STATUS_OK;
 
-	struct subsystem_func *subsystem_func;
-	const char *subsystem_name;
+	struct subsystem_func *subsystem_func = NULL;
+	const char *subsystem_name = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -81,12 +81,10 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 int smw_utils_execute_operation(enum operation_id operation_id, void *args,
 				enum subsystem_id subsystem_id)
 {
-	int status;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_utils_execute_common(operation_id, args, subsystem_id,
-					  SMW_OP_STEP_ONESHOT, false);
+	int status = smw_utils_execute_common(operation_id, args, subsystem_id,
+					      SMW_OP_STEP_ONESHOT, false);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -95,12 +93,10 @@ int smw_utils_execute_operation(enum operation_id operation_id, void *args,
 int smw_utils_execute_init(enum operation_id operation_id, void *args,
 			   enum subsystem_id subsystem_id)
 {
-	int status;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_utils_execute_common(operation_id, args, subsystem_id,
-					  SMW_OP_STEP_INIT, false);
+	int status = smw_utils_execute_common(operation_id, args, subsystem_id,
+					      SMW_OP_STEP_INIT, false);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -109,12 +105,10 @@ int smw_utils_execute_init(enum operation_id operation_id, void *args,
 int smw_utils_execute_update(enum operation_id operation_id, void *args,
 			     enum subsystem_id subsystem_id)
 {
-	int status;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_utils_execute_common(operation_id, args, subsystem_id,
-					  SMW_OP_STEP_UPDATE, true);
+	int status = smw_utils_execute_common(operation_id, args, subsystem_id,
+					      SMW_OP_STEP_UPDATE, true);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -123,12 +117,10 @@ int smw_utils_execute_update(enum operation_id operation_id, void *args,
 int smw_utils_execute_final(enum operation_id operation_id, void *args,
 			    enum subsystem_id subsystem_id)
 {
-	int status;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_utils_execute_common(operation_id, args, subsystem_id,
-					  SMW_OP_STEP_FINAL, true);
+	int status = smw_utils_execute_common(operation_id, args, subsystem_id,
+					      SMW_OP_STEP_FINAL, true);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -137,12 +129,10 @@ int smw_utils_execute_final(enum operation_id operation_id, void *args,
 int smw_utils_execute_implicit(enum operation_id operation_id, void *args,
 			       enum subsystem_id subsystem_id)
 {
-	int status;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_utils_execute_common(operation_id, args, subsystem_id,
-					  SMW_OP_STEP_ONESHOT, true);
+	int status = smw_utils_execute_common(operation_id, args, subsystem_id,
+					      SMW_OP_STEP_ONESHOT, true);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

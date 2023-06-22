@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include "compiler.h"
@@ -102,34 +102,32 @@ static struct node *find_node(struct node *node, unsigned int ref)
 struct node *smw_utils_list_find_first(struct smw_utils_list *list,
 				       unsigned int *ref)
 {
-	struct node *next;
+	struct node *next = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!list)
-		return NULL;
+	if (list) {
+		next = list->first;
 
-	next = list->first;
-
-	if (ref)
-		next = find_node(next, *ref);
+		if (ref)
+			next = find_node(next, *ref);
+	}
 
 	return next;
 }
 
 struct node *smw_utils_list_find_next(struct node *node, unsigned int *ref)
 {
-	struct node *next;
+	struct node *next = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!node)
-		return NULL;
+	if (node) {
+		next = node->next;
 
-	next = node->next;
-
-	if (ref)
-		next = find_node(next, *ref);
+		if (ref)
+			next = find_node(next, *ref);
+	}
 
 	return next;
 }
@@ -139,7 +137,7 @@ unsigned int smw_utils_list_get_ref(struct node *node)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!node)
-		return (-1);
+		return UINT_MAX;
 
 	return node->ref;
 }

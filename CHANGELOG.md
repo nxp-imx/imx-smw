@@ -41,6 +41,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Fix coverity in configuration module and ensure all variables are initialized.
 * Fix coverity in cryptography module and ensure all variables are initialized.
+* Fix coverity in key manager module and ensure all variables are initialized.
 * Fix the SMW_DBG_ASSERT() macro to exit properly in release and debug mode.
 
 ##### 3. Subsystems

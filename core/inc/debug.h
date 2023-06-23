@@ -19,12 +19,6 @@
 #define SMW_DBG_LEVEL_DEBUG   3 /* First level of debugging information */
 #define SMW_DBG_LEVEL_VERBOSE 4 /* Maximum level of debugging information */
 
-#if defined(ENABLE_DEBUG)
-#define SMW_ABORT abort
-#else /* ENABLE_DEBUG */
-#define SMW_ABORT(...)
-#endif /* ENABLE_DEBUG */
-
 #if defined(ENABLE_TRACE)
 
 #define SMW_DBG_LEVEL TRACE_LEVEL
@@ -103,7 +97,8 @@ static inline void dbg_hex_dump(const unsigned char *addr, unsigned int size,
 			   "line %d\n",                                        \
 			   #exp, __FILE__, __LINE__);                          \
 		SMW_FFLUSH(stdout);                                            \
-		SMW_ABORT();                                                   \
+		/* Exit in error properly flushing/closing streams */          \
+		exit(EXIT_FAILURE);                                            \
 	} while (0)
 
 #endif /* __DEBUG_H__ */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include "smw_status.h"
@@ -33,11 +33,11 @@ static void
 set_hsm_tls_finish_flag(enum smw_config_tls_finish_label_id tls_finish_label_id,
 			hsm_op_tls_finish_flags_t *hsm_tls_finish_flag)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	*hsm_tls_finish_flag = 0;
 
-	for (i = 0; i < ARRAY_SIZE(tls_finish_flags); i++) {
+	for (; i < ARRAY_SIZE(tls_finish_flags); i++) {
 		if (tls_finish_label_id ==
 		    tls_finish_flags[i].tls_finish_label_id) {
 			*hsm_tls_finish_flag =
@@ -64,9 +64,9 @@ set_hsm_tls_finish_algo_id(enum smw_config_hash_algo_id hash_algo_id,
 			   hsm_op_tls_finish_algo_id_t *hsm_tls_finish_algo_id)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	unsigned int i;
+	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(tls_finish_algos); i++) {
+	for (; i < ARRAY_SIZE(tls_finish_algos); i++) {
 		if (hash_algo_id == tls_finish_algos[i].hash_algo_id) {
 			*hsm_tls_finish_algo_id =
 				tls_finish_algos[i].hsm_tls_finish_algo_id;
@@ -112,7 +112,7 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	op_tls_args.handshake_hash_input =
 		smw_sign_verify_get_msg_buf(smw_args);
 	op_tls_args.handshake_hash_input_size =
-		smw_sign_verify_get_msg_len(smw_args);
+		(uint16_t)smw_sign_verify_get_msg_len(smw_args);
 	op_tls_args.verify_data_output = smw_sign_verify_get_sign_buf(smw_args);
 	set_hsm_tls_finish_flag(smw_args->attributes.tls_label,
 				&op_tls_args.flags);

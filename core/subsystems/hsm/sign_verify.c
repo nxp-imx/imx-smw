@@ -56,12 +56,12 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(signature_scheme_ids);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < size; i++) {
+	for (; i < size; i++) {
 		if (signature_scheme_ids[i].key_type_id < key_type_id)
 			continue;
 		if (signature_scheme_ids[i].key_type_id > key_type_id)
@@ -90,10 +90,10 @@ end:
 	return status;
 }
 
-static uint16_t get_hsm_signature_size(int security_size)
+static uint16_t get_hsm_signature_size(unsigned int security_size)
 {
 	/* HSM requires 1 extra byte */
-	return BITS_TO_BYTES_SIZE(security_size) * 2 + 1;
+	return (BITS_TO_BYTES_SIZE(security_size) * 2 + 1) & UINT16_MAX;
 }
 
 __weak int tls_mac_finish(struct hdl *hdl, void *args)
@@ -119,8 +119,8 @@ static int sign(struct hdl *hdl, void *args)
 		&key_descriptor->identifier;
 
 	uint8_t *signature = NULL;
-	uint16_t signature_size;
-	uint16_t pub_signature_size;
+	unsigned int signature_size = 0;
+	unsigned int pub_signature_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -145,7 +145,7 @@ static int sign(struct hdl *hdl, void *args)
 	op_generate_sign_args.message_size =
 		smw_sign_verify_get_msg_len(sign_args);
 	op_generate_sign_args.signature_size =
-		get_hsm_signature_size(key_identifier->security_size);
+		(uint16_t)get_hsm_signature_size(key_identifier->security_size);
 
 	pub_signature_size = smw_sign_verify_get_sign_len(sign_args);
 	signature_size = BITS_TO_BYTES_SIZE(key_identifier->security_size) * 2;
@@ -238,26 +238,23 @@ static int verify(struct hdl *hdl, void *args)
 	hsm_err_t err = HSM_NO_ERROR;
 
 	op_verify_sign_args_t op_verify_sign_args = { 0 };
-	hsm_verification_status_t hsm_verification_status;
+	hsm_verification_status_t hsm_verification_status = 0;
 
 	struct smw_crypto_sign_verify_args *verify_args = args;
 	struct smw_keymgr_descriptor *key_descriptor =
 		&verify_args->key_descriptor;
 
 	struct smw_keymgr_descriptor export_key_desc = { 0 };
-	enum smw_config_key_type_id key_type_id =
-		SMW_CONFIG_KEY_TYPE_ID_INVALID;
 	unsigned int security_size = 0;
 	uint8_t *key_buf = NULL;
-	uint16_t key_size = 0;
+	unsigned int key_size = 0;
 	uint8_t *signature = NULL;
-	uint16_t signature_size;
-	uint16_t hsm_signature_size;
+	uint16_t signature_size = 0;
+	uint16_t hsm_signature_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	security_size = key_descriptor->identifier.security_size;
-	key_type_id = key_descriptor->identifier.type_id;
 	if (!security_size) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
@@ -265,7 +262,8 @@ static int verify(struct hdl *hdl, void *args)
 
 	if (key_descriptor->format_id == SMW_KEYMGR_FORMAT_ID_INVALID) {
 		export_key_desc.identifier.id = key_descriptor->identifier.id;
-		export_key_desc.identifier.type_id = key_type_id;
+		export_key_desc.identifier.type_id =
+			key_descriptor->identifier.type_id;
 		export_key_desc.identifier.security_size = security_size;
 
 		status = hsm_export_public_key(hdl, &export_key_desc);
@@ -279,18 +277,29 @@ static int verify(struct hdl *hdl, void *args)
 		key_buf = smw_keymgr_get_public_data(key_descriptor);
 	}
 
+	if (key_size > UINT16_MAX) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
 	op_verify_sign_args.key = key_buf;
 	op_verify_sign_args.message = smw_sign_verify_get_msg_buf(verify_args);
 	op_verify_sign_args.signature =
 		smw_sign_verify_get_sign_buf(verify_args);
 	op_verify_sign_args.key_size = key_size;
 	op_verify_sign_args.signature_size =
-		smw_sign_verify_get_sign_len(verify_args);
+		(uint16_t)smw_sign_verify_get_sign_len(verify_args);
 	op_verify_sign_args.message_size =
 		smw_sign_verify_get_msg_len(verify_args);
 
 	hsm_signature_size = get_hsm_signature_size(security_size);
-	signature_size = BITS_TO_BYTES_SIZE(security_size) * 2;
+
+	signature_size = (BITS_TO_BYTES_SIZE(security_size) * 2) & UINT16_MAX;
+	if (!signature_size || !hsm_signature_size) {
+		status = SMW_STATUS_OPERATION_FAILURE;
+		goto end;
+	}
+
 	if (op_verify_sign_args.signature_size == signature_size) {
 		/* HSM requires a bigger buffer */
 		signature = SMW_UTILS_MALLOC(hsm_signature_size);
@@ -304,8 +313,8 @@ static int verify(struct hdl *hdl, void *args)
 		op_verify_sign_args.signature_size = hsm_signature_size;
 	}
 
-	status = set_signature_scheme(key_type_id, security_size,
-				      verify_args->algo_id,
+	status = set_signature_scheme(key_descriptor->identifier.type_id,
+				      security_size, verify_args->algo_id,
 				      &op_verify_sign_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;

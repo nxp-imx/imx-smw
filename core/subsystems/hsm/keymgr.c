@@ -80,16 +80,16 @@ static const struct hsm_key_def {
 };
 
 static int set_key_type(enum smw_config_key_type_id key_type_id,
-			unsigned short security_size, hsm_key_type_t *key_type)
+			unsigned int security_size, hsm_key_type_t *key_type)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(hsm_key_def_list);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < size; i++) {
+	for (; i < size; i++) {
 		if (hsm_key_def_list[i].key_type_id < key_type_id)
 			continue;
 		if (hsm_key_def_list[i].key_type_id > key_type_id)
@@ -317,7 +317,7 @@ end:
 static int delete_key_operation(struct hdl *hdl,
 				struct smw_keymgr_descriptor *key_desc)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 
@@ -366,7 +366,7 @@ end:
 }
 static int generate_key(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 
@@ -561,6 +561,12 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 
 	if (status == SMW_STATUS_OK) {
 		public_length = hsm_public_key_length(hsm_key_type);
+		if (!public_length) {
+			SMW_DBG_PRINTF(VERBOSE, "%s: No public key\n",
+				       __func__);
+			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+			goto end;
+		}
 
 		/*
 		 * Only public key is available, private or symmetric key
@@ -575,6 +581,7 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 			status = tmp_status;
 	}
 
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -595,7 +602,7 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 int hsm_export_public_key(struct hdl *hdl,
 			  struct smw_keymgr_descriptor *key_desc)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
 	unsigned int public_length = 0;
 	hsm_key_type_t hsm_key_type = 0;

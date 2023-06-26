@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include "smw_status.h"
@@ -33,9 +33,9 @@ static int set_cipher_algo(enum smw_config_key_type_id key_type_id,
 			   hsm_op_cipher_one_go_algo_t *hsm_algo)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	unsigned int i;
+	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(cipher_algos); i++) {
+	for (; i < ARRAY_SIZE(cipher_algos); i++) {
 		if (key_type_id == cipher_algos[i].key_type_id &&
 		    cipher_mode_id == cipher_algos[i].cipher_mode_id) {
 			*hsm_algo = cipher_algos[i].hsm_algo;
@@ -63,9 +63,9 @@ static int set_cipher_flags(enum smw_config_cipher_op_type_id smw_op_type_id,
 			    hsm_op_cipher_one_go_flags_t *hsm_flags)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	unsigned int i;
+	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(cipher_flags); i++) {
+	for (; i < ARRAY_SIZE(cipher_flags); i++) {
 		if (smw_op_type_id == cipher_flags[i].smw_op_type_id) {
 			*hsm_flags = cipher_flags[i].hsm_flags;
 			status = SMW_STATUS_OK;
@@ -81,10 +81,10 @@ static int cipher(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 	op_cipher_one_go_args_t op_cipher_args = { 0 };
-	enum smw_config_key_type_id key_type_id;
 	struct smw_crypto_cipher_args *cipher_args = args;
+	struct smw_keymgr_descriptor *key_desc = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -95,10 +95,11 @@ static int cipher(struct hdl *hdl, void *args)
 	}
 
 	/* Get 1st key type as reference */
-	key_type_id = cipher_args->keys_desc[0]->identifier.type_id;
+	key_desc = cipher_args->keys_desc[0];
 
 	/* Get HSM algorithm */
-	status = set_cipher_algo(key_type_id, cipher_args->mode_id,
+	status = set_cipher_algo(key_desc->identifier.type_id,
+				 cipher_args->mode_id,
 				 &op_cipher_args.cipher_algo);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -136,7 +137,8 @@ static int cipher(struct hdl *hdl, void *args)
 	op_cipher_args.key_identifier =
 		smw_crypto_get_cipher_key_id(cipher_args, 0);
 	op_cipher_args.iv = smw_crypto_get_cipher_iv(cipher_args);
-	op_cipher_args.iv_size = smw_crypto_get_cipher_iv_len(cipher_args);
+	op_cipher_args.iv_size =
+		(unsigned int)smw_crypto_get_cipher_iv_len(cipher_args);
 	op_cipher_args.input = smw_crypto_get_cipher_input(cipher_args);
 
 	/*

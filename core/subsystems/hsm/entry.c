@@ -20,7 +20,8 @@
 
 #include "common.h"
 
-#define STORAGE_MANAGER_TIMEOUT 1 /* s */
+#define STORAGE_MANAGER_WAIT_MS 10  /* 10 ms */
+#define STORAGE_MANAGER_TIMEOUT 100 /* 100x WAIT_MS */
 
 static struct {
 	struct hdl hdl;
@@ -63,7 +64,7 @@ end:
 
 static void close_session(hsm_hdl_t session_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -79,8 +80,8 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 
 	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_store_args_t open_svc_key_store_args = { 0 };
-	const char *subsystem_name;
-	struct se_info info;
+	const char *subsystem_name = NULL;
+	struct se_info info = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_HSM);
@@ -118,7 +119,7 @@ end:
 
 static void close_key_store_service(hsm_hdl_t key_store_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -132,7 +133,7 @@ static int open_key_mgmt_service(hsm_hdl_t key_store_hdl,
 {
 	int status = SMW_STATUS_OK;
 
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_management_args_t open_svc_key_management_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -154,7 +155,7 @@ end:
 
 static void close_key_management_service(hsm_hdl_t key_management_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -190,7 +191,7 @@ end:
 
 static void close_signature_geneneration_service(hsm_hdl_t signature_gen_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -226,7 +227,7 @@ end:
 
 static void close_signature_verification_service(hsm_hdl_t signature_ver_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -259,7 +260,7 @@ end:
 
 static void close_hash_service(hsm_hdl_t hash_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -292,7 +293,7 @@ end:
 
 static void close_rng_service(hsm_hdl_t rng_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -327,7 +328,7 @@ end:
 
 static void close_cipher_service(hsm_hdl_t cipher_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -390,54 +391,70 @@ static void *storage_thread(void *arg)
 	return NULL;
 }
 
-static long time_elapse(long ref)
+static void wait_ms(int ms)
 {
-	time_t t = time(NULL);
+	int err = 0;
+	long tv_nsec = ms * 1000;
 
-	if (t != (time_t)-1)
-		return difftime(t, ref);
+	struct timespec t = { .tv_sec = 0, .tv_nsec = tv_nsec };
+	struct timespec t_rem = { 0 };
 
-	return 0;
+	err = nanosleep(&t, &t_rem);
+	if (err) {
+		SMW_DBG_PRINTF(DEBUG, "%s error: remain %ld", __func__,
+			       t_rem.tv_nsec);
+		/*
+		 * If interrupted by a signal, t_rem contains the
+		 * remaining time.
+		 */
+		tv_nsec = t_rem.tv_nsec / 1000;
+		if (tv_nsec > 0 && tv_nsec < INT32_MAX)
+			wait_ms(tv_nsec);
+	}
 }
 
 static int start_storage_manager(void)
 {
 	int status = SMW_STATUS_OK;
 
-	long start_time = time_elapse(0);
+	int timeout_count = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	hsm_ctx.nvm_status = NVM_STATUS_UNDEF;
-
-	if (smw_utils_thread_create(&hsm_ctx.tid, storage_thread, NULL)) {
-		status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
+	if (smw_utils_mutex_lock(hsm_ctx.mutex)) {
+		status = SMW_STATUS_MUTEX_LOCK_FAILURE;
 		goto end;
 	}
+
+	if (!hsm_ctx.tid) {
+		hsm_ctx.nvm_status = NVM_STATUS_UNDEF;
+
+		if (smw_utils_thread_create(&hsm_ctx.tid, storage_thread, NULL))
+			status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
+	}
+
+	if (smw_utils_mutex_unlock(hsm_ctx.mutex)) {
+		if (status == SMW_STATUS_OK)
+			status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
+	}
+
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	SMW_DBG_PRINTF(DEBUG, "tid: %lx\n", hsm_ctx.tid);
 
 	while (hsm_ctx.nvm_status <= NVM_STATUS_STARTING) {
-		if (smw_utils_mutex_lock(hsm_ctx.mutex)) {
-			status = SMW_STATUS_MUTEX_LOCK_FAILURE;
-			goto end;
-		}
-
-		SMW_DBG_PRINTF(DEBUG, "Storage manager status: %d\n",
-			       hsm_ctx.nvm_status);
-
-		if (smw_utils_mutex_unlock(hsm_ctx.mutex)) {
-			status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
-			goto end;
-		}
-
-		if (time_elapse(start_time) >= STORAGE_MANAGER_TIMEOUT) {
+		wait_ms(STORAGE_MANAGER_WAIT_MS);
+		timeout_count++;
+		if (hsm_ctx.nvm_status <= NVM_STATUS_STARTING &&
+		    timeout_count > STORAGE_MANAGER_TIMEOUT) {
 			SMW_DBG_PRINTF(DEBUG,
 				       "Storage manager failed to start (%d)\n",
 				       hsm_ctx.nvm_status);
 			(void)smw_utils_thread_cancel(hsm_ctx.tid);
 			status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
-			goto end;
+			hsm_ctx.tid = 0;
+			break;
 		}
 	}
 
@@ -445,7 +462,6 @@ static int start_storage_manager(void)
 		SMW_DBG_PRINTF(DEBUG, "Storage manager stopped (%d)\n",
 			       hsm_ctx.nvm_status);
 		status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
-		goto end;
 	}
 
 end:
@@ -461,9 +477,12 @@ static int stop_storage_manager(void)
 
 	SMW_DBG_PRINTF(DEBUG, "tid: %lx\n", hsm_ctx.tid);
 
-	if (hsm_ctx.nvm_status != NVM_STATUS_STOPPED)
+	if (hsm_ctx.nvm_status != NVM_STATUS_STOPPED) {
 		if (smw_utils_thread_cancel(hsm_ctx.tid))
 			status = SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE;
+
+		hsm_ctx.tid = 0;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

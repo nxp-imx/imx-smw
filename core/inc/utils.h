@@ -39,7 +39,7 @@
 #define MUL_OVERFLOW(a, b, res) __builtin_mul_overflow(a, b, res)
 #define INC_OVERFLOW(a, b)	__builtin_add_overflow(a, b, &(a))
 
-#define BITS_TO_BYTES_SIZE(security_size) (((security_size) + 7) / 8)
+#define BITS_TO_BYTES_SIZE(security_size) (((security_size) + 7UL) / 8UL)
 
 #define SET_CLEAR_MASK(val, set, clear) (((val) & ~(clear)) | (set))
 

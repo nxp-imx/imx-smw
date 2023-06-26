@@ -179,7 +179,8 @@ static unsigned short hsm_key_exchange_length(struct smw_keymgr_identifier *key)
 	if (BITS_TO_BYTES_SIZE(key->security_size) * 2 <= UINT16_MAX) {
 		key_def = get_tls_key_def(key);
 		if (key_def)
-			length = BITS_TO_BYTES_SIZE(key->security_size) * 2;
+			length = (BITS_TO_BYTES_SIZE(key->security_size) * 2) &
+				 UINT16_MAX;
 	}
 
 	return length;
@@ -252,9 +253,9 @@ end:
 static const struct tls12_kdf_info *
 get_tls12_kdf_info(struct smw_keymgr_tls12_args *args)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(hsm_tls12_kdf); i++) {
+	for (; i < ARRAY_SIZE(hsm_tls12_kdf); i++) {
 		if (hsm_tls12_kdf[i].key_exchange_id == args->key_exchange_id &&
 		    hsm_tls12_kdf[i].encryption_id == args->encryption_id &&
 		    hsm_tls12_kdf[i].prf_id == args->prf_id)
@@ -266,7 +267,7 @@ get_tls12_kdf_info(struct smw_keymgr_tls12_args *args)
 
 static void delete_db_shared_keys(unsigned int *ids_array, int nb_shared_keys)
 {
-	int idx;
+	int idx = 0;
 	struct smw_keymgr_identifier identifier = { 0 };
 
 	identifier.id = INVALID_KEY_ID;
@@ -275,7 +276,7 @@ static void delete_db_shared_keys(unsigned int *ids_array, int nb_shared_keys)
 	identifier.persistence_id = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
 
 	/* Delete all keys from the database */
-	for (idx = 0; idx < nb_shared_keys && ids_array[idx] != INVALID_KEY_ID;
+	for (; idx < nb_shared_keys && ids_array[idx] != INVALID_KEY_ID;
 	     idx++) {
 		(void)smw_keymgr_db_delete(ids_array[idx], &identifier);
 	}
@@ -287,12 +288,12 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 				     unsigned int *ids_hsm_array)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	int idx;
+	int idx = 0;
 	unsigned int *id = ids_array;
 	unsigned int *hsm_id = ids_hsm_array;
 	struct smw_keymgr_identifier identifier = { 0 };
-	struct smw_keymgr_tls12_args *tls_args;
-	const struct tls12_kdf_info *kdf_info;
+	struct smw_keymgr_tls12_args *tls_args = NULL;
+	const struct tls12_kdf_info *kdf_info = NULL;
 
 	tls_args = args->kdf_args;
 	kdf_info = get_tls12_kdf_info(tls_args);
@@ -300,7 +301,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 		return status;
 
 	/* Initialize the ids_array with invalid key ids */
-	for (idx = 0; !hsm_id && idx < nb_shared_keys; idx++)
+	for (; !hsm_id && idx < nb_shared_keys; idx++)
 		ids_array[idx] = INVALID_KEY_ID;
 
 	identifier.id = INVALID_KEY_ID;
@@ -506,7 +507,7 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	unsigned short hsm_key_size = 0;
 	int nb_shared_keys = 0;
 
-	hsm_err_t hsm_err;
+	hsm_err_t hsm_err = HSM_NO_ERROR;
 	op_key_exchange_args_t op_hsm_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -517,6 +518,12 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	kdf_info = get_tls12_kdf_info(args->kdf_args);
 	if (!kdf_info)
 		goto end;
+
+	nb_shared_keys = kdf_info->hsm_nb_shared_key_id;
+	if (sizeof(unsigned int) * nb_shared_keys > UINT8_MAX) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	status = get_hsm_tls_key_exchange_ids(key_derived_id, &op_hsm_args);
 	if (status != SMW_STATUS_OK)
@@ -546,7 +553,7 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 
 	op_hsm_args.kdf_algorithm = kdf_info->hsm_kdf;
 	op_hsm_args.shared_key_identifier_array_size =
-		sizeof(unsigned int) * kdf_info->hsm_nb_shared_key_id;
+		sizeof(unsigned int) * nb_shared_keys;
 
 	/*
 	 * Shared key identifier array size depends if KDF is HMAC or not.
@@ -555,7 +562,6 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	 * Allocate a double buffer to handle the OSAL Key IDs pre-added
 	 * in the database and the TLS 1.2 shared keys
 	 */
-	nb_shared_keys = kdf_info->hsm_nb_shared_key_id;
 	new_key_ids =
 		SMW_UTILS_MALLOC(nb_shared_keys * sizeof(*new_key_ids) +
 				 op_hsm_args.shared_key_identifier_array_size);
@@ -565,7 +571,12 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 		goto end;
 	}
 
-	shared_key_ids = new_key_ids + nb_shared_keys;
+	if (ADD_OVERFLOW((uintptr_t)new_key_ids,
+			 nb_shared_keys * sizeof(*new_key_ids),
+			 (uintptr_t *)&shared_key_ids)) {
+		status = SMW_STATUS_OPERATION_FAILURE;
+		goto end;
+	}
 
 	status = add_update_db_shared_keys(args, nb_shared_keys, new_key_ids,
 					   NULL);

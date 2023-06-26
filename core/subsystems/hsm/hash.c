@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include "smw_status.h"
@@ -38,12 +38,12 @@ get_hash_algo_info(enum smw_config_hash_algo_id algo_id)
 {
 	const struct hash_algo_info *info = NULL;
 
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(hash_algo_info);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < size; i++) {
+	for (; i < size; i++) {
 		if (hash_algo_info[i].algo_id < algo_id)
 			continue;
 		if (hash_algo_info[i].algo_id > algo_id)
@@ -64,7 +64,7 @@ static int hash(struct hdl *hdl, void *args)
 	op_hash_one_go_args_t op_hash_one_go_args = { 0 };
 
 	struct smw_crypto_hash_args *hash_args = args;
-	const struct hash_algo_info *hash_algo_info;
+	const struct hash_algo_info *hash_algo_info = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

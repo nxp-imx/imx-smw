@@ -83,7 +83,7 @@ static hsm_err_t open_mac_service(struct hdl *hdl, hsm_hdl_t *mac_hdl)
 
 static hsm_err_t close_mac_service(hsm_hdl_t mac_hdl)
 {
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -105,7 +105,7 @@ static int mac(struct hdl *hdl, void *args)
 
 	struct smw_crypto_mac_args *mac_args = args;
 	struct mac_algo alg = { 0 };
-	struct smw_keymgr_descriptor *key_descriptor;
+	struct smw_keymgr_descriptor *key_descriptor = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -128,9 +128,9 @@ static int mac(struct hdl *hdl, void *args)
 	op_args.key_identifier = key_descriptor->identifier.id;
 	op_args.algorithm = alg.hsm_id;
 	op_args.payload = smw_mac_get_input_data(mac_args);
-	op_args.payload_size = smw_mac_get_input_length(mac_args);
+	op_args.payload_size = (uint16_t)smw_mac_get_input_length(mac_args);
 	op_args.mac = smw_mac_get_mac_data(mac_args);
-	op_args.mac_size = smw_mac_get_mac_length(mac_args);
+	op_args.mac_size = (uint16_t)smw_mac_get_mac_length(mac_args);
 
 	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE) {
 		if (!op_args.mac) {

@@ -49,6 +49,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * The TEE TAs are compiled with TA flags TA_FLAG_SINGLE_INSTANCE and TA_FLAG_MULTI_SESSION. All TA instances can handle several sessions.
 * Fix TEE TA library retrieving ECC key buffer size.
 * Change ELE subsystem to align ELE Library API arguments.
+* Fix coverity in HSM subsystem and ensure all variables are initialized.
 
 #### SMW Tests - _version 2.4_
 

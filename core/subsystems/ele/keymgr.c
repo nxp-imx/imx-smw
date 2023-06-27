@@ -345,6 +345,7 @@ static int export_key_operation(struct hdl *hdl,
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
 	unsigned char *public_data = NULL;
 	unsigned char *tmp_key = NULL;
+	unsigned int exp_key_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -391,14 +392,15 @@ static int export_key_operation(struct hdl *hdl,
 
 	status = ele_convert_err(err);
 
+	exp_key_size = op_args.exp_out_key_size;
+
 	if (status == SMW_STATUS_OK) {
 		status = smw_keymgr_update_public_buffer(key_desc,
 							 op_args.out_key,
-							 op_args.out_key_size);
+							 exp_key_size);
 	} else if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
-		tmp_status =
-			smw_keymgr_update_public_buffer(key_desc, NULL,
-							op_args.out_key_size);
+		tmp_status = smw_keymgr_update_public_buffer(key_desc, NULL,
+							     exp_key_size);
 		if (tmp_status != SMW_STATUS_OK)
 			status = tmp_status;
 	}
@@ -527,8 +529,9 @@ static int generate_key(struct hdl *hdl, void *args)
 
 	status = ele_convert_err(err);
 	if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
-		tmp_status = smw_keymgr_update_public_buffer(key_desc, NULL,
-							     op_args.out_size);
+		tmp_status =
+			smw_keymgr_update_public_buffer(key_desc, NULL,
+							op_args.exp_out_size);
 
 		if (tmp_status != SMW_STATUS_OK)
 			status = tmp_status;
@@ -545,7 +548,7 @@ static int generate_key(struct hdl *hdl, void *args)
 	if (public_data) {
 		status = smw_keymgr_update_public_buffer(key_desc,
 							 op_args.out_key,
-							 op_args.out_size);
+							 op_args.exp_out_size);
 
 		if (status != SMW_STATUS_OK) {
 			/*

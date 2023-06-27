@@ -170,7 +170,7 @@ static int mac(struct hdl *hdl, void *args)
 	status = ele_convert_err(err);
 
 	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE)
-		smw_mac_set_mac_length(mac_args, op_args.expected_mac_size);
+		smw_mac_set_mac_length(mac_args, op_args.exp_mac_size);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

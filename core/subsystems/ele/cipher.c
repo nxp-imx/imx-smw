@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "smw_status.h"
@@ -154,7 +154,7 @@ static int cipher(struct hdl *hdl, void *args)
 	status = ele_convert_err(err);
 
 	/* Update the output length */
-	smw_crypto_set_cipher_output_len(cipher_args, op_args.output_size);
+	smw_crypto_set_cipher_output_len(cipher_args, op_args.exp_output_size);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

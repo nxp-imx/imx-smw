@@ -38,6 +38,18 @@
 #define SUB_OVERFLOW(a, b, res) __builtin_sub_overflow(a, b, res)
 #define MUL_OVERFLOW(a, b, res) __builtin_mul_overflow(a, b, res)
 #define INC_OVERFLOW(a, b)	__builtin_add_overflow(a, b, &(a))
+#define SET_OVERFLOW(a, res)                                                   \
+	({                                                                     \
+		__typeof__(res) _max = 0;                                      \
+		__typeof__(a) _a = a;                                          \
+		int _overflow = 1;                                             \
+		_max -= 1;                                                     \
+		if (_a <= _max) {                                              \
+			res = _a;                                              \
+			_overflow = 0;                                         \
+		}                                                              \
+		_overflow;                                                     \
+	})
 
 #define BITS_TO_BYTES_SIZE(security_size) (((security_size) + 7UL) / 8UL)
 

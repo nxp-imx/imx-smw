@@ -9,12 +9,24 @@
 #include <stdint.h>
 
 #include "tlv_strings.h"
+#include "utils.h"
 
 /* TLV defines */
 #define SMW_TLV_LENGTH_FIELD_SIZE 2 /* TLV length encoded with 2 bytes */
-#define SMW_TLV_ELEMENT_LENGTH(_type, _value_size)                             \
-	(SMW_UTILS_STRLEN(_type) + 1 /* Type */ +                              \
-	 SMW_TLV_LENGTH_FIELD_SIZE /* Length */ + (_value_size) /* Value */)
+
+#define SMW_TLV_ELEMENT_LENGTH(_type, _value_size, _res)                       \
+	({                                                                     \
+		int _ret = 1;                                                  \
+		size_t _l_type = SMW_UTILS_STRLEN(_type) + 1;                  \
+		__typeof__(_res) _l = 0;                                       \
+		/* Add length of Type + length of Length */                    \
+		if (!ADD_OVERFLOW(_l_type, SMW_TLV_LENGTH_FIELD_SIZE, &_l)) {  \
+			/* Append length of Value */                           \
+			if (!ADD_OVERFLOW(_l, _value_size, &(_res)))           \
+				_ret = 0;                                      \
+		}                                                              \
+		_ret;                                                          \
+	})
 
 /**
  * smw_tlv_read_element() - Read one Type-Length-Value encoded element.

@@ -24,8 +24,8 @@ struct ele_get_info_head {
 static int device_attestation_operation(struct hdl *hdl,
 					op_dev_attest_args_t *op_args)
 {
-	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
-	hsm_err_t err = HSM_FEATURE_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
+	hsm_err_t err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -80,7 +80,7 @@ static int device_attestation(struct hdl *hdl, void *args)
 
 	if (op_args.uid_sz != ELE_UID_SIZE) {
 		SMW_DBG_PRINTF(ERROR,
-			       "Wrong Device UID size got %d expected %d",
+			       "Wrong Device UID size got %d expected %lu",
 			       op_args.uid_sz, ELE_UID_SIZE);
 		status = SMW_STATUS_SUBSYSTEM_FAILURE;
 		goto end;
@@ -172,7 +172,7 @@ end:
 
 static int device_uuid(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 
 	unsigned char *uuid = NULL;
 	unsigned int uuid_length = 0;
@@ -219,7 +219,6 @@ static int device_uuid(struct hdl *hdl, void *args)
 		SMW_UTILS_MEMCPY(uuid, &device_uid[i], sizeof(*device_uid));
 
 	smw_devmgr_set_uuid_length(args, ELE_UID_SIZE);
-	status = SMW_STATUS_OK;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

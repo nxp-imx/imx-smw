@@ -24,9 +24,9 @@ static struct {
 
 static int open_session(hsm_hdl_t *session_hdl)
 {
-	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
+	int status = SMW_STATUS_OK;
 
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 	open_session_args_t open_session_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -43,7 +43,7 @@ static int open_session(hsm_hdl_t *session_hdl)
 
 static void close_session(hsm_hdl_t session_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -55,20 +55,18 @@ static void close_session(hsm_hdl_t session_hdl)
 static int open_key_store_service(hsm_hdl_t session_hdl,
 				  hsm_hdl_t *key_store_hdl)
 {
-	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
+	int status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_store_args_t open_svc_key_store_args = { 0 };
-	const char *subsystem_name;
-	struct se_info info;
+	const char *subsystem_name = NULL;
+	struct se_info info = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_ELE);
 
-	if (smw_utils_get_subsystem_info(subsystem_name, &info)) {
-		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
+	if (smw_utils_get_subsystem_info(subsystem_name, &info))
 		goto end;
-	}
 
 	open_svc_key_store_args.key_store_identifier = info.storage_id;
 	open_svc_key_store_args.authentication_nonce = info.storage_nonce;
@@ -97,7 +95,7 @@ end:
 
 static void close_key_store_service(hsm_hdl_t key_store_hdl)
 {
-	hsm_err_t __maybe_unused err;
+	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -135,7 +133,7 @@ static int unload(void)
 
 static int load(void)
 {
-	int status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
+	int status = SMW_STATUS_OK;
 
 	struct hdl *hdl = &ele_ctx.hdl;
 

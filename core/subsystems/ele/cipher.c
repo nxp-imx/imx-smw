@@ -35,9 +35,9 @@ static int set_cipher_algo(enum smw_config_key_type_id key_type_id,
 			   hsm_op_cipher_one_go_algo_t *hsm_algo)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	unsigned int i;
+	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(cipher_algos); i++) {
+	for (; i < ARRAY_SIZE(cipher_algos); i++) {
 		if (key_type_id == cipher_algos[i].key_type_id &&
 		    cipher_mode_id == cipher_algos[i].cipher_mode_id) {
 			*hsm_algo = cipher_algos[i].hsm_algo;
@@ -65,9 +65,9 @@ static int set_cipher_flags(enum smw_config_cipher_op_type_id smw_op_type_id,
 			    hsm_op_cipher_one_go_flags_t *hsm_flags)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	unsigned int i;
+	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(cipher_flags); i++) {
+	for (; i < ARRAY_SIZE(cipher_flags); i++) {
 		if (smw_op_type_id == cipher_flags[i].smw_op_type_id) {
 			*hsm_flags = cipher_flags[i].hsm_flags;
 			status = SMW_STATUS_OK;
@@ -83,9 +83,9 @@ static int cipher(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 	op_cipher_one_go_args_t op_args = { 0 };
-	enum smw_config_key_type_id key_type_id;
+	enum smw_config_key_type_id key_type_id = 0;
 	struct smw_crypto_cipher_args *cipher_args = args;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -126,7 +126,12 @@ static int cipher(struct hdl *hdl, void *args)
 	op_args.input = smw_crypto_get_cipher_input(cipher_args);
 	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
 	op_args.iv = smw_crypto_get_cipher_iv(cipher_args);
-	op_args.iv_size = smw_crypto_get_cipher_iv_len(cipher_args);
+
+	if (SET_OVERFLOW(smw_crypto_get_cipher_iv_len(cipher_args),
+			 op_args.iv_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_cipher_one_go()\n"

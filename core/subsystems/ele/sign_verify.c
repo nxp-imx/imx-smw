@@ -83,12 +83,12 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	unsigned int i;
+	unsigned int i = 0;
 	const struct signature_scheme *scheme = signature_schemes;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < ARRAY_SIZE(signature_schemes); i++, scheme++) {
+	for (; i < ARRAY_SIZE(signature_schemes); i++, scheme++) {
 		if (scheme->key_type_id == key_type_id) {
 			if (scheme->algo_id != algo_id)
 				continue;
@@ -120,7 +120,7 @@ static int sign(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 	op_generate_sign_args_t op_args = { 0 };
 
 	struct smw_crypto_sign_verify_args *sign_args = args;
@@ -146,7 +146,12 @@ static int sign(struct hdl *hdl, void *args)
 	op_args.message = smw_sign_verify_get_msg_buf(sign_args);
 	op_args.signature = smw_sign_verify_get_sign_buf(sign_args);
 	op_args.message_size = smw_sign_verify_get_msg_len(sign_args);
-	op_args.signature_size = smw_sign_verify_get_sign_len(sign_args);
+
+	if (SET_OVERFLOW(smw_sign_verify_get_sign_len(sign_args),
+			 op_args.signature_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	if (sign_args->algo_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
@@ -190,21 +195,21 @@ end:
 
 static int verify(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 	op_verify_sign_args_t op_args = { 0 };
-	hsm_verification_status_t hsm_verification_status;
+	hsm_verification_status_t hsm_verification_status = 0;
 
 	struct smw_crypto_sign_verify_args *verify_args = args;
 	struct smw_keymgr_descriptor *key_desc = &verify_args->key_descriptor;
 
 	struct smw_keymgr_descriptor export_key_desc = { 0 };
 
-	enum smw_config_key_type_id key_type_id;
-	unsigned int security_size;
-	uint8_t *key_buf;
-	uint16_t key_size;
+	enum smw_config_key_type_id key_type_id = 0;
+	unsigned int security_size = 0;
+	uint8_t *key_buf = NULL;
+	unsigned int key_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -236,11 +241,20 @@ static int verify(struct hdl *hdl, void *args)
 
 	op_args.key_sz = security_size;
 	op_args.key = key_buf;
-	op_args.key_size = key_size;
 	op_args.message = smw_sign_verify_get_msg_buf(verify_args);
 	op_args.signature = smw_sign_verify_get_sign_buf(verify_args);
-	op_args.signature_size = smw_sign_verify_get_sign_len(verify_args);
 	op_args.message_size = smw_sign_verify_get_msg_len(verify_args);
+
+	if (SET_OVERFLOW(key_size, op_args.key_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	if (SET_OVERFLOW(smw_sign_verify_get_sign_len(verify_args),
+			 op_args.signature_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	status = set_signature_scheme(key_type_id, security_size,
 				      verify_args->algo_id, &op_args.scheme_id);

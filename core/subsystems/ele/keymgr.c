@@ -21,10 +21,10 @@ static int ecc_public_key_length(unsigned int security_size);
  * Bit mask identifing the key category, asymmetric public, keypair
  * symmetric key and raw key.
  */
-#define ELE_KEY_CATEGORY_MASK	      (BIT(14) | BIT(13) | BIT(12))
+#define ELE_KEY_CATEGORY_MASK	      ((unsigned int)(BIT(14) | BIT(13) | BIT(12)))
 #define ELE_ASYM_KEY_TYPE_MASK	      BIT(14)
 #define ELE_ASYM_PUBLIC_KEY_TYPE_MASK BIT(14)
-#define ELE_ASYM_KEYPAIR_TYPE_MASK    (BIT(14) | BIT(13) | BIT(12))
+#define ELE_ASYM_KEYPAIR_TYPE_MASK    ((unsigned int)(BIT(14) | BIT(13) | BIT(12)))
 #define ELE_SYM_KEY_TYPE_MASK	      BIT(13)
 #define ELE_RAW_KEY_TYPE_MASK	      BIT(12)
 
@@ -99,12 +99,12 @@ static int ecc_public_key_length(unsigned int security_size)
 static const struct ele_key_def *
 get_key_def_by_smw_type(enum smw_config_key_type_id key_type_id)
 {
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(ele_key_def_list);
 	const struct ele_key_def *key = ele_key_def_list;
 	const struct ele_key_def *ret_key = NULL;
 
-	for (i = 0; i < size; i++, key++) {
+	for (; i < size; i++, key++) {
 		if (key->smw_key_type == key_type_id) {
 			ret_key = key;
 			break;
@@ -116,7 +116,7 @@ get_key_def_by_smw_type(enum smw_config_key_type_id key_type_id)
 
 static const struct ele_key_def *get_key_def_by_ele_type(unsigned int key_type)
 {
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(ele_key_def_list);
 	const struct ele_key_def *key = ele_key_def_list;
 	const struct ele_key_def *ret_key = NULL;
@@ -126,7 +126,7 @@ static const struct ele_key_def *get_key_def_by_ele_type(unsigned int key_type)
 	if (key_type & ELE_ASYM_KEY_TYPE_MASK)
 		full_key_type = ELE_ASYM_KEYPAIR_KEY_TYPE(key_type);
 
-	for (i = 0; i < size; i++, key++) {
+	for (; i < size; i++, key++) {
 		if (key->ele_key_type == full_key_type) {
 			ret_key = key;
 			break;
@@ -160,8 +160,8 @@ static int get_full_ele_key_type(enum smw_config_key_type_id key_type_id,
 
 	key_def = get_key_def_by_smw_type(key_type_id);
 	if (key_def) {
-		*ele_type = key_def->ele_key_type;
-		status = SMW_STATUS_OK;
+		if (!SET_OVERFLOW(key_def->ele_key_type, *ele_type))
+			status = SMW_STATUS_OK;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -234,7 +234,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 
 static int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl)
 {
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_management_args_t open_svc_key_management_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -268,7 +268,7 @@ static int close_key_mgt_service(hsm_hdl_t key_management_hdl)
 
 static int delete_key_operation(hsm_hdl_t key_mgt_hdl, unsigned int key_id)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 	op_delete_key_args_t op_args = { 0 };
@@ -298,8 +298,8 @@ static int delete_key_operation(hsm_hdl_t key_mgt_hdl, unsigned int key_id)
 static int get_key_attributes_operation(struct hdl *hdl,
 					op_get_key_attr_args_t *key_attrs)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	int tmp_status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 	hsm_hdl_t key_mgt_hdl = 0;
@@ -336,8 +336,8 @@ end:
 static int export_key_operation(struct hdl *hdl,
 				struct smw_keymgr_descriptor *key_desc)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	int tmp_status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 	hsm_err_t err = HSM_NO_ERROR;
 
 	op_pub_key_recovery_args_t op_args = { 0 };
@@ -345,7 +345,7 @@ static int export_key_operation(struct hdl *hdl,
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
 	unsigned char *public_data = NULL;
 	unsigned char *tmp_key = NULL;
-	unsigned int exp_key_size = 0;
+	unsigned int public_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -355,8 +355,14 @@ static int export_key_operation(struct hdl *hdl,
 
 	/* Set the operation public key with user arguments */
 	public_data = smw_keymgr_get_public_data(key_desc);
+	public_length = smw_keymgr_get_public_length(key_desc);
+
+	if (SET_OVERFLOW(public_length, op_args.out_key_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
 	op_args.out_key = public_data;
-	op_args.out_key_size = smw_keymgr_get_public_length(key_desc);
 
 	if (public_data && key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
 		/*
@@ -392,15 +398,15 @@ static int export_key_operation(struct hdl *hdl,
 
 	status = ele_convert_err(err);
 
-	exp_key_size = op_args.exp_out_key_size;
+	public_length = op_args.exp_out_key_size;
 
 	if (status == SMW_STATUS_OK) {
 		status = smw_keymgr_update_public_buffer(key_desc,
 							 op_args.out_key,
-							 exp_key_size);
+							 public_length);
 	} else if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
 		tmp_status = smw_keymgr_update_public_buffer(key_desc, NULL,
-							     exp_key_size);
+							     public_length);
 		if (tmp_status != SMW_STATUS_OK)
 			status = tmp_status;
 	}
@@ -415,8 +421,8 @@ end:
 
 static int generate_key(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	int tmp_status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 	hsm_hdl_t key_mgt_hdl = 0;
@@ -432,6 +438,7 @@ static int generate_key(struct hdl *hdl, void *args)
 	int policy_status = SMW_STATUS_KEY_POLICY_ERROR;
 	unsigned char *actual_policy = NULL;
 	unsigned int actual_policy_len = 0;
+	unsigned int public_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -447,8 +454,13 @@ static int generate_key(struct hdl *hdl, void *args)
 
 	/* Set the operation public key with user arguments */
 	public_data = smw_keymgr_get_public_data(key_desc);
+	public_length = smw_keymgr_get_public_length(key_desc);
+	if (SET_OVERFLOW(public_length, op_args.out_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
 	op_args.out_key = public_data;
-	op_args.out_size = smw_keymgr_get_public_length(key_desc);
 
 	if (public_data && key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
 		/*
@@ -467,7 +479,10 @@ static int generate_key(struct hdl *hdl, void *args)
 
 	key_id = key_identifier->id;
 	op_args.key_identifier = &key_id;
-	op_args.bit_key_sz = key_identifier->security_size;
+	if (SET_OVERFLOW(key_identifier->security_size, op_args.bit_key_sz)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	policy_status =
 		ele_set_key_policy(key_attrs->policy, key_attrs->policy_len,
@@ -587,8 +602,8 @@ end:
 static int import_el2go_key(struct hdl *hdl,
 			    struct smw_keymgr_descriptor *key_desc)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	int tmp_status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 	hsm_err_t err = HSM_NO_ERROR;
 
 	hsm_hdl_t key_mgt_hdl = 0;
@@ -680,7 +695,7 @@ end:
 
 static int export_key(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_export_key_args *key_args = args;
 
@@ -694,8 +709,8 @@ static int export_key(struct hdl *hdl, void *args)
 
 static int delete_key(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	int tmp_status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	hsm_hdl_t key_mgt_hdl = 0;
 
@@ -720,8 +735,8 @@ static int delete_key(struct hdl *hdl, void *args)
 
 static int get_key_lengths(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
-	int tmp_status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	struct smw_keymgr_descriptor *key_desc = NULL;
 	op_get_key_attr_args_t key_attrs = { 0 };
@@ -763,7 +778,7 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 
 static int get_key_attributes(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_get_key_attributes_args *key_attrs = NULL;
 	op_get_key_attr_args_t op_key_attrs = { 0 };
@@ -833,13 +848,15 @@ int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	const struct ele_key_def *key_def = NULL;
+	unsigned int type = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	key_def = get_key_def_by_smw_type(key_type_id);
 	if (key_def) {
-		*ele_type = ELE_ASYM_PUBLIC_KEY_TYPE(key_def->ele_key_type);
-		status = SMW_STATUS_OK;
+		type = ELE_ASYM_PUBLIC_KEY_TYPE(key_def->ele_key_type);
+		if (!SET_OVERFLOW(type, *ele_type))
+			status = SMW_STATUS_OK;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -849,7 +866,7 @@ int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
 int ele_export_public_key(struct hdl *hdl,
 			  struct smw_keymgr_descriptor *key_desc)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
 	unsigned int public_length = 0;
 	op_get_key_attr_args_t key_attrs = { 0 };

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include "smw_status.h"
@@ -15,9 +15,9 @@
 
 static int rng(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
-	hsm_err_t err;
+	hsm_err_t err = HSM_NO_ERROR;
 	op_get_random_args_t op_args = { 0 };
 
 	struct smw_crypto_rng_args *rng_args = args;

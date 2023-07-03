@@ -12,30 +12,31 @@
 #include "common.h"
 
 struct mac_algo {
-	hsm_op_mac_one_go_algo_t ele_id;
-	int max_length;
+	unsigned int ele_id;
+	unsigned int max_length;
 };
 
-#define ELE_MAC_LENGTH_SHIFT 16
-#define ELE_MAC_LENGTH_MASK  0x3F
-#define ELE_MAC_MIN_LENGTH   8
-#define ELE_CMAC_MAX_LENGTH  16
-#define ELE_HMAC_HASH_SHIFT  0
-#define ELE_HMAC_HASH_MASK   0xFF
+#define ELE_MAC_LENGTH_SHIFT 16U
+#define ELE_MAC_LENGTH_MASK  0x3FU
+#define ELE_MAC_MIN_LENGTH   8U
+#define ELE_CMAC_MAX_LENGTH  16U
+#define ELE_HMAC_HASH_SHIFT  0U
+#define ELE_HMAC_HASH_MASK   0xFFU
 #define PERMITTED_ALGO_HMAC  (PERMITTED_ALGO_HMAC_SHA256 & ~ELE_HMAC_HASH_MASK)
 
-static unsigned int mac_algo_truncated_length(hsm_op_mac_one_go_algo_t algo,
-					      int length, int max_length)
+static unsigned int mac_algo_truncated_length(size_t algo, size_t length,
+					      size_t max_length)
 {
-	int trunc_length = length;
+	size_t trunc_length = length;
 
 	if (trunc_length < ELE_MAC_MIN_LENGTH)
 		trunc_length = ELE_MAC_MIN_LENGTH;
 	else if (trunc_length > max_length)
 		trunc_length = max_length;
 
-	return SET_CLEAR_MASK(algo, trunc_length << ELE_MAC_LENGTH_SHIFT,
-			      ELE_MAC_LENGTH_MASK << ELE_MAC_LENGTH_SHIFT);
+	return (SET_CLEAR_MASK(algo, trunc_length << ELE_MAC_LENGTH_SHIFT,
+			       ELE_MAC_LENGTH_MASK << ELE_MAC_LENGTH_SHIFT) &
+		UINT32_MAX);
 }
 
 static int get_cmac_algo(struct mac_algo *alg, struct smw_crypto_mac_args *args)
@@ -54,7 +55,7 @@ static int get_cmac_algo(struct mac_algo *alg, struct smw_crypto_mac_args *args)
 
 static int get_hmac_algo(struct mac_algo *alg, struct smw_crypto_mac_args *args)
 {
-	const struct ele_hash_algo *hash_alg;
+	const struct ele_hash_algo *hash_alg = NULL;
 
 	hash_alg = ele_get_hash_algo(args->hash_id);
 	if (!hash_alg)
@@ -105,7 +106,7 @@ static int mac(struct hdl *hdl, void *args)
 
 	struct smw_crypto_mac_args *mac_args = args;
 	struct mac_algo alg = { 0 };
-	struct smw_keymgr_descriptor *key_descriptor;
+	struct smw_keymgr_descriptor *key_descriptor = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -129,8 +130,16 @@ static int mac(struct hdl *hdl, void *args)
 	op_args.payload = smw_mac_get_input_data(mac_args);
 	op_args.payload_size = smw_mac_get_input_length(mac_args);
 	op_args.mac = smw_mac_get_mac_data(mac_args);
-	op_args.mac_size = smw_mac_get_mac_length(mac_args);
-	op_args.algorithm = alg.ele_id;
+
+	if (SET_OVERFLOW(smw_mac_get_mac_length(mac_args), op_args.mac_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	if (SET_OVERFLOW(alg.ele_id, op_args.algorithm)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE) {
 		if (!op_args.mac) {

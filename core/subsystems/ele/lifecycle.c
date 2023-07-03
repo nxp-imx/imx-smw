@@ -21,10 +21,10 @@ static const struct lifecycle {
 } lifecycles[] = { LIFECYCLE(OPEN), LIFECYCLE(CLOSED),
 		   LIFECYCLE(CLOSED_LOCKED) };
 
-static int lifecycle_to_string(unsigned char **str, int str_length,
-			       hsm_key_lifecycle_t lifecycle)
+static size_t lifecycle_to_string(unsigned char **str, size_t str_length,
+				  hsm_key_lifecycle_t lifecycle)
 {
-	int out_len = 0;
+	size_t out_len = 0;
 	size_t i = 0;
 
 	if (lifecycle) {
@@ -44,7 +44,7 @@ static int lifecycle_to_string(unsigned char **str, int str_length,
 							 out_len);
 					*str += out_len;
 				} else {
-					out_len = -1;
+					out_len = SIZE_MAX;
 				}
 			}
 		}
@@ -58,7 +58,7 @@ int ele_get_lifecycle(unsigned char **lifecycle, unsigned int *lifecycle_len,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
-	int lc_str_len = 0;
+	size_t lc_str_len = 0;
 	unsigned char *p = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -68,13 +68,16 @@ int ele_get_lifecycle(unsigned char **lifecycle, unsigned int *lifecycle_len,
 
 	/* Get the expected lifecycle(s) string length */
 	lc_str_len = lifecycle_to_string(&p, lc_str_len, ele_lifecycle);
-	if (lc_str_len == -1) {
+	if (lc_str_len == SIZE_MAX || lc_str_len > UINT32_MAX) {
 		status = SMW_STATUS_OPERATION_FAILURE;
 		goto exit;
 	}
 
 	/* Calculate lifecyle length and allocate the lifecycle string */
-	*lifecycle_len = SMW_TLV_ELEMENT_LENGTH(LIFECYCLE_STR, lc_str_len);
+	if (SMW_TLV_ELEMENT_LENGTH(LIFECYCLE_STR, lc_str_len, *lifecycle_len)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
+	}
 
 	*lifecycle = SMW_UTILS_CALLOC(1, *lifecycle_len);
 	if (!*lifecycle) {
@@ -87,7 +90,7 @@ int ele_get_lifecycle(unsigned char **lifecycle, unsigned int *lifecycle_len,
 
 	/* Get the expected lifecycle(s) string */
 	lc_str_len = lifecycle_to_string(&p, lc_str_len, ele_lifecycle);
-	if (lc_str_len == -1) {
+	if (lc_str_len == SIZE_MAX) {
 		status = SMW_STATUS_OPERATION_FAILURE;
 	} else {
 		smw_tlv_set_length(*lifecycle, p);

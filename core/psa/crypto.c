@@ -190,6 +190,7 @@ set_signature_attributes_list(psa_algorithm_t alg,
 {
 	unsigned char *p;
 	const char *sign_type_str;
+	size_t str_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -203,9 +204,10 @@ set_signature_attributes_list(psa_algorithm_t alg,
 	else
 		return PSA_SUCCESS;
 
-	*attributes_list_length +=
-		SMW_TLV_ELEMENT_LENGTH(SIGNATURE_TYPE_STR,
-				       SMW_UTILS_STRLEN(sign_type_str) + 1);
+	str_length = SMW_UTILS_STRLEN(sign_type_str) + 1;
+	if (SMW_TLV_ELEMENT_LENGTH(SIGNATURE_TYPE_STR, str_length,
+				   *attributes_list_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	*attributes_list = SMW_UTILS_MALLOC(*attributes_list_length);
 	if (!*attributes_list)

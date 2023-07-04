@@ -706,7 +706,7 @@ static void get_alg_name(psa_algorithm_t alg, const char **alg_str,
 }
 
 static psa_status_t set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
-				 unsigned int *tlv_length)
+				 unsigned int *out_tlv_length)
 {
 	const char *alg_str = NULL;
 	const char *hash_str = NULL;
@@ -718,11 +718,12 @@ static psa_status_t set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
 	uint8_t min_length = 0;
 	unsigned char *p;
 	unsigned char *kdf_tlv = NULL;
+	unsigned int tlv_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	*tlv = NULL;
-	*tlv_length = 0;
+	*out_tlv_length = 0;
 
 	if (!alg)
 		return PSA_SUCCESS;
@@ -741,23 +742,45 @@ static psa_status_t set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
 	if (kdf_str)
 		kdf_len = SMW_UTILS_STRLEN(kdf_str);
 
-	*tlv_length += alg_len + 1;
+	if (ADD_OVERFLOW(alg_len, 1, &tlv_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
-	if (hash_len)
-		*tlv_length += SMW_TLV_ELEMENT_LENGTH(HASH_STR, hash_len + 1);
+	if (hash_len) {
+		if (ADD_OVERFLOW(tlv_length, hash_len + 1, &tlv_length))
+			return PSA_ERROR_INVALID_ARGUMENT;
 
-	if (kdf_len)
-		*tlv_length += SMW_TLV_ELEMENT_LENGTH(KDF_STR, kdf_len + 1);
+		if (SMW_TLV_ELEMENT_LENGTH(HASH_STR, tlv_length, tlv_length))
+			return PSA_ERROR_INVALID_ARGUMENT;
+	}
 
-	if (length)
-		*tlv_length +=
-			SMW_TLV_ELEMENT_LENGTH(LENGTH_STR, sizeof(length));
+	if (kdf_len) {
+		if (ADD_OVERFLOW(tlv_length, kdf_len + 1, &tlv_length))
+			return PSA_ERROR_INVALID_ARGUMENT;
 
-	if (min_length)
-		*tlv_length += SMW_TLV_ELEMENT_LENGTH(MIN_LENGTH_STR,
-						      sizeof(min_length));
+		if (SMW_TLV_ELEMENT_LENGTH(KDF_STR, tlv_length, tlv_length))
+			return PSA_ERROR_INVALID_ARGUMENT;
+	}
 
-	*tlv = SMW_UTILS_MALLOC(*tlv_length);
+	if (length) {
+		if (ADD_OVERFLOW(tlv_length, sizeof(length), &tlv_length))
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		if (SMW_TLV_ELEMENT_LENGTH(LENGTH_STR, tlv_length, tlv_length))
+			return PSA_ERROR_INVALID_ARGUMENT;
+	}
+	if (min_length) {
+		if (ADD_OVERFLOW(tlv_length, sizeof(min_length), &tlv_length))
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		if (SMW_TLV_ELEMENT_LENGTH(MIN_LENGTH_STR, tlv_length,
+					   tlv_length))
+
+			return PSA_ERROR_INVALID_ARGUMENT;
+	}
+
+	*out_tlv_length = tlv_length;
+
+	*tlv = SMW_UTILS_MALLOC(tlv_length);
 	if (!*tlv)
 		return PSA_ERROR_INSUFFICIENT_MEMORY;
 
@@ -790,9 +813,10 @@ static unsigned int get_usage_tlv_length(psa_key_usage_t usage_flags,
 {
 	unsigned int usage_tlv_length = 0;
 	unsigned int usage_v_length = 0;
-	unsigned int i;
+	unsigned int tmp_length = 0;
+	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(key_usage); i++) {
+	for (; i < ARRAY_SIZE(key_usage); i++) {
 		if (usage_flags & key_usage[i].psa_usage) {
 			usage_v_length =
 				SMW_UTILS_STRLEN(key_usage[i].usage_str) + 1;
@@ -800,9 +824,17 @@ static unsigned int get_usage_tlv_length(psa_key_usage_t usage_flags,
 			if (key_usage[i].restricted)
 				usage_v_length += algo_tlv_length;
 
-			usage_tlv_length +=
-				SMW_TLV_ELEMENT_LENGTH(USAGE_STR,
-						       usage_v_length);
+			if (SMW_TLV_ELEMENT_LENGTH(USAGE_STR, usage_v_length,
+						   tmp_length)) {
+				usage_tlv_length = 0;
+				break;
+			}
+
+			if (ADD_OVERFLOW(usage_tlv_length, tmp_length,
+					 &usage_tlv_length)) {
+				usage_tlv_length = 0;
+				break;
+			}
 		}
 	}
 
@@ -1029,6 +1061,7 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 	unsigned int algo_v_length = 0;
 	unsigned int algo_tlv_length = 0;
 	unsigned int usage_tlv_length = 0;
+	unsigned int tmp_tlv_length = 0;
 	unsigned int storage_id = 0;
 	smw_keymgr_persistence_t key_persistence = NULL;
 
@@ -1052,27 +1085,63 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
 
-	if (algo_v_length)
-		algo_tlv_length =
-			SMW_TLV_ELEMENT_LENGTH(ALGO_STR, algo_v_length);
+	if (algo_v_length) {
+		if (SMW_TLV_ELEMENT_LENGTH(ALGO_STR, algo_v_length,
+					   algo_tlv_length)) {
+			psa_status = PSA_ERROR_INVALID_ARGUMENT;
+			goto end;
+		}
+	}
 
 	usage_tlv_length = get_usage_tlv_length(usage_flags, algo_tlv_length);
 
-	*key_attributes_list_length =
-		SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_tlv_length);
+	if (SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_tlv_length,
+				   tmp_tlv_length)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
+
+	*key_attributes_list_length = tmp_tlv_length;
 
 	if (!PSA_KEY_LIFETIME_IS_VOLATILE(lifetime)) {
-		*key_attributes_list_length +=
-			SMW_TLV_ELEMENT_LENGTH(key_persistence, 0);
+		if (SMW_TLV_ELEMENT_LENGTH(key_persistence, 0,
+					   tmp_tlv_length)) {
+			psa_status = PSA_ERROR_INVALID_ARGUMENT;
+			goto end;
+		}
 
-		*key_attributes_list_length +=
-			SMW_TLV_ELEMENT_LENGTH(FLUSH_KEY_STR, 0);
+		if (ADD_OVERFLOW(*key_attributes_list_length, tmp_tlv_length,
+				 key_attributes_list_length)) {
+			psa_status = PSA_ERROR_INVALID_ARGUMENT;
+			goto end;
+		}
+
+		if (SMW_TLV_ELEMENT_LENGTH(FLUSH_KEY_STR, 0, tmp_tlv_length)) {
+			psa_status = PSA_ERROR_INVALID_ARGUMENT;
+			goto end;
+		}
+
+		if (ADD_OVERFLOW(*key_attributes_list_length, tmp_tlv_length,
+				 key_attributes_list_length)) {
+			psa_status = PSA_ERROR_INVALID_ARGUMENT;
+			goto end;
+		}
 	}
 
 	storage_id = PSA_KEY_LIFETIME_GET_LOCATION(attributes->lifetime);
-	*key_attributes_list_length +=
-		SMW_TLV_ELEMENT_LENGTH(STORAGE_ID_STR,
-				       smw_tlv_numeral_length(storage_id));
+
+	if (SMW_TLV_ELEMENT_LENGTH(STORAGE_ID_STR,
+				   smw_tlv_numeral_length(storage_id),
+				   tmp_tlv_length)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
+
+	if (ADD_OVERFLOW(*key_attributes_list_length, tmp_tlv_length,
+			 key_attributes_list_length)) {
+		psa_status = PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
+	}
 
 	*key_attributes_list = SMW_UTILS_MALLOC(*key_attributes_list_length);
 	if (!*key_attributes_list) {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <tee_client_api.h>
@@ -39,9 +39,9 @@ static int get_tee_cipher_algo_id(enum smw_config_key_type_id key_type,
 				  enum smw_config_cipher_mode_id cipher_mode,
 				  uint32_t *tee_algo)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(tee_cipher_algo_id); i++) {
+	for (; i < ARRAY_SIZE(tee_cipher_algo_id); i++) {
 		if (key_type == tee_cipher_algo_id[i].key_type &&
 		    cipher_mode == tee_cipher_algo_id[i].cipher_mode) {
 			*tee_algo = tee_cipher_algo_id[i].tee_algo;
@@ -149,11 +149,11 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	int res;
-	unsigned int key_idx;
-	unsigned int key_id;
+	int res = SMW_STATUS_OK;
+	unsigned int key_idx = 0;
+	unsigned int key_id = INVALID_KEY_ID;
 	uint32_t param2_type = TEEC_NONE;
-	enum smw_config_key_type_id key_type;
+	enum smw_config_key_type_id key_type = 0;
 	struct shared_context context = { 0 };
 	unsigned int key_usage = 0;
 
@@ -185,7 +185,7 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	for (key_idx = 0; key_idx < args->nb_keys; key_idx++) {
+	for (; key_idx < args->nb_keys; key_idx++) {
 		key_id = smw_crypto_get_cipher_key_id(args, key_idx);
 
 		/*
@@ -259,11 +259,12 @@ end:
 }
 
 static int cipher_multi_part_common(struct smw_crypto_cipher_args *args,
-				    unsigned int ta_cmd)
+				    enum ta_commands ta_cmd)
 {
 	TEEC_Operation op = { 0 };
-	int status;
-	struct shared_context context;
+	int status = SMW_STATUS_OK;
+	struct shared_context context = { 0 };
+	unsigned int output_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -312,7 +313,10 @@ static int cipher_multi_part_common(struct smw_crypto_cipher_args *args,
 			    ta_cmd == CMD_CIPHER_UPDATE ? "update" : "final");
 
 	/* Update output length */
-	smw_crypto_set_cipher_output_len(args, op.params[2].tmpref.size);
+	if (!SET_OVERFLOW(op.params[2].tmpref.size, output_length))
+		smw_crypto_set_cipher_output_len(args, output_length);
+	else
+		status = SMW_STATUS_OPERATION_FAILURE;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -331,7 +335,7 @@ static int cipher_multi_part_common(struct smw_crypto_cipher_args *args,
  */
 static int cipher(void *args)
 {
-	int status;
+	int status = SMW_STATUS_OK;
 	struct smw_crypto_cipher_args *cipher_args = args;
 	struct smw_op_context op_context = { 0 };
 
@@ -356,7 +360,7 @@ end:
 
 static int cipher_multi_part(void *args)
 {
-	int status;
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	struct smw_crypto_cipher_args *cipher_args = args;
 
 	switch (cipher_args->op_step) {
@@ -375,7 +379,6 @@ static int cipher_multi_part(void *args)
 		break;
 
 	default:
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		break;
 	}
 

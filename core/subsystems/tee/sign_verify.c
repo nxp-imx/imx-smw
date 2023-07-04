@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <tee_client_api.h>
@@ -41,7 +41,7 @@ static int tee_convert_signature_type_id(enum smw_config_sign_type_id smw_id,
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int array_size = ARRAY_SIZE(signature_type_ids);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -76,23 +76,26 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	TEEC_Operation operation = { 0 };
 	TEEC_SharedMemory shm = { 0 };
 
-	struct smw_keymgr_descriptor *key_descriptor = &args->key_descriptor;
-	struct smw_keymgr_identifier *key_identifier =
-		&key_descriptor->identifier;
+	struct smw_keymgr_descriptor *key_descriptor = NULL;
+	struct smw_keymgr_identifier *key_identifier = NULL;
 	struct sign_verify_shared_params shared_params = { 0 };
+	unsigned int sign_length = 0;
 
 	uint32_t param0_type = TEEC_NONE;
-	uint32_t param3_type;
+	uint32_t param3_type = TEEC_NONE;
 
-	enum tee_key_type key_type_id;
-	enum smw_keymgr_privacy_id key_privacy;
+	enum tee_key_type key_type_id = TEE_KEY_TYPE_ID_INVALID;
+	enum smw_keymgr_privacy_id key_privacy = SMW_KEYMGR_PRIVACY_ID_INVALID;
 
-	uint32_t cmd_id;
+	enum ta_commands cmd_id = CMD_VERIFY;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!args)
 		goto exit;
+
+	key_descriptor = &args->key_descriptor;
+	key_identifier = &key_descriptor->identifier;
 
 	status = tee_convert_key_type(key_identifier->type_id, &key_type_id);
 	if (status != SMW_STATUS_OK)
@@ -210,13 +213,17 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 			    "%s: Operation failed\n", __func__);
 
 	if (op_id == OPERATION_ID_SIGN) {
-		smw_sign_verify_set_sign_len(args,
-					     operation.params[3].tmpref.size);
+		if (!SET_OVERFLOW(operation.params[3].tmpref.size,
+				  sign_length)) {
+			smw_sign_verify_set_sign_len(args, sign_length);
 
-		SMW_DBG_PRINTF(DEBUG, "Output (%zu):\n",
-			       operation.params[3].tmpref.size);
-		SMW_DBG_HEX_DUMP(DEBUG, operation.params[3].tmpref.buffer,
-				 operation.params[3].tmpref.size, 4);
+			SMW_DBG_PRINTF(DEBUG, "Output (%u):\n", sign_length);
+			SMW_DBG_HEX_DUMP(DEBUG,
+					 operation.params[3].tmpref.buffer,
+					 sign_length, 4);
+		} else {
+			status = SMW_STATUS_OPERATION_FAILURE;
+		}
 	}
 
 exit:

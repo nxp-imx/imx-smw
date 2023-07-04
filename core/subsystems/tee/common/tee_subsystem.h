@@ -106,7 +106,8 @@ enum ta_commands {
 	CMD_MAC_COMPUTE,
 	CMD_MAC_VERIFY,
 	CMD_GET_KEY_LENGTHS,
-	CMD_GET_KEY_ATTRIBUTES
+	CMD_GET_KEY_ATTRIBUTES,
+	CMD_INVALID,
 };
 
 struct mac_shared_params {

@@ -7,6 +7,7 @@
 #define TEE_H
 
 #include "keymgr.h"
+#include "utils.h"
 
 #include "tee_subsystem.h"
 
@@ -16,16 +17,12 @@
  */
 #define SET_TEEC_PARAMS_TYPE(t, p, i)                                          \
 	do {                                                                   \
-		__typeof__(t) *_t = &(t);                                      \
-		__typeof__(p) _p = (p);                                        \
-		__typeof__(i) _i = (i);                                        \
-		*_t = SET_CLEAR_MASK(*_t, (_p & 0xF) << (_i * 4),              \
-				     (0xF << (_i * 4)));                       \
+		uint32_t _t = (t);                                             \
+		uint32_t _p = (p);                                             \
+		uint32_t _i = (i);                                             \
+		(t) = SET_CLEAR_MASK(_t, (_p & 0xF) << (_i * 4),               \
+				     ((uint32_t)0xF << (_i * 4)));             \
 	} while (0)
-
-#ifndef TEEC_ERROR_SIGNATURE_INVALID
-#define TEEC_ERROR_SIGNATURE_INVALID 0xFFFF3072
-#endif
 
 /**
  * tee_convert_key_type() - Convert SMW key type to TEE key type.
@@ -60,7 +57,7 @@ int tee_convert_hash_algorithm_id(enum smw_config_hash_algo_id smw_id,
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_SUBSYSTEM_FAILURE - Operation failed.
  */
-int execute_tee_cmd(uint32_t cmd_id, TEEC_Operation *op);
+int execute_tee_cmd(enum ta_commands cmd_id, TEEC_Operation *op);
 
 /**
  * tee_key_handle() - Handle the key operations.

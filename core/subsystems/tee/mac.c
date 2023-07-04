@@ -55,6 +55,7 @@ static int mac(void *args)
 	struct smw_crypto_mac_args *mac_args = args;
 	struct smw_keymgr_descriptor *key_descriptor = NULL;
 	struct smw_keymgr_identifier *key_identifier = NULL;
+	unsigned int output_length = 0;
 
 	uint32_t key_param_type = TEEC_VALUE_INPUT;
 	uint32_t mac_param_type = TEEC_MEMREF_TEMP_INPUT;
@@ -113,9 +114,13 @@ static int mac(void *args)
 	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE) {
 		status = execute_tee_cmd(CMD_MAC_COMPUTE, &op);
 		if (status == SMW_STATUS_OK ||
-		    status == SMW_STATUS_OUTPUT_TOO_SHORT)
-			smw_mac_set_mac_length(mac_args,
-					       op.params[3].tmpref.size);
+		    status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+			if (!SET_OVERFLOW(op.params[3].tmpref.size,
+					  output_length))
+				smw_mac_set_mac_length(mac_args, output_length);
+			else
+				status = SMW_STATUS_OPERATION_FAILURE;
+		}
 	} else {
 		status = execute_tee_cmd(CMD_MAC_VERIFY, &op);
 	}

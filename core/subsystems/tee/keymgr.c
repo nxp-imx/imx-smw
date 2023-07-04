@@ -198,7 +198,7 @@ int tee_convert_key_type(enum smw_config_key_type_id smw_key_type,
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(key_info);
-	enum tee_key_type tmp_type = TEE_KEY_TYPE_ID_INVALID;
+	enum tee_key_type tmp_type = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -240,11 +240,11 @@ key_type_tee_to_smw(enum tee_key_type tee_key_type)
 
 static bool key_usage_to_value(const char *value, unsigned int *usage)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < ARRAY_SIZE(key_usage); i++) {
+	for (; i < ARRAY_SIZE(key_usage); i++) {
 		if (!SMW_UTILS_STRCMP(key_usage[i].usage_str, value)) {
 			SMW_DBG_PRINTF(DEBUG, "Key usage: %s\n", value);
 			*usage |= key_usage[i].tee_usage;
@@ -311,7 +311,8 @@ static int tee_set_key_usage(unsigned char *policy, unsigned int policy_len,
 
 	smw_tlv_set_length(actual_policy, q);
 
-	SMW_DBG_ASSERT((unsigned int)(q - actual_policy) <= *actual_policy_len);
+	SMW_DBG_ASSERT((uintptr_t)q - (uintptr_t)actual_policy <=
+		       *actual_policy_len);
 	*actual_policy_len = q - actual_policy;
 
 	if (policy_ignored)
@@ -333,13 +334,13 @@ exit:
  * If @str is not NULL, the length of @str built
  * -1 in case of error (@str's length too small
  */
-static int key_usage_to_string(unsigned char **str, int length,
-			       unsigned int usage)
+static size_t key_usage_to_string(unsigned char **str, size_t length,
+				  unsigned int usage)
 {
 	unsigned char *p = NULL;
-	int out_len = 0;
-	int rem_len = length;
-	int usage_len = 0;
+	size_t out_len = 0;
+	size_t rem_len = length;
+	size_t usage_len = 0;
 	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -354,11 +355,11 @@ static int key_usage_to_string(unsigned char **str, int length,
 		usage_len = SMW_UTILS_STRLEN(key_usage[i].usage_str) + 1;
 
 		if (SMW_TLV_ELEMENT_LENGTH(USAGE_STR, usage_len, usage_len)) {
-			out_len = -1;
+			out_len = SIZE_MAX;
 			break;
 		}
 
-		SMW_DBG_PRINTF(DEBUG, "Key usage (len=%u): USAGE=%s\n",
+		SMW_DBG_PRINTF(DEBUG, "Key usage (len=%zu): USAGE=%s\n",
 			       usage_len, key_usage[i].usage_str);
 		if (p) {
 			if (rem_len >= usage_len) {
@@ -366,19 +367,22 @@ static int key_usage_to_string(unsigned char **str, int length,
 						   key_usage[i].usage_str);
 				rem_len -= usage_len;
 			} else {
-				out_len = -1;
+				out_len = SIZE_MAX;
 				p = *str;
 				break;
 			}
 		}
 
-		out_len += usage_len;
+		if (ADD_OVERFLOW(out_len, usage_len, &out_len)) {
+			out_len = SIZE_MAX;
+			break;
+		}
 	}
 
 	if (str)
 		*str = p;
 
-	SMW_DBG_PRINTF(DEBUG, "%s return length %u\n", __func__, out_len);
+	SMW_DBG_PRINTF(DEBUG, "%s return length %zu\n", __func__, out_len);
 	return out_len;
 }
 
@@ -388,13 +392,13 @@ static int tee_set_key_policy(unsigned char **policy, unsigned int *policy_len,
 	int status = SMW_STATUS_KEY_POLICY_ERROR;
 
 	unsigned char *p = NULL;
-	int usage_str_len = 0;
+	size_t usage_str_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	/* Get the expected usage(s) string length */
 	usage_str_len = key_usage_to_string(NULL, usage_str_len, tee_usage);
-	if (usage_str_len == -1)
+	if (usage_str_len == SIZE_MAX)
 		goto exit;
 
 	/* Calculate policy length and allocate the policy string */
@@ -547,7 +551,6 @@ static inline void free_tmpref_buffer(unsigned int param_idx,
  *
  * Return:
  * SMW_STATUS_OK                - Success.
- * SMW_STATUS_INVALID_PARAM     - One of the parameter is invalid.
  * SMW_STATUS_OUTPUT_TOO_SHORT  - Output buffer is too short
  * SMW_STATUS_OPERATION_FAILURE - No exported buffer
  */
@@ -556,7 +559,7 @@ static int update_public_buffers(struct smw_keymgr_descriptor *key_desc,
 				 bool only_length)
 {
 	int status = SMW_STATUS_OPERATION_FAILURE;
-	int status_mod = SMW_STATUS_OPERATION_FAILURE;
+	int status_mod = SMW_STATUS_OK;
 	unsigned char *data = NULL;
 	unsigned int length = 0;
 	unsigned int param_idx = GEN_PUB_KEY_PARAM_IDX;
@@ -570,7 +573,8 @@ static int update_public_buffers(struct smw_keymgr_descriptor *key_desc,
 	if (!only_length)
 		data = op->params[param_idx].tmpref.buffer;
 
-	length = op->params[param_idx].tmpref.size;
+	if (SET_OVERFLOW(op->params[param_idx].tmpref.size, length))
+		goto exit;
 
 	status = smw_keymgr_update_public_buffer(key_desc, data, length);
 
@@ -584,13 +588,14 @@ static int update_public_buffers(struct smw_keymgr_descriptor *key_desc,
 	if (!only_length)
 		data = op->params[param_idx].tmpref.buffer;
 
-	if (op->params[param_idx].tmpref.size < UINT_MAX)
-		length = op->params[param_idx].tmpref.size;
-
-	status_mod = smw_keymgr_update_modulus_buffer(key_desc, data, length);
-	if (status == SMW_STATUS_OK)
-		status = status_mod;
-
+	if (!SET_OVERFLOW(op->params[param_idx].tmpref.size, length)) {
+		status_mod = smw_keymgr_update_modulus_buffer(key_desc, data,
+							      length);
+		if (status == SMW_STATUS_OK)
+			status = status_mod;
+	} else {
+		status = SMW_STATUS_OPERATION_FAILURE;
+	}
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -726,7 +731,7 @@ exit:
 static int set_params_gen_key(struct smw_keymgr_generate_key_args *key_args,
 			      TEEC_Operation *op)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 	struct smw_keymgr_attributes *key_attrs = &key_args->key_attributes;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -804,11 +809,11 @@ static int generate_key(void *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
-	int tmp_status = SMW_STATUS_INVALID_PARAM;
+	int tmp_status = SMW_STATUS_OK;
 	int usage_status = SMW_STATUS_OK;
 	struct smw_keymgr_generate_key_args *key_args = args;
 	struct smw_keymgr_identifier *key_identifier = NULL;
-	struct smw_keymgr_attributes *key_attrs;
+	struct smw_keymgr_attributes *key_attrs = NULL;
 	const struct key_info *key = NULL;
 	struct keymgr_shared_params shared_params = { 0 };
 	unsigned char *actual_policy = NULL;
@@ -1093,7 +1098,7 @@ static int set_hex_imp_buffer(enum smw_keymgr_format_id format_id,
 			      unsigned char **hex_buffer,
 			      unsigned int *hex_buffer_len)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1139,8 +1144,9 @@ set_params_import_pub_key(struct smw_keymgr_descriptor *key_descriptor,
 			  TEEC_Operation *op)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	unsigned char *hex_pub_data;
-	unsigned int hex_pub_len;
+	unsigned char *hex_pub_data = NULL;
+	unsigned int hex_pub_len = 0;
+	unsigned int ecc_pub_size = 0;
 	unsigned int pub_data_len =
 		smw_keymgr_get_public_length(key_descriptor);
 
@@ -1161,12 +1167,16 @@ set_params_import_pub_key(struct smw_keymgr_descriptor *key_descriptor,
 	 * Check coherence between buffer length and security size for
 	 * ECDSA public key
 	 */
-	if (key->tee_key_type == TEE_KEY_TYPE_ID_ECDSA &&
-	    (hex_pub_len != 2 * key_size_bytes)) {
-		SMW_DBG_PRINTF(ERROR, "%s: Wrong public key buffer length\n",
-			       __func__);
-		status = SMW_STATUS_INVALID_PARAM;
-		goto exit;
+	if (key->tee_key_type == TEE_KEY_TYPE_ID_ECDSA) {
+		if (MUL_OVERFLOW(key_size_bytes, 2, &ecc_pub_size) ||
+		    hex_pub_len != ecc_pub_size) {
+			SMW_DBG_PRINTF(ERROR,
+				       "%s: Wrong public key buffer length\n",
+				       __func__);
+
+			status = SMW_STATUS_INVALID_PARAM;
+			goto exit;
+		}
 	}
 
 	status =
@@ -1174,6 +1184,11 @@ set_params_import_pub_key(struct smw_keymgr_descriptor *key_descriptor,
 				  hex_pub_data, hex_pub_len, op);
 
 exit:
+	if (status != SMW_STATUS_OK &&
+	    key_descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 &&
+	    hex_pub_data)
+		SMW_UTILS_FREE(hex_pub_data);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -1199,13 +1214,16 @@ set_params_import_priv_key(enum tee_key_type key_type,
 			   unsigned int key_size_bytes,
 			   unsigned char *priv_data, TEEC_Operation *op)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
-	unsigned char *hex_priv_data;
-	unsigned int hex_priv_len;
-	unsigned int priv_data_len =
-		smw_keymgr_get_private_length(key_descriptor);
+	int status = SMW_STATUS_OK;
+	unsigned char *hex_priv_data = NULL;
+	unsigned int hex_priv_len = 0;
+	unsigned int priv_data_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	priv_data_len = smw_keymgr_get_private_length(key_descriptor);
+	if (!priv_data_len)
+		goto exit;
 
 	status = set_hex_imp_buffer(key_descriptor->format_id, priv_data,
 				    priv_data_len, &hex_priv_data,
@@ -1229,6 +1247,11 @@ set_params_import_priv_key(enum tee_key_type key_type,
 				   hex_priv_len, op);
 
 exit:
+	if (status != SMW_STATUS_OK &&
+	    key_descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 &&
+	    hex_priv_data)
+		SMW_UTILS_FREE(hex_priv_data);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -1252,9 +1275,9 @@ set_params_import_modulus(struct smw_keymgr_descriptor *key_descriptor,
 			  unsigned int key_size_bytes, unsigned char *modulus,
 			  TEEC_Operation *op)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
-	unsigned char *hex_modulus;
-	unsigned int hex_modulus_len;
+	int status = SMW_STATUS_OK;
+	unsigned char *hex_modulus = NULL;
+	unsigned int hex_modulus_len = 0;
 	unsigned int modulus_len =
 		smw_keymgr_get_modulus_length(key_descriptor);
 
@@ -1278,6 +1301,11 @@ set_params_import_modulus(struct smw_keymgr_descriptor *key_descriptor,
 				   hex_modulus, hex_modulus_len, op);
 
 exit:
+	if (status != SMW_STATUS_OK &&
+	    key_descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 &&
+	    hex_modulus)
+		SMW_UTILS_FREE(hex_modulus);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -1304,7 +1332,7 @@ static int set_params_import_key(struct smw_keymgr_descriptor *key_descriptor,
 				 unsigned int key_size_bytes,
 				 TEEC_Operation *op)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 	unsigned char *public_data = smw_keymgr_get_public_data(key_descriptor);
 	unsigned char *private_data =
 		smw_keymgr_get_private_data(key_descriptor);
@@ -1366,10 +1394,10 @@ static int import_key(void *args)
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
 	int usage_status = SMW_STATUS_OK;
-	unsigned int key_size_bytes = 0;
+	size_t key_size_bytes = 0;
 	struct smw_keymgr_import_key_args *key_args = args;
 	struct smw_keymgr_identifier *key_identifier = NULL;
-	struct smw_keymgr_attributes *key_attrs;
+	struct smw_keymgr_attributes *key_attrs = NULL;
 	const struct key_info *key = NULL;
 	struct keymgr_shared_params shared_params = { 0 };
 	unsigned char *actual_policy = NULL;
@@ -1476,9 +1504,11 @@ static int import_key(void *args)
 		       key_identifier->id);
 
 	/* For RSA key type attribute is the public exponent length in bytes */
-	if (key_identifier->type_id == SMW_CONFIG_KEY_TYPE_ID_RSA)
-		key_identifier->attribute =
-			op.params[IMP_PUB_KEY_PARAM_IDX].tmpref.size;
+	if (key_identifier->type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
+		if (SET_OVERFLOW(op.params[IMP_PUB_KEY_PARAM_IDX].tmpref.size,
+				 key_identifier->attribute))
+			status = SMW_STATUS_OPERATION_FAILURE;
+	}
 
 exit:
 	if (key_args &&
@@ -1496,6 +1526,8 @@ exit:
 	if (status == SMW_STATUS_OK &&
 	    usage_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
 		status = usage_status;
+	else if (status != SMW_STATUS_OK && shared_params.id)
+		(void)cmd_ta_delete_key(shared_params.id);
 
 	if (actual_policy) {
 		if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
@@ -1527,7 +1559,7 @@ static int export_key(void *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
-	int tmp_status = SMW_STATUS_INVALID_PARAM;
+	int tmp_status = SMW_STATUS_OK;
 	struct smw_keymgr_export_key_args *key_args = args;
 	struct smw_keymgr_descriptor *key_descriptor = NULL;
 
@@ -1599,10 +1631,10 @@ static int get_key_lengths(void *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
-	int tmp_status = SMW_STATUS_INVALID_PARAM;
+	int tmp_status = SMW_STATUS_OK;
 	struct smw_keymgr_descriptor *key_desc = NULL;
-	enum smw_config_key_type_id key_type = SMW_CONFIG_KEY_TYPE_ID_INVALID;
-	enum tee_key_type tee_key_type = TEE_KEY_TYPE_ID_INVALID;
+	enum smw_config_key_type_id key_type = 0;
+	enum tee_key_type tee_key_type = 0;
 	unsigned int length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1636,7 +1668,12 @@ static int get_key_lengths(void *args)
 		goto exit;
 	}
 
-	tee_key_type = op.params[GET_KEY_LENGTHS_KEY_ID_IDX].value.b;
+	if (SET_OVERFLOW(op.params[GET_KEY_LENGTHS_KEY_ID_IDX].value.b,
+			 tee_key_type)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
+	}
+
 	key_type = key_type_tee_to_smw(tee_key_type);
 	if (key_desc->identifier.type_id != key_type) {
 		SMW_DBG_PRINTF(DEBUG, "User/TEE key type error %d != %d\n",
@@ -1686,7 +1723,7 @@ static int get_key_attributes(void *args)
 	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_keymgr_get_key_attributes_args *key_attrs = NULL;
-	enum tee_key_type tee_type = TEE_KEY_TYPE_ID_INVALID;
+	enum tee_key_type tee_type = 0;
 	unsigned int tee_usage = 0;
 	unsigned char *policy_list = NULL;
 	unsigned int policy_list_length = 0;
@@ -1723,7 +1760,12 @@ static int get_key_attributes(void *args)
 		goto exit;
 	}
 
-	tee_type = op.params[GET_KEY_ATTRS_KEY_TYPE_IDX].value.a;
+	if (SET_OVERFLOW(op.params[GET_KEY_ATTRS_KEY_TYPE_IDX].value.a,
+			 tee_type)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
+	}
+
 	tee_usage = op.params[GET_KEY_ATTRS_KEY_USAGE_IDX].value.b;
 
 	switch (op.params[GET_KEY_ATTRS_KEYPAIR_FLAG_IDX].value.a) {
@@ -1784,8 +1826,10 @@ exit:
  */
 static int get_shared_key_size(struct smw_keymgr_descriptor *key_descriptor,
 			       enum smw_keymgr_privacy_id privacy,
-			       unsigned int *memory_size)
+			       size_t *memory_size)
 {
+	int status = SMW_STATUS_INVALID_PARAM;
+	size_t out_size = 0;
 	unsigned int pub_size = 0;
 	unsigned int priv_size = 0;
 
@@ -1793,43 +1837,50 @@ static int get_shared_key_size(struct smw_keymgr_descriptor *key_descriptor,
 	case SMW_KEYMGR_PRIVACY_ID_PAIR:
 		if (!smw_keymgr_get_public_data(key_descriptor) ||
 		    !smw_keymgr_get_private_data(key_descriptor))
-			return SMW_STATUS_INVALID_PARAM;
+			goto exit;
 
 		pub_size = smw_keymgr_get_public_length(key_descriptor);
 		priv_size = smw_keymgr_get_private_length(key_descriptor);
 
 		if (!pub_size || !priv_size)
-			return SMW_STATUS_INVALID_PARAM;
+			goto exit;
+
 		break;
 
 	case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
 		if (!smw_keymgr_get_private_data(key_descriptor))
-			return SMW_STATUS_INVALID_PARAM;
+			goto exit;
 
 		priv_size = smw_keymgr_get_private_length(key_descriptor);
 		if (!priv_size)
-			return SMW_STATUS_INVALID_PARAM;
+			goto exit;
 
 		break;
 
 	case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
 		if (!smw_keymgr_get_public_data(key_descriptor))
-			return SMW_STATUS_INVALID_PARAM;
+			goto exit;
 
 		pub_size = smw_keymgr_get_public_length(key_descriptor);
 		if (!pub_size)
-			return SMW_STATUS_INVALID_PARAM;
+			goto exit;
 
 		break;
 
 	default:
-		return SMW_STATUS_INVALID_PARAM;
+		goto exit;
 	}
 
-	*memory_size = smw_keymgr_get_modulus_length(key_descriptor) +
-		       pub_size + priv_size;
+	out_size = smw_keymgr_get_modulus_length(key_descriptor);
+	if (!ADD_OVERFLOW(out_size, pub_size, &out_size)) {
+		if (!ADD_OVERFLOW(out_size, priv_size, &out_size)) {
+			*memory_size = out_size;
+			status = SMW_STATUS_OK;
+		}
+	}
 
-	return SMW_STATUS_OK;
+exit:
+	return status;
 }
 
 /**
@@ -1851,6 +1902,8 @@ static int fill_shared_key_memory(struct smw_keymgr_descriptor *key_descriptor,
 	unsigned char *private_data = NULL;
 	unsigned int public_length = 0;
 	unsigned int private_length = 0;
+	unsigned char *modulus_data = NULL;
+	unsigned int modulus_length = 0;
 
 	switch (privacy) {
 	case SMW_KEYMGR_PRIVACY_ID_PAIR:
@@ -1896,11 +1949,10 @@ static int fill_shared_key_memory(struct smw_keymgr_descriptor *key_descriptor,
 		key_buffer += private_length;
 	}
 
-	if (smw_keymgr_get_modulus(key_descriptor)) {
-		SMW_UTILS_MEMCPY(key_buffer,
-				 smw_keymgr_get_modulus(key_descriptor),
-				 smw_keymgr_get_modulus_length(key_descriptor));
-	}
+	modulus_data = smw_keymgr_get_modulus(key_descriptor);
+	modulus_length = smw_keymgr_get_modulus_length(key_descriptor);
+	if (modulus_data && modulus_length)
+		SMW_UTILS_MEMCPY(key_buffer, modulus_data, modulus_length);
 
 	return SMW_STATUS_OK;
 }
@@ -1910,8 +1962,8 @@ int copy_keys_to_shm(TEEC_SharedMemory *shm,
 		     enum smw_keymgr_privacy_id privacy)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	unsigned int memory_size;
-	TEEC_Result result;
+	size_t memory_size = 0;
+	TEEC_Result result = TEEC_SUCCESS;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1922,6 +1974,7 @@ int copy_keys_to_shm(TEEC_SharedMemory *shm,
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
+	shm->buffer = NULL;
 	shm->size = memory_size;
 	shm->flags = TEEC_MEM_INPUT;
 

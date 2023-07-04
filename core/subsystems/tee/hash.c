@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021,2023 NXP
  */
 
 #include <tee_client_api.h>
@@ -38,12 +38,12 @@ int tee_convert_hash_algorithm_id(enum smw_config_hash_algo_id smw_id,
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int array_size = ARRAY_SIZE(algorithm_ids);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < array_size; i++) {
+	for (; i < array_size; i++) {
 		if (algorithm_ids[i].smw_id == smw_id) {
 			*tee_id = algorithm_ids[i].tee_id;
 			status = SMW_STATUS_OK;
@@ -69,7 +69,8 @@ static int hash(void *args)
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_hash_args *hash_args = args;
-	uint32_t tee_algorithm_id;
+	enum tee_algorithm_id tee_algorithm_id = 0;
+	unsigned int output_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -102,9 +103,13 @@ static int hash(void *args)
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_HASH, &op);
 
-	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT)
-		smw_crypto_set_hash_output_length(hash_args,
-						  op.params[2].tmpref.size);
+	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+		if (!SET_OVERFLOW(op.params[2].tmpref.size, output_length))
+			smw_crypto_set_hash_output_length(hash_args,
+							  output_length);
+		else
+			status = SMW_STATUS_OPERATION_FAILURE;
+	}
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

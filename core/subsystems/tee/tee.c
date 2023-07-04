@@ -95,12 +95,12 @@ __weak bool tee_cipher_handle(enum operation_id operation_id, void *args,
 
 static void str_to_hex(char *str, unsigned char *hex)
 {
-	long val;
+	long val = 0;
 	unsigned char *phex = hex;
 	char tmp[3] = { 0 };
-	size_t i;
+	size_t i = 0;
 
-	for (i = 0; i < strlen(str); i += 2, phex++) {
+	for (; i < strlen(str); i += 2, phex++) {
 		tmp[0] = str[i];
 		tmp[1] = str[i + 1];
 		val = SMW_UTILS_STRTOL(tmp, NULL, 16);
@@ -123,20 +123,24 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 {
 	int res = SMW_STATUS_INVALID_PARAM;
 	static const char delim[2] = "-";
-	char *field;
+	char *field = NULL;
 	char *tmp = NULL;
-	size_t len;
+	size_t len = 0;
+	long time_field = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	len = SMW_UTILS_STRLEN(str) + 1;
-	tmp = SMW_UTILS_CALLOC(1, len);
+	if (ADD_OVERFLOW(SMW_UTILS_STRLEN(str), 1, &len))
+		goto exit;
+
+	tmp = SMW_UTILS_MALLOC(len);
 	if (!tmp) {
 		SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
 		return SMW_STATUS_ALLOC_FAILURE;
 	}
 
 	SMW_UTILS_MEMCPY(tmp, str, len - 1);
+	tmp[len - 1] = 0;
 
 	/* Read the timeLow field */
 	field = SMW_UTILS_STRTOK(tmp, delim);
@@ -145,8 +149,8 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 		goto exit;
 	}
 
-	uuid->timeLow = SMW_UTILS_STRTOL(field, NULL, 16);
-	if (!uuid->timeLow) {
+	time_field = SMW_UTILS_STRTOL(field, NULL, 16);
+	if (SET_OVERFLOW(time_field, uuid->timeLow) || !uuid->timeLow) {
 		SMW_DBG_PRINTF(ERROR, "TA UUID timeLow bad value\n");
 		goto exit;
 	}
@@ -158,8 +162,8 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 		goto exit;
 	}
 
-	uuid->timeMid = SMW_UTILS_STRTOL(field, NULL, 16);
-	if (!uuid->timeMid) {
+	time_field = SMW_UTILS_STRTOL(field, NULL, 16);
+	if (SET_OVERFLOW(time_field, uuid->timeMid) || !uuid->timeMid) {
 		SMW_DBG_PRINTF(ERROR, "TA UUID timeMid bad value\n");
 		goto exit;
 	}
@@ -171,8 +175,9 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 		goto exit;
 	}
 
-	uuid->timeHiAndVersion = SMW_UTILS_STRTOL(field, NULL, 16);
-	if (!uuid->timeHiAndVersion) {
+	time_field = SMW_UTILS_STRTOL(field, NULL, 16);
+	if (SET_OVERFLOW(time_field, uuid->timeHiAndVersion) ||
+	    !uuid->timeHiAndVersion) {
 		SMW_DBG_PRINTF(ERROR, "TA UUID timeHiAndVersion bad value\n");
 		goto exit;
 	}
@@ -234,12 +239,12 @@ exit:
  */
 static int load(void)
 {
-	TEEC_Result tee_res = TEEC_ERROR_GENERIC;
+	TEEC_Result tee_res = TEEC_SUCCESS;
 	TEEC_UUID ta_uuid = { 0 };
-	int status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
+	int status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 	uint32_t err_origin = 0;
-	const char *subsystem_name;
-	struct tee_info info;
+	const char *subsystem_name = NULL;
+	struct tee_info info = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -248,10 +253,8 @@ static int load(void)
 
 	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_TEE);
 
-	if (smw_utils_get_subsystem_info(subsystem_name, &info)) {
-		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
+	if (smw_utils_get_subsystem_info(subsystem_name, &info))
 		goto exit;
-	}
 
 	status = ta_uuid_string_to_uuid(info.ta_uuid, &ta_uuid);
 	if (status != SMW_STATUS_OK)
@@ -422,8 +425,8 @@ int convert_tee_result(TEEC_Result result)
 
 int execute_tee_cmd(enum ta_commands cmd_id, TEEC_Operation *op)
 {
-	TEEC_Result tee_res = TEEC_ERROR_GENERIC;
-	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
+	TEEC_Result tee_res = TEEC_SUCCESS;
+	int status = SMW_STATUS_OK;
 	uint32_t err_origin = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <tee_client_api.h>
@@ -26,7 +26,7 @@
 static int cancel_operation(struct smw_crypto_cancel_op_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	struct shared_context shared_ctx;
+	struct shared_context shared_ctx = { 0 };
 	TEEC_Operation op = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -72,7 +72,7 @@ end:
 static int copy_context(struct smw_crypto_copy_ctx_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	struct shared_context src_ctx;
+	struct shared_context src_ctx = { 0 };
 	struct shared_context dst_ctx = { 0 };
 	TEEC_Operation op = { 0 };
 

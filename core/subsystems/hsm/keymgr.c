@@ -251,7 +251,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 static int export_key_operation(struct hdl *hdl,
 				struct smw_keymgr_descriptor *key_desc)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 
@@ -514,7 +514,7 @@ static int import_key(struct hdl *hdl, void *args)
 
 static int export_key(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_export_key_args *export_key_args = args;
 	struct smw_keymgr_descriptor *key_descriptor =
@@ -539,8 +539,8 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 {
 	(void)hdl;
 
-	int status = SMW_STATUS_INVALID_PARAM;
-	int tmp_status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	struct smw_keymgr_descriptor *key_desc = NULL;
 	unsigned int public_length = 0;

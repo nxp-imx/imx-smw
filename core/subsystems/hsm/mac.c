@@ -128,9 +128,18 @@ static int mac(struct hdl *hdl, void *args)
 	op_args.key_identifier = key_descriptor->identifier.id;
 	op_args.algorithm = alg.hsm_id;
 	op_args.payload = smw_mac_get_input_data(mac_args);
-	op_args.payload_size = (uint16_t)smw_mac_get_input_length(mac_args);
 	op_args.mac = smw_mac_get_mac_data(mac_args);
-	op_args.mac_size = (uint16_t)smw_mac_get_mac_length(mac_args);
+
+	if (SET_OVERFLOW(smw_mac_get_input_length(mac_args),
+			 op_args.payload_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	if (SET_OVERFLOW(smw_mac_get_mac_length(mac_args), op_args.mac_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE) {
 		if (!op_args.mac) {

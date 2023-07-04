@@ -137,9 +137,13 @@ static int cipher(struct hdl *hdl, void *args)
 	op_cipher_args.key_identifier =
 		smw_crypto_get_cipher_key_id(cipher_args, 0);
 	op_cipher_args.iv = smw_crypto_get_cipher_iv(cipher_args);
-	op_cipher_args.iv_size =
-		(unsigned int)smw_crypto_get_cipher_iv_len(cipher_args);
 	op_cipher_args.input = smw_crypto_get_cipher_input(cipher_args);
+
+	if (SET_OVERFLOW(smw_crypto_get_cipher_iv_len(cipher_args),
+			 op_cipher_args.iv_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	/*
 	 * If output length is too big HSM returns HSM_INVALID_PARAM, which

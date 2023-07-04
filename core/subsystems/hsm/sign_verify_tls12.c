@@ -111,11 +111,14 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	op_tls_args.key_identifier = key_identifier->id;
 	op_tls_args.handshake_hash_input =
 		smw_sign_verify_get_msg_buf(smw_args);
-	op_tls_args.handshake_hash_input_size =
-		(uint16_t)smw_sign_verify_get_msg_len(smw_args);
 	op_tls_args.verify_data_output = smw_sign_verify_get_sign_buf(smw_args);
 	set_hsm_tls_finish_flag(smw_args->attributes.tls_label,
 				&op_tls_args.flags);
+
+	if (SET_OVERFLOW(smw_sign_verify_get_msg_len(smw_args),
+			 op_tls_args.handshake_hash_input_size)) {
+		return SMW_STATUS_INVALID_PARAM;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_tls_finish()\n"

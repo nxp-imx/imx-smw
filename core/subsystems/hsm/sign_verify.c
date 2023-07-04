@@ -287,10 +287,14 @@ static int verify(struct hdl *hdl, void *args)
 	op_verify_sign_args.signature =
 		smw_sign_verify_get_sign_buf(verify_args);
 	op_verify_sign_args.key_size = key_size;
-	op_verify_sign_args.signature_size =
-		(uint16_t)smw_sign_verify_get_sign_len(verify_args);
 	op_verify_sign_args.message_size =
 		smw_sign_verify_get_msg_len(verify_args);
+
+	if (SET_OVERFLOW(smw_sign_verify_get_sign_len(verify_args),
+			 op_verify_sign_args.signature_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	hsm_signature_size = get_hsm_signature_size(security_size);
 

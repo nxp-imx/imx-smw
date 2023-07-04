@@ -352,7 +352,12 @@ static int key_usage_to_string(unsigned char **str, int length,
 			continue;
 
 		usage_len = SMW_UTILS_STRLEN(key_usage[i].usage_str) + 1;
-		usage_len = SMW_TLV_ELEMENT_LENGTH(USAGE_STR, usage_len);
+
+		if (SMW_TLV_ELEMENT_LENGTH(USAGE_STR, usage_len, usage_len)) {
+			out_len = -1;
+			break;
+		}
+
 		SMW_DBG_PRINTF(DEBUG, "Key usage (len=%u): USAGE=%s\n",
 			       usage_len, key_usage[i].usage_str);
 		if (p) {
@@ -393,7 +398,8 @@ static int tee_set_key_policy(unsigned char **policy, unsigned int *policy_len,
 		goto exit;
 
 	/* Calculate policy length and allocate the policy string */
-	*policy_len = SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_str_len);
+	if (SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_str_len, *policy_len))
+		goto exit;
 
 	*policy = SMW_UTILS_CALLOC(1, *policy_len);
 	if (!*policy) {
@@ -829,9 +835,12 @@ static int generate_key(void *args)
 	key_attrs = &key_args->key_attributes;
 
 	if (key_attrs->policy && key_attrs->policy_len) {
-		actual_policy_len =
-			SMW_TLV_ELEMENT_LENGTH(POLICY_STR,
-					       key_attrs->policy_len);
+		if (SMW_TLV_ELEMENT_LENGTH(POLICY_STR, key_attrs->policy_len,
+					   actual_policy_len)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto exit;
+		}
+
 		actual_policy = SMW_UTILS_MALLOC(actual_policy_len);
 		if (!actual_policy) {
 			status = SMW_STATUS_ALLOC_FAILURE;
@@ -1387,9 +1396,12 @@ static int import_key(void *args)
 	key_attrs = &key_args->key_attributes;
 
 	if (key_attrs->policy && key_attrs->policy_len) {
-		actual_policy_len =
-			SMW_TLV_ELEMENT_LENGTH(POLICY_STR,
-					       key_attrs->policy_len);
+		if (SMW_TLV_ELEMENT_LENGTH(POLICY_STR, key_attrs->policy_len,
+					   actual_policy_len)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto exit;
+		}
+
 		actual_policy = SMW_UTILS_MALLOC(actual_policy_len);
 		if (!actual_policy) {
 			status = SMW_STATUS_ALLOC_FAILURE;

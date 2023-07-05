@@ -21,7 +21,7 @@ static const char *const mac_algo_names[] = {
 	[SMW_CONFIG_MAC_ALGO_ID_HMAC_TRUNCATED] = "HMAC_TRUNCATED",
 };
 
-static int read_mac_algo_names(char **start, char *end, unsigned long *bitmap)
+int read_mac_algo_names(char **start, char *end, unsigned long *bitmap)
 {
 	return read_names(start, end, bitmap, mac_algo_names,
 			  SMW_CONFIG_MAC_ALGO_ID_NB);

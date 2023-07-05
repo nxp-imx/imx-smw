@@ -88,6 +88,13 @@ struct cipher_params {
 	struct op_key key;
 };
 
+struct storage_store_params {
+	unsigned long mode_bitmap;
+	unsigned long algo_bitmap;
+	unsigned long hash_bitmap;
+	struct op_key key;
+};
+
 /**
  * get_tag_prefix() - Get a tag prefix.
  * @tag: In/Out tag string.
@@ -237,6 +244,9 @@ int read_names(char **start, char *end, unsigned long *bitmap,
  * after the semicolon.
  * Insignificant chars are skipped if any.
  *
+ * Names are compared with values set in @key_type_names.
+ * @bitmap is set with enum smw_config_key_type_id values.
+ *
  * Return:
  * error code.
  */
@@ -254,10 +264,53 @@ int read_key_type_names(char **start, char *end, unsigned long *bitmap);
  * after the semicolon.
  * Insignificant chars are skipped if any.
  *
+ * Names are compared with values set in @hash_algo_names.
+ * @bitmap is set with enum smw_config_hash_algo_id values.
+ *
  * Return:
  * error code.
  */
 int read_hash_algo_names(char **start, char *end, unsigned long *bitmap);
+
+/**
+ * read_cipher_mode_names() - Read a list of cipher mode names
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured names.
+ *
+ * This function reads a list of names from the current char
+ * of the buffer being parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Names are compared with values set in @cipher_mode_names.
+ * @bitmap is set with enum smw_config_cipher_mode_id values.
+ *
+ * Return:
+ * error code.
+ */
+int read_cipher_mode_names(char **start, char *end, unsigned long *bitmap);
+
+/**
+ * read_mac_algo_names() - Read a list of MAC algos names.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured names.
+ *
+ * This function reads a list of names from the current char
+ * of the buffer being parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Names are compared with values set in @mac_algo_names.
+ * @bitmap is set with enum smw_config_mac_algo_id values.
+ *
+ * Return:
+ * error code.
+ */
+int read_mac_algo_names(char **start, char *end, unsigned long *bitmap);
 
 /**
  * parse() - Parse a plaintext configuration.

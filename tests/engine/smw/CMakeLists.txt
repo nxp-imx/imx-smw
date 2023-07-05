@@ -2,6 +2,7 @@ target_sources(${PROJECT_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/cipher.c
                ${CMAKE_CURRENT_SOURCE_DIR}/config.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/device.c
                ${CMAKE_CURRENT_SOURCE_DIR}/exec.c
                ${CMAKE_CURRENT_SOURCE_DIR}/hash.c
                ${CMAKE_CURRENT_SOURCE_DIR}/hmac.c
@@ -13,7 +14,7 @@ target_sources(${PROJECT_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/operation_context.c
                ${CMAKE_CURRENT_SOURCE_DIR}/rng.c
                ${CMAKE_CURRENT_SOURCE_DIR}/sign_verify.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/device.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/storage.c
                ${CMAKE_CURRENT_BINARY_DIR}/status.c)
 
 #

@@ -55,6 +55,7 @@
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
+		"key_name": "key 1",
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
@@ -98,6 +99,7 @@
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
+		"key_name": "key 6",
 		"test_error": "KEY_BUFFER_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},

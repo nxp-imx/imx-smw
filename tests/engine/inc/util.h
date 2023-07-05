@@ -238,7 +238,7 @@ int util_compare_buffers(unsigned char *buffer, size_t buffer_len,
  * util_read_json_type() - Read an json-c @key value of type @type
  * @value: Pointer to the output value read (can be NULL)
  * @key: Key value to read
- * @type: data type to read
+ * @type: Data type to read
  * @params: json-c object where the @key value is
  *
  * Searches if the @key value is defined in json-c @params.

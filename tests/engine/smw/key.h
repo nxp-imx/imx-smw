@@ -53,6 +53,20 @@ struct keypair_ops {
 	unsigned int *(*modulus_length)(struct keypair_ops *this);
 };
 
+/**
+ * struct keys - Group of structures representing keys
+ * @nb_keys: Number of keys
+ * @keys_test: Pointer to an array of test keypair structures
+ * @keys_desc: Pointer to an array of SMW key descriptor pointers
+ * @keys_buffer: Pointer to an array of key buffer
+ */
+struct keys {
+	unsigned int nb_keys;
+	struct keypair_ops *keys_test;
+	struct smw_key_descriptor **keys_desc;
+	struct smw_keypair_buffer *keys_buffer;
+};
+
 #define key_public_data(this)                                                  \
 	({                                                                     \
 		__typeof__(this) _this = (this);                               \
@@ -274,5 +288,40 @@ void key_free_key(struct keypair_ops *key_test);
  */
 void key_prepare_key_data(struct keypair_ops *key_test,
 			  struct key_data *key_data);
+
+/**
+ * free_keys() - Free all fields present in keys structure
+ * @keys: Pointer to keys structure
+ *
+ * Return:
+ * none
+ */
+void free_keys(struct keys *keys);
+
+/**
+ * key_read_descriptors() - Read the key descriptors definition
+ * @subtest: Subtest data
+ * @key: Key value to read
+ * @nb_keys: Pointer to the number of keys
+ * @keys_desc: Address of the pointer to the array of public key descriptors
+ *             pointer.
+ * @keys: Pointer to structure to update
+ *
+ * This function reads the keys description present in the test definition file
+ * and set the keys structure.
+ *
+ * Return:
+ * PASSED		- Success
+ * -API_STATUS_NOK      - SMW API Call return error
+ * -MISSING_PARAMS	- Mandatory parameters are missing
+ * -INTERNAL		- Internal error
+ * Error code from allocate_keys
+ * Error code from key_desc_init
+ * Error code from key_read_descriptor
+ */
+int key_read_descriptors(struct subtest_data *subtest, const char *key,
+			 unsigned int *nb_keys,
+			 struct smw_key_descriptor ***keys_desc,
+			 struct keys *keys);
 
 #endif /* __KEY_H__ */

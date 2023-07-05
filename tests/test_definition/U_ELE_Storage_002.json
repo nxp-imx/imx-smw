@@ -1,0 +1,15 @@
+{
+	"subtest 1": {
+		"command": "STORAGE_STORE",
+		"subsystem": "ELE",
+		"id": 21,
+		"data": "ABCDEF"
+	},
+	"subtest 2": {
+		"command": "STORAGE_RETRIEVE",
+		"subsystem": "ELE",
+		"id": 21,
+		"data": "ABCDEF",
+		"depends": 1
+	}
+}

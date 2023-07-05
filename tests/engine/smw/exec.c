@@ -18,6 +18,7 @@
 #include "info.h"
 #include "mac.h"
 #include "device.h"
+#include "storage.h"
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -396,6 +397,31 @@ static int execute_device_cmd(char *cmd, struct subtest_data *subtest)
 	return ERR_CODE(UNDEFINED_CMD);
 }
 
+/**
+ * execute_storage_cmd() - Execute storage command
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED		- Success.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ */
+static int execute_storage_cmd(char *cmd, struct subtest_data *subtest)
+{
+	if (!strcmp(cmd, STORAGE_STORE))
+		return storage_store(subtest);
+	else if (!strcmp(cmd, STORAGE_RETRIEVE))
+		return storage_retrieve(subtest);
+	else if (!strcmp(cmd, STORAGE_DELETE))
+		return storage_delete(subtest);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
 int execute_command_smw(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
@@ -419,6 +445,7 @@ int execute_command_smw(char *cmd, struct subtest_data *subtest)
 		{ GET_VERSION, &execute_get_version_cmd },
 		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
 		{ DEVICE, &execute_device_cmd },
+		{ STORAGE, &execute_storage_cmd },
 	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {

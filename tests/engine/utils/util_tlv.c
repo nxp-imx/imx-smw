@@ -46,6 +46,7 @@
  * @length: Length field
  * @val_type: Type of the value (JSON type: string, int, boolean or array)
  * @val_len: Length of the field @value
+ * @value_alloc: 1 if the value is allocated buffer
  * @value: Value field
  */
 struct tlv {
@@ -54,9 +55,11 @@ struct tlv {
 	size_t length;
 	enum json_type val_type;
 	size_t val_len;
+	int value_alloc;
 	union {
 		long num;
 		const char *str;
+		void *ptr;
 	} value;
 };
 
@@ -73,6 +76,54 @@ struct tlv_list {
 	struct tlv_list *tlv_list;
 	struct tlv_list *next;
 };
+
+static void free_tlvs(struct tlv **tlv, size_t nb_tlv)
+{
+	size_t idx = 0;
+	struct tlv *ptlv = NULL;
+
+	if (tlv && *tlv) {
+		for (ptlv = *tlv; idx < nb_tlv; idx++, ptlv++) {
+			if (ptlv->value_alloc)
+				free(ptlv->value.ptr);
+		}
+
+		free(*tlv);
+		*tlv = NULL;
+	}
+}
+
+static int concat_buffers(void **buf, size_t *len, void *add_buf,
+			  size_t add_len)
+{
+	unsigned int new_len = 0;
+	void *new_buf = NULL;
+
+	if (*buf) {
+		/*
+		 * Input buffer is not empty, reallocate a new one
+		 * and concatenate the new buffer.
+		 */
+		if (ADD_OVERFLOW(*len, add_len, &new_len))
+			return ERR_CODE(FAILED);
+
+		new_buf = realloc(*buf, new_len);
+		if (!new_buf) {
+			DBG_PRINT_ALLOC_FAILURE();
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		(void)memcpy(new_buf + *len, add_buf, add_len);
+
+		*buf = new_buf;
+		*len = new_len;
+	} else {
+		*buf = add_buf;
+		*len = add_len;
+	}
+
+	return ERR_CODE(PASSED);
+}
 
 static unsigned int get_tlv_numeral_byte(long value)
 {
@@ -96,18 +147,23 @@ static unsigned int get_tlv_numeral_byte(long value)
 	return nb_bytes;
 }
 
-static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
+static int read_tlv(struct tlv *tlv, size_t *len, struct json_object *obj)
 {
 	int ret = ERR_CODE(FAILED);
+	size_t idx_val = 0;
+	size_t nb_val = 0;
 	size_t nb_elem = 0;
 	struct json_object *ovalue = NULL;
 	struct json_object *oidx = NULL;
 	enum json_type type = json_type_null;
 	size_t tlv_elem_length = 0;
 	int64_t int64_val = 0;
+	char *tmp_str = NULL;
+	int json_str_len = 0;
+	size_t tmp_str_len = 0;
 
-	nb_elem = json_object_array_length(obj);
-	DBG_PRINT("Get nb array elem %d", nb_elem);
+	nb_val = json_object_array_length(obj);
+	DBG_PRINT("Get nb array elem %d", nb_val);
 
 	tlv->type = json_object_get_string(json_object_array_get_idx(obj, 0));
 	if (!tlv->type) {
@@ -118,8 +174,11 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 	/* Type length without null termination character */
 	tlv->type_len = strlen(tlv->type);
 
-	/* Initialize tlv->length to 0 */
+	/* Initialize tlv->length to json null type */
 	tlv->length = 0;
+
+	/* Initialize tlv->type to null */
+	tlv->val_type = json_type_null;
 
 	/* Calculate the tlv element length with a value of 0 */
 	TLV_ELEMENT_LENGTH(tlv->type, tlv->length, tlv_elem_length);
@@ -129,10 +188,21 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 		return ERR_CODE(FAILED);
 	}
 
-	if (nb_elem > 1) {
-		ovalue = json_object_array_get_idx(obj, 1);
+	if (nb_val == 1) {
+		DBG_PRINT("Type %s, L=%d", tlv->type, tlv->length);
+		tlv->val_type = json_type_boolean;
+		ret = ERR_CODE(PASSED);
+	}
 
-		tlv->val_type = json_object_get_type(ovalue);
+	for (idx_val = 1; idx_val < nb_val; idx_val++) {
+		ovalue = json_object_array_get_idx(obj, idx_val);
+
+		if (tlv->val_type == json_type_null) {
+			tlv->val_type = json_object_get_type(ovalue);
+		} else if (tlv->val_type != json_object_get_type(ovalue)) {
+			ret = ERR_CODE(FAILED);
+			goto error;
+		}
 
 		switch (tlv->val_type) {
 		case json_type_int:
@@ -145,20 +215,47 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 			DBG_PRINT("Type %s, L=%d, V=%ld", tlv->type,
 				  tlv->length, tlv->value.num);
 			ret = ERR_CODE(PASSED);
-			break;
+			goto end;
 
 		case json_type_string:
-			tlv->value.str = json_object_get_string(ovalue);
-			if (tlv->value.str) {
-				/*
-				 * Length is the string length including
-				 * the NULL ending character
-				 */
-				tlv->val_len = strlen(tlv->value.str) + 1;
-				tlv->length = tlv->val_len;
+			/*
+			 * Length is the string length including
+			 * the NULL ending character
+			 */
+			json_str_len = json_object_get_string_len(ovalue);
+			if (json_str_len &&
+			    !ADD_OVERFLOW(json_str_len, 1, &tmp_str_len)) {
+				tmp_str = malloc(tmp_str_len);
+				if (!tmp_str) {
+					DBG_PRINT_ALLOC_FAILURE();
+					return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+				}
+
+				(void)memcpy(tmp_str,
+					     json_object_get_string(ovalue),
+					     tmp_str_len);
+				ret = concat_buffers((void **)&tlv->value.str,
+						     &tlv->val_len,
+						     (void *)tmp_str,
+						     tmp_str_len);
+
+				if (tlv->value.str != tmp_str)
+					free(tmp_str);
+
+				if (ret != ERR_CODE(PASSED))
+					return ret;
+
+				tlv->value_alloc = 1;
+
+				if (INC_OVERFLOW(tlv->length, tmp_str_len))
+					return ERR_CODE(INTERNAL);
+
 				DBG_PRINT("Type %s, L=%d, V=%s", tlv->type,
 					  tlv->length, tlv->value.str);
 				ret = ERR_CODE(PASSED);
+			} else {
+				ret = ERR_CODE(FAILED);
+				goto error;
 			}
 			break;
 
@@ -202,19 +299,17 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 			tlv->value.str = json_object_get_string(oidx);
 
 			ret = ERR_CODE(PASSED);
-			break;
+			goto end;
 
 		default:
 			DBG_PRINT("TLV Value of type %d not supported",
 				  tlv->val_type);
-			break;
+			ret = ERR_CODE(FAILED);
+			goto error;
 		}
-	} else {
-		DBG_PRINT("Type %s, L=%d", tlv->type, tlv->length);
-		tlv->val_type = json_type_boolean;
-		ret = ERR_CODE(PASSED);
 	}
 
+end:
 	/*
 	 * Add length of the 'value' defined by tlv->length
 	 * If no value, tlv->length is 0.
@@ -222,11 +317,12 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 	if (INC_OVERFLOW(*len, tlv->length))
 		ret = ERR_CODE(FAILED);
 
+error:
 	return ret;
 }
 
-static int build_attr_lists(unsigned char **attr, unsigned int len,
-			    struct tlv *tlv, int nb_tlv)
+static int build_attr_lists(unsigned char **attr, size_t len, struct tlv *tlv,
+			    int nb_tlv)
 {
 	int ret = ERR_CODE(FAILED);
 	int idx = 0;
@@ -391,7 +487,7 @@ end:
 	return err;
 }
 
-static int read_key_usage_algo(struct tlv **tlv, unsigned int *policy_len,
+static int read_key_usage_algo(struct tlv **tlv, size_t *policy_len,
 			       struct json_object_iter *usage)
 {
 	int err = ERR_CODE(PASSED);
@@ -570,49 +666,13 @@ static int count_tlv_key_usage_algo(size_t *nb_tlv,
 	return ERR_CODE(PASSED);
 }
 
-static int concat_attr_list(unsigned char **attr, unsigned int *len,
-			    unsigned char **add_attr, unsigned int add_attr_len)
-{
-	unsigned char *new_attr = NULL;
-	unsigned int new_len = 0;
-
-	if (*attr) {
-		/*
-		 * Input attribute list is not empty, reallocate
-		 * a new one and concatenate the new computed attribute
-		 * list.
-		 */
-		if (ADD_OVERFLOW(*len, add_attr_len, &new_len))
-			return ERR_CODE(FAILED);
-
-		new_attr = realloc(*attr, new_len);
-		if (!new_attr) {
-			DBG_PRINT_ALLOC_FAILURE();
-			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		}
-
-		(void)memcpy(new_attr + *len, *add_attr, add_attr_len);
-
-		*attr = new_attr;
-		*len = new_len;
-
-		free(*add_attr);
-		*add_attr = NULL;
-	} else {
-		*attr = *add_attr;
-		*len = add_attr_len;
-	}
-
-	return ERR_CODE(PASSED);
-}
-
-static int concat_policy_attr(unsigned char **attr, unsigned int *len,
-			      unsigned char *usages, unsigned int usages_len)
+static int concat_policy_attr(unsigned char **attr, size_t *len,
+			      unsigned char *usages, size_t usages_len)
 {
 	int err = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	unsigned char *p = NULL;
 	unsigned char *policy_attr = NULL;
-	unsigned int policy_len = 0;
+	size_t policy_len = 0;
 
 	TLV_ELEMENT_LENGTH(TLV_KEY_POLICY, usages_len, policy_len);
 	if (policy_len < sizeof(TLV_KEY_POLICY))
@@ -634,9 +694,10 @@ static int concat_policy_attr(unsigned char **attr, unsigned int *len,
 
 	(void)memcpy(p, usages, usages_len);
 
-	err = concat_attr_list(attr, len, &policy_attr, policy_len);
+	err = concat_buffers((void **)attr, len, (void *)policy_attr,
+			     policy_len);
 
-	if (err != ERR_CODE(PASSED) && policy_attr)
+	if (policy_attr && *attr != policy_attr)
 		free(policy_attr);
 
 	return err;
@@ -650,10 +711,7 @@ static void free_tlv_list(struct tlv_list **tlv_list)
 	if (tlv_list) {
 		entry = *tlv_list;
 		while (entry) {
-			if (entry->tlv) {
-				free(entry->tlv);
-				entry->tlv = NULL;
-			}
+			free_tlvs(&entry->tlv, 1);
 
 			if (entry->tlv_list)
 				free_tlv_list(&entry->tlv_list);
@@ -745,7 +803,7 @@ static int parse_tlv_list(struct tlv_list **tlv_list, const unsigned char **str,
 	 *  - one string + other TLV(s)
 	 *
 	 * The input @str may not be a null-terminated string in case
-	 * last type is string is a numeral value.
+	 * last type is a numeral value.
 	 * note: numeral is either 1, 2, 4, 8 bytes (limit is 64 bits value)
 	 *
 	 * If VALUE is:
@@ -982,12 +1040,18 @@ int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
 	struct json_object *oattr_list = NULL;
 	struct json_object *oattr = NULL;
 	unsigned char *new_attr = NULL;
-	unsigned int new_attr_len = 0;
+	size_t new_attr_len = 0;
 	size_t nb_attrs = 0;
 	size_t idx = 0;
 	size_t tlvs_size = 0;
+	size_t output_len = 0;
 
 	if (!params || !attr || !len) {
+		DBG_PRINT_BAD_ARGS();
+		return ret;
+	}
+
+	if (SET_OVERFLOW(*len, output_len)) {
 		DBG_PRINT_BAD_ARGS();
 		return ret;
 	}
@@ -1033,14 +1097,17 @@ int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
 	 * Concatenate new attributes with the input attributes if
 	 * not empty.
 	 */
-	if (ret == ERR_CODE(PASSED))
-		ret = concat_attr_list(attr, len, &new_attr, new_attr_len);
+	if (ret == ERR_CODE(PASSED)) {
+		ret = concat_buffers((void **)attr, &output_len,
+				     (void *)new_attr, new_attr_len);
+		if (ret == ERR_CODE(PASSED) && SET_OVERFLOW(output_len, *len))
+			ret = ERR_CODE(FAILED);
+	}
 
 end:
-	if (tlv)
-		free(tlv);
+	free_tlvs(&tlv, nb_attrs);
 
-	if (ret != ERR_CODE(PASSED) && new_attr)
+	if (new_attr && *attr != new_attr)
 		free(new_attr);
 
 	return ret;
@@ -1057,15 +1124,21 @@ int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
 	size_t nb_tlv = 0;
 	size_t tlvs_size = 0;
 	unsigned char *usages_attr = NULL;
-	unsigned int usages_len = 0;
+	size_t usages_len = 0;
+	size_t output_len = 0;
 
 	if (!okey || !attr || !len) {
 		DBG_PRINT_BAD_ARGS();
 		return err;
 	}
 
+	if (SET_OVERFLOW(*len, output_len)) {
+		DBG_PRINT_BAD_ARGS();
+		return err;
+	}
+
 	/*
-	 * Key policy is an JSON-C object where each item is a
+	 * Key policy is a JSON-C object where each item is a
 	 * key usage. Each key usage is an array (empty or not) of
 	 * permitted algorithm(s).
 	 *
@@ -1129,15 +1202,19 @@ int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
 	if (err == ERR_CODE(PASSED))
 		err = build_attr_lists(&usages_attr, usages_len, tlv, nb_tlv);
 
-	free(tlv);
+	free_tlvs(&tlv, nb_tlv);
 
 	/*
 	 * Second step is to build the final policy attribute starting
 	 * with tag Type=POLICY, length is all usages attributes length
 	 * computed above and concatenate it with the input attributes.
 	 */
-	if (err == ERR_CODE(PASSED))
-		err = concat_policy_attr(attr, len, usages_attr, usages_len);
+	if (err == ERR_CODE(PASSED)) {
+		err = concat_policy_attr(attr, &output_len, usages_attr,
+					 usages_len);
+		if (err == ERR_CODE(PASSED) && SET_OVERFLOW(output_len, *len))
+			err = ERR_CODE(FAILED);
+	}
 
 	if (usages_attr)
 		free(usages_attr);
@@ -1278,7 +1355,7 @@ int util_tlv_check_lifecycle(const unsigned char *lifecyle,
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	/* Check first if policy is starting with POLICY string */
+	/* Check first if lifecycle is starting with LIFECYCLE string */
 	if (strncmp((const char *)lifecyle, TLV_LIFECYCLE,
 		    MIN(lifecycle_len, strlen(TLV_LIFECYCLE)))) {
 		DBG_PRINT("Lifecycle string is not starting with %s",

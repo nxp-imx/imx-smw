@@ -478,3 +478,170 @@ void key_prepare_key_data(struct keypair_ops *key_test,
 		key_data->pub_key.length = *key_test->public_length(key_test);
 	}
 }
+
+/**
+ * allocate_keys() - Allocate all fields present in keys structure
+ * @keys: Pointer to structure to update
+ *
+ * Return:
+ * PASSED			- Success
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failure
+ */
+static int allocate_keys(struct keys *keys)
+{
+	struct keypair_ops *keys_test = NULL;
+	struct smw_key_descriptor **keys_desc = NULL;
+	struct smw_keypair_buffer *keys_buffer = NULL;
+	size_t alloc_size = 0;
+
+	if (!keys->nb_keys)
+		return ERR_CODE(INTERNAL);
+
+	/* Allocate keypair ops array */
+	if (MUL_OVERFLOW(keys->nb_keys, sizeof(*keys_test), &alloc_size))
+		goto err;
+
+	keys_test = calloc(1, alloc_size);
+	if (!keys_test)
+		goto err;
+
+	/* Allocate keys descriptor array */
+	if (MUL_OVERFLOW(keys->nb_keys, sizeof(*keys_desc), &alloc_size))
+		goto err;
+
+	keys_desc = calloc(1, alloc_size);
+	if (!keys_desc)
+		goto err;
+
+	/* Allocate keys buffer array */
+	if (MUL_OVERFLOW(keys->nb_keys, sizeof(*keys_buffer), &alloc_size))
+		goto err;
+
+	keys_buffer = calloc(1, alloc_size);
+	if (!keys_buffer)
+		goto err;
+
+	keys->keys_test = keys_test;
+	keys->keys_desc = keys_desc;
+	keys->keys_buffer = keys_buffer;
+
+	return ERR_CODE(PASSED);
+
+err:
+	if (keys_test)
+		free(keys_test);
+
+	if (keys_desc)
+		free(keys_desc);
+
+	return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+}
+
+void free_keys(struct keys *keys)
+{
+	unsigned int i = 0;
+
+	if (keys->keys_desc) {
+		free(keys->keys_desc);
+		keys->keys_desc = NULL;
+	}
+
+	for (; i < keys->nb_keys; i++)
+		key_free_key(&keys->keys_test[i]);
+
+	if (keys->keys_buffer) {
+		free(keys->keys_buffer);
+		keys->keys_buffer = NULL;
+	}
+
+	if (keys->keys_test) {
+		free(keys->keys_test);
+		keys->keys_test = NULL;
+	}
+}
+
+int key_read_descriptors(struct subtest_data *subtest, const char *key,
+			 unsigned int *nb_keys,
+			 struct smw_key_descriptor ***keys_desc,
+			 struct keys *keys)
+
+{
+	int res = ERR_CODE(BAD_ARGS);
+	unsigned int i = 0;
+	struct keypair_ops *key_test = NULL;
+	struct json_object *okey_name = NULL;
+	struct json_object *obj = NULL;
+	const char *key_name = NULL;
+
+	res = util_read_json_type(&key_name, key, t_string, subtest->params);
+	if (res == ERR_CODE(PASSED)) {
+		*nb_keys = 1;
+	} else if (res == ERR_CODE(BAD_PARAM_TYPE)) {
+		res = util_read_json_type(&okey_name, key, t_array,
+					  subtest->params);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		if (SET_OVERFLOW(json_object_array_length(okey_name), *nb_keys))
+			return ERR_CODE(INTERNAL);
+	} else {
+		return res;
+	}
+
+	/*
+	 * If this is API test number of keys = 0, need to allocate
+	 * at least one key, else test is failed for other reason.
+	 */
+	keys->nb_keys = *nb_keys;
+	if (is_api_test(subtest) && keys->nb_keys == 0)
+		keys->nb_keys = 1;
+
+	res = allocate_keys(keys);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (!keys->keys_test || !keys->keys_desc || !keys->keys_buffer)
+		return ERR_CODE(INTERNAL);
+
+	for (i = 0; i < keys->nb_keys; i++) {
+		key_test = &keys->keys_test[i];
+
+		/* Initialize key descriptor */
+		res = key_desc_init(key_test, &keys->keys_buffer[i]);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		if (okey_name) {
+			obj = json_object_array_get_idx(okey_name, i);
+			if (obj)
+				key_name = json_object_get_string(obj);
+		}
+
+		if (key_name) {
+			res = key_read_descriptor(list_keys(subtest), key_test,
+						  key_name);
+
+			if (res != ERR_CODE(PASSED))
+				return res;
+
+			if (key_is_id_set(key_test))
+				key_free_key(key_test);
+		}
+
+		if (!key_is_id_set(key_test) && !is_api_test(subtest) &&
+		    (!key_is_type_set(key_test) ||
+		     !key_is_security_set(key_test) ||
+		     !key_is_private_key_defined(key_test))) {
+			DBG_PRINT_MISS_PARAM("Key description");
+			return ERR_CODE(MISSING_PARAMS);
+		}
+
+		key_name = NULL;
+
+		keys->keys_desc[i] = &key_test->desc;
+	}
+
+	*keys_desc = keys->keys_desc;
+
+	return ERR_CODE(PASSED);
+}

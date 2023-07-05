@@ -1,0 +1,59 @@
+{
+	"subtest 1": { // Store data descriptor NULL
+		"command": "STORAGE_STORE",
+		"subsystem": "DEFAULT",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Retrieve data descriptor NULL
+		"command": "STORAGE_RETRIEVE",
+		"subsystem": "DEFAULT",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": { // Store Data ID missing
+		"command": "STORAGE_STORE",
+		"subsystem": "DEFAULT",
+		"data": "0102030405060708090A0B0C0D0E0FCC",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": { // Retrieve Data ID missing
+		"command": "STORAGE_RETRIEVE",
+		"subsystem": "DEFAULT",
+		"data": "0102030405060708090A0B0C0D0E0FCC",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Store Data Buffer null
+		"command": "STORAGE_STORE",
+		"subsystem": "DEFAULT",
+		"id": 1,
+		"data": 16,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Store Data Buffer defined but length is 0
+		"command": "STORAGE_STORE",
+		"subsystem": "DEFAULT",
+		"id": 1,
+		"data": [0, "0102030405060708090A0B0C0D0E0FCC"],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": { // Store Attribute invalid
+		"command": "STORAGE_STORE",
+		"subsystem": "DEFAULT",
+		"id": 1,
+		"data": "0102030405060708090A0B0C0D0E0FCC",
+		"attributes_list": [
+			["UNDEFINED"]
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": { // Store Attribute lifecyle invalid
+		"command": "STORAGE_STORE",
+		"subsystem": "DEFAULT",
+		"id": 1,
+		"data": "0102030405060708090A0B0C0D0E0FCC",
+		"attributes_list": [
+			["LIFECYCLE", "UNDEFINED"]
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}
+

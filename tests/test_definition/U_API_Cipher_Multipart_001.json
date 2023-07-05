@@ -12,6 +12,7 @@
 	"subtest 1": {
 		"command": "CIPHER_INIT",
 		"test_error": "ARGS_NULL",
+		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 2": { // Version not supported
@@ -19,22 +20,26 @@
 		"version": 255,
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
+		"key_name": "key 1",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Mode is not set
 		"command": "CIPHER_INIT",
 		"op_type": "ENCRYPT",
+		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 4": { // Operation type is not set
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
+		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": {
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
+		"key_name": "key 1",
 		"test_error": "CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
@@ -42,18 +47,21 @@
 		"command": "CIPHER_INIT",
 		"mode": "UNDEFINED",
 		"op_type": "ENCRYPT",
+		"key_name": "key 1",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 7": { // Operation type is undefined
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "UNDEFINED",
+		"key_name": "key 1",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 8": { // Subsystem name is undefined
 		"command": "CIPHER_INIT",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
+		"key_name": "key 1",
 		"subsystem": "UNDEFINED",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},

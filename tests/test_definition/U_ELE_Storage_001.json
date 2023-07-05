@@ -1,0 +1,116 @@
+{
+	"keys": {
+		"encrypt key": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				],
+				"decrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		},
+		"sign key": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"CMAC"
+					]
+				],
+				"verify_message": [
+					[
+						"CMAC"
+					]
+				]
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "encrypt key"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "sign key"
+	},
+	"subtest 3": {
+		"command": "STORAGE_STORE",
+		"subsystem": "ELE",
+		"id": 11,
+		"encrypt_key_name": "encrypt key",
+		"mode": "ECB",
+		"sign_key_name": "sign key",
+		"algo": "CMAC",
+		"data": "0102030405060708090A0B0C0D0E0FCC",
+		"attributes_list": [
+			["READ_ONLY"],
+			["READ_ONCE"],
+			["LIFECYCLE", "OPEN"]
+		],
+		"depends": [1,2]
+	},
+	"subtest 4": {
+		"command": "STORAGE_RETRIEVE",
+		"subsystem": "ELE",
+		"id": 11,
+		"depends": 3
+	},
+	"subtest 5": { // Second retrieve must failed
+		"command": "STORAGE_RETRIEVE",
+		"subsystem": "ELE",
+		"id": 11,
+		"data": [
+			"000000000000000000000000000000000000",
+			"000000000000000000000000000000000000",
+			"000000000000000000000000000000000000"
+		],
+		"result": "SMW_STATUS_DATA_ALREADY_RETRIEVED",
+		"depends": 3
+	},
+	"subtest 6": {
+		"command": "STORAGE_STORE",
+		"subsystem": "ELE",
+		"id": 12,
+		"encrypt_key_name": "encrypt key",
+		"mode": "ECB",
+		"sign_key_name": "sign key",
+		"algo": "CMAC",
+		"data": "0102030405060708090A0B0C0D0E0FCC",
+		"attributes_list": [
+			["LIFECYCLE", "CLOSED"]
+		],
+		"depends": [1,2]
+	},
+	"subtest 7": { // Data is only accessible in closed mode.
+		"command": "STORAGE_RETRIEVE",
+		"subsystem": "ELE",
+		"id": 12,
+		"data": [
+			"000000000000000000000000000000000000",
+			"000000000000000000000000000000000000",
+			"000000000000000000000000000000000000"
+		],
+		"result": "SMW_STATUS_INVALID_LIFECYCLE",
+		"depends": 6
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_name": "encrypt key",
+		"depends": 1
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "sign key",
+		"depends": 2
+	}
+}

@@ -2,6 +2,7 @@
 /*
  * Copyright 2023 NXP
  */
+
 #include <string.h>
 #include <stdlib.h>
 

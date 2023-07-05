@@ -23,20 +23,6 @@
 #define FINAL	3
 
 /**
- * struct cipher_keys - Group of structures representing keys
- * @nb_keys: Number of keys
- * @keys_test: Pointer to an array of test keypair structures
- * @keys_desc: Pointer to an array of SMW key descriptor pointers
- * @keys_buffer: Pointer to an array of key buffer
- */
-struct cipher_keys {
-	unsigned int nb_keys;
-	struct keypair_ops *keys_test;
-	struct smw_key_descriptor **keys_desc;
-	struct smw_keypair_buffer *keys_buffer;
-};
-
-/**
  * cipher_bad_params() - Set cipher bad parameters
  * @params: JSON Cipher parameters.
  * @oneshot: SMW cipher one-shot arguments.
@@ -86,14 +72,24 @@ static int cipher_bad_params(struct json_object *params,
 		break;
 
 	case KEY_BUFFER_NULL:
+		if (!(*init)->keys_desc) {
+			DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
+			ret = ERR_CODE(BAD_PARAM_TYPE);
+			break;
+		}
+
 		(*init)->keys_desc[0]->buffer = NULL;
 		break;
 
 	case CTX_NULL:
-		if (step == INIT)
+		if (step == INIT) {
+			if ((*init)->context)
+				free((*init)->context);
+
 			(*init)->context = NULL;
-		else if (step == UPDATE || step == FINAL)
+		} else if (step == UPDATE || step == FINAL) {
 			(*data)->context = NULL;
+		}
 
 		break;
 
@@ -110,192 +106,6 @@ static int cipher_bad_params(struct json_object *params,
 	}
 
 	return ret;
-}
-
-/**
- * allocate_keys() - Allocate all fields present in cipher keys structure
- * @keys: Pointer to structure to update
- *
- * Return:
- * PASSED			- Success
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failure
- */
-static int allocate_keys(struct cipher_keys *keys)
-{
-	struct keypair_ops *keys_test = NULL;
-	struct smw_key_descriptor **keys_desc = NULL;
-	struct smw_keypair_buffer *keys_buffer = NULL;
-	size_t alloc_size = 0;
-
-	if (!keys->nb_keys)
-		return ERR_CODE(INTERNAL);
-
-	/* Allocate keypair ops array */
-	if (MUL_OVERFLOW(keys->nb_keys, sizeof(*keys_test), &alloc_size))
-		goto err;
-
-	keys_test = calloc(1, alloc_size);
-	if (!keys_test)
-		goto err;
-
-	/* Allocate keys descriptor array */
-	if (MUL_OVERFLOW(keys->nb_keys, sizeof(*keys_desc), &alloc_size))
-		goto err;
-
-	keys_desc = malloc(alloc_size);
-	if (!keys_desc)
-		goto err;
-
-	/* Allocate keys buffer array */
-	if (MUL_OVERFLOW(keys->nb_keys, sizeof(*keys_buffer), &alloc_size))
-		goto err;
-
-	keys_buffer = calloc(1, alloc_size);
-	if (!keys_buffer)
-		goto err;
-
-	keys->keys_test = keys_test;
-	keys->keys_desc = keys_desc;
-	keys->keys_buffer = keys_buffer;
-
-	return ERR_CODE(PASSED);
-
-err:
-	if (keys_test)
-		free(keys_test);
-
-	if (keys_desc)
-		free(keys_desc);
-
-	return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-}
-
-/**
- * free_keys() - Free all fields present in cipher keys structure
- * @keys: Pointer to keys structure
- *
- * Return:
- * none
- */
-static void free_keys(struct cipher_keys *keys)
-{
-	unsigned int i = 0;
-
-	if (keys->keys_desc)
-		free(keys->keys_desc);
-
-	for (; i < keys->nb_keys; i++)
-		key_free_key(&keys->keys_test[i]);
-
-	if (keys->keys_buffer)
-		free(keys->keys_buffer);
-
-	if (keys->keys_test)
-		free(keys->keys_test);
-}
-
-/**
- * set_keys() - Set cipher keys structure
- * @subtest: Subtest data
- * @args: Pointer to SMW cipher initialization API arguments
- * @keys: Pointer to structure to update
- *
- * This function reads the keys description present in the test definition file
- * and set the keys structure.
- *
- * Return:
- * PASSED		- Success
- * -API_STATUS_NOK      - SMW API Call return error
- * -MISSING_PARAMS	- Mandatory parameters are missing
- * Error code from allocate_keys
- * Error code from key_desc_init
- * Error code from key_read_descriptor
- */
-static int set_keys(struct subtest_data *subtest,
-		    struct smw_cipher_init_args *args, struct cipher_keys *keys)
-
-{
-	int res = ERR_CODE(BAD_ARGS);
-	unsigned int i = 0;
-	struct keypair_ops *key_test = NULL;
-	struct json_object *okey_name = NULL;
-	struct json_object *obj = NULL;
-	const char *key_name = NULL;
-	size_t nb_keys = 0;
-
-	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
-				  subtest->params);
-	if (res == ERR_CODE(PASSED) || res == ERR_CODE(VALUE_NOTFOUND)) {
-		args->nb_keys = 1;
-	} else if (res == ERR_CODE(BAD_PARAM_TYPE)) {
-		res = util_read_json_type(&okey_name, KEY_NAME_OBJ, t_array,
-					  subtest->params);
-		if (res != ERR_CODE(PASSED))
-			return res;
-
-		nb_keys = json_object_array_length(okey_name);
-		if (SET_OVERFLOW(nb_keys, args->nb_keys)) {
-			DBG_PRINT_BAD_PARAM(KEY_NAME_OBJ);
-			return ERR_CODE(BAD_PARAM_TYPE);
-		}
-	}
-
-	/*
-	 * If this is API test number of keys = 0, need to allocate
-	 * at least one key, else test is failed for other reason.
-	 */
-	keys->nb_keys = args->nb_keys;
-	if (is_api_test(subtest) && keys->nb_keys == 0)
-		keys->nb_keys = 1;
-
-	res = allocate_keys(keys);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	if (!keys->keys_test || !keys->keys_desc || !keys->keys_buffer)
-		return ERR_CODE(INTERNAL);
-
-	for (i = 0; i < keys->nb_keys; i++) {
-		key_test = &keys->keys_test[i];
-
-		/* Initialize key descriptor */
-		res = key_desc_init(key_test, &keys->keys_buffer[i]);
-		if (res != ERR_CODE(PASSED))
-			return res;
-
-		if (okey_name) {
-			obj = json_object_array_get_idx(okey_name, i);
-			if (obj)
-				key_name = json_object_get_string(obj);
-		}
-
-		if (key_name) {
-			res = key_read_descriptor(list_keys(subtest), key_test,
-						  key_name);
-
-			if (res != ERR_CODE(PASSED))
-				return res;
-
-			if (key_is_id_set(key_test))
-				key_free_key(key_test);
-		}
-
-		if (!key_is_id_set(key_test) && !is_api_test(subtest) &&
-		    (!key_is_type_set(key_test) ||
-		     !key_is_security_set(key_test) ||
-		     !key_is_private_key_defined(key_test))) {
-			DBG_PRINT_MISS_PARAM("Key description");
-			return ERR_CODE(MISSING_PARAMS);
-		}
-
-		key_name = NULL;
-
-		keys->keys_desc[i] = &key_test->desc;
-	}
-
-	args->keys_desc = keys->keys_desc;
-
-	return ERR_CODE(PASSED);
 }
 
 /**
@@ -341,11 +151,10 @@ static int cipher_update_save_out_data(struct subtest_data *subtest,
  * Return:
  * PASSED	- Success
  * Error code from util_read_hex_buffer
- * Error code from set_keys
+ * Error code from key_read_descriptors
  */
 static int set_init_params(struct subtest_data *subtest,
-			   struct smw_cipher_init_args *args,
-			   struct cipher_keys *keys)
+			   struct smw_cipher_init_args *args, struct keys *keys)
 {
 	int res = ERR_CODE(PASSED);
 
@@ -381,7 +190,10 @@ static int set_init_params(struct subtest_data *subtest,
 	}
 
 	/* Set key descriptors */
-	res = set_keys(subtest, args, keys);
+	res = key_read_descriptors(subtest, KEY_NAME_OBJ, &args->nb_keys,
+				   &args->keys_desc, keys);
+	if (res == ERR_CODE(VALUE_NOTFOUND) && is_api_test(subtest))
+		res = ERR_CODE(PASSED);
 
 	return res;
 }
@@ -497,7 +309,7 @@ int cipher(struct subtest_data *subtest)
 	struct smw_cipher_args args = { 0 };
 	struct smw_cipher_args *cipher_args = &args;
 	struct smw_cipher_init_args *init = &args.init;
-	struct cipher_keys keys = { 0 };
+	struct keys keys = { 0 };
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -572,8 +384,7 @@ int cipher_init(struct subtest_data *subtest)
 	int ctx_id = -1;
 	struct smw_cipher_init_args args = { 0 };
 	struct smw_cipher_init_args *cipher_args = &args;
-	struct smw_op_context *context = NULL;
-	struct cipher_keys keys = { 0 };
+	struct keys keys = { 0 };
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -593,13 +404,11 @@ int cipher_init(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	context = malloc(sizeof(*context));
-	if (!context) {
+	args.context = malloc(sizeof(*args.context));
+	if (!args.context) {
 		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		goto end;
 	}
-
-	args.context = context;
 
 	/* Specific test cases */
 	res = cipher_bad_params(subtest->params, NULL, &cipher_args, NULL,
@@ -610,6 +419,8 @@ int cipher_init(struct subtest_data *subtest)
 	subtest->smw_status = smw_cipher_init(cipher_args);
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
+		free(args.context);
+		args.context = NULL;
 		goto end;
 	}
 
@@ -619,11 +430,11 @@ int cipher_init(struct subtest_data *subtest)
 	 */
 	if (!is_api_test(subtest))
 		res = util_context_add_node(list_op_ctxs(subtest), ctx_id,
-					    context);
+					    args.context);
 
 end:
-	if (context && res != ERR_CODE(PASSED))
-		free(context);
+	if (res != ERR_CODE(PASSED) && args.context)
+		free(args.context);
 
 	if (args.iv)
 		free(args.iv);

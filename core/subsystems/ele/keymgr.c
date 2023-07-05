@@ -653,12 +653,39 @@ exit:
 static int import_el2go_data(struct hdl *hdl,
 			     struct smw_keymgr_descriptor *key_desc)
 {
-	(void)hdl;
-	(void)key_desc;
+	int status = SMW_STATUS_OK;
 
-	SMW_DBG_PRINTF(ERROR, "EdgeLock 2GO data import not supported");
+	hsm_err_t err = HSM_NO_ERROR;
 
-	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	op_data_storage_args_t op_args = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	op_args.data_id = key_desc->identifier.id;
+	op_args.data = smw_keymgr_get_private_data(key_desc);
+	op_args.data_size = smw_keymgr_get_private_length(key_desc);
+	op_args.flags = HSM_OP_DATA_STORAGE_FLAGS_STORE |
+			HSM_OP_DATA_STORAGE_FLAGS_EL2GO;
+
+	SMW_DBG_PRINTF(VERBOSE,
+		       "[%s (%d)] Call hsm_data_ops()\n"
+		       "  op_data_storage_args_t\n"
+		       "    Data\n"
+		       "      - id: %d\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n"
+		       "    flags: 0x%X\n",
+		       __func__, __LINE__, op_args.data_id, op_args.data,
+		       op_args.data_size, op_args.flags);
+
+	err = hsm_data_ops(hdl->key_store, &op_args);
+
+	SMW_DBG_PRINTF(DEBUG, "hsm_data_ops returned %d\n", err);
+
+	status = ele_convert_err(err);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 static int import_key(struct hdl *hdl, void *args)

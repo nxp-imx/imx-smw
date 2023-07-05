@@ -231,6 +231,17 @@ __weak bool ele_device_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
+__weak bool ele_storage_handle(struct hdl *hdl, enum operation_id operation_id,
+			       void *args, int *status)
+{
+	(void)hdl;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
 static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -251,8 +262,10 @@ static int execute(enum operation_id operation_id, void *args)
 		goto end;
 	else if (ele_mac_handle(hdl, operation_id, args, &status))
 		goto end;
+	else if (ele_device_handle(hdl, operation_id, args, &status))
+		goto end;
 
-	ele_device_handle(hdl, operation_id, args, &status);
+	ele_storage_handle(hdl, operation_id, args, &status);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -325,10 +338,17 @@ int ele_convert_err(hsm_err_t err)
 		status = SMW_STATUS_SIGNATURE_INVALID;
 		break;
 
+	case HSM_DATA_ALREADY_RETRIEVED:
+		status = SMW_STATUS_DATA_ALREADY_RETRIEVED;
+		break;
+
+	case HSM_INVALID_LIFECYCLE:
+		status = SMW_STATUS_INVALID_LIFECYCLE;
+		break;
+
 	default:
 		/*
 		 * status = SMW_STATUS_SUBSYSTEM_FAILURE
-		 * HSM_INVALID_LIFECYCLE
 		 * HSM_SELF_TEST_FAILURE
 		 * HSM_FATAL_FAILURE
 		 * HSM_GENERAL_ERROR

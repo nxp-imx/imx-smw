@@ -12,11 +12,13 @@
 #define LIFECYCLE(_lifecycle)                                                  \
 	{                                                                      \
 		.str = LC_##_lifecycle##_STR,                                  \
+		.smw = SMW_LIFECYCLE_##_lifecycle,                             \
 		.ele = HSM_KEY_LIFECYCLE_##_lifecycle                          \
 	}
 
 static const struct lifecycle {
 	const char *str;
+	unsigned long smw;
 	hsm_key_lifecycle_t ele;
 } lifecycles[] = { LIFECYCLE(OPEN), LIFECYCLE(CLOSED),
 		   LIFECYCLE(CLOSED_LOCKED) };
@@ -35,7 +37,13 @@ static size_t lifecycle_to_string(unsigned char **str, size_t str_length,
 			SMW_DBG_PRINTF(DEBUG, "%s(%d) %s\n", __func__, __LINE__,
 				       lifecycles[i].str);
 
-			out_len = SMW_UTILS_STRLEN(lifecycles[i].str) + 1;
+			if (ADD_OVERFLOW(out_len,
+					 SMW_UTILS_STRLEN(lifecycles[i].str) +
+						 1,
+					 &out_len)) {
+				out_len = SIZE_MAX;
+				break;
+			}
 
 			if (*str) {
 				if (str_length >= out_len) {
@@ -45,6 +53,7 @@ static size_t lifecycle_to_string(unsigned char **str, size_t str_length,
 					*str += out_len;
 				} else {
 					out_len = SIZE_MAX;
+					break;
 				}
 			}
 		}
@@ -111,4 +120,16 @@ exit:
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+void ele_set_lifecycle_flags(unsigned long smw_flags, uint16_t *ele_flags)
+{
+	unsigned int i = 0;
+
+	*ele_flags = 0;
+
+	for (; i < ARRAY_SIZE(lifecycles); i++) {
+		if (smw_flags & lifecycles[i].smw)
+			*ele_flags |= lifecycles[i].ele;
+	}
 }

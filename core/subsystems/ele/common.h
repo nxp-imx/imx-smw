@@ -9,6 +9,7 @@
 #define PSA_COMPLIANT
 #include <hsm_api.h>
 
+#include "constants.h"
 #include "keymgr_derive.h"
 
 /**
@@ -269,5 +270,27 @@ int ele_export_public_key(struct hdl *hdl,
  */
 int ele_get_lifecycle(unsigned char **lifecycle, unsigned int *lifecycle_len,
 		      hsm_key_lifecycle_t ele_lifecycle);
+
+/**
+ * ele_set_lifecycle_flags() - Convert the SMW lifecycle flags to ELE flags
+ * @smw_flags: SMW lifecycle flags
+ * @ele_flags: ELE lifecycle flags
+ */
+
+void ele_set_lifecycle_flags(unsigned long smw_flags, uint16_t *ele_flags);
+
+/**
+ * ele_set_cipher_algo() - Set the ELE cipher algorithm
+ * @key_type_id: SMW Key type id
+ * @cipher_mode_id: SMW cipher mode ID
+ * @cipher_algo: ELE cipher algorithm ID
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Cipher mode not supported
+ */
+int ele_set_cipher_algo(enum smw_config_key_type_id key_type_id,
+			enum smw_config_cipher_mode_id cipher_mode_id,
+			hsm_op_cipher_one_go_algo_t *cipher_algo);
 
 #endif /* __COMMON_H__ */

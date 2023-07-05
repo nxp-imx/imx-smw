@@ -97,8 +97,7 @@ struct smw_key_descriptor {
  * struct smw_generate_key_args - Key generation arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @key_attributes_list: Key attributes list.
- *			 See &typedef smw_attribute_type_t
+ * @key_attributes_list: Key attributes list. See &typedef smw_attr_key_type_t
  * @key_attributes_list_length: Length of the Key attributes list
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
@@ -233,8 +232,7 @@ struct smw_update_key_args {
  * struct smw_import_key_args - Key import arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @key_attributes_list: Key attributes list.
- *			 See &typedef smw_attribute_type_t
+ * @key_attributes_list: Key attributes list. See &typedef smw_attr_key_type_t
  * @key_attributes_list_length: Length of a Key attributes list
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor

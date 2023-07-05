@@ -110,7 +110,7 @@ typedef smw_string_t smw_cipher_operation_t;
 typedef smw_string_t smw_key_format_t;
 
 /**
- * typedef smw_attribute_type_t - Attribute type name
+ * typedef smw_attr_key_type_t - Key definition attribute type name
  *
  * An attribute is encoded with a Type-Length-Value (TLV) format.
  * Function of the attribute type, the TLV scheme varies.
@@ -193,7 +193,72 @@ typedef smw_string_t smw_key_format_t;
  *    +-----------------+--------------+---------------------------------------+
  *
  */
-typedef smw_string_t smw_attribute_type_t;
+typedef smw_string_t smw_attr_key_type_t;
+
+/**
+ * typedef smw_attr_data_type_t - Data definition attribute type name
+ *
+ * An attribute is encoded with a Type-Length-Value (TLV) format.
+ * Function of the attribute type, the TLV scheme varies.
+ * Refer to :doc:`/tlv/tlv`
+ *
+ * The following :numref:`data_manager_attributes` lists all TLV attributes
+ * supported by data manager store operation.
+ *
+ * .. table:: Data manager attributes
+ *    :name: data_manager_attributes
+ *    :align: center
+ *    :widths: 25 14 62
+ *    :width: 100%
+ *    :class: wrap-table
+ *
+ *    +-----------------+--------------+---------------------------------------+
+ *    | **Type Value**  | **Encoding** | **Description**                       |
+ *    +=================+==============+=======================================+
+ *    | READ_ONLY       | boolean      | Data is read-only.                    |
+ *    +-----------------+--------------+---------------------------------------+
+ *    | READ_ONCE       | boolean      | Data is read once time, when data is  |
+ *    |                 |              | retrieved, data is deleted.           |
+ *    +-----------------+--------------+---------------------------------------+
+ *    | LIFECYCLE       | variable     | This attribute is used to restrict    |
+ *    |                 | length list  | the data accessibility.               |
+ *    |                 |              | The following `Data lifecycle`_ gives |
+ *    |                 |              | more details.                         |
+ *    +-----------------+--------------+---------------------------------------+
+ *
+ * Data lifecycle
+ * """"""""""""""
+ * The data lifecycle is built with a TLV variable length list in which one or
+ * more string below. This attribute limits the access of the data in the
+ * corresponding device lifecycle.
+ *
+ * The CURRENT string value means that data is accessible only in the current
+ * device lifecycle when data is created.
+ *
+ * .. table:: Data lifecyle attribute
+ *    :name: data_lifecycle_attribute
+ *    :align: center
+ *    :class: wrap-table
+ *
+ *    +------------------+
+ *    | **String Value** |
+ *    +==================+
+ *    | OPEN             |
+ *    +------------------+
+ *    | CLOSED           |
+ *    +------------------+
+ *    | CLOSED_LOCKED    |
+ *    +------------------+
+ *    | CURRENT          |
+ *    +------------------+
+ *
+ * This attribute may or may not be significative (fully or partially) function
+ * of the subsystem handling the data. Refer to the :doc:`/capabilities`
+ * for more details.
+ *
+ *
+ */
+typedef smw_string_t smw_attr_data_type_t;
 
 /**
  * typedef smw_signature_type_t - Signature type name

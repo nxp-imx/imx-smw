@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __SMW_STATUS_H__
@@ -32,9 +32,10 @@
  * the requested operation.
  * @SMW_STATUS_SUBSYSTEM_STORAGE_ERROR: Generic secure subsystem storage error.
  * @SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT: An object stored in the secure subsystem is corrupted.
- * @SMW_STATUS_SUBSYSTEM_LOADED: Secure Subsystem is loaded
- * @SMW_STATUS_SUBSYSTEM_NOT_LOADED: Secure Subsystem is not loaded
- * @SMW_STATUS_KEY_INVALID: Key used for the operation is not valid
+ * @SMW_STATUS_SUBSYSTEM_LOADED: Secure Subsystem is loaded.
+ * @SMW_STATUS_SUBSYSTEM_NOT_LOADED: Secure Subsystem is not loaded.
+ * @SMW_STATUS_KEY_INVALID: Key used for the operation is not valid.
+ * @SMW_STATUS_INVALID_LIFECYCLE: Object is not accessible in the current device lifecycle.
  *
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
@@ -72,6 +73,8 @@
  * @SMW_STATUS_KEY_POLICY_ERROR: The key policy is syntactically wrong.
  * @SMW_STATUS_KEY_POLICY_WARNING_IGNORED: At least one element of the key policy is ignored.
  *
+ * @SMW_STATUS_DATA_ALREADY_RETRIEVED: The data was read once and has been already retrieved.
+ *
  * Status code classification:
  ** Common return codes
  *
@@ -97,6 +100,7 @@
  *	- SMW_STATUS_SUBSYSTEM_LOADED
  *	- SMW_STATUS_SUBSYSTEM_NOT_LOADED
  *      - SMW_STATUS_KEY_INVALID
+ *      - SMW_STATUS_INVALID_LIFECYCLE
  *
  ** Specific return codes - Library initialization
  *
@@ -138,6 +142,9 @@
  ** Specific return codes - Key manager
  *	- SMW_STATUS_KEY_POLICY_ERROR
  *	- SMW_STATUS_KEY_POLICY_WARNING_IGNORED
+ *
+ ** Specific return codes - Data storage
+ *      - SMW_STATUS_DATA_ALREADY_RETRIEVED
  */
 
 /* Status codes */
@@ -191,7 +198,9 @@ enum smw_status_code {
 	SMW_STATUS_MUTEX_LOCK_FAILURE,
 	SMW_STATUS_MUTEX_UNLOCK_FAILURE,
 	SMW_STATUS_INVALID_LIBRARY_CONTEXT,
-	SMW_STATUS_INVALID_CONFIG_DATABASE
+	SMW_STATUS_INVALID_CONFIG_DATABASE,
+	SMW_STATUS_DATA_ALREADY_RETRIEVED, /* 50 */
+	SMW_STATUS_INVALID_LIFECYCLE,
 };
 
 #endif /* __SMW_STATUS_H__ */

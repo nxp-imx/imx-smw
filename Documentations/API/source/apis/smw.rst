@@ -11,5 +11,6 @@ SMW APIs
    smw/crypto
    smw/keymgr
    smw/device
+   smw/storage
    smw/status
    smw/strings

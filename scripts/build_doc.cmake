@@ -1,5 +1,5 @@
 list(APPEND CMAKE_MODULE_PATH PATHS ./cmake)
-include(GNUInstallDirs)
+
 find_package(Sphinx REQUIRED)
 find_package(Kerneldoc REQUIRED)
 

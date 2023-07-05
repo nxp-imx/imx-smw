@@ -230,6 +230,18 @@ int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
 int smw_keymgr_free_keypair_buffer(struct smw_keymgr_descriptor *descriptor);
 
 /**
+ * smw_keymgr_free_keys_ptr_array() - Free the array of keymgr descriptors
+ *                                    pointer
+ * @keys_desc: Pointer to the array to free.
+ * @nb_keys: Number of entries of @keys_desc.
+ *
+ * Return:
+ * none
+ */
+void smw_keymgr_free_keys_ptr_array(struct smw_keymgr_descriptor **keys_desc,
+				    unsigned int nb_keys);
+
+/**
  * smw_keymgr_get_api_key_id() - Return the API key descriptor id value.
  * @descriptor: Pointer to the internal Key descriptor structure.
  *
@@ -487,6 +499,25 @@ int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
 int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 				  struct smw_keymgr_descriptor *out,
 				  bool new_key, enum subsystem_id subsystem_id);
+
+/**
+ * smw_keymgr_convert_descriptors() - Convert public key descriptors pointer array
+ *                                    in internal key descriptors pointer array
+ * @in: Address of the pointer to the array of public key descriptors
+ *             pointer to convert.
+ * @out: Pointer to an internal Key descriptors array.
+ * @nb_keys: Number of keys.
+ * @subsystem_id: Pointer to subsystem ID.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success
+ * SMW_STATUS_ALLOC_FAILURE	- Memory allocation failure
+ * Error code from smw_keymgr_convert_descriptor()
+ */
+int smw_keymgr_convert_descriptors(struct smw_key_descriptor **in,
+				   struct smw_keymgr_descriptor ***out,
+				   unsigned int nb_keys,
+				   enum subsystem_id *subsystem_id);
 
 /**
  * smw_keymgr_set_default_attributes() - Set default Key attributes.

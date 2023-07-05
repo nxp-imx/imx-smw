@@ -47,6 +47,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix the SMW_DBG_ASSERT() macro to exit properly in release and debug mode.
 * Add device manager APIs: smw_device_attestation() and smw_device_get_uuid()
 * Add support to fetch the length of output buffer in smw_cipher_update api.
+* Add storage manager APIs: smw_store_data(), smw_retrieve_data(),
+  smw_delete_data().
 
 ##### 3. Subsystems
 
@@ -57,6 +59,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix coverity in ELE subsystem and ensure all variables are initialized.
 * Fix coverity in TEE subsystem and ensure all variables are initialized.
 * Fix coverity in TA Library of the TEE subsystem and ensure all variables are initialized.
+* Add ELE subsystem storage data store and retrieve.
+* Add ELE EL2GO data import.
 
 #### 4. OSAL
 
@@ -66,6 +70,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Fix coverity and ensure all variables are initialized.
 * Remove the subtest where the output data buffer is NULL in U_API_Cipher_Multipart_002.json.
+* Add SMW API storage tests engine.
 
 #### PKCS#11 Library - _version 2.4_
 

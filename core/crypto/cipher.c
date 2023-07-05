@@ -14,29 +14,6 @@
 #include "cipher.h"
 
 /**
- * free_keys_ptr_array() - Free the array of keymgr descriptors pointer
- * @keys_desc: Pointer to the array to free.
- * @nb_keys: Number of entries of @keys_desc.
- *
- * Return:
- * none
- */
-static void free_keys_ptr_array(struct smw_keymgr_descriptor **keys_desc,
-				unsigned int nb_keys)
-{
-	unsigned int i = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	for (; i < nb_keys; i++) {
-		if (keys_desc[i])
-			SMW_UTILS_FREE(keys_desc[i]);
-	}
-
-	SMW_UTILS_FREE(keys_desc);
-}
-
-/**
  * cipher_get_ids_from_strings() - Get config ids from strings
  * @args: Pointer to SMW API cipher initialization arguments.
  * @converted_args: Pointer to cipher converted arguments to update.
@@ -76,80 +53,6 @@ end:
 }
 
 /**
- * convert_key_descriptors() - Convert public key descriptors pointer array
- *                             in internal key descriptors pointer array
- * @keys_desc: Pointer to the array of public key descriptors pointer to
- *             convert.
- * @converted_args: Pointer to cipher converted arguments to update.
- * @subsystem_id: Pointer to subsystem ID.
- *
- * Return:
- * SMW_STATUS_OK		- Success
- * SMW_STATUS_ALLOC_FAILURE	- Memory allocation failure
- * Error code from smw_keymgr_convert_descriptor()
- */
-static int
-convert_key_descriptors(struct smw_key_descriptor **keys_desc,
-			struct smw_crypto_cipher_args *converted_args,
-			enum subsystem_id *subsystem_id)
-{
-	int status = SMW_STATUS_ALLOC_FAILURE;
-	unsigned int i = 0;
-	struct smw_keymgr_descriptor **keymgr_desc = NULL;
-	struct smw_key_descriptor *key = NULL;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	/*
-	 * This memory is freed at the end of cipher one-shot operation or
-	 * cipher initialization
-	 */
-	keymgr_desc = SMW_UTILS_CALLOC(converted_args->nb_keys,
-				       sizeof(struct smw_keymgr_descriptor *));
-	if (!keymgr_desc)
-		goto end;
-
-	for (; i < converted_args->nb_keys; i++) {
-		key = keys_desc[i];
-
-		/*
-		 * This memory is freed at the end of one shot operation or
-		 * cipher initialization
-		 */
-		keymgr_desc[i] =
-			SMW_UTILS_CALLOC(1,
-					 sizeof(struct smw_keymgr_descriptor));
-		if (!keymgr_desc[i]) {
-			status = SMW_STATUS_ALLOC_FAILURE;
-			free_keys_ptr_array(keymgr_desc,
-					    converted_args->nb_keys);
-			goto end;
-		}
-
-		status = smw_keymgr_convert_descriptor(key, keymgr_desc[i],
-						       false, *subsystem_id);
-		if (status != SMW_STATUS_OK) {
-			free_keys_ptr_array(keymgr_desc,
-					    converted_args->nb_keys);
-			goto end;
-		}
-
-		/*
-		 * If @args->subsystem_name is not set and a key ID is set, get
-		 * subsystem ID from key ID
-		 */
-		if (*subsystem_id == SUBSYSTEM_ID_INVALID && key->id)
-			*subsystem_id = keymgr_desc[i]->identifier.subsystem_id;
-	}
-
-	converted_args->keys_desc = keymgr_desc;
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-/**
  * convert_init_args() - Convert public cipher initialization arguments
  * @args: Pointer to public arguments.
  * @converted_args: Pointer to internal argument structure to update.
@@ -159,7 +62,7 @@ end:
  * SMW_STATUS_INVALID_PARAM		- One of the parameters is invalid
  * SMW_STATUS_VERSION_NOT_SUPPORTED	- Public arguments version not supported
  * Error code from cipher_get_ids_from_strings()
- * Error code from convert_key_descriptors()
+ * Error code from smw_keymgr_convert_descriptors()
  */
 static int convert_init_args(struct smw_cipher_init_args *args,
 			     struct smw_crypto_cipher_args *converted_args,
@@ -186,8 +89,10 @@ static int convert_init_args(struct smw_cipher_init_args *args,
 	converted_args->nb_keys = args->nb_keys;
 	converted_args->init_pub = args;
 
-	status = convert_key_descriptors(args->keys_desc, converted_args,
-					 subsystem_id);
+	status = smw_keymgr_convert_descriptors(args->keys_desc,
+						&converted_args->keys_desc,
+						converted_args->nb_keys,
+						subsystem_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -334,9 +239,10 @@ enum smw_status_code smw_cipher(struct smw_cipher_args *args)
 		status = SMW_STATUS_OK;
 
 end:
-	/* Free keys decriptor allocated in one_shot_convert_args() */
+	/* Free keys decriptor allocated in convert_init_args() */
 	if (cipher_args.keys_desc)
-		free_keys_ptr_array(cipher_args.keys_desc, cipher_args.nb_keys);
+		smw_keymgr_free_keys_ptr_array(cipher_args.keys_desc,
+					       cipher_args.nb_keys);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -373,7 +279,8 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args)
 end:
 	/* Free keys decriptor allocated in convert_init_args() */
 	if (init_args.keys_desc)
-		free_keys_ptr_array(init_args.keys_desc, init_args.nb_keys);
+		smw_keymgr_free_keys_ptr_array(init_args.keys_desc,
+					       init_args.nb_keys);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

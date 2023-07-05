@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #ifndef __CIPHER_H__
@@ -181,5 +181,25 @@ void smw_crypto_set_cipher_init_handle(struct smw_crypto_cipher_args *args,
  */
 unsigned int
 smw_crypto_get_cipher_nb_key_buffer(struct smw_crypto_cipher_args *args);
+
+/**
+ * smw_crypto_cipher_iv_required() - Check if cipher IV/tweak is required
+ * @mode: Cipher mode
+ *
+ * Return:
+ * True is required,
+ * Fals otherwise.
+ */
+static inline bool
+smw_crypto_cipher_iv_required(enum smw_config_cipher_mode_id mode)
+{
+	bool ret = true;
+
+	if (mode == SMW_CONFIG_CIPHER_MODE_ID_ECB ||
+	    mode == SMW_CONFIG_CIPHER_MODE_ID_INVALID)
+		ret = false;
+
+	return ret;
+}
 
 #endif /* __CIPHER_H__ */

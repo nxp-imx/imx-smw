@@ -31,6 +31,11 @@
 #define LC_OPEN_STR	     "OPEN"
 #define LC_CLOSED_STR	     "CLOSED"
 #define LC_CLOSED_LOCKED_STR "CLOSED_LOCKED"
+#define LC_CURRENT_STR	     "CURRENT"
+
+#define READ_ONLY_STR  "READ_ONLY"
+#define READ_ONCE_STR  "READ_ONCE"
+#define WRITE_ONLY_STR "WRITE_ONLY"
 
 #define ANY_STR			    "ANY"
 #define ALL_AEAD_STR		    "ALL_AEAD"

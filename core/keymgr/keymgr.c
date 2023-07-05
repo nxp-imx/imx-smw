@@ -763,6 +763,65 @@ end:
 	return status;
 }
 
+int smw_keymgr_convert_descriptors(struct smw_key_descriptor **in,
+				   struct smw_keymgr_descriptor ***out,
+				   unsigned int nb_keys,
+				   enum subsystem_id *subsystem_id)
+{
+	int status = SMW_STATUS_ALLOC_FAILURE;
+	unsigned int i = 0;
+	struct smw_keymgr_descriptor **keymgr_desc = NULL;
+	struct smw_key_descriptor *key = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/*
+	 * This memory is freed at the end of cipher one-shot operation or
+	 * cipher initialization
+	 */
+	keymgr_desc = SMW_UTILS_CALLOC(nb_keys,
+				       sizeof(struct smw_keymgr_descriptor *));
+	if (!keymgr_desc)
+		goto end;
+
+	for (; i < nb_keys; i++) {
+		key = in[i];
+
+		/*
+		 * This memory is freed at the end of one shot operation or
+		 * cipher initialization
+		 */
+		keymgr_desc[i] =
+			SMW_UTILS_CALLOC(1,
+					 sizeof(struct smw_keymgr_descriptor));
+		if (!keymgr_desc[i]) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			smw_keymgr_free_keys_ptr_array(keymgr_desc, nb_keys);
+			goto end;
+		}
+
+		status = smw_keymgr_convert_descriptor(key, keymgr_desc[i],
+						       false, *subsystem_id);
+		if (status != SMW_STATUS_OK) {
+			smw_keymgr_free_keys_ptr_array(keymgr_desc, nb_keys);
+			goto end;
+		}
+
+		/*
+		 * If @args->subsystem_name is not set and a key ID is set, get
+		 * subsystem ID from key ID
+		 */
+		if (*subsystem_id == SUBSYSTEM_ID_INVALID && key->id)
+			*subsystem_id = keymgr_desc[i]->identifier.subsystem_id;
+	}
+
+	*out = keymgr_desc;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr)
 {
 	attr->persistence = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
@@ -1179,6 +1238,21 @@ int smw_keymgr_free_keypair_buffer(struct smw_keymgr_descriptor *descriptor)
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+void smw_keymgr_free_keys_ptr_array(struct smw_keymgr_descriptor **keys_desc,
+				    unsigned int nb_keys)
+{
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < nb_keys; i++) {
+		if (keys_desc[i])
+			SMW_UTILS_FREE(keys_desc[i]);
+	}
+
+	SMW_UTILS_FREE(keys_desc);
 }
 
 inline unsigned int

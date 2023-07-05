@@ -6,6 +6,8 @@
 #ifndef __EXEC_H___
 #define __EXEC_H___
 
+#include "subsystems.h"
+
 enum smw_op_step {
 	SMW_OP_STEP_INIT,
 	SMW_OP_STEP_UPDATE,

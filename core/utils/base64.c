@@ -26,15 +26,13 @@ static const unsigned char encoding_table[] = {
 
 unsigned int smw_utils_get_base64_len(unsigned int hex_len)
 {
-	size_t b64_len = 0;
+	unsigned int b64_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	b64_len = hex_len + 2;
 	b64_len /= 3;
-	b64_len *= 4;
-
-	if (b64_len > UINT_MAX)
+	if (MUL_OVERFLOW(b64_len, 4, &b64_len))
 		b64_len = 0;
 
 	return b64_len;

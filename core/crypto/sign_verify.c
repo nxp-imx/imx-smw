@@ -267,7 +267,7 @@ end:
 
 static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 {
-	unsigned long size = 0;
+	unsigned int size = 0;
 
 	switch (key->identifier.type_id) {
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
@@ -275,7 +275,10 @@ static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
 		/* Signature size is public key size */
 		size = key->identifier.security_size;
-		size = BITS_TO_BYTES_SIZE(size) * 2;
+
+		if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(size), 2, &size))
+			size = 0;
+
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
@@ -291,9 +294,6 @@ static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 	default:
 		break;
 	}
-
-	if (size >= UINT32_MAX)
-		size = 0;
 
 	return size;
 }

@@ -155,12 +155,14 @@ static int get_full_ele_key_type(enum smw_config_key_type_id key_type_id,
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	const struct ele_key_def *key_def = NULL;
+	unsigned int key_type = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	key_def = get_key_def_by_smw_type(key_type_id);
 	if (key_def) {
-		if (!SET_OVERFLOW(key_def->ele_key_type, *ele_type))
+		key_type = key_def->ele_key_type;
+		if (!SET_OVERFLOW(key_type, *ele_type))
 			status = SMW_STATUS_OK;
 	}
 

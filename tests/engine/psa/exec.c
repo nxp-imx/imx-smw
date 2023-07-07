@@ -11,6 +11,7 @@
 #include "hash.h"
 #include "rng.h"
 #include "cipher.h"
+#include "mac.h"
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -60,6 +61,27 @@ static int execute_hash_cmd(char *cmd, struct subtest_data *subtest)
 	(void)cmd;
 
 	return hash_psa(subtest);
+}
+
+/**
+ * execute_mac_cmd() - Execute cmac command.
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from mac().
+ */
+static int execute_mac_cmd(char *cmd, struct subtest_data *subtest)
+{
+	if (!strcmp(cmd, MAC_COMPUTE))
+		return mac_psa(subtest, false);
+	else if (!strcmp(cmd, MAC_VERIFY))
+		return mac_psa(subtest, true);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
 }
 
 /**
@@ -168,6 +190,7 @@ int execute_command_psa(char *cmd, struct subtest_data *subtest)
 		{ IMPORT, &execute_import_cmd },
 		{ EXPORT, &execute_export_cmd },
 		{ HASH, &execute_hash_cmd },
+		{ MAC, &execute_mac_cmd },
 		{ RNG, &execute_rng_cmd },
 		{ CIPHER, &execute_cipher_cmd },
 		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },

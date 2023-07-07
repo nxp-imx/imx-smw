@@ -1,0 +1,142 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "HMAC",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"HMAC", "HASH=SHA256", "MIN_LENGTH=8"
+					]
+				],
+				"verify_message": [
+					[
+						"HMAC", "HASH=SHA256", "MIN_LENGTH=8"
+					]
+				]
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1"
+	},
+	"subtest 2": { // Get the MAC size - Output buffer is NULL
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"depends": 1
+	},
+	"subtest 3": { // Buffer too short
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": [
+			2,
+			"012345"
+		],
+		"depends": 1,
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL"
+	},
+	"subtest 4": {
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC_TRUNCATED",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": 16,
+		"mac_id": 1,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": 0,
+		"output": 32,
+		"mac_id": 2,
+		"depends": 1
+	},
+	"subtest 6": { // Length set to minimal key permitted algorithm
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC_TRUNCATED",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": 8,
+		"mac_id": 3,
+		"depends": 1
+	},
+	"subtest 7": {
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC_TRUNCATED",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"mac_id": 1,
+		"depends": 4
+	},
+	"subtest 8": { // Verify signature invalid
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC_TRUNCATED",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"bad1bee22e409f96e93d7e117393172a"
+		],
+		"mac_id": 1,
+		"depends": 4,
+		"result": "PSA_ERROR_INVALID_SIGNATURE"
+	},
+	"subtest 9": {
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC_TRUNCATED",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": 0,
+		"mac_id": 2,
+		"depends": 5
+	},
+	"subtest 10": { // Length set to minimal key permitted algorithm
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC_TRUNCATED",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"mac_id": 3,
+		"depends": 6
+	},
+	"subtest 11": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

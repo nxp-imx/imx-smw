@@ -6,7 +6,19 @@
 #ifndef __HASH_H__
 #define __HASH_H__
 
+#include <psa/crypto_types.h>
+
 #include "types.h"
+
+/**
+ * get_hash_alg_id() - Convert hash name in PSA Hash ID.
+ * @alg_name: Hash name.
+ *
+ * Return:
+ * PSA Hash ID, if @alg_name is known
+ * -PSA_ALG_NONE
+ */
+psa_algorithm_t get_hash_alg_id(const char *alg_name);
 
 /**
  * hash_psa() - Do a hash operation.

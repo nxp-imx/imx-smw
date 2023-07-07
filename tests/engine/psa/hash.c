@@ -39,7 +39,7 @@ static const struct hash_alg_info *get_hash_alg_info(const char *alg_name)
 	return GET_INFO(alg_name, hash_alg_info);
 }
 
-static psa_algorithm_t get_psa_alg_id(const char *alg_name)
+psa_algorithm_t get_hash_alg_id(const char *alg_name)
 {
 	const struct hash_alg_info *info = get_hash_alg_info(alg_name);
 
@@ -93,7 +93,7 @@ int hash_psa(struct subtest_data *subtest)
 	input = input_hex;
 	input_length = input_len;
 
-	psa_alg_id = get_psa_alg_id(alg_name);
+	psa_alg_id = get_hash_alg_id(alg_name);
 	hash_size = get_hash_length(alg_name);
 
 	/*

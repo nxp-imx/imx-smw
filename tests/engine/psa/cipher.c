@@ -19,7 +19,7 @@
 
 /**
  * struct cipher_alg_info
- * @name: SMW cipher mdoe name.
+ * @name: Cipher algo name.
  * @psa_alg_id: PSA cipher algo id.
  */
 static struct cipher_alg_info {

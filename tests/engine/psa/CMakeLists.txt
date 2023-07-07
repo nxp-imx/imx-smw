@@ -5,6 +5,7 @@ target_sources(${PROJECT_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/hash.c
                ${CMAKE_CURRENT_SOURCE_DIR}/key.c
                ${CMAKE_CURRENT_SOURCE_DIR}/keymgr.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/mac.c
                ${CMAKE_CURRENT_SOURCE_DIR}/rng.c
                ${CMAKE_CURRENT_BINARY_DIR}/status.c)
 

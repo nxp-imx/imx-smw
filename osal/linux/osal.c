@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2019-2022 NXP
+ * Copyright 2019-2023 NXP
  */
 
 #include "local.h"
@@ -118,10 +118,10 @@ static void vprint(const char *format, va_list arg)
 static int fill_dbg_buffer(char *out, size_t size, unsigned int *off,
 			   const char *fmt, size_t fmt_size, char c)
 {
-	int ret;
+	int ret = -1;
 
 	if (*off >= size)
-		return -1;
+		return ret;
 
 	if (fmt_size >= size)
 		printf(fmt, c);
@@ -143,10 +143,11 @@ static int fill_dbg_buffer(char *out, size_t size, unsigned int *off,
 static void hex_dump(const unsigned char *addr, unsigned int size,
 		     unsigned int align)
 {
-	unsigned int i;
+	unsigned int i = 0;
 	/* Size of out must be at least equal to 3. */
 	char out[256] = { 0 };
 	unsigned int off = 0;
+	unsigned int align_mask = 0;
 
 	printf("(%d) [0x%lx] (%p-%u)\n", getpid(), pthread_self(), addr, size);
 
@@ -156,16 +157,19 @@ static void hex_dump(const unsigned char *addr, unsigned int size,
 	}
 
 	if (align > 4)
-		align = 4;
-	if (align)
-		align = 1 << align;
+		align_mask = BIT(4);
+	else if (align)
+		align_mask = BIT(align) & 0xF;
+
+	if (align_mask)
+		align_mask -= 1;
 
 	for (i = 0; i < size; i++) {
 		if (fill_dbg_buffer(out, sizeof(out), &off, "%.2x ", 3,
 				    addr[i]))
 			break;
 
-		if (!((i + 1) & (align - 1))) {
+		if (!((i + 1) & align_mask)) {
 			if (fill_dbg_buffer(out, sizeof(out), &off, "%c", 1,
 					    '\n'))
 				break;
@@ -319,7 +323,7 @@ static bool is_lib_initialized(void)
 static int get_default_config(char **buffer, unsigned int *size)
 {
 	int status = SMW_STATUS_NO_CONFIG_LOADED;
-	long fsize;
+	long fsize = 0;
 
 	FILE *f = NULL;
 	const char *file_name = getenv("SMW_CONFIG_FILE");
@@ -427,7 +431,7 @@ __export enum smw_status_code
 smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 			    size_t info_size)
 {
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 
 	TRACE_FUNCTION_CALL;
 
@@ -456,7 +460,7 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 __export enum smw_status_code smw_osal_open_key_db(const char *file,
 						   size_t len __maybe_unused)
 {
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 
 	TRACE_FUNCTION_CALL;
 
@@ -476,9 +480,9 @@ __export enum smw_status_code smw_osal_open_key_db(const char *file,
 
 __export enum smw_status_code smw_osal_lib_init(void)
 {
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 
-	struct osal_ctx *ctx;
+	struct osal_ctx *ctx = NULL;
 	struct smw_ops ops = { 0 };
 	char *buffer = NULL;
 	unsigned int size = 0;

@@ -53,6 +53,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix coverity in ELE subsystem and ensure all variables are initialized.
 * Fix coverity in TEE subsystem and ensure all variables are initialized.
 
+#### 4. OSAL
+
+* Fix coverity and ensure all variables are initialized.
+
 #### SMW Tests - _version 2.4_
 
 #### PKCS#11 Library - _version 2.4_

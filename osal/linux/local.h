@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #ifndef __LOCAL_H__
@@ -16,6 +16,7 @@
 
 #include "smw_osal.h"
 
+#include "builtin_macros.h"
 #include "compiler.h"
 #include "osal.h"
 
@@ -44,10 +45,6 @@
 #define DBG_PRINTF(level, ...)
 #define TRACE_FUNCTION_CALL
 #endif /* ENABLE_TRACE */
-
-#ifndef BIT
-#define BIT(bit) (1 << (bit))
-#endif /* BIT */
 
 /*
  * Define the configuration flags ids

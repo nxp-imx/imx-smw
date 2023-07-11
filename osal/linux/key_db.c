@@ -34,7 +34,7 @@ __weak void dbg_get_lock_file(int fp)
 
 static int lock_db(struct key_db_obj *db)
 {
-	int ret;
+	int ret = 0;
 	struct flock lock = { 0 };
 
 	ret = mutex_lock(db->mutex);
@@ -49,6 +49,7 @@ static int lock_db(struct key_db_obj *db)
 		ret = -1;
 	}
 
+	// coverity[missing_unlock]
 	return ret;
 }
 
@@ -76,15 +77,20 @@ static int unlock_db(struct key_db_obj *db)
 static void find_db_key_id(struct key_db_obj *db, unsigned int id,
 			   struct key_entry *key, long *pos)
 {
-	ssize_t off = 0;
+	off_t off = 0;
+	ssize_t nb_bytes = 0;
+	size_t inc = 0;
 
 	*pos = -1;
 
-	while (pread(db->fp, key, sizeof(*key), off) == sizeof(*key)) {
+	while ((nb_bytes = pread(db->fp, key, sizeof(*key), off)) > 0 &&
+	       nb_bytes == sizeof(*key)) {
 		DBG_PRINTF(DEBUG, "%s ID=%u vs %u\n", __func__, key->id, id);
 		if (key->id != id) {
 			/* Go to the next entry */
-			off += sizeof(*key) + key->info_size;
+			if (ADD_OVERFLOW(sizeof(*key), key->info_size, &inc) ||
+			    ADD_OVERFLOW(off, inc, &off))
+				break;
 			continue;
 		}
 
@@ -111,13 +117,16 @@ static void find_db_key_id(struct key_db_obj *db, unsigned int id,
 static void find_db_key_free(struct key_db_obj *db, struct osal_key *key,
 			     unsigned int *free_id, long *pos)
 {
-	ssize_t off = 0;
-	struct key_entry rd_key;
+	off_t off = 0;
+	off_t inc_off = 0;
+	ssize_t nb_bytes = 0;
+	struct key_entry rd_key = { 0 };
 	unsigned int last_id = 0;
 
 	*pos = -1;
 
-	while (pread(db->fp, &rd_key, sizeof(rd_key), off) == sizeof(rd_key)) {
+	while ((nb_bytes = pread(db->fp, &rd_key, sizeof(rd_key), off)) > 0 &&
+	       nb_bytes == sizeof(rd_key)) {
 		/*
 		 * If the key id read is the requested range
 		 * set the last_id value
@@ -128,7 +137,12 @@ static void find_db_key_free(struct key_db_obj *db, struct osal_key *key,
 		if (last_id != rd_key.id || rd_key.flags != ENTRY_FREE ||
 		    rd_key.info_size < key->info_size) {
 			/* Go to the next entry */
-			off += sizeof(rd_key) + rd_key.info_size;
+			if (ADD_OVERFLOW(rd_key.info_size, sizeof(rd_key),
+					 &inc_off))
+				return;
+			if (ADD_OVERFLOW(inc_off, off, &off))
+				return;
+
 			continue;
 		}
 
@@ -160,6 +174,7 @@ static int write_key_db(struct key_db_obj *db, struct key_entry *key,
 	int err = -1;
 	off_t off = pos;
 	struct stat f_stat = { 0 };
+	ssize_t nb_bytes = 0;
 
 	DBG_PRINTF(DEBUG, "%s (%d) pos = %ld\n", __func__, __LINE__, pos);
 
@@ -174,7 +189,8 @@ static int write_key_db(struct key_db_obj *db, struct key_entry *key,
 		off = f_stat.st_size;
 	}
 
-	if (pwrite(db->fp, key, sizeof(*key), off) != sizeof(*key)) {
+	nb_bytes = pwrite(db->fp, key, sizeof(*key), off);
+	if (nb_bytes < 0 || nb_bytes != (ssize_t)sizeof(*key)) {
 		DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
 			   __LINE__);
 		goto end;
@@ -184,8 +200,8 @@ static int write_key_db(struct key_db_obj *db, struct key_entry *key,
 		dbg_entry_info(info, key->info_size);
 
 		off += sizeof(*key);
-		if (pwrite(db->fp, info, key->info_size, off) !=
-		    (ssize_t)key->info_size) {
+		nb_bytes = pwrite(db->fp, info, key->info_size, off);
+		if (nb_bytes < 0 || (size_t)nb_bytes != key->info_size) {
 			DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
 				   __LINE__);
 			goto end;
@@ -217,11 +233,12 @@ static void close_db_file(struct key_db_obj *db)
 
 int key_db_open(const char *key_db)
 {
+	int ret = -1;
 	struct osal_ctx *ctx = get_osal_ctx();
-	struct key_db_obj *db;
+	struct key_db_obj *db = NULL;
 
 	if (!ctx)
-		return -1;
+		return ret;
 
 	db = ctx->key_db_obj;
 
@@ -232,14 +249,13 @@ int key_db_open(const char *key_db)
 		db = calloc(1, sizeof(*db));
 		if (!db) {
 			DBG_PRINTF(ERROR, "Key database allocation error\n");
-			return -1;
+			goto end;
 		}
 
 		ctx->key_db_obj = db;
-	}
-
-	if (db->fp)
+	} else if (db->fp) {
 		close_db_file(db);
+	}
 
 	/*
 	 * Open the application key database file.
@@ -250,20 +266,28 @@ int key_db_open(const char *key_db)
 	if (db->fp < 0) {
 		DBG_PRINTF(ERROR, "%s (%d): %s\n", __func__, __LINE__,
 			   get_strerr());
+		db->fp = 0;
+		goto end;
+	}
+
+	ret = mutex_init(&db->mutex);
+
+end:
+	if (ret && db) {
+		close_db_file(db);
+		(void)mutex_destroy(&db->mutex);
 
 		free(db);
 		ctx->key_db_obj = NULL;
-
-		return -1;
 	}
 
-	return mutex_init(&db->mutex);
+	return ret;
 }
 
 void key_db_close(void)
 {
 	struct osal_ctx *ctx = get_osal_ctx();
-	struct key_db_obj *db;
+	struct key_db_obj *db = NULL;
 
 	if (!ctx)
 		return;
@@ -283,9 +307,11 @@ void key_db_close(void)
 int key_db_get_info(struct osal_key *key)
 {
 	int ret = -1;
+	ssize_t nb_bytes = 0;
 	long pos = -1;
+	off_t offset = 0;
 	struct osal_ctx *ctx = get_osal_ctx();
-	struct key_db_obj *db;
+	struct key_db_obj *db = NULL;
 	struct key_entry entry = { 0 };
 
 	if (!ctx)
@@ -330,8 +356,11 @@ int key_db_get_info(struct osal_key *key)
 	}
 
 	/* Read the key information and exit */
-	if (pread(db->fp, key->info, entry.info_size, pos + sizeof(entry)) ==
-	    (ssize_t)entry.info_size) {
+	if (ADD_OVERFLOW(pos, sizeof(entry), &offset))
+		goto end;
+
+	nb_bytes = pread(db->fp, key->info, entry.info_size, offset);
+	if (nb_bytes > 0 || nb_bytes == (ssize_t)entry.info_size) {
 		dbg_entry_info(key->info, entry.info_size);
 		ret = 0;
 	} else {
@@ -348,7 +377,7 @@ end:
 int key_db_add(struct osal_key *key)
 {
 	struct osal_ctx *ctx = get_osal_ctx();
-	struct key_db_obj *db;
+	struct key_db_obj *db = NULL;
 	int ret = -1;
 	long pos = -1;
 	unsigned int free_id = 0;
@@ -409,7 +438,7 @@ int key_db_update(struct osal_key *key)
 	int ret = -1;
 	long pos = -1;
 	struct osal_ctx *ctx = get_osal_ctx();
-	struct key_db_obj *db;
+	struct key_db_obj *db = NULL;
 	struct key_entry entry = { 0 };
 
 	if (!ctx)
@@ -463,7 +492,7 @@ int key_db_delete(struct osal_key *key)
 	int ret = -1;
 	long pos = -1;
 	struct osal_ctx *ctx = get_osal_ctx();
-	struct key_db_obj *db;
+	struct key_db_obj *db = NULL;
 	struct key_entry entry = { 0 };
 
 	if (!ctx)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <errno.h>
@@ -26,9 +26,10 @@ void dbg_entry(struct key_entry *entry __maybe_unused)
 
 void dbg_entry_info(void *buf, size_t len)
 {
-	size_t idx;
-	char out[256];
-	int off = 0;
+	size_t idx = 0;
+	char out[256] = { 0 };
+	unsigned long off = 0;
+	int nb_char = 0;
 
 	if (DBG_LEVEL_DEBUG > DBG_LEVEL)
 		return;
@@ -36,12 +37,17 @@ void dbg_entry_info(void *buf, size_t len)
 	printf("Entry Info: (%p-%zu)\n", buf, len);
 
 	for (idx = 0; idx < len; idx++) {
-		if (((idx % 16) == 0) && idx > 0) {
+		if ((!(idx % 16) && idx > 0) || off == (sizeof(out) - 1)) {
 			printf("%s\n", out);
 			off = 0;
 		}
-		off += snprintf(out + off, (sizeof(out) - off), "%02X ",
-				((char *)buf)[idx]);
+
+		nb_char = snprintf(out + off, (sizeof(out) - off), "%02X ",
+				   ((char *)buf)[idx]);
+		if (nb_char < 0)
+			break;
+
+		off += nb_char;
 	}
 
 	if (off > 0)

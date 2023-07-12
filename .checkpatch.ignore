@@ -11,3 +11,4 @@ tests/psa/psa-arch-tests/crypto
 *.png
 *.pub
 public/psa/*.h
+Documentations

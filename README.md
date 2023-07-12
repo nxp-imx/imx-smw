@@ -1,81 +1,28 @@
 # Security Middleware Project
 
-This git contains source code for the Security Middleware library.
+This git contains source code (C standard) for the NXP Security Middleware library.
 
-All project information can be found at
-[Security Middleware Confluence](https://confluence.sw.nxp.com/display/EPSTEC/Security+Middleware)
+The NXP Security Middleware Library is a software library exposing a set of
+unify APIs to execute operations on i.MX Secure Subsystems. The library
+intends to be a "bridge" or "wrapper" formatting operation's parameters
+function of the Secure Subsystem used.
 
+The objectives of this library are:
+- Exposing the same set of APIs regardless the secure operation.
+- Making target Secure Subsystems configurable by using a configuration file. This configuration is text buffer loaded at runtime and describing operations versus Secure Subsystems.
+- Offering the possibility to use a Secure Subsystem transparently by defining a "default" Secure Subsystem per operation in the configuration file.
+- Allowing to use a particular (not default one) Secure Subsystem for each operation.
+- Being OS' agnostic. The final target library include a specific OS Abstraction Layer to access non-standard C library system resources.
+- Supporting multiple applications and threads.
 
-----
-
-## Table Of Content
-
-1. [Pre-commit hook](#pre-commit-hook)
-   1. [Enabling pre-commit hooks](#enabling-pre-commit-hooks)
-   2. [Bypassing pre-commit hooks](#bypassing-pre-commit-hooks)
-2. [Formating Tools](#formating-tools)
-   1. [Installing clang-format](#installing-clang-format)
-   2. [Installing checkpatch](#installing-checkpatch)
-3. [List of changes](#list-of-changes)
-
-----
-
-## Pre-commit hook
-Some pre-commit hooks are available to check:
-* The commit message format
-* The coding syle using clang-format
-* Run linux checkpatch
-* Check file copyright in commit
-
-### Enabling pre-commit hooks
-This is under the developer responsability to enable the pre-commit hook on
-his local environment. The below script has to be executed one time in the
-source tee.
-
-```
-$ cd <your-source-tree>
-$ ./scripts/enable-git-hooks.sh
-```
-
-The script create linked in the .git folder:
-* git-hooks/commit-msg: check the commit message.
-* git-hooks/pre-commit: run all scripts present in git-hooks/pre-commit.d/
-* git-hooks/pre-commit.d/check-copyright: verify that all source files
-    copyright header. To remove files from the check, update the file
-    `.check-style.ignore` in the root directory.
-* git-hooks/pre-commit.d/clang-format: run clang-format on all source files.
-    Coding format is defined in the file `.clang-format` in the root directory.
-* git-hooks/pre-commit.d/checkpatch: run checkpatch on all files.
-
-### Bypassing pre-commit hooks
-If for whatever reason you need to disable the hooks, simply add the
---no-verify option to git commit command.
-It's no recommended to bypass hooks if commit is to be merge in mainline.
-
-___
-
-## Formating Tools
-
-### Installing clang-format
-The minimum version required is the version 9.0.
-To install the latest version in Ubuntu run the command:
-
-```
-sudo apt install clang-format
-```
-
-### Installing checkpatch
-There is no manual installation to be done. Script is uploading checkpatch in
-the top level .tmp directory created if not existing.
-The file .checkpatch.ignore excludes files/directory from the checkpatch
-verification.
-
-**Note:** the scripts/checkpatch.sh can be executed as a normal script without
-using the pre-commit hook.
-More help with `./scripts/checkpatch.sh --help`
-
-___
+## User guide
+Project User guide can be found in the [User Guide](./Documentations/user_guide/user_guide.md)
 
 ## List of changes
 The list of changes can be found in the [ChangeLog](./CHANGELOG.md) file.
 
+## Licenses
+Almost all sources are under the <a href="https://opensource.org/license/BSD-3-clause/">BSD 3-Clause license</a>,
+except sources inherit from external project like ARM, OASIS.
+
+More details are available in the [SCR](./SW-Content-Register.txt) file.

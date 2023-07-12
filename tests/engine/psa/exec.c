@@ -9,6 +9,7 @@
 #include "util_debug.h"
 #include "keymgr.h"
 #include "hash.h"
+#include "sign_verify.h"
 #include "rng.h"
 #include "cipher.h"
 #include "mac.h"
@@ -125,6 +126,40 @@ static int execute_export_cmd(char *cmd, struct subtest_data *subtest)
 }
 
 /**
+ * execute_sign_cmd() - Execute sign command.
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from sign_verify().
+ */
+static int execute_sign_cmd(char *cmd, struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	return sign_verify_psa(subtest, SIGN_OPERATION);
+}
+
+/**
+ * execute_verify_cmd() - Execute sign or verify command.
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from sign_verify().
+ */
+static int execute_verify_cmd(char *cmd, struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	return sign_verify_psa(subtest, VERIFY_OPERATION);
+}
+
+/**
  * execute_rng_cmd() - Execute RNG command.
  * @cmd: Command name.
  * @subtest: Subtest data.
@@ -191,6 +226,8 @@ int execute_command_psa(char *cmd, struct subtest_data *subtest)
 		{ EXPORT, &execute_export_cmd },
 		{ HASH, &execute_hash_cmd },
 		{ MAC, &execute_mac_cmd },
+		{ SIGN, &execute_sign_cmd },
+		{ VERIFY, &execute_verify_cmd },
 		{ RNG, &execute_rng_cmd },
 		{ CIPHER, &execute_cipher_cmd },
 		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },

@@ -7,6 +7,7 @@ target_sources(${PROJECT_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/keymgr.c
                ${CMAKE_CURRENT_SOURCE_DIR}/mac.c
                ${CMAKE_CURRENT_SOURCE_DIR}/rng.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/sign_verify.c
                ${CMAKE_CURRENT_BINARY_DIR}/status.c)
 
 #

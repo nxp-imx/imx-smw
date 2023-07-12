@@ -31,7 +31,7 @@ TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	void *iv = NULL;
 	size_t iv_len = 0;
 	unsigned int nb_ids = 0;
-	unsigned int i;
+	unsigned int i = 0;
 	uint32_t max_key_size = 0;
 	struct shared_context *context;
 
@@ -141,7 +141,7 @@ end:
 		TEE_FreeOperation(op_handle);
 
 	/* Close persistent key(s) opened */
-	for (i = 0; i < nb_ids; i++) {
+	for (; i < nb_ids; i++) {
 		if (keys_handle[i].handle && keys_handle[i].persistent)
 			TEE_CloseObject(keys_handle[i].handle);
 	}
@@ -152,9 +152,9 @@ end:
 TEE_Result cipher_update(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_OperationHandle op_handle;
+	TEE_OperationHandle op_handle = TEE_HANDLE_NULL;
 	uint32_t exp_param_types = 0;
-	struct shared_context *context;
+	struct shared_context *context = NULL;
 
 	FMSG("Executing %s", __func__);
 
@@ -184,9 +184,9 @@ TEE_Result cipher_update(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 TEE_Result cipher_final(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_OperationHandle op_handle;
+	TEE_OperationHandle op_handle = TEE_HANDLE_NULL;
 	uint32_t exp_param_types = 0;
-	struct shared_context *context;
+	struct shared_context *context = NULL;
 
 	FMSG("Executing %s", __func__);
 

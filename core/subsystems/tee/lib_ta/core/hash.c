@@ -30,7 +30,7 @@ static const struct algorithm_info {
 static TEE_Result get_algorithm_info(enum tee_algorithm_id ca_id,
 				     const struct algorithm_info **info)
 {
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(algorithm_infos);
 
 	FMSG("Executing %s", __func__);
@@ -38,7 +38,7 @@ static TEE_Result get_algorithm_info(enum tee_algorithm_id ca_id,
 	if (!info)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	for (i = 0; i < size; i++) {
+	for (; i < size; i++) {
 		if (algorithm_infos[i].ca_id < ca_id)
 			continue;
 		if (algorithm_infos[i].ca_id > ca_id)
@@ -70,15 +70,15 @@ TEE_Result ta_get_digest_length(enum tee_algorithm_id tee_algorithm_id,
 	return res;
 }
 
-TEE_Result ta_get_hash_ca_id(uint32_t digest_len, enum tee_algorithm_id *ca_id)
+TEE_Result ta_get_hash_ca_id(size_t digest_len, enum tee_algorithm_id *ca_id)
 {
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(algorithm_infos);
 
 	FMSG("Executing %s", __func__);
 
 	if (ca_id) {
-		for (i = 0; i < size; i++) {
+		for (; i < size; i++) {
 			if (algorithm_infos[i].length < digest_len)
 				continue;
 			if (algorithm_infos[i].length > digest_len)
@@ -93,10 +93,10 @@ TEE_Result ta_get_hash_ca_id(uint32_t digest_len, enum tee_algorithm_id *ca_id)
 }
 
 TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
-			     const void *chunk, uint32_t chunk_len, void *hash,
+			     const void *chunk, size_t chunk_len, void *hash,
 			     size_t *hash_len)
 {
-	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_Result res = TEE_SUCCESS;
 	TEE_OperationHandle operation = TEE_HANDLE_NULL;
 	const struct algorithm_info *algorithm_info = NULL;
 
@@ -136,6 +136,8 @@ TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 
 TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	enum tee_algorithm_id algo = 0;
 	FMSG("Executing %s", __func__);
 
 	/*
@@ -147,9 +149,16 @@ TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 					   TEE_PARAM_TYPE_MEMREF_INPUT,
 					   TEE_PARAM_TYPE_MEMREF_OUTPUT,
 					   TEE_PARAM_TYPE_NONE))
-		return TEE_ERROR_BAD_PARAMETERS;
+		return res;
 
-	return ta_compute_digest(params[0].value.a, params[1].memref.buffer,
-				 params[1].memref.size, params[2].memref.buffer,
-				 &params[2].memref.size);
+	if (params[0].value.a < TEE_ALGORITHM_ID_INVALID) {
+		algo = params[0].value.a;
+
+		res = ta_compute_digest(algo, params[1].memref.buffer,
+					params[1].memref.size,
+					params[2].memref.buffer,
+					&params[2].memref.size);
+	}
+
+	return res;
 }

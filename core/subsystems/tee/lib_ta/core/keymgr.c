@@ -314,7 +314,7 @@ find_and_open_persistent_id(uint32_t id, TEE_ObjectHandle *handle, bool shared)
 {
 #define OBJECT_ID_BUFFER_MAX (TEE_OBJECT_ID_MAX_LEN / sizeof(uint32_t) + 1)
 
-	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
+	TEE_Result res = TEE_SUCCESS;
 	TEE_ObjectEnumHandle obj_enum = TEE_HANDLE_NULL;
 	TEE_ObjectInfo obj_info = { 0 };
 	uint32_t *obj_id = NULL;
@@ -382,7 +382,7 @@ find_and_open_persistent_id(uint32_t id, TEE_ObjectHandle *handle, bool shared)
  */
 static TEE_Result register_persistent_object(struct obj_data *data)
 {
-	TEE_Result res = TEE_ERROR_GENERIC;
+	TEE_Result res = TEE_SUCCESS;
 	TEE_ObjectHandle handle = TEE_HANDLE_NULL;
 
 	FMSG("Executing %s", __func__);
@@ -410,7 +410,7 @@ static TEE_Result register_persistent_object(struct obj_data *data)
  */
 static TEE_Result find_and_delete_persistent_id(uint32_t id)
 {
-	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
+	TEE_Result res = TEE_SUCCESS;
 	TEE_ObjectHandle handle = TEE_HANDLE_NULL;
 
 	FMSG("Executing %s", __func__);
@@ -465,17 +465,15 @@ static TEE_Result find_and_get_transient_id(uint32_t id,
  */
 static TEE_Result register_transient_object(struct obj_data *data)
 {
-	TEE_Result res = TEE_ERROR_GENERIC;
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	struct obj_data *new_data = NULL;
 	struct obj_list *new_obj = NULL;
 	struct obj_list *head = NULL;
 
 	FMSG("Executing %s", __func__);
 
-	if (!data) {
-		res = TEE_ERROR_BAD_PARAMETERS;
+	if (!data)
 		goto exit;
-	}
 
 	new_data =
 		TEE_Malloc(sizeof(*new_data), TEE_USER_MEM_HINT_NO_FILL_ZERO);
@@ -577,7 +575,7 @@ static TEE_Result find_and_delete_transient_id(uint32_t id)
  */
 static TEE_Result is_object_id_used(uint32_t id)
 {
-	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
+	TEE_Result res = TEE_SUCCESS;
 
 	FMSG("Executing %s", __func__);
 
@@ -695,7 +693,7 @@ static TEE_Result conf_key_ecc_attribute(enum tee_key_type key_type,
 static TEE_Result key_usage_to_tee(unsigned int key_usage,
 				   uint32_t *tee_key_usage)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	FMSG("Executing %s", __func__);
 
@@ -703,7 +701,7 @@ static TEE_Result key_usage_to_tee(unsigned int key_usage,
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	*tee_key_usage = 0;
-	for (i = 0; i < ARRAY_SIZE(conv_key_usage); i++) {
+	for (; i < ARRAY_SIZE(conv_key_usage); i++) {
 		if (conv_key_usage[i].usage & key_usage)
 			*tee_key_usage |= conv_key_usage[i].tee_usage;
 	}
@@ -724,12 +722,12 @@ static TEE_Result key_usage_to_tee(unsigned int key_usage,
  */
 static void key_usage_to_ta(unsigned int *key_usage, uint32_t tee_key_usage)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	FMSG("Executing %s", __func__);
 
 	*key_usage = 0;
-	for (i = 0; i < ARRAY_SIZE(conv_key_usage); i++) {
+	for (; i < ARRAY_SIZE(conv_key_usage); i++) {
 		if (conv_key_usage[i].tee_usage & tee_key_usage)
 			*key_usage |= conv_key_usage[i].usage;
 	}
@@ -769,7 +767,7 @@ static TEE_Result set_key_usage(uint32_t key_usage, TEE_ObjectHandle key_handle)
  */
 static TEE_Result get_ecc_public_key_size(TEE_ObjectHandle handle, size_t *size)
 {
-	TEE_Result res = TEE_ERROR_GENERIC;
+	TEE_Result res = TEE_SUCCESS;
 	size_t x_size = 0;
 	size_t y_size = 0;
 
@@ -815,7 +813,7 @@ static TEE_Result get_rsa_public_key_size(TEE_ObjectHandle handle,
 					  size_t *modulus_size,
 					  size_t *exponent_size)
 {
-	TEE_Result res = TEE_ERROR_GENERIC;
+	TEE_Result res = TEE_SUCCESS;
 
 	FMSG("Executing %s", __func__);
 
@@ -881,7 +879,8 @@ static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 		if (res)
 			return res;
 
-		y_size = *pub_key_size - x_size;
+		if (SUB_OVERFLOW(*pub_key_size, x_size, &y_size))
+			return TEE_ERROR_GENERIC;
 
 		res = TEE_GetObjectBufferAttribute(handle,
 						   TEE_ATTR_ECC_PUBLIC_VALUE_Y,
@@ -924,6 +923,7 @@ static inline void set_ecc_public_key(TEE_Attribute *attr, unsigned char *key,
  *
  * Return:
  * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- Bad parameters.
  * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
  * Error code from conf_key_ecc_attribute().
  */
@@ -936,11 +936,14 @@ static TEE_Result set_import_key_public_attributes(TEE_Attribute **attr,
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_Attribute *key_attr = NULL;
+	size_t attr_size = 0;
 
 	FMSG("Executing %s", __func__);
 
-	key_attr = TEE_Malloc(attr_count * sizeof(TEE_Attribute),
-			      TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (MUL_OVERFLOW(attr_count, sizeof(TEE_Attribute), &attr_size))
+		return res;
+
+	key_attr = TEE_Malloc(attr_size, TEE_USER_MEM_HINT_NO_FILL_ZERO);
 	if (!key_attr) {
 		EMSG("TEE_Malloc failed");
 		return TEE_ERROR_OUT_OF_MEMORY;
@@ -973,6 +976,7 @@ static TEE_Result set_import_key_public_attributes(TEE_Attribute **attr,
  *
  * Return:
  * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- Bad parameters.
  * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
  * Error code from conf_key_ecc_attribute().
  */
@@ -984,11 +988,14 @@ set_import_keypair_attrs(TEE_Attribute **attr, uint32_t attr_count,
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_Attribute *key_attr = NULL;
+	size_t attr_size = 0;
 
 	FMSG("Executing %s", __func__);
 
-	key_attr = TEE_Malloc(attr_count * sizeof(TEE_Attribute),
-			      TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (MUL_OVERFLOW(attr_count, sizeof(TEE_Attribute), &attr_size))
+		return res;
+
+	key_attr = TEE_Malloc(attr_size, TEE_USER_MEM_HINT_NO_FILL_ZERO);
 	if (!key_attr) {
 		EMSG("TEE_Malloc failed");
 		return TEE_ERROR_OUT_OF_MEMORY;
@@ -1020,6 +1027,7 @@ set_import_keypair_attrs(TEE_Attribute **attr, uint32_t attr_count,
  *
  * Return:
  * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- Bad parameters
  * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
  */
 static TEE_Result set_import_key_private_attributes(TEE_Attribute **attr,
@@ -1027,10 +1035,14 @@ static TEE_Result set_import_key_private_attributes(TEE_Attribute **attr,
 						    unsigned char *priv_key,
 						    unsigned int priv_key_len)
 {
+	size_t attr_size = 0;
+
 	FMSG("Executing %s", __func__);
 
-	*attr = TEE_Malloc(attr_count * sizeof(TEE_Attribute),
-			   TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (MUL_OVERFLOW(attr_count, sizeof(TEE_Attribute), &attr_size))
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	*attr = TEE_Malloc(attr_size, TEE_USER_MEM_HINT_NO_FILL_ZERO);
 	if (!*attr) {
 		EMSG("TEE_Malloc failed");
 		return TEE_ERROR_OUT_OF_MEMORY;
@@ -1082,6 +1094,7 @@ static inline void set_rsa_public_key(TEE_Attribute *attr,
  *
  * Return:
  * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- Bad parameters.
  * TEE_ERROR_OUT_OF_MEMORY	- Memory allocation failed.
  */
 static TEE_Result
@@ -1091,11 +1104,14 @@ set_import_key_rsa_attributes(TEE_Attribute **attr, uint32_t attr_count,
 			      unsigned char *priv_exp, unsigned int priv_len)
 {
 	TEE_Attribute *key_attr = NULL;
+	size_t attr_size = 0;
 
 	FMSG("Executing %s", __func__);
 
-	key_attr = TEE_Malloc(attr_count * sizeof(TEE_Attribute),
-			      TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (MUL_OVERFLOW(attr_count, sizeof(TEE_Attribute), &attr_size))
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	key_attr = TEE_Malloc(attr_size, TEE_USER_MEM_HINT_NO_FILL_ZERO);
 	if (!key_attr) {
 		EMSG("TEE_Malloc failed");
 		return TEE_ERROR_OUT_OF_MEMORY;
@@ -1502,7 +1518,7 @@ TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 			 unsigned int pub_key_len, unsigned char *modulus,
 			 unsigned int modulus_len)
 {
-	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	TEE_Result res = TEE_SUCCESS;
 	TEE_Attribute *key_attr = NULL;
 	uint32_t object_type = 0;
 	uint32_t attr_count = 0;
@@ -1555,9 +1571,9 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	unsigned int security_size = 0;
-	unsigned int priv_key_len = 0;
-	unsigned int pub_key_len = 0;
-	unsigned int modulus_len = 0;
+	size_t priv_key_len = 0;
+	size_t pub_key_len = 0;
+	size_t modulus_len = 0;
 	unsigned char *priv_key = NULL;
 	unsigned char *pub_key = NULL;
 	unsigned char *modulus = NULL;

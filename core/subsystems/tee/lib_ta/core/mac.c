@@ -35,12 +35,12 @@ static const struct algo_info {
 static const struct algo_info *get_algo_info(enum tee_algorithm_id ca_id)
 {
 	const struct algo_info *alg = NULL;
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(alg_infos);
 
 	FMSG("Executing %s", __func__);
 
-	for (i = 0; i < size; i++) {
+	for (; i < size; i++) {
 		if (alg_infos[i].ca_id == ca_id) {
 			alg = &alg_infos[i];
 			break;
@@ -60,11 +60,11 @@ static TEE_Result mac_operate(uint32_t param_types,
 	uint32_t key_param_type = TEE_PARAM_TYPE_GET(param_types, 0);
 	struct mac_shared_params *shared_params = NULL;
 	unsigned char *priv_key = NULL;
-	unsigned int priv_key_len = 0;
-	void *message;
-	uint32_t message_len;
-	void *mac;
-	size_t mac_len;
+	size_t priv_key_len = 0;
+	void *message = NULL;
+	size_t message_len = 0;
+	void *mac = NULL;
+	size_t mac_len = 0;
 	const struct algo_info *alg = NULL;
 
 	bool persistent = false;
@@ -90,6 +90,7 @@ static TEE_Result mac_operate(uint32_t param_types,
 	case TEE_PARAM_TYPE_MEMREF_INPUT:
 		priv_key = params[0].memref.buffer;
 		priv_key_len = params[0].memref.size;
+
 		res = ta_import_key(&key_handle, shared_params->tee_key_type,
 				    shared_params->security_size, TEE_USAGE_MAC,
 				    priv_key, priv_key_len, NULL, 0, NULL, 0);

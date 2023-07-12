@@ -52,6 +52,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix coverity in HSM subsystem and ensure all variables are initialized.
 * Fix coverity in ELE subsystem and ensure all variables are initialized.
 * Fix coverity in TEE subsystem and ensure all variables are initialized.
+* Fix coverity in TA Library of the TEE subsystem and ensure all variables are initialized.
 
 #### 4. OSAL
 

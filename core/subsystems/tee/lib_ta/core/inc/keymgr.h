@@ -6,9 +6,13 @@
 #ifndef TA_KEYMGR_H
 #define TA_KEYMGR_H
 
-#ifndef BITS_TO_BYTES_SIZE
-#define BITS_TO_BYTES_SIZE(security_size) (((security_size) + 7) / 8)
-#endif
+#include <util.h>
+
+#define BITS_TO_BYTES_SIZE(size)                                               \
+	({                                                                     \
+		__typeof__(size) _bits = 0;                                    \
+		ADD_OVERFLOW((size), 7, &_bits) ? 0 : _bits / 8;               \
+	})
 
 /**
  * generate_key() - Generate a key.

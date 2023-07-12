@@ -77,10 +77,11 @@ static const struct {
  */
 static TEE_Result get_rsa_algo_id(enum tee_signature_type signature_type,
 				  enum tee_algorithm_id hash_algo,
-				  uint32_t digest_len, uint32_t *algorithm_id)
+				  size_t digest_len,
+				  enum tee_algorithm_id *algorithm_id)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(rsa_algorithm_ids);
 	enum tee_algorithm_id tee_hash_algo = hash_algo;
 
@@ -95,7 +96,7 @@ static TEE_Result get_rsa_algo_id(enum tee_signature_type signature_type,
 			return res;
 	}
 
-	for (i = 0; i < size; i++) {
+	for (; i < size; i++) {
 		if (rsa_algorithm_ids[i].signature_type < signature_type)
 			continue;
 		if (rsa_algorithm_ids[i].signature_type > signature_type)
@@ -114,9 +115,9 @@ static TEE_Result get_rsa_algo_id(enum tee_signature_type signature_type,
 
 static TEE_Result get_algorithm_id(enum tee_key_type key_type_id,
 				   unsigned int security_size,
-				   uint32_t *algorithm_id)
+				   enum tee_algorithm_id *algorithm_id)
 {
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(algorithm_ids);
 
 	FMSG("Executing %s", __func__);
@@ -124,7 +125,7 @@ static TEE_Result get_algorithm_id(enum tee_key_type key_type_id,
 	if (!algorithm_id)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	for (i = 0; i < size; i++) {
+	for (; i < size; i++) {
 		if (algorithm_ids[i].key_type_id < key_type_id)
 			continue;
 		if (algorithm_ids[i].key_type_id > key_type_id)
@@ -170,11 +171,10 @@ static TEE_Result set_key(uint32_t cmd_id, TEE_Param ta_param,
 	unsigned char *pub_key = NULL;
 	unsigned char *priv_key = NULL;
 	unsigned char *modulus = NULL;
-	unsigned char *ptr;
-	unsigned int priv_key_len = 0;
-	unsigned int modulus_len = 0;
-	unsigned int key_size =
-		BITS_TO_BYTES_SIZE(shared_params->security_size);
+	unsigned char *ptr = NULL;
+	size_t priv_key_len = 0;
+	size_t modulus_len = 0;
+	size_t key_size = BITS_TO_BYTES_SIZE(shared_params->security_size);
 	uint32_t key_usage = 0;
 
 	FMSG("Executing %s", __func__);
@@ -234,9 +234,9 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	TEE_Attribute sign_verify_attr = { 0 };
 	TEE_ObjectInfo key_info = { 0 };
 	uint32_t param0_type = TEE_PARAM_TYPE_GET(param_types, 0);
-	uint32_t exp_param3_type;
-	uint32_t mode;
-	uint32_t algorithm_id = 0;
+	uint32_t exp_param3_type = 0;
+	uint32_t mode = 0;
+	enum tee_algorithm_id algorithm_id = 0;
 	void *digest = NULL;
 	size_t digest_len = 0;
 	bool persistent = false;

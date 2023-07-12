@@ -3,24 +3,29 @@
  * Copyright 2023 NXP
  */
 
+#include <util.h>
 #include "common.h"
 
 TEE_Result check_operation_keys_usage(TEE_OperationHandle op,
 				      TEE_ObjectInfo *key_info,
 				      uint32_t nb_keys)
 {
-	TEE_Result res = TEE_SUCCESS;
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_OperationInfoMultiple *op_info = NULL;
 	TEE_OperationInfoKey *op_key_info = NULL;
-	size_t op_info_size;
+	size_t op_info_size = 0;
 
 	if (!key_info && nb_keys) {
 		res = TEE_ERROR_BAD_PARAMETERS;
 		goto end;
 	}
 
-	op_info_size = sizeof(TEE_OperationInfoMultiple) +
-		       nb_keys * sizeof(TEE_OperationInfoKey);
+	if (MUL_OVERFLOW(nb_keys, sizeof(TEE_OperationInfoKey), &op_info_size))
+		goto end;
+
+	if (ADD_OVERFLOW(op_info_size, sizeof(TEE_OperationInfoMultiple),
+			 &op_info_size))
+		goto end;
 
 	op_info = TEE_Malloc(op_info_size, TEE_MALLOC_FILL_ZERO);
 	if (!op_info) {

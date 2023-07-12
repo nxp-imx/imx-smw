@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <util.h>
@@ -14,10 +14,10 @@
 
 TEE_Result rng(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
-	unsigned int remaining_size;
-	unsigned int block_size;
-	unsigned char *buffer;
-	unsigned char *block;
+	size_t remaining_size = 0;
+	size_t block_size = 0;
+	unsigned char *buffer = NULL;
+	unsigned char *block = NULL;
 
 	FMSG("Executing %s", __func__);
 

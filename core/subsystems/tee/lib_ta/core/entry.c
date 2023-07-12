@@ -18,9 +18,8 @@
 
 TEE_Result libsmw_detach(void)
 {
-	TEE_Result res;
+	TEE_Result res = clear_key_linked_list();
 
-	res = clear_key_linked_list();
 	if (res) {
 		EMSG("Error 0x%" PRIx32 " while cleaning key linked list", res);
 		res = TEE_ERROR_GENERIC;

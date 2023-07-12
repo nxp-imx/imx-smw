@@ -41,7 +41,7 @@ TEE_Result ta_get_digest_length(enum tee_algorithm_id tee_algorithm_id,
  * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
  * TEE_ERROR_NOT_SUPPORTED	- Hash algorithm is not supported.
  */
-TEE_Result ta_get_hash_ca_id(uint32_t digest_len, enum tee_algorithm_id *ca_id);
+TEE_Result ta_get_hash_ca_id(size_t digest_len, enum tee_algorithm_id *ca_id);
 
 /**
  * ta_compute_digest() - Compute a digest.
@@ -57,7 +57,7 @@ TEE_Result ta_get_hash_ca_id(uint32_t digest_len, enum tee_algorithm_id *ca_id);
  * Error code from internal functions.
  */
 TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
-			     const void *chunk, uint32_t chunk_len, void *hash,
+			     const void *chunk, size_t chunk_len, void *hash,
 			     size_t *hash_len);
 
 #endif /* TA_HASH_H */

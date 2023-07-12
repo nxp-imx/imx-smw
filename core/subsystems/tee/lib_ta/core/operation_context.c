@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <util.h>
@@ -13,8 +13,8 @@ TEE_Result cancel_operation(uint32_t param_types,
 			    TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	uint32_t exp_param_types;
-	struct shared_context *context;
+	uint32_t exp_param_types = 0;
+	struct shared_context *context = NULL;
 
 	FMSG("Executing %s", __func__);
 
@@ -47,7 +47,7 @@ TEE_Result copy_context(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	TEE_OperationInfo src_info = { 0 };
 	TEE_OperationHandle src_handle = TEE_HANDLE_NULL;
 	TEE_OperationHandle dst_handle = TEE_HANDLE_NULL;
-	uint32_t exp_param_types;
+	uint32_t exp_param_types = 0;
 	struct shared_context *src_context;
 	struct shared_context *dst_context;
 

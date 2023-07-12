@@ -159,7 +159,7 @@ static void hex_dump(const unsigned char *addr, unsigned int size,
 	if (align > 4)
 		align_mask = BIT(4);
 	else if (align)
-		align_mask = BIT(align) & 0xF;
+		align_mask = BIT(align) & 0x1F;
 
 	if (align_mask)
 		align_mask -= 1;

@@ -37,6 +37,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library - _version 2.4_
 ##### 1. ARM PSA APIs
 
+* Fix coverity and ensure all variables are initialized.
+
 ##### 2. SMW APIs
 
 * Fix coverity in configuration module and ensure all variables are initialized.

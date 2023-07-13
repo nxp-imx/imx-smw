@@ -9,7 +9,7 @@
 
 psa_status_t util_smw_to_psa_status(enum smw_status_code status)
 {
-	psa_status_t psa_status;
+	psa_status_t psa_status = PSA_ERROR_GENERIC_ERROR;
 
 	switch (status) {
 	case SMW_STATUS_OK:
@@ -63,7 +63,7 @@ psa_status_t util_smw_to_psa_status(enum smw_status_code status)
 		break;
 
 	default:
-		psa_status = PSA_ERROR_GENERIC_ERROR;
+		break;
 	}
 
 	return psa_status;

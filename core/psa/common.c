@@ -18,7 +18,7 @@ smw_subsystem_t get_psa_default_subsystem(void)
 {
 	smw_subsystem_t subsystem_name = NULL;
 
-	struct smw_config_psa_config config;
+	struct smw_config_psa_config config = { 0 };
 
 	smw_config_get_psa_config(&config);
 
@@ -32,13 +32,13 @@ smw_subsystem_t get_psa_default_subsystem(void)
 psa_status_t call_smw_api(enum smw_status_code (*api)(void *a), void *args,
 			  smw_subsystem_t *subsystem_name)
 {
-	enum smw_status_code status;
-	struct smw_config_psa_config config;
+	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
+	struct smw_config_psa_config config = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!subsystem_name || *subsystem_name)
-		return PSA_ERROR_INVALID_ARGUMENT;
+		goto end;
 
 	smw_config_get_psa_config(&config);
 
@@ -55,5 +55,6 @@ psa_status_t call_smw_api(enum smw_status_code (*api)(void *a), void *args,
 		status = api(args);
 	}
 
+end:
 	return util_smw_to_psa_status(status);
 }

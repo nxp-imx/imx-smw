@@ -217,11 +217,19 @@ static psa_status_t set_rsa_key_pair_buffer(const uint8_t *data,
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	keypair_rsa->modulus = sequence[1].value;
-	keypair_rsa->modulus_length = sequence[1].length;
+
+	if (SET_OVERFLOW(sequence[1].length, keypair_rsa->modulus_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	keypair_rsa->public_data = sequence[2].value;
-	keypair_rsa->public_length = sequence[2].length;
+
+	if (SET_OVERFLOW(sequence[2].length, keypair_rsa->public_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	keypair_rsa->private_data = sequence[3].value;
-	keypair_rsa->private_length = sequence[3].length;
+
+	if (SET_OVERFLOW(sequence[3].length, keypair_rsa->private_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	return PSA_SUCCESS;
 }
@@ -248,9 +256,14 @@ set_rsa_public_key_buffer(const uint8_t *data, size_t data_length,
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	keypair_rsa->modulus = sequence[0].value;
-	keypair_rsa->modulus_length = sequence[0].length;
+
+	if (SET_OVERFLOW(sequence[0].length, keypair_rsa->modulus_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	keypair_rsa->public_data = sequence[1].value;
-	keypair_rsa->public_length = sequence[1].length;
+
+	if (SET_OVERFLOW(sequence[1].length, keypair_rsa->public_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	return PSA_SUCCESS;
 }
@@ -288,7 +301,7 @@ static void set_gen_private_key_buffer(const uint8_t *data, size_t data_length,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	keypair_gen->private_data = (unsigned char *)data;
-	keypair_gen->private_length = data_length;
+	(void)SET_OVERFLOW(data_length, keypair_gen->private_length);
 }
 
 static void set_ecc_public_key_buffer(const uint8_t *data, size_t data_length,
@@ -298,7 +311,7 @@ static void set_ecc_public_key_buffer(const uint8_t *data, size_t data_length,
 
 	/* Remove byte 0x04 */
 	keypair_gen->public_data = (unsigned char *)data + 1;
-	keypair_gen->public_length = data_length - 1;
+	(void)SET_OVERFLOW(data_length - 1, keypair_gen->public_length);
 }
 
 static void set_ecc_key_buffer(psa_key_type_t key_type, const uint8_t *data,
@@ -315,11 +328,11 @@ static void set_ecc_key_buffer(psa_key_type_t key_type, const uint8_t *data,
 
 static smw_key_type_t get_hmac_smw_key_type(psa_algorithm_t psa_hash)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < ARRAY_SIZE(hmac_hash); i++) {
+	for (; i < ARRAY_SIZE(hmac_hash); i++) {
 		if (hmac_hash[i].psa_hash == psa_hash)
 			return hmac_hash[i].smw_key_type;
 	}
@@ -330,7 +343,7 @@ static smw_key_type_t get_hmac_smw_key_type(psa_algorithm_t psa_hash)
 static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family,
 					   psa_algorithm_t psa_hash)
 {
-	unsigned int i;
+	unsigned int i = 0;
 	unsigned int array_size = 0;
 	const struct ecc_key_type *array = NULL;
 
@@ -344,7 +357,7 @@ static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family,
 		array = ecdh_key_type;
 	}
 
-	for (i = 0; i < array_size; i++) {
+	for (; i < array_size; i++) {
 		if (array[i].ecc_family == ecc_family)
 			return array[i].smw_key_type;
 	}
@@ -429,11 +442,11 @@ static psa_key_type_t get_hmac_psa_key_type(smw_key_type_t smw_key_type)
 
 psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < ARRAY_SIZE(cipher_key_type); i++) {
+	for (; i < ARRAY_SIZE(cipher_key_type); i++) {
 		if (!SMW_UTILS_STRCMP(cipher_key_type[i].smw_key_type,
 				      smw_key_type)) {
 			SMW_DBG_PRINTF(DEBUG, "Key type name: %s\n",
@@ -448,11 +461,11 @@ psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type)
 static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 				       unsigned int security_size)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
-	psa_key_type_t psa_key_type;
-	psa_algorithm_t alg;
-	psa_ecc_family_t ecc_family;
+	psa_key_type_t psa_key_type = 0;
+	psa_algorithm_t alg = 0;
+	psa_ecc_family_t ecc_family = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -486,7 +499,7 @@ static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 		return get_ecc_smw_key_type(ecc_family, alg);
 	}
 
-	for (i = 0; i < ARRAY_SIZE(cipher_key_type); i++) {
+	for (; i < ARRAY_SIZE(cipher_key_type); i++) {
 		if (cipher_key_type[i].psa_key_type == psa_key_type) {
 			SMW_DBG_PRINTF(DEBUG, "Key type: %s\n",
 				       cipher_key_type[i].smw_key_type);
@@ -530,11 +543,11 @@ static psa_status_t get_psa_key_type(psa_key_type_t *psa_key_type,
 
 static void get_hash_name(psa_algorithm_t hash, const char **hash_str)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < ARRAY_SIZE(key_hash); i++) {
+	for (; i < ARRAY_SIZE(key_hash); i++) {
 		if (hash == key_hash[i].psa_hash) {
 			*hash_str = key_hash[i].hash_str;
 			SMW_DBG_PRINTF(DEBUG, "Key hash: %s (0x%.8x)\n",
@@ -547,11 +560,11 @@ static void get_hash_name(psa_algorithm_t hash, const char **hash_str)
 static psa_algorithm_t get_hash_alg_from_name(const char *hash_str)
 {
 	psa_algorithm_t alg = PSA_ALG_NONE;
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (i = 0; i < ARRAY_SIZE(key_hash); i++) {
+	for (; i < ARRAY_SIZE(key_hash); i++) {
 		if (!SMW_UTILS_STRCMP(key_hash[i].hash_str, hash_str)) {
 			alg = key_hash[i].psa_hash;
 			SMW_DBG_PRINTF(DEBUG, "Key hash: %s (0x%.8x)\n",
@@ -631,8 +644,8 @@ static void get_alg_name(psa_algorithm_t alg, const char **alg_str,
 			 const char **hash_str, const char **kdf_str,
 			 uint8_t *length, uint8_t *min_length)
 {
-	unsigned int i;
-	uint8_t l;
+	unsigned int i = 0;
+	uint8_t l = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -651,7 +664,7 @@ static void get_alg_name(psa_algorithm_t alg, const char **alg_str,
 		alg = PSA_ALG_KEY_AGREEMENT_GET_BASE(alg);
 	}
 
-	for (i = 0; i < ARRAY_SIZE(key_algorithm); i++) {
+	for (; i < ARRAY_SIZE(key_algorithm); i++) {
 		if (alg == key_algorithm[i].psa_alg) {
 			*alg_str = key_algorithm[i].alg_str;
 			SMW_DBG_PRINTF(DEBUG, "Key algorithm: %s (0x%.8x)\n",
@@ -711,12 +724,12 @@ static psa_status_t set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
 	const char *alg_str = NULL;
 	const char *hash_str = NULL;
 	const char *kdf_str = NULL;
-	unsigned int alg_len = 0;
-	unsigned int hash_len = 0;
-	unsigned int kdf_len = 0;
+	size_t alg_len = 0;
+	size_t hash_len = 0;
+	size_t kdf_len = 0;
 	uint8_t length = 0;
 	uint8_t min_length = 0;
-	unsigned char *p;
+	unsigned char *p = NULL;
 	unsigned char *kdf_tlv = NULL;
 	unsigned int tlv_length = 0;
 
@@ -785,7 +798,8 @@ static psa_status_t set_key_algo(psa_algorithm_t alg, unsigned char **tlv,
 		return PSA_ERROR_INSUFFICIENT_MEMORY;
 
 	p = *tlv;
-	SMW_UTILS_MEMCPY(p, alg_str, alg_len + 1);
+	SMW_UTILS_MEMCPY(p, alg_str, alg_len);
+	p[alg_len] = 0;
 	p += alg_len + 1;
 
 	if (kdf_len) {
@@ -812,7 +826,7 @@ static unsigned int get_usage_tlv_length(psa_key_usage_t usage_flags,
 					 unsigned int algo_tlv_length)
 {
 	unsigned int usage_tlv_length = 0;
-	unsigned int usage_v_length = 0;
+	size_t usage_v_length = 0;
 	unsigned int tmp_length = 0;
 	unsigned int i = 0;
 
@@ -821,8 +835,13 @@ static unsigned int get_usage_tlv_length(psa_key_usage_t usage_flags,
 			usage_v_length =
 				SMW_UTILS_STRLEN(key_usage[i].usage_str) + 1;
 
-			if (key_usage[i].restricted)
-				usage_v_length += algo_tlv_length;
+			if (key_usage[i].restricted) {
+				if (INC_OVERFLOW(usage_v_length,
+						 algo_tlv_length)) {
+					usage_tlv_length = 0;
+					break;
+				}
+			}
 
 			if (SMW_TLV_ELEMENT_LENGTH(USAGE_STR, usage_v_length,
 						   tmp_length)) {
@@ -844,9 +863,9 @@ static unsigned int get_usage_tlv_length(psa_key_usage_t usage_flags,
 static psa_key_usage_t get_usage_from_smw(const char *usage)
 {
 	psa_key_usage_t psa_usage = 0;
-	unsigned int i;
+	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(key_usage) && !psa_usage; i++) {
+	for (; i < ARRAY_SIZE(key_usage) && !psa_usage; i++) {
 		if (!SMW_UTILS_STRCMP(usage, key_usage[i].usage_str)) {
 			psa_usage = key_usage[i].psa_usage;
 			break;
@@ -882,7 +901,7 @@ static psa_status_t get_algo_from_smw(psa_algorithm_t *psa_algo,
 				      unsigned int algo_length)
 {
 	psa_status_t psa_status = PSA_ERROR_DATA_INVALID;
-	int status = SMW_STATUS_KEY_POLICY_ERROR;
+	int status = SMW_STATUS_OK;
 	const unsigned char *p = (const unsigned char *)algo;
 	const unsigned char *p_end = p + algo_length;
 	char *tlv_type = NULL;
@@ -1179,7 +1198,7 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 	smw_tlv_set_length(policy_tlv, p);
 
 	SMW_DBG_ASSERT(*key_attributes_list_length ==
-		       (unsigned int)(p - *key_attributes_list));
+		       (uintptr_t)p - (uintptr_t)*key_attributes_list);
 
 end:
 	if (psa_status != PSA_SUCCESS) {
@@ -1198,7 +1217,7 @@ static psa_status_t read_key_policy_list(psa_key_attributes_t *attributes,
 					 unsigned int policy_length)
 {
 	int psa_status = PSA_ERROR_DATA_INVALID;
-	int status = SMW_STATUS_KEY_POLICY_ERROR;
+	int status = SMW_STATUS_OK;
 	const unsigned char *p = policy;
 	const unsigned char *p_end = policy + policy_length;
 	unsigned int usage_str_len = 0;
@@ -1236,17 +1255,25 @@ static psa_status_t read_key_policy_list(psa_key_attributes_t *attributes,
 		if (status != SMW_STATUS_OK) {
 			SMW_DBG_PRINTF(ERROR, "%s Parsing policy failed\n",
 				       __func__);
+			psa_status = PSA_ERROR_DATA_INVALID;
 			goto end;
 		}
 
 		if (SMW_UTILS_STRCMP(tlv_type, USAGE_STR)) {
 			SMW_DBG_PRINTF(ERROR, "%s Expected type %s got %s\n",
 				       __func__, USAGE_STR, tlv_type);
+			psa_status = PSA_ERROR_DATA_INVALID;
 			goto end;
 		}
 
 		usage_flags |= get_usage_from_smw(tlv_value);
-		usage_str_len = SMW_UTILS_STRLEN(tlv_value) + 1;
+
+		if (ADD_OVERFLOW(SMW_UTILS_STRLEN(tlv_value), 1,
+				 &usage_str_len)) {
+			psa_status = PSA_ERROR_DATA_INVALID;
+			goto end;
+		}
+
 		if (usage_str_len < tlv_length && perm_algo == PSA_ALG_NONE) {
 			psa_status =
 				get_algo_from_smw(&perm_algo,
@@ -1298,9 +1325,9 @@ static psa_status_t export_rsa_public_key(uint8_t *data, size_t data_size,
 					  size_t *data_length,
 					  struct smw_export_key_args *args)
 {
-	psa_status_t psa_status;
-	enum smw_status_code status;
-	struct smw_keypair_rsa *keypair_rsa;
+	psa_status_t psa_status = PSA_ERROR_INVALID_ARGUMENT;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_keypair_rsa *keypair_rsa = NULL;
 	uint8_t *modulus = NULL;
 	uint8_t *public_data = NULL;
 
@@ -1308,7 +1335,7 @@ static psa_status_t export_rsa_public_key(uint8_t *data, size_t data_size,
 
 	if (!data || !data_size || !data_length || !args ||
 	    !args->key_descriptor || !args->key_descriptor->buffer)
-		return PSA_ERROR_INVALID_ARGUMENT;
+		return psa_status;
 
 	keypair_rsa = &args->key_descriptor->buffer->rsa;
 
@@ -1348,8 +1375,8 @@ static psa_status_t export_ecc_public_key(uint8_t *data, size_t data_size,
 					  size_t *data_length,
 					  struct smw_export_key_args *args)
 {
-	enum smw_status_code status;
-	struct smw_keypair_gen *keypair_gen;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_keypair_gen *keypair_gen = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1375,8 +1402,8 @@ static psa_status_t export_gen_public_key(uint8_t *data, size_t data_size,
 					  size_t *data_length,
 					  struct smw_export_key_args *args)
 {
-	enum smw_status_code status;
-	struct smw_keypair_gen *keypair_gen;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_keypair_gen *keypair_gen = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1400,7 +1427,7 @@ static psa_status_t export_gen_public_key(uint8_t *data, size_t data_size,
 static psa_status_t export_key_common(psa_key_id_t key, uint8_t *data,
 				      size_t data_size, size_t *data_length)
 {
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_export_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
@@ -1465,7 +1492,7 @@ __export psa_status_t psa_copy_key(psa_key_id_t source_key,
 
 __export psa_status_t psa_destroy_key(psa_key_id_t key)
 {
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_delete_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 
@@ -1501,20 +1528,24 @@ __export psa_status_t psa_export_public_key(psa_key_id_t key, uint8_t *data,
 __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 				       psa_key_id_t *key)
 {
-	psa_status_t psa_status;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_generate_key_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
+	size_t security_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
-		return PSA_ERROR_BAD_STATE;
+		return psa_status;
 
 	if (!attributes || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	key_descriptor.id = psa_get_key_id(attributes);
-	key_descriptor.security_size = psa_get_key_bits(attributes);
+	security_size = psa_get_key_bits(attributes);
+
+	if (SET_OVERFLOW(security_size, key_descriptor.security_size))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	key_descriptor.type_name =
 		get_smw_key_type(attributes, key_descriptor.security_size);
@@ -1548,7 +1579,7 @@ __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
 					     psa_key_attributes_t *attributes)
 {
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
-	enum smw_status_code status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_get_key_attributes_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 	psa_key_persistence_t key_persistence = PSA_KEY_PERSISTENCE_VOLATILE;
@@ -1619,7 +1650,7 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	struct smw_keypair_buffer keypair_buffer = { 0 };
 	struct smw_keypair_gen *keypair_gen = NULL;
 	psa_key_type_t key_type = 0;
-	unsigned int security_size = 0;
+	size_t security_size = 0;
 	unsigned int location = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1688,7 +1719,8 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	    security_size == 528)
 		security_size = 521;
 
-	key_descriptor.security_size = security_size;
+	if (SET_OVERFLOW(security_size, key_descriptor.security_size))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	key_descriptor.type_name =
 		get_smw_key_type(attributes, key_descriptor.security_size);

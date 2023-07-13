@@ -54,7 +54,7 @@ static const struct cipher_algo_info {
 
 static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)
 {
-	const struct cipher_algo_info *info;
+	const struct cipher_algo_info *info = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -118,7 +118,7 @@ static const struct mac_algo_info {
 
 static smw_mac_algo_t get_mac_algo_name(psa_algorithm_t alg)
 {
-	const struct mac_algo_info *info;
+	const struct mac_algo_info *info = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -136,10 +136,16 @@ __export size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
 					       psa_algorithm_t alg,
 					       size_t input_length)
 {
-	if (PSA_ALG_IS_CIPHER(alg))
-		return input_length + psa_cipher_iv_length(key_type, alg);
+	size_t iv_length = 0;
+	size_t size = 0;
 
-	return 0;
+	if (PSA_ALG_IS_CIPHER(alg)) {
+		iv_length = psa_cipher_iv_length(key_type, alg);
+		if (ADD_OVERFLOW(iv_length, input_length, &size))
+			size = 0;
+	}
+
+	return size;
 }
 
 __export size_t psa_cipher_iv_length(psa_key_type_t key_type,
@@ -188,8 +194,8 @@ set_signature_attributes_list(psa_algorithm_t alg,
 			      unsigned char **attributes_list,
 			      unsigned int *attributes_list_length)
 {
-	unsigned char *p;
-	const char *sign_type_str;
+	unsigned char *p = NULL;
+	const char *sign_type_str = NULL;
 	size_t str_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -218,7 +224,7 @@ set_signature_attributes_list(psa_algorithm_t alg,
 	smw_tlv_set_string(&p, SIGNATURE_TYPE_STR, sign_type_str);
 
 	SMW_DBG_ASSERT(*attributes_list_length ==
-		       (unsigned int)(p - *attributes_list));
+		       (uintptr_t)p - (uintptr_t)*attributes_list);
 
 	return PSA_SUCCESS;
 }
@@ -474,7 +480,7 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 				    struct smw_cipher_args *args)
 {
 	psa_status_t psa_status = PSA_SUCCESS;
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_cipher_init_args *init = &args->init;
 	struct smw_cipher_data_args *data = &args->data;
 	psa_key_type_t key_type = 0;
@@ -568,14 +574,14 @@ __export psa_status_t psa_cipher_decrypt(psa_key_id_t key, psa_algorithm_t alg,
 					 size_t output_size,
 					 size_t *output_length)
 {
-	psa_status_t psa_status;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_cipher_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
-		return PSA_ERROR_BAD_STATE;
+		return psa_status;
 
 	psa_status = set_cipher_args(key, alg, input, input_length, output,
 				     output_size, output_length, "DECRYPT",
@@ -619,14 +625,14 @@ __export psa_status_t psa_cipher_encrypt(psa_key_id_t key, psa_algorithm_t alg,
 					 size_t output_size,
 					 size_t *output_length)
 {
-	psa_status_t psa_status;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_cipher_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
-		return PSA_ERROR_BAD_STATE;
+		return psa_status;
 
 	psa_status = set_cipher_args(key, alg, input, input_length, output,
 				     output_size, output_length, "ENCRYPT",
@@ -638,7 +644,10 @@ __export psa_status_t psa_cipher_encrypt(psa_key_id_t key, psa_algorithm_t alg,
 				  &args, &args.init.subsystem_name);
 
 	if (psa_status == PSA_SUCCESS) {
-		*output_length = args.data.output_length + args.init.iv_length;
+		if (ADD_OVERFLOW(args.data.output_length, args.init.iv_length,
+				 output_length))
+			psa_status = PSA_ERROR_DATA_CORRUPT;
+
 		if (args.init.iv_length)
 			SMW_UTILS_MEMCPY(output, args.init.iv,
 					 args.init.iv_length);
@@ -745,7 +754,9 @@ __export psa_status_t psa_generate_random(uint8_t *output, size_t output_size)
 		return PSA_ERROR_BAD_STATE;
 
 	args.output = output;
-	args.output_length = output_size;
+
+	if (SET_OVERFLOW(output_size, args.output_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	if (output_size)
 		return call_smw_api((enum smw_status_code(*)(void *))smw_rng,
@@ -780,10 +791,10 @@ __export psa_status_t psa_hash_compare(psa_algorithm_t alg,
 				       size_t input_length, const uint8_t *hash,
 				       size_t hash_length)
 {
-	psa_status_t psa_status;
-	uint8_t hash_computed[PSA_HASH_MAX_SIZE];
+	psa_status_t psa_status = PSA_SUCCESS;
+	uint8_t hash_computed[PSA_HASH_MAX_SIZE] = { 0 };
 	size_t hash_computed_length = 0;
-	unsigned int i;
+	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -797,7 +808,7 @@ __export psa_status_t psa_hash_compare(psa_algorithm_t alg,
 	if (hash_computed_length != hash_length)
 		return PSA_ERROR_INVALID_SIGNATURE;
 
-	for (i = 0; i < hash_length; i++)
+	for (; i < hash_length; i++)
 		if (hash[i] != hash_computed[i])
 			return PSA_ERROR_INVALID_SIGNATURE;
 
@@ -809,22 +820,27 @@ __export psa_status_t psa_hash_compute(psa_algorithm_t alg,
 				       size_t input_length, uint8_t *hash,
 				       size_t hash_size, size_t *hash_length)
 {
-	psa_status_t psa_status;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_hash_args args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
-		return PSA_ERROR_BAD_STATE;
+		return psa_status;
 
 	args.algo_name = get_hash_algo_name(alg);
 	if (!args.algo_name)
 		return PSA_ERROR_NOT_SUPPORTED;
 
 	args.input = (unsigned char *)input;
-	args.input_length = input_length;
+
+	if (SET_OVERFLOW(input_length, args.input_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	args.output = hash;
-	args.output_length = hash_size;
+
+	if (SET_OVERFLOW(hash_size, args.output_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_hash,
 				  &args, &args.subsystem_name);
@@ -925,7 +941,7 @@ __export psa_status_t psa_mac_compute(psa_key_id_t key, psa_algorithm_t alg,
 				      uint8_t *mac, size_t mac_size,
 				      size_t *mac_length)
 {
-	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 
 	struct smw_mac_args op_args = { 0 };
 	struct smw_key_descriptor op_key = { 0 };
@@ -933,7 +949,7 @@ __export psa_status_t psa_mac_compute(psa_key_id_t key, psa_algorithm_t alg,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
-		return PSA_ERROR_BAD_STATE;
+		return psa_status;
 
 	if (!mac_length)
 		return PSA_ERROR_INVALID_SIGNATURE;
@@ -943,9 +959,14 @@ __export psa_status_t psa_mac_compute(psa_key_id_t key, psa_algorithm_t alg,
 	op_args.algo_name = get_mac_algo_name(alg);
 	op_args.hash_name = get_hash_algo_name(PSA_ALG_GET_HASH(alg));
 	op_args.input = (unsigned char *)input;
-	op_args.input_length = input_length;
+
+	if (SET_OVERFLOW(input_length, op_args.input_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	op_args.mac = mac;
-	op_args.mac_length = mac_size;
+
+	if (SET_OVERFLOW(mac_size, op_args.mac_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_mac,
 				  &op_args, &op_args.subsystem_name);
@@ -1000,7 +1021,7 @@ __export psa_status_t psa_mac_verify(psa_key_id_t key, psa_algorithm_t alg,
 				     const uint8_t *input, size_t input_length,
 				     const uint8_t *mac, size_t mac_length)
 {
-	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 
 	struct smw_mac_args op_args = { 0 };
 	struct smw_key_descriptor op_key = { 0 };
@@ -1008,7 +1029,7 @@ __export psa_status_t psa_mac_verify(psa_key_id_t key, psa_algorithm_t alg,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
-		return PSA_ERROR_BAD_STATE;
+		return psa_status;
 
 	if (!mac_length)
 		return PSA_ERROR_INVALID_SIGNATURE;
@@ -1018,9 +1039,14 @@ __export psa_status_t psa_mac_verify(psa_key_id_t key, psa_algorithm_t alg,
 	op_args.algo_name = get_mac_algo_name(alg);
 	op_args.hash_name = get_hash_algo_name(PSA_ALG_GET_HASH(alg));
 	op_args.input = (unsigned char *)input;
-	op_args.input_length = input_length;
+
+	if (SET_OVERFLOW(input_length, op_args.input_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	op_args.mac = (unsigned char *)mac;
-	op_args.mac_length = mac_length;
+
+	if (SET_OVERFLOW(mac_length, op_args.mac_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	psa_status =
 		call_smw_api((enum smw_status_code(*)(void *))smw_mac_verify,
@@ -1091,7 +1117,7 @@ set_sign_verify_args(psa_key_id_t key, psa_algorithm_t alg,
 		     struct smw_key_descriptor *key_descriptor,
 		     struct smw_sign_verify_args *args)
 {
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	const char *algo_name = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1128,14 +1154,14 @@ static psa_status_t sign_common(psa_key_id_t key, psa_algorithm_t alg,
 				uint8_t *signature, size_t signature_size,
 				size_t *signature_length, bool hashed)
 {
-	psa_status_t psa_status;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_sign_verify_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
-		return PSA_ERROR_BAD_STATE;
+		return psa_status;
 
 	psa_status = set_sign_verify_args(key, alg, message, message_length,
 					  signature, signature_size, hashed,
@@ -1179,14 +1205,14 @@ static psa_status_t verify_common(psa_key_id_t key, psa_algorithm_t alg,
 				  const uint8_t *signature,
 				  size_t signature_length, bool hashed)
 {
-	psa_status_t psa_status;
+	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_sign_verify_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
-		return PSA_ERROR_BAD_STATE;
+		return psa_status;
 
 	if (!signature || !signature_length)
 		return PSA_ERROR_INVALID_SIGNATURE;

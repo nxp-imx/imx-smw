@@ -1542,7 +1542,7 @@
  * @lifetime: The lifetime value to query (value of &typedef psa_key_lifetime_t).
  */
 #define PSA_KEY_LIFETIME_GET_PERSISTENCE(lifetime)                             \
-	((psa_key_persistence_t)(lifetime))
+	((psa_key_persistence_t)(lifetime & 0xFF))
 
 /**
  * PSA_KEY_LIFETIME_IS_VOLATILE() - Whether a key lifetime indicates that the key is volatile.

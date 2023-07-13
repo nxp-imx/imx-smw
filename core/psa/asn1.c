@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <stdint.h>
@@ -11,6 +11,7 @@
 
 #include "asn1.h"
 
+#define ASN1_LONG_LENGTH  BIT(7)
 #define ASN1_TAG_SEQUENCE 0x30 /* (16 | 0x20) */
 #define ASN1_TAG_INTEGER  2
 
@@ -22,7 +23,11 @@ static size_t get_length_field_length(size_t length)
 
 	if (length > 0x7F)
 		while (length) {
-			len++;
+			if (INC_OVERFLOW(len, 1)) {
+				len = 0;
+				break;
+			}
+
 			length >>= 8;
 		}
 
@@ -32,30 +37,41 @@ static size_t get_length_field_length(size_t length)
 static size_t get_sequence_length(struct asn1_integer sequence[], size_t size)
 {
 	size_t len = 0;
-	size_t length;
-	uint8_t *value;
-	size_t i;
+	size_t length = 0;
+	size_t nb_length_bytes = 0;
+	uint8_t *value = NULL;
+	size_t i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!sequence || !size)
 		return 0;
 
-	for (i = 0; i < size; i++) {
+	for (; i < size; i++) {
 		length = sequence[i].length;
 		value = sequence[i].value;
 		if (length) {
 			if (!value)
 				return 0;
-			if (*value & 0x80)
+			if (*value & ASN1_LONG_LENGTH)
 				length++;
 		}
+
 		/* Tag */
-		len += 1;
+		if (INC_OVERFLOW(len, 1))
+			return 0;
+
 		/* Length */
-		len += get_length_field_length(length);
+		nb_length_bytes = get_length_field_length(length);
+		if (!nb_length_bytes)
+			return 0;
+
+		if (ADD_OVERFLOW(len, nb_length_bytes, &len))
+			return 0;
+
 		/* Value */
-		len += length;
+		if (ADD_OVERFLOW(len, length, &len))
+			return 0;
 	}
 
 	return len;
@@ -63,9 +79,9 @@ static size_t get_sequence_length(struct asn1_integer sequence[], size_t size)
 
 static int encode_length(uint8_t **data, const uint8_t *end, size_t length)
 {
-	size_t len = 1;
-	uint8_t *p;
-	size_t i;
+	size_t len = 0;
+	uint8_t *p = NULL;
+	size_t i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -73,6 +89,8 @@ static int encode_length(uint8_t **data, const uint8_t *end, size_t length)
 		return -1;
 
 	len = get_length_field_length(length);
+	if (!len || len > sizeof(length))
+		return -1;
 
 	if (*data + len > end)
 		return -1;
@@ -81,12 +99,12 @@ static int encode_length(uint8_t **data, const uint8_t *end, size_t length)
 	p = *data;
 
 	if (!i)
-		*p++ = length;
+		*p++ = length & UINT8_MAX;
 	else
-		*p++ = 0x80 + i;
+		*p++ = ASN1_LONG_LENGTH | i;
 
 	while (i--)
-		*p++ = length >> (8 * i);
+		*p++ = (length >> (8 * i)) & UINT8_MAX;
 
 	SMW_DBG_ASSERT(*data + len == p);
 	if (*data + len != p)
@@ -103,7 +121,7 @@ static int encode_length(uint8_t **data, const uint8_t *end, size_t length)
 static int encode_integer(uint8_t **data, const uint8_t *end, uint8_t *integer,
 			  size_t length)
 {
-	uint8_t *p;
+	uint8_t *p = NULL;
 	size_t len = length;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -119,8 +137,9 @@ static int encode_integer(uint8_t **data, const uint8_t *end, uint8_t *integer,
 		return -1;
 
 	/* Length */
-	if (integer[0] & 0x80)
-		len++;
+	if (integer[0] & ASN1_LONG_LENGTH)
+		if (INC_OVERFLOW(len, 1))
+			return -1;
 
 	if (encode_length(&p, end, len))
 		return -1;
@@ -143,10 +162,11 @@ static int encode_integer(uint8_t **data, const uint8_t *end, uint8_t *integer,
 size_t asn1_encode_sequence_integer(uint8_t *data, size_t data_size,
 				    struct asn1_integer sequence[], size_t size)
 {
-	uint8_t *p;
-	uint8_t *end;
+	uint8_t *p = NULL;
+	uint8_t *end = NULL;
 	size_t sequence_length = 0;
-	size_t i;
+	size_t i = 0;
+	size_t enc_bytes = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -163,6 +183,8 @@ size_t asn1_encode_sequence_integer(uint8_t *data, size_t data_size,
 
 	/* Length */
 	sequence_length = get_sequence_length(sequence, size);
+	if (!sequence_length)
+		return 0;
 
 	if (encode_length(&p, end, sequence_length))
 		return 0;
@@ -174,15 +196,18 @@ size_t asn1_encode_sequence_integer(uint8_t *data, size_t data_size,
 			return 0;
 	}
 
-	return p - data;
+	if (SUB_OVERFLOW((uintptr_t)p, (uintptr_t)data, &enc_bytes))
+		enc_bytes = 0;
+
+	return enc_bytes;
 }
 
 static void decode_length(const uint8_t **data, const uint8_t *end,
 			  size_t *length)
 {
 	size_t len = 0;
-	size_t i;
-	const uint8_t *p;
+	int i = 0;
+	const uint8_t *p = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -194,7 +219,7 @@ static void decode_length(const uint8_t **data, const uint8_t *end,
 
 	p = *data;
 
-	if (*p & 0x80) {
+	if (*p & ASN1_LONG_LENGTH) {
 		len = *p++ & 0x7F;
 		if (len > sizeof(*length) || len > (unsigned int)(end - p)) {
 			*data = end;
@@ -207,7 +232,7 @@ static void decode_length(const uint8_t **data, const uint8_t *end,
 			*length = *p++;
 
 			i = len - 1;
-			while (i--) {
+			while (i-- > 0) {
 				*length <<= 8;
 				*length += *p++;
 			}
@@ -225,8 +250,8 @@ static void decode_length(const uint8_t **data, const uint8_t *end,
 static void remove_leading_zeros(const uint8_t **data, const uint8_t *end,
 				 size_t *length)
 {
-	const uint8_t *p;
-	size_t len;
+	const uint8_t *p = NULL;
+	size_t len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -250,7 +275,7 @@ static void remove_leading_zeros(const uint8_t **data, const uint8_t *end,
 static int decode_integer(const uint8_t **data, const uint8_t *end,
 			  uint8_t **integer, size_t *length)
 {
-	const uint8_t *p;
+	const uint8_t *p = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -287,10 +312,10 @@ static int decode_integer(const uint8_t **data, const uint8_t *end,
 int asn1_decode_sequence_integer(const uint8_t *data, size_t data_length,
 				 struct asn1_integer sequence[], size_t size)
 {
-	const uint8_t *p;
-	const uint8_t *end;
+	const uint8_t *p = NULL;
+	const uint8_t *end = NULL;
 	size_t length = 0;
-	size_t i;
+	size_t i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

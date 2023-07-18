@@ -198,7 +198,7 @@ void set_bit(unsigned long *bitmap, unsigned int size, unsigned int offset)
 
 	SMW_DBG_ASSERT(offset < size);
 
-	*bitmap |= SHIFT_BIT(offset);
+	*bitmap |= BIT(offset);
 }
 
 static bool get_bit(unsigned long bitmap, unsigned int size,
@@ -207,7 +207,7 @@ static bool get_bit(unsigned long bitmap, unsigned int size,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_ASSERT(offset < size);
-	return (bitmap & SHIFT_BIT(offset)) ? true : false;
+	return (bitmap & BIT(offset)) ? true : false;
 }
 
 void set_subsystem_configured(enum subsystem_id id)

@@ -6,9 +6,22 @@
 #ifndef __BUILTIN_MACROS_H__
 #define __BUILTIN_MACROS_H__
 
-#define BIT(n)		 (1 << (n))
-#define BIT_MASK(length) ((1ULL << (length)) - 1)
-#define SHIFT_BIT(n)	 (1ULL << (n))
+#define BIT(n)		      (1UL << (n))
+#define BIT_MASK(length)      ((1UL << (length)) - 1)
+#define SET_BITS(val, mask)   ((val) |= (mask))
+#define CLEAR_BITS(val, mask) ((val) &= ~(mask))
+
+/* Extract the byte @n of the value @val */
+#define GET_BYTE(val, n)                                                       \
+	({                                                                     \
+		__typeof__(val) _val = (val);                                  \
+		uint8_t _b = 0;                                                \
+		_val >>= (n) * (8);                                            \
+		_b = _val & UINT8_MAX;                                         \
+		_b;                                                            \
+	})
+
+#define STR(x) #x
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
@@ -21,10 +34,20 @@
 	})
 #endif /* MIN */
 
+#ifndef MAX
+#define MAX(a, b)                                                              \
+	({                                                                     \
+		__typeof__(a) _a = (a);                                        \
+		__typeof__(b) _b = (b);                                        \
+		_a < _b ? _b : _a;                                             \
+	})
+#endif /* MAX */
+
 #define ADD_OVERFLOW(a, b, res) __builtin_add_overflow(a, b, res)
 #define SUB_OVERFLOW(a, b, res) __builtin_sub_overflow(a, b, res)
 #define MUL_OVERFLOW(a, b, res) __builtin_mul_overflow(a, b, res)
 #define INC_OVERFLOW(a, b)	__builtin_add_overflow(a, b, &(a))
+#define DEC_OVERFLOW(a, b)	__builtin_sub_overflow(a, b, &(a))
 
 #define SET_OVERFLOW_UNSIGNED(ua, res)                                         \
 	({                                                                     \

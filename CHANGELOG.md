@@ -63,6 +63,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Tests - _version 2.4_
 
 #### PKCS#11 Library - _version 2.4_
+* Fix coverity and ensure all variables are initialized.
 
 #### PKCS#11 Tests - _version 2.4_
 

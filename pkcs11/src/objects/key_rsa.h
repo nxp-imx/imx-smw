@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #ifndef __KEY_RSA_H__
@@ -30,7 +30,6 @@ void key_rsa_private_free(struct libobj_obj *obj);
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
- * CKR_GENERAL_ERROR             - No slot defined
  * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
  * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
@@ -94,7 +93,6 @@ CK_RV key_rsa_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
- * CKR_GENERAL_ERROR             - No slot defined
  * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
  * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported

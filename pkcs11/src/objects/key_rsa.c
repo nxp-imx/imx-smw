@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -70,14 +70,18 @@ const struct template_attr attr_key_rsa_private[] = {
  *   LIBOBJ_KEY_PAIR
  *
  * return:
- * Key allocated if success
- * NULL otherwise
+ * CKR_OK             - Success
+ * CKR_HOST_MEMORY    - Out of memory
+ * CKR_GENERAL_ERROR  - Bad type of key
  */
-static struct libobj_key_rsa_pair *key_rsa_allocate(struct libobj_obj *pub_obj,
-						    struct libobj_obj *priv_obj,
-						    unsigned int type)
+static CK_RV key_rsa_allocate(struct libobj_obj *pub_obj,
+			      struct libobj_obj *priv_obj, unsigned int type)
 {
+	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libobj_key_rsa_pair *key = NULL;
+
+	if (!(type & LIBOBJ_KEY_PUBLIC) && !(type & LIBOBJ_KEY_PRIVATE))
+		return ret;
 
 	key = calloc(1, sizeof(*key));
 	if (key) {
@@ -90,11 +94,16 @@ static struct libobj_key_rsa_pair *key_rsa_allocate(struct libobj_obj *pub_obj,
 			set_subkey_to(priv_obj, key);
 			key->pub_obj = pub_obj;
 		}
+
+		ret = CKR_OK;
+	} else {
+		ret = CKR_HOST_MEMORY;
 	}
 
-	DBG_TRACE("Allocated a new RSA key (%p) of type %d", key, type);
+	DBG_TRACE("Allocated a new RSA key (%p) of type %d (ret=%ld)", key,
+		  type, ret);
 
-	return key;
+	return ret;
 }
 
 /**
@@ -184,12 +193,14 @@ void key_rsa_private_free(struct libobj_obj *obj)
 CK_RV key_rsa_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			    struct libattr_list *attrs)
 {
-	CK_RV ret;
-	struct libobj_key_rsa_pair *new_key;
+	CK_RV ret = CKR_OK;
+	struct libobj_key_rsa_pair *new_key = NULL;
 
-	new_key = key_rsa_allocate(obj, NULL, LIBOBJ_KEY_PUBLIC);
-	if (!new_key)
-		return CKR_HOST_MEMORY;
+	ret = key_rsa_allocate(obj, NULL, LIBOBJ_KEY_PUBLIC);
+	if (ret != CKR_OK)
+		goto end;
+
+	new_key = get_subkey_from(obj);
 
 	DBG_TRACE("Create a new RSA public key (%p)", new_key);
 
@@ -221,7 +232,7 @@ end:
 CK_RV key_rsa_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 				   const struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 
@@ -238,7 +249,7 @@ CK_RV key_rsa_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 CK_RV key_rsa_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
 				      struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
@@ -253,12 +264,14 @@ CK_RV key_rsa_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
 CK_RV key_rsa_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			     struct libattr_list *attrs)
 {
-	CK_RV ret;
-	struct libobj_key_rsa_pair *new_key;
+	CK_RV ret = CKR_OK;
+	struct libobj_key_rsa_pair *new_key = NULL;
 
-	new_key = key_rsa_allocate(NULL, obj, LIBOBJ_KEY_PRIVATE);
-	if (!new_key)
-		return CKR_HOST_MEMORY;
+	ret = key_rsa_allocate(NULL, obj, LIBOBJ_KEY_PRIVATE);
+	if (ret != CKR_OK)
+		goto end;
+
+	new_key = get_subkey_from(obj);
 
 	DBG_TRACE("Create a new RSA private key (%p)", new_key);
 
@@ -325,7 +338,7 @@ end:
 CK_RV key_rsa_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 				    const struct libobj_obj *obj, bool protect)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
 		  protect ? "YES" : "NO");
@@ -343,7 +356,7 @@ CK_RV key_rsa_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 CK_RV key_rsa_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
 				       struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
@@ -364,12 +377,15 @@ CK_RV key_rsa_keypair_generate(CK_SESSION_HANDLE hsession,
 {
 	(void)hsession;
 	(void)mech;
-	CK_RV ret;
-	struct libobj_key_rsa_pair *keypair;
 
-	keypair = key_rsa_allocate(pub_obj, priv_obj, LIBOBJ_KEY_PAIR);
-	if (!keypair)
-		return CKR_HOST_MEMORY;
+	CK_RV ret = CKR_OK;
+	struct libobj_key_rsa_pair *keypair = NULL;
+
+	ret = key_rsa_allocate(pub_obj, priv_obj, LIBOBJ_KEY_PAIR);
+	if (ret != CKR_OK)
+		goto end;
+
+	keypair = get_subkey_from(priv_obj);
 
 	DBG_TRACE("Generate a RSA keypair (%p)", keypair);
 
@@ -445,7 +461,7 @@ end:
 CK_RV key_rsa_get_id(struct libbytes *id, struct libobj_obj *obj,
 		     size_t prefix_len)
 {
-	struct libobj_key_rsa_pair *keypair;
+	struct libobj_key_rsa_pair *keypair = NULL;
 
 	if (!obj || !id)
 		return CKR_GENERAL_ERROR;

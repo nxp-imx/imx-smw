@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2023 NXP
  */
 
 #include "lib_context.h"
@@ -9,7 +9,7 @@
 CK_RV libmutex_create(CK_VOID_PTR_PTR mutex)
 {
 	CK_RV ret = CKR_OK;
-	struct libmutex *ops;
+	struct libmutex *ops = NULL;
 
 	*mutex = NULL;
 
@@ -26,7 +26,7 @@ CK_RV libmutex_create(CK_VOID_PTR_PTR mutex)
 CK_RV libmutex_destroy(CK_VOID_PTR_PTR mutex)
 {
 	CK_RV ret = CKR_OK;
-	struct libmutex *ops;
+	struct libmutex *ops = NULL;
 
 	ops = libctx_get_mutex();
 	if (!ops)
@@ -44,7 +44,7 @@ CK_RV libmutex_destroy(CK_VOID_PTR_PTR mutex)
 CK_RV libmutex_lock(CK_VOID_PTR mutex)
 {
 	CK_RV ret = CKR_OK;
-	struct libmutex *ops;
+	struct libmutex *ops = NULL;
 
 	ops = libctx_get_mutex();
 	if (!ops)
@@ -58,7 +58,7 @@ CK_RV libmutex_lock(CK_VOID_PTR mutex)
 
 void libmutex_unlock(CK_VOID_PTR mutex)
 {
-	struct libmutex *ops;
+	struct libmutex *ops = NULL;
 
 	ops = libctx_get_mutex();
 	if (ops && ops->unlock)

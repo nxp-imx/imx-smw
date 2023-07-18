@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include "asn1_ec_curve.h"
@@ -123,9 +123,9 @@ const struct cipher_def ciphers[] = {
 static CK_RV ec_key_desc(struct smw_key_descriptor *desc,
 			 struct libobj_obj *obj)
 {
-	CK_RV ret;
-	struct smw_keypair_gen *smw_key;
-	const struct curve_def *curve;
+	CK_RV ret = CKR_OK;
+	struct smw_keypair_gen *smw_key = NULL;
+	const struct curve_def *curve = NULL;
 	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 
 	/* Verify that curve is supported */
@@ -147,10 +147,15 @@ static CK_RV ec_key_desc(struct smw_key_descriptor *desc,
 		 */
 		if (key->point_q.array) {
 			smw_key->public_data = key->point_q.array + 1;
-			smw_key->public_length = key->point_q.number - 1;
+			if (SUB_OVERFLOW(key->point_q.number, 1,
+					 &smw_key->public_length))
+				ret = CKR_ARGUMENTS_BAD;
 		}
+
 		smw_key->private_data = key->value_d.value;
-		smw_key->private_length = key->value_d.length;
+
+		if (SET_OVERFLOW(key->value_d.length, smw_key->private_length))
+			ret = CKR_ARGUMENTS_BAD;
 	}
 
 	return ret;
@@ -159,7 +164,7 @@ static CK_RV ec_key_desc(struct smw_key_descriptor *desc,
 static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 			     struct libobj_obj *obj)
 {
-	struct smw_keypair_gen *smw_key;
+	struct smw_keypair_gen *smw_key = NULL;
 	const struct cipher_def *cipher = ciphers;
 	struct libobj_key_cipher *key = get_subkey_from(obj);
 	CK_KEY_TYPE key_type = get_key_type(obj);
@@ -200,7 +205,8 @@ static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 	if (desc->buffer) {
 		smw_key = &desc->buffer->gen;
 		smw_key->private_data = key->value.array;
-		smw_key->private_length = key->value.number;
+		if (SET_OVERFLOW(key->value.number, smw_key->private_length))
+			return CKR_ARGUMENTS_BAD;
 	}
 
 	return CKR_OK;
@@ -209,8 +215,9 @@ static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 static CK_RV rsa_key_desc(struct smw_key_descriptor *desc,
 			  struct libobj_obj *obj)
 {
-	struct smw_keypair_rsa *smw_key;
+	struct smw_keypair_rsa *smw_key = NULL;
 	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
+	size_t security_size = 0;
 
 	desc->type_name = "RSA";
 
@@ -222,11 +229,15 @@ static CK_RV rsa_key_desc(struct smw_key_descriptor *desc,
 	 * the key security size
 	 */
 	if (key->modulus_length)
-		desc->security_size = key->modulus_length;
+		security_size = key->modulus_length;
 	else if (key->modulus.value)
-		desc->security_size = util_get_bignum_bits(&key->modulus);
-	else
+		security_size = util_get_bignum_bits(&key->modulus);
+
+	if (!security_size)
 		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	if (SET_OVERFLOW(security_size, desc->security_size))
+		return CKR_ARGUMENTS_BAD;
 
 	/*
 	 * If SMW key's descriptor buffer field is set, setup it
@@ -235,11 +246,16 @@ static CK_RV rsa_key_desc(struct smw_key_descriptor *desc,
 	if (desc->buffer) {
 		smw_key = &desc->buffer->rsa;
 		smw_key->modulus = key->modulus.value;
-		smw_key->modulus_length = key->modulus.length;
+		if (SET_OVERFLOW(key->modulus.length, smw_key->modulus_length))
+			return CKR_ARGUMENTS_BAD;
+
 		smw_key->public_data = key->pub_exp.value;
-		smw_key->public_length = key->pub_exp.length;
+		if (SET_OVERFLOW(key->pub_exp.length, smw_key->public_length))
+			return CKR_ARGUMENTS_BAD;
+
 		smw_key->private_data = key->priv_exp.value;
-		smw_key->private_length = key->priv_exp.length;
+		if (SET_OVERFLOW(key->priv_exp.length, smw_key->private_length))
+			return CKR_ARGUMENTS_BAD;
 	}
 
 	return CKR_OK;
@@ -247,7 +263,7 @@ static CK_RV rsa_key_desc(struct smw_key_descriptor *desc,
 
 CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_FUNCTION_FAILED;
 
 	switch (get_key_type(obj)) {
 	case CKK_AES:
@@ -265,7 +281,7 @@ CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj)
 		break;
 
 	default:
-		return CKR_FUNCTION_FAILED;
+		break;
 	}
 
 	return ret;

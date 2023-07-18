@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <stdlib.h>
@@ -9,6 +9,7 @@
 #include "attributes.h"
 
 #include "trace.h"
+#include "util.h"
 
 /**
  * obj_find_attr() - Find an attribute type in object template
@@ -85,7 +86,7 @@ CK_RV attr_to_class(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV class_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const CK_OBJECT_CLASS *in = src;
 
 	ret = set_attr_value_length(attr, sizeof(*in));
@@ -95,7 +96,7 @@ CK_RV class_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 
 	*(CK_OBJECT_CLASS *)attr->pValue = *in;
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV attr_to_rfc2279(void *dest, CK_ATTRIBUTE_PTR attr)
@@ -117,7 +118,7 @@ CK_RV attr_to_rfc2279(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV rfc2279_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const struct librfc2279 *in = src;
 
 	ret = set_attr_value_length(attr, in->length);
@@ -127,12 +128,12 @@ CK_RV rfc2279_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 
 	memcpy(attr->pValue, in->string, in->length);
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV modify_rfc2279(void *dest, CK_ATTRIBUTE_PTR attr)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct librfc2279 *out = dest;
 	struct librfc2279 new = { 0 };
 
@@ -144,7 +145,7 @@ CK_RV modify_rfc2279(void *dest, CK_ATTRIBUTE_PTR attr)
 	out->string = new.string;
 	out->length = new.length;
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV attr_to_boolean(void *dest, CK_ATTRIBUTE_PTR attr)
@@ -161,7 +162,7 @@ CK_RV attr_to_boolean(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV boolean_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const CK_BBOOL *in = src;
 
 	ret = set_attr_value_length(attr, sizeof(*in));
@@ -171,7 +172,7 @@ CK_RV boolean_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 
 	*(CK_BBOOL *)attr->pValue = *in;
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV modify_boolean(void *dest, CK_ATTRIBUTE_PTR attr)
@@ -209,7 +210,7 @@ CK_RV attr_to_key(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV key_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const CK_KEY_TYPE *in = src;
 
 	ret = set_attr_value_length(attr, sizeof(*in));
@@ -219,7 +220,7 @@ CK_RV key_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 
 	*(CK_KEY_TYPE *)attr->pValue = *in;
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV attr_to_byte_array(void *dest, CK_ATTRIBUTE_PTR attr)
@@ -241,7 +242,7 @@ CK_RV attr_to_byte_array(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV byte_array_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const struct libbytes *in = src;
 
 	ret = set_attr_value_length(attr, in->number);
@@ -251,12 +252,12 @@ CK_RV byte_array_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 
 	memcpy(attr->pValue, in->array, in->number);
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV modify_byte_array(void *dest, CK_ATTRIBUTE_PTR attr)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libbytes *out = dest;
 	struct libbytes new = { 0 };
 
@@ -268,7 +269,7 @@ CK_RV modify_byte_array(void *dest, CK_ATTRIBUTE_PTR attr)
 	out->array = new.array;
 	out->number = new.number;
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV attr_to_date(void *dest, CK_ATTRIBUTE_PTR attr)
@@ -285,7 +286,7 @@ CK_RV attr_to_date(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV date_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const CK_DATE *in = src;
 
 	ret = set_attr_value_length(attr, sizeof(*in));
@@ -295,7 +296,7 @@ CK_RV date_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 
 	*(CK_DATE *)attr->pValue = *in;
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV modify_date(void *dest, CK_ATTRIBUTE_PTR attr)
@@ -317,8 +318,8 @@ CK_RV attr_to_mech(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV mech_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
+	CK_RV ret = CKR_OK;
 	const CK_MECHANISM_TYPE *in = src;
-	CK_RV ret;
 
 	ret = set_attr_value_length(attr, sizeof(*in));
 
@@ -327,7 +328,7 @@ CK_RV mech_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 
 	*(CK_MECHANISM_TYPE_PTR)attr->pValue = *in;
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV attr_to_mech_list(void *dest, CK_ATTRIBUTE_PTR attr)
@@ -349,49 +350,61 @@ CK_RV attr_to_mech_list(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV mech_list_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 	const struct libmech_list *in = src;
+	CK_ULONG length = 0;
 
-	ret = set_attr_value_length(attr, in->number * sizeof(*in->mech));
+	if (MUL_OVERFLOW(in->number, sizeof(*in->mech), &length))
+		return ret;
+
+	ret = set_attr_value_length(attr, length);
 
 	if (!attr->pValue || ret != CKR_OK)
 		return ret;
 
-	memcpy(attr->pValue, in->mech, in->number * sizeof(*in->mech));
+	memcpy(attr->pValue, in->mech, length);
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV attr_to_attr_list(void *dest, CK_ATTRIBUTE_PTR attr)
 {
 	struct libattr_list *out = dest;
+	size_t size = 0;
 
 	if (!attr->pValue || !attr->ulValueLen)
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 
 	out->number = attr->ulValueLen;
-	out->attr = malloc(out->number * sizeof(*out->attr));
+	if (MUL_OVERFLOW(out->number, sizeof(*out->attr), &size))
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	out->attr = malloc(size);
 	if (!out->attr)
 		return CKR_HOST_MEMORY;
 
-	memcpy(out->attr, attr->pValue, out->number * sizeof(*out->attr));
+	memcpy(out->attr, attr->pValue, size);
 
 	return CKR_OK;
 }
 
 CK_RV attr_list_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const struct libattr_list *in = src;
+	size_t size = 0;
 
-	ret = set_attr_value_length(attr, in->number * sizeof(*in->attr));
+	if (MUL_OVERFLOW(in->number, sizeof(*in->attr), &size))
+		return CKR_FUNCTION_FAILED;
+
+	ret = set_attr_value_length(attr, size);
 
 	if (!attr->pValue || ret != CKR_OK)
 		return ret;
 
-	memcpy(attr->pValue, in->attr, in->number * sizeof(*in->attr));
+	memcpy(attr->pValue, in->attr, size);
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV attr_to_bignumber(void *dest, CK_ATTRIBUTE_PTR attr)
@@ -413,7 +426,7 @@ CK_RV attr_to_bignumber(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV bignumber_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const struct libbignumber *in = src;
 
 	ret = set_attr_value_length(attr, in->length * sizeof(*in->value));
@@ -423,7 +436,7 @@ CK_RV bignumber_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 
 	memcpy(attr->pValue, in->value, in->length * sizeof(*in->value));
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV attr_to_ulong(void *dest, CK_ATTRIBUTE_PTR attr)
@@ -440,7 +453,7 @@ CK_RV attr_to_ulong(void *dest, CK_ATTRIBUTE_PTR attr)
 
 CK_RV ulong_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const CK_ULONG *in = src;
 
 	ret = set_attr_value_length(attr, sizeof(*in));
@@ -450,13 +463,13 @@ CK_RV ulong_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 
 	*(CK_ULONG *)attr->pValue = *in;
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV attr_get_value(void *obj, const struct template_attr *tattr,
 		     struct libattr_list *attrs, enum attr_req req_overwrite)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_ATTRIBUTE_PTR cattr = NULL;
 	enum attr_req req = tattr->req;
 
@@ -506,17 +519,18 @@ CK_RV attr_get_value(void *obj, const struct template_attr *tattr,
 	}
 
 	ret = tattr->attr_to(obj + tattr->of_field, cattr);
-	return CKR_OK;
+
+	return ret;
 }
 
 CK_RV attr_get_obj_prot_value(CK_ATTRIBUTE_PTR attr,
 			      const struct template_attr *tattrs,
 			      size_t nb_tattrs, const void *obj, bool protect)
 {
-	size_t idx;
+	size_t idx = 0;
 	const struct template_attr *tattr = tattrs;
 
-	for (idx = 0; idx < nb_tattrs; idx++, tattr++) {
+	for (; idx < nb_tattrs; idx++, tattr++) {
 		if (attr->type == tattr->type) {
 			if (tattr->protect && protect) {
 				attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
@@ -541,10 +555,10 @@ CK_RV attr_modify_obj_value(CK_ATTRIBUTE_PTR attr,
 			    const struct template_attr *tattrs,
 			    size_t nb_tattrs, void *obj)
 {
-	size_t idx;
+	size_t idx = 0;
 	const struct template_attr *tattr = tattrs;
 
-	for (idx = 0; idx < nb_tattrs; idx++, tattr++) {
+	for (; idx < nb_tattrs; idx++, tattr++) {
 		if (attr->type == tattr->type) {
 			if (tattr->modify)
 				return tattr->modify(obj + tattr->of_field,

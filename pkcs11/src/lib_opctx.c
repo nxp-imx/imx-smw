@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <stdlib.h>
@@ -14,8 +14,8 @@
 
 CK_RV libopctx_add(struct libopctx_list *list, struct libopctx *opctx)
 {
-	CK_MECHANISM_PTR mech;
-	struct libopctx *new;
+	CK_MECHANISM_PTR mech = NULL_PTR;
+	struct libopctx *new = NULL;
 
 	if (!opctx)
 		return CKR_ARGUMENTS_BAD;
@@ -60,7 +60,7 @@ CK_RV libopctx_add(struct libopctx_list *list, struct libopctx *opctx)
 CK_RV libopctx_find(struct libopctx_list *list, CK_FLAGS op_flag,
 		    struct libopctx **opctx)
 {
-	struct libopctx *elem;
+	struct libopctx *elem = NULL;
 
 	*opctx = NULL;
 	for (elem = LIST_FIRST(list); elem; elem = LIST_NEXT(elem)) {
@@ -92,14 +92,14 @@ CK_RV libopctx_destroy(struct libopctx_list *list, struct libopctx *opctx)
 
 CK_RV libopctx_list_destroy(struct libopctx_list *list)
 {
-	CK_RV ret;
-	struct libopctx *opctx;
-	struct libopctx *next;
+	CK_RV ret = CKR_GENERAL_ERROR;
+	struct libopctx *opctx = NULL;
+	struct libopctx *next = NULL;
 
 	DBG_TRACE("Destroy all operations contexts from list %p", list);
 
 	if (!list)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	/* Lock the list until the end of the destruction */
 	ret = LLIST_LOCK(list);

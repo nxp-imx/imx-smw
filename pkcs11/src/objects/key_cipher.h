@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #ifndef __KEY_CIPHER_H__
@@ -24,7 +24,6 @@ void key_cipher_free(struct libobj_obj *obj);
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
- * CKR_GENERAL_ERROR             - No slot defined
  * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
  * CKR_SLOT_ID_INVALID           - Slot ID is not valid
  * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid

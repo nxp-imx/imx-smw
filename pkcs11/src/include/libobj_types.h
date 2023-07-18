@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #ifndef __LIBOBJ_TYPES_H__
@@ -38,7 +38,11 @@ struct libobj_storage {
 	void *subobject;
 };
 
-#define get_object_from(obj) ((obj)->object)
+#define get_object_from(obj)                                                   \
+	({                                                                     \
+		__typeof__(obj) _obj = (obj);                                  \
+		_obj ? _obj->object : NULL;                                    \
+	})
 
 #define get_subobj_from(obj, type)                                             \
 	({                                                                     \

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <stdlib.h>
@@ -192,7 +192,7 @@ const struct template_attr attr_key_secret[] = {
  */
 static struct libobj_key *key_allocate(struct libobj_obj *obj)
 {
-	struct libobj_key *key;
+	struct libobj_key *key = NULL;
 
 	key = calloc(1, sizeof(*key));
 	if (key)
@@ -389,7 +389,7 @@ static void key_public_free(struct libobj_obj *obj)
  */
 static CK_RV key_secret_new(struct libobj_obj *obj, struct libattr_list *attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_key_secret *new_key = NULL;
 
 	ret = key_secret_allocate(&new_key);
@@ -494,7 +494,7 @@ static CK_RV key_secret_new(struct libobj_obj *obj, struct libattr_list *attrs)
  */
 static CK_RV key_private_new(struct libobj_obj *obj, struct libattr_list *attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_key_private *new_key = NULL;
 
 	ret = key_private_allocate(&new_key);
@@ -596,9 +596,9 @@ static CK_RV key_private_new(struct libobj_obj *obj, struct libattr_list *attrs)
 static CK_RV key_public_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			    struct libattr_list *attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_key_public *new_key = NULL;
-	CK_USER_TYPE user;
+	CK_USER_TYPE user = CKU_USER;
 
 	ret = key_public_allocate(&new_key);
 	if (ret != CKR_OK)
@@ -684,7 +684,7 @@ static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
 				  struct libobj_obj *obj,
 				  struct libattr_list *attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_FUNCTION_FAILED;
 
 	switch (get_key_type(obj)) {
 	case CKK_AES:
@@ -694,7 +694,7 @@ static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
 		break;
 
 	default:
-		ret = CKR_FUNCTION_FAILED;
+		break;
 	}
 
 	return ret;
@@ -718,7 +718,7 @@ static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
 static CK_RV subkey_secret_get_attribute(CK_ATTRIBUTE_PTR attr,
 					 const struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const struct libobj_key_secret *secret_key = get_key_from(obj);
 	bool protect = false;
 
@@ -773,7 +773,7 @@ static CK_RV subkey_secret_get_attribute(CK_ATTRIBUTE_PTR attr,
 static CK_RV subkey_secret_modify_attribute(CK_ATTRIBUTE_PTR attr,
 					    struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
@@ -830,7 +830,7 @@ static CK_RV subkey_private_create(CK_SESSION_HANDLE hsession,
 				   struct libobj_obj *obj,
 				   struct libattr_list *attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_FUNCTION_FAILED;
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
@@ -842,7 +842,7 @@ static CK_RV subkey_private_create(CK_SESSION_HANDLE hsession,
 		break;
 
 	default:
-		ret = CKR_FUNCTION_FAILED;
+		break;
 	}
 
 	return ret;
@@ -866,7 +866,7 @@ static CK_RV subkey_private_create(CK_SESSION_HANDLE hsession,
 static CK_RV subkey_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 					  const struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	const struct libobj_key_private *priv_key = get_key_from(obj);
 	bool protect = false;
 
@@ -923,7 +923,7 @@ static CK_RV subkey_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 static CK_RV subkey_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
 					     struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
@@ -983,7 +983,7 @@ static CK_RV subkey_public_create(CK_SESSION_HANDLE hsession,
 				  struct libobj_obj *obj,
 				  struct libattr_list *attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_FUNCTION_FAILED;
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
@@ -995,7 +995,7 @@ static CK_RV subkey_public_create(CK_SESSION_HANDLE hsession,
 		break;
 
 	default:
-		ret = CKR_FUNCTION_FAILED;
+		break;
 	}
 
 	return ret;
@@ -1018,7 +1018,7 @@ static CK_RV subkey_public_create(CK_SESSION_HANDLE hsession,
 static CK_RV subkey_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 					 const struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 
@@ -1069,7 +1069,7 @@ static CK_RV subkey_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 static CK_RV subkey_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
 					    struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
@@ -1118,12 +1118,12 @@ static CK_RV subkey_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
  */
 static CK_RV create_key_new(struct libobj_obj *obj, struct libattr_list *attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_HOST_MEMORY;
 	struct libobj_key *new_key = NULL;
 
 	new_key = key_allocate(obj);
 	if (!new_key)
-		return CKR_HOST_MEMORY;
+		return ret;
 
 	DBG_TRACE("Create a new key (%p)", new_key);
 
@@ -1190,12 +1190,12 @@ static CK_RV generate_key_new(struct libobj_obj *obj,
 			      struct libattr_list *attrs, CK_MECHANISM_PTR mech,
 			      CK_KEY_TYPE key_type)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_HOST_MEMORY;
 	struct libobj_key *new_key = NULL;
 
 	new_key = key_allocate(obj);
 	if (!new_key)
-		return CKR_HOST_MEMORY;
+		return ret;
 
 	DBG_TRACE("Generate a new key (%p)", new_key);
 
@@ -1286,12 +1286,12 @@ void key_free(struct libobj_obj *obj)
 CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		 struct libattr_list *attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 
 	DBG_TRACE("Create a new key type object");
 
 	if (!obj)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	/* Create the common key object */
 	ret = create_key_new(obj, attrs);
@@ -1330,7 +1330,7 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 CK_RV key_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 
@@ -1369,7 +1369,7 @@ CK_RV key_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj)
 
 CK_RV key_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
@@ -1412,13 +1412,13 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			   struct libobj_obj *priv_key,
 			   struct libattr_list *priv_attrs)
 {
-	CK_RV ret;
-	CK_KEY_TYPE key_type;
+	CK_RV ret = CKR_GENERAL_ERROR;
+	CK_KEY_TYPE key_type = 0;
 
 	DBG_TRACE("Generate a new keypair type object");
 
 	if (!pub_key || !priv_key)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	switch (mech->mechanism) {
 	case CKM_EC_KEY_PAIR_GEN:
@@ -1471,24 +1471,27 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			      struct libobj_obj *obj,
 			      struct libattr_list *attrs)
 {
-	CK_RV ret;
-	CK_KEY_TYPE key_type;
+	CK_RV ret = CKR_GENERAL_ERROR;
+	CK_KEY_TYPE key_type = 0;
 
 	DBG_TRACE("Generate a new secret key type object");
 
 	if (!obj)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	switch (mech->mechanism) {
 	case CKM_AES_KEY_GEN:
 		key_type = CKK_AES;
 		break;
+
 	case CKM_DES_KEY_GEN:
 		key_type = CKK_DES;
 		break;
+
 	case CKM_DES3_KEY_GEN:
 		key_type = CKK_DES3;
 		break;
+
 	default:
 		return CKR_MECHANISM_INVALID;
 	}
@@ -1522,10 +1525,10 @@ end:
 
 CK_RV key_get_id(struct libbytes *id, struct libobj_obj *obj, size_t prefix_len)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 
 	if (!id || !obj)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	switch (get_key_type(obj)) {
 	case CKK_AES:

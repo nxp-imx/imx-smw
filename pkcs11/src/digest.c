@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include "pkcs11smw.h"
@@ -13,12 +13,12 @@ static CK_RV digest(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 		    CK_ULONG ulDataLen, CK_BYTE_PTR pDigest,
 		    CK_ULONG_PTR pulDigestLen)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_SESSION_HANDLE_INVALID;
 	CK_MECHANISM mechanism = { 0 };
-	struct libdig_params params;
+	struct libdig_params params = { 0 };
 
 	if (!hSession)
-		return CKR_SESSION_HANDLE_INVALID;
+		return ret;
 
 	if ((pDigest && (!pData != !ulDataLen)) || !pulDigestLen) {
 		ret = CKR_ARGUMENTS_BAD;
@@ -47,10 +47,10 @@ end:
 
 CK_RV C_DigestInit(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_SESSION_HANDLE_INVALID;
 
 	if (!hSession)
-		return CKR_SESSION_HANDLE_INVALID;
+		return ret;
 
 	if (pMechanism) {
 		ret = libsess_validate_mechanism(hSession, pMechanism,

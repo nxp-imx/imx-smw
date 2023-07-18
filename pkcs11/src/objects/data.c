@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #include <stdlib.h>
@@ -37,7 +37,7 @@ const struct template_attr attr_data[] = {
  */
 static struct libobj_data *data_allocate(struct libobj_obj *obj)
 {
-	struct libobj_data *data;
+	struct libobj_data *data = NULL;
 
 	data = calloc(1, sizeof(*data));
 	if (data)
@@ -71,13 +71,13 @@ void data_free(struct libobj_obj *obj)
 CK_RV data_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		  struct libattr_list *attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libobj_data *new_data = NULL;
 
 	DBG_TRACE("Create a new data type object");
 
 	if (!obj)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	new_data = data_allocate(obj);
 	if (!new_data)
@@ -109,7 +109,7 @@ CK_RV data_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 CK_RV data_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 
@@ -123,7 +123,7 @@ CK_RV data_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj)
 
 CK_RV data_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 

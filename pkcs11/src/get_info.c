@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2023 NXP
  */
 
 #include <string.h>
@@ -212,7 +212,8 @@ static struct CK_INTERFACE pkcs11smw_interfaces[] = {
 
 CK_RV C_GetInfo(CK_INFO_PTR pInfo)
 {
-	size_t len;
+	size_t len = 0;
+	size_t memset_len = 0;
 
 	if (!pInfo)
 		return CKR_ARGUMENTS_BAD;
@@ -224,14 +225,16 @@ CK_RV C_GetInfo(CK_INFO_PTR pInfo)
 	/* Pad manufacturerID and LibraryDescription with blank */
 	len = strlen((const char *)pkcs11smw_info.manufacturerID);
 	DBG_TRACE("Manufacturer (%zu) bytes: %s", len, pInfo->manufacturerID);
-	memset(pInfo->manufacturerID + len, ' ',
-	       sizeof(pInfo->manufacturerID) - len);
+
+	if (!SUB_OVERFLOW(sizeof(pInfo->manufacturerID), len, &memset_len))
+		memset(pInfo->manufacturerID + len, ' ', memset_len);
 
 	len = strlen((const char *)pkcs11smw_info.libraryDescription);
 	DBG_TRACE("Lib Description (%zu) bytes: %s", len,
 		  pInfo->libraryDescription);
-	memset(pInfo->libraryDescription + len, ' ',
-	       sizeof(pInfo->libraryDescription) - len);
+
+	if (!SUB_OVERFLOW(sizeof(pInfo->libraryDescription), len, &memset_len))
+		memset(pInfo->libraryDescription + len, ' ', memset_len);
 
 	return CKR_OK;
 }
@@ -249,7 +252,7 @@ CK_RV C_GetFunctionList(CK_FUNCTION_LIST_PTR_PTR ppFunctionList)
 CK_RV C_GetInterfaceList(CK_INTERFACE_PTR pInterfacesList,
 			 CK_ULONG_PTR pulCount)
 {
-	CK_ULONG nb_entries;
+	CK_ULONG nb_entries = 0;
 
 	if (!pulCount)
 		return CKR_ARGUMENTS_BAD;
@@ -274,7 +277,7 @@ CK_RV C_GetInterface(CK_UTF8CHAR_PTR pInterfaceName, CK_VERSION_PTR pVersion,
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
 	CK_INTERFACE_PTR entry = pkcs11smw_interfaces;
-	CK_FUNCTION_LIST_PTR func_list;
+	CK_FUNCTION_LIST_PTR func_list = NULL;
 
 	if (!ppInterface)
 		goto end;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <stdlib.h>
@@ -74,9 +74,9 @@ const struct template_attr attr_obj_storage[] = {
 static CK_RV obj_add_to_list(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			     bool token)
 {
-	CK_RV ret;
-	struct libdevice *dev;
-	struct libobj_list *objects;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	struct libobj_list *objects = NULL;
 
 	DBG_TRACE("Add object (%p) in session %lu list", obj, hsession);
 
@@ -121,9 +121,9 @@ static CK_RV obj_add_to_list(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 static CK_RV find_lock_object(CK_SESSION_HANDLE hsession,
 			      struct libobj_obj *obj, struct libobj_list **list)
 {
-	CK_RV ret;
-	struct libdevice *dev;
-	struct libobj_list *objects;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	struct libobj_list *objects = NULL;
 	struct libobj_obj *fobj = NULL;
 
 	DBG_TRACE("Find and lock object %p", obj);
@@ -177,6 +177,7 @@ static CK_RV find_lock_object(CK_SESSION_HANDLE hsession,
 			*list = objects;
 	}
 
+	// coverity[missing_unlock]
 	return ret;
 }
 
@@ -194,12 +195,12 @@ static CK_RV find_lock_object(CK_SESSION_HANDLE hsession,
  */
 static CK_RV set_unique_id(struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_FUNCTION_FAILED;
+	CK_RV ret = CKR_GENERAL_ERROR;
 	struct librfc2279 *unique_id = NULL;
-	struct libbytes id = {};
+	struct libbytes id = { 0 };
 
 	if (!obj)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	DBG_TRACE("Class %lx", obj->class);
 
@@ -268,8 +269,8 @@ end:
 static CK_RV get_session_obj_access(CK_SESSION_HANDLE hsession,
 				    unsigned int *access)
 {
-	CK_RV ret;
-	CK_SESSION_INFO sinfo;
+	CK_RV ret = CKR_OK;
+	CK_SESSION_INFO sinfo = { 0 };
 
 	ret = libsess_get_info(hsession, &sinfo);
 	if (ret != CKR_OK)
@@ -302,8 +303,8 @@ static CK_RV get_session_obj_access(CK_SESSION_HANDLE hsession,
 static CK_RV get_token_obj_access(CK_SESSION_HANDLE hsession,
 				  unsigned int *access)
 {
-	CK_RV ret;
-	CK_SESSION_INFO sinfo;
+	CK_RV ret = CKR_OK;
+	CK_SESSION_INFO sinfo = { 0 };
 
 	ret = libsess_get_info(hsession, &sinfo);
 	if (ret != CKR_OK)
@@ -339,9 +340,9 @@ static CK_RV get_token_obj_access(CK_SESSION_HANDLE hsession,
 static CK_RV obj_is_destroyable(CK_SESSION_HANDLE hsession,
 				struct libobj_obj *obj)
 {
-	CK_RV ret;
-	unsigned int access;
-	bool is_destroyable = true;
+	CK_RV ret = CKR_FUNCTION_FAILED;
+	unsigned int access = OBJ_RO;
+	bool is_destroyable = false;
 	bool is_private = false;
 
 	switch (obj->class) {
@@ -356,7 +357,7 @@ static CK_RV obj_is_destroyable(CK_SESSION_HANDLE hsession,
 		break;
 
 	default:
-		return CKR_FUNCTION_FAILED;
+		return ret;
 	}
 
 	if (!is_destroyable)
@@ -388,9 +389,9 @@ static CK_RV obj_is_destroyable(CK_SESSION_HANDLE hsession,
 static CK_RV obj_is_modifiable(CK_SESSION_HANDLE hsession,
 			       struct libobj_obj *obj)
 {
-	CK_RV ret;
-	unsigned int access;
-	bool is_modifiable = true;
+	CK_RV ret = CKR_FUNCTION_FAILED;
+	unsigned int access = OBJ_RO;
+	bool is_modifiable = false;
 	bool is_token = false;
 
 	switch (obj->class) {
@@ -404,7 +405,7 @@ static CK_RV obj_is_modifiable(CK_SESSION_HANDLE hsession,
 		break;
 
 	default:
-		return CKR_FUNCTION_FAILED;
+		return ret;
 	}
 
 	if (!is_modifiable)
@@ -434,29 +435,33 @@ static CK_RV obj_is_modifiable(CK_SESSION_HANDLE hsession,
  */
 static CK_RV obj_allocate(struct libobj_obj **obj)
 {
-	CK_RV ret;
-	struct libobj_obj *newobj;
+	CK_RV ret = CKR_HOST_MEMORY;
+	struct libobj_obj *newobj = NULL;
 
 	newobj = malloc(sizeof(*newobj));
 	if (!newobj)
-		return CKR_HOST_MEMORY;
+		goto end;
 
 	ret = libmutex_create(&newobj->lock);
-	if (ret != CKR_OK) {
-		free(newobj);
-		return ret;
-	}
+	if (ret != CKR_OK)
+		goto end;
 
 	newobj->class = 0;
 	newobj->object = NULL;
 	newobj->prev = NULL;
 	newobj->next = NULL;
 
+end:
+	if (ret != CKR_OK) {
+		free(newobj);
+		newobj = NULL;
+	}
+
 	*obj = newobj;
 
 	DBG_TRACE("Allocated a new object (%p)", *obj);
 
-	return CKR_OK;
+	return ret;
 }
 
 /**
@@ -469,7 +474,7 @@ static CK_RV obj_allocate(struct libobj_obj **obj)
  */
 static CK_RV obj_storage_allocate(struct libobj_storage **obj)
 {
-	struct libobj_storage *newobj;
+	struct libobj_storage *newobj = NULL;
 
 	newobj = malloc(sizeof(*newobj));
 	if (!newobj)
@@ -503,7 +508,7 @@ static CK_RV obj_storage_allocate(struct libobj_storage **obj)
  */
 static void obj_storage_free(struct libobj_obj *obj)
 {
-	struct libobj_storage *objstorage;
+	struct libobj_storage *objstorage = NULL;
 
 	if (!obj)
 		return;
@@ -601,8 +606,8 @@ static void obj_free(struct libobj_obj *obj, struct libobj_list *list)
 static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			     struct libattr_list *attrs)
 {
-	CK_RV ret;
-	unsigned int access;
+	CK_RV ret = CKR_OK;
+	unsigned int access = OBJ_RO;
 	struct libobj_storage *newobj = NULL;
 
 	ret = obj_storage_allocate(&newobj);
@@ -685,7 +690,7 @@ static CK_RV obj_storage_new(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 static CK_RV class_get_attribute(CK_ATTRIBUTE_PTR attr,
 				 const struct libobj_obj *libobj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_FUNCTION_FAILED;
 
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 	switch (libobj->class) {
@@ -720,7 +725,7 @@ static CK_RV class_get_attribute(CK_ATTRIBUTE_PTR attr,
 		break;
 
 	default:
-		ret = CKR_FUNCTION_FAILED;
+		break;
 	}
 
 	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
@@ -746,7 +751,7 @@ static CK_RV class_get_attribute(CK_ATTRIBUTE_PTR attr,
 static CK_RV class_modify_attribute(CK_ATTRIBUTE_PTR attr,
 				    struct libobj_obj *libobj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_FUNCTION_FAILED;
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 	switch (libobj->class) {
@@ -781,7 +786,7 @@ static CK_RV class_modify_attribute(CK_ATTRIBUTE_PTR attr,
 		break;
 
 	default:
-		ret = CKR_FUNCTION_FAILED;
+		break;
 	}
 
 	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
@@ -791,7 +796,7 @@ static CK_RV class_modify_attribute(CK_ATTRIBUTE_PTR attr,
 CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		    CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_obj *newobj = NULL;
 	struct libattr_list attrs_list = { .attr = attrs, .number = nb_attrs };
 
@@ -855,9 +860,9 @@ end:
 
 CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_obj *obj = (struct libobj_obj *)hobject;
-	struct libobj_list *objects;
+	struct libobj_list *objects = NULL;
 
 	DBG_TRACE("Destroy object (%p) of session %lu", obj, hsession);
 
@@ -880,10 +885,10 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 			   CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs)
 {
-	CK_RV ret;
-	CK_RV status;
+	CK_RV ret = CKR_OK;
+	CK_RV status = CKR_OK;
 	struct libobj_obj *libobj = (struct libobj_obj *)hobject;
-	CK_ULONG idx;
+	CK_ULONG idx = 0;
 
 	DBG_TRACE("Get attribute(s) of object (%p) in session %lu", libobj,
 		  hsession);
@@ -893,7 +898,7 @@ CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 		goto end;
 
 	DBG_TRACE("Get %lu attribute(s)", nb_attrs);
-	for (idx = 0; idx < nb_attrs; idx++) {
+	for (; idx < nb_attrs; idx++) {
 		DBG_TRACE("Get attribute %lu type=%#lx", idx, attrs[idx].type);
 		status =
 			attr_get_obj_value(&attrs[idx], attr_obj_common,
@@ -938,9 +943,9 @@ CK_RV libobj_modify_attribute(CK_SESSION_HANDLE hsession,
 			      CK_OBJECT_HANDLE hobject, CK_ATTRIBUTE_PTR attrs,
 			      CK_ULONG nb_attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_obj *libobj = (struct libobj_obj *)hobject;
-	CK_ULONG idx;
+	CK_ULONG idx = 0;
 
 	DBG_TRACE("Modify attribute(s) of object (%p) in session %lu", libobj,
 		  hsession);
@@ -952,7 +957,7 @@ CK_RV libobj_modify_attribute(CK_SESSION_HANDLE hsession,
 	ret = obj_is_modifiable(hsession, libobj);
 
 	DBG_TRACE("Modify %lu attribute(s)", nb_attrs);
-	for (idx = 0; idx < nb_attrs && ret == CKR_OK; idx++) {
+	for (; idx < nb_attrs && ret == CKR_OK; idx++) {
 		DBG_TRACE("Modify attribute %lu type=%#lx", idx,
 			  attrs[idx].type);
 		ret = attr_modify_obj_value(&attrs[idx], attr_obj_common,
@@ -983,7 +988,7 @@ CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			      CK_ULONG nb_priv_attrs, CK_OBJECT_HANDLE_PTR hpub,
 			      CK_OBJECT_HANDLE_PTR hpriv)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_obj *pub_key = NULL;
 	struct libobj_obj *priv_key = NULL;
 	struct libattr_list pub_attrs_list = { .attr = pub_attrs,
@@ -1094,7 +1099,7 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			  CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs,
 			  CK_OBJECT_HANDLE_PTR hkey)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_obj *key = NULL;
 	struct libattr_list attrs_list = { .attr = attrs, .number = nb_attrs };
 
@@ -1170,10 +1175,10 @@ static CK_RV object_match(CK_SESSION_HANDLE hsession,
 			  CK_ATTRIBUTE_PTR attrs_tmp, CK_ULONG nb_attrs)
 {
 	CK_RV ret = CKR_OK;
-	struct libobj_obj *obj;
+	struct libobj_obj *obj = NULL;
 	struct libobj_handles *obj_match = NULL;
-	CK_ULONG idx;
-	bool match;
+	CK_ULONG idx = 0;
+	bool match = false;
 
 	for (obj = LIST_FIRST(list); obj; obj = LIST_NEXT(obj)) {
 		DBG_TRACE("Check if object %p match", obj);
@@ -1219,8 +1224,8 @@ static CK_RV object_match(CK_SESSION_HANDLE hsession,
 
 static void destroy_query_list(struct libobj_query *query)
 {
-	struct libobj_handles *obj;
-	struct libobj_handles *next;
+	struct libobj_handles *obj = NULL;
+	struct libobj_handles *next = NULL;
 
 	if (query) {
 		obj = LIST_FIRST(&query->objects);
@@ -1237,11 +1242,11 @@ static void destroy_query_list(struct libobj_query *query)
 CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		       CK_ULONG nb_attrs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_query *query = NULL;
-	struct libobj_list *objects;
-	struct libdevice *dev;
-	CK_ULONG idx;
+	struct libobj_list *objects = NULL;
+	struct libdevice *dev = NULL;
+	CK_ULONG idx = 0;
 	CK_ATTRIBUTE_PTR attrs_tmp = NULL;
 
 	DBG_TRACE("Start Find Object Query on session %lu", hsession);
@@ -1335,10 +1340,10 @@ end:
 CK_RV libobj_find(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE_PTR pobjs,
 		  CK_ULONG nb_objs_max, CK_ULONG_PTR pnb_objs_found)
 {
-	CK_RV ret;
-	struct libobj_query *query;
-	struct libobj_handles *obj;
-	struct libobj_handles *next;
+	CK_RV ret = CKR_OK;
+	struct libobj_query *query = NULL;
+	struct libobj_handles *obj = NULL;
+	struct libobj_handles *next = NULL;
 	CK_ULONG rem_objs = nb_objs_max;
 	CK_OBJECT_HANDLE_PTR out_objs = pobjs;
 
@@ -1354,7 +1359,10 @@ CK_RV libobj_find(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE_PTR pobjs,
 		LIST_REMOVE(&query->objects, obj);
 		free(obj);
 		obj = next;
-		(*pnb_objs_found)++;
+
+		if (INC_OVERFLOW(*pnb_objs_found, 1))
+			return CKR_GENERAL_ERROR;
+
 		out_objs++;
 	}
 
@@ -1367,8 +1375,8 @@ end:
 
 CK_RV libobj_find_final(CK_SESSION_HANDLE hsession)
 {
-	CK_RV ret;
-	struct libobj_query *query;
+	CK_RV ret = CKR_OK;
+	struct libobj_query *query = NULL;
 
 	DBG_TRACE("Final Find Object Query on session %lu", hsession);
 	ret = libsess_get_query(hsession, &query);
@@ -1386,14 +1394,14 @@ CK_RV libobj_find_final(CK_SESSION_HANDLE hsession)
 
 CK_RV libobj_list_destroy(struct libobj_list *list)
 {
-	CK_RV ret;
-	struct libobj_obj *obj;
-	struct libobj_obj *next;
+	CK_RV ret = CKR_GENERAL_ERROR;
+	struct libobj_obj *obj = NULL;
+	struct libobj_obj *next = NULL;
 
 	DBG_TRACE("Destroy all objects from list %p", list);
 
 	if (!list)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	/* Lock the list until the end of the destruction */
 	ret = LLIST_LOCK(list);

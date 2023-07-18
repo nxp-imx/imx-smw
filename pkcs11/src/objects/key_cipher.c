@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <stdlib.h>
@@ -30,20 +30,23 @@ const struct template_attr attr_key_cipher[] = {
  * @obj: Cipher key object
  *
  * return:
- * Key allocated if success
- * NULL otherwise
+ * CKR_OK             - Success
+ * CKR_HOST_MEMORY    - Out of memory
  */
-static struct libobj_key_cipher *key_cipher_allocate(struct libobj_obj *obj)
+static CK_RV key_cipher_allocate(struct libobj_obj *obj)
 {
-	struct libobj_key_cipher *key;
+	CK_RV ret = CKR_HOST_MEMORY;
+	struct libobj_key_cipher *key = NULL;
 
 	key = calloc(1, sizeof(*key));
-	if (key)
+	if (key) {
 		set_subkey_to(obj, key);
+		ret = CKR_OK;
+	}
 
-	DBG_TRACE("Allocated a new Cipher secret key (%p)", key);
+	DBG_TRACE("Allocated a new Cipher secret key (%p) (ret=%ld)", key, ret);
 
-	return key;
+	return ret;
 }
 
 void key_cipher_free(struct libobj_obj *obj)
@@ -66,12 +69,14 @@ void key_cipher_free(struct libobj_obj *obj)
 CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			struct libattr_list *attrs)
 {
-	CK_RV ret;
-	struct libobj_key_cipher *new_key;
+	CK_RV ret = CKR_OK;
+	struct libobj_key_cipher *new_key = NULL;
 
-	new_key = key_cipher_allocate(obj);
-	if (!new_key)
-		return CKR_HOST_MEMORY;
+	ret = key_cipher_allocate(obj);
+	if (ret != CKR_OK)
+		goto end;
+
+	new_key = get_subkey_from(obj);
 
 	DBG_TRACE("Create a new Cipher secret key (%p)", new_key);
 
@@ -103,7 +108,7 @@ end:
 CK_RV key_cipher_get_attribute(CK_ATTRIBUTE_PTR attr,
 			       const struct libobj_obj *obj, bool protect)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
 		  protect ? "YES" : "NO");
@@ -120,7 +125,7 @@ CK_RV key_cipher_get_attribute(CK_ATTRIBUTE_PTR attr,
 
 CK_RV key_cipher_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
@@ -135,12 +140,14 @@ CK_RV key_cipher_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
 CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			  struct libobj_obj *obj, struct libattr_list *attrs)
 {
-	CK_RV ret;
-	struct libobj_key_cipher *key;
+	CK_RV ret = CKR_OK;
+	struct libobj_key_cipher *key = NULL;
 
-	key = key_cipher_allocate(obj);
-	if (!key)
-		return CKR_HOST_MEMORY;
+	ret = key_cipher_allocate(obj);
+	if (ret != CKR_OK)
+		goto end;
+
+	key = get_subkey_from(obj);
 
 	DBG_TRACE("Generate a Cipher key (%p)", key);
 
@@ -173,7 +180,7 @@ end:
 CK_RV key_cipher_get_id(struct libbytes *id, struct libobj_obj *obj,
 			size_t prefix_len)
 {
-	struct libobj_key_cipher *key_cipher;
+	struct libobj_key_cipher *key_cipher = NULL;
 
 	if (!obj || !id)
 		return CKR_GENERAL_ERROR;

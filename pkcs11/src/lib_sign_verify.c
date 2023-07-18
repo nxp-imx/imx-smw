@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <stdlib.h>
@@ -123,15 +123,15 @@ static CK_RV get_hash_mech_from_mgf(CK_RSA_PKCS_MGF_TYPE mgf,
 static CK_RV check_rsa_pss(CK_MECHANISM_PTR pmechanism,
 			   struct lib_signature_ctx *ctx)
 {
-	CK_RV ret;
-	CK_MECHANISM_TYPE mech_hash;
+	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
+	CK_MECHANISM_TYPE mech_hash = 0;
 	CK_MECHANISM_TYPE mgf_hash = 0;
-	CK_RSA_PKCS_PSS_PARAMS_PTR mech_params;
+	CK_RSA_PKCS_PSS_PARAMS_PTR mech_params = NULL_PTR;
 
 	DBG_TRACE("Check RSA PSS signature mechanism parameter");
 
 	if (pmechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS))
-		return CKR_MECHANISM_PARAM_INVALID;
+		return ret;
 
 	/* Get hash mechanism from mechanism type */
 	mech_hash = get_hash_mech_from_rsa_pss_mech(pmechanism->mechanism);
@@ -204,8 +204,8 @@ CK_RV lib_sign_verify_init(CK_SESSION_HANDLE hsession,
 			   CK_MECHANISM_PTR pmechanism, CK_OBJECT_HANDLE hkey,
 			   CK_FLAGS op_flag)
 {
-	CK_RV ret;
-	struct lib_signature_ctx *ctx;
+	CK_RV ret = CKR_OK;
+	struct lib_signature_ctx *ctx = NULL;
 	CK_BBOOL key_op = false;
 	CK_ATTRIBUTE iskey_op[] = {
 		{ CKA_VERIFY, &key_op, sizeof(key_op) },
@@ -268,17 +268,15 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 	       CK_ULONG uldatalen, CK_BYTE_PTR psignature,
 	       CK_ULONG_PTR pulsignaturelen)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 	CK_MECHANISM mechanism = { 0 };
-	struct lib_signature_ctx *ctx;
+	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params params = { 0 };
 
 	DBG_TRACE("Sign operation");
 
-	if (!pulsignaturelen) {
-		ret = CKR_ARGUMENTS_BAD;
+	if (!pulsignaturelen)
 		goto end;
-	}
 
 	if (psignature && !pdata) {
 		ret = CKR_DATA_INVALID;
@@ -334,17 +332,15 @@ CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 		 CK_ULONG uldatalen, CK_BYTE_PTR psignature,
 		 CK_ULONG ulsignaturelen)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_DATA_INVALID;
 	CK_MECHANISM mechanism = { 0 };
-	struct lib_signature_ctx *ctx;
+	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params params = { 0 };
 
 	DBG_TRACE("Verify operation");
 
-	if (!pdata) {
-		ret = CKR_DATA_INVALID;
+	if (!pdata)
 		goto end;
-	}
 
 	if (!uldatalen) {
 		ret = CKR_DATA_LEN_RANGE;

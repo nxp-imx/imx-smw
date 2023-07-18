@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include <stdlib.h>
@@ -15,7 +15,7 @@
 
 static CK_RV get_slotdev(struct libdevice **dev, struct libsess *sess)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	ret = libdev_get_slotdev(dev, sess->slotid);
 	if (ret == CKR_SLOT_ID_INVALID)
@@ -26,7 +26,7 @@ static CK_RV get_slotdev(struct libdevice **dev, struct libsess *sess)
 
 struct libsess *find_session(struct libdevice *dev, struct libsess *session)
 {
-	struct libsess *sess;
+	struct libsess *sess = NULL;
 
 	if (session->flags & CKF_RW_SESSION) {
 		LIST_FIND(sess, &dev->rw_sessions, session);
@@ -86,7 +86,7 @@ static CK_RV open_ro_session(struct libsess *session, struct libdevice *dev)
 
 static CK_RV close_rw_session(struct libdevice *dev, struct libsess *session)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Close R/W session %p", session);
 
@@ -97,7 +97,9 @@ static CK_RV close_rw_session(struct libdevice *dev, struct libsess *session)
 	ret = libopctx_list_destroy(&session->opctx);
 	if (ret == CKR_OK) {
 		LIST_REMOVE(&dev->rw_sessions, session);
-		dev->token.rw_session_count--;
+
+		if (DEC_OVERFLOW(dev->token.rw_session_count, 1))
+			dev->token.rw_session_count = 0;
 
 		free(session);
 	}
@@ -107,7 +109,7 @@ static CK_RV close_rw_session(struct libdevice *dev, struct libsess *session)
 
 static CK_RV close_ro_session(struct libdevice *dev, struct libsess *session)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	DBG_TRACE("Close RO session %p", session);
 
@@ -119,7 +121,9 @@ static CK_RV close_ro_session(struct libdevice *dev, struct libsess *session)
 
 	if (ret == CKR_OK) {
 		LIST_REMOVE(&dev->ro_sessions, session);
-		dev->token.ro_session_count--;
+
+		if (DEC_OVERFLOW(dev->token.ro_session_count, 1))
+			dev->token.ro_session_count = 0;
 
 		free(session);
 	}
@@ -130,9 +134,9 @@ static CK_RV close_ro_session(struct libdevice *dev, struct libsess *session)
 CK_RV libsess_open(CK_SLOT_ID slotid, CK_FLAGS flags, CK_VOID_PTR application,
 		   CK_NOTIFY notify, CK_SESSION_HANDLE_PTR hsession)
 {
-	CK_RV ret;
-	struct libdevice *dev;
-	const struct libdev *devinfo;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	const struct libdev *devinfo = NULL;
 	struct libsess *sess = NULL;
 
 	DBG_TRACE("Try to open a new session on token #%ld", slotid);
@@ -200,8 +204,8 @@ err:
 
 CK_RV libsess_close(CK_SESSION_HANDLE hsession)
 {
-	CK_RV ret;
-	struct libdevice *dev;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Try to close session %p (slotid = %ld)", sess, sess->slotid);
@@ -235,10 +239,10 @@ end:
 
 CK_RV libsess_close_all(CK_SLOT_ID slotid)
 {
-	CK_RV ret;
-	struct libdevice *dev;
-	struct libsess *sess;
-	struct libsess *next;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	struct libsess *sess = NULL;
+	struct libsess *next = NULL;
 
 	DBG_TRACE("Try to close all sessions of token %ld", slotid);
 
@@ -288,8 +292,8 @@ end:
 
 CK_RV libsess_get_info(CK_SESSION_HANDLE hsession, CK_SESSION_INFO_PTR pinfo)
 {
-	CK_RV ret;
-	struct libdevice *dev;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Try to get session %p information (slotid = %lu)", sess,
@@ -342,8 +346,8 @@ end:
 
 CK_RV libsess_login(CK_SESSION_HANDLE hsession, CK_USER_TYPE user)
 {
-	CK_RV ret;
-	struct libdevice *dev;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Try to login as %lu on session %p (slotid = %lu)", user,
@@ -392,8 +396,8 @@ end:
 
 CK_RV libsess_logout(CK_SESSION_HANDLE hsession)
 {
-	CK_RV ret;
-	struct libdevice *dev;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Logout of session %p (slotid = %lu)", sess, sess->slotid);
@@ -426,12 +430,12 @@ end:
 
 CK_RV libsess_get_user(CK_SESSION_HANDLE hsession, CK_USER_TYPE *user)
 {
-	CK_RV ret;
-	struct libdevice *dev;
+	CK_RV ret = CKR_GENERAL_ERROR;
+	struct libdevice *dev = NULL;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	if (!user)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	DBG_TRACE("Get the user logged on session %p", sess);
 
@@ -455,9 +459,12 @@ CK_RV libsess_get_user(CK_SESSION_HANDLE hsession, CK_USER_TYPE *user)
 
 CK_RV libsess_validate(CK_SESSION_HANDLE hsession)
 {
-	CK_RV ret;
-	struct libdevice *dev;
+	CK_RV ret = CKR_SESSION_HANDLE_INVALID;
+	struct libdevice *dev = NULL;
 	struct libsess *sess = (struct libsess *)hsession;
+
+	if (!sess)
+		return ret;
 
 	DBG_TRACE("Validate session %p (slotid = %lu)", sess, sess->slotid);
 
@@ -482,8 +489,8 @@ CK_RV libsess_validate(CK_SESSION_HANDLE hsession)
 CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
 				 CK_MECHANISM_PTR mech, CK_FLAGS op_flag)
 {
-	CK_RV ret;
-	struct libdevice *dev;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Validate session %p (slotid = %lu)", sess, sess->slotid);
@@ -510,14 +517,14 @@ CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
 
 CK_RV libsess_get_slotid(CK_SESSION_HANDLE hsession, CK_SLOT_ID *slotid)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Get slot ID of session %p (slotid = %lu)", sess,
 		  sess->slotid);
 
 	if (!slotid)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	ret = libsess_validate(hsession);
 	if (ret != CKR_OK)
@@ -530,13 +537,13 @@ CK_RV libsess_get_slotid(CK_SESSION_HANDLE hsession, CK_SLOT_ID *slotid)
 
 CK_RV libsess_get_device(CK_SESSION_HANDLE hsession, struct libdevice **dev)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Get the session %p (slotid = %lu)", sess, sess->slotid);
 
 	if (!dev)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	ret = libsess_validate(hsession);
 	if (ret != CKR_OK)
@@ -549,14 +556,14 @@ CK_RV libsess_get_device(CK_SESSION_HANDLE hsession, struct libdevice **dev)
 
 CK_RV libsess_get_objects(CK_SESSION_HANDLE hsession, struct libobj_list **list)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Get slot ID of session %p (slotid = %lu)", sess,
 		  sess->slotid);
 
 	if (!list)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	ret = libsess_validate(hsession);
 	if (ret != CKR_OK)
@@ -569,7 +576,7 @@ CK_RV libsess_get_objects(CK_SESSION_HANDLE hsession, struct libobj_list **list)
 
 CK_RV libsess_set_query(CK_SESSION_HANDLE hsession, struct libobj_query *query)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Get slot ID of session %p (slotid = %lu)", sess,
@@ -586,14 +593,14 @@ CK_RV libsess_set_query(CK_SESSION_HANDLE hsession, struct libobj_query *query)
 
 CK_RV libsess_get_query(CK_SESSION_HANDLE hsession, struct libobj_query **query)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Get slot ID of session %p (slotid = %lu)", sess,
 		  sess->slotid);
 
 	if (!query)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	ret = libsess_validate(hsession);
 	if (ret != CKR_OK)
@@ -606,10 +613,10 @@ CK_RV libsess_get_query(CK_SESSION_HANDLE hsession, struct libobj_query **query)
 
 CK_RV libsess_callback(CK_SESSION_HANDLE hsession, CK_NOTIFICATION event)
 {
-	CK_RV ret_callback;
-	CK_RV ret;
+	CK_RV ret_callback = CKR_OK;
+	CK_RV ret = CKR_OK;
 	struct libsess *sess = (struct libsess *)hsession;
-	struct libdevice *dev;
+	struct libdevice *dev = NULL;
 
 	DBG_TRACE("Call session (%p) callback", sess);
 
@@ -655,7 +662,7 @@ CK_RV libsess_callback(CK_SESSION_HANDLE hsession, CK_NOTIFICATION event)
 CK_RV libsess_add_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
 			CK_MECHANISM_PTR mech, void *ctx)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libsess *sess = (struct libsess *)hsession;
 	struct libopctx *opctx_find = NULL;
 	struct libopctx opctx_add = { 0 };
@@ -693,7 +700,7 @@ end:
 CK_RV libsess_find_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
 			 CK_MECHANISM_PTR mech, void **ctx)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libsess *sess = (struct libsess *)hsession;
 	struct libopctx *opctx = NULL;
 
@@ -728,7 +735,7 @@ end:
 
 CK_RV libsess_remove_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libsess *sess = (struct libsess *)hsession;
 	struct libopctx *opctx = NULL;
 

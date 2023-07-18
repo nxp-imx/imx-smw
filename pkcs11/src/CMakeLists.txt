@@ -12,7 +12,8 @@ configure_file(./include/pkcs11smw_config.h.in ./include/pkcs11smw_config.h)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 	./include
-	${CMAKE_CURRENT_BINARY_DIR}/include)
+	${CMAKE_CURRENT_BINARY_DIR}/include
+	${CMAKE_SOURCE_DIR}/inc)
 
 add_subdirectory(utils)
 add_subdirectory(ifsmw)

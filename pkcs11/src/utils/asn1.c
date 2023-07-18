@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 #include <string.h>
 
@@ -28,9 +28,9 @@ struct asn1_tlv {
 static CK_RV get_tlv(struct asn1_tlv *tlv, CK_BYTE_PTR string, size_t offset)
 {
 	CK_BYTE_PTR str = string;
-	int idx;
-	int nb_octets;
-	size_t tmp_len;
+	int idx = 0;
+	int nb_octets = 0;
+	size_t tmp_len = 0;
 
 	if (!str) {
 		DBG_TRACE("Error TLV String empty");
@@ -128,9 +128,9 @@ CK_RV util_asn1_ec_params_to_curve(const struct curve_def **out_curve,
 				   struct libbytes *params,
 				   const struct curve_def *curves)
 {
-	CK_RV ret;
-	struct asn1_tlv tlv;
-	const struct curve_def *fcurve;
+	CK_RV ret = CKR_OK;
+	struct asn1_tlv tlv = { 0 };
+	const struct curve_def *fcurve = NULL;
 
 	/*
 	 * Parameters are encoded in ASN1 format:

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2023 NXP
  */
 
 #include "lib_context.h"
@@ -10,9 +10,9 @@
 
 CK_RV C_Initialize(CK_VOID_PTR pInitArgs)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS_PTR pinit = pInitArgs;
-	struct libcaps *libcaps;
+	struct libcaps *libcaps = NULL;
 
 	ret = libctx_create();
 	if (ret != CKR_OK)
@@ -115,12 +115,10 @@ end_check:
 
 CK_RV C_Finalize(CK_VOID_PTR pReserved)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 
-	if (pReserved)
-		return CKR_ARGUMENTS_BAD;
-
-	ret = libctx_destroy();
+	if (!pReserved)
+		ret = libctx_destroy();
 
 	return ret;
 }

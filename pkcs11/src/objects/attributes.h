@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #ifndef __ATTRIBUTE_H__
@@ -392,6 +392,7 @@ CK_RV attr_to_mech_list(void *dest, CK_ATTRIBUTE_PTR attr);
  *
  * return:
  * CKR_BUFFER_TOO_SMALL        - Attribute length too small
+ * CKR_ARGUMENTS_BAD           - Bad arguments
  * CKR_OK                      - Success
  */
 CK_RV mech_list_to_attr(CK_ATTRIBUTE_PTR attr, const void *src);
@@ -420,6 +421,7 @@ CK_RV attr_to_attr_list(void *dest, CK_ATTRIBUTE_PTR attr);
  * attribute of type CK_ATTRIBUTE_PTR
  *
  * return:
+ * CKR_FUNCTION_FAILED         - Function failure
  * CKR_BUFFER_TOO_SMALL        - Attribute length too small
  * CKR_OK                      - Success
  */
@@ -524,6 +526,7 @@ attr_get_value(void *obj, const struct template_attr *tattr,
  *     set ulValueLen to CK_UNAVAILABLE_INFORMATION
  *
  * return:
+ * CKR_FUNCTION_FAILED         - Function failure
  * CKR_ATTRIBUTE_SENSITIVE     - Attribute is sensitive
  * CKR_BUFFER_TOO_SMALL        - Attribute length is too small
  * CKR_ATTRIBUTE_TYPE_INVALID  - Attribute not found
@@ -555,6 +558,7 @@ attr_get_obj_value(CK_ATTRIBUTE_PTR attr, const struct template_attr *tattrs,
  *     set ulValueLen to CK_UNAVAILABLE_INFORMATION
  *
  * return:
+ * CKR_FUNCTION_FAILED         - Function failure
  * CKR_ATTRIBUTE_SENSITIVE     - Attribute is sensitive
  * CKR_BUFFER_TOO_SMALL        - Attribute length is too small
  * CKR_ATTRIBUTE_TYPE_INVALID  - Attribute not found

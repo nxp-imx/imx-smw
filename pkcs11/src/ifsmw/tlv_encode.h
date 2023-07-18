@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 #ifndef __TLV_ENCODE_H__
 #define __TLV_ENCODE_H__
@@ -26,6 +26,7 @@ struct smw_tlv {
  *
  * return:
  * CKR_HOST_MEMORY               - Out of memory
+ * CKR_ARGUMENTS_BAD             - Bad arguments
  * CKR_OK                        - Success
  */
 CK_RV tlv_encode_boolean(struct smw_tlv *tlv, const char *type);
@@ -43,6 +44,7 @@ CK_RV tlv_encode_boolean(struct smw_tlv *tlv, const char *type);
  *
  * return:
  * CKR_HOST_MEMORY               - Out of memory
+ * CKR_ARGUMENTS_BAD             - Bad arguments
  * CKR_OK                        - Success
  */
 CK_RV tlv_encode_large_numeral(struct smw_tlv *tlv, const char *type,
@@ -56,6 +58,7 @@ CK_RV tlv_encode_large_numeral(struct smw_tlv *tlv, const char *type,
  *
  * Return:
  * CKR_HOST_MEMORY               - Out of memory
+ * CKR_ARGUMENTS_BAD             - Bad arguments
  * CKR_OK                        - Success
  */
 CK_RV tlv_encode_string(struct smw_tlv *tlv, const char *type,
@@ -69,6 +72,7 @@ CK_RV tlv_encode_string(struct smw_tlv *tlv, const char *type,
  *
  * Return:
  * CKR_HOST_MEMORY               - Out of memory
+ * CKR_ARGUMENTS_BAD             - Bad arguments
  * CKR_OK                        - Success
  */
 CK_RV tlv_encode_enum(struct smw_tlv *tlv, const char *type, const char *value);
@@ -81,6 +85,7 @@ CK_RV tlv_encode_enum(struct smw_tlv *tlv, const char *type, const char *value);
  *
  * Return:
  * CKR_HOST_MEMORY               - Out of memory
+ * CKR_ARGUMENTS_BAD             - Bad arguments
  * CKR_OK                        - Success
  */
 CK_RV tlv_encode_numeral(struct smw_tlv *tlv, const char *type, long long num);
@@ -98,6 +103,7 @@ CK_RV tlv_encode_numeral(struct smw_tlv *tlv, const char *type, long long num);
  *
  * Return:
  * CKR_HOST_MEMORY               - Out of memory
+ * CKR_ARGUMENTS_BAD             - Bad arguments
  * CKR_OK                        - Success
  */
 CK_RV tlv_encode_concat_string(struct smw_tlv *tlv, const char *type,
@@ -111,6 +117,7 @@ CK_RV tlv_encode_concat_string(struct smw_tlv *tlv, const char *type,
  *
  * Return:
  * CKR_HOST_MEMORY               - Out of memory
+ * CKR_ARGUMENTS_BAD             - Bad arguments
  * CKR_OK                        - Success
  */
 CK_RV tlv_encode_tlv(struct smw_tlv *tlv, const char *type,

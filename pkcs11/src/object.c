@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include "lib_object.h"
@@ -105,7 +105,7 @@ CK_RV C_FindObjects(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_PTR phObject,
 		 * If size of object handles is 0, assume it's valid
 		 * but return 0 object found.
 		 */
-		pulObjectCount = 0;
+		*pulObjectCount = 0;
 		return CKR_OK;
 	}
 

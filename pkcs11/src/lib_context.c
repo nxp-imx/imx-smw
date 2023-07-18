@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2023 NXP
  */
 #include <stdlib.h>
 
@@ -83,10 +83,10 @@ struct libmutex *libctx_get_mutex(void)
 
 CK_RV libctx_initialized(void)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 
 	if (!libctx)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	ret = libdev_initialize(&libctx->devices);
 	if (ret == CKR_OK)
@@ -147,10 +147,10 @@ CK_RV libctx_create(void)
 
 CK_RV libctx_destroy(void)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 
 	if (!libctx)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	if (!libctx->initialized)
 		return CKR_CRYPTOKI_NOT_INITIALIZED;

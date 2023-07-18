@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #include <string.h>
@@ -250,12 +250,12 @@ static CK_RV smw_status_to_ck_rv(enum smw_status_code status)
 static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mgroup **group, struct mentry **entry)
 {
-	CK_RV ret;
-	struct libdevice *dev;
-	struct mgroup *grp;
-	struct mentry *ent;
-	unsigned int idx;
-	CK_FLAGS slot_flag;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	struct mgroup *grp = NULL;
+	struct mentry *ent = NULL;
+	unsigned int idx = 0;
+	CK_FLAGS slot_flag = 0;
 
 	ret = libdev_get_slotdev(&dev, slotid);
 	if (ret != CKR_OK)
@@ -295,14 +295,13 @@ static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 			  struct mgroup *mgroup)
 {
-	enum smw_status_code status;
-	unsigned int idx;
-	struct mentry *entry;
-	CK_FLAGS slot_flag;
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx = 0;
+	struct mentry *entry = NULL;
+	CK_FLAGS slot_flag = 0;
 
 	slot_flag = BIT(slotid);
-	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
-	     idx++, entry++) {
+	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
 		status = smw_config_check_digest(subsystem, entry->smw_algo);
 		DBG_TRACE("%s digest %s: %d", subsystem,
 			  (char *)entry->smw_algo, status);
@@ -314,16 +313,15 @@ static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 static void check_keygen_common(CK_SLOT_ID slotid, const char *subsystem,
 				struct mgroup *mgroup)
 {
-	enum smw_status_code status;
-	unsigned int idx;
-	unsigned int idx_algo;
-	struct mentry *entry;
-	CK_FLAGS slot_flag;
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx = 0;
+	unsigned int idx_algo = 0;
+	struct mentry *entry = NULL;
+	CK_FLAGS slot_flag = 0;
 	struct smw_key_info info = { 0 };
 
 	slot_flag = BIT(slotid);
-	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
-	     idx++, entry++) {
+	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
 		for (idx_algo = 0; idx_algo < entry->nb_smw_algo; idx_algo++) {
 			info.key_type_name = GET_ALGO_NAME(entry, idx_algo);
 
@@ -379,23 +377,27 @@ static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 
 static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
-	CK_RV ret;
-	enum smw_status_code status;
-	const struct libdev *devinfo;
+	CK_RV ret = CKR_SLOT_ID_INVALID;
+	enum smw_status_code status = SMW_STATUS_OK;
+	const struct libdev *devinfo = NULL;
 	struct libdig_params *params = args;
 	struct smw_hash_args hash_args = { 0 };
 
 	DBG_TRACE("Digest mechanism");
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
+		return ret;
 
 	hash_args.subsystem_name = devinfo->name;
 	hash_args.algo_name = GET_ALGO_NAME(entry, 0);
+
 	hash_args.input = params->pData;
-	hash_args.input_length = params->ulDataLen;
+	if (SET_OVERFLOW(params->ulDataLen, hash_args.input_length))
+		return CKR_ARGUMENTS_BAD;
+
 	hash_args.output = params->pDigest;
-	hash_args.output_length = *params->pulDigestLen;
+	if (SET_OVERFLOW(*params->pulDigestLen, hash_args.output_length))
+		return CKR_ARGUMENTS_BAD;
 
 	status = smw_hash(&hash_args);
 
@@ -414,16 +416,16 @@ static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 				CK_MECHANISM_INFO_PTR info)
 {
 	CK_RV ret = CKR_OK;
-	enum smw_status_code status;
-	const struct libdev *devinfo;
-	unsigned int idx;
+	enum smw_status_code status = SMW_STATUS_OK;
+	const struct libdev *devinfo = NULL;
+	unsigned int idx = 0;
 	struct smw_key_info keyinfo = { 0 };
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	for (idx = 0; idx < entry->nb_smw_algo; idx++) {
+	for (; idx < entry->nb_smw_algo; idx++) {
 		keyinfo.key_type_name = GET_ALGO_NAME(entry, idx);
 		keyinfo.security_size = 0;
 
@@ -492,19 +494,19 @@ static CK_RV build_key_allowed_algos(struct smw_tlv *tlv_algos,
 				     CK_SLOT_ID slotid, struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_OK;
-	size_t idx;
-	struct libmech_list *mech;
-	struct mentry *entry;
+	size_t idx = 0;
+	struct libmech_list *mech = NULL;
+	struct mentry *entry = NULL;
 	struct smw_tlv tlv_algo_params = { 0 };
 
 	mech = get_key_mech(obj);
 
-	for (idx = 0; idx < mech->number && ret == CKR_OK; idx++) {
+	for (; idx < mech->number && ret == CKR_OK; idx++) {
 		ret = find_mechanism(slotid, mech->mech[idx], NULL, &entry);
 		if (ret != CKR_OK) {
 			DBG_TRACE("Key allowed mechanism 0x%lx error %ld",
 				  mech->mech[idx], ret);
-			return ret;
+			break;
 		}
 
 		DBG_TRACE("Key allowed mechanism %s", (char *)entry->smw_algo);
@@ -522,14 +524,14 @@ static CK_RV build_key_allowed_algos(struct smw_tlv *tlv_algos,
 		tlv_encode_free(&tlv_algo_params);
 	}
 
-	return CKR_OK;
+	return ret;
 }
 
 static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 {
-	CK_RV ret;
-	const struct libdev *devinfo;
-	enum smw_status_code status;
+	CK_RV ret = CKR_SLOT_ID_INVALID;
+	const struct libdev *devinfo = NULL;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_tlv key_attr = { 0 };
 	struct smw_tlv allowed_algos = { 0 };
 	struct smw_generate_key_args gen_args = { 0 };
@@ -538,7 +540,7 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	DBG_TRACE("Common Generate Key mechanism");
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
+		return ret;
 
 	ret = key_desc_setup(&key, obj);
 	if (ret != CKR_OK)
@@ -596,12 +598,12 @@ static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
 			      struct mgroup *mgroup)
 {
-	enum smw_status_code status;
-	unsigned int idx;
-	unsigned int ecdsa_idx;
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx = 0;
+	unsigned int ecdsa_idx = 0;
 	struct smw_signature_info info = { 0 };
-	struct mentry *entry;
-	CK_FLAGS slot_flag;
+	struct mentry *entry = NULL;
+	CK_FLAGS slot_flag = 0;
 
 	DBG_TRACE("Check ECDSA Signature mechanism");
 
@@ -615,8 +617,7 @@ static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
 	 */
 
 	slot_flag = BIT(slotid);
-	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
-	     idx++, entry++) {
+	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
 		if (entry->smw_hash)
 			info.hash_algo = entry->smw_hash;
 
@@ -643,10 +644,10 @@ static void check_msign_rsa_common(CK_SLOT_ID slotid, const char *subsystem,
 				   struct mgroup *mgroup,
 				   struct smw_signature_info *info)
 {
-	enum smw_status_code status;
-	unsigned int idx;
-	CK_FLAGS slot_flag;
-	struct mentry *entry;
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx = 0;
+	CK_FLAGS slot_flag = 0;
+	struct mentry *entry = NULL;
 
 	/*
 	 * smw_config_check_sign() checks the key type, the hash algorithm
@@ -659,8 +660,7 @@ static void check_msign_rsa_common(CK_SLOT_ID slotid, const char *subsystem,
 	info->key_type_name = "RSA";
 
 	slot_flag = BIT(slotid);
-	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
-	     idx++, entry++) {
+	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
 		if (entry->smw_hash)
 			info->hash_algo = entry->smw_hash;
 
@@ -704,11 +704,11 @@ static void check_msign_rsa_pss(CK_SLOT_ID slotid, const char *subsystem,
 static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	CK_RV ret = CKR_OK;
-	unsigned int ecdsa_idx;
+	unsigned int ecdsa_idx = 0;
 	struct smw_signature_info sign_verify_info = { 0 };
-	const struct libdev *devinfo;
+	const struct libdev *devinfo = NULL;
 
 	DBG_TRACE("Return info of 0x%lx signature mechanism", type);
 
@@ -761,9 +761,9 @@ static CK_RV info_msign_rsa_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 				   CK_MECHANISM_INFO_PTR info,
 				   struct smw_signature_info *sign_verify_info)
 {
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	CK_RV ret = CKR_OK;
-	const struct libdev *devinfo;
+	const struct libdev *devinfo = NULL;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
@@ -835,22 +835,25 @@ static CK_RV op_msign_common(struct smw_sign_verify_args *smw_args,
 			     struct lib_signature_params *params,
 			     const char *signature_type)
 {
-	CK_RV ret;
-	enum smw_status_code status;
-	unsigned int i;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int i = 0;
 	struct smw_tlv attr = { 0 };
 	struct lib_signature_ctx *ctx = (struct lib_signature_ctx *)params->ctx;
 
 	smw_args->message = params->pdata;
-	smw_args->message_length = params->uldatalen;
+	if (SET_OVERFLOW(params->uldatalen, smw_args->message_length))
+		return ret;
+
 	smw_args->signature = params->psignature;
-	smw_args->signature_length = params->ulsignaturelen;
+	if (SET_OVERFLOW(params->ulsignaturelen, smw_args->signature_length))
+		return ret;
 
 	/* Get hash algorithm */
 	if (entry->smw_hash) {
 		smw_args->algo_name = entry->smw_hash;
 	} else if (ctx->hash_mech) {
-		for (i = 0; i < ARRAY_SIZE(mdigest); i++) {
+		for (; i < ARRAY_SIZE(mdigest); i++) {
 			if (ctx->hash_mech == mdigest[i].type) {
 				smw_args->algo_name =
 					(char *)mdigest[i].smw_algo;
@@ -894,9 +897,9 @@ end:
 
 static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
-	const struct libdev *devinfo;
-	struct lib_signature_ctx *ctx;
-	struct lib_signature_params *params;
+	const struct libdev *devinfo = NULL;
+	struct lib_signature_ctx *ctx = NULL;
+	struct lib_signature_params *params = NULL;
 	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_sign_verify_args smw_args = { 0 };
 
@@ -920,9 +923,9 @@ static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 static CK_RV op_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, struct mentry *entry,
 				    void *args)
 {
-	const struct libdev *devinfo;
-	struct lib_signature_ctx *ctx;
-	struct lib_signature_params *params;
+	const struct libdev *devinfo = NULL;
+	struct lib_signature_ctx *ctx = NULL;
+	struct lib_signature_params *params = NULL;
 	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_sign_verify_args smw_args = { 0 };
 
@@ -947,9 +950,9 @@ static CK_RV op_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, struct mentry *entry,
 static CK_RV op_msign_rsa_pss(CK_SLOT_ID slotid, struct mentry *entry,
 			      void *args)
 {
-	const struct libdev *devinfo;
-	struct lib_signature_ctx *ctx;
-	struct lib_signature_params *params;
+	const struct libdev *devinfo = NULL;
+	struct lib_signature_ctx *ctx = NULL;
+	struct lib_signature_params *params = NULL;
 	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_sign_verify_args smw_args = { 0 };
 
@@ -974,14 +977,14 @@ CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
 			    CK_MECHANISM_TYPE_PTR mechanismlist,
 			    CK_ULONG_PTR count)
 {
-	CK_RV ret;
-	struct libdevice *dev;
-	struct mgroup *group;
-	struct mentry *entry;
-	unsigned int idx;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	struct mgroup *group = NULL;
+	struct mentry *entry = NULL;
+	unsigned int idx = 0;
 	CK_MECHANISM_TYPE_PTR item = mechanismlist;
 	CK_ULONG nb_mechanisms = 0;
-	CK_FLAGS slot_flag;
+	CK_FLAGS slot_flag = 0;
 
 	ret = libdev_get_slotdev(&dev, slotid);
 	if (ret != CKR_OK)
@@ -1004,7 +1007,10 @@ CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
 			if (entry->slot_flag & slot_flag) {
 				DBG_TRACE("Mechanism 0x%lx supported",
 					  entry->type);
-				nb_mechanisms++;
+
+				if (INC_OVERFLOW(nb_mechanisms, 1))
+					return CKR_GENERAL_ERROR;
+
 				if (item) {
 					if (*count < nb_mechanisms)
 						return CKR_BUFFER_TOO_SMALL;
@@ -1024,9 +1030,9 @@ CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
 CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 				CK_MECHANISM_INFO_PTR info)
 {
-	CK_RV ret;
-	struct mgroup *group;
-	struct mentry *entry;
+	CK_RV ret = CKR_OK;
+	struct mgroup *group = NULL;
+	struct mentry *entry = NULL;
 
 	ret = find_mechanism(slotid, type, &group, &entry);
 	if (ret == CKR_OK)
@@ -1038,8 +1044,8 @@ CK_RV libdev_get_mechanism_info(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech,
 				CK_FLAGS op_flag)
 {
-	CK_RV ret;
-	CK_MECHANISM_INFO info;
+	CK_RV ret = CKR_OK;
+	CK_MECHANISM_INFO info = { 0 };
 
 	ret = find_mechanism(slotid, mech->mechanism, NULL, NULL);
 	if (ret != CKR_OK)
@@ -1055,10 +1061,10 @@ CK_RV libdev_validate_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_PTR mech,
 CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
 			       CK_MECHANISM_PTR mech, void *args)
 {
-	CK_RV ret;
-	CK_SLOT_ID slotid;
-	struct mgroup *group;
-	struct mentry *entry;
+	CK_RV ret = CKR_OK;
+	CK_SLOT_ID slotid = 0;
+	struct mgroup *group = NULL;
+	struct mentry *entry = NULL;
 
 	/* Before calling SMW, call the application callback */
 	ret = libsess_callback(hsession, CKN_SURRENDER);
@@ -1078,10 +1084,10 @@ CK_RV libdev_operate_mechanism(CK_SESSION_HANDLE hsession,
 
 CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 {
-	CK_RV ret;
-	enum smw_status_code status;
-	CK_SLOT_ID slotid;
-	const struct libdev *devinfo;
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_SLOT_ID slotid = 0;
+	const struct libdev *devinfo = NULL;
 	struct smw_tlv key_attr = { 0 };
 	struct smw_tlv allowed_algos = { 0 };
 	struct smw_import_key_args imp_args = { 0 };
@@ -1144,14 +1150,14 @@ end:
 
 CK_RV libdev_delete_key(unsigned int key_id)
 {
-	CK_RV ret;
-	enum smw_status_code status;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_delete_key_args key_args = { 0 };
 
 	DBG_TRACE("Delete Key ID %X", key_id);
 	if (!key_id)
-		return CKR_ARGUMENTS_BAD;
+		return ret;
 
 	key_desc.id = key_id;
 	key_args.key_descriptor = &key_desc;
@@ -1166,9 +1172,9 @@ CK_RV libdev_delete_key(unsigned int key_id)
 
 CK_RV libdev_mechanisms_init(CK_SLOT_ID slotid)
 {
-	enum smw_status_code status;
-	const struct libdev *devinfo;
-	struct mgroup *group;
+	enum smw_status_code status = SMW_STATUS_OK;
+	const struct libdev *devinfo = NULL;
+	struct mgroup *group = NULL;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
@@ -1188,10 +1194,10 @@ CK_RV libdev_mechanisms_init(CK_SLOT_ID slotid)
 CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
 		 CK_ULONG ulRandomLen)
 {
-	CK_RV ret;
-	enum smw_status_code status;
-	CK_SLOT_ID slotid;
-	const struct libdev *devinfo;
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_SLOT_ID slotid = 0;
+	const struct libdev *devinfo = NULL;
 	struct smw_rng_args args = { 0 };
 
 	DBG_TRACE("Generate a random number");
@@ -1206,7 +1212,9 @@ CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
 
 	args.subsystem_name = devinfo->name;
 	args.output = pRandomData;
-	args.output_length = ulRandomLen;
+
+	if (SET_OVERFLOW(ulRandomLen, args.output_length))
+		return CKR_ARGUMENTS_BAD;
 
 	status = smw_rng(&args);
 

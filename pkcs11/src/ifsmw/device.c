@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 #include "smw_config.h"
 #include "smw_status.h"
@@ -26,12 +26,12 @@ unsigned int libdev_get_nb_devinfo(void)
 
 void libdev_set_present(struct libdevice *devices)
 {
-	const struct libdev *devinfo;
-	enum smw_status_code status;
-	unsigned int idx;
+	const struct libdev *devinfo = NULL;
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx = 0;
 	unsigned int nb_devices = libdev_get_nb_devinfo();
 
-	for (idx = 0; idx < nb_devices; idx++) {
+	for (; idx < nb_devices; idx++) {
 		devinfo = libdev_get_devinfo(idx);
 		if (devinfo->name)
 			status = smw_config_subsystem_present(devinfo->name);

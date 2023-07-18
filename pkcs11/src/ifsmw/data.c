@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 #include <string.h>
 
@@ -18,9 +18,9 @@
 
 static int set_tee_info(struct libobj_obj *obj)
 {
-	int ret = CKR_DEVICE_ERROR;
+	int ret = CKR_OK;
 
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
 	status = smw_osal_set_subsystem_info("TEE", data->value.array,
@@ -35,9 +35,9 @@ static int set_tee_info(struct libobj_obj *obj)
 
 static int set_hsm_info(struct libobj_obj *obj)
 {
-	int ret = CKR_DEVICE_ERROR;
+	int ret = CKR_OK;
 
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
 	status = smw_osal_set_subsystem_info("HSM", data->value.array,
@@ -52,9 +52,9 @@ static int set_hsm_info(struct libobj_obj *obj)
 
 static int set_ele_info(struct libobj_obj *obj)
 {
-	int ret = CKR_DEVICE_ERROR;
+	int ret = CKR_OK;
 
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
 	status = smw_osal_set_subsystem_info("ELE", data->value.array,
@@ -69,9 +69,9 @@ static int set_ele_info(struct libobj_obj *obj)
 
 static int set_key_db(struct libobj_obj *obj)
 {
-	int ret = CKR_DEVICE_ERROR;
+	int ret = CKR_OK;
 
-	enum smw_status_code status;
+	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
 	status = smw_osal_open_key_db((const char *)data->value.array,
@@ -97,15 +97,15 @@ CK_RV libdev_create_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 {
 	(void)hsession;
 
-	struct libobj_storage *objstorage;
+	struct libobj_storage *objstorage = NULL;
 	const struct data_op *op = data_op;
-	size_t index;
+	size_t index = 0;
 
 	objstorage = get_object_from(obj);
 	if (!objstorage)
 		return CKR_ARGUMENTS_BAD;
 
-	for (index = 0; index < ARRAY_SIZE(data_op); index++, op++) {
+	for (; index < ARRAY_SIZE(data_op); index++, op++) {
 		if (objstorage->label.length == op->label.length &&
 		    !memcmp(objstorage->label.string, op->label.string,
 			    op->label.length)) {

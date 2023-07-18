@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #ifndef __LIST_H__
@@ -107,15 +107,13 @@
 /* Close the list, destroyes list mutex */
 #define LLIST_CLOSE(head)                                                      \
 	({                                                                     \
-		CK_RV _ret;                                                    \
 		do {                                                           \
 			__typeof__(head) _head = (head);                       \
 			_head->first = NULL;                                   \
 			_head->last = NULL;                                    \
-			LLIST_UNLOCK(_head);                                   \
-			_ret = libmutex_destroy(&_head->lock);                 \
 		} while (0);                                                   \
-		_ret;                                                          \
+		LLIST_UNLOCK(head);                                            \
+		libmutex_destroy(&head->lock);                                 \
 	})
 
 #define LLIST_EMPTY(head) LIST_EMPTY(head)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2023 NXP
  */
 
 #include "lib_context.h"
@@ -9,11 +9,11 @@
 CK_RV C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList,
 		    CK_ULONG_PTR pulCount)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 	CK_ULONG nb_slots = 0;
 
 	if (!pulCount)
-		return CKR_ARGUMENTS_BAD;
+		return ret;
 
 	if (pSlotList)
 		nb_slots = *pulCount;
@@ -56,7 +56,7 @@ CK_RV C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR pSlot,
 	(void)pSlot;
 	(void)pRserved;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	ret = libctx_get_initialized();
 	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
@@ -73,11 +73,11 @@ CK_RV C_GetMechanismList(CK_SLOT_ID slotID,
 			 CK_MECHANISM_TYPE_PTR pMechanismList,
 			 CK_ULONG_PTR pulCount)
 {
-	CK_RV ret;
-	CK_ULONG nb_mechanisms;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	CK_ULONG nb_mechanisms = 0;
 
 	if (!pulCount)
-		return CKR_ARGUMENTS_BAD;
+		return ret;
 
 	if (pMechanismList)
 		nb_mechanisms = *pulCount;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include <stdlib.h>
@@ -31,10 +31,10 @@
  */
 static CK_RV clean_token(struct libdevice *device, CK_SLOT_ID slotid)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	if (!(device->token.flags & CKF_TOKEN_INITIALIZED))
-		return CKR_OK;
+		return ret;
 
 	ret = libsess_close_all(slotid);
 	DBG_TRACE("Token #%lu close all sessions ret %lu", slotid, ret);
@@ -80,8 +80,8 @@ static void init_device_info(struct libdevice *device,
 
 CK_RV libdev_get_slotdev(struct libdevice **dev, CK_SLOT_ID slotid)
 {
-	CK_RV ret;
-	struct libdevice *devices;
+	CK_RV ret = CKR_OK;
+	struct libdevice *devices = NULL;
 
 	*dev = NULL;
 	ret = libctx_get_initialized();
@@ -102,10 +102,10 @@ CK_RV libdev_get_slotdev(struct libdevice **dev, CK_SLOT_ID slotid)
 
 CK_RV libdev_get_slotinfo(CK_SLOT_ID slotid, CK_SLOT_INFO_PTR pinfo)
 {
-	CK_RV ret;
-	struct libdevice *dev;
-	const struct libdev *devinfo;
-	size_t len;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	const struct libdev *devinfo = NULL;
+	size_t len = 0;
 
 	ret = libdev_get_slotdev(&dev, slotid);
 	if (ret != CKR_OK)
@@ -153,11 +153,11 @@ CK_RV libdev_get_slotinfo(CK_SLOT_ID slotid, CK_SLOT_INFO_PTR pinfo)
 
 CK_RV libdev_get_tokeninfo(CK_SLOT_ID slotid, CK_TOKEN_INFO_PTR pinfo)
 {
-	CK_RV ret;
-	struct libdevice *dev;
-	const struct libdev *devinfo;
-	time_t now;
-	struct tm *tminfo;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	const struct libdev *devinfo = NULL;
+	struct timespec tp = { 0 };
+	struct tm *tminfo = NULL;
 
 	ret = libdev_get_slotdev(&dev, slotid);
 	if (ret != CKR_OK)
@@ -186,10 +186,14 @@ CK_RV libdev_get_tokeninfo(CK_SLOT_ID slotid, CK_TOKEN_INFO_PTR pinfo)
 		  pinfo->serialNumber);
 
 	pinfo->flags = dev->token.flags;
-	pinfo->ulMaxSessionCount =
-		dev->token.max_ro_session + dev->token.max_rw_session;
-	pinfo->ulSessionCount =
-		dev->token.ro_session_count + dev->token.rw_session_count;
+	if (ADD_OVERFLOW(dev->token.max_ro_session, dev->token.max_rw_session,
+			 &pinfo->ulMaxSessionCount))
+		return CKR_GENERAL_ERROR;
+
+	if (ADD_OVERFLOW(dev->token.ro_session_count,
+			 dev->token.rw_session_count, &pinfo->ulSessionCount))
+		return CKR_GENERAL_ERROR;
+
 	pinfo->ulMaxRwSessionCount = dev->token.max_rw_session;
 	pinfo->ulRwSessionCount = dev->token.rw_session_count;
 	pinfo->ulMaxPinLen = dev->token.max_pin_len;
@@ -209,31 +213,31 @@ CK_RV libdev_get_tokeninfo(CK_SLOT_ID slotid, CK_TOKEN_INFO_PTR pinfo)
 		pinfo->firmwareVersion = devinfo->version;
 	}
 
-	/* Set the current time */
-	now = time((time_t *)NULL);
-	if (now == (time_t)-1)
-		return CKR_FUNCTION_FAILED;
+	/* Get the Realtime clock if available */
+	if (!clock_gettime(CLOCK_REALTIME, &tp)) {
+		tminfo = localtime(&tp.tv_sec);
+		if (!tminfo)
+			return CKR_FUNCTION_FAILED;
 
-	tminfo = localtime(&now);
-	if (!tminfo)
-		return CKR_FUNCTION_FAILED;
-
-	(void)strftime((char *)pinfo->utcTime, sizeof(pinfo->utcTime),
-		       "%Y%m%d%H%M%S", tminfo);
-	pinfo->utcTime[14] = '0';
-	pinfo->utcTime[15] = '0';
+		(void)strftime((char *)pinfo->utcTime, sizeof(pinfo->utcTime),
+			       "%Y%m%d%H%M%S", tminfo);
+		pinfo->utcTime[14] = '0';
+		pinfo->utcTime[15] = '0';
+	} else {
+		memset(pinfo->utcTime, 0, sizeof(pinfo->utcTime));
+	}
 
 	return CKR_OK;
 }
 
 CK_RV libdev_get_slots(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
 {
-	CK_RV ret;
-	struct libdevice *devices;
+	CK_RV ret = CKR_OK;
+	struct libdevice *devices = NULL;
 	CK_SLOT_ID_PTR item = slotlist;
 	CK_ULONG nb_slots = 0;
-	unsigned int nb_devices;
-	unsigned int idx;
+	unsigned int nb_devices = 0;
+	unsigned int idx = 0;
 
 	ret = libctx_get_initialized();
 	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
@@ -252,7 +256,7 @@ CK_RV libdev_get_slots(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
 	/* Update the slot presence */
 	libdev_set_present(devices);
 
-	for (idx = 0; idx < nb_devices; idx++) {
+	for (; idx < nb_devices; idx++) {
 		nb_slots++;
 		if (item) {
 			if (*count < nb_slots)
@@ -271,12 +275,12 @@ CK_RV libdev_get_slots(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
 
 CK_RV libdev_get_slots_present(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
 {
-	CK_RV ret;
-	struct libdevice *devices;
+	CK_RV ret = CKR_OK;
+	struct libdevice *devices = NULL;
 	CK_SLOT_ID_PTR item = slotlist;
 	CK_ULONG nb_slots = 0;
-	unsigned int nb_devices;
-	unsigned int idx;
+	unsigned int nb_devices = 0;
+	unsigned int idx = 0;
 
 	ret = libctx_get_initialized();
 	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
@@ -291,10 +295,13 @@ CK_RV libdev_get_slots_present(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
 	/* Update the slot presence */
 	libdev_set_present(devices);
 
-	for (idx = 0; idx < nb_devices; idx++) {
+	for (; idx < nb_devices; idx++) {
 		if (devices[idx].slot.flags & CKF_TOKEN_PRESENT) {
 			DBG_TRACE("Slot %u is Present", idx);
-			nb_slots++;
+
+			if (INC_OVERFLOW(nb_slots, 1))
+				return CKR_GENERAL_ERROR;
+
 			if (item) {
 				if (*count < nb_slots)
 					return CKR_BUFFER_TOO_SMALL;
@@ -313,8 +320,8 @@ CK_RV libdev_get_slots_present(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
 
 CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 {
-	CK_RV ret;
-	struct libdevice *dev;
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
 
 	ret = libdev_get_slotdev(&dev, slotid);
 	if (ret)
@@ -370,56 +377,62 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 
 CK_RV libdev_initialize(struct libdevice **devices)
 {
-	CK_RV ret;
-	unsigned int nb_devices;
-	unsigned int slotid;
-	struct libdevice *dev;
-	const struct libdev *devinfo;
+	CK_RV ret = CKR_GENERAL_ERROR;
+	unsigned int nb_devices = 0;
+	unsigned int slotid = 0;
+	struct libdevice *dev = NULL;
+	const struct libdev *devinfo = NULL;
 
 	if (!devices)
-		return CKR_GENERAL_ERROR;
+		return ret;
+
+	*devices = NULL;
 
 	nb_devices = libdev_get_nb_devinfo();
-	dev = calloc(1, nb_devices * sizeof(*dev));
+	if (!nb_devices)
+		goto end;
 
-	if (!dev)
-		return CKR_HOST_MEMORY;
+	dev = calloc(1, nb_devices * sizeof(*dev));
+	if (!dev) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
 
 	*devices = dev;
 
-	for (slotid = 0; slotid < nb_devices; slotid++, dev++) {
+	for (slotid = 0; slotid < nb_devices; slotid++) {
 		devinfo = libdev_get_devinfo(slotid);
 		if (!devinfo) {
 			ret = CKR_GENERAL_ERROR;
-			goto err;
+			break;
 		}
 
-		init_device_info(dev, devinfo);
+		init_device_info(&dev[slotid], devinfo);
 
 		/* Create mutexes */
-		ret = libmutex_create(&dev->mutex_session);
+		ret = libmutex_create(&dev[slotid].mutex_session);
 		if (ret != CKR_OK)
-			goto err;
+			break;
 	}
 
-	return CKR_OK;
-
-err:
-	if (dev)
+end:
+	if (ret != CKR_OK && dev) {
 		free(dev);
+		*devices = NULL;
+	}
 
 	return ret;
 }
 
 CK_RV libdev_destroy(struct libdevice **devices)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libdevice *dev;
 	unsigned int nb_devices;
 	unsigned int slotid;
 
 	if (!devices)
-		return CKR_GENERAL_ERROR;
+		return ret;
 
 	/* Nothing to do, it's ok */
 	if (!*devices)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include "libobj_types.h"
@@ -13,7 +13,7 @@
 static CK_RV set_sign_usage(struct smw_tlv *policy,
 			    struct smw_tlv *allowed_algos)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
 				       SMW_ATTR_USAGE_SIGN_MSG, allowed_algos);
@@ -28,7 +28,7 @@ static CK_RV set_sign_usage(struct smw_tlv *policy,
 static CK_RV set_verify_usage(struct smw_tlv *policy,
 			      struct smw_tlv *allowed_algos)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
 				       SMW_ATTR_USAGE_VERIFY_MSG,
@@ -133,7 +133,7 @@ static CK_RV set_secret_key_usage(struct smw_tlv *policy,
 static CK_RV set_ec_key_usage(struct smw_tlv *policy, struct libobj_obj *obj,
 			      struct smw_tlv *allowed_algos)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 
 	switch (key->type) {
@@ -159,7 +159,7 @@ static CK_RV set_ec_key_usage(struct smw_tlv *policy, struct libobj_obj *obj,
 static CK_RV set_rsa_key_usage(struct smw_tlv *policy, struct libobj_obj *obj,
 			       struct smw_tlv *allowed_algos)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
 
 	switch (key->type) {
@@ -202,7 +202,7 @@ static CK_RV rsa_key_attr(struct smw_tlv *attr, struct libobj_obj *obj)
 
 CK_RV args_attr_generate_key(struct smw_tlv *attr, struct libobj_obj *obj)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	if (is_token_obj(obj, storage)) {
 		DBG_TRACE("Generate Persistent Key");
@@ -217,7 +217,7 @@ CK_RV args_attr_generate_key(struct smw_tlv *attr, struct libobj_obj *obj)
 		break;
 
 	default:
-		ret = CKR_OK;
+		break;
 	}
 
 	return ret;
@@ -255,7 +255,7 @@ CK_RV args_attr_sign_verify(struct smw_tlv *attr, const char *signature_type,
 CK_RV args_attrs_key_policy(struct smw_tlv *attr, struct libobj_obj *obj,
 			    struct smw_tlv *allowed_algos)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_FUNCTION_FAILED;
 	struct smw_tlv policy = { 0 };
 
 	switch (get_key_type(obj)) {
@@ -274,7 +274,7 @@ CK_RV args_attrs_key_policy(struct smw_tlv *attr, struct libobj_obj *obj,
 		break;
 
 	default:
-		ret = CKR_FUNCTION_FAILED;
+		break;
 	}
 
 	if (ret == CKR_OK)

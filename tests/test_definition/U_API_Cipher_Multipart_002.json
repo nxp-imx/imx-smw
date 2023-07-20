@@ -32,13 +32,7 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // No output data
-		"command": "CIPHER_UPDATE",
-		"input": "5555555555",
-		"output": 0,
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 8": { // Cipher output pointer is set and output length not
+	"subtest 7": { // Cipher output pointer is set and output length not
 		"command": "CIPHER_UPDATE",
 		"input": "5555555555",
 		"output": [

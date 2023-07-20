@@ -352,6 +352,9 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args);
  *
  * The context used must be initialized by the cipher multi-part initialization.
  *
+ * Output data field of @args can be a NULL pointer to get the required output
+ * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK.
+ *
  * Output length @args field is updated to the correct value when:
  *  - Output length is bigger than expected. In this case operation succeeded.
  *  - Output length is shorter than expected. In this case operation failed and

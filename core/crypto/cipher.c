@@ -388,7 +388,7 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!args || !args->context || !args->context->handle || !args->input ||
-	    !args->input_length || !args->output || !args->output_length)
+	    !args->input_length || (args->output && !args->output_length))
 		goto end;
 
 	if (args->version != 0) {
@@ -403,6 +403,14 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 
 	status = smw_utils_execute_update(OPERATION_ID_CIPHER_MULTI_PART,
 					  &update_args, ops->subsystem);
+
+	/*
+	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
+	 * 'get output buffer length' feature succeed and must be converted to
+	 * SMW_STATUS_OK
+	 */
+	if (status == SMW_STATUS_OUTPUT_TOO_SHORT && !args->output)
+		status = SMW_STATUS_OK;
 
 end:
 

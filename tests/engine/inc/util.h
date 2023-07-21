@@ -9,33 +9,12 @@
 #include <limits.h>
 #include <json_object.h>
 
+#include "builtin_macros.h"
+
 #include "json_types.h"
 #include "types.h"
 #include "util_debug.h"
 #include "util_status.h"
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif /* ARRAY_SIZE */
-
-#ifndef BIT
-#define BIT(n) (1 << (n))
-#endif /* BIT */
-
-#ifndef MIN
-#define MIN(a, b)                                                              \
-	({                                                                     \
-		__typeof__(a) _a = (a);                                        \
-		__typeof__(b) _b = (b);                                        \
-		_a < _b ? _a : _b;                                             \
-	})
-#endif /* MIN */
-
-#define UCHAR_SHIFT_BYTE(val, byte) ((val) >> ((byte) * (CHAR_BIT)) & UCHAR_MAX)
-
-#ifndef BITS_TO_BYTES_SIZE
-#define BITS_TO_BYTES_SIZE(nb_bits) (((nb_bits) + 7) / 8)
-#endif
 
 /*
  * Read a JSON-C name/value from an object containing field @f of

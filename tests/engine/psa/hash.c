@@ -117,8 +117,13 @@ int hash_psa(struct subtest_data *subtest)
 	if (res == ERR_CODE(PASSED))
 		hash_size = digest_len;
 
-	if (res == ERR_CODE(MISSING_PARAMS))
-		digest_len = hash_size;
+	if (res == ERR_CODE(MISSING_PARAMS)) {
+		if (SET_OVERFLOW(hash_size, digest_len)) {
+			DBG_PRINT_BAD_PARAM(ALGO_OBJ);
+			res = ERR_CODE(BAD_ARGS);
+			goto exit;
+		}
+	}
 
 	/* Call hash function and compare result with expected one */
 	subtest->psa_status = psa_hash_compute(psa_alg_id, input, input_length,

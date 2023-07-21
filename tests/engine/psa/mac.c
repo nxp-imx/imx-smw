@@ -207,7 +207,7 @@ int mac_psa(struct subtest_data *subtest, bool verify)
 					&mac_length);
 		if (subtest->psa_status != PSA_SUCCESS) {
 			if (subtest->psa_status == PSA_ERROR_BUFFER_TOO_SMALL)
-				DBG_PRINT("Buffer too short, expected %u",
+				DBG_PRINT("Buffer too short, expected %zu",
 					  mac_length);
 			res = ERR_CODE(API_STATUS_NOK);
 			goto exit;
@@ -230,8 +230,9 @@ int mac_psa(struct subtest_data *subtest, bool verify)
 						   expected_mac_length, mac,
 						   mac_length);
 		} else if (mac_id != INT_MAX) {
+			(void)SET_OVERFLOW(mac_length, mac_size);
 			res = util_mac_add_node(list_macs(subtest), mac_id, mac,
-						mac_length);
+						mac_size);
 			/* Don't free output MAC generated */
 			if (res == ERR_CODE(PASSED))
 				output = NULL;

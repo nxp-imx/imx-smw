@@ -941,7 +941,7 @@ static int read_descriptor(struct llist *keys, struct keypair_psa *key_test,
 	ret = util_read_json_type(&parent_key_name, KEY_NAME_OBJ, t_string,
 				  data->okey_params);
 
-	if (ret == ERR_CODE(PASSED)) {
+	if (ret == ERR_CODE(PASSED) && parent_key_name) {
 		ret = util_list_find_node(key_names, (uintptr_t)parent_key_name,
 					  &dummy);
 		if (ret != ERR_CODE(PASSED))
@@ -972,6 +972,8 @@ static int read_descriptor(struct llist *keys, struct keypair_psa *key_test,
 			return ret;
 	} else if (ret != ERR_CODE(VALUE_NOTFOUND)) {
 		return ret;
+	} else if (!parent_key_name) {
+		ret = ERR_CODE(VALUE_NOTFOUND);
 	}
 
 	/* Read 'privacy' parameter if defined */
@@ -1046,7 +1048,8 @@ int key_desc_init_psa(struct keypair_psa *key_test)
 int key_read_descriptor_psa(struct llist *keys, struct keypair_psa *key_test,
 			    const char *key_name)
 {
-	int res, err;
+	int res = ERR_CODE(PASSED);
+	int err = ERR_CODE(PASSED);
 
 	struct llist *key_names = NULL;
 

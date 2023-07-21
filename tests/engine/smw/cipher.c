@@ -55,13 +55,13 @@ static int cipher_bad_params(struct json_object *params,
 			     struct smw_cipher_data_args **data,
 			     unsigned int step)
 {
-	int ret;
-	enum arguments_test_err_case error;
+	int ret = ERR_CODE(BAD_ARGS);
+	enum arguments_test_err_case error = NOT_DEFINED;
 
 	if (!params || (step == ONESHOT && (!oneshot || !init)) ||
 	    (step == INIT && !init) ||
 	    ((step == UPDATE || step == FINAL) && !data))
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 
 	ret = util_read_test_error(&error, params);
 	if (ret != ERR_CODE(PASSED))
@@ -98,7 +98,10 @@ static int cipher_bad_params(struct json_object *params,
 		break;
 
 	case CTX_HANDLE_NULL:
-		(*data)->context->handle = NULL;
+		if (data && (*data) && (*data)->context)
+			(*data)->context->handle = NULL;
+		else
+			ret = ERR_CODE(BAD_ARGS);
 		break;
 
 	default:
@@ -122,22 +125,32 @@ static int allocate_keys(struct cipher_keys *keys)
 	struct keypair_ops *keys_test = NULL;
 	struct smw_key_descriptor **keys_desc = NULL;
 	struct smw_keypair_buffer *keys_buffer = NULL;
+	size_t alloc_size = 0;
 
 	if (!keys->nb_keys)
 		return ERR_CODE(INTERNAL);
 
 	/* Allocate keypair ops array */
-	keys_test = calloc(1, keys->nb_keys * sizeof(struct keypair_ops));
+	if (MUL_OVERFLOW(keys->nb_keys, sizeof(*keys_test), &alloc_size))
+		goto err;
+
+	keys_test = calloc(1, alloc_size);
 	if (!keys_test)
 		goto err;
 
 	/* Allocate keys descriptor array */
-	keys_desc = malloc(keys->nb_keys * sizeof(struct smw_key_descriptor *));
+	if (MUL_OVERFLOW(keys->nb_keys, sizeof(*keys_desc), &alloc_size))
+		goto err;
+
+	keys_desc = malloc(alloc_size);
 	if (!keys_desc)
 		goto err;
 
 	/* Allocate keys buffer array */
-	keys_buffer = calloc(1, keys->nb_keys * sizeof(*keys_buffer));
+	if (MUL_OVERFLOW(keys->nb_keys, sizeof(*keys_buffer), &alloc_size))
+		goto err;
+
+	keys_buffer = calloc(1, alloc_size);
 	if (!keys_buffer)
 		goto err;
 
@@ -166,12 +179,12 @@ err:
  */
 static void free_keys(struct cipher_keys *keys)
 {
-	unsigned int i;
+	unsigned int i = 0;
 
 	if (keys->keys_desc)
 		free(keys->keys_desc);
 
-	for (i = 0; i < keys->nb_keys; i++)
+	for (; i < keys->nb_keys; i++)
 		key_free_key(&keys->keys_test[i]);
 
 	if (keys->keys_buffer)
@@ -203,11 +216,12 @@ static int set_keys(struct subtest_data *subtest,
 
 {
 	int res = ERR_CODE(BAD_ARGS);
-	unsigned int i;
-	struct keypair_ops *key_test;
+	unsigned int i = 0;
+	struct keypair_ops *key_test = NULL;
 	struct json_object *okey_name = NULL;
 	struct json_object *obj = NULL;
 	const char *key_name = NULL;
+	size_t nb_keys = 0;
 
 	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
 				  subtest->params);
@@ -219,7 +233,11 @@ static int set_keys(struct subtest_data *subtest,
 		if (res != ERR_CODE(PASSED))
 			return res;
 
-		args->nb_keys = json_object_array_length(okey_name);
+		nb_keys = json_object_array_length(okey_name);
+		if (SET_OVERFLOW(nb_keys, args->nb_keys)) {
+			DBG_PRINT_BAD_PARAM(KEY_NAME_OBJ);
+			return ERR_CODE(BAD_PARAM_TYPE);
+		}
 	}
 
 	/*
@@ -296,9 +314,9 @@ static int set_keys(struct subtest_data *subtest,
  */
 static int cipher_update_save_out_data(struct subtest_data *subtest,
 				       struct smw_cipher_data_args *cipher_args,
-				       int ctx_id)
+				       unsigned int ctx_id)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 	int save_flag = 0;
 
 	res = util_read_json_type(&save_flag, SAVE_OUT_OBJ, t_int,
@@ -329,7 +347,7 @@ static int set_init_params(struct subtest_data *subtest,
 			   struct smw_cipher_init_args *args,
 			   struct cipher_keys *keys)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 
 	if (subtest->subsystem) {
 		if (!strcmp(subtest->subsystem, "DEFAULT"))
@@ -385,7 +403,7 @@ static int set_output_params(struct subtest_data *subtest,
 			     unsigned int *expected_out_len,
 			     struct smw_cipher_data_args *args)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 
 	/* Read expected output buffer */
 	res = util_read_hex_buffer(expected_output, expected_out_len,
@@ -442,11 +460,11 @@ static int set_output_params(struct subtest_data *subtest,
  * -MISSING_PARAMS	- Context ID json parameter is missing
  * Error code from util_context_find_node
  */
-static int set_op_context(struct subtest_data *subtest, int *ctx_id,
+static int set_op_context(struct subtest_data *subtest, unsigned int *ctx_id,
 			  struct smw_cipher_data_args *args,
 			  struct smw_op_context *api_ctx)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 
 	/* Context ID is a mandatory parameter except for API tests */
 	res = util_read_json_type(ctx_id, CTX_ID_OBJ, t_int, subtest->params);
@@ -456,7 +474,7 @@ static int set_op_context(struct subtest_data *subtest, int *ctx_id,
 	}
 
 	/* Get operation context */
-	if (*ctx_id != -1) {
+	if (*ctx_id != UINT_MAX) {
 		res = util_context_find_node(list_op_ctxs(subtest), *ctx_id,
 					     &args->context);
 		if (res != ERR_CODE(PASSED)) {
@@ -618,7 +636,7 @@ end:
 int cipher_update(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	int ctx_id = -1;
+	unsigned int ctx_id = UINT_MAX;
 	unsigned int expected_out_len = 0;
 	unsigned char *expected_output = NULL;
 	struct smw_cipher_data_args args = { 0 };
@@ -684,7 +702,7 @@ end:
 int cipher_final(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	int ctx_id = -1;
+	unsigned int ctx_id = UINT_MAX;
 	unsigned int expected_out_len = 0;
 	unsigned char *expected_output = NULL;
 	struct smw_cipher_data_args args = { 0 };

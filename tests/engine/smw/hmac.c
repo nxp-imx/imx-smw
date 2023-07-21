@@ -78,9 +78,9 @@ static int set_hmac_bad_args(struct subtest_data *subtest,
 int hmac(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
-	struct keypair_ops key_test;
+	struct keypair_ops key_test = { 0 };
 	const char *key_name = NULL;
-	struct smw_keypair_buffer key_buffer;
+	struct smw_keypair_buffer key_buffer = { 0 };
 	unsigned int input_len = 0;
 	unsigned int output_len = 0;
 	unsigned int mac_len = 0;

@@ -231,9 +231,8 @@ static int build_attr_lists(unsigned char **attr, unsigned int len,
 		case json_type_int:
 			for (int nb_bytes = tlv[idx].val_len; nb_bytes;
 			     nb_bytes--) {
-				*(attr_string++) =
-					UCHAR_SHIFT_BYTE(tlv[idx].value.num,
-							 nb_bytes - 1);
+				*(attr_string++) = GET_BYTE(tlv[idx].value.num,
+							    nb_bytes - 1);
 			}
 			continue;
 

@@ -31,14 +31,14 @@
  */
 static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct tbuffer buf = { 0 };
 
 	struct smw_kdf_tls12_args *tls_args = NULL;
 
 	if (!kdf_args || !oargs) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	tls_args = calloc(1, sizeof(*tls_args));
@@ -121,7 +121,7 @@ static int kdf_tls12_prepare_result(struct subtest_data *subtest,
 				    struct json_object *okey_params)
 {
 	int res = ERR_CODE(PASSED);
-	struct smw_keypair_buffer *buf;
+	struct smw_keypair_buffer *buf = NULL;
 	const char *key_name = NULL;
 
 	/*
@@ -172,12 +172,12 @@ static bool kdf_tls12_is_mac_key_expected(const char *encryption_name)
 static int store_key_data(struct llist *keys, const char *key,
 			  struct key_data *key_data, struct json_object *params)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	const char *key_name = NULL;
 
 	if (!key || !key_data || !params) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	res = util_read_json_type(&key_name, key, t_string, params);
@@ -207,15 +207,15 @@ static int kdf_tls12_end_operation(struct subtest_data *subtest,
 				   struct smw_derive_key_args *args,
 				   struct keypair_ops *key_derived)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct json_object *oargs = NULL;
 	struct key_data key_data = { 0 };
-	struct smw_kdf_tls12_args *tls_args;
-	struct llist *keys;
+	struct smw_kdf_tls12_args *tls_args = NULL;
+	struct llist *keys = NULL;
 
 	if (!args || !subtest || !args->kdf_arguments) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	keys = list_keys(subtest);
@@ -272,8 +272,8 @@ static int kdf_tls12_end_operation(struct subtest_data *subtest,
  */
 static void kdf_tls12_free(struct smw_derive_key_args *args)
 {
-	struct smw_kdf_tls12_args *tls_args;
-	struct smw_key_descriptor *desc;
+	struct smw_kdf_tls12_args *tls_args = NULL;
+	struct smw_key_descriptor *desc = NULL;
 
 	if (args) {
 		if (args->kdf_arguments) {
@@ -357,9 +357,9 @@ static const struct kdf_op *get_kdf_op(const char *kdf_name)
 static int kdf_args_read(struct smw_derive_key_args *args,
 			 struct json_object *params)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 
-	const struct kdf_op *kdf_op;
+	const struct kdf_op *kdf_op = NULL;
 	struct json_object *oargs = NULL;
 
 	/* Get the key derivation function if any */
@@ -403,15 +403,15 @@ static int kdf_args_read(struct smw_derive_key_args *args,
 static int setup_derive_opt_params(struct subtest_data *subtest,
 				   struct smw_derive_key_args *args)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct json_object *okey_params = NULL;
 
-	unsigned char **attrs;
-	unsigned int *attrs_len;
+	unsigned char **attrs = NULL;
+	unsigned int *attrs_len = NULL;
 
 	if (!subtest || !args) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	res = util_key_get_key_params(subtest, OP_INPUT_OBJ, &okey_params);
@@ -456,7 +456,7 @@ static int setup_derive_output(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(PASSED);
 
-	const struct kdf_op *kdf_op;
+	const struct kdf_op *kdf_op = NULL;
 	struct json_object *okey_params = NULL;
 
 	kdf_op = get_kdf_op(args->kdf_name);
@@ -531,7 +531,7 @@ static int end_derive_operation(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(FAILED);
 
-	const struct kdf_op *kdf_op;
+	const struct kdf_op *kdf_op = NULL;
 
 	kdf_op = get_kdf_op(args->kdf_name);
 
@@ -557,11 +557,11 @@ static void kdf_args_free(struct smw_derive_key_args *args)
 static int derive_bad_params(struct json_object *params,
 			     struct smw_derive_key_args **args)
 {
-	int ret;
-	enum arguments_test_err_case error;
+	int ret = ERR_CODE(BAD_ARGS);
+	enum arguments_test_err_case error = NOT_DEFINED;
 
 	if (!params || !args)
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 
 	ret = util_read_test_error(&error, params);
 	if (ret != ERR_CODE(PASSED))

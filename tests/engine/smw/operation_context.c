@@ -18,11 +18,11 @@
 static int bad_params(struct json_object *params, struct smw_op_context **args,
 		      struct smw_op_context **dst)
 {
-	int ret;
+	int ret = ERR_CODE(BAD_ARGS);
 	enum arguments_test_err_case error;
 
 	if (!params || !args)
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 
 	ret = util_read_test_error(&error, params);
 	if (ret != ERR_CODE(PASSED))
@@ -44,7 +44,14 @@ static int bad_params(struct json_object *params, struct smw_op_context **args,
 		break;
 
 	case DST_CPY_ARGS_NULL:
-		*dst = NULL;
+		if (dst) {
+			if (*dst)
+				free(*dst);
+
+			*dst = NULL;
+		} else {
+			ret = ERR_CODE(BAD_ARGS);
+		}
 		break;
 
 	default:
@@ -97,10 +104,12 @@ int cancel_operation(struct subtest_data *subtest)
 }
 
 int copy_context(struct subtest_data *subtest)
+
 {
 	int res = ERR_CODE(BAD_ARGS);
-	int dst_ctx_id = 0;
-	int src_ctx_id = 0;
+	int json_ctx_id = 0;
+	unsigned int dst_ctx_id = 0;
+	unsigned int src_ctx_id = 0;
 	int op_copy_ctx = 0;
 	struct json_object *obj = NULL;
 	struct json_object *array_member;
@@ -145,7 +154,11 @@ int copy_context(struct subtest_data *subtest)
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
-		src_ctx_id = json_object_get_int(array_member);
+		json_ctx_id = json_object_get_int(array_member);
+		if (SET_OVERFLOW(json_ctx_id, src_ctx_id)) {
+			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
+			return ERR_CODE(BAD_PARAM_TYPE);
+		}
 
 		res = util_context_find_node(list_op_ctxs(subtest), src_ctx_id,
 					     &src_args_ptr);
@@ -161,7 +174,11 @@ int copy_context(struct subtest_data *subtest)
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
-		dst_ctx_id = json_object_get_int(array_member);
+		json_ctx_id = json_object_get_int(array_member);
+		if (SET_OVERFLOW(json_ctx_id, dst_ctx_id)) {
+			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
+			return ERR_CODE(BAD_PARAM_TYPE);
+		}
 	}
 
 	dst_args_ptr = malloc(sizeof(struct smw_op_context));

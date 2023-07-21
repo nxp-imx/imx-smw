@@ -240,7 +240,7 @@ static int keypair_read(struct keypair_ops *key_test,
 			struct json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
-	struct json_object *okey;
+	struct json_object *okey = NULL;
 
 	if (!params || !key_test || !key_test->keys) {
 		DBG_PRINT_BAD_ARGS();
@@ -296,7 +296,7 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 	int ret = ERR_CODE(PASSED);
 	struct key_data *data = NULL;
 	const char *parent_key_name = NULL;
-	struct smw_key_descriptor *desc;
+	struct smw_key_descriptor *desc = NULL;
 	smw_key_type_t type_name = NULL;
 	void *dummy = NULL;
 
@@ -332,7 +332,7 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 	ret = util_read_json_type(&parent_key_name, KEY_NAME_OBJ, t_string,
 				  data->okey_params);
 
-	if (ret == ERR_CODE(PASSED)) {
+	if (ret == ERR_CODE(PASSED) && parent_key_name) {
 		ret = util_list_find_node(key_names, (uintptr_t)parent_key_name,
 					  &dummy);
 		if (ret != ERR_CODE(PASSED))
@@ -403,7 +403,7 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 
 int key_desc_init(struct keypair_ops *key_test, struct smw_keypair_buffer *key)
 {
-	struct smw_key_descriptor *desc;
+	struct smw_key_descriptor *desc = NULL;
 
 	if (!key_test) {
 		DBG_PRINT_BAD_ARGS();
@@ -428,7 +428,8 @@ int key_desc_init(struct keypair_ops *key_test, struct smw_keypair_buffer *key)
 int key_read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 			const char *key_name)
 {
-	int res, err;
+	int res = ERR_CODE(PASSED);
+	int err = ERR_CODE(PASSED);
 
 	struct llist *key_names = NULL;
 

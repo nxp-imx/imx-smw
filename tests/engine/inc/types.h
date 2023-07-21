@@ -114,7 +114,7 @@ struct subtest_data {
 	};
 	char *subsystem;
 	char *api;
-	unsigned int version;
+	unsigned char version;
 };
 
 #define is_api_test(this)                                                      \

@@ -116,8 +116,8 @@ static int set_sign_verify_bad_args(struct subtest_data *subtest,
 int sign_verify(struct subtest_data *subtest, int operation)
 {
 	int res = ERR_CODE(PASSED);
-	struct keypair_ops key_test;
-	struct smw_keypair_buffer key_buffer;
+	struct keypair_ops key_test = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
 	const char *key_name = NULL;
 	int sign_id = INT_MAX;
 	unsigned int message_length = 0;

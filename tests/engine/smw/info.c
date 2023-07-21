@@ -12,7 +12,7 @@
 
 static int check_version(struct subtest_data *subtest)
 {
-	int ret;
+	int ret = ERR_CODE(PASSED);
 	unsigned int major = 255;
 	unsigned int minor = 255;
 	double exp_version = 0;
@@ -49,7 +49,7 @@ static int check_version(struct subtest_data *subtest)
 
 int get_info(struct subtest_data *subtest)
 {
-	int ret;
+	int ret = ERR_CODE(PASSED);
 	enum arguments_test_err_case error = NOT_DEFINED;
 
 	if (!subtest) {

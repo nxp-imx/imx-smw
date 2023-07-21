@@ -78,9 +78,9 @@ static int set_mac_bad_args(struct subtest_data *subtest,
 int mac(struct subtest_data *subtest, bool verify)
 {
 	int res = ERR_CODE(PASSED);
-	struct keypair_ops key_test;
+	struct keypair_ops key_test = { 0 };
 	const char *key_name = NULL;
-	struct smw_keypair_buffer key_buffer;
+	struct smw_keypair_buffer key_buffer = { 0 };
 	int mac_id = INT_MAX;
 	unsigned int input_len = 0;
 	unsigned int output_len = 0;

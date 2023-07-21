@@ -38,16 +38,16 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 			      struct smw_generate_key_args *args,
 			      struct keypair_ops *key_test)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct json_object *okey_params = NULL;
-	struct smw_key_descriptor *desc;
+	struct smw_key_descriptor *desc = NULL;
 	unsigned int public_length = 0;
 	unsigned int modulus_length = 0;
-	unsigned char **attrs;
-	unsigned int *attrs_len;
+	unsigned char **attrs = NULL;
+	unsigned int *attrs_len = NULL;
 
 	if (!subtest || !args || !key_test || !key_test->keys)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
 	if (res != ERR_CODE(PASSED))
@@ -142,13 +142,13 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 static int set_import_opt_params(struct subtest_data *subtest,
 				 struct smw_import_key_args *args)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct json_object *okey_params = NULL;
-	unsigned char **attrs;
-	unsigned int *attrs_len;
+	unsigned char **attrs = NULL;
+	unsigned int *attrs_len = NULL;
 
 	if (!subtest || !args)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
 	if (res != ERR_CODE(PASSED))
@@ -316,11 +316,11 @@ static int set_export_opt_params(struct subtest_data *subtest,
 static int set_common_bad_args(json_object *params, void **args,
 			       struct smw_key_descriptor **key)
 {
-	int ret;
-	enum arguments_test_err_case error;
+	int ret = ERR_CODE(BAD_ARGS);
+	enum arguments_test_err_case error = NOT_DEFINED;
 
 	if (!params)
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 
 	ret = util_read_test_error(&error, params);
 	if (ret != ERR_CODE(PASSED))
@@ -370,11 +370,11 @@ static int set_common_bad_args(json_object *params, void **args,
 static int set_gen_bad_args(json_object *params,
 			    struct smw_generate_key_args **args)
 {
-	int ret;
+	int ret = ERR_CODE(BAD_ARGS);
 
 	if (!args || !*args || !(*args)->key_descriptor) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 	}
 
 	ret = set_common_bad_args(params, (void **)args,
@@ -401,12 +401,12 @@ static int set_gen_bad_args(json_object *params,
 static int set_del_bad_args(json_object *params,
 			    struct smw_delete_key_args **args)
 {
-	int ret;
+	int ret = ERR_CODE(BAD_ARGS);
 
 	if (!args || !*args || !(*args)->key_descriptor ||
 	    (*args)->key_descriptor->buffer) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 	}
 
 	ret = set_common_bad_args(params, (void **)args,
@@ -433,12 +433,12 @@ static int set_del_bad_args(json_object *params,
 static int set_import_bad_args(json_object *params,
 			       struct smw_import_key_args **args)
 {
-	int ret;
+	int ret = ERR_CODE(BAD_ARGS);
 
 	if (!args || !*args || !(*args)->key_descriptor ||
 	    !(*args)->key_descriptor->buffer) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 	}
 
 	ret = set_common_bad_args(params, (void **)args,
@@ -468,12 +468,12 @@ static int set_export_bad_args(struct subtest_data *subtest,
 			       struct smw_export_key_args **args,
 			       struct smw_keypair_buffer *exp_key)
 {
-	int ret;
+	int ret = ERR_CODE(BAD_ARGS);
 
 	if (!args || !*args || !(*args)->key_descriptor ||
 	    !(*args)->key_descriptor->buffer) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 	}
 
 	ret = set_common_bad_args(subtest->params, (void **)args,
@@ -551,7 +551,7 @@ int generate_key(struct subtest_data *subtest)
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test = { 0 };
 	struct key_data key_data = { 0 };
-	struct smw_keypair_buffer key_buffer;
+	struct smw_keypair_buffer key_buffer = { 0 };
 	struct smw_generate_key_args args = { 0 };
 	struct smw_generate_key_args *smw_gen_args = &args;
 	const char *key_name = NULL;

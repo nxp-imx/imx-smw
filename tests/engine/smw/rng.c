@@ -26,7 +26,7 @@ static int set_rng_bad_args(struct json_object *params,
 			    struct smw_rng_args **args)
 {
 	int ret = ERR_CODE(PASSED);
-	enum arguments_test_err_case error;
+	enum arguments_test_err_case error = NOT_DEFINED;
 
 	if (!params || !args)
 		return ERR_CODE(BAD_ARGS);

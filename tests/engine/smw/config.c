@@ -17,7 +17,7 @@ static int read_config_file(char *file_name, char **buffer, unsigned int *size)
 {
 	int res = ERR_CODE(INTERNAL);
 
-	long fsize;
+	long fsize = 0;
 
 	FILE *f = NULL;
 
@@ -81,7 +81,7 @@ int config_load(struct subtest_data *subtest)
 
 	char *file_path = NULL;
 	char *file_name = NULL;
-	unsigned int file_path_size = 0;
+	size_t file_path_size = 0;
 	char *buffer = NULL;
 	unsigned int size = 0;
 	unsigned int offset = 0;
@@ -94,6 +94,11 @@ int config_load(struct subtest_data *subtest)
 	res = util_read_hex_buffer((unsigned char **)&buffer, &size,
 				   subtest->params, INPUT_OBJ);
 	if (res == ERR_CODE(MISSING_PARAMS)) {
+		if (buffer) {
+			free(buffer);
+			buffer = NULL;
+		}
+
 		res = util_read_json_type(&file_name, FILEPATH_OBJ, t_string,
 					  subtest->params);
 		if (res != ERR_CODE(PASSED)) {
@@ -102,8 +107,17 @@ int config_load(struct subtest_data *subtest)
 			goto end;
 		}
 
-		file_path_size = strlen(CONFIG_DIR) + strlen(file_name);
-		file_path = malloc(file_path_size + 1);
+		if (ADD_OVERFLOW(strlen(CONFIG_DIR), strlen(file_name),
+				 &file_path_size)) {
+			res = ERR_CODE(BAD_ARGS);
+			goto end;
+		}
+		if (INC_OVERFLOW(file_path_size, 1)) {
+			res = ERR_CODE(BAD_ARGS);
+			goto end;
+		}
+
+		file_path = malloc(file_path_size);
 		if (!file_path) {
 			DBG_PRINT_ALLOC_FAILURE();
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);

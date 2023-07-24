@@ -37,11 +37,11 @@ int util_mac_init(struct llist **list)
 int util_mac_add_node(struct llist *list, unsigned int id, unsigned char *mac,
 		      unsigned int mac_length)
 {
-	int res;
-	struct mac_data *data;
+	int res = ERR_CODE(BAD_ARGS);
+	struct mac_data *data = NULL;
 
 	if (!list)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	data = malloc(sizeof(*data));
 	if (!data) {
@@ -63,11 +63,11 @@ int util_mac_add_node(struct llist *list, unsigned int id, unsigned char *mac,
 int util_mac_find_node(struct llist *list, unsigned int id, unsigned char **mac,
 		       unsigned int *mac_length)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct mac_data *data = NULL;
 
 	if (!list)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	res = util_list_find_node(list, id, (void **)&data);
 	if (res == ERR_CODE(PASSED) && !data)

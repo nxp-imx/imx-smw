@@ -33,10 +33,10 @@ int util_context_add_node(struct llist *list, unsigned int id,
 int util_context_find_node(struct llist *list, unsigned int id,
 			   struct smw_op_context **smw_context)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 
 	if (!list || !smw_context)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	res = util_list_find_node(list, id, (void **)smw_context);
 	if (res == ERR_CODE(PASSED) && !*smw_context)

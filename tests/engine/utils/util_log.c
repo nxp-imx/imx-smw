@@ -11,8 +11,8 @@
 
 void util_log(struct test_data *test, const char *fmt, ...)
 {
-	int nb_char;
-	va_list args;
+	int nb_char = 0;
+	va_list args = { 0 };
 
 	if (!test) {
 		DBG_PRINT_BAD_ARGS();
@@ -44,8 +44,8 @@ exit:
 
 void util_log_status(struct test_data *test, const char *fmt, ...)
 {
-	int nb_char;
-	va_list args;
+	int nb_char = 0;
+	va_list args = { 0 };
 
 	if (!test) {
 		DBG_PRINT_BAD_ARGS();

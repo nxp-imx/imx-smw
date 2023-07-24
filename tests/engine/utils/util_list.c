@@ -34,10 +34,16 @@ static int write_id_uint(struct node *node, uintptr_t id)
 
 static int write_id_string(struct node *node, uintptr_t id)
 {
+	size_t size = 0;
+
 	if (!node)
 		return ERR_CODE(BAD_ARGS);
 
-	node->id = (uintptr_t)malloc(strlen((const char *)id) + 1);
+	size = strlen((const char *)id);
+	if (INC_OVERFLOW(size, 1))
+		return ERR_CODE(INTERNAL);
+
+	node->id = (uintptr_t)malloc(size);
 	if (!node->id) {
 		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
@@ -56,7 +62,7 @@ static void free_id_string(uintptr_t id)
 
 static int match_id_uint(uintptr_t node_id, uintptr_t id)
 {
-	if ((unsigned int)id == (unsigned int)node_id)
+	if (id == node_id)
 		return 1;
 
 	return 0;
@@ -74,7 +80,7 @@ static int list_add_node(struct llist *list, uintptr_t id, void *data, int lock)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	struct node *last = NULL;
-	struct node *node;
+	struct node *node = NULL;
 
 	if (!list)
 		return res;
@@ -108,9 +114,12 @@ static int list_add_node(struct llist *list, uintptr_t id, void *data, int lock)
 	}
 
 exit:
-	if (res != ERR_CODE(PASSED)) {
-		if (node)
-			free(node);
+	if (res != ERR_CODE(PASSED) && node) {
+		if (list->free_id)
+			list->free_id(node->id);
+
+		// coverity[leaked_storage]
+		free(node);
 	}
 
 	if (lock)
@@ -122,7 +131,7 @@ exit:
 static int list_find_node(struct llist *list, uintptr_t id, void **data,
 			  int lock)
 {
-	struct node *node;
+	struct node *node = NULL;
 
 	if (!list || !data)
 		return ERR_CODE(BAD_ARGS);
@@ -149,13 +158,16 @@ static int list_find_node(struct llist *list, uintptr_t id, void **data,
 int util_list_init(struct llist **list, void (*free_data)(void *),
 		   enum list_id_type id_type)
 {
+	int ret = ERR_CODE(BAD_ARGS);
+
 	if (!list)
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 
 	*list = malloc(sizeof(struct llist));
 	if (!*list) {
 		DBG_PRINT_ALLOC_FAILURE();
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		ret = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto exit;
 	}
 
 	(*list)->head = NULL;
@@ -167,21 +179,32 @@ int util_list_init(struct llist **list, void (*free_data)(void *),
 		(*list)->free_id = NULL;
 		(*list)->match_id = match_id_uint;
 		break;
+
 	case LIST_ID_TYPE_STRING:
 		(*list)->write_id = write_id_string;
 		(*list)->free_id = free_id_string;
 		(*list)->match_id = match_id_string;
 		break;
+
 	default:
-		return ERR_CODE(BAD_ARGS);
+		ret = ERR_CODE(BAD_ARGS);
+		goto exit;
 	}
 
 	/* List protector */
 	(*list)->lock = util_mutex_create();
 	if (!(*list)->lock)
-		return ERR_CODE(FAILED);
+		ret = ERR_CODE(FAILED);
+	else
+		ret = ERR_CODE(PASSED);
 
-	return ERR_CODE(PASSED);
+exit:
+	if (ret != ERR_CODE(PASSED) && *list) {
+		free(*list);
+		*list = NULL;
+	}
+
+	return ret;
 }
 
 int util_list_clear(struct llist *list)
@@ -233,7 +256,7 @@ int util_list_find_node(struct llist *list, uintptr_t id, void **data)
 struct node *util_list_next(struct llist *list, struct node *node,
 			    uintptr_t *id)
 {
-	struct node *next;
+	struct node *next = NULL;
 
 	if (!list)
 		return NULL;

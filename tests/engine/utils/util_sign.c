@@ -41,11 +41,11 @@ int util_sign_init(struct llist **list)
 int util_sign_add_node(struct llist *list, unsigned int id,
 		       unsigned char *signature, unsigned int signature_length)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct signature_data *data;
 
 	if (!list)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	data = malloc(sizeof(*data));
 	if (!data) {
@@ -68,11 +68,11 @@ int util_sign_find_node(struct llist *list, unsigned int id,
 			unsigned char **signature,
 			unsigned int *signature_length)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct signature_data *data = NULL;
 
 	if (!list || !signature || !signature_length)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	res = util_list_find_node(list, id, (void **)&data);
 	if (res == ERR_CODE(PASSED) && !data)

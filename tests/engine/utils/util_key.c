@@ -27,7 +27,7 @@ static void key_free_data(void *data)
 static int register_keys(struct json_object *okeys, struct llist *keys)
 {
 	int res = ERR_CODE(PASSED);
-	struct json_object_iter okey_params;
+	struct json_object_iter okey_params = { 0 };
 	void *data = NULL;
 
 	if (!json_object_get_object(okeys))
@@ -65,7 +65,7 @@ static int build_keys_list(char *dir_def_file, struct json_object *definition,
 	int res = ERR_CODE(BAD_ARGS);
 	struct json_object *okeys = NULL;
 	struct json_object *odef = NULL;
-	struct json_object_iter obj;
+	struct json_object_iter obj = { 0 };
 	char *def_file = NULL;
 	void *dummy = NULL;
 
@@ -149,7 +149,7 @@ static int save_keys_to_json_file(struct llist *key_list, char *filepath)
 {
 	int res = ERR_CODE(BAD_ARGS);
 	void *node = NULL;
-	uintptr_t key_name;
+	uintptr_t key_name = 0;
 	struct key_data *data = NULL;
 	struct json_object *global_obj = NULL;
 	struct json_object *keys_obj = NULL;
@@ -210,16 +210,16 @@ static int save_keys_to_json_file(struct llist *key_list, char *filepath)
 			goto exit;
 		}
 
-		key_identifier_obj = json_object_new_int(0);
+		key_identifier_obj = json_object_new_int64(0);
 		if (!key_identifier_obj) {
 			DBG_PRINT("Can't create a new json object");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
 		}
 
-		if (!json_object_set_int(key_identifier_obj,
-					 data->identifier)) {
-			DBG_PRINT("json_object_set_int() failed");
+		if (!json_object_set_int64(key_identifier_obj,
+					   data->identifier)) {
+			DBG_PRINT("json_object_set_int64() failed");
 			res = ERR_CODE(INTERNAL);
 			goto exit;
 		}
@@ -273,8 +273,9 @@ static int restore_keys_from_json_file(struct subtest_data *subtest,
 	int res = ERR_CODE(FAILED);
 	struct json_object *restore_obj = NULL;
 	struct json_object *okeys = NULL;
-	struct json_object_iter okey_params;
+	struct json_object_iter okey_params = { 0 };
 	struct key_data key_data = { 0 };
+	int64_t key_id = 0;
 
 	if (!subtest || !filepath) {
 		DBG_PRINT_BAD_ARGS();
@@ -303,10 +304,13 @@ static int restore_keys_from_json_file(struct subtest_data *subtest,
 		if (res != ERR_CODE(PASSED))
 			return res;
 
-		res = util_read_json_type(&key_data.identifier, ID_OBJ, t_int,
+		res = util_read_json_type(&key_id, ID_OBJ, t_int64,
 					  okey_params.val);
 		if (res != ERR_CODE(PASSED))
 			return res;
+
+		if (SET_OVERFLOW(key_id, key_data.identifier))
+			return ERR_CODE(INTERNAL);
 
 		res = util_key_update_node(list_keys(subtest), okey_params.key,
 					   &key_data);
@@ -332,7 +336,7 @@ int util_key_add_node(struct llist *keys, const char *key_name,
 {
 	int res = ERR_CODE(BAD_ARGS);
 
-	struct key_data *data;
+	struct key_data *data = NULL;
 
 	if (!keys || !key_name)
 		return res;

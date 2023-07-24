@@ -88,7 +88,7 @@ static int register_sem(struct llist *lsem, const char *name,
 {
 	int res = ERR_CODE(PASSED);
 	struct sem_obj *sem = NULL;
-	size_t len;
+	size_t len = 0;
 
 	if (!name || !lsem || !new_sem) {
 		DBG_PRINT_BAD_ARGS();
@@ -160,16 +160,15 @@ exit:
  * -BAD_ARGS  - One of the argument is not correct.
  * -FAILED    - Wait semaphore failed on timeout.
  */
-static int wait_sem(struct thread_data *thr, struct sem_obj *sem,
-		    unsigned int timeout)
+static int wait_sem(struct thread_data *thr, struct sem_obj *sem, int timeout)
 {
 	int res = ERR_CODE(PASSED);
-	int err;
-	struct timespec ts;
+	int err = ERR_CODE(BAD_ARGS);
+	struct timespec ts = { 0 };
 
 	if (!sem) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	if (timeout) {
@@ -179,7 +178,10 @@ static int wait_sem(struct thread_data *thr, struct sem_obj *sem,
 			return ERR_CODE(INTERNAL);
 		}
 
-		ts.tv_sec += timeout;
+		if (INC_OVERFLOW(ts.tv_sec, timeout)) {
+			DBG_PRINT("Timeout overflow");
+			return ERR_CODE(INTERNAL);
+		}
 
 		thr->state = STATE_WAITING;
 		DBG_PRINT("Waiting %s for %d seconds", sem->name, timeout);
@@ -224,17 +226,17 @@ static int wait_sem(struct thread_data *thr, struct sem_obj *sem,
 static int get_wait_sem(struct thread_data *thr, struct json_object *obj,
 			const char *tag)
 {
-	int err;
+	int err = ERR_CODE(BAD_ARGS);
 	struct sem_obj *sem = NULL;
 	struct json_object *sem_obj = NULL;
 	struct json_object *oval = NULL;
 	const char *sem_name = NULL;
-	int nb_elem;
+	size_t nb_elem = 0;
 	int sem_timeout = 0;
 
 	if (!thr || !thr->app) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return err;
 	}
 
 	if (!thr->app->is_multithread)
@@ -242,7 +244,7 @@ static int get_wait_sem(struct thread_data *thr, struct json_object *obj,
 
 	if (!obj || !tag) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return err;
 	}
 
 	/*
@@ -323,7 +325,6 @@ static int post_sem_all(struct app_data *app)
 	util_list_lock(app->semaphores);
 
 	do {
-		sem = NULL;
 		node = util_list_next(app->semaphores, node, NULL);
 		if (node) {
 			sem = util_list_data(node);
@@ -358,13 +359,13 @@ static int post_sem_all(struct app_data *app)
  */
 static int post_sem(struct app_data *app, const char *sem_name)
 {
-	int res;
-	int err;
+	int res = ERR_CODE(BAD_ARGS);
+	int err = ERR_CODE(PASSED);
 	struct sem_obj *sem = NULL;
 
 	if (!sem_name) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	DBG_PRINT("%s", sem_name);
@@ -402,16 +403,16 @@ static int post_sem(struct app_data *app, const char *sem_name)
 static int get_post_sem(struct thread_data *thr, struct json_object *obj,
 			const char *tag)
 {
-	int err;
+	int err = ERR_CODE(BAD_ARGS);
 	struct json_object *sem_obj = NULL;
 	struct json_object *oval = NULL;
 	const char *sem_name = NULL;
-	int nb_elem = 0;
-	int idx;
+	size_t nb_elem = 0;
+	size_t idx = 0;
 
 	if (!thr || !thr->app) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return err;
 	}
 
 	if (!thr->app->is_multithread)
@@ -449,7 +450,7 @@ static int get_post_sem(struct thread_data *thr, struct json_object *obj,
 	case json_type_array:
 		nb_elem = json_object_array_length(sem_obj);
 
-		for (idx = 0; idx < nb_elem; idx++) {
+		for (; idx < nb_elem; idx++) {
 			/* Get the semaphore name */
 			oval = json_object_array_get_idx(sem_obj, idx);
 			if (json_object_get_type(oval) != json_type_string) {
@@ -499,8 +500,9 @@ static int post_to_sem(struct app_data *app, struct json_object *obj)
 	char *op_name = op.args.name;
 	size_t cnt_char = 0;
 	int nb_char = 0;
-	int nb_elem = 0;
-	int idx;
+	size_t nb_elem = 0;
+	size_t idx = 0;
+	size_t sem_name_len = 0;
 
 	/* First element of the @obj must be the application name or "all" */
 	sem_obj = json_object_array_get_idx(obj, 0);
@@ -514,7 +516,9 @@ static int post_to_sem(struct app_data *app, struct json_object *obj)
 	switch (json_object_get_type(sem_obj)) {
 	case json_type_string:
 		sem_name = json_object_get_string(sem_obj);
-		if (strlen(sem_name) + 1 <= sizeof(op.args.name)) {
+		sem_name_len = strlen(sem_name);
+		if (!INC_OVERFLOW(sem_name_len, 1) &&
+		    sem_name_len <= sizeof(op.args.name)) {
 			(void)sprintf(op_name, "%s", sem_name);
 			err = util_ipc_send(app, app_name, &op);
 		}
@@ -528,7 +532,7 @@ static int post_to_sem(struct app_data *app, struct json_object *obj)
 
 		err = ERR_CODE(PASSED);
 
-		for (idx = 0; idx < nb_elem; idx++) {
+		for (; idx < nb_elem; idx++) {
 			/* Get the semaphore name */
 			oval = json_object_array_get_idx(sem_obj, idx);
 			if (json_object_get_type(oval) != json_type_string) {
@@ -546,8 +550,12 @@ static int post_to_sem(struct app_data *app, struct json_object *obj)
 			 * if not the last semaphore list, the delimiter.
 			 */
 			cnt_char += strlen(sem_name) + 1;
-			if (idx < nb_elem - 1)
-				cnt_char += 1;
+			if (idx < nb_elem - 1) {
+				if (INC_OVERFLOW(cnt_char, 1)) {
+					err = ERR_CODE(INTERNAL);
+					break;
+				}
+			}
 
 			if (cnt_char > sizeof(op.args.name)) {
 				DBG_PRINT("Operation name too short");
@@ -598,16 +606,16 @@ static int post_to_sem(struct app_data *app, struct json_object *obj)
 static int get_post_to_sem(struct app_data *app, struct json_object *obj,
 			   const char *tag)
 {
-	int err;
+	int err = ERR_CODE(BAD_ARGS);
 	struct json_object *sem_obj = NULL;
 	struct json_object *oapp = NULL;
-	int nb_elem = 0;
-	int nb_apps = 0;
-	int idx;
+	size_t nb_elem = 0;
+	size_t nb_apps = 0;
+	size_t idx = 0;
 
 	if (!app || !app->test) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return err;
 	}
 
 	if (app->test->nb_apps < 2)
@@ -673,7 +681,7 @@ static int get_post_to_sem(struct app_data *app, struct json_object *obj,
 	case json_type_array:
 		nb_apps = json_object_array_length(oapp);
 
-		for (idx = 0; idx < nb_apps; idx++) {
+		for (; idx < nb_apps; idx++) {
 			/* Get the first application's semaphores
 			 *   [
 			 *     ["app 1", "name"],

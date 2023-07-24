@@ -126,7 +126,7 @@ exit:
 
 void util_destroy_test(struct test_data *test)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 
 	if (!test)
 		return;
@@ -135,29 +135,21 @@ void util_destroy_test(struct test_data *test)
 
 	/* Destroy the debug print mutex and abort if failure */
 	res = util_mutex_destroy(&test->lock_dbg);
-	if (res != ERR_CODE(PASSED)) {
-		DBG_PRINT("Destroy mutex error %d", res);
-		assert(res == ERR_CODE(PASSED));
-	}
+	DBG_ASSERT(res == ERR_CODE(PASSED), "Destroy mutex error %d", res);
 
 	if (test->log)
 		(void)fclose(test->log);
 
 	/* Destroy the log file mutex and abort if failure */
 	res = util_mutex_destroy(&test->lock_log);
-	if (res != ERR_CODE(PASSED)) {
-		DBG_PRINT("Destroy mutex error %d", res);
-		assert(res == ERR_CODE(PASSED));
-	}
+	DBG_ASSERT(res == ERR_CODE(PASSED), "Destroy mutex error %d", res);
 
 	if (test->definition)
 		json_object_put(test->definition);
 
 	res = util_list_clear(test->apps);
-	if (res != ERR_CODE(PASSED)) {
-		DBG_PRINT("Clear applications list error %d", res);
-		assert(res == ERR_CODE(PASSED));
-	}
+	DBG_ASSERT(res == ERR_CODE(PASSED), "Clear applications list error %d",
+		   res);
 
 	free(test);
 }
@@ -165,9 +157,9 @@ void util_destroy_test(struct test_data *test)
 int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 {
 	char tmp[3] = { 0 };
-	int i = 0;
+	size_t i = 0;
 	unsigned int j = 0;
-	int string_len = 0;
+	size_t string_len = 0;
 
 	if (!string || !hex || !len) {
 		DBG_PRINT_BAD_ARGS();
@@ -181,8 +173,8 @@ int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	if (string_len)
-		*len = string_len / 2;
+	if (string_len && SET_OVERFLOW(string_len / 2, *len))
+		return ERR_CODE(FAILED);
 
 	if (*len) {
 		*hex = malloc(*len);
@@ -194,7 +186,7 @@ int util_string_to_hex(char *string, unsigned char **hex, unsigned int *len)
 		for (; i < string_len && j < *len; i += 2, j++) {
 			tmp[0] = string[i];
 			tmp[1] = string[i + 1];
-			(*hex)[j] = strtol(tmp, NULL, 16);
+			(*hex)[j] = strtol(tmp, NULL, 16) & UCHAR_MAX;
 		}
 
 		if (!string_len)
@@ -209,10 +201,11 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 {
 	struct json_object *otmp = NULL;
 	char *buf_tmp = NULL;
-	int idx = 0;
+	size_t idx = 0;
 	int idx_string = 0;
-	int nb_entries;
+	size_t nb_entries = 0;
 	unsigned int len_tmp = 0;
+	int json_int_len = 0;
 
 	if (!buf || !buf_len || !json_len || !obuf) {
 		DBG_PRINT_BAD_ARGS();
@@ -226,10 +219,12 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 		otmp = json_object_array_get_idx(obuf, 0);
 		if (json_object_get_type(otmp) == json_type_int) {
 			/* Buffer length in byte is specified, get it */
-			*json_len = json_object_get_int(otmp);
+			json_int_len = json_object_get_int(otmp);
+			(void)SET_OVERFLOW(json_int_len, *json_len);
 			idx++;
 			idx_string = 1;
 		}
+
 		for (; idx < nb_entries; idx++) {
 			otmp = json_object_array_get_idx(obuf, idx);
 			if (json_object_get_type(otmp) != json_type_string) {
@@ -237,7 +232,9 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 				return ERR_CODE(FAILED);
 			}
 
-			len_tmp += json_object_get_string_len(otmp);
+			json_int_len = json_object_get_string_len(otmp);
+			if (INC_OVERFLOW(len_tmp, json_int_len))
+				return ERR_CODE(FAILED);
 		}
 
 		if (idx_string == 1 && *json_len > len_tmp)
@@ -245,14 +242,18 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 		break;
 
 	case json_type_string:
-		len_tmp = json_object_get_string_len(obuf);
+		json_int_len = json_object_get_string_len(obuf);
+		if (!json_int_len || SET_OVERFLOW(json_int_len, len_tmp))
+			return ERR_CODE(FAILED);
+
 		otmp = obuf;
 		nb_entries = 1;
 		break;
 
 	case json_type_int:
 		/* Just the buffer length in byte is given, there is no data */
-		*json_len = json_object_get_int(obuf);
+		json_int_len = json_object_get_int(obuf);
+		(void)SET_OVERFLOW(json_int_len, *json_len);
 		nb_entries = 0;
 		break;
 
@@ -275,11 +276,11 @@ int util_read_json_buffer(char **buf, unsigned int *buf_len,
 			if (nb_entries > 1)
 				otmp = json_object_array_get_idx(obuf, idx);
 
-			len_tmp = json_object_get_string_len(otmp);
-			if (len_tmp && json_object_get_string(otmp)) {
+			json_int_len = json_object_get_string_len(otmp);
+			if (json_int_len && json_object_get_string(otmp)) {
 				memcpy(buf_tmp, json_object_get_string(otmp),
-				       len_tmp);
-				buf_tmp += len_tmp;
+				       json_int_len);
+				buf_tmp += json_int_len;
 			}
 		}
 
@@ -293,7 +294,7 @@ int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
 			 struct json_object *params, const char *field)
 {
 	int ret = ERR_CODE(MISSING_PARAMS);
-	struct json_object *obj;
+	struct json_object *obj = NULL;
 	char *str = NULL;
 	unsigned int len = 0;
 	unsigned int json_len = UINT_MAX;
@@ -343,8 +344,8 @@ exit:
 int get_test_name(char **test_name, char *test_definition_file)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	unsigned int len = 0;
-	char *filename;
+	size_t len = 0;
+	char *filename = NULL;
 
 	if (!test_name || !test_definition_file) {
 		DBG_PRINT_BAD_ARGS();
@@ -367,7 +368,9 @@ int get_test_name(char **test_name, char *test_definition_file)
 	 * Extract filename without extension
 	 * and build the @test_name null terminated string
 	 */
-	len = strlen(filename) - strlen(DEFINITION_FILE_EXTENSION);
+	if (SUB_OVERFLOW(strlen(filename), strlen(DEFINITION_FILE_EXTENSION),
+			 &len))
+		return ERR_CODE(FAILED);
 
 	*test_name = malloc(len + 1);
 	if (!*test_name) {
@@ -385,7 +388,7 @@ int util_read_test_error(enum arguments_test_err_case *error,
 			 struct json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
-	size_t idx;
+	size_t idx = 0;
 	char *tst_err = NULL;
 
 	if (!error || !params) {
@@ -431,6 +434,7 @@ int util_compare_buffers(unsigned char *buffer, size_t buffer_len,
 
 static const unsigned int t_data_2_json_type[] = {
 	[t_boolean] = BIT(json_type_boolean),
+	[t_int8] = BIT(json_type_int),
 	[t_int] = BIT(json_type_int),
 	[t_string] = BIT(json_type_string),
 	[t_object] = BIT(json_type_object),
@@ -449,9 +453,9 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 			struct json_object *params)
 {
 	int ret = ERR_CODE(BAD_PARAM_TYPE);
-	struct tbuffer *buf;
+	struct tbuffer *buf = NULL;
 
-	json_type val_type;
+	enum json_type val_type = json_type_null;
 	struct json_object *obj = NULL;
 
 	if (!params || !key) {
@@ -482,6 +486,16 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 			*((bool *)value) = json_object_get_boolean(obj);
 			ret = ERR_CODE(PASSED);
 			break;
+
+		case t_int8: {
+			int val = json_object_get_int(obj);
+
+			if ((val & UINT8_MAX) == val) {
+				*((int8_t *)value) = val;
+				ret = ERR_CODE(PASSED);
+			}
+			break;
+		}
 
 		case t_int:
 			*((int *)value) = json_object_get_int(obj);
@@ -590,10 +604,8 @@ char *util_get_strerr(void)
 
 const char *util_get_err_code_str(int err)
 {
-	size_t idx;
-
 	/* Find the error entry in the array of error string */
-	for (idx = 0; idx < MAX_TEST_ERROR; idx++)
+	for (size_t idx = 0; idx < MAX_TEST_ERROR; idx++)
 		if (err == ERR_CODE(idx))
 			return list_err[idx].status;
 
@@ -623,7 +635,7 @@ int util_get_json_obj_ids(const char *name, const char *key,
 {
 	int err = ERR_CODE(INTERNAL);
 	static const char delim[2] = ":";
-	long val;
+	long val = 0;
 	char *tmp = NULL;
 	char *field = NULL;
 
@@ -688,11 +700,11 @@ exit:
 int util_get_subdef(struct json_object **subdef, struct json_object *topdef,
 		    struct test_data *test)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	char *def_file = NULL;
 
 	if (!subdef || !topdef || !test)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	/*
 	 * Check if the top definition object is defined with a test
@@ -721,9 +733,7 @@ int util_get_subdef(struct json_object **subdef, struct json_object *topdef,
 
 char *util_string_to_upper(char *str)
 {
-	size_t idx;
-
-	for (idx = 0; idx < strlen(str); idx++) {
+	for (size_t idx = 0; idx < strlen(str); idx++) {
 		if (str[idx] >= 'a' && str[idx] <= 'z')
 			str[idx] -= 'a' - 'A';
 	}

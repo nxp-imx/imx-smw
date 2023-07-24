@@ -33,7 +33,8 @@ static int program_wakeup(int fd, int sec)
 {
 	int res = ERR_CODE(INTERNAL);
 
-	time_t tm_sec;
+	// coverity[declaration_with_small_time_t]
+	time_t tm_sec = 0;
 	struct tm time = { 0 };
 	struct rtc_time rtc_time = { 0 };
 	struct rtc_wkalrm rtc_wake = { 0 };
@@ -64,7 +65,10 @@ static int program_wakeup(int fd, int sec)
 		goto exit;
 	}
 
-	tm_sec += sec;
+	if (INC_OVERFLOW(tm_sec, sec)) {
+		DBG_PRINT("Error in seconds to time conversion");
+		goto exit;
+	}
 
 	if (!localtime_r(&tm_sec, &time)) {
 		DBG_PRINT("Error in seconds to time conversion");
@@ -138,12 +142,12 @@ exit:
 
 int util_rtcwake_suspend_to_mem(int sec)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	int fd = -1;
 
 	if (!sec) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	res = open_rtc_drv(RTC_DEVICE, &fd);

@@ -3,6 +3,7 @@
  * Copyright 2022-2023 NXP
  */
 
+#include <errno.h>
 #include <mqueue.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -24,9 +25,9 @@ struct ipc_data {
 
 static void *process_ipc(void *arg)
 {
-	ssize_t rsize;
-	size_t exp_size;
-	unsigned int priority;
+	ssize_t rsize = 0;
+	size_t exp_size = 0;
+	unsigned int priority = 0;
 	struct app_data *app = arg;
 	struct ipc_op op = { 0 };
 
@@ -44,8 +45,22 @@ static void *process_ipc(void *arg)
 				   &priority);
 		if (rsize == -1) {
 			DBG_PRINT("IPC Message receive %s", util_get_strerr());
+
+			if (__errno_location()) {
+				switch (errno) {
+				case EBADF:
+				case EINVAL:
+				case EBADMSG:
+					goto exit;
+
+				default:
+					break;
+				}
+			}
+
 			continue;
 		}
+
 		if ((size_t)rsize < exp_size) {
 			DBG_PRINT("IPC Message received size %d expected %d",
 				  rsize, exp_size);
@@ -63,6 +78,7 @@ static void *process_ipc(void *arg)
 		}
 	} while (1);
 
+exit:
 	exit(ERR_CODE(FAILED));
 	return NULL;
 }
@@ -107,7 +123,7 @@ static int ipc_queue_create_open(struct app_data *app, mqd_t *queue_desc,
 	int ret = ERR_CODE(FAILED);
 	struct mq_attr attr = { 0 };
 	char *q_name = NULL;
-	mqd_t queue;
+	mqd_t queue = 0;
 	int oflags = O_WRONLY;
 
 	if (!app) {
@@ -119,6 +135,12 @@ static int ipc_queue_create_open(struct app_data *app, mqd_t *queue_desc,
 	if (!q_name) {
 		DBG_PRINT("Unable to create %s queue name", app->name);
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+	}
+
+	if (app->test->nb_apps > LONG_MAX) {
+		DBG_PRINT("Number of applications too big");
+		ret = ERR_CODE(INTERNAL);
+		goto end;
 	}
 
 	attr.mq_maxmsg = app->test->nb_apps;
@@ -243,8 +265,8 @@ static void ipc_queue_destroy(struct app_data *app)
  */
 static int ipc_queue_post(struct app_data *to, struct ipc_op *op)
 {
-	int res;
-	mqd_t queue;
+	int res = ERR_CODE(PASSED);
+	mqd_t queue = 0;
 
 	res = ipc_queue_open(to, &queue);
 	if (res != ERR_CODE(PASSED))
@@ -265,10 +287,10 @@ static int ipc_queue_post(struct app_data *to, struct ipc_op *op)
 
 int util_ipc_start(struct app_data *app)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 
 	if (!app)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	app->ipc = calloc(1, sizeof(*app->ipc));
 	if (!app->ipc) {
@@ -306,7 +328,7 @@ void util_ipc_end(struct app_data *app)
 int util_ipc_send(struct app_data *app, const char *app_name, struct ipc_op *op)
 {
 	int status = ERR_CODE(PASSED);
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	int fbroadcast = 0;
 	int nb_apps = 0;
 	struct node *node = NULL;
@@ -314,7 +336,7 @@ int util_ipc_send(struct app_data *app, const char *app_name, struct ipc_op *op)
 
 	if (!app || !app->test || !app->test->apps || !app_name || !op) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	if (!strcmp(app_name, "all"))

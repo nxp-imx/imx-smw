@@ -25,6 +25,20 @@
 /* TLV defines */
 #define TLV_LENGTH_FIELD_SIZE 2 /* TLV length encoded with 2 bytes */
 
+#define TLV_ELEMENT_LENGTH(_type, _value_size, _res)                           \
+	({                                                                     \
+		int _ret = 1;                                                  \
+		size_t _l_type = strlen(_type) + 1;                            \
+		__typeof__(_res) _l = 0;                                       \
+		/* Add length of Type + length of Length */                    \
+		if (!ADD_OVERFLOW(_l_type, TLV_LENGTH_FIELD_SIZE, &_l)) {      \
+			/* Append length of Value */                           \
+			if (!ADD_OVERFLOW(_l, _value_size, &(_res)))           \
+				_ret = 0;                                      \
+		}                                                              \
+		_ret;                                                          \
+	})
+
 /**
  * struct tlv - TLV structure
  * @type: Type field (string)
@@ -36,10 +50,10 @@
  */
 struct tlv {
 	const char *type;
-	int type_len;
-	unsigned int length;
+	size_t type_len;
+	size_t length;
 	enum json_type val_type;
-	unsigned int val_len;
+	size_t val_len;
 	union {
 		long num;
 		const char *str;
@@ -60,13 +74,15 @@ struct tlv_list {
 	struct tlv_list *next;
 };
 
-static int get_tlv_numeral_byte(long value)
+static unsigned int get_tlv_numeral_byte(long value)
 {
 	long val = value;
-	int nb_bytes = 0;
+	unsigned int nb_bytes = 0;
 
 	do {
-		nb_bytes++;
+		if (INC_OVERFLOW(nb_bytes, 1))
+			return 0;
+
 		val >>= CHAR_BIT;
 	} while (val);
 
@@ -83,10 +99,12 @@ static int get_tlv_numeral_byte(long value)
 static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 {
 	int ret = ERR_CODE(FAILED);
-	int nb_elem = 0;
-	struct json_object *ovalue;
-	struct json_object *oidx;
-	enum json_type type;
+	size_t nb_elem = 0;
+	struct json_object *ovalue = NULL;
+	struct json_object *oidx = NULL;
+	enum json_type type = json_type_null;
+	size_t tlv_elem_length = 0;
+	int64_t int64_val = 0;
 
 	nb_elem = json_object_array_length(obj);
 	DBG_PRINT("Get nb array elem %d", nb_elem);
@@ -100,14 +118,16 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 	/* Type length without null termination character */
 	tlv->type_len = strlen(tlv->type);
 
-	/* Add length of the 'type" and its null termination character */
-	*len += tlv->type_len + 1;
-
-	/* Add length of the 'length' always 2 bytes, regardless 'value' */
-	*len += 2;
-
 	/* Initialize tlv->length to 0 */
 	tlv->length = 0;
+
+	/* Calculate the tlv element length with a value of 0 */
+	TLV_ELEMENT_LENGTH(tlv->type, tlv->length, tlv_elem_length);
+
+	if (INC_OVERFLOW(*len, tlv_elem_length)) {
+		DBG_PRINT("TLV length overflow");
+		return ERR_CODE(FAILED);
+	}
 
 	if (nb_elem > 1) {
 		ovalue = json_object_array_get_idx(obj, 1);
@@ -116,8 +136,10 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 
 		switch (tlv->val_type) {
 		case json_type_int:
-			tlv->value.num = json_object_get_int64(ovalue);
+			int64_val = json_object_get_int64(ovalue);
+
 			/* Number of bytes used to code the value */
+			tlv->value.num = int64_val & LONG_MAX;
 			tlv->val_len = get_tlv_numeral_byte(tlv->value.num);
 			tlv->length = tlv->val_len;
 			DBG_PRINT("Type %s, L=%d, V=%ld", tlv->type,
@@ -161,7 +183,12 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 				break;
 			}
 
-			tlv->val_len = json_object_get_int64(oidx);
+			int64_val = json_object_get_int64(oidx);
+			if (SET_OVERFLOW(int64_val, tlv->val_len)) {
+				DBG_PRINT("TLV numeral length invalid\n");
+				break;
+			}
+
 			tlv->length = tlv->val_len;
 
 			oidx = json_object_array_get_idx(ovalue, 1);
@@ -192,21 +219,24 @@ static int read_tlv(struct tlv *tlv, unsigned int *len, struct json_object *obj)
 	 * Add length of the 'value' defined by tlv->length
 	 * If no value, tlv->length is 0.
 	 */
-	*len += tlv->length;
+	if (INC_OVERFLOW(*len, tlv->length))
+		ret = ERR_CODE(FAILED);
+
 	return ret;
 }
 
 static int build_attr_lists(unsigned char **attr, unsigned int len,
 			    struct tlv *tlv, int nb_tlv)
 {
-	int ret;
-	int idx;
+	int ret = ERR_CODE(FAILED);
+	int idx = 0;
 	unsigned char *attr_string = NULL;
 	unsigned char *hex_string = NULL;
 	unsigned int hex_len = 0;
+	size_t nb_bytes = 0;
 
 	if (!len)
-		return ERR_CODE(FAILED);
+		return ret;
 
 	attr_string = malloc(len);
 	if (!attr_string)
@@ -215,7 +245,7 @@ static int build_attr_lists(unsigned char **attr, unsigned int len,
 	*attr = attr_string;
 
 	/* Build the attributes list with all tlv(s) read */
-	for (idx = 0; idx < nb_tlv; idx++) {
+	for (; idx < nb_tlv; idx++) {
 		/* Copy the 'type' of TLV */
 		memcpy(attr_string, tlv[idx].type, tlv[idx].type_len);
 		attr_string += tlv[idx].type_len;
@@ -223,17 +253,15 @@ static int build_attr_lists(unsigned char **attr, unsigned int len,
 		*(attr_string++) = '\0';
 
 		/* Set the 'length' of TLV with 2 bytes */
-		*(attr_string++) = tlv[idx].length >> CHAR_BIT;
-		*(attr_string++) = tlv[idx].length & UCHAR_MAX;
+		*(attr_string++) = GET_BYTE(tlv[idx].length, 1);
+		*(attr_string++) = GET_BYTE(tlv[idx].length, 0);
 
 		/* Copy the 'value' of TLV */
 		switch (tlv[idx].val_type) {
 		case json_type_int:
-			for (int nb_bytes = tlv[idx].val_len; nb_bytes;
-			     nb_bytes--) {
+			for (nb_bytes = tlv[idx].val_len; nb_bytes; nb_bytes--)
 				*(attr_string++) = GET_BYTE(tlv[idx].value.num,
 							    nb_bytes - 1);
-			}
 			continue;
 
 		case json_type_string:
@@ -258,6 +286,10 @@ static int build_attr_lists(unsigned char **attr, unsigned int len,
 			}
 
 			memcpy(attr_string, hex_string, tlv[idx].val_len);
+
+			free(hex_string);
+			hex_string = NULL;
+
 			break;
 
 		default:
@@ -290,8 +322,13 @@ static int read_key_algo_param(struct tlv *tlv, struct json_object *oval)
 	static const char delim[2] = "=";
 	char *tmp = NULL;
 	char *field = NULL;
+	int json_str_len = 0;
 
-	tmp = malloc(json_object_get_string_len(oval) + 1);
+	json_str_len = json_object_get_string_len(oval);
+	if (!json_str_len || INC_OVERFLOW(json_str_len, 1))
+		return err;
+
+	tmp = malloc(json_str_len);
 	if (!tmp) {
 		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
@@ -336,7 +373,11 @@ static int read_key_algo_param(struct tlv *tlv, struct json_object *oval)
 		tlv->val_type = json_type_string;
 		tlv->value.str =
 			json_object_get_string(oval) + tlv->type_len + 1;
-		tlv->val_len = strlen(tlv->value.str) + 1;
+		tlv->val_len = strlen(tlv->value.str);
+		if (INC_OVERFLOW(tlv->val_len, 1)) {
+			err = ERR_CODE(FAILED);
+			goto end;
+		}
 	}
 
 	tlv->length = tlv->val_len;
@@ -357,18 +398,25 @@ static int read_key_usage_algo(struct tlv **tlv, unsigned int *policy_len,
 	struct json_object *oalgo = NULL;
 	struct json_object *oval = NULL;
 	struct tlv *ptlv = *tlv;
-	struct tlv *ptlv_usage;
-	struct tlv *ptlv_algo;
-	int nb_elem;
-	int nb_algo_params;
-	int idx;
-	int idx_param;
+	struct tlv *ptlv_usage = NULL;
+	struct tlv *ptlv_algo = NULL;
+	size_t tlv_elem_length = 0;
+	size_t nb_elem = 0;
+	size_t nb_algo_params = 0;
+	size_t idx = 0;
+	size_t idx_param = 0;
+	size_t val_len = 0;
+	int json_str_len = 0;
 
 	ptlv->type = TLV_KEY_USAGE;
 	ptlv->type_len = strlen(ptlv->type);
 	ptlv->val_type = json_type_string;
 	ptlv->value.str = util_string_to_upper(usage->key);
-	ptlv->val_len = strlen(ptlv->value.str) + 1;
+
+	val_len = strlen(ptlv->value.str);
+	if (ADD_OVERFLOW(val_len, 1, &ptlv->val_len))
+		return ERR_CODE(FAILED);
+
 	ptlv->length = ptlv->val_len;
 
 	/*
@@ -380,7 +428,7 @@ static int read_key_usage_algo(struct tlv **tlv, unsigned int *policy_len,
 	ptlv++;
 
 	nb_elem = json_object_array_length(usage->val);
-	for (idx = 0; idx < nb_elem; idx++) {
+	for (; idx < nb_elem; idx++) {
 		oalgo = json_object_array_get_idx(usage->val, idx);
 		nb_algo_params = json_object_array_length(oalgo);
 
@@ -394,7 +442,12 @@ static int read_key_usage_algo(struct tlv **tlv, unsigned int *policy_len,
 		ptlv->type_len = strlen(ptlv->type);
 		ptlv->val_type = json_type_string;
 		ptlv->value.str = json_object_get_string(oval);
-		ptlv->val_len = json_object_get_string_len(oval) + 1;
+
+		json_str_len = json_object_get_string_len(oval);
+		if (!json_str_len ||
+		    ADD_OVERFLOW(json_str_len, 1, &ptlv->val_len))
+			return ERR_CODE(FAILED);
+
 		ptlv->length = ptlv->val_len;
 
 		/*
@@ -405,36 +458,58 @@ static int read_key_usage_algo(struct tlv **tlv, unsigned int *policy_len,
 
 		ptlv++;
 
-		for (idx_param = 1;
-		     idx_param < nb_algo_params && err == ERR_CODE(PASSED);
+		for (idx_param = 1; idx_param < nb_algo_params;
 		     idx_param++, ptlv++) {
 			oval = json_object_array_get_idx(oalgo, idx_param);
 			err = read_key_algo_param(ptlv, oval);
 
-			ptlv_algo->length +=
-				ptlv->type_len + 1 + 2 + ptlv->length;
+			if (err != ERR_CODE(PASSED))
+				break;
+
+			/*
+			 * Calculate the additional algorithm parameter
+			 * defined.
+			 * Don't use ptlv->type in the TLV_ELEMENT_LENGTH()
+			 * macro here as the ptlv->type is the full parameter
+			 * string (e.g. HASH=SHA256)
+			 */
+			TLV_ELEMENT_LENGTH("\0", ptlv->length, tlv_elem_length);
+			if (INC_OVERFLOW(tlv_elem_length, ptlv->type_len) ||
+			    INC_OVERFLOW(ptlv_algo->length, tlv_elem_length))
+				err = ERR_CODE(FAILED);
 		}
 
+		if (err == ERR_CODE(FAILED))
+			break;
+
 		/* Increase the key usage length with the new algorithm */
-		ptlv_usage->length +=
-			ptlv_algo->type_len + 1 + 2 + ptlv_algo->length;
+		TLV_ELEMENT_LENGTH(ptlv_algo->type, ptlv_algo->length,
+				   tlv_elem_length);
+		if (INC_OVERFLOW(ptlv_usage->length, tlv_elem_length))
+			err = ERR_CODE(FAILED);
 	}
 
-	/* Increase the total policy length with the new key usage */
-	*policy_len += ptlv_usage->type_len + 1 + 2 + ptlv_usage->length;
+	if (err == ERR_CODE(PASSED)) {
+		/* Increase the total policy length with the new key usage */
+		TLV_ELEMENT_LENGTH(ptlv_usage->type, ptlv_usage->length,
+				   tlv_elem_length);
+		if (INC_OVERFLOW(*policy_len, tlv_elem_length))
+			err = ERR_CODE(FAILED);
+	}
 
 	*tlv = ptlv;
 
 	return err;
 }
 
-static int count_tlv_key_usage_algo(int *nb_tlv, struct json_object_iter *usage)
+static int count_tlv_key_usage_algo(size_t *nb_tlv,
+				    struct json_object_iter *usage)
 {
 	struct json_object *oalgo = NULL;
 	struct json_object *oval = NULL;
-	int nb_elem;
-	int nb_params;
-	int idx;
+	size_t nb_elem = 0;
+	size_t nb_params = 0;
+	size_t idx = 0;
 
 	nb_elem = json_object_array_length(usage->val);
 
@@ -452,7 +527,7 @@ static int count_tlv_key_usage_algo(int *nb_tlv, struct json_object_iter *usage)
 	 *        [...]
 	 *    ]
 	 */
-	for (idx = 0; idx < nb_elem; idx++) {
+	for (; idx < nb_elem; idx++) {
 		oalgo = json_object_array_get_idx(usage->val, idx);
 		if (json_object_get_type(oalgo) != json_type_array) {
 			DBG_PRINT("Usage %s entry #%d must be an array",
@@ -467,7 +542,10 @@ static int count_tlv_key_usage_algo(int *nb_tlv, struct json_object_iter *usage)
 			return ERR_CODE(FAILED);
 		}
 
-		*nb_tlv += nb_params;
+		if (INC_OVERFLOW(*nb_tlv, nb_params)) {
+			DBG_PRINT("Too much parameters");
+			return ERR_CODE(FAILED);
+		}
 
 		oval = json_object_array_get_idx(oalgo, 0);
 		if (json_object_get_type(oval) != json_type_string) {
@@ -496,6 +574,7 @@ static int concat_attr_list(unsigned char **attr, unsigned int *len,
 			    unsigned char **add_attr, unsigned int add_attr_len)
 {
 	unsigned char *new_attr = NULL;
+	unsigned int new_len = 0;
 
 	if (*attr) {
 		/*
@@ -503,15 +582,19 @@ static int concat_attr_list(unsigned char **attr, unsigned int *len,
 		 * a new one and concatenate the new computed attribute
 		 * list.
 		 */
-		new_attr = realloc(*attr, *len + add_attr_len);
+		if (ADD_OVERFLOW(*len, add_attr_len, &new_len))
+			return ERR_CODE(FAILED);
+
+		new_attr = realloc(*attr, new_len);
 		if (!new_attr) {
 			DBG_PRINT_ALLOC_FAILURE();
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 
 		(void)memcpy(new_attr + *len, *add_attr, add_attr_len);
-		*len += add_attr_len;
+
 		*attr = new_attr;
+		*len = new_len;
 
 		free(*add_attr);
 		*add_attr = NULL;
@@ -526,25 +609,28 @@ static int concat_attr_list(unsigned char **attr, unsigned int *len,
 static int concat_policy_attr(unsigned char **attr, unsigned int *len,
 			      unsigned char *usages, unsigned int usages_len)
 {
-	int err;
-	char *p;
+	int err = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+	unsigned char *p = NULL;
 	unsigned char *policy_attr = NULL;
 	unsigned int policy_len = 0;
 
-	policy_len = sizeof(TLV_KEY_POLICY) + 2 + usages_len;
+	TLV_ELEMENT_LENGTH(TLV_KEY_POLICY, usages_len, policy_len);
+	if (policy_len < sizeof(TLV_KEY_POLICY))
+		return err;
+
 	policy_attr = malloc(policy_len);
 	if (!policy_attr) {
 		DBG_PRINT_ALLOC_FAILURE();
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		return err;
 	}
 
-	p = (char *)policy_attr;
-	(void)strcpy(p, TLV_KEY_POLICY);
+	p = policy_attr;
+	(void)strcpy((char *)p, TLV_KEY_POLICY);
 	p += sizeof(TLV_KEY_POLICY);
 
 	/* Set the 'length' of TLV with 2 bytes */
-	*(p++) = usages_len >> CHAR_BIT;
-	*(p++) = usages_len & UCHAR_MAX;
+	*(p++) = GET_BYTE(usages_len, 1);
+	*(p++) = GET_BYTE(usages_len, 0);
 
 	(void)memcpy(p, usages, usages_len);
 
@@ -578,20 +664,20 @@ static void free_tlv_list(struct tlv_list **tlv_list)
 			entry = next;
 		}
 
-		tlv_list = NULL;
+		*tlv_list = NULL;
 	}
 }
 
-static int tlv_convert_numeral(long *numeral, unsigned int length,
+static int tlv_convert_numeral(long *numeral, size_t length,
 			       const unsigned char *value)
 {
 	int err = ERR_CODE(FAILED);
-	unsigned int i;
+	size_t i = 0;
 
 	*numeral = 0;
 
 	if (length <= sizeof(*numeral)) {
-		for (i = 0; i < length; i++)
+		for (; i < length; i++)
 			*numeral |= (long)value[i] << ((length - 1 - i) * 8);
 
 		err = ERR_CODE(PASSED);
@@ -628,8 +714,8 @@ static int parse_tlv_list(struct tlv_list **tlv_list, const unsigned char **str,
 	struct tlv_list **list_elem = NULL;
 	const unsigned char *p = *str;
 	const unsigned char *p_end = NULL;
-	unsigned int value_length = 0;
-	unsigned int tmp_len = 0;
+	size_t value_length = 0;
+	size_t tmp_len = 0;
 
 	if (!tlv_list)
 		return err;
@@ -684,7 +770,7 @@ static int parse_tlv_list(struct tlv_list **tlv_list, const unsigned char **str,
 
 	DBG_PRINT("Decoding TYPE=%s LENGTH=%d", entry->type, value_length);
 
-	if ((unsigned int)(end - p) < value_length - 1) {
+	if (!((uintptr_t)end - (uintptr_t)p >= value_length)) {
 		DBG_PRINT("TLV string is too small p=%p end=%p", p, end);
 		err = ERR_CODE(FAILED);
 		goto exit;
@@ -823,7 +909,11 @@ static int report_policy_comparison(struct tlv_list *list)
 
 	for (; entry; entry = entry->next) {
 		if (!entry->verified && entry->tlv) {
-			error++;
+			if (INC_OVERFLOW(error, 1)) {
+				error = -1;
+				break;
+			}
+
 			switch (entry->tlv->val_type) {
 			case json_type_int:
 				DBG_PRINT("Policy %s=%s not verified",
@@ -862,10 +952,20 @@ static int compare_policy_lists(struct tlv_list *ref_policy,
 
 	DBG_PRINT("Report missing value(s) in policy reference");
 	ref_error = report_policy_comparison(ref_policy);
+	if (ref_error < 0) {
+		DBG_PRINT("Too much missing values in policy reference");
+		return res;
+	}
+
 	DBG_PRINT("Missing %d value(s) in policy reference", ref_error);
 
 	DBG_PRINT("Report missing value(s) in policy retrieved");
 	error = report_policy_comparison(policy);
+	if (error < 0) {
+		DBG_PRINT("Too much missing values in policy reference");
+		return res;
+	}
+
 	DBG_PRINT("Missing %d value(s) in policy retrieved", error);
 
 	if (!error && !ref_error)
@@ -877,18 +977,19 @@ static int compare_policy_lists(struct tlv_list *ref_policy,
 int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
 			struct json_object *params)
 {
-	int ret;
+	int ret = ERR_CODE(BAD_ARGS);
 	struct tlv *tlv = NULL;
-	struct json_object *oattr_list;
-	struct json_object *oattr;
+	struct json_object *oattr_list = NULL;
+	struct json_object *oattr = NULL;
 	unsigned char *new_attr = NULL;
 	unsigned int new_attr_len = 0;
-	int nb_attrs = 0;
-	int idx;
+	size_t nb_attrs = 0;
+	size_t idx = 0;
+	size_t tlvs_size = 0;
 
 	if (!params || !attr || !len) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return ret;
 	}
 
 	ret = util_read_json_type(&oattr_list, ATTR_LIST_OBJ, t_array, params);
@@ -911,11 +1012,14 @@ int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
 		oattr = oattr_list;
 	}
 
-	tlv = calloc(1, nb_attrs * sizeof(*tlv));
+	if (MUL_OVERFLOW(nb_attrs, sizeof(*tlv), &tlvs_size))
+		return ERR_CODE(BAD_ARGS);
+
+	tlv = calloc(1, tlvs_size);
 	if (!tlv)
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 
-	for (idx = 0; idx < nb_attrs; idx++) {
+	for (; idx < nb_attrs; idx++) {
 		if (nb_attrs > 1)
 			oattr = json_object_array_get_idx(oattr_list, idx);
 		ret = read_tlv(&tlv[idx], &new_attr_len, oattr);
@@ -945,18 +1049,19 @@ end:
 int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
 			     struct json_object *okey)
 {
-	int err;
+	int err = ERR_CODE(BAD_ARGS);
 	struct json_object *obj = NULL;
-	struct json_object_iter usage;
+	struct json_object_iter usage = { 0 };
 	struct tlv *tlv = NULL;
 	struct tlv *ptlv = NULL;
-	int nb_tlv = 0;
+	size_t nb_tlv = 0;
+	size_t tlvs_size = 0;
 	unsigned char *usages_attr = NULL;
 	unsigned int usages_len = 0;
 
 	if (!okey || !attr || !len) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return err;
 	}
 
 	/*
@@ -996,14 +1101,18 @@ int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
 			return ERR_CODE(FAILED);
 		}
 
-		nb_tlv++;
+		if (INC_OVERFLOW(nb_tlv, 1))
+			return ERR_CODE(INTERNAL);
 
 		err = count_tlv_key_usage_algo(&nb_tlv, &usage);
 		if (err != ERR_CODE(PASSED))
 			return err;
 	}
 
-	tlv = calloc(1, nb_tlv * sizeof(*tlv));
+	if (!nb_tlv || MUL_OVERFLOW(nb_tlv, sizeof(*tlv), &tlvs_size))
+		return ERR_CODE(INTERNAL);
+
+	tlv = calloc(1, tlvs_size);
 	if (!tlv) {
 		DBG_PRINT_ALLOC_FAILURE();
 		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
@@ -1040,7 +1149,7 @@ int util_tlv_check_key_policy(struct subtest_data *subtest,
 			      const unsigned char *policy,
 			      unsigned int policy_len)
 {
-	int res = ERR_CODE(INTERNAL);
+	int res = ERR_CODE(BAD_ARGS);
 
 	int error = 0;
 	struct json_object *okey_params = NULL;
@@ -1055,7 +1164,7 @@ int util_tlv_check_key_policy(struct subtest_data *subtest,
 
 	if (!policy || !policy_len) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
@@ -1070,7 +1179,7 @@ int util_tlv_check_key_policy(struct subtest_data *subtest,
 	if (policy_len > ref_policy_len) {
 		DBG_PRINT("Policy length is %u expected maximum %u bytes",
 			  policy_len, ref_policy_len);
-		error++;
+		error = 1;
 	}
 
 	/* Check first if policy is starting with POLICY string */
@@ -1078,7 +1187,7 @@ int util_tlv_check_key_policy(struct subtest_data *subtest,
 		    MIN(policy_len, strlen(TLV_KEY_POLICY)))) {
 		DBG_PRINT("Policy string is not starting with %s",
 			  TLV_KEY_POLICY);
-		error++;
+		error = 1;
 		goto exit;
 	}
 
@@ -1094,13 +1203,13 @@ int util_tlv_check_key_policy(struct subtest_data *subtest,
 	p_len = tlv_length(&p);
 	if (!p_len) {
 		DBG_PRINT("Policy variable list is empty");
-		error++;
+		error = 1;
 		goto exit;
 	}
 
-	if (p_len != (unsigned int)(p_end - p)) {
+	if (p_len != (uintptr_t)p_end - (uintptr_t)p) {
 		DBG_PRINT("Policy buffer and list lengths not equal");
-		error++;
+		error = 1;
 		goto exit;
 	}
 
@@ -1121,7 +1230,7 @@ int util_tlv_check_key_policy(struct subtest_data *subtest,
 	p_len = tlv_length(&p);
 	if (!p_len) {
 		DBG_PRINT("Reference Policy variable list is empty");
-		error++;
+		error = 1;
 		goto exit;
 	}
 
@@ -1188,7 +1297,7 @@ int util_tlv_check_lifecycle(const unsigned char *lifecyle,
 		return ERR_CODE(FAILED);
 	}
 
-	if (p_len != (unsigned int)(p_end - p)) {
+	if (p_len != (uintptr_t)p_end - (uintptr_t)p) {
 		DBG_PRINT("Lifecycle buffer and list length not equal");
 		return ERR_CODE(FAILED);
 	}

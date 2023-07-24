@@ -21,7 +21,7 @@
 static struct app_data *util_app_get_data(pid_t pid)
 {
 	struct test_data *test = util_get_test();
-	struct app_data *data;
+	struct app_data *data = NULL;
 	struct node *node = NULL;
 
 	if (!test)
@@ -43,43 +43,39 @@ static struct app_data *util_app_get_data(pid_t pid)
 static void util_app_destroy(void *data)
 {
 	struct app_data *app_data = data;
-	int err;
+	int err = ERR_CODE(PASSED);
 
 	if (!app_data)
 		return;
 
 	err = util_list_clear(app_data->keys);
-	if (err != ERR_CODE(PASSED))
-		DBG_PRINT("Clear list keys error %d", err);
+	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list keys error %d", err);
 
 	err = util_list_clear(app_data->op_contexts);
-	if (err != ERR_CODE(PASSED))
-		DBG_PRINT("Clear list operation contexts error %d", err);
+	DBG_ASSERT(err == ERR_CODE(PASSED),
+		   "Clear list operation contexts error %d", err);
 
 	err = util_list_clear(app_data->ciphers);
-	if (err != ERR_CODE(PASSED))
-		DBG_PRINT("Clear list ciphers error %d", err);
+	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list ciphers error %d", err);
 
 	err = util_list_clear(app_data->signatures);
-	if (err != ERR_CODE(PASSED))
-		DBG_PRINT("Clear list signatures error %d", err);
+	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list signatures error %d",
+		   err);
 
 	err = util_list_clear(app_data->macs);
-	if (err != ERR_CODE(PASSED))
-		DBG_PRINT("Clear list MACs error %d", err);
+	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list MACs error %d", err);
 
 	err = util_list_clear(app_data->threads);
-	if (err != ERR_CODE(PASSED))
-		DBG_PRINT("Clear list threads error %d", err);
+	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list threads error %d", err);
 
 	err = util_list_clear(app_data->semaphores);
-	if (err != ERR_CODE(PASSED))
-		DBG_PRINT("Clear list semaphores error %d", err);
+	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list semaphores error %d",
+		   err);
 
 	/* Destroy the thread completion mutex and condition */
 	err = util_thread_ends_destroy(app_data);
-	if (err != ERR_CODE(PASSED))
-		DBG_PRINT("Application Thread ends destroy error %d", err);
+	DBG_ASSERT(err == ERR_CODE(PASSED),
+		   "Application Thread ends destroy error %d", err);
 
 	if (app_data->parent_def)
 		json_object_put(app_data->parent_def);
@@ -105,12 +101,12 @@ static void util_app_destroy(void *data)
 static int app_register(struct test_data *test, unsigned int id,
 			struct app_data **data)
 {
-	int err;
+	int err = ERR_CODE(BAD_ARGS);
 	struct app_data *app_data = NULL;
 
 	if (!test || !test->apps || !id || !data) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return err;
 	}
 
 	app_data = calloc(1, sizeof(*app_data));
@@ -163,6 +159,7 @@ static int app_register(struct test_data *test, unsigned int id,
 
 exit:
 	if (err != ERR_CODE(PASSED))
+		// coverity[leaked_storage]
 		util_app_destroy(app_data);
 
 	return err;
@@ -186,12 +183,12 @@ struct app_data *util_app_get_active_data(void)
 int util_app_create(struct test_data *test, unsigned int app_id,
 		    struct json_object *def)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct app_data *app = NULL;
 
 	if (!test || !app_id) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	res = app_register(test, app_id, &app);
@@ -203,12 +200,12 @@ int util_app_create(struct test_data *test, unsigned int app_id,
 
 int util_app_fork(struct app_data *app)
 {
-	int res;
-	int pid;
+	int res = ERR_CODE(BAD_ARGS);
+	int pid = 0;
 
 	if (!app) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	/* Flush all user-space buffered data before duplicating the process */

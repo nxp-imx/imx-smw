@@ -26,10 +26,10 @@ static void dbg_func_printf(const char *function, int line, const char *app,
 void util_dbg_printf(const char *function, int line, const char *fmt, ...)
 {
 	struct test_data *test = NULL;
-	struct app_data *app;
+	struct app_data *app = NULL;
 	const char *thr_name = NULL;
 	const char *app_name = NULL;
-	va_list args;
+	va_list args = { 0 };
 
 	va_start(args, fmt);
 
@@ -62,12 +62,13 @@ void util_dbg_dumphex(const char *function, int line, char *msg, void *buf,
 		      size_t len)
 {
 	struct test_data *test = NULL;
-	struct app_data *app;
+	struct app_data *app = NULL;
 	const char *thr_name = NULL;
 	const char *app_name = NULL;
-	size_t idx;
-	char out[256];
+	size_t idx = 0;
+	char out[256] = { 0 };
 	int off = 0;
+	int nb_char = 0;
 
 	app = util_app_get_active_data();
 
@@ -88,12 +89,18 @@ void util_dbg_dumphex(const char *function, int line, char *msg, void *buf,
 
 	if (buf) {
 		for (idx = 0; idx < len; idx++) {
-			if (((idx % 16) == 0) && idx > 0) {
+			if ((!(idx % 16) && idx > 0) ||
+			    off == (sizeof(out) - 1)) {
 				printf("%s\n", out);
 				off = 0;
 			}
-			off += snprintf(out + off, (sizeof(out) - off), "%02X ",
-					((char *)buf)[idx]);
+
+			nb_char = snprintf(out + off, (sizeof(out) - off),
+					   "%02X ", ((char *)buf)[idx]);
+			if (nb_char < 0)
+				break;
+
+			off += nb_char;
 		}
 
 		if (off > 0)

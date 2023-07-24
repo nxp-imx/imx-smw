@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __UTIL_DEBUG_H__
@@ -46,5 +46,15 @@ void util_dbg_dumphex(const char *function, int line, char *msg, void *buf,
 
 #define DBG_DHEX(msg, buf, len)                                                \
 	util_dbg_dumphex(__func__, __LINE__, msg, buf, len)
+
+#define DBG_ASSERT(cond, ...)                                                  \
+	({                                                                     \
+		if (!(cond)) {                                                 \
+			DBG_PRINT(__VA_ARGS__);                                \
+			fflush(stdout);                                        \
+			/* Exit in error properly flushing/closing streams */  \
+			exit(EXIT_FAILURE);                                    \
+		}                                                              \
+	})
 
 #endif /* __UTIL_DEBUG_H__ */

@@ -42,12 +42,13 @@ int util_cipher_init(struct llist **list)
 int util_cipher_add_out_data(struct llist *list, unsigned int ctx_id,
 			     unsigned char *out_data, unsigned int data_len)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 
 	struct cipher_output_data *data = NULL;
+	unsigned int new_output_size = 0;
 
 	if (!out_data || !list)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	res = util_list_find_node(list, ctx_id, (void **)&data);
 	if (res != ERR_CODE(PASSED))
@@ -72,30 +73,31 @@ int util_cipher_add_out_data(struct llist *list, unsigned int ctx_id,
 		memcpy(data->output, out_data, data->output_len);
 
 		res = util_list_add_node(list, ctx_id, data);
-		if (res != ERR_CODE(PASSED)) {
+		if (res != ERR_CODE(PASSED))
 			cipher_free_data(data);
-			return res;
-		}
 	} else {
 		/* Realloc output data and fill it */
-		data->output =
-			realloc(data->output, data->output_len + data_len);
+		if (ADD_OVERFLOW(data->output_len, data_len, &new_output_size))
+			return ERR_CODE(BAD_ARGS);
+
+		data->output = realloc(data->output, new_output_size);
 		if (!data->output) {
 			DBG_PRINT_ALLOC_FAILURE();
 			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
 
 		memcpy(data->output + data->output_len, out_data, data_len);
-		data->output_len += data_len;
+		data->output_len = new_output_size;
+		res = ERR_CODE(PASSED);
 	}
 
-	return ERR_CODE(PASSED);
+	return res;
 }
 
 int util_cipher_cmp_output_data(struct llist *list, unsigned int ctx_id,
 				unsigned char *data, unsigned int data_len)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 	struct cipher_output_data *node_data = NULL;
 
 	res = util_list_find_node(list, ctx_id, (void **)&node_data);
@@ -118,7 +120,7 @@ int util_cipher_cmp_output_data(struct llist *list, unsigned int ctx_id,
 int util_cipher_copy_node(struct llist *list, unsigned int dst_ctx_id,
 			  unsigned int src_ctx_id)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 	struct cipher_output_data *data = NULL;
 
 	res = util_list_find_node(list, src_ctx_id, (void **)&data);

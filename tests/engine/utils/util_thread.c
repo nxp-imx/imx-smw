@@ -19,7 +19,7 @@ static int get_active_thread_data(struct app_data *app,
 				  struct thread_data **thr)
 {
 	struct node *node = NULL;
-	pthread_t tid;
+	pthread_t tid = 0;
 
 	if (!app || !thr)
 		return ERR_CODE(BAD_ARGS);
@@ -63,7 +63,7 @@ static void thr_free_data(void *data)
 static int read_thread_loop(struct json_object_iter *thr_obj, int *loop,
 			    struct json_object **thr_def)
 {
-	struct json_object *otmp;
+	struct json_object *otmp = NULL;
 
 	if (json_object_array_length(thr_obj->val) != 2) {
 		DBG_PRINT("\"%s\" is more than 2 array entries", thr_obj->key);
@@ -95,7 +95,7 @@ static int cancel_all_threads(struct app_data *app)
 {
 	int status = ERR_CODE(PASSED);
 	struct node *node = NULL;
-	struct thread_data *thr;
+	struct thread_data *thr = NULL;
 
 	node = util_list_next(app->threads, node, NULL);
 	while (node) {
@@ -134,7 +134,7 @@ static void *process_thread_ends(void *arg)
 	struct thread_ends *thr_end = arg;
 	int *thr_status = NULL;
 	struct node *node = NULL;
-	struct thread_data *thr;
+	struct thread_data *thr = NULL;
 
 	if (!thr_end || !thr_end->app) {
 		DBG_PRINT_BAD_ARGS();
@@ -184,16 +184,16 @@ static void *process_thread_ends(void *arg)
  */
 static int thread_ends_start(struct app_data *app)
 {
-	int res;
-	struct thread_ends *thr;
+	int res = ERR_CODE(BAD_ARGS);
+	struct thread_ends *thr = NULL;
 
 	if (!app)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	thr = calloc(1, sizeof(*thr));
 	if (!thr) {
 		DBG_PRINT_ALLOC_FAILURE();
-		return INTERNAL_OUT_OF_MEMORY;
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
 	thr->app = app;
@@ -260,7 +260,10 @@ static int log_header(struct thread_data *thr, char *str)
 			return err;
 		}
 
-		nb_char += err;
+		if (INC_OVERFLOW(nb_char, err)) {
+			DBG_PRINT("Nb char overflow");
+			nb_char = -1;
+		}
 	}
 
 	return nb_char;
@@ -333,7 +336,7 @@ static void thread_stat_log(struct thread_data *thr)
 	int nb_char = 0;
 	int err = 0;
 	char str[256] = { 0 };
-	int rate_passed = 0;
+	size_t rate_passed = 0;
 	int total = 0;
 	int fails = 0;
 
@@ -356,12 +359,14 @@ static void thread_stat_log(struct thread_data *thr)
 	fails = total - thr->stat.passed;
 
 	if (thr->stat.ran && total) {
-		rate_passed = 100 * thr->stat.passed;
-		rate_passed /= total;
+		if (!MUL_OVERFLOW(thr->stat.passed, 100, &rate_passed))
+			rate_passed /= total;
+		else
+			rate_passed = 0;
 	}
 
 	err = sprintf(&str[nb_char],
-		      "\t%d%% subtests passed, %d failed out of %d",
+		      "\t%zu%% subtests passed, %d failed out of %d",
 		      rate_passed, fails, total);
 
 	if (err >= 0)
@@ -397,13 +402,13 @@ int util_thread_init(struct llist **list)
 int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 		      unsigned int thr_num)
 {
-	int err;
+	int err = ERR_CODE(BAD_ARGS);
 	int loop = 0;
 	struct thread_data *thr = NULL;
 	struct json_object *def_obj = NULL;
 
 	if (!app || !thr_obj)
-		return ERR_CODE(BAD_ARGS);
+		return err;
 
 	DBG_PRINT("%s", thr_obj->key);
 
@@ -471,11 +476,11 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 
 int util_get_thread_name(struct app_data *app, const char **name)
 {
-	int res;
+	int res = ERR_CODE(BAD_ARGS);
 	struct thread_data *thr = NULL;
 
 	if (!app || !name)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	res = get_active_thread_data(app, &thr);
 	if (res == ERR_CODE(PASSED) && thr)
@@ -486,14 +491,14 @@ int util_get_thread_name(struct app_data *app, const char **name)
 
 int util_thread_ends_destroy(struct app_data *app)
 {
-	int res = ERR_CODE(PASSED);
-	int err;
+	int res = ERR_CODE(BAD_ARGS);
+	int err = ERR_CODE(PASSED);
 
 	if (!app)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	if (!app->thr_ends)
-		return res;
+		return ERR_CODE(PASSED);
 
 	res = util_mutex_destroy(&app->thr_ends->lock);
 	if (res != ERR_CODE(PASSED))
@@ -513,11 +518,11 @@ int util_thread_ends_destroy(struct app_data *app)
 
 int util_thread_ends_wait(struct app_data *app)
 {
-	int res;
-	int status;
+	int res = ERR_CODE(BAD_ARGS);
+	int status = ERR_CODE(PASSED);
 
 	if (!app)
-		return ERR_CODE(BAD_ARGS);
+		return res;
 
 	/*
 	 * Create and start the thread waiting all test threads

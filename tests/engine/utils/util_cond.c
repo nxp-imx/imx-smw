@@ -61,8 +61,8 @@ int util_cond_signal(void *cond)
 int util_cond_wait(void *cond, void *mutex, unsigned int timeout)
 {
 	int res = ERR_CODE(FAILED);
-	int err;
-	struct timespec ts;
+	int err = 0;
+	struct timespec ts = { 0 };
 
 	if (!cond || !mutex || !timeout) {
 		DBG_PRINT_BAD_ARGS();

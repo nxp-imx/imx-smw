@@ -67,10 +67,11 @@ static int run_singleapp(struct test_data *test)
 static int run_multiapp(struct test_data *test)
 {
 	int status = ERR_CODE(FAILED);
-	int res;
-	struct json_object_iter obj;
+	int res = ERR_CODE(PASSED);
+	struct json_object_iter obj = { 0 };
 	unsigned int app_counter = 1;
-	unsigned int first, last;
+	unsigned int first = 0;
+	unsigned int last = 0;
 
 	if (!json_object_get_object(test->definition)) {
 		DBG_PRINT("Test definition json_object_get_object error");
@@ -106,7 +107,7 @@ static int run_multiapp(struct test_data *test)
 			goto exit;
 		}
 
-		for (; app_counter < last + 1; app_counter++) {
+		for (; app_counter <= last; app_counter++) {
 			status = util_app_create(test, app_counter, obj.val);
 			if (status != ERR_CODE(PASSED))
 				goto exit;
@@ -141,8 +142,8 @@ exit:
  */
 static const struct app_type *get_app_type(struct test_data *test_data)
 {
-	const struct app_type *test;
-	struct json_object_iter obj;
+	const struct app_type *test = NULL;
+	struct json_object_iter obj = { 0 };
 
 	if (!test_data || !test_data->definition)
 		return NULL;

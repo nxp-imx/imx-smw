@@ -72,7 +72,7 @@
 		if ((_v & _max_v) == _v) {                                     \
 			_res = _v;                                             \
 			_overflow = 0;                                         \
-		} else if (ADD_OVERFLOW(~_v, 1, &_res)) {                      \
+		} else if (!ADD_OVERFLOW(~_v, 1, &_res)) {                     \
 			_overflow = 0;                                         \
 		}                                                              \
 		res = _res;                                                    \

@@ -14,7 +14,6 @@
 #include "util_thread.h"
 #include "util_rtcwake.h"
 #include "util_key.h"
-#include "util_file.h"
 #include "exec_smw.h"
 #include "exec_psa.h"
 
@@ -182,9 +181,10 @@ static int is_subtest_passed(struct thread_data *thr, int id)
 static int run_subtest_vs_depends(struct thread_data *thr,
 				  struct json_object *def)
 {
-	int res;
-	int dep_id;
-	int nb_members = 1;
+	int res = ERR_CODE(PASSED);
+	int dep_id = 0;
+	size_t nb_members = 0;
+	size_t i = 0;
 	struct json_object *depends_obj = NULL;
 	struct json_object *oval = NULL;
 
@@ -217,7 +217,7 @@ static int run_subtest_vs_depends(struct thread_data *thr,
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
-		for (int i = 0; i < nb_members; i++) {
+		for (; i < nb_members; i++) {
 			/* Get the subtest id number */
 			oval = json_object_array_get_idx(depends_obj, i);
 			if (json_object_get_type(oval) != json_type_int) {
@@ -255,7 +255,7 @@ static void run_subtest(struct thread_data *thr)
 	const char *sub_exp = NULL;
 	const char *exp_res_st = NULL;
 	int exp_status = 0;
-	struct subtest_data *subtest;
+	struct subtest_data *subtest = NULL;
 
 	subtest = thr->subtest;
 	subtest->api_status = 0;
@@ -320,7 +320,7 @@ static void run_subtest(struct thread_data *thr)
 	 * If not set in test definition file, use default value.
 	 */
 	subtest->version = SMW_API_DEFAULT_VERSION;
-	res = util_read_json_type(&subtest->version, VERSION_OBJ, t_int,
+	res = util_read_json_type(&subtest->version, VERSION_OBJ, t_int8,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
@@ -399,8 +399,10 @@ static void run_subtest(struct thread_data *thr)
 exit:
 	*thr->subtest->status = res;
 
-	if (res == ERR_CODE(PASSED))
-		thr->stat.passed++;
+	if (res == ERR_CODE(PASSED)) {
+		if (INC_OVERFLOW(thr->stat.passed, 1))
+			thr->stat.passed = 0;
+	}
 
 	if (thr->status == ERR_CODE(PASSED))
 		thr->status = res;
@@ -413,9 +415,10 @@ void *process_thread(void *arg)
 	int err = ERR_CODE(BAD_ARGS);
 	int total = 0;
 	int nb_loops = 1;
-	int idx_stat;
+	int idx_stat = 0;
+	size_t status_array_size = 0;
 	struct thread_data *thr = arg;
-	struct json_object_iter obj;
+	struct json_object_iter obj = { 0 };
 	struct subtest_data subtest = { 0 };
 
 	if (!thr || !thr->def) {
@@ -446,8 +449,13 @@ void *process_thread(void *arg)
 	}
 
 	total = thr->stat.number;
-	thr->stat.status_array =
-		malloc(thr->stat.number * sizeof(*thr->stat.status_array));
+	if (MUL_OVERFLOW(thr->stat.number, sizeof(*thr->stat.status_array),
+			 &status_array_size)) {
+		thr->status = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	thr->stat.status_array = malloc(status_array_size);
 	if (!thr->stat.status_array) {
 		DBG_PRINT_ALLOC_FAILURE();
 		thr->status = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
@@ -507,7 +515,11 @@ void *process_thread(void *arg)
 			subtest.app = thr->app;
 			subtest.name = obj.key;
 			subtest.params = obj.val;
-			subtest.status = &thr->stat.status_array[idx_stat++];
+			subtest.status = &thr->stat.status_array[idx_stat];
+			if (INC_OVERFLOW(idx_stat, 1)) {
+				err = ERR_CODE(INTERNAL);
+				goto exit;
+			}
 
 			thr->stat.ran++;
 			run_subtest(thr);

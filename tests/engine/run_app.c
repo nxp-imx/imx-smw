@@ -64,10 +64,11 @@ const struct thread_type {
  */
 static int setup_tee_info(struct json_object *test_def)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 	struct tee_info info = tee_default_info;
 	struct json_object *oinfo = NULL;
 	char *ta_uuid = NULL;
+	size_t ta_uuid_len = 0;
 
 	res = util_read_json_type(&oinfo, TEE_INFO_OBJ, t_object, test_def);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
@@ -79,10 +80,14 @@ static int setup_tee_info(struct json_object *test_def)
 		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 			return res;
 
-		if (strlen(ta_uuid) + 1 > sizeof(info.ta_uuid))
+		ta_uuid_len = strlen(ta_uuid);
+		if (INC_OVERFLOW(ta_uuid_len, 1))
 			return ERR_CODE(BAD_PARAM_TYPE);
 
-		memcpy(info.ta_uuid, ta_uuid, strlen(ta_uuid) + 1);
+		if (ta_uuid_len > sizeof(info.ta_uuid))
+			return ERR_CODE(BAD_PARAM_TYPE);
+
+		memcpy(info.ta_uuid, ta_uuid, ta_uuid_len);
 	}
 
 	res = smw_osal_set_subsystem_info("TEE", &info, sizeof(info));
@@ -118,7 +123,7 @@ static int setup_tee_info(struct json_object *test_def)
  */
 static int setup_hsm_ele_info(struct json_object *test_def, int is_ele)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 	struct se_info info = se_default_info;
 	struct json_object *oinfo = NULL;
 
@@ -177,9 +182,10 @@ static int setup_hsm_ele_info(struct json_object *test_def, int is_ele)
  */
 static int setup_key_db(struct json_object *test_def)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 	char *filepath = DEFAULT_KEY_DB;
 	struct json_object *oinfo = NULL;
+	size_t filepath_len = 0;
 
 	res = util_read_json_type(&oinfo, KEY_DB_OBJ, t_object, test_def);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
@@ -193,7 +199,11 @@ static int setup_key_db(struct json_object *test_def)
 			return res;
 	}
 
-	res = smw_osal_open_key_db(filepath, strlen(filepath) + 1);
+	filepath_len = strlen(filepath);
+	if (INC_OVERFLOW(filepath_len, 1))
+		return ERR_CODE(BAD_PARAM_TYPE);
+
+	res = smw_osal_open_key_db(filepath, filepath_len);
 	if (res != SMW_STATUS_OK) {
 		DBG_PRINT("SMW Create Key database failed %s",
 			  get_string_status(res, "SMW"));
@@ -218,7 +228,7 @@ static int setup_key_db(struct json_object *test_def)
  */
 static int init_smwlib(struct app_data *app)
 {
-	int res;
+	int res = ERR_CODE(PASSED);
 
 	res = setup_tee_info(app->parent_def);
 	if (res != ERR_CODE(PASSED))
@@ -262,14 +272,14 @@ end:
  */
 static int run_multithread(struct app_data *app)
 {
-	int status = ERR_CODE(PASSED);
-	int res;
+	int status = ERR_CODE(FAILED);
+	int res = ERR_CODE(PASSED);
 	struct json_object_iter obj;
 	unsigned int thr_counter = 1;
 	unsigned int first, last;
 
 	if (!app || !app->parent_def)
-		return ERR_CODE(FAILED);
+		return status;
 
 	status = util_get_subdef(&app->def, app->parent_def, app->test);
 	if (status != ERR_CODE(PASSED))
@@ -310,7 +320,7 @@ static int run_multithread(struct app_data *app)
 		}
 
 		/* Create and start all threads */
-		for (; thr_counter < last + 1; thr_counter++) {
+		for (; thr_counter <= last; thr_counter++) {
 			res = util_thread_start(app, &obj, thr_counter);
 			status = (status == ERR_CODE(PASSED)) ? res : status;
 		}
@@ -339,7 +349,7 @@ end:
  */
 static int run_singlethread(struct app_data *app)
 {
-	int *status;
+	int *status = NULL;
 	struct thread_data thr = { 0 };
 
 	if (!app || !app->parent_def)
@@ -374,8 +384,8 @@ static int run_singlethread(struct app_data *app)
  */
 static const struct thread_type *get_thread_type(struct app_data *app)
 {
-	const struct thread_type *test;
-	struct json_object_iter obj;
+	const struct thread_type *test = NULL;
+	struct json_object_iter obj = { 0 };
 
 	if (!app || !app->parent_def)
 		return NULL;
@@ -408,8 +418,8 @@ static const struct thread_type *get_thread_type(struct app_data *app)
 int process_app(struct app_data *app)
 {
 	int status = ERR_CODE(FAILED);
-	int err;
-	const struct thread_type *thr;
+	int err = ERR_CODE(PASSED);
+	const struct thread_type *thr = NULL;
 
 	if (!app || !app->test) {
 		DBG_PRINT_BAD_ARGS();
@@ -464,7 +474,7 @@ exit:
 int run_apps(struct test_data *test)
 {
 	int status = ERR_CODE(PASSED);
-	int res;
+	int res = ERR_CODE(PASSED);
 	int nb_apps = 0;
 	struct node *node = NULL;
 	struct app_data *app = NULL;

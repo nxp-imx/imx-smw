@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -27,11 +27,11 @@ struct shared_data {
 
 static int init_shared_data(struct mp_args *args)
 {
-	int ret;
+	int ret = 0;
 	struct shared_data *share = args->shm.data;
 
 	if (args->child)
-		return 0;
+		return ret;
 
 	/* Initialize all semaphores */
 	for (int i = 0; i < NB_SEM; i++) {
@@ -47,11 +47,11 @@ static int init_shared_data(struct mp_args *args)
 
 static int uninit_shared_data(struct mp_args *args)
 {
-	int ret;
+	int ret = 0;
 	struct shared_data *share = args->shm.data;
 
 	if (args->child)
-		return 0;
+		return ret;
 
 	for (int i = 0; i < NB_SEM; i++) {
 		ret = sem_destroy(&share->sem[i]);
@@ -67,11 +67,11 @@ static int uninit_shared_data(struct mp_args *args)
 static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 			       CK_SESSION_HANDLE_PTR sess, CK_BBOOL token)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
-	CK_OBJECT_HANDLE hpubkey;
-	CK_OBJECT_HANDLE hprivkey;
+	CK_RV ret = CKR_OK;
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
 	CK_BBOOL btrue = CK_TRUE;
 
@@ -96,7 +96,7 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		nb_privkey_attrs = ARRAY_SIZE(privkey_token);
 	}
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(*sess, CKU_USER, NULL, 0);
@@ -134,8 +134,8 @@ end:
 
 static int wait_timeout(sem_t *sem)
 {
-	int ret;
-	struct timespec ts;
+	int ret = 0;
+	struct timespec ts = { 0 };
 
 	ret = clock_gettime(CLOCK_REALTIME, &ts);
 	if (CHECK_EXPECTED(!ret, "clock_gettime: %s\n",
@@ -143,7 +143,8 @@ static int wait_timeout(sem_t *sem)
 		return ret;
 
 	/* Set wait timeout in seconds */
-	ts.tv_sec += TIMEOUT_WAIT;
+	if (INC_OVERFLOW(ts.tv_sec, TIMEOUT_WAIT))
+		return 1;
 
 	ret = sem_timedwait(sem, &ts);
 	(void)CHECK_EXPECTED(!ret, "sem_timedwait: %s\n",
@@ -156,9 +157,9 @@ static CK_RV notify_callback(CK_SESSION_HANDLE hsess, CK_NOTIFICATION event,
 			     CK_VOID_PTR app)
 {
 	(void)hsess;
-	int ret;
+	int ret = 0;
 	struct mp_args *args = app;
-	struct shared_data *share;
+	struct shared_data *share = NULL;
 
 	if (!args)
 		return CKR_CANCEL;
@@ -239,18 +240,19 @@ end:
 
 void tests_pkcs11_callback(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	int ret;
+	int ret = 0;
 	struct mp_args mp_args = { 0 };
 
 	mp_args.pid = getpid();
 	tests_data.trace_pid = mp_args.pid;
 
-	TEST_START(status);
+	TEST_START();
 
 	mp_args.testname = strrchr(__func__, '_');
-	if (CHECK_EXPECTED(mp_args.testname, "Unable to get function name\n"))
+	if (CHECK_EXPECTED(mp_args.testname, "Unable to get function name\n") ||
+	    !mp_args.testname)
 		goto end;
 
 	mp_args.testname++;

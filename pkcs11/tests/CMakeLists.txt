@@ -9,7 +9,9 @@ add_executable(${PROJECT_NAME} EXCLUDE_FROM_ALL "")
 file(GLOB pkcs11_test *.c)
 target_sources(${PROJECT_NAME} PRIVATE  ${pkcs11_test})
 
-target_include_directories(${PROJECT_NAME} PRIVATE include)
+target_include_directories(${PROJECT_NAME} PRIVATE
+                           include
+                           ${CMAKE_SOURCE_DIR}/inc)
 
 set(LIBRARY_PATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
 

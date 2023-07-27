@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -10,11 +10,11 @@
 static int parallel_check_legacy(CK_FUNCTION_LIST_PTR pfunc,
 				 CK_SESSION_HANDLE_PTR sess)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("Legacy functions return CKR_FUNCTION_NOT_PARALLEL\n");
 	ret = pfunc->C_GetFunctionStatus(*sess);
@@ -34,12 +34,12 @@ void tests_pkcs11_parallel(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
 
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 
-	TEST_START(status);
+	TEST_START();
 
 	ret = pfunc->C_Initialize(NULL);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
@@ -54,6 +54,8 @@ end:
 	util_close_session(pfunc, &sess);
 
 	ret = pfunc->C_Finalize(NULL);
+	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
+		status = TEST_FAIL;
 
 	TEST_END(status);
 }

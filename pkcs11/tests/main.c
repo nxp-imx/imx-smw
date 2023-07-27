@@ -1,23 +1,21 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include "builtin_macros.h"
 #include "tests_pkcs11.h"
 
 const char *progname;
 
 static void printf_repeat(size_t count, const char ch)
 {
-	size_t i = count;
-
-	do {
+	for (size_t i = 0; i < count; i++)
 		printf("%c", ch);
-	} while (--i);
 
 	printf("\n");
 }
@@ -35,11 +33,7 @@ static void usage(void)
 
 static int run_tests(char *test_name)
 {
-	int ret;
-
-	ret = tests_pkcs11(test_name);
-
-	return ret;
+	return tests_pkcs11(test_name);
 }
 
 int main(int argc, char *argv[])
@@ -47,11 +41,17 @@ int main(int argc, char *argv[])
 	int ret = -1;
 	int option = 0;
 	char *test_name = NULL;
+	size_t nb_char = 0;
 
 	printf("\n");
-	printf_repeat(strlen(argv[0]) + 4, '*');
+
+	nb_char = strlen(argv[0]);
+	if (INC_OVERFLOW(nb_char, 4))
+		nb_char = strlen(argv[0]);
+
+	printf_repeat(nb_char, '*');
 	printf("* %s *\n", argv[0]);
-	printf_repeat(strlen(argv[0]) + 4, '*');
+	printf_repeat(nb_char, '*');
 	printf("\n");
 
 	progname = argv[0];

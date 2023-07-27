@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <dlfcn.h>
@@ -34,12 +34,12 @@ static struct test_interface {
 
 static int get_info(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
-	CK_INFO info;
+	CK_RV ret = CKR_OK;
+	CK_INFO info = { 0 };
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	ret = pfunc->C_GetInfo(&info);
 	if (CHECK_CK_RV(CKR_OK, "C_GetInfo"))
@@ -64,17 +64,18 @@ end:
 
 static int get_interface_list(void *handle)
 {
-	int status;
-	CK_RV ret;
+	int status = TEST_FAIL;
+	CK_RV ret = CKR_OK;
 
-	CK_FUNCTION_PTR(C_GetInterfaceList)(CK_INTERFACE_PTR, CK_ULONG_PTR);
+	CK_FUNCTION_PTR(C_GetInterfaceList)
+	(CK_INTERFACE_PTR, CK_ULONG_PTR) = NULL;
 	CK_ULONG nb_ifs = 0;
 	CK_INTERFACE_PTR ifs = NULL;
-	CK_FUNCTION_LIST_PTR funcs;
-	CK_ULONG idx;
-	int retcmp;
+	CK_FUNCTION_LIST_PTR funcs = NULL_PTR;
+	CK_ULONG idx = 0;
+	int retcmp = 0;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	/*
 	 * The C_GetInterfaceList function is not part of the
@@ -157,19 +158,19 @@ end:
 
 static int get_interface(void *handle)
 {
-	int status;
-	CK_RV ret;
+	int status = TEST_FAIL;
+	CK_RV ret = CKR_OK;
 
 	CK_FUNCTION_PTR(C_GetInterface)
 	(CK_UTF8CHAR_PTR pInterfaceName, CK_VERSION_PTR pVersion,
-	 CK_INTERFACE_PTR_PTR ppInterface, CK_FLAGS flags);
+	 CK_INTERFACE_PTR_PTR ppInterface, CK_FLAGS flags) = NULL;
 	CK_INTERFACE_PTR ifs = NULL;
 	struct test_interface *def_if = &exp_ifs[IF_DEF];
-	CK_FUNCTION_LIST_PTR funcs;
+	CK_FUNCTION_LIST_PTR funcs = NULL_PTR;
 	CK_VERSION bad_ver = { 2, 10 };
-	int retcmp;
+	int retcmp = 0;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	/*
 	 * The C_GetInterface function is not part of the
@@ -284,9 +285,9 @@ end:
 
 void tests_pkcs11_get_info_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	TEST_START(status);
+	TEST_START();
 
 	if (get_info(pfunc) == TEST_FAIL)
 		goto end;
@@ -300,9 +301,9 @@ end:
 void tests_pkcs11_get_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)pfunc;
-	int status;
+	int status = 0;
 
-	TEST_START(status);
+	TEST_START();
 
 	status = get_interface(lib_hdl);
 

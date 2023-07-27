@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -12,14 +12,14 @@
 static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 			     CK_BBOOL bencrypt)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hkey;
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
 	CK_KEY_TYPE key_type = CKK_AES;
-	CK_BYTE key[32] = {};
+	CK_BYTE key[32] = { 0 };
 
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
@@ -29,7 +29,7 @@ static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		{ CKA_ENCRYPT, &bencrypt, sizeof(bencrypt) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -64,11 +64,11 @@ end:
 static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 				      CK_BBOOL token, CK_BBOOL bencrypt)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hkey;
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
 	CK_ULONG key_len = 16;
 
@@ -78,7 +78,7 @@ static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 		{ CKA_ENCRYPT, &bencrypt, sizeof(bencrypt) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -112,18 +112,18 @@ end:
 
 static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hkey;
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
 	CK_KEY_TYPE key_type = CKK_AES;
-	CK_BYTE key[32] = {};
+	CK_BYTE key[32] = { 0 };
 	CK_BBOOL btrue = true;
 	CK_BBOOL bfalse = false;
-	CK_BBOOL bvalue;
+	CK_BBOOL bvalue = false;
 
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
@@ -147,7 +147,7 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_SENSITIVE, &btrue, sizeof(btrue) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -225,7 +225,6 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Get sensitive attribute\n");
-	bvalue = false;
 	keyAttrSensitive[0].pValue = &bvalue;
 	ret = pfunc->C_GetAttributeValue(sess, hkey, keyAttrSensitive,
 					 ARRAY_SIZE(keyAttrSensitive));
@@ -253,9 +252,9 @@ end:
 void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
 
 	init.CreateMutex = mutex_create;
@@ -263,7 +262,7 @@ void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	init.LockMutex = mutex_lock;
 	init.UnlockMutex = mutex_unlock;
 
-	TEST_START(status);
+	TEST_START();
 
 	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
@@ -297,6 +296,8 @@ void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	ret = pfunc->C_Finalize(NULL);
+	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
+		status = TEST_FAIL;
 
 	TEST_END(status);
 }

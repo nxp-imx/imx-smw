@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 #include <string.h>
 
@@ -16,12 +16,12 @@ struct tests_data tests_data;
 
 static int initialize(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("param = NULL\n");
 	ret = pfunc->C_Initialize(NULL);
@@ -109,9 +109,9 @@ end:
 static void tests_pkcs11_get_functions(void *lib_hdl,
 				       CK_FUNCTION_LIST_PTR_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	TEST_START(status);
+	TEST_START();
 
 	*pfunc = util_lib_get_func_list(lib_hdl);
 	if (!CHECK_EXPECTED(*pfunc, "Get function failure"))
@@ -123,9 +123,9 @@ static void tests_pkcs11_get_functions(void *lib_hdl,
 static void tests_pkcs11_initialize(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
-	int status;
+	int status = 0;
 
-	TEST_START(status);
+	TEST_START();
 
 	status = initialize(pfunc);
 
@@ -170,8 +170,8 @@ void tests_pkcs11_list(void)
 
 int tests_pkcs11(char *test_name)
 {
-	int diff_count;
-	void *lib_hdl;
+	int count = 0;
+	void *lib_hdl = NULL;
 	CK_FUNCTION_LIST_PTR func_list;
 
 	/* Initialize tests result */
@@ -202,9 +202,11 @@ int tests_pkcs11(char *test_name)
 	TEST_OUT("| Ran %d tests with %d failures\n", tests_data.result.count,
 		 tests_data.result.count_fail);
 
-	diff_count = tests_data.result.count - tests_data.result.count_pass -
-		     tests_data.result.count_fail;
-	if (diff_count)
+	if (ADD_OVERFLOW(tests_data.result.count_pass,
+			 tests_data.result.count_fail, &count))
+		count = 0;
+
+	if (count != tests_data.result.count)
 		TEST_OUT("| Total tests %d != %d PASSED + %d FAILED\n",
 			 tests_data.result.count, tests_data.result.count_pass,
 			 tests_data.result.count_fail);
@@ -214,7 +216,7 @@ int tests_pkcs11(char *test_name)
 
 	util_lib_close(lib_hdl);
 
-	if (diff_count || tests_data.result.count_fail)
+	if (count != tests_data.result.count || tests_data.result.count_fail)
 		return -1;
 
 	return 0;

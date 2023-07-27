@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <stdlib.h>
@@ -21,9 +21,12 @@ const CK_BYTE prime256v1[] = ASN1_OID_PRIME256;
 
 int util_to_asn1_string(CK_ATTRIBUTE_PTR attr, const char *str)
 {
-	CK_BYTE_PTR bytes;
+	CK_BYTE_PTR bytes = 0;
+	size_t str_len = strlen(str);
 
-	attr->ulValueLen = 2 + strlen(str);
+	if (ADD_OVERFLOW(str_len, 2, &attr->ulValueLen))
+		return 0;
+
 	attr->pValue = malloc(attr->ulValueLen);
 	if (!attr->pValue)
 		return 0;
@@ -31,7 +34,13 @@ int util_to_asn1_string(CK_ATTRIBUTE_PTR attr, const char *str)
 	bytes = attr->pValue;
 
 	bytes[0] = ASN1_PRINTABLE_STRING;
-	bytes[1] = strlen(str);
+
+	if (SET_OVERFLOW(str_len, bytes[1])) {
+		free(attr->pValue);
+		attr->pValue = NULL;
+		return 0;
+	}
+
 	memcpy(&bytes[2], str, attr->ulValueLen - 2);
 
 	return 1;
@@ -39,7 +48,7 @@ int util_to_asn1_string(CK_ATTRIBUTE_PTR attr, const char *str)
 
 int util_to_asn1_oid(CK_ATTRIBUTE_PTR attr, const CK_BYTE *oid)
 {
-	CK_BYTE_PTR bytes;
+	CK_BYTE_PTR bytes = 0;
 
 	attr->ulValueLen = 2 + sizeof(oid);
 	attr->pValue = malloc(attr->ulValueLen);

@@ -70,6 +70,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### PKCS#11 Tests - _version 2.4_
 
+* Fix coverity and ensure all variables are initialized.
+
 ---
 ### <a id ="rel_2_3"></a></br>**Release 2.3**
 ---

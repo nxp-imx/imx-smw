@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 #ifndef __TEST_CHECK_H__
 #define __TEST_CHECK_H__
@@ -25,8 +25,7 @@ extern struct tests_data tests_data;
 
 int check_ckrv(CK_RV got, CK_RV exp, const char *func, int line,
 	       const char *const str);
-int check_expected(const bool exp, const char *func, int line,
-		   const char *format, ...);
+void print_failure(const char *func, int line, const char *format, ...);
 void test_printf(const char *format, ...) __printf(1, 2);
 
 #define TEST_FAIL 0xBAD
@@ -37,17 +36,24 @@ void test_printf(const char *format, ...) __printf(1, 2);
 #define TEST_STATUS(_status) (((_status) == TEST_PASS) ? "PASSED" : "FAILED")
 
 #define CHECK_EXPECTED(exp, ...)                                               \
-	check_expected(exp, __func__, __LINE__, __VA_ARGS__)
+	({                                                                     \
+		int _ret = 0;                                                  \
+		if (!(exp)) {                                                  \
+			print_failure(__func__, __LINE__, __VA_ARGS__);        \
+			_ret = 1;                                              \
+		}                                                              \
+		_ret;                                                          \
+	})
 
 #define CHECK_CK_RV(val, str) check_ckrv(ret, val, __func__, __LINE__, str)
 
-#define TEST_START(_status)                                                    \
+#define TEST_START()                                                           \
 	do {                                                                   \
-		_status = TEST_FAIL;                                           \
 		TEST_OUT("========================\n");                        \
 		TEST_OUT("== TEST %s\n", __func__);                            \
 		TEST_OUT("\n");                                                \
-		tests_data.result.count++;                                     \
+		if (INC_OVERFLOW(tests_data.result.count, 1))                  \
+			tests_data.result.count = -1;                          \
 	} while (0)
 
 #define TEST_END(_status)                                                      \
@@ -56,20 +62,22 @@ void test_printf(const char *format, ...) __printf(1, 2);
 		TEST_OUT("\n");                                                \
 		TEST_OUT("TEST %s %s\n", __func__, TEST_STATUS(__status));     \
 		TEST_OUT("========================\n");                        \
-		if (__status != TEST_PASS)                                     \
-			tests_data.result.count_fail++;                        \
-		else                                                           \
-			tests_data.result.count_pass++;                        \
+		if (__status != TEST_PASS) {                                   \
+			if (INC_OVERFLOW(tests_data.result.count_fail, 1))     \
+				tests_data.result.count_fail = -1;             \
+		} else {                                                       \
+			if (INC_OVERFLOW(tests_data.result.count_pass, 1))     \
+				tests_data.result.count_pass = 0;              \
+		}                                                              \
 	} while (0)
 
-#define SUBTEST_START(_status)                                                 \
-	do {                                                                   \
-		_status = TEST_FAIL;                                           \
+#define SUBTEST_START()                                                        \
+	({                                                                     \
 		TEST_OUT("\n");                                                \
 		TEST_OUT("************\n");                                    \
 		TEST_OUT("* Start SubTest %s\n", __func__);                    \
 		TEST_OUT("\n");                                                \
-	} while (0)
+	})
 
 #define SUBTEST_END(_status)                                                   \
 	do {                                                                   \

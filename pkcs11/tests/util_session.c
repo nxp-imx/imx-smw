@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +21,7 @@ static struct se_info {
 static CK_RV create_tee_info(CK_SESSION_HANDLE_PTR sess,
 			     CK_FUNCTION_LIST_PTR pfunc)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
 	CK_BBOOL token = true;
@@ -51,7 +51,7 @@ static CK_RV create_tee_info(CK_SESSION_HANDLE_PTR sess,
 static CK_RV create_hsm_info(CK_SESSION_HANDLE_PTR sess,
 			     CK_FUNCTION_LIST_PTR pfunc)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
 	CK_BBOOL token = true;
@@ -81,7 +81,7 @@ static CK_RV create_hsm_info(CK_SESSION_HANDLE_PTR sess,
 static CK_RV create_ele_info(CK_SESSION_HANDLE_PTR sess,
 			     CK_FUNCTION_LIST_PTR pfunc)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
 	CK_BBOOL token = true;
@@ -111,7 +111,7 @@ static CK_RV create_ele_info(CK_SESSION_HANDLE_PTR sess,
 static CK_RV create_key_db(CK_SESSION_HANDLE_PTR sess,
 			   CK_FUNCTION_LIST_PTR pfunc)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
 	CK_BBOOL token = true;
@@ -146,10 +146,10 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 {
 	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_ULONG nb_slots = 0;
 	CK_SLOT_ID_PTR slots = NULL;
-	CK_UTF8CHAR label[32];
+	CK_UTF8CHAR label[32] = { 0 };
 	const char *slot_label = NULL;
 
 	TEST_OUT("Get Nb slots present\n");
@@ -178,7 +178,10 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 
 	memset(label, ' ', sizeof(label));
 	memcpy(label, slot_label, strlen(slot_label));
+
 	ret = pfunc->C_InitToken(p11_slot, NULL, 0, label);
+	if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
+		goto end;
 
 	TEST_OUT("-- Process #%u Open Session on Slot %lu [%s] --\n", getpid(),
 		 p11_slot, slot_label);
@@ -252,7 +255,7 @@ int util_open_ro_session_cb(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 
 void util_close_session(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE_PTR sess)
 {
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	if (!(sess && *sess))
 		return;

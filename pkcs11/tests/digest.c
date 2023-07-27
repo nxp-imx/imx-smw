@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <stdlib.h>
@@ -259,16 +259,16 @@ static bool check_digest(const unsigned char *exp_digest,
 
 static int digest_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM digmech = { 0 };
 	CK_BYTE_PTR digest = NULL_PTR;
-	CK_ULONG digest_length;
+	CK_ULONG digest_length = 0;
 	enum mechanism_id id = MECH_ID_SHA_1;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) != TEST_PASS)
 		goto end;
@@ -341,15 +341,15 @@ end:
 
 static int digest_no_init(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BYTE_PTR digest = NULL_PTR;
-	CK_ULONG digest_length;
+	CK_ULONG digest_length = 0;
 	enum mechanism_id id = MECH_ID_SHA_1;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) != TEST_PASS)
 		goto end;
@@ -384,17 +384,17 @@ end:
 
 static int digest_multiple_init(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM digmech = { 0 };
 	CK_BYTE_PTR digest = NULL_PTR;
-	CK_ULONG digest_length;
+	CK_ULONG digest_length = 0;
 	enum mechanism_id id = MECH_ID_SHA_1;
 	bool match;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) != TEST_PASS)
 		goto end;
@@ -460,17 +460,17 @@ end:
 
 static int digest_bad_digest_length(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM digmech = { 0 };
 	CK_BYTE_PTR digest = NULL_PTR;
 	CK_ULONG digest_length = 0;
 	enum mechanism_id id = MECH_ID_SHA_1;
-	bool match;
+	bool match = false;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) != TEST_PASS)
 		goto end;
@@ -508,8 +508,6 @@ static int digest_bad_digest_length(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Check digest length too long\n");
 	digest_length <<= 1;
-	if (CHECK_EXPECTED(digest, "Allocation error"))
-		goto end;
 
 	ret = pfunc->C_Digest(sess, (CK_BYTE_PTR)TV_MSG(id), TV_MSG_LEN(id),
 			      digest, &digest_length);
@@ -535,24 +533,24 @@ end:
 
 static int digest_all_mechanisms(CK_FUNCTION_LIST_PTR pfunc, bool final)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM digmech = { 0 };
 	CK_BYTE_PTR message = NULL_PTR;
-	CK_ULONG message_length;
+	CK_ULONG message_length = 0;
 	CK_BYTE_PTR digest = NULL_PTR;
-	CK_ULONG digest_length;
-	unsigned int i;
-	bool match;
+	CK_ULONG digest_length = 0;
+	unsigned int i = 0;
+	bool match = false;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) != TEST_PASS)
 		goto end;
 
-	for (i = 0; i < MECH_ID_NB; i++) {
+	for (; i < MECH_ID_NB; i++) {
 		TEST_OUT("Check digest %s\n", DIGEST_NAME(i));
 		digmech.mechanism = DIGEST_MECHANISM(i);
 		ret = pfunc->C_DigestInit(sess, &digmech);
@@ -606,9 +604,9 @@ end:
 void tests_pkcs11_digest(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
 
 	init.CreateMutex = mutex_create;
@@ -616,7 +614,7 @@ void tests_pkcs11_digest(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	init.LockMutex = mutex_lock;
 	init.UnlockMutex = mutex_unlock;
 
-	TEST_START(status);
+	TEST_START();
 
 	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
@@ -644,6 +642,8 @@ void tests_pkcs11_digest(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	ret = pfunc->C_Finalize(NULL_PTR);
+	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
+		status = TEST_FAIL;
 
 	TEST_END(status);
 }

@@ -1,21 +1,15 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 #ifndef __LOCAL_H__
 #define __LOCAL_H__
 
 #include <pkcs11smw.h>
 
+#include "builtin_macros.h"
+
 #include "test_check.h"
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
-#endif /* ARRAY_SIZE */
-
-#ifndef BITS_TO_BYTES
-#define BITS_TO_BYTES(size) (((size) + 7) / 8)
-#endif /* BITS_TO_BYTES */
 
 struct ckr_enum {
 	CK_RV val;

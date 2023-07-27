@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <errno.h>
@@ -33,7 +33,7 @@ static int initialize_process(CK_FUNCTION_LIST_PTR pfunc)
 static int run_test(struct mp_args *args)
 {
 	int status = TEST_FAIL;
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 
 	ret = initialize_process(args->pfunc);
 	if (CHECK_CK_RV(CKR_OK, "Initialize process"))
@@ -51,7 +51,7 @@ end:
 
 static int process_b(struct mp_args *args)
 {
-	int ret;
+	int ret = 0;
 	const char *const test_argv[] = { progname, "-t", args->testname,
 					  NULL };
 
@@ -76,7 +76,8 @@ int util_close_shm(struct mp_args *args)
 
 int util_create_open_shm(struct mp_args *args)
 {
-	int ret;
+	int ret = 0;
+	off_t shm_size = 0;
 
 	ret = sprintf(args->shm.name, "/%s", args->testname);
 	if (ret <= 0) {
@@ -105,7 +106,13 @@ int util_create_open_shm(struct mp_args *args)
 
 	args->shm.fd = ret;
 
-	ret = ftruncate(args->shm.fd, args->shm.size);
+	if (SET_OVERFLOW(args->shm.size, shm_size)) {
+		TEST_OUT("shm size is too big\n");
+		ret = -1;
+		goto end;
+	}
+
+	ret = ftruncate(args->shm.fd, shm_size);
 	if (ret) {
 		TEST_OUT("ftruncate: %s\n", util_lib_get_strerror());
 		goto end;
@@ -131,9 +138,9 @@ end:
 int run_multi_process(struct mp_args *args)
 {
 	int status = TEST_FAIL;
-	int pid;
-	int wpid;
-	int wstatus;
+	int pid = 0;
+	int wpid = 0;
+	int wstatus = 0;
 
 	if (CHECK_EXPECTED(args, "Error args is NULL"))
 		return status;

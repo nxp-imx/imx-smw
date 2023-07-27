@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -82,14 +82,14 @@ const char *get_slot_label(CK_ULONG slotid)
 
 static int get_slotlist(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
-	CK_ULONG idx;
+	CK_RV ret = CKR_OK;
+	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
 	CK_SLOT_ID_PTR slots = NULL;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("Check all parameters NULL\n");
 	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, NULL);
@@ -140,14 +140,14 @@ end:
 
 static int get_slotlist_present(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
-	CK_ULONG idx;
+	CK_RV ret = CKR_OK;
+	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
 	CK_SLOT_ID_PTR slots = NULL;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("Check all parameters NULL\n");
 	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, NULL);
@@ -194,19 +194,19 @@ end:
 
 static int get_slotinfo(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
-	CK_ULONG idx;
-	CK_ULONG idx_p;
+	CK_RV ret = CKR_OK;
+	CK_ULONG idx = 0;
+	CK_ULONG idx_p = 0;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_slots_present = 0;
 	CK_SLOT_ID_PTR slots = NULL;
 	CK_SLOT_ID_PTR slots_present = NULL;
-	CK_SLOT_INFO info;
-	CK_FLAGS exp_flags;
+	CK_SLOT_INFO info = { 0 };
+	CK_FLAGS exp_flags = 0;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots\n");
 	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
@@ -294,19 +294,19 @@ end:
 
 static int init_token(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_slots_present = 0;
-	CK_ULONG idx;
-	CK_ULONG idx_p;
+	CK_ULONG idx = 0;
+	CK_ULONG idx_p = 0;
 	CK_SLOT_ID_PTR slots = NULL;
 	CK_SLOT_ID_PTR slots_present = NULL;
-	CK_UTF8CHAR label[32];
-	bool slot_present;
+	CK_UTF8CHAR label[32] = { 0 };
+	bool slot_present = false;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots\n");
 	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
@@ -376,16 +376,16 @@ end:
 
 static int get_tokeninfo(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
-	CK_ULONG idx;
+	CK_RV ret = CKR_OK;
+	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
 	CK_SLOT_ID_PTR slots = NULL;
-	CK_TOKEN_INFO info;
-	int retcmp;
+	CK_TOKEN_INFO info = { 0 };
+	int retcmp = 0;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
 	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
@@ -504,17 +504,17 @@ end:
 
 static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
-	CK_ULONG idx;
-	CK_ULONG idx_m;
+	CK_RV ret = CKR_OK;
+	CK_ULONG idx = 0;
+	CK_ULONG idx_m = 0;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_mechs = 0;
 	CK_SLOT_ID_PTR slots = NULL;
 	CK_MECHANISM_TYPE_PTR mechs = NULL;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots\n");
 	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
@@ -583,18 +583,18 @@ end:
 
 static int get_mechanismsinfo(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
-	CK_ULONG idx;
-	CK_ULONG idx_m;
+	CK_RV ret = CKR_OK;
+	CK_ULONG idx = 0;
+	CK_ULONG idx_m = 0;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_mechs = 0;
 	CK_SLOT_ID_PTR slots = NULL;
 	CK_MECHANISM_TYPE_PTR mechs = NULL;
-	CK_MECHANISM_INFO info;
+	CK_MECHANISM_INFO info = { 0 };
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots\n");
 	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
@@ -670,9 +670,9 @@ end:
 void tests_pkcs11_slot_token(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
 
 	init.CreateMutex = mutex_create;
@@ -680,7 +680,7 @@ void tests_pkcs11_slot_token(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	init.LockMutex = mutex_lock;
 	init.UnlockMutex = mutex_unlock;
 
-	TEST_START(status);
+	TEST_START();
 
 	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
@@ -708,6 +708,8 @@ void tests_pkcs11_slot_token(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	ret = pfunc->C_Finalize(NULL);
+	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
+		status = TEST_FAIL;
 
 	TEST_END(status);
 }

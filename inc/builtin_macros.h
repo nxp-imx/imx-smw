@@ -6,6 +6,8 @@
 #ifndef __BUILTIN_MACROS_H__
 #define __BUILTIN_MACROS_H__
 
+#include <stdint.h>
+
 #define BIT(n)		      (1UL << (n))
 #define BIT_MASK(length)      ((1UL << (length)) - 1)
 #define SET_BITS(val, mask)   ((val) |= (mask))
@@ -54,8 +56,9 @@
 		__typeof__(res) _max = 0;                                      \
 		__typeof__(ua) _ua = (ua);                                     \
 		int _overflow = 1;                                             \
-		_max = ~_max;                                                  \
-		if ((_ua & _max) == _ua) {                                     \
+		if (sizeof(ua) > sizeof(res))                                  \
+			_ua = _ua & ~_max;                                     \
+		if (_ua == _ua) {                                              \
 			res = _ua;                                             \
 			_overflow = 0;                                         \
 		}                                                              \

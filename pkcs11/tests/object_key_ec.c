@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -20,14 +20,14 @@ const struct asn1_ec_curve ec_curves[] = {
 static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 				CK_BBOOL bverify)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hkey;
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
 	CK_KEY_TYPE key_type = CKK_EC;
-	CK_BYTE pubkey[65] = {};
+	CK_BYTE pubkey[65] = { 0 };
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
 						 CKM_ECDSA_SHA256 };
@@ -42,7 +42,7 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		  sizeof(key_allowed_mech) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -53,7 +53,7 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	pubkey[0] = 0x04; /* Uncompress point */
 	/* Set the CKA_EC_POINT size function of the security size */
 	keyTemplate[3].ulValueLen =
-		BITS_TO_BYTES(ec_curves[0].security_size) * 2 + 1;
+		BITS_TO_BYTES_SIZE((size_t)ec_curves[0].security_size) * 2 + 1;
 
 	TEST_OUT("Create %sKey Public by curve name\n", token ? "Token " : "");
 	if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
@@ -113,15 +113,15 @@ end:
 static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 				 CK_BBOOL bsign)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hkey;
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
 	CK_KEY_TYPE key_type = CKK_EC;
-	CK_BYTE privkey[32] = {};
-	CK_BYTE pubkey[65] = {};
+	CK_BYTE privkey[32] = { 0 };
+	CK_BYTE pubkey[65] = { 0 };
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
 						 CKM_ECDSA_SHA256 };
@@ -137,7 +137,7 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		  sizeof(key_allowed_mech) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -159,10 +159,11 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	pubkey[0] = 0x04; /* Uncompress point */
 
 	/* Set the CKA_EC_POINT size function of the security size */
-	keyTemplate[4].ulValueLen = BITS_TO_BYTES(192) * 2 + 1;
+	keyTemplate[4].ulValueLen = BITS_TO_BYTES_SIZE(192) * 2 + 1;
 
 	/* Set the CKA_VALUE size function of the security size */
-	keyTemplate[3].ulValueLen = BITS_TO_BYTES(ec_curves[0].security_size);
+	keyTemplate[3].ulValueLen =
+		BITS_TO_BYTES_SIZE((size_t)ec_curves[0].security_size);
 	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    &hkey);
 
@@ -211,12 +212,12 @@ end:
 static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 				      CK_BBOOL token)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hpubkey;
-	CK_OBJECT_HANDLE hprivkey;
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
 	CK_BBOOL bverify = CK_TRUE;
 	CK_BBOOL bsign = CK_TRUE;
@@ -238,7 +239,7 @@ static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		  sizeof(key_allowed_mech) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (token) {
 		privkey_attrs = privkey_token;
@@ -301,12 +302,12 @@ end:
 
 static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hpubkey;
-	CK_OBJECT_HANDLE hprivkey;
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
 	CK_BBOOL bverify = CK_FALSE;
 	CK_BBOOL bsign = CK_FALSE;
@@ -326,7 +327,7 @@ static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 		  sizeof(key_allowed_mech) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -392,9 +393,9 @@ end:
 void tests_pkcs11_object_key_ec(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
 
 	init.CreateMutex = mutex_create;
@@ -402,7 +403,7 @@ void tests_pkcs11_object_key_ec(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	init.LockMutex = mutex_lock;
 	init.UnlockMutex = mutex_unlock;
 
-	TEST_START(status);
+	TEST_START();
 
 	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
@@ -445,6 +446,8 @@ void tests_pkcs11_object_key_ec(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	ret = pfunc->C_Finalize(NULL);
+	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
+		status = TEST_FAIL;
 
 	TEST_END(status);
 }

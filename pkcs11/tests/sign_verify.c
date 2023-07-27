@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -18,15 +18,15 @@ const CK_ULONG msg_sha256_len = 32;
 
 static int sign_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_mech = { 0 };
 	CK_RSA_PKCS_PSS_PARAMS pss_params = { 0 };
 
-	CK_OBJECT_HANDLE rsa_hpubkey;
-	CK_OBJECT_HANDLE rsa_hprivkey;
+	CK_OBJECT_HANDLE rsa_hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE rsa_hprivkey = CK_INVALID_HANDLE;
 	CK_ULONG rsa_modulus_bits = 2048;
 	CK_MECHANISM rsa_key_mech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
 	CK_ATTRIBUTE rsa_pubkey_attrs[] = {
@@ -37,7 +37,7 @@ static int sign_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_SIGN, &rsa_sign, sizeof(CK_BBOOL) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -113,15 +113,15 @@ end:
 
 static int verify_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM verify_mech = { 0 };
 	CK_RSA_PKCS_PSS_PARAMS pss_params = { 0 };
 
-	CK_OBJECT_HANDLE rsa_hpubkey;
-	CK_OBJECT_HANDLE rsa_hprivkey;
+	CK_OBJECT_HANDLE rsa_hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE rsa_hprivkey = CK_INVALID_HANDLE;
 	CK_ULONG rsa_modulus_bits = 2048;
 	CK_MECHANISM rsa_key_mech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
 	CK_BBOOL rsa_verify = true;
@@ -130,7 +130,7 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_VERIFY, &rsa_verify, sizeof(CK_BBOOL) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -205,19 +205,22 @@ end:
 
 static int sign_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_ULONG sign_len = 32;
-	CK_ULONG data_len = 5;
-	CK_BYTE data[data_len];
-	CK_BYTE signature[sign_len];
+	CK_ULONG sign_len = 0;
+	CK_ULONG data_len = 0;
+	CK_BYTE data[5] = { 0 };
+	CK_BYTE signature[32] = { 0 };
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
+
+	sign_len = sizeof(signature);
+	data_len = sizeof(data);
 
 	TEST_OUT("Check session NULL\n");
 	ret = pfunc->C_Sign(0, data, data_len, signature, &sign_len);
@@ -250,19 +253,22 @@ end:
 
 static int verify_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_ULONG sign_len = 32;
-	CK_ULONG data_len = 5;
-	CK_BYTE data[data_len];
-	CK_BYTE signature[sign_len];
+	CK_ULONG sign_len = 0;
+	CK_ULONG data_len = 0;
+	CK_BYTE data[5] = { 0 };
+	CK_BYTE signature[32] = { 0 };
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
+
+	sign_len = sizeof(signature);
+	data_len = sizeof(data);
 
 	TEST_OUT("Check session NULL\n");
 	ret = pfunc->C_Verify(0, data, data_len, signature, sign_len);
@@ -300,16 +306,16 @@ end:
 
 static int sign_verify_no_init(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_ULONG sign_len = 32;
-	CK_ULONG data_len = 5;
-	CK_BYTE data[data_len];
-	CK_BYTE signature[sign_len];
+	CK_ULONG sign_len = 0;
+	CK_ULONG data_len = 0;
+	CK_BYTE data[5] = { 0 };
+	CK_BYTE signature[32] = { 0 };
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -323,6 +329,9 @@ static int sign_verify_no_init(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_VerifyInit(sess, NULL, 1);
 	if (CHECK_CK_RV(CKR_OK, "C_VerifyInit"))
 		goto end;
+
+	sign_len = sizeof(signature);
+	data_len = sizeof(data);
 
 	TEST_OUT("Sign without init\n");
 	ret = pfunc->C_Sign(sess, data, data_len, signature, &sign_len);
@@ -345,14 +354,14 @@ end:
 
 static int sign_verify_multiple_init(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_ECDSA_SHA224 };
 
-	CK_OBJECT_HANDLE hpubkey;
-	CK_OBJECT_HANDLE hprivkey;
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_MECHANISM key_mech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
 	CK_BBOOL ec_verify = true;
 	CK_ATTRIBUTE pubkey_attrs[] = {
@@ -364,7 +373,7 @@ static int sign_verify_multiple_init(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_SIGN, &ec_sign, sizeof(CK_BBOOL) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -443,15 +452,15 @@ end:
 
 static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_ECDSA_SHA224 };
 	CK_ULONG msg_len = strlen((const char *)msg);
 	CK_BYTE_PTR signature = NULL_PTR;
-	CK_ULONG signature_len;
-	CK_ULONG tmp;
+	CK_ULONG signature_len = 0;
+	CK_ULONG tmp = 0;
 
 	CK_OBJECT_HANDLE hpubkey;
 	CK_OBJECT_HANDLE hprivkey;
@@ -466,7 +475,7 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_SIGN, &ec_sign, sizeof(CK_BBOOL) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -603,18 +612,18 @@ end:
 
 static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_SHA512_RSA_PKCS };
 	CK_RSA_PKCS_PSS_PARAMS pss_params = { 0 };
 	CK_ULONG msg_len = strlen((const char *)msg);
 	CK_BYTE_PTR signature = NULL_PTR;
-	CK_ULONG signature_len;
+	CK_ULONG signature_len = 0;
 
-	CK_OBJECT_HANDLE hpubkey;
-	CK_OBJECT_HANDLE hprivkey;
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_ULONG modulus_bits = 2048;
 	CK_MECHANISM key_mech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
 	CK_BBOOL sign = true;
@@ -627,7 +636,7 @@ static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_VERIFY, &verify, sizeof(CK_BBOOL) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -719,19 +728,19 @@ end:
 
 static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_ECDSA_SHA256 };
 	CK_ULONG msg_len = strlen((const char *)msg);
 	CK_BYTE_PTR signature = NULL_PTR;
-	CK_ULONG signature_len;
+	CK_ULONG signature_len = 0;
 
-	CK_OBJECT_HANDLE hpubkey_sign;
-	CK_OBJECT_HANDLE hprivkey_sign;
-	CK_OBJECT_HANDLE hpubkey_verify;
-	CK_OBJECT_HANDLE hprivkey_verify;
+	CK_OBJECT_HANDLE hpubkey_sign = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey_sign = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hpubkey_verify = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey_verify = CK_INVALID_HANDLE;
 
 	CK_MECHANISM key_mech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
 	CK_BBOOL ec_verify = CK_FALSE;
@@ -744,7 +753,7 @@ static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_SIGN, &ec_sign, sizeof(CK_BBOOL) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -831,9 +840,9 @@ end:
 void tests_pkcs11_sign_verify(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
 
 	init.CreateMutex = mutex_create;
@@ -841,7 +850,7 @@ void tests_pkcs11_sign_verify(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	init.LockMutex = mutex_lock;
 	init.UnlockMutex = mutex_unlock;
 
-	TEST_START(status);
+	TEST_START();
 
 	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
@@ -875,6 +884,8 @@ void tests_pkcs11_sign_verify(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	ret = pfunc->C_Finalize(NULL_PTR);
+	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
+		status = TEST_FAIL;
 
 	TEST_END(status);
 }

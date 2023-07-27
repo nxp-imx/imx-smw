@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <stdlib.h>
@@ -12,14 +12,14 @@
 
 static int random_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BYTE_PTR random = NULL_PTR;
 	CK_ULONG random_length = 32;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) != TEST_PASS)
 		goto end;
@@ -57,17 +57,17 @@ end:
 
 static int random_multiple_length(CK_FUNCTION_LIST_PTR pfunc)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_BYTE_PTR random = NULL_PTR;
 	CK_ULONG random_length = 65535;
-	bool diff;
+	bool diff = false;
 
 	unsigned char *latest = NULL;
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) != TEST_PASS)
 		goto end;
@@ -178,9 +178,9 @@ end:
 void tests_pkcs11_random(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
 
 	init.CreateMutex = mutex_create;
@@ -188,7 +188,7 @@ void tests_pkcs11_random(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	init.LockMutex = mutex_lock;
 	init.UnlockMutex = mutex_unlock;
 
-	TEST_START(status);
+	TEST_START();
 
 	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
@@ -204,6 +204,8 @@ void tests_pkcs11_random(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	ret = pfunc->C_Finalize(NULL_PTR);
+	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
+		status = TEST_FAIL;
 
 	TEST_END(status);
 }

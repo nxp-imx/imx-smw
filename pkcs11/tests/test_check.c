@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #include <stdarg.h>
@@ -23,24 +23,26 @@ int check_ckrv(CK_RV got, CK_RV exp, const char *func, int line,
 	       const char *const str)
 {
 	int ret = 1;
-	int nb;
-	char buf[256];
+	int nb = 0;
+	char buf[256] = { 0 };
+	size_t max_len = 0;
 
-	nb = snprintf(buf, sizeof(buf), "[%s line %d] ", func, line);
+	max_len = sizeof(buf);
+	nb = snprintf(buf, max_len, "[%s line %d] ", func, line);
 
-	if (got == exp) {
-		if (nb > 0)
-			(void)snprintf(&buf[nb], sizeof(buf) - nb,
+	if (nb > 0 && !DEC_OVERFLOW(max_len, nb)) {
+		if (got == exp) {
+			(void)snprintf(&buf[nb], max_len,
 				       "%s OK (returned %s)\n", str,
 				       get_ckrv_name(got));
 
-		ret = 0;
-	} else {
-		if (nb > 0)
-			(void)snprintf(&buf[nb], sizeof(buf) - nb,
+			ret = 0;
+		} else {
+			(void)snprintf(&buf[nb], max_len,
 				       "%s FAILED (returned %s expected %s)\n",
 				       str, get_ckrv_name(got),
 				       get_ckrv_name(exp));
+		}
 	}
 
 	TEST_OUT("%s", buf);
@@ -48,43 +50,41 @@ int check_ckrv(CK_RV got, CK_RV exp, const char *func, int line,
 	return ret;
 }
 
-int check_expected(const bool exp, const char *func, int line,
-		   const char *format, ...)
+void print_failure(const char *func, int line, const char *format, ...)
 {
-	int nb;
-	char buf[256];
-	va_list args;
+	int nb = 0;
+	char buf[256] = { 0 };
+	va_list args = { 0 };
+	size_t max_len = 0;
 
-	if (!exp) {
-		va_start(args, format);
+	va_start(args, format);
 
-		nb = snprintf(buf, sizeof(buf), "[%s line %d] ", func, line);
-		if (nb > 0)
-			(void)vsnprintf(&buf[nb], sizeof(buf) - nb - 1, format,
-					args);
+	max_len = sizeof(buf);
+	nb = snprintf(buf, max_len, "[%s line %d] ", func, line);
+	if (nb > 0 && !DEC_OVERFLOW(max_len, nb))
+		(void)vsnprintf(&buf[nb], max_len - 1, format, args);
 
-		TEST_OUT("%s\n", buf);
+	TEST_OUT("%s\n", buf);
 
-		va_end(args);
-		return 1;
-	}
-
-	return 0;
+	va_end(args);
 }
 
 void test_printf(const char *format, ...)
 {
-	va_list args;
+	va_list args = { 0 };
 	int nb = 0;
-	char buf[256];
+	char buf[256] = { 0 };
+	size_t max_len = 0;
+
+	max_len = sizeof(buf);
 
 	if (tests_data.trace_pid)
-		nb = snprintf(buf, sizeof(buf), "{pid #%d} ",
-			      tests_data.trace_pid);
+		nb = snprintf(buf, max_len, "{pid #%d} ", tests_data.trace_pid);
 
-	if (nb >= 0) {
+	if (nb >= 0 && !DEC_OVERFLOW(max_len, nb)) {
 		va_start(args, format);
-		(void)vsnprintf(&buf[nb], sizeof(buf) - nb, format, args);
+
+		(void)vsnprintf(&buf[nb], max_len, format, args);
 		va_end(args);
 	}
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2023 NXP
  */
 
 #include <stdlib.h>
@@ -73,11 +73,11 @@ const CK_BYTE rsa_priv_exp[] = {
 static int object_rsa_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 				 CK_BBOOL bverify)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hkey;
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
 	CK_KEY_TYPE key_type = CKK_RSA;
 
@@ -95,7 +95,7 @@ static int object_rsa_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		  sizeof(key_allowed_mech) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -130,11 +130,11 @@ end:
 static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 				  CK_BBOOL bsign)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hkey;
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
 	CK_KEY_TYPE key_type = CKK_RSA;
 
@@ -154,7 +154,7 @@ static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		  sizeof(key_allowed_mech) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -189,12 +189,12 @@ end:
 static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 				       CK_BBOOL token, bool with_pub_exp)
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hpubkey;
-	CK_OBJECT_HANDLE hprivkey;
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_MECHANISM genmech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
 	CK_ULONG modulus_bits = 0;
 	CK_BBOOL btrue = CK_TRUE;
@@ -219,7 +219,7 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		  sizeof(key_allowed_mech) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	modulus_bits = sizeof(rsa_modulus) * 8;
 
@@ -267,12 +267,12 @@ end:
 static int object_rsa_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 
 {
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_OBJECT_HANDLE hpubkey;
-	CK_OBJECT_HANDLE hprivkey;
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_MECHANISM genmech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
 	CK_ULONG modulus_bits = 0;
 	CK_BBOOL bverify = CK_FALSE;
@@ -295,7 +295,7 @@ static int object_rsa_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 		  sizeof(key_allowed_mech) },
 	};
 
-	SUBTEST_START(status);
+	SUBTEST_START();
 
 	modulus_bits = sizeof(rsa_modulus) * 8;
 
@@ -355,9 +355,9 @@ end:
 void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
-	int status;
+	int status = TEST_FAIL;
 
-	CK_RV ret;
+	CK_RV ret = CKR_OK;
 	CK_C_INITIALIZE_ARGS init = { 0 };
 
 	init.CreateMutex = mutex_create;
@@ -365,7 +365,7 @@ void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	init.LockMutex = mutex_lock;
 	init.UnlockMutex = mutex_unlock;
 
-	TEST_START(status);
+	TEST_START();
 
 	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
@@ -414,6 +414,8 @@ void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 
 end:
 	ret = pfunc->C_Finalize(NULL);
+	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
+		status = TEST_FAIL;
 
 	TEST_END(status);
 }

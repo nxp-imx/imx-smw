@@ -68,18 +68,20 @@ int device_attestation(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
 
-	struct certificate {
-		uint16_t soc_rev;
+	struct certificate_common {
+		uint8_t cmd;
+		uint8_t version;
+		uint16_t length;
 		uint16_t soc_id;
+		uint16_t soc_rev;
 		uint16_t lifecycle;
 		uint8_t ssm_state;
 		uint8_t reserved;
-		uint32_t nonce;
 		uint32_t uid[4];
 		uint8_t sha_rom_patch[32];
 		uint8_t sha_fw[32];
-		uint8_t signature[96];
 	} *certificate = NULL;
+
 	unsigned int challenge = 0xCAFEF00D;
 	struct smw_device_attestation_args args = { 0 };
 
@@ -125,18 +127,21 @@ int device_attestation(struct subtest_data *subtest)
 
 	DBG_DHEX("Certificate", args.certificate, args.certificate_length);
 
-	certificate = (struct certificate *)args.certificate;
+	certificate = (struct certificate_common *)args.certificate;
 	DBG_PRINT("Certificate:\n"
+		  " cmd: 0x%X\n"
+		  " version: 0x%X\n"
+		  " length: %d\n"
 		  " soc_rev: 0x%04X\n"
 		  " soc_id: 0x%04X\n"
 		  " ssm_state: 0x%02X\n"
 		  " lifecycle: 0x%04X\n"
-		  " nonce: 0x%08X\n"
 		  " UUID: 0x%08X 0x%08X 0x%08X 0x%08X",
+		  certificate->cmd, certificate->version, certificate->length,
 		  certificate->soc_rev, certificate->soc_id,
 		  certificate->ssm_state, certificate->lifecycle,
-		  certificate->nonce, certificate->uid[0], certificate->uid[1],
-		  certificate->uid[2], certificate->uid[3]);
+		  certificate->uid[0], certificate->uid[1], certificate->uid[2],
+		  certificate->uid[3]);
 
 	res = ERR_CODE(PASSED);
 

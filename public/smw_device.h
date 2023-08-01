@@ -30,6 +30,10 @@
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default configured Secure Subsystem is used.
  *
+ * @challenge length depends of the device (refer to the subsystem capabilities).
+ * If the length is bigger than expected, it will be cut to keep only the device
+ * maximum size. If the length is shorter, the challenge value will be completed
+ * with 0's.
  */
 struct smw_device_attestation_args {
 	unsigned char version;
@@ -53,6 +57,7 @@ struct smw_device_attestation_args {
  * If this field is NULL, the default configured Secure Subsystem is used.
  *
  * Two methods are allowed to get the Device UUID.
+ *
  * * Method #1
  *    Extract the device UUID from the device certificate.
  *    The Device Certificate (@certificate) is previously read using the
@@ -97,6 +102,8 @@ smw_device_attestation(struct smw_device_attestation_args *args);
  *
  * Extracts device UUID from the device certificate or reads the device UUID
  * without device certificate.
+ *
+ * Device UUID buffer is in big endian format.
  *
  * UUID length @args field is updated to the correct value when:
  *  - Length is bigger than expected. In this case operation succeeded.

@@ -3,6 +3,8 @@
  * Copyright 2023 NXP
  */
 
+#include <byteswap.h>
+
 #include "debug.h"
 #include "devmgr.h"
 #include "utils.h"
@@ -11,13 +13,16 @@
 
 #define ELE_NB_UID_WORD 4
 #define ELE_UID_SIZE	(ELE_NB_UID_WORD * sizeof(uint32_t))
+
 struct ele_get_info_head {
-	uint16_t soc_rev;
+	uint8_t cmd;
+	uint8_t version;
+	uint16_t length;
 	uint16_t soc_id;
+	uint16_t soc_rev;
 	uint16_t lifecycle;
 	uint8_t ssm_state;
 	uint8_t reserved;
-	uint32_t nonce;
 	uint32_t uid[ELE_NB_UID_WORD];
 };
 
@@ -39,7 +44,8 @@ static int device_attestation_operation(struct hdl *hdl,
 	/* Check if all buffers allocated by the ELE Library are valid */
 	if (!op_args->uid || !op_args->uid_sz || !op_args->sha_rom_patch ||
 	    !op_args->rom_patch_sha_sz || !op_args->sha_fw ||
-	    !op_args->sha_fw_sz || !op_args->signature || !op_args->sign_sz)
+	    !op_args->sha_fw_sz || !op_args->signature || !op_args->sign_sz ||
+	    !op_args->info_buf || !op_args->info_buf_sz)
 		status = SMW_STATUS_SUBSYSTEM_FAILURE;
 
 end:
@@ -56,10 +62,10 @@ static int device_attestation(struct hdl *hdl, void *args)
 	unsigned char *certificate = NULL;
 	unsigned int nonce_length = 0;
 	unsigned int certificate_length = 0;
+	uint8_t nonce_v1[DEV_ATTEST_NOUNCE_SIZE_V1] = { 0 };
+	uint8_t nonce_v2[DEV_ATTEST_NOUNCE_SIZE_V2] = { 0 };
 
 	op_dev_attest_args_t op_args = { 0 };
-
-	struct ele_get_info_head *cert_head = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -70,9 +76,17 @@ static int device_attestation(struct hdl *hdl, void *args)
 	if (certificate && (!nonce || !nonce_length))
 		goto end;
 
+	if (hsm_get_dev_attest_api_ver() == HSM_API_VERSION_1) {
+		op_args.nounce = nonce_v1;
+		op_args.nounce_sz = sizeof(nonce_v1);
+	} else {
+		op_args.nounce = nonce_v2;
+		op_args.nounce_sz = sizeof(nonce_v2);
+	}
+
 	if (nonce && nonce_length)
-		SMW_UTILS_MEMCPY((void *)&op_args.nounce, nonce,
-				 MIN(nonce_length, sizeof(op_args.nounce)));
+		SMW_UTILS_MEMCPY(op_args.nounce, nonce,
+				 MIN(nonce_length, op_args.nounce_sz));
 
 	status = device_attestation_operation(hdl, &op_args);
 	if (status != SMW_STATUS_OK)
@@ -86,21 +100,23 @@ static int device_attestation(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	certificate_length = sizeof(*cert_head);
-	certificate_length += op_args.rom_patch_sha_sz;
-	certificate_length += op_args.sha_fw_sz;
-	certificate_length += op_args.sign_sz;
+	if (ADD_OVERFLOW(op_args.info_buf_sz, op_args.sign_sz,
+			 &certificate_length)) {
+		status = SMW_STATUS_SUBSYSTEM_FAILURE;
+		goto end;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_dev_attest() length = %d\n"
 		       "    soc_id   : 0x%04X\n"
 		       "    soc_rev  : 0x%04X\n"
 		       "    ssm state: 0x%02X\n"
-		       "    lifecycle: 0x%04X\n"
-		       "    nonce    : 0x%08X\n",
+		       "    lifecycle: 0x%04X\n",
 		       __func__, __LINE__, certificate_length, op_args.soc_id,
-		       op_args.soc_rev, op_args.ssm_state, op_args.lmda_val,
-		       op_args.rsp_nounce);
+		       op_args.soc_rev, op_args.ssm_state, op_args.lmda_val);
+
+	SMW_DBG_PRINTF(VERBOSE, "Nonce (%d bytes)", op_args.rsp_nounce_sz);
+	SMW_DBG_HEX_DUMP(VERBOSE, op_args.rsp_nounce, op_args.rsp_nounce_sz, 4);
 
 	SMW_DBG_PRINTF(VERBOSE, "Device UID (%d bytes)", op_args.uid_sz);
 	SMW_DBG_HEX_DUMP(VERBOSE, op_args.uid, op_args.uid_sz, 4);
@@ -112,6 +128,9 @@ static int device_attestation(struct hdl *hdl, void *args)
 
 	SMW_DBG_PRINTF(VERBOSE, "FW sha (%d bytes)", op_args.sha_fw_sz);
 	SMW_DBG_HEX_DUMP(VERBOSE, op_args.sha_fw, op_args.sha_fw_sz, 4);
+
+	SMW_DBG_PRINTF(VERBOSE, "Certificate (%d bytes)", op_args.info_buf_sz);
+	SMW_DBG_HEX_DUMP(VERBOSE, op_args.info_buf, op_args.info_buf_sz, 4);
 
 	SMW_DBG_PRINTF(VERBOSE, "Certificate signature (%d bytes)",
 		       op_args.sign_sz);
@@ -126,25 +145,9 @@ static int device_attestation(struct hdl *hdl, void *args)
 	if (certificate) {
 		if (smw_devmgr_get_certificate_length(args) >=
 		    certificate_length) {
-			cert_head = (struct ele_get_info_head *)certificate;
-			cert_head->soc_id = op_args.soc_id;
-			cert_head->soc_rev = op_args.soc_rev;
-			cert_head->lifecycle = op_args.lmda_val;
-			cert_head->ssm_state = op_args.ssm_state;
-			cert_head->nonce = op_args.nounce;
-
-			SMW_UTILS_MEMCPY(cert_head->uid, op_args.uid,
-					 op_args.uid_sz);
-			certificate += sizeof(*cert_head);
-
-			SMW_UTILS_MEMCPY(certificate, op_args.sha_rom_patch,
-					 op_args.rom_patch_sha_sz);
-			certificate += op_args.rom_patch_sha_sz;
-
-			SMW_UTILS_MEMCPY(certificate, op_args.sha_fw,
-					 op_args.sha_fw_sz);
-			certificate += op_args.sha_fw_sz;
-
+			SMW_UTILS_MEMCPY(certificate, op_args.info_buf,
+					 op_args.info_buf_sz);
+			certificate += op_args.info_buf_sz;
 			SMW_UTILS_MEMCPY(certificate, op_args.signature,
 					 op_args.sign_sz);
 		} else {
@@ -164,6 +167,12 @@ end:
 		SMW_UTILS_FREE(op_args.sha_fw);
 	if (op_args.signature)
 		SMW_UTILS_FREE(op_args.signature);
+	if (op_args.info_buf)
+		SMW_UTILS_FREE(op_args.info_buf);
+	if (op_args.rsp_nounce)
+		SMW_UTILS_FREE(op_args.rsp_nounce);
+	if (op_args.oem_srkh)
+		SMW_UTILS_FREE(op_args.oem_srkh);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
@@ -179,6 +188,10 @@ static int device_uuid(struct hdl *hdl, void *args)
 	unsigned char *certificate = NULL;
 	unsigned int certificate_length = 0;
 	unsigned int *device_uid = NULL;
+	unsigned int uuid_word = 0;
+	uint8_t nonce_v1[DEV_ATTEST_NOUNCE_SIZE_V1] = { 0 };
+	uint8_t nonce_v2[DEV_ATTEST_NOUNCE_SIZE_V2] = { 0 };
+	int i = 0;
 
 	op_dev_attest_args_t op_args = { 0 };
 
@@ -202,6 +215,14 @@ static int device_uuid(struct hdl *hdl, void *args)
 	certificate_length = smw_devmgr_get_certificate_length(args);
 
 	if (!certificate) {
+		if (hsm_get_dev_attest_api_ver() == HSM_API_VERSION_1) {
+			op_args.nounce = nonce_v1;
+			op_args.nounce_sz = sizeof(nonce_v1);
+		} else {
+			op_args.nounce = nonce_v2;
+			op_args.nounce_sz = sizeof(nonce_v2);
+		}
+
 		status = device_attestation_operation(hdl, &op_args);
 		if (status != SMW_STATUS_OK)
 			goto end;
@@ -215,8 +236,11 @@ static int device_uuid(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	for (int i = 0; i < ELE_NB_UID_WORD; i++, uuid += sizeof(*device_uid))
-		SMW_UTILS_MEMCPY(uuid, &device_uid[i], sizeof(*device_uid));
+	for (i = ELE_NB_UID_WORD - 1; i >= 0;
+	     i--, uuid += sizeof(*device_uid)) {
+		uuid_word = bswap_32(device_uid[i]);
+		SMW_UTILS_MEMCPY(uuid, &uuid_word, sizeof(uuid_word));
+	}
 
 	smw_devmgr_set_uuid_length(args, ELE_UID_SIZE);
 

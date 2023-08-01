@@ -403,3 +403,29 @@ The following key policies must defined if a key identifier is used:
     - ECB_NO_PADDING
     - CTR
     - ALL_CIPHER (any cipher mode)
+
+Device management
+^^^^^^^^^^^^^^^^^
+
+The following operations are available:
+
+  - Device Attestation
+  - Device UUID (in big endian format)
+
+
+The device attestation requires a challenge value to guaranty the certificate
+request. The challenge value maximum length depends of the device as listed in
+the following table.
+
+.. table:: ELE Attestation Challenge
+   :name: ele_challenge
+   :align: center
+   :class: wrap-table
+
+   +------------+-------------------------------+
+   | **Device** | **Challenge Length in bytes** |
+   +============+===============================+
+   | i.MX8ULP   |  4                            |
+   +------------+-------------------------------+
+   | i.MX93     |  16                           |
+   +------------+-------------------------------+

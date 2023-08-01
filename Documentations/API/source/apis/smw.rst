@@ -10,5 +10,6 @@ SMW APIs
    smw/config
    smw/crypto
    smw/keymgr
+   smw/device
    smw/status
    smw/strings

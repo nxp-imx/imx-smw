@@ -34,9 +34,10 @@
 #define LENGTH_STR     "LENGTH"
 #define MIN_LENGTH_STR "MIN_LENGTH"
 
-#define DH_STR	    "DH"
-#define RSA_STR	    "RSA"
-#define KEYPAIR_STR "KEYPAIR"
+#define DH_STR	     "DH"
+#define RSA_STR	     "RSA"
+#define KEYPAIR_STR  "KEYPAIR"
+#define RAW_DATA_STR "RAW_DATA"
 
 #define ANY_STR			    "ANY"
 #define ALL_AEAD_STR		    "ALL_AEAD"
@@ -319,6 +320,16 @@ psa_key_type_t get_cipher_psa_key_type(const char *key_type_name)
 	return PSA_KEY_TYPE_NONE;
 }
 
+static psa_key_type_t get_raw_psa_key_type(const char *key_type_name)
+{
+	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
+
+	if (!strncmp(key_type_name, RAW_DATA_STR, strlen(RAW_DATA_STR)))
+		psa_key_type = PSA_KEY_TYPE_RAW_DATA;
+
+	return psa_key_type;
+}
+
 static int get_psa_key_type(psa_key_type_t *psa_key_type,
 			    const char *key_type_name, const char *privacy_name)
 {
@@ -341,6 +352,8 @@ static int get_psa_key_type(psa_key_type_t *psa_key_type,
 		*psa_key_type = get_hmac_psa_key_type(key_type_name);
 	if (*psa_key_type == PSA_KEY_TYPE_NONE)
 		*psa_key_type = get_cipher_psa_key_type(key_type_name);
+	if (*psa_key_type == PSA_KEY_TYPE_NONE)
+		*psa_key_type = get_raw_psa_key_type(key_type_name);
 	if (*psa_key_type != PSA_KEY_TYPE_NONE)
 		ret = ERR_CODE(PASSED);
 
@@ -972,8 +985,6 @@ static int read_descriptor(struct llist *keys, struct keypair_psa *key_test,
 			return ret;
 	} else if (ret != ERR_CODE(VALUE_NOTFOUND)) {
 		return ret;
-	} else if (!parent_key_name) {
-		ret = ERR_CODE(VALUE_NOTFOUND);
 	}
 
 	/* Read 'privacy' parameter if defined */

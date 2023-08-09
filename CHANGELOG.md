@@ -38,6 +38,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 1. ARM PSA APIs
 
 * Fix coverity and ensure all variables are initialized.
+* Add RAW data key type support.
 
 ##### 2. SMW APIs
 

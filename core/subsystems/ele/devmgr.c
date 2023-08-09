@@ -54,6 +54,24 @@ end:
 	return status;
 }
 
+static void free_device_attestation_operation(op_dev_attest_args_t *op_args)
+{
+	if (op_args->uid)
+		SMW_UTILS_FREE(op_args->uid);
+	if (op_args->sha_rom_patch)
+		SMW_UTILS_FREE(op_args->sha_rom_patch);
+	if (op_args->sha_fw)
+		SMW_UTILS_FREE(op_args->sha_fw);
+	if (op_args->signature)
+		SMW_UTILS_FREE(op_args->signature);
+	if (op_args->info_buf)
+		SMW_UTILS_FREE(op_args->info_buf);
+	if (op_args->rsp_nounce)
+		SMW_UTILS_FREE(op_args->rsp_nounce);
+	if (op_args->oem_srkh)
+		SMW_UTILS_FREE(op_args->oem_srkh);
+}
+
 static int device_attestation(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -159,20 +177,7 @@ static int device_attestation(struct hdl *hdl, void *args)
 
 end:
 	/* Free all buffers allocated by the ELE Library */
-	if (op_args.uid)
-		SMW_UTILS_FREE(op_args.uid);
-	if (op_args.sha_rom_patch)
-		SMW_UTILS_FREE(op_args.sha_rom_patch);
-	if (op_args.sha_fw)
-		SMW_UTILS_FREE(op_args.sha_fw);
-	if (op_args.signature)
-		SMW_UTILS_FREE(op_args.signature);
-	if (op_args.info_buf)
-		SMW_UTILS_FREE(op_args.info_buf);
-	if (op_args.rsp_nounce)
-		SMW_UTILS_FREE(op_args.rsp_nounce);
-	if (op_args.oem_srkh)
-		SMW_UTILS_FREE(op_args.oem_srkh);
+	free_device_attestation_operation(&op_args);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
@@ -245,6 +250,9 @@ static int device_uuid(struct hdl *hdl, void *args)
 	smw_devmgr_set_uuid_length(args, ELE_UID_SIZE);
 
 end:
+	/* Free all buffers allocated by the ELE Library */
+	free_device_attestation_operation(&op_args);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
 	return status;

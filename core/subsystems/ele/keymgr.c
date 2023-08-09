@@ -18,6 +18,13 @@
 static int ecc_public_key_length(unsigned int security_size);
 
 /*
+ * OEM SRKH Key Identifier - Hardcoded value
+ * This object is imported by EL2GO as RAW Type but must use the import key
+ * operation.
+ */
+#define ELE_OEM_SRKH_KEY_ID 0x7FFF817A
+
+/*
  * Bit mask identifing the key category, asymmetric public, keypair
  * symmetric key and raw key.
  */
@@ -713,7 +720,9 @@ static int import_key(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	if (NXP_IS_EL2GO_KEY(storage_id))
+	if (NXP_IS_EL2GO_KEY(storage_id) ||
+	    (NXP_IS_EL2GO_OBJECT(storage_id) &&
+	     key_desc->identifier.id == ELE_OEM_SRKH_KEY_ID))
 		status = import_el2go_key(hdl, key_desc);
 	else
 		status = import_el2go_data(hdl, key_desc);

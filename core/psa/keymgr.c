@@ -475,6 +475,9 @@ static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 	psa_key_type = psa_get_key_type(attributes);
 	alg = psa_get_key_algorithm(attributes);
 
+	if (psa_key_type == PSA_KEY_TYPE_RAW_DATA)
+		return "RAW";
+
 	if (PSA_KEY_TYPE_IS_DH(psa_key_type))
 		return "DH";
 
@@ -1114,7 +1117,8 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 
 	usage_tlv_length = get_usage_tlv_length(usage_flags, algo_tlv_length);
 
-	if (SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_tlv_length,
+	if (usage_tlv_length &&
+	    SMW_TLV_ELEMENT_LENGTH(POLICY_STR, usage_tlv_length,
 				   tmp_tlv_length)) {
 		psa_status = PSA_ERROR_INVALID_ARGUMENT;
 		goto end;
@@ -1178,24 +1182,28 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 
 	smw_tlv_set_numeral(&p, STORAGE_ID_STR, storage_id);
 
-	policy_tlv = p;
-	smw_tlv_set_type(&p, POLICY_STR);
+	if (usage_tlv_length) {
+		policy_tlv = p;
+		smw_tlv_set_type(&p, POLICY_STR);
 
-	for (; i < ARRAY_SIZE(key_usage); i++) {
-		if (usage_flags & key_usage[i].psa_usage) {
-			usage_tlv = p;
-			smw_tlv_set_string(&p, USAGE_STR,
-					   key_usage[i].usage_str);
+		for (; i < ARRAY_SIZE(key_usage); i++) {
+			if (usage_flags & key_usage[i].psa_usage) {
+				usage_tlv = p;
+				smw_tlv_set_string(&p, USAGE_STR,
+						   key_usage[i].usage_str);
 
-			if (key_usage[i].restricted && algo_v && algo_v_length)
-				smw_tlv_set_element(&p, ALGO_STR, algo_v,
-						    algo_v_length);
+				if (key_usage[i].restricted && algo_v &&
+				    algo_v_length)
+					smw_tlv_set_element(&p, ALGO_STR,
+							    algo_v,
+							    algo_v_length);
 
-			smw_tlv_set_length(usage_tlv, p);
+				smw_tlv_set_length(usage_tlv, p);
+			}
 		}
-	}
 
-	smw_tlv_set_length(policy_tlv, p);
+		smw_tlv_set_length(policy_tlv, p);
+	}
 
 	SMW_DBG_ASSERT(*key_attributes_list_length ==
 		       (uintptr_t)p - (uintptr_t)*key_attributes_list);
@@ -1629,10 +1637,10 @@ __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
 
 exit:
 	if (args.policy_list)
-		free(args.policy_list);
+		SMW_UTILS_FREE(args.policy_list);
 
 	if (args.lifecycle_list)
-		free(args.lifecycle_list);
+		SMW_UTILS_FREE(args.lifecycle_list);
 
 	if (psa_status != PSA_SUCCESS)
 		psa_reset_key_attributes(attributes);

@@ -62,6 +62,7 @@ enum smw_keymgr_persistence_id {
  * @id: Key ID set by the subsystem
  * @persistence_id: Key persistence ID
  * @storage_id: Key storage identifier
+ * @group: Key group (may not be used by all subsystems)
  *
  * The value of @attribute is key type dependent.
  * For RSA key type, it represents the public exponent length in bytes.
@@ -75,6 +76,7 @@ struct smw_keymgr_identifier {
 	uint32_t id;
 	enum smw_keymgr_persistence_id persistence_id;
 	uint32_t storage_id;
+	uint16_t group;
 };
 
 /**

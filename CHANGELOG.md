@@ -67,6 +67,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add ELE subsystem storage data store and retrieve.
 * Add ELE EL2GO data import.
 * Fix ELE persistent/permanent key deletion strict operation.
+* Fix ELE subsystem Key group management.
+* Fix HSM subsystem Key group management.
 
 #### 4. OSAL
 

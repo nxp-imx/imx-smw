@@ -14,13 +14,7 @@
 
 #include "common.h"
 
-static struct {
-	struct hdl hdl;
-	unsigned long tid;
-} ele_ctx = {
-	.hdl = { .session = 0, .key_store = 0 },
-	.tid = 0,
-};
+static struct subsystem_context ele_ctx = { 0 };
 
 static int open_session(hsm_hdl_t *session_hdl)
 {
@@ -127,6 +121,21 @@ static int unload(void)
 
 	reset_handles();
 
+	if (ele_ctx.key_grp_mutex) {
+		if (smw_utils_mutex_lock(ele_ctx.key_grp_mutex))
+			status = SMW_STATUS_MUTEX_LOCK_FAILURE;
+
+		if (status == SMW_STATUS_OK) {
+			smw_utils_list_destroy(&ele_ctx.key_grp_list);
+			if (smw_utils_mutex_unlock(ele_ctx.key_grp_mutex))
+				status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
+		}
+
+		if (status == SMW_STATUS_OK &&
+		    smw_utils_mutex_destroy(&ele_ctx.key_grp_mutex))
+			status = SMW_STATUS_MUTEX_DESTROY_FAILURE;
+	}
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -144,6 +153,13 @@ static int load(void)
 		goto end;
 
 	status = open_key_store_service(hdl->session, &hdl->key_store);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	smw_utils_list_init(&ele_ctx.key_grp_list);
+
+	if (smw_utils_mutex_init(&ele_ctx.key_grp_mutex))
+		status = SMW_STATUS_MUTEX_INIT_FAILURE;
 
 end:
 	if (status != SMW_STATUS_OK)
@@ -153,10 +169,11 @@ end:
 	return status;
 }
 
-__weak bool ele_key_handle(struct hdl *hdl, enum operation_id operation_id,
-			   void *args, int *status)
+__weak bool ele_key_handle(struct subsystem_context *ele_ctx,
+			   enum operation_id operation_id, void *args,
+			   int *status)
 {
-	(void)hdl;
+	(void)ele_ctx;
 	(void)operation_id;
 	(void)args;
 	(void)status;
@@ -250,7 +267,7 @@ static int execute(enum operation_id operation_id, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (ele_key_handle(hdl, operation_id, args, &status))
+	if (ele_key_handle(&ele_ctx, operation_id, args, &status))
 		goto end;
 	else if (ele_hash_handle(hdl, operation_id, args, &status))
 		goto end;

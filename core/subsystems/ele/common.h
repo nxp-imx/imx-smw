@@ -10,6 +10,8 @@
 #include <hsm_api.h>
 
 #include "constants.h"
+#include "list.h"
+
 #include "keymgr_derive.h"
 
 /**
@@ -24,6 +26,17 @@ struct hdl {
 	hsm_hdl_t key_store;
 };
 
+/**
+ * struct subsystem_context - ELE subsystem context
+ * @hdl: ELE handles
+ * @key_grp_list: Key group list
+ * @key_grp_mutex: Mutex of the key group list access
+ */
+struct subsystem_context {
+	struct hdl hdl;
+	struct smw_utils_list key_grp_list;
+	void *key_grp_mutex;
+};
 struct ele_hash_algo {
 	enum smw_config_hash_algo_id algo_id;
 	hsm_hash_algo_t ele_algo;
@@ -43,7 +56,7 @@ ele_get_hash_algo(enum smw_config_hash_algo_id algo_id);
 
 /**
  * ele_key_handle() - Handle the Key operations.
- * @hdl: Pointer to the ELE handles structure.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @status: Error code set only if the Security Operation is handled.
@@ -55,8 +68,8 @@ ele_get_hash_algo(enum smw_config_hash_algo_id algo_id);
  * * true:	- the Security Operation has been handled.
  * * false:	- the Security Operation has not been handled.
  */
-bool ele_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
-		    int *status);
+bool ele_key_handle(struct subsystem_context *ele_ctx,
+		    enum operation_id operation_id, void *args, int *status);
 
 /**
  * ele_hash_handle() - Handle the Hash operation.

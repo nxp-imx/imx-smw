@@ -23,22 +23,7 @@
 #define STORAGE_MANAGER_WAIT_MS 10  /* 10 ms */
 #define STORAGE_MANAGER_TIMEOUT 100 /* 100x WAIT_MS */
 
-static struct {
-	struct hdl hdl;
-	uint32_t nvm_status;
-	unsigned long tid;
-	void *mutex;
-} hsm_ctx = { .hdl = { .session = 0,
-		       .key_store = 0,
-		       .key_management = 0,
-		       .signature_gen = 0,
-		       .signature_ver = 0,
-		       .hash = 0,
-		       .rng = 0,
-		       .cipher = 0 },
-	      .nvm_status = NVM_STATUS_UNDEF,
-	      .tid = 0,
-	      .mutex = NULL };
+static struct subsystem_context hsm_ctx = { 0 };
 
 static int open_session(hsm_hdl_t *session_hdl)
 {
@@ -491,22 +476,37 @@ static int stop_storage_manager(void)
 static int unload(void)
 {
 	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	reset_handles();
 
-	status = stop_storage_manager();
-	if (status != SMW_STATUS_OK)
-		goto end;
+	if (hsm_ctx.key_grp_mutex) {
+		if (smw_utils_mutex_lock(hsm_ctx.key_grp_mutex))
+			status = SMW_STATUS_MUTEX_LOCK_FAILURE;
 
-	if (smw_utils_mutex_destroy(&hsm_ctx.mutex))
+		if (status == SMW_STATUS_OK) {
+			smw_utils_list_destroy(&hsm_ctx.key_grp_list);
+			if (smw_utils_mutex_unlock(hsm_ctx.key_grp_mutex))
+				status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
+		}
+
+		if (status == SMW_STATUS_OK &&
+		    smw_utils_mutex_destroy(&hsm_ctx.key_grp_mutex))
+			status = SMW_STATUS_MUTEX_DESTROY_FAILURE;
+	}
+
+	tmp_status = stop_storage_manager();
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
+
+	if (smw_utils_mutex_destroy(&hsm_ctx.mutex) && status == SMW_STATUS_OK)
 		status = SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE;
 
 	/* Close Seco Session */
 	seco_nvm_close_session();
 
-end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -568,6 +568,13 @@ static int load(void)
 		goto err;
 
 	status = open_cipher_service(hdl->key_store, &hdl->cipher);
+	if (status != SMW_STATUS_OK)
+		goto err;
+
+	smw_utils_list_init(&hsm_ctx.key_grp_list);
+
+	if (smw_utils_mutex_init(&hsm_ctx.key_grp_mutex))
+		status = SMW_STATUS_MUTEX_INIT_FAILURE;
 
 err:
 	if (status_mutex == SMW_STATUS_OK)
@@ -584,10 +591,11 @@ end:
 	return status;
 }
 
-__weak bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id,
-			   void *args, int *status)
+__weak bool hsm_key_handle(struct subsystem_context *hsm_ctx,
+			   enum operation_id operation_id, void *args,
+			   int *status)
 {
-	(void)hdl;
+	(void)hsm_ctx;
 	(void)operation_id;
 	(void)args;
 	(void)status;
@@ -659,7 +667,7 @@ static int execute(enum operation_id operation_id, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (hsm_key_handle(hdl, operation_id, args, &status))
+	if (hsm_key_handle(&hsm_ctx, operation_id, args, &status))
 		goto end;
 	else if (hsm_hash_handle(hdl, operation_id, args, &status))
 		goto end;

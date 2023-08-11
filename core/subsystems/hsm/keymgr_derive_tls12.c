@@ -488,7 +488,8 @@ static int check_kdf_input_length(op_key_exchange_args_t *args,
 	return SMW_STATUS_OK;
 }
 
-int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
+int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
+		     struct smw_keymgr_derive_key_args *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
@@ -506,6 +507,7 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	unsigned int hex_key_base_len = 0;
 	unsigned short hsm_key_size = 0;
 	int nb_shared_keys = 0;
+	unsigned int key_group = 0;
 
 	hsm_err_t hsm_err = HSM_NO_ERROR;
 	op_key_exchange_args_t op_hsm_args = { 0 };
@@ -619,42 +621,76 @@ int derive_tls12(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 
 	/* Only Transient keys generated */
 	op_hsm_args.shared_key_info = HSM_KEY_INFO_TRANSIENT;
-	op_hsm_args.shared_key_group = TRANSIENT_KEY_GROUP;
 
-	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_key_exchange()\n"
-		       "  key_management_hdl: %d\n"
-		       "  op_key_exchange_args_t\n"
-		       "    key_identifier: %d\n"
-		       "    shared_key_identifier_array: %p (size %d)\n"
-		       "    ke_input: %p (size %d)\n"
-		       "    ke_ouput: %p (size %d)\n"
-		       "    kdf_input: %p (size %d)\n"
-		       "    kdf_output: %p (size %d)\n"
-		       "    shared_key: grp %d, info %d, type %d\n"
-		       "    initiator_public_data_type: %d\n"
-		       "    key_exchange_scheme: %d\n"
-		       "    kdf_algorithm: %d\n"
-		       "    flags: 0x%x\n"
-		       "    signed_message: %p (size %d)\n",
-		       __func__, __LINE__, hdl->key_management,
-		       op_hsm_args.key_identifier,
-		       op_hsm_args.shared_key_identifier_array,
-		       op_hsm_args.shared_key_identifier_array_size,
-		       op_hsm_args.ke_input, op_hsm_args.ke_input_size,
-		       op_hsm_args.ke_output, op_hsm_args.ke_output_size,
-		       op_hsm_args.kdf_input, op_hsm_args.kdf_input_size,
-		       op_hsm_args.kdf_output, op_hsm_args.kdf_output_size,
-		       op_hsm_args.shared_key_group,
-		       op_hsm_args.shared_key_info, op_hsm_args.shared_key_type,
-		       op_hsm_args.initiator_public_data_type,
-		       op_hsm_args.key_exchange_scheme,
-		       op_hsm_args.kdf_algorithm, op_hsm_args.flags,
-		       op_hsm_args.signed_message, op_hsm_args.signed_msg_size);
+	do {
+		status = hsm_get_key_group(hsm_ctx, false, &key_group);
+		if (status != SMW_STATUS_OK)
+			goto end;
 
-	hsm_err = hsm_key_exchange(hdl->key_management, &op_hsm_args);
+		if (SET_OVERFLOW(key_group, op_hsm_args.shared_key_group)) {
+			status = SMW_STATUS_OPERATION_FAILURE;
+			goto end;
+		}
 
-	SMW_DBG_PRINTF(DEBUG, "hsm_key_exchange returned %d\n", hsm_err);
+		SMW_DBG_PRINTF(VERBOSE,
+			       "[%s (%d)] Call hsm_key_exchange()\n"
+			       "  key_management_hdl: %d\n"
+			       "  op_key_exchange_args_t\n"
+			       "    key_identifier: %d\n"
+			       "    shared_key_identifier_array: %p (size %d)\n"
+			       "    ke_input: %p (size %d)\n"
+			       "    ke_ouput: %p (size %d)\n"
+			       "    kdf_input: %p (size %d)\n"
+			       "    kdf_output: %p (size %d)\n"
+			       "    shared_key: grp %d, info %d, type %d\n"
+			       "    initiator_public_data_type: %d\n"
+			       "    key_exchange_scheme: %d\n"
+			       "    kdf_algorithm: %d\n"
+			       "    flags: 0x%x\n"
+			       "    signed_message: %p (size %d)\n",
+			       __func__, __LINE__, hsm_ctx->hdl.key_management,
+			       op_hsm_args.key_identifier,
+			       op_hsm_args.shared_key_identifier_array,
+			       op_hsm_args.shared_key_identifier_array_size,
+			       op_hsm_args.ke_input, op_hsm_args.ke_input_size,
+			       op_hsm_args.ke_output,
+			       op_hsm_args.ke_output_size,
+			       op_hsm_args.kdf_input,
+			       op_hsm_args.kdf_input_size,
+			       op_hsm_args.kdf_output,
+			       op_hsm_args.kdf_output_size,
+			       op_hsm_args.shared_key_group,
+			       op_hsm_args.shared_key_info,
+			       op_hsm_args.shared_key_type,
+			       op_hsm_args.initiator_public_data_type,
+			       op_hsm_args.key_exchange_scheme,
+			       op_hsm_args.kdf_algorithm, op_hsm_args.flags,
+			       op_hsm_args.signed_message,
+			       op_hsm_args.signed_msg_size);
+
+		hsm_err = hsm_key_exchange(hsm_ctx->hdl.key_management,
+					   &op_hsm_args);
+
+		SMW_DBG_PRINTF(DEBUG, "hsm_key_exchange returned %d\n",
+			       hsm_err);
+		/*
+		 * There is no specific HSM error code indicating that the
+		 * NVM Storage is full, hence let's assume that the NVM_KEY_STORE_ERROR
+		 * will be returned only in case of key group full.
+		 */
+		if (hsm_err == HSM_KEY_STORE_ERROR) {
+			status = hsm_set_key_group_state(hsm_ctx, key_group,
+							 false, true);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			if (INC_OVERFLOW(key_group, 1)) {
+				status = SMW_STATUS_OPERATION_FAILURE;
+				goto end;
+			}
+		}
+	} while (hsm_err == HSM_KEY_STORE_ERROR);
+
 	status = convert_hsm_err(hsm_err);
 	if (status != SMW_STATUS_OK) {
 		delete_db_shared_keys(new_key_ids, nb_shared_keys);

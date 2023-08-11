@@ -314,7 +314,7 @@ end:
 	return status;
 }
 
-static int delete_key_operation(struct hdl *hdl,
+static int delete_key_operation(struct subsystem_context *hsm_ctx,
 				struct smw_keymgr_descriptor *key_desc)
 {
 	int status = SMW_STATUS_OK;
@@ -334,11 +334,7 @@ static int delete_key_operation(struct hdl *hdl,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (key_desc->identifier.persistence_id ==
-	    SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT)
-		manage_key_args.key_group = PERSISTENT_KEY_GROUP;
-	else
-		manage_key_args.key_group = TRANSIENT_KEY_GROUP;
+	manage_key_args.key_group = key_desc->identifier.group;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_manage_key()\n"
@@ -351,20 +347,29 @@ static int delete_key_operation(struct hdl *hdl,
 		       "    key_group: %d\n"
 		       "    key_info: %x\n"
 		       "    input_data: %p\n",
-		       __func__, __LINE__, hdl->key_management,
+		       __func__, __LINE__, hsm_ctx->hdl.key_management,
 		       *manage_key_args.key_identifier,
 		       manage_key_args.input_size, manage_key_args.flags,
 		       manage_key_args.key_type, manage_key_args.key_group,
 		       manage_key_args.key_info, manage_key_args.input_data);
 
-	err = hsm_manage_key(hdl->key_management, &manage_key_args);
+	err = hsm_manage_key(hsm_ctx->hdl.key_management, &manage_key_args);
 	status = convert_hsm_err(err);
+
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	/* Let assume there is place to add a new key */
+	status = hsm_set_key_group_state(hsm_ctx, key_desc->identifier.group,
+					 key_desc->identifier.persistence_id,
+					 false);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
-static int generate_key(struct hdl *hdl, void *args)
+
+static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -382,6 +387,8 @@ static int generate_key(struct hdl *hdl, void *args)
 	unsigned char *tmp_key = NULL;
 	unsigned short hsm_key_size = 0;
 	hsm_key_type_t hsm_key_type = 0;
+	bool persistent_grp = false;
+	unsigned int key_group = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -406,51 +413,92 @@ static int generate_key(struct hdl *hdl, void *args)
 	op_generate_key_args.out_key = tmp_key;
 	op_generate_key_args.out_size = hsm_key_size;
 
-	if (generate_key_args->key_attributes.persistence ==
-	    SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT) {
-		op_generate_key_args.key_info = HSM_KEY_INFO_PERSISTENT;
-		op_generate_key_args.key_group = PERSISTENT_KEY_GROUP;
-	} else {
-		op_generate_key_args.key_info = HSM_KEY_INFO_TRANSIENT;
-		op_generate_key_args.key_group = TRANSIENT_KEY_GROUP;
-	}
-
-	if (generate_key_args->key_attributes.flush_key)
-		op_generate_key_args.flags |=
-			HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
-
 	status = smw_keymgr_get_privacy_id(key_identifier->type_id,
 					   &key_identifier->privacy_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_generate_key()\n"
-		       "key_management_hdl: %d\n"
-		       "op_generate_key_args_t\n"
-		       "    key_identifier: %p\n"
-		       "    out_size: %d\n"
-		       "    flags: %x\n"
-		       "    key_type: %d\n"
-		       "    key_group: %d\n"
-		       "    key_info: %x\n"
-		       "    out_key: %p\n",
-		       __func__, __LINE__, hdl->key_management,
-		       op_generate_key_args.key_identifier,
-		       op_generate_key_args.out_size,
-		       op_generate_key_args.flags,
-		       op_generate_key_args.key_type,
-		       op_generate_key_args.key_group,
-		       op_generate_key_args.key_info,
-		       op_generate_key_args.out_key);
+	if (generate_key_args->key_attributes.flush_key)
+		op_generate_key_args.flags |=
+			HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
 
-	err = hsm_generate_key(hdl->key_management, &op_generate_key_args);
+	switch (generate_key_args->key_attributes.persistence) {
+	case SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT:
+		op_generate_key_args.key_info = HSM_KEY_INFO_PERSISTENT;
+		key_group = HSM_FIRST_PERSISTENT_KEY_GROUP;
+		persistent_grp = true;
+		break;
+
+	case SMW_KEYMGR_PERSISTENCE_ID_PERMANENT:
+		op_generate_key_args.key_info = HSM_KEY_INFO_PERMANENT;
+		key_group = HSM_FIRST_PERSISTENT_KEY_GROUP;
+		persistent_grp = true;
+		break;
+
+	default:
+		op_generate_key_args.key_info = HSM_KEY_INFO_TRANSIENT;
+		key_group = HSM_FIRST_TRANSIENT_KEY_GROUP;
+		break;
+	}
+
+	do {
+		status = hsm_get_key_group(hsm_ctx, persistent_grp, &key_group);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		if (SET_OVERFLOW(key_group, op_generate_key_args.key_group)) {
+			status = SMW_STATUS_OPERATION_FAILURE;
+			goto end;
+		}
+
+		SMW_DBG_PRINTF(VERBOSE,
+			       "[%s (%d)] Call hsm_generate_key()\n"
+			       "key_management_hdl: %d\n"
+			       "op_generate_key_args_t\n"
+			       "    key_identifier: %p\n"
+			       "    out_size: %d\n"
+			       "    flags: %x\n"
+			       "    key_type: %d\n"
+			       "    key_group: %d\n"
+			       "    key_info: %x\n"
+			       "    out_key: %p\n",
+			       __func__, __LINE__, hsm_ctx->hdl.key_management,
+			       op_generate_key_args.key_identifier,
+			       op_generate_key_args.out_size,
+			       op_generate_key_args.flags,
+			       op_generate_key_args.key_type,
+			       op_generate_key_args.key_group,
+			       op_generate_key_args.key_info,
+			       op_generate_key_args.out_key);
+
+		err = hsm_generate_key(hsm_ctx->hdl.key_management,
+				       &op_generate_key_args);
+
+		/*
+		 * There is no specific HSM error code indicating that the
+		 * NVM Storage is full, hence let's assume that the NVM_KEY_STORE_ERROR
+		 * will be returned only in case of key group full.
+		 */
+		if (err == HSM_KEY_STORE_ERROR) {
+			status = hsm_set_key_group_state(hsm_ctx, key_group,
+							 persistent_grp, true);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			if (INC_OVERFLOW(key_group, 1)) {
+				status = SMW_STATUS_OPERATION_FAILURE;
+				goto end;
+			}
+		}
+	} while (err == HSM_KEY_STORE_ERROR);
+
 	status = convert_hsm_err(err);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	key_identifier->subsystem_id = SUBSYSTEM_ID_HSM;
 	key_identifier->id = key_id;
+	key_identifier->group = key_group;
 
 	SMW_DBG_PRINTF(DEBUG, "HSM Key identifier: %d\n", key_id);
 
@@ -462,7 +510,7 @@ static int generate_key(struct hdl *hdl, void *args)
 			 * Delete the key in subsystem as smw_generate_key()
 			 * is going to remove it from the key database
 			 */
-			(void)delete_key_operation(hdl, key_descriptor);
+			(void)delete_key_operation(hsm_ctx, key_descriptor);
 		}
 	}
 
@@ -528,11 +576,11 @@ static int export_key(struct hdl *hdl, void *args)
 	return status;
 }
 
-static int delete_key(struct hdl *hdl, void *args)
+static int delete_key(struct subsystem_context *hsm_ctx, void *args)
 {
 	struct smw_keymgr_delete_key_args *delete_key_args = args;
 
-	return delete_key_operation(hdl, &delete_key_args->key_descriptor);
+	return delete_key_operation(hsm_ctx, &delete_key_args->key_descriptor);
 }
 
 static int get_key_lengths(struct hdl *hdl, void *args)
@@ -645,17 +693,21 @@ end:
 	return status;
 }
 
-bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
-		    int *status)
+bool hsm_key_handle(struct subsystem_context *hsm_ctx,
+		    enum operation_id operation_id, void *args, int *status)
 {
-	SMW_DBG_ASSERT(args);
+	struct hdl *hdl = NULL;
+
+	SMW_DBG_ASSERT(hsm_ctx && args);
+
+	hdl = &hsm_ctx->hdl;
 
 	switch (operation_id) {
 	case OPERATION_ID_GENERATE_KEY:
-		*status = generate_key(hdl, args);
+		*status = generate_key(hsm_ctx, args);
 		break;
 	case OPERATION_ID_DERIVE_KEY:
-		*status = derive_key(hdl, args);
+		*status = hsm_derive_key(hsm_ctx, args);
 		break;
 	case OPERATION_ID_UPDATE_KEY:
 		*status = update_key(hdl, args);
@@ -667,7 +719,7 @@ bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		*status = export_key(hdl, args);
 		break;
 	case OPERATION_ID_DELETE_KEY:
-		*status = delete_key(hdl, args);
+		*status = delete_key(hsm_ctx, args);
 		break;
 	case OPERATION_ID_GET_KEY_LENGTHS:
 		*status = get_key_lengths(hdl, args);

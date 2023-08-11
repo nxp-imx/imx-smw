@@ -8,7 +8,15 @@
 
 #include <hsm_api.h>
 
+#include "list.h"
+
 #include "keymgr_derive.h"
+
+#define HSM_MAX_KEY_GROUP	       1024U
+#define HSM_FIRST_PERSISTENT_KEY_GROUP 0U
+#define HSM_FIRST_TRANSIENT_KEY_GROUP  (HSM_MAX_KEY_GROUP / 2)
+#define HSM_LAST_PERSISTENT_KEY_GROUP  (HSM_FIRST_TRANSIENT_KEY_GROUP - 1)
+#define HSM_LAST_TRANSIENT_KEY_GROUP   (HSM_MAX_KEY_GROUP - 1)
 
 /**
  * struct hdl - HSM handles
@@ -35,8 +43,25 @@ struct hdl {
 };
 
 /**
+ * struct subsystem_context - HSM subsystem context
+ * @hdl: HSM handles
+ * @nvm_status: NVM storage active status
+ * @mutex: Mutex of the subsystem context access
+ * @key_grp_list: Key group list
+ * @key_grp_mutex: Mutex of the key group list access
+ */
+struct subsystem_context {
+	struct hdl hdl;
+	uint32_t nvm_status;
+	void *mutex;
+	unsigned long tid;
+	struct smw_utils_list key_grp_list;
+	void *key_grp_mutex;
+};
+
+/**
  * hsm_key_handle() - Handle the Key operations.
- * @hdl: Pointer to the HSM handles structure.
+ * @hsm_ctx: Pointer to the HSM subsystem context structure.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @status: Error code set only if the Security Operation is handled.
@@ -48,8 +73,8 @@ struct hdl {
  * * true:	- the Security Operation has been handled.
  * * false:	- the Security Operation has not been handled.
  */
-bool hsm_key_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
-		    int *status);
+bool hsm_key_handle(struct subsystem_context *hsm_ctx,
+		    enum operation_id operation_id, void *args, int *status);
 
 /**
  * hsm_hash_handle() - Handle the Hash operation.
@@ -86,14 +111,15 @@ bool hsm_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
 			    void *args, int *status);
 
 /**
- * derive_key() - HSM key derivation operation.
- * @hdl: Pointer to the HSM handles structure.
+ * hsm_derive_key() - HSM key derivation operation.
+ * @hsm_ctx: Pointer to the HSM subsystem context structure.
  * @args: Pointer to the derive key arguments.
  *
  * Return:
  * SMW status
  */
-int derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args);
+int hsm_derive_key(struct subsystem_context *hsm_ctx,
+		   struct smw_keymgr_derive_key_args *args);
 
 /**
  * hsm_mac_handle() - Handle the MAC operation.
@@ -151,5 +177,48 @@ void hsm_set_empty_key_policy(struct smw_keymgr_attributes *key_attributes);
  */
 int hsm_export_public_key(struct hdl *hdl,
 			  struct smw_keymgr_descriptor *key_desc);
+
+/**
+ * hsm_set_key_group_state() - Set internal key group list state
+ * @hsm_ctx: Pointer to HSM subsystem context structure.
+ * @grp: Group id.
+ * @persistent: True if key group contains persistent keys.
+ * @full: True if the key group is full.
+ *
+ * Find the subsystem key group list the group id, if found, update the
+ * status of the key group with the @full status.
+ * Else, add a new key group in the list with the type @persistent and the
+ * status @full.
+ *
+ * Return:
+ * SMW_STATUS_OK                   - Success
+ * SMW_STATUS_MUTEX_LOCK_FAILURE   - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE - Mutex unlock failure
+ * SMW_STATUS_OPERATION_FAILURE    - Key group not valid
+ * SMW_STATUS_ALLOC_FAILURE        - Out of memory
+ */
+int hsm_set_key_group_state(struct subsystem_context *hsm_ctx, unsigned int grp,
+			    bool persistent, bool full);
+
+/**
+ * hsm_get_key_group() - Return a key group id not full
+ * @hsm_ctx: Pointer to HSM subsystem context structure.
+ * @persistent: True if key is a persistent key.
+ * @out_grp: Group id not full.
+ *
+ * Find the subsystem key group list the group id, if found, update the
+ * status of the key group with the @full status.
+ * Else, add a new key group in the list with the type @persistent and the
+ * status @full.
+ *
+ * Return:
+ * SMW_STATUS_OK                   - Success
+ * SMW_STATUS_MUTEX_LOCK_FAILURE   - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE - Mutex unlock failure
+ * SMW_STATUS_OPERATION_FAILURE    - No more key group available
+ * SMW_STATUS_ALLOC_FAILURE        - Out of memory
+ */
+int hsm_get_key_group(struct subsystem_context *hsm_ctx, bool persistent,
+		      unsigned int *out_grp);
 
 #endif /* __COMMON_H__ */

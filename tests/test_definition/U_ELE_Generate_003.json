@@ -1,0 +1,345 @@
+{
+	"keys": {
+		"key NIST 1": {
+			"id": 805310464, // 0x30001000
+			"type": "NIST",
+			"security_size": 521,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 2": {
+			"id": 805310465, // 0x30001001
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 3": {
+			"id": 805310466, // 0x30001002
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 4": {
+			"id": 805310467, // 0x30001003
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 5": {
+			"id": 805310468, // 0x30001004
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 6": {
+			"id": 805310469, // 0x30001005
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 7": {
+			"id": 805310470, // 0x30001006
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 8": {
+			"id": 805310471, // 0x30001007
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 9": {
+			"id": 805310472, // 0x30001008
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 10": {
+			"id": 805310473, // 0x30001009
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 11": {
+			"id": 805310474, // 0x3000100A
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key NIST 12": {
+			"id": 805310475, // 0x3000100B
+			"key_name":"key NIST 1",
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"sign_message": [
+					["ECDSA","HASH=SHA512"]
+				]
+			}
+		},
+		"key AES 1": {
+			"type": "AES",
+			"id": 805314560, // 0x30002000
+			"security_size": 128,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		},
+		"key AES 2": {
+			"type": "AES",
+			"id": 805314561, // 0x30002001
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		},
+		"key AES 3": {
+			"type": "AES",
+			"id": 805314562, // 0x30002002
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		}
+
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 1"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 2"
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 3"
+	},
+	"subtest 4": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 4"
+	},
+	"subtest 5": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 5"
+	},
+	"subtest 6": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 6"
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 7"
+	},
+	"subtest 8": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 8"
+	},
+	"subtest 9": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 9"
+	},
+	"subtest 10": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 10"
+	},
+	"subtest 11": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 11"
+	},
+	"subtest 12": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST 12"
+	},
+	"subtest 13": { // Delete the first NIST key
+		"command": "DELETE",
+		"key_name": "key NIST 1",
+		"depends": 1
+	},
+	"subtest 14": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key AES 1"
+	},
+	"subtest 15": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key AES 2"
+	},
+	"subtest 16": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key AES 3"
+	},
+	"subtest 17": {
+		"command": "DELETE",
+		"key_name": "key NIST 2",
+		"depends": 2
+	},
+	"subtest 18": {
+		"command": "DELETE",
+		"key_name": "key NIST 3",
+		"depends": 3
+	},
+	"subtest 19": {
+		"command": "DELETE",
+		"key_name": "key NIST 4",
+		"depends": 4
+	},
+	"subtest 20": {
+		"command": "DELETE",
+		"key_name": "key NIST 5",
+		"depends": 5
+	},
+	"subtest 21": {
+		"command": "DELETE",
+		"key_name": "key NIST 6",
+		"depends": 6
+	},
+	"subtest 22": {
+		"command": "DELETE",
+		"key_name": "key NIST 7",
+		"depends": 7
+	},
+	"subtest 23": {
+		"command": "DELETE",
+		"key_name": "key NIST 8",
+		"depends": 8
+	},
+	"subtest 24": {
+		"command": "DELETE",
+		"key_name": "key NIST 9",
+		"depends": 9
+	},
+	"subtest 25": {
+		"command": "DELETE",
+		"key_name": "key NIST 10",
+		"depends": 10
+	},
+	"subtest 26": {
+		"command": "DELETE",
+		"key_name": "key NIST 11",
+		"depends": 11
+	},
+	"subtest 27": {
+		"command": "DELETE",
+		"key_name": "key NIST 12",
+		"depends": 12
+	},
+	"subtest 28": {
+		"command": "DELETE",
+		"key_name": "key AES 1",
+		"depends": 14
+	},
+	"subtest 29": {
+		"command": "DELETE",
+		"key_name": "key AES 2",
+		"depends": 15
+	},
+	"subtest 30": {
+		"command": "DELETE",
+		"key_name": "key AES 3",
+		"depends": 16
+	}
+}

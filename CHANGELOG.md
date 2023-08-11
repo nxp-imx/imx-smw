@@ -62,6 +62,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix coverity in TA Library of the TEE subsystem and ensure all variables are initialized.
 * Add ELE subsystem storage data store and retrieve.
 * Add ELE EL2GO data import.
+* Fix ELE persistent/permanent key deletion strict operation.
 
 #### 4. OSAL
 

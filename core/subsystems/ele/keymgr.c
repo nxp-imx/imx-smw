@@ -275,7 +275,8 @@ static int close_key_mgt_service(hsm_hdl_t key_management_hdl)
 	return ele_convert_err(err);
 }
 
-static int delete_key_operation(hsm_hdl_t key_mgt_hdl, unsigned int key_id)
+static int delete_key_operation(hsm_hdl_t key_mgt_hdl,
+				struct smw_keymgr_identifier *key_identifier)
 {
 	int status = SMW_STATUS_OK;
 
@@ -284,7 +285,12 @@ static int delete_key_operation(hsm_hdl_t key_mgt_hdl, unsigned int key_id)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	op_args.key_identifier = key_id;
+	op_args.key_identifier = key_identifier->id;
+	if (key_identifier->persistence_id ==
+		    SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT ||
+	    key_identifier->persistence_id ==
+		    SMW_KEYMGR_PERSISTENCE_ID_PERMANENT)
+		op_args.flags = HSM_OP_DEL_KEY_FLAGS_STRICT_OPERATION;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_delete_key()\n"
@@ -579,7 +585,7 @@ static int generate_key(struct hdl *hdl, void *args)
 			 * Delete the key in subsystem as smw_generate_key()
 			 * is going to remove it from the key database
 			 */
-			(void)delete_key_operation(key_mgt_hdl, key_id);
+			(void)delete_key_operation(key_mgt_hdl, key_identifier);
 		}
 	}
 
@@ -760,7 +766,7 @@ static int delete_key(struct hdl *hdl, void *args)
 	status = open_key_mgmt_service(hdl, &key_mgt_hdl);
 	if (status == SMW_STATUS_OK) {
 		status = delete_key_operation(key_mgt_hdl,
-					      key_desc->identifier.id);
+					      &key_desc->identifier);
 
 		tmp_status = close_key_mgt_service(key_mgt_hdl);
 		if (status == SMW_STATUS_OK)

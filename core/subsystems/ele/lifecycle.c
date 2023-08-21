@@ -67,6 +67,24 @@ static size_t lifecycle_to_string(unsigned char **str, size_t str_length,
 	return out_len;
 }
 
+static int get_current_lifecycle(struct subsystem_context *ele_ctx,
+				 uint16_t *lifecycle)
+{
+	int status = SMW_STATUS_OK;
+
+	struct ele_info *info = &ele_ctx->info;
+
+	status = ele_get_device_info(ele_ctx);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	*lifecycle = info->lifecycle;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 int ele_get_lifecycle(unsigned char **lifecycle, unsigned int *lifecycle_len,
 		      hsm_key_lifecycle_t ele_lifecycle)
 {
@@ -127,14 +145,30 @@ exit:
 	return status;
 }
 
-void ele_set_lifecycle_flags(unsigned long smw_flags, uint16_t *ele_flags)
+int ele_set_lifecycle_flags(struct subsystem_context *ele_ctx,
+			    unsigned long smw_flags, uint16_t *ele_flags)
 {
+	int status = SMW_STATUS_OK;
+
 	unsigned int i = 0;
+	uint16_t lifecycle = 0;
 
 	*ele_flags = 0;
+
+	if (smw_flags & SMW_LIFECYCLE_CURRENT) {
+		status = get_current_lifecycle(ele_ctx, &lifecycle);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		*ele_flags |= lifecycle;
+	}
 
 	for (; i < ARRAY_SIZE(lifecycles); i++) {
 		if (smw_flags & lifecycles[i].smw)
 			*ele_flags |= lifecycles[i].ele;
 	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }

@@ -66,7 +66,7 @@ static int store_data_raw(struct hdl *hdl,
 	return status;
 }
 
-static int store_data_encrypted(struct hdl *hdl,
+static int store_data_encrypted(struct subsystem_context *ele_ctx,
 				struct smw_storage_store_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -80,6 +80,8 @@ static int store_data_encrypted(struct hdl *hdl,
 	struct smw_storage_sign_args *sign_args = &args->sign_args;
 	struct smw_keymgr_identifier *key_identifier =
 		&enc_args->keys_desc[0]->identifier;
+	unsigned long lifecycle_flags =
+		data_descriptor->attributes.lifecycle_flags;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -112,8 +114,10 @@ static int store_data_encrypted(struct hdl *hdl,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	ele_set_lifecycle_flags(data_descriptor->attributes.lifecycle_flags,
-				&op_args.lifecycle);
+	status = ele_set_lifecycle_flags(ele_ctx, lifecycle_flags,
+					 &op_args.lifecycle);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_enc_data_ops()\n"
@@ -139,7 +143,7 @@ static int store_data_encrypted(struct hdl *hdl,
 		       op_args.sign_key_id, op_args.sign_algo, op_args.flags,
 		       op_args.lifecycle);
 
-	err = hsm_enc_data_ops(hdl->key_store, &op_args);
+	err = hsm_enc_data_ops(ele_ctx->hdl.key_store, &op_args);
 
 	SMW_DBG_PRINTF(DEBUG, "hsm_enc_data_ops returned %d\n", err);
 
@@ -150,7 +154,7 @@ end:
 	return status;
 }
 
-static int storage_store(struct hdl *hdl, void *args)
+static int storage_store(struct subsystem_context *ele_ctx, void *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -160,9 +164,9 @@ static int storage_store(struct hdl *hdl, void *args)
 
 	if (store_args->enc_args.mode_id == SMW_CONFIG_CIPHER_MODE_ID_INVALID &&
 	    store_args->sign_args.algo_id == SMW_CONFIG_MAC_ALGO_ID_INVALID) {
-		status = store_data_raw(hdl, args);
+		status = store_data_raw(&ele_ctx->hdl, args);
 	} else {
-		status = store_data_encrypted(hdl, args);
+		status = store_data_encrypted(ele_ctx, args);
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -210,18 +214,18 @@ static int storage_retrieve(struct hdl *hdl,
 	return status;
 }
 
-bool ele_storage_handle(struct hdl *hdl, enum operation_id operation_id,
-			void *args, int *status)
+bool ele_storage_handle(struct subsystem_context *ele_ctx,
+			enum operation_id operation_id, void *args, int *status)
 {
 	SMW_DBG_ASSERT(args);
 
 	switch (operation_id) {
 	case OPERATION_ID_STORAGE_STORE:
-		*status = storage_store(hdl, args);
+		*status = storage_store(ele_ctx, args);
 		break;
 
 	case OPERATION_ID_STORAGE_RETRIEVE:
-		*status = storage_retrieve(hdl, args);
+		*status = storage_retrieve(&ele_ctx->hdl, args);
 		break;
 
 	case OPERATION_ID_STORAGE_DELETE:

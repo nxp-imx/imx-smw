@@ -36,10 +36,6 @@ The releases are listed from the most recent to the first one.
 * When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
-##### 2. ELE Subsystem
-
-* Data storage API does not handle the `CURRENT` lifecycle properly. If the application restricts the data accessibility to the `CURRENT` lifecycle and another one or more, then the `CURRENT` lifecycle is ignored.
-
 #### SMW Library - _version 2.5_
 ##### 1. ARM PSA APIs
 
@@ -54,6 +50,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add commit key storage operation in all subsytems. In HSM and TEE subsystem
   the operation is not available so success is always returned. HSM subsystem
   key storage commit is managed with the "FLUSH_KEY" attributes of key operation.
+* Fix the handling of `CURRENT` lifecycle in ELE subsystem. It is not ignored anymore.
 
 #### 4. OSAL
 

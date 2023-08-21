@@ -3,6 +3,8 @@
  * Copyright 2023 NXP
  */
 
+#include "compiler.h"
+
 #include "config.h"
 #include "debug.h"
 #include "utils.h"
@@ -73,4 +75,11 @@ int ele_set_cipher_algo(enum smw_config_key_type_id key_type_id,
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+__weak int ele_get_device_info(struct subsystem_context *ele_ctx)
+{
+	(void)ele_ctx;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }

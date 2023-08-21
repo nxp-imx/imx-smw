@@ -116,6 +116,7 @@ static void reset_handles(void)
 static int unload(void)
 {
 	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -127,6 +128,7 @@ static int unload(void)
 
 		if (status == SMW_STATUS_OK) {
 			smw_utils_list_destroy(&ele_ctx.key_grp_list);
+
 			if (smw_utils_mutex_unlock(ele_ctx.key_grp_mutex))
 				status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
 		}
@@ -135,6 +137,28 @@ static int unload(void)
 		    smw_utils_mutex_destroy(&ele_ctx.key_grp_mutex))
 			status = SMW_STATUS_MUTEX_DESTROY_FAILURE;
 	}
+
+	if (ele_ctx.info.mutex) {
+		if (smw_utils_mutex_lock(ele_ctx.info.mutex))
+			tmp_status = SMW_STATUS_MUTEX_LOCK_FAILURE;
+
+		if (tmp_status == SMW_STATUS_OK) {
+			if (ele_ctx.info.uid)
+				SMW_UTILS_FREE(ele_ctx.info.uid);
+
+			ele_ctx.info.valid = false;
+
+			if (smw_utils_mutex_unlock(ele_ctx.info.mutex))
+				tmp_status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
+		}
+
+		if (tmp_status == SMW_STATUS_OK &&
+		    smw_utils_mutex_destroy(&ele_ctx.info.mutex))
+			tmp_status = SMW_STATUS_MUTEX_DESTROY_FAILURE;
+	}
+
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -158,7 +182,12 @@ static int load(void)
 
 	smw_utils_list_init(&ele_ctx.key_grp_list);
 
-	if (smw_utils_mutex_init(&ele_ctx.key_grp_mutex))
+	if (smw_utils_mutex_init(&ele_ctx.key_grp_mutex)) {
+		status = SMW_STATUS_MUTEX_INIT_FAILURE;
+		goto end;
+	}
+
+	if (smw_utils_mutex_init(&ele_ctx.info.mutex))
 		status = SMW_STATUS_MUTEX_INIT_FAILURE;
 
 end:
@@ -237,10 +266,11 @@ __weak bool ele_mac_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
-__weak bool ele_device_handle(struct hdl *hdl, enum operation_id operation_id,
-			      void *args, int *status)
+__weak bool ele_device_info_handle(struct subsystem_context *ele_ctx,
+				   enum operation_id operation_id, void *args,
+				   int *status)
 {
-	(void)hdl;
+	(void)ele_ctx;
 	(void)operation_id;
 	(void)args;
 	(void)status;
@@ -248,10 +278,23 @@ __weak bool ele_device_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
-__weak bool ele_storage_handle(struct hdl *hdl, enum operation_id operation_id,
-			       void *args, int *status)
+__weak bool ele_device_attest_handle(struct subsystem_context *ele_ctx,
+				     enum operation_id operation_id, void *args,
+				     int *status)
 {
-	(void)hdl;
+	(void)ele_ctx;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
+__weak bool ele_storage_handle(struct subsystem_context *ele_ctx,
+			       enum operation_id operation_id, void *args,
+			       int *status)
+{
+	(void)ele_ctx;
 	(void)operation_id;
 	(void)args;
 	(void)status;
@@ -279,10 +322,13 @@ static int execute(enum operation_id operation_id, void *args)
 		goto end;
 	else if (ele_mac_handle(hdl, operation_id, args, &status))
 		goto end;
-	else if (ele_device_handle(hdl, operation_id, args, &status))
+	else if (ele_device_info_handle(&ele_ctx, operation_id, args, &status))
+		goto end;
+	else if (ele_device_attest_handle(&ele_ctx, operation_id, args,
+					  &status))
 		goto end;
 
-	ele_storage_handle(hdl, operation_id, args, &status);
+	ele_storage_handle(&ele_ctx, operation_id, args, &status);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

@@ -14,6 +14,9 @@
 
 #include "keymgr_derive.h"
 
+#define ELE_NB_UID_WORD 4
+#define ELE_UID_SIZE	(ELE_NB_UID_WORD * sizeof(uint32_t))
+
 /**
  * struct hdl - ELE handles
  * @session: Session handle
@@ -27,16 +30,43 @@ struct hdl {
 };
 
 /**
+ * struct ele_info - ELE information
+ * @mutex: Mutex of the ELE information access
+ * @valid: True if structure has been initialized
+ * @attest_api_ver: Attestation API version
+ * @soc_rev: SoC Revision
+ * @soc_id: SoC ID
+ * @lifecycle: Current device lifecycle
+ * @uid_length: Chip Unique ID length
+ * @uid: Chip Unique ID buffer
+ *
+ * This structure stores some useful ELE information.
+ */
+struct ele_info {
+	void *mutex;
+	bool valid;
+	uint8_t attest_api_ver;
+	uint16_t soc_rev;
+	uint16_t soc_id;
+	uint16_t lifecycle;
+	unsigned int uid_length;
+	unsigned char *uid;
+};
+
+/**
  * struct subsystem_context - ELE subsystem context
  * @hdl: ELE handles
  * @key_grp_list: Key group list
  * @key_grp_mutex: Mutex of the key group list access
+ * @info: ELE information
  */
 struct subsystem_context {
 	struct hdl hdl;
 	struct smw_utils_list key_grp_list;
 	void *key_grp_mutex;
+	struct ele_info info;
 };
+
 struct ele_hash_algo {
 	enum smw_config_hash_algo_id algo_id;
 	hsm_hash_algo_t ele_algo;
@@ -157,21 +187,58 @@ bool ele_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
 		       void *args, int *status);
 
 /**
- * ele_device_handle() - Handle the device management operations.
- * @hdl: Pointer to the ELE handles structure.
+ * ele_device_info_handle() - Handle the device information management operations.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @status: Error code set only if the Security Operation is handled.
  *
- * This function handles the device management operations.
+ * This function handles the device information management operations.
  * @status is set only if the function returns true.
  *
  * Return:
  * * true:	- the Security Operation has been handled.
  * * false:	- the Security Operation has not been handled.
  */
-bool ele_device_handle(struct hdl *hdl, enum operation_id operation_id,
-		       void *args, int *status);
+bool ele_device_info_handle(struct subsystem_context *ele_ctx,
+			    enum operation_id operation_id, void *args,
+			    int *status);
+
+/**
+ * ele_device_attest_handle() - Handle the device attestation management operations.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the device attestation management operations.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool ele_device_attest_handle(struct subsystem_context *ele_ctx,
+			      enum operation_id operation_id, void *args,
+			      int *status);
+
+/**
+ * ele_storage_handle() - Handle the storage operations.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the storage operations.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool ele_storage_handle(struct subsystem_context *ele_ctx,
+			enum operation_id operation_id, void *args,
+			int *status);
 
 /**
  * ele_derive_key() - ELE key derivation operation.
@@ -286,11 +353,20 @@ int ele_get_lifecycle(unsigned char **lifecycle, unsigned int *lifecycle_len,
 
 /**
  * ele_set_lifecycle_flags() - Convert the SMW lifecycle flags to ELE flags
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @smw_flags: SMW lifecycle flags
  * @ele_flags: ELE lifecycle flags
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_MUTEX_LOCK_FAILURE         - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE       - Mutex unlock failure
+ * SMW_STATUS_INVALID_PARAM              - Invalid parameters
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
  */
-
-void ele_set_lifecycle_flags(unsigned long smw_flags, uint16_t *ele_flags);
+int ele_set_lifecycle_flags(struct subsystem_context *ele_ctx,
+			    unsigned long smw_flags, uint16_t *ele_flags);
 
 /**
  * ele_set_cipher_algo() - Set the ELE cipher algorithm
@@ -305,5 +381,22 @@ void ele_set_lifecycle_flags(unsigned long smw_flags, uint16_t *ele_flags);
 int ele_set_cipher_algo(enum smw_config_key_type_id key_type_id,
 			enum smw_config_cipher_mode_id cipher_mode_id,
 			hsm_op_cipher_one_go_algo_t *cipher_algo);
+
+/**
+ * ele_get_device_info() - Get the device information
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ *
+ * This function writes ELE information only once.
+ * Thus only the writing of ELE information must be mutex protected.
+ * The reading of ELE information does not need to be mutex protected
+ * as long as this function is called first.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_INVALID_PARAM              - Invalid parameters
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
+ */
+int ele_get_device_info(struct subsystem_context *ele_ctx);
 
 #endif /* __COMMON_H__ */

@@ -1,0 +1,1139 @@
+{
+	"keys": {
+		"key NIST 1": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 2": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 3": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 4": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 5": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 6": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 7": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 8": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 9": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 10": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 11": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 12": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 13": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 14": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 15": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 16": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 17": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 18": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 19": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 20": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 21": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 22": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 23": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 24": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 25": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 26": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 27": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 28": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 29": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 30": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 31": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 32": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 33": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 34": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 35": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 36": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 37": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 38": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 39": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 40": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 41": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 42": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 43": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 44": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 45": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 46": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 47": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 48": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 49": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 50": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 51": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 52": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 53": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 54": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 55": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 56": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 57": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 58": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 59": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 60": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 61": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 62": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 63": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 64": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 65": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 66": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 67": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 68": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 69": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 70": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 71": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 72": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 73": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 74": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 75": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 76": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 77": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 78": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key NIST 79": {
+			"type": "NIST",
+			"security_size": 384
+		},
+		"key AES 1": {
+			"type": "AES",
+			"security_size": 256
+		},
+		"key AES 2": {
+			"type": "AES",
+			"security_size": 256
+		}
+	},
+
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 1"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 2"
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 3"
+	},
+	"subtest 4": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 4"
+	},
+	"subtest 5": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 5"
+	},
+	"subtest 6": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 6"
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 7"
+	},
+	"subtest 8": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 8"
+	},
+	"subtest 9": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 9"
+	},
+	"subtest 10": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 10"
+	},
+	"subtest 11": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 11"
+	},
+	"subtest 12": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 12"
+	},
+	"subtest 13": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 13"
+	},
+	"subtest 14": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 14"
+	},
+	"subtest 15": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 15"
+	},
+	"subtest 16": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 16"
+	},
+	"subtest 17": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 17"
+	},
+	"subtest 18": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 18"
+	},
+	"subtest 19": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 19"
+	},
+	"subtest 20": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 20"
+	},
+	"subtest 21": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 21"
+	},
+	"subtest 22": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 22"
+	},
+	"subtest 23": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 23"
+	},
+	"subtest 24": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 24"
+	},
+	"subtest 25": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 25"
+	},
+	"subtest 26": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 26"
+	},
+	"subtest 27": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 27"
+	},
+	"subtest 28": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 28"
+	},
+	"subtest 29": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 29"
+	},
+	"subtest 30": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 30"
+	},
+	"subtest 31": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 31"
+	},
+	"subtest 32": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 32"
+	},
+	"subtest 33": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 33"
+	},
+	"subtest 34": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 34"
+	},
+	"subtest 35": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 35"
+	},
+	"subtest 36": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 36"
+	},
+	"subtest 37": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 37"
+	},
+	"subtest 38": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 38"
+	},
+	"subtest 39": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 39"
+	},
+	"subtest 40": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 40"
+	},
+	"subtest 41": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 41"
+	},
+	"subtest 42": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 42"
+	},
+	"subtest 43": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 43"
+	},
+	"subtest 44": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 44"
+	},
+	"subtest 45": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 45"
+	},
+	"subtest 46": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 46"
+	},
+	"subtest 47": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 47"
+	},
+	"subtest 48": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 48"
+	},
+	"subtest 49": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 49"
+	},
+	"subtest 50": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 50"
+	},
+	"subtest 51": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 51"
+	},
+	"subtest 52": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 52"
+	},
+	"subtest 53": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 53"
+	},
+	"subtest 54": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 54"
+	},
+	"subtest 55": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 55"
+	},
+	"subtest 56": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 56"
+	},
+	"subtest 57": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 57"
+	},
+	"subtest 58": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 58"
+	},
+	"subtest 59": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 59"
+	},
+	"subtest 60": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 60"
+	},
+	"subtest 61": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 61"
+	},
+	"subtest 62": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 62"
+	},
+	"subtest 63": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 63"
+	},
+	"subtest 64": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 64"
+	},
+	"subtest 65": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 65"
+	},
+	"subtest 66": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 66"
+	},
+	"subtest 67": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 67"
+	},
+	"subtest 68": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 68"
+	},
+	"subtest 69": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 69"
+	},
+	"subtest 70": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 70"
+	},
+	"subtest 71": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 71"
+	},
+	"subtest 72": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 72"
+	},
+	"subtest 73": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 73"
+	},
+	"subtest 74": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 74"
+	},
+	"subtest 75": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 75"
+	},
+	"subtest 76": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 76"
+	},
+	"subtest 77": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 77"
+	},
+	"subtest 78": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 78"
+	},
+	"subtest 79": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key NIST 79"
+	},
+	"subtest 80": { // Delete the first NIST key
+		"command": "DELETE",
+		"key_name": "key NIST 1",
+		"depends": 1
+	},
+	"subtest 81": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key AES 1"
+	},
+	"subtest 82": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key AES 2"
+	},
+	"subtest 83": {
+		"command": "DELETE",
+		"key_name": "key NIST 2",
+		"depends": 2
+	},
+	"subtest 84": {
+		"command": "DELETE",
+		"key_name": "key NIST 3",
+		"depends": 3
+	},
+	"subtest 85": {
+		"command": "DELETE",
+		"key_name": "key NIST 4",
+		"depends": 4
+	},
+	"subtest 86": {
+		"command": "DELETE",
+		"key_name": "key NIST 5",
+		"depends": 5
+	},
+	"subtest 87": {
+		"command": "DELETE",
+		"key_name": "key NIST 6",
+		"depends": 6
+	},
+	"subtest 88": {
+		"command": "DELETE",
+		"key_name": "key NIST 7",
+		"depends": 7
+	},
+	"subtest 89": {
+		"command": "DELETE",
+		"key_name": "key NIST 8",
+		"depends": 8
+	},
+	"subtest 90": {
+		"command": "DELETE",
+		"key_name": "key NIST 9",
+		"depends": 9
+	},
+	"subtest 91": {
+		"command": "DELETE",
+		"key_name": "key NIST 10",
+		"depends": 10
+	},
+	"subtest 92": {
+		"command": "DELETE",
+		"key_name": "key NIST 11",
+		"depends": 11
+	},
+	"subtest 93": {
+		"command": "DELETE",
+		"key_name": "key NIST 12",
+		"depends": 12
+	},
+	"subtest 94": {
+		"command": "DELETE",
+		"key_name": "key NIST 13",
+		"depends": 13
+	},
+	"subtest 95": {
+		"command": "DELETE",
+		"key_name": "key NIST 14",
+		"depends": 14
+	},
+	"subtest 96": {
+		"command": "DELETE",
+		"key_name": "key NIST 15",
+		"depends": 15
+	},
+	"subtest 97": {
+		"command": "DELETE",
+		"key_name": "key NIST 16",
+		"depends": 16
+	},
+	"subtest 98": {
+		"command": "DELETE",
+		"key_name": "key NIST 17",
+		"depends": 17
+	},
+	"subtest 99": {
+		"command": "DELETE",
+		"key_name": "key NIST 18",
+		"depends": 18
+	},
+	"subtest 100": {
+		"command": "DELETE",
+		"key_name": "key NIST 19",
+		"depends": 19
+	},
+	"subtest 101": {
+		"command": "DELETE",
+		"key_name": "key NIST 20",
+		"depends": 20
+	},
+	"subtest 102": {
+		"command": "DELETE",
+		"key_name": "key NIST 21",
+		"depends": 21
+	},
+	"subtest 103": {
+		"command": "DELETE",
+		"key_name": "key NIST 22",
+		"depends": 22
+	},
+	"subtest 104": {
+		"command": "DELETE",
+		"key_name": "key NIST 23",
+		"depends": 23
+	},
+	"subtest 105": {
+		"command": "DELETE",
+		"key_name": "key NIST 24",
+		"depends": 24
+	},
+	"subtest 106": {
+		"command": "DELETE",
+		"key_name": "key NIST 25",
+		"depends": 25
+	},
+	"subtest 107": {
+		"command": "DELETE",
+		"key_name": "key NIST 26",
+		"depends": 26
+	},
+	"subtest 108": {
+		"command": "DELETE",
+		"key_name": "key NIST 27",
+		"depends": 27
+	},
+	"subtest 109": {
+		"command": "DELETE",
+		"key_name": "key NIST 28",
+		"depends": 28
+	},
+	"subtest 110": {
+		"command": "DELETE",
+		"key_name": "key NIST 29",
+		"depends": 29
+	},
+	"subtest 111": {
+		"command": "DELETE",
+		"key_name": "key NIST 30",
+		"depends": 30
+	},
+	"subtest 112": {
+		"command": "DELETE",
+		"key_name": "key NIST 31",
+		"depends": 31
+	},
+	"subtest 113": {
+		"command": "DELETE",
+		"key_name": "key NIST 32",
+		"depends": 32
+	},
+	"subtest 114": {
+		"command": "DELETE",
+		"key_name": "key NIST 33",
+		"depends": 33
+	},
+	"subtest 115": {
+		"command": "DELETE",
+		"key_name": "key NIST 34",
+		"depends": 34
+	},
+	"subtest 116": {
+		"command": "DELETE",
+		"key_name": "key NIST 35",
+		"depends": 35
+	},
+	"subtest 117": {
+		"command": "DELETE",
+		"key_name": "key NIST 36",
+		"depends": 36
+	},
+	"subtest 118": {
+		"command": "DELETE",
+		"key_name": "key NIST 37",
+		"depends": 37
+	},
+	"subtest 119": {
+		"command": "DELETE",
+		"key_name": "key NIST 38",
+		"depends": 38
+	},
+	"subtest 120": {
+		"command": "DELETE",
+		"key_name": "key NIST 39",
+		"depends": 39
+	},
+	"subtest 121": {
+		"command": "DELETE",
+		"key_name": "key NIST 40",
+		"depends": 40
+	},
+	"subtest 122": {
+		"command": "DELETE",
+		"key_name": "key NIST 41",
+		"depends": 41
+	},
+	"subtest 123": {
+		"command": "DELETE",
+		"key_name": "key NIST 42",
+		"depends": 42
+	},
+	"subtest 124": {
+		"command": "DELETE",
+		"key_name": "key NIST 43",
+		"depends": 43
+	},
+	"subtest 125": {
+		"command": "DELETE",
+		"key_name": "key NIST 44",
+		"depends": 44
+	},
+	"subtest 126": {
+		"command": "DELETE",
+		"key_name": "key NIST 45",
+		"depends": 45
+	},
+	"subtest 127": {
+		"command": "DELETE",
+		"key_name": "key NIST 46",
+		"depends": 46
+	},
+	"subtest 128": {
+		"command": "DELETE",
+		"key_name": "key NIST 47",
+		"depends": 47
+	},
+	"subtest 129": {
+		"command": "DELETE",
+		"key_name": "key NIST 48",
+		"depends": 48
+	},
+	"subtest 130": {
+		"command": "DELETE",
+		"key_name": "key NIST 49",
+		"depends": 49
+	},
+	"subtest 131": {
+		"command": "DELETE",
+		"key_name": "key NIST 50",
+		"depends": 50
+	},
+	"subtest 132": {
+		"command": "DELETE",
+		"key_name": "key NIST 51",
+		"depends": 51
+	},
+	"subtest 133": {
+		"command": "DELETE",
+		"key_name": "key NIST 52",
+		"depends": 52
+	},
+	"subtest 134": {
+		"command": "DELETE",
+		"key_name": "key NIST 53",
+		"depends": 53
+	},
+	"subtest 135": {
+		"command": "DELETE",
+		"key_name": "key NIST 54",
+		"depends": 54
+	},
+	"subtest 136": {
+		"command": "DELETE",
+		"key_name": "key NIST 55",
+		"depends": 55
+	},
+	"subtest 137": {
+		"command": "DELETE",
+		"key_name": "key NIST 56",
+		"depends": 56
+	},
+	"subtest 138": {
+		"command": "DELETE",
+		"key_name": "key NIST 57",
+		"depends": 57
+	},
+	"subtest 139": {
+		"command": "DELETE",
+		"key_name": "key NIST 58",
+		"depends": 58
+	},
+	"subtest 140": {
+		"command": "DELETE",
+		"key_name": "key NIST 59",
+		"depends": 59
+	},
+	"subtest 141": {
+		"command": "DELETE",
+		"key_name": "key NIST 60",
+		"depends": 60
+	},
+	"subtest 142": {
+		"command": "DELETE",
+		"key_name": "key NIST 61",
+		"depends": 61
+	},
+	"subtest 143": {
+		"command": "DELETE",
+		"key_name": "key NIST 62",
+		"depends": 62
+	},
+	"subtest 144": {
+		"command": "DELETE",
+		"key_name": "key NIST 63",
+		"depends": 63
+	},
+	"subtest 145": {
+		"command": "DELETE",
+		"key_name": "key NIST 64",
+		"depends": 64
+	},
+	"subtest 146": {
+		"command": "DELETE",
+		"key_name": "key NIST 65",
+		"depends": 65
+	},
+	"subtest 147": {
+		"command": "DELETE",
+		"key_name": "key NIST 66",
+		"depends": 66
+	},
+	"subtest 148": {
+		"command": "DELETE",
+		"key_name": "key NIST 67",
+		"depends": 67
+	},
+	"subtest 149": {
+		"command": "DELETE",
+		"key_name": "key NIST 68",
+		"depends": 68
+	},
+	"subtest 150": {
+		"command": "DELETE",
+		"key_name": "key NIST 69",
+		"depends": 69
+	},
+	"subtest 151": {
+		"command": "DELETE",
+		"key_name": "key NIST 70",
+		"depends": 70
+	},
+	"subtest 152": {
+		"command": "DELETE",
+		"key_name": "key NIST 71",
+		"depends": 71
+	},
+	"subtest 153": {
+		"command": "DELETE",
+		"key_name": "key NIST 72",
+		"depends": 72
+	},
+	"subtest 154": {
+		"command": "DELETE",
+		"key_name": "key NIST 73",
+		"depends": 73
+	},
+	"subtest 155": {
+		"command": "DELETE",
+		"key_name": "key NIST 74",
+		"depends": 74
+	},
+	"subtest 156": {
+		"command": "DELETE",
+		"key_name": "key NIST 75",
+		"depends": 75
+	},
+	"subtest 157": {
+		"command": "DELETE",
+		"key_name": "key NIST 76",
+		"depends": 76
+	},
+	"subtest 158": {
+		"command": "DELETE",
+		"key_name": "key NIST 77",
+		"depends": 77
+	},
+	"subtest 159": {
+		"command": "DELETE",
+		"key_name": "key NIST 78",
+		"depends": 78
+	},
+	"subtest 160": {
+		"command": "DELETE",
+		"key_name": "key NIST 79",
+		"depends": 79
+	},
+	"subtest 161": {
+		"command": "DELETE",
+		"key_name": "key AES 1",
+		"depends": 81
+	},
+	"subtest 162": {
+		"command": "DELETE",
+		"key_name": "key AES 2",
+		"depends": 82
+	}
+}

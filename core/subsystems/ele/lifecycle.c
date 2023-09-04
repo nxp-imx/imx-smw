@@ -37,8 +37,10 @@ static size_t lifecycle_to_string(unsigned char **str, size_t str_length,
 			SMW_DBG_PRINTF(DEBUG, "%s(%d) %s\n", __func__, __LINE__,
 				       lifecycles[i].str);
 
-			if (ADD_OVERFLOW(SMW_UTILS_STRLEN(lifecycles[i].str), 1,
-					 &out_len)) {
+			if (ADD_OVERFLOW(out_len,
+					 SMW_UTILS_STRLEN(lifecycles[i].str),
+					 &out_len) ||
+			    INC_OVERFLOW(out_len, 1)) {
 				out_len = SIZE_MAX;
 				break;
 			}

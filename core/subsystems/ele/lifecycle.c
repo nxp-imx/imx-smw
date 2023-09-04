@@ -27,6 +27,7 @@ static size_t lifecycle_to_string(unsigned char **str, size_t str_length,
 				  hsm_key_lifecycle_t lifecycle)
 {
 	size_t out_len = 0;
+	size_t lc_length = 0;
 	size_t i = 0;
 
 	if (lifecycle) {
@@ -37,10 +38,14 @@ static size_t lifecycle_to_string(unsigned char **str, size_t str_length,
 			SMW_DBG_PRINTF(DEBUG, "%s(%d) %s\n", __func__, __LINE__,
 				       lifecycles[i].str);
 
-			if (ADD_OVERFLOW(out_len,
-					 SMW_UTILS_STRLEN(lifecycles[i].str),
-					 &out_len) ||
-			    INC_OVERFLOW(out_len, 1)) {
+			lc_length = SMW_UTILS_STRLEN(lifecycles[i].str);
+
+			if (INC_OVERFLOW(lc_length, 1)) {
+				out_len = SIZE_MAX;
+				break;
+			}
+
+			if (ADD_OVERFLOW(out_len, lc_length, &out_len)) {
 				out_len = SIZE_MAX;
 				break;
 			}
@@ -49,8 +54,8 @@ static size_t lifecycle_to_string(unsigned char **str, size_t str_length,
 				if (str_length >= out_len) {
 					SMW_UTILS_MEMCPY(*str,
 							 lifecycles[i].str,
-							 out_len);
-					*str += out_len;
+							 lc_length);
+					*str += lc_length;
 				} else {
 					out_len = SIZE_MAX;
 					break;

@@ -3,8 +3,6 @@
  * Copyright 2023 NXP
  */
 
-#include <byteswap.h>
-
 #include "debug.h"
 #include "devmgr.h"
 #include "utils.h"
@@ -193,7 +191,6 @@ static int device_uuid(struct hdl *hdl, void *args)
 	unsigned char *certificate = NULL;
 	unsigned int certificate_length = 0;
 	unsigned int *device_uid = NULL;
-	unsigned int uuid_word = 0;
 	uint8_t nonce_v1[DEV_ATTEST_NOUNCE_SIZE_V1] = { 0 };
 	uint8_t nonce_v2[DEV_ATTEST_NOUNCE_SIZE_V2] = { 0 };
 	int i = 0;
@@ -241,11 +238,8 @@ static int device_uuid(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	for (i = ELE_NB_UID_WORD - 1; i >= 0;
-	     i--, uuid += sizeof(*device_uid)) {
-		uuid_word = bswap_32(device_uid[i]);
-		SMW_UTILS_MEMCPY(uuid, &uuid_word, sizeof(uuid_word));
-	}
+	for (i = 0; i < ELE_NB_UID_WORD; i++, uuid += sizeof(*device_uid))
+		SMW_UTILS_MEMCPY(uuid, &device_uid[i], sizeof(*device_uid));
 
 	smw_devmgr_set_uuid_length(args, ELE_UID_SIZE);
 

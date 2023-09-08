@@ -1,7 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
+
+#ifndef __HASH_H__
+#define __HASH_H__
+
+#include "config.h"
 
 /**
  * struct smw_crypto_hash_args - Hash arguments
@@ -79,3 +84,5 @@ smw_crypto_get_hash_output_length(struct smw_crypto_hash_args *args);
  */
 void smw_crypto_set_hash_output_length(struct smw_crypto_hash_args *args,
 				       unsigned int output_length);
+
+#endif /* __HASH_H__ */

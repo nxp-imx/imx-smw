@@ -53,14 +53,14 @@ static const char *const cipher_op_type_names[] = {
 static int read_cipher_op_type_names(char **start, char *end,
 				     unsigned long *bitmap)
 {
-	return read_names(start, end, bitmap, cipher_op_type_names,
-			  SMW_CONFIG_CIPHER_OP_ID_NB);
+	return smw_config_read_names(start, end, bitmap, cipher_op_type_names,
+				     SMW_CONFIG_CIPHER_OP_ID_NB);
 }
 
 int read_cipher_mode_names(char **start, char *end, unsigned long *bitmap)
 {
-	return read_names(start, end, bitmap, cipher_mode_names,
-			  SMW_CONFIG_CIPHER_MODE_ID_NB);
+	return smw_config_read_names(start, end, bitmap, cipher_mode_names,
+				     SMW_CONFIG_CIPHER_MODE_ID_NB);
 }
 
 /**

@@ -14,26 +14,9 @@
 #include "subsystems.h"
 #include "config.h"
 #include "hash.h"
-#include "name.h"
 
 #include "common.h"
 #include "tag.h"
-
-static const char *const hash_algo_names[] = {
-	[SMW_CONFIG_HASH_ALGO_ID_MD5] = "MD5",
-	[SMW_CONFIG_HASH_ALGO_ID_SHA1] = "SHA1",
-	[SMW_CONFIG_HASH_ALGO_ID_SHA224] = "SHA224",
-	[SMW_CONFIG_HASH_ALGO_ID_SHA256] = "SHA256",
-	[SMW_CONFIG_HASH_ALGO_ID_SHA384] = "SHA384",
-	[SMW_CONFIG_HASH_ALGO_ID_SHA512] = "SHA512",
-	[SMW_CONFIG_HASH_ALGO_ID_SM3] = "SM3"
-};
-
-int read_hash_algo_names(char **start, char *end, unsigned long *bitmap)
-{
-	return read_names(start, end, bitmap, hash_algo_names,
-			  SMW_CONFIG_HASH_ALGO_ID_NB);
-}
 
 static int hash_read_params(char **start, char *end, void **params)
 {
@@ -59,7 +42,8 @@ static int hash_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values, length)) {
-			status = read_hash_algo_names(&cur, end, &algo_bitmap);
+			status = smw_utils_hash_algo_names(&cur, end,
+							   &algo_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else {
@@ -121,20 +105,33 @@ static int hash_check_subsystem_caps(void *args, void *params)
 
 DEFINE_CONFIG_OPERATION_FUNC(hash);
 
-int smw_config_get_hash_algo_id(const char *name,
-				enum smw_config_hash_algo_id *id)
+__export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
+						      smw_hash_algo_t algo)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
+	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
+	enum smw_config_hash_algo_id algo_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
+	struct hash_params params = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!name)
-		*id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
-	else
-		status = smw_utils_get_string_index(name, hash_algo_names,
-						    SMW_CONFIG_HASH_ALGO_ID_NB,
-						    id);
+	if (!algo)
+		return status;
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	status = smw_config_get_subsystem_id(subsystem, &id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = smw_utils_get_hash_algo_id(algo, &algo_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = get_operation_params(OPERATION_ID_HASH, id, &params);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	if (!check_id(algo_id, params.algo_bitmap))
+		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	return SMW_STATUS_OK;
 }

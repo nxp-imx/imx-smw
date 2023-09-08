@@ -307,8 +307,8 @@ static int convert_sign_args(struct smw_sign_args *args,
 		if (status != SMW_STATUS_OK)
 			goto end;
 
-		status = smw_config_get_hash_algo_id(args->hash_name,
-						     &converted_args->hash_id);
+		status = smw_utils_get_hash_algo_id(args->hash_name,
+						    &converted_args->hash_id);
 	}
 
 end:

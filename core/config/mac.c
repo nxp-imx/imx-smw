@@ -23,8 +23,8 @@ static const char *const mac_algo_names[] = {
 
 int read_mac_algo_names(char **start, char *end, unsigned long *bitmap)
 {
-	return read_names(start, end, bitmap, mac_algo_names,
-			  SMW_CONFIG_MAC_ALGO_ID_NB);
+	return smw_config_read_names(start, end, bitmap, mac_algo_names,
+				     SMW_CONFIG_MAC_ALGO_ID_NB);
 }
 
 static int mac_read_params(char **start, char *end, void **params)
@@ -65,8 +65,8 @@ static int mac_read_params(char **start, char *end, void **params)
 
 		} else if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values,
 					      length)) {
-			status = read_hash_algo_names(&cur, end,
-						      &p->hash_bitmap);
+			status = smw_utils_hash_algo_names(&cur, end,
+							   &p->hash_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 

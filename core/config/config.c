@@ -54,35 +54,13 @@ smw_config_subsystem_loaded(smw_subsystem_t subsystem)
 	return status;
 }
 
-__export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
-						      smw_hash_algo_t algo)
+__export __weak enum smw_status_code
+smw_config_check_digest(smw_subsystem_t subsystem, smw_hash_algo_t algo)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
-	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
-	enum smw_config_hash_algo_id algo_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
-	struct hash_params params = { 0 };
+	(void)subsystem;
+	(void)algo;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!algo)
-		return status;
-
-	status = smw_config_get_subsystem_id(subsystem, &id);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	status = smw_config_get_hash_algo_id(algo, &algo_id);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	status = get_operation_params(OPERATION_ID_HASH, id, &params);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	if (!check_id(algo_id, params.algo_bitmap))
-		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
-
-	return SMW_STATUS_OK;
+	return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 }
 
 __export enum smw_status_code
@@ -164,7 +142,7 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 
 	/* Check hash algorithm if set */
 	if (info->hash_algo) {
-		status = smw_config_get_hash_algo_id(info->hash_algo, &algo_id);
+		status = smw_utils_get_hash_algo_id(info->hash_algo, &algo_id);
 		if (status != SMW_STATUS_OK)
 			return status;
 

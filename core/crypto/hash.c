@@ -32,8 +32,8 @@ static int hash_convert_args(struct smw_hash_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_config_get_hash_algo_id(args->algo_name,
-					     &converted_args->algo_id);
+	status = smw_utils_get_hash_algo_id(args->algo_name,
+					    &converted_args->algo_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

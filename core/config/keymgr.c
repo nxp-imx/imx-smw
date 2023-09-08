@@ -51,8 +51,8 @@ static const char *const key_derive_op_names[] = {
 
 int read_key_type_names(char **start, char *end, unsigned long *bitmap)
 {
-	return read_names(start, end, bitmap, key_type_names,
-			  SMW_CONFIG_KEY_TYPE_ID_NB);
+	return smw_config_read_names(start, end, bitmap, key_type_names,
+				     SMW_CONFIG_KEY_TYPE_ID_NB);
 }
 
 static int read_key_size_range(char **start, char *end, const char *type_name,
@@ -113,7 +113,7 @@ static int read_key_op_names(char **start, char *end, enum operation_id op_id,
 		return SMW_STATUS_UNKNOWN_NAME;
 	}
 
-	return read_names(start, end, bitmap, op_names, nb_op_names);
+	return smw_config_read_names(start, end, bitmap, op_names, nb_op_names);
 }
 
 bool read_key(char *tag, size_t length, char **start, char *end,

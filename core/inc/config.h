@@ -273,19 +273,6 @@ void smw_config_get_key_type_name(enum smw_config_key_type_id id,
 				  const char **name);
 
 /**
- * smw_config_get_hash_algo_id() - Get the Hash algo ID associated to a name.
- * @name: Name as a string.
- * @id: Pointer where the ID is written.
- *
- * This function gets the Hash algo ID associated to a name.
- *
- * Return:
- * error code.
- */
-int smw_config_get_hash_algo_id(const char *name,
-				enum smw_config_hash_algo_id *id);
-
-/**
  * smw_config_get_hmac_algo_id() - Get the HMAC algo ID associated to a name.
  * @name: Name as a string.
  * @id: Pointer where the ID is written.
@@ -384,5 +371,58 @@ int smw_config_get_mac_algo_id(const char *name,
  * none.
  */
 void smw_config_get_psa_config(struct smw_config_psa_config *config);
+
+/**
+ * smw_config_read_names() - Read a list of names.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured names.
+ * @array: Array associating an ID (index) to a name (value).
+ * @size: Size of @array.
+ *
+ * This function reads a list of names from the current char
+ * of the buffer being parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Return:
+ * error code.
+ */
+int smw_config_read_names(char **start, char *end, unsigned long *bitmap,
+			  const char *const array[], unsigned int size);
+
+/**
+ * smw_utils_hash_algo_names() - Read a list of Hash algos names.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured names.
+ *
+ * This function reads a list of names from the current char
+ * of the buffer being parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Names are compared with values set in @hash_algo_names.
+ * @bitmap is set with enum smw_config_hash_algo_id values.
+ *
+ * Return:
+ * error code.
+ */
+int smw_utils_hash_algo_names(char **start, char *end, unsigned long *bitmap);
+
+/**
+ * smw_utils_get_hash_algo_id() - Get the Hash algo ID associated to a name.
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * This function gets the Hash algo ID associated to a name.
+ *
+ * Return:
+ * error code.
+ */
+int smw_utils_get_hash_algo_id(const char *name,
+			       enum smw_config_hash_algo_id *id);
 
 #endif /* __CONFIG_H__ */

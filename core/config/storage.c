@@ -52,8 +52,8 @@ static int storage_store_read_params(char **start, char *end, void **params)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values,
 					      length)) {
-			status = read_hash_algo_names(&cur, end,
-						      &p->hash_bitmap);
+			status = smw_utils_hash_algo_names(&cur, end,
+							   &p->hash_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, mac_algo_values,

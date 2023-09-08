@@ -6,6 +6,8 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include <stddef.h>
+
 #include "config.h"
 #include "keymgr.h"
 
@@ -213,26 +215,6 @@ int read_params_name(char **start, char *end, char *dest);
 int skip_param(char **start, char *end);
 
 /**
- * read_names() - Read a list of names.
- * @start: Address of the pointer to the current char.
- * @end: Pointer to the last char of the buffer being parsed.
- * @bitmap: Bitmap representing the configured names.
- * @array: Array associating an ID (index) to a name (value).
- * @size: Size of @array.
- *
- * This function reads a list of names from the current char
- * of the buffer being parsed until a semicolon is detected.
- * The pointer to the current char is moved to the next char
- * after the semicolon.
- * Insignificant chars are skipped if any.
- *
- * Return:
- * error code.
- */
-int read_names(char **start, char *end, unsigned long *bitmap,
-	       const char *const array[], unsigned int size);
-
-/**
  * read_key_type_names() - Read a list of Key types names.
  * @start: Address of the pointer to the current char.
  * @end: Pointer to the last char of the buffer being parsed.
@@ -251,26 +233,6 @@ int read_names(char **start, char *end, unsigned long *bitmap,
  * error code.
  */
 int read_key_type_names(char **start, char *end, unsigned long *bitmap);
-
-/**
- * read_hash_algo_names() - Read a list of Hash algos names.
- * @start: Address of the pointer to the current char.
- * @end: Pointer to the last char of the buffer being parsed.
- * @bitmap: Bitmap representing the configured names.
- *
- * This function reads a list of names from the current char
- * of the buffer being parsed until a semicolon is detected.
- * The pointer to the current char is moved to the next char
- * after the semicolon.
- * Insignificant chars are skipped if any.
- *
- * Names are compared with values set in @hash_algo_names.
- * @bitmap is set with enum smw_config_hash_algo_id values.
- *
- * Return:
- * error code.
- */
-int read_hash_algo_names(char **start, char *end, unsigned long *bitmap);
 
 /**
  * read_cipher_mode_names() - Read a list of cipher mode names

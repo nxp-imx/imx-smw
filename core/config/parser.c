@@ -408,8 +408,8 @@ end:
 	return status;
 }
 
-int read_names(char **start, char *end, unsigned long *bitmap,
-	       const char *const array[], unsigned int size)
+int smw_config_read_names(char **start, char *end, unsigned long *bitmap,
+			  const char *const array[], unsigned int size)
 {
 	int status = SMW_STATUS_OK;
 

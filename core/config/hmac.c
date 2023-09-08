@@ -32,8 +32,8 @@ static const char *const hmac_algo_names[] = {
 
 int read_hmac_algo_names(char **start, char *end, unsigned long *bitmap)
 {
-	return read_names(start, end, bitmap, hmac_algo_names,
-			  SMW_CONFIG_HMAC_ALGO_ID_NB);
+	return smw_config_read_names(start, end, bitmap, hmac_algo_names,
+				     SMW_CONFIG_HMAC_ALGO_ID_NB);
 }
 
 static int hmac_read_params(char **start, char *end, void **params)

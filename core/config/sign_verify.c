@@ -34,8 +34,8 @@ static const char *const tls_finish_label_names[] = {
 static int read_signature_type_names(char **start, char *end,
 				     unsigned long *bitmap)
 {
-	return read_names(start, end, bitmap, sign_type_names,
-			  SMW_CONFIG_SIGN_TYPE_ID_NB);
+	return smw_config_read_names(start, end, bitmap, sign_type_names,
+				     SMW_CONFIG_SIGN_TYPE_ID_NB);
 }
 
 static int sign_verify_read_params(char **start, char *end, void **params)
@@ -70,8 +70,8 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values, length)) {
-			status = read_hash_algo_names(&cur, end,
-						      &p->algo_bitmap);
+			status = smw_utils_hash_algo_names(&cur, end,
+							   &p->algo_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, sign_type_values,

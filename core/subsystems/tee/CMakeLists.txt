@@ -30,6 +30,7 @@ endif()
 
 target_sources(tee PRIVATE
                tee.c
+               common.c
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>

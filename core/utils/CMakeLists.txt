@@ -10,7 +10,8 @@ target_sources(utils PRIVATE
                name.c
                attr.c
                info.c
-               hash.c)
+               hash.c
+               mac.c)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
     target_sources(utils PRIVATE list_debug.c)

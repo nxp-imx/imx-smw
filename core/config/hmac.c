@@ -15,7 +15,6 @@
 #include "config.h"
 #include "keymgr.h"
 #include "hmac.h"
-#include "name.h"
 
 #include "common.h"
 #include "tag.h"
@@ -137,12 +136,3 @@ static int hmac_check_subsystem_caps(void *args, void *params)
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(hmac);
-
-int smw_config_get_hmac_algo_id(const char *name,
-				enum smw_config_hmac_algo_id *id)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return smw_utils_get_string_index(name, hmac_algo_names,
-					  SMW_CONFIG_HMAC_ALGO_ID_NB, id);
-}

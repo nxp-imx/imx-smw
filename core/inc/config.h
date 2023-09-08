@@ -273,19 +273,6 @@ void smw_config_get_key_type_name(enum smw_config_key_type_id id,
 				  const char **name);
 
 /**
- * smw_config_get_hmac_algo_id() - Get the HMAC algo ID associated to a name.
- * @name: Name as a string.
- * @id: Pointer where the ID is written.
- *
- * This function gets the HMAC algo ID associated to a name.
- *
- * Return:
- * error code.
- */
-int smw_config_get_hmac_algo_id(const char *name,
-				enum smw_config_hmac_algo_id *id);
-
-/**
  * smw_config_get_signature_type_id() - Get the signature type ID associated to
  *                                      a name.
  * @name: Name as a string.
@@ -424,5 +411,18 @@ int smw_utils_hash_algo_names(char **start, char *end, unsigned long *bitmap);
  */
 int smw_utils_get_hash_algo_id(const char *name,
 			       enum smw_config_hash_algo_id *id);
+
+/**
+ * smw_utils_get_hmac_algo_id() - Get the HMAC algo ID associated to a name.
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * This function gets the HMAC algo ID associated to a name.
+ *
+ * Return:
+ * error code.
+ */
+int smw_utils_get_hmac_algo_id(const char *name,
+			       enum smw_config_hmac_algo_id *id);
 
 #endif /* __CONFIG_H__ */

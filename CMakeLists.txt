@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.13)
 
 project(SecurityMiddleware VERSION 2.5 LANGUAGES C)
 
@@ -138,9 +138,4 @@ if(NOT DISABLE_CMAKE_CONFIG)
         NAMESPACE NXP_SMW::
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake"
         FILE "NXP_SMWTargets.cmake")
-
-    install(FILES ${CMAKE_SOURCE_DIR}/cmake/FindSeco.cmake
-                  ${CMAKE_SOURCE_DIR}/cmake/FindEle.cmake
-                  ${CMAKE_SOURCE_DIR}/cmake/FindTeec.cmake
-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake")
 endif()

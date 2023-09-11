@@ -18,12 +18,49 @@ Each component handles its own version number specified in each component main C
 
 The releases are listed from the most recent to the first one.
 
-1. [Release 2.4](#rel_2_4)
-2. [Release 2.3](#rel_2_3)
-3. [Release 2.2](#rel_2_2)
-4. [Release 2.1](#rel_2_1)
-5. [Release 2.0](#rel_2_0)
-6. [Release 1.0](#rel_1_0)
+1. [Release 2.5](#rel_2_5)
+2. [Release 2.4](#rel_2_4)
+3. [Release 2.3](#rel_2_3)
+4. [Release 2.2](#rel_2_2)
+5. [Release 2.1](#rel_2_1)
+6. [Release 2.0](#rel_2_0)
+7. [Release 1.0](#rel_1_0)
+
+
+---
+### <a id ="rel_2_5"></a></br>**Release 2.5**
+---
+#### Known Issues
+##### 1. HSM Subsystem
+
+* When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
+The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+##### 1. ELE Subsystem
+
+* Data storage API does not handle the `CURRENT` lifecycle properly. If the application restricts the data accessibility to the `CURRENT` lifecycle and another one or more, then the `CURRENT` lifecycle is ignored.
+
+#### SMW Library - _version 2.5_
+##### 1. ARM PSA APIs
+
+
+##### 2. SMW APIs
+
+
+##### 3. Subsystems
+
+
+#### 4. OSAL
+
+* Fix coverity and ensure all variables are initialized.
+
+#### SMW Tests - _version 2.5_
+
+#### PKCS#11 Library - _version 2.5_
+
+
+#### PKCS#11 Tests - _version 2.4_
+
 
 ---
 ### <a id ="rel_2_4"></a></br>**Release 2.4**

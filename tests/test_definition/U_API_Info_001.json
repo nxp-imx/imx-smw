@@ -6,6 +6,6 @@
 	},
 	"subtest 2": {
 		"command": "GET_VERSION",
-		"lib_version": 2.4
+		"lib_version": 2.5
 	}
 }

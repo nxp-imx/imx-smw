@@ -285,7 +285,8 @@ static void delete_db_shared_keys(unsigned int *ids_array, int nb_shared_keys)
 static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 				     int nb_shared_keys,
 				     unsigned int *ids_array,
-				     unsigned int *ids_hsm_array)
+				     unsigned int *ids_hsm_array,
+				     unsigned int key_group)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	int idx = 0;
@@ -308,6 +309,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	identifier.subsystem_id = SUBSYSTEM_ID_HSM;
 	/* Only transient key are generated */
 	identifier.persistence_id = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
+	identifier.group = key_group;
 
 	if (nb_shared_keys == TLS12_NB_KEYS_WITH_MAC) {
 		/*
@@ -581,7 +583,7 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 	}
 
 	status = add_update_db_shared_keys(args, nb_shared_keys, new_key_ids,
-					   NULL);
+					   NULL, key_group);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -720,7 +722,7 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 
 	/* Update the key database with the shared key ids */
 	status = add_update_db_shared_keys(args, nb_shared_keys, new_key_ids,
-					   shared_key_ids);
+					   shared_key_ids, key_group);
 
 	if (args->key_attributes.policy) {
 		hsm_set_empty_key_policy(&args->key_attributes);

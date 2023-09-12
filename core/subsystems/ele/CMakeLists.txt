@@ -28,7 +28,7 @@ target_sources(ele PRIVATE
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
                $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
-               $<$<BOOL:${ENABLE_DEVMGR_MODULE}>:devmgr.c>
+               $<$<BOOL:${ENABLE_DEVICE_ATTESTATION}>:devmgr.c>
                $<$<BOOL:${ENABLE_STORAGE_MODULE}>:storage.c>)
 
 target_include_directories(ele PRIVATE

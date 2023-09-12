@@ -253,8 +253,7 @@ static int convert_encryption_args(struct smw_encryption_args *args,
 			goto end;
 		}
 
-		status =
-			smw_config_get_cipher_mode_id(args->mode_name,
+		status = smw_utils_get_cipher_mode_id(args->mode_name,
 						      &converted_args->mode_id);
 		if (status != SMW_STATUS_OK)
 			goto end;

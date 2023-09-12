@@ -37,3 +37,40 @@ ele_get_hash_algo(enum smw_config_hash_algo_id algo_id)
 
 	return hash_algo;
 }
+
+#define CIPHER_ALGO(_key_type_id, _cipher_mode_id)                             \
+	{                                                                      \
+		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,          \
+		.cipher_mode_id = SMW_CONFIG_CIPHER_MODE_ID_##_cipher_mode_id, \
+		.cipher_algo = HSM_CIPHER_ONE_GO_ALGO_##_cipher_mode_id        \
+	}
+
+static const struct {
+	enum smw_config_key_type_id key_type_id;
+	enum smw_config_cipher_mode_id cipher_mode_id;
+	hsm_op_cipher_one_go_algo_t cipher_algo;
+} cipher_algos[] = {
+	CIPHER_ALGO(AES, CBC),
+	CIPHER_ALGO(AES, ECB),
+	CIPHER_ALGO(AES, CTR),
+};
+
+int ele_set_cipher_algo(enum smw_config_key_type_id key_type_id,
+			enum smw_config_cipher_mode_id cipher_mode_id,
+			hsm_op_cipher_one_go_algo_t *cipher_algo)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(cipher_algos); i++) {
+		if (key_type_id == cipher_algos[i].key_type_id &&
+		    cipher_mode_id == cipher_algos[i].cipher_mode_id) {
+			*cipher_algo = cipher_algos[i].cipher_algo;
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}

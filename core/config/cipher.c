@@ -3,6 +3,7 @@
  * Copyright 2021, 2023 NXP
  */
 
+#include "smw_config.h"
 #include "smw_status.h"
 
 #include "compiler.h"
@@ -11,57 +12,10 @@
 #include "utils.h"
 #include "operations.h"
 #include "subsystems.h"
-#include "name.h"
 #include "cipher.h"
 #include "tag.h"
 
 #include "common.h"
-
-static const char *const cipher_mode_names[] = {
-	[SMW_CONFIG_CIPHER_MODE_ID_CBC] = "CBC",
-	[SMW_CONFIG_CIPHER_MODE_ID_CCM] = "CCM",
-	[SMW_CONFIG_CIPHER_MODE_ID_CTR] = "CTR",
-	[SMW_CONFIG_CIPHER_MODE_ID_CTS] = "CTS",
-	[SMW_CONFIG_CIPHER_MODE_ID_ECB] = "ECB",
-	[SMW_CONFIG_CIPHER_MODE_ID_GCM] = "GCM",
-	[SMW_CONFIG_CIPHER_MODE_ID_XTS] = "XTS"
-};
-
-static const char *const cipher_op_type_names[] = {
-	[SMW_CONFIG_CIPHER_OP_ID_ENCRYPT] = "ENCRYPT",
-	[SMW_CONFIG_CIPHER_OP_ID_DECRYPT] = "DECRYPT"
-};
-
-/**
- * read_cipher_op_type_names() - Read a list of cipher operation types names
- * @start: Address of the pointer to the current char.
- * @end: Pointer to the last char of the buffer being parsed.
- * @bitmap: Bitmap representing the configured names.
- *
- * This function reads a list of names from the current char of the buffer being
- * parsed until a semicolon is detected.
- * The pointer to the current char is moved to the next char after the
- * semicolon.
- * Insignificant chars are skipped if any.
- *
- * Names are compared with values set in @cipher_op_type_names.
- * @bitmap is set with enum smw_config_cipher_op_type_id values.
- *
- * Return:
- * error code.
- */
-static int read_cipher_op_type_names(char **start, char *end,
-				     unsigned long *bitmap)
-{
-	return smw_config_read_names(start, end, bitmap, cipher_op_type_names,
-				     SMW_CONFIG_CIPHER_OP_ID_NB);
-}
-
-int read_cipher_mode_names(char **start, char *end, unsigned long *bitmap)
-{
-	return smw_config_read_names(start, end, bitmap, cipher_mode_names,
-				     SMW_CONFIG_CIPHER_MODE_ID_NB);
-}
 
 /**
  * cipher_common_read_params() - Read common cipher parameters
@@ -106,13 +60,13 @@ static int cipher_common_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, mode_values, length)) {
-			status = read_cipher_mode_names(&cur, end,
-							&p->mode_bitmap);
+			status = smw_utils_cipher_mode_names(&cur, end,
+							     &p->mode_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, op_type_values, length)) {
-			status = read_cipher_op_type_names(&cur, end,
-							   &p->op_bitmap);
+			status = smw_utils_cipher_op_type_names(&cur, end,
+								&p->op_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (read_key(buffer, length, &cur, end,
@@ -250,39 +204,59 @@ static int cipher_multi_part_check_subsystem_caps(void *args, void *params)
 DEFINE_CONFIG_OPERATION_FUNC(cipher);
 DEFINE_CONFIG_OPERATION_FUNC(cipher_multi_part);
 
-int smw_config_get_cipher_mode_id(const char *name,
-				  enum smw_config_cipher_mode_id *id)
+__export enum smw_status_code
+smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
+	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
+	enum smw_config_key_type_id key_type_id =
+		SMW_CONFIG_KEY_TYPE_ID_INVALID;
+	enum smw_config_cipher_op_type_id op_type_id =
+		SMW_CONFIG_CIPHER_OP_ID_INVALID;
+	enum smw_config_cipher_mode_id mode_id =
+		SMW_CONFIG_CIPHER_MODE_ID_INVALID;
+	enum operation_id op_id = OPERATION_ID_CIPHER;
+	struct cipher_params params = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!name)
-		*id = SMW_CONFIG_CIPHER_MODE_ID_INVALID;
-	else
-		status =
-			smw_utils_get_string_index(name, cipher_mode_names,
-						   SMW_CONFIG_CIPHER_MODE_ID_NB,
-						   id);
+	if (!info || !info->key_type_name || !info->mode || !info->op_type)
+		return status;
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
+	status = smw_config_get_subsystem_id(subsystem, &id);
+	if (status != SMW_STATUS_OK)
+		return status;
 
-int smw_config_get_cipher_op_type_id(const char *name,
-				     enum smw_config_cipher_op_type_id *id)
-{
-	int status = SMW_STATUS_OK;
+	status = smw_config_get_key_type_id(info->key_type_name, &key_type_id);
+	if (status != SMW_STATUS_OK)
+		return status;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	status = smw_utils_get_cipher_mode_id(info->mode, &mode_id);
+	if (status != SMW_STATUS_OK)
+		return status;
 
-	if (!name)
-		*id = SMW_CONFIG_CIPHER_OP_ID_INVALID;
-	else
-		status = smw_utils_get_string_index(name, cipher_op_type_names,
-						    SMW_CONFIG_CIPHER_OP_ID_NB,
-						    id);
+	status = smw_utils_get_cipher_op_type_id(info->op_type, &op_type_id);
+	if (status != SMW_STATUS_OK)
+		return status;
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	if (info->multipart)
+		op_id = OPERATION_ID_CIPHER_MULTI_PART;
+
+	status = get_operation_params(op_id, id, &params);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	/* Check key type */
+	if (!check_id(key_type_id, params.key.type_bitmap))
+		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	/* Check operation mode*/
+	if (!check_id(mode_id, params.mode_bitmap))
+		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	/* Check operation type */
+	if (!check_id(op_type_id, params.op_bitmap))
+		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	return SMW_STATUS_OK;
 }

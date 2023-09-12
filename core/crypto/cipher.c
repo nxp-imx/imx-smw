@@ -39,13 +39,13 @@ cipher_get_ids_from_strings(struct smw_cipher_init_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_config_get_cipher_mode_id(args->mode_name,
-					       &converted_args->mode_id);
+	status = smw_utils_get_cipher_mode_id(args->mode_name,
+					      &converted_args->mode_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_config_get_cipher_op_type_id(args->operation_name,
-						  &converted_args->op_id);
+	status = smw_utils_get_cipher_op_type_id(args->operation_name,
+						 &converted_args->op_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

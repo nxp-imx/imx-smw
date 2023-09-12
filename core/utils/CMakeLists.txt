@@ -11,7 +11,8 @@ target_sources(utils PRIVATE
                attr.c
                info.c
                hash.c
-               mac.c)
+               mac.c
+               cipher.c)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
     target_sources(utils PRIVATE list_debug.c)

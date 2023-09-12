@@ -46,8 +46,8 @@ static int storage_store_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, mode_values, length)) {
-			status = read_cipher_mode_names(&cur, end,
-							&p->mode_bitmap);
+			status = smw_utils_cipher_mode_names(&cur, end,
+							     &p->mode_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values,

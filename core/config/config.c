@@ -178,59 +178,11 @@ smw_config_check_verify(smw_subsystem_t subsystem,
 	return check_sign_verify_common(subsystem, info, OPERATION_ID_VERIFY);
 }
 
-__export enum smw_status_code
+__export __weak enum smw_status_code
 smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
-	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
-	enum smw_config_key_type_id key_type_id =
-		SMW_CONFIG_KEY_TYPE_ID_INVALID;
-	enum smw_config_cipher_op_type_id op_type_id =
-		SMW_CONFIG_CIPHER_OP_ID_INVALID;
-	enum smw_config_cipher_mode_id mode_id =
-		SMW_CONFIG_CIPHER_MODE_ID_INVALID;
-	enum operation_id op_id = OPERATION_ID_CIPHER;
-	struct cipher_params params = { 0 };
+	(void)subsystem;
+	(void)info;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!info || !info->key_type_name || !info->mode || !info->op_type)
-		return status;
-
-	status = smw_config_get_subsystem_id(subsystem, &id);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	status = smw_config_get_key_type_id(info->key_type_name, &key_type_id);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	status = smw_config_get_cipher_mode_id(info->mode, &mode_id);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	status = smw_config_get_cipher_op_type_id(info->op_type, &op_type_id);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	if (info->multipart)
-		op_id = OPERATION_ID_CIPHER_MULTI_PART;
-
-	status = get_operation_params(op_id, id, &params);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	/* Check key type */
-	if (!check_id(key_type_id, params.key.type_bitmap))
-		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
-
-	/* Check operation mode*/
-	if (!check_id(mode_id, params.mode_bitmap))
-		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
-
-	/* Check operation type */
-	if (!check_id(op_type_id, params.op_bitmap))
-		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
-
-	return SMW_STATUS_OK;
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }

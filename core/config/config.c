@@ -63,47 +63,14 @@ smw_config_check_digest(smw_subsystem_t subsystem, smw_hash_algo_t algo)
 	return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 }
 
-__export enum smw_status_code
+__export __weak enum smw_status_code
 smw_config_check_generate_key(smw_subsystem_t subsystem,
 			      struct smw_key_info *info)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
-	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
-	enum smw_config_key_type_id key_type_id =
-		SMW_CONFIG_KEY_TYPE_ID_INVALID;
-	struct key_operation_params params = { 0 };
-	struct range *key_size_range = NULL;
+	(void)subsystem;
+	(void)info;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!info || !info->key_type_name)
-		return status;
-
-	status = smw_config_get_subsystem_id(subsystem, &id);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	status = smw_config_get_key_type_id(info->key_type_name, &key_type_id);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	status = get_operation_params(OPERATION_ID_GENERATE_KEY, id, &params);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	if (!check_id(key_type_id, params.key.type_bitmap))
-		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
-
-	key_size_range = &params.key.size_range[key_type_id];
-	if (info->security_size) {
-		if (!check_size(info->security_size, key_size_range))
-			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
-	} else {
-		info->security_size_min = key_size_range->min;
-		info->security_size_max = key_size_range->max;
-	}
-
-	return SMW_STATUS_OK;
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
 __export __weak enum smw_status_code

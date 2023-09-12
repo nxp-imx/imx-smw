@@ -8,24 +8,10 @@
 #include "compiler.h"
 #include "debug.h"
 #include "mac.h"
-#include "name.h"
 #include "tag.h"
 #include "utils.h"
 
 #include "common.h"
-
-static const char *const mac_algo_names[] = {
-	[SMW_CONFIG_MAC_ALGO_ID_CMAC] = "CMAC",
-	[SMW_CONFIG_MAC_ALGO_ID_CMAC_TRUNCATED] = "CMAC_TRUNCATED",
-	[SMW_CONFIG_MAC_ALGO_ID_HMAC] = "HMAC",
-	[SMW_CONFIG_MAC_ALGO_ID_HMAC_TRUNCATED] = "HMAC_TRUNCATED",
-};
-
-int read_mac_algo_names(char **start, char *end, unsigned long *bitmap)
-{
-	return smw_config_read_names(start, end, bitmap, mac_algo_names,
-				     SMW_CONFIG_MAC_ALGO_ID_NB);
-}
 
 static int mac_read_params(char **start, char *end, void **params)
 {
@@ -52,14 +38,15 @@ static int mac_read_params(char **start, char *end, void **params)
 		status = read_params_name(&cur, end, buffer);
 		if (status != SMW_STATUS_OK)
 			goto end;
+
 		SMW_DBG_PRINTF(INFO, "Parameter: %s\n", buffer);
 		length = SMW_UTILS_STRLEN(buffer);
 
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, mac_algo_values, length)) {
-			status =
-				read_mac_algo_names(&cur, end, &p->algo_bitmap);
+			status = smw_utils_mac_algo_names(&cur, end,
+							  &p->algo_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 
@@ -137,20 +124,3 @@ static int mac_check_subsystem_caps(void *args, void *params)
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(mac);
-
-int smw_config_get_mac_algo_id(const char *name,
-			       enum smw_config_mac_algo_id *id)
-{
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-	if (!name)
-		*id = SMW_CONFIG_MAC_ALGO_ID_INVALID;
-	else
-		status = smw_utils_get_string_index(name, mac_algo_names,
-						    SMW_CONFIG_MAC_ALGO_ID_NB,
-						    id);
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}

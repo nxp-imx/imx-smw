@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2023 NXP
  */
 
 #include "compiler.h"
@@ -107,6 +107,24 @@ __weak enum smw_status_code smw_copy_context(struct smw_op_context *dst,
 {
 	(void)dst;
 	(void)src;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code smw_mac(struct smw_mac_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code smw_mac_verify(struct smw_mac_args *args)
+{
+	(void)args;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

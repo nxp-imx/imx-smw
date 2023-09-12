@@ -309,7 +309,8 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	identifier.subsystem_id = SUBSYSTEM_ID_HSM;
 	/* Only transient key are generated */
 	identifier.persistence_id = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
-	identifier.group = key_group;
+	if (SET_OVERFLOW(key_group, identifier.group))
+		return SMW_STATUS_OPERATION_FAILURE;
 
 	if (nb_shared_keys == TLS12_NB_KEYS_WITH_MAC) {
 		/*

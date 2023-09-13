@@ -45,6 +45,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. SMW APIs
 
+* Fix overall code to allow disabling cmake options.
+
 ##### 3. Subsystems
 
 #### 4. OSAL

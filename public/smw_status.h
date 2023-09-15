@@ -35,7 +35,8 @@
  * @SMW_STATUS_SUBSYSTEM_LOADED: Secure Subsystem is loaded.
  * @SMW_STATUS_SUBSYSTEM_NOT_LOADED: Secure Subsystem is not loaded.
  * @SMW_STATUS_KEY_INVALID: Key used for the operation is not valid.
- * @SMW_STATUS_INVALID_LIFECYCLE: Object is not accessible in the current device lifecycle.
+ * @SMW_STATUS_INVALID_LIFECYCLE: Device lifecycle not valid, or object not
+ * accessible in current device lifecyle.
  *
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.

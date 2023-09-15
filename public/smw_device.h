@@ -77,6 +77,21 @@ struct smw_device_uuid_args {
 };
 
 /**
+ * struct smw_device_lifecycle_args - Device lifecycle arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @lifecycle_name: Device lifecycle name. See &typedef smw_lifecycle_t
+ *
+ * @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is NULL, the default configured Secure Subsystem is used.
+ */
+struct smw_device_lifecycle_args {
+	unsigned char version;
+	smw_subsystem_t subsystem_name;
+	smw_lifecycle_t lifecycle_name;
+};
+
+/**
  * smw_device_attestation() - Get the device attestation certificate.
  * @args: Pointer to the structure that contains the device attestation arguments.
  *
@@ -116,5 +131,32 @@ smw_device_attestation(struct smw_device_attestation_args *args);
  *	- Common return codes
  */
 enum smw_status_code smw_device_get_uuid(struct smw_device_uuid_args *args);
+
+/**
+ * smw_device_set_lifecycle() - Set the device to given lifecycle.
+ * @args: Pointer to the structure that contains the device lifecycle arguments.
+ *
+ * Forward the device lifecycle to the given value. The device must be reset
+ * to propagate the new lifecycle.
+ *
+ * **Caution:** Forwarding device lifecycle is not reversible.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code
+smw_device_set_lifecycle(struct smw_device_lifecycle_args *args);
+
+/**
+ * smw_device_get_lifecycle() - Get the device active lifecycle.
+ * @args: Pointer to the structure that contains the device lifecycle arguments.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code
+smw_device_get_lifecycle(struct smw_device_lifecycle_args *args);
 
 #endif /* __SMW_DEVICE_H__ */

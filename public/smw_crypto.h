@@ -82,7 +82,6 @@ struct smw_sign_verify_args {
  *
  * **Deprecated. Will be removed in library version 3.x.**
  * Use smw_mac() or smw_mac_verify().
-
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default configured Secure Subsystem is used.

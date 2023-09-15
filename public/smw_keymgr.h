@@ -293,14 +293,15 @@ struct smw_delete_key_args {
 };
 
 /**
- * struct smw_key_get_attributes_args - Get key attributes arguments
+ * struct smw_get_key_attributes_args - Get key attributes arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
  * @key_privacy: Key privacy type.
  * @persistence: Key persistence.
- * @policy_list: Key policy list. More details on `Key policy`_
+ * @policy_list: Key policy list. More details in `Key policy` of
+ *               &typedef smw_attr_key_type_t
  * @policy_list_length: Length of the @policy_list string.
  * @lifecycle_list: Key lifecycle list.
  * @lifecycle_list_length: Length of the @lifecycle_list.

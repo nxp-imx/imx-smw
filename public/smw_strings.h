@@ -40,7 +40,7 @@ typedef smw_string_t smw_subsystem_t;
 typedef smw_string_t smw_key_type_t;
 
 /**
- * typedef smw_key_privacy_t - Key privacy name
+ * typedef smw_keymgr_privacy_t - Key privacy name
  * Values:
  *	- PUBLIC
  *	- PRIVATE
@@ -49,7 +49,7 @@ typedef smw_string_t smw_key_type_t;
 typedef smw_string_t smw_keymgr_privacy_t;
 
 /**
- * typedef smw_key_persistence_t - Key persistence name
+ * typedef smw_keymgr_persistence_t - Key persistence name
  * Values:
  *	- TRANSIENT
  *	- PERSISTENT
@@ -117,7 +117,6 @@ typedef smw_string_t smw_key_format_t;
  * Refer to :doc:`/tlv/tlv`
  *
  * Key Manager attributes:
- *
  * The following :numref:`key_manager_attributes` lists all TLV attributes
  * supported by key manager operations like generate, import, derive, delete.
  *
@@ -302,5 +301,16 @@ typedef smw_string_t smw_tls12_kea_t;
  *	- RC4_128
  */
 typedef smw_string_t smw_tls12_enc_t;
+
+/**
+ * typedef smw_lifecycle_t - Device lifecycle name
+ * Values:
+ *	- OPEN
+ *	- CLOSED
+ *	- CLOSED_LOCKED
+ *	- OEM_RETURN
+ *	- NXP_RETURN
+ */
+typedef smw_string_t smw_lifecycle_t;
 
 #endif /* __SMW_STRINGS_H__ */

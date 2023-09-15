@@ -13,6 +13,7 @@ opt_verbose="-DVERBOSE=0"
 opt_format="-DFORMAT=html"
 opt_psa="-DENABLE_PSA_DEFAULT_ALT=OFF"
 opt_tls12="-DENABLE_TLS12=OFF"
+opt_hmac="-DENABLE_HMAC=OFF"
 opt_cmake_ver="3.13"
 
 #
@@ -286,6 +287,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_jsonc} ${opt_psaarchtests}"
     cmd_script="${cmd_script} ${opt_psa}"
     cmd_script="${cmd_script} ${opt_tls12}"
+    cmd_script="${cmd_script} ${opt_hmac}"
 
     printf "Execute %s\n" "${cmd_script}"
     eval "${cmd_script}"
@@ -812,6 +814,7 @@ do
         all_options)
             opt_psa="-DENABLE_PSA_DEFAULT_ALT=ON"
             opt_tls12="-DENABLE_TLS12=ON"
+            opt_hmac="-DENABLE_HMAC=ON"
             ;;
 
         #

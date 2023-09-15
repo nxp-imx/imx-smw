@@ -8,7 +8,12 @@
 
 #include "smw_device.h"
 
-enum smw_op_devmgr { SMW_OP_DEVMGR_ATTESTATION, SMW_OP_DEVMGR_UUID };
+enum smw_op_devmgr {
+	SMW_OP_DEVMGR_ATTESTATION,
+	SMW_OP_DEVMGR_UUID,
+	SMW_OP_DEVMGR_SET_LIFECYCLE,
+	SMW_OP_DEVMGR_GET_LIFECYCLE
+};
 
 /**
  * struct smw_devmgr_args - Device manager arguments
@@ -22,6 +27,15 @@ struct smw_devmgr_args {
 		struct smw_device_attestation_args *attestation;
 		struct smw_device_uuid_args *uuid;
 	} pub;
+};
+
+/**
+ * struct smw_devmgr_lifecycle_args - Device lifecycle arguments
+ * @lifecycle_id: Internal device lifecycle value
+ */
+struct smw_devmgr_lifecycle_args {
+	enum smw_op_devmgr op;
+	unsigned int lifecycle_id;
 };
 
 /**

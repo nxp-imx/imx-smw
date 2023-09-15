@@ -9,11 +9,17 @@ if(ENABLE_DEVICE_ATTESTATION)
    add_operation(DEVICE_ATTESTATION)
 endif()
 
+if(ENABLE_DEVICE_LIFECYCLE)
+   add_operation(DEVICE_LIFECYCLE)
+endif()
+
 add_library(devmgr OBJECT "")
 target_sources(devmgr PRIVATE
                devmgr_weak.c
+               lifecycle_weak.c
                $<$<BOOL:${ENABLE_DEVMGR_MODULE}>:devmgr.c>
-               $<$<BOOL:${ENABLE_DEVICE_ATTESTATION}>:attestation.c>)
+               $<$<BOOL:${ENABLE_DEVICE_ATTESTATION}>:attestation.c>
+               $<$<BOOL:${ENABLE_DEVICE_LIFECYCLE}>:lifecycle.c>)
 
 target_include_directories(devmgr PRIVATE ${INCLUDE_DIR})
 

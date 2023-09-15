@@ -85,8 +85,9 @@ end:
 	return status;
 }
 
-int ele_get_lifecycle(unsigned char **lifecycle, unsigned int *lifecycle_len,
-		      hsm_key_lifecycle_t ele_lifecycle)
+int ele_get_key_lifecycle(unsigned char **lifecycle,
+			  unsigned int *lifecycle_len,
+			  hsm_key_lifecycle_t ele_lifecycle)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -166,6 +167,31 @@ int ele_set_lifecycle_flags(struct subsystem_context *ele_ctx,
 	for (; i < ARRAY_SIZE(lifecycles); i++) {
 		if (smw_flags & lifecycles[i].smw)
 			*ele_flags |= lifecycles[i].ele;
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int ele_get_device_lifecycle_id(struct subsystem_context *ele_ctx,
+				unsigned int *lifecycle)
+{
+	int status = SMW_STATUS_OK;
+
+	unsigned int i = 0;
+	uint16_t lc = 0;
+
+	status = get_current_lifecycle(ele_ctx, &lc);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	for (; i < ARRAY_SIZE(lifecycles); i++) {
+		if (lc == lifecycles[i].ele) {
+			*lifecycle = lifecycles[i].smw;
+			status = SMW_STATUS_OK;
+			break;
+		}
 	}
 
 end:

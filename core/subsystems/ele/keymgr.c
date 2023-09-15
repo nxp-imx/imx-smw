@@ -1038,9 +1038,9 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 					    op_key_attrs.permitted_algo);
 
 		if (status == SMW_STATUS_OK)
-			status = ele_get_lifecycle(&lifecycle_list,
-						   &lifecycle_list_length,
-						   op_key_attrs.lifecycle);
+			status = ele_get_key_lifecycle(&lifecycle_list,
+						       &lifecycle_list_length,
+						       op_key_attrs.lifecycle);
 
 		if (status == SMW_STATUS_OK) {
 			smw_keymgr_set_policy(key_attrs, policy_list,

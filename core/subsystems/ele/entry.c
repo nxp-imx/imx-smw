@@ -290,6 +290,18 @@ __weak bool ele_device_attest_handle(struct subsystem_context *ele_ctx,
 	return false;
 }
 
+__weak bool ele_device_lifecycle_handle(struct subsystem_context *ele_ctx,
+					enum operation_id operation_id,
+					void *args, int *status)
+{
+	(void)ele_ctx;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
 __weak bool ele_storage_handle(struct subsystem_context *ele_ctx,
 			       enum operation_id operation_id, void *args,
 			       int *status)
@@ -326,6 +338,9 @@ static int execute(enum operation_id operation_id, void *args)
 		goto end;
 	else if (ele_device_attest_handle(&ele_ctx, operation_id, args,
 					  &status))
+		goto end;
+	else if (ele_device_lifecycle_handle(&ele_ctx, operation_id, args,
+					     &status))
 		goto end;
 
 	ele_storage_handle(&ele_ctx, operation_id, args, &status);
@@ -406,6 +421,7 @@ int ele_convert_err(hsm_err_t err)
 		break;
 
 	case HSM_INVALID_LIFECYCLE:
+	case HSM_INVALID_LIFECYCLE_OP:
 		status = SMW_STATUS_INVALID_LIFECYCLE;
 		break;
 

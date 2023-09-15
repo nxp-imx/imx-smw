@@ -223,6 +223,24 @@ bool ele_device_attest_handle(struct subsystem_context *ele_ctx,
 			      int *status);
 
 /**
+ * ele_device_lifecycle_handle() - Handle the device lifecycle operations.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the device lifecycle management operations.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool ele_device_lifecycle_handle(struct subsystem_context *ele_ctx,
+				 enum operation_id operation_id, void *args,
+				 int *status);
+
+/**
  * ele_storage_handle() - Handle the storage operations.
  * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @operation_id: Security Operation ID.
@@ -334,7 +352,24 @@ int ele_export_public_key(struct hdl *hdl,
 			  struct smw_keymgr_descriptor *key_desc);
 
 /**
- * ele_get_lifecycle() - Convert the ELE lifecycle to user lifecycle
+ * ele_get_current_lifecycle_id() - Get the device lifecycle SMW id
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @lifecycle: SMW Device lifecycle
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_SUBSYSTEM_FAILURE          - Subsystem failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED    - Operation not supported
+ * SMW_STATUS_MUTEX_LOCK_FAILURE         - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE       - Mutex unlock failure
+ * Other SMW status error.
+ */
+int ele_get_device_lifecycle_id(struct subsystem_context *ele_ctx,
+				unsigned int *lifecycle);
+
+/**
+ * ele_get_key_lifecycle() - Convert the ELE lifecycle to user lifecycle
  * @lifecycle: Pointer to the lifecycle string
  * @lifecycle_len: Length of @lifecycle
  * @ele_lifecycle: ELE lifecycle(s) bit mask
@@ -348,8 +383,9 @@ int ele_export_public_key(struct hdl *hdl,
  * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
  * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
  */
-int ele_get_lifecycle(unsigned char **lifecycle, unsigned int *lifecycle_len,
-		      hsm_key_lifecycle_t ele_lifecycle);
+int ele_get_key_lifecycle(unsigned char **lifecycle,
+			  unsigned int *lifecycle_len,
+			  hsm_key_lifecycle_t ele_lifecycle);
 
 /**
  * ele_set_lifecycle_flags() - Convert the SMW lifecycle flags to ELE flags
@@ -393,9 +429,12 @@ int ele_set_cipher_algo(enum smw_config_key_type_id key_type_id,
  *
  * Return:
  * SMW_STATUS_OK                         - Success
- * SMW_STATUS_INVALID_PARAM              - Invalid parameters
  * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
- * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
+ * SMW_STATUS_SUBSYSTEM_FAILURE          - Subsystem failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED    - Operation not supported
+ * SMW_STATUS_MUTEX_LOCK_FAILURE         - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE       - Mutex unlock failure
+ * Other SMW status error.
  */
 int ele_get_device_info(struct subsystem_context *ele_ctx);
 

@@ -1,0 +1,12 @@
+
+{
+	"subtest 1": {
+		"command": "DEVICE_GET_LIFECYCLE"
+	},
+	"subtest 2": {
+		"command": "DEVICE_SET_LIFECYCLE",
+		"lifecycle": "CURRENT",
+		"result": "SMW_STATUS_INVALID_LIFECYCLE",
+		"depends": 1
+	}
+}

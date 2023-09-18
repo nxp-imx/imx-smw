@@ -31,4 +31,17 @@ int device_uuid(struct subtest_data *subtest);
  */
 int device_attestation(struct subtest_data *subtest);
 
+/**
+ * device_lifecycle() - Get/set the device lifecycle
+ * @subtest: Subtest data.
+ * @set: True if operation to set the device lifecycle
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ */
+int device_lifecycle(struct subtest_data *subtest, bool set);
+
 #endif /* __DEVICE_H__ */

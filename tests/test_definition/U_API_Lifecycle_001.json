@@ -1,0 +1,40 @@
+{
+	"subtest 1": {
+		"command": "DEVICE_SET_LIFECYCLE",
+		"lifecycle": "CURRENT",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Argument version not supported
+		"command": "DEVICE_SET_LIFECYCLE",
+		"version": 255,
+		"lifecycle": "CURRENT",
+		"result": "SMW_STATUS_INVALID_VERSION"
+	},
+	"subtest 3": { // Subsystem not defined
+		"command": "DEVICE_SET_LIFECYCLE",
+		"subsystem": "UNDEFINED",
+		"lifecycle": "CURRENT",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 4": { // Lifecyle undefined
+		"command": "DEVICE_SET_LIFECYCLE",
+		"lifecycle": "UNDEFINED",
+		"result": "SMW_STATUS_INVALID_LIFECYCLE"
+	},
+	"subtest 5": {
+		"command": "DEVICE_GET_LIFECYCLE",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Argument version not supported
+		"command": "DEVICE_GET_LIFECYCLE",
+		"version": 255,
+		"result": "SMW_STATUS_INVALID_VERSION"
+	},
+	"subtest 7": { // Subsystem not defined
+		"command": "DEVICE_GET_LIFECYCLE",
+		"subsystem": "UNDEFINED",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	}
+}

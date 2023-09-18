@@ -11,6 +11,48 @@
 #include "device.h"
 #include "util.h"
 
+/**
+ * set_lifecycle_bad_args() - Set device lifecycle bad parameters function
+ *                            of the test error.
+ * @subtest: Subtest data
+ * @args: SMW device lifecycle parameters.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ */
+static int set_lifecycle_bad_args(struct subtest_data *subtest,
+				  struct smw_device_lifecycle_args **args)
+{
+	int ret = ERR_CODE(PASSED);
+	enum arguments_test_err_case error = NOT_DEFINED;
+
+	if (!subtest || !args)
+		return ERR_CODE(BAD_ARGS);
+
+	ret = util_read_test_error(&error, subtest->params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	switch (error) {
+	case NOT_DEFINED:
+		break;
+
+	case ARGS_NULL:
+		*args = NULL;
+		break;
+
+	default:
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
+		ret = ERR_CODE(BAD_PARAM_TYPE);
+		break;
+	}
+
+	return ret;
+}
+
 int device_uuid(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
@@ -150,5 +192,67 @@ end:
 	if (args.certificate)
 		free(args.certificate);
 
+	return res;
+}
+
+int device_lifecycle(struct subtest_data *subtest, bool set)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	struct smw_device_lifecycle_args args = { 0 };
+	struct smw_device_lifecycle_args *smw_args = &args;
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	if (!subtest->subsystem || !strcmp(subtest->subsystem, "DEFAULT"))
+		args.subsystem_name = NULL;
+	else
+		args.subsystem_name = subtest->subsystem;
+
+	args.version = subtest->version;
+
+	/* Specific test cases */
+	res = set_lifecycle_bad_args(subtest, &smw_args);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	if (set) {
+		res = util_read_json_type(&args.lifecycle_name, LIFECYCLE_OBJ,
+					  t_string, subtest->params);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+
+		/*
+		 * If the test define a lifecycle `CURRENT` read the device
+		 * lifecycle and set the same.
+		 */
+		if (args.lifecycle_name &&
+		    !strcmp(args.lifecycle_name, "CURRENT")) {
+			subtest->smw_status =
+				smw_device_get_lifecycle(smw_args);
+			if (subtest->smw_status != SMW_STATUS_OK) {
+				res = ERR_CODE(API_STATUS_NOK);
+				goto exit;
+			}
+		}
+
+		subtest->smw_status = smw_device_set_lifecycle(smw_args);
+		if (subtest->smw_status != SMW_STATUS_OK) {
+			res = ERR_CODE(API_STATUS_NOK);
+			goto exit;
+		}
+	} else {
+		subtest->smw_status = smw_device_get_lifecycle(smw_args);
+		if (subtest->smw_status != SMW_STATUS_OK) {
+			res = ERR_CODE(API_STATUS_NOK);
+			goto exit;
+		}
+
+		DBG_PRINT("Device Lifecycle is %s", smw_args->lifecycle_name);
+	}
+
+exit:
 	return res;
 }

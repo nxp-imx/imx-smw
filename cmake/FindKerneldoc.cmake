@@ -22,7 +22,8 @@ The name of the kernel-doc executable
 #]=======================================================================]
 find_program(KERNELDOC_EXECUTABLE
              NAMES kernel-doc
-             PATHS usr/${CMAKE_INSTALL_BINDIR} ${CMAKE_INSTALL_BINDIR}
+             PATHS usr ENV VIRTUAL_ENV
+             PATH_SUFFIXES ${CMAKE_INSTALL_BINDIR}
              DOC "kernel-doc executable")
 
 include(FindPackageHandleStandardArgs)

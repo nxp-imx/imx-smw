@@ -1812,6 +1812,16 @@ exit:
 	return status;
 }
 
+static int commit_key_storage(void)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 /**
  * get_shared_key_size() - Get shared key memory size.
  * @key_descriptor: Pointer to key descriptor.
@@ -2019,6 +2029,9 @@ bool tee_key_handle(enum operation_id op_id, void *args, int *status)
 		break;
 	case OPERATION_ID_GET_KEY_ATTRIBUTES:
 		*status = get_key_attributes(args);
+		break;
+	case OPERATION_ID_COMMIT_KEY_STORAGE:
+		*status = commit_key_storage();
 		break;
 	default:
 		return false;

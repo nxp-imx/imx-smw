@@ -1,0 +1,19 @@
+{
+	"subtest 1": {
+		"command": "COMMIT_KEY_STORAGE",
+		"subsystem": "DEFAULT",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"command": "COMMIT_KEY_STORAGE",
+		"subsystem": "DEFAULT",
+		"version": 255,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"command": "COMMIT_KEY_STORAGE",
+		"subsystem": "UNDEFINED",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	}
+}

@@ -101,4 +101,17 @@ int derive_key(struct subtest_data *subtest);
  */
 int get_key_attributes(struct subtest_data *subtest);
 
+/**
+ * commit_key_storage() - Commit key storage
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED                       - Success.
+ * -MISSING_PARAMS              - Missing mandatory parameters in @params.
+ * -API_STATUS_NOK              - SMW API Call return error
+ * -BAD_ARGS                    - One of the arguments is bad.
+ * -BAD_PARAM_TYPE              - Bad parameter type
+ */
+int commit_key_storage(struct subtest_data *subtest);
+
 #endif /* __KEYMGR_H__ */

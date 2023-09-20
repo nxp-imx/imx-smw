@@ -496,6 +496,53 @@ static int set_export_bad_args(struct subtest_data *subtest,
 }
 
 /**
+ * set_commit_bad_args() - Set commit key storage parameters for specific
+ *                         test cases.
+ * @params: json-c parameters
+ * @args: Pointer to smw commit key storage args structure.
+ *
+ * These configurations represent specific error case using SMW API for a
+ * commit key storage.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ */
+static int set_commit_bad_args(json_object *params,
+			       struct smw_commit_key_storage_args **args)
+{
+	int ret = ERR_CODE(BAD_ARGS);
+	enum arguments_test_err_case error = NOT_DEFINED;
+
+	if (!params || !args || !*args) {
+		DBG_PRINT_BAD_ARGS();
+		return ret;
+	}
+
+	ret = util_read_test_error(&error, params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	switch (error) {
+	case NOT_DEFINED:
+		/* 'test_error' not defined */
+		ret = ERR_CODE(PASSED);
+		break;
+
+	case ARGS_NULL:
+		*args = NULL;
+		break;
+
+	default:
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
+		ret = ERR_CODE(BAD_PARAM_TYPE);
+	}
+
+	return ret;
+}
+
+/**
  * compare_keys() - Compare SMW keys with expected keys
  * @key_test: Test exported keypair structure with operations
  * @exp_key_test: Test expected exported keypair structure with operations
@@ -927,5 +974,35 @@ exit:
 
 	key_free_key(&key_test);
 
+	return res;
+}
+
+int commit_key_storage(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(FAILED);
+	struct smw_commit_key_storage_args args = { 0 };
+	struct smw_commit_key_storage_args *smw_args = &args;
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	args.version = subtest->version;
+
+	if (!strcmp(subtest->subsystem, "DEFAULT"))
+		args.subsystem_name = NULL;
+	else
+		args.subsystem_name = subtest->subsystem;
+
+	res = set_commit_bad_args(subtest->params, &smw_args);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	subtest->smw_status = smw_commit_key_storage(smw_args);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		res = ERR_CODE(API_STATUS_NOK);
+
+exit:
 	return res;
 }

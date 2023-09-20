@@ -1,0 +1,6 @@
+{
+	"subtest 1": {
+		"command": "COMMIT_KEY_STORAGE",
+		"subsystem": "TEE"
+	}
+}

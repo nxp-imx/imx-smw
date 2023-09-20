@@ -422,6 +422,32 @@ static int execute_storage_cmd(char *cmd, struct subtest_data *subtest)
 	return ERR_CODE(UNDEFINED_CMD);
 }
 
+/**
+ * execute_commit_key_storage_cmd() - Execute commit key storage command
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -MISSING_PARAMS          - One command parameters is not defined.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -BAD_PARAM_TYPE          - Bad parameter type
+ */
+static int execute_commit_key_storage_cmd(char *cmd,
+					  struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	/* Check mandatory params */
+	if (!subtest->subsystem) {
+		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
+		return ERR_CODE(MISSING_PARAMS);
+	}
+
+	return commit_key_storage(subtest);
+}
+
 int execute_command_smw(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
@@ -446,6 +472,7 @@ int execute_command_smw(char *cmd, struct subtest_data *subtest)
 		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
 		{ DEVICE, &execute_device_cmd },
 		{ STORAGE, &execute_storage_cmd },
+		{ COMMIT_KEY_STORAGE, &execute_commit_key_storage_cmd },
 	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {

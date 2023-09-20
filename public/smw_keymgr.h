@@ -327,6 +327,16 @@ struct smw_get_key_attributes_args {
 };
 
 /**
+ * struct smw_commit_key_storage_args - Commit non-volatile key storage arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ */
+struct smw_commit_key_storage_args {
+	unsigned char version;
+	smw_subsystem_t subsystem_name;
+};
+
+/**
  * smw_generate_key() - Generate a Key.
  * @args: Pointer to the structure that contains the Key generation arguments.
  *
@@ -464,5 +474,20 @@ smw_get_security_size(struct smw_key_descriptor *descriptor);
  */
 enum smw_status_code
 smw_get_key_attributes(struct smw_get_key_attributes_args *args);
+
+/**
+ * smw_commit_key_storage() - Commit the active non-volatile key storage
+ * @args: Pointer to the structure that contains the commit storage arguments.
+ *
+ * This function ensures that the non-volatile key storage opened by the
+ * subsystem is pushed in physical memory and associated anti-rollback
+ * protection counter is incremented.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code
+smw_commit_key_storage(struct smw_commit_key_storage_args *args);
 
 #endif /* __SMW_KEYMGR_H__ */

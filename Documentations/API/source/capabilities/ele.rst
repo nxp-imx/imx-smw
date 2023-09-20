@@ -25,20 +25,17 @@ Operations supported:
  - Import (only EdgeLock 2GO object)
  - Export (only public key in HEX or Base64 format)
  - Delete
+ - Get key attributes
+ - Get key buffers' length
+ - Get key security size
+ - Get key type name
+ - Commit key storage
 
-Key group limitation:
-Key group ID is hard-coded in SMW's ELE subsystem support. There is one group
-for transient key and one for persistent key. As the number of keys per group is
-limited by ELE, key generation may failed if the maximum number of keys is
-reached.
-
-Persistent key:
-To flush persistent key, "FLUSH_KEY" attribute must be set. When set, ELE
-executes a strict operation and all keys defined as persistent are flushed. Note
-that ELE uses a strict operation counter which is a replay attack counter, then
-the number of strict operation is limited. So when possible it's better to
-perform multiple persistent key operations (generate, import) before setting the
-"FLUSH_KEY" attribute.
+Key group:
+The SMW Library is managing the ELE key group automatically. The library is
+selecting a key group depending if a key is persistent/permanent or transient.
+  - Persistent/Permanent keys are in key groups from 0 to 49.
+  - Transient keys are in key groups from 50 to 99.
 
 Key policy
 """"""""""

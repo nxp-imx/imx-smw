@@ -46,14 +46,23 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. SMW APIs
 
 * Fix overall code to allow disabling cmake options.
+* Add commit key storage API.
 
 ##### 3. Subsystems
+
+* Fix HSM subsystem key group update when creating TLS keys.
+* Add commit key storage operation in all subsytems. In HSM and TEE subsystem
+  the operation is not available so success is always returned. HSM subsystem
+  key storage commit is managed with the "FLUSH_KEY" attributes of key operation.
 
 #### 4. OSAL
 
 #### SMW Tests - _version 2.5_
 
 * Fix test F_TEE_Keymgr_005 instability.
+* Add TEE and HSM tests to validate smw_commit_key_storage(). No ELE test provided
+  because incrementing the rollback protection implies to reload the key storage
+  saved when counter was incremented and it's not feasable in the CI test suite.
 
 #### PKCS#11 Library - _version 2.5_
 

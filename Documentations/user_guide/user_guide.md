@@ -86,7 +86,7 @@ and supported by the SMW Library.
 </thead>
 <tbody>
 <tr>
-  <td rowspan="8">Key Management</td>
+  <td rowspan="13">Key Management</td>
   <td colspan="2">Generate</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -135,6 +135,36 @@ and supported by the SMW Library.
 	<td>✔️<sup><a href="#t_note_1">1</a>, <a href="#t_note_2">2</a></sup></td>
 	<td>❌</td>
 	<td>❌</td>
+</tr>
+<tr>
+  <td colspan="2">Get key attributes</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+</tr>
+<tr>
+  <td colspan="2">Get key buffers' length</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+</tr>
+<tr>
+  <td colspan="2">Get key type name</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+</tr>
+<tr>
+  <td colspan="2">Get key security size</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+</tr>
+<tr>
+  <td colspan="2">Commit key storage</td>
+	<td>✔️<sup><a href="#t_note_3">3</a></td>
+	<td>✔️<sup><a href="#t_note_3">3</a></td>
+	<td>✔️</td>
 </tr>
 <tr>
   <td colspan="3">Hash</td>
@@ -190,7 +220,8 @@ and supported by the SMW Library.
 
 <p>
 <a name="t_note_1"><sup>1</sup></a> Require specific SECO/HSM Firmware.<br>
-<a name="t_note_2"><sup>2</sup></a> Build option ENABLE_TLS12 must be set ON.
+<a name="t_note_2"><sup>2</sup></a> Build option ENABLE_TLS12 must be set ON.<br>
+<a name="t_note_3"><sup>3</sup></a> Do nothing, returns always success.
 </p>
 
 # 3. Prerequisites

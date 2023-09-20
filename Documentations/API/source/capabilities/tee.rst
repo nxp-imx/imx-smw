@@ -41,6 +41,11 @@ Operations supported:
  - Import
  - Export (only public key in HEX or Base64 format)
  - Delete
+ - Get key attributes
+ - Get key buffers' length
+ - Get key security size
+ - Get key type name
+ - Commit key storage (do nothing)
 
 .. [1] multiple of 2 bits
 .. [2] multiple of 8 bits

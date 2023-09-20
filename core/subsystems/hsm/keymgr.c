@@ -647,6 +647,16 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 	return status;
 }
 
+static int commit_key_storage(void)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 int hsm_export_public_key(struct hdl *hdl,
 			  struct smw_keymgr_descriptor *key_desc)
 {
@@ -726,6 +736,9 @@ bool hsm_key_handle(struct subsystem_context *hsm_ctx,
 		break;
 	case OPERATION_ID_GET_KEY_ATTRIBUTES:
 		*status = get_key_attributes(hdl, args);
+		break;
+	case OPERATION_ID_COMMIT_KEY_STORAGE:
+		*status = commit_key_storage();
 		break;
 	default:
 		return false;

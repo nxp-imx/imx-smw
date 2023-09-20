@@ -1061,6 +1061,47 @@ end:
 	return status;
 }
 
+static int commit_key_storage(struct hdl *hdl)
+{
+	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
+
+	hsm_err_t err = HSM_NO_ERROR;
+	hsm_hdl_t key_mgt_hdl = 0;
+	op_manage_key_group_args_t op_args = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = open_key_mgmt_service(hdl, &key_mgt_hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	op_args.flags = HSM_OP_MANAGE_KEY_GROUP_FLAGS_MONOTONIC |
+			HSM_OP_MANAGE_KEY_GROUP_FLAGS_SYNC_KEYSTORE;
+
+	SMW_DBG_PRINTF(VERBOSE,
+		       "[%s (%d)] Call hsm_manage_key_group()\n"
+		       "  key_management_hdl: %u\n"
+		       "  op_manage_key_group_args_t\n"
+		       "    key_group: 0x%08X\n"
+		       "    flags: 0x%08X\n",
+		       __func__, __LINE__, key_mgt_hdl, op_args.key_group,
+		       op_args.flags);
+
+	err = hsm_manage_key_group(key_mgt_hdl, &op_args);
+	SMW_DBG_PRINTF(DEBUG, "hsm_manage_key_group returned %d\n", err);
+
+	status = ele_convert_err(err);
+
+end:
+	tmp_status = close_key_mgt_service(key_mgt_hdl);
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
 			hsm_pubkey_type_t *ele_type)
 {
@@ -1177,6 +1218,9 @@ bool ele_key_handle(struct subsystem_context *ele_ctx,
 		break;
 	case OPERATION_ID_GET_KEY_ATTRIBUTES:
 		*status = get_key_attributes(hdl, args);
+		break;
+	case OPERATION_ID_COMMIT_KEY_STORAGE:
+		*status = commit_key_storage(hdl);
 		break;
 	default:
 		return false;

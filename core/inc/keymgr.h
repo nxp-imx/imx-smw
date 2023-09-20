@@ -195,6 +195,15 @@ struct smw_keymgr_get_key_attributes_args {
 };
 
 /**
+ * struct smw_keymgr_commit_key_storage_args - Commit Key storage arguments
+ * @pub: Pointer to the public commit key storage arguments structure
+ *
+ */
+struct smw_keymgr_commit_key_storage_args {
+	struct smw_commit_key_storage_args *pub;
+};
+
+/**
  * smw_keymgr_alloc_keypair_buffer() - Allocate a keypair object.
  * @descriptor: Pointer to the internal Key descriptor structure.
  * @public_length: Length of the public Key buffer.

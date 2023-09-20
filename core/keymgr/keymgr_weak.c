@@ -104,3 +104,13 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
+
+__weak enum smw_status_code
+smw_commit_key_storage(struct smw_commit_key_storage_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}

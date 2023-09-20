@@ -9,6 +9,7 @@ if(ENABLE_KEYMGR_MODULE)
     add_operation(DELETE_KEY)
     add_operation_implicit(GET_KEY_LENGTHS)
     add_operation_implicit(GET_KEY_ATTRIBUTES)
+    add_operation_implicit(COMMIT_KEY_STORAGE)
 endif()
 
 add_library(keymgr OBJECT "")

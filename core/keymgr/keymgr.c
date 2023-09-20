@@ -2011,7 +2011,7 @@ void smw_keymgr_set_lifecycle(struct smw_keymgr_get_key_attributes_args *attrs,
 enum smw_status_code
 smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_keymgr_get_key_attributes_args attr_args = { 0 };
 	struct smw_keymgr_identifier *key_identifier = &attr_args.identifier;
@@ -2020,6 +2020,9 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	unsigned int index = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args)
+		goto end;
 
 	if (args->version != 0) {
 		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
@@ -2085,6 +2088,39 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 		status = smw_keymgr_db_create(&key_identifier->id,
 					      key_identifier);
 	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+enum smw_status_code
+smw_commit_key_storage(struct smw_commit_key_storage_args *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct smw_keymgr_commit_key_storage_args commit_args = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args)
+		goto end;
+
+	if (args->version != 0) {
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	status = smw_config_get_subsystem_id(args->subsystem_name,
+					     &subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	commit_args.pub = args;
+
+	status = smw_utils_execute_implicit(OPERATION_ID_COMMIT_KEY_STORAGE,
+					    &commit_args, subsystem_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

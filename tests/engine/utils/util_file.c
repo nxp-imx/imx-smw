@@ -23,35 +23,38 @@ int util_file_open(char *dir, char *name, const char *restrict mode, FILE **f)
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	if (dir)
+	if (dir) {
 		fullname_size = strlen(dir) + 1;
 
-	name_length = strlen(name) + 1;
+		name_length = strlen(name) + 1;
 
-	if (ADD_OVERFLOW(fullname_size, name_length, &fullname_size)) {
-		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
-	}
+		if (ADD_OVERFLOW(fullname_size, name_length, &fullname_size)) {
+			DBG_PRINT_BAD_ARGS();
+			return ERR_CODE(BAD_ARGS);
+		}
 
-	fullname = calloc(1, fullname_size);
-	if (!fullname) {
-		DBG_PRINT_ALLOC_FAILURE();
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-	}
+		fullname = calloc(1, fullname_size);
+		if (!fullname) {
+			DBG_PRINT_ALLOC_FAILURE();
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
 
-	if (dir) {
 		strcpy(fullname, dir);
 		strcat(fullname, "/");
+
+		strcat(fullname, name);
+	} else {
+		fullname = name;
 	}
 
-	strcat(fullname, name);
 	*f = fopen(fullname, mode);
 	if (*f)
 		ret = ERR_CODE(PASSED);
 	else
 		DBG_PRINT("Open %s failure %s", fullname, util_get_strerr());
 
-	free(fullname);
+	if (dir)
+		free(fullname);
 
 	return ret;
 }

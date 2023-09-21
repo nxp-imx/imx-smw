@@ -11,7 +11,7 @@ install:
 		install $(O)/$(libname).a $(LIB_DIR); \
 	else \
 		echo "install target $(libname).a to $(LIB_DIR)"; \
-		install $(libname).a $(LIB_DIR); \
+		mv $(libname).a $(LIB_DIR); \
 	fi
 
 	@echo "Copy library include(s) to $(INCLUDE_DIR)"

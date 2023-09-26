@@ -49,8 +49,8 @@ To flush persistent key, "FLUSH_KEY" attribute must be set. When set, HSM
 executes a strict operation and all keys defined as persistent are flushed. Note
 that HSM uses a strict operation counter which is a replay attack counter, then
 the number of strict operation is limited. So when possible it's better to
-perform multiple persistent key operations (generate, import) before setting the
-"FLUSH_KEY" attribute.
+perform multiple persistent key operations (generate, import, delete) before
+setting the "FLUSH_KEY" attribute.
 
 .. [1] Only TLS12_KEY_EXCHANGE when hardware supports it
 

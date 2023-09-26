@@ -131,7 +131,8 @@ static int build_keys_list(char *dir_def_file, struct json_object *definition,
 
 	json_object_object_foreachC(definition, obj)
 	{
-		if (!strcmp(obj.key, KEYS_OBJ))
+		if (!strcmp(obj.key, KEYS_OBJ) ||
+		    !strncmp(obj.key, SUBTEST_OBJ, SUBTEST_OBJ_LEN))
 			continue;
 
 		if (json_object_get_type(obj.val) == json_type_object) {
@@ -301,11 +302,6 @@ static int restore_keys_from_json_file(struct subtest_data *subtest,
 
 	json_object_object_foreachC(okeys, okey_params)
 	{
-		res = util_key_add_node(list_keys(subtest), okey_params.key,
-					NULL);
-		if (res != ERR_CODE(PASSED))
-			return res;
-
 		res = util_read_json_type(&key_id, ID_OBJ, t_int64,
 					  okey_params.val);
 		if (res != ERR_CODE(PASSED))
@@ -314,8 +310,23 @@ static int restore_keys_from_json_file(struct subtest_data *subtest,
 		if (SET_OVERFLOW(key_id, key_data.identifier))
 			return ERR_CODE(INTERNAL);
 
+		/*
+		 * Try to update the key in the list in case it's already
+		 * present.
+		 * Else create a new key in the list and add the information.
+		 */
 		res = util_key_update_node(list_keys(subtest), okey_params.key,
 					   &key_data);
+		if (res == ERR_CODE(KEY_NOTFOUND)) {
+			res = util_key_add_node(list_keys(subtest),
+						okey_params.key, NULL);
+			if (res != ERR_CODE(PASSED))
+				return res;
+
+			res = util_key_update_node(list_keys(subtest),
+						   okey_params.key, &key_data);
+		}
+
 		if (res != ERR_CODE(PASSED))
 			return res;
 	}

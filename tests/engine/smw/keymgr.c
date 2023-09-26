@@ -302,6 +302,44 @@ static int set_export_opt_params(struct subtest_data *subtest,
 }
 
 /**
+ * set_delete_opt_params() - Set key delete optional parameters.
+ * @subtest: Subtest data
+ * @args: Pointer to smw delete key args structure to update.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -FAILED                  - Error in definition file
+ */
+static int set_delete_opt_params(struct subtest_data *subtest,
+				 struct smw_delete_key_args *args)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	struct json_object *okey_params = NULL;
+	unsigned char **attrs = NULL;
+	unsigned int *attrs_len = NULL;
+
+	if (!subtest || !args)
+		return res;
+
+	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (okey_params) {
+		attrs = (unsigned char **)&args->key_attributes_list;
+		attrs_len = &args->key_attributes_list_length;
+
+		/* Get 'attributes_list' optional parameter */
+		res = util_tlv_read_attrs(attrs, attrs_len, okey_params);
+	}
+
+	return res;
+}
+
+/**
  * set_common_bad_args() - Common function handling bad test cases
  * @params: json-c object
  * @args: Pointer to smw operation key args structure.
@@ -690,27 +728,34 @@ int delete_key(struct subtest_data *subtest)
 	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED))
-		return res;
+		goto exit;
 
 	/* Initialize key descriptor, no key buffer */
 	res = key_desc_init(&key_test, NULL);
 	if (res != ERR_CODE(PASSED))
-		return res;
+		goto exit;
 
 	/* Read the json-c key description */
 	res = key_read_descriptor(list_keys(subtest), &key_test, key_name);
 	if (res != ERR_CODE(PASSED))
-		return res;
+		goto exit;
+
+	/* Set optional parameters */
+	res = set_delete_opt_params(subtest, smw_del_args);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
 
 	/* Specific test cases */
 	res = set_del_bad_args(subtest->params, &smw_del_args);
 	if (res != ERR_CODE(PASSED))
-		return res;
+		goto exit;
 
 	/* Call delete key function and compare result with expected one */
 	subtest->smw_status = smw_delete_key(smw_del_args);
 	if (subtest->smw_status != SMW_STATUS_OK)
-		return ERR_CODE(API_STATUS_NOK);
+		res = ERR_CODE(API_STATUS_NOK);
+	else
+		res = ERR_CODE(PASSED);
 
 	/*
 	 * Key node is freed when the list is freed (at the of the test).
@@ -718,7 +763,13 @@ int delete_key(struct subtest_data *subtest)
 	 * can try to delete/use it after this operation.
 	 */
 
-	return ERR_CODE(PASSED);
+exit:
+	key_free_key(&key_test);
+
+	if (args.key_attributes_list)
+		free((void *)args.key_attributes_list);
+
+	return res;
 }
 
 int import_key(struct subtest_data *subtest)

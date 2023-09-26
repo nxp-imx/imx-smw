@@ -1,4 +1,11 @@
 {
+	"keys":{
+		"key 4": {
+			"attributes_list": [
+				"FLUSH_KEY"
+			]
+		}
+	},
 	"subtest 1": {
 		"command": "SUSPEND",
 		"seconds": 30
@@ -22,6 +29,7 @@
 	},
 	"subtest 6": {
 		"command": "DELETE",
+		"version": 1,
 		"key_name": "key 4"
 	}
 }

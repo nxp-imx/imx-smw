@@ -1010,10 +1010,13 @@ delete_key_convert_args(struct smw_delete_key_args *args,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (args->version != 0) {
+	if (args->version > 1) {
 		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
+
+	/* Initialize key_attributes parameters to default values */
+	smw_keymgr_set_default_attributes(&converted_args->key_attributes);
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
@@ -1023,7 +1026,13 @@ delete_key_convert_args(struct smw_delete_key_args *args,
 
 	*subsystem_id = converted_args->key_descriptor.identifier.subsystem_id;
 
-	status = SMW_STATUS_OK;
+	if (args->version < 1)
+		goto end;
+
+	status = smw_keymgr_read_attributes(&converted_args->key_attributes,
+					    args->key_attributes_list,
+					    &args->key_attributes_list_length);
+
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

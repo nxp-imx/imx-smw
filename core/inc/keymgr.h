@@ -177,10 +177,12 @@ struct smw_keymgr_export_key_args {
 /**
  * struct smw_keymgr_delete_key_args - Key deletion arguments
  * @key_descriptor: Descriptor of the Key to delete
+ * @key_attributes: Key attributes
  *
  */
 struct smw_keymgr_delete_key_args {
 	struct smw_keymgr_descriptor key_descriptor;
+	struct smw_keymgr_attributes key_attributes;
 };
 
 /**

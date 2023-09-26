@@ -44,6 +44,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix overall code to allow disabling cmake options.
 * Add commit key storage API.
 * Add get/set device lifecycle API.
+* Add key attributes in the smw_delete_key() arguments.
 
 ##### 3. Subsystems
 
@@ -53,6 +54,8 @@ The failure is due to the storage manager which is already loaded and a new inst
   key storage commit is managed with the "FLUSH_KEY" attributes of key operation.
 * Fix the handling of `CURRENT` lifecycle in ELE subsystem. It is not ignored anymore.
 * Add get/set device lifecycle operations in ELE subsystem.
+* Fix HSM delete key operation to handle "FLUSH_KEY" attribute to commit the
+  key storage rollback protection.
 
 ##### 4. OSAL
 

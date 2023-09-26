@@ -280,9 +280,16 @@ struct smw_export_key_args {
 
 /**
  * struct smw_delete_key_args - Key deletion arguments
- * @version: Version of this structure
+ * @version: Version of this structure (must be equal 1).
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
+ * @key_attributes_list: Key attributes list. See &typedef smw_attr_key_type_t
+ * @key_attributes_list_length: Length of a Key attributes list
+ *
+ * The arguments @key_attributes_list and @key_attributes_list_length are
+ * supported since structure @version=1.
+ *
+ * Only the "FLUSH_KEY" key attribute is handled in the @key_attributes_list.
  *
  * The @key_descriptor fields @id must be given as input.
  * The @key_descriptor fields @buffer is ignored.
@@ -290,6 +297,8 @@ struct smw_export_key_args {
 struct smw_delete_key_args {
 	unsigned char version;
 	struct smw_key_descriptor *key_descriptor;
+	unsigned char *key_attributes_list;
+	unsigned int key_attributes_list_length;
 };
 
 /**

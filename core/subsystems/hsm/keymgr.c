@@ -285,13 +285,13 @@ static int export_key_operation(struct hdl *hdl,
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_pub_key_recovery()\n"
-		       "  key_store_hdl: %d\n"
+		       "  key_store_hdl: %u\n"
 		       "  op_pub_key_recovery_args_t\n"
-		       "    key_identifier: %d\n"
+		       "    key_identifier: 0x%08X\n"
 		       "    out_key: %p\n"
 		       "    out_key_size: %d\n"
-		       "    key_type: %d\n"
-		       "    flags: %x\n",
+		       "    key_type: 0x%02X\n"
+		       "    flags: 0x%02X\n",
 		       __func__, __LINE__, hdl->key_store,
 		       op_export_key_args.key_identifier,
 		       op_export_key_args.out_key,
@@ -315,7 +315,8 @@ end:
 }
 
 static int delete_key_operation(struct subsystem_context *hsm_ctx,
-				struct smw_keymgr_descriptor *key_desc)
+				struct smw_keymgr_descriptor *key_desc,
+				bool flush)
 {
 	int status = SMW_STATUS_OK;
 
@@ -327,6 +328,10 @@ static int delete_key_operation(struct subsystem_context *hsm_ctx,
 
 	manage_key_args.key_identifier = &key_desc->identifier.id;
 	manage_key_args.flags = HSM_OP_MANAGE_KEY_FLAGS_DELETE;
+
+	if (flush)
+		manage_key_args.flags |=
+			HSM_OP_MANAGE_KEY_FLAGS_STRICT_OPERATION;
 
 	status = set_key_type(key_desc->identifier.type_id,
 			      key_desc->identifier.security_size,
@@ -340,12 +345,12 @@ static int delete_key_operation(struct subsystem_context *hsm_ctx,
 		       "[%s (%d)] Call hsm_manage_key()\n"
 		       "  key_management_hdl: %u\n"
 		       "  op_manage_key_args_t\n"
-		       "    key_identifier: %u\n"
+		       "    key_identifier: 0x%08X\n"
 		       "    input_size: %d\n"
-		       "    flags: %x\n"
+		       "    flags: 0x%02X\n"
 		       "    key_type: %d\n"
 		       "    key_group: %d\n"
-		       "    key_info: %x\n"
+		       "    key_info: 0x%04X\n"
 		       "    input_data: %p\n",
 		       __func__, __LINE__, hsm_ctx->hdl.key_management,
 		       *manage_key_args.key_identifier,
@@ -389,6 +394,7 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 	hsm_key_type_t hsm_key_type = 0;
 	bool persistent_grp = false;
 	unsigned int key_group = 0;
+	bool flush_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -418,9 +424,11 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (generate_key_args->key_attributes.flush_key)
+	if (generate_key_args->key_attributes.flush_key) {
+		flush_key = true;
 		op_generate_key_args.flags |=
 			HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
+	}
 
 	switch (generate_key_args->key_attributes.persistence) {
 	case SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT:
@@ -453,14 +461,14 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 
 		SMW_DBG_PRINTF(VERBOSE,
 			       "[%s (%d)] Call hsm_generate_key()\n"
-			       "key_management_hdl: %d\n"
+			       "key_management_hdl: %u\n"
 			       "op_generate_key_args_t\n"
-			       "    key_identifier: %p\n"
+			       "    key_identifier: @%p\n"
 			       "    out_size: %d\n"
-			       "    flags: %x\n"
+			       "    flags: 0x%02X\n"
 			       "    key_type: %d\n"
 			       "    key_group: %d\n"
-			       "    key_info: %x\n"
+			       "    key_info: 0x%04X\n"
 			       "    out_key: %p\n",
 			       __func__, __LINE__, hsm_ctx->hdl.key_management,
 			       op_generate_key_args.key_identifier,
@@ -500,7 +508,7 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 	key_identifier->id = key_id;
 	key_identifier->group = key_group;
 
-	SMW_DBG_PRINTF(DEBUG, "HSM Key identifier: %d\n", key_id);
+	SMW_DBG_PRINTF(DEBUG, "HSM Key identifier: 0x%08X\n", key_id);
 
 	if (public_data) {
 		status = smw_keymgr_update_public_buffer(key_descriptor,
@@ -510,7 +518,8 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 			 * Delete the key in subsystem as smw_generate_key()
 			 * is going to remove it from the key database
 			 */
-			(void)delete_key_operation(hsm_ctx, key_descriptor);
+			(void)delete_key_operation(hsm_ctx, key_descriptor,
+						   flush_key);
 		}
 	}
 
@@ -580,7 +589,8 @@ static int delete_key(struct subsystem_context *hsm_ctx, void *args)
 {
 	struct smw_keymgr_delete_key_args *delete_key_args = args;
 
-	return delete_key_operation(hsm_ctx, &delete_key_args->key_descriptor);
+	return delete_key_operation(hsm_ctx, &delete_key_args->key_descriptor,
+				    delete_key_args->key_attributes.flush_key);
 }
 
 static int get_key_lengths(struct hdl *hdl, void *args)

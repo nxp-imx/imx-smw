@@ -9,10 +9,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "constants.h"
 #include "config.h"
+#include "object.h"
 
 /* Define invalid key identifier */
-#define INVALID_KEY_ID 0
+#define INVALID_KEY_ID INVALID_OBJ_ID
 
 /* Default RSA public exponent is 65537, which has a length of 3 bytes */
 #define DEFAULT_RSA_PUB_EXP_LEN 3
@@ -32,15 +34,6 @@ enum smw_keymgr_format_id {
 	SMW_KEYMGR_FORMAT_ID_BASE64,
 	SMW_KEYMGR_FORMAT_ID_NB,
 	SMW_KEYMGR_FORMAT_ID_INVALID
-};
-
-enum smw_keymgr_persistence_id {
-	/* Key persistence */
-	SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT,
-	SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT,
-	SMW_KEYMGR_PERSISTENCE_ID_PERMANENT,
-	SMW_KEYMGR_PERSISTENCE_ID_NB,
-	SMW_KEYMGR_PERSISTENCE_ID_INVALID
 };
 
 /**
@@ -65,7 +58,7 @@ struct smw_keymgr_identifier {
 	unsigned int attribute;
 	unsigned int security_size;
 	uint32_t id;
-	enum smw_keymgr_persistence_id persistence_id;
+	enum smw_object_persistence_id persistence_id;
 	uint32_t storage_id;
 	uint16_t group;
 };
@@ -112,18 +105,18 @@ struct smw_keymgr_descriptor {
 
 /**
  * struct smw_keymgr_attributes - Key attributes list.
- * @persistence: Define key persistence.
- * @rsa_pub_exp: Pointer to rsa public exponent.
- * @rsa_pub_exp_len: @rsa_pub_exp length in bytes.
+ * @persistence_id: Key persistence ID
+ * @rsa_pub_exp: Pointer to rsa public exponent
+ * @rsa_pub_exp_len: @rsa_pub_exp length in bytes
  * @flush_key: Flush persistent key(s)
- * @policy: Key policy encoded as variable-length list TLV.
- * @policy_len: @policy length in bytes.
+ * @policy: Key policy encoded as variable-length list TLV
+ * @policy_len: @policy length in bytes
  * @pub_key_attributes_list: Key attributes list from the public API
  * @pub_key_attributes_list_length: Length of @pub_key_attributes_list
- * @storage_id: Key storage ID.
+ * @storage_id: Key storage ID
  */
 struct smw_keymgr_attributes {
-	enum smw_keymgr_persistence_id persistence;
+	enum smw_object_persistence_id persistence_id;
 	unsigned char *rsa_pub_exp;
 	unsigned int rsa_pub_exp_len;
 	bool flush_key;

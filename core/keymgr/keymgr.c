@@ -19,6 +19,7 @@
 #include "name.h"
 #include "base64.h"
 #include "attr.h"
+#include "object.h"
 
 #define FORMAT_ID_ASSERT(id)                                                   \
 	do {                                                                   \
@@ -44,19 +45,6 @@ static const char *const key_privacy_names[] = {
 		typeof(id) _id = (id);                                         \
 		SMW_DBG_ASSERT((_id < SMW_KEYMGR_PRIVACY_ID_NB) &&             \
 			       (_id != SMW_KEYMGR_PRIVACY_ID_INVALID));        \
-	} while (0)
-
-static const char *const key_persistence_names[] = {
-	[SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT] = "TRANSIENT",
-	[SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT] = "PERSISTENT",
-	[SMW_KEYMGR_PERSISTENCE_ID_PERMANENT] = "PERMANENT",
-};
-
-#define KEY_PERSISTENCE_ID_ASSERT(id)                                          \
-	do {                                                                   \
-		typeof(id) _id = (id);                                         \
-		SMW_DBG_ASSERT((_id < SMW_KEYMGR_PERSISTENCE_ID_NB) &&         \
-			       (_id != SMW_KEYMGR_PERSISTENCE_ID_INVALID));    \
 	} while (0)
 
 /**
@@ -824,7 +812,7 @@ end:
 
 void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr)
 {
-	attr->persistence = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
+	attr->persistence_id = SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 	attr->rsa_pub_exp = NULL;
 	attr->rsa_pub_exp_len = 0;
 	attr->flush_key = false;
@@ -1050,7 +1038,7 @@ static int store_persistent(void *attributes, unsigned char *value,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (attr) {
-		attr->persistence = SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT;
+		attr->persistence_id = SMW_OBJECT_PERSISTENCE_ID_PERSISTENT;
 		status = SMW_STATUS_OK;
 	}
 
@@ -1674,7 +1662,7 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 		goto end;
 
 	key_desc->identifier.persistence_id =
-		generate_key_args.key_attributes.persistence;
+		generate_key_args.key_attributes.persistence_id;
 
 	/*
 	 * Try to create the key in the database before
@@ -1791,7 +1779,7 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_INVALID;
 
 	key_desc->identifier.persistence_id =
-		import_key_args.key_attributes.persistence;
+		import_key_args.key_attributes.persistence_id;
 
 	ret = set_key_identifier(new_id, key_desc);
 	if (ret == SMW_STATUS_OK)
@@ -1879,7 +1867,7 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 
 	if (status == SMW_STATUS_OK ||
 	    key_desc->identifier.persistence_id !=
-		    SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT)
+		    SMW_OBJECT_PERSISTENCE_ID_TRANSIENT)
 		status = tmp_status;
 
 end:
@@ -2086,9 +2074,8 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	index = key_identifier->privacy_id;
 	args->key_privacy = key_privacy_names[index];
 
-	KEY_PERSISTENCE_ID_ASSERT(key_identifier->persistence_id);
-	index = key_identifier->persistence_id;
-	args->persistence = key_persistence_names[index];
+	args->persistence =
+		smw_object_get_persistence_name(key_identifier->persistence_id);
 
 	args->storage = key_identifier->storage_id;
 

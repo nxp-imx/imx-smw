@@ -8,6 +8,9 @@
 
 #include "builtin_macros.h"
 
+/* Define invalid object identifier */
+#define INVALID_OBJ_ID 0
+
 #define SMW_STORAGE_READ_ONLY  BIT(0)
 #define SMW_STORAGE_READ_ONCE  BIT(1)
 #define SMW_STORAGE_WRITE_ONLY BIT(2)

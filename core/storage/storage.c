@@ -11,6 +11,7 @@
 #include "exec.h"
 #include "tlv.h"
 #include "attr.h"
+#include "object_db.h"
 #include "storage.h"
 
 /**
@@ -65,6 +66,19 @@ static int store_write_only(void *attributes, unsigned char *value,
 static int store_lifecycle(void *attributes, unsigned char *value,
 			   unsigned int length);
 
+/**
+ * store_persistent() - Store persistent storage info.
+ * @attributes: Pointer to attribute structure to fill.
+ * @value: Unused.
+ * @length: Unused.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
+ */
+static int store_persistent(void *attributes, unsigned char *value,
+			    unsigned int length);
+
 static const struct attribute_tlv data_attributes_tlv_array[] = {
 	{ .type = (const unsigned char *)READ_ONLY_STR,
 	  .verify = smw_tlv_verify_boolean,
@@ -77,7 +91,10 @@ static const struct attribute_tlv data_attributes_tlv_array[] = {
 	  .store = store_write_only },
 	{ .type = (const unsigned char *)LIFECYCLE_STR,
 	  .verify = smw_tlv_verify_variable_length_list,
-	  .store = store_lifecycle }
+	  .store = store_lifecycle },
+	{ .type = (const unsigned char *)PERSISTENT_STR,
+	  .verify = smw_tlv_verify_boolean,
+	  .store = store_persistent }
 };
 
 #define LIFECYCLE(_name)                                                       \
@@ -208,15 +225,38 @@ end:
 	return status;
 }
 
+static int store_persistent(void *attributes, unsigned char *value,
+			    unsigned int length)
+{
+	(void)value;
+	(void)length;
+
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_storage_data_attributes *attr = attributes;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (attr) {
+		attr->persistence_id = SMW_OBJECT_PERSISTENCE_ID_PERSISTENT;
+		status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static void
 set_default_attributes(struct smw_storage_data_attributes *data_attributes)
 {
 	data_attributes->rw_flags = 0;
 	data_attributes->lifecycle_flags = 0;
+	data_attributes->persistence_id = SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 }
 
 static int convert_data_descriptor(struct smw_data_descriptor *in,
-				   struct smw_storage_data_descriptor *out)
+				   struct smw_storage_data_descriptor *out,
+				   enum subsystem_id *subsystem_id,
+				   union smw_object_db_info *info)
 {
 	int status = SMW_STATUS_OK;
 
@@ -229,9 +269,26 @@ static int convert_data_descriptor(struct smw_data_descriptor *in,
 		read_attributes(in->attributes_list, in->attributes_list_length,
 				&out->attributes, data_attributes_tlv_array,
 				ARRAY_SIZE(data_attributes_tlv_array));
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_object_db_get_info(in->identifier,
+					out->attributes.persistence_id, info);
+	if (status == SMW_STATUS_OK) {
+		if (*subsystem_id != SUBSYSTEM_ID_INVALID &&
+		    info->data_info.subsystem_id != *subsystem_id) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
+		*subsystem_id = info->data_info.subsystem_id;
+	} else if (status != SMW_STATUS_UNKNOWN_ID) {
+		goto end;
+	}
 
 	out->pub = in;
 
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -318,7 +375,8 @@ end:
 static int
 store_data_convert_args(struct smw_store_data_args *args,
 			struct smw_storage_store_data_args *converted_args,
-			enum subsystem_id *subsystem_id)
+			enum subsystem_id *subsystem_id,
+			union smw_object_db_info *info)
 {
 	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 
@@ -329,11 +387,6 @@ store_data_convert_args(struct smw_store_data_args *args,
 
 	status =
 		smw_config_get_subsystem_id(args->subsystem_name, subsystem_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = convert_data_descriptor(args->data_descriptor,
-					 &converted_args->data_descriptor);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -345,7 +398,12 @@ store_data_convert_args(struct smw_store_data_args *args,
 
 	status = convert_sign_args(args->sign_args, &converted_args->sign_args,
 				   *subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
+	status = convert_data_descriptor(args->data_descriptor,
+					 &converted_args->data_descriptor,
+					 subsystem_id, info);
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -354,7 +412,8 @@ end:
 static int
 retrieve_data_convert_args(struct smw_retrieve_data_args *args,
 			   struct smw_storage_retrieve_data_args *conv_args,
-			   enum subsystem_id *subsystem_id)
+			   enum subsystem_id *subsystem_id,
+			   union smw_object_db_info *info)
 {
 	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 
@@ -369,7 +428,8 @@ retrieve_data_convert_args(struct smw_retrieve_data_args *args,
 		goto end;
 
 	status = convert_data_descriptor(args->data_descriptor,
-					 &conv_args->data_descriptor);
+					 &conv_args->data_descriptor,
+					 subsystem_id, info);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -379,7 +439,8 @@ end:
 static int
 delete_data_convert_args(struct smw_delete_data_args *args,
 			 struct smw_storage_delete_data_args *converted_args,
-			 enum subsystem_id *subsystem_id)
+			 enum subsystem_id *subsystem_id,
+			 union smw_object_db_info *info)
 {
 	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 
@@ -394,9 +455,8 @@ delete_data_convert_args(struct smw_delete_data_args *args,
 		goto end;
 
 	status = convert_data_descriptor(args->data_descriptor,
-					 &converted_args->data_descriptor);
-	if (status != SMW_STATUS_OK)
-		goto end;
+					 &converted_args->data_descriptor,
+					 subsystem_id, info);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -468,8 +528,12 @@ smw_storage_get_iv_length(struct smw_storage_enc_args *enc_args)
 enum smw_status_code smw_store_data(struct smw_store_data_args *args)
 {
 	int status = SMW_STATUS_OK;
+
 	struct smw_storage_store_data_args store_data_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	union smw_object_db_info info = { 0 };
+	enum smw_object_persistence_id persistence_id =
+		SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -484,12 +548,37 @@ enum smw_status_code smw_store_data(struct smw_store_data_args *args)
 		goto end;
 	}
 
-	status = store_data_convert_args(args, &store_data_args, &subsystem_id);
-	if (status != SMW_STATUS_OK)
+	status = store_data_convert_args(args, &store_data_args, &subsystem_id,
+					 &info);
+
+	persistence_id =
+		store_data_args.data_descriptor.attributes.persistence_id;
+
+	if (status == SMW_STATUS_OK) {
+		if (info.data_info.attributes.rw_flags &
+		    SMW_STORAGE_READ_ONLY) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+	} else if (status == SMW_STATUS_UNKNOWN_ID) {
+		status =
+			smw_object_db_create(&args->data_descriptor->identifier,
+					     persistence_id, &info);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	} else {
 		goto end;
+	}
 
 	status = smw_utils_execute_operation(OPERATION_ID_STORAGE_STORE,
 					     &store_data_args, subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	info.data_info.size = store_data_args.data_descriptor.pub->length;
+	info.data_info.attributes = store_data_args.data_descriptor.attributes;
+	status = smw_object_db_update(args->data_descriptor->identifier,
+				      persistence_id, &info);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -499,8 +588,14 @@ end:
 enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args)
 {
 	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
+
 	struct smw_storage_retrieve_data_args retrieve_data_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	union smw_object_db_info info = { 0 };
+	bool obj_not_present = false;
+	enum smw_object_persistence_id persistence_id =
+		SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -515,12 +610,37 @@ enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args)
 	}
 
 	status = retrieve_data_convert_args(args, &retrieve_data_args,
-					    &subsystem_id);
-	if (status != SMW_STATUS_OK)
+					    &subsystem_id, &info);
+	if (status == SMW_STATUS_UNKNOWN_ID) {
+		if (subsystem_id == SUBSYSTEM_ID_INVALID)
+			goto end;
+
+		obj_not_present = true;
+	} else if (status != SMW_STATUS_OK) {
 		goto end;
+	}
 
 	status = smw_utils_execute_operation(OPERATION_ID_STORAGE_RETRIEVE,
 					     &retrieve_data_args, subsystem_id);
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_UNKNOWN_ID)
+		goto end;
+
+	if (obj_not_present)
+		goto end;
+
+	persistence_id = info.data_info.attributes.persistence_id;
+
+	if (status != SMW_STATUS_OK ||
+	    info.data_info.attributes.rw_flags & SMW_STORAGE_READ_ONCE) {
+		tmp_status =
+			smw_object_db_delete(args->data_descriptor->identifier,
+					     persistence_id);
+
+		if (status == SMW_STATUS_OK ||
+		    info.data_info.attributes.persistence_id !=
+			    SMW_OBJECT_PERSISTENCE_ID_TRANSIENT)
+			status = tmp_status;
+	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -530,8 +650,13 @@ end:
 enum smw_status_code smw_delete_data(struct smw_delete_data_args *args)
 {
 	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
+	enum smw_object_persistence_id persistence_id =
+		SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
+
 	struct smw_storage_delete_data_args delete_data_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	union smw_object_db_info info = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -546,12 +671,24 @@ enum smw_status_code smw_delete_data(struct smw_delete_data_args *args)
 	}
 
 	status = delete_data_convert_args(args, &delete_data_args,
-					  &subsystem_id);
+					  &subsystem_id, &info);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	persistence_id = info.data_info.attributes.persistence_id;
+
 	status = smw_utils_execute_operation(OPERATION_ID_STORAGE_DELETE,
 					     &delete_data_args, subsystem_id);
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_UNKNOWN_ID)
+		goto end;
+
+	tmp_status = smw_object_db_delete(args->data_descriptor->identifier,
+					  persistence_id);
+
+	if (status == SMW_STATUS_OK ||
+	    info.data_info.attributes.persistence_id !=
+		    SMW_OBJECT_PERSISTENCE_ID_TRANSIENT)
+		status = tmp_status;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

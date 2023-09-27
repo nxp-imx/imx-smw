@@ -58,7 +58,7 @@ psa_status_t util_smw_to_psa_status(enum smw_status_code status)
 		psa_status = PSA_ERROR_DATA_CORRUPT;
 		break;
 
-	case SMW_STATUS_KEY_DB_GET_INFO:
+	case SMW_STATUS_OBJ_DB_GET_INFO:
 		psa_status = PSA_ERROR_INVALID_HANDLE;
 		break;
 

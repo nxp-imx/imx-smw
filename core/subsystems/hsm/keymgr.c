@@ -430,14 +430,14 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 			HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
 	}
 
-	switch (generate_key_args->key_attributes.persistence) {
-	case SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT:
+	switch (generate_key_args->key_attributes.persistence_id) {
+	case SMW_OBJECT_PERSISTENCE_ID_PERSISTENT:
 		op_generate_key_args.key_info = HSM_KEY_INFO_PERSISTENT;
 		key_group = HSM_FIRST_PERSISTENT_KEY_GROUP;
 		persistent_grp = true;
 		break;
 
-	case SMW_KEYMGR_PERSISTENCE_ID_PERMANENT:
+	case SMW_OBJECT_PERSISTENCE_ID_PERMANENT:
 		op_generate_key_args.key_info = HSM_KEY_INFO_PERMANENT;
 		key_group = HSM_FIRST_PERSISTENT_KEY_GROUP;
 		persistent_grp = true;

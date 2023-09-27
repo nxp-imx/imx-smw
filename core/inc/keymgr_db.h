@@ -13,8 +13,8 @@
  * @id: New key identifier created in the database
  * @identifier: Internal Key identifier object
  *
- * Function creates a new key in the OSAL Key database. The
- * given @identifier is stored in the key entry.
+ * Function creates a new key in the OSAL object database. The
+ * given @identifier is stored in the object entry.
  * Objective of the function is to ensure that key can be
  * created in the database before creating/importing key in
  * the subsystem.

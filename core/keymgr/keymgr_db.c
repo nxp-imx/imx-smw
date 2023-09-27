@@ -5,121 +5,48 @@
 
 #include "smw_status.h"
 
-#include "debug.h"
-#include "global.h"
-#include "keymgr_db.h"
-
-static void prepare_osal_key(struct smw_keymgr_identifier *identifier,
-			     struct osal_key *key)
-{
-	key->id = identifier->id;
-	key->persistent = identifier->persistence_id;
-	key->info = identifier;
-	key->info_size = sizeof(*identifier);
-
-	/* If key id is known, there is no key id range */
-	if (key->id == INVALID_KEY_ID) {
-		key->range.min = 1;
-		key->range.max = UINT32_MAX;
-	} else {
-		key->range.min = key->id;
-		key->range.max = key->id;
-	}
-}
+#include "utils.h"
+#include "keymgr.h"
+#include "object_db.h"
 
 int smw_keymgr_db_create(unsigned int *id,
 			 struct smw_keymgr_identifier *identifier)
 {
-	int ret = SMW_STATUS_KEY_DB_CREATE;
-	struct smw_ops *ops = get_smw_ops();
-	struct osal_key key = { 0 };
+	union smw_object_db_info info = { 0 };
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	*id = identifier->id;
+	SMW_UTILS_MEMCPY(&info, identifier, sizeof(*identifier));
 
-	if (!id || !identifier)
-		return SMW_STATUS_INVALID_PARAM;
-
-	if (!ops || !ops->add_key_info)
-		return SMW_STATUS_OPS_INVALID;
-
-	prepare_osal_key(identifier, &key);
-
-	if (!ops->add_key_info(&key) && key.id != INVALID_KEY_ID) {
-		*id = key.id;
-		ret = SMW_STATUS_OK;
-	}
-
-	return ret;
+	return smw_object_db_create(id, identifier->persistence_id, &info);
 }
 
 int smw_keymgr_db_update(unsigned int id,
 			 struct smw_keymgr_identifier *identifier)
 {
-	int ret = SMW_STATUS_KEY_DB_UPDATE;
-	struct smw_ops *ops = get_smw_ops();
-	struct osal_key key = { 0 };
+	union smw_object_db_info info = { 0 };
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_UTILS_MEMCPY(&info, identifier, sizeof(*identifier));
 
-	if (!identifier)
-		return SMW_STATUS_INVALID_PARAM;
-
-	if (!ops || !ops->update_key_info)
-		return SMW_STATUS_OPS_INVALID;
-
-	prepare_osal_key(identifier, &key);
-	key.id = id;
-
-	if (!ops->update_key_info(&key))
-		ret = SMW_STATUS_OK;
-
-	return ret;
+	return smw_object_db_update(id, identifier->persistence_id, &info);
 }
 
 int smw_keymgr_db_delete(unsigned int id,
 			 struct smw_keymgr_identifier *identifier)
 
 {
-	int ret = SMW_STATUS_KEY_DB_DELETE;
-	struct smw_ops *ops = get_smw_ops();
-	struct osal_key key = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!ops || !ops->delete_key_info)
-		return SMW_STATUS_OPS_INVALID;
-
-	prepare_osal_key(identifier, &key);
-	key.id = id;
-
-	if (!ops->delete_key_info(&key))
-		ret = SMW_STATUS_OK;
-
-	return ret;
+	return smw_object_db_delete(id, identifier->persistence_id);
 }
 
 int smw_keymgr_db_get_info(unsigned int id,
 			   struct smw_keymgr_identifier *identifier)
 {
-	int ret = SMW_STATUS_KEY_DB_GET_INFO;
-	struct smw_ops *ops = get_smw_ops();
-	struct osal_key key = { 0 };
+	int ret = SMW_STATUS_OK;
+	union smw_object_db_info info = { 0 };
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	ret = smw_object_db_get_info(id, identifier->persistence_id, &info);
 
-	if (!identifier)
-		return SMW_STATUS_INVALID_PARAM;
-
-	if (!ops || !ops->get_key_info)
-		return SMW_STATUS_OPS_INVALID;
-
-	prepare_osal_key(identifier, &key);
-	key.id = id;
-
-	if (!ops->get_key_info(&key))
-		ret = SMW_STATUS_OK;
-	else if (key.id == INVALID_KEY_ID)
-		ret = SMW_STATUS_UNKNOWN_ID;
+	if (ret == SMW_STATUS_OK)
+		SMW_UTILS_MEMCPY(identifier, &info, sizeof(*identifier));
 
 	return ret;
 }

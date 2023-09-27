@@ -858,7 +858,7 @@ static int generate_key(void *args)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	if (key_attrs->persistence == SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT)
+	if (key_attrs->persistence_id == SMW_OBJECT_PERSISTENCE_ID_PERSISTENT)
 		shared_params.persistent_storage = true;
 
 	shared_params.id = key_identifier->id;
@@ -1461,7 +1461,7 @@ static int import_key(void *args)
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->tee_key_type;
 
-	if (key_attrs->persistence == SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT)
+	if (key_attrs->persistence_id == SMW_OBJECT_PERSISTENCE_ID_PERSISTENT)
 		shared_params.persistent_storage = true;
 
 	usage_status =
@@ -1789,10 +1789,10 @@ static int get_key_attributes(void *args)
 
 	if (op.params[GET_KEY_ATTRS_PERSISTENT_FLAG_IDX].value.b)
 		key_attrs->identifier.persistence_id =
-			SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT;
+			SMW_OBJECT_PERSISTENCE_ID_PERSISTENT;
 	else
 		key_attrs->identifier.persistence_id =
-			SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
+			SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 
 	key_attrs->identifier.storage_id = 0;
 	key_attrs->identifier.type_id = key_type_tee_to_smw(tee_type);

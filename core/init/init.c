@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2019-2022 NXP
+ * Copyright 2019-2023 NXP
  */
 
 #include "smw_status.h"
@@ -48,8 +48,8 @@ static int check_ops(const struct smw_ops *ops)
 	if (!ops->is_lib_initialized)
 		return -1;
 
-	if (!ops->get_key_info || !ops->add_key_info || !ops->update_key_info ||
-	    !ops->delete_key_info)
+	if (!ops->get_obj_info || !ops->add_obj_info || !ops->update_obj_info ||
+	    !ops->delete_obj_info)
 		return -1;
 
 	return 0;

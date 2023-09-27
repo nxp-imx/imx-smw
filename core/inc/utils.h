@@ -16,6 +16,7 @@
 #include "builtin_macros.h"
 
 #include "global.h"
+#include "debug.h"
 
 #define SMW_ALL_ONES (-1UL)
 

@@ -188,30 +188,30 @@ static int get_full_ele_key_type(enum smw_config_key_type_id key_type_id,
 	return status;
 }
 
-static enum smw_keymgr_persistence_id
+static enum smw_object_persistence_id
 get_key_persistence(hsm_key_lifetime_t lifetime)
 {
-	enum smw_keymgr_persistence_id persistence =
-		SMW_KEYMGR_PERSISTENCE_ID_INVALID;
+	enum smw_object_persistence_id persistence_id =
+		SMW_OBJECT_PERSISTENCE_ID_INVALID;
 
 	switch (ELE_KEY_LIFETIME_PERSISTENCE_GET(lifetime)) {
 	case ELE_KEY_TRANSIENT:
-		persistence = SMW_KEYMGR_PERSISTENCE_ID_TRANSIENT;
+		persistence_id = SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 		break;
 
 	case ELE_KEY_PERSISTENT:
-		persistence = SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT;
+		persistence_id = SMW_OBJECT_PERSISTENCE_ID_PERSISTENT;
 		break;
 
 	case ELE_KEY_PERMANENT:
-		persistence = SMW_KEYMGR_PERSISTENCE_ID_PERMANENT;
+		persistence_id = SMW_OBJECT_PERSISTENCE_ID_PERMANENT;
 		break;
 
 	default:
 		break;
 	}
 
-	return persistence;
+	return persistence_id;
 }
 
 /**
@@ -298,9 +298,9 @@ static int delete_key_operation(hsm_hdl_t key_mgt_hdl,
 
 	op_args.key_identifier = key_identifier->id;
 	if (key_identifier->persistence_id ==
-		    SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT ||
+		    SMW_OBJECT_PERSISTENCE_ID_PERSISTENT ||
 	    key_identifier->persistence_id ==
-		    SMW_KEYMGR_PERSISTENCE_ID_PERMANENT)
+		    SMW_OBJECT_PERSISTENCE_ID_PERMANENT)
 		op_args.flags = HSM_OP_DEL_KEY_FLAGS_STRICT_OPERATION;
 
 	SMW_DBG_PRINTF(VERBOSE,
@@ -638,8 +638,8 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		goto end;
 	}
 
-	switch (key_args->key_attributes.persistence) {
-	case SMW_KEYMGR_PERSISTENCE_ID_PERSISTENT:
+	switch (key_args->key_attributes.persistence_id) {
+	case SMW_OBJECT_PERSISTENCE_ID_PERSISTENT:
 		op_args.key_lifetime = HSM_SE_KEY_STORAGE_PERSISTENT;
 		/* Force persistent key to be written in NVM */
 		op_args.flags |= HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
@@ -647,7 +647,7 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		persistent_grp = true;
 		break;
 
-	case SMW_KEYMGR_PERSISTENCE_ID_PERMANENT:
+	case SMW_OBJECT_PERSISTENCE_ID_PERMANENT:
 		op_args.key_lifetime = HSM_SE_KEY_STORAGE_PERS_PERM;
 		/* Force permanant key to be written in NVM */
 		op_args.flags |= HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;

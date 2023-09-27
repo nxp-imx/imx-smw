@@ -22,7 +22,7 @@
  *
  * .. code-block:: c
  *
- *    #define DEFAULT_KEY_DB "/var/tmp/key_db_smw_test.dat"
+ *    #define DEFAULT_OBJ_DB "/var/tmp/obj_db_smw_test.dat"
  *
  *    static const struct tee_info tee_default_info = {
  *        { "11b5c4aa-6d20-11ea-bc55-0242ac130003" }
@@ -47,8 +47,8 @@
  *        if (res != SMW_STATUS_OK)
  *            goto exit;
  *
- *        // Open/Create the application key database
- *        res = smw_osal_open_key_db(DEFAULT_KEY_DB, strlen(DEFAULT_KEY_DB) + 1);
+ *        // Open/Create the application object database
+ *        res = smw_osal_open_obj_db(DEFAULT_OBJ_DB, strlen(DEFAULT_OBJ_DB) + 1);
  *        if (res != SMW_STATUS_OK)
  *            goto exit;
  *
@@ -147,10 +147,25 @@ enum smw_status_code smw_osal_set_subsystem_info(smw_subsystem_t subsystem,
  * @file: Fullname of the key database
  * @len: Length of the @file string
  *
+ * **Deprecated. Will be removed in library version 3.x.**
+ * Use smw_osal_open_obj_db().
+ *
  * Return:
  * See &enum smw_status_code
  *  - SMW_STATUS_OK                - Success
  *  - SMW_STATUS_KEY_DB_INIT       - Initialization error of the database
  */
 enum smw_status_code smw_osal_open_key_db(const char *file, size_t len);
+
+/**
+ * smw_osal_open_obj_db() - Open a object database file
+ * @file: Fullname of the object database
+ * @len: Length of the @file string
+ *
+ * Return:
+ * See &enum smw_status_code
+ *  - SMW_STATUS_OK                - Success
+ *  - SMW_STATUS_OBJ_DB_INIT       - Initialization error of the database
+ */
+enum smw_status_code smw_osal_open_obj_db(const char *file, size_t len);
 #endif /* __SMW_OSAL_H__ */

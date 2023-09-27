@@ -64,12 +64,17 @@
  * @SMW_STATUS_SIGNATURE_INVALID: The Signature is not valid.
  * @SMW_STATUS_SIGNATURE_LEN_INVALID: The Signature length is not valid.
  *
- * @SMW_STATUS_KEY_DB_INIT: Initialization error of the keys database.
+ * @SMW_STATUS_OBJ_DB_INIT: Initialization error of the object database.
+ * @SMW_STATUS_OBJ_DB_CREATE: Object database creation error.
+ * @SMW_STATUS_OBJ_DB_UPDATE: Object database update error.
+ * @SMW_STATUS_OBJ_DB_DELETE: Object database delete error.
+ * @SMW_STATUS_OBJ_DB_GET_INFO: Object database get information error.
+ *
+ * @SMW_STATUS_KEY_DB_INIT: Initialization error of the key database.
  * @SMW_STATUS_KEY_DB_CREATE: Key database creation error.
  * @SMW_STATUS_KEY_DB_UPDATE: Key database update error.
  * @SMW_STATUS_KEY_DB_DELETE: Key database delete error.
  * @SMW_STATUS_KEY_DB_GET_INFO: Key database get information error.
- *
  *
  * @SMW_STATUS_KEY_POLICY_ERROR: The key policy is syntactically wrong.
  * @SMW_STATUS_KEY_POLICY_WARNING_IGNORED: At least one element of the key policy is ignored.
@@ -133,6 +138,13 @@
  *	- SMW_STATUS_SIGNATURE_INVALID
  *	- SMW_STATUS_SIGNATURE_LEN_INVALID
  *
+ ** Specific return codes - Object database
+ *	- SMW_STATUS_ERROR_OBJ_DB_INIT
+ *	- SMW_STATUS_ERROR_OBJ_DB_CREATE
+ *	- SMW_STATUS_ERROR_OBJ_DB_UPDATE
+ *	- SMW_STATUS_ERROR_OBJ_DB_DELETE
+ *	- SMW_STATUS_ERROR_OBJ_DB_GET_INFO
+ *
  ** Specific return codes - Key database
  *	- SMW_STATUS_ERROR_KEY_DB_INIT
  *	- SMW_STATUS_ERROR_KEY_DB_CREATE
@@ -188,11 +200,16 @@ enum smw_status_code {
 	SMW_STATUS_LIBRARY_ALREADY_INIT, /* 35 */
 	SMW_STATUS_SUBSYSTEM_LOADED,
 	SMW_STATUS_SUBSYSTEM_NOT_LOADED,
-	SMW_STATUS_KEY_DB_INIT,
-	SMW_STATUS_KEY_DB_CREATE,
-	SMW_STATUS_KEY_DB_UPDATE, /* 40 */
-	SMW_STATUS_KEY_DB_DELETE,
-	SMW_STATUS_KEY_DB_GET_INFO,
+	SMW_STATUS_OBJ_DB_INIT,
+	SMW_STATUS_OBJ_DB_CREATE,
+	SMW_STATUS_OBJ_DB_UPDATE, /* 40 */
+	SMW_STATUS_OBJ_DB_DELETE,
+	SMW_STATUS_OBJ_DB_GET_INFO,
+	SMW_STATUS_KEY_DB_INIT = SMW_STATUS_OBJ_DB_INIT,
+	SMW_STATUS_KEY_DB_CREATE = SMW_STATUS_OBJ_DB_CREATE,
+	SMW_STATUS_KEY_DB_UPDATE = SMW_STATUS_OBJ_DB_UPDATE, /* 40 */
+	SMW_STATUS_KEY_DB_DELETE = SMW_STATUS_OBJ_DB_DELETE,
+	SMW_STATUS_KEY_DB_GET_INFO = SMW_STATUS_OBJ_DB_GET_INFO,
 	SMW_STATUS_KEY_POLICY_ERROR,
 	SMW_STATUS_KEY_POLICY_WARNING_IGNORED,
 	SMW_STATUS_KEY_INVALID, /* 45 */

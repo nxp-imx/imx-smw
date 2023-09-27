@@ -59,6 +59,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 4. OSAL
 
+* OSAL key database becomes OSAL object database that can store keys and raw data.
+
 #### SMW Tests - _version 2.5_
 
 * Fix test F_TEE_Keymgr_005 instability.

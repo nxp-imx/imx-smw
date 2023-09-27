@@ -158,7 +158,9 @@ List of Security Operations:
    +------------------------------------+------------------------------------------------------------------+
    | HASH                               | Hash a message.                                                  |
    +------------------------------------+------------------------------------------------------------------+
-   | HMAC                               | Keyed-hash authentication of a message.                          |
+   | HMAC                               | Keyed-hash authentication of a message. **Deprecated use MAC**   |
+   +------------------------------------+------------------------------------------------------------------+
+   | MAC                                | Message Authentication Code.                                     |
    +------------------------------------+------------------------------------------------------------------+
    | SIGN                               | Sign a message.                                                  |
    +------------------------------------+------------------------------------------------------------------+
@@ -173,6 +175,14 @@ List of Security Operations:
    | AUTHENTICATE_DECRYPT               | Decrypt and verify a message.                                    |
    +------------------------------------+------------------------------------------------------------------+
    | RNG                                | Generate a Random data number.                                   |
+   +------------------------------------+------------------------------------------------------------------+
+   | DEVICE_LIFECYCLE                   | Get and Set device lifecycle.                                    |
+   +------------------------------------+------------------------------------------------------------------+
+   | STORAGE_STORE                      | Store data in secure storage.                                    |
+   +------------------------------------+------------------------------------------------------------------+
+   | STORAGE_RETRIEVE                   | Retrieve data from secure storage.                               |
+   +------------------------------------+------------------------------------------------------------------+
+   | STORAGE_DELETE                     | Delete data from secure storage.                                 |
    +------------------------------------+------------------------------------------------------------------+
 
 Each Security Operations definition can specify capabilities using Values and Range tags definition as listed in the following tables.
@@ -195,6 +205,8 @@ List of Security Operation values tag:
    | MODE_VALUES      | Define the modes supported for the operation algorithms.                         |
    +------------------+----------------------------------------------------------------------------------+
    | HASH_ALGO_VALUES | Define the Hash operation algorithms supported for the operation.                |
+   +------------------+----------------------------------------------------------------------------------+
+   | MAC_ALGO_VALUES  | Define the MAC operation algorithms supported for the operation.                 |
    +------------------+----------------------------------------------------------------------------------+
    | KEY_TYPE_VALUES  | Define the Key types supported for the operation.                                |
    +------------------+----------------------------------------------------------------------------------+

@@ -43,6 +43,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Fix overall code to allow disabling cmake options.
 * Add commit key storage API.
+* Add get/set device lifecycle API.
 
 ##### 3. Subsystems
 
@@ -51,8 +52,9 @@ The failure is due to the storage manager which is already loaded and a new inst
   the operation is not available so success is always returned. HSM subsystem
   key storage commit is managed with the "FLUSH_KEY" attributes of key operation.
 * Fix the handling of `CURRENT` lifecycle in ELE subsystem. It is not ignored anymore.
+* Add get/set device lifecycle operations in ELE subsystem.
 
-#### 4. OSAL
+##### 4. OSAL
 
 #### SMW Tests - _version 2.5_
 
@@ -60,6 +62,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add TEE and HSM tests to validate smw_commit_key_storage(). No ELE test provided
   because incrementing the rollback protection implies to reload the key storage
   saved when counter was incremented and it's not feasable in the CI test suite.
+* Add tests to validate smw_device_get_lifecycle() and smw_device_set_lifecycle().
 
 #### PKCS#11 Library - _version 2.5_
 
@@ -110,7 +113,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix ELE subsystem Key group management.
 * Fix HSM subsystem Key group management.
 
-#### 4. OSAL
+##### 4. OSAL
 
 * Fix coverity and ensure all variables are initialized.
 

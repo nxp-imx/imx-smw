@@ -408,8 +408,11 @@ The following operations are available:
 
   - Device Attestation
   - Device UUID (in big endian format)
+  - Device lifecycle
 
 
+Device Attestation
+""""""""""""""""""
 The device attestation requires a challenge value to guaranty the certificate
 request. The challenge value maximum length depends of the device as listed in
 the following table.
@@ -426,6 +429,38 @@ the following table.
    +------------+-------------------------------+
    | i.MX93     |  16                           |
    +------------+-------------------------------+
+
+Device lifecycle
+""""""""""""""""
+The device lifecycle operations supported are get and set device lifecycle.
+The following table lists the device lifecycle supported when executing a
+get or set device lifecycle.
+
+.. warning::
+  Changing the device lifecycle (set operation) is not revertable. Refer to
+  the device documentation to get more details about the lifecycle.
+
+.. table:: ELE Device lifecycle
+   :name: ele_lifecycle
+   :widths: 22 10 10 58
+   :width: 100%
+   :class: wrap-table
+
+   +---------------+---------+---------+------------------------------------+
+   | **Lifecycle** | **Get** | **Set** | **Comment**                        |
+   +===============+=========+=========+====================================+
+   | OPEN          |   Yes   |   Yes   |                                    |
+   +---------------+---------+---------+------------------------------------+
+   | CLOSED        |   Yes   |   Yes   | A signed image is required to boot |
+   +---------------+---------+---------+------------------------------------+
+   | CLOSED_LOCKED |   Yes   |   Yes   | A signed image is required to boot |
+   +---------------+---------+---------+------------------------------------+
+   | OEM_RETURN    |   No    |   Yes   | Device is no more OEM usable and   |
+   |               |         |         | must be returned to NXP            |
+   +---------------+---------+---------+------------------------------------+
+   | NXP_RETURN    |   No    |   Yes   | Device is no more usable and       |
+   |               |         |         | must be returned to NXP            |
+   +---------------+---------+---------+------------------------------------+
 
 Data Storage manager
 ^^^^^^^^^^^^^^^^^^^^

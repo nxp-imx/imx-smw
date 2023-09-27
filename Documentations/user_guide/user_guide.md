@@ -203,7 +203,7 @@ and supported by the SMW Library.
 	<td>✔️</td>
 </tr>
 <tr>
-  <td rowspan="2">Device Manager</td>
+  <td rowspan="3">Device Manager</td>
 	<td colspan="2">Device Attestation</td>
 	<td>❌</td>
 	<td>❌</td>
@@ -214,6 +214,31 @@ and supported by the SMW Library.
 	<td>❌</td>
 	<td>❌</td>
 	<td>✔️</td>
+</tr>
+<tr>
+  <td colspan="2">Device Lifecycle</td>
+	<td>❌</td>
+	<td>❌</td>
+	<td>✔️</td>
+</tr>
+<tr>
+  <td rowspan="3">Data Storage</td>
+	<td colspan="2">Store</td>
+	<td>❌</td>
+	<td>❌</td>
+	<td>✔️</td>
+</tr>
+<tr>
+  <td colspan="2">Retrieve</td>
+	<td>❌</td>
+	<td>❌</td>
+	<td>✔️</td>
+</tr>
+<tr>
+  <td colspan="2">Delete</td>
+	<td>❌</td>
+	<td>❌</td>
+	<td>❌</td>
 </tr>
 </tbody>
 </table>
@@ -714,7 +739,7 @@ The default option value is in **bold**.
 	<td>ENABLE_KEYMGR_MODULE</td>
 </tr>
 <tr>
-  <td>-DENABLE_HMAC=[<b>ON</b>|OFF]</td>
+  <td>-DENABLE_HMAC=[ON|<b>OFF</b>]</td>
   <td>Enable/disable the support of HMAC operations. Default is ON (enable).
 	<b><i>Deprecated, refer to ENABLE_MAC option</i></b></td>
 	<td>ENABLE_KEYMGR_MODULE</td>
@@ -732,6 +757,12 @@ The default option value is in **bold**.
 	<td>ENABLE_KEYMGR_MODULE</td>
 </tr>
 <tr>
+  <td>-DENABLE_STORAGE_MODULE=[<b>ON</b>|OFF]</td>
+  <td>Enable/disable the support of data storge operations.
+	Default is ON (enable).</td>
+	<td>ENABLE_KEYMGR_MODULE</td>
+</tr>
+<tr>
   <td>-DENABLE_DEVMGR_MODULE=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of Device Manager operations.
 	Default is ON (enable).</td>
@@ -740,6 +771,12 @@ The default option value is in **bold**.
 <tr>
   <td>-DENABLE_DEVICE_ATTESTATION=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of Device Attestation operations.
+	Default is ON (enable).</td>
+	<td>ENABLE_DEVMGR_MODULE</td>
+</tr>
+<tr>
+  <td>-DENABLE_DEVICE_LIFECYCLE=[<b>ON</b>|OFF]</td>
+  <td>Enable/disable the support of Device Lifecycle operations.
 	Default is ON (enable).</td>
 	<td>ENABLE_DEVMGR_MODULE</td>
 </tr>

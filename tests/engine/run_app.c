@@ -17,7 +17,7 @@
 #include "util_thread.h"
 #include "run_thread.h"
 
-#define DEFAULT_KEY_DB "/var/tmp/key_db_smw_test.dat"
+#define DEFAULT_OBJ_DB "/var/tmp/obj_db_smw_test.dat"
 
 static const struct tee_info tee_default_info = {
 	{ "11b5c4aa-6d20-11ea-bc55-0242ac130003" }
@@ -170,7 +170,7 @@ static int setup_hsm_ele_info(struct json_object *test_def, int is_ele)
 }
 
 /**
- * setup_key_db() -  Open/Create the application key database
+ * setup_obj_db() -  Open/Create the application object database
  * @test_def: JSON-C test definition of the application
  *
  * Return:
@@ -180,14 +180,14 @@ static int setup_hsm_ele_info(struct json_object *test_def, int is_ele)
  * -FAILED             - Error in definition file
  * -ERROR_SMWLIB_INIT  - SMW Library initialization error
  */
-static int setup_key_db(struct json_object *test_def)
+static int setup_obj_db(struct json_object *test_def)
 {
 	int res = ERR_CODE(PASSED);
-	char *filepath = DEFAULT_KEY_DB;
+	char *filepath = DEFAULT_OBJ_DB;
 	struct json_object *oinfo = NULL;
 	size_t filepath_len = 0;
 
-	res = util_read_json_type(&oinfo, KEY_DB_OBJ, t_object, test_def);
+	res = util_read_json_type(&oinfo, OBJ_DB_OBJ, t_object, test_def);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
 	    !oinfo)
 		return res;
@@ -203,9 +203,9 @@ static int setup_key_db(struct json_object *test_def)
 	if (INC_OVERFLOW(filepath_len, 1))
 		return ERR_CODE(BAD_PARAM_TYPE);
 
-	res = smw_osal_open_key_db(filepath, filepath_len);
+	res = smw_osal_open_obj_db(filepath, filepath_len);
 	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Create Key database failed %s",
+		DBG_PRINT("SMW Create object database failed %s",
 			  get_string_status(res, "SMW"));
 		res = ERR_CODE(ERROR_SMWLIB_INIT);
 	} else {
@@ -242,7 +242,7 @@ static int init_smwlib(struct app_data *app)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	res = setup_key_db(app->parent_def);
+	res = setup_obj_db(app->parent_def);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 

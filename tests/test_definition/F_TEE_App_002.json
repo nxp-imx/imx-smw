@@ -16,8 +16,8 @@
 		}
 	},
 	"App 1": {
-		"key_db": {
-			"filepath": "/var/tmp/key_db_smw_test_F_TEE_App_002_App1.dat"
+		"obj_db": {
+			"filepath": "/var/tmp/obj_db_smw_test_F_TEE_App_002_App1.dat"
 		},
 		"Thread 1": {
 			"subtest 1": {
@@ -91,8 +91,8 @@
 		}
 	},
 	"App 2": {
-		"key_db": {
-			"filepath": "/var/tmp/key_db_smw_test_F_TEE_App_002_App2.dat"
+		"obj_db": {
+			"filepath": "/var/tmp/obj_db_smw_test_F_TEE_App_002_App2.dat"
 		},
 		"Thread 1": {
 			"subtest 1": {

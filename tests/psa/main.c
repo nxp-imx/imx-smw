@@ -17,7 +17,7 @@
 
 #include "psa_arch_tests.h"
 
-#define DEFAULT_KEY_DB "/var/tmp/key_db_smw_psa_test.dat"
+#define DEFAULT_OBJ_DB "/var/tmp/obj_db_smw_psa_test.dat"
 
 static void read_custom_test_list_file(char **buffer, char *file_name)
 {
@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 {
 	uint32_t ret;
 	enum smw_status_code status;
-	char *filepath = DEFAULT_KEY_DB;
+	char *filepath = DEFAULT_OBJ_DB;
 	int option = 0;
 	char *custom_test_list = NULL;
 	char *custom_test_list_file_name = NULL;
@@ -152,7 +152,7 @@ int main(int argc, char **argv)
 	if (status != SMW_STATUS_OK)
 		return -1;
 
-	status = smw_osal_open_key_db(filepath, strlen(filepath) + 1);
+	status = smw_osal_open_obj_db(filepath, strlen(filepath) + 1);
 	if (status != SMW_STATUS_OK)
 		return -1;
 

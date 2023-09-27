@@ -67,14 +67,14 @@ static int set_ele_info(struct libobj_obj *obj)
 	return ret;
 }
 
-static int set_key_db(struct libobj_obj *obj)
+static int set_obj_db(struct libobj_obj *obj)
 {
 	int ret = CKR_OK;
 
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
-	status = smw_osal_open_key_db((const char *)data->value.array,
+	status = smw_osal_open_obj_db((const char *)data->value.array,
 				      data->value.number);
 	if (status == SMW_STATUS_OK)
 		ret = CKR_OK;
@@ -90,7 +90,7 @@ static const struct data_op {
 	{ DATA_LABEL("TEE Info"), .set = &set_tee_info },
 	{ DATA_LABEL("HSM Info"), .set = &set_hsm_info },
 	{ DATA_LABEL("ELE Info"), .set = &set_ele_info },
-	{ DATA_LABEL("Key DB"), .set = &set_key_db },
+	{ DATA_LABEL("Object DB"), .set = &set_obj_db },
 };
 
 CK_RV libdev_create_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)

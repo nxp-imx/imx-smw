@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2019-2022 NXP
+ * Copyright 2019-2023 NXP
  */
 
 #ifndef __OSAL_H__
@@ -21,29 +21,29 @@
  */
 
 /**
- * struct osal_key - OSAL Key database operation parameters
- * @id: Key id output when key added, else input
- * @range: Key id range to generate (information set by SMW at key creation)
+ * struct osal_obj - OSAL object database operation parameters
+ * @id: Object id output when object added, else input
+ * @range: Object id range to generate (information set by SMW at object creation)
  * @range.min: Minimum value
  * @range.max: Maximum value
- * @persistent: Key is persistent (information set by SMW at key creation)
- * @info: Key information to store or restore
- * @info_size: Size of the key information
+ * @persistence: Object persistence (information set by SMW at object creation)
+ * @info: Object information to store or restore
+ * @info_size: Size of the object information
  *
- * This structure defines the key information to be handled by the OSAL
- * key database if needed.
+ * This structure defines the object information to be handled by the OSAL
+ * object database if needed.
  *
- * Note: if key range min and max are equal, the key id is not generated
- * by the Key database manager.
+ * Note: if object range min and max are equal, the object id is not generated
+ * by the object database manager.
  */
-struct osal_key {
+struct osal_obj {
 	unsigned int id;
 	struct {
 		unsigned int min;
 		unsigned int max;
 	} range;
 
-	int persistent;
+	int persistence;
 	void *info;
 	size_t info_size;
 };
@@ -63,10 +63,10 @@ struct osal_key {
  * @register_active_subsystem: [optional] Register the active Secure Subsystem
  * @get_subsystem_info: [mandatory] Get Subsystem configuration info
  * @is_lib_initialized: [mandatory] Check if the library was successfully initialized by OSAL
- * @get_key_info: [mandatory] Get a key information from database
- * @add_key_info: [mandatory] Add a key information into database
- * @update_key_info: [mandatory] Update a key information into database
- * @delete_key_info: [mandatory] Delete a key information from database
+ * @get_obj_info: [mandatory] Get an object information from database
+ * @add_obj_info: [mandatory] Add an object information into database
+ * @update_obj_info: [mandatory] Update an object information into database
+ * @delete_obj_info: [mandatory] Delete an object information from database
  *
  * This structure defines the SMW OSAL.
  * Functions pointers marked as [mandatory] must be assigned.
@@ -97,10 +97,10 @@ struct smw_ops {
 
 	bool (*is_lib_initialized)(void);
 
-	int (*get_key_info)(struct osal_key *key);
-	int (*add_key_info)(struct osal_key *key);
-	int (*update_key_info)(struct osal_key *key);
-	int (*delete_key_info)(struct osal_key *key);
+	int (*get_obj_info)(struct osal_obj *obj);
+	int (*add_obj_info)(struct osal_obj *obj);
+	int (*update_obj_info)(struct osal_obj *obj);
+	int (*delete_obj_info)(struct osal_obj *obj);
 };
 
 /**

@@ -411,7 +411,7 @@ static void stop(void)
 		status = smw_deinit();
 		DBG_PRINTF(VERBOSE, "SMW deinit status: %d\n", status);
 
-		key_db_close();
+		obj_db_close();
 
 		free_context();
 	}
@@ -460,19 +460,26 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 __export enum smw_status_code smw_osal_open_key_db(const char *file,
 						   size_t len __maybe_unused)
 {
+	return smw_osal_open_obj_db(file, len);
+}
+
+__export enum smw_status_code smw_osal_open_obj_db(const char *file,
+						   size_t len __maybe_unused)
+{
 	enum smw_status_code status = SMW_STATUS_OK;
 
 	TRACE_FUNCTION_CALL;
 
-	DBG_PRINTF(INFO, "Open Key database %s (%zu)\n", file, len);
+	DBG_PRINTF(INFO, "Open object database %s (%zu)\n", file, len);
 
 	status = alloc_context();
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	if (key_db_open(file)) {
-		DBG_PRINTF(ERROR, "Error opening/creating key db %s\n", file);
-		return SMW_STATUS_KEY_DB_INIT;
+	if (obj_db_open(file)) {
+		DBG_PRINTF(ERROR, "Error opening/creating object db %s\n",
+			   file);
+		return SMW_STATUS_OBJ_DB_INIT;
 	}
 
 	return SMW_STATUS_OK;
@@ -515,11 +522,11 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	ops.get_subsystem_info = get_subsystem_info;
 	ops.is_lib_initialized = is_lib_initialized;
 
-	/* Key database management */
-	ops.get_key_info = key_db_get_info;
-	ops.add_key_info = key_db_add;
-	ops.update_key_info = key_db_update;
-	ops.delete_key_info = key_db_delete;
+	/* Object database management */
+	ops.get_obj_info = obj_db_get_info;
+	ops.add_obj_info = obj_db_add;
+	ops.update_obj_info = obj_db_update;
+	ops.delete_obj_info = obj_db_delete;
 
 	status = smw_init(&ops);
 	if (status != SMW_STATUS_OK)

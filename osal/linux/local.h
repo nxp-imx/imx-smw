@@ -71,38 +71,38 @@ struct osal_ctx {
 	int lib_initialized;
 	struct lib_config_args config;
 	const char *active_subsystem_name;
-	void *key_db_obj;
+	void *obj_db;
 };
 
-enum key_flags {
+enum obj_flags {
 	ENTRY_FREE = 0,
 	ENTRY_USE,
 };
 
 /**
- * struct key_entry - Key entry header in key database
- * @id: 16 bits key id in the DB
+ * struct obj_entry - Object entry header in object database
+ * @id: 32 bits object id in the DB
+ * @persistence: Object persistence
  * @flags: Flags state of the entry
- * @persistent: Key is persistent
- * @info_size: Key information block size
+ * @info_size: Object information block size
  *
- * The key database is a binary file build with
- * ----------------------
- * | Key header         |
- * | (struct key_entry) |
- * ----------------------
- * |                    |
- * | Key information of |
- * | info_size bytes    |
- * |                    |
- * ----------------------
+ * The object database is a binary file build with
+ * -------------------------
+ * | Object header         |
+ * | (struct obj_entry)    |
+ * -------------------------
+ * |                       |
+ * | Object information of |
+ * | info_size bytes       |
+ * |                       |
+ * -------------------------
  */
-struct key_entry {
+struct obj_entry {
 	unsigned int id;
-	enum key_flags flags;
-	int persitent;
+	enum obj_flags flags;
+	int persistence;
 	size_t info_size;
-	/* Info data block is right after the key entry header */
+	/* Info data block is right after the object entry header */
 };
 
 /**
@@ -152,54 +152,54 @@ int mutex_lock(void *mutex);
 int mutex_unlock(void *mutex);
 
 /**
- * key_db_open() - Open Key database
- * @key_db: Database file name
+ * obj_db_open() - Open object database
+ * @db: Database file name
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int key_db_open(const char *key_db);
+int obj_db_open(const char *db);
 
 /**
- * key_db_close() - Close Key database
+ * obj_db_close() - Close object database
  */
-void key_db_close(void);
+void obj_db_close(void);
 
 /**
- * key_db_get_info() - Get a key information from DB
- * @key: OSAL key object
+ * obj_db_get_info() - Get an object information from DB
+ * @obj: OSAL object
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int key_db_get_info(struct osal_key *key);
+int obj_db_get_info(struct osal_obj *obj);
 
 /**
- * key_db_add() - Add a key in the DB
- * @key: OSAL key object
+ * obj_db_add() - Add an object in the DB
+ * @obj: OSAL object
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int key_db_add(struct osal_key *key);
+int obj_db_add(struct osal_obj *obj);
 
 /**
- * key_db_update() - Update a key information into the DB
- * @key: OSAL key object
+ * obj_db_update() - Update an object information into the DB
+ * @obj: OSAL object
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int key_db_update(struct osal_key *key);
+int obj_db_update(struct osal_obj *obj);
 
 /**
- * key_db_delete() - Remove a key from the DB
- * @key: OSAL key object
+ * obj_db_delete() - Remove an object from the DB
+ * @obj: OSAL object
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int key_db_delete(struct osal_key *key);
+int obj_db_delete(struct osal_obj *obj);
 
 /**
  * get_strerr() - Return the system error message
@@ -211,13 +211,13 @@ int key_db_delete(struct osal_key *key);
 char *get_strerr(void);
 
 /**
- * dbg_entry() - Debug print the key database entry object
- * @entry: Key entry object
+ * dbg_entry() - Debug print the object database entry
+ * @entry: Object entry
  */
-void dbg_entry(struct key_entry *entry);
+void dbg_entry(struct obj_entry *entry);
 
 /**
- * dbg_entry_info() - Debug print the key database data
+ * dbg_entry_info() - Debug print the object database data
  * @buf: Data buffer
  * @len: Length in bytes of the buffer
  */

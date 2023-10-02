@@ -8,7 +8,9 @@
 
 #include <stdint.h>
 
-#define BIT(n)		      (1UL << (n))
+#ifndef BIT
+#define BIT(n) (1UL << (n))
+#endif
 #define BIT_MASK(length)      ((1UL << (length)) - 1)
 #define SET_BITS(val, mask)   ((val) |= (mask))
 #define CLEAR_BITS(val, mask) ((val) &= ~(mask))

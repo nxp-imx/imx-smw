@@ -45,6 +45,7 @@
 #define MODE_OBJ		  "mode"
 #define MODULUS_OBJ		  "modulus"
 #define OBJ_DB_OBJ		  "obj_db"
+#define OFFSET_OBJ		  "offset"
 #define OP_ARGS_OBJ		  "op_args"
 #define OP_INPUT_OBJ		  "op_input"
 #define OP_OUTPUT_OBJ		  "op_output"

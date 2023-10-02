@@ -1,0 +1,76 @@
+{
+	"data_list": {
+		"data pointer NULL": {
+			"id": 21,
+			"data": 3
+		},
+		"data 1": {
+			"id": 21,
+			"data": "ABCDEF"
+		},
+		"data 2": {
+			"id": 22,
+			"data": "FEDCBA",
+			"attributes_list": [
+				["READ_ONLY"]
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "STORAGE_STORE",
+		"api": "PSA",
+		"data_name": "data pointer NULL",
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	},
+	"subtest 2": {
+		"command": "STORAGE_STORE",
+		"api": "PSA",
+		"data_name": "data 1"
+	},
+	"subtest 3": {
+		"command": "STORAGE_RETRIEVE",
+		"api": "PSA",
+		"data_name": "data 1",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"offset": 4,
+		"depends": 2
+	},
+	"subtest 4": {
+		"command": "STORAGE_RETRIEVE",
+		"api": "PSA",
+		"data_name": "data 1",
+		"offset": 3,
+		"depends": 2
+	},
+	"subtest 5": {
+		"command": "STORAGE_RETRIEVE",
+		"api": "PSA",
+		"data_name": "data 1",
+		"offset": 1,
+		"depends": 2
+	},
+	"subtest 6": {
+		"command": "STORAGE_RETRIEVE",
+		"api": "PSA",
+		"data_name": "data 1",
+		"depends": 2
+	},
+	"subtest 7": {
+		"command": "STORAGE_STORE",
+		"api": "PSA",
+		"data_name": "data 2"
+	},
+	"subtest 8": {
+		"command": "STORAGE_RETRIEVE",
+		"api": "PSA",
+		"data_name": "data 2",
+		"depends": 7
+	},
+	"subtest 9": { // Re-write data
+		"command": "STORAGE_STORE",
+		"api": "PSA",
+		"data_name": "data 2",
+		"result": "PSA_ERROR_NOT_PERMITTED",
+		"depends": 7
+	}
+}

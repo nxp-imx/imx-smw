@@ -11,9 +11,8 @@
 /* Define invalid object identifier */
 #define INVALID_OBJ_ID 0
 
-#define SMW_STORAGE_READ_ONLY  BIT(0)
-#define SMW_STORAGE_READ_ONCE  BIT(1)
-#define SMW_STORAGE_WRITE_ONLY BIT(2)
+#define SMW_STORAGE_READ_ONLY BIT(0)
+#define SMW_STORAGE_READ_ONCE BIT(1)
 
 #define SMW_LIFECYCLE_CURRENT	    BIT(0)
 #define SMW_LIFECYCLE_OPEN	    BIT(1)

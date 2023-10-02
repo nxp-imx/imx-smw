@@ -35,9 +35,8 @@
 #define LC_OEM_RETURN_STR    "OEM_RETURN"
 #define LC_NXP_RETURN_STR    "NXP_RETURN"
 
-#define READ_ONLY_STR  "READ_ONLY"
-#define READ_ONCE_STR  "READ_ONCE"
-#define WRITE_ONLY_STR "WRITE_ONLY"
+#define READ_ONLY_STR "READ_ONLY"
+#define READ_ONCE_STR "READ_ONCE"
 
 #define ANY_STR			    "ANY"
 #define ALL_AEAD_STR		    "ALL_AEAD"

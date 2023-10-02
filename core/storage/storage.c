@@ -41,19 +41,6 @@ static int store_read_once(void *attributes, unsigned char *value,
 			   unsigned int length);
 
 /**
- * store_write_only() - Store write-only attribute.
- * @attributes: Pointer to attribute structure to fill.
- * @value: Pointer to the storage ID value.
- * @length: Length of @value in bytes.
- *
- * Return:
- * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
- */
-static int store_write_only(void *attributes, unsigned char *value,
-			    unsigned int length);
-
-/**
  * store_lifecycle() - Store lifecycle attribute.
  * @attributes: Pointer to attribute structure to fill.
  * @value: Pointer to the lifecycle.
@@ -86,9 +73,6 @@ static const struct attribute_tlv data_attributes_tlv_array[] = {
 	{ .type = (const unsigned char *)READ_ONCE_STR,
 	  .verify = smw_tlv_verify_boolean,
 	  .store = store_read_once },
-	{ .type = (const unsigned char *)WRITE_ONLY_STR,
-	  .verify = smw_tlv_verify_boolean,
-	  .store = store_write_only },
 	{ .type = (const unsigned char *)LIFECYCLE_STR,
 	  .verify = smw_tlv_verify_variable_length_list,
 	  .store = store_lifecycle },
@@ -162,26 +146,6 @@ static int store_read_once(void *attributes, unsigned char *value,
 
 	if (attr) {
 		attr->rw_flags |= SMW_STORAGE_READ_ONCE;
-		status = SMW_STATUS_OK;
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static int store_write_only(void *attributes, unsigned char *value,
-			    unsigned int length)
-{
-	(void)value;
-	(void)length;
-
-	int status = SMW_STATUS_INVALID_PARAM;
-	struct smw_storage_data_attributes *attr = attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (attr) {
-		attr->rw_flags |= SMW_STORAGE_WRITE_ONLY;
 		status = SMW_STATUS_OK;
 	}
 

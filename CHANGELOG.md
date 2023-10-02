@@ -39,6 +39,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library - _version 2.5_
 ##### 1. ARM PSA APIs
 
+* Implement PSA Internal Storage APIs
+
 ##### 2. SMW APIs
 
 * Fix overall code to allow disabling cmake options.

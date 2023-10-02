@@ -8,6 +8,7 @@
 
 #include "util.h"
 #include "util_app.h"
+#include "util_certificate.h"
 #include "util_cipher.h"
 #include "util_context.h"
 #include "util_key.h"
@@ -64,6 +65,10 @@ static void util_app_destroy(void *data)
 
 	err = util_list_clear(app_data->macs);
 	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list MACs error %d", err);
+
+	err = util_list_clear(app_data->certificates);
+	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list certificates error %d",
+		   err);
 
 	err = util_list_clear(app_data->threads);
 	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list threads error %d", err);
@@ -142,6 +147,10 @@ static int app_register(struct test_data *test, unsigned int id,
 		goto exit;
 
 	err = util_mac_init(&app_data->macs);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_certificate_init(&app_data->certificates);
 	if (err != ERR_CODE(PASSED))
 		goto exit;
 

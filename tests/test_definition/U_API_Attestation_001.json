@@ -1,0 +1,20 @@
+{
+	"subtest 1": {
+		"command": "DEVICE_ATTESTATION",
+		"test_error": "ARGS_NULL",
+		"output": 256,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"command": "DEVICE_ATTESTATION",
+		"version": 255,
+		"output": 256,
+		"result": "SMW_STATUS_INVALID_VERSION"
+	},
+	"subtest 3": {
+		"command": "DEVICE_ATTESTATION",
+		"subsystem": "UNDEFINED",
+		"output": 256,
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	}
+}

@@ -8,6 +8,7 @@ target_sources(${PROJECT_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/util_sign.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_tlv.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_context.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_certificate.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_cipher.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_thread.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_file.c

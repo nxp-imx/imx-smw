@@ -1,11 +1,24 @@
 {
 	"subtest 1": {
-		"command": "DEVICE_ATTESTATION",
-		"subsystem": "ELE"
+		"command": "DEVICE_UUID",
+		"subsystem": "ELE",
+		"output": 32
 	},
 	"subtest 2": {
 		"command": "DEVICE_UUID",
-		"subsystem": "ELE"
+		"subsystem": "ELE",
+		"output": 8,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 3": {
+		"command": "DEVICE_UUID",
+		"subsystem": "ELE",
+		"output": 0,
+	},
+	"subtest 4": {
+		"command": "DEVICE_UUID",
+		"subsystem": "ELE",
+		"certificate": ["01"],
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	}
-
 }

@@ -1,0 +1,53 @@
+{
+	"subtest 1": {
+		"command": "DEVICE_ATTESTATION",
+		"subsystem": "ELE",
+		"challenge": ["0102030405060708090A0B0C0D0E0F1617"],
+		"output": 0,
+		"cert_id": 1
+	},
+	"subtest 2": {
+		"command": "DEVICE_ATTESTATION",
+		"subsystem": "ELE",
+		"output": 300,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": {
+		"command": "DEVICE_ATTESTATION",
+		"subsystem": "ELE",
+		"challenge": 16,
+		"output": 300,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"command": "DEVICE_ATTESTATION",
+		"subsystem": "ELE",
+		"challenge": [0, "0102030405060708090A0B0C0D0E0F1617"],
+		"output": 300,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"command": "DEVICE_ATTESTATION",
+		"subsystem": "ELE",
+		"challenge": ["01"],
+		"output": 300
+	},
+	"subtest 6": {
+		"command": "DEVICE_ATTESTATION",
+		"subsystem": "ELE",
+		"output": 0
+	},
+	"subtest 7": {
+		"command": "DEVICE_ATTESTATION",
+		"subsystem": "ELE",
+		"challenge": ["0102030405060708090A0B0C0D0E0F1617"],
+		"output": 1,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 8": {
+		"command": "DEVICE_UUID",
+		"subsystem": "ELE",
+		"cert_id": 1,
+		"depends": 1
+	}
+}

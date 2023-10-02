@@ -1,0 +1,20 @@
+{
+	"subtest 1": {
+		"command": "DEVICE_UUID",
+		"test_error": "ARGS_NULL",
+		"output": 16,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"command": "DEVICE_UUID",
+		"version": 255,
+		"output": 16,
+		"result": "SMW_STATUS_INVALID_VERSION"
+	},
+	"subtest 3": {
+		"command": "DEVICE_UUID",
+		"subsystem": "UNDEFINED",
+		"output": 16,
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	}
+}

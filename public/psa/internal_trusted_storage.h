@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  */
 
 #ifndef __PSA_INTERNAL_TRUSTED_STORAGE_H__
@@ -47,8 +47,6 @@
  * @p_data: A buffer containing the data.
  * @create_flags: The flags that the data will be stored with.
  *
- * **Warning: Not supported**
- *
  * Stores data in the internal storage.
  *
  * Return:
@@ -80,8 +78,6 @@ psa_status_t psa_its_set(psa_storage_uid_t uid, size_t data_length,
  * @p_data: On success, the buffer where the data will be placed.
  * @p_data_length: On success, this will contain size of the data placed in @p_data.
  *
- * **Warning: Not supported**
- *
  * Retrieves up to @data_size bytes of the data associated with @uid, starting at @data_offset
  * bytes from the beginning of the data. Upon successful completion, the data will be placed in the
  * @p_data buffer, which must be at least @data_size bytes in size. The length of the data returned
@@ -109,8 +105,6 @@ psa_status_t psa_its_get(psa_storage_uid_t uid, size_t data_offset,
  * @uid: The uid value.
  * @p_info: A pointer to the &struct psa_storage_info_t that will be populated with the metadata.
  *
- * **Warning: Not supported**
- *
  * Retrieves the metadata stored for a given @uid as a &struct psa_storage_info_t.
  *
  * Return:
@@ -130,8 +124,6 @@ psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 /**
  * psa_its_remove() - Remove the provided key and its associated data from the storage.
  * @uid: The uid value.
- *
- * **Warning: Not supported**
  *
  * Deletes the data from internal storage.
  *

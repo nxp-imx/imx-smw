@@ -66,11 +66,15 @@ The failure is due to the storage manager which is already loaded and a new inst
   because incrementing the rollback protection implies to reload the key storage
   saved when counter was incremented and it's not feasable in the CI test suite.
 * Add tests to validate smw_device_get_lifecycle() and smw_device_set_lifecycle().
+* Add project option `TEE_TA_DESTDIR` to install TAs in a directory other than
+  the system `\lib` directory.
 
 #### PKCS#11 Library - _version 2.5_
 
 #### PKCS#11 Tests - _version 2.5_
 
+* Add project option `TEE_TA_DESTDIR` to install TAs in a directory other than
+  the system `\lib` directory.
 ---
 ### <a id ="rel_2_4"></a></br>**Release 2.4**
 ---

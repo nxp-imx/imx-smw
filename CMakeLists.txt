@@ -96,6 +96,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 # Installing SMW and/PKCS11 tests with make command
 # "make install_tests [DESTDIR=dir]"
 #
+# Allow OPTEE TA to be installed in a dedicated directory if the
+# TEE_TA_DESTDIR is defined as cmake option.
+if(NOT TEE_TA_DESTDIR)
+  set(TEE_TA_DESTDIR ${CMAKE_INSTALL_LIBDIR})
+endif()
+string(APPEND TEE_TA_DESTDIR "/optee_armtz")
+string(PREPEND TEE_TA_DESTDIR "/")
+string(REGEX REPLACE "[/]+" "/" TEE_TA_DESTDIR ${TEE_TA_DESTDIR})
+file(TO_NATIVE_PATH ${TEE_TA_DESTDIR} TEE_TA_DESTDIR)
+
 add_custom_target(build_tests)
 add_custom_target(install_tests)
 

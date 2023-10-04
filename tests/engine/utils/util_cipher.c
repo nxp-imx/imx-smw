@@ -27,7 +27,7 @@ static void cipher_free_data(void *data)
 		if (cipher_output_data->output)
 			free(cipher_output_data->output);
 
-		free(data);
+		free(cipher_output_data);
 	}
 }
 
@@ -36,7 +36,7 @@ int util_cipher_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, &cipher_free_data, LIST_ID_TYPE_UINT);
+	return util_list_init(list, cipher_free_data, LIST_ID_TYPE_UINT);
 }
 
 int util_cipher_add_out_data(struct llist *list, unsigned int ctx_id,

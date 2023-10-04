@@ -11,6 +11,7 @@
 #include "util_certificate.h"
 #include "util_cipher.h"
 #include "util_context.h"
+#include "util_data.h"
 #include "util_key.h"
 #include "util_list.h"
 #include "util_mac.h"
@@ -51,6 +52,9 @@ static void util_app_destroy(void *data)
 
 	err = util_list_clear(app_data->keys);
 	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list keys error %d", err);
+
+	err = util_list_clear(app_data->data);
+	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list data error %d", err);
 
 	err = util_list_clear(app_data->op_contexts);
 	DBG_ASSERT(err == ERR_CODE(PASSED),
@@ -131,6 +135,16 @@ static int app_register(struct test_data *test, unsigned int id,
 	/* Build the keys list */
 	err = util_key_build_keys_list(test->dir_def_file, test->definition,
 				       app_data->keys);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_data_init(&app_data->data);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Build the data list */
+	err = util_data_build_data_list(test->dir_def_file, test->definition,
+					app_data->data);
 	if (err != ERR_CODE(PASSED))
 		goto exit;
 

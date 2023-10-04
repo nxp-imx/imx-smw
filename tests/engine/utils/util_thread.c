@@ -396,7 +396,7 @@ int util_thread_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, &thr_free_data, LIST_ID_TYPE_UINT);
+	return util_list_init(list, thr_free_data, LIST_ID_TYPE_UINT);
 }
 
 int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,

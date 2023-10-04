@@ -19,6 +19,8 @@
 #define CMD_OBJ			  "command"
 #define COPY_CIPHER_CTX		  "copy_cipher_ctx"
 #define CTX_ID_OBJ		  "context_id"
+#define DATA_LIST_OBJ		  "data_list"
+#define DATA_NAME_OBJ		  "data_name"
 #define DATA_OBJ		  "data"
 #define DEPENDS_OBJ		  "depends"
 #define DIGEST_OBJ		  "digest"

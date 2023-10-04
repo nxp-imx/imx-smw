@@ -10,56 +10,8 @@
 
 #include "types.h"
 #include "util.h"
-#include "util_tlv.h"
+#include "data.h"
 #include "key.h"
-
-static int read_data(struct smw_data_descriptor *data_descriptor,
-		     struct smw_data_descriptor **data_descriptor_ptr,
-		     struct json_object *params)
-{
-	int res = ERR_CODE(BAD_ARGS);
-
-	int found = 0;
-	unsigned char *attrs = NULL;
-	unsigned int attrs_len = 0;
-
-	res = util_read_json_type(&data_descriptor->identifier, ID_OBJ, t_int,
-				  params);
-	if (res == ERR_CODE(PASSED))
-		found++;
-	else if (res != ERR_CODE(VALUE_NOTFOUND))
-		goto exit;
-
-	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs(&attrs, &attrs_len, params);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	if (attrs)
-		found++;
-
-	res = util_read_hex_buffer(&data_descriptor->data,
-				   &data_descriptor->length, params, DATA_OBJ);
-	if (res == ERR_CODE(PASSED))
-		found++;
-	else if (res == ERR_CODE(MISSING_PARAMS))
-		res = ERR_CODE(PASSED);
-	else
-		goto exit;
-
-	if (found) {
-		data_descriptor->attributes_list = attrs;
-		data_descriptor->attributes_list_length = attrs_len;
-
-		*data_descriptor_ptr = data_descriptor;
-	}
-
-exit:
-	if (res != ERR_CODE(PASSED) && attrs)
-		free(attrs);
-
-	return res;
-}
 
 static void free_data(struct smw_data_descriptor *data_descriptor)
 {
@@ -84,6 +36,7 @@ int storage_store(struct subtest_data *subtest)
 	struct keys encrypt_keys = { 0 };
 	struct keypair_ops sign_key_test = { 0 };
 	struct smw_keypair_buffer sign_key_buffer = { 0 };
+	const char *data_name = NULL;
 	const char *sign_key_name = NULL;
 
 	if (!subtest) {
@@ -98,10 +51,18 @@ int storage_store(struct subtest_data *subtest)
 	else
 		args.subsystem_name = subtest->subsystem;
 
-	res = read_data(&data_descriptor, &data_descriptor_ptr,
-			subtest->params);
-	if (res != ERR_CODE(PASSED))
+	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res == ERR_CODE(PASSED)) {
+		data_descriptor_ptr = &data_descriptor;
+
+		res = data_read_descriptor(list_data(subtest), &data_descriptor,
+					   data_name);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+	} else if (res != ERR_CODE(VALUE_NOTFOUND)) {
 		goto exit;
+	}
 
 	res = util_read_hex_buffer(&encryption_args.iv,
 				   &encryption_args.iv_length, subtest->params,
@@ -201,8 +162,10 @@ int storage_retrieve(struct subtest_data *subtest)
 	struct smw_retrieve_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
 	struct smw_data_descriptor *data_descriptor_ptr = NULL;
+	const char *data_name = NULL;
 	unsigned char *expected_data = NULL;
 	unsigned int expected_data_length = 0;
+	bool no_output = false;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -216,18 +179,27 @@ int storage_retrieve(struct subtest_data *subtest)
 	else
 		args.subsystem_name = subtest->subsystem;
 
-	res = read_data(&data_descriptor, &data_descriptor_ptr,
-			subtest->params);
-	if (res != ERR_CODE(PASSED))
-		goto exit;
+	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res == ERR_CODE(PASSED)) {
+		data_descriptor_ptr = &data_descriptor;
 
-	if (data_descriptor.data && data_descriptor.length)
-		memset(data_descriptor.data, 0, data_descriptor.length);
+		res = data_read_descriptor(list_data(subtest), &data_descriptor,
+					   data_name);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+	} else if (res != ERR_CODE(VALUE_NOTFOUND)) {
+		goto exit;
+	}
 
 	res = util_read_hex_buffer(&expected_data, &expected_data_length,
-				   subtest->params, DATA_OBJ);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
+				   subtest->params, OUTPUT_OBJ);
+	if (res == ERR_CODE(MISSING_PARAMS)) {
+		no_output = true;
+		res = ERR_CODE(PASSED);
+	} else if (res != ERR_CODE(PASSED)) {
 		goto exit;
+	}
 
 	args.data_descriptor = data_descriptor_ptr;
 
@@ -252,15 +224,14 @@ int storage_retrieve(struct subtest_data *subtest)
 		goto exit;
 	}
 
-	if (data_descriptor.data && expected_data) {
+	if (!no_output) {
 		res = util_compare_buffers(data_descriptor.data,
 					   data_descriptor.length,
 					   expected_data, expected_data_length);
-	} else {
-		DBG_DHEX("Retrieved data", data_descriptor.data,
-			 data_descriptor.length);
-		res = ERR_CODE(PASSED);
 	}
+
+	DBG_DHEX("Retrieved data", data_descriptor.data,
+		 data_descriptor.length);
 
 exit:
 	free_data(&data_descriptor);
@@ -278,6 +249,7 @@ int storage_delete(struct subtest_data *subtest)
 	struct smw_delete_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
 	struct smw_data_descriptor *data_descriptor_ptr = NULL;
+	const char *data_name = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -291,10 +263,18 @@ int storage_delete(struct subtest_data *subtest)
 	else
 		args.subsystem_name = subtest->subsystem;
 
-	res = read_data(&data_descriptor, &data_descriptor_ptr,
-			subtest->params);
-	if (res != ERR_CODE(PASSED))
+	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res == ERR_CODE(PASSED)) {
+		data_descriptor_ptr = &data_descriptor;
+
+		res = data_read_descriptor(list_data(subtest), &data_descriptor,
+					   data_name);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+	} else if (res != ERR_CODE(VALUE_NOTFOUND)) {
 		goto exit;
+	}
 
 	args.data_descriptor = data_descriptor_ptr;
 

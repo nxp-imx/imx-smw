@@ -35,7 +35,7 @@ int util_sign_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, &sign_free_data, LIST_ID_TYPE_UINT);
+	return util_list_init(list, sign_free_data, LIST_ID_TYPE_UINT);
 }
 
 int util_sign_add_node(struct llist *list, unsigned int id,

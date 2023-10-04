@@ -66,6 +66,7 @@ const struct error list_err[MAX_TEST_ERROR] = {
 	SET_ERR_CODE_AND_NAME(THREAD_CANCELED, "THREAD HAS BEEN CANCELED"),
 	SET_ERR_CODE_AND_NAME(BAD_SUBSYSTEM, "API CALLED UNEXPECTED SUBSYSTEM"),
 	SET_ERR_CODE_AND_NAME(UNDEFINED_API, "UNDEFINED API"),
+	SET_ERR_CODE_AND_NAME(DATA_NOTFOUND, "DATA NOT FOUND"),
 };
 
 #undef SET_ERR_CODE_AND_NAME
@@ -310,6 +311,12 @@ int util_read_hex_buffer(unsigned char **hex, unsigned int *length,
 	ret = util_read_json_buffer(&str, &len, &json_len, obj);
 	if (ret != ERR_CODE(PASSED))
 		goto exit;
+
+	if (*hex)
+		free(*hex);
+
+	*hex = NULL;
+	*length = 0;
 
 	/* Either test definition specify:
 	 * - length != 0 but no data

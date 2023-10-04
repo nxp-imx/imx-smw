@@ -43,6 +43,7 @@ enum err_num {
 	THREAD_CANCELED,
 	BAD_SUBSYSTEM, /* 20 */
 	UNDEFINED_API,
+	DATA_NOTFOUND,
 	MAX_TEST_ERROR, /* Maximum test error constant - keep last item */
 };
 
@@ -130,6 +131,13 @@ struct subtest_data {
 		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
 		_this->app->keys;                                              \
+	})
+
+#define list_data(this)                                                        \
+	({                                                                     \
+		struct subtest_data *_this = (this);                           \
+		assert(_this->app);                                            \
+		_this->app->data;                                              \
 	})
 
 #define list_op_ctxs(this)                                                     \

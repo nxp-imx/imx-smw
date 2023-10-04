@@ -22,8 +22,12 @@ static void mac_free_data(void *data)
 {
 	struct mac_data *mac_data = data;
 
-	if (mac_data && mac_data->mac)
-		free(mac_data->mac);
+	if (mac_data) {
+		if (mac_data->mac)
+			free(mac_data->mac);
+
+		free(mac_data);
+	}
 }
 
 int util_mac_init(struct llist **list)
@@ -31,7 +35,7 @@ int util_mac_init(struct llist **list)
 	if (!list)
 		return ERR_CODE(BAD_ARGS);
 
-	return util_list_init(list, &mac_free_data, LIST_ID_TYPE_UINT);
+	return util_list_init(list, mac_free_data, LIST_ID_TYPE_UINT);
 }
 
 int util_mac_add_node(struct llist *list, unsigned int id, unsigned char *mac,

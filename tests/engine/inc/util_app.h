@@ -17,6 +17,7 @@
  * @id:              Application id
  * @test:            Reference on the global test data
  * @keys:            Key list
+ * @data:            Data list
  * @op_contexts:     Operation context list
  * @ciphers:         Cipher to verify list
  * @signatures:      Signatures to verify list
@@ -37,6 +38,7 @@ struct app_data {
 	int id;
 	struct test_data *test;
 	struct llist *keys;
+	struct llist *data;
 	struct llist *op_contexts;
 	struct llist *ciphers;
 	struct llist *signatures;

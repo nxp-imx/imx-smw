@@ -1,4 +1,31 @@
 {
+	"data_list": {
+		"data 1": {
+			"data": "0102030405060708090A0B0C0D0E0FCC"
+		},
+		"data 2": {
+			"id": 1,
+			"data": 16
+		},
+		"data 3": {
+			"id": 1,
+			"data": [0, "0102030405060708090A0B0C0D0E0FCC"]
+		},
+		"data 4": {
+			"id": 1,
+			"data": "0102030405060708090A0B0C0D0E0FCC",
+			"attributes_list": [
+				["UNDEFINED"]
+			]
+		},
+		"data 5": {
+			"id": 1,
+			"data": "0102030405060708090A0B0C0D0E0FCC",
+			"attributes_list": [
+				["LIFECYCLE", "UNDEFINED"]
+			]
+		}
+	},
 	"subtest 1": { // Store data descriptor NULL
 		"command": "STORAGE_STORE",
 		"subsystem": "DEFAULT",
@@ -12,47 +39,37 @@
 	"subtest 3": { // Store Data ID missing
 		"command": "STORAGE_STORE",
 		"subsystem": "DEFAULT",
-		"data": "0102030405060708090A0B0C0D0E0FCC",
+		"data_name": "data 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 4": { // Retrieve Data ID missing
 		"command": "STORAGE_RETRIEVE",
 		"subsystem": "DEFAULT",
-		"data": "0102030405060708090A0B0C0D0E0FCC",
+		"data_name": "data 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": { // Store Data Buffer null
 		"command": "STORAGE_STORE",
 		"subsystem": "DEFAULT",
-		"id": 1,
-		"data": 16,
+		"data_name": "data 2",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 6": { // Store Data Buffer defined but length is 0
 		"command": "STORAGE_STORE",
 		"subsystem": "DEFAULT",
-		"id": 1,
-		"data": [0, "0102030405060708090A0B0C0D0E0FCC"],
+		"data_name": "data 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": { // Store Attribute invalid
 		"command": "STORAGE_STORE",
 		"subsystem": "DEFAULT",
-		"id": 1,
-		"data": "0102030405060708090A0B0C0D0E0FCC",
-		"attributes_list": [
-			["UNDEFINED"]
-		],
+		"data_name": "data 4",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 8": { // Store Attribute lifecyle invalid
 		"command": "STORAGE_STORE",
 		"subsystem": "DEFAULT",
-		"id": 1,
-		"data": "0102030405060708090A0B0C0D0E0FCC",
-		"attributes_list": [
-			["LIFECYCLE", "UNDEFINED"]
-		],
+		"data_name": "data 5",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

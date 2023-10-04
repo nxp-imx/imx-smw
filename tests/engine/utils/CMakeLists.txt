@@ -2,21 +2,22 @@ target_sources(${PROJECT_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/util.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_app.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_list.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_key.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_mac.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_sign.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_tlv.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_context.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_certificate.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_cipher.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_thread.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_file.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_mutex.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_sem.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_log.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_cond.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_context.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_data.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_file.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_ipc.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_key.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_list.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_log.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_mac.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_mutex.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_rtcwake.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_sem.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_sign.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_status.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_thread.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_tlv.c
                $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/util_debug.c>)

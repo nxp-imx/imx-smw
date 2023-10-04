@@ -657,6 +657,14 @@ documentation generation.
 	<a href="https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html">cmake package</a><br>
 	By default, the DISABLE_CMAKE_CONFIG=OFF.</td>
 </tr>
+<tr>
+  <td>TEE_TA_DESTDIR</td>
+  <td>-DTEE_TA_DESTDIR=[/path/to/install/ta/]</td>
+  <td>Define the path where TEE TAs are installed. The path is prefixed by the <i><code>[DESTDIR]</code></i> environment variable.<br>
+  By default, the TAs are installed in the <code>/lib</code> directory.<br>
+  Installing TAs in the non-default directory may require specific TEE build
+  configuration not configurable by SMW project.</td>
+</tr>
 </tbody>
 </table>
 
@@ -1024,14 +1032,18 @@ super-user privilege.
 > - Engines are installed in _`[DESTDIR]/[CMAKE_INSTALL_PREFIX]/bin`_
 > - SMW Library test files are installed in _`[DESTDIR]/[CMAKE_INSTALL_PREFIX]/share/smw/tests`_
 > - PKCS#11 Library test files are installed in _`[DESTDIR]/[CMAKE_INSTALL_PREFIX]/share/smw/pkcs11/tests`_
+> - TEE TAs are installed in _`[DESTDIR]/[TEE_TA_DESTDIR]/optee_armtz`_
 
 
 ### 7.2.2. Install result
 
 > :memo: **Note 1**: The <i>y</i> is for the project minor version.
 
-> :memo: **Note 2**: The `usr/lib/cmake` folder is not present if the porject
+> :memo: **Note 2**: The `usr/lib/cmake` folder is not present if the project
 option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-environment-options)).
+
+> :memo: **Note 3**: In this installation, the _`[TEE_TA_DESTDIR]`_ is
+set with the default value `/lib`
 
 <pre>
 `-- <span style="color:orange">lib</span>

@@ -83,6 +83,7 @@
 				],
 				"sign_id": 1,
 				"key_name": "key NIST",
+				"post_to_after": ["App 2", "sem_a1_t2_done"],
 				"depends": 1
 			},
 			"wait_after": "sem_a2_done",
@@ -163,9 +164,10 @@
 				],
 				"sign_id": 1,
 				"key_name": "key NIST",
-				"post_after": "sem_a2_t2_done",
 				"depends": 1
-			}
+			},
+			"wait_after": "sem_a1_t2_done",
+			"post_after": "sem_a2_t2_done"
 		}
 	}
 }

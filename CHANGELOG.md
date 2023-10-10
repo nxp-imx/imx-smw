@@ -62,6 +62,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Tests - _version 2.5_
 
 * Fix test F_TEE_Keymgr_005 instability.
+* Fix test F_TEE_App_002, ensure key is deleted when no more used.
 * Add TEE and HSM tests to validate smw_commit_key_storage(). No ELE test provided
   because incrementing the rollback protection implies to reload the key storage
   saved when counter was incremented and it's not feasable in the CI test suite.

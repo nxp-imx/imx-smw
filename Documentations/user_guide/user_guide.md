@@ -1268,14 +1268,14 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
 <tr>
   <td>All</td>
   <td>https://github.com/nxp-imx/imx-optee-client</td>
-	<td>lf-6.1.22_2.0.0</td>
+	<td>lf-6.1.55_2.2.0</td>
   <td>../optee-client</td>
   <td>NXP i.MX OPTEE OS Client library sources</td>
 </tr>
 <tr>
   <td>All</td>
   <td>https://github.com/nxp-imx/imx-optee-os</td>
-	<td>lf-6.1.22_2.0.0</td>
+	<td>lf-6.1.55_2.2.0</td>
   <td>../optee-os</td>
   <td>NXP i.MX OPTEE OS sources</td>
 </tr>
@@ -1303,7 +1303,7 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
 	<li>imx8ulpevk</li>
 	</ul></td>
   <td>https://github.com/nxp-imx/imx-secure-enclave.git</td>
-	<td>lf-6.1.22_2.0.0</td>
+	<td>lf-6.1.55_2.2.0</td>
 	<td>../secure_enclave</td>
   <td>ELE library sources</td>
 </tr>

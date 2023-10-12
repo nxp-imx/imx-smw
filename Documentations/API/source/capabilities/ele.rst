@@ -401,6 +401,23 @@ The following key policies must defined if a key identifier is used:
     - CTR
     - ALL_CIPHER (any cipher mode)
 
+AEAD
+^^^^
+
+.. table:: ELE AEAD
+   :align: center
+   :class: wrap-table
+
+   +--------------+----------+
+   | **Key type** | **Mode** |
+   +==============+==========+
+   | AES          |   CCM    |
+   +--------------+----------+
+
+One-shot operations supported:
+ - AEAD Encryption
+ - AEAD Decryption
+
 Device management
 ^^^^^^^^^^^^^^^^^
 

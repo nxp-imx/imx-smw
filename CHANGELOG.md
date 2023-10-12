@@ -47,6 +47,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add commit key storage API.
 * Add get/set device lifecycle API.
 * Add key attributes in the smw_delete_key() arguments.
+* Implement AEAD one-shot and multi-part operations.
 
 ##### 3. Subsystems
 
@@ -74,6 +75,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add project option `TEE_TA_DESTDIR` to install TAs in a directory other than
   the system `\lib` directory.
 * Add more tests to validate device UUID and Attestation APIs.
+* Validation of AEAD (one-shot and multi-part) SMW's APIs.
 
 #### PKCS#11 Library - _version 2.5_
 

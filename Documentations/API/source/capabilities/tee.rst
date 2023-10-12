@@ -237,3 +237,24 @@ Operations supported:
  - Cancel
  - Copy
 
+AEAD
+^^^^
+
+.. table:: TEE AEAD
+   :align: center
+   :class: wrap-table
+
+   +--------------+----------+
+   | **Key type** | **Mode** |
+   +==============+==========+
+   | AES          |  CCM     |
+   +              +          +
+   |              |  GCM     |
+   +--------------+----------+
+
+Operations supported:
+ - Encrypt [6]_
+ - Decrypt [6]_
+
+.. [6] one shot and multi-part
+

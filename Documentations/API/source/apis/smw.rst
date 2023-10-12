@@ -14,3 +14,4 @@ SMW APIs
    smw/storage
    smw/status
    smw/strings
+   smw/examples

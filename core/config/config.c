@@ -101,3 +101,12 @@ smw_config_check_verify(smw_subsystem_t subsystem,
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
+
+__export __weak enum smw_status_code
+smw_config_check_aead(smw_subsystem_t subsystem, struct smw_aead_info *info)
+{
+	(void)subsystem;
+	(void)info;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}

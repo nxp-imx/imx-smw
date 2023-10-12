@@ -97,6 +97,12 @@ struct storage_store_params {
 	struct op_key key;
 };
 
+struct aead_params {
+	unsigned long mode_bitmap;
+	unsigned long op_bitmap;
+	struct op_key key;
+};
+
 /**
  * get_tag_prefix() - Get a tag prefix.
  * @tag: In/Out tag string.

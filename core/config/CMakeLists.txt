@@ -17,7 +17,8 @@ target_sources(config PRIVATE
                $<$<BOOL:${ENABLE_MAC}>:mac.c>
                $<$<BOOL:${ENABLE_PSA_DEFAULT_ALT}>:parser_psa_alt.c>
                $<$<BOOL:${ENABLE_DEVMGR_MODULE}>:device.c>
-               $<$<BOOL:${ENABLE_STORAGE_MODULE}>:storage.c>)
+               $<$<BOOL:${ENABLE_STORAGE_MODULE}>:storage.c>
+               $<$<BOOL:${ENABLE_AEAD}>:aead.c>)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
   target_sources(config PRIVATE
@@ -29,7 +30,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
                  $<$<BOOL:${ENABLE_RNG}>:rng_debug.c>
                  $<$<BOOL:${ENABLE_CIPHER}>:cipher_debug.c>
                  $<$<BOOL:${ENABLE_MAC}>:mac_debug.c>
-                 $<$<BOOL:${ENABLE_STORAGE_MODULE}>:storage_debug.c>)
+                 $<$<BOOL:${ENABLE_STORAGE_MODULE}>:storage_debug.c>
+                 $<$<BOOL:${ENABLE_AEAD}>:aead_debug.c>)
 endif()
 
 target_include_directories(config PRIVATE ${INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

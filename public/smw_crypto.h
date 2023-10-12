@@ -8,6 +8,7 @@
 
 #include "smw_status.h"
 #include "smw_strings.h"
+#include "smw/crypto/aead.h"
 
 /* Default TLS 1.2 verify data length for Finished message */
 #define TLS12_MAC_FINISH_DEFAULT_LEN 12

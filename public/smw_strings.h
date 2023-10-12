@@ -84,14 +84,19 @@ typedef smw_string_t smw_mac_algo_t;
  * typedef smw_cipher_mode_t - Cipher mode name
  * Values:
  *	- CBC
- *	- CCM
  *	- CTR
  *	- CTS
  *	- ECB
- *	- GCM
  *	- XTS
  */
 typedef smw_string_t smw_cipher_mode_t;
+/**
+ * typedef smw_aead_mode_t - AEAD mode name
+ * Values:
+ *	- CCM
+ *	- GCM
+ */
+typedef smw_string_t smw_aead_mode_t;
 
 /**
  * typedef smw_cipher_operation_t - Cipher operation name
@@ -100,6 +105,14 @@ typedef smw_string_t smw_cipher_mode_t;
  *	- DECRYPT
  */
 typedef smw_string_t smw_cipher_operation_t;
+
+/**
+ * typedef smw_aead_operation_t - AEAD operation name
+ * Values:
+ *	- ENCRYPT
+ *	- DECRYPT
+ */
+typedef smw_string_t smw_aead_operation_t;
 
 /**
  * typedef smw_key_format_t - Key format name

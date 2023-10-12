@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2023 NXP
  */
 
 #ifndef __SMW_CONFIG_H__
@@ -231,6 +231,45 @@ struct smw_cipher_info {
  */
 enum smw_status_code smw_config_check_cipher(smw_subsystem_t subsystem,
 					     struct smw_cipher_info *info);
+
+/**
+ * struct smw_aead_info - AEAD operation information
+ * @multipart: True if it's a AEAD multi-part operation
+ * @key_type_name: Key type name. See &typedef smw_key_type_t
+ * @mode: Operation mode name. See &typedef smw_aead_mode_t
+ * @op_type: Operation type name. See &typedef smw_aead_operation_t
+ */
+struct smw_aead_info {
+	bool multipart;
+	smw_key_type_t key_type_name;
+	smw_aead_mode_t mode;
+	smw_aead_operation_t op_type;
+};
+
+/**
+ * smw_config_check_aead() - Check if AEAD operation is supported
+ * @subsystem: Name of the subsystem
+ * @info: AEAD operation information
+ *
+ * Function checks if all fields provided in the @info structure are
+ * supported on the given @subsystem for a AEAD one-shot or multi-part
+ * operation.
+ *
+ * If @subsystem is NULL, default subsystem AEAD capability is checked.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		AEAD operation is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@info, @info->key_type_name, @info->mode or @info->op_type is NULL
+ *	- SMW_STATUS_UNKNOWN_NAME:
+ *		@info->key_type_name, @info->mode or @info->op_type is not a valid string
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		AEAD operation is not supported
+ */
+enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
+					   struct smw_aead_info *info);
 
 /**
  * smw_config_load() - Load a configuration.

@@ -9,6 +9,16 @@
 #include <tee_internal_api.h>
 
 /**
+ * struct key_handle - Key handle
+ * @handle: Key handle
+ * @persistent: Is key a persistent object
+ */
+struct key_handle {
+	TEE_ObjectHandle handle;
+	bool persistent;
+};
+
+/**
  * check_operation_keys_usage() - Check operation keys usage with given keys
  * @op: Operation handle
  * @key_info: Reference to caller key(s) information

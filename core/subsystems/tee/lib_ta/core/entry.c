@@ -14,6 +14,7 @@
 #include "mac.h"
 #include "rng.h"
 #include "cipher.h"
+#include "aead.h"
 #include "operation_context.h"
 
 TEE_Result libsmw_detach(void)
@@ -100,6 +101,26 @@ TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 
 	case CMD_GET_KEY_ATTRIBUTES:
 		res = get_key_attributes(param_types, params);
+		break;
+
+	case CMD_AEAD_INIT:
+		res = aead_init(param_types, params);
+		break;
+
+	case CMD_AEAD_UPDATE_AAD:
+		res = aead_update_aad(param_types, params);
+		break;
+
+	case CMD_AEAD_UPDATE:
+		res = aead_update(param_types, params);
+		break;
+
+	case CMD_AEAD_ENCRYPT_FINAL:
+		res = aead_encrypt_final(param_types, params);
+		break;
+
+	case CMD_AEAD_DECRYPT_FINAL:
+		res = aead_decrypt_final(param_types, params);
 		break;
 
 	default:

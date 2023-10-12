@@ -107,6 +107,11 @@ enum ta_commands {
 	CMD_MAC_VERIFY,
 	CMD_GET_KEY_LENGTHS,
 	CMD_GET_KEY_ATTRIBUTES,
+	CMD_AEAD_INIT,
+	CMD_AEAD_UPDATE_AAD,
+	CMD_AEAD_UPDATE,
+	CMD_AEAD_ENCRYPT_FINAL,
+	CMD_AEAD_DECRYPT_FINAL,
 	CMD_INVALID,
 };
 
@@ -150,6 +155,22 @@ struct sign_verify_shared_params {
 	enum tee_signature_type signature_type;
 	uint32_t salt_length;
 	unsigned int pub_key_len;
+};
+
+/**
+ * struct aead_shared_params - AEAD operation shared parameters.
+ * @tag_len: Size of the tag in bits.
+ * @aad_len: Size of the AAD in bytes(only for AES-CCM).
+ * @payload_len: Length of the payload in bytes(only for AES-CCM).
+ * @aead_algo: TEE Algo ID
+ * @aead_op: TEE Operation
+ */
+struct aead_shared_params {
+	uint32_t tag_len;
+	size_t aad_len;
+	size_t payload_len;
+	uint32_t aead_algo;
+	uint32_t aead_op;
 };
 
 /**

@@ -24,7 +24,7 @@ set_target_properties(tee PROPERTIES C_VISIBILITY_PRESET hidden)
 # If at least one of the operation that supports MULTI_PART is enabled, context
 # features are enabled
 #
-if (ENABLE_CIPHER)
+if (ENABLE_CIPHER OR ENABLE_AEAD)
     set(ENABLE_CONTEXT ON)
 endif()
 
@@ -37,7 +37,8 @@ target_sources(tee PRIVATE
                $<$<BOOL:${ENABLE_MAC}>:mac.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
                $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
-               $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>)
+               $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>
+               $<$<BOOL:${ENABLE_AEAD}>:aead.c>)
 
 target_include_directories(tee PRIVATE
                            ${TA_HOST_INCLUDE_DIR}

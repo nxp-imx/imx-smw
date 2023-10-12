@@ -12,16 +12,6 @@
 
 #define MAX_CIPHER_KEYS 2
 
-/**
- * struct key_handle - Key handle
- * @handle: Key handle
- * @persistent: Is key a persistent object
- */
-struct key_handle {
-	TEE_ObjectHandle handle;
-	bool persistent;
-};
-
 TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;

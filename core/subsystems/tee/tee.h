@@ -121,6 +121,18 @@ bool tee_mac_handle(enum operation_id operation_id, void *args, int *status);
 bool tee_cipher_handle(enum operation_id operation_id, void *args, int *status);
 
 /**
+ * tee_aead_handle() - Handle the AEAD operation.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * Return:
+ * true		- the Security Operation has been handled.
+ * false	- the Security Operation has not been handled.
+ */
+bool tee_aead_handle(enum operation_id operation_id, void *args, int *status);
+
+/**
  * tee_get_ctx_ops() - Return TEE context operations structure
  *
  * Return:
@@ -167,5 +179,30 @@ TEEC_Context *get_tee_context_ptr(void);
 int copy_keys_to_shm(TEEC_SharedMemory *shm,
 		     struct smw_keymgr_descriptor *key_descriptor,
 		     enum smw_keymgr_privacy_id privacy);
+
+/**
+ * tee_delete_key() - Delete a key in TEE subsystem storage.
+ * @id: Key id to delete.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid.
+ * SMW_STATUS_SUBSYSTEM_FAILURE	- Operation failed.
+ */
+int tee_delete_key(uint32_t id);
+
+/**
+ * tee_import_key_buffer() - Import a key buffer.
+ * @key: Internal key descriptor structure
+ * @id: Key id to import.
+ * @key_usage: Key usage.
+ *
+ * Return:
+ * SMW_STATUS_OK		- Success.
+ * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid.
+ * SMW_STATUS_SUBSYSTEM_FAILURE	- Operation failed.
+ */
+int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
+			  unsigned int *key_id, unsigned int key_usage);
 
 #endif /* TEE_H */

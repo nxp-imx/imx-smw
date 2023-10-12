@@ -74,77 +74,6 @@ get_tee_cipher_operation_and_usage(enum smw_config_cipher_op_type_id smw_op,
 	return SMW_STATUS_OK;
 }
 
-static int import_key_buffer(struct smw_keymgr_descriptor *key,
-			     unsigned int *key_id, unsigned int key_usage)
-{
-	TEEC_Operation op = { 0 };
-	int status = SMW_STATUS_OK;
-	struct keymgr_shared_params import_shared_params = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	/* Key type is common for all keys */
-	status = tee_convert_key_type(key->identifier.type_id,
-				      &import_shared_params.key_type);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	/*
-	 * params[0]: Pointer to import shared params structure.
-	 * params[1]: Private key buffer.
-	 * params[2]: None.
-	 * params[3]: None.
-	 */
-	op.paramTypes =
-		TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INOUT, TEEC_MEMREF_TEMP_INPUT,
-				 TEEC_NONE, TEEC_NONE);
-	op.params[0].tmpref.buffer = &import_shared_params;
-	op.params[0].tmpref.size = sizeof(import_shared_params);
-
-	import_shared_params.security_size = key->identifier.security_size;
-	import_shared_params.key_usage = key_usage;
-
-	op.params[1].tmpref.buffer = smw_keymgr_get_private_data(key);
-	op.params[1].tmpref.size = smw_keymgr_get_private_length(key);
-
-	/* Invoke TA */
-	status = execute_tee_cmd(CMD_IMPORT_KEY, &op);
-	if (status != SMW_STATUS_OK) {
-		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
-		goto end;
-	}
-
-	*key_id = import_shared_params.id;
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static int delete_imported_keys(unsigned int key_id)
-{
-	TEEC_Operation op = { 0 };
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (key_id == INVALID_KEY_ID)
-		goto end;
-
-	/* params[0] = Key ID */
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_NONE, TEEC_NONE,
-					 TEEC_NONE);
-
-	op.params[0].value.a = key_id;
-
-	/* Invoke TA */
-	status = execute_tee_cmd(CMD_DELETE_KEY, &op);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 static int cipher_init(struct smw_crypto_cipher_args *args)
 {
 	TEEC_Operation op = { 0 };
@@ -194,8 +123,8 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 		 */
 		if (key_id == INVALID_KEY_ID) {
 			/* If some keys are defined as buffer import them */
-			status = import_key_buffer(args->keys_desc[key_idx],
-						   &key_id, key_usage);
+			status = tee_import_key_buffer(args->keys_desc[key_idx],
+						       &key_id, key_usage);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		}
@@ -248,7 +177,7 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 			else
 				key_id = op.params[1].value.a;
 
-			res = delete_imported_keys(key_id);
+			res = tee_delete_key(key_id);
 			status = (status == SMW_STATUS_OK) ? res : status;
 		}
 	}

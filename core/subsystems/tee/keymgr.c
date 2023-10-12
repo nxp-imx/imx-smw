@@ -756,23 +756,14 @@ exit:
 	return status;
 }
 
-/**
- * cmd_ta_delete_key() - Delete a key in TEE subsystem storage.
- * @id: Key id to delete.
- *
- * Return:
- * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid.
- * SMW_STATUS_SUBSYSTEM_FAILURE	- Operation failed.
- */
-static int cmd_ta_delete_key(uint32_t id)
+int tee_delete_key(uint32_t id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	TEEC_Operation op = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!id)
+	if (id == INVALID_KEY_ID)
 		goto exit;
 
 	/* params[0] = Key ID */
@@ -923,7 +914,7 @@ exit:
 	}
 
 	if (status != SMW_STATUS_OK) {
-		(void)cmd_ta_delete_key(shared_params.id);
+		(void)tee_delete_key(shared_params.id);
 
 	} else if (usage_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
 		if (actual_policy)
@@ -959,7 +950,7 @@ static int delete_key(void *args)
 	if (!key_args)
 		goto exit;
 
-	status = cmd_ta_delete_key(key_args->key_descriptor.identifier.id);
+	status = tee_delete_key(key_args->key_descriptor.identifier.id);
 
 	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is %sdeleted\n", __func__,
 		       key_args->key_descriptor.identifier.id,
@@ -1527,7 +1518,7 @@ exit:
 	    usage_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
 		status = usage_status;
 	else if (status != SMW_STATUS_OK && shared_params.id)
-		(void)cmd_ta_delete_key(shared_params.id);
+		(void)tee_delete_key(shared_params.id);
 
 	if (actual_policy) {
 		if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
@@ -1997,6 +1988,53 @@ int copy_keys_to_shm(TEEC_SharedMemory *shm,
 	status = fill_shared_key_memory(key_descriptor, privacy, shm);
 
 exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
+			  unsigned int *key_id, unsigned int key_usage)
+{
+	TEEC_Operation op = { 0 };
+	int status = SMW_STATUS_OK;
+	struct keymgr_shared_params import_shared_params = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/* Key type is common for all keys */
+	status = tee_convert_key_type(key->identifier.type_id,
+				      &import_shared_params.key_type);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	/*
+	 * params[0]: Pointer to import shared params structure.
+	 * params[1]: Private key buffer.
+	 * params[2]: None.
+	 * params[3]: None.
+	 */
+	op.paramTypes =
+		TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INOUT, TEEC_MEMREF_TEMP_INPUT,
+				 TEEC_NONE, TEEC_NONE);
+	op.params[0].tmpref.buffer = &import_shared_params;
+	op.params[0].tmpref.size = sizeof(import_shared_params);
+
+	import_shared_params.security_size = key->identifier.security_size;
+	import_shared_params.key_usage = key_usage;
+
+	op.params[1].tmpref.buffer = smw_keymgr_get_private_data(key);
+	op.params[1].tmpref.size = smw_keymgr_get_private_length(key);
+
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_IMPORT_KEY, &op);
+	if (status != SMW_STATUS_OK) {
+		SMW_DBG_PRINTF(ERROR, "%s: Operation failed\n", __func__);
+		goto end;
+	}
+
+	*key_id = import_shared_params.id;
+
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

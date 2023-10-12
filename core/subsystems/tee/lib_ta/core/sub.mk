@@ -12,3 +12,4 @@ srcs-y += rng.c
 srcs-y += cipher.c
 srcs-y += operation_context.c
 srcs-y += common.c
+srcs-y += aead.c

@@ -1,0 +1,77 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": []
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "AEAD_INIT",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"plaintext_len": 0,
+		"tag_len": 16,
+		"aad": 12,
+		"iv": "31323334353637383132333435363738",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"command": "AEAD_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 5": {
+		"command": "AEAD_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"output": 5,
+		"context_id": 0,
+		"depends": 2,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 6": {
+		"command": "AEAD_UPDATE",
+		"input": "32333435363738394142434445463031",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 7": { // Get the output length
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": "32333435363738394142434445463031",
+		"tag_len": 16,
+		"output": 0,
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 8": {
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": "32333435363738394142434445463031",
+		"tag_len": 16,
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

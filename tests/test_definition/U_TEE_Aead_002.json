@@ -1,0 +1,80 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"addf88c1ab997eb58c0455288c3a4fa3",
+				"20ada8c18a69cc90aa99c73b174dfde6"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"plaintext_len": 0,
+		"tag_len": 16,
+		"aad": 12,
+		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
+		"aad": "353637383132333435363738",
+		"input": "32333435363738394142434445463031",
+		"output": [ //ciphertext + tag
+			"871e90b92e4a549142b62af228cfd90b",
+			"b4fde3ae3ad9218ff6ff0f1737735674"
+		]
+	},
+	"subtest 2": {
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"plaintext_len": 0,
+		"tag_len": 16,
+		"aad": 12,
+		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
+		"aad": "353637383132333435363738",
+		"input": [ //ciphertext + tag
+			"871e90b92e4a549142b62af228cfd90b",
+			"b4fde3ae3ad9218ff6ff0f1737735674"
+		],
+		"output": "32333435363738394142434445463031"
+	},
+	"subtest 3": {
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"plaintext_len": 16,
+		"tag_len": 16,
+		"aad": 12,
+		"iv": "9dbfc7aed2484e2577246c14",
+		"aad": "353637383132333435363738",
+		"input": "32333435363738394142434445463031",
+		"output": [ // ciphertext + tag
+			"655ceede429daf1e83b2a18c2ea6d32d",
+			"c29819aaa1b126fadfc9c8a694daad70"
+		]
+	},
+	"subtest 4": {
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"plaintext_len": 16,
+		"tag_len": 16,
+		"aad": 12,
+		"iv": "9dbfc7aed2484e2577246c14",
+		"aad": "353637383132333435363738",
+		"input": [ // ciphertext + tag
+			"655ceede429daf1e83b2a18c2ea6d32d",
+			"c29819aaa1b126fadfc9c8a694daad70"
+		],
+		"output": "32333435363738394142434445463031"
+	}
+}

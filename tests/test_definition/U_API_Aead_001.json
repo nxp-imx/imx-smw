@@ -1,0 +1,96 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": [
+				"663af6d897bb7390fbaa058371d76923",
+				"1384fe0424ad320be18cc15ccbd0d6c4"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "AEAD",
+		"test_error": "ARGS_NULL",
+		"key_name": "key 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Unsupported version no is set
+		"command": "AEAD",
+		"version": 255,
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"input": "0123456789abcdef1011121314151617",
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": { // Mode is not set
+		"command": "AEAD",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"input": "0123456789abcdef1011121314151617",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": { // Operation type is not set
+		"command": "AEAD",
+		"mode": "GCM",
+		"key_name": "key 1",
+		"input": "0123456789abcdef1011121314151617",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // No input data
+		"command": "AEAD",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Input data length is 0
+		"command": "AEAD",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"input": [
+			0,
+			"0123456789abcdef1011121314151617"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": { // Output pointer is set and output length is not set
+		"command": "AEAD",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"input": "0123456789abcdef1011121314151617",
+		"output": [
+			0,
+			"0123456789abcdef1011121314151617"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": { // Mode is undefined
+		"command": "AEAD",
+		"mode": "UNDEFINED",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"input": "0123456789abcdef1011121314151617",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 9": { // Operation type is undefined
+		"command": "AEAD",
+		"mode": "GCM",
+		"op_type": "UNDEFINED",
+		"key_name": "key 1",
+		"input": "0123456789abcdef1011121314151617",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 10": { // Subsystem name is undefined
+		"command": "AEAD",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"input": "0123456789abcdef1011121314151617",
+		"subsystem": "UNDEFINED",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	}
+}

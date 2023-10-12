@@ -175,6 +175,13 @@ struct subtest_data {
 		_this->app->certificates;                                      \
 	})
 
+#define list_aeads(this)                                                       \
+	({                                                                     \
+		struct subtest_data *_this = (this);                           \
+		assert(_this->app);                                            \
+		_this->app->aeads;                                             \
+	})
+
 /**
  * struct tbuffer - Data of type buffer
  * @data: Data buffer

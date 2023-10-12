@@ -1,0 +1,44 @@
+{
+	"subtest 1": { // Argument is NULL
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Unsupported version no is set
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"version": 255,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": { // Context is NULL
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"test_error": "CTX_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": { // Context handle is NULL
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"test_error": "CTX_HANDLE_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Input data set and input length is 0
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": [
+			0,
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Aead output pointer is set and output length not
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"output": [
+			0,
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

@@ -23,6 +23,7 @@
  * @signatures:      Signatures to verify list
  * @macs:            MACs to verify list
  * @certificates:    Certificates to verify list
+ * @aeads:           AEADs to verify list
  * @threads:         Application threads list
  * @semaphores:      Semaphores list
  * @is_multithread:  Application is multithread
@@ -44,6 +45,7 @@ struct app_data {
 	struct llist *signatures;
 	struct llist *macs;
 	struct llist *certificates;
+	struct llist *aeads;
 	struct llist *threads;
 	struct llist *semaphores;
 	int is_multithread;

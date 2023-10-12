@@ -28,6 +28,10 @@ VERSION=1;
         SIGN_TYPE_VALUES=DEFAULT;
     [SECURITY_OPERATION]
         RNG;
+    [SECURITY_OPERATION]
+        AEAD;
+        KEY_TYPE_VALUES=AES;
+        MODE_VALUES=CCM:GCM;
 [SECURE_SUBSYSTEM]
     TEE;
     /* No Start/Stop method specified. Default is 1. */
@@ -67,6 +71,14 @@ VERSION=1;
         MAC;
         MAC_ALGO_VALUES=CMAC:CMAC_TRUNCATED;
         KEY_TYPE_VALUES=AES;
+    [SECURITY_OPERATION]
+        AEAD;
+        KEY_TYPE_VALUES=AES;
+        MODE_VALUES=CCM:GCM;
+    [SECURITY_OPERATION]
+        AEAD_MULTI_PART;
+        KEY_TYPE_VALUES=AES;
+        MODE_VALUES=CCM:GCM;
 [SECURE_SUBSYSTEM]
     ELE;
     /* No Start/Stop method specified. Default is 1. */
@@ -96,3 +108,7 @@ VERSION=1;
         RNG;
     [SECURITY_OPERATION]
         DEVICE_LIFECYCLE;
+    [SECURITY_OPERATION]
+        AEAD;
+        KEY_TYPE_VALUES=AES;
+        MODE_VALUES=CCM:GCM;

@@ -7,6 +7,7 @@
 #define __JSON_TYPES_H__
 
 /* List of parameters present in JSON test definition file */
+#define AAD_OBJ			  "aad"
 #define ALGO_OBJ		  "algo"
 #define API_OBJ			  "api"
 #define APP_OBJ			  "App"
@@ -51,6 +52,7 @@
 #define OP_OUTPUT_OBJ		  "op_output"
 #define OP_TYPE_OBJ		  "op_type"
 #define OUTPUT_OBJ		  "output"
+#define PLAINTEXT_LEN_OBJ	  "plaintext_len"
 #define POLICY_OBJ		  "policy"
 #define POST_AFTER		  "post_after"
 #define POST_BEFORE		  "post_before"
@@ -74,6 +76,7 @@
 #define SUBSYSTEM_OBJ		  "subsystem"
 #define SUBTEST_OBJ		  "subtest "
 #define TA_UUID			  "ta_uuid"
+#define TAG_LEN_OBJ		  "tag_len"
 #define TEE_INFO_OBJ		  "tee_info"
 #define TEST_ERR_OBJ		  "test_error"
 #define THREAD_OBJ		  "Thread"
@@ -88,6 +91,11 @@
 #define SMW_API_DEFAULT_VERSION 0
 
 /* List of commands */
+#define AEAD		     "AEAD"
+#define AEAD_FINAL	     "AEAD_FINAL"
+#define AEAD_INIT	     "AEAD_INIT"
+#define AEAD_UPDATE	     "AEAD_UPDATE"
+#define AEAD_UPDATE_AAD	     "AEAD_UPDATE_AAD"
 #define CIPHER		     "CIPHER"
 #define CIPHER_FINAL	     "CIPHER_FINAL"
 #define CIPHER_INIT	     "CIPHER_INIT"

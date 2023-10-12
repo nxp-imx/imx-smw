@@ -1,0 +1,98 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"addf88c1ab997eb58c0455288c3a4fa3",
+				"20ada8c18a69cc90aa99c73b174dfde6"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "AEAD_INIT",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"plaintext_len": 48,
+		"tag_len": 16,
+		"aad": 12,
+		"context_id": 0
+	},
+	"subtest 2": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "AEAD_UPDATE",
+		"input": "30313233343536373839404142434445",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "AEAD_UPDATE",
+		"input": "46474849505152535456575859606162",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": "63646566676869707172737475767778",
+		"tag_len": 16,
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "AEAD_INIT",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"plaintext_len": 48,
+		"tag_len": 16,
+		"aad": 12,
+		"context_id": 1
+	},
+	"subtest 7": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 8": {
+		"command": "AEAD_UPDATE",
+		"input": "675ee8d8409fa110fac9a28929a3a759",
+		"context_id": 1,
+		"save_output": 1,
+		"depends": 6
+	},
+	"subtest 9": {
+		"command": "AEAD_UPDATE",
+		"input": "2d5150f6729b4bdc11b26ee97a2fb6d3",
+		"save_output": 1,
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 10": {
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"input": [
+			"7a5228b420b731e983e7405ef32c4cf9",
+			"b23366f1544fed782488d91bb0e8f16c"
+		],
+		"output": [
+			"30313233343536373839404142434445",
+			"46474849505152535456575859606162",
+			"63646566676869707172737475767778"
+		],
+		"tag_len": 16,
+		"context_id": 1,
+		"depends": 6
+	}
+}

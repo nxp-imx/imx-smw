@@ -1,0 +1,93 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"priv_key": [
+				"addf88c1ab997eb58c0455288c3a4fa3",
+				"20ada8c18a69cc90aa99c73b174dfde6"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "AEAD_INIT",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
+		"plaintext_len": 0,
+		"tag_len": 16,
+		"aad": 12,
+		"context_id": 0
+	},
+	"subtest 2": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "AEAD_UPDATE",
+		"input": "30313233343536373839404142434445",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "AEAD_UPDATE",
+		"input": "46474849505152535456575859606162",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"tag_len": 16,
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "AEAD_INIT",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
+		"plaintext_len": 0,
+		"tag_len": 16,
+		"aad": 12,
+		"context_id": 1
+	},
+	"subtest 7": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 8": {
+		"command": "AEAD_UPDATE",
+		"input": "851c96bf2c485a9f3bcd29f72fcaad7f",
+		"context_id": 1,
+		"save_output": 1,
+		"depends": 6
+	},
+	"subtest 9": {
+		"command": "AEAD_UPDATE",
+		"input": "5269f9727aaadf15911637179cce1b36",
+		"save_output": 1,
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 10": {
+		"command": "AEAD_FINAL",
+		"op_type": "DECRYPT",
+		"input": "d9cd032be31c1b8c36dc7fafc0964809",
+		"output": [
+			"30313233343536373839404142434445",
+			"46474849505152535456575859606162"
+		],
+		"tag_len": 16,
+		"context_id": 1,
+		"depends": 6
+	}
+}

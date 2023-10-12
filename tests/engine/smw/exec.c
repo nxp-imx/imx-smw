@@ -19,6 +19,7 @@
 #include "mac.h"
 #include "device.h"
 #include "storage.h"
+#include "aead.h"
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -452,32 +453,62 @@ static int execute_commit_key_storage_cmd(char *cmd,
 	return commit_key_storage(subtest);
 }
 
+/**
+ * execute_aead_cmd() - Execute AEAD command
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * PASSED		- Passed.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * Error code from aead().
+ * Error code from aead_init().
+ * Error code from aead_update().
+ * Error code from aead_final().
+ * Error code from aead_update_aad().
+ */
+static int execute_aead_cmd(char *cmd, struct subtest_data *subtest)
+{
+	if (!strcmp(cmd, AEAD))
+		return aead(subtest);
+	else if (!strcmp(cmd, AEAD_INIT))
+		return aead_init(subtest);
+	else if (!strcmp(cmd, AEAD_UPDATE_AAD))
+		return aead_update_aad(subtest);
+	else if (!strcmp(cmd, AEAD_UPDATE))
+		return aead_update(subtest);
+	else if (!strcmp(cmd, AEAD_FINAL))
+		return aead_final(subtest);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
 int execute_command_smw(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
 		const char *cmd_prefix;
 		int (*op)(char *cmd, struct subtest_data *subtest);
-	} cmd_list[] = {
-		{ DELETE, &execute_delete_key_cmd },
-		{ GENERATE, &execute_generate_cmd },
-		{ IMPORT, &execute_import_cmd },
-		{ EXPORT, &execute_export_cmd },
-		{ DERIVE, &execute_derive_cmd },
-		{ HASH, &execute_hash_cmd },
-		{ HMAC, &execute_hmac_cmd },
-		{ MAC, &execute_mac_cmd },
-		{ SIGN, &execute_sign_cmd },
-		{ VERIFY, &execute_verify_cmd },
-		{ RNG, &execute_rng_cmd },
-		{ CIPHER, &execute_cipher_cmd },
-		{ OP_CTX, &execute_op_context_cmd },
-		{ CONFIG, &execute_config_cmd },
-		{ GET_VERSION, &execute_get_version_cmd },
-		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
-		{ DEVICE, &execute_device_cmd },
-		{ STORAGE, &execute_storage_cmd },
-		{ COMMIT_KEY_STORAGE, &execute_commit_key_storage_cmd },
-	};
+	} cmd_list[] = { { DELETE, &execute_delete_key_cmd },
+			 { GENERATE, &execute_generate_cmd },
+			 { IMPORT, &execute_import_cmd },
+			 { EXPORT, &execute_export_cmd },
+			 { DERIVE, &execute_derive_cmd },
+			 { HASH, &execute_hash_cmd },
+			 { HMAC, &execute_hmac_cmd },
+			 { MAC, &execute_mac_cmd },
+			 { SIGN, &execute_sign_cmd },
+			 { VERIFY, &execute_verify_cmd },
+			 { RNG, &execute_rng_cmd },
+			 { CIPHER, &execute_cipher_cmd },
+			 { OP_CTX, &execute_op_context_cmd },
+			 { CONFIG, &execute_config_cmd },
+			 { GET_VERSION, &execute_get_version_cmd },
+			 { GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
+			 { DEVICE, &execute_device_cmd },
+			 { STORAGE, &execute_storage_cmd },
+			 { COMMIT_KEY_STORAGE,
+			   &execute_commit_key_storage_cmd },
+			 { AEAD, &execute_aead_cmd } };
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {
 		if (!strncmp(cmd, cmd_list[idx].cmd_prefix,

@@ -1,0 +1,41 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		}
+	},
+	"subtest 1": { // Argument is NULL
+		"command": "AEAD_UPDATE_AAD",
+		"test_error": "ARGS_NULL",
+		"key_name": "key 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Context is NULL
+		"command": "AEAD_UPDATE_AAD",
+		"test_error": "CTX_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": { // Context handle is NULL
+		"command": "AEAD_UPDATE_AAD",
+		"test_error": "CTX_HANDLE_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": { // AAD is not set
+		"command": "AEAD_UPDATE_AAD",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": { // Version not supported
+		"command": "AEAD_UPDATE_AAD",
+		"version": 255,
+		"aad": [
+			10,
+			"11223344556677889900"
+		],
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	}
+}

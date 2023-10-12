@@ -1,0 +1,116 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "AEAD_INIT",
+		"test_error": "ARGS_NULL",
+		"key_name": "key 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Version not supported
+		"command": "AEAD_INIT",
+		"version": 255,
+		"mode": "GCM",
+		"iv": "041f41fa30b78898040b5e0e",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": { // Mode is not set
+		"command": "AEAD_INIT",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": { // Operation type is not set
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"key_name": "key 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"test_error": "CTX_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": { // Mode is undefined
+		"command": "AEAD_INIT",
+		"mode": "UNDEFINED",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"iv": "041f41fa30b78898040b5e0e",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 7": { // Operation type is undefined
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "UNDEFINED",
+		"key_name": "key 1",
+		"iv": "041f41fa30b78898040b5e0e",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 8": { // Subsystem name is undefined
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"subsystem": "UNDEFINED",
+		"iv": "041f41fa30b78898040b5e0e",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 9": { // IV is missing
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": { // tag length is missing
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"iv": "041f41fa30b78898040b5e0e",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": { // aad length is missing
+		"command": "AEAD_INIT",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"iv": "041f41fa30b78898040b5e0e",
+		"tag_len": 128,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 12": { // plaintext length is missing
+		"command": "AEAD_INIT",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"iv": "041f41fa30b78898040b5e0e",
+		"tag_len": 128,
+		"aad": 128,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 13": { // wrong tag length is set
+		"command": "AEAD_INIT",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"iv": "041f41fa30b78898040b5e0e",
+		"tag_len": 120,
+		"aad": 128,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

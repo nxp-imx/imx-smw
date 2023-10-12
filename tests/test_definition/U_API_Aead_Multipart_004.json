@@ -1,0 +1,100 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": []
+			}
+		},
+		"key 2": {
+			"format": "UNDEFINED"
+		},
+		"key 3": {
+			"key_name": "key 1",
+			"type": "DES"
+		},
+		"key 4": {
+			"key_name": "key 1",
+			"security_size": 128
+		},
+		"key 5": {
+			"security_size": 128,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		},
+		"key 6": {
+			"type": "AES",
+			"security_size": 0,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": { // Key descriptor structure is NULL
+		"command": "AEAD_INIT",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"test_error": "KEY_DESC_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": { // Key Format is undefined
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 2",
+		"result": "SMW_STATUS_UNKNOWN_NAME"
+	},
+	"subtest 4": { // ID set and wrong key type
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 3",
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 5": { // ID set and wrong key security size
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 4",
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 6": { // Key buffer is nULL
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 5",
+		"test_error": "KEY_BUFFER_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": { // Key type is missing
+		"command": "AEAD_INIT",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 5",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": { // Security size is 0
+		"command": "AEAD_INIT",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 6",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

@@ -1,6 +1,7 @@
 target_sources(${PROJECT_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/util.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_aead.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_app.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_certificate.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_cipher.c

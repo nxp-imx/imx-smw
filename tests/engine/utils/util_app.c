@@ -19,6 +19,7 @@
 #include "util_sign.h"
 #include "util_thread.h"
 #include "run_app.h"
+#include "util_aead.h"
 
 static struct app_data *util_app_get_data(pid_t pid)
 {
@@ -73,6 +74,9 @@ static void util_app_destroy(void *data)
 	err = util_list_clear(app_data->certificates);
 	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list certificates error %d",
 		   err);
+
+	err = util_list_clear(app_data->aeads);
+	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list aeads error %d", err);
 
 	err = util_list_clear(app_data->threads);
 	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list threads error %d", err);
@@ -153,6 +157,10 @@ static int app_register(struct test_data *test, unsigned int id,
 		goto exit;
 
 	err = util_cipher_init(&app_data->ciphers);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_aead_init(&app_data->aeads);
 	if (err != ERR_CODE(PASSED))
 		goto exit;
 

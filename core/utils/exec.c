@@ -137,3 +137,16 @@ int smw_utils_execute_implicit(enum operation_id operation_id, void *args,
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
+
+int smw_utils_execute_update_implicit(enum operation_id operation_id,
+				      void *args,
+				      enum subsystem_id subsystem_id)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	int status = smw_utils_execute_common(operation_id, args, subsystem_id,
+					      SMW_OP_STEP_UPDATE, true);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}

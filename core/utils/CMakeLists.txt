@@ -3,6 +3,7 @@ set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:utils> PARENT_SCOPE)
 add_library(utils OBJECT "")
 set_target_properties(utils PROPERTIES C_VISIBILITY_PRESET hidden)
 target_sources(utils PRIVATE
+               aead.c
                attr.c
                base64.c
                cipher.c

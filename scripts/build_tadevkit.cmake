@@ -61,32 +61,38 @@ if(NOT IS_ABSOLUTE ${OPTEE_OS_SRC_PATH})
     set(OPTEE_OS_SRC_PATH "${CMAKE_SOURCE_DIR}/${OPTEE_OS_SRC_PATH}")
 endif()
 
-find_file(NXP_BUILD_SCRIPT nxp_build.sh ${OPTEE_OS_SRC_PATH}/scripts)
+# Get number of cores to optimise build process
+execute_process(COMMAND nproc OUTPUT_VARIABLE NB_CORES)
+string(STRIP ${NB_CORES} NB_CORES)
 
-if(NXP_BUILD_SCRIPT)
-    if(${arch} MATCHES "^aarch64")
-        set(ENV{CROSS_COMPILE64} ${TOOLCHAIN_BIN_PATH}/${TOOLCHAIN_PREFIX})
-    else()
-        set(ENV{CROSS_COMPILE} ${TOOLCHAIN_BIN_PATH}/${TOOLCHAIN_PREFIX})
-    endif()
+set(CMD_OPTEE_OS_BUILD "make")
+list(APPEND CMD_OPTEE_OS_BUILD "-j${NB_CORES}")
+list(APPEND CMD_OPTEE_OS_BUILD "CFG_TEE_CORE_LOG_LEVEL=1")
+list(APPEND CMD_OPTEE_OS_BUILB "CFG_TEE_TA_LOG_LEVEL=0")
+list(APPEND CMD_OPTEE_OS_BUILD "CFG_WERROR=y")
+list(APPEND CMD_OPTEE_OS_BUILD "PLATFORM=${PLATFORM}")
+list(APPEND CMD_OPTEE_OS_BUILD "O=${BUILD_DIR}/build.${PLATFORM}")
 
-    set(ENV{O} ${BUILD_DIR})
-
-    # Get number of cores to optimise build process
-    execute_process(COMMAND nproc OUTPUT_VARIABLE NB_CORES)
-    message(STATUS "Building OPTEE OS ${COMPILER}")
-    execute_process(COMMAND ./scripts/nxp_build.sh ${PLATFORM}
-                    WORKING_DIRECTORY ${OPTEE_OS_SRC_PATH}
-                    RESULT_VARIABLE res)
-
-    if(NOT ${res} EQUAL 0)
-        message(FATAL_ERROR "\n${res}\nFailed to build OPTEE OS from "
-                            "${OPTEE_OS_SRC_PATH}\n")
-    endif()
-
-    get_filename_component(COPY_DIR ${TA_DEV_KIT_ROOT} DIRECTORY)
-    file(COPY ${BUILD_DIR}/build.${PLATFORM}/${TA_EXPORT}
-         DESTINATION ${COPY_DIR})
+if(${arch} MATCHES "^aarch64")
+    list(APPEND CMD_OPTEE_OS_BUILD "CROSS_COMPILE64=${TOOLCHAIN_BIN_PATH}/${TOOLCHAIN_PREFIX}")
+    list(APPEND CMD_OPTEE_OS_BUILD "all")
 else()
-    message(FATAL_ERROR "\nOPTEE OS can't be build, build script not found")
+    list(APPEND CMD_OPTEE_OS_BUILD "CROSS_COMPILE=${TOOLCHAIN_BIN_PATH}/${TOOLCHAIN_PREFIX}")
+    list(APPEND CMD_OPTEE_OS_BUILD "all")
+    list(APPEND CMD_OPTEE_OS_BUILD "uTee")
 endif()
+
+message(STATUS "Building OPTEE OS - ${PLATFORM}")
+
+execute_process(COMMAND ${CMD_OPTEE_OS_BUILD}
+                WORKING_DIRECTORY ${OPTEE_OS_SRC_PATH}
+                RESULT_VARIABLE res)
+
+if(NOT ${res} EQUAL 0)
+    message(FATAL_ERROR "\n${res}\nFailed to build OPTEE OS from "
+                        "${OPTEE_OS_SRC_PATH}\n")
+endif()
+
+get_filename_component(COPY_DIR ${TA_DEV_KIT_ROOT} DIRECTORY)
+file(COPY ${BUILD_DIR}/build.${PLATFORM}/${TA_EXPORT}
+     DESTINATION ${COPY_DIR})

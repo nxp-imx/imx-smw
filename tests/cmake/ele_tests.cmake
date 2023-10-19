@@ -7,6 +7,7 @@ file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}_*.json)
 
 # Remove failing test due to ELE Library or FW issues
 list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/F_${GROUP}_Thread_001.json)
+list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Aead_003.json)
 
 set(CFG_FILES ${SMW_CONFIG_SRC_DIR}/${CFG_FILE})
 add_and_install_tests("${TESTS}" "${CFG_FILES}" "${CMD}")

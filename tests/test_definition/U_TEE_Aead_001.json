@@ -28,18 +28,19 @@
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // Encrypt with key ID
+	"subtest 2": { // Mode not supported
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
-		"mode": "GCM",
+		"mode": "XTS",
 		"op_type": "ENCRYPT",
 		"plaintext_len": 0,
-		"tag_len": 16,
+		"tag": 16,
 		"aad": "353637383132333435363738",
 		"iv": "31323334353637383132333435363738",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
-		"depends": 1
+		"depends": 1,
+		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
 	"subtest 3": { // Key type not supported
 		"command": "AEAD",
@@ -50,26 +51,29 @@
 		"iv": "3132333435363738",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"plaintext_len": 0,
-		"tag_len": 16,
+		"tag": 16,
 		"aad": "ebabce95b14d3c8d6fb35039",
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
-	"subtest 4": { // Encrypt with key buffer
+	"subtest 4": { // Output length too small & dedicated tag field set
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"subsystem": "TEE",
 		"key_name": "key 3",
 		"plaintext_len": 0,
-		"tag_len": 16,
+		"tag_field_set": true,
+		"tag": 16,
+		"iv": "31323334353637383132333435363738",
 		"aad": "353637383132333435363738",
 		"input": [
 			"32333435363738394142434445463031",
 			"42434445463031323435363738394142"
 		],
-		"iv": "31323334353637383132333435363738"
+		"output": 8,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 5": { // Output length too small
+	"subtest 5": { // Output length too small and tag is part of output
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -77,14 +81,14 @@
 		"op_type": "ENCRYPT",
 		"iv": "31323334353637383132333435363738",
 		"plaintext_len": 0,
-		"tag_len": 16,
+		"tag": 16,
 		"aad": "353637383132333435363738",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"output": 2,
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 6": { // Get output length
+	"subtest 6": { // Get output length and tag is part of output
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -92,15 +96,30 @@
 		"op_type": "ENCRYPT",
 		"iv": "31323334353637383132333435363738",
 		"plaintext_len": 0,
-		"tag_len": 16,
+		"tag": 16,
 		"aad": "353637383132333435363738",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"output": 0,
 		"depends": 1
 	},
-	"subtest 7": {
+	"subtest 7": { // Get output length and dedicated tag field set
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "31323334353637383132333435363738",
+		"plaintext_len": 0,
+		"tag_field_set": true,
+		"tag": 16,
+		"aad": "353637383132333435363738",
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"output": 0,
+		"depends": 1
+	},
+	"subtest 8": {
 		"command": "DELETE",
 		"key_name": "key 1",
-		"depends": 2
+		"depends": 1
 	}
 }

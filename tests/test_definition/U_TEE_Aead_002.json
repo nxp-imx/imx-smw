@@ -9,15 +9,14 @@
 			]
 		}
 	},
-	"subtest 1": {
+	"subtest 1": { // Encrypt using GCM  mode and expected tag is set
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"plaintext_len": 0,
-		"tag_len": 16,
-		"aad": 12,
+		"tag": "b4fde3ae3ad9218ff6ff0f1737735674",
 		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
 		"aad": "353637383132333435363738",
 		"input": "32333435363738394142434445463031",
@@ -33,25 +32,24 @@
 		"mode": "GCM",
 		"op_type": "DECRYPT",
 		"plaintext_len": 0,
-		"tag_len": 16,
-		"aad": 12,
+		"tag": 16,
 		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
 		"aad": "353637383132333435363738",
 		"input": [ //ciphertext + tag
 			"871e90b92e4a549142b62af228cfd90b",
 			"b4fde3ae3ad9218ff6ff0f1737735674"
 		],
-		"output": "32333435363738394142434445463031"
+		"output": "32333435363738394142434445463031",
+		"depends": 1
 	},
-	"subtest 3": {
+	"subtest 3": { // Encrypt using CCM mode and tag is a part of output
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
 		"plaintext_len": 16,
-		"tag_len": 16,
-		"aad": 12,
+		"tag": 16,
 		"iv": "9dbfc7aed2484e2577246c14",
 		"aad": "353637383132333435363738",
 		"input": "32333435363738394142434445463031",
@@ -67,14 +65,43 @@
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"plaintext_len": 16,
-		"tag_len": 16,
-		"aad": 12,
+		"tag": 16,
 		"iv": "9dbfc7aed2484e2577246c14",
 		"aad": "353637383132333435363738",
 		"input": [ // ciphertext + tag
 			"655ceede429daf1e83b2a18c2ea6d32d",
 			"c29819aaa1b126fadfc9c8a694daad70"
 		],
-		"output": "32333435363738394142434445463031"
+		"output": "32333435363738394142434445463031",
+		"depends": 3
+	},
+	"subtest 5": { // Expected tag, dedicated tag field and aead_id are set
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"plaintext_len": 16,
+		"tag": "c29819aaa1b126fadfc9c8a694daad70",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"aad": "353637383132333435363738",
+		"input": "32333435363738394142434445463031",
+		"tag_field_set": true,
+		"aead_id": 1
+	},
+	"subtest 6": { // Tag buffer (Invalid tag) overrides the saved tag
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"plaintext_len": 16,
+		"tag": "32333435363738394142434445463031",
+		"tag_field_set": true,
+		"aad": "353637383132333435363738",
+		"output": "32333435363738394142434445463031",
+		"aead_id": 1,
+		"depends": 5,
+		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	}
 }

@@ -84,32 +84,23 @@
 		"iv": "041f41fa30b78898040b5e0e",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 11": { // aad length is missing
+	"subtest 11": { // plaintext length is missing
 		"command": "AEAD_INIT",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
 		"iv": "041f41fa30b78898040b5e0e",
-		"tag_len": 128,
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 12": { // plaintext length is missing
-		"command": "AEAD_INIT",
-		"mode": "CCM",
-		"op_type": "ENCRYPT",
-		"key_name": "key 1",
-		"iv": "041f41fa30b78898040b5e0e",
-		"tag_len": 128,
+		"tag": 16,
 		"aad": 128,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 13": { // wrong tag length is set
+	"subtest 12": { // wrong tag length is set
 		"command": "AEAD_INIT",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
 		"iv": "041f41fa30b78898040b5e0e",
-		"tag_len": 120,
+		"tag": 120,
 		"aad": 128,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}

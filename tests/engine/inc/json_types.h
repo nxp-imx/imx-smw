@@ -8,6 +8,7 @@
 
 /* List of parameters present in JSON test definition file */
 #define AAD_OBJ			  "aad"
+#define AEAD_ID_OBJ		  "aead_id"
 #define ALGO_OBJ		  "algo"
 #define API_OBJ			  "api"
 #define APP_OBJ			  "App"
@@ -76,7 +77,8 @@
 #define SUBSYSTEM_OBJ		  "subsystem"
 #define SUBTEST_OBJ		  "subtest "
 #define TA_UUID			  "ta_uuid"
-#define TAG_LEN_OBJ		  "tag_len"
+#define TAG_FIELD_SET_OBJ	  "tag_field_set"
+#define TAG_OBJ			  "tag"
 #define TEE_INFO_OBJ		  "tee_info"
 #define TEST_ERR_OBJ		  "test_error"
 #define THREAD_OBJ		  "Thread"
@@ -84,6 +86,9 @@
 #define VERSION_OBJ		  "version"
 #define WAIT_AFTER		  "wait_after"
 #define WAIT_BEFORE		  "wait_before"
+
+#define OP_TYPE_ENCRYPT_STR "ENCRYPT"
+#define OP_TYPE_DECRYPT_STR "DECRYPT"
 
 #define SUBTEST_OBJ_LEN strlen(SUBTEST_OBJ)
 

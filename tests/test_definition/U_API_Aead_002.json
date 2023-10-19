@@ -54,8 +54,7 @@
 		"op_type": "ENCRYPT",
 		"input": "5555555555",
 		"key_name": "key 3",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 1
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": { // Key type is missing
 		"command": "AEAD",
@@ -71,8 +70,7 @@
 		"op_type": "ENCRYPT",
 		"input": "5555555555",
 		"key_name": "key 4",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 1
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": { // No key is set
 		"command": "AEAD",

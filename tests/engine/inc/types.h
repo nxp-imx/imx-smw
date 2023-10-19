@@ -182,6 +182,13 @@ struct subtest_data {
 		_this->app->aeads;                                             \
 	})
 
+#define list_aead_output(this)                                                 \
+	({                                                                     \
+		struct subtest_data *_this = (this);                           \
+		assert(_this->app);                                            \
+		_this->app->aead_output;                                       \
+	})
+
 /**
  * struct tbuffer - Data of type buffer
  * @data: Data buffer

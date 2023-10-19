@@ -24,6 +24,7 @@
  * @macs:            MACs to verify list
  * @certificates:    Certificates to verify list
  * @aeads:           AEADs to verify list
+ * @aead_output:     AEAD output result list
  * @threads:         Application threads list
  * @semaphores:      Semaphores list
  * @is_multithread:  Application is multithread
@@ -46,6 +47,7 @@ struct app_data {
 	struct llist *macs;
 	struct llist *certificates;
 	struct llist *aeads;
+	struct llist *aead_output;
 	struct llist *threads;
 	struct llist *semaphores;
 	int is_multithread;

@@ -11,10 +11,18 @@
  * struct aead_output_data - AEAD output data
  * @output: Pointer to output data.
  * @output_len: @output length in bytes.
+ * @tag: Pointer to tag buffer.
+ * @tag_len: @tag length in bytes.
+ * @iv: Pointer to IV buffer.
+ * @iv_len: @iv length in bytes.
  */
 struct aead_output_data {
 	unsigned char *output;
 	unsigned int output_len;
+	unsigned char *tag;
+	unsigned int tag_len;
+	unsigned char *iv;
+	unsigned int iv_len;
 };
 
 /**
@@ -31,14 +39,22 @@ int util_aead_init(struct llist **list);
 
 /**
  * util_aead_add_output_data() - Add data in a AEAD output linked list
- * @list: Pointer to AEAD output data linked list.
- * @ctx_id: Local context ID.
- * @out_data: Data to add.
- * @data_len: @out_data length in bytes.
+ * @list: Pointer to AEAD linked list.
+ * @id: Id of the node.
+ * @output: Pointer to data buffer.
+ * @output_len: Data length in bytes.
+ * @tag: Pointer to tag buffer.
+ * @tag_len: @tag length in bytes.
+ * @iv: Pointer to IV buffer.
+ * @iv_len: @iv length in bytes.
  *
  * If parameter @list is NULL it's allocated in this function.
- * If it's the first call for parameter @ctx_id, the node is allocated.
- * Else, parameter @out_data is added to existing node data.
+ * If it's the first call for parameter @id, the node is allocated.
+ * Else, parameter @output and @tag (if tag is set in a dedicated tag field)
+ * and IV are added to existing node data.
+ *
+ * @list could be either list_aead_output or list_aead.
+ *
  * All the memory allocated by this function is freed when
  * util_list_clear() is called.
  *
@@ -47,8 +63,10 @@ int util_aead_init(struct llist **list);
  * -BAD_ARG                - Bad argument.
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  */
-int util_aead_add_output_data(struct llist *list, unsigned int ctx_id,
-			      unsigned char *out_data, unsigned int data_len);
+int util_aead_add_output_data(struct llist *list, unsigned int id,
+			      unsigned char *output, unsigned int output_len,
+			      unsigned char *tag, unsigned int tag_len,
+			      unsigned char *iv, unsigned int iv_len);
 
 /**
  * util_aead_cmp_output_data() - Compare AEAD output data
@@ -66,4 +84,30 @@ int util_aead_add_output_data(struct llist *list, unsigned int ctx_id,
 int util_aead_cmp_output_data(struct llist *list, unsigned int ctx_id,
 			      unsigned char *data, unsigned int data_len);
 
-#endif /* __UTIL_AEAD_H__ */
+/**
+ * util_aead_find_node() - Point to node members, if node exists
+ * @list: Linked list where the search is done.
+ * @id: Id of the node.
+ * @output: Pointer to the output data buffer.
+ * @output_length: @output length in bytes.
+ * @tag: Pointer to the tag buffer.
+ * @tag_length: @tag length in bytes.
+ * @iv: Pointer to the IV buffer.
+ * @iv_length: @iv length in bytes.
+ * @tag_field_set: 1 if tag is set in the dedicated tag field.
+ *
+ * If node id exists, point output, iv and tag buffers to the respective members
+ * of the linked list node.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARG                - Bad argument.
+ * -FAILED                 - @output is NULL or @id is not found.
+ */
+int util_aead_find_node(struct llist *list, unsigned int id,
+			unsigned char **output, unsigned int *output_length,
+			unsigned char **tag, unsigned int *tag_length,
+			unsigned char **iv, unsigned int *iv_length,
+			int tag_field_set);
+
+#endif /* __UTIL_aead_H__ */

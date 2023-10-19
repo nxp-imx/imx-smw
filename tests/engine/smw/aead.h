@@ -13,11 +13,11 @@
  * @subtest: Subtest data.
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -MISSING_PARAMS		- Missing mandatory parameters in @params.
- * -API_STATUS_NOK              - SMW API Call return error
- * -BAD_ARGS			- One of the arguments is bad.
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -MISSING_PARAMS          - Missing mandatory parameters in @params.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -BAD_ARGS                - One of the arguments is bad.
  */
 int aead(struct subtest_data *subtest);
 
@@ -26,11 +26,11 @@ int aead(struct subtest_data *subtest);
  * @subtest: Subtest data.
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -MISSING_PARAMS		- Missing mandatory parameters in @params.
- * -API_STATUS_NOK              - SMW API Call return error
- * -BAD_ARGS			- One of the arguments is bad.
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -MISSING_PARAMS          - Missing mandatory parameters in @params.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -BAD_ARGS                - One of the arguments is bad.
  */
 int aead_init(struct subtest_data *subtest);
 
@@ -39,11 +39,11 @@ int aead_init(struct subtest_data *subtest);
  * @subtest: Subtest data.
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -MISSING_PARAMS		- Missing mandatory parameters in @params.
- * -API_STATUS_NOK              - SMW API Call return error
- * -BAD_ARGS			- One of the arguments is bad.
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -MISSING_PARAMS          - Missing mandatory parameters in @params.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -BAD_ARGS                - One of the arguments is bad.
  */
 int aead_update_aad(struct subtest_data *subtest);
 
@@ -52,11 +52,11 @@ int aead_update_aad(struct subtest_data *subtest);
  * @subtest: Subtest data.
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -MISSING_PARAMS		- Missing mandatory parameters in @params.
- * -API_STATUS_NOK              - SMW API Call return error
- * -BAD_ARGS			- One of the arguments is bad.
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -MISSING_PARAMS          - Missing mandatory parameters in @params.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -BAD_ARGS                - One of the arguments is bad.
  */
 int aead_update(struct subtest_data *subtest);
 
@@ -65,11 +65,11 @@ int aead_update(struct subtest_data *subtest);
  * @subtest: Subtest data.
  *
  * Return:
- * PASSED			- Success.
- * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
- * -MISSING_PARAMS		- Missing mandatory parameters in @params.
- * -API_STATUS_NOK              - SMW API Call return error
- * -BAD_ARGS			- One of the arguments is bad.
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -MISSING_PARAMS          - Missing mandatory parameters in @params.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -BAD_ARGS                - One of the arguments is bad.
  */
 int aead_final(struct subtest_data *subtest);
 

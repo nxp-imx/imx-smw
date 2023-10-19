@@ -20,8 +20,7 @@
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"plaintext_len": 0,
-		"tag_len": 16,
-		"aad": 12,
+		"tag": 16,
 		"iv": "31323334353637383132333435363738",
 		"context_id": 0,
 		"depends": 1
@@ -38,7 +37,7 @@
 		"context_id": 0,
 		"depends": 2
 	},
-	"subtest 5": {
+	"subtest 5": { // output length too short
 		"command": "AEAD_UPDATE",
 		"input": "32333435363738394142434445463031",
 		"output": 5,
@@ -56,20 +55,30 @@
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": "32333435363738394142434445463031",
-		"tag_len": 16,
+		"tag": 16,
 		"output": 0,
 		"context_id": 0,
 		"depends": 2
 	},
-	"subtest 8": {
+	"subtest 8": { // Get the output length and dedicated tag field set
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": "32333435363738394142434445463031",
-		"tag_len": 16,
+		"tag_field_set": true,
+		"tag": 16,
+		"output": 0,
 		"context_id": 0,
 		"depends": 2
 	},
 	"subtest 9": {
+		"command": "AEAD_FINAL",
+		"op_type": "ENCRYPT",
+		"input": "32333435363738394142434445463031",
+		"tag": 16,
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 10": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

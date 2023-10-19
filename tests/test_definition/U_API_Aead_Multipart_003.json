@@ -9,6 +9,7 @@
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"version": 255,
+		"tag": "35363738313233343536373839404142",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Context is NULL
@@ -39,6 +40,7 @@
 			0,
 			"5555555555"
 		],
+		"tag": 16,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

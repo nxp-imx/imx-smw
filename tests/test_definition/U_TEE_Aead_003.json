@@ -1,0 +1,92 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": [],
+				"decrypt": []
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": { // AEAD ID and dedicated tag field are set
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
+		"tag": 16,
+		"aad": "353637383132333435363738",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"aead_id": 1,
+		"tag_field_set": true,
+		"plaintext_len": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"tag_field_set": true,
+		"tag": 16,
+		"aad": "353637383132333435363738",
+		"aead_id": 1,
+		"plaintext_len": 0,
+		"depends": [
+			1,
+			2
+		]
+	},
+	"subtest 4": { // AEAD ID is set and tag is part of output
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "9dbfc7aed2484e2577246c14",
+		"aad": "353637383132333435363738",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"plaintext_len": 32,
+		"tag": 16,
+		"aead_id": 2,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"aad": "353637383132333435363738",
+		"plaintext_len": 32,
+		"output": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"aead_id": 2,
+		"depends": [
+			1,
+			4
+		]
+	},
+	"subtest 6": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

@@ -22,7 +22,7 @@
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": {
+	"subtest 2": { // AEAD encryption init using CCM mode
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -30,21 +30,21 @@
 		"op_type": "ENCRYPT",
 		"iv": "313233343536373831323334",
 		"plaintext_len": 16,
-		"tag_len": 16,
+		"tag": 16,
 		"aad": 12,
 		"context_id": 0,
 		"depends": 1
 	},
-	"subtest 3": {
+	"subtest 3": { // AEAD decryption init using GCM mode
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 2",
-		"mode": "CCM",
-		"op_type": "ENCRYPT",
-		"plaintext_len": 16,
-		"tag_len": 16,
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"plaintext_len": 0,
+		"tag": 16,
 		"aad": 12,
-		"iv": "60cc50e0887532e0d4f3d2f2",
+		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
 		"context_id": 1
 	},
 	"subtest 4": {
@@ -67,21 +67,24 @@
 	},
 	"subtest 7": {
 		"command": "AEAD_UPDATE",
-		"input": "6cb4e2f4ddf79a8e08c96c7f4040e8a8",
+		"input": "851c96bf2c485a9f3bcd29f72fcaad7f",
 		"context_id": 1,
+		"save_output": 1,
 		"depends": 3
 	},
 	"subtest 8": {
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
-		"tag_len": 16,
+		"tag": 16,
 		"context_id": 0,
 		"depends": 2
 	},
 	"subtest 9": {
 		"command": "AEAD_FINAL",
-		"op_type": "ENCRYPT",
-		"tag_len": 16,
+		"op_type": "DECRYPT",
+		"input": "d5c549c38ae8f4180c5f071ee2a5f381",
+		"output": "30313233343536373839404142434445",
+		"tag": 16,
 		"context_id": 1,
 		"depends": 3
 	},

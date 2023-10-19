@@ -9,15 +9,15 @@
 			]
 		}
 	},
-	"subtest 1": {
+	"subtest 1": { // AEAD encryption init using CCM mode
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
 		"iv": "9dbfc7aed2484e2577246c14",
-		"plaintext_len": 64,
-		"tag_len": 16,
+		"plaintext_len": 48,
+		"tag": 16,
 		"aad": 12,
 		"context_id": 0
 	},
@@ -29,10 +29,7 @@
 	},
 	"subtest 3": {
 		"command": "AEAD_UPDATE",
-		"input": [
-			"30313233343536373839404142434445",
-			"46474849505152535456575859606162"
-		],
+		"input": "30313233343536373839404142434445",
 		"context_id": 0,
 		"depends": 1
 	},
@@ -42,23 +39,24 @@
 		"context_id": 0,
 		"depends": 1
 	},
-	"subtest 5": {
+	"subtest 5": { // Dedicated tag field is set
 		"command": "AEAD_FINAL",
+		"tag_field_set": true,
 		"op_type": "ENCRYPT",
 		"input": "63646566676869707172737475767778",
-		"tag_len": 16,
+		"tag": "b23366f1544fed782488d91bb0e8f16c",
 		"context_id": 0,
 		"depends": 1
 	},
-	"subtest 6": {
+	"subtest 6": { // AEAD decryption init using CCM mode
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"iv": "9dbfc7aed2484e2577246c14",
-		"plaintext_len": 64,
-		"tag_len": 16,
+		"plaintext_len": 48,
+		"tag": 16,
 		"aad": 12,
 		"context_id": 1
 	},
@@ -70,36 +68,30 @@
 	},
 	"subtest 8": {
 		"command": "AEAD_UPDATE",
-		"input": [
-			"675ee8d8409fa110fac9a28929a3a759",
-			"2d5150f6729b4bdc11b26ee97a2fb6d3"
-		],
+		"input": "675ee8d8409fa110fac9a28929a3a759",
 		"context_id": 1,
 		"save_output": 1,
 		"depends": 6
 	},
 	"subtest 9": {
 		"command": "AEAD_UPDATE",
-		"input": "5f71059b178e0acaa6c36472df3a5ae3",
-		"context_id": 1,
+		"input": "2d5150f6729b4bdc11b26ee97a2fb6d3",
 		"save_output": 1,
+		"context_id": 1,
 		"depends": 6
 	},
-	"subtest 10": {
+	"subtest 10": { // Dedicated tag field is set
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
-		"input": [
-			"5c54b23e7eed3bc5e645b4f64aee2264",
-			"6717245635edb4bc4fad2be833a0868e"
-		],
+		"input": "7a5228b420b731e983e7405ef32c4cf9",
 		"output": [
 			"30313233343536373839404142434445",
 			"46474849505152535456575859606162",
-			"46474849505152535456575859606162",
 			"63646566676869707172737475767778"
 		],
-		"tag_len": 16,
+		"tag": "b23366f1544fed782488d91bb0e8f16c",
 		"context_id": 1,
+		"tag_field_set": true,
 		"depends": 6
 	}
 }

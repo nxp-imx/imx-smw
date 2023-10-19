@@ -12,6 +12,8 @@
 	"subtest 1": {
 		"command": "AEAD",
 		"test_error": "ARGS_NULL",
+		"op_type": "ENCRYPT",
+		"mode": "GCM",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},

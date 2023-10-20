@@ -18,22 +18,32 @@
  * @mode_id: AEAD mode ID
  * @op_id: Operation type ID
  * @op_step: Multi-part operation step
- * @init_pub: Pointer to the public AEAD init arguments structure
- * @data_pub: Pointer to the public AEAD data arguments structure
  * @tag: Pointer to tag buffer
- * @tag_length: Tag buffer length in bytes
- * @aad: Pointer to additional authentication data
+ * @oneshot_pub: Pointer to public AEAD one-shot arguments structure
+ * @init_pub: Pointer to public AEAD initialization arguments structure
+ * @data_pub: Pointer to public AEAD data arguments structure
+ * @aad_pub: Pointer to public AEAD AAD arguments structure
+ * @final_pub: Pointer to public AEAD final arguments structure
+ *
+ * The @tag field dynamically points to the tag value.
+ * It either points to dedicated tag field if it is explicitly set,
+ * or points to tag set in the @data.output field in case of encryption or
+ * tag set in the @data.input field in case of decryption.
+ *
  */
 struct smw_crypto_aead_args {
 	struct smw_keymgr_descriptor key_desc;
 	enum smw_config_aead_mode_id mode_id;
 	enum smw_config_aead_op_type_id op_id;
 	enum smw_op_step op_step;
-	struct smw_aead_init_args *init_pub;
-	struct smw_aead_data_args *data_pub;
 	unsigned char *tag;
-	unsigned int tag_length;
-	unsigned char *aad;
+	union {
+		struct smw_aead_args *oneshot_pub;
+		struct smw_aead_init_args *init_pub;
+		struct smw_aead_data_args *data_pub;
+		struct smw_aead_aad_args *aad_pub;
+		struct smw_aead_final_args *final_pub;
+	};
 };
 
 /**
@@ -67,14 +77,34 @@ unsigned int smw_crypto_get_aad_len(struct smw_crypto_aead_args *args);
 unsigned char *smw_crypto_get_iv(struct smw_crypto_aead_args *args);
 
 /**
- * smw_crypto_get_iv_len() - Return the length of the iv buffer
+ * smw_crypto_get_iv_len() - Return the length of the IV buffer
  * @args: Pointer to internal AEAD argument structure
  *
  * Return:
- * iv length
+ * IV buffer length
  * 0
  */
 unsigned int smw_crypto_get_iv_len(struct smw_crypto_aead_args *args);
+
+/**
+ * smw_crypto_get_output_iv() - Get output IV buffer address
+ * @args: Pointer to internal AEAD argument structure
+ *
+ * Return:
+ * address of output IV buffer
+ * NULL
+ */
+unsigned char *smw_crypto_get_output_iv(struct smw_crypto_aead_args *args);
+
+/**
+ * smw_crypto_get_output_iv_len() - Return the length of the output IV buffer
+ * @args: Pointer to internal AEAD argument structure
+ *
+ * Return:
+ * output IV length
+ * 0
+ */
+unsigned int smw_crypto_get_output_iv_len(struct smw_crypto_aead_args *args);
 
 /**
  * smw_crypto_get_plaintext_len() - Return the length of the plaintext
@@ -154,6 +184,18 @@ void smw_crypto_set_output_len(struct smw_crypto_aead_args *args,
 unsigned char *smw_crypto_get_tag(struct smw_crypto_aead_args *args);
 
 /**
+ * smw_crypto_is_tag_field_set() - Return true if AEAD tag buffer is set
+ * @args: Pointer to internal AEAD argument structure
+ *
+ * Check if AEAD tag buffer is set in the dedicated tag field
+ *
+ * Return:
+ * * true:	- if dedicated @tag field is set
+ * * false:	- if dedicated @tag field is not set
+ */
+bool smw_crypto_is_tag_field_set(struct smw_crypto_aead_args *args);
+
+/**
  * smw_crypto_get_tag_len() - Get AEAD tag buffer length
  * @args: Pointer to internal AEAD arguments
  *
@@ -173,6 +215,17 @@ unsigned int smw_crypto_get_tag_len(struct smw_crypto_aead_args *args);
  */
 void smw_crypto_set_tag_len(struct smw_crypto_aead_args *args,
 			    unsigned int len);
+
+/**
+ * smw_crypto_set_output_iv_len() - Set AEAD output IV buffer length
+ * @args: Pointer to internal AEAD arguments
+ * @len: Output IV buffer length value
+ *
+ * Return:
+ * none
+ */
+void smw_crypto_set_output_iv_len(struct smw_crypto_aead_args *args,
+				  unsigned int len);
 
 /**
  * smw_crypto_set_init_op_context() - Set AEAD init context pointer
@@ -216,6 +269,16 @@ void smw_crypto_set_init_handle(struct smw_crypto_aead_args *args,
  * NULL
  */
 void *smw_crypto_get_op_handle(struct smw_crypto_aead_args *args);
+
+/**
+ * smw_crypto_get_aad_op_handle() - Get AEAD AAD operation handle
+ * @args: Pointer to internal AEAD arguments
+ *
+ * Return:
+ * AEAD operation handle
+ * NULL
+ */
+void *smw_crypto_get_aad_op_handle(struct smw_crypto_aead_args *args);
 
 /**
  * smw_crypto_set_ctx_reserved() - Set AEAD context reserved field

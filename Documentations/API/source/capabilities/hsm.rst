@@ -158,25 +158,6 @@ One-shot operations supported:
  - Encrypt
  - Decrypt
 
-AEAD
-^^^^
-
-.. table:: HSM AEAD
-   :align: center
-   :class: wrap-table
-
-   +--------------+----------+
-   | **Key type** | **Mode** |
-   +==============+==========+
-   | AES          |   CCM    |
-   +              +          +
-   |              |   GCM    |
-   +--------------+----------+
-
-One-shot operations supported:
- - AEAD Encryption
- - AEAD Decryption
-
 Data Storage manager
 ^^^^^^^^^^^^^^^^^^^^
 

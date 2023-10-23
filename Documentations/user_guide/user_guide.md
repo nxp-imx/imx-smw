@@ -197,6 +197,12 @@ and supported by the SMW Library.
 	<td>✔️</td>
 </tr>
 <tr>
+  <td colspan="3">Authentication Encryption (AEAD)</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️</td>
+</tr>
+<tr>
   <td colspan="3">Random Number Generation</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -765,6 +771,12 @@ The default option value is in **bold**.
 	<td>ENABLE_KEYMGR_MODULE</td>
 </tr>
 <tr>
+  <td>-DENABLE_AEAD=[<b>ON</b>|OFF]</td>
+  <td>Enable/disable the support of authentication encryption and decryption
+	(AEAD) operations. Default is ON (enable).</td>
+	<td>ENABLE_KEYMGR_MODULE</td>
+</tr>
+<tr>
   <td>-DENABLE_STORAGE_MODULE=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of data storge operations.
 	Default is ON (enable).</td>
@@ -943,6 +955,9 @@ option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-envi
     |   |   |   |-- internal_trusted_storage.h
     |   |   |   |-- protected_storage.h
     |   |   |   `-- storage_common.h
+    |   |   |-- <span style="color:orange">smw</span>
+    |   |   |   `-- <span style="color:orange">crypto</span>
+    |   |   |       `-- aead.h
     |   |   |-- smw_config.h
     |   |   |-- smw_crypto.h
     |   |   |-- smw_device.h
@@ -1188,6 +1203,9 @@ Below is the organization of the project sources.
 |   |   |-- internal_trusted_storage.h
 |   |   |-- protected_storage.h
 |   |   `-- storage_common.h
+|   |-- <span style="color:orange">smw</span>
+|   |   `-- <span style="color:orange">crypto</span>                 SMW's cryptographic interface headers (refer to APIs documentation)
+|   |       `-- aead.h
 |   |-- smw_config.h
 |   |-- smw_crypto.h
 |   |-- smw_device.h

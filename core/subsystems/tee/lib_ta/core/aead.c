@@ -215,7 +215,6 @@ TEE_Result aead_encrypt_final(uint32_t param_types,
 				 &params[2].memref.size,
 				 params[3].memref.buffer,
 				 &params[3].memref.size);
-
 	if (res == TEE_SUCCESS)
 		TEE_FreeOperation(op_handle);
 
@@ -255,8 +254,7 @@ TEE_Result aead_decrypt_final(uint32_t param_types,
 				 &params[2].memref.size,
 				 params[3].memref.buffer,
 				 params[3].memref.size);
-
-	if (res == TEE_SUCCESS)
+	if (res == TEE_SUCCESS || res == TEE_ERROR_MAC_INVALID)
 		TEE_FreeOperation(op_handle);
 
 	FMSG("Return status of %s = 0x%x", __func__, res);

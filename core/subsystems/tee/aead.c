@@ -186,7 +186,10 @@ static int aead_update_aad(struct smw_crypto_aead_args *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	context.handle = smw_crypto_get_op_handle(args);
+	if (args->op_step == SMW_OP_STEP_ONESHOT)
+		context.handle = smw_crypto_get_op_handle(args);
+	else
+		context.handle = smw_crypto_get_aad_op_handle(args);
 
 	/*
 	 * Parameters for TEE_AEUpdateAAD
@@ -243,16 +246,19 @@ static unsigned int get_tee_input_data_len(struct smw_crypto_aead_args *args,
 					   unsigned int *input_data_length)
 {
 	int status = SMW_STATUS_OK;
-	unsigned int data_len = 0;
 
-	data_len = smw_crypto_get_input_len(args);
+	*input_data_length = smw_crypto_get_input_len(args);
 
 	if (ta_cmd == CMD_AEAD_DECRYPT_FINAL) {
-		if (DEC_OVERFLOW(data_len, smw_crypto_get_tag_len(args)))
-			status = SMW_STATUS_INVALID_PARAM;
+		if (!smw_crypto_is_tag_field_set(args)) {
+			if (DEC_OVERFLOW(*input_data_length,
+					 smw_crypto_get_tag_len(args)))
+				status = SMW_STATUS_INVALID_PARAM;
+		}
 	}
 
-	*input_data_length = data_len;
+	SMW_DBG_PRINTF(VERBOSE, "%s returned with input length = %u\n",
+		       __func__, *input_data_length);
 	return status;
 }
 
@@ -276,9 +282,14 @@ static unsigned int get_tee_output_data_len(struct smw_crypto_aead_args *args,
 	out_len = smw_crypto_get_output_len(args);
 
 	if (ta_cmd == CMD_AEAD_ENCRYPT_FINAL) {
-		if (DEC_OVERFLOW(out_len, smw_crypto_get_tag_len(args)))
-			out_len = 0;
+		if (!smw_crypto_is_tag_field_set(args)) {
+			if (DEC_OVERFLOW(out_len, smw_crypto_get_tag_len(args)))
+				out_len = 0;
+		}
 	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned with output length = %u\n",
+		       __func__, out_len);
 
 	return out_len;
 }
@@ -292,6 +303,7 @@ static int aead_multi_part_common(struct smw_crypto_aead_args *args,
 	unsigned int output_length = 0;
 	unsigned int input_length = 0;
 	unsigned int tag_length = 0;
+
 	uint32_t param_type = TEEC_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -346,7 +358,8 @@ static int aead_multi_part_common(struct smw_crypto_aead_args *args,
 
 	if (ta_cmd == CMD_AEAD_ENCRYPT_FINAL ||
 	    ta_cmd == CMD_AEAD_DECRYPT_FINAL) {
-		if (op.params[2].tmpref.size == 0) {
+		if (op.params[2].tmpref.size == 0 &&
+		    op.params[1].tmpref.size != 0) {
 			op.params[3].tmpref.size = 0;
 			op.params[3].tmpref.buffer = NULL;
 		} else {
@@ -375,12 +388,23 @@ static int aead_multi_part_common(struct smw_crypto_aead_args *args,
 		else
 			status = SMW_STATUS_OPERATION_FAILURE;
 
-		/* For encryption, output_length = ciphertext length + tag length */
-		if (!INC_OVERFLOW(output_length, tag_length)) {
-			smw_crypto_set_output_len(args, output_length);
-		} else {
-			status = SMW_STATUS_OPERATION_FAILURE;
-			goto end;
+		/*
+		 * For encryption,
+		 * if dedicated tag is set,
+		 * output_length = ciphertext length
+		 *
+		 * if dedicated tag is not set,
+		 * output_length = ciphertext length + tag length
+		 *
+		 */
+
+		if (!smw_crypto_is_tag_field_set(args)) {
+			if (!INC_OVERFLOW(output_length, tag_length)) {
+				smw_crypto_set_output_len(args, output_length);
+			} else {
+				status = SMW_STATUS_OPERATION_FAILURE;
+				goto end;
+			}
 		}
 	}
 
@@ -396,7 +420,23 @@ static int aead_one_shot(void *args)
 	struct smw_op_context op_context = { 0 };
 	enum ta_commands ta_cmd = CMD_AEAD_ENCRYPT_FINAL;
 
+	unsigned char *output_iv = NULL;
+	unsigned char *iv = NULL;
+	unsigned int output_iv_len = 0;
+	unsigned int iv_len = 0;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
+		output_iv_len = smw_crypto_get_output_iv_len(aead_args);
+		output_iv = smw_crypto_get_output_iv(aead_args);
+		iv = smw_crypto_get_iv(aead_args);
+		iv_len = smw_crypto_get_iv_len(aead_args);
+		if (output_iv_len < iv_len) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+	}
 
 	smw_crypto_set_init_op_context(aead_args, &op_context);
 
@@ -408,15 +448,30 @@ static int aead_one_shot(void *args)
 	smw_crypto_set_data_op_context(aead_args, &op_context);
 
 	/* Update AAD */
-	status = aead_update_aad(aead_args);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	if (smw_crypto_get_aad(aead_args) &&
+	    smw_crypto_get_aad_len(aead_args)) {
+		status = aead_update_aad(aead_args);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
 
 	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_DECRYPT)
 		ta_cmd = CMD_AEAD_DECRYPT_FINAL;
 
 	/* AE final */
 	status = aead_multi_part_common(aead_args, ta_cmd);
+
+	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
+		if (status != SMW_STATUS_OK &&
+		    status != SMW_STATUS_OUTPUT_TOO_SHORT)
+			goto end;
+
+		smw_crypto_set_output_iv_len(aead_args, iv_len);
+
+		/* Copy user provided IV buffer to output IV */
+		if (status == SMW_STATUS_OK && output_iv && iv && iv_len)
+			SMW_UTILS_MEMCPY(output_iv, iv, iv_len);
+	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

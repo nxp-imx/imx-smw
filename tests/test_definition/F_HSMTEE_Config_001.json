@@ -1,4 +1,14 @@
 {
+	"keys": {
+		"key HSM": {
+			"type": "AES",
+			"security_size": 256,
+		},
+		"key TEE": {
+			"type": "AES",
+			"security_size": 256,
+		}
+	},
 	"subtest 1": {
 		"command": "CONFIG_UNLOAD"
 	},
@@ -34,5 +44,75 @@
 		"random": 512,
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED",
 		"depends": 2
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key HSM",
+		"subsystem_exp": "HSM"
+	},
+	"subtest 8": {
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_name": "key HSM",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": 16,
+		"mac_id": 1,
+		"subsystem_exp": "HSM",
+		"depends": 7
+	},
+	"subtest 9": {
+		"command": "MAC_VERIFY",
+		"algo": "CMAC",
+		"key_name": "key HSM",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"mac_id": 1,
+		"subsystem_exp": "HSM",
+		"depends": 8
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "key HSM",
+		"subsystem_exp": "HSM",
+		"depends": 7
+	},
+	"subtest 11": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key TEE",
+		"subsystem_exp": "TEE"
+	},
+	"subtest 12": {
+		"command": "MAC_COMPUTE",
+		"algo": "CMAC",
+		"key_name": "key TEE",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": 16,
+		"mac_id": 2,
+		"subsystem_exp": "TEE",
+		"depends": 11
+	},
+	"subtest 13": {
+		"command": "MAC_VERIFY",
+		"algo": "CMAC",
+		"key_name": "key TEE",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"mac_id": 2,
+		"subsystem_exp": "TEE",
+		"depends": 12
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "key TEE",
+		"subsystem_exp": "TEE",
+		"depends": 11
 	}
 }

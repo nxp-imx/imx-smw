@@ -17,7 +17,7 @@
  * @mode_name: AEAD mode name. See &typedef smw_aead_mode_t
  * @operation_name: AEAD operation name. See &typedef smw_aead_operation_t
  * @iv: Pointer to initialization vector
- * @iv_length: iv length in bytes
+ * @iv_length: IV buffer length in bytes
  * @aad_length: Additional authentication data length in bytes
  * @tag_length: Tag buffer length in bytes
  * @plaintext_length: Length in bytes of the data to encrypt
@@ -62,47 +62,68 @@ struct smw_aead_data_args {
 /**
  * struct smw_aead_aad_args - Authentication Encryption AAD arguments
  * @version: Version of this structure
- * @aad: Pointer to additional authentication data
- * @aad_length: AAD length in bytes
+ * @data: Pointer to additional authentication data
+ * @data_length: AAD length in bytes
  * @context: Pointer to operation context. See &struct smw_op_context
  */
 struct smw_aead_aad_args {
 	/* Inputs */
 	unsigned char version;
-	unsigned char *aad;
-	unsigned int aad_length;
+	unsigned char *data;
+	unsigned int data_length;
 	struct smw_op_context *context;
 };
 
 /**
  * struct smw_aead_final_args - AEAD final arguments
  * @version: Version of this structure
- * @data: AEAD data arguments. See &struct smw_aead_data_args
+ * @data: Pointer to AEAD data arguments. See &struct smw_aead_data_args
  * @operation_name: AEAD operation name. See &typedef smw_aead_operation_t
+ * @tag: Pointer to tag buffer
  * @tag_length: Tag buffer length in bytes
- *
  */
 struct smw_aead_final_args {
 	/* Inputs */
 	unsigned char version;
-	struct smw_aead_data_args data;
+	struct smw_aead_data_args *data;
 	smw_aead_operation_t operation_name;
 	/* Input output */
+	unsigned char *tag;
 	unsigned int tag_length;
 };
 
 /**
  * struct smw_aead_args - AEAD one-shot arguments
- * @init: Initialization arguments. See &struct smw_aead_init_args
- * @data: Data arguments. See &struct smw_aead_data_args
- * @aad: Pointer to additional authentication data
+ * @version: Version of this structure
+ * @aad: Pointer to AAD arguments. See &struct smw_aead_aad_args
+ * @init: Pointer to initialization arguments. See &struct smw_aead_init_args
+ * @final: Pointer to final arguments. See &struct smw_aead_final_args
+ * @output_iv_length: Length of output IV buffer
+ * @output_iv: Pointer to output IV buffer
  *
- * Field @context present in @init and @data is ignored.
+ * Field @context present in @init, @aad and @final is ignored.
+ * Field @operation_name present in @final is ignored.
+ *
+ * Upon successful encryption operation, @output_iv will contain the IV
+ * used by subsystem during operation.
+ * If subsystem offers the capability to generate partial or complete IV,
+ * the user can set the input @init->iv_length to 0 (requesting full generated
+ * IV) or to 4 (requesting partial generated IV)
+ * Otherwise, if @init->iv_length is set to 12 bytes or greater, the @output_iv
+ * will contain the IV supplied by the user.
+ *
+ * Fields @output_iv_length and @output_iv are ignored for decryption operation.
  */
 struct smw_aead_args {
-	struct smw_aead_init_args init;
-	struct smw_aead_data_args data;
-	unsigned char *aad;
+	/* Input */
+	unsigned char version;
+	struct smw_aead_aad_args *aad;
+	/* Input output */
+	struct smw_aead_init_args *init;
+	struct smw_aead_final_args *final;
+	unsigned int output_iv_length;
+	/* Output */
+	unsigned char *output_iv;
 };
 
 /**
@@ -114,30 +135,50 @@ struct smw_aead_args {
  *  - One-shot AEAD encryption operation:
  *
  *    - This function encrypts a message and computes the tag.
+ *    - If the @args->final->tag field is set, the computed tag will be stored
+ *      in the dedicated @args->final->tag field.
+ *    - If the @args->final->tag field is not set, @args->final->data->output
+ *      field will contain the ciphertext followed by the tag.
  *
  *  - One-shot AEAD decryption operation:
  *
  *    - This function authenticates and decrypts the ciphertext.
+ *    - If the @args->final->tag field is not set, the @args->final->data->input
+ *      should contain the ciphertext followed by the tag.
  *    - If the computed tag does not match the supplied tag, the operation
  *      will be terminated.
- *    - The input data field of @args should be large enough to accommodate
- *      the ciphertext and the tag.
  *
- * Output data field of @args can be a NULL pointer to get the required output
- * buffer length. If this feature succeeds, returned error code is SMW_STATUS_OK.
+ * If @args->final->data->output is a NULL pointer, then the function updates
+ * @args->final->data->output_length field and returns error code SMW_STATUS_OK.
+ * Additionally, if the operation is encryption, the tag length
+ * @args->final->tag_length and output IV length @args->output_iv_length are
+ * updated with generated tag value length and IV length, respectively.
  *
- * Output length @args field is updated to the correct value when:
+ * On operation completion, the @args->final->data->output_length is updated to
+ * the correct value when:
  *
- *  - Output length is bigger than expected. In this case operation is succeeded.
- *  - Output length is shorter than expected. In this case operation failed and
- *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
+ *  - Output length is bigger than expected. In this case, operation succeeds.
+ *  - Output length is shorter than expected. In this case, operation fails and
+ *    returns SMW_STATUS_OUTPUT_TOO_SHORT.
+ *  - In the above mentioned two scenarios, if the operation is encryption, the
+ *    function also updates the required tag buffer length
+ *    @args->final->tag_length and output IV length @args->output_iv_length.
  *
- * If output data field of @args is not a NULL pointer, then
+ * If @args->final->data->output is not a NULL pointer, then
  *
- *  - For encryption operation, output length should be large enough to
- *    accommodate both the ciphertext and tag.
- *  - For decryption operation, output length should be large enough to
- *    accommodate the plaintext.
+ *  - For an encryption operation, if the @args->final->tag field is not set,
+ *    @args->final->data->output should be sufficiently large to accommodate
+ *    both the ciphertext and tag.
+ *  - For an encryption operation, if the @args->final->tag field is set,
+ *    @args->final->data->output should be sufficiently large to accommodate the
+ *    ciphertext.
+ *  - For decryption operation, @args->final->data->output should be
+ *    sufficiently large to accommodate the plaintext.
+ *
+ * If the IV is generated fully or partially by the subsystem, @args->output_iv
+ * will hold the IV generated by subsystem.
+ * If the IV is supplied fully by the user, @args->output_iv will hold IV
+ * supplied by he user.
  *
  * Return:
  * See &enum smw_status_code
@@ -150,7 +191,8 @@ enum smw_status_code smw_aead(struct smw_aead_args *args);
  * @args: Pointer to the structure that contains the AEAD initialization
  * arguments.
  *
- * This function initializes AEAD multi-part encryption or decryption operation.
+ * This function initializes AEAD multi-part encryption or decryption
+ * operation.
  *
  * Key used can be defined either as a buffer or as a key ID.
  *
@@ -186,18 +228,18 @@ enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args);
  *
  * The context used must be initialized by the AEAD multi-part initialization.
  *
- * Output data field of @args can be a NULL pointer to get the required output
- * buffer length. If this feature succeeds, returned error code is SMW_STATUS_OK.
+ * The @args->output can be a NULL pointer to get the required output buffer
+ * length. If this feature succeeds, returned error code is SMW_STATUS_OK.
  *
- * Output length @args field is updated to the correct value when:
+ * The @args->output_length field is updated to the correct value when:
  *
  *  - Output length is bigger than expected. In this case operation succeeded.
  *  - Output length is shorter than expected. In this case operation failed and
  *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
  *
  * If the returned error code is SMW_STATUS_OK, SMW_STATUS_INVALID_PARAM,
- * SMW_STATUS_VERSION_NOT_SUPPORTED or SMW_STATUS_OUTPUT_TOO_SHORT the operation
- * is not terminated and the context remains valid.
+ * SMW_STATUS_VERSION_NOT_SUPPORTED or SMW_STATUS_OUTPUT_TOO_SHORT the
+ * operation is not terminated and the context remains valid.
  *
  * Return:
  * See &enum smw_status_code
@@ -219,6 +261,10 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args);
  *
  *    - This function finishes encrypting a message in an active multi-part
  *      AEAD operation and computes the tag.
+ *    - If the @args->tag field is set, the computed tag will be stored in the
+ *      dedicated @args->tag field.
+ *    - If the @args->tag field is not set, @args->data->output field will point
+ *      to the ciphertext followed by the tag.
  *
  *  - AEAD Decryption final operation:
  *
@@ -226,25 +272,35 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args);
  *      active multi-part AEAD operation.
  *    - If the computed tag does not match the supplied tag, the operation will
  *      be terminated. The returned error code is SMW_STATUS_SIGNATURE_INVALID.
- *    - The input data field of @args should be large enough to accommodate
- *      the ciphertext and the tag.
+ *    - If the @args->tag is not supplied in the tag field, the
+ *      @args->data->input field should be sufficiently large to accommodate
+ *      both the ciphertext and the tag.
  *
- * Output data field of @args can be a NULL pointer to get the required output
- * buffer length. If this feature succeeds, returned error code is SMW_STATUS_OK.
- * Output length @args field is updated to the correct value when:
+ * If @args->data->output is a NULL pointer, then the function updates
+ * @args->data->output_length field and returns error code SMW_STATUS_OK.
+ * In this case, if the operation is encryption, the function also updates the
+ * required tag buffer length @args->tag_length.
  *
- *  - Output length is bigger than expected. In this case operation succeeded.
- *  - Output length is shorter than expected. In this case operation failed and
- *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
+ * The @args->data->output_length field is updated to the correct value when:
  *
- * If output data field of @args is not a NULL pointer, then
+ *  - Output length is bigger than expected. In this case, operation succeeds.
+ *  - Output length is shorter than expected. In this case, operation fails and
+ *    returns SMW_STATUS_OUTPUT_TOO_SHORT error code.
+ *  - In the above mentioned two scenarios, if the operation is encryption, the
+ *    function also updates the required tag buffer length @args->tag_length.
  *
- *  - For encryption operation, output length should be large enough to
- *    accommodate both the plaintext and tag.
- *  - For decryption operation, output length should be large enough to
- *    accommodate the plaintext.
+ * If @args->data->output field is not a NULL pointer, then
  *
- * If the returned error code is SMW_STATUS_OK, SMW_STATUS_INVALID_PARAM,
+ *  - For an encryption operation, if the @args->tag field is not set,
+ *    @args->data->output should be sufficiently large to accommodate both the
+ *    ciphertext and tag.
+ *  - For an encryption operation, if the @args->tag field is set,
+ *    @args->data->output should be sufficiently large to accommodate the
+ *    ciphertext.
+ *  - For decryption operation, @args->data->output should be sufficiently large
+ *    to accommodate the plaintext.
+ *
+ * If the returned error code is SMW_STATUS_INVALID_PARAM,
  * SMW_STATUS_VERSION_NOT_SUPPORTED or SMW_STATUS_OUTPUT_TOO_SHORT the operation
  * is not terminated and the context remains valid.
  *

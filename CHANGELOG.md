@@ -18,14 +18,37 @@ Each component handles its own version number specified in each component main C
 
 The releases are listed from the most recent to the first one.
 
-1. [Release 2.5](#rel_2_5)
-2. [Release 2.4](#rel_2_4)
-3. [Release 2.3](#rel_2_3)
-4. [Release 2.2](#rel_2_2)
-5. [Release 2.1](#rel_2_1)
-6. [Release 2.0](#rel_2_0)
-7. [Release 1.0](#rel_1_0)
+1. [Release 3.0](#rel_3_0)
+2. [Release 2.5](#rel_2_5)
+3. [Release 2.4](#rel_2_4)
+4. [Release 2.3](#rel_2_3)
+5. [Release 2.2](#rel_2_2)
+6. [Release 2.1](#rel_2_1)
+7. [Release 2.0](#rel_2_0)
+8. [Release 1.0](#rel_1_0)
 
+
+---
+### <a id ="rel_3_0"></a></br>**Release 3.0**
+---
+#### Known Issues
+##### 1. HSM Subsystem
+
+* When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
+The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+#### SMW Library - _version 3.0_
+##### 1. SMW APIs
+
+* Fix the selection of the subsystem for cryptographic operations using one or more key(s).
+  The selection is based on the content of the configuration file unless the cryptographic operation
+  uses one or more key(s). In this case, the subsystem associated to the key(s) must be selected.
+
+#### SMW Tests - _version 3.0_
+
+#### PKCS#11 Library - _version 3.0_
+
+#### PKCS#11 Tests - _version 3.0_
 
 ---
 ### <a id ="rel_2_5"></a></br>**Release 2.5**

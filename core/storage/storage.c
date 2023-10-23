@@ -297,7 +297,7 @@ end:
 
 static int convert_sign_args(struct smw_sign_args *args,
 			     struct smw_storage_sign_args *converted_args,
-			     enum subsystem_id subsystem_id)
+			     enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_OK;
 	struct smw_keymgr_descriptor *key_desc = NULL;
@@ -361,7 +361,7 @@ store_data_convert_args(struct smw_store_data_args *args,
 		goto end;
 
 	status = convert_sign_args(args->sign_args, &converted_args->sign_args,
-				   *subsystem_id);
+				   subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

@@ -232,7 +232,7 @@ static int convert_init_args(struct smw_aead_init_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_desc,
 					       &converted_args->key_desc, false,
-					       *subsystem_id);
+					       subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

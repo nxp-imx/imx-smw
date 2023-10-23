@@ -29,7 +29,7 @@ static int mac_convert_args(struct smw_mac_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       false, *subsystem_id);
+					       false, subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

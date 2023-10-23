@@ -414,7 +414,7 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 		key_desc = &conv_args->key_derived;
 		/* Input base key defines the key type and size */
 		status = smw_keymgr_convert_descriptor(key_out, key_desc, true,
-						       SUBSYSTEM_ID_INVALID);
+						       NULL);
 	} else {
 		status = SMW_STATUS_OK;
 	}
@@ -427,7 +427,7 @@ end:
 
 static int convert_input_args(struct smw_derive_key_args *args,
 			      struct smw_keymgr_derive_key_args *conv_args,
-			      enum subsystem_id subsystem_id)
+			      enum subsystem_id *subsystem_id)
 {
 	/* Get the input key base for the derivation */
 	int status = smw_keymgr_convert_descriptor(args->key_descriptor_base,
@@ -515,7 +515,7 @@ static int derive_key_convert_args(struct smw_derive_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = convert_input_args(args, conv_args, *subsystem_id);
+	status = convert_input_args(args, conv_args, subsystem_id);
 
 	if (status == SMW_STATUS_OK)
 		status = convert_output_args(args, conv_args);

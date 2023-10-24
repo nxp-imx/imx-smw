@@ -6,6 +6,7 @@
 #ifndef __CIPHER_H__
 #define __CIPHER_H__
 
+#include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
 #include "exec.h"
@@ -153,13 +154,13 @@ void smw_crypto_set_cipher_init_op_context(struct smw_crypto_cipher_args *args,
 /**
  * smw_crypto_set_cipher_ctx_reserved() - Set cipher context reserved field
  * @args: Pointer to internal cipher arguments.
- * @rsvd: Pointer to subsystem context operation structure.
+ * @subsystem_id: Secure Subsystem ID.
  *
  * Return:
  * none
  */
 void smw_crypto_set_cipher_ctx_reserved(struct smw_crypto_cipher_args *args,
-					struct smw_crypto_context_ops *rsvd);
+					enum subsystem_id subsystem_id);
 
 /**
  * smw_crypto_set_cipher_init_handle() - Set cipher init handle

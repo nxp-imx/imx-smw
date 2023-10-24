@@ -354,9 +354,9 @@ enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_aead_args aead_args = { 0 };
-	struct smw_crypto_context_ops *ops = NULL;
 	struct smw_aead_data_args data_pub = { 0 };
 	struct smw_aead_init_args init_pub = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -379,12 +379,11 @@ enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args)
 	aead_args.aad = args->aad;
 	init_pub.aad_length = args->aad_length;
 
-	ops = (struct smw_crypto_context_ops *)args->context->reserved;
-	if (ops)
-		status =
-			smw_utils_execute_update_implicit(OPERATION_ID_AEAD_AAD,
-							  &aead_args,
-							  ops->subsystem);
+	if (SET_OVERFLOW((uintptr_t)args->context->reserved, subsystem_id))
+		goto end;
+
+	status = smw_utils_execute_update_implicit(OPERATION_ID_AEAD_AAD,
+						   &aead_args, subsystem_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -395,7 +394,7 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_aead_args aead_args = { 0 };
-	struct smw_crypto_context_ops *ops = NULL;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -412,12 +411,11 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args)
 
 	aead_args.data_pub = args;
 
-	ops = (struct smw_crypto_context_ops *)args->context->reserved;
-	if (!ops)
+	if (SET_OVERFLOW((uintptr_t)args->context->reserved, subsystem_id))
 		goto end;
 
 	status = smw_utils_execute_update(OPERATION_ID_AEAD_MULTI_PART,
-					  &aead_args, ops->subsystem);
+					  &aead_args, subsystem_id);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -436,8 +434,8 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_aead_args aead_args = { 0 };
-	struct smw_crypto_context_ops *ops = NULL;
 	struct smw_aead_init_args init_args = { 0 };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -462,12 +460,11 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 	aead_args.data_pub = &args->data;
 	aead_args.init_pub->tag_length = args->tag_length;
 
-	ops = (struct smw_crypto_context_ops *)args->data.context->reserved;
-	if (!ops)
+	if (SET_OVERFLOW((uintptr_t)args->data.context->reserved, subsystem_id))
 		goto end;
 
 	status = smw_utils_execute_final(OPERATION_ID_AEAD_MULTI_PART,
-					 &aead_args, ops->subsystem);
+					 &aead_args, subsystem_id);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -644,8 +641,8 @@ inline void *smw_crypto_get_op_handle(struct smw_crypto_aead_args *args)
 }
 
 inline void smw_crypto_set_ctx_reserved(struct smw_crypto_aead_args *args,
-					struct smw_crypto_context_ops *rsvd)
+					enum subsystem_id subsystem_id)
 {
 	if (args && args->init_pub && args->init_pub->context)
-		args->init_pub->context->reserved = rsvd;
+		args->init_pub->context->reserved = (void *)subsystem_id;
 }

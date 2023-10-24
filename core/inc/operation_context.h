@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2023 NXP
  */
 
 #ifndef __OPERATION_CONTEXT_H__
@@ -28,12 +28,10 @@ struct smw_crypto_copy_ctx_args {
 
 /**
  * struct smw_crypto_context_ops - Internal context operations structure
- * @subsystem: SMW subsystem ID
  * @cancel: Pointer to cancel context function
  * @copy: Pointer to copy context function
  */
 struct smw_crypto_context_ops {
-	enum subsystem_id subsystem;
 	int (*cancel)(struct smw_crypto_cancel_op_args *args);
 	int (*copy)(struct smw_crypto_copy_ctx_args *args);
 };

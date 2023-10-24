@@ -7,14 +7,18 @@
 
 #include "global.h"
 #include "debug.h"
+#include "utils.h"
 #include "operations.h"
 #include "subsystems.h"
+#include "config.h"
 #include "operation_context.h"
 
 enum smw_status_code smw_cancel_operation(struct smw_op_context *context)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cancel_op_args args = { .ctx = context };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	struct subsystem_func *subsystem_func = NULL;
 	struct smw_crypto_context_ops *ops = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -22,7 +26,19 @@ enum smw_status_code smw_cancel_operation(struct smw_op_context *context)
 	if (!context || !context->handle)
 		goto end;
 
-	ops = context->reserved;
+	if (SET_OVERFLOW((uintptr_t)context->reserved, subsystem_id))
+		goto end;
+
+	if (subsystem_id >= SUBSYSTEM_ID_NB)
+		goto end;
+
+	subsystem_func = smw_config_get_subsystem_func(subsystem_id);
+	if (!subsystem_func || !subsystem_func->ctx_ops) {
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	ops = subsystem_func->ctx_ops();
 
 	if (!ops || !ops->cancel) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -46,6 +62,8 @@ enum smw_status_code smw_copy_context(struct smw_op_context *dst,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_copy_ctx_args args = { .src = src, .dst = dst };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	struct subsystem_func *subsystem_func = NULL;
 	struct smw_crypto_context_ops *ops = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -53,7 +71,19 @@ enum smw_status_code smw_copy_context(struct smw_op_context *dst,
 	if (!src || !src->handle || !dst)
 		goto end;
 
-	ops = src->reserved;
+	if (SET_OVERFLOW((uintptr_t)src->reserved, subsystem_id))
+		goto end;
+
+	if (subsystem_id >= SUBSYSTEM_ID_NB)
+		goto end;
+
+	subsystem_func = smw_config_get_subsystem_func(subsystem_id);
+	if (!subsystem_func || !subsystem_func->ctx_ops) {
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	ops = subsystem_func->ctx_ops();
 
 	if (!ops || !ops->copy) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;

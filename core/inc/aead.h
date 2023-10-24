@@ -6,6 +6,7 @@
 #ifndef __AEAD_H__
 #define __AEAD_H__
 
+#include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
 #include "exec.h"
@@ -219,12 +220,12 @@ void *smw_crypto_get_op_handle(struct smw_crypto_aead_args *args);
 /**
  * smw_crypto_set_ctx_reserved() - Set AEAD context reserved field
  * @args: Pointer to internal AEAD arguments
- * @rsvd: Pointer to subsystem context operation structure
+ * @subsystem_id: Secure Subsystem ID
  *
  * Return:
  * none
  */
 void smw_crypto_set_ctx_reserved(struct smw_crypto_aead_args *args,
-				 struct smw_crypto_context_ops *rsvd);
+				 enum subsystem_id subsystem_id);
 
 #endif /* __AEAD_H__ */

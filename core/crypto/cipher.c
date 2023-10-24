@@ -290,7 +290,7 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args update_args = { 0 };
-	struct smw_crypto_context_ops *ops = NULL;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -306,10 +306,11 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 	update_args.op_step = SMW_OP_STEP_UPDATE;
 	update_args.data_pub = args;
 
-	ops = (struct smw_crypto_context_ops *)args->context->reserved;
+	if (SET_OVERFLOW((uintptr_t)args->context->reserved, subsystem_id))
+		goto end;
 
 	status = smw_utils_execute_update(OPERATION_ID_CIPHER_MULTI_PART,
-					  &update_args, ops->subsystem);
+					  &update_args, subsystem_id);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -320,7 +321,6 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 		status = SMW_STATUS_OK;
 
 end:
-
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -329,7 +329,7 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args final_args = { 0 };
-	struct smw_crypto_context_ops *ops = NULL;
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -346,10 +346,11 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 	final_args.op_step = SMW_OP_STEP_FINAL;
 	final_args.data_pub = args;
 
-	ops = (struct smw_crypto_context_ops *)args->context->reserved;
+	if (SET_OVERFLOW((uintptr_t)args->context->reserved, subsystem_id))
+		goto end;
 
 	status = smw_utils_execute_final(OPERATION_ID_CIPHER_MULTI_PART,
-					 &final_args, ops->subsystem);
+					 &final_args, subsystem_id);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -360,7 +361,6 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 		status = SMW_STATUS_OK;
 
 end:
-
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -464,10 +464,10 @@ smw_crypto_set_cipher_init_op_context(struct smw_crypto_cipher_args *args,
 
 inline void
 smw_crypto_set_cipher_ctx_reserved(struct smw_crypto_cipher_args *args,
-				   struct smw_crypto_context_ops *rsvd)
+				   enum subsystem_id subsystem_id)
 {
 	if (args && args->init_pub && args->init_pub->context)
-		args->init_pub->context->reserved = rsvd;
+		args->init_pub->context->reserved = (void *)subsystem_id;
 }
 
 inline void

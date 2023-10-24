@@ -352,7 +352,8 @@ end:
 
 static const struct subsystem_func func = { .load = load,
 					    .unload = unload,
-					    .execute = execute };
+					    .execute = execute,
+					    .ctx_ops = NULL };
 
 const struct subsystem_func *smw_ele_get_func(void)
 {

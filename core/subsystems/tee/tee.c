@@ -351,6 +351,11 @@ end:
 	return status;
 }
 
+__weak void *tee_get_ctx_ops(void)
+{
+	return NULL;
+}
+
 int convert_tee_result(TEEC_Result result)
 {
 	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
@@ -459,7 +464,8 @@ TEEC_Context *get_tee_context_ptr(void)
 
 static const struct subsystem_func func = { .load = load,
 					    .unload = unload,
-					    .execute = execute };
+					    .execute = execute,
+					    .ctx_ops = tee_get_ctx_ops };
 
 const struct subsystem_func *smw_tee_get_func(void)
 {

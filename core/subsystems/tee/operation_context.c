@@ -112,12 +112,10 @@ end:
 }
 
 /* TEE context operations structure */
-static struct smw_crypto_context_ops tee_ctx_ops = { .subsystem =
-							     SUBSYSTEM_ID_TEE,
-						     .cancel = cancel_operation,
+static struct smw_crypto_context_ops tee_ctx_ops = { .cancel = cancel_operation,
 						     .copy = copy_context };
 
-struct smw_crypto_context_ops *tee_get_ctx_ops(void)
+void *tee_get_ctx_ops(void)
 {
 	return &tee_ctx_ops;
 }

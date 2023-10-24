@@ -161,7 +161,7 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 
 	if (status == SMW_STATUS_OK) {
 		smw_crypto_set_cipher_init_handle(args, context.handle);
-		smw_crypto_set_cipher_ctx_reserved(args, tee_get_ctx_ops());
+		smw_crypto_set_cipher_ctx_reserved(args, SUBSYSTEM_ID_TEE);
 	}
 
 	/* Delete imported ephemeral keys and update operation context */

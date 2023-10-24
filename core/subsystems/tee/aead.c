@@ -161,7 +161,7 @@ static int aead_init(struct smw_crypto_aead_args *args)
 
 	if (status == SMW_STATUS_OK) {
 		smw_crypto_set_init_handle(args, context.handle);
-		smw_crypto_set_ctx_reserved(args, tee_get_ctx_ops());
+		smw_crypto_set_ctx_reserved(args, SUBSYSTEM_ID_TEE);
 	}
 
 	key_id = args->key_desc.identifier.id;

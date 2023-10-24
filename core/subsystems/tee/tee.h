@@ -138,7 +138,7 @@ bool tee_aead_handle(enum operation_id operation_id, void *args, int *status);
  * Return:
  * Pointer to TEE context operations structure
  */
-struct smw_crypto_context_ops *tee_get_ctx_ops(void);
+void *tee_get_ctx_ops(void);
 
 /**
  * convert_tee_result() - Convert TEE result into SMW status.

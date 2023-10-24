@@ -41,6 +41,9 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 			return status;
 	}
 
+	if (subsystem_id >= SUBSYSTEM_ID_NB)
+		return SMW_STATUS_INVALID_PARAM;
+
 	/*
 	 * For update and final no need to load subsystem.
 	 * This is done at initialization

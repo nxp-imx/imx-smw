@@ -111,15 +111,38 @@ bool hsm_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
 			    void *args, int *status);
 
 /**
- * hsm_derive_key() - HSM key derivation operation.
- * @hsm_ctx: Pointer to the HSM subsystem context structure.
- * @args: Pointer to the derive key arguments.
+ * hsm_rng_handle() - Handle the RNG operation.
+ * @hdl: Pointer to the HSM handles structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the RNG operation.
+ * @status is set only if the function returns true.
  *
  * Return:
- * SMW status
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
  */
-int hsm_derive_key(struct subsystem_context *hsm_ctx,
-		   struct smw_keymgr_derive_key_args *args);
+bool hsm_rng_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
+		    int *status);
+
+/**
+ * hsm_cipher_handle() - Handle the Cipher operation.
+ * @hdl: Pointer to the HSM handles structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the Cipher operation.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool hsm_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
+		       void *args, int *status);
 
 /**
  * hsm_mac_handle() - Handle the MAC operation.
@@ -137,6 +160,35 @@ int hsm_derive_key(struct subsystem_context *hsm_ctx,
  */
 bool hsm_mac_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		    int *status);
+
+/**
+ * hsm_storage_handle() - Handle the Storage operation.
+ * @hdl: Pointer to the HSM handles structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the Storage operation.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool hsm_storage_handle(struct hdl *hdl, enum operation_id operation_id,
+			void *args, int *status);
+
+/**
+ * hsm_derive_key() - HSM key derivation operation.
+ * @hsm_ctx: Pointer to the HSM subsystem context structure.
+ * @args: Pointer to the derive key arguments.
+ *
+ * Return:
+ * SMW status
+ */
+int hsm_derive_key(struct subsystem_context *hsm_ctx,
+		   struct smw_keymgr_derive_key_args *args);
+
 /**
  * convert_hsm_err() - Convert HSM error into SMW status.
  * @err: HSM error code.

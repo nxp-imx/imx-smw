@@ -18,10 +18,10 @@ char *get_strerr(void)
 
 void dbg_entry(struct obj_entry *entry __maybe_unused)
 {
-	DBG_PRINTF(DEBUG, "Key ID         : %u\n", entry->id);
-	DBG_PRINTF(DEBUG, "    Flags      : %u\n", entry->flags);
-	DBG_PRINTF(DEBUG, "    Persistence: %u\n", entry->persistence);
-	DBG_PRINTF(DEBUG, "    Size       : %zu\n", entry->info_size);
+	DBG_PRINTF(DEBUG, "Object ID         : %u\n", entry->id);
+	DBG_PRINTF(DEBUG, "       Flags      : %u\n", entry->flags);
+	DBG_PRINTF(DEBUG, "       Persistence: %u\n", entry->persistence);
+	DBG_PRINTF(DEBUG, "       Size       : %zu\n", entry->info_size);
 }
 
 void dbg_entry_info(void *buf, size_t len)

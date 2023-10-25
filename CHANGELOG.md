@@ -44,6 +44,10 @@ The failure is due to the storage manager which is already loaded and a new inst
   The selection is based on the content of the configuration file unless the cryptographic operation
   uses one or more key(s). In this case, the subsystem associated to the key(s) must be selected.
 
+##### 2. Subsystems
+
+* Add HSM subsystem storage data store and retrieve.
+
 #### SMW Tests - _version 3.0_
 
 #### PKCS#11 Library - _version 3.0_

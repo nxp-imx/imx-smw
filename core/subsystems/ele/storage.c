@@ -28,8 +28,9 @@ static int get_mac_algo(struct smw_storage_sign_args *args,
 	return status;
 }
 
-static int store_data_raw(struct hdl *hdl,
-			  struct smw_storage_store_data_args *args)
+static int data_ops(struct hdl *hdl,
+		    struct smw_storage_data_descriptor *data_descriptor,
+		    bool store)
 {
 	int status = SMW_STATUS_OK;
 
@@ -39,31 +40,42 @@ static int store_data_raw(struct hdl *hdl,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	op_args.data_id =
-		smw_storage_get_data_identifier(&args->data_descriptor);
-	op_args.data = smw_storage_get_data(&args->data_descriptor);
-	op_args.data_size = smw_storage_get_data_length(&args->data_descriptor);
-	op_args.flags = HSM_OP_DATA_STORAGE_FLAGS_STORE;
+	op_args.data_id = smw_storage_get_data_identifier(data_descriptor);
+	op_args.data = smw_storage_get_data(data_descriptor);
+	op_args.data_size = smw_storage_get_data_length(data_descriptor);
+	op_args.flags = store ? HSM_OP_DATA_STORAGE_FLAGS_STORE :
+				HSM_OP_DATA_STORAGE_FLAGS_RETRIEVE;
 
 	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_data_ops()\n"
+		       "[%s (%d)] Call hsm_data_ops() - %s\n"
 		       "  op_data_storage_args_t\n"
 		       "    Data\n"
 		       "      - id: 0x%08X\n"
 		       "      - buffer: %p\n"
 		       "      - size: %d\n"
-		       "    flags: 0x%X\n",
-		       __func__, __LINE__, op_args.data_id, op_args.data,
-		       op_args.data_size, op_args.flags);
+		       "    flags: 0x%X\n"
+		       "    svc_flags: 0x%X\n",
+		       __func__, __LINE__, store ? "store" : "retrieve",
+		       op_args.data_id, op_args.data, op_args.data_size,
+		       op_args.flags, op_args.svc_flags);
 
 	err = hsm_data_ops(hdl->key_store, &op_args);
-
 	SMW_DBG_PRINTF(DEBUG, "hsm_data_ops returned %d\n", err);
 
 	status = ele_convert_err(err);
 
+	if (!store)
+		smw_storage_set_data_length(data_descriptor,
+					    op_args.exp_output_size);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+static int store_data_raw(struct hdl *hdl,
+			  struct smw_storage_store_data_args *args)
+{
+	return data_ops(hdl, &args->data_descriptor, true);
 }
 
 static int store_data_encrypted(struct subsystem_context *ele_ctx,
@@ -163,11 +175,10 @@ static int storage_store(struct subsystem_context *ele_ctx, void *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (store_args->enc_args.mode_id == SMW_CONFIG_CIPHER_MODE_ID_INVALID &&
-	    store_args->sign_args.algo_id == SMW_CONFIG_MAC_ALGO_ID_INVALID) {
+	    store_args->sign_args.algo_id == SMW_CONFIG_MAC_ALGO_ID_INVALID)
 		status = store_data_raw(&ele_ctx->hdl, args);
-	} else {
+	else
 		status = store_data_encrypted(ele_ctx, args);
-	}
 
 	store_args->data_descriptor.subsystem_id = SUBSYSTEM_ID_ELE;
 
@@ -178,42 +189,7 @@ static int storage_store(struct subsystem_context *ele_ctx, void *args)
 static int storage_retrieve(struct hdl *hdl,
 			    struct smw_storage_retrieve_data_args *args)
 {
-	int status = SMW_STATUS_OK;
-
-	hsm_err_t err = HSM_NO_ERROR;
-
-	op_data_storage_args_t op_args = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	op_args.data_id =
-		smw_storage_get_data_identifier(&args->data_descriptor);
-	op_args.data = smw_storage_get_data(&args->data_descriptor);
-	op_args.data_size = smw_storage_get_data_length(&args->data_descriptor);
-	op_args.flags = HSM_OP_DATA_STORAGE_FLAGS_RETRIEVE;
-
-	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_data_ops()\n"
-		       "  op_data_storage_args_t\n"
-		       "    Data\n"
-		       "      - id: %d\n"
-		       "      - buffer: %p\n"
-		       "      - size: %d\n"
-		       "    flags: 0x%X\n"
-		       "    svc_flags: 0x%X\n",
-		       __func__, __LINE__, op_args.data_id, op_args.data,
-		       op_args.data_size, op_args.flags, op_args.svc_flags);
-
-	err = hsm_data_ops(hdl->key_store, &op_args);
-	SMW_DBG_PRINTF(DEBUG, "hsm_data_ops returned %d\n", err);
-
-	status = ele_convert_err(err);
-
-	smw_storage_set_data_length(&args->data_descriptor,
-				    op_args.exp_output_size);
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return data_ops(hdl, &args->data_descriptor, false);
 }
 
 bool ele_storage_handle(struct subsystem_context *ele_ctx,

@@ -9,6 +9,12 @@
 			"security_size": 256,
 		}
 	},
+	"data_list": {
+		"data 1": {
+			"id": 31,
+			"data": "ABCDEF"
+		}
+	},
 	"subtest 1": {
 		"command": "CONFIG_UNLOAD"
 	},
@@ -49,7 +55,8 @@
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key HSM",
-		"subsystem_exp": "HSM"
+		"subsystem_exp": "HSM",
+		"depends": 2
 	},
 	"subtest 8": {
 		"command": "MAC_COMPUTE",
@@ -84,7 +91,8 @@
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key TEE",
-		"subsystem_exp": "TEE"
+		"subsystem_exp": "TEE",
+		"depends": 2
 	},
 	"subtest 12": {
 		"command": "MAC_COMPUTE",
@@ -114,5 +122,23 @@
 		"key_name": "key TEE",
 		"subsystem_exp": "TEE",
 		"depends": 11
+	},
+	"subtest 15": {
+		"command": "STORAGE_STORE",
+		"data_name": "data 1",
+		"subsystem_exp": "TEE",
+		"depends": 2
+	},
+	"subtest 16": {
+		"command": "STORAGE_RETRIEVE",
+		"data_name": "data 1",
+		"subsystem_exp": "TEE",
+		"depends": 15
+	},
+	"subtest 17": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 1",
+		"subsystem_exp": "TEE",
+		"depends": 15
 	}
 }

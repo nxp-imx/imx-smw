@@ -46,7 +46,7 @@ int storage_store(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
+	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
 		args.subsystem_name = subtest->subsystem;
@@ -174,7 +174,7 @@ int storage_retrieve(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
+	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
 		args.subsystem_name = subtest->subsystem;
@@ -258,7 +258,7 @@ int storage_delete(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
+	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
 	else
 		args.subsystem_name = subtest->subsystem;

@@ -16,13 +16,16 @@
 #include "cipher.h"
 #include "aead.h"
 #include "operation_context.h"
+#include "obj.h"
+#include "storage.h"
 
 TEE_Result libsmw_detach(void)
 {
-	TEE_Result res = clear_key_linked_list();
+	TEE_Result res = ta_clear_obj_linked_list();
 
 	if (res) {
-		EMSG("Error 0x%" PRIx32 " while cleaning key linked list", res);
+		EMSG("Error 0x%" PRIx32 " while cleaning object linked list",
+		     res);
 		res = TEE_ERROR_GENERIC;
 	}
 
@@ -121,6 +124,18 @@ TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 
 	case CMD_AEAD_DECRYPT_FINAL:
 		res = aead_decrypt_final(param_types, params);
+		break;
+
+	case CMD_STORAGE_STORE:
+		res = storage_store(param_types, params);
+		break;
+
+	case CMD_STORAGE_RETRIEVE:
+		res = storage_retrieve(param_types, params);
+		break;
+
+	case CMD_STORAGE_DELETE:
+		res = storage_delete(param_types, params);
 		break;
 
 	default:

@@ -12,6 +12,7 @@
 #include "keymgr.h"
 #include "hash.h"
 #include "sign_verify.h"
+#include "obj.h"
 
 #define ALGORITHM_ID(_key_type_id, _security_size)                             \
 	{                                                                      \
@@ -160,7 +161,7 @@ static TEE_Result get_algorithm_id(enum tee_key_type key_type_id,
  * TEE_SUCCESS			- Success.
  * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
  * Error code from ta_import_key().
- * Error code from ta_get_key_handle().
+ * Error code from ta_get_obj_handle().
  */
 static TEE_Result set_key(uint32_t cmd_id, TEE_Param ta_param,
 			  uint32_t ta_param_type,
@@ -213,7 +214,7 @@ static TEE_Result set_key(uint32_t cmd_id, TEE_Param ta_param,
 
 	case TEE_PARAM_TYPE_NONE:
 		/* Retrieve key handle */
-		res = ta_get_key_handle(key_handle, shared_params->id,
+		res = ta_get_obj_handle(key_handle, shared_params->id,
 					persistent);
 		if (res)
 			EMSG("Key not found: 0x%x", res);

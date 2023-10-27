@@ -9,6 +9,7 @@
 #include "tee_subsystem.h"
 #include "cipher.h"
 #include "keymgr.h"
+#include "obj.h"
 
 #define MAX_CIPHER_KEYS 2
 
@@ -61,7 +62,7 @@ TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	}
 
 	/* Get key(s) handle and max key size */
-	res = ta_get_key_handle(&keys_handle[0].handle, params[1].value.a,
+	res = ta_get_obj_handle(&keys_handle[0].handle, params[1].value.a,
 				&keys_handle[0].persistent);
 	if (res != TEE_SUCCESS) {
 		EMSG("Failed to get key handle (0x%x)", res);
@@ -77,7 +78,7 @@ TEE_Result cipher_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	max_key_size = key_info[0].maxObjectSize;
 
 	if (nb_ids == MAX_CIPHER_KEYS) {
-		res = ta_get_key_handle(&keys_handle[1].handle,
+		res = ta_get_obj_handle(&keys_handle[1].handle,
 					params[1].value.b,
 					&keys_handle[1].persistent);
 		if (res != TEE_SUCCESS) {

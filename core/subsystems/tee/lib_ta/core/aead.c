@@ -9,6 +9,7 @@
 #include "tee_subsystem.h"
 #include "aead.h"
 #include "keymgr.h"
+#include "obj.h"
 
 TEE_Result aead_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
@@ -49,7 +50,7 @@ TEE_Result aead_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	shared_params = params[2].memref.buffer;
 
 	/* Get key handle */
-	res = ta_get_key_handle(&key_handle.handle, params[1].value.a,
+	res = ta_get_obj_handle(&key_handle.handle, params[1].value.a,
 				&key_handle.persistent);
 	if (res != TEE_SUCCESS) {
 		EMSG("Failed to get key handle (0x%x)", res);

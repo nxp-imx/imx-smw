@@ -10,6 +10,7 @@
 #include "tee_subsystem.h"
 #include "keymgr.h"
 #include "mac.h"
+#include "obj.h"
 
 #define ALGO_HMAC_ID(_algorithm_id)                                            \
 	{                                                                      \
@@ -102,7 +103,7 @@ static TEE_Result mac_operate(uint32_t param_types,
 		break;
 
 	case TEE_PARAM_TYPE_VALUE_INPUT:
-		res = ta_get_key_handle(&key_handle, params[0].value.a,
+		res = ta_get_obj_handle(&key_handle, params[0].value.a,
 					&persistent);
 		if (res) {
 			EMSG("Key not found: 0x%x", res);

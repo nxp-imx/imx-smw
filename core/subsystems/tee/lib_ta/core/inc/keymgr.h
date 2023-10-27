@@ -92,19 +92,6 @@ TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
 
 /**
- * ta_get_key_handle() - Get the TEE key object handle of a given key ID.
- * @key_handle: Key handle.
- * @key_id: Key ID.
- * @persistent: Set to true if key object is persistent.
- *
- * Return:
- * TEE_SUCCESS			- Success.
- * Error code from internal functions.
- */
-TEE_Result ta_get_key_handle(TEE_ObjectHandle *key_handle, uint32_t key_id,
-			     bool *persistent);
-
-/**
  * export_key() - Export a key.
  * @param_types: Parameters types.
  * @params: Shared parameters between Secure and Normal world.
@@ -117,18 +104,6 @@ TEE_Result ta_get_key_handle(TEE_ObjectHandle *key_handle, uint32_t key_id,
  * Error code from internal functions.
  */
 TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
-
-/**
- * clear_key_linked_list() - Clear key linked list.
- *
- * This function is called when the TA session is closed. Its goal is to
- * free all key transient objects and free key linked list resources.
- *
- * Return:
- * TEE_SUCCESS	- Success.
- * Error code from key_del_list() function.
- */
-TEE_Result clear_key_linked_list(void);
 
 /**
  * get_key_lengths() - Get the key buffer lengths

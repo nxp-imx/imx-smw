@@ -47,6 +47,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. Subsystems
 
 * Add HSM subsystem storage data store and retrieve.
+* Add TEE subsystem storage data store, retrieve and delete.
 
 #### SMW Tests - _version 3.0_
 

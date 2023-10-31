@@ -575,8 +575,7 @@ static void obj_free(struct libobj_obj *obj, struct libobj_list *list)
 		LIST_REMOVE(list, obj);
 	}
 
-	libmutex_unlock(obj->lock);
-	libmutex_destroy(obj->lock);
+	libmutex_destroy(&obj->lock);
 
 	free(obj);
 }
@@ -870,11 +869,12 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 	if (ret == CKR_OK) {
 		/* Check if the object can be destroyed */
 		ret = obj_is_destroyable(hsession, obj);
+
+		libmutex_unlock(obj->lock);
+
 		if (ret == CKR_OK) {
 			obj_free(obj, objects);
 			obj = NULL;
-		} else {
-			libmutex_unlock(obj->lock);
 		}
 	}
 
@@ -1418,6 +1418,7 @@ CK_RV libobj_list_destroy(struct libobj_list *list)
 			return ret;
 		}
 
+		libmutex_unlock(obj->lock);
 		obj_free(obj, list);
 		obj = next;
 	}

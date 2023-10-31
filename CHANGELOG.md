@@ -79,6 +79,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### PKCS#11 Library - _version 2.5_
 
+* Fix object's mutex destroy.
+* Fix TLV numeral attribute construction generating a memory overflow.
+
 #### PKCS#11 Tests - _version 2.5_
 
 * Add project option `TEE_TA_DESTDIR` to install TAs in a directory other than

@@ -222,7 +222,6 @@ CK_RV tlv_encode_numeral(struct smw_tlv *tlv, const char *type, long long num)
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
 	size_t len_add = 0;
-	int i = 0;
 	unsigned int nb_bytes = 0;
 	uint8_t byte = 0;
 
@@ -254,14 +253,14 @@ CK_RV tlv_encode_numeral(struct smw_tlv *tlv, const char *type, long long num)
 	if (ret != CKR_OK)
 		return ret;
 
-	for (i = nb_bytes - 1; i >= 0; i--) {
+	for (; nb_bytes; nb_bytes--) {
+		byte = GET_BYTE(num, nb_bytes - 1);
+		(void)SET_OVERFLOW(byte, tlv->string[tlv->length]);
+
 		if (INC_OVERFLOW(tlv->length, 1)) {
 			ret = CKR_ARGUMENTS_BAD;
 			break;
 		}
-
-		byte = GET_BYTE(num, i);
-		(void)SET_OVERFLOW(byte, tlv->string[tlv->length]);
 	}
 
 	return ret;

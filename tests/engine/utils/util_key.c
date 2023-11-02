@@ -170,7 +170,7 @@ static int save_keys_to_json_file(struct llist *key_list, char *filepath)
 
 	json_file = fopen(filepath, "w");
 	if (!json_file) {
-		DBG_PRINT("fopen failed, file is %s", filepath);
+		DBG_PRINT("fopen %s failure %s", filepath, util_get_strerr());
 		return ERR_CODE(INTERNAL);
 	}
 
@@ -254,8 +254,20 @@ static int save_keys_to_json_file(struct llist *key_list, char *filepath)
 	}
 
 exit:
-	if (fclose(json_file) && res == ERR_CODE(PASSED))
-		res = ERR_CODE(INTERNAL);
+
+	if (fflush(json_file)) {
+		DBG_PRINT("fflush %s failure %s", filepath, util_get_strerr());
+
+		if (res == ERR_CODE(PASSED))
+			res = ERR_CODE(INTERNAL);
+	}
+
+	if (fclose(json_file)) {
+		DBG_PRINT("fclose %s failure %s", filepath, util_get_strerr());
+
+		if (res == ERR_CODE(PASSED))
+			res = ERR_CODE(INTERNAL);
+	}
 
 	/* Free json objects */
 	if (global_obj)

@@ -37,13 +37,21 @@ static int bad_params(struct json_object *params, struct smw_op_context **args,
 		break;
 
 	case CTX_HANDLE_NULL:
-		if (*args)
+		if (*args) {
 			(*args)->handle = NULL;
-		else
+			(*args)->reserved = NULL;
+		} else {
 			ret = ERR_CODE(BAD_ARGS);
+		}
 		break;
 
 	case DST_CPY_ARGS_NULL:
+		if (*args) {
+			(*args)->reserved = NULL;
+		} else {
+			ret = ERR_CODE(BAD_ARGS);
+		}
+
 		if (dst) {
 			if (*dst)
 				free(*dst);
@@ -69,7 +77,7 @@ int cancel_operation(struct subtest_data *subtest)
 	struct smw_op_context args = { 0 };
 	struct smw_op_context *args_ptr = &args;
 	struct smw_op_context api_ctx = { .handle = &api_ctx,
-					  .reserved = NULL };
+					  .reserved = (void *)INTPTR_MAX };
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -116,7 +124,7 @@ int copy_context(struct subtest_data *subtest)
 	struct smw_op_context *dst_args_ptr = NULL;
 	struct smw_op_context *src_args_ptr = NULL;
 	struct smw_op_context empty_ctx = { .handle = &empty_ctx,
-					    .reserved = NULL };
+					    .reserved = (void *)INTPTR_MAX };
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();

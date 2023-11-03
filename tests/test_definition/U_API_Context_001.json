@@ -11,7 +11,7 @@
 	},
 	"subtest 3": { // Reserved field is bad
 		"command": "OP_CONTEXT_CANCEL",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 4": {
 		"command": "OP_CONTEXT_COPY",
@@ -25,7 +25,7 @@
 	},
 	"subtest 6": { // Reserved field is bad
 		"command": "OP_CONTEXT_COPY",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": {
 		"command": "OP_CONTEXT_COPY",

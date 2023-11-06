@@ -15,7 +15,7 @@ int smw_keymgr_db_create(unsigned int *id,
 	union smw_object_db_info info = { 0 };
 
 	*id = identifier->id;
-	SMW_UTILS_MEMCPY(&info, identifier, sizeof(*identifier));
+	info.key_identifier = *identifier;
 
 	return smw_object_db_create(id, identifier->persistence_id, &info);
 }
@@ -25,7 +25,7 @@ int smw_keymgr_db_update(unsigned int id,
 {
 	union smw_object_db_info info = { 0 };
 
-	SMW_UTILS_MEMCPY(&info, identifier, sizeof(*identifier));
+	info.key_identifier = *identifier;
 
 	return smw_object_db_update(id, identifier->persistence_id, &info);
 }
@@ -46,7 +46,7 @@ int smw_keymgr_db_get_info(unsigned int id,
 	ret = smw_object_db_get_info(id, identifier->persistence_id, &info);
 
 	if (ret == SMW_STATUS_OK)
-		SMW_UTILS_MEMCPY(identifier, &info, sizeof(*identifier));
+		*identifier = info.key_identifier;
 
 	return ret;
 }

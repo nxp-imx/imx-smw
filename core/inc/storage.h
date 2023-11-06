@@ -49,10 +49,12 @@ struct smw_storage_enc_args {
 
 /**
  * struct smw_storage_data_descriptor - Data descriptor
+ * @subsystem_id: Secure Subsystem ID
  * @attributes: Data attributes
  * @pub: Data descriptor from the public API
  */
 struct smw_storage_data_descriptor {
+	enum subsystem_id subsystem_id;
 	struct smw_storage_data_attributes attributes;
 	struct smw_data_descriptor *pub;
 };

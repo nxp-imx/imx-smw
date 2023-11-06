@@ -539,6 +539,8 @@ enum smw_status_code smw_store_data(struct smw_store_data_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	info.data_info.subsystem_id =
+		store_data_args.data_descriptor.subsystem_id;
 	info.data_info.size = store_data_args.data_descriptor.pub->length;
 	info.data_info.attributes = store_data_args.data_descriptor.attributes;
 	status = smw_object_db_update(args->data_descriptor->identifier,

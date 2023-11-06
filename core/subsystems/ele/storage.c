@@ -49,7 +49,7 @@ static int store_data_raw(struct hdl *hdl,
 		       "[%s (%d)] Call hsm_data_ops()\n"
 		       "  op_data_storage_args_t\n"
 		       "    Data\n"
-		       "      - id: %d\n"
+		       "      - id: 0x%08X\n"
 		       "      - buffer: %p\n"
 		       "      - size: %d\n"
 		       "    flags: 0x%X\n",
@@ -168,6 +168,8 @@ static int storage_store(struct subsystem_context *ele_ctx, void *args)
 	} else {
 		status = store_data_encrypted(ele_ctx, args);
 	}
+
+	store_args->data_descriptor.subsystem_id = SUBSYSTEM_ID_ELE;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

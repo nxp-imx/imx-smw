@@ -13,6 +13,7 @@ typedef const char *smw_string_t;
  * Values:
  *	- TEE
  *	- HSM
+ *	- ELE
  */
 typedef smw_string_t smw_subsystem_t;
 
@@ -25,6 +26,7 @@ typedef smw_string_t smw_subsystem_t;
  *	- AES
  *	- DES
  *	- DES3
+ *	- DH
  *	- DSA_SM2_FP
  *	- SM4
  *	- HMAC
@@ -35,7 +37,9 @@ typedef smw_string_t smw_subsystem_t;
  *	- HMAC_SHA384
  *	- HMAC_SHA512
  *	- HMAC_SM3
+ *	- RAW
  *	- RSA
+ *	- TLS_MASTER_KEY
  */
 typedef smw_string_t smw_key_type_t;
 
@@ -236,6 +240,8 @@ typedef smw_string_t smw_attr_key_type_t;
  *    |                 | length list  | the data accessibility.               |
  *    |                 |              | The following `Data lifecycle`_ gives |
  *    |                 |              | more details.                         |
+ *    +-----------------+--------------+---------------------------------------+
+ *    | PERSISTENT      | boolean      | Data is persistent.                   |
  *    +-----------------+--------------+---------------------------------------+
  *
  * Data lifecycle

@@ -482,16 +482,16 @@ get or set device lifecycle.
 Data Storage manager
 ^^^^^^^^^^^^^^^^^^^^
 
-Data Storage manager allows to store and retreive data. The data ID is a 32-bits
+Data Storage manager allows to store and retrieve data. The data ID is a 32-bits
 value with the exception of the 0xF00000E0 reserved for EdgeLock 2GO claimcode.
 
 The subsystem allows to:
 
-  - store and retreive user data.
+  - store and retrieve user data.
   - encrypt and sign data (:numref:`ele_data_encrypt`) before storing it and
-    retreive a TLV blob (:numref:`ele_data_blob`).
+    retrieve a TLV blob (:numref:`ele_data_blob`).
   - set encypted and signed data as READ_ONCE, meaning that when data is
-    retreived the subsystem deletes the data.
+    retrieved the subsystem deletes the data.
 
 The subsystem doesn't allow to:
 

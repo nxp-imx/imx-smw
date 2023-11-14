@@ -176,3 +176,18 @@ AEAD
 One-shot operations supported:
  - AEAD Encryption
  - AEAD Decryption
+
+Data Storage manager
+^^^^^^^^^^^^^^^^^^^^
+
+Data Storage manager allows to store and retrieve data. The data ID is a 32-bits
+value.
+
+The subsystem allows to:
+
+  - store and retrieve user data.
+
+The subsystem doesn't allow to:
+
+  - encrypt and sign data before storing it.
+  - delete a data.

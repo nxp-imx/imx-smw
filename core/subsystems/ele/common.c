@@ -53,8 +53,9 @@ static const struct {
 	hsm_op_cipher_one_go_algo_t cipher_algo;
 } cipher_algos[] = {
 	CIPHER_ALGO(AES, CBC),
-	CIPHER_ALGO(AES, ECB),
+	CIPHER_ALGO(AES, CFB),
 	CIPHER_ALGO(AES, CTR),
+	CIPHER_ALGO(AES, ECB),
 };
 
 int ele_set_cipher_algo(enum smw_config_key_type_id key_type_id,

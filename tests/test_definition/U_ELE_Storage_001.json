@@ -1,6 +1,6 @@
 {
 	"keys": {
-		"encrypt key": {
+		"encrypt key 1": {
 			"type": "AES",
 			"security_size": 256,
 			"policy": {
@@ -12,6 +12,22 @@
 				"decrypt": [
 					[
 						"ECB_NO_PADDING"
+					]
+				]
+			}
+		},
+		"encrypt key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": [
+					[
+						"CFB"
+					]
+				],
+				"decrypt": [
+					[
+						"CFB"
 					]
 				]
 			}
@@ -85,86 +101,133 @@
 				"00000000000000000000000000000000",
 				"000000000000"
 			]
+		},
+		"data 4": {
+			"id": 14,
+			"data": "0102030405060708090A0B0C0D0E0FCC",
+			"attributes_list": [
+				["READ_ONLY"],
+				["READ_ONCE"],
+				["LIFECYCLE", "OPEN"]
+			]
+		},
+		"data 4 retrieve": {
+			"data_name": "data 4",
+			"data": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000",
+				"0000000000000000"
+			]
 		}
 	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "encrypt key"
+		"key_name": "encrypt key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "sign key"
+		"key_name": "encrypt key 2"
 	},
 	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "sign key"
+	},
+	"subtest 4": {
 		"command": "STORAGE_STORE",
 		"subsystem": "ELE",
 		"data_name": "data 1",
-		"encrypt_key_name": "encrypt key",
+		"encrypt_key_name": "encrypt key 1",
 		"mode": "ECB",
 		"sign_key_name": "sign key",
 		"algo": "CMAC",
-		"depends": [1,2]
+		"depends": [1,3]
 	},
-	"subtest 4": {
+	"subtest 5": {
 		"command": "STORAGE_RETRIEVE",
 		"subsystem": "ELE",
 		"data_name": "data 1 retrieve",
 		"output": 54,
-		"depends": 3
+		"depends": 4
 	},
-	"subtest 5": { // Second retrieve must failed
+	"subtest 6": { // Second retrieve must failed
 		"command": "STORAGE_RETRIEVE",
 		"subsystem": "ELE",
 		"data_name": "data 1 retrieve",
 		"output": 54,
 		"result": "SMW_STATUS_DATA_ALREADY_RETRIEVED",
-		"depends": 3
+		"depends": 4
 	},
-	"subtest 6": {
+	"subtest 7": {
 		"command": "STORAGE_STORE",
 		"subsystem": "ELE",
 		"data_name": "data 2",
-		"encrypt_key_name": "encrypt key",
+		"encrypt_key_name": "encrypt key 1",
 		"mode": "ECB",
 		"sign_key_name": "sign key",
 		"algo": "CMAC",
-		"depends": [1,2]
+		"depends": [1,3]
 	},
-	"subtest 7": { // Data is only accessible in closed mode.
+	"subtest 8": { // Data is only accessible in closed mode.
 		"command": "STORAGE_RETRIEVE",
 		"subsystem": "ELE",
 		"data_name": "data 2 retrieve",
 		"output": 54,
 		"result": "SMW_STATUS_INVALID_LIFECYCLE",
-		"depends": 6
+		"depends": 7
 	},
-	"subtest 8": {
+	"subtest 9": {
 		"command": "STORAGE_STORE",
 		"subsystem": "ELE",
 		"data_name": "data 3",
-		"encrypt_key_name": "encrypt key",
+		"encrypt_key_name": "encrypt key 1",
 		"mode": "ECB",
 		"sign_key_name": "sign key",
 		"algo": "CMAC",
-		"depends": [1,2]
+		"depends": [1,3]
 	},
-	"subtest 9": {
+	"subtest 10": {
 		"command": "STORAGE_RETRIEVE",
 		"subsystem": "ELE",
 		"data_name": "data 3 retrieve",
 		"output": 54,
-		"depends": 8
-	},
-	"subtest 10": {
-		"command": "DELETE",
-		"key_name": "encrypt key",
-		"depends": 1
+		"depends": 9
 	},
 	"subtest 11": {
+		"command": "STORAGE_STORE",
+		"subsystem": "ELE",
+		"data_name": "data 4",
+		"encrypt_key_name": "encrypt key 2",
+		"mode": "CFB",
+		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"sign_key_name": "sign key",
+		"algo": "CMAC",
+		"depends": [2,3]
+	},
+	"subtest 12": {
+		"command": "STORAGE_RETRIEVE",
+		"subsystem": "ELE",
+		"data_name": "data 4 retrieve",
+		"output": 72,
+		"depends": 11
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "encrypt key 1",
+		"depends": 1
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "encrypt key 2",
+		"depends": 2
+	},
+	"subtest 15": {
 		"command": "DELETE",
 		"key_name": "sign key",
-		"depends": 2
+		"depends": 3
 	}
 }

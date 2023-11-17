@@ -100,11 +100,13 @@ The key permitted algorithm definition:
    +                +----------+--------------------------+-------------------------------------+
    |                | SHA384   | From 8 to 48 bytes       | If not specified length is 48 bytes |
    +----------------+----------+--------------------------+-------------------------------------+
-   | ECB_NO_PADDING | N/A      | N/A                      |                                     |
-   +----------------+----------+--------------------------+-------------------------------------+
    | CBC_NO_PADDING | N/A      | N/A                      |                                     |
    +----------------+----------+--------------------------+-------------------------------------+
+   | CFB            | N/A      | N/A                      |                                     |
+   +----------------+----------+--------------------------+-------------------------------------+
    | CTR            | N/A      | N/A                      |                                     |
+   +----------------+----------+--------------------------+-------------------------------------+
+   | ECB_NO_PADDING | N/A      | N/A                      |                                     |
    +----------------+----------+--------------------------+-------------------------------------+
    | ALL_CIPHER     | N/A      | N/A                      | Support all ciphers including CMAC  |
    +----------------+----------+--------------------------+-------------------------------------+
@@ -368,9 +370,11 @@ Cipher
    +==============+==========+
    | AES          |   CBC    |
    +              +          +
-   |              |   ECB    |
+   |              |   CFB    |
    +              +          +
    |              |   CTR    |
+   +              +          +
+   |              |   ECB    |
    +--------------+----------+
 
 One-shot operations supported:
@@ -385,8 +389,9 @@ The following key policies must defined:
   - Algorithm:
 
     - CBC_NO_PADDING
-    - ECB_NO_PADDING
+    - CFB
     - CTR
+    - ECB_NO_PADDING
     - ALL_CIPHER (any cipher mode)
 
 Decrypt operation
@@ -397,8 +402,9 @@ The following key policies must defined if a key identifier is used:
   - Algorithm:
 
     - CBC_NO_PADDING
-    - ECB_NO_PADDING
+    - CFB
     - CTR
+    - ECB_NO_PADDING
     - ALL_CIPHER (any cipher mode)
 
 AEAD
@@ -512,13 +518,13 @@ The subsystem doesn't allow to:
    +----------------+--------+---------------+
    | **Encryption** | **IV** | **Signature** |
    +================+========+===============+
-   | ECB_NO_PADDING |  N/A   |  CMAC         |
-   +----------------+--------+               +
    | CBC_NO_PADDING |  Yes   |               |
+   +----------------+--------+               +
+   | CFB            |  Yes   |               |
    +----------------+--------+               +
    | CTR            |  Yes   |               |
    +----------------+--------+               +
-   | CFB            |  Yes   |               |
+   | ECB_NO_PADDING |  N/A   |  CMAC         |
    +----------------+--------+---------------+
 
 .. table:: ELE Data blob (encrypted and signed)

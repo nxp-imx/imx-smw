@@ -48,6 +48,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add HSM subsystem storage data store and retrieve.
 * Add TEE subsystem storage data store, retrieve and delete.
+* Add support of CFB mode with ELE subsystem.
+
+##### 3. ARM PSA APIs
+
+* Add support of CFB mode.
 
 #### SMW Tests - _version 3.0_
 
@@ -249,7 +254,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 1. Subsystem
 * Add EdgeLock Enclave (ELE) subsystem.
 
-##### 1. ARM PSA APIs
+##### 2. ARM PSA APIs
 
 * Implement Key manager (Generate, Import, Export, Delete)
 

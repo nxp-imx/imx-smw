@@ -96,6 +96,7 @@ enum smw_config_cipher_op_type_id {
 
 enum smw_config_cipher_mode_id {
 	SMW_CONFIG_CIPHER_MODE_ID_CBC,
+	SMW_CONFIG_CIPHER_MODE_ID_CFB,
 	SMW_CONFIG_CIPHER_MODE_ID_CTR,
 	SMW_CONFIG_CIPHER_MODE_ID_CTS,
 	SMW_CONFIG_CIPHER_MODE_ID_ECB,

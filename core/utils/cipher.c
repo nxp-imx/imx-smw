@@ -16,6 +16,7 @@ static const char *const cipher_op_type_names[] = {
 
 static const char *const cipher_mode_names[] = {
 	[SMW_CONFIG_CIPHER_MODE_ID_CBC] = "CBC",
+	[SMW_CONFIG_CIPHER_MODE_ID_CFB] = "CFB",
 	[SMW_CONFIG_CIPHER_MODE_ID_CTR] = "CTR",
 	[SMW_CONFIG_CIPHER_MODE_ID_CTS] = "CTS",
 	[SMW_CONFIG_CIPHER_MODE_ID_ECB] = "ECB",

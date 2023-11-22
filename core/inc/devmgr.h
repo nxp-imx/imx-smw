@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #ifndef __DEVMGR_H___
@@ -12,7 +12,9 @@ enum smw_op_devmgr {
 	SMW_OP_DEVMGR_ATTESTATION,
 	SMW_OP_DEVMGR_UUID,
 	SMW_OP_DEVMGR_SET_LIFECYCLE,
-	SMW_OP_DEVMGR_GET_LIFECYCLE
+	SMW_OP_DEVMGR_GET_LIFECYCLE,
+	SMW_OP_DEVMGR_REPROVISION_PREP,
+	SMW_OP_DEVMGR_REPROVISION
 };
 
 /**
@@ -26,6 +28,7 @@ struct smw_devmgr_args {
 	union {
 		struct smw_device_attestation_args *attestation;
 		struct smw_device_uuid_args *uuid;
+		struct smw_device_reprovision_args *reprovision;
 	} pub;
 };
 
@@ -140,4 +143,46 @@ unsigned int smw_devmgr_get_uuid_length(struct smw_devmgr_args *args);
  */
 void smw_devmgr_set_uuid_length(struct smw_devmgr_args *args,
 				unsigned int length);
+
+/**
+ * smw_devmgr_get_reprovisioning_data() - Return the address of the
+ *                                        reprovisioning buffer.
+ * @args: Pointer to the internal device args structure.
+ *
+ * This function returns the address of the device storage reprovisioning
+ * buffer.
+ *
+ * Return:
+ * NULL
+ * address of the device reprovisioning buffer
+ */
+unsigned char *smw_devmgr_get_reprovision_data(struct smw_devmgr_args *args);
+
+/**
+ * smw_devmgr_get_reprovisiong_length() - Return the length of the device
+ *                                        reprovisioning buffer.
+ * @args: Pointer to the internal device args structure.
+ *
+ * This function returns the length of the device storage reprovisioning buffer.
+ *
+ * Return:
+ * 0
+ * length of the device reprovisioning buffer.
+ */
+unsigned int smw_devmgr_get_reprovision_length(struct smw_devmgr_args *args);
+
+/**
+ * smw_devmgr_set_reprovisiong_length() - Set the length of the device
+ *                                        reprovisioning buffer.
+ * @args: Pointer to the internal device args structure.
+ * @length: Length of the reprovisioning buffer.
+ *
+ * This function sets the length of the device storage reprovisioning buffer.
+ *
+ * Return:
+ * None.
+ */
+void smw_devmgr_set_reprovision_length(struct smw_devmgr_args *args,
+				       unsigned int length);
+
 #endif /* __DEVMGR_H___ */

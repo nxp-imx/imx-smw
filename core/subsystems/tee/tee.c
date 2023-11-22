@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <tee_client_api.h>
@@ -271,7 +271,7 @@ static int load(void)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	/* Initialize the TEE context */
-	memset(&tee_ctx, 0, sizeof(tee_ctx));
+	SMW_UTILS_MEMSET(&tee_ctx, 0, sizeof(tee_ctx));
 
 	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_TEE);
 

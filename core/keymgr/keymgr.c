@@ -485,7 +485,7 @@ static int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
 	if (descriptor->pub) {
 		ops = &descriptor->ops;
 		/* Clear all operations */
-		memset(ops, 0, sizeof(*ops));
+		SMW_UTILS_MEMSET(ops, 0, sizeof(*ops));
 		if (!descriptor->pub->buffer)
 			return SMW_STATUS_NO_KEY_BUFFER;
 

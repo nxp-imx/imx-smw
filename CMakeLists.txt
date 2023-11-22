@@ -74,6 +74,7 @@ option(ENABLE_PSA_DEFAULT_ALT "Enable alternative subsystem selection for PSA AP
 option(ENABLE_DEVMGR_MODULE "Enable device manager module" ON)
 cmake_dependent_option(ENABLE_DEVICE_ATTESTATION "Enable device attestation" ON "ENABLE_DEVMGR_MODULE" OFF)
 cmake_dependent_option(ENABLE_DEVICE_LIFECYCLE "Enable device lifecycle" ON "ENABLE_DEVMGR_MODULE" OFF)
+cmake_dependent_option(ENABLE_DEVICE_REPROVISION "Enable device storage reprovisioning" ON "ENABLE_DEVMGR_MODULE" OFF)
 
 cmake_dependent_option(ENABLE_STORAGE_MODULE "Enable storage module" ON "ENABLE_KEYMGR_MODULE" OFF)
 

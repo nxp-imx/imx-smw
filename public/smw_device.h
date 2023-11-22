@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #ifndef __SMW_DEVICE_H__
@@ -92,6 +92,23 @@ struct smw_device_lifecycle_args {
 };
 
 /**
+ * struct smw_device_reprovision_args - Device storage reprovisioning arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @data: Data message to prepare or to send to the device
+ * @data_length: Length of the @data buffer
+ *
+ * @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is NULL, the default configured Secure Subsystem is used.
+ */
+struct smw_device_reprovision_args {
+	unsigned char version;
+	smw_subsystem_t subsystem_name;
+	unsigned char *data;
+	unsigned int data_length;
+};
+
+/**
  * smw_device_attestation() - Get the device attestation certificate.
  * @args: Pointer to the structure that contains the device attestation arguments.
  *
@@ -158,5 +175,42 @@ smw_device_set_lifecycle(struct smw_device_lifecycle_args *args);
  */
 enum smw_status_code
 smw_device_get_lifecycle(struct smw_device_lifecycle_args *args);
+
+/**
+ * smw_device_reprovisioning_prepare() - Fill the device reprovisioning message
+ * @args: Pointer to the structure that contains the reprovisioning arguments
+ *
+ * This function is used to fill the reprovisioning message.
+ * The field data_length of @args is updated to the correct value when:
+ *  - Length is bigger than expected. In this case operation succeeded.
+ *  - Length is shorter than expected. In this case operation failed and
+ *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
+ *  - Data buffer is set the NULL. In this case operation returned
+ *    SMW_STATUS_OK
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code
+smw_device_reprovision_prepare(struct smw_device_reprovision_args *args);
+
+/**
+ * smw_device_reprovisioning() - Request device storage reprovisioning
+ * @args: Pointer to the structure that contains the reprovisioning arguments
+ *
+ * This function is used to request the subsystem to enable the storage
+ * re-provisioning. In this case, the rollback protection of the storage is
+ * reset and consequently all objects previously stored are lost.
+ *
+ * The field data of @args might contain information to be passed to the
+ * subsystem.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code
+smw_device_reprovision(struct smw_device_reprovision_args *args);
 
 #endif /* __SMW_DEVICE_H__ */

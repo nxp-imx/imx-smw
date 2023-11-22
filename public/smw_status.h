@@ -49,6 +49,7 @@
  * the user configuration is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME: Signature type name provided by the user
  * or set in the user configuration is not recognized by SMW.
+ * @SMW_STATUS_OEM_SRKH_NOT_FUSED: Device OEM SRKH is not fused.
  *
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
@@ -202,6 +203,9 @@
  *
  ** Specific return codes - Data storage
  *      - SMW_STATUS_DATA_ALREADY_RETRIEVED
+ *
+ ** Specific return codes - Device manager
+ *      - SMW_STATUS_OEM_SRKH_NOT_FUSED
  */
 
 /* Status codes */
@@ -277,6 +281,7 @@ enum smw_status_code {
 	SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME,
 	SMW_STATUS_UNKNOWN_TLS12_KEA_NAME,
 	SMW_STATUS_UNKNOWN_TLS12_ENC_NAME, /* 65 */
+	SMW_STATUS_OEM_SRKH_NOT_FUSED,
 };
 
 #endif /* __SMW_STATUS_H__ */

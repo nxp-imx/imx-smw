@@ -253,7 +253,20 @@
 		"aead_id": 7,
 		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	},
-	"subtest 18": {
+	"subtest 18": { // iv_length = 6
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e01245",
+		"aad": "353637383132333435363738",
+		"input": "30313233343536373839404142434445",
+		"tag": 16,
+		"aead_id": 8,
+		"depends": 1
+	},
+	"subtest 19": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

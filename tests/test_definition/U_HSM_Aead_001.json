@@ -2,37 +2,11 @@
 	"keys": {
 		"key 1": {
 			"type": "AES",
-			"security_size": 256,
-			"policy": {
-				"encrypt": [
-					[
-						"CCM"
-					]
-				],
-				"decrypt": [
-					[
-						"CCM"
-					]
-				]
-			}
+			"security_size": 256
 		},
 		"key 2": {
 			"type": "NIST",
-			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				],
-				"verify_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"security_size": 256
 		},
 		"key 3": {
 			"type": "AES",
@@ -40,31 +14,24 @@
 			"priv_key": [
 				"d6c4cf73c639e025654dd3232fe3aa71",
 				"38f21bc8922271b4a6c0af999100b6b5"
-			],
-			"policy": {
-				"encrypt": [
-					[
-						"CCM"
-					]
-				]
-			}
+			]
 		}
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"key_name": "key 2"
 	},
 	"subtest 3": { // Key type not supported
 		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"key_name": "key 2",
-		"mode": "CCM",
+		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
 		"aad": "353637383132333435363738",
@@ -75,7 +42,7 @@
 	},
 	"subtest 4": { // Mode not supported
 		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"key_name": "key 1",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
@@ -88,9 +55,9 @@
 	},
 	"subtest 5": { // Key buffer not supported
 		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"key_name": "key 3",
-		"mode": "CCM",
+		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"input": "30313233343536373839404142434445",
 		"aad": "353637383132333435363738",
@@ -100,25 +67,24 @@
 	},
 	"subtest 6": { // Get output length
 		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
 		"iv": "60cc50e0887532e0d4f3d2f2",
-		"aad": "353637383132333435363738",
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
 		"output": 0,
 		"depends": 1
 	},
-	"subtest 7": { // Get output length & tag field set
+	"subtest 7": { // Get output length and dedicated tag field set
 		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"key_name": "key 1",
-		"mode": "CCM",
+		"mode": "GCM",
 		"op_type": "ENCRYPT",
-		"iv": "60cc50e0887532e0d4f3d2f2",
-		"aad": "353637383132333435363738",
+		"iv": "60cc5023",
+		"aad": "35363738313233343536373839404142",
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
 		"tag_field_set": true,
@@ -127,11 +93,10 @@
 	},
 	"subtest 8": { // Output length too small
 		"command": "AEAD",
-		"subsystem": "ELE",
-		"mode": "CCM",
+		"subsystem": "HSM",
+		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
-		"iv": "60cc50e0887532e0d4f3d2f2",
 		"aad": "353637383132333435363738",
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
@@ -141,11 +106,10 @@
 	},
 	"subtest 9": { // Output length too small and dedicated tag field set
 		"command": "AEAD",
-		"subsystem": "ELE",
-		"mode": "CCM",
+		"subsystem": "HSM",
+		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
-		"iv": "60cc50e0887532e0d4f3d2f2",
 		"aad": "353637383132333435363738",
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
@@ -156,39 +120,24 @@
 	},
 	"subtest 10": { // Output length too big
 		"command": "AEAD",
-		"subsystem": "ELE",
-		"mode": "CCM",
+		"subsystem": "HSM",
+		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
-		"iv": "60cc50e0887532e0d4f3d2f2",
+		"iv": "60cc50e0",
 		"aad": "353637383132333435363738",
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
 		"output": 50,
 		"depends": 1
 	},
-	"subtest 11": { // Dedicated Tag field and Output length too big
+	"subtest 11": { // Output length too small
 		"command": "AEAD",
-		"subsystem": "ELE",
-		"key_name": "key 1",
-		"mode": "CCM",
-		"op_type": "ENCRYPT",
-		"iv": "60cc50e0887532e0d4f3d2f2",
-		"aad": "353637383132333435363738",
-		"input": "30313233343536373839404142434445",
-		"tag": 16,
-		"tag_field_set": true,
-		"output": 60,
-		"depends": 1
-	},
-	"subtest 12": { // Output length too small  - decryption
-		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"key_name": "key 1",
 		"iv": "60cc50e0887532e0d4f3d2f2",
-		"aad": "353637383132333435363738",
 		"input": [
 			"30313233343536373839404142434445",
 			"60cc50e0887532e0d4f3cc50e0887532"
@@ -198,14 +147,13 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 13": { // Output length too small - decryption
+	"subtest 12": { // Output length too small and dedicated tag field set
 		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"key_name": "key 1",
 		"iv": "60cc50e0887532e0d4f3d2f2",
-		"aad": "353637383132333435363738",
 		"input": "30313233343536373839404142434445",
 		"tag_field_set": true,
 		"tag": "60cc50e0887532e0d4f3cc50e0887532",
@@ -213,28 +161,26 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 14": { // Get output length & tag field set
+	"subtest 13": { // Get output length and dedicated tag field set
 		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"key_name": "key 1",
 		"iv": "60cc50e0887532e0d4f3d2f2",
-		"aad": "353637383132333435363738",
 		"input": "30313233343536373839404142434445",
 		"tag_field_set": true,
 		"tag": "60cc50e0887532e0d4f3cc50e0887532",
 		"output": 0,
 		"depends": 1
 	},
-	"subtest 15": { // Get output length - decryption
+	"subtest 14": { // Get output length - decryption
 		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"key_name": "key 1",
 		"iv": "60cc50e0887532e0d4f3d2f2",
-		"aad": "353637383132333435363738",
 		"input": [
 			"30313233343536373839404142434445",
 			"60cc50e0887532e0d4f3cc50e0887532"
@@ -243,37 +189,83 @@
 		"output": 0,
 		"depends": 1
 	},
-	"subtest 16": { // Tag length = 10
+	"subtest 15": { // AAD set for CCM mode
 		"command": "AEAD",
-		"subsystem": "ELE",
+		"subsystem": "HSM",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"input": "8bc1dbce367bfd014b1cf199cda0e9c4",
+		"tag": 16,
+		"depends": 1,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 16": { // IV length = 12 for GCM mode
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"key_name": "key 1",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"input": "8bc1dbce367bfd014b1cf199cda0e9c4",
+		"tag": 16,
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 17": { // IV length = 6
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e01213",
+		"aad": "353637383132333435363738",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 18": { // Tag length = 32
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"aad": "353637383132333435363738",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 32,
+		"depends": 1
+	},
+	"subtest 19": { // Tag length = 10
+		"command": "AEAD",
+		"subsystem": "HSM",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
 		"iv": "60cc50e0887532e0d4f3d2f2",
-		"aad": "353637383132333435363738",
-		"input": "30313233343536373839404142434445",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
 		"tag": 10,
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 17": { // Tag length = 32
-		"command": "AEAD",
-		"subsystem": "ELE",
-		"key_name": "key 1",
-		"mode": "CCM",
-		"op_type": "ENCRYPT",
-		"iv": "60cc50e0887532e0d4f3d2f2",
-		"aad": "353637383132333435363738",
-		"input": "30313233343536373839404142434445",
-		"tag": 32,
-		"depends": 1
-	},
-	"subtest 18": {
+	"subtest 20": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 19": {
+	"subtest 21": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 2

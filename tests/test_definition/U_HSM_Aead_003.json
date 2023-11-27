@@ -1,0 +1,130 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 256
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "HSM",
+		"key_name": "key 1"
+	},
+	"subtest 2": { // One-shot AEAD Encryption operation
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"input": "30313233343536373839404142434445",
+		"tag": 16,
+		"aead_id": 1,
+		"depends": 1
+	},
+	"subtest 3": { // One-shot AEAD Decryption operation
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"tag": 16,
+		"aead_id": 1,
+		"output": "30313233343536373839404142434445",
+		"depends": [
+			1,
+			2
+		]
+	},
+	"subtest 4": { // Dedicated tag field set
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"input": "30313233343536373839404142434445",
+		"tag": 16,
+		"tag_field_set": true,
+		"aead_id": 2,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"tag": 16,
+		"tag_field_set": true,
+		"aead_id": 2,
+		"output": "30313233343536373839404142434445",
+		"depends": [
+			1,
+			4
+		]
+	},
+	"subtest 6": { // IV length  = 0
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"tag": 16,
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": { // IV length  = 4
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"iv": "60cc50e0",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"tag": 16,
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": {
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"input": [
+			"30313233343536373839404142434445",
+			"30313233343536373839404142434445"
+		],
+		"tag": 16,
+		"depends": 1
+	},
+	"subtest 9": { // Invalid tag
+		"command": "AEAD",
+		"subsystem": "HSM",
+		"key_name": "key 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"tag": 16,
+		"input": [
+			"30313260cc50e0887535787854544452",
+			"530313260cc55454440e088753578782",
+			"60cc50e0887532e0d4567841e0887532"
+		],
+		"depends": [
+			1,
+			8
+		],
+		"result": "SMW_STATUS_SIGNATURE_INVALID"
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

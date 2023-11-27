@@ -172,3 +172,34 @@ The subsystem doesn't allow to:
 
   - encrypt and sign data before storing it.
   - delete a data.
+
+AEAD
+^^^^
+
+.. table:: HSM AEAD
+   :align: center
+   :class: wrap-table
+
+   +--------------+----------+------------------------+------------------------+
+   | **Key type** | **Mode** | **IV length (bytes)**  | **Tag length (bytes)** |
+   +==============+==========+========================+========================+
+   | AES          |   CCM    |       12 [3]_          |        16              |
+   +              +----------+------------------------+------------------------+
+   |              |   GCM    | Encryption: 0 or 4 [4]_|        16              |
+   +              +          +                        +                        +
+   |              |          | Decryption: 12         |                        |
+   +--------------+----------+------------------------+------------------------+
+
+.. [3] For CCM AEAD encryption and decryption operation, IV length should be
+       12 bytes.
+
+.. [4] For GCM AEAD Encryption operation, IV length can be either
+
+  - 0 bytes, to request the subsystem to fully generate the IV.
+  - 4 bytes, to request the subsystem to generate the rest of the IV bytes.
+
+   For decryption operation, IV length should be 12 bytes.
+
+One-shot operations supported:
+ - AEAD Encryption
+ - AEAD Decryption

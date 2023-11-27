@@ -44,7 +44,6 @@ The failure is due to the storage manager which is already loaded and a new inst
   The selection is based on the content of the configuration file unless the cryptographic operation
   uses one or more key(s). In this case, the subsystem associated to the key(s) must be selected.
 * Device manager returns the correct status code if the arguments version is not supported.
-* Implement AEAD one-shot operation for ELE subsystem.
 * Change public AEAD arguments structure members (struct smw_aead_args, struct smw_aead_aad_args and struct smw_aead_final_args).
 
 ##### 2. Subsystems
@@ -52,6 +51,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add HSM subsystem storage data store and retrieve.
 * Add TEE subsystem storage data store, retrieve and delete.
 * Add support of CFB mode with ELE subsystem.
+* Implement AEAD one-shot operation for ELE subsystem.
+* Implement AEAD one-shot operation for HSM subsystem.
 
 ##### 3. ARM PSA APIs
 
@@ -91,7 +92,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add commit key storage API.
 * Add get/set device lifecycle API.
 * Add key attributes in the smw_delete_key() arguments.
-* Implement AEAD one-shot and multi-part operations for OPTEE subsystem.
+* Add AEAD one-shot and multi-part APIs.
 
 ##### 3. Subsystems
 
@@ -103,6 +104,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add get/set device lifecycle operations in ELE subsystem.
 * Fix HSM delete key operation to handle "FLUSH_KEY" attribute to commit the
   key storage rollback protection.
+* Implement AEAD one-shot and multi-part operations for OPTEE subsystem.
 
 ##### 4. OSAL
 

@@ -23,6 +23,7 @@ set_target_properties(hsm PROPERTIES C_VISIBILITY_PRESET hidden)
 
 target_sources(hsm PRIVATE
                entry.c
+               $<$<BOOL:${ENABLE_AEAD}>:aead.c>
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c keymgr_derive.c key_group.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_MAC}>:mac.c>

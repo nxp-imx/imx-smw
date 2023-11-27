@@ -190,6 +190,23 @@ int hsm_derive_key(struct subsystem_context *hsm_ctx,
 		   struct smw_keymgr_derive_key_args *args);
 
 /**
+ * hsm_aead_handle() - Handle the one-shot AEAD operation.
+ * @hdl: Pointer to the HSM handles structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the AEAD encryption/decryption operation.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool hsm_aead_handle(struct hdl *hdl, enum operation_id operation_id,
+		     void *args, int *status);
+
+/**
  * convert_hsm_err() - Convert HSM error into SMW status.
  * @err: HSM error code.
  *

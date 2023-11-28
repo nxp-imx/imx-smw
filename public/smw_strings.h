@@ -88,6 +88,7 @@ typedef smw_string_t smw_mac_algo_t;
  * typedef smw_cipher_mode_t - Cipher mode name
  * Values:
  *	- CBC
+ *	- CFB
  *	- CTR
  *	- CTS
  *	- ECB

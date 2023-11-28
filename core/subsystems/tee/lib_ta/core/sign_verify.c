@@ -232,7 +232,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_OperationHandle operation = TEE_HANDLE_NULL;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
-	TEE_Attribute sign_verify_attr = { 0 };
+	TEE_Attribute sign_verify_attr[1] = { 0 };
 	TEE_ObjectInfo key_info = { 0 };
 	uint32_t param0_type = TEE_PARAM_TYPE_GET(param_types, 0);
 	uint32_t exp_param3_type = 0;
@@ -311,7 +311,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 
 		/* Set salt length attribute if needed */
 		if (!res && shared_params->salt_length) {
-			TEE_InitValueAttribute(&sign_verify_attr,
+			TEE_InitValueAttribute(sign_verify_attr,
 					       TEE_ATTR_RSA_PSS_SALT_LENGTH,
 					       shared_params->salt_length, 0);
 			attr_count = 1;
@@ -351,14 +351,14 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	}
 
 	if (cmd_id == CMD_SIGN) {
-		res = TEE_AsymmetricSignDigest(operation, &sign_verify_attr,
+		res = TEE_AsymmetricSignDigest(operation, sign_verify_attr,
 					       attr_count, digest, digest_len,
 					       params[3].memref.buffer,
 					       &params[3].memref.size);
 		if (res)
 			EMSG("Failed to sign digest: 0x%x", res);
 	} else { /* CMD_VERIFY */
-		res = TEE_AsymmetricVerifyDigest(operation, &sign_verify_attr,
+		res = TEE_AsymmetricVerifyDigest(operation, sign_verify_attr,
 						 attr_count, digest, digest_len,
 						 params[3].memref.buffer,
 						 params[3].memref.size);

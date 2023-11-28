@@ -1413,8 +1413,17 @@ TEE_Result get_key_lengths(uint32_t param_types,
 		break;
 	}
 
-	params[GET_KEY_LENGTHS_PUBKEYS_IDX].value.a = public_length;
-	params[GET_KEY_LENGTHS_PUBKEYS_IDX].value.b = modulus_length;
+	if (ADD_OVERFLOW(public_length, 0,
+			 &params[GET_KEY_LENGTHS_PUBKEYS_IDX].value.a)) {
+		res = TEE_ERROR_GENERIC;
+		goto exit;
+	}
+
+	if (ADD_OVERFLOW(modulus_length, 0,
+			 &params[GET_KEY_LENGTHS_PUBKEYS_IDX].value.b)) {
+		res = TEE_ERROR_GENERIC;
+		goto exit;
+	}
 
 	/* Private key is protected, hence length can't retrieved */
 	params[GET_KEY_LENGTHS_PRIVKEY_IDX].value.a = 0;

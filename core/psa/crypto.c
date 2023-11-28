@@ -48,9 +48,11 @@ static const struct cipher_algo_info {
 	psa_algorithm_t psa_alg_id;
 	smw_cipher_mode_t smw_mode_name;
 } cipher_algo_info[] = { CIPHER_ALGO(CBC_NO_PADDING, "CBC"),
+			 CIPHER_ALGO(CFB, "CFB"),
 			 CIPHER_ALGO(CTR, "CTR"),
 			 CIPHER_ALGO(ECB_NO_PADDING, "ECB"),
-			 CIPHER_ALGO(XTS, "XTS"), CIPHER_ALGO(NONE, NULL) };
+			 CIPHER_ALGO(XTS, "XTS"),
+			 CIPHER_ALGO(NONE, NULL) };
 
 static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)
 {

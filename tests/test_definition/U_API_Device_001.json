@@ -9,7 +9,7 @@
 		"command": "DEVICE_UUID",
 		"version": 255,
 		"output": 16,
-		"result": "SMW_STATUS_INVALID_VERSION"
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": {
 		"command": "DEVICE_UUID",

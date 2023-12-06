@@ -9,7 +9,7 @@
 		"command": "DEVICE_ATTESTATION",
 		"version": 255,
 		"output": 256,
-		"result": "SMW_STATUS_INVALID_VERSION"
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": {
 		"command": "DEVICE_ATTESTATION",

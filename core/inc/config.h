@@ -51,18 +51,6 @@ enum smw_config_hash_algo_id {
 	SMW_CONFIG_HASH_ALGO_ID_INVALID
 };
 
-enum smw_config_hmac_algo_id {
-	SMW_CONFIG_HMAC_ALGO_ID_MD5,
-	SMW_CONFIG_HMAC_ALGO_ID_SHA1,
-	SMW_CONFIG_HMAC_ALGO_ID_SHA224,
-	SMW_CONFIG_HMAC_ALGO_ID_SHA256,
-	SMW_CONFIG_HMAC_ALGO_ID_SHA384,
-	SMW_CONFIG_HMAC_ALGO_ID_SHA512,
-	SMW_CONFIG_HMAC_ALGO_ID_SM3,
-	SMW_CONFIG_HMAC_ALGO_ID_NB,
-	SMW_CONFIG_HMAC_ALGO_ID_INVALID
-};
-
 enum smw_config_mac_algo_id {
 	SMW_CONFIG_MAC_ALGO_ID_CMAC,
 	SMW_CONFIG_MAC_ALGO_ID_CMAC_TRUNCATED,
@@ -387,19 +375,6 @@ int smw_utils_hash_algo_names(char **start, char *end, unsigned long *bitmap);
  */
 int smw_utils_get_hash_algo_id(const char *name,
 			       enum smw_config_hash_algo_id *id);
-
-/**
- * smw_utils_get_hmac_algo_id() - Get the HMAC algo ID associated to a name.
- * @name: Name as a string.
- * @id: Pointer where the ID is written.
- *
- * This function gets the HMAC algo ID associated to a name.
- *
- * Return:
- * error code.
- */
-int smw_utils_get_hmac_algo_id(const char *name,
-			       enum smw_config_hmac_algo_id *id);
 
 /**
  * smw_utils_cipher_op_type_names() - Read a list of cipher operation types names

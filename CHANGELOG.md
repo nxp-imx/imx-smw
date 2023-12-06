@@ -43,6 +43,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix the selection of the subsystem for cryptographic operations using one or more key(s).
   The selection is based on the content of the configuration file unless the cryptographic operation
   uses one or more key(s). In this case, the subsystem associated to the key(s) must be selected.
+* Device manager returns the correct status code if the arguments version is not supported.
 
 ##### 2. Subsystems
 
@@ -68,6 +69,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+##### 2. SMW APIs
+
+* Device manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported.
 
 #### SMW Library - _version 2.5_
 ##### 1. ARM PSA APIs
@@ -131,6 +136,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. ELE Subsystem
 
 * Data storage API does not handle the `CURRENT` lifecycle properly. If the application restricts the data accessibility to the `CURRENT` lifecycle and another one or more, then the `CURRENT` lifecycle is ignored.
+
+##### 3. SMW APIs
+
+* Device manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported.
 
 #### SMW Library - _version 2.4_
 ##### 1. ARM PSA APIs
@@ -198,6 +207,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. TEE Subsystem
 
 * Two or more applications cannot have concurrent access to the same key storage because the TEE TAs only support one session.
+
+##### 3. SMW APIs
+
+* Device manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported.
 
 #### SMW Library - _version 2.3_
 ##### 1. ARM PSA APIs

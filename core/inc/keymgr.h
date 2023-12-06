@@ -17,6 +17,7 @@
 #define INVALID_KEY_ID INVALID_OBJ_ID
 
 /* Default RSA public exponent is 65537, which has a length of 3 bytes */
+#define DEFAULT_RSA_PUB_EXP	65537
 #define DEFAULT_RSA_PUB_EXP_LEN 3
 
 enum smw_keymgr_privacy_id {

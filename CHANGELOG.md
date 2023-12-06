@@ -57,6 +57,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support of CFB mode with ELE subsystem.
 * Implement AEAD one-shot operation for ELE subsystem.
 * Implement AEAD one-shot operation for HSM subsystem.
+* Add ELE subsystem RSA key management.
 
 ##### 3. ARM PSA APIs
 
@@ -70,6 +71,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Remove the subtest with incorrect tag length in U_API_Aead_Multipart_001.
 * Remove aead_id and update expected result to `SMW_STATUS_INVALID_PARAM` when IV length = 6 in U_ELE_Aead_003.
 * Update the expected result in test definition files for scenarios where the parameter string value is not recognized by SMW.
+* Add test to validate ELE RSA key management.
 
 #### PKCS#11 Library - _version 3.0_
 

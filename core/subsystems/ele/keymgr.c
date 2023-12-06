@@ -26,7 +26,9 @@ struct key_group {
 	bool full;
 };
 
-static int ecc_public_key_length(unsigned int security_size);
+static unsigned int ecc_public_key_length(unsigned int security_size);
+static unsigned int rsa_public_key_length(unsigned int security_size);
+static unsigned int rsa_modulus_length(unsigned int security_size);
 
 /*
  * OEM SRKH Key Identifier - Hardcoded value
@@ -77,36 +79,50 @@ static int ecc_public_key_length(unsigned int security_size);
  * @smw_key_type: SMW Key type ID
  * @ele_key_type: ELE full key type ID (keypair, symmetric or raw)
  * @public_length: Function pointer calculating the public key length in bytes
+ * @modulus_length: Function pointer calculating the RSA modulus length in bytes
  */
 static const struct ele_key_def {
 	enum smw_config_key_type_id smw_key_type;
 	unsigned int ele_key_type;
-	int (*public_length)(unsigned int security_size);
+	unsigned int (*public_length)(unsigned int security_size);
+	unsigned int (*modulus_length)(unsigned int security_size);
 } ele_key_def_list[] = {
 	{ .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 	  .ele_key_type = HSM_KEY_TYPE_ECC_NIST,
-	  .public_length = ecc_public_key_length },
+	  .public_length = ecc_public_key_length,
+	  .modulus_length = NULL },
 	{ .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
 	  .ele_key_type = HSM_KEY_TYPE_ECC_BP_R1,
-	  .public_length = ecc_public_key_length },
+	  .public_length = ecc_public_key_length,
+	  .modulus_length = NULL },
 	{ .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_AES,
 	  .ele_key_type = HSM_KEY_TYPE_AES,
-	  .public_length = NULL },
+	  .public_length = NULL,
+	  .modulus_length = NULL },
 	{ .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC,
-	  .public_length = NULL },
+	  .public_length = NULL,
+	  .modulus_length = NULL },
 	{ .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC,
-	  .public_length = NULL },
+	  .public_length = NULL,
+	  .modulus_length = NULL },
 	{ .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC,
-	  .public_length = NULL },
+	  .public_length = NULL,
+	  .modulus_length = NULL },
 	{ .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC,
-	  .public_length = NULL },
+	  .public_length = NULL,
+	  .modulus_length = NULL },
 	{ .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512,
 	  .ele_key_type = HSM_KEY_TYPE_HMAC,
-	  .public_length = NULL },
+	  .public_length = NULL,
+	  .modulus_length = NULL },
+	{ .smw_key_type = SMW_CONFIG_KEY_TYPE_ID_RSA,
+	  .ele_key_type = HSM_KEY_TYPE_RSA,
+	  .public_length = rsa_public_key_length,
+	  .modulus_length = rsa_modulus_length },
 };
 
 #define SIGN_ALGO(_sign_type_id)                                               \
@@ -127,9 +143,22 @@ static const struct signature_type {
 			    SIGN_ALGO(ECDSA_SHA256), SIGN_ALGO(ECDSA_SHA384),
 			    SIGN_ALGO(ECDSA_SHA512) };
 
-static int ecc_public_key_length(unsigned int security_size)
+static unsigned int ecc_public_key_length(unsigned int security_size)
 {
 	return BITS_TO_BYTES_SIZE(security_size) * 2;
+}
+
+static unsigned int rsa_public_key_length(unsigned int security_size)
+{
+	(void)security_size;
+
+	/* RSA public exponent is hardcoded to be 65537 */
+	return DEFAULT_RSA_PUB_EXP_LEN;
+}
+
+static unsigned int rsa_modulus_length(unsigned int security_size)
+{
+	return security_size;
 }
 
 static const struct ele_key_def *
@@ -404,6 +433,59 @@ end:
 	return status;
 }
 
+static int update_export_rsa_key_data(struct smw_keymgr_descriptor *key_desc,
+				      unsigned char *modulus_data,
+				      unsigned int modulus_length)
+{
+	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
+
+	int i = 0;
+	unsigned char *public_data = NULL;
+	unsigned int public_length = 0;
+	unsigned int def_pub_length = DEFAULT_RSA_PUB_EXP_LEN;
+	unsigned char def_pub[DEFAULT_RSA_PUB_EXP_LEN] = { 0 };
+
+	public_length = smw_keymgr_get_public_length(key_desc);
+
+	if (modulus_data && public_length >= def_pub_length) {
+		if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
+			public_data = def_pub;
+		else
+			public_data = smw_keymgr_get_public_data(key_desc);
+
+		for (; public_data && i < DEFAULT_RSA_PUB_EXP_LEN; i++)
+			public_data[i] =
+				(DEFAULT_RSA_PUB_EXP >> (i * 8)) & UCHAR_MAX;
+
+		status =
+			smw_keymgr_update_modulus_buffer(key_desc, modulus_data,
+							 modulus_length);
+
+		tmp_status =
+			smw_keymgr_update_public_buffer(key_desc, public_data,
+							def_pub_length);
+
+		if (status == SMW_STATUS_OK)
+			status = tmp_status;
+	} else {
+		if (public_length < def_pub_length)
+			status = SMW_STATUS_OUTPUT_TOO_SHORT;
+
+		tmp_status = smw_keymgr_update_modulus_buffer(key_desc, NULL,
+							      modulus_length);
+		if (tmp_status != SMW_STATUS_OK)
+			status = tmp_status;
+
+		tmp_status = smw_keymgr_update_public_buffer(key_desc, NULL,
+							     def_pub_length);
+		if (tmp_status != SMW_STATUS_OK)
+			status = tmp_status;
+	}
+
+	return status;
+}
+
 static int export_key_operation(struct hdl *hdl,
 				struct smw_keymgr_descriptor *key_desc)
 {
@@ -415,8 +497,10 @@ static int export_key_operation(struct hdl *hdl,
 
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
 	unsigned char *public_data = NULL;
+	unsigned char *modulus_data = NULL;
 	unsigned char *tmp_key = NULL;
 	unsigned int public_length = 0;
+	unsigned int modulus_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -424,18 +508,32 @@ static int export_key_operation(struct hdl *hdl,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	/* Set the operation public key with user arguments */
-	public_data = smw_keymgr_get_public_data(key_desc);
-	public_length = smw_keymgr_get_public_length(key_desc);
+	if (key_identifier->type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
+		/* Set the operation output with user public key arguments */
+		public_data = smw_keymgr_get_public_data(key_desc);
+		public_length = smw_keymgr_get_public_length(key_desc);
 
-	if (SET_OVERFLOW(public_length, op_args.out_key_size)) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
+		if (SET_OVERFLOW(public_length, op_args.out_key_size)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
+		op_args.out_key = public_data;
+	} else {
+		/* Set the operation output with user modulus arguments */
+		modulus_data = smw_keymgr_get_modulus(key_desc);
+		modulus_length = smw_keymgr_get_modulus_length(key_desc);
+
+		if (SET_OVERFLOW(modulus_length, op_args.out_key_size)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
+		op_args.out_key = modulus_data;
 	}
 
-	op_args.out_key = public_data;
-
-	if (public_data && key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+	if (op_args.out_key &&
+	    key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
 		/*
 		 * Assume the user buffer length is big enough, ELE subsystem
 		 * will return the real public buffer length exported
@@ -471,15 +569,30 @@ static int export_key_operation(struct hdl *hdl,
 
 	public_length = op_args.exp_out_key_size;
 
-	if (status == SMW_STATUS_OK) {
-		status = smw_keymgr_update_public_buffer(key_desc,
-							 op_args.out_key,
-							 public_length);
-	} else if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
-		tmp_status = smw_keymgr_update_public_buffer(key_desc, NULL,
-							     public_length);
-		if (tmp_status != SMW_STATUS_OK)
-			status = tmp_status;
+	if (key_identifier->type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
+		if (status == SMW_STATUS_OK) {
+			status =
+				smw_keymgr_update_public_buffer(key_desc,
+								op_args.out_key,
+								public_length);
+		} else if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+			tmp_status =
+				smw_keymgr_update_public_buffer(key_desc, NULL,
+								public_length);
+			if (tmp_status != SMW_STATUS_OK)
+				status = tmp_status;
+		}
+	} else {
+		if (status == SMW_STATUS_OK) {
+			status = update_export_rsa_key_data(key_desc,
+							    op_args.out_key,
+							    public_length);
+		} else if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+			tmp_status = update_export_rsa_key_data(key_desc, NULL,
+								public_length);
+			if (tmp_status != SMW_STATUS_OK)
+				status = tmp_status;
+		}
 	}
 
 end:
@@ -1007,6 +1120,7 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 
 	const struct ele_key_def *key_def = NULL;
 	unsigned int public_length = 0;
+	unsigned int modulus_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1022,13 +1136,26 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 			public_length =
 				key_def->public_length(key_attrs.bit_key_sz);
 
+		if (key_def && key_def->modulus_length)
+			modulus_length =
+				key_def->modulus_length(key_attrs.bit_key_sz);
+
 		/*
 		 * Only public key is available, private or symmetric key
 		 * are never exported.
-		 * RSA key are not supported.
+		 *
+		 * No need to check if it's an asymmetric key and the
+		 * type of the key RSA or not.
+		 * Key function setting the buffer length is setup
+		 * according to key type.
 		 */
 		status = smw_keymgr_update_public_buffer(key_desc, NULL,
 							 public_length);
+
+		tmp_status = smw_keymgr_update_modulus_buffer(key_desc, NULL,
+							      modulus_length);
+		if (status == SMW_STATUS_OK)
+			status = tmp_status;
 
 		tmp_status =
 			smw_keymgr_update_private_buffer(key_desc, NULL, 0);
@@ -1251,13 +1378,6 @@ int ele_export_public_key(struct hdl *hdl,
 		SMW_DBG_PRINTF(VERBOSE,
 			       "%s: ELE key type 0x%08x not supported\n",
 			       __func__, key_attrs.key_type);
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-		goto end;
-	}
-
-	if (key_def->smw_key_type == SMW_CONFIG_KEY_TYPE_ID_RSA) {
-		SMW_DBG_PRINTF(VERBOSE, "%s: RSA key not supported\n",
-			       __func__);
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto end;
 	}

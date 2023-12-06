@@ -13,6 +13,6 @@
 struct smw_crypto_hmac_args {
 	/* Inputs */
 	struct smw_keymgr_descriptor key_descriptor;
-	enum smw_config_hmac_algo_id algo_id;
+	enum smw_config_hash_algo_id algo_id;
 	struct smw_hmac_args *pub;
 };

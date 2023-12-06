@@ -58,7 +58,7 @@ struct smw_keymgr_derive_key_args {
 struct smw_keymgr_tls12_args {
 	enum smw_tls12_key_exchange_id key_exchange_id;
 	enum smw_tls12_encryption_id encryption_id;
-	enum smw_config_hmac_algo_id prf_id;
+	enum smw_config_hash_algo_id prf_id;
 	bool ephemeral_key;
 
 	struct smw_kdf_tls12_args *pub_args;

@@ -1,0 +1,73 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 2048,
+			"policy": {
+				"sign_message": [
+					[
+						"RSA_PKCS1V15",
+						"HASH=SHA256"
+					]
+				]
+			}
+		},
+		"key 2": {
+			"type": "RSA",
+			"security_size": 3072,
+			"policy": {
+				"sign_message": [
+					[
+						"RSA_PKCS1V15",
+						"HASH=SHA256"
+					]
+				]
+			}
+		},
+		"key 3": {
+			"type": "RSA",
+			"security_size": 4096,
+			"policy": {
+				"sign_message": [
+					[
+						"RSA_PSS",
+						"HASH=SHA512"
+					]
+				]
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": "imx8ulpevk"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"restriction_list": "imx8ulpevk"
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"restriction_list": "imx8ulpevk"
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 6": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 3
+	}
+}

@@ -10,6 +10,7 @@ if(ENABLE_KEYMGR_MODULE)
     add_operation_implicit(GET_KEY_LENGTHS)
     add_operation_implicit(GET_KEY_ATTRIBUTES)
     add_operation_implicit(COMMIT_KEY_STORAGE)
+    add_operation_implicit(KEY_ATTESTATION)
 endif()
 
 add_library(keymgr OBJECT "")

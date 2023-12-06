@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -107,6 +107,16 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 
 __weak enum smw_status_code
 smw_commit_key_storage(struct smw_commit_key_storage_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_key_attestation(struct smw_key_attestation_args *args)
 {
 	(void)args;
 

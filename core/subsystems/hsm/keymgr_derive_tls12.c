@@ -36,7 +36,7 @@
 static const struct tls12_kdf_info {
 	enum smw_tls12_key_exchange_id key_exchange_id;
 	enum smw_tls12_encryption_id encryption_id;
-	enum smw_config_hmac_algo_id prf_id;
+	enum smw_config_hash_algo_id prf_id;
 	enum smw_config_key_type_id mac_key_id;
 	unsigned int mac_security_size;
 	enum smw_config_key_type_id enc_key_id;
@@ -49,7 +49,7 @@ static const struct tls12_kdf_info {
 		// TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
 		.key_exchange_id = SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA,
 		.encryption_id = SMW_TLS12_ENCRYPTION_ID_AES_128_CBC,
-		.prf_id = SMW_CONFIG_HMAC_ALGO_ID_SHA256,
+		.prf_id = SMW_CONFIG_HASH_ALGO_ID_SHA256,
 		.mac_key_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
 		.mac_security_size = 256,
 		.enc_key_id = SMW_CONFIG_KEY_TYPE_ID_AES,
@@ -63,7 +63,7 @@ static const struct tls12_kdf_info {
 		// TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
 		.key_exchange_id = SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA,
 		.encryption_id = SMW_TLS12_ENCRYPTION_ID_AES_256_CBC,
-		.prf_id = SMW_CONFIG_HMAC_ALGO_ID_SHA384,
+		.prf_id = SMW_CONFIG_HASH_ALGO_ID_SHA384,
 		.mac_key_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
 		.mac_security_size = 384,
 		.enc_key_id = SMW_CONFIG_KEY_TYPE_ID_AES,
@@ -77,7 +77,7 @@ static const struct tls12_kdf_info {
 		// TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
 		.key_exchange_id = SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA,
 		.encryption_id = SMW_TLS12_ENCRYPTION_ID_AES_128_GCM,
-		.prf_id = SMW_CONFIG_HMAC_ALGO_ID_SHA256,
+		.prf_id = SMW_CONFIG_HASH_ALGO_ID_SHA256,
 		.enc_key_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 		.enc_security_size = 128,
 		.hsm_kdf = HSM_KDF_HMAC_SHA_256_TLS_0_16_4,
@@ -89,7 +89,7 @@ static const struct tls12_kdf_info {
 		// TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
 		.key_exchange_id = SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA,
 		.encryption_id = SMW_TLS12_ENCRYPTION_ID_AES_256_GCM,
-		.prf_id = SMW_CONFIG_HMAC_ALGO_ID_SHA384,
+		.prf_id = SMW_CONFIG_HASH_ALGO_ID_SHA384,
 		.enc_key_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 		.enc_security_size = 256,
 		.hsm_kdf = HSM_KDF_HMAC_SHA_384_TLS_0_32_4,
@@ -461,19 +461,19 @@ static int check_ivs_length(struct smw_keymgr_tls12_args *tls_args)
 }
 
 static int check_kdf_input_length(op_key_exchange_args_t *args,
-				  enum smw_config_hmac_algo_id prf_id)
+				  enum smw_config_hash_algo_id prf_id)
 {
 	if ((args->flags & HSM_OP_KEY_EXCHANGE_FLAGS_USE_TLS_EMS) ==
 	    HSM_OP_KEY_EXCHANGE_FLAGS_USE_TLS_EMS) {
 		switch (prf_id) {
-		case SMW_CONFIG_HMAC_ALGO_ID_SHA256:
+		case SMW_CONFIG_HASH_ALGO_ID_SHA256:
 			if (args->kdf_input_size !=
 			    TLS12_KDF_EMS_SHA256_INPUT_SIZE)
 				return SMW_STATUS_INVALID_PARAM;
 
 			return SMW_STATUS_OK;
 
-		case SMW_CONFIG_HMAC_ALGO_ID_SHA384:
+		case SMW_CONFIG_HASH_ALGO_ID_SHA384:
 			if (args->kdf_input_size !=
 			    TLS12_KDF_EMS_SHA384_INPUT_SIZE)
 				return SMW_STATUS_INVALID_PARAM;

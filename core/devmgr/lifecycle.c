@@ -82,7 +82,7 @@ smw_device_set_lifecycle(struct smw_device_lifecycle_args *args)
 		goto end;
 
 	if (args->version != 0) {
-		status = SMW_STATUS_INVALID_VERSION;
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
 
@@ -119,7 +119,7 @@ smw_device_get_lifecycle(struct smw_device_lifecycle_args *args)
 		goto end;
 
 	if (args->version != 0) {
-		status = SMW_STATUS_INVALID_VERSION;
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
 

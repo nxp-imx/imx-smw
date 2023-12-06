@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __JSON_TYPES_H__
@@ -12,6 +12,7 @@
 #define ALGO_OBJ		  "algo"
 #define API_OBJ			  "api"
 #define APP_OBJ			  "App"
+#define ATTEST_KEY_NAME_OBJ	  "attest_key_name"
 #define ATTR_LIST_OBJ		  "attributes_list"
 #define CERTIFICATE_ID_OBJ	  "cert_id"
 #define CERTIFICATE_OBJ		  "certificate"
@@ -73,6 +74,7 @@
 #define SIGN_ID_OBJ		  "sign_id"
 #define SIGN_KEY_NAME_OBJ	  "sign_key_name"
 #define SIGN_OBJ		  "signature"
+#define SIGN_TYPE_OBJ		  "signature_type"
 #define SUBSYSTEM_EXP_OBJ	  "subsystem_exp"
 #define SUBSYSTEM_OBJ		  "subsystem"
 #define SUBTEST_OBJ		  "subtest "
@@ -125,6 +127,7 @@
 #define GET_VERSION	     "GET_VERSION"
 #define HASH		     "HASH"
 #define IMPORT		     "IMPORT"
+#define KEY_ATTESTATION	     "KEY_ATTESTATION"
 #define MAC		     "MAC"
 #define MAC_COMPUTE	     "MAC_COMPUTE"
 #define MAC_VERIFY	     "MAC_VERIFY"

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -189,7 +189,7 @@ int delete_key_psa(struct subtest_data *subtest)
 		return ERR_CODE(API_STATUS_NOK);
 
 	/*
-	 * Key node is freed when the list is freed (at the of the test).
+	 * Key node is freed when the list is freed (at the end of the test).
 	 * Even if the key is deleted by the subsystem a test scenario
 	 * can try to delete/use it after this operation.
 	 */

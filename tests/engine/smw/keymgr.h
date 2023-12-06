@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __KEYMGR_H__
@@ -113,5 +113,18 @@ int get_key_attributes(struct subtest_data *subtest);
  * -BAD_PARAM_TYPE              - Bad parameter type
  */
 int commit_key_storage(struct subtest_data *subtest);
+
+/**
+ * key_attestation() - Key attestation
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED                       - Success.
+ * -MISSING_PARAMS              - Missing mandatory parameters in @params.
+ * -API_STATUS_NOK              - SMW API Call return error
+ * -BAD_ARGS                    - One of the arguments is bad.
+ * -BAD_PARAM_TYPE              - Bad parameter type
+ */
+int key_attestation(struct subtest_data *subtest);
 
 #endif /* __KEYMGR_H__ */

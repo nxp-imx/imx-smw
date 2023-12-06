@@ -1,0 +1,7 @@
+{
+	"subtest 1": {
+		"command": "KEY_ATTESTATION",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

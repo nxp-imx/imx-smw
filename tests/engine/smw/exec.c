@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <string.h>
@@ -459,6 +459,25 @@ static int execute_aead_cmd(char *cmd, struct subtest_data *subtest)
 	return ERR_CODE(UNDEFINED_CMD);
 }
 
+/**
+ * execute_key_attestation_cmd() - Execute key attestation command
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -MISSING_PARAMS          - One command parameters is not defined.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -BAD_PARAM_TYPE          - Bad parameter type
+ */
+static int execute_key_attestation_cmd(char *cmd, struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	return key_attestation(subtest);
+}
+
 int execute_command_smw(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
@@ -483,7 +502,8 @@ int execute_command_smw(char *cmd, struct subtest_data *subtest)
 			 { STORAGE, &execute_storage_cmd },
 			 { COMMIT_KEY_STORAGE,
 			   &execute_commit_key_storage_cmd },
-			 { AEAD, &execute_aead_cmd } };
+			 { AEAD, &execute_aead_cmd },
+			 { KEY_ATTESTATION, &execute_key_attestation_cmd } };
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {
 		if (!strncmp(cmd, cmd_list[idx].cmd_prefix,

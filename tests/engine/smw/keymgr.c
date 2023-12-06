@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <stdlib.h>
@@ -387,6 +387,7 @@ static int set_common_bad_args(json_object *params, void **args,
 	default:
 		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
+		break;
 	}
 
 	return ret;
@@ -575,6 +576,51 @@ static int set_commit_bad_args(json_object *params,
 	default:
 		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
 		ret = ERR_CODE(BAD_PARAM_TYPE);
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * set_attestation_bad_args() - Set key attestation parameters for specific
+ *                              test cases.
+ * @params: json-c parameters
+ * @args: Pointer to smw key attestation args structure.
+ *
+ * These configurations represent specific error case using SMW API for a
+ * key attestation.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ */
+static int set_attestation_bad_args(json_object *params,
+				    struct smw_key_attestation_args **args)
+{
+	int ret = ERR_CODE(PASSED);
+	enum arguments_test_err_case error = NOT_DEFINED;
+
+	if (!params || !args)
+		return ERR_CODE(BAD_ARGS);
+
+	ret = util_read_test_error(&error, params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	switch (error) {
+	case NOT_DEFINED:
+		break;
+
+	case ARGS_NULL:
+		*args = NULL;
+		break;
+
+	default:
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
+		ret = ERR_CODE(BAD_PARAM_TYPE);
+		break;
 	}
 
 	return ret;
@@ -758,7 +804,7 @@ int delete_key(struct subtest_data *subtest)
 		res = ERR_CODE(PASSED);
 
 	/*
-	 * Key node is freed when the list is freed (at the of the test).
+	 * Key node is freed when the list is freed (at the end of the test).
 	 * Even if the key is deleted by the subsystem a test scenario
 	 * can try to delete/use it after this operation.
 	 */
@@ -1055,5 +1101,152 @@ int commit_key_storage(struct subtest_data *subtest)
 		res = ERR_CODE(API_STATUS_NOK);
 
 exit:
+	return res;
+}
+
+int key_attestation(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(FAILED);
+	struct keypair_ops key_test = { 0 };
+	struct keypair_ops attest_key_test = { 0 };
+	struct smw_key_attestation_args args = { 0 };
+	struct smw_key_attestation_args *smw_args = &args;
+	const char *key_name = NULL;
+	const char *attest_key_name = NULL;
+	struct tbuffer certificate = { 0 };
+	struct tbuffer challenge = { 0 };
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	args.version = subtest->version;
+	args.key_descriptor = &key_test.desc;
+	args.attest_key_descriptor = &attest_key_test.desc;
+
+	/* Key name is not mandatory in case of error test */
+	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
+	/* Initialize key descriptor, no key buffer */
+	res = key_desc_init(&key_test, NULL);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	if (key_name) {
+		/* Read the json-c key description */
+		res = key_read_descriptor(list_keys(subtest), &key_test,
+					  key_name);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+	}
+
+	/* Key name is not mandatory in case of error test */
+	res = util_read_json_type(&attest_key_name, ATTEST_KEY_NAME_OBJ,
+				  t_string, subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
+	/* Initialize key descriptor, no key buffer */
+	res = key_desc_init(&attest_key_test, NULL);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	if (attest_key_name) {
+		/* Read the json-c key description */
+		res = key_read_descriptor(list_keys(subtest), &attest_key_test,
+					  attest_key_name);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+	}
+
+	/* Signature type is not mandatory in case of error test */
+	res = util_read_json_type(&args.signature_type_name, SIGN_TYPE_OBJ,
+				  t_string, subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
+	res = util_read_json_type(&challenge, CHALLENGE_OBJ, t_buffer_hex,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
+	args.challenge = challenge.data;
+	args.challenge_length = challenge.length;
+
+	res = util_read_json_type(&certificate, CERTIFICATE_OBJ, t_buffer_hex,
+				  subtest->params);
+	if (res == ERR_CODE(PASSED)) {
+		args.certificate_length = certificate.length;
+	} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
+		/* JSON test file doesn't give the certificate length */
+		subtest->smw_status = smw_key_attestation(smw_args);
+		if (subtest->smw_status != SMW_STATUS_OUTPUT_TOO_SHORT) {
+			res = ERR_CODE(API_STATUS_NOK);
+			goto exit;
+		}
+
+		if (!args.certificate_length) {
+			res = ERR_CODE(API_STATUS_NOK);
+			goto exit;
+		}
+	} else {
+		goto exit;
+	}
+
+	if (args.certificate_length) {
+		args.certificate = calloc(1, args.certificate_length);
+		if (!args.certificate) {
+			DBG_PRINT_ALLOC_FAILURE();
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto exit;
+		}
+	}
+
+	/* Specific test cases */
+	res = set_attestation_bad_args(subtest->params, &smw_args);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Call key attestation function */
+	subtest->smw_status = smw_key_attestation(smw_args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
+		goto exit;
+	}
+
+	if (!args.certificate)
+		goto exit;
+
+	if (certificate.data)
+		res = util_compare_buffers(args.certificate,
+					   args.certificate_length,
+					   certificate.data,
+					   certificate.length);
+
+	DBG_DHEX("Certificate", args.certificate, args.certificate_length);
+
+	/*
+	 * Key node is freed when the list is freed (at the end of the test).
+	 * Even if the key is deleted by the subsystem a test scenario
+	 * can try to delete/use it after this operation.
+	 */
+
+exit:
+	key_free_key(&key_test);
+	key_free_key(&attest_key_test);
+
+	if (challenge.data)
+		free(challenge.data);
+
+	if (certificate.data)
+		free(certificate.data);
+
+	if (args.certificate)
+		free(args.certificate);
+
 	return res;
 }

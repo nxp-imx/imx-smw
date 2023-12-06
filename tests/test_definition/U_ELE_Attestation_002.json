@@ -1,0 +1,251 @@
+{
+	"keys": {
+		"key attested": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				],
+				"verify_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			}
+		},
+		"key NIST SHA224": {
+			"type": "NIST",
+			"security_size": 224,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA224"
+					]
+				]
+			},
+		},
+		"key NIST SHA256": {
+			"type": "NIST",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA256"
+					]
+				]
+			},
+		},
+		"key NIST SHA384": {
+			"type": "NIST",
+			"security_size": 384,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA384"
+					]
+				]
+			},
+		},
+		"key NIST SHA512": {
+			"type": "NIST",
+			"security_size": 521,
+			"policy": {
+				"sign_message": [
+					[
+						"ECDSA",
+						"HASH=SHA512"
+					]
+				]
+			},
+		},
+		"key AES": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"sign_message": [
+					[
+						"CMAC"
+					]
+				]
+			},
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key attested"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST SHA224"
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST SHA256"
+	},
+	"subtest 4": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST SHA384"
+	},
+	"subtest 5": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key NIST SHA512"
+	},
+	"subtest 6": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key AES"
+	},
+	"subtest 7": { // EDCSA SHA224
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key NIST SHA224",
+		"signature_type": "ECDSA_SHA224",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"depends": [1, 2]
+	},
+	"subtest 8": { // EDCSA SHA256
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key NIST SHA256",
+		"signature_type": "ECDSA_SHA256",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"depends": [1, 3]
+	},
+	"subtest 9": { // EDCSA SHA384
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key NIST SHA384",
+		"signature_type": "ECDSA_SHA384",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"depends": [1, 4]
+	},
+	"subtest 10": { // EDCSA SHA512
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key NIST SHA512",
+		"signature_type": "ECDSA_SHA512",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"depends": [1, 5]
+	},
+	"subtest 11": { // AES CMAC
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key AES",
+		"signature_type": "CMAC",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"depends": [1, 6]
+	},
+	"subtest 12": { // AES CMAC invalid version
+		"command": "KEY_ATTESTATION",
+		"version": 255,
+		"key_name": "key attested",
+		"attest_key_name": "key AES",
+		"signature_type": "CMAC",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
+		"depends": [1, 6]
+	},
+	"subtest 13": { // ECDSA key and undefined signature type
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key NIST SHA256",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": [1, 3]
+	},
+	"subtest 14": { // AES key and undefined signature type
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key AES",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": [1, 6]
+	},
+	"subtest 15": { // AES CMAC and undefined key
+		"command": "KEY_ATTESTATION",
+		"attest_key_name": "key AES",
+		"signature_type": "CMAC",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 6
+	},
+	"subtest 16": { // Undefined attestation key
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"signature_type": "CMAC",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 17": { // AES CMAC output too short
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key AES",
+		"signature_type": "CMAC",
+		"challenge": ["000102030405060708090A0B0C0D0E0F"],
+		"certificate": 1,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
+		"depends": [1, 6]
+	},
+	"subtest 18": { // AES CMAC invalid challenge
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key AES",
+		"signature_type": "CMAC",
+		"challenge": 16,
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": [1, 6]
+	},
+	"subtest 19": { // AES CMAC invalid challenge length
+		"command": "KEY_ATTESTATION",
+		"key_name": "key attested",
+		"attest_key_name": "key AES",
+		"signature_type": "CMAC",
+		"challenge": [0, "000102030405060708090A0B0C0D0E0F"],
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": [1, 6]
+	},
+	"subtest 20": {
+		"command": "DELETE",
+		"key_name": "key attested",
+		"depends": 1
+	},
+	"subtest 21": {
+		"command": "DELETE",
+		"key_name": "key NIST SHA224",
+		"depends": 2
+	},
+	"subtest 22": {
+		"command": "DELETE",
+		"key_name": "key NIST SHA256",
+		"depends": 3
+	},
+	"subtest 23": {
+		"command": "DELETE",
+		"key_name": "key NIST SHA384",
+		"depends": 4
+	},
+	"subtest 24": {
+		"command": "DELETE",
+		"key_name": "key NIST SHA512",
+		"depends": 5
+	},
+	"subtest 25": {
+		"command": "DELETE",
+		"key_name": "key AES",
+		"depends": 6
+	}
+}

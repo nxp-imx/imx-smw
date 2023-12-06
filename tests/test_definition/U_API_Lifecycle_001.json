@@ -9,7 +9,7 @@
 		"command": "DEVICE_SET_LIFECYCLE",
 		"version": 255,
 		"lifecycle": "CURRENT",
-		"result": "SMW_STATUS_INVALID_VERSION"
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 3": { // Subsystem not defined
 		"command": "DEVICE_SET_LIFECYCLE",
@@ -30,7 +30,7 @@
 	"subtest 6": { // Argument version not supported
 		"command": "DEVICE_GET_LIFECYCLE",
 		"version": 255,
-		"result": "SMW_STATUS_INVALID_VERSION"
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 7": { // Subsystem not defined
 		"command": "DEVICE_GET_LIFECYCLE",

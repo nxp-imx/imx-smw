@@ -4,7 +4,7 @@
 	},
 	"subtest 2": {
 		"command": "CONFIG_LOAD",
-		"filepath": "config_version_not_supported.txt",
+		"filepath": "config_version_invalid.txt",
 		"result": "SMW_STATUS_INVALID_VERSION"
 	},
 	"subtest 3": {

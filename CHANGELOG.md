@@ -45,6 +45,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   uses one or more key(s). In this case, the subsystem associated to the key(s) must be selected.
 * Device manager returns the correct status code if the arguments version is not supported.
 * Change public AEAD arguments structure members (struct smw_aead_args, struct smw_aead_aad_args and struct smw_aead_final_args).
+* Add support of key attestation
 
 ##### 2. Subsystems
 

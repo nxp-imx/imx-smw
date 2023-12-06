@@ -96,7 +96,7 @@ enum smw_status_code smw_device_get_uuid(struct smw_device_uuid_args *args)
 		goto end;
 
 	if (args->version != 0) {
-		status = SMW_STATUS_INVALID_VERSION;
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
 

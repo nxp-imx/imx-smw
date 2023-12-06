@@ -35,6 +35,9 @@
  * @public_length: Length of @public_data in bytes
  * @private_data: Pointer to the private key
  * @private_length: Length of @private_data in bytes
+ *
+ * Asymmetric Keypair common structure definition. It's the basis of the
+ * other asymmetric keypair structure.
  */
 struct smw_keypair_gen {
 	unsigned char *public_data;
@@ -45,20 +48,23 @@ struct smw_keypair_gen {
 
 /**
  * struct smw_keypair_rsa - RSA Keypair object
- * @modulus: Pointer to the RSA modulus
- * @modulus_length: Length of @modulus in bytes
  * @public_data: Pointer to the RSA public exponent
  * @public_length: Length of @public_data in bytes
  * @private_data: Pointer to the RSA private exponent
  * @private_length: Length of @private_data in bytes
+ * @modulus: Pointer to the RSA modulus
+ * @modulus_length: Length of @modulus in bytes
+ *
+ * First fields are common to the struct smw_keypair_gen and must be
+ * kept common.
  */
 struct smw_keypair_rsa {
-	unsigned char *modulus;
-	unsigned int modulus_length;
 	unsigned char *public_data;
 	unsigned int public_length;
 	unsigned char *private_data;
 	unsigned int private_length;
+	unsigned char *modulus;
+	unsigned int modulus_length;
 };
 
 /**

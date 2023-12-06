@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __SMW_KEYMGR_H__
@@ -347,6 +347,36 @@ struct smw_commit_key_storage_args {
 };
 
 /**
+ * struct smw_key_attestation_args - Device attestation arguments
+ * @version: Version of this structure
+ * @key_descriptor: Pointer to a Key descriptor object of the key to be attested.
+ *		    See &struct smw_key_descriptor
+ * @attest_key_descriptor: Pointer to a Key descriptor object
+ *			   of the attestation key.
+ *			   See &struct smw_key_descriptor
+ * @signature_type_name: Signature type name. See &typedef smw_signature_type_t
+ * @challenge: Caller unique ephemeral value (e.g. nonce)
+ * @challenge_length: Length (in bytes) of the @challenge value
+ * @certificate: Device attestation certificate.
+ * @certificate_length: Length (in bytes) of the @certificate.
+ *
+ * @challenge length depends on the key (refer to the subsystem capabilities).
+ * If the length is bigger than expected, it will be cut to keep only the
+ * maximum size. If the length is shorter, the challenge value will be completed
+ * with 0's.
+ */
+struct smw_key_attestation_args {
+	unsigned char version;
+	struct smw_key_descriptor *key_descriptor;
+	struct smw_key_descriptor *attest_key_descriptor;
+	smw_signature_type_t signature_type_name;
+	unsigned char *challenge;
+	unsigned int challenge_length;
+	unsigned char *certificate;
+	unsigned int certificate_length;
+};
+
+/**
  * smw_generate_key() - Generate a Key.
  * @args: Pointer to the structure that contains the Key generation arguments.
  *
@@ -499,5 +529,24 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args);
  */
 enum smw_status_code
 smw_commit_key_storage(struct smw_commit_key_storage_args *args);
+
+/**
+ * smw_key_attestation() - Get the key attestation certificate.
+ * @args: Pointer to the structure that contains the key attestation arguments.
+ *
+ * Reads the key attestation certificate.
+ *
+ * Certificate length of @args field is updated to the correct value when:
+ *  - Length is bigger than expected. In this case operation succeeded.
+ *  - Length is shorter than expected. In this case operation failed and
+ *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
+ *  - Certificate buffer is set the NULL. In this case operation returned
+ *    SMW_STATUS_OK
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_key_attestation(struct smw_key_attestation_args *args);
 
 #endif /* __SMW_KEYMGR_H__ */

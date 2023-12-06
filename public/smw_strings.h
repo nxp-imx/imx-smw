@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #ifndef __SMW_STRINGS_H__
@@ -163,7 +163,9 @@ typedef smw_string_t smw_key_format_t;
  *    |                 |              | how a key policy is defined.          |
  *    +-----------------+--------------+---------------------------------------+
  *    | STORAGE_ID      | numeral      | Subsystem storage identifier.         |
+ *    |                 |              |                                       |
  *    |                 |              | EdgeLock 2GO storage identifiers:     |
+ *    |                 |              |                                       |
  *    |                 |              |  - Key object: NXP_EL2GO_KEY          |
  *    |                 |              |  - Data object: NXP_EL2GO_DATA        |
  *    +-----------------+--------------+---------------------------------------+
@@ -285,6 +287,11 @@ typedef smw_string_t smw_attr_data_type_t;
  *	- DEFAULT
  *	- RSASSA-PKCS1-V1_5
  *	- RSASSA-PSS
+ *	- CMAC
+ *	- ECDSA_SHA224
+ *	- ECDSA_SHA256
+ *	- ECDSA_SHA384
+ *	- ECDSA_SHA512
  */
 typedef smw_string_t smw_signature_type_t;
 

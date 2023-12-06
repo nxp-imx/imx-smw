@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include "smw_status.h"
@@ -109,6 +109,24 @@ static const struct ele_key_def {
 	  .public_length = NULL },
 };
 
+#define SIGN_ALGO(_sign_type_id)                                               \
+	{                                                                      \
+		.signature_type_id = SMW_CONFIG_SIGN_TYPE_ID_##_sign_type_id,  \
+		.sign_algo = HSM_PKEY_ATTEST_ALGO_##_sign_type_id              \
+	}
+
+/**
+ * struct signature_type - ELE signature algorithm
+ * @signature_type_id: SMW signature type ID
+ * @sign_algo: ELE Sign algo ID
+ */
+static const struct signature_type {
+	enum smw_config_sign_type_id signature_type_id;
+	hsm_pub_key_attest_sign_algo_t sign_algo;
+} signature_type_list[] = { SIGN_ALGO(CMAC), SIGN_ALGO(ECDSA_SHA224),
+			    SIGN_ALGO(ECDSA_SHA256), SIGN_ALGO(ECDSA_SHA384),
+			    SIGN_ALGO(ECDSA_SHA512) };
+
 static int ecc_public_key_length(unsigned int security_size)
 {
 	return BITS_TO_BYTES_SIZE(security_size) * 2;
@@ -212,6 +230,33 @@ get_key_persistence(hsm_key_lifetime_t lifetime)
 	}
 
 	return persistence_id;
+}
+
+static int set_sign_algo(enum smw_config_sign_type_id signature_type_id,
+			 hsm_pub_key_attest_sign_algo_t *sign_algo)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(signature_type_list);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < size; i++) {
+		if (signature_type_list[i].signature_type_id ==
+		    signature_type_id) {
+			*sign_algo = signature_type_list[i].sign_algo;
+
+			SMW_DBG_PRINTF(DEBUG, "ELE signature algorithm: %d\n",
+				       *sign_algo);
+
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 /**
@@ -791,7 +836,7 @@ static int import_el2go_key(struct hdl *hdl,
 
 	status = open_key_mgmt_service(hdl, &key_mgt_hdl);
 	if (status != SMW_STATUS_OK)
-		goto exit;
+		goto end;
 
 	op_args.input_lsb_addr = smw_keymgr_get_private_data(key_desc);
 	op_args.input_size = smw_keymgr_get_private_length(key_desc);
@@ -818,7 +863,7 @@ static int import_el2go_key(struct hdl *hdl,
 		key_desc->identifier.id = op_args.key_identifier;
 	}
 
-exit:
+end:
 	if (key_mgt_hdl) {
 		tmp_status = close_key_mgt_service(key_mgt_hdl);
 		if (status == SMW_STATUS_OK)
@@ -1102,6 +1147,66 @@ end:
 	return status;
 }
 
+static int key_attestation(struct hdl *hdl, void *args)
+{
+	int status = SMW_STATUS_OK;
+
+	struct smw_keymgr_attest_args *attest_args = args;
+	struct smw_keymgr_descriptor *attest_key_descriptor =
+		&attest_args->attest_key_descriptor;
+	hsm_err_t err = HSM_NO_ERROR;
+	op_pub_key_attest_args_t op_args = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	op_args.key_identifier = attest_args->key_descriptor.identifier.id;
+	op_args.key_attestation_id = attest_key_descriptor->identifier.id;
+
+	status = set_sign_algo(attest_args->signature_type_id,
+			       &op_args.sign_algo);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	op_args.auth_challenge = smw_keymgr_get_attest_chal(attest_args);
+	op_args.auth_challenge_size =
+		smw_keymgr_get_attest_chal_length(attest_args);
+	op_args.certificate = smw_keymgr_get_attest_cert(attest_args);
+	op_args.certificate_size =
+		smw_keymgr_get_attest_cert_length(attest_args);
+
+	SMW_DBG_PRINTF(VERBOSE,
+		       "[%s (%d)] Call hsm_do_pub_key_attest()\n"
+		       "  key_store_hdl: %u\n"
+		       "  op_pub_key_attest_args_t\n"
+		       "    key_identifier: 0x%08X\n"
+		       "    key_attestation_id: 0x%08X\n"
+		       "    sign_algo: 0x%08X\n"
+		       "    Challenge\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n"
+		       "    Certificate\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n",
+		       __func__, __LINE__, hdl->key_store,
+		       op_args.key_identifier, op_args.key_attestation_id,
+		       op_args.sign_algo, op_args.auth_challenge,
+		       op_args.auth_challenge_size, op_args.certificate,
+		       op_args.certificate_size);
+
+	err = hsm_do_pub_key_attest(hdl->key_store, &op_args);
+	SMW_DBG_PRINTF(DEBUG, "hsm_do_pub_key_attest returned %d\n", err);
+
+	status = ele_convert_err(err);
+
+	/* Update certificate length */
+	smw_keymgr_set_attest_cert_length(attest_args,
+					  op_args.exp_certificate_size);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
 			hsm_pubkey_type_t *ele_type)
 {
@@ -1221,6 +1326,9 @@ bool ele_key_handle(struct subsystem_context *ele_ctx,
 		break;
 	case OPERATION_ID_COMMIT_KEY_STORAGE:
 		*status = commit_key_storage(hdl);
+		break;
+	case OPERATION_ID_KEY_ATTESTATION:
+		*status = key_attestation(hdl, args);
 		break;
 	default:
 		return false;

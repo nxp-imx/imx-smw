@@ -138,7 +138,7 @@ int mac(struct subtest_data *subtest, bool verify)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
-	/* Hash algorithm is not mandatory*/
+	/* Hash algorithm is not mandatory */
 	res = util_read_json_type(&args.hash_name, HASH_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))

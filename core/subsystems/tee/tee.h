@@ -133,6 +133,19 @@ bool tee_cipher_handle(enum operation_id operation_id, void *args, int *status);
 bool tee_aead_handle(enum operation_id operation_id, void *args, int *status);
 
 /**
+ * tee_storage_handle() - Handle the storage operation.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * Return:
+ * true		- the Security Operation has been handled.
+ * false	- the Security Operation has not been handled.
+ */
+bool tee_storage_handle(enum operation_id operation_id, void *args,
+			int *status);
+
+/**
  * tee_get_ctx_ops() - Return TEE context operations structure
  *
  * Return:

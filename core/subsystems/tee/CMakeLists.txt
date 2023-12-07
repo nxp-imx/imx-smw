@@ -39,7 +39,7 @@ target_sources(tee PRIVATE
                $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
                $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>
                $<$<BOOL:${ENABLE_AEAD}>:aead.c>
-               $<$<BOOL:${ENABLE_AEAD}>:storage.c>)
+               $<$<BOOL:${ENABLE_STORAGE_MODULE}>:storage.c>)
 
 target_include_directories(tee PRIVATE
                            ${TA_HOST_INCLUDE_DIR}

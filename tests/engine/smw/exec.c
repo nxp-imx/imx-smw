@@ -10,7 +10,6 @@
 #include "keymgr.h"
 #include "hash.h"
 #include "sign_verify.h"
-#include "hmac.h"
 #include "rng.h"
 #include "cipher.h"
 #include "operation_context.h"
@@ -81,29 +80,6 @@ static int execute_hash_cmd(char *cmd, struct subtest_data *subtest)
 	}
 
 	return hash(subtest);
-}
-
-/**
- * execute_hmac_cmd() - Execute hmac command.
- * @cmd: Command name.
- * @subtest: Subtest data.
- *
- * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from hmac().
- */
-static int execute_hmac_cmd(char *cmd, struct subtest_data *subtest)
-{
-	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	return hmac(subtest);
 }
 
 /**
@@ -494,7 +470,6 @@ int execute_command_smw(char *cmd, struct subtest_data *subtest)
 			 { EXPORT, &execute_export_cmd },
 			 { DERIVE, &execute_derive_cmd },
 			 { HASH, &execute_hash_cmd },
-			 { HMAC, &execute_hmac_cmd },
 			 { MAC, &execute_mac_cmd },
 			 { SIGN, &execute_sign_cmd },
 			 { VERIFY, &execute_verify_cmd },

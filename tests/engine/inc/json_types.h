@@ -124,7 +124,6 @@
 #define GET_KEY_ATTRIBUTES   "GET_KEY_ATTRIBUTES"
 #define GET_VERSION	     "GET_VERSION"
 #define HASH		     "HASH"
-#define HMAC		     "HMAC"
 #define IMPORT		     "IMPORT"
 #define MAC		     "MAC"
 #define MAC_COMPUTE	     "MAC_COMPUTE"

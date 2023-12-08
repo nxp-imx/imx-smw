@@ -180,13 +180,13 @@ int cipher_psa(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	if (!strcmp(operation_name, "ENCRYPT")) {
+	if (!strcmp(operation_name, OP_TYPE_ENCRYPT_STR)) {
 		subtest->psa_status =
 			psa_cipher_encrypt(key, alg, input, input_length,
 					   output, output_size, &output_length);
 	}
 
-	else if (!strcmp(operation_name, "DECRYPT")) {
+	else if (!strcmp(operation_name, OP_TYPE_DECRYPT_STR)) {
 		subtest->psa_status =
 			psa_cipher_decrypt(key, alg, (uint8_t *)input,
 					   input_length, output, output_size,

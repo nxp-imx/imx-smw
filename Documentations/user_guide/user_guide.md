@@ -753,12 +753,6 @@ The default option value is in **bold**.
 	<td>ENABLE_KEYMGR_MODULE</td>
 </tr>
 <tr>
-  <td>-DENABLE_HMAC=[ON|<b>OFF</b>]</td>
-  <td>Enable/disable the support of HMAC operations. Default is ON (enable).
-	<b><i>Deprecated, refer to ENABLE_MAC option</i></b></td>
-	<td>ENABLE_KEYMGR_MODULE</td>
-</tr>
-<tr>
   <td>-DENABLE_MAC=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of MAC (HMAC/CMAC) operations.
 	Default is ON (enable).</td>

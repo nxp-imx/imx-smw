@@ -63,11 +63,6 @@ struct hash_params {
 	unsigned long algo_bitmap;
 };
 
-struct hmac_params {
-	unsigned long algo_bitmap;
-	struct op_key key;
-};
-
 struct mac_params {
 	unsigned long algo_bitmap;
 	unsigned long hash_bitmap;

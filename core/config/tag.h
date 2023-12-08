@@ -29,7 +29,6 @@ extern const char *psa_default_tag;
 extern const char *alt_tag;
 extern const char *key_type_values;
 extern const char *hash_algo_values;
-extern const char *hmac_algo_values;
 extern const char *mac_algo_values;
 extern const char *sign_type_values;
 extern const char *op_type_values;

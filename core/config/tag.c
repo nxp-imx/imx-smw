@@ -26,7 +26,6 @@ const char *psa_default_tag = "PSA_DEFAULT";
 const char *alt_tag = "ALT";
 const char *key_type_values = "KEY_TYPE_VALUES";
 const char *hash_algo_values = "HASH_ALGO_VALUES";
-const char *hmac_algo_values = "HMAC_ALGO_VALUES";
 const char *mac_algo_values = "MAC_ALGO_VALUES";
 const char *sign_type_values = "SIGN_TYPE_VALUES";
 const char *op_type_values = "OP_TYPE_VALUES";

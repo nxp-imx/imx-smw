@@ -39,15 +39,6 @@ __weak enum smw_status_code smw_verify(struct smw_sign_verify_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak enum smw_status_code smw_hmac(struct smw_hmac_args *args)
-{
-	(void)args;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
-}
-
 __weak enum smw_status_code smw_rng(struct smw_rng_args *args)
 {
 	(void)args;

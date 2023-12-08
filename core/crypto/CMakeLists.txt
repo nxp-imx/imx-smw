@@ -9,10 +9,6 @@ add_operation(SIGN)
 add_operation(VERIFY)
 endif()
 
-if(ENABLE_HMAC)
-add_operation(HMAC)
-endif()
-
 if(ENABLE_RNG)
 add_operation(RNG)
 endif()
@@ -45,7 +41,6 @@ target_sources(crypto PRIVATE
                crypto_weak.c
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
-               $<$<BOOL:${ENABLE_HMAC}>:hmac.c>
                $<$<BOOL:${ENABLE_MAC}>:mac.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
                $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>

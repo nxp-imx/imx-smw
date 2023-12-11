@@ -100,7 +100,7 @@ int util_file_to_buffer(char *dir, char *name, char **buffer)
 		goto exit;
 	}
 
-	*buffer = malloc(read_size);
+	*buffer = malloc(read_size + 1);
 	if (!*buffer) {
 		DBG_PRINT_ALLOC_FAILURE();
 		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
@@ -115,6 +115,7 @@ int util_file_to_buffer(char *dir, char *name, char **buffer)
 
 		res = ERR_CODE(INTERNAL);
 	} else {
+		*(*buffer + read_size) = '\0';
 		res = ERR_CODE(PASSED);
 	}
 

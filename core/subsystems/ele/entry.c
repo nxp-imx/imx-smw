@@ -266,45 +266,9 @@ __weak bool ele_mac_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
-__weak bool ele_device_info_handle(struct subsystem_context *ele_ctx,
-				   enum operation_id operation_id, void *args,
-				   int *status)
-{
-	(void)ele_ctx;
-	(void)operation_id;
-	(void)args;
-	(void)status;
-
-	return false;
-}
-
-__weak bool ele_device_attest_handle(struct subsystem_context *ele_ctx,
-				     enum operation_id operation_id, void *args,
-				     int *status)
-{
-	(void)ele_ctx;
-	(void)operation_id;
-	(void)args;
-	(void)status;
-
-	return false;
-}
-
-__weak bool ele_device_lifecycle_handle(struct subsystem_context *ele_ctx,
-					enum operation_id operation_id,
-					void *args, int *status)
-{
-	(void)ele_ctx;
-	(void)operation_id;
-	(void)args;
-	(void)status;
-
-	return false;
-}
-
-__weak bool ele_device_reprovisioning_handle(struct subsystem_context *ele_ctx,
-					     enum operation_id operation_id,
-					     void *args, int *status)
+__weak bool ele_device_manager_handle(struct subsystem_context *ele_ctx,
+				      enum operation_id operation_id,
+				      void *args, int *status)
 {
 	(void)ele_ctx;
 	(void)operation_id;
@@ -357,18 +321,10 @@ static int execute(enum operation_id operation_id, void *args)
 		goto end;
 	else if (ele_mac_handle(hdl, operation_id, args, &status))
 		goto end;
-	else if (ele_device_info_handle(&ele_ctx, operation_id, args, &status))
-		goto end;
-	else if (ele_device_attest_handle(&ele_ctx, operation_id, args,
-					  &status))
-		goto end;
-	else if (ele_device_lifecycle_handle(&ele_ctx, operation_id, args,
-					     &status))
+	else if (ele_device_manager_handle(&ele_ctx, operation_id, args,
+					   &status))
 		goto end;
 	else if (ele_storage_handle(&ele_ctx, operation_id, args, &status))
-		goto end;
-	else if (ele_device_reprovisioning_handle(&ele_ctx, operation_id, args,
-						  &status))
 		goto end;
 
 	ele_aead_handle(hdl, operation_id, args, &status);

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "debug.h"
 #include "devmgr.h"
 #include "utils.h"
 
-#include "common.h"
+#include "local.h"
 
 static int get_attest_api_ver(struct subsystem_context *ele_ctx,
 			      uint8_t *attest_api_ver)

@@ -9,7 +9,7 @@
 #include "devmgr.h"
 #include "utils.h"
 
-#include "common.h"
+#include "local.h"
 
 struct ele_get_info_head {
 	uint8_t cmd;
@@ -86,7 +86,7 @@ static void free_device_info_operation(op_dev_getinfo_args_t *op_args)
 		SMW_UTILS_FREE(op_args->oem_srkh);
 }
 
-static int device_uuid(struct subsystem_context *ele_ctx, void *args)
+static int ele_device_uuid(struct subsystem_context *ele_ctx, void *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -238,20 +238,58 @@ end:
 	return status;
 }
 
-bool ele_device_info_handle(struct subsystem_context *ele_ctx,
-			    enum operation_id operation_id, void *args,
-			    int *status)
+__weak bool ele_device_lifecycle_handle(struct subsystem_context *ele_ctx,
+					enum operation_id operation_id,
+					void *args, int *status)
 {
+	(void)ele_ctx;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
+__weak bool ele_device_reprovisioning_handle(struct subsystem_context *ele_ctx,
+					     enum operation_id operation_id,
+					     void *args, int *status)
+{
+	(void)ele_ctx;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
+bool ele_device_manager_handle(struct subsystem_context *ele_ctx,
+			       enum operation_id operation_id, void *args,
+			       int *status)
+{
+	bool handled = false;
+
 	SMW_DBG_ASSERT(args);
 
 	switch (operation_id) {
 	case OPERATION_ID_DEVICE_GET_UUID:
-		*status = device_uuid(ele_ctx, args);
+		*status = ele_device_uuid(ele_ctx, args);
+		handled = true;
 		break;
 
 	default:
-		return false;
+		if (ele_device_attest_handle(ele_ctx, operation_id, args,
+					     status))
+			handled = true;
+		else if (ele_device_lifecycle_handle(ele_ctx, operation_id,
+						     args, status))
+			handled = true;
+		else if (ele_storage_handle(ele_ctx, operation_id, args,
+					    status))
+			handled = true;
+		else if (ele_device_reprovisioning_handle(ele_ctx, operation_id,
+							  args, status))
+			handled = true;
 	}
 
-	return true;
+	return handled;
 }

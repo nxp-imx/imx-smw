@@ -897,7 +897,7 @@ enum smw_status_code smw_aead(struct smw_aead_args *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args || !args->final || !args->final->data ||
+	if (!args || !args->init || !args->final || !args->final->data ||
 	    !args->final->data->input || !args->final->data->input_length ||
 	    (args->final->data->output && !args->final->data->output_length))
 		goto end;

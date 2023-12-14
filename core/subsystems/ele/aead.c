@@ -170,13 +170,12 @@ static void set_output_iv(struct smw_crypto_aead_args *args,
 	unsigned char *iv = smw_crypto_get_iv(args);
 
 	if (output_iv) {
-		if (iv_len < MAX_IV_LEN) {
+		if (iv_len < MAX_IV_LEN)
 			SMW_UTILS_MEMCPY(output_iv,
 					 &op_args->output[iv_start_index],
 					 MAX_IV_LEN);
-		} else if (iv) {
+		else if (iv)
 			SMW_UTILS_MEMCPY(output_iv, iv, MAX_IV_LEN);
-		}
 	}
 }
 
@@ -373,8 +372,7 @@ end:
  *
  * @output_len initially points to the expected output length received from FW.
  * This function then modifies the value pointed to by @output_len
- * to total user output length after performing calculations based on
- * IV and tag.
+ * to user output length after performing calculations based on IV and tag.
  *
  * Return:
  * SMW_STATUS_OK		- Success
@@ -411,8 +409,8 @@ end:
  * @resized_output: Pointer to resized output buffer
  *
  * @output_len initially points to the expected output length received from FW
- * as input. Update the value pointed to by @output_len to total user output
- * length after performing calculations based on IV and tag.
+ * as input. Update the value pointed to by @output_len to user output length
+ * after performing calculations based on IV and tag.
  *
  * Copy the output IV buffer, tag(if applicable) and output
  * buffer(if applicable) from op_args->output if the operation is AEAD
@@ -491,18 +489,17 @@ static int set_output_length(struct smw_crypto_aead_args *aead_args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
-	unsigned int tag_len = smw_crypto_get_tag_len(aead_args);
 	unsigned int output_len = smw_crypto_get_input_len(aead_args);
 
 	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
 		if (!smw_crypto_is_tag_field_set(aead_args)) {
-			if (INC_OVERFLOW(output_len, tag_len))
+			if (INC_OVERFLOW(output_len, ELE_TAG_LEN))
 				goto end;
 		}
 
 	} else {
 		if (!smw_crypto_is_tag_field_set(aead_args)) {
-			if (DEC_OVERFLOW(output_len, tag_len))
+			if (DEC_OVERFLOW(output_len, ELE_TAG_LEN))
 				goto end;
 		}
 	}
@@ -533,6 +530,7 @@ static int aead(struct hdl *hdl, void *args)
 	unsigned char *resized_input = NULL;
 
 	unsigned int output_length = 0;
+	bool is_encrypt_op = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -550,6 +548,20 @@ static int aead(struct hdl *hdl, void *args)
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
+
+	/*
+	 * For ELE subsystem, tag length must be 16 Bytes.
+	 * For encryption operation, if tag length < ELE_TAG_LEN, set the required
+	 * output buffer lengths and return SMW_STATUS_OUTPUT_TOO_SHORT.
+	 */
+	if (smw_crypto_get_tag_len(aead_args) < ELE_TAG_LEN) {
+		(void)set_output_length(aead_args);
+		status = SMW_STATUS_OUTPUT_TOO_SHORT;
+		goto end;
+	}
+
+	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT)
+		is_encrypt_op = true;
 
 	op_args.iv = smw_crypto_get_iv(aead_args);
 
@@ -579,7 +591,7 @@ static int aead(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT)
+	if (is_encrypt_op)
 		status = set_encryption_io_params(aead_args, &op_args,
 						  &resized_output);
 	else
@@ -630,8 +642,7 @@ static int aead(struct hdl *hdl, void *args)
 	SMW_DBG_PRINTF(DEBUG, "%s returned %d. expected output size = %u\n",
 		       __func__, err, op_args.exp_output_size);
 
-	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_DECRYPT &&
-	    err == HSM_GENERAL_ERROR)
+	if (!is_encrypt_op && err == HSM_GENERAL_ERROR)
 		/*
 		 * Assume ELE returned this error code
 		 * because the tag is invalid.
@@ -641,7 +652,7 @@ static int aead(struct hdl *hdl, void *args)
 		status = ele_convert_err(err);
 
 	if (!SET_OVERFLOW(op_args.exp_output_size, output_length)) {
-		if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_DECRYPT) {
+		if (!is_encrypt_op) {
 			smw_crypto_set_output_len(aead_args, output_length);
 		} else {
 			if (status == SMW_STATUS_OK && op_args.output)

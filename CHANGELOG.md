@@ -59,9 +59,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### SMW Tests - _version 3.0_
 
+* Change the TA installation default path to be `/usr/lib`
+
 #### PKCS#11 Library - _version 3.0_
 
 #### PKCS#11 Tests - _version 3.0_
+
+* Change the TA installation default path to be `/usr/lib`
 
 ---
 ### <a id ="rel_2_5"></a></br>**Release 2.5**

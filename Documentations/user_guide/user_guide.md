@@ -667,7 +667,7 @@ documentation generation.
   <td>TEE_TA_DESTDIR</td>
   <td>-DTEE_TA_DESTDIR=[/path/to/install/ta/]</td>
   <td>Define the path where TEE TAs are installed. The path is prefixed by the <i><code>[DESTDIR]</code></i> environment variable.<br>
-  By default, the TAs are installed in the <code>/lib</code> directory.<br>
+  By default, the TAs are installed in the <code>/usr/lib/optee_armtz</code> directory.<br>
   Installing TAs in the non-default directory may require specific TEE build
   configuration not configurable by SMW project.</td>
 </tr>
@@ -1058,14 +1058,14 @@ super-user privilege.
 option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-environment-options)).
 
 > :memo: **Note 3**: In this installation, the _`[TEE_TA_DESTDIR]`_ is
-set with the default value `/lib`
+set with the default value `/usr/lib/optee_armtz`
 
 <pre>
-`-- <span style="color:orange">lib</span>
-|   `-- <span style="color:orange">optee_armtz</span>
-|       |-- 11b5c4aa-6d20-11ea-bc55-0242ac130003.ta
-|       `-- 218c6053-294e-4e96-830c-e6eba4aa4345.ta
 `-- <span style="color:orange">usr</span>
+    |-- <span style="color:orange">lib</span>
+    |   `-- <span style="color:orange">optee_armtz</span>
+    |   |-- 11b5c4aa-6d20-11ea-bc55-0242ac130003.ta
+    |   `-- 218c6053-294e-4e96-830c-e6eba4aa4345.ta
     |-- <span style="color:orange">bin</span>
     |   |-- smwtest
     |   `-- testsmw_pkcs11

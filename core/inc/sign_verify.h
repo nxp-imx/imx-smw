@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __SIGN_VERIFY_H__
@@ -13,6 +13,11 @@
 #define SIGNATURE_TYPE_STR    "SIGNATURE_TYPE"
 #define RSASSA_PKCS1_V1_5_STR "RSASSA-PKCS1-V1_5"
 #define RSASSA_PSS_STR	      "RSASSA-PSS"
+#define CMAC_STR	      "CMAC"
+#define ECDSA_SHA224_STR      "ECDSA_SHA224"
+#define ECDSA_SHA256_STR      "ECDSA_SHA256"
+#define ECDSA_SHA384_STR      "ECDSA_SHA384"
+#define ECDSA_SHA512_STR      "ECDSA_SHA512"
 
 #define SALT_LEN_STR "SALT_LEN"
 

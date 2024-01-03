@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022, 2024 NXP
  */
 
 #ifndef __DATA_H__
@@ -65,5 +65,22 @@ CK_RV data_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj);
  * CKR_OK                        - Success
  */
 CK_RV data_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj);
+
+/*
+ * data_get_id() - Generate the data ID
+ * @id: Byte buffer of the data ID
+ * @obj: Data object
+ * @prefix_len: Byte length of id prefix
+ *
+ * Generate a unique data ID.
+ *
+ * return:
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+CK_RV data_get_id(struct libbytes *id, struct libobj_obj *obj,
+		  size_t prefix_len);
 
 #endif /* __DATA_H__ */

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2024 NXP
  */
 #ifndef __ARGS_ATTR_H__
 #define __ARGS_ATTR_H__
@@ -65,7 +65,7 @@ CK_RV args_attr_sign_verify(struct smw_tlv *attr, const char *signature_type,
 /**
  * args_attrs_key_policy() - Build the key policy attribute list
  * @attr: Attribute list
- * @obj: key object
+ * @obj: Key object
  * @allowed_algos: Allowed key's algorithms
  *
  * Return:
@@ -75,5 +75,17 @@ CK_RV args_attr_sign_verify(struct smw_tlv *attr, const char *signature_type,
  */
 CK_RV args_attrs_key_policy(struct smw_tlv *attr, struct libobj_obj *obj,
 			    struct smw_tlv *allowed_algos);
+
+/**
+ * args_attrs_store_data() - Build the store data attribute list
+ * @attr: Attribute list
+ * @obj: Data object
+ *
+ * Return:
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_ARGUMENTS_BAD             - Bad arguments
+ * CKR_OK                        - Success
+ */
+CK_RV args_attrs_store_data(struct smw_tlv *attr, struct libobj_obj *obj);
 
 #endif /* __ARGS_ATTR_H__ */

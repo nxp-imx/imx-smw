@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __LIB_DEVICE_H__
@@ -301,6 +301,7 @@ CK_RV libdev_mechanisms_init(CK_SLOT_ID slotid);
 
 /**
  * libdev_rng() - Call SMW random number generator API
+ * @hsession: Session handle
  * @pRandomData: Location that receives the random data
  * @ulRandomLen: Length in bytes of the random data
  *
@@ -330,6 +331,36 @@ CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
  * CKR_OK                        - Success
  */
 CK_RV libdev_create_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj);
+
+/**
+ * libdev_retrieve_data() - Retrieve SMW data
+ * @obj: Data object
+ *
+ * Function calls the SMW API to retrieve data if data label
+ * is supported.
+ *
+ * Return:
+ * CKR_ARGUMENTS_BAD             - Bad arguments
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_retrieve_data(const struct libobj_obj *obj);
+
+/**
+ * libdev_delete_data() - Delete SMW data
+ * @obj: Data object
+ *
+ * Function calls the SMW API to delete data if data label
+ * is supported.
+ *
+ * Return:
+ * CKR_ARGUMENTS_BAD             - Bad arguments
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_delete_data(struct libobj_obj *obj);
 
 /**
  * libdev_cancel_operation() - Cancel an on-going cryptographic multi-part operation.

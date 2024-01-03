@@ -116,6 +116,7 @@ pkcs11_test(sign_verify)
 pkcs11_test(random)
 pkcs11_test(encrypt_decrypt)
 pkcs11_test(encrypt_decrypt_multipart)
+pkcs11_test(data_storage)
 
 # If TEE subsystem defined, include tests
 if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND

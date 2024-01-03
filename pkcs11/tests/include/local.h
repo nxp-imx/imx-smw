@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 #ifndef __LOCAL_H__
 #define __LOCAL_H__
@@ -64,5 +64,6 @@ void tests_pkcs11_random(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_encrypt_decrypt(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 void tests_pkcs11_encrypt_decrypt_multipart(void *lib_hdl,
 					    CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_data_storage(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

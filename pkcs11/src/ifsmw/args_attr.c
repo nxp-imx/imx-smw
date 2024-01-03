@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include "libobj_types.h"
@@ -284,6 +284,16 @@ CK_RV args_attrs_key_policy(struct smw_tlv *attr, struct libobj_obj *obj,
 		ret = tlv_encode_tlv(attr, SMW_ATTR_POLICY, &policy);
 
 	tlv_encode_free(&policy);
+
+	return ret;
+}
+
+CK_RV args_attrs_store_data(struct smw_tlv *attr, struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+
+	if (!is_modifiable_obj(obj, storage))
+		ret = tlv_encode_boolean(attr, "READ_ONLY");
 
 	return ret;
 }

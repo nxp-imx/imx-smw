@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021,2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 #include <stdarg.h>
 #include <string.h>
@@ -68,7 +68,7 @@ void util_copy_str_to_utf8(CK_UTF8CHAR_PTR dst, size_t len_dst, const char *src)
 		memset(dst + len_src, ' ', len_dst - len_src);
 }
 
-size_t util_byte_to_utf8_len(const CK_BYTE_PTR src, size_t len_src)
+size_t util_byte_to_rfc2279_len(const CK_BYTE_PTR src, size_t len_src)
 {
 	size_t len = 0;
 	size_t idx = 0;
@@ -79,18 +79,18 @@ size_t util_byte_to_utf8_len(const CK_BYTE_PTR src, size_t len_src)
 				return 0;
 		}
 
-	return len + 1;
+	return len;
 }
 
-size_t util_byte_to_utf8(CK_UTF8CHAR_PTR dst, size_t len_dst,
-			 const CK_BYTE_PTR src, size_t len_src)
+size_t util_byte_to_rfc2279(CK_UTF8CHAR_PTR dst, size_t len_dst,
+			    const CK_BYTE_PTR src, size_t len_src)
 {
 	size_t len = 0;
 	size_t idx = 0;
 
 	for (; idx < len_src && len < len_dst; idx++, len++) {
 		if (src[idx] > 0x7F) {
-			if (len_dst <= len + 2)
+			if (len_dst <= len + 1)
 				return idx;
 
 			dst[len] = ((src[idx] >> 6) & 0x1F) | 0xC0;
@@ -103,29 +103,50 @@ size_t util_byte_to_utf8(CK_UTF8CHAR_PTR dst, size_t len_dst,
 	return idx;
 }
 
-size_t util_utf8_to_byte_len(const CK_UTF8CHAR_PTR src, size_t len_src)
+size_t util_rfc2279_to_byte_len(const CK_UTF8CHAR_PTR src, size_t len_src)
 {
 	size_t len = 0;
 	size_t idx = 0;
 
-	for (; idx < len_src; idx++)
-		if ((src[idx] & 0xC0) != 0x80) {
+	for (; idx < len_src; idx++) {
+		if ((src[idx] & 0xE0) == 0xE0) {
+			return 0;
+		} else if ((src[idx] & 0xC0) == 0x80) {
+			return 0;
+		} else if ((src[idx] & 0xE0) == 0xC0) {
+			if (len_src <= idx + 1)
+				return 0;
+
+			if ((src[++idx] & 0xC0) != 0x80)
+				return 0;
+
+			if (INC_OVERFLOW(len, 1))
+				return 0;
+		} else {
 			if (INC_OVERFLOW(len, 1))
 				return 0;
 		}
+	}
 
-	return len + 1;
+	return len;
 }
 
-size_t util_utf8_to_byte(CK_BYTE_PTR dst, size_t len_dst,
-			 const CK_UTF8CHAR_PTR src, size_t len_src)
+size_t util_rfc2279_to_byte(CK_BYTE_PTR dst, size_t len_dst,
+			    const CK_UTF8CHAR_PTR src, size_t len_src)
 {
 	size_t len = 0;
 	size_t idx = 0;
 
 	for (; idx < len_src && len < len_dst; idx++, len++) {
-		if (src[idx] & 0xC0) {
-			if (len_src <= idx + 2)
+		if ((src[idx] & 0xE0) == 0xE0) {
+			return idx;
+		} else if ((src[idx] & 0xC0) == 0x80) {
+			return idx;
+		} else if ((src[idx] & 0xE0) == 0xC0) {
+			if (len_src <= idx + 1)
+				return idx;
+
+			if ((src[idx + 1] & 0xC0) != 0x80)
 				return idx;
 
 			dst[len] = src[idx] << 6;

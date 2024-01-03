@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <stdlib.h>
@@ -212,6 +212,11 @@ static CK_RV set_unique_id(struct libobj_obj *obj)
 		ret = key_get_id(&id, obj, sizeof(obj->class));
 		break;
 
+	case CKO_DATA:
+		unique_id = get_unique_id_obj(obj, storage);
+		ret = data_get_id(&id, obj, sizeof(obj->class));
+		break;
+
 	default:
 		return CKR_FUNCTION_FAILED;
 	}
@@ -221,8 +226,8 @@ static CK_RV set_unique_id(struct libobj_obj *obj)
 
 	TO_CK_BYTES(id.array, obj->class);
 
-	/* Get UTF8 length and allocate UTF8 string */
-	unique_id->length = util_byte_to_utf8_len(id.array, id.number);
+	/* Get RFC2279 length and allocate RFC2279 string */
+	unique_id->length = util_byte_to_rfc2279_len(id.array, id.number);
 	if (!unique_id->length) {
 		ret = CKR_FUNCTION_FAILED;
 		goto end;
@@ -235,8 +240,8 @@ static CK_RV set_unique_id(struct libobj_obj *obj)
 	}
 
 	ret = CKR_FUNCTION_FAILED;
-	if (util_byte_to_utf8(unique_id->string, unique_id->length, id.array,
-			      id.number) == id.number)
+	if (util_byte_to_rfc2279(unique_id->string, unique_id->length, id.array,
+				 id.number) == id.number)
 		ret = CKR_OK;
 
 end:
@@ -830,6 +835,10 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 
 	case CKO_DATA:
 		ret = obj_storage_new(hsession, newobj, &attrs_list);
+		if (ret != CKR_OK)
+			break;
+
+		ret = set_unique_id(newobj);
 		if (ret != CKR_OK)
 			break;
 

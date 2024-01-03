@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include <stdlib.h>
+#include <limits.h>
 
 #include "attributes.h"
 #include "data.h"
@@ -53,6 +54,8 @@ void data_free(struct libobj_obj *obj)
 
 	if (!data)
 		return;
+
+	(void)libdev_delete_data(obj);
 
 	DBG_TRACE("Free data object (%p)", data);
 
@@ -113,9 +116,12 @@ CK_RV data_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj)
 
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 
-	/* Get attribute from the data attribute */
-	ret = attr_get_obj_value(attr, attr_data, ARRAY_SIZE(attr_data),
-				 get_subobj_from(obj, storage));
+	if (is_token_obj(obj, storage) && attr->type == CKA_VALUE)
+		ret = libdev_retrieve_data(obj);
+
+	if (ret == CKR_OK || ret == CKR_BUFFER_TOO_SMALL)
+		ret = attr_get_obj_value(attr, attr_data, ARRAY_SIZE(attr_data),
+					 get_subobj_from(obj, storage));
 
 	DBG_TRACE("Get attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
@@ -133,4 +139,26 @@ CK_RV data_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
 
 	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
+}
+
+CK_RV data_get_id(struct libbytes *data_id, struct libobj_obj *obj,
+		  size_t prefix_len)
+{
+	unsigned int id = 0;
+
+	if (!obj || !data_id)
+		return CKR_GENERAL_ERROR;
+
+	id = (uintptr_t)obj & UINT_MAX;
+
+	data_id->number = prefix_len + sizeof(id);
+	data_id->array = malloc(data_id->number);
+	if (!data_id->array)
+		return CKR_HOST_MEMORY;
+
+	DBG_TRACE("Data ID 0x%X", id);
+
+	TO_CK_BYTES(&data_id->array[prefix_len], id);
+
+	return CKR_OK;
 }

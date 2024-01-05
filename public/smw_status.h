@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __SMW_STATUS_H__
@@ -10,10 +10,12 @@
  * enum smw_status_code - Security Middleware status codes
  *
  * @SMW_STATUS_OK: Function returned successfully.
- * @SMW_STATUS_UNKNOWN_NAME: One of the string name arguments is not valid.
+ * @SMW_STATUS_UNKNOWN_NAME: Generic status code indicating that one of the
+ * string name arguments is not valid.
  * @SMW_STATUS_UNKNOWN_ID: One of the identifier arguments is not valid.
  * @SMW_STATUS_ALLOC_FAILURE: Internal allocation failure.
- * @SMW_STATUS_INVALID_PARAM: One of the argument parameter is not valid.
+ * @SMW_STATUS_INVALID_PARAM: Generic status code indicating that one of the
+ * argument parameter is not valid.
  * @SMW_STATUS_VERSION_NOT_SUPPORTED: Argument version not compatible.
  * @SMW_STATUS_SUBSYSTEM_LOAD_FAILURE: Load of the Secure Subsystem failed.
  * @SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE: Unload of the Secure Subsystem failed.
@@ -37,6 +39,16 @@
  * @SMW_STATUS_KEY_INVALID: Key used for the operation is not valid.
  * @SMW_STATUS_INVALID_LIFECYCLE: Device lifecycle not valid, or object not
  * accessible in current device lifecyle.
+ * @SMW_STATUS_UNKNOWN_MODE_NAME: Mode name provided by the user or set in the
+ * user configuration is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_OP_TYPE_NAME: Operation type name provided by the user or
+ * set in the user configuration is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME: Subsystem name provided by the user or
+ * set in the user configuration is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_ALGO_NAME: Algorithm name provided by the user or set in
+ * the user configuration is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME: Signature type name provided by the user
+ * or set in the user configuration is not recognized by SMW.
  *
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
  * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
@@ -60,6 +72,10 @@
  * the Unload configuration API must be called first.
  * @SMW_STATUS_NO_CONFIG_LOADED: No user configuration is loaded.
  * @SMW_STATUS_LOAD_METHOD_DUPLICATE: The load/unload method is defined more than once.
+ * @SMW_STATUS_UNKNOWN_CONFIG_OP_NAME: Operation name set in the configuration
+ * file is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_LOAD_METHOD_NAME: String value of the load/unload method
+ * set in the configuration file is not recognized by SMW.
  *
  * @SMW_STATUS_SIGNATURE_INVALID: The Signature is not valid.
  * @SMW_STATUS_SIGNATURE_LEN_INVALID: The Signature length is not valid.
@@ -78,6 +94,20 @@
  *
  * @SMW_STATUS_KEY_POLICY_ERROR: The key policy is syntactically wrong.
  * @SMW_STATUS_KEY_POLICY_WARNING_IGNORED: At least one element of the key policy is ignored.
+ * @SMW_STATUS_UNKNOWN_KEY_OP_NAME: Key operation name provided by the user or
+ * set in the user configuration is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_KEY_TYPE_NAME: Key type name provided by the user or set
+ * in the user configuration is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_FORMAT_NAME: Key format name provided by the user is not
+ * recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_KDF_NAME: Key derivation function name provided by the
+ * user or set in the user configuration is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME: TLS finish message label name
+ * provided by the user is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_TLS12_KEA_NAME: TLS 1.2 Key exchange algorithm name
+ * provided by the user is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_TLS12_ENC_NAME: TLS 1.2 encryption algorithm name
+ * provided by the user is not recognized by SMW.
  *
  * @SMW_STATUS_DATA_ALREADY_RETRIEVED: The data was read once and has been already retrieved.
  *
@@ -105,8 +135,13 @@
  *	- SMW_STATUS_SUBSYSTEM_CORRUPT_OBJECT
  *	- SMW_STATUS_SUBSYSTEM_LOADED
  *	- SMW_STATUS_SUBSYSTEM_NOT_LOADED
- *      - SMW_STATUS_KEY_INVALID
- *      - SMW_STATUS_INVALID_LIFECYCLE
+ *	- SMW_STATUS_KEY_INVALID
+ *	- SMW_STATUS_INVALID_LIFECYCLE
+ *	- SMW_STATUS_UNKNOWN_MODE_NAME
+ *	- SMW_STATUS_UNKNOWN_OP_TYPE_NAME
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME
+ *	- SMW_STATUS_UNKNOWN_ALGO_NAME
+ *	- SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME
  *
  ** Specific return codes - Library initialization
  *
@@ -132,6 +167,8 @@
  *	- SMW_STATUS_CONFIG_ALREADY_LOADED
  *	- SMW_STATUS_NO_CONFIG_LOADED
  *	- SMW_STATUS_LOAD_METHOD_DUPLICATE
+ *	- SMW_STATUS_UNKNOWN_CONFIG_OP_NAME
+ *	- SMW_STATUS_UNKNOWN_LOAD_METHOD_NAME
  *
  ** Specific return codes - Signature
  *
@@ -155,6 +192,13 @@
  ** Specific return codes - Key manager
  *	- SMW_STATUS_KEY_POLICY_ERROR
  *	- SMW_STATUS_KEY_POLICY_WARNING_IGNORED
+ *	- SMW_STATUS_UNKNOWN_KEY_OP_NAME
+ *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME
+ *	- SMW_STATUS_UNKNOWN_FORMAT_NAME
+ *	- SMW_STATUS_UNKNOWN_KDF_NAME
+ *	- SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME
+ *	- SMW_STATUS_UNKNOWN_TLS12_KEA_NAME
+ *	- SMW_STATUS_UNKNOWN_TLS12_ENC_NAME
  *
  ** Specific return codes - Data storage
  *      - SMW_STATUS_DATA_ALREADY_RETRIEVED
@@ -219,6 +263,20 @@ enum smw_status_code {
 	SMW_STATUS_INVALID_CONFIG_DATABASE,
 	SMW_STATUS_DATA_ALREADY_RETRIEVED, /* 50 */
 	SMW_STATUS_INVALID_LIFECYCLE,
+	SMW_STATUS_UNKNOWN_MODE_NAME,
+	SMW_STATUS_UNKNOWN_OP_TYPE_NAME,
+	SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME,
+	SMW_STATUS_UNKNOWN_ALGO_NAME, /* 55 */
+	SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME,
+	SMW_STATUS_UNKNOWN_CONFIG_OP_NAME,
+	SMW_STATUS_UNKNOWN_LOAD_METHOD_NAME,
+	SMW_STATUS_UNKNOWN_KEY_OP_NAME,
+	SMW_STATUS_UNKNOWN_KEY_TYPE_NAME, /* 60 */
+	SMW_STATUS_UNKNOWN_FORMAT_NAME,
+	SMW_STATUS_UNKNOWN_KDF_NAME,
+	SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME,
+	SMW_STATUS_UNKNOWN_TLS12_KEA_NAME,
+	SMW_STATUS_UNKNOWN_TLS12_ENC_NAME, /* 65 */
 };
 
 #endif /* __SMW_STATUS_H__ */

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #ifndef __SMW_OSAL_H__
@@ -133,11 +133,11 @@ enum smw_status_code smw_osal_lib_init(void);
  *
  * Return:
  * See &enum smw_status_code
- *  - SMW_STATUS_OK                - Success
- *  - SMW_STATUS_SUBSYSTEM_LOADED  - Subsystem is already loaded
- *  - SMW_STATUS_INVALID_PARAM     - Function parameter error
- *  - SMW_STATUS_ALLOC_FAILURE     - Allocation failure
- *  - SMW_STATUS_UNKNOWN_NAME      - Subsystem unknown
+ *  - SMW_STATUS_OK                     - Success
+ *  - SMW_STATUS_SUBSYSTEM_LOADED       - Subsystem is already loaded
+ *  - SMW_STATUS_INVALID_PARAM          - Function parameter error
+ *  - SMW_STATUS_ALLOC_FAILURE          - Allocation failure
+ *  - SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME - Unknown subsystem name
  */
 enum smw_status_code smw_osal_set_subsystem_info(smw_subsystem_t subsystem,
 						 void *info, size_t info_size);

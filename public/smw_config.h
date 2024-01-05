@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __SMW_CONFIG_H__
@@ -29,7 +29,7 @@
  *		@subsystem is present
  *	- SMW_STATUS_INVALID_PARAM:
  *		@subsystem is NULL
- *	- SMW_STATUS_UNKNOWN_NAME:
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
  *		@subsystem is not a valid string
  */
 enum smw_status_code smw_config_subsystem_present(smw_subsystem_t subsystem);
@@ -46,7 +46,7 @@ enum smw_status_code smw_config_subsystem_present(smw_subsystem_t subsystem);
  *		@subsystem is not loaded
  *	- SMW_STATUS_INVALID_PARAM:
  *		@subsystem is NULL
- *	- SMW_STATUS_UNKNOWN_NAME:
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
  *		@subsystem is not a valid string
  *	- SMW_STATUS_INVALID_LIBRARY_CONTEXT:
  *		Library context is not valid
@@ -67,10 +67,12 @@ enum smw_status_code smw_config_subsystem_loaded(smw_subsystem_t subsystem);
  *		@algo is supported
  *	- SMW_STATUS_INVALID_PARAM:
  *		@algo is NULL
- *	- SMW_STATUS_UNKNOWN_NAME:
+ *	- SMW_STATUS_UNKNOWN_ALGO_NAME:
  *		@algo is not a valid string
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		@algo is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not a valid string
  */
 enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
 					     smw_hash_algo_t algo);
@@ -109,10 +111,12 @@ struct smw_key_info {
  *		Key type is supported
  *	- SMW_STATUS_INVALID_PARAM:
  *		@info or @info->key_type_name is NULL
- *	- SMW_STATUS_UNKNOWN_NAME:
+ *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
  *		@info->key_type_name is not a valid string
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Key type is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not a valid string
  */
 enum smw_status_code smw_config_check_generate_key(smw_subsystem_t subsystem,
 						   struct smw_key_info *info);
@@ -153,10 +157,12 @@ struct smw_signature_info {
  *		Signature operation is supported
  *	- SMW_STATUS_INVALID_PARAM:
  *		@info or @info->key_type_name is NULL
- *	- SMW_STATUS_UNKNOWN_NAME:
+ *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
  *		@info->key_type_name is not a valid string
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Signature operation is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not a valid string
  */
 enum smw_status_code smw_config_check_sign(smw_subsystem_t subsystem,
 					   struct smw_signature_info *info);
@@ -185,7 +191,7 @@ enum smw_status_code smw_config_check_sign(smw_subsystem_t subsystem,
  *		Verify operation is supported
  *	- SMW_STATUS_INVALID_PARAM:
  *		@info or @info->key_type_name is NULL
- *	- SMW_STATUS_UNKNOWN_NAME:
+ *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
  *		@info->key_type_name is not a valid string
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Verify operation is not supported
@@ -224,10 +230,16 @@ struct smw_cipher_info {
  *		Cipher operation is supported
  *	- SMW_STATUS_INVALID_PARAM:
  *		@info, @info->key_type_name, @info->mode or @info->op_type is NULL
- *	- SMW_STATUS_UNKNOWN_NAME:
- *		@info->key_type_name, @info->mode or @info->op_type is not a valid string
+ *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
+ *		@info->key_type_name is not a valid string
+ *	- SMW_STATUS_UNKNOWN_MODE_NAME:
+ *		 @info->mode is not a valid string
+ *	- SMW_STATUS_UNKNOWN_OP_TYPE_NAME:
+ *		@info->op_type is not a valid string
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Cipher operation is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not a valid string
  */
 enum smw_status_code smw_config_check_cipher(smw_subsystem_t subsystem,
 					     struct smw_cipher_info *info);
@@ -263,10 +275,16 @@ struct smw_aead_info {
  *		AEAD operation is supported
  *	- SMW_STATUS_INVALID_PARAM:
  *		@info, @info->key_type_name, @info->mode or @info->op_type is NULL
- *	- SMW_STATUS_UNKNOWN_NAME:
- *		@info->key_type_name, @info->mode or @info->op_type is not a valid string
+ *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
+ *		@info->key_type_name is not a valid string
+ *	- SMW_STATUS_UNKNOWN_MODE_NAME:
+ *		 @info->mode is not a valid string
+ *	- SMW_STATUS_UNKNOWN_OP_TYPE_NAME:
+ *		@info->op_type is not a valid string
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		AEAD operation is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not a valid string
  */
 enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 					   struct smw_aead_info *info);

@@ -15,6 +15,6 @@
 		"command": "DEVICE_UUID",
 		"subsystem": "UNDEFINED",
 		"output": 16,
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	}
 }

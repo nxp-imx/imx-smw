@@ -97,7 +97,7 @@
 			"55555555555555555555555555555555",
 			"55555555555555555555555555555555"
 		],
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
 	"subtest 4": { // Key descriptor pointer is NULL
 		"command": "VERIFY",
@@ -150,7 +150,7 @@
 			"55555555555555555555555555555555",
 			"55555555555555555555555555555555"
 		],
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"
 	},
 	"subtest 6": { // Message buffer is NULL
 		"command": "VERIFY",

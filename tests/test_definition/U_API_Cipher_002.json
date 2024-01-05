@@ -73,7 +73,7 @@
 		"op_type": "ENCRYPT",
 		"input": "5555555555",
 		"key_name": "key 3",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
 	"subtest 6": { // ID set and wrong key type
 		"command": "CIPHER",

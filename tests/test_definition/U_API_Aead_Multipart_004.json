@@ -52,7 +52,7 @@
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 2",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
 	"subtest 4": { // ID set and wrong key type
 		"command": "AEAD_INIT",

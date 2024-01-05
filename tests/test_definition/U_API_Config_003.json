@@ -50,11 +50,11 @@
 	"subtest 13": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_psa_default_value_unknown.txt",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
 	"subtest 14": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_key_size_range_unknown.txt",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_KEY_TYPE_NAME"
 	}
 }

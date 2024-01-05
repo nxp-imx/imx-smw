@@ -51,7 +51,7 @@
 		"aad": "353637383132333435363738",
 		"tag": 16,
 		"depends": 1,
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_MODE_NAME"
 	},
 	"subtest 5": { // Key buffer not supported
 		"command": "AEAD",

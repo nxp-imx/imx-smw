@@ -43,7 +43,7 @@
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 1,
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_KEY_TYPE_NAME"
 	},
 	"subtest 5": { // Key descriptor security size field is set and doesn't match id
 		"command": "DELETE",

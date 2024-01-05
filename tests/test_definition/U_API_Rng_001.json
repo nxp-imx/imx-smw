@@ -17,7 +17,7 @@
 		"command": "RNG",
 		"subsystem": "UNDEFINED",
 		"random": "55555555555555555555555555555555",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
 	"subtest 4": { // Random buffer is NULL
 		"command": "RNG",

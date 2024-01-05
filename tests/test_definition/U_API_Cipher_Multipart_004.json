@@ -70,7 +70,7 @@
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
 		"key_name": "key 3",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
 	"subtest 6": { // ID set and wrong key type
 		"command": "CIPHER_INIT",

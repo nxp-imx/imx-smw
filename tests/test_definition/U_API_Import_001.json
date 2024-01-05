@@ -157,19 +157,19 @@
 		"command": "IMPORT",
 		"subsystem": "UNDEFINED",
 		"key_name": "key 1",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
 	"subtest 11": { // Key type is undefined
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 8",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_KEY_TYPE_NAME"
 	},
 	"subtest 12": { // Buffer key format is undefined
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 9",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
 	"subtest 13": { // Attributes list is undefined
 		"command": "IMPORT",

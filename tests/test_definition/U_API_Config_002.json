@@ -48,7 +48,7 @@
 	"subtest 10": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_subsystem_name_twice.txt",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_LOAD_METHOD_NAME"
 	},
 	"subtest 11": {
 		"command": "CONFIG_LOAD",
@@ -63,7 +63,7 @@
 	"subtest 13": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_load_method_unknown.txt",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_LOAD_METHOD_NAME"
 	},
 	"subtest 14": {
 		"command": "CONFIG_LOAD",
@@ -118,7 +118,7 @@
 	"subtest 24": {
 		"command": "CONFIG_LOAD",
 		"filepath": "config_parameter_value_unknown.txt",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_KEY_TYPE_NAME"
 	},
 	"subtest 25": {
 		"command": "CONFIG_LOAD",

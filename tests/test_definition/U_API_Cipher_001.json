@@ -74,7 +74,7 @@
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
 		"input": "5555555555",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_MODE_NAME"
 	},
 	"subtest 9": { // Operation type is undefined
 		"command": "CIPHER",
@@ -82,7 +82,7 @@
 		"op_type": "UNDEFINED",
 		"key_name": "key 1",
 		"input": "5555555555",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_OP_TYPE_NAME"
 	},
 	"subtest 10": { // Subsystem name is undefined
 		"command": "CIPHER",
@@ -91,7 +91,7 @@
 		"key_name": "key 1",
 		"input": "5555555555",
 		"subsystem": "UNDEFINED",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
 	"subtest 11": { // IV is missing
 		"command": "CIPHER",

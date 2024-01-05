@@ -40,7 +40,7 @@
 		"iv": "31323334353637383132333435363738",
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 1,
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_MODE_NAME"
 	},
 	"subtest 3": { // Key type not supported
 		"command": "AEAD",

@@ -219,7 +219,7 @@
 	"subtest 10": { // Buffer key format is undefined
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 8",
-		"result": "SMW_STATUS_UNKNOWN_NAME",
+		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME",
 		"depends": 1
 	},
 	"subtest 11": { // Key descriptor type name doesn't match key identifier

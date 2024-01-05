@@ -105,14 +105,14 @@
 		"command": "DERIVE",
 		"subsystem": "UNDEFINED",
 		"op_input": "key 2",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
 	"subtest 5": { // Key derivation name function not defined
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "UNDEFINED",
 		"op_input": "key 2",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_KDF_NAME"
 	},
 	"subtest 6": { // Base key descriptor is not set
 		"command": "DERIVE",
@@ -136,13 +136,13 @@
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 4",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_KEY_TYPE_NAME"
 	},
 	"subtest 10": { // Key base format name not defined
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 5",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
 	"subtest 11": { // Key type doesn't match key ID
 		"command": "DERIVE",

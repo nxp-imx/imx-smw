@@ -194,7 +194,7 @@
 		},
 		"op_output": "key 2",
 		"op_input": "key 1",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_TLS12_KEA_NAME"
 	},
 	"subtest 5": { // Key exchange name is not set
 		"command": "DERIVE",
@@ -247,7 +247,7 @@
 		},
 		"op_output": "key 2",
 		"op_input": "key 1",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_TLS12_ENC_NAME"
 	},
 	"subtest 7": { // Encryption name is not set
 		"command": "DERIVE",
@@ -300,7 +300,7 @@
 		},
 		"op_output": "key 2",
 		"op_input": "key 1",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"
 	},
 	"subtest 9": { // PRF name is not set
 		"command": "DERIVE",

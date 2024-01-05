@@ -76,7 +76,7 @@
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
 		"input": "0123456789abcdef1011121314151617",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_MODE_NAME"
 	},
 	"subtest 9": { // Operation type is undefined
 		"command": "AEAD",
@@ -84,7 +84,7 @@
 		"op_type": "UNDEFINED",
 		"key_name": "key 1",
 		"input": "0123456789abcdef1011121314151617",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_OP_TYPE_NAME"
 	},
 	"subtest 10": { // Subsystem name is undefined
 		"command": "AEAD",
@@ -93,6 +93,6 @@
 		"key_name": "key 1",
 		"input": "0123456789abcdef1011121314151617",
 		"subsystem": "UNDEFINED",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	}
 }

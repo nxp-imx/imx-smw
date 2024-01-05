@@ -15,6 +15,6 @@
 		"command": "DEVICE_ATTESTATION",
 		"subsystem": "UNDEFINED",
 		"output": 256,
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	}
 }

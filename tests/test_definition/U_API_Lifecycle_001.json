@@ -15,7 +15,7 @@
 		"command": "DEVICE_SET_LIFECYCLE",
 		"subsystem": "UNDEFINED",
 		"lifecycle": "CURRENT",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
 	"subtest 4": { // Lifecyle undefined
 		"command": "DEVICE_SET_LIFECYCLE",
@@ -35,6 +35,6 @@
 	"subtest 7": { // Subsystem not defined
 		"command": "DEVICE_GET_LIFECYCLE",
 		"subsystem": "UNDEFINED",
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	}
 }

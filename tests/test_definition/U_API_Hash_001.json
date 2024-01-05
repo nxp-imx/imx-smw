@@ -28,7 +28,7 @@
 			"6C2064F09625A0E63F7E1F18BCAFC631",
 			"0768290AF18FE21847C8344E02C5CECF"
 		],
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
 	"subtest 4": { // Algo is undefined
 		"command": "HASH",
@@ -39,7 +39,7 @@
 			"6C2064F09625A0E63F7E1F18BCAFC631",
 			"0768290AF18FE21847C8344E02C5CECF"
 		],
-		"result": "SMW_STATUS_UNKNOWN_NAME"
+		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"
 	},
 	"subtest 5": { // Digest length is zero
 		"command": "HASH",

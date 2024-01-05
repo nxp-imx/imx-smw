@@ -40,8 +40,12 @@ static const char *const tls_finish_label_names[] = {
 static int read_signature_type_names(char **start, char *end,
 				     unsigned long *bitmap)
 {
-	return smw_config_read_names(start, end, bitmap, sign_type_names,
-				     SMW_CONFIG_SIGN_TYPE_ID_NB);
+	int status = smw_config_read_names(start, end, bitmap, sign_type_names,
+					   SMW_CONFIG_SIGN_TYPE_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME;
+
+	return status;
 }
 
 static int sign_verify_read_params(char **start, char *end, void **params)
@@ -272,6 +276,9 @@ int smw_config_get_signature_type_id(const char *name,
 						    SMW_CONFIG_SIGN_TYPE_ID_NB,
 						    id);
 
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -290,6 +297,9 @@ int smw_config_get_tls_label_id(const char *name,
 			smw_utils_get_string_index(name, tls_finish_label_names,
 						   SMW_CONFIG_TLS_FINISH_ID_NB,
 						   id);
+
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

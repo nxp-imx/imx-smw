@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -100,7 +100,9 @@ static int is_output_iv_set(struct smw_crypto_aead_args *args)
  *
  * Return:
  * SMW_STATUS_OK		- Success
- * SMW_STATUS_UNKNOWN_NAME	- Unknown name
+ * SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME	- Unknown subsystem name
+ * SMW_STATUS_UNKNOWN_OP_TYPE_NAME	- Unknown operation type name
+ * SMW_STATUS_UNKNOWN_MODE_NAME	- Unknown mode name
  */
 static int
 aead_get_ids_from_strings(struct smw_aead_init_args *args,

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_status.h"
@@ -402,6 +402,9 @@ int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id)
 		status = smw_utils_get_string_index(name, subsystem_names,
 						    SUBSYSTEM_ID_NB, id);
 
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -420,6 +423,9 @@ int get_load_method_id(const char *name, enum load_method_id *id)
 		status = smw_utils_get_string_index(name, load_method_names,
 						    LOAD_METHOD_ID_NB, id);
 
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_LOAD_METHOD_NAME;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -432,6 +438,8 @@ int get_operation_id(const char *name, enum operation_id *id)
 
 	status = smw_utils_get_string_index(name, operation_names,
 					    OPERATION_ID_NB, id);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_CONFIG_OP_NAME;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

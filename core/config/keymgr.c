@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_config.h"
@@ -52,8 +52,12 @@ static const char *const key_derive_op_names[] = {
 
 int read_key_type_names(char **start, char *end, unsigned long *bitmap)
 {
-	return smw_config_read_names(start, end, bitmap, key_type_names,
-				     SMW_CONFIG_KEY_TYPE_ID_NB);
+	int status = smw_config_read_names(start, end, bitmap, key_type_names,
+					   SMW_CONFIG_KEY_TYPE_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_KEY_TYPE_NAME;
+
+	return status;
 }
 
 static int read_key_size_range(char **start, char *end, const char *type_name,
@@ -98,9 +102,10 @@ end:
 	return status;
 }
 
-static int read_key_op_names(char **start, char *end, enum operation_id op_id,
-			     unsigned long *bitmap)
+static bool read_key_op_names(char **start, char *end, enum operation_id op_id,
+			      unsigned long *bitmap, int *status)
 {
+	bool read_key_op_type_value = false;
 	const char *const *op_names = NULL;
 	unsigned int nb_op_names = 0;
 
@@ -108,13 +113,19 @@ static int read_key_op_names(char **start, char *end, enum operation_id op_id,
 	case OPERATION_ID_DERIVE_KEY:
 		op_names = key_derive_op_names;
 		nb_op_names = SMW_CONFIG_KDF_ID_NB;
+		read_key_op_type_value = true;
 		break;
 
 	default:
-		return SMW_STATUS_UNKNOWN_NAME;
+		return read_key_op_type_value;
 	}
 
-	return smw_config_read_names(start, end, bitmap, op_names, nb_op_names);
+	*status = smw_config_read_names(start, end, bitmap, op_names,
+					nb_op_names);
+	if (*status == SMW_STATUS_UNKNOWN_NAME)
+		*status = SMW_STATUS_UNKNOWN_KEY_OP_NAME;
+
+	return read_key_op_type_value;
 }
 
 bool read_key(char *tag, size_t length, char **start, char *end,
@@ -175,10 +186,15 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, op_type_values, length)) {
-			status = read_key_op_names(&cur, end, operation_id,
-						   &p->op_bitmap);
-			if (status != SMW_STATUS_OK)
-				goto end;
+			if (read_key_op_names(&cur, end, operation_id,
+					      &p->op_bitmap, &status)) {
+				if (status != SMW_STATUS_OK)
+					goto end;
+			} else {
+				status = skip_param(&cur, end);
+				if (status != SMW_STATUS_OK)
+					goto end;
+			}
 		} else if (read_key(buffer, length, &cur, end,
 				    &key_size_range_bitmap, &p->key, &status)) {
 			if (status != SMW_STATUS_OK)
@@ -435,6 +451,9 @@ int smw_config_get_key_type_id(const char *name,
 						    SMW_CONFIG_KEY_TYPE_ID_NB,
 						    id);
 
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_KEY_TYPE_NAME;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -451,6 +470,9 @@ int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id)
 	if (name)
 		status = smw_utils_get_string_index(name, key_derive_op_names,
 						    SMW_CONFIG_KDF_ID_NB, id);
+
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_KDF_NAME;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 

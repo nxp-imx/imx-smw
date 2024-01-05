@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include "smw_status.h"
@@ -23,7 +23,9 @@
  *
  * Return:
  * SMW_STATUS_OK		- Success
- * SMW_STATUS_UNKNOWN_NAME	- Unknown name
+ * SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME	- Unknown subsystem name
+ * SMW_STATUS_UNKNOWN_OP_TYPE_NAME	- Unknown operation type name
+ * SMW_STATUS_UNKNOWN_MODE_NAME	- Unknown mode name
  */
 static int
 cipher_get_ids_from_strings(struct smw_cipher_init_args *args,

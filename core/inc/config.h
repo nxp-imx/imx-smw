@@ -285,7 +285,7 @@ void smw_config_get_key_type_name(enum smw_config_key_type_id id,
  * @id: Pointer where the ID is written.
  *
  * Return:
- * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_SIGN_TYPE_NAME	- @name is unknown
  * SMW_STATUS_OK		- Success
  */
 int smw_config_get_signature_type_id(const char *name,
@@ -300,7 +300,7 @@ int smw_config_get_signature_type_id(const char *name,
  *       and function return SMW_STATUS_OK.
  *
  * Return:
- * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_UNKNOWN_KDF_NAME	- @name is unknown
  * SMW_STATUS_OK		- Success
  */
 int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id);
@@ -311,7 +311,7 @@ int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id);
  * @id: Pointer where the ID is written.
  *
  * Return:
- * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME	- @name is unknown
  * SMW_STATUS_OK		- Success
  */
 int smw_config_get_tls_label_id(const char *name,
@@ -428,7 +428,7 @@ int smw_utils_cipher_mode_names(char **start, char *end, unsigned long *bitmap);
  * @id: Pointer where the ID is written.
  *
  * Return:
- * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_UNKNOWN_MODE_NAME	- @name is unknown
  * SMW_STATUS_OK		- Success
  */
 int smw_utils_get_cipher_mode_id(const char *name,
@@ -441,7 +441,7 @@ int smw_utils_get_cipher_mode_id(const char *name,
  * @id: Pointer where the ID is written.
  *
  * Return:
- * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_UNKNOWN_OP_TYPE_NAME	- @name is unknown
  * SMW_STATUS_OK		- Success
  */
 int smw_utils_get_cipher_op_type_id(const char *name,
@@ -486,7 +486,7 @@ int smw_utils_get_mac_algo_id(const char *name,
  * @id: Pointer where the ID is written.
  *
  * Return:
- * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_UNKNOWN_MODE_NAME	- @name is unknown
  * SMW_STATUS_OK		- Success
  */
 int smw_utils_get_aead_mode_id(const char *name,
@@ -499,7 +499,7 @@ int smw_utils_get_aead_mode_id(const char *name,
  * @id: Pointer where the ID is written.
  *
  * Return:
- * SMW_STATUS_UNKNOWN_NAME	- @name is unknown
+ * SMW_STATUS_UNKNOWN_OP_TYPE_NAME	- @name is unknown
  * SMW_STATUS_OK		- Success
  */
 int smw_utils_get_aead_op_type_id(const char *name,

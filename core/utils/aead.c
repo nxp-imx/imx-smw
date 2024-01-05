@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -21,14 +21,23 @@ static const char *const aead_op_type_names[] = {
 
 int smw_utils_aead_op_type_names(char **start, char *end, unsigned long *bitmap)
 {
-	return smw_config_read_names(start, end, bitmap, aead_op_type_names,
-				     SMW_CONFIG_AEAD_OP_ID_NB);
+	int status =
+		smw_config_read_names(start, end, bitmap, aead_op_type_names,
+				      SMW_CONFIG_AEAD_OP_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
+
+	return status;
 }
 
 int smw_utils_aead_mode_names(char **start, char *end, unsigned long *bitmap)
 {
-	return smw_config_read_names(start, end, bitmap, aead_mode_names,
-				     SMW_CONFIG_AEAD_MODE_ID_NB);
+	int status = smw_config_read_names(start, end, bitmap, aead_mode_names,
+					   SMW_CONFIG_AEAD_MODE_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_MODE_NAME;
+
+	return status;
 }
 
 int smw_utils_get_aead_mode_id(const char *name,
@@ -44,6 +53,9 @@ int smw_utils_get_aead_mode_id(const char *name,
 		status = smw_utils_get_string_index(name, aead_mode_names,
 						    SMW_CONFIG_AEAD_MODE_ID_NB,
 						    id);
+
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_MODE_NAME;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -62,6 +74,9 @@ int smw_utils_get_aead_op_type_id(const char *name,
 		status = smw_utils_get_string_index(name, aead_op_type_names,
 						    SMW_CONFIG_AEAD_OP_ID_NB,
 						    id);
+
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

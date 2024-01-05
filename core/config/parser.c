@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_status.h"
@@ -468,16 +468,19 @@ static bool read_operation(char **start, char *end,
 			     SMW_CONFIG_MAX_OPERATION_NAME_LENGTH, semicolon);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
 	SMW_DBG_PRINTF(INFO, "Security operation name: %s\n", buffer);
 
 	/* Security operation id */
 	status = get_operation_id(buffer, &operation_id);
 	if (status != SMW_STATUS_OK) {
 		/* Skip unknown Security Operation without error */
-		if (status == SMW_STATUS_UNKNOWN_NAME)
+		if (status == SMW_STATUS_UNKNOWN_CONFIG_OP_NAME)
 			skip = true;
+
 		goto end;
 	}
+
 	SMW_DBG_PRINTF(DEBUG, "Security operation id: %d\n", operation_id);
 
 	skip_insignificant_chars(&cur, end);
@@ -534,7 +537,7 @@ static bool read_subsystem(char **start, char *end, int *return_status)
 	status = smw_config_get_subsystem_id(buffer, &subsystem_id);
 	if (status != SMW_STATUS_OK) {
 		/* Skip unknown Secure Subsystem without error */
-		if (status == SMW_STATUS_UNKNOWN_NAME)
+		if (status == SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME)
 			skip = true;
 		goto end;
 	}

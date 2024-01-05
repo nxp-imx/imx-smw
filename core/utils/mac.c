@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "config.h"
@@ -26,12 +26,19 @@ int smw_utils_get_mac_algo_id(const char *name, enum smw_config_mac_algo_id *id)
 						    SMW_CONFIG_MAC_ALGO_ID_NB,
 						    id);
 
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_ALGO_NAME;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
 int smw_utils_mac_algo_names(char **start, char *end, unsigned long *bitmap)
 {
-	return smw_config_read_names(start, end, bitmap, mac_algo_names,
-				     SMW_CONFIG_MAC_ALGO_ID_NB);
+	int status = smw_config_read_names(start, end, bitmap, mac_algo_names,
+					   SMW_CONFIG_MAC_ALGO_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_ALGO_NAME;
+
+	return status;
 }

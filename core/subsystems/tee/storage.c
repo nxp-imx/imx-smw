@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <tee_client_api.h>
@@ -85,6 +85,7 @@ static int storage_retrieve(void *args)
 	TEEC_Operation op = { 0 };
 	struct smw_storage_retrieve_data_args *retrieve_args = args;
 	struct smw_storage_data_descriptor *data_descriptor = NULL;
+	unsigned int data_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -111,6 +112,11 @@ static int storage_retrieve(void *args)
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_STORAGE_RETRIEVE, &op);
+
+	if (!SET_OVERFLOW(op.params[1].tmpref.size, data_length))
+		smw_storage_set_data_length(data_descriptor, data_length);
+	else
+		status = SMW_STATUS_OPERATION_FAILURE;
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

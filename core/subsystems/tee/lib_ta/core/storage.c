@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <util.h>
@@ -77,8 +77,6 @@ TEE_Result storage_retrieve(uint32_t param_types,
 
 	id = params[0].value.a;
 	persistent = params[0].value.b ? true : false;
-	if (!params[1].memref.size)
-		return res;
 
 	if (persistent) {
 		res = ta_find_and_open_persistent_id(id, &obj_handle, true);
@@ -99,14 +97,22 @@ TEE_Result storage_retrieve(uint32_t param_types,
 			goto end;
 		}
 
-		res = TEE_ReadObjectData(obj_handle, params[1].memref.buffer,
-					 obj_info.dataSize, &read_bytes);
+		if (params[1].memref.buffer && obj_info.dataSize) {
+			res = TEE_ReadObjectData(obj_handle,
+						 params[1].memref.buffer,
+						 obj_info.dataSize,
+						 &read_bytes);
 
-		if (res != TEE_SUCCESS || read_bytes != obj_info.dataSize) {
-			EMSG("Failed to read data (0x%x), read %zu over %zu",
-			     res, read_bytes, obj_info.dataSize);
-			goto end;
+			if (res != TEE_SUCCESS ||
+			    read_bytes != obj_info.dataSize) {
+				EMSG("Failed to read data (0x%x), read %zu over %zu",
+				     res, read_bytes, obj_info.dataSize);
+				goto end;
+			}
 		}
+
+		/* Return the number of bytes */
+		params[1].memref.size = obj_info.dataSize;
 	} else {
 		res = ta_find_and_get_transient_id(id, &obj_data);
 
@@ -121,12 +127,13 @@ TEE_Result storage_retrieve(uint32_t param_types,
 			goto end;
 		}
 
-		TEE_MemMove(params[1].memref.buffer, obj_data.data,
-			    obj_data.data_size);
-	}
+		if (params[1].memref.buffer && obj_data.data_size)
+			TEE_MemMove(params[1].memref.buffer, obj_data.data,
+				    obj_data.data_size);
 
-	/* Return the number of byte effectively filled */
-	params[1].memref.size = obj_data.data_size;
+		/* Return the number of bytes */
+		params[1].memref.size = obj_data.data_size;
+	}
 
 end:
 	if (persistent)

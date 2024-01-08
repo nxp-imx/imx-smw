@@ -48,7 +48,7 @@
 		"key_name": "key 2",
 		"result": "SMW_STATUS_UNKNOWN_NAME"
 	},
-	"subtest 4": { // ID set and wrong key type
+	"subtest 4": { // Key type is missing
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -56,32 +56,16 @@
 		"key_name": "key 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Key type is missing
+	"subtest 5": { // Key descriptor buffer is NULL
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
-		"input": "5555555555",
-		"key_name": "key 3",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 6": { // ID set and wrong key security size
-		"command": "AEAD",
-		"mode": "GCM",
-		"op_type": "ENCRYPT",
-		"input": "5555555555",
-		"key_name": "key 4",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 7": { // No key is set
-		"command": "AEAD",
-		"mode": "GCM",
-		"op_type": "ENCRYPT",
-		"key_name": "key 4",
+		"key_name": "key 1",
 		"input": "5555555555",
 		"test_error": "KEY_BUFFER_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Security size is 0
+	"subtest 6": { // Security size is 0
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -89,7 +73,7 @@
 		"key_name": "key 4",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 9": {
+	"subtest 7": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

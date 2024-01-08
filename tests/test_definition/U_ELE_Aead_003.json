@@ -263,8 +263,8 @@
 		"aad": "353637383132333435363738",
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
-		"aead_id": 8,
-		"depends": 1
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 19": {
 		"command": "DELETE",

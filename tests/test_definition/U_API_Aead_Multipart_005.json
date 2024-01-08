@@ -1,18 +1,7 @@
 {
-	"keys": {
-		"key 1": {
-			"type": "AES",
-			"security_size": 128,
-			"priv_key": [
-				"a1b90cba3f06ac353b2c343876081762",
-				"090923026e91771815f29dab01932f2f"
-			]
-		}
-	},
 	"subtest 1": { // Argument is NULL
 		"command": "AEAD_UPDATE_AAD",
 		"test_error": "ARGS_NULL",
-		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 2": { // Context is NULL

@@ -62,6 +62,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Tests - _version 3.0_
 
 * Change the TA installation default path to be `/usr/lib`
+* Update the key name and remove duplicate subtests in U_API_Aead_002.
+* Remove key 1 and key_name in U_API_Aead_Multipart_005.
+* Remove the subtest with incorrect tag length in U_API_Aead_Multipart_001.
+* Remove aead_id and update expected result to `SMW_STATUS_INVALID_PARAM` when IV length = 6 in U_ELE_Aead_003.
 
 #### PKCS#11 Library - _version 3.0_
 

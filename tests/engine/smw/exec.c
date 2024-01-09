@@ -373,6 +373,8 @@ static int execute_device_cmd(char *cmd, struct subtest_data *subtest)
 		return device_lifecycle(subtest, true);
 	else if (!strcmp(cmd, DEVICE_GET_LIFECYCLE))
 		return device_lifecycle(subtest, false);
+	else if (!strcmp(cmd, DEVICE_REPROVISION))
+		return device_reprovision(subtest);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 
@@ -297,4 +298,64 @@ int util_app_wait(struct test_data *test)
 	};
 
 	return res;
+}
+
+int util_app_exe_system(char *const argv[])
+{
+	int res = ERR_CODE(BAD_ARGS);
+	int status = 0;
+	pid_t pid = 0;
+	pid_t wait_pid = 0;
+
+	if (!argv) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	/* Flush all user-space buffered data before duplicating the process */
+	(void)fflush(NULL);
+
+	pid = fork();
+	if (pid == -1) {
+		DBG_PRINT("fork() error %s", util_get_strerr());
+		res = ERR_CODE(INTERNAL);
+	} else if (pid) {
+		do {
+			/* Ensure that child process is scheduled */
+			sleep(1);
+			wait_pid = waitpid(pid, &status,
+					   WNOHANG | WUNTRACED | WCONTINUED);
+
+			/* Still waiting for pid */
+			if (wait_pid == -1) {
+				DBG_PRINT("(%s) failed: %s", argv[0],
+					  util_get_strerr());
+				res = ERR_CODE(FAILED);
+				break;
+			} else if (wait_pid) {
+				res = ERR_CODE(FAILED);
+
+				if (WIFEXITED(status)) {
+					DBG_PRINT("(%s) exit with %d", argv[0],
+						  WEXITSTATUS(status));
+
+					if (!WEXITSTATUS(status))
+						res = ERR_CODE(PASSED);
+				}
+			}
+		} while (!wait_pid);
+	} else {
+		/* New child process */
+		res = execvp(argv[0], argv);
+		exit(res);
+	}
+
+	return res;
+}
+
+int util_app_find_exe(char *const prog)
+{
+	char *const cmd[] = { "which", prog, NULL };
+
+	return util_app_exe_system(cmd);
 }

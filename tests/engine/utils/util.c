@@ -563,7 +563,7 @@ int util_read_json_file(char *dir, char *name, struct json_object **json_obj)
 		return res;
 	}
 
-	res = util_file_to_buffer(dir, name, &definition_buffer);
+	res = util_file_to_buffer(dir, name, &definition_buffer, NULL);
 	if (res == ERR_CODE(PASSED)) {
 		*json_obj = json_tokener_parse(definition_buffer);
 		if (!*json_obj) {

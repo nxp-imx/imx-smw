@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 #ifndef __UTIL_APP_H__
 #define __UTIL_APP_H__
@@ -114,5 +114,27 @@ int util_app_fork(struct app_data *app);
  * or any error code (see enum err_num)
  */
 int util_app_wait(struct test_data *test);
+
+/**
+ * util_app_exe_system - Execute system command in application child
+ * @argv: System command line must be terminated by a NULL pointer
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARG                - Bad argument.
+ * -INTERNAL               - Fork operation failure
+ * -FAILED                 - System command failed
+ */
+int util_app_exe_system(char *const argv[]);
+
+/**
+ * util_app_find_exe() - Find executable
+ * @prog: Name of the executable to find.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -FAILED                 - Program not found
+ */
+int util_app_find_exe(char *const prog);
 
 #endif /* __UTIL_APP_H__ */

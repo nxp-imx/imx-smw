@@ -1,0 +1,19 @@
+{
+	"subtest 1": {
+		"command": "DEVICE_REPROVISION",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // Argument version not supported
+		"command": "DEVICE_REPROVISION",
+		"version": 255,
+		"output": 100,
+		"result": "SMW_STATUS_INVALID_VERSION"
+	},
+	"subtest 3": { // Subsystem not defined
+		"command": "DEVICE_REPROVISION",
+		"subsystem": "UNDEFINED",
+		"output": 100,
+		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
+	}
+}

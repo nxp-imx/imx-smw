@@ -1,0 +1,5 @@
+{
+	"subtest 1": {
+		"command": "DEVICE_REPROVISION"
+	}
+}

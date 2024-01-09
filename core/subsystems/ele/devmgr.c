@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "compiler.h"
@@ -154,6 +154,7 @@ int ele_get_device_info(struct subsystem_context *ele_ctx)
 
 	struct ele_info *info = &ele_ctx->info;
 	uint8_t *uid = NULL;
+	size_t i = 0;
 
 	op_dev_getinfo_args_t op_args = { 0 };
 
@@ -193,6 +194,16 @@ int ele_get_device_info(struct subsystem_context *ele_ctx)
 
 	info->lifecycle = hsm_get_lc_from_lmda(op_args.lmda_val);
 
+	/* Verify if the OEM SRKH is fused */
+	if (op_args.oem_srkh && op_args.oem_srkh_sz) {
+		for (; i < op_args.oem_srkh_sz; i++) {
+			if (op_args.oem_srkh[i]) {
+				info->srkh_fused = true;
+				break;
+			}
+		}
+	}
+
 	info->valid = true;
 
 end:
@@ -206,6 +217,23 @@ end:
 	/* Free all buffers allocated by the ELE Library */
 	free_device_info_operation(&op_args);
 
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int ele_is_oem_srkh_fused(struct subsystem_context *ele_ctx, bool *fused)
+{
+	int status = SMW_STATUS_OK;
+
+	struct ele_info *info = &ele_ctx->info;
+
+	status = ele_get_device_info(ele_ctx);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	*fused = info->srkh_fused;
+
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

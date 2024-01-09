@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include "smw_osal.h"
@@ -302,6 +302,18 @@ __weak bool ele_device_lifecycle_handle(struct subsystem_context *ele_ctx,
 	return false;
 }
 
+__weak bool ele_device_reprovisioning_handle(struct subsystem_context *ele_ctx,
+					     enum operation_id operation_id,
+					     void *args, int *status)
+{
+	(void)ele_ctx;
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
 __weak bool ele_storage_handle(struct subsystem_context *ele_ctx,
 			       enum operation_id operation_id, void *args,
 			       int *status)
@@ -354,6 +366,9 @@ static int execute(enum operation_id operation_id, void *args)
 					     &status))
 		goto end;
 	else if (ele_storage_handle(&ele_ctx, operation_id, args, &status))
+		goto end;
+	else if (ele_device_reprovisioning_handle(&ele_ctx, operation_id, args,
+						  &status))
 		goto end;
 
 	ele_aead_handle(hdl, operation_id, args, &status);

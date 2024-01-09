@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2019-2023 NXP
+ * Copyright 2019-2024 NXP
  */
 
 #ifndef __UTILS_H__
@@ -24,6 +24,7 @@
 #define SMW_UTILS_CALLOC  calloc
 #define SMW_UTILS_FREE	  free
 #define SMW_UTILS_MEMCPY  memcpy
+#define SMW_UTILS_MEMSET  memset
 #define SMW_UTILS_STRLEN  strlen
 #define SMW_UTILS_STRCMP  strcmp
 #define SMW_UTILS_STRNCMP strncmp

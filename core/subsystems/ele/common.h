@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __COMMON_H__
@@ -39,6 +39,7 @@ struct hdl {
  * @lifecycle: Current device lifecycle
  * @uid_length: Chip Unique ID length
  * @uid: Chip Unique ID buffer
+ * @srkh_fused: True if OEM SRKH is fused
  *
  * This structure stores some useful ELE information.
  */
@@ -51,6 +52,7 @@ struct ele_info {
 	uint16_t lifecycle;
 	unsigned int uid_length;
 	unsigned char *uid;
+	bool srkh_fused;
 };
 
 /**
@@ -239,6 +241,25 @@ bool ele_device_attest_handle(struct subsystem_context *ele_ctx,
 bool ele_device_lifecycle_handle(struct subsystem_context *ele_ctx,
 				 enum operation_id operation_id, void *args,
 				 int *status);
+
+/**
+ * ele_device_reprovisioning_handle() - Handle the device reprovisioning
+ *                                      operations.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @operation_id: Security Operation ID.
+ * @args: Pointer to a structure of arguments defined by the internal API.
+ * @status: Error code set only if the Security Operation is handled.
+ *
+ * This function handles the device storage reprovisioning operations.
+ * @status is set only if the function returns true.
+ *
+ * Return:
+ * * true:	- the Security Operation has been handled.
+ * * false:	- the Security Operation has not been handled.
+ */
+bool ele_device_reprovisioning_handle(struct subsystem_context *ele_ctx,
+				      enum operation_id operation_id,
+				      void *args, int *status);
 
 /**
  * ele_storage_handle() - Handle the storage operations.
@@ -454,5 +475,21 @@ int ele_set_cipher_algo(enum smw_config_key_type_id key_type_id,
  * Other SMW status error.
  */
 int ele_get_device_info(struct subsystem_context *ele_ctx);
+
+/**
+ * ele_is_oem_srkh_fused() - Return if the OEM SRKH is fused
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @fused: True if the OEM SRKH is fused.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
+ * SMW_STATUS_SUBSYSTEM_FAILURE          - Subsystem failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED    - Operation not supported
+ * SMW_STATUS_MUTEX_LOCK_FAILURE         - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE       - Mutex unlock failure
+ * Other SMW status error.
+ */
+int ele_is_oem_srkh_fused(struct subsystem_context *ele_ctx, bool *fused);
 
 #endif /* __COMMON_H__ */

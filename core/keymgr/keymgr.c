@@ -147,6 +147,9 @@ static int get_format_id(const char *name, enum smw_keymgr_format_id *id)
 			smw_utils_get_string_index(name, format_names,
 						   SMW_KEYMGR_FORMAT_ID_NB, id);
 
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_FORMAT_NAME;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

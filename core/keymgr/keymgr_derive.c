@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include "smw_keymgr.h"
@@ -41,9 +41,9 @@ static const char *const tls12_encryption_name[] = {
  * @args: TLS 1.2 internal arguments
  *
  * Return:
- * SMW_STATUS_OK              - Success
- * SMW_STATUS_INVALID_PARAM   - Invalid function parameter
- * SMW_STATUS_UNKNOWN_NAME    - String name is not referenced
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_INVALID_PARAM           - Invalid function parameter
+ * SMW_STATUS_UNKNOWN_TLS12_KEA_NAME  - Unknown key exchange algorithm name
  */
 static int tls12_get_key_exchange_id(const char *name,
 				     struct smw_keymgr_tls12_args *args)
@@ -74,6 +74,8 @@ static int tls12_get_key_exchange_id(const char *name,
 		default:
 			args->ephemeral_key = false;
 		}
+	} else if (status == SMW_STATUS_UNKNOWN_NAME) {
+		status = SMW_STATUS_UNKNOWN_TLS12_KEA_NAME;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -215,9 +217,9 @@ end:
  * @id: ID of the cipher encryption name
  *
  * Return:
- * SMW_STATUS_OK              - Success
- * SMW_STATUS_INVALID_PARAM   - Invalid function parameter
- * SMW_STATUS_UNKNOWN_NAME    - String name is not referenced
+ * SMW_STATUS_OK                     - Success
+ * SMW_STATUS_INVALID_PARAM          - Invalid function parameter
+ * SMW_STATUS_UNKNOWN_TLS12_ENC_NAME - Unknown TLS 1.2 encryption algorithm name
  */
 static int tls12_get_encryption_id(const char *name,
 				   enum smw_tls12_encryption_id *id)
@@ -232,6 +234,9 @@ static int tls12_get_encryption_id(const char *name,
 		status = smw_utils_get_string_index(name, tls12_encryption_name,
 						    SMW_TLS12_ENCRYPTION_ID_NB,
 						    id);
+
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_TLS12_ENC_NAME;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
@@ -264,9 +269,9 @@ static bool tls12_is_encryption_gcm(enum smw_tls12_encryption_id id)
  * @id: ID of the Pseudo-Random Function name
  *
  * Return:
- * SMW_STATUS_OK              - Success
- * SMW_STATUS_INVALID_PARAM   - Invalid function parameter
- * SMW_STATUS_UNKNOWN_NAME    - String name is not referenced
+ * SMW_STATUS_OK                - Success
+ * SMW_STATUS_INVALID_PARAM     - Invalid function parameter
+ * SMW_STATUS_UNKNOWN_ALGO_NAME - String name is not referenced
  */
 static int tls12_get_prf_id(const char *name, enum smw_config_hash_algo_id *id)
 {
@@ -278,6 +283,9 @@ static int tls12_get_prf_id(const char *name, enum smw_config_hash_algo_id *id)
 
 	if (name)
 		status = smw_utils_get_hash_algo_id(name, id);
+
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_ALGO_NAME;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
@@ -301,10 +309,12 @@ static int tls12_get_prf_id(const char *name, enum smw_config_hash_algo_id *id)
  *  - If encryption mode is AES GCM, the Client and Server write IVs.
  *
  * Return :
- * SMW_STATUS_OK            - Success
- * SMW_STATUS_ALLOC_FAILURE - Out of memory
- * SMW_STATUS_INVALID_PARAM - Invalid function parameter
- * SMW_STATUS_UNKNOWN_NAME  - String name is not referenced
+ * SMW_STATUS_OK                     - Success
+ * SMW_STATUS_ALLOC_FAILURE          - Out of memory
+ * SMW_STATUS_INVALID_PARAM          - Invalid function parameter
+ * SMW_STATUS_UNKNOWN_ALGO_NAME      - Unknown hash algorithm name
+ * SMW_STATUS_UNKNOWN_TLS12_KEA_NAME - Unknown TLS 1.2 Key exchange algo name
+ * SMW_STATUS_UNKNOWN_TLS12_ENC_NAME - Unknown TLS 1.2 encryption algorithm name
  */
 static int tls12_convert_args(struct smw_kdf_tls12_args *args, void **conv_args)
 {
@@ -372,10 +382,11 @@ end:
  * public key is exported in the derived key descriptor.
  *
  * Return:
- * SMW_STATUS_OK              - Success
- * SMW_STATUS_ALLOC_FAILURE   - Out of memory
- * SMW_STATUS_INVALID_PARAM   - Invalid function parameter
- * SMW_STATUS_UNKNOWN_NAME    - String name is not referenced
+ * SMW_STATUS_OK                     - Success
+ * SMW_STATUS_ALLOC_FAILURE          - Out of memory
+ * SMW_STATUS_INVALID_PARAM          - Invalid function parameter
+ * SMW_STATUS_UNKNOWN_KEY_TYPE_NAME  - Unknown key type name
+ * SMW_STATUS_UNKNOWN_FORMAT_NAME    - Unknown key format name
  */
 static int tls12_convert_output(struct smw_derive_key_args *args,
 				struct smw_keymgr_derive_key_args *conv_args)

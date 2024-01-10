@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2019-2023 NXP
+ * Copyright 2019-2024 NXP
  */
 
 #include "local.h"
@@ -451,7 +451,7 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 		else if (!strcmp(subsystem, "ELE"))
 			status = set_ele_info(info, info_size);
 		else
-			status = SMW_STATUS_UNKNOWN_NAME;
+			status = SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME;
 	}
 
 	return status;

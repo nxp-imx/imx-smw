@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -639,8 +639,10 @@ static int aead(struct hdl *hdl, void *args)
 
 	err = hsm_do_auth_enc(hdl->key_store, &op_args);
 
-	SMW_DBG_PRINTF(DEBUG, "%s returned %d. expected output size = %u\n",
-		       __func__, err, op_args.exp_output_size);
+	SMW_DBG_PRINTF(DEBUG, "hsm_do_auth_enc returned %d\n", err);
+
+	SMW_DBG_PRINTF(DEBUG, "Expected output size = %u\n",
+		       op_args.exp_output_size);
 
 	if (!is_encrypt_op && err == HSM_GENERAL_ERROR)
 		/*

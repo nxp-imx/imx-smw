@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include "debug.h"
@@ -270,6 +270,7 @@ static const struct {
 	PERM_ALGO(CFB, CFB, 0, NULL),
 	PERM_ALGO(ALL_CIPHER, ALL_CIPHER, 0, NULL),
 	PERM_ALGO(CCM, CCM, 0, NULL),
+	PERM_ALGO(GCM, GCM, 0, NULL),
 	PERM_ALGO(RSA_PKCS1V15, RSA_PKCS1_V15_ANY_HASH, 0, perm_hash_algo),
 	PERM_ALGO(RSA_PSS, RSA_PKCS1_PSS_MGF1_ANY_HASH, 0, perm_hash_algo),
 	PERM_ALGO(ECDSA, ECDSA_ANY_HASH, 0, perm_hash_algo),

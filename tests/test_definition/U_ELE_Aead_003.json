@@ -32,6 +32,7 @@
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
 		"aead_id": 1,
+		"restriction_list": "imx8ulpevk",
 		"depends": 1
 	},
 	"subtest 3": {
@@ -44,6 +45,7 @@
 		"tag": 16,
 		"aead_id": 1,
 		"output": "30313233343536373839404142434445",
+		"restriction_list": "imx8ulpevk",
 		"depends": [
 			1,
 			2
@@ -60,6 +62,7 @@
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
 		"aead_id": 2,
+		"restriction_list": "imx8ulpevk",
 		"depends": 1
 	},
 	"subtest 5": {
@@ -72,6 +75,7 @@
 		"tag": 16,
 		"aead_id": 2,
 		"output": "30313233343536373839404142434445",
+		"restriction_list": "imx8ulpevk",
 		"depends": [
 			1,
 			4
@@ -88,6 +92,7 @@
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
 		"aead_id": 3,
+		"restriction_list": "imx8ulpevk",
 		"depends": 1
 	},
 	"subtest 7": {
@@ -100,6 +105,7 @@
 		"tag": 16,
 		"aead_id": 3,
 		"output": "30313233343536373839404142434445",
+		"restriction_list": "imx8ulpevk",
 		"depends": [
 			1,
 			6
@@ -116,6 +122,7 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 4,
+		"restriction_list": "imx8ulpevk",
 		"depends": 1
 	},
 	"subtest 9": {
@@ -129,6 +136,7 @@
 		"tag": 16,
 		"aead_id": 4,
 		"output": "30313233343536373839404142434445",
+		"restriction_list": "imx8ulpevk",
 		"depends": [
 			1,
 			8
@@ -146,6 +154,7 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 5,
+		"restriction_list": "imx8ulpevk",
 		"depends": 1
 	},
 	"subtest 11": {
@@ -159,6 +168,7 @@
 		"tag": 16,
 		"aead_id": 5,
 		"output": "30313233343536373839404142434445",
+		"restriction_list": "imx8ulpevk",
 		"depends": [
 			1,
 			10
@@ -176,6 +186,7 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 6,
+		"restriction_list": "imx8ulpevk",
 		"depends": 1
 	},
 	"subtest 13": {
@@ -189,6 +200,7 @@
 		"tag": 16,
 		"aead_id": 6,
 		"output": "30313233343536373839404142434445",
+		"restriction_list": "imx8ulpevk",
 		"depends": [
 			1,
 			12
@@ -234,6 +246,7 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 7,
+		"restriction_list": "imx8ulpevk",
 		"depends": 1
 	},
 	"subtest 17": { // Tag buffer overrides saved tag
@@ -246,6 +259,7 @@
 		"tag": "c29819aaa1b126fadfc9c8a694daad12",
 		"tag_field_set": true,
 		"output": "30313233343536373839404142434445",
+		"restriction_list": "imx8ulpevk",
 		"depends": [
 			1,
 			16
@@ -263,6 +277,7 @@
 		"aad": "353637383132333435363738",
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
+		"restriction_list": "imx8ulpevk",
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},

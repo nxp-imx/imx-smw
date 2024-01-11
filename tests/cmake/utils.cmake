@@ -146,6 +146,7 @@ macro(add_tests definition_list cmd)
 		add_test(NAME ${test_name} COMMAND ${test_cmd})
 		set_tests_properties(${test_name} PROPERTIES LABELS
 				     "${labels_list}")
+		set_tests_properties(${test_name} PROPERTIES SKIP_RETURN_CODE 1)
 	endwhile()
 endmacro()
 

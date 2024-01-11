@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include <stdlib.h>
@@ -356,27 +356,27 @@ static void thread_stat_log(struct thread_data *thr)
 	if (thr->loop)
 		total *= thr->loop;
 
-	fails = total - thr->stat.passed;
+	fails = total - thr->stat.passed - thr->stat.skipped;
 
-	if (thr->stat.ran && total) {
+	if (thr->stat.skipped < total && thr->stat.run && total) {
 		if (!MUL_OVERFLOW(thr->stat.passed, 100, &rate_passed))
-			rate_passed /= total;
+			rate_passed /= (total - thr->stat.skipped);
 		else
 			rate_passed = 0;
 	}
 
 	err = sprintf(&str[nb_char],
 		      "\t%zu%% subtests passed, %d failed out of %d",
-		      rate_passed, fails, total);
+		      rate_passed, fails, total - thr->stat.skipped);
 
 	if (err >= 0)
 		nb_char += err;
 	else
 		DBG_PRINT("Error (%d) %s", err, util_get_strerr());
 
-	if (total - thr->stat.ran) {
+	if (total - thr->stat.run) {
 		err = sprintf(&str[nb_char], " (missing %d)",
-			      total - thr->stat.ran);
+			      total - thr->stat.run);
 		if (err >= 0)
 			nb_char += err;
 		else

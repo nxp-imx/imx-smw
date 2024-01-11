@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <string.h>
+#include <unistd.h>
 
 #include <smw_osal.h>
 
@@ -138,12 +139,89 @@ static int execute_command(char *cmd, struct subtest_data *subtest)
 }
 
 /**
+ * is_subtest_skipped() - Return if a subtest is skipped
+ * @params: JSON-C Subtest parameters object
+ *
+ * Return:
+ * PASSED          - Subtest applicable
+ * SKIPPED         - Subtest skipped
+ * -INTERNAL       - Internal error
+ */
+static int is_subtest_skipped(struct json_object *params)
+{
+	int res = ERR_CODE(PASSED);
+
+	char hostname[256] = { 0 };
+	struct json_object *restriction_list_obj = NULL;
+	size_t nb_members = 0;
+	size_t i = 0;
+	struct json_object *hostname_obj = NULL;
+
+	if (gethostname(hostname, sizeof(hostname))) {
+		res = ERR_CODE(INTERNAL);
+		goto exit;
+	}
+
+	res = util_read_json_type(&restriction_list_obj, RESTRICTION_LIST_OBJ,
+				  t_buffer, params);
+	if (res != ERR_CODE(PASSED)) {
+		/* If JSON tag not found, return with no error */
+		if (res == ERR_CODE(VALUE_NOTFOUND))
+			res = ERR_CODE(PASSED);
+
+		return res;
+	}
+
+	switch (json_object_get_type(restriction_list_obj)) {
+	case json_type_string:
+		if (!strcmp(hostname,
+			    json_object_get_string(restriction_list_obj)))
+			res = ERR_CODE(SKIPPED);
+		break;
+
+	case json_type_array:
+		nb_members = json_object_array_length(restriction_list_obj);
+
+		for (; i < nb_members; i++) {
+			hostname_obj =
+				json_object_array_get_idx(restriction_list_obj,
+							  i);
+			if (json_object_get_type(hostname_obj) !=
+			    json_type_string) {
+				DBG_PRINT("%s must be an array of strings",
+					  RESTRICTION_LIST_OBJ);
+				return ERR_CODE(BAD_PARAM_TYPE);
+			}
+
+			if (!strcmp(hostname,
+				    json_object_get_string(hostname_obj))) {
+				res = ERR_CODE(SKIPPED);
+				break;
+			}
+		}
+
+		break;
+
+	default:
+		res = ERR_CODE(BAD_PARAM_TYPE);
+		break;
+	}
+
+exit:
+	if (res == ERR_CODE(SKIPPED))
+		DBG_PRINT("%s found in the restriction list", hostname);
+
+	return res;
+}
+
+/**
  * is_subtest_passed() - Return if a subtest passed
  * @thr: Thread data
  * @id: Subtest id
  *
  * Return:
  * PASSED          - Subtest passed
+ * SKIPPED         - Subtest skipped
  * -FAILED         - Subtest failed
  * -INTERNAL       - Internal error if subtest id out of range
  */
@@ -153,7 +231,7 @@ static int is_subtest_passed(struct thread_data *thr, int id)
 
 	if (id && id < thr->stat.number) {
 		res = thr->stat.status_array[id - 1];
-		if (res != ERR_CODE(PASSED))
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(SKIPPED))
 			res = ERR_CODE(FAILED);
 	}
 
@@ -208,20 +286,11 @@ static int run_subtest_vs_depends(struct thread_data *thr,
 	case json_type_array:
 		nb_members = json_object_array_length(depends_obj);
 
-		/*
-		 * 'depends' parameter must be an array only for multiple
-		 * entries. Otherwise it must be an integer
-		 */
-		if (nb_members < 2) {
-			DBG_PRINT_BAD_PARAM(DEPENDS_OBJ);
-			return ERR_CODE(BAD_PARAM_TYPE);
-		}
-
 		for (; i < nb_members; i++) {
 			/* Get the subtest id number */
 			oval = json_object_array_get_idx(depends_obj, i);
 			if (json_object_get_type(oval) != json_type_int) {
-				DBG_PRINT("%s must be an array of integer",
+				DBG_PRINT("%s must be an array of integers",
 					  DEPENDS_OBJ);
 				return ERR_CODE(BAD_PARAM_TYPE);
 			}
@@ -231,13 +300,16 @@ static int run_subtest_vs_depends(struct thread_data *thr,
 			if (res == ERR_CODE(FAILED)) {
 				res = ERR_CODE(NOT_RUN);
 				break;
+			} else if (res == ERR_CODE(SKIPPED)) {
+				break;
 			}
 		}
 
 		break;
 
 	default:
-		res = ERR_CODE(INTERNAL);
+		res = ERR_CODE(BAD_PARAM_TYPE);
+		break;
 	}
 
 	return res;
@@ -269,6 +341,15 @@ static void run_subtest(struct thread_data *thr)
 		DBG_PRINT("\"subtest\" is not a json-c object");
 
 		res = ERR_CODE(BAD_PARAM_TYPE);
+		goto exit;
+	}
+
+	res = is_subtest_skipped(subtest->params);
+	if (res != ERR_CODE(PASSED)) {
+		if (res == ERR_CODE(SKIPPED))
+			FPRINT_MESSAGE(thr->app, "%s is skipped",
+				       subtest->name);
+
 		goto exit;
 	}
 
@@ -404,7 +485,14 @@ exit:
 			thr->stat.passed = 0;
 	}
 
-	if (thr->status == ERR_CODE(PASSED))
+	if (res == ERR_CODE(SKIPPED)) {
+		if (INC_OVERFLOW(thr->stat.skipped, 1))
+			thr->stat.skipped = 0;
+	}
+
+	if ((thr->status == ERR_CODE(PASSED) ||
+	     thr->status == ERR_CODE(SKIPPED)) &&
+	    res != ERR_CODE(SKIPPED))
 		thr->status = res;
 
 	util_thread_log(thr);
@@ -428,7 +516,8 @@ void *process_thread(void *arg)
 
 	thr->stat.status_array = NULL;
 	thr->stat.number = 0;
-	thr->stat.ran = 0;
+	thr->stat.run = 0;
+	thr->stat.skipped = 0;
 	thr->stat.passed = 0;
 
 	if (!json_object_get_object(thr->def)) {
@@ -463,7 +552,7 @@ void *process_thread(void *arg)
 	}
 
 	thr->state = STATE_RUNNING;
-	thr->status = ERR_CODE(PASSED);
+	thr->status = ERR_CODE(SKIPPED);
 
 	/* Wait semaphore if multi-thread test */
 	err = util_sem_wait_before(thr, thr->parent_def);
@@ -521,15 +610,15 @@ void *process_thread(void *arg)
 				goto exit;
 			}
 
-			thr->stat.ran++;
+			thr->stat.run++;
 			run_subtest(thr);
 		}
 	}
 
 	thr->subtest = NULL;
 
-	/* If no subtests ran - Failure */
-	if (!thr->stat.ran || thr->stat.ran != total)
+	/* If no subtests was run - Failure */
+	if (!thr->stat.run || thr->stat.run != total)
 		thr->status = ERR_CODE(FAILED);
 
 	/* Wait semaphore if multi-thread test */

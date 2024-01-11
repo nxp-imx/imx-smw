@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <json.h>
@@ -248,7 +248,8 @@ exit:
 	if (name)
 		free(name);
 
-	if (test_status == ERR_CODE(PASSED)) {
+	if (test_status == ERR_CODE(PASSED) ||
+	    test_status == ERR_CODE(SKIPPED)) {
 		util_log(test_data, "%s: %s\n", test_name,
 			 util_get_err_code_str(test_status));
 	} else {

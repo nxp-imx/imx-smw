@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <assert.h>
@@ -45,6 +45,7 @@ static const struct test_err_case {
 
 const struct error list_err[MAX_TEST_ERROR] = {
 	SET_ERR_CODE_AND_NAME(PASSED, "PASSED"),
+	SET_ERR_CODE_AND_NAME(-SKIPPED, "SKIPPED"),
 	SET_ERR_CODE_AND_NAME(FAILED, "FAILED"),
 	SET_ERR_CODE_AND_NAME(INTERNAL, "INTERNAL"),
 	SET_ERR_CODE_AND_NAME(INTERNAL_OUT_OF_MEMORY, "INTERNAL OUT OF MEMORY"),

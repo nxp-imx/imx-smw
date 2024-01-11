@@ -65,6 +65,7 @@
 #define PUB_KEY_OBJ		  "pub_key"
 #define RANDOM_OBJ		  "random"
 #define RESTORE_OBJ		  "restore"
+#define RESTRICTION_LIST_OBJ	  "restriction_list"
 #define RES_OBJ			  "result"
 #define SAVE_OUT_OBJ		  "save_output"
 #define SECONDS_OBJ		  "seconds"

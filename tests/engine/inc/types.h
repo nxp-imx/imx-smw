@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __TYPES_H__
@@ -22,26 +22,27 @@
 /* Type of errors */
 enum err_num {
 	PASSED = 0,
+	SKIPPED, /* Must be 1, don't move it */
 	FAILED,
 	INTERNAL,
 	INTERNAL_OUT_OF_MEMORY,
-	UNDEFINED_CMD,
-	MISSING_PARAMS, /* 5 */
+	UNDEFINED_CMD, /* 5 */
+	MISSING_PARAMS,
 	UNKNOWN_RESULT,
 	API_STATUS_NOK, /* SMW Call return a status not ok */
 	BAD_ARGS,
-	SUBSYSTEM,
-	NOT_RUN, /* 10 */
+	SUBSYSTEM, /* 10 */
+	NOT_RUN,
 	BAD_PARAM_TYPE,
 	VALUE_NOTFOUND,
 	KEY_NOTFOUND,
-	ERROR_NOT_DEFINED,
-	ERROR_SMWLIB_INIT, /* 15 */
+	ERROR_NOT_DEFINED, /* 15 */
+	ERROR_SMWLIB_INIT,
 	MUTEX_DESTROY,
 	COND_DESTROY,
 	TIMEOUT,
-	THREAD_CANCELED,
-	BAD_SUBSYSTEM, /* 20 */
+	THREAD_CANCELED, /* 20 */
+	BAD_SUBSYSTEM,
 	UNDEFINED_API,
 	DATA_NOTFOUND,
 	MAX_TEST_ERROR, /* Maximum test error constant - keep last item */

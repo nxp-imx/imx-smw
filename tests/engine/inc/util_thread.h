@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022, 2024 NXP
  */
 
 #ifndef __UTIL_THREAD__H__
@@ -26,14 +26,16 @@ enum thread_state {
  * struct subtests_stat - Subtests statistic
  * @status_array: All subtests status
  * @number: Number of subtests defined
- * @ran: Number of subtests ran
+ * @run: Number of subtests run
  * @passed: Number of subtests passed
+ * @skipped: Number of subtests skipped
  */
 struct subtests_stat {
 	int *status_array;
 	int number;
-	int ran;
+	int run;
 	int passed;
+	int skipped;
 };
 
 /**

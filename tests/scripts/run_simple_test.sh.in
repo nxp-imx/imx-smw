@@ -3,7 +3,6 @@
 set -u
 
 res=0
-error=0
 cfg_path="@CMAKE_INSTALL_PREFIX@/@SMW_TESTS_TARGET_CONFIG_DIR@"
 status_file_path="@DEFAULT_OUT_STATUS_DIR@/"
 def_file_ext=".json"
@@ -62,13 +61,12 @@ do
     rm "${status_file}"
   fi
 
-  if [[ ${res} -ne 0 ]]; then
+  if [[ ${res} -gt 1 ]]; then
     echo "${def} test failed (${res})"
-    error=1
     break
   fi
 
   shift
 done
 
-exit ${error}
+exit ${res}

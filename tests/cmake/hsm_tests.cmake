@@ -13,7 +13,6 @@ else()
 	list(APPEND REM_TESTS_LIST U_HSM_Derive_002.json)
 	list(APPEND REM_TESTS_LIST F_HSM_TLS_001.json)
 	list(APPEND REM_TESTS_LIST U_HSM_Generate_003.json)
-	list(APPEND REM_TESTS_LIST U_HSM_Hmac_001.json)
 	list(APPEND REM_TESTS_LIST U_HSM_Mac_002.json)
 endif()
 

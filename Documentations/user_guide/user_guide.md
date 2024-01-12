@@ -198,7 +198,7 @@ and supported by the SMW Library.
 </tr>
 <tr>
   <td colspan="3">Authentication Encryption (AEAD)</td>
-	<td>❌</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 </tr>
@@ -209,7 +209,7 @@ and supported by the SMW Library.
 	<td>✔️</td>
 </tr>
 <tr>
-  <td rowspan="3">Device Manager</td>
+  <td rowspan="4">Device Manager</td>
 	<td colspan="2">Device Attestation</td>
 	<td>❌</td>
 	<td>❌</td>
@@ -223,6 +223,12 @@ and supported by the SMW Library.
 </tr>
 <tr>
   <td colspan="2">Device Lifecycle</td>
+	<td>❌</td>
+	<td>❌</td>
+	<td>✔️</td>
+</tr>
+<tr>
+  <td colspan="2">Storage Reprovisioning</td>
 	<td>❌</td>
 	<td>❌</td>
 	<td>✔️</td>
@@ -791,6 +797,12 @@ The default option value is in **bold**.
 <tr>
   <td>-DENABLE_DEVICE_LIFECYCLE=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of Device Lifecycle operations.
+	Default is ON (enable).</td>
+	<td>ENABLE_DEVMGR_MODULE</td>
+</tr>
+<tr>
+  <td>-DENABLE_DEVICE_REPROVISION=[<b>ON</b>|OFF]</td>
+  <td>Enable/disable the support of Device Storage reprovisioning operations.
 	Default is ON (enable).</td>
 	<td>ENABLE_DEVMGR_MODULE</td>
 </tr>

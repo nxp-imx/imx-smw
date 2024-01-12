@@ -49,6 +49,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add dedicated status codes for cases where the argument string name provided by the user or the parameter set in the user configuration file is not recognized by SMW.
 * Skip reading of tag `OP_TYPE_VALUES` for any key related security operation other than `DERIVE_KEY`.
 * Change the `struct smw_keypair_rsa` to have first fields common to the `struct smw_keypair_gen`
+* Add support of storage re-provisoning.
 
 ##### 2. Subsystems
 
@@ -58,6 +59,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Implement AEAD one-shot operation for ELE subsystem.
 * Implement AEAD one-shot operation for HSM subsystem.
 * Add ELE subsystem RSA key management.
+* Implement storage re-provisioning for ELE subsystem.
 
 ##### 3. ARM PSA APIs
 
@@ -72,6 +74,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Remove aead_id and update expected result to `SMW_STATUS_INVALID_PARAM` when IV length = 6 in U_ELE_Aead_003.
 * Update the expected result in test definition files for scenarios where the parameter string value is not recognized by SMW.
 * Add test to validate ELE RSA key management.
+* Add storage reprovisioning.
+* Add skipped test management.
 
 #### PKCS#11 Library - _version 3.0_
 

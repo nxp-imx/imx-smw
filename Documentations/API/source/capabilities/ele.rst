@@ -631,3 +631,20 @@ in the table below (:numref:`key_attest_cert`):
    |         |                    | (0x5E) and signature length fields.     |
    +---------+--------------------+-----------------------------------------+
 
+Storage Re-provisioning
+^^^^^^^^^^^^^^^^^^^^^^^
+
+This operation allows to reset and re-fill a new non-volatile storage that
+has been rollback protected (using the commit operation).
+This operation requires a specific tool called CST to sign the ELE Secure
+Enclave re-provisioning request. The signature key is correlated to the
+OEM SRKH fused.
+CST tool can be downloaded from https://www.nxp.com/webapp/sps/download/license.jsp?colCode=IMX_CST_TOOL_NEW
+or from https://gitlab.apertis.org/pkg/imx-code-signing-tool as sources.
+
+The SMW library offers the possibility to create the message payload to be
+signed with the CST tools (see :ref:smw_device_reprovision_prepare). The
+buffer returned must be signed with CST tool and given as parameter of the
+:ref:smw_device_reprovision API.
+
+.. Note:: The OEM SRKH must be fused.

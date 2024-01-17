@@ -79,18 +79,18 @@ int mutex_destroy(void **mutex)
 
 int mutex_lock(void *mutex)
 {
-	TRACE_FUNCTION_CALL;
+	TRACE_EXTRA_FUNCTION_CALL;
 
-	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
+	DBG_PRINTF(EXTRA, "%s: %p\n", __func__, mutex);
 
 	return pthread_mutex_lock((pthread_mutex_t *)mutex);
 }
 
 int mutex_unlock(void *mutex)
 {
-	TRACE_FUNCTION_CALL;
+	TRACE_EXTRA_FUNCTION_CALL;
 
-	DBG_PRINTF(DEBUG, "%s: %p\n", __func__, mutex);
+	DBG_PRINTF(EXTRA, "%s: %p\n", __func__, mutex);
 
 	return pthread_mutex_unlock((pthread_mutex_t *)mutex);
 }

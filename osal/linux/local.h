@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #ifndef __LOCAL_H__
@@ -25,7 +25,8 @@
 #define DBG_LEVEL_ERROR	  1 /* Failures of which the user must be aware */
 #define DBG_LEVEL_INFO	  2 /* Traces which could interest the user */
 #define DBG_LEVEL_DEBUG	  3 /* First level of debugging information */
-#define DBG_LEVEL_VERBOSE 4 /* Maximum level of debugging information */
+#define DBG_LEVEL_VERBOSE 4 /* Second level of debugging information */
+#define DBG_LEVEL_EXTRA	  5 /* Maximum level of debugging information */
 
 #if defined(ENABLE_TRACE)
 
@@ -41,9 +42,12 @@
 
 #define TRACE_FUNCTION_CALL DBG_PRINTF(VERBOSE, "Executing %s\n", __func__)
 
+#define TRACE_EXTRA_FUNCTION_CALL DBG_PRINTF(EXTRA, "Executing %s\n", __func__)
+
 #else
 #define DBG_PRINTF(level, ...)
 #define TRACE_FUNCTION_CALL
+#define TRACE_EXTRA_FUNCTION_CALL
 #endif /* ENABLE_TRACE */
 
 /*

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <errno.h>
@@ -85,7 +85,7 @@ static void find_db_obj_id(struct obj_db *db, unsigned int id,
 
 	while ((nb_bytes = pread(db->fp, obj, sizeof(*obj), off)) > 0 &&
 	       nb_bytes == sizeof(*obj)) {
-		DBG_PRINTF(DEBUG, "%s ID=%u vs %u\n", __func__, obj->id, id);
+		DBG_PRINTF(EXTRA, "%s ID=%u vs %u\n", __func__, obj->id, id);
 		if (obj->id != id) {
 			/* Go to the next entry */
 			if (ADD_OVERFLOW(sizeof(*obj), obj->info_size, &inc) ||

@@ -108,7 +108,7 @@ static int thread_cancel(unsigned long thread)
 
 static void vprint(const char *format, va_list arg)
 {
-	printf("(%d) [0x%lx] ", getpid(), pthread_self());
+	printf("[SMW] (%d) [0x%lx] ", getpid(), pthread_self());
 
 	vprintf(format, arg);
 

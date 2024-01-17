@@ -35,7 +35,8 @@
 #define DBG_PRINTF(level, ...)                                                 \
 	do {                                                                   \
 		if (DBG_LEVEL_##level <= DBG_LEVEL) {                          \
-			printf("(%d) [0x%lx] ", getpid(), pthread_self());     \
+			printf("[OSAL] (%d) [0x%lx] ", getpid(),               \
+			       pthread_self());                                \
 			printf(__VA_ARGS__);                                   \
 		}                                                              \
 	} while (0)

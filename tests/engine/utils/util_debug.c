@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include <stdarg.h>
@@ -14,6 +14,8 @@
 static void dbg_func_printf(const char *function, int line, const char *app,
 			    const char *thr)
 {
+	printf("[TEST] ");
+
 	if (app)
 		printf("(%s) ", app);
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2024 NXP
  */
 
 #include "global.h"
@@ -14,7 +14,7 @@ static void print_node(struct node *node)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(DEBUG, "Reference: %d\n", node->ref);
-	SMW_DBG_PRINTF(DEBUG, "Data: %p\n", node->data);
+	SMW_DBG_PRINTF(EXTRA, "Data: %p\n", node->data);
 	if (node->printer)
 		node->printer(node->data);
 }
@@ -28,7 +28,7 @@ void smw_utils_list_print(struct smw_utils_list *list)
 	if (SMW_DBG_LEVEL < SMW_DBG_LEVEL_DEBUG)
 		return;
 
-	SMW_DBG_PRINTF(DEBUG,
+	SMW_DBG_PRINTF(EXTRA,
 		       "Print list: %p,\n"
 		       "    first : %p,\n"
 		       "    last  : %p\n",

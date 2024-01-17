@@ -543,7 +543,7 @@ enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 	struct smw_keymgr_derive_key_args derive_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->key_descriptor_base ||
 	    !args->key_descriptor_derived) {

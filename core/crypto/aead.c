@@ -897,7 +897,7 @@ enum smw_status_code smw_aead(struct smw_aead_args *args)
 	struct smw_crypto_aead_args aead_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->init || !args->final || !args->final->data ||
 	    !args->final->data->input || !args->final->data->input_length ||
@@ -965,7 +965,7 @@ enum smw_status_code smw_aead_init(struct smw_aead_init_args *args)
 	struct smw_crypto_aead_args init_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->context)
 		goto end;
@@ -1006,7 +1006,7 @@ enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args)
 	struct smw_crypto_aead_args aead_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->context || !args->context->handle || !args->data ||
 	    !args->data_length)
@@ -1038,7 +1038,7 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args)
 	struct smw_crypto_aead_args aead_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->context || !args->context->handle || !args->input ||
 	    !args->input_length || (args->output && !args->output_length))
@@ -1077,7 +1077,7 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 	struct smw_crypto_aead_args aead_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->data || !args->data->context ||
 	    !args->data->context->handle ||

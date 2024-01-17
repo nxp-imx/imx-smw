@@ -52,7 +52,7 @@ smw_device_reprovision_prepare(struct smw_device_reprovision_args *args)
 	struct smw_devmgr_args repro_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args)
 		goto end;
@@ -86,7 +86,7 @@ smw_device_reprovision(struct smw_device_reprovision_args *args)
 	struct smw_devmgr_args repro_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args)
 		goto end;

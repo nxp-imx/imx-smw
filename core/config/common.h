@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __COMMON_H__
@@ -127,21 +127,6 @@ bool get_tag_prefix(char *tag, size_t length, const char *suffix);
  * none.
  */
 void skip_insignificant_chars(char **start, char *end);
-
-/**
- * read_unsigned_integer() - Read an integer.
- * @start: Address of the pointer to the current char.
- * @end: Pointer to the last char of the buffer being parsed.
- * @dest: Pointer where the unsigned integer is written.
- *
- * This function reads an unsigned integer from the current char
- * of the buffer being parsed. The pointer to the current char is moved
- * to the next non-numerical char. Insignificant chars are skipped if any.
- *
- * Return:
- * error code.
- */
-int read_unsigned_integer(char **start, char *end, unsigned int *dest);
 
 /**
  * read_range() - Read a range.

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -21,7 +21,7 @@ enum smw_status_code smw_cancel_operation(struct smw_op_context *context)
 	struct subsystem_func *subsystem_func = NULL;
 	struct smw_crypto_context_ops *ops = NULL;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!context || !context->handle)
 		goto end;
@@ -66,7 +66,7 @@ enum smw_status_code smw_copy_context(struct smw_op_context *dst,
 	struct subsystem_func *subsystem_func = NULL;
 	struct smw_crypto_context_ops *ops = NULL;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!src || !src->handle || !dst)
 		goto end;

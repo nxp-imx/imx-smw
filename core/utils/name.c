@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -30,6 +30,6 @@ int smw_utils_get_string_index(const char *name, const char *const array[],
 		}
 	}
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
 	return status;
 }

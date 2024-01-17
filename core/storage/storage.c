@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_storage.h"
@@ -499,7 +499,7 @@ enum smw_status_code smw_store_data(struct smw_store_data_args *args)
 	enum smw_object_persistence_id persistence_id =
 		SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->data_descriptor) {
 		status = SMW_STATUS_INVALID_PARAM;
@@ -563,7 +563,7 @@ enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args)
 	enum smw_object_persistence_id persistence_id =
 		SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->data_descriptor) {
 		status = SMW_STATUS_INVALID_PARAM;
@@ -624,7 +624,7 @@ enum smw_status_code smw_delete_data(struct smw_delete_data_args *args)
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	union smw_object_db_info info = { 0 };
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->data_descriptor) {
 		status = SMW_STATUS_INVALID_PARAM;

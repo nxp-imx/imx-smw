@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -25,8 +25,8 @@ void aead_common_print_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "Params:\n"
-		       "    mode_bitmap: %.8lX\n"
-		       "    op_bitmap: %.8lX\n",
+		       "\tmode_bitmap: %.8lX\n"
+		       "\top_bitmap: %.8lX\n",
 		       p->mode_bitmap, p->op_bitmap);
 
 	print_key_params(&p->key);

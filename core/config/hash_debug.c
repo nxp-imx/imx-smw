@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2024 NXP
  */
 
 #include "smw_status.h"
@@ -25,6 +25,6 @@ void hash_print_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "Params:\n"
-		       "    algo_bitmap: %.8lX\n",
+		       "\talgo_bitmap: %.8lX\n",
 		       p->algo_bitmap);
 }

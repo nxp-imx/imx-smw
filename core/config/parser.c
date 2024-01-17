@@ -71,7 +71,7 @@ static bool detect_tag(char **start, char *end, const char *tag)
 		SMW_DBG_PRINTF(INFO, "Tag: %s\n", tag);
 	}
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+	SMW_DBG_PRINTF(EXTRA, "%s returned %s\n", __func__,
 		       match ? "true" : "false");
 	return match;
 }
@@ -92,10 +92,10 @@ bool get_tag_prefix(char *tag, size_t length, const char *suffix)
 		/* Remove suffix from tag */
 		*(tag + length - suffix_length) = 0;
 
-		SMW_DBG_PRINTF(INFO, "Algo: %s\n", tag);
+		SMW_DBG_PRINTF(INFO, "Tag prefix: %s\n", tag);
 	}
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+	SMW_DBG_PRINTF(EXTRA, "%s returned %s\n", __func__,
 		       match ? "true" : "false");
 	return match;
 }
@@ -133,7 +133,7 @@ static unsigned int skip_comments(char **start, char *end)
 
 	*start = cur;
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned count: %d\n", __func__, count);
+	SMW_DBG_PRINTF(EXTRA, "%s returned count: %d\n", __func__, count);
 	return count;
 }
 
@@ -156,7 +156,7 @@ static unsigned int skip_whitespaces(char **start, char *end)
 
 	*start = cur;
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned count: %d\n", __func__, count);
+	SMW_DBG_PRINTF(EXTRA, "%s returned count: %d\n", __func__, count);
 	return count;
 }
 
@@ -228,7 +228,7 @@ static void skip_subsystem(char **start, char *end)
 	*start = cur;
 }
 
-int read_unsigned_integer(char **start, char *end, unsigned int *dest)
+static int read_unsigned_integer(char **start, char *end, unsigned int *dest)
 {
 	int status = SMW_STATUS_OK;
 
@@ -276,7 +276,7 @@ int read_unsigned_integer(char **start, char *end, unsigned int *dest)
 	*start = cur;
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -329,7 +329,7 @@ int read_range(char **start, char *end, struct range *range)
 	*start = cur;
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -365,8 +365,8 @@ static int read_string(char **start, char *end, char *dest, size_t max_len,
 end:
 	dest[length] = 0;
 
-	SMW_DBG_PRINTF(VERBOSE, "%s decoded %s\n", __func__, dest);
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s decoded %s\n", __func__, dest);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -404,7 +404,7 @@ int skip_param(char **start, char *end)
 	*start = cur;
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -445,7 +445,7 @@ int smw_config_read_names(char **start, char *end, unsigned long *bitmap,
 	*start = cur;
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -508,8 +508,8 @@ end:
 	if (return_status)
 		*return_status = status;
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned status: %d\n", __func__, status);
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+	SMW_DBG_PRINTF(EXTRA, "%s returned status: %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %s\n", __func__,
 		       skip ? "TRUE" : "FALSE");
 	return skip;
 }
@@ -602,8 +602,8 @@ end:
 	if (return_status)
 		*return_status = status;
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned status: %d\n", __func__, status);
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %s\n", __func__,
+	SMW_DBG_PRINTF(EXTRA, "%s returned status: %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %s\n", __func__,
 		       skip ? "TRUE" : "FALSE");
 	return skip;
 }
@@ -688,7 +688,7 @@ static int get_psa_default_subsystem(char **start, char *end)
 	*start = cur;
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -737,7 +737,7 @@ static int verify_version(char **start, char *end)
 	*start = cur;
 
 end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -805,6 +805,6 @@ end:
 		init_database(true);
 	}
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
 	return status;
 }

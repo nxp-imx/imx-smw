@@ -24,7 +24,7 @@ if(CODE_COVERAGE)
     endif()
 
     message(STATUS "Code Coverage enabled, force all traces ON")
-    set(VERBOSE 4)
+    set(VERBOSE 5)
 endif()
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
@@ -40,8 +40,8 @@ if(VERBOSE)
         add_definitions(-DENABLE_TRACE)
     endif()
 
-    if(${VERBOSE} GREATER 4)
-        set(VERBOSE 4)
+    if(${VERBOSE} GREATER 5)
+        set(VERBOSE 5)
     endif()
 
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")

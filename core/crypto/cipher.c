@@ -204,7 +204,7 @@ enum smw_status_code smw_cipher(struct smw_cipher_args *args)
 	struct smw_crypto_cipher_args cipher_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->data.input || !args->data.input_length ||
 	    (args->data.output && !args->data.output_length))
@@ -256,7 +256,7 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args)
 	struct smw_crypto_cipher_args init_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->context)
 		goto end;
@@ -294,7 +294,7 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 	struct smw_crypto_cipher_args update_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->context || !args->context->handle || !args->input ||
 	    !args->input_length || (args->output && !args->output_length))
@@ -333,7 +333,7 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 	struct smw_crypto_cipher_args final_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->context || !args->context->handle ||
 	    (args->input && !args->input_length) ||

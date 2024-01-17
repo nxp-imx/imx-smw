@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __DEBUG_H__
@@ -17,7 +17,8 @@
 #define SMW_DBG_LEVEL_ERROR   1 /* Failures of which the user must be aware */
 #define SMW_DBG_LEVEL_INFO    2 /* Traces which could interest the user */
 #define SMW_DBG_LEVEL_DEBUG   3 /* First level of debugging information */
-#define SMW_DBG_LEVEL_VERBOSE 4 /* Maximum level of debugging information */
+#define SMW_DBG_LEVEL_VERBOSE 4 /* Second level of debugging information */
+#define SMW_DBG_LEVEL_EXTRA   5 /* Maximum level of debugging information  */
 
 #if defined(ENABLE_TRACE)
 
@@ -44,9 +45,15 @@ static inline void dbg_printf(const char *fmt, ...)
 
 #define SMW_FFLUSH fflush
 
-#define SMW_DBG_TRACE_FUNCTION_CALL                                            \
+#define SMW_DBG_TRACE_API_CALL                                                 \
 	do {                                                                   \
 		if (SMW_DBG_LEVEL_VERBOSE <= SMW_DBG_LEVEL)                    \
+			SMW_PRINTF("Executing %s\n", __func__);                \
+	} while (0)
+
+#define SMW_DBG_TRACE_FUNCTION_CALL                                            \
+	do {                                                                   \
+		if (SMW_DBG_LEVEL_EXTRA <= SMW_DBG_LEVEL)                      \
 			SMW_PRINTF("Executing %s\n", __func__);                \
 	} while (0)
 
@@ -82,6 +89,7 @@ static inline void dbg_hex_dump(const unsigned char *addr, unsigned int size,
 
 #define SMW_PRINTF(...)
 #define SMW_FFLUSH(...)
+#define SMW_DBG_TRACE_API_CALL
 #define SMW_DBG_TRACE_FUNCTION_CALL
 #define SMW_DBG_PRINTF(level, ...)
 #define SMW_DBG_PRINTF_COND(level, cond, ...)

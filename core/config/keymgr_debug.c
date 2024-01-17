@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2024 NXP
  */
 
 #include "smw_status.h"
@@ -25,7 +25,7 @@ void print_key_operation_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "Params:\n"
-		       "    op_bitmap: %.8lX\n",
+		       "\top_bitmap: %.8lX\n",
 		       p->op_bitmap);
 
 	print_key_params(&p->key);

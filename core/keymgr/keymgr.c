@@ -1727,7 +1727,7 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	unsigned int new_id = INVALID_KEY_ID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->key_descriptor)
 		goto end;
@@ -1785,7 +1785,7 @@ enum smw_status_code smw_update_key(struct smw_update_key_args *args)
 	struct smw_keymgr_update_key_args update_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args) {
 		status = SMW_STATUS_INVALID_PARAM;
@@ -1814,7 +1814,7 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	unsigned int new_id = INVALID_KEY_ID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->key_descriptor ||
 	    !args->key_descriptor->type_name ||
@@ -1886,7 +1886,7 @@ enum smw_status_code smw_export_key(struct smw_export_key_args *args)
 	struct smw_keymgr_descriptor *key_desc = NULL;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->key_descriptor || !args->key_descriptor->id) {
 		status = SMW_STATUS_INVALID_PARAM;
@@ -1929,7 +1929,7 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	struct smw_keymgr_descriptor *key_desc = NULL;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->key_descriptor) {
 		status = SMW_STATUS_INVALID_PARAM;
@@ -1973,7 +1973,7 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!descriptor)
 		goto end;
@@ -2033,7 +2033,7 @@ smw_get_key_type_name(struct smw_key_descriptor *descriptor)
 	struct smw_keymgr_identifier key_identifier = { 0 };
 	const char *name = NULL;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	status = smw_keymgr_db_get_info(descriptor->id, &key_identifier);
 	if (status != SMW_STATUS_OK)
@@ -2058,7 +2058,7 @@ smw_get_security_size(struct smw_key_descriptor *descriptor)
 
 	struct smw_keymgr_identifier key_identifier = { 0 };
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	status = smw_keymgr_db_get_info(descriptor->id, &key_identifier);
 	if (status != SMW_STATUS_OK)
@@ -2103,7 +2103,7 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	bool key_not_present = false;
 	unsigned int index = 0;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args)
 		goto end;
@@ -2185,7 +2185,7 @@ smw_commit_key_storage(struct smw_commit_key_storage_args *args)
 	struct smw_keymgr_commit_key_storage_args commit_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args)
 		goto end;
@@ -2217,7 +2217,7 @@ enum smw_status_code smw_key_attestation(struct smw_key_attestation_args *args)
 	struct smw_keymgr_attest_args attest_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->key_descriptor || !args->attest_key_descriptor ||
 	    !args->key_descriptor->id || !args->attest_key_descriptor->id ||

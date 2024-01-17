@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_device.h"
@@ -90,7 +90,7 @@ enum smw_status_code smw_device_get_uuid(struct smw_device_uuid_args *args)
 	struct smw_devmgr_args uuid_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args)
 		goto end;

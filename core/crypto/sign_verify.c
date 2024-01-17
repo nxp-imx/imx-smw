@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_status.h"
@@ -373,10 +373,14 @@ end:
 
 enum smw_status_code smw_sign(struct smw_sign_verify_args *args)
 {
+	SMW_DBG_TRACE_API_CALL;
+
 	return smw_sign_verify(OPERATION_ID_SIGN, args);
 }
 
 enum smw_status_code smw_verify(struct smw_sign_verify_args *args)
 {
+	SMW_DBG_TRACE_API_CALL;
+
 	return smw_sign_verify(OPERATION_ID_VERIFY, args);
 }

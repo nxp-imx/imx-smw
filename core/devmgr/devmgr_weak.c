@@ -37,7 +37,7 @@ smw_device_attestation(struct smw_device_attestation_args *args)
 {
 	(void)args;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
@@ -47,7 +47,7 @@ smw_device_get_uuid(struct smw_device_uuid_args *args)
 {
 	(void)args;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
@@ -57,7 +57,7 @@ smw_device_get_lifecycle(struct smw_device_lifecycle_args *args)
 {
 	(void)args;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
@@ -67,7 +67,7 @@ smw_device_set_lifecycle(struct smw_device_lifecycle_args *args)
 {
 	(void)args;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
@@ -77,7 +77,7 @@ smw_device_reprovision_prepare(struct smw_device_reprovision_args *args)
 {
 	(void)args;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
@@ -87,7 +87,7 @@ smw_device_reprovision(struct smw_device_reprovision_args *args)
 {
 	(void)args;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }

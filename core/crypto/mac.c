@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_crypto.h"
@@ -153,10 +153,14 @@ void smw_mac_set_mac_length(struct smw_crypto_mac_args *args,
 
 enum smw_status_code smw_mac(struct smw_mac_args *args)
 {
+	SMW_DBG_TRACE_API_CALL;
+
 	return mac_operate(args, SMW_CONFIG_MAC_OP_ID_COMPUTE);
 }
 
 enum smw_status_code smw_mac_verify(struct smw_mac_args *args)
 {
+	SMW_DBG_TRACE_API_CALL;
+
 	return mac_operate(args, SMW_CONFIG_MAC_OP_ID_VERIFY);
 }

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_device.h"
@@ -76,7 +76,7 @@ smw_device_set_lifecycle(struct smw_device_lifecycle_args *args)
 	struct smw_devmgr_lifecycle_args lc_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args)
 		goto end;
@@ -113,7 +113,7 @@ smw_device_get_lifecycle(struct smw_device_lifecycle_args *args)
 	struct smw_devmgr_lifecycle_args lc_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args)
 		goto end;

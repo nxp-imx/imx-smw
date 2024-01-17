@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_status.h"
@@ -18,15 +18,30 @@
 void print_key_params(struct op_key *key)
 {
 	unsigned int i = 0;
+	char buf[512] = { 0 };
+	unsigned int nb_char = 0;
+	int tmp_char = 0;
+
+	for (; i < ARRAY_SIZE(key->size_range); i++) {
+		tmp_char = snprintf(&buf[nb_char], sizeof(buf) - nb_char,
+				    "\t\t(%u, %u)\n", key->size_range[i].min,
+				    key->size_range[i].max);
+		if (tmp_char < 0)
+			break;
+
+		nb_char += tmp_char;
+
+		if (sizeof(buf) <= nb_char)
+			break;
+	}
+
+	buf[sizeof(buf) - 1] = '\0';
 
 	SMW_DBG_PRINTF(DEBUG,
-		       "    key_type_bitmap: %.8lX\n"
-		       "    key_size_range:\n",
-		       key->type_bitmap);
-
-	for (; i < ARRAY_SIZE(key->size_range); i++)
-		SMW_DBG_PRINTF(DEBUG, "        (%u, %u)\n",
-			       key->size_range[i].min, key->size_range[i].max);
+		       "Key params:\n"
+		       "\tkey_type_bitmap: %.8lX\n"
+		       "\tkey_size_range:\n%s",
+		       key->type_bitmap, buf);
 }
 
 void print_database(void)
@@ -59,8 +74,7 @@ void print_database(void)
 
 	SMW_DBG_PRINTF(INFO, "Security operations:\n");
 	for (i = 0; i < OPERATION_ID_NB; i++) {
-		SMW_DBG_PRINTF(INFO, "   operation: %s\n",
-			       smw_config_get_operation_name(i));
+		SMW_DBG_PRINTF(INFO, "%s\n", smw_config_get_operation_name(i));
 
 		operation = &database->operation[i];
 		smw_utils_list_print(&operation->subsystems_list);

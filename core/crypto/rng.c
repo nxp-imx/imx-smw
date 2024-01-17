@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -66,7 +66,7 @@ enum smw_status_code smw_rng(struct smw_rng_args *args)
 	struct smw_crypto_rng_args rng_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->output || !args->output_length) {
 		status = SMW_STATUS_INVALID_PARAM;

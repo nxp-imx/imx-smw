@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdint.h>
@@ -385,7 +385,7 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 		return ret;
 
 	/* Read 'id' parameter if defined */
-	ret = util_read_json_type(&desc->id, ID_OBJ, t_int, data->okey_params);
+	ret = util_read_json_type(&desc->id, ID_OBJ, t_uint, data->okey_params);
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 

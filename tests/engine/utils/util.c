@@ -444,6 +444,7 @@ static const unsigned int t_data_2_json_type[] = {
 	[t_boolean] = BIT(json_type_boolean),
 	[t_int8] = BIT(json_type_int),
 	[t_int] = BIT(json_type_int),
+	[t_uint] = BIT(json_type_int),
 	[t_string] = BIT(json_type_string),
 	[t_object] = BIT(json_type_object),
 	[t_buffer] = BIT(json_type_int) | BIT(json_type_string) |
@@ -507,6 +508,12 @@ int util_read_json_type(void *value, const char *key, enum t_data_type type,
 
 		case t_int:
 			*((int *)value) = json_object_get_int(obj);
+			ret = ERR_CODE(PASSED);
+			break;
+
+		case t_uint:
+			*((unsigned int *)value) =
+				json_object_get_int64(obj) & UINT32_MAX;
 			ret = ERR_CODE(PASSED);
 			break;
 

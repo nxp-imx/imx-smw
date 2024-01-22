@@ -204,6 +204,7 @@ enum t_data_type {
 	t_boolean = 0,
 	t_int8,
 	t_int,
+	t_uint,
 	t_string,
 	t_object,
 	t_buffer,

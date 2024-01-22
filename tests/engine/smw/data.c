@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdint.h>
@@ -80,7 +80,7 @@ static int read_descriptor(struct llist *data_list,
 		return ret;
 	}
 
-	ret = util_read_json_type(&data_descriptor->identifier, ID_OBJ, t_int,
+	ret = util_read_json_type(&data_descriptor->identifier, ID_OBJ, t_uint,
 				  info->odata_params);
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;

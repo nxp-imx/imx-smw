@@ -76,6 +76,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add test to validate ELE RSA key management.
 * Add storage reprovisioning.
 * Add skipped test management.
+* Fix test engine to read data/key ID >= 0x80000000 from JSON definition.
 
 #### PKCS#11 Library - _version 3.0_
 

@@ -637,9 +637,10 @@ documentation generation.
 	<li>1 &rarr; ERROR, error traces only</li>
 	<li>2 &rarr; INFO, error and information traces</li>
 	<li>3 &rarr; DEBUG, all above + debug traces</li>
-	<li>4 &rarr; VERBOSE, all traces</li>
+	<li>4 &rarr; VERBOSE, all above + verbose traces</li>
+	<li>5 &rarr; EXTRA, all traces</li>
 	</ul>
-	If CMAKE_BUILD_TYPE is set to "Debug", max trace level supported is 4, otherwise is 2.
+	If CMAKE_BUILD_TYPE is set to "Debug", max trace level supported is 5, otherwise is 2.
 	Any value greater than the max trace level is interpreted as the max trace level.<br>
 	By default setting is no trace.
 	</td>

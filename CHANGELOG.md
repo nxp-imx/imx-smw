@@ -48,8 +48,10 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support of key attestation.
 * Add dedicated status codes for cases where the argument string name provided by the user or the parameter set in the user configuration file is not recognized by SMW.
 * Skip reading of tag `OP_TYPE_VALUES` for any key related security operation other than `DERIVE_KEY`.
-* Change the `struct smw_keypair_rsa` to have first fields common to the `struct smw_keypair_gen`
+* Change the `struct smw_keypair_rsa` to have first fields common to the `struct smw_keypair_gen`.
 * Add support of storage re-provisoning.
+* Add trace level EXTRA to lighten trace level DEBUG.
+* Add prefix `[SMW]` to SMW traces.
 
 ##### 2. Subsystems
 
@@ -65,6 +67,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add support of CFB mode.
 
+##### 4. OSAL
+
+* Add trace level EXTRA to lighten trace level DEBUG.
+* Add prefix `[OSAL]` to OSAL traces.
+
 #### SMW Tests - _version 3.0_
 
 * Change the TA installation default path to be `/usr/lib`
@@ -77,8 +84,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add storage reprovisioning.
 * Add skipped test management.
 * Fix test engine to read data/key ID >= 0x80000000 from JSON definition.
+* Add prefix `[TEST]` to test traces.
 
 #### PKCS#11 Library - _version 3.0_
+
+* Add prefix `[PKCS11]` to PKCS#11 traces.
 
 #### PKCS#11 Tests - _version 3.0_
 
@@ -210,13 +220,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Library - _version 2.4_
 
 * Fix coverity and ensure all variables are initialized.
-
 * Implement encrypt/decrypt (single-part and multi-part) PKCS#11 APIs.
 
 #### PKCS#11 Tests - _version 2.4_
 
 * Fix coverity and ensure all variables are initialized.
-
 * Validation of encrypt/decrypt (single-part and multi-part) PKCS#11 APIs.
 
 ---
@@ -289,6 +297,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### SMW Library - _version 2.2_
 ##### 1. Subsystem
+
 * Add EdgeLock Enclave (ELE) subsystem.
 
 ##### 2. ARM PSA APIs
@@ -378,7 +387,6 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * All PSA APIs not supported return an error.
 
-
 #### SMW Tests - _version 2.0_
 
 * Add subsystems information (TA UUID, key storage) in the test definition file.
@@ -438,10 +446,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TLS 1.2 Key agreement
 
 #### SMW Tests - _version 1.0_
+
 * Validation of all SMW's APIs
 * Simple application with single thread
 
 #### PKCS#11 Library - _version 1.0_
+
 * Token/Session
 * Key Management
 * Random Number
@@ -449,4 +459,5 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Signing/Verifying message
 
 #### PKCS#11 Tests - _version 1.0_
+
 * Validation of all implemented PKCS#11 APIs listed above

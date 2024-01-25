@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <time.h>
@@ -520,7 +520,7 @@ static int load(void)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (smw_utils_mutex_init(&hsm_ctx.mutex)) {
+	if (!hsm_ctx.mutex && smw_utils_mutex_init(&hsm_ctx.mutex)) {
 		status = SMW_STATUS_MUTEX_INIT_FAILURE;
 		goto end;
 	}

@@ -177,7 +177,7 @@ enum smw_status_code
 smw_device_get_lifecycle(struct smw_device_lifecycle_args *args);
 
 /**
- * smw_device_reprovisioning_prepare() - Fill the device reprovisioning message
+ * smw_device_reprovision_prepare() - Fill the device reprovisioning message
  * @args: Pointer to the structure that contains the reprovisioning arguments
  *
  * This function is used to fill the reprovisioning message.
@@ -196,7 +196,7 @@ enum smw_status_code
 smw_device_reprovision_prepare(struct smw_device_reprovision_args *args);
 
 /**
- * smw_device_reprovisioning() - Request device storage reprovisioning
+ * smw_device_reprovision() - Request device storage reprovisioning
  * @args: Pointer to the structure that contains the reprovisioning arguments
  *
  * This function is used to request the subsystem to enable the storage

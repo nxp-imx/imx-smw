@@ -18,6 +18,9 @@ The objectives of this library are:
 ## User guide
 Project User guide can be found in the [User Guide](./Documentations/user_guide/user_guide.md)
 
+## User APIs documentation
+User API documentation is available [here](./Documentations/API/SecurityMiddleware_API.pdf)
+
 ## List of changes
 The list of changes can be found in the [ChangeLog](./CHANGELOG.md) file.
 

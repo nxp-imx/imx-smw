@@ -5,6 +5,8 @@ if(ENABLE_STORAGE_MODULE)
    add_operation(STORAGE_STORE)
    add_operation(STORAGE_RETRIEVE)
    add_operation(STORAGE_DELETE)
+   add_operation_implicit(STORAGE_IS_DATA_PRESENT)
+   add_operation_implicit(STORAGE_GET_DATA_INFO)
 endif()
 
 add_library(storage OBJECT "")

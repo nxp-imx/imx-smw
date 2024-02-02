@@ -177,6 +177,25 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 				enum subsystem_id *subsystem_id);
 
 /**
+ * smw_config_is_operations_supported() - Check if subsystem support at least
+ *                                        one operation
+ * @op_ids: Array of Security Operation IDs.
+ * @nb_op_ids: Number of @op_ids.
+ * @subsystem_id: Secure Subsystem ID to check.
+ *
+ * This function checks if one of the operations given in the @op_ids is
+ * supported.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - One of the operation is supported
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED - None of the operation is supported
+ * other error code.
+ */
+int smw_config_is_operations_supported(enum operation_id op_ids[],
+				       unsigned int nb_op_ids,
+				       enum subsystem_id subsystem_id);
+
+/**
  * smw_config_load_subsystem() - Load a Secure Subsystem.
  * @id: Secure Subsystem ID.
  *

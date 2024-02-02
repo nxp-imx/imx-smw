@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #ifndef __STORAGE_H__
@@ -97,6 +97,15 @@ struct smw_storage_retrieve_data_args {
  * @data_descriptor: Data descriptor
  */
 struct smw_storage_delete_data_args {
+	struct smw_storage_data_descriptor data_descriptor;
+};
+
+/**
+ * struct smw_storage_data_info_args - Internal data information arguments
+ *                                     structure
+ * @data_descriptor: Data descriptor
+ */
+struct smw_storage_data_info_args {
 	struct smw_storage_data_descriptor data_descriptor;
 };
 

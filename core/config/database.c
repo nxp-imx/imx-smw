@@ -137,6 +137,42 @@ static void init_psa_config(struct smw_config_psa_config *psa)
 	psa->alt = false;
 }
 
+static int find_subsystem_per_operation(enum operation_id operation_id,
+					unsigned int subsystem_id,
+					struct node **node)
+{
+	int status = SMW_STATUS_INVALID_CONFIG_DATABASE;
+
+	struct database *database = NULL;
+	unsigned int index = operation_id;
+
+	struct smw_utils_list *list = NULL;
+	unsigned int *ref = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (subsystem_id != SUBSYSTEM_ID_INVALID)
+		ref = &subsystem_id;
+
+	if (!*node) {
+		database = get_database();
+
+		if (!database)
+			goto end;
+
+		list = &database->operation[index].subsystems_list;
+
+		*node = smw_utils_list_find_first(list, ref);
+	} else {
+		*node = smw_utils_list_find_next(*node, ref);
+	}
+
+	status = SMW_STATUS_OK;
+
+end:
+	return status;
+}
+
 void init_database(bool reset)
 {
 	struct database *database = NULL;
@@ -337,17 +373,13 @@ static enum load_method_id get_subsystem_load_method_id(enum subsystem_id id)
 
 void smw_config_notify_subsystem_failure(enum subsystem_id id)
 {
-	// coverity[assigned_value]
-	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
-
 	unsigned int index = id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SUBSYSTEM_ID_ASSERT(id);
 
-	status_mutex = config_db_mutex_lock();
-	if (status_mutex != SMW_STATUS_OK)
+	if (config_db_mutex_lock() != SMW_STATUS_OK)
 		return;
 
 	if (get_subsystem_state(id) != SUBSYSTEM_STATE_UNLOADED)
@@ -482,25 +514,14 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 {
 	int status = SMW_STATUS_OK;
 
-	// coverity[assigned_value]
-	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
-
-	struct database *database = NULL;
+	int status_mutex = SMW_STATUS_OK;
 	struct operation_func *operation_func = NULL;
 	int (*check_subsystem_caps)(void *args, void *params) = NULL;
-	unsigned int index = operation_id;
 
-	struct smw_utils_list *list = NULL;
-	unsigned int *ref = NULL;
 	struct node *node = NULL;
-	unsigned int node_ref = 0;
+	unsigned int ref_id = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	database = get_database();
-
-	if (!database)
-		return SMW_STATUS_INVALID_CONFIG_DATABASE;
 
 	SMW_DBG_ASSERT(subsystem_id);
 
@@ -510,37 +531,80 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 	check_subsystem_caps = operation_func->check_subsystem_caps;
 	SMW_DBG_ASSERT(check_subsystem_caps);
 
-	list = &database->operation[index].subsystems_list;
-
-	if (*subsystem_id != SUBSYSTEM_ID_INVALID)
-		ref = subsystem_id;
+	ref_id = *subsystem_id;
 
 	status_mutex = config_db_mutex_lock();
 	if (status_mutex != SMW_STATUS_OK)
 		goto end;
 
-	status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	status = find_subsystem_per_operation(operation_id, ref_id, &node);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
-	node = smw_utils_list_find_first(list, ref);
 	while (node) {
 		status = check_subsystem_caps(args,
 					      smw_utils_list_get_data(node));
 
 		if (status == SMW_STATUS_OK) {
-			node_ref = smw_utils_list_get_ref(node);
-			if (node_ref < SUBSYSTEM_ID_NB)
-				*subsystem_id = node_ref;
+			ref_id = smw_utils_list_get_ref(node);
+			if (ref_id < SUBSYSTEM_ID_NB)
+				*subsystem_id = ref_id;
 			break;
 		}
 
-		node = smw_utils_list_find_next(node, ref);
+		status = find_subsystem_per_operation(operation_id, ref_id,
+						      &node);
+		if (status != SMW_STATUS_OK)
+			break;
 	}
 
 end:
-	if (status_mutex == SMW_STATUS_OK)
+	if (status_mutex == SMW_STATUS_OK) {
 		status_mutex = config_db_mutex_unlock();
+		if (status == SMW_STATUS_OK)
+			status = status_mutex;
+	}
+
+	if (status == SMW_STATUS_OK && !node)
+		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	return status;
+}
+
+int smw_config_is_operations_supported(enum operation_id op_ids[],
+				       unsigned int nb_op_ids,
+				       enum subsystem_id subsystem_id)
+{
+	int status = SMW_STATUS_OK;
+
+	int status_mutex = SMW_STATUS_OK;
+	unsigned int index = 0;
+	struct node *node = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SUBSYSTEM_ID_ASSERT(subsystem_id);
+
+	if (!is_subsystem_configured(subsystem_id))
+		return SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
+
+	status_mutex = config_db_mutex_lock();
+	if (status_mutex != SMW_STATUS_OK)
+		return status_mutex;
+
+	for (; index < nb_op_ids && !node; index++) {
+		status = find_subsystem_per_operation(op_ids[index],
+						      subsystem_id, &node);
+		if (status != SMW_STATUS_OK)
+			break;
+	}
+
+	status_mutex = config_db_mutex_unlock();
 	if (status == SMW_STATUS_OK)
 		status = status_mutex;
+
+	if (status == SMW_STATUS_OK && !node)
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	return status;
 }
@@ -550,9 +614,7 @@ int get_operation_params(enum operation_id operation_id,
 {
 	int status = SMW_STATUS_OK;
 
-	// coverity[assigned_value]
-	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
-
+	int status_mutex = SMW_STATUS_OK;
 	struct database *database = NULL;
 	struct operation_func *operation_func = NULL;
 	unsigned int index = operation_id;
@@ -713,9 +775,7 @@ int smw_config_load_subsystem(enum subsystem_id id)
 {
 	int status = SMW_STATUS_OK;
 
-	// coverity[assigned_value]
-	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
-
+	int status_mutex = SMW_STATUS_OK;
 	struct subsystem_func *func = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -774,9 +834,7 @@ int smw_config_unload_subsystem(enum subsystem_id id)
 {
 	int status = SMW_STATUS_OK;
 
-	// coverity[assigned_value]
-	int status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
-
+	int status_mutex = SMW_STATUS_OK;
 	struct subsystem_func *func = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;

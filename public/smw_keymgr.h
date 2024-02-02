@@ -334,7 +334,7 @@ struct smw_get_key_attributes_args {
 	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_descriptor;
 	smw_keymgr_privacy_t key_privacy;
-	smw_keymgr_persistence_t persistence;
+	smw_object_persistence_t persistence;
 	unsigned char *policy_list;
 	unsigned int policy_list_length;
 	unsigned char *lifecycle_list;

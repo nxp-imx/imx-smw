@@ -138,6 +138,38 @@ struct smw_delete_data_args {
 };
 
 /**
+ * struct smw_data_info_args - Data information arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @data_descriptor: Data descriptor. See &struct smw_data_descriptor
+ * @persistence: Data persistence.
+ * @lifecycle_list: Data lifecycle list.
+ * @lifecycle_list_length: Length of the @lifecycle_list.
+ *
+ * This function gets the data attributes retrieved for the subsystem owning
+ * the given data identifier.
+ *
+ * If data is present in the internal object database, the field @subsystem_name
+ * is not used.
+ * If data is not present in the internal object database, and the
+ * field @subsystem_name is defined, the data information are retrieved from
+ * the subsystem.
+ * If data is not present in the internal object database, and the
+ * field @subsystem_name is NULL, query all subsystems to get the data
+ * information until one subsystem replies.
+ *
+ * If some data attributes are not supported, the output values are empty.
+ */
+struct smw_data_info_args {
+	unsigned char version;
+	smw_subsystem_t subsystem_name;
+	struct smw_data_descriptor *data_descriptor;
+	smw_object_persistence_t persistence;
+	unsigned char *lifecycle_list;
+	unsigned int lifecycle_list_length;
+};
+
+/**
  * smw_store_data() - Store data.
  * @args: Pointer to the structure that contains the store data arguments.
  *
@@ -172,5 +204,18 @@ enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args);
  *	- Common return codes
  */
 enum smw_status_code smw_delete_data(struct smw_delete_data_args *args);
+
+/**
+ * smw_get_data_info() - Get data information
+ * @args: Pointer to the data information arguments.
+ *
+ * Returns the data information extracts from the subsystem where data is
+ * stored combined with the internal database if data identifier is present.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_get_data_info(struct smw_data_info_args *args);
 
 #endif /* __SMW_STORAGE_H__ */

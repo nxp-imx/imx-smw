@@ -402,6 +402,8 @@ static int execute_storage_cmd(char *cmd, struct subtest_data *subtest)
 		return storage_retrieve(subtest);
 	else if (!strcmp(cmd, STORAGE_DELETE))
 		return storage_delete(subtest);
+	else if (!strcmp(cmd, STORAGE_GET_DATA_INFO))
+		return storage_get_data_info(subtest);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

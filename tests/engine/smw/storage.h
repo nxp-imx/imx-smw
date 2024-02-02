@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 #ifndef __STORAGE_H__
 #define __STORAGE_H__
@@ -43,5 +43,17 @@ int storage_retrieve(struct subtest_data *subtest);
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
 int storage_delete(struct subtest_data *subtest);
+
+/**
+ * storage_get_data_info() - Get data information
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ */
+int storage_get_data_info(struct subtest_data *subtest);
 
 #endif /* __STORAGE_H__ */

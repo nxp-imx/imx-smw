@@ -1,0 +1,129 @@
+{
+	"keys": {
+		"encrypt key": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"encrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				],
+				"decrypt": [
+					[
+						"ECB_NO_PADDING"
+					]
+				]
+			}
+		},
+		"sign key": {
+			"type": "AES",
+			"security_size": 256,
+			"policy": {
+				"sign_message": [
+					[
+						"CMAC"
+					]
+				],
+				"verify_message": [
+					[
+						"CMAC"
+					]
+				]
+			}
+		}
+	},
+	"data_list": {
+		"data 1": {
+			"id": 21,
+			"data": "ABCDEF"
+		},
+		"data 2": {
+			"id": 22,
+			"data": "FEDCBA",
+			"attributes_list": [
+				["PERSISTENT"]
+			]
+		},
+		"data 3": {
+			"id": 23,
+			"data": "0102030405060708090A0B0C0D0E0FCC",
+			"attributes_list": [
+				["PERSISTENT"],
+			],
+			"lifecycle": [
+				["OPEN"]
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "STORAGE_STORE",
+		"subsystem": "ELE",
+		"data_name": "data 1"
+	},
+	"subtest 2": {
+		"command": "STORAGE_GET_DATA_INFO",
+		"data_name": "data 1",
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "STORAGE_STORE",
+		"subsystem": "ELE",
+		"data_name": "data 2"
+	},
+	"subtest 4": {
+		"command": "STORAGE_GET_DATA_INFO",
+		"data_name": "data 2",
+		"depends": 3
+	},
+	"subtest 5": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 1",
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 2",
+		"depends": 3
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "encrypt key"
+	},
+	"subtest 8": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "sign key"
+	},
+	"subtest 9": {
+		"command": "STORAGE_STORE",
+		"subsystem": "ELE",
+		"data_name": "data 3",
+		"encrypt_key_name": "encrypt key",
+		"mode": "ECB",
+		"sign_key_name": "sign key",
+		"algo": "CMAC",
+		"depends": [7, 8]
+	},
+	"subtest 10": {
+		"command": "STORAGE_GET_DATA_INFO",
+		"data_name": "data 3",
+		"depends": 9
+	},
+	"subtest 11": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 3",
+		"depends": 9
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "encrypt key",
+		"depends": 7
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "sign key",
+		"depends": 8
+	}
+}

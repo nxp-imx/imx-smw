@@ -103,4 +103,28 @@ int util_tlv_check_key_policy(struct subtest_data *subtest,
 int util_tlv_check_lifecycle(const unsigned char *lifecyle,
 			     unsigned int lifecycle_len);
 
+/**
+ * util_tlv_cmp_data_attrs() - Compare data attributes
+ * @ref_attr: Reference data attributes list
+ * @ref_attr_len: Length of the @ref_attr list
+ * @attr: Retrieved data attributes list
+ * @attr_len: Length of the @attr list
+ * @persistence: Retrieved persistence name
+ * @lc_attr: Retrieved lifecycle list
+ * @lc_attr_len: Length of @lc_attr
+ *
+ * Compare the reference attributes list with retrieved attributes.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -INTERNAL                - Internal error.
+ * -INTERNAL_OUT_OF_MEMORY  - Allocation error.
+ * -FAILED                  - Failure.
+ */
+int util_tlv_cmp_data_attrs(unsigned char *ref_attr, unsigned int ref_attr_len,
+			    unsigned char *attr, unsigned int attr_len,
+			    const char *persistence, unsigned char *lc_attr,
+			    unsigned int lc_attr_len);
+
 #endif /* __UTIL_TLV_H__ */

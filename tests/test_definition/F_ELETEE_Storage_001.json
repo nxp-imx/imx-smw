@@ -1,0 +1,63 @@
+{
+	"data_list": {
+		"data 1": {
+			"id": 21,
+			"data": "FOOD",
+			"attributes_list": [
+				["PERSISTENT"]
+			]
+		},
+		"data 2": {
+			"id": 22,
+			"data": "CAFE",
+			"attributes_list": [
+				["READ_ONLY"],
+				["PERSISTENT"]
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "STORAGE_STORE",
+		"subsystem": "TEE",
+		"data_name": "data 1"
+	},
+	"subtest 2": {
+		"command": "STORAGE_STORE",
+		"subsystem": "ELE",
+		"data_name": "data 2"
+	},
+	"subtest 3": {
+		"command": "STORAGE_RETRIEVE",
+		"data_name": "data 1",
+		"subsystem_exp": "TEE",
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "STORAGE_RETRIEVE",
+		"data_name": "data 2",
+		"subsystem_exp": "ELE",
+		"depends": 2
+	},
+	"subtest 5": {
+		"command": "STORAGE_GET_DATA_INFO",
+		"data_name": "data 1",
+		"subsystem_exp": "TEE",
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "STORAGE_GET_DATA_INFO",
+		"data_name": "data 2",
+		"subsystem_exp": "ELE",
+		"depends": 2
+	},
+	"subtest 7": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 1",
+		"depends": 1
+	},
+	"subtest 8": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 2",
+		"depends": 2
+	}
+}

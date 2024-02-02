@@ -71,6 +71,23 @@
 		"subsystem": "DEFAULT",
 		"data_name": "data 5",
 		"result": "SMW_STATUS_INVALID_LIFECYCLE"
+	},
+	"subtest 9": { // Data descriptor NULL
+		"command": "STORAGE_GET_DATA_INFO",
+		"subsystem": "DEFAULT",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": { // Data ID missing
+		"command": "STORAGE_GET_DATA_INFO",
+		"subsystem": "DEFAULT",
+		"data_name": "data 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": { // Data buffer is defined
+		"command": "STORAGE_GET_DATA_INFO",
+		"subsystem": "DEFAULT",
+		"data_name": "data 3",
+		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }
 

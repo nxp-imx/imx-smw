@@ -1,12 +1,12 @@
 {
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"context_id": 0
 	},
 	"subtest 2": {
 		"command": "OP_CONTEXT_ALLOCATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"context_id": 1
 	},
 	"subtest 3": {
@@ -24,20 +24,20 @@
 	},
 	"subtest 4": {
 		"command": "OP_CONTEXT_CANCEL",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"context_id": 0,
 		"depends": 1
 	},
 	"subtest 5": { // Context is NULL
 		"command": "OP_CONTEXT_CANCEL",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"context_id": 0,
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 6": {
 		"command": "OP_CONTEXT_CANCEL",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"context_id": 1,
 		"depends": 2
 	}

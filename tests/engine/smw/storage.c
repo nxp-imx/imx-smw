@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -10,6 +10,7 @@
 
 #include "types.h"
 #include "util.h"
+#include "util_tlv.h"
 #include "data.h"
 #include "key.h"
 
@@ -284,6 +285,72 @@ int storage_delete(struct subtest_data *subtest)
 
 exit:
 	free_data(&data_descriptor);
+
+	return res;
+}
+
+int storage_get_data_info(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(BAD_ARGS);
+
+	struct smw_data_info_args args = { 0 };
+	struct smw_data_descriptor data_ref = { 0 };
+	struct smw_data_descriptor data_test = { 0 };
+	const char *data_name = NULL;
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	args.version = subtest->version;
+
+	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
+		args.subsystem_name = NULL;
+	else
+		args.subsystem_name = subtest->subsystem;
+
+	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res == ERR_CODE(PASSED)) {
+		res = data_read_descriptor(list_data(subtest), &data_ref,
+					   data_name);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+
+		if (is_api_test(subtest)) {
+			data_test.data = data_ref.data;
+			data_test.length = data_ref.length;
+
+			data_ref.data = NULL;
+			data_ref.length = 0;
+		}
+
+		data_test.identifier = data_ref.identifier;
+
+		args.data_descriptor = &data_test;
+	} else if (res != ERR_CODE(VALUE_NOTFOUND)) {
+		goto exit;
+	}
+
+	subtest->smw_status = smw_get_data_info(&args);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		res = ERR_CODE(API_STATUS_NOK);
+	else
+		res = util_tlv_cmp_data_attrs(data_ref.attributes_list,
+					      data_ref.attributes_list_length,
+					      data_test.attributes_list,
+					      data_test.attributes_list_length,
+					      args.persistence,
+					      args.lifecycle_list,
+					      args.lifecycle_list_length);
+
+exit:
+	if (args.lifecycle_list)
+		free(args.lifecycle_list);
+
+	free_data(&data_ref);
+	free_data(&data_test);
 
 	return res;
 }

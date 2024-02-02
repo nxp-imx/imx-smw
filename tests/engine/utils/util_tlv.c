@@ -802,6 +802,7 @@ static int parse_tlv_list(struct tlv_list **tlv_list, const unsigned char **str,
 	 * TYPE is a string
 	 * LENGTH is the nummber of bytes of VALUE
 	 * VALUE is either:
+	 *  - one boolean if length=0
 	 *  - one string
 	 *  - one numeral
 	 *  - one string + other TLV(s)
@@ -811,6 +812,8 @@ static int parse_tlv_list(struct tlv_list **tlv_list, const unsigned char **str,
 	 * note: numeral is either 1, 2, 4, 8 bytes (limit is 64 bits value)
 	 *
 	 * If VALUE is:
+	 *  - one boolean,
+	 *       LENGTH = 0
 	 *  - one string,
 	 *       LENGTH = strlen(VALUE) + 1
 	 *  - one numeral,
@@ -841,7 +844,13 @@ static int parse_tlv_list(struct tlv_list **tlv_list, const unsigned char **str,
 	/* Determine how VALUE is encoded */
 	tmp_len = strlen((const char *)p);
 
-	if (tmp_len >= value_length) {
+	if (value_length == 0) {
+		entry->val_len = value_length;
+		entry->val_type = json_type_boolean;
+		DBG_PRINT("VALUE is boolean %s", entry->type);
+
+		err = ERR_CODE(PASSED);
+	} else if (tmp_len >= value_length) {
 		/* It's one numeral */
 		err = tlv_convert_numeral(&entry->value.num, value_length, p);
 		if (err != ERR_CODE(PASSED))
@@ -868,6 +877,8 @@ static int parse_tlv_list(struct tlv_list **tlv_list, const unsigned char **str,
 
 		err = ERR_CODE(PASSED);
 	} else {
+		err = ERR_CODE(PASSED);
+
 		entry->value.str = (const char *)p;
 		entry->val_len = tmp_len + 1;
 		entry->val_type = json_type_string;
@@ -877,13 +888,17 @@ static int parse_tlv_list(struct tlv_list **tlv_list, const unsigned char **str,
 		/* It's other TLV(s) */
 		p_end = p + value_length;
 		p += entry->val_len;
+
+		if (tlv_length(&p))
+			p -= 2;
+
 		list_elem = &(*tlv_list)->tlv_list;
 
-		do {
+		while (p < p_end) {
 			err = parse_tlv_list(list_elem, &p, p_end);
 			if (err == ERR_CODE(PASSED))
 				list_elem = &(*list_elem)->next;
-		} while (err == ERR_CODE(PASSED) && p < p_end);
+		};
 	}
 
 exit:
@@ -927,6 +942,13 @@ static bool check_tlvs(struct tlv *ref_tlv, struct tlv *tlv)
 			}
 			break;
 
+		case json_type_boolean:
+			if (!ref_tlv->val_len && !tlv->val_len) {
+				DBG_PRINT("Found boolean %s", tlv->type);
+				ret = true;
+			}
+			break;
+
 		default:
 			break;
 		}
@@ -964,9 +986,10 @@ static void check_tlv_lists(struct tlv_list *ref_policy,
 	}
 }
 
-static int report_policy_comparison(struct tlv_list *list)
+static int report_tlv_comparison(struct tlv_list *list)
 {
 	int error = 0;
+	int ret = 0;
 	struct tlv_list *entry = list;
 
 	for (; entry; entry = entry->next) {
@@ -978,59 +1001,82 @@ static int report_policy_comparison(struct tlv_list *list)
 
 			switch (entry->tlv->val_type) {
 			case json_type_int:
-				DBG_PRINT("Policy %s=%s not verified",
+				DBG_PRINT("TLV %s=%s not verified",
 					  entry->tlv->type,
 					  entry->tlv->value.str);
 				break;
 
 			case json_type_string:
-				DBG_PRINT("Policy %s=%s not verified",
+				DBG_PRINT("TLV %s=%s not verified",
 					  entry->tlv->type,
 					  entry->tlv->value.str);
 				break;
 
+			case json_type_boolean:
+				/* Exception is the boolean "TRANSIENT" */
+				if (!strcmp("TRANSIENT", entry->tlv->type)) {
+					if (DEC_OVERFLOW(error, 1))
+						error = -1;
+
+					break;
+				}
+
+				DBG_PRINT("TLV %s not verified",
+					  entry->tlv->type);
+				break;
+
 			default:
-				DBG_PRINT("Policy %s unknown type",
+				DBG_PRINT("TLV %s unknown type",
 					  entry->tlv->type);
 				break;
 			}
 		}
 
-		if (entry->tlv_list)
-			error += report_policy_comparison(entry->tlv_list);
+		if (entry->tlv_list) {
+			ret = report_tlv_comparison(entry->tlv_list);
+			if (INC_OVERFLOW(error, ret)) {
+				error = -1;
+				break;
+			}
+		}
 	}
 
 	return error;
 }
 
-static int compare_policy_lists(struct tlv_list *ref_policy,
-				struct tlv_list *policy)
+static int compare_tlv_lists(struct tlv_list *attr1_list,
+			     struct tlv_list *attr2_list)
 {
 	int res = ERR_CODE(FAILED);
-	int ref_error = 0;
-	int error = 0;
+	int attr1_err = 0;
+	int attr2_err = 0;
 
-	check_tlv_lists(ref_policy, policy);
+	if (attr1_list && attr2_list)
+		check_tlv_lists(attr1_list, attr2_list);
 
-	DBG_PRINT("Report missing value(s) in policy reference");
-	ref_error = report_policy_comparison(ref_policy);
-	if (ref_error < 0) {
-		DBG_PRINT("Too much missing values in policy reference");
-		return res;
+	if (attr1_list) {
+		DBG_PRINT("Report missing value(s) in TLV list 1");
+		attr1_err = report_tlv_comparison(attr1_list);
+		if (attr1_err < 0) {
+			DBG_PRINT("Too much missing values in TLV list 1");
+			return res;
+		}
+
+		DBG_PRINT("Missing %d value(s) in TLV list 1", attr1_err);
 	}
 
-	DBG_PRINT("Missing %d value(s) in policy reference", ref_error);
+	if (attr2_list) {
+		DBG_PRINT("Report missing value(s) in TLV list 2");
+		attr2_err = report_tlv_comparison(attr2_list);
+		if (attr2_err < 0) {
+			DBG_PRINT("Too much missing values in TLV list 2");
+			return res;
+		}
 
-	DBG_PRINT("Report missing value(s) in policy retrieved");
-	error = report_policy_comparison(policy);
-	if (error < 0) {
-		DBG_PRINT("Too much missing values in policy reference");
-		return res;
+		DBG_PRINT("Missing %d value(s) in TLV list 2", attr2_err);
 	}
 
-	DBG_PRINT("Missing %d value(s) in policy retrieved", error);
-
-	if (!error && !ref_error)
+	if (!attr1_err && !attr2_err)
 		res = ERR_CODE(PASSED);
 
 	return res;
@@ -1334,7 +1380,7 @@ int util_tlv_check_key_policy(struct subtest_data *subtest,
 	} while (res == ERR_CODE(PASSED) && p < p_end);
 
 	if (res == ERR_CODE(PASSED))
-		res = compare_policy_lists(ref_tlv_list, tlv_list);
+		res = compare_tlv_lists(ref_tlv_list, tlv_list);
 
 exit:
 	if (error)
@@ -1445,4 +1491,121 @@ int util_tlv_check_lifecycle(const unsigned char *lifecyle,
 	free_tlv_list(&tlv_list);
 
 	return res;
+}
+
+int util_tlv_cmp_data_attrs(unsigned char *ref_attr, unsigned int ref_attr_len,
+			    unsigned char *attr, unsigned int attr_len,
+			    const char *persistence, unsigned char *lc_attr,
+			    unsigned int lc_attr_len)
+{
+	int ret = ERR_CODE(FAILED);
+
+	struct tlv_list *ref_attr_tlv_list = NULL;
+	struct tlv_list *attr_tlv_list = NULL;
+	struct tlv_list **list_elem = NULL;
+
+	unsigned char *tmp_persistence = NULL;
+	size_t tmp_persistence_len = 0;
+	const unsigned char *p = NULL;
+	const unsigned char *p_end = NULL;
+
+	if (!ref_attr && !attr && !persistence && !lc_attr) {
+		ret = ERR_CODE(PASSED);
+		goto exit;
+	}
+
+	/*
+	 * Build the read attributes TLV list
+	 */
+	if (attr_len) {
+		DBG_DHEX("Attributes Retrieved", (void *)attr, attr_len);
+
+		list_elem = &attr_tlv_list;
+		p = attr;
+		p_end = p + attr_len;
+		do {
+			ret = parse_tlv_list(list_elem, &p, p_end);
+			list_elem = &(*list_elem)->next;
+		} while (ret == ERR_CODE(PASSED) && p < p_end);
+
+		if (ret != ERR_CODE(PASSED))
+			goto exit;
+	}
+
+	if (lc_attr_len) {
+		DBG_DHEX("LIFECYCLE Retrieved", (void *)lc_attr, lc_attr_len);
+
+		if (!list_elem)
+			list_elem = &attr_tlv_list;
+
+		p = lc_attr;
+		p_end = p + lc_attr_len;
+		do {
+			ret = parse_tlv_list(list_elem, &p, p_end);
+			list_elem = &(*list_elem)->next;
+		} while (ret == ERR_CODE(PASSED) && p < p_end);
+
+		if (ret != ERR_CODE(PASSED))
+			goto exit;
+	}
+
+	if (persistence) {
+		DBG_DHEX("Persistence Retrieved", (void *)persistence,
+			 strlen(persistence) + 1);
+
+		if (!list_elem)
+			list_elem = &attr_tlv_list;
+
+		if (TLV_ELEMENT_LENGTH(persistence, 0, tmp_persistence_len)) {
+			DBG_PRINT("Persistence length overflow");
+			ret = ERR_CODE(FAILED);
+			goto exit;
+		}
+
+		tmp_persistence = calloc(1, tmp_persistence_len);
+		if (!tmp_persistence) {
+			DBG_PRINT_ALLOC_FAILURE();
+			ret = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto exit;
+		}
+
+		memcpy(tmp_persistence, persistence, strlen(persistence));
+
+		tmp_persistence[strlen(persistence)] = 0;
+
+		p = tmp_persistence;
+		p_end = p + tmp_persistence_len;
+
+		ret = parse_tlv_list(list_elem, &p, p_end);
+		if (ret != ERR_CODE(PASSED))
+			goto exit;
+	}
+
+	if (ref_attr_len) {
+		DBG_DHEX("Attributes Reference", (void *)ref_attr,
+			 ref_attr_len);
+
+		/* Build reference attributes list */
+		list_elem = &ref_attr_tlv_list;
+		p = ref_attr;
+		p_end = p + ref_attr_len;
+		do {
+			ret = parse_tlv_list(list_elem, &p, p_end);
+			list_elem = &(*list_elem)->next;
+		} while (ret == ERR_CODE(PASSED) && p < p_end);
+
+		if (ret != ERR_CODE(PASSED))
+			goto exit;
+	}
+
+	ret = compare_tlv_lists(ref_attr_tlv_list, attr_tlv_list);
+
+exit:
+	if (tmp_persistence)
+		free(tmp_persistence);
+
+	free_tlv_list(&ref_attr_tlv_list);
+	free_tlv_list(&attr_tlv_list);
+
+	return ret;
 }

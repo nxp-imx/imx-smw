@@ -1,0 +1,36 @@
+
+{
+	"data_list": {
+		"data 1": {
+			"id": 21,
+			"data": "ABCDEF"
+		},
+		"data 2": {
+			"id": 22,
+			"data": "FEDCBA",
+			"attributes_list": [
+				["PERSISTENT"]
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "STORAGE_STORE",
+		"subsystem": "SECO",
+		"data_name": "data 1"
+	},
+	"subtest 2": {
+		"command": "STORAGE_GET_DATA_INFO",
+		"data_name": "data 1",
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "STORAGE_STORE",
+		"subsystem": "SECO",
+		"data_name": "data 2"
+	},
+	"subtest 4": {
+		"command": "STORAGE_GET_DATA_INFO",
+		"data_name": "data 2",
+		"depends": 3
+	}
+}

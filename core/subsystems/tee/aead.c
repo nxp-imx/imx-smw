@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <tee_client_api.h>
@@ -13,6 +13,7 @@
 #include "tee.h"
 
 #include "smw_status.h"
+#include "operation_context.h"
 
 #define TEE_AEAD_ALGO_ID(_key_type, _smw_aead_mode)                            \
 	{                                                                      \
@@ -79,7 +80,76 @@ get_tee_aead_operation_and_usage(enum smw_config_aead_op_type_id smw_op,
 	return SMW_STATUS_OK;
 }
 
-static int aead_init(struct smw_crypto_aead_args *args)
+/**
+ * set_aead_context() - Allocate and initialize AEAD subsystem specific context
+ * @op_context: Pointer to operation context arguments structure
+ * @args: Pointer to internal AEAD arguments structure
+ * @context: Pointer to TEE context operation handle structure
+ *
+ * This function initializes the members of operation context structure. It also
+ * allocates memory to aead subsystem specific context and initializes it's
+ * members.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - One of the parameters is invalid
+ * SMW_STATUS_ALLOC_FAILURE - Memory allocation failure
+ */
+static int set_aead_context(struct smw_op_context *op_context,
+			    struct smw_crypto_aead_args *args,
+			    struct shared_context *context)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct aead_context *aead_ctx = NULL;
+
+	unsigned char *iv = NULL;
+	unsigned int iv_len = 0;
+
+	if (!op_context)
+		goto end;
+
+	op_context->op_id = SMW_CRYPTO_OP_ID_AEAD_MULTI_PART;
+
+	if (args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
+		iv = smw_crypto_get_aead_iv(args);
+		iv_len = smw_crypto_get_aead_iv_len(args);
+
+		if (!iv || !iv_len)
+			goto end;
+
+		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_ENCRYPT;
+	} else {
+		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_DECRYPT;
+	}
+
+	aead_ctx = SMW_UTILS_CALLOC(1, sizeof(*aead_ctx));
+	if (!aead_ctx) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		SMW_DBG_PRINTF(DEBUG,
+			       "AEAD subsystem context allocation failure\n");
+		goto end;
+	}
+
+	aead_ctx->tee_handle = context->handle;
+
+	if (args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
+		aead_ctx->iv_len = iv_len;
+		SMW_UTILS_MEMCPY(aead_ctx->iv, iv, iv_len);
+	}
+
+	op_context->subsystem_context = aead_ctx;
+	op_context->op_state = CTX_OP_STATE_INIT;
+
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int aead_init(struct smw_op_context *op_context,
+		     struct smw_crypto_aead_args *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_OK;
@@ -101,9 +171,9 @@ static int aead_init(struct smw_crypto_aead_args *args)
 	 * params[2] = Pointer to aead_shared_params structure
 	 * params[3] = Operation handle
 	 */
-	if (smw_crypto_get_iv(args)) {
-		op.params[0].tmpref.buffer = smw_crypto_get_iv(args);
-		op.params[0].tmpref.size = smw_crypto_get_iv_len(args);
+	if (smw_crypto_get_aead_iv(args)) {
+		op.params[0].tmpref.buffer = smw_crypto_get_aead_iv(args);
+		op.params[0].tmpref.size = smw_crypto_get_aead_iv_len(args);
 	}
 
 	/* Get OPTEE algorithm */
@@ -135,14 +205,14 @@ static int aead_init(struct smw_crypto_aead_args *args)
 
 	op.params[1].value.a = key_id;
 
-	if (MUL_OVERFLOW(smw_crypto_get_tag_len(args), 8,
+	if (MUL_OVERFLOW(smw_crypto_get_aead_tag_len(args), 8,
 			 &shared_params.tag_len)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
 
-	shared_params.payload_len = smw_crypto_get_plaintext_len(args);
-	shared_params.aad_len = smw_crypto_get_aad_len(args);
+	shared_params.payload_len = smw_crypto_get_aead_plaintext_len(args);
+	shared_params.aad_len = smw_crypto_get_aead_aad_len(args);
 
 	op.params[2].tmpref.buffer = &shared_params;
 	op.params[2].tmpref.size = sizeof(shared_params);
@@ -154,15 +224,15 @@ static int aead_init(struct smw_crypto_aead_args *args)
 				 TEEC_MEMREF_TEMP_INPUT,
 				 TEEC_MEMREF_TEMP_INOUT);
 
+	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_TEE);
+
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_AEAD_INIT, &op);
 	SMW_DBG_PRINTF_COND(ERROR, status != SMW_STATUS_OK,
 			    "%s: Operation failed\n", __func__);
 
-	if (status == SMW_STATUS_OK) {
-		smw_crypto_set_init_handle(args, context.handle);
-		smw_crypto_set_ctx_reserved(args, SUBSYSTEM_ID_TEE);
-	}
+	if (status == SMW_STATUS_OK)
+		status = set_aead_context(op_context, args, &context);
 
 	key_id = args->key_desc.identifier.id;
 	if (key_id == INVALID_KEY_ID) {
@@ -178,18 +248,24 @@ end:
 	return status;
 }
 
-static int aead_update_aad(struct smw_crypto_aead_args *args)
+static int aead_update_aad(struct smw_op_context *op_context,
+			   struct smw_crypto_aead_args *args)
 {
 	TEEC_Operation op = { 0 };
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 	struct shared_context context = { 0 };
+	struct aead_context *aead_ctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (args->op_step == SMW_OP_STEP_ONESHOT)
-		context.handle = smw_crypto_get_op_handle(args);
-	else
-		context.handle = smw_crypto_get_aad_op_handle(args);
+	if (!op_context)
+		goto end;
+
+	aead_ctx = op_context->subsystem_context;
+	if (!aead_ctx)
+		goto end;
+
+	context.handle = aead_ctx->tee_handle;
 
 	/*
 	 * Parameters for TEE_AEUpdateAAD
@@ -202,8 +278,8 @@ static int aead_update_aad(struct smw_crypto_aead_args *args)
 	op.params[0].tmpref.buffer = &context;
 	op.params[0].tmpref.size = sizeof(context);
 
-	op.params[1].tmpref.size = smw_crypto_get_aad_len(args);
-	op.params[1].tmpref.buffer = smw_crypto_get_aad(args);
+	op.params[1].tmpref.size = smw_crypto_get_aead_aad_len(args);
+	op.params[1].tmpref.buffer = smw_crypto_get_aead_aad(args);
 
 	op.paramTypes =
 		TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT, TEEC_MEMREF_TEMP_INPUT,
@@ -214,6 +290,7 @@ static int aead_update_aad(struct smw_crypto_aead_args *args)
 	SMW_DBG_PRINTF_COND(ERROR, status != SMW_STATUS_OK, "%s: %s failed\n",
 			    __func__, "TEE_AEUpdateAAD");
 
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -247,12 +324,12 @@ static unsigned int get_tee_input_data_len(struct smw_crypto_aead_args *args,
 {
 	int status = SMW_STATUS_OK;
 
-	*input_data_length = smw_crypto_get_input_len(args);
+	*input_data_length = smw_crypto_get_aead_input_len(args);
 
 	if (ta_cmd == CMD_AEAD_DECRYPT_FINAL) {
-		if (!smw_crypto_is_tag_field_set(args)) {
+		if (!smw_crypto_is_aead_tag_field_set(args)) {
 			if (DEC_OVERFLOW(*input_data_length,
-					 smw_crypto_get_tag_len(args)))
+					 smw_crypto_get_aead_tag_len(args)))
 				status = SMW_STATUS_INVALID_PARAM;
 		}
 	}
@@ -279,11 +356,12 @@ static unsigned int get_tee_output_data_len(struct smw_crypto_aead_args *args,
 {
 	unsigned int out_len = 0;
 
-	out_len = smw_crypto_get_output_len(args);
+	out_len = smw_crypto_get_aead_output_len(args);
 
 	if (ta_cmd == CMD_AEAD_ENCRYPT_FINAL) {
-		if (!smw_crypto_is_tag_field_set(args)) {
-			if (DEC_OVERFLOW(out_len, smw_crypto_get_tag_len(args)))
+		if (!smw_crypto_is_aead_tag_field_set(args)) {
+			if (DEC_OVERFLOW(out_len,
+					 smw_crypto_get_aead_tag_len(args)))
 				out_len = 0;
 		}
 	}
@@ -294,21 +372,40 @@ static unsigned int get_tee_output_data_len(struct smw_crypto_aead_args *args,
 	return out_len;
 }
 
-static int aead_multi_part_common(struct smw_crypto_aead_args *args,
+static int aead_multi_part_common(struct smw_op_context *op_context,
+				  struct smw_crypto_aead_args *args,
 				  enum ta_commands ta_cmd)
 {
-	TEEC_Operation op = { 0 };
-	int status = SMW_STATUS_OK;
-	struct shared_context context = { 0 };
+	int status = SMW_STATUS_INVALID_PARAM;
+
 	unsigned int output_length = 0;
 	unsigned int input_length = 0;
 	unsigned int tag_length = 0;
+	unsigned char *output_iv = NULL;
+	struct aead_context *aead_ctx = NULL;
 
+	struct shared_context context = { 0 };
+
+	TEEC_Operation op = { 0 };
 	uint32_t param_type = TEEC_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	context.handle = smw_crypto_get_op_handle(args);
+	if (!op_context)
+		goto end;
+
+	aead_ctx = op_context->subsystem_context;
+	if (!aead_ctx)
+		goto end;
+
+	if (ta_cmd == CMD_AEAD_ENCRYPT_FINAL) {
+		if (smw_crypto_get_aead_output_iv_len(args) < aead_ctx->iv_len)
+			goto end;
+
+		output_iv = smw_crypto_get_aead_output_iv(args);
+	}
+
+	context.handle = aead_ctx->tee_handle;
 
 	/*
 	 * Parameters for TEE_AEUpdate
@@ -331,7 +428,7 @@ static int aead_multi_part_common(struct smw_crypto_aead_args *args,
 
 	op.params[0].tmpref.buffer = &context;
 	op.params[0].tmpref.size = sizeof(context);
-	op.params[1].tmpref.buffer = smw_crypto_get_input(args);
+	op.params[1].tmpref.buffer = smw_crypto_get_aead_input(args);
 
 	/*
 	 * For final operation, TEE requires an input length set to 0 if input
@@ -347,7 +444,7 @@ static int aead_multi_part_common(struct smw_crypto_aead_args *args,
 		op.params[1].tmpref.size = input_length;
 	}
 
-	op.params[2].tmpref.buffer = smw_crypto_get_output(args);
+	op.params[2].tmpref.buffer = smw_crypto_get_aead_output(args);
 
 	/* Set output length to 0 if output data buffer is NULL */
 	if (!op.params[2].tmpref.buffer)
@@ -363,8 +460,10 @@ static int aead_multi_part_common(struct smw_crypto_aead_args *args,
 			op.params[3].tmpref.size = 0;
 			op.params[3].tmpref.buffer = NULL;
 		} else {
-			op.params[3].tmpref.buffer = smw_crypto_get_tag(args);
-			op.params[3].tmpref.size = smw_crypto_get_tag_len(args);
+			op.params[3].tmpref.buffer =
+				smw_crypto_get_aead_tag(args);
+			op.params[3].tmpref.size =
+				smw_crypto_get_aead_tag_len(args);
 		}
 	}
 
@@ -376,7 +475,7 @@ static int aead_multi_part_common(struct smw_crypto_aead_args *args,
 
 	/* Update output length */
 	if (!SET_OVERFLOW(op.params[2].tmpref.size, output_length)) {
-		smw_crypto_set_output_len(args, output_length);
+		smw_crypto_set_aead_output_len(args, output_length);
 	} else {
 		status = SMW_STATUS_OPERATION_FAILURE;
 		goto end;
@@ -384,7 +483,7 @@ static int aead_multi_part_common(struct smw_crypto_aead_args *args,
 
 	if (ta_cmd == CMD_AEAD_ENCRYPT_FINAL) {
 		if (!SET_OVERFLOW(op.params[3].tmpref.size, tag_length))
-			smw_crypto_set_tag_len(args, tag_length);
+			smw_crypto_set_aead_tag_len(args, tag_length);
 		else
 			status = SMW_STATUS_OPERATION_FAILURE;
 
@@ -398,14 +497,26 @@ static int aead_multi_part_common(struct smw_crypto_aead_args *args,
 		 *
 		 */
 
-		if (!smw_crypto_is_tag_field_set(args)) {
+		if (!smw_crypto_is_aead_tag_field_set(args)) {
 			if (!INC_OVERFLOW(output_length, tag_length)) {
-				smw_crypto_set_output_len(args, output_length);
+				smw_crypto_set_aead_output_len(args,
+							       output_length);
 			} else {
 				status = SMW_STATUS_OPERATION_FAILURE;
 				goto end;
 			}
 		}
+
+		if (status != SMW_STATUS_OK &&
+		    status != SMW_STATUS_OUTPUT_TOO_SHORT)
+			goto end;
+
+		smw_crypto_set_aead_output_iv_len(args, aead_ctx->iv_len);
+
+		/* Copy user provided IV buffer to output IV */
+		if (status == SMW_STATUS_OK && output_iv && aead_ctx->iv_len)
+			SMW_UTILS_MEMCPY(output_iv, aead_ctx->iv,
+					 aead_ctx->iv_len);
 	}
 
 end:
@@ -420,37 +531,26 @@ static int aead_one_shot(void *args)
 	struct smw_op_context op_context = { 0 };
 	enum ta_commands ta_cmd = CMD_AEAD_ENCRYPT_FINAL;
 
-	unsigned char *output_iv = NULL;
-	unsigned char *iv = NULL;
-	unsigned int output_iv_len = 0;
-	unsigned int iv_len = 0;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
-		output_iv_len = smw_crypto_get_output_iv_len(aead_args);
-		output_iv = smw_crypto_get_output_iv(aead_args);
-		iv = smw_crypto_get_iv(aead_args);
-		iv_len = smw_crypto_get_iv_len(aead_args);
-		if (output_iv_len < iv_len) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto end;
-		}
-	}
-
-	smw_crypto_set_init_op_context(aead_args, &op_context);
+	/*
+	 * For multi-part operation, dynamic memory is allocated for operation
+	 * context using the smw_allocate_context() API, whereas for single-shot
+	 * operation, context is created on stack.
+	 * Subsystem specific context is allocated during the initialization and
+	 * released after the final operation or if the aead_update_aad has returned
+	 * error.
+	 */
 
 	/* AE initialization */
-	status = aead_init(aead_args);
+	status = aead_init(&op_context, aead_args);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	smw_crypto_set_data_op_context(aead_args, &op_context);
-
 	/* Update AAD */
-	if (smw_crypto_get_aad(aead_args) &&
-	    smw_crypto_get_aad_len(aead_args)) {
-		status = aead_update_aad(aead_args);
+	if (smw_crypto_get_aead_aad(aead_args) &&
+	    smw_crypto_get_aead_aad_len(aead_args)) {
+		status = aead_update_aad(&op_context, aead_args);
 		if (status != SMW_STATUS_OK)
 			goto end;
 	}
@@ -459,21 +559,13 @@ static int aead_one_shot(void *args)
 		ta_cmd = CMD_AEAD_DECRYPT_FINAL;
 
 	/* AE final */
-	status = aead_multi_part_common(aead_args, ta_cmd);
-
-	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
-		if (status != SMW_STATUS_OK &&
-		    status != SMW_STATUS_OUTPUT_TOO_SHORT)
-			goto end;
-
-		smw_crypto_set_output_iv_len(aead_args, iv_len);
-
-		/* Copy user provided IV buffer to output IV */
-		if (status == SMW_STATUS_OK && output_iv && iv && iv_len)
-			SMW_UTILS_MEMCPY(output_iv, iv, iv_len);
-	}
+	status = aead_multi_part_common(&op_context, aead_args, ta_cmd);
 
 end:
+	if (op_context.op_state == CTX_OP_STATE_INIT &&
+	    op_context.subsystem_context)
+		SMW_UTILS_FREE(op_context.subsystem_context);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -482,22 +574,27 @@ static int aead_multi_part(void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	struct smw_crypto_aead_args *aead_args = args;
+	struct smw_op_context *op_context = NULL;
 
 	switch (aead_args->op_step) {
 	case SMW_OP_STEP_INIT:
-		status = aead_init(aead_args);
+		op_context = smw_crypto_get_aead_init_op_context(aead_args);
+		status = aead_init(op_context, aead_args);
 		break;
 
 	case SMW_OP_STEP_UPDATE:
-		status = aead_multi_part_common(aead_args, CMD_AEAD_UPDATE);
+		op_context = smw_crypto_get_aead_data_op_context(aead_args);
+		status = aead_multi_part_common(op_context, aead_args,
+						CMD_AEAD_UPDATE);
 		break;
 
 	case SMW_OP_STEP_FINAL:
+		op_context = smw_crypto_get_aead_data_op_context(aead_args);
 		if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT)
-			status = aead_multi_part_common(aead_args,
+			status = aead_multi_part_common(op_context, aead_args,
 							CMD_AEAD_ENCRYPT_FINAL);
 		else
-			status = aead_multi_part_common(aead_args,
+			status = aead_multi_part_common(op_context, aead_args,
 							CMD_AEAD_DECRYPT_FINAL);
 
 		break;
@@ -512,6 +609,8 @@ static int aead_multi_part(void *args)
 
 bool tee_aead_handle(enum operation_id operation_id, void *args, int *status)
 {
+	struct smw_op_context *ctx = NULL;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	switch (operation_id) {
@@ -524,7 +623,8 @@ bool tee_aead_handle(enum operation_id operation_id, void *args, int *status)
 		break;
 
 	case OPERATION_ID_AEAD_AAD:
-		*status = aead_update_aad(args);
+		ctx = smw_crypto_get_aead_aad_op_context(args);
+		*status = aead_update_aad(ctx, args);
 		break;
 
 	default:

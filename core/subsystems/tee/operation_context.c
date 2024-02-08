@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include <tee_client_api.h>
@@ -15,26 +15,80 @@
 
 #include "smw_status.h"
 
+static void *get_subsystem_context_handle(struct smw_op_context *context,
+					  int *status)
+{
+	*status = SMW_STATUS_INVALID_PARAM;
+
+	void *handle = NULL;
+
+	struct aead_context *aead_ctx = NULL;
+	struct cipher_context *cipher_ctx = NULL;
+
+	if (!context->subsystem_context)
+		goto end;
+
+	switch (context->op_id) {
+	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
+		aead_ctx = context->subsystem_context;
+		handle = aead_ctx->tee_handle;
+
+		break;
+
+	case SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART:
+		cipher_ctx = context->subsystem_context;
+		handle = cipher_ctx->tee_handle;
+
+		break;
+
+	default:
+		break;
+	}
+
+	*status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, *status);
+	return handle;
+}
+
 /**
- * cancel_operation() - Call TA cancel operation
- * @args: Pointer to cancel operation arguments
+ * free_context() - Free all the memory allocated to operation context
+ * @args: Pointer to SMW operation context arguments structure
  *
  * Return:
- * SMW_STATUS_OK		- Success
- * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid
+ * None.
  */
-static int cancel_operation(struct smw_crypto_cancel_op_args *args)
+static void free_context(struct smw_op_context **args)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if ((*args)->subsystem_context) {
+		SMW_UTILS_FREE((*args)->subsystem_context);
+		(*args)->subsystem_context = NULL;
+	}
+}
+
+/**
+ * cancel_operation() - Call TA cancel operation
+ * @ctx: Pointer to SMW operation context arguments structure
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - One of the parameters is invalid
+ */
+static int cancel_operation(struct smw_op_context *ctx)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+
 	struct shared_context shared_ctx = { 0 };
 	TEEC_Operation op = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args)
+	shared_ctx.handle = get_subsystem_context_handle(ctx, &status);
+	if (status != SMW_STATUS_OK || !shared_ctx.handle)
 		goto end;
-
-	shared_ctx.handle = smw_crypto_get_cancel_handle(args);
 
 	/*
 	 * params[0] = Operation handle
@@ -60,28 +114,107 @@ end:
 }
 
 /**
- * copy_context() - Call TA copy context operation
- * @args: Pointer to copy context arguments
+ * allocate_copy_subsystem_context() - Allocate and copy destination op context
+ * @src_context: Pointer to source operation context arguments structure
+ * @dst_context: Pointer to destination operation context arguments structure
+ * @tee_dst_ctx: Pointer to optee context operation handle structure
+ *
+ * This function allocates memory to subsystem specific destination operation
+ * context structure and also initializes it's members.
  *
  * Return:
- * SMW_STATUS_OK			- Success
- * SMW_STATUS_INVALID_PARAM		- One of the parameters is invalid
- * SMW_STATUS_SUBSYSTEM_FAILURE		- Subsystem failure
- * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Operation not supported by subsystem
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_INVALID_PARAM           - One of the parameters is invalid
+ * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure
  */
-static int copy_context(struct smw_crypto_copy_ctx_args *args)
+static int allocate_copy_subsystem_context(struct smw_op_context *src_context,
+					   struct smw_op_context *dst_context,
+					   struct shared_context *tee_dst_ctx)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	struct shared_context src_ctx = { 0 };
-	struct shared_context dst_ctx = { 0 };
+
+	struct aead_context *src_aead_ctx = NULL;
+	struct aead_context *dst_aead_ctx = NULL;
+	struct cipher_context *dst_cipher_ctx = NULL;
+
+	switch (src_context->op_id) {
+	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
+		src_aead_ctx = src_context->subsystem_context;
+
+		if (src_context->op_type_id == SMW_CRYPTO_OP_TYPE_ID_ENCRYPT) {
+			if (!src_aead_ctx || !src_aead_ctx->iv_len)
+				goto end;
+		}
+
+		dst_aead_ctx = SMW_UTILS_MALLOC(sizeof(*dst_aead_ctx));
+		if (!dst_aead_ctx) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		if (src_context->op_type_id == SMW_CRYPTO_OP_TYPE_ID_ENCRYPT) {
+			dst_aead_ctx->iv_len = src_aead_ctx->iv_len;
+			SMW_UTILS_MEMCPY(dst_aead_ctx->iv, src_aead_ctx->iv,
+					 src_aead_ctx->iv_len);
+		} else {
+			dst_aead_ctx->iv_len = 0;
+		}
+
+		dst_aead_ctx->tee_handle = tee_dst_ctx->handle;
+		dst_context->subsystem_context = dst_aead_ctx;
+
+		break;
+
+	case SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART:
+		dst_cipher_ctx = SMW_UTILS_MALLOC(sizeof(*dst_cipher_ctx));
+		if (!dst_cipher_ctx) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		dst_cipher_ctx->tee_handle = tee_dst_ctx->handle;
+		dst_context->subsystem_context = dst_cipher_ctx;
+
+		break;
+
+	default:
+		goto end;
+	}
+
+	smw_crypto_copy_ctx_members(dst_context, src_context);
+
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
+ * copy_context() - Call TA copy context operation
+ * @src_ctx: Pointer to source operation context arguments structure
+ * @dst_ctx: Pointer to destination operation context arguments structure
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_INVALID_PARAM           - One of the parameters is invalid
+ * SMW_STATUS_SUBSYSTEM_FAILURE       - Subsystem failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED - Operation not supported by subsystem
+ */
+static int copy_context(struct smw_op_context *src_ctx,
+			struct smw_op_context *dst_ctx)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct shared_context src_shared_ctx = { 0 };
+	struct shared_context dst_shared_ctx = { 0 };
 	TEEC_Operation op = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args)
+	src_shared_ctx.handle = get_subsystem_context_handle(src_ctx, &status);
+	if (status != SMW_STATUS_OK || !src_shared_ctx.handle)
 		goto end;
-
-	src_ctx.handle = smw_crypto_get_copy_src_handle(args);
 
 	/*
 	 * params[0] = Source operation handle
@@ -89,22 +222,23 @@ static int copy_context(struct smw_crypto_copy_ctx_args *args)
 	 * params[2] = None
 	 * params[3] = None
 	 */
-
 	op.paramTypes =
 		TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT, TEEC_MEMREF_TEMP_INOUT,
 				 TEEC_NONE, TEEC_NONE);
 
-	op.params[0].tmpref.buffer = &src_ctx;
-	op.params[0].tmpref.size = sizeof(src_ctx);
-	op.params[1].tmpref.buffer = &dst_ctx;
-	op.params[1].tmpref.size = sizeof(dst_ctx);
+	op.params[0].tmpref.buffer = &src_shared_ctx;
+	op.params[0].tmpref.size = sizeof(src_shared_ctx);
+	op.params[1].tmpref.buffer = &dst_shared_ctx;
+	op.params[1].tmpref.size = sizeof(dst_shared_ctx);
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_COPY_CTX, &op);
 	SMW_DBG_PRINTF_COND(ERROR, status != SMW_STATUS_OK,
 			    "%s: Operation failed\n", __func__);
 
-	smw_crypto_set_copy_dst_handle(args, dst_ctx.handle);
+	if (status == SMW_STATUS_OK)
+		status = allocate_copy_subsystem_context(src_ctx, dst_ctx,
+							 &dst_shared_ctx);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -113,7 +247,8 @@ end:
 
 /* TEE context operations structure */
 static struct smw_crypto_context_ops tee_ctx_ops = { .cancel = cancel_operation,
-						     .copy = copy_context };
+						     .copy = copy_context,
+						     .free = free_context };
 
 void *tee_get_ctx_ops(void)
 {

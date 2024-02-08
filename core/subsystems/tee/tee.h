@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #ifndef TEE_H
@@ -10,6 +10,28 @@
 #include "utils.h"
 
 #include "tee_subsystem.h"
+
+#define TEE_MAX_IV_LEN 16
+
+/**
+ * struct aead_context - AEAD context
+ * @iv: IV buffer
+ * @iv_len: @iv length in bytes
+ * @tee_handle: TEE operation handle
+ */
+struct aead_context {
+	unsigned char iv[TEE_MAX_IV_LEN];
+	unsigned int iv_len;
+	void *tee_handle;
+};
+
+/**
+ * struct cipher_context - Cipher context
+ * @tee_handle: TEE operation handle
+ */
+struct cipher_context {
+	void *tee_handle;
+};
 
 /*
  * Set the type @p of the parameter @i in the operation parameter

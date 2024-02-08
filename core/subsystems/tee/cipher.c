@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <tee_client_api.h>
@@ -52,6 +52,60 @@ static int get_tee_cipher_algo_id(enum smw_config_key_type_id key_type,
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
+/**
+ * set_cipher_context() - Allocate and initialize cipher subsystem specific ctx
+ * @op_context: Pointer to operation context arguments structure
+ * @args: Pointer to internal cipher arguments structure
+ * @context: Pointer to TEE context operation handle structure
+ *
+ * This function initializes the members of operation context structure. It also
+ * allocates memory to cipher subsystem specific context and initializes it's
+ * members.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - One of the parameters is invalid
+ * SMW_STATUS_ALLOC_FAILURE - Memory allocation failure
+ */
+static int set_cipher_context(struct smw_op_context *op_context,
+			      struct smw_crypto_cipher_args *args,
+			      struct shared_context *context)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct cipher_context *cipher_ctx = NULL;
+
+	if (!op_context)
+		goto end;
+
+	op_context->op_id = SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART;
+
+	cipher_ctx = SMW_UTILS_MALLOC(sizeof(*cipher_ctx));
+	if (!cipher_ctx) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		SMW_DBG_PRINTF(DEBUG,
+			       "Cipher subsystem context allocation failure\n");
+		goto end;
+	}
+
+	cipher_ctx->tee_handle = context->handle;
+
+	op_context->subsystem_context = cipher_ctx;
+
+	if (args->op_id == SMW_CONFIG_CIPHER_OP_ID_ENCRYPT)
+		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_ENCRYPT;
+	else
+		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_DECRYPT;
+
+	op_context->op_state = CTX_OP_STATE_INIT;
+
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static int
 get_tee_cipher_operation_and_usage(enum smw_config_cipher_op_type_id smw_op,
 				   uint32_t *tee_op, unsigned int *key_usage)
@@ -74,7 +128,8 @@ get_tee_cipher_operation_and_usage(enum smw_config_cipher_op_type_id smw_op,
 	return SMW_STATUS_OK;
 }
 
-static int cipher_init(struct smw_crypto_cipher_args *args)
+static int cipher_init(struct smw_op_context *op_context,
+		       struct smw_crypto_cipher_args *args)
 {
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -154,17 +209,17 @@ static int cipher_init(struct smw_crypto_cipher_args *args)
 	op.params[3].tmpref.buffer = &context;
 	op.params[3].tmpref.size = sizeof(context);
 
+	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_TEE);
+
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_CIPHER_INIT, &op);
 	SMW_DBG_PRINTF_COND(ERROR, status != SMW_STATUS_OK,
 			    "%s: Operation failed\n", __func__);
 
-	if (status == SMW_STATUS_OK) {
-		smw_crypto_set_cipher_init_handle(args, context.handle);
-		smw_crypto_set_cipher_ctx_reserved(args, SUBSYSTEM_ID_TEE);
-	}
+	if (status == SMW_STATUS_OK)
+		status = set_cipher_context(op_context, args, &context);
 
-	/* Delete imported ephemeral keys and update operation context */
+	/* Delete imported ephemeral keys */
 	for (key_idx = 0; key_idx < args->nb_keys; key_idx++) {
 		key_id = smw_crypto_get_cipher_key_id(args, key_idx);
 		if (key_id == INVALID_KEY_ID) {
@@ -187,17 +242,27 @@ end:
 	return status;
 }
 
-static int cipher_multi_part_common(struct smw_crypto_cipher_args *args,
+static int cipher_multi_part_common(struct smw_op_context *op_context,
+				    struct smw_crypto_cipher_args *args,
 				    enum ta_commands ta_cmd)
 {
 	TEEC_Operation op = { 0 };
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 	struct shared_context context = { 0 };
+	struct cipher_context *cipher_ctx = NULL;
+
 	unsigned int output_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	context.handle = smw_crypto_get_cipher_op_handle(args);
+	if (!op_context)
+		goto end;
+
+	cipher_ctx = op_context->subsystem_context;
+	if (!cipher_ctx)
+		goto end;
+
+	context.handle = cipher_ctx->tee_handle;
 
 	/*
 	 * params[0] = Operation handle
@@ -247,6 +312,7 @@ static int cipher_multi_part_common(struct smw_crypto_cipher_args *args,
 	else
 		status = SMW_STATUS_OPERATION_FAILURE;
 
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -270,19 +336,28 @@ static int cipher(void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	smw_crypto_set_cipher_init_op_context(cipher_args, &op_context);
+	/*
+	 * For multi-part operation, dynamic memory is allocated for operation
+	 * context using the smw_allocate_context() API, whereas for single-shot
+	 * operation, context is created on stack.
+	 * Subsystem specific context is allocated during the initialization and
+	 * released after the final operation.
+	 */
 
 	/* Cipher initialization */
-	status = cipher_init(cipher_args);
+	status = cipher_init(&op_context, cipher_args);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	/* Cipher final */
-	smw_crypto_set_cipher_data_op_context(cipher_args, &op_context);
-
-	status = cipher_multi_part_common(cipher_args, CMD_CIPHER_FINAL);
+	status = cipher_multi_part_common(&op_context, cipher_args,
+					  CMD_CIPHER_FINAL);
 
 end:
+	if (op_context.op_state == CTX_OP_STATE_INIT &&
+	    op_context.subsystem_context)
+		SMW_UTILS_FREE(op_context.subsystem_context);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -291,20 +366,24 @@ static int cipher_multi_part(void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	struct smw_crypto_cipher_args *cipher_args = args;
+	struct smw_op_context *op_context = NULL;
 
 	switch (cipher_args->op_step) {
 	case SMW_OP_STEP_INIT:
-		status = cipher_init(cipher_args);
+		op_context = smw_crypto_get_cipher_init_op_context(cipher_args);
+		status = cipher_init(op_context, cipher_args);
 		break;
 
 	case SMW_OP_STEP_UPDATE:
-		status = cipher_multi_part_common(cipher_args,
+		op_context = smw_crypto_get_cipher_data_op_context(cipher_args);
+		status = cipher_multi_part_common(op_context, cipher_args,
 						  CMD_CIPHER_UPDATE);
 		break;
 
 	case SMW_OP_STEP_FINAL:
-		status =
-			cipher_multi_part_common(cipher_args, CMD_CIPHER_FINAL);
+		op_context = smw_crypto_get_cipher_data_op_context(cipher_args);
+		status = cipher_multi_part_common(op_context, cipher_args,
+						  CMD_CIPHER_FINAL);
 		break;
 
 	default:

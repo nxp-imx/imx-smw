@@ -23,7 +23,7 @@
  */
 static int is_iv_set(struct smw_crypto_aead_args *args)
 {
-	if (!smw_crypto_get_iv(args) && smw_crypto_get_iv_len(args))
+	if (!smw_crypto_get_aead_iv(args) && smw_crypto_get_aead_iv_len(args))
 		return SMW_STATUS_INVALID_PARAM;
 	else
 		return SMW_STATUS_OK;
@@ -44,7 +44,7 @@ static int is_plaintext_len_set(struct smw_crypto_aead_args *args)
 	int status = SMW_STATUS_OK;
 
 	if (args->mode_id == SMW_CONFIG_AEAD_MODE_ID_CCM) {
-		if (!smw_crypto_get_plaintext_len(args))
+		if (!smw_crypto_get_aead_plaintext_len(args))
 			status = SMW_STATUS_INVALID_PARAM;
 	}
 
@@ -65,7 +65,7 @@ static int is_tag_len_set(struct smw_crypto_aead_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	if (!smw_crypto_get_tag_len(args))
+	if (!smw_crypto_get_aead_tag_len(args))
 		status = SMW_STATUS_INVALID_PARAM;
 
 	return status;
@@ -83,7 +83,7 @@ static int is_output_iv_set(struct smw_crypto_aead_args *args)
 {
 	int status = SMW_STATUS_OK;
 
-	if (!smw_crypto_get_output_iv(args) &&
+	if (!smw_crypto_get_aead_output_iv(args) &&
 	    args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT)
 		status = SMW_STATUS_INVALID_PARAM;
 
@@ -282,10 +282,10 @@ static int get_tag_buffer(struct smw_crypto_aead_args *args)
 	if (!final->data)
 		return status;
 
-	tag_length = smw_crypto_get_tag_len(args);
+	tag_length = smw_crypto_get_aead_tag_len(args);
 
 	if (args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
-		output_length = smw_crypto_get_output_len(args);
+		output_length = smw_crypto_get_aead_output_len(args);
 		tag_index = output_length;
 
 		if (!DEC_OVERFLOW(tag_index, tag_length)) {
@@ -298,7 +298,7 @@ static int get_tag_buffer(struct smw_crypto_aead_args *args)
 		}
 
 	} else if (args->op_id == SMW_CONFIG_AEAD_OP_ID_DECRYPT) {
-		input_length = smw_crypto_get_input_len(args);
+		input_length = smw_crypto_get_aead_input_len(args);
 		tag_index = input_length;
 
 		if (!DEC_OVERFLOW(tag_index, tag_length)) {
@@ -312,7 +312,7 @@ static int get_tag_buffer(struct smw_crypto_aead_args *args)
 	return status;
 }
 
-unsigned char *smw_crypto_get_aad(struct smw_crypto_aead_args *args)
+unsigned char *smw_crypto_get_aead_aad(struct smw_crypto_aead_args *args)
 {
 	unsigned char *aad = NULL;
 
@@ -340,7 +340,7 @@ unsigned char *smw_crypto_get_aad(struct smw_crypto_aead_args *args)
 	return aad;
 }
 
-unsigned int smw_crypto_get_aad_len(struct smw_crypto_aead_args *args)
+unsigned int smw_crypto_get_aead_aad_len(struct smw_crypto_aead_args *args)
 {
 	unsigned int aad_length = 0;
 
@@ -386,7 +386,7 @@ unsigned int smw_crypto_get_aad_len(struct smw_crypto_aead_args *args)
 	return aad_length;
 }
 
-unsigned char *smw_crypto_get_iv(struct smw_crypto_aead_args *args)
+unsigned char *smw_crypto_get_aead_iv(struct smw_crypto_aead_args *args)
 {
 	unsigned char *iv = NULL;
 
@@ -413,7 +413,7 @@ unsigned char *smw_crypto_get_iv(struct smw_crypto_aead_args *args)
 	return iv;
 }
 
-unsigned int smw_crypto_get_iv_len(struct smw_crypto_aead_args *args)
+unsigned int smw_crypto_get_aead_iv_len(struct smw_crypto_aead_args *args)
 {
 	unsigned int iv_length = 0;
 
@@ -440,25 +440,64 @@ unsigned int smw_crypto_get_iv_len(struct smw_crypto_aead_args *args)
 	return iv_length;
 }
 
-inline unsigned char *
-smw_crypto_get_output_iv(struct smw_crypto_aead_args *args)
+unsigned char *smw_crypto_get_aead_output_iv(struct smw_crypto_aead_args *args)
 {
-	if (args && args->oneshot_pub)
-		return args->oneshot_pub->output_iv;
+	unsigned char *output_iv = NULL;
 
-	return NULL;
+	if (!args)
+		return output_iv;
+
+	switch (args->op_step) {
+	case SMW_OP_STEP_ONESHOT:
+		if (args->oneshot_pub && args->oneshot_pub->final)
+			output_iv = args->oneshot_pub->final->output_iv;
+
+		break;
+
+	case SMW_OP_STEP_FINAL:
+		if (args->final_pub)
+			output_iv = args->final_pub->output_iv;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return output_iv;
 }
 
-inline unsigned int
-smw_crypto_get_output_iv_len(struct smw_crypto_aead_args *args)
+unsigned int
+smw_crypto_get_aead_output_iv_len(struct smw_crypto_aead_args *args)
 {
-	if (args && args->oneshot_pub)
-		return args->oneshot_pub->output_iv_length;
+	unsigned int output_iv_len = 0;
 
-	return 0;
+	if (!args)
+		return output_iv_len;
+
+	switch (args->op_step) {
+	case SMW_OP_STEP_ONESHOT:
+		if (args->oneshot_pub && args->oneshot_pub->final)
+			output_iv_len =
+				args->oneshot_pub->final->output_iv_length;
+
+		break;
+
+	case SMW_OP_STEP_FINAL:
+		if (args->final_pub)
+			output_iv_len = args->final_pub->output_iv_length;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return output_iv_len;
 }
 
-unsigned int smw_crypto_get_plaintext_len(struct smw_crypto_aead_args *args)
+unsigned int
+smw_crypto_get_aead_plaintext_len(struct smw_crypto_aead_args *args)
 {
 	unsigned int plaintext_length = 0;
 
@@ -486,7 +525,7 @@ unsigned int smw_crypto_get_plaintext_len(struct smw_crypto_aead_args *args)
 	return plaintext_length;
 }
 
-unsigned char *smw_crypto_get_input(struct smw_crypto_aead_args *args)
+unsigned char *smw_crypto_get_aead_input(struct smw_crypto_aead_args *args)
 {
 	unsigned char *input = NULL;
 
@@ -520,7 +559,7 @@ unsigned char *smw_crypto_get_input(struct smw_crypto_aead_args *args)
 	return input;
 }
 
-unsigned int smw_crypto_get_input_len(struct smw_crypto_aead_args *args)
+unsigned int smw_crypto_get_aead_input_len(struct smw_crypto_aead_args *args)
 {
 	unsigned int input_length = 0;
 
@@ -555,7 +594,7 @@ unsigned int smw_crypto_get_input_len(struct smw_crypto_aead_args *args)
 	return input_length;
 }
 
-unsigned char *smw_crypto_get_output(struct smw_crypto_aead_args *args)
+unsigned char *smw_crypto_get_aead_output(struct smw_crypto_aead_args *args)
 {
 	unsigned char *output = NULL;
 
@@ -589,7 +628,7 @@ unsigned char *smw_crypto_get_output(struct smw_crypto_aead_args *args)
 	return output;
 }
 
-unsigned int smw_crypto_get_output_len(struct smw_crypto_aead_args *args)
+unsigned int smw_crypto_get_aead_output_len(struct smw_crypto_aead_args *args)
 {
 	unsigned int output_length = 0;
 
@@ -624,8 +663,8 @@ unsigned int smw_crypto_get_output_len(struct smw_crypto_aead_args *args)
 	return output_length;
 }
 
-void smw_crypto_set_output_len(struct smw_crypto_aead_args *args,
-			       unsigned int len)
+void smw_crypto_set_aead_output_len(struct smw_crypto_aead_args *args,
+				    unsigned int len)
 {
 	if (!args)
 		return;
@@ -655,7 +694,7 @@ void smw_crypto_set_output_len(struct smw_crypto_aead_args *args,
 	}
 }
 
-inline unsigned char *smw_crypto_get_tag(struct smw_crypto_aead_args *args)
+inline unsigned char *smw_crypto_get_aead_tag(struct smw_crypto_aead_args *args)
 {
 	if (args && args->tag)
 		return args->tag;
@@ -663,7 +702,7 @@ inline unsigned char *smw_crypto_get_tag(struct smw_crypto_aead_args *args)
 		return NULL;
 }
 
-bool smw_crypto_is_tag_field_set(struct smw_crypto_aead_args *args)
+bool smw_crypto_is_aead_tag_field_set(struct smw_crypto_aead_args *args)
 {
 	bool status = false;
 
@@ -691,7 +730,7 @@ bool smw_crypto_is_tag_field_set(struct smw_crypto_aead_args *args)
 	return status;
 }
 
-unsigned int smw_crypto_get_tag_len(struct smw_crypto_aead_args *args)
+unsigned int smw_crypto_get_aead_tag_len(struct smw_crypto_aead_args *args)
 {
 	unsigned int tag_length = 0;
 
@@ -737,7 +776,8 @@ unsigned int smw_crypto_get_tag_len(struct smw_crypto_aead_args *args)
 	return tag_length;
 }
 
-void smw_crypto_set_tag_len(struct smw_crypto_aead_args *args, unsigned int len)
+void smw_crypto_set_aead_tag_len(struct smw_crypto_aead_args *args,
+				 unsigned int len)
 {
 	if (!args)
 		return;
@@ -760,135 +800,95 @@ void smw_crypto_set_tag_len(struct smw_crypto_aead_args *args, unsigned int len)
 	}
 }
 
-inline void smw_crypto_set_output_iv_len(struct smw_crypto_aead_args *args,
-					 unsigned int len)
-{
-	if (args && args->oneshot_pub)
-		args->oneshot_pub->output_iv_length = len;
-}
-
-inline void smw_crypto_set_init_op_context(struct smw_crypto_aead_args *args,
-					   struct smw_op_context *op_context)
-{
-	if (!args)
-		return;
-
-	if (args->op_step == SMW_OP_STEP_ONESHOT && args->oneshot_pub &&
-	    args->oneshot_pub->init)
-		args->oneshot_pub->init->context = op_context;
-}
-
-inline void smw_crypto_set_data_op_context(struct smw_crypto_aead_args *args,
-					   struct smw_op_context *op_context)
-{
-	if (!args)
-		return;
-
-	if (args->op_step == SMW_OP_STEP_ONESHOT && args->oneshot_pub &&
-	    args->oneshot_pub->final && args->oneshot_pub->final->data)
-		args->oneshot_pub->final->data->context = op_context;
-}
-
-void smw_crypto_set_init_handle(struct smw_crypto_aead_args *args, void *handle)
+inline void smw_crypto_set_aead_output_iv_len(struct smw_crypto_aead_args *args,
+					      unsigned int len)
 {
 	if (!args)
 		return;
 
 	switch (args->op_step) {
 	case SMW_OP_STEP_ONESHOT:
-		if (args->oneshot_pub && args->oneshot_pub->init &&
-		    args->oneshot_pub->init->context)
-			args->oneshot_pub->init->context->handle = handle;
-
-		break;
-
-	case SMW_OP_STEP_INIT:
-		if (args->init_pub && args->init_pub->context)
-			args->init_pub->context->handle = handle;
-
-		break;
-
-	default:
-		break;
-	}
-}
-
-void *smw_crypto_get_aad_op_handle(struct smw_crypto_aead_args *args)
-{
-	void *handle = NULL;
-
-	if (!args)
-		return handle;
-
-	if (args->op_step == SMW_OP_STEP_UPDATE && args->aad_pub &&
-	    args->aad_pub->context)
-		handle = args->aad_pub->context->handle;
-
-	return handle;
-}
-
-void *smw_crypto_get_op_handle(struct smw_crypto_aead_args *args)
-{
-	void *handle = NULL;
-
-	if (!args)
-		return handle;
-
-	switch (args->op_step) {
-	case SMW_OP_STEP_ONESHOT:
-		if (args->oneshot_pub && args->oneshot_pub->final &&
-		    args->oneshot_pub->final->data &&
-		    args->oneshot_pub->final->data->context)
-			handle =
-				args->oneshot_pub->final->data->context->handle;
-
-		break;
-
-	case SMW_OP_STEP_UPDATE:
-		if (args->data_pub && args->data_pub->context)
-			handle = args->data_pub->context->handle;
+		if (args->oneshot_pub && args->oneshot_pub->final)
+			args->oneshot_pub->final->output_iv_length = len;
 
 		break;
 
 	case SMW_OP_STEP_FINAL:
-		if (args->final_pub && args->final_pub->data &&
-		    args->final_pub->data->context)
-			handle = args->final_pub->data->context->handle;
+		if (args->final_pub)
+			args->final_pub->output_iv_length = len;
 
 		break;
 
 	default:
 		break;
 	}
-
-	return handle;
 }
 
-inline void smw_crypto_set_ctx_reserved(struct smw_crypto_aead_args *args,
-					enum subsystem_id subsystem_id)
+struct smw_op_context *
+smw_crypto_get_aead_init_op_context(struct smw_crypto_aead_args *args)
 {
+	struct smw_op_context *ctx = NULL;
+
 	if (!args)
-		return;
+		return ctx;
 
 	switch (args->op_step) {
-	case SMW_OP_STEP_INIT:
-		if (args->init_pub && args->init_pub->context)
-			args->init_pub->context->reserved =
-				(void *)subsystem_id;
+	case SMW_OP_STEP_ONESHOT:
+		if (args->oneshot_pub && args->oneshot_pub->init)
+			ctx = args->oneshot_pub->init->context;
 
 		break;
 
-	case SMW_OP_STEP_ONESHOT:
-		if (args->oneshot_pub && args->oneshot_pub->init &&
-		    args->oneshot_pub->init->context)
-			args->oneshot_pub->init->context->reserved =
-				(void *)subsystem_id;
+	case SMW_OP_STEP_INIT:
+		if (args->init_pub)
+			ctx = args->init_pub->context;
 
 		break;
 
 	default:
 		break;
 	}
+
+	return ctx;
+}
+
+struct smw_op_context *
+smw_crypto_get_aead_data_op_context(struct smw_crypto_aead_args *args)
+{
+	struct smw_op_context *ctx = NULL;
+
+	if (!args)
+		return ctx;
+
+	switch (args->op_step) {
+	case SMW_OP_STEP_UPDATE:
+		if (args->data_pub)
+			ctx = args->data_pub->context;
+
+		break;
+
+	case SMW_OP_STEP_FINAL:
+		if (args->final_pub && args->final_pub->data)
+			ctx = args->final_pub->data->context;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return ctx;
+}
+
+inline struct smw_op_context *
+smw_crypto_get_aead_aad_op_context(struct smw_crypto_aead_args *args)
+{
+	void *ctx = NULL;
+
+	if (args && args->op_step == SMW_OP_STEP_UPDATE && args->aad_pub)
+		ctx = args->aad_pub->context;
+
+	return ctx;
 }
 
 enum smw_status_code smw_aead(struct smw_aead_args *args)
@@ -994,6 +994,12 @@ enum smw_status_code smw_aead_init(struct smw_aead_init_args *args)
 
 	status = smw_utils_execute_init(OPERATION_ID_AEAD_MULTI_PART,
 					&init_args, subsystem_id);
+	/*
+	 * Release the context if the init operation has returned any status
+	 * code except SMW_STATUS_OK and SMW_STATUS_INVALID_PARAM.
+	 */
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_INVALID_PARAM)
+		(void)smw_utils_free_context(&args->context);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1004,12 +1010,10 @@ enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_aead_args aead_args = { 0 };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->context || !args->context->handle || !args->data ||
-	    !args->data_length)
+	if (!args || !args->context || !args->data || !args->data_length)
 		goto end;
 
 	if (args->version != 0) {
@@ -1021,11 +1025,15 @@ enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args)
 
 	aead_args.aad_pub = args;
 
-	if (SET_OVERFLOW((uintptr_t)args->context->reserved, subsystem_id))
-		goto end;
-
 	status = smw_utils_execute_update_implicit(OPERATION_ID_AEAD_AAD,
-						   &aead_args, subsystem_id);
+						   &aead_args,
+						   args->context->subsystem_id);
+	/*
+	 * Release the context if the update AAD operation has returned any status
+	 * code except SMW_STATUS_OK and SMW_STATUS_INVALID_PARAM.
+	 */
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_INVALID_PARAM)
+		(void)smw_utils_free_context(&args->context);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1036,12 +1044,11 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_aead_args aead_args = { 0 };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->context || !args->context->handle || !args->input ||
-	    !args->input_length || (args->output && !args->output_length))
+	if (!args || !args->context || !args->input || !args->input_length ||
+	    (args->output && !args->output_length))
 		goto end;
 
 	if (args->version != 0) {
@@ -1052,11 +1059,9 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args)
 	aead_args.op_step = SMW_OP_STEP_UPDATE;
 	aead_args.data_pub = args;
 
-	if (SET_OVERFLOW((uintptr_t)args->context->reserved, subsystem_id))
-		goto end;
-
 	status = smw_utils_execute_update(OPERATION_ID_AEAD_MULTI_PART,
-					  &aead_args, subsystem_id);
+					  &aead_args,
+					  args->context->subsystem_id);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -1065,6 +1070,15 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args)
 	 */
 	if (status == SMW_STATUS_OUTPUT_TOO_SHORT && !args->output)
 		status = SMW_STATUS_OK;
+
+	/*
+	 * Release the context if the update operation has returned any status
+	 * code except SMW_STATUS_OK, SMW_STATUS_OUTPUT_TOO_SHORT and
+	 * SMW_STATUS_INVALID_PARAM.
+	 */
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_OUTPUT_TOO_SHORT &&
+	    status != SMW_STATUS_INVALID_PARAM)
+		(void)smw_utils_free_context(&args->context);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1075,12 +1089,10 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_aead_args aead_args = { 0 };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->data || !args->data->context ||
-	    !args->data->context->handle ||
 	    (args->data->input && !args->data->input_length) ||
 	    (args->data->output && !args->data->output_length) ||
 	    !args->tag_length)
@@ -1100,6 +1112,10 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 
 	aead_args.final_pub = args;
 
+	status = is_output_iv_set(&aead_args);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	status = get_tag_buffer(&aead_args);
 	/*
 	 * In order to fetch the required output length and tag length, the code
@@ -1109,12 +1125,18 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 	if (status == SMW_STATUS_INVALID_PARAM)
 		goto end;
 
-	if (SET_OVERFLOW((uintptr_t)args->data->context->reserved,
-			 subsystem_id))
-		goto end;
-
 	status = smw_utils_execute_final(OPERATION_ID_AEAD_MULTI_PART,
-					 &aead_args, subsystem_id);
+					 &aead_args,
+					 args->data->context->subsystem_id);
+
+	/*
+	 * Release the operation context if the final operation has returned any
+	 * status code except SMW_STATUS_OUTPUT_TOO_SHORT and
+	 * SMW_STATUS_INVALID_PARAM.
+	 */
+	if (status != SMW_STATUS_OUTPUT_TOO_SHORT &&
+	    status != SMW_STATUS_INVALID_PARAM)
+		smw_utils_free_context(&args->data->context);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the

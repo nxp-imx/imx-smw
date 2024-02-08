@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #ifndef __CIPHER_H__
@@ -109,16 +109,6 @@ unsigned int
 smw_crypto_get_cipher_output_len(struct smw_crypto_cipher_args *args);
 
 /**
- * smw_crypto_get_cipher_op_handle() - Get cipher operation handle
- * @args: Pointer to internal cipher arguments.
- *
- * Return:
- * cipher operation handle
- * NULL
- */
-void *smw_crypto_get_cipher_op_handle(struct smw_crypto_cipher_args *args);
-
-/**
  * smw_crypto_set_cipher_output_len() - Set cipher output buffer length
  * @args: Pointer to internal cipher arguments.
  * @len: Output buffer length value.
@@ -130,48 +120,24 @@ void smw_crypto_set_cipher_output_len(struct smw_crypto_cipher_args *args,
 				      unsigned int len);
 
 /**
- * smw_crypto_set_cipher_data_op_context() - Set cipher data context pointer
+ * smw_crypto_get_cipher_init_op_context() - Return cipher init op ctx pointer
  * @args: Pointer to internal cipher arguments.
- * @op_context: Pointer top SMW operation context structure.
  *
  * Return:
- * none
+ * Address of cipher init operation context structure
  */
-void smw_crypto_set_cipher_data_op_context(struct smw_crypto_cipher_args *args,
-					   struct smw_op_context *op_context);
+struct smw_op_context *
+smw_crypto_get_cipher_init_op_context(struct smw_crypto_cipher_args *args);
 
 /**
- * smw_crypto_set_cipher_init_op_context() - Set cipher init context pointer
+ * smw_crypto_get_cipher_data_op_context() - Return cipher data op ctx ptr
  * @args: Pointer to internal cipher arguments.
- * @op_context: Pointer top SMW operation context structure.
  *
  * Return:
- * none
+ * Address of cipher data operation context structure
  */
-void smw_crypto_set_cipher_init_op_context(struct smw_crypto_cipher_args *args,
-					   struct smw_op_context *op_context);
-
-/**
- * smw_crypto_set_cipher_ctx_reserved() - Set cipher context reserved field
- * @args: Pointer to internal cipher arguments.
- * @subsystem_id: Secure Subsystem ID.
- *
- * Return:
- * none
- */
-void smw_crypto_set_cipher_ctx_reserved(struct smw_crypto_cipher_args *args,
-					enum subsystem_id subsystem_id);
-
-/**
- * smw_crypto_set_cipher_init_handle() - Set cipher init handle
- * @args: Pointer to internal cipher arguments.
- * @handle: Pointer to handle.
- *
- * Return:
- * none
- */
-void smw_crypto_set_cipher_init_handle(struct smw_crypto_cipher_args *args,
-				       void *handle);
+struct smw_op_context *
+smw_crypto_get_cipher_data_op_context(struct smw_crypto_cipher_args *args);
 
 /**
  * smw_crypto_get_cipher_nb_key_buffer() - Get number of keys defined as buffer
@@ -189,7 +155,7 @@ smw_crypto_get_cipher_nb_key_buffer(struct smw_crypto_cipher_args *args);
  *
  * Return:
  * True is required,
- * Fals otherwise.
+ * False otherwise.
  */
 static inline bool
 smw_crypto_cipher_iv_required(enum smw_config_cipher_mode_id mode)

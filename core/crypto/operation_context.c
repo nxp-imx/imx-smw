@@ -9,119 +9,115 @@
 #include "debug.h"
 #include "utils.h"
 #include "operations.h"
-#include "subsystems.h"
 #include "config.h"
 #include "operation_context.h"
 
-enum smw_status_code smw_cancel_operation(struct smw_op_context *context)
+inline void smw_crypto_set_ctx_subsystem_id(struct smw_op_context *op_context,
+					    enum subsystem_id subsystem_id)
+{
+	if (op_context)
+		op_context->subsystem_id = subsystem_id;
+}
+
+void smw_crypto_copy_ctx_members(struct smw_op_context *dst_context,
+				 struct smw_op_context *src_context)
+{
+	dst_context->op_state = src_context->op_state;
+	dst_context->subsystem_id = src_context->subsystem_id;
+	dst_context->op_id = src_context->op_id;
+	dst_context->op_type_id = src_context->op_type_id;
+}
+
+enum smw_status_code smw_allocate_context(struct smw_context_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	struct smw_crypto_cancel_op_args args = { .ctx = context };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	struct subsystem_func *subsystem_func = NULL;
-	struct smw_crypto_context_ops *ops = NULL;
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!context || !context->handle)
+	if (!args)
 		goto end;
 
-	if (SET_OVERFLOW((uintptr_t)context->reserved, subsystem_id))
-		goto end;
-
-	if (subsystem_id >= SUBSYSTEM_ID_NB)
-		goto end;
-
-	subsystem_func = smw_config_get_subsystem_func(subsystem_id);
-	if (!subsystem_func || !subsystem_func->ctx_ops) {
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	if (args->version != 0) {
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
 
-	ops = subsystem_func->ctx_ops();
-
-	if (!ops || !ops->cancel) {
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	args->context = SMW_UTILS_CALLOC(1, sizeof(*args->context));
+	if (!args->context) {
+		status = SMW_STATUS_ALLOC_FAILURE;
 		goto end;
 	}
 
-	status = ops->cancel(&args);
-
-	if (status == SMW_STATUS_OK) {
-		context->handle = NULL;
-		context->reserved = NULL;
+	status = smw_config_get_subsystem_id(args->subsystem_name,
+					     &args->context->subsystem_id);
+	if (status != SMW_STATUS_OK) {
+		SMW_UTILS_FREE(args->context);
+		args->context = NULL;
+		goto end;
 	}
+
+	status = SMW_STATUS_OK;
+	args->context->op_state = CTX_OP_STATE_ALLOC;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-enum smw_status_code smw_copy_context(struct smw_op_context *dst,
-				      struct smw_op_context *src)
+enum smw_status_code smw_cancel_operation(struct smw_context_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
-	struct smw_crypto_copy_ctx_args args = { .src = src, .dst = dst };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	struct subsystem_func *subsystem_func = NULL;
-	struct smw_crypto_context_ops *ops = NULL;
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!src || !src->handle || !dst)
+	if (!args || !args->context)
 		goto end;
 
-	if (SET_OVERFLOW((uintptr_t)src->reserved, subsystem_id))
-		goto end;
-
-	if (subsystem_id >= SUBSYSTEM_ID_NB)
-		goto end;
-
-	subsystem_func = smw_config_get_subsystem_func(subsystem_id);
-	if (!subsystem_func || !subsystem_func->ctx_ops) {
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	if (args->version != 0) {
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
 
-	ops = subsystem_func->ctx_ops();
-
-	if (!ops || !ops->copy) {
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-		goto end;
-	}
-
-	status = ops->copy(&args);
-
-	if (status == SMW_STATUS_OK)
-		dst->reserved = src->reserved;
+	status = smw_utils_cancel_operation(&args->context);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-inline void *
-smw_crypto_get_cancel_handle(struct smw_crypto_cancel_op_args *args)
+enum smw_status_code smw_copy_context(struct smw_copy_context_args *args)
 {
-	if (args && args->ctx)
-		return args->ctx->handle;
+	int status = SMW_STATUS_INVALID_PARAM;
 
-	return NULL;
-}
+	struct subsystem_func *subsystem_func = NULL;
+	struct smw_crypto_context_ops *ops = NULL;
 
-inline void *
-smw_crypto_get_copy_src_handle(struct smw_crypto_copy_ctx_args *args)
-{
-	if (args && args->src)
-		return args->src->handle;
+	SMW_DBG_TRACE_API_CALL;
 
-	return NULL;
-}
+	if (!args || !args->src_context || !args->dst_context)
+		goto end;
 
-inline void
-smw_crypto_set_copy_dst_handle(struct smw_crypto_copy_ctx_args *args,
-			       void *handle)
-{
-	if (args && args->dst)
-		args->dst->handle = handle;
+	if (args->version != 0) {
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	subsystem_func =
+		smw_config_get_subsystem_func(args->src_context->subsystem_id);
+	if (!subsystem_func || !subsystem_func->ctx_ops) {
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	ops = subsystem_func->ctx_ops();
+	if (!ops) {
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
+	}
+
+	status = ops->copy(args->src_context, args->dst_context);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }

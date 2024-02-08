@@ -15,6 +15,7 @@ target_sources(utils PRIVATE
                name.c
                object_db.c
                object.c
+               operation_context.c
                tlv.c)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)

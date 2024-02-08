@@ -198,6 +198,119 @@ static int is_iv_set(struct smw_crypto_cipher_args *args)
 	return SMW_STATUS_OK;
 }
 
+inline unsigned char *
+smw_crypto_get_cipher_iv(struct smw_crypto_cipher_args *args)
+{
+	if (args && args->init_pub)
+		return args->init_pub->iv;
+
+	return NULL;
+}
+
+inline unsigned int
+smw_crypto_get_cipher_iv_len(struct smw_crypto_cipher_args *args)
+{
+	if (args && args->init_pub)
+		return args->init_pub->iv_length;
+
+	return 0;
+}
+
+inline uint32_t
+smw_crypto_get_cipher_key_id(struct smw_crypto_cipher_args *args,
+			     unsigned int idx)
+{
+	if (args && idx < args->nb_keys && args->keys_desc[idx])
+		return args->keys_desc[idx]->identifier.id;
+
+	return 0;
+}
+
+inline unsigned char *
+smw_crypto_get_cipher_input(struct smw_crypto_cipher_args *args)
+{
+	if (args && args->data_pub)
+		return args->data_pub->input;
+
+	return NULL;
+}
+
+inline unsigned int
+smw_crypto_get_cipher_input_len(struct smw_crypto_cipher_args *args)
+{
+	if (args && args->data_pub)
+		return args->data_pub->input_length;
+
+	return 0;
+}
+
+inline unsigned char *
+smw_crypto_get_cipher_output(struct smw_crypto_cipher_args *args)
+{
+	if (args && args->data_pub)
+		return args->data_pub->output;
+
+	return NULL;
+}
+
+inline unsigned int
+smw_crypto_get_cipher_output_len(struct smw_crypto_cipher_args *args)
+{
+	if (args && args->data_pub)
+		return args->data_pub->output_length;
+
+	return 0;
+}
+
+inline void
+smw_crypto_set_cipher_output_len(struct smw_crypto_cipher_args *args,
+				 unsigned int len)
+{
+	if (args && args->data_pub)
+		args->data_pub->output_length = len;
+}
+
+inline struct smw_op_context *
+smw_crypto_get_cipher_init_op_context(struct smw_crypto_cipher_args *args)
+{
+	struct smw_op_context *ctx = NULL;
+
+	if (args && args->init_pub)
+		ctx = args->init_pub->context;
+
+	return ctx;
+}
+
+inline struct smw_op_context *
+smw_crypto_get_cipher_data_op_context(struct smw_crypto_cipher_args *args)
+{
+	struct smw_op_context *ctx = NULL;
+
+	if (args && args->data_pub)
+		ctx = args->data_pub->context;
+
+	return ctx;
+}
+
+unsigned int
+smw_crypto_get_cipher_nb_key_buffer(struct smw_crypto_cipher_args *args)
+{
+	unsigned int i = 0;
+	unsigned int nb_buffers = 0;
+
+	/* Key is defined as buffer if ID is not set and buffer set */
+	for (; i < args->nb_keys; i++) {
+		if (args->keys_desc[i] && !args->keys_desc[i]->identifier.id &&
+		    smw_keymgr_get_private_data(args->keys_desc[i]))
+			if (INC_OVERFLOW(nb_buffers, 1)) {
+				nb_buffers = 0;
+				break;
+			}
+	}
+
+	return nb_buffers;
+}
+
 enum smw_status_code smw_cipher(struct smw_cipher_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -241,7 +354,7 @@ enum smw_status_code smw_cipher(struct smw_cipher_args *args)
 		status = SMW_STATUS_OK;
 
 end:
-	/* Free keys decriptor allocated in convert_init_args() */
+	/* Free keys descriptor allocated in convert_init_args() */
 	if (cipher_args.keys_desc)
 		smw_keymgr_free_keys_ptr_array(cipher_args.keys_desc,
 					       cipher_args.nb_keys);
@@ -277,9 +390,15 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args)
 
 	status = smw_utils_execute_init(OPERATION_ID_CIPHER_MULTI_PART,
 					&init_args, subsystem_id);
+	/*
+	 * Release the context if the init operation has returned any status
+	 * code except SMW_STATUS_OK and SMW_STATUS_INVALID_PARAM.
+	 */
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_INVALID_PARAM)
+		smw_utils_free_context(&args->context);
 
 end:
-	/* Free keys decriptor allocated in convert_init_args() */
+	/* Free keys descriptor allocated in convert_init_args() */
 	if (init_args.keys_desc)
 		smw_keymgr_free_keys_ptr_array(init_args.keys_desc,
 					       init_args.nb_keys);
@@ -292,12 +411,11 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args update_args = { 0 };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->context || !args->context->handle || !args->input ||
-	    !args->input_length || (args->output && !args->output_length))
+	if (!args || !args->context || !args->input || !args->input_length ||
+	    (args->output && !args->output_length))
 		goto end;
 
 	if (args->version != 0) {
@@ -308,11 +426,18 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 	update_args.op_step = SMW_OP_STEP_UPDATE;
 	update_args.data_pub = args;
 
-	if (SET_OVERFLOW((uintptr_t)args->context->reserved, subsystem_id))
-		goto end;
-
 	status = smw_utils_execute_update(OPERATION_ID_CIPHER_MULTI_PART,
-					  &update_args, subsystem_id);
+					  &update_args,
+					  args->context->subsystem_id);
+
+	/*
+	 * Release the operation context if the final operation has returned any
+	 * status code except SMW_STATUS_OK, SMW_STATUS_OUTPUT_TOO_SHORT and
+	 * SMW_STATUS_INVALID_PARAM.
+	 */
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_OUTPUT_TOO_SHORT &&
+	    status != SMW_STATUS_INVALID_PARAM)
+		smw_utils_free_context(&args->context);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -331,12 +456,10 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_cipher_args final_args = { 0 };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->context || !args->context->handle ||
-	    (args->input && !args->input_length) ||
+	if (!args || !args->context || (args->input && !args->input_length) ||
 	    (args->output && !args->output_length))
 		goto end;
 
@@ -348,11 +471,17 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 	final_args.op_step = SMW_OP_STEP_FINAL;
 	final_args.data_pub = args;
 
-	if (SET_OVERFLOW((uintptr_t)args->context->reserved, subsystem_id))
-		goto end;
-
 	status = smw_utils_execute_final(OPERATION_ID_CIPHER_MULTI_PART,
-					 &final_args, subsystem_id);
+					 &final_args,
+					 args->context->subsystem_id);
+
+	/*
+	 * Release the context if the final operation has returned any status code
+	 * except SMW_STATUS_OUTPUT_TOO_SHORT or SMW_STATUS_INVALID_PARAM.
+	 */
+	if (status != SMW_STATUS_OUTPUT_TOO_SHORT &&
+	    status != SMW_STATUS_INVALID_PARAM)
+		smw_utils_free_context(&args->context);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -365,136 +494,4 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
-}
-
-inline unsigned char *
-smw_crypto_get_cipher_iv(struct smw_crypto_cipher_args *args)
-{
-	if (args && args->init_pub)
-		return args->init_pub->iv;
-
-	return NULL;
-}
-
-inline unsigned int
-smw_crypto_get_cipher_iv_len(struct smw_crypto_cipher_args *args)
-{
-	if (args && args->init_pub)
-		return args->init_pub->iv_length;
-
-	return 0;
-}
-
-inline uint32_t
-smw_crypto_get_cipher_key_id(struct smw_crypto_cipher_args *args,
-			     unsigned int idx)
-{
-	if (args)
-		return args->keys_desc[idx]->identifier.id;
-
-	return 0;
-}
-
-inline unsigned char *
-smw_crypto_get_cipher_input(struct smw_crypto_cipher_args *args)
-{
-	if (args && args->data_pub)
-		return args->data_pub->input;
-
-	return NULL;
-}
-
-inline unsigned int
-smw_crypto_get_cipher_input_len(struct smw_crypto_cipher_args *args)
-{
-	if (args && args->data_pub)
-		return args->data_pub->input_length;
-
-	return 0;
-}
-
-inline unsigned char *
-smw_crypto_get_cipher_output(struct smw_crypto_cipher_args *args)
-{
-	if (args && args->data_pub)
-		return args->data_pub->output;
-
-	return NULL;
-}
-
-inline unsigned int
-smw_crypto_get_cipher_output_len(struct smw_crypto_cipher_args *args)
-{
-	if (args && args->data_pub)
-		return args->data_pub->output_length;
-
-	return 0;
-}
-
-inline void *
-smw_crypto_get_cipher_op_handle(struct smw_crypto_cipher_args *args)
-{
-	if (args && args->data_pub && args->data_pub->context)
-		return args->data_pub->context->handle;
-
-	return NULL;
-}
-
-inline void
-smw_crypto_set_cipher_output_len(struct smw_crypto_cipher_args *args,
-				 unsigned int len)
-{
-	if (args && args->data_pub)
-		args->data_pub->output_length = len;
-}
-
-inline void
-smw_crypto_set_cipher_data_op_context(struct smw_crypto_cipher_args *args,
-				      struct smw_op_context *op_context)
-{
-	if (args && args->data_pub)
-		args->data_pub->context = op_context;
-}
-
-inline void
-smw_crypto_set_cipher_init_op_context(struct smw_crypto_cipher_args *args,
-				      struct smw_op_context *op_context)
-{
-	if (args && args->init_pub)
-		args->init_pub->context = op_context;
-}
-
-inline void
-smw_crypto_set_cipher_ctx_reserved(struct smw_crypto_cipher_args *args,
-				   enum subsystem_id subsystem_id)
-{
-	if (args && args->init_pub && args->init_pub->context)
-		args->init_pub->context->reserved = (void *)subsystem_id;
-}
-
-inline void
-smw_crypto_set_cipher_init_handle(struct smw_crypto_cipher_args *args,
-				  void *handle)
-{
-	if (args && args->init_pub && args->init_pub->context)
-		args->init_pub->context->handle = handle;
-}
-
-unsigned int
-smw_crypto_get_cipher_nb_key_buffer(struct smw_crypto_cipher_args *args)
-{
-	unsigned int i = 0;
-	unsigned int nb_buffers = 0;
-
-	/* Key is defined as buffer if ID is not set and buffer set */
-	for (; i < args->nb_keys; i++) {
-		if (!args->keys_desc[i]->identifier.id &&
-		    smw_keymgr_get_private_data(args->keys_desc[i]))
-			if (INC_OVERFLOW(nb_buffers, 1)) {
-				nb_buffers = 0;
-				break;
-			}
-	}
-
-	return nb_buffers;
 }

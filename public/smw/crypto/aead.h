@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #ifndef __SMW_AEAD_H__
@@ -21,7 +21,13 @@
  * @aad_length: Additional authentication data length in bytes
  * @tag_length: Tag buffer length in bytes
  * @plaintext_length: Length in bytes of the data to encrypt
- * @context: Pointer to operation context. See &struct smw_op_context
+ * @context: Pointer to an opaque operation context structure
+ *
+ * If subsystem offers the capability to generate partial or complete IV,
+ * the user can set the input @init->iv_length to 0 (requesting full generated
+ * IV) or to 4 (requesting partial generated IV). Otherwise, if @init->iv_length
+ * is set to 12 bytes or greater, the subsystem will use the user supplied IV.
+ *
  */
 struct smw_aead_init_args {
 	/* Inputs */
@@ -42,7 +48,7 @@ struct smw_aead_init_args {
 /**
  * struct smw_aead_data_args - AEAD data arguments
  * @version: Version of this structure
- * @context: Pointer to operation context. See &struct smw_op_context
+ * @context: Pointer to an opaque operation context structure
  * @input: Pointer to input data buffer to be encrypted or decrypted
  * @input_length: Input data buffer length in bytes
  * @output: Pointer to output buffer
@@ -64,7 +70,7 @@ struct smw_aead_data_args {
  * @version: Version of this structure
  * @data: Pointer to additional authentication data
  * @data_length: AAD length in bytes
- * @context: Pointer to operation context. See &struct smw_op_context
+ * @context: Pointer to an opaque operation context structure
  */
 struct smw_aead_aad_args {
 	/* Inputs */
@@ -81,6 +87,16 @@ struct smw_aead_aad_args {
  * @operation_name: AEAD operation name. See &typedef smw_aead_operation_t
  * @tag: Pointer to tag buffer
  * @tag_length: Tag buffer length in bytes
+ * @output_iv_length: Length of output IV buffer
+ * @output_iv: Pointer to output IV buffer
+ *
+ * @output_iv buffer should be allocated by the caller application for
+ * encryption operation.
+ * Upon successful encryption operation, @output_iv will contain the IV
+ * used by subsystem during operation.
+ *
+ * Fields @output_iv_length and @output_iv are ignored for decryption operation.
+ *
  */
 struct smw_aead_final_args {
 	/* Inputs */
@@ -90,6 +106,9 @@ struct smw_aead_final_args {
 	/* Input output */
 	unsigned char *tag;
 	unsigned int tag_length;
+	unsigned int output_iv_length;
+	/* Output */
+	unsigned char *output_iv;
 };
 
 /**
@@ -98,21 +117,10 @@ struct smw_aead_final_args {
  * @aad: Pointer to AAD arguments. See &struct smw_aead_aad_args
  * @init: Pointer to initialization arguments. See &struct smw_aead_init_args
  * @final: Pointer to final arguments. See &struct smw_aead_final_args
- * @output_iv_length: Length of output IV buffer
- * @output_iv: Pointer to output IV buffer
  *
  * Field @context present in @init, @aad and @final is ignored.
  * Field @operation_name present in @final is ignored.
  *
- * Upon successful encryption operation, @output_iv will contain the IV
- * used by subsystem during operation.
- * If subsystem offers the capability to generate partial or complete IV,
- * the user can set the input @init->iv_length to 0 (requesting full generated
- * IV) or to 4 (requesting partial generated IV)
- * Otherwise, if @init->iv_length is set to 12 bytes or greater, the @output_iv
- * will contain the IV supplied by the user.
- *
- * Fields @output_iv_length and @output_iv are ignored for decryption operation.
  */
 struct smw_aead_args {
 	/* Input */
@@ -121,9 +129,6 @@ struct smw_aead_args {
 	/* Input output */
 	struct smw_aead_init_args *init;
 	struct smw_aead_final_args *final;
-	unsigned int output_iv_length;
-	/* Output */
-	unsigned char *output_iv;
 };
 
 /**
@@ -151,8 +156,8 @@ struct smw_aead_args {
  * If @args->final->data->output is a NULL pointer, then the function updates
  * @args->final->data->output_length field and returns error code SMW_STATUS_OK.
  * Additionally, if the operation is encryption, the tag length
- * @args->final->tag_length and output IV length @args->output_iv_length are
- * updated with generated tag value length and IV length, respectively.
+ * @args->final->tag_length and output IV length @args->final->output_iv_length
+ * are updated with generated tag value length and IV length, respectively.
  *
  * On operation completion, the @args->final->data->output_length is updated to
  * the correct value when:
@@ -162,7 +167,8 @@ struct smw_aead_args {
  *    returns SMW_STATUS_OUTPUT_TOO_SHORT.
  *  - In the above mentioned two scenarios, if the operation is encryption, the
  *    function also updates the required tag buffer length
- *    @args->final->tag_length and output IV length @args->output_iv_length.
+ *    @args->final->tag_length and output IV length
+ *    @args->final->output_iv_length.
  *
  * If @args->final->data->output is not a NULL pointer, then
  *
@@ -175,9 +181,9 @@ struct smw_aead_args {
  *  - For decryption operation, @args->final->data->output should be
  *    sufficiently large to accommodate the plaintext.
  *
- * If the IV is generated fully or partially by the subsystem, @args->output_iv
- * will hold the IV generated by subsystem.
- * If the IV is supplied fully by the user, @args->output_iv will hold IV
+ * If the IV is generated fully or partially by the subsystem,
+ * @args->final->output_iv will hold the IV generated by subsystem.
+ * If the IV is supplied fully by the user, @args->final->output_iv will hold IV
  * supplied by he user.
  *
  * Return:
@@ -193,6 +199,12 @@ enum smw_status_code smw_aead(struct smw_aead_args *args);
  *
  * This function initializes AEAD multi-part encryption or decryption
  * operation.
+ *
+ * The operation context must be allocated using smw_allocate_context() API
+ * prior to invoking this API.
+ *
+ * If the returned error code is SMW_STATUS_OK or SMW_STATUS_INVALID_PARAM, the
+ * operation is not terminated and the context remains valid.
  *
  * Key used can be defined either as a buffer or as a key ID.
  *
@@ -211,6 +223,10 @@ enum smw_status_code smw_aead_init(struct smw_aead_init_args *args);
  * (to encrypt or to decrypt) step is not called.
  *
  * The context used must be initialized by the AEAD multi-part initialization.
+ *
+ * If the returned error code is SMW_STATUS_OK, SMW_STATUS_INVALID_PARAM or
+ * SMW_STATUS_VERSION_NOT_SUPPORTED, the operation is not terminated, and the
+ * context remains valid.
  *
  * Return:
  * See &enum smw_status_code
@@ -299,6 +315,11 @@ enum smw_status_code smw_aead_update(struct smw_aead_data_args *args);
  *    ciphertext.
  *  - For decryption operation, @args->data->output should be sufficiently large
  *    to accommodate the plaintext.
+ *
+ * If the IV is generated fully or partially by the subsystem, @args->output_iv
+ * will hold the IV generated by subsystem.
+ * If the IV is supplied fully by the user, @args->output_iv will hold IV
+ * supplied by he user.
  *
  * If the returned error code is SMW_STATUS_INVALID_PARAM,
  * SMW_STATUS_VERSION_NOT_SUPPORTED or SMW_STATUS_OUTPUT_TOO_SHORT the operation

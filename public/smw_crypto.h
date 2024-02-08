@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __SMW_CRYPTO_H__
@@ -9,6 +9,7 @@
 #include "smw_status.h"
 #include "smw_strings.h"
 #include "smw/crypto/aead.h"
+#include "smw/crypto/op_context.h"
 
 /* Default TLS 1.2 verify data length for Finished message */
 #define TLS12_MAC_FINISH_DEFAULT_LEN 12
@@ -120,20 +121,6 @@ struct smw_rng_args {
 };
 
 /**
- * struct smw_op_context - SMW cryptographic operation context
- * @handle: Pointer to operation handle
- * @reserved: Reserved data
- *
- * Parameters @handle and @reserved are set by SMW. They must not be modified by
- * the application
- */
-struct smw_op_context {
-	/* Outputs */
-	void *handle;
-	void *reserved;
-};
-
-/**
  * struct smw_cipher_init_args - Cipher multi-part initialization arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
@@ -144,7 +131,7 @@ struct smw_op_context {
  * @operation_name: Cipher operation name. See &typedef smw_cipher_operation_t
  * @iv: Pointer to initialization vector
  * @iv_length: @iv length in bytes
- * @context: Pointer to operation context. See &struct smw_op_context
+ * @context: Pointer to an opaque operation context structure
  *
  * Switch @mode, @iv is optional and represents:
  *	- Initialization Vector (CBC, CTS)
@@ -168,7 +155,7 @@ struct smw_cipher_init_args {
 /**
  * struct smw_cipher_data_args - Cipher data arguments
  * @version: Version of this structure
- * @context: Pointer to operation context. See &struct smw_op_context
+ * @context: Pointer to an opaque operation context structure
  * @input: Input data buffer
  * @input_length: @input length in bytes
  * @output: Output data buffer
@@ -229,7 +216,7 @@ enum smw_status_code smw_sign(struct smw_sign_verify_args *args);
  * smw_verify() - Verify a signature.
  * @args: Pointer to the structure that contains the Verify arguments.
  *
- * This function verifies a sigature.
+ * This function verifies a signature.
  *
  * Return:
  * See &enum smw_status_code
@@ -265,7 +252,7 @@ enum smw_status_code smw_rng(struct smw_rng_args *args);
  *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
  *
  * Keys used can be defined as buffer and as key ID.
- * All key types must be identical and must be linked to the same subystem.
+ * All key types must be identical and must be linked to the same subsystem.
  * If at least one key ID is set, subsystem name field of @args is optional. If
  * set it must be coherent with the key ID.
  *
@@ -282,13 +269,15 @@ enum smw_status_code smw_cipher(struct smw_cipher_args *args);
  *
  * This function executes a cipher multi-part encryption or decryption
  * initialization.
+ * The operation context must be allocated using smw_allocate_context() API
+ * prior to invoking this API.
+ * If the returned error code is SMW_STATUS_OK or SMW_STATUS_INVALID_PARAM, the
+ * operation is not terminated and the context remains valid.
  *
  * Keys used can be defined as buffer and as key ID.
- * All key types must be identical and must be linked to the same subystem.
+ * All key types must be identical and must be linked to the same subsystem.
  * If at least one key ID is set, subsystem name field of @args is optional. If
  * set it must be coherent with the key ID.
- *
- * Context structure presents in @args must be allocated by the application.
  *
  * Return:
  * See &enum smw_status_code
@@ -380,33 +369,5 @@ enum smw_status_code smw_mac(struct smw_mac_args *args);
  *	- Common return codes
  */
 enum smw_status_code smw_mac_verify(struct smw_mac_args *args);
-
-/**
- * smw_cancel_operation() - Cancel on-going cryptographic multi-part operation
- * @args: Pointer to operation context.
- *
- * If function succeeds, @args handle field is set to NULL.
- *
- * Return:
- * See &enum smw_status_code
- *	- Common return codes
- */
-enum smw_status_code smw_cancel_operation(struct smw_op_context *args);
-
-/**
- * smw_copy_context() - Copy an operation context
- * @dst: Pointer to destination operation context.
- * @src: Pointer to source operation context.
- *
- * This function copies an initialized or updated source context to a new
- * created destination context.
- * Parameter @dst must be allocated by caller.
- *
- * Return:
- * See &enum smw_status_code
- *	- Common return codes
- */
-enum smw_status_code smw_copy_context(struct smw_op_context *dst,
-				      struct smw_op_context *src);
 
 #endif /* __SMW_CRYPTO_H__ */

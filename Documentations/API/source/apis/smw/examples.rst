@@ -42,8 +42,11 @@ Example 1: AEAD one-shot encryption operation
         data_args.input = input;
         data_args.output_length = CIPHER_LEN + TAG_LEN;
         data_args.output = output;
-        final_args->data = &data_args;
-        final_args->tag_length = TAG_LEN;
+
+        final_args.data = &data_args;
+        final_args.tag_length = TAG_LEN;
+        final_args.output_iv_length = IV_LEN;
+        final_args.output_iv = output_iv;
 
         aad_args.data = aad;
         aad_args.data_length = AAD_LEN;
@@ -52,8 +55,6 @@ Example 1: AEAD one-shot encryption operation
         args.init = &init_args;
         args.final = &final_args;
         args.aad = &aad_args;
-        args.output_iv_length = IV_LEN;
-        args.output_iv = output_iv;
 
         res = smw_aead(&args);
         return res;
@@ -98,9 +99,12 @@ Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
         data_args.input = input;
         data_args.output_length = CIPHER_LEN;
         data_args.output = output;
-        final_args->data = &data_args;
-        final_args->tag_length = TAG_LEN;
-        final_args->tag = tag;
+
+        final_args.data = &data_args;
+        final_args.tag_length = TAG_LEN;
+        final_args.tag = tag;
+        final_args.output_iv_length = IV_LEN;
+        final_args.output_iv = output_iv;
 
         aad_args.data = aad;
         aad_args.data_length = AAD_LEN;
@@ -109,8 +113,6 @@ Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
         args.init = &init_args;
         args.final = &final_args;
         args.aad = &aad_args;
-        args.output_iv_length = IV_LEN;
-        args.output_iv = output_iv;
 
         res = smw_aead(&args);
         return res;
@@ -154,9 +156,10 @@ Example 3: AEAD one-shot decryption operation (Tag stored in tag field)
         data_args.input = input;
         data_args.output_length = DATA_LEN;
         data_args.output = output;
-        final_args->data = &data_args;
-        final_args->tag_length = TAG_LEN;
-        final_args->tag = tag;
+
+        final_args.data = &data_args;
+        final_args.tag_length = TAG_LEN;
+        final_args.tag = tag;
 
         aad_args.data = aad;
         aad_args.data_length = AAD_LEN;
@@ -196,7 +199,7 @@ Example 4: AEAD multi-part encryption operation
         struct smw_aead_final_args final_args = {0};
         struct smw_aead_init_args init_args = {0};
         struct smw_key_descriptor key_desc = {0};
-        struct smw_op_context *op_ctx = 0;
+        struct smw_context_args op_ctx = {0};
 
         init_args.subsystem_name = "TEE";
         init_args.operation_name = "ENCRYPT";
@@ -207,9 +210,12 @@ Example 4: AEAD multi-part encryption operation
         init_args.iv = iv;
         init.args.iv_length = IV_LEN;
 
-        // Allocate memory to pointer to operation context
-        op_ctx = calloc(1, sizeof(*op_ctx));
-        init_args.context = op_ctx;
+        // Allocate memory to operation context
+        res = smw_allocate_context(&op_ctx);
+        if (res != SMW_STATUS_OK)
+            goto exit;
+
+        init_args.context = op_ctx.context;
         init_args.key_desc = &key_desc;
 
         // Initialize multi-part AEAD operation
@@ -225,7 +231,7 @@ Example 4: AEAD multi-part encryption operation
         if (res != SMW_STATUS_OK)
             goto exit;
 
-        /**
+        /*
          * Encrypt 1st message fragment in an active
          * multi-part AEAD encryption operation.
          */
@@ -238,7 +244,7 @@ Example 4: AEAD multi-part encryption operation
         if (res != SMW_STATUS_OK)
             goto exit;
 
-        /**
+        /*
          * Encrypt 2nd message fragment in an active
          * multi-part AEAD encryption operation.
          */
@@ -251,7 +257,7 @@ Example 4: AEAD multi-part encryption operation
         if (res != SMW_STATUS_OK)
             goto exit;
 
-        /**
+        /*
          * Finish encrypting the message in an active
          * multi-part AEAD operation.
          */
@@ -262,14 +268,12 @@ Example 4: AEAD multi-part encryption operation
         final_args.data->output = &output[32];
         final_args.data->output_length = TAG_LEN;
         final_args.tag_length = TAG_LEN;
+        final_args.output_iv_length = IV_LEN;
+        final_args.output_iv = output_iv;
+
         res = smw_aead_final(&final_args);
-        if (res != SMW_STATUS_OK)
-            goto exit;
 
-        exit:
-        if (op_ctx)
-            free(op_ctx);
-
+    exit:
         return res;
     }
 
@@ -299,7 +303,7 @@ Example 5: AEAD multi-part decryption operation
         struct smw_aead_final_args final_args = {0};
         struct smw_aead_init_args init_args = {0};
         struct smw_key_descriptor key_desc = {0};
-        struct smw_op_context *op_ctx = 0;
+        struct smw_context_args op_ctx = {0};
 
         init_args.subsystem_name = "TEE";
         init_args.operation_name = "DECRYPT";
@@ -310,9 +314,12 @@ Example 5: AEAD multi-part decryption operation
         init_args.iv = iv;
         init.args.iv_length = IV_LEN;
 
-        // Allocate memory to pointer to operation context
-        op_ctx = calloc(1, sizeof(*op_ctx));
-        init_args.context = op_ctx;
+        // Allocate memory to operation context
+        res = smw_allocate_context(&op_ctx);
+        if (res != SMW_STATUS_OK)
+            goto exit;
+
+        init_args.context = op_ctx.context;
         init_args.key_desc = &key_desc;
 
         // Initialize multi-part AEAD operation
@@ -328,7 +335,7 @@ Example 5: AEAD multi-part decryption operation
         if (res != SMW_STATUS_OK)
             goto exit;
 
-        /**
+        /*
          * Decrypt 1st message fragment in an active
          * multi-part AEAD decryption operation.
          */
@@ -341,7 +348,7 @@ Example 5: AEAD multi-part decryption operation
         if (res != SMW_STATUS_OK)
             goto exit;
 
-        /**
+        /*
          * Decrypt 2nd message fragment in an active
          * multi-part AEAD decryption operation.
          */
@@ -354,7 +361,7 @@ Example 5: AEAD multi-part decryption operation
         if (res != SMW_STATUS_OK)
             goto exit;
 
-        /**
+        /*
          * Finish authenticating and decrypting the message
          * in an active multi-part AEAD operation.
          */
@@ -367,12 +374,7 @@ Example 5: AEAD multi-part decryption operation
         final_args.data->output_length = 0;
         final_args.tag_length = TAG_LEN;
         res = smw_aead_final(&final_args);
-        if (res != SMW_STATUS_OK)
-            goto exit;
 
-        exit:
-        if (op_ctx)
-            free(op_ctx);
-
+exit:
         return res;
     }

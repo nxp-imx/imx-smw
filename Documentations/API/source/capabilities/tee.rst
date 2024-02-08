@@ -240,6 +240,7 @@ Operation context
 ^^^^^^^^^^^^^^^^^
 
 Operations supported:
+ - Allocate
  - Cancel
  - Copy
 

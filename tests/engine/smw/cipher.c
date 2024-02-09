@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <string.h>
@@ -32,7 +32,7 @@
  *
  * Return:
  * PASSED		- Success.
- * -BAD_PARAM_TYPE	- Test error is not suuported.
+ * -BAD_PARAM_TYPE	- Test error is not supported.
  * -BAD_ARGS		- One of the argument is bad.
  */
 static int cipher_bad_params(struct json_object *params,
@@ -82,22 +82,11 @@ static int cipher_bad_params(struct json_object *params,
 		break;
 
 	case CTX_NULL:
-		if (step == INIT) {
-			if ((*init)->context)
-				free((*init)->context);
-
+		if (step == INIT)
 			(*init)->context = NULL;
-		} else if (step == UPDATE || step == FINAL) {
+		else if (step == UPDATE || step == FINAL)
 			(*data)->context = NULL;
-		}
 
-		break;
-
-	case CTX_HANDLE_NULL:
-		if (data && (*data) && (*data)->context)
-			(*data)->context->handle = NULL;
-		else
-			ret = ERR_CODE(BAD_ARGS);
 		break;
 
 	default:
@@ -114,8 +103,8 @@ static int cipher_bad_params(struct json_object *params,
  * @cipher_args: SMW cipher update arguments
  * @ctx_id: Local context ID
  *
- * If 'save_output' JSON parameter is set to 1, output data from a cipher update
- * operation is saved in the cipher output data linked list.
+ * If 'save_output' JSON parameter is set to true, output data from a cipher
+ * update operation is saved in the cipher output data linked list.
  *
  * Return:
  * PASSED		- Success
@@ -127,9 +116,9 @@ static int cipher_update_save_out_data(struct subtest_data *subtest,
 				       unsigned int ctx_id)
 {
 	int res = ERR_CODE(PASSED);
-	int save_flag = 0;
+	bool save_flag = false;
 
-	res = util_read_json_type(&save_flag, SAVE_OUT_OBJ, t_int,
+	res = util_read_json_type(&save_flag, SAVE_OUT_OBJ, t_boolean,
 				  subtest->params);
 	if (res == ERR_CODE(VALUE_NOTFOUND))
 		res = ERR_CODE(PASSED);
@@ -259,48 +248,6 @@ static int set_output_params(struct subtest_data *subtest,
 	return ERR_CODE(PASSED);
 }
 
-/**
- * set_op_context() - Set operation context
- * @params: JSON Cipher parameters
- * @cmn_params: Operation common parameters
- * @ctx_id: Pointer to context ID
- * @args: Pointer to SMW cipher data API arguments
- * @api_ctx: Pointer to API operation context structure
- *
- * Return:
- * PASSED		- Success
- * -MISSING_PARAMS	- Context ID json parameter is missing
- * Error code from util_context_find_node
- */
-static int set_op_context(struct subtest_data *subtest, unsigned int *ctx_id,
-			  struct smw_cipher_data_args *args,
-			  struct smw_op_context *api_ctx)
-{
-	int res = ERR_CODE(PASSED);
-
-	/* Context ID is a mandatory parameter except for API tests */
-	res = util_read_json_type(ctx_id, CTX_ID_OBJ, t_int, subtest->params);
-	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
-		DBG_PRINT_MISS_PARAM("Context ID");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	/* Get operation context */
-	if (*ctx_id != UINT_MAX) {
-		res = util_context_find_node(list_op_ctxs(subtest), *ctx_id,
-					     &args->context);
-		if (res != ERR_CODE(PASSED)) {
-			DBG_PRINT("Failed to find context node");
-			return res;
-		}
-	} else {
-		/* API specific tests cases */
-		args->context = api_ctx;
-	}
-
-	return ERR_CODE(PASSED);
-}
-
 int cipher(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
@@ -381,34 +328,27 @@ end:
 int cipher_init(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	int ctx_id = -1;
+
+	unsigned int ctx_id = UINT_MAX;
 	struct smw_cipher_init_args args = { 0 };
 	struct smw_cipher_init_args *cipher_args = &args;
 	struct keys keys = { 0 };
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
-	/* Context ID is a mandatory parameter except for API tests */
-	res = util_read_json_type(&ctx_id, CTX_ID_OBJ, t_int, subtest->params);
-	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
-		DBG_PRINT_MISS_PARAM("Context ID");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
 	args.version = subtest->version;
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (res != ERR_CODE(PASSED))
+		goto end;
 
 	res = set_init_params(subtest, cipher_args, &keys);
 	if (res != ERR_CODE(PASSED))
 		goto end;
-
-	args.context = malloc(sizeof(*args.context));
-	if (!args.context) {
-		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		goto end;
-	}
 
 	/* Specific test cases */
 	res = cipher_bad_params(subtest->params, NULL, &cipher_args, NULL,
@@ -419,23 +359,16 @@ int cipher_init(struct subtest_data *subtest)
 	subtest->smw_status = smw_cipher_init(cipher_args);
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
-		free(args.context);
-		args.context = NULL;
-		goto end;
+
+		if (!args.context) {
+			res = util_context_update_node(list_op_ctxs(subtest),
+						       ctx_id, args.context);
+			if (res != ERR_CODE(PASSED))
+				DBG_PRINT("Failed to update context node data");
+		}
 	}
 
-	/*
-	 * Add context in linked list if initialization succeed and test isn't
-	 * an API test
-	 */
-	if (!is_api_test(subtest))
-		res = util_context_add_node(list_op_ctxs(subtest), ctx_id,
-					    args.context);
-
 end:
-	if (res != ERR_CODE(PASSED) && args.context)
-		free(args.context);
-
 	if (args.iv)
 		free(args.iv);
 
@@ -452,7 +385,7 @@ int cipher_update(struct subtest_data *subtest)
 	unsigned char *expected_output = NULL;
 	struct smw_cipher_data_args args = { 0 };
 	struct smw_cipher_data_args *cipher_args = &args;
-	struct smw_op_context api_ctx = { .handle = &api_ctx };
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -461,7 +394,7 @@ int cipher_update(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 
-	res = set_op_context(subtest, &ctx_id, cipher_args, &api_ctx);
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -492,10 +425,19 @@ int cipher_update(struct subtest_data *subtest)
 	 * Save output data if operation success.
 	 * Output data is checked at final step
 	 */
-	if (subtest->smw_status != SMW_STATUS_OK)
+	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
-	else
+
+		if (!args.context) {
+			res = util_context_update_node(list_op_ctxs(subtest),
+						       ctx_id, args.context);
+			if (res != ERR_CODE(PASSED))
+				DBG_PRINT("Failed to update context node data");
+		}
+
+	} else {
 		res = cipher_update_save_out_data(subtest, cipher_args, ctx_id);
+	}
 
 end:
 	if (args.input)
@@ -518,7 +460,7 @@ int cipher_final(struct subtest_data *subtest)
 	unsigned char *expected_output = NULL;
 	struct smw_cipher_data_args args = { 0 };
 	struct smw_cipher_data_args *cipher_args = &args;
-	struct smw_op_context api_ctx = { .handle = &api_ctx };
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -527,7 +469,7 @@ int cipher_final(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 
-	res = set_op_context(subtest, &ctx_id, cipher_args, &api_ctx);
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -551,6 +493,14 @@ int cipher_final(struct subtest_data *subtest)
 		goto end;
 
 	subtest->smw_status = smw_cipher_final(cipher_args);
+
+	if (!args.context) {
+		res = util_context_update_node(list_op_ctxs(subtest), ctx_id,
+					       args.context);
+		if (res != ERR_CODE(PASSED))
+			DBG_PRINT("Failed to update context node data");
+	}
+
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
 		goto end;

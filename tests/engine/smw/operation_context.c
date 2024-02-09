@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -13,15 +13,17 @@
 #include "operation_context.h"
 #include "util.h"
 #include "util_cipher.h"
+#include "util_aead.h"
 #include "util_context.h"
 
-static int bad_params(struct json_object *params, struct smw_op_context **args,
-		      struct smw_op_context **dst)
+static int bad_params(struct json_object *params, void **args,
+		      struct smw_op_context **ctx,
+		      struct smw_op_context **dest_ctx)
 {
 	int ret = ERR_CODE(BAD_ARGS);
 	enum arguments_test_err_case error;
 
-	if (!params || !args)
+	if (!params || !args || !ctx)
 		return ret;
 
 	ret = util_read_test_error(&error, params);
@@ -36,30 +38,17 @@ static int bad_params(struct json_object *params, struct smw_op_context **args,
 		*args = NULL;
 		break;
 
-	case CTX_HANDLE_NULL:
-		if (*args) {
-			(*args)->handle = NULL;
-			(*args)->reserved = NULL;
-		} else {
-			ret = ERR_CODE(BAD_ARGS);
-		}
+	case CTX_NULL:
+	case SRC_CPY_CTX_NULL:
+		*ctx = NULL;
 		break;
 
-	case DST_CPY_ARGS_NULL:
-		if (*args) {
-			(*args)->reserved = NULL;
-		} else {
+	case DST_CPY_CTX_NULL:
+		if (dest_ctx)
+			*dest_ctx = NULL;
+		else
 			ret = ERR_CODE(BAD_ARGS);
-		}
 
-		if (dst) {
-			if (*dst)
-				free(*dst);
-
-			*dst = NULL;
-		} else {
-			ret = ERR_CODE(BAD_ARGS);
-		}
 		break;
 
 	default:
@@ -70,69 +59,192 @@ static int bad_params(struct json_object *params, struct smw_op_context **args,
 	return ret;
 }
 
-int cancel_operation(struct subtest_data *subtest)
+static int find_context_node(struct subtest_data *subtest,
+			     struct json_object *obj, unsigned int index,
+			     unsigned int *context_id,
+			     struct smw_op_context **context)
+{
+	int status = ERR_CODE(BAD_PARAM_TYPE);
+
+	struct json_object *array_member = NULL;
+	int json_ctx_id = 0;
+
+	array_member = json_object_array_get_idx(obj, index);
+
+	if (json_object_get_type(array_member) != json_type_int) {
+		DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
+		goto end;
+	}
+
+	json_ctx_id = json_object_get_int(array_member);
+	if (SET_OVERFLOW(json_ctx_id, *context_id))
+		DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
+
+	status = ERR_CODE(PASSED);
+
+	status = util_context_find_node(list_op_ctxs(subtest), *context_id,
+					context);
+	if (status != ERR_CODE(PASSED)) {
+		DBG_PRINT("Failed to find context node");
+		return status;
+	}
+
+end:
+	return status;
+}
+
+static int copy_output_data_node(struct subtest_data *subtest,
+				 unsigned int dst_ctx_id,
+				 unsigned int src_ctx_id)
+{
+	int res = ERR_CODE(PASSED);
+
+	bool copy_output = false;
+	char *op_name = NULL;
+
+	res = util_read_json_type(&copy_output, COPY_OUTPUT_OBJ, t_boolean,
+				  subtest->params);
+	if (res == ERR_CODE(PASSED)) {
+		if (!copy_output) {
+			DBG_PRINT("Copy output data node ignored");
+			return res;
+		}
+
+		res = util_read_json_type(&op_name, TYPE_OBJ, t_string,
+					  subtest->params);
+		if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
+			DBG_PRINT_MISS_PARAM("Operation name");
+			return ERR_CODE(MISSING_PARAMS);
+		}
+
+		if (!op_name) {
+			DBG_PRINT_MISS_PARAM("Operation name");
+			return ERR_CODE(MISSING_PARAMS);
+		}
+
+		/*
+		 * Copy the output data node to the respective output data list based on
+		 * operation type.
+		 */
+		if (!strcmp(op_name, OP_AEAD_MULTI_PART))
+			res = util_aead_copy_node(list_aeads(subtest),
+						  dst_ctx_id, src_ctx_id);
+		else if (!strcmp(op_name, OP_CIPHER_MULTI_PART))
+			res = util_cipher_copy_node(list_ciphers(subtest),
+						    dst_ctx_id, src_ctx_id);
+
+	} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
+		res = ERR_CODE(PASSED);
+	}
+
+	return res;
+}
+
+int allocate_context(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	int ctx_id = INT_MAX;
-	struct smw_op_context args = { 0 };
-	struct smw_op_context *args_ptr = &args;
-	struct smw_op_context api_ctx = { .handle = &api_ctx,
-					  .reserved = (void *)INTPTR_MAX };
+	unsigned int ctx_id = 0;
+	struct smw_context_args args = { 0 };
+	struct smw_context_args *args_ptr = &args;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
+	args.version = subtest->version;
+
 	/* Context ID is a mandatory parameter except for API tests */
-	res = util_read_json_type(&ctx_id, CTX_ID_OBJ, t_int, subtest->params);
+	res = util_read_json_type(&ctx_id, CTX_ID_OBJ, t_uint, subtest->params);
 	if (!is_api_test(subtest) && res != ERR_CODE(PASSED))
 		return res;
 
-	if (ctx_id != INT_MAX) {
-		res = util_context_find_node(list_op_ctxs(subtest), ctx_id,
-					     &args_ptr);
-		if (res != ERR_CODE(PASSED)) {
-			DBG_PRINT("Failed to find context node");
-			return res;
-		}
-	} else {
-		args_ptr = &api_ctx;
+	if (subtest->subsystem) {
+		if (!strcmp(subtest->subsystem, "DEFAULT"))
+			args.subsystem_name = NULL;
+		else
+			args.subsystem_name = subtest->subsystem;
 	}
 
-	res = bad_params(subtest->params, &args_ptr, NULL);
+	res = bad_params(subtest->params, (void **)&args_ptr, &args.context,
+			 NULL);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	subtest->smw_status = smw_allocate_context(args_ptr);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
+		return res;
+	}
+
+	/*
+	 * Add context in linked list if context allocation succeeds and test isn't
+	 * an API test
+	 */
+	if (!is_api_test(subtest))
+		res = util_context_add_node(list_op_ctxs(subtest), ctx_id,
+					    args.context);
+
+	return res;
+}
+
+int cancel_operation(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	unsigned int ctx_id = UINT_MAX;
+	struct smw_context_args args = { 0 };
+	struct smw_context_args *args_ptr = &args;
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	args.version = subtest->version;
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = bad_params(subtest->params, (void **)&args_ptr, &args.context,
+			 NULL);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
 	subtest->smw_status = smw_cancel_operation(args_ptr);
-	if (subtest->smw_status != SMW_STATUS_OK)
+	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
+		return res;
+	}
+
+	res = util_context_update_node(list_op_ctxs(subtest), ctx_id,
+				       args.context);
+	if (res != ERR_CODE(PASSED)) {
+		DBG_PRINT("Failed to update context node data");
+		return res;
+	}
 
 	return res;
 }
 
 int copy_context(struct subtest_data *subtest)
-
 {
 	int res = ERR_CODE(BAD_ARGS);
-	int json_ctx_id = 0;
+
+	struct smw_copy_context_args args = { 0 };
+	struct smw_copy_context_args *args_ptr = &args;
+
 	unsigned int dst_ctx_id = 0;
 	unsigned int src_ctx_id = 0;
-	int op_copy_ctx = 0;
 	struct json_object *obj = NULL;
-	struct json_object *array_member;
-	struct smw_op_context *dst_args_ptr = NULL;
-	struct smw_op_context *src_args_ptr = NULL;
-	struct smw_op_context empty_ctx = { .handle = &empty_ctx,
-					    .reserved = (void *)INTPTR_MAX };
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
-	/* Initialize the source context to be empty */
-	src_args_ptr = &empty_ctx;
+	args.version = subtest->version;
 
 	/* Context ID is a mandatory parameter except for API tests */
 	res = util_read_json_type(&obj, CTX_ID_OBJ, t_buffer, subtest->params);
@@ -155,84 +267,38 @@ int copy_context(struct subtest_data *subtest)
 			return ERR_CODE(BAD_PARAM_TYPE);
 		}
 
-		array_member = json_object_array_get_idx(obj, 0);
-
-		if (json_object_get_type(array_member) != json_type_int) {
-			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
-			return ERR_CODE(BAD_PARAM_TYPE);
-		}
-
-		json_ctx_id = json_object_get_int(array_member);
-		if (SET_OVERFLOW(json_ctx_id, src_ctx_id)) {
-			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
-			return ERR_CODE(BAD_PARAM_TYPE);
-		}
-
-		res = util_context_find_node(list_op_ctxs(subtest), src_ctx_id,
-					     &src_args_ptr);
-		if (res != ERR_CODE(PASSED)) {
-			DBG_PRINT("Failed to find context node");
+		/* Get source context ID and node data */
+		res = find_context_node(subtest, obj, 0, &src_ctx_id,
+					&args.src_context);
+		if (res != ERR_CODE(PASSED))
 			return res;
-		}
 
-		array_member = json_object_array_get_idx(obj, 1);
-
-		if (json_object_get_type(array_member) != json_type_int) {
-			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
-			return ERR_CODE(BAD_PARAM_TYPE);
-		}
-
-		json_ctx_id = json_object_get_int(array_member);
-		if (SET_OVERFLOW(json_ctx_id, dst_ctx_id)) {
-			DBG_PRINT_BAD_PARAM(CTX_ID_OBJ);
-			return ERR_CODE(BAD_PARAM_TYPE);
-		}
+		/* Get destination context ID and node data */
+		res = find_context_node(subtest, obj, 1, &dst_ctx_id,
+					&args.dst_context);
+		if (res != ERR_CODE(PASSED))
+			return res;
 	}
 
-	dst_args_ptr = malloc(sizeof(struct smw_op_context));
-	if (!dst_args_ptr)
-		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+	if (is_api_test(subtest)) {
+		args.src_context = (struct smw_op_context *)INTPTR_MAX;
+		args.dst_context = (struct smw_op_context *)INTPTR_MAX;
+	}
 
-	res = bad_params(subtest->params, &src_args_ptr, &dst_args_ptr);
+	res = bad_params(subtest->params, (void **)&args_ptr, &args.src_context,
+			 &args.dst_context);
 	if (res != ERR_CODE(PASSED))
-		goto exit_free;
+		goto exit;
 
-	subtest->smw_status = smw_copy_context(dst_args_ptr, src_args_ptr);
+	subtest->smw_status = smw_copy_context(args_ptr);
 	if (subtest->smw_status != SMW_STATUS_OK)
 		res = ERR_CODE(API_STATUS_NOK);
 
 	if (is_api_test(subtest))
-		goto exit_free;
-
-	if (res == ERR_CODE(PASSED)) {
-		res = util_context_add_node(list_op_ctxs(subtest), dst_ctx_id,
-					    dst_args_ptr);
-		if (res != ERR_CODE(PASSED)) {
-			DBG_PRINT("Failed to add context node");
-			goto exit_free;
-		}
-
-		res = util_read_json_type(&op_copy_ctx, COPY_CIPHER_CTX, t_int,
-					  subtest->params);
-		if (res == ERR_CODE(PASSED)) {
-			if (op_copy_ctx != 1) {
-				DBG_PRINT("Copy cipher context ignored");
-				goto exit;
-			}
-
-			/* Copy cipher output data node */
-			res = util_cipher_copy_node(list_ciphers(subtest),
-						    dst_ctx_id, src_ctx_id);
-		} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
-			res = ERR_CODE(PASSED);
-		}
-
 		goto exit;
-	}
 
-exit_free:
-	if (dst_args_ptr)
-		free(dst_args_ptr);
+	if (res == ERR_CODE(PASSED))
+		res = copy_output_data_node(subtest, dst_ctx_id, src_ctx_id);
 
 exit:
 	return res;

@@ -279,6 +279,8 @@ static int execute_op_context_cmd(char *cmd, struct subtest_data *subtest)
 		return cancel_operation(subtest);
 	else if (!strcmp(cmd, OP_CTX_COPY))
 		return copy_context(subtest);
+	else if (!strcmp(cmd, OP_CTX_ALLOCATE))
+		return allocate_context(subtest);
 
 	DBG_PRINT("Undefined command");
 	return ERR_CODE(UNDEFINED_CMD);

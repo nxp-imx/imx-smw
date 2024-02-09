@@ -18,13 +18,7 @@
 		"test_error": "CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Context handle is NULL
-		"command": "AEAD_FINAL",
-		"op_type": "ENCRYPT",
-		"test_error": "CTX_HANDLE_NULL",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 5": { // Input data set and input length is 0
+	"subtest 4": { // Input data set and input length is 0
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": [
@@ -33,7 +27,7 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Aead output pointer is set and output length not
+	"subtest 5": { // Aead output pointer is set and output length not
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"output": [

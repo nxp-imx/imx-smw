@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -258,4 +258,22 @@ int util_aead_find_node(struct llist *list, unsigned int id,
 	}
 
 	return res;
+}
+
+int util_aead_copy_node(struct llist *list, unsigned int dst_ctx_id,
+			unsigned int src_ctx_id)
+{
+	int res = ERR_CODE(PASSED);
+	struct aead_output_data *data = NULL;
+
+	res = util_list_find_node(list, src_ctx_id, (void **)&data);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (!data)
+		return ERR_CODE(INTERNAL);
+
+	return util_aead_add_output_data(list, dst_ctx_id, data->output,
+					 data->output_len, data->tag,
+					 data->tag_len, data->iv, data->iv_len);
 }

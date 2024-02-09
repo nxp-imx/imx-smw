@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -128,6 +128,37 @@ exit:
 	return res;
 }
 
+static int list_update_node(struct llist *list, uintptr_t id, void *data,
+			    int lock)
+{
+	struct node *node = NULL;
+
+	if (!list)
+		return ERR_CODE(BAD_ARGS);
+
+	if (lock)
+		util_mutex_lock(list->lock);
+
+	node = list->head;
+
+	while (node) {
+		if (list->match_id(node->id, id)) {
+			if (list->free_data && node->data)
+				list->free_data(node->data);
+
+			node->data = data;
+			break;
+		}
+
+		node = node->next;
+	}
+
+	if (lock)
+		util_mutex_unlock(list->lock);
+
+	return ERR_CODE(PASSED);
+}
+
 static int list_find_node(struct llist *list, uintptr_t id, void **data,
 			  int lock)
 {
@@ -246,6 +277,11 @@ int util_list_add_node(struct llist *list, uintptr_t id, void *data)
 int util_list_add_node_nl(struct llist *list, uintptr_t id, void *data)
 {
 	return list_add_node(list, id, data, 0);
+}
+
+int util_list_update_node(struct llist *list, uintptr_t id, void *data)
+{
+	return list_update_node(list, id, data, 1);
 }
 
 int util_list_find_node(struct llist *list, uintptr_t id, void **data)

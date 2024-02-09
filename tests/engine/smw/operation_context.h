@@ -1,12 +1,26 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #ifndef __OPERATION_CONTEXT_H__
 #define __OPERATION_CONTEXT_H__
 
 #include "types.h"
+
+/**
+ * allocate_context() - Allocate an operation context
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED                  - Success
+ * -BAD_ARGS               - One of the arguments is bad
+ * -BAD_PARAM_TYPE         - A parameter value is undefined.
+ * -MISSING_PARAMS         - Missing mandatory parameters in @params
+ * -API_STATUS_NOK         - SMW API Call return error
+ * -FAILED                 - Operation context is not found
+ */
+int allocate_context(struct subtest_data *subtest);
 
 /**
  * cancel_operation() - Cancel operation

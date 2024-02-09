@@ -15,16 +15,11 @@
 		"test_error": "CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Context handle is NULL
-		"command": "AEAD_UPDATE",
-		"test_error": "CTX_HANDLE_NULL",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 5": { // No input data
+	"subtest 4": { // No input data
 		"command": "AEAD_UPDATE",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Input data length is 0
+	"subtest 5": { // Input data length is 0
 		"command": "AEAD_UPDATE",
 		"input": [
 			0,
@@ -32,7 +27,7 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // Output pointer is set and output length is not set
+	"subtest 6": { // Output pointer is set and output length is not set
 		"command": "AEAD_UPDATE",
 		"input": "5555555555",
 		"output": [

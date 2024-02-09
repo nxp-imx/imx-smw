@@ -9,16 +9,11 @@
 		"test_error": "CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // Context handle is NULL
-		"command": "AEAD_UPDATE_AAD",
-		"test_error": "CTX_HANDLE_NULL",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 4": { // AAD is not set
+	"subtest 3": { // AAD is not set
 		"command": "AEAD_UPDATE_AAD",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Version not supported
+	"subtest 4": { // Version not supported
 		"command": "AEAD_UPDATE_AAD",
 		"version": 255,
 		"aad": [

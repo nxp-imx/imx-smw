@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <string.h>
@@ -19,15 +19,12 @@
 
 #define MAX_IV_LEN 12
 
-enum cmd { ONESHOT = 0, INIT, UPDATE_ADD, UPDATE, FINAL };
-
 /**
  * aead_bad_params() - Set AEAD bad parameters
  * @params: JSON AEAD parameters
  * @arg: SMW AEAD arguments
  * @key: Key descriptor
  * @context: SMW cryptographic operation context
- * @cmd: AEAD command
  *
  * Return:
  * PASSED           - Success.
@@ -36,7 +33,7 @@ enum cmd { ONESHOT = 0, INIT, UPDATE_ADD, UPDATE, FINAL };
  */
 static int aead_bad_params(struct json_object *params, void **arg,
 			   struct smw_key_descriptor **key,
-			   struct smw_op_context **context, enum cmd cmd)
+			   struct smw_op_context **context)
 {
 	int ret = ERR_CODE(BAD_ARGS);
 	enum arguments_test_err_case error = NOT_DEFINED;
@@ -69,18 +66,8 @@ static int aead_bad_params(struct json_object *params, void **arg,
 		break;
 
 	case CTX_NULL:
-		if (context) {
-			if (cmd == INIT)
-				free(*context);
-
-			*context = NULL;
-		}
-
-		break;
-
-	case CTX_HANDLE_NULL:
 		if (context)
-			(*context)->handle = NULL;
+			*context = NULL;
 
 		break;
 
@@ -98,7 +85,7 @@ static int aead_bad_params(struct json_object *params, void **arg,
  * @aead_args: SMW AEAD update arguments
  * @ctx_id: Local context ID
  *
- * If 'save_output' JSON parameter is set to 1, output data from a AEAD update
+ * If 'save_output' JSON parameter is set to true, output data from a AEAD update
  * operation is saved in the AEAD output data linked list.
  *
  * Return:
@@ -112,9 +99,9 @@ static int aead_update_save_out_data(struct subtest_data *subtest,
 				     unsigned int ctx_id)
 {
 	int res = ERR_CODE(PASSED);
-	int save_flag = 0;
+	bool save_flag = false;
 
-	res = util_read_json_type(&save_flag, SAVE_OUT_OBJ, t_int,
+	res = util_read_json_type(&save_flag, SAVE_OUT_OBJ, t_boolean,
 				  subtest->params);
 	if (res == ERR_CODE(VALUE_NOTFOUND))
 		res = ERR_CODE(PASSED);
@@ -187,7 +174,7 @@ static int set_init_params(struct subtest_data *subtest,
 
 	/* Get plaintext length, if any */
 	res = util_read_json_type(&args->plaintext_length, PLAINTEXT_LEN_OBJ,
-				  t_int, subtest->params);
+				  t_uint, subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
 		DBG_PRINT("Failed to read AEAD plaintext length");
 		return res;
@@ -473,48 +460,6 @@ static int set_update_output_params(struct subtest_data *subtest,
 }
 
 /**
- * set_op_context() - Set operation context
- * @subtest: Subtest data
- * @ctx_id: Pointer to context ID
- * @arg_context: Double pointer to SMW operation context structure
- * @api_ctx: Pointer to API operation context structure
- *
- * Return:
- * PASSED           - Success
- * -MISSING_PARAMS  - Context ID json parameter is missing
- * Error code from util_context_find_node and util_read_json_type
- */
-static int set_op_context(struct subtest_data *subtest, unsigned int *ctx_id,
-			  struct smw_op_context **arg_context,
-			  struct smw_op_context *api_ctx)
-{
-	int res = ERR_CODE(PASSED);
-
-	/* Context ID is a mandatory parameter except for API tests */
-	res = util_read_json_type(ctx_id, CTX_ID_OBJ, t_int, subtest->params);
-	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
-		DBG_PRINT_MISS_PARAM("Context ID");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
-	/* Get operation context */
-	if (*ctx_id != UINT_MAX) {
-		res = util_context_find_node(list_op_ctxs(subtest), *ctx_id,
-					     arg_context);
-		if (res != ERR_CODE(PASSED)) {
-			DBG_PRINT("Failed to find context node");
-			return res;
-		}
-
-	} else {
-		/* API specific tests cases */
-		*arg_context = api_ctx;
-	}
-
-	return ERR_CODE(PASSED);
-}
-
-/**
  * set_encrypt_iv_params() - Set AEAD IV parameters for encryption operation
  * @subtest: Subtest data
  * @output_iv: Double pointer to output IV buffer
@@ -681,8 +626,8 @@ static int compare_output_and_tag(struct smw_aead_final_args *args,
  */
 static int read_decryption_input_buffer(struct subtest_data *subtest,
 					unsigned char **data,
-					unsigned int *data_len, int aead_id,
-					char *field)
+					unsigned int *data_len,
+					unsigned int aead_id, char *field)
 {
 	int res = ERR_CODE(PASSED);
 
@@ -694,8 +639,34 @@ static int read_decryption_input_buffer(struct subtest_data *subtest,
 
 	/* Buffer can retrieved from linked list */
 	if (!is_api_test(subtest) && res == ERR_CODE(MISSING_PARAMS) &&
-	    aead_id != INT_MAX)
+	    aead_id != UINT_MAX)
 		res = ERR_CODE(PASSED);
+
+	return res;
+}
+
+static int set_final_output_iv_params(struct subtest_data *subtest,
+				      unsigned char **output_iv,
+				      unsigned int *output_iv_len)
+{
+	int res = ERR_CODE(PASSED);
+
+	unsigned int iv_len = 0;
+
+	res = util_read_json_type(&iv_len, IV_OBJ, t_uint, subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
+		DBG_PRINT("Failed to read AEAD IV length");
+		return res;
+	}
+
+	if (iv_len < MAX_IV_LEN)
+		*output_iv_len = MAX_IV_LEN;
+	else
+		*output_iv_len = iv_len;
+
+	*output_iv = calloc(1, *output_iv_len * (sizeof(**output_iv)));
+	if (!*output_iv)
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 
 	return res;
 }
@@ -724,7 +695,7 @@ static int aead_encrypt(struct subtest_data *subtest)
 	struct keypair_ops key = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
 
-	int aead_id = INT_MAX;
+	unsigned int aead_id = UINT_MAX;
 	bool tag_field_set = false;
 	unsigned int expected_out_len = 0;
 	unsigned char *expected_output = NULL;
@@ -746,9 +717,9 @@ static int aead_encrypt(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	res = set_encrypt_iv_params(subtest, &args.output_iv,
-				    &args.output_iv_length, &args.init->iv,
-				    &args.init->iv_length);
+	res = set_encrypt_iv_params(subtest, &args.final->output_iv,
+				    &args.final->output_iv_length,
+				    &args.init->iv, &args.init->iv_length);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
 		goto end;
 
@@ -766,12 +737,12 @@ static int aead_encrypt(struct subtest_data *subtest)
 		res = ERR_CODE(PASSED);
 
 	/* Get 'aead_id' parameter, if any */
-	res = util_read_json_type(&aead_id, AEAD_ID_OBJ, t_int,
+	res = util_read_json_type(&aead_id, AEAD_ID_OBJ, t_uint,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
-	if (aead_id != INT_MAX) {
+	if (aead_id != UINT_MAX) {
 		res = util_aead_find_node(list_aead_output(subtest), aead_id,
 					  &args.final->data->input,
 					  &args.final->data->input_length,
@@ -815,8 +786,7 @@ static int aead_encrypt(struct subtest_data *subtest)
 
 	/* Specific test cases */
 	res = aead_bad_params(subtest->params, (void **)&aead_args,
-			      &aead_args->init->key_desc,
-			      &aead_args->init->context, ONESHOT);
+			      &args.init->key_desc, &args.init->context);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
@@ -830,7 +800,7 @@ static int aead_encrypt(struct subtest_data *subtest)
 		goto end;
 	}
 
-	if (aead_id != INT_MAX) {
+	if (aead_id != UINT_MAX) {
 		/*
 		 * Copy ciphertext, tag and output IV params to "aead_output" list,
 		 * if aead_id is set.
@@ -841,8 +811,8 @@ static int aead_encrypt(struct subtest_data *subtest)
 						args.final->data->output_length,
 						args.final->tag,
 						args.final->tag_length,
-						args.output_iv,
-						args.output_iv_length);
+						args.final->output_iv,
+						args.final->output_iv_length);
 		if (res != ERR_CODE(PASSED))
 			goto end;
 	}
@@ -856,8 +826,8 @@ end:
 	if (args.init->iv)
 		free(args.init->iv);
 
-	if (args.output_iv)
-		free(args.output_iv);
+	if (args.final->output_iv)
+		free(args.final->output_iv);
 
 	if (args.aad->data)
 		free(args.aad->data);
@@ -906,7 +876,7 @@ static int aead_decrypt(struct subtest_data *subtest)
 	struct keypair_ops key = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
 
-	int aead_id = INT_MAX;
+	unsigned int aead_id = UINT_MAX;
 	bool tag_field_set = false;
 	unsigned int expected_out_len = 0;
 	unsigned char *expected_output = NULL;
@@ -947,7 +917,7 @@ static int aead_decrypt(struct subtest_data *subtest)
 		res = ERR_CODE(PASSED);
 
 	/* Read 'aead_id' parameter, if any */
-	res = util_read_json_type(&aead_id, AEAD_ID_OBJ, t_int,
+	res = util_read_json_type(&aead_id, AEAD_ID_OBJ, t_uint,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
@@ -957,7 +927,7 @@ static int aead_decrypt(struct subtest_data *subtest)
 	 * members of the linked list node that were saved during the
 	 * encryption operation.
 	 */
-	if (aead_id != INT_MAX) {
+	if (aead_id != UINT_MAX) {
 		res = util_aead_find_node(list_aead_output(subtest), aead_id,
 					  &args.final->data->input,
 					  &args.final->data->input_length,
@@ -1016,7 +986,7 @@ static int aead_decrypt(struct subtest_data *subtest)
 			     tag_field_set);
 	if ((res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS)) ||
 	    (!is_api_test(subtest) && res == ERR_CODE(MISSING_PARAMS) &&
-	     aead_id == INT_MAX))
+	     aead_id == UINT_MAX))
 		goto end;
 
 	/* Set output buffer parameters */
@@ -1028,8 +998,7 @@ static int aead_decrypt(struct subtest_data *subtest)
 
 	/* Specific test cases */
 	res = aead_bad_params(subtest->params, (void **)&aead_args,
-			      &aead_args->init->key_desc,
-			      &aead_args->init->context, ONESHOT);
+			      &args.init->key_desc, &args.init->context);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
@@ -1100,26 +1069,24 @@ int aead_init(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
 
-	int ctx_id = -1;
+	unsigned int ctx_id = UINT_MAX;
 	struct smw_aead_init_args args = { 0 };
 	struct smw_aead_init_args *aead_args = &args;
 	struct keypair_ops key = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
 	struct tbuffer iv = { 0 };
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
-	/* Context ID is a mandatory parameter except for API tests */
-	res = util_read_json_type(&ctx_id, CTX_ID_OBJ, t_int, subtest->params);
-	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
-		DBG_PRINT_MISS_PARAM("Context ID");
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
 	args.version = subtest->version;
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	res = set_init_params(subtest, &args, &key, &key_buffer);
 	if (res != ERR_CODE(PASSED))
@@ -1136,52 +1103,39 @@ int aead_init(struct subtest_data *subtest)
 	args.iv_length = iv.length;
 
 	/* Get AAD length if any */
-	res = util_read_json_type(&args.aad_length, AAD_OBJ, t_int,
+	res = util_read_json_type(&args.aad_length, AAD_OBJ, t_uint,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
 		DBG_PRINT("Failed to read AEAD AAD length");
 		return res;
 	}
 
-	res = util_read_json_type(&args.tag_length, TAG_OBJ, t_int,
+	res = util_read_json_type(&args.tag_length, TAG_OBJ, t_uint,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
 		DBG_PRINT("Failed to read AEAD tag");
 		return res;
 	}
 
-	args.context = malloc(sizeof(*args.context));
-	if (!args.context) {
-		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		goto end;
-	}
-
 	/* Specific test cases */
 	res = aead_bad_params(subtest->params, (void **)&aead_args,
-			      &aead_args->key_desc, &aead_args->context, INIT);
+			      &aead_args->key_desc, &aead_args->context);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
 	subtest->smw_status = smw_aead_init(aead_args);
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
-		free(args.context);
-		args.context = NULL;
-		goto end;
+
+		if (!args.context) {
+			res = util_context_update_node(list_op_ctxs(subtest),
+						       ctx_id, args.context);
+			if (res != ERR_CODE(PASSED))
+				DBG_PRINT("Failed to update context node data");
+		}
 	}
 
-	/*
-	 * Add context in linked list if initialization succeed and test isn't
-	 * an API test
-	 */
-	if (!is_api_test(subtest))
-		res = util_context_add_node(list_op_ctxs(subtest), ctx_id,
-					    args.context);
-
 end:
-	if (res != ERR_CODE(PASSED) && args.context)
-		free(args.context);
-
 	if (iv.data)
 		free(iv.data);
 
@@ -1197,7 +1151,7 @@ int aead_update_aad(struct subtest_data *subtest)
 	unsigned int ctx_id = UINT_MAX;
 	struct smw_aead_aad_args args = { 0 };
 	struct smw_aead_aad_args *aead_args = &args;
-	struct smw_op_context api_ctx = { .handle = &api_ctx };
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -1206,7 +1160,7 @@ int aead_update_aad(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 
-	res = set_op_context(subtest, &ctx_id, &args.context, &api_ctx);
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -1221,14 +1175,22 @@ int aead_update_aad(struct subtest_data *subtest)
 	}
 
 	/* Specific test cases */
-	res = aead_bad_params(subtest->params, (void **)&aead_args, NULL, NULL,
-			      UPDATE_ADD);
+	res = aead_bad_params(subtest->params, (void **)&aead_args, NULL,
+			      &args.context);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
 	subtest->smw_status = smw_aead_update_add(aead_args);
-	if (subtest->smw_status != SMW_STATUS_OK)
+	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
+
+		if (!args.context) {
+			res = util_context_update_node(list_op_ctxs(subtest),
+						       ctx_id, args.context);
+			if (res != ERR_CODE(PASSED))
+				DBG_PRINT("Failed to update context node data");
+		}
+	}
 
 end:
 	if (args.data)
@@ -1245,7 +1207,7 @@ int aead_update(struct subtest_data *subtest)
 	unsigned char *expected_output = NULL;
 	struct smw_aead_data_args args = { 0 };
 	struct smw_aead_data_args *aead_args = &args;
-	struct smw_op_context api_ctx = { .handle = &api_ctx };
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -1254,7 +1216,7 @@ int aead_update(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 
-	res = set_op_context(subtest, &ctx_id, &args.context, &api_ctx);
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -1275,7 +1237,7 @@ int aead_update(struct subtest_data *subtest)
 
 	/* Specific test cases */
 	res = aead_bad_params(subtest->params, (void **)&aead_args, NULL,
-			      &aead_args->context, UPDATE);
+			      &args.context);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
@@ -1285,10 +1247,18 @@ int aead_update(struct subtest_data *subtest)
 	 * Save output data if operation success.
 	 * Output data is checked at final step
 	 */
-	if (subtest->smw_status != SMW_STATUS_OK)
+	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
-	else
+
+		if (!args.context) {
+			res = util_context_update_node(list_op_ctxs(subtest),
+						       ctx_id, args.context);
+			if (res != ERR_CODE(PASSED))
+				DBG_PRINT("Failed to update context node data");
+		}
+	} else {
 		res = aead_update_save_out_data(subtest, &args, ctx_id);
+	}
 
 end:
 	if (args.input)
@@ -1311,7 +1281,7 @@ int aead_final(struct subtest_data *subtest)
 	struct smw_aead_final_args args = { 0 };
 	struct smw_aead_data_args data_args = { 0 };
 	struct smw_aead_final_args *aead_args = &args;
-	struct smw_op_context api_ctx = { .handle = &api_ctx };
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 
 	unsigned int expected_out_len = 0;
 	unsigned char *expected_output = NULL;
@@ -1330,7 +1300,8 @@ int aead_final(struct subtest_data *subtest)
 	args.version = subtest->version;
 	data_args.version = subtest->version;
 
-	res = set_op_context(subtest, &ctx_id, &args.data->context, &api_ctx);
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.data->context,
+				      api_ctx);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -1345,6 +1316,13 @@ int aead_final(struct subtest_data *subtest)
 	if (args.operation_name &&
 	    !strcmp(args.operation_name, OP_TYPE_ENCRYPT_STR))
 		encrypt_op = true;
+
+	if (encrypt_op) {
+		res = set_final_output_iv_params(subtest, &args.output_iv,
+						 &args.output_iv_length);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			goto end;
+	}
 
 	/* Read input if any */
 	res = util_read_hex_buffer(&data_args.input, &data_args.input_length,
@@ -1389,20 +1367,27 @@ int aead_final(struct subtest_data *subtest)
 
 	/* Specific test cases */
 	res = aead_bad_params(subtest->params, (void **)&aead_args, NULL,
-			      &aead_args->data->context, FINAL);
+			      &args.data->context);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
 	subtest->smw_status = smw_aead_final(aead_args);
+
+	if (!args.data->context) {
+		res = util_context_update_node(list_op_ctxs(subtest), ctx_id,
+					       args.data->context);
+		if (res != ERR_CODE(PASSED))
+			DBG_PRINT("Failed to update context node data");
+	}
+
 	if (subtest->smw_status != SMW_STATUS_OK) {
+		if (subtest->smw_status == SMW_STATUS_OUTPUT_TOO_SHORT)
+			DBG_PRINT("expected  args.data->output_length%u",
+				  args.data->output_length);
+
 		res = ERR_CODE(API_STATUS_NOK);
 		goto end;
 	}
-
-	if (subtest->smw_status == SMW_STATUS_OK ||
-	    subtest->smw_status == SMW_STATUS_OUTPUT_TOO_SHORT)
-		DBG_PRINT("expected  args.data->output_length%u",
-			  args.data->output_length);
 
 	if (expected_output) {
 		res = aead_save_final_output_data(subtest, args.data, ctx_id);
@@ -1439,6 +1424,9 @@ end:
 
 	if (expected_tag)
 		free(expected_tag);
+
+	if (args.output_iv)
+		free(args.output_iv);
 
 	return res;
 }

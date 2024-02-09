@@ -14,6 +14,12 @@
 		"key_name": "key 1"
 	},
 	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -23,62 +29,65 @@
 		"tag": 16,
 		"iv": "31323334353637383132333435363738",
 		"context_id": 0,
-		"depends": 1
-	},
-	"subtest 3": {
-		"command": "AEAD_UPDATE_AAD",
-		"aad": "353637383132333435363738",
-		"context_id": 0,
 		"depends": 2
 	},
 	"subtest 4": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 5": {
 		"command": "AEAD_UPDATE",
 		"input": "32333435363738394142434445463031",
 		"context_id": 0,
-		"depends": 2
+		"depends": 3
 	},
-	"subtest 5": { // output length too short
+	"subtest 6": { // output length too short
 		"command": "AEAD_UPDATE",
 		"input": "32333435363738394142434445463031",
 		"output": 5,
 		"context_id": 0,
-		"depends": 2,
+		"depends": 3,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 6": {
+	"subtest 7": {
 		"command": "AEAD_UPDATE",
 		"input": "32333435363738394142434445463031",
 		"context_id": 0,
-		"depends": 2
+		"depends": 3
 	},
-	"subtest 7": { // Get the output length
+	"subtest 8": { // Get the output length
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": "32333435363738394142434445463031",
 		"tag": 16,
+		"iv": 16,
 		"output": 0,
 		"context_id": 0,
-		"depends": 2
+		"depends": 3
 	},
-	"subtest 8": { // Get the output length and dedicated tag field set
+	"subtest 9": { // Get the output length and dedicated tag field set
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": "32333435363738394142434445463031",
 		"tag_field_set": true,
 		"tag": 16,
+		"iv": 16,
 		"output": 0,
 		"context_id": 0,
-		"depends": 2
+		"depends": 3
 	},
-	"subtest 9": {
+	"subtest 10": {
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": "32333435363738394142434445463031",
 		"tag": 16,
+		"iv": 16,
 		"context_id": 0,
-		"depends": 2
+		"depends": 3
 	},
-	"subtest 10": {
+	"subtest 11": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

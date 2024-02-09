@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 #ifndef __UTIL_AEAD_H__
 #define __UTIL_AEAD_H__
@@ -109,5 +109,24 @@ int util_aead_find_node(struct llist *list, unsigned int id,
 			unsigned char **tag, unsigned int *tag_length,
 			unsigned char **iv, unsigned int *iv_length,
 			int tag_field_set);
+
+/**
+ * util_aead_copy_node() - Copy a AEAD output data node
+ * @list: Pointer to AEAD output data linked list
+ * @dst_ctx_id: Context ID associated to the new node
+ * @src_ctx_id: Context ID associated to the source node
+ *
+ * A new node is created in parameter @list linked list, associated to parameter
+ * @dst_ctx_id. Data present in parameter @src_ctx_id node are copied in the new
+ * node.
+ *
+ * Return:
+ * PASSED                  - Success
+ * -BAD_ARG                - Bad argument.
+ * -INTERNAL               - Source node not found
+ * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed
+ */
+int util_aead_copy_node(struct llist *list, unsigned int dst_ctx_id,
+			unsigned int src_ctx_id);
 
 #endif /* __UTIL_aead_H__ */

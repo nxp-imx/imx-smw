@@ -20,7 +20,7 @@
 #define CLIENT_W_ENC_KEY_NAME_OBJ "client_w_enc_key_name"
 #define CLIENT_W_MAC_KEY_NAME_OBJ "client_w_mac_key_name"
 #define CMD_OBJ			  "command"
-#define COPY_CIPHER_CTX		  "copy_cipher_ctx"
+#define COPY_OUTPUT_OBJ		  "copy_output"
 #define CTX_ID_OBJ		  "context_id"
 #define DATA_LIST_OBJ		  "data_list"
 #define DATA_NAME_OBJ		  "data_name"
@@ -93,6 +93,9 @@
 #define OP_TYPE_ENCRYPT_STR "ENCRYPT"
 #define OP_TYPE_DECRYPT_STR "DECRYPT"
 
+#define OP_AEAD_MULTI_PART   "AEAD_MULTI_PART"
+#define OP_CIPHER_MULTI_PART "CIPHER_MULTI_PART"
+
 #define SUBTEST_OBJ_LEN strlen(SUBTEST_OBJ)
 
 /* SMW API default version. Used if not set in test definition file */
@@ -134,6 +137,7 @@
 #define MAC_COMPUTE	     "MAC_COMPUTE"
 #define MAC_VERIFY	     "MAC_VERIFY"
 #define OP_CTX		     "OP_CONTEXT"
+#define OP_CTX_ALLOCATE	     "OP_CONTEXT_ALLOCATE"
 #define OP_CTX_CANCEL	     "OP_CONTEXT_CANCEL"
 #define OP_CTX_COPY	     "OP_CONTEXT_COPY"
 #define RESTORE_KEY_IDS	     "RESTORE_KEY_IDS"
@@ -156,8 +160,8 @@ enum arguments_test_err_case {
 	KEY_DESC_OUT_NULL,
 	NB_ERROR_CASE, /* 5 */
 	CTX_NULL,
-	CTX_HANDLE_NULL,
-	DST_CPY_ARGS_NULL,
+	SRC_CPY_CTX_NULL,
+	DST_CPY_CTX_NULL,
 	TLS12_KDF_ARGS_NULL,
 };
 

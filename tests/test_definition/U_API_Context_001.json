@@ -6,12 +6,13 @@
 	},
 	"subtest 2": {
 		"command": "OP_CONTEXT_CANCEL",
-		"test_error": "CTX_HANDLE_NULL",
+		"test_error": "CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // Reserved field is bad
+	"subtest 3": {
 		"command": "OP_CONTEXT_CANCEL",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"version": 255,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
 	"subtest 4": {
 		"command": "OP_CONTEXT_COPY",
@@ -20,16 +21,27 @@
 	},
 	"subtest 5": {
 		"command": "OP_CONTEXT_COPY",
-		"test_error": "CTX_HANDLE_NULL",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"version": 255,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
-	"subtest 6": { // Reserved field is bad
+	"subtest 6": {
 		"command": "OP_CONTEXT_COPY",
+		"test_error": "SRC_CPY_CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 7": {
 		"command": "OP_CONTEXT_COPY",
-		"test_error": "DST_CPY_ARGS_NULL",
+		"test_error": "DST_CPY_CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 9": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"version": 255,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	}
 }

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 #ifndef __UTIL_LIST_H__
 #define __UTIL_LIST_H__
@@ -67,6 +67,18 @@ int util_list_add_node(struct llist *list, uintptr_t id, void *data);
  * -INTERNAL_OUT_OF_MEMORY - Memory allocation failed.
  */
 int util_list_add_node_nl(struct llist *list, uintptr_t id, void *data);
+
+/**
+ * util_list_update_node() - Update a node in a linked list.
+ * @list: Linked list.
+ * @id: Local ID of the data.
+ * @data: Buffer to be stored in the node.
+ *
+ * Return:
+ * PASSED                  - Success.
+ * -BAD_ARG                - @list is NULL.
+ */
+int util_list_update_node(struct llist *list, uintptr_t id, void *data);
 
 /**
  * util_list_clear() - Clear linked list.

@@ -9,7 +9,12 @@
 			]
 		}
 	},
-	"subtest 1": { // AAD length = 0
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 0
+	},
+	"subtest 2": { // AAD length = 0
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -19,18 +24,19 @@
 		"plaintext_len": 0,
 		"tag": 16,
 		"aad": 0,
-		"context_id": 0
+		"context_id": 0,
+		"depends": 1
 	},
-	"subtest 2": {
+	"subtest 3": {
 		"command": "AEAD_UPDATE",
 		"input": [
 			"30313233343536373839404142434445",
 			"46474849505152535456575859606162"
 		],
 		"context_id": 0,
-		"depends": 1
+		"depends": 2
 	},
-	"subtest 3": { // Expected tag is set and tag is part of output data
+	"subtest 4": { // Expected tag is set and tag is part of output data
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": [
@@ -39,9 +45,15 @@
 		],
 		"tag": "aa7e803a8ca24fba04c5822f3c0a66a8",
 		"context_id": 0,
-		"depends": 1
+		"iv": 16,
+		"depends": 2
 	},
-	"subtest 4": { // AAD length = 0
+	"subtest 5": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 1
+	},
+	"subtest 6": { // AAD length = 0
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -51,19 +63,20 @@
 		"plaintext_len": 0,
 		"tag": 16,
 		"aad": 0,
-		"context_id": 1
+		"context_id": 1,
+		"depends": 5
 	},
-	"subtest 5": {
+	"subtest 7": {
 		"command": "AEAD_UPDATE",
 		"input": [
 			"851c96bf2c485a9f3bcd29f72fcaad7f",
 			"5269f9727aaadf15911637179cce1b36"
 		],
 		"context_id": 1,
-		"save_output": 1,
-		"depends": 4
+		"save_output": true,
+		"depends": 6
 	},
-	"subtest 6": { // Invalid tag
+	"subtest 8": { // Invalid tag
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"input": [
@@ -79,7 +92,7 @@
 		],
 		"tag": 16,
 		"context_id": 1,
-		"depends": 4,
+		"depends": 6,
 		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	}
 }

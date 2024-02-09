@@ -22,7 +22,19 @@
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // AEAD encryption init using CCM mode
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 1,
+		"depends": 1
+	},
+	"subtest 4": { // AEAD encryption init using CCM mode
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -33,9 +45,9 @@
 		"tag": 16,
 		"aad": 12,
 		"context_id": 0,
-		"depends": 1
+		"depends": 2
 	},
-	"subtest 3": { // AEAD decryption init using GCM mode
+	"subtest 5": { // AEAD decryption init using GCM mode
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 2",
@@ -45,50 +57,52 @@
 		"tag": 16,
 		"aad": 12,
 		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
-		"context_id": 1
-	},
-	"subtest 4": {
-		"command": "AEAD_UPDATE_AAD",
-		"aad": "353637383132333435363738",
-		"context_id": 0,
-		"depends": 2
-	},
-	"subtest 5": {
-		"command": "AEAD_UPDATE_AAD",
-		"aad": "353637383132333435363738",
 		"context_id": 1,
 		"depends": 3
 	},
 	"subtest 6": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 0,
+		"depends": 4
+	},
+	"subtest 7": {
+		"command": "AEAD_UPDATE_AAD",
+		"aad": "353637383132333435363738",
+		"context_id": 1,
+		"depends": 5
+	},
+	"subtest 8": {
 		"command": "AEAD_UPDATE",
 		"input": "32333435363738394142434445463031",
 		"context_id": 0,
-		"depends": 2
+		"depends": 4
 	},
-	"subtest 7": {
+	"subtest 9": {
 		"command": "AEAD_UPDATE",
 		"input": "851c96bf2c485a9f3bcd29f72fcaad7f",
 		"context_id": 1,
-		"save_output": 1,
-		"depends": 3
+		"save_output": true,
+		"depends": 5
 	},
-	"subtest 8": {
+	"subtest 10": {
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"tag": 16,
+		"iv": 16,
 		"context_id": 0,
-		"depends": 2
+		"depends": 4
 	},
-	"subtest 9": {
+	"subtest 11": {
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"input": "d5c549c38ae8f4180c5f071ee2a5f381",
 		"output": "30313233343536373839404142434445",
 		"tag": 16,
 		"context_id": 1,
-		"depends": 3
+		"depends": 5
 	},
-	"subtest 10": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

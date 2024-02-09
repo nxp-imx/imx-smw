@@ -9,6 +9,7 @@
 
 #include "obj.h"
 #include "storage.h"
+#include "tee_subsystem.h"
 
 TEE_Result storage_store(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
@@ -171,6 +172,66 @@ TEE_Result storage_delete(uint32_t param_types,
 		else
 			res = ta_find_and_delete_transient_id(id);
 	}
+
+	return res;
+}
+
+TEE_Result storage_get_data_info(uint32_t param_types,
+				 TEE_Param params[TEE_NUM_PARAMS])
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	uint32_t exp_param_types = 0;
+	uint32_t id = 0;
+	bool persistent = false;
+	size_t data_size = 0;
+	TEE_ObjectHandle obj_handle = TEE_HANDLE_NULL;
+	TEE_ObjectInfo obj_info = { 0 };
+	struct obj_data obj_data = { 0 };
+
+	FMSG("Executing %s", __func__);
+
+	/*
+	 * params[0] = Object ID, persistent
+	 */
+	exp_param_types =
+		TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
+				TEE_PARAM_TYPE_VALUE_OUTPUT,
+				TEE_PARAM_TYPE_NONE, TEE_PARAM_TYPE_NONE);
+
+	if (exp_param_types != param_types)
+		return res;
+
+	id = params[0].value.a;
+
+	if (!id)
+		return res;
+
+	res = ta_get_obj_handle(&obj_handle, id, &persistent);
+	if (res != TEE_SUCCESS)
+		goto end;
+
+	if (persistent) {
+		res = TEE_GetObjectInfo1(obj_handle, &obj_info);
+		if (res != TEE_SUCCESS) {
+			EMSG("Failed to get object info (0x%x)", res);
+			goto end;
+		}
+
+		data_size = obj_info.dataSize;
+	} else {
+		res = ta_find_and_get_transient_id(id, &obj_data);
+		if (res == TEE_SUCCESS)
+			data_size = obj_data.data_size;
+	}
+
+	params[GET_DATA_INFO_IDX].value.a = persistent ? 1 : 0;
+
+	if (ADD_OVERFLOW(data_size, 0, &params[GET_DATA_INFO_IDX].value.b))
+		res = TEE_ERROR_OVERFLOW;
+
+end:
+	if (persistent)
+		TEE_CloseObject(obj_handle);
 
 	return res;
 }

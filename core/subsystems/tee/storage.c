@@ -113,10 +113,13 @@ static int storage_retrieve(void *args)
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_STORAGE_RETRIEVE, &op);
 
-	if (!SET_OVERFLOW(op.params[1].tmpref.size, data_length))
-		smw_storage_set_data_length(data_descriptor, data_length);
-	else
-		status = SMW_STATUS_OPERATION_FAILURE;
+	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+		if (!SET_OVERFLOW(op.params[1].tmpref.size, data_length))
+			smw_storage_set_data_length(data_descriptor,
+						    data_length);
+		else
+			status = SMW_STATUS_OPERATION_FAILURE;
+	}
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -165,6 +168,50 @@ exit:
 	return status;
 }
 
+static int storage_get_data_info(void *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	TEEC_Operation op = { 0 };
+	struct smw_storage_data_descriptor *data_desc = args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args)
+		goto exit;
+
+	/*
+	 * Input
+	 * params[0] = Object ID
+	 *
+	 * Output
+	 * params[GET_DATA_INFO_IDX].value.a = persistence
+	 * params[GET_DATA_INFO_IDX].value.b = data size
+	 */
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT,
+					 TEEC_NONE, TEEC_NONE);
+
+	op.params[0].value.a = smw_storage_get_data_identifier(data_desc);
+
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_STORAGE_GET_DATA_INFO, &op);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	if (op.params[GET_DATA_INFO_IDX].value.a)
+		data_desc->attributes.persistence_id =
+			SMW_OBJECT_PERSISTENCE_ID_PERSISTENT;
+	else
+		data_desc->attributes.persistence_id =
+			SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
+
+	smw_storage_set_data_length(data_desc,
+				    op.params[GET_DATA_INFO_IDX].value.b);
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 bool tee_storage_handle(enum operation_id op_id, void *args, int *status)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -178,6 +225,10 @@ bool tee_storage_handle(enum operation_id op_id, void *args, int *status)
 		break;
 	case OPERATION_ID_STORAGE_DELETE:
 		*status = storage_delete(args);
+		break;
+	case OPERATION_ID_STORAGE_IS_DATA_PRESENT:
+	case OPERATION_ID_STORAGE_GET_DATA_INFO:
+		*status = storage_get_data_info(args);
 		break;
 	default:
 		return false;

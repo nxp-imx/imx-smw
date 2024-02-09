@@ -26,6 +26,7 @@
 #define GET_KEY_ATTRS_KEYPAIR_FLAG_IDX	  2
 #define GET_KEY_ATTRS_PERSISTENT_FLAG_IDX 2
 #define GET_KEY_ATTRS_KEY_SIZE_IDX	  3
+#define GET_DATA_INFO_IDX		  1
 
 /* TEE key privacy */
 enum tee_key_privacy {
@@ -120,6 +121,7 @@ enum ta_commands {
 	CMD_STORAGE_STORE,
 	CMD_STORAGE_RETRIEVE,
 	CMD_STORAGE_DELETE,
+	CMD_STORAGE_GET_DATA_INFO,
 	CMD_INVALID,
 };
 

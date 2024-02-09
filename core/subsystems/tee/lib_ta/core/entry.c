@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include <tee_internal_api.h>
@@ -136,6 +136,10 @@ TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 
 	case CMD_STORAGE_DELETE:
 		res = storage_delete(param_types, params);
+		break;
+
+	case CMD_STORAGE_GET_DATA_INFO:
+		res = storage_get_data_info(param_types, params);
 		break;
 
 	default:

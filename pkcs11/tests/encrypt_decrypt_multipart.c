@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -626,13 +626,11 @@ static int multipart_cipher_update(CK_FUNCTION_LIST_PTR pfunc,
 		in_index = i * input_len;
 		out_index = *total_output_len;
 		if (encrypt) {
-			// coverity[uninitialized_use]
 			ret = pfunc->C_EncryptUpdate(sess, &input[in_index],
 						     input_len, NULL_PTR,
 						     &output_len);
 
 		} else {
-			// coverity[uninitialized_use]
 			ret = pfunc->C_DecryptUpdate(sess, &input[in_index],
 						     input_len, NULL_PTR,
 						     &output_len);
@@ -648,14 +646,12 @@ static int multipart_cipher_update(CK_FUNCTION_LIST_PTR pfunc,
 
 		TEST_OUT("Multi-part cipher operation\n");
 		if (encrypt) {
-			// coverity[uninitialized_use]
 			ret = pfunc->C_EncryptUpdate(sess, &input[in_index],
 						     input_len,
 						     &output[out_index],
 						     &output_len);
 
 		} else {
-			// coverity[uninitialized_use]
 			ret = pfunc->C_DecryptUpdate(sess, &input[in_index],
 						     input_len,
 						     &output[out_index],

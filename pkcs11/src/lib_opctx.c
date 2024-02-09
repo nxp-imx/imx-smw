@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -81,9 +81,6 @@ CK_RV libopctx_destroy(struct libopctx_list *list, struct libopctx *opctx)
 	if (opctx->mech.pParameter)
 		free(opctx->mech.pParameter);
 
-	if (opctx->ctx)
-		free(opctx->ctx);
-
 	DBG_TRACE("Destroy operation context (%p)", opctx);
 
 	free(opctx);
@@ -113,9 +110,6 @@ CK_RV libopctx_list_destroy(struct libopctx_list *list)
 
 		if (opctx->mech.pParameter)
 			free(opctx->mech.pParameter);
-
-		if (opctx->ctx)
-			free(opctx->ctx);
 
 		free(opctx);
 

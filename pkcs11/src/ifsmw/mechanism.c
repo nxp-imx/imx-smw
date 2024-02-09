@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <string.h>
@@ -1392,7 +1392,7 @@ static CK_RV cipher(struct lib_cipher_params *params,
 	CK_RV ret = CKR_OK;
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_cipher_args smw_args = { 0 };
-	struct smw_op_context *op_ctx = NULL;
+	struct smw_context_args op_ctx_args = { 0 };
 
 	struct lib_cipher_ctx *ctx = NULL_PTR;
 
@@ -1408,24 +1408,27 @@ static CK_RV cipher(struct lib_cipher_params *params,
 
 	case OP_UPDATE:
 		if (ctx->current_state == OP_INIT) {
-			op_ctx = calloc(1, sizeof(*op_ctx));
-			if (!op_ctx) {
-				status = SMW_STATUS_ALLOC_FAILURE;
+			op_ctx_args.subsystem_name =
+				smw_args.init.subsystem_name;
+			status = smw_allocate_context(&op_ctx_args);
+			if (status != SMW_STATUS_OK)
 				goto end;
-			}
 
-			smw_init_args->context = op_ctx;
+			smw_init_args->context = op_ctx_args.context;
+
 			status = smw_cipher_init(smw_init_args);
 			if (status == SMW_STATUS_OK) {
 				ctx->context = smw_init_args->context;
 				smw_data_args->context = smw_init_args->context;
 				status = smw_cipher_update(smw_data_args);
+				ctx->context = smw_data_args->context;
 			}
 
 		} else if (ctx->current_state == OP_UPDATE) {
 			smw_data_args->context =
 				(struct smw_op_context *)ctx->context;
 			status = smw_cipher_update(smw_data_args);
+			ctx->context = smw_data_args->context;
 		}
 
 		break;
@@ -1435,6 +1438,7 @@ static CK_RV cipher(struct lib_cipher_params *params,
 			smw_data_args->context =
 				(struct smw_op_context *)ctx->context;
 			status = smw_cipher_final(smw_data_args);
+			ctx->context = smw_data_args->context;
 		} else {
 			status = SMW_STATUS_OK;
 			params->output_length = 0;
@@ -1453,25 +1457,6 @@ static CK_RV cipher(struct lib_cipher_params *params,
 			params->output_length = smw_args.data.output_length;
 		else
 			params->output_length = smw_data_args->output_length;
-	}
-
-	/**
-	 * Release the smw op context if either of the below condition is met.
-	 * 1. if the final operation is successful and the
-	 * output buffer length is 0 (smw_cipher_final function
-	 * terminates the operation, if output buffer length is 0.)
-	 * 2.if the final operation is successful and
-	 * the pointer to output buffer is not null.
-	 */
-	if (status == SMW_STATUS_OK && params->state == OP_FINAL) {
-		if (params->poutput || params->output_length == 0) {
-			if (ctx->context) {
-				free(ctx->context);
-				ctx->context = NULL_PTR;
-			}
-
-			goto end;
-		}
 	}
 
 end:
@@ -1575,7 +1560,7 @@ static CK_RV op_mcipher_common(CK_SLOT_ID slotid, void *args)
 	params = (struct lib_cipher_params *)args;
 	ctx = params->ctx;
 
-	if ((params->state == OP_ONE_SHOT || OP_INIT) ||
+	if (params->state == OP_ONE_SHOT ||
 	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE)) {
 		if (set_smw_init_args(ctx, &smw_init_args_ptr, &key_buffer,
 				      &keys_desc_ptr, &key_descriptor[0],
@@ -1710,14 +1695,14 @@ CK_RV libdev_cancel_operation(void **context)
 {
 	CK_RV ret = CKR_OK;
 	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_context_args args = { 0 };
 
-	status = smw_cancel_operation((struct smw_op_context *)*context);
+	args.context = (struct smw_op_context *)*context;
+
+	status = smw_cancel_operation(&args);
 	ret = smw_status_to_ck_rv(status);
 
-	if (*context) {
-		free(*context);
-		*context = NULL_PTR;
-	}
+	*context = args.context;
 
 	DBG_TRACE(" smw cancel operation ret = %lx\n", ret);
 	return ret;

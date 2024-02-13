@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <stdlib.h>
@@ -26,6 +26,10 @@ static struct hash {
 		  { .algo_name = "SHA256", .digest_len = 32 },
 		  { .algo_name = "SHA384", .digest_len = 48 },
 		  { .algo_name = "SHA512", .digest_len = 64 },
+		  { .algo_name = "SHA3_224", .digest_len = 28 },
+		  { .algo_name = "SHA3_256", .digest_len = 32 },
+		  { .algo_name = "SHA3_384", .digest_len = 48 },
+		  { .algo_name = "SHA3_512", .digest_len = 64 },
 		  { .algo_name = "SM3", .digest_len = 32 },
 		  { .algo_name = "UNDEFINED", .digest_len = 20 } };
 

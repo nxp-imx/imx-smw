@@ -1,0 +1,96 @@
+{
+	"subtest 1": { // SHA3_224
+		"command": "HASH",
+		"subsystem": "TEE",
+		"algo": "SHA3_224",
+		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
+		//sha-3bytetestvectors.zip/SHA3_224LongMsg.rsp
+		"input": [
+			"31c82d71785b7ca6b651cb6c8c9ad5e2",
+			"aceb0b0633c088d33aa247ada7a594ff",
+			"4936c023251319820a9b19fc6c48de8a",
+			"6f7ada214176ccdaadaeef51ed43714a",
+			"c0c8269bbd497e46e78bb5e58196494b",
+			"2471b1680e2d4c6dbd249831bd83a4d3",
+			"be06c8a2e903933974aa05ee748bfe6e",
+			"f359f7a143edf0d4918da916bd6f15e2",
+			"6a790cff514b40a5da7f72e1ed2fe63a",
+			"05b8149587bea05653718cc8980eadbf",
+			"eca85b7c9c286dd040936585938be7f9",
+			"8219700c83a9443c2856a80ff46852b2",
+			"6d1b1edf72a30203cf6c44a10fa6eaf1",
+			"920173cedfb5c4cf3ac665b37a86ed02",
+			"155bbbf17dc2e786af9478fe0889d86c",
+			"5bfa85a242eb0854b1482b7bd16f67f8",
+			"0bef9c7a628f05a107936a64273a97b0",
+			"088b0e515451f916b5656230a12ba6dc",
+			"78"
+		],
+		"digest": [
+			"aab23c9e7fb9d7dacefdfd0b1ae85ab1",
+			"374abff7c4e3f7556ecae412"
+		]
+	},
+	"subtest 2": { // SHA3_256
+		"command": "HASH",
+		"subsystem": "TEE",
+		"algo": "SHA3_256",
+		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
+		//sha-3bytetestvectors.zip/SHA3_256ShortMsg.rsp
+		"input": [
+			"84b60cb3720bf29748483cf7abd0d1f1",
+			"d9380459dfa968460c86e5d1a54f0b19",
+			"dac6a78bf9509460e29dd466bb8bdf04",
+			"e5483b782eb74d6448166f897add43d2",
+			"95e946942ad9a814fab95b4aaede6ae4",
+			"c8108c8edaeff971f58f7cf96566c9dc",
+			"9b6812586b70d5bc78e2f829ec8e179a",
+			"6cd81d224b161175fd3a33aacfb1483f"
+		],
+		"digest": [
+			"8814630a39dcb99792cc4e08cae5dd07",
+			"8973d15cd19f17bacf04deda9e62c45f"
+		]
+	},
+	"subtest 3": { // SHA3_384
+		"command": "HASH",
+		"subsystem": "TEE",
+		"algo": "SHA3_384",
+		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
+		//sha-3bytetestvectors.zip/SHA3_384ShortMsg.rsp
+		"input": [
+			"093e56d33bd9337ad2ad268d14bac69a",
+			"64a8a7361350cf9f787e69a043f5beb5",
+			"0eb460703578a81be882639f7e9ac9a5",
+			"0c54affa3792fd38464a61a37c8a4551",
+			"a4b9ff8eed1f487ef8a8f00430e4d0e3",
+			"5a53ff236ce049b7a3abdc5cd00b45c4",
+			"f3d49b"
+		],
+		"digest": [
+			"4a339128486e5b274fc4ed538c0ec9e5",
+			"7f780e9c500c5f92b04ae81a22fbeebf",
+			"3785259a0bb3b6d9b47f31873cd8dffa"
+		]
+	},
+	"subtest 4": { // SHA3_512
+		"command": "HASH",
+		"subsystem": "TEE",
+		"algo": "SHA3_512",
+		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
+		//sha-3bytetestvectors.zip/SHA3_512ShortMsg.rsp
+		"input": [
+			"0ce9f8c3a990c268f34efd9befdb0f7c",
+			"4ef8466cfdb01171f8de70dc5fefa92a",
+			"cbe93d29e2ac1a5c2979129f1ab08c0e",
+			"77de7924ddf68a209cdfa0adc62f85c1",
+			"8637d9c6b33f4ff8"
+		],
+		"digest": [
+			"b018a20fcf831dde290e4fb18c56342e",
+			"fe138472cbe142da6b77eea4fce52588",
+			"c04c808eb32912faa345245a850346fa",
+			"ec46c3a16d39bd2e1ddb1816bc57d2da"
+		]
+	}
+}

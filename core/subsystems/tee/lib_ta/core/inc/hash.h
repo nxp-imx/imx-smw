@@ -1,10 +1,15 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef TA_HASH_H
 #define TA_HASH_H
+
+#define TEE_SHA3_224_HASH_SIZE TEE_SHA224_HASH_SIZE
+#define TEE_SHA3_256_HASH_SIZE TEE_SHA256_HASH_SIZE
+#define TEE_SHA3_384_HASH_SIZE TEE_SHA384_HASH_SIZE
+#define TEE_SHA3_512_HASH_SIZE TEE_SHA512_HASH_SIZE
 
 /**
  * hash() - Hash a message.

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <util.h>
@@ -22,9 +22,11 @@ static const struct algorithm_info {
 	enum tee_algorithm_id ca_id;
 	uint32_t ta_id;
 	size_t length;
-} algorithm_infos[] = { ALGORITHM_INFO(MD5),	ALGORITHM_INFO(SHA1),
-			ALGORITHM_INFO(SHA224), ALGORITHM_INFO(SHA256),
-			ALGORITHM_INFO(SHA384), ALGORITHM_INFO(SHA512),
+} algorithm_infos[] = { ALGORITHM_INFO(MD5),	  ALGORITHM_INFO(SHA1),
+			ALGORITHM_INFO(SHA224),	  ALGORITHM_INFO(SHA256),
+			ALGORITHM_INFO(SHA384),	  ALGORITHM_INFO(SHA512),
+			ALGORITHM_INFO(SHA3_224), ALGORITHM_INFO(SHA3_256),
+			ALGORITHM_INFO(SHA3_384), ALGORITHM_INFO(SHA3_512),
 			ALGORITHM_INFO(SM3) };
 
 static TEE_Result get_algorithm_info(enum tee_algorithm_id ca_id,

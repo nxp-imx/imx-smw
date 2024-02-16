@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -265,7 +265,7 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 {
 	CK_RV ret = CKR_OK;
 	struct lib_cipher_ctx *ctx = NULL;
-	CK_BBOOL key_op = false;
+	CK_BBOOL key_op = CK_FALSE;
 	CK_ATTRIBUTE iskey_op[] = {
 		{ CKA_DECRYPT, &key_op, sizeof(key_op) },
 	};

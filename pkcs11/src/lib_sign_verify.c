@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -31,10 +31,10 @@ static CK_BBOOL is_rsa_pss_mechanism(CK_MECHANISM_TYPE type)
 	case CKM_SHA256_RSA_PKCS_PSS:
 	case CKM_SHA384_RSA_PKCS_PSS:
 	case CKM_SHA512_RSA_PKCS_PSS:
-		return true;
+		return CK_TRUE;
 
 	default:
-		return false;
+		return CK_FALSE;
 	}
 }
 
@@ -206,7 +206,7 @@ CK_RV lib_sign_verify_init(CK_SESSION_HANDLE hsession,
 {
 	CK_RV ret = CKR_OK;
 	struct lib_signature_ctx *ctx = NULL;
-	CK_BBOOL key_op = false;
+	CK_BBOOL key_op = CK_FALSE;
 	CK_ATTRIBUTE iskey_op[] = {
 		{ CKA_VERIFY, &key_op, sizeof(key_op) },
 	};
@@ -269,6 +269,7 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 	       CK_ULONG_PTR pulsignaturelen)
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
+	CK_RV ret_ctx = CKR_OK;
 	CK_MECHANISM mechanism = { 0 };
 	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params params = { 0 };
@@ -320,10 +321,10 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 
 end:
 	/* Remove operation context */
-	if (ret != CKR_OK)
-		(void)libsess_remove_opctx(hsession, CKF_SIGN);
-	else
-		ret = libsess_remove_opctx(hsession, CKF_SIGN);
+	ret_ctx = libsess_remove_opctx(hsession, CKF_SIGN);
+
+	if (ret == CKR_OK)
+		ret = ret_ctx;
 
 	return ret;
 }
@@ -333,6 +334,7 @@ CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 		 CK_ULONG ulsignaturelen)
 {
 	CK_RV ret = CKR_DATA_INVALID;
+	CK_RV ret_ctx = CKR_OK;
 	CK_MECHANISM mechanism = { 0 };
 	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params params = { 0 };
@@ -375,10 +377,10 @@ CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 
 end:
 	/* Remove operation context */
-	if (ret != CKR_OK)
-		(void)libsess_remove_opctx(hsession, CKF_VERIFY);
-	else
-		ret = libsess_remove_opctx(hsession, CKF_VERIFY);
+	ret_ctx = libsess_remove_opctx(hsession, CKF_VERIFY);
+
+	if (ret == CKR_OK)
+		ret = ret_ctx;
 
 	return ret;
 }

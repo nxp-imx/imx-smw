@@ -94,7 +94,7 @@ struct smw_key_info {
 /**
  * smw_config_check_generate_key() - Check generate key type
  * @subsystem: Name of the subsystem (if NULL default subsystem).
- * @info: Key information
+ * @info: Key information.
  *
  * Function checks if the key type provided in the @info structure is
  * supported on the given subsystem.
@@ -137,7 +137,7 @@ struct smw_signature_info {
  * smw_config_check_sign() - Check if signature generation operation is
  *                           supported
  * @subsystem: Name of the subsystem (if NULL default subsystem).
- * @info: Signature information
+ * @info: Signature information.
  *
  * @info key type name field is mandatory.
  * @info hash algorithm name and signature type name fields are optional.
@@ -171,7 +171,7 @@ enum smw_status_code smw_config_check_sign(smw_subsystem_t subsystem,
  * smw_config_check_verify() - Check if signature verification operation is
  *                             supported
  * @subsystem: Name of the subsystem (if NULL default subsystem).
- * @info: Signature information
+ * @info: Signature information.
  *
  * @info key type name field is mandatory.
  * @info hash algorithm name and signature type name fields are optional.
@@ -216,7 +216,7 @@ struct smw_cipher_info {
 /**
  * smw_config_check_cipher() - Check if cipher operation is supported
  * @subsystem: Name of the subsystem (if NULL default subsystem).
- * @info: Cipher information
+ * @info: Cipher information.
  *
  * Function checks if all fields provided in the @info structure are
  * supported on the given @subsystem for a cipher one-shot or multi-part
@@ -260,8 +260,8 @@ struct smw_aead_info {
 
 /**
  * smw_config_check_aead() - Check if AEAD operation is supported
- * @subsystem: Name of the subsystem
- * @info: AEAD operation information
+ * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @info: AEAD information.
  *
  * Function checks if all fields provided in the @info structure are
  * supported on the given @subsystem for a AEAD one-shot or multi-part
@@ -288,6 +288,50 @@ struct smw_aead_info {
  */
 enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 					   struct smw_aead_info *info);
+
+/**
+ * struct smw_mac_info - MAC operation information
+ * @key_type_name: Key type name. See &typedef smw_key_type_t
+ * @mac_algo: MAC algorithm name. See &typedef smw_mac_algo_t
+ * @hash_algo: Hash algorithm name. See &typedef smw_hash_algo_t
+ */
+struct smw_mac_info {
+	smw_key_type_t key_type_name;
+	smw_mac_algo_t mac_algo;
+	smw_hash_algo_t hash_algo;
+};
+
+/**
+ * smw_config_check_mac() - Check if MAC operation is supported
+ * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @info: MAC information.
+ *
+ * Function checks if all fields provided in the @info structure are
+ * supported on the given @subsystem for MAC operation.
+ * If set, function checks if the hash algorithm is supported on the given
+ * @subsystem for the signature generation operation.
+ * If set, function checks if the MAC algorithm is supported on the given
+ * @subsystem for the signature generation operation.
+ *
+ * If @subsystem is NULL, default subsystem AEAD capability is checked.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		MAC operation is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@info, @info->key_type_name is NULL
+ *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
+ *		@info->key_type_name is not a valid string
+ *	- SMW_STATUS_UNKNOWN_ALGO_NAME:
+ *		 @info->mac_algo or @info->hash_algo is not a valid string
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		MAC operation is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not a valid string
+ */
+enum smw_status_code smw_config_check_mac(smw_subsystem_t subsystem,
+					  struct smw_mac_info *info);
 
 /**
  * smw_config_load() - Load a configuration.

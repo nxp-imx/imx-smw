@@ -1,12 +1,17 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2022, 2024 NXP
  */
 
 #ifndef __DATABASE_H__
 #define __DATABASE_H__
 
 #include "list.h"
+#include "operations.h"
+#include "subsystems.h"
+#include "config.h"
+
+#include "common.h"
 
 #define LOAD_METHOD_ID_DEFAULT LOAD_METHOD_ID_AT_FIRST_CALL_LOAD
 

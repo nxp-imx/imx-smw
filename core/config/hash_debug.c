@@ -3,14 +3,7 @@
  * Copyright 2020-2021, 2024 NXP
  */
 
-#include "smw_status.h"
-
-#include "global.h"
 #include "debug.h"
-#include "utils.h"
-#include "operations.h"
-#include "subsystems.h"
-#include "config.h"
 
 #include "common.h"
 

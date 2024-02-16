@@ -5,11 +5,8 @@
 
 #include "smw_status.h"
 
-#include "global.h"
 #include "debug.h"
-#include "utils.h"
-#include "operations.h"
-#include "subsystems.h"
+#include "list.h"
 #include "config.h"
 
 #include "common.h"

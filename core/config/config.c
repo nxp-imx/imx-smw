@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <stdbool.h>
@@ -104,6 +104,15 @@ smw_config_check_verify(smw_subsystem_t subsystem,
 
 __export __weak enum smw_status_code
 smw_config_check_aead(smw_subsystem_t subsystem, struct smw_aead_info *info)
+{
+	(void)subsystem;
+	(void)info;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__export __weak enum smw_status_code
+smw_config_check_mac(smw_subsystem_t subsystem, struct smw_mac_info *info)
 {
 	(void)subsystem;
 	(void)info;

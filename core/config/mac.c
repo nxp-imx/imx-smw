@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
+#include "smw_config.h"
 #include "smw_crypto.h"
 
 #include "compiler.h"
@@ -124,3 +125,58 @@ static int mac_check_subsystem_caps(void *args, void *params)
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(mac);
+
+__export enum smw_status_code smw_config_check_mac(smw_subsystem_t subsystem,
+						   struct smw_mac_info *info)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
+	enum smw_config_key_type_id key_type_id =
+		SMW_CONFIG_KEY_TYPE_ID_INVALID;
+	enum smw_config_mac_algo_id mac_id = SMW_CONFIG_MAC_ALGO_ID_INVALID;
+	enum smw_config_hash_algo_id hash_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
+	struct mac_params params = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!info || !info->key_type_name)
+		return status;
+
+	status = smw_config_get_subsystem_id(subsystem, &id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = smw_config_get_key_type_id(info->key_type_name, &key_type_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = get_operation_params(OPERATION_ID_MAC, id, &params);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	/* Check key type */
+	if (!check_id(key_type_id, params.key.type_bitmap))
+		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	/* Check MAC algorithm if set */
+	if (info->mac_algo) {
+		status = smw_utils_get_mac_algo_id(info->mac_algo, &mac_id);
+		if (status != SMW_STATUS_OK)
+			return status;
+
+		if (!check_id(mac_id, params.algo_bitmap))
+			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	}
+
+	/* Check hash algorithm if set */
+	if (info->hash_algo) {
+		status = smw_utils_get_hash_algo_id(info->hash_algo, &hash_id);
+		if (status != SMW_STATUS_OK)
+			return status;
+
+		if (!check_id(hash_id, params.algo_bitmap))
+			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	}
+
+	return SMW_STATUS_OK;
+}

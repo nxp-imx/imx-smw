@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -206,7 +206,7 @@ static int proc_a_callback(struct mp_args *args)
 	sem_post(&share->sem[SEM_B_WAIT_SIG]);
 	sem_wait(&share->sem[SEM_A_WAIT_SIG]);
 
-	status = generate_ec_keypair(args->pfunc, &sess, false);
+	status = generate_ec_keypair(args->pfunc, &sess, CK_FALSE);
 
 end:
 	util_close_session(args->pfunc, &sess);
@@ -230,7 +230,7 @@ static int proc_b_callback(struct mp_args *args)
 	sem_post(&share->sem[SEM_A_WAIT_SIG]);
 	sem_wait(&share->sem[SEM_B_WAIT_SIG]);
 
-	status = generate_ec_keypair(args->pfunc, &sess, false);
+	status = generate_ec_keypair(args->pfunc, &sess, CK_FALSE);
 
 end:
 	util_close_session(args->pfunc, &sess);

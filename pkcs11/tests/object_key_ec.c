@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -390,6 +390,7 @@ end:
 	SUBTEST_END(status);
 	return status;
 }
+
 void tests_pkcs11_object_key_ec(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -409,40 +410,40 @@ void tests_pkcs11_object_key_ec(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 
-	if (object_ec_key_public(pfunc, false, true) == TEST_FAIL)
+	if (object_ec_key_public(pfunc, CK_FALSE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_public(pfunc, false, false) == TEST_FAIL)
+	if (object_ec_key_public(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_private(pfunc, false, true) == TEST_FAIL)
+	if (object_ec_key_private(pfunc, CK_FALSE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_private(pfunc, false, false) == TEST_FAIL)
+	if (object_ec_key_private(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_ec_keypair(pfunc, false) == TEST_FAIL)
+	if (object_generate_ec_keypair(pfunc, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_keypair_usage(pfunc, false) == TEST_FAIL)
+	if (object_ec_keypair_usage(pfunc, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_public(pfunc, true, true) == TEST_FAIL)
+	if (object_ec_key_public(pfunc, CK_TRUE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_public(pfunc, true, false) == TEST_FAIL)
+	if (object_ec_key_public(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_private(pfunc, true, true) == TEST_FAIL)
+	if (object_ec_key_private(pfunc, CK_TRUE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_private(pfunc, true, false) == TEST_FAIL)
+	if (object_ec_key_private(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_ec_keypair(pfunc, true) == TEST_FAIL)
+	if (object_generate_ec_keypair(pfunc, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	status = object_ec_keypair_usage(pfunc, true);
+	status = object_ec_keypair_usage(pfunc, CK_TRUE);
 
 end:
 	ret = pfunc->C_Finalize(NULL);

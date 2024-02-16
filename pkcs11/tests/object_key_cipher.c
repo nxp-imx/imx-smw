@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -121,9 +121,9 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
 	CK_KEY_TYPE key_type = CKK_AES;
 	CK_BYTE key[32] = { 0 };
-	CK_BBOOL btrue = true;
-	CK_BBOOL bfalse = false;
-	CK_BBOOL bvalue = false;
+	CK_BBOOL btrue = CK_TRUE;
+	CK_BBOOL bfalse = CK_FALSE;
+	CK_BBOOL bvalue = CK_FALSE;
 
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
@@ -232,7 +232,7 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	if (CHECK_EXPECTED(bvalue, "Got key sensitive %d exptected %d", bvalue,
-			   true))
+			   CK_TRUE))
 		goto end;
 
 	status = TEST_PASS;
@@ -268,28 +268,28 @@ void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 
-	if (object_cipher_key(pfunc, false, true) == TEST_FAIL)
+	if (object_cipher_key(pfunc, CK_FALSE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_cipher_key(pfunc, false, false) == TEST_FAIL)
+	if (object_cipher_key(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_cipher_key(pfunc, false, true) == TEST_FAIL)
+	if (object_generate_cipher_key(pfunc, CK_FALSE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_cipher_key(pfunc, false, false) == TEST_FAIL)
+	if (object_generate_cipher_key(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_cipher_key(pfunc, true, true) == TEST_FAIL)
+	if (object_cipher_key(pfunc, CK_TRUE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_cipher_key(pfunc, true, false) == TEST_FAIL)
+	if (object_cipher_key(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_cipher_key(pfunc, true, true) == TEST_FAIL)
+	if (object_generate_cipher_key(pfunc, CK_TRUE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_cipher_key(pfunc, true, false) == TEST_FAIL)
+	if (object_generate_cipher_key(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
 	status = object_attribute_cipher_key(pfunc);

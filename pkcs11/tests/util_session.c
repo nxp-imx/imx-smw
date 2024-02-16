@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -24,7 +24,7 @@ static CK_RV create_tee_info(CK_SESSION_HANDLE_PTR sess,
 	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = true;
+	CK_BBOOL token = CK_TRUE;
 	CK_UTF8CHAR label[] = "TEE Info";
 
 	CK_ATTRIBUTE data_template[] = {
@@ -54,7 +54,7 @@ static CK_RV create_hsm_info(CK_SESSION_HANDLE_PTR sess,
 	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = true;
+	CK_BBOOL token = CK_TRUE;
 	CK_UTF8CHAR label[] = "HSM Info";
 
 	CK_ATTRIBUTE data_template[] = {
@@ -84,7 +84,7 @@ static CK_RV create_ele_info(CK_SESSION_HANDLE_PTR sess,
 	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = true;
+	CK_BBOOL token = CK_TRUE;
 	CK_UTF8CHAR label[] = "ELE Info";
 
 	CK_ATTRIBUTE data_template[] = {
@@ -114,7 +114,7 @@ static CK_RV create_obj_db(CK_SESSION_HANDLE_PTR sess,
 	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = true;
+	CK_BBOOL token = CK_TRUE;
 	CK_UTF8CHAR label[] = "Object DB";
 	CK_UTF8CHAR app[] = "Test PKCS11";
 	CK_BYTE obj_db_file[] = "/var/tmp/obj_db_pkcs11_test.dat";

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -600,35 +600,38 @@ void tests_pkcs11_find(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
-	if (create_ec_key_public(pfunc, &sess, false, &hkeys[0]) == TEST_FAIL)
+	if (create_ec_key_public(pfunc, &sess, CK_FALSE, &hkeys[0]) ==
+	    TEST_FAIL)
 		goto end;
 
-	if (create_ec_key_private(pfunc, &sess, false, &hkeys[1]) == TEST_FAIL)
+	if (create_ec_key_private(pfunc, &sess, CK_FALSE, &hkeys[1]) ==
+	    TEST_FAIL)
 		goto end;
 
-	if (generate_ec_keypair(pfunc, &sess, false, &hkeys[2]) == TEST_FAIL)
+	if (generate_ec_keypair(pfunc, &sess, CK_FALSE, &hkeys[2]) == TEST_FAIL)
 		goto end;
 
-	if (create_cipher_key(pfunc, &sess, false, &hkeys[4]) == TEST_FAIL)
+	if (create_cipher_key(pfunc, &sess, CK_FALSE, &hkeys[4]) == TEST_FAIL)
 		goto end;
 
-	if (generate_cipher_key(pfunc, &sess, false, &hkeys[5]) == TEST_FAIL)
+	if (generate_cipher_key(pfunc, &sess, CK_FALSE, &hkeys[5]) == TEST_FAIL)
 		goto end;
 
-	if (create_cipher_key(pfunc, &sess, true, &hkeys[6]) == TEST_FAIL)
+	if (create_cipher_key(pfunc, &sess, CK_TRUE, &hkeys[6]) == TEST_FAIL)
 		goto end;
 
-	if (generate_cipher_key(pfunc, &sess, true, &hkeys[7]) == TEST_FAIL)
+	if (generate_cipher_key(pfunc, &sess, CK_TRUE, &hkeys[7]) == TEST_FAIL)
 		goto end;
 
 	if (find_all_keys(pfunc, &sess, hkeys) == TEST_FAIL)
 		goto end;
 
-	if (find_cipher_aes_keys(pfunc, &sess, &hkeys[4], 2, false) ==
+	if (find_cipher_aes_keys(pfunc, &sess, &hkeys[4], 2, CK_FALSE) ==
 	    TEST_FAIL)
 		goto end;
 
-	if (find_cipher_aes_keys(pfunc, &sess, &hkeys[6], 2, true) == TEST_FAIL)
+	if (find_cipher_aes_keys(pfunc, &sess, &hkeys[6], 2, CK_TRUE) ==
+	    TEST_FAIL)
 		goto end;
 
 	status = find_while_active(pfunc, &sess, hkeys);

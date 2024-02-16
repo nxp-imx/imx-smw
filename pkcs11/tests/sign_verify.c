@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -32,7 +32,7 @@ static int sign_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ATTRIBUTE rsa_pubkey_attrs[] = {
 		{ CKA_MODULUS_BITS, &rsa_modulus_bits, sizeof(CK_ULONG) },
 	};
-	CK_BBOOL rsa_sign = true;
+	CK_BBOOL rsa_sign = CK_TRUE;
 	CK_ATTRIBUTE rsa_privkey_attrs[] = {
 		{ CKA_SIGN, &rsa_sign, sizeof(CK_BBOOL) },
 	};
@@ -124,7 +124,7 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE rsa_hprivkey = CK_INVALID_HANDLE;
 	CK_ULONG rsa_modulus_bits = 2048;
 	CK_MECHANISM rsa_key_mech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
-	CK_BBOOL rsa_verify = true;
+	CK_BBOOL rsa_verify = CK_TRUE;
 	CK_ATTRIBUTE rsa_pubkey_attrs[] = {
 		{ CKA_MODULUS_BITS, &rsa_modulus_bits, sizeof(CK_ULONG) },
 		{ CKA_VERIFY, &rsa_verify, sizeof(CK_BBOOL) },
@@ -363,12 +363,12 @@ static int sign_verify_multiple_init(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_MECHANISM key_mech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
-	CK_BBOOL ec_verify = true;
+	CK_BBOOL ec_verify = CK_TRUE;
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VERIFY, &ec_verify, sizeof(CK_BBOOL) },
 	};
-	CK_BBOOL ec_sign = true;
+	CK_BBOOL ec_sign = CK_TRUE;
 	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_SIGN, &ec_sign, sizeof(CK_BBOOL) },
 	};
@@ -465,12 +465,12 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE hpubkey;
 	CK_OBJECT_HANDLE hprivkey;
 	CK_MECHANISM key_mech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
-	CK_BBOOL ec_verify = true;
+	CK_BBOOL ec_verify = CK_TRUE;
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VERIFY, &ec_verify, sizeof(CK_BBOOL) },
 	};
-	CK_BBOOL ec_sign = true;
+	CK_BBOOL ec_sign = CK_TRUE;
 	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_SIGN, &ec_sign, sizeof(CK_BBOOL) },
 	};
@@ -626,11 +626,11 @@ static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_ULONG modulus_bits = 2048;
 	CK_MECHANISM key_mech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
-	CK_BBOOL sign = true;
+	CK_BBOOL sign = CK_TRUE;
 	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_SIGN, &sign, sizeof(CK_BBOOL) },
 	};
-	CK_BBOOL verify = true;
+	CK_BBOOL verify = CK_TRUE;
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_MODULUS_BITS, &modulus_bits, sizeof(CK_ULONG) },
 		{ CKA_VERIFY, &verify, sizeof(CK_BBOOL) },
@@ -837,6 +837,7 @@ end:
 	SUBTEST_END(status);
 	return status;
 }
+
 void tests_pkcs11_sign_verify(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 {
 	(void)lib_hdl;

@@ -19,7 +19,7 @@ static int data_storage_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	CK_SESSION_HANDLE sess = 0;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = true;
+	CK_BBOOL token = CK_TRUE;
 	CK_UTF8CHAR label[] = "Data";
 	CK_UTF8CHAR invalid_label[] = "Invalid label";
 	CK_BYTE data[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
@@ -128,7 +128,7 @@ static int data_storage_store(CK_FUNCTION_LIST_PTR pfunc)
 	CK_SESSION_HANDLE sess = 0;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = true;
+	CK_BBOOL token = CK_TRUE;
 	CK_UTF8CHAR label[] = "Data";
 	CK_BYTE data[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 	CK_BYTE retrieved_data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };

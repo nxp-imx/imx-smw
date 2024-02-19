@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "compiler.h"
@@ -18,8 +18,10 @@
 	}
 
 static const struct ele_hash_algo hash_algos[] = {
-	HASH_ALGO(SHA224, SHA_224, 28), HASH_ALGO(SHA256, SHA_256, 32),
-	HASH_ALGO(SHA384, SHA_384, 48), HASH_ALGO(SHA512, SHA_512, 64)
+	HASH_ALGO(SHA224, SHA_224, 28),	   HASH_ALGO(SHA256, SHA_256, 32),
+	HASH_ALGO(SHA384, SHA_384, 48),	   HASH_ALGO(SHA512, SHA_512, 64),
+	HASH_ALGO(SHA3_224, SHA3_224, 28), HASH_ALGO(SHA3_256, SHA3_256, 32),
+	HASH_ALGO(SHA3_384, SHA3_384, 48), HASH_ALGO(SHA3_512, SHA3_512, 64)
 };
 
 const struct ele_hash_algo *

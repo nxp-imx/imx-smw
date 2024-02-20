@@ -262,7 +262,7 @@ int obj_db_open(const char *obj_db)
 	 * Try to open it for read/write assuming file exist, if
 	 * file doesn't exist create a new file.
 	 */
-	db->fp = open(obj_db, O_RDWR | O_SYNC | O_CREAT, 777);
+	db->fp = open(obj_db, O_RDWR | O_SYNC | O_CREAT, 0777);
 	if (db->fp < 0) {
 		DBG_PRINTF(ERROR, "%s (%d): %s\n", __func__, __LINE__,
 			   get_strerr());

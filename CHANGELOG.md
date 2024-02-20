@@ -68,6 +68,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 3. ARM PSA APIs
 
 * Add support of CFB mode.
+* Add support of SHA-3 hash.
 
 ##### 4. OSAL
 
@@ -88,6 +89,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix test engine to read data/key ID >= 0x80000000 from JSON definition.
 * Add prefix `[TEST]` to test traces.
 * Add SHA-3 test vectors in U_TEE_Hash_002 and U_ELE_Hash_002.
+* Add SHA-3 test vectors in U_PSA_Hash_002.
 
 #### PKCS#11 Library - _version 3.0_
 

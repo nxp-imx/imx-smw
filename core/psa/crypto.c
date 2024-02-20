@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include "smw_keymgr.h"
@@ -85,6 +85,10 @@ static const struct hash_algo_info {
 		       HASH_ALGO(SHA_256, "SHA256", 32, 64),
 		       HASH_ALGO(SHA_384, "SHA384", 48, 128),
 		       HASH_ALGO(SHA_512, "SHA512", 64, 128),
+		       HASH_ALGO(SHA3_224, "SHA3_224", 28, 64),
+		       HASH_ALGO(SHA3_256, "SHA3_256", 32, 64),
+		       HASH_ALGO(SHA3_384, "SHA3_384", 48, 128),
+		       HASH_ALGO(SHA3_512, "SHA3_512", 64, 128),
 		       HASH_ALGO(SM3, "SM3", 32, 64),
 		       HASH_ALGO(NONE, NULL, 0, 0) };
 

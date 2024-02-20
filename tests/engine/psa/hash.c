@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -27,12 +27,18 @@ static const struct hash_alg_info {
 	const char *name;
 	psa_algorithm_t psa_alg_id;
 	size_t length;
-} hash_alg_info[] = {
-	HASH_ALGO("MD5", MD5, 16),	  HASH_ALGO("SHA1", SHA_1, 20),
-	HASH_ALGO("SHA224", SHA_224, 28), HASH_ALGO("SHA256", SHA_256, 32),
-	HASH_ALGO("SHA384", SHA_384, 48), HASH_ALGO("SHA512", SHA_512, 64),
-	HASH_ALGO("SM3", SM3, 32),	  HASH_ALGO(NULL, NONE, 0)
-};
+} hash_alg_info[] = { HASH_ALGO("MD5", MD5, 16),
+		      HASH_ALGO("SHA1", SHA_1, 20),
+		      HASH_ALGO("SHA224", SHA_224, 28),
+		      HASH_ALGO("SHA256", SHA_256, 32),
+		      HASH_ALGO("SHA384", SHA_384, 48),
+		      HASH_ALGO("SHA512", SHA_512, 64),
+		      HASH_ALGO("SHA3_224", SHA3_224, 28),
+		      HASH_ALGO("SHA3_256", SHA3_256, 32),
+		      HASH_ALGO("SHA3_384", SHA3_384, 48),
+		      HASH_ALGO("SHA3_512", SHA3_512, 64),
+		      HASH_ALGO("SM3", SM3, 32),
+		      HASH_ALGO(NULL, NONE, 0) };
 
 static const struct hash_alg_info *get_hash_alg_info(const char *alg_name)
 {

@@ -84,11 +84,11 @@ static int data_storage(struct hdl *hdl,
 
 	status = seco_convert_err(err);
 
-	if (!store)
+	if (!store &&
+	    (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT))
 		smw_storage_set_data_length(data_descriptor, op_args.data_size);
 
 	err = close_data_storage_service(data_storage_hdl);
-
 	if (status == SMW_STATUS_OK)
 		status = seco_convert_err(err);
 
@@ -140,6 +140,26 @@ bool seco_storage_handle(struct hdl *hdl, enum operation_id operation_id,
 
 	case OPERATION_ID_STORAGE_RETRIEVE:
 		*status = storage_retrieve(hdl, args);
+		break;
+
+	case OPERATION_ID_STORAGE_IS_DATA_PRESENT:
+		/*
+		 * Because of SECO limitation, there is no way to know if
+		 * a data is present or not.
+		 * Return SMW_STATUS_UNKNOWN_ID to ensure that store/retrieve
+		 * operation are executed when this subsystem is selected.
+		 */
+		*status = SMW_STATUS_UNKNOWN_ID;
+		break;
+
+	case OPERATION_ID_STORAGE_GET_DATA_INFO:
+		/*
+		 * Because of SECO limitation, there is no way to get data
+		 * information.
+		 * Return SMW_STATUS_OK to ensure that SMW's object information
+		 * extracted from the database is returned.
+		 */
+		*status = SMW_STATUS_OK;
 		break;
 
 	case OPERATION_ID_STORAGE_DELETE:

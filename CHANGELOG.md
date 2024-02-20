@@ -63,7 +63,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Implement AEAD one-shot operation for HSM subsystem.
 * Add ELE subsystem RSA key management.
 * Implement storage re-provisioning for ELE subsystem.
-* Add support of SHA-3 hash with TEE subsystem.
+* Add support of SHA-3 hash with TEE and ELE subsystem.
 
 ##### 3. ARM PSA APIs
 
@@ -87,7 +87,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add skipped test management.
 * Fix test engine to read data/key ID >= 0x80000000 from JSON definition.
 * Add prefix `[TEST]` to test traces.
-* Add SHA-3 test vectors in U_TEE_Hash_002.
+* Add SHA-3 test vectors in U_TEE_Hash_002 and U_ELE_Hash_002.
 
 #### PKCS#11 Library - _version 3.0_
 

@@ -63,8 +63,8 @@ static int data_ops(struct hdl *hdl,
 	SMW_DBG_PRINTF(DEBUG, "hsm_data_ops returned %d\n", err);
 
 	status = ele_convert_err(err);
-
-	if (!store)
+	if (!store &&
+	    (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT))
 		smw_storage_set_data_length(data_descriptor,
 					    op_args.exp_output_size);
 
@@ -223,6 +223,34 @@ static int storage_delete(struct hdl *hdl,
 	return status;
 }
 
+static int storage_get_data_info(struct hdl *hdl, void *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_storage_data_descriptor *data_desc = args;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args)
+		goto exit;
+
+	/*
+	 * Before calling the operation the length must be 0 otherwise
+	 * a generic error is returned.
+	 */
+	smw_storage_set_data_length(data_desc, 0);
+
+	status = data_ops(hdl, data_desc, false);
+
+	if (status == SMW_STATUS_SUBSYSTEM_FAILURE)
+		status = SMW_STATUS_UNKNOWN_ID;
+	else if (status == SMW_STATUS_OUTPUT_TOO_SHORT)
+		status = SMW_STATUS_OK;
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 bool ele_storage_handle(struct subsystem_context *ele_ctx,
 			enum operation_id operation_id, void *args, int *status)
 {
@@ -235,6 +263,11 @@ bool ele_storage_handle(struct subsystem_context *ele_ctx,
 
 	case OPERATION_ID_STORAGE_RETRIEVE:
 		*status = storage_retrieve(&ele_ctx->hdl, args);
+		break;
+
+	case OPERATION_ID_STORAGE_IS_DATA_PRESENT:
+	case OPERATION_ID_STORAGE_GET_DATA_INFO:
+		*status = storage_get_data_info(&ele_ctx->hdl, args);
 		break;
 
 	case OPERATION_ID_STORAGE_DELETE:

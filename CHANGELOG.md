@@ -106,6 +106,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Tests - _version 3.0_
 
 * Change the TA installation default path to be `/usr/lib`.
+* Add prefix `[TEST]` to PKCS#11 test traces.
 
 ---
 ### <a id ="rel_2_5"></a></br>**Release 2.5**

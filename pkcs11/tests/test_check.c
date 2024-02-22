@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include <stdarg.h>
@@ -78,8 +78,13 @@ void test_printf(const char *format, ...)
 
 	max_len = sizeof(buf);
 
-	if (tests_data.trace_pid)
-		nb = snprintf(buf, max_len, "{pid #%d} ", tests_data.trace_pid);
+	nb = snprintf(buf, max_len, "[TEST] ");
+
+	if (nb >= 0 && !DEC_OVERFLOW(max_len, nb)) {
+		if (tests_data.trace_pid)
+			nb = snprintf(buf, max_len, "{pid #%d} ",
+				      tests_data.trace_pid);
+	}
 
 	if (nb >= 0 && !DEC_OVERFLOW(max_len, nb)) {
 		va_start(args, format);

@@ -54,11 +54,13 @@ CK_RV libdev_get_tokeninfo(CK_SLOT_ID slotid, CK_TOKEN_INFO_PTR pinfo);
 
 /**
  * libdev_get_slots() - Return the list of slots
- * @nb_slots: Number of slots
+ * @nb_solts: Number of slots
  * @slotlist: List of slots
+ * @tokenPresent: Whether or not a token is present
  *
- * Return the number of slots in @nb_slots and if @slotlist not
- * NULL, fill the list of slots.
+ * Return the number of slots in @nb_solts and if @slotlist not
+ * NULL, fill the list of slots, retricted to the slots with a token
+ * present if @tokenPresent is TRUE.
  *
  * Return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -67,23 +69,8 @@ CK_RV libdev_get_tokeninfo(CK_SLOT_ID slotid, CK_TOKEN_INFO_PTR pinfo);
  * CKR_OK                        - Success
  *
  */
-CK_RV libdev_get_slots(CK_ULONG_PTR nb_slots, CK_SLOT_ID_PTR slotlist);
-
-/**
- * libdev_get_slots_present() - Return the slots present
- * @nb_slots: Number of slots present
- * @slotlist: List of slots present
- *
- * Return the number of slots present in @nb_slots and if @slotlist not
- * NULL, fill the list of slot present.
- *
- * Return:
- * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
- * CKR_GENERAL_ERROR             - No slot defined
- * CKR_BUFFER_TOO_SMALL          - Pointer to the list buffer too small
- * CKR_OK                        - Success
- */
-CK_RV libdev_get_slots_present(CK_ULONG_PTR nb_slots, CK_SLOT_ID_PTR slotlist);
+CK_RV libdev_get_slots(CK_ULONG_PTR nb_solts, CK_SLOT_ID_PTR slotlist,
+		       CK_BBOOL tokenPresent);
 
 /**
  * libdev_init_token() - Initialize a token

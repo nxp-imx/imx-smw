@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -230,12 +230,13 @@ CK_RV libdev_get_tokeninfo(CK_SLOT_ID slotid, CK_TOKEN_INFO_PTR pinfo)
 	return CKR_OK;
 }
 
-CK_RV libdev_get_slots(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
+CK_RV libdev_get_slots(CK_ULONG_PTR nb_slots, CK_SLOT_ID_PTR slotlist,
+		       CK_BBOOL tokenPresent)
 {
 	CK_RV ret = CKR_OK;
 	struct libdevice *devices = NULL;
 	CK_SLOT_ID_PTR item = slotlist;
-	CK_ULONG nb_slots = 0;
+	CK_ULONG count = 0;
 	unsigned int nb_devices = 0;
 	unsigned int idx = 0;
 
@@ -250,16 +251,25 @@ CK_RV libdev_get_slots(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
 	nb_devices = libdev_get_nb_devinfo();
 	DBG_TRACE("Number of devices %u", nb_devices);
 
-	if (slotlist && *count < nb_devices)
+	if (!tokenPresent && slotlist && *nb_slots < nb_devices)
 		return CKR_BUFFER_TOO_SMALL;
 
 	/* Update the slot presence */
 	libdev_set_present(devices);
 
 	for (; idx < nb_devices; idx++) {
-		nb_slots++;
+		if (tokenPresent) {
+			if (!(devices[idx].slot.flags & CKF_TOKEN_PRESENT))
+				continue;
+
+			DBG_TRACE("Slot %u is Present", idx);
+		}
+
+		if (INC_OVERFLOW(count, 1))
+			return CKR_GENERAL_ERROR;
+
 		if (item) {
-			if (*count < nb_slots)
+			if (*nb_slots < count)
 				return CKR_BUFFER_TOO_SMALL;
 
 			*item = idx;
@@ -267,53 +277,8 @@ CK_RV libdev_get_slots(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
 		}
 	}
 
-	DBG_TRACE("Return %lu slots", nb_slots);
-	*count = nb_slots;
-
-	return CKR_OK;
-}
-
-CK_RV libdev_get_slots_present(CK_ULONG_PTR count, CK_SLOT_ID_PTR slotlist)
-{
-	CK_RV ret = CKR_OK;
-	struct libdevice *devices = NULL;
-	CK_SLOT_ID_PTR item = slotlist;
-	CK_ULONG nb_slots = 0;
-	unsigned int nb_devices = 0;
-	unsigned int idx = 0;
-
-	ret = libctx_get_initialized();
-	if (ret != CKR_CRYPTOKI_ALREADY_INITIALIZED)
-		return ret;
-
-	devices = libctx_get_devices();
-	if (!devices)
-		return CKR_GENERAL_ERROR;
-
-	nb_devices = libdev_get_nb_devinfo();
-
-	/* Update the slot presence */
-	libdev_set_present(devices);
-
-	for (; idx < nb_devices; idx++) {
-		if (devices[idx].slot.flags & CKF_TOKEN_PRESENT) {
-			DBG_TRACE("Slot %u is Present", idx);
-
-			if (INC_OVERFLOW(nb_slots, 1))
-				return CKR_GENERAL_ERROR;
-
-			if (item) {
-				if (*count < nb_slots)
-					return CKR_BUFFER_TOO_SMALL;
-
-				*item = idx;
-				item++;
-			}
-		}
-	}
-
-	DBG_TRACE("Return %lu slots", nb_slots);
-	*count = nb_slots;
+	DBG_TRACE("Return %lu slots", count);
+	*nb_slots = count;
 
 	return CKR_OK;
 }

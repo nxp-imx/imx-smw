@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2023 NXP
+ * Copyright 2020, 2023-2024 NXP
  */
 
 #include "lib_context.h"
@@ -22,10 +22,7 @@ CK_RV C_GetSlotList(CK_BBOOL tokenPresent, CK_SLOT_ID_PTR pSlotList,
 	 * Caller ask only the list of the Slot present
 	 * if @tokenPresent is true
 	 */
-	if (tokenPresent)
-		ret = libdev_get_slots_present(&nb_slots, pSlotList);
-	else
-		ret = libdev_get_slots(&nb_slots, pSlotList);
+	ret = libdev_get_slots(&nb_slots, pSlotList, tokenPresent);
 
 	if (!pSlotList && ret == CKR_OK)
 		*pulCount = nb_slots;

@@ -262,6 +262,16 @@ CK_RV args_attrs_key_policy(struct smw_tlv *attr, struct libobj_obj *obj,
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
 		ret = set_secret_key_usage(&policy, obj, allowed_algos);
 		break;
 

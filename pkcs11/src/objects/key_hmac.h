@@ -1,26 +1,26 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2024 NXP
  */
 
-#ifndef __KEY_CIPHER_H__
-#define __KEY_CIPHER_H__
+#ifndef __KEY_HMAC_H__
+#define __KEY_HMAC_H__
 
 #include "types.h"
 
 /**
- * key_cipher_free() - Free a Cipher key
- * @obj: Cipher Key object
+ * key_hmac_free() - Free a HMAC key
+ * @obj: HMAC Key object
  */
-void key_cipher_free(struct libobj_obj *obj);
+void key_hmac_free(struct libobj_obj *obj);
 
 /*
- * key_cipher_create() - Creates a Cipher key object
+ * key_hmac_create() - Creates a HMAC key object
  * @hsession: Session handle
- * @obj: Cipher Key object
+ * @obj: HMAC Key object
  * @attrs: List of object attributes
  *
- * If key attributes are corrects, create a new Cipher key object.
+ * If key attributes are corrects, create a new HMAC key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -36,16 +36,16 @@ void key_cipher_free(struct libobj_obj *obj);
  * CKR_DEVICE_ERROR              - Device failure
  * CKR_OK                        - Success
  */
-CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
-			struct libattr_list *attrs);
+CK_RV key_hmac_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+		      struct libattr_list *attrs);
 
 /**
- * key_cipher_get_attribute() - Get an attribute from the Cipher key
+ * key_hmac_get_attribute() - Get an attribute from the HMAC key
  * @attr: Attribute to get
- * @obj: Cipher key object
+ * @obj: HMAC key object
  * @protect: True if object is sensitive or unextractable
  *
- * Get the given attribute @attr from the Cipher key object,
+ * Get the given attribute @attr from the HMAC key object,
  * if not present, as this is the last function called to get the attribute
  * set the attribute's ulValueLen to CK_UNAVAILABLE_INFORMATION
  *
@@ -55,15 +55,15 @@ CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
  * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute not found
  * CKR_OK                        - Success
  */
-CK_RV key_cipher_get_attribute(CK_ATTRIBUTE_PTR attr,
-			       const struct libobj_obj *obj, bool protect);
+CK_RV key_hmac_get_attribute(CK_ATTRIBUTE_PTR attr,
+			     const struct libobj_obj *obj, bool protect);
 
 /**
- * key_cipher_modify_attribute() - Modify an attribute of the Cipher key
+ * key_hmac_modify_attribute() - Modify an attribute of the HMAC key
  * @attr: Attribute to modify
- * @obj: Cipher key object
+ * @obj: HMAC key object
  *
- * Modify the given attribute @attr of the Cipher key object,
+ * Modify the given attribute @attr of the HMAC key object,
  * if not present, as this is the last function called returns the
  * CKR_ATTRIBUTE_TYPE_INVALID error.
  *
@@ -74,17 +74,16 @@ CK_RV key_cipher_get_attribute(CK_ATTRIBUTE_PTR attr,
  * CKR_HOST_MEMORY               - Out of memory
  * CKR_OK                        - Success
  */
-CK_RV key_cipher_modify_attribute(CK_ATTRIBUTE_PTR attr,
-				  struct libobj_obj *obj);
+CK_RV key_hmac_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj);
 
 /*
- * key_cipher_generate() - Generates a Cipher object
+ * key_hmac_generate() - Generates a HMAC object
  * @hsession: Session handle
  * @mech: Key generation mechanism
- * @obj: Cipher Key object
+ * @obj: HMAC Key object
  * @attrs: List of key attributes
  *
- * If key attributes are corrects, create and generate a Cipher key object.
+ * If key attributes are corrects, create and generate a HMAC key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -102,13 +101,13 @@ CK_RV key_cipher_modify_attribute(CK_ATTRIBUTE_PTR attr,
  * CKR_FUNCTION_CANCELED         - Application callback canceled function
  * CKR_OK                        - Success
  */
-CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
-			  struct libobj_obj *obj, struct libattr_list *attrs);
+CK_RV key_hmac_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			struct libobj_obj *obj, struct libattr_list *attrs);
 
 /*
- * key_cipher_get_id() - Get the Cipher key ID returned by SMW
+ * key_hmac_get_id() - Get the HMAC key ID returned by SMW
  * @id: Byte buffer of the key ID
- * @obj: Cipher Key object
+ * @obj: HMAC Key object
  * @prefix_len: Byte length of id prefix
  *
  * Allocates the @id buffer with a length of SMW Key ID added to the
@@ -121,7 +120,7 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_OK                        - Success
  */
-CK_RV key_cipher_get_id(struct libbytes *id, struct libobj_obj *obj,
-			size_t prefix_len);
+CK_RV key_hmac_get_id(struct libbytes *id, struct libobj_obj *obj,
+		      size_t prefix_len);
 
-#endif /* __KEY_CIPHER_H__ */
+#endif /* __KEY_HMAC_H__ */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <stdlib.h>
@@ -8,6 +8,7 @@
 #include "attributes.h"
 #include "key.h"
 #include "key_cipher.h"
+#include "key_hmac.h"
 #include "key_ec.h"
 #include "key_rsa.h"
 
@@ -275,6 +276,19 @@ static void key_secret_free(struct libobj_obj *obj)
 	case CKK_DES:
 	case CKK_DES3:
 		key_cipher_free(obj);
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+		key_hmac_free(obj);
 		break;
 
 	default:
@@ -693,6 +707,19 @@ static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
 		ret = key_cipher_create(hsession, obj, attrs);
 		break;
 
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+		ret = key_hmac_create(hsession, obj, attrs);
+		break;
+
 	default:
 		break;
 	}
@@ -746,6 +773,19 @@ static CK_RV subkey_secret_get_attribute(CK_ATTRIBUTE_PTR attr,
 		ret = key_cipher_get_attribute(attr, obj, protect);
 		break;
 
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+		ret = key_hmac_get_attribute(attr, obj, protect);
+		break;
+
 	default:
 		ret = CKR_FUNCTION_FAILED;
 	}
@@ -793,6 +833,19 @@ static CK_RV subkey_secret_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	case CKK_DES:
 	case CKK_DES3:
 		ret = key_cipher_modify_attribute(attr, obj);
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+		ret = key_hmac_modify_attribute(attr, obj);
 		break;
 
 	default:
@@ -1205,7 +1258,7 @@ static CK_RV generate_key_new(struct libobj_obj *obj,
 	if (ret != CKR_OK)
 		return ret;
 
-	if (new_key->type != key_type)
+	if (new_key->type != key_type && key_type != CKK_GENERIC_SECRET)
 		return CKR_TEMPLATE_INCONSISTENT;
 
 	ret = attr_get_value(new_key, &attr_key_common[KEY_ID], attrs,
@@ -1492,6 +1545,10 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		key_type = CKK_DES3;
 		break;
 
+	case CKM_GENERIC_SECRET_KEY_GEN:
+		key_type = CKK_GENERIC_SECRET;
+		break;
+
 	default:
 		return CKR_MECHANISM_INVALID;
 	}
@@ -1511,6 +1568,19 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	case CKK_DES:
 	case CKK_DES3:
 		ret = key_cipher_generate(hsession, mech, obj, attrs);
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+		ret = key_hmac_generate(hsession, mech, obj, attrs);
 		break;
 
 	default:
@@ -1535,6 +1605,19 @@ CK_RV key_get_id(struct libbytes *id, struct libobj_obj *obj, size_t prefix_len)
 	case CKK_DES:
 	case CKK_DES3:
 		ret = key_cipher_get_id(id, obj, prefix_len);
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+		ret = key_hmac_get_id(id, obj, prefix_len);
 		break;
 
 	case CKK_EC:

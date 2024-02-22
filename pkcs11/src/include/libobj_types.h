@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #ifndef __LIBOBJ_TYPES_H__
@@ -201,6 +201,12 @@ struct libobj_key_rsa_pair {
 };
 
 struct libobj_key_cipher {
+	unsigned int key_id;
+	struct libbytes value;
+	size_t value_len;
+};
+
+struct libobj_key_hmac {
 	unsigned int key_id;
 	struct libbytes value;
 	size_t value_len;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <stdlib.h>
@@ -141,34 +141,40 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			  struct libobj_obj *obj, struct libattr_list *attrs)
 {
 	CK_RV ret = CKR_OK;
-	struct libobj_key_cipher *key = NULL;
+	struct libobj_key_cipher *new_key = NULL;
+	enum attr_req req = NO_OVERWRITE;
 
 	ret = key_cipher_allocate(obj);
 	if (ret != CKR_OK)
 		goto end;
 
-	key = get_subkey_from(obj);
+	new_key = get_subkey_from(obj);
 
-	DBG_TRACE("Generate a Cipher key (%p)", key);
+	DBG_TRACE("Generate a Cipher key (%p)", new_key);
 
 	/* Verify the key attributes */
-	ret = attr_get_value(key, &attr_key_cipher[SEC_VALUE], attrs, MUST_NOT);
+	ret = attr_get_value(new_key, &attr_key_cipher[SEC_VALUE], attrs,
+			     MUST_NOT);
 	if (ret != CKR_OK)
 		goto end;
 
-	if (get_key_type(obj) == CKK_AES)
-		ret = attr_get_value(key, &attr_key_cipher[SEC_VALUE_LEN],
-				     attrs, MUST);
-	else
-		ret = attr_get_value(key, &attr_key_cipher[SEC_VALUE_LEN],
-				     attrs, NO_OVERWRITE);
+	switch (get_key_type(obj)) {
+	case CKK_AES:
+		req = MUST;
+		break;
 
+	default:
+		break;
+	}
+
+	ret = attr_get_value(new_key, &attr_key_cipher[SEC_VALUE_LEN], attrs,
+			     req);
 	if (ret != CKR_OK)
 		goto end;
 
 	/* Generate the secret key with SMW library */
 	ret = libdev_operate_mechanism(hsession, mech, obj);
-	DBG_TRACE("Cipher Key ID 0x%X", key->key_id);
+	DBG_TRACE("Cipher Key ID 0x%X", new_key->key_id);
 
 end:
 	if (ret != CKR_OK)

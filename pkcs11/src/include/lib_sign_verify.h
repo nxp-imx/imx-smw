@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2024 NXP
  */
 
 #ifndef __LIB_SIGN_VERIFY_H__
@@ -13,11 +13,13 @@
  * @hkey: Operation key handle
  * @hash_mech: Hash mechanism
  * @salt_len: Salt length in bytes
+ * @mac_len: MAC length in bytes
  */
 struct lib_signature_ctx {
 	CK_OBJECT_HANDLE hkey;
 	CK_MECHANISM_TYPE hash_mech;
 	CK_ULONG salt_len;
+	CK_ULONG mac_len;
 };
 
 /**
@@ -65,6 +67,8 @@ CK_RV lib_sign_verify_init(CK_SESSION_HANDLE hsession,
 /**
  * lib_sign() - Run a sign operation
  * @hsession: Session handle
+ * @pparameter: Pointer to parameter
+ * @ulparameterlen: @pparameter length in bytes
  * @pdata: Pointer to data
  * @uldatalen: @pdata length in bytes
  * @psignature: Pointer to signature
@@ -83,13 +87,15 @@ CK_RV lib_sign_verify_init(CK_SESSION_HANDLE hsession,
  * CKR_DEVICE_MEMORY                  - Device memory error
  * CKR_OK                             - Success
  */
-CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
-	       CK_ULONG uldatalen, CK_BYTE_PTR psignature,
-	       CK_ULONG_PTR pulsignaturelen);
+CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
+	       CK_ULONG ulparameterlen, CK_BYTE_PTR pdata, CK_ULONG uldatalen,
+	       CK_BYTE_PTR psignature, CK_ULONG_PTR pulsignaturelen);
 
 /**
  * lib_verify() - Run a verify operation
  * @hsession: Session handle
+ * @pparameter: Pointer to parameter
+ * @ulparameterlen: @pparameter length in bytes
  * @pdata: Pointer to data
  * @uldatalen: @pdata length in bytes
  * @psignature: Pointer to signature
@@ -110,8 +116,8 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
  * CKR_SIGNATURE_LEN_RANGE            - Signature length is invalid
  * CKR_OK                             - Success
  */
-CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
-		 CK_ULONG uldatalen, CK_BYTE_PTR psignature,
-		 CK_ULONG ulsignaturelen);
+CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
+		 CK_ULONG ulparameterlen, CK_BYTE_PTR pdata, CK_ULONG uldatalen,
+		 CK_BYTE_PTR psignature, CK_ULONG ulsignaturelen);
 
 #endif /* __LIB_SIGN_VERIFY_H__ */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2024 NXP
  */
 
 #include "lib_sign_verify.h"
@@ -24,7 +24,7 @@ CK_RV C_Verify(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 	if (!hSession)
 		return CKR_SESSION_HANDLE_INVALID;
 
-	return lib_verify(hSession, pData, ulDataLen, pSignature,
+	return lib_verify(hSession, NULL_PTR, 0, pData, ulDataLen, pSignature,
 			  ulSignatureLen);
 }
 

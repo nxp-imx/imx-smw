@@ -174,6 +174,68 @@ static CK_RV check_rsa_pss(CK_MECHANISM_PTR pmechanism,
 }
 
 /**
+ * is_general_length_mac_mechanism() - Check if mechanism type is
+ *                                     general-length CMAC/HMAC
+ * @type: Mechanism type
+ *
+ * Return:
+ * True if CMAC/HMAC mechanism
+ * False otherwise
+ */
+static CK_BBOOL is_general_length_mac_mechanism(CK_MECHANISM_TYPE type)
+{
+	switch (type) {
+	case CKM_AES_CMAC_GENERAL:
+	case CKM_DES3_CMAC_GENERAL:
+	case CKM_MD5_HMAC_GENERAL:
+	case CKM_SHA_1_HMAC_GENERAL:
+	case CKM_SHA224_HMAC_GENERAL:
+	case CKM_SHA256_HMAC_GENERAL:
+	case CKM_SHA384_HMAC_GENERAL:
+	case CKM_SHA512_HMAC_GENERAL:
+	case CKM_SHA3_256_HMAC_GENERAL:
+	case CKM_SHA3_224_HMAC_GENERAL:
+	case CKM_SHA3_384_HMAC_GENERAL:
+	case CKM_SHA3_512_HMAC_GENERAL:
+		return CK_TRUE;
+
+	default:
+		return CK_FALSE;
+	}
+}
+
+/**
+ * check_mac() - Check MAC mechanism parameters
+ * @pmechanism: Pointer to mechanism
+ * @ctx: Pointer to signature context
+ *
+ * Return:
+ * CKR_MECHANISM_PARAM_INVALID        - Mechanism parameters invalid
+ * CKR_OK                             - Success
+ */
+static CK_RV check_mac(CK_MECHANISM_PTR pmechanism,
+		       struct lib_signature_ctx *ctx)
+{
+	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
+	CK_MAC_GENERAL_PARAMS_PTR mech_params = NULL_PTR;
+
+	DBG_TRACE("Check MAC signature mechanism parameter");
+
+	if (pmechanism->ulParameterLen != sizeof(CK_MAC_GENERAL_PARAMS))
+		return ret;
+
+	mech_params = (CK_MAC_GENERAL_PARAMS_PTR)pmechanism->pParameter;
+
+	if (!*mech_params)
+		return ret;
+
+	/* Set context with mechanism parameters */
+	ctx->mac_len = *mech_params;
+
+	return CKR_OK;
+}
+
+/**
  * check_mech_params() - Check Sign Verify mechanism parameters
  * @pmechanism: Pointer to mechanism
  * @ctx: Pointer to signature context
@@ -195,6 +257,9 @@ static CK_RV check_mech_params(CK_MECHANISM_PTR pmechanism,
 
 	if (is_rsa_pss_mechanism(pmechanism->mechanism))
 		return check_rsa_pss(pmechanism, ctx);
+
+	if (is_general_length_mac_mechanism(pmechanism->mechanism))
+		return check_mac(pmechanism, ctx);
 
 	/* Parameters are set but ignored */
 	return CKR_OK;
@@ -239,12 +304,9 @@ CK_RV lib_sign_verify_init(CK_SESSION_HANDLE hsession,
 	if (!key_op)
 		return CKR_KEY_FUNCTION_NOT_PERMITTED;
 
-	ctx = malloc(sizeof(*ctx));
+	ctx = calloc(1, sizeof(*ctx));
 	if (!ctx)
 		return CKR_HOST_MEMORY;
-
-	ctx->hash_mech = 0;
-	ctx->salt_len = 0;
 
 	/* Check mechanism parameters */
 	ret = check_mech_params(pmechanism, ctx);
@@ -264,15 +326,16 @@ end:
 	return ret;
 }
 
-CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
-	       CK_ULONG uldatalen, CK_BYTE_PTR psignature,
-	       CK_ULONG_PTR pulsignaturelen)
+CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
+	       CK_ULONG ulparameterlen, CK_BYTE_PTR pdata, CK_ULONG uldatalen,
+	       CK_BYTE_PTR psignature, CK_ULONG_PTR pulsignaturelen)
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
 	CK_RV ret_ctx = CKR_OK;
 	CK_MECHANISM mechanism = { 0 };
 	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params params = { 0 };
+	CK_ULONG ulmaclen = 0;
 
 	DBG_TRACE("Sign operation");
 
@@ -289,6 +352,13 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 		goto end;
 	}
 
+	if ((ulparameterlen &&
+	     ulparameterlen != sizeof(CK_MAC_GENERAL_PARAMS)) ||
+	    !pparameter != !ulparameterlen) {
+		ret = CKR_MECHANISM_PARAM_INVALID;
+		goto end;
+	}
+
 	/* Check that operation is initialized */
 	ret = libsess_find_opctx(hsession, CKF_SIGN, &mechanism, (void **)&ctx);
 	if (ret != CKR_OK)
@@ -300,6 +370,24 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 	params.uldatalen = uldatalen;
 	params.psignature = psignature;
 	params.ulsignaturelen = *pulsignaturelen;
+
+	if (pparameter) {
+		ulmaclen = *((CK_MAC_GENERAL_PARAMS_PTR)pparameter);
+
+		if (params.ulsignaturelen < ulmaclen) {
+			ret = CKR_BUFFER_TOO_SMALL;
+			goto end;
+		}
+
+		params.ulsignaturelen = ulmaclen;
+	} else if (ctx->mac_len) {
+		if (params.ulsignaturelen < ctx->mac_len) {
+			ret = CKR_BUFFER_TOO_SMALL;
+			goto end;
+		}
+
+		params.ulsignaturelen = ctx->mac_len;
+	}
 
 	/* Run operation */
 	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
@@ -329,15 +417,16 @@ end:
 	return ret;
 }
 
-CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
-		 CK_ULONG uldatalen, CK_BYTE_PTR psignature,
-		 CK_ULONG ulsignaturelen)
+CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
+		 CK_ULONG ulparameterlen, CK_BYTE_PTR pdata, CK_ULONG uldatalen,
+		 CK_BYTE_PTR psignature, CK_ULONG ulsignaturelen)
 {
 	CK_RV ret = CKR_DATA_INVALID;
 	CK_RV ret_ctx = CKR_OK;
 	CK_MECHANISM mechanism = { 0 };
 	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params params = { 0 };
+	CK_ULONG ulmaclen = 0;
 
 	DBG_TRACE("Verify operation");
 
@@ -359,6 +448,13 @@ CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 		goto end;
 	}
 
+	if ((ulparameterlen &&
+	     ulparameterlen != sizeof(CK_MAC_GENERAL_PARAMS)) ||
+	    !pparameter != !ulparameterlen) {
+		ret = CKR_MECHANISM_PARAM_INVALID;
+		goto end;
+	}
+
 	/* Check that operation is initialized */
 	ret = libsess_find_opctx(hsession, CKF_VERIFY, &mechanism,
 				 (void **)&ctx);
@@ -371,6 +467,17 @@ CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pdata,
 	params.uldatalen = uldatalen;
 	params.psignature = psignature;
 	params.ulsignaturelen = ulsignaturelen;
+
+	if (pparameter) {
+		ulmaclen = *((CK_MAC_GENERAL_PARAMS_PTR)pparameter);
+
+		if (params.ulsignaturelen < ulmaclen) {
+			ret = CKR_SIGNATURE_LEN_RANGE;
+			goto end;
+		}
+
+		params.ulsignaturelen = ulmaclen;
+	}
 
 	/* Run operation */
 	ret = libdev_operate_mechanism(hsession, &mechanism, &params);

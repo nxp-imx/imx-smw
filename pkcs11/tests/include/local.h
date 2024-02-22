@@ -48,22 +48,21 @@ extern const struct asn1_ec_curve ec_curves[];
 int util_to_asn1_string(CK_ATTRIBUTE_PTR attr, const char *str);
 int util_to_asn1_oid(CK_ATTRIBUTE_PTR attr, const CK_BYTE *oid);
 
-void tests_pkcs11_get_info_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_get_ifs(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_slot_token(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_session(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_object_key_ec(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_find(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_parallel(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_callback(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_digest(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_sign_verify(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_random(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_encrypt_decrypt(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_encrypt_decrypt_multipart(void *lib_hdl,
-					    CK_FUNCTION_LIST_PTR pfunc);
-void tests_pkcs11_data_storage(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc);
+void tests_pkcs11_get_info_ifs(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_get_ifs(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_slot_token(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_session(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_object_key_ec(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_parallel(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_callback(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_digest(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_sign_verify(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_random(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_encrypt_decrypt(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_encrypt_decrypt_multipart(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_data_storage(void *lib_hdl, CK_VOID_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

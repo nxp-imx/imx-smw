@@ -1197,8 +1197,7 @@ end:
 	return status;
 }
 
-void tests_pkcs11_encrypt_decrypt_multipart(void *lib_hdl,
-					    CK_FUNCTION_LIST_PTR pfunc)
+void tests_pkcs11_encrypt_decrypt_multipart(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
 	int status = TEST_FAIL;
@@ -1213,7 +1212,7 @@ void tests_pkcs11_encrypt_decrypt_multipart(void *lib_hdl,
 
 	TEST_START();
 
-	ret = pfunc->C_Initialize(&init);
+	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 
@@ -1244,7 +1243,7 @@ void tests_pkcs11_encrypt_decrypt_multipart(void *lib_hdl,
 	status = TEST_PASS;
 
 end:
-	ret = pfunc->C_Finalize(NULL_PTR);
+	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
 		status = TEST_FAIL;
 

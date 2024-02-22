@@ -120,7 +120,7 @@ static void tests_pkcs11_get_functions(void *lib_hdl,
 	TEST_END(status);
 }
 
-static void tests_pkcs11_initialize(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
+static void tests_pkcs11_initialize(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
 	int status = 0;
@@ -134,7 +134,7 @@ static void tests_pkcs11_initialize(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 
 struct test_def {
 	const char *name;
-	void (*test)(void *handle, CK_FUNCTION_LIST_PTR func_list);
+	void (*test)(void *handle, CK_VOID_PTR func_list);
 };
 
 #define TEST_DEF(_name)                                                        \

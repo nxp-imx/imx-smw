@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include <dlfcn.h>
@@ -22,12 +22,12 @@ static struct test_interface {
 } exp_ifs[] = {
 	{
 		.name = def_if_name,
-		.version = { 2, 40 },
+		.version = { .major = 2, .minor = 40 },
 		.flags = 0,
 	},
 	{
 		.name = def_if_name,
-		.version = { 3, 0 },
+		.version = { .major = 3, .minor = 0 },
 		.flags = 0,
 	},
 };
@@ -68,9 +68,9 @@ static int get_interface_list(void *handle)
 	CK_RV ret = CKR_OK;
 
 	CK_FUNCTION_PTR(C_GetInterfaceList)
-	(CK_INTERFACE_PTR, CK_ULONG_PTR) = NULL;
+	(CK_INTERFACE_PTR, CK_ULONG_PTR) = NULL_PTR;
 	CK_ULONG nb_ifs = 0;
-	CK_INTERFACE_PTR ifs = NULL;
+	CK_INTERFACE_PTR ifs = NULL_PTR;
 	CK_FUNCTION_LIST_PTR funcs = NULL_PTR;
 	CK_ULONG idx = 0;
 	int retcmp = 0;
@@ -90,12 +90,12 @@ static int get_interface_list(void *handle)
 		goto end;
 
 	TEST_OUT("Check all parameters NULL\n");
-	ret = C_GetInterfaceList(NULL, NULL);
+	ret = C_GetInterfaceList(NULL_PTR, NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetInterfaceList"))
 		goto end;
 
 	TEST_OUT("\nGet number of interfaces\n");
-	ret = C_GetInterfaceList(NULL, &nb_ifs);
+	ret = C_GetInterfaceList(NULL_PTR, &nb_ifs);
 	if (CHECK_CK_RV(CKR_OK, "C_GetInterfaceList"))
 		goto end;
 
@@ -163,11 +163,11 @@ static int get_interface(void *handle)
 
 	CK_FUNCTION_PTR(C_GetInterface)
 	(CK_UTF8CHAR_PTR pInterfaceName, CK_VERSION_PTR pVersion,
-	 CK_INTERFACE_PTR_PTR ppInterface, CK_FLAGS flags) = NULL;
-	CK_INTERFACE_PTR ifs = NULL;
+	 CK_INTERFACE_PTR_PTR ppInterface, CK_FLAGS flags) = NULL_PTR;
+	CK_INTERFACE_PTR ifs = NULL_PTR;
 	struct test_interface *def_if = &exp_ifs[IF_DEF];
 	CK_FUNCTION_LIST_PTR funcs = NULL_PTR;
-	CK_VERSION bad_ver = { 2, 10 };
+	CK_VERSION bad_ver = { .major = 2, .minor = 10 };
 	int retcmp = 0;
 
 	SUBTEST_START();
@@ -185,12 +185,13 @@ static int get_interface(void *handle)
 		goto end;
 
 	TEST_OUT("Check all parameters NULL\n");
-	ret = C_GetInterface(NULL, NULL, NULL, 0);
+	ret = C_GetInterface(NULL_PTR, NULL_PTR, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetInterface"))
 		goto end;
 
 	TEST_OUT("\nCheck bad parameter: name\n");
-	ret = C_GetInterface((CK_UTF8CHAR_PTR)unknown_if_name, NULL, &ifs, 0);
+	ret = C_GetInterface((CK_UTF8CHAR_PTR)unknown_if_name, NULL_PTR, &ifs,
+			     0);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetInterface"))
 		goto end;
 
@@ -211,19 +212,19 @@ static int get_interface(void *handle)
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetInterface"))
 		goto end;
 
-	if (CHECK_EXPECTED(!ifs, "Interface returned msut be NULL"))
+	if (CHECK_EXPECTED(!ifs, "Interface returned must be NULL"))
 		goto end;
 
 	TEST_OUT("\nCheck flag parameter\n");
-	ret = C_GetInterface(NULL, NULL, &ifs, 0x10);
+	ret = C_GetInterface(NULL_PTR, NULL_PTR, &ifs, 0x10);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetInterface"))
 		goto end;
 
-	if (CHECK_EXPECTED(!ifs, "Interface returned msut be NULL"))
+	if (CHECK_EXPECTED(!ifs, "Interface returned must be NULL"))
 		goto end;
 
 	TEST_OUT("\nCheck not critera - Get default interface\n");
-	ret = C_GetInterface(NULL, NULL, &ifs, 0);
+	ret = C_GetInterface(NULL_PTR, NULL_PTR, &ifs, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_GetInterface"))
 		goto end;
 
@@ -249,7 +250,7 @@ static int get_interface(void *handle)
 		goto end;
 
 	TEST_OUT("\nGet interface v3.0\n");
-	ret = C_GetInterface(NULL, &exp_ifs[IF_V3].version, &ifs, 0);
+	ret = C_GetInterface(NULL_PTR, &exp_ifs[IF_V3].version, &ifs, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_GetInterface"))
 		goto end;
 

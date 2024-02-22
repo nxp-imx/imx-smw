@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include <errno.h>
@@ -42,7 +42,7 @@ static int run_test(struct mp_args *args)
 	status = args->test_func(args);
 
 end:
-	ret = args->pfunc->C_Finalize(NULL);
+	ret = args->pfunc->C_Finalize(NULL_PTR);
 	if (ret != CKR_OK)
 		status = TEST_FAIL;
 

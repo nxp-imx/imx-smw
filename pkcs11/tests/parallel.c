@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +41,7 @@ void tests_pkcs11_parallel(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_START();
 
-	ret = pfunc->C_Initialize(NULL);
+	ret = pfunc->C_Initialize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 
@@ -53,7 +53,7 @@ void tests_pkcs11_parallel(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 end:
 	util_close_session(pfunc, &sess);
 
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
 		status = TEST_FAIL;
 

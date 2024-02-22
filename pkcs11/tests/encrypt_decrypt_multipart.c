@@ -554,7 +554,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Cancel on-going multi-part encryption operation\n");
-	ret = pfunc->C_EncryptInit(sess, NULL, hsecretkey);
+	ret = pfunc->C_EncryptInit(sess, NULL_PTR, hsecretkey);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
 		goto end;
 
@@ -580,7 +580,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Cancel on-going multi-part decryption operation\n");
-	ret = pfunc->C_DecryptInit(sess, NULL, hsecretkey);
+	ret = pfunc->C_DecryptInit(sess, NULL_PTR, hsecretkey);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
 		goto end;
 
@@ -611,7 +611,7 @@ static int multipart_cipher_update(CK_FUNCTION_LIST_PTR pfunc,
 				   CK_BYTE_PTR output,
 				   unsigned int update_loop_count,
 				   CK_ULONG input_len,
-				   CK_ULONG *total_output_len, bool encrypt)
+				   CK_ULONG_PTR total_output_len, bool encrypt)
 {
 	CK_RV ret = CKR_OK;
 
@@ -670,7 +670,7 @@ static int multipart_cipher_update(CK_FUNCTION_LIST_PTR pfunc,
 
 static int multipart_cipher_final(CK_FUNCTION_LIST_PTR pfunc,
 				  CK_SESSION_HANDLE sess, CK_BYTE_PTR output,
-				  CK_ULONG *total_output_len, bool encrypt)
+				  CK_ULONG_PTR total_output_len, bool encrypt)
 {
 	CK_RV ret = CKR_OK;
 
@@ -679,9 +679,9 @@ static int multipart_cipher_final(CK_FUNCTION_LIST_PTR pfunc,
 	TEST_OUT("Get the length of the last output data part\n");
 
 	if (encrypt)
-		ret = pfunc->C_EncryptFinal(sess, NULL, &output_part_len);
+		ret = pfunc->C_EncryptFinal(sess, NULL_PTR, &output_part_len);
 	else
-		ret = pfunc->C_DecryptFinal(sess, NULL, &output_part_len);
+		ret = pfunc->C_DecryptFinal(sess, NULL_PTR, &output_part_len);
 
 	if (ret != CKR_OK)
 		return ret;

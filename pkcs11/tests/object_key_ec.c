@@ -34,7 +34,7 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
-		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_EC_POINT, &pubkey, sizeof(pubkey) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_VERIFY, &bverify, sizeof(bverify) },
@@ -128,7 +128,7 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
-		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VALUE, &privkey, sizeof(privkey) },
 		{ CKA_EC_POINT, &pubkey, sizeof(pubkey) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
@@ -143,7 +143,7 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -225,12 +225,12 @@ static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
 						 CKM_ECDSA_SHA256 };
 	CK_ATTRIBUTE pubkey_attrs[] = {
-		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VERIFY, &bverify, sizeof(bverify) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
 	};
-	CK_ATTRIBUTE *privkey_attrs = NULL;
+	CK_ATTRIBUTE_PTR privkey_attrs = NULL_PTR;
 	CK_ULONG nb_privkey_attrs = 0;
 	CK_ATTRIBUTE privkey_token[] = {
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
@@ -250,7 +250,7 @@ static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -315,7 +315,7 @@ static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
 						 CKM_ECDSA_SHA256 };
 	CK_ATTRIBUTE pubkey_attrs[] = {
-		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VERIFY, &bverify, sizeof(bverify) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
@@ -333,7 +333,7 @@ static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -446,7 +446,7 @@ void tests_pkcs11_object_key_ec(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	status = object_ec_keypair_usage(pfunc, CK_TRUE);
 
 end:
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
 		status = TEST_FAIL;
 

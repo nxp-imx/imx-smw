@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -12,7 +12,7 @@
 #include "util.h"
 
 static CK_BYTE data[] =
-	"message to encrypt using symmetric crypto algo (AES, DES, 3DES)";
+	"message to encrypt using symmetric crypto algo (AES, DES, DES3)";
 
 static int encrypt_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 {
@@ -70,7 +70,7 @@ static int encrypt_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Wrong CKM_AES_CTR mechanism parameters:\n");
 	encrypt_mech.mechanism = CKM_AES_CTR;
-	encrypt_mech.pParameter = NULL;
+	encrypt_mech.pParameter = NULL_PTR;
 	encrypt_mech.ulParameterLen = 0;
 	ret = pfunc->C_EncryptInit(sess, &encrypt_mech, aes_hsecretkey);
 	if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_EncryptInit"))
@@ -141,7 +141,7 @@ static int decrypt_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Check bad mechanism parameters:\n");
 	decrypt_mech.mechanism = CKM_AES_CBC;
-	decrypt_mech.pParameter = NULL;
+	decrypt_mech.pParameter = NULL_PTR;
 	decrypt_mech.ulParameterLen = 0;
 	ret = pfunc->C_DecryptInit(sess, &decrypt_mech, secret_key_handle);
 	if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_DecryptInit"))
@@ -836,10 +836,10 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_PTR pfunc)
 	CK_BYTE_PTR recovered_data = NULL_PTR;
 
 	CK_OBJECT_HANDLE des3_hsecretkey = 0;
-	CK_MECHANISM aes_key_mech = { .mechanism = CKM_DES3_KEY_GEN };
+	CK_MECHANISM des3_key_mech = { .mechanism = CKM_DES3_KEY_GEN };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
-	CK_ATTRIBUTE aes_secretkey_attrs[] = {
+	CK_ATTRIBUTE des3_secretkey_attrs[] = {
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
@@ -857,9 +857,9 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	TEST_OUT("Generate 3DES secret Key\n");
-	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
-				   ARRAY_SIZE(aes_secretkey_attrs),
+	TEST_OUT("Generate DES3 secret Key\n");
+	ret = pfunc->C_GenerateKey(sess, &des3_key_mech, des3_secretkey_attrs,
+				   ARRAY_SIZE(des3_secretkey_attrs),
 				   &des3_hsecretkey);
 	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 		goto end;
@@ -875,7 +875,7 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_PTR pfunc)
 	TEST_OUT("Initialize encrypt operation\n");
 
 	for (; i < ARRAY_SIZE(des3_mech_type); i++) {
-		TEST_OUT("3DES Encryption mechanism = 0x%lx\n",
+		TEST_OUT("DES3 Encryption mechanism = 0x%lx\n",
 			 des3_mech_type[i]);
 		encrypt_decrypt_mech.mechanism = des3_mech_type[i];
 

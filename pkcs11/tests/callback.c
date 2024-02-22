@@ -77,12 +77,12 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA };
 	CK_ATTRIBUTE pubkey_attrs[] = {
-		{ CKA_EC_PARAMS, NULL, 0 },
+		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VERIFY, &btrue, sizeof(btrue) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
 	};
-	CK_ATTRIBUTE *privkey_attrs = NULL;
+	CK_ATTRIBUTE_PTR privkey_attrs = NULL_PTR;
 	CK_ULONG nb_privkey_attrs = 0;
 	CK_ATTRIBUTE privkey_token[] = {
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
@@ -99,7 +99,7 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	SUBTEST_START();
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(*sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(*sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -36,15 +36,15 @@ static int open_session_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG idx_p = 0;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_slots_present = 0;
-	CK_SLOT_ID_PTR slots = NULL;
-	CK_SLOT_ID_PTR slots_present = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
+	CK_SLOT_ID_PTR slots_present = NULL_PTR;
 	CK_SESSION_HANDLE sess = CK_INVALID_HANDLE;
 	CK_BYTE myapp = 0;
 
 	SUBTEST_START();
 
 	TEST_OUT("Get Nb slots\n");
-	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_FALSE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -57,7 +57,7 @@ static int open_session_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots_present);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots_present);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -72,13 +72,13 @@ static int open_session_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 	}
 
-	TEST_OUT("Check all parameters NULL\n");
-	ret = pfunc->C_OpenSession(slots[0], 0, NULL, NULL, NULL);
+	TEST_OUT("Check all parameters NULL_PTR\n");
+	ret = pfunc->C_OpenSession(slots[0], 0, NULL_PTR, NULL_PTR, NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_OpenSession"))
 		goto end;
 
 	TEST_OUT("Check Bad Flags and No Notify/application\n");
-	ret = pfunc->C_OpenSession(slots[0], 0, NULL, NULL, &sess);
+	ret = pfunc->C_OpenSession(slots[0], 0, NULL_PTR, NULL_PTR, &sess);
 	if (CHECK_CK_RV(CKR_SESSION_PARALLEL_NOT_SUPPORTED, "C_OpenSession"))
 		goto end;
 
@@ -88,20 +88,20 @@ static int open_session_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Check Application but NO Notify\n");
-	ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION, &myapp, NULL,
-				   &sess);
+	ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION, &myapp,
+				   NULL_PTR, &sess);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_OpenSession"))
 		goto end;
 
 	TEST_OUT("Check Notify but NO Application\n");
-	ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION, NULL,
+	ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION, NULL_PTR,
 				   &test_notify, &sess);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_OpenSession"))
 		goto end;
 
 	TEST_OUT("Check Open R/O Session - Bad slot ID\n");
-	ret = pfunc->C_OpenSession(nb_slots, CKF_SERIAL_SESSION, NULL, NULL,
-				   &sess);
+	ret = pfunc->C_OpenSession(nb_slots, CKF_SERIAL_SESSION, NULL_PTR,
+				   NULL_PTR, &sess);
 	if (CHECK_CK_RV(CKR_SLOT_ID_INVALID, "C_OpenSession"))
 		goto end;
 
@@ -118,8 +118,8 @@ static int open_session_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 		TEST_OUT("Check Open R/O Session - no Token Init - Slot %s\n",
 			 (exp_ret == CKR_TOKEN_NOT_PRESENT) ? "Not Present" :
 							      "Present");
-		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION, NULL,
-					   NULL, &sess);
+		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION,
+					   NULL_PTR, NULL_PTR, &sess);
 
 		if (CHECK_CK_RV(exp_ret, "C_OpenSession"))
 			goto end;
@@ -165,7 +165,7 @@ static int open_session_no_login(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_SESSION_HANDLE sess[2] = { 0 };
 	CK_UTF8CHAR label[32] = { 0 };
 	CK_SESSION_INFO info = { 0 };
@@ -173,7 +173,7 @@ static int open_session_no_login(CK_FUNCTION_LIST_PTR pfunc)
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -193,7 +193,7 @@ static int open_session_no_login(CK_FUNCTION_LIST_PTR pfunc)
 		memset(label, ' ', sizeof(label));
 		memcpy(label, exp_slots[slots[idx]].label,
 		       strlen(exp_slots[slots[idx]].label));
-		ret = pfunc->C_InitToken(slots[idx], NULL, 0, label);
+		ret = pfunc->C_InitToken(slots[idx], NULL_PTR, 0, label);
 		if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 			goto end;
 
@@ -201,8 +201,8 @@ static int open_session_no_login(CK_FUNCTION_LIST_PTR pfunc)
 			 get_slot_label(slots[idx]));
 
 		TEST_OUT("Check Open R/O Session\n");
-		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION, NULL,
-					   NULL, &sess[0]);
+		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION,
+					   NULL_PTR, NULL_PTR, &sess[0]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/O Session #%lu\n", sess[0]);
@@ -210,7 +210,7 @@ static int open_session_no_login(CK_FUNCTION_LIST_PTR pfunc)
 		TEST_OUT("Check Open R/W Session\n");
 		ret = pfunc->C_OpenSession(slots[idx],
 					   CKF_SERIAL_SESSION | CKF_RW_SESSION,
-					   NULL, NULL, &sess[1]);
+					   NULL_PTR, NULL_PTR, &sess[1]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/W Session #%lu\n", sess[1]);
@@ -288,7 +288,7 @@ static int open_session_so_login_fail(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_SESSION_HANDLE sess[2] = { 0 };
 	CK_UTF8CHAR label[32] = { 0 };
 	CK_SESSION_INFO info = { 0 };
@@ -296,7 +296,7 @@ static int open_session_so_login_fail(CK_FUNCTION_LIST_PTR pfunc)
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -317,7 +317,7 @@ static int open_session_so_login_fail(CK_FUNCTION_LIST_PTR pfunc)
 		memcpy(label, exp_slots[slots[idx]].label,
 		       strlen(exp_slots[slots[idx]].label));
 
-		ret = pfunc->C_InitToken(slots[idx], NULL, 0, label);
+		ret = pfunc->C_InitToken(slots[idx], NULL_PTR, 0, label);
 		if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 			goto end;
 
@@ -325,8 +325,8 @@ static int open_session_so_login_fail(CK_FUNCTION_LIST_PTR pfunc)
 			 get_slot_label(slots[idx]));
 
 		TEST_OUT("Check Open R/O Session\n");
-		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION, NULL,
-					   NULL, &sess[0]);
+		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION,
+					   NULL_PTR, NULL_PTR, &sess[0]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/O Session #%lu\n", sess[0]);
@@ -334,13 +334,13 @@ static int open_session_so_login_fail(CK_FUNCTION_LIST_PTR pfunc)
 		TEST_OUT("Check Open R/W Session\n");
 		ret = pfunc->C_OpenSession(slots[idx],
 					   CKF_SERIAL_SESSION | CKF_RW_SESSION,
-					   NULL, NULL, &sess[1]);
+					   NULL_PTR, NULL_PTR, &sess[1]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/W Session #%lu\n", sess[1]);
 
 		TEST_OUT("Login to R/W Session as SO - Failure\n");
-		ret = pfunc->C_Login(sess[1], CKU_SO, NULL, 0);
+		ret = pfunc->C_Login(sess[1], CKU_SO, NULL_PTR, 0);
 		if (CHECK_CK_RV(CKR_SESSION_READ_ONLY_EXISTS, "C_Login"))
 			goto end;
 		/*
@@ -416,7 +416,7 @@ static int open_session_user_login(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_SESSION_HANDLE sess[2] = { 0 };
 	CK_UTF8CHAR label[32] = { 0 };
 	CK_SESSION_INFO info = { 0 };
@@ -424,7 +424,7 @@ static int open_session_user_login(CK_FUNCTION_LIST_PTR pfunc)
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -445,7 +445,7 @@ static int open_session_user_login(CK_FUNCTION_LIST_PTR pfunc)
 		memcpy(label, exp_slots[slots[idx]].label,
 		       strlen(exp_slots[slots[idx]].label));
 
-		ret = pfunc->C_InitToken(slots[idx], NULL, 0, label);
+		ret = pfunc->C_InitToken(slots[idx], NULL_PTR, 0, label);
 		if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 			goto end;
 
@@ -453,8 +453,8 @@ static int open_session_user_login(CK_FUNCTION_LIST_PTR pfunc)
 			 get_slot_label(slots[idx]));
 
 		TEST_OUT("Check Open R/O Session\n");
-		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION, NULL,
-					   NULL, &sess[0]);
+		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION,
+					   NULL_PTR, NULL_PTR, &sess[0]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/O Session #%lu\n", sess[0]);
@@ -462,13 +462,13 @@ static int open_session_user_login(CK_FUNCTION_LIST_PTR pfunc)
 		TEST_OUT("Check Open R/W Session\n");
 		ret = pfunc->C_OpenSession(slots[idx],
 					   CKF_SERIAL_SESSION | CKF_RW_SESSION,
-					   NULL, NULL, &sess[1]);
+					   NULL_PTR, NULL_PTR, &sess[1]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/W Session #%lu\n", sess[1]);
 
 		TEST_OUT("Login to R/W Session as User");
-		ret = pfunc->C_Login(sess[1], CKU_USER, NULL, 0);
+		ret = pfunc->C_Login(sess[1], CKU_USER, NULL_PTR, 0);
 		if (CHECK_CK_RV(CKR_OK, "C_Login"))
 			goto end;
 		/*
@@ -544,7 +544,7 @@ static int open_session_rw_so_login(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_SESSION_HANDLE sess[2] = { 0 };
 	CK_UTF8CHAR label[32] = { 0 };
 	CK_SESSION_INFO info = { 0 };
@@ -552,7 +552,7 @@ static int open_session_rw_so_login(CK_FUNCTION_LIST_PTR pfunc)
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -573,7 +573,7 @@ static int open_session_rw_so_login(CK_FUNCTION_LIST_PTR pfunc)
 		memcpy(label, exp_slots[slots[idx]].label,
 		       strlen(exp_slots[slots[idx]].label));
 
-		ret = pfunc->C_InitToken(slots[idx], NULL, 0, label);
+		ret = pfunc->C_InitToken(slots[idx], NULL_PTR, 0, label);
 		if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 			goto end;
 
@@ -583,19 +583,19 @@ static int open_session_rw_so_login(CK_FUNCTION_LIST_PTR pfunc)
 		TEST_OUT("Check Open R/W Session\n");
 		ret = pfunc->C_OpenSession(slots[idx],
 					   CKF_SERIAL_SESSION | CKF_RW_SESSION,
-					   NULL, NULL, &sess[0]);
+					   NULL_PTR, NULL_PTR, &sess[0]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/W Session #%lu\n", sess[0]);
 
 		TEST_OUT("Login as SO");
-		ret = pfunc->C_Login(sess[0], CKU_SO, NULL, 0);
+		ret = pfunc->C_Login(sess[0], CKU_SO, NULL_PTR, 0);
 		if (CHECK_CK_RV(CKR_OK, "C_Login"))
 			goto end;
 
 		TEST_OUT("Check Open R/O Session Failure\n");
-		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION, NULL,
-					   NULL, &sess[1]);
+		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION,
+					   NULL_PTR, NULL_PTR, &sess[1]);
 		if (CHECK_CK_RV(CKR_SESSION_READ_WRITE_SO_EXISTS,
 				"C_OpenSession"))
 			goto end;
@@ -654,7 +654,7 @@ static int open_session_ro_so_login(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_SESSION_HANDLE sess[2] = { 0 };
 	CK_UTF8CHAR label[32] = { 0 };
 	CK_SESSION_INFO info = { 0 };
@@ -662,7 +662,7 @@ static int open_session_ro_so_login(CK_FUNCTION_LIST_PTR pfunc)
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -683,7 +683,7 @@ static int open_session_ro_so_login(CK_FUNCTION_LIST_PTR pfunc)
 		memcpy(label, exp_slots[slots[idx]].label,
 		       strlen(exp_slots[slots[idx]].label));
 
-		ret = pfunc->C_InitToken(slots[idx], NULL, 0, label);
+		ret = pfunc->C_InitToken(slots[idx], NULL_PTR, 0, label);
 		if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 			goto end;
 
@@ -693,19 +693,19 @@ static int open_session_ro_so_login(CK_FUNCTION_LIST_PTR pfunc)
 		TEST_OUT("Check Open R/W Sessio\n");
 		ret = pfunc->C_OpenSession(slots[idx],
 					   CKF_SERIAL_SESSION | CKF_RW_SESSION,
-					   NULL, NULL, &sess[0]);
+					   NULL_PTR, NULL_PTR, &sess[0]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/W Session #%lu\n", sess[0]);
 
 		TEST_OUT("Login as SO");
-		ret = pfunc->C_Login(sess[0], CKU_SO, NULL, 0);
+		ret = pfunc->C_Login(sess[0], CKU_SO, NULL_PTR, 0);
 		if (CHECK_CK_RV(CKR_OK, "C_Login"))
 			goto end;
 
 		TEST_OUT("Check Open R/O Session Failure\n");
-		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION, NULL,
-					   NULL, &sess[1]);
+		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION,
+					   NULL_PTR, NULL_PTR, &sess[1]);
 		if (CHECK_CK_RV(CKR_SESSION_READ_WRITE_SO_EXISTS,
 				"C_OpenSession"))
 			goto end;
@@ -734,8 +734,8 @@ static int open_session_ro_so_login(CK_FUNCTION_LIST_PTR pfunc)
 		sess[0] = 0;
 
 		TEST_OUT("Check Open R/O Session\n");
-		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION, NULL,
-					   NULL, &sess[0]);
+		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION,
+					   NULL_PTR, NULL_PTR, &sess[0]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/O Session #%lu\n", sess[0]);
@@ -743,7 +743,7 @@ static int open_session_ro_so_login(CK_FUNCTION_LIST_PTR pfunc)
 		TEST_OUT("Check Open R/W Session\n");
 		ret = pfunc->C_OpenSession(slots[idx],
 					   CKF_SERIAL_SESSION | CKF_RW_SESSION,
-					   NULL, NULL, &sess[1]);
+					   NULL_PTR, NULL_PTR, &sess[1]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/W Session #%lu\n", sess[1]);
@@ -820,7 +820,7 @@ static int open_session_login_test(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_RV ret = CKR_OK;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_SESSION_HANDLE sess[2] = { 0 };
 	CK_UTF8CHAR label[32] = { 0 };
 	CK_SESSION_INFO info = { 0 };
@@ -828,7 +828,7 @@ static int open_session_login_test(CK_FUNCTION_LIST_PTR pfunc)
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -847,7 +847,7 @@ static int open_session_login_test(CK_FUNCTION_LIST_PTR pfunc)
 	memset(label, ' ', sizeof(label));
 	memcpy(label, exp_slots[slots[0]].label,
 	       strlen(exp_slots[slots[0]].label));
-	ret = pfunc->C_InitToken(slots[0], NULL, 0, label);
+	ret = pfunc->C_InitToken(slots[0], NULL_PTR, 0, label);
 	if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 		goto end;
 
@@ -856,14 +856,14 @@ static int open_session_login_test(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Check Open R/W Session\n");
 	ret = pfunc->C_OpenSession(slots[0],
-				   CKF_SERIAL_SESSION | CKF_RW_SESSION, NULL,
-				   NULL, &sess[0]);
+				   CKF_SERIAL_SESSION | CKF_RW_SESSION,
+				   NULL_PTR, NULL_PTR, &sess[0]);
 	if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 		goto end;
 	TEST_OUT("Opened R/W Session #%lu\n", sess[0]);
 
 	TEST_OUT("Login as SO");
-	ret = pfunc->C_Login(sess[0], CKU_SO, NULL, 0);
+	ret = pfunc->C_Login(sess[0], CKU_SO, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -884,12 +884,12 @@ static int open_session_login_test(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Login again as SO without logout");
-	ret = pfunc->C_Login(sess[0], CKU_SO, NULL, 0);
+	ret = pfunc->C_Login(sess[0], CKU_SO, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_USER_ALREADY_LOGGED_IN, "C_Login"))
 		goto end;
 
 	TEST_OUT("Login as User without logout SO");
-	ret = pfunc->C_Login(sess[0], CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess[0], CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_USER_ANOTHER_ALREADY_LOGGED_IN, "C_Login"))
 		goto end;
 
@@ -915,8 +915,8 @@ static int open_session_login_test(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Check Open R/O Session\n");
-	ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION, NULL, NULL,
-				   &sess[1]);
+	ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION, NULL_PTR,
+				   NULL_PTR, &sess[1]);
 	if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 		goto end;
 	TEST_OUT("Opened R/O Session #%lu\n", sess[1]);
@@ -973,14 +973,14 @@ static int open_session_closeall(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	unsigned int idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_SESSION_HANDLE sess[10] = { 0 };
 	CK_UTF8CHAR label[32] = { 0 };
 
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -1000,7 +1000,7 @@ static int open_session_closeall(CK_FUNCTION_LIST_PTR pfunc)
 	memcpy(label, exp_slots[slots[0]].label,
 	       strlen(exp_slots[slots[0]].label));
 
-	ret = pfunc->C_InitToken(slots[0], NULL, 0, label);
+	ret = pfunc->C_InitToken(slots[0], NULL_PTR, 0, label);
 	if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 		goto end;
 
@@ -1009,7 +1009,7 @@ static int open_session_closeall(CK_FUNCTION_LIST_PTR pfunc)
 			 get_slot_label(slots[0]));
 		ret = pfunc->C_OpenSession(slots[0],
 					   CKF_SERIAL_SESSION | CKF_RW_SESSION,
-					   NULL, NULL, &sess[idx]);
+					   NULL_PTR, NULL_PTR, &sess[idx]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/W Session #%lu\n", sess[idx]);
@@ -1018,8 +1018,8 @@ static int open_session_closeall(CK_FUNCTION_LIST_PTR pfunc)
 	for (; idx < ARRAY_SIZE(sess); idx++) {
 		TEST_OUT("Check Open R/O Session - Slot %lu [%s]\n", slots[0],
 			 get_slot_label(slots[0]));
-		ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION, NULL,
-					   NULL, &sess[idx]);
+		ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION,
+					   NULL_PTR, NULL_PTR, &sess[idx]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/O Session #%lu\n", sess[idx]);
@@ -1045,14 +1045,14 @@ static int open_session_without_closure(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	unsigned int idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_SESSION_HANDLE sess[10] = { 0 };
 	CK_UTF8CHAR label[32] = { 0 };
 
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -1072,7 +1072,7 @@ static int open_session_without_closure(CK_FUNCTION_LIST_PTR pfunc)
 	memcpy(label, exp_slots[slots[0]].label,
 	       strlen(exp_slots[slots[0]].label));
 
-	ret = pfunc->C_InitToken(slots[0], NULL, 0, label);
+	ret = pfunc->C_InitToken(slots[0], NULL_PTR, 0, label);
 	if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 		goto end;
 
@@ -1081,7 +1081,7 @@ static int open_session_without_closure(CK_FUNCTION_LIST_PTR pfunc)
 			 get_slot_label(slots[0]));
 		ret = pfunc->C_OpenSession(slots[0],
 					   CKF_SERIAL_SESSION | CKF_RW_SESSION,
-					   NULL, NULL, &sess[idx]);
+					   NULL_PTR, NULL_PTR, &sess[idx]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/W Session #%lu\n", sess[idx]);
@@ -1090,8 +1090,8 @@ static int open_session_without_closure(CK_FUNCTION_LIST_PTR pfunc)
 	for (; idx < ARRAY_SIZE(sess); idx++) {
 		TEST_OUT("Check Open R/O Session - Slot %lu [%s]\n", slots[0],
 			 get_slot_label(slots[0]));
-		ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION, NULL,
-					   NULL, &sess[idx]);
+		ret = pfunc->C_OpenSession(slots[0], CKF_SERIAL_SESSION,
+					   NULL_PTR, NULL_PTR, &sess[idx]);
 		if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 			goto end;
 		TEST_OUT("Opened R/O Session #%lu\n", sess[idx]);
@@ -1156,7 +1156,7 @@ void tests_pkcs11_session(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	status = open_session_without_closure(pfunc);
 
 end:
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
 		status = TEST_FAIL;
 

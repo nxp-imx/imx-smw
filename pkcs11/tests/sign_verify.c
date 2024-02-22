@@ -321,12 +321,12 @@ static int sign_verify_no_init(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Sign init with NULL mechanism");
-	ret = pfunc->C_SignInit(sess, NULL, 1);
+	ret = pfunc->C_SignInit(sess, NULL_PTR, 1);
 	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
 		goto end;
 
 	TEST_OUT("Verify init with NULL mechanism");
-	ret = pfunc->C_VerifyInit(sess, NULL, 1);
+	ret = pfunc->C_VerifyInit(sess, NULL_PTR, 1);
 	if (CHECK_CK_RV(CKR_OK, "C_VerifyInit"))
 		goto end;
 

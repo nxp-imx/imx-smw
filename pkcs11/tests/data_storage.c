@@ -56,7 +56,7 @@ static int data_storage_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	TEST_OUT("Check data pointer NULL\n");
 	data_template[1].pValue = label;
 	data_template[1].ulValueLen = sizeof(label) - 1;
-	data_template[2].pValue = NULL;
+	data_template[2].pValue = NULL_PTR;
 
 	ret = pfunc->C_CreateObject(sess, data_template,
 				    ARRAY_SIZE(data_template), &hdata);
@@ -93,7 +93,7 @@ static int data_storage_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	}
 
 	TEST_OUT("Retrieve %sData, pointer NULL\n", token ? "Token " : "");
-	retrieve_template[0].pValue = NULL;
+	retrieve_template[0].pValue = NULL_PTR;
 	ret = pfunc->C_GetAttributeValue(sess, hdata, retrieve_template,
 					 ARRAY_SIZE(retrieve_template));
 	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
@@ -228,7 +228,7 @@ void tests_pkcs11_data_storage(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	status = data_storage_store(pfunc);
 
 end:
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
 		status = TEST_FAIL;
 

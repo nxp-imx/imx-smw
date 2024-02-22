@@ -148,12 +148,12 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 
 	CK_RV ret = CKR_OK;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_UTF8CHAR label[32] = { 0 };
 	const char *slot_label = NULL;
 
 	TEST_OUT("Get Nb slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -179,7 +179,7 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	memset(label, ' ', sizeof(label));
 	memcpy(label, slot_label, strlen(slot_label));
 
-	ret = pfunc->C_InitToken(p11_slot, NULL, 0, label);
+	ret = pfunc->C_InitToken(p11_slot, NULL_PTR, 0, label);
 	if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 		goto end;
 
@@ -194,7 +194,7 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	else
 		ret = pfunc->C_OpenSession(p11_slot,
 					   CKF_SERIAL_SESSION | sess_flags,
-					   NULL, NULL, sess);
+					   NULL_PTR, NULL_PTR, sess);
 
 	if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 		goto end;
@@ -228,13 +228,15 @@ end:
 int util_open_rw_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 			 CK_SESSION_HANDLE_PTR sess)
 {
-	return open_session(pfunc, p11_slot, NULL, NULL, CKF_RW_SESSION, sess);
+	return open_session(pfunc, p11_slot, NULL_PTR, NULL_PTR, CKF_RW_SESSION,
+			    sess);
 }
 
 int util_open_ro_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 			 CK_SESSION_HANDLE_PTR sess)
 {
-	return open_session(pfunc, p11_slot, NULL, NULL, CKF_RW_SESSION, sess);
+	return open_session(pfunc, p11_slot, NULL_PTR, NULL_PTR, CKF_RW_SESSION,
+			    sess);
 }
 
 int util_open_rw_session_cb(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,

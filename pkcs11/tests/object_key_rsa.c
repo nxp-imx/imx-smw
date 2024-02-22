@@ -160,7 +160,7 @@ static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -210,7 +210,7 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		  sizeof(key_allowed_mech) },
 	};
 	CK_ULONG nb_pubkey_attrs = 0;
-	CK_ATTRIBUTE *privkey_attrs = NULL;
+	CK_ATTRIBUTE_PTR privkey_attrs = NULL_PTR;
 	CK_ULONG nb_privkey_attrs = 0;
 	CK_ATTRIBUTE privkey_token[] = {
 		{ CKA_SIGN, &btrue, sizeof(btrue) },
@@ -232,7 +232,7 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -303,7 +303,7 @@ static int object_rsa_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -414,7 +414,7 @@ void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	status = object_rsa_keypair_usage(pfunc, CK_TRUE);
 
 end:
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
 		status = TEST_FAIL;
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -37,7 +37,7 @@ int util_to_asn1_string(CK_ATTRIBUTE_PTR attr, const char *str)
 
 	if (SET_OVERFLOW(str_len, bytes[1])) {
 		free(attr->pValue);
-		attr->pValue = NULL;
+		attr->pValue = NULL_PTR;
 		return 0;
 	}
 

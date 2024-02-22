@@ -35,7 +35,7 @@ static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -84,7 +84,7 @@ static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -153,7 +153,7 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Login to R/W Session as User\n");
-	ret = pfunc->C_Login(sess, CKU_USER, NULL, 0);
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
@@ -194,10 +194,11 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 		goto end;
 
-	if (CHECK_EXPECTED(*(CK_OBJECT_CLASS *)getkeyAttr[0].pValue ==
+	if (CHECK_EXPECTED(*(CK_OBJECT_CLASS_PTR)getkeyAttr[0].pValue ==
 				   key_class,
 			   "Got class %#lx exptected %#lx",
-			   *(CK_OBJECT_CLASS *)getkeyAttr[0].pValue, key_class))
+			   *(CK_OBJECT_CLASS_PTR)getkeyAttr[0].pValue,
+			   key_class))
 		goto end;
 
 	if (CHECK_EXPECTED(*(CK_KEY_TYPE *)getkeyAttr[1].pValue == key_type,
@@ -295,7 +296,7 @@ void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	status = object_attribute_cipher_key(pfunc);
 
 end:
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
 		status = TEST_FAIL;
 

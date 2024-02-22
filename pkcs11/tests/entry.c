@@ -24,16 +24,16 @@ static int initialize(CK_FUNCTION_LIST_PTR pfunc)
 	SUBTEST_START();
 
 	TEST_OUT("param = NULL\n");
-	ret = pfunc->C_Initialize(NULL);
+	ret = pfunc->C_Initialize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 
 	TEST_OUT("\nparam = empty\n");
 	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 
 	TEST_OUT("\nparam = empty\n");
 	TEST_OUT("flags = CKF_LIBRARY_CANT_CREATE_OS_THREADS\n");
@@ -46,7 +46,7 @@ static int initialize(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 #endif
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 
 	TEST_OUT("\nparam = empty\n");
 	TEST_OUT("flags = CKF_LIBRARY_CANT_CREATE_OS_THREADS\n");
@@ -65,7 +65,7 @@ static int initialize(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 #endif /* PKCS11_OS_MUTEX_SUPPORT */
 #endif /* PKCS11_MULTI_THREAD */
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 
 	TEST_OUT("\nparam = empty\n");
 	TEST_OUT("flags = CKF_OS_LOCKING_OK\n");
@@ -78,7 +78,7 @@ static int initialize(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_CANT_LOCK, "C_Initialize"))
 		goto end;
 #endif /* PKCS11_OS_MUTEX_SUPPORT */
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 
 	TEST_OUT("\nparam = CreateMutex defined\n");
 	TEST_OUT("flags = CKF_OS_LOCKING_OK\n");
@@ -86,7 +86,7 @@ static int initialize(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_Initialize(&init);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_Initialize"))
 		goto end;
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 
 	TEST_OUT("\nparam = All defined\n");
 	TEST_OUT("flags = CKF_OS_LOCKING_OK\n");
@@ -99,7 +99,7 @@ static int initialize(CK_FUNCTION_LIST_PTR pfunc)
 
 	status = TEST_PASS;
 end:
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 
 	SUBTEST_END(status);
 
@@ -137,9 +137,9 @@ struct test_def {
 	void (*test)(void *handle, CK_FUNCTION_LIST_PTR func_list);
 };
 
-#define TEST_DEF(name)                                                         \
+#define TEST_DEF(_name)                                                        \
 	{                                                                      \
-#name, tests_pkcs11_##name,                                    \
+		.name = #_name, .test = tests_pkcs11_##_name,                  \
 	}
 
 struct test_def test_list[] = { TEST_DEF(get_info_ifs),
@@ -178,7 +178,7 @@ int tests_pkcs11(char *test_name)
 	/* Initialize tests result */
 	memset(&tests_data, 0, sizeof(tests_data));
 
-	lib_hdl = util_lib_open(NULL);
+	lib_hdl = util_lib_open(NULL_PTR);
 	if (!lib_hdl)
 		return -1;
 

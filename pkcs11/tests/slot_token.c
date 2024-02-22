@@ -96,17 +96,17 @@ static int get_slotlist(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 
 	SUBTEST_START();
 
 	TEST_OUT("Check all parameters NULL\n");
-	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, NULL);
+	ret = pfunc->C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetSlotList"))
 		goto end;
 
 	TEST_OUT("\nGet number of slots\n");
-	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_FALSE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 	if (CHECK_EXPECTED(nb_slots == NB_EXP_DEVICES,
@@ -154,17 +154,17 @@ static int get_slotlist_present(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 
 	SUBTEST_START();
 
 	TEST_OUT("Check all parameters NULL\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, NULL);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetSlotList"))
 		goto end;
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -210,20 +210,20 @@ static int get_slotinfo(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG idx_p = 0;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_slots_present = 0;
-	CK_SLOT_ID_PTR slots = NULL;
-	CK_SLOT_ID_PTR slots_present = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
+	CK_SLOT_ID_PTR slots_present = NULL_PTR;
 	CK_SLOT_INFO info = { 0 };
 	CK_FLAGS exp_flags = 0;
 
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots\n");
-	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_FALSE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
 	TEST_OUT("\nGet Slot Info NULL\n");
-	ret = pfunc->C_GetSlotInfo(0, NULL);
+	ret = pfunc->C_GetSlotInfo(0, NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetSlotInfo"))
 		goto end;
 
@@ -241,7 +241,7 @@ static int get_slotinfo(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots_present);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots_present);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -310,15 +310,15 @@ static int init_token(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG nb_slots_present = 0;
 	CK_ULONG idx = 0;
 	CK_ULONG idx_p = 0;
-	CK_SLOT_ID_PTR slots = NULL;
-	CK_SLOT_ID_PTR slots_present = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
+	CK_SLOT_ID_PTR slots_present = NULL_PTR;
 	CK_UTF8CHAR label[32] = { 0 };
 	bool slot_present = false;
 
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots\n");
-	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_FALSE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -334,7 +334,7 @@ static int init_token(CK_FUNCTION_LIST_PTR pfunc)
 			   NB_EXP_DEVICES))
 		goto end;
 
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots_present);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots_present);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -358,7 +358,7 @@ static int init_token(CK_FUNCTION_LIST_PTR pfunc)
 		memset(label, ' ', sizeof(label));
 		memcpy(label, exp_slots[idx].label,
 		       strlen(exp_slots[idx].label));
-		ret = pfunc->C_InitToken(idx, NULL, 0, label);
+		ret = pfunc->C_InitToken(idx, NULL_PTR, 0, label);
 
 		slot_present = false;
 		for (idx_p = 0; idx_p < nb_slots_present; idx_p++) {
@@ -392,19 +392,19 @@ static int get_tokeninfo(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG nb_slots = 0;
-	CK_SLOT_ID_PTR slots = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_TOKEN_INFO info = { 0 };
 	int retcmp = 0;
 
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_FALSE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
 	TEST_OUT("\nGet Token Info NULL\n");
-	ret = pfunc->C_GetTokenInfo(0, NULL);
+	ret = pfunc->C_GetTokenInfo(0, NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetTokenInfo"))
 		goto end;
 
@@ -522,23 +522,23 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG idx_m = 0;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_mechs = 0;
-	CK_SLOT_ID_PTR slots = NULL;
-	CK_MECHANISM_TYPE_PTR mechs = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
+	CK_MECHANISM_TYPE_PTR mechs = NULL_PTR;
 
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots\n");
-	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_FALSE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
 	TEST_OUT("\nGet Mechanism Bad Slot ID\n");
-	ret = pfunc->C_GetMechanismList(nb_slots, NULL, &nb_mechs);
+	ret = pfunc->C_GetMechanismList(nb_slots, NULL_PTR, &nb_mechs);
 	if (CHECK_CK_RV(CKR_SLOT_ID_INVALID, "C_GetMechanisms"))
 		goto end;
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -551,7 +551,8 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	for (idx = 0; idx < nb_slots; idx++) {
-		ret = pfunc->C_GetMechanismList(slots[idx], NULL, &nb_mechs);
+		ret = pfunc->C_GetMechanismList(slots[idx], NULL_PTR,
+						&nb_mechs);
 		if (CHECK_CK_RV(CKR_OK, "C_GetMechanisms"))
 			goto end;
 
@@ -601,19 +602,19 @@ static int get_mechanismsinfo(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG idx_m = 0;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_mechs = 0;
-	CK_SLOT_ID_PTR slots = NULL;
-	CK_MECHANISM_TYPE_PTR mechs = NULL;
+	CK_SLOT_ID_PTR slots = NULL_PTR;
+	CK_MECHANISM_TYPE_PTR mechs = NULL_PTR;
 	CK_MECHANISM_INFO info = { 0 };
 
 	SUBTEST_START();
 
 	TEST_OUT("\nGet number of slots\n");
-	ret = pfunc->C_GetSlotList(CK_FALSE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_FALSE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
 	TEST_OUT("\nGet Mechanism Info NULL\n");
-	ret = pfunc->C_GetMechanismInfo(0, mlist[0], NULL);
+	ret = pfunc->C_GetMechanismInfo(0, mlist[0], NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetMechanismInfo"))
 		goto end;
 
@@ -623,7 +624,7 @@ static int get_mechanismsinfo(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("\nGet number of slots present\n");
-	ret = pfunc->C_GetSlotList(CK_TRUE, NULL, &nb_slots);
+	ret = pfunc->C_GetSlotList(CK_TRUE, NULL_PTR, &nb_slots);
 	if (CHECK_CK_RV(CKR_OK, "C_GetSlotList"))
 		goto end;
 
@@ -636,7 +637,8 @@ static int get_mechanismsinfo(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	for (idx = 0; idx < nb_slots; idx++) {
-		ret = pfunc->C_GetMechanismList(slots[idx], NULL, &nb_mechs);
+		ret = pfunc->C_GetMechanismList(slots[idx], NULL_PTR,
+						&nb_mechs);
 		if (CHECK_CK_RV(CKR_OK, "C_GetMechanisms"))
 			goto end;
 
@@ -718,7 +720,7 @@ void tests_pkcs11_slot_token(void *lib_hdl, CK_FUNCTION_LIST_PTR pfunc)
 	status = get_mechanismsinfo(pfunc);
 
 end:
-	ret = pfunc->C_Finalize(NULL);
+	ret = pfunc->C_Finalize(NULL_PTR);
 	if (CHECK_CK_RV(CKR_OK, "C_Finalize"))
 		status = TEST_FAIL;
 

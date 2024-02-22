@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2024 NXP
  */
 
 #include <dlfcn.h>
@@ -62,7 +62,7 @@ CK_FUNCTION_LIST_PTR util_lib_get_func_list(void *handle)
 	CK_RV ret = CKR_GENERAL_ERROR;
 
 	CK_FUNCTION_PTR(C_GetFunctionList)(CK_FUNCTION_LIST_PTR_PTR);
-	CK_FUNCTION_LIST_PTR pfunc = NULL;
+	CK_FUNCTION_LIST_PTR pfunc = NULL_PTR;
 
 	/* First get the function symbol */
 	C_GetFunctionList = dlsym(handle, "C_GetFunctionList");
@@ -77,5 +77,5 @@ CK_FUNCTION_LIST_PTR util_lib_get_func_list(void *handle)
 		return pfunc;
 	}
 
-	return NULL;
+	return NULL_PTR;
 }

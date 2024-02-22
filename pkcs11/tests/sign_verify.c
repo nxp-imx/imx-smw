@@ -9,12 +9,19 @@
 #include "os_mutex.h"
 #include "util_session.h"
 
-const CK_BYTE_PTR msg = (CK_BYTE_PTR) "messagetosign";
-const CK_BYTE msg_sha256[] = { 0x2c, 0x3a, 0xd6, 0x43, 0xfd, 0x28, 0x47, 0xb5,
-			       0xd6, 0x68, 0xf4, 0xc8, 0xcf, 0xbb, 0xbd, 0x89,
-			       0x6c, 0xa4, 0xdb, 0xc8, 0xc0, 0xd2, 0x72, 0x70,
-			       0x62, 0xa0, 0x5b, 0x06, 0x1f, 0x10, 0xe3, 0xba };
-const CK_ULONG msg_sha256_len = 32;
+/* messagetosign */
+static CK_BYTE msg[] = { 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+			 0x74, 0x6f, 0x73, 0x69, 0x67, 0x6e };
+
+static CK_ULONG msg_len = 13;
+
+static CK_BYTE msg_sha256[] = {
+	0x2c, 0x3a, 0xd6, 0x43, 0xfd, 0x28, 0x47, 0xb5, 0xd6, 0x68, 0xf4,
+	0xc8, 0xcf, 0xbb, 0xbd, 0x89, 0x6c, 0xa4, 0xdb, 0xc8, 0xc0, 0xd2,
+	0x72, 0x70, 0x62, 0xa0, 0x5b, 0x06, 0x1f, 0x10, 0xe3, 0xba
+};
+
+static CK_ULONG msg_sha256_len = 32;
 
 static int sign_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 {
@@ -209,8 +216,8 @@ static int sign_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_ULONG sign_len = 0;
 	CK_ULONG data_len = 0;
+	CK_ULONG sign_len = 0;
 	CK_BYTE data[5] = { 0 };
 	CK_BYTE signature[32] = { 0 };
 
@@ -257,8 +264,8 @@ static int verify_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_ULONG sign_len = 0;
 	CK_ULONG data_len = 0;
+	CK_ULONG sign_len = 0;
 	CK_BYTE data[5] = { 0 };
 	CK_BYTE signature[32] = { 0 };
 
@@ -457,7 +464,6 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_ECDSA_SHA224 };
-	CK_ULONG msg_len = strlen((const char *)msg);
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
 	CK_ULONG tmp = 0;
@@ -510,8 +516,7 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Sign message with signature buffer too small\n");
-	ret = pfunc->C_Sign(sess, (CK_BYTE_PTR)msg, msg_len, signature,
-			    &signature_len);
+	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
 	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_Sign"))
 		goto end;
 
@@ -521,8 +526,7 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Sign message\n");
-	ret = pfunc->C_Sign(sess, (CK_BYTE_PTR)msg, msg_len, signature,
-			    &signature_len);
+	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
 		goto end;
 
@@ -532,8 +536,7 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Verify signature\n");
-	ret = pfunc->C_Verify(sess, (CK_BYTE_PTR)msg, msg_len, signature,
-			      signature_len);
+	ret = pfunc->C_Verify(sess, msg, msg_len, signature, signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Verify"))
 		goto end;
 
@@ -546,8 +549,8 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Sign message\n");
-	ret = pfunc->C_Sign(sess, (CK_BYTE_PTR)msg_sha256, msg_sha256_len,
-			    signature, &signature_len);
+	ret = pfunc->C_Sign(sess, msg_sha256, msg_sha256_len, signature,
+			    &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
 		goto end;
 
@@ -557,13 +560,13 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Verify signature\n");
-	ret = pfunc->C_Verify(sess, (CK_BYTE_PTR)msg_sha256, msg_sha256_len,
-			      signature, signature_len);
+	ret = pfunc->C_Verify(sess, msg_sha256, msg_sha256_len, signature,
+			      signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Verify"))
 		goto end;
 
-	signature_len *= 2;
 	tmp = signature_len;
+	signature_len *= 2;
 	signature = realloc(signature, signature_len);
 	if (CHECK_EXPECTED(signature, "Allocation error"))
 		goto end;
@@ -574,13 +577,13 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Sign message with signature buffer bigger that needed\n");
-	ret = pfunc->C_Sign(sess, (CK_BYTE_PTR)msg_sha256, msg_sha256_len,
-			    signature, &signature_len);
+	ret = pfunc->C_Sign(sess, msg_sha256, msg_sha256_len, signature,
+			    &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
 		goto end;
 
 	TEST_OUT("Check updated signature buffer length\n");
-	if (CHECK_EXPECTED(signature_len == (tmp / 2),
+	if (CHECK_EXPECTED(signature_len == tmp,
 			   "Signature length not updated"))
 		goto end;
 
@@ -590,8 +593,8 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Verify signature\n");
-	ret = pfunc->C_Verify(sess, (CK_BYTE_PTR)msg_sha256, msg_sha256_len,
-			      signature, signature_len);
+	ret = pfunc->C_Verify(sess, msg_sha256, msg_sha256_len, signature,
+			      signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Verify"))
 		goto end;
 
@@ -618,7 +621,6 @@ static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_SHA512_RSA_PKCS };
 	CK_RSA_PKCS_PSS_PARAMS pss_params = { 0 };
-	CK_ULONG msg_len = strlen((const char *)msg);
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
 
@@ -669,8 +671,7 @@ static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Sign message\n");
-	ret = pfunc->C_Sign(sess, (CK_BYTE_PTR)msg, msg_len, signature,
-			    &signature_len);
+	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
 		goto end;
 
@@ -680,8 +681,7 @@ static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Verify signature\n");
-	ret = pfunc->C_Verify(sess, (CK_BYTE_PTR)msg, msg_len, signature,
-			      signature_len);
+	ret = pfunc->C_Verify(sess, msg, msg_len, signature, signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Verify"))
 		goto end;
 
@@ -698,8 +698,7 @@ static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Sign message\n");
-	ret = pfunc->C_Sign(sess, (CK_BYTE_PTR)msg, msg_len, signature,
-			    &signature_len);
+	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
 		goto end;
 
@@ -709,8 +708,7 @@ static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Verify signature\n");
-	ret = pfunc->C_Verify(sess, (CK_BYTE_PTR)msg, msg_len, signature,
-			      signature_len);
+	ret = pfunc->C_Verify(sess, msg, msg_len, signature, signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Verify"))
 		goto end;
 
@@ -733,7 +731,6 @@ static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_ECDSA_SHA256 };
-	CK_ULONG msg_len = strlen((const char *)msg);
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
 
@@ -802,8 +799,7 @@ static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Sign message\n");
-	ret = pfunc->C_Sign(sess, (CK_BYTE_PTR)msg, msg_len, signature,
-			    &signature_len);
+	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
 	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
 		goto end;
 
@@ -818,8 +814,7 @@ static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Verify signature with public key no verify usage\n");
-	ret = pfunc->C_Verify(sess, (CK_BYTE_PTR)msg, msg_len, signature,
-			      signature_len);
+	ret = pfunc->C_Verify(sess, msg, msg_len, signature, signature_len);
 	if (CHECK_CK_RV(CKR_SIGNATURE_INVALID, "C_Verify"))
 		goto end;
 
@@ -878,10 +873,10 @@ void tests_pkcs11_sign_verify(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (sign_verify_ecdsa(pfunc) == TEST_FAIL)
 		goto end;
 
-	if (sign_verify_key_usage(pfunc) == TEST_FAIL)
+	if (sign_verify_rsa(pfunc) == TEST_FAIL)
 		goto end;
 
-	status = sign_verify_rsa(pfunc);
+	status = sign_verify_key_usage(pfunc);
 
 end:
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

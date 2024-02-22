@@ -315,7 +315,7 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 	ctx->cipher_mech = pmechanism->mechanism;
 	ctx->iv_length = 0;
 	ctx->iv = NULL;
-	ctx->context = NULL_PTR;
+	ctx->context = NULL;
 
 	ret = check_cipher_mech_params(pmechanism, ctx);
 	if (ret != CKR_OK)

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 #ifndef __LIB_SESSION_H__
 #define __LIB_SESSION_H__
@@ -169,7 +169,7 @@ CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
  * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
  * CKR_OK                             - Success
  */
-CK_RV libsess_get_slotid(CK_SESSION_HANDLE hsession, CK_SLOT_ID *slotid);
+CK_RV libsess_get_slotid(CK_SESSION_HANDLE hsession, CK_SLOT_ID_PTR slotid);
 
 /**
  * libsess_get_device() - Get the Session's device (aka token)

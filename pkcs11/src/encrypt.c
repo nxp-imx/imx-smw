@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2023 NXP
+ * Copyright 2020, 2023-2024 NXP
  */
 
 #include "lib_cipher.h"
@@ -47,7 +47,7 @@ CK_RV C_EncryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pLastEncryptedPart,
 	if (!hSession)
 		return CKR_SESSION_HANDLE_INVALID;
 
-	return lib_encrypt_decrypt(hSession, NULL, 0, pLastEncryptedPart,
+	return lib_encrypt_decrypt(hSession, NULL_PTR, 0, pLastEncryptedPart,
 				   pulLastEncryptedPartLen, CKF_ENCRYPT,
 				   OP_FINAL);
 }

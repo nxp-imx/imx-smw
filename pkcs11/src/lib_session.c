@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -118,7 +118,6 @@ static CK_RV close_ro_session(struct libdevice *dev, struct libsess *session)
 		return ret;
 
 	ret = libopctx_list_destroy(&session->opctx);
-
 	if (ret == CKR_OK) {
 		LIST_REMOVE(&dev->ro_sessions, session);
 
@@ -515,7 +514,7 @@ CK_RV libsess_validate_mechanism(CK_SESSION_HANDLE hsession,
 	return ret;
 }
 
-CK_RV libsess_get_slotid(CK_SESSION_HANDLE hsession, CK_SLOT_ID *slotid)
+CK_RV libsess_get_slotid(CK_SESSION_HANDLE hsession, CK_SLOT_ID_PTR slotid)
 {
 	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libsess *sess = (struct libsess *)hsession;

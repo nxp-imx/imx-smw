@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <stdlib.h>
@@ -28,7 +28,7 @@
 static CK_RV obj_find_attr(CK_ATTRIBUTE_PTR *outattr, CK_ATTRIBUTE_TYPE type,
 			   struct libattr_list *attrs)
 {
-	*outattr = NULL;
+	*outattr = NULL_PTR;
 	for (CK_ULONG idx = 0; idx < attrs->number; idx++) {
 		if (attrs->attr[idx].type == type) {
 			if (*outattr)
@@ -72,14 +72,14 @@ static CK_RV set_attr_value_length(CK_ATTRIBUTE_PTR attr, CK_ULONG length)
 	return CKR_OK;
 }
 
-CK_RV attr_to_class(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV attr_to_class(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
-	CK_OBJECT_CLASS *out = dest;
+	CK_OBJECT_CLASS_PTR out = dest;
 
 	if (!attr->pValue)
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 
-	*out = *(CK_OBJECT_CLASS *)attr->pValue;
+	*out = *(CK_OBJECT_CLASS_PTR)attr->pValue;
 
 	return CKR_OK;
 }
@@ -94,7 +94,7 @@ CK_RV class_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 	if (!attr->pValue || ret != CKR_OK)
 		return ret;
 
-	*(CK_OBJECT_CLASS *)attr->pValue = *in;
+	*(CK_OBJECT_CLASS_PTR)attr->pValue = *in;
 
 	return ret;
 }
@@ -148,7 +148,7 @@ CK_RV modify_rfc2279(void *dest, CK_ATTRIBUTE_PTR attr)
 	return ret;
 }
 
-CK_RV attr_to_boolean(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV attr_to_boolean(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
 	CK_BBOOL *out = dest;
 
@@ -175,12 +175,12 @@ CK_RV boolean_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 	return ret;
 }
 
-CK_RV modify_boolean(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV modify_boolean(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
 	return attr_to_boolean(dest, attr);
 }
 
-CK_RV modify_true_only(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV modify_true_only(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
 	if (!*(CK_BBOOL *)attr->pValue && *(CK_BBOOL *)dest)
 		return CKR_ATTRIBUTE_READ_ONLY;
@@ -188,7 +188,7 @@ CK_RV modify_true_only(void *dest, CK_ATTRIBUTE_PTR attr)
 	return attr_to_boolean(dest, attr);
 }
 
-CK_RV modify_false_only(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV modify_false_only(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
 	if (*(CK_BBOOL *)attr->pValue && !*(CK_BBOOL *)dest)
 		return CKR_ATTRIBUTE_READ_ONLY;
@@ -196,7 +196,7 @@ CK_RV modify_false_only(void *dest, CK_ATTRIBUTE_PTR attr)
 	return attr_to_boolean(dest, attr);
 }
 
-CK_RV attr_to_key(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV attr_to_key(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
 	CK_KEY_TYPE *out = dest;
 
@@ -272,7 +272,7 @@ CK_RV modify_byte_array(void *dest, CK_ATTRIBUTE_PTR attr)
 	return ret;
 }
 
-CK_RV attr_to_date(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV attr_to_date(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
 	CK_DATE *out = dest;
 
@@ -299,12 +299,12 @@ CK_RV date_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 	return ret;
 }
 
-CK_RV modify_date(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV modify_date(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
 	return attr_to_date(dest, attr);
 }
 
-CK_RV attr_to_mech(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV attr_to_mech(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
 	CK_MECHANISM_TYPE_PTR out = dest;
 
@@ -439,14 +439,14 @@ CK_RV bignumber_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 	return ret;
 }
 
-CK_RV attr_to_ulong(void *dest, CK_ATTRIBUTE_PTR attr)
+CK_RV attr_to_ulong(CK_VOID_PTR dest, CK_ATTRIBUTE_PTR attr)
 {
-	CK_ULONG *out = dest;
+	CK_ULONG_PTR out = dest;
 
 	if (!attr->pValue)
 		return CKR_ATTRIBUTE_VALUE_INVALID;
 
-	*out = *(CK_ULONG *)attr->pValue;
+	*out = *(CK_ULONG_PTR)attr->pValue;
 
 	return CKR_OK;
 }
@@ -461,7 +461,7 @@ CK_RV ulong_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 	if (!attr->pValue || ret != CKR_OK)
 		return ret;
 
-	*(CK_ULONG *)attr->pValue = *in;
+	*(CK_ULONG_PTR)attr->pValue = *in;
 
 	return ret;
 }
@@ -470,7 +470,7 @@ CK_RV attr_get_value(void *obj, const struct template_attr *tattr,
 		     struct libattr_list *attrs, enum attr_req req_overwrite)
 {
 	CK_RV ret = CKR_OK;
-	CK_ATTRIBUTE_PTR cattr = NULL;
+	CK_ATTRIBUTE_PTR cattr = NULL_PTR;
 	enum attr_req req = tattr->req;
 
 	ret = obj_find_attr(&cattr, tattr->type, attrs);

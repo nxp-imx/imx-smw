@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <stdlib.h>
@@ -81,8 +81,8 @@ static CK_RV key_ec_allocate(struct libobj_obj *pub_obj,
 		ret = CKR_HOST_MEMORY;
 	}
 
-	DBG_TRACE("Allocated a new EC key (%p) of type %d (ret= %ld)", key,
-		  type, ret);
+	DBG_TRACE("Allocated a new EC key (%p) of type %d (ret=%ld)", key, type,
+		  ret);
 
 	return ret;
 }
@@ -113,20 +113,21 @@ static void key_ec_free(struct libobj_obj *obj, unsigned int type)
 	case LIBOBJ_KEY_PUBLIC:
 		if (key->point_q.array) {
 			free(key->point_q.array);
-			key->point_q.array = NULL;
+			key->point_q.array = NULL_PTR;
 		}
 		break;
 
 	case LIBOBJ_KEY_PRIVATE:
 		if (key->value_d.value) {
 			free(key->value_d.value);
-			key->value_d.value = NULL;
+			key->value_d.value = NULL_PTR;
 		}
 		if (key->type == LIBOBJ_KEY_PRIVATE && key->point_q.array) {
 			free(key->point_q.array);
-			key->point_q.array = NULL;
+			key->point_q.array = NULL_PTR;
 		}
 		break;
+
 	default:
 		return;
 	}
@@ -304,9 +305,6 @@ CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			      struct libobj_obj *priv_obj,
 			      struct libattr_list *priv_attrs)
 {
-	(void)hsession;
-	(void)mech;
-
 	CK_RV ret = CKR_OK;
 	struct libobj_key_ec_pair *keypair = NULL;
 

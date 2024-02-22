@@ -137,7 +137,7 @@ struct mgroup {
 };
 
 /* Macro filling a struct mentry for a single algo without hash */
-#define M_ALGO_NO_HASH(name, id)    M_ALGO(STR(name), NULL_PTR, id)
+#define M_ALGO_NO_HASH(name, id)    M_ALGO(STR(name), NULL, id)
 #define M_ALGO_HASH(name, hash, id) M_ALGO(STR(name), STR(hash), id)
 
 /* Macro filling a struct mentry for a single algo using a hash */
@@ -151,7 +151,7 @@ struct mgroup {
 #define M_ALGO_MULTI(ptr, nb, id)                                              \
 	{                                                                      \
 		.type = CKM_##id, .slot_flag = 0, .nb_smw_algo = nb,           \
-		.smw_algo = ptr,                                               \
+		.smw_algo = ptr, .smw_hash = NULL                              \
 	}
 
 /* Macro filling a group of mechanisms */
@@ -221,14 +221,16 @@ static struct mentry msign_rsa_pss[] = {
 /*
  * Cipher mechanisms
  */
-static struct mentry mcipher_aes[] = { M_ALGO_NO_HASH(AES, AES_CBC),
-				       M_ALGO_NO_HASH(AES, AES_CTR),
-				       M_ALGO_NO_HASH(AES, AES_CTS),
-				       M_ALGO_NO_HASH(AES, AES_ECB),
-				       M_ALGO_NO_HASH(AES, AES_XTS) };
+static struct mentry mcipher_aes[] = {
+	M_ALGO_NO_HASH(AES, AES_CBC), M_ALGO_NO_HASH(AES, AES_CTR),
+	M_ALGO_NO_HASH(AES, AES_CTS), M_ALGO_NO_HASH(AES, AES_ECB),
+	M_ALGO_NO_HASH(AES, AES_XTS),
+};
 
-static struct mentry mcipher_des[] = { M_ALGO_NO_HASH(DES, DES_CBC),
-				       M_ALGO_NO_HASH(DES, DES_ECB) };
+static struct mentry mcipher_des[] = {
+	M_ALGO_NO_HASH(DES, DES_CBC),
+	M_ALGO_NO_HASH(DES, DES_ECB),
+};
 
 static struct mentry mcipher_des3[] = {
 	M_ALGO_NO_HASH(DES3, DES3_CBC),
@@ -248,7 +250,7 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(mcipher_aes), mcipher_aes),
 	M_GROUP(ARRAY_SIZE(mcipher_des), mcipher_des),
 	M_GROUP(ARRAY_SIZE(mcipher_des3), mcipher_des3),
-	{ 0 },
+	{ 0 }
 };
 
 #define GET_ALGO_NAME(entry, idx)                                              \
@@ -278,7 +280,7 @@ struct cipher_algo_info {
 static struct cipher_algo_info cipher_algos[] = {
 	CIPHER_ALGO(AES, ECB), CIPHER_ALGO(AES, CBC),  CIPHER_ALGO(AES, CTR),
 	CIPHER_ALGO(AES, CTS), CIPHER_ALGO(AES, XTS),  CIPHER_ALGO(DES, ECB),
-	CIPHER_ALGO(DES, CBC), CIPHER_ALGO(DES3, ECB), CIPHER_ALGO(DES3, CBC)
+	CIPHER_ALGO(DES, CBC), CIPHER_ALGO(DES3, ECB), CIPHER_ALGO(DES3, CBC),
 };
 
 /**
@@ -980,8 +982,8 @@ static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	params = (struct lib_signature_params *)args;
-	ctx = (struct lib_signature_ctx *)params->ctx;
+	params = args;
+	ctx = params->ctx;
 
 	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, ec_pair);
 
@@ -1006,8 +1008,8 @@ static CK_RV op_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, struct mentry *entry,
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	params = (struct lib_signature_params *)args;
-	ctx = (struct lib_signature_ctx *)params->ctx;
+	params = args;
+	ctx = params->ctx;
 
 	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, rsa_pair);
 
@@ -1033,8 +1035,8 @@ static CK_RV op_msign_rsa_pss(CK_SLOT_ID slotid, struct mentry *entry,
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	params = (struct lib_signature_params *)args;
-	ctx = (struct lib_signature_ctx *)params->ctx;
+	params = args;
+	ctx = params->ctx;
 
 	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, rsa_pair);
 
@@ -1317,7 +1319,7 @@ static CK_RV info_mcipher_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 {
 	enum smw_status_code status = SMW_STATUS_OK;
 	CK_RV ret = CKR_OK;
-	const struct libdev *devinfo = NULL_PTR;
+	const struct libdev *devinfo = NULL;
 
 	DBG_TRACE("info of 0x%lx cipher mechanism", type);
 
@@ -1361,7 +1363,7 @@ static void check_mcipher_common(CK_SLOT_ID slotid, const char *subsystem,
 	enum smw_status_code status = SMW_STATUS_OK;
 	unsigned int idx;
 	CK_FLAGS slot_flag = 0;
-	struct mentry *entry = NULL_PTR;
+	struct mentry *entry = NULL;
 
 	/*
 	 * Slot flag is set if:
@@ -1394,7 +1396,7 @@ static CK_RV cipher(struct lib_cipher_params *params,
 	struct smw_cipher_args smw_args = { 0 };
 	struct smw_context_args op_ctx_args = { 0 };
 
-	struct lib_cipher_ctx *ctx = NULL_PTR;
+	struct lib_cipher_ctx *ctx = NULL;
 
 	ctx = params->ctx;
 
@@ -1538,17 +1540,17 @@ static CK_RV op_mcipher_common(CK_SLOT_ID slotid, void *args)
 {
 	CK_RV ret = CKR_OK;
 
-	const struct libdev *devinfo = NULL_PTR;
-	struct lib_cipher_ctx *ctx = NULL_PTR;
-	struct lib_cipher_params *params = NULL_PTR;
+	const struct libdev *devinfo = NULL;
+	struct lib_cipher_ctx *ctx = NULL;
+	struct lib_cipher_params *params = NULL;
 
-	struct smw_keypair_buffer *key_buffer = NULL_PTR;
+	struct smw_keypair_buffer *key_buffer = NULL;
 	struct smw_cipher_init_args smw_init_args = { 0 };
-	struct smw_cipher_init_args *smw_init_args_ptr = NULL_PTR;
+	struct smw_cipher_init_args *smw_init_args_ptr = NULL;
 	struct smw_cipher_data_args smw_data_args = { 0 };
-	struct smw_key_descriptor *keys_desc[2] = { NULL_PTR };
+	struct smw_key_descriptor *keys_desc[2] = { NULL };
 	struct smw_key_descriptor key_descriptor[2] = { 0 };
-	struct smw_key_descriptor **keys_desc_ptr = NULL_PTR;
+	struct smw_key_descriptor **keys_desc_ptr = NULL;
 
 	keys_desc_ptr = keys_desc;
 	smw_init_args_ptr = &smw_init_args;

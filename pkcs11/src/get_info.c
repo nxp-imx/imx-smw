@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2023 NXP
+ * Copyright 2020, 2023-2024 NXP
  */
 
 #include <string.h>
@@ -277,12 +277,12 @@ CK_RV C_GetInterface(CK_UTF8CHAR_PTR pInterfaceName, CK_VERSION_PTR pVersion,
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
 	CK_INTERFACE_PTR entry = pkcs11smw_interfaces;
-	CK_FUNCTION_LIST_PTR func_list = NULL;
+	CK_FUNCTION_LIST_PTR func_list = NULL_PTR;
 
 	if (!ppInterface)
 		goto end;
 
-	*ppInterface = NULL;
+	*ppInterface = NULL_PTR;
 
 	if (!pInterfaceName && !pVersion && !flags) {
 		DBG_TRACE("No criteria, return default entry %d",

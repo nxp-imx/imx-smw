@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -135,27 +135,27 @@ static void key_rsa_free(struct libobj_obj *obj, unsigned int type)
 	case LIBOBJ_KEY_PRIVATE:
 		if (key->priv_exp.value) {
 			free(key->priv_exp.value);
-			key->priv_exp.value = NULL;
+			key->priv_exp.value = NULL_PTR;
 		}
 		if (key->prime_p.value) {
 			free(key->prime_p.value);
-			key->prime_p.value = NULL;
+			key->prime_p.value = NULL_PTR;
 		}
 		if (key->prime_q.value) {
 			free(key->prime_q.value);
-			key->prime_q.value = NULL;
+			key->prime_q.value = NULL_PTR;
 		}
 		if (key->exp_dp.value) {
 			free(key->exp_dp.value);
-			key->exp_dp.value = NULL;
+			key->exp_dp.value = NULL_PTR;
 		}
 		if (key->exp_dq.value) {
 			free(key->exp_dq.value);
-			key->exp_dq.value = NULL;
+			key->exp_dq.value = NULL_PTR;
 		}
 		if (key->coeff.value) {
 			free(key->coeff.value);
-			key->coeff.value = NULL;
+			key->coeff.value = NULL_PTR;
 		}
 		break;
 
@@ -375,9 +375,6 @@ CK_RV key_rsa_keypair_generate(CK_SESSION_HANDLE hsession,
 			       struct libobj_obj *priv_obj,
 			       struct libattr_list *priv_attrs)
 {
-	(void)hsession;
-	(void)mech;
-
 	CK_RV ret = CKR_OK;
 	struct libobj_key_rsa_pair *keypair = NULL;
 

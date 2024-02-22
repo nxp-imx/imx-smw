@@ -494,9 +494,9 @@ static CK_RV obj_storage_allocate(struct libobj_storage **obj)
 	newobj->modifiable = true;
 	newobj->copyable = true;
 	newobj->destroyable = true;
-	newobj->label.string = NULL;
+	newobj->label.string = NULL_PTR;
 	newobj->label.length = 0;
-	newobj->unique_id.string = NULL;
+	newobj->unique_id.string = NULL_PTR;
 	newobj->unique_id.length = 0;
 	newobj->subobject = NULL;
 
@@ -1109,7 +1109,7 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			  CK_OBJECT_HANDLE_PTR hkey)
 {
 	CK_RV ret = CKR_OK;
-	struct libobj_obj *key = NULL;
+	struct libobj_obj *new_key = NULL;
 	struct libattr_list attrs_list = { .attr = attrs, .number = nb_attrs };
 
 	DBG_TRACE("Generate a secret key on session %lu", hsession);
@@ -1121,7 +1121,7 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	/*
 	 * First create the storage object for the secret key
 	 */
-	ret = obj_allocate(&key);
+	ret = obj_allocate(&new_key);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -1129,37 +1129,37 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	 * Get the optional class of the object
 	 * By default this is a CKO_SECRET_KEY class
 	 */
-	key->class = CKO_SECRET_KEY;
-	ret = attr_get_value(key, &attr_obj_common[OBJ_CLASS], &attrs_list,
+	new_key->class = CKO_SECRET_KEY;
+	ret = attr_get_value(new_key, &attr_obj_common[OBJ_CLASS], &attrs_list,
 			     OPTIONAL);
 	if (ret != CKR_OK)
 		goto end;
 
-	if (key->class != CKO_SECRET_KEY) {
+	if (new_key->class != CKO_SECRET_KEY) {
 		ret = CKR_TEMPLATE_INCONSISTENT;
 		goto end;
 	}
 
-	ret = obj_storage_new(hsession, key, &attrs_list);
+	ret = obj_storage_new(hsession, new_key, &attrs_list);
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = key_secret_key_generate(hsession, mech, key, &attrs_list);
+	ret = key_secret_key_generate(hsession, mech, new_key, &attrs_list);
 
 	if (ret == CKR_OK)
-		ret = set_unique_id(key);
+		ret = set_unique_id(new_key);
 
 	if (ret == CKR_OK)
-		ret = obj_add_to_list(hsession, key,
-				      is_token_obj(key, storage));
+		ret = obj_add_to_list(hsession, new_key,
+				      is_token_obj(new_key, storage));
 
 end:
 	DBG_TRACE("Generate secret key return %ld", ret);
 
 	if (ret == CKR_OK)
-		*hkey = (CK_OBJECT_HANDLE)key;
+		*hkey = (CK_OBJECT_HANDLE)new_key;
 	else
-		obj_free(key, NULL);
+		obj_free(new_key, NULL);
 
 	return ret;
 }
@@ -1256,7 +1256,7 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	struct libobj_list *objects = NULL;
 	struct libdevice *dev = NULL;
 	CK_ULONG idx = 0;
-	CK_ATTRIBUTE_PTR attrs_tmp = NULL;
+	CK_ATTRIBUTE_PTR attrs_tmp = NULL_PTR;
 
 	DBG_TRACE("Start Find Object Query on session %lu", hsession);
 

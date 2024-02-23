@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -350,6 +350,11 @@ static int init_token(CK_FUNCTION_LIST_PTR pfunc)
 	}
 
 	for (idx = 0; idx < nb_slots; idx++) {
+		if (CHECK_EXPECTED(strlen(exp_slots[idx].label) <=
+					   sizeof(label),
+				   "Slot label overflow"))
+			goto end;
+
 		memset(label, ' ', sizeof(label));
 		memcpy(label, exp_slots[idx].label,
 		       strlen(exp_slots[idx].label));
@@ -362,13 +367,10 @@ static int init_token(CK_FUNCTION_LIST_PTR pfunc)
 				break;
 			}
 		}
-		if (slot_present) {
-			if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
-				goto end;
-		} else {
-			if (CHECK_CK_RV(CKR_TOKEN_NOT_PRESENT, "C_InitToken"))
-				goto end;
-		}
+
+		if (CHECK_CK_RV(slot_present ? CKR_OK : CKR_TOKEN_NOT_PRESENT,
+				"C_InitToken"))
+			goto end;
 	}
 
 	status = TEST_PASS;

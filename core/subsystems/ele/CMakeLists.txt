@@ -18,10 +18,15 @@ message(STATUS "    ELE  Headers  : ${ELE_INCLUDE_DIRS}")
 add_library(ele OBJECT "")
 set_target_properties(ele PROPERTIES C_VISIBILITY_PRESET hidden)
 
+if (ENABLE_CIPHER OR ENABLE_AEAD)
+    set(ENABLE_CONTEXT ON)
+endif()
+
 set(ele_srcs
     entry.c
     common.c
     $<$<BOOL:${ENABLE_AEAD}>:aead.c>
+    $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>
     $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c keymgr_derive.c key_policy.c
         lifecycle.c>
     $<$<BOOL:${ENABLE_HASH}>:hash.c>

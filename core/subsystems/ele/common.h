@@ -144,7 +144,7 @@ bool ele_mac_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @status: Error code set only if the Security Operation is handled.
  *
- * This function handles the signarture generation and verification operation.
+ * This function handles the signature generation and verification operation.
  * @status is set only if the function returns true.
  *
  * Return:
@@ -178,7 +178,7 @@ bool ele_rng_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @status: Error code set only if the Security Operation is handled.
  *
- * This function handles the cipher encryption/decrytion operation.
+ * This function handles the cipher encryption/decryption operation.
  * @status is set only if the function returns true.
  *
  * Return:
@@ -231,7 +231,7 @@ bool ele_storage_handle(struct subsystem_context *ele_ctx,
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @status: Error code set only if the Security Operation is handled.
  *
- * This function handles the AEAD encryption/decrytion operation.
+ * This function handles the AEAD encryption/decryption operation.
  * @status is set only if the function returns true.
  *
  * Return:
@@ -436,5 +436,13 @@ int ele_get_device_info(struct subsystem_context *ele_ctx);
  * Other SMW status error.
  */
 int ele_is_oem_srkh_fused(struct subsystem_context *ele_ctx, bool *fused);
+
+/**
+ * ele_get_ctx_ops() - Return ELE context operations structure
+ *
+ * Return:
+ * Pointer to ELE context operations structure
+ */
+void *ele_get_ctx_ops(void);
 
 #endif /* __COMMON_H__ */

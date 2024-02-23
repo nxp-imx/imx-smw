@@ -21,9 +21,14 @@ message(STATUS "    ZLIB Header   : ${ZLIB_INCLUDE_DIR}")
 add_library(hsm OBJECT "")
 set_target_properties(hsm PROPERTIES C_VISIBILITY_PRESET hidden)
 
+if (ENABLE_CIPHER OR ENABLE_AEAD)
+    set(ENABLE_CONTEXT ON)
+endif()
+
 target_sources(hsm PRIVATE
                entry.c
                $<$<BOOL:${ENABLE_AEAD}>:aead.c>
+               $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c keymgr_derive.c key_group.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_MAC}>:mac.c>

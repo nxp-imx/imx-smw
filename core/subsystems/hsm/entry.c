@@ -681,6 +681,11 @@ __weak bool hsm_aead_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
+__weak void *hsm_get_ctx_ops(void)
+{
+	return NULL;
+}
+
 static int execute(enum operation_id operation_id, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -714,7 +719,7 @@ end:
 static const struct subsystem_func func = { .load = load,
 					    .unload = unload,
 					    .execute = execute,
-					    .ctx_ops = NULL };
+					    .ctx_ops = hsm_get_ctx_ops };
 
 const struct subsystem_func *smw_hsm_get_func(void)
 {

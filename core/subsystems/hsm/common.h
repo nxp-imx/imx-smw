@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __COMMON_H__
@@ -289,5 +289,13 @@ int hsm_set_key_group_state(struct subsystem_context *hsm_ctx, unsigned int grp,
  */
 int hsm_get_key_group(struct subsystem_context *hsm_ctx, bool persistent,
 		      unsigned int *out_grp);
+
+/**
+ * hsm_get_ctx_ops() - Return HSM context operations structure
+ *
+ * Return:
+ * Pointer to HSM context operations structure
+ */
+void *hsm_get_ctx_ops(void);
 
 #endif /* __COMMON_H__ */

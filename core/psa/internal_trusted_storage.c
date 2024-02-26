@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include "smw_storage.h"
@@ -63,6 +63,50 @@ set_data_attributes_list(psa_storage_create_flags_t create_flags,
 		       (uintptr_t)p - (uintptr_t)*attributes_list);
 
 	return PSA_SUCCESS;
+}
+
+static psa_status_t
+get_data_attributes(psa_storage_create_flags_t *create_flags,
+		    unsigned char *attributes_list,
+		    unsigned int attributes_list_length)
+{
+	psa_status_t psa_status = PSA_SUCCESS;
+	int status = SMW_STATUS_OK;
+
+	const unsigned char *p = attributes_list;
+	const unsigned char *p_end = p + attributes_list_length;
+	unsigned char *tlv_type = NULL;
+	unsigned char *tlv_value = NULL;
+	unsigned int tlv_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*create_flags = PSA_STORAGE_FLAG_NONE;
+
+	if (!attributes_list || !attributes_list_length)
+		return psa_status;
+
+	while (p < p_end) {
+		status = smw_tlv_read_element(&p, p_end, &tlv_type, &tlv_value,
+					      &tlv_length);
+		if (status != SMW_STATUS_OK) {
+			SMW_DBG_PRINTF(ERROR, "%s data attributes failed\n",
+				       __func__);
+			psa_status = PSA_ERROR_DATA_INVALID;
+			break;
+		}
+
+		/*
+		 * If "READ_ONLY" is verified, no need to continue as there is
+		 * no other flags managed.
+		 */
+		if (!SMW_UTILS_STRCMP((char *)tlv_type, READ_ONLY_STR)) {
+			*create_flags |= PSA_STORAGE_FLAG_WRITE_ONCE;
+			break;
+		}
+	}
+
+	return psa_status;
 }
 
 __export psa_status_t psa_its_set(psa_storage_uid_t uid, size_t data_length,
@@ -213,8 +257,8 @@ __export psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	int status = SMW_STATUS_OK;
 
-	unsigned int id = INVALID_OBJ_ID;
-	union smw_object_db_info info = { 0 };
+	struct smw_data_info_args data_info = { 0 };
+	struct smw_data_descriptor data_desc = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -224,25 +268,28 @@ __export psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 	if (!p_info)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	if (SET_OVERFLOW(uid, id))
+	data_info.data_descriptor = &data_desc;
+	if (SET_OVERFLOW(uid, data_desc.identifier))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	status =
-		smw_object_db_get_info(id, SMW_OBJECT_PERSISTENCE_ID_PERSISTENT,
-				       &info);
-	if (status == SMW_STATUS_OK) {
-		p_info->capacity = info.data_info.size;
-		p_info->size = info.data_info.size;
-		/* Only PSA_STORAGE_FLAG_WRITE_ONCE is supported for now */
-		if (info.data_info.attributes.rw_flags & SMW_STORAGE_READ_ONLY)
-			p_info->flags = PSA_STORAGE_FLAG_WRITE_ONCE;
+	status = smw_get_data_info(&data_info);
 
-		psa_status = PSA_SUCCESS;
+	if (status == SMW_STATUS_OK) {
+		p_info->capacity = data_desc.length;
+		p_info->size = data_desc.length;
+
+		psa_status =
+			get_data_attributes(&p_info->flags,
+					    data_desc.attributes_list,
+					    data_desc.attributes_list_length);
 	} else if (status == SMW_STATUS_UNKNOWN_ID) {
 		psa_status = PSA_ERROR_DOES_NOT_EXIST;
 	} else {
 		psa_status = util_smw_to_psa_status(status);
 	}
+
+	if (data_desc.attributes_list)
+		SMW_UTILS_FREE(data_desc.attributes_list);
 
 	return psa_status;
 }

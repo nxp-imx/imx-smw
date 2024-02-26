@@ -58,6 +58,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Support storing the IV used by subsystem in the `output_iv` field for the AEAD final encryption operation, in addition to existing support for the one-shot AEAD encryption operation.
 * Fix the TLV lifecycle encoding to handle boolean. Make TLV lifecycle as core global function.
 * Fix SECO static link libraries.
+* Add get data information API.
 
 ##### 2. Subsystems
 
@@ -78,12 +79,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Remove SMW_STATUS_DATA_ALREADY_RETRIEVED no more used in ELE subsystem.
 * Implement SM4 block cipher for TEE subsystem.
 * Add SECO NVM Secure Storage start new attempt in case of failure
+* Add function to check if a data is present and to get data information in ELE/TEE subsystem.
 
 ##### 3. ARM PSA APIs
 
 * Add support of CFB mode.
 * Add support of SHA-3 hash.
 * Add support for single-part AEAD encryption APIs: `psa_aead_encrypt()` & `psa_aead_decrypt()`
+* Change psa_its_get_info() to call the SMW get data information API.
 
 ##### 4. OSAL
 
@@ -110,6 +113,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests for SM4 block cipher.
 * Add AEAD test vectors in F_PSA_Aead_001, U_PSA_Aead_001 and U_PSA_Aead_002.
 * Add tests to validate PSA single-part AEAD operations.
+* Add tests to validate the SMW get data information API.
 
 #### PKCS#11 Library - _version 3.0_
 

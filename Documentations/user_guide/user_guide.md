@@ -234,8 +234,14 @@ and supported by the SMW Library.
 	<td>✔️</td>
 </tr>
 <tr>
-  <td rowspan="3">Data Storage</td>
-	<td colspan="2">Store</td>
+  <td rowspan="4">Data Storage</td>
+	<td colspan="2">Get information</td>
+	<td>✔️<sup><a href="#t_note_4">4</a></sup></td>
+	<td>✔️</td>
+	<td>✔️</td>
+</tr>
+<tr>
+  <td colspan="2">Store</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -258,7 +264,8 @@ and supported by the SMW Library.
 <p>
 <a name="t_note_1"><sup>1</sup></a> Require specific SECO Firmware.<br>
 <a name="t_note_2"><sup>2</sup></a> Build option ENABLE_TLS12 must be set ON.<br>
-<a name="t_note_3"><sup>3</sup></a> Do nothing, returns always success.
+<a name="t_note_3"><sup>3</sup></a> Do nothing, returns always success.<br>
+<a name="t_note_4"><sup>4</sup></a> Retrieve only information from SMW object database.<br>
 </p>
 
 # 3. Prerequisites
@@ -279,7 +286,7 @@ bits toolchain aarch\[*XX*\]-none-linux-gnu 10.3-2021.07 (\[*XX*\] can be 32 or
 The command must be executed from sources installation folder.
 
 ### 3.1.1. Install in a default path
-To install the toolchain in the source i`./toolchains` directory, execute the
+To install the toolchain in the source `./toolchains` directory, execute the
 following cmake script command:
 
 ```sh

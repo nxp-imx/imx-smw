@@ -457,8 +457,6 @@ The following cmake script builds the OPTEE TA Development Kit sources pointed b
 
 The OPTEE OS sources built are the NXP sources integrating the NXP platform and
 available in github (https://github.com/nxp-imx/imx-optee-os).
-The script `build_tadevkit.cmake` requires the NXP script `scripts/nxp_build.sh`
-present in the NXP OPTEE OS sources.
 
 The development kit and corresponding interface headers are installed in the `TA_DEV_KIT_ROOT`
 directory.

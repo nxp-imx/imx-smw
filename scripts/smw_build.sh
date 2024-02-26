@@ -192,6 +192,31 @@ function ele()
     eval "${cmd_script}"
 }
 
+function libuuid_config()
+{
+    cmd_script="cmake ${opt_toolchain}"
+    libuuid_script="${script_dir}/build_libuuid.cmake"
+
+    printf "\033[0;32m\n"
+    printf "***************************************\n"
+    printf " Install libuuid to %s\n" "${opt_export}"
+    printf "***************************************\n"
+    printf "\033[0m\n"
+
+    if [[ -z ${opt_export} ]]; then
+        usage_libuuid_config
+        exit 1
+    fi
+
+    if [[ -n ${opt_src} ]]; then
+        cmd_script="${cmd_script} -DLIBUUID_SRC_PATH=${opt_src}"
+    fi
+
+    cmd_script="${cmd_script} -DLIBUUID_CONFIG_ROOT=${opt_export} -P ${libuuid_script}"
+
+    printf "Execute %s\n" "${cmd_script}"
+    eval "${cmd_script}"
+}
 
 function teec()
 {
@@ -282,7 +307,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_coverage}"
     cmd_script="${cmd_script} ${opt_buildtype} ${opt_verbose}"
     cmd_script="${cmd_script} ${opt_zlib} ${opt_seco} ${opt_ele}"
-    cmd_script="${cmd_script} ${opt_teec} ${opt_tadevkit}"
+    cmd_script="${cmd_script} ${opt_libuuid_config} ${opt_teec} ${opt_tadevkit}"
     cmd_script="${cmd_script} ${opt_jsonc} ${opt_psaarchtests}"
     cmd_script="${cmd_script} ${opt_psa}"
     cmd_script="${cmd_script} ${opt_tls12}"
@@ -467,6 +492,20 @@ function usage_zlib()
     printf "\n"
 }
 
+function usage_libuuid_config()
+{
+    printf "\n"
+    printf "To build and install the LIBUUID Library\n"
+    printf "  %s libuuid_config export=[dir] src=[dir] arch=[arch] " "${script_name}"
+    printf "toolpath=[dir] toolname=[name]\n"
+    printf "    export   = Export directory\n"
+    printf "    src      = [optional] Temporary directory where install sources\n"
+    printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
+    printf "    toolpath = [optional] Toolchain path where installed\n"
+    printf "    toolname = [optional] Toolchain name\n"
+    printf "\n"
+}
+
 function usage_seco()
 {
     printf "\n"
@@ -549,7 +588,7 @@ function usage_configure()
     printf "  %s configure out=[dir] coverage debug " "${script_name}"
     printf "verbose=[lvl] zlib=[dir] seco=[dir] "
     printf "ele=[dir] "
-    printf "teec=[dir] tadevkit=[dir] "
+    printf "libuuid_config=[dir] teec=[dir] tadevkit=[dir] "
     printf "arch=[arch] toolpath=[dir] toolname=[name] jsonc=[dir] "
     printf "psaarchtests=[dir]"
     printf "format=[name] ...\n"
@@ -653,6 +692,7 @@ function usage()
     usage_zlib
     usage_seco
     usage_ele
+    usage_libuuid_config
     usage_teec
     usage_tadevkit
     usage_psaarchtests
@@ -859,6 +899,10 @@ case ${opt_action} in
 
     ele)
         ele
+        ;;
+
+    libuuid_config)
+        libuuid_config
         ;;
 
     teec)

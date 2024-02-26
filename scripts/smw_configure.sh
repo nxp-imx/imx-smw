@@ -138,8 +138,10 @@ fi
 
 eval "./scripts/smw_build.sh jsonc export=${export} \
       src=../jsonc ${arch} ${opt_toolpath}"
+eval "./scripts/smw_build.sh libuuid_config export=${export}/usr \
+      src=../libuuid ${arch} ${opt_toolpath}"
 eval "./scripts/smw_build.sh teec export=${export} \
-      src=../optee-client out=${tee_build} ${arch} ${opt_toolpath}"
+      src=../optee-client libuuid_config=${export}/usr out=${tee_build} ${arch} ${opt_toolpath}"
 eval "./scripts/smw_build.sh tadevkit export=${ta_export} \
       src=../optee-os out=${tee_build} ${arch} ${optee_plat} ${opt_toolpath}"
 eval "./scripts/smw_build.sh psaarchtests src=${psaarchtests_src_path}"
@@ -161,7 +163,7 @@ fi
 
 
 # Enable optee
-conf_opts="${conf_opts} teec=${export} tadevkit=${ta_export}"
+conf_opts="${conf_opts} libuuid_config=${export}/usr teec=${export} tadevkit=${ta_export}"
 # Enable tests
 conf_opts="${conf_opts} jsonc=${export}"
 # Enable PSA Architecture tests

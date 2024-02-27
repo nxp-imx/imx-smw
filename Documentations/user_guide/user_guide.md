@@ -8,15 +8,15 @@
     - [3.1.2. Install in other path](#312-install-in-other-path)
     - [3.1.3. Additional toolchain options](#313-additional-toolchain-options)
   - [3.2. External Dependencies](#32-external-dependencies)
-    - [3.2.1. HSM subsystem](#321-hsm-subsystem)
+    - [3.2.1. SECO subsystem](#321-seco-subsystem)
       - [3.2.1.1. zlib Library](#3211-zlib-library)
-      - [3.2.1.2. SECO/HSM Libraries](#3212-secohsm-libraries)
+      - [3.2.1.2. SECO Libraries](#3212-seco-libraries)
     - [3.2.2. TEE subsystem](#322-tee-subsystem)
       - [3.2.2.1. OPTEE Client Library](#3221-optee-client-library)
       - [3.2.2.2. OPTEE TA Development Kit](#3222-optee-ta-development-kit)
       - [3.2.2.3. Creating a simple OPTEE TA](#3223-creating-a-simple-optee-ta)
     - [3.2.3. ELE subsystem](#323-ele-subsystem)
-      - [3.2.3.1. ELE/HSM Library](#3231-elehsm-library)
+      - [3.2.3.1. ELE Library](#3231-ele-library)
       - [3.2.3.2. NVM Daemon](#3232-nvm-daemon)
     - [3.2.4. JSON-C Library](#324-json-c-library)
     - [3.2.5 ARM PSA Test Suite](#325-arm-psa-test-suite)
@@ -55,7 +55,7 @@ This SMW Library doesn't intent to calculate data (cryptographic operation),
 the only operation it's doing is pure software data conversion like DER, PEM, ...
 
 Security Middleware supports the following Secure Subsystem:
-*	HSM subsystem (limited to device supporting the SECO/HSM, e.g. i.MX8QXP).
+*	SECO subsystem (limited to device supporting the SECO, e.g. i.MX8QXP).
 *	TEE subsystem (OPTEE OS running in Trustzone secure world).
 * ELE subsystem (device supporting EdgeLock Enclave, e.g. i.MX8ULP, i.MX9x).
 
@@ -79,7 +79,7 @@ and supported by the SMW Library.
   <th colspan="3">Subsystems</th>
 </tr>
 <tr>
-  <th>HSM</th>
+  <th>SECO</th>
   <th>TEE</th>
   <th>ELE</th>
 </tr>
@@ -256,7 +256,7 @@ and supported by the SMW Library.
 </table>
 
 <p>
-<a name="t_note_1"><sup>1</sup></a> Require specific SECO/HSM Firmware.<br>
+<a name="t_note_1"><sup>1</sup></a> Require specific SECO Firmware.<br>
 <a name="t_note_2"><sup>2</sup></a> Build option ENABLE_TLS12 must be set ON.<br>
 <a name="t_note_3"><sup>3</sup></a> Do nothing, returns always success.
 </p>
@@ -351,12 +351,12 @@ this section to build external dependencies using provided cmake scripts.
 </thead>
 <tbody>
 <tr>
-  <td rowspan="3">HSM subsystem</td>
-	<td>Seco NVM Manager</td>
+  <td rowspan="3">SECO subsystem</td>
+	<td>SECO NVM Manager</td>
 	<td>Static library seco_nvm_manager.a and seco_nvm.h header</td>
 </tr>
 <tr>
-  <td>HSM Library</td>
+  <td>SECO Library</td>
 	<td>Static library hsm_lib.a and hsm_api.h header</td>
 </tr>
 <tr>
@@ -374,7 +374,7 @@ this section to build external dependencies using provided cmake scripts.
 </tr>
 <tr>
   <td rowspan="2">ELE subsystem</td>
-	<td>ELE HSM Library</td>
+	<td>ELE Library</td>
 	<td>Shared library libele_hsm.so and hsm_api.h header</td>
 </tr>
 <tr>
@@ -389,9 +389,9 @@ this section to build external dependencies using provided cmake scripts.
 </tbody>
 </table>
 
-### 3.2.1. HSM subsystem
+### 3.2.1. SECO subsystem
 #### 3.2.1.1. zlib Library
-Before building the [Seco/HSM Library](#3212-secohsm-libraries), the zlib library
+Before building the [SECO Library](#3212-seco-libraries), the zlib library
 must be present and built with the default compiler. Installation of the ARM 32
 or 64 bits cross-compiler is described in [Toolchains](#31-toolchains).
 
@@ -403,12 +403,12 @@ The command uploads and builds the zlib sources in the directory specified by
 the option `ZLIB_SRC_PATH`, then copies the library and interface header in the
 path specified by `ZLIB_ROOT`.
 
-#### 3.2.1.2. SECO/HSM Libraries
-The Seco/HSM Library interfaces the SMW's subsystem HSM with the kernel Seco/HSM
+#### 3.2.1.2. SECO Libraries
+The SECO Library interfaces the SMW's subsystem SECO with the kernel SECO
 Message Unit driver and the Non-Volatile Memory (NVM) manager.
-Before building the Seco/HSM Library, the zlib library must be present, see [zlib library](#3211-zlib-library).
+Before building the SECO Library, the zlib library must be present, see [zlib library](#3211-zlib-library).
 
-The following cmake script builds the SECO/HSM pointed by the `SECO_SRC_PATH` using
+The following cmake script builds the SECO pointed by the `SECO_SRC_PATH` using
 the default compiler. Installation of the ARM 32 or 64 bits cross-compiler is described in [Toolchains](#31-toolchains).
 
 The built libraries and corresponding interface headers are installed in the `SECO_ROOT`
@@ -502,11 +502,11 @@ The library header `libsmw_ta.h` is present in the include folder of the project
 build directory.
 
 ### 3.2.3. ELE subsystem
-#### 3.2.3.1. ELE/HSM Library
-The ELE/HSM Library interfaces the SMW's subsystem ELE with the kernel ELE/HSM
+#### 3.2.3.1. ELE Library
+The ELE Library interfaces the SMW's subsystem ELE with the kernel ELE
 Message Unit driver.
 
-The following cmake script builds the ELE/HSM pointed by the `ELE_SRC_PATH` using
+The following cmake script builds the ELE pointed by the `ELE_SRC_PATH` using
 the default compiler. Installation of the ARM 32 or 64 bits cross-compiler is described in [Toolchains](#31-toolchains).
 
 The built libraries and corresponding interface headers are installed in the `ELE_ROOT`
@@ -518,7 +518,7 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DELE_ROOT=[e
 
 #### 3.2.3.2. NVM Daemon
 The ELE Non-Volatile Memory (NVM) daemon used to store all presistent objects is
-built with the same command as the [ELE/HSM Library](#3231-elehsm-library).
+built with the same command as the [ELE Library](#3231-ele-library).
 The NVM Daemon is a linux service that must be started before loading the SMW Library.
 
 The NVM Daemon service package is available in the `ELE_ROOT` directory.
@@ -697,9 +697,9 @@ Before enabling a subsystem, the subsystem dependencies must be built as describ
 </thead>
 <tbody>
 <tr>
-  <td rowspan="2">HSM</td>
+  <td rowspan="2">SECO</td>
   <td>-DSECO_ROOT=[/path/to/export]</td>
-  <td>Path to the Seco/HSM and NVM Manager libraries and headers interface</td>
+  <td>Path to the SECO and NVM Manager libraries and headers interface</td>
 </tr>
 <tr>
   <td>-DZLIB_ROOT=[/path/to/export]</td>
@@ -717,7 +717,7 @@ Before enabling a subsystem, the subsystem dependencies must be built as describ
 <tr>
   <td>ELE</td>
   <td>-DELE_ROOT=[/path/to/export]</td>
-  <td>Path to the ELE/HSM library and headers interface</td>
+  <td>Path to the ELE library and headers interface</td>
 </tr>
 </tbody>
 </table>
@@ -1080,7 +1080,7 @@ set with the default value `/usr/lib/optee_armtz`
             |   |-- <span style="color:orange">config</span>
             |   |   |-- default_config.txt
             |   |   |-- ele_only_config.txt
-            |   |   |-- hsm_only_config.txt
+            |   |   |-- seco_only_config.txt
             |   |   `-- tee_only_config.txt
             |   |-- <span style="color:orange">scripts</span>
             |   |   `-- run_psa_test.sh
@@ -1164,7 +1164,7 @@ Below is the organization of the project sources.
 |   |-- <span style="color:orange">subsystems</span>                  Secure Subsystems Layers
 |   |   |-- <span style="color:orange">ele</span>                     ELE Subsystem
 |   |   |   |-- ...
-|   |   |-- <span style="color:orange">hsm</span>                     HSM Subsystem
+|   |   |-- <span style="color:orange">seco</span>                    SECO Subsystem
 |   |   |   |-- ...
 |   |   `-- <span style="color:orange">tee</span>                     TEE Subsystem
 |   |       |-- ...
@@ -1335,7 +1335,7 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
   <td>https://github.com/NXP/imx-seco-libs.git</td>
 	<td>imx_5.4.70_2.3.11</td>
 	<td>../seco_libs</td>
-  <td>HSM/SECO library sources</td>
+  <td>SECO library sources</td>
 </tr>
 </tbody>
 </table>

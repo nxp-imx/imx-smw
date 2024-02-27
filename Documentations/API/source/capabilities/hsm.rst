@@ -1,10 +1,10 @@
-HSM capabilities
+SECO capabilities
 ================
 
 Key manager
 ^^^^^^^^^^^
 
-.. table:: HSM Key type
+.. table:: SECO Key type
    :align: center
    :class: wrap-table
 
@@ -39,15 +39,15 @@ Operations supported:
  - Commit key storage (do nothing)
 
 Key group:
-The SMW Library is managing the HSM key group automatically. The library is
+The SMW Library is managing the SECO key group automatically. The library is
 selecting a key group depending if a key is persistent/permanent or transient.
   - Persistent/Permanent keys are in key groups from 0 to 511.
   - Transient keys are in key groups from 512 to 1023.
 
 Persistent key:
-To flush persistent key, "FLUSH_KEY" attribute must be set. When set, HSM
+To flush persistent key, "FLUSH_KEY" attribute must be set. When set, SECO
 executes a strict operation and all keys defined as persistent are flushed. Note
-that HSM uses a strict operation counter which is a replay attack counter, then
+that SECO uses a strict operation counter which is a replay attack counter, then
 the number of strict operation is limited. So when possible it's better to
 perform multiple persistent key operations (generate, import, delete) before
 setting the "FLUSH_KEY" attribute.
@@ -57,7 +57,7 @@ setting the "FLUSH_KEY" attribute.
 
 Key policy
 """"""""""
-The HSM subsystem doesn't support key policy attribute. Defining the key
+The SECO subsystem doesn't support key policy attribute. Defining the key
 attribute **POLICY** will be ignored and if attribute is defined the API
 returns the warning `SMW_STATUS_KEY_POLICY_WARNING_IGNORED`.
 
@@ -65,7 +65,7 @@ returns the warning `SMW_STATUS_KEY_POLICY_WARNING_IGNORED`.
 Hash
 ^^^^
 
-.. table:: HSM Hash
+.. table:: SECO Hash
    :align: center
    :class: wrap-table
 
@@ -84,7 +84,7 @@ Hash
 Signature
 ^^^^^^^^^
 
-.. table:: HSM Signature
+.. table:: SECO Signature
    :align: center
    :class: wrap-table
 
@@ -114,7 +114,7 @@ Length: 1 to UINT32_MAX
 MAC
 ^^^
 
-.. table:: HSM MAC
+.. table:: SECO MAC
    :align: center
    :class: wrap-table
 
@@ -132,7 +132,7 @@ MAC
    | HMAC_SHA512  | 512                      | HMAC          | SHA512   |
    +--------------+--------------------------+---------------+----------+
 
-HMAC Key generation and HMAC generation is not working on all HSM Firmware
+HMAC Key generation and HMAC generation is not working on all SECO Firmware
 and may return ``SMW_STATUS_SUBSYSTEM_FAILURE``.
 
 Operations supported:
@@ -142,7 +142,7 @@ Operations supported:
 Cipher
 ^^^^^^
 
-.. table:: HSM Cipher
+.. table:: SECO Cipher
    :align: center
    :class: wrap-table
 
@@ -176,7 +176,7 @@ The subsystem doesn't allow to:
 AEAD
 ^^^^
 
-.. table:: HSM AEAD
+.. table:: SECO AEAD
    :align: center
    :class: wrap-table
 

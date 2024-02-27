@@ -74,19 +74,19 @@ List of Secure Subsystems:
    :align: left
    :class: wrap-table
 
-   +----------------------------------+-----------------------------------------------------------------+
-   | **Secure Subsystem string name** | **Description**                                                 |
-   +==================================+=================================================================+
-   | HSM                              | Use the HSM/SECO protected secure mode on certain i.MX8 device. |
-   +----------------------------------+-----------------------------------------------------------------+
-   | TEE                              | Use the Secure OS called OPTEE and running                      |
-   |                                  | in ARM Trustzone Secure world.                                  |
-   +----------------------------------+-----------------------------------------------------------------+
-   | ELE                              | Use the ELE (EdgeLock Enclave) protected secure mode on:        |
-   |                                  |                                                                 |
-   |                                  |  - i.MX8ULP                                                     |
-   |                                  |  - i.MX9x                                                       |
-   +----------------------------------+-----------------------------------------------------------------+
+   +----------------------------------+-------------------------------------------------------------+
+   | **Secure Subsystem string name** | **Description**                                             |
+   +==================================+=============================================================+
+   | SECO                             | Use the SECO protected secure mode on certain i.MX8 device. |
+   +----------------------------------+-------------------------------------------------------------+
+   | TEE                              | Use the Secure OS called OPTEE and running                  |
+   |                                  | in ARM Trustzone Secure world.                              |
+   +----------------------------------+-------------------------------------------------------------+
+   | ELE                              | Use the ELE (EdgeLock Enclave) protected secure mode on:    |
+   |                                  |                                                             |
+   |                                  |  - i.MX8ULP                                                 |
+   |                                  |  - i.MX9x                                                   |
+   +----------------------------------+-------------------------------------------------------------+
 
 A different load and unload method can be specified for each Secure Subsystem thru the <string: load/unload method> string following the subsystem’s string name. The following table defines the possible string value of the load/unload method.
 
@@ -242,7 +242,7 @@ Notice that all Values or Range are not useful for each operation. Refer to each
 Example
 -------
 
-On Linux the plaintext configuration may be a text file. This example defines the configuration supporting 2 Secure Subsystems: OPTEE and HSM.
+On Linux the plaintext configuration may be a text file. This example defines the configuration supporting 2 Secure Subsystems: OPTEE and SECO.
 
 PSA default Secure Subsystem is OPTEE.
 Secure Subsystem selection is enabled if OPTEE does not support the requested Security Operation.
@@ -253,13 +253,13 @@ OPTEE configuration:
 - Cipher AES (ECB and CBC) and DES (ECB and CBC) operation. OPTEE is the default subsystem for this operation for the defined keys and modes.
 - All keys defined by the Security Middleware can be generated using OPTEE Secure Subsystem.
 
-HSM configuration:
+SECO configuration:
 
 - Subsystem is loaded/unloaded with the default method as defined in Secure Subsystems definition.
 - Digest SHA256 operation.
 - Generate 128 bits to 256 bits AES keys.
 - Generate 56 bits DES keys.
-- HSM is the default subsystem for this operation for the defined key capabilities.
+- SECO is the default subsystem for this operation for the defined key capabilities.
 
 .. code-block:: text
 
@@ -280,7 +280,7 @@ HSM configuration:
            GENERATE_KEY;
            /* No specific capabilities - all parameters are accepted */
    [SECURE_SUBSYSTEM]
-       HSM;
+       SECO;
        /* No Load/unload method specified. Default is 1. */
        [SECURITY_OPERATION]
            HASH;

@@ -48,7 +48,7 @@ static int set_hsm_info(struct libobj_obj *obj)
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
-	status = smw_osal_set_subsystem_info("HSM", data->value.array,
+	status = smw_osal_set_subsystem_info("SECO", data->value.array,
 					     data->value.number);
 	if (status == SMW_STATUS_OK)
 		ret = CKR_OK;
@@ -257,7 +257,7 @@ static const struct data_op {
 	int (*set)(struct libobj_obj *obj);
 } data_op[] = {
 	{ DATA_LABEL("TEE Info"), .set = &set_tee_info },
-	{ DATA_LABEL("HSM Info"), .set = &set_hsm_info },
+	{ DATA_LABEL("SECO Info"), .set = &set_hsm_info },
 	{ DATA_LABEL("ELE Info"), .set = &set_ele_info },
 	{ DATA_LABEL("Object DB"), .set = &set_obj_db },
 };

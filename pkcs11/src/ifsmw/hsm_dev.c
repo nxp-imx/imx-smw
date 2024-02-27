@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2024 NXP
  */
 #include "dev_config.h"
 #include "lib_device.h"
@@ -12,7 +12,7 @@
  * Define HSM Security Middleware library Secure Subsystem.
  */
 const struct libdev hsm_info = {
-	.name = "HSM",
+	.name = "SECO",
 	.description = "Hardware Secure Module",
 	.manufacturer = MANUFACTURER_ID,
 	.model = "",

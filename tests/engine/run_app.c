@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include <json.h>
@@ -156,10 +156,11 @@ static int setup_hsm_ele_info(struct json_object *test_def, int is_ele)
 	if (is_ele)
 		res = smw_osal_set_subsystem_info("ELE", &info, sizeof(info));
 	else
-		res = smw_osal_set_subsystem_info("HSM", &info, sizeof(info));
+		res = smw_osal_set_subsystem_info("SECO", &info, sizeof(info));
 
 	if (res != SMW_STATUS_OK) {
-		DBG_PRINT("SMW Set %s Info failed %s", (is_ele) ? "ELE" : "HSM",
+		DBG_PRINT("SMW Set %s Info failed %s",
+			  (is_ele) ? "ELE" : "SECO",
 			  get_string_status(res, "SMW"));
 		res = ERR_CODE(ERROR_SMWLIB_INIT);
 	} else {

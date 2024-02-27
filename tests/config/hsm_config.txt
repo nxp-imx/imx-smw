@@ -1,7 +1,7 @@
 /* Configuration file */
 VERSION=1;
 [SECURE_SUBSYSTEM]
-    HSM;
+    SECO;
     /* No Start/Stop method specified. Default is 1. */
     [SECURITY_OPERATION]
         GENERATE_KEY;

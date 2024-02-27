@@ -328,397 +328,397 @@
 
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 4"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 5"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 6"
 	},
 	"subtest 7": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 7"
 	},
 	"subtest 8": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 8"
 	},
 	"subtest 9": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 9"
 	},
 	"subtest 10": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 10"
 	},
 	"subtest 11": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 11"
 	},
 	"subtest 12": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 12"
 	},
 	"subtest 13": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 13"
 	},
 	"subtest 14": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 14"
 	},
 	"subtest 15": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 15"
 	},
 	"subtest 16": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 16"
 	},
 	"subtest 17": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 17"
 	},
 	"subtest 18": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 18"
 	},
 	"subtest 19": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 19"
 	},
 	"subtest 20": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 20"
 	},
 	"subtest 21": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 21"
 	},
 	"subtest 22": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 22"
 	},
 	"subtest 23": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 23"
 	},
 	"subtest 24": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 24"
 	},
 	"subtest 25": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 25"
 	},
 	"subtest 26": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 26"
 	},
 	"subtest 27": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 27"
 	},
 	"subtest 28": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 28"
 	},
 	"subtest 29": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 29"
 	},
 	"subtest 30": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 30"
 	},
 	"subtest 31": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 31"
 	},
 	"subtest 32": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 32"
 	},
 	"subtest 33": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 33"
 	},
 	"subtest 34": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 34"
 	},
 	"subtest 35": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 35"
 	},
 	"subtest 36": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 36"
 	},
 	"subtest 37": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 37"
 	},
 	"subtest 38": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 38"
 	},
 	"subtest 39": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 39"
 	},
 	"subtest 40": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 40"
 	},
 	"subtest 41": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 41"
 	},
 	"subtest 42": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 42"
 	},
 	"subtest 43": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 43"
 	},
 	"subtest 44": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 44"
 	},
 	"subtest 45": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 45"
 	},
 	"subtest 46": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 46"
 	},
 	"subtest 47": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 47"
 	},
 	"subtest 48": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 48"
 	},
 	"subtest 49": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 49"
 	},
 	"subtest 50": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 50"
 	},
 	"subtest 51": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 51"
 	},
 	"subtest 52": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 52"
 	},
 	"subtest 53": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 53"
 	},
 	"subtest 54": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 54"
 	},
 	"subtest 55": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 55"
 	},
 	"subtest 56": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 56"
 	},
 	"subtest 57": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 57"
 	},
 	"subtest 58": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 58"
 	},
 	"subtest 59": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 59"
 	},
 	"subtest 60": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 60"
 	},
 	"subtest 61": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 61"
 	},
 	"subtest 62": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 62"
 	},
 	"subtest 63": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 63"
 	},
 	"subtest 64": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 64"
 	},
 	"subtest 65": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 65"
 	},
 	"subtest 66": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 66"
 	},
 	"subtest 67": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 67"
 	},
 	"subtest 68": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 68"
 	},
 	"subtest 69": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 69"
 	},
 	"subtest 70": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 70"
 	},
 	"subtest 71": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 71"
 	},
 	"subtest 72": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 72"
 	},
 	"subtest 73": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 73"
 	},
 	"subtest 74": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 74"
 	},
 	"subtest 75": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 75"
 	},
 	"subtest 76": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 76"
 	},
 	"subtest 77": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 77"
 	},
 	"subtest 78": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 78"
 	},
 	"subtest 79": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key NIST 79"
 	},
 	"subtest 80": { // Delete the first NIST key
@@ -728,12 +728,12 @@
 	},
 	"subtest 81": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key AES 1"
 	},
 	"subtest 82": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key AES 2"
 	},
 	"subtest 83": {

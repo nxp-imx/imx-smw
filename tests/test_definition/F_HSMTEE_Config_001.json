@@ -1,6 +1,6 @@
 {
 	"keys": {
-		"key HSM": {
+		"key SECO": {
 			"type": "AES",
 			"security_size": 256,
 		},
@@ -34,7 +34,7 @@
 		"command": "RNG",
 		"subsystem": "DEFAULT",
 		"random": 64,
-		"subsystem_exp": "HSM",
+		"subsystem_exp": "SECO",
 		"depends": 2
 	},
 	"subtest 5": {
@@ -54,37 +54,37 @@
 	"subtest 7": {
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
-		"key_name": "key HSM",
-		"subsystem_exp": "HSM",
+		"key_name": "key SECO",
+		"subsystem_exp": "SECO",
 		"depends": 2
 	},
 	"subtest 8": {
 		"command": "MAC_COMPUTE",
 		"algo": "CMAC",
-		"key_name": "key HSM",
+		"key_name": "key SECO",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
 		"output": 16,
 		"mac_id": 1,
-		"subsystem_exp": "HSM",
+		"subsystem_exp": "SECO",
 		"depends": 7
 	},
 	"subtest 9": {
 		"command": "MAC_VERIFY",
 		"algo": "CMAC",
-		"key_name": "key HSM",
+		"key_name": "key SECO",
 		"input": [
 			"6bc1bee22e409f96e93d7e117393172a"
 		],
 		"mac_id": 1,
-		"subsystem_exp": "HSM",
+		"subsystem_exp": "SECO",
 		"depends": 8
 	},
 	"subtest 10": {
 		"command": "DELETE",
-		"key_name": "key HSM",
-		"subsystem_exp": "HSM",
+		"key_name": "key SECO",
+		"subsystem_exp": "SECO",
 		"depends": 7
 	},
 	"subtest 11": {

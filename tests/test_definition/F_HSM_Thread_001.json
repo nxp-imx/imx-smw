@@ -12,7 +12,7 @@
 	"Thread 1": {
 		"subtest 1": {
 			"command": "GENERATE",
-			"subsystem": "HSM",
+			"subsystem": "SECO",
 			"key_name": "key 1"
 		},
 		"subtest 2": {
@@ -32,12 +32,12 @@
 	"Thread 2": {
 		"subtest 1": {
 			"command": "GENERATE",
-			"subsystem": "HSM",
+			"subsystem": "SECO",
 			"key_name": "key 2"
 		},
 		"subtest 2": {
 			"command": "SIGN",
-			"subsystem": "HSM",
+			"subsystem": "SECO",
 			"message": [
 				"54686973207068726173652069732033",
 				"32206279746573206c6f6e6720212121"

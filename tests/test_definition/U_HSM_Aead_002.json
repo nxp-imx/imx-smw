@@ -7,12 +7,12 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1"
 	},
 	"subtest 2": { // IV length = 0
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -24,7 +24,7 @@
 	},
 	"subtest 3": {
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "DECRYPT",
@@ -39,7 +39,7 @@
 	},
 	"subtest 4": { // IV length = 4
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -55,7 +55,7 @@
 	},
 	"subtest 5": {
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "DECRYPT",
@@ -73,7 +73,7 @@
 	},
 	"subtest 6": { // Dedicated tag field set and IV length = 0
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -89,7 +89,7 @@
 	},
 	"subtest 7": {
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "DECRYPT",
@@ -108,7 +108,7 @@
 	},
 	"subtest 8": { // Dedicated tag field set and IV length = 4
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -122,7 +122,7 @@
 	},
 	"subtest 9": {
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "DECRYPT",
@@ -138,7 +138,7 @@
 	},
 	"subtest 10": { // IV length = 0
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -148,7 +148,7 @@
 	},
 	"subtest 11": { // Invalid tag
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "DECRYPT",

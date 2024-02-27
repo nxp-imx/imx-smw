@@ -7,12 +7,12 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1"
 	},
 	"subtest 2": { // One-shot AEAD Encryption operation
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
@@ -24,7 +24,7 @@
 	},
 	"subtest 3": { // One-shot AEAD Decryption operation
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
@@ -39,7 +39,7 @@
 	},
 	"subtest 4": { // Dedicated tag field set
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
@@ -52,7 +52,7 @@
 	},
 	"subtest 5": {
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
@@ -68,7 +68,7 @@
 	},
 	"subtest 6": { // IV length  = 0
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
@@ -79,7 +79,7 @@
 	},
 	"subtest 7": { // IV length  = 4
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"iv": "60cc50e0",
@@ -91,7 +91,7 @@
 	},
 	"subtest 8": {
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
@@ -105,7 +105,7 @@
 	},
 	"subtest 9": { // Invalid tag
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "DECRYPT",

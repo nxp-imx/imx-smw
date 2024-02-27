@@ -31,39 +31,39 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 2",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 4"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 5"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 6"
 	},
 	"subtest 7": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 7",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},

@@ -7,12 +7,12 @@
 	},
 	"subtest 1": {
 		"command": "STORAGE_STORE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"data_name": "data 1"
 	},
 	"subtest 2": {
 		"command": "STORAGE_RETRIEVE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"data_name": "data 1",
 		"depends": 1
 	}

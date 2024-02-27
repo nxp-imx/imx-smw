@@ -22,17 +22,17 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "encrypt key"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "sign key"
 	},
 	"subtest 3": {
 		"command": "STORAGE_STORE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"data_name": "data 1",
 		"encrypt_key_name": "encrypt key",
 		"mode": "ECB",

@@ -7,7 +7,7 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1"
 	},
 	"subtest 2": { // Get the MAC size - Output buffer is NULL

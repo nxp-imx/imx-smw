@@ -1,42 +1,42 @@
 {
 	"subtest 1": {
 		"command": "RNG",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"random": 16
 	},
 	"subtest 2": {
 		"command": "RNG",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"random": 32
 	},
 	"subtest 3": {
 		"command": "RNG",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"random": 64
 	},
 	"subtest 4": {
 		"command": "RNG",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"random": 256
 	},
 	"subtest 5": {
 		"command": "RNG",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"random": 1024
 	},
 	"subtest 6": {
 		"command": "RNG",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"random": 4096
 	},
 	"subtest 7": {
 		"command": "RNG",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"random": 16384
 	},
 	"subtest 8": {
 		"command": "RNG",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"random": 65535
 	}
 }

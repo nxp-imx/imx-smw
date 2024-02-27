@@ -19,17 +19,17 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 2"
 	},
 	"subtest 3": { // Key type not supported
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 2",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -42,7 +42,7 @@
 	},
 	"subtest 4": { // Mode not supported
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
@@ -55,7 +55,7 @@
 	},
 	"subtest 5": { // Key buffer not supported
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 3",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -67,7 +67,7 @@
 	},
 	"subtest 6": { // Get output length
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
@@ -79,7 +79,7 @@
 	},
 	"subtest 7": { // Get output length and dedicated tag field set
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -93,7 +93,7 @@
 	},
 	"subtest 8": { // Output length too small
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
@@ -106,7 +106,7 @@
 	},
 	"subtest 9": { // Output length too small and dedicated tag field set
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
@@ -120,7 +120,7 @@
 	},
 	"subtest 10": { // Output length too big
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
@@ -133,7 +133,7 @@
 	},
 	"subtest 11": { // Output length too small
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"key_name": "key 1",
@@ -149,7 +149,7 @@
 	},
 	"subtest 12": { // Output length too small and dedicated tag field set
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"key_name": "key 1",
@@ -163,7 +163,7 @@
 	},
 	"subtest 13": { // Get output length and dedicated tag field set
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"key_name": "key 1",
@@ -176,7 +176,7 @@
 	},
 	"subtest 14": { // Get output length - decryption
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"key_name": "key 1",
@@ -191,7 +191,7 @@
 	},
 	"subtest 15": { // AAD set for CCM mode
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
@@ -204,7 +204,7 @@
 	},
 	"subtest 16": { // IV length = 12 for GCM mode
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
@@ -217,7 +217,7 @@
 	},
 	"subtest 17": { // IV length = 6
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -233,7 +233,7 @@
 	},
 	"subtest 18": { // Tag length = 32
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -247,7 +247,7 @@
 	},
 	"subtest 19": { // Tag length = 10
 		"command": "AEAD",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",

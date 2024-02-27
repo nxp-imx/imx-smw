@@ -1,7 +1,7 @@
 {
 	"subtest 1": { // SHA224
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA224",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA224LongMsg.rsp
@@ -25,7 +25,7 @@
 	},
 	"subtest 2": { // SHA256
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA256",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA256LongMsg.rsp
@@ -49,7 +49,7 @@
 	},
 	"subtest 3": { // SHA384
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA384",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA384LongMsg.rsp
@@ -78,7 +78,7 @@
 	},
 	"subtest 4": { // SHA512
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA512",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA512LongMsg.rsp
@@ -108,7 +108,7 @@
 	},
 	"subtest 5": { // SHA224
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA224",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA224LongMsg.rsp
@@ -129,7 +129,7 @@
 	},
 	"subtest 6": { // SHA256
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA256",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA256LongMsg.rsp
@@ -150,7 +150,7 @@
 	},
 	"subtest 7": { // SHA384
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA384",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA384LongMsg.rsp
@@ -175,7 +175,7 @@
 	},
 	"subtest 8": { // SHA512
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA512",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA512LongMsg.rsp
@@ -200,7 +200,7 @@
 	},
 	"subtest 9": { // SHA512
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA512",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA512LongMsg.rsp
@@ -226,7 +226,7 @@
 	},
 	"subtest 10": { // SHA512
 		"command": "HASH",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA512",
 		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
 		//shabytetestvectors.zip/SHA512LongMsg.rsp

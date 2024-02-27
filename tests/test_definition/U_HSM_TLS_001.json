@@ -58,12 +58,12 @@
 	},
 	"subtest 2": { // Generate a "fake key"
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 6"
 	},
 	"subtest 3": {
 		"command": "SIGN",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA256",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",

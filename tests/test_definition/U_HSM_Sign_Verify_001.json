@@ -19,27 +19,27 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 4"
 	},
 	"subtest 5": {
 		"command": "SIGN",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"message": [
 			"3c593aa539fdcdae516cdf2f15000f66",
 			"34185c88f505b39775fb9ab137a10aa2"
@@ -50,7 +50,7 @@
 	},
 	"subtest 6": {
 		"command": "VERIFY",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"message": [
 			"3c593aa539fdcdae516cdf2f15000f66",
 			"34185c88f505b39775fb9ab137a10aa2"
@@ -61,7 +61,7 @@
 	},
 	"subtest 7": {
 		"command": "SIGN",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
@@ -82,7 +82,7 @@
 	},
 	"subtest 8": {
 		"command": "VERIFY",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
@@ -103,7 +103,7 @@
 	},
 	"subtest 9": {
 		"command": "SIGN",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
 			"54498e0e5d096b18285e988d245b6f34",
@@ -115,7 +115,7 @@
 	},
 	"subtest 10": {
 		"command": "VERIFY",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
 			"54498e0e5d096b18285e988d245b6f34",
@@ -127,7 +127,7 @@
 	},
 	"subtest 11": {
 		"command": "SIGN",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
@@ -152,7 +152,7 @@
 	},
 	"subtest 12": {
 		"command": "VERIFY",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
@@ -177,7 +177,7 @@
 	},
 	"subtest 13": {
 		"command": "SIGN",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"message": [
 			"3c593aa539fdcdae516cdf2f15000f66",
 			"34185c88f505b39775fb9ab137a10aa2"
@@ -188,7 +188,7 @@
 	},
 	"subtest 14": {
 		"command": "VERIFY",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"message": [
 			"3c593aa539fdcdae516cdf2f15000f66",
 			"34185c88f505b39775fb9ab137a10aa2"
@@ -199,7 +199,7 @@
 	},
 	"subtest 15": {
 		"command": "SIGN",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
@@ -220,7 +220,7 @@
 	},
 	"subtest 16": {
 		"command": "VERIFY",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA256",
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
@@ -241,7 +241,7 @@
 	},
 	"subtest 17": {
 		"command": "SIGN",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
 			"54498e0e5d096b18285e988d245b6f34",
@@ -253,7 +253,7 @@
 	},
 	"subtest 18": {
 		"command": "VERIFY",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
 			"54498e0e5d096b18285e988d245b6f34",
@@ -265,7 +265,7 @@
 	},
 	"subtest 19": {
 		"command": "SIGN",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
@@ -290,7 +290,7 @@
 	},
 	"subtest 20": {
 		"command": "VERIFY",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"algo": "SHA384",
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",

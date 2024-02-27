@@ -19,7 +19,7 @@
 	},
 	"subtest 2": {
 		"command": "GENERATE",
-		"subsystem": "HSM",
+		"subsystem": "SECO",
 		"key_name": "key 2"
 	},
 	"subtest 3": {

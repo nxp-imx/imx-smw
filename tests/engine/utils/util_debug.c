@@ -97,8 +97,9 @@ void util_dbg_dumphex(const char *function, int line, char *msg, void *buf,
 				off = 0;
 			}
 
-			nb_char = snprintf(out + off, (sizeof(out) - off),
-					   "%02X ", ((char *)buf)[idx]);
+			nb_char =
+				snprintf(out + off, (sizeof(out) - off),
+					 "%02X ", ((unsigned char *)buf)[idx]);
 			if (nb_char < 0)
 				break;
 

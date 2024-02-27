@@ -70,6 +70,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Implement context management for TEE subsystem.
 * Implement context management for ELE subsystem.
 * Implement context management for HSM subsystem.
+* Add ELE subsystem data delete.
 
 ##### 3. ARM PSA APIs
 
@@ -97,6 +98,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add SHA-3 test vectors in U_TEE_Hash_002 and U_ELE_Hash_002.
 * Add SHA-3 test vectors in U_PSA_Hash_002.
 * Add tests to validate revised context management.
+* Review data storage test to delete data.
 
 #### PKCS#11 Library - _version 3.0_
 

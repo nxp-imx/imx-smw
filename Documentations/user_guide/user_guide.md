@@ -236,21 +236,21 @@ and supported by the SMW Library.
 <tr>
   <td rowspan="3">Data Storage</td>
 	<td colspan="2">Store</td>
-	<td>❌</td>
-	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 </tr>
 <tr>
   <td colspan="2">Retrieve</td>
-	<td>❌</td>
-	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 </tr>
 <tr>
   <td colspan="2">Delete</td>
 	<td>❌</td>
-	<td>❌</td>
-	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️</td>
 </tr>
 </tbody>
 </table>

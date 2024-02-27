@@ -510,10 +510,7 @@ The subsystem allows to:
     retrieve a TLV blob (:numref:`ele_data_blob`).
   - set encypted and signed data as READ_ONCE, meaning that when data is
     retrieved the subsystem deletes the data.
-
-The subsystem doesn't allow to:
-
-  - delete a data.
+  - delete a data on i.MX93.
 
 **Notes**:
 

@@ -301,7 +301,7 @@ static int get_subsystem_info(const char *subsystem_name, void *info)
 	if (!strcmp(subsystem_name, "TEE"))
 		return get_tee_info(info);
 
-	if (!strcmp(subsystem_name, "HSM"))
+	if (!strcmp(subsystem_name, "SECO"))
 		return get_hsm_info(info);
 
 	if (!strcmp(subsystem_name, "ELE"))
@@ -446,7 +446,7 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 	if (status != SMW_STATUS_SUBSYSTEM_LOADED) {
 		if (!strcmp(subsystem, "TEE"))
 			status = set_tee_info(info, info_size);
-		else if (!strcmp(subsystem, "HSM"))
+		else if (!strcmp(subsystem, "SECO"))
 			status = set_hsm_info(info, info_size);
 		else if (!strcmp(subsystem, "ELE"))
 			status = set_ele_info(info, info_size);

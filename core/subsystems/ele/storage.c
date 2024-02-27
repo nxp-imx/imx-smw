@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "debug.h"
@@ -192,6 +192,37 @@ static int storage_retrieve(struct hdl *hdl,
 	return data_ops(hdl, &args->data_descriptor, false);
 }
 
+static int storage_delete(struct hdl *hdl,
+			  struct smw_storage_delete_data_args *args)
+{
+	int status = SMW_STATUS_OK;
+
+	hsm_err_t err = HSM_NO_ERROR;
+	op_data_storage_delete_args_t op_args = { 0 };
+	struct smw_storage_data_descriptor *data_desc = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	data_desc = &args->data_descriptor;
+	op_args.data_id = smw_storage_get_data_identifier(data_desc);
+
+	SMW_DBG_PRINTF(VERBOSE,
+		       "[%s (%d)] Call hsm_data_delete_ops()\n"
+		       "  op_data_storage_delete_args_t\n"
+		       "    Data\n"
+		       "      - id: 0x%08X\n"
+		       "    svc_flags: 0x%X\n",
+		       __func__, __LINE__, op_args.data_id, op_args.svc_flags);
+
+	err = hsm_data_delete_ops(hdl->key_store, &op_args);
+	SMW_DBG_PRINTF(DEBUG, "hsm_data_delete_ops returned %d\n", err);
+
+	status = ele_convert_err(err);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 bool ele_storage_handle(struct subsystem_context *ele_ctx,
 			enum operation_id operation_id, void *args, int *status)
 {
@@ -207,6 +238,9 @@ bool ele_storage_handle(struct subsystem_context *ele_ctx,
 		break;
 
 	case OPERATION_ID_STORAGE_DELETE:
+		*status = storage_delete(&ele_ctx->hdl, args);
+		break;
+
 	default:
 		return false;
 	}

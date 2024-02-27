@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __PSA_CRYPTO_TYPES_H__
@@ -198,7 +198,7 @@ typedef uint32_t psa_key_lifetime_t;
  *   +------------------------+--------------------------------------------------------------------+
  *   | 1                      | Primary secure element.                                            |
  *   |                        |                                                                    |
- *   |                        | HSM or ELE Secure Subsystems are primary secure elements. As a     |
+ *   |                        | SECO or ELE Secure Subsystems are primary secure elements. As a    |
  *   |                        | guideline, secure elements may provide higher resistance against   |
  *   |                        | side channel and physical attacks than the primary local storage,  |
  *   |                        | but may have restrictions on supported key types, sizes, policies  |

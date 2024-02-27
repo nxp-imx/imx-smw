@@ -41,8 +41,8 @@
  *        if (res != SMW_STATUS_OK)
  *            goto exit;
  *
- *        // Configure the HSM Subsystem: Key storage identifier and replay
- *        res = smw_osal_set_subsystem_info("HSM", &se_default_info,
+ *        // Configure the SECO Subsystem: Key storage identifier and replay
+ *        res = smw_osal_set_subsystem_info("SECO", &se_default_info,
  *                                           sizeof(se_default_info));
  *        if (res != SMW_STATUS_OK)
  *            goto exit;

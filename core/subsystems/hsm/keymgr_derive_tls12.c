@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include "smw_status.h"
@@ -271,7 +271,7 @@ static void delete_db_shared_keys(unsigned int *ids_array, int nb_shared_keys)
 	struct smw_keymgr_identifier identifier = { 0 };
 
 	identifier.id = INVALID_KEY_ID;
-	identifier.subsystem_id = SUBSYSTEM_ID_HSM;
+	identifier.subsystem_id = SUBSYSTEM_ID_SECO;
 	/* Only transient key are generated */
 	identifier.persistence_id = SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 
@@ -306,7 +306,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 		ids_array[idx] = INVALID_KEY_ID;
 
 	identifier.id = INVALID_KEY_ID;
-	identifier.subsystem_id = SUBSYSTEM_ID_HSM;
+	identifier.subsystem_id = SUBSYSTEM_ID_SECO;
 	/* Only transient key are generated */
 	identifier.persistence_id = SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
 	if (SET_OVERFLOW(key_group, identifier.group))

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include "smw_status.h"
@@ -89,7 +89,7 @@ static int cipher(struct hdl *hdl, void *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (smw_crypto_get_cipher_nb_key_buffer(cipher_args)) {
-		SMW_DBG_PRINTF(ERROR, "%s: HSM doesn't support keys buffer\n",
+		SMW_DBG_PRINTF(ERROR, "%s: SECO doesn't support keys buffer\n",
 			       __func__);
 		goto end;
 	}

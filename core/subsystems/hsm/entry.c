@@ -69,7 +69,7 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 	struct se_info info = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_HSM);
+	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_SECO);
 
 	if (smw_utils_get_subsystem_info(subsystem_name, &info)) {
 		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
@@ -364,7 +364,7 @@ static void *storage_thread(void *arg)
 	seco_nvm_manager(NVM_FLAGS_HSM, &hsm_ctx.nvm_status);
 
 	if (hsm_ctx.nvm_status >= NVM_STATUS_STOPPED)
-		smw_config_notify_subsystem_failure(SUBSYSTEM_ID_HSM);
+		smw_config_notify_subsystem_failure(SUBSYSTEM_ID_SECO);
 
 	if (smw_utils_mutex_lock(hsm_ctx.mutex))
 		return NULL;
@@ -721,7 +721,7 @@ static const struct subsystem_func func = { .load = load,
 					    .execute = execute,
 					    .ctx_ops = hsm_get_ctx_ops };
 
-const struct subsystem_func *smw_hsm_get_func(void)
+const struct subsystem_func *smw_seco_get_func(void)
 {
 	return &func;
 }

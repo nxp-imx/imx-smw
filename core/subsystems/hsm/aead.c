@@ -632,7 +632,7 @@ static int aead(struct hdl *hdl, void *args)
 		// TODO: first import key, then do authenticated encryption
 		// Currently, key import is not supported by HSM
 		SMW_DBG_PRINTF(VERBOSE,
-			       "%s : key import is not supported by HSM\n",
+			       "%s : key import is not supported by SECO\n",
 			       __func__);
 		goto end;
 	}

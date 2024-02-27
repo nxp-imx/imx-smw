@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_status.h"
@@ -103,7 +103,7 @@ static int set_key_type(enum smw_config_key_type_id key_type_id,
 		break;
 	}
 
-	SMW_DBG_PRINTF(DEBUG, "HSM Key Type: %d\n", *key_type);
+	SMW_DBG_PRINTF(DEBUG, "Key Type: %d\n", *key_type);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -504,11 +504,11 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	key_identifier->subsystem_id = SUBSYSTEM_ID_HSM;
+	key_identifier->subsystem_id = SUBSYSTEM_ID_SECO;
 	key_identifier->id = key_id;
 	key_identifier->group = key_group;
 
-	SMW_DBG_PRINTF(DEBUG, "HSM Key identifier: 0x%08X\n", key_id);
+	SMW_DBG_PRINTF(DEBUG, "Key identifier: 0x%08X\n", key_id);
 
 	if (public_data) {
 		status = smw_keymgr_update_public_buffer(key_descriptor,

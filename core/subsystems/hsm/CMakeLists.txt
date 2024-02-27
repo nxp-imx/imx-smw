@@ -1,5 +1,5 @@
 if(NOT DEFINED SECO_ROOT)
-    message(STATUS "HSM not enabled")
+    message(STATUS "SECO not enabled")
     return()
 endif()
 
@@ -9,7 +9,7 @@ find_package(Seco REQUIRED)
 #
 # Add HSM subsystem
 #
-add_subsystem(hsm)
+add_subsystem(seco)
 
 set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:hsm> PARENT_SCOPE)
 

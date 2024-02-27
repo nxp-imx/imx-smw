@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "debug.h"
@@ -115,7 +115,7 @@ static int storage_store(struct hdl *hdl, void *args)
 	    store_args->sign_args.algo_id == SMW_CONFIG_MAC_ALGO_ID_INVALID) {
 		status = store_data_raw(hdl, args);
 
-		store_args->data_descriptor.subsystem_id = SUBSYSTEM_ID_HSM;
+		store_args->data_descriptor.subsystem_id = SUBSYSTEM_ID_SECO;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

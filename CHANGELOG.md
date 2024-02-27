@@ -32,9 +32,9 @@ The releases are listed from the most recent to the first one.
 ### <a id ="rel_3_0"></a></br>**Release 3.0**
 ---
 #### Known Issues
-##### 1. HSM Subsystem
+##### 1. SECO Subsystem
 
-* When 2 or more applications load the SMW Library and configure the HSM subsystem, only one application is able to get the HSM configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the HSM subsystem. </br>
+* When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
 #### SMW Library - _version 3.0_
@@ -59,11 +59,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. Subsystems
 
-* Add HSM subsystem storage data store and retrieve.
+* Add SECO subsystem storage data store and retrieve.
 * Add TEE subsystem storage data store, retrieve and delete.
 * Add support of CFB mode with ELE subsystem.
 * Implement AEAD one-shot operation for ELE subsystem.
-* Implement AEAD one-shot operation for HSM subsystem.
+* Implement AEAD one-shot operation for SECO subsystem.
 * Add ELE subsystem RSA key management.
 * Implement storage re-provisioning for ELE subsystem.
 * Add support of SHA-3 hash with TEE and ELE subsystem.
@@ -71,6 +71,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Implement context management for ELE subsystem.
 * Implement context management for HSM subsystem.
 * Add ELE subsystem data delete.
+* Rename HSM subsystem as SECO subsystem.
 
 ##### 3. ARM PSA APIs
 

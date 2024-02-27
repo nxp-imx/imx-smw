@@ -151,16 +151,21 @@ static int is_subtest_skipped(struct json_object *params)
 {
 	int res = ERR_CODE(PASSED);
 
+	const char *prefix = NULL;
 	char hostname[256] = { 0 };
 	struct json_object *restriction_list_obj = NULL;
 	size_t nb_members = 0;
 	size_t i = 0;
 	struct json_object *hostname_obj = NULL;
+	size_t host_len = 0;
+	size_t len = 0;
 
 	if (gethostname(hostname, sizeof(hostname))) {
 		res = ERR_CODE(INTERNAL);
 		goto exit;
 	}
+
+	host_len = strlen(hostname);
 
 	res = util_read_json_type(&restriction_list_obj, RESTRICTION_LIST_OBJ,
 				  t_buffer, params);
@@ -174,9 +179,12 @@ static int is_subtest_skipped(struct json_object *params)
 
 	switch (json_object_get_type(restriction_list_obj)) {
 	case json_type_string:
-		if (!strcmp(hostname,
-			    json_object_get_string(restriction_list_obj)))
+		prefix = json_object_get_string(restriction_list_obj);
+		len = strlen(prefix);
+
+		if (len <= host_len && !strncmp(hostname, prefix, len))
 			res = ERR_CODE(SKIPPED);
+
 		break;
 
 	case json_type_array:
@@ -193,8 +201,11 @@ static int is_subtest_skipped(struct json_object *params)
 				return ERR_CODE(BAD_PARAM_TYPE);
 			}
 
-			if (!strcmp(hostname,
-				    json_object_get_string(hostname_obj))) {
+			prefix = json_object_get_string(hostname_obj);
+			len = strlen(prefix);
+
+			if (len <= host_len &&
+			    !strncmp(hostname, prefix, len)) {
 				res = ERR_CODE(SKIPPED);
 				break;
 			}

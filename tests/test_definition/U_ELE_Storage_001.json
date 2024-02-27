@@ -160,6 +160,7 @@
 		"data_name": "data 1 retrieve",
 		"output": 54,
 		"result": "SMW_STATUS_DATA_ALREADY_RETRIEVED",
+		"restriction_list": "imx93",
 		"depends": 4
 	},
 	"subtest 7": {
@@ -229,5 +230,32 @@
 		"command": "DELETE",
 		"key_name": "sign key",
 		"depends": 3
+	},
+	"subtest 16": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 1",
+		"result": "SMW_STATUS_UNKNOWN_ID",
+		"restriction_list": "imx8ulp",
+		"depends": 4
+	},
+	"subtest 17": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 2",
+		"restriction_list": "imx8ulp",
+		"depends": 7
+	},
+	"subtest 18": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 3",
+		"result": "SMW_STATUS_UNKNOWN_ID",
+		"restriction_list": "imx8ulp",
+		"depends": 9
+	},
+	"subtest 19": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 4",
+		"result": "SMW_STATUS_UNKNOWN_ID",
+		"restriction_list": "imx8ulp",
+		"depends": 11
 	}
 }

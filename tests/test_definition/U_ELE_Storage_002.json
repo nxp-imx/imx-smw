@@ -15,5 +15,11 @@
 		"subsystem": "ELE",
 		"data_name": "data 1",
 		"depends": 1
+	},
+	"subtest 3": {
+		"command": "STORAGE_DELETE",
+		"data_name": "data 1",
+		"restriction_list": "imx8ulp",
+		"depends": 1
 	}
 }

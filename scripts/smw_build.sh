@@ -599,7 +599,7 @@ function usage_configure()
     printf "    toolpath = [optional] Toolchain path where installed\n"
     printf "    toolname = [optional] Toolchain name\n"
     printf "    format   = [optional] Documentation format\n"
-    printf "  To enable HSM subsystem [optional]\n"
+    printf "  To enable SECO subsystem [optional]\n"
     printf "    zlib     = ZLIB library root directory\n"
     printf "    seco     = SECO export directory\n"
     printf "  To enable ELE subsystem [optional]\n"

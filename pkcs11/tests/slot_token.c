@@ -89,7 +89,7 @@ const struct test_slots exp_slots[] = { {
 					},
 					{
 						.num = 1,
-						.label = "HSM",
+						.label = "SECO",
 						.flags_slot = CKF_HW_SLOT,
 					},
 					{

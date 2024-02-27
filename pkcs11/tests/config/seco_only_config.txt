@@ -1,7 +1,7 @@
 /* Configuration file */
 VERSION=1;
 [SECURE_SUBSYSTEM]
-    HSM;
+    SECO;
     AT_FIRST_CALL_LOAD;
     [SECURITY_OPERATION]
         GENERATE_KEY;

@@ -55,7 +55,7 @@ static CK_RV create_hsm_info(CK_SESSION_HANDLE_PTR sess,
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
 	CK_BBOOL token = CK_TRUE;
-	CK_UTF8CHAR label[] = "HSM Info";
+	CK_UTF8CHAR label[] = "SECO Info";
 
 	CK_ATTRIBUTE data_template[] = {
 		{ CKA_CLASS, &data_class, sizeof(data_class) },
@@ -64,14 +64,14 @@ static CK_RV create_hsm_info(CK_SESSION_HANDLE_PTR sess,
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 	};
 
-	TEST_OUT("Create %sHSM Info (Storage ID=0x%x) data object\n",
+	TEST_OUT("Create %sSECO Info (Storage ID=0x%x) data object\n",
 		 token ? "Token " : "", se_default_info.storage_id);
 
 	ret = pfunc->C_CreateObject(*sess, data_template,
 				    ARRAY_SIZE(data_template), &hdata);
 	if (!CHECK_EXPECTED(ret == CKR_OK || ret == CKR_FUNCTION_FAILED,
 			    "C_CreateObject returned 0x%lx", ret)) {
-		TEST_OUT("HSM Info created #%lu\n", hdata);
+		TEST_OUT("SECO Info created #%lu\n", hdata);
 		ret = CKR_OK;
 	}
 

@@ -9,9 +9,9 @@
 #include "trace.h"
 
 /*
- * Define HSM Security Middleware library Secure Subsystem.
+ * Define SECO Security Middleware library Secure Subsystem.
  */
-const struct libdev hsm_info = {
+const struct libdev seco_info = {
 	.name = "SECO",
 	.description = "Hardware Secure Module",
 	.manufacturer = MANUFACTURER_ID,
@@ -22,7 +22,7 @@ const struct libdev hsm_info = {
 	.flags_token = 0,
 };
 
-FUNC_DEV_MECH_INFO(hsm_mech_info)
+FUNC_DEV_MECH_INFO(seco_mech_info)
 {
 	(void)(type);
 

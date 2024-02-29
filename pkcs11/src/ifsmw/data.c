@@ -41,7 +41,7 @@ static int set_tee_info(struct libobj_obj *obj)
 	return ret;
 }
 
-static int set_hsm_info(struct libobj_obj *obj)
+static int set_seco_info(struct libobj_obj *obj)
 {
 	int ret = CKR_OK;
 
@@ -257,7 +257,7 @@ static const struct data_op {
 	int (*set)(struct libobj_obj *obj);
 } data_op[] = {
 	{ DATA_LABEL("TEE Info"), .set = &set_tee_info },
-	{ DATA_LABEL("SECO Info"), .set = &set_hsm_info },
+	{ DATA_LABEL("SECO Info"), .set = &set_seco_info },
 	{ DATA_LABEL("ELE Info"), .set = &set_ele_info },
 	{ DATA_LABEL("Object DB"), .set = &set_obj_db },
 };

@@ -48,8 +48,8 @@ static CK_RV create_tee_info(CK_SESSION_HANDLE_PTR sess,
 	return ret;
 }
 
-static CK_RV create_hsm_info(CK_SESSION_HANDLE_PTR sess,
-			     CK_FUNCTION_LIST_PTR pfunc)
+static CK_RV create_seco_info(CK_SESSION_HANDLE_PTR sess,
+			      CK_FUNCTION_LIST_PTR pfunc)
 {
 	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
@@ -205,8 +205,8 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	if (CHECK_CK_RV(CKR_OK, "create_tee_info"))
 		goto end;
 
-	ret = create_hsm_info(sess, pfunc);
-	if (CHECK_CK_RV(CKR_OK, "create_hsm_info"))
+	ret = create_seco_info(sess, pfunc);
+	if (CHECK_CK_RV(CKR_OK, "create_seco_info"))
 		goto end;
 
 	ret = create_ele_info(sess, pfunc);

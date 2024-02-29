@@ -48,7 +48,7 @@ endif()
 
 find_file(PKG_CONFIG_BIN NAMES pkg-config PATHS ${PKG_CONFIG_ROOT})
 
-if(PKG_CONFIG_BIN)
+if(NOT PKG_CONFIG_BIN)
     if(NOT DEFINED PKG_CONFIG_ROOT)
         message(WARNING "-DPKG_CONFIG_ROOT=<pkg-config path> missing")
     else()

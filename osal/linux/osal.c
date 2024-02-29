@@ -224,7 +224,7 @@ static int get_tee_info(struct tee_info *info)
 	return ret;
 }
 
-static int set_hsm_info(void *info, size_t info_size)
+static int set_seco_info(void *info, size_t info_size)
 {
 	struct osal_ctx *ctx = get_osal_ctx();
 
@@ -234,13 +234,13 @@ static int set_hsm_info(void *info, size_t info_size)
 	if (info_size != sizeof(struct se_info))
 		return SMW_STATUS_INVALID_PARAM;
 
-	ctx->config.se_hsm_info = *((struct se_info *)info);
-	ctx->config.config_flags |= CONFIG_HSM;
+	ctx->config.se_seco_info = *((struct se_info *)info);
+	ctx->config.config_flags |= CONFIG_SECO;
 
 	return SMW_STATUS_OK;
 }
 
-static int get_hsm_info(struct se_info *info)
+static int get_seco_info(struct se_info *info)
 {
 	int ret = -1;
 
@@ -250,8 +250,8 @@ static int get_hsm_info(struct se_info *info)
 	 * Copy the Storage Nonce configuration if value set
 	 * in the library instance
 	 */
-	if (ctx && ctx->config.config_flags & CONFIG_HSM) {
-		*info = ctx->config.se_hsm_info;
+	if (ctx && ctx->config.config_flags & CONFIG_SECO) {
+		*info = ctx->config.se_seco_info;
 		ret = 0;
 	}
 
@@ -302,7 +302,7 @@ static int get_subsystem_info(const char *subsystem_name, void *info)
 		return get_tee_info(info);
 
 	if (!strcmp(subsystem_name, "SECO"))
-		return get_hsm_info(info);
+		return get_seco_info(info);
 
 	if (!strcmp(subsystem_name, "ELE"))
 		return get_ele_info(info);
@@ -447,7 +447,7 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 		if (!strcmp(subsystem, "TEE"))
 			status = set_tee_info(info, info_size);
 		else if (!strcmp(subsystem, "SECO"))
-			status = set_hsm_info(info, info_size);
+			status = set_seco_info(info, info_size);
 		else if (!strcmp(subsystem, "ELE"))
 			status = set_ele_info(info, info_size);
 		else

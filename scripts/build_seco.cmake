@@ -43,11 +43,11 @@ if(NOT SECO_FOUND)
         set(ENV{AR} ${CMAKE_AR})
         set(ENV{CPATH} $ENV{CPATH}:${ZLIB_INCLUDE_DIR})
 
-        set(HSM_LIB_FILE hsm_lib.a)
+        set(SECO_LIB_FILE hsm_lib.a)
         set(NVM_LIB_FILE seco_nvm_manager.a)
 
         message(STATUS "Building seco libs")
-        set(SECO_MAKE_ARGS clean ${HSM_LIB_FILE} ${NVM_LIB_FILE})
+        set(SECO_MAKE_ARGS clean ${SECO_LIB_FILE} ${NVM_LIB_FILE})
         execute_process(COMMAND make ${SECO_MAKE_ARGS}
                         WORKING_DIRECTORY ${SECO_SRC_PATH}
                         RESULT_VARIABLE res)

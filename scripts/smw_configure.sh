@@ -151,7 +151,7 @@ eval "./scripts/smw_build.sh psaarchtests src=${psaarchtests_src_path}"
 #
 conf_opts="${arch} ${opt_toolpath}"
 
-# Enable seco/hsm if supported
+# Enable SECO if supported
 if [[ ${opt_seco} -eq 1 ]]; then
     conf_opts="${conf_opts} zlib=${export}/usr seco=${seco_export}"
 fi

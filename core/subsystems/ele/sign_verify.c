@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include "smw_status.h"
@@ -199,7 +199,7 @@ static int verify(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 	op_verify_sign_args_t op_args = { 0 };
-	hsm_verification_status_t hsm_verification_status = 0;
+	hsm_verification_status_t verification_status = 0;
 
 	struct smw_crypto_sign_verify_args *verify_args = args;
 	struct smw_keymgr_descriptor *key_desc = &verify_args->key_descriptor;
@@ -287,12 +287,12 @@ static int verify(struct hdl *hdl, void *args)
 		       op_args.key_size, op_args.message, op_args.message_size,
 		       op_args.signature, op_args.signature_size);
 
-	err = hsm_verify_sign(hdl->session, &op_args, &hsm_verification_status);
+	err = hsm_verify_sign(hdl->session, &op_args, &verification_status);
 
 	status = ele_convert_err(err);
 	SMW_DBG_PRINTF(DEBUG, "hsm_verify_signature returned %d\n", err);
 
-	if (hsm_verification_status != HSM_VERIFICATION_STATUS_SUCCESS)
+	if (verification_status != HSM_VERIFICATION_STATUS_SUCCESS)
 		status = SMW_STATUS_SIGNATURE_INVALID;
 
 end:

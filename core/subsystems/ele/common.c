@@ -11,10 +11,10 @@
 
 #include "common.h"
 
-#define HASH_ALGO(_id, _hsm_id, _length)                                       \
+#define HASH_ALGO(_id, _ele_id, _length)                                       \
 	{                                                                      \
 		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_id,                      \
-		.ele_algo = HSM_HASH_ALGO_##_hsm_id, .length = _length         \
+		.ele_algo = HSM_HASH_ALGO_##_ele_id, .length = _length         \
 	}
 
 static const struct ele_hash_algo hash_algos[] = {

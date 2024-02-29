@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include "smw_status.h"
@@ -16,23 +16,23 @@
 #define CIPHER_FLAG(_op_type_id)                                               \
 	{                                                                      \
 		.smw_op_type_id = SMW_CONFIG_CIPHER_OP_ID_##_op_type_id,       \
-		.hsm_flags = HSM_CIPHER_ONE_GO_FLAGS_##_op_type_id             \
+		.flags = HSM_CIPHER_ONE_GO_FLAGS_##_op_type_id                 \
 	}
 
 static const struct {
 	enum smw_config_cipher_op_type_id smw_op_type_id;
-	hsm_op_cipher_one_go_flags_t hsm_flags;
+	hsm_op_cipher_one_go_flags_t flags;
 } cipher_flags[] = { CIPHER_FLAG(ENCRYPT), CIPHER_FLAG(DECRYPT) };
 
 static int set_cipher_flags(enum smw_config_cipher_op_type_id smw_op_type_id,
-			    hsm_op_cipher_one_go_flags_t *hsm_flags)
+			    hsm_op_cipher_one_go_flags_t *flags)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	unsigned int i = 0;
 
 	for (; i < ARRAY_SIZE(cipher_flags); i++) {
 		if (smw_op_type_id == cipher_flags[i].smw_op_type_id) {
-			*hsm_flags = cipher_flags[i].hsm_flags;
+			*flags = cipher_flags[i].flags;
 			status = SMW_STATUS_OK;
 			break;
 		}

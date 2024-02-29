@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_status.h"
@@ -20,13 +20,13 @@
 #include "sign_verify_tls12.h"
 
 #define SIGNATURE_SCHEME_ID(_key_type_id, _security_size, _algo_id,            \
-			    _hsm_signature_scheme_id)                          \
+			    _signature_scheme_id)                              \
 	{                                                                      \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,          \
 		.security_size = _security_size,                               \
 		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_algo_id,                 \
-		.hsm_signature_scheme_id =                                     \
-			HSM_SIGNATURE_SCHEME_##_hsm_signature_scheme_id        \
+		.signature_scheme_id =                                         \
+			HSM_SIGNATURE_SCHEME_##_signature_scheme_id            \
 	}
 
 /* Key type IDs must be ordered from lowest to highest.
@@ -39,7 +39,7 @@ static const struct {
 	enum smw_config_key_type_id key_type_id;
 	unsigned int security_size;
 	enum smw_config_hash_algo_id algo_id;
-	hsm_signature_scheme_id_t hsm_signature_scheme_id;
+	hsm_signature_scheme_id_t signature_scheme_id;
 } signature_scheme_ids[] = {
 	SIGNATURE_SCHEME_ID(ECDSA_NIST, 256, SHA256, ECDSA_NIST_P256_SHA_256),
 	SIGNATURE_SCHEME_ID(ECDSA_NIST, 384, SHA384, ECDSA_NIST_P384_SHA_384),
@@ -77,12 +77,12 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 				goto end;
 		}
 		*signature_scheme_id =
-			signature_scheme_ids[i].hsm_signature_scheme_id;
+			signature_scheme_ids[i].signature_scheme_id;
 		status = SMW_STATUS_OK;
 		break;
 	}
 
-	SMW_DBG_PRINTF(DEBUG, "HSM Signature Scheme ID: %x\n",
+	SMW_DBG_PRINTF(DEBUG, "SECO Signature Scheme ID: %x\n",
 		       *signature_scheme_id);
 
 end:
@@ -90,9 +90,9 @@ end:
 	return status;
 }
 
-static uint16_t get_hsm_signature_size(unsigned int security_size)
+static uint16_t get_signature_size(unsigned int security_size)
 {
-	/* HSM requires 1 extra byte */
+	/* SECO requires 1 extra byte */
 	return (BITS_TO_BYTES_SIZE(security_size) * 2 + 1) & UINT16_MAX;
 }
 
@@ -126,7 +126,7 @@ static int sign(struct hdl *hdl, void *args)
 
 	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
 		//TODO: first import key, then sign
-		//      for now import is not supported by HSM
+		//      for now import is not supported by SECO
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto end;
 	}
@@ -145,7 +145,7 @@ static int sign(struct hdl *hdl, void *args)
 	op_generate_sign_args.message_size =
 		smw_sign_verify_get_msg_len(sign_args);
 	op_generate_sign_args.signature_size =
-		(uint16_t)get_hsm_signature_size(key_identifier->security_size);
+		(uint16_t)get_signature_size(key_identifier->security_size);
 
 	pub_signature_size = smw_sign_verify_get_sign_len(sign_args);
 	signature_size = BITS_TO_BYTES_SIZE(key_identifier->security_size) * 2;
@@ -157,7 +157,7 @@ static int sign(struct hdl *hdl, void *args)
 	}
 
 	if (pub_signature_size == signature_size) {
-		/* HSM requires a bigger buffer */
+		/* SECO requires a bigger buffer */
 		signature =
 			SMW_UTILS_MALLOC(op_generate_sign_args.signature_size);
 		if (!signature) {
@@ -238,7 +238,7 @@ static int verify(struct hdl *hdl, void *args)
 	hsm_err_t err = HSM_NO_ERROR;
 
 	op_verify_sign_args_t op_verify_sign_args = { 0 };
-	hsm_verification_status_t hsm_verification_status = 0;
+	hsm_verification_status_t verification_status = 0;
 
 	struct smw_crypto_sign_verify_args *verify_args = args;
 	struct smw_keymgr_descriptor *key_descriptor =
@@ -250,7 +250,7 @@ static int verify(struct hdl *hdl, void *args)
 	unsigned int key_size = 0;
 	uint8_t *signature = NULL;
 	uint16_t signature_size = 0;
-	uint16_t hsm_signature_size = 0;
+	uint16_t seco_signature_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -266,7 +266,7 @@ static int verify(struct hdl *hdl, void *args)
 			key_descriptor->identifier.type_id;
 		export_key_desc.identifier.security_size = security_size;
 
-		status = hsm_export_public_key(hdl, &export_key_desc);
+		status = seco_export_public_key(hdl, &export_key_desc);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
@@ -296,17 +296,17 @@ static int verify(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	hsm_signature_size = get_hsm_signature_size(security_size);
+	seco_signature_size = get_signature_size(security_size);
 
 	signature_size = (BITS_TO_BYTES_SIZE(security_size) * 2) & UINT16_MAX;
-	if (!signature_size || !hsm_signature_size) {
+	if (!signature_size || !seco_signature_size) {
 		status = SMW_STATUS_OPERATION_FAILURE;
 		goto end;
 	}
 
 	if (op_verify_sign_args.signature_size == signature_size) {
-		/* HSM requires a bigger buffer */
-		signature = SMW_UTILS_MALLOC(hsm_signature_size);
+		/* SECO requires a bigger buffer */
+		signature = SMW_UTILS_MALLOC(seco_signature_size);
 		if (!signature) {
 			status = SMW_STATUS_ALLOC_FAILURE;
 			goto end;
@@ -314,7 +314,7 @@ static int verify(struct hdl *hdl, void *args)
 		SMW_UTILS_MEMCPY(signature, op_verify_sign_args.signature,
 				 op_verify_sign_args.signature_size);
 		op_verify_sign_args.signature = signature;
-		op_verify_sign_args.signature_size = hsm_signature_size;
+		op_verify_sign_args.signature_size = seco_signature_size;
 	}
 
 	status = set_signature_scheme(key_descriptor->identifier.type_id,
@@ -352,7 +352,7 @@ static int verify(struct hdl *hdl, void *args)
 		       op_verify_sign_args.flags);
 
 	err = hsm_verify_signature(hdl->signature_ver, &op_verify_sign_args,
-				   &hsm_verification_status);
+				   &verification_status);
 	if (err != HSM_NO_ERROR) {
 		SMW_DBG_PRINTF(DEBUG, "hsm_verify_signature returned %d\n",
 			       err);
@@ -360,7 +360,7 @@ static int verify(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	if (hsm_verification_status != HSM_VERIFICATION_STATUS_SUCCESS)
+	if (verification_status != HSM_VERIFICATION_STATUS_SUCCESS)
 		status = SMW_STATUS_SIGNATURE_INVALID;
 
 end:
@@ -374,8 +374,8 @@ end:
 	return status;
 }
 
-bool hsm_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
-			    void *args, int *status)
+bool seco_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
+			     void *args, int *status)
 {
 	SMW_DBG_ASSERT(args);
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include "smw_status.h"
@@ -21,27 +21,26 @@
 #define TLS_FINISH_FLAG(_label)                                                \
 	{                                                                      \
 		.tls_finish_label_id = SMW_CONFIG_TLS_FINISH_ID_##_label,      \
-		.hsm_tls_finish_flag = HSM_OP_TLS_FINISH_FLAGS_##_label        \
+		.tls_finish_flag = HSM_OP_TLS_FINISH_FLAGS_##_label            \
 	}
 
 static const struct {
 	enum smw_config_tls_finish_label_id tls_finish_label_id;
-	hsm_op_tls_finish_flags_t hsm_tls_finish_flag;
+	hsm_op_tls_finish_flags_t tls_finish_flag;
 } tls_finish_flags[] = { TLS_FINISH_FLAG(CLIENT), TLS_FINISH_FLAG(SERVER) };
 
 static void
-set_hsm_tls_finish_flag(enum smw_config_tls_finish_label_id tls_finish_label_id,
-			hsm_op_tls_finish_flags_t *hsm_tls_finish_flag)
+set_tls_finish_flag(enum smw_config_tls_finish_label_id tls_finish_label_id,
+		    hsm_op_tls_finish_flags_t *tls_finish_flag)
 {
 	unsigned int i = 0;
 
-	*hsm_tls_finish_flag = 0;
+	*tls_finish_flag = 0;
 
 	for (; i < ARRAY_SIZE(tls_finish_flags); i++) {
 		if (tls_finish_label_id ==
 		    tls_finish_flags[i].tls_finish_label_id) {
-			*hsm_tls_finish_flag =
-				tls_finish_flags[i].hsm_tls_finish_flag;
+			*tls_finish_flag = tls_finish_flags[i].tls_finish_flag;
 			break;
 		}
 	}
@@ -50,26 +49,25 @@ set_hsm_tls_finish_flag(enum smw_config_tls_finish_label_id tls_finish_label_id,
 #define TLS_FINISH_ALGO(_algo_id)                                              \
 	{                                                                      \
 		.hash_algo_id = SMW_CONFIG_HASH_ALGO_ID_##_algo_id,            \
-		.hsm_tls_finish_algo_id =                                      \
-			HSM_OP_TLS_FINISH_HASH_ALGO_##_algo_id                 \
+		.tls_finish_algo_id = HSM_OP_TLS_FINISH_HASH_ALGO_##_algo_id   \
 	}
 
 static const struct {
 	enum smw_config_hash_algo_id hash_algo_id;
-	hsm_op_tls_finish_algo_id_t hsm_tls_finish_algo_id;
+	hsm_op_tls_finish_algo_id_t tls_finish_algo_id;
 } tls_finish_algos[] = { TLS_FINISH_ALGO(SHA256), TLS_FINISH_ALGO(SHA384) };
 
 static int
-set_hsm_tls_finish_algo_id(enum smw_config_hash_algo_id hash_algo_id,
-			   hsm_op_tls_finish_algo_id_t *hsm_tls_finish_algo_id)
+set_tls_finish_algo_id(enum smw_config_hash_algo_id hash_algo_id,
+		       hsm_op_tls_finish_algo_id_t *tls_finish_algo_id)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	unsigned int i = 0;
 
 	for (; i < ARRAY_SIZE(tls_finish_algos); i++) {
 		if (hash_algo_id == tls_finish_algos[i].hash_algo_id) {
-			*hsm_tls_finish_algo_id =
-				tls_finish_algos[i].hsm_tls_finish_algo_id;
+			*tls_finish_algo_id =
+				tls_finish_algos[i].tls_finish_algo_id;
 			status = SMW_STATUS_OK;
 			break;
 		}
@@ -83,7 +81,7 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OK;
 
-	hsm_err_t hsm_err = HSM_NO_ERROR;
+	hsm_err_t err = HSM_NO_ERROR;
 
 	op_tls_finish_args_t op_tls_args = { 0 };
 
@@ -97,8 +95,8 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 
 	SMW_DBG_ASSERT(smw_args);
 
-	status = set_hsm_tls_finish_algo_id(smw_args->algo_id,
-					    &op_tls_args.hash_algorithm);
+	status = set_tls_finish_algo_id(smw_args->algo_id,
+					&op_tls_args.hash_algorithm);
 	if (status != SMW_STATUS_OK)
 		return status;
 
@@ -112,8 +110,7 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	op_tls_args.handshake_hash_input =
 		smw_sign_verify_get_msg_buf(smw_args);
 	op_tls_args.verify_data_output = smw_sign_verify_get_sign_buf(smw_args);
-	set_hsm_tls_finish_flag(smw_args->attributes.tls_label,
-				&op_tls_args.flags);
+	set_tls_finish_flag(smw_args->attributes.tls_label, &op_tls_args.flags);
 
 	if (SET_OVERFLOW(smw_sign_verify_get_msg_len(smw_args),
 			 op_tls_args.handshake_hash_input_size)) {
@@ -139,10 +136,10 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 		       op_tls_args.verify_data_output_size, op_tls_args.flags,
 		       op_tls_args.hash_algorithm);
 
-	hsm_err = hsm_tls_finish(hdl->key_management, &op_tls_args);
+	err = hsm_tls_finish(hdl->key_management, &op_tls_args);
 
-	SMW_DBG_PRINTF(DEBUG, "hsm_tls_finish returned %d\n", hsm_err);
-	status = convert_hsm_err(hsm_err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_tls_finish returned %d\n", err);
+	status = seco_convert_err(err);
 
 	smw_sign_verify_set_sign_len(smw_args,
 				     op_tls_args.verify_data_output_size);

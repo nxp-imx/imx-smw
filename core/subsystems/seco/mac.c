@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -11,16 +11,16 @@
 
 #include "common.h"
 
-#define HMAC_ALGO(_id, _hsm_id, _size)                                         \
+#define HMAC_ALGO(_id, _seco_id, _size)                                        \
 	{                                                                      \
 		.hash_id = SMW_CONFIG_HASH_ALGO_ID_##_id,                      \
-		.hsm_algo = HSM_OP_MAC_ONE_GO_ALGO_HMAC_##_hsm_id,             \
+		.algo = HSM_OP_MAC_ONE_GO_ALGO_HMAC_##_seco_id,                \
 		.mac_size = _size                                              \
 	}
 
 static const struct hmac_algo {
 	enum smw_config_hash_algo_id hash_id;
-	hsm_op_mac_one_go_algo_t hsm_algo;
+	hsm_op_mac_one_go_algo_t algo;
 	unsigned int mac_size;
 } hmac_algos[] = { HMAC_ALGO(SHA224, SHA_224, 28),
 		   HMAC_ALGO(SHA256, SHA_256, 32),
@@ -28,7 +28,7 @@ static const struct hmac_algo {
 		   HMAC_ALGO(SHA512, SHA_512, 64) };
 
 struct mac_algo {
-	hsm_op_mac_one_go_algo_t hsm_id;
+	hsm_op_mac_one_go_algo_t id;
 	unsigned int mac_size;
 };
 
@@ -40,7 +40,7 @@ static int get_mac_algo(struct mac_algo *alg, struct smw_crypto_mac_args *args)
 
 	switch (args->algo_id) {
 	case SMW_CONFIG_MAC_ALGO_ID_CMAC:
-		alg->hsm_id = HSM_OP_MAC_ONE_GO_ALGO_AES_CMAC;
+		alg->id = HSM_OP_MAC_ONE_GO_ALGO_AES_CMAC;
 		alg->mac_size = 16;
 		status = SMW_STATUS_OK;
 		break;
@@ -48,7 +48,7 @@ static int get_mac_algo(struct mac_algo *alg, struct smw_crypto_mac_args *args)
 	case SMW_CONFIG_MAC_ALGO_ID_HMAC:
 		for (size_t i = 0; i < ARRAY_SIZE(hmac_algos); i++) {
 			if (hmac_algos[i].hash_id == args->hash_id) {
-				alg->hsm_id = hmac_algos[i].hsm_algo;
+				alg->id = hmac_algos[i].algo;
 				alg->mac_size = hmac_algos[i].mac_size;
 				status = SMW_STATUS_OK;
 				break;
@@ -120,13 +120,13 @@ static int mac(struct hdl *hdl, void *args)
 
 	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
 		//TODO: first import key, then generate mac
-		//      for now import is not supported by HSM
+		//      for now import is not supported by SECO
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto end;
 	}
 
 	op_args.key_identifier = key_descriptor->identifier.id;
-	op_args.algorithm = alg.hsm_id;
+	op_args.algorithm = alg.id;
 	op_args.payload = smw_mac_get_input_data(mac_args);
 	op_args.mac = smw_mac_get_mac_data(mac_args);
 
@@ -161,7 +161,7 @@ static int mac(struct hdl *hdl, void *args)
 
 	err = open_mac_service(hdl, &mac_hdl);
 	if (err != HSM_NO_ERROR) {
-		status = convert_hsm_err(err);
+		status = seco_convert_err(err);
 		goto end;
 	}
 
@@ -188,7 +188,7 @@ static int mac(struct hdl *hdl, void *args)
 
 	err = hsm_mac_one_go(mac_hdl, &op_args, &verif_status);
 
-	status = convert_hsm_err(err);
+	status = seco_convert_err(err);
 
 	if (status == SMW_STATUS_OK) {
 		if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE) {
@@ -210,15 +210,15 @@ static int mac(struct hdl *hdl, void *args)
 	err = close_mac_service(mac_hdl);
 
 	if (status == SMW_STATUS_OK)
-		status = convert_hsm_err(err);
+		status = seco_convert_err(err);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-bool hsm_mac_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
-		    int *status)
+bool seco_mac_handle(struct hdl *hdl, enum operation_id operation_id,
+		     void *args, int *status)
 {
 	switch (operation_id) {
 	case OPERATION_ID_MAC:

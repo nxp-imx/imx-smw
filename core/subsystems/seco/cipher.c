@@ -18,19 +18,18 @@
 	{                                                                         \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,             \
 		.cipher_mode_id = SMW_CONFIG_CIPHER_MODE_ID_##_cipher_mode_id,    \
-		.hsm_algo =                                                       \
-			HSM_CIPHER_ONE_GO_ALGO_##_key_type_id##_##_cipher_mode_id \
+		.algo = HSM_CIPHER_ONE_GO_ALGO_##_key_type_id##_##_cipher_mode_id \
 	}
 
 static const struct {
 	enum smw_config_key_type_id key_type_id;
 	enum smw_config_cipher_mode_id cipher_mode_id;
-	hsm_op_cipher_one_go_algo_t hsm_algo;
+	hsm_op_cipher_one_go_algo_t algo;
 } cipher_algos[] = { CIPHER_ALGO(AES, CBC), CIPHER_ALGO(AES, ECB) };
 
 static int set_cipher_algo(enum smw_config_key_type_id key_type_id,
 			   enum smw_config_cipher_mode_id cipher_mode_id,
-			   hsm_op_cipher_one_go_algo_t *hsm_algo)
+			   hsm_op_cipher_one_go_algo_t *algo)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	unsigned int i = 0;
@@ -38,7 +37,7 @@ static int set_cipher_algo(enum smw_config_key_type_id key_type_id,
 	for (; i < ARRAY_SIZE(cipher_algos); i++) {
 		if (key_type_id == cipher_algos[i].key_type_id &&
 		    cipher_mode_id == cipher_algos[i].cipher_mode_id) {
-			*hsm_algo = cipher_algos[i].hsm_algo;
+			*algo = cipher_algos[i].algo;
 			status = SMW_STATUS_OK;
 			break;
 		}
@@ -51,23 +50,23 @@ static int set_cipher_algo(enum smw_config_key_type_id key_type_id,
 #define CIPHER_FLAG(_op_type_id)                                               \
 	{                                                                      \
 		.smw_op_type_id = SMW_CONFIG_CIPHER_OP_ID_##_op_type_id,       \
-		.hsm_flags = HSM_CIPHER_ONE_GO_FLAGS_##_op_type_id             \
+		.flags = HSM_CIPHER_ONE_GO_FLAGS_##_op_type_id                 \
 	}
 
 static const struct {
 	enum smw_config_cipher_op_type_id smw_op_type_id;
-	hsm_op_cipher_one_go_flags_t hsm_flags;
+	hsm_op_cipher_one_go_flags_t flags;
 } cipher_flags[] = { CIPHER_FLAG(ENCRYPT), CIPHER_FLAG(DECRYPT) };
 
 static int set_cipher_flags(enum smw_config_cipher_op_type_id smw_op_type_id,
-			    hsm_op_cipher_one_go_flags_t *hsm_flags)
+			    hsm_op_cipher_one_go_flags_t *flags)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	unsigned int i = 0;
 
 	for (; i < ARRAY_SIZE(cipher_flags); i++) {
 		if (smw_op_type_id == cipher_flags[i].smw_op_type_id) {
-			*hsm_flags = cipher_flags[i].hsm_flags;
+			*flags = cipher_flags[i].flags;
 			status = SMW_STATUS_OK;
 			break;
 		}
@@ -97,14 +96,14 @@ static int cipher(struct hdl *hdl, void *args)
 	/* Get 1st key type as reference */
 	key_desc = cipher_args->keys_desc[0];
 
-	/* Get HSM algorithm */
+	/* Set operation algorithm */
 	status = set_cipher_algo(key_desc->identifier.type_id,
 				 cipher_args->mode_id,
 				 &op_cipher_args.cipher_algo);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	/* Get HSM operation */
+	/* Set flags */
 	status = set_cipher_flags(cipher_args->op_id, &op_cipher_args.flags);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -124,7 +123,7 @@ static int cipher(struct hdl *hdl, void *args)
 
 	/*
 	 * If output length is too short, update is done here (not supported by
-	 * HSM)
+	 * SECO)
 	 */
 	if (smw_crypto_get_cipher_output_len(cipher_args) <
 	    op_cipher_args.input_size) {
@@ -146,8 +145,8 @@ static int cipher(struct hdl *hdl, void *args)
 	}
 
 	/*
-	 * If output length is too big HSM returns HSM_INVALID_PARAM, which
-	 * doesn't match SMW API behavior. Then set HSM argument to the correct
+	 * If output length is too big SECO returns HSM_INVALID_PARAM, which
+	 * doesn't match SMW API behavior. Then set SECO argument to the correct
 	 * value.
 	 */
 	op_cipher_args.output_size = op_cipher_args.input_size;
@@ -187,8 +186,8 @@ end:
 	return status;
 }
 
-bool hsm_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
-		       void *args, int *status)
+bool seco_cipher_handle(struct hdl *hdl, enum operation_id operation_id,
+			void *args, int *status)
 {
 	switch (operation_id) {
 	case OPERATION_ID_CIPHER:

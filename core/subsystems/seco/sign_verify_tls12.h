@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2024 NXP
  */
 
 /**
  * tls_mac_finish() - Compute TLS 1.2 finished message
- * @hdl: Pointer to the HSM handles structure.
+ * @hdl: Pointer to the SECO handles structure.
  * @args: Pointer to SMW signature arguments.
  *
  * Return:

@@ -25,11 +25,12 @@ static void free_context(struct smw_op_context **args)
 }
 
 /* ELE context operations structure */
-static struct smw_crypto_context_ops hsm_ctx_ops = { .cancel = cancel_operation,
-						     .copy = copy_context,
-						     .free = free_context };
+static struct smw_crypto_context_ops seco_ctx_ops = { .cancel =
+							      cancel_operation,
+						      .copy = copy_context,
+						      .free = free_context };
 
-void *hsm_get_ctx_ops(void)
+void *seco_get_ctx_ops(void)
 {
-	return &hsm_ctx_ops;
+	return &seco_ctx_ops;
 }

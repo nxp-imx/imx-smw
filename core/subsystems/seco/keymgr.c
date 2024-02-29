@@ -17,66 +17,40 @@
 
 #include "common.h"
 
+/* There is no SECO master key type value */
+#define HSM_KEY_TYPE_TLS_MASTER_KEY 0
+
+#define KEY_DEF(_key_type_id, _security_size, _public_key_size, _key_type)     \
+	{                                                                      \
+		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,          \
+		.security_size = _security_size,                               \
+		.public_key_size = _public_key_size,                           \
+		.key_type = HSM_KEY_TYPE_##_key_type                           \
+	}
+
 /* Key type IDs must be ordered from lowest to highest.
  * Security sizes must be ordered from lowest to highest
  * for 1 given Key type ID.
  * This sorting is required to simplify the implementation of set_key_type().
  */
-static const struct hsm_key_def {
+static const struct key_def {
 	enum smw_config_key_type_id key_type_id;
 	unsigned int security_size;
 	unsigned short public_key_size;
-	hsm_key_type_t hsm_key_type;
-} hsm_key_def_list[] = {
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-	  .security_size = 256,
-	  .public_key_size = 64,
-	  .hsm_key_type = HSM_KEY_TYPE_ECDSA_NIST_P256 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-	  .security_size = 384,
-	  .public_key_size = 96,
-	  .hsm_key_type = HSM_KEY_TYPE_ECDSA_NIST_P384 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-	  .security_size = 256,
-	  .public_key_size = 64,
-	  .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_256 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-	  .security_size = 384,
-	  .public_key_size = 96,
-	  .hsm_key_type = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_384 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-	  .security_size = 128,
-	  .public_key_size = 0,
-	  .hsm_key_type = HSM_KEY_TYPE_AES_128 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-	  .security_size = 192,
-	  .public_key_size = 0,
-	  .hsm_key_type = HSM_KEY_TYPE_AES_192 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-	  .security_size = 256,
-	  .public_key_size = 0,
-	  .hsm_key_type = HSM_KEY_TYPE_AES_256 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224,
-	  .security_size = 224,
-	  .public_key_size = 0,
-	  .hsm_key_type = HSM_KEY_TYPE_HMAC_224 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
-	  .security_size = 256,
-	  .public_key_size = 0,
-	  .hsm_key_type = HSM_KEY_TYPE_HMAC_256 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
-	  .security_size = 384,
-	  .public_key_size = 0,
-	  .hsm_key_type = HSM_KEY_TYPE_HMAC_384 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512,
-	  .security_size = 512,
-	  .public_key_size = 0,
-	  .hsm_key_type = HSM_KEY_TYPE_HMAC_512 },
-	{ .key_type_id = SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY,
-	  .security_size = TLS12_MASTER_SECRET_SEC_SIZE,
-	  .public_key_size = 0,
-	  /* There is no HSM master key type value */
-	  .hsm_key_type = 0 }
+	hsm_key_type_t key_type;
+} key_def_list[] = {
+	KEY_DEF(ECDSA_NIST, 256, 64, ECDSA_NIST_P256),
+	KEY_DEF(ECDSA_NIST, 384, 96, ECDSA_NIST_P384),
+	KEY_DEF(ECDSA_BRAINPOOL_R1, 256, 64, ECDSA_BRAINPOOL_R1_256),
+	KEY_DEF(ECDSA_BRAINPOOL_R1, 384, 96, ECDSA_BRAINPOOL_R1_384),
+	KEY_DEF(AES, 128, 0, AES_128),
+	KEY_DEF(AES, 192, 0, AES_192),
+	KEY_DEF(AES, 256, 0, AES_256),
+	KEY_DEF(HMAC_SHA224, 224, 0, HMAC_224),
+	KEY_DEF(HMAC_SHA256, 256, 0, HMAC_256),
+	KEY_DEF(HMAC_SHA384, 384, 0, HMAC_384),
+	KEY_DEF(HMAC_SHA512, 512, 0, HMAC_512),
+	KEY_DEF(TLS_MASTER_KEY, TLS12_MASTER_SECRET_SEC_SIZE, 0, TLS_MASTER_KEY)
 };
 
 static int set_key_type(enum smw_config_key_type_id key_type_id,
@@ -85,20 +59,20 @@ static int set_key_type(enum smw_config_key_type_id key_type_id,
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	unsigned int i = 0;
-	unsigned int size = ARRAY_SIZE(hsm_key_def_list);
+	unsigned int size = ARRAY_SIZE(key_def_list);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < size; i++) {
-		if (hsm_key_def_list[i].key_type_id < key_type_id)
+		if (key_def_list[i].key_type_id < key_type_id)
 			continue;
-		if (hsm_key_def_list[i].key_type_id > key_type_id)
+		if (key_def_list[i].key_type_id > key_type_id)
 			goto end;
-		if (hsm_key_def_list[i].security_size < security_size)
+		if (key_def_list[i].security_size < security_size)
 			continue;
-		if (hsm_key_def_list[i].security_size > security_size)
+		if (key_def_list[i].security_size > security_size)
 			goto end;
-		*key_type = hsm_key_def_list[i].hsm_key_type;
+		*key_type = key_def_list[i].key_type;
 		status = SMW_STATUS_OK;
 		break;
 	}
@@ -110,18 +84,18 @@ end:
 	return status;
 }
 
-static unsigned short hsm_public_key_length(hsm_key_type_t key_type)
+static unsigned short get_public_key_length(hsm_key_type_t key_type)
 {
 	unsigned short length = 0;
 
 	unsigned int i = 0;
-	unsigned int size = ARRAY_SIZE(hsm_key_def_list);
-	const struct hsm_key_def *key = hsm_key_def_list;
+	unsigned int size = ARRAY_SIZE(key_def_list);
+	const struct key_def *key = key_def_list;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < size; i++, key++) {
-		if (key->hsm_key_type == key_type) {
+		if (key->key_type == key_type) {
 			length = key->public_key_size;
 			break;
 		}
@@ -131,7 +105,7 @@ static unsigned short hsm_public_key_length(hsm_key_type_t key_type)
 	return length;
 }
 
-void hsm_set_empty_key_policy(struct smw_keymgr_attributes *key_attributes)
+void seco_set_empty_key_policy(struct smw_keymgr_attributes *key_attributes)
 {
 	unsigned char *attributes_list =
 		key_attributes->pub_key_attributes_list;
@@ -158,16 +132,16 @@ check_reallocate_public_buffer(unsigned char **data, unsigned short *length,
 	unsigned char *public_data = NULL;
 	unsigned int public_length = 0;
 	unsigned char *tmp_key = NULL;
-	unsigned short hsm_key_size = 0;
+	unsigned short key_size = 0;
 	unsigned int max_public_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	public_data = smw_keymgr_get_public_data(key_desc);
 
-	/* HSM require exact asymmetric public key size */
-	hsm_key_size = hsm_public_key_length(key_type);
-	if (!hsm_key_size) {
+	/* SECO requires exact asymmetric public key size */
+	key_size = get_public_key_length(key_type);
+	if (!key_size) {
 		if (public_data) {
 			SMW_DBG_PRINTF(ERROR,
 				       "Only public key can be exported\n");
@@ -182,7 +156,7 @@ check_reallocate_public_buffer(unsigned char **data, unsigned short *length,
 	public_length = smw_keymgr_get_public_length(key_desc);
 
 	/* First check if the user public buffer size is big enough */
-	max_public_length = hsm_key_size;
+	max_public_length = key_size;
 	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
 		max_public_length = smw_utils_get_base64_len(max_public_length);
 
@@ -201,7 +175,7 @@ check_reallocate_public_buffer(unsigned char **data, unsigned short *length,
 			tmp_key = public_data;
 		}
 
-		*length = hsm_key_size;
+		*length = key_size;
 		*data = tmp_key;
 
 		status = SMW_STATUS_OK;
@@ -216,7 +190,7 @@ end:
  * check_export_key_config() - Check key descriptor configuration.
  * @key_descriptor: Pointer to key descriptor.
  *
- * HSM secure subsystem only exports ECDSA NIST and BR1 public key.
+ * SECO secure subsystem only exports ECDSA NIST and BR1 public key.
  *
  * Return:
  * SMW_STATUS_OK			- Configuration ok.
@@ -258,7 +232,7 @@ static int export_key_operation(struct hdl *hdl,
 	op_pub_key_recovery_args_t op_export_key_args = { 0 };
 
 	unsigned char *tmp_key = NULL;
-	unsigned short hsm_key_size = 0;
+	unsigned short key_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -272,8 +246,7 @@ static int export_key_operation(struct hdl *hdl,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = check_reallocate_public_buffer(&tmp_key, &hsm_key_size,
-						key_desc,
+	status = check_reallocate_public_buffer(&tmp_key, &key_size, key_desc,
 						op_export_key_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -281,7 +254,7 @@ static int export_key_operation(struct hdl *hdl,
 	op_export_key_args.key_identifier = key_desc->identifier.id;
 
 	op_export_key_args.out_key = tmp_key;
-	op_export_key_args.out_key_size = hsm_key_size;
+	op_export_key_args.out_key_size = key_size;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_pub_key_recovery()\n"
@@ -299,12 +272,11 @@ static int export_key_operation(struct hdl *hdl,
 		       op_export_key_args.key_type, op_export_key_args.flags);
 
 	err = hsm_pub_key_recovery(hdl->key_store, &op_export_key_args);
-	status = convert_hsm_err(err);
+	status = seco_convert_err(err);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_keymgr_update_public_buffer(key_desc, tmp_key,
-						 hsm_key_size);
+	status = smw_keymgr_update_public_buffer(key_desc, tmp_key, key_size);
 
 end:
 	if (tmp_key && tmp_key != smw_keymgr_get_public_data(key_desc))
@@ -314,7 +286,7 @@ end:
 	return status;
 }
 
-static int delete_key_operation(struct subsystem_context *hsm_ctx,
+static int delete_key_operation(struct subsystem_context *seco_ctx,
 				struct smw_keymgr_descriptor *key_desc,
 				bool flush)
 {
@@ -352,29 +324,29 @@ static int delete_key_operation(struct subsystem_context *hsm_ctx,
 		       "    key_group: %d\n"
 		       "    key_info: 0x%04X\n"
 		       "    input_data: %p\n",
-		       __func__, __LINE__, hsm_ctx->hdl.key_management,
+		       __func__, __LINE__, seco_ctx->hdl.key_management,
 		       *manage_key_args.key_identifier,
 		       manage_key_args.input_size, manage_key_args.flags,
 		       manage_key_args.key_type, manage_key_args.key_group,
 		       manage_key_args.key_info, manage_key_args.input_data);
 
-	err = hsm_manage_key(hsm_ctx->hdl.key_management, &manage_key_args);
-	status = convert_hsm_err(err);
+	err = hsm_manage_key(seco_ctx->hdl.key_management, &manage_key_args);
+	status = seco_convert_err(err);
 
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	/* Let assume there is place to add a new key */
-	status = hsm_set_key_group_state(hsm_ctx, key_desc->identifier.group,
-					 key_desc->identifier.persistence_id,
-					 false);
+	status = seco_set_key_group_state(seco_ctx, key_desc->identifier.group,
+					  key_desc->identifier.persistence_id,
+					  false);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-static int generate_key(struct subsystem_context *hsm_ctx, void *args)
+static int generate_key(struct subsystem_context *seco_ctx, void *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -390,8 +362,8 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 	unsigned char *public_data = NULL;
 	uint32_t key_id = 0;
 	unsigned char *tmp_key = NULL;
-	unsigned short hsm_key_size = 0;
-	hsm_key_type_t hsm_key_type = 0;
+	unsigned short key_size = 0;
+	hsm_key_type_t key_type = 0;
 	bool persistent_grp = false;
 	unsigned int key_group = 0;
 	bool flush_key = false;
@@ -399,15 +371,15 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	status = set_key_type(key_identifier->type_id,
-			      key_identifier->security_size, &hsm_key_type);
+			      key_identifier->security_size, &key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	public_data = smw_keymgr_get_public_data(key_descriptor);
 	if (public_data) {
-		status = check_reallocate_public_buffer(&tmp_key, &hsm_key_size,
+		status = check_reallocate_public_buffer(&tmp_key, &key_size,
 							key_descriptor,
-							hsm_key_type);
+							key_type);
 		if (status != SMW_STATUS_OK)
 			goto end;
 	}
@@ -415,9 +387,9 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 	op_generate_key_args.key_identifier = &key_id;
 	op_generate_key_args.flags = HSM_OP_KEY_GENERATION_FLAGS_CREATE;
 
-	op_generate_key_args.key_type = hsm_key_type;
+	op_generate_key_args.key_type = key_type;
 	op_generate_key_args.out_key = tmp_key;
-	op_generate_key_args.out_size = hsm_key_size;
+	op_generate_key_args.out_size = key_size;
 
 	status = smw_keymgr_get_privacy_id(key_identifier->type_id,
 					   &key_identifier->privacy_id);
@@ -433,24 +405,25 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 	switch (generate_key_args->key_attributes.persistence_id) {
 	case SMW_OBJECT_PERSISTENCE_ID_PERSISTENT:
 		op_generate_key_args.key_info = HSM_KEY_INFO_PERSISTENT;
-		key_group = HSM_FIRST_PERSISTENT_KEY_GROUP;
+		key_group = SECO_FIRST_PERSISTENT_KEY_GROUP;
 		persistent_grp = true;
 		break;
 
 	case SMW_OBJECT_PERSISTENCE_ID_PERMANENT:
 		op_generate_key_args.key_info = HSM_KEY_INFO_PERMANENT;
-		key_group = HSM_FIRST_PERSISTENT_KEY_GROUP;
+		key_group = SECO_FIRST_PERSISTENT_KEY_GROUP;
 		persistent_grp = true;
 		break;
 
 	default:
 		op_generate_key_args.key_info = HSM_KEY_INFO_TRANSIENT;
-		key_group = HSM_FIRST_TRANSIENT_KEY_GROUP;
+		key_group = SECO_FIRST_TRANSIENT_KEY_GROUP;
 		break;
 	}
 
 	do {
-		status = hsm_get_key_group(hsm_ctx, persistent_grp, &key_group);
+		status = seco_get_key_group(seco_ctx, persistent_grp,
+					    &key_group);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
@@ -470,7 +443,7 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 			       "    key_group: %d\n"
 			       "    key_info: 0x%04X\n"
 			       "    out_key: %p\n",
-			       __func__, __LINE__, hsm_ctx->hdl.key_management,
+			       __func__, __LINE__, seco_ctx->hdl.key_management,
 			       op_generate_key_args.key_identifier,
 			       op_generate_key_args.out_size,
 			       op_generate_key_args.flags,
@@ -479,17 +452,17 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 			       op_generate_key_args.key_info,
 			       op_generate_key_args.out_key);
 
-		err = hsm_generate_key(hsm_ctx->hdl.key_management,
+		err = hsm_generate_key(seco_ctx->hdl.key_management,
 				       &op_generate_key_args);
 
 		/*
-		 * There is no specific HSM error code indicating that the
+		 * There is no specific SECO error code indicating that the
 		 * NVM Storage is full, hence let's assume that the NVM_KEY_STORE_ERROR
 		 * will be returned only in case of key group full.
 		 */
 		if (err == HSM_KEY_STORE_ERROR) {
-			status = hsm_set_key_group_state(hsm_ctx, key_group,
-							 persistent_grp, true);
+			status = seco_set_key_group_state(seco_ctx, key_group,
+							  persistent_grp, true);
 			if (status != SMW_STATUS_OK)
 				goto end;
 
@@ -500,7 +473,7 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 		}
 	} while (err == HSM_KEY_STORE_ERROR);
 
-	status = convert_hsm_err(err);
+	status = seco_convert_err(err);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -512,19 +485,19 @@ static int generate_key(struct subsystem_context *hsm_ctx, void *args)
 
 	if (public_data) {
 		status = smw_keymgr_update_public_buffer(key_descriptor,
-							 tmp_key, hsm_key_size);
+							 tmp_key, key_size);
 		if (status != SMW_STATUS_OK) {
 			/*
 			 * Delete the key in subsystem as smw_generate_key()
 			 * is going to remove it from the key database
 			 */
-			(void)delete_key_operation(hsm_ctx, key_descriptor,
+			(void)delete_key_operation(seco_ctx, key_descriptor,
 						   flush_key);
 		}
 	}
 
 	if (generate_key_args->key_attributes.policy) {
-		hsm_set_empty_key_policy(&generate_key_args->key_attributes);
+		seco_set_empty_key_policy(&generate_key_args->key_attributes);
 		if (status == SMW_STATUS_OK)
 			status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 	}
@@ -585,11 +558,11 @@ static int export_key(struct hdl *hdl, void *args)
 	return status;
 }
 
-static int delete_key(struct subsystem_context *hsm_ctx, void *args)
+static int delete_key(struct subsystem_context *seco_ctx, void *args)
 {
 	struct smw_keymgr_delete_key_args *delete_key_args = args;
 
-	return delete_key_operation(hsm_ctx, &delete_key_args->key_descriptor,
+	return delete_key_operation(seco_ctx, &delete_key_args->key_descriptor,
 				    delete_key_args->key_attributes.flush_key);
 }
 
@@ -602,23 +575,22 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 
 	struct smw_keymgr_descriptor *key_desc = NULL;
 	unsigned int public_length = 0;
-	hsm_key_type_t hsm_key_type = 0;
+	hsm_key_type_t key_type = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	key_desc = args;
 
 	/*
-	 * HSM subsystem doesn't expose services to get the key id attributes
+	 * SECO subsystem doesn't expose services to get the key id attributes
 	 * Let assume user key descriptor is correct to get the type and if
 	 * key type is asymmetric key, get the public key size.
 	 */
-	status =
-		set_key_type(key_desc->identifier.type_id,
-			     key_desc->identifier.security_size, &hsm_key_type);
+	status = set_key_type(key_desc->identifier.type_id,
+			      key_desc->identifier.security_size, &key_type);
 
 	if (status == SMW_STATUS_OK) {
-		public_length = hsm_public_key_length(hsm_key_type);
+		public_length = get_public_key_length(key_type);
 		if (!public_length) {
 			SMW_DBG_PRINTF(VERBOSE, "%s: No public key\n",
 				       __func__);
@@ -667,28 +639,27 @@ static int commit_key_storage(void)
 	return status;
 }
 
-int hsm_export_public_key(struct hdl *hdl,
-			  struct smw_keymgr_descriptor *key_desc)
+int seco_export_public_key(struct hdl *hdl,
+			   struct smw_keymgr_descriptor *key_desc)
 {
 	int status = SMW_STATUS_OK;
 
 	unsigned int public_length = 0;
-	hsm_key_type_t hsm_key_type = 0;
+	hsm_key_type_t key_type = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	/*
-	 * HSM subsystem doesn't expose services to get the key id attributes
+	 * SECO subsystem doesn't expose services to get the key id attributes
 	 * Let assume user key descriptor is correct to get the type and if
 	 * key type is asymmetric key, get the public key size.
 	 */
-	status =
-		set_key_type(key_desc->identifier.type_id,
-			     key_desc->identifier.security_size, &hsm_key_type);
+	status = set_key_type(key_desc->identifier.type_id,
+			      key_desc->identifier.security_size, &key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	public_length = hsm_public_key_length(hsm_key_type);
+	public_length = get_public_key_length(key_type);
 	if (!public_length) {
 		SMW_DBG_PRINTF(VERBOSE, "%s: No public key\n", __func__);
 		status = SMW_STATUS_INVALID_PARAM;
@@ -713,21 +684,21 @@ end:
 	return status;
 }
 
-bool hsm_key_handle(struct subsystem_context *hsm_ctx,
-		    enum operation_id operation_id, void *args, int *status)
+bool seco_key_handle(struct subsystem_context *seco_ctx,
+		     enum operation_id operation_id, void *args, int *status)
 {
 	struct hdl *hdl = NULL;
 
-	SMW_DBG_ASSERT(hsm_ctx && args);
+	SMW_DBG_ASSERT(seco_ctx && args);
 
-	hdl = &hsm_ctx->hdl;
+	hdl = &seco_ctx->hdl;
 
 	switch (operation_id) {
 	case OPERATION_ID_GENERATE_KEY:
-		*status = generate_key(hsm_ctx, args);
+		*status = generate_key(seco_ctx, args);
 		break;
 	case OPERATION_ID_DERIVE_KEY:
-		*status = hsm_derive_key(hsm_ctx, args);
+		*status = seco_derive_key(seco_ctx, args);
 		break;
 	case OPERATION_ID_UPDATE_KEY:
 		*status = update_key(hdl, args);
@@ -739,7 +710,7 @@ bool hsm_key_handle(struct subsystem_context *hsm_ctx,
 		*status = export_key(hdl, args);
 		break;
 	case OPERATION_ID_DELETE_KEY:
-		*status = delete_key(hsm_ctx, args);
+		*status = delete_key(seco_ctx, args);
 		break;
 	case OPERATION_ID_GET_KEY_LENGTHS:
 		*status = get_key_lengths(hdl, args);

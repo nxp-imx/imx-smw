@@ -63,7 +63,7 @@ static int data_storage(struct hdl *hdl,
 
 	err = open_data_storage_service(hdl, &data_storage_hdl);
 	if (err != HSM_NO_ERROR) {
-		status = convert_hsm_err(err);
+		status = seco_convert_err(err);
 		goto end;
 	}
 
@@ -82,7 +82,7 @@ static int data_storage(struct hdl *hdl,
 	err = hsm_data_storage(data_storage_hdl, &op_args);
 	SMW_DBG_PRINTF(DEBUG, "hsm_data_storage returned %d\n", err);
 
-	status = convert_hsm_err(err);
+	status = seco_convert_err(err);
 
 	if (!store)
 		smw_storage_set_data_length(data_descriptor, op_args.data_size);
@@ -90,7 +90,7 @@ static int data_storage(struct hdl *hdl,
 	err = close_data_storage_service(data_storage_hdl);
 
 	if (status == SMW_STATUS_OK)
-		status = convert_hsm_err(err);
+		status = seco_convert_err(err);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -128,8 +128,8 @@ static int storage_retrieve(struct hdl *hdl,
 	return data_storage(hdl, &args->data_descriptor, false);
 }
 
-bool hsm_storage_handle(struct hdl *hdl, enum operation_id operation_id,
-			void *args, int *status)
+bool seco_storage_handle(struct hdl *hdl, enum operation_id operation_id,
+			 void *args, int *status)
 {
 	SMW_DBG_ASSERT(args);
 

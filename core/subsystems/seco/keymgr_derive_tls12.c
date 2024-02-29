@@ -15,7 +15,7 @@
 #include "keymgr_derive_tls12.h"
 
 /*
- * HSM TLS 1.2 hard coded value
+ * SECO TLS 1.2 hard coded value
  */
 #define TLS12_CLIENT_W_IV_SIZE 4 /* Client write IVs */
 #define TLS12_SERVER_W_IV_SIZE 4 /* Server write IVs */
@@ -28,10 +28,40 @@
 #define TLS12_KDF_EMS_SHA256_INPUT_SIZE 96
 #define TLS12_KDF_EMS_SHA384_INPUT_SIZE 112
 
+#define TLS12_KDF_DEF(_key_exchange_id, _encryption_id, _prf_id, _mac_key_id,  \
+		      _mac_security_size, _enc_key_id, _enc_security_size,     \
+		      _kdf, _nb_shared_key_id)                                 \
+	{                                                                      \
+		.key_exchange_id =                                             \
+			SMW_TLS12_KEY_EXCHANGE_ID_##_key_exchange_id,          \
+		.encryption_id = SMW_TLS12_ENCRYPTION_ID_##_encryption_id,     \
+		.prf_id = SMW_CONFIG_HASH_ALGO_ID_##_prf_id,                   \
+		.mac_key_id = SMW_CONFIG_KEY_TYPE_ID_##_mac_key_id,            \
+		.mac_security_size = _mac_security_size,                       \
+		.enc_key_id = SMW_CONFIG_KEY_TYPE_ID_##_enc_key_id,            \
+		.enc_security_size = _enc_security_size,                       \
+		.kdf = HSM_KDF_##_kdf,                                         \
+		.flags = HSM_OP_KEY_EXCHANGE_FLAGS_GENERATE_EPHEMERAL |        \
+			 HSM_KEY_INFO_TRANSIENT,                               \
+		.nb_shared_key_id = TLS12_NB_KEYS_##_nb_shared_key_id,         \
+	}
+
+#define TLS12_KDF_DEF_WITH_MAC(_key_exchange_id, _encryption_id, _prf_id,      \
+			       _mac_key_id, _mac_security_size, _enc_key_id,   \
+			       _enc_security_size, _kdf)                       \
+	TLS12_KDF_DEF(_key_exchange_id, _encryption_id, _prf_id, _mac_key_id,  \
+		      _mac_security_size, _enc_key_id, _enc_security_size,     \
+		      _kdf, WITH_MAC)
+
+#define TLS12_KDF_DEF_NO_MAC(_key_exchange_id, _encryption_id, _prf_id,        \
+			     _enc_key_id, _enc_security_size, _kdf)            \
+	TLS12_KDF_DEF(_key_exchange_id, _encryption_id, _prf_id, INVALID, 0,   \
+		      _enc_key_id, _enc_security_size, _kdf, NO_MAC)
+
 /*
- * List of TLS 1.2 Cipher suite supported in HSM
- * hsm_tls12_kdf[]: list of Key derivation function
- * hsm_tls12_key_ids[]: list of Keys (initiator and exchange)
+ * List of TLS 1.2 Cipher suite supported in SECO
+ * tls12_kdf[]: list of Key derivation function
+ * tls12_key_ids[]: list of Keys (initiator and exchange)
  */
 static const struct tls12_kdf_info {
 	enum smw_tls12_key_exchange_id key_exchange_id;
@@ -41,104 +71,52 @@ static const struct tls12_kdf_info {
 	unsigned int mac_security_size;
 	enum smw_config_key_type_id enc_key_id;
 	unsigned int enc_security_size;
-	hsm_kdf_algo_id_t hsm_kdf;
-	hsm_op_key_exchange_flags_t hsm_flags;
-	unsigned char hsm_nb_shared_key_id;
-} hsm_tls12_kdf[] = {
-	{
-		// TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
-		.key_exchange_id = SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA,
-		.encryption_id = SMW_TLS12_ENCRYPTION_ID_AES_128_CBC,
-		.prf_id = SMW_CONFIG_HASH_ALGO_ID_SHA256,
-		.mac_key_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
-		.mac_security_size = 256,
-		.enc_key_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-		.enc_security_size = 128,
-		.hsm_kdf = HSM_KDF_HMAC_SHA_256_TLS_32_16_4,
-		.hsm_flags = HSM_OP_KEY_EXCHANGE_FLAGS_GENERATE_EPHEMERAL |
-			     HSM_KEY_INFO_TRANSIENT,
-		.hsm_nb_shared_key_id = TLS12_NB_KEYS_WITH_MAC,
-	},
-	{
-		// TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
-		.key_exchange_id = SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA,
-		.encryption_id = SMW_TLS12_ENCRYPTION_ID_AES_256_CBC,
-		.prf_id = SMW_CONFIG_HASH_ALGO_ID_SHA384,
-		.mac_key_id = SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
-		.mac_security_size = 384,
-		.enc_key_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-		.enc_security_size = 256,
-		.hsm_kdf = HSM_KDF_HMAC_SHA_384_TLS_48_32_4,
-		.hsm_flags = HSM_OP_KEY_EXCHANGE_FLAGS_GENERATE_EPHEMERAL |
-			     HSM_KEY_INFO_TRANSIENT,
-		.hsm_nb_shared_key_id = TLS12_NB_KEYS_WITH_MAC,
-	},
-	{
-		// TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-		.key_exchange_id = SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA,
-		.encryption_id = SMW_TLS12_ENCRYPTION_ID_AES_128_GCM,
-		.prf_id = SMW_CONFIG_HASH_ALGO_ID_SHA256,
-		.enc_key_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-		.enc_security_size = 128,
-		.hsm_kdf = HSM_KDF_HMAC_SHA_256_TLS_0_16_4,
-		.hsm_flags = HSM_OP_KEY_EXCHANGE_FLAGS_GENERATE_EPHEMERAL |
-			     HSM_KEY_INFO_TRANSIENT,
-		.hsm_nb_shared_key_id = TLS12_NB_KEYS_NO_MAC,
-	},
-	{
-		// TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-		.key_exchange_id = SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA,
-		.encryption_id = SMW_TLS12_ENCRYPTION_ID_AES_256_GCM,
-		.prf_id = SMW_CONFIG_HASH_ALGO_ID_SHA384,
-		.enc_key_id = SMW_CONFIG_KEY_TYPE_ID_AES,
-		.enc_security_size = 256,
-		.hsm_kdf = HSM_KDF_HMAC_SHA_384_TLS_0_32_4,
-		.hsm_flags = HSM_OP_KEY_EXCHANGE_FLAGS_GENERATE_EPHEMERAL |
-			     HSM_KEY_INFO_TRANSIENT,
-		.hsm_nb_shared_key_id = TLS12_NB_KEYS_NO_MAC,
-	},
+	hsm_kdf_algo_id_t kdf;
+	hsm_op_key_exchange_flags_t flags;
+	unsigned char nb_shared_key_id;
+} tls12_kdf[] = {
+	/* TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 */
+	TLS12_KDF_DEF_WITH_MAC(ECDHE_ECDSA, AES_128_CBC, SHA256, HMAC_SHA256,
+			       256, AES, 128, HMAC_SHA_256_TLS_32_16_4),
+	/* TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384 */
+	TLS12_KDF_DEF_WITH_MAC(ECDHE_ECDSA, AES_256_CBC, SHA384, HMAC_SHA384,
+			       384, AES, 256, HMAC_SHA_384_TLS_48_32_4),
+	/* TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 */
+	TLS12_KDF_DEF_NO_MAC(ECDHE_ECDSA, AES_128_GCM, SHA256, AES, 128,
+			     HMAC_SHA_256_TLS_0_16_4),
+	/* TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 */
+	TLS12_KDF_DEF_NO_MAC(ECDHE_ECDSA, AES_256_GCM, SHA384, AES, 256,
+			     HMAC_SHA_384_TLS_0_32_4),
 };
 
-static const struct tls_key_def {
+#define KEY_DEF(_key_type_id, _security_size, _key_initiator, _key_exchange)   \
+	{                                                                      \
+		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,          \
+		.security_size = _security_size,                               \
+		.key_initiator = HSM_KEY_TYPE_##_key_initiator,                \
+		.key_exchange = HSM_KE_SCHEME_##_key_exchange                  \
+	}
+static const struct key_def {
 	enum smw_config_key_type_id key_type_id;
 	unsigned int security_size;
-	hsm_key_type_t hsm_key_initiator;
-	hsm_key_exchange_scheme_id_t hsm_key_exchange;
-} hsm_tls_key_def_list[] = {
-	{
-		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST,
-		.security_size = 256,
-		.hsm_key_initiator = HSM_KEY_TYPE_ECDSA_NIST_P256,
-		.hsm_key_exchange = HSM_KE_SCHEME_ECDH_NIST_P256,
-	},
-	{
-		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST,
-		.security_size = 384,
-		.hsm_key_initiator = HSM_KEY_TYPE_ECDSA_NIST_P384,
-		.hsm_key_exchange = HSM_KE_SCHEME_ECDH_NIST_P384,
-	},
-	{
-		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1,
-		.security_size = 256,
-		.hsm_key_initiator = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_256,
-		.hsm_key_exchange = HSM_KE_SCHEME_ECDH_BRAINPOOL_R1_256,
-	},
-	{
-		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1,
-		.security_size = 384,
-		.hsm_key_initiator = HSM_KEY_TYPE_ECDSA_BRAINPOOL_R1_384,
-		.hsm_key_exchange = HSM_KE_SCHEME_ECDH_BRAINPOOL_R1_384,
-	},
+	hsm_key_type_t key_initiator;
+	hsm_key_exchange_scheme_id_t key_exchange;
+} key_def_list[] = {
+	KEY_DEF(ECDH_NIST, 256, ECDSA_NIST_P256, ECDH_NIST_P256),
+	KEY_DEF(ECDH_NIST, 384, ECDSA_NIST_P384, ECDH_NIST_P384),
+	KEY_DEF(ECDH_BRAINPOOL_R1, 256, ECDSA_BRAINPOOL_R1_256,
+		ECDH_BRAINPOOL_R1_256),
+	KEY_DEF(ECDH_BRAINPOOL_R1, 384, ECDSA_BRAINPOOL_R1_384,
+		ECDH_BRAINPOOL_R1_384),
 };
 
-static const struct tls_key_def *
-get_tls_key_def(struct smw_keymgr_identifier *key)
+static const struct key_def *get_key_def(struct smw_keymgr_identifier *key)
 {
-	const struct tls_key_def *key_def = hsm_tls_key_def_list;
-	const struct tls_key_def *ret_key = NULL;
+	const struct key_def *key_def = key_def_list;
+	const struct key_def *ret_key = NULL;
 	unsigned int i = 0;
 
-	for (i = 0; i < ARRAY_SIZE(hsm_tls_key_def_list); i++, key_def++) {
+	for (; i < ARRAY_SIZE(key_def_list); i++, key_def++) {
 		if (key_def->key_type_id == key->type_id &&
 		    key_def->security_size == key->security_size) {
 			ret_key = key_def;
@@ -149,19 +127,18 @@ get_tls_key_def(struct smw_keymgr_identifier *key)
 	return ret_key;
 }
 
-static int get_hsm_tls_key_exchange_ids(struct smw_keymgr_identifier *key,
-					op_key_exchange_args_t *op_args)
+static int get_tls_key_exchange_ids(struct smw_keymgr_identifier *key,
+				    op_key_exchange_args_t *op_args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	const struct tls_key_def *key_def = NULL;
+	const struct key_def *key_def = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	key_def = get_tls_key_def(key);
+	key_def = get_key_def(key);
 	if (key_def) {
-		op_args->initiator_public_data_type =
-			key_def->hsm_key_initiator;
-		op_args->key_exchange_scheme = key_def->hsm_key_exchange;
+		op_args->initiator_public_data_type = key_def->key_initiator;
+		op_args->key_exchange_scheme = key_def->key_exchange;
 		status = SMW_STATUS_OK;
 	}
 
@@ -169,15 +146,15 @@ static int get_hsm_tls_key_exchange_ids(struct smw_keymgr_identifier *key,
 	return status;
 }
 
-static unsigned short hsm_key_exchange_length(struct smw_keymgr_identifier *key)
+static unsigned short get_key_exchange_length(struct smw_keymgr_identifier *key)
 {
 	unsigned short length = 0;
-	const struct tls_key_def *key_def = NULL;
+	const struct key_def *key_def = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (BITS_TO_BYTES_SIZE(key->security_size) * 2 <= UINT16_MAX) {
-		key_def = get_tls_key_def(key);
+		key_def = get_key_def(key);
 		if (key_def)
 			length = (BITS_TO_BYTES_SIZE(key->security_size) * 2) &
 				 UINT16_MAX;
@@ -196,16 +173,16 @@ check_reallocate_key_exchange_buffer(unsigned char **data,
 	unsigned char *public_data = NULL;
 	unsigned int public_length = 0;
 	unsigned char *tmp_key = NULL;
-	unsigned short hsm_key_size = 0;
+	unsigned short key_size = 0;
 	unsigned int max_public_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	public_data = smw_keymgr_get_public_data(key_desc);
 
-	/* HSM require exact asymmetric public key size */
-	hsm_key_size = hsm_key_exchange_length(&key_desc->identifier);
-	if (!hsm_key_size) {
+	/* SECO requires exact asymmetric public key size */
+	key_size = get_key_exchange_length(&key_desc->identifier);
+	if (!key_size) {
 		if (public_data) {
 			SMW_DBG_PRINTF(ERROR,
 				       "Only public key can be exported\n");
@@ -220,7 +197,7 @@ check_reallocate_key_exchange_buffer(unsigned char **data,
 	public_length = smw_keymgr_get_public_length(key_desc);
 
 	/* First check if the user public buffer size is big enough */
-	max_public_length = hsm_key_size;
+	max_public_length = key_size;
 	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
 		max_public_length = smw_utils_get_base64_len(max_public_length);
 
@@ -239,7 +216,7 @@ check_reallocate_key_exchange_buffer(unsigned char **data,
 			tmp_key = public_data;
 		}
 
-		*length = hsm_key_size;
+		*length = key_size;
 		*data = tmp_key;
 
 		status = SMW_STATUS_OK;
@@ -255,11 +232,11 @@ get_tls12_kdf_info(struct smw_keymgr_tls12_args *args)
 {
 	unsigned int i = 0;
 
-	for (; i < ARRAY_SIZE(hsm_tls12_kdf); i++) {
-		if (hsm_tls12_kdf[i].key_exchange_id == args->key_exchange_id &&
-		    hsm_tls12_kdf[i].encryption_id == args->encryption_id &&
-		    hsm_tls12_kdf[i].prf_id == args->prf_id)
-			return &hsm_tls12_kdf[i];
+	for (; i < ARRAY_SIZE(tls12_kdf); i++) {
+		if (tls12_kdf[i].key_exchange_id == args->key_exchange_id &&
+		    tls12_kdf[i].encryption_id == args->encryption_id &&
+		    tls12_kdf[i].prf_id == args->prf_id)
+			return &tls12_kdf[i];
 	}
 
 	return NULL;
@@ -284,14 +261,14 @@ static void delete_db_shared_keys(unsigned int *ids_array, int nb_shared_keys)
 
 static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 				     int nb_shared_keys,
-				     unsigned int *ids_array,
-				     unsigned int *ids_hsm_array,
+				     unsigned int *new_key_ids,
+				     unsigned int *shared_key_ids,
 				     unsigned int key_group)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	int idx = 0;
-	unsigned int *id = ids_array;
-	unsigned int *hsm_id = ids_hsm_array;
+	unsigned int *new_key_id = new_key_ids;
+	unsigned int *shared_key_id = shared_key_ids;
 	struct smw_keymgr_identifier identifier = { 0 };
 	struct smw_keymgr_tls12_args *tls_args = NULL;
 	const struct tls12_kdf_info *kdf_info = NULL;
@@ -301,9 +278,9 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	if (!kdf_info)
 		return status;
 
-	/* Initialize the ids_array with invalid key ids */
-	for (; !hsm_id && idx < nb_shared_keys; idx++)
-		ids_array[idx] = INVALID_KEY_ID;
+	/* Initialize the new_key_ids with invalid key ids */
+	for (; !shared_key_id && idx < nb_shared_keys; idx++)
+		new_key_ids[idx] = INVALID_KEY_ID;
 
 	identifier.id = INVALID_KEY_ID;
 	identifier.subsystem_id = SUBSYSTEM_ID_SECO;
@@ -324,39 +301,41 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 		if (status != SMW_STATUS_OK)
 			goto end;
 
-		if (!hsm_id) {
+		if (!shared_key_id) {
 			/* Create the Client MAC write Key */
-			status = smw_keymgr_db_create(id, &identifier);
+			status = smw_keymgr_db_create(new_key_id, &identifier);
 		} else {
 			/* Update the Client MAC write Key */
-			identifier.id = *hsm_id++;
-			smw_keymgr_tls12_set_client_w_mac_key_id(tls_args, *id);
-			status = smw_keymgr_db_update(*id, &identifier);
+			identifier.id = *shared_key_id++;
+			smw_keymgr_tls12_set_client_w_mac_key_id(tls_args,
+								 *new_key_id);
+			status = smw_keymgr_db_update(*new_key_id, &identifier);
 		}
 
 		if (status != SMW_STATUS_OK) {
 			SMW_DBG_PRINTF(ERROR,
 				       "%s Key DB Client MAC key error\n",
-				       (hsm_id) ? "Update" : "Create");
+				       (shared_key_id) ? "Update" : "Create");
 			goto end;
 		}
-		id++;
+		new_key_id++;
 
-		if (!hsm_id) {
+		if (!shared_key_id) {
 			/* Create the Server MAC write Key */
-			status = smw_keymgr_db_create(id, &identifier);
+			status = smw_keymgr_db_create(new_key_id, &identifier);
 		} else {
 			/* Update the Server MAC write Key */
-			identifier.id = *hsm_id++;
-			smw_keymgr_tls12_set_server_w_mac_key_id(tls_args, *id);
-			status = smw_keymgr_db_update(*id, &identifier);
+			identifier.id = *shared_key_id++;
+			smw_keymgr_tls12_set_server_w_mac_key_id(tls_args,
+								 *new_key_id);
+			status = smw_keymgr_db_update(*new_key_id, &identifier);
 		}
-		id++;
+		new_key_id++;
 
 		if (status != SMW_STATUS_OK) {
 			SMW_DBG_PRINTF(ERROR,
 				       "%s Key DB Server MAC key error\n",
-				       (hsm_id) ? "Update" : "Create");
+				       (shared_key_id) ? "Update" : "Create");
 			goto end;
 		}
 	}
@@ -371,37 +350,37 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (!hsm_id) {
+	if (!shared_key_id) {
 		/* Create the Client Encryption write Key */
-		status = smw_keymgr_db_create(id, &identifier);
+		status = smw_keymgr_db_create(new_key_id, &identifier);
 	} else {
 		/* Update the Client Encryption write Key */
-		identifier.id = *hsm_id++;
-		smw_keymgr_tls12_set_client_w_enc_key_id(tls_args, *id);
-		status = smw_keymgr_db_update(*id, &identifier);
+		identifier.id = *shared_key_id++;
+		smw_keymgr_tls12_set_client_w_enc_key_id(tls_args, *new_key_id);
+		status = smw_keymgr_db_update(*new_key_id, &identifier);
 	}
-	id++;
+	new_key_id++;
 
 	if (status != SMW_STATUS_OK) {
 		SMW_DBG_PRINTF(ERROR, "%s Key DB Client Encryption key error\n",
-			       (hsm_id) ? "Update" : "Create");
+			       (shared_key_id) ? "Update" : "Create");
 		goto end;
 	}
 
-	if (!hsm_id) {
+	if (!shared_key_id) {
 		/* Create the Server Encryption write Key */
-		status = smw_keymgr_db_create(id, &identifier);
+		status = smw_keymgr_db_create(new_key_id, &identifier);
 	} else {
 		/* Update the Server Encryption write Key */
-		identifier.id = *hsm_id++;
-		smw_keymgr_tls12_set_server_w_enc_key_id(tls_args, *id);
-		status = smw_keymgr_db_update(*id, &identifier);
+		identifier.id = *shared_key_id++;
+		smw_keymgr_tls12_set_server_w_enc_key_id(tls_args, *new_key_id);
+		status = smw_keymgr_db_update(*new_key_id, &identifier);
 	}
-	id++;
+	new_key_id++;
 
 	if (status != SMW_STATUS_OK) {
 		SMW_DBG_PRINTF(ERROR, "%s Key DB Server Encryption key error\n",
-			       (hsm_id) ? "Update" : "Create");
+			       (shared_key_id) ? "Update" : "Create");
 		goto end;
 	}
 
@@ -415,24 +394,24 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (!hsm_id) {
+	if (!shared_key_id) {
 		/* Create the Master Key */
-		status = smw_keymgr_db_create(id, &identifier);
+		status = smw_keymgr_db_create(new_key_id, &identifier);
 	} else {
 		/* Update the Master Key */
-		identifier.id = *hsm_id;
-		smw_keymgr_tls12_set_master_sec_key_id(tls_args, *id);
-		status = smw_keymgr_db_update(*id, &identifier);
+		identifier.id = *shared_key_id;
+		smw_keymgr_tls12_set_master_sec_key_id(tls_args, *new_key_id);
+		status = smw_keymgr_db_update(*new_key_id, &identifier);
 	}
 
 	if (status != SMW_STATUS_OK) {
 		SMW_DBG_PRINTF(ERROR, "%s Key DB Master key error\n",
-			       (hsm_id) ? "Update" : "Create");
+			       (shared_key_id) ? "Update" : "Create");
 	}
 
 end:
-	if (status != SMW_STATUS_OK && !hsm_id)
-		delete_db_shared_keys(ids_array, nb_shared_keys);
+	if (status != SMW_STATUS_OK && !shared_key_id)
+		delete_db_shared_keys(new_key_ids, nb_shared_keys);
 
 	return status;
 }
@@ -460,21 +439,21 @@ static int check_ivs_length(struct smw_keymgr_tls12_args *tls_args)
 	return SMW_STATUS_OK;
 }
 
-static int check_kdf_input_length(op_key_exchange_args_t *args,
+static int check_kdf_input_length(op_key_exchange_args_t *op_args,
 				  enum smw_config_hash_algo_id prf_id)
 {
-	if ((args->flags & HSM_OP_KEY_EXCHANGE_FLAGS_USE_TLS_EMS) ==
+	if ((op_args->flags & HSM_OP_KEY_EXCHANGE_FLAGS_USE_TLS_EMS) ==
 	    HSM_OP_KEY_EXCHANGE_FLAGS_USE_TLS_EMS) {
 		switch (prf_id) {
 		case SMW_CONFIG_HASH_ALGO_ID_SHA256:
-			if (args->kdf_input_size !=
+			if (op_args->kdf_input_size !=
 			    TLS12_KDF_EMS_SHA256_INPUT_SIZE)
 				return SMW_STATUS_INVALID_PARAM;
 
 			return SMW_STATUS_OK;
 
 		case SMW_CONFIG_HASH_ALGO_ID_SHA384:
-			if (args->kdf_input_size !=
+			if (op_args->kdf_input_size !=
 			    TLS12_KDF_EMS_SHA384_INPUT_SIZE)
 				return SMW_STATUS_INVALID_PARAM;
 
@@ -485,14 +464,14 @@ static int check_kdf_input_length(op_key_exchange_args_t *args,
 		}
 	}
 
-	if (args->kdf_input_size != TLS12_KDF_INPUT_SIZE)
+	if (op_args->kdf_input_size != TLS12_KDF_INPUT_SIZE)
 		return SMW_STATUS_INVALID_PARAM;
 
 	return SMW_STATUS_OK;
 }
 
-int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
-		     struct smw_keymgr_derive_key_args *args)
+int seco_derive_tls12(struct subsystem_context *seco_ctx,
+		      struct smw_keymgr_derive_key_args *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
@@ -508,12 +487,12 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 	unsigned int *new_key_ids = NULL;
 	unsigned int key_base_len = 0;
 	unsigned int hex_key_base_len = 0;
-	unsigned short hsm_key_size = 0;
+	unsigned short key_size = 0;
 	int nb_shared_keys = 0;
 	unsigned int key_group = 0;
 
-	hsm_err_t hsm_err = HSM_NO_ERROR;
-	op_key_exchange_args_t op_hsm_args = { 0 };
+	hsm_err_t err = HSM_NO_ERROR;
+	op_key_exchange_args_t op_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -524,18 +503,18 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 	if (!kdf_info)
 		goto end;
 
-	nb_shared_keys = kdf_info->hsm_nb_shared_key_id;
+	nb_shared_keys = kdf_info->nb_shared_key_id;
 	if (sizeof(unsigned int) * nb_shared_keys > UINT8_MAX) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
 
-	status = get_hsm_tls_key_exchange_ids(key_derived_id, &op_hsm_args);
+	status = get_tls_key_exchange_ids(key_derived_id, &op_args);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	status = check_reallocate_key_exchange_buffer(&tmp_key_exchange,
-						      &hsm_key_size,
+						      &key_size,
 						      &args->key_derived);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -550,14 +529,14 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 	 * Client and Server write IVs
 	 * KDF output can't be NULL even if IV's are not expected
 	 */
-	op_hsm_args.kdf_output_size = sizeof(kdf_output);
-	op_hsm_args.kdf_output = kdf_output;
+	op_args.kdf_output_size = sizeof(kdf_output);
+	op_args.kdf_output = kdf_output;
 
-	op_hsm_args.ke_output = tmp_key_exchange;
-	op_hsm_args.ke_output_size = hsm_key_size;
+	op_args.ke_output = tmp_key_exchange;
+	op_args.ke_output_size = key_size;
 
-	op_hsm_args.kdf_algorithm = kdf_info->hsm_kdf;
-	op_hsm_args.shared_key_identifier_array_size =
+	op_args.kdf_algorithm = kdf_info->kdf;
+	op_args.shared_key_identifier_array_size =
 		sizeof(unsigned int) * nb_shared_keys;
 
 	/*
@@ -569,7 +548,7 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 	 */
 	new_key_ids =
 		SMW_UTILS_MALLOC(nb_shared_keys * sizeof(*new_key_ids) +
-				 op_hsm_args.shared_key_identifier_array_size);
+				 op_args.shared_key_identifier_array_size);
 	if (!new_key_ids) {
 		SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
 		status = SMW_STATUS_ALLOC_FAILURE;
@@ -588,22 +567,22 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	op_hsm_args.flags = kdf_info->hsm_flags;
+	op_args.flags = kdf_info->flags;
 
 	/* Add extended Master secret key flag if requested */
 	if (smw_keymgr_tls12_get_ext_master_key(tls_args))
-		op_hsm_args.flags |= HSM_OP_KEY_EXCHANGE_FLAGS_USE_TLS_EMS;
+		op_args.flags |= HSM_OP_KEY_EXCHANGE_FLAGS_USE_TLS_EMS;
 
-	op_hsm_args.kdf_input_size =
+	op_args.kdf_input_size =
 		smw_keymgr_tls12_get_kdf_input_length(tls_args);
 
-	status = check_kdf_input_length(&op_hsm_args, kdf_info->prf_id);
+	status = check_kdf_input_length(&op_args, kdf_info->prf_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	op_hsm_args.kdf_input = smw_keymgr_tls12_get_kdf_input(tls_args);
+	op_args.kdf_input = smw_keymgr_tls12_get_kdf_input(tls_args);
 
-	op_hsm_args.shared_key_identifier_array = (uint8_t *)shared_key_ids;
+	op_args.shared_key_identifier_array = (uint8_t *)shared_key_ids;
 
 	key_base = smw_keymgr_get_public_data(&args->key_base);
 	key_base_len = smw_keymgr_get_public_length(&args->key_base);
@@ -615,22 +594,22 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 		if (status != SMW_STATUS_OK)
 			goto end;
 
-		op_hsm_args.ke_input = hex_key_base;
-		op_hsm_args.ke_input_size = hex_key_base_len;
+		op_args.ke_input = hex_key_base;
+		op_args.ke_input_size = hex_key_base_len;
 	} else {
-		op_hsm_args.ke_input = key_base;
-		op_hsm_args.ke_input_size = key_base_len;
+		op_args.ke_input = key_base;
+		op_args.ke_input_size = key_base_len;
 	}
 
 	/* Only Transient keys generated */
-	op_hsm_args.shared_key_info = HSM_KEY_INFO_TRANSIENT;
+	op_args.shared_key_info = HSM_KEY_INFO_TRANSIENT;
 
 	do {
-		status = hsm_get_key_group(hsm_ctx, false, &key_group);
+		status = seco_get_key_group(seco_ctx, false, &key_group);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
-		if (SET_OVERFLOW(key_group, op_hsm_args.shared_key_group)) {
+		if (SET_OVERFLOW(key_group, op_args.shared_key_group)) {
 			status = SMW_STATUS_OPERATION_FAILURE;
 			goto end;
 		}
@@ -651,39 +630,32 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 			       "    kdf_algorithm: %d\n"
 			       "    flags: 0x%x\n"
 			       "    signed_message: %p (size %d)\n",
-			       __func__, __LINE__, hsm_ctx->hdl.key_management,
-			       op_hsm_args.key_identifier,
-			       op_hsm_args.shared_key_identifier_array,
-			       op_hsm_args.shared_key_identifier_array_size,
-			       op_hsm_args.ke_input, op_hsm_args.ke_input_size,
-			       op_hsm_args.ke_output,
-			       op_hsm_args.ke_output_size,
-			       op_hsm_args.kdf_input,
-			       op_hsm_args.kdf_input_size,
-			       op_hsm_args.kdf_output,
-			       op_hsm_args.kdf_output_size,
-			       op_hsm_args.shared_key_group,
-			       op_hsm_args.shared_key_info,
-			       op_hsm_args.shared_key_type,
-			       op_hsm_args.initiator_public_data_type,
-			       op_hsm_args.key_exchange_scheme,
-			       op_hsm_args.kdf_algorithm, op_hsm_args.flags,
-			       op_hsm_args.signed_message,
-			       op_hsm_args.signed_msg_size);
+			       __func__, __LINE__, seco_ctx->hdl.key_management,
+			       op_args.key_identifier,
+			       op_args.shared_key_identifier_array,
+			       op_args.shared_key_identifier_array_size,
+			       op_args.ke_input, op_args.ke_input_size,
+			       op_args.ke_output, op_args.ke_output_size,
+			       op_args.kdf_input, op_args.kdf_input_size,
+			       op_args.kdf_output, op_args.kdf_output_size,
+			       op_args.shared_key_group,
+			       op_args.shared_key_info, op_args.shared_key_type,
+			       op_args.initiator_public_data_type,
+			       op_args.key_exchange_scheme,
+			       op_args.kdf_algorithm, op_args.flags,
+			       op_args.signed_message, op_args.signed_msg_size);
 
-		hsm_err = hsm_key_exchange(hsm_ctx->hdl.key_management,
-					   &op_hsm_args);
+		err = hsm_key_exchange(seco_ctx->hdl.key_management, &op_args);
 
-		SMW_DBG_PRINTF(DEBUG, "hsm_key_exchange returned %d\n",
-			       hsm_err);
+		SMW_DBG_PRINTF(DEBUG, "hsm_key_exchange returned %d\n", err);
 		/*
-		 * There is no specific HSM error code indicating that the
+		 * There is no specific SECO error code indicating that the
 		 * NVM Storage is full, hence let's assume that the NVM_KEY_STORE_ERROR
 		 * will be returned only in case of key group full.
 		 */
-		if (hsm_err == HSM_KEY_STORE_ERROR) {
-			status = hsm_set_key_group_state(hsm_ctx, key_group,
-							 false, true);
+		if (err == HSM_KEY_STORE_ERROR) {
+			status = seco_set_key_group_state(seco_ctx, key_group,
+							  false, true);
 			if (status != SMW_STATUS_OK)
 				goto end;
 
@@ -692,18 +664,17 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 				goto end;
 			}
 		}
-	} while (hsm_err == HSM_KEY_STORE_ERROR);
+	} while (err == HSM_KEY_STORE_ERROR);
 
-	status = convert_hsm_err(hsm_err);
+	status = seco_convert_err(err);
 	if (status != SMW_STATUS_OK) {
 		delete_db_shared_keys(new_key_ids, nb_shared_keys);
 		goto end;
 	}
 
 	/* Update the ephemeral key exchange public buffer */
-	status =
-		smw_keymgr_update_public_buffer(&args->key_derived,
-						tmp_key_exchange, hsm_key_size);
+	status = smw_keymgr_update_public_buffer(&args->key_derived,
+						 tmp_key_exchange, key_size);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -726,7 +697,7 @@ int hsm_derive_tls12(struct subsystem_context *hsm_ctx,
 					   shared_key_ids, key_group);
 
 	if (args->key_attributes.policy) {
-		hsm_set_empty_key_policy(&args->key_attributes);
+		seco_set_empty_key_policy(&args->key_attributes);
 		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 	}
 

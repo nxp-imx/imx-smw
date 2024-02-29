@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_status.h"
@@ -38,8 +38,8 @@ static int append_key_group(struct smw_utils_list *key_grp_list,
 	return status;
 }
 
-int hsm_get_key_group(struct subsystem_context *hsm_ctx, bool persistent,
-		      unsigned int *out_grp)
+int seco_get_key_group(struct subsystem_context *seco_ctx, bool persistent,
+		       unsigned int *out_grp)
 {
 	int status = SMW_STATUS_MUTEX_LOCK_FAILURE;
 
@@ -47,19 +47,19 @@ int hsm_get_key_group(struct subsystem_context *hsm_ctx, bool persistent,
 	struct key_group *key_grp = NULL;
 	unsigned int grp = 0;
 	unsigned int first_grp = *out_grp;
-	unsigned int last_grp = HSM_LAST_TRANSIENT_KEY_GROUP;
+	unsigned int last_grp = SECO_LAST_TRANSIENT_KEY_GROUP;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (smw_utils_mutex_lock(hsm_ctx->key_grp_mutex))
+	if (smw_utils_mutex_lock(seco_ctx->key_grp_mutex))
 		goto end;
 
 	if (persistent)
-		last_grp = HSM_LAST_PERSISTENT_KEY_GROUP;
+		last_grp = SECO_LAST_PERSISTENT_KEY_GROUP;
 
 	status = SMW_STATUS_OPERATION_FAILURE;
 	for (grp = first_grp; grp <= last_grp; grp++) {
-		node = smw_utils_list_find_first(&hsm_ctx->key_grp_list, &grp);
+		node = smw_utils_list_find_first(&seco_ctx->key_grp_list, &grp);
 		if (node) {
 			key_grp = smw_utils_list_get_data(node);
 			if (!key_grp) {
@@ -75,13 +75,13 @@ int hsm_get_key_group(struct subsystem_context *hsm_ctx, bool persistent,
 			}
 		} else {
 			/* Create a new node entry in the list */
-			status = append_key_group(&hsm_ctx->key_grp_list, grp,
+			status = append_key_group(&seco_ctx->key_grp_list, grp,
 						  persistent, false);
 			break;
 		}
 	}
 
-	if (smw_utils_mutex_unlock(hsm_ctx->key_grp_mutex) &&
+	if (smw_utils_mutex_unlock(seco_ctx->key_grp_mutex) &&
 	    status == SMW_STATUS_OK)
 		status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
 
@@ -91,8 +91,8 @@ end:
 	return status;
 }
 
-int hsm_set_key_group_state(struct subsystem_context *hsm_ctx, unsigned int grp,
-			    bool persistent, bool full)
+int seco_set_key_group_state(struct subsystem_context *seco_ctx,
+			     unsigned int grp, bool persistent, bool full)
 {
 	int status = SMW_STATUS_MUTEX_LOCK_FAILURE;
 
@@ -101,10 +101,10 @@ int hsm_set_key_group_state(struct subsystem_context *hsm_ctx, unsigned int grp,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (smw_utils_mutex_lock(hsm_ctx->key_grp_mutex))
+	if (smw_utils_mutex_lock(seco_ctx->key_grp_mutex))
 		goto end;
 
-	node = smw_utils_list_find_first(&hsm_ctx->key_grp_list, &grp);
+	node = smw_utils_list_find_first(&seco_ctx->key_grp_list, &grp);
 	if (node) {
 		key_grp = smw_utils_list_get_data(node);
 		if (key_grp && key_grp->persistent == persistent) {
@@ -119,11 +119,11 @@ int hsm_set_key_group_state(struct subsystem_context *hsm_ctx, unsigned int grp,
 
 	} else {
 		/* Create a new node entry in the list */
-		status = append_key_group(&hsm_ctx->key_grp_list, grp,
+		status = append_key_group(&seco_ctx->key_grp_list, grp,
 					  persistent, full);
 	}
 
-	if (smw_utils_mutex_unlock(hsm_ctx->key_grp_mutex) &&
+	if (smw_utils_mutex_unlock(seco_ctx->key_grp_mutex) &&
 	    status == SMW_STATUS_OK)
 		status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
 

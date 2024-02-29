@@ -13,9 +13,9 @@
 
 #include "common.h"
 
-#define HSM_MAX_IV_LEN	       12
-#define HSM_GEN_COUNTER_IV_LEN 4
-#define HSM_TAG_LEN	       16
+#define SECO_MAX_IV_LEN		12
+#define SECO_GEN_COUNTER_IV_LEN 4
+#define SECO_TAG_LEN		16
 
 /*
  * AEAD using CCM mode can be achieved by setting AAD = 0 and
@@ -23,21 +23,21 @@
  * AEAD using GCM mode can be achieved using function hsm_auth_enc() and AAD
  * is supported.
  * Depending on the mode, algorithm to be used for the operation (either
- * hsm_cipher_algo or hsm_aead_algo) is defined.
+ * cipher_algo or aead_algo) is defined.
  */
 static const struct {
 	enum smw_config_key_type_id key_type_id;
 	enum smw_config_aead_mode_id aead_mode_id;
 	union {
-		hsm_op_auth_enc_algo_t hsm_aead_algo;
-		hsm_op_cipher_one_go_algo_t hsm_cipher_algo;
+		hsm_op_auth_enc_algo_t aead_algo;
+		hsm_op_cipher_one_go_algo_t cipher_algo;
 	};
 } aead_algos[] = { { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 		     .aead_mode_id = SMW_CONFIG_AEAD_MODE_ID_CCM,
-		     .hsm_cipher_algo = HSM_CIPHER_ONE_GO_ALGO_AES_CCM },
+		     .cipher_algo = HSM_CIPHER_ONE_GO_ALGO_AES_CCM },
 		   { .key_type_id = SMW_CONFIG_KEY_TYPE_ID_AES,
 		     .aead_mode_id = SMW_CONFIG_AEAD_MODE_ID_GCM,
-		     .hsm_aead_algo = HSM_AUTH_ENC_ALGO_AES_GCM } };
+		     .aead_algo = HSM_AUTH_ENC_ALGO_AES_GCM } };
 
 static int set_aead_algo(enum smw_config_key_type_id key_type_id,
 			 enum smw_config_aead_mode_id aead_mode_id,
@@ -52,9 +52,9 @@ static int set_aead_algo(enum smw_config_key_type_id key_type_id,
 		if (key_type_id == aead_algos[i].key_type_id &&
 		    aead_mode_id == aead_algos[i].aead_mode_id) {
 			if (aead_mode_id == SMW_CONFIG_AEAD_MODE_ID_CCM)
-				*cipher_algo = aead_algos[i].hsm_cipher_algo;
+				*cipher_algo = aead_algos[i].cipher_algo;
 			else
-				*aead_algo = aead_algos[i].hsm_aead_algo;
+				*aead_algo = aead_algos[i].aead_algo;
 
 			status = SMW_STATUS_OK;
 			break;
@@ -68,20 +68,20 @@ static int set_aead_algo(enum smw_config_key_type_id key_type_id,
 #define AEAD_FLAG(_op_type_id)                                                 \
 	{                                                                      \
 		.smw_op_type_id = SMW_CONFIG_AEAD_OP_ID_##_op_type_id,         \
-		.hsm_flags = HSM_AUTH_ENC_FLAGS_##_op_type_id                  \
+		.flags = HSM_AUTH_ENC_FLAGS_##_op_type_id                      \
 	}
 
 static const struct {
 	enum smw_config_aead_op_type_id smw_op_type_id;
-	hsm_op_auth_enc_flags_t hsm_flags;
+	hsm_op_auth_enc_flags_t flags;
 } aead_flags[] = { AEAD_FLAG(ENCRYPT), AEAD_FLAG(DECRYPT) };
 
 /**
- * set_aead_flags() - Set the HSM AEAD operation flags
+ * set_aead_flags() - Set the AEAD operation flags
  * @aead_args: Pointer to internal AEAD arguments structure
- * @hsm_flags: Pointer to HSM AEAD operation flag
+ * @flags: Pointer to AEAD operation flag
  *
- * This function sets the required HSM AEAD operation flags.
+ * This function sets the required AEAD operation flags.
  *
  * Depending on the operation type, either HSM_AUTH_ENC_FLAGS_DECRYPT or
  * HSM_AUTH_ENC_FLAGS_ENCRYPT flag is set.
@@ -98,7 +98,7 @@ static const struct {
  * SMW_STATUS_INVALID_PARAM - Invalid argument parameter
  */
 static int set_aead_flags(struct smw_crypto_aead_args *aead_args,
-			  hsm_op_auth_enc_flags_t *hsm_flags)
+			  hsm_op_auth_enc_flags_t *flags)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -108,16 +108,15 @@ static int set_aead_flags(struct smw_crypto_aead_args *aead_args,
 		if (aead_args->op_id != aead_flags[i].smw_op_type_id)
 			continue;
 
-		*hsm_flags = aead_flags[i].hsm_flags;
+		*flags = aead_flags[i].flags;
 
 		if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT &&
 		    aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_GCM) {
 			if (!smw_crypto_get_aead_iv_len(aead_args))
-				*hsm_flags |=
-					HSM_AUTH_ENC_FLAGS_GENERATE_FULL_IV;
+				*flags |= HSM_AUTH_ENC_FLAGS_GENERATE_FULL_IV;
 			else if (smw_crypto_get_aead_iv_len(aead_args) ==
-				 HSM_GEN_COUNTER_IV_LEN)
-				*hsm_flags |=
+				 SECO_GEN_COUNTER_IV_LEN)
+				*flags |=
 					HSM_AUTH_ENC_FLAGS_GENERATE_COUNTER_IV;
 		}
 
@@ -130,11 +129,11 @@ static int set_aead_flags(struct smw_crypto_aead_args *aead_args,
 }
 
 /**
- * get_hsm_expected_encr_output_len() - Return the HSM expected output length
+ * get_expected_encr_output_len() - Return the expected output length
  * @aead_args: Pointer to internal AEAD arguments structure
  * @length: Pointer to output buffer length
  *
- * This function returns the HSM expected output buffer length for encryption
+ * This function returns the expected output buffer length for encryption
  * operation
  *
  * Encryption:
@@ -148,9 +147,8 @@ static int set_aead_flags(struct smw_crypto_aead_args *aead_args,
  * SMW_STATUS_OK            - Success
  * SMW_STATUS_INVALID_PARAM - Invalid argument parameter
  */
-static int
-get_hsm_expected_encr_output_len(struct smw_crypto_aead_args *aead_args,
-				 unsigned int *length)
+static int get_expected_encr_output_len(struct smw_crypto_aead_args *aead_args,
+					unsigned int *length)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -161,8 +159,8 @@ get_hsm_expected_encr_output_len(struct smw_crypto_aead_args *aead_args,
 
 	if (!INC_OVERFLOW(*length, tag_len)) {
 		if (aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_GCM &&
-		    iv_len < HSM_MAX_IV_LEN) {
-			if (INC_OVERFLOW(*length, HSM_MAX_IV_LEN))
+		    iv_len < SECO_MAX_IV_LEN) {
+			if (INC_OVERFLOW(*length, SECO_MAX_IV_LEN))
 				goto end;
 		}
 
@@ -179,8 +177,8 @@ static void set_all_outputs_length(struct smw_crypto_aead_args *args,
 				   unsigned int *output_len)
 {
 	if (args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
-		smw_crypto_set_aead_output_iv_len(args, HSM_MAX_IV_LEN);
-		smw_crypto_set_aead_tag_len(args, HSM_TAG_LEN);
+		smw_crypto_set_aead_output_iv_len(args, SECO_MAX_IV_LEN);
+		smw_crypto_set_aead_tag_len(args, SECO_TAG_LEN);
 	}
 
 	smw_crypto_set_aead_output_len(args, *output_len);
@@ -209,25 +207,25 @@ static void set_output_iv(struct smw_crypto_aead_args *args,
 	unsigned char *iv = smw_crypto_get_aead_iv(args);
 
 	if (output_iv) {
-		if (iv_len < HSM_MAX_IV_LEN)
+		if (iv_len < SECO_MAX_IV_LEN)
 			SMW_UTILS_MEMCPY(output_iv, &output[iv_start_index],
-					 HSM_MAX_IV_LEN);
+					 SECO_MAX_IV_LEN);
 		else if (iv)
-			SMW_UTILS_MEMCPY(output_iv, iv, HSM_MAX_IV_LEN);
+			SMW_UTILS_MEMCPY(output_iv, iv, SECO_MAX_IV_LEN);
 	}
 }
 
 /**
  * set_encryption_io_params() - Set input and output params
  * @aead_args: Pointer to internal AEAD arguments structure
- * @op_args: Pointer to HSM AEAD operation arguments structure
+ * @op_args: Pointer to AEAD operation arguments structure
  * @resized_output: Pointer to resized output buffer
  *
- * This function sets HSM AEAD arguments input, input_size,
+ * This function sets AEAD arguments input, input_size,
  * output and output_size for AEAD encryption operation.
  *
  * This function allocates memory to resized_output, if the user output buffer
- * length is less than HSM expected output length (output buffer length +
+ * length is less than expected output length (output buffer length +
  * tag length (if applicable) + IV length (if applicable)).
  *
  * resized_output is released once the AEAD operation is performed.
@@ -244,7 +242,7 @@ static int set_encryption_io_params(struct smw_crypto_aead_args *aead_args,
 {
 	int status = SMW_STATUS_OK;
 
-	unsigned int hsm_expected_output_len = 0;
+	unsigned int expected_output_len = 0;
 	unsigned int output_len = smw_crypto_get_aead_output_len(aead_args);
 	bool dedicated_tag_field_set =
 		smw_crypto_is_aead_tag_field_set(aead_args);
@@ -253,8 +251,7 @@ static int set_encryption_io_params(struct smw_crypto_aead_args *aead_args,
 	unsigned int exp_total_user_output_len =
 		smw_crypto_get_aead_input_len(aead_args);
 
-	status = get_hsm_expected_encr_output_len(aead_args,
-						  &hsm_expected_output_len);
+	status = get_expected_encr_output_len(aead_args, &expected_output_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -281,8 +278,8 @@ static int set_encryption_io_params(struct smw_crypto_aead_args *aead_args,
 		goto end;
 	}
 
-	if (output_len < hsm_expected_output_len) {
-		*resized_output = SMW_UTILS_MALLOC(hsm_expected_output_len *
+	if (output_len < expected_output_len) {
+		*resized_output = SMW_UTILS_MALLOC(expected_output_len *
 						   sizeof(**resized_output));
 		if (!*resized_output) {
 			status = SMW_STATUS_ALLOC_FAILURE;
@@ -294,7 +291,7 @@ static int set_encryption_io_params(struct smw_crypto_aead_args *aead_args,
 		op_args->output = smw_crypto_get_aead_output(aead_args);
 	}
 
-	if (SET_OVERFLOW(hsm_expected_output_len, op_args->output_size)) {
+	if (SET_OVERFLOW(expected_output_len, op_args->output_size)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
@@ -313,10 +310,10 @@ end:
 /**
  * set_decryption_io_params() - Set input and output params
  * @aead_args: Pointer to internal AEAD arguments structure
- * @op_args: Pointer to HSM AEAD operation arguments structure
+ * @op_args: Pointer to AEAD operation arguments structure
  * @resized_input: Pointer to resized input buffer
  *
- * This function sets HSM AEAD arguments input, input_size, output
+ * This function sets AEAD arguments input, input_size, output
  * and output_size for AEAD decryption operation.
  *
  * This function allocates memory to resized_input, if the
@@ -341,8 +338,8 @@ static int set_decryption_io_params(struct smw_crypto_aead_args *aead_args,
 	unsigned int tag_len = smw_crypto_get_aead_tag_len(aead_args);
 	unsigned char *input = smw_crypto_get_aead_input(aead_args);
 	unsigned char *tag = smw_crypto_get_aead_tag(aead_args);
-	unsigned int hsm_expected_input_len = input_len;
-	unsigned int hsm_expected_output_len = input_len;
+	unsigned int expected_input_len = input_len;
+	unsigned int expected_output_len = input_len;
 	bool dedicated_tag_field_set =
 		smw_crypto_is_aead_tag_field_set(aead_args);
 
@@ -350,17 +347,16 @@ static int set_decryption_io_params(struct smw_crypto_aead_args *aead_args,
 		goto end;
 
 	if (!dedicated_tag_field_set) {
-		if (DEC_OVERFLOW(hsm_expected_output_len, tag_len))
+		if (DEC_OVERFLOW(expected_output_len, tag_len))
 			goto end;
 	}
 
-	if (smw_crypto_get_aead_output_len(aead_args) <
-	    hsm_expected_output_len) {
+	if (smw_crypto_get_aead_output_len(aead_args) < expected_output_len) {
 		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		goto end;
 	}
 
-	if (SET_OVERFLOW(hsm_expected_output_len, op_args->output_size))
+	if (SET_OVERFLOW(expected_output_len, op_args->output_size))
 		goto end;
 
 	op_args->output = smw_crypto_get_aead_output(aead_args);
@@ -369,10 +365,10 @@ static int set_decryption_io_params(struct smw_crypto_aead_args *aead_args,
 		if (!tag || !tag_len)
 			goto end;
 
-		if (INC_OVERFLOW(hsm_expected_input_len, tag_len))
+		if (INC_OVERFLOW(expected_input_len, tag_len))
 			goto end;
 
-		*resized_input = SMW_UTILS_MALLOC(hsm_expected_input_len *
+		*resized_input = SMW_UTILS_MALLOC(expected_input_len *
 						  sizeof(**resized_input));
 		if (!*resized_input) {
 			status = SMW_STATUS_ALLOC_FAILURE;
@@ -383,7 +379,7 @@ static int set_decryption_io_params(struct smw_crypto_aead_args *aead_args,
 		SMW_UTILS_MEMCPY(*resized_input + input_len, tag, tag_len);
 
 		op_args->input = *resized_input;
-		input_len = hsm_expected_input_len;
+		input_len = expected_input_len;
 	} else {
 		op_args->input = smw_crypto_get_aead_input(aead_args);
 	}
@@ -417,8 +413,8 @@ static int set_user_encr_outputs_len(struct smw_crypto_aead_args *args,
 {
 	int status = SMW_STATUS_OPERATION_FAILURE;
 
-	if (smw_crypto_get_aead_iv_len(args) < HSM_MAX_IV_LEN) {
-		if (DEC_OVERFLOW(*output_len, HSM_MAX_IV_LEN))
+	if (smw_crypto_get_aead_iv_len(args) < SECO_MAX_IV_LEN) {
+		if (DEC_OVERFLOW(*output_len, SECO_MAX_IV_LEN))
 			goto end;
 	}
 
@@ -473,7 +469,7 @@ static int copy_buffers_post_encr(uint8_t *received_output,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (smw_crypto_get_aead_iv_len(args) < HSM_MAX_IV_LEN) {
+	if (smw_crypto_get_aead_iv_len(args) < SECO_MAX_IV_LEN) {
 		iv_start_index = *output_len;
 
 		if (dedicated_tag_field_set) {
@@ -529,12 +525,12 @@ static int set_output_length(struct smw_crypto_aead_args *aead_args)
 
 	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
 		if (!smw_crypto_is_aead_tag_field_set(aead_args)) {
-			if (INC_OVERFLOW(output_len, HSM_TAG_LEN))
+			if (INC_OVERFLOW(output_len, SECO_TAG_LEN))
 				goto end;
 		}
 	} else {
 		if (!smw_crypto_is_aead_tag_field_set(aead_args)) {
-			if (DEC_OVERFLOW(output_len, HSM_TAG_LEN))
+			if (DEC_OVERFLOW(output_len, SECO_TAG_LEN))
 				goto end;
 		}
 	}
@@ -549,9 +545,9 @@ end:
 }
 
 /**
- * fill_cipher_args() - Fill HSM cipher arguments structure
- * @aead_args: Pointer to HSM AEAD operation arguments structure
- * @cipher_args: Pointer to HSM cipher operation arguments structure
+ * fill_cipher_args() - Fill cipher arguments structure
+ * @aead_args: Pointer to AEAD operation arguments structure
+ * @cipher_args: Pointer to cipher operation arguments structure
  *
  * This function fills the required @cipher_args members from @aead_args.
  *
@@ -601,26 +597,26 @@ static int aead(struct hdl *hdl, void *args)
 		if (smw_crypto_get_aead_aad(aead_args))
 			goto end;
 
-		if (iv_length != HSM_MAX_IV_LEN) {
+		if (iv_length != SECO_MAX_IV_LEN) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
 	}
 
 	/*
-	 * For HSM subsystem, tag length must be 16 Bytes.
-	 * If tag length < HSM_TAG_LEN, set the required output buffer lengths and
+	 * For SECO subsystem, tag length must be 16 Bytes.
+	 * If tag length < SECO_TAG_LEN, set the required output buffer lengths and
 	 * return SMW_STATUS_OUTPUT_TOO_SHORT.
-	 * If tag length > HSM_TAG_LEN, HSM returns HSM_INVALID_PARAM
+	 * If tag length > SECO_TAG_LEN, SECO returns HSM_INVALID_PARAM
 	 * because the output length is too big. So, set the tag length to 16 and
 	 * continue with operation.
 	 */
-	if (smw_crypto_get_aead_tag_len(aead_args) < HSM_TAG_LEN) {
+	if (smw_crypto_get_aead_tag_len(aead_args) < SECO_TAG_LEN) {
 		set_output_length(aead_args);
 		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		goto end;
-	} else if (smw_crypto_get_aead_tag_len(aead_args) > HSM_TAG_LEN) {
-		smw_crypto_set_aead_tag_len(args, HSM_TAG_LEN);
+	} else if (smw_crypto_get_aead_tag_len(aead_args) > SECO_TAG_LEN) {
+		smw_crypto_set_aead_tag_len(args, SECO_TAG_LEN);
 	}
 
 	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT)
@@ -630,21 +626,21 @@ static int aead(struct hdl *hdl, void *args)
 
 	if (key_desc->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
 		// TODO: first import key, then do authenticated encryption
-		// Currently, key import is not supported by HSM
+		// Currently, key import is not supported by SECO
 		SMW_DBG_PRINTF(VERBOSE,
 			       "%s : key import is not supported by SECO\n",
 			       __func__);
 		goto end;
 	}
 
-	/* Set HSM operation algorithm */
+	/* Set operation algorithm */
 	status = set_aead_algo(key_desc->identifier.type_id, aead_args->mode_id,
 			       &op_aead_args.ae_algo,
 			       &op_cipher_args.cipher_algo);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	/* Set HSM flags */
+	/* Set flags */
 	status = set_aead_flags(aead_args, &op_aead_args.flags);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -743,12 +739,12 @@ static int aead(struct hdl *hdl, void *args)
 
 	if (!is_encrypt_op && err == HSM_GENERAL_ERROR)
 		/*
-		 * Assume HSM returned this error code
+		 * Assume SECO returned this error code
 		 * because the tag is invalid.
 		 */
 		status = SMW_STATUS_SIGNATURE_INVALID;
 	else
-		status = convert_hsm_err(err);
+		status = seco_convert_err(err);
 
 	if (aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_GCM &&
 	    (!SET_OVERFLOW(op_aead_args.output_size, output_length)))
@@ -780,8 +776,8 @@ end:
 	return status;
 }
 
-bool hsm_aead_handle(struct hdl *hdl, enum operation_id operation_id,
-		     void *args, int *status)
+bool seco_aead_handle(struct hdl *hdl, enum operation_id operation_id,
+		      void *args, int *status)
 {
 	switch (operation_id) {
 	case OPERATION_ID_AEAD:

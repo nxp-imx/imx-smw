@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_status.h"
@@ -15,10 +15,10 @@
 
 #include "common.h"
 
-#define HASH_ALGO(_id, _hsm_id, _length)                                       \
+#define HASH_ALGO(_id, _seco_id, _length)                                      \
 	{                                                                      \
 		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_id,                      \
-		.hsm_hash_algo = HSM_HASH_ALGO_##_hsm_id, .length = _length    \
+		.hash_algo = HSM_HASH_ALGO_##_seco_id, .length = _length       \
 	}
 
 /* Algo IDs must be ordered from lowest to highest.
@@ -26,7 +26,7 @@
  */
 static const struct hash_algo_info {
 	enum smw_config_hash_algo_id algo_id;
-	hsm_hash_algo_t hsm_hash_algo;
+	hsm_hash_algo_t hash_algo;
 	uint32_t length;
 } hash_algo_info[] = { HASH_ALGO(SHA224, SHA_224, 28),
 		       HASH_ALGO(SHA256, SHA_256, 32),
@@ -80,7 +80,7 @@ static int hash(struct hdl *hdl, void *args)
 		smw_crypto_get_hash_input_length(hash_args);
 	op_hash_one_go_args.output_size =
 		smw_crypto_get_hash_output_length(hash_args);
-	op_hash_one_go_args.algo = hash_algo_info->hsm_hash_algo;
+	op_hash_one_go_args.algo = hash_algo_info->hash_algo;
 
 	if (!op_hash_one_go_args.output) {
 		smw_crypto_set_hash_output_length(hash_args,
@@ -135,8 +135,8 @@ end:
 	return status;
 }
 
-bool hsm_hash_handle(struct hdl *hdl, enum operation_id operation_id,
-		     void *args, int *status)
+bool seco_hash_handle(struct hdl *hdl, enum operation_id operation_id,
+		      void *args, int *status)
 {
 	switch (operation_id) {
 	case OPERATION_ID_HASH:

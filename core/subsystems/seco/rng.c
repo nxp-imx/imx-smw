@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2022 NXP
+ * Copyright 2021-2022, 2024 NXP
  */
 
 #include "smw_status.h"
@@ -51,8 +51,8 @@ end:
 	return status;
 }
 
-bool hsm_rng_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
-		    int *status)
+bool seco_rng_handle(struct hdl *hdl, enum operation_id operation_id,
+		     void *args, int *status)
 {
 	switch (operation_id) {
 	case OPERATION_ID_RNG:

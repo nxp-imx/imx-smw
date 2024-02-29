@@ -7,25 +7,25 @@ find_package(ZLIBLight REQUIRED)
 find_package(Seco REQUIRED)
 
 #
-# Add HSM subsystem
+# Add SECO subsystem
 #
 add_subsystem(seco)
 
-set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:hsm> PARENT_SCOPE)
+set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:seco> PARENT_SCOPE)
 
 message(STATUS "    Seco Libraries: ${SECO_LIBRARIES}")
 message(STATUS "    Seco Headers  : ${SECO_INCLUDE_DIRS}")
 message(STATUS "    ZLIB Library  : ${ZLIB_LIBRARY}")
 message(STATUS "    ZLIB Header   : ${ZLIB_INCLUDE_DIR}")
 
-add_library(hsm OBJECT "")
-set_target_properties(hsm PROPERTIES C_VISIBILITY_PRESET hidden)
+add_library(seco OBJECT "")
+set_target_properties(seco PROPERTIES C_VISIBILITY_PRESET hidden)
 
 if (ENABLE_CIPHER OR ENABLE_AEAD)
     set(ENABLE_CONTEXT ON)
 endif()
 
-target_sources(hsm PRIVATE
+target_sources(seco PRIVATE
                entry.c
                $<$<BOOL:${ENABLE_AEAD}>:aead.c>
                $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>
@@ -39,7 +39,7 @@ target_sources(hsm PRIVATE
                $<$<AND:$<BOOL:${ENABLE_TLS12}>,$<BOOL:${ENABLE_SIGN_VERIFY}>>:sign_verify_tls12.c>
                $<$<BOOL:${ENABLE_STORAGE_MODULE}>:storage.c>)
 
-target_include_directories(hsm PRIVATE ${INCLUDE_DIR}
+target_include_directories(seco PRIVATE ${INCLUDE_DIR}
                            ${SECO_INCLUDE_DIRS})
 
 set(EXT_LIBS ${EXT_LIBS} ${SECO_LIBRARIES} ${ZLIB_LIBRARY} PARENT_SCOPE)

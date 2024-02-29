@@ -369,7 +369,7 @@ __weak void *tee_get_ctx_ops(void)
 	return NULL;
 }
 
-int convert_tee_result(TEEC_Result result)
+int tee_convert_result(TEEC_Result result)
 {
 	int status = SMW_STATUS_SUBSYSTEM_FAILURE;
 
@@ -463,7 +463,7 @@ int execute_tee_cmd(enum ta_commands cmd_id, TEEC_Operation *op)
 
 	tee_res = TEEC_InvokeCommand(&tee_ctx.session, cmd_id, op, &err_origin);
 
-	status = convert_tee_result(tee_res);
+	status = tee_convert_result(tee_res);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d (%x)\n", __func__, status,
 		       tee_res);

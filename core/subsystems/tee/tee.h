@@ -176,13 +176,13 @@ bool tee_storage_handle(enum operation_id operation_id, void *args,
 void *tee_get_ctx_ops(void);
 
 /**
- * convert_tee_result() - Convert TEE result into SMW status.
+ * tee_convert_result() - Convert TEE result into SMW status.
  * @result: TEE result.
  *
  * Return:
  * SMW status.
  */
-int convert_tee_result(TEEC_Result result);
+int tee_convert_result(TEEC_Result result);
 
 /**
  * get_tee_context_ptr() - Get TEE context address.

@@ -32,7 +32,7 @@
 #define FILEPATH_OBJ		  "filepath"
 #define FORMAT_OBJ		  "format"
 #define HASH_OBJ		  "hash"
-#define HSM_INFO_OBJ		  "hsm_info"
+#define SECO_INFO_OBJ		  "seco_info"
 #define ID_OBJ			  "id"
 #define INPUT_OBJ		  "input"
 #define IV_OBJ			  "iv"

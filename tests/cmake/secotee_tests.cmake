@@ -1,4 +1,4 @@
-set(GROUP "HSMTEE")
+set(GROUP "SECOTEE")
 set(CFG_FILE api_config.txt)
 set(CMD ${TEST_CMD} ${CFG_FILE})
 

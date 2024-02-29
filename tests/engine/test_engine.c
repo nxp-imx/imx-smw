@@ -19,13 +19,13 @@ static int run_multiapp(struct test_data *test);
 /*
  * List of the application type function of the test definition top tag/value.
  * The subsystem definition defined with the tag "TEE_INFO_OBJ" and
- * "HSM_INFO_OBJ" are ignored.
+ * "SECO_INFO_OBJ" are ignored.
  */
 const struct app_type {
 	const char *name;
 	int (*run_app)(struct test_data *test);
 } app_types[] = {
-	{ TEE_INFO_OBJ, NULL },		{ HSM_INFO_OBJ, NULL },
+	{ TEE_INFO_OBJ, NULL },		{ SECO_INFO_OBJ, NULL },
 	{ APP_OBJ, &run_multiapp },	{ SUBTEST_OBJ, &run_singleapp },
 	{ THREAD_OBJ, &run_singleapp }, { NULL, NULL }
 };

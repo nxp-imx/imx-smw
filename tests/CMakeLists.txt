@@ -78,11 +78,11 @@ if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
     include(${CMAKE_SOURCE_DIR}/tests/cmake/tee_tests.cmake)
 endif()
 
-# If HSM subsystem defined, include tests
+# If SECO subsystem defined, include tests
 if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco AND
    DEFINED FIND_PACKAGE_MESSAGE_DETAILS_ZLIBLight)
-    set(HSM_TESTS_ENABLED ON)
-    include(${CMAKE_SOURCE_DIR}/tests/cmake/hsm_tests.cmake)
+    set(SECO_TESTS_ENABLED ON)
+    include(${CMAKE_SOURCE_DIR}/tests/cmake/seco_tests.cmake)
 endif()
 
 # If ELE subsystem defined, include tests
@@ -91,10 +91,10 @@ if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Ele)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/ele_tests.cmake)
 endif()
 
-# If HSM subsystem and TEE subsystem defined, include tests
-if(TEE_TESTS_ENABLED AND HSM_TESTS_ENABLED)
-    set(HSMTEE_TESTS ON)
-    include(${CMAKE_SOURCE_DIR}/tests/cmake/hsmtee_tests.cmake)
+# If SECO subsystem and TEE subsystem defined, include tests
+if(TEE_TESTS_ENABLED AND SECO_TESTS_ENABLED)
+    set(SECOTEE_TESTS ON)
+    include(${CMAKE_SOURCE_DIR}/tests/cmake/secotee_tests.cmake)
 endif()
 
 if(TEE_TESTS_ENABLED)

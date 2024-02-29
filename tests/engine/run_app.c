@@ -32,13 +32,13 @@ static int run_multithread(struct app_data *app);
 /*
  * List of the tests type function of the test definition top tag/value.
  * The subsystem definition defined with the tag "TEE_INFO_OBJ" and
- * "HSM_INFO_OBJ" are ignored.
+ * "SECO_INFO_OBJ" are ignored.
  */
 const struct thread_type {
 	const char *name;
 	int (*run_thread)(struct app_data *app);
 } thread_types[] = { { TEE_INFO_OBJ, NULL },
-		     { HSM_INFO_OBJ, NULL },
+		     { SECO_INFO_OBJ, NULL },
 		     { KEYS_OBJ, NULL },
 		     { SUBTEST_OBJ, &run_singlethread },
 		     { THREAD_OBJ, &run_multithread },
@@ -103,15 +103,15 @@ static int setup_tee_info(struct json_object *test_def)
 }
 
 /**
- * setup_hsm_ele_info() - Read and setup HSM or ELE Secure Enclave Information
+ * setup_seco_ele_info() - Read and setup SECO or ELE Secure Enclave Information
  * @test_def: JSON-C test definition of the application
  * @is_ele: Get the ELE tag information if value is 1
  *
- * Function extracts HSM or ELE information from the test definition of
- * the application configuration and calls the SMW Library HSM or ELE
+ * Function extracts SECO or ELE information from the test definition of
+ * the application configuration and calls the SMW Library SECO or ELE
  * Information setup API.
  *
- * SE info is defined with a JSON-C object "hsm_info" for the HSM subsystem
+ * SE info is defined with a JSON-C object "seco_info" for the SECO subsystem
  * or "ele_info" for the ELE subsystem.
  *
  * Return:
@@ -121,7 +121,7 @@ static int setup_tee_info(struct json_object *test_def)
  * -FAILED             - Error in definition file
  * -ERROR_SMWLIB_INIT  - SMW Library initialization error
  */
-static int setup_hsm_ele_info(struct json_object *test_def, int is_ele)
+static int setup_seco_ele_info(struct json_object *test_def, int is_ele)
 {
 	int res = ERR_CODE(PASSED);
 	struct se_info info = se_default_info;
@@ -131,7 +131,7 @@ static int setup_hsm_ele_info(struct json_object *test_def, int is_ele)
 		res = util_read_json_type(&oinfo, ELE_INFO_OBJ, t_object,
 					  test_def);
 	else
-		res = util_read_json_type(&oinfo, HSM_INFO_OBJ, t_object,
+		res = util_read_json_type(&oinfo, SECO_INFO_OBJ, t_object,
 					  test_def);
 
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
@@ -235,11 +235,11 @@ static int init_smwlib(struct app_data *app)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	res = setup_hsm_ele_info(app->parent_def, 0);
+	res = setup_seco_ele_info(app->parent_def, 0);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	res = setup_hsm_ele_info(app->parent_def, 1);
+	res = setup_seco_ele_info(app->parent_def, 1);
 	if (res != ERR_CODE(PASSED))
 		goto end;
 

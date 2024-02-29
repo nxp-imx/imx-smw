@@ -12,7 +12,7 @@
 	},
 	"subtest 2": {
 		"command": "RESTORE_KEY_IDS",
-		"filepath": "/usr/share/smw/tests/F_HSM_Keymgr_001_ids.json"
+		"filepath": "/usr/share/smw/tests/F_SECO_Keymgr_001_ids.json"
 	},
 	"subtest 3": {
 		"command": "DELETE",

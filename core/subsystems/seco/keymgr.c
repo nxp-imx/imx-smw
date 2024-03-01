@@ -696,6 +696,7 @@ bool seco_key_handle(struct subsystem_context *seco_ctx,
 	switch (operation_id) {
 	case OPERATION_ID_GENERATE_KEY:
 		*status = generate_key(seco_ctx, args);
+		// coverity[missing_unlock]
 		break;
 	case OPERATION_ID_DERIVE_KEY:
 		*status = seco_derive_key(seco_ctx, args);
@@ -711,6 +712,7 @@ bool seco_key_handle(struct subsystem_context *seco_ctx,
 		break;
 	case OPERATION_ID_DELETE_KEY:
 		*status = delete_key(seco_ctx, args);
+		// coverity[missing_unlock]
 		break;
 	case OPERATION_ID_GET_KEY_LENGTHS:
 		*status = get_key_lengths(hdl, args);

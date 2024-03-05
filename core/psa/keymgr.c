@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include "smw_keymgr.h"
@@ -20,6 +20,16 @@
 	{                                                                      \
 		.smw_key_type = _smw, .psa_key_type = PSA_KEY_TYPE_##_psa,     \
 	}
+
+/**
+ * struct aead_key_type - AEAD key type
+ * @smw_key_type: SMW key type name.
+ * @psa_key_type: PSA key type.
+ */
+static const struct aead_key_type {
+	smw_key_type_t smw_key_type;
+	psa_key_type_t psa_key_type;
+} aead_key_type[] = { KEY_TYPE("AES", AES), KEY_TYPE("CHACHA20", CHACHA20) };
 
 /**
  * struct - Key type
@@ -438,6 +448,24 @@ static psa_key_type_t get_hmac_psa_key_type(smw_key_type_t smw_key_type)
 		psa_key_type = PSA_KEY_TYPE_HMAC;
 
 	return psa_key_type;
+}
+
+psa_key_type_t get_aead_psa_key_type(smw_key_type_t smw_key_type)
+{
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(aead_key_type); i++) {
+		if (!SMW_UTILS_STRCMP(aead_key_type[i].smw_key_type,
+				      smw_key_type)) {
+			SMW_DBG_PRINTF(DEBUG, "Key type name: %s\n",
+				       aead_key_type[i].smw_key_type);
+			return cipher_key_type[i].psa_key_type;
+		}
+	}
+
+	return PSA_KEY_TYPE_NONE;
 }
 
 psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type)

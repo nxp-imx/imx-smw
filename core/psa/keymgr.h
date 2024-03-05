@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __KEYMGR__H__
@@ -9,6 +9,18 @@
 #include "smw_strings.h"
 
 #include "psa/crypto_types.h"
+
+/**
+ * get_aead_psa_key_type() - Get AEAD PSA key type.
+ * @smw_key_type: SMW key type name.
+ *
+ * This function returns the AEAD PSA key type corresponding to the AEAD
+ * SMW key type.
+ *
+ * Return:
+ * AEAD PSA key type.
+ */
+psa_key_type_t get_aead_psa_key_type(smw_key_type_t smw_key_type);
 
 /**
  * get_cipher_psa_key_type() - Get Cipher PSA key type.

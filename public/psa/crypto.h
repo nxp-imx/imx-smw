@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __PSA_CRYPTO_H__
@@ -411,8 +411,6 @@ psa_status_t psa_aead_abort(psa_aead_operation_t *operation);
  * @plaintext_size: Size of the @plaintext buffer in bytes.
  * @plaintext_length: On success, the size of the output in the plaintext buffer.
  *
- * **Warning: Not supported**
- *
  * Parameter @plaintext_size must be appropriate for the selected algorithm and key\:
  *
  * - A sufficient output size is PSA_AEAD_DECRYPT_OUTPUT_SIZE(key_type, alg, ciphertext_length)
@@ -545,8 +543,6 @@ psa_status_t psa_aead_decrypt_setup(psa_aead_operation_t *operation,
  *              encrypted data.
  * @ciphertext_size: Size of the @ciphertext buffer in bytes.
  * @ciphertext_length: On success, the size of the output in the ciphertext buffer.
- *
- * **Warning: Not supported**
  *
  * Parameter @ciphertext_size must be appropriate for the selected algorithm and key\:
  *

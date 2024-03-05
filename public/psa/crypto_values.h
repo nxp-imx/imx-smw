@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __PSA_CRYPTO_VALUES_H__
@@ -143,6 +143,22 @@
 						  0)) ?                        \
 		 PSA_ALG_CHACHA20_POLY1305 :                                   \
 		 PSA_ALG_NONE)
+
+/**
+ * PSA_ALG_AEAD_TAG_LENGTH() - Retrieve the tag length of a specified AEAD algorithm.
+ * @aead_alg: An AEAD algorithm identifier (value of &typedef psa_algorithm_t such that
+ *            PSA_ALG_IS_AEAD(aead_alg) is true).
+ *
+ * Return:
+ * The tag length specified by the input algorithm.
+ * 
+ * 0 if @aead_alg is not a supported AEAD algorithm.
+ */
+#define PSA_ALG_AEAD_TAG_LENGTH(aead_alg)                                      \
+	(PSA_ALG_IS_AEAD(aead_alg) ?                                           \
+		 (((aead_alg) & (PSA_ALG_AEAD_TAG_LENGTH_MASK)) >>             \
+		  PSA_AEAD_TAG_LENGTH_OFFSET) :                                \
+		 (0u))
 
 /**
  * PSA_ALG_AEAD_WITH_SHORTENED_TAG() - Macro to build a AEAD algorithm with a shortened tag.

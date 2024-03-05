@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __PSA_CRYPTO_SIZES_H__
@@ -40,15 +40,12 @@
  * any of the supported key types and AEAD algorithms.
  * @ciphertext_length: Size of the ciphertext in bytes.
  *
- * **Warning: Not supported**
- *
  * If the size of the plaintext buffer is at least this large, it is guaranteed that
  * psa_aead_decrypt() will not fail due to an insufficient buffer size.
  *
  * See also PSA_AEAD_DECRYPT_OUTPUT_SIZE().
  */
-#define PSA_AEAD_DECRYPT_OUTPUT_MAX_SIZE(ciphertext_length)                    \
-/* implementation-defined value */
+#define PSA_AEAD_DECRYPT_OUTPUT_MAX_SIZE(ciphertext_length) (ciphertext_length)
 
 /**
  * PSA_AEAD_DECRYPT_OUTPUT_SIZE() - The maximum size of the output of psa_aead_decrypt(), in
@@ -56,8 +53,6 @@
  * @key_type: A symmetric key type that is compatible with algorithm @alg.
  * @alg: An AEAD algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_AEAD(alg) is true).
  * @ciphertext_length: Size of the ciphertext in bytes.
- *
- * **Warning: Not supported**
  *
  * If the size of the plaintext buffer is at least this large, it is guaranteed that
  * psa_aead_decrypt() will not fail due to an insufficient buffer size. Depending on the algorithm,
@@ -72,14 +67,15 @@
  * not support.
  */
 #define PSA_AEAD_DECRYPT_OUTPUT_SIZE(key_type, alg, ciphertext_length)         \
-/* implementation-defined value */
+	((PSA_ALG_IS_AEAD(alg) != 0 &&                                         \
+	  (ciphertext_length) > PSA_ALG_AEAD_TAG_LENGTH(alg)) ?                \
+		 (ciphertext_length) - (PSA_ALG_AEAD_TAG_LENGTH(alg)) :        \
+		 (0u))
 
 /**
  * PSA_AEAD_ENCRYPT_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_aead_encrypt(), for
  * any of the supported key types and AEAD algorithms.
  * @plaintext_length: Size of the plaintext in bytes.
- *
- * **Warning: Not supported**
  *
  * If the size of the ciphertext buffer is at least this large, it is guaranteed that
  * psa_aead_encrypt() will not fail due to an insufficient buffer size.
@@ -87,15 +83,13 @@
  * See also PSA_AEAD_ENCRYPT_OUTPUT_SIZE().
  */
 #define PSA_AEAD_ENCRYPT_OUTPUT_MAX_SIZE(plaintext_length)                     \
-/* implementation-defined value */
+	((plaintext_length) + PSA_AEAD_TAG_MAX_SIZE)
 
 /**
  * PSA_AEAD_ENCRYPT_OUTPUT_SIZE() - The maximum size of the output of psa_aead_encrypt(), in bytes.
  * @key_type: A symmetric key type that is compatible with algorithm @alg.
  * @alg: An AEAD algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_AEAD(alg) is true).
  * @plaintext_length: Size of the plaintext in bytes.
- *
- * **Warning: Not supported**
  *
  * If the size of the ciphertext buffer is at least this large, it is guaranteed that
  * psa_aead_encrypt() will not fail due to an insufficient buffer size. Depending on the algorithm,
@@ -110,7 +104,9 @@
  * not support.
  */
 #define PSA_AEAD_ENCRYPT_OUTPUT_SIZE(key_type, alg, plaintext_length)          \
-/* implementation-defined value */
+	(PSA_ALG_IS_AEAD(alg) ?                                                \
+		 ((plaintext_length) + PSA_ALG_AEAD_TAG_LENGTH(alg)) :         \
+		 (0u))
 
 /**
  * DOC: PSA_AEAD_FINISH_OUTPUT_MAX_SIZE
@@ -150,8 +146,6 @@
  * @key_type: A symmetric key type that is compatible with algorithm @alg.
  * @alg: An AEAD algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_AEAD(alg) is true).
  *
- * **Warning: Not supported**
- *
  * This macro can be used to allocate a buffer of sufficient size to store the nonce output from
  * psa_aead_generate_nonce().
  *
@@ -163,25 +157,32 @@
  * return either 0 or a correct size for a key type and AEAD algorithm that it recognizes, but does
  * not support.
  */
-#define PSA_AEAD_NONCE_LENGTH(key_type, alg) /* implementation-defined value */
+#define PSA_AEAD_NONCE_LENGTH(key_type, alg)                                   \
+	(PSA_ALG_IS_AEAD(alg) ?                                                \
+		 ((PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg) == PSA_ALG_CCM) ? \
+			  (13u) :                                              \
+		  (PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg) == PSA_ALG_GCM) ? \
+			  (12u) :                                              \
+		  ((key_type) == PSA_KEY_TYPE_CHACHA20 &&                      \
+		   PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(alg) ==                \
+			   PSA_ALG_CHACHA20_POLY1305) ?                        \
+			  (12u) :                                              \
+			  (0u)) :                                              \
+		 (0u))
 
 /**
  * DOC: PSA_AEAD_NONCE_MAX_SIZE
  * The maximum nonce size for all supported AEAD algorithms, in bytes.
  *
- * **Warning: Not supported**
- *
  * See also PSA_AEAD_NONCE_LENGTH().
  */
-#define PSA_AEAD_NONCE_MAX_SIZE /* implementation-defined value */
+#define PSA_AEAD_NONCE_MAX_SIZE (13u)
 
 /**
  * PSA_AEAD_TAG_LENGTH() - The length of a tag for an AEAD algorithm, in bytes.
  * @key_type: The type of the AEAD key.
  * @key_bits: The size of the AEAD key in bits.
  * @alg: An AEAD algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_AEAD(alg) is true).
- *
- * **Warning: Not supported**
  *
  * This macro can be used to allocate a buffer of sufficient size to store the tag output from
  * psa_aead_finish().
@@ -195,17 +196,15 @@
  * for an AEAD algorithm that it recognizes, but does not support.
  */
 #define PSA_AEAD_TAG_LENGTH(key_type, key_bits, alg)                           \
-/* implementation-defined value */
+	PSA_ALG_AEAD_TAG_LENGTH(alg)
 
 /**
  * DOC: PSA_AEAD_TAG_MAX_SIZE
  * The maximum tag size for all supported AEAD algorithms, in bytes.
  *
- * **Warning: Not supported**
- *
  * See also PSA_AEAD_TAG_LENGTH().
  */
-#define PSA_AEAD_TAG_MAX_SIZE /* implementation-defined value */
+#define PSA_AEAD_TAG_MAX_SIZE (16u)
 
 /**
  * PSA_AEAD_UPDATE_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_aead_update(), for

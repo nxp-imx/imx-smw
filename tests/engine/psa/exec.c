@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <string.h>
@@ -14,6 +14,7 @@
 #include "cipher.h"
 #include "mac.h"
 #include "storage.h"
+#include "aead.h"
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -240,6 +241,27 @@ static int execute_storage_cmd(char *cmd, struct subtest_data *subtest)
 	return ERR_CODE(UNDEFINED_CMD);
 }
 
+/**
+ * execute_aead_cmd() - Execute AEAD command
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED		- Success.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ */
+static int execute_aead_cmd(char *cmd, struct subtest_data *subtest)
+{
+	if (!strcmp(cmd, AEAD))
+		return aead_psa(subtest);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
 int execute_command_psa(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
@@ -258,6 +280,7 @@ int execute_command_psa(char *cmd, struct subtest_data *subtest)
 		{ CIPHER, &execute_cipher_cmd },
 		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
 		{ STORAGE, &execute_storage_cmd },
+		{ AEAD, &execute_aead_cmd },
 	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {

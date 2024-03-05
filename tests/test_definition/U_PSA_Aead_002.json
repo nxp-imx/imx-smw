@@ -1,0 +1,607 @@
+{
+	"keys": {
+		"generated aes-gcm-128 key encrypt": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"encrypt": [
+					[
+						"GCM"
+					]
+				]
+			}
+		},
+		"generated aes-gcm-128 key decrypt": {
+			"type": "AES",
+			"security_size": 128,
+			"policy": {
+				"decrypt": [
+					[
+						"GCM"
+					]
+				]
+			}
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"restriction_list": [ "imx8ulp" ]
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"restriction_list": [ "imx8ulp" ]
+	},
+	// aes-gcm-128, encrypt, output buffer size
+	"subtest 3": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "33333333333333333333333333333333",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 4,
+		"output": "33333333",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 8,
+		"output": "3333333333333333",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 1
+	},
+	"subtest 6": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 12,
+		"output": "333333333333333333333333",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 1
+	},
+	"subtest 7": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 13,
+		"output": "33333333333333333333333333",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 1
+	},
+	"subtest 8": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 14,
+		"output": "3333333333333333333333333333",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 1
+	},
+	"subtest 9": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 15,
+		"output": "333333333333333333333333333333",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 1
+	},
+	// aes-gcm-128, decrypt, output buffer size
+	"subtest 10": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "000000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "33",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 2
+	},
+	"subtest 11": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 4,
+		"output": "33",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 2
+	},
+	"subtest 12": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 8,
+		"output": "33",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 2
+	},
+	"subtest 13": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "000000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 12,
+		"output": "33",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 2
+	},
+	"subtest 14": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "00000000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 13,
+		"output": "33",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 2
+	},
+	"subtest 15": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 14,
+		"output": "33",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 2
+	},
+	"subtest 16": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "000000000000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 15,
+		"output": "33",
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL",
+		"depends": 2
+	},
+	// aes-gcm-128, encrypt, iv size
+	"subtest 17": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "11",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 1
+	},
+	"subtest 18": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "1111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 1
+	},
+	"subtest 19": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 1
+	},
+	"subtest 20": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "11111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 1
+	},
+	"subtest 21": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "1111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 1
+	},
+	"subtest 22": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 1
+	},
+	"subtest 23": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "1111111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 1
+	},
+	"subtest 24": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 1
+	},
+	// aes-gcm-128, decrypt, iv size
+	"subtest 25": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "00",
+		"iv": "11",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 26": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "00",
+		"iv": "1111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 27": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "00",
+		"iv": "111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 28": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "00",
+		"iv": "11111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 29": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "00",
+		"iv": "111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 30": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "00",
+		"iv": "1111111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 31": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	// aes-gcm-128, encrypt, key policy
+	"subtest 32": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "33",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 1
+	},
+	// aes-gcm-128, decrypt, key policy
+	"subtest 33": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "00",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"output": "3333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	// aes-gcm-128, tag length
+	"subtest 34": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 3,
+		"output":
+			"3333333333333333333333333333333333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 35": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 5,
+		"output":
+			"3333333333333333333333333333333333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 36": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 6,
+		"output":
+			"3333333333333333333333333333333333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 37": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 7,
+		"output":
+			"3333333333333333333333333333333333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 38": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 9,
+		"output":
+			"3333333333333333333333333333333333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 39": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 10,
+		"output":
+			"3333333333333333333333333333333333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 40": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 3,
+		"output":
+			"3333333333333333333333333333333333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 41": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 11,
+		"output":
+			"3333333333333333333333333333333333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 42": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"input": "0000000000000000000000000000000000",
+		"iv": "111111111111111111111111",
+		"aad": "222222222222222222222222222222222222222222222222222222222222",
+		"tag": 17,
+		"output":
+			"3333333333333333333333333333333333333333333333333333333333333333333333",
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"depends": 2
+	},
+	"subtest 43": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key encrypt",
+		"depends": 1
+	},
+	"subtest 44": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "generated aes-gcm-128 key decrypt",
+		"depends": 2
+	}
+}

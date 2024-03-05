@@ -755,3 +755,72 @@ char *util_string_to_upper(char *str)
 
 	return str;
 }
+
+int util_read_obj_value(unsigned char **value, unsigned int *length,
+			const char *key, struct json_object *params)
+{
+	int ret = ERR_CODE(INTERNAL);
+	char *buf = NULL;
+	unsigned int len = 0;
+	unsigned int json_len = UINT_MAX;
+	struct json_object *obj = NULL;
+	const char *format = NULL;
+
+	if (!value || !length)
+		return ret;
+
+	if (!json_object_object_get_ex(params, key, &obj))
+		return ERR_CODE(VALUE_NOTFOUND);
+
+	ret = util_read_json_type(&format, FORMAT_OBJ, t_string, params);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
+
+	ret = util_read_json_buffer(&buf, &len, &json_len, obj);
+	if (ret != ERR_CODE(PASSED)) {
+		if (buf)
+			free(buf);
+		return ret;
+	}
+
+	/*
+	 * If object buffer was already defined, overwrite it with
+	 * the new definition.
+	 */
+	if (*value)
+		free(*value);
+
+	*value = NULL;
+	*length = 0;
+
+	/* Either test definition specify:
+	 * - length != 0 but no data
+	 * - length = 0 but data
+	 * - no length but data
+	 * - length and data
+	 */
+	if (!buf || (format && !strcmp(format, OBJ_FORMAT_BASE64))) {
+		*value = (unsigned char *)buf;
+	} else {
+		ret = util_string_to_hex(buf, value, &len);
+		/*
+		 * Buffer can be freed because a new one has been
+		 * allocated to convert the string to hex
+		 */
+		free(buf);
+
+		if (ret != ERR_CODE(PASSED))
+			return ret;
+	}
+
+	if (json_len != UINT_MAX) {
+		if (*value && json_len > len)
+			return ERR_CODE(BAD_ARGS);
+
+		*length = json_len;
+	} else {
+		*length = len;
+	}
+
+	return ret;
+}

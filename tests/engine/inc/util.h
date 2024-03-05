@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __UTIL_H__
@@ -359,5 +359,24 @@ int util_get_subdef(struct json_object **subdef, struct json_object *topdef,
  * Pointer to output string (@str)
  */
 char *util_string_to_upper(char *str);
+
+/**
+ * util_read_obj_value() - Read the object buffer from json-c object
+ * @value: Object buffer to return
+ * @length: Length of the buffer
+ * @key: Object's buffer json-c key name
+ * @param: Object json-c definition
+ *
+ * Function read the json-c object buffer if defined.
+ * Function allocates the buffer and caller must free it.
+ *
+ * Return:
+ * PASSED                   - Success
+ * -FAILED                  - Function failure
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ * -BAD_ARGS                - Bad function argument
+ */
+int util_read_obj_value(unsigned char **value, unsigned int *length,
+			const char *key, struct json_object *params);
 
 #endif /* __UTIL_H__ */

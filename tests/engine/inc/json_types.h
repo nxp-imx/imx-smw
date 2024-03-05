@@ -173,4 +173,10 @@ enum export_type {
 	EXP_PUB,
 };
 
+/*
+ * Object format values
+ */
+#define OBJ_FORMAT_BASE64 "BASE64"
+#define OBJ_FORMAT_HEX	  "HEX"
+
 #endif /* __JSON_TYPES_H__ */

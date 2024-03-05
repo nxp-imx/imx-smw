@@ -85,10 +85,10 @@ static int read_descriptor(struct llist *data_list,
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
-	ret = util_read_hex_buffer(&data_descriptor->data,
-				   &data_descriptor->length, info->odata_params,
-				   DATA_OBJ);
-	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(MISSING_PARAMS))
+	ret = util_read_obj_value(&data_descriptor->data,
+				  &data_descriptor->length, DATA_OBJ,
+				  info->odata_params);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
 	ret = util_tlv_read_attrs(&attrs, &attrs_len, info->odata_params);

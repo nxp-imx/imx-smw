@@ -147,79 +147,6 @@ static void set_key_ops(struct keypair_ops *key_test)
 }
 
 /**
- * read_key() - Read the key buffer from json-c object
- * @key: Key buffer to return
- * @length: Length of the key
- * @format: Key format of json-c buffer
- * @okey: Key json-c object
- *
- * Function read the json-c key object if defined.
- * Function allocates the key buffer caller must free it.
- *
- * Return:
- * PASSED                   - Success
- * -FAILED                  - Function failure
- * -INTERNAL_OUT_OF_MEMORY  - Out of memory
- * -BAD_ARGS                - Bad function argument
- */
-static int read_key(unsigned char **key, unsigned int *length,
-		    const char *format, struct json_object *okey)
-{
-	int ret = ERR_CODE(INTERNAL);
-	char *buf = NULL;
-	unsigned int len = 0;
-	unsigned int json_len = UINT_MAX;
-
-	if (!key || !length)
-		return ret;
-
-	ret = util_read_json_buffer(&buf, &len, &json_len, okey);
-	if (ret != ERR_CODE(PASSED)) {
-		if (buf)
-			free(buf);
-		return ret;
-	}
-
-	/* If key buffer was already defined, overwrite it with the new definition. */
-	if (*key)
-		free(*key);
-
-	*key = NULL;
-	*length = 0;
-
-	/* Either test definition specify:
-	 * - length != 0 but no data
-	 * - length = 0 but data
-	 * - no length but data
-	 * - length and data
-	 */
-	if (!buf || (format && !strcmp(format, KEY_FORMAT_BASE64))) {
-		*key = (unsigned char *)buf;
-	} else {
-		ret = util_string_to_hex(buf, key, &len);
-		/*
-		 * Buffer can be freed because a new one has been
-		 * allocated to convert the string to hex
-		 */
-		free(buf);
-
-		if (ret != ERR_CODE(PASSED))
-			return ret;
-	}
-
-	if (json_len != UINT_MAX) {
-		if (*key && json_len > len)
-			return ERR_CODE(BAD_ARGS);
-
-		*length = json_len;
-	} else {
-		*length = len;
-	}
-
-	return ret;
-}
-
-/**
  * keypair_read() - Read the public and private key definition
  * @key_test: Test keypair structure with operations
  * @params: json-c object
@@ -240,38 +167,39 @@ static int keypair_read(struct keypair_ops *key_test,
 			struct json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
-	struct json_object *okey = NULL;
 
 	if (!params || !key_test || !key_test->keys) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	if (json_object_object_get_ex(params, FORMAT_OBJ, &okey))
-		key_test->keys->format_name = json_object_get_string(okey);
+	ret = util_read_json_type(&key_test->keys->format_name, FORMAT_OBJ,
+				  t_string, params);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
 
-	if (json_object_object_get_ex(params, PUB_KEY_OBJ, &okey)) {
-		ret = read_key(key_public_data(key_test),
-			       key_public_length(key_test),
-			       key_test->keys->format_name, okey);
+	ret = util_read_obj_value(key_public_data(key_test),
+				  key_public_length(key_test), PUB_KEY_OBJ,
+				  params);
 
-		if (ret != ERR_CODE(PASSED))
-			return ret;
-	}
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
 
-	if (json_object_object_get_ex(params, PRIV_KEY_OBJ, &okey)) {
-		ret = read_key(key_private_data(key_test),
-			       key_private_length(key_test),
-			       key_test->keys->format_name, okey);
+	ret = util_read_obj_value(key_private_data(key_test),
+				  key_private_length(key_test), PRIV_KEY_OBJ,
+				  params);
 
-		if (ret != ERR_CODE(PASSED))
-			return ret;
-	}
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
 
-	if (json_object_object_get_ex(params, MODULUS_OBJ, &okey))
-		ret = read_key(key_modulus(key_test),
-			       key_modulus_length(key_test),
-			       key_test->keys->format_name, okey);
+	if (key_test->desc.type_name &&
+	    !strcmp(key_test->desc.type_name, RSA_KEY))
+		ret = util_read_obj_value(key_modulus(key_test),
+					  key_modulus_length(key_test),
+					  MODULUS_OBJ, params);
+
+	if (ret == ERR_CODE(VALUE_NOTFOUND))
+		ret = ERR_CODE(PASSED);
 
 	return ret;
 }

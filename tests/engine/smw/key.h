@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 #ifndef __KEY_H__
 #define __KEY_H__
@@ -11,12 +11,6 @@
 #include <smw_keymgr.h>
 
 #include "util_key.h"
-
-/*
- * Key format values
- */
-#define KEY_FORMAT_BASE64 "BASE64"
-#define KEY_FORMAT_HEX	  "HEX"
 
 /*
  * Definition of the key descriptor fields not set

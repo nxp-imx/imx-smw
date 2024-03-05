@@ -114,6 +114,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add AEAD test vectors in F_PSA_Aead_001, U_PSA_Aead_001 and U_PSA_Aead_002.
 * Add tests to validate PSA single-part AEAD operations.
 * Add tests to validate the SMW get data information API.
+* Add data storage of a base64 value.
 
 #### PKCS#11 Library - _version 3.0_
 

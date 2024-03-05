@@ -2,7 +2,8 @@
 	"data_list": {
 		"data 1": {
 			"id": 21,
-			"data": "ABCDEF"
+			"format": "BASE64",
+			"data": "QmFzZTY0LXN0b3JhZ2U="
 		},
 		"data 2": {
 			"id": 22,

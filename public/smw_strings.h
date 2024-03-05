@@ -99,6 +99,7 @@ typedef smw_string_t smw_cipher_mode_t;
  * typedef smw_aead_mode_t - AEAD mode name
  * Values:
  *	- CCM
+ *	- CHACHA20_POLY1305
  *	- GCM
  */
 typedef smw_string_t smw_aead_mode_t;

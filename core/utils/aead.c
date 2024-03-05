@@ -9,10 +9,11 @@
 #include "debug.h"
 #include "name.h"
 
-static const char *const aead_mode_names[] = { [SMW_CONFIG_AEAD_MODE_ID_CCM] =
-						       "CCM",
-					       [SMW_CONFIG_AEAD_MODE_ID_GCM] =
-						       "GCM" };
+static const char *const aead_mode_names[] = {
+	[SMW_CONFIG_AEAD_MODE_ID_CCM] = "CCM",
+	[SMW_CONFIG_AEAD_MODE_ID_GCM] = "GCM",
+	[SMW_CONFIG_AEAD_MODE_ID_CHACHA20_POLY1305] = "CHACHA20_POLY1305"
+};
 
 static const char *const aead_op_type_names[] = {
 	[SMW_CONFIG_AEAD_OP_ID_ENCRYPT] = "ENCRYPT",

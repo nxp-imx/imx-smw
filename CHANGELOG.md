@@ -81,6 +81,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add support of CFB mode.
 * Add support of SHA-3 hash.
+* Add support for single-part AEAD encryption APIs: `psa_aead_encrypt()` & `psa_aead_decrypt()`
 
 ##### 4. OSAL
 
@@ -105,6 +106,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests to validate revised context management.
 * Review data storage test to delete data.
 * Add tests for SM4 block cipher.
+* Add AEAD test vectors in F_PSA_Aead_001, U_PSA_Aead_001 and U_PSA_Aead_002.
+* Add tests to validate PSA single-part AEAD operations.
 
 #### PKCS#11 Library - _version 3.0_
 

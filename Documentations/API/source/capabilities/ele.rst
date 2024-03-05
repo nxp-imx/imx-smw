@@ -437,20 +437,22 @@ AEAD
    :align: center
    :class: wrap-table
 
-   +--------------+----------+------------------------+------------------------+
-   | **Key type** | **Mode** | **IV length (bytes)**  | **Tag length (bytes)** |
-   +==============+==========+========================+========================+
-   | AES          |   CCM    |       12 [1]_          |        16              |
-   +              +----------+------------------------+------------------------+
-   |              |   GCM    | Encryption: 0/4/12 [2]_|        16              |
-   +              +          +                        +                        +
-   |              |          | Decryption: 12         |                        |
-   +--------------+----------+------------------------+------------------------+
+   +--------------+------------+------------------------+------------------------+
+   | **Key type** | **Mode**   | **IV length (bytes)**  | **Tag length (bytes)** |
+   +==============+============+========================+========================+
+   | AES          |   CCM      |       12 [1]_          |        16              |
+   +              +------------+------------------------+------------------------+
+   |              |   GCM [3]_ | Encryption: 0/4/12 [2]_|        16              |
+   +              +            +                        +                        +
+   |              |            | Decryption: 12         |                        |
+   +--------------+------------+------------------------+------------------------+
 
 .. [1] For CCM AEAD encryption and decryption operation, IV length should be
        12 bytes.
 
 .. [2] For GCM AEAD Encryption operation, IV length can be either
+
+.. [3] Not supported on i.MX8ULP
 
   - 0 bytes, to request the subsystem to fully generate the IV.
   - 4 bytes, to request the subsystem to generate the rest of the IV bytes.
@@ -461,6 +463,7 @@ AEAD
 One-shot operations supported:
  - AEAD Encryption
  - AEAD Decryption
+
 
 Device management
 ^^^^^^^^^^^^^^^^^

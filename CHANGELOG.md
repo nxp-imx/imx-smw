@@ -111,6 +111,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Change the TA installation default path to be `/usr/lib`.
 * Add prefix `[TEST]` to PKCS#11 test traces.
 * Validation of message-based sign/verify with MACs single-part PKCS#11 APIs.
+* Add SHA-3 test vectors in pkcs11_digest test suite.
 
 ---
 ### <a id ="rel_2_5"></a></br>**Release 2.5**

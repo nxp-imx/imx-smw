@@ -30,7 +30,7 @@
 			"aab23c9e7fb9d7dacefdfd0b1ae85ab1",
 			"374abff7c4e3f7556ecae412"
 		],
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 2": { // SHA3_256
 		"command": "HASH",
@@ -52,7 +52,7 @@
 			"8814630a39dcb99792cc4e08cae5dd07",
 			"8973d15cd19f17bacf04deda9e62c45f"
 		],
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 3": { // SHA3_384
 		"command": "HASH",
@@ -74,7 +74,7 @@
 			"7f780e9c500c5f92b04ae81a22fbeebf",
 			"3785259a0bb3b6d9b47f31873cd8dffa"
 		],
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 4": { // SHA3_512
 		"command": "HASH",
@@ -95,6 +95,6 @@
 			"c04c808eb32912faa345245a850346fa",
 			"ec46c3a16d39bd2e1ddb1816bc57d2da"
 		],
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	}
 }

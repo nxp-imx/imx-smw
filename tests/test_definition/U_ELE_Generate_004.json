@@ -41,19 +41,19 @@
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 1",
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 2",
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 3",
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 4": {
 		"command": "DELETE",

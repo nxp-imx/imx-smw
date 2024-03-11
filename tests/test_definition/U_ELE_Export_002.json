@@ -56,7 +56,7 @@
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 1",
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 2": { // Export RSA keypair
 		"command": "EXPORT_KEYPAIR",

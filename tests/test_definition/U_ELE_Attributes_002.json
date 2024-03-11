@@ -41,7 +41,7 @@
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key RSA sign",
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 2": {
 		"command": "GET_KEY_ATTRIBUTES",
@@ -58,7 +58,7 @@
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key RSA verify",
-		"restriction_list": "imx8ulpevk"
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 5": {
 		"command": "GET_KEY_ATTRIBUTES",

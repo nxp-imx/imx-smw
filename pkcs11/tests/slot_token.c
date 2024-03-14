@@ -60,6 +60,8 @@ static CK_MECHANISM_TYPE mlist[] = {
 	M(SM4_CBC),
 	M(SM4_CTR),
 	M(SM4_ECB),
+	M(AES_GCM),
+	M(AES_CCM),
 	M(AES_CMAC),
 	M(DES3_CMAC),
 	M(AES_CMAC_GENERAL),

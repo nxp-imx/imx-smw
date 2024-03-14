@@ -63,7 +63,10 @@ void tests_pkcs11_sign_verify(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_sign_verify_message(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_random(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_encrypt_decrypt(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_encrypt_decrypt_message(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_encrypt_decrypt_multipart(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_encrypt_decrypt_multipart_message(void *lib_hdl,
+						    CK_VOID_PTR pfunc);
 void tests_pkcs11_data_storage(void *lib_hdl, CK_VOID_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

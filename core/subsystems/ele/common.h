@@ -352,23 +352,13 @@ int ele_get_device_lifecycle_id(struct subsystem_context *ele_ctx,
 				unsigned int *lifecycle);
 
 /**
- * ele_get_key_lifecycle() - Convert the ELE lifecycle to user lifecycle
- * @lifecycle: Pointer to the lifecycle string
- * @lifecycle_len: Length of @lifecycle
+ * ele_get_key_lifecycles() - Convert the ELE lifecycles to SMW lifecycles
  * @ele_lifecycle: ELE lifecycle(s) bit mask
  *
- * On success, the function allocates the @lifecycle buffer and returns its
- * length in the @lifecycle_len.
- *
  * Return:
- * SMW_STATUS_OK                         - Success
- * SMW_STATUS_INVALID_PARAM              - Invalid parameters
- * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
- * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
+ * SMW lifecycle flags bit mask
  */
-int ele_get_key_lifecycle(unsigned char **lifecycle,
-			  unsigned int *lifecycle_len,
-			  hsm_key_lifecycle_t ele_lifecycle);
+unsigned int ele_get_key_lifecycles(hsm_key_lifecycle_t ele_lifecycles);
 
 /**
  * ele_set_lifecycle_flags() - Convert the SMW lifecycle flags to ELE flags

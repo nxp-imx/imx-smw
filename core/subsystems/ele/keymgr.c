@@ -1161,10 +1161,6 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 	struct smw_keymgr_get_key_attributes_args *key_attrs = NULL;
 	op_get_key_attr_args_t op_key_attrs = { 0 };
 	const struct key_def *key_def = NULL;
-	unsigned char *policy_list = NULL;
-	unsigned char *lifecycle_list = NULL;
-	unsigned int policy_list_length = 0;
-	unsigned int lifecycle_list_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1190,30 +1186,13 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 		get_key_persistence(op_key_attrs.key_lifetime);
 	key_attrs->identifier.storage_id =
 		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
+	key_attrs->attributes.lifecycle_flags =
+		ele_get_key_lifecycles(op_key_attrs.lifecycle);
 
-	if (key_attrs->pub) {
-		status = ele_get_key_policy(&policy_list, &policy_list_length,
-					    op_key_attrs.key_usage,
-					    op_key_attrs.permitted_algo);
-
-		if (status == SMW_STATUS_OK)
-			status = ele_get_key_lifecycle(&lifecycle_list,
-						       &lifecycle_list_length,
-						       op_key_attrs.lifecycle);
-
-		if (status == SMW_STATUS_OK) {
-			smw_keymgr_set_policy(key_attrs, policy_list,
-					      policy_list_length);
-			smw_keymgr_set_lifecycle(key_attrs, lifecycle_list,
-						 lifecycle_list_length);
-		} else {
-			if (policy_list)
-				SMW_UTILS_FREE(policy_list);
-
-			if (lifecycle_list)
-				SMW_UTILS_FREE(lifecycle_list);
-		}
-	}
+	status = ele_get_key_policy(&key_attrs->attributes.policy,
+				    &key_attrs->attributes.policy_len,
+				    op_key_attrs.key_usage,
+				    op_key_attrs.permitted_algo);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

@@ -95,6 +95,10 @@ static int read_descriptor(struct llist *data_list,
 	if (ret != ERR_CODE(PASSED))
 		return ret;
 
+	ret = util_tlv_read_lifecycle(&attrs, &attrs_len, info->odata_params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
 	if (attrs && attrs_len) {
 		if (data_descriptor->attributes_list)
 			free(data_descriptor->attributes_list);

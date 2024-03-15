@@ -21,8 +21,8 @@
 		"data 5": {
 			"id": 1,
 			"data": "0102030405060708090A0B0C0D0E0FCC",
-			"attributes_list": [
-				["LIFECYCLE", "UNDEFINED"]
+			"lifecycle": [
+				["UNDEFINED"]
 			]
 		}
 	},
@@ -70,7 +70,7 @@
 		"command": "STORAGE_STORE",
 		"subsystem": "DEFAULT",
 		"data_name": "data 5",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_LIFECYCLE"
 	}
 }
 

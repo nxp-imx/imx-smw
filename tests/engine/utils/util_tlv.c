@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <ctype.h>
@@ -666,39 +666,43 @@ static int count_tlv_key_usage_algo(size_t *nb_tlv,
 	return ERR_CODE(PASSED);
 }
 
-static int concat_policy_attr(unsigned char **attr, size_t *len,
-			      unsigned char *usages, size_t usages_len)
+static int append_tlv_var_length(unsigned char **attr, size_t *attr_len,
+				 const char *type, unsigned char *tlv,
+				 size_t tlv_len)
 {
-	int err = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+	int err = ERR_CODE(BAD_ARGS);
 	unsigned char *p = NULL;
-	unsigned char *policy_attr = NULL;
-	size_t policy_len = 0;
+	unsigned char *buf = NULL;
+	size_t buf_len = 0;
 
-	TLV_ELEMENT_LENGTH(TLV_KEY_POLICY, usages_len, policy_len);
-	if (policy_len < sizeof(TLV_KEY_POLICY))
+	if (!attr || !attr_len || !type || !tlv || !tlv_len)
 		return err;
 
-	policy_attr = malloc(policy_len);
-	if (!policy_attr) {
+	TLV_ELEMENT_LENGTH(type, tlv_len, buf_len);
+
+	if (buf_len < sizeof(type))
+		return err;
+
+	buf = malloc(buf_len);
+	if (!buf) {
 		DBG_PRINT_ALLOC_FAILURE();
-		return err;
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 	}
 
-	p = policy_attr;
-	(void)strcpy((char *)p, TLV_KEY_POLICY);
-	p += sizeof(TLV_KEY_POLICY);
+	p = buf;
+	(void)strcpy((char *)p, type);
+	p += strlen(type) + 1;
 
 	/* Set the 'length' of TLV with 2 bytes */
-	*(p++) = GET_BYTE(usages_len, 1);
-	*(p++) = GET_BYTE(usages_len, 0);
+	*(p++) = GET_BYTE(tlv_len, 1);
+	*(p++) = GET_BYTE(tlv_len, 0);
 
-	(void)memcpy(p, usages, usages_len);
+	(void)memcpy(p, tlv, tlv_len);
 
-	err = concat_buffers((void **)attr, len, (void *)policy_attr,
-			     policy_len);
+	err = concat_buffers((void **)attr, attr_len, (void *)buf, buf_len);
 
-	if (policy_attr && *attr != policy_attr)
-		free(policy_attr);
+	if (buf && *attr != buf)
+		free(buf);
 
 	return err;
 }
@@ -1032,37 +1036,25 @@ static int compare_policy_lists(struct tlv_list *ref_policy,
 	return res;
 }
 
-int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
-			struct json_object *params)
+static int tlv_read_array(unsigned char **attr, size_t *attr_len,
+			  const char *key, struct json_object *params)
 {
 	int ret = ERR_CODE(BAD_ARGS);
 	struct tlv *tlv = NULL;
 	struct json_object *oattr_list = NULL;
 	struct json_object *oattr = NULL;
-	unsigned char *new_attr = NULL;
-	size_t new_attr_len = 0;
 	size_t nb_attrs = 0;
 	size_t idx = 0;
 	size_t tlvs_size = 0;
-	size_t output_len = 0;
 
-	if (!params || !attr || !len) {
+	if (!params || !attr || !attr_len || !key) {
 		DBG_PRINT_BAD_ARGS();
 		return ret;
 	}
 
-	if (SET_OVERFLOW(*len, output_len)) {
-		DBG_PRINT_BAD_ARGS();
+	ret = util_read_json_type(&oattr_list, key, t_array, params);
+	if (ret != ERR_CODE(PASSED))
 		return ret;
-	}
-
-	ret = util_read_json_type(&oattr_list, ATTR_LIST_OBJ, t_array, params);
-	if (ret != ERR_CODE(PASSED)) {
-		/* If JSON tag not found, return with no error */
-		if (ret == ERR_CODE(VALUE_NOTFOUND))
-			ret = ERR_CODE(PASSED);
-		return ret;
-	}
 
 	nb_attrs = json_object_array_length(oattr_list);
 	DBG_PRINT("Get nb array attr %d", nb_attrs);
@@ -1086,12 +1078,38 @@ int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
 	for (; idx < nb_attrs; idx++) {
 		if (nb_attrs > 1)
 			oattr = json_object_array_get_idx(oattr_list, idx);
-		ret = read_tlv(&tlv[idx], &new_attr_len, oattr);
+		ret = read_tlv(&tlv[idx], attr_len, oattr);
 		if (ret != ERR_CODE(PASSED))
 			goto end;
 	}
 
-	ret = build_attr_lists(&new_attr, new_attr_len, tlv, nb_attrs);
+	ret = build_attr_lists(attr, *attr_len, tlv, nb_attrs);
+
+end:
+	free_tlvs(&tlv, nb_attrs);
+
+	return ret;
+}
+
+int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
+			struct json_object *params)
+{
+	int ret = ERR_CODE(BAD_ARGS);
+	unsigned char *new_attr = NULL;
+	size_t new_attr_len = 0;
+	size_t output_len = 0;
+
+	if (!params || !attr || !len) {
+		DBG_PRINT_BAD_ARGS();
+		return ret;
+	}
+
+	if (SET_OVERFLOW(*len, output_len)) {
+		DBG_PRINT_BAD_ARGS();
+		return ret;
+	}
+
+	ret = tlv_read_array(&new_attr, &new_attr_len, ATTR_LIST_OBJ, params);
 
 	/*
 	 * Concatenate new attributes with the input attributes if
@@ -1102,13 +1120,9 @@ int util_tlv_read_attrs(unsigned char **attr, unsigned int *len,
 				     (void *)new_attr, new_attr_len);
 		if (ret == ERR_CODE(PASSED) && SET_OVERFLOW(output_len, *len))
 			ret = ERR_CODE(FAILED);
+	} else if (ret == ERR_CODE(VALUE_NOTFOUND)) {
+		ret = ERR_CODE(PASSED);
 	}
-
-end:
-	free_tlvs(&tlv, nb_attrs);
-
-	if (new_attr && *attr != new_attr)
-		free(new_attr);
 
 	return ret;
 }
@@ -1210,8 +1224,8 @@ int util_tlv_read_key_policy(unsigned char **attr, unsigned int *len,
 	 * computed above and concatenate it with the input attributes.
 	 */
 	if (err == ERR_CODE(PASSED)) {
-		err = concat_policy_attr(attr, &output_len, usages_attr,
-					 usages_len);
+		err = append_tlv_var_length(attr, &output_len, TLV_KEY_POLICY,
+					    usages_attr, usages_len);
 		if (err == ERR_CODE(PASSED) && SET_OVERFLOW(output_len, *len))
 			err = ERR_CODE(FAILED);
 	}
@@ -1335,24 +1349,67 @@ exit:
 	return res;
 }
 
+int util_tlv_read_lifecycle(unsigned char **attr, unsigned int *len,
+			    struct json_object *params)
+{
+	int ret = ERR_CODE(BAD_ARGS);
+	unsigned char *new_attr = NULL;
+	size_t new_attr_len = 0;
+	size_t output_len = 0;
+
+	if (!params || !attr || !len) {
+		DBG_PRINT_BAD_ARGS();
+		return ret;
+	}
+
+	if (SET_OVERFLOW(*len, output_len)) {
+		DBG_PRINT_BAD_ARGS();
+		return ret;
+	}
+
+	ret = tlv_read_array(&new_attr, &new_attr_len, LIFECYCLE_OBJ, params);
+
+	/*
+	 * Concatenate new attributes with the input attributes if
+	 * not empty.
+	 */
+	if (ret == ERR_CODE(PASSED)) {
+		ret = append_tlv_var_length(attr, &output_len, TLV_LIFECYCLE,
+					    (void *)new_attr, new_attr_len);
+		if (ret == ERR_CODE(PASSED) && SET_OVERFLOW(output_len, *len))
+			ret = ERR_CODE(FAILED);
+	} else if (ret == ERR_CODE(VALUE_NOTFOUND)) {
+		ret = ERR_CODE(PASSED);
+	}
+
+	if (new_attr)
+		free(new_attr);
+
+	return ret;
+}
+
 int util_tlv_check_lifecycle(const unsigned char *lifecyle,
 			     unsigned int lifecycle_len)
 {
+	int res = ERR_CODE(BAD_ARGS);
+
 	const unsigned char *p = lifecyle;
 	const unsigned char *p_end = NULL;
 	unsigned int p_len = 0;
+	struct tlv_list *tlv_list = NULL;
+	struct tlv_list **list_elem = NULL;
 
 	if (!lifecyle && !lifecycle_len)
 		return ERR_CODE(PASSED);
 
 	if (!lifecyle && lifecycle_len) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	if (lifecyle && !lifecycle_len) {
 		DBG_PRINT_BAD_ARGS();
-		return ERR_CODE(BAD_ARGS);
+		return res;
 	}
 
 	/* Check first if lifecycle is starting with LIFECYCLE string */
@@ -1379,11 +1436,13 @@ int util_tlv_check_lifecycle(const unsigned char *lifecyle,
 		return ERR_CODE(FAILED);
 	}
 
-	DBG_PRINT("Lifecycle(s):");
-	while (p < p_end) {
-		DBG_PRINT("\t - %s", p);
-		p += strlen((const char *)p) + 1;
-	}
+	list_elem = &tlv_list;
+	do {
+		res = parse_tlv_list(list_elem, &p, p_end);
+		list_elem = &(*list_elem)->next;
+	} while (res == ERR_CODE(PASSED) && p < p_end);
 
-	return ERR_CODE(PASSED);
+	free_tlv_list(&tlv_list);
+
+	return res;
 }

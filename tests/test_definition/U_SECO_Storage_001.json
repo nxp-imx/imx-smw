@@ -16,7 +16,9 @@
 			"attributes_list": [
 				["READ_ONLY"],
 				["READ_ONCE"],
-				["LIFECYCLE", "OPEN"]
+			],
+			"lifecycle": [
+				["OPEN"]
 			]
 		}
 	},

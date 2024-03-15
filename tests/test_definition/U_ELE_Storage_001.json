@@ -56,7 +56,9 @@
 			"attributes_list": [
 				["READ_ONLY"],
 				["READ_ONCE"],
-				["LIFECYCLE", "OPEN"]
+			],
+			"lifecycle": [
+				["OPEN"]
 			]
 		},
 		"data 1 retrieve": {
@@ -71,8 +73,8 @@
 		"data 2": {
 			"id": 12,
 			"data": "0102030405060708090A0B0C0D0E0FCC",
-			"attributes_list": [
-				["LIFECYCLE", "CLOSED"]
+			"lifecycle": [
+				["CLOSED"]
 			]
 		},
 		"data 2 retrieve": {
@@ -89,8 +91,11 @@
 			"data": "0102030405060708090A0B0C0D0E0FCC",
 			"attributes_list": [
 				["READ_ONLY"],
-				["READ_ONCE"],
-				["LIFECYCLE", "CURRENT", "CLOSED"]
+				["READ_ONCE"]
+			],
+			"lifecycle": [
+				["CURRENT"],
+				["CLOSED"]
 			]
 		},
 		"data 3 retrieve": {
@@ -107,8 +112,10 @@
 			"data": "0102030405060708090A0B0C0D0E0FCC",
 			"attributes_list": [
 				["READ_ONLY"],
-				["READ_ONCE"],
-				["LIFECYCLE", "OPEN"]
+				["READ_ONCE"]
+			],
+			"lifecycle": [
+				["OPEN"]
 			]
 		},
 		"data 4 retrieve": {

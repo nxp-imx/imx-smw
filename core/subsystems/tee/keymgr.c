@@ -5,7 +5,6 @@
 
 #include <tee_client_api.h>
 
-#include "operations.h"
 #include "subsystems.h"
 #include "debug.h"
 #include "utils.h"
@@ -1670,8 +1669,6 @@ static int get_key_attributes(void *args)
 	struct smw_keymgr_get_key_attributes_args *key_attrs = NULL;
 	enum tee_key_type tee_type = 0;
 	unsigned int tee_usage = 0;
-	unsigned char *policy_list = NULL;
-	unsigned int policy_list_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1744,13 +1741,9 @@ static int get_key_attributes(void *args)
 	key_attrs->identifier.security_size =
 		op.params[GET_KEY_ATTRS_KEY_SIZE_IDX].value.a;
 
-	if (key_attrs->pub) {
-		status = tee_set_key_policy(&policy_list, &policy_list_length,
-					    tee_usage);
-		if (status == SMW_STATUS_OK)
-			smw_keymgr_set_policy(key_attrs, policy_list,
-					      policy_list_length);
-	}
+	status = tee_set_key_policy(&key_attrs->attributes.policy,
+				    &key_attrs->attributes.policy_len,
+				    tee_usage);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

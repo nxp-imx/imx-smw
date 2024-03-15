@@ -13,6 +13,7 @@
 #include "attr.h"
 #include "object_db.h"
 #include "storage.h"
+#include "lifecycle.h"
 
 /**
  * store_read_only() - Store read-only attribute.
@@ -81,38 +82,6 @@ static const struct attribute_tlv data_attributes_tlv_array[] = {
 	  .store = store_persistent }
 };
 
-#define LIFECYCLE(_name)                                                       \
-	{                                                                      \
-		.lifecycle_str = LC_##_name##_STR,                             \
-		.lifecycle = SMW_LIFECYCLE_##_name,                            \
-	}
-
-/**
- * struct - Lifecycle
- * @lifecycle_str: Lifecycle name used for TLV encoding.
- * @lifecycle: Lifecycle id.
- */
-static const struct {
-	const char *lifecycle_str;
-	unsigned int lifecycle;
-} lifecycle_info[] = { LIFECYCLE(OPEN), LIFECYCLE(CLOSED),
-		       LIFECYCLE(CLOSED_LOCKED), LIFECYCLE(CURRENT) };
-
-static unsigned int get_lifecycle(const char *name)
-{
-	unsigned int lifecycle = 0;
-	unsigned int i = 0;
-
-	for (; i < ARRAY_SIZE(lifecycle_info); i++) {
-		if (!SMW_UTILS_STRCMP(name, lifecycle_info[i].lifecycle_str)) {
-			lifecycle = lifecycle_info[i].lifecycle;
-			break;
-		}
-	}
-
-	return lifecycle;
-}
-
 static int store_read_only(void *attributes, unsigned char *value,
 			   unsigned int length)
 {
@@ -158,33 +127,13 @@ static int store_lifecycle(void *attributes, unsigned char *value,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_storage_data_attributes *attr = attributes;
-	const unsigned char *p = value;
-	const unsigned char *p_end = value + length;
-	const char *lifecycle = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (attr && value && length) {
-		while (p < p_end) {
-			lifecycle = (const char *)p;
+	if (attr && value && length)
+		status = smw_lifecycle_get_tlv(&attr->lifecycle_flags, value,
+					       length);
 
-			p += SMW_UTILS_STRLEN(lifecycle) + 1;
-
-			if (p > p_end) {
-				SMW_DBG_PRINTF(ERROR,
-					       "%s Parsing lifecycle failed\n",
-					       __func__);
-				goto end;
-			}
-
-			attr->lifecycle_flags |= get_lifecycle(lifecycle);
-		}
-
-		if (attr->lifecycle_flags)
-			status = SMW_STATUS_OK;
-	}
-
-end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

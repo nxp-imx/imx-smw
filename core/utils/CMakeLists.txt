@@ -10,6 +10,7 @@ target_sources(utils PRIVATE
                exec.c
                hash.c
                info.c
+               lifecycle.c
                list.c
                mac.c
                name.c

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #include "smw_status.h"
@@ -290,4 +290,88 @@ void smw_tlv_set_length(unsigned char *element, unsigned char *end)
 	*p = (value_size >> 8) & UCHAR_MAX;
 	p++;
 	*p = value_size & 0xFF;
+}
+
+int smw_tlv_append_var_len_list(unsigned char **buffer,
+				unsigned int *buffer_length,
+				unsigned char *element,
+				unsigned int element_length)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	const char *type = NULL;
+	unsigned char *p = NULL;
+	unsigned int len = 0;
+	unsigned int j = 1;
+	size_t val_len = 0;
+	size_t new_val_len = 0;
+	size_t add_len = element_length;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!buffer || !buffer_length || !element || !*buffer ||
+	    !element_length)
+		goto exit;
+
+	/* Get the TLV variable-length list length */
+	type = (const char *)*buffer;
+
+	p = *buffer;
+	p += SMW_UTILS_STRLEN(type);
+	p++;
+
+	/* Get the TLV minimum TLV length */
+	if (SMW_TLV_ELEMENT_LENGTH(type, 0, len))
+		goto exit;
+
+	if (len > *buffer_length)
+		goto exit;
+
+	/* Parse length */
+	val_len = *p++;
+	for (; j < SMW_TLV_LENGTH_FIELD_SIZE; j++) {
+		val_len <<= 8;
+		val_len |= *p++;
+	}
+
+	if (ADD_OVERFLOW(val_len, add_len, &new_val_len))
+		goto exit;
+
+	/* Calculate the new TLV length */
+	if (SMW_TLV_ELEMENT_LENGTH(type, new_val_len, len))
+		goto exit;
+
+	if (len > *buffer_length) {
+		*buffer = SMW_UTILS_REALLOC(*buffer, len);
+		if (!*buffer) {
+			SMW_DBG_PRINTF(DEBUG, "%s reallocation failed\n",
+				       __func__);
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto exit;
+		}
+
+		SMW_UTILS_MEMSET(*buffer + *buffer_length, 0,
+				 len - *buffer_length);
+		*buffer_length = len;
+	}
+
+	/* Calculate the position where to copy the new elemeent */
+	p = *buffer;
+
+	type = (const char *)*buffer;
+	p += SMW_UTILS_STRLEN(type);
+	p++;
+	p += SMW_TLV_LENGTH_FIELD_SIZE;
+	p += val_len;
+
+	SMW_UTILS_MEMCPY(p, element, add_len);
+	p += add_len;
+
+	smw_tlv_set_length(*buffer, p);
+
+	status = SMW_STATUS_OK;
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }

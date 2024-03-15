@@ -9,7 +9,6 @@
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
-#include "operations.h"
 #include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
@@ -20,6 +19,7 @@
 #include "base64.h"
 #include "attr.h"
 #include "object.h"
+#include "lifecycle.h"
 
 #define FORMAT_ID_ASSERT(id)                                                   \
 	do {                                                                   \
@@ -671,7 +671,6 @@ static int get_key_identifier(struct smw_keymgr_identifier *key_identifier,
 
 	struct smw_keymgr_get_key_attributes_args attr_args = { 0 };
 
-	attr_args.pub = NULL;
 	attr_args.identifier.id = key_identifier->id;
 
 	status = smw_utils_execute_implicit(OPERATION_ID_GET_KEY_ATTRIBUTES,
@@ -817,10 +816,11 @@ void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr)
 	attr->rsa_pub_exp_len = 0;
 	attr->flush_key = false;
 	attr->policy = NULL;
-	attr->policy = 0;
+	attr->policy_len = 0;
 	attr->pub_key_attributes_list = NULL;
 	attr->pub_key_attributes_list_length = 0;
 	attr->storage_id = 0;
+	attr->lifecycle_flags = 0;
 }
 
 int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
@@ -2074,24 +2074,6 @@ end:
 	return status;
 }
 
-void smw_keymgr_set_policy(struct smw_keymgr_get_key_attributes_args *attrs,
-			   unsigned char *policy, unsigned int length)
-{
-	if (attrs && attrs->pub) {
-		attrs->pub->policy_list = policy;
-		attrs->pub->policy_list_length = length;
-	}
-}
-
-void smw_keymgr_set_lifecycle(struct smw_keymgr_get_key_attributes_args *attrs,
-			      unsigned char *lifecycle, unsigned int length)
-{
-	if (attrs && attrs->pub) {
-		attrs->pub->lifecycle_list = lifecycle;
-		attrs->pub->lifecycle_list_length = length;
-	}
-}
-
 enum smw_status_code
 smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 {
@@ -2140,10 +2122,6 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 		goto end;
 	}
 
-	attr_args.pub = args;
-	smw_keymgr_set_policy(&attr_args, NULL, 0);
-	smw_keymgr_set_lifecycle(&attr_args, NULL, 0);
-
 	status = smw_utils_execute_implicit(OPERATION_ID_GET_KEY_ATTRIBUTES,
 					    &attr_args, subsystem_id);
 
@@ -2165,6 +2143,13 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 		smw_object_get_persistence_name(key_identifier->persistence_id);
 
 	args->storage = key_identifier->storage_id;
+
+	args->policy_list = attr_args.attributes.policy;
+	args->policy_list_length = attr_args.attributes.policy_len;
+
+	status = smw_lifecycle_set_tlv(&args->lifecycle_list,
+				       &args->lifecycle_list_length,
+				       attr_args.attributes.lifecycle_flags);
 
 	if (key_not_present) {
 		key_identifier->subsystem_id = subsystem_id;

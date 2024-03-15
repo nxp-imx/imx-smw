@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __TLV_H__
@@ -244,5 +244,27 @@ void smw_tlv_set_type(unsigned char **buffer, const char *type);
  * None.
  */
 void smw_tlv_set_length(unsigned char *element, unsigned char *end);
+
+/**
+ * smw_tlv_append_var_len_list() - Add a new element to the variable length list
+ * @buffer: [in/out] TLV variable-length list
+ * @buffer_length: [in/out] Size in bytes of @buffer
+ * @element: [in] New element to be added
+ * @element_length: [in] Length of the element to add.
+ *
+ * The @buffer must be a TLV aleady containing the TLV's type and must be big
+ * enough to contain the TLV's length field even if equal 0.
+ * The @buffer is reallocated if the @buffer_length is too short to add the
+ * new @element.
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success.
+ * SMW_STATUS_INVALID_PARAM  - One of the parameter is invalid.
+ * SMW_STATUS_ALLOC_FAILURE  - Memory allocation failure.
+ */
+int smw_tlv_append_var_len_list(unsigned char **buffer,
+				unsigned int *buffer_length,
+				unsigned char *element,
+				unsigned int element_length);
 
 #endif /* __TLV_H__ */

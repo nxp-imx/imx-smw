@@ -115,6 +115,7 @@ struct smw_keymgr_descriptor {
  * @pub_key_attributes_list: Key attributes list from the public API
  * @pub_key_attributes_list_length: Length of @pub_key_attributes_list
  * @storage_id: Key storage ID
+ * @lifecycle_flags: Device lifecycles where key is accessible
  */
 struct smw_keymgr_attributes {
 	enum smw_object_persistence_id persistence_id;
@@ -126,6 +127,7 @@ struct smw_keymgr_attributes {
 	unsigned char *pub_key_attributes_list;
 	unsigned int *pub_key_attributes_list_length;
 	unsigned int storage_id;
+	unsigned long lifecycle_flags;
 };
 
 /**
@@ -182,12 +184,12 @@ struct smw_keymgr_delete_key_args {
 /**
  * struct smw_keymgr_get_key_attributes_args - Get Key attributes arguments
  * @identifier: Key identifier
- * @pub: Pointer to the public get key attributes arguments structure
+ * @attributes: Key attributes
  *
  */
 struct smw_keymgr_get_key_attributes_args {
 	struct smw_keymgr_identifier identifier;
-	struct smw_get_key_attributes_args *pub;
+	struct smw_keymgr_attributes attributes;
 };
 
 /**

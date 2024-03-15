@@ -22,6 +22,7 @@
 
 #define SMW_UTILS_MALLOC  malloc
 #define SMW_UTILS_CALLOC  calloc
+#define SMW_UTILS_REALLOC realloc
 #define SMW_UTILS_FREE	  free
 #define SMW_UTILS_MEMCPY  memcpy
 #define SMW_UTILS_MEMSET  memset

@@ -58,6 +58,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   Additionally, remove default value assignment for key usage when undefined by the user for TEE subsystem.
 * ELE subsystem add MD5 and SHA1 digest.
 * ELE subsystem add RSA signature.
+* Add TEE subsystem random IV generation.
 
 ##### 3. ARM PSA APIs
 
@@ -77,7 +78,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### PKCS#11 Library - _version 4.0_
 
+* Update to PKCS#11 3.1 Specification.
+* Implement message-based encrypt/decrypt PKCS#11 APIs.
+
 #### PKCS#11 Tests - _version 4.0_
+
+* Validation of message-based encrypt/decrypt PKCS#11 APIs.
 
 ---
 ### <a id ="rel_3_0"></a></br>**Release 3.0**

@@ -291,6 +291,9 @@ __export psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 	if (data_desc.attributes_list)
 		SMW_UTILS_FREE(data_desc.attributes_list);
 
+	if (data_info.lifecycle_list)
+		SMW_UTILS_FREE(data_info.lifecycle_list);
+
 	return psa_status;
 }
 

@@ -1059,7 +1059,7 @@ end:
 
 static psa_status_t
 get_psa_key_persistence(psa_key_persistence_t *psa_persistence,
-			smw_keymgr_persistence_t persistence)
+			smw_object_persistence_t persistence)
 {
 	unsigned int i = 0;
 
@@ -1076,7 +1076,7 @@ get_psa_key_persistence(psa_key_persistence_t *psa_persistence,
 }
 
 static psa_status_t
-get_smw_key_persistence(smw_keymgr_persistence_t *smw_persistence,
+get_smw_key_persistence(smw_object_persistence_t *smw_persistence,
 			psa_key_lifetime_t lifetime)
 {
 	unsigned int i = 0;
@@ -1113,7 +1113,7 @@ set_key_attributes_list(const psa_key_attributes_t *attributes,
 	unsigned int usage_tlv_length = 0;
 	unsigned int tmp_tlv_length = 0;
 	unsigned int storage_id = 0;
-	smw_keymgr_persistence_t key_persistence = NULL;
+	smw_object_persistence_t key_persistence = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

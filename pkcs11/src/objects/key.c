@@ -275,6 +275,7 @@ static void key_secret_free(struct libobj_obj *obj)
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_SM4:
 		key_cipher_free(obj);
 		break;
 
@@ -704,6 +705,7 @@ static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_SM4:
 		ret = key_cipher_create(hsession, obj, attrs);
 		break;
 
@@ -770,6 +772,7 @@ static CK_RV subkey_secret_get_attribute(CK_ATTRIBUTE_PTR attr,
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_SM4:
 		ret = key_cipher_get_attribute(attr, obj, protect);
 		break;
 
@@ -832,6 +835,7 @@ static CK_RV subkey_secret_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_SM4:
 		ret = key_cipher_modify_attribute(attr, obj);
 		break;
 
@@ -1545,6 +1549,10 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		key_type = CKK_DES3;
 		break;
 
+	case CKM_SM4_KEY_GEN:
+		key_type = CKK_SM4;
+		break;
+
 	case CKM_GENERIC_SECRET_KEY_GEN:
 		key_type = CKK_GENERIC_SECRET;
 		break;
@@ -1567,6 +1575,7 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_SM4:
 		ret = key_cipher_generate(hsession, mech, obj, attrs);
 		break;
 
@@ -1604,6 +1613,7 @@ CK_RV key_get_id(struct libbytes *id, struct libobj_obj *obj, size_t prefix_len)
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_SM4:
 		ret = key_cipher_get_id(id, obj, prefix_len);
 		break;
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2024 NXP
  */
 
 #ifndef __PKCS11SMW_H__
@@ -25,5 +25,25 @@
 #endif
 
 #include <pkcs11.h>
+
+/*
+ * SMW vendor extensions
+*/
+#define CKK_VENDOR_SMW (CKK_VENDOR_DEFINED | 0x534D57UL)
+#define CKM_VENDOR_SMW (CKM_VENDOR_DEFINED | 0x534D57UL)
+
+/* Key type SM4 */
+#define CKK_SM4 (CKK_VENDOR_SMW + 1)
+
+/* SM4 mechanisms */
+#define CKM_SM4_KEY_GEN (CKM_VENDOR_SMW + 1)
+#define CKM_SM4_CBC	(CKM_VENDOR_SMW + 2)
+#define CKM_SM4_CTR	(CKM_VENDOR_SMW + 3)
+#define CKM_SM4_ECB	(CKM_VENDOR_SMW + 4)
+
+/* Parameters for SM4-CTR mechanism: same as AES-CTR */
+typedef struct CK_AES_CTR_PARAMS CK_SM4_CTR_PARAMS;
+
+typedef CK_SM4_CTR_PARAMS CK_PTR CK_SM4_CTR_PARAMS_PTR;
 
 #endif /* __PKCS11SMW_H__ */

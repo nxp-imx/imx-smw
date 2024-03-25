@@ -160,6 +160,7 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 	switch (get_key_type(obj)) {
 	case CKK_AES:
+	case CKK_SM4:
 		req = MUST;
 		break;
 

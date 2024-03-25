@@ -128,6 +128,7 @@ struct cipher_def {
 const struct cipher_def ciphers[] = { CIPHERS(CKK_AES, AES),
 				      CIPHERS(CKK_DES, DES),
 				      CIPHERS(CKK_DES3, DES3),
+				      CIPHERS(CKK_SM4, SM4),
 				      CIPHERS(CKK_MD5_HMAC, HMAC_MD5),
 				      CIPHERS(CKK_SHA_1_HMAC, HMAC_SHA1),
 				      CIPHERS(CKK_SHA224_HMAC, HMAC_SHA224),
@@ -201,6 +202,12 @@ static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 
 	case CKK_AES:
 		if (key_length != 16 && key_length != 24 && key_length != 32)
+			return CKR_ATTRIBUTE_VALUE_INVALID;
+		desc->security_size = key_length * 8;
+		break;
+
+	case CKK_SM4:
+		if (key_length != 16)
 			return CKR_ATTRIBUTE_VALUE_INVALID;
 		desc->security_size = key_length * 8;
 		break;
@@ -303,6 +310,7 @@ CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj)
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_SM4:
 	case CKK_MD5_HMAC:
 	case CKK_SHA_1_HMAC:
 	case CKK_SHA224_HMAC:
@@ -338,6 +346,7 @@ void key_desc_copy_key_id(struct libobj_obj *obj,
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_SM4:
 	case CKK_MD5_HMAC:
 	case CKK_SHA_1_HMAC:
 	case CKK_SHA224_HMAC:

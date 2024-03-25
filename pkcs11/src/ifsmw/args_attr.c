@@ -262,6 +262,7 @@ CK_RV args_attrs_key_policy(struct smw_tlv *attr, struct libobj_obj *obj,
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
+	case CKK_SM4:
 	case CKK_MD5_HMAC:
 	case CKK_SHA_1_HMAC:
 	case CKK_SHA224_HMAC:

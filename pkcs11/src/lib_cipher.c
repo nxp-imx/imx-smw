@@ -16,6 +16,7 @@
 
 #define DES_IV_LEN	 8
 #define AES_IV_LEN	 16
+#define SM4_IV_LEN	 16
 #define MAX_COUNTER_BITS 128
 
 /**
@@ -33,7 +34,8 @@
 static CK_RV check_cipher_mech_params(CK_MECHANISM_PTR pmechanism,
 				      struct lib_cipher_ctx *ctx)
 {
-	CK_AES_CTR_PARAMS_PTR ctr_params = NULL_PTR;
+	CK_AES_CTR_PARAMS_PTR aes_ctr_params = NULL_PTR;
+	CK_SM4_CTR_PARAMS_PTR sm4_ctr_params = NULL_PTR;
 
 	switch (pmechanism->mechanism) {
 	case CKM_AES_CBC:
@@ -73,15 +75,15 @@ static CK_RV check_cipher_mech_params(CK_MECHANISM_PTR pmechanism,
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		ctr_params = (CK_AES_CTR_PARAMS_PTR)pmechanism->pParameter;
+		aes_ctr_params = (CK_AES_CTR_PARAMS_PTR)pmechanism->pParameter;
 
-		if (ctr_params->ulCounterBits > MAX_COUNTER_BITS) {
+		if (aes_ctr_params->ulCounterBits > MAX_COUNTER_BITS) {
 			DBG_TRACE("ulCounterBits error");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		ctx->iv = ctr_params->cb;
-		ctx->iv_length = sizeof(ctr_params->cb);
+		ctx->iv = aes_ctr_params->cb;
+		ctx->iv_length = sizeof(aes_ctr_params->cb);
 		break;
 
 	case CKM_AES_CTS:
@@ -107,6 +109,39 @@ static CK_RV check_cipher_mech_params(CK_MECHANISM_PTR pmechanism,
 	case CKM_AES_ECB:
 	case CKM_DES_ECB:
 	case CKM_DES3_ECB:
+	case CKM_SM4_ECB:
+		break;
+
+	case CKM_SM4_CBC:
+		if (!pmechanism->pParameter) {
+			DBG_TRACE("SM4 CBC mode: iv is not set");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		if (pmechanism->ulParameterLen != SM4_IV_LEN) {
+			DBG_TRACE("SM4 CBC mode: iv length is not correct");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		ctx->iv = pmechanism->pParameter;
+		ctx->iv_length = pmechanism->ulParameterLen;
+		break;
+
+	case CKM_SM4_CTR:
+		if (pmechanism->ulParameterLen != sizeof(CK_SM4_CTR_PARAMS)) {
+			DBG_TRACE("ulParameterLen error");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		sm4_ctr_params = (CK_SM4_CTR_PARAMS_PTR)pmechanism->pParameter;
+
+		if (sm4_ctr_params->ulCounterBits > MAX_COUNTER_BITS) {
+			DBG_TRACE("ulCounterBits error");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		ctx->iv = sm4_ctr_params->cb;
+		ctx->iv_length = sizeof(sm4_ctr_params->cb);
 		break;
 
 	default:

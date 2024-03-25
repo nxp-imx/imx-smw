@@ -38,6 +38,7 @@
 #define DES_STR	 "DES"
 #define DES3_STR "DES3"
 #define HMAC_STR "HMAC"
+#define SM4_STR	 "SM4"
 
 struct mgroup;
 struct mentry;
@@ -111,6 +112,12 @@ static void check_mhmac(CK_SLOT_ID slotid, const char *subsystem,
 static CK_RV info_mhmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args);
+static void check_mcipher_sm4(CK_SLOT_ID slotid, const char *subsystem,
+			      struct mgroup *mgroup);
+static CK_RV info_mcipher_sm4(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_mcipher_sm4(CK_SLOT_ID slotid, struct mentry *entry,
+			    void *args);
 
 const char *smw_ec_name[] = { "NIST", "BRAINPOOL_R1", "BRAINPOOL_T1" };
 
@@ -203,6 +210,7 @@ static struct mentry mkeygen[] = {
 	M_ALGO_NO_HASH(AES, AES_KEY_GEN),
 	M_ALGO_NO_HASH(DES, DES_KEY_GEN),
 	M_ALGO_NO_HASH(DES3, DES3_KEY_GEN),
+	M_ALGO_NO_HASH(SM4, SM4_KEY_GEN),
 	M_ALGO_NO_HASH(HMAC, GENERIC_SECRET_KEY_GEN),
 	M_ALGO_NO_HASH(RSA, RSA_PKCS_KEY_PAIR_GEN),
 };
@@ -297,6 +305,12 @@ static struct mentry mhmac[] = {
 	M_ALGO_HASH(HMAC, SHA3_512, SHA3_512_HMAC_GENERAL),
 };
 
+static struct mentry mcipher_sm4[] = {
+	M_ALGO_NO_HASH(SM4, SM4_CBC),
+	M_ALGO_NO_HASH(SM4, SM4_CTR),
+	M_ALGO_NO_HASH(SM4, SM4_ECB),
+};
+
 /*
  * All SMW mechanisms
  */
@@ -313,6 +327,7 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(mcmac_aes), mcmac_aes),
 	M_GROUP(ARRAY_SIZE(mcmac_des3), mcmac_des3),
 	M_GROUP(ARRAY_SIZE(mhmac), mhmac),
+	M_GROUP(ARRAY_SIZE(mcipher_sm4), mcipher_sm4),
 	{ 0 }
 };
 
@@ -350,6 +365,7 @@ static struct cipher_algo_info cipher_algos[] = {
 	CIPHER_ALGO(AES, ECB), CIPHER_ALGO(AES, CBC),  CIPHER_ALGO(AES, CTR),
 	CIPHER_ALGO(AES, CTS), CIPHER_ALGO(AES, XTS),  CIPHER_ALGO(DES, ECB),
 	CIPHER_ALGO(DES, CBC), CIPHER_ALGO(DES3, ECB), CIPHER_ALGO(DES3, CBC),
+	CIPHER_ALGO(SM4, CBC), CIPHER_ALGO(SM4, CTR),  CIPHER_ALGO(SM4, ECB)
 };
 
 /**
@@ -2060,6 +2076,37 @@ static CK_RV info_mhmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
 	return op_mmac_common(slotid, entry, args);
+}
+
+static void check_mcipher_sm4(CK_SLOT_ID slotid, const char *subsystem,
+			      struct mgroup *mgroup)
+{
+	struct smw_cipher_info info = { 0 };
+
+	info.key_type_name = SM4_STR;
+
+	check_mcipher_common(slotid, subsystem, mgroup, info);
+}
+
+static CK_RV info_mcipher_sm4(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	CK_RV ret = CKR_OK;
+	struct smw_cipher_info cipher_info = { 0 };
+
+	DBG_TRACE("Return info of 0x%lx cipher mechanism", type);
+
+	cipher_info.key_type_name = SM4_STR;
+
+	ret = info_mcipher_common(slotid, type, entry, info, cipher_info);
+
+	return ret;
+}
+
+static CK_RV op_mcipher_sm4(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	(void)entry;
+	return op_mcipher_common(slotid, args);
 }
 
 CK_RV libdev_cancel_operation(void **context)

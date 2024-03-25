@@ -1,0 +1,176 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SM4",
+			"security_size": 128,
+			"priv_key": "0123456789abcdeffedcba9876543210"
+		},
+		"key 2": {
+			"type": "SM4",
+			"security_size": 128,
+			"priv_key": "fedcba98765432100123456789abcdef"
+		}
+	},
+	"subtest 1": {
+		"command": "CIPHER",
+		"subsystem": "TEE",
+		"mode": "XTS",
+		"op_type": "ENCRYPT",
+		"key_name": [
+			"key 1",
+			"key 2"
+		],
+		"input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		"iv": "00112233445566778899aabbccddeeff",
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 2": {
+		"command": "CIPHER",
+		"subsystem": "TEE",
+		"mode": "XTS",
+		"op_type": "DECRYPT",
+		"key_name": [
+			"key 1",
+			"key 2"
+		],
+		"input": "684780134eb2caaad3d58041c210e652",
+		"iv": "00112233445566778899aabbccddeeff",
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"input": [
+			"aaaaaaaabbbbbbbbccccccccdddddddd",
+			"eeeeeeeeffffffffaaaaaaaabbbbbbbb"
+		],
+		"output": [
+			"5ec8143de509cff7b5179f8f474b8619",
+			"2f1d305a7fb17df985f81c8482192304"
+		]
+	},
+	"subtest 4": {
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 2",
+		"input": [
+			"aaaaaaaabbbbbbbbccccccccdddddddd",
+			"eeeeeeeeffffffffaaaaaaaabbbbbbbb"
+		],
+		"output": [
+			"c5876897e4a59bbba72a10c83872245b",
+			"12dd90bc2d200692b529a4155ac9e600"
+		]
+	},
+	"subtest 5": {
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"iv": "000102030405060708090a0b0c0d0e0f",
+		"input": [
+			"aaaaaaaabbbbbbbbccccccccdddddddd",
+			"eeeeeeeeffffffffaaaaaaaabbbbbbbb"
+		],
+		"output": [
+			"78ebb11cc40b0a48312aaeb2040244cb",
+			"4cb7016951909226979b0d15dc6a8f6d"
+		]
+	},
+	"subtest 6": {
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 2",
+		"iv": "000102030405060708090a0b0c0d0e0f",
+		"input": [
+			"aaaaaaaabbbbbbbbccccccccdddddddd",
+			"eeeeeeeeffffffffaaaaaaaabbbbbbbb"
+		],
+		"output": [
+			"0d3a6ddc2d21c698857215587b7bb59a",
+			"91f2c147911a4144665e1fa1d40bae38"
+		]
+	},
+	"subtest 7": {
+		"command": "CIPHER",
+		"mode": "CFB",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"iv": "000102030405060708090a0b0c0d0e0f",
+		"input": [
+			"aaaaaaaabbbbbbbbccccccccdddddddd",
+			"eeeeeeeeffffffffaaaaaaaabbbbbbbb"
+		],
+		"output": [
+			"ac3236cb861dd316e6413b4e3c7524b7",
+			"69d4c54ed433b9a0346009beb37b2b3f"
+		],
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED" // not configured, but also not supported
+	},
+	"subtest 8": {
+		"command": "CIPHER",
+		"mode": "CFB",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 2",
+		"iv": "000102030405060708090a0b0c0d0e0f",
+		"input": [
+			"aaaaaaaabbbbbbbbccccccccdddddddd",
+			"eeeeeeeeffffffffaaaaaaaabbbbbbbb"
+		],
+		"output": [
+			"5dcccd25a84ba16560d7f26588706849",
+			"0d9b86ff20c3bfe115ffa02ca6192cc5"
+		],
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED" // not configured, but also not supported
+	},
+	"subtest 9": {
+		"command": "CIPHER",
+		"mode": "CTR",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 1",
+		"iv": "000102030405060708090a0b0c0d0e0f",
+		"input": [
+			"aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb",
+			"ccccccccccccccccdddddddddddddddd",
+			"eeeeeeeeeeeeeeeeffffffffffffffff",
+			"aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb"
+		],
+		"output": [
+			"ac3236cb970cc20791364c395a1342d1",
+			"a3cbc1878c6f30cd074cce385cdd70c7",
+			"f234bc0e24c11980fd1286310ce37b92",
+			"6e02fcd0faa0baf38b2933851d824514"
+		]
+	},
+	"subtest 10": {
+		"command": "CIPHER",
+		"mode": "CTR",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 2",
+		"iv": "000102030405060708090a0b0c0d0e0f",
+		"input": [
+			"aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb",
+			"ccccccccccccccccdddddddddddddddd",
+			"eeeeeeeeeeeeeeeeffffffffffffffff",
+			"aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb"
+		],
+		"output": [
+			"5dcccd25b95ab07417a08512ee160e2f",
+			"8f661521cbbab44cc87138445bc29e5c",
+			"0ae0297205d62704173b21239b887f6c",
+			"8cb5b800917a2488284bde9e16ea2906"
+		]
+	}
+}

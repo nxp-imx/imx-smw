@@ -75,6 +75,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Rename HSM subsystem as SECO subsystem.
 * Add ELE subsystem attestation key permitted algorithm.
 * Remove SMW_STATUS_DATA_ALREADY_RETRIEVED no more used in ELE subsystem.
+* Implement SM4 block cipher for TEE subsystem.
 
 ##### 3. ARM PSA APIs
 
@@ -103,12 +104,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add SHA-3 test vectors in U_PSA_Hash_002.
 * Add tests to validate revised context management.
 * Review data storage test to delete data.
+* Add tests for SM4 block cipher.
 
 #### PKCS#11 Library - _version 3.0_
 
 * Add prefix `[PKCS11]` to PKCS#11 traces.
 * Update context management.
 * Implement message-based sign/verify with MACs single-part PKCS#11 APIs.
+* Implement SM4 block cipher support as a vendor extension.
 
 #### PKCS#11 Tests - _version 3.0_
 
@@ -116,6 +119,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add prefix `[TEST]` to PKCS#11 test traces.
 * Validation of message-based sign/verify with MACs single-part PKCS#11 APIs.
 * Add SHA-3 test vectors in pkcs11_digest test suite.
+* Add SM4 block cipher tests.
 
 ---
 ### <a id ="rel_2_5"></a></br>**Release 2.5**

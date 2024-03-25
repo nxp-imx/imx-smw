@@ -950,6 +950,155 @@ end:
 	return status;
 }
 
+static int encrypt_decrypt_sm4(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+
+	static const CK_BYTE counter_block[] = { 0x00, 0x01, 0x02, 0x03,
+						 0x04, 0x05, 0x06, 0x07,
+						 0x00, 0x00, 0x00, 0x00,
+						 0x00, 0x00, 0x00, 0x00 };
+	const CK_ULONG counter_bits = 64;
+	CK_SM4_CTR_PARAMS ctr_params;
+
+	/* XTS doesn't work with a single key right now */
+	CK_MECHANISM_TYPE sm4_mech_type[] = { CKM_SM4_CBC, CKM_SM4_CTR,
+					      CKM_SM4_ECB /*, CKM_SM4_XTS */ };
+
+	CK_BYTE iv[] = { 0x01, 0x02,  0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+
+	CK_MECHANISM encrypt_decrypt_mech = { 0 };
+	CK_BYTE_PTR encrypted_data = NULL_PTR;
+	CK_ULONG encrypted_data_len = 0;
+	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_BYTE_PTR recovered_data = NULL_PTR;
+	CK_ULONG recovered_data_len = 0;
+
+	CK_OBJECT_HANDLE sm4_hsecretkey = 0;
+
+	/* SM4 - 128 bits key length */
+	CK_ULONG key_length = 128 / 8;
+	CK_MECHANISM sm4_key_mech = { .mechanism = CKM_SM4_KEY_GEN };
+	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
+	CK_BBOOL ck_true = CK_TRUE;
+
+	CK_ATTRIBUTE sm4_key_attrs[] = {
+		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
+		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) }
+	};
+
+	unsigned int i = 0;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	encrypted_data = (CK_BYTE_PTR)calloc(data_len, sizeof(CK_BYTE));
+	if (CHECK_EXPECTED(encrypted_data, "Allocation error"))
+		goto end;
+
+	recovered_data = (CK_BYTE_PTR)calloc(data_len, sizeof(CK_BYTE));
+	if (CHECK_EXPECTED(recovered_data, "Allocation error"))
+		goto end;
+
+	for (; i < ARRAY_SIZE(sm4_mech_type); i++) {
+		encrypt_decrypt_mech.pParameter = NULL_PTR;
+		encrypt_decrypt_mech.ulParameterLen = 0;
+		encrypt_decrypt_mech.mechanism = sm4_mech_type[i];
+
+		TEST_OUT("Generate SM4 secret Key\n");
+		ret = pfunc->C_GenerateKey(sess, &sm4_key_mech, sm4_key_attrs,
+					   ARRAY_SIZE(sm4_key_attrs),
+					   &sm4_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+			goto end;
+
+		TEST_OUT("Initialize encrypt operation\n");
+
+		switch (encrypt_decrypt_mech.mechanism) {
+		case CKM_SM4_CBC:
+			encrypt_decrypt_mech.pParameter = iv;
+			encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+			break;
+
+		case CKM_SM4_CTR:
+			memcpy(ctr_params.cb, counter_block,
+			       ARRAY_SIZE(counter_block));
+			ctr_params.ulCounterBits = counter_bits;
+			encrypt_decrypt_mech.pParameter = &ctr_params;
+			encrypt_decrypt_mech.ulParameterLen =
+				sizeof(ctr_params);
+			break;
+
+		default:
+			break;
+		}
+
+		ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech,
+					   sm4_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
+			goto end;
+
+		encrypted_data_len = data_len;
+
+		TEST_OUT("Encrypt message\n");
+		ret = pfunc->C_Encrypt(sess, data, data_len, encrypted_data,
+				       &encrypted_data_len);
+		if (CHECK_CK_RV(CKR_OK, "C_Encrypt"))
+			goto end;
+
+		TEST_OUT("Initialize decrypt operation\n");
+		ret = pfunc->C_DecryptInit(sess, &encrypt_decrypt_mech,
+					   sm4_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
+			goto end;
+
+		recovered_data_len = data_len;
+
+		TEST_OUT("Decrypt encrypted data\n");
+		ret = pfunc->C_Decrypt(sess, encrypted_data, encrypted_data_len,
+				       recovered_data, &recovered_data_len);
+		if (CHECK_CK_RV(CKR_OK, "C_Decrypt"))
+			goto end;
+
+		TEST_OUT("Recovered_data = %s recovered_data_len = 0x%lx\n",
+			 recovered_data, recovered_data_len);
+
+		if (!util_compare_buffers(data, data_len, recovered_data,
+					  recovered_data_len)) {
+			TEST_OUT("Decrypted data and plaintext are not same\n");
+			goto end;
+		}
+	}
+
+	status = TEST_PASS;
+
+end:
+
+	util_close_session(pfunc, &sess);
+
+	if (encrypted_data)
+		free(encrypted_data);
+
+	if (recovered_data)
+		free(recovered_data);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 static int encrypt_decrypt_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status = TEST_FAIL;
@@ -1121,6 +1270,9 @@ void tests_pkcs11_encrypt_decrypt(void *lib_hdl, CK_VOID_PTR pfunc)
 		goto end;
 
 	if (encrypt_decrypt_des(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (encrypt_decrypt_sm4(pfunc) == TEST_FAIL)
 		goto end;
 
 	status = encrypt_decrypt_key_usage(pfunc);

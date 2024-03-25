@@ -27,6 +27,7 @@ static CK_MECHANISM_TYPE mlist[] = {
 	M(AES_KEY_GEN),
 	M(DES_KEY_GEN),
 	M(DES3_KEY_GEN),
+	M(SM4_KEY_GEN),
 	M(GENERIC_SECRET_KEY_GEN),
 	M(RSA_PKCS_KEY_PAIR_GEN),
 	M(ECDSA),
@@ -80,6 +81,9 @@ static CK_MECHANISM_TYPE mlist[] = {
 	M(SHA3_384_HMAC_GENERAL),
 	M(SHA3_512_HMAC),
 	M(SHA3_512_HMAC_GENERAL),
+	M(SM4_CBC),
+	M(SM4_CTR),
+	M(SM4_ECB),
 };
 
 const struct test_slots exp_slots[] = { {

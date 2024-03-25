@@ -25,15 +25,12 @@
 		do {                                                           \
 			typeof(_array[0]) *_elm = (_array);                    \
 			typeof(_algo) _alg = (_algo);                          \
-			if (_alg != PSA_ALG_NONE) {                            \
-				while (_elm->psa_alg_id != PSA_ALG_NONE) {     \
-					if ((_elm->psa_alg_id & (_alg)) ==     \
-					    (_alg)) {                          \
-						_ret = _elm;                   \
-						break;                         \
-					}                                      \
-					_elm++;                                \
+			while (_elm->psa_alg_id != PSA_ALG_NONE) {             \
+				if (_elm->psa_alg_id == _alg) {                \
+					_ret = _elm;                           \
+					break;                                 \
 				}                                              \
+				_elm++;                                        \
 			}                                                      \
 		} while (0);                                                   \
 		_ret;                                                          \
@@ -127,6 +124,9 @@ static smw_mac_algo_t get_mac_algo_name(psa_algorithm_t alg)
 	const struct mac_algo_info *info = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (alg & PSA_ALG_MAC_TRUNCATION_MASK)
+		alg |= PSA_ALG_MAC_TRUNCATION_MASK;
 
 	info = GET_ALGO_INFO(alg & ~(PSA_ALG_HASH_MASK |
 				     PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG),

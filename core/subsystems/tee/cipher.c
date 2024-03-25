@@ -33,7 +33,10 @@ static const struct {
 			   TEE_CIPHER_ALGO_ID(DES, CBC, CBC_NOPAD),
 			   TEE_CIPHER_ALGO_ID(DES, ECB, ECB_NOPAD),
 			   TEE_CIPHER_ALGO_ID(DES3, CBC, CBC_NOPAD),
-			   TEE_CIPHER_ALGO_ID(DES3, ECB, ECB_NOPAD) };
+			   TEE_CIPHER_ALGO_ID(DES3, ECB, ECB_NOPAD),
+			   TEE_CIPHER_ALGO_ID(SM4, ECB, ECB_NOPAD),
+			   TEE_CIPHER_ALGO_ID(SM4, CBC, CBC_NOPAD),
+			   TEE_CIPHER_ALGO_ID(SM4, CTR, CTR) };
 
 static int get_tee_cipher_algo_id(enum smw_config_key_type_id key_type,
 				  enum smw_config_cipher_mode_id cipher_mode,

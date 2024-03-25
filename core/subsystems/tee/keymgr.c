@@ -111,7 +111,7 @@ static const struct key_def {
 	KEY_DEF_SYM(DES, 56),
 	KEY_DEF_RANGE_SYM(DES3),
 	KEY_DEF_INVALID(DSA_SM2_FP),
-	KEY_DEF_INVALID(SM4),
+	KEY_DEF_SYM(SM4, 128),
 	KEY_DEF_RANGE_SYM(HMAC_MD5),
 	KEY_DEF_RANGE_SYM(HMAC_SHA1),
 	KEY_DEF_RANGE_SYM(HMAC_SHA224),
@@ -935,6 +935,7 @@ static int check_import_key_buffers_presence(enum tee_key_type key_type,
 	case TEE_KEY_TYPE_ID_AES:
 	case TEE_KEY_TYPE_ID_DES:
 	case TEE_KEY_TYPE_ID_DES3:
+	case TEE_KEY_TYPE_ID_SM4:
 	case TEE_KEY_TYPE_ID_HMAC_MD5:
 	case TEE_KEY_TYPE_ID_HMAC_SHA1:
 	case TEE_KEY_TYPE_ID_HMAC_SHA224:

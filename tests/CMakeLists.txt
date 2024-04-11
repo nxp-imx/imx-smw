@@ -97,6 +97,13 @@ if(TEE_TESTS_ENABLED AND SECO_TESTS_ENABLED)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/secotee_tests.cmake)
 endif()
 
+# If ELE subsystem and TEE subsystem defined, include tests
+if(TEE_TESTS_ENABLED AND ELE_TESTS_ENABLED)
+    set(ELETEE_TESTS ON)
+    include(${CMAKE_SOURCE_DIR}/tests/cmake/eletee_tests.cmake)
+endif()
+
+
 if(TEE_TESTS_ENABLED)
     add_subdirectory(tee)
 endif()

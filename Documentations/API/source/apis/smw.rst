@@ -13,5 +13,6 @@ SMW APIs
    smw/device
    smw/storage
    smw/status
+   smw/attr
    smw/strings
    smw/examples

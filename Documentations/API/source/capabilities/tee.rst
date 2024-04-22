@@ -56,8 +56,7 @@ Operations supported:
 Key policy
 """"""""""
 When creating a new key, the key policy must be specified through the operation
-key attributes list. The key policy definition is defined with a **POLICY** TLV
-:ref:`tlv_variable-length-list`.
+key attributes.
 
 The following :numref:`tee_key_usage` lists all key usages applicable in TEE
 subsystem. A key policy defines one or more key usage.
@@ -136,27 +135,27 @@ Signature
    :align: center
    :class: wrap-table
 
-   +--------------+-----------------------------+----------+--------------------+
-   | **Key type** | **Key security size(s)**    | **Hash** | **Signature type** |
-   +==============+=============================+==========+====================+
-   | ECDSA NIST   | 192 / 224 / 256 / 384 / 521 |  SHA224  | N/A                |
-   +              +                             +          +                    +
-   |              |                             |  SHA256  |                    |
-   +              +                             +          +                    +
-   |              |                             |  SHA384  |                    |
-   +              +                             +          +                    +
-   |              |                             |  SHA512  |                    |
-   +--------------+-----------------------------+----------+--------------------+
-   | RSA          | 256 to 4096 [3]_            |  MD5     |  RSASSA-PKCS1-V1_5 |
-   +              +                             +          +                    +
-   |              |                             |  SHA1    |  RSASSA-PSS        |
-   +              +                             +          +                    +
-   |              |                             |  SHA224  |                    |
-   +              +                             +          +                    +
-   |              |                             |  SHA256  |                    |
-   +              +                             +          +                    +
-   |              |                             |  SHA384  |                    |
-   +--------------+-----------------------------+----------+--------------------+
+   +--------------+-----------------------------+----------+--------------------+--------------------+
+   | **Key type** | **Key security size(s)**    | **Hash** | **Signature type** | **Signature mode** |
+   +==============+=============================+==========+====================+====================+
+   | ECDSA NIST   | 192 / 224 / 256 / 384 / 521 |  SHA224  | N/A                | N/A                |
+   +              +                             +          +                    +                    +
+   |              |                             |  SHA256  |                    |                    |
+   +              +                             +          +                    +                    +
+   |              |                             |  SHA384  |                    |                    |
+   +              +                             +          +                    +                    +
+   |              |                             |  SHA512  |                    |                    |
+   +--------------+-----------------------------+----------+--------------------+--------------------+
+   | RSA          | 256 to 4096 [3]_            |  MD5     |  RSA               |  PKCS1-V1_5        |
+   +              +                             +          +                    +                    +
+   |              |                             |  SHA1    |  RSA               |  PSS               |
+   +              +                             +          +                    +                    +
+   |              |                             |  SHA224  |                    |                    |
+   +              +                             +          +                    +                    +
+   |              |                             |  SHA256  |                    |                    |
+   +              +                             +          +                    +                    +
+   |              |                             |  SHA384  |                    |                    |
+   +--------------+-----------------------------+----------+--------------------+--------------------+
 
 Operations supported:
  - Sign

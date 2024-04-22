@@ -47,8 +47,7 @@ selecting a key group depending if a key is persistent/permanent or transient.
 Key policy
 """"""""""
 When creating a new key, the key policy must be specified through the operation
-key attributes list. The key policy definition is defined with a **POLICY** TLV
-:ref:`tlv_variable-length-list`.
+key attributes.
 
 The following :numref:`ele_key_usage` lists all key usages applicable in ELE
 subsystem. A key policy defines one or more key usage.
@@ -81,13 +80,6 @@ subsystem. A key policy defines one or more key usage.
 The following :numref:`ele_permitted_algorithm` lists all permitted algorithms
 applicable in ELE subsystem. Only one permitted algorithm is allowed per key.
 
-The key permitted algorithm definition:
-
- - can be defines once with one of the key usages or repeated to each key usage.
- - if more than one permitted algorithm is given in the key policy (one different
-   per key usage or several per key usage), only the first algorithm is retained,
-   others are ignored.
-
 .. table:: ELE Key permitted algorithm
    :name: ele_permitted_algorithm
    :align: center
@@ -97,9 +89,7 @@ The key permitted algorithm definition:
 
 
    +----------------+----------+--------------------------+-------------------------------------+
-   | **TLV Type**                                         | **Comment**                         |
-   +----------------+----------+--------------------------+                                     +
-   | **ALGO**       | **HASH** | **MIN_LENGTH**           |                                     |
+   | **ALGO**       | **HASH** | **MIN_LENGTH**           | **Comment**                         |
    +                +          +                          +                                     +
    |                |          | **LENGTH**               |                                     |
    +================+==========+==========================+=====================================+

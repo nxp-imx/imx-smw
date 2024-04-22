@@ -8,84 +8,36 @@
 #include "pkcs11smw.h"
 #include "types.h"
 
-#include "tlv_encode.h"
-
-/*
- * Definition of the SMW key policy TLV's attribute type
- */
-#define SMW_ATTR_ALGO		   "ALGO"
-#define SMW_ATTR_USAGE		   "USAGE"
-#define SMW_ATTR_POLICY		   "POLICY"
-#define SMW_ATTR_HASH		   "HASH"
-#define SMW_ATTR_USAGE_COPY	   "COPY"
-#define SMW_ATTR_USAGE_DERIVE	   "DERIVE"
-#define SMW_ATTR_USAGE_ENCRYPT	   "ENCRYPT"
-#define SMW_ATTR_USAGE_DECRYPT	   "DECRYPT"
-#define SMW_ATTR_USAGE_SIGN_MSG	   "SIGN_MESSAGE"
-#define SMW_ATTR_USAGE_SIGN_HASH   "SIGN_HASH"
-#define SMW_ATTR_USAGE_VERIFY_MSG  "VERIFY_MESSAGE"
-#define SMW_ATTR_USAGE_VERIFY_HASH "VERIFY_HASH"
-#define SMW_ATTR_USAGE_EXPORT	   "EXPORT"
-
 /**
- * args_attr_generate_key() - Build the key generate attribute list
- * @attr: Generate key attribute list
+ * args_attrs_key_usage() - Build the key usage flags
+ * @usage_flags: Usage flags
  * @obj: Key object
  *
  * Return:
- * CKR_HOST_MEMORY               - Out of memory
- * CKR_OK                        - Success
+ * None.
  */
-CK_RV args_attr_generate_key(struct smw_tlv *attr, struct libobj_obj *obj);
+void args_attrs_key_usage(smw_attr_usage_t *usage_flags,
+			  struct libobj_obj *obj);
 
 /**
- * args_attr_import_key() - Build the key import attribute list
- * @attr: Import key attribute list
- * @obj: Key object
+ * args_attr_key_storage() - Set the key storage attributes
+ * @attr: Attributes
+ * @obj: Object
  *
  * Return:
- * CKR_HOST_MEMORY               - Out of memory
- * CKR_OK                        - Success
+ * None.
  */
-CK_RV args_attr_import_key(struct smw_tlv *attr, struct libobj_obj *obj);
+void args_attr_key_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj);
 
 /**
- * args_attr_sign_verify() - Build the sign or verify attribute list
- * @attr: Sign or verify attribute list
- * @signature_type: Signature type attribute
- * @salt_len: Salt length attribute
+ * args_attr_data_storage() - Set the data storage attributes
+ * @attr: Attributes
+ * @obj: Object
  *
  * Return:
- * CKR_HOST_MEMORY               - Out of memory
- * CKR_OK                        - Success
+ * None.
  */
-CK_RV args_attr_sign_verify(struct smw_tlv *attr, const char *signature_type,
-			    CK_ULONG salt_len);
-
-/**
- * args_attrs_key_policy() - Build the key policy attribute list
- * @attr: Attribute list
- * @obj: Key object
- * @allowed_algos: Allowed key's algorithms
- *
- * Return:
- * CKR_FUNCTION_FAILED           - Operation failed
- * CKR_HOST_MEMORY               - Out of memory
- * CKR_OK                        - Success
- */
-CK_RV args_attrs_key_policy(struct smw_tlv *attr, struct libobj_obj *obj,
-			    struct smw_tlv *allowed_algos);
-
-/**
- * args_attrs_store_data() - Build the store data attribute list
- * @attr: Attribute list
- * @obj: Data object
- *
- * Return:
- * CKR_HOST_MEMORY               - Out of memory
- * CKR_ARGUMENTS_BAD             - Bad arguments
- * CKR_OK                        - Success
- */
-CK_RV args_attrs_store_data(struct smw_tlv *attr, struct libobj_obj *obj);
+void args_attr_data_storage(smw_attr_attributes_t *attr,
+			    struct libobj_obj *obj);
 
 #endif /* __ARGS_ATTR_H__ */

@@ -6,10 +6,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <inttypes.h>
 
 #include "smw_config.h"
 #include "smw_crypto.h"
 #include "smw_osal.h"
+#include "smw/attr.h"
 
 #include "dev_config.h"
 #include "lib_context.h"
@@ -24,21 +26,27 @@
 
 #include "args_attr.h"
 #include "key_desc.h"
-#include "tlv_encode.h"
 
 #include "trace.h"
 
-#define SMW_RSA_PKCS1_V1_5_SIGN_TYPE "RSASSA-PKCS1-V1_5"
-#define SMW_RSA_PSS_SIGN_TYPE	     "RSASSA-PSS"
-
-#define ENCRYPT_STR "ENCRYPT"
-#define DECRYPT_STR "DECRYPT"
+#define NIST_STR	 "NIST"
+#define BRAINPOOL_R1_STR "BRAINPOOL_R1"
+#define BRAINPOOL_T1_STR "BRAINPOOL_T1"
 
 #define AES_STR	 "AES"
 #define DES_STR	 "DES"
 #define DES3_STR "DES3"
 #define HMAC_STR "HMAC"
 #define SM4_STR	 "SM4"
+
+#define ENCRYPT_STR "ENCRYPT"
+#define DECRYPT_STR "DECRYPT"
+
+#define ECDSA_STR "ECDSA"
+#define RSA_STR	  "RSA"
+
+#define PKCS1_1_5_STR "PKCS1_1_5"
+#define PSS_STR	      "PSS"
 
 struct mgroup;
 struct mentry;
@@ -64,77 +72,49 @@ static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry,
 			    void *args);
-static void check_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, const char *subsystem,
-				      struct mgroup *mgroup);
-static CK_RV info_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-				      struct mentry *entry,
-				      CK_MECHANISM_INFO_PTR info);
-static CK_RV op_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, struct mentry *entry,
-				    void *args);
-static void check_msign_rsa_pss(CK_SLOT_ID slotid, const char *subsystem,
-				struct mgroup *mgroup);
-static CK_RV info_msign_rsa_pss(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-				struct mentry *entry,
-				CK_MECHANISM_INFO_PTR info);
-static CK_RV op_msign_rsa_pss(CK_SLOT_ID slotid, struct mentry *entry,
-			      void *args);
-static void check_mcipher_aes(CK_SLOT_ID slotid, const char *subsystem,
-			      struct mgroup *mgroup);
-static CK_RV info_mcipher_aes(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
-static CK_RV op_mcipher_aes(CK_SLOT_ID slotid, struct mentry *entry,
-			    void *args);
-static void check_mcipher_des(CK_SLOT_ID slotid, const char *subsystem,
-			      struct mgroup *mgroup);
-static CK_RV info_mcipher_des(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
-static CK_RV op_mcipher_des(CK_SLOT_ID slotid, struct mentry *entry,
-			    void *args);
-static void check_mcipher_des3(CK_SLOT_ID slotid, const char *subsystem,
-			       struct mgroup *mgroup);
-static CK_RV info_mcipher_des3(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			       struct mentry *entry,
-			       CK_MECHANISM_INFO_PTR info);
-static CK_RV op_mcipher_des3(CK_SLOT_ID slotid, struct mentry *entry,
-			     void *args);
-static void check_mcmac_aes(CK_SLOT_ID slotid, const char *subsystem,
+static void check_msign_rsa(CK_SLOT_ID slotid, const char *subsystem,
 			    struct mgroup *mgroup);
-static CK_RV info_mcmac_aes(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+static CK_RV info_msign_rsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mentry *entry, CK_MECHANISM_INFO_PTR info);
-static CK_RV op_mcmac_aes(CK_SLOT_ID slotid, struct mentry *entry, void *args);
-static void check_mcmac_des3(CK_SLOT_ID slotid, const char *subsystem,
-			     struct mgroup *mgroup);
-static CK_RV info_mcmac_des3(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			     struct mentry *entry, CK_MECHANISM_INFO_PTR info);
-static CK_RV op_mcmac_des3(CK_SLOT_ID slotid, struct mentry *entry, void *args);
+static CK_RV op_msign_rsa(CK_SLOT_ID slotid, struct mentry *entry, void *args);
+static void check_mcipher(CK_SLOT_ID slotid, const char *subsystem,
+			  struct mgroup *mgroup);
+static CK_RV info_mcipher(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args);
+static void check_mcmac(CK_SLOT_ID slotid, const char *subsystem,
+			struct mgroup *mgroup);
+static CK_RV info_mcmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_mcmac(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 static void check_mhmac(CK_SLOT_ID slotid, const char *subsystem,
 			struct mgroup *mgroup);
 static CK_RV info_mhmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args);
-static void check_mcipher_sm4(CK_SLOT_ID slotid, const char *subsystem,
-			      struct mgroup *mgroup);
-static CK_RV info_mcipher_sm4(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
-static CK_RV op_mcipher_sm4(CK_SLOT_ID slotid, struct mentry *entry,
-			    void *args);
 
-const char *smw_ec_name[] = { "NIST", "BRAINPOOL_R1", "BRAINPOOL_T1" };
+smw_string_t smw_ec_name[] = { NIST_STR, BRAINPOOL_R1_STR, BRAINPOOL_T1_STR };
 
 /**
  * struct mentry - Definition of a mechanism supported by each device
  * @type: Cryptoki Mechanism type
  * @slot_flag: Bit mask flag of a device supporting the mechanism
- * @nb_smw_algo: Number of SMW algorithm for this mechanism
- * @smw_algo: Mechanism's algorithm(s) definition corresponding to SMW
- * @smw_hash: Digest algorithm name used for the mechanism (SMW name)
+ * @smw_algo: SMW algorithm name for this mechanism
+ * @smw_mode: SMW mode name for this mechanism, if any
+ * @smw_hash: SMW hash name for this mechanism, if any
+ * @smw_algo_id: SMW permitted algorithm for this mechanism
+ * @nb_smw_curve: Number of SMW curves
+ * @smw_curve: SMW curves names for this mechanism, if any
  */
 struct mentry {
 	CK_MECHANISM_TYPE type;
 	CK_FLAGS slot_flag;
-	unsigned int nb_smw_algo;
-	void *smw_algo;
-	void *smw_hash;
+	smw_string_t smw_algo;
+	smw_string_t smw_mode;
+	smw_string_t smw_hash;
+	smw_attr_algo_t smw_algo_id;
+	unsigned int nb_smw_curve;
+	smw_string_t *smw_curve;
 };
 
 /**
@@ -159,23 +139,72 @@ struct mgroup {
 	CK_RV (*op)(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 };
 
-/* Macro filling a struct mentry for a single algo without hash */
-#define M_ALGO_NO_HASH(name, id)    M_ALGO(STR(name), NULL, id)
-#define M_ALGO_HASH(name, hash, id) M_ALGO(STR(name), STR(hash), id)
-
-/* Macro filling a struct mentry for a single algo using a hash */
-#define M_ALGO(_name, _hash, id)                                               \
+/* Macro filling a struct mentry for a single algo */
+#define M_ALGO(_algo_name, _mode_name, _hash_name, _algo_id, _id)              \
 	{                                                                      \
-		.type = CKM_##id, .slot_flag = 0, .nb_smw_algo = 1,            \
-		.smw_algo = _name, .smw_hash = _hash                           \
+		.type = CKM_##_id, .slot_flag = 0, .smw_algo = _algo_name,     \
+		.smw_hash = _hash_name, .smw_mode = _mode_name,                \
+		.smw_algo_id = _algo_id, .nb_smw_curve = 0, .smw_curve = NULL, \
 	}
 
 /* Macro filling a struct mentry for an algo or a list of algo */
-#define M_ALGO_MULTI(ptr, nb, id)                                              \
+#define M_ECKEYGEN(_curve, _nb_curve, _id)                                     \
 	{                                                                      \
-		.type = CKM_##id, .slot_flag = 0, .nb_smw_algo = nb,           \
-		.smw_algo = ptr, .smw_hash = NULL                              \
+		.type = CKM_##_id, .slot_flag = 0, .smw_algo = ECDSA_STR,      \
+		.smw_hash = NULL, .smw_mode = NULL, .smw_algo_id = 0,          \
+		.nb_smw_curve = _nb_curve, .smw_curve = _curve,                \
 	}
+
+#define M_DIGEST(_hash, _id)                                                   \
+	M_ALGO(STR(_hash), NULL, NULL, SMW_ATTR_HASH_##_hash, _id)
+
+#define M_KEYGEN(_algo, _id)                                                   \
+	{                                                                      \
+		.type = CKM_##_id, .slot_flag = 0, .smw_algo = STR(_algo),     \
+		.smw_hash = NULL, .smw_mode = NULL, .smw_algo_id = 0,          \
+		.nb_smw_curve = 1, .smw_curve = NULL,                          \
+	}
+
+#define M_SIGN_ECDSA_ANY_HASH(_id)                                             \
+	M_ALGO(ECDSA_STR, NULL, NULL,                                          \
+	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_ANY,    \
+							SMW_ATTR_HASH_ANY),    \
+	       _id)
+
+#define M_SIGN_ECDSA(_hash, _id)                                               \
+	M_ALGO(ECDSA_STR, NULL, STR(_hash),                                    \
+	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(                       \
+		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
+	       _id)
+
+#define M_SIGN_RSA_ANY_HASH(_mode, _id)                                        \
+	M_ALGO(RSA_STR, STR(_mode), NULL,                                      \
+	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
+						      SMW_ATTR_HASH_ANY, 0),   \
+	       _id)
+
+#define M_SIGN_RSA(_mode, _hash, _id)                                          \
+	M_ALGO(RSA_STR, STR(_mode), STR(_hash),                                \
+	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
+						      SMW_ATTR_HASH_##_hash,   \
+						      0),                      \
+	       _id)
+
+#define M_CIPHER(_algo, _mode, _mode_id, _id)                                  \
+	M_ALGO(STR(_algo), STR(_mode), NULL,                                   \
+	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
+						  SMW_ATTR_MODE_##_mode_id),   \
+	       _id)
+
+#define M_MAC(_algo, _mode, _mode_id, _id)                                     \
+	M_ALGO(STR(_algo), STR(_mode), NULL,                                   \
+	       SMW_ATTR_ALGO_MAC(SMW_ATTR_ALGO_##_algo,                        \
+				 SMW_ATTR_MODE_##_mode_id, 0),                 \
+	       _id)
+
+#define M_HMAC(_mode, _hash, _id)                                              \
+	M_ALGO(HMAC_STR, STR(_mode), STR(_hash),                               \
+	       SMW_ATTR_ALGO_MAC_HMAC(SMW_ATTR_HASH_##_hash, 0), _id)
 
 /* Macro filling a group of mechanisms */
 #define M_GROUP(nb, grp)                                                       \
@@ -188,18 +217,18 @@ struct mgroup {
  * Digest mechanisms
  */
 static struct mentry mdigest[] = {
-	M_ALGO_NO_HASH(MD5, MD5),	    M_ALGO_NO_HASH(SHA1, SHA_1),
-	M_ALGO_NO_HASH(SHA224, SHA224),	    M_ALGO_NO_HASH(SHA256, SHA256),
-	M_ALGO_NO_HASH(SHA384, SHA384),	    M_ALGO_NO_HASH(SHA512, SHA512),
-	M_ALGO_NO_HASH(SHA3_224, SHA3_224), M_ALGO_NO_HASH(SHA3_256, SHA3_256),
-	M_ALGO_NO_HASH(SHA3_384, SHA3_384), M_ALGO_NO_HASH(SHA3_512, SHA3_512),
+	M_DIGEST(MD5, MD5),	      M_DIGEST(SHA1, SHA_1),
+	M_DIGEST(SHA224, SHA224),     M_DIGEST(SHA256, SHA256),
+	M_DIGEST(SHA384, SHA384),     M_DIGEST(SHA512, SHA512),
+	M_DIGEST(SHA3_224, SHA3_224), M_DIGEST(SHA3_256, SHA3_256),
+	M_DIGEST(SHA3_384, SHA3_384), M_DIGEST(SHA3_512, SHA3_512),
 };
 
 /*
  * EC Key Generate mechanisms
  */
 static struct mentry meckeygen[] = {
-	M_ALGO_MULTI(smw_ec_name, ARRAY_SIZE(smw_ec_name), EC_KEY_PAIR_GEN),
+	M_ECKEYGEN(smw_ec_name, ARRAY_SIZE(smw_ec_name), EC_KEY_PAIR_GEN),
 };
 
 /*
@@ -207,108 +236,90 @@ static struct mentry meckeygen[] = {
  * Cipher, HMAC and RSA keys
  */
 static struct mentry mkeygen[] = {
-	M_ALGO_NO_HASH(AES, AES_KEY_GEN),
-	M_ALGO_NO_HASH(DES, DES_KEY_GEN),
-	M_ALGO_NO_HASH(DES3, DES3_KEY_GEN),
-	M_ALGO_NO_HASH(SM4, SM4_KEY_GEN),
-	M_ALGO_NO_HASH(HMAC, GENERIC_SECRET_KEY_GEN),
-	M_ALGO_NO_HASH(RSA, RSA_PKCS_KEY_PAIR_GEN),
+	M_KEYGEN(AES, AES_KEY_GEN),
+	M_KEYGEN(DES, DES_KEY_GEN),
+	M_KEYGEN(DES3, DES3_KEY_GEN),
+	M_KEYGEN(SM4, SM4_KEY_GEN),
+	M_KEYGEN(HMAC, GENERIC_SECRET_KEY_GEN),
+	M_KEYGEN(RSA, RSA_PKCS_KEY_PAIR_GEN),
 };
 
 /*
  * Signature mechanism
  */
 static struct mentry msign_ecdsa[] = {
-	M_ALGO_NO_HASH(ECDSA, ECDSA),
-	M_ALGO_HASH(ECDSA, SHA1, ECDSA_SHA1),
-	M_ALGO_HASH(ECDSA, SHA224, ECDSA_SHA224),
-	M_ALGO_HASH(ECDSA, SHA256, ECDSA_SHA256),
-	M_ALGO_HASH(ECDSA, SHA384, ECDSA_SHA384),
-	M_ALGO_HASH(ECDSA, SHA512, ECDSA_SHA512),
+	M_SIGN_ECDSA_ANY_HASH(ECDSA),	    M_SIGN_ECDSA(SHA1, ECDSA_SHA1),
+	M_SIGN_ECDSA(SHA224, ECDSA_SHA224), M_SIGN_ECDSA(SHA256, ECDSA_SHA256),
+	M_SIGN_ECDSA(SHA384, ECDSA_SHA384), M_SIGN_ECDSA(SHA512, ECDSA_SHA512),
 };
 
-static struct mentry msign_rsa_pkcs_v1_5[] = {
-	M_ALGO_NO_HASH(RSA_PKCS1V15, RSA_PKCS),
-	M_ALGO_HASH(RSA_PKCS1V15, SHA1, SHA1_RSA_PKCS),
-	M_ALGO_HASH(RSA_PKCS1V15, SHA224, SHA224_RSA_PKCS),
-	M_ALGO_HASH(RSA_PKCS1V15, SHA256, SHA256_RSA_PKCS),
-	M_ALGO_HASH(RSA_PKCS1V15, SHA384, SHA384_RSA_PKCS),
-	M_ALGO_HASH(RSA_PKCS1V15, SHA512, SHA512_RSA_PKCS),
-};
-
-static struct mentry msign_rsa_pss[] = {
-	M_ALGO_NO_HASH(RSA_PSS, RSA_PKCS_PSS),
-	M_ALGO_HASH(RSA_PSS, SHA1, SHA1_RSA_PKCS_PSS),
-	M_ALGO_HASH(RSA_PSS, SHA224, SHA224_RSA_PKCS_PSS),
-	M_ALGO_HASH(RSA_PSS, SHA256, SHA256_RSA_PKCS_PSS),
-	M_ALGO_HASH(RSA_PSS, SHA384, SHA384_RSA_PKCS_PSS),
-	M_ALGO_HASH(RSA_PSS, SHA512, SHA512_RSA_PKCS_PSS),
+static struct mentry msign_rsa[] = {
+	M_SIGN_RSA_ANY_HASH(PKCS1_1_5, RSA_PKCS),
+	M_SIGN_RSA(PKCS1_1_5, SHA1, SHA1_RSA_PKCS),
+	M_SIGN_RSA(PKCS1_1_5, SHA224, SHA224_RSA_PKCS),
+	M_SIGN_RSA(PKCS1_1_5, SHA256, SHA256_RSA_PKCS),
+	M_SIGN_RSA(PKCS1_1_5, SHA384, SHA384_RSA_PKCS),
+	M_SIGN_RSA(PKCS1_1_5, SHA512, SHA512_RSA_PKCS),
+	M_SIGN_RSA_ANY_HASH(PSS, RSA_PKCS_PSS),
+	M_SIGN_RSA(PSS, SHA1, SHA1_RSA_PKCS_PSS),
+	M_SIGN_RSA(PSS, SHA224, SHA224_RSA_PKCS_PSS),
+	M_SIGN_RSA(PSS, SHA256, SHA256_RSA_PKCS_PSS),
+	M_SIGN_RSA(PSS, SHA384, SHA384_RSA_PKCS_PSS),
+	M_SIGN_RSA(PSS, SHA512, SHA512_RSA_PKCS_PSS),
 };
 
 /*
  * Cipher mechanisms
  */
-static struct mentry mcipher_aes[] = {
-	M_ALGO_NO_HASH(CBC_NO_PADDING, AES_CBC),
-	M_ALGO_NO_HASH(CTR, AES_CTR),
-	M_ALGO_NO_HASH(CTS, AES_CTS),
-	M_ALGO_NO_HASH(ECB_NO_PADDING, AES_ECB),
-	M_ALGO_NO_HASH(XTS, AES_XTS),
-};
-
-static struct mentry mcipher_des[] = {
-	M_ALGO_NO_HASH(CBC_NO_PADDING, DES_CBC),
-	M_ALGO_NO_HASH(ECB_NO_PADDING, DES_ECB),
-};
-
-static struct mentry mcipher_des3[] = {
-	M_ALGO_NO_HASH(CBC_NO_PADDING, DES3_CBC),
-	M_ALGO_NO_HASH(ECB_NO_PADDING, DES3_ECB),
+static struct mentry mcipher[] = {
+	M_CIPHER(AES, CBC, CBC_NO_PAD, AES_CBC),
+	M_CIPHER(AES, CTR, CTR, AES_CTR),
+	M_CIPHER(AES, CTS, CTS, AES_CTS),
+	M_CIPHER(AES, ECB, ECB_NO_PAD, AES_ECB),
+	M_CIPHER(AES, XTS, XTS, AES_XTS),
+	M_CIPHER(DES, CBC, CBC_NO_PAD, DES_CBC),
+	M_CIPHER(DES, ECB, ECB_NO_PAD, DES_ECB),
+	M_CIPHER(DES3, CBC, CBC_NO_PAD, DES3_CBC),
+	M_CIPHER(DES3, ECB, ECB_NO_PAD, DES3_ECB),
+	M_CIPHER(SM4, CBC, CBC_NO_PAD, SM4_CBC),
+	M_CIPHER(SM4, CTR, CTR, SM4_CTR),
+	M_CIPHER(SM4, ECB, ECB_NO_PAD, SM4_ECB),
 };
 
 /*
  * CMAC mechanisms
  */
-static struct mentry mcmac_aes[] = {
-	M_ALGO_NO_HASH(CMAC, AES_CMAC),
-	M_ALGO_NO_HASH(CMAC, AES_CMAC_GENERAL),
-};
-
-static struct mentry mcmac_des3[] = {
-	M_ALGO_NO_HASH(CMAC, DES3_CMAC),
-	M_ALGO_NO_HASH(CMAC, DES3_CMAC_GENERAL),
+static struct mentry mcmac[] = {
+	M_MAC(AES, CMAC, CMAC, AES_CMAC),
+	M_MAC(DES3, CMAC, CMAC, DES3_CMAC),
+	M_MAC(AES, CMAC_TRUNCATED, CMAC, AES_CMAC_GENERAL),
+	M_MAC(DES3, CMAC_TRUNCATED, CMAC, DES3_CMAC_GENERAL),
 };
 
 /*
  * HMAC mechanisms
  */
 static struct mentry mhmac[] = {
-	M_ALGO_HASH(HMAC, MD5, MD5_HMAC),
-	M_ALGO_HASH(HMAC, MD5, MD5_HMAC_GENERAL),
-	M_ALGO_HASH(HMAC, SHA1, SHA_1_HMAC),
-	M_ALGO_HASH(HMAC, SHA1, SHA_1_HMAC_GENERAL),
-	M_ALGO_HASH(HMAC, SHA224, SHA224_HMAC),
-	M_ALGO_HASH(HMAC, SHA224, SHA224_HMAC_GENERAL),
-	M_ALGO_HASH(HMAC, SHA256, SHA256_HMAC),
-	M_ALGO_HASH(HMAC, SHA256, SHA256_HMAC_GENERAL),
-	M_ALGO_HASH(HMAC, SHA384, SHA384_HMAC),
-	M_ALGO_HASH(HMAC, SHA384, SHA384_HMAC_GENERAL),
-	M_ALGO_HASH(HMAC, SHA512, SHA512_HMAC),
-	M_ALGO_HASH(HMAC, SHA512, SHA512_HMAC_GENERAL),
-	M_ALGO_HASH(HMAC, SHA3_224, SHA3_224_HMAC),
-	M_ALGO_HASH(HMAC, SHA3_224, SHA3_224_HMAC_GENERAL),
-	M_ALGO_HASH(HMAC, SHA3_256, SHA3_256_HMAC),
-	M_ALGO_HASH(HMAC, SHA3_256, SHA3_256_HMAC_GENERAL),
-	M_ALGO_HASH(HMAC, SHA3_384, SHA3_384_HMAC),
-	M_ALGO_HASH(HMAC, SHA3_384, SHA3_384_HMAC_GENERAL),
-	M_ALGO_HASH(HMAC, SHA3_512, SHA3_512_HMAC),
-	M_ALGO_HASH(HMAC, SHA3_512, SHA3_512_HMAC_GENERAL),
-};
-
-static struct mentry mcipher_sm4[] = {
-	M_ALGO_NO_HASH(SM4, SM4_CBC),
-	M_ALGO_NO_HASH(SM4, SM4_CTR),
-	M_ALGO_NO_HASH(SM4, SM4_ECB),
+	M_HMAC(HMAC, MD5, MD5_HMAC),
+	M_HMAC(HMAC, SHA1, SHA_1_HMAC),
+	M_HMAC(HMAC, SHA224, SHA224_HMAC),
+	M_HMAC(HMAC, SHA256, SHA256_HMAC),
+	M_HMAC(HMAC, SHA384, SHA384_HMAC),
+	M_HMAC(HMAC, SHA512, SHA512_HMAC),
+	M_HMAC(HMAC, SHA3_224, SHA3_224_HMAC),
+	M_HMAC(HMAC, SHA3_256, SHA3_256_HMAC),
+	M_HMAC(HMAC, SHA3_384, SHA3_384_HMAC),
+	M_HMAC(HMAC, SHA3_512, SHA3_512_HMAC),
+	M_HMAC(HMAC_TRUNCATED, MD5, MD5_HMAC_GENERAL),
+	M_HMAC(HMAC_TRUNCATED, SHA1, SHA_1_HMAC_GENERAL),
+	M_HMAC(HMAC_TRUNCATED, SHA224, SHA224_HMAC_GENERAL),
+	M_HMAC(HMAC_TRUNCATED, SHA256, SHA256_HMAC_GENERAL),
+	M_HMAC(HMAC_TRUNCATED, SHA384, SHA384_HMAC_GENERAL),
+	M_HMAC(HMAC_TRUNCATED, SHA512, SHA512_HMAC_GENERAL),
+	M_HMAC(HMAC_TRUNCATED, SHA3_224, SHA3_224_HMAC_GENERAL),
+	M_HMAC(HMAC_TRUNCATED, SHA3_256, SHA3_256_HMAC_GENERAL),
+	M_HMAC(HMAC_TRUNCATED, SHA3_384, SHA3_384_HMAC_GENERAL),
+	M_HMAC(HMAC_TRUNCATED, SHA3_512, SHA3_512_HMAC_GENERAL),
 };
 
 /*
@@ -319,70 +330,11 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(meckeygen), meckeygen),
 	M_GROUP(ARRAY_SIZE(mkeygen), mkeygen),
 	M_GROUP(ARRAY_SIZE(msign_ecdsa), msign_ecdsa),
-	M_GROUP(ARRAY_SIZE(msign_rsa_pkcs_v1_5), msign_rsa_pkcs_v1_5),
-	M_GROUP(ARRAY_SIZE(msign_rsa_pss), msign_rsa_pss),
-	M_GROUP(ARRAY_SIZE(mcipher_aes), mcipher_aes),
-	M_GROUP(ARRAY_SIZE(mcipher_des), mcipher_des),
-	M_GROUP(ARRAY_SIZE(mcipher_des3), mcipher_des3),
-	M_GROUP(ARRAY_SIZE(mcmac_aes), mcmac_aes),
-	M_GROUP(ARRAY_SIZE(mcmac_des3), mcmac_des3),
+	M_GROUP(ARRAY_SIZE(msign_rsa), msign_rsa),
+	M_GROUP(ARRAY_SIZE(mcipher), mcipher),
+	M_GROUP(ARRAY_SIZE(mcmac), mcmac),
 	M_GROUP(ARRAY_SIZE(mhmac), mhmac),
-	M_GROUP(ARRAY_SIZE(mcipher_sm4), mcipher_sm4),
 	{ 0 }
-};
-
-#define GET_ALGO_NAME(entry, idx)                                              \
-	({                                                                     \
-		__typeof__(entry) _entry = entry;                              \
-		(_entry->nb_smw_algo > 1) ?                                    \
-			((const char **)_entry->smw_algo)[idx] :               \
-			_entry->smw_algo;                                      \
-	})
-
-#define CIPHER_ALGO(_key_type_, _cipher_mode_)                                 \
-	{                                                                      \
-		.mech_type = CKM_##_key_type_##_##_cipher_mode_,               \
-		.cipher_mode = #_cipher_mode_                                  \
-	}
-
-#define CMAC_ALGO(_key_type_, _cmac_algo_, _smw_algo_)                         \
-	{                                                                      \
-		.mech_type = CKM_##_key_type_##_##_cmac_algo_,                 \
-		.smw_algo = #_smw_algo_                                        \
-	}
-
-/**
- * struct cipher_algo_info - Information about cipher algorithm
- * @mech_type: Cipher mechanism
- * @cipher_mode: Cipher mode
- */
-struct cipher_algo_info {
-	CK_MECHANISM_TYPE mech_type;
-	smw_cipher_mode_t cipher_mode;
-};
-
-static struct cipher_algo_info cipher_algos[] = {
-	CIPHER_ALGO(AES, ECB), CIPHER_ALGO(AES, CBC),  CIPHER_ALGO(AES, CTR),
-	CIPHER_ALGO(AES, CTS), CIPHER_ALGO(AES, XTS),  CIPHER_ALGO(DES, ECB),
-	CIPHER_ALGO(DES, CBC), CIPHER_ALGO(DES3, ECB), CIPHER_ALGO(DES3, CBC),
-	CIPHER_ALGO(SM4, CBC), CIPHER_ALGO(SM4, CTR),  CIPHER_ALGO(SM4, ECB)
-};
-
-/**
- * struct cmac_algo_info - Information about CMAC algorithm
- * @mech_type: CMAC mechanism
- * @mac_algo: CMAC algo
- */
-struct cmac_algo_info {
-	CK_MECHANISM_TYPE mech_type;
-	smw_mac_algo_t smw_algo;
-};
-
-static struct cmac_algo_info cmac_algos[] = {
-	CMAC_ALGO(AES, CMAC, CMAC),
-	CMAC_ALGO(AES, CMAC_GENERAL, CMAC_TRUNCATED),
-	CMAC_ALGO(DES3, CMAC, CMAC),
-	CMAC_ALGO(DES3, CMAC_GENERAL, CMAC_TRUNCATED),
 };
 
 /**
@@ -467,6 +419,76 @@ static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return CKR_MECHANISM_INVALID;
 }
 
+static smw_hash_algo_t get_hash_algo(CK_MECHANISM_TYPE mech_type)
+{
+	smw_hash_algo_t hash_algo = NULL;
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(mdigest); i++) {
+		if (mech_type == mdigest[i].type) {
+			hash_algo = mdigest[i].smw_algo;
+			break;
+		}
+	}
+
+	return hash_algo;
+}
+
+static smw_attr_algo_t get_hash_algo_id(CK_MECHANISM_TYPE mech_type)
+{
+	smw_attr_algo_t hash_algo_id = SMW_ATTR_HASH_ANY;
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(mdigest); i++) {
+		if (mech_type == mdigest[i].type) {
+			hash_algo_id = mdigest[i].smw_algo_id;
+			break;
+		}
+	}
+
+	return hash_algo_id;
+}
+
+static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
+				    CK_SLOT_ID slotid, struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+	struct libmech_list *mech = NULL;
+	struct mentry *entry = NULL;
+
+	mech = get_key_mech(obj);
+
+	/* Only one permitted algorithm is supported. */
+	if (mech->number) {
+		ret = find_mechanism(slotid, mech->mech[0], NULL, &entry);
+		if (ret != CKR_OK) {
+			DBG_TRACE("Key allowed mechanism 0x%lx error %ld",
+				  mech->mech[0], ret);
+		}
+
+		DBG_TRACE("Key permitted algorithm 0x%" PRIx64,
+			  entry->smw_algo_id);
+		*permitted_algo = entry->smw_algo_id;
+	}
+
+	return ret;
+}
+
+static smw_cipher_mode_t get_cipher_mode(CK_MECHANISM_TYPE mech_type)
+{
+	smw_cipher_mode_t mode = NULL;
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(mcipher); i++) {
+		if (mech_type == mcipher[i].type) {
+			mode = mcipher[i].smw_mode;
+			break;
+		}
+	}
+
+	return mode;
+}
+
 static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 			  struct mgroup *mgroup)
 {
@@ -483,61 +505,6 @@ static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
 	}
-}
-
-static void check_keygen_common(CK_SLOT_ID slotid, const char *subsystem,
-				struct mgroup *mgroup)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	unsigned int idx = 0;
-	unsigned int idx_algo = 0;
-	struct mentry *entry = NULL;
-	CK_FLAGS slot_flag = 0;
-	struct smw_key_info info = { 0 };
-
-	slot_flag = BIT(slotid);
-	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
-		for (idx_algo = 0; idx_algo < entry->nb_smw_algo; idx_algo++) {
-			info.key_type_name = GET_ALGO_NAME(entry, idx_algo);
-
-			status =
-				smw_config_check_generate_key(subsystem, &info);
-			DBG_TRACE("%s Key Generate %s: %d", subsystem,
-				  info.key_type_name, status);
-
-			if (status == SMW_STATUS_OK)
-				SET_BITS(entry->slot_flag, slot_flag);
-		}
-	}
-}
-
-static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
-			    struct mgroup *mgroup)
-{
-	DBG_TRACE("Check EC Key generate");
-	check_keygen_common(slotid, subsystem, mgroup);
-}
-
-static void check_mkeygen(CK_SLOT_ID slotid, const char *subsystem,
-			  struct mgroup *mgroup)
-{
-	DBG_TRACE("Check Key generate");
-	check_keygen_common(slotid, subsystem, mgroup);
-}
-
-static smw_hash_algo_t get_hash_algo(CK_MECHANISM_TYPE mech_type)
-{
-	smw_hash_algo_t hash_algo = NULL;
-	unsigned int i = 0;
-
-	for (; i < ARRAY_SIZE(mdigest); i++) {
-		if (mech_type == mdigest[i].type) {
-			hash_algo = (smw_hash_algo_t)mdigest[i].smw_algo;
-			break;
-		}
-	}
-
-	return hash_algo;
 }
 
 static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
@@ -579,7 +546,7 @@ static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 		return ret;
 
 	hash_args.subsystem_name = devinfo->name;
-	hash_args.algo_name = GET_ALGO_NAME(entry, 0);
+	hash_args.algo_name = entry->smw_algo;
 
 	hash_args.input = params->pData;
 	if (SET_OVERFLOW(params->ulDataLen, hash_args.input_length))
@@ -601,6 +568,53 @@ static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	return ret;
 }
 
+static void check_keygen_common(CK_SLOT_ID slotid, const char *subsystem,
+				struct mgroup *mgroup)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct mentry *entry = NULL;
+	CK_FLAGS slot_flag = 0;
+	smw_string_t *curve = NULL;
+	unsigned int idx = 0;
+	unsigned int idx_algo = 0;
+	struct smw_key_info info = { 0 };
+
+	slot_flag = BIT(slotid);
+	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
+		if (entry->nb_smw_curve > 1)
+			curve = &entry->smw_curve[0];
+		else
+			curve = &entry->smw_algo;
+
+		for (idx_algo = 0; idx_algo < entry->nb_smw_curve;
+		     idx_algo++, curve++) {
+			info.key_type_name = *curve;
+
+			status =
+				smw_config_check_generate_key(subsystem, &info);
+			DBG_TRACE("%s Key Generate %s: %d", subsystem,
+				  info.key_type_name, status);
+
+			if (status == SMW_STATUS_OK)
+				SET_BITS(entry->slot_flag, slot_flag);
+		}
+	}
+}
+
+static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
+			    struct mgroup *mgroup)
+{
+	DBG_TRACE("Check EC Key generate");
+	check_keygen_common(slotid, subsystem, mgroup);
+}
+
+static void check_mkeygen(CK_SLOT_ID slotid, const char *subsystem,
+			  struct mgroup *mgroup)
+{
+	DBG_TRACE("Check Key generate");
+	check_keygen_common(slotid, subsystem, mgroup);
+}
+
 static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 				struct mentry *entry,
 				CK_MECHANISM_INFO_PTR info)
@@ -608,6 +622,7 @@ static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	CK_RV ret = CKR_OK;
 	enum smw_status_code status = SMW_STATUS_OK;
 	const struct libdev *devinfo = NULL;
+	smw_string_t *curve = NULL;
 	unsigned int idx = 0;
 	struct smw_key_info keyinfo = { 0 };
 
@@ -615,8 +630,13 @@ static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	for (; idx < entry->nb_smw_algo; idx++) {
-		keyinfo.key_type_name = GET_ALGO_NAME(entry, idx);
+	if (entry->nb_smw_curve > 1)
+		curve = &entry->smw_curve[0];
+	else
+		curve = &entry->smw_algo;
+
+	for (; idx < entry->nb_smw_curve; idx++, curve++) {
+		keyinfo.key_type_name = *curve;
 		keyinfo.security_size = 0;
 
 		status = smw_config_check_generate_key(devinfo->name, &keyinfo);
@@ -680,50 +700,12 @@ static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return info_keygen_common(slotid, type, entry, info);
 }
 
-static CK_RV build_key_allowed_algos(struct smw_tlv *tlv_algos,
-				     CK_SLOT_ID slotid, struct libobj_obj *obj)
-{
-	CK_RV ret = CKR_OK;
-	size_t idx = 0;
-	struct libmech_list *mech = NULL;
-	struct mentry *entry = NULL;
-	struct smw_tlv tlv_algo_params = { 0 };
-
-	mech = get_key_mech(obj);
-
-	for (; idx < mech->number && ret == CKR_OK; idx++) {
-		ret = find_mechanism(slotid, mech->mech[idx], NULL, &entry);
-		if (ret != CKR_OK) {
-			DBG_TRACE("Key allowed mechanism 0x%lx error %ld",
-				  mech->mech[idx], ret);
-			break;
-		}
-
-		DBG_TRACE("Key allowed mechanism %s", (char *)entry->smw_algo);
-		if (entry->smw_hash) {
-			DBG_TRACE("\t with HASH=%s", (char *)entry->smw_hash);
-			ret = tlv_encode_string(&tlv_algo_params, SMW_ATTR_HASH,
-						entry->smw_hash);
-		}
-
-		if (ret == CKR_OK)
-			ret = tlv_encode_concat_string(tlv_algos, SMW_ATTR_ALGO,
-						       entry->smw_algo,
-						       &tlv_algo_params);
-
-		tlv_encode_free(&tlv_algo_params);
-	}
-
-	return ret;
-}
-
 static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_SLOT_ID_INVALID;
-	const struct libdev *devinfo = NULL;
 	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_tlv key_attr = { 0 };
-	struct smw_tlv allowed_algos = { 0 };
+	const struct libdev *devinfo = NULL;
+	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_generate_key_args gen_args = { 0 };
 	struct smw_key_descriptor key = { 0 };
 
@@ -736,26 +718,19 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = build_key_allowed_algos(&allowed_algos, slotid, obj);
+	ret = get_key_permitted_algo(&key_attributes.permitted_algo, slotid,
+				     obj);
 	if (ret != CKR_OK)
-		goto end;
-
-	ret = args_attrs_key_policy(&key_attr, obj, &allowed_algos);
-	if (ret != CKR_OK)
-		goto end;
+		return ret;
 
 	gen_args.subsystem_name = devinfo->name;
 	gen_args.key_descriptor = &key;
 
-	ret = args_attr_generate_key(&key_attr, obj);
-	if (ret != CKR_OK)
-		goto end;
-
-	gen_args.key_attributes_list = (unsigned char *)key_attr.string;
-	gen_args.key_attributes_list_length = key_attr.length;
+	args_attrs_key_usage(&key_attributes.usage_flags, obj);
+	args_attr_key_storage(&key_attributes.attributes, obj);
+	gen_args.key_attributes = &key_attributes;
 
 	status = smw_generate_key(&gen_args);
-
 	ret = smw_status_to_ck_rv(status);
 
 	DBG_TRACE("Generate Key on %s status %d return %ld", devinfo->name,
@@ -763,10 +738,6 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 
 	if (ret == CKR_OK)
 		key_desc_copy_key_id(obj, &key);
-
-end:
-	tlv_encode_free(&allowed_algos);
-	tlv_encode_free(&key_attr);
 
 	return ret;
 }
@@ -785,82 +756,38 @@ static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	return op_keygen_common(slotid, args);
 }
 
-static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
-			      struct mgroup *mgroup)
+static void check_msign_common(CK_SLOT_ID slotid, const char *subsystem,
+			       struct mgroup *mgroup)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
 	unsigned int idx = 0;
-	unsigned int ecdsa_idx = 0;
+	struct mentry *entry = NULL;
 	struct smw_signature_info info = { 0 };
-	struct mentry *entry = NULL;
 	CK_FLAGS slot_flag = 0;
 
-	DBG_TRACE("Check ECDSA Signature mechanism");
-
 	/*
-	 * smw_config_check_sign() checks the key type, the hash algorithm
-	 * (optional) and the signature type (optional).
-	 *
-	 * Slot flag is set if:
-	 *  - sign or verify or both operations are supported
-	 *  - at least one ECDSA key type is supported
-	 */
-
-	slot_flag = BIT(slotid);
-	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
-		if (entry->smw_hash)
-			info.hash_algo = entry->smw_hash;
-
-		for (ecdsa_idx = 0; ecdsa_idx < ARRAY_SIZE(smw_ec_name);
-		     ecdsa_idx++) {
-			info.key_type_name = smw_ec_name[ecdsa_idx];
-
-			status = smw_config_check_sign(subsystem, &info);
-			DBG_TRACE("%s sign mechanism %lu: %d", subsystem,
-				  entry->type, status);
-			if (status == SMW_STATUS_OK)
-				SET_BITS(entry->slot_flag, slot_flag);
-
-			status = smw_config_check_verify(subsystem, &info);
-			DBG_TRACE("%s verify mechanism %lu: %d", subsystem,
-				  entry->type, status);
-			if (status == SMW_STATUS_OK)
-				SET_BITS(entry->slot_flag, slot_flag);
-		}
-	}
-}
-
-static void check_msign_rsa_common(CK_SLOT_ID slotid, const char *subsystem,
-				   struct mgroup *mgroup,
-				   struct smw_signature_info *info)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	unsigned int idx = 0;
-	CK_FLAGS slot_flag = 0;
-	struct mentry *entry = NULL;
-
-	/*
-	 * smw_config_check_sign() checks the key type, the hash algorithm
-	 * (optional) and the signature type (optional).
+	 * smw_config_check_sign() check:
+	 * - the sign algorithm,
+	 * - the hash algorithm (optional) and
+	 * - the signature type (optional).
 	 *
 	 * Slot flag is set if:
 	 *  - sign or verify or both operations are supported
 	 */
 
-	info->key_type_name = "RSA";
-
 	slot_flag = BIT(slotid);
 	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
-		if (entry->smw_hash)
-			info->hash_algo = entry->smw_hash;
+		info.algo = entry->smw_algo;
+		info.type = entry->smw_mode;
+		info.hash = entry->smw_hash;
 
-		status = smw_config_check_sign(subsystem, info);
+		status = smw_config_check_sign(subsystem, &info);
 		DBG_TRACE("%s sign mechanism %lu: %d", subsystem, entry->type,
 			  status);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
 
-		status = smw_config_check_verify(subsystem, info);
+		status = smw_config_check_verify(subsystem, &info);
 		DBG_TRACE("%s verify mechanism %lu: %d", subsystem, entry->type,
 			  status);
 		if (status == SMW_STATUS_OK)
@@ -868,37 +795,29 @@ static void check_msign_rsa_common(CK_SLOT_ID slotid, const char *subsystem,
 	}
 }
 
-static void check_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, const char *subsystem,
-				      struct mgroup *mgroup)
+static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
+			      struct mgroup *mgroup)
 {
-	struct smw_signature_info info = {
-		.signature_type = SMW_RSA_PKCS1_V1_5_SIGN_TYPE
-	};
+	DBG_TRACE("Check ECDSA Signature mechanism");
 
-	DBG_TRACE("Check RSA PKCS V1_5 Signature mechanism");
-
-	check_msign_rsa_common(slotid, subsystem, mgroup, &info);
+	check_msign_common(slotid, subsystem, mgroup);
 }
 
-static void check_msign_rsa_pss(CK_SLOT_ID slotid, const char *subsystem,
-				struct mgroup *mgroup)
+static void check_msign_rsa(CK_SLOT_ID slotid, const char *subsystem,
+			    struct mgroup *mgroup)
 {
-	struct smw_signature_info info = { .signature_type =
-						   SMW_RSA_PSS_SIGN_TYPE };
+	DBG_TRACE("Check RSA Signature mechanism");
 
-	DBG_TRACE("Check RSA PSS Signature mechanism");
-
-	check_msign_rsa_common(slotid, subsystem, mgroup, &info);
+	check_msign_common(slotid, subsystem, mgroup);
 }
 
-static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+static CK_RV info_msign_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			       struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
 	CK_RV ret = CKR_OK;
-	unsigned int ecdsa_idx = 0;
-	struct smw_signature_info sign_verify_info = { 0 };
 	const struct libdev *devinfo = NULL;
+	struct smw_signature_info sign_verify_info = { 0 };
 
 	DBG_TRACE("Return info of 0x%lx signature mechanism", type);
 
@@ -913,72 +832,16 @@ static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	info->ulMinKeySize = 0;
 	info->flags = 0;
 
-	if (entry->smw_hash)
-		sign_verify_info.hash_algo = entry->smw_hash;
-
-	/*
-	 * @info flag is set with Sign flag or Verify flag or both
-	 *
-	 * If at least one ECDSA key type is supported by the operation,
-	 * @info flag is set
-	 */
-	for (ecdsa_idx = 0; ecdsa_idx < ARRAY_SIZE(smw_ec_name); ecdsa_idx++) {
-		sign_verify_info.key_type_name = smw_ec_name[ecdsa_idx];
-
-		status =
-			smw_config_check_sign(devinfo->name, &sign_verify_info);
-		if (status == SMW_STATUS_OK)
-			info->flags |= CKF_SIGN;
-
-		status = smw_config_check_verify(devinfo->name,
-						 &sign_verify_info);
-		if (status == SMW_STATUS_OK)
-			info->flags |= CKF_VERIFY;
-	}
-
-	/*
-	 * Call specific device mechanism information function
-	 * to complete the global setting.
-	 */
-	if (dev_mech_info[slotid])
-		ret = dev_mech_info[slotid](type, info);
-
-	return ret;
-}
-
-static CK_RV info_msign_rsa_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-				   struct mentry *entry,
-				   CK_MECHANISM_INFO_PTR info,
-				   struct smw_signature_info *sign_verify_info)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	CK_RV ret = CKR_OK;
-	const struct libdev *devinfo = NULL;
-
-	devinfo = libdev_get_devinfo(slotid);
-	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
-
-	/*
-	 * Signature global settings.
-	 */
-	info->ulMaxKeySize = 0;
-	info->ulMinKeySize = 0;
-	info->flags = 0;
-
-	sign_verify_info->key_type_name = "RSA";
-
-	if (entry->smw_hash)
-		sign_verify_info->hash_algo = entry->smw_hash;
-	else
-		sign_verify_info->hash_algo = NULL_PTR;
+	sign_verify_info.algo = entry->smw_algo;
+	sign_verify_info.type = entry->smw_mode;
+	sign_verify_info.hash = entry->smw_hash;
 
 	/* @info flag is set with Sign flag or Verify flag or both */
-	status = smw_config_check_sign(devinfo->name, sign_verify_info);
+	status = smw_config_check_sign(devinfo->name, &sign_verify_info);
 	if (status == SMW_STATUS_OK)
 		info->flags |= CKF_SIGN;
 
-	status = smw_config_check_verify(devinfo->name, sign_verify_info);
+	status = smw_config_check_verify(devinfo->name, &sign_verify_info);
 	if (status == SMW_STATUS_OK)
 		info->flags |= CKF_VERIFY;
 
@@ -992,126 +855,444 @@ static CK_RV info_msign_rsa_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return ret;
 }
 
-static CK_RV info_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-				      struct mentry *entry,
-				      CK_MECHANISM_INFO_PTR info)
+static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
-	struct smw_signature_info sign_verify_info = {
-		.signature_type = SMW_RSA_PKCS1_V1_5_SIGN_TYPE
-	};
-
-	DBG_TRACE("Return info of 0x%lx signature mechanism", type);
-
-	return info_msign_rsa_common(slotid, type, entry, info,
-				     &sign_verify_info);
+	return info_msign_common(slotid, type, entry, info);
 }
 
-static CK_RV info_msign_rsa_pss(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-				struct mentry *entry,
-				CK_MECHANISM_INFO_PTR info)
+static CK_RV info_msign_rsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			    struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
-	struct smw_signature_info sign_verify_info = {
-		.signature_type = SMW_RSA_PSS_SIGN_TYPE
-	};
-
-	DBG_TRACE("Return info of 0x%lx signature mechanism", type);
-
-	return info_msign_rsa_common(slotid, type, entry, info,
-				     &sign_verify_info);
+	return info_msign_common(slotid, type, entry, info);
 }
 
-static CK_RV op_msign_common(struct smw_sign_verify_args *smw_args,
-			     struct mentry *entry,
+static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 			     struct lib_signature_params *params,
-			     const char *signature_type)
+			     unsigned int key_id)
 {
-	CK_RV ret = CKR_ARGUMENTS_BAD;
+	CK_RV ret = CKR_OK;
 	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_tlv attr = { 0 };
-	struct lib_signature_ctx *ctx = (struct lib_signature_ctx *)params->ctx;
+	const struct libdev *devinfo = NULL;
+	struct lib_signature_ctx *ctx = params->ctx;
+	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_sign_verify_args smw_args = { 0 };
 
-	smw_args->message = params->pdata;
-	if (SET_OVERFLOW(params->uldatalen, smw_args->message_length))
-		return ret;
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
 
-	smw_args->signature = params->psignature;
-	if (SET_OVERFLOW(params->ulsignaturelen, smw_args->signature_length))
-		return ret;
+	smw_args.subsystem_name = devinfo->name;
+	key_desc.id = key_id;
+	smw_args.key_descriptor = &key_desc;
+	smw_args.sign_algo = entry->smw_algo_id;
 
-	/* Get hash algorithm */
-	if (entry->smw_hash)
-		smw_args->algo_name = entry->smw_hash;
-	else if (ctx->hash_mech)
-		smw_args->algo_name = get_hash_algo(ctx->hash_mech);
+	if (!entry->smw_hash)
+		smw_args.sign_algo =
+			SMW_ATTR_SET_HASH(smw_args.sign_algo,
+					  get_hash_algo_id(ctx->hash_mech));
 
-	/* Build attribute list */
-	ret = args_attr_sign_verify(&attr, signature_type, ctx->salt_len);
-	if (ret != CKR_OK)
-		goto end;
+	if (ctx->salt_len)
+		if (SET_OVERFLOW(SMW_ATTR_SET_SALT_LENGTH(smw_args.sign_algo,
+							  ctx->salt_len),
+				 smw_args.sign_algo))
+			return CKR_ARGUMENTS_BAD;
 
-	if (attr.string) {
-		smw_args->attributes_list = (unsigned char *)attr.string;
-		smw_args->attributes_list_length = attr.length;
-	}
+	smw_args.message = params->pdata;
+	if (SET_OVERFLOW(params->uldatalen, smw_args.message_length))
+		return CKR_ARGUMENTS_BAD;
+
+	smw_args.signature = params->psignature;
+	if (SET_OVERFLOW(params->ulsignaturelen, smw_args.signature_length))
+		return CKR_ARGUMENTS_BAD;
 
 	if (params->op_flag == CKF_SIGN) {
-		status = smw_sign(smw_args);
+		status = smw_sign(&smw_args);
 
 		/* Update signature length */
 		if (status == SMW_STATUS_OK ||
 		    status == SMW_STATUS_OUTPUT_TOO_SHORT)
-			params->ulsignaturelen = smw_args->signature_length;
+			params->ulsignaturelen = smw_args.signature_length;
 	} else {
-		status = smw_verify(smw_args);
+		status = smw_verify(&smw_args);
 	}
 
 	ret = smw_status_to_ck_rv(status);
 
 	DBG_TRACE("%s on %s status %d return %ld",
 		  params->op_flag == CKF_SIGN ? "Sign" : "Verify",
-		  smw_args->subsystem_name, status, ret);
-
-end:
-	tlv_encode_free(&attr);
+		  smw_args.subsystem_name, status, ret);
 
 	return ret;
 }
 
 static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
-	const struct libdev *devinfo = NULL;
 	struct lib_signature_ctx *ctx = NULL;
-	struct lib_signature_params *params = NULL;
-	struct smw_key_descriptor key_desc = { 0 };
-	struct smw_sign_verify_args smw_args = { 0 };
+	unsigned int key_id = 0;
 
 	DBG_TRACE("ECDSA Signature mechanism");
 
+	ctx = ((struct lib_signature_params *)args)->ctx;
+
+	key_id = get_key_id_from((struct libobj_obj *)ctx->hkey, ec_pair);
+
+	return op_msign_common(slotid, entry, args, key_id);
+}
+
+static CK_RV op_msign_rsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	struct lib_signature_ctx *ctx = NULL;
+	unsigned int key_id = 0;
+
+	DBG_TRACE("RSA Signature mechanism");
+
+	ctx = ((struct lib_signature_params *)args)->ctx;
+
+	key_id = get_key_id_from((struct libobj_obj *)ctx->hkey, rsa_pair);
+
+	return op_msign_common(slotid, entry, args, key_id);
+}
+
+static void check_mcipher(CK_SLOT_ID slotid, const char *subsystem,
+			  struct mgroup *mgroup)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx;
+	CK_FLAGS slot_flag = 0;
+	struct mentry *entry = NULL;
+	struct smw_cipher_info info = { 0 };
+
+	/*
+	 * Slot flag is set if:
+	 * encryption or decryption operation is supported
+	 */
+
+	slot_flag = BIT(slotid);
+
+	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
+	     idx++, entry++) {
+		info.key_type_name = entry->smw_algo;
+		info.mode = entry->smw_mode;
+		info.op_type = ENCRYPT_STR;
+		status = smw_config_check_cipher(subsystem, &info);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+
+		info.op_type = DECRYPT_STR;
+		status = smw_config_check_cipher(subsystem, &info);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+	}
+}
+
+static CK_RV info_mcipher(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			  struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_RV ret = CKR_OK;
+	const struct libdev *devinfo = NULL;
+	struct smw_cipher_info cipher_info = { 0 };
+
+	DBG_TRACE("Return info of 0x%lx cipher mechanism", type);
+
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	params = args;
-	ctx = params->ctx;
+	/*
+	 * Global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = 0;
 
-	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, ec_pair);
+	cipher_info.key_type_name = entry->smw_algo;
+	cipher_info.mode = entry->smw_mode;
 
-	smw_args.subsystem_name = devinfo->name;
-	smw_args.key_descriptor = &key_desc;
+	cipher_info.op_type = ENCRYPT_STR;
+	status = smw_config_check_cipher(devinfo->name, &cipher_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_ENCRYPT;
 
-	return op_msign_common(&smw_args, entry, params, NULL);
+	cipher_info.op_type = DECRYPT_STR;
+	status = smw_config_check_cipher(devinfo->name, &cipher_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_DECRYPT;
+
+	/*
+	 * Call specific device mechanism information function
+	 * to complete the global setting.
+	 */
+	if (dev_mech_info[slotid])
+		ret = dev_mech_info[slotid](type, info);
+
+	return ret;
 }
 
-static CK_RV op_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, struct mentry *entry,
-				    void *args)
+static CK_RV cipher(struct lib_cipher_params *params,
+		    struct smw_cipher_init_args *smw_init_args,
+		    struct smw_cipher_data_args *smw_data_args)
 {
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_cipher_args smw_args = { 0 };
+	struct smw_context_args op_ctx_args = { 0 };
+
+	struct lib_cipher_ctx *ctx = NULL;
+
+	ctx = params->ctx;
+
+	smw_args.data = *smw_data_args;
+	smw_args.init = *smw_init_args;
+
+	switch (params->state) {
+	case OP_ONE_SHOT:
+		status = smw_cipher(&smw_args);
+		break;
+
+	case OP_UPDATE:
+		if (ctx->current_state == OP_INIT) {
+			op_ctx_args.subsystem_name =
+				smw_args.init.subsystem_name;
+			status = smw_allocate_context(&op_ctx_args);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			smw_init_args->context = op_ctx_args.context;
+
+			status = smw_cipher_init(smw_init_args);
+			if (status == SMW_STATUS_OK) {
+				ctx->context = smw_init_args->context;
+				smw_data_args->context = smw_init_args->context;
+				status = smw_cipher_update(smw_data_args);
+				ctx->context = smw_data_args->context;
+			}
+
+		} else if (ctx->current_state == OP_UPDATE) {
+			smw_data_args->context =
+				(struct smw_op_context *)ctx->context;
+			status = smw_cipher_update(smw_data_args);
+			ctx->context = smw_data_args->context;
+		}
+
+		break;
+
+	case OP_FINAL:
+		if (ctx->context) {
+			smw_data_args->context =
+				(struct smw_op_context *)ctx->context;
+			status = smw_cipher_final(smw_data_args);
+			ctx->context = smw_data_args->context;
+		} else {
+			status = SMW_STATUS_OK;
+			params->output_length = 0;
+			goto end;
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
+	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+		/* Update output data buffer length */
+		if (params->state == OP_ONE_SHOT)
+			params->output_length = smw_args.data.output_length;
+		else
+			params->output_length = smw_data_args->output_length;
+	}
+
+end:
+
+	ret = smw_status_to_ck_rv(status);
+	DBG_TRACE("%s on subsystem %s SMW status = 0x%x return = 0x%lx",
+		  params->op_flag == CKF_ENCRYPT ? ENCRYPT_STR : DECRYPT_STR,
+		  smw_init_args->subsystem_name, status, ret);
+	return ret;
+}
+
+static CK_RV set_smw_init_args(struct lib_cipher_ctx *ctx,
+			       struct smw_cipher_init_args *smw_init_args,
+			       struct smw_keypair_buffer **key_buffer,
+			       struct smw_key_descriptor ***keys_desc,
+			       struct smw_key_descriptor *key_desc_ptr,
+			       smw_subsystem_t subsystem_name, CK_FLAGS op_flag)
+{
+	CK_RV ret = CKR_HOST_MEMORY;
+
+	unsigned int i = 0;
+	unsigned int key_length = 0;
+	bool is_xts = false;
+
+	if (ctx->cipher_mech == CKM_AES_XTS) {
+		is_xts = true;
+		smw_init_args->nb_keys = 2;
+		*key_buffer =
+			calloc(smw_init_args->nb_keys, sizeof(**key_buffer));
+		if (!*key_buffer)
+			return ret;
+
+	} else {
+		smw_init_args->nb_keys = 1;
+	}
+
+	if (is_xts) {
+		if (SET_OVERFLOW(ctx->key_len / 2, key_length))
+			return CKR_ARGUMENTS_BAD;
+
+		(*key_buffer)[0].gen.private_data = &ctx->key_value[0];
+		(*key_buffer)[1].gen.private_data = &ctx->key_value[key_length];
+
+		for (; i < smw_init_args->nb_keys; i++) {
+			(*key_buffer)[i].gen.private_length = key_length;
+			key_desc_ptr[i].buffer = &(*key_buffer)[i];
+			key_desc_ptr[i].type_name = AES_STR;
+			key_desc_ptr[i].security_size =
+				BYTES_TO_BITS(key_length);
+		}
+
+	} else {
+		key_desc_ptr[0].id =
+			get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
+	}
+
+	for (i = 0; i < smw_init_args->nb_keys; i++)
+		(*keys_desc)[i] = &key_desc_ptr[i];
+
+	smw_init_args->keys_desc = *keys_desc;
+	smw_init_args->subsystem_name = subsystem_name;
+	smw_init_args->mode_name = get_cipher_mode(ctx->cipher_mech);
+	smw_init_args->iv = ctx->iv;
+
+	if (SET_OVERFLOW(ctx->iv_length, smw_init_args->iv_length))
+		return CKR_ARGUMENTS_BAD;
+
+	DBG_TRACE("Cipher mode = %s", smw_init_args->mode_name);
+
+	if (op_flag == CKF_ENCRYPT)
+		smw_init_args->operation_name = ENCRYPT_STR;
+	else
+		smw_init_args->operation_name = DECRYPT_STR;
+
+	return CKR_OK;
+}
+
+static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	(void)entry;
+	CK_RV ret = CKR_OK;
+
+	const struct libdev *devinfo = NULL;
+	struct lib_cipher_ctx *ctx = NULL;
+	struct lib_cipher_params *params = NULL;
+
+	struct smw_keypair_buffer *key_buffer = NULL;
+	struct smw_cipher_init_args smw_init_args = { 0 };
+	struct smw_cipher_init_args *smw_init_args_ptr = NULL;
+	struct smw_cipher_data_args smw_data_args = { 0 };
+	struct smw_key_descriptor *keys_desc[2] = { NULL };
+	struct smw_key_descriptor key_descriptor[2] = { 0 };
+	struct smw_key_descriptor **keys_desc_ptr = NULL;
+
+	keys_desc_ptr = keys_desc;
+	smw_init_args_ptr = &smw_init_args;
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	params = (struct lib_cipher_params *)args;
+	ctx = params->ctx;
+
+	if (params->state == OP_ONE_SHOT ||
+	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE)) {
+		if (set_smw_init_args(ctx, smw_init_args_ptr, &key_buffer,
+				      &keys_desc_ptr, &key_descriptor[0],
+				      devinfo->name, params->op_flag) != CKR_OK)
+			goto end;
+	}
+
+	if (SET_OVERFLOW(params->input_length, smw_data_args.input_length)) {
+		if (params->op_flag == CKF_ENCRYPT)
+			ret = CKR_DATA_LEN_RANGE;
+		else
+			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
+
+		goto end;
+	}
+
+	if (SET_OVERFLOW(params->output_length, smw_data_args.output_length)) {
+		if (params->op_flag == CKF_ENCRYPT)
+			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
+		else
+			ret = CKR_DATA_LEN_RANGE;
+
+		goto end;
+	}
+
+	smw_data_args.input = params->pinput;
+	smw_data_args.output = params->poutput;
+	ret = cipher(params, &smw_init_args, &smw_data_args);
+
+end:
+	if (key_buffer)
+		free(key_buffer);
+
+	return ret;
+}
+
+static CK_RV info_mmac_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_RV ret = CKR_OK;
+	const struct libdev *devinfo = NULL;
+	struct smw_mac_info mac_info = { 0 };
+
+	DBG_TRACE("Return info of 0x%lx MAC mechanism", type);
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	/*
+	 * Global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = 0;
+
+	mac_info.key_type_name = entry->smw_algo;
+	mac_info.mac_algo = entry->smw_mode;
+	mac_info.hash_algo = entry->smw_hash;
+
+	status = smw_config_check_mac(devinfo->name, &mac_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_SIGN | CKF_VERIFY;
+
+	/*
+	 * Call specific device mechanism information function
+	 * to complete the global setting.
+	 */
+	if (dev_mech_info[slotid])
+		ret = dev_mech_info[slotid](type, info);
+
+	return ret;
+}
+
+static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	enum smw_status_code status = SMW_STATUS_OK;
 	const struct libdev *devinfo = NULL;
 	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params *params = NULL;
 	struct smw_key_descriptor key_desc = { 0 };
-	struct smw_sign_verify_args smw_args = { 0 };
+	struct smw_mac_args smw_args = { 0 };
 
-	DBG_TRACE("RSA PKCS V1_5 Signature mechanism");
+	DBG_TRACE("MAC mechanism");
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
@@ -1120,39 +1301,122 @@ static CK_RV op_msign_rsa_pkcs_v1_5(CK_SLOT_ID slotid, struct mentry *entry,
 	params = args;
 	ctx = params->ctx;
 
-	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, rsa_pair);
+	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
 
 	smw_args.subsystem_name = devinfo->name;
 	smw_args.key_descriptor = &key_desc;
 
-	return op_msign_common(&smw_args, entry, params,
-			       SMW_RSA_PKCS1_V1_5_SIGN_TYPE);
+	smw_args.input = params->pdata;
+	if (SET_OVERFLOW(params->uldatalen, smw_args.input_length))
+		return ret;
+
+	smw_args.mac = params->psignature;
+	if (SET_OVERFLOW(params->ulsignaturelen, smw_args.mac_length))
+		return ret;
+
+	smw_args.algo_name = entry->smw_mode;
+
+	/* Get hash algorithm */
+	if (entry->smw_hash)
+		smw_args.hash_name = entry->smw_hash;
+	else if (ctx->hash_mech)
+		smw_args.hash_name = get_hash_algo(ctx->hash_mech);
+
+	if (params->op_flag == CKF_SIGN) {
+		status = smw_mac(&smw_args);
+
+		/* Update MAC length */
+		if (status == SMW_STATUS_OK ||
+		    status == SMW_STATUS_OUTPUT_TOO_SHORT)
+			params->ulsignaturelen = smw_args.mac_length;
+	} else {
+		status = smw_mac_verify(&smw_args);
+	}
+
+	ret = smw_status_to_ck_rv(status);
+
+	DBG_TRACE("%s on %s status %d return %ld",
+		  params->op_flag == CKF_SIGN ? "Sign" : "Verify",
+		  smw_args.subsystem_name, status, ret);
+
+	return ret;
 }
 
-static CK_RV op_msign_rsa_pss(CK_SLOT_ID slotid, struct mentry *entry,
-			      void *args)
+static void check_mcmac(CK_SLOT_ID slotid, const char *subsystem,
+			struct mgroup *mgroup)
 {
-	const struct libdev *devinfo = NULL;
-	struct lib_signature_ctx *ctx = NULL;
-	struct lib_signature_params *params = NULL;
-	struct smw_key_descriptor key_desc = { 0 };
-	struct smw_sign_verify_args smw_args = { 0 };
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx;
+	CK_FLAGS slot_flag = 0;
+	struct mentry *entry = NULL;
+	struct smw_mac_info info = { 0 };
 
-	DBG_TRACE("RSA PSS Signature mechanism");
+	slot_flag = BIT(slotid);
 
-	devinfo = libdev_get_devinfo(slotid);
-	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
+	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
+	     idx++, entry++) {
+		info.key_type_name = entry->smw_algo;
+		info.mac_algo = entry->smw_mode;
+		status = smw_config_check_mac(subsystem, &info);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+	}
+}
 
-	params = args;
-	ctx = params->ctx;
+static CK_RV info_mcmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	return info_mmac_common(slotid, type, entry, info);
+}
 
-	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, rsa_pair);
+static CK_RV op_mcmac(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	return op_mmac_common(slotid, entry, args);
+}
 
-	smw_args.subsystem_name = devinfo->name;
-	smw_args.key_descriptor = &key_desc;
+static void check_mhmac(CK_SLOT_ID slotid, const char *subsystem,
+			struct mgroup *mgroup)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx = 0;
+	struct smw_mac_info info = { 0 };
+	struct mentry *entry = NULL;
+	CK_FLAGS slot_flag = 0;
 
-	return op_msign_common(&smw_args, entry, params, SMW_RSA_PSS_SIGN_TYPE);
+	DBG_TRACE("Check HMAC mechanism");
+
+	/*
+	 * smw_config_check_mac() checks the key type, the MAC algorithm
+	 * (optional) and the hash algorithm (optional).
+	 *
+	 * Slot flag is set if:
+	 *  - sign or verify or both operations are supported
+	 */
+
+	info.key_type_name = HMAC_STR;
+
+	slot_flag = BIT(slotid);
+	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
+		info.mac_algo = entry->smw_algo;
+		info.hash_algo = entry->smw_hash;
+
+		status = smw_config_check_mac(subsystem, &info);
+		DBG_TRACE("%s MAC mechanism %lu: %d", subsystem, entry->type,
+			  status);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+	}
+}
+
+static CK_RV info_mhmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	return info_mmac_common(slotid, type, entry, info);
+}
+
+static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	return op_mmac_common(slotid, entry, args);
 }
 
 CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
@@ -1270,8 +1534,7 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	enum smw_status_code status = SMW_STATUS_OK;
 	CK_SLOT_ID slotid = 0;
 	const struct libdev *devinfo = NULL;
-	struct smw_tlv key_attr = { 0 };
-	struct smw_tlv allowed_algos = { 0 };
+	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_import_key_args imp_args = { 0 };
 	struct smw_key_descriptor key = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
@@ -1296,23 +1559,17 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = build_key_allowed_algos(&allowed_algos, slotid, obj);
+	ret = get_key_permitted_algo(&key_attributes.permitted_algo, slotid,
+				     obj);
 	if (ret != CKR_OK)
-		goto end;
-
-	ret = args_attrs_key_policy(&key_attr, obj, &allowed_algos);
-	if (ret != CKR_OK)
-		goto end;
+		return ret;
 
 	imp_args.subsystem_name = devinfo->name;
 	imp_args.key_descriptor = &key;
 
-	ret = args_attr_import_key(&key_attr, obj);
-	if (ret != CKR_OK)
-		goto end;
-
-	imp_args.key_attributes_list = (unsigned char *)key_attr.string;
-	imp_args.key_attributes_list_length = key_attr.length;
+	args_attrs_key_usage(&key_attributes.usage_flags, obj);
+	args_attr_key_storage(&key_attributes.attributes, obj);
+	imp_args.key_attributes = &key_attributes;
 
 	status = smw_import_key(&imp_args);
 	ret = smw_status_to_ck_rv(status);
@@ -1322,10 +1579,6 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 
 	if (ret == CKR_OK)
 		key_desc_copy_key_id(obj, &key);
-
-end:
-	tlv_encode_free(&allowed_algos);
-	tlv_encode_free(&key_attr);
 
 	return ret;
 }
@@ -1406,709 +1659,6 @@ CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
 	return ret;
 }
 
-static smw_cipher_mode_t get_cipher_mode(CK_MECHANISM_TYPE mech_type)
-{
-	smw_cipher_mode_t mode = NULL;
-	unsigned int i = 0;
-
-	for (; i < ARRAY_SIZE(cipher_algos); i++) {
-		if (mech_type == cipher_algos[i].mech_type) {
-			mode = cipher_algos[i].cipher_mode;
-			break;
-		}
-	}
-
-	return mode;
-}
-
-static CK_RV info_mcipher_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-				 struct mentry *entry,
-				 CK_MECHANISM_INFO_PTR info,
-				 struct smw_cipher_info cipher_info)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	CK_RV ret = CKR_OK;
-	const struct libdev *devinfo = NULL;
-
-	DBG_TRACE("info of 0x%lx cipher mechanism", type);
-
-	devinfo = libdev_get_devinfo(slotid);
-	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
-
-	/*
-	 * Global settings.
-	 */
-	info->ulMaxKeySize = 0;
-	info->ulMinKeySize = 0;
-	info->flags = 0;
-
-	cipher_info.mode = get_cipher_mode(entry->type);
-
-	cipher_info.op_type = ENCRYPT_STR;
-	status = smw_config_check_cipher(devinfo->name, &cipher_info);
-	if (status == SMW_STATUS_OK)
-		info->flags |= CKF_ENCRYPT;
-
-	cipher_info.op_type = DECRYPT_STR;
-	status = smw_config_check_cipher(devinfo->name, &cipher_info);
-	if (status == SMW_STATUS_OK)
-		info->flags |= CKF_DECRYPT;
-
-	/*
-	 * Call specific device mechanism information function
-	 * to complete the global setting.
-	 */
-	if (dev_mech_info[slotid])
-		ret = dev_mech_info[slotid](type, info);
-
-	return ret;
-}
-
-static void check_mcipher_common(CK_SLOT_ID slotid, const char *subsystem,
-				 struct mgroup *mgroup,
-				 struct smw_cipher_info info)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	unsigned int idx;
-	CK_FLAGS slot_flag = 0;
-	struct mentry *entry = NULL;
-
-	/*
-	 * Slot flag is set if:
-	 * encryption or decryption operation is supported
-	 */
-
-	slot_flag = BIT(slotid);
-
-	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
-	     idx++, entry++) {
-		info.mode = get_cipher_mode(entry->type);
-		info.op_type = ENCRYPT_STR;
-		status = smw_config_check_cipher(subsystem, &info);
-		if (status == SMW_STATUS_OK)
-			SET_BITS(entry->slot_flag, slot_flag);
-
-		info.op_type = DECRYPT_STR;
-		status = smw_config_check_cipher(subsystem, &info);
-		if (status == SMW_STATUS_OK)
-			SET_BITS(entry->slot_flag, slot_flag);
-	}
-}
-
-static CK_RV cipher(struct lib_cipher_params *params,
-		    struct smw_cipher_init_args *smw_init_args,
-		    struct smw_cipher_data_args *smw_data_args)
-{
-	CK_RV ret = CKR_OK;
-	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_cipher_args smw_args = { 0 };
-	struct smw_context_args op_ctx_args = { 0 };
-
-	struct lib_cipher_ctx *ctx = NULL;
-
-	ctx = params->ctx;
-
-	smw_args.data = *smw_data_args;
-	smw_args.init = *smw_init_args;
-
-	switch (params->state) {
-	case OP_ONE_SHOT:
-		status = smw_cipher(&smw_args);
-		break;
-
-	case OP_UPDATE:
-		if (ctx->current_state == OP_INIT) {
-			op_ctx_args.subsystem_name =
-				smw_args.init.subsystem_name;
-			status = smw_allocate_context(&op_ctx_args);
-			if (status != SMW_STATUS_OK)
-				goto end;
-
-			smw_init_args->context = op_ctx_args.context;
-
-			status = smw_cipher_init(smw_init_args);
-			if (status == SMW_STATUS_OK) {
-				ctx->context = smw_init_args->context;
-				smw_data_args->context = smw_init_args->context;
-				status = smw_cipher_update(smw_data_args);
-				ctx->context = smw_data_args->context;
-			}
-
-		} else if (ctx->current_state == OP_UPDATE) {
-			smw_data_args->context =
-				(struct smw_op_context *)ctx->context;
-			status = smw_cipher_update(smw_data_args);
-			ctx->context = smw_data_args->context;
-		}
-
-		break;
-
-	case OP_FINAL:
-		if (ctx->context) {
-			smw_data_args->context =
-				(struct smw_op_context *)ctx->context;
-			status = smw_cipher_final(smw_data_args);
-			ctx->context = smw_data_args->context;
-		} else {
-			status = SMW_STATUS_OK;
-			params->output_length = 0;
-			goto end;
-		}
-
-		break;
-
-	default:
-		break;
-	}
-
-	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT) {
-		/* Update output data buffer length */
-		if (params->state == OP_ONE_SHOT)
-			params->output_length = smw_args.data.output_length;
-		else
-			params->output_length = smw_data_args->output_length;
-	}
-
-end:
-
-	ret = smw_status_to_ck_rv(status);
-	DBG_TRACE("%s on subsystem %s SMW status = 0x%x return = 0x%lx",
-		  params->op_flag == CKF_ENCRYPT ? ENCRYPT_STR : DECRYPT_STR,
-		  smw_init_args->subsystem_name, status, ret);
-	return ret;
-}
-
-static CK_RV set_smw_init_args(struct lib_cipher_ctx *ctx,
-			       struct smw_cipher_init_args **smw_init_args,
-			       struct smw_keypair_buffer **key_buffer,
-			       struct smw_key_descriptor ***keys_desc,
-			       struct smw_key_descriptor *key_desc_ptr,
-			       smw_subsystem_t subsystem_name, CK_FLAGS op_flag)
-{
-	CK_RV ret = CKR_HOST_MEMORY;
-
-	unsigned int i = 0;
-	unsigned int key_length = 0;
-	bool is_xts = false;
-
-	if (ctx->cipher_mech == CKM_AES_XTS) {
-		is_xts = true;
-		(*smw_init_args)->nb_keys = 2;
-		*key_buffer =
-			calloc((*smw_init_args)->nb_keys, sizeof(**key_buffer));
-		if (!*key_buffer)
-			return ret;
-
-	} else {
-		(*smw_init_args)->nb_keys = 1;
-	}
-
-	if (is_xts) {
-		if (SET_OVERFLOW(ctx->key_len / 2, key_length))
-			return CKR_ARGUMENTS_BAD;
-
-		(*key_buffer)[0].gen.private_data = &ctx->key_value[0];
-		(*key_buffer)[1].gen.private_data = &ctx->key_value[key_length];
-
-		for (; i < (*smw_init_args)->nb_keys; i++) {
-			(*key_buffer)[i].gen.private_length = key_length;
-			key_desc_ptr[i].buffer = &(*key_buffer)[i];
-			key_desc_ptr[i].type_name = "AES";
-			key_desc_ptr[i].security_size =
-				BYTES_TO_BITS(key_length);
-		}
-
-	} else {
-		key_desc_ptr[0].id =
-			get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
-	}
-
-	for (i = 0; i < (*smw_init_args)->nb_keys; i++)
-		(*keys_desc)[i] = &key_desc_ptr[i];
-
-	(*smw_init_args)->keys_desc = *keys_desc;
-	(*smw_init_args)->subsystem_name = subsystem_name;
-	(*smw_init_args)->mode_name = get_cipher_mode(ctx->cipher_mech);
-	(*smw_init_args)->iv = ctx->iv;
-
-	if (SET_OVERFLOW(ctx->iv_length, (*smw_init_args)->iv_length))
-		return CKR_ARGUMENTS_BAD;
-
-	DBG_TRACE("Cipher mode = %s", (*smw_init_args)->mode_name);
-
-	if (op_flag == CKF_ENCRYPT)
-		(*smw_init_args)->operation_name = ENCRYPT_STR;
-	else
-		(*smw_init_args)->operation_name = DECRYPT_STR;
-
-	return CKR_OK;
-}
-
-static CK_RV op_mcipher_common(CK_SLOT_ID slotid, void *args)
-{
-	CK_RV ret = CKR_OK;
-
-	const struct libdev *devinfo = NULL;
-	struct lib_cipher_ctx *ctx = NULL;
-	struct lib_cipher_params *params = NULL;
-
-	struct smw_keypair_buffer *key_buffer = NULL;
-	struct smw_cipher_init_args smw_init_args = { 0 };
-	struct smw_cipher_init_args *smw_init_args_ptr = NULL;
-	struct smw_cipher_data_args smw_data_args = { 0 };
-	struct smw_key_descriptor *keys_desc[2] = { NULL };
-	struct smw_key_descriptor key_descriptor[2] = { 0 };
-	struct smw_key_descriptor **keys_desc_ptr = NULL;
-
-	keys_desc_ptr = keys_desc;
-	smw_init_args_ptr = &smw_init_args;
-
-	devinfo = libdev_get_devinfo(slotid);
-	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
-
-	params = (struct lib_cipher_params *)args;
-	ctx = params->ctx;
-
-	if (params->state == OP_ONE_SHOT ||
-	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE)) {
-		if (set_smw_init_args(ctx, &smw_init_args_ptr, &key_buffer,
-				      &keys_desc_ptr, &key_descriptor[0],
-				      devinfo->name, params->op_flag) != CKR_OK)
-			goto end;
-	}
-
-	if (SET_OVERFLOW(params->input_length, smw_data_args.input_length)) {
-		if (params->op_flag == CKF_ENCRYPT)
-			ret = CKR_DATA_LEN_RANGE;
-		else
-			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
-
-		goto end;
-	}
-
-	if (SET_OVERFLOW(params->output_length, smw_data_args.output_length)) {
-		if (params->op_flag == CKF_ENCRYPT)
-			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
-		else
-			ret = CKR_DATA_LEN_RANGE;
-
-		goto end;
-	}
-
-	smw_data_args.input = params->pinput;
-	smw_data_args.output = params->poutput;
-	ret = cipher(params, &smw_init_args, &smw_data_args);
-
-end:
-	if (key_buffer)
-		free(key_buffer);
-
-	return ret;
-}
-
-static CK_RV info_mcipher_aes(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
-{
-	CK_RV ret = CKR_OK;
-	struct smw_cipher_info cipher_info = { 0 };
-
-	DBG_TRACE("Return info of 0x%lx cipher mechanism", type);
-
-	cipher_info.key_type_name = AES_STR;
-
-	ret = info_mcipher_common(slotid, type, entry, info, cipher_info);
-
-	return ret;
-}
-
-static void check_mcipher_aes(CK_SLOT_ID slotid, const char *subsystem,
-			      struct mgroup *mgroup)
-{
-	struct smw_cipher_info info = { 0 };
-
-	info.key_type_name = AES_STR;
-
-	check_mcipher_common(slotid, subsystem, mgroup, info);
-}
-
-static CK_RV op_mcipher_aes(CK_SLOT_ID slotid, struct mentry *entry, void *args)
-{
-	(void)entry;
-	return op_mcipher_common(slotid, args);
-}
-
-static CK_RV info_mcipher_des(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
-{
-	CK_RV ret = CKR_OK;
-	struct smw_cipher_info cipher_info = { 0 };
-
-	DBG_TRACE("Return info of 0x%lx cipher mechanism", type);
-
-	cipher_info.key_type_name = DES_STR;
-
-	ret = info_mcipher_common(slotid, type, entry, info, cipher_info);
-
-	return ret;
-}
-
-static void check_mcipher_des(CK_SLOT_ID slotid, const char *subsystem,
-			      struct mgroup *mgroup)
-{
-	struct smw_cipher_info info = { 0 };
-
-	info.key_type_name = DES_STR;
-
-	check_mcipher_common(slotid, subsystem, mgroup, info);
-}
-
-static CK_RV op_mcipher_des(CK_SLOT_ID slotid, struct mentry *entry, void *args)
-{
-	(void)entry;
-	return op_mcipher_common(slotid, args);
-}
-
-static CK_RV info_mcipher_des3(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			       struct mentry *entry, CK_MECHANISM_INFO_PTR info)
-{
-	CK_RV ret = CKR_OK;
-	struct smw_cipher_info cipher_info = { 0 };
-
-	DBG_TRACE("Return info of 0x%lx cipher mechanism", type);
-
-	cipher_info.key_type_name = DES3_STR;
-
-	ret = info_mcipher_common(slotid, type, entry, info, cipher_info);
-
-	return ret;
-}
-
-static void check_mcipher_des3(CK_SLOT_ID slotid, const char *subsystem,
-			       struct mgroup *mgroup)
-{
-	struct smw_cipher_info info = { 0 };
-
-	info.key_type_name = DES3_STR;
-
-	check_mcipher_common(slotid, subsystem, mgroup, info);
-}
-
-static CK_RV op_mcipher_des3(CK_SLOT_ID slotid, struct mentry *entry,
-			     void *args)
-{
-	(void)entry;
-	return op_mcipher_common(slotid, args);
-}
-
-static smw_mac_algo_t get_cmac_algo(CK_MECHANISM_TYPE mech_type)
-{
-	smw_mac_algo_t algo = NULL;
-	unsigned int i = 0;
-
-	for (; i < ARRAY_SIZE(cmac_algos); i++) {
-		if (mech_type == cmac_algos[i].mech_type) {
-			algo = cmac_algos[i].smw_algo;
-			break;
-		}
-	}
-
-	return algo;
-}
-
-static CK_RV info_mcmac_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			       struct mentry *entry, CK_MECHANISM_INFO_PTR info,
-			       struct smw_mac_info mac_info)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	CK_RV ret = CKR_OK;
-	const struct libdev *devinfo = NULL;
-
-	DBG_TRACE("info of 0x%lx MAC mechanism", type);
-
-	devinfo = libdev_get_devinfo(slotid);
-	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
-
-	/*
-	 * Global settings.
-	 */
-	info->ulMaxKeySize = 0;
-	info->ulMinKeySize = 0;
-	info->flags = 0;
-
-	mac_info.mac_algo = get_cmac_algo(entry->type);
-
-	status = smw_config_check_mac(devinfo->name, &mac_info);
-	if (status == SMW_STATUS_OK)
-		info->flags |= CKF_SIGN | CKF_VERIFY;
-
-	/*
-	 * Call specific device mechanism information function
-	 * to complete the global setting.
-	 */
-	if (dev_mech_info[slotid])
-		ret = dev_mech_info[slotid](type, info);
-
-	return ret;
-}
-
-static void check_mcmac_common(CK_SLOT_ID slotid, const char *subsystem,
-			       struct mgroup *mgroup, struct smw_mac_info info)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	unsigned int idx;
-	CK_FLAGS slot_flag = 0;
-	struct mentry *entry = NULL;
-
-	slot_flag = BIT(slotid);
-
-	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
-	     idx++, entry++) {
-		info.mac_algo = get_cmac_algo(entry->type);
-		status = smw_config_check_mac(subsystem, &info);
-		if (status == SMW_STATUS_OK)
-			SET_BITS(entry->slot_flag, slot_flag);
-	}
-}
-
-static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
-{
-	CK_RV ret = CKR_ARGUMENTS_BAD;
-	enum smw_status_code status = SMW_STATUS_OK;
-	const struct libdev *devinfo = NULL;
-	struct lib_signature_ctx *ctx = NULL;
-	struct lib_signature_params *params = NULL;
-	struct smw_key_descriptor key_desc = { 0 };
-	struct smw_mac_args smw_args = { 0 };
-
-	DBG_TRACE("MAC mechanism");
-
-	devinfo = libdev_get_devinfo(slotid);
-	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
-
-	params = args;
-	ctx = params->ctx;
-
-	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
-
-	smw_args.subsystem_name = devinfo->name;
-	smw_args.key_descriptor = &key_desc;
-
-	smw_args.input = params->pdata;
-	if (SET_OVERFLOW(params->uldatalen, smw_args.input_length))
-		return ret;
-
-	smw_args.mac = params->psignature;
-	if (SET_OVERFLOW(params->ulsignaturelen, smw_args.mac_length))
-		return ret;
-
-	smw_args.algo_name = GET_ALGO_NAME(entry, 0);
-
-	/* Get hash algorithm */
-	if (entry->smw_hash)
-		smw_args.hash_name = entry->smw_hash;
-	else if (ctx->hash_mech)
-		smw_args.hash_name = get_hash_algo(ctx->hash_mech);
-
-	if (params->op_flag == CKF_SIGN) {
-		status = smw_mac(&smw_args);
-
-		/* Update MAC length */
-		if (status == SMW_STATUS_OK ||
-		    status == SMW_STATUS_OUTPUT_TOO_SHORT)
-			params->ulsignaturelen = smw_args.mac_length;
-	} else {
-		status = smw_mac_verify(&smw_args);
-	}
-
-	ret = smw_status_to_ck_rv(status);
-
-	DBG_TRACE("%s on %s status %d return %ld",
-		  params->op_flag == CKF_SIGN ? "Sign" : "Verify",
-		  smw_args.subsystem_name, status, ret);
-
-	return ret;
-}
-
-static CK_RV info_mcmac_aes(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			    struct mentry *entry, CK_MECHANISM_INFO_PTR info)
-{
-	CK_RV ret = CKR_OK;
-	struct smw_mac_info mac_info = { 0 };
-
-	DBG_TRACE("Return info of 0x%lx MAC mechanism", type);
-
-	mac_info.key_type_name = AES_STR;
-
-	ret = info_mcmac_common(slotid, type, entry, info, mac_info);
-
-	return ret;
-}
-
-static void check_mcmac_aes(CK_SLOT_ID slotid, const char *subsystem,
-			    struct mgroup *mgroup)
-{
-	struct smw_mac_info info = { 0 };
-
-	info.key_type_name = AES_STR;
-
-	check_mcmac_common(slotid, subsystem, mgroup, info);
-}
-
-static CK_RV op_mcmac_aes(CK_SLOT_ID slotid, struct mentry *entry, void *args)
-{
-	return op_mmac_common(slotid, entry, args);
-}
-
-static CK_RV info_mcmac_des3(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			     struct mentry *entry, CK_MECHANISM_INFO_PTR info)
-{
-	CK_RV ret = CKR_OK;
-	struct smw_mac_info mac_info = { 0 };
-
-	DBG_TRACE("Return info of 0x%lx MAC mechanism", type);
-
-	mac_info.key_type_name = DES3_STR;
-
-	ret = info_mcmac_common(slotid, type, entry, info, mac_info);
-
-	return ret;
-}
-
-static void check_mcmac_des3(CK_SLOT_ID slotid, const char *subsystem,
-			     struct mgroup *mgroup)
-{
-	struct smw_mac_info info = { 0 };
-
-	info.key_type_name = DES3_STR;
-
-	check_mcmac_common(slotid, subsystem, mgroup, info);
-}
-
-static CK_RV op_mcmac_des3(CK_SLOT_ID slotid, struct mentry *entry, void *args)
-{
-	return op_mmac_common(slotid, entry, args);
-}
-
-static void check_mhmac(CK_SLOT_ID slotid, const char *subsystem,
-			struct mgroup *mgroup)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	unsigned int idx = 0;
-	struct smw_mac_info info = { 0 };
-	struct mentry *entry = NULL;
-	CK_FLAGS slot_flag = 0;
-
-	DBG_TRACE("Check HMAC mechanism");
-
-	/*
-	 * smw_config_check_mac() checks the key type, the MAC algorithm
-	 * (optional) and the hash algorithm (optional).
-	 *
-	 * Slot flag is set if:
-	 *  - sign or verify or both operations are supported
-	 */
-
-	info.key_type_name = HMAC_STR;
-
-	slot_flag = BIT(slotid);
-	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
-		if (entry->smw_algo)
-			info.mac_algo = entry->smw_algo;
-
-		if (entry->smw_hash)
-			info.hash_algo = entry->smw_hash;
-
-		status = smw_config_check_mac(subsystem, &info);
-		DBG_TRACE("%s MAC mechanism %lu: %d", subsystem, entry->type,
-			  status);
-		if (status == SMW_STATUS_OK)
-			SET_BITS(entry->slot_flag, slot_flag);
-	}
-}
-
-static CK_RV info_mhmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			struct mentry *entry, CK_MECHANISM_INFO_PTR info)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	CK_RV ret = CKR_OK;
-	struct smw_mac_info mac_info = { 0 };
-	const struct libdev *devinfo = NULL;
-
-	DBG_TRACE("Return info of 0x%lx MAC mechanism", type);
-
-	devinfo = libdev_get_devinfo(slotid);
-	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
-
-	/*
-	 * MAC global settings.
-	 */
-	info->ulMaxKeySize = 0;
-	info->ulMinKeySize = 0;
-	info->flags = 0;
-
-	mac_info.key_type_name = HMAC_STR;
-
-	if (entry->smw_algo)
-		mac_info.mac_algo = entry->smw_algo;
-
-	if (entry->smw_hash)
-		mac_info.hash_algo = entry->smw_hash;
-
-	status = smw_config_check_mac(devinfo->name, &mac_info);
-	if (status == SMW_STATUS_OK)
-		info->flags |= CKF_SIGN | CKF_VERIFY;
-
-	/*
-	 * Call specific device mechanism information function
-	 * to complete the global setting.
-	 */
-	if (dev_mech_info[slotid])
-		ret = dev_mech_info[slotid](type, info);
-
-	return ret;
-}
-
-static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args)
-{
-	return op_mmac_common(slotid, entry, args);
-}
-
-static void check_mcipher_sm4(CK_SLOT_ID slotid, const char *subsystem,
-			      struct mgroup *mgroup)
-{
-	struct smw_cipher_info info = { 0 };
-
-	info.key_type_name = SM4_STR;
-
-	check_mcipher_common(slotid, subsystem, mgroup, info);
-}
-
-static CK_RV info_mcipher_sm4(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
-			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
-{
-	CK_RV ret = CKR_OK;
-	struct smw_cipher_info cipher_info = { 0 };
-
-	DBG_TRACE("Return info of 0x%lx cipher mechanism", type);
-
-	cipher_info.key_type_name = SM4_STR;
-
-	ret = info_mcipher_common(slotid, type, entry, info, cipher_info);
-
-	return ret;
-}
-
-static CK_RV op_mcipher_sm4(CK_SLOT_ID slotid, struct mentry *entry, void *args)
-{
-	(void)entry;
-	return op_mcipher_common(slotid, args);
-}
-
 CK_RV libdev_cancel_operation(void **context)
 {
 	CK_RV ret = CKR_OK;
@@ -2122,6 +1672,7 @@ CK_RV libdev_cancel_operation(void **context)
 
 	*context = args.context;
 
-	DBG_TRACE(" smw cancel operation ret = %lx\n", ret);
+	DBG_TRACE("Cancel operation ret = %lx\n", ret);
+
 	return ret;
 }

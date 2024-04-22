@@ -3,261 +3,132 @@
  * Copyright 2021-2024 NXP
  */
 
+#include "smw/attr.h"
+
 #include "libobj_types.h"
 
 #include "args_attr.h"
-#include "tlv_encode.h"
 
-#include "trace.h"
-
-static CK_RV set_sign_usage(struct smw_tlv *policy,
-			    struct smw_tlv *allowed_algos)
+static void set_sign_usage(smw_attr_usage_t *usage_flags)
 {
-	CK_RV ret = CKR_OK;
-
-	ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-				       SMW_ATTR_USAGE_SIGN_MSG, allowed_algos);
-	if (ret == CKR_OK)
-		ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-					       SMW_ATTR_USAGE_SIGN_HASH,
-					       allowed_algos);
-
-	return ret;
+	SMW_ATTR_USAGE_SET_SIGN_MESSAGE(*usage_flags);
+	SMW_ATTR_USAGE_SET_SIGN_HASH(*usage_flags);
 }
 
-static CK_RV set_verify_usage(struct smw_tlv *policy,
-			      struct smw_tlv *allowed_algos)
+static void set_verify_usage(smw_attr_usage_t *usage_flags)
 {
-	CK_RV ret = CKR_OK;
-
-	ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-				       SMW_ATTR_USAGE_VERIFY_MSG,
-				       allowed_algos);
-	if (ret == CKR_OK)
-		ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-					       SMW_ATTR_USAGE_VERIFY_HASH,
-					       allowed_algos);
-
-	return ret;
+	SMW_ATTR_USAGE_SET_VERIFY_MESSAGE(*usage_flags);
+	SMW_ATTR_USAGE_SET_VERIFY_HASH(*usage_flags);
 }
 
-static CK_RV set_common_key_usage(struct smw_tlv *policy,
-				  struct libobj_obj *obj,
-				  struct smw_tlv *allowed_algos)
+static void set_common_key_usage(smw_attr_usage_t *usage_flags,
+				 struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
-
 	if (is_copyable_obj(obj, storage))
-		ret = tlv_encode_string(policy, SMW_ATTR_USAGE,
-					SMW_ATTR_USAGE_COPY);
+		SMW_ATTR_USAGE_SET_COPY(*usage_flags);
 
-	if (ret == CKR_OK && is_derive_key(obj))
-		ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-					       SMW_ATTR_USAGE_DERIVE,
-					       allowed_algos);
-
-	return ret;
+	if (is_derive_key(obj))
+		SMW_ATTR_USAGE_SET_DERIVE(*usage_flags);
 }
 
-static CK_RV set_public_key_usage(struct smw_tlv *policy,
-				  struct libobj_obj *obj,
-				  struct smw_tlv *allowed_algos)
+static void set_public_key_usage(smw_attr_usage_t *usage_flags,
+				 struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
 	struct libobj_key_public *key = get_key_from(obj);
 
 	if (key->encrypt)
-		ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-					       SMW_ATTR_USAGE_ENCRYPT,
-					       allowed_algos);
+		SMW_ATTR_USAGE_SET_ENCRYPT(*usage_flags);
 
-	if (ret == CKR_OK && key->verify)
-		ret = set_verify_usage(policy, allowed_algos);
-
-	return ret;
+	if (key->verify)
+		set_verify_usage(usage_flags);
 }
 
-static CK_RV set_private_key_usage(struct smw_tlv *policy,
-				   struct libobj_obj *obj,
-				   struct smw_tlv *allowed_algos)
+static void set_private_key_usage(smw_attr_usage_t *usage_flags,
+				  struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
 	struct libobj_key_private *key = get_key_from(obj);
 
 	if (key->decrypt)
-		ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-					       SMW_ATTR_USAGE_DECRYPT,
-					       allowed_algos);
+		SMW_ATTR_USAGE_SET_DECRYPT(*usage_flags);
 
-	if (ret == CKR_OK && key->sign)
-		ret = set_sign_usage(policy, allowed_algos);
+	if (key->sign)
+		set_sign_usage(usage_flags);
 
-	if (ret == CKR_OK && key->extractable && !key->sensitive)
-		ret = tlv_encode_string(policy, SMW_ATTR_USAGE,
-					SMW_ATTR_USAGE_EXPORT);
-
-	return ret;
+	if (key->extractable && !key->sensitive)
+		SMW_ATTR_USAGE_SET_EXPORT(*usage_flags);
 }
 
-static CK_RV set_secret_key_usage(struct smw_tlv *policy,
-				  struct libobj_obj *obj,
-				  struct smw_tlv *allowed_algos)
+static void set_secret_key_usage(smw_attr_usage_t *usage_flags,
+				 struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
 	struct libobj_key_secret *key = get_key_from(obj);
 
 	if (key->encrypt)
-		ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-					       SMW_ATTR_USAGE_ENCRYPT,
-					       allowed_algos);
+		SMW_ATTR_USAGE_SET_ENCRYPT(*usage_flags);
 
-	if (ret == CKR_OK && key->decrypt)
-		ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-					       SMW_ATTR_USAGE_DECRYPT,
-					       allowed_algos);
+	if (key->decrypt)
+		SMW_ATTR_USAGE_SET_DECRYPT(*usage_flags);
 
-	if (ret == CKR_OK && key->sign)
-		ret = set_sign_usage(policy, allowed_algos);
+	if (key->sign)
+		set_sign_usage(usage_flags);
 
-	if (ret == CKR_OK && key->verify)
-		ret = set_verify_usage(policy, allowed_algos);
+	if (key->verify)
+		set_verify_usage(usage_flags);
 
-	if (ret == CKR_OK && key->extractable && !key->sensitive)
-		ret = tlv_encode_concat_string(policy, SMW_ATTR_USAGE,
-					       SMW_ATTR_USAGE_EXPORT,
-					       allowed_algos);
-
-	return ret;
+	if (key->extractable && !key->sensitive)
+		SMW_ATTR_USAGE_SET_EXPORT(*usage_flags);
 }
 
-static CK_RV set_ec_key_usage(struct smw_tlv *policy, struct libobj_obj *obj,
-			      struct smw_tlv *allowed_algos)
+static void set_ec_key_usage(smw_attr_usage_t *usage_flags,
+			     struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
 	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 
 	switch (key->type) {
 	case LIBOBJ_KEY_PUBLIC:
-		ret = set_public_key_usage(policy, obj, allowed_algos);
+		set_public_key_usage(usage_flags, obj);
 		break;
 
 	case LIBOBJ_KEY_PRIVATE:
-		ret = set_private_key_usage(policy, obj, allowed_algos);
+		set_private_key_usage(usage_flags, obj);
 		break;
 
 	default:
-		ret = set_private_key_usage(policy, obj, allowed_algos);
-		if (ret == CKR_OK && key->pub_obj)
-			ret = set_public_key_usage(policy, key->pub_obj,
-						   allowed_algos);
+		set_private_key_usage(usage_flags, obj);
+
+		if (key->pub_obj)
+			set_public_key_usage(usage_flags, key->pub_obj);
+
 		break;
 	}
-
-	return ret;
 }
 
-static CK_RV set_rsa_key_usage(struct smw_tlv *policy, struct libobj_obj *obj,
-			       struct smw_tlv *allowed_algos)
+static void set_rsa_key_usage(smw_attr_usage_t *usage_flags,
+			      struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
 	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
 
 	switch (key->type) {
 	case LIBOBJ_KEY_PUBLIC:
-		ret = set_public_key_usage(policy, obj, allowed_algos);
+		set_public_key_usage(usage_flags, obj);
 		break;
 
 	case LIBOBJ_KEY_PRIVATE:
-		ret = set_private_key_usage(policy, obj, allowed_algos);
+		set_private_key_usage(usage_flags, obj);
 		break;
 
 	default:
-		ret = set_private_key_usage(policy, obj, allowed_algos);
-		if (ret == CKR_OK && key->pub_obj)
-			ret = set_public_key_usage(policy, key->pub_obj,
-						   allowed_algos);
+		set_private_key_usage(usage_flags, obj);
+
+		if (key->pub_obj)
+			set_public_key_usage(usage_flags, key->pub_obj);
+
 		break;
 	}
-
-	return ret;
 }
 
-static CK_RV rsa_key_attr(struct smw_tlv *attr, struct libobj_obj *obj)
+void args_attrs_key_usage(smw_attr_usage_t *usage_flags, struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
-	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
-
-	/*
-	 * The public exponent might be present and define
-	 * the RSA public exponent attribute.
-	 */
-	if (key->pub_exp.value) {
-		DBG_TRACE("Build RSA public exponent attribute");
-		ret = tlv_encode_large_numeral(attr, "RSA_PUB_EXP",
-					       &key->pub_exp);
-	}
-
-	return ret;
-}
-
-CK_RV args_attr_generate_key(struct smw_tlv *attr, struct libobj_obj *obj)
-{
-	CK_RV ret = CKR_OK;
-
-	if (is_token_obj(obj, storage)) {
-		DBG_TRACE("Generate Persistent Key");
-		ret = tlv_encode_boolean(attr, "PERSISTENT");
-		if (ret != CKR_OK)
-			return ret;
-	}
-
-	switch (get_key_type(obj)) {
-	case CKK_RSA:
-		ret = rsa_key_attr(attr, obj);
-		break;
-
-	default:
-		break;
-	}
-
-	return ret;
-}
-
-CK_RV args_attr_import_key(struct smw_tlv *attr, struct libobj_obj *obj)
-{
-	CK_RV ret = CKR_OK;
-
-	if (is_token_obj(obj, storage)) {
-		DBG_TRACE("Import Persistent Key");
-		ret = tlv_encode_boolean(attr, "PERSISTENT");
-	}
-
-	return ret;
-}
-
-CK_RV args_attr_sign_verify(struct smw_tlv *attr, const char *signature_type,
-			    CK_ULONG salt_len)
-{
-	CK_RV ret = CKR_OK;
-
-	if (signature_type) {
-		ret = tlv_encode_enum(attr, "SIGNATURE_TYPE", signature_type);
-		if (ret != CKR_OK)
-			return ret;
-	}
-
-	if (salt_len)
-		ret = tlv_encode_numeral(attr, "SALT_LEN", salt_len);
-
-	return ret;
-}
-
-CK_RV args_attrs_key_policy(struct smw_tlv *attr, struct libobj_obj *obj,
-			    struct smw_tlv *allowed_algos)
-{
-	CK_RV ret = CKR_FUNCTION_FAILED;
-	struct smw_tlv policy = { 0 };
-
 	switch (get_key_type(obj)) {
 	case CKK_AES:
 	case CKK_DES:
@@ -273,38 +144,32 @@ CK_RV args_attrs_key_policy(struct smw_tlv *attr, struct libobj_obj *obj,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
-		ret = set_secret_key_usage(&policy, obj, allowed_algos);
+		set_secret_key_usage(usage_flags, obj);
 		break;
 
 	case CKK_EC:
-		ret = set_ec_key_usage(&policy, obj, allowed_algos);
+		set_ec_key_usage(usage_flags, obj);
 		break;
 
 	case CKK_RSA:
-		ret = set_rsa_key_usage(&policy, obj, allowed_algos);
+		set_rsa_key_usage(usage_flags, obj);
 		break;
 
 	default:
 		break;
 	}
 
-	if (ret == CKR_OK)
-		ret = set_common_key_usage(&policy, obj, allowed_algos);
-
-	if (ret == CKR_OK && policy.string)
-		ret = tlv_encode_tlv(attr, SMW_ATTR_POLICY, &policy);
-
-	tlv_encode_free(&policy);
-
-	return ret;
+	set_common_key_usage(usage_flags, obj);
 }
 
-CK_RV args_attrs_store_data(struct smw_tlv *attr, struct libobj_obj *obj)
+void args_attr_key_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj)
 {
-	CK_RV ret = CKR_OK;
+	if (is_token_obj(obj, storage))
+		*attr = SMW_ATTR_SET_PERSISTENT(*attr);
+}
 
+void args_attr_data_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj)
+{
 	if (!is_modifiable_obj(obj, storage))
-		ret = tlv_encode_boolean(attr, "READ_ONLY");
-
-	return ret;
+		*attr = SMW_ATTR_SET_READ_ONLY(*attr);
 }

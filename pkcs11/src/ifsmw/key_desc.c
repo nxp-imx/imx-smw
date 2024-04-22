@@ -297,6 +297,11 @@ static CK_RV rsa_key_desc(struct smw_key_descriptor *desc,
 		smw_key->private_data = key->priv_exp.value;
 		if (SET_OVERFLOW(key->priv_exp.length, smw_key->private_length))
 			return CKR_ARGUMENTS_BAD;
+
+		smw_key->public_exponent = key->pub_exp.value;
+		if (SET_OVERFLOW(key->pub_exp.length,
+				 smw_key->public_exponent_length))
+			return CKR_ARGUMENTS_BAD;
 	}
 
 	return CKR_OK;

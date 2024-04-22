@@ -17,7 +17,6 @@
 #include "libobj_types.h"
 
 #include "args_attr.h"
-#include "tlv_encode.h"
 
 #define DATA_LABEL(name)                                                       \
 	{                                                                      \
@@ -136,7 +135,7 @@ static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	struct smw_store_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
 	struct libobj_data *data = get_subobj_from(obj, storage);
-	struct smw_tlv data_attr = { 0 };
+	struct smw_data_attributes data_attr = { 0 };
 
 	ret = libsess_get_slotid(hsession, &slotid);
 	if (ret != CKR_OK)
@@ -150,17 +149,13 @@ static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = args_attrs_store_data(&data_attr, obj);
-	if (ret != CKR_OK)
-		return ret;
-
 	data_descriptor.data = data->value.array;
 
 	if (SET_OVERFLOW(data->value.number, data_descriptor.length))
 		return CKR_FUNCTION_FAILED;
 
-	data_descriptor.attributes_list = (unsigned char *)data_attr.string;
-	data_descriptor.attributes_list_length = data_attr.length;
+	args_attr_data_storage(&data_attr.attributes, obj);
+	data_descriptor.data_attributes = &data_attr;
 
 	args.subsystem_name = devinfo->name;
 	args.data_descriptor = &data_descriptor;
@@ -170,8 +165,6 @@ static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 		ret = CKR_OK;
 	else
 		ret = CKR_FUNCTION_FAILED;
-
-	tlv_encode_free(&data_attr);
 
 	return ret;
 }

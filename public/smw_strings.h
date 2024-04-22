@@ -44,22 +44,13 @@ typedef smw_string_t smw_subsystem_t;
 typedef smw_string_t smw_key_type_t;
 
 /**
- * typedef smw_keymgr_privacy_t - Key privacy name
+ * typedef smw_key_privacy_t - Key privacy name
  * Values:
  *	- PUBLIC
  *	- PRIVATE
  *	- KEYPAIR
  */
-typedef smw_string_t smw_keymgr_privacy_t;
-
-/**
- * typedef smw_object_persistence_t - Object persistence name
- * Values:
- *	- TRANSIENT
- *	- PERSISTENT
- *	- PERMANENT
- */
-typedef smw_string_t smw_object_persistence_t;
+typedef smw_string_t smw_key_privacy_t;
 
 /**
  * typedef smw_hash_algo_t - Hash algorithm name
@@ -129,170 +120,26 @@ typedef smw_string_t smw_aead_operation_t;
 typedef smw_string_t smw_key_format_t;
 
 /**
- * typedef smw_attr_key_type_t - Key definition attribute type name
- *
- * An attribute is encoded with a Type-Length-Value (TLV) format.
- * Function of the attribute type, the TLV scheme varies.
- * Refer to :doc:`/tlv/tlv`
- *
- * Key Manager attributes:
- * The following :numref:`key_manager_attributes` lists all TLV attributes
- * supported by key manager operations like generate, import, derive, delete.
- *
- * .. table:: Key manager attributes
- *    :name: key_manager_attributes
- *    :align: center
- *    :widths: 25 14 62
- *    :width: 100%
- *    :class: wrap-table
- *
- *    +-----------------+--------------+---------------------------------------+
- *    | **Type Value**  | **Encoding** | **Description**                       |
- *    +=================+==============+=======================================+
- *    | PERSISTENT      | boolean      | If present key is persistent.         |
- *    +-----------------+--------------+---------------------------------------+
- *    | RSA_PUB_EXP     | numeral      | Setup the RSA Public exponent value.  |
- *    |                 |              | The default value is 65537 if this    |
- *    |                 |              | attribute is not defined.             |
- *    +-----------------+--------------+---------------------------------------+
- *    | FLUSH_KEY       | boolean      | If present, ensure that the key       |
- *    |                 |              | storage is up to date.                |
- *    +-----------------+--------------+---------------------------------------+
- *    | POLICY          | variable     | This attribute is used to restrict    |
- *    |                 | length list  | the key usage(s) and algorithm(s).    |
- *    |                 |              | The following `Key policy`_ details   |
- *    |                 |              | how a key policy is defined.          |
- *    +-----------------+--------------+---------------------------------------+
- *    | STORAGE_ID      | numeral      | Subsystem storage identifier.         |
- *    |                 |              |                                       |
- *    |                 |              | EdgeLock 2GO storage identifiers:     |
- *    |                 |              |                                       |
- *    |                 |              |  - Key object: NXP_EL2GO_KEY          |
- *    |                 |              |  - Data object: NXP_EL2GO_DATA        |
- *    +-----------------+--------------+---------------------------------------+
- *
- * Key policy
- * """"""""""
- * The key policy is built with a TLV variable length list in which one or more
- * key usage(s) are listed. To each key usage, algorithm(s) might be restricted.
- *
- * This attribute may or may not be significative (fully or partially) function
- * of the subsystem handling the key. Refer to the :doc:`/capabilities`
- * for more details.
- *
- * Signature attributes:
- *
- * The following :numref:`signature_attributes` lists all TLV attributes
- * supported by sign and verify operations.
- *
- * .. table:: Signature attributes
- *    :name: signature_attributes
- *    :align: center
- *    :widths: 25 14 62
- *    :width: 100%
- *    :class: wrap-table
- *
- *    +-----------------+--------------+---------------------------------------+
- *    | **Type Value**  | **Encoding** | **Description**                       |
- *    +=================+==============+=======================================+
- *    | SIGNATURE_TYPE  | string       | Define the type of signature in case  |
- *    |                 |              | multiple options are possible.        |
- *    |                 |              | Otherwise the signature type is       |
- *    |                 |              | function of the key type.             |
- *    |                 |              | Refer to `smw_signature_type_t`_      |
- *    |                 |              | to get the possible attribute value.  |
- *    +-----------------+--------------+---------------------------------------+
- *    | SALT_LENGTH     | string       | If signature is RSASSA-PSS, set the   |
- *    |                 |              | salt length of the signature.         |
- *    +-----------------+--------------+---------------------------------------+
- *    | TLS_MAC_FINISH  | string       | Define the TLS finish message         |
- *    |                 |              | signature type to generate. Value is  |
- *    |                 |              | either "CLIENT" or "SERVER"           |
- *    |                 |              | corresponding to client or server     |
- *    |                 |              | finish signature.                     |
- *    +-----------------+--------------+---------------------------------------+
- *
+ * typedef smw_signature_algo_t - Signature main algo name
+ * Values:
+ *	- DEFAULT
+ *	- ECDSA
+ *	- EDDSA
+ *	- DSA
+ *	- RSA
+ *	- TLS_1_2
  */
-typedef smw_string_t smw_attr_key_type_t;
-
-/**
- * typedef smw_attr_data_type_t - Data definition attribute type name
- *
- * An attribute is encoded with a Type-Length-Value (TLV) format.
- * Function of the attribute type, the TLV scheme varies.
- * Refer to :doc:`/tlv/tlv`
- *
- * The following :numref:`data_manager_attributes` lists all TLV attributes
- * supported by data manager store operation.
- *
- * .. table:: Data manager attributes
- *    :name: data_manager_attributes
- *    :align: center
- *    :widths: 25 14 62
- *    :width: 100%
- *    :class: wrap-table
- *
- *    +-----------------+--------------+---------------------------------------+
- *    | **Type Value**  | **Encoding** | **Description**                       |
- *    +=================+==============+=======================================+
- *    | READ_ONLY       | boolean      | Data is read-only.                    |
- *    +-----------------+--------------+---------------------------------------+
- *    | READ_ONCE       | boolean      | Data is read once time, when data is  |
- *    |                 |              | retrieved, data is deleted.           |
- *    +-----------------+--------------+---------------------------------------+
- *    | LIFECYCLE       | variable     | This attribute is used to restrict    |
- *    |                 | length list  | the data accessibility.               |
- *    |                 |              | The following `Data lifecycle`_ gives |
- *    |                 |              | more details.                         |
- *    +-----------------+--------------+---------------------------------------+
- *    | PERSISTENT      | boolean      | Data is persistent.                   |
- *    +-----------------+--------------+---------------------------------------+
- *
- * Data lifecycle
- * """"""""""""""
- * The data lifecycle is built with a TLV variable length list in which one or
- * more string below. This attribute limits the access of the data in the
- * corresponding device lifecycle.
- *
- * The CURRENT string value means that data is accessible only in the current
- * device lifecycle when data is created.
- *
- * .. table:: Data lifecyle attribute
- *    :name: data_lifecycle_attribute
- *    :align: center
- *    :class: wrap-table
- *
- *    +------------------+
- *    | **String Value** |
- *    +==================+
- *    | OPEN             |
- *    +------------------+
- *    | CLOSED           |
- *    +------------------+
- *    | CLOSED_LOCKED    |
- *    +------------------+
- *    | CURRENT          |
- *    +------------------+
- *
- * This attribute may or may not be significative (fully or partially) function
- * of the subsystem handling the data. Refer to the :doc:`/capabilities`
- * for more details.
- *
- *
- */
-typedef smw_string_t smw_attr_data_type_t;
+typedef smw_string_t smw_signature_algo_t;
 
 /**
  * typedef smw_signature_type_t - Signature type name
  * Values:
  *	- DEFAULT
- *	- RSASSA-PKCS1-V1_5
- *	- RSASSA-PSS
+ *	- PKCS1_1_5
+ *	- PSS
+ *	- CLIENT
+ *	- SERVER
  *	- CMAC
- *	- ECDSA_SHA224
- *	- ECDSA_SHA256
- *	- ECDSA_SHA384
- *	- ECDSA_SHA512
  */
 typedef smw_string_t smw_signature_type_t;
 

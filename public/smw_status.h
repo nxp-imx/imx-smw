@@ -47,6 +47,8 @@
  * set in the user configuration is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_ALGO_NAME: Algorithm name provided by the user or set in
  * the user configuration is not recognized by SMW.
+ * @SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME: Signature algo name provided by the user
+ * or set in the user configuration is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME: Signature type name provided by the user
  * or set in the user configuration is not recognized by SMW.
  * @SMW_STATUS_OEM_SRKH_NOT_FUSED: Device OEM SRKH is not fused.
@@ -93,7 +95,6 @@
  * @SMW_STATUS_KEY_DB_DELETE: Key database delete error.
  * @SMW_STATUS_KEY_DB_GET_INFO: Key database get information error.
  *
- * @SMW_STATUS_KEY_POLICY_ERROR: The key policy is syntactically wrong.
  * @SMW_STATUS_KEY_POLICY_WARNING_IGNORED: At least one element of the key policy is ignored.
  * @SMW_STATUS_UNKNOWN_KEY_OP_NAME: Key operation name provided by the user or
  * set in the user configuration is not recognized by SMW.
@@ -103,8 +104,6 @@
  * recognized by SMW.
  * @SMW_STATUS_UNKNOWN_KDF_NAME: Key derivation function name provided by the
  * user or set in the user configuration is not recognized by SMW.
- * @SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME: TLS finish message label name
- * provided by the user is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_TLS12_KEA_NAME: TLS 1.2 Key exchange algorithm name
  * provided by the user is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_TLS12_ENC_NAME: TLS 1.2 encryption algorithm name
@@ -140,6 +139,7 @@
  *	- SMW_STATUS_UNKNOWN_OP_TYPE_NAME
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME
  *	- SMW_STATUS_UNKNOWN_ALGO_NAME
+ *	- SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME
  *	- SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME
  *
  ** Specific return codes - Library initialization
@@ -189,13 +189,11 @@
  *	- SMW_STATUS_ERROR_KEY_DB_GET_INFO
  *
  ** Specific return codes - Key manager
- *	- SMW_STATUS_KEY_POLICY_ERROR
  *	- SMW_STATUS_KEY_POLICY_WARNING_IGNORED
  *	- SMW_STATUS_UNKNOWN_KEY_OP_NAME
  *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME
  *	- SMW_STATUS_UNKNOWN_FORMAT_NAME
  *	- SMW_STATUS_UNKNOWN_KDF_NAME
- *	- SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME
  *	- SMW_STATUS_UNKNOWN_TLS12_KEA_NAME
  *	- SMW_STATUS_UNKNOWN_TLS12_ENC_NAME
  *
@@ -253,18 +251,18 @@ enum smw_status_code {
 	SMW_STATUS_KEY_DB_UPDATE = SMW_STATUS_OBJ_DB_UPDATE, /* 40 */
 	SMW_STATUS_KEY_DB_DELETE = SMW_STATUS_OBJ_DB_DELETE,
 	SMW_STATUS_KEY_DB_GET_INFO = SMW_STATUS_OBJ_DB_GET_INFO,
-	SMW_STATUS_KEY_POLICY_ERROR,
 	SMW_STATUS_KEY_POLICY_WARNING_IGNORED,
-	SMW_STATUS_KEY_INVALID, /* 45 */
-	SMW_STATUS_MUTEX_LOCK_FAILURE,
+	SMW_STATUS_KEY_INVALID,
+	SMW_STATUS_MUTEX_LOCK_FAILURE, /* 45 */
 	SMW_STATUS_MUTEX_UNLOCK_FAILURE,
 	SMW_STATUS_INVALID_LIBRARY_CONTEXT,
 	SMW_STATUS_INVALID_CONFIG_DATABASE,
-	SMW_STATUS_INVALID_LIFECYCLE, /* 50 */
-	SMW_STATUS_UNKNOWN_MODE_NAME,
+	SMW_STATUS_INVALID_LIFECYCLE,
+	SMW_STATUS_UNKNOWN_MODE_NAME, /* 50 */
 	SMW_STATUS_UNKNOWN_OP_TYPE_NAME,
 	SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME,
 	SMW_STATUS_UNKNOWN_ALGO_NAME,
+	SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME,
 	SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME, /* 55 */
 	SMW_STATUS_UNKNOWN_CONFIG_OP_NAME,
 	SMW_STATUS_UNKNOWN_LOAD_METHOD_NAME,
@@ -272,10 +270,9 @@ enum smw_status_code {
 	SMW_STATUS_UNKNOWN_KEY_TYPE_NAME,
 	SMW_STATUS_UNKNOWN_FORMAT_NAME, /* 60 */
 	SMW_STATUS_UNKNOWN_KDF_NAME,
-	SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME,
 	SMW_STATUS_UNKNOWN_TLS12_KEA_NAME,
 	SMW_STATUS_UNKNOWN_TLS12_ENC_NAME,
-	SMW_STATUS_OEM_SRKH_NOT_FUSED, /* 65 */
+	SMW_STATUS_OEM_SRKH_NOT_FUSED,
 };
 
 #endif /* __SMW_STATUS_H__ */

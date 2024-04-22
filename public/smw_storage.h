@@ -8,6 +8,7 @@
 
 #include "smw_status.h"
 #include "smw_strings.h"
+#include "smw/attr.h"
 
 /**
  * DOC:
@@ -33,19 +34,27 @@
  */
 
 /**
+ * struct smw_data_attributes - Data attributes
+ * @storage_id: Storage identifier. See &typedef smw_attr_storage_id_t
+ * @attributes: Attributes. See &typedef smw_attr_attributes_t
+ */
+struct smw_data_attributes {
+	smw_attr_storage_id_t storage_id;
+	smw_attr_attributes_t attributes;
+};
+
+/**
  * struct smw_data_descriptor - Data descriptor
  * @identifier: Data identifier
  * @data: Pointer to the data buffer
  * @length: Length of buffer @data
- * @attributes_list: Data attributes list. See &typedef smw_attr_data_type_t
- * @attributes_list_length: Length of buffer @attributes_list
+ * @data_attributes: Data attributes. See &typedef smw_data_attributes_t
  */
 struct smw_data_descriptor {
 	unsigned int identifier;
 	unsigned char *data;
 	unsigned int length;
-	unsigned char *attributes_list;
-	unsigned int attributes_list_length;
+	struct smw_data_attributes *data_attributes;
 };
 
 /**
@@ -142,9 +151,6 @@ struct smw_delete_data_args {
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @data_descriptor: Data descriptor. See &struct smw_data_descriptor
- * @persistence: Data persistence.
- * @lifecycle_list: Data lifecycle list.
- * @lifecycle_list_length: Length of the @lifecycle_list.
  *
  * This function gets the data attributes retrieved for the subsystem owning
  * the given data identifier.
@@ -164,9 +170,6 @@ struct smw_data_info_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
 	struct smw_data_descriptor *data_descriptor;
-	smw_object_persistence_t persistence;
-	unsigned char *lifecycle_list;
-	unsigned int lifecycle_list_length;
 };
 
 /**

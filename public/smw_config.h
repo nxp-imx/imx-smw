@@ -123,14 +123,14 @@ enum smw_status_code smw_config_check_generate_key(smw_subsystem_t subsystem,
 
 /**
  * struct smw_signature_info - Signature operation information
- * @key_type_name: Key type name. See &typedef smw_key_type_t
- * @hash_algo: Hash algorithm name. See &typedef smw_hash_algo_t
- * @signature_type: Signature type name. See &typedef smw_signature_type_t
+ * @algo: Signature algo name. See &typedef smw_signature_algo_t
+ * @type: Signature type name. See &typedef smw_signature_type_t
+ * @hash: Hash algorithm name. See &typedef smw_hash_algo_t
  */
 struct smw_signature_info {
-	smw_key_type_t key_type_name;
-	smw_hash_algo_t hash_algo;
-	smw_signature_type_t signature_type;
+	smw_signature_algo_t algo;
+	smw_signature_type_t type;
+	smw_hash_algo_t hash;
 };
 
 /**

@@ -10,6 +10,7 @@
 
 #include "smw_status.h"
 #include "smw_strings.h"
+#include "smw/attr.h"
 
 /*
  * Define the NXP and NXP's EdgeLock 2GO key/data storage identifier
@@ -54,6 +55,8 @@ struct smw_keypair_gen {
  * @private_length: Length of @private_data in bytes
  * @modulus: Pointer to the RSA modulus
  * @modulus_length: Length of @modulus in bytes
+ * @public_exponent: Pointer to the RSA public exponent
+ * @public_exponent_length: Length of @public_exponent in bytes
  *
  * First fields are common to the struct smw_keypair_gen and must be
  * kept common.
@@ -65,6 +68,8 @@ struct smw_keypair_rsa {
 	unsigned int private_length;
 	unsigned char *modulus;
 	unsigned int modulus_length;
+	unsigned char *public_exponent;
+	unsigned int public_exponent_length;
 };
 
 /**
@@ -100,11 +105,24 @@ struct smw_key_descriptor {
 };
 
 /**
+ * struct smw_key_attributes - Key attributes
+ * @permitted_algo: Permitted algorithm. See &typedef smw_attr_algo_t
+ * @usage_flags: Permitted usage flags. See &typedef smw_attr_usage_t
+ * @storage_id: Storage identifier. See &typedef smw_attr_storage_id_t
+ * @attributes: Attributes. See &typedef smw_attr_attributes_t
+ */
+struct smw_key_attributes {
+	smw_attr_algo_t permitted_algo;
+	smw_attr_usage_t usage_flags;
+	smw_attr_storage_id_t storage_id;
+	smw_attr_attributes_t attributes;
+};
+
+/**
  * struct smw_generate_key_args - Key generation arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @key_attributes_list: Key attributes list. See &typedef smw_attr_key_type_t
- * @key_attributes_list_length: Length of the Key attributes list
+ * @key_attributes: Pointer to a Key attributes object. See &smw_key_attributes
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
  *
@@ -122,8 +140,7 @@ struct smw_key_descriptor {
 struct smw_generate_key_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
-	unsigned char *key_attributes_list;
-	unsigned int key_attributes_list_length;
+	struct smw_key_attributes *key_attributes;
 	struct smw_key_descriptor *key_descriptor;
 };
 
@@ -135,8 +152,7 @@ struct smw_generate_key_args {
  * @kdf_arguments: Key derivation function arguments
  * @key_descriptor_base: Pointer to a Key base descriptor.
  *			 See &struct smw_key_descriptor
- * @key_attributes_list: Key attributes list
- * @key_attributes_list_length: Length of the Key attributes list
+ * @key_attributes: Pointer to a Key attributes object. See &smw_key_attributes
  * @key_descriptor_derived: Pointer to the Key derived descriptor.
  *			    See &struct smw_key_descriptor
  *
@@ -160,8 +176,7 @@ struct smw_derive_key_args {
 	smw_kdf_t kdf_name;
 	void *kdf_arguments;
 	struct smw_key_descriptor *key_descriptor_base;
-	unsigned char *key_attributes_list;
-	unsigned int key_attributes_list_length;
+	struct smw_key_attributes *key_attributes;
 	struct smw_key_descriptor *key_descriptor_derived;
 };
 
@@ -238,8 +253,7 @@ struct smw_update_key_args {
  * struct smw_import_key_args - Key import arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @key_attributes_list: Key attributes list. See &typedef smw_attr_key_type_t
- * @key_attributes_list_length: Length of a Key attributes list
+ * @key_attributes: Pointer to a Key attributes object. See &smw_key_attributes
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
  *
@@ -258,8 +272,7 @@ struct smw_update_key_args {
 struct smw_import_key_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
-	unsigned char *key_attributes_list;
-	unsigned int key_attributes_list_length;
+	struct smw_key_attributes *key_attributes;
 	struct smw_key_descriptor *key_descriptor;
 };
 
@@ -289,13 +302,6 @@ struct smw_export_key_args {
  * @version: Version of this structure (must be equal 1).
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
- * @key_attributes_list: Key attributes list. See &typedef smw_attr_key_type_t
- * @key_attributes_list_length: Length of a Key attributes list
- *
- * The arguments @key_attributes_list and @key_attributes_list_length are
- * supported since structure @version=1.
- *
- * Only the "FLUSH_KEY" key attribute is handled in the @key_attributes_list.
  *
  * The @key_descriptor fields @id must be given as input.
  * The @key_descriptor fields @buffer is ignored.
@@ -303,8 +309,6 @@ struct smw_export_key_args {
 struct smw_delete_key_args {
 	unsigned char version;
 	struct smw_key_descriptor *key_descriptor;
-	unsigned char *key_attributes_list;
-	unsigned int key_attributes_list_length;
 };
 
 /**
@@ -313,33 +317,19 @@ struct smw_delete_key_args {
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
- * @key_privacy: Key privacy type.
- * @persistence: Key persistence.
- * @policy_list: Key policy list. More details in `Key policy` of
- *               &typedef smw_attr_key_type_t
- * @policy_list_length: Length of the @policy_list string.
- * @lifecycle_list: Key lifecycle list.
- * @lifecycle_list_length: Length of the @lifecycle_list.
- * @storage: Key storage identifier
+ * @key_privacy: Key privacy type
+ * @key_attributes: Key attributes. See &smw_key_attributes
  *
  * The @key_descriptor fields @id must be given as input.
  * The @key_descriptor fields @buffer is ignored.
  * The @key_descriptor fields @type_name and @security_size are output.
- *
- * Both @policy_list and @lifecycle_list are allocated by the operation
- * smw_get_key_attributes() if retrieved and must be freed by user.
  */
 struct smw_get_key_attributes_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_descriptor;
-	smw_keymgr_privacy_t key_privacy;
-	smw_object_persistence_t persistence;
-	unsigned char *policy_list;
-	unsigned int policy_list_length;
-	unsigned char *lifecycle_list;
-	unsigned int lifecycle_list_length;
-	unsigned int storage;
+	smw_key_privacy_t key_privacy;
+	struct smw_key_attributes key_attributes;
 };
 
 /**
@@ -360,7 +350,7 @@ struct smw_commit_key_storage_args {
  * @attest_key_descriptor: Pointer to a Key descriptor object
  *			   of the attestation key.
  *			   See &struct smw_key_descriptor
- * @signature_type_name: Signature type name. See &typedef smw_signature_type_t
+ * @sign_algo: Signature algorithm and attributes. See &typedef smw_attr_algo_t
  * @challenge: Caller unique ephemeral value (e.g. nonce)
  * @challenge_length: Length (in bytes) of the @challenge value
  * @certificate: Device attestation certificate.
@@ -375,7 +365,7 @@ struct smw_key_attestation_args {
 	unsigned char version;
 	struct smw_key_descriptor *key_descriptor;
 	struct smw_key_descriptor *attest_key_descriptor;
-	smw_signature_type_t signature_type_name;
+	smw_attr_algo_t sign_algo;
 	unsigned char *challenge;
 	unsigned int challenge_length;
 	unsigned char *certificate;

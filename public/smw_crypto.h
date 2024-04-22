@@ -8,6 +8,7 @@
 
 #include "smw_status.h"
 #include "smw_strings.h"
+#include "smw/attr.h"
 #include "smw/crypto/aead.h"
 #include "smw/crypto/op_context.h"
 
@@ -45,13 +46,11 @@ struct smw_hash_args {
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
- * @algo_name: Hash algorithm name. See &typedef smw_hash_algo_t
+ * @sign_algo: Signature algorithm and attributes. See &typedef smw_attr_algo_t
  * @message: Location of the message
  * @message_length: Length of the message
  * @signature: Location of the signature
  * @signature_length: Length of the signature
- * @attributes_list: Sign Verify attributes list
- * @attributes_list_length: @attributes_list length in bytes
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default configured Secure Subsystem is used.
@@ -61,13 +60,11 @@ struct smw_sign_verify_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_descriptor;
-	smw_hash_algo_t algo_name;
+	smw_attr_algo_t sign_algo;
 	unsigned char *message;
 	unsigned int message_length;
 	unsigned char *signature;
 	unsigned int signature_length;
-	unsigned char *attributes_list;
-	unsigned int attributes_list_length;
 };
 
 /**

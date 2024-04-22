@@ -20,7 +20,8 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key 1"
+		"key_name": "key 1",
+		"restriction_list": "imx95"
 	},
 	"subtest 2": { // Get the MAC size - Output buffer is NULL
 		"command": "MAC_COMPUTE",

@@ -28,12 +28,14 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"api": "PSA",
-		"key_name": "key 1"
+		"key_name": "key 1",
+		"restriction_list": "imx95"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"api": "PSA",
-		"key_name": "key 2"
+		"key_name": "key 2",
+		"restriction_list": "imx95"
 	},
 	"subtest 3": { // SHA224
 		"command": "MAC_COMPUTE",

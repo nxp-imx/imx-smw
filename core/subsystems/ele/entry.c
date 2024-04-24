@@ -25,6 +25,8 @@ static int open_session(hsm_hdl_t *session_hdl)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	open_session_args.mu_type = HSM1;
+
 	err = hsm_open_session(&open_session_args, session_hdl);
 	status = ele_convert_err(err);
 

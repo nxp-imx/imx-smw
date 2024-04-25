@@ -732,7 +732,7 @@ void tests_pkcs11_sign_verify_message(void *lib_hdl, CK_VOID_PTR pfunc)
 
 	TEST_START();
 
-	if (CHECK_EXPECTED(version->major == 3 && version->minor == 0,
+	if (CHECK_EXPECTED(version->major == 3 && version->minor == 1,
 			   "Bad version expected %01d.%01d", version->major,
 			   version->minor))
 		goto end;

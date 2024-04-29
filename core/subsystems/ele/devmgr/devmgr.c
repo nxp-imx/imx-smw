@@ -187,10 +187,8 @@ int ele_get_device_info(struct subsystem_context *ele_ctx)
 
 	info->soc_id = op_args.soc_id;
 	info->soc_rev = op_args.soc_rev;
-	if (info->soc_id == SOC_IMX93 && info->soc_rev == SOC_REV_A1)
-		info->attest_api_ver = HSM_API_VERSION_2;
-	else
-		info->attest_api_ver = HSM_API_VERSION_1;
+
+	info->attest_api_ver = hsm_get_dev_attest_api_ver();
 
 	info->lifecycle = hsm_get_lc_from_lmda(op_args.lmda_val);
 

@@ -16,7 +16,7 @@
 #define FUNCTION(_field, _name) ._field = _name
 
 static struct CK_FUNCTION_LIST_3_0 pkcs11smw_v3_functions = {
-	VERSION(3, 0),
+	VERSION(3, 1),
 	FUNCTION(C_Initialize, C_Initialize),
 	FUNCTION(C_Finalize, C_Finalize),
 	FUNCTION(C_GetInfo, C_GetInfo),

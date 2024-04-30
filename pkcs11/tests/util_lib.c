@@ -62,7 +62,7 @@ CK_FUNCTION_LIST_PTR util_lib_get_func_list(void *handle)
 	CK_RV ret = CKR_GENERAL_ERROR;
 
 	CK_VERSION version_2_40 = { .major = 2, .minor = 40 };
-	CK_VERSION version_3_0 = { .major = 3, .minor = 0 };
+	CK_VERSION version_3_1 = { .major = 3, .minor = 1 };
 	CK_VERSION version = version_2_40;
 
 	CK_FUNCTION_PTR(C_GetInterface)
@@ -75,7 +75,7 @@ CK_FUNCTION_LIST_PTR util_lib_get_func_list(void *handle)
 
 	C_GetInterface = dlsym(handle, "C_GetInterface");
 	if (C_GetInterface) {
-		version = version_3_0;
+		version = version_3_1;
 		ret = C_GetInterface(NULL_PTR, &version, &ifs, 0);
 		if (ret != CKR_OK) {
 			version = version_2_40;

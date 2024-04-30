@@ -27,7 +27,7 @@ static struct test_interface {
 	},
 	{
 		.name = def_if_name,
-		.version = { .major = 3, .minor = 0 },
+		.version = { .major = 3, .minor = 1 },
 		.flags = 0,
 	},
 };

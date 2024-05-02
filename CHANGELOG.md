@@ -74,6 +74,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add ELE subsystem data delete.
 * Rename HSM subsystem as SECO subsystem.
 * Add ELE subsystem attestation key permitted algorithm.
+* Remove SMW_STATUS_DATA_ALREADY_RETRIEVED no more used in ELE subsystem.
 
 ##### 3. ARM PSA APIs
 

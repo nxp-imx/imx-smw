@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #ifndef __SMW_STORAGE_H__
@@ -158,7 +158,6 @@ enum smw_status_code smw_store_data(struct smw_store_data_args *args);
  * Return:
  * See &enum smw_status_code
  *	- Common return codes
- *      - SMW_STATUS_DATA_ALREADY_RETRIEVED
  */
 enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args);
 

@@ -24,7 +24,7 @@
 			"policy": {
 				"sign_message": [
 					[
-						"ECDSA",
+						"ATTEST_ECDSA",
 						"HASH=SHA224"
 					]
 				]
@@ -36,7 +36,7 @@
 			"policy": {
 				"sign_message": [
 					[
-						"ECDSA",
+						"ATTEST_ECDSA",
 						"HASH=SHA256"
 					]
 				]
@@ -48,7 +48,7 @@
 			"policy": {
 				"sign_message": [
 					[
-						"ECDSA",
+						"ATTEST_ECDSA",
 						"HASH=SHA384"
 					]
 				]
@@ -60,7 +60,7 @@
 			"policy": {
 				"sign_message": [
 					[
-						"ECDSA",
+						"ATTEST_ECDSA",
 						"HASH=SHA512"
 					]
 				]
@@ -72,7 +72,7 @@
 			"policy": {
 				"sign_message": [
 					[
-						"CMAC"
+						"ATTEST_CMAC"
 					]
 				]
 			},

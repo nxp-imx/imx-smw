@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include "psa/error.h"
@@ -37,7 +37,6 @@ psa_status_t util_smw_to_psa_status(enum smw_status_code status)
 
 	case SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED:
 	case SMW_STATUS_OPERATION_NOT_CONFIGURED:
-	case SMW_STATUS_DATA_ALREADY_RETRIEVED:
 		psa_status = PSA_ERROR_NOT_PERMITTED;
 		break;
 

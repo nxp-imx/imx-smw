@@ -73,6 +73,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Implement context management for HSM subsystem.
 * Add ELE subsystem data delete.
 * Rename HSM subsystem as SECO subsystem.
+* Add ELE subsystem attestation key permitted algorithm.
 
 ##### 3. ARM PSA APIs
 

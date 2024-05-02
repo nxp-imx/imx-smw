@@ -408,10 +408,6 @@ int ele_convert_err(hsm_err_t err)
 		status = SMW_STATUS_SIGNATURE_INVALID;
 		break;
 
-	case HSM_DATA_ALREADY_RETRIEVED:
-		status = SMW_STATUS_DATA_ALREADY_RETRIEVED;
-		break;
-
 	case HSM_INVALID_LIFECYCLE:
 	case HSM_INVALID_LIFECYCLE_OP:
 		status = SMW_STATUS_INVALID_LIFECYCLE;

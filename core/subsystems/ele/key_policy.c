@@ -217,6 +217,8 @@ static size_t perm_algo_minlength_str(unsigned char **str, size_t str_length,
 
 #define PERMITTED_ALGO_HMAC_ANY_HASH		   (PERMITTED_ALGO_HMAC_SHA256 | 0xFF)
 #define PERMITTED_ALGO_ECDSA_ANY_HASH		   (PERMITTED_ALGO_ECDSA_SHA256 | 0xFF)
+#define PERMITTED_ALGO_ATTEST_ECDSA_ANY_HASH                                   \
+	(PERMITTED_ALGO_ATTEST_ECDSA_SHA256 | 0xFF)
 #define PERMITTED_ALGO_RSA_PKCS1_V15_ANY_HASH	   (0x060002FF)
 #define PERMITTED_ALGO_RSA_PKCS1_PSS_MGF1_ANY_HASH (0x060003FF)
 
@@ -274,7 +276,9 @@ static const struct {
 	PERM_ALGO(RSA_PKCS1V15, RSA_PKCS1_V15_ANY_HASH, 0, perm_hash_algo),
 	PERM_ALGO(RSA_PSS, RSA_PKCS1_PSS_MGF1_ANY_HASH, 0, perm_hash_algo),
 	PERM_ALGO(ECDSA, ECDSA_ANY_HASH, 0, perm_hash_algo),
-	PERM_ALGO(ALL_AEAD, ALL_AEAD, 0, NULL)
+	PERM_ALGO(ALL_AEAD, ALL_AEAD, 0, NULL),
+	PERM_ALGO(ATTEST_CMAC, ATTEST_CMAC, 0, NULL),
+	PERM_ALGO(ATTEST_ECDSA, ATTEST_ECDSA_ANY_HASH, 0, perm_hash_algo)
 };
 
 static int convert_algo_param(unsigned int *algo,

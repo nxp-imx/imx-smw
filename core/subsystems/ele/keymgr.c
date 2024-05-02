@@ -119,7 +119,7 @@ static const struct key_def {
  */
 static const struct signature_type {
 	enum smw_config_sign_type_id signature_type_id;
-	hsm_pub_key_attest_sign_algo_t sign_algo;
+	hsm_op_pub_key_attest_algo_t sign_algo;
 } signature_type_list[] = { SIGN_ALGO(CMAC), SIGN_ALGO(ECDSA_SHA224),
 			    SIGN_ALGO(ECDSA_SHA256), SIGN_ALGO(ECDSA_SHA384),
 			    SIGN_ALGO(ECDSA_SHA512) };
@@ -243,7 +243,7 @@ get_key_persistence(hsm_key_lifetime_t lifetime)
 }
 
 static int set_sign_algo(enum smw_config_sign_type_id signature_type_id,
-			 hsm_pub_key_attest_sign_algo_t *sign_algo)
+			 hsm_op_pub_key_attest_algo_t *sign_algo)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
@@ -1256,7 +1256,7 @@ static int key_attestation(struct hdl *hdl, void *args)
 	op_args.key_attestation_id = attest_key_descriptor->identifier.id;
 
 	status = set_sign_algo(attest_args->signature_type_id,
-			       &op_args.sign_algo);
+			       &op_args.attest_algo);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -1273,7 +1273,7 @@ static int key_attestation(struct hdl *hdl, void *args)
 		       "  op_pub_key_attest_args_t\n"
 		       "    key_identifier: 0x%08X\n"
 		       "    key_attestation_id: 0x%08X\n"
-		       "    sign_algo: 0x%08X\n"
+		       "    attest_algo: 0x%08X\n"
 		       "    Challenge\n"
 		       "      - buffer: %p\n"
 		       "      - size: %d\n"
@@ -1282,7 +1282,7 @@ static int key_attestation(struct hdl *hdl, void *args)
 		       "      - size: %d\n",
 		       __func__, __LINE__, hdl->key_store,
 		       op_args.key_identifier, op_args.key_attestation_id,
-		       op_args.sign_algo, op_args.auth_challenge,
+		       op_args.attest_algo, op_args.auth_challenge,
 		       op_args.auth_challenge_size, op_args.certificate,
 		       op_args.certificate_size);
 

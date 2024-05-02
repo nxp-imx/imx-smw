@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __TLV_STRINGS_H__
@@ -89,5 +89,7 @@
 #define SHA3_512_STR		    "SHA3_512"
 #define SHAKE256_512_STR	    "SHAKE256_512"
 #define SM3_STR			    "SM3"
+#define ATTEST_CMAC_STR		    "ATTEST_CMAC"
+#define ATTEST_ECDSA_STR	    "ATTEST_ECDSA"
 
 #endif /* __TLV_STRINGS_H__ */

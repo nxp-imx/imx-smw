@@ -8,21 +8,21 @@ Key manager
    :align: center
    :class: wrap-table
 
-   +--------------+-----------------------------+-------------+
-   | **Key type** | **Key security size(s)**    | **Devices** |
-   |              |                             +------+------+
-   |              |                             | 8ULP |  93  |
-   +==============+=============================+======+======+
-   | AES          | 128 / 192 / 256             |  X   |  X   |
-   +--------------+-----------------------------+------+------+
-   | ECDSA NIST   | 224 / 256 / 384 / 521       |  X   |  X   |
-   +--------------+-----------------------------+------+------+
-   | ECDSA BR1    | 224 / 256 / 384             |  X   |  X   |
-   +--------------+-----------------------------+------+------+
-   | HMAC         | 224 / 256 / 384 / 512       |  X   |  X   |
-   +--------------+-----------------------------+------+------+
-   | RSA          | 2048 / 3072 / 4096          |      |  X   |
-   +--------------+-----------------------------+------+------+
+   +--------------+-----------------------------+--------------------+
+   | **Key type** | **Key security size(s)**    |     **Devices**    |
+   |              |                             +------+------+------+
+   |              |                             | 8ULP |  93  |  95  |
+   +==============+=============================+======+======+======+
+   | AES          | 128 / 192 / 256             |  X   |  X   |  X   |
+   +--------------+-----------------------------+------+------+------+
+   | ECDSA NIST   | 224 / 256 / 384 / 521       |  X   |  X   |  X   |
+   +--------------+-----------------------------+------+------+------+
+   | ECDSA BR1    | 224 / 256 / 384             |  X   |  X   |  X   |
+   +--------------+-----------------------------+------+------+------+
+   | HMAC         | 224 / 256 / 384 / 512       |  X   |  X   |      |
+   +--------------+-----------------------------+------+------+------+
+   | RSA          | 2048 / 3072 / 4096          |      |  X   |  X   |
+   +--------------+-----------------------------+------+------+------+
 
 Operations supported:
  - Generate
@@ -437,11 +437,26 @@ AEAD
    :align: center
    :class: wrap-table
 
-   +--------------+----------+-----------------------+------------------------+
-   | **Key type** | **Mode** | **IV length (bytes)** | **Tag length (bytes)** |
-   +==============+==========+=======================+========================+
-   | AES          |   CCM    |       12              |        16              |
-   +--------------+----------+-----------------------+------------------------+
+   +--------------+----------+------------------------+------------------------+
+   | **Key type** | **Mode** | **IV length (bytes)**  | **Tag length (bytes)** |
+   +==============+==========+========================+========================+
+   | AES          |   CCM    |       12 [1]_          |        16              |
+   +              +----------+------------------------+------------------------+
+   |              |   GCM    | Encryption: 0/4/12 [2]_|        16              |
+   +              +          +                        +                        +
+   |              |          | Decryption: 12         |                        |
+   +--------------+----------+------------------------+------------------------+
+
+.. [1] For CCM AEAD encryption and decryption operation, IV length should be
+       12 bytes.
+
+.. [2] For GCM AEAD Encryption operation, IV length can be either
+
+  - 0 bytes, to request the subsystem to fully generate the IV.
+  - 4 bytes, to request the subsystem to generate the rest of the IV bytes.
+  - 12 bytes (user supplied full IV)
+
+   For decryption operation, IV length should be 12 bytes.
 
 One-shot operations supported:
  - AEAD Encryption
@@ -473,6 +488,8 @@ the following table.
    | i.MX8ULP   |  4                            |
    +------------+-------------------------------+
    | i.MX93     |  16                           |
+   +------------+-------------------------------+
+   | i.MX95     |  16                           |
    +------------+-------------------------------+
 
 Device lifecycle
@@ -514,12 +531,11 @@ value with the exception of the 0xF00000E0 reserved for EdgeLock 2GO claimcode.
 
 The subsystem allows to:
 
-  - store and retrieve user data.
+  - store, retrieve and delete user data.
   - encrypt and sign data (:numref:`ele_data_encrypt`) before storing it and
     retrieve a TLV blob (:numref:`ele_data_blob`).
-  - set encypted and signed data as READ_ONCE, meaning that when data is
+  - set encrypted and signed data as READ_ONCE, meaning that when data is
     retrieved the subsystem deletes the data.
-  - delete a data on i.MX93.
 
 **Notes**:
 

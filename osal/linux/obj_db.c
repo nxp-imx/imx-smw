@@ -95,8 +95,6 @@ static void find_db_obj_id(struct obj_db *db, unsigned int id,
 		}
 
 		*pos = off;
-
-		dbg_entry(obj);
 		break;
 	}
 }
@@ -117,45 +115,16 @@ static void find_db_obj_id(struct obj_db *db, unsigned int id,
 static void find_db_obj_free(struct obj_db *db, struct osal_obj *obj,
 			     unsigned int *free_id, long *pos)
 {
-	off_t off = 0;
-	off_t inc_off = 0;
-	ssize_t nb_bytes = 0;
 	struct obj_entry rd_obj = { 0 };
-	unsigned int last_id = 0;
+	unsigned int last_id = obj->range.min;
 
-	*pos = -1;
-
-	while ((nb_bytes = pread(db->fp, &rd_obj, sizeof(rd_obj), off)) > 0 &&
-	       nb_bytes == sizeof(rd_obj)) {
-		/*
-		 * If the object id read is the requested range
-		 * set the last_id value
-		 */
-		if (rd_obj.id >= obj->range.min && rd_obj.id <= obj->range.max)
-			last_id = rd_obj.id;
-
-		if (last_id != rd_obj.id || rd_obj.flags != ENTRY_FREE ||
-		    rd_obj.info_size < obj->info_size) {
-			/* Go to the next entry */
-			if (ADD_OVERFLOW(rd_obj.info_size, sizeof(rd_obj),
-					 &inc_off))
-				return;
-			if (ADD_OVERFLOW(inc_off, off, &off))
-				return;
-
-			continue;
-		}
-
-		*pos = off;
-		*free_id = rd_obj.id;
-
-		return;
+	for (; last_id <= obj->range.max; last_id++) {
+		find_db_obj_id(db, last_id, &rd_obj, pos);
+		if (*pos < 0 || rd_obj.flags == ENTRY_FREE)
+			break;
 	}
 
-	if (!last_id)
-		*free_id = obj->range.min;
-	else
-		*free_id = last_id + 1;
+	*free_id = last_id;
 }
 
 /**
@@ -341,6 +310,8 @@ int obj_db_get_info(struct osal_obj *obj)
 		goto end;
 	}
 
+	dbg_entry(&entry);
+
 	if (entry.flags != ENTRY_USE) {
 		DBG_PRINTF(ERROR, "%s (%d) object id " PRIxID " not valid\n",
 			   __func__, __LINE__, obj->id);
@@ -465,6 +436,8 @@ int obj_db_update(struct osal_obj *obj)
 	if (pos < 0)
 		goto end;
 
+	dbg_entry(&entry);
+
 	if (entry.flags != ENTRY_USE) {
 		DBG_PRINTF(ERROR, "%s (%d) object id " PRIxID " not valid\n",
 			   __func__, __LINE__, obj->id);
@@ -517,6 +490,8 @@ int obj_db_delete(struct osal_obj *obj)
 		   __LINE__, obj->id, pos);
 
 	if (pos >= 0) {
+		dbg_entry(&entry);
+
 		entry.flags = ENTRY_FREE;
 		ret = write_obj_db(db, &entry, NULL, pos);
 	}

@@ -92,6 +92,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add trace level EXTRA to lighten trace level DEBUG.
 * Add prefix `[OSAL]` to OSAL traces.
+* Fix the find_db_obj_free() to increment the object id until one id is free.
 
 #### SMW Tests - _version 3.0_
 

@@ -12,8 +12,14 @@
 #include "devmgr.h"
 #include "debug.h"
 #include "exec.h"
-#include "tlv_strings.h"
 #include "utils.h"
+
+#define LC_OPEN_STR	     "OPEN"
+#define LC_CLOSED_STR	     "CLOSED"
+#define LC_CLOSED_LOCKED_STR "CLOSED_LOCKED"
+#define LC_CURRENT_STR	     "CURRENT"
+#define LC_OEM_RETURN_STR    "OEM_RETURN"
+#define LC_NXP_RETURN_STR    "NXP_RETURN"
 
 #define LIFECYCLE(_name)                                                       \
 	{                                                                      \
@@ -23,7 +29,7 @@
 
 /**
  * struct - Lifecycle
- * @lifecycle_str: Lifecycle name used for TLV encoding.
+ * @lifecycle_str: Lifecycle name.
  * @lifecycle: Lifecycle id.
  */
 static const struct {

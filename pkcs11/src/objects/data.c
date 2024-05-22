@@ -55,7 +55,8 @@ void data_free(struct libobj_obj *obj)
 	if (!data)
 		return;
 
-	(void)libdev_delete_data(obj);
+	if (is_force_destroy_obj(obj))
+		(void)libdev_delete_data(obj);
 
 	DBG_TRACE("Free data object (%p)", data);
 

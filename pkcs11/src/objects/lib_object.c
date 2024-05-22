@@ -452,6 +452,7 @@ static CK_RV obj_allocate(struct libobj_obj **obj)
 		goto end;
 
 	newobj->class = 0;
+	newobj->force_destroy = false;
 	newobj->object = NULL;
 	newobj->prev = NULL;
 	newobj->next = NULL;
@@ -877,6 +878,8 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 	if (ret == CKR_OK) {
 		/* Check if the object can be destroyed */
 		ret = obj_is_destroyable(hsession, obj);
+		if (ret == CKR_OK)
+			set_force_destroy_obj(obj);
 
 		libmutex_unlock(obj->lock);
 

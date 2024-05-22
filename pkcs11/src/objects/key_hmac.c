@@ -56,7 +56,8 @@ void key_hmac_free(struct libobj_obj *obj)
 	if (!key)
 		return;
 
-	(void)libdev_delete_key(key->key_id);
+	if (is_force_destroy_obj(obj) || !is_token_obj(obj, storage))
+		(void)libdev_delete_key(key->key_id);
 
 	if (key->value.array)
 		free(key->value.array);

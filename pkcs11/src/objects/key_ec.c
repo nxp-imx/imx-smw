@@ -136,7 +136,8 @@ static void key_ec_free(struct libobj_obj *obj, unsigned int type)
 		if (key->params.array)
 			free(key->params.array);
 
-		(void)libdev_delete_key(key->key_id);
+		if (is_force_destroy_obj(obj) || !is_token_obj(obj, storage))
+			(void)libdev_delete_key(key->key_id);
 
 		free(key);
 	} else {

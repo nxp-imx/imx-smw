@@ -169,7 +169,8 @@ static void key_rsa_free(struct libobj_obj *obj, unsigned int type)
 		if (key->pub_exp.value)
 			free(key->pub_exp.value);
 
-		(void)libdev_delete_key(key->key_id);
+		if (is_force_destroy_obj(obj) || !is_token_obj(obj, storage))
+			(void)libdev_delete_key(key->key_id);
 
 		free(key);
 	} else {

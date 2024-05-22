@@ -15,6 +15,7 @@
  * struct libobj_obj - Definition of an object element of a object list
  * @lock: Mutex to lock object when used
  * @class: Object class
+ * @force_destroy: Destroy an object even if it is a token
  * @object: Pointer to the object (type depend on the class)
  * @prev: Previous element of the list
  * @next: Next element of the list
@@ -22,6 +23,7 @@
 struct libobj_obj {
 	CK_VOID_PTR lock;
 	CK_OBJECT_CLASS class;
+	bool force_destroy;
 	void *object;
 	struct libobj_obj *prev;
 	struct libobj_obj *next;
@@ -42,6 +44,18 @@ struct libobj_storage {
 	({                                                                     \
 		__typeof__(obj) _obj = (obj);                                  \
 		_obj ? _obj->object : NULL;                                    \
+	})
+
+#define is_force_destroy_obj(obj)                                              \
+	({                                                                     \
+		struct libobj_obj *_obj = (obj);                               \
+		_obj->force_destroy;                                           \
+	})
+
+#define set_force_destroy_obj(obj)                                             \
+	({                                                                     \
+		struct libobj_obj *_obj = (obj);                               \
+		_obj->force_destroy = true;                                    \
 	})
 
 #define get_subobj_from(obj, type)                                             \

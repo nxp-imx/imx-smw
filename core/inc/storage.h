@@ -6,20 +6,10 @@
 #ifndef __STORAGE_H__
 #define __STORAGE_H__
 
+#include "smw_storage.h"
+
 #include "config.h"
 #include "keymgr.h"
-
-/**
- * struct smw_storage_data_attributes - Storage attributes.
- * @rw_flags: Data access flags
- * @lifecycle_flags: Device lifecycles where data is accessible
- * @persistence_id: Persistence ID
- */
-struct smw_storage_data_attributes {
-	unsigned long rw_flags;
-	unsigned long lifecycle_flags;
-	enum smw_object_persistence_id persistence_id;
-};
 
 /**
  * struct smw_storage_data_info - Data information stored in object database.
@@ -30,7 +20,7 @@ struct smw_storage_data_attributes {
 struct smw_storage_data_info {
 	enum subsystem_id subsystem_id;
 	unsigned int size;
-	struct smw_storage_data_attributes attributes;
+	smw_attr_attributes_t attributes;
 };
 
 /**
@@ -50,12 +40,12 @@ struct smw_storage_enc_args {
 /**
  * struct smw_storage_data_descriptor - Data descriptor
  * @subsystem_id: Secure Subsystem ID
- * @attributes: Data attributes
+ * @data_attributes: Data attributes
  * @pub: Data descriptor from the public API
  */
 struct smw_storage_data_descriptor {
 	enum subsystem_id subsystem_id;
-	struct smw_storage_data_attributes attributes;
+	struct smw_data_attributes data_attributes;
 	struct smw_data_descriptor *pub;
 };
 

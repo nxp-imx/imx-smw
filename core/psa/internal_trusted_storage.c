@@ -10,103 +10,37 @@
 #include "compiler.h"
 #include "debug.h"
 #include "utils.h"
-#include "tlv.h"
 #include "object_db.h"
 
 #include "common.h"
 #include "util_status.h"
 
 static psa_status_t
-set_data_attributes_list(psa_storage_create_flags_t create_flags,
-			 unsigned char **attributes_list,
-			 unsigned int *attributes_list_length)
+set_data_attributes(psa_storage_create_flags_t create_flags,
+		    struct smw_data_attributes *data_attributes)
 {
-	unsigned char *p = NULL;
-	unsigned int tlv_length = 0;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	*attributes_list = NULL;
-	*attributes_list_length = 0;
 
 	if (create_flags & ~PSA_STORAGE_FLAG_WRITE_ONCE)
 		return PSA_ERROR_NOT_SUPPORTED;
 
-	if (SMW_TLV_ELEMENT_LENGTH(PERSISTENT_STR, 0, tlv_length))
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	if (ADD_OVERFLOW(*attributes_list_length, tlv_length,
-			 attributes_list_length))
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	if (create_flags & PSA_STORAGE_FLAG_WRITE_ONCE) {
-		if (SMW_TLV_ELEMENT_LENGTH(READ_ONLY_STR, 0, tlv_length))
-			return PSA_ERROR_INVALID_ARGUMENT;
-
-		if (ADD_OVERFLOW(*attributes_list_length, tlv_length,
-				 attributes_list_length))
-			return PSA_ERROR_INVALID_ARGUMENT;
-	}
-
-	*attributes_list = SMW_UTILS_MALLOC(*attributes_list_length);
-	if (!*attributes_list)
-		return PSA_ERROR_INSUFFICIENT_MEMORY;
-
-	p = *attributes_list;
-
-	smw_tlv_set_boolean(&p, PERSISTENT_STR);
+	data_attributes->attributes =
+		SMW_ATTR_SET_PERSISTENT(data_attributes->attributes);
 
 	if (create_flags & PSA_STORAGE_FLAG_WRITE_ONCE)
-		smw_tlv_set_boolean(&p, READ_ONLY_STR);
-
-	SMW_DBG_ASSERT(*attributes_list_length ==
-		       (uintptr_t)p - (uintptr_t)*attributes_list);
+		data_attributes->attributes =
+			SMW_ATTR_SET_READ_ONLY(data_attributes->attributes);
 
 	return PSA_SUCCESS;
 }
 
-static psa_status_t
-get_data_attributes(psa_storage_create_flags_t *create_flags,
-		    unsigned char *attributes_list,
-		    unsigned int attributes_list_length)
+static void get_data_attributes(psa_storage_create_flags_t *create_flags,
+				smw_attr_attributes_t attributes)
 {
-	psa_status_t psa_status = PSA_SUCCESS;
-	int status = SMW_STATUS_OK;
-
-	const unsigned char *p = attributes_list;
-	const unsigned char *p_end = p + attributes_list_length;
-	unsigned char *tlv_type = NULL;
-	unsigned char *tlv_value = NULL;
-	unsigned int tlv_length = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
 	*create_flags = PSA_STORAGE_FLAG_NONE;
 
-	if (!attributes_list || !attributes_list_length)
-		return psa_status;
-
-	while (p < p_end) {
-		status = smw_tlv_read_element(&p, p_end, &tlv_type, &tlv_value,
-					      &tlv_length);
-		if (status != SMW_STATUS_OK) {
-			SMW_DBG_PRINTF(ERROR, "%s data attributes failed\n",
-				       __func__);
-			psa_status = PSA_ERROR_DATA_INVALID;
-			break;
-		}
-
-		/*
-		 * If "READ_ONLY" is verified, no need to continue as there is
-		 * no other flags managed.
-		 */
-		if (!SMW_UTILS_STRCMP((char *)tlv_type, READ_ONLY_STR)) {
-			*create_flags |= PSA_STORAGE_FLAG_WRITE_ONCE;
-			break;
-		}
-	}
-
-	return psa_status;
+	if (SMW_ATTR_IS_READ_ONLY(attributes))
+		*create_flags |= PSA_STORAGE_FLAG_WRITE_ONCE;
 }
 
 __export psa_status_t psa_its_set(psa_storage_uid_t uid, size_t data_length,
@@ -119,13 +53,15 @@ __export psa_status_t psa_its_set(psa_storage_uid_t uid, size_t data_length,
 	struct psa_storage_info_t info = { 0 };
 	struct smw_store_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
-	unsigned char **attributes_list = NULL;
-	unsigned int *attributes_list_length = 0;
+	struct smw_data_attributes data_attributes = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
 		return psa_status;
+
+	if (!p_data)
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	psa_status = psa_its_get_info(uid, &info);
 	if (psa_status == PSA_SUCCESS) {
@@ -142,20 +78,16 @@ __export psa_status_t psa_its_set(psa_storage_uid_t uid, size_t data_length,
 	if (SET_OVERFLOW(data_length, data_descriptor.length))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	attributes_list = &data_descriptor.attributes_list;
-	attributes_list_length = &data_descriptor.attributes_list_length;
-	psa_status = set_data_attributes_list(create_flags, attributes_list,
-					      attributes_list_length);
+	psa_status = set_data_attributes(create_flags, &data_attributes);
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
+
+	data_descriptor.data_attributes = &data_attributes;
 
 	args.subsystem_name = get_psa_default_subsystem();
 	args.data_descriptor = &data_descriptor;
 
 	status = smw_store_data(&args);
-
-	if (data_descriptor.attributes_list)
-		SMW_UTILS_FREE(data_descriptor.attributes_list);
 
 	return util_smw_to_psa_status(status);
 }
@@ -259,6 +191,7 @@ __export psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 
 	struct smw_data_info_args data_info = { 0 };
 	struct smw_data_descriptor data_desc = { 0 };
+	struct smw_data_attributes data_attr = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -268,6 +201,7 @@ __export psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 	if (!p_info)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
+	data_desc.data_attributes = &data_attr;
 	data_info.data_descriptor = &data_desc;
 	if (SET_OVERFLOW(uid, data_desc.identifier))
 		return PSA_ERROR_INVALID_ARGUMENT;
@@ -278,21 +212,15 @@ __export psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 		p_info->capacity = data_desc.length;
 		p_info->size = data_desc.length;
 
-		psa_status =
-			get_data_attributes(&p_info->flags,
-					    data_desc.attributes_list,
-					    data_desc.attributes_list_length);
+		get_data_attributes(&p_info->flags,
+				    data_desc.data_attributes->attributes);
+
+		psa_status = PSA_SUCCESS;
 	} else if (status == SMW_STATUS_UNKNOWN_ID) {
 		psa_status = PSA_ERROR_DOES_NOT_EXIST;
 	} else {
 		psa_status = util_smw_to_psa_status(status);
 	}
-
-	if (data_desc.attributes_list)
-		SMW_UTILS_FREE(data_desc.attributes_list);
-
-	if (data_info.lifecycle_list)
-		SMW_UTILS_FREE(data_info.lifecycle_list);
 
 	return psa_status;
 }

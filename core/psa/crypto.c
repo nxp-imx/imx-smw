@@ -6,19 +6,27 @@
 #include "smw_keymgr.h"
 #include "smw_crypto.h"
 #include "smw_keymgr.h"
-#include "aead.h"
 
 #include "psa/crypto.h"
 
 #include "compiler.h"
 #include "debug.h"
 #include "utils.h"
-#include "tlv.h"
 #include "sign_verify.h"
 
 #include "common.h"
 #include "util_status.h"
 #include "keymgr.h"
+
+#define CBC_STR "CBC"
+#define CFB_STR "CFB"
+#define CTR_STR "CTR"
+#define ECB_STR "ECB"
+#define XTS_STR "XTS"
+
+#define CCM_STR		      "CCM"
+#define CHACHA20_POLY1305_STR "CHACHA20_POLY1305"
+#define GCM_STR		      "GCM"
 
 #define GET_ALGO_INFO(_algo, _array)                                           \
 	({                                                                     \
@@ -56,8 +64,13 @@ static const struct aead_algo_info {
 	smw_aead_mode_t smw_mode_name;
 	const unsigned int *tag_lengths;
 	const size_t tag_lengths_size;
-} aead_algo_info[] = { AEAD_ALGO(CCM), AEAD_ALGO(CHACHA20_POLY1305),
-		       AEAD_ALGO(GCM) };
+} aead_algo_info[] = { AEAD_ALGO(CCM),
+		       AEAD_ALGO(CHACHA20_POLY1305),
+		       AEAD_ALGO(GCM),
+		       { .psa_alg_id = PSA_ALG_NONE,
+			 .smw_mode_name = NULL,
+			 .tag_lengths = NULL,
+			 .tag_lengths_size = 0 } };
 
 static smw_aead_mode_t get_aead_mode_name(psa_algorithm_t alg)
 {
@@ -75,18 +88,19 @@ static smw_aead_mode_t get_aead_mode_name(psa_algorithm_t alg)
 
 #define CIPHER_ALGO(_id, _name)                                                \
 	{                                                                      \
-		.psa_alg_id = PSA_ALG_##_id, .smw_mode_name = _name            \
+		.psa_alg_id = PSA_ALG_##_id, .smw_mode_name = _name##_STR      \
 	}
 
 static const struct cipher_algo_info {
 	psa_algorithm_t psa_alg_id;
 	smw_cipher_mode_t smw_mode_name;
-} cipher_algo_info[] = { CIPHER_ALGO(CBC_NO_PADDING, "CBC"),
-			 CIPHER_ALGO(CFB, "CFB"),
-			 CIPHER_ALGO(CTR, "CTR"),
-			 CIPHER_ALGO(ECB_NO_PADDING, "ECB"),
-			 CIPHER_ALGO(XTS, "XTS"),
-			 CIPHER_ALGO(NONE, NULL) };
+} cipher_algo_info[] = { CIPHER_ALGO(CBC_NO_PADDING, CBC),
+			 CIPHER_ALGO(CFB, CFB),
+			 CIPHER_ALGO(CTR, CTR),
+			 CIPHER_ALGO(ECB_NO_PADDING, ECB),
+			 CIPHER_ALGO(XTS, XTS),
+			 { .psa_alg_id = PSA_ALG_NONE,
+			   .smw_mode_name = NULL } };
 
 static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)
 {
@@ -104,27 +118,33 @@ static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)
 
 #define HASH_ALGO(_id, _name, _length, _block_size)                            \
 	{                                                                      \
-		.psa_alg_id = PSA_ALG_##_id, .smw_alg_name = _name,            \
-		.length = _length, .block_size = _block_size                   \
+		.psa_alg_id = PSA_ALG_##_id, .smw_alg_name = #_name,           \
+		.smw_alg_id = SMW_ATTR_HASH_##_name, .length = _length,        \
+		.block_size = _block_size                                      \
 	}
 
 static const struct hash_algo_info {
 	psa_algorithm_t psa_alg_id;
 	smw_hash_algo_t smw_alg_name;
+	smw_attr_algo_t smw_alg_id;
 	size_t length;
 	size_t block_size;
-} hash_algo_info[] = { HASH_ALGO(MD5, "MD5", 16, 64),
-		       HASH_ALGO(SHA_1, "SHA1", 20, 64),
-		       HASH_ALGO(SHA_224, "SHA224", 28, 64),
-		       HASH_ALGO(SHA_256, "SHA256", 32, 64),
-		       HASH_ALGO(SHA_384, "SHA384", 48, 128),
-		       HASH_ALGO(SHA_512, "SHA512", 64, 128),
-		       HASH_ALGO(SHA3_224, "SHA3_224", 28, 64),
-		       HASH_ALGO(SHA3_256, "SHA3_256", 32, 64),
-		       HASH_ALGO(SHA3_384, "SHA3_384", 48, 128),
-		       HASH_ALGO(SHA3_512, "SHA3_512", 64, 128),
-		       HASH_ALGO(SM3, "SM3", 32, 64),
-		       HASH_ALGO(NONE, NULL, 0, 0) };
+} hash_algo_info[] = { HASH_ALGO(MD5, MD5, 16, 64),
+		       HASH_ALGO(SHA_1, SHA1, 20, 64),
+		       HASH_ALGO(SHA_224, SHA224, 28, 64),
+		       HASH_ALGO(SHA_256, SHA256, 32, 64),
+		       HASH_ALGO(SHA_384, SHA384, 48, 128),
+		       HASH_ALGO(SHA_512, SHA512, 64, 128),
+		       HASH_ALGO(SHA3_224, SHA3_224, 28, 64),
+		       HASH_ALGO(SHA3_256, SHA3_256, 32, 64),
+		       HASH_ALGO(SHA3_384, SHA3_384, 48, 128),
+		       HASH_ALGO(SHA3_512, SHA3_512, 64, 128),
+		       HASH_ALGO(SM3, SM3, 32, 64),
+		       { .psa_alg_id = PSA_ALG_NONE,
+			 .smw_alg_name = NULL,
+			 .smw_alg_id = SMW_ATTR_HASH_ANY,
+			 .length = 0,
+			 .block_size = 0 } };
 
 static const struct hash_algo_info *get_hash_algo_info(psa_algorithm_t alg)
 {
@@ -407,42 +427,40 @@ __export size_t psa_hash_length(psa_algorithm_t alg)
 	return info->length;
 }
 
-static psa_status_t
-set_signature_attributes_list(psa_algorithm_t alg,
-			      unsigned char **attributes_list,
-			      unsigned int *attributes_list_length)
+static psa_status_t set_signature_attributes(psa_algorithm_t alg, bool hashed,
+					     smw_attr_algo_t *sign_algo)
 {
-	unsigned char *p = NULL;
-	const char *sign_type_str = NULL;
-	size_t str_length = 0;
+	const struct hash_algo_info *info =
+		get_hash_algo_info(PSA_ALG_GET_HASH(alg));
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
+	smw_attr_algo_t hash = SMW_ATTR_HASH_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	*attributes_list = NULL;
-	*attributes_list_length = 0;
-
-	if (PSA_ALG_IS_RSA_PKCS1V15_SIGN(alg))
-		sign_type_str = RSASSA_PKCS1_V1_5_STR;
-	else if (PSA_ALG_IS_RSA_PSS(alg))
-		sign_type_str = RSASSA_PSS_STR;
-	else
-		return PSA_SUCCESS;
-
-	str_length = SMW_UTILS_STRLEN(sign_type_str) + 1;
-	if (SMW_TLV_ELEMENT_LENGTH(SIGNATURE_TYPE_STR, str_length,
-				   *attributes_list_length))
+	if (!hashed && !info)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	*attributes_list = SMW_UTILS_MALLOC(*attributes_list_length);
-	if (!*attributes_list)
-		return PSA_ERROR_INSUFFICIENT_MEMORY;
+	if (!hashed)
+		hash = info->smw_alg_id;
 
-	p = *attributes_list;
+	if (PSA_ALG_IS_RSA_PKCS1V15_SIGN(alg)) {
+		algo = SMW_ATTR_ALGO_RSA;
+		mode = SMW_ATTR_MODE_PKCS1_1_5;
+	} else if (PSA_ALG_IS_RSA_PSS(alg)) {
+		algo = SMW_ATTR_ALGO_RSA;
+		mode = SMW_ATTR_MODE_PSS;
+	} else if (PSA_ALG_IS_ECDSA(alg)) {
+		algo = SMW_ATTR_ALGO_ECDSA;
+		mode = SMW_ATTR_MODE_NONE;
+	}
 
-	smw_tlv_set_string(&p, SIGNATURE_TYPE_STR, sign_type_str);
-
-	SMW_DBG_ASSERT(*attributes_list_length ==
-		       (uintptr_t)p - (uintptr_t)*attributes_list);
+	if (algo == SMW_ATTR_ALGO_RSA)
+		*sign_algo =
+			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(mode, hash, 0);
+	else if (algo == SMW_ATTR_ALGO_ECDSA)
+		*sign_algo =
+			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(mode, hash);
 
 	return PSA_SUCCESS;
 }
@@ -1409,7 +1427,6 @@ set_sign_verify_args(psa_key_id_t key, psa_algorithm_t alg,
 		     struct smw_sign_verify_args *args)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
-	const char *algo_name = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1423,21 +1440,13 @@ set_sign_verify_args(psa_key_id_t key, psa_algorithm_t alg,
 	    (hashed && !PSA_ALG_IS_SIGN_HASH(alg)))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	if (!hashed) {
-		algo_name = get_hash_algo_name(PSA_ALG_GET_HASH(alg));
-		if (!algo_name)
-			return PSA_ERROR_INVALID_ARGUMENT;
-	}
-
 	args->key_descriptor = key_descriptor;
-	args->algo_name = algo_name;
 	args->message = (unsigned char *)message;
 	args->message_length = message_length;
 	args->signature = signature;
 	args->signature_length = signature_size;
 
-	return set_signature_attributes_list(alg, &args->attributes_list,
-					     &args->attributes_list_length);
+	return set_signature_attributes(alg, hashed, &args->sign_algo);
 }
 
 static psa_status_t sign_common(psa_key_id_t key, psa_algorithm_t alg,
@@ -1465,9 +1474,6 @@ static psa_status_t sign_common(psa_key_id_t key, psa_algorithm_t alg,
 
 	if (psa_status == PSA_SUCCESS && signature_length)
 		*signature_length = args.signature_length;
-
-	if (args.attributes_list)
-		SMW_UTILS_FREE(args.attributes_list);
 
 	return psa_status;
 }
@@ -1517,9 +1523,6 @@ static psa_status_t verify_common(psa_key_id_t key, psa_algorithm_t alg,
 
 	psa_status = call_smw_api((enum smw_status_code(*)(void *))smw_verify,
 				  &args, &args.subsystem_name);
-
-	if (args.attributes_list)
-		SMW_UTILS_FREE(args.attributes_list);
 
 	return psa_status;
 }

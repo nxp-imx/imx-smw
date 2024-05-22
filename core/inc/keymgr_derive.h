@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #ifndef __KEYMGR_DERIVE_H__
@@ -42,14 +42,14 @@ enum smw_tls12_encryption_id {
 /**
  * struct smw_keymgr_derive_key_args - Key derivation arguments
  * @key_base: Descriptor of the base key
- * @key_attributes: Key attributes
+ * @key_attributes: Pointer to the public Key attributes structure
  * @key_derived: Descriptor of the derived Key
  * @kdf_id: Key Derivation Function id if any
  * @kdf_args: Key Derivation Function arguments (depend on KDF)
  */
 struct smw_keymgr_derive_key_args {
 	struct smw_keymgr_descriptor key_base;
-	struct smw_keymgr_attributes key_attributes;
+	struct smw_key_attributes *key_attributes;
 	struct smw_keymgr_descriptor key_derived;
 	enum smw_config_kdf_id kdf_id;
 	void *kdf_args;

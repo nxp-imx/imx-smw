@@ -11,7 +11,6 @@
 
 #include "constants.h"
 #include "config.h"
-#include "object.h"
 
 /* Define invalid key identifier */
 #define INVALID_KEY_ID INVALID_OBJ_ID
@@ -42,24 +41,19 @@ enum smw_keymgr_format_id {
  * @subsystem_id: Secure Subsystem ID
  * @type_id: Key type ID
  * @privacy_id: Key privacy ID
- * @attribute: Key attribute
  * @security_size: Security size in bits
  * @id: Key ID set by the subsystem
- * @persistence_id: Key persistence ID
+ * @attributes: Key attributes
  * @storage_id: Key storage identifier
  * @group: Key group (may not be used by all subsystems)
- *
- * The value of @attribute is key type dependent.
- * For RSA key type, it represents the public exponent length in bytes.
  */
 struct smw_keymgr_identifier {
 	enum subsystem_id subsystem_id;
 	enum smw_config_key_type_id type_id;
 	enum smw_keymgr_privacy_id privacy_id;
-	unsigned int attribute;
 	unsigned int security_size;
 	uint32_t id;
-	enum smw_object_persistence_id persistence_id;
+	smw_attr_attributes_t attributes;
 	uint32_t storage_id;
 	uint16_t group;
 };
@@ -73,6 +67,8 @@ struct smw_keymgr_identifier {
  * @private_length: Get the @pub's private length reference
  * @modulus: Get the @pub's modulus reference
  * @modulus_length: Get the @pub's modulus length reference
+ * @exponent: Get the @pub's exponent reference
+ * @exponent_length: Get the @pub's exponent length reference
  *
  * This structure is initialized by the function
  * smw_keymgr_convert_descriptor().
@@ -88,6 +84,8 @@ struct smw_keymgr_key_ops {
 	unsigned int *(*private_length)(struct smw_keymgr_key_ops *this);
 	unsigned char **(*modulus)(struct smw_keymgr_key_ops *this);
 	unsigned int *(*modulus_length)(struct smw_keymgr_key_ops *this);
+	unsigned char **(*exponent)(struct smw_keymgr_key_ops *this);
+	unsigned int *(*exponent_length)(struct smw_keymgr_key_ops *this);
 };
 
 /**
@@ -105,40 +103,14 @@ struct smw_keymgr_descriptor {
 };
 
 /**
- * struct smw_keymgr_attributes - Key attributes list.
- * @persistence_id: Key persistence ID
- * @rsa_pub_exp: Pointer to rsa public exponent
- * @rsa_pub_exp_len: @rsa_pub_exp length in bytes
- * @flush_key: Flush persistent key(s)
- * @policy: Key policy encoded as variable-length list TLV
- * @policy_len: @policy length in bytes
- * @pub_key_attributes_list: Key attributes list from the public API
- * @pub_key_attributes_list_length: Length of @pub_key_attributes_list
- * @storage_id: Key storage ID
- * @lifecycle_flags: Device lifecycles where key is accessible
- */
-struct smw_keymgr_attributes {
-	enum smw_object_persistence_id persistence_id;
-	unsigned char *rsa_pub_exp;
-	unsigned int rsa_pub_exp_len;
-	bool flush_key;
-	unsigned char *policy;
-	unsigned int policy_len;
-	unsigned char *pub_key_attributes_list;
-	unsigned int *pub_key_attributes_list_length;
-	unsigned int storage_id;
-	unsigned long lifecycle_flags;
-};
-
-/**
  * struct smw_keymgr_generate_key_args - Key generation arguments
- * @key_attributes: Key attributes
  * @key_descriptor: Descriptor of the generated Key
+ * @key_attributes: Pointer to the public Key attributes structure
  *
  */
 struct smw_keymgr_generate_key_args {
-	struct smw_keymgr_attributes key_attributes;
 	struct smw_keymgr_descriptor key_descriptor;
+	struct smw_key_attributes *key_attributes;
 };
 
 /**
@@ -152,13 +124,13 @@ struct smw_keymgr_update_key_args {
 
 /**
  * struct smw_keymgr_import_key_args - Key import arguments
- * @key_attributes: Key attributes
  * @key_descriptor: Descriptor of the imported Key
+ * @key_attributes: Pointer to the public Key attributes structure
  *
  */
 struct smw_keymgr_import_key_args {
-	struct smw_keymgr_attributes key_attributes;
 	struct smw_keymgr_descriptor key_descriptor;
+	struct smw_key_attributes *key_attributes;
 };
 
 /**
@@ -173,23 +145,21 @@ struct smw_keymgr_export_key_args {
 /**
  * struct smw_keymgr_delete_key_args - Key deletion arguments
  * @key_descriptor: Descriptor of the Key to delete
- * @key_attributes: Key attributes
  *
  */
 struct smw_keymgr_delete_key_args {
 	struct smw_keymgr_descriptor key_descriptor;
-	struct smw_keymgr_attributes key_attributes;
 };
 
 /**
  * struct smw_keymgr_get_key_attributes_args - Get Key attributes arguments
  * @identifier: Key identifier
- * @attributes: Key attributes
+ * @key_attributes: Pointer to the public Key attributes structure
  *
  */
 struct smw_keymgr_get_key_attributes_args {
 	struct smw_keymgr_identifier identifier;
-	struct smw_keymgr_attributes attributes;
+	struct smw_key_attributes *key_attributes;
 };
 
 /**
@@ -199,21 +169,6 @@ struct smw_keymgr_get_key_attributes_args {
  */
 struct smw_keymgr_commit_key_storage_args {
 	struct smw_commit_key_storage_args *pub;
-};
-
-/**
- * struct smw_keymgr_attest_args - Key attestation arguments
- * @key_descriptor: Descriptor of the Key to be attested
- * @attest_key_descriptor: Descriptor of the attestation Key
- * @signature_type_id: Signature type ID
- * @pub: Pointer to the public key attestation arguments structure
- *
- */
-struct smw_keymgr_attest_args {
-	struct smw_keymgr_descriptor key_descriptor;
-	struct smw_keymgr_descriptor attest_key_descriptor;
-	enum smw_config_sign_type_id signature_type_id;
-	struct smw_key_attestation_args *pub;
 };
 
 /**
@@ -351,10 +306,40 @@ unsigned char *smw_keymgr_get_modulus(struct smw_keymgr_descriptor *descriptor);
  *
  * Return:
  * 0
- * length of the mofulus Key buffer.
+ * length of the modulus Key buffer.
  */
 unsigned int
 smw_keymgr_get_modulus_length(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_get_exponent() - Return the address of the exponent buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the address of the exponent buffer.
+ * If the @descriptor field @pub is NULL or if the @pub field @buffer is NULL,
+ * the function returns NULL.
+ *
+ * Return:
+ * NULL
+ * address of the exponent buffer.
+ */
+unsigned char *
+smw_keymgr_get_exponent(struct smw_keymgr_descriptor *descriptor);
+
+/**
+ * smw_keymgr_get_exponent_length() - Return the length of the exponent buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ *
+ * This function returns the length of the exponent buffer.
+ * If the @descriptor field @pub is NULL or if the @pub field @buffer is NULL,
+ * the function returns 0.
+ *
+ * Return:
+ * 0
+ * length of the exponent Key buffer.
+ */
+unsigned int
+smw_keymgr_get_exponent_length(struct smw_keymgr_descriptor *descriptor);
 
 /**
  * smw_keymgr_set_public_data() - Set the address of the public Key buffer.
@@ -427,6 +412,20 @@ void smw_keymgr_set_modulus_length(struct smw_keymgr_descriptor *descriptor,
 				   unsigned int modulus_length);
 
 /**
+ * smw_keymgr_set_exponent_length() - Set the length of the exponent buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ * @modulus_length: Length of the exponent buffer.
+ *
+ * This function sets the length of the exponent buffer.
+ * If the @buffer field @pub is NULL, the function returns with no action.
+ *
+ * Return:
+ * none.
+ */
+void smw_keymgr_set_exponent_length(struct smw_keymgr_descriptor *descriptor,
+				    unsigned int exponent_length);
+
+/**
  * smw_keymgr_update_public_buffer() - Update the public buffer fields
  * @descriptor: Key descriptor.
  * @data: Data to be converted in base64 if key buffer's format is base64.
@@ -451,30 +450,6 @@ int smw_keymgr_update_public_buffer(struct smw_keymgr_descriptor *descriptor,
 				    unsigned char *data, unsigned int length);
 
 /**
- * smw_keymgr_update_modulus_buffer() - Update the modulus buffer fields
- * @descriptor: key descriptor.
- * @data: Data to be converted in base64 if key buffer's format is base64.
- * @length: Length of the @data.
- *
- * If the key buffer format is base64, the function converts the @data to
- * base64 and update the key buffer's data field. Otherwise, the key buffer's
- * data is assumed to be the same as the @data.
- *
- * Key buffer's length is updated if function success of return
- * SMW_STATUS_OUTPUT_TOO_SHORT.
- *
- * If @data = NULL, only the key buffer's length is updated.
- *
- * Return:
- * SMW_STATUS_OK                 - Success
- * SMW_STATUS_OPERATION_FAILURE  - Operation failed
- * SMW_STATUS_OUTPUT_TOO_SHORT   - Output buffer is too short
- * SMW_STATUS_INVALID_PARAM      - One of the parameter is invalid.
- */
-int smw_keymgr_update_modulus_buffer(struct smw_keymgr_descriptor *descriptor,
-				     unsigned char *data, unsigned int length);
-
-/**
  * smw_keymgr_update_private_buffer() - Update the private buffer fields
  * @descriptor: key descriptor.
  * @data: Data to be converted in base64 if key buffer's format is base64.
@@ -496,6 +471,30 @@ int smw_keymgr_update_modulus_buffer(struct smw_keymgr_descriptor *descriptor,
  * SMW_STATUS_INVALID_PARAM      - One of the parameter is invalid.
  */
 int smw_keymgr_update_private_buffer(struct smw_keymgr_descriptor *descriptor,
+				     unsigned char *data, unsigned int length);
+
+/**
+ * smw_keymgr_update_modulus_buffer() - Update the modulus buffer fields
+ * @descriptor: key descriptor.
+ * @data: Data to be converted in base64 if key buffer's format is base64.
+ * @length: Length of the @data.
+ *
+ * If the key buffer format is base64, the function converts the @data to
+ * base64 and update the key buffer's data field. Otherwise, the key buffer's
+ * data is assumed to be the same as the @data.
+ *
+ * Key buffer's length is updated if function success of return
+ * SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * If @data = NULL, only the key buffer's length is updated.
+ *
+ * Return:
+ * SMW_STATUS_OK                 - Success
+ * SMW_STATUS_OPERATION_FAILURE  - Operation failed
+ * SMW_STATUS_OUTPUT_TOO_SHORT   - Output buffer is too short
+ * SMW_STATUS_INVALID_PARAM      - One of the parameter is invalid.
+ */
+int smw_keymgr_update_modulus_buffer(struct smw_keymgr_descriptor *descriptor,
 				     unsigned char *data, unsigned int length);
 
 /**
@@ -536,49 +535,6 @@ int smw_keymgr_convert_descriptors(struct smw_key_descriptor **in,
 				   enum subsystem_id *subsystem_id);
 
 /**
- * smw_keymgr_set_default_attributes() - Set default Key attributes.
- * @attr: Pointer to the Key attributes structure.
- *
- * This function sets the default values of the Key attributes.
- *
- * Return:
- * None.
- */
-void smw_keymgr_set_default_attributes(struct smw_keymgr_attributes *attr);
-
-/**
- * smw_keymgr_read_attributes() - Read key attributes from list
- * @key_attrs: Key attributes read.
- * @attr_list: List (TLV string format) of attributes to read.
- * @attr_length: Length of the @att_list string.
- *
- * This function reads the TLV string @attr_list and set appropriate
- * key attributes in @key_attrs structure.
- *
- * Return:
- * SMW_STATUS_OK             - Success.
- * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
- */
-int smw_keymgr_read_attributes(struct smw_keymgr_attributes *key_attrs,
-			       unsigned char *attr_list,
-			       unsigned int *attr_length);
-
-/**
- * smw_keymgr_set_attributes_list() - Set Key attributes.
- * @key_attrs: Key attributes.
- * @attr_list: List (TLV string format) of attributes to write.
- * @attr_length: Length of the @att_list string.
- *
- * This function sets the Key attributes list.
- *
- * Return:
- * None.
- */
-void smw_keymgr_set_attributes_list(struct smw_keymgr_attributes *key_attrs,
-				    unsigned char *attr_list,
-				    unsigned int attr_length);
-
-/**
  * smw_keymgr_get_privacy_id() - Get the Key privacy ID.
  * @type_id: Key type ID.
  * @privacy_id: Key privacy ID.
@@ -590,95 +546,5 @@ void smw_keymgr_set_attributes_list(struct smw_keymgr_attributes *key_attrs,
  */
 int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 			      enum smw_keymgr_privacy_id *privacy_id);
-
-/**
- * smw_keymgr_set_policy() - Set key attributes policy list
- * @attrs: Pointer to get key attributes arguments.
- * @policy: Pointer to the policy list buffer.
- * @length: Policy list length.
- *
- * Return:
- * none
- */
-void smw_keymgr_set_policy(struct smw_keymgr_get_key_attributes_args *attrs,
-			   unsigned char *policy, unsigned int length);
-
-/**
- * smw_keymgr_set_lifecycle() - Set key attributes lifecycle list
- * @attrs: Pointer to get key attributes arguments.
- * @lifecycle: Pointer to the lifecycle list buffer.
- * @length: Lifecycle list length.
- *
- * Return:
- * none
- */
-void smw_keymgr_set_lifecycle(struct smw_keymgr_get_key_attributes_args *attrs,
-			      unsigned char *lifecycle, unsigned int length);
-
-/**
- * smw_keymgr_get_attest_chal() - Return the address of the challenge buffer.
- * @args: Pointer to the internal key attestation args structure.
- *
- * This function returns the address of the challenge buffer.
- *
- * Return:
- * NULL
- * address of the challenge buffer.
- */
-unsigned char *smw_keymgr_get_attest_chal(struct smw_keymgr_attest_args *args);
-
-/**
- * smw_keymgr_get_attest_chal_length() - Return the length of the challenge
- *                                       buffer.
- * @args: Pointer to the internal key attestation args structure.
- *
- * This function returns the length of the challenge buffer.
- *
- * Return:
- * 0
- * length of the challenge buffer.
- */
-unsigned int
-smw_keymgr_get_attest_chal_length(struct smw_keymgr_attest_args *args);
-
-/**
- * smw_keymgr_get_attest_cert() - Return the address of the certificate buffer.
- * @args: Pointer to the internal key attestation args structure.
- *
- * This function returns the address of the certificate buffer.
- *
- * Return:
- * NULL
- * address of the certificate buffer.
- */
-unsigned char *smw_keymgr_get_attest_cert(struct smw_keymgr_attest_args *args);
-
-/**
- * smw_keymgr_get_attest_cert_length() - Return the length of the certificate
- *                                       buffer.
- * @args: Pointer to the internal key attestation args structure.
- *
- * This function returns the length of the certificate buffer.
- *
- * Return:
- * 0
- * length of the certificate buffer.
- */
-unsigned int
-smw_keymgr_get_attest_cert_length(struct smw_keymgr_attest_args *args);
-
-/**
- * smw_keymgr_set_attest_cert_length() - Set the length of the certificate
- *                                       buffer.
- * @args: Pointer to the internal key attestation args structure.
- * @length: Length of the certificate buffer.
- *
- * This function sets the length of the certificate buffer.
- *
- * Return:
- * none.
- */
-void smw_keymgr_set_attest_cert_length(struct smw_keymgr_attest_args *args,
-				       unsigned int length);
 
 #endif /* __KEYMGR_H__ */

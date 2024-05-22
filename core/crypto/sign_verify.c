@@ -3,6 +3,8 @@
  * Copyright 2020-2024 NXP
  */
 
+#include <inttypes.h>
+
 #include "smw_status.h"
 #include "smw_crypto.h"
 
@@ -15,79 +17,172 @@
 #include "keymgr.h"
 #include "sign_verify.h"
 #include "exec.h"
-#include "tlv.h"
-#include "attr.h"
 
-/**
- * store_signature_type() - Store signature type.
- * @attributes: Pointer to attribute structure to fill.
- * @value: Signature type string.
- * @length: Length of @value in bytes.
- *
- * @value is converted in 'enum smw_config_sign_type_id'.
- *
- * Return:
- * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
- */
-static int store_signature_type(void *attributes, unsigned char *value,
-				unsigned int length);
+#define HASH_ALGO(_id)                                                         \
+	{                                                                      \
+		.attr = SMW_ATTR_HASH_##_id,                                   \
+		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_id                       \
+	}
 
-/**
- * store_salt_len() - Store optional salt length.
- * @attributes: Pointer to attribute structure to fill.
- * @value: Salt length (HEX buffer).
- * @length: @value length in bytes.
- *
- * @value is converted in uint32_t.
- *
- * Return:
- * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- One of the parameters is invalid.
- */
-static int store_salt_len(void *attributes, unsigned char *value,
-			  unsigned int length);
+static const struct hash_algo {
+	smw_attr_algo_t attr;
+	enum smw_config_hash_algo_id algo_id;
+} hash_algo_list[] = { { .attr = SMW_ATTR_HASH_NONE,
+			 .algo_id = SMW_CONFIG_HASH_ALGO_ID_INVALID },
+		       { .attr = SMW_ATTR_HASH_ANY,
+			 .algo_id = SMW_CONFIG_HASH_ALGO_ID_INVALID },
+		       HASH_ALGO(MD5),
+		       HASH_ALGO(SHA1),
+		       HASH_ALGO(SHA224),
+		       HASH_ALGO(SHA256),
+		       HASH_ALGO(SHA384),
+		       HASH_ALGO(SHA512),
+		       HASH_ALGO(SHA3_224),
+		       HASH_ALGO(SHA3_256),
+		       HASH_ALGO(SHA3_384),
+		       HASH_ALGO(SHA3_512),
+		       HASH_ALGO(SM3) };
 
-/**
- * store_tls_mac_finish_label() - Store TLS finished message label.
- * @attributes: Pointer to attribute structure to fill.
- * @value: Label string.
- * @length: Length of @value in bytes.
- *
- * The parameter @value is converted in
- * 'enum smw_config_tls_mac_finish_label_id'.
- *
- * Return:
- * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- @attributes is NULL.
- */
-static int store_tls_mac_finish_label(void *attributes, unsigned char *value,
-				      unsigned int length);
+static int set_sign_hash_id(smw_attr_algo_t sign_attr,
+			    enum smw_config_hash_algo_id *algo_id)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-static const struct attribute_tlv sign_verify_attributes_tlv_array[] = {
-	{ .type = (const unsigned char *)SIGNATURE_TYPE_STR,
-	  .verify = smw_tlv_verify_enumeration,
-	  .store = store_signature_type },
-	{ .type = (const unsigned char *)SALT_LEN_STR,
-	  .verify = smw_tlv_verify_numeral,
-	  .store = store_salt_len },
-	{ .type = (const unsigned char *)TLS_MAC_FINISH_STR,
-	  .verify = smw_tlv_verify_enumeration,
-	  .store = store_tls_mac_finish_label }
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(hash_algo_list);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < size; i++) {
+		if (SMW_ATTR_GET_HASH(sign_attr) == hash_algo_list[i].attr) {
+			*algo_id = hash_algo_list[i].algo_id;
+
+			SMW_DBG_PRINTF(DEBUG, "Hash algorithm: %d\n", *algo_id);
+
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+#define SIGN_ALGO(_id)                                                         \
+	{                                                                      \
+		.attr = SMW_ATTR_ALGO_##_id,                                   \
+		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_##_id                       \
+	}
+
+static const struct {
+	smw_attr_algo_t attr;
+	enum smw_config_sign_algo_id algo_id;
+} sign_algo_list[] = {
+	SIGN_ALGO(DEFAULT), SIGN_ALGO(ECDSA), SIGN_ALGO(EDDSA),
+	SIGN_ALGO(DSA),	    SIGN_ALGO(RSA),   SIGN_ALGO(TLS_1_2)
 };
 
-/**
- * set_default_attributes() - Set default sign/verify attributes
- * @attr: Pointer to the sign/verify attributes structure.
- *
- * Return:
- * None.
- */
-static void set_default_attributes(struct smw_sign_verify_attributes *attr)
+static int set_sign_algo_id(smw_attr_algo_t sign_attr,
+			    enum smw_config_sign_algo_id *algo_id)
 {
-	attr->signature_type = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT;
-	attr->salt_length = 0;
-	attr->tls_label = SMW_CONFIG_TLS_FINISH_ID_INVALID;
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(sign_algo_list);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < size; i++) {
+		if (SMW_ATTR_GET_ALGO(sign_attr) == sign_algo_list[i].attr) {
+			*algo_id = sign_algo_list[i].algo_id;
+
+			SMW_DBG_PRINTF(DEBUG, "Signature algo: %d\n", *algo_id);
+
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+#define SIGN_TYPE(_id)                                                         \
+	{                                                                      \
+		.attr = SMW_ATTR_MODE_##_id,                                   \
+		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_id                       \
+	}
+
+static const struct {
+	smw_attr_algo_t attr;
+	enum smw_config_sign_type_id type_id;
+} sign_type_list[] = { { .attr = SMW_ATTR_MODE_NONE,
+			 .type_id = SMW_CONFIG_SIGN_TYPE_ID_INVALID },
+		       { .attr = SMW_ATTR_MODE_ANY,
+			 .type_id = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT },
+		       SIGN_TYPE(CMAC),
+		       SIGN_TYPE(PKCS1_1_5),
+		       SIGN_TYPE(PSS),
+		       SIGN_TYPE(CLIENT),
+		       SIGN_TYPE(SERVER) };
+
+static int set_sign_type_id(smw_attr_algo_t sign_attr,
+			    enum smw_config_sign_type_id *type_id)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(sign_type_list);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < size; i++) {
+		if (SMW_ATTR_GET_MODE(sign_attr) == sign_type_list[i].attr) {
+			*type_id = sign_type_list[i].type_id;
+
+			SMW_DBG_PRINTF(DEBUG, "Signature type: %d\n", *type_id);
+
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_sign_verify_convert_attributes(smw_attr_algo_t in,
+				       struct smw_sign_verify_attributes *out)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_PRINTF(DEBUG, "Signature attributes: 0x%" PRIx64 "\n", in);
+
+	if (SMW_ATTR_GET_CLASS(in) != SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE &&
+	    SMW_ATTR_GET_CLASS(in) != SMW_ATTR_CLASS_MAC &&
+	    SMW_ATTR_GET_CLASS(in) != SMW_ATTR_CLASS_KEY_ATTESTATION)
+		goto end;
+
+	status = set_sign_algo_id(in, &out->algo_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = set_sign_type_id(in, &out->type_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = set_sign_hash_id(in, &out->hash_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (SET_OVERFLOW(SMW_ATTR_GET_SALT_LENGTH(in), out->salt_length))
+		status = SMW_STATUS_INVALID_PARAM;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 static int
@@ -115,19 +210,9 @@ sign_verify_convert_args(struct smw_sign_verify_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_utils_get_hash_algo_id(args->algo_name,
-					    &converted_args->algo_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	/* Initialize attributes parameters to default values */
-	set_default_attributes(&converted_args->attributes);
-
-	status = read_attributes(args->attributes_list,
-				 args->attributes_list_length,
-				 &converted_args->attributes,
-				 sign_verify_attributes_tlv_array,
-				 ARRAY_SIZE(sign_verify_attributes_tlv_array));
+	status =
+		smw_sign_verify_convert_attributes(args->sign_algo,
+						   &converted_args->attributes);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -199,70 +284,6 @@ smw_sign_verify_set_sign_len(struct smw_crypto_sign_verify_args *args,
 {
 	if (args->pub)
 		args->pub->signature_length = signature_length;
-}
-
-static int store_signature_type(void *attributes, unsigned char *value,
-				unsigned int length)
-{
-	(void)length;
-
-	int status = SMW_STATUS_INVALID_PARAM;
-	struct smw_sign_verify_attributes *attr = attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!value || !attr)
-		goto end;
-
-	status = smw_config_get_signature_type_id((char *)value,
-						  &attr->signature_type);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static int store_salt_len(void *attributes, unsigned char *value,
-			  unsigned int length)
-{
-	int status = SMW_STATUS_INVALID_PARAM;
-	struct smw_sign_verify_attributes *attr = attributes;
-	unsigned long long numeral = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!value || !attr)
-		goto end;
-
-	numeral = smw_tlv_convert_numeral(length, value);
-	if (numeral < UINT32_MAX) {
-		attr->salt_length = numeral;
-		status = SMW_STATUS_OK;
-	}
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static int store_tls_mac_finish_label(void *attributes, unsigned char *value,
-				      unsigned int length)
-{
-	(void)length;
-
-	int status = SMW_STATUS_INVALID_PARAM;
-	struct smw_sign_verify_attributes *attr = attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!value || !attr)
-		goto end;
-
-	status = smw_config_get_tls_label_id((char *)value, &attr->tls_label);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
 }
 
 static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)

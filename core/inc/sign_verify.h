@@ -6,45 +6,48 @@
 #ifndef __SIGN_VERIFY_H__
 #define __SIGN_VERIFY_H__
 
+#include "smw/attr.h"
+
 #include "keymgr.h"
 #include "config.h"
 
-/* Signature type string */
-#define SIGNATURE_TYPE_STR    "SIGNATURE_TYPE"
-#define RSASSA_PKCS1_V1_5_STR "RSASSA-PKCS1-V1_5"
-#define RSASSA_PSS_STR	      "RSASSA-PSS"
-#define CMAC_STR	      "CMAC"
-#define ECDSA_SHA224_STR      "ECDSA_SHA224"
-#define ECDSA_SHA256_STR      "ECDSA_SHA256"
-#define ECDSA_SHA384_STR      "ECDSA_SHA384"
-#define ECDSA_SHA512_STR      "ECDSA_SHA512"
+#define DEFAULT_STR "DEFAULT"
 
-#define SALT_LEN_STR "SALT_LEN"
+/* Signature algo strings */
+#define ECDSA_STR   "ECDSA"
+#define EDDSA_STR   "EDDSA"
+#define DSA_STR	    "DSA"
+#define RSA_STR	    "RSA"
+#define TLS_1_2_STR "TLS_1_2"
 
-/* TLS finished message label */
-#define TLS_MAC_FINISH_STR    "TLS_MAC_FINISH"
-#define TLS_FINISH_CLIENT_STR "CLIENT"
-#define TLS_FINISH_SERVER_STR "SERVER"
+/* Signature type strings */
+#define PKCS1_1_5_STR "PKCS1_1_5"
+#define PSS_STR	      "PSS"
+#define CLIENT_STR    "CLIENT"
+#define SERVER_STR    "SERVER"
+#define CMAC_STR      "CMAC"
 
 /**
- * struct smw_sign_verify_attributes - Sign Verify attributes list.
- * @signature_type: Type of signature.
+ * struct smw_sign_verify_attributes - Sign Verify attributes.
+ * @algo_id: Signature algo ID
+ * @type_id: Signature type ID
+ * @hash_id: Hash algorithm ID
  * @salt_length: Optional salt length in bytes.
- * @tls_mac_finish: TLS finished message label.
  *
- * Parameter @salt_length is only for 'RSASSA-PSS' signature type. If not set,
+ * Parameter @salt_length is only for 'RSA' signature type. If not set,
  * the salt length is equal to the hash length.
  */
 struct smw_sign_verify_attributes {
-	enum smw_config_sign_type_id signature_type;
+	enum smw_config_sign_algo_id algo_id;
+	enum smw_config_sign_type_id type_id;
+	enum smw_config_hash_algo_id hash_id;
 	uint32_t salt_length;
-	enum smw_config_tls_finish_label_id tls_label;
 };
 
 /**
  * struct smw_crypto_sign_verify_args - Sign or verify arguments
  * @key_descriptor: Descriptor of the Key
- * @algo_id: Algorithm ID
+ * @attributes: Signature attributes
  * @pub: Pointer to the public API arguments structure
  *
  * @subsystem_name designates the Secure Subsystem to be used.
@@ -52,10 +55,23 @@ struct smw_sign_verify_attributes {
  */
 struct smw_crypto_sign_verify_args {
 	struct smw_keymgr_descriptor key_descriptor;
-	enum smw_config_hash_algo_id algo_id;
-	struct smw_sign_verify_args *pub;
 	struct smw_sign_verify_attributes attributes;
+	struct smw_sign_verify_args *pub;
 };
+
+/**
+ * smw_sign_verify_convert_attributes() - Signature attributes conversion.
+ * @in: Public Signature algorithm and attributes.
+ * @out: Pointer to an internal Signature attributes structure.
+ *
+ * This function converts a public Signature algorithm and attributes
+ * structure into an internal Signature attributes structure.
+ *
+ * Return:
+ * error code.
+ */
+int smw_sign_verify_convert_attributes(smw_attr_algo_t in,
+				       struct smw_sign_verify_attributes *out);
 
 /**
  * smw_sign_verify_get_msg_buf() - Return the message buffer.

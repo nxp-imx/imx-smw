@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2023 NXP
+ * Copyright 2020, 2023-2024 NXP
  */
+#include <errno.h>
+#include <pthread.h>
 #include <stdlib.h>
 
 #include "lib_context.h"
@@ -55,6 +57,72 @@ static void initialize_caps(struct libcaps *caps)
 #endif
 
 	DBG_TRACE("Libraries capabilities = 0x%08X", caps->flags);
+}
+
+static CK_RV mutex_init(CK_VOID_PTR_PTR mutex)
+{
+	if (!mutex)
+		return CKR_GENERAL_ERROR;
+
+	if (*mutex)
+		return CKR_GENERAL_ERROR;
+
+	*mutex = malloc(sizeof(pthread_mutex_t));
+	if (!*mutex)
+		return CKR_HOST_MEMORY;
+
+	DBG_TRACE("%s: %p\n", __func__, mutex);
+
+	if (pthread_mutex_init((pthread_mutex_t *)*mutex, NULL))
+		return CKR_GENERAL_ERROR;
+
+	return CKR_OK;
+}
+
+static CK_RV mutex_destroy(CK_VOID_PTR mutex)
+{
+	if (!mutex)
+		return CKR_GENERAL_ERROR;
+
+	DBG_TRACE("%s: %p\n", __func__, mutex);
+
+	if (pthread_mutex_destroy((pthread_mutex_t *)mutex))
+		return CKR_MUTEX_BAD;
+
+	free(mutex);
+
+	return CKR_OK;
+}
+
+static CK_RV mutex_lock(CK_VOID_PTR mutex)
+{
+	if (!mutex)
+		return CKR_GENERAL_ERROR;
+
+	DBG_TRACE("%s: %p\n", __func__, mutex);
+
+	if (pthread_mutex_lock((pthread_mutex_t *)mutex))
+		return CKR_MUTEX_BAD;
+
+	return CKR_OK;
+}
+
+static CK_RV mutex_unlock(CK_VOID_PTR mutex)
+{
+	int ret = 0;
+
+	DBG_TRACE("%s: %p\n", __func__, mutex);
+
+	if (!mutex)
+		return CKR_GENERAL_ERROR;
+
+	ret = pthread_mutex_unlock((pthread_mutex_t *)mutex);
+	if (ret == EPERM)
+		return CKR_MUTEX_NOT_LOCKED;
+	else if (ret)
+		return CKR_MUTEX_BAD;
+
+	return CKR_OK;
 }
 
 struct libdevice *libctx_get_devices(void)
@@ -114,10 +182,10 @@ CK_RV libctx_setup_mutex(CK_C_INITIALIZE_ARGS_PTR pinit, struct libcaps *caps)
 		libctx->mutex.lock = pinit->LockMutex;
 		libctx->mutex.unlock = pinit->UnlockMutex;
 	} else if (caps->multi_thread && caps->use_os_mutex) {
-		/*
-		 * TODO: Implement OS Mutex primitives
-		 */
-		return CKR_FUNCTION_FAILED;
+		libctx->mutex.create = mutex_init;
+		libctx->mutex.destroy = mutex_destroy;
+		libctx->mutex.lock = mutex_lock;
+		libctx->mutex.unlock = mutex_unlock;
 	} else if (!caps->multi_thread) {
 		libctx->mutex.create = NULL;
 		libctx->mutex.destroy = NULL;

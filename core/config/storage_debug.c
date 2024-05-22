@@ -18,9 +18,9 @@ void storage_store_print_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "Params:\n"
-		       "\tmode_bitmap: %.8lX\n"
-		       "\talgo_bitmap: %.8lX\n"
-		       "\thash_bitmap: %.8lX\n",
+		       "\tmode_bitmap: 0x%.8lX\n"
+		       "\talgo_bitmap: 0x%.8lX\n"
+		       "\thash_bitmap: 0x%.8lX\n",
 		       p->mode_bitmap, p->algo_bitmap, p->hash_bitmap);
 
 	print_key_params(&p->key);

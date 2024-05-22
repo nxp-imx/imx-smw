@@ -18,9 +18,8 @@ void sign_verify_print_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "Params:\n"
-		       "\talgo_bitmap: %.8lX\n"
-		       "\tsign_type_bitmap: %.8lX\n",
-		       p->algo_bitmap, p->sign_type_bitmap);
-
-	print_key_params(&p->key);
+		       "\talgo_bitmap: 0x%.8lX\n"
+		       "\ttype_bitmap: 0x%.8lX\n"
+		       "\thash_bitmap: 0x%.8lX\n",
+		       p->algo_bitmap, p->type_bitmap, p->hash_bitmap);
 }

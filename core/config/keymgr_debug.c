@@ -18,7 +18,7 @@ void print_key_operation_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "Params:\n"
-		       "\top_bitmap: %.8lX\n",
+		       "\top_bitmap: 0x%.8lX\n",
 		       p->op_bitmap);
 
 	print_key_params(&p->key);

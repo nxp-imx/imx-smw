@@ -11,7 +11,6 @@
 #include "subsystems.h"
 
 enum smw_config_key_type_id {
-	/* Key type IDs */
 	SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
 	SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
 	SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1,
@@ -71,15 +70,24 @@ enum smw_config_mac_op_type_id {
 	SMW_CONFIG_MAC_OP_ID_INVALID
 };
 
+enum smw_config_sign_algo_id {
+	SMW_CONFIG_SIGN_ALGO_ID_DEFAULT,
+	SMW_CONFIG_SIGN_ALGO_ID_ECDSA,
+	SMW_CONFIG_SIGN_ALGO_ID_EDDSA,
+	SMW_CONFIG_SIGN_ALGO_ID_DSA,
+	SMW_CONFIG_SIGN_ALGO_ID_RSA,
+	SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2,
+	SMW_CONFIG_SIGN_ALGO_ID_NB,
+	SMW_CONFIG_SIGN_ALGO_ID_INVALID
+};
+
 enum smw_config_sign_type_id {
 	SMW_CONFIG_SIGN_TYPE_ID_DEFAULT,
-	SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PKCS1_V1_5,
-	SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PSS,
+	SMW_CONFIG_SIGN_TYPE_ID_PKCS1_1_5,
+	SMW_CONFIG_SIGN_TYPE_ID_PSS,
+	SMW_CONFIG_SIGN_TYPE_ID_CLIENT,
+	SMW_CONFIG_SIGN_TYPE_ID_SERVER,
 	SMW_CONFIG_SIGN_TYPE_ID_CMAC,
-	SMW_CONFIG_SIGN_TYPE_ID_ECDSA_SHA224,
-	SMW_CONFIG_SIGN_TYPE_ID_ECDSA_SHA256,
-	SMW_CONFIG_SIGN_TYPE_ID_ECDSA_SHA384,
-	SMW_CONFIG_SIGN_TYPE_ID_ECDSA_SHA512,
 	SMW_CONFIG_SIGN_TYPE_ID_NB,
 	SMW_CONFIG_SIGN_TYPE_ID_INVALID
 };
@@ -106,13 +114,6 @@ enum smw_config_kdf_id {
 	SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE,
 	SMW_CONFIG_KDF_ID_NB,
 	SMW_CONFIG_KDF_ID_INVALID
-};
-
-enum smw_config_tls_finish_label_id {
-	SMW_CONFIG_TLS_FINISH_ID_CLIENT,
-	SMW_CONFIG_TLS_FINISH_ID_SERVER,
-	SMW_CONFIG_TLS_FINISH_ID_NB,
-	SMW_CONFIG_TLS_FINISH_ID_INVALID
 };
 
 enum smw_config_aead_mode_id {
@@ -303,6 +304,19 @@ void smw_config_get_key_type_name(enum smw_config_key_type_id id,
 				  const char **name);
 
 /**
+ * smw_config_get_signature_algo_id() - Get the signature algo ID associated to
+ *                                      a name.
+ * @name: Name as a string.
+ * @id: Pointer where the ID is written.
+ *
+ * Return:
+ * SMW_STATUS_SIGN_TYPE_NAME	- @name is unknown
+ * SMW_STATUS_OK		- Success
+ */
+int smw_config_get_signature_algo_id(const char *name,
+				     enum smw_config_sign_algo_id *id);
+
+/**
  * smw_config_get_signature_type_id() - Get the signature type ID associated to
  *                                      a name.
  * @name: Name as a string.
@@ -328,18 +342,6 @@ int smw_config_get_signature_type_id(const char *name,
  * SMW_STATUS_OK		- Success
  */
 int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id);
-
-/**
- * smw_config_get_tls_label_id() - Get TLS MAC finish label ID
- * @name: Label name as a string.
- * @id: Pointer where the ID is written.
- *
- * Return:
- * SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME	- @name is unknown
- * SMW_STATUS_OK		- Success
- */
-int smw_config_get_tls_label_id(const char *name,
-				enum smw_config_tls_finish_label_id *id);
 
 /**
  * smw_config_get_psa_config() - Get the PSA configuration.
@@ -505,7 +507,7 @@ int smw_utils_get_mac_algo_id(const char *name,
 			      enum smw_config_mac_algo_id *id);
 
 /**
- * smw_config_get_aead_mode_id() - Get the AEAD mode ID associated to a name
+ * smw_utils_get_aead_mode_id() - Get the AEAD mode ID associated to a name
  * @name: Name as a string.
  * @id: Pointer where the ID is written.
  *
@@ -517,7 +519,7 @@ int smw_utils_get_aead_mode_id(const char *name,
 			       enum smw_config_aead_mode_id *id);
 
 /**
- * smw_config_get_aead_op_type_id() - Get the AEAD operation type ID
+ * smw_utils_get_aead_op_type_id() - Get the AEAD operation type ID
  *                                      associated to a name
  * @name: Name as a string.
  * @id: Pointer where the ID is written.

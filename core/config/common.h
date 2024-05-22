@@ -71,8 +71,8 @@ struct mac_params {
 
 struct sign_verify_params {
 	unsigned long algo_bitmap;
-	unsigned long sign_type_bitmap;
-	struct op_key key;
+	unsigned long type_bitmap;
+	unsigned long hash_bitmap;
 };
 
 struct rng_params {

@@ -21,21 +21,34 @@
 #include "common.h"
 #include "tag.h"
 
-static const char *const sign_type_names[] = {
-	[SMW_CONFIG_SIGN_TYPE_ID_DEFAULT] = "DEFAULT",
-	[SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PKCS1_V1_5] = RSASSA_PKCS1_V1_5_STR,
-	[SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PSS] = RSASSA_PSS_STR,
-	[SMW_CONFIG_SIGN_TYPE_ID_CMAC] = CMAC_STR,
-	[SMW_CONFIG_SIGN_TYPE_ID_ECDSA_SHA224] = ECDSA_SHA224_STR,
-	[SMW_CONFIG_SIGN_TYPE_ID_ECDSA_SHA256] = ECDSA_SHA256_STR,
-	[SMW_CONFIG_SIGN_TYPE_ID_ECDSA_SHA384] = ECDSA_SHA384_STR,
-	[SMW_CONFIG_SIGN_TYPE_ID_ECDSA_SHA512] = ECDSA_SHA512_STR
+static const char *const sign_algo_names[] = {
+	[SMW_CONFIG_SIGN_ALGO_ID_DEFAULT] = DEFAULT_STR,
+	[SMW_CONFIG_SIGN_ALGO_ID_ECDSA] = ECDSA_STR,
+	[SMW_CONFIG_SIGN_ALGO_ID_EDDSA] = EDDSA_STR,
+	[SMW_CONFIG_SIGN_ALGO_ID_DSA] = DSA_STR,
+	[SMW_CONFIG_SIGN_ALGO_ID_RSA] = RSA_STR,
+	[SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2] = TLS_1_2_STR,
 };
 
-static const char *const tls_finish_label_names[] = {
-	[SMW_CONFIG_TLS_FINISH_ID_CLIENT] = TLS_FINISH_CLIENT_STR,
-	[SMW_CONFIG_TLS_FINISH_ID_SERVER] = TLS_FINISH_SERVER_STR
+static const char *const sign_type_names[] = {
+	[SMW_CONFIG_SIGN_TYPE_ID_DEFAULT] = DEFAULT_STR,
+	[SMW_CONFIG_SIGN_TYPE_ID_PKCS1_1_5] = PKCS1_1_5_STR,
+	[SMW_CONFIG_SIGN_TYPE_ID_PSS] = PSS_STR,
+	[SMW_CONFIG_SIGN_TYPE_ID_CLIENT] = CLIENT_STR,
+	[SMW_CONFIG_SIGN_TYPE_ID_SERVER] = SERVER_STR,
+	[SMW_CONFIG_SIGN_TYPE_ID_CMAC] = CMAC_STR,
 };
+
+static int read_signature_algo_names(char **start, char *end,
+				     unsigned long *bitmap)
+{
+	int status = smw_config_read_names(start, end, bitmap, sign_algo_names,
+					   SMW_CONFIG_SIGN_ALGO_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME;
+
+	return status;
+}
 
 static int read_signature_type_names(char **start, char *end,
 				     unsigned long *bitmap)
@@ -57,7 +70,6 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 	size_t length = 0;
 
 	struct sign_verify_params *p = NULL;
-	unsigned long key_size_range_bitmap = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -66,9 +78,6 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 		status = SMW_STATUS_ALLOC_FAILURE;
 		goto end;
 	}
-
-	init_key_params(&p->key);
-	p->sign_type_bitmap = SMW_ALL_ONES;
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
 		status = read_params_name(&cur, end, buffer);
@@ -79,20 +88,21 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 
 		skip_insignificant_chars(&cur, end);
 
-		if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values, length)) {
-			status = smw_utils_hash_algo_names(&cur, end,
+		if (!SMW_UTILS_STRNCMP(buffer, sign_algo_values, length)) {
+			status = read_signature_algo_names(&cur, end,
 							   &p->algo_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, sign_type_values,
 					      length)) {
-			status =
-				read_signature_type_names(&cur, end,
-							  &p->sign_type_bitmap);
+			status = read_signature_type_names(&cur, end,
+							   &p->type_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
-		} else if (read_key(buffer, length, &cur, end,
-				    &key_size_range_bitmap, &p->key, &status)) {
+		} else if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values,
+					      length)) {
+			status = smw_utils_hash_algo_names(&cur, end,
+							   &p->hash_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else {
@@ -106,9 +116,18 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 
 	if (!p->algo_bitmap)
 		p->algo_bitmap = SMW_ALL_ONES;
+	else
+		set_bit(&p->algo_bitmap, sizeof(p->algo_bitmap) << 3,
+			SMW_CONFIG_SIGN_ALGO_ID_DEFAULT);
 
-	if (!p->key.type_bitmap)
-		p->key.type_bitmap = SMW_ALL_ONES;
+	if (!p->type_bitmap)
+		p->type_bitmap = SMW_ALL_ONES;
+	else
+		set_bit(&p->type_bitmap, sizeof(p->type_bitmap) << 3,
+			SMW_CONFIG_SIGN_TYPE_ID_DEFAULT);
+
+	if (!p->hash_bitmap)
+		p->hash_bitmap = SMW_ALL_ONES;
 
 	*params = p;
 
@@ -140,9 +159,8 @@ static void sign_verify_merge_params(void *caps, void *params)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	sign_verify_caps->algo_bitmap |= sign_verify_params->algo_bitmap;
-	sign_verify_caps->sign_type_bitmap |=
-		sign_verify_params->sign_type_bitmap;
-	merge_key_params(&sign_verify_caps->key, &sign_verify_params->key);
+	sign_verify_caps->type_bitmap |= sign_verify_params->type_bitmap;
+	sign_verify_caps->hash_bitmap |= sign_verify_params->hash_bitmap;
 }
 
 static void sign_merge_params(void *caps, void *params)
@@ -170,7 +188,7 @@ static void verify_print_params(void *params)
 	sign_verify_print_params(params);
 }
 
-static int check_subsystem_caps(void *args, void *params)
+static int sign_verify_check_subsystem_caps(void *args, void *params)
 {
 	int status = SMW_STATUS_OK;
 
@@ -179,12 +197,12 @@ static int check_subsystem_caps(void *args, void *params)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!check_id(sign_verify_args->algo_id,
+	if (!check_id(sign_verify_args->attributes.algo_id,
 		      sign_verify_params->algo_bitmap) ||
-	    !check_key(&sign_verify_args->key_descriptor.identifier,
-		       &sign_verify_params->key) ||
-	    !check_id(sign_verify_args->attributes.signature_type,
-		      sign_verify_params->sign_type_bitmap))
+	    !check_id(sign_verify_args->attributes.type_id,
+		      sign_verify_params->type_bitmap) ||
+	    !check_id(sign_verify_args->attributes.hash_id,
+		      sign_verify_params->hash_bitmap))
 		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -193,12 +211,12 @@ static int check_subsystem_caps(void *args, void *params)
 
 static int sign_check_subsystem_caps(void *args, void *params)
 {
-	return check_subsystem_caps(args, params);
+	return sign_verify_check_subsystem_caps(args, params);
 }
 
 static int verify_check_subsystem_caps(void *args, void *params)
 {
-	return check_subsystem_caps(args, params);
+	return sign_verify_check_subsystem_caps(args, params);
 }
 
 static int check_sign_verify_common(smw_subsystem_t subsystem,
@@ -207,23 +225,17 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
-	enum smw_config_key_type_id key_type_id =
-		SMW_CONFIG_KEY_TYPE_ID_INVALID;
-	enum smw_config_hash_algo_id algo_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
-	enum smw_config_sign_type_id sign_type_id =
-		SMW_CONFIG_SIGN_TYPE_ID_INVALID;
+	enum smw_config_sign_algo_id algo_id = SMW_CONFIG_SIGN_ALGO_ID_INVALID;
+	enum smw_config_sign_type_id type_id = SMW_CONFIG_SIGN_TYPE_ID_INVALID;
+	enum smw_config_hash_algo_id hash_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
 	struct sign_verify_params params = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!info || !info->key_type_name)
+	if (!info || !info->algo)
 		return status;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);
-	if (status != SMW_STATUS_OK)
-		return status;
-
-	status = smw_config_get_key_type_id(info->key_type_name, &key_type_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 
@@ -231,13 +243,9 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	/* Check key type */
-	if (!check_id(key_type_id, params.key.type_bitmap))
-		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
-
-	/* Check hash algorithm if set */
-	if (info->hash_algo) {
-		status = smw_utils_get_hash_algo_id(info->hash_algo, &algo_id);
+	/* Check signature algo if set */
+	if (info->algo) {
+		status = smw_config_get_signature_algo_id(info->algo, &algo_id);
 		if (status != SMW_STATUS_OK)
 			return status;
 
@@ -246,13 +254,22 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	}
 
 	/* Check signature type if set */
-	if (info->signature_type) {
-		status = smw_config_get_signature_type_id(info->signature_type,
-							  &sign_type_id);
+	if (info->type) {
+		status = smw_config_get_signature_type_id(info->type, &type_id);
 		if (status != SMW_STATUS_OK)
 			return status;
 
-		if (!check_id(sign_type_id, params.sign_type_bitmap))
+		if (!check_id(type_id, params.type_bitmap))
+			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
+	}
+
+	/* Check hash algorithm if set */
+	if (info->hash) {
+		status = smw_utils_get_hash_algo_id(info->hash, &hash_id);
+		if (status != SMW_STATUS_OK)
+			return status;
+
+		if (!check_id(hash_id, params.hash_bitmap))
 			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 	}
 
@@ -262,44 +279,39 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 DEFINE_CONFIG_OPERATION_FUNC(sign);
 DEFINE_CONFIG_OPERATION_FUNC(verify);
 
-int smw_config_get_signature_type_id(const char *name,
-				     enum smw_config_sign_type_id *id)
+int smw_config_get_signature_algo_id(const char *name,
+				     enum smw_config_sign_algo_id *id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!name)
-		*id = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT;
-	else
+	if (name)
+		status = smw_utils_get_string_index(name, sign_algo_names,
+						    SMW_CONFIG_SIGN_ALGO_ID_NB,
+						    id);
+
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_config_get_signature_type_id(const char *name,
+				     enum smw_config_sign_type_id *id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (name)
 		status = smw_utils_get_string_index(name, sign_type_names,
 						    SMW_CONFIG_SIGN_TYPE_ID_NB,
 						    id);
 
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME;
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-int smw_config_get_tls_label_id(const char *name,
-				enum smw_config_tls_finish_label_id *id)
-{
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!name)
-		*id = SMW_CONFIG_TLS_FINISH_ID_INVALID;
-	else
-		status =
-			smw_utils_get_string_index(name, tls_finish_label_names,
-						   SMW_CONFIG_TLS_FINISH_ID_NB,
-						   id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_TLS_FINISH_LABEL_NAME;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

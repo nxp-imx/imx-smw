@@ -18,6 +18,6 @@ void hash_print_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "Params:\n"
-		       "\talgo_bitmap: %.8lX\n",
+		       "\talgo_bitmap: 0x%.8lX\n",
 		       p->algo_bitmap);
 }

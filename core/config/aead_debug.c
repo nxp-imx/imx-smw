@@ -18,8 +18,8 @@ void aead_common_print_params(void *params)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "Params:\n"
-		       "\tmode_bitmap: %.8lX\n"
-		       "\top_bitmap: %.8lX\n",
+		       "\tmode_bitmap: 0x%.8lX\n"
+		       "\top_bitmap: 0x%.8lX\n",
 		       p->mode_bitmap, p->op_bitmap);
 
 	print_key_params(&p->key);

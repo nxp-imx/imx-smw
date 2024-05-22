@@ -36,7 +36,7 @@ void print_key_params(struct op_key *key)
 
 	SMW_DBG_PRINTF(DEBUG,
 		       "Key params:\n"
-		       "\tkey_type_bitmap: %.8lX\n"
+		       "\tkey_type_bitmap: 0x%.8lX\n"
 		       "\tkey_size_range:\n%s",
 		       key->type_bitmap, buf);
 }

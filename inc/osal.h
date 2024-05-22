@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2019-2023 NXP
+ * Copyright 2019-2024 NXP
  */
 
 #ifndef __OSAL_H__
@@ -11,6 +11,7 @@
 #include <stdarg.h>
 
 #include "smw_status.h"
+#include "smw/attr.h"
 
 /**
  * DOC:
@@ -23,10 +24,10 @@
 /**
  * struct osal_obj - OSAL object database operation parameters
  * @id: Object id output when object added, else input
- * @range: Object id range to generate (information set by SMW at object creation)
+ * @range: Object id range to generate (set by SMW at object creation)
  * @range.min: Minimum value
  * @range.max: Maximum value
- * @persistence: Object persistence (information set by SMW at object creation)
+ * @attributes: Object attributes (set by SMW at object creation)
  * @info: Object information to store or restore
  * @info_size: Size of the object information
  *
@@ -43,7 +44,7 @@ struct osal_obj {
 		unsigned int max;
 	} range;
 
-	int persistence;
+	smw_attr_attributes_t attributes;
 	void *info;
 	size_t info_size;
 };

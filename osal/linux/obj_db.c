@@ -386,7 +386,7 @@ int obj_db_add(struct osal_obj *obj)
 
 	entry.id = free_id;
 	entry.flags = ENTRY_USE;
-	entry.persistence = obj->persistence;
+	entry.attributes = obj->attributes;
 	entry.info_size = obj->info_size;
 
 	ret = write_obj_db(db, &entry, obj->info, pos);

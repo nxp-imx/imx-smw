@@ -15,6 +15,7 @@
 #include <pthread.h>
 
 #include "smw_osal.h"
+#include "smw/attr.h"
 
 #include "builtin_macros.h"
 #include "compiler.h"
@@ -87,7 +88,7 @@ enum obj_flags {
 /**
  * struct obj_entry - Object entry header in object database
  * @id: 32 bits object id in the DB
- * @persistence: Object persistence
+ * @attributes: Object attributes
  * @flags: Flags state of the entry
  * @info_size: Object information block size
  *
@@ -105,7 +106,7 @@ enum obj_flags {
 struct obj_entry {
 	unsigned int id;
 	enum obj_flags flags;
-	int persistence;
+	smw_attr_attributes_t attributes;
 	size_t info_size;
 	/* Info data block is right after the object entry header */
 };

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include <errno.h>
@@ -20,7 +20,7 @@ void dbg_entry(struct obj_entry *entry __maybe_unused)
 {
 	DBG_PRINTF(DEBUG, "Object ID         : %u\n", entry->id);
 	DBG_PRINTF(DEBUG, "       Flags      : %u\n", entry->flags);
-	DBG_PRINTF(DEBUG, "       Persistence: %u\n", entry->persistence);
+	DBG_PRINTF(DEBUG, "       Attributes : 0x08%x\n", entry->attributes);
 	DBG_PRINTF(DEBUG, "       Size       : %zu\n", entry->info_size);
 }
 

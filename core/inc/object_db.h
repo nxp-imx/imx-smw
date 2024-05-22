@@ -1,12 +1,11 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #ifndef __OBJECT_DB_H__
 #define __OBJECT_DB_H__
 
-#include "object.h"
 #include "keymgr.h"
 #include "storage.h"
 
@@ -18,7 +17,7 @@ union smw_object_db_info {
 /**
  * smw_object_db_create() - Create an object in the database
  * @id: New object identifier created in the database
- * @persistence_id: Object persistence ID
+ * @attributes: Object attributes
  * @info: Object information
  *
  * Function creates a new object in the OSAL object database. The
@@ -32,14 +31,13 @@ union smw_object_db_info {
  * SMW_STATUS_OPS_INVALID       - OSAL operation invalid
  * SMW_STATUS_OBJ_DB_CREATE     - Object creation error
  */
-int smw_object_db_create(unsigned int *id,
-			 enum smw_object_persistence_id persistence_id,
+int smw_object_db_create(unsigned int *id, smw_attr_attributes_t attributes,
 			 union smw_object_db_info *info);
 
 /**
  * smw_object_db_update() - Update an object in the database
  * @id: Object identifier to update in the database
- * @persistence_id: Object persistence ID
+ * @attributes: Object attributes
  * @info: Object information
  *
  * Function updates an object in the database. The given @identifier
@@ -50,27 +48,25 @@ int smw_object_db_create(unsigned int *id,
  * SMW_STATUS_OPS_INVALID       - OSAL operation invalid
  * SMW_STATUS_OBJ_DB_UPDATE     - Object update error
  */
-int smw_object_db_update(unsigned int id,
-			 enum smw_object_persistence_id persistence_id,
+int smw_object_db_update(unsigned int id, smw_attr_attributes_t attributes,
 			 union smw_object_db_info *info);
 
 /**
  * smw_object_db_delete() - Delete an object in the database
  * @id: Object identifier to delete in the database
- * @persistence_id: Object persistence ID
+ * @attributes: Object attributes
  *
  * Return:
  * SMW_STATUS_OK                - Success
  * SMW_STATUS_OPS_INVALID       - OSAL operation invalid
  * SMW_STATUS_OBJ_DB_DELETE     - Object delete error
  */
-int smw_object_db_delete(unsigned int id,
-			 enum smw_object_persistence_id persistence_id);
+int smw_object_db_delete(unsigned int id, smw_attr_attributes_t attributes);
 
 /**
  * smw_object_db_get_info() - Retrieve the object information from the database
  * @id: Object identifier in the database
- * @persistence_id: Object persistence ID
+ * @attributes: Object attributes
  * @info: Object information
  *
  * Return:
@@ -79,8 +75,7 @@ int smw_object_db_delete(unsigned int id,
  * SMW_STATUS_OBJ_DB_GET_INFO   - Object get information error
  * SMW_STATUS_UNKNOWN_ID        - Object ID is unknown
  */
-int smw_object_db_get_info(unsigned int id,
-			   enum smw_object_persistence_id persistence_id,
+int smw_object_db_get_info(unsigned int id, smw_attr_attributes_t attributes,
 			   union smw_object_db_info *info);
 
 #endif /* __OBJECT_DB_H__ */

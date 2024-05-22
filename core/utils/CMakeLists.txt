@@ -4,20 +4,16 @@ add_library(utils OBJECT "")
 set_target_properties(utils PROPERTIES C_VISIBILITY_PRESET hidden)
 target_sources(utils PRIVATE
                aead.c
-               attr.c
                base64.c
                cipher.c
                exec.c
                hash.c
                info.c
-               lifecycle.c
                list.c
                mac.c
                name.c
                object_db.c
-               object.c
-               operation_context.c
-               tlv.c)
+               operation_context.c)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
     target_sources(utils PRIVATE list_debug.c)

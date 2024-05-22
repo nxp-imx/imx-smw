@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -9,12 +9,12 @@
 #include "global.h"
 #include "object_db.h"
 
-static void prepare_osal_obj(unsigned int id, int persistence,
+static void prepare_osal_obj(unsigned int id, smw_attr_attributes_t attributes,
 			     union smw_object_db_info *info,
 			     struct osal_obj *obj)
 {
 	obj->id = id;
-	obj->persistence = persistence;
+	obj->attributes = attributes;
 	obj->info = info;
 	obj->info_size = sizeof(*info);
 
@@ -28,8 +28,7 @@ static void prepare_osal_obj(unsigned int id, int persistence,
 	}
 }
 
-int smw_object_db_create(unsigned int *id,
-			 enum smw_object_persistence_id persistence_id,
+int smw_object_db_create(unsigned int *id, smw_attr_attributes_t attributes,
 			 union smw_object_db_info *info)
 {
 	int ret = SMW_STATUS_OBJ_DB_CREATE;
@@ -44,7 +43,7 @@ int smw_object_db_create(unsigned int *id,
 	if (!ops || !ops->add_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(*id, persistence_id, info, &obj);
+	prepare_osal_obj(*id, attributes, info, &obj);
 
 	if (!ops->add_obj_info(&obj) && obj.id != INVALID_OBJ_ID) {
 		*id = obj.id;
@@ -54,8 +53,7 @@ int smw_object_db_create(unsigned int *id,
 	return ret;
 }
 
-int smw_object_db_update(unsigned int id,
-			 enum smw_object_persistence_id persistence_id,
+int smw_object_db_update(unsigned int id, smw_attr_attributes_t attributes,
 			 union smw_object_db_info *info)
 {
 	int ret = SMW_STATUS_OBJ_DB_UPDATE;
@@ -70,7 +68,7 @@ int smw_object_db_update(unsigned int id,
 	if (!ops || !ops->update_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(id, persistence_id, info, &obj);
+	prepare_osal_obj(id, attributes, info, &obj);
 
 	if (!ops->update_obj_info(&obj))
 		ret = SMW_STATUS_OK;
@@ -78,8 +76,7 @@ int smw_object_db_update(unsigned int id,
 	return ret;
 }
 
-int smw_object_db_delete(unsigned int id,
-			 enum smw_object_persistence_id persistence_id)
+int smw_object_db_delete(unsigned int id, smw_attr_attributes_t attributes)
 
 {
 	int ret = SMW_STATUS_OBJ_DB_DELETE;
@@ -91,7 +88,7 @@ int smw_object_db_delete(unsigned int id,
 	if (!ops || !ops->delete_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(id, persistence_id, NULL, &obj);
+	prepare_osal_obj(id, attributes, NULL, &obj);
 
 	if (!ops->delete_obj_info(&obj))
 		ret = SMW_STATUS_OK;
@@ -99,8 +96,7 @@ int smw_object_db_delete(unsigned int id,
 	return ret;
 }
 
-int smw_object_db_get_info(unsigned int id,
-			   enum smw_object_persistence_id persistence_id,
+int smw_object_db_get_info(unsigned int id, smw_attr_attributes_t attributes,
 			   union smw_object_db_info *info)
 {
 	int ret = SMW_STATUS_OBJ_DB_GET_INFO;
@@ -115,7 +111,7 @@ int smw_object_db_get_info(unsigned int id,
 	if (!ops || !ops->get_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(id, persistence_id, info, &obj);
+	prepare_osal_obj(id, attributes, info, &obj);
 
 	if (!ops->get_obj_info(&obj))
 		ret = SMW_STATUS_OK;

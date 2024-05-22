@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #include <tee_client_api.h>
@@ -16,9 +16,9 @@
 #include "sign_verify.h"
 #include "tee.h"
 
-#define SIGNATURE_TYPE_ID(_id)                                                 \
+#define SIGNATURE_TYPE_ID(_type, _id)                                          \
 	{                                                                      \
-		.smw_id = SMW_CONFIG_SIGN_TYPE_ID_##_id,                       \
+		.smw_id = SMW_CONFIG_SIGN_TYPE_ID_##_type,                     \
 		.tee_id = TEE_SIGNATURE_TYPE_##_id                             \
 	}
 
@@ -30,11 +30,9 @@
 static const struct {
 	enum smw_config_sign_type_id smw_id;
 	enum tee_signature_type tee_id;
-} signature_type_ids[] = {
-	SIGNATURE_TYPE_ID(DEFAULT),
-	SIGNATURE_TYPE_ID(RSASSA_PKCS1_V1_5),
-	SIGNATURE_TYPE_ID(RSASSA_PSS),
-};
+} signature_type_ids[] = { SIGNATURE_TYPE_ID(DEFAULT, DEFAULT),
+			   SIGNATURE_TYPE_ID(PKCS1_1_5, RSASSA_PKCS1_V1_5),
+			   SIGNATURE_TYPE_ID(PSS, RSASSA_PSS) };
 
 static int tee_convert_signature_type_id(enum smw_config_sign_type_id smw_id,
 					 enum tee_signature_type *tee_id)
@@ -107,28 +105,28 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		 * Salt length optional attribute is only for RSASSA-PSS
 		 * signature type.
 		 */
-		if (args->attributes.signature_type ==
+		if (args->attributes.type_id ==
 		    SMW_CONFIG_SIGN_TYPE_ID_DEFAULT) {
 			SMW_DBG_PRINTF(ERROR, "No signature type set\n");
 			status = SMW_STATUS_INVALID_PARAM;
 			goto exit;
-		} else if (args->attributes.signature_type ==
-				   SMW_CONFIG_SIGN_TYPE_ID_RSASSA_PKCS1_V1_5 &&
+		} else if (args->attributes.type_id ==
+				   SMW_CONFIG_SIGN_TYPE_ID_PKCS1_1_5 &&
 			   args->attributes.salt_length) {
 			SMW_DBG_PRINTF(ERROR,
 				       "Salt length not supported for %s\n",
-				       RSASSA_PKCS1_V1_5_STR);
+				       "RSA PKCS1_V1_5");
 			status = SMW_STATUS_INVALID_PARAM;
 			goto exit;
 		}
 	}
 
-	status = tee_convert_hash_algorithm_id(args->algo_id,
+	status = tee_convert_hash_algorithm_id(args->attributes.hash_id,
 					       &shared_params.hash_algorithm);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	status = tee_convert_signature_type_id(args->attributes.signature_type,
+	status = tee_convert_signature_type_id(args->attributes.type_id,
 					       &shared_params.signature_type);
 	if (status != SMW_STATUS_OK)
 		goto exit;

@@ -30,6 +30,7 @@ static int storage_store(void *args)
 	TEEC_Operation op = { 0 };
 	struct smw_storage_store_data_args *store_args = args;
 	struct smw_storage_data_descriptor *data_descriptor = NULL;
+	smw_attr_attributes_t attributes = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -53,8 +54,9 @@ static int storage_store(void *args)
 				 TEEC_NONE, TEEC_NONE);
 
 	op.params[0].value.a = smw_storage_get_data_identifier(data_descriptor);
-	if (data_descriptor->attributes.persistence_id !=
-	    SMW_OBJECT_PERSISTENCE_ID_TRANSIENT)
+
+	attributes = data_descriptor->data_attributes.attributes;
+	if (!SMW_ATTR_IS_TRANSIENT(attributes))
 		op.params[0].value.b = 1;
 
 	op.params[1].tmpref.buffer = smw_storage_get_data(data_descriptor);
@@ -86,6 +88,7 @@ static int storage_retrieve(void *args)
 	struct smw_storage_retrieve_data_args *retrieve_args = args;
 	struct smw_storage_data_descriptor *data_descriptor = NULL;
 	unsigned int data_length = 0;
+	smw_attr_attributes_t attributes = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -103,8 +106,9 @@ static int storage_retrieve(void *args)
 				 TEEC_NONE, TEEC_NONE);
 
 	op.params[0].value.a = smw_storage_get_data_identifier(data_descriptor);
-	if (data_descriptor->attributes.persistence_id !=
-	    SMW_OBJECT_PERSISTENCE_ID_TRANSIENT)
+
+	attributes = data_descriptor->data_attributes.attributes;
+	if (!SMW_ATTR_IS_TRANSIENT(attributes))
 		op.params[0].value.b = 1;
 
 	op.params[1].tmpref.buffer = smw_storage_get_data(data_descriptor);
@@ -141,6 +145,7 @@ static int storage_delete(void *args)
 	TEEC_Operation op = { 0 };
 	struct smw_storage_delete_data_args *delete_args = args;
 	struct smw_storage_data_descriptor *data_descriptor = NULL;
+	smw_attr_attributes_t attributes = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -156,8 +161,9 @@ static int storage_delete(void *args)
 					 TEEC_NONE);
 
 	op.params[0].value.a = smw_storage_get_data_identifier(data_descriptor);
-	if (data_descriptor->attributes.persistence_id !=
-	    SMW_OBJECT_PERSISTENCE_ID_TRANSIENT)
+
+	attributes = data_descriptor->data_attributes.attributes;
+	if (!SMW_ATTR_IS_TRANSIENT(attributes))
 		op.params[0].value.b = 1;
 
 	/* Invoke TA */
@@ -173,11 +179,14 @@ static int storage_get_data_info(void *args)
 	int status = SMW_STATUS_INVALID_PARAM;
 	TEEC_Operation op = { 0 };
 	struct smw_storage_data_descriptor *data_desc = args;
+	smw_attr_attributes_t attributes = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!args)
 		goto exit;
+
+	attributes = data_desc->data_attributes.attributes;
 
 	/*
 	 * Input
@@ -198,11 +207,11 @@ static int storage_get_data_info(void *args)
 		goto exit;
 
 	if (op.params[GET_DATA_INFO_IDX].value.a)
-		data_desc->attributes.persistence_id =
-			SMW_OBJECT_PERSISTENCE_ID_PERSISTENT;
+		data_desc->data_attributes.attributes =
+			SMW_ATTR_SET_PERSISTENT(attributes);
 	else
-		data_desc->attributes.persistence_id =
-			SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
+		data_desc->data_attributes.attributes =
+			SMW_ATTR_SET_TRANSIENT(attributes);
 
 	smw_storage_set_data_length(data_desc,
 				    op.params[GET_DATA_INFO_IDX].value.b);

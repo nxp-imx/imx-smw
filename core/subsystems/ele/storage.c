@@ -92,8 +92,8 @@ static int store_data_encrypted(struct subsystem_context *ele_ctx,
 	struct smw_storage_sign_args *sign_args = &args->sign_args;
 	struct smw_keymgr_identifier *key_identifier =
 		&enc_args->keys_desc[0]->identifier;
-	unsigned long lifecycle_flags =
-		data_descriptor->attributes.lifecycle_flags;
+	smw_attr_attributes_t attributes =
+		data_descriptor->data_attributes.attributes;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -109,7 +109,7 @@ static int store_data_encrypted(struct subsystem_context *ele_ctx,
 	    !op_args.iv && !op_args.iv_size)
 		op_args.flags |= HSM_OP_ENC_DATA_STORAGE_FLAGS_RANDOM_IV;
 
-	if (data_descriptor->attributes.rw_flags & SMW_STORAGE_READ_ONCE)
+	if (SMW_ATTR_IS_READ_ONCE(attributes))
 		op_args.flags |= HSM_OP_ENC_DATA_STORAGE_FLAGS_READ_ONCE;
 
 	op_args.enc_key_id = key_identifier->id;
@@ -126,7 +126,7 @@ static int store_data_encrypted(struct subsystem_context *ele_ctx,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = ele_set_lifecycle_flags(ele_ctx, lifecycle_flags,
+	status = ele_set_lifecycle_flags(ele_ctx, attributes,
 					 &op_args.lifecycle);
 	if (status != SMW_STATUS_OK)
 		goto end;

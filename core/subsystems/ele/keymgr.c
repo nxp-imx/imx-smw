@@ -12,6 +12,7 @@
 #include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
+#include "keymgr_attest.h"
 
 #include "common.h"
 
@@ -106,23 +107,31 @@ static const struct key_def {
 	KEY_DEF(RSA, RSA, rsa_public_key_length, rsa_modulus_length)
 };
 
-#define SIGN_ALGO(_sign_type_id)                                               \
+#define SIGN_ALGO(_algo_id, _type_id, _hash_id, _sign_algo)                    \
 	{                                                                      \
-		.signature_type_id = SMW_CONFIG_SIGN_TYPE_ID_##_sign_type_id,  \
-		.sign_algo = HSM_PKEY_ATTEST_ALGO_##_sign_type_id              \
+		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_##_algo_id,                 \
+		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_type_id,                 \
+		.hash_id = SMW_CONFIG_HASH_ALGO_ID_##_hash_id,                 \
+		.algo = HSM_PKEY_ATTEST_ALGO_##_sign_algo                      \
 	}
 
 /**
- * struct signature_type - ELE signature algorithm
- * @signature_type_id: SMW signature type ID
- * @sign_algo: ELE Sign algo ID
+ * struct signature_algo - ELE signature algorithm
+ * @algo_id: SMW signature algo ID
+ * @type_id: SMW signature type ID
+ * @hash_id: SMW signature hash ID
+ * @algo: ELE Sign algo ID
  */
-static const struct signature_type {
-	enum smw_config_sign_type_id signature_type_id;
-	hsm_op_pub_key_attest_algo_t sign_algo;
-} signature_type_list[] = { SIGN_ALGO(CMAC), SIGN_ALGO(ECDSA_SHA224),
-			    SIGN_ALGO(ECDSA_SHA256), SIGN_ALGO(ECDSA_SHA384),
-			    SIGN_ALGO(ECDSA_SHA512) };
+static const struct signature_algo {
+	enum smw_config_sign_algo_id algo_id;
+	enum smw_config_sign_type_id type_id;
+	enum smw_config_hash_algo_id hash_id;
+	hsm_op_pub_key_attest_algo_t algo;
+} signature_algo_list[] = { SIGN_ALGO(DEFAULT, CMAC, INVALID, CMAC),
+			    SIGN_ALGO(ECDSA, DEFAULT, SHA224, ECDSA_SHA224),
+			    SIGN_ALGO(ECDSA, DEFAULT, SHA256, ECDSA_SHA256),
+			    SIGN_ALGO(ECDSA, DEFAULT, SHA384, ECDSA_SHA384),
+			    SIGN_ALGO(ECDSA, DEFAULT, SHA512, ECDSA_SHA512) };
 
 static unsigned int ecc_public_key_length(unsigned int security_size)
 {
@@ -182,17 +191,15 @@ static const struct key_def *get_key_def_by_ele_type(unsigned int key_type)
 	return ret_key;
 }
 
-static enum smw_keymgr_privacy_id
-get_key_privacy_by_ele_type(unsigned int key_type)
+static void get_key_privacy_by_ele_type(unsigned int key_type,
+					enum smw_keymgr_privacy_id *privacy)
 {
-	enum smw_keymgr_privacy_id privacy = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+	*privacy = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 
 	if (key_type & ELE_ASYM_KEYPAIR_TYPE_MASK)
-		privacy = SMW_KEYMGR_PRIVACY_ID_PAIR;
+		*privacy = SMW_KEYMGR_PRIVACY_ID_PAIR;
 	else if (key_type & ELE_ASYM_PUBLIC_KEY_TYPE_MASK)
-		privacy = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
-
-	return privacy;
+		*privacy = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
 }
 
 static int get_full_ele_key_type(enum smw_config_key_type_id key_type_id,
@@ -216,49 +223,45 @@ static int get_full_ele_key_type(enum smw_config_key_type_id key_type_id,
 	return status;
 }
 
-static enum smw_object_persistence_id
-get_key_persistence(hsm_key_lifetime_t lifetime)
+static void get_key_persistence(hsm_key_lifetime_t lifetime,
+				smw_attr_attributes_t *attributes)
 {
-	enum smw_object_persistence_id persistence_id =
-		SMW_OBJECT_PERSISTENCE_ID_INVALID;
-
 	switch (ELE_KEY_LIFETIME_PERSISTENCE_GET(lifetime)) {
 	case ELE_KEY_TRANSIENT:
-		persistence_id = SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
+		*attributes = SMW_ATTR_SET_TRANSIENT(*attributes);
 		break;
 
 	case ELE_KEY_PERSISTENT:
-		persistence_id = SMW_OBJECT_PERSISTENCE_ID_PERSISTENT;
+		*attributes = SMW_ATTR_SET_PERSISTENT(*attributes);
 		break;
 
 	case ELE_KEY_PERMANENT:
-		persistence_id = SMW_OBJECT_PERSISTENCE_ID_PERMANENT;
+		*attributes = SMW_ATTR_SET_PERMANENT(*attributes);
 		break;
 
 	default:
 		break;
 	}
-
-	return persistence_id;
 }
 
-static int set_sign_algo(enum smw_config_sign_type_id signature_type_id,
-			 hsm_op_pub_key_attest_algo_t *sign_algo)
+static int set_sign_algo(struct smw_sign_verify_attributes *attributes,
+			 hsm_op_pub_key_attest_algo_t *algo)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	unsigned int i = 0;
-	unsigned int size = ARRAY_SIZE(signature_type_list);
+	unsigned int size = ARRAY_SIZE(signature_algo_list);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < size; i++) {
-		if (signature_type_list[i].signature_type_id ==
-		    signature_type_id) {
-			*sign_algo = signature_type_list[i].sign_algo;
+		if (signature_algo_list[i].algo_id == attributes->algo_id &&
+		    signature_algo_list[i].type_id == attributes->type_id &&
+		    signature_algo_list[i].hash_id == attributes->hash_id) {
+			*algo = signature_algo_list[i].algo;
 
 			SMW_DBG_PRINTF(DEBUG, "ELE signature algorithm: %d\n",
-				       *sign_algo);
+				       *algo);
 
 			status = SMW_STATUS_OK;
 			break;
@@ -352,10 +355,8 @@ static int delete_key_operation(hsm_hdl_t key_mgt_hdl,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	op_args.key_identifier = key_identifier->id;
-	if (key_identifier->persistence_id ==
-		    SMW_OBJECT_PERSISTENCE_ID_PERSISTENT ||
-	    key_identifier->persistence_id ==
-		    SMW_OBJECT_PERSISTENCE_ID_PERMANENT)
+	if (SMW_ATTR_IS_PERSISTENT(key_identifier->attributes) ||
+	    SMW_ATTR_IS_PERMANENT(key_identifier->attributes))
 		op_args.flags = HSM_OP_DEL_KEY_FLAGS_STRICT_OPERATION;
 
 	SMW_DBG_PRINTF(VERBOSE,
@@ -717,18 +718,18 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 	op_generate_key_args_t op_args = { 0 };
 
 	struct smw_keymgr_generate_key_args *key_args = args;
-	struct smw_keymgr_attributes *key_attrs = &key_args->key_attributes;
 	struct smw_keymgr_descriptor *key_desc = &key_args->key_descriptor;
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
+	struct smw_key_attributes *key_attributes = key_args->key_attributes;
 	unsigned char *public_data = NULL;
 	uint32_t key_id = 0;
 	unsigned char *tmp_key = NULL;
-	int policy_status = SMW_STATUS_KEY_POLICY_ERROR;
-	unsigned char *actual_policy = NULL;
-	unsigned int actual_policy_len = 0;
 	unsigned int public_length = 0;
+	smw_attr_attributes_t persistence = 0;
 	bool persistent_grp = false;
 	unsigned int key_group = 0;
+	smw_attr_algo_t actual_permitted_algo = 0;
+	smw_attr_usage_t actual_usage_flags = SMW_ATTR_USAGE_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -773,18 +774,18 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		goto end;
 	}
 
-	policy_status =
-		ele_set_key_policy(key_attrs->policy, key_attrs->policy_len,
-				   &op_args.key_usage, &op_args.permitted_algo,
-				   &actual_policy, &actual_policy_len);
-	if (policy_status != SMW_STATUS_OK &&
-	    policy_status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
-		status = policy_status;
-		goto end;
+	if (key_attributes) {
+		ele_set_key_policy(&op_args.permitted_algo, &op_args.key_usage,
+				   key_attributes->permitted_algo,
+				   key_attributes->usage_flags);
+		ele_get_key_policy(&actual_permitted_algo, &actual_usage_flags,
+				   op_args.permitted_algo, op_args.key_usage);
 	}
 
-	switch (key_args->key_attributes.persistence_id) {
-	case SMW_OBJECT_PERSISTENCE_ID_PERSISTENT:
+	persistence = SMW_ATTR_GET_PERSISTENCE(key_identifier->attributes);
+
+	switch (persistence) {
+	case SMW_ATTR_PERSISTENCE_PERSISTENT:
 		op_args.key_lifetime = HSM_SE_KEY_STORAGE_PERSISTENT;
 		/* Force persistent key to be written in NVM */
 		op_args.flags |= HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
@@ -792,7 +793,7 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		persistent_grp = true;
 		break;
 
-	case SMW_OBJECT_PERSISTENCE_ID_PERMANENT:
+	case SMW_ATTR_PERSISTENCE_PERMANENT:
 		op_args.key_lifetime = HSM_SE_KEY_STORAGE_PERS_PERM;
 		/* Force permanant key to be written in NVM */
 		op_args.flags |= HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
@@ -899,6 +900,16 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		}
 	}
 
+	if (key_attributes &&
+	    (key_attributes->usage_flags != actual_usage_flags ||
+	     key_attributes->permitted_algo != actual_permitted_algo)) {
+		key_attributes->usage_flags = actual_usage_flags;
+		key_attributes->permitted_algo = actual_permitted_algo;
+
+		if (status == SMW_STATUS_OK)
+			status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	}
+
 end:
 	tmp_status = close_key_mgt_service(key_mgt_hdl);
 
@@ -907,18 +918,6 @@ end:
 
 	if (tmp_key)
 		SMW_UTILS_FREE(tmp_key);
-
-	if (status == SMW_STATUS_OK &&
-	    policy_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
-		status = policy_status;
-
-	if (actual_policy) {
-		if (status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
-			smw_keymgr_set_attributes_list(key_attrs, actual_policy,
-						       actual_policy_len);
-
-		SMW_UTILS_FREE(actual_policy);
-	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -1070,6 +1069,8 @@ static int delete_key(struct subsystem_context *ele_ctx, void *args)
 
 	struct smw_keymgr_delete_key_args *key_args = args;
 	struct smw_keymgr_descriptor *key_desc = &key_args->key_descriptor;
+	smw_attr_attributes_t attributes = 0;
+	bool is_transient = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1084,10 +1085,12 @@ static int delete_key(struct subsystem_context *ele_ctx, void *args)
 		status = tmp_status;
 
 		/* Let assume there is place to add a new key */
+		attributes = key_desc->identifier.attributes;
+		is_transient = SMW_ATTR_IS_TRANSIENT(attributes);
+
 		tmp_status =
 			set_key_group_state(ele_ctx, key_desc->identifier.group,
-					    key_desc->identifier.persistence_id,
-					    false);
+					    !is_transient, false);
 		if (status == SMW_STATUS_OK)
 			status = tmp_status;
 	}
@@ -1158,15 +1161,15 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_get_key_attributes_args *key_attrs = NULL;
+	struct smw_keymgr_get_key_attributes_args *key_args = args;
+	struct smw_keymgr_identifier *key_identifier = &key_args->identifier;
+	struct smw_key_attributes *key_attributes = key_args->key_attributes;
 	op_get_key_attr_args_t op_key_attrs = { 0 };
 	const struct key_def *key_def = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	key_attrs = args;
-
-	op_key_attrs.key_identifier = key_attrs->identifier.id;
+	op_key_attrs.key_identifier = key_identifier->id;
 
 	status = get_key_attributes_operation(hdl, &op_key_attrs);
 	if (status != SMW_STATUS_OK)
@@ -1178,21 +1181,25 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	key_attrs->identifier.type_id = key_def->key_type_id;
-	key_attrs->identifier.security_size = op_key_attrs.bit_key_sz;
-	key_attrs->identifier.privacy_id =
-		get_key_privacy_by_ele_type(op_key_attrs.key_type);
-	key_attrs->identifier.persistence_id =
-		get_key_persistence(op_key_attrs.key_lifetime);
-	key_attrs->identifier.storage_id =
+	key_identifier->type_id = key_def->key_type_id;
+	key_identifier->security_size = op_key_attrs.bit_key_sz;
+	get_key_privacy_by_ele_type(op_key_attrs.key_type,
+				    &key_identifier->privacy_id);
+	key_identifier->storage_id =
 		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
-	key_attrs->attributes.lifecycle_flags =
-		ele_get_key_lifecycles(op_key_attrs.lifecycle);
+	ele_get_key_lifecycles(op_key_attrs.lifecycle,
+			       &key_identifier->attributes);
+	get_key_persistence(op_key_attrs.key_lifetime,
+			    &key_identifier->attributes);
 
-	status = ele_get_key_policy(&key_attrs->attributes.policy,
-				    &key_attrs->attributes.policy_len,
-				    op_key_attrs.key_usage,
-				    op_key_attrs.permitted_algo);
+	if (key_attributes) {
+		ele_get_key_policy(&key_attributes->permitted_algo,
+				   &key_attributes->usage_flags,
+				   op_key_attrs.permitted_algo,
+				   op_key_attrs.key_usage);
+		key_attributes->storage_id = key_identifier->storage_id;
+		key_attributes->attributes = key_identifier->attributes;
+	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1255,7 +1262,7 @@ static int key_attestation(struct hdl *hdl, void *args)
 	op_args.key_identifier = attest_args->key_descriptor.identifier.id;
 	op_args.key_attestation_id = attest_key_descriptor->identifier.id;
 
-	status = set_sign_algo(attest_args->signature_type_id,
+	status = set_sign_algo(&attest_args->sign_attributes,
 			       &op_args.attest_algo);
 	if (status != SMW_STATUS_OK)
 		goto end;

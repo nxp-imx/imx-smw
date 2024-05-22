@@ -4,7 +4,6 @@
  */
 
 #include "debug.h"
-#include "tlv.h"
 #include "utils.h"
 
 #include "common.h"
@@ -39,30 +38,28 @@ end:
 	return status;
 }
 
-unsigned int ele_get_key_lifecycles(hsm_key_lifecycle_t ele_lifecycles)
+void ele_get_key_lifecycles(hsm_key_lifecycle_t ele_lifecycles,
+			    smw_attr_attributes_t *attributes)
 {
-	unsigned int i = 0;
-	unsigned int lc_flags = 0;
-
-	for (; ele_lifecycles && i < ARRAY_SIZE(lifecycles); i++) {
-		if (ele_lifecycles & lifecycles[i].ele)
-			lc_flags |= lifecycles[i].smw;
-	}
-
-	return lc_flags;
+	if (ele_lifecycles & HSM_KEY_LIFECYCLE_OPEN)
+		*attributes = SMW_ATTR_SET_LC_OPEN(*attributes);
+	if (ele_lifecycles & HSM_KEY_LIFECYCLE_CLOSED)
+		*attributes = SMW_ATTR_SET_LC_CLOSED(*attributes);
+	if (ele_lifecycles & HSM_KEY_LIFECYCLE_CLOSED_LOCKED)
+		*attributes = SMW_ATTR_SET_LC_CLOSED_LOCKED(*attributes);
 }
 
 int ele_set_lifecycle_flags(struct subsystem_context *ele_ctx,
-			    unsigned long smw_flags, uint16_t *ele_flags)
+			    smw_attr_attributes_t attributes,
+			    uint16_t *ele_flags)
 {
 	int status = SMW_STATUS_OK;
 
-	unsigned int i = 0;
 	uint16_t lifecycle = 0;
 
 	*ele_flags = 0;
 
-	if (smw_flags & SMW_LIFECYCLE_CURRENT) {
+	if (SMW_ATTR_IS_LC_CURRENT(attributes)) {
 		status = get_current_lifecycle(ele_ctx, &lifecycle);
 		if (status != SMW_STATUS_OK)
 			goto end;
@@ -70,10 +67,14 @@ int ele_set_lifecycle_flags(struct subsystem_context *ele_ctx,
 		*ele_flags |= lifecycle;
 	}
 
-	for (; i < ARRAY_SIZE(lifecycles); i++) {
-		if (smw_flags & lifecycles[i].smw)
-			*ele_flags |= lifecycles[i].ele;
-	}
+	if (SMW_ATTR_IS_LC_OPEN(attributes))
+		*ele_flags |= HSM_KEY_LIFECYCLE_OPEN;
+
+	if (SMW_ATTR_IS_LC_CLOSED(attributes))
+		*ele_flags |= HSM_KEY_LIFECYCLE_CLOSED;
+
+	if (SMW_ATTR_IS_LC_CLOSED_LOCKED(attributes))
+		*ele_flags |= HSM_KEY_LIFECYCLE_CLOSED_LOCKED;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

@@ -23,8 +23,8 @@
 #define SIGNATURE_SCHEME_ID(_key_type_id, _key_sizes, _hash, _scheme)          \
 	{                                                                      \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,          \
-		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_hash,                    \
 		.security_sizes = _key_sizes,                                  \
+		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_hash,                    \
 		.scheme_id = HSM_SIGNATURE_SCHEME_##_scheme                    \
 	}
 
@@ -37,8 +37,8 @@ static const unsigned int ecdsa_r1_key_sizes[] = { 224, 256, 384, 0 };
 
 static const struct signature_scheme {
 	enum smw_config_key_type_id key_type_id;
-	enum smw_config_hash_algo_id algo_id;
 	const unsigned int *security_sizes;
+	enum smw_config_hash_algo_id algo_id;
 	hsm_signature_scheme_id_t scheme_id;
 } signature_schemes[] = {
 	SIGNATURE_SCHEME_ID(ECDSA_NIST, ecdsa_nist_key_sizes, INVALID,
@@ -136,8 +136,7 @@ static int sign(struct hdl *hdl, void *args)
 	}
 
 	/* TLS finish case */
-	if (sign_args->attributes.tls_label !=
-	    SMW_CONFIG_TLS_FINISH_ID_INVALID) {
+	if (sign_args->attributes.algo_id == SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2) {
 		status = tls_mac_finish(hdl, args);
 		goto end;
 	}
@@ -153,14 +152,15 @@ static int sign(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	if (sign_args->algo_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
+	if (sign_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 	else
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
 
 	status = set_signature_scheme(key_identifier->type_id,
 				      key_identifier->security_size,
-				      sign_args->algo_id, &op_args.scheme_id);
+				      sign_args->attributes.hash_id,
+				      &op_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -257,11 +257,12 @@ static int verify(struct hdl *hdl, void *args)
 	}
 
 	status = set_signature_scheme(key_type_id, security_size,
-				      verify_args->algo_id, &op_args.scheme_id);
+				      verify_args->attributes.hash_id,
+				      &op_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (verify_args->algo_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
+	if (verify_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 	else
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;

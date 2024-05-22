@@ -262,8 +262,8 @@ int ele_convert_err(hsm_err_t err);
 
 /**
  * ele_set_pubkey_type() - Set the ELE public key type
- * @key_type_id: SMW Key type id
- * @ele_type: ELE key type corresponding
+ * @key_type_id: SMW Key type ID.
+ * @ele_type: ELE key type corresponding.
  *
  * Return:
  * SMW_STATUS_OK                       - Success
@@ -274,34 +274,27 @@ int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
 
 /**
  * ele_set_key_policy() - Convert the user key policy to ELE key policy
- * @policy: Pointer to the key policy
- * @policy_len: Length of @policy
- * @ele_usage: ELE key usage(s) bit mask
- * @ele_algo: ELE key permitted algorithm (first algorithm defined)
- * @actual_policy: Key attributes policy used
- * @actual_policy_len: Length of key attributes policy used
+ * @ele_permitted_algo: Pointer to ELE permitted algorithm.
+ * @ele_usage_flags: Pointer to ELE usage flags.
+ * @smw_permitted_algo: SMW permitted algorithm.
+ * @smw_usage_flags: SMW usage flags.
  *
  * Return:
  * SMW_STATUS_OK                         - Success
- * SMW_STATUS_KEY_POLICY_ERROR           - User key policy definition error
  * SMW_STATUS_KEY_POLICY_WARNING_IGNORED - One of the user key policy is ignored
  * Other SMW status error.
  */
-int ele_set_key_policy(const unsigned char *policy, unsigned int policy_len,
-		       hsm_key_usage_t *ele_usage,
-		       hsm_permitted_algo_t *ele_algo,
-		       unsigned char **actual_policy,
-		       unsigned int *actual_policy_len);
+void ele_set_key_policy(hsm_permitted_algo_t *ele_permitted_algo,
+			hsm_key_usage_t *ele_usage_flags,
+			smw_attr_algo_t smw_permitted_algo,
+			smw_attr_usage_t smw_usage_flags);
 
 /**
  * ele_get_key_policy() - Convert the ELE key policy to user key policy
- * @policy: Pointer to the key policy
- * @policy_len: Length of @policy
- * @ele_usage: ELE key usage(s) bit mask
- * @ele_algo: ELE key permitted algorithm
- *
- * On success, the function allocates the @policy buffer and returns its length
- * in the @policy_len.
+ * @smw_permitted_algo: Pointer to SMW permitted algorithm.
+ * @smw_usage_flags: Pointer to SMW usage flags.
+ * @ele_permitted_algo: ELE permitted algorithm.
+ * @ele_usage_flags: ELE usage flags.
  *
  * Return:
  * SMW_STATUS_OK                         - Success
@@ -309,14 +302,15 @@ int ele_set_key_policy(const unsigned char *policy, unsigned int policy_len,
  * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failure
  * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
  */
-int ele_get_key_policy(unsigned char **policy, unsigned int *policy_len,
-		       hsm_key_usage_t ele_usage,
-		       hsm_permitted_algo_t ele_algo);
+void ele_get_key_policy(smw_attr_algo_t *smw_permitted_algo,
+			smw_attr_usage_t *smw_usage_flags,
+			hsm_permitted_algo_t ele_permitted_algo,
+			hsm_key_usage_t ele_usage_flags);
 
 /**
  * ele_export_public_key() - Export the ELE public key
  * @hdl: Pointer to the ELE handles structure.
- * @key_desc: Key descriptor
+ * @key_desc: Key descriptor.
  *
  * The function exports the public key of the given @key_desc->identifier.id.
  * The following fields of @key_desc parameters are output:
@@ -337,7 +331,7 @@ int ele_export_public_key(struct hdl *hdl,
 /**
  * ele_get_current_lifecycle_id() - Get the device lifecycle SMW id
  * @ele_ctx: Pointer to the ELE subsystem context structure.
- * @lifecycle: SMW Device lifecycle
+ * @lifecycle: SMW Device lifecycle.
  *
  * Return:
  * SMW_STATUS_OK                         - Success
@@ -353,18 +347,20 @@ int ele_get_device_lifecycle_id(struct subsystem_context *ele_ctx,
 
 /**
  * ele_get_key_lifecycles() - Convert the ELE lifecycles to SMW lifecycles
- * @ele_lifecycle: ELE lifecycle(s) bit mask
+ * @ele_lifecycle: ELE lifecycle(s) bit mask.
+ * @attributes: SMW key attributes.
  *
  * Return:
- * SMW lifecycle flags bit mask
+ * None.
  */
-unsigned int ele_get_key_lifecycles(hsm_key_lifecycle_t ele_lifecycles);
+void ele_get_key_lifecycles(hsm_key_lifecycle_t ele_lifecycles,
+			    smw_attr_attributes_t *attributes);
 
 /**
  * ele_set_lifecycle_flags() - Convert the SMW lifecycle flags to ELE flags
  * @ele_ctx: Pointer to the ELE subsystem context structure.
- * @smw_flags: SMW lifecycle flags
- * @ele_flags: ELE lifecycle flags
+ * @attributes: SMW key attributes.
+ * @ele_flags: ELE lifecycle flags.
  *
  * Return:
  * SMW_STATUS_OK                         - Success
@@ -375,13 +371,14 @@ unsigned int ele_get_key_lifecycles(hsm_key_lifecycle_t ele_lifecycles);
  * SMW_STATUS_OPERATION_FAILURE          - Unexpected operation failure
  */
 int ele_set_lifecycle_flags(struct subsystem_context *ele_ctx,
-			    unsigned long smw_flags, uint16_t *ele_flags);
+			    smw_attr_attributes_t attributes,
+			    uint16_t *ele_flags);
 
 /**
  * ele_set_cipher_algo() - Set the ELE cipher algorithm
- * @key_type_id: SMW Key type id
- * @cipher_mode_id: SMW cipher mode ID
- * @cipher_algo: ELE cipher algorithm ID
+ * @key_type_id: SMW Key type ID.
+ * @cipher_mode_id: SMW cipher mode ID.
+ * @cipher_algo: ELE cipher algorithm ID.
  *
  * Return:
  * SMW_STATUS_OK                       - Success

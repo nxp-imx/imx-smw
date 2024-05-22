@@ -245,17 +245,18 @@ get_tls12_kdf_info(struct smw_keymgr_tls12_args *args)
 static void delete_db_shared_keys(unsigned int *ids_array, int nb_shared_keys)
 {
 	int idx = 0;
-	struct smw_keymgr_identifier identifier = { 0 };
+	struct smw_keymgr_identifier key_identifier = { 0 };
 
-	identifier.id = INVALID_KEY_ID;
-	identifier.subsystem_id = SUBSYSTEM_ID_SECO;
+	key_identifier.id = INVALID_KEY_ID;
+	key_identifier.subsystem_id = SUBSYSTEM_ID_SECO;
 	/* Only transient key are generated */
-	identifier.persistence_id = SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
+	key_identifier.attributes =
+		SMW_ATTR_SET_TRANSIENT(key_identifier.attributes);
 
 	/* Delete all keys from the database */
 	for (; idx < nb_shared_keys && ids_array[idx] != INVALID_KEY_ID;
 	     idx++) {
-		(void)smw_keymgr_db_delete(ids_array[idx], &identifier);
+		(void)smw_keymgr_db_delete(ids_array[idx], &key_identifier);
 	}
 }
 
@@ -269,7 +270,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	int idx = 0;
 	unsigned int *new_key_id = new_key_ids;
 	unsigned int *shared_key_id = shared_key_ids;
-	struct smw_keymgr_identifier identifier = { 0 };
+	struct smw_keymgr_identifier key_identifier = { 0 };
 	struct smw_keymgr_tls12_args *tls_args = NULL;
 	const struct tls12_kdf_info *kdf_info = NULL;
 
@@ -282,34 +283,37 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	for (; !shared_key_id && idx < nb_shared_keys; idx++)
 		new_key_ids[idx] = INVALID_KEY_ID;
 
-	identifier.id = INVALID_KEY_ID;
-	identifier.subsystem_id = SUBSYSTEM_ID_SECO;
+	key_identifier.id = INVALID_KEY_ID;
+	key_identifier.subsystem_id = SUBSYSTEM_ID_SECO;
 	/* Only transient key are generated */
-	identifier.persistence_id = SMW_OBJECT_PERSISTENCE_ID_TRANSIENT;
-	if (SET_OVERFLOW(key_group, identifier.group))
+	key_identifier.attributes =
+		SMW_ATTR_SET_TRANSIENT(key_identifier.attributes);
+	if (SET_OVERFLOW(key_group, key_identifier.group))
 		return SMW_STATUS_OPERATION_FAILURE;
 
 	if (nb_shared_keys == TLS12_NB_KEYS_WITH_MAC) {
 		/*
 		 * Create the Client and Server MAC write keys
 		 */
-		identifier.type_id = kdf_info->mac_key_id;
-		identifier.security_size = kdf_info->mac_security_size;
+		key_identifier.type_id = kdf_info->mac_key_id;
+		key_identifier.security_size = kdf_info->mac_security_size;
 
-		status = smw_keymgr_get_privacy_id(identifier.type_id,
-						   &identifier.privacy_id);
+		status = smw_keymgr_get_privacy_id(key_identifier.type_id,
+						   &key_identifier.privacy_id);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
 		if (!shared_key_id) {
 			/* Create the Client MAC write Key */
-			status = smw_keymgr_db_create(new_key_id, &identifier);
+			status = smw_keymgr_db_create(new_key_id,
+						      &key_identifier);
 		} else {
 			/* Update the Client MAC write Key */
-			identifier.id = *shared_key_id++;
+			key_identifier.id = *shared_key_id++;
 			smw_keymgr_tls12_set_client_w_mac_key_id(tls_args,
 								 *new_key_id);
-			status = smw_keymgr_db_update(*new_key_id, &identifier);
+			status = smw_keymgr_db_update(*new_key_id,
+						      &key_identifier);
 		}
 
 		if (status != SMW_STATUS_OK) {
@@ -322,13 +326,15 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 
 		if (!shared_key_id) {
 			/* Create the Server MAC write Key */
-			status = smw_keymgr_db_create(new_key_id, &identifier);
+			status = smw_keymgr_db_create(new_key_id,
+						      &key_identifier);
 		} else {
 			/* Update the Server MAC write Key */
-			identifier.id = *shared_key_id++;
+			key_identifier.id = *shared_key_id++;
 			smw_keymgr_tls12_set_server_w_mac_key_id(tls_args,
 								 *new_key_id);
-			status = smw_keymgr_db_update(*new_key_id, &identifier);
+			status = smw_keymgr_db_update(*new_key_id,
+						      &key_identifier);
 		}
 		new_key_id++;
 
@@ -343,21 +349,21 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	/*
 	 * Create Client and Server encryption write keys
 	 */
-	identifier.type_id = kdf_info->enc_key_id;
-	identifier.security_size = kdf_info->enc_security_size;
-	status = smw_keymgr_get_privacy_id(identifier.type_id,
-					   &identifier.privacy_id);
+	key_identifier.type_id = kdf_info->enc_key_id;
+	key_identifier.security_size = kdf_info->enc_security_size;
+	status = smw_keymgr_get_privacy_id(key_identifier.type_id,
+					   &key_identifier.privacy_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	if (!shared_key_id) {
 		/* Create the Client Encryption write Key */
-		status = smw_keymgr_db_create(new_key_id, &identifier);
+		status = smw_keymgr_db_create(new_key_id, &key_identifier);
 	} else {
 		/* Update the Client Encryption write Key */
-		identifier.id = *shared_key_id++;
+		key_identifier.id = *shared_key_id++;
 		smw_keymgr_tls12_set_client_w_enc_key_id(tls_args, *new_key_id);
-		status = smw_keymgr_db_update(*new_key_id, &identifier);
+		status = smw_keymgr_db_update(*new_key_id, &key_identifier);
 	}
 	new_key_id++;
 
@@ -369,12 +375,12 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 
 	if (!shared_key_id) {
 		/* Create the Server Encryption write Key */
-		status = smw_keymgr_db_create(new_key_id, &identifier);
+		status = smw_keymgr_db_create(new_key_id, &key_identifier);
 	} else {
 		/* Update the Server Encryption write Key */
-		identifier.id = *shared_key_id++;
+		key_identifier.id = *shared_key_id++;
 		smw_keymgr_tls12_set_server_w_enc_key_id(tls_args, *new_key_id);
-		status = smw_keymgr_db_update(*new_key_id, &identifier);
+		status = smw_keymgr_db_update(*new_key_id, &key_identifier);
 	}
 	new_key_id++;
 
@@ -387,21 +393,21 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	/*
 	 * Create the Master Key
 	 */
-	identifier.type_id = SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY;
-	identifier.security_size = TLS12_MASTER_SECRET_SEC_SIZE;
-	status = smw_keymgr_get_privacy_id(identifier.type_id,
-					   &identifier.privacy_id);
+	key_identifier.type_id = SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY;
+	key_identifier.security_size = TLS12_MASTER_SECRET_SEC_SIZE;
+	status = smw_keymgr_get_privacy_id(key_identifier.type_id,
+					   &key_identifier.privacy_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	if (!shared_key_id) {
 		/* Create the Master Key */
-		status = smw_keymgr_db_create(new_key_id, &identifier);
+		status = smw_keymgr_db_create(new_key_id, &key_identifier);
 	} else {
 		/* Update the Master Key */
-		identifier.id = *shared_key_id;
+		key_identifier.id = *shared_key_id;
 		smw_keymgr_tls12_set_master_sec_key_id(tls_args, *new_key_id);
-		status = smw_keymgr_db_update(*new_key_id, &identifier);
+		status = smw_keymgr_db_update(*new_key_id, &key_identifier);
 	}
 
 	if (status != SMW_STATUS_OK) {
@@ -696,8 +702,10 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 	status = add_update_db_shared_keys(args, nb_shared_keys, new_key_ids,
 					   shared_key_ids, key_group);
 
-	if (args->key_attributes.policy) {
-		seco_set_empty_key_policy(&args->key_attributes);
+	if (args->key_attributes && (args->key_attributes->permitted_algo ||
+				     args->key_attributes->usage_flags)) {
+		args->key_attributes->permitted_algo = 0;
+		args->key_attributes->usage_flags = 0;
 		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 	}
 

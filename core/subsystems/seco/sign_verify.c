@@ -132,8 +132,7 @@ static int sign(struct hdl *hdl, void *args)
 	}
 
 	/* TLS finish case */
-	if (sign_args->attributes.tls_label !=
-	    SMW_CONFIG_TLS_FINISH_ID_INVALID) {
+	if (sign_args->attributes.algo_id == SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2) {
 		status = tls_mac_finish(hdl, args);
 		goto end;
 	}
@@ -167,7 +166,7 @@ static int sign(struct hdl *hdl, void *args)
 		op_generate_sign_args.signature = signature;
 	}
 
-	if (sign_args->algo_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
+	if (sign_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
 		op_generate_sign_args.flags =
 			HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 	else
@@ -176,7 +175,7 @@ static int sign(struct hdl *hdl, void *args)
 
 	status = set_signature_scheme(key_identifier->type_id,
 				      key_identifier->security_size,
-				      sign_args->algo_id,
+				      sign_args->attributes.hash_id,
 				      &op_generate_sign_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -318,12 +317,13 @@ static int verify(struct hdl *hdl, void *args)
 	}
 
 	status = set_signature_scheme(key_descriptor->identifier.type_id,
-				      security_size, verify_args->algo_id,
+				      security_size,
+				      verify_args->attributes.hash_id,
 				      &op_verify_sign_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (verify_args->algo_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
+	if (verify_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
 		op_verify_sign_args.flags =
 			HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 	else

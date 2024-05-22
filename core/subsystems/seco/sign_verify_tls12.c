@@ -20,17 +20,17 @@
 
 #define TLS_FINISH_FLAG(_label)                                                \
 	{                                                                      \
-		.tls_finish_label_id = SMW_CONFIG_TLS_FINISH_ID_##_label,      \
+		.tls_finish_label_id = SMW_CONFIG_SIGN_TYPE_ID_##_label,       \
 		.tls_finish_flag = HSM_OP_TLS_FINISH_FLAGS_##_label            \
 	}
 
 static const struct {
-	enum smw_config_tls_finish_label_id tls_finish_label_id;
+	enum smw_config_sign_type_id tls_finish_label_id;
 	hsm_op_tls_finish_flags_t tls_finish_flag;
 } tls_finish_flags[] = { TLS_FINISH_FLAG(CLIENT), TLS_FINISH_FLAG(SERVER) };
 
 static void
-set_tls_finish_flag(enum smw_config_tls_finish_label_id tls_finish_label_id,
+set_tls_finish_flag(enum smw_config_sign_type_id tls_finish_label_id,
 		    hsm_op_tls_finish_flags_t *tls_finish_flag)
 {
 	unsigned int i = 0;
@@ -95,7 +95,7 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 
 	SMW_DBG_ASSERT(smw_args);
 
-	status = set_tls_finish_algo_id(smw_args->algo_id,
+	status = set_tls_finish_algo_id(smw_args->attributes.hash_id,
 					&op_tls_args.hash_algorithm);
 	if (status != SMW_STATUS_OK)
 		return status;
@@ -110,7 +110,7 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	op_tls_args.handshake_hash_input =
 		smw_sign_verify_get_msg_buf(smw_args);
 	op_tls_args.verify_data_output = smw_sign_verify_get_sign_buf(smw_args);
-	set_tls_finish_flag(smw_args->attributes.tls_label, &op_tls_args.flags);
+	set_tls_finish_flag(smw_args->attributes.type_id, &op_tls_args.flags);
 
 	if (SET_OVERFLOW(smw_sign_verify_get_msg_len(smw_args),
 			 op_tls_args.handshake_hash_input_size)) {

@@ -216,15 +216,6 @@ bool seco_aead_handle(struct hdl *hdl, enum operation_id operation_id,
 int seco_convert_err(hsm_err_t err);
 
 /**
- * seco_set_empty_key_policy() - Set empty key policy.
- * @key_attributes: Key attributes.
- *
- * Return:
- * None.
- */
-void seco_set_empty_key_policy(struct smw_keymgr_attributes *key_attributes);
-
-/**
  * seco_export_public_key() - Export the SECO public key
  * @hdl: Pointer to the SECO handles structure.
  * @key_desc: Key descriptor

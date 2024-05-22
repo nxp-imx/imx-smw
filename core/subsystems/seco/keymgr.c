@@ -9,7 +9,6 @@
 #include "debug.h"
 #include "utils.h"
 #include "base64.h"
-#include "tlv.h"
 #include "operations.h"
 #include "subsystems.h"
 #include "config.h"
@@ -103,23 +102,6 @@ static unsigned short get_public_key_length(hsm_key_type_t key_type)
 
 	SMW_DBG_PRINTF(DEBUG, "Public key size %d bytes\n", length);
 	return length;
-}
-
-void seco_set_empty_key_policy(struct smw_keymgr_attributes *key_attributes)
-{
-	unsigned char *attributes_list =
-		key_attributes->pub_key_attributes_list;
-
-	SMW_DBG_ASSERT(attributes_list);
-
-	smw_tlv_set_type(&attributes_list, POLICY_STR);
-
-	SMW_DBG_ASSERT(*key_attributes->pub_key_attributes_list_length >=
-		       attributes_list -
-			       key_attributes->pub_key_attributes_list);
-
-	*key_attributes->pub_key_attributes_list_length =
-		attributes_list - key_attributes->pub_key_attributes_list;
 }
 
 static int
@@ -287,31 +269,32 @@ end:
 }
 
 static int delete_key_operation(struct subsystem_context *seco_ctx,
-				struct smw_keymgr_descriptor *key_desc,
-				bool flush)
+				struct smw_keymgr_identifier *key_identifier)
 {
 	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 
 	op_manage_key_args_t manage_key_args = { 0 };
+	bool is_transient = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	manage_key_args.key_identifier = &key_desc->identifier.id;
+	manage_key_args.key_identifier = &key_identifier->id;
 	manage_key_args.flags = HSM_OP_MANAGE_KEY_FLAGS_DELETE;
 
-	if (flush)
+	if (SMW_ATTR_IS_PERSISTENT(key_identifier->attributes) ||
+	    SMW_ATTR_IS_PERMANENT(key_identifier->attributes))
 		manage_key_args.flags |=
 			HSM_OP_MANAGE_KEY_FLAGS_STRICT_OPERATION;
 
-	status = set_key_type(key_desc->identifier.type_id,
-			      key_desc->identifier.security_size,
+	status = set_key_type(key_identifier->type_id,
+			      key_identifier->security_size,
 			      &manage_key_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	manage_key_args.key_group = key_desc->identifier.group;
+	manage_key_args.key_group = key_identifier->group;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_manage_key()\n"
@@ -337,9 +320,9 @@ static int delete_key_operation(struct subsystem_context *seco_ctx,
 		goto end;
 
 	/* Let assume there is place to add a new key */
-	status = seco_set_key_group_state(seco_ctx, key_desc->identifier.group,
-					  key_desc->identifier.persistence_id,
-					  false);
+	is_transient = SMW_ATTR_IS_TRANSIENT(key_identifier->attributes);
+	status = seco_set_key_group_state(seco_ctx, key_identifier->group,
+					  !is_transient, false);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -359,14 +342,16 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 		&generate_key_args->key_descriptor;
 	struct smw_keymgr_identifier *key_identifier =
 		&key_descriptor->identifier;
+	struct smw_key_attributes *key_attributes =
+		generate_key_args->key_attributes;
 	unsigned char *public_data = NULL;
 	uint32_t key_id = 0;
 	unsigned char *tmp_key = NULL;
 	unsigned short key_size = 0;
 	hsm_key_type_t key_type = 0;
+	smw_attr_attributes_t persistence = 0;
 	bool persistent_grp = false;
 	unsigned int key_group = 0;
-	bool flush_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -396,21 +381,23 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (generate_key_args->key_attributes.flush_key) {
-		flush_key = true;
+	persistence = SMW_ATTR_GET_PERSISTENCE(key_identifier->attributes);
+
+	switch (persistence) {
+	case SMW_ATTR_PERSISTENCE_PERSISTENT:
+		op_generate_key_args.key_info = HSM_KEY_INFO_PERSISTENT;
+		/* Force persistent key to be written in NVM */
 		op_generate_key_args.flags |=
 			HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
-	}
-
-	switch (generate_key_args->key_attributes.persistence_id) {
-	case SMW_OBJECT_PERSISTENCE_ID_PERSISTENT:
-		op_generate_key_args.key_info = HSM_KEY_INFO_PERSISTENT;
 		key_group = SECO_FIRST_PERSISTENT_KEY_GROUP;
 		persistent_grp = true;
 		break;
 
-	case SMW_OBJECT_PERSISTENCE_ID_PERMANENT:
+	case SMW_ATTR_PERSISTENCE_PERMANENT:
 		op_generate_key_args.key_info = HSM_KEY_INFO_PERMANENT;
+		/* Force permanant key to be written in NVM */
+		op_generate_key_args.flags |=
+			HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
 		key_group = SECO_FIRST_PERSISTENT_KEY_GROUP;
 		persistent_grp = true;
 		break;
@@ -491,13 +478,15 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 			 * Delete the key in subsystem as smw_generate_key()
 			 * is going to remove it from the key database
 			 */
-			(void)delete_key_operation(seco_ctx, key_descriptor,
-						   flush_key);
+			(void)delete_key_operation(seco_ctx,
+						   &key_descriptor->identifier);
 		}
 	}
 
-	if (generate_key_args->key_attributes.policy) {
-		seco_set_empty_key_policy(&generate_key_args->key_attributes);
+	if (key_attributes &&
+	    (key_attributes->permitted_algo || key_attributes->usage_flags)) {
+		key_attributes->permitted_algo = 0;
+		key_attributes->usage_flags = 0;
 		if (status == SMW_STATUS_OK)
 			status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 	}
@@ -561,9 +550,10 @@ static int export_key(struct hdl *hdl, void *args)
 static int delete_key(struct subsystem_context *seco_ctx, void *args)
 {
 	struct smw_keymgr_delete_key_args *delete_key_args = args;
+	struct smw_keymgr_identifier *key_identifier =
+		&delete_key_args->key_descriptor.identifier;
 
-	return delete_key_operation(seco_ctx, &delete_key_args->key_descriptor,
-				    delete_key_args->key_attributes.flush_key);
+	return delete_key_operation(seco_ctx, key_identifier);
 }
 
 static int get_key_lengths(struct hdl *hdl, void *args)

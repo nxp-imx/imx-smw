@@ -20,8 +20,9 @@
 
 #include "common.h"
 
-#define STORAGE_MANAGER_WAIT_MS 10  /* 10 ms */
-#define STORAGE_MANAGER_TIMEOUT 100 /* 100x WAIT_MS */
+#define STORAGE_MANAGER_WAIT_MS	   10  /* 10 ms */
+#define STORAGE_MANAGER_TIMEOUT	   100 /* 100x WAIT_MS */
+#define STORAGE_MANAGER_RETRIES_NB 2   /* Number of retries starting NVM  */
 
 static struct subsystem_context seco_ctx = { 0 };
 
@@ -438,6 +439,9 @@ static int start_storage_manager(void)
 				       "Storage manager failed to start (%d)\n",
 				       seco_ctx.nvm_status);
 			(void)smw_utils_thread_cancel(seco_ctx.tid);
+
+			wait_ms(STORAGE_MANAGER_WAIT_MS);
+
 			status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
 			seco_ctx.tid = 0;
 			break;
@@ -448,6 +452,8 @@ static int start_storage_manager(void)
 		SMW_DBG_PRINTF(DEBUG, "Storage manager stopped (%d)\n",
 			       seco_ctx.nvm_status);
 		status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
+
+		seco_ctx.tid = 0;
 	}
 
 end:
@@ -516,6 +522,7 @@ static int load(void)
 {
 	int status = SMW_STATUS_OK;
 	int status_mutex = SMW_STATUS_OK;
+	unsigned int retry = STORAGE_MANAGER_RETRIES_NB;
 
 	struct hdl *hdl = &seco_ctx.hdl;
 
@@ -526,7 +533,18 @@ static int load(void)
 		goto end;
 	}
 
-	status = start_storage_manager();
+	/*
+	 * Start the NVM Secure Storage, if the first attempt fails,
+	 * retries one more time.
+	 */
+	do {
+		status = start_storage_manager();
+		if (status == SMW_STATUS_OK)
+			break;
+
+		retry--;
+	} while (retry);
+
 	if (status != SMW_STATUS_OK)
 		goto end;
 

@@ -76,6 +76,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add ELE subsystem attestation key permitted algorithm.
 * Remove SMW_STATUS_DATA_ALREADY_RETRIEVED no more used in ELE subsystem.
 * Implement SM4 block cipher for TEE subsystem.
+* Add SECO NVM Secure Storage start new attempt in case of failure
 
 ##### 3. ARM PSA APIs
 

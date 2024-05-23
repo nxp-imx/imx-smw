@@ -3,50 +3,49 @@
 		"key AES": {
 			"type": "AES",
 			"security_size": 128,
-			"policy": {
-				"encrypt": [
-					[ "ECB_NO_PADDING" ]
-				],
-				"decrypt": [
-					[ "ECB_NO_PADDING" ]
-				]
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
 		},
 		"key ECDSA sign": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_hash": [
-					[ "ECDSA", "HASH=SHA256" ]
-				],
-				"sign_message": [
-					[ "ECDSA", "HASH=SHA256" ]
-				]
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
 		},
 		"key ECDSA verify": {
 			"type": "NIST",
 			"security_size": 384,
-			"policy": {
-				"verify_hash": [
-					[ "ECDSA", "HASH=SHA384" ]
-				],
-				"verify_message": [
-					[ "ECDSA", "HASH=SHA384" ]
-				]
-			}
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA384"
+			]
 		},
 		"key MAC": {
 			"type": "AES",
 			"security_size": 256,
-			"policy":{
-				"sign_message": [
-					[ "CMAC", "MIN_LENGTH=8" ]
-				],
-				"verify_message": [
-					[ "CMAC", "MIN_LENGTH=8" ]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"CMAC",
+				"MIN_LENGTH=8"
+			]
 		}
 	},
 	"subtest 1": {

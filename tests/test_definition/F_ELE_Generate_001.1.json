@@ -3,27 +3,16 @@
 		"key 1": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				],
-				"verify_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			},
 			"attributes_list": [
-				[
-					"PERSISTENT"
-				],
-				[
-					"FLUSH_KEY"
-				]
+				"PERSISTENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
 			]
 		}
 	},

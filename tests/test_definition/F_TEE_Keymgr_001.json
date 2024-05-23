@@ -2,17 +2,17 @@
 	"keys": {
 		"key 1": {
 			"type": "AES",
-			"policy": {
-				"encrypt": []
-			},
-			"security_size": 128
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
-			"policy": {
-				"sign_message": []
-			},
-			"security_size": 256
+			"security_size": 256,
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {

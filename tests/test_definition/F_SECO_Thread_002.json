@@ -38,6 +38,9 @@
 		"subtest 1": {
 			"wait_before": "sem_t2",
 			"command": "SIGN",
+			"sign_attr": [
+				"DEFAULT"
+			],
 			"subsystem": "SECO",
 			"message": [
 				"54686973207068726173652069732033",

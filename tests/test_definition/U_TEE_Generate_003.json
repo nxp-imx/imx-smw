@@ -3,52 +3,52 @@
 		"key 1": {
 			"type": "HMAC_MD5",
 			"security_size": 256,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 2": {
 			"type": "HMAC_SHA1",
 			"security_size": 256,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 3": {
 			"type": "HMAC_SHA224",
 			"security_size": 256,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 4": {
 			"type": "HMAC_SHA256",
 			"security_size": 256,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 5": {
 			"type": "HMAC_SHA384",
 			"security_size": 256,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 6": {
 			"type": "HMAC_SHA512",
 			"security_size": 256,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 7": {
 			"type": "HMAC_SM3",
 			"security_size": 256,
-			"policy": {
-				"sign_message": []
-			}
-		},
+			"usage": [
+				"SIGN_MESSAGE"
+			]
+		}
 	},
 	"subtest 1": {
 		"command": "GENERATE",

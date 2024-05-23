@@ -3,62 +3,30 @@
 		"key 1":{
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				],
-				"sign_hash": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				],
-				"verify_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				],
-				"verify_hash": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE",
+				"SIGN_HASH",
+				"VERIFY_MESSAGE",
+				"VERIFY_HASH"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
 		},
 		"key 2":{
 			"type": "NIST",
 			"security_size": 384,
-			"policy": {
-				"sign_message": [
-					[
-						"ECDSA",
-						"HASH=SHA384"
-					]
-				],
-				"sign_hash": [
-					[
-						"ECDSA",
-						"HASH=SHA384"
-					]
-				],
-				"verify_message": [
-					[
-						"ECDSA",
-						"HASH=SHA384"
-					]
-				],
-				"verify_hash": [
-					[
-						"ECDSA",
-						"HASH=SHA384"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE",
+				"SIGN_HASH",
+				"VERIFY_MESSAGE",
+				"VERIFY_HASH"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA384"
+			]
 		}
 	},
 	"subtest 1": {
@@ -74,6 +42,9 @@
 	"subtest 3": {
 		"command": "SIGN",
 		"subsystem": "ELE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -85,6 +56,9 @@
 	"subtest 4": {
 		"command": "VERIFY",
 		"subsystem": "ELE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -96,7 +70,10 @@
 	"subtest 5": {
 		"command": "SIGN",
 		"subsystem": "ELE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -117,7 +94,10 @@
 	"subtest 6": {
 		"command": "VERIFY",
 		"subsystem": "ELE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -138,6 +118,9 @@
 	"subtest 7": {
 		"command": "SIGN",
 		"subsystem": "ELE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
 			"54498e0e5d096b18285e988d245b6f34",
@@ -150,6 +133,9 @@
 	"subtest 8": {
 		"command": "VERIFY",
 		"subsystem": "ELE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
 			"54498e0e5d096b18285e988d245b6f34",
@@ -163,7 +149,10 @@
 	"subtest 9": {
 		"command": "SIGN",
 		"subsystem": "ELE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -188,7 +177,10 @@
 	"subtest 10": {
 		"command": "VERIFY",
 		"subsystem": "ELE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -213,7 +205,10 @@
 	"subtest 11": { // Invalid signature verify
 		"command": "VERIFY",
 		"subsystem": "ELE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"bad101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",

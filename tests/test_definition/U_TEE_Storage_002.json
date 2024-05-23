@@ -9,7 +9,7 @@
 			"id": 22,
 			"data": "FEDCBA",
 			"attributes_list": [
-				["PERSISTENT"]
+				"PERSISTENT"
 			]
 		}
 	},

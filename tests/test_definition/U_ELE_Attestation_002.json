@@ -3,79 +3,68 @@
 		"key attested": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				],
-				"verify_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
 		},
 		"key NIST SHA224": {
 			"type": "NIST",
 			"security_size": 224,
-			"policy": {
-				"sign_message": [
-					[
-						"ATTEST_ECDSA",
-						"HASH=SHA224"
-					]
-				]
-			},
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ATTEST_ECDSA",
+				"HASH=SHA224"
+			]
 		},
 		"key NIST SHA256": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"ATTEST_ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			},
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ATTEST_ECDSA",
+				"HASH=SHA256"
+			]
 		},
 		"key NIST SHA384": {
 			"type": "NIST",
 			"security_size": 384,
-			"policy": {
-				"sign_message": [
-					[
-						"ATTEST_ECDSA",
-						"HASH=SHA384"
-					]
-				]
-			},
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ATTEST_ECDSA",
+				"HASH=SHA384"
+			]
 		},
 		"key NIST SHA512": {
 			"type": "NIST",
 			"security_size": 521,
-			"policy": {
-				"sign_message": [
-					[
-						"ATTEST_ECDSA",
-						"HASH=SHA512"
-					]
-				]
-			},
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ATTEST_ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key AES": {
 			"type": "AES",
 			"security_size": 128,
-			"policy": {
-				"sign_message": [
-					[
-						"ATTEST_CMAC"
-					]
-				]
-			},
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ATTEST_CMAC"
+			]
 		}
 	},
 	"subtest 1": {
@@ -112,7 +101,10 @@
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
 		"attest_key_name": "key NIST SHA224",
-		"signature_type": "ECDSA_SHA224",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA224"
+		],
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"restriction_list": "imx8ulp",
 		"depends": [1, 2]
@@ -121,7 +113,10 @@
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
 		"attest_key_name": "key NIST SHA256",
-		"signature_type": "ECDSA_SHA256",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"restriction_list": "imx8ulp",
 		"depends": [1, 3]
@@ -130,7 +125,10 @@
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
 		"attest_key_name": "key NIST SHA384",
-		"signature_type": "ECDSA_SHA384",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA384"
+		],
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"restriction_list": "imx8ulp",
 		"depends": [1, 4]
@@ -139,7 +137,10 @@
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
 		"attest_key_name": "key NIST SHA512",
-		"signature_type": "ECDSA_SHA512",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA512"
+		],
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"restriction_list": "imx8ulp",
 		"depends": [1, 5]
@@ -148,7 +149,9 @@
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
-		"signature_type": "CMAC",
+		"sign_attr": [
+			"CMAC"
+		],
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"restriction_list": "imx8ulp",
 		"depends": [1, 6]
@@ -158,7 +161,9 @@
 		"version": 255,
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
-		"signature_type": "CMAC",
+		"sign_attr": [
+			"CMAC"
+		],
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"depends": [1, 6]
@@ -182,7 +187,9 @@
 	"subtest 15": { // AES CMAC and undefined key
 		"command": "KEY_ATTESTATION",
 		"attest_key_name": "key AES",
-		"signature_type": "CMAC",
+		"sign_attr": [
+			"CMAC"
+		],
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 6
@@ -190,7 +197,9 @@
 	"subtest 16": { // Undefined attestation key
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
-		"signature_type": "CMAC",
+		"sign_attr": [
+			"CMAC"
+		],
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
@@ -199,7 +208,9 @@
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
-		"signature_type": "CMAC",
+		"sign_attr": [
+			"CMAC"
+		],
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"certificate": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
@@ -210,7 +221,9 @@
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
-		"signature_type": "CMAC",
+		"sign_attr": [
+			"CMAC"
+		],
 		"challenge": 16,
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"restriction_list": "imx8ulp",
@@ -220,7 +233,9 @@
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
-		"signature_type": "CMAC",
+		"sign_attr": [
+			"CMAC"
+		],
 		"challenge": [0, "000102030405060708090A0B0C0D0E0F"],
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": [1, 6]

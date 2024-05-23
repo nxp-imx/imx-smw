@@ -3,20 +3,14 @@
 		"key 1": {
 			"type": "RSA",
 			"security_size": 2048,
-			"policy": {
-				"sign_hash": [
-					[
-						"RSA_PKCS1V15",
-						"HASH=SHA384"
-					]
-				],
-				"sign_message": [
-					[
-						"RSA_PKCS1V15",
-						"HASH=SHA384"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=SHA384"
+			]
 		},
 		"key 2": {
 			"key_name": "key 1",

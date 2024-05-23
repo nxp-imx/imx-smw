@@ -3,18 +3,14 @@
 		"key 1": {
 			"type": "HMAC",
 			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"HMAC", "HASH=SHA256"
-					]
-				],
-				"verify_message": [
-					[
-						"HMAC", "HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			]
 		}
 	},
 	"subtest 1": {

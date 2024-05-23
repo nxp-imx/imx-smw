@@ -3,79 +3,78 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 128,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 2": {
 			"type": "AES",
 			"security_size": 192,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 3": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 4": {
 			"type": "DES",
 			"security_size": 56,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 5": {
 			"type": "DES3",
 			"security_size": 112,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 6": {
 			"type": "DES3",
 			"security_size": 168,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 7": {
 			"type": "NIST",
 			"security_size": 192,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"			]
 		},
 		"key 8": {
 			"type": "NIST",
 			"security_size": 224,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 9": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 10": {
 			"type": "NIST",
 			"security_size": 384,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 11": {
 			"type": "NIST",
 			"security_size": 521,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {

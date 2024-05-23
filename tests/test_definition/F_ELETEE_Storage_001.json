@@ -4,15 +4,15 @@
 			"id": 21,
 			"data": "FOOD",
 			"attributes_list": [
-				["PERSISTENT"]
+				"PERSISTENT"
 			]
 		},
 		"data 2": {
 			"id": 22,
 			"data": "CAFE",
 			"attributes_list": [
-				["READ_ONLY"],
-				["PERSISTENT"]
+				"READ_ONLY",
+				"PERSISTENT"
 			]
 		}
 	},

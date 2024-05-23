@@ -3,9 +3,9 @@
 		"key 1": {
 			"type": "SM4",
 			"security_size": 128,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		}
 	},
 	"subtest 1": {

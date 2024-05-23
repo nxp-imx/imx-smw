@@ -7,14 +7,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
 		},
 		"key NIST 2": {
 			"id": 805310465, // "0x30001001"
@@ -23,14 +22,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
 		}
 	},
 	"subtest 1": { // Generate key persistent with wrong ID
@@ -53,6 +51,9 @@
 	"subtest 4": {
 		"command": "SIGN",
 		"subsystem": "ELE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"

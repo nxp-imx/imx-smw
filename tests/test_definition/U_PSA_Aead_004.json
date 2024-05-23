@@ -3,10 +3,13 @@
 		"generated aes-gcm-128 key": {
 			"type": "AES",
 			"security_size": 128,
-			"policy": {
-				"encrypt": [ [ "GCM" ] ],
-				"decrypt": [ [ "GCM" ] ]
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
 		}
 	},
 	"subtest 1": {

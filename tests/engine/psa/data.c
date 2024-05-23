@@ -12,46 +12,24 @@
 #include "types.h"
 #include "util.h"
 #include "util_data.h"
+#include "util_attr.h"
 
 #include "data.h"
 
-static int read_data_attributes(psa_storage_create_flags_t *create_flags,
-				struct json_object *params)
+static void attributes_callback(void *user_data, const char *attributes[],
+				size_t n_attributes)
 {
-	int ret = ERR_CODE(BAD_ARGS);
+	psa_storage_create_flags_t *storage_flags = user_data;
+	size_t i = 0;
 
-	struct json_object *oattr_list = NULL;
-	struct json_object *oattr = NULL;
-	struct json_object *oattr_type = NULL;
-	const char *attr_name = NULL;
-	size_t nb_attrs = 0;
-	size_t idx = 0;
-
-	ret = util_read_json_type(&oattr_list, ATTR_LIST_OBJ, t_array, params);
-	if (ret == ERR_CODE(VALUE_NOTFOUND))
-		return ERR_CODE(PASSED);
-	else if (ret != ERR_CODE(PASSED))
-		return ret;
-
-	*create_flags = 0;
-
-	nb_attrs = json_object_array_length(oattr_list);
-
-	for (; idx < nb_attrs; idx++) {
-		oattr = json_object_array_get_idx(oattr_list, idx);
-		if (json_object_get_type(oattr) == json_type_array) {
-			oattr_type = json_object_array_get_idx(oattr, 0);
-
-			attr_name = json_object_get_string(oattr_type);
-			if (!attr_name)
-				continue;
-
-			if (!strcmp(attr_name, "READ_ONLY"))
-				*create_flags = PSA_STORAGE_FLAG_WRITE_ONCE;
+	for (; i < n_attributes; i++) {
+		if (attributes[i] && !strcmp(attributes[i], "READ_ONLY")) {
+			*storage_flags |= PSA_STORAGE_FLAG_WRITE_ONCE;
+			break;
 		}
 	}
 
-	return ret;
+	DBG_PRINT("PSA storage flags: %08x", *storage_flags);
 }
 
 static int read_descriptor(struct llist *data_list,
@@ -129,9 +107,10 @@ static int read_descriptor(struct llist *data_list,
 	else if (ret != ERR_CODE(MISSING_PARAMS))
 		return ret;
 
-	ret = read_data_attributes(&data_descriptor->create_flags,
-				   info->odata_params);
-	if (ret != ERR_CODE(PASSED))
+	ret = util_attr_read_attributes(info->odata_params, ATTR_LIST_OBJ,
+					&attributes_callback,
+					&data_descriptor->create_flags);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
 	return ERR_CODE(PASSED);

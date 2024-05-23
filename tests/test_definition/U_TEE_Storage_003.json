@@ -8,11 +8,11 @@
 			"id": 22,
 			"data": "FEDCBA",
 			"attributes_list": [
-				["READ_ONLY"],
-				["PERSISTENT"]
+				"READ_ONLY",
+				"PERSISTENT"
 			],
 			"lifecycle": [
-				["OPEN"]
+				"OPEN"
 			]
 		}
 	},

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -10,8 +10,8 @@
 #include <smw_crypto.h>
 
 #include "util.h"
+#include "util_attr.h"
 #include "util_sign.h"
-#include "util_tlv.h"
 
 #include "key.h"
 #include "sign_verify.h"
@@ -178,9 +178,9 @@ int sign_verify(struct subtest_data *subtest, int operation)
 		goto exit;
 	}
 
-	/* Get 'algo' optional parameter */
-	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string,
-				  subtest->params);
+	/* Signature attributes are not mandatory in case of error test */
+	res = util_attr_read_attributes(subtest->params, SIGN_ATTR_OBJ,
+					&algorithm_callback, &args.sign_algo);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
@@ -245,13 +245,6 @@ int sign_verify(struct subtest_data *subtest, int operation)
 	/* Specific test cases */
 	res = set_sign_verify_bad_args(subtest, &smw_sign_verify_args, exp_sign,
 				       exp_sign_length);
-	if (res != ERR_CODE(PASSED))
-		goto exit;
-
-	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs((unsigned char **)&args.attributes_list,
-				  &args.attributes_list_length,
-				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 

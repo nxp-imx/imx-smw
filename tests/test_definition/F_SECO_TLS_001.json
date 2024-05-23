@@ -54,13 +54,13 @@
 	"subtest 2": { // TLS MAC Finish with unsupported hash algorithm
 		"command": "SIGN",
 		"subsystem": "SECO",
-		"algo": "SHA512",
+		"sign_attr": [
+			"TLS_1_2_CLIENT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
-		],
-		"attributes_list": [
-			["TLS_MAC_FINISH", "CLIENT"]
 		],
 		"sign_id": 0,
 		"key_name": "master secret key",
@@ -70,13 +70,13 @@
 	"subtest 3": { // TLS MAC Finish with client label
 		"command": "SIGN",
 		"subsystem": "SECO",
-		"algo": "SHA256",
+		"sign_attr": [
+			"TLS_1_2_CLIENT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
-		],
-		"attributes_list": [
-			["TLS_MAC_FINISH", "CLIENT"]
 		],
 		"sign_id": 0,
 		"key_name": "master secret key",
@@ -85,13 +85,13 @@
 	"subtest 4": { // TLS MAC Finish with server label
 		"command": "SIGN",
 		"subsystem": "SECO",
-		"algo": "SHA256",
+		"sign_attr": [
+			"TLS_1_2_SERVER",
+			"HASH=SHA256"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
-		],
-		"attributes_list": [
-			["TLS_MAC_FINISH", "SERVER"]
 		],
 		"sign_id": 1,
 		"key_name": "master secret key",

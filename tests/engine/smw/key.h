@@ -318,4 +318,54 @@ int key_read_descriptors(struct subtest_data *subtest, const char *key,
 			 struct smw_key_descriptor ***keys_desc,
 			 struct keys *keys);
 
+/**
+ * algorithm_callback() - Set algorithm
+ * @user_data: Pointer to the algorithm.
+ * @params: List of algorithm parameters as strings.
+ * @n_params: Number of algorithm parameters.
+ *
+ * Return:
+ * None.
+ */
+void algorithm_callback(void *user_data, const char *params[], size_t n_params);
+
+/**
+ * usage_callback() - Set key usage
+ * @user_data: Pointer to the usage bitmap.
+ * @attributes: List of attributes as strings.
+ * @n_attributes: Number of attributes.
+ *
+ * Return:
+ * None.
+ */
+void usage_callback(void *user_data, const char *attributes[],
+		    size_t n_attributes);
+
+/**
+ * attributes_callback() - Set attributes
+ * @user_data: Pointer to the storage attributes bitmap.
+ * @attributes: List of attributes as strings.
+ * @n_attributes: Number of attributes.
+ *
+ * Return:
+ * None.
+ */
+void attributes_callback(void *user_data, const char *attributes[],
+			 size_t n_attributes);
+
+/**
+ * key_read_attributes() - Read the key attributes
+ * @params: json-c parameters.
+ * @attributes: Address where the attributes are written.
+ *
+ * This function reads the key attributes present in the test definition file.
+ * If no attribute is defined, @attributes is set to NULL.
+ *
+ * Return:
+ * PASSED		- Success
+ * Error code from util_attr_read_attributes
+ */
+int key_read_attributes(struct json_object *params,
+			struct smw_key_attributes **attributes);
+
 #endif /* __KEY_H__ */

@@ -14,11 +14,11 @@
 			"id": 11,
 			"data": "0102030405060708090A0B0C0D0E0FCC",
 			"attributes_list": [
-				["READ_ONLY"],
-				["READ_ONCE"],
+				"READ_ONLY",
+				"READ_ONCE"
 			],
 			"lifecycle": [
-				["OPEN"]
+				"OPEN"
 			]
 		}
 	},

@@ -3,12 +3,12 @@
 		"key 1": {
 			"type": "RSA",
 			"security_size": 1536,
-			"policy": {
-				"sign_hash": [],
-				"sign_message": [],
-				"verify_hash": [],
-				"verify_message": []
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {
@@ -16,10 +16,13 @@
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // No attributes are set
+	"subtest 2": { // Sign type is undefued
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"RSA",
+			"HASH=SHA512"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -41,6 +44,10 @@
 	"subtest 3": { // MD5 algorithm is set for PSS signature type
 		"command": "SIGN",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=MD5"
+		],
 		"algo": "MD5",
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
@@ -55,12 +62,6 @@
 			"96210d9254873643008d45f29cfd6c5b",
 			"060c9a"
 		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PSS"
-			]
-		],
 		"sign_id": 1,
 		"key_name": "key 1",
 		"depends": 1,
@@ -69,7 +70,11 @@
 	"subtest 4": { // Salt length is set for PKCS1 V1_5 signature type
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512",
+			"LENGTH=96"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -82,19 +87,6 @@
 			"7cc3273f5e3ba747f0cb65050cb72287",
 			"96210d9254873643008d45f29cfd6c5b",
 			"060c9a"
-		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PKCS1-V1_5"
-			],
-			[
-				"SALT_LEN",
-				[
-					1,
-					"60"
-				]
-			]
 		],
 		"sign_id": 2,
 		"key_name": "key 1",
@@ -104,7 +96,10 @@
 	"subtest 5": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -117,12 +112,6 @@
 			"7cc3273f5e3ba747f0cb65050cb72287",
 			"96210d9254873643008d45f29cfd6c5b",
 			"060c9a"
-		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PSS"
-			]
 		],
 		"sign_id": 3,
 		"key_name": "key 1",
@@ -131,7 +120,10 @@
 	"subtest 6": { // Signature type different from the one use for signature operation
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -144,12 +136,6 @@
 			"7cc3273f5e3ba747f0cb65050cb72287",
 			"96210d9254873643008d45f29cfd6c5b",
 			"060c9a"
-		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PKCS1-V1_5"
-			]
 		],
 		"sign_id": 3,
 		"key_name": "key 1",
@@ -159,7 +145,10 @@
 	"subtest 7": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA256"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -173,12 +162,6 @@
 			"96210d9254873643008d45f29cfd6c5b",
 			"060c9a"
 		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PSS"
-			]
-		],
 		"sign_id": 3,
 		"key_name": "key 1",
 		"depends": 5,
@@ -187,15 +170,13 @@
 	"subtest 8": { // No hash algo set and bad hashed message length
 		"command": "SIGN",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=NONE"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e67202121"
-		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PKCS1-V1_5"
-			]
 		],
 		"sign_id": 4,
 		"key_name": "key 1",

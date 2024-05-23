@@ -2,6 +2,7 @@ target_sources(${PROJECT_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/util.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_aead.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_attr.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_app.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_certificate.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_cipher.c
@@ -20,5 +21,4 @@ target_sources(${PROJECT_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/util_sign.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_status.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_thread.c
-               ${CMAKE_CURRENT_SOURCE_DIR}/util_tlv.c
                $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/util_debug.c>)

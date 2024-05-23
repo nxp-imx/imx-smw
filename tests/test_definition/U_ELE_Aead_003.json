@@ -3,18 +3,13 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": [
-					[
-						"GCM"
-					]
-				],
-				"decrypt": [
-					[
-						"GCM"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
 		}
 	},
 	"subtest 1": {

@@ -12,9 +12,64 @@
 #include "types.h"
 #include "util.h"
 #include "util_data.h"
-#include "util_tlv.h"
+#include "util_attr.h"
 
 #include "data.h"
+
+static const struct util_attr_info attributes_info[] = {
+	ATTR_LIFECYCLE(CURRENT),     ATTR_LIFECYCLE(OPEN),
+	ATTR_LIFECYCLE(CLOSED),	     ATTR_LIFECYCLE(CLOSED_LOCKED),
+	ATTR_RW_FLAGS(READ_ONCE),    ATTR_RW_FLAGS(READ_ONLY),
+	ATTR_PERSISTENCE(TRANSIENT), ATTR_PERSISTENCE(PERSISTENT),
+	ATTR_PERSISTENCE(PERMANENT), { .name = NULL }
+};
+
+static void attributes_callback(void *user_data, const char *attributes[],
+				size_t n_attributes)
+{
+	smw_attr_attributes_t *rw_flags = user_data;
+	size_t i = 0;
+
+	for (; i < n_attributes; i++)
+		*rw_flags |=
+			ATTR_ARRAY_FIND_MATCH(attributes_info, attributes[i])
+				.smw_attributes;
+
+	DBG_PRINT("SMW RW flags: %08x", *rw_flags);
+}
+
+static int read_data_attributes(struct json_object *params,
+				struct smw_data_attributes **data_attributes)
+{
+	int ret = ERR_CODE(PASSED);
+	int found = 0;
+
+	if (!params || !data_attributes || !*data_attributes) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	ret = util_attr_read_attributes(params, ATTR_LIST_OBJ,
+					&attributes_callback,
+					&((*data_attributes)->attributes));
+	if (ret == ERR_CODE(PASSED))
+		found++;
+	else if (ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
+
+	ret = util_attr_read_attributes(params, LIFECYCLE_OBJ,
+					&attributes_callback,
+					&((*data_attributes)->attributes));
+	if (ret == ERR_CODE(PASSED))
+		found++;
+	else if (ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
+
+	if (!found)
+		*data_attributes = NULL;
+
+	return ERR_CODE(PASSED);
+}
 
 static int read_descriptor(struct llist *data_list,
 			   struct smw_data_descriptor *data_descriptor,
@@ -22,8 +77,6 @@ static int read_descriptor(struct llist *data_list,
 {
 	int ret = ERR_CODE(PASSED);
 	struct data_info *info = NULL;
-	unsigned char *attrs = NULL;
-	unsigned int attrs_len = 0;
 	const char *parent_data_name = NULL;
 	void *dummy = NULL;
 
@@ -91,21 +144,10 @@ static int read_descriptor(struct llist *data_list,
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
-	ret = util_tlv_read_attrs(&attrs, &attrs_len, info->odata_params);
+	ret = read_data_attributes(info->odata_params,
+				   &data_descriptor->data_attributes);
 	if (ret != ERR_CODE(PASSED))
 		return ret;
-
-	ret = util_tlv_read_lifecycle(&attrs, &attrs_len, info->odata_params);
-	if (ret != ERR_CODE(PASSED))
-		return ret;
-
-	if (attrs && attrs_len) {
-		if (data_descriptor->attributes_list)
-			free(data_descriptor->attributes_list);
-
-		data_descriptor->attributes_list = attrs;
-		data_descriptor->attributes_list_length = attrs_len;
-	}
 
 	return ERR_CODE(PASSED);
 }

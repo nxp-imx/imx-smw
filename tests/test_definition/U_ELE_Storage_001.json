@@ -3,50 +3,35 @@
 		"encrypt key 1": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": [
-					[
-						"ECB_NO_PADDING"
-					]
-				],
-				"decrypt": [
-					[
-						"ECB_NO_PADDING"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
 		},
 		"encrypt key 2": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": [
-					[
-						"CFB"
-					]
-				],
-				"decrypt": [
-					[
-						"CFB"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CFB"
+			]
 		},
 		"sign key": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"CMAC"
-					]
-				],
-				"verify_message": [
-					[
-						"CMAC"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"CMAC"
+			]
 		}
 	},
 	"data_list": {
@@ -54,11 +39,11 @@
 			"id": 11,
 			"data": "0102030405060708090A0B0C0D0E0FCC",
 			"attributes_list": [
-				["READ_ONLY"],
-				["READ_ONCE"],
+				"READ_ONLY",
+				"READ_ONCE"
 			],
 			"lifecycle": [
-				["OPEN"]
+				"OPEN"
 			]
 		},
 		"data 1 retrieve": {
@@ -74,7 +59,7 @@
 			"id": 12,
 			"data": "0102030405060708090A0B0C0D0E0FCC",
 			"lifecycle": [
-				["CLOSED"]
+				"CLOSED"
 			]
 		},
 		"data 2 retrieve": {
@@ -90,12 +75,12 @@
 			"id": 13,
 			"data": "0102030405060708090A0B0C0D0E0FCC",
 			"attributes_list": [
-				["READ_ONLY"],
-				["READ_ONCE"]
+				"READ_ONLY",
+				"READ_ONCE"
 			],
 			"lifecycle": [
-				["CURRENT"],
-				["CLOSED"]
+				"CURRENT",
+				"CLOSED"
 			]
 		},
 		"data 3 retrieve": {
@@ -111,11 +96,11 @@
 			"id": 14,
 			"data": "0102030405060708090A0B0C0D0E0FCC",
 			"attributes_list": [
-				["READ_ONLY"],
-				["READ_ONCE"]
+				"READ_ONLY",
+				"READ_ONCE"
 			],
 			"lifecycle": [
-				["OPEN"]
+				"OPEN"
 			]
 		},
 		"data 4 retrieve": {

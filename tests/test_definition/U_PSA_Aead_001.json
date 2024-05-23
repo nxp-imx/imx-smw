@@ -3,24 +3,22 @@
 		"generated aes-ccm-128 key encrypt": {
 			"type": "AES",
 			"security_size": 128,
-			"policy": {
-				"encrypt": [
-					[
-						"CCM"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
 		},
 		"generated aes-ccm-128 key decrypt": {
 			"type": "AES",
 			"security_size": 128,
-			"policy": {
-				"decrypt": [
-					[
-						"CCM"
-					]
-				]
-			}
+			"usage": [
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
 		}
 	},
 	"subtest 1": {

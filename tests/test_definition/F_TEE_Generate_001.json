@@ -7,10 +7,9 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": { // Generate key persistent with correct ID
@@ -27,6 +26,9 @@
 	"subtest 3": {
 		"command": "SIGN",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"

@@ -3,16 +3,16 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 2": {
 			"type": "DES",
 			"security_size": 56,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 3": {
 			"format": "UNDEFINED"

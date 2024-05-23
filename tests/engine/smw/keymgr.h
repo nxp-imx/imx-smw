@@ -6,7 +6,6 @@
 #ifndef __KEYMGR_H__
 #define __KEYMGR_H__
 
-#include "json_types.h"
 #include "types.h"
 
 /**

@@ -3,26 +3,26 @@
 		"key AES": {
 			"type": "AES",
 			"security_size": 128,
-			"policy": {
-				"encrypt": [],
-				"decrypt": []
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
 		},
 		"key ECDSA sign": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_hash": [],
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			]
 		},
 		"key ECDSA verify": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"verify_hash": [],
-				"verify_message": []
-			}
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {

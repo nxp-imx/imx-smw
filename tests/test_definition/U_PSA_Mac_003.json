@@ -3,18 +3,14 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"CMAC", "LENGTH=8"
-					]
-				],
-				"verify_message": [
-					[
-						"CMAC", "LENGTH=8"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"CMAC",
+				"LENGTH=8"
+			]
 		}
 	},
 	"subtest 1": {

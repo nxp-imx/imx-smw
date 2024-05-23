@@ -7,11 +7,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 2": {
 			"id": 805310465, // 0x30001001
@@ -19,11 +21,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 3": {
 			"id": 805310466, // 0x30001002
@@ -31,11 +35,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 4": {
 			"id": 805310467, // 0x30001003
@@ -43,11 +49,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 5": {
 			"id": 805310468, // 0x30001004
@@ -55,11 +63,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 6": {
 			"id": 805310469, // 0x30001005
@@ -67,11 +77,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 7": {
 			"id": 805310470, // 0x30001006
@@ -79,11 +91,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 8": {
 			"id": 805310471, // 0x30001007
@@ -91,11 +105,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 9": {
 			"id": 805310472, // 0x30001008
@@ -103,23 +119,27 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 10": {
-			"id": 805310473, // 0x30001009
-			"key_name":"key NIST 1",
+			"id": 805310473,
+			"key_name": "key NIST 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 11": {
 			"id": 805310474, // 0x3000100A
@@ -127,11 +147,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key NIST 12": {
 			"id": 805310475, // 0x3000100B
@@ -139,11 +161,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": [
-					["ECDSA","HASH=SHA512"]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA512"
+			]
 		},
 		"key AES 1": {
 			"type": "AES",
@@ -152,13 +176,12 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"encrypt": [
-					[
-						"ECB_NO_PADDING"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
 		},
 		"key AES 2": {
 			"type": "AES",
@@ -167,13 +190,12 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"encrypt": [
-					[
-						"ECB_NO_PADDING"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
 		},
 		"key AES 3": {
 			"type": "AES",
@@ -182,15 +204,13 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"encrypt": [
-					[
-						"ECB_NO_PADDING"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
 		}
-
 	},
 	"subtest 1": {
 		"command": "GENERATE",

@@ -3,10 +3,10 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 128,
-			"policy": {
-				"encrypt": [],
-				"decrypt": []
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
 		}
 	},
 	"subtest 1": {

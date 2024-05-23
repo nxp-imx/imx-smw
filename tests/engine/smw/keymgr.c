@@ -12,7 +12,7 @@
 
 #include "util.h"
 #include "util_key.h"
-#include "util_tlv.h"
+#include "util_attr.h"
 
 #include "key.h"
 #include "keymgr.h"
@@ -43,26 +43,16 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 	struct smw_key_descriptor *desc = NULL;
 	unsigned int public_length = 0;
 	unsigned int modulus_length = 0;
-	unsigned char **attrs = NULL;
-	unsigned int *attrs_len = NULL;
 
-	if (!subtest || !args || !key_test || !key_test->keys)
+	if (!subtest || !args || !key_test || !key_test->keys ||
+	    !args->key_attributes)
 		return res;
 
 	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	attrs = (unsigned char **)&args->key_attributes_list;
-	attrs_len = &args->key_attributes_list_length;
-
-	/* Get the key policy */
-	res = util_tlv_read_key_policy(attrs, attrs_len, okey_params);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs(attrs, attrs_len, okey_params);
+	res = key_read_attributes(okey_params, &args->key_attributes);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -144,26 +134,17 @@ static int set_import_opt_params(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(BAD_ARGS);
 	struct json_object *okey_params = NULL;
-	unsigned char **attrs = NULL;
-	unsigned int *attrs_len = NULL;
 
-	if (!subtest || !args)
+	if (!subtest || !args || !args->key_attributes)
 		return res;
 
 	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	attrs = (unsigned char **)&args->key_attributes_list;
-	attrs_len = &args->key_attributes_list_length;
-
-	/* Get the key policy */
-	res = util_tlv_read_key_policy(attrs, attrs_len, okey_params);
+	res = key_read_attributes(okey_params, &args->key_attributes);
 	if (res != ERR_CODE(PASSED))
 		return res;
-
-	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs(attrs, attrs_len, okey_params);
 
 	return res;
 }
@@ -296,44 +277,6 @@ static int set_export_opt_params(struct subtest_data *subtest,
 			DBG_PRINT_ALLOC_FAILURE();
 			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		}
-	}
-
-	return res;
-}
-
-/**
- * set_delete_opt_params() - Set key delete optional parameters.
- * @subtest: Subtest data
- * @args: Pointer to smw delete key args structure to update.
- *
- * Return:
- * PASSED                   - Success.
- * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
- * -BAD_ARGS                - One of the arguments is bad.
- * -BAD_PARAM_TYPE          - A parameter value is undefined.
- * -FAILED                  - Error in definition file
- */
-static int set_delete_opt_params(struct subtest_data *subtest,
-				 struct smw_delete_key_args *args)
-{
-	int res = ERR_CODE(BAD_ARGS);
-	struct json_object *okey_params = NULL;
-	unsigned char **attrs = NULL;
-	unsigned int *attrs_len = NULL;
-
-	if (!subtest || !args)
-		return res;
-
-	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	if (okey_params) {
-		attrs = (unsigned char **)&args->key_attributes_list;
-		attrs_len = &args->key_attributes_list_length;
-
-		/* Get 'attributes_list' optional parameter */
-		res = util_tlv_read_attrs(attrs, attrs_len, okey_params);
 	}
 
 	return res;
@@ -684,6 +627,7 @@ int generate_key(struct subtest_data *subtest)
 	struct key_data key_data = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
 	struct smw_generate_key_args args = { 0 };
+	struct smw_key_attributes attributes = { 0 };
 	struct smw_generate_key_args *smw_gen_args = &args;
 	const char *key_name = NULL;
 
@@ -693,6 +637,7 @@ int generate_key(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.key_attributes = &attributes;
 
 	if (!strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
@@ -736,8 +681,11 @@ int generate_key(struct subtest_data *subtest)
 
 	/* Call generate key function and compare result with expected one */
 	subtest->smw_status = smw_generate_key(smw_gen_args);
-	if (subtest->smw_status == SMW_STATUS_OK ||
-	    subtest->smw_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
+
+	if (subtest->smw_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+		subtest->smw_status = SMW_STATUS_OK;
+
+	if (subtest->smw_status == SMW_STATUS_OK) {
 		key_prepare_key_data(&key_test, &key_data);
 		res = util_key_update_node(list_keys(subtest), key_name,
 					   &key_data);
@@ -747,9 +695,6 @@ int generate_key(struct subtest_data *subtest)
 
 exit:
 	key_free_key(&key_test);
-
-	if (args.key_attributes_list)
-		free((void *)args.key_attributes_list);
 
 	return res;
 }
@@ -786,11 +731,6 @@ int delete_key(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	/* Set optional parameters */
-	res = set_delete_opt_params(subtest, smw_del_args);
-	if (res != ERR_CODE(PASSED))
-		goto exit;
-
 	/* Specific test cases */
 	res = set_del_bad_args(subtest->params, &smw_del_args);
 	if (res != ERR_CODE(PASSED))
@@ -812,9 +752,6 @@ int delete_key(struct subtest_data *subtest)
 exit:
 	key_free_key(&key_test);
 
-	if (args.key_attributes_list)
-		free((void *)args.key_attributes_list);
-
 	return res;
 }
 
@@ -825,6 +762,7 @@ int import_key(struct subtest_data *subtest)
 	struct key_data key_data = { 0 };
 	struct smw_keypair_buffer key_buffer;
 	struct smw_import_key_args args = { 0 };
+	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_import_key_args *smw_import_args = &args;
 	const char *key_name = NULL;
 
@@ -840,6 +778,7 @@ int import_key(struct subtest_data *subtest)
 	else
 		args.subsystem_name = subtest->subsystem;
 
+	args.key_attributes = &key_attributes;
 	args.key_descriptor = &key_test.desc;
 
 	/* Key name is mandatory */
@@ -876,6 +815,10 @@ int import_key(struct subtest_data *subtest)
 
 	/* Call import key function and compare result with expected one */
 	subtest->smw_status = smw_import_key(smw_import_args);
+
+	if (subtest->smw_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+		subtest->smw_status = SMW_STATUS_OK;
+
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
 		goto exit;
@@ -886,9 +829,6 @@ int import_key(struct subtest_data *subtest)
 
 exit:
 	key_free_key(&key_test);
-
-	if (args.key_attributes_list)
-		free((void *)args.key_attributes_list);
 
 	return res;
 }
@@ -989,7 +929,10 @@ int get_key_attributes(struct subtest_data *subtest)
 	struct keypair_ops key_test = { 0 };
 	struct keypair_ops key_ref = { 0 };
 	struct smw_get_key_attributes_args args = { 0 };
+	struct smw_key_attributes key_ref_attributes = { 0 };
+	struct smw_key_attributes *key_ref_attributes_ptr = NULL;
 	const char *key_name = NULL;
+	struct json_object *okey_params = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -1011,6 +954,10 @@ int get_key_attributes(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
+	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
 	/* Initialize key descriptor, no key buffer */
 	res = key_desc_init(&key_test, NULL);
 	if (res != ERR_CODE(PASSED))
@@ -1025,12 +972,23 @@ int get_key_attributes(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
+	key_ref_attributes_ptr = &key_ref_attributes;
+
+	res = key_read_attributes(okey_params, &key_ref_attributes_ptr);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
 	/* Set only the key identifier */
 	key_test.desc.id = key_ref.desc.id;
 
 	subtest->smw_status = smw_get_key_attributes(&args);
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
+		goto exit;
+	}
+
+	if (!key_ref_attributes_ptr) {
+		res = ERR_CODE(PASSED);
 		goto exit;
 	}
 
@@ -1050,25 +1008,36 @@ int get_key_attributes(struct subtest_data *subtest)
 		error++;
 	}
 
-	if (error) {
-		res = ERR_CODE(FAILED);
-		goto exit;
+	if ((args.key_attributes.usage_flags &
+	     key_ref_attributes.usage_flags) !=
+	    key_ref_attributes.usage_flags) {
+		DBG_PRINT("Invalid usage flags %08x expected %08x",
+			  args.key_attributes.usage_flags,
+			  key_ref_attributes.usage_flags);
+		error++;
 	}
 
-	res = util_tlv_check_key_policy(subtest, args.policy_list,
-					args.policy_list_length);
+	if ((args.key_attributes.permitted_algo &
+	     key_ref_attributes.permitted_algo) !=
+	    key_ref_attributes.permitted_algo) {
+		DBG_PRINT("Invalid algorithm %016x expected %016x",
+			  args.key_attributes.permitted_algo,
+			  key_ref_attributes.permitted_algo);
+		error++;
+	}
 
-	if (res == ERR_CODE(PASSED))
-		res = util_tlv_check_lifecycle(args.lifecycle_list,
-					       args.lifecycle_list_length);
+	if ((args.key_attributes.attributes & key_ref_attributes.attributes) !=
+	    key_ref_attributes.attributes) {
+		DBG_PRINT("Invalid algorithm %08x expected %08x",
+			  args.key_attributes.attributes,
+			  key_ref_attributes.attributes);
+		error++;
+	}
+
+	if (error)
+		res = ERR_CODE(FAILED);
 
 exit:
-	if (args.policy_list)
-		free(args.policy_list);
-
-	if (args.lifecycle_list)
-		free(args.lifecycle_list);
-
 	key_free_key(&key_test);
 
 	return res;
@@ -1163,9 +1132,9 @@ int key_attestation(struct subtest_data *subtest)
 			goto exit;
 	}
 
-	/* Signature type is not mandatory in case of error test */
-	res = util_read_json_type(&args.signature_type_name, SIGN_TYPE_OBJ,
-				  t_string, subtest->params);
+	/* Signature attributes are not mandatory in case of error test */
+	res = util_attr_read_attributes(subtest->params, SIGN_ATTR_OBJ,
+					&algorithm_callback, &args.sign_algo);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 

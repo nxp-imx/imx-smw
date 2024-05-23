@@ -10,7 +10,6 @@
 
 #include "types.h"
 #include "util.h"
-#include "util_tlv.h"
 #include "data.h"
 #include "key.h"
 
@@ -18,9 +17,6 @@ static void free_data(struct smw_data_descriptor *data_descriptor)
 {
 	if (data_descriptor->data)
 		free(data_descriptor->data);
-
-	if (data_descriptor->attributes_list)
-		free(data_descriptor->attributes_list);
 }
 
 int storage_store(struct subtest_data *subtest)
@@ -29,6 +25,7 @@ int storage_store(struct subtest_data *subtest)
 
 	struct smw_store_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
+	struct smw_data_attributes data_attributes = { 0 };
 	struct smw_data_descriptor *data_descriptor_ptr = NULL;
 	struct smw_encryption_args encryption_args = { 0 };
 	struct smw_sign_args sign_args = { 0 };
@@ -46,6 +43,7 @@ int storage_store(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	data_descriptor.data_attributes = &data_attributes;
 
 	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
@@ -162,6 +160,7 @@ int storage_retrieve(struct subtest_data *subtest)
 
 	struct smw_retrieve_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
+	struct smw_data_attributes data_attributes = { 0 };
 	struct smw_data_descriptor *data_descriptor_ptr = NULL;
 	const char *data_name = NULL;
 	unsigned char *expected_data = NULL;
@@ -174,6 +173,7 @@ int storage_retrieve(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	data_descriptor.data_attributes = &data_attributes;
 
 	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
@@ -249,6 +249,7 @@ int storage_delete(struct subtest_data *subtest)
 
 	struct smw_delete_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
+	struct smw_data_attributes data_attributes = { 0 };
 	struct smw_data_descriptor *data_descriptor_ptr = NULL;
 	const char *data_name = NULL;
 
@@ -258,6 +259,7 @@ int storage_delete(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	data_descriptor.data_attributes = &data_attributes;
 
 	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
@@ -295,7 +297,9 @@ int storage_get_data_info(struct subtest_data *subtest)
 
 	struct smw_data_info_args args = { 0 };
 	struct smw_data_descriptor data_ref = { 0 };
+	struct smw_data_attributes data_ref_attributes = { 0 };
 	struct smw_data_descriptor data_test = { 0 };
+	struct smw_data_attributes data_test_attributes = { 0 };
 	const char *data_name = NULL;
 
 	if (!subtest) {
@@ -304,6 +308,7 @@ int storage_get_data_info(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	data_ref.data_attributes = &data_ref_attributes;
 
 	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
@@ -327,6 +332,7 @@ int storage_get_data_info(struct subtest_data *subtest)
 		}
 
 		data_test.identifier = data_ref.identifier;
+		data_test.data_attributes = &data_test_attributes;
 
 		args.data_descriptor = &data_test;
 	} else if (res != ERR_CODE(VALUE_NOTFOUND)) {
@@ -334,21 +340,21 @@ int storage_get_data_info(struct subtest_data *subtest)
 	}
 
 	subtest->smw_status = smw_get_data_info(&args);
-	if (subtest->smw_status != SMW_STATUS_OK)
+	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
-	else
-		res = util_tlv_cmp_data_attrs(data_ref.attributes_list,
-					      data_ref.attributes_list_length,
-					      data_test.attributes_list,
-					      data_test.attributes_list_length,
-					      args.persistence,
-					      args.lifecycle_list,
-					      args.lifecycle_list_length);
+		goto exit;
+	}
+
+	if ((data_test_attributes.attributes &
+	     data_ref_attributes.attributes) !=
+	    data_ref_attributes.attributes) {
+		DBG_PRINT("Invalid storage attribute %08x expected %08x",
+			  data_test_attributes.attributes,
+			  data_ref_attributes.attributes);
+		res = ERR_CODE(FAILED);
+	}
 
 exit:
-	if (args.lifecycle_list)
-		free(args.lifecycle_list);
-
 	free_data(&data_ref);
 	free_data(&data_test);
 

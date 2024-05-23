@@ -3,52 +3,36 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": [
-					[
-						"ECB_NO_PADDING"
-					]
-				],
-				"decrypt": [
-					[
-						"ECB_NO_PADDING"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				],
-				"verify_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
 		},
 		"key 3": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": [
-					[
-						"CFB"
-					]
-				],
-				"decrypt": [
-					[
-						"CFB"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CFB"
+			]
 		}
 	},
 	"subtest 1": {

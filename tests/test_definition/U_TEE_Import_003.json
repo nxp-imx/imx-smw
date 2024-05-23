@@ -42,9 +42,9 @@
 				"377fbb316f1e69a763b1ec1265454e60",
 				"bf18ea22e64bf5142b3bcb8833800abd"
 			],
-			"policy": {
-				"sign_hash": []
-			}
+			"usage": [
+				"SIGN_HASH"
+			]
 		},
 		"key 2": {
 			"type": "RSA",
@@ -70,9 +70,9 @@
 				"377fbb316f1e69a763b1ec1265454e60",
 				"bf18ea22e64bf5142b3bcb8833800abd"
 			],
-			"policy": {
-				"verify_hash": []
-			}
+			"usage": [
+				"VERIFY_HASH"
+			]
 		},
 		"key 3": {
 			"type": "RSA",
@@ -92,9 +92,9 @@
 				"e//am5tX3rc3f7sxbx5pp2Ox7BJlRU5g",
 				"vxjqIuZL9RQrO8uIM4AKvQ=="
 			],
-			"policy": {
-				"verify_hash": []
-			}
+			"usage": [
+				"VERIFY_HASH"
+			]
 		}
 	},
 	"subtest 1": { // Import RSA 2048bits keypair

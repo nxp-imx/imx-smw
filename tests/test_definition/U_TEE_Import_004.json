@@ -7,9 +7,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 2": {
 			"type": "HMAC_SHA1",
@@ -18,9 +18,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 3": {
 			"type": "HMAC_SHA224",
@@ -29,9 +29,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 4": {
 			"type": "HMAC_SHA256",
@@ -40,9 +40,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 5": {
 			"type": "HMAC_SHA384",
@@ -51,9 +51,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 6": {
 			"type": "HMAC_SHA512",
@@ -62,9 +62,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 7": {
 			"type": "HMAC_SM3",
@@ -73,9 +73,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {

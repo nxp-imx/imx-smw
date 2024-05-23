@@ -10,20 +10,6 @@
 		"data 3": {
 			"id": 1,
 			"data": [0, "0102030405060708090A0B0C0D0E0FCC"]
-		},
-		"data 4": {
-			"id": 1,
-			"data": "0102030405060708090A0B0C0D0E0FCC",
-			"attributes_list": [
-				["UNDEFINED"]
-			]
-		},
-		"data 5": {
-			"id": 1,
-			"data": "0102030405060708090A0B0C0D0E0FCC",
-			"lifecycle": [
-				["UNDEFINED"]
-			]
 		}
 	},
 	"subtest 1": { // Store data descriptor NULL
@@ -60,30 +46,18 @@
 		"data_name": "data 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // Store Attribute invalid
-		"command": "STORAGE_STORE",
-		"subsystem": "DEFAULT",
-		"data_name": "data 4",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 8": { // Store Attribute lifecyle invalid
-		"command": "STORAGE_STORE",
-		"subsystem": "DEFAULT",
-		"data_name": "data 5",
-		"result": "SMW_STATUS_INVALID_LIFECYCLE"
-	},
-	"subtest 9": { // Data descriptor NULL
+	"subtest 7": { // Data descriptor NULL
 		"command": "STORAGE_GET_DATA_INFO",
 		"subsystem": "DEFAULT",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Data ID missing
+	"subtest 8": { // Data ID missing
 		"command": "STORAGE_GET_DATA_INFO",
 		"subsystem": "DEFAULT",
 		"data_name": "data 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 11": { // Data buffer is defined
+	"subtest 8": { // Data buffer is defined
 		"command": "STORAGE_GET_DATA_INFO",
 		"subsystem": "DEFAULT",
 		"data_name": "data 3",

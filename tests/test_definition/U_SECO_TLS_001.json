@@ -64,13 +64,13 @@
 	"subtest 3": {
 		"command": "SIGN",
 		"subsystem": "SECO",
-		"algo": "SHA256",
+		"sign_attr": [
+			"TLS_1_2_CLIENT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
-		],
-		"attributes_list": [
-			["TLS_MAC_FINISH", "CLIENT"]
 		],
 		"sign_id": 0,
 		"key_name": "key 6",

@@ -13,9 +13,9 @@
 				"9681b517b1cda17d0d83d335d9c4a8a9",
 				"a9b0b1b3c7106d8f3c72bc5093dc275f"
 			],
-			"policy": {
-				"sign_hash": []
-			}
+			"usage": [
+				"SIGN_HASH"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
@@ -36,7 +36,10 @@
 	"subtest 2": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -62,7 +65,10 @@
 	"subtest 4": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",

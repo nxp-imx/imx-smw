@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -10,7 +10,6 @@
 
 #include "util.h"
 #include "util_key.h"
-#include "util_tlv.h"
 
 #include "key.h"
 #include "keymgr.h"
@@ -406,10 +405,7 @@ static int setup_derive_opt_params(struct subtest_data *subtest,
 	int res = ERR_CODE(BAD_ARGS);
 	struct json_object *okey_params = NULL;
 
-	unsigned char **attrs = NULL;
-	unsigned int *attrs_len = NULL;
-
-	if (!subtest || !args) {
+	if (!subtest || !args || !args->key_attributes) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
@@ -418,16 +414,7 @@ static int setup_derive_opt_params(struct subtest_data *subtest,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	attrs = (unsigned char **)&args->key_attributes_list;
-	attrs_len = &args->key_attributes_list_length;
-
-	/* Get the key policy */
-	res = util_tlv_read_key_policy(attrs, attrs_len, okey_params);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	/* Get 'attributes_list' optional parameter */
-	res = util_tlv_read_attrs(attrs, attrs_len, okey_params);
+	res = key_read_attributes(okey_params, &args->key_attributes);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -602,6 +589,7 @@ int derive_key(struct subtest_data *subtest)
 	struct keypair_ops key_derived = { 0 };
 	struct smw_keypair_buffer base_buffer = { 0 };
 	struct smw_derive_key_args args = { 0 };
+	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_derive_key_args *smw_args = &args;
 
 	if (!subtest) {
@@ -610,6 +598,7 @@ int derive_key(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.key_attributes = &key_attributes;
 
 	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
 		args.subsystem_name = NULL;
@@ -663,9 +652,6 @@ exit:
 		key_free_key(&key_derived);
 
 	kdf_args_free(&args);
-
-	if (args.key_attributes_list)
-		free((void *)args.key_attributes_list);
 
 	return res;
 }

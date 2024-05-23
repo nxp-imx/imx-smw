@@ -2,11 +2,21 @@
 	"keys": {
 		"encrypt key": {
 			"type": "AES",
-			"security_size": 256
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
 		},
 		"sign key": {
 			"type": "AES",
-			"security_size": 256
+			"security_size": 256,
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		}
 	},
 	"data_list": {
@@ -14,11 +24,11 @@
 			"id": 11,
 			"data": "0102030405060708090A0B0C0D0E0FCC",
 			"attributes_list": [
-				["READ_ONLY"],
-				["READ_ONCE"],
+				"READ_ONLY",
+				"READ_ONCE"
 			],
 			"lifecycle": [
-				["OPEN"]
+				"OPEN"
 			]
 		}
 	},

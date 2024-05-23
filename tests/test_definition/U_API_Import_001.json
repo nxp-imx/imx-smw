@@ -58,12 +58,6 @@
 			"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17"
 		},
 		"key 10": {
-			"type": "AES",
-			"security_size": 128,
-			"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
-			"attributes_list": ["UNDEFINED"]
-		},
-		"key 11": {
 			"type": "RSA",
 			"security_size": 256,
 			"priv_key": [
@@ -76,7 +70,7 @@
 				"010001"
 			]
 		},
-		"key 12": {
+		"key 11": {
 			"type": "RSA",
 			"security_size": 256,
 			"priv_key": [
@@ -171,22 +165,16 @@
 		"key_name": "key 9",
 		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
-	"subtest 13": { // Attributes list is undefined
+	"subtest 13": { // Modulus buffer not set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 10",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 14": { // Modulus buffer not set
+	"subtest 14": { // Modulus length is not set
 		"command": "IMPORT",
 		"subsystem": "DEFAULT",
 		"key_name": "key 11",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 15": { // Modulus length is not set
-		"command": "IMPORT",
-		"subsystem": "DEFAULT",
-		"key_name": "key 12",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

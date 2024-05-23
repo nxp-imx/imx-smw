@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 #ifndef __KEY_H__
 #define __KEY_H__
@@ -63,5 +63,17 @@ int key_read_descriptor_psa(struct llist *keys, struct keypair_psa *key_test,
  */
 void key_prepare_key_data_psa(struct keypair_psa *key_test,
 			      struct key_data *key_data);
+
+/**
+ * algorithm_callback_psa() - Set algorithm
+ * @user_data: Pointer to the algorithm.
+ * @params: List of algorithm parameters as strings.
+ * @n_params: Number of algorithm parameters.
+ *
+ * Return:
+ * None.
+ */
+void algorithm_callback_psa(void *user_data, const char *params[],
+			    size_t n_params);
 
 #endif /* __KEY_H__ */

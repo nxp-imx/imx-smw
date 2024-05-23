@@ -13,16 +13,19 @@
 		"key 2": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"verify_hash": [],
-				"verify_message": []
-			}
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": { // Verify args pointer is NULL
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -50,7 +53,10 @@
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"version": 255,
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -76,7 +82,10 @@
 	"subtest 3": { // Subsystem is not set in SMW config file
 		"command": "VERIFY",
 		"subsystem": "UNDEFINED",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -102,7 +111,10 @@
 	"subtest 4": { // Key descriptor pointer is NULL
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -126,10 +138,9 @@
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Algo is undefined
+	"subtest 5": { // Sign algo is undefined
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
-		"algo": "UNDEFINED",
 		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -150,12 +161,15 @@
 			"55555555555555555555555555555555",
 			"55555555555555555555555555555555"
 		],
-		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"
+		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 6": { // Message buffer is NULL
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"key_name": "key 1",
 		"message": 163,
 		"signature": [
@@ -169,7 +183,10 @@
 	"subtest 7": { // Message length is 0
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"key_name": "key 1",
 		"message": [
 			0,
@@ -187,7 +204,10 @@
 	"subtest 8": { // Signature buffer is NULL
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -208,7 +228,10 @@
 	"subtest 9": { // Signature length is 0
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"key_name": "key 1",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -232,44 +255,18 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Attributes list not defined
-		"command": "VERIFY",
-		"subsystem": "DEFAULT",
-		"algo": "SHA256",
-		"key_name": "key 1",
-		"message": [
-			"7c9c67323a1df1adbfe5ceb415eaef01",
-			"55ece2820f4d50c1ec22cba4928ac656",
-			"c83fe585db6a78ce40bc42757aba7e5a",
-			"3f582428d6ca68d0c3978336a6efb729",
-			"613e8d9979016204bfd921322fdd5222",
-			"183554447de5e6e9bbe6edf76d7b71e1",
-			"8dc2e8d6dc89b7398364f652fafc7343",
-			"29aafa3dcd45d4f31e388e4fafd7fc64",
-			"95f37ca5cbab7f54d586463da4bfeaa3",
-			"bae09f7b8e9239d832b4f0a733aa609c",
-			"c1f8d4"
-		],
-		"signature": [
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555",
-			"55555555555555555555555555555555"
-		],
-		"attributes_list": [
-			"undefined"
-		],
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 11": { // Add a keypair for the test
+	"subtest 10": { // Add a keypair for the test
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key 2"
 	},
-	"subtest 12": { // Signature length not valid
+	"subtest 11": { // Signature length not valid
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"key_name": "key 2",
 		"message": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
@@ -292,11 +289,11 @@
 			"55555555555555555555555555555555"
 		],
 		"result": "SMW_STATUS_SIGNATURE_LEN_INVALID",
-		"depends": 11
+		"depends": 10
 	},
-	"subtest 13": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key 2",
-		"depends": 11
+		"depends": 10
 	}
 }

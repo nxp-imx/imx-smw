@@ -3,79 +3,79 @@
 		"key 1": {
 			"type": "RSA",
 			"security_size": 256,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 2": {
 			"type": "RSA",
 			"security_size": 384,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 3": {
 			"type": "RSA",
 			"security_size": 512,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 4": {
 			"type": "RSA",
 			"security_size": 640,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 5": {
 			"type": "RSA",
 			"security_size": 768,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 6": {
 			"type": "RSA",
 			"security_size": 896,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 7": {
 			"type": "RSA",
 			"security_size": 1024,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 8": {
 			"type": "RSA",
 			"security_size": 1536,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 9": {
 			"type": "RSA",
 			"security_size": 2048,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 10": {
 			"type": "RSA",
 			"security_size": 3072,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 11": {
 			"type": "RSA",
 			"security_size": 4096,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {

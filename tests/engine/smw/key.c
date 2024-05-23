@@ -11,9 +11,59 @@
 
 #include "types.h"
 #include "util.h"
+#include "util_attr.h"
 #include "util_key.h"
 
 #include "key.h"
+
+static const struct util_attr_info algo_info[] = {
+	ATTR_ALGO("ECB_NO_PADDING", SYMMETRIC_ENCRYPTION, DEFAULT, ECB_NO_PAD,
+		  ANY),
+	ATTR_ALGO("CFB", SYMMETRIC_ENCRYPTION, DEFAULT, CFB, ANY),
+	ATTR_ALGO("CTR", SYMMETRIC_ENCRYPTION, DEFAULT, CTR, ANY),
+	ATTR_ALGO("OFB", SYMMETRIC_ENCRYPTION, DEFAULT, OFB, ANY),
+	ATTR_ALGO("XTS", SYMMETRIC_ENCRYPTION, DEFAULT, XTS, ANY),
+	ATTR_ALGO("CCM", AEAD, DEFAULT, CCM, ANY),
+	ATTR_ALGO("GCM", AEAD, DEFAULT, GCM, ANY),
+	ATTR_ALGO("CHACHA20_POLY1305", AEAD, CHACHA20, POLY1305, ANY),
+	ATTR_ALGO("CMAC", MAC, DEFAULT, CMAC, ANY),
+	ATTR_ALGO("HMAC", MAC, HMAC, ANY, ANY),
+	ATTR_ALGO("DEFAULT", ASYMMETRIC_SIGNATURE, DEFAULT, ANY, ANY),
+	ATTR_ALGO_CURVE("ECDSA", ASYMMETRIC_SIGNATURE, ECDSA, ANY, ANY),
+	ATTR_ALGO_CURVE("EDDSA", ASYMMETRIC_SIGNATURE, EDDSA, ANY, ANY),
+	ATTR_ALGO("DSA", ASYMMETRIC_SIGNATURE, DSA, ANY, ANY),
+	ATTR_ALGO("RSA", ASYMMETRIC_SIGNATURE, RSA, ANY, ANY),
+	ATTR_ALGO("RSA_PKCS1V15", ASYMMETRIC_SIGNATURE, RSA, PKCS1_1_5, ANY),
+	ATTR_ALGO("RSA_PSS", ASYMMETRIC_SIGNATURE, RSA, PSS, ANY),
+	ATTR_ALGO("TLS_1_2", ASYMMETRIC_SIGNATURE, TLS_1_2, ANY, ANY),
+	ATTR_ALGO("TLS_1_2_CLIENT", ASYMMETRIC_SIGNATURE, TLS_1_2, CLIENT, ANY),
+	ATTR_ALGO("TLS_1_2_SERVER", ASYMMETRIC_SIGNATURE, TLS_1_2, SERVER, ANY),
+	ATTR_ALGO("ATTEST_CMAC", KEY_ATTESTATION, DEFAULT, CMAC, ANY),
+	ATTR_ALGO_CURVE("ATTEST_ECDSA", KEY_ATTESTATION, ECDSA, ANY, ANY),
+	{ .name = NULL }
+};
+
+static const struct util_attr_info hash_info[] = {
+	ATTR_HASH(NONE),     ATTR_HASH(MD5),	  ATTR_HASH(SHA1),
+	ATTR_HASH(SHA224),   ATTR_HASH(SHA256),	  ATTR_HASH(SHA384),
+	ATTR_HASH(SHA512),   ATTR_HASH(SHA3_224), ATTR_HASH(SHA3_256),
+	ATTR_HASH(SHA3_384), ATTR_HASH(SHA3_512), { .name = NULL }
+};
+
+static const struct util_attr_info usage_info[] = {
+	ATTR_USAGE(CACHE),	    ATTR_USAGE(COPY),
+	ATTR_USAGE(DERIVE),	    ATTR_USAGE(ENCRYPT),
+	ATTR_USAGE(DECRYPT),	    ATTR_USAGE(SIGN_HASH),
+	ATTR_USAGE(SIGN_MESSAGE),   ATTR_USAGE(VERIFY_HASH),
+	ATTR_USAGE(VERIFY_MESSAGE), { .name = NULL }
+};
+
+static const struct util_attr_info attributes_info[] = {
+	ATTR_PERSISTENCE(TRANSIENT),
+	ATTR_PERSISTENCE(PERSISTENT),
+	ATTR_PERSISTENCE(PERMANENT),
+	{ .name = NULL }
+};
 
 static struct smw_keypair_gen *get_keypair_gen(struct keypair_ops *this)
 {
@@ -570,6 +620,110 @@ int key_read_descriptors(struct subtest_data *subtest, const char *key,
 	}
 
 	*keys_desc = keys->keys_desc;
+
+	return ERR_CODE(PASSED);
+}
+
+void algorithm_callback(void *user_data, const char *params[], size_t n_params)
+{
+	smw_attr_algo_t *algo = user_data;
+	size_t i = 1;
+	const char *param = NULL;
+	smw_attr_algo_t hash = SMW_ATTR_HASH_NONE;
+	smw_attr_algo_t length = 0;
+
+	*algo = ATTR_ARRAY_FIND_MATCH(algo_info, params[0]).smw_algo;
+
+	for (; i < n_params; i++) {
+		param = params[i];
+
+		if (!strncmp(param, HASH_STR, strlen(HASH_STR))) {
+			param += strlen(HASH_STR);
+
+			hash = ATTR_ARRAY_FIND_MATCH(hash_info, param).smw_algo;
+
+			*algo = SMW_ATTR_SET_HASH(*algo, hash);
+		} else if (!strncmp(param, MIN_LENGTH_STR,
+				    strlen(MIN_LENGTH_STR))) {
+			param += strlen(MIN_LENGTH_STR);
+
+			(void)SET_OVERFLOW(atol(param), length);
+
+			*algo = SMW_ATTR_SET_MIN_LENGTH(*algo, length);
+		} else if (!strncmp(param, LENGTH_STR, strlen(LENGTH_STR))) {
+			param += strlen(LENGTH_STR);
+
+			(void)SET_OVERFLOW(atol(param), length);
+
+			*algo = SMW_ATTR_SET_LENGTH(*algo, length);
+		}
+	}
+
+	DBG_PRINT("SMW algorithm: %0" PRIx64, *algo);
+}
+
+void usage_callback(void *user_data, const char *attributes[],
+		    size_t n_attributes)
+{
+	smw_attr_usage_t *usage_flags = user_data;
+	size_t i = 0;
+
+	for (; i < n_attributes; i++)
+		*usage_flags |= ATTR_ARRAY_FIND_MATCH(usage_info, attributes[i])
+					.smw_usage;
+
+	DBG_PRINT("SMW usage flags: %08x", *usage_flags);
+}
+
+void attributes_callback(void *user_data, const char *attributes[],
+			 size_t n_attributes)
+{
+	smw_attr_attributes_t *attr = user_data;
+	size_t i = 0;
+
+	for (; i < n_attributes; i++)
+		*attr |= ATTR_ARRAY_FIND_MATCH(attributes_info, attributes[i])
+				 .smw_attributes;
+
+	DBG_PRINT("SMW RW flags: %08x", *attributes);
+}
+
+int key_read_attributes(struct json_object *params,
+			struct smw_key_attributes **attributes)
+{
+	int ret = ERR_CODE(PASSED);
+	int found = 0;
+
+	if (!params || !attributes || !*attributes) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	ret = util_attr_read_attributes(params, USAGE_OBJ, &usage_callback,
+					&((*attributes)->usage_flags));
+	if (ret == ERR_CODE(PASSED))
+		found++;
+	else if (ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
+
+	ret = util_attr_read_attributes(params, PERMITTED_ALGO_OBJ,
+					&algorithm_callback,
+					&((*attributes)->permitted_algo));
+	if (ret == ERR_CODE(PASSED))
+		found++;
+	else if (ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
+
+	ret = util_attr_read_attributes(params, ATTR_LIST_OBJ,
+					&attributes_callback,
+					&((*attributes)->attributes));
+	if (ret == ERR_CODE(PASSED))
+		found++;
+	else if (ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
+
+	if (!found)
+		*attributes = NULL;
 
 	return ERR_CODE(PASSED);
 }

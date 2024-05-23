@@ -3,12 +3,16 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 128,
-			"attributes_list": ["PERSISTENT"]
+			"attributes_list": [
+				"PERSISTENT"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
 			"security_size": 256,
-			"attributes_list": ["PERSISTENT"]
+			"attributes_list": [
+				"PERSISTENT"
+			]
 		},
 		"key 3": {
 			"type": "AES",
@@ -18,8 +22,7 @@
 			"type": "BRAINPOOL_R1",
 			"security_size": 384,
 			"attributes_list": [
-				["PERSISTENT"],
-				["FLUSH_KEY"]
+				"PERSISTENT"
 			]
 		}
 	},

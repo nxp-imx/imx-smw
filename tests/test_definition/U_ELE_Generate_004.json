@@ -3,38 +3,35 @@
 		"key 1": {
 			"type": "RSA",
 			"security_size": 2048,
-			"policy": {
-				"sign_message": [
-					[
-						"RSA_PKCS1V15",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=SHA256"
+			]
 		},
 		"key 2": {
 			"type": "RSA",
 			"security_size": 3072,
-			"policy": {
-				"sign_message": [
-					[
-						"RSA_PKCS1V15",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=SHA256"
+			]
 		},
 		"key 3": {
 			"type": "RSA",
 			"security_size": 4096,
-			"policy": {
-				"sign_message": [
-					[
-						"RSA_PSS",
-						"HASH=SHA512"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PSS",
+				"HASH=SHA512"
+			]
 		}
 	},
 	"subtest 1": {

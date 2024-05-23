@@ -6,9 +6,9 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
@@ -16,16 +16,16 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 3": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 4": {
 			"type": "RSA",
@@ -33,9 +33,9 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {

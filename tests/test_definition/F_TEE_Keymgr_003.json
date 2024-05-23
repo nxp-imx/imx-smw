@@ -2,9 +2,6 @@
 	"keys": {
 		"key 1": {
 			"type": "RSA",
-			"policy": {
-				"sign_message": []
-			},
 			"security_size": 512,
 			"priv_key": [
 				"a386c6fddde3888750aed9b09c703c78",
@@ -20,6 +17,9 @@
 				"fe5f8c2e62275b76f6d68cb03dbecc88",
 				"b6cc3d592dd59b81462b894beb3b32d9",
 				"7680b326c3f0f93b89d885c417cb28df"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
 			]
 		},
 		"key 2": {
@@ -56,16 +56,16 @@
 					]
 				]
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		},
 		"key 5": {
 			"type": "RSA",
 			"security_size": 4096,
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": { // Import RSA 512bits keypair

@@ -3,25 +3,23 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": [
-					[
-						"ECB_NO_PADDING"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_hash": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_HASH"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
 		}
 	},
 	"Thread 1": {
@@ -54,6 +52,9 @@
 			"wait_before": "sem_t2",
 			"command": "SIGN",
 			"subsystem": "ELE",
+			"sign_attr": [
+				"DEFAULT"
+			],
 			"message": [
 				"54686973207068726173652069732033",
 				"32206279746573206c6f6e6720212121"

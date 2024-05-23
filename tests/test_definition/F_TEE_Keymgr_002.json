@@ -2,9 +2,6 @@
 	"keys": {
 		"key 1": {
 			"type": "NIST",
-			"policy": {
-				"sign_message": []
-			},
 			"security_size": 192,
 			"priv_key": [
 				"e5ce89a34adddf25ff3bf1ffe6803f57",
@@ -14,6 +11,9 @@
 				"8abf7b3ceb2b02438af19543d3e5b1d5",
 				"73fa9ac60085840fa87f80182dcd56a6",
 				"a061f81f7da393e7cffd5e0738c6b245"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
 			]
 		},
 		"key 2": {
@@ -26,9 +26,6 @@
 		},
 		"key 3": {
 			"type": "NIST",
-			"policy": {
-				"sign_message": []
-			},
 			"security_size": 224,
 			"priv_key": [
 				"e7c92383846a4e6887a10498d8eaca2b",
@@ -39,6 +36,9 @@
 				"507ab164b12f84843f4b7b96a6313a93",
 				"8eff7a293222e0e3c7b4c6132489b332",
 				"55a61c3fc1ce2256"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
 			]
 		},
 		"key 4": {
@@ -52,9 +52,6 @@
 		},
 		"key 5": {
 			"type": "NIST",
-			"policy": {
-				"sign_message": []
-			},
 			"security_size": 256,
 			"priv_key": [
 				"c9806898a0334916c860748880a541f0",
@@ -65,6 +62,9 @@
 				"620690d06de0317b8618d5ce65eb728f",
 				"9681b517b1cda17d0d83d335d9c4a8a9",
 				"a9b0b1b3c7106d8f3c72bc5093dc275f"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
 			]
 		},
 		"key 6": {
@@ -78,9 +78,6 @@
 		},
 		"key 7": {
 			"type": "NIST",
-			"keypolicy": {
-				"sign_message": []
-			},
 			"security_size": 384,
 			"priv_key": [
 				"5394f7973ea868c52bf3ff8d8ceeb4db",
@@ -94,6 +91,9 @@
 				"b83ca4126cfc4c4d1d18a4b6c21c7f69",
 				"9d5123dd9c24f66f833846eeb5829619",
 				"6b42ec06425db5b70a4b81b7fcf705a0"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
 			]
 		},
 		"key 8": {
@@ -108,9 +108,6 @@
 		},
 		"key 9": {
 			"type": "NIST",
-			"policy": {
-				"sign_message": []
-			},
 			"security_size": 521,
 			"priv_key": [
 				"0184258ea667ab99d09d4363b3f51384",
@@ -129,6 +126,9 @@
 				"56e95fe48b7fbf60c3df5172bf386f25",
 				"05f1e1bb2893da3b96d4f5ae78f25448",
 				"81a238f7"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
 			]
 		},
 		"key 10": {
@@ -154,9 +154,9 @@
 			"attributes_list": [
 				"PERSISTENT"
 			],
-			"policy": {
-				"sign_message": []
-			}
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {

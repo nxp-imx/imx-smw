@@ -3,52 +3,52 @@
 		"key 1": {
 			"type": "NIST",
 			"security_size": 192,
-			"policy": {
-				"sign_hash": [],
-				"sign_message": [],
-				"verify_hash": [],
-				"verify_message": []
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
 			"security_size": 224,
-			"policy": {
-				"sign_hash": [],
-				"sign_message": [],
-				"verify_hash": [],
-				"verify_message": []
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		},
 		"key 3": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_hash": [],
-				"sign_message": [],
-				"verify_hash": [],
-				"verify_message": []
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		},
 		"key 4": {
 			"type": "NIST",
 			"security_size": 384,
-			"policy": {
-				"sign_hash": [],
-				"sign_message": [],
-				"verify_hash": [],
-				"verify_message": []
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		},
 		"key 5": {
 			"type": "NIST",
 			"security_size": 521,
-			"policy": {
-				"sign_hash": [],
-				"sign_message": [],
-				"verify_hash": [],
-				"verify_message": []
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {
@@ -79,6 +79,9 @@
 	"subtest 6": {
 		"command": "SIGN",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -90,6 +93,9 @@
 	"subtest 7": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -101,7 +107,10 @@
 	"subtest 8": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA224",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA224"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -122,7 +131,10 @@
 	"subtest 9": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA224",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA224"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -143,7 +155,10 @@
 	"subtest 10": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -164,7 +179,10 @@
 	"subtest 11": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -185,7 +203,10 @@
 	"subtest 12": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -210,7 +231,10 @@
 	"subtest 13": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -235,7 +259,10 @@
 	"subtest 14": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -260,7 +287,10 @@
 	"subtest 15": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -285,6 +315,9 @@
 	"subtest 16": {
 		"command": "SIGN",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -296,6 +329,9 @@
 	"subtest 17": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -307,7 +343,10 @@
 	"subtest 18": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA224",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA224"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -328,7 +367,10 @@
 	"subtest 19": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA224",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA224"
+		],
 		"message": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -349,7 +391,10 @@
 	"subtest 20": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -370,7 +415,10 @@
 	"subtest 21": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -391,7 +439,10 @@
 	"subtest 22": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -416,7 +467,10 @@
 	"subtest 23": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -441,7 +495,10 @@
 	"subtest 24": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -466,7 +523,10 @@
 	"subtest 25": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -491,6 +551,9 @@
 	"subtest 26": {
 		"command": "SIGN",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -502,6 +565,9 @@
 	"subtest 27": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -513,7 +579,10 @@
 	"subtest 28": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -534,7 +603,10 @@
 	"subtest 29": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -555,7 +627,10 @@
 	"subtest 30": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -580,7 +655,10 @@
 	"subtest 31": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -605,7 +683,10 @@
 	"subtest 32": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -630,7 +711,10 @@
 	"subtest 33": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -655,6 +739,9 @@
 	"subtest 34": {
 		"command": "SIGN",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -666,6 +753,9 @@
 	"subtest 35": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -677,7 +767,10 @@
 	"subtest 36": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -702,7 +795,10 @@
 	"subtest 37": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA384",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA384"
+		],
 		"message": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -727,7 +823,10 @@
 	"subtest 38": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -752,7 +851,10 @@
 	"subtest 39": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -777,6 +879,9 @@
 	"subtest 40": {
 		"command": "SIGN",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -788,6 +893,9 @@
 	"subtest 41": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
+		"sign_attr": [
+			"DEFAULT"
+		],
 		"message": [
 			"54686973207068726173652069732033",
 			"32206279746573206c6f6e6720212121"
@@ -799,7 +907,10 @@
 	"subtest 42": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -824,7 +935,10 @@
 	"subtest 43": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA512"
+		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",

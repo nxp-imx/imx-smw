@@ -3,10 +3,10 @@
 		"key 1": {
 			"type": "DES3",
 			"security_size": 112,
-			"policy": {
-				"encrypt": [],
-				"decrypt": []
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
 		},
 		"key 2": {
 			"type": "AES",

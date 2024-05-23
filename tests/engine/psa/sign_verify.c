@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -9,63 +9,18 @@
 #include <psa/crypto.h>
 
 #include "util.h"
+#include "util_attr.h"
 #include "util_sign.h"
 
 #include "key.h"
-#include "hash.h"
 #include "sign_verify.h"
-
-#define SIGN_ALGO(_name, _id)                                                  \
-	{                                                                      \
-		.name = #_name, .psa_alg_id = PSA_ALG_##_id                    \
-	}
-
-/**
- * struct sign_alg_info
- * @name: Signing algo name.
- * @psa_alg_id: PSA signing algo id.
- */
-static struct sign_alg_info {
-	const char *name;
-	psa_algorithm_t psa_alg_id;
-} sign_alg_info[] = { SIGN_ALGO(ECDSA_ANY, ECDSA_ANY),
-		      SIGN_ALGO(ED25519PH, ED25519PH),
-		      SIGN_ALGO(ED448PH, ED448PH),
-		      SIGN_ALGO(PURE_EDDSA, PURE_EDDSA),
-		      SIGN_ALGO(RSA_PKCS1V15_SIGN_RAW, RSA_PKCS1V15_SIGN_RAW),
-		      SIGN_ALGO(DETERMINISTIC_ECDSA, DETERMINISTIC_ECDSA_BASE),
-		      SIGN_ALGO(ECDSA, ECDSA_BASE),
-		      SIGN_ALGO(HASH_EDDSA, HASH_EDDSA_BASE),
-		      SIGN_ALGO(RSA_PKCS1V15_SIGN_BASE, RSA_PKCS1V15_SIGN_BASE),
-		      SIGN_ALGO(RSA_PSS_ANY_SALT, RSA_PSS_ANY_SALT_BASE),
-		      SIGN_ALGO(RSA_PSS, RSA_PSS_BASE),
-		      { .name = NULL, .psa_alg_id = PSA_ALG_NONE } };
-
-static struct sign_alg_info *get_sign_alg_info(const char *alg_name)
-{
-	return GET_INFO(alg_name, sign_alg_info);
-}
-
-static psa_algorithm_t get_sign_alg_id(const char *alg_name,
-				       psa_algorithm_t hash_alg)
-{
-	const struct sign_alg_info *info = get_sign_alg_info(alg_name);
-
-	if (!info)
-		return PSA_ALG_NONE;
-
-	return info->psa_alg_id | ((hash_alg) & (PSA_ALG_HASH_MASK));
-}
 
 int sign_verify_psa(struct subtest_data *subtest, int operation)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_psa key_test = { 0 };
 	const char *key_name = NULL;
-	const char *alg_name = NULL;
-	const char *hash_name = NULL;
 	psa_algorithm_t psa_alg_id = PSA_ALG_NONE;
-	psa_algorithm_t psa_hash_id = PSA_ALG_NONE;
 	int sign_id = INT_MAX;
 	unsigned int message_length = 0;
 	unsigned int list_sign_length = 0;
@@ -110,23 +65,11 @@ int sign_verify_psa(struct subtest_data *subtest, int operation)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
 		goto exit;
 
-	/* Sign algorithm */
-	res = util_read_json_type(&alg_name, ALGO_OBJ, t_string,
-				  subtest->params);
+	/* Signature attributes are not mandatory in case of error test */
+	res = util_attr_read_attributes(subtest->params, SIGN_ATTR_OBJ,
+					&algorithm_callback_psa, &psa_alg_id);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
-
-	/* Hash algorithm */
-	res = util_read_json_type(&hash_name, HASH_OBJ, t_string,
-				  subtest->params);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-		goto exit;
-
-	if (hash_name)
-		psa_hash_id = get_hash_alg_id(hash_name);
-
-	if (alg_name)
-		psa_alg_id = get_sign_alg_id(alg_name, psa_hash_id);
 
 	/* Read message buffer if any */
 	res = util_read_hex_buffer(&message, &message_length, subtest->params,
@@ -188,7 +131,7 @@ int sign_verify_psa(struct subtest_data *subtest, int operation)
 
 	/* Call operation function and compare result with expected one */
 	if (operation == SIGN_OPERATION) {
-		if (hash_name)
+		if (PSA_ALG_GET_HASH(psa_alg_id) != PSA_ALG_NONE)
 			subtest->psa_status =
 				psa_sign_message(key_test.attributes.id,
 						 psa_alg_id, message,
@@ -204,7 +147,7 @@ int sign_verify_psa(struct subtest_data *subtest, int operation)
 					      &signature_length);
 
 	} else { /* operation == VERIFY_OPERATION */
-		if (hash_name)
+		if (PSA_ALG_GET_HASH(psa_alg_id) != PSA_ALG_NONE)
 			subtest->psa_status =
 				psa_verify_message(key_test.attributes.id,
 						   psa_alg_id, message,

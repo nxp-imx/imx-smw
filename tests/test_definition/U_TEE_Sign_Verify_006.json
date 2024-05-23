@@ -74,12 +74,12 @@
 				"84f5125f5200eb57868cce6b74c58334",
 				"17990e318372c9239a36dca1a0b28809"
 			],
-			"policy": {
-				"sign_hash": [],
-				"sign_message": [],
-				"verify_hash": [],
-				"verify_message": []
-			}
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": {
@@ -90,7 +90,10 @@
 	"subtest 2": { // NIST SigVer15_186-3.rsp
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512"
+		],
 		"message": [
 			"42c5ea617a25f019329ee172e4932485",
 			"518dabd01983249189597473b4a6616c",
@@ -135,12 +138,6 @@
 			"8bba909ca2b4d91b9e520d6c681c2f92",
 			"070f156e31a6875122993e1d94fc3568"
 		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PKCS1-V1_5"
-			]
-		],
 		"sign_id": 0,
 		"key_name": "key 1",
 		"depends": 1
@@ -148,7 +145,10 @@
 	"subtest 3": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512"
+		],
 		"message": [
 			"42c5ea617a25f019329ee172e4932485",
 			"518dabd01983249189597473b4a6616c",
@@ -158,12 +158,6 @@
 			"49256eec9797422dd60d7fd5fe73f2cf",
 			"5ead7fb72fd85e3f6fd284d2edfc5e77",
 			"a03ec5f73c4c2f420728220fe9e9efc3"
-		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PKCS1-V1_5"
-			]
 		],
 		"sign_id": 0,
 		"key_name": "key 1",
@@ -172,7 +166,10 @@
 	"subtest 4": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512"
+		],
 		"message": [
 			"42c5ea617a25f019329ee172e4932485",
 			"518dabd01983249189597473b4a6616c",
@@ -182,12 +179,6 @@
 			"49256eec9797422dd60d7fd5fe73f2cf",
 			"5ead7fb72fd85e3f6fd284d2edfc5e77",
 			"a03ec5f73c4c2f420728220fe9e9efc3"
-		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PSS"
-			]
 		],
 		"sign_id": 1,
 		"key_name": "key 1",
@@ -196,7 +187,10 @@
 	"subtest 5": {
 		"command": "VERIFY",
 		"subsystem": "TEE",
-		"algo": "SHA512",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512"
+		],
 		"message": [
 			"42c5ea617a25f019329ee172e4932485",
 			"518dabd01983249189597473b4a6616c",
@@ -206,12 +200,6 @@
 			"49256eec9797422dd60d7fd5fe73f2cf",
 			"5ead7fb72fd85e3f6fd284d2edfc5e77",
 			"a03ec5f73c4c2f420728220fe9e9efc3"
-		],
-		"attributes_list": [
-			[
-				"SIGNATURE_TYPE",
-				"RSASSA-PSS"
-			]
 		],
 		"sign_id": 1,
 		"key_name": "key 1",

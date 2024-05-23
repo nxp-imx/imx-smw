@@ -3,10 +3,10 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 128,
-			"policy": {
-				"encrypt": [],
-				"decrypt": []
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
@@ -17,10 +17,10 @@
 			"type": "AES",
 			"security_size": 128,
 			"priv_key": "11111111111111111111111111111111",
-			"policy": {
-				"encrypt": [],
-				"decrypt": []
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
 		}
 	},
 	"subtest 1": {

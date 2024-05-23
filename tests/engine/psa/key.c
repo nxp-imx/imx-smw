@@ -13,6 +13,7 @@
 
 #include "types.h"
 #include "util.h"
+#include "util_attr.h"
 #include "util_key.h"
 
 #include "key.h"
@@ -28,11 +29,6 @@
 #define SIGN_HASH_STR	   "sign_hash"
 #define VERIFY_HASH_STR	   "verify_hash"
 #define DERIVE_STR	   "derive"
-
-#define HASH_STR       "HASH"
-#define KDF_STR	       "KDF"
-#define LENGTH_STR     "LENGTH"
-#define MIN_LENGTH_STR "MIN_LENGTH"
 
 #define DH_STR	     "DH"
 #define RSA_STR	     "RSA"
@@ -137,81 +133,16 @@ static const struct ecc_key_type ecdh_key_type[] = {
 		.hash_str = _name##_STR, .psa_hash = PSA_ALG_##_name           \
 	}
 
-/**
- * struct - Key hash
- * @hash_str: SMW hash name used for TLV encoding.
- * @psa_hash: PSA hash id.
- */
-static const struct {
-	const char *hash_str;
-	psa_algorithm_t psa_hash;
-} key_hash[] = {
-	KEY_HASH(MD2),		KEY_HASH(MD4),	       KEY_HASH(MD5),
-	KEY_HASH(RIPEMD160),	KEY_HASH(SHA_1),       KEY_HASH(SHA_224),
-	KEY_HASH(SHA_256),	KEY_HASH(SHA_384),     KEY_HASH(SHA_512),
-	KEY_HASH(SHA_512_224),	KEY_HASH(SHA_512_256), KEY_HASH(SHA3_224),
-	KEY_HASH(SHA3_256),	KEY_HASH(SHA3_384),    KEY_HASH(SHA3_512),
-	KEY_HASH(SHAKE256_512), KEY_HASH(SM3)
-};
-
 #define KEY_ALGORITHM(_name)                                                   \
 	{                                                                      \
 		.alg_str = _name##_STR, .psa_alg = PSA_ALG_##_name             \
 	}
-
-/**
- * struct - Key algorithm
- * @alg_str: SMW algorithm name used for TLV encoding.
- * @psa_alg: PSA algorithm id.
- */
-static const struct {
-	const char *alg_str;
-	psa_algorithm_t psa_alg;
-} key_algorithm[] = { KEY_ALGORITHM(CBC_MAC),
-		      KEY_ALGORITHM(CMAC),
-		      KEY_ALGORITHM(STREAM_CIPHER),
-		      KEY_ALGORITHM(CTR),
-		      KEY_ALGORITHM(CFB),
-		      KEY_ALGORITHM(OFB),
-		      KEY_ALGORITHM(XTS),
-		      KEY_ALGORITHM(ECB_NO_PADDING),
-		      KEY_ALGORITHM(CBC_NO_PADDING),
-		      KEY_ALGORITHM(CBC_PKCS7),
-		      KEY_ALGORITHM(CCM),
-		      KEY_ALGORITHM(GCM),
-		      KEY_ALGORITHM(CHACHA20_POLY1305),
-		      KEY_ALGORITHM(PURE_EDDSA),
-		      KEY_ALGORITHM(ED25519PH),
-		      KEY_ALGORITHM(ED448PH),
-		      KEY_ALGORITHM(RSA_PKCS1V15_CRYPT),
-		      KEY_ALGORITHM(ECDH),
-		      KEY_ALGORITHM(FFDH) };
 
 #define KEY_USAGE(_name, _restricted)                                          \
 	{                                                                      \
 		.usage_str = _name##_STR, .psa_usage = PSA_KEY_USAGE_##_name,  \
 		.restricted = _restricted                                      \
 	}
-
-/**
- * struct - Key usage
- * @usage_str: Usage name in test definition file.
- * @psa_usage: PSA usage id.
- * @restricted: Is usage restricted to an algorithm.
- */
-struct key_usage_info {
-	const char *usage_str;
-	psa_key_usage_t psa_usage;
-	bool restricted;
-};
-
-static const struct key_usage_info key_usage[] = {
-	KEY_USAGE(EXPORT, false),      KEY_USAGE(COPY, false),
-	KEY_USAGE(ENCRYPT, true),      KEY_USAGE(DECRYPT, true),
-	KEY_USAGE(SIGN_MESSAGE, true), KEY_USAGE(VERIFY_MESSAGE, true),
-	KEY_USAGE(SIGN_HASH, true),    KEY_USAGE(VERIFY_HASH, true),
-	KEY_USAGE(DERIVE, true)
-};
 
 static const struct {
 	const char *persistence_str;
@@ -360,291 +291,6 @@ static int get_psa_key_type(psa_key_type_t *psa_key_type,
 	return ret;
 }
 
-static const struct key_usage_info *get_usage_info(const char *value)
-{
-	unsigned int i = 0;
-
-	if (!value)
-		return NULL;
-
-	for (; i < ARRAY_SIZE(key_usage); i++) {
-		if (!strcmp(key_usage[i].usage_str, value))
-			return &key_usage[i];
-	}
-
-	return NULL;
-}
-
-static bool convert_hash(const char *value, psa_algorithm_t *hash)
-{
-	unsigned int i = 0;
-
-	*hash = 0;
-
-	if (!value)
-		return false;
-
-	for (; i < ARRAY_SIZE(key_hash); i++) {
-		if (!strcmp(key_hash[i].hash_str, value)) {
-			*hash = key_hash[i].psa_hash;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-static bool convert_kdf(const char *value, psa_algorithm_t hash,
-			psa_algorithm_t *kdf)
-{
-	*kdf = 0;
-
-	if (!value)
-		return false;
-
-	if (!strcmp(HKDF_STR, value))
-		*kdf = PSA_ALG_HKDF(hash);
-	else if (!strcmp(TLS12_PRF_STR, value))
-		*kdf = PSA_ALG_TLS12_PRF(hash);
-	else if (!strcmp(TLS12_PSK_TO_MS_STR, value))
-		*kdf = PSA_ALG_TLS12_PSK_TO_MS(hash);
-	else if (!strcmp(PBKDF2_HMAC_STR, value))
-		*kdf = PSA_ALG_PBKDF2_HMAC(hash);
-	else if (!strcmp(PBKDF2_AES_CMAC_PRF_128_STR, value))
-		*kdf = PSA_ALG_PBKDF2_AES_CMAC_PRF_128;
-	else
-		return false;
-
-	return true;
-}
-
-static void set_aead_length(psa_algorithm_t *alg, unsigned int length,
-			    unsigned int min_length)
-{
-	if (length)
-		*alg = PSA_ALG_AEAD_WITH_SHORTENED_TAG(*alg, length);
-
-	if (min_length)
-		*alg = PSA_ALG_AEAD_WITH_AT_LEAST_THIS_LENGTH_TAG(*alg,
-								  min_length);
-}
-
-static void set_mac_length(psa_algorithm_t *alg, unsigned int length,
-			   unsigned int min_length)
-{
-	if (length)
-		*alg = PSA_ALG_TRUNCATED_MAC(*alg, length);
-
-	if (min_length)
-		*alg = PSA_ALG_AT_LEAST_THIS_LENGTH_MAC(*alg, min_length);
-}
-
-static int convert_algo(const char *alg_str, const char *hash, const char *kdf,
-			unsigned int length, unsigned int min_length,
-			psa_algorithm_t *alg)
-{
-	unsigned int i = 0;
-	psa_algorithm_t psa_hash = 0;
-	psa_algorithm_t psa_kdf = 0;
-
-	*alg = PSA_ALG_NONE;
-
-	if (!alg_str)
-		goto end;
-
-	for (; i < ARRAY_SIZE(key_algorithm); i++) {
-		if (!strcmp(key_algorithm[i].alg_str, alg_str)) {
-			*alg = key_algorithm[i].psa_alg;
-			break;
-		}
-	}
-
-	if (!*alg) {
-		if (!convert_hash(hash, &psa_hash))
-			goto end;
-
-		if (!strcmp(HMAC_STR, alg_str))
-			*alg = PSA_ALG_HMAC(psa_hash);
-		else if (!strcmp(HKDF_STR, alg_str))
-			*alg = PSA_ALG_HKDF(psa_hash);
-		else if (!strcmp(RSA_PKCS1V15_STR, alg_str))
-			*alg = PSA_ALG_RSA_PKCS1V15_SIGN(psa_hash);
-		else if (!strcmp(RSA_PSS_STR, alg_str))
-			*alg = PSA_ALG_RSA_PSS(psa_hash);
-		else if (!strcmp(RSA_PSS_ANY_SALT_STR, alg_str))
-			*alg = PSA_ALG_RSA_PSS_ANY_SALT(psa_hash);
-		else if (!strcmp(ECDSA_STR, alg_str))
-			*alg = PSA_ALG_ECDSA(psa_hash);
-		else if (!strcmp(DETERMINISTIC_ECDSA_STR, alg_str))
-			*alg = PSA_ALG_DETERMINISTIC_ECDSA(psa_hash);
-		else if (!strcmp(RSA_OAEP_STR, alg_str))
-			*alg = PSA_ALG_RSA_OAEP(psa_hash);
-		else
-			goto end;
-	}
-
-	if (PSA_ALG_IS_AEAD(*alg)) {
-		if (length && min_length)
-			goto end;
-
-		set_aead_length(alg, length, min_length);
-	} else if (PSA_ALG_IS_MAC(*alg)) {
-		if (length && min_length)
-			goto end;
-
-		set_mac_length(alg, length, min_length);
-	} else if (PSA_ALG_IS_KEY_AGREEMENT(*alg)) {
-		if (!convert_hash(hash, &psa_hash))
-			goto end;
-
-		if (!convert_kdf(kdf, psa_hash, &psa_kdf))
-			goto end;
-
-		*alg = PSA_ALG_KEY_AGREEMENT(*alg, psa_kdf);
-	}
-
-	return ERR_CODE(PASSED);
-
-end:
-	return ERR_CODE(BAD_PARAM_TYPE);
-}
-
-static int set_param_str(const char **param, const char *value)
-{
-	if (!param)
-		return ERR_CODE(BAD_ARGS);
-
-	if (*param)
-		return ERR_CODE(BAD_PARAM_TYPE);
-
-	*param = value;
-
-	return ERR_CODE(PASSED);
-}
-
-static int set_param_num(unsigned int *param, const char *value)
-{
-	long num = 0;
-
-	if (!param)
-		return ERR_CODE(BAD_ARGS);
-
-	if (*param)
-		return ERR_CODE(BAD_PARAM_TYPE);
-
-	num = strtol(value, NULL, 10);
-	if (num == LONG_MIN || num == LONG_MAX)
-		return ERR_CODE(BAD_PARAM_TYPE);
-
-	if (num < 0)
-		return ERR_CODE(BAD_PARAM_TYPE);
-
-	*param = (unsigned int)num;
-
-	return ERR_CODE(PASSED);
-}
-
-static int read_key_usage_algo(psa_algorithm_t *alg, struct json_object *oalgo)
-{
-	int ret = ERR_CODE(BAD_ARGS);
-
-	unsigned int i = 0;
-	struct json_object *oname = NULL;
-	struct json_object *oparam = NULL;
-	size_t size = 0;
-	static const char delim[2] = "=";
-	int len = 0;
-	char *buf = NULL;
-	const char *param_name = NULL;
-	const char *param_value = NULL;
-
-	const char *alg_str = NULL;
-	const char *hash_str = NULL;
-	const char *kdf_str = NULL;
-	unsigned int length = 0;
-	unsigned int min_length = 0;
-
-	if (!alg)
-		return ret;
-
-	*alg = PSA_ALG_NONE;
-
-	/*
-	 * First element of the algorithm array is the
-	 * algorithm name
-	 */
-	oname = json_object_array_get_idx(oalgo, 0);
-	alg_str = json_object_get_string(oname);
-
-	size = json_object_array_length(oalgo);
-
-	for (i = 1; i < size; i++) {
-		oparam = json_object_array_get_idx(oalgo, i);
-
-		len = json_object_get_string_len(oparam) + 1;
-		if (len <= 0) {
-			ret = ERR_CODE(FAILED);
-			goto end;
-		}
-
-		buf = malloc(len);
-		if (!buf) {
-			DBG_PRINT_ALLOC_FAILURE();
-			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
-		}
-		strcpy(buf, json_object_get_string(oparam));
-
-		param_name = strtok(buf, delim);
-		if (!param_name) {
-			DBG_PRINT("Key Algo parameter \"%s\" not supported",
-				  json_object_get_string(oparam));
-			ret = ERR_CODE(FAILED);
-			goto end;
-		}
-
-		if ((unsigned int)len <= strlen(delim) ||
-		    strlen(param_name) >= len - strlen(delim)) {
-			ret = ERR_CODE(BAD_PARAM_TYPE);
-			goto end;
-		}
-
-		param_value = json_object_get_string(oparam) +
-			      strlen(param_name) + strlen(delim);
-
-		if (!strcmp(param_name, HASH_STR)) {
-			ret = set_param_str(&hash_str, param_value);
-			if (ret != ERR_CODE(PASSED))
-				goto end;
-		} else if (!strcmp(param_name, LENGTH_STR)) {
-			ret = set_param_num(&length, param_value);
-			if (ret != ERR_CODE(PASSED))
-				goto end;
-		} else if (!strcmp(param_name, MIN_LENGTH_STR)) {
-			ret = set_param_num(&min_length, param_value);
-			if (ret != ERR_CODE(PASSED))
-				goto end;
-		} else if (!strcmp(param_name, KDF_STR)) {
-			ret = set_param_str(&kdf_str, param_value);
-			if (ret != ERR_CODE(PASSED))
-				goto end;
-		} else {
-			ret = ERR_CODE(BAD_PARAM_TYPE);
-			goto end;
-		}
-
-		free(buf);
-		buf = NULL;
-	}
-
-	ret = convert_algo(alg_str, hash_str, kdf_str, length, min_length, alg);
-
-end:
-	if (buf)
-		free(buf);
-
-	return ret;
-}
-
 static int get_psa_key_persistence(psa_key_persistence_t *psa_persistence,
 				   const char *persistence_str)
 {
@@ -720,87 +366,173 @@ static int key_read_lifetime(psa_key_lifetime_t *lifetime,
 	return ret;
 }
 
+static const struct util_attr_info usage_info_psa[] = {
+	ATTR_USAGE_PSA(CACHE),
+	ATTR_USAGE_PSA(COPY),
+	ATTR_USAGE_PSA(DERIVE),
+	ATTR_USAGE_PSA(ENCRYPT),
+	ATTR_USAGE_PSA(DECRYPT),
+	ATTR_USAGE_PSA(SIGN_HASH),
+	ATTR_USAGE_PSA(SIGN_MESSAGE),
+	ATTR_USAGE_PSA(VERIFY_HASH),
+	ATTR_USAGE_PSA(VERIFY_MESSAGE),
+	ATTR_USAGE_PSA(VERIFY_DERIVATION),
+	{ .name = NULL }
+};
+
+static void usage_callback(void *user_data, const char *attributes[],
+			   size_t n_attributes)
+{
+	psa_key_usage_t *usage_flags = user_data;
+	size_t i = 0;
+
+	for (; i < n_attributes; i++)
+		*usage_flags |=
+			ATTR_ARRAY_FIND_MATCH(usage_info_psa, attributes[i])
+				.psa_usage;
+
+	DBG_PRINT("PSA usage flags: %08x", *usage_flags);
+}
+
+static const struct util_attr_info algo_info_psa[] = {
+	ATTR_ALGO_PSA("ECB_NO_PADDING", PSA_ALG_ECB_NO_PADDING),
+	ATTR_ALGO_PSA("CFB", PSA_ALG_CFB),
+	ATTR_ALGO_PSA("CTR", PSA_ALG_CTR),
+	ATTR_ALGO_PSA("OFB", PSA_ALG_OFB),
+	ATTR_ALGO_PSA("XTS", PSA_ALG_XTS),
+	ATTR_ALGO_PSA("CCM", PSA_ALG_CCM),
+	ATTR_ALGO_PSA("GCM", PSA_ALG_GCM),
+	ATTR_ALGO_PSA("CHACHA20_POLY1305", PSA_ALG_CHACHA20_POLY1305),
+	ATTR_ALGO_PSA("CMAC", PSA_ALG_CMAC),
+	ATTR_ALGO_PSA("HMAC", PSA_ALG_HMAC(PSA_ALG_NONE)),
+	ATTR_ALGO_PSA("ECDSA", PSA_ALG_ECDSA_BASE),
+	ATTR_ALGO_PSA("ED25519PH", PSA_ALG_ED25519PH),
+	ATTR_ALGO_PSA("ED448PH", PSA_ALG_ED448PH),
+	ATTR_ALGO_PSA("PURE_EDDSA", PSA_ALG_PURE_EDDSA),
+	ATTR_ALGO_PSA("DETERMINISTIC_ECDSA", PSA_ALG_DETERMINISTIC_ECDSA_BASE),
+	ATTR_ALGO_PSA("HASH_EDDSA", PSA_ALG_HASH_EDDSA_BASE),
+	ATTR_ALGO_PSA("RSA_PKCS1V15", PSA_ALG_RSA_PKCS1V15_SIGN(PSA_ALG_NONE)),
+	ATTR_ALGO_PSA("RSA_PSS", PSA_ALG_RSA_PSS_ANY_SALT(PSA_ALG_NONE)),
+	ATTR_ALGO_PSA("RSA_PKCS1V15_SIGN_RAW", PSA_ALG_RSA_PKCS1V15_SIGN_RAW),
+	ATTR_ALGO_PSA("RSA_PKCS1V15_SIGN_BASE", PSA_ALG_RSA_PKCS1V15_SIGN_BASE),
+	ATTR_ALGO_PSA("RSA_PSS_ANY_SALT", PSA_ALG_RSA_PSS_ANY_SALT_BASE),
+	ATTR_ALGO_PSA("RSA_PSS", PSA_ALG_RSA_PSS_BASE),
+	{ .name = NULL }
+};
+
+static const struct util_attr_info hash_info_psa[] = {
+	ATTR_HASH_PSA("MD5", PSA_ALG_MD5),
+	ATTR_HASH_PSA("SHA1", PSA_ALG_SHA_1),
+	ATTR_HASH_PSA("SHA224", PSA_ALG_SHA_224),
+	ATTR_HASH_PSA("SHA256", PSA_ALG_SHA_256),
+	ATTR_HASH_PSA("SHA384", PSA_ALG_SHA_384),
+	ATTR_HASH_PSA("SHA512", PSA_ALG_SHA_512),
+	ATTR_HASH_PSA("SHA3_SHA224", PSA_ALG_SHA3_224),
+	ATTR_HASH_PSA("SHA3_SHA256", PSA_ALG_SHA3_256),
+	ATTR_HASH_PSA("SHA3_SHA384", PSA_ALG_SHA3_384),
+	ATTR_HASH_PSA("SHA3_SHA512", PSA_ALG_SHA3_512),
+	ATTR_HASH_PSA("ANY_HASH", PSA_ALG_ANY_HASH),
+	{ .name = NULL }
+};
+
+void algorithm_callback_psa(void *user_data, const char *params[],
+			    size_t n_params)
+{
+	psa_algorithm_t *alg = user_data;
+	size_t i = 1;
+	const char *param = NULL;
+	psa_algorithm_t length = 0;
+	bool min_length = false;
+
+	*alg = ATTR_ARRAY_FIND_MATCH(algo_info_psa, params[0]).psa_algo;
+
+	for (; i < n_params; i++) {
+		param = params[i];
+
+		if (!strncmp(param, HASH_STR, strlen(HASH_STR))) {
+			param = param + strlen(HASH_STR);
+			*alg |= ATTR_ARRAY_FIND_MATCH(hash_info_psa, param)
+					.psa_algo;
+		} else if (!strncmp(param, MIN_LENGTH_STR,
+				    strlen(MIN_LENGTH_STR))) {
+			(void)SET_OVERFLOW(atol(param + strlen(MIN_LENGTH_STR)),
+					   length);
+
+			min_length = true;
+		} else if (!strncmp(param, LENGTH_STR, strlen(LENGTH_STR))) {
+			(void)SET_OVERFLOW(atol(param + strlen(LENGTH_STR)),
+					   length);
+
+			min_length = false;
+		}
+	}
+
+	if (length) {
+		if (PSA_ALG_IS_AEAD(*alg)) {
+			*alg = PSA_ALG_AEAD_WITH_SHORTENED_TAG(*alg, length);
+			if (min_length)
+				*alg |= PSA_ALG_AEAD_AT_LEAST_THIS_LENGTH_FLAG;
+		} else if (PSA_ALG_IS_MAC(*alg)) {
+			*alg = PSA_ALG_TRUNCATED_MAC(*alg, length);
+			if (min_length)
+				*alg |= PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG;
+		}
+	}
+
+	DBG_PRINT("PSA algorithm: %08x", *alg);
+}
+
+static const struct util_attr_info lifetime_info_psa[] = {
+	ATTR_LIFETIME_PSA(VOLATILE),
+	ATTR_LIFETIME_PSA(PERSISTENT),
+	{ .name = NULL }
+};
+
+static void attributes_callback(void *user_data, const char *attributes[],
+				size_t n_attributes)
+{
+	psa_key_attributes_t *attr = user_data;
+
+	size_t i = 0;
+
+	for (; i < n_attributes; i++)
+		attr->lifetime |=
+			ATTR_ARRAY_FIND_MATCH(lifetime_info_psa, attributes[i])
+				.psa_lifetime;
+
+	DBG_PRINT("PSA lifetime: %08x", attr->lifetime);
+}
+
 static int key_read_policy(psa_key_attributes_t *attributes,
 			   struct json_object *okey)
 {
 	int ret = ERR_CODE(BAD_ARGS);
-	struct json_object *obj = NULL;
-	struct json_object_iter usage;
-	const struct key_usage_info *usage_info = NULL;
-	psa_key_usage_t usage_flags = 0;
-	psa_algorithm_t algorithm = PSA_ALG_NONE;
-	psa_algorithm_t alg = PSA_ALG_NONE;
 
 	if (!okey || !attributes) {
 		DBG_PRINT_BAD_ARGS();
 		return ret;
 	}
 
-	/*
-	 * Key policy is an JSON-C object where each item is a
-	 * key usage. Each key usage is an array (empty or not) of
-	 * permitted algorithm(s).
-	 *
-	 * Definition is as below:
-	 * "policy" : {
-	 *     "usage_1" : [],
-	 *     "usage_2" : [
-	 *         ["algo_1", "MIN_LENGTH=32"],
-	 *         ["algo_2"]
-	 *     ]
-	 * }
-	 */
-	ret = util_read_json_type(&obj, POLICY_OBJ, t_object, okey);
-	if (ret != ERR_CODE(PASSED))
+	ret = util_attr_read_attributes(okey, USAGE_OBJ, &usage_callback,
+					&attributes->usage_flags);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
-	if (!json_object_get_object(obj))
-		return ERR_CODE(PASSED);
+	ret = util_attr_read_attributes(okey, PERMITTED_ALGO_OBJ,
+					&algorithm_callback_psa,
+					&attributes->alg);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
 
-	/*
-	 * First step is to build all usages definition attributes
-	 */
-	json_object_object_foreachC(obj, usage)
-	{
-		algorithm = 0;
+	ret = util_attr_read_attributes(okey, ATTR_LIST_OBJ,
+					&attributes_callback, &attributes);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
 
-		if (json_object_get_type(usage.val) != json_type_array) {
-			DBG_PRINT("Key usage %s must be an array", usage.key);
-			return ERR_CODE(FAILED);
-		}
+	if (ret == ERR_CODE(VALUE_NOTFOUND))
+		ret = ERR_CODE(PASSED);
 
-		if (!json_object_array_length(usage.val))
-			continue;
-
-		if (json_object_array_length(usage.val) != 1)
-			return ERR_CODE(BAD_PARAM_TYPE);
-
-		usage_info = get_usage_info(usage.key);
-		if (!usage_info)
-			return ERR_CODE(BAD_PARAM_TYPE);
-
-		if (!usage_info->restricted &&
-		    json_object_array_length(usage.val))
-			return ERR_CODE(BAD_PARAM_TYPE);
-
-		usage_flags |= usage_info->psa_usage;
-
-		ret = read_key_usage_algo(&algorithm,
-					  json_object_array_get_idx(usage.val,
-								    0));
-		if (ret != ERR_CODE(PASSED))
-			return ret;
-
-		if (alg && algorithm && algorithm != alg)
-			return ERR_CODE(BAD_PARAM_TYPE);
-
-		if (!alg && algorithm)
-			alg = algorithm;
-	}
-
-	attributes->usage_flags = usage_flags;
-	attributes->alg = alg;
-
+	ret = ERR_CODE(PASSED);
 	return ret;
 }
 

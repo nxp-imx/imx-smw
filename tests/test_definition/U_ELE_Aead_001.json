@@ -3,36 +3,25 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": [
-					[
-						"CCM"
-					]
-				],
-				"decrypt": [
-					[
-						"CCM"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
 			"security_size": 256,
-			"policy": {
-				"sign_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				],
-				"verify_message": [
-					[
-						"ECDSA",
-						"HASH=SHA256"
-					]
-				]
-			}
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
 		},
 		"key 3": {
 			"type": "AES",
@@ -41,13 +30,12 @@
 				"d6c4cf73c639e025654dd3232fe3aa71",
 				"38f21bc8922271b4a6c0af999100b6b5"
 			],
-			"policy": {
-				"encrypt": [
-					[
-						"CCM"
-					]
-				]
-			}
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
 		}
 	},
 	"subtest 1": {

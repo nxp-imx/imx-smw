@@ -3,9 +3,9 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 192,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		},
 		"key 2": {
 			"key_name": "key 1",

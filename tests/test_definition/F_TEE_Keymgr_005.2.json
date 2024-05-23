@@ -3,9 +3,9 @@
 		"key 3": {
 			"type": "AES",
 			"security_size": 256,
-			"policy": {
-				"encrypt": []
-			}
+			"usage": [
+				"ENCRYPT"
+			]
 		}
 	},
 	"subtest 1": {
@@ -25,7 +25,10 @@
 	"subtest 4": {
 		"command": "SIGN",
 		"subsystem": "TEE",
-		"algo": "SHA256",
+		"sign_attr": [
+			"DEFAULT",
+			"HASH=SHA256"
+		],
 		"message": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",

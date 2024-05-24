@@ -126,6 +126,7 @@ configure_file(${CORE_SRC_INC}/subsystems.h.in ${CORE_BIN_INC}/subsystems.h)
 
 set(OBJ_LIST ${OBJ_LIST} PARENT_SCOPE)
 set(EXT_LIBS ${EXT_LIBS} PARENT_SCOPE)
+set(STATIC_EXT_LIBS ${STATIC_EXT_LIBS} PARENT_SCOPE)
 
 target_sources(${PROJECT_NAME} PRIVATE ${OBJ_LIST})
 
@@ -146,7 +147,7 @@ target_include_directories(${PROJECT_NAME}
 
 # Add external library dependency as target interface but
 # don't use them to link the target
-target_link_libraries(${PROJECT_NAME} INTERFACE ${EXT_LIBS})
+target_link_libraries(${PROJECT_NAME} INTERFACE ${EXT_LIBS} PRIVATE ${STATIC_EXT_LIBS})
 
 install(TARGETS ${PROJECT_NAME} EXPORT SMWTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_SOURCE_DIR}/osal/${OS}/config/default_config.txt

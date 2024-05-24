@@ -57,6 +57,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update the arguments passed to `smw_cancel_operation()` and `smw_copy_context()`.
 * Support storing the IV used by subsystem in the `output_iv` field for the AEAD final encryption operation, in addition to existing support for the one-shot AEAD encryption operation.
 * Fix the TLV lifecycle encoding to handle boolean. Make TLV lifecycle as core global function.
+* Fix SECO static link libraries.
 
 ##### 2. Subsystems
 

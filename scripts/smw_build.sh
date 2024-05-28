@@ -192,6 +192,32 @@ function libuuid_config()
     eval "${cmd_script}"
 }
 
+function libsqlite()
+{
+    cmd_script="cmake ${opt_toolchain}"
+    libsqlite_script="${script_dir}/build_libsqlite.cmake"
+
+    printf "\033[0;32m\n"
+    printf "***************************************\n"
+    printf " Install libsqlite to %s\n" "${opt_export}"
+    printf "***************************************\n"
+    printf "\033[0m\n"
+
+    if [[ -z ${opt_export} ]]; then
+        usage_libsqlite
+        exit 1
+    fi
+
+    if [[ -n ${opt_src} ]]; then
+        cmd_script="${cmd_script} -DSQLite3_SRC_PATH=${opt_src}"
+    fi
+
+    cmd_script="${cmd_script} -DSQLite3_ROOT=${opt_export} -P ${libsqlite_script}"
+
+    printf "Execute %s\n" "${cmd_script}"
+    eval "${cmd_script}"
+}
+
 function teec()
 {
     cmd_script="cmake ${opt_toolchain} ${opt_builddir}"
@@ -285,6 +311,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_jsonc} ${opt_psaarchtests}"
     cmd_script="${cmd_script} ${opt_psa}"
     cmd_script="${cmd_script} ${opt_tls12}"
+    cmd_script="${cmd_script} ${opt_libsqlite}"
 
     printf "Execute %s\n" "${cmd_script}"
     eval "${cmd_script}"
@@ -408,6 +435,12 @@ function package()
         eval "cp -P ${opt_jsonc_lib}.* ${opt_dest}/usr/lib/."
     fi
 
+    get_cmakecache opt_sqlite_lib "SQLite3_LIBRARY"
+
+    if [[ -n ${opt_sqlite_lib} ]]; then
+        eval "cp -P ${opt_sqlite_lib}.* ${opt_dest}/usr/lib/."
+    fi
+
     eval "cd ${opt_dest} && tar -czf ../${package_name} ."
     rm -rf "${opt_dest}"
 }
@@ -457,6 +490,20 @@ function usage_libuuid_config()
     printf "\n"
     printf "To build and install the LIBUUID Library\n"
     printf "  %s libuuid_config export=[dir] src=[dir] arch=[arch] " "${script_name}"
+    printf "toolpath=[dir] toolname=[name]\n"
+    printf "    export   = Export directory\n"
+    printf "    src      = [optional] Temporary directory where install sources\n"
+    printf "    arch     = [optional] Toolchain architecture (aarch32|aarch64)\n"
+    printf "    toolpath = [optional] Toolchain path where installed\n"
+    printf "    toolname = [optional] Toolchain name\n"
+    printf "\n"
+}
+
+function usage_libsqlite()
+{
+    printf "\n"
+    printf "To build and install the LIBSQLite3 Library\n"
+    printf "  %s libsqlite export=[dir] src=[dir] arch=[arch] " "${script_name}"
     printf "toolpath=[dir] toolname=[name]\n"
     printf "    export   = Export directory\n"
     printf "    src      = [optional] Temporary directory where install sources\n"
@@ -648,6 +695,7 @@ function usage()
     usage_seco
     usage_ele
     usage_libuuid_config
+    usage_libsqlite
     usage_teec
     usage_tadevkit
     usage_psaarchtests
@@ -732,6 +780,12 @@ do
             opt_teec="${arg#*=}"
             check_directory opt_teec
             opt_teec="-DTEEC_ROOT=${opt_teec}"
+            ;;
+
+        libsqlite=*)
+            opt_libsqlite="${arg#*=}"
+            check_directory opt_libsqlite
+            opt_libsqlite="-DSQLite3_ROOT=${opt_libsqlite}"
             ;;
 
         libuuid_config=*)
@@ -848,6 +902,10 @@ case ${opt_action} in
 
     libuuid_config)
         libuuid_config
+        ;;
+
+    libsqlite)
+        libsqlite
         ;;
 
     teec)

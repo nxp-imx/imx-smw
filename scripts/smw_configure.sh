@@ -148,6 +148,8 @@ eval "./scripts/smw_build.sh jsonc export=${export} \
       src=../jsonc ${arch} ${opt_toolpath}"
 eval "./scripts/smw_build.sh libuuid_config export=${export}/usr \
       src=../libuuid ${arch} ${opt_toolpath}"
+eval "./scripts/smw_build.sh libsqlite export=${export}/usr \
+      src=../libsqlite ${arch} ${opt_toolpath}"
 eval "./scripts/smw_build.sh teec export=${export} \
       src=../optee-client libuuid_config=${export}/usr out=${tee_build} ${arch} ${opt_toolpath}"
 eval "./scripts/smw_build.sh tadevkit export=${ta_export} \
@@ -176,6 +178,8 @@ conf_opts="${conf_opts} libuuid_config=${export}/usr teec=${export} tadevkit=${t
 conf_opts="${conf_opts} jsonc=${export}"
 # Enable PSA Architecture tests
 conf_opts="${conf_opts} psaarchtests=${psaarchtests_src_path}"
+# Enable SQLite
+conf_opts="${conf_opts} libsqlite=${export}/usr"
 
 #
 # Configure build targets

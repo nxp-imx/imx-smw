@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020, 2023-2024 NXP
+ * Copyright 2020, 2023-2025 NXP
  */
 #ifndef __UTIL_H__
 #define __UTIL_H__
@@ -122,5 +122,31 @@ size_t util_rfc2279_to_byte(CK_BYTE_PTR dst, size_t len_dst,
  * The number of bits of the big number
  */
 size_t util_get_bignum_bits(struct libbignumber *bignum);
+
+/**
+ * util_byte_to_hex() - Convert an array of byte to a string
+ * @dst: String output
+ * @len_dst: Length of the @dst array
+ * @src: Byte array to convert
+ * @len_src: Length of the @src array
+ *
+ * Return:
+ * The length of string converted
+ */
+size_t util_byte_to_hex(CK_CHAR_PTR dst, size_t len_dst, const CK_BYTE_PTR src,
+			size_t len_src);
+
+/**
+ * util_hex_to_byte() - Convert string to an array of byte
+ * @dst: Byte array output
+ * @len_dst: Length of the @dst array
+ * @src: String to convert
+ * @len_src: Length of the @src array
+ *
+ * Return:
+ * The length of byte array converted
+ */
+size_t util_hex_to_byte(CK_BYTE_PTR dst, size_t len_dst, const CK_CHAR_PTR src,
+			size_t len_src);
 
 #endif /* __UTIL_H__ */

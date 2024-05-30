@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "trace.h"
@@ -154,6 +156,67 @@ size_t util_rfc2279_to_byte(CK_BYTE_PTR dst, size_t len_dst,
 		} else {
 			dst[len] = src[idx];
 		}
+	}
+
+	return idx;
+}
+
+size_t util_byte_to_hex(CK_CHAR_PTR dst, size_t len_dst, const CK_BYTE_PTR src,
+			size_t len_src)
+{
+	size_t len = 0;
+	size_t idx = 0;
+	int l = 0;
+
+	for (; idx < len_src && len < len_dst; idx++, len += 2) {
+		l = sprintf((char *)dst + len, "%02hhX", src[idx]);
+		if (l != 2)
+			return 0;
+	}
+
+	return idx;
+}
+
+static CK_BYTE util_hex_to_dec(CK_BYTE b)
+{
+	if (b >= 'a' && b <= 'f')
+		b = b - 'a' + 10;
+	else if (b >= 'A' && b <= 'F')
+		b = b - 'A' + 10;
+	else if (b >= '0' && b <= '9')
+		b = b - '0';
+	else
+		/* Valid value are 0 to 15 */
+		return 0x10;
+
+	return b;
+}
+
+size_t util_hex_to_byte(CK_BYTE_PTR dst, size_t len_dst, const CK_CHAR_PTR src,
+			size_t len_src)
+{
+	CK_BYTE msb = 0;
+	CK_BYTE lsb = 0;
+	size_t len = 0;
+	size_t idx = 0;
+
+	if (!len_src || len_src & 1)
+		return 0;
+
+	len_src -= 2;
+	for (; idx <= len_src && len < len_dst; idx += 2, len++) {
+		msb = src[idx];
+		lsb = src[idx + 1];
+
+		msb = util_hex_to_dec(msb);
+		if (msb >= 0x10)
+			return 0;
+
+		lsb = util_hex_to_dec(lsb);
+		if (lsb >= 0x10)
+			return 0;
+
+		dst[len] = (CK_BYTE)((msb << 4) & 0xF0) | lsb;
 	}
 
 	return idx;

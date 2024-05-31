@@ -43,13 +43,14 @@ Origin:             NXP
 --------------------------------------------------------------------------------
 Description:        Tests suite of the SMW Library.
 Location:           tests/*
-Except:             tests/psa/crypto/testsuite.db
-Except:             tests/psa/crypto/*
+Except:             tests/psa/psa-arch-tests/crypto/pal_crypto_config.h
 License:            BSD 3-Clause
 Origin:             NXP
 --------------------------------------------------------------------------------
-Location:           tests/psa/crypto/*
+Description:        Configuration options for crypto tests (set of defines).
+Location:           tests/psa/psa-arch-tests/crypto/pal_crypto_config.h
 License:            Apache-2.0
+                    (http://www.apache.org/licenses/LICENSE-2.0)
 Origin:             ARM
 --------------------------------------------------------------------------------
 Description:        PKCS11 Library interfaced with SMW's library.

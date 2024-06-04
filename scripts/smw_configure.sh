@@ -135,10 +135,8 @@ done
 eval "./scripts/smw_build.sh toolchain ${arch} ${opt_toolpath}"
 
 if [[ ${opt_seco} -eq 1 ]]; then
-eval "./scripts/smw_build.sh zlib export=${export}/usr \
-       	src=../zlib ${arch} ${opt_toolpath}"
 eval "./scripts/smw_build.sh seco export=${seco_export} \
-      src=../seco_libs zlib=${export}/usr ${arch} ${opt_toolpath}"
+      src=../secure_enclave ${arch} ${opt_toolpath}"
 fi
 
 if [[ ${opt_ele} -eq 1 ]]; then
@@ -163,7 +161,7 @@ conf_opts="${arch} ${opt_toolpath}"
 
 # Enable SECO if supported
 if [[ ${opt_seco} -eq 1 ]]; then
-    conf_opts="${conf_opts} zlib=${export}/usr seco=${seco_export}"
+    conf_opts="${conf_opts} seco=${seco_export}"
 fi
 
 # Enable ELE if supported

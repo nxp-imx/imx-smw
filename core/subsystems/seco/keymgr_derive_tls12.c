@@ -2,7 +2,6 @@
 /*
  * Copyright 2021-2024 NXP
  */
-
 #include "smw_status.h"
 
 #include "debug.h"
@@ -480,6 +479,7 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 		      struct smw_keymgr_derive_key_args *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int tmp_status = SMW_STATUS_OK;
 
 	struct smw_keymgr_identifier *key_derived_id = NULL;
 	struct smw_keymgr_tls12_args *tls_args = NULL;
@@ -498,6 +498,7 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 	unsigned int key_group = 0;
 
 	hsm_err_t err = HSM_NO_ERROR;
+	hsm_hdl_t key_mgt_hdl = 0;
 	op_key_exchange_args_t op_args = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -610,6 +611,10 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 	/* Only Transient keys generated */
 	op_args.shared_key_info = HSM_KEY_INFO_TRANSIENT;
 
+	status = seco_open_key_mgmt_service(&seco_ctx->hdl, &key_mgt_hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	do {
 		status = seco_get_key_group(seco_ctx, false, &key_group);
 		if (status != SMW_STATUS_OK)
@@ -622,7 +627,6 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 
 		SMW_DBG_PRINTF(VERBOSE,
 			       "[%s (%d)] Call hsm_key_exchange()\n"
-			       "  key_management_hdl: %d\n"
 			       "  op_key_exchange_args_t\n"
 			       "    key_identifier: %d\n"
 			       "    shared_key_identifier_array: %p (size %d)\n"
@@ -636,8 +640,7 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 			       "    kdf_algorithm: %d\n"
 			       "    flags: 0x%x\n"
 			       "    signed_message: %p (size %d)\n",
-			       __func__, __LINE__, seco_ctx->hdl.key_management,
-			       op_args.key_identifier,
+			       __func__, __LINE__, op_args.key_identifier,
 			       op_args.shared_key_identifier_array,
 			       op_args.shared_key_identifier_array_size,
 			       op_args.ke_input, op_args.ke_input_size,
@@ -651,7 +654,7 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 			       op_args.kdf_algorithm, op_args.flags,
 			       op_args.signed_message, op_args.signed_msg_size);
 
-		err = hsm_key_exchange(seco_ctx->hdl.key_management, &op_args);
+		err = hsm_key_exchange(key_mgt_hdl, &op_args);
 
 		SMW_DBG_PRINTF(DEBUG, "hsm_key_exchange returned %d\n", err);
 		/*
@@ -719,6 +722,10 @@ end:
 
 	if (hex_key_base)
 		SMW_UTILS_FREE(hex_key_base);
+
+	tmp_status = seco_close_key_mgt_service(key_mgt_hdl);
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

@@ -575,6 +575,7 @@ static int aead(struct hdl *hdl, void *args)
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	hsm_err_t err = HSM_NO_ERROR;
+
 	op_auth_enc_args_t op_aead_args = { 0 };
 	op_cipher_one_go_args_t op_cipher_args = { 0 };
 
@@ -689,52 +690,58 @@ static int aead(struct hdl *hdl, void *args)
 		fill_cipher_args(&op_aead_args, &op_cipher_args);
 
 		SMW_DBG_PRINTF(VERBOSE,
-			       "[%s (%d)] Call hsm_cipher_one_go()\n"
-			       "cipher_hdl: %d\n"
+			       "[%s (%d)] Call hsm_do_cipher()\n"
 			       "op_cipher_one_go_args_t\n"
-			       "    key_identifier: %d\n"
-			       "    iv: %p\n"
-			       "    iv_size: %d\n"
-			       "    cipher_algo: %d\n"
-			       "    flags: %d\n"
-			       "    input: %p\n"
-			       "    output: %p\n"
-			       "    input_size: %d\n"
-			       "    output_size: %d\n",
-			       __func__, __LINE__, hdl->cipher,
-			       op_cipher_args.key_identifier, op_cipher_args.iv,
-			       op_cipher_args.iv_size,
+			       "    key_identifier: 0x%08X\n"
+			       "    algo: 0x%08X\n"
+			       "    flags: 0x%X\n"
+			       "    IV\n"
+			       "      - buffer: %p\n"
+			       "      - size: %d\n"
+			       "    Input\n"
+			       "       - buffer: %p\n"
+			       "       - size: %d\n"
+			       "    Output\n"
+			       "       - buffer: %p\n"
+			       "       - size: %d\n",
+			       __func__, __LINE__,
+			       op_cipher_args.key_identifier,
 			       op_cipher_args.cipher_algo, op_cipher_args.flags,
-			       op_cipher_args.input, op_cipher_args.output,
-			       op_cipher_args.input_size,
+			       op_cipher_args.iv, op_cipher_args.iv_size,
+			       op_cipher_args.input, op_cipher_args.input_size,
+			       op_cipher_args.output,
 			       op_cipher_args.output_size);
 
-		err = hsm_cipher_one_go(hdl->cipher, &op_cipher_args);
+		err = hsm_do_cipher(hdl->key_store, &op_cipher_args);
+		SMW_DBG_PRINTF(DEBUG, "hsm_do_cipher returned %d\n", err);
 	} else {
 		SMW_DBG_PRINTF(VERBOSE,
-			       "[%s (%d)] Call hsm_auth_enc()\n"
-			       "aead_hdl: %d\n"
+			       "[%s (%d)] Call hsm_do_auth_enc()\n"
 			       "op_auth_enc_args_t\n"
-			       "    key_identifier: %d\n"
-			       "    iv: %p\n"
-			       "    iv_size: %d\n"
-			       "    aad: %p\n"
-			       "    aad_size: %d\n"
-			       "    ae_algo: %d\n"
-			       "    flags: %d\n"
-			       "    input: %p\n"
-			       "    output: %p\n"
-			       "    input_size: %d\n"
-			       "    output_size: %d\n",
-			       __func__, __LINE__, hdl->cipher,
-			       op_aead_args.key_identifier, op_aead_args.iv,
-			       op_aead_args.iv_size, op_aead_args.aad,
-			       op_aead_args.aad_size, op_aead_args.ae_algo,
-			       op_aead_args.flags, op_aead_args.input,
-			       op_aead_args.output, op_aead_args.input_size,
-			       op_aead_args.output_size);
+			       "    key_identifier: 0x%08X\n"
+			       "    algo: 0x%08X\n"
+			       "    flags: 0x%X\n"
+			       "    IV\n"
+			       "      - buffer: %p\n"
+			       "      - size: %d\n"
+			       "    AAD\n"
+			       "      - buffer: %p\n"
+			       "      - size: %d\n"
+			       "    Input\n"
+			       "       - buffer: %p\n"
+			       "       - size: %d\n"
+			       "    Output\n"
+			       "       - buffer: %p\n"
+			       "       - size: %d\n",
+			       __func__, __LINE__, op_aead_args.key_identifier,
+			       op_aead_args.ae_algo, op_aead_args.flags,
+			       op_aead_args.iv, op_aead_args.iv_size,
+			       op_aead_args.aad, op_aead_args.aad_size,
+			       op_aead_args.input, op_aead_args.input_size,
+			       op_aead_args.output, op_aead_args.output_size);
 
-		err = hsm_auth_enc(hdl->cipher, &op_aead_args);
+		err = hsm_do_auth_enc(hdl->key_store, &op_aead_args);
+		SMW_DBG_PRINTF(DEBUG, "hsm_do_auth_enc returned %d\n", err);
 	}
 
 	if (!is_encrypt_op && err == HSM_GENERAL_ERROR)

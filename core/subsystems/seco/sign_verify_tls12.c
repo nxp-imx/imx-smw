@@ -3,6 +3,8 @@
  * Copyright 2021-2024 NXP
  */
 
+#include <internal/hsm_tls_finish.h>
+
 #include "smw_status.h"
 #include "smw_crypto.h"
 
@@ -80,9 +82,10 @@ set_tls_finish_algo_id(enum smw_config_hash_algo_id hash_algo_id,
 int tls_mac_finish(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
-
+	hsm_hdl_t key_mgt_hdl = 0;
 	op_tls_finish_args_t op_tls_args = { 0 };
 
 	struct smw_crypto_sign_verify_args *smw_args = args;
@@ -98,11 +101,13 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	status = set_tls_finish_algo_id(smw_args->attributes.hash_id,
 					&op_tls_args.hash_algorithm);
 	if (status != SMW_STATUS_OK)
-		return status;
+		goto end;
 
 	if (smw_sign_verify_get_sign_len(smw_args) <
-	    TLS12_MAC_FINISH_DEFAULT_LEN)
-		return SMW_STATUS_OUTPUT_TOO_SHORT;
+	    TLS12_MAC_FINISH_DEFAULT_LEN) {
+		status = SMW_STATUS_OUTPUT_TOO_SHORT;
+		goto end;
+	}
 
 	op_tls_args.verify_data_output_size = TLS12_MAC_FINISH_DEFAULT_LEN;
 
@@ -114,12 +119,16 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 
 	if (SET_OVERFLOW(smw_sign_verify_get_msg_len(smw_args),
 			 op_tls_args.handshake_hash_input_size)) {
-		return SMW_STATUS_INVALID_PARAM;
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
 	}
+
+	status = seco_open_key_mgmt_service(hdl, &key_mgt_hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_tls_finish()\n"
-		       "key_management_hdl: %d\n"
 		       "op_tls_finish_args_t\n"
 		       "    key_identifier: %d\n"
 		       "    handshake_hash_input: %p\n"
@@ -128,15 +137,14 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 		       "    verify_data_output_size: %d\n"
 		       "    flags: 0x%x\n"
 		       "    hash_algorithm: 0x%x\n",
-		       __func__, __LINE__, hdl->key_management,
-		       op_tls_args.key_identifier,
+		       __func__, __LINE__, op_tls_args.key_identifier,
 		       op_tls_args.handshake_hash_input,
 		       op_tls_args.verify_data_output,
 		       op_tls_args.handshake_hash_input_size,
 		       op_tls_args.verify_data_output_size, op_tls_args.flags,
 		       op_tls_args.hash_algorithm);
 
-	err = hsm_tls_finish(hdl->key_management, &op_tls_args);
+	err = hsm_tls_finish(key_mgt_hdl, &op_tls_args);
 
 	SMW_DBG_PRINTF(DEBUG, "hsm_tls_finish returned %d\n", err);
 	status = seco_convert_err(err);
@@ -148,6 +156,13 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 		       op_tls_args.verify_data_output_size);
 	SMW_DBG_HEX_DUMP(DEBUG, op_tls_args.verify_data_output,
 			 op_tls_args.verify_data_output_size, 4);
+
+end:
+	tmp_status = seco_close_key_mgt_service(key_mgt_hdl);
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
 	return status;
 }

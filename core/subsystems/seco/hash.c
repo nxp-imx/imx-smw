@@ -61,7 +61,7 @@ static int hash(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 
-	op_hash_one_go_args_t op_hash_one_go_args = { 0 };
+	op_hash_one_go_args_t op_args = { 0 };
 
 	struct smw_crypto_hash_args *hash_args = args;
 	const struct hash_algo_info *hash_algo_info = NULL;
@@ -74,61 +74,52 @@ static int hash(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	op_hash_one_go_args.input = smw_crypto_get_hash_input_data(hash_args);
-	op_hash_one_go_args.output = smw_crypto_get_hash_output_data(hash_args);
-	op_hash_one_go_args.input_size =
-		smw_crypto_get_hash_input_length(hash_args);
-	op_hash_one_go_args.output_size =
-		smw_crypto_get_hash_output_length(hash_args);
-	op_hash_one_go_args.algo = hash_algo_info->hash_algo;
+	op_args.svc_flags = HSM_HASH_FLAG_ONE_SHOT;
+	op_args.input = smw_crypto_get_hash_input_data(hash_args);
+	op_args.output = smw_crypto_get_hash_output_data(hash_args);
+	op_args.input_size = smw_crypto_get_hash_input_length(hash_args);
+	op_args.output_size = smw_crypto_get_hash_output_length(hash_args);
+	op_args.algo = hash_algo_info->hash_algo;
 
-	if (!op_hash_one_go_args.output) {
+	if (!op_args.output) {
 		smw_crypto_set_hash_output_length(hash_args,
 						  hash_algo_info->length);
 		goto end;
 	}
 
-	if (op_hash_one_go_args.output_size < hash_algo_info->length) {
+	if (op_args.output_size < hash_algo_info->length) {
 		smw_crypto_set_hash_output_length(hash_args,
 						  hash_algo_info->length);
 		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		goto end;
 	}
 
-	if (op_hash_one_go_args.output_size > hash_algo_info->length) {
-		op_hash_one_go_args.output_size = hash_algo_info->length;
-	}
+	if (op_args.output_size > hash_algo_info->length)
+		op_args.output_size = hash_algo_info->length;
 
 	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_hash_one_go()\n"
-		       "hash_hdl: %d\n"
+		       "[%s (%d)] Call hsm_do_hash()\n"
 		       "op_hash_one_go_args_t\n"
-		       "    input: %p\n"
-		       "    output: %p\n"
-		       "    input_size: %d\n"
-		       "    output_size: %d\n"
-		       "    algo: %x\n"
-		       "    flags: %x\n",
-		       __func__, __LINE__, hdl->hash, op_hash_one_go_args.input,
-		       op_hash_one_go_args.output,
-		       op_hash_one_go_args.input_size,
-		       op_hash_one_go_args.output_size,
-		       op_hash_one_go_args.algo, op_hash_one_go_args.flags);
+		       "    algo: 0x%08X\n"
+		       "    flags: 0x%02X\n"
+		       "    Input\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n"
+		       "    Output\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n",
+		       __func__, __LINE__, op_args.algo, op_args.svc_flags,
+		       op_args.input, op_args.input_size, op_args.output,
+		       op_args.output_size);
 
-	err = hsm_hash_one_go(hdl->hash, &op_hash_one_go_args);
+	err = hsm_do_hash(hdl->session, &op_args);
 	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "hsm_hash_one_go returned %d\n", err);
+		SMW_DBG_PRINTF(DEBUG, "hsm_do_hash returned %d\n", err);
 		status = SMW_STATUS_SUBSYSTEM_FAILURE;
 		goto end;
 	}
 
-	smw_crypto_set_hash_output_length(hash_args,
-					  op_hash_one_go_args.output_size);
-
-	SMW_DBG_PRINTF(DEBUG, "Output (%d):\n",
-		       op_hash_one_go_args.output_size);
-	SMW_DBG_HEX_DUMP(DEBUG, op_hash_one_go_args.output,
-			 op_hash_one_go_args.output_size, 4);
+	smw_crypto_set_hash_output_length(hash_args, op_args.output_size);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

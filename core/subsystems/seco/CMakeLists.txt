@@ -3,7 +3,6 @@ if(NOT DEFINED SECO_ROOT)
     return()
 endif()
 
-find_package(ZLIBLight REQUIRED)
 find_package(Seco REQUIRED)
 
 #
@@ -15,8 +14,6 @@ set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:seco> PARENT_SCOPE)
 
 message(STATUS "    Seco Libraries: ${SECO_LIBRARIES}")
 message(STATUS "    Seco Headers  : ${SECO_INCLUDE_DIRS}")
-message(STATUS "    ZLIB Library  : ${ZLIB_LIBRARY}")
-message(STATUS "    ZLIB Header   : ${ZLIB_INCLUDE_DIR}")
 
 add_library(seco OBJECT "")
 set_target_properties(seco PROPERTIES C_VISIBILITY_PRESET hidden)
@@ -42,5 +39,4 @@ target_sources(seco PRIVATE
 target_include_directories(seco PRIVATE ${INCLUDE_DIR}
                            ${SECO_INCLUDE_DIRS})
 
-set(EXT_LIBS ${EXT_LIBS} ${ZLIB_LIBRARY} PARENT_SCOPE)
-set(STATIC_EXT_LIBS ${STATIC_EXT_LIBS} ${SECO_LIBRARIES} PARENT_SCOPE)
+set(EXT_LIBS ${EXT_LIBS} ${SECO_LIBRARIES} PARENT_SCOPE)

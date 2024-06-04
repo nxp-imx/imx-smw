@@ -50,6 +50,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add TEE subsystem ed25519 key management.
 * Add ELE support for the CHACHA20_POLY1305 AEAD mode.
 * Fix SECO MAC length to be exact length due to SECO limitation.
+* Switch the SECO subsystem to the new Secure Enclave library.
 
 ##### 3. ARM PSA APIs
 

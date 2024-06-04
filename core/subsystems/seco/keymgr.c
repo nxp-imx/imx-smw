@@ -5,6 +5,7 @@
 
 #include "smw_status.h"
 
+#include "compiler.h"
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
@@ -272,9 +273,11 @@ static int delete_key_operation(struct subsystem_context *seco_ctx,
 				struct smw_keymgr_identifier *key_identifier)
 {
 	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 
+	hsm_hdl_t key_mgt_hdl = 0;
 	op_manage_key_args_t manage_key_args = { 0 };
 	bool is_transient = false;
 
@@ -296,9 +299,12 @@ static int delete_key_operation(struct subsystem_context *seco_ctx,
 
 	manage_key_args.key_group = key_identifier->group;
 
+	status = seco_open_key_mgmt_service(&seco_ctx->hdl, &key_mgt_hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_manage_key()\n"
-		       "  key_management_hdl: %u\n"
 		       "  op_manage_key_args_t\n"
 		       "    key_identifier: 0x%08X\n"
 		       "    input_size: %d\n"
@@ -307,15 +313,16 @@ static int delete_key_operation(struct subsystem_context *seco_ctx,
 		       "    key_group: %d\n"
 		       "    key_info: 0x%04X\n"
 		       "    input_data: %p\n",
-		       __func__, __LINE__, seco_ctx->hdl.key_management,
-		       *manage_key_args.key_identifier,
+		       __func__, __LINE__, *manage_key_args.key_identifier,
 		       manage_key_args.input_size, manage_key_args.flags,
 		       manage_key_args.key_type, manage_key_args.key_group,
 		       manage_key_args.key_info, manage_key_args.input_data);
 
-	err = hsm_manage_key(seco_ctx->hdl.key_management, &manage_key_args);
-	status = seco_convert_err(err);
+	err = hsm_manage_key(key_mgt_hdl, &manage_key_args);
 
+	SMW_DBG_PRINTF(DEBUG, "hsm_manage_key returned %d\n", err);
+
+	status = seco_convert_err(err);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -325,6 +332,10 @@ static int delete_key_operation(struct subsystem_context *seco_ctx,
 					  !is_transient, false);
 
 end:
+	tmp_status = seco_close_key_mgt_service(key_mgt_hdl);
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -332,9 +343,11 @@ end:
 static int generate_key(struct subsystem_context *seco_ctx, void *args)
 {
 	int status = SMW_STATUS_OK;
+	int tmp_status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 
+	hsm_hdl_t key_mgt_hdl = 0;
 	op_generate_key_args_t op_generate_key_args = { 0 };
 
 	struct smw_keymgr_generate_key_args *generate_key_args = args;
@@ -408,6 +421,10 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 		break;
 	}
 
+	status = seco_open_key_mgmt_service(&seco_ctx->hdl, &key_mgt_hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	do {
 		status = seco_get_key_group(seco_ctx, persistent_grp,
 					    &key_group);
@@ -421,7 +438,6 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 
 		SMW_DBG_PRINTF(VERBOSE,
 			       "[%s (%d)] Call hsm_generate_key()\n"
-			       "key_management_hdl: %u\n"
 			       "op_generate_key_args_t\n"
 			       "    key_identifier: @%p\n"
 			       "    out_size: %d\n"
@@ -430,7 +446,7 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 			       "    key_group: %d\n"
 			       "    key_info: 0x%04X\n"
 			       "    out_key: %p\n",
-			       __func__, __LINE__, seco_ctx->hdl.key_management,
+			       __func__, __LINE__,
 			       op_generate_key_args.key_identifier,
 			       op_generate_key_args.out_size,
 			       op_generate_key_args.flags,
@@ -439,8 +455,8 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 			       op_generate_key_args.key_info,
 			       op_generate_key_args.out_key);
 
-		err = hsm_generate_key(seco_ctx->hdl.key_management,
-				       &op_generate_key_args);
+		err = hsm_generate_key(key_mgt_hdl, &op_generate_key_args);
+		SMW_DBG_PRINTF(DEBUG, "hsm_generate_key returned %d\n", err);
 
 		/*
 		 * There is no specific SECO error code indicating that the
@@ -494,6 +510,10 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 end:
 	if (tmp_key && tmp_key != public_data)
 		SMW_UTILS_FREE(tmp_key);
+
+	tmp_status = seco_close_key_mgt_service(key_mgt_hdl);
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

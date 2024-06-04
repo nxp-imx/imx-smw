@@ -110,7 +110,7 @@ static int sign(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 
-	op_generate_sign_args_t op_generate_sign_args = { 0 };
+	op_generate_sign_args_t op_args = { 0 };
 
 	struct smw_crypto_sign_verify_args *sign_args = args;
 	struct smw_keymgr_descriptor *key_descriptor =
@@ -137,13 +137,11 @@ static int sign(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	op_generate_sign_args.key_identifier = key_identifier->id;
-	op_generate_sign_args.message = smw_sign_verify_get_msg_buf(sign_args);
-	op_generate_sign_args.signature =
-		smw_sign_verify_get_sign_buf(sign_args);
-	op_generate_sign_args.message_size =
-		smw_sign_verify_get_msg_len(sign_args);
-	op_generate_sign_args.signature_size =
+	op_args.key_identifier = key_identifier->id;
+	op_args.message = smw_sign_verify_get_msg_buf(sign_args);
+	op_args.signature = smw_sign_verify_get_sign_buf(sign_args);
+	op_args.message_size = smw_sign_verify_get_msg_len(sign_args);
+	op_args.signature_size =
 		(uint16_t)get_signature_size(key_identifier->security_size);
 
 	pub_signature_size = smw_sign_verify_get_sign_len(sign_args);
@@ -157,70 +155,58 @@ static int sign(struct hdl *hdl, void *args)
 
 	if (pub_signature_size == signature_size) {
 		/* SECO requires a bigger buffer */
-		signature =
-			SMW_UTILS_MALLOC(op_generate_sign_args.signature_size);
+		signature = SMW_UTILS_MALLOC(op_args.signature_size);
 		if (!signature) {
 			status = SMW_STATUS_ALLOC_FAILURE;
 			goto end;
 		}
-		op_generate_sign_args.signature = signature;
+		op_args.signature = signature;
 	}
 
 	if (sign_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
-		op_generate_sign_args.flags =
-			HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
+		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 	else
-		op_generate_sign_args.flags =
-			HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
+		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
 
 	status = set_signature_scheme(key_identifier->type_id,
 				      key_identifier->security_size,
 				      sign_args->attributes.hash_id,
-				      &op_generate_sign_args.scheme_id);
+				      &op_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_generate_signature()\n"
-		       "signature_gen_hdl: %d\n"
+		       "[%s (%d)] Call hsm_do_sign()\n"
 		       "op_generate_sign_args_t\n"
-		       "    key_identifier: %d\n"
-		       "    message: %p\n"
-		       "    signature: %p\n"
-		       "    message_size: %d\n"
-		       "    signature_size: %d\n"
-		       "    scheme_id: %x\n"
-		       "    flags: %x\n",
-		       __func__, __LINE__, hdl->signature_gen,
-		       op_generate_sign_args.key_identifier,
-		       op_generate_sign_args.message,
-		       op_generate_sign_args.signature,
-		       op_generate_sign_args.message_size,
-		       op_generate_sign_args.signature_size,
-		       op_generate_sign_args.scheme_id,
-		       op_generate_sign_args.flags);
+		       "    key_identifier: 0x%08X\n"
+		       "    scheme_id: 0x%08X\n"
+		       "    flags: 0x%X\n"
+		       "    Message\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n"
+		       "    Signature\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n",
+		       __func__, __LINE__, op_args.key_identifier,
+		       op_args.scheme_id, op_args.flags, op_args.message,
+		       op_args.message_size, op_args.signature,
+		       op_args.signature_size);
 
-	err = hsm_generate_signature(hdl->signature_gen,
-				     &op_generate_sign_args);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "hsm_generate_signature returned %d\n",
-			       err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
+	err = hsm_do_sign(hdl->key_store, &op_args);
+	SMW_DBG_PRINTF(DEBUG, "hsm_do_sign returned %d\n", err);
+
+	status = seco_convert_err(err);
+	if (status != SMW_STATUS_OK)
 		goto end;
-	}
 
-	if (signature_size > op_generate_sign_args.signature_size)
-		signature_size = op_generate_sign_args.signature_size;
+	if (signature_size > op_args.signature_size)
+		signature_size = op_args.signature_size;
 
 	if (signature)
 		smw_sign_verify_copy_sign_buf(sign_args, signature,
 					      signature_size);
 
 	smw_sign_verify_set_sign_len(sign_args, signature_size);
-
-	SMW_DBG_PRINTF(DEBUG, "Output (%d):\n", signature_size);
-	SMW_DBG_HEX_DUMP(DEBUG, op_generate_sign_args.signature, signature_size,
-			 4);
 
 end:
 	if (signature)
@@ -236,7 +222,7 @@ static int verify(struct hdl *hdl, void *args)
 
 	hsm_err_t err = HSM_NO_ERROR;
 
-	op_verify_sign_args_t op_verify_sign_args = { 0 };
+	op_verify_sign_args_t op_args = { 0 };
 	hsm_verification_status_t verification_status = 0;
 
 	struct smw_crypto_sign_verify_args *verify_args = args;
@@ -281,16 +267,14 @@ static int verify(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	op_verify_sign_args.key = key_buf;
-	op_verify_sign_args.message = smw_sign_verify_get_msg_buf(verify_args);
-	op_verify_sign_args.signature =
-		smw_sign_verify_get_sign_buf(verify_args);
-	op_verify_sign_args.key_size = key_size;
-	op_verify_sign_args.message_size =
-		smw_sign_verify_get_msg_len(verify_args);
+	op_args.key = key_buf;
+	op_args.message = smw_sign_verify_get_msg_buf(verify_args);
+	op_args.signature = smw_sign_verify_get_sign_buf(verify_args);
+	op_args.key_size = key_size;
+	op_args.message_size = smw_sign_verify_get_msg_len(verify_args);
 
 	if (SET_OVERFLOW(smw_sign_verify_get_sign_len(verify_args),
-			 op_verify_sign_args.signature_size)) {
+			 op_args.signature_size)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
@@ -303,65 +287,54 @@ static int verify(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	if (op_verify_sign_args.signature_size == signature_size) {
+	if (op_args.signature_size == signature_size) {
 		/* SECO requires a bigger buffer */
 		signature = SMW_UTILS_MALLOC(seco_signature_size);
 		if (!signature) {
 			status = SMW_STATUS_ALLOC_FAILURE;
 			goto end;
 		}
-		SMW_UTILS_MEMCPY(signature, op_verify_sign_args.signature,
-				 op_verify_sign_args.signature_size);
-		op_verify_sign_args.signature = signature;
-		op_verify_sign_args.signature_size = seco_signature_size;
+		SMW_UTILS_MEMCPY(signature, op_args.signature,
+				 op_args.signature_size);
+		op_args.signature = signature;
+		op_args.signature_size = seco_signature_size;
 	}
 
 	status = set_signature_scheme(key_descriptor->identifier.type_id,
 				      security_size,
 				      verify_args->attributes.hash_id,
-				      &op_verify_sign_args.scheme_id);
+				      &op_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	if (verify_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
-		op_verify_sign_args.flags =
-			HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
+		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 	else
-		op_verify_sign_args.flags =
-			HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
+		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
 
 	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_verify_signature()\n"
-		       "  signature_ver_hdl: %d\n"
-		       "  op_verify_sign_args_t\n"
-		       "    key: %p\n"
-		       "    message: %p\n"
-		       "    signature: %p\n"
-		       "    key_size: %d\n"
-		       "    message_size: %d\n"
-		       "    signature_size: %d\n"
-		       "    scheme_id: %x\n"
-		       "    flags: %x\n",
-		       __func__, __LINE__, hdl->signature_ver,
-		       op_verify_sign_args.key, op_verify_sign_args.message,
-		       op_verify_sign_args.signature,
-		       op_verify_sign_args.key_size,
-		       op_verify_sign_args.message_size,
-		       op_verify_sign_args.signature_size,
-		       op_verify_sign_args.scheme_id,
-		       op_verify_sign_args.flags);
+		       "[%s (%d)] Call hsm_verify_sign()\n"
+		       "op_verify_sign_args_t\n"
+		       "    scheme_id: 0x%08X\n"
+		       "    flags: 0x%X\n"
+		       "    Public Key\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n"
+		       "    Message\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n"
+		       "    Signature\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n",
+		       __func__, __LINE__, op_args.scheme_id, op_args.flags,
+		       op_args.key, op_args.key_size, op_args.message,
+		       op_args.message_size, op_args.signature,
+		       op_args.signature_size);
 
-	err = hsm_verify_signature(hdl->signature_ver, &op_verify_sign_args,
-				   &verification_status);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "hsm_verify_signature returned %d\n",
-			       err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-		goto end;
-	}
+	err = hsm_verify_sign(hdl->session, &op_args, &verification_status);
+	status = seco_convert_err(err);
 
-	if (verification_status != HSM_VERIFICATION_STATUS_SUCCESS)
-		status = SMW_STATUS_SIGNATURE_INVALID;
+	SMW_DBG_PRINTF(DEBUG, "hsm_verify_sign returned %d\n", err);
 
 end:
 	if (export_key_desc.pub)

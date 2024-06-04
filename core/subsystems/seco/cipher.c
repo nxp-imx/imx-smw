@@ -81,7 +81,7 @@ static int cipher(struct hdl *hdl, void *args)
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	hsm_err_t err = HSM_NO_ERROR;
-	op_cipher_one_go_args_t op_cipher_args = { 0 };
+	op_cipher_one_go_args_t op_args = { 0 };
 	struct smw_crypto_cipher_args *cipher_args = args;
 	struct smw_keymgr_descriptor *key_desc = NULL;
 
@@ -98,25 +98,23 @@ static int cipher(struct hdl *hdl, void *args)
 
 	/* Set operation algorithm */
 	status = set_cipher_algo(key_desc->identifier.type_id,
-				 cipher_args->mode_id,
-				 &op_cipher_args.cipher_algo);
+				 cipher_args->mode_id, &op_args.cipher_algo);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	/* Set flags */
-	status = set_cipher_flags(cipher_args->op_id, &op_cipher_args.flags);
+	status = set_cipher_flags(cipher_args->op_id, &op_args.flags);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	op_cipher_args.output = smw_crypto_get_cipher_output(cipher_args);
-	op_cipher_args.input_size =
-		smw_crypto_get_cipher_input_len(cipher_args);
+	op_args.output = smw_crypto_get_cipher_output(cipher_args);
+	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
 
 	/* Get output length feature */
-	if (!op_cipher_args.output) {
+	if (!op_args.output) {
 		/* Cipher output length is equal to input length */
 		smw_crypto_set_cipher_output_len(cipher_args,
-						 op_cipher_args.input_size);
+						 op_args.input_size);
 		status = SMW_STATUS_OK;
 		goto end;
 	}
@@ -126,20 +124,19 @@ static int cipher(struct hdl *hdl, void *args)
 	 * SECO)
 	 */
 	if (smw_crypto_get_cipher_output_len(cipher_args) <
-	    op_cipher_args.input_size) {
+	    op_args.input_size) {
 		status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		smw_crypto_set_cipher_output_len(cipher_args,
-						 op_cipher_args.input_size);
+						 op_args.input_size);
 		goto end;
 	}
 
-	op_cipher_args.key_identifier =
-		smw_crypto_get_cipher_key_id(cipher_args, 0);
-	op_cipher_args.iv = smw_crypto_get_cipher_iv(cipher_args);
-	op_cipher_args.input = smw_crypto_get_cipher_input(cipher_args);
+	op_args.key_identifier = smw_crypto_get_cipher_key_id(cipher_args, 0);
+	op_args.iv = smw_crypto_get_cipher_iv(cipher_args);
+	op_args.input = smw_crypto_get_cipher_input(cipher_args);
 
 	if (SET_OVERFLOW(smw_crypto_get_cipher_iv_len(cipher_args),
-			 op_cipher_args.iv_size)) {
+			 op_args.iv_size)) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
@@ -149,37 +146,37 @@ static int cipher(struct hdl *hdl, void *args)
 	 * doesn't match SMW API behavior. Then set SECO argument to the correct
 	 * value.
 	 */
-	op_cipher_args.output_size = op_cipher_args.input_size;
+	op_args.output_size = op_args.input_size;
 
 	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_cipher_one_go()\n"
-		       "cipher_hdl: %d\n"
+		       "[%s (%d)] Call hsm_do_cipher()\n"
 		       "op_cipher_one_go_args_t\n"
-		       "    key_identifier: %d\n"
-		       "    iv: %p\n"
-		       "    iv_size: %d\n"
-		       "    cipher_algo: %d\n"
-		       "    flags: %d\n"
-		       "    input: %p\n"
-		       "    output: %p\n"
-		       "    input_size: %d\n"
-		       "    output_size: %d\n",
-		       __func__, __LINE__, hdl->cipher,
-		       op_cipher_args.key_identifier, op_cipher_args.iv,
-		       op_cipher_args.iv_size, op_cipher_args.cipher_algo,
-		       op_cipher_args.flags, op_cipher_args.input,
-		       op_cipher_args.output, op_cipher_args.input_size,
-		       op_cipher_args.output_size);
+		       "    key_identifier: 0x%08X\n"
+		       "    algo: 0x%08X\n"
+		       "    flags: 0x%X\n"
+		       "    IV\n"
+		       "      - buffer: %p\n"
+		       "      - size: %d\n"
+		       "    Input\n"
+		       "       - buffer: %p\n"
+		       "       - size: %d\n"
+		       "    Output\n"
+		       "       - buffer: %p\n"
+		       "       - size: %d\n",
+		       __func__, __LINE__, op_args.key_identifier,
+		       op_args.cipher_algo, op_args.flags, op_args.iv,
+		       op_args.iv_size, op_args.input, op_args.input_size,
+		       op_args.output, op_args.output_size);
 
-	err = hsm_cipher_one_go(hdl->cipher, &op_cipher_args);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "hsm_cipher_one_go returned %d\n", err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-	}
+	err = hsm_do_cipher(hdl->key_store, &op_args);
+	SMW_DBG_PRINTF(DEBUG, "hsm_do_cipher returned %d\n", err);
 
-	/* Update output length */
-	smw_crypto_set_cipher_output_len(cipher_args,
-					 op_cipher_args.output_size);
+	status = seco_convert_err(err);
+
+	if (status == SMW_STATUS_OK)
+		/* Update output length */
+		smw_crypto_set_cipher_output_len(cipher_args,
+						 op_args.output_size);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

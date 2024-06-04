@@ -5,9 +5,6 @@
 
 #include <time.h>
 
-#include <seco_nvm.h>
-#include <hsm_api.h>
-
 #include "smw_osal.h"
 
 #include "compiler.h"
@@ -20,10 +17,6 @@
 
 #include "common.h"
 
-#define STORAGE_MANAGER_WAIT_MS	   10  /* 10 ms */
-#define STORAGE_MANAGER_TIMEOUT	   100 /* 100x WAIT_MS */
-#define STORAGE_MANAGER_RETRIES_NB 2   /* Number of retries starting NVM  */
-
 static struct subsystem_context seco_ctx = { 0 };
 
 static int open_session(hsm_hdl_t *session_hdl)
@@ -35,15 +28,14 @@ static int open_session(hsm_hdl_t *session_hdl)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	err = hsm_open_session(&open_session_args, session_hdl);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-		goto end;
-	}
-	SMW_DBG_PRINTF(DEBUG, "session_hdl: %d\n", *session_hdl);
+	open_session_args.mu_type = HSM1;
 
-end:
+	err = hsm_open_session(&open_session_args, session_hdl);
+	status = seco_convert_err(err);
+
+	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "session_hdl: %u\n", *session_hdl);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -54,7 +46,7 @@ static void close_session(hsm_hdl_t session_hdl)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_PRINTF(DEBUG, "session_hdl: %d\n", session_hdl);
+	SMW_DBG_PRINTF(DEBUG, "session_hdl: %u\n", session_hdl);
 	err = hsm_close_session(session_hdl);
 	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
@@ -89,12 +81,11 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 						 &open_svc_key_store_args,
 						 key_store_hdl);
 	}
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-		goto end;
-	}
-	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %d\n", *key_store_hdl);
+
+	status = seco_convert_err(err);
+	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+
+	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", *key_store_hdl);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -107,217 +98,8 @@ static void close_key_store_service(hsm_hdl_t key_store_hdl)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %d\n", key_store_hdl);
+	SMW_DBG_PRINTF(DEBUG, "key_store_hdl: %u\n", key_store_hdl);
 	err = hsm_close_key_store_service(key_store_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
-}
-
-static int open_key_mgmt_service(hsm_hdl_t key_store_hdl,
-				 hsm_hdl_t *key_management_hdl)
-{
-	int status = SMW_STATUS_OK;
-
-	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_key_management_args_t open_svc_key_management_args = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	err = hsm_open_key_management_service(key_store_hdl,
-					      &open_svc_key_management_args,
-					      key_management_hdl);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-		goto end;
-	}
-	SMW_DBG_PRINTF(DEBUG, "key_management_hdl: %d\n", *key_management_hdl);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static void close_key_management_service(hsm_hdl_t key_management_hdl)
-{
-	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_PRINTF(DEBUG, "key_management_hdl: %d\n", key_management_hdl);
-	err = hsm_close_key_management_service(key_management_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
-}
-
-static int open_signature_gen_service(hsm_hdl_t key_store_hdl,
-				      hsm_hdl_t *signature_gen_hdl)
-{
-	int status = SMW_STATUS_OK;
-
-	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_sign_gen_args_t open_svc_sign_gen_args = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	err = hsm_open_signature_generation_service(key_store_hdl,
-						    &open_svc_sign_gen_args,
-						    signature_gen_hdl);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-		goto end;
-	}
-	SMW_DBG_PRINTF(DEBUG, "signature_gen_hdl: %d\n", *signature_gen_hdl);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static void close_signature_geneneration_service(hsm_hdl_t signature_gen_hdl)
-{
-	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_PRINTF(DEBUG, "signature_gen_hdl: %d\n", signature_gen_hdl);
-	err = hsm_close_signature_generation_service(signature_gen_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
-}
-
-static int open_signature_ver_service(hsm_hdl_t session_hdl,
-				      hsm_hdl_t *signature_ver_hdl)
-{
-	int status = SMW_STATUS_OK;
-
-	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_sign_ver_args_t open_svc_sign_ver_args = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	err = hsm_open_signature_verification_service(session_hdl,
-						      &open_svc_sign_ver_args,
-						      signature_ver_hdl);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-		goto end;
-	}
-	SMW_DBG_PRINTF(DEBUG, "signature_ver_hdl: %d\n", *signature_ver_hdl);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static void close_signature_verification_service(hsm_hdl_t signature_ver_hdl)
-{
-	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_PRINTF(DEBUG, "signature_ver_hdl: %d\n", signature_ver_hdl);
-	err = hsm_close_signature_verification_service(signature_ver_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
-}
-
-static int open_hash_service(hsm_hdl_t session_hdl, hsm_hdl_t *hash_hdl)
-{
-	int status = SMW_STATUS_OK;
-
-	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_hash_args_t open_svc_hash_args = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	err = hsm_open_hash_service(session_hdl, &open_svc_hash_args, hash_hdl);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-		goto end;
-	}
-	SMW_DBG_PRINTF(DEBUG, "hash_hdl: %d\n", *hash_hdl);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static void close_hash_service(hsm_hdl_t hash_hdl)
-{
-	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_PRINTF(DEBUG, "hash_hdl: %d\n", hash_hdl);
-	err = hsm_close_hash_service(hash_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
-}
-
-static int open_rng_service(hsm_hdl_t session_hdl, hsm_hdl_t *rng_hdl)
-{
-	int status = SMW_STATUS_OK;
-
-	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_rng_args_t open_svc_rng_args = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	err = hsm_open_rng_service(session_hdl, &open_svc_rng_args, rng_hdl);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-		goto end;
-	}
-	SMW_DBG_PRINTF(DEBUG, "rng_hdl: %d\n", *rng_hdl);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static void close_rng_service(hsm_hdl_t rng_hdl)
-{
-	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_PRINTF(DEBUG, "rng_hdl: %d\n", rng_hdl);
-	err = hsm_close_rng_service(rng_hdl);
-	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
-}
-
-static int open_cipher_service(hsm_hdl_t key_store_hdl, hsm_hdl_t *cipher_hdl)
-{
-	int status = SMW_STATUS_OK;
-
-	hsm_err_t err = HSM_NO_ERROR;
-	open_svc_cipher_args_t open_svc_cipher_args = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	err = hsm_open_cipher_service(key_store_hdl, &open_svc_cipher_args,
-				      cipher_hdl);
-	if (err != HSM_NO_ERROR) {
-		SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
-		status = SMW_STATUS_SUBSYSTEM_FAILURE;
-		goto end;
-	}
-
-	SMW_DBG_PRINTF(DEBUG, "cipher_hdl: %d\n", *cipher_hdl);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static void close_cipher_service(hsm_hdl_t cipher_hdl)
-{
-	hsm_err_t __maybe_unused err = HSM_NO_ERROR;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_PRINTF(DEBUG, "cipher_hdl: %d\n", cipher_hdl);
-	err = hsm_close_cipher_service(cipher_hdl);
 	SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
 }
 
@@ -327,18 +109,6 @@ static void reset_handles(void)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (hdl->cipher)
-		close_cipher_service(hdl->cipher);
-	if (hdl->rng)
-		close_rng_service(hdl->rng);
-	if (hdl->hash)
-		close_hash_service(hdl->hash);
-	if (hdl->signature_ver)
-		close_signature_verification_service(hdl->signature_ver);
-	if (hdl->signature_gen)
-		close_signature_geneneration_service(hdl->signature_gen);
-	if (hdl->key_management)
-		close_key_management_service(hdl->key_management);
 	if (hdl->key_store)
 		close_key_store_service(hdl->key_store);
 	if (hdl->session)
@@ -346,142 +116,11 @@ static void reset_handles(void)
 
 	hdl->session = 0;
 	hdl->key_store = 0;
-	hdl->key_management = 0;
-	hdl->signature_gen = 0;
-	hdl->signature_ver = 0;
-	hdl->hash = 0;
-	hdl->rng = 0;
-	hdl->cipher = 0;
-}
-
-static void *storage_thread(void *arg)
-{
-	(void)arg;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	seco_nvm_manager(NVM_FLAGS_HSM, &seco_ctx.nvm_status);
-
-	if (seco_ctx.nvm_status >= NVM_STATUS_STOPPED)
-		smw_config_notify_subsystem_failure(SUBSYSTEM_ID_SECO);
-
-	if (smw_utils_mutex_lock(seco_ctx.mutex))
-		return NULL;
-
-	reset_handles();
-
-	(void)smw_utils_mutex_unlock(seco_ctx.mutex);
-
-	return NULL;
-}
-
-static void wait_ms(int ms)
-{
-	int err = 0;
-	long tv_nsec = ms * 1000;
-
-	struct timespec t = { .tv_sec = 0, .tv_nsec = tv_nsec };
-	struct timespec t_rem = { 0 };
-
-	err = nanosleep(&t, &t_rem);
-	if (err) {
-		SMW_DBG_PRINTF(DEBUG, "%s error: remain %ld", __func__,
-			       t_rem.tv_nsec);
-		/*
-		 * If interrupted by a signal, t_rem contains the
-		 * remaining time.
-		 */
-		tv_nsec = t_rem.tv_nsec / 1000;
-		if (tv_nsec > 0 && tv_nsec < INT32_MAX)
-			wait_ms(tv_nsec);
-	}
-}
-
-static int start_storage_manager(void)
-{
-	int status = SMW_STATUS_OK;
-
-	int timeout_count = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (smw_utils_mutex_lock(seco_ctx.mutex)) {
-		status = SMW_STATUS_MUTEX_LOCK_FAILURE;
-		goto end;
-	}
-
-	if (!seco_ctx.tid) {
-		seco_ctx.nvm_status = NVM_STATUS_UNDEF;
-
-		if (smw_utils_thread_create(&seco_ctx.tid, storage_thread,
-					    NULL))
-			status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
-	}
-
-	if (smw_utils_mutex_unlock(seco_ctx.mutex)) {
-		if (status == SMW_STATUS_OK)
-			status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
-	}
-
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	SMW_DBG_PRINTF(DEBUG, "tid: %lx\n", seco_ctx.tid);
-
-	while (seco_ctx.nvm_status <= NVM_STATUS_STARTING) {
-		wait_ms(STORAGE_MANAGER_WAIT_MS);
-		timeout_count++;
-		if (seco_ctx.nvm_status <= NVM_STATUS_STARTING &&
-		    timeout_count > STORAGE_MANAGER_TIMEOUT) {
-			SMW_DBG_PRINTF(DEBUG,
-				       "Storage manager failed to start (%d)\n",
-				       seco_ctx.nvm_status);
-			(void)smw_utils_thread_cancel(seco_ctx.tid);
-
-			wait_ms(STORAGE_MANAGER_WAIT_MS);
-
-			status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
-			seco_ctx.tid = 0;
-			break;
-		}
-	}
-
-	if (seco_ctx.nvm_status >= NVM_STATUS_STOPPED) {
-		SMW_DBG_PRINTF(DEBUG, "Storage manager stopped (%d)\n",
-			       seco_ctx.nvm_status);
-		status = SMW_STATUS_SUBSYSTEM_LOAD_FAILURE;
-
-		seco_ctx.tid = 0;
-	}
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-static int stop_storage_manager(void)
-{
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_PRINTF(DEBUG, "tid: %lx\n", seco_ctx.tid);
-
-	if (seco_ctx.nvm_status != NVM_STATUS_STOPPED) {
-		if (smw_utils_thread_cancel(seco_ctx.tid))
-			status = SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE;
-
-		seco_ctx.tid = 0;
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
 }
 
 static int unload(void)
 {
 	int status = SMW_STATUS_OK;
-	int tmp_status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -493,6 +132,7 @@ static int unload(void)
 
 		if (status == SMW_STATUS_OK) {
 			smw_utils_list_destroy(&seco_ctx.key_grp_list);
+
 			if (smw_utils_mutex_unlock(seco_ctx.key_grp_mutex))
 				status = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
 		}
@@ -502,16 +142,6 @@ static int unload(void)
 			status = SMW_STATUS_MUTEX_DESTROY_FAILURE;
 	}
 
-	tmp_status = stop_storage_manager();
-	if (status == SMW_STATUS_OK)
-		status = tmp_status;
-
-	if (smw_utils_mutex_destroy(&seco_ctx.mutex) && status == SMW_STATUS_OK)
-		status = SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE;
-
-	/* Close Seco Session */
-	seco_nvm_close_session();
-
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -519,91 +149,30 @@ static int unload(void)
 static int load(void)
 {
 	int status = SMW_STATUS_OK;
-	int status_mutex = SMW_STATUS_OK;
-	unsigned int retry = STORAGE_MANAGER_RETRIES_NB;
 
 	struct hdl *hdl = &seco_ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!seco_ctx.mutex && smw_utils_mutex_init(&seco_ctx.mutex)) {
-		status = SMW_STATUS_MUTEX_INIT_FAILURE;
-		goto end;
-	}
-
-	/*
-	 * Start the NVM Secure Storage, if the first attempt fails,
-	 * retries one more time.
-	 */
-	do {
-		status = start_storage_manager();
-		if (status == SMW_STATUS_OK)
-			break;
-
-		retry--;
-	} while (retry);
-
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	if (smw_utils_mutex_lock(seco_ctx.mutex)) {
-		status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
-		goto err;
-	}
-
-	if (seco_ctx.nvm_status >= NVM_STATUS_STOPPED)
-		goto err;
-
 	status = open_session(&hdl->session);
 	if (status != SMW_STATUS_OK)
-		goto err;
+		goto end;
 
 	status = open_key_store_service(hdl->session, &hdl->key_store);
 	if (status != SMW_STATUS_OK)
-		goto err;
-
-	status = open_key_mgmt_service(hdl->key_store, &hdl->key_management);
-	if (status != SMW_STATUS_OK)
-		goto err;
-
-	status =
-		open_signature_gen_service(hdl->key_store, &hdl->signature_gen);
-	if (status != SMW_STATUS_OK)
-		goto err;
-
-	status = open_signature_ver_service(hdl->session, &hdl->signature_ver);
-	if (status != SMW_STATUS_OK)
-		goto err;
-
-	status = open_hash_service(hdl->session, &hdl->hash);
-
-	if (status != SMW_STATUS_OK)
-		goto err;
-
-	status = open_rng_service(hdl->session, &hdl->rng);
-	if (status != SMW_STATUS_OK)
-		goto err;
-
-	status = open_cipher_service(hdl->key_store, &hdl->cipher);
-	if (status != SMW_STATUS_OK)
-		goto err;
+		goto end;
 
 	smw_utils_list_init(&seco_ctx.key_grp_list);
 
-	if (smw_utils_mutex_init(&seco_ctx.key_grp_mutex))
+	if (smw_utils_mutex_init(&seco_ctx.key_grp_mutex)) {
 		status = SMW_STATUS_MUTEX_INIT_FAILURE;
-
-err:
-	if (status_mutex == SMW_STATUS_OK)
-		status_mutex = smw_utils_mutex_unlock(seco_ctx.mutex);
-
-	if (status != SMW_STATUS_OK)
-		status = unload();
-
-	if (status == SMW_STATUS_OK)
-		status = status_mutex;
+		goto end;
+	}
 
 end:
+	if (status != SMW_STATUS_OK)
+		(void)unload();
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -800,4 +369,36 @@ int seco_convert_err(hsm_err_t err)
 	}
 
 	return status;
+}
+
+int seco_open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_mgt_hdl)
+{
+	hsm_err_t err = HSM_NO_ERROR;
+	open_svc_key_management_args_t open_svc_key_management_args = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	err = hsm_open_key_management_service(hdl->key_store,
+					      &open_svc_key_management_args,
+					      key_mgt_hdl);
+	SMW_DBG_PRINTF(DEBUG, "%s - err: %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "Open key_mgt_hdl: %u\n", *key_mgt_hdl);
+
+	return seco_convert_err(err);
+}
+
+int seco_close_key_mgt_service(hsm_hdl_t key_mgt_hdl)
+{
+	hsm_err_t err = HSM_NO_ERROR;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_PRINTF(DEBUG, "Close key_mgt_hdl: %u\n", key_mgt_hdl);
+
+	if (key_mgt_hdl) {
+		err = hsm_close_key_management_service(key_mgt_hdl);
+		SMW_DBG_PRINTF(DEBUG, "%s - returned: %d\n", __func__, err);
+	}
+
+	return seco_convert_err(err);
 }

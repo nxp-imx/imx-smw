@@ -69,7 +69,7 @@ static int data_storage(struct hdl *hdl,
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_data_storage() - %s\n"
-		       "  op_data_storage_args_t\n"
+		       "op_data_storage_args_t\n"
 		       "    Data\n"
 		       "      - id: 0x%08X\n"
 		       "      - buffer: %p\n"

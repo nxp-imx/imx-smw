@@ -22,39 +22,22 @@
  * struct hdl - SECO handles
  * @session: Session handle
  * @key_store: Key store service flow handle
- * @key_management: Key management service flow handle
- * @signature_gen: Signature generation service flow handle
- * @signature_ver: Signature verification service flow handle
- * @hash: Hash service flow handle
- * @rng: RNG service flow handle
- * @cipher: Cipher service flow handle
  *
  * This structure stores the SECO handles managed by the SMW library.
  */
 struct hdl {
 	hsm_hdl_t session;
 	hsm_hdl_t key_store;
-	hsm_hdl_t key_management;
-	hsm_hdl_t signature_gen;
-	hsm_hdl_t signature_ver;
-	hsm_hdl_t hash;
-	hsm_hdl_t rng;
-	hsm_hdl_t cipher;
 };
 
 /**
  * struct subsystem_context - SECO subsystem context
  * @hdl: SECO handles
- * @nvm_status: NVM storage active status
- * @mutex: Mutex of the subsystem context access
  * @key_grp_list: Key group list
  * @key_grp_mutex: Mutex of the key group list access
  */
 struct subsystem_context {
 	struct hdl hdl;
-	uint32_t nvm_status;
-	void *mutex;
-	unsigned long tid;
 	struct smw_utils_list key_grp_list;
 	void *key_grp_mutex;
 };
@@ -288,5 +271,26 @@ int seco_get_key_group(struct subsystem_context *seco_ctx, bool persistent,
  * Pointer to SECO context operations structure
  */
 void *seco_get_ctx_ops(void);
+
+/**
+ * seco_open_key_mgt_service() - Open a subsystem key manager service
+ * @hdl: Pointer to subsystem context handlers
+ * @key_mgt_hdl: Return the key manager service handler
+ *
+ * Return:
+ * SMW_STATUS_OK                   - Success
+ * SMW_STATUS_SUBSYSTEM_FAILURE    - Subsystem failure
+ */
+int seco_open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_mgt_hdl);
+
+/**
+ * seco_close_key_mgt_service() - Close a subsystem key manager service
+ * @key_mgt_hdl: Key manager service handler to close
+ *
+ * Return:
+ * SMW_STATUS_OK                   - Success
+ * SMW_STATUS_SUBSYSTEM_FAILURE    - Subsystem failure
+ */
+int seco_close_key_mgt_service(hsm_hdl_t key_mgt_hdl);
 
 #endif /* __COMMON_H__ */

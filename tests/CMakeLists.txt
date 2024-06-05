@@ -79,8 +79,7 @@ if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
 endif()
 
 # If SECO subsystem defined, include tests
-if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco AND
-   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_ZLIBLight)
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco)
     set(SECO_TESTS_ENABLED ON)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/seco_tests.cmake)
 endif()

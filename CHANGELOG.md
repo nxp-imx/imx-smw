@@ -39,6 +39,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### SMW Library - _version 4.0_
 ##### 1. SMW APIs
+* Update `smw_derive_key()` API argument and add support for HKDF based key derivation.
 
 * Key attributes, data attributes and signature algorithm are no longer encoded with TLV format. They are now encoded with a dedicated bitmap.
 * The Secure Subsystem name is not a string anymore but an enum.
@@ -52,6 +53,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix SECO MAC length to be exact length due to SECO limitation.
 * Switch the SECO subsystem to the new Secure Enclave library.
 * Fix SECO Data length, return data length relying on the database content.
+* Add support for HKDF based key derivation in the TEE subsystem.
 
 ##### 3. ARM PSA APIs
 
@@ -67,6 +69,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests to validate ed25519 key management in TEE subsystem.
 * Add ELE tests for CHACHA20_POLY1305 (U_ELE_Aead_001 and U_ELE_Aead_004).
 * Add PSA tests for CHACHA20_POLY1305 (U_PSA_Aead_005 and U_PSA_Aead_006).
+* Add tests for HKDF based key derivation.
 
 #### PKCS#11 Library - _version 4.0_
 

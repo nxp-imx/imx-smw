@@ -50,6 +50,8 @@ Operations supported:
  - Get key security size
  - Get key type name
  - Commit key storage (do nothing)
+ - Key Derivation: Derive a key from a symmetric base key using the HMAC based
+   Key Derivation Function (HKDF)
 
 .. [1] multiple of 2 bits
 .. [2] multiple of 8 bits

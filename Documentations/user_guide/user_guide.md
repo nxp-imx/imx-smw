@@ -97,10 +97,9 @@ and supported by the SMW Library.
 	<td>✔️</td>
 </tr>
 <tr>
-  <td>Key Derivation</td>
-  <td>TLS 1.2</td>
+  <td colspan="2">Key Derivation</td>
 	<td>✔️<sup><a href="#t_note_1">1</a>, <a href="#t_note_2">2</a></sup></td>
-	<td>❌</td>
+	<td>✔️<sup><a href="#t_note_3">3</a></sup></td>
 	<td>❌</td>
 </tr>
 <tr>
@@ -129,8 +128,8 @@ and supported by the SMW Library.
 </tr>
 <tr>
   <td colspan="2">Commit key storage</td>
-	<td>✔️<sup><a href="#t_note_3">3</a></td>
-	<td>✔️<sup><a href="#t_note_3">3</a></td>
+	<td>✔️<sup><a href="#t_note_4">4</a></td>
+	<td>✔️<sup><a href="#t_note_4">4</a></td>
 	<td>✔️</td>
 </tr>
 <tr>
@@ -147,7 +146,7 @@ and supported by the SMW Library.
 </tr>
 <tr>
   <td colspan="3">HMAC</td>
-	<td>❌<sup><a href="#t_note_2">1</a></sup></td>
+	<td>❌<sup><a href="#t_note_2">2</a></sup></td>
 	<td>✔️</td>
 	<td>✔️</td>
 </tr>
@@ -203,7 +202,7 @@ and supported by the SMW Library.
 <tr>
   <td rowspan="4">Data Storage</td>
 	<td colspan="2">Get information</td>
-	<td>✔️<sup><a href="#t_note_4">4</a></sup></td>
+	<td>✔️<sup><a href="#t_note_5">5</a></sup></td>
 	<td>✔️</td>
 	<td>✔️</td>
 </tr>
@@ -230,9 +229,10 @@ and supported by the SMW Library.
 
 <p>
 <a name="t_note_1"><sup>1</sup></a> Require specific SECO Firmware.<br>
-<a name="t_note_2"><sup>2</sup></a> Build option ENABLE_TLS12 must be set ON.<br>
-<a name="t_note_3"><sup>3</sup></a> Do nothing, returns always success.<br>
-<a name="t_note_4"><sup>4</sup></a> Retrieve only information from SMW object database.<br>
+<a name="t_note_2"><sup>2</sup></a> Supports TLS 1.2. Build option ENABLE_TLS12 must be set ON.<br>
+<a name="t_note_3"><sup>3</sup></a> Supports HKDF.<br>
+<a name="t_note_4"><sup>4</sup></a> Do nothing, returns always success.<br>
+<a name="t_note_5"><sup>5</sup></a> Retrieve only information from SMW object database.<br>
 </p>
 
 # 3. Creating a simple OPTEE TA

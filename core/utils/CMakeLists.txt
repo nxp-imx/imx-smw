@@ -10,6 +10,7 @@ target_sources(utils PRIVATE
                hash.c
                info.c
                list.c
+               key.c
                mac.c
                name.c
                object_db.c

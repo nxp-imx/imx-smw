@@ -14,6 +14,16 @@
 /* The master secret is always exactly 48 bytes in length (cf RFC 5246)*/
 #define TLS12_MASTER_SECRET_SEC_SIZE 384
 
+enum hkdf_step {
+	HKDF_STEP_INVALID,
+	/* HKDF step 1 expand */
+	HKDF_STEP_EXPAND,
+	/* HKDF step 2 extract */
+	HKDF_STEP_EXTRACT,
+	/* HKDF Step 1 and step 2 combined */
+	HKDF_STEP_FULL
+};
+
 enum smw_tls12_key_exchange_id {
 	SMW_TLS12_KEY_EXCHANGE_ID_RSA,
 	SMW_TLS12_KEY_EXCHANGE_ID_DH_DSS,
@@ -40,6 +50,18 @@ enum smw_tls12_encryption_id {
 };
 
 /**
+ * struct smw_keymgr_derived_key_desc - Derived key descriptor
+ * @identifier: Key identifier
+ * @format_id: Format ID of the key buffer
+ * @pub: Pointer to public derived key descriptor
+ */
+struct smw_keymgr_derived_key_desc {
+	struct smw_keymgr_identifier identifier;
+	enum smw_keymgr_format_id format_id;
+	struct smw_derived_key_descriptor *pub;
+};
+
+/**
  * struct smw_keymgr_derive_key_args - Key derivation arguments
  * @key_base: Descriptor of the base key
  * @key_attributes: Pointer to the public Key attributes structure
@@ -50,7 +72,7 @@ enum smw_tls12_encryption_id {
 struct smw_keymgr_derive_key_args {
 	struct smw_keymgr_descriptor key_base;
 	struct smw_key_attributes *key_attributes;
-	struct smw_keymgr_descriptor key_derived;
+	struct smw_keymgr_derived_key_desc key_derived;
 	enum smw_config_kdf_id kdf_id;
 	void *kdf_args;
 };
@@ -62,6 +84,11 @@ struct smw_keymgr_tls12_args {
 	bool ephemeral_key;
 
 	struct smw_kdf_tls12_args *pub_args;
+};
+
+struct smw_keymgr_hkdf_args {
+	enum smw_config_hash_algo_id prf_id;
+	struct smw_kdf_hkdf_args *pub_args;
 };
 
 /**
@@ -293,5 +320,173 @@ smw_keymgr_tls12_set_master_sec_key_id(struct smw_keymgr_tls12_args *args,
  * False otherwise
  */
 bool smw_keymgr_tls12_is_encryption_aead(enum smw_tls12_encryption_id id);
+
+/**
+ * smw_keymgr_get_shared_secret_buffer() - Return shared secret buffer address.
+ * @descriptor: Pointer to the internal derived key descriptor structure.
+ *
+ * Return:
+ * NULL
+ * address of the shared secret buffer
+ */
+unsigned char *
+smw_keymgr_get_shared_secret_buffer(struct smw_keymgr_derived_key_desc *desc);
+
+/**
+ * smw_keymgr_get_shared_secret_len() - Return length of shared secret buffer.
+ * @descriptor: Pointer to the internal derived key descriptor structure.
+ *
+ * Return:
+ * 0
+ * length of the shared secret buffer
+ */
+unsigned int
+smw_keymgr_get_shared_secret_len(struct smw_keymgr_derived_key_desc *desc);
+
+/**
+ * smw_keymgr_set_shared_secret_len() - Set the length of shared secret buffer.
+ * @desc: Pointer to the internal derived key descriptor structure.
+ * @len: Length of the shared secret buffer.
+ *
+ * Return:
+ * None
+ */
+void smw_keymgr_set_shared_secret_len(struct smw_keymgr_derived_key_desc *desc,
+				      unsigned int len);
+
+/**
+ * smw_keymgr_update_shared_secret() - Update the derived key buffer fields.
+ * @descriptor: Internal derived key descriptor structure.
+ * @data: Data to be converted in base64 if key buffer's format is base64.
+ * @length: Length of the @data.
+ *
+ * If the key buffer format is base64, the function converts the @data to
+ * base64 and update the key buffer's data field. Otherwise, the key buffer's
+ * data is assumed to be the same as the @data.
+ *
+ * Key buffer's length is updated if function returns
+ * SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * If @data = NULL, only the key buffer's length is updated.
+ *
+ * Return:
+ * SMW_STATUS_OK                 - Success
+ * SMW_STATUS_OPERATION_FAILURE  - Operation failed
+ * SMW_STATUS_OUTPUT_TOO_SHORT   - Output buffer is too short
+ * SMW_STATUS_INVALID_PARAM      - One of the parameter is invalid
+ */
+int smw_keymgr_update_shared_secret(struct smw_keymgr_derived_key_desc *desc,
+				    unsigned char *data, unsigned int length);
+
+/**
+ * smw_keymgr_get_hkdf_step() - Get the HKDF step
+ * @args: Pointer to internal HKDF argument structure
+ *
+ * Return:
+ * HKDF step type
+ * HKDF_STEP_INVALID
+ */
+enum hkdf_step smw_keymgr_get_hkdf_step(struct smw_keymgr_hkdf_args *args);
+
+/**
+ * smw_keymgr_get_salt() - Get salt buffer address
+ * @args: Pointer to internal HKDF argument structure
+ *
+ * Return:
+ * address of salt buffer
+ * NULL
+ */
+unsigned char *smw_keymgr_get_salt(struct smw_keymgr_hkdf_args *args);
+
+/**
+ * smw_keymgr_get_info() - Get info buffer address
+ * @args: Pointer to internal HKDF argument structure
+ *
+ * Return:
+ * address of info buffer
+ * NULL
+ */
+unsigned char *smw_keymgr_get_info(struct smw_keymgr_hkdf_args *args);
+
+/**
+ * smw_keymgr_get_salt_len() - Get salt buffer length
+ * @args: Pointer to internal HKDF arguments
+ *
+ * Return:
+ * Salt buffer length
+ * 0
+ */
+unsigned int smw_keymgr_get_salt_len(struct smw_keymgr_hkdf_args *args);
+
+/**
+ * smw_keymgr_get_info_len() - Get info buffer length
+ * @args: Pointer to internal HKDF arguments
+ *
+ * Return:
+ * Info buffer length
+ * 0
+ */
+unsigned int smw_keymgr_get_info_len(struct smw_keymgr_hkdf_args *args);
+
+/**
+ * smw_keymgr_get_prk_id() - Get Pseudo-Random Key (PRK) ID
+ * @args: Pointer to internal HKDF arguments
+ *
+ * Return:
+ * Pseudo-Random Key (PRK) ID
+ * 0
+ */
+unsigned int smw_keymgr_get_prk_id(struct smw_keymgr_hkdf_args *args);
+
+/**
+ * smw_keymgr_set_prk_id() - Set Pseudo-Random Key (PRK) ID
+ * @args: Pointer to internal HKDF arguments
+ * @id: PRK ID
+ *
+ * Return:
+ * none
+ */
+void smw_keymgr_set_prk_id(struct smw_keymgr_hkdf_args *args, unsigned int id);
+
+/**
+ * smw_keymgr_set_prk_len() - Set Pseudo-Random Key (PRK) length
+ * @args: Pointer to internal HKDF arguments
+ * @len: PRK length value
+ *
+ * Return:
+ * none
+ */
+void smw_keymgr_set_prk_len(struct smw_keymgr_hkdf_args *args,
+			    unsigned int length);
+
+/**
+ * smw_keymgr_get_prk() - Get Pseudo-Random Key (PRK) buffer address
+ * @args: Pointer to internal HKDF argument structure
+ *
+ * Return:
+ * address of PRK buffer
+ * NULL
+ */
+unsigned char *smw_keymgr_get_prk(struct smw_keymgr_hkdf_args *args);
+
+/**
+ * smw_keymgr_get_prk_len() - Get Pseudo-Random Key (PRK) length
+ * @args: Pointer to internal HKDF arguments
+ *
+ * Return:
+ * PRK buffer length
+ * 0
+ */
+unsigned int smw_keymgr_get_prk_len(struct smw_keymgr_hkdf_args *args);
+
+/**
+ * smw_keymgr_get_okm_len() - Get output key material (derived key) length
+ * @args: Pointer to internal HKDF arguments
+ *
+ * Return:
+ * Derived key length
+ * 0
+ */
+unsigned int smw_keymgr_get_okm_len(struct smw_keymgr_hkdf_args *args);
 
 #endif /* __KEYMGR_DERIVE_H__ */

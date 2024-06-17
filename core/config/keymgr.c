@@ -44,11 +44,13 @@ static const char *const key_type_names[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_RSA] = "RSA",
 	[SMW_CONFIG_KEY_TYPE_ID_DH] = "DH",
 	[SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY] = "TLS_MASTER_KEY",
-	[SMW_CONFIG_KEY_TYPE_ID_RAW] = "RAW"
+	[SMW_CONFIG_KEY_TYPE_ID_RAW] = "RAW",
+	[SMW_CONFIG_KEY_TYPE_ID_GENERIC_SECRET] = "GENERIC_SECRET"
 };
 
 static const char *const key_derive_op_names[] = {
-	[SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE] = "TLS12_KEY_EXCHANGE"
+	[SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE] = "TLS12_KEY_EXCHANGE",
+	[SMW_CONFIG_KDF_HKDF] = "HKDF"
 };
 
 int read_key_type_names(char **start, char *end, unsigned long *bitmap)

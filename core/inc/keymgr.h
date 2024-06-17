@@ -11,6 +11,7 @@
 
 #include "constants.h"
 #include "config.h"
+#include "key.h"
 
 /* Define invalid key identifier */
 #define INVALID_KEY_ID INVALID_OBJ_ID
@@ -24,16 +25,12 @@ enum smw_keymgr_privacy_id {
 	SMW_KEYMGR_PRIVACY_ID_PUBLIC,
 	SMW_KEYMGR_PRIVACY_ID_PRIVATE,
 	SMW_KEYMGR_PRIVACY_ID_PAIR,
+	/* This type is intended for secret data that has been derived using a
+	 * key derivation function.
+	 */
+	SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET,
 	SMW_KEYMGR_PRIVACY_ID_NB,
 	SMW_KEYMGR_PRIVACY_ID_INVALID
-};
-
-enum smw_keymgr_format_id {
-	/* Key format */
-	SMW_KEYMGR_FORMAT_ID_HEX,
-	SMW_KEYMGR_FORMAT_ID_BASE64,
-	SMW_KEYMGR_FORMAT_ID_NB,
-	SMW_KEYMGR_FORMAT_ID_INVALID
 };
 
 /**

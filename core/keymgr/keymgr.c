@@ -17,23 +17,11 @@
 #include "name.h"
 #include "base64.h"
 
-#define FORMAT_ID_ASSERT(id)                                                   \
-	do {                                                                   \
-		typeof(id) _id = (id);                                         \
-		SMW_DBG_ASSERT((_id < SMW_KEYMGR_FORMAT_ID_NB) &&              \
-			       (_id != SMW_KEYMGR_FORMAT_ID_INVALID));         \
-	} while (0)
-
-#define SMW_KEYMGR_FORMAT_ID_DEFAULT SMW_KEYMGR_FORMAT_ID_HEX
-
-static const char *const format_names[] = { [SMW_KEYMGR_FORMAT_ID_HEX] = "HEX",
-					    [SMW_KEYMGR_FORMAT_ID_BASE64] =
-						    "BASE64" };
-
 static const char *const key_privacy_names[] = {
 	[SMW_KEYMGR_PRIVACY_ID_PUBLIC] = "PUBLIC",
 	[SMW_KEYMGR_PRIVACY_ID_PRIVATE] = "PRIVATE",
 	[SMW_KEYMGR_PRIVACY_ID_PAIR] = "KEYPAIR",
+	[SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET] = "SHARED_SECRET",
 };
 
 #define KEY_PRIVACY_ID_ASSERT(id)                                              \
@@ -42,26 +30,6 @@ static const char *const key_privacy_names[] = {
 		SMW_DBG_ASSERT((_id < SMW_KEYMGR_PRIVACY_ID_NB) &&             \
 			       (_id != SMW_KEYMGR_PRIVACY_ID_INVALID));        \
 	} while (0)
-
-static int get_format_id(const char *name, enum smw_keymgr_format_id *id)
-{
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!name)
-		*id = SMW_KEYMGR_FORMAT_ID_DEFAULT;
-	else
-		status =
-			smw_utils_get_string_index(name, format_names,
-						   SMW_KEYMGR_FORMAT_ID_NB, id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_FORMAT_NAME;
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
 
 static unsigned char **public_data_key_gen(struct smw_keymgr_key_ops *this)
 {
@@ -704,8 +672,8 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 	if (!in->buffer) {
 		out->format_id = SMW_KEYMGR_FORMAT_ID_INVALID;
 	} else {
-		status =
-			get_format_id(in->buffer->format_name, &out->format_id);
+		status = smw_keymgr_get_key_format_id(in->buffer->format_name,
+						      &out->format_id);
 		if (status != SMW_STATUS_OK)
 			goto end;
 	}
@@ -1433,8 +1401,6 @@ static int set_key_identifier(unsigned int id,
 
 static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
 {
-	unsigned int index = 0;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_ASSERT(descriptor);
@@ -1445,10 +1411,8 @@ static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
 	if (!descriptor->pub->buffer)
 		return;
 
-	FORMAT_ID_ASSERT(descriptor->format_id);
-
-	index = descriptor->format_id;
-	descriptor->pub->buffer->format_name = format_names[index];
+	descriptor->pub->buffer->format_name =
+		smw_keymgr_get_key_format_name(descriptor->format_id);
 }
 
 int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
@@ -1482,6 +1446,10 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
 	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY:
 		*privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_GENERIC_SECRET:
+		*privacy_id = SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET;
 		break;
 
 	default:

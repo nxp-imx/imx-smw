@@ -139,6 +139,7 @@ typedef smw_string_t smw_signature_type_t;
  * typedef smw_kdf_t - Key derivation function name
  * Values:
  *	- TLS12_KEY_EXCHANGE
+ *	- HKDF
  */
 typedef smw_string_t smw_kdf_t;
 

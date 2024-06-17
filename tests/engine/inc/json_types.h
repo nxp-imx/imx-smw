@@ -34,6 +34,7 @@
 #define HASH_OBJ		  "hash"
 #define SECO_INFO_OBJ		  "seco_info"
 #define ID_OBJ			  "id"
+#define INFO_OBJ		  "info"
 #define INPUT_OBJ		  "input"
 #define IV_OBJ			  "iv"
 #define KEYS_OBJ		  "keys"
@@ -49,6 +50,7 @@
 #define MODULUS_OBJ		  "modulus"
 #define OBJ_DB_OBJ		  "obj_db"
 #define OFFSET_OBJ		  "offset"
+#define OKM_LEN_OBJ		  "okm_len"
 #define OP_ARGS_OBJ		  "op_args"
 #define OP_INPUT_OBJ		  "op_input"
 #define OP_OUTPUT_OBJ		  "op_output"
@@ -67,6 +69,7 @@
 #define RESTORE_OBJ		  "restore"
 #define RESTRICTION_LIST_OBJ	  "restriction_list"
 #define RES_OBJ			  "result"
+#define SALT_OBJ		  "salt"
 #define SAVE_OUT_OBJ		  "save_output"
 #define SECONDS_OBJ		  "seconds"
 #define SEC_SIZE_OBJ		  "security_size"
@@ -76,6 +79,7 @@
 #define SIGN_ID_OBJ		  "sign_id"
 #define SIGN_KEY_NAME_OBJ	  "sign_key_name"
 #define SIGN_OBJ		  "signature"
+#define SHARED_SECRET_OBJ	  "shared_secret"
 #define SUBSYSTEM_EXP_OBJ	  "subsystem_exp"
 #define SUBSYSTEM_OBJ		  "subsystem"
 #define SUBTEST_OBJ		  "subtest "
@@ -164,7 +168,7 @@ enum arguments_test_err_case {
 	CTX_NULL,
 	SRC_CPY_CTX_NULL,
 	DST_CPY_CTX_NULL,
-	TLS12_KDF_ARGS_NULL,
+	KDF_ARGS_NULL,
 };
 
 /* Type of export */

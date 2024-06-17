@@ -119,7 +119,7 @@
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
 		"op_input": "key 1",
-		"test_error": "TLS12_KDF_ARGS_NULL",
+		"test_error": "KDF_ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 2": { // TLS 1.2 KDF input not set

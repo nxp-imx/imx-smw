@@ -51,11 +51,12 @@ static const struct util_attr_info hash_info[] = {
 };
 
 static const struct util_attr_info usage_info[] = {
-	ATTR_USAGE(CACHE),	    ATTR_USAGE(COPY),
-	ATTR_USAGE(DERIVE),	    ATTR_USAGE(ENCRYPT),
-	ATTR_USAGE(DECRYPT),	    ATTR_USAGE(SIGN_HASH),
-	ATTR_USAGE(SIGN_MESSAGE),   ATTR_USAGE(VERIFY_HASH),
-	ATTR_USAGE(VERIFY_MESSAGE), { .name = NULL }
+	ATTR_USAGE(CACHE),	 ATTR_USAGE(COPY),
+	ATTR_USAGE(EXPORT),	 ATTR_USAGE(DERIVE),
+	ATTR_USAGE(ENCRYPT),	 ATTR_USAGE(DECRYPT),
+	ATTR_USAGE(SIGN_HASH),	 ATTR_USAGE(SIGN_MESSAGE),
+	ATTR_USAGE(VERIFY_HASH), ATTR_USAGE(VERIFY_MESSAGE),
+	{ .name = NULL }
 };
 
 static const struct util_attr_info attributes_info[] = {

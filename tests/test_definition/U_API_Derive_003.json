@@ -1,0 +1,53 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		},
+		"key 2": {
+			"shared_secret": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		}
+	},
+	"subtest 1": { // HKDF operation argument is NULL
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "HKDF",
+		"op_input": "key 1",
+		"op_output": "key 2",
+		"test_error": "KDF_ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": { // PRF name is undefined
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "HKDF",
+		"type": "HKDF_EXTRACT",
+		"op_args": {
+			"algo": "UNDEFINED"
+		},
+		"op_input": "key 1",
+		"op_output": "key 2",
+		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"
+	},
+	"subtest 3": { // PRF name is not set
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "HKDF",
+		"op_args": {
+			"salt": "000102030405060708090a0b0c",
+			"info": "f0f1f2f3f4f5f6f7f8f9"
+		},
+		"op_input": "key 1",
+		"op_output": "key 2",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

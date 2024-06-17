@@ -1,0 +1,269 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "HMAC_SHA256",
+			"security_size": 256,
+			"priv_key": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"
+		},
+		"key 2": {
+			"shared_secret": [
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"30313233343536373839"
+			]
+		},
+		"key 3": {
+			"type": "HMAC_SHA256",
+			"security_size": 640,
+			"priv_key": [
+				"000102030405060708090a0b0c0d0e0f",
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"303132333435363738393a3b3c3d3e3f",
+				"404142434445464748494a4b4c4d4e4f"
+			]
+		},
+		"key 4": {
+			"shared_secret": [
+				"000102030405060708090a0b0c0d0e0f",
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"303132333435363738393a3b3c3d3e3f",
+				"404142434445464748494a4b4c4d4e4f",
+				"4041"
+			]
+		},
+		"key 5": {
+			"shared_secret": [
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"30313233343536373839"
+			],
+			"attributes_list": [
+				"PERSISTENT"
+			]
+		},
+		"key 6": {
+			"type": "HMAC_SHA256",
+			"security_size": 256,
+			"priv_key": "0b0b0b0b0b0b0b0b0b0b0b"
+		},
+		"key 7": {
+			"shared_secret": [
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"30313233343536373839"
+			]
+		},
+		"key 8": {
+			"shared_secret": [
+				"000102030405060708090a0b0c0d0e0f",
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"303132333435363738393a3b3c3d3e3f",
+				"404142434445464748494a4b4c4d4e4f",
+				"4041"
+			]
+		},
+		"key 9": {
+			"shared_secret": [
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"30313233343536373839"
+			]
+		},
+		"key 10": {
+			"type": "HMAC_SHA1",
+			"security_size": 256,
+			"priv_key": [
+				"0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+				"0c0c0c0c0c0c"
+			]
+		},
+		"key 11": {
+			"shared_secret": [
+				"000102030405060708090a0b0c0d0e0f",
+				"101112131415161718191a1b1c1d1e1f",
+				"20212223242526272829"
+			]
+		}
+	},
+	"subtest 1": { // RFC5869 - Test case 1
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "key 1",
+		"op_type": "HKDF",
+		"op_args": {
+			"salt": "000102030405060708090a0b0c",
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256"
+		},
+		"op_output": "key 2",
+		"output": [
+			"3cb25f25faacd57a90434f64d0362f2a",
+			"2d2d0a90cf1a5a4c5db02d56ecc4c5bf",
+			"34007208d5b887185865"
+		]
+	},
+	"subtest 2": { // RFC5869 - Test case 2
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "key 3",
+		"op_type": "HKDF",
+		"op_args": {
+			"salt": [
+				"606162636465666768696a6b6c6d6e6f",
+				"707172737475767778797a7b7c7d7e7f",
+				"808182838485868788898a8b8c8d8e8f",
+				"909192939495969798999a9b9c9d9e9f",
+				"a0a1a2a3a4a5a6a7a8a9aaabacadaeaf"
+			],
+			"info": [
+				"b0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+				"c0c1c2c3c4c5c6c7c8c9cacbcccdcecf",
+				"d0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+				"e0e1e2e3e4e5e6e7e8e9eaebecedeeef",
+				"f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+			],
+			"algo": "SHA256"
+		},
+		"op_output": "key 4",
+		"output": [
+			"b11e398dc80327a1c8e7f78c596a4934",
+			"4f012eda2d4efad8a050cc4c19afa97c",
+			"59045a99cac7827271cb41c65e590e09",
+			"da3275600c2f09b8367793a9aca3db71",
+			"cc30c58179ec3e87c14c01d5c1f3434f",
+			"1d87"
+		]
+	},
+	"subtest 3": { // RFC5869 - Test case 3
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "key 1",
+		"op_type": "HKDF",
+		"op_args": {
+			"algo": "SHA256"
+		},
+		"op_output": "key 5",
+		"output": [
+			"8da4e775a563c18f715f802a063c5a31",
+			"b8a11f5c5ee1879ec3454e5f3c738d2d",
+			"9d201395faa4b61a96c8"
+		]
+	},
+	"subtest 4": { // RFC5869 - Test case 4
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "key 6",
+		"op_type": "HKDF",
+		"op_args": {
+			"algo": "SHA1",
+			"salt": "000102030405060708090a0b0c",
+			"info": "f0f1f2f3f4f5f6f7f8f9"
+		},
+		"op_output": "key 7",
+		"output": [
+			"085a01ea1b10f36933068b56efa5ad81",
+			"a4f14b822f5b091568a9cdd4f155fda2",
+			"c22e422478d305f3f896"
+		]
+	},
+	"subtest 5": { // RFC5869 - Test case 5
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "key 3",
+		"op_type": "HKDF",
+		"op_args": {
+			"algo": "SHA1",
+			"salt": [
+				"606162636465666768696a6b6c6d6e6f",
+				"707172737475767778797a7b7c7d7e7f",
+				"808182838485868788898a8b8c8d8e8f",
+				"909192939495969798999a9b9c9d9e9f",
+				"a0a1a2a3a4a5a6a7a8a9aaabacadaeaf"
+			],
+			"info": [
+				"b0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+				"c0c1c2c3c4c5c6c7c8c9cacbcccdcecf",
+				"d0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+				"e0e1e2e3e4e5e6e7e8e9eaebecedeeef",
+				"f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+			]
+		},
+		"op_output": "key 8",
+		"output": [
+			"0bd770a74d1160f7c9f12cd5912a06eb",
+			"ff6adcae899d92191fe4305673ba2ffe",
+			"8fa3f1a4e5ad79f3f334b3b202b2173c",
+			"486ea37ce3d397ed034c7f9dfeb15c5e",
+			"927336d0441f4c4300e2cff0d0900b52",
+			"d3b4"
+		]
+	},
+	"subtest 6": { // RFC5869 - Test case 6
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "key 1",
+		"op_type": "HKDF",
+		"op_args": {
+			"algo": "SHA1"
+		},
+		"op_output": "key 9",
+		"output": [
+			"0ac1af7002b3d761d1e55298da9d0506",
+			"b9ae52057220a306e07b6b87e8df21d0",
+			"ea00033de03984d34918"
+		]
+	},
+	"subtest 7": { // RFC5869 - Test case 7
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "key 10",
+		"op_type": "HKDF",
+		"op_args": {
+			"algo": "SHA1"
+		},
+		"op_output": "key 11",
+		"output": [
+			"2C91117204d745f3500d636a62f64f0a",
+			"b3bae548aa53d423b0d1f27ebba6f5e5",
+			"673a081d70cce7acfc48"
+		]
+	},
+	"subtest 8": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 1
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "key 4",
+		"depends": 2
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "key 5",
+		"depends": 3
+	},
+	"subtest 11": {
+		"command": "DELETE",
+		"key_name": "key 7",
+		"depends": 4
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "key 8",
+		"depends": 5
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "key 9",
+		"depends": 6
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "key 11",
+		"depends": 7
+	}
+}

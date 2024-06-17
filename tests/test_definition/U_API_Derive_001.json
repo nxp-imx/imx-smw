@@ -67,6 +67,19 @@
 			"usage": [
 				"DERIVE"
 			]
+		},
+		"key 9": {
+			"shared_secret": [
+				"76e656a9ea0d51412b83a48891bfb1e7",
+				"0cbb8e2125c620e32636222c32ec2810",
+				"afca3d1d3766f351f44232d0a6f6a6e4",
+				"8d20e493a01abeca121e719215df0541"
+			]
+		},
+		"key 10": {
+			"id": 2,
+			"type": "ECDH_NIST",
+			"security_size": 256
 		}
 	},
 	"subtest 1": {
@@ -98,6 +111,7 @@
 		"subsystem": "DEFAULT",
 		"op_type": "UNDEFINED",
 		"op_input": "key 2",
+		"op_output": "key 9",
 		"result": "SMW_STATUS_UNKNOWN_KDF_NAME"
 	},
 	"subtest 6": { // Base key descriptor is not set
@@ -150,7 +164,18 @@
 		"op_input": "key 8",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 14": {
+	"subtest 14": { // Derived key ID is set to 2
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "HKDF",
+		"op_args": {
+			"algo": "SHA256"
+		},
+		"op_input": "key 1",
+		"op_output": "key 10",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 15": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

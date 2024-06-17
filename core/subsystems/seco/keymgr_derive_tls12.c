@@ -165,26 +165,26 @@ static unsigned short get_key_exchange_length(struct smw_keymgr_identifier *key)
 static int
 check_reallocate_key_exchange_buffer(unsigned char **data,
 				     unsigned short *length,
-				     struct smw_keymgr_descriptor *key_desc)
+				     struct smw_keymgr_derived_key_desc *desc)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
-	unsigned char *public_data = NULL;
-	unsigned int public_length = 0;
+	unsigned char *shared_secret_data = NULL;
+	unsigned int shared_secret_length = 0;
 	unsigned char *tmp_key = NULL;
 	unsigned short key_size = 0;
-	unsigned int max_public_length = 0;
+	unsigned int max_shared_secret_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	public_data = smw_keymgr_get_public_data(key_desc);
+	shared_secret_data = smw_keymgr_get_shared_secret_buffer(desc);
 
-	/* SECO requires exact asymmetric public key size */
-	key_size = get_key_exchange_length(&key_desc->identifier);
+	/* SECO requires exact shared secret key size */
+	key_size = get_key_exchange_length(&desc->identifier);
 	if (!key_size) {
-		if (public_data) {
+		if (shared_secret_data) {
 			SMW_DBG_PRINTF(ERROR,
-				       "Only public key can be exported\n");
+				       "Shared secret buffer is not set\n");
 			status = SMW_STATUS_INVALID_PARAM;
 		} else {
 			status = SMW_STATUS_OK;
@@ -193,26 +193,28 @@ check_reallocate_key_exchange_buffer(unsigned char **data,
 		goto end;
 	}
 
-	public_length = smw_keymgr_get_public_length(key_desc);
+	shared_secret_length = smw_keymgr_get_shared_secret_len(desc);
 
-	/* First check if the user public buffer size is big enough */
-	max_public_length = key_size;
-	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
-		max_public_length = smw_utils_get_base64_len(max_public_length);
+	/* First check if the user set shared secret buffer size is big enough */
+	max_shared_secret_length = key_size;
+	if (desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
+		max_shared_secret_length =
+			smw_utils_get_base64_len(max_shared_secret_length);
 
-	if (public_length < max_public_length) {
-		smw_keymgr_set_public_length(key_desc, max_public_length);
+	if (shared_secret_length < max_shared_secret_length) {
+		smw_keymgr_set_shared_secret_len(desc,
+						 max_shared_secret_length);
 		status = SMW_STATUS_OUTPUT_TOO_SHORT;
-	} else if (public_data) {
-		if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
-			tmp_key = SMW_UTILS_MALLOC(max_public_length);
+	} else if (shared_secret_data) {
+		if (desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+			tmp_key = SMW_UTILS_MALLOC(max_shared_secret_length);
 			if (!tmp_key) {
 				SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
 				status = SMW_STATUS_ALLOC_FAILURE;
 				goto end;
 			}
 		} else {
-			tmp_key = public_data;
+			tmp_key = shared_secret_data;
 		}
 
 		*length = key_size;
@@ -682,7 +684,7 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 	}
 
 	/* Update the ephemeral key exchange public buffer */
-	status = smw_keymgr_update_public_buffer(&args->key_derived,
+	status = smw_keymgr_update_shared_secret(&args->key_derived,
 						 tmp_key_exchange, key_size);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -717,7 +719,8 @@ end:
 		SMW_UTILS_FREE(new_key_ids);
 
 	if (tmp_key_exchange &&
-	    tmp_key_exchange != smw_keymgr_get_public_data(&args->key_derived))
+	    tmp_key_exchange !=
+		    smw_keymgr_get_shared_secret_buffer(&args->key_derived))
 		SMW_UTILS_FREE(tmp_key_exchange);
 
 	if (hex_key_base)

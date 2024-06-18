@@ -9,6 +9,7 @@
 
 #include "config.h"
 #include "debug.h"
+#include "base64.h"
 
 #include "tee.h"
 
@@ -53,4 +54,46 @@ int tee_convert_hash_algorithm_id(enum smw_config_hash_algo_id smw_id,
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+int set_hex_buffer(enum smw_keymgr_format_id format_id, unsigned char *buffer,
+		   unsigned int buffer_len, unsigned char **hex_buffer,
+		   unsigned int *hex_buffer_len)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+		/* Convert buffer in hex format */
+		status = smw_utils_base64_decode(buffer, buffer_len, hex_buffer,
+						 hex_buffer_len);
+		if (status != SMW_STATUS_OK) {
+			SMW_DBG_PRINTF(ERROR, "%s: Failed to decode base64\n",
+				       __func__);
+			goto exit;
+		}
+	} else {
+		*hex_buffer = buffer;
+		*hex_buffer_len = buffer_len;
+		status = SMW_STATUS_OK;
+	}
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int set_tmpref_buffer(unsigned int mem_type, unsigned int param_idx,
+		      unsigned char *buffer, unsigned int buffer_len,
+		      TEEC_Operation *op)
+{
+	if (param_idx > (TEE_NUM_PARAMS - 1))
+		return SMW_STATUS_INVALID_PARAM;
+
+	SET_TEEC_PARAMS_TYPE(op->paramTypes, mem_type, param_idx);
+	op->params[param_idx].tmpref.buffer = buffer;
+	op->params[param_idx].tmpref.size = buffer_len;
+
+	return SMW_STATUS_OK;
 }

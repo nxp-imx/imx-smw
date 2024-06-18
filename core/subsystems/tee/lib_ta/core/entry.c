@@ -9,6 +9,7 @@
 #include <libsmw_ta.h>
 
 #include "keymgr.h"
+#include "keymgr_derive.h"
 #include "hash.h"
 #include "sign_verify.h"
 #include "mac.h"
@@ -54,6 +55,10 @@ TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 
 	case CMD_EXPORT_KEY:
 		res = export_key(param_types, params);
+		break;
+
+	case CMD_DERIVE_KEY:
+		res = derive_key(param_types, params);
 		break;
 
 	case CMD_HASH:

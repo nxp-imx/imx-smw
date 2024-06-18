@@ -17,6 +17,10 @@
 #define IMP_MOD_PARAM_IDX		  3
 #define EXP_PUB_KEY_PARAM_IDX		  1
 #define EXP_MOD_PARAM_IDX		  2
+#define DER_SHARED_PARAM_IDX		  0
+#define DER_BASE_KEY_PARAM_IDX		  1
+#define DER_DERIVED_KEY_PARAM_IDX	  2
+#define DER_SHARED_MEM_IDX		  3
 #define GET_KEY_LENGTHS_KEY_ID_IDX	  0
 #define GET_KEY_LENGTHS_PUBKEYS_IDX	  1
 #define GET_KEY_LENGTHS_PRIVKEY_IDX	  2
@@ -33,6 +37,10 @@ enum tee_key_privacy {
 	TEE_KEY_PUBLIC = 0,
 	TEE_KEY_PRIVATE,
 	TEE_KEY_PAIR,
+	/* This type is intended for secret data that has been derived from a
+	 * key derivation scheme.
+	 */
+	TEE_KEY_SHARED_SECRET
 };
 
 /* TEE key type */
@@ -51,6 +59,7 @@ enum tee_key_type {
 	TEE_KEY_TYPE_ID_HMAC_SHA512,
 	TEE_KEY_TYPE_ID_HMAC_SM3,
 	TEE_KEY_TYPE_ID_RSA,
+	TEE_KEY_TYPE_ID_GENERIC_SECRET,
 	TEE_KEY_TYPE_ID_NB,
 	TEE_KEY_TYPE_ID_INVALID
 };
@@ -100,6 +109,7 @@ enum ta_commands {
 	CMD_DELETE_KEY,
 	CMD_IMPORT_KEY,
 	CMD_EXPORT_KEY,
+	CMD_DERIVE_KEY,
 	CMD_HASH,
 	CMD_SIGN,
 	CMD_VERIFY,
@@ -190,6 +200,34 @@ struct aead_shared_params {
  */
 struct shared_context {
 	void *handle;
+};
+
+/**
+ * struct key_derive_shared_params - Derive key operation shared parameters.
+ * @salt_length: Length of salt buffer in bytes.
+ * @info_length: Length of info buffer in bytes.
+ * @key_type: Key type.
+ * @key_usage: Key usage.
+ * @persistent: Use persistent subsystem storage or not.
+ * @hash_algo: Hash algorithm.
+ * @base_key_id: Key ID of base key.
+ * @derived_key_id: Key ID of the derived key.
+ * @base_key_sec_size: Base key security size in bits.
+ * @derived_key_sec_size: Derived key security size in bits.
+ * @derived_key_len: Derived key length in bytes.
+ */
+struct key_derive_shared_params {
+	uint32_t salt_length;
+	uint32_t info_length;
+	enum tee_key_type key_type;
+	unsigned int key_usage;
+	bool persistent;
+	uint32_t hash_algo;
+	uint32_t base_key_id;
+	uint32_t derived_key_id;
+	unsigned int base_key_sec_size;
+	unsigned int derived_key_sec_size;
+	unsigned int derived_key_len;
 };
 
 #endif /* TEE_SUBSYSTEM_H */

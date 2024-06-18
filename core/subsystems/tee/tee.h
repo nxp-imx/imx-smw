@@ -240,4 +240,79 @@ int tee_delete_key(uint32_t id);
 int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
 			  unsigned int *key_id, unsigned int key_usage);
 
+/**
+ * derive_key() - Derive a key from base key.
+ * @args: Derive key arguments structure.
+ *
+ * A shared secret is derived from a symmetric key and it is stored in
+ * the TEE storage.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED    - Operation parameters not supported.
+ * SMW_STATUS_INVALID_PARAM              - One of the parameter is invalid.
+ * SMW_STATUS_ALLOC_FAILURE              - Memory allocation failed.
+ * SMW_STATUS_OPERATION_FAILURE          - Operation failed.
+ * SMW_STATUS_SUBSYSTEM_FAILURE          - Trusted application failed.
+ * SMW_STATUS_KEY_POLICY_WARNING_IGNORED - One of the key policy is ignored.
+ * SMW_STATUS_OUTPUT_TOO_SHORT           - Output buffer is too short.
+ */
+int derive_key(void *args);
+
+/**
+ * key_usage_to_value() - Convert SMW key usage to TEE key usage value.
+ * @smw: SMW key usage.
+ * @tee: TEE key usage.
+ *
+ * Return:
+ * None
+ */
+void key_usage_to_tee(smw_attr_usage_t smw, unsigned int *tee);
+
+/**
+ * key_usage_to_value() - Convert TEE key usage to SMW key usage.
+ * @tee: TEE key usage.
+ * @smw: SMW key usage.
+ *
+ * Return:
+ * None
+ */
+void key_usage_to_smw(unsigned int tee, smw_attr_usage_t *smw);
+
+/**
+ * set_hex_buffer() - Set HEX buffer.
+ * @format_id: Format of the input buffer.
+ * @buffer: Pointer to the input buffer.
+ * @buffer_len: @buffer length in bytes.
+ * @hex_buffer: Pointer to the HEX buffer to update.
+ * @hex_buffer_len: Pointer @hex_buffer length to update.
+ *
+ * If format id is BASE64, the input buffer in converted in HEX format.
+ * Memory allocated to @hex_buffer in smw_utils_base64_decode() should
+ * be freed at the end of the operation.
+ *
+ * Return:
+ * SMW_STATUS_OK  - Success.
+ * Error code from smw_utils_base64_decode().
+ */
+int set_hex_buffer(enum smw_keymgr_format_id format_id, unsigned char *buffer,
+		   unsigned int buffer_len, unsigned char **hex_buffer,
+		   unsigned int *hex_buffer_len);
+
+/**
+ * set_tmpref_buffer() - Set a shared tmpref buffer parameter.
+ * @buffer_type: TEEC memory type.
+ * @param_idx: Index of the parameter in @op structure.
+ * @buffer: Pointer to the buffer.
+ * @buffer_len: @buffer length in bytes.
+ * @op: Pointer to operation structure to update.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success.
+ * SMW_STATUS_INVALID_PARAM - Invalid index.
+ */
+int set_tmpref_buffer(unsigned int mem_type, unsigned int param_idx,
+		      unsigned char *buffer, unsigned int buffer_len,
+		      TEEC_Operation *op);
+
 #endif /* TEE_H */

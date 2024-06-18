@@ -115,6 +115,7 @@ struct {
 	KEY_DEF_RANGE(HMAC_SHA512, HMAC_SHA512),
 	KEY_DEF_RANGE(HMAC_SM3, HMAC_SM3),
 	KEY_DEF_RANGE(RSA, RSA_KEYPAIR),
+	KEY_DEF_RANGE(GENERIC_SECRET, GENERIC_SECRET),
 };
 
 static TEE_Result roundup_even_size(size_t *size)
@@ -152,6 +153,18 @@ static TEE_Result key_obj_type_to_ta_type(enum tee_key_type *key_type,
 	if (!key_type || !key_privacy)
 		return TEE_ERROR_BAD_PARAMETERS;
 
+	/* If the obj_type is TEE_TYPE_GENERIC_SECRET, bitwise ANDing it with any
+	 * object in the key_def_list array would also result in
+	 * TEE_TYPE_GENERIC_SECRET, leading to the wrong key type being returned.
+	 * To prevent this, update the key type and key privacy if the obj_type is
+	 * TEE_TYPE_GENERIC_SECRET, and then return from the function.
+	 */
+	if (obj_type == TEE_TYPE_GENERIC_SECRET) {
+		*key_type = TEE_KEY_TYPE_ID_GENERIC_SECRET;
+		*key_privacy = TEE_KEY_SHARED_SECRET;
+		return TEE_SUCCESS;
+	}
+
 	for (; i < array_size; i++) {
 		if ((key_def_list[i].obj_type & obj_type) == obj_type) {
 			*key_type = key_def_list[i].key_type;
@@ -179,18 +192,7 @@ static TEE_Result key_obj_type_to_ta_type(enum tee_key_type *key_type,
 	return TEE_ERROR_ITEM_NOT_FOUND;
 }
 
-/**
- * get_key_obj_type() - Get key's object type.
- * @key_type: Key type.
- * @obj_type: Pointer to object type. Not updated if an error is returned.
- *
- * Return:
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_BAD_PARAMETERS	- @obj_type is NULL.
- * TEE_ERROR_ITEM_NOT_FOUND	- Key type isn't present.
- */
-static TEE_Result get_key_obj_type(enum tee_key_type key_type,
-				   uint32_t *obj_type)
+TEE_Result get_key_obj_type(enum tee_key_type key_type, uint32_t *obj_type)
 {
 	unsigned int i = 0;
 	unsigned int array_size = ARRAY_SIZE(key_def_list);
@@ -294,8 +296,7 @@ static TEE_Result conf_key_ecc_attribute(enum tee_key_type key_type,
  * TEE_SUCCESS                - Success.
  * TEE_ERROR_BAD_PARAMETERS   - Bad key type.
  */
-static TEE_Result key_usage_to_tee(unsigned int key_usage,
-				   uint32_t *tee_key_usage)
+TEE_Result key_usage_to_tee(unsigned int key_usage, uint32_t *tee_key_usage)
 {
 	unsigned int i = 0;
 
@@ -337,19 +338,7 @@ static void key_usage_to_ta(unsigned int *key_usage, uint32_t tee_key_usage)
 	}
 }
 
-/**
- * set_key_usage() - Set key usage (cryptographic operations).
- * @key_usage: Key usage definition.
- * @key_handle: Key handle.
- *
- * Key are not set as extractable.
- *
- * Return:
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_BAD_PARAMETERS	- Bad key type.
- * Error code from TEE_RestrictObjectUsage1().
- */
-static TEE_Result set_key_usage(uint32_t key_usage, TEE_ObjectHandle key_handle)
+TEE_Result set_key_usage(uint32_t key_usage, TEE_ObjectHandle key_handle)
 {
 	FMSG("Executing %s", __func__);
 
@@ -804,7 +793,7 @@ static TEE_Result set_import_keypair_ed25519_attrs(TEE_Attribute **attr,
 /**
  * set_rsa_public_key() - Set the rsa public key attributes (modulus and
  *                        public exponent)
- * @attr: Pointer to TEE Attrbute structure to update.
+ * @attr: Pointer to TEE Attribute structure to update.
  * @modulus: Modulus buffer.
  * @modulus_len: @modulus length in bytes.
  * @pub_exp: Public exponent buffer.

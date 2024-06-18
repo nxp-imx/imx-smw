@@ -5,6 +5,7 @@ incdirs-y += ./inc
 
 srcs-y += entry.c
 srcs-y += keymgr.c
+srcs-y += keymgr_derive.c
 srcs-y += hash.c
 srcs-y += sign_verify.c
 srcs-y += mac.c

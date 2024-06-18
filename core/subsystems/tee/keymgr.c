@@ -48,6 +48,7 @@ RANGE_DEF(HMAC_SHA384, 256, 1024, 8);
 RANGE_DEF(HMAC_SHA512, 256, 1024, 8);
 RANGE_DEF(HMAC_SM3, 80, 1024, 8);
 RANGE_DEF(RSA, 256, 4096, 2);
+RANGE_DEF(GENERIC_SECRET, 8, 4096, 8);
 
 /* This alias is aimed to simplify the definitions of the macros below. */
 #define TEE_KEY_TYPE_ID_ECDSA_NIST TEE_KEY_TYPE_ID_ECDSA
@@ -124,6 +125,7 @@ static const struct key_def {
 	KEY_DEF_RANGE_SYM(HMAC_SHA512),
 	KEY_DEF_RANGE_SYM(HMAC_SM3),
 	KEY_DEF_RANGE_ASYM(RSA),
+	KEY_DEF_RANGE_ASYM(GENERIC_SECRET),
 };
 
 /**
@@ -194,7 +196,7 @@ key_type_tee_to_smw(enum tee_key_type key_type)
 	return ret_type;
 }
 
-static void key_usage_to_tee(smw_attr_usage_t smw, unsigned int *tee)
+void key_usage_to_tee(smw_attr_usage_t smw, unsigned int *tee)
 {
 	unsigned int i = 0;
 
@@ -213,7 +215,7 @@ static void key_usage_to_tee(smw_attr_usage_t smw, unsigned int *tee)
 	SMW_DBG_PRINTF(DEBUG, "TEE key usage: 0x%" PRIx32 "\n", *tee);
 }
 
-static void key_usage_to_smw(unsigned int tee, smw_attr_usage_t *smw)
+void key_usage_to_smw(unsigned int tee, smw_attr_usage_t *smw)
 {
 	unsigned int i = 0;
 
@@ -302,33 +304,6 @@ find_check_key_def(enum smw_config_key_type_id key_type_id,
 	}
 
 	return NULL;
-}
-
-/**
- * set_tmpref_buffer() - Set a shared tmpref buffer parameter.
- * @buffer_type: TEEC memory type.
- * @param_idx: Index of the parameter in @op structure.
- * @buffer: Pointer to the buffer.
- * @buffer_len: @buffer length in bytes.
- * @op: Pointer to operation structure to update.
- *
- * Return:
- * SMW_STATUS_OK		- Success.
- * SMW_STATUS_INVALID_PARAM	- Invalid index.
- */
-static inline int set_tmpref_buffer(unsigned int mem_type,
-				    unsigned int param_idx,
-				    unsigned char *buffer,
-				    unsigned int buffer_len, TEEC_Operation *op)
-{
-	if (param_idx > (TEE_NUM_PARAMS - 1))
-		return SMW_STATUS_INVALID_PARAM;
-
-	SET_TEEC_PARAMS_TYPE(op->paramTypes, mem_type, param_idx);
-	op->params[param_idx].tmpref.buffer = buffer;
-	op->params[param_idx].tmpref.size = buffer_len;
-
-	return SMW_STATUS_OK;
 }
 
 /**
@@ -651,12 +626,17 @@ static int generate_key(void *args)
 	key_attrs = key_args->key_attributes;
 
 	if (key_attrs) {
-		key_usage_to_tee(key_attrs->usage_flags,
-				 &shared_params.key_usage);
-		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
-
 		if (SMW_ATTR_IS_PERSISTENT(key_attrs->attributes))
 			shared_params.persistent_storage = true;
+
+		if (key_attrs->usage_flags == SMW_ATTR_USAGE_NONE) {
+			shared_params.key_usage = TEE_KEY_USAGE_ALL;
+		} else {
+			key_usage_to_tee(key_attrs->usage_flags,
+					 &shared_params.key_usage);
+			key_usage_to_smw(shared_params.key_usage,
+					 &actual_usage_flags);
+		}
 	} else {
 		shared_params.key_usage = TEE_KEY_USAGE_ALL;
 	}
@@ -866,51 +846,6 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 }
 
 /**
- * set_hex_imp_buffer() - Set HEX buffer for import key operation.
- * @format_id: Format of the input buffer.
- * @buffer: Pointer to the input buffer.
- * @buffer_len: @buffer length in bytes.
- * @hex_buffer: Pointer to the HEX buffer to update.
- * @hex_buffer_len: Pointer @hex_buffer length to update.
- *
- * If format id is BASE64, the input buffer in converted in HEX format. In this
- * case @hex_buffer is allocated in smw_utils_base64_decode() and will be freed
- * at the end of import_key().
- *
- * Return:
- * SMW_STATUS_OK	- Success.
- * Error code from smw_utils_base64_decode().
- */
-static int set_hex_imp_buffer(enum smw_keymgr_format_id format_id,
-			      unsigned char *buffer, unsigned int buffer_len,
-			      unsigned char **hex_buffer,
-			      unsigned int *hex_buffer_len)
-{
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
-		/* Convert buffer in hex format */
-		status = smw_utils_base64_decode(buffer, buffer_len, hex_buffer,
-						 hex_buffer_len);
-		if (status != SMW_STATUS_OK) {
-			SMW_DBG_PRINTF(ERROR, "%s: Failed to decode base64\n",
-				       __func__);
-			goto exit;
-		}
-	} else {
-		*hex_buffer = buffer;
-		*hex_buffer_len = buffer_len;
-		status = SMW_STATUS_OK;
-	}
-
-exit:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-/**
  * set_params_import_pub_key() - Set public key buffer shared parameter for
  *                               import operation.
  * @key_descriptor: Pointer to key descriptor.
@@ -922,7 +857,7 @@ exit:
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Private key buffer length invalid.
- * Error code from set_hex_imp_buffer().
+ * Error code from set_hex_buffer().
  * Error code from set_tmpref_buffer().
  */
 static int
@@ -946,8 +881,8 @@ set_params_import_pub_key(struct smw_keymgr_descriptor *key_descriptor,
 		goto exit;
 	}
 
-	status = set_hex_imp_buffer(key_descriptor->format_id, pub_data,
-				    pub_data_len, &hex_pub_data, &hex_pub_len);
+	status = set_hex_buffer(key_descriptor->format_id, pub_data,
+				pub_data_len, &hex_pub_data, &hex_pub_len);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -993,7 +928,7 @@ exit:
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Private key buffer length invalid.
- * Error code from set_hex_imp_buffer().
+ * Error code from set_hex_buffer().
  * Error code from set_tmpref_buffer().
  */
 static int
@@ -1013,9 +948,8 @@ set_params_import_priv_key(enum tee_key_type key_type,
 	if (!priv_data_len)
 		goto exit;
 
-	status = set_hex_imp_buffer(key_descriptor->format_id, priv_data,
-				    priv_data_len, &hex_priv_data,
-				    &hex_priv_len);
+	status = set_hex_buffer(key_descriptor->format_id, priv_data,
+				priv_data_len, &hex_priv_data, &hex_priv_len);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -1055,7 +989,7 @@ exit:
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Modulus buffer length invalid.
- * Error code from set_hex_imp_buffer().
+ * Error code from set_hex_buffer().
  * Error code from set_tmpref_buffer().
  */
 static int
@@ -1071,9 +1005,8 @@ set_params_import_modulus(struct smw_keymgr_descriptor *key_descriptor,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status =
-		set_hex_imp_buffer(key_descriptor->format_id, modulus,
-				   modulus_len, &hex_modulus, &hex_modulus_len);
+	status = set_hex_buffer(key_descriptor->format_id, modulus, modulus_len,
+				&hex_modulus, &hex_modulus_len);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -1234,12 +1167,18 @@ static int import_key(void *args)
 	key_attrs = key_args->key_attributes;
 
 	if (key_attrs) {
-		key_usage_to_tee(key_attrs->usage_flags,
-				 &shared_params.key_usage);
-		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
-
 		if (SMW_ATTR_IS_PERSISTENT(key_attrs->attributes))
 			shared_params.persistent_storage = true;
+
+		if (key_attrs->usage_flags == SMW_ATTR_USAGE_NONE) {
+			shared_params.key_usage = TEE_KEY_USAGE_ALL;
+		} else {
+			key_usage_to_tee(key_attrs->usage_flags,
+					 &shared_params.key_usage);
+			key_usage_to_smw(shared_params.key_usage,
+					 &actual_usage_flags);
+		}
+
 	} else {
 		shared_params.key_usage = TEE_KEY_USAGE_ALL;
 	}
@@ -1289,8 +1228,9 @@ exit:
 	if (status != SMW_STATUS_OK) {
 		if (shared_params.id)
 			(void)tee_delete_key(shared_params.id);
-	} else if (key_attrs->permitted_algo ||
-		   key_attrs->usage_flags != actual_usage_flags) {
+	} else if (key_attrs &&
+		   (key_attrs->permitted_algo ||
+		    key_attrs->usage_flags != actual_usage_flags)) {
 		key_attrs->permitted_algo = 0;
 		key_attrs->usage_flags = actual_usage_flags;
 
@@ -1541,6 +1481,11 @@ static int get_key_attributes(void *args)
 
 	case TEE_KEY_PUBLIC:
 		key_identifier->privacy_id = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
+		break;
+
+	case TEE_KEY_SHARED_SECRET:
+		key_identifier->privacy_id =
+			SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET;
 		break;
 
 	default:
@@ -1818,7 +1763,7 @@ bool tee_key_handle(enum operation_id op_id, void *args, int *status)
 		*status = delete_key(args);
 		break;
 	case OPERATION_ID_DERIVE_KEY:
-		*status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+		*status = derive_key(args);
 		break;
 	case OPERATION_ID_UPDATE_KEY:
 		*status = SMW_STATUS_OPERATION_NOT_CONFIGURED;

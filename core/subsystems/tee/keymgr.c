@@ -110,6 +110,7 @@ static const struct key_def {
 	KEY_DEF_ASYM(ECDSA_NIST, 521),
 	KEY_DEF_INVALID(ECDSA_BRAINPOOL_R1),
 	KEY_DEF_INVALID(ECDSA_BRAINPOOL_T1),
+	KEY_DEF_ASYM(ED25519, 256),
 	KEY_DEF_RANGE_SYM(AES),
 	KEY_DEF_SYM(DES, 56),
 	KEY_DEF_RANGE_SYM(DES3),
@@ -801,6 +802,7 @@ static int check_import_key_buffers_presence(enum tee_key_type key_type,
 		break;
 
 	case TEE_KEY_TYPE_ID_ECDSA:
+	case TEE_KEY_TYPE_ID_ED25519:
 	case TEE_KEY_TYPE_ID_RSA:
 		/*
 		 * OPTEE does not support import of private key only for
@@ -838,6 +840,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 {
 	switch (key_descriptor->identifier.type_id) {
 	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		/*
 		 * For RSA key type, modulus presence is already check in

@@ -276,6 +276,21 @@
 				"SIGN_HASH",
 				"SIGN_MESSAGE"
 			]
+		},
+		"key 21": {
+			"type": "ED25519",
+			"security_size": 256,
+			"pub_key": [
+				"43e75272720043d875999b82e370b0cc",
+				"1a10bd07d8fe2e01d7801abf47771559"
+			],
+			"priv_key": [
+				"2ad3c7ce1696e52103572cc2aa396bfc",
+				"45069e5d82412f060805cda11677f658"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			]
 		}
 	},
 	"subtest 1": { // Import AES 128
@@ -477,5 +492,15 @@
 		"command": "DELETE",
 		"key_name": "key 20",
 		"depends": 38
+	},
+	"subtest 41": { // Import ED25519 keypair
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key 21"
+	},
+	"subtest 42": {
+		"command": "DELETE",
+		"key_name": "key 21",
+		"depends": 41
 	}
 }

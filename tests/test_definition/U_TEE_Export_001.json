@@ -65,6 +65,21 @@
 			"key_name": "key 10",
 			"priv_key": 64
 		},
+		"key 12": {
+			"type": "ED25519",
+			"security_size": 256,
+			"usage": [
+				"SIGN_MESSAGE"
+			]
+		},
+		"key 13": {
+			"key_name": "key 12",
+			"pub_key": 32
+		},
+		"key 14": {
+			"key_name": "key 12",
+			"priv_key": 32
+		}
 	},
 	"subtest 1": {
 		"command": "GENERATE",
@@ -159,5 +174,26 @@
 		"command": "DELETE",
 		"key_name": "key 10",
 		"depends": 14
+	},
+	"subtest 18": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 12"
+	},
+	"subtest 19": {
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 13",
+		"depends": 18
+	},
+	"subtest 20": {
+		"command": "EXPORT_PRIVATE",
+		"key_name": "key 14",
+		"depends": 18,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 21": {
+		"command": "DELETE",
+		"key_name": "key 12",
+		"depends": 18
 	}
 }

@@ -53,6 +53,11 @@ optee_plat=
 opt_seco=0
 opt_ele=0
 case ${platform} in
+  imx91evk)
+    optee_plat="imx-mx91evk"
+    opt_ele=1
+    ;;
+
   imx95evk)
     optee_plat="imx-mx95evk"
     opt_ele=1

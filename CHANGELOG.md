@@ -58,6 +58,24 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Tests - _version 4.0_
 
 ---
+### <a id ="rel_4_0"></a></br>**Release 4.0**
+---
+#### Known Issues
+##### 1. SECO Subsystem
+
+* When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
+The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+#### SMW Library - _version 4.0_
+##### 1. SMW APIs
+
+* Key attributes, data attributes and signature algorithm are no longer encoded with TLV format. They are now encoded with a dedicated bitmap.
+
+#### SMW Tests - _version 4.0_
+
+* Simplify the description of key attributes, data attributes and signature algorithm in test definition files.
+
+---
 ### <a id ="rel_3_0"></a></br>**Release 3.0**
 ---
 #### Known Issues

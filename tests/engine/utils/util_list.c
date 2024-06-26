@@ -56,7 +56,7 @@ static int write_id_string(struct node *node, uintptr_t id)
 
 static void free_id_string(uintptr_t id)
 {
-	if (!id)
+	if (id)
 		free((void *)id);
 }
 

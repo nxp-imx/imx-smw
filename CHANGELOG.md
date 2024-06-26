@@ -43,6 +43,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. Subsystems
 
 * ELE subsystem: Fix cipher get output length feature.
+* Add TEE subsystem ed25519 key management.
 
 ##### 3. ARM PSA APIs
 
@@ -52,6 +53,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Fix undefined behavior with both `vprinf()` and `vfprinf()` reusing the same va_list.
 * Fix trivial memory leak in util_list.c.
+* Add tests to validate ed25519 key management in TEE subsystem.
 
 #### PKCS#11 Library - _version 4.0_
 

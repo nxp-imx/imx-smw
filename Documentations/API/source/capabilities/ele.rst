@@ -425,30 +425,33 @@ AEAD
 
 .. table:: ELE AEAD
    :align: center
+   :widths: 13 32 40 15
+   :width: 100%
    :class: wrap-table
 
-   +--------------+------------+------------------------+------------------------+
-   | **Key type** | **Mode**   | **IV length (bytes)**  | **Tag length (bytes)** |
-   +==============+============+========================+========================+
-   | AES          |   CCM      |       12 [1]_          |        16              |
-   +              +------------+------------------------+------------------------+
-   |              |   GCM [3]_ | Encryption: 0/4/12 [2]_|        16              |
-   +              +            +                        +                        +
-   |              |            | Decryption: 12         |                        |
-   +--------------+------------+------------------------+------------------------+
+   +--------------+-------------------------+-----------------------------------------+----------------+
+   | **Key type** | **Mode**                | **IV length**                           | **Tag length** |
+   +              +                         +                                         +                +
+   |              |                         | **(bytes)**                             | **(bytes)**    |
+   +==============+=========================+=========================================+================+
+   | AES          | CCM                     | 12                                      |       16       |
+   +              +-------------------------+-----------------------------------------+----------------+
+   |              | GCM [1]_                | Encryption:                             |       16       |
+   |              |                         |                                         |                |
+   |              |                         | - 0 (subsystem generates full IV)       |                |
+   |              |                         | - 4 (subsystem generates 8 bytes of IV) |                |
+   |              |                         | - 12 (user supplied full IV)            |                |
+   +              +                         +-----------------------------------------+                +
+   |              |                         | Decryption:                             |                |
+   |              |                         |                                         |                |
+   |              |                         | - 12 (user supplied full IV)            |                |
+   +              +-------------------------+-----------------------------------------+----------------+
+   |              | CHACHA20_POLY1305 [2]_  | 12                                      |       16       |
+   +--------------+-------------------------+-----------------------------------------+----------------+
 
-.. [1] For CCM AEAD encryption and decryption operation, IV length should be
-       12 bytes.
+.. [1] Not supported on i.MX8ULP
 
-.. [2] For GCM AEAD Encryption operation, IV length can be either
-
-.. [3] Not supported on i.MX8ULP
-
-  - 0 bytes, to request the subsystem to fully generate the IV.
-  - 4 bytes, to request the subsystem to generate the rest of the IV bytes.
-  - 12 bytes (user supplied full IV)
-
-   For decryption operation, IV length should be 12 bytes.
+.. [2] Currently supported on i.MX91 and i.MX93
 
 One-shot operations supported:
  - AEAD Encryption

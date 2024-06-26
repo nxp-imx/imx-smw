@@ -23,6 +23,7 @@ typedef smw_string_t smw_subsystem_t;
  *	- NIST
  *	- BRAINPOOL_R1
  *	- BRAINPOOL_T1
+ *	- ED25519
  *	- AES
  *	- DES
  *	- DES3

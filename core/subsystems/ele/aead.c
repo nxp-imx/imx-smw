@@ -26,7 +26,8 @@ static const struct {
 	enum smw_config_key_type_id key_type_id;
 	enum smw_config_aead_mode_id aead_mode_id;
 	hsm_op_auth_enc_algo_t aead_algo;
-} aead_algos[] = { AEAD_ALGO(AES, CCM), AEAD_ALGO(AES, GCM) };
+} aead_algos[] = { AEAD_ALGO(AES, CCM), AEAD_ALGO(AES, GCM),
+		   AEAD_ALGO(AES, CHACHA20_POLY1305) };
 
 static int set_aead_algo(enum smw_config_key_type_id key_type_id,
 			 enum smw_config_aead_mode_id aead_mode_id,
@@ -548,7 +549,8 @@ static int aead(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	if (aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_CCM &&
+	if ((aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_CCM ||
+	     aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_CHACHA20_POLY1305) &&
 	    smw_crypto_get_aead_iv_len(aead_args) != MAX_IV_LEN) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;

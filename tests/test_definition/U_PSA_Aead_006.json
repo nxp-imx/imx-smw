@@ -1,0 +1,363 @@
+{
+	"keys": {
+		"generated aes-chacha20-256 key": {
+			"type": "AES",
+			"security_size": 256,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CHACHA20_POLY1305"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"restriction_list": [ "imx8ulp", "imx95" ]
+	},
+	"subtest 2": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 1,
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 1,
+		"output": "11",
+		"depends": [ 1, 2 ]
+	},
+	"subtest 4": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 2,
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 2,
+		"output": "11",
+		"depends": [ 1, 4 ]
+	},
+	"subtest 6": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 3,
+		"depends": 1
+	},
+	"subtest 7": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 3,
+		"output": "11",
+		"depends": [ 1, 6 ]
+	},
+	"subtest 8": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 4,
+		"depends": 1
+	},
+	"subtest 9": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 4,
+		"output": "11",
+		"depends": [ 1, 8 ]
+	},
+	"subtest 10": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 5,
+		"depends": 1
+	},
+	"subtest 11": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 5,
+		"output": "11",
+		"depends": [ 1, 10 ]
+	},
+	"subtest 12": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 6,
+		"depends": 1
+	},
+	"subtest 13": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 6,
+		"output": "11",
+		"depends": [ 1, 12 ]
+	},
+	"subtest 14": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 7,
+		"depends": 1
+	},
+	"subtest 15": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "11111111",
+		"aead_id": 7,
+		"output": "11",
+		"depends": [ 1, 14 ]
+	},
+	"subtest 16": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"input": "11",
+		"op_type": "ENCRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "111111111111",
+		"aead_id": 8,
+		"depends": 1
+	},
+	"subtest 17": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "111111111111",
+		"aead_id": 8,
+		"output": "11",
+		"depends": [ 1, 16 ]
+	},
+	"subtest 18": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "1111111111111111",
+		"aead_id": 9,
+		"depends": 1
+	},
+	"subtest 19": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "1111111111111111",
+		"aead_id": 9,
+		"output": "11",
+		"depends": [ 1, 18 ]
+	},
+	"subtest 20": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "111111111111111111111111",
+		"aead_id": 10,
+		"depends": 1
+	},
+	"subtest 21": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "111111111111111111111111",
+		"aead_id": 10,
+		"output": "11",
+		"depends": [ 1, 20 ]
+	},
+	"subtest 22": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": "11",
+		"iv": "000000000000000000000000",
+		"aad": "11111111111111111111111111111111",
+		"aead_id": 11,
+		"depends": 1
+	},
+	"subtest 23": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "000000000000000000000000",
+		"aad": "11111111111111111111111111111111",
+		"aead_id": 11,
+		"output": "11",
+		"depends": [ 1, 22 ]
+	},
+	"subtest 24": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": [
+			"ac9774830c12939b72b58838d939d507",
+			"0d6d79b55e0ae262f231a583f919c46c",
+			"c097ff045b17a1f14406bfa0eb95b859",
+			"777c5a7b8ce3ff46b880c16a37eb35"
+		],
+		"iv": "049ab16a7699e054ca2fe8ce",
+		"aad": "a9f4beeadf98b8ca6a392f881849b38b",
+		"aead_id": 12,
+		"depends": 1
+	},
+	"subtest 25": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "049ab16a7699e054ca2fe8ce",
+		"aad": "a9f4beeadf98b8ca6a392f881849b38b",
+		"aead_id": 12,
+		"output": [
+			"ac9774830c12939b72b58838d939d507",
+			"0d6d79b55e0ae262f231a583f919c46c",
+			"c097ff045b17a1f14406bfa0eb95b859",
+			"777c5a7b8ce3ff46b880c16a37eb35"
+		],
+		"depends": [ 1, 24 ]
+	},
+	"subtest 26": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "ENCRYPT",
+		"input": [
+			"a85367dbc3b416af88cc0cc006b2d5ea",
+			"d62a57b06ce7ce37c59d9cd489a2e568",
+			"0ccd28c5a4fb8ebedfeee1cb9aa5b876",
+			"b755308cfb302db3c0998fb87e1906a0",
+			"d7ba8df887ede5571343624eca6f7e0f",
+			"a0a72da28c41a1099614c323ec074954"
+		],
+		"iv": "5be56ee5b824d65461e35c9b",
+		"aad": "e1ff76185869197578483b49c7caaadf",
+		"aead_id": 13,
+		"depends": 1
+	},
+	"subtest 27": {
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"mode": "CHACHA20_POLY1305",
+		"op_type": "DECRYPT",
+		"iv": "5be56ee5b824d65461e35c9b",
+		"aad": "e1ff76185869197578483b49c7caaadf",
+		"aead_id": 13,
+		"output": [
+			"a85367dbc3b416af88cc0cc006b2d5ea",
+			"d62a57b06ce7ce37c59d9cd489a2e568",
+			"0ccd28c5a4fb8ebedfeee1cb9aa5b876",
+			"b755308cfb302db3c0998fb87e1906a0",
+			"d7ba8df887ede5571343624eca6f7e0f",
+			"a0a72da28c41a1099614c323ec074954"
+		],
+		"depends": [ 1, 26 ]
+	},
+	"subtest 28": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "generated aes-chacha20-256 key",
+		"depends": 1
+	}
+}

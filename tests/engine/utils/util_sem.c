@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include <semaphore.h>
@@ -516,11 +516,13 @@ static int post_to_sem(struct app_data *app, struct json_object *obj)
 	switch (json_object_get_type(sem_obj)) {
 	case json_type_string:
 		sem_name = json_object_get_string(sem_obj);
-		sem_name_len = strlen(sem_name);
-		if (!INC_OVERFLOW(sem_name_len, 1) &&
-		    sem_name_len <= sizeof(op.args.name)) {
-			(void)sprintf(op_name, "%s", sem_name);
-			err = util_ipc_send(app, app_name, &op);
+		if (sem_name) {
+			sem_name_len = strlen(sem_name);
+			if (!INC_OVERFLOW(sem_name_len, 1) &&
+			    sem_name_len <= sizeof(op.args.name)) {
+				(void)sprintf(op_name, "%s", sem_name);
+				err = util_ipc_send(app, app_name, &op);
+			}
 		}
 		break;
 
@@ -543,6 +545,10 @@ static int post_to_sem(struct app_data *app, struct json_object *obj)
 			}
 
 			sem_name = json_object_get_string(oval);
+			if (!sem_name) {
+				err = ERR_CODE(FAILED);
+				break;
+			}
 
 			/*
 			 * Calculate the remaining operation name length

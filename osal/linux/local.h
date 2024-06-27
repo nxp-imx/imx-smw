@@ -56,19 +56,33 @@
 /*
  * Define the configuration flags ids
  */
-#define CONFIG_TEE  BIT(0)
-#define CONFIG_SECO BIT(1)
-#define CONFIG_ELE  BIT(2)
+#define CONFIG_SMW_CONFIG_FILE BIT(0)
+#define CONFIG_SMW_DATABASE    BIT(1)
+#define CONFIG_TEE	       BIT(2)
+#define CONFIG_SECO	       BIT(3)
+#define CONFIG_ELE	       BIT(4)
+
+/**
+ * struct smw_info - SMW library configuration
+ * @smw_config_file: SMW configuration file
+ * @smw_database: SMW database file
+ */
+struct smw_info {
+	char *smw_config_file;
+	char *smw_database;
+};
 
 /**
  * struct lib_config_args - Library configuration arguments
  * @config_flags: Flags the library configuration set
+ * @smw_info: SMW library configuration
  * @tee_info: TEE subsystem configuration
  * @se_seco_info: Secure Enclave SECO subsystem configuration
  * @se_ele_info: Secure Enclave ELE subsystem configuration
  */
 struct lib_config_args {
 	unsigned int config_flags;
+	struct smw_info smw_info;
 	struct tee_info tee_info;
 	struct se_info se_seco_info;
 	struct se_info se_ele_info;
@@ -235,5 +249,31 @@ void dbg_entry_info(void *buf, size_t len);
  * @fp: File id opened
  */
 void dbg_get_lock_file(int fp);
+
+/**
+ * config_read_system_cnf() - Read the system configuration file
+ *
+ * If present, the function reads the system configuration file containing
+ * all the library information like:
+ *   - SMW_CONFIG_FILE
+ *   - object database
+ *   - each subsystem configuration
+ *
+ * Return:
+ * SMW_STATUS_OK                 - Success
+ * SMW_STATUS_READ_CONF_FAILURE  - Failure
+ */
+int config_read_system_cnf(void);
+
+/**
+ * config_smw_db() - Setup the database file name in the OSAL configuration
+ * @file: File name of the database
+ * @config: OSAL configuration
+ *
+ * Return:
+ * 0  - Success
+ * -1 - Failure
+ */
+int config_smw_db(const char *file, struct lib_config_args *config);
 
 #endif /* __LOCAL_H__ */

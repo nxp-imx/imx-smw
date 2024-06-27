@@ -34,6 +34,12 @@ static inline int alloc_context(void)
 
 static inline void free_context(void)
 {
+	if (osal_ctx->config.smw_info.smw_config_file)
+		free(osal_ctx->config.smw_info.smw_config_file);
+
+	if (osal_ctx->config.smw_info.smw_database)
+		free(osal_ctx->config.smw_info.smw_database);
+
 	free(osal_ctx);
 	osal_ctx = NULL;
 }
@@ -322,7 +328,8 @@ static bool is_lib_initialized(void)
 	return ctx ? ctx->lib_initialized : false;
 }
 
-static int get_default_config(char **buffer, unsigned int *size)
+static int get_smw_config(char **buffer, unsigned int *size,
+			  struct osal_ctx *ctx)
 {
 	int status = SMW_STATUS_NO_CONFIG_LOADED;
 	long fsize = 0;
@@ -333,9 +340,13 @@ static int get_default_config(char **buffer, unsigned int *size)
 	TRACE_FUNCTION_CALL;
 
 	if (!file_name) {
-		DBG_PRINTF(ERROR, "SMW_CONFIG_FILE not set.\n"
-				  "Use export SMW_CONFIG_FILE=...\n");
-		goto end;
+		if (!(ctx->config.config_flags & CONFIG_SMW_CONFIG_FILE)) {
+			DBG_PRINTF(ERROR, "SMW_CONFIG_FILE not set.\n"
+					  "Use export SMW_CONFIG_FILE=...\n");
+			goto end;
+		}
+
+		file_name = ctx->config.smw_info.smw_config_file;
 	}
 
 	f = fopen(file_name, "r");
@@ -459,16 +470,11 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem_name, void *info,
 	return status;
 }
 
-__export enum smw_status_code smw_osal_open_key_db(const char *file,
-						   size_t len __maybe_unused)
-{
-	return smw_osal_open_obj_db(file, len);
-}
-
 __export enum smw_status_code smw_osal_open_obj_db(const char *file,
 						   size_t len __maybe_unused)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
+	struct osal_ctx *ctx = NULL;
 
 	TRACE_FUNCTION_CALL;
 
@@ -476,15 +482,25 @@ __export enum smw_status_code smw_osal_open_obj_db(const char *file,
 
 	status = alloc_context();
 	if (status != SMW_STATUS_OK)
-		return status;
+		goto end;
 
-	if (obj_db_open(file)) {
-		DBG_PRINTF(ERROR, "Error opening/creating object db %s\n",
-			   file);
-		return SMW_STATUS_OBJ_DB_INIT;
+	ctx = get_osal_ctx();
+	if (!ctx) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
 	}
 
-	return SMW_STATUS_OK;
+	if (config_smw_db(file, &ctx->config))
+		status = SMW_STATUS_CONFIGURATION_FAILURE;
+
+	if (ctx->config.config_flags & CONFIG_SMW_DATABASE) {
+		if (obj_db_open(ctx->config.smw_info.smw_database) < 0) {
+			status = SMW_STATUS_OBJ_DB_INIT;
+			goto end;
+		}
+	}
+end:
+	return status;
 }
 
 __export enum smw_status_code smw_osal_lib_init(void)
@@ -512,6 +528,10 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	if (ctx->lib_initialized)
 		return SMW_STATUS_LIBRARY_ALREADY_INIT;
 
+	status = config_read_system_cnf();
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	ops.mutex_init = mutex_init;
 	ops.mutex_destroy = mutex_destroy;
 	ops.mutex_lock = mutex_lock;
@@ -534,7 +554,14 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = get_default_config(&buffer, &size);
+	if (ctx->config.config_flags & CONFIG_SMW_DATABASE) {
+		if (obj_db_open(ctx->config.smw_info.smw_database) < 0) {
+			status = SMW_STATUS_OBJ_DB_INIT;
+			goto end;
+		}
+	}
+
+	status = get_smw_config(&buffer, &size, ctx);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

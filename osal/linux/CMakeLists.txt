@@ -13,6 +13,7 @@ set_target_properties(osal PROPERTIES C_VISIBILITY_PRESET hidden)
 target_sources(osal PRIVATE
                osal.c
                obj_db.c
+               config.c
                $<$<BOOL:${VERBOSE}>:osal_trace.c>
                $<$<CONFIG:DEBUG>:osal_debug.c>)
 

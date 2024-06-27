@@ -161,8 +161,6 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} INTERFACE ${EXT_LIBS} PRIVATE ${STATIC_EXT_LIBS})
 
 install(TARGETS ${PROJECT_NAME} EXPORT SMWTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES ${CMAKE_SOURCE_DIR}/osal/${OS}/config/default_config.txt
-        DESTINATION share/smw)
 
 # Install library headers interface
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/public/

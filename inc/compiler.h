@@ -10,5 +10,6 @@
 #define __export       __attribute__((visibility("default")))
 #define __maybe_unused __attribute__((unused))
 #define __packed       __attribute__((packed))
+#define __fallthrough  __attribute__((fallthrough))
 
 #endif /* __COMPILER_H__ */

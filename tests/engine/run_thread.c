@@ -180,10 +180,12 @@ static int is_subtest_skipped(struct json_object *params)
 	switch (json_object_get_type(restriction_list_obj)) {
 	case json_type_string:
 		prefix = json_object_get_string(restriction_list_obj);
-		len = strlen(prefix);
+		if (prefix) {
+			len = strlen(prefix);
 
-		if (len <= host_len && !strncmp(hostname, prefix, len))
-			res = ERR_CODE(SKIPPED);
+			if (len <= host_len && !strncmp(hostname, prefix, len))
+				res = ERR_CODE(SKIPPED);
+		}
 
 		break;
 
@@ -202,12 +204,14 @@ static int is_subtest_skipped(struct json_object *params)
 			}
 
 			prefix = json_object_get_string(hostname_obj);
-			len = strlen(prefix);
+			if (prefix) {
+				len = strlen(prefix);
 
-			if (len <= host_len &&
-			    !strncmp(hostname, prefix, len)) {
-				res = ERR_CODE(SKIPPED);
-				break;
+				if (len <= host_len &&
+				    !strncmp(hostname, prefix, len)) {
+					res = ERR_CODE(SKIPPED);
+					break;
+				}
 			}
 		}
 

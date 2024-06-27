@@ -89,12 +89,6 @@
  * @SMW_STATUS_OBJ_DB_DELETE: Object database delete error.
  * @SMW_STATUS_OBJ_DB_GET_INFO: Object database get information error.
  *
- * @SMW_STATUS_KEY_DB_INIT: Initialization error of the key database.
- * @SMW_STATUS_KEY_DB_CREATE: Key database creation error.
- * @SMW_STATUS_KEY_DB_UPDATE: Key database update error.
- * @SMW_STATUS_KEY_DB_DELETE: Key database delete error.
- * @SMW_STATUS_KEY_DB_GET_INFO: Key database get information error.
- *
  * @SMW_STATUS_KEY_POLICY_WARNING_IGNORED: At least one element of the key policy is ignored.
  * @SMW_STATUS_UNKNOWN_KEY_OP_NAME: Key operation name provided by the user or
  * set in the user configuration is not recognized by SMW.
@@ -108,6 +102,7 @@
  * provided by the user is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_TLS12_ENC_NAME: TLS 1.2 encryption algorithm name
  * provided by the user is not recognized by SMW.
+ * @SMW_STATUS_CONFIGURATION_FAILURE: Library configuration failure.
  *
  * Status code classification:
  ** Common return codes
@@ -152,6 +147,7 @@
  *	- SMW_STATUS_MUTEX_UNLOCK_FAILURE
  *	- SMW_STATUS_INVALID_LIBRARY_CONTEXT
  *	- SMW_STATUS_INVALID_CONFIG_DATABASE
+ *	- SMW_STATUS_CONFIGURATION_FAILURE
  *
  ** Specific return codes - Configuration file
  *
@@ -180,13 +176,6 @@
  *	- SMW_STATUS_ERROR_OBJ_DB_UPDATE
  *	- SMW_STATUS_ERROR_OBJ_DB_DELETE
  *	- SMW_STATUS_ERROR_OBJ_DB_GET_INFO
- *
- ** Specific return codes - Key database
- *	- SMW_STATUS_ERROR_KEY_DB_INIT
- *	- SMW_STATUS_ERROR_KEY_DB_CREATE
- *	- SMW_STATUS_ERROR_KEY_DB_UPDATE
- *	- SMW_STATUS_ERROR_KEY_DB_DELETE
- *	- SMW_STATUS_ERROR_KEY_DB_GET_INFO
  *
  ** Specific return codes - Key manager
  *	- SMW_STATUS_KEY_POLICY_WARNING_IGNORED
@@ -246,11 +235,6 @@ enum smw_status_code {
 	SMW_STATUS_OBJ_DB_UPDATE, /* 40 */
 	SMW_STATUS_OBJ_DB_DELETE,
 	SMW_STATUS_OBJ_DB_GET_INFO,
-	SMW_STATUS_KEY_DB_INIT = SMW_STATUS_OBJ_DB_INIT,
-	SMW_STATUS_KEY_DB_CREATE = SMW_STATUS_OBJ_DB_CREATE,
-	SMW_STATUS_KEY_DB_UPDATE = SMW_STATUS_OBJ_DB_UPDATE, /* 40 */
-	SMW_STATUS_KEY_DB_DELETE = SMW_STATUS_OBJ_DB_DELETE,
-	SMW_STATUS_KEY_DB_GET_INFO = SMW_STATUS_OBJ_DB_GET_INFO,
 	SMW_STATUS_KEY_POLICY_WARNING_IGNORED,
 	SMW_STATUS_KEY_INVALID,
 	SMW_STATUS_MUTEX_LOCK_FAILURE, /* 45 */
@@ -272,7 +256,8 @@ enum smw_status_code {
 	SMW_STATUS_UNKNOWN_KDF_NAME,
 	SMW_STATUS_UNKNOWN_TLS12_KEA_NAME,
 	SMW_STATUS_UNKNOWN_TLS12_ENC_NAME,
-	SMW_STATUS_OEM_SRKH_NOT_FUSED,
+	SMW_STATUS_OEM_SRKH_NOT_FUSED, /* 65 */
+	SMW_STATUS_CONFIGURATION_FAILURE,
 };
 
 #endif /* __SMW_STATUS_H__ */

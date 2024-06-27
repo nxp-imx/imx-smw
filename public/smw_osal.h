@@ -142,21 +142,6 @@ enum smw_status_code smw_osal_set_subsystem_info(smw_subsystem_t subsystem,
 						 void *info, size_t info_size);
 
 /**
- * smw_osal_open_key_db() - Open a key database file
- * @file: Fullname of the key database
- * @len: Length of the @file string
- *
- * **Deprecated. Will be removed in library version 3.x.**
- * Use smw_osal_open_obj_db().
- *
- * Return:
- * See &enum smw_status_code
- *  - SMW_STATUS_OK                - Success
- *  - SMW_STATUS_KEY_DB_INIT       - Initialization error of the database
- */
-enum smw_status_code smw_osal_open_key_db(const char *file, size_t len);
-
-/**
  * smw_osal_open_obj_db() - Open a object database file
  * @file: Fullname of the object database
  * @len: Length of the @file string
@@ -167,4 +152,5 @@ enum smw_status_code smw_osal_open_key_db(const char *file, size_t len);
  *  - SMW_STATUS_OBJ_DB_INIT       - Initialization error of the database
  */
 enum smw_status_code smw_osal_open_obj_db(const char *file, size_t len);
+
 #endif /* __SMW_OSAL_H__ */

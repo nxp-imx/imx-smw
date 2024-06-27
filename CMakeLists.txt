@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(SecurityMiddleware VERSION 3.0 LANGUAGES C)
+project(SecurityMiddleware VERSION 4.0 LANGUAGES C)
 
 include(CMakeDependentOption)
 

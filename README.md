@@ -18,6 +18,15 @@ The objectives of this library are:
 ## User guide
 Project User guide can be found in the [User Guide](./Documentations/user_guide/user_guide.md)
 
+## Build instructions
+Project Build instructions can be found in the [Build instructions](./Documentations/user_guide/build_instructions.md)
+
+## Installation instructions
+Project Installation instructions can be found in the [Installation instructions](./Documentations/user_guide/build_instructions.md#5-smwpkcs11-libraries-installation)
+
+## Tests
+Project tests build, installation and execution instructions can be found in the [tests](./Documentations/user_guide/build_instructions.md#7-tests)
+
 ## User APIs documentation
 User API documentation is available [here](./Documentations/API/SecurityMiddleware_API.pdf)
 

@@ -1,5 +1,5 @@
 SECO capabilities
-================
+=================
 
 Key manager
 ^^^^^^^^^^^
@@ -41,6 +41,7 @@ Operations supported:
 Key group:
 The SMW Library is managing the SECO key group automatically. The library is
 selecting a key group depending if a key is persistent/permanent or transient.
+
   - Persistent/Permanent keys are in key groups from 0 to 511.
   - Transient keys are in key groups from 512 to 1023.
 

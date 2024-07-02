@@ -56,6 +56,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 4. OSAL
 
+* Add management of a linux system configuration file (/etc/opt/smw/smw.conf).
+
 #### SMW Tests - _version 4.0_
 
 * Fix undefined behavior with both `vprinf()` and `vfprinf()` reusing the same va_list.

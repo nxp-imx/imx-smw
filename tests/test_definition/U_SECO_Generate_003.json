@@ -47,13 +47,13 @@
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 1",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 2",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 3": {
 		"command": "GENERATE",

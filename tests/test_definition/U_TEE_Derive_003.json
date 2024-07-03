@@ -169,7 +169,7 @@
 	"subtest 6": {
 		"description": "Base key format Base64",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 6",
 		"op_type": "HKDF",
 		"op_args": {
@@ -185,7 +185,7 @@
 			"Store the derived key"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 6",
 		"op_type": "HKDF",
 		"store_key": true,

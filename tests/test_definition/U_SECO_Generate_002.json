@@ -47,36 +47,36 @@
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 1",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 2",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 3",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 4",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 5",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 6",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	}
 }

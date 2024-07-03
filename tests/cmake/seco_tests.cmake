@@ -1,6 +1,5 @@
 set(GROUP SECO)
-set(CFG_FILE seco_config.txt)
-set(CMD ${TEST_CMD} ${CFG_FILE})
+set(CMD ${TEST_CMD})
 
 # Get all test definition files
 file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}_*.json)
@@ -20,5 +19,13 @@ foreach(REM_TESTS IN LISTS REM_TESTS_LIST)
 	list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/${REM_TESTS})
 endforeach()
 
-set(CFG_FILES ${SMW_CONFIG_SRC_DIR}/${CFG_FILE})
-add_and_install_tests("${TESTS}" "${CFG_FILES}" "${CMD}")
+add_and_install_tests("${TESTS}" "${CMD}")
+
+# Install config files
+file(GLOB CFG_FILES ${SMW_CONFIG_SRC_DIR}/config_seco*.txt)
+
+# Install the test configuration files
+install(FILES ${CFG_FILES}
+	DESTINATION ${SMW_TESTS_TARGET_CONFIG_DIR}
+	EXCLUDE_FROM_ALL
+	COMPONENT ${PROJECT_NAME})

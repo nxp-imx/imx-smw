@@ -25,22 +25,6 @@ void *util_lib_open(const char *libname)
 	const char *open_lib = DEFAULT_PKCS11_LIB;
 	void *handle = NULL;
 
-#ifdef SMW_CONFIG_FILE
-	int err;
-	char env_config[1024];
-
-	strcpy(env_config, SMW_CONFIG_FILE);
-	TEST_OUT("SMW_CONFIG_FILE=%s\n", env_config);
-	err = setenv("SMW_CONFIG_FILE", env_config, 1);
-	(void)CHECK_EXPECTED(!err, "Set Environment error: %s\n",
-			     util_lib_get_strerror());
-#else
-	char *env_config;
-
-	env_config = getenv("SMW_CONFIG_FILE");
-	TEST_OUT("SMW_CONFIG_FILE=%s\n", env_config);
-#endif
-
 	if (libname)
 		open_lib = libname;
 

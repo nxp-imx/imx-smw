@@ -154,21 +154,14 @@ endmacro()
 # add_and_install_tests() - Add tests to the project and install test definition
 #                           files
 # @def_list: [Input] List of test definition files.
-# @cfg_list: [Input] List of test configuration files.
 # @cmd: [Input] Test command common to all tests.
 #
-macro(add_and_install_tests def_list cfg_list cmd)
+macro(add_and_install_tests def_list cmd)
 	add_tests("${def_list}" "${cmd}")
 
 	# Install the test definition files
 	install(FILES ${def_list}
 		DESTINATION ${SMW_TESTS_TARGET_DEF_DIR}
-		EXCLUDE_FROM_ALL
-		COMPONENT ${PROJECT_NAME})
-
-	# Install the test configuration files
-	install(FILES ${cfg_list}
-		DESTINATION ${SMW_TESTS_TARGET_CONFIG_DIR}
 		EXCLUDE_FROM_ALL
 		COMPONENT ${PROJECT_NAME})
 endmacro()

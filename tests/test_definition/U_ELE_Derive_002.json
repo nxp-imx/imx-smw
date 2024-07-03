@@ -74,7 +74,7 @@
 			"Derived key is stored"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 1",
 		"op_output": "derived key 1",
 		"op_type": "HKDF",
@@ -95,7 +95,7 @@
 			"Derived key is stored"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 2",
 		"op_output": "derived key 2",
 		"op_type": "HKDF",
@@ -122,7 +122,7 @@
 			"Derived key is exported"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 1",
 		"op_output": "derived key 3",
 		"op_type": "HKDF",
@@ -142,7 +142,7 @@
 			"Derived key is exported"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 2",
 		"op_output": "derived key 4",
 		"op_type": "HKDF",
@@ -172,7 +172,7 @@
 			"Derived key buffer is short"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 2",
 		"op_output": "derived key 5",
 		"op_type": "HKDF",

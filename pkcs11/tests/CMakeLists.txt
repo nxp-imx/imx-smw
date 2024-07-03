@@ -21,7 +21,6 @@ endif()
 
 set(PKCS11_SHARE_TARGET_DIR share/smw/pkcs11)
 set(PKCS11_TESTS_TARGET_DATA_DIR ${PKCS11_SHARE_TARGET_DIR}/tests)
-set(PKCS11_TARGET_CONFIG_DIR ${PKCS11_SHARE_TARGET_DIR}/config)
 set(PKCS11_TARGET_SCRIPTS_DIR ${PKCS11_SHARE_TARGET_DIR}/scripts)
 
 message(STATUS "Default PKCS11 Library: ${DEFAULT_PKCS11_LIB}")
@@ -42,11 +41,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     rt
     ${CMAKE_THREAD_LIBS_INIT})
 
-if(NOT NO_SMW_CONFIG AND NOT DEFINED SMW_CONFIG_FILE)
-  set(SMW_CONFIG_FILE "${CMAKE_INSTALL_PREFIX}/${PKCS11_TARGET_CONFIG_DIR}/default_config.txt")
-  message(STATUS "SMW Config will be loaded from ${SMW_CONFIG_FILE}")
-endif()
-
 configure_file(./include/config.h.in ./include/config.h)
 
 #
@@ -59,11 +53,6 @@ install(TARGETS ${PROJECT_NAME}
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
         DESTINATION ${PKCS11_TESTS_TARGET_DATA_DIR}
-        COMPONENT ${PROJECT_NAME}
-        EXCLUDE_FROM_ALL)
-
-install(DIRECTORY config
-        DESTINATION ${PKCS11_SHARE_TARGET_DIR}
         COMPONENT ${PROJECT_NAME}
         EXCLUDE_FROM_ALL)
 

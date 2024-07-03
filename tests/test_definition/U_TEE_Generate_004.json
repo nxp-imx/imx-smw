@@ -137,35 +137,35 @@
 	"subtest 5": {
 		"description": "Modulus buffer set but not public buffer",
 		"command": "GENERATE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"key_name": "key RSA 2",
 		"result": "SMW_STATUS_OK"
 	},
 	"subtest 6": {
 		"description": "Public buffer len is too small",
 		"command": "GENERATE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"key_name": "key RSA 3",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 7": {
 		"description": "Modulus buffer len is too small",
 		"command": "GENERATE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"key_name": "key RSA 4",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 8": {
 		"description": "Public buffer len is too small (base64)",
 		"command": "GENERATE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"key_name": "key RSA 5",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 9": {
 		"description": "Modulus buffer len is too small (base64)",
 		"command": "GENERATE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"key_name": "key RSA 6",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},

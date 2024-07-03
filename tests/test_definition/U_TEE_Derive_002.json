@@ -84,7 +84,7 @@
 	"subtest 1": {
 		"description": "RFC5869 - Test case 1",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 1",
 		"op_type": "HKDF",
 		"op_args": {
@@ -102,7 +102,7 @@
 	"subtest 2": {
 		"description": "RFC5869 - Test case 2",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 3",
 		"op_type": "HKDF",
 		"op_args": {
@@ -135,7 +135,7 @@
 	"subtest 3": {
 		"description": "RFC5869 - Test case 3",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 1",
 		"op_type": "HKDF",
 		"op_args": {
@@ -151,7 +151,7 @@
 	"subtest 4": {
 		"description": "RFC5869 - Test case 4",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 6",
 		"op_type": "HKDF",
 		"op_args": {
@@ -169,7 +169,7 @@
 	"subtest 5": {
 		"description": "RFC5869 - Test case 5",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 3",
 		"op_type": "HKDF",
 		"op_args": {
@@ -202,7 +202,7 @@
 	"subtest 6": {
 		"description": "RFC5869 - Test case 6",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 1",
 		"op_type": "HKDF",
 		"op_args": {
@@ -218,7 +218,7 @@
 	"subtest 7": {
 		"description": "RFC5869 - Test case 7",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 10",
 		"op_type": "HKDF",
 		"op_args": {

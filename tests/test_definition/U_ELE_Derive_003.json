@@ -109,7 +109,7 @@
 			"PRK is exported"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 1",
 		"op_output": "prk 1",
 		"op_type": "HKDF",
@@ -137,7 +137,7 @@
 			"Derived key buffer is exported"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "prk 1",
 		"op_type": "HKDF",
 		"op_args": {
@@ -163,7 +163,7 @@
 			"PRK buffer is set"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 2",
 		"op_output": "prk 2",
 		"op_type": "HKDF",
@@ -193,7 +193,7 @@
 			"Derived key buffer is set"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "prk 2",
 		"op_type": "HKDF",
 		"op_args": {
@@ -220,7 +220,7 @@
 			"PRK is stored"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 1",
 		"op_output": "prk 3",
 		"op_type": "HKDF",
@@ -244,7 +244,7 @@
 			"Derived key is stored"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "prk 3",
 		"op_type": "HKDF",
 		"store_key": true,
@@ -267,7 +267,7 @@
 			"PRK is stored."
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 2",
 		"op_output": "prk 4",
 		"op_type": "HKDF",
@@ -292,7 +292,7 @@
 			"Derived key ID is stored"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "prk 4",
 		"op_type": "HKDF",
 		"store_key": true,
@@ -316,7 +316,7 @@
 			"PRK is exported"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 1",
 		"op_output": "prk 5",
 		"op_type": "HKDF",
@@ -341,7 +341,7 @@
 			"Derived key buffer is exported"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "prk 5",
 		"op_type": "HKDF",
 		"op_args": {
@@ -367,7 +367,7 @@
 			"PRK buffer is exported"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "base key 2",
 		"op_output": "prk 6",
 		"op_type": "HKDF",
@@ -393,7 +393,7 @@
 			"Derived key is exported"
 		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "prk 6",
 		"op_type": "HKDF",
 		"op_args": {

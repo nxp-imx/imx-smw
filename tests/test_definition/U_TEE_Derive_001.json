@@ -158,7 +158,7 @@
 	"subtest 5": {
 		"description": "HKDF_EXPAND step is set",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 7",
 		"op_type": "HKDF",
 		"op_args": {
@@ -172,7 +172,7 @@
 	"subtest 6": {
 		"description": "Unsupported KDF",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "TEE",
 		"op_input": "key 4",
 		"op_type": "TLS12_KEY_EXCHANGE",
 		"op_args": {

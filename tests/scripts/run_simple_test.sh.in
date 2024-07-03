@@ -1,39 +1,28 @@
-#! /bin/bash
+#!/bin/sh
 
 set -u
 
 res=0
-cfg_path="@CMAKE_INSTALL_PREFIX@/@SMW_TESTS_TARGET_CONFIG_DIR@"
 status_file_path="@DEFAULT_OUT_STATUS_DIR@/"
 def_file_ext=".json"
 status_file_ext=".txt"
 
-if [ $# -lt 2 ]
+if [ $# -lt 1 ]
 then
-  echo "This script needs 2 arguments:"
-  echo " - 1st: SMW configuration file name. Must be located in: ${cfg_path} directory"
-  echo " - 2nd: Test definition file"
+  echo "This script needs at least one Test definition file"
   exit 1
 fi
-
-#
-# Set the SMW configuration file and run the test
-#
-export SMW_CONFIG_FILE="${cfg_path}/$1"
-
-# Run all test definition multiple part files building a full test
-shift
 
 #
 # Check if the ELE Daemon is present
 # If not active, start it
 #
-if [[ -e /etc/systemd/system/nvm_daemon.service ]]; then
+if [ -e /etc/systemd/system/nvm_daemon.service ]; then
   res=$(systemctl is-active nvm_daemon)
-  if [[ ${res} != "active" ]]; then
+  if [ "${res}" != "active" ]; then
     systemctl start nvm_daemon
     res=$(systemctl is-active nvm_daemon)
-    if [[ ${res} != "active" ]]; then
+    if [ "${res}" != "active" ]; then
       echo "NVM Daemon start failure"
       systemctl -l status nvm_daemon
       exit 1
@@ -42,7 +31,7 @@ if [[ -e /etc/systemd/system/nvm_daemon.service ]]; then
 fi
 
 final_status_file=
-if [[ $# -gt 1 ]]; then
+if [ $# -gt 1 ]; then
   final_status_file=$(basename "$1")
   final_status_file="${final_status_file%%.*}"
   final_status_file="${status_file_path}${final_status_file}${status_file_ext}"
@@ -54,14 +43,14 @@ do
   @PROJECT_NAME@ -d "${def}"
   res=$?
 
-  if [[ -n "${final_status_file}" ]]; then
+  if [ -n "${final_status_file}" ]; then
     status_file=$(basename "${def}" "${def_file_ext}")
     status_file="${status_file_path}${status_file}${status_file_ext}"
     cat "${status_file}" >> "${final_status_file}"
     rm "${status_file}"
   fi
 
-  if [[ ${res} -gt 1 ]]; then
+  if [ "${res}" -gt 1 ]; then
     echo "${def} test failed (${res})"
     break
   fi

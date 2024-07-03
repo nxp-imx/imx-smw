@@ -93,7 +93,7 @@
 	"subtest 3": {
 		"description": "Unsupported Key derivation algo HKDF SHA1 is set",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "key 3",
 		"op_type": "HKDF",
 		"op_args": {
@@ -111,7 +111,7 @@
 	"subtest 4": {
 		"description": "Unsupported Key derivation algo HKDF SHA512 is set",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "key 3",
 		"op_type": "HKDF",
 		"op_args": {
@@ -127,7 +127,7 @@
 	"subtest 5": {
 		"description": "Unsupported KDF",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "key 4",
 		"op_type": "TLS12_KEY_EXCHANGE",
 		"op_args": {
@@ -212,7 +212,7 @@
 	"subtest 9": {
 		"description": "Storing the derived key and exporting derived key buffer simultaneously is not supported",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "ELE",
 		"op_input": "key 3",
 		"op_type": "HKDF",
 		"store_key": true,

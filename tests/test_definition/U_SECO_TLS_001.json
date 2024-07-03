@@ -76,7 +76,7 @@
 		],
 		"sign_id": 0,
 		"key_name": "key 6",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED",
 		"depends": 2
 	},
 	"subtest 4": {

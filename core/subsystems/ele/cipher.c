@@ -74,6 +74,7 @@ static int cipher(struct hdl *hdl, void *args)
 		goto end;
 
 	op_args.output = smw_crypto_get_cipher_output(cipher_args);
+	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
 
 	/* Get output length feature */
 	if (!op_args.output) {
@@ -87,7 +88,6 @@ static int cipher(struct hdl *hdl, void *args)
 	op_args.key_identifier = smw_crypto_get_cipher_key_id(cipher_args, 0);
 	op_args.output_size = smw_crypto_get_cipher_output_len(cipher_args);
 	op_args.input = smw_crypto_get_cipher_input(cipher_args);
-	op_args.input_size = smw_crypto_get_cipher_input_len(cipher_args);
 	op_args.iv = smw_crypto_get_cipher_iv(cipher_args);
 
 	if (SET_OVERFLOW(smw_crypto_get_cipher_iv_len(cipher_args),

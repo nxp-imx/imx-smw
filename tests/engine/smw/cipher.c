@@ -299,6 +299,16 @@ int cipher(struct subtest_data *subtest)
 
 		res = ERR_CODE(API_STATUS_NOK);
 		goto end;
+	} else if (!cipher_args->data.output) {
+		/* Case when the output length is requested */
+		if (cipher_args->data.output_length !=
+		    cipher_args->data.input_length) {
+			DBG_PRINT("Invalid output length, got %u expected %u",
+				  cipher_args->data.output_length,
+				  cipher_args->data.input_length);
+			res = ERR_CODE(API_STATUS_NOK);
+			goto end;
+		}
 	}
 
 	/* Optional output comparison */

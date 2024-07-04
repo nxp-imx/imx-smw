@@ -42,6 +42,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. Subsystems
 
+* ELE subsystem: Fix cipher get output length feature.
+
 ##### 3. ARM PSA APIs
 
 ##### 4. OSAL

@@ -127,6 +127,16 @@ add_subdirectory(pkcs11)
 # Include SMW Documentations
 add_subdirectory(Documentations)
 
+#
+# Generate and install OSAL configuration
+# NOTE: Macro is OSAL implementation
+#
+# As it's depend on the subsystem(s) enabled, it must be
+# call after entire project configuration.
+if (COMMAND make_smw_conf)
+  make_smw_conf()
+endif()
+
 if(NOT DISABLE_CMAKE_CONFIG)
     # Create the SMW Package configuration
     include(CMakePackageConfigHelpers)

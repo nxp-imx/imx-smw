@@ -13,22 +13,24 @@
 #define RET_END_OF_FILE 1
 #define RET_NEW_SECTION 2
 
-#define TAG_SPACE	  ' '
-#define TAG_COMMENT_HASH  '#'
-#define TAG_COMMENT_SLASH '/'
-#define TAG_COMMENT_STAR  '*'
-#define TAG_CR		  '\r'
-#define TAG_LF		  '\n'
-#define TAG_SECTION	  '['
-#define TAG_CNF_DELIM	  '='
-#define TEE_CNF_TA_UUID	  "ta_uuid"
-#define SECO_CNF_ID	  "id"
-#define SECO_CNF_NONCE	  "nonce"
-#define SECO_CNF_REPLAY	  "replay"
-#define ELE_CNF_ID	  "id"
-#define ELE_CNF_NONCE	  "nonce"
-#define SMW_CONFIG_FILE	  "smw_config_file"
-#define SMW_DATABASE	  "database"
+#define TAG_SPACE	   ' '
+#define TAG_COMMENT_HASH   '#'
+#define TAG_COMMENT_SLASH  '/'
+#define TAG_COMMENT_STAR   '*'
+#define TAG_CR		   '\r'
+#define TAG_LF		   '\n'
+#define TAG_SECTION	   '['
+#define TAG_SECTION_CLOSE  ']'
+#define TAG_SECTION_DEVICE '-'
+#define TAG_CNF_DELIM	   '='
+#define TEE_CNF_TA_UUID	   "ta_uuid"
+#define SECO_CNF_ID	   "id"
+#define SECO_CNF_NONCE	   "nonce"
+#define SECO_CNF_REPLAY	   "replay"
+#define ELE_CNF_ID	   "id"
+#define ELE_CNF_NONCE	   "nonce"
+#define SMW_CONFIG_FILE	   "smw_config_file"
+#define SMW_DATABASE	   "database"
 
 struct cnf_section_desc {
 	const char *entry;
@@ -486,6 +488,7 @@ end:
  * @cnf: [in/out] Section configuration descriptor
  * @field: [in] Configuration field to set
  * @value: [in] Value of the entry
+ * @force: [in] 1 if the configuration must be replaced
  *
  * Return:
  * RET_NO_ERROR  - Success
@@ -493,7 +496,7 @@ end:
  */
 static int set_section_conf_value(unsigned int *config_flags,
 				  const struct cnf_section_desc *cnf,
-				  char *field, char *value)
+				  char *field, char *value, int force)
 {
 	int ret = RET_NO_ERROR;
 	const struct cnf_section_desc *entry = NULL;
@@ -506,7 +509,7 @@ static int set_section_conf_value(unsigned int *config_flags,
 				break;
 			}
 
-			if (!(entry->flag & *config_flags)) {
+			if (force || !(entry->flag & *config_flags)) {
 				ret = entry->conv(entry->value, entry->length,
 						  value);
 
@@ -528,6 +531,7 @@ static int set_section_conf_value(unsigned int *config_flags,
  * @cnf: [in/out] Configurations to find
  * @line: [out] Read line - return next section
  * @length: [in/out] length of @line buffer
+ * @force: [in] 1 if the configuration must be replaced
  *
  * Return:
  * RET_NO_ERROR    - Success
@@ -537,7 +541,7 @@ static int set_section_conf_value(unsigned int *config_flags,
  */
 static int parse_section_conf(FILE *fp, unsigned int *config_flags,
 			      const struct cnf_section_desc *cnf, char **line,
-			      size_t *length)
+			      size_t *length, int force)
 {
 	int ret = RET_NO_ERROR;
 	char *value = NULL;
@@ -565,7 +569,8 @@ static int parse_section_conf(FILE *fp, unsigned int *config_flags,
 
 		value++;
 
-		ret = set_section_conf_value(config_flags, cnf, *line, value);
+		ret = set_section_conf_value(config_flags, cnf, *line, value,
+					     force);
 		if (ret)
 			break;
 
@@ -575,10 +580,47 @@ static int parse_section_conf(FILE *fp, unsigned int *config_flags,
 }
 
 /**
- * read_smw_conf() - Read the SMW Library subsystem configuration
+ * parse_smw_conf() - Parse the SMW Library subsystem configuration
  * @fp: [in] Pointer to configuration file
  * @config: [in/out] OSAL configuration context
- * @line: [out] Read line - return next section
+ * @line: [in/out] Read line - return next section
+ * @length: [in/out] length of @line buffer
+ * @force: [in] 1 if the configuration must be replaced
+ *
+ * Read all configuration items and set for each the configuration flag
+ * corresponding.
+ * If @force is set, replace the general configuration with device specific one.
+ *
+ * Return:
+ * RET_NO_ERROR    - Success
+ * RET_END_OF_FILE - End Of File
+ * RET_NEW_SECTION - Read new section
+ * RET_ERROR       - Error
+ */
+static int parse_smw_conf(FILE *fp, struct lib_config_args *config, char **line,
+			  size_t *length, int force)
+{
+	int ret = RET_NO_ERROR;
+
+	const struct cnf_section_desc cnf_section_smw[] = {
+		{ SMW_CONFIG_FILE, &config->smw_info.smw_config_file, 0,
+		  CONFIG_SMW_CONFIG_FILE, value_to_str_alloc },
+		{ SMW_DATABASE, &config->smw_info.smw_database, 0,
+		  CONFIG_SMW_DATABASE, value_to_str_alloc },
+		{ NULL, NULL, 0, 0, NULL }
+	};
+
+	ret = parse_section_conf(fp, &config->config_flags, cnf_section_smw,
+				 line, length, force);
+
+	return ret;
+}
+
+/**
+ * read_smw_conf() - Read the general SMW Library subsystem configuration
+ * @fp: [in] Pointer to configuration file
+ * @config: [in/out] OSAL configuration context
+ * @line: [in/out] Read line - return next section
  * @length: [in/out] length of @line buffer
  *
  * Read all configuration items and set for each the configuration flag
@@ -593,19 +635,70 @@ static int parse_section_conf(FILE *fp, unsigned int *config_flags,
 static int read_smw_conf(FILE *fp, struct lib_config_args *config, char **line,
 			 size_t *length)
 {
-	int ret = RET_NO_ERROR;
+	return parse_smw_conf(fp, config, line, length, 0);
+}
 
-	const struct cnf_section_desc cnf_section_smw[] = {
-		{ SMW_CONFIG_FILE, &config->smw_info.smw_config_file, 0,
-		  CONFIG_SMW_CONFIG_FILE, value_to_str_alloc },
-		{ SMW_DATABASE, &config->smw_info.smw_database, 0,
-		  CONFIG_SMW_DATABASE, value_to_str_alloc },
-		{ NULL, NULL, 0, 0, NULL }
-	};
+/**
+ * read_smw_conf_device() - Read specific SMW Library subsystem configuration
+ * @fp: [in] Pointer to configuration file
+ * @config: [in/out] OSAL configuration context
+ * @line: [in/out] Read line - return next section
+ * @length: [in/out] length of @line buffer
+ *
+ * Read specific device configuration items if hostname is the corresponding.
+ * If force the configuration to use this configuration even if flag is set.
+ *
+ * Return:
+ * RET_NO_ERROR    - Success
+ * RET_END_OF_FILE - End Of File
+ * RET_NEW_SECTION - Read new section
+ * RET_ERROR       - Error
+ */
+static int read_smw_conf_device(FILE *fp, struct lib_config_args *config,
+				char **line, size_t *length)
+{
+	int ret = RET_ERROR;
+	char hostname[256] = { 0 };
+	char *device = NULL;
+	char *end = NULL;
+	size_t device_length = 0;
 
-	ret = parse_section_conf(fp, &config->config_flags, cnf_section_smw,
-				 line, length);
+	device = strchr(*line, TAG_SECTION_DEVICE);
+	if (!device) {
+		DBG_PRINTF(ERROR, "%s (%d): invalid section %s\n", __func__,
+			   __LINE__, *line);
+		goto end;
+	}
 
+	end = strchr(device, TAG_SECTION_CLOSE);
+	if (!end) {
+		DBG_PRINTF(ERROR, "%s (%d): invalid section %s\n", __func__,
+			   __LINE__, *line);
+		goto end;
+	}
+
+	device++;
+	if (SUB_OVERFLOW((uintptr_t)end, (uintptr_t)device, &device_length))
+		goto end;
+
+	if (gethostname(hostname, sizeof(hostname))) {
+		DBG_PRINTF(ERROR, "%s (%d): %s\n", __func__, __LINE__,
+			   get_strerr());
+		goto end;
+	}
+
+	string_to_lower(hostname, strlen(hostname));
+	string_to_lower(device, device_length);
+
+	if (strncmp(hostname, device, device_length)) {
+		/* Configuration is not for this host */
+		ret = RET_NO_ERROR;
+		goto end;
+	}
+
+	ret = parse_smw_conf(fp, config, line, length, 1);
+
+end:
 	return ret;
 }
 
@@ -613,7 +706,7 @@ static int read_smw_conf(FILE *fp, struct lib_config_args *config, char **line,
  * read_tee_conf() - Read the TEE subsystem configuration
  * @fp: [in] Pointer to configuration file
  * @config: [in/out] OSAL configuration context
- * @line: [out] Read line - return next section
+ * @line: [in/out] Read line - return next section
  * @length: [in/out] length of @line buffer
  *
  * Read all subsystem configuration items, if one is missing, stop
@@ -638,7 +731,7 @@ static int read_tee_conf(FILE *fp, struct lib_config_args *config, char **line,
 
 	if (!(config->config_flags & CONFIG_TEE)) {
 		ret = parse_section_conf(fp, &config->config_flags,
-					 cnf_section_tee, line, length);
+					 cnf_section_tee, line, length, 0);
 	}
 
 	return ret;
@@ -648,7 +741,7 @@ static int read_tee_conf(FILE *fp, struct lib_config_args *config, char **line,
  * read_seco_conf() - Read the SECO subsystem configuration
  * @fp: [in] Pointer to configuration file
  * @config: [in/out] OSAL configuration context
- * @line: [out] Read line - return next section
+ * @line: [in/out] Read line - return next section
  * @length: [in/out] length of @line buffer
  *
  * Read all subsystem configuration items, if one is missing, stop
@@ -682,7 +775,7 @@ static int read_seco_conf(FILE *fp, struct lib_config_args *config, char **line,
 
 	if (!(config->config_flags & CONFIG_SECO)) {
 		ret = parse_section_conf(fp, &seco_flags, cnf_section_seco,
-					 line, length);
+					 line, length, 0);
 
 		if (ret != RET_ERROR) {
 			if (seco_flags ==
@@ -698,7 +791,7 @@ static int read_seco_conf(FILE *fp, struct lib_config_args *config, char **line,
  * read_ele_conf() - Read the ELE subsystem configuration
  * @fp: [in] Pointer to configuration file
  * @config: [in/out] OSAL configuration context
- * @line: [out] Read line - return next section
+ * @line: [in/out] Read line - return next section
  * @length: [in/out] length of @line buffer
  *
  * Read all subsystem configuration items, if one is missing, stop
@@ -729,7 +822,7 @@ static int read_ele_conf(FILE *fp, struct lib_config_args *config, char **line,
 
 	if (!(config->config_flags & CONFIG_ELE)) {
 		ret = parse_section_conf(fp, &ele_flags, cnf_section_ele, line,
-					 length);
+					 length, 0);
 
 		if (ret != RET_NO_ERROR) {
 			if (ele_flags == (FLAG_ELE_ID | FLAG_ELE_NONCE))
@@ -744,11 +837,11 @@ const struct cnf_section {
 	const char *name;
 	int (*read_cnf)(FILE *fp, struct lib_config_args *cnf, char **line,
 			size_t *length);
-} cnf_sections[] = { { "[setup]", &read_smw_conf },
-		     { "[tee]", &read_tee_conf },
-		     { "[seco]", &read_seco_conf },
-		     { "[ele]", &read_ele_conf },
-		     { NULL, NULL } };
+} cnf_sections[] = {
+	{ "[setup]", &read_smw_conf }, { "[setup-", &read_smw_conf_device },
+	{ "[tee]", &read_tee_conf },   { "[seco]", &read_seco_conf },
+	{ "[ele]", &read_ele_conf },   { NULL, NULL }
+};
 
 int config_read_system_cnf(void)
 {

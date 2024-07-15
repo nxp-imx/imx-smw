@@ -2,6 +2,9 @@
 /*
  * Copyright 2020, 2024 NXP
  */
+
+#include "smw/names.h"
+
 #include "dev_config.h"
 #include "lib_device.h"
 #include "pkcs11smw_config.h"
@@ -12,7 +15,7 @@
  * Define SECO Security Middleware library Secure Subsystem.
  */
 const struct libdev seco_info = {
-	.name = "SECO",
+	.name = SMW_SUBSYSTEM_NAME_SECO,
 	.description = "Hardware Secure Module",
 	.manufacturer = MANUFACTURER_ID,
 	.model = "",

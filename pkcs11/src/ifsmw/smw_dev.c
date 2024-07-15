@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2024 NXP
  */
+
+#include "smw/names.h"
 
 #include "dev_config.h"
 #include "lib_device.h"
@@ -15,7 +17,7 @@
  * the configuration file.
  */
 const struct libdev smw_info = {
-	.name = NULL,
+	.name = SMW_SUBSYSTEM_NAME_NONE,
 	.description = "Security Middleware Abstraction",
 	.manufacturer = MANUFACTURER_ID,
 	.model = "",

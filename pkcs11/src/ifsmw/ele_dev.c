@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022, 2024 NXP
  */
+
+#include "smw/names.h"
+
 #include "dev_config.h"
 #include "lib_device.h"
 #include "pkcs11smw_config.h"
@@ -12,7 +15,7 @@
  * Define ELE Security Middleware library Secure Subsystem.
  */
 const struct libdev ele_info = {
-	.name = "ELE",
+	.name = SMW_SUBSYSTEM_NAME_ELE,
 	.description = "EdgeLock Secure Enclave Module",
 	.manufacturer = MANUFACTURER_ID,
 	.model = "",

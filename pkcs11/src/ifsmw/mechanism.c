@@ -12,6 +12,7 @@
 #include "smw_crypto.h"
 #include "smw_osal.h"
 #include "smw/attr.h"
+#include "smw/names.h"
 
 #include "dev_config.h"
 #include "lib_context.h"
@@ -51,43 +52,43 @@
 struct mgroup;
 struct mentry;
 
-static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mdigest(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			  struct mgroup *mgroup);
 static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args);
-static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
+static void check_meckeygen(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			    struct mgroup *mgroup);
 static CK_RV info_meckeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_meckeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args);
-static void check_mkeygen(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mkeygen(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			  struct mgroup *mgroup);
 static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args);
-static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
+static void check_msign_ecdsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			      struct mgroup *mgroup);
 static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry,
 			    void *args);
-static void check_msign_rsa(CK_SLOT_ID slotid, const char *subsystem,
+static void check_msign_rsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			    struct mgroup *mgroup);
 static CK_RV info_msign_rsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_msign_rsa(CK_SLOT_ID slotid, struct mentry *entry, void *args);
-static void check_mcipher(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mcipher(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			  struct mgroup *mgroup);
 static CK_RV info_mcipher(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args);
-static void check_mcmac(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mcmac(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			struct mgroup *mgroup);
 static CK_RV info_mcmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mcmac(CK_SLOT_ID slotid, struct mentry *entry, void *args);
-static void check_mhmac(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mhmac(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			struct mgroup *mgroup);
 static CK_RV info_mhmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			struct mentry *entry, CK_MECHANISM_INFO_PTR info);
@@ -131,7 +132,7 @@ struct mgroup {
 	unsigned int number;
 	struct mentry *mechanism;
 
-	void (*check)(CK_SLOT_ID slotid, const char *subsystem,
+	void (*check)(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 		      struct mgroup *mgroup);
 	CK_RV(*info)
 	(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type, struct mentry *entry,
@@ -489,7 +490,7 @@ static smw_cipher_mode_t get_cipher_mode(CK_MECHANISM_TYPE mech_type)
 	return mode;
 }
 
-static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mdigest(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			  struct mgroup *mgroup)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -500,7 +501,7 @@ static void check_mdigest(CK_SLOT_ID slotid, const char *subsystem,
 	slot_flag = BIT(slotid);
 	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
 		status = smw_config_check_digest(subsystem, entry->smw_algo);
-		DBG_TRACE("%s digest %s: %d", subsystem,
+		DBG_TRACE("Subsystem #%d digest %s: %d", subsystem,
 			  (char *)entry->smw_algo, status);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
@@ -563,12 +564,12 @@ static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	if (ret == CKR_OK || ret == CKR_BUFFER_TOO_SMALL)
 		*params->pulDigestLen = hash_args.output_length;
 
-	DBG_TRACE("Digest on %s status %d return %ld", devinfo->name, status,
+	DBG_TRACE("Digest on %d status %d return %ld", devinfo->name, status,
 		  ret);
 	return ret;
 }
 
-static void check_keygen_common(CK_SLOT_ID slotid, const char *subsystem,
+static void check_keygen_common(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 				struct mgroup *mgroup)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -592,8 +593,8 @@ static void check_keygen_common(CK_SLOT_ID slotid, const char *subsystem,
 
 			status =
 				smw_config_check_generate_key(subsystem, &info);
-			DBG_TRACE("%s Key Generate %s: %d", subsystem,
-				  info.key_type_name, status);
+			DBG_TRACE("Subsystem #%d Key Generate %s: %d",
+				  subsystem, info.key_type_name, status);
 
 			if (status == SMW_STATUS_OK)
 				SET_BITS(entry->slot_flag, slot_flag);
@@ -601,14 +602,14 @@ static void check_keygen_common(CK_SLOT_ID slotid, const char *subsystem,
 	}
 }
 
-static void check_meckeygen(CK_SLOT_ID slotid, const char *subsystem,
+static void check_meckeygen(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			    struct mgroup *mgroup)
 {
 	DBG_TRACE("Check EC Key generate");
 	check_keygen_common(slotid, subsystem, mgroup);
 }
 
-static void check_mkeygen(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mkeygen(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			  struct mgroup *mgroup)
 {
 	DBG_TRACE("Check Key generate");
@@ -640,7 +641,7 @@ static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 		keyinfo.security_size = 0;
 
 		status = smw_config_check_generate_key(devinfo->name, &keyinfo);
-		DBG_TRACE("%s Key Generate %s: %d", devinfo->name,
+		DBG_TRACE("Subsystem #%d Key Generate %s: %d", devinfo->name,
 			  keyinfo.key_type_name, status);
 
 		if (status != SMW_STATUS_OK)
@@ -733,8 +734,8 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	status = smw_generate_key(&gen_args);
 	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("Generate Key on %s status %d return %ld", devinfo->name,
-		  status, ret);
+	DBG_TRACE("Generate Key on subsystem #%d status %d return %ld",
+		  devinfo->name, status, ret);
 
 	if (ret == CKR_OK)
 		key_desc_copy_key_id(obj, &key);
@@ -756,7 +757,7 @@ static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	return op_keygen_common(slotid, args);
 }
 
-static void check_msign_common(CK_SLOT_ID slotid, const char *subsystem,
+static void check_msign_common(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			       struct mgroup *mgroup)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -782,20 +783,20 @@ static void check_msign_common(CK_SLOT_ID slotid, const char *subsystem,
 		info.hash = entry->smw_hash;
 
 		status = smw_config_check_sign(subsystem, &info);
-		DBG_TRACE("%s sign mechanism %lu: %d", subsystem, entry->type,
-			  status);
+		DBG_TRACE("Subsystem #%d sign mechanism %lu: %d", subsystem,
+			  entry->type, status);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
 
 		status = smw_config_check_verify(subsystem, &info);
-		DBG_TRACE("%s verify mechanism %lu: %d", subsystem, entry->type,
-			  status);
+		DBG_TRACE("Subsystem #%d verify mechanism %lu: %d", subsystem,
+			  entry->type, status);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
 	}
 }
 
-static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
+static void check_msign_ecdsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			      struct mgroup *mgroup)
 {
 	DBG_TRACE("Check ECDSA Signature mechanism");
@@ -803,7 +804,7 @@ static void check_msign_ecdsa(CK_SLOT_ID slotid, const char *subsystem,
 	check_msign_common(slotid, subsystem, mgroup);
 }
 
-static void check_msign_rsa(CK_SLOT_ID slotid, const char *subsystem,
+static void check_msign_rsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			    struct mgroup *mgroup)
 {
 	DBG_TRACE("Check RSA Signature mechanism");
@@ -919,7 +920,7 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 
 	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("%s on %s status %d return %ld",
+	DBG_TRACE("%s on subsystem #%d status %d return %ld",
 		  params->op_flag == CKF_SIGN ? "Sign" : "Verify",
 		  smw_args.subsystem_name, status, ret);
 
@@ -954,7 +955,7 @@ static CK_RV op_msign_rsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	return op_msign_common(slotid, entry, args, key_id);
 }
 
-static void check_mcipher(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mcipher(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			  struct mgroup *mgroup)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -1107,7 +1108,7 @@ static CK_RV cipher(struct lib_cipher_params *params,
 end:
 
 	ret = smw_status_to_ck_rv(status);
-	DBG_TRACE("%s on subsystem %s SMW status = 0x%x return = 0x%lx",
+	DBG_TRACE("%s on subsystem #%d SMW status = 0x%x return = 0x%lx",
 		  params->op_flag == CKF_ENCRYPT ? ENCRYPT_STR : DECRYPT_STR,
 		  smw_init_args->subsystem_name, status, ret);
 	return ret;
@@ -1335,14 +1336,14 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("%s on %s status %d return %ld",
+	DBG_TRACE("%s on subsystem #%d status %d return %ld",
 		  params->op_flag == CKF_SIGN ? "Sign" : "Verify",
 		  smw_args.subsystem_name, status, ret);
 
 	return ret;
 }
 
-static void check_mcmac(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mcmac(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			struct mgroup *mgroup)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -1374,7 +1375,7 @@ static CK_RV op_mcmac(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	return op_mmac_common(slotid, entry, args);
 }
 
-static void check_mhmac(CK_SLOT_ID slotid, const char *subsystem,
+static void check_mhmac(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			struct mgroup *mgroup)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -1401,8 +1402,8 @@ static void check_mhmac(CK_SLOT_ID slotid, const char *subsystem,
 		info.hash_algo = entry->smw_hash;
 
 		status = smw_config_check_mac(subsystem, &info);
-		DBG_TRACE("%s MAC mechanism %lu: %d", subsystem, entry->type,
-			  status);
+		DBG_TRACE("Subsystem #%d MAC mechanism %lu: %d", subsystem,
+			  entry->type, status);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
 	}
@@ -1574,8 +1575,8 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	status = smw_import_key(&imp_args);
 	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("Import Key on %s status %d return %ld", devinfo->name,
-		  status, ret);
+	DBG_TRACE("Import Key on subsystem #%d status %d return %ld",
+		  devinfo->name, status, ret);
 
 	if (ret == CKR_OK)
 		key_desc_copy_key_id(obj, &key);
@@ -1655,7 +1656,8 @@ CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
 
 	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("RNG on %s status %d return %ld", devinfo->name, status, ret);
+	DBG_TRACE("RNG on subsystem #%d status %d return %ld", devinfo->name,
+		  status, ret);
 	return ret;
 }
 

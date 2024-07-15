@@ -9,8 +9,10 @@
 #include "smw_osal.h"
 #include "smw_status.h"
 #include "smw_storage.h"
+#include "smw/names.h"
 
 #include "util.h"
+#include "trace.h"
 
 #include "lib_session.h"
 #include "lib_device.h"
@@ -30,7 +32,10 @@ static int set_tee_info(struct libobj_obj *obj)
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
-	status = smw_osal_set_subsystem_info("TEE", data->value.array,
+	DBG_TRACE("Set TEE info (%d)", SMW_SUBSYSTEM_NAME_TEE);
+
+	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_TEE,
+					     data->value.array,
 					     data->value.number);
 	if (status == SMW_STATUS_OK)
 		ret = CKR_OK;
@@ -47,7 +52,10 @@ static int set_seco_info(struct libobj_obj *obj)
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
-	status = smw_osal_set_subsystem_info("SECO", data->value.array,
+	DBG_TRACE("Set SECO info (%d)", SMW_SUBSYSTEM_NAME_SECO);
+
+	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_SECO,
+					     data->value.array,
 					     data->value.number);
 	if (status == SMW_STATUS_OK)
 		ret = CKR_OK;
@@ -64,7 +72,10 @@ static int set_ele_info(struct libobj_obj *obj)
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
-	status = smw_osal_set_subsystem_info("ELE", data->value.array,
+	DBG_TRACE("Set ELE info (%d)", SMW_SUBSYSTEM_NAME_ELE);
+
+	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_ELE,
+					     data->value.array,
 					     data->value.number);
 	if (status == SMW_STATUS_OK)
 		ret = CKR_OK;

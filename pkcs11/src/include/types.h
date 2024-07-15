@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2024 NXP
  */
 
 #ifndef __TYPES_H__
 #define __TYPES_H__
+
+#include "smw/names.h"
 
 #include "list.h"
 #include "pkcs11smw.h"
@@ -21,7 +23,7 @@
  * @flags_token: Bits flag of the token's hardcoded capabilities
  */
 struct libdev {
-	const char *name;
+	smw_subsystem_t name;
 	const char *description;
 	const char *manufacturer;
 	const char *model;

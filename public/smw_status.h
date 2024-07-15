@@ -43,7 +43,7 @@
  * user configuration is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_OP_TYPE_NAME: Operation type name provided by the user or
  * set in the user configuration is not recognized by SMW.
- * @SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME: Subsystem name provided by the user or
+ * @SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME: Secure Subsystem name provided by the user or
  * set in the user configuration is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_ALGO_NAME: Algorithm name provided by the user or set in
  * the user configuration is not recognized by SMW.

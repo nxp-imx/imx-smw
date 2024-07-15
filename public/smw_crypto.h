@@ -9,6 +9,7 @@
 #include "smw_status.h"
 #include "smw_strings.h"
 #include "smw/attr.h"
+#include "smw/names.h"
 #include "smw/crypto/aead.h"
 #include "smw/crypto/op_context.h"
 

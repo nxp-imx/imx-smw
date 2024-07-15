@@ -9,6 +9,7 @@
 #include "smw_status.h"
 #include "smw_strings.h"
 #include "smw/attr.h"
+#include "smw/names.h"
 
 /**
  * DOC:

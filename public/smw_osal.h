@@ -10,6 +10,7 @@
 
 #include "smw_status.h"
 #include "smw_strings.h"
+#include "smw/names.h"
 
 /**
  * DOC:
@@ -36,13 +37,13 @@
  *        int res = ERR_CODE(FAILED);
  *
  *        // Configure the TEE Subsystem: TA UUID (and so key storage)
- *        res = smw_osal_set_subsystem_info("TEE", &tee_default_info,
+ *        res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_TEE, &tee_default_info,
  *                                          sizeof(tee_default_info));
  *        if (res != SMW_STATUS_OK)
  *            goto exit;
  *
  *        // Configure the SECO Subsystem: Key storage identifier and replay
- *        res = smw_osal_set_subsystem_info("SECO", &se_default_info,
+ *        res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_SECO, &se_default_info,
  *                                           sizeof(se_default_info));
  *        if (res != SMW_STATUS_OK)
  *            goto exit;
@@ -102,11 +103,9 @@ struct se_info {
  * In other modes, function always returns NULL.
  *
  * Return:
- * In DEBUG mode only, the pointer to the static buffer containing the
- * null-terminated string name of the Secure Subsystem.
- * In other modes, NULL
+ * In DEBUG mode only, the name of the Secure Subsystem.
  */
-const char *smw_osal_latest_subsystem_name(void);
+smw_subsystem_t smw_osal_latest_subsystem_name(void);
 
 /**
  * smw_osal_lib_init() - Initialize the SMW library

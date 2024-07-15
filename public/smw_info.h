@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2024 NXP
  */
 
 #ifndef __SMW_INFO_H__
@@ -8,6 +8,7 @@
 
 #include "smw_status.h"
 #include "smw_strings.h"
+#include "smw/names.h"
 
 /**
  * DOC:

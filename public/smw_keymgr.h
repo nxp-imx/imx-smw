@@ -11,6 +11,7 @@
 #include "smw_status.h"
 #include "smw_strings.h"
 #include "smw/attr.h"
+#include "smw/names.h"
 
 /*
  * Define the NXP and NXP's EdgeLock 2GO key/data storage identifier

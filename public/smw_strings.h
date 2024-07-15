@@ -9,15 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_subsystem_t - Subsystem name
- * Values:
- *	- TEE
- *	- SECO
- *	- ELE
- */
-typedef smw_string_t smw_subsystem_t;
-
-/**
  * typedef smw_key_type_t - Key type name
  * Values:
  *	- NIST

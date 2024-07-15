@@ -8,6 +8,7 @@
 
 #include "smw_status.h"
 #include "smw_strings.h"
+#include "smw/names.h"
 
 /**
  * struct smw_aead_init_args - AEAD initialization arguments

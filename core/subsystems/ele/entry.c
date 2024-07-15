@@ -55,13 +55,11 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 
 	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_store_args_t open_svc_key_store_args = { 0 };
-	const char *subsystem_name = NULL;
 	struct se_info info = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_ELE);
 
-	if (smw_utils_get_subsystem_info(subsystem_name, &info))
+	if (smw_utils_get_subsystem_info(SMW_SUBSYSTEM_NAME_ELE, &info))
 		goto end;
 
 	open_svc_key_store_args.key_store_identifier = info.storage_id;

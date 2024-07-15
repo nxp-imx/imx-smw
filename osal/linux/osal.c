@@ -7,6 +7,7 @@
 
 #include "smw_config.h"
 #include "smw_osal.h"
+#include "smw/names.h"
 
 __attribute__((destructor)) static void destructor(void);
 
@@ -180,7 +181,7 @@ static void hex_dump(const unsigned char *addr, unsigned int size,
 	(void)fflush(stdout);
 }
 
-static void register_active_subsystem(const char *subsystem_name)
+static void register_active_subsystem(smw_subsystem_t subsystem_name)
 {
 	struct osal_ctx *ctx = get_osal_ctx();
 
@@ -291,23 +292,24 @@ static int get_ele_info(struct se_info *info)
 
 	return ret;
 }
-static int get_subsystem_info(const char *subsystem_name, void *info)
+
+static int get_subsystem_info(smw_subsystem_t subsystem_name, void *info)
 {
 	TRACE_FUNCTION_CALL;
 
-	if (!info || !subsystem_name)
+	if (!info || subsystem_name >= SMW_SUBSYSTEM_NAME_NB)
 		return -1;
 
-	if (!strcmp(subsystem_name, "TEE"))
+	if (subsystem_name == SMW_SUBSYSTEM_NAME_TEE)
 		return get_tee_info(info);
 
-	if (!strcmp(subsystem_name, "SECO"))
+	if (subsystem_name == SMW_SUBSYSTEM_NAME_SECO)
 		return get_seco_info(info);
 
-	if (!strcmp(subsystem_name, "ELE"))
+	if (subsystem_name == SMW_SUBSYSTEM_NAME_ELE)
 		return get_ele_info(info);
 
-	DBG_PRINTF(VERBOSE, "%s unknown %s subsystem\n", __func__,
+	DBG_PRINTF(VERBOSE, "%s unknown %d subsystem\n", __func__,
 		   subsystem_name);
 
 	return -1;
@@ -422,13 +424,13 @@ static void destructor(void)
 	stop();
 }
 
-__export __weak const char *smw_osal_latest_subsystem_name(void)
+__export __weak smw_subsystem_t smw_osal_latest_subsystem_name(void)
 {
-	return NULL;
+	return SMW_SUBSYSTEM_NAME_NONE;
 }
 
 __export enum smw_status_code
-smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
+smw_osal_set_subsystem_info(smw_subsystem_t subsystem_name, void *info,
 			    size_t info_size)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
@@ -439,16 +441,16 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem, void *info,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	if (!subsystem || !info)
+	if (!info || subsystem_name >= SMW_SUBSYSTEM_NAME_NB)
 		return SMW_STATUS_INVALID_PARAM;
 
-	status = smw_config_subsystem_loaded(subsystem);
+	status = smw_config_subsystem_loaded(subsystem_name);
 	if (status != SMW_STATUS_SUBSYSTEM_LOADED) {
-		if (!strcmp(subsystem, "TEE"))
+		if (subsystem_name == SMW_SUBSYSTEM_NAME_TEE)
 			status = set_tee_info(info, info_size);
-		else if (!strcmp(subsystem, "SECO"))
+		else if (subsystem_name == SMW_SUBSYSTEM_NAME_SECO)
 			status = set_seco_info(info, info_size);
-		else if (!strcmp(subsystem, "ELE"))
+		else if (subsystem_name == SMW_SUBSYSTEM_NAME_ELE)
 			status = set_ele_info(info, info_size);
 		else
 			status = SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME;

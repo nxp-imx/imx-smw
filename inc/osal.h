@@ -12,6 +12,7 @@
 
 #include "smw_status.h"
 #include "smw/attr.h"
+#include "smw/names.h"
 
 /**
  * DOC:
@@ -92,9 +93,9 @@ struct smw_ops {
 	void (*hex_dump)(const unsigned char *addr, unsigned int size,
 			 unsigned int align);
 
-	void (*register_active_subsystem)(const char *subsystem_name);
+	void (*register_active_subsystem)(smw_subsystem_t subsystem_name);
 
-	int (*get_subsystem_info)(const char *subsystem_name, void *info);
+	int (*get_subsystem_info)(smw_subsystem_t subsystem_name, void *info);
 
 	bool (*is_lib_initialized)(void);
 

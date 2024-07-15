@@ -16,6 +16,7 @@
 
 #include "smw_osal.h"
 #include "smw/attr.h"
+#include "smw/names.h"
 
 #include "builtin_macros.h"
 #include "compiler.h"
@@ -76,7 +77,7 @@ struct lib_config_args {
 struct osal_ctx {
 	int lib_initialized;
 	struct lib_config_args config;
-	const char *active_subsystem_name;
+	smw_subsystem_t active_subsystem_name;
 	void *obj_db;
 };
 

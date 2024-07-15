@@ -598,13 +598,8 @@ int derive_key(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 	args.key_attributes = &key_attributes;
-
-	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
-
 	args.key_descriptor_base = &key_base.desc;
 	args.key_descriptor_derived = &key_derived.desc;
 

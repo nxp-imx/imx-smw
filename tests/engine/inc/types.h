@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include <smw/names.h>
+
 #include "util_app.h"
 
 /* List of key type */
@@ -114,7 +116,7 @@ struct subtest_data {
 		int smw_status;
 		int psa_status;
 	};
-	char *subsystem;
+	smw_subsystem_t subsystem;
 	char *api;
 	unsigned char version;
 };

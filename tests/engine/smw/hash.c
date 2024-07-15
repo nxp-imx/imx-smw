@@ -127,11 +127,7 @@ int hash(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
-
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
+	args.subsystem_name = subtest->subsystem;
 
 	/* Algorithm is mandatory */
 	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string,

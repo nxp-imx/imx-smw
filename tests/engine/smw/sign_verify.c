@@ -140,12 +140,7 @@ int sign_verify(struct subtest_data *subtest, int operation)
 		return ERR_CODE(UNDEFINED_CMD);
 
 	args.version = subtest->version;
-
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
-
+	args.subsystem_name = subtest->subsystem;
 	args.key_descriptor = &key_test.desc;
 
 	/* Key name is mandatory */

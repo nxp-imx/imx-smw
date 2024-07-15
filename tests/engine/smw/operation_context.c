@@ -153,18 +153,12 @@ int allocate_context(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 
 	/* Context ID is a mandatory parameter except for API tests */
 	res = util_read_json_type(&ctx_id, CTX_ID_OBJ, t_uint, subtest->params);
 	if (!is_api_test(subtest) && res != ERR_CODE(PASSED))
 		return res;
-
-	if (subtest->subsystem) {
-		if (!strcmp(subtest->subsystem, "DEFAULT"))
-			args.subsystem_name = NULL;
-		else
-			args.subsystem_name = subtest->subsystem;
-	}
 
 	res = bad_params(subtest->params, (void **)&args_ptr, &args.context,
 			 NULL);

@@ -5,7 +5,7 @@
 #ifndef __UTIL_CONTEXT_H__
 #define __UTIL_CONTEXT_H__
 
-#include "smw_crypto.h"
+#include <smw_crypto.h>
 
 #include "util_list.h"
 

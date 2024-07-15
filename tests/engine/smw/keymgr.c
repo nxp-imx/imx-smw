@@ -637,13 +637,8 @@ int generate_key(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 	args.key_attributes = &attributes;
-
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
-
 	args.key_descriptor = &key_test.desc;
 
 	/* Key name is mandatory */
@@ -772,12 +767,7 @@ int import_key(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
-
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
-
+	args.subsystem_name = subtest->subsystem;
 	args.key_attributes = &key_attributes;
 	args.key_descriptor = &key_test.desc;
 
@@ -940,12 +930,7 @@ int get_key_attributes(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
-
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
-
+	args.subsystem_name = subtest->subsystem;
 	args.key_descriptor = &key_test.desc;
 
 	/* Key name is mandatory */
@@ -1055,11 +1040,7 @@ int commit_key_storage(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
-
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
+	args.subsystem_name = subtest->subsystem;
 
 	res = set_commit_bad_args(subtest->params, &smw_args);
 	if (res != ERR_CODE(PASSED))

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include <stdarg.h>
@@ -14,6 +14,7 @@
 
 #include <smw_status.h>
 #include <smw_osal.h>
+#include <smw/names.h>
 
 #include "psa_arch_tests.h"
 
@@ -142,12 +143,14 @@ int main(int argc, char **argv)
 		} while (option != -1);
 	}
 
-	status = smw_osal_set_subsystem_info("ELE", &se_default_info,
+	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_ELE,
+					     &se_default_info,
 					     sizeof(se_default_info));
 	if (status != SMW_STATUS_OK)
 		return -1;
 
-	status = smw_osal_set_subsystem_info("TEE", &tee_default_info,
+	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_TEE,
+					     &tee_default_info,
 					     sizeof(tee_default_info));
 	if (status != SMW_STATUS_OK)
 		return -1;

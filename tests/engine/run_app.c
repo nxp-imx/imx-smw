@@ -6,7 +6,8 @@
 #include <json.h>
 #include <string.h>
 
-#include "smw_osal.h"
+#include <smw_osal.h>
+#include <smw/names.h>
 
 #include "util.h"
 #include "util_app.h"
@@ -90,7 +91,8 @@ static int setup_tee_info(struct json_object *test_def)
 		memcpy(info.ta_uuid, ta_uuid, ta_uuid_len);
 	}
 
-	res = smw_osal_set_subsystem_info("TEE", &info, sizeof(info));
+	res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_TEE, &info,
+					  sizeof(info));
 	if (res != SMW_STATUS_OK) {
 		DBG_PRINT("SMW Set TEE Info failed %s",
 			  get_string_status(res, "SMW"));
@@ -154,9 +156,11 @@ static int setup_seco_ele_info(struct json_object *test_def, int is_ele)
 	}
 
 	if (is_ele)
-		res = smw_osal_set_subsystem_info("ELE", &info, sizeof(info));
+		res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_ELE, &info,
+						  sizeof(info));
 	else
-		res = smw_osal_set_subsystem_info("SECO", &info, sizeof(info));
+		res = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_SECO,
+						  &info, sizeof(info));
 
 	if (res != SMW_STATUS_OK) {
 		DBG_PRINT("SMW Set %s Info failed %s",

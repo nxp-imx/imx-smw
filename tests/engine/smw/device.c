@@ -247,11 +247,7 @@ int device_uuid(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
-
-	if (!subtest->subsystem || !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
+	args.subsystem_name = subtest->subsystem;
 
 	res = util_read_json_type(&uuid, OUTPUT_OBJ, t_buffer_hex,
 				  subtest->params);
@@ -369,11 +365,7 @@ int device_attestation(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
-
-	if (!subtest->subsystem || !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
+	args.subsystem_name = subtest->subsystem;
 
 	res = util_read_json_type(&certificate, OUTPUT_OBJ, t_buffer_hex,
 				  subtest->params);
@@ -492,12 +484,8 @@ int device_lifecycle(struct subtest_data *subtest, bool set)
 		return res;
 	}
 
-	if (!subtest->subsystem || !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
-
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 
 	/* Specific test cases */
 	res = set_lifecycle_bad_args(subtest, &smw_args);
@@ -562,12 +550,8 @@ int device_reprovision(struct subtest_data *subtest)
 		return res;
 	}
 
-	if (!subtest->subsystem || !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
-
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 
 	/* Specific test cases */
 	res = set_reprovision_bad_args(subtest, &smw_args);

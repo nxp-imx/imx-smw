@@ -165,12 +165,7 @@ static int set_init_params(struct subtest_data *subtest,
 
 	const char *key_name = NULL;
 
-	if (subtest->subsystem) {
-		if (!strcmp(subtest->subsystem, "DEFAULT"))
-			args->subsystem_name = NULL;
-		else
-			args->subsystem_name = subtest->subsystem;
-	}
+	args->subsystem_name = subtest->subsystem;
 
 	/* Get plaintext length, if any */
 	res = util_read_json_type(&args->plaintext_length, PLAINTEXT_LEN_OBJ,

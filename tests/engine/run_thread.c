@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include <smw_osal.h>
+#include <smw/names.h>
 
 #include "compiler.h"
 #include "util.h"
@@ -14,6 +15,7 @@
 #include "util_sem.h"
 #include "util_thread.h"
 #include "util_rtcwake.h"
+#include "util_subsystem.h"
 #include "util_key.h"
 #include "exec_smw.h"
 #include "exec_psa.h"
@@ -338,8 +340,9 @@ static void run_subtest(struct thread_data *thr)
 {
 	int res = ERR_CODE(FAILED);
 	char *cmd_name = NULL;
-	const char *sub_used = NULL;
-	const char *sub_exp = NULL;
+	const char *subsystem = NULL;
+	smw_subsystem_t sub_used = SMW_SUBSYSTEM_NAME_NONE;
+	smw_subsystem_t sub_exp = SMW_SUBSYSTEM_NAME_NONE;
 	const char *exp_res_st = NULL;
 	int exp_status = 0;
 	struct subtest_data *subtest = NULL;
@@ -380,10 +383,12 @@ static void run_subtest(struct thread_data *thr)
 		goto exit;
 	}
 
-	res = util_read_json_type(&subtest->subsystem, SUBSYSTEM_OBJ, t_string,
+	res = util_read_json_type(&subsystem, SUBSYSTEM_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
+
+	util_subsystem_get_name(&subtest->subsystem, subsystem);
 
 	res = util_read_json_type(&subtest->api, API_OBJ, t_string,
 				  subtest->params);
@@ -425,10 +430,14 @@ static void run_subtest(struct thread_data *thr)
 	 * Get expected subsystem to be used.
 	 * If not set in test definition file don't verify it.
 	 */
-	res = util_read_json_type(&sub_exp, SUBSYSTEM_EXP_OBJ, t_string,
+	subsystem = NULL;
+
+	res = util_read_json_type(&subsystem, SUBSYSTEM_EXP_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
+
+	util_subsystem_get_name(&sub_exp, subsystem);
 
 	/* Wait semaphore */
 	res = util_sem_wait_before(thr, subtest->params);
@@ -479,12 +488,12 @@ static void run_subtest(struct thread_data *thr)
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	if (sub_exp) {
+	if (sub_exp != SMW_SUBSYSTEM_NAME_NONE) {
 		sub_used = smw_osal_latest_subsystem_name();
-		if (sub_used) {
-			DBG_PRINT("Selected subsystem: %s", sub_used);
-			if (strcmp(sub_used, sub_exp)) {
-				DBG_PRINT("Expected subsystem: %s", sub_exp);
+		if (sub_used != SMW_SUBSYSTEM_NAME_NONE) {
+			DBG_PRINT("Selected subsystem: %d", sub_used);
+			if (sub_used != sub_exp) {
+				DBG_PRINT("Expected subsystem: %d", sub_exp);
 				res = ERR_CODE(BAD_SUBSYSTEM);
 			}
 		} else {

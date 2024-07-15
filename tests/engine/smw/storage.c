@@ -43,12 +43,8 @@ int storage_store(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 	data_descriptor.data_attributes = &data_attributes;
-
-	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
 
 	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
 				  subtest->params);
@@ -173,12 +169,8 @@ int storage_retrieve(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 	data_descriptor.data_attributes = &data_attributes;
-
-	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
 
 	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
 				  subtest->params);
@@ -259,12 +251,8 @@ int storage_delete(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 	data_descriptor.data_attributes = &data_attributes;
-
-	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
 
 	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
 				  subtest->params);
@@ -308,12 +296,8 @@ int storage_get_data_info(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
+	args.subsystem_name = subtest->subsystem;
 	data_ref.data_attributes = &data_ref_attributes;
-
-	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
 
 	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
 				  subtest->params);

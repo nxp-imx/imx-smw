@@ -50,12 +50,6 @@ static int execute_generate_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
 	return generate_key(subtest);
 }
 
@@ -72,12 +66,6 @@ static int execute_generate_cmd(char *cmd, struct subtest_data *subtest)
 static int execute_hash_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
-		return ERR_CODE(MISSING_PARAMS);
-	}
 
 	return hash(subtest);
 }
@@ -116,12 +104,6 @@ static int execute_mac_cmd(char *cmd, struct subtest_data *subtest)
 static int execute_import_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
-		return ERR_CODE(MISSING_PARAMS);
-	}
 
 	return import_key(subtest);
 }
@@ -180,12 +162,6 @@ static int execute_sign_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
 	return sign_verify(subtest, SIGN_OPERATION);
 }
 
@@ -203,12 +179,6 @@ static int execute_verify_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
 	return sign_verify(subtest, VERIFY_OPERATION);
 }
 
@@ -225,12 +195,6 @@ static int execute_verify_cmd(char *cmd, struct subtest_data *subtest)
 static int execute_rng_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
-		return ERR_CODE(MISSING_PARAMS);
-	}
 
 	return rng(subtest);
 }
@@ -344,12 +308,6 @@ static int execute_get_key_attrs_cmd(char *cmd, struct subtest_data *subtest)
 {
 	(void)cmd;
 
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
-		return ERR_CODE(MISSING_PARAMS);
-	}
-
 	return get_key_attributes(subtest);
 }
 
@@ -425,12 +383,6 @@ static int execute_commit_key_storage_cmd(char *cmd,
 					  struct subtest_data *subtest)
 {
 	(void)cmd;
-
-	/* Check mandatory params */
-	if (!subtest->subsystem) {
-		DBG_PRINT_MISS_PARAM(SUBSYSTEM_OBJ);
-		return ERR_CODE(MISSING_PARAMS);
-	}
 
 	return commit_key_storage(subtest);
 }

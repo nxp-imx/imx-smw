@@ -147,12 +147,7 @@ static int set_init_params(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(PASSED);
 
-	if (subtest->subsystem) {
-		if (!strcmp(subtest->subsystem, "DEFAULT"))
-			args->subsystem_name = NULL;
-		else
-			args->subsystem_name = subtest->subsystem;
-	}
+	args->subsystem_name = subtest->subsystem;
 
 	/* Get cipher mode */
 	res = util_read_json_type(&args->mode_name, MODE_OBJ, t_string,

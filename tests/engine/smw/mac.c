@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -97,12 +97,7 @@ int mac(struct subtest_data *subtest, bool verify)
 	}
 
 	args.version = subtest->version;
-
-	if (subtest->subsystem && !strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
-
+	args.subsystem_name = subtest->subsystem;
 	args.key_descriptor = &key_test.desc;
 
 	/* Key name is mandatory */

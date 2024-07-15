@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -64,11 +64,7 @@ int rng(struct subtest_data *subtest)
 	}
 
 	args.version = subtest->version;
-
-	if (!strcmp(subtest->subsystem, "DEFAULT"))
-		args.subsystem_name = NULL;
-	else
-		args.subsystem_name = subtest->subsystem;
+	args.subsystem_name = subtest->subsystem;
 
 	res = util_read_json_type(&random, RANDOM_OBJ, t_buffer_hex,
 				  subtest->params);

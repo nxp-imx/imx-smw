@@ -30,7 +30,7 @@ Example 1: AEAD one-shot encryption operation
         struct smw_aead_aad_args aad_args = {0};
         struct smw_key_descriptor key_desc = {0};
 
-        init_args.subsystem_name = "TEE";
+        init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "ENCRYPT";
         init_args.mode_name = "GCM";
         init_args.plaintext_length = DATA_LEN;
@@ -87,7 +87,7 @@ Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
         struct smw_aead_aad_args aad_args = {0};
         struct smw_key_descriptor key_desc = {0};
 
-        init_args.subsystem_name = "TEE";
+        init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "ENCRYPT";
         init_args.mode_name = "GCM";
         init_args.plaintext_length = DATA_LEN;
@@ -144,7 +144,7 @@ Example 3: AEAD one-shot decryption operation (Tag stored in tag field)
         struct smw_aead_aad_args aad_args = {0};
         struct smw_key_descriptor key_desc = {0};
 
-        init_args.subsystem_name = "TEE";
+        init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "DECRYPT";
         init_args.mode_name = "GCM";
         init_args.plaintext_length = DATA_LEN;
@@ -201,7 +201,7 @@ Example 4: AEAD multi-part encryption operation
         struct smw_key_descriptor key_desc = {0};
         struct smw_context_args op_ctx = {0};
 
-        init_args.subsystem_name = "TEE";
+        init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "ENCRYPT";
         init_args.mode_name = "GCM";
         init_args.aad_length = AAD_LEN;
@@ -305,7 +305,7 @@ Example 5: AEAD multi-part decryption operation
         struct smw_key_descriptor key_desc = {0};
         struct smw_context_args op_ctx = {0};
 
-        init_args.subsystem_name = "TEE";
+        init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "DECRYPT";
         init_args.mode_name = "GCM";
         init_args.aad_length = AAD_LEN;

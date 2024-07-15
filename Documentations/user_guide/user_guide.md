@@ -969,6 +969,7 @@ option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-envi
     |   |   |   `-- storage_common.h
     |   |   |-- <span style="color:orange">smw</span>
     |   |   |   |-- attr.h
+    |   |   |   |-- names.h
     |   |   |   `-- <span style="color:orange">crypto</span>
     |   |   |       `-- aead.h
     |   |   |-- smw_config.h
@@ -1217,9 +1218,10 @@ Below is the organization of the project sources.
 |   |   |-- protected_storage.h
 |   |   `-- storage_common.h
 |   |-- <span style="color:orange">smw</span>
+|   |   |-- attr.h
+|   |   |-- names.h
 |   |   `-- <span style="color:orange">crypto</span>                 SMW's cryptographic interface headers (refer to APIs documentation)
 |   |       `-- aead.h
-|   |       `-- attr.h
 |   |-- smw_config.h
 |   |-- smw_crypto.h
 |   |-- smw_device.h

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -21,11 +21,11 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 	int status = SMW_STATUS_OK;
 
 	struct subsystem_func *subsystem_func = NULL;
-	const char *subsystem_name = NULL;
+	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_PRINTF(INFO, "Execute Security Operation: %s (%d)\n",
+	SMW_DBG_PRINTF(INFO, "Execute Security Operation: %d (%d)\n",
 		       smw_config_get_operation_name(operation_id),
 		       operation_id);
 
@@ -56,7 +56,7 @@ static int smw_utils_execute_common(enum operation_id operation_id, void *args,
 
 	subsystem_name = smw_config_get_subsystem_name(subsystem_id);
 
-	SMW_DBG_PRINTF(INFO, "Secure Subsystem: %s (%d)\n", subsystem_name,
+	SMW_DBG_PRINTF(INFO, "Secure Subsystem: %d (%d)\n", subsystem_name,
 		       subsystem_id);
 
 	/* Register the latest Secure Subsystem selected */

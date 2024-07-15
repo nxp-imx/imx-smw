@@ -26,8 +26,8 @@ static const char *const cipher_mode_names[] = {
 int smw_utils_cipher_mode_names(char **start, char *end, unsigned long *bitmap)
 {
 	int status =
-		smw_config_read_names(start, end, bitmap, cipher_mode_names,
-				      SMW_CONFIG_CIPHER_MODE_ID_NB);
+		smw_config_read_strings(start, end, bitmap, cipher_mode_names,
+					SMW_CONFIG_CIPHER_MODE_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_MODE_NAME;
 
@@ -37,9 +37,9 @@ int smw_utils_cipher_mode_names(char **start, char *end, unsigned long *bitmap)
 int smw_utils_cipher_op_type_names(char **start, char *end,
 				   unsigned long *bitmap)
 {
-	int status =
-		smw_config_read_names(start, end, bitmap, cipher_op_type_names,
-				      SMW_CONFIG_CIPHER_OP_ID_NB);
+	int status = smw_config_read_strings(start, end, bitmap,
+					     cipher_op_type_names,
+					     SMW_CONFIG_CIPHER_OP_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
 

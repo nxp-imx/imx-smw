@@ -23,8 +23,8 @@ static const char *const aead_op_type_names[] = {
 int smw_utils_aead_op_type_names(char **start, char *end, unsigned long *bitmap)
 {
 	int status =
-		smw_config_read_names(start, end, bitmap, aead_op_type_names,
-				      SMW_CONFIG_AEAD_OP_ID_NB);
+		smw_config_read_strings(start, end, bitmap, aead_op_type_names,
+					SMW_CONFIG_AEAD_OP_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
 
@@ -33,8 +33,9 @@ int smw_utils_aead_op_type_names(char **start, char *end, unsigned long *bitmap)
 
 int smw_utils_aead_mode_names(char **start, char *end, unsigned long *bitmap)
 {
-	int status = smw_config_read_names(start, end, bitmap, aead_mode_names,
-					   SMW_CONFIG_AEAD_MODE_ID_NB);
+	int status =
+		smw_config_read_strings(start, end, bitmap, aead_mode_names,
+					SMW_CONFIG_AEAD_MODE_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_MODE_NAME;
 

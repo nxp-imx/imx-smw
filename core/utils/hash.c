@@ -25,8 +25,9 @@ static const char *const hash_algo_names[] = {
 
 int smw_utils_hash_algo_names(char **start, char *end, unsigned long *bitmap)
 {
-	int status = smw_config_read_names(start, end, bitmap, hash_algo_names,
-					   SMW_CONFIG_HASH_ALGO_ID_NB);
+	int status =
+		smw_config_read_strings(start, end, bitmap, hash_algo_names,
+					SMW_CONFIG_HASH_ALGO_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_ALGO_NAME;
 

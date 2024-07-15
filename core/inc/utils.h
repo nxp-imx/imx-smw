@@ -135,7 +135,7 @@ static inline int smw_utils_thread_cancel(unsigned long thread)
 }
 
 static inline void
-smw_utils_register_active_subsystem(const char *subsystem_name)
+smw_utils_register_active_subsystem(smw_subsystem_t subsystem_name)
 {
 	struct smw_ops *ops = get_smw_ops();
 
@@ -143,7 +143,7 @@ smw_utils_register_active_subsystem(const char *subsystem_name)
 		ops->register_active_subsystem(subsystem_name);
 }
 
-static inline int smw_utils_get_subsystem_info(const char *subsystem_name,
+static inline int smw_utils_get_subsystem_info(smw_subsystem_t subsystem_name,
 					       void *info)
 {
 	struct smw_ops *ops = get_smw_ops();

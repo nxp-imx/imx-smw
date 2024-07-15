@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "utils.h"
 
-int smw_utils_get_string_index(const char *name, const char *const array[],
+int smw_utils_get_string_index(const char *string, const char *const array[],
 			       unsigned int size, unsigned int *id)
 {
 	int status = SMW_STATUS_UNKNOWN_NAME;
@@ -18,15 +18,38 @@ int smw_utils_get_string_index(const char *name, const char *const array[],
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_ASSERT(name);
+	SMW_DBG_ASSERT(string);
 
 	for (; i < size; i++) {
 		if (array[i] && *array[i]) {
-			if (!SMW_UTILS_STRCMP(array[i], name)) {
+			if (!SMW_UTILS_STRCMP(array[i], string)) {
 				status = SMW_STATUS_OK;
 				*id = i;
 				break;
 			}
+		}
+	}
+
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int smw_utils_get_name_index(unsigned int value, const unsigned int array[],
+			     unsigned int size, unsigned int *id)
+{
+	int status = SMW_STATUS_UNKNOWN_NAME;
+
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(value);
+
+	for (; i < size; i++) {
+		if (array[i] == value) {
+			status = SMW_STATUS_OK;
+			*id = i;
+			break;
 		}
 	}
 

@@ -1,4 +1,4 @@
-function(add_component implicit name prefix_id return_export list_id list_export list_name list_func)
+function(add_component implicit name prefix_id prefix_name return_export list_id list_export list_string list_name list_func)
     string(TOLOWER ${name} l_name)
     string(TOUPPER ${name} u_name)
 
@@ -22,8 +22,12 @@ function(add_component implicit name prefix_id return_export list_id list_export
         set_property(GLOBAL PROPERTY ${list_export} ${exports})
     endif()
 
+    get_property(strings GLOBAL PROPERTY ${list_string})
+    string(APPEND strings "\t[${enum}] = \"${u_name}\",\n")
+    set_property(GLOBAL PROPERTY ${list_string} ${strings})
+
     get_property(names GLOBAL PROPERTY ${list_name})
-    string(APPEND names "\t[${enum}] = \"${u_name}\",\n")
+    string(APPEND names "\t[${enum}] = ${prefix_name}_${u_name},\n")
     set_property(GLOBAL PROPERTY ${list_name} ${names})
 
     get_property(funcs GLOBAL PROPERTY ${list_func})

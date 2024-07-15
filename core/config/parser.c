@@ -370,10 +370,10 @@ end:
 	return status;
 }
 
-int read_params_name(char **start, char *end, char *dest)
+int read_params_string(char **start, char *end, char *dest)
 {
-	return read_string(start, end, dest, SMW_CONFIG_MAX_PARAMS_NAME_LENGTH,
-			   equal);
+	return read_string(start, end, dest,
+			   SMW_CONFIG_MAX_PARAMS_STRING_LENGTH, equal);
 }
 
 int skip_param(char **start, char *end)
@@ -408,8 +408,8 @@ end:
 	return status;
 }
 
-int smw_config_read_names(char **start, char *end, unsigned long *bitmap,
-			  const char *const array[], unsigned int size)
+int smw_config_read_strings(char **start, char *end, unsigned long *bitmap,
+			    const char *const array[], unsigned int size)
 {
 	int status = SMW_STATUS_OK;
 
@@ -424,7 +424,7 @@ int smw_config_read_names(char **start, char *end, unsigned long *bitmap,
 	while ((cur < end) && (semicolon != *cur)) {
 		status = read_string(&cur, end, buffer,
 				     SMW_CONFIG_MAX_STRING_LENGTH, colon);
-		/* The end of the names list has been reached */
+		/* The end of the strings list has been reached */
 		if (status == SMW_STATUS_SYNTAX_ERROR && semicolon == *cur)
 			status = SMW_STATUS_OK;
 		if (status != SMW_STATUS_OK)
@@ -463,9 +463,9 @@ static bool read_operation(char **start, char *end,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	/* Security operation name */
+	/* Security operation string */
 	status = read_string(&cur, end, buffer,
-			     SMW_CONFIG_MAX_OPERATION_NAME_LENGTH, semicolon);
+			     SMW_CONFIG_MAX_OPERATION_STRING_LENGTH, semicolon);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -526,15 +526,15 @@ static bool read_subsystem(char **start, char *end, int *return_status)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	/* Secure Subsystem name */
+	/* Secure Subsystem string */
 	status = read_string(&cur, end, buffer,
-			     SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH, semicolon);
+			     SMW_CONFIG_MAX_SUBSYSTEM_STRING_LENGTH, semicolon);
 	if (status != SMW_STATUS_OK)
 		goto end;
 	SMW_DBG_PRINTF(INFO, "Secure subsystem name: %s\n", buffer);
 
 	/* Secure Subsystem id */
-	status = smw_config_get_subsystem_id(buffer, &subsystem_id);
+	status = get_subsystem_id(buffer, &subsystem_id);
 	if (status != SMW_STATUS_OK) {
 		/* Skip unknown Secure Subsystem without error */
 		if (status == SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME)
@@ -545,9 +545,10 @@ static bool read_subsystem(char **start, char *end, int *return_status)
 
 	skip_insignificant_chars(&cur, end);
 
-	/* Secure Subsystem start/stop method name */
+	/* Secure Subsystem start/stop method string */
 	status = read_string(&cur, end, buffer,
-			     SMW_CONFIG_MAX_LOAD_METHOD_NAME_LENGTH, semicolon);
+			     SMW_CONFIG_MAX_LOAD_METHOD_STRING_LENGTH,
+			     semicolon);
 	if (status == SMW_STATUS_SYNTAX_ERROR && open_square_bracket == *cur &&
 	    !SMW_UTILS_STRLEN(buffer))
 		status = SMW_STATUS_OK;
@@ -618,7 +619,7 @@ static int get_psa_default_subsystem(char **start, char *end)
 	int status = SMW_STATUS_OK;
 
 	char *cur = *start;
-	char buffer[SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH + 1] = { 0 };
+	char buffer[SMW_CONFIG_MAX_SUBSYSTEM_STRING_LENGTH + 1] = { 0 };
 	bool option_present = false;
 	struct smw_config_psa_config config = { .subsystem_id =
 							SUBSYSTEM_ID_INVALID,
@@ -641,7 +642,7 @@ static int get_psa_default_subsystem(char **start, char *end)
 	skip_insignificant_chars(&cur, end);
 
 	status = read_string(&cur, end, buffer,
-			     SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH, semicolon);
+			     SMW_CONFIG_MAX_SUBSYSTEM_STRING_LENGTH, semicolon);
 	if (status == SMW_STATUS_SYNTAX_ERROR && colon == *cur) {
 		status = SMW_STATUS_OK;
 		option_present = true;
@@ -653,7 +654,7 @@ static int get_psa_default_subsystem(char **start, char *end)
 	SMW_DBG_PRINTF(INFO, "PSA default secure subsystem name: %s\n", buffer);
 
 	/* Secure Subsystem id */
-	status = smw_config_get_subsystem_id(buffer, &config.subsystem_id);
+	status = get_subsystem_id(buffer, &config.subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

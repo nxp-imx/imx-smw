@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -20,7 +20,7 @@ static int storage_store_read_params(char **start, char *end, void **params)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1] = { 0 };
+	char buffer[SMW_CONFIG_MAX_PARAMS_STRING_LENGTH + 1] = { 0 };
 	size_t length = 0;
 
 	struct storage_store_params *p = NULL;
@@ -37,7 +37,7 @@ static int storage_store_read_params(char **start, char *end, void **params)
 	init_key_params(&p->key);
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
-		status = read_params_name(&cur, end, buffer);
+		status = read_params_string(&cur, end, buffer);
 		if (status != SMW_STATUS_OK)
 			goto end;
 		SMW_DBG_PRINTF(INFO, "Parameter: %s\n", buffer);

@@ -53,8 +53,8 @@ static const char *const key_derive_op_names[] = {
 
 int read_key_type_names(char **start, char *end, unsigned long *bitmap)
 {
-	int status = smw_config_read_names(start, end, bitmap, key_type_names,
-					   SMW_CONFIG_KEY_TYPE_ID_NB);
+	int status = smw_config_read_strings(start, end, bitmap, key_type_names,
+					     SMW_CONFIG_KEY_TYPE_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_KEY_TYPE_NAME;
 
@@ -121,8 +121,8 @@ static bool read_key_op_names(char **start, char *end, enum operation_id op_id,
 		return read_key_op_type_value;
 	}
 
-	*status = smw_config_read_names(start, end, bitmap, op_names,
-					nb_op_names);
+	*status = smw_config_read_strings(start, end, bitmap, op_names,
+					  nb_op_names);
 	if (*status == SMW_STATUS_UNKNOWN_NAME)
 		*status = SMW_STATUS_UNKNOWN_KEY_OP_NAME;
 
@@ -161,7 +161,7 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
 
-	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1] = { 0 };
+	char buffer[SMW_CONFIG_MAX_PARAMS_STRING_LENGTH + 1] = { 0 };
 	size_t length = 0;
 
 	struct key_operation_params *p = NULL;
@@ -178,7 +178,7 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 	init_key_params(&p->key);
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
-		status = read_params_name(&cur, end, buffer);
+		status = read_params_string(&cur, end, buffer);
 		if (status != SMW_STATUS_OK)
 			goto end;
 		SMW_DBG_PRINTF(INFO, "Parameter: %s\n", buffer);

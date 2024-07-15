@@ -33,7 +33,7 @@
 			       (_id != OPERATION_ID_INVALID));                 \
 	} while (0)
 
-static const char *const load_method_names[] = {
+static const char *const load_method_strings[] = {
 	[LOAD_METHOD_ID_AT_FIRST_CALL_LOAD] = "AT_FIRST_CALL_LOAD",
 	[LOAD_METHOD_ID_AT_CONTEXT_CREATION_DESTRUCTION] =
 		"AT_CONTEXT_CREATION_DESTRUCTION"
@@ -418,21 +418,18 @@ int store_operation_params(enum operation_id operation_id, void *params,
 	return status;
 }
 
-int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id)
+int smw_config_get_subsystem_id(smw_subsystem_t name, enum subsystem_id *id)
 {
 	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	/*
-	 * If name is NULL, require the default subsystem.
-	 * Hence, set the id as invalid by default.
-	 */
+	/* Set the id as invalid by default. */
 	*id = SUBSYSTEM_ID_INVALID;
 
-	if (name)
-		status = smw_utils_get_string_index(name, subsystem_names,
-						    SUBSYSTEM_ID_NB, id);
+	if (name != SMW_SUBSYSTEM_NAME_NONE)
+		status = smw_utils_get_name_index(name, subsystem_names,
+						  SUBSYSTEM_ID_NB, id);
 
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME;
@@ -441,18 +438,18 @@ int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id)
 	return status;
 }
 
-int get_load_method_id(const char *name, enum load_method_id *id)
+int get_load_method_id(const char *string, enum load_method_id *id)
 {
 	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	SMW_DBG_ASSERT(name);
+	SMW_DBG_ASSERT(string);
 
-	if (!SMW_UTILS_STRLEN(name))
+	if (!SMW_UTILS_STRLEN(string))
 		*id = LOAD_METHOD_ID_INVALID;
 	else
-		status = smw_utils_get_string_index(name, load_method_names,
+		status = smw_utils_get_string_index(string, load_method_strings,
 						    LOAD_METHOD_ID_NB, id);
 
 	if (status == SMW_STATUS_UNKNOWN_NAME)
@@ -462,13 +459,28 @@ int get_load_method_id(const char *name, enum load_method_id *id)
 	return status;
 }
 
-int get_operation_id(const char *name, enum operation_id *id)
+int get_subsystem_id(const char *string, enum subsystem_id *id)
 {
 	int status = SMW_STATUS_OK;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = smw_utils_get_string_index(name, operation_names,
+	status = smw_utils_get_string_index(string, subsystem_strings,
+					    SUBSYSTEM_ID_NB, id);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int get_operation_id(const char *string, enum operation_id *id)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = smw_utils_get_string_index(string, operation_strings,
 					    OPERATION_ID_NB, id);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_CONFIG_OP_NAME;
@@ -720,7 +732,7 @@ struct subsystem_func *smw_config_get_subsystem_func(enum subsystem_id id)
 	return subsystem_func[index]();
 }
 
-const char *smw_config_get_operation_name(enum operation_id id)
+smw_operation_t smw_config_get_operation_name(enum operation_id id)
 {
 	unsigned int index;
 
@@ -730,7 +742,7 @@ const char *smw_config_get_operation_name(enum operation_id id)
 	return operation_names[index];
 }
 
-const char *smw_config_get_subsystem_name(enum subsystem_id id)
+smw_subsystem_t smw_config_get_subsystem_name(enum subsystem_id id)
 {
 	unsigned int index;
 
@@ -760,7 +772,7 @@ void unload_subsystems(void)
 				SMW_DBG_PRINTF_COND(ERROR,
 						    status != SMW_STATUS_OK,
 						    "Failed to unload %s\n",
-						    subsystem_names[i]);
+						    subsystem_strings[i]);
 			} else {
 				status = SMW_STATUS_OK;
 			}

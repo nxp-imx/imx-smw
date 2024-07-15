@@ -1,10 +1,14 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2024 NXP
  */
 
 ${LIST_OPERATION_EXPORT}
-static const char *const operation_names[] = {
+static const char *const operation_strings[] = {
+	${LIST_OPERATION_STRING}
+};
+
+static const smw_operation_t operation_names[] = {
 	${LIST_OPERATION_NAME}
 };
 

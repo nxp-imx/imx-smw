@@ -8,6 +8,8 @@
 
 #include <stdbool.h>
 
+#include "smw/names.h"
+
 #include "subsystems.h"
 
 enum smw_config_key_type_id {
@@ -251,9 +253,9 @@ struct subsystem_func *smw_config_get_subsystem_func(enum subsystem_id id);
  * This function gets the name of a Security Operation.
  *
  * Return:
- * pointer to the string that is the Security Operation name.
+ * The Security Operation name.
  */
-const char *smw_config_get_operation_name(enum operation_id id);
+smw_operation_t smw_config_get_operation_name(enum operation_id id);
 
 /**
  * smw_config_get_subsystem_name() - Get the Secure Subsystem name.
@@ -262,9 +264,9 @@ const char *smw_config_get_operation_name(enum operation_id id);
  * This function gets the name of a Secure Subsystem.
  *
  * Return:
- * pointer to the string that is the Secure Subsystem name.
+ * The Secure Subsystem name.
  */
-const char *smw_config_get_subsystem_name(enum subsystem_id id);
+smw_subsystem_t smw_config_get_subsystem_name(enum subsystem_id id);
 
 /**
  * smw_config_get_subsystem_id() - Get the ID associated to a name.
@@ -276,7 +278,7 @@ const char *smw_config_get_subsystem_name(enum subsystem_id id);
  * Return:
  * error code.
  */
-int smw_config_get_subsystem_id(const char *name, enum subsystem_id *id);
+int smw_config_get_subsystem_id(smw_subsystem_t name, enum subsystem_id *id);
 
 /**
  * smw_config_get_key_type_id() - Get the ID associated to a Key type name.
@@ -356,14 +358,14 @@ int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id);
 void smw_config_get_psa_config(struct smw_config_psa_config *config);
 
 /**
- * smw_config_read_names() - Read a list of names.
+ * smw_config_read_strings() - Read a list of strings.
  * @start: Address of the pointer to the current char.
  * @end: Pointer to the last char of the buffer being parsed.
- * @bitmap: Bitmap representing the configured names.
- * @array: Array associating an ID (index) to a name (value).
+ * @bitmap: Bitmap representing the configured strings.
+ * @array: Array associating an ID (index) to a string (value).
  * @size: Size of @array.
  *
- * This function reads a list of names from the current char
+ * This function reads a list of strings from the current char
  * of the buffer being parsed until a semicolon is detected.
  * The pointer to the current char is moved to the next char
  * after the semicolon.
@@ -372,8 +374,8 @@ void smw_config_get_psa_config(struct smw_config_psa_config *config);
  * Return:
  * error code.
  */
-int smw_config_read_names(char **start, char *end, unsigned long *bitmap,
-			  const char *const array[], unsigned int size);
+int smw_config_read_strings(char **start, char *end, unsigned long *bitmap,
+			    const char *const array[], unsigned int size);
 
 /**
  * smw_utils_hash_algo_names() - Read a list of Hash algos names.

@@ -15,14 +15,14 @@ enum subsystem_state { SUBSYSTEM_STATE_UNLOADED, SUBSYSTEM_STATE_LOADED };
 
 #define SMW_CONFIG_MAX_STRING_LENGTH 256
 
-#define SMW_CONFIG_MAX_OPERATION_NAME_LENGTH 25
+#define SMW_CONFIG_MAX_OPERATION_STRING_LENGTH 25
 
-#define SMW_CONFIG_MAX_SUBSYSTEM_NAME_LENGTH 8
+#define SMW_CONFIG_MAX_SUBSYSTEM_STRING_LENGTH 8
 
-#define SMW_CONFIG_MAX_LOAD_METHOD_NAME_LENGTH 32
+#define SMW_CONFIG_MAX_LOAD_METHOD_STRING_LENGTH 32
 
-/* All <ALGO>_SIZE_RANGE must be smaller than SMW_CONFIG_MAX_PARAMS_NAME_LENGTH */
-#define SMW_CONFIG_MAX_PARAMS_NAME_LENGTH 32
+/* All <ALGO>_SIZE_RANGE must be smaller than SMW_CONFIG_MAX_PARAMS_STRING_LENGTH */
+#define SMW_CONFIG_MAX_PARAMS_STRING_LENGTH 32
 
 #define DEFINE_CONFIG_OPERATION_FUNC(operation)                                \
 	struct operation_func operation##_func = {                             \
@@ -169,7 +169,7 @@ bool read_key(char *tag, size_t length, char **start, char *end,
 	      int *status);
 
 /**
- * read_params_name() - Read parameters name.
+ * read_params_string() - Read parameters string.
  * @start: Address of the pointer to the current char.
  * @end: Pointer to the last char of the buffer being parsed.
  * @dest: Pointer where the unsigned integer is written.
@@ -183,14 +183,14 @@ bool read_key(char *tag, size_t length, char **start, char *end,
  * Return:
  * error code.
  */
-int read_params_name(char **start, char *end, char *dest);
+int read_params_string(char **start, char *end, char *dest);
 
 /**
  * skip_param() - Skip a parameter.
  * @start: Address of the pointer to the current char.
  * @end: Pointer to the last char of the buffer being parsed.
  *
- * This function skips a parameter if its name is unknown.
+ * This function skips a parameter if its string is unknown.
  * The pointer to the current char is moved to the next char
  * after the next semicolon.
  * Insignificant chars are skipped if any.
@@ -393,28 +393,40 @@ void print_key_params(struct op_key *key);
 void print_database(void);
 
 /**
- * get_load_method_id() - Get the load method ID associated to a name.
- * @name: Name as a string.
+ * get_load_method_id() - Get the load method ID associated to a string.
+ * @string: Name as a string.
  * @id: Pointer where the load method ID is written.
  *
- * This function gets the load method ID associated to a name.
+ * This function gets the load method ID associated to a string.
  *
  * Return:
  * error code.
  */
-int get_load_method_id(const char *name, enum load_method_id *id);
+int get_load_method_id(const char *string, enum load_method_id *id);
 
 /**
- * get_operation_id() - Get the Security Operation ID associated to a name.
- * @name: Name as a string.
- * @id: Pointer where the Security Operation ID is written.
+ * get_subsystem_id() - Get the Secure Susystem ID associated to a string.
+ * @string: Name as a string.
+ * @id: Pointer where the Secure Subsystem ID is written.
  *
- * This function gets the Security Operation ID associated to a name.
+ * This function gets the Secure Subsystem ID associated to a string.
  *
  * Return:
  * error code.
  */
-int get_operation_id(const char *name, enum operation_id *id);
+int get_subsystem_id(const char *string, enum subsystem_id *id);
+
+/**
+ * get_operation_id() - Get the Security Operation ID associated to a string.
+ * @string: Name as a string.
+ * @id: Pointer where the Security Operation ID is written.
+ *
+ * This function gets the Security Operation ID associated to a string.
+ *
+ * Return:
+ * error code.
+ */
+int get_operation_id(const char *string, enum operation_id *id);
 
 /**
  * merge_key_params() - Merge two operation keys parameters.

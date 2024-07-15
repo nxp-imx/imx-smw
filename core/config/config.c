@@ -24,7 +24,7 @@ smw_config_subsystem_present(smw_subsystem_t subsystem)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!subsystem)
+	if (subsystem == SMW_SUBSYSTEM_NAME_NONE)
 		return SMW_STATUS_INVALID_PARAM;
 
 	return smw_config_get_subsystem_id(subsystem, &id);

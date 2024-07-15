@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #include "smw_status.h"
@@ -23,7 +23,7 @@ static int hash_read_params(char **start, char *end, void **params)
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
 
-	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1] = { 0 };
+	char buffer[SMW_CONFIG_MAX_PARAMS_STRING_LENGTH + 1] = { 0 };
 	size_t length = 0;
 
 	unsigned long algo_bitmap = SMW_ALL_ONES;
@@ -33,7 +33,7 @@ static int hash_read_params(char **start, char *end, void **params)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
-		status = read_params_name(&cur, end, buffer);
+		status = read_params_string(&cur, end, buffer);
 		if (status != SMW_STATUS_OK)
 			goto end;
 		SMW_DBG_PRINTF(INFO, "Parameter: %s\n", buffer);

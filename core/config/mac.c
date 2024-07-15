@@ -19,7 +19,7 @@ static int mac_read_params(char **start, char *end, void **params)
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
 
-	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1] = { 0 };
+	char buffer[SMW_CONFIG_MAX_PARAMS_STRING_LENGTH + 1] = { 0 };
 	size_t length = 0;
 
 	struct mac_params *p = NULL;
@@ -36,7 +36,7 @@ static int mac_read_params(char **start, char *end, void **params)
 	init_key_params(&p->key);
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
-		status = read_params_name(&cur, end, buffer);
+		status = read_params_string(&cur, end, buffer);
 		if (status != SMW_STATUS_OK)
 			goto end;
 

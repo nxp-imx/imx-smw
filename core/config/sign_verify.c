@@ -42,8 +42,9 @@ static const char *const sign_type_names[] = {
 static int read_signature_algo_names(char **start, char *end,
 				     unsigned long *bitmap)
 {
-	int status = smw_config_read_names(start, end, bitmap, sign_algo_names,
-					   SMW_CONFIG_SIGN_ALGO_ID_NB);
+	int status =
+		smw_config_read_strings(start, end, bitmap, sign_algo_names,
+					SMW_CONFIG_SIGN_ALGO_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME;
 
@@ -53,8 +54,9 @@ static int read_signature_algo_names(char **start, char *end,
 static int read_signature_type_names(char **start, char *end,
 				     unsigned long *bitmap)
 {
-	int status = smw_config_read_names(start, end, bitmap, sign_type_names,
-					   SMW_CONFIG_SIGN_TYPE_ID_NB);
+	int status =
+		smw_config_read_strings(start, end, bitmap, sign_type_names,
+					SMW_CONFIG_SIGN_TYPE_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME;
 
@@ -66,7 +68,7 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
 
-	char buffer[SMW_CONFIG_MAX_PARAMS_NAME_LENGTH + 1] = { 0 };
+	char buffer[SMW_CONFIG_MAX_PARAMS_STRING_LENGTH + 1] = { 0 };
 	size_t length = 0;
 
 	struct sign_verify_params *p = NULL;
@@ -80,7 +82,7 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 	}
 
 	while ((cur < end) && (open_square_bracket != *cur)) {
-		status = read_params_name(&cur, end, buffer);
+		status = read_params_string(&cur, end, buffer);
 		if (status != SMW_STATUS_OK)
 			goto end;
 		SMW_DBG_PRINTF(INFO, "Parameter: %s\n", buffer);

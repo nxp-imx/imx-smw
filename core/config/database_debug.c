@@ -71,7 +71,8 @@ void print_database(void)
 
 	SMW_DBG_PRINTF(INFO, "Security operations:\n");
 	for (i = 0; i < OPERATION_ID_NB; i++) {
-		SMW_DBG_PRINTF(INFO, "%s\n", smw_config_get_operation_name(i));
+		SMW_DBG_PRINTF(INFO, "Operation #%d\n",
+			       smw_config_get_operation_name(i));
 
 		operation = &database->operation[i];
 		smw_utils_list_print(&operation->subsystems_list);

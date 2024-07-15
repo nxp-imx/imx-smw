@@ -1,11 +1,12 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __COMMON__H__
 #define __COMMON__H__
 
+#include "smw/names.h"
 #include "smw_status.h"
 #include "smw_strings.h"
 

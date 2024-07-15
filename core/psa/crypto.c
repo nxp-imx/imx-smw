@@ -217,11 +217,11 @@ static bool check_aead_tag_length(psa_algorithm_t alg, unsigned int tag_length)
 
 static bool is_psa_subsystem_ele(void)
 {
-	smw_subsystem_t subsystem_name = NULL;
+	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 
 	subsystem_name = get_psa_default_subsystem();
 
-	return (subsystem_name && !SMW_UTILS_STRCMP(subsystem_name, "ELE"));
+	return (subsystem_name == SMW_SUBSYSTEM_NAME_ELE);
 }
 
 static psa_status_t

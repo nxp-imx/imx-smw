@@ -265,7 +265,6 @@ static int load(void)
 	TEEC_UUID ta_uuid = { 0 };
 	int status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 	uint32_t err_origin = 0;
-	const char *subsystem_name = NULL;
 	struct tee_info info = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -273,9 +272,7 @@ static int load(void)
 	/* Initialize the TEE context */
 	SMW_UTILS_MEMSET(&tee_ctx, 0, sizeof(tee_ctx));
 
-	subsystem_name = smw_config_get_subsystem_name(SUBSYSTEM_ID_TEE);
-
-	if (smw_utils_get_subsystem_info(subsystem_name, &info))
+	if (smw_utils_get_subsystem_info(SMW_SUBSYSTEM_NAME_TEE, &info))
 		goto exit;
 
 	status = ta_uuid_string_to_uuid(info.ta_uuid, &ta_uuid);

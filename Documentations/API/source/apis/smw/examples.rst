@@ -227,7 +227,7 @@ Example 4: AEAD multi-part encryption operation
         aad_args.data = aad;
         aad_args.data_length = AAD_LEN;
         aad_args.context = init_args.context;
-        res = smw_aead_update_add(&aad_args);
+        res = smw_aead_update_aad(&aad_args);
         if (res != SMW_STATUS_OK)
             goto exit;
 
@@ -331,7 +331,7 @@ Example 5: AEAD multi-part decryption operation
         aad_args.data = aad;
         aad_args.data_length = AAD_LEN;
         aad_args.context = init_args.context;
-        res = smw_aead_update_add(&aad_args);
+        res = smw_aead_update_aad(&aad_args);
         if (res != SMW_STATUS_OK)
             goto exit;
 

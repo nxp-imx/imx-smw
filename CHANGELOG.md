@@ -42,6 +42,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Key attributes, data attributes and signature algorithm are no longer encoded with TLV format. They are now encoded with a dedicated bitmap.
 * The Secure Subsystem name is not a string anymore but an enum.
+* Rename `smw_aead_update_add()` as `smw_aead_update_aad()`
 
 ##### 2. Subsystems
 

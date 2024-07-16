@@ -622,7 +622,7 @@ bool tee_aead_handle(enum operation_id operation_id, void *args, int *status)
 		*status = aead_multi_part(args);
 		break;
 
-	case OPERATION_ID_AEAD_AAD:
+	case OPERATION_ID_AEAD_UPDATE_AAD:
 		ctx = smw_crypto_get_aead_aad_op_context(args);
 		*status = aead_update_aad(ctx, args);
 		break;

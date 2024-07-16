@@ -216,7 +216,7 @@ enum smw_status_code smw_aead(struct smw_aead_args *args);
 enum smw_status_code smw_aead_init(struct smw_aead_init_args *args);
 
 /**
- * smw_aead_update_add() - Add additional data to the AEAD operation.
+ * smw_aead_update_aad() - Update AEAD additional authenticated data.
  * @args: Pointer to the structure that contains the AEAD additional data
  *        arguments.
  *
@@ -233,7 +233,7 @@ enum smw_status_code smw_aead_init(struct smw_aead_init_args *args);
  * See &enum smw_status_code
  *	- Common return codes
  */
-enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args);
+enum smw_status_code smw_aead_update_aad(struct smw_aead_aad_args *args);
 
 /**
  * smw_aead_update() - AEAD multi-part update operation

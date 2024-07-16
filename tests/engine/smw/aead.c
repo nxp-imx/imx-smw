@@ -1175,7 +1175,7 @@ int aead_update_aad(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	subtest->smw_status = smw_aead_update_add(aead_args);
+	subtest->smw_status = smw_aead_update_aad(aead_args);
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
 

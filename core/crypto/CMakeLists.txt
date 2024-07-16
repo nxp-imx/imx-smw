@@ -25,7 +25,7 @@ endif()
 if(ENABLE_AEAD)
 add_operation(AEAD)
 add_operation(AEAD_MULTI_PART)
-add_operation_implicit(AEAD_AAD)
+add_operation_implicit(AEAD_UPDATE_AAD)
 endif()
 
 #

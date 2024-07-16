@@ -326,7 +326,7 @@ unsigned char *smw_crypto_get_aead_aad(struct smw_crypto_aead_args *args)
 
 		break;
 
-	/* op_step for OPERATION_ID_AEAD_AAD, is SMW_OP_STEP_UPDATE */
+	/* op_step for OPERATION_ID_AEAD_UPDATE_AAD, is SMW_OP_STEP_UPDATE */
 	case SMW_OP_STEP_UPDATE:
 		if (args->aad_pub)
 			aad = args->aad_pub->data;
@@ -1006,7 +1006,7 @@ end:
 	return status;
 }
 
-enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args)
+enum smw_status_code smw_aead_update_aad(struct smw_aead_aad_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_crypto_aead_args aead_args = { 0 };
@@ -1025,7 +1025,7 @@ enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args)
 
 	aead_args.aad_pub = args;
 
-	status = smw_utils_execute_update_implicit(OPERATION_ID_AEAD_AAD,
+	status = smw_utils_execute_update_implicit(OPERATION_ID_AEAD_UPDATE_AAD,
 						   &aead_args,
 						   args->context->subsystem_id);
 	/*

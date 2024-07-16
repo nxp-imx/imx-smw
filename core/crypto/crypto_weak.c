@@ -147,7 +147,7 @@ __weak enum smw_status_code smw_aead_init(struct smw_aead_init_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak enum smw_status_code smw_aead_update_add(struct smw_aead_aad_args *args)
+__weak enum smw_status_code smw_aead_update_aad(struct smw_aead_aad_args *args)
 {
 	(void)args;
 

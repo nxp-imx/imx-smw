@@ -155,6 +155,9 @@ static int mac(struct hdl *hdl, void *args)
 		}
 
 		op_args.flags = HSM_OP_MAC_ONE_GO_FLAGS_MAC_GENERATION;
+
+		/* MAC size expected is the exact size */
+		op_args.mac_size = alg.mac_size;
 	} else {
 		op_args.flags = HSM_OP_MAC_ONE_GO_FLAGS_MAC_VERIFICATION;
 	}

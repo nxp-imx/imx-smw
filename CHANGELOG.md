@@ -45,6 +45,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE subsystem: Fix cipher get output length feature.
 * Add TEE subsystem ed25519 key management.
 * Add ELE support for the CHACHA20_POLY1305 AEAD mode.
+* Fix SECO MAC length to be exact length due to SECO limitation.
 
 ##### 3. ARM PSA APIs
 

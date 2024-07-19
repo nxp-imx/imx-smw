@@ -13,12 +13,12 @@
 
 /**
  * struct smw_storage_data_info - Data information stored in object database.
- * @subsystem_id: Secure Subsystem ID
+ * @subsystem_name: Secure Subsystem name
  * @size: Data size
  * @attributes: Data attributes
  */
 struct smw_storage_data_info {
-	enum subsystem_id subsystem_id;
+	smw_subsystem_t subsystem_name;
 	unsigned int size;
 	smw_attr_attributes_t attributes;
 };

@@ -19,7 +19,13 @@ static int data_db_create(struct smw_storage_data_descriptor *descriptor)
 		descriptor->data_attributes.attributes;
 
 	id = smw_storage_get_data_identifier(descriptor);
-	info.data_info.subsystem_id = descriptor->subsystem_id;
+
+	if (descriptor->subsystem_id == SUBSYSTEM_ID_INVALID)
+		info.data_info.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+	else
+		info.data_info.subsystem_name =
+			smw_config_get_subsystem_name(descriptor->subsystem_id);
+
 	info.data_info.size = smw_storage_get_data_length(descriptor);
 	info.data_info.attributes = attributes;
 
@@ -34,7 +40,13 @@ static int data_db_update(struct smw_storage_data_descriptor *descriptor)
 		descriptor->data_attributes.attributes;
 
 	id = smw_storage_get_data_identifier(descriptor);
-	info.data_info.subsystem_id = descriptor->subsystem_id;
+
+	if (descriptor->subsystem_id == SUBSYSTEM_ID_INVALID)
+		info.data_info.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+	else
+		info.data_info.subsystem_name =
+			smw_config_get_subsystem_name(descriptor->subsystem_id);
+
 	info.data_info.size = smw_storage_get_data_length(descriptor);
 	info.data_info.attributes = attributes;
 
@@ -172,6 +184,8 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 				       OPERATION_ID_STORAGE_RETRIEVE };
 	enum operation_id op_get_info = OPERATION_ID_STORAGE_IS_DATA_PRESENT;
 	union smw_object_db_info db_info = { 0 };
+	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+	enum subsystem_id *out_subsystem_id = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -198,8 +212,11 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 					in_desc->data_attributes.attributes,
 					&db_info);
 	if (status == SMW_STATUS_OK) {
+		subsystem_name = db_info.data_info.subsystem_name;
+
 		if (subsystem_id != SUBSYSTEM_ID_INVALID &&
-		    subsystem_id != db_info.data_info.subsystem_id) {
+		    smw_config_get_subsystem_name(subsystem_id) !=
+			    subsystem_name) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
@@ -209,7 +226,12 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 				db_info.data_info.attributes;
 			smw_storage_set_data_length(out_desc,
 						    db_info.data_info.size);
-			out_desc->subsystem_id = db_info.data_info.subsystem_id;
+
+			out_subsystem_id = &out_desc->subsystem_id;
+			status = smw_config_get_subsystem_id(subsystem_name,
+							     out_subsystem_id);
+			if (status != SMW_STATUS_OK)
+				goto end;
 		}
 
 		goto end;

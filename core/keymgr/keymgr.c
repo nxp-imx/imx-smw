@@ -723,7 +723,10 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 			     type_id != out->identifier.type_id) ||
 			    (in->security_size &&
 			     in->security_size !=
-				     out->identifier.security_size))
+				     out->identifier.security_size) ||
+			    (subsystem_id &&
+			     *subsystem_id != SUBSYSTEM_ID_INVALID &&
+			     *subsystem_id != out->identifier.subsystem_id))
 				status = SMW_STATUS_INVALID_PARAM;
 			else if (subsystem_id &&
 				 *subsystem_id == SUBSYSTEM_ID_INVALID)

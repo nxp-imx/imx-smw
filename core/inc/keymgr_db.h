@@ -1,12 +1,34 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __KEYMGR_DB_H__
 #define __KEYMGR_DB_H__
 
 #include "keymgr.h"
+
+/**
+ * struct smw_keymgr_key_info - Key information stored in object database
+ * @subsystem_name: Secure Subsystem name
+ * @type_id: Key type ID
+ * @privacy_id: Key privacy ID
+ * @security_size: Security size in bits
+ * @id: Key ID set by the subsystem
+ * @attributes: Key attributes
+ * @storage_id: Key storage identifier
+ * @group: Key group (may not be used by all subsystems)
+ */
+struct smw_keymgr_key_info {
+	smw_subsystem_t subsystem_name;
+	enum smw_config_key_type_id type_id;
+	enum smw_keymgr_privacy_id privacy_id;
+	unsigned int security_size;
+	uint32_t id;
+	smw_attr_attributes_t attributes;
+	uint32_t storage_id;
+	uint16_t group;
+};
 
 /**
  * smw_keymgr_db_create() - Create a key in the database

@@ -6,11 +6,11 @@
 #ifndef __OBJECT_DB_H__
 #define __OBJECT_DB_H__
 
-#include "keymgr.h"
+#include "keymgr_db.h"
 #include "storage.h"
 
 union smw_object_db_info {
-	struct smw_keymgr_identifier key_identifier;
+	struct smw_keymgr_key_info key_info;
 	struct smw_storage_data_info data_info;
 };
 

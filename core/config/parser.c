@@ -621,9 +621,10 @@ static int get_psa_default_subsystem(char **start, char *end)
 	char *cur = *start;
 	char buffer[SMW_CONFIG_MAX_SUBSYSTEM_STRING_LENGTH + 1] = { 0 };
 	bool option_present = false;
-	struct smw_config_psa_config config = { .subsystem_id =
-							SUBSYSTEM_ID_INVALID,
+	struct smw_config_psa_config config = { .subsystem_name =
+							SMW_SUBSYSTEM_NAME_NONE,
 						.alt = false };
+	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	size_t alt_tag_len = SMW_UTILS_STRLEN(alt_tag);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -653,10 +654,11 @@ static int get_psa_default_subsystem(char **start, char *end)
 
 	SMW_DBG_PRINTF(INFO, "PSA default secure subsystem name: %s\n", buffer);
 
-	/* Secure Subsystem id */
-	status = get_subsystem_id(buffer, &config.subsystem_id);
+	status = get_subsystem_id(buffer, &subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	config.subsystem_name = smw_config_get_subsystem_name(subsystem_id);
 
 	if (option_present) {
 		skip_insignificant_chars(&cur, end);
@@ -680,8 +682,8 @@ static int get_psa_default_subsystem(char **start, char *end)
 	}
 
 	SMW_DBG_PRINTF(DEBUG,
-		       "PSA default secure subsystem id: %d, alternative %s\n",
-		       config.subsystem_id,
+		       "PSA default secure subsystem: %d (%d), alternative %s\n",
+		       config.subsystem_name, subsystem_id,
 		       config.alt ? "enabled" : "disabled");
 
 	set_psa_config(&config);

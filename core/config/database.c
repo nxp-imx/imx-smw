@@ -133,7 +133,7 @@ static void init_psa_config(struct smw_config_psa_config *psa)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	psa->subsystem_id = SUBSYSTEM_ID_INVALID;
+	psa->subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	psa->alt = false;
 }
 
@@ -205,7 +205,7 @@ void set_psa_config(struct smw_config_psa_config *config)
 	if (!database)
 		return;
 
-	SUBSYSTEM_ID_ASSERT(config->subsystem_id);
+	SMW_DBG_ASSERT(config->subsystem_name != SMW_SUBSYSTEM_NAME_NONE);
 
 	database->psa = *config;
 }
@@ -220,7 +220,7 @@ void smw_config_get_psa_config(struct smw_config_psa_config *config)
 
 	if (!database) {
 		*config = (struct smw_config_psa_config){
-			.subsystem_id = SUBSYSTEM_ID_INVALID, .alt = false
+			.subsystem_name = SMW_SUBSYSTEM_NAME_NONE, .alt = false
 		};
 		return;
 	}

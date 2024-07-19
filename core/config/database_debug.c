@@ -52,7 +52,7 @@ void print_database(void)
 		return;
 
 	SMW_DBG_PRINTF(INFO, "PSA default subsystem: %d, alternative: %s\n",
-		       database->psa.subsystem_id,
+		       database->psa.subsystem_name,
 		       database->psa.alt ? "ENABLED" : "DISABLED");
 
 	SMW_DBG_PRINTF(INFO, "Secure subsystems:\n");

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2024 NXP
  */
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
@@ -8,6 +8,9 @@
 #cmakedefine SMW_DEVICE_ONLY
 
 #define DEFAULT_PKCS11_LIB "@DEFAULT_PKCS11_LIB@"
+
+#cmakedefine01 SECO_TESTS_ENABLED
+#cmakedefine01 ELE_TESTS_ENABLED
 
 #endif /* __CONFIG_H__ */
 

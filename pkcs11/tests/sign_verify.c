@@ -36,12 +36,15 @@ static int sign_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE rsa_hprivkey = CK_INVALID_HANDLE;
 	CK_ULONG rsa_modulus_bits = 2048;
 	CK_MECHANISM rsa_key_mech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA256_RSA_PKCS_PSS };
 	CK_ATTRIBUTE rsa_pubkey_attrs[] = {
 		{ CKA_MODULUS_BITS, &rsa_modulus_bits, sizeof(CK_ULONG) },
 	};
 	CK_BBOOL rsa_sign = CK_TRUE;
 	CK_ATTRIBUTE rsa_privkey_attrs[] = {
 		{ CKA_SIGN, &rsa_sign, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -131,10 +134,17 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE rsa_hprivkey = CK_INVALID_HANDLE;
 	CK_ULONG rsa_modulus_bits = 2048;
 	CK_MECHANISM rsa_key_mech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA256_RSA_PKCS_PSS };
 	CK_BBOOL rsa_verify = CK_TRUE;
 	CK_ATTRIBUTE rsa_pubkey_attrs[] = {
 		{ CKA_MODULUS_BITS, &rsa_modulus_bits, sizeof(CK_ULONG) },
 		{ CKA_VERIFY, &rsa_verify, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
+	};
+	CK_ATTRIBUTE rsa_privkey_attrs[] = {
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -149,8 +159,10 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Generate RSA Keypair\n");
 	ret = pfunc->C_GenerateKeyPair(sess, &rsa_key_mech, rsa_pubkey_attrs,
-				       ARRAY_SIZE(rsa_pubkey_attrs), NULL_PTR,
-				       0, &rsa_hpubkey, &rsa_hprivkey);
+				       ARRAY_SIZE(rsa_pubkey_attrs),
+				       rsa_privkey_attrs,
+				       ARRAY_SIZE(rsa_privkey_attrs),
+				       &rsa_hpubkey, &rsa_hprivkey);
 
 	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
 		goto end;
@@ -463,7 +475,7 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
-	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_ECDSA_SHA224 };
+	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_ECDSA_SHA256 };
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
 	CK_ULONG tmp = 0;
@@ -471,6 +483,7 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE hpubkey;
 	CK_OBJECT_HANDLE hprivkey;
 	CK_MECHANISM key_mech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA256 };
 	CK_BBOOL ec_verify = CK_TRUE;
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_EC_PARAMS, NULL_PTR, 0 },
@@ -479,6 +492,8 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_BBOOL ec_sign = CK_TRUE;
 	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_SIGN, &ec_sign, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -493,7 +508,7 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[0].name),
+					       ec_curves[1].name),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -613,14 +628,13 @@ end:
 	return status;
 }
 
-static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
+static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_SHA512_RSA_PKCS };
-	CK_RSA_PKCS_PSS_PARAMS pss_params = { 0 };
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
 
@@ -628,9 +642,12 @@ static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_ULONG modulus_bits = 2048;
 	CK_MECHANISM key_mech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA512_RSA_PKCS };
 	CK_BBOOL sign = CK_TRUE;
 	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_SIGN, &sign, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_BBOOL verify = CK_TRUE;
 	CK_ATTRIBUTE pubkey_attrs[] = {
@@ -685,16 +702,81 @@ static int sign_verify_rsa(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Verify"))
 		goto end;
 
-	/* Change mechanism */
-	sign_verify_mech.mechanism = CKM_RSA_PKCS_PSS;
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &sess);
+
+	if (signature)
+		free(signature);
+
+	SUBTEST_END(status);
+	return status;
+}
+
+static int sign_verify_rsa_pss(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_RSA_PKCS_PSS };
+	CK_RSA_PKCS_PSS_PARAMS pss_params = { 0 };
+	CK_BYTE_PTR signature = NULL_PTR;
+	CK_ULONG signature_len = 0;
+
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
+	CK_ULONG modulus_bits = 2048;
+	CK_MECHANISM key_mech = { .mechanism = CKM_RSA_PKCS_KEY_PAIR_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA384_RSA_PKCS_PSS };
+	CK_BBOOL sign = CK_TRUE;
+	CK_ATTRIBUTE privkey_attrs[] = {
+		{ CKA_SIGN, &sign, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
+	};
+	CK_BBOOL verify = CK_TRUE;
+	CK_ATTRIBUTE pubkey_attrs[] = {
+		{ CKA_MODULUS_BITS, &modulus_bits, sizeof(CK_ULONG) },
+		{ CKA_VERIFY, &verify, sizeof(CK_BBOOL) },
+	};
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
 	sign_verify_mech.pParameter = &pss_params;
 	sign_verify_mech.ulParameterLen = sizeof(pss_params);
 	pss_params.hashAlg = CKM_SHA384;
 	pss_params.sLen = 100;
 
+	TEST_OUT("Generate RSA Keypair\n");
+	ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,
+				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+		goto end;
+
 	TEST_OUT("Initialize sign operation\n");
 	ret = pfunc->C_SignInit(sess, &sign_verify_mech, hprivkey);
 	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	TEST_OUT("Get signature length (sign with NULL signature buffer)\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, 0, signature, &signature_len);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	signature = malloc(signature_len);
+	if (CHECK_EXPECTED(signature, "Allocation error"))
 		goto end;
 
 	TEST_OUT("Sign message\n");
@@ -740,6 +822,7 @@ static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE hprivkey_verify = CK_INVALID_HANDLE;
 
 	CK_MECHANISM key_mech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA256 };
 	CK_BBOOL ec_verify = CK_FALSE;
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_EC_PARAMS, NULL_PTR, 0 },
@@ -748,6 +831,8 @@ static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 	CK_BBOOL ec_sign = CK_TRUE;
 	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_SIGN, &ec_sign, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -762,7 +847,7 @@ static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Generate signature EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[0].name),
+					       ec_curves[1].name),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -873,7 +958,10 @@ void tests_pkcs11_sign_verify(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (sign_verify_ecdsa(pfunc) == TEST_FAIL)
 		goto end;
 
-	if (sign_verify_rsa(pfunc) == TEST_FAIL)
+	if (sign_verify_rsa_pkcs(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (sign_verify_rsa_pss(pfunc) == TEST_FAIL)
 		goto end;
 
 	status = sign_verify_key_usage(pfunc);

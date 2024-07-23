@@ -199,15 +199,15 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_ULONG modulus_bits = 0;
 	CK_BBOOL btrue = CK_TRUE;
 
-	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_RSA_PKCS_PSS,
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA224_RSA_PKCS,
 						 CKM_SHA256_RSA_PKCS_PSS };
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_VERIFY, &btrue, sizeof(btrue) },
 		{ CKA_MODULUS_BITS, &modulus_bits, sizeof(CK_ULONG) },
-		{ CKA_PUBLIC_EXPONENT, (CK_BYTE_PTR)rsa_pub_exp,
-		  sizeof(rsa_pub_exp) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
+		{ CKA_PUBLIC_EXPONENT, (CK_BYTE_PTR)rsa_pub_exp,
+		  sizeof(rsa_pub_exp) },
 	};
 	CK_ULONG nb_pubkey_attrs = 0;
 	CK_ATTRIBUTE_PTR privkey_attrs = NULL_PTR;
@@ -223,10 +223,8 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 
 	modulus_bits = sizeof(rsa_modulus) * 8;
 
-	if (token) {
-		privkey_attrs = privkey_token;
-		nb_privkey_attrs = ARRAY_SIZE(privkey_token);
-	}
+	privkey_attrs = privkey_token;
+	nb_privkey_attrs = ARRAY_SIZE(privkey_token);
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
@@ -241,10 +239,11 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 			 token ? "Token " : "");
 		nb_pubkey_attrs = ARRAY_SIZE(pubkey_attrs);
 	} else {
-		TEST_OUT("Generate RSA %sKeypair without Public Exponent\n",
+		TEST_OUT("Generate RSA %sKeypair no Public Exponent\n",
 			 token ? "Token " : "");
 		nb_pubkey_attrs = ARRAY_SIZE(pubkey_attrs) - 1;
 	}
+
 	ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
 				       nb_pubkey_attrs, privkey_attrs,
 				       nb_privkey_attrs, &hpubkey, &hprivkey);

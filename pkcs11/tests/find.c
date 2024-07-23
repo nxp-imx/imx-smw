@@ -268,11 +268,14 @@ static int generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
 	CK_ULONG key_len = 16;
 	CK_BBOOL btrue = CK_TRUE;
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
 
 	CK_ATTRIBUTE key_attrs[] = {
 		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();

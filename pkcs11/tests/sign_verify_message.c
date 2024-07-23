@@ -27,6 +27,7 @@ static int sign_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_OBJECT_HANDLE aes_hsecretkey = 0;
 	CK_OBJECT_HANDLE aes_hsecretkey_not_permitted = 0;
 	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_CMAC };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 	CK_ULONG key_length = 32;
@@ -34,11 +35,15 @@ static int sign_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_SIGN, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_ATTRIBUTE aes_secretkey_attrs_not_perm[] = {
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_VERIFY, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -124,6 +129,7 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_OBJECT_HANDLE aes_hsecretkey = 0;
 	CK_OBJECT_HANDLE aes_hsecretkey_not_permitted = 0;
 	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_CMAC };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 	CK_ULONG key_length = 32;
@@ -131,11 +137,15 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_VERIFY, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_ATTRIBUTE aes_secretkey_attrs_not_perm[] = {
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_SIGN, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -414,6 +424,7 @@ static int sign_verify_multiple_init(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_OBJECT_HANDLE aes_hsecretkey = 0;
 	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_CMAC };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 	CK_ULONG key_length = 32;
@@ -422,6 +433,8 @@ static int sign_verify_multiple_init(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		{ CKA_SIGN, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VERIFY, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -496,13 +509,14 @@ end:
 	return status;
 }
 
-static int sign_verify_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
+static int sign_verify_cmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 {
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_AES_CMAC };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_CMAC };
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
 	CK_ULONG tmp = 0;
@@ -517,6 +531,8 @@ static int sign_verify_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		{ CKA_SIGN, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VERIFY, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -759,7 +775,7 @@ void tests_pkcs11_sign_verify_message(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (sign_verify_multiple_init(pfunc) == TEST_FAIL)
 		goto end;
 
-	if (sign_verify_aes(pfunc) == TEST_FAIL)
+	if (sign_verify_cmac(pfunc) == TEST_FAIL)
 		goto end;
 
 	status = sign_verify_hmac(pfunc);

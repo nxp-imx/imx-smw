@@ -8,6 +8,7 @@
 
 #include "os_mutex.h"
 #include "util_session.h"
+#include "util.h"
 
 static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 			     CK_BBOOL bencrypt)
@@ -71,11 +72,14 @@ static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
 	CK_ULONG key_len = 16;
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
 
 	CK_ATTRIBUTE key_attrs[] = {
 		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_ENCRYPT, &bencrypt, sizeof(bencrypt) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -92,7 +96,7 @@ static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 	ret = pfunc->C_GenerateKey(sess, &genmech, key_attrs,
 				   ARRAY_SIZE(key_attrs), &hkey);
 
-	if (bencrypt) {
+	if (bencrypt || is_seco_subsystem()) {
 		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 			goto end;
 

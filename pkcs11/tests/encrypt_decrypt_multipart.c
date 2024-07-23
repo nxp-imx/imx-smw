@@ -23,6 +23,7 @@ static int encrypt_decrypt_multipart_no_init(CK_FUNCTION_LIST_PTR pfunc)
 	/* AES - 128 bits key length */
 	CK_ULONG key_length = 16;
 	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -30,7 +31,9 @@ static int encrypt_decrypt_multipart_no_init(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) }
+		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_OBJECT_HANDLE hsecretkey = 0;
 
@@ -115,13 +118,16 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_PTR pfunc)
 	/* AES - 128 bits key length */
 	CK_ULONG key_length = 16;
 	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_CBC };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
 	CK_ATTRIBUTE aes_secretkey_attrs[] = {
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) }
+		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_OBJECT_HANDLE hsecretkey = 0;
 
@@ -229,13 +235,16 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_PTR pfunc)
 	/* AES - 128 bits key length */
 	CK_ULONG key_length = 16;
 	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
 	CK_ATTRIBUTE aes_secretkey_attrs[] = {
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) }
+		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_OBJECT_HANDLE hsecretkey = 0;
 
@@ -347,6 +356,7 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	/* AES - 128 bits key length */
 	CK_ULONG key_length = 16;
 	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_CBC };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -354,7 +364,9 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) }
+		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 	CK_OBJECT_HANDLE hsecretkey = 0;
 
@@ -504,6 +516,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_PTR pfunc)
 	/* AES - 128 bits key length */
 	CK_ULONG key_length = 16;
 	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -511,7 +524,9 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) }
+		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
@@ -742,6 +757,7 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 	/* AES - 256 bits key length */
 	CK_ULONG key_length = 32;
 	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 	CK_BBOOL ck_false = CK_FALSE;
@@ -749,7 +765,9 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) }
+		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	CK_ATTRIBUTE xts_key_attrs[] = {
@@ -760,6 +778,8 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_SENSITIVE, &ck_false, sizeof(CK_BBOOL) },
 		{ CKA_EXTRACTABLE, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VALUE, &key_value, sizeof(key_value) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	unsigned int i = 0;
@@ -800,6 +820,7 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 		encrypt_decrypt_mech.pParameter = NULL_PTR;
 		encrypt_decrypt_mech.ulParameterLen = 0;
 		encrypt_decrypt_mech.mechanism = aes_mech_type[i];
+		key_allowed_mech[0] = aes_mech_type[i];
 
 		if (encrypt_decrypt_mech.mechanism == CKM_AES_XTS) {
 			TEST_OUT("Createobject AES secret Key\n");
@@ -939,6 +960,7 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE des_hsecretkey = 0;
 
 	CK_MECHANISM des_key_mech = { .mechanism = CKM_DES_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -946,6 +968,8 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) }
 	};
 
 	unsigned int update_loop_count = 2;
@@ -1082,6 +1106,7 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE des3_hsecretkey = 0;
 
 	CK_MECHANISM des3_key_mech = { .mechanism = CKM_DES3_KEY_GEN };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -1089,6 +1114,8 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	unsigned int update_loop_count = 2;

@@ -8,6 +8,7 @@
 
 #include "os_mutex.h"
 #include "util_session.h"
+#include "util.h"
 
 #define EC_STR_PRIME192_V1 "prime192v1"
 #define EC_STR_PRIME256_V1 "prime256v1"
@@ -312,8 +313,7 @@ static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	CK_BBOOL bverify = CK_FALSE;
 	CK_BBOOL bsign = CK_FALSE;
 
-	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
-						 CKM_ECDSA_SHA256 };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA256 };
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VERIFY, &bverify, sizeof(bverify) },
@@ -349,8 +349,13 @@ static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 				       ARRAY_SIZE(privkey_attrs), &hpubkey,
 				       &hprivkey);
 
-	if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_GenerateKeyPair"))
-		goto end;
+	if (is_seco_subsystem()) {
+		if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+			goto end;
+	} else {
+		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_GenerateKeyPair"))
+			goto end;
+	}
 
 	TEST_OUT("Generate %sKeypair sign only usage by curve name\n",
 		 token ? "Token " : "");

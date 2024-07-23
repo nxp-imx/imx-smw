@@ -397,7 +397,7 @@ static int digest_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	CK_MECHANISM digmech = { 0 };
 	CK_BYTE_PTR digest = NULL_PTR;
 	CK_ULONG digest_length = 0;
-	enum mechanism_id id = MECH_ID_SHA_1;
+	enum mechanism_id id = MECH_ID_SHA256;
 
 	SUBTEST_START();
 
@@ -478,7 +478,7 @@ static int digest_no_init(CK_FUNCTION_LIST_PTR pfunc)
 	CK_SESSION_HANDLE sess = 0;
 	CK_BYTE_PTR digest = NULL_PTR;
 	CK_ULONG digest_length = 0;
-	enum mechanism_id id = MECH_ID_SHA_1;
+	enum mechanism_id id = MECH_ID_SHA256;
 
 	SUBTEST_START();
 
@@ -522,7 +522,7 @@ static int digest_multiple_init(CK_FUNCTION_LIST_PTR pfunc)
 	CK_MECHANISM digmech = { 0 };
 	CK_BYTE_PTR digest = NULL_PTR;
 	CK_ULONG digest_length = 0;
-	enum mechanism_id id = MECH_ID_SHA_1;
+	enum mechanism_id id = MECH_ID_SHA256;
 	bool match;
 
 	SUBTEST_START();
@@ -598,7 +598,7 @@ static int digest_bad_digest_length(CK_FUNCTION_LIST_PTR pfunc)
 	CK_MECHANISM digmech = { 0 };
 	CK_BYTE_PTR digest = NULL_PTR;
 	CK_ULONG digest_length = 0;
-	enum mechanism_id id = MECH_ID_SHA_1;
+	enum mechanism_id id = MECH_ID_SHA256;
 	bool match = false;
 
 	SUBTEST_START();
@@ -622,7 +622,7 @@ static int digest_bad_digest_length(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	digest_length = DIGEST_LENGTH(id);
-	digest = malloc(digest_length);
+	digest = malloc(digest_length * 2);
 	digest_length >>= 1;
 	if (CHECK_EXPECTED(digest, "Allocation error"))
 		goto end;

@@ -41,6 +41,16 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     rt
     ${CMAKE_THREAD_LIBS_INIT})
 
+# If SECO subsystem defined, include tests
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco)
+    set(SECO_TESTS_ENABLED ON)
+endif()
+
+# If ELE subsystem defined, include tests
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Ele)
+    set(ELE_TESTS_ENABLED ON)
+endif()
+
 configure_file(./include/config.h.in ./include/config.h)
 
 #

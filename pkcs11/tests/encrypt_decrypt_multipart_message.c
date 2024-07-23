@@ -1274,7 +1274,8 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		gcm_params.ivGenerator = CKG_GENERATE;
 		gcm_params.ulIvFixedBits = ulIvFixedBits[i];
 
-		TEST_OUT("Initialize encryption operation\n");
+		TEST_OUT("Initialize encryption operation IV Fixed %ld bits\n",
+			 gcm_params.ulIvFixedBits);
 		ret = pfunc->C_MessageEncryptInit(sess, &enc_dec_mech,
 						  aes_hsecretkey);
 		if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
@@ -1467,6 +1468,9 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	for (; i < ARRAY_SIZE(aes_mech_type); i++) {
+		TEST_OUT("AES Encryption mechanism = 0x%lx\n",
+			 aes_mech_type[i]);
+
 		memset(encrypted_data, 0, data_len);
 		memset(recovered_data, 0, data_len);
 		enc_dec_mech.pParameter = NULL_PTR;
@@ -1614,6 +1618,12 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		aes_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;
@@ -1693,6 +1703,11 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	encrypt_decrypt_mech.ulParameterLen = 0;
 
 	for (; i < ARRAY_SIZE(des_mech_type); i++) {
+		TEST_OUT("DES Encryption mechanism = 0x%lx\n",
+			 des_mech_type[i]);
+
+		encrypt_decrypt_mech.mechanism = des_mech_type[i];
+
 		TEST_OUT("Generate DES secret Key\n");
 
 		des_secretkey_attrs[3].pValue = &des_mech_type[i];
@@ -1703,8 +1718,6 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					   &des_hsecretkey);
 		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 			goto end;
-
-		encrypt_decrypt_mech.mechanism = des_mech_type[i];
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des;
@@ -1776,6 +1789,12 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, des_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		des_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;
@@ -1851,6 +1870,11 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	for (; i < ARRAY_SIZE(des3_mech_type); i++) {
+		TEST_OUT("3DES Encryption mechanism = 0x%lx\n",
+			 des3_mech_type[i]);
+
+		encrypt_decrypt_mech.mechanism = des3_mech_type[i];
+
 		TEST_OUT("Generate DES secret Key\n");
 
 		des3_secretkey_attrs[3].pValue = &des3_mech_type[i];
@@ -1861,8 +1885,6 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					   &des3_hsecretkey);
 		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 			goto end;
-
-		encrypt_decrypt_mech.mechanism = des3_mech_type[i];
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES3_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des3;
@@ -1934,6 +1956,12 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, des3_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		des3_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;

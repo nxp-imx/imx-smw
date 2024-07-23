@@ -195,7 +195,7 @@ static int encrypt_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		  sizeof(aes_mech_type) }
 	};
 
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG cipher_len = 0;
 	CK_BYTE_PTR cipher = NULL_PTR;
 
@@ -322,7 +322,7 @@ static int decrypt_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		  sizeof(aes_mech_type) }
 	};
 
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG plaintext_len = 0;
 	CK_BYTE_PTR plaintext = NULL_PTR;
 	CK_BYTE_PTR cipher = NULL_PTR;
@@ -456,12 +456,12 @@ static int encrypt_decrypt_no_init(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	TEST_OUT("Message Encrypt init with NULL mechanism");
+	TEST_OUT("Message Encrypt init with NULL mechanism\n");
 	ret = pfunc->C_MessageEncryptInit(sess, NULL_PTR, 1);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
 		goto end;
 
-	TEST_OUT("Message Decrypt init with NULL mechanism");
+	TEST_OUT("Message Decrypt init with NULL mechanism\n");
 	ret = pfunc->C_MessageDecryptInit(sess, NULL_PTR, 1);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 		goto end;
@@ -601,11 +601,11 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_MECHANISM_TYPE aes_mech_type[] = { CKM_AES_CBC };
 	CK_MECHANISM encrypt_decrypt_mech = { .mechanism = CKM_AES_CBC };
-	CK_ULONG data_len = ARRAY_SIZE(data);
-	CK_ULONG cipher_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
+	CK_ULONG cipher_len = sizeof(data);
 	CK_BYTE cipher[data_len];
 	CK_BYTE recovered_data[data_len];
-	CK_ULONG recovered_data_len = ARRAY_SIZE(data);
+	CK_ULONG recovered_data_len = sizeof(data);
 
 	CK_BYTE iv[] = { 0x01, 0x02,  0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
@@ -709,7 +709,7 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_MECHANISM enc_dec_mech = { 0 };
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_ULONG encrypted_data_len = 0;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_BYTE_PTR recovered_data = NULL_PTR;
 	CK_ULONG recovered_data_len = 0;
 
@@ -775,6 +775,8 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		gcm_params.ivGenerator = CKG_GENERATE;
 		gcm_params.ulIvFixedBits = ulIvFixedBits[i];
 
+		TEST_OUT("Encrypt message IV Fixed %ld bits\n",
+			 gcm_params.ulIvFixedBits);
 		ret = pfunc->C_MessageEncryptInit(sess, &enc_dec_mech,
 						  aes_hsecretkey);
 		if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
@@ -788,8 +790,30 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					      NULL_PTR, 0, data, data_len,
 					      encrypted_data,
 					      &encrypted_data_len);
-		if (CHECK_CK_RV(CKR_OK, "C_EncryptMessage"))
+
+		if (is_seco_subsystem() && (gcm_params.ulIvFixedBits != 0 &&
+					    gcm_params.ulIvFixedBits != 32)) {
+			if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
+					"C_EncryptMessage"))
+				goto end;
+
+			continue;
+		} else if (!is_8ulp() && is_ele_subsystem() &&
+			   (gcm_params.ulIvFixedBits != 0 &&
+			    gcm_params.ulIvFixedBits != 32)) {
+			if (gcm_params.ulIvFixedBits == 128) {
+				if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
+						"C_EncryptMessage"))
+					goto end;
+			} else if (CHECK_CK_RV(CKR_DEVICE_ERROR,
+					       "C_EncryptMessage")) {
+				goto end;
+			}
+
+			continue;
+		} else if (CHECK_CK_RV(CKR_OK, "C_EncryptMessage")) {
 			goto end;
+		}
 
 		for (j = 1; j <= BITS_TO_BYTES_SIZE(ulIvFixedBits[i]); j++) {
 			if (iv[j - 1] != 0xA5) {
@@ -863,8 +887,8 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					      CKM_AES_GCM, CKM_AES_CCM,
 					      CKM_AES_XTS };
 
-	CK_BYTE iv[] = { 0x01, 0x02,  0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+	CK_BYTE iv[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+			 0x09, 0x10, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 
 	/* CK_AES_CTR_PARAMS */
 	static const CK_BYTE counter_block[] = { 0x00, 0x01, 0x02, 0x03,
@@ -874,13 +898,12 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	const CK_ULONG counter_bits = 64;
 
 	/* CK_GCM_MESSAGE_PARAMS/CK_CCM_MESSAGE_PARAMS */
-	CK_BYTE tag[12] = { 0 };
-	const CK_ULONG tag_bits = 96;
+	CK_BYTE tag[16] = { 0 };
 
 	CK_MECHANISM enc_dec_mech = { 0 };
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_ULONG encrypted_data_len = 0;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_BYTE_PTR recovered_data = NULL_PTR;
 	CK_ULONG recovered_data_len = 0;
 
@@ -944,6 +967,9 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	for (; i < ARRAY_SIZE(aes_mech_type); i++) {
+		TEST_OUT("AES Encryption mechanism = 0x%lx\n",
+			 aes_mech_type[i]);
+
 		enc_dec_mech.pParameter = NULL_PTR;
 		enc_dec_mech.ulParameterLen = 0;
 		enc_dec_mech.mechanism = aes_mech_type[i];
@@ -976,7 +1002,7 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		switch (enc_dec_mech.mechanism) {
 		case CKM_AES_CBC:
 			enc_dec_mech.pParameter = iv;
-			enc_dec_mech.ulParameterLen = ARRAY_SIZE(iv);
+			enc_dec_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		case CKM_AES_CTR:
@@ -989,19 +1015,25 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		case CKM_AES_CTS:
 			enc_dec_mech.pParameter = iv;
-			enc_dec_mech.ulParameterLen = ARRAY_SIZE(iv);
+			enc_dec_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		case CKM_AES_XTS:
 			enc_dec_mech.pParameter = iv;
-			enc_dec_mech.ulParameterLen = ARRAY_SIZE(iv);
+			enc_dec_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		case CKM_AES_GCM:
 			gcm_params.pIv = iv;
-			gcm_params.ulIvLen = ARRAY_SIZE(iv);
+			gcm_params.ulIvLen = 12;
+
+			if (is_seco_subsystem()) {
+				gcm_params.ulIvFixedBits = 4 * 8;
+				gcm_params.ivGenerator = CKG_GENERATE;
+			}
+
 			gcm_params.pTag = tag;
-			gcm_params.ulTagBits = tag_bits;
+			gcm_params.ulTagBits = sizeof(tag) * 8;
 			enc_dec_mech.pParameter = &gcm_params;
 			enc_dec_mech.ulParameterLen = sizeof(gcm_params);
 			break;
@@ -1012,10 +1044,10 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			 * AES CCM IV range is 7-13 bytes
 			 * according to the NIST 800-38C
 			 */
-			ccm_params.ulNonceLen = 13;
+			ccm_params.ulNonceLen = 12;
 			ccm_params.ulDataLen = data_len;
 			ccm_params.pMAC = tag;
-			ccm_params.ulMACLen = tag_bits >> 3;
+			ccm_params.ulMACLen = sizeof(tag);
 			enc_dec_mech.pParameter = &ccm_params;
 			enc_dec_mech.ulParameterLen = sizeof(ccm_params);
 			break;
@@ -1051,6 +1083,12 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			goto end;
 
 		TEST_OUT("Initialize decrypt message operation\n");
+
+		if (enc_dec_mech.mechanism == CKM_AES_GCM) {
+			gcm_params.ulIvFixedBits = 0;
+			gcm_params.ivGenerator = CKG_NO_GENERATE;
+		}
+
 		ret = pfunc->C_MessageDecryptInit(sess, &enc_dec_mech,
 						  aes_hsecretkey);
 		if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
@@ -1083,6 +1121,12 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		aes_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;
@@ -1115,7 +1159,7 @@ static int encrypt_decrypt_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_ULONG encrypted_data_len = 0;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_BYTE_PTR recovered_data = NULL_PTR;
 	CK_ULONG recovered_data_len = 0;
 
@@ -1156,6 +1200,11 @@ static int encrypt_decrypt_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	TEST_OUT("Initialize encrypt operation\n");
 
 	for (; i < ARRAY_SIZE(des_mech_type); i++) {
+		TEST_OUT("DES Encryption mechanism = 0x%lx\n",
+			 des_mech_type[i]);
+
+		encrypt_decrypt_mech.mechanism = des_mech_type[i];
+
 		TEST_OUT("Generate DES secret Key\n");
 
 		des_secretkey_attrs[3].pValue = &des_mech_type[i];
@@ -1166,10 +1215,6 @@ static int encrypt_decrypt_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					   &des_hsecretkey);
 		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 			goto end;
-
-		TEST_OUT("DES Encryption mechanism = 0x%lx\n",
-			 des_mech_type[i]);
-		encrypt_decrypt_mech.mechanism = des_mech_type[i];
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des;
@@ -1229,6 +1274,12 @@ static int encrypt_decrypt_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, des_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		des_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;
@@ -1259,7 +1310,7 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_ULONG encrypted_data_len = 0;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG recovered_data_len = 0;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
 
@@ -1298,6 +1349,11 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	TEST_OUT("Initialize encrypt operation\n");
 
 	for (; i < ARRAY_SIZE(des3_mech_type); i++) {
+		TEST_OUT("3DES Encryption mechanism = 0x%lx\n",
+			 des3_mech_type[i]);
+
+		encrypt_decrypt_mech.mechanism = des3_mech_type[i];
+
 		TEST_OUT("Generate 3DES secret Key\n");
 
 		des3_secretkey_attrs[3].pValue = &des3_mech_type[i];
@@ -1308,10 +1364,6 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					   &des3_hsecretkey);
 		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 			goto end;
-
-		TEST_OUT("3DES Encryption mechanism = 0x%lx\n",
-			 des3_mech_type[i]);
-		encrypt_decrypt_mech.mechanism = des3_mech_type[i];
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES3_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des3;
@@ -1374,6 +1426,12 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, des3_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		des3_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;
@@ -1400,7 +1458,7 @@ static int encrypt_decrypt_key_usage(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_MECHANISM_TYPE aes_mech_type[] = { CKM_AES_ECB };
 	CK_MECHANISM encrypt_decrypt_mech = { .mechanism = CKM_AES_ECB };
 
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
 	CK_ULONG encrypted_data_len = 0;

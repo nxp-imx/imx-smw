@@ -149,7 +149,8 @@ static int check_keys(struct smw_crypto_cipher_args *args,
 		 * be set
 		 */
 		if (args->keys_desc[i]->pub->buffer &&
-		    (!args->keys_desc[i]->pub->type_name ||
+		    (args->keys_desc[i]->pub->type_name ==
+			     SMW_KEY_TYPE_NAME_NONE ||
 		     !args->keys_desc[i]->pub->security_size))
 			goto end;
 

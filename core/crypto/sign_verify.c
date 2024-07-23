@@ -291,9 +291,9 @@ static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 	unsigned int size = 0;
 
 	switch (key->identifier.type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 		/* Signature size is public key size */
 		size = key->identifier.security_size;
 
@@ -308,7 +308,7 @@ static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 		size = BITS_TO_BYTES_SIZE(size);
 		break;
 
-	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY:
+	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER:
 		size = TLS12_MAC_FINISH_DEFAULT_LEN;
 		break;
 

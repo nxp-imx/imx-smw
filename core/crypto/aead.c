@@ -159,8 +159,9 @@ static int check_key(struct smw_crypto_aead_args *args,
 	 * If key is defined as buffer security size and key type must
 	 * be set
 	 */
-	if (args->key_desc.pub->buffer && (!args->key_desc.pub->type_name ||
-					   !args->key_desc.pub->security_size))
+	if (args->key_desc.pub->buffer &&
+	    (args->key_desc.pub->type_name == SMW_KEY_TYPE_NAME_NONE ||
+	     !args->key_desc.pub->security_size))
 		goto end;
 
 	if (args->key_desc.identifier.id &&

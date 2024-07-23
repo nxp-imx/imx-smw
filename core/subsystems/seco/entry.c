@@ -142,6 +142,9 @@ static int unload(void)
 			status = SMW_STATUS_MUTEX_DESTROY_FAILURE;
 	}
 
+	if (smw_utils_mutex_destroy(&seco_ctx.mutex) && status == SMW_STATUS_OK)
+		status = SMW_STATUS_SUBSYSTEM_UNLOAD_FAILURE;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -153,6 +156,11 @@ static int load(void)
 	struct hdl *hdl = &seco_ctx.hdl;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!seco_ctx.mutex && smw_utils_mutex_init(&seco_ctx.mutex)) {
+		status = SMW_STATUS_MUTEX_INIT_FAILURE;
+		goto end;
+	}
 
 	status = open_session(&hdl->session);
 	if (status != SMW_STATUS_OK)
@@ -280,6 +288,15 @@ static int execute(enum operation_id operation_id, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	/*
+	 * To ensure that only one secure enclave service is called, lock
+	 * a mutex.
+	 */
+	if (smw_utils_mutex_lock(seco_ctx.mutex)) {
+		status = SMW_STATUS_MUTEX_LOCK_FAILURE;
+		goto end;
+	}
+
 	if (seco_key_handle(&seco_ctx, operation_id, args, &status))
 		goto end;
 	else if (seco_hash_handle(hdl, operation_id, args, &status))
@@ -298,6 +315,9 @@ static int execute(enum operation_id operation_id, void *args)
 	seco_aead_handle(hdl, operation_id, args, &status);
 
 end:
+	if (smw_utils_mutex_unlock(seco_ctx.mutex) && status == SMW_STATUS_OK)
+		status = SMW_STATUS_MUTEX_LOCK_FAILURE;
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

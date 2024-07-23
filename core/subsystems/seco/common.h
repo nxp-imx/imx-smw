@@ -33,11 +33,13 @@ struct hdl {
 /**
  * struct subsystem_context - SECO subsystem context
  * @hdl: SECO handles
+ * @mutex: Mutex of the subsystem context access
  * @key_grp_list: Key group list
  * @key_grp_mutex: Mutex of the key group list access
  */
 struct subsystem_context {
 	struct hdl hdl;
+	void *mutex;
 	struct smw_utils_list key_grp_list;
 	void *key_grp_mutex;
 };

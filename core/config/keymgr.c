@@ -20,13 +20,10 @@
 #include "common.h"
 #include "tag.h"
 
-static const char *const key_type_names[] = {
-	[SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST] = "NIST",
-	[SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1] = "BRAINPOOL_R1",
-	[SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1] = "BRAINPOOL_T1",
-	[SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST] = "ECDH_NIST",
-	[SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1] = "ECDH_BRAINPOOL_R1",
-	[SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1] = "ECDH_BRAINPOOL_T1",
+static const char *const key_type_strings[] = {
+	[SMW_CONFIG_KEY_TYPE_ID_SECP_R1] = "SECP_R1",
+	[SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1] = "BRAINPOOL_R1",
+	[SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1] = "BRAINPOOL_T1",
 	[SMW_CONFIG_KEY_TYPE_ID_ED25519] = "ED25519",
 	[SMW_CONFIG_KEY_TYPE_ID_AES] = "AES",
 	[SMW_CONFIG_KEY_TYPE_ID_DES] = "DES",
@@ -34,16 +31,9 @@ static const char *const key_type_names[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP] = "DSA_SM2_FP",
 	[SMW_CONFIG_KEY_TYPE_ID_SM4] = "SM4",
 	[SMW_CONFIG_KEY_TYPE_ID_HMAC] = "HMAC",
-	[SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5] = "HMAC_MD5",
-	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1] = "HMAC_SHA1",
-	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224] = "HMAC_SHA224",
-	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256] = "HMAC_SHA256",
-	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384] = "HMAC_SHA384",
-	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512] = "HMAC_SHA512",
-	[SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3] = "HMAC_SM3",
 	[SMW_CONFIG_KEY_TYPE_ID_RSA] = "RSA",
 	[SMW_CONFIG_KEY_TYPE_ID_DH] = "DH",
-	[SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY] = "TLS_MASTER_KEY",
+	[SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER] = "TLS_MASTER",
 	[SMW_CONFIG_KEY_TYPE_ID_RAW] = "RAW",
 	[SMW_CONFIG_KEY_TYPE_ID_GENERIC_SECRET] = "GENERIC_SECRET"
 };
@@ -53,17 +43,37 @@ static const char *const key_derive_op_names[] = {
 	[SMW_CONFIG_KDF_HKDF] = "HKDF"
 };
 
-int read_key_type_names(char **start, char *end, unsigned long *bitmap)
+static int read_key_type_strings(char **start, char *end, unsigned long *bitmap)
 {
-	int status = smw_config_read_strings(start, end, bitmap, key_type_names,
-					     SMW_CONFIG_KEY_TYPE_ID_NB);
+	int status =
+		smw_config_read_strings(start, end, bitmap, key_type_strings,
+					SMW_CONFIG_KEY_TYPE_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_KEY_TYPE_NAME;
 
 	return status;
 }
 
-static int read_key_size_range(char **start, char *end, const char *type_name,
+static int get_key_type_id(const char *type_string,
+			   enum smw_config_key_type_id *id)
+{
+	int status = SMW_STATUS_OK;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(type_string);
+
+	status = smw_utils_get_string_index(type_string, key_type_strings,
+					    SMW_CONFIG_KEY_TYPE_ID_NB, id);
+
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_KEY_TYPE_NAME;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int read_key_size_range(char **start, char *end, const char *type_string,
 			       unsigned long *size_range_bitmap,
 			       struct op_key *key)
 {
@@ -76,7 +86,7 @@ static int read_key_size_range(char **start, char *end, const char *type_name,
 
 	SMW_DBG_ASSERT(size_range_bitmap);
 
-	status = smw_config_get_key_type_id(type_name, &id);
+	status = get_key_type_id(type_string, &id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -142,7 +152,7 @@ bool read_key(char *tag, size_t length, char **start, char *end,
 
 	if (!SMW_UTILS_STRNCMP(tag, key_type_values, length)) {
 		match = true;
-		*status = read_key_type_names(&cur, end, &key->type_bitmap);
+		*status = read_key_type_strings(&cur, end, &key->type_bitmap);
 	} else if (get_tag_prefix(tag, length, _size_range)) {
 		match = true;
 		*status = read_key_size_range(&cur, end, tag,
@@ -424,38 +434,33 @@ DEFINE_KEYMGR_OPERATION_FUNC(export_key);
 DEFINE_KEYMGR_OPERATION_FUNC(delete_key);
 
 void smw_config_get_key_type_name(enum smw_config_key_type_id id,
-				  const char **name)
+				  smw_key_type_t *name)
 {
-	unsigned int index = id;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*name = SMW_KEY_TYPE_NAME_NONE;
 
 	if (id < SMW_CONFIG_KEY_TYPE_ID_NB &&
 	    id != SMW_CONFIG_KEY_TYPE_ID_INVALID)
-		*name = key_type_names[index];
-	else
-		*name = NULL;
+		(void)ADD_OVERFLOW(id, SMW_CONFIG_KEY_TYPE_ID_OFFSET,
+				   (int *)name);
 }
 
-int smw_config_get_key_type_id(const char *name,
+int smw_config_get_key_type_id(smw_key_type_t name,
 			       enum smw_config_key_type_id *id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_UNKNOWN_KEY_TYPE_NAME;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	/* name == NULL is an acceptable input from caller.
-	 * Just set *id to invalid and return status OK.
-	 */
-	*id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
-
-	if (name)
-		status = smw_utils_get_string_index(name, key_type_names,
-						    SMW_CONFIG_KEY_TYPE_ID_NB,
-						    id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_KEY_TYPE_NAME;
+	if (name == SMW_KEY_TYPE_NAME_NONE) {
+		*id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
+		status = SMW_STATUS_OK;
+	} else if (name < SMW_KEY_TYPE_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_CONFIG_KEY_TYPE_ID_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -495,7 +500,7 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!info || !info->key_type_name)
+	if (!info || info->key_type_name == SMW_KEY_TYPE_NAME_NONE)
 		return status;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);

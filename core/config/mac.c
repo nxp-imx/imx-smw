@@ -139,7 +139,7 @@ __export enum smw_status_code smw_config_check_mac(smw_subsystem_t subsystem,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!info || !info->key_type_name)
+	if (!info || info->key_type_name == SMW_KEY_TYPE_NAME_NONE)
 		return status;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);

@@ -12,13 +12,22 @@
 
 #include "subsystems.h"
 
+/*
+ * Ordering must be the same for internal values and public values.
+ * This way the offset between the internal values and the public values
+ * can be used for conversion, and no conversion table is required.
+ *
+ * The offset between the internal values and the public values is
+ * given by the first public value.
+ */
+
+#define SMW_CONFIG_KEY_TYPE_ID_OFFSET                                          \
+	(SMW_KEY_TYPE_NAME_SECP_R1 - SMW_CONFIG_KEY_TYPE_ID_SECP_R1)
+
 enum smw_config_key_type_id {
-	SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST,
-	SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1,
-	SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1,
-	SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST,
-	SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1,
-	SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1,
+	SMW_CONFIG_KEY_TYPE_ID_SECP_R1,
+	SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1,
+	SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1,
 	SMW_CONFIG_KEY_TYPE_ID_ED25519,
 	SMW_CONFIG_KEY_TYPE_ID_AES,
 	SMW_CONFIG_KEY_TYPE_ID_DES,
@@ -26,16 +35,9 @@ enum smw_config_key_type_id {
 	SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP,
 	SMW_CONFIG_KEY_TYPE_ID_SM4,
 	SMW_CONFIG_KEY_TYPE_ID_HMAC,
-	SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5,
-	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1,
-	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224,
-	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256,
-	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384,
-	SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512,
-	SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3,
 	SMW_CONFIG_KEY_TYPE_ID_RSA,
 	SMW_CONFIG_KEY_TYPE_ID_DH,
-	SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY,
+	SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER,
 	SMW_CONFIG_KEY_TYPE_ID_RAW,
 	SMW_CONFIG_KEY_TYPE_ID_GENERIC_SECRET,
 	SMW_CONFIG_KEY_TYPE_ID_NB,
@@ -284,7 +286,7 @@ int smw_config_get_subsystem_id(smw_subsystem_t name, enum subsystem_id *id);
 
 /**
  * smw_config_get_key_type_id() - Get the ID associated to a Key type name.
- * @name: Name as a string.
+ * @name: Name of the Key type.
  * @id: Pointer where the ID is written.
  *
  * This function gets the ID associated to a Key type name.
@@ -292,7 +294,7 @@ int smw_config_get_subsystem_id(smw_subsystem_t name, enum subsystem_id *id);
  * Return:
  * error code.
  */
-int smw_config_get_key_type_id(const char *name,
+int smw_config_get_key_type_id(smw_key_type_t name,
 			       enum smw_config_key_type_id *id);
 
 /**
@@ -306,7 +308,7 @@ int smw_config_get_key_type_id(const char *name,
  * none.
  */
 void smw_config_get_key_type_name(enum smw_config_key_type_id id,
-				  const char **name);
+				  smw_key_type_t *name);
 
 /**
  * smw_config_get_signature_algo_id() - Get the signature algo ID associated to

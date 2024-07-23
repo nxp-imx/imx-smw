@@ -222,7 +222,8 @@ __export enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!info || !info->key_type_name || !info->mode || !info->op_type)
+	if (!info || info->key_type_name == SMW_KEY_TYPE_NAME_NONE ||
+	    !info->mode || !info->op_type)
 		return status;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);

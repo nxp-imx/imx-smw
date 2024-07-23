@@ -201,26 +201,6 @@ int read_params_string(char **start, char *end, char *dest);
 int skip_param(char **start, char *end);
 
 /**
- * read_key_type_names() - Read a list of Key types names.
- * @start: Address of the pointer to the current char.
- * @end: Pointer to the last char of the buffer being parsed.
- * @bitmap: Bitmap representing the configured names.
- *
- * This function reads a list of names from the current char
- * of the buffer being parsed until a semicolon is detected.
- * The pointer to the current char is moved to the next char
- * after the semicolon.
- * Insignificant chars are skipped if any.
- *
- * Names are compared with values set in @key_type_names.
- * @bitmap is set with enum smw_config_key_type_id values.
- *
- * Return:
- * error code.
- */
-int read_key_type_names(char **start, char *end, unsigned long *bitmap);
-
-/**
  * parse() - Parse a plaintext configuration.
  * @buffer: Address of the first char of the plaintext configuration.
  * @size: Size of of rth plaintext configuration.

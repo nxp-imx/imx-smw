@@ -9,8 +9,8 @@
     - [3.1.3. Additional toolchain options](#313-additional-toolchain-options)
   - [3.2. External Dependencies](#32-external-dependencies)
     - [3.2.1. SECO subsystem](#321-seco-subsystem)
-      - [3.2.1.1. zlib Library](#3211-zlib-library)
-      - [3.2.1.2. SECO Libraries](#3212-seco-libraries)
+      - [3.2.1.1. SECO Library](#3211-seco-library)
+      - [3.2.1.2. NVM Daemon](#3212-nvm-daemon)
     - [3.2.2. TEE subsystem](#322-tee-subsystem)
       - [3.2.2.1. OPTEE Client Library](#3221-optee-client-library)
       - [3.2.2.2. OPTEE TA Development Kit](#3222-optee-ta-development-kit)
@@ -358,17 +358,13 @@ this section to build external dependencies using provided cmake scripts.
 </thead>
 <tbody>
 <tr>
-  <td rowspan="3">SECO subsystem</td>
-	<td>SECO NVM Manager</td>
-	<td>Static library seco_nvm_manager.a and seco_nvm.h header</td>
-</tr>
-<tr>
+  <td rowspan="2">SECO subsystem</td>
   <td>SECO Library</td>
-	<td>Static library hsm_lib.a and hsm_api.h header</td>
+	<td>Shared library lib_hsm.so and hsm_api.h header</td>
 </tr>
 <tr>
-  <td>zlib Library</td>
-	<td>Shared library libz.so and zlib.h header</td>
+ 	<td>SECO NVM Manager</td>
+	<td>Daemon service to be started before using SMW Library</td>
 </tr>
 <tr>
   <td rowspan="2">TEE subsystem</td>
@@ -397,23 +393,10 @@ this section to build external dependencies using provided cmake scripts.
 </table>
 
 ### 3.2.1. SECO subsystem
-#### 3.2.1.1. zlib Library
-Before building the [SECO Library](#3212-seco-libraries), the zlib library
-must be present and built with the default compiler. Installation of the ARM 32
-or 64 bits cross-compiler is described in [Toolchains](#31-toolchains).
 
-```sh
-$ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DZLIB_ROOT=[export path] -DZLIB_SRC_PATH=[source path] -P ./scripts/build_zlib.cmake
-```
-
-The command uploads and builds the zlib sources in the directory specified by
-the option `ZLIB_SRC_PATH`, then copies the library and interface header in the
-path specified by `ZLIB_ROOT`.
-
-#### 3.2.1.2. SECO Libraries
+#### 3.2.1.1. SECO Library
 The SECO Library interfaces the SMW's subsystem SECO with the kernel SECO
-Message Unit driver and the Non-Volatile Memory (NVM) manager.
-Before building the SECO Library, the zlib library must be present, see [zlib library](#3211-zlib-library).
+Message Unit driver.
 
 The following cmake script builds the SECO pointed by the `SECO_SRC_PATH` using
 the default compiler. Installation of the ARM 32 or 64 bits cross-compiler is described in [Toolchains](#31-toolchains).
@@ -423,6 +406,20 @@ directory.
 
 ```sh
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DSECO_ROOT=[export path] -DSECO_SRC_PATH=[source path] -P ./scripts/build_seco.cmake
+```
+
+#### 3.2.1.2. NVM Daemon
+The SECO Non-Volatile Memory (NVM) daemon used to store all persistent objects is
+built with the same command as the [SECO Library](#3211-seco-library).
+The NVM Daemon is a linux service that must be started before loading the SMW Library.
+
+The NVM Daemon service package is available in the `SECO_ROOT` directory.
+
+To start the NVM Daemon service if not yet active, the following command can be
+used on the host platform.
+
+```sh
+systemctl start nvm_daemon
 ```
 
 ### 3.2.2. TEE subsystem
@@ -524,7 +521,7 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DELE_ROOT=[e
 ```
 
 #### 3.2.3.2. NVM Daemon
-The ELE Non-Volatile Memory (NVM) daemon used to store all presistent objects is
+The ELE Non-Volatile Memory (NVM) daemon used to store all persistent objects is
 built with the same command as the [ELE Library](#3231-ele-library).
 The NVM Daemon is a linux service that must be started before loading the SMW Library.
 
@@ -704,13 +701,9 @@ Before enabling a subsystem, the subsystem dependencies must be built as describ
 </thead>
 <tbody>
 <tr>
-  <td rowspan="2">SECO</td>
+  <td>SECO</td>
   <td>-DSECO_ROOT=[/path/to/export]</td>
-  <td>Path to the SECO and NVM Manager libraries and headers interface</td>
-</tr>
-<tr>
-  <td>-DZLIB_ROOT=[/path/to/export]</td>
-  <td>Path to the zlib libraries and headers interface</td>
+  <td>Path to the SECO library and headers interface</td>
 </tr>
 <tr>
   <td rowspan="2">TEE</td>

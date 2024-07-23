@@ -1,7 +1,7 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "HMAC_SHA256",
+			"type": "HMAC",
 			"security_size": 256,
 			"priv_key": [
 				"6ed76d2d97c69fd1339589523931f2a6",
@@ -16,6 +16,10 @@
 				"VERIFY_HASH",
 				"VERIFY_MESSAGE",
 				"EXPORT"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
 			]
 		},
 		"key 2": {
@@ -33,15 +37,19 @@
 			]
 		},
 		"key 3": {
-			"type": "HMAC_SHA256",
+			"type": "HMAC",
 			"security_size": 256,
 			"pub_key": [
 				"000102030405060708090a0b0c0d0e0f",
 				"101112131415161718191a1b1c1d1e1f"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
 			]
 		},
 		"key 4": {
-			"type": "ECDH_NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"format": "BASE64",
 			"pub_key": [
@@ -74,7 +82,7 @@
 		"server write encryption key": {},
 		"master secret key": {},
 		"key 6": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 192,
 			"priv_key": [
 				"e5ce89a34adddf25ff3bf1ffe6803f57",

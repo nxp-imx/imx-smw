@@ -1,553 +1,553 @@
 {
 	"keys": {
-		"key NIST 1": {
-			"type": "NIST",
+		"key secp384r1 1": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 2": {
-			"type": "NIST",
+		"key secp384r1 2": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 3": {
-			"type": "NIST",
+		"key secp384r1 3": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 4": {
-			"type": "NIST",
+		"key secp384r1 4": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 5": {
-			"type": "NIST",
+		"key secp384r1 5": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 6": {
-			"type": "NIST",
+		"key secp384r1 6": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 7": {
-			"type": "NIST",
+		"key secp384r1 7": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 8": {
-			"type": "NIST",
+		"key secp384r1 8": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 9": {
-			"type": "NIST",
+		"key secp384r1 9": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 10": {
-			"type": "NIST",
+		"key secp384r1 10": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 11": {
-			"type": "NIST",
+		"key secp384r1 11": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 12": {
-			"type": "NIST",
+		"key secp384r1 12": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 13": {
-			"type": "NIST",
+		"key secp384r1 13": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 14": {
-			"type": "NIST",
+		"key secp384r1 14": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 15": {
-			"type": "NIST",
+		"key secp384r1 15": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 16": {
-			"type": "NIST",
+		"key secp384r1 16": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 17": {
-			"type": "NIST",
+		"key secp384r1 17": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 18": {
-			"type": "NIST",
+		"key secp384r1 18": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 19": {
-			"type": "NIST",
+		"key secp384r1 19": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 20": {
-			"type": "NIST",
+		"key secp384r1 20": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 21": {
-			"type": "NIST",
+		"key secp384r1 21": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 22": {
-			"type": "NIST",
+		"key secp384r1 22": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 23": {
-			"type": "NIST",
+		"key secp384r1 23": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 24": {
-			"type": "NIST",
+		"key secp384r1 24": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 25": {
-			"type": "NIST",
+		"key secp384r1 25": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 26": {
-			"type": "NIST",
+		"key secp384r1 26": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 27": {
-			"type": "NIST",
+		"key secp384r1 27": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 28": {
-			"type": "NIST",
+		"key secp384r1 28": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 29": {
-			"type": "NIST",
+		"key secp384r1 29": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 30": {
-			"type": "NIST",
+		"key secp384r1 30": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 31": {
-			"type": "NIST",
+		"key secp384r1 31": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 32": {
-			"type": "NIST",
+		"key secp384r1 32": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 33": {
-			"type": "NIST",
+		"key secp384r1 33": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 34": {
-			"type": "NIST",
+		"key secp384r1 34": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 35": {
-			"type": "NIST",
+		"key secp384r1 35": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 36": {
-			"type": "NIST",
+		"key secp384r1 36": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 37": {
-			"type": "NIST",
+		"key secp384r1 37": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 38": {
-			"type": "NIST",
+		"key secp384r1 38": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 39": {
-			"type": "NIST",
+		"key secp384r1 39": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 40": {
-			"type": "NIST",
+		"key secp384r1 40": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 41": {
-			"type": "NIST",
+		"key secp384r1 41": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 42": {
-			"type": "NIST",
+		"key secp384r1 42": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 43": {
-			"type": "NIST",
+		"key secp384r1 43": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 44": {
-			"type": "NIST",
+		"key secp384r1 44": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 45": {
-			"type": "NIST",
+		"key secp384r1 45": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 46": {
-			"type": "NIST",
+		"key secp384r1 46": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 47": {
-			"type": "NIST",
+		"key secp384r1 47": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 48": {
-			"type": "NIST",
+		"key secp384r1 48": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 49": {
-			"type": "NIST",
+		"key secp384r1 49": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 50": {
-			"type": "NIST",
+		"key secp384r1 50": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 51": {
-			"type": "NIST",
+		"key secp384r1 51": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 52": {
-			"type": "NIST",
+		"key secp384r1 52": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 53": {
-			"type": "NIST",
+		"key secp384r1 53": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 54": {
-			"type": "NIST",
+		"key secp384r1 54": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 55": {
-			"type": "NIST",
+		"key secp384r1 55": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 56": {
-			"type": "NIST",
+		"key secp384r1 56": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 57": {
-			"type": "NIST",
+		"key secp384r1 57": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 58": {
-			"type": "NIST",
+		"key secp384r1 58": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 59": {
-			"type": "NIST",
+		"key secp384r1 59": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 60": {
-			"type": "NIST",
+		"key secp384r1 60": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 61": {
-			"type": "NIST",
+		"key secp384r1 61": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 62": {
-			"type": "NIST",
+		"key secp384r1 62": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 63": {
-			"type": "NIST",
+		"key secp384r1 63": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 64": {
-			"type": "NIST",
+		"key secp384r1 64": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 65": {
-			"type": "NIST",
+		"key secp384r1 65": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 66": {
-			"type": "NIST",
+		"key secp384r1 66": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 67": {
-			"type": "NIST",
+		"key secp384r1 67": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 68": {
-			"type": "NIST",
+		"key secp384r1 68": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 69": {
-			"type": "NIST",
+		"key secp384r1 69": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 70": {
-			"type": "NIST",
+		"key secp384r1 70": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 71": {
-			"type": "NIST",
+		"key secp384r1 71": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 72": {
-			"type": "NIST",
+		"key secp384r1 72": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 73": {
-			"type": "NIST",
+		"key secp384r1 73": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 74": {
-			"type": "NIST",
+		"key secp384r1 74": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 75": {
-			"type": "NIST",
+		"key secp384r1 75": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 76": {
-			"type": "NIST",
+		"key secp384r1 76": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 77": {
-			"type": "NIST",
+		"key secp384r1 77": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 78": {
-			"type": "NIST",
+		"key secp384r1 78": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
-		"key NIST 79": {
-			"type": "NIST",
+		"key secp384r1 79": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
@@ -571,401 +571,401 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 1"
+		"key_name": "key secp384r1 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 2"
+		"key_name": "key secp384r1 2"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 3"
+		"key_name": "key secp384r1 3"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 4"
+		"key_name": "key secp384r1 4"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 5"
+		"key_name": "key secp384r1 5"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 6"
+		"key_name": "key secp384r1 6"
 	},
 	"subtest 7": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 7"
+		"key_name": "key secp384r1 7"
 	},
 	"subtest 8": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 8"
+		"key_name": "key secp384r1 8"
 	},
 	"subtest 9": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 9"
+		"key_name": "key secp384r1 9"
 	},
 	"subtest 10": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 10"
+		"key_name": "key secp384r1 10"
 	},
 	"subtest 11": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 11"
+		"key_name": "key secp384r1 11"
 	},
 	"subtest 12": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 12"
+		"key_name": "key secp384r1 12"
 	},
 	"subtest 13": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 13"
+		"key_name": "key secp384r1 13"
 	},
 	"subtest 14": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 14"
+		"key_name": "key secp384r1 14"
 	},
 	"subtest 15": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 15"
+		"key_name": "key secp384r1 15"
 	},
 	"subtest 16": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 16"
+		"key_name": "key secp384r1 16"
 	},
 	"subtest 17": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 17"
+		"key_name": "key secp384r1 17"
 	},
 	"subtest 18": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 18"
+		"key_name": "key secp384r1 18"
 	},
 	"subtest 19": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 19"
+		"key_name": "key secp384r1 19"
 	},
 	"subtest 20": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 20"
+		"key_name": "key secp384r1 20"
 	},
 	"subtest 21": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 21"
+		"key_name": "key secp384r1 21"
 	},
 	"subtest 22": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 22"
+		"key_name": "key secp384r1 22"
 	},
 	"subtest 23": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 23"
+		"key_name": "key secp384r1 23"
 	},
 	"subtest 24": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 24"
+		"key_name": "key secp384r1 24"
 	},
 	"subtest 25": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 25"
+		"key_name": "key secp384r1 25"
 	},
 	"subtest 26": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 26"
+		"key_name": "key secp384r1 26"
 	},
 	"subtest 27": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 27"
+		"key_name": "key secp384r1 27"
 	},
 	"subtest 28": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 28"
+		"key_name": "key secp384r1 28"
 	},
 	"subtest 29": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 29"
+		"key_name": "key secp384r1 29"
 	},
 	"subtest 30": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 30"
+		"key_name": "key secp384r1 30"
 	},
 	"subtest 31": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 31"
+		"key_name": "key secp384r1 31"
 	},
 	"subtest 32": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 32"
+		"key_name": "key secp384r1 32"
 	},
 	"subtest 33": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 33"
+		"key_name": "key secp384r1 33"
 	},
 	"subtest 34": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 34"
+		"key_name": "key secp384r1 34"
 	},
 	"subtest 35": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 35"
+		"key_name": "key secp384r1 35"
 	},
 	"subtest 36": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 36"
+		"key_name": "key secp384r1 36"
 	},
 	"subtest 37": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 37"
+		"key_name": "key secp384r1 37"
 	},
 	"subtest 38": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 38"
+		"key_name": "key secp384r1 38"
 	},
 	"subtest 39": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 39"
+		"key_name": "key secp384r1 39"
 	},
 	"subtest 40": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 40"
+		"key_name": "key secp384r1 40"
 	},
 	"subtest 41": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 41"
+		"key_name": "key secp384r1 41"
 	},
 	"subtest 42": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 42"
+		"key_name": "key secp384r1 42"
 	},
 	"subtest 43": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 43"
+		"key_name": "key secp384r1 43"
 	},
 	"subtest 44": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 44"
+		"key_name": "key secp384r1 44"
 	},
 	"subtest 45": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 45"
+		"key_name": "key secp384r1 45"
 	},
 	"subtest 46": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 46"
+		"key_name": "key secp384r1 46"
 	},
 	"subtest 47": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 47"
+		"key_name": "key secp384r1 47"
 	},
 	"subtest 48": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 48"
+		"key_name": "key secp384r1 48"
 	},
 	"subtest 49": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 49"
+		"key_name": "key secp384r1 49"
 	},
 	"subtest 50": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 50"
+		"key_name": "key secp384r1 50"
 	},
 	"subtest 51": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 51"
+		"key_name": "key secp384r1 51"
 	},
 	"subtest 52": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 52"
+		"key_name": "key secp384r1 52"
 	},
 	"subtest 53": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 53"
+		"key_name": "key secp384r1 53"
 	},
 	"subtest 54": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 54"
+		"key_name": "key secp384r1 54"
 	},
 	"subtest 55": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 55"
+		"key_name": "key secp384r1 55"
 	},
 	"subtest 56": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 56"
+		"key_name": "key secp384r1 56"
 	},
 	"subtest 57": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 57"
+		"key_name": "key secp384r1 57"
 	},
 	"subtest 58": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 58"
+		"key_name": "key secp384r1 58"
 	},
 	"subtest 59": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 59"
+		"key_name": "key secp384r1 59"
 	},
 	"subtest 60": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 60"
+		"key_name": "key secp384r1 60"
 	},
 	"subtest 61": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 61"
+		"key_name": "key secp384r1 61"
 	},
 	"subtest 62": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 62"
+		"key_name": "key secp384r1 62"
 	},
 	"subtest 63": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 63"
+		"key_name": "key secp384r1 63"
 	},
 	"subtest 64": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 64"
+		"key_name": "key secp384r1 64"
 	},
 	"subtest 65": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 65"
+		"key_name": "key secp384r1 65"
 	},
 	"subtest 66": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 66"
+		"key_name": "key secp384r1 66"
 	},
 	"subtest 67": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 67"
+		"key_name": "key secp384r1 67"
 	},
 	"subtest 68": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 68"
+		"key_name": "key secp384r1 68"
 	},
 	"subtest 69": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 69"
+		"key_name": "key secp384r1 69"
 	},
 	"subtest 70": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 70"
+		"key_name": "key secp384r1 70"
 	},
 	"subtest 71": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 71"
+		"key_name": "key secp384r1 71"
 	},
 	"subtest 72": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 72"
+		"key_name": "key secp384r1 72"
 	},
 	"subtest 73": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 73"
+		"key_name": "key secp384r1 73"
 	},
 	"subtest 74": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 74"
+		"key_name": "key secp384r1 74"
 	},
 	"subtest 75": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 75"
+		"key_name": "key secp384r1 75"
 	},
 	"subtest 76": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 76"
+		"key_name": "key secp384r1 76"
 	},
 	"subtest 77": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 77"
+		"key_name": "key secp384r1 77"
 	},
 	"subtest 78": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 78"
+		"key_name": "key secp384r1 78"
 	},
 	"subtest 79": {
 		"command": "GENERATE",
 		"subsystem": "SECO",
-		"key_name": "key NIST 79"
+		"key_name": "key secp384r1 79"
 	},
-	"subtest 80": { // Delete the first NIST key
+	"subtest 80": { // Delete the first Secp R1 key
 		"command": "DELETE",
-		"key_name": "key NIST 1",
+		"key_name": "key secp384r1 1",
 		"depends": 1
 	},
 	"subtest 81": {
@@ -980,392 +980,392 @@
 	},
 	"subtest 83": {
 		"command": "DELETE",
-		"key_name": "key NIST 2",
+		"key_name": "key secp384r1 2",
 		"depends": 2
 	},
 	"subtest 84": {
 		"command": "DELETE",
-		"key_name": "key NIST 3",
+		"key_name": "key secp384r1 3",
 		"depends": 3
 	},
 	"subtest 85": {
 		"command": "DELETE",
-		"key_name": "key NIST 4",
+		"key_name": "key secp384r1 4",
 		"depends": 4
 	},
 	"subtest 86": {
 		"command": "DELETE",
-		"key_name": "key NIST 5",
+		"key_name": "key secp384r1 5",
 		"depends": 5
 	},
 	"subtest 87": {
 		"command": "DELETE",
-		"key_name": "key NIST 6",
+		"key_name": "key secp384r1 6",
 		"depends": 6
 	},
 	"subtest 88": {
 		"command": "DELETE",
-		"key_name": "key NIST 7",
+		"key_name": "key secp384r1 7",
 		"depends": 7
 	},
 	"subtest 89": {
 		"command": "DELETE",
-		"key_name": "key NIST 8",
+		"key_name": "key secp384r1 8",
 		"depends": 8
 	},
 	"subtest 90": {
 		"command": "DELETE",
-		"key_name": "key NIST 9",
+		"key_name": "key secp384r1 9",
 		"depends": 9
 	},
 	"subtest 91": {
 		"command": "DELETE",
-		"key_name": "key NIST 10",
+		"key_name": "key secp384r1 10",
 		"depends": 10
 	},
 	"subtest 92": {
 		"command": "DELETE",
-		"key_name": "key NIST 11",
+		"key_name": "key secp384r1 11",
 		"depends": 11
 	},
 	"subtest 93": {
 		"command": "DELETE",
-		"key_name": "key NIST 12",
+		"key_name": "key secp384r1 12",
 		"depends": 12
 	},
 	"subtest 94": {
 		"command": "DELETE",
-		"key_name": "key NIST 13",
+		"key_name": "key secp384r1 13",
 		"depends": 13
 	},
 	"subtest 95": {
 		"command": "DELETE",
-		"key_name": "key NIST 14",
+		"key_name": "key secp384r1 14",
 		"depends": 14
 	},
 	"subtest 96": {
 		"command": "DELETE",
-		"key_name": "key NIST 15",
+		"key_name": "key secp384r1 15",
 		"depends": 15
 	},
 	"subtest 97": {
 		"command": "DELETE",
-		"key_name": "key NIST 16",
+		"key_name": "key secp384r1 16",
 		"depends": 16
 	},
 	"subtest 98": {
 		"command": "DELETE",
-		"key_name": "key NIST 17",
+		"key_name": "key secp384r1 17",
 		"depends": 17
 	},
 	"subtest 99": {
 		"command": "DELETE",
-		"key_name": "key NIST 18",
+		"key_name": "key secp384r1 18",
 		"depends": 18
 	},
 	"subtest 100": {
 		"command": "DELETE",
-		"key_name": "key NIST 19",
+		"key_name": "key secp384r1 19",
 		"depends": 19
 	},
 	"subtest 101": {
 		"command": "DELETE",
-		"key_name": "key NIST 20",
+		"key_name": "key secp384r1 20",
 		"depends": 20
 	},
 	"subtest 102": {
 		"command": "DELETE",
-		"key_name": "key NIST 21",
+		"key_name": "key secp384r1 21",
 		"depends": 21
 	},
 	"subtest 103": {
 		"command": "DELETE",
-		"key_name": "key NIST 22",
+		"key_name": "key secp384r1 22",
 		"depends": 22
 	},
 	"subtest 104": {
 		"command": "DELETE",
-		"key_name": "key NIST 23",
+		"key_name": "key secp384r1 23",
 		"depends": 23
 	},
 	"subtest 105": {
 		"command": "DELETE",
-		"key_name": "key NIST 24",
+		"key_name": "key secp384r1 24",
 		"depends": 24
 	},
 	"subtest 106": {
 		"command": "DELETE",
-		"key_name": "key NIST 25",
+		"key_name": "key secp384r1 25",
 		"depends": 25
 	},
 	"subtest 107": {
 		"command": "DELETE",
-		"key_name": "key NIST 26",
+		"key_name": "key secp384r1 26",
 		"depends": 26
 	},
 	"subtest 108": {
 		"command": "DELETE",
-		"key_name": "key NIST 27",
+		"key_name": "key secp384r1 27",
 		"depends": 27
 	},
 	"subtest 109": {
 		"command": "DELETE",
-		"key_name": "key NIST 28",
+		"key_name": "key secp384r1 28",
 		"depends": 28
 	},
 	"subtest 110": {
 		"command": "DELETE",
-		"key_name": "key NIST 29",
+		"key_name": "key secp384r1 29",
 		"depends": 29
 	},
 	"subtest 111": {
 		"command": "DELETE",
-		"key_name": "key NIST 30",
+		"key_name": "key secp384r1 30",
 		"depends": 30
 	},
 	"subtest 112": {
 		"command": "DELETE",
-		"key_name": "key NIST 31",
+		"key_name": "key secp384r1 31",
 		"depends": 31
 	},
 	"subtest 113": {
 		"command": "DELETE",
-		"key_name": "key NIST 32",
+		"key_name": "key secp384r1 32",
 		"depends": 32
 	},
 	"subtest 114": {
 		"command": "DELETE",
-		"key_name": "key NIST 33",
+		"key_name": "key secp384r1 33",
 		"depends": 33
 	},
 	"subtest 115": {
 		"command": "DELETE",
-		"key_name": "key NIST 34",
+		"key_name": "key secp384r1 34",
 		"depends": 34
 	},
 	"subtest 116": {
 		"command": "DELETE",
-		"key_name": "key NIST 35",
+		"key_name": "key secp384r1 35",
 		"depends": 35
 	},
 	"subtest 117": {
 		"command": "DELETE",
-		"key_name": "key NIST 36",
+		"key_name": "key secp384r1 36",
 		"depends": 36
 	},
 	"subtest 118": {
 		"command": "DELETE",
-		"key_name": "key NIST 37",
+		"key_name": "key secp384r1 37",
 		"depends": 37
 	},
 	"subtest 119": {
 		"command": "DELETE",
-		"key_name": "key NIST 38",
+		"key_name": "key secp384r1 38",
 		"depends": 38
 	},
 	"subtest 120": {
 		"command": "DELETE",
-		"key_name": "key NIST 39",
+		"key_name": "key secp384r1 39",
 		"depends": 39
 	},
 	"subtest 121": {
 		"command": "DELETE",
-		"key_name": "key NIST 40",
+		"key_name": "key secp384r1 40",
 		"depends": 40
 	},
 	"subtest 122": {
 		"command": "DELETE",
-		"key_name": "key NIST 41",
+		"key_name": "key secp384r1 41",
 		"depends": 41
 	},
 	"subtest 123": {
 		"command": "DELETE",
-		"key_name": "key NIST 42",
+		"key_name": "key secp384r1 42",
 		"depends": 42
 	},
 	"subtest 124": {
 		"command": "DELETE",
-		"key_name": "key NIST 43",
+		"key_name": "key secp384r1 43",
 		"depends": 43
 	},
 	"subtest 125": {
 		"command": "DELETE",
-		"key_name": "key NIST 44",
+		"key_name": "key secp384r1 44",
 		"depends": 44
 	},
 	"subtest 126": {
 		"command": "DELETE",
-		"key_name": "key NIST 45",
+		"key_name": "key secp384r1 45",
 		"depends": 45
 	},
 	"subtest 127": {
 		"command": "DELETE",
-		"key_name": "key NIST 46",
+		"key_name": "key secp384r1 46",
 		"depends": 46
 	},
 	"subtest 128": {
 		"command": "DELETE",
-		"key_name": "key NIST 47",
+		"key_name": "key secp384r1 47",
 		"depends": 47
 	},
 	"subtest 129": {
 		"command": "DELETE",
-		"key_name": "key NIST 48",
+		"key_name": "key secp384r1 48",
 		"depends": 48
 	},
 	"subtest 130": {
 		"command": "DELETE",
-		"key_name": "key NIST 49",
+		"key_name": "key secp384r1 49",
 		"depends": 49
 	},
 	"subtest 131": {
 		"command": "DELETE",
-		"key_name": "key NIST 50",
+		"key_name": "key secp384r1 50",
 		"depends": 50
 	},
 	"subtest 132": {
 		"command": "DELETE",
-		"key_name": "key NIST 51",
+		"key_name": "key secp384r1 51",
 		"depends": 51
 	},
 	"subtest 133": {
 		"command": "DELETE",
-		"key_name": "key NIST 52",
+		"key_name": "key secp384r1 52",
 		"depends": 52
 	},
 	"subtest 134": {
 		"command": "DELETE",
-		"key_name": "key NIST 53",
+		"key_name": "key secp384r1 53",
 		"depends": 53
 	},
 	"subtest 135": {
 		"command": "DELETE",
-		"key_name": "key NIST 54",
+		"key_name": "key secp384r1 54",
 		"depends": 54
 	},
 	"subtest 136": {
 		"command": "DELETE",
-		"key_name": "key NIST 55",
+		"key_name": "key secp384r1 55",
 		"depends": 55
 	},
 	"subtest 137": {
 		"command": "DELETE",
-		"key_name": "key NIST 56",
+		"key_name": "key secp384r1 56",
 		"depends": 56
 	},
 	"subtest 138": {
 		"command": "DELETE",
-		"key_name": "key NIST 57",
+		"key_name": "key secp384r1 57",
 		"depends": 57
 	},
 	"subtest 139": {
 		"command": "DELETE",
-		"key_name": "key NIST 58",
+		"key_name": "key secp384r1 58",
 		"depends": 58
 	},
 	"subtest 140": {
 		"command": "DELETE",
-		"key_name": "key NIST 59",
+		"key_name": "key secp384r1 59",
 		"depends": 59
 	},
 	"subtest 141": {
 		"command": "DELETE",
-		"key_name": "key NIST 60",
+		"key_name": "key secp384r1 60",
 		"depends": 60
 	},
 	"subtest 142": {
 		"command": "DELETE",
-		"key_name": "key NIST 61",
+		"key_name": "key secp384r1 61",
 		"depends": 61
 	},
 	"subtest 143": {
 		"command": "DELETE",
-		"key_name": "key NIST 62",
+		"key_name": "key secp384r1 62",
 		"depends": 62
 	},
 	"subtest 144": {
 		"command": "DELETE",
-		"key_name": "key NIST 63",
+		"key_name": "key secp384r1 63",
 		"depends": 63
 	},
 	"subtest 145": {
 		"command": "DELETE",
-		"key_name": "key NIST 64",
+		"key_name": "key secp384r1 64",
 		"depends": 64
 	},
 	"subtest 146": {
 		"command": "DELETE",
-		"key_name": "key NIST 65",
+		"key_name": "key secp384r1 65",
 		"depends": 65
 	},
 	"subtest 147": {
 		"command": "DELETE",
-		"key_name": "key NIST 66",
+		"key_name": "key secp384r1 66",
 		"depends": 66
 	},
 	"subtest 148": {
 		"command": "DELETE",
-		"key_name": "key NIST 67",
+		"key_name": "key secp384r1 67",
 		"depends": 67
 	},
 	"subtest 149": {
 		"command": "DELETE",
-		"key_name": "key NIST 68",
+		"key_name": "key secp384r1 68",
 		"depends": 68
 	},
 	"subtest 150": {
 		"command": "DELETE",
-		"key_name": "key NIST 69",
+		"key_name": "key secp384r1 69",
 		"depends": 69
 	},
 	"subtest 151": {
 		"command": "DELETE",
-		"key_name": "key NIST 70",
+		"key_name": "key secp384r1 70",
 		"depends": 70
 	},
 	"subtest 152": {
 		"command": "DELETE",
-		"key_name": "key NIST 71",
+		"key_name": "key secp384r1 71",
 		"depends": 71
 	},
 	"subtest 153": {
 		"command": "DELETE",
-		"key_name": "key NIST 72",
+		"key_name": "key secp384r1 72",
 		"depends": 72
 	},
 	"subtest 154": {
 		"command": "DELETE",
-		"key_name": "key NIST 73",
+		"key_name": "key secp384r1 73",
 		"depends": 73
 	},
 	"subtest 155": {
 		"command": "DELETE",
-		"key_name": "key NIST 74",
+		"key_name": "key secp384r1 74",
 		"depends": 74
 	},
 	"subtest 156": {
 		"command": "DELETE",
-		"key_name": "key NIST 75",
+		"key_name": "key secp384r1 75",
 		"depends": 75
 	},
 	"subtest 157": {
 		"command": "DELETE",
-		"key_name": "key NIST 76",
+		"key_name": "key secp384r1 76",
 		"depends": 76
 	},
 	"subtest 158": {
 		"command": "DELETE",
-		"key_name": "key NIST 77",
+		"key_name": "key secp384r1 77",
 		"depends": 77
 	},
 	"subtest 159": {
 		"command": "DELETE",
-		"key_name": "key NIST 78",
+		"key_name": "key secp384r1 78",
 		"depends": 78
 	},
 	"subtest 160": {
 		"command": "DELETE",
-		"key_name": "key NIST 79",
+		"key_name": "key secp384r1 79",
 		"depends": 79
 	},
 	"subtest 161": {

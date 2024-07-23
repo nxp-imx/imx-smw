@@ -1,8 +1,8 @@
 {
 	"keys": {
-		"key NIST 1": {
+		"key secp256r1 1": {
 			"id": 1342177279, // "0x4FFFFFFF"
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
 				"PERSISTENT"
@@ -15,9 +15,9 @@
 				"HASH=SHA256"
 			]
 		},
-		"key NIST 2": {
+		"key secp256r1 2": {
 			"id": 805310465, // "0x30001001"
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
 				"PERSISTENT"
@@ -34,18 +34,18 @@
 	"subtest 1": { // Generate key persistent with wrong ID
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key NIST 1",
+		"key_name": "key secp256r1 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 2": { // Generate key persistent with correct ID
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key NIST 2"
+		"key_name": "key secp256r1 2"
 	},
 	"subtest 3": { // Generate key persistent again with correct ID
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key NIST 2",
+		"key_name": "key secp256r1 2",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 4": {
@@ -64,12 +64,12 @@
 			"55555555555555555555555555555555",
 			"55555555555555555555555555555555"
 		],
-		"key_name": "key NIST 2",
+		"key_name": "key secp256r1 2",
 		"depends": 2
 	},
 	"subtest 5": {
 		"command": "DELETE",
-		"key_name": "key NIST 2",
+		"key_name": "key secp256r1 2",
 		"depends": 2
 	}
 }

@@ -245,7 +245,7 @@ static int set_export_opt_params(struct subtest_data *subtest,
 	if (*key_public_length(exp_key_test))
 		*key_public_length(key_test) = *key_public_length(exp_key_test);
 
-	if (!strcmp(tmp_key_desc.type_name, RSA_KEY) &&
+	if (tmp_key_desc.type_name == SMW_KEY_TYPE_NAME_RSA &&
 	    *key_modulus_length(exp_key_test)) {
 		*key_modulus_length(key_test) =
 			*key_modulus_length(exp_key_test);
@@ -270,7 +270,7 @@ static int set_export_opt_params(struct subtest_data *subtest,
 		}
 	}
 
-	if (!strcmp(tmp_key_desc.type_name, RSA_KEY) &&
+	if (tmp_key_desc.type_name == SMW_KEY_TYPE_NAME_RSA &&
 	    *key_modulus_length(key_test)) {
 		*key_modulus(key_test) = malloc(*key_modulus_length(key_test));
 		if (!*key_modulus(key_test)) {
@@ -987,8 +987,8 @@ int get_key_attributes(struct subtest_data *subtest)
 		error++;
 	}
 
-	if (strcmp(key_test.desc.type_name, key_ref.desc.type_name)) {
-		DBG_PRINT("Invalid key type got %s expected %s",
+	if (key_test.desc.type_name != key_ref.desc.type_name) {
+		DBG_PRINT("Invalid key type got %d expected %d",
 			  key_test.desc.type_name, key_ref.desc.type_name);
 		error++;
 	}

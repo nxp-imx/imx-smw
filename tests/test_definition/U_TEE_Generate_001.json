@@ -61,7 +61,7 @@
 			]
 		},
 		"key 7": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 192,
 			"attributes_list": [
 				"TRANSIENT"
@@ -71,7 +71,7 @@
 			]
 		},
 		"key 8": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 224,
 			"attributes_list": [
 				"TRANSIENT"
@@ -81,7 +81,7 @@
 			]
 		},
 		"key 9": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
 				"TRANSIENT"
@@ -91,7 +91,7 @@
 			]
 		},
 		"key 10": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
@@ -101,7 +101,7 @@
 			]
 		},
 		"key 11": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 521,
 			"attributes_list": [
 				"TRANSIENT"

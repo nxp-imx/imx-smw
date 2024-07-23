@@ -1,8 +1,8 @@
 {
 	"keys": {
-		"key NIST": {
+		"key secp256r1": {
 			"id": 805310466, // "0x30001002"
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
 				"PERSISTENT"
@@ -15,12 +15,12 @@
 	"subtest 1": { // Generate key persistent with correct ID
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_name": "key NIST"
+		"key_name": "key secp256r1"
 	},
 	"subtest 2": { // Generate key persistent again with correct ID
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_name": "key NIST",
+		"key_name": "key secp256r1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 3": {
@@ -39,12 +39,12 @@
 			"55555555555555555555555555555555",
 			"55555555555555555555555555555555"
 		],
-		"key_name": "key NIST",
+		"key_name": "key secp256r1",
 		"depends": 1
 	},
 	"subtest 4": {
 		"command": "DELETE",
-		"key_name": "key NIST",
+		"key_name": "key secp256r1",
 		"depends": 1
 	}
 }

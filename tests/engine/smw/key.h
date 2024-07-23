@@ -118,7 +118,7 @@ struct keys {
  */
 static inline int key_is_type_set(struct keypair_ops *key_test)
 {
-	return !!key_test->desc.type_name;
+	return key_test->desc.type_name != SMW_KEY_TYPE_NAME_NONE;
 }
 
 /**
@@ -218,6 +218,15 @@ static inline int key_is_modulus(struct keypair_ops *key_test)
 {
 	return key_test->modulus_length && key_test->modulus;
 }
+
+/**
+ * key_get_type_name() - Get the key type name
+ * @string: Name as a string
+ *
+ * Return:
+ * The key type name.
+ */
+smw_key_type_t key_get_type_name(const char *string);
 
 /**
  * key_desc_init() - Initialize SMW key descriptor fields

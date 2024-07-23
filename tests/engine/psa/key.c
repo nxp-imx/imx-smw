@@ -87,60 +87,58 @@
 #define SHAKE256_512_STR	    "SHAKE256_512"
 #define SM3_STR			    "SM3"
 
-#define KEY_TYPE(_name, _psa)                                                  \
+#define KEY_TYPE(_string, _psa)                                                \
 	{                                                                      \
-		.key_type_name = _name, .psa_key_type = PSA_KEY_TYPE_##_psa,   \
+		.key_type_string = _string,                                    \
+		.psa_key_type = PSA_KEY_TYPE_##_psa,                           \
 	}
 
 /**
  * struct - Key type
- * @key_type_name: Key type name.
+ * @key_type_string: Key type string.
  * @psa_key_type: PSA key type.
  */
 static const struct cipher_key_type {
-	const char *key_type_name;
+	const char *key_type_string;
 	psa_key_type_t psa_key_type;
 } cipher_key_type[] = { KEY_TYPE("AES", AES), KEY_TYPE("DES", DES),
 			KEY_TYPE("DES3", DES), KEY_TYPE("SM4", SM4) };
 
-#define ECC_KEY_TYPE(_name, _family)                                           \
+#define ECC_KEY_TYPE(_string, _family)                                         \
 	{                                                                      \
-		.key_type_name = _name, .ecc_family = PSA_ECC_FAMILY_##_family \
+		.key_type_string = _string,                                    \
+		.ecc_family = PSA_ECC_FAMILY_##_family                         \
 	}
 
 /**
  * struct - ECC key type
- * @key_type_name: SMW HMAC key type name.
+ * @key_type_string: SMW HMAC key type string.
  * @ecc_family: Elliptic curve family.
  */
 struct ecc_key_type {
-	const char *key_type_name;
+	const char *key_type_string;
 	psa_ecc_family_t ecc_family;
 };
 
-static const struct ecc_key_type ecdsa_key_type[] = {
-	ECC_KEY_TYPE("NIST", SECP_R1),
+static const struct ecc_key_type ecc_key_type[] = {
+	ECC_KEY_TYPE("SECP_R1", SECP_R1),
 	ECC_KEY_TYPE("BRAINPOOL_R1", BRAINPOOL_P_R1)
 };
 
-static const struct ecc_key_type ecdh_key_type[] = {
-	ECC_KEY_TYPE("ECDH_NIST", SECP_R1),
-	ECC_KEY_TYPE("ECDH_BRAINPOOL_R1", BRAINPOOL_P_R1)
-};
-
-#define KEY_HASH(_name)                                                        \
+#define KEY_HASH(_string)                                                      \
 	{                                                                      \
-		.hash_str = _name##_STR, .psa_hash = PSA_ALG_##_name           \
+		.hash_str = _string##_STR, .psa_hash = PSA_ALG_##_string       \
 	}
 
-#define KEY_ALGORITHM(_name)                                                   \
+#define KEY_ALGORITHM(_string)                                                 \
 	{                                                                      \
-		.alg_str = _name##_STR, .psa_alg = PSA_ALG_##_name             \
+		.alg_str = _string##_STR, .psa_alg = PSA_ALG_##_string         \
 	}
 
-#define KEY_USAGE(_name, _restricted)                                          \
+#define KEY_USAGE(_string, _restricted)                                        \
 	{                                                                      \
-		.usage_str = _name##_STR, .psa_usage = PSA_KEY_USAGE_##_name,  \
+		.usage_str = _string##_STR,                                    \
+		.psa_usage = PSA_KEY_USAGE_##_string,                          \
 		.restricted = _restricted                                      \
 	}
 
@@ -153,31 +151,26 @@ static const struct {
 	{ "PERMANENT", PSA_KEY_PERSISTENCE_READ_ONLY },
 };
 
-static psa_key_type_t get_ecc_psa_key_type(const char *key_type_name,
-					   const char *privacy_name)
+static psa_key_type_t get_ecc_psa_key_type(const char *key_type_string,
+					   const char *privacy_string)
 {
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 	bool is_keypair = false;
 	psa_ecc_family_t ecc_family = 0;
 	unsigned int i = 0;
 
-	if (!privacy_name)
+	if (!privacy_string)
 		return psa_key_type;
 
-	for (; !ecc_family && i < ARRAY_SIZE(ecdsa_key_type); i++) {
-		if (!strcmp(ecdsa_key_type[i].key_type_name, key_type_name))
-			ecc_family = ecdsa_key_type[i].ecc_family;
-	}
-
-	for (i = 0; !ecc_family && i < ARRAY_SIZE(ecdh_key_type); i++) {
-		if (!strcmp(ecdh_key_type[i].key_type_name, key_type_name))
-			ecc_family = ecdh_key_type[i].ecc_family;
+	for (; !ecc_family && i < ARRAY_SIZE(ecc_key_type); i++) {
+		if (!strcmp(ecc_key_type[i].key_type_string, key_type_string))
+			ecc_family = ecc_key_type[i].ecc_family;
 	}
 
 	if (!ecc_family)
 		return psa_key_type;
 
-	if (!strcmp(privacy_name, KEYPAIR_STR))
+	if (!strcmp(privacy_string, KEYPAIR_STR))
 		is_keypair = true;
 
 	if (is_keypair)
@@ -188,16 +181,16 @@ static psa_key_type_t get_ecc_psa_key_type(const char *key_type_name,
 	return psa_key_type;
 }
 
-static psa_key_type_t get_dh_psa_key_type(const char *key_type_name,
-					  const char *privacy_name)
+static psa_key_type_t get_dh_psa_key_type(const char *key_type_string,
+					  const char *privacy_string)
 {
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 	bool is_keypair = false;
 
-	if (strcmp(key_type_name, DH_STR) || !privacy_name)
+	if (strcmp(key_type_string, DH_STR) || !privacy_string)
 		return psa_key_type;
 
-	if (!strcmp(privacy_name, KEYPAIR_STR))
+	if (!strcmp(privacy_string, KEYPAIR_STR))
 		is_keypair = true;
 
 	if (is_keypair)
@@ -209,16 +202,16 @@ static psa_key_type_t get_dh_psa_key_type(const char *key_type_name,
 	return psa_key_type;
 }
 
-static psa_key_type_t get_rsa_psa_key_type(const char *key_type_name,
-					   const char *privacy_name)
+static psa_key_type_t get_rsa_psa_key_type(const char *key_type_string,
+					   const char *privacy_string)
 {
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 	bool is_keypair = false;
 
-	if (strcmp(key_type_name, RSA_STR) || !privacy_name)
+	if (strcmp(key_type_string, RSA_STR) || !privacy_string)
 		return psa_key_type;
 
-	if (!strcmp(privacy_name, KEYPAIR_STR))
+	if (!strcmp(privacy_string, KEYPAIR_STR))
 		is_keypair = true;
 
 	if (is_keypair)
@@ -229,62 +222,64 @@ static psa_key_type_t get_rsa_psa_key_type(const char *key_type_name,
 	return psa_key_type;
 }
 
-static psa_key_type_t get_hmac_psa_key_type(const char *key_type_name)
+static psa_key_type_t get_hmac_psa_key_type(const char *key_type_string)
 {
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 
-	if (!strncmp(key_type_name, HMAC_STR, strlen(HMAC_STR)))
+	if (!strncmp(key_type_string, HMAC_STR, strlen(HMAC_STR)))
 		psa_key_type = PSA_KEY_TYPE_HMAC;
 
 	return psa_key_type;
 }
 
-psa_key_type_t get_cipher_psa_key_type(const char *key_type_name)
+psa_key_type_t get_cipher_psa_key_type(const char *key_type_string)
 {
 	unsigned int i = 0;
 
 	for (; i < ARRAY_SIZE(cipher_key_type); i++) {
-		if (!strcmp(cipher_key_type[i].key_type_name, key_type_name))
+		if (!strcmp(cipher_key_type[i].key_type_string,
+			    key_type_string))
 			return cipher_key_type[i].psa_key_type;
 	}
 
 	return PSA_KEY_TYPE_NONE;
 }
 
-static psa_key_type_t get_raw_psa_key_type(const char *key_type_name)
+static psa_key_type_t get_raw_psa_key_type(const char *key_type_string)
 {
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 
-	if (!strncmp(key_type_name, RAW_DATA_STR, strlen(RAW_DATA_STR)))
+	if (!strncmp(key_type_string, RAW_DATA_STR, strlen(RAW_DATA_STR)))
 		psa_key_type = PSA_KEY_TYPE_RAW_DATA;
 
 	return psa_key_type;
 }
 
 static int get_psa_key_type(psa_key_type_t *psa_key_type,
-			    const char *key_type_name, const char *privacy_name)
+			    const char *key_type_string,
+			    const char *privacy_string)
 {
 	int ret = ERR_CODE(BAD_PARAM_TYPE);
 
 	if (!psa_key_type)
 		return ERR_CODE(BAD_ARGS);
 
-	if (!key_type_name)
+	if (!key_type_string)
 		return ret;
 
-	*psa_key_type = get_dh_psa_key_type(key_type_name, privacy_name);
+	*psa_key_type = get_dh_psa_key_type(key_type_string, privacy_string);
 	if (*psa_key_type == PSA_KEY_TYPE_NONE)
 		*psa_key_type =
-			get_rsa_psa_key_type(key_type_name, privacy_name);
+			get_rsa_psa_key_type(key_type_string, privacy_string);
 	if (*psa_key_type == PSA_KEY_TYPE_NONE)
 		*psa_key_type =
-			get_ecc_psa_key_type(key_type_name, privacy_name);
+			get_ecc_psa_key_type(key_type_string, privacy_string);
 	if (*psa_key_type == PSA_KEY_TYPE_NONE)
-		*psa_key_type = get_hmac_psa_key_type(key_type_name);
+		*psa_key_type = get_hmac_psa_key_type(key_type_string);
 	if (*psa_key_type == PSA_KEY_TYPE_NONE)
-		*psa_key_type = get_cipher_psa_key_type(key_type_name);
+		*psa_key_type = get_cipher_psa_key_type(key_type_string);
 	if (*psa_key_type == PSA_KEY_TYPE_NONE)
-		*psa_key_type = get_raw_psa_key_type(key_type_name);
+		*psa_key_type = get_raw_psa_key_type(key_type_string);
 	if (*psa_key_type != PSA_KEY_TYPE_NONE)
 		ret = ERR_CODE(PASSED);
 
@@ -377,7 +372,7 @@ static const struct util_attr_info usage_info_psa[] = {
 	ATTR_USAGE_PSA(VERIFY_HASH),
 	ATTR_USAGE_PSA(VERIFY_MESSAGE),
 	ATTR_USAGE_PSA(VERIFY_DERIVATION),
-	{ .name = NULL }
+	{ .string = NULL }
 };
 
 static void usage_callback(void *user_data, const char *attributes[],
@@ -395,44 +390,44 @@ static void usage_callback(void *user_data, const char *attributes[],
 }
 
 static const struct util_attr_info algo_info_psa[] = {
-	ATTR_ALGO_PSA("ECB_NO_PADDING", PSA_ALG_ECB_NO_PADDING),
-	ATTR_ALGO_PSA("CFB", PSA_ALG_CFB),
-	ATTR_ALGO_PSA("CTR", PSA_ALG_CTR),
-	ATTR_ALGO_PSA("OFB", PSA_ALG_OFB),
-	ATTR_ALGO_PSA("XTS", PSA_ALG_XTS),
-	ATTR_ALGO_PSA("CCM", PSA_ALG_CCM),
-	ATTR_ALGO_PSA("GCM", PSA_ALG_GCM),
-	ATTR_ALGO_PSA("CHACHA20_POLY1305", PSA_ALG_CHACHA20_POLY1305),
-	ATTR_ALGO_PSA("CMAC", PSA_ALG_CMAC),
-	ATTR_ALGO_PSA("HMAC", PSA_ALG_HMAC(PSA_ALG_NONE)),
-	ATTR_ALGO_PSA("ECDSA", PSA_ALG_ECDSA_BASE),
-	ATTR_ALGO_PSA("ED25519PH", PSA_ALG_ED25519PH),
-	ATTR_ALGO_PSA("ED448PH", PSA_ALG_ED448PH),
-	ATTR_ALGO_PSA("PURE_EDDSA", PSA_ALG_PURE_EDDSA),
-	ATTR_ALGO_PSA("DETERMINISTIC_ECDSA", PSA_ALG_DETERMINISTIC_ECDSA_BASE),
-	ATTR_ALGO_PSA("HASH_EDDSA", PSA_ALG_HASH_EDDSA_BASE),
-	ATTR_ALGO_PSA("RSA_PKCS1V15", PSA_ALG_RSA_PKCS1V15_SIGN(PSA_ALG_NONE)),
-	ATTR_ALGO_PSA("RSA_PSS", PSA_ALG_RSA_PSS_ANY_SALT(PSA_ALG_NONE)),
-	ATTR_ALGO_PSA("RSA_PKCS1V15_SIGN_RAW", PSA_ALG_RSA_PKCS1V15_SIGN_RAW),
-	ATTR_ALGO_PSA("RSA_PKCS1V15_SIGN_BASE", PSA_ALG_RSA_PKCS1V15_SIGN_BASE),
-	ATTR_ALGO_PSA("RSA_PSS_ANY_SALT", PSA_ALG_RSA_PSS_ANY_SALT_BASE),
-	ATTR_ALGO_PSA("RSA_PSS", PSA_ALG_RSA_PSS_BASE),
-	{ .name = NULL }
+	ATTR_ALGO_PSA(ECB_NO_PADDING, PSA_ALG_ECB_NO_PADDING),
+	ATTR_ALGO_PSA(CFB, PSA_ALG_CFB),
+	ATTR_ALGO_PSA(CTR, PSA_ALG_CTR),
+	ATTR_ALGO_PSA(OFB, PSA_ALG_OFB),
+	ATTR_ALGO_PSA(XTS, PSA_ALG_XTS),
+	ATTR_ALGO_PSA(CCM, PSA_ALG_CCM),
+	ATTR_ALGO_PSA(GCM, PSA_ALG_GCM),
+	ATTR_ALGO_PSA(CHACHA20_POLY1305, PSA_ALG_CHACHA20_POLY1305),
+	ATTR_ALGO_PSA(CMAC, PSA_ALG_CMAC),
+	ATTR_ALGO_PSA(HMAC, PSA_ALG_HMAC(PSA_ALG_NONE)),
+	ATTR_ALGO_PSA(ECDSA, PSA_ALG_ECDSA_BASE),
+	ATTR_ALGO_PSA(ED25519PH, PSA_ALG_ED25519PH),
+	ATTR_ALGO_PSA(ED448PH, PSA_ALG_ED448PH),
+	ATTR_ALGO_PSA(PURE_EDDSA, PSA_ALG_PURE_EDDSA),
+	ATTR_ALGO_PSA(DETERMINISTIC_ECDSA, PSA_ALG_DETERMINISTIC_ECDSA_BASE),
+	ATTR_ALGO_PSA(HASH_EDDSA, PSA_ALG_HASH_EDDSA_BASE),
+	ATTR_ALGO_PSA(RSA_PKCS1V15, PSA_ALG_RSA_PKCS1V15_SIGN(PSA_ALG_NONE)),
+	ATTR_ALGO_PSA(RSA_PSS, PSA_ALG_RSA_PSS_ANY_SALT(PSA_ALG_NONE)),
+	ATTR_ALGO_PSA(RSA_PKCS1V15_SIGN_RAW, PSA_ALG_RSA_PKCS1V15_SIGN_RAW),
+	ATTR_ALGO_PSA(RSA_PKCS1V15_SIGN_BASE, PSA_ALG_RSA_PKCS1V15_SIGN_BASE),
+	ATTR_ALGO_PSA(RSA_PSS_ANY_SALT, PSA_ALG_RSA_PSS_ANY_SALT_BASE),
+	ATTR_ALGO_PSA(RSA_PSS, PSA_ALG_RSA_PSS_BASE),
+	{ .string = NULL }
 };
 
 static const struct util_attr_info hash_info_psa[] = {
-	ATTR_HASH_PSA("MD5", PSA_ALG_MD5),
-	ATTR_HASH_PSA("SHA1", PSA_ALG_SHA_1),
-	ATTR_HASH_PSA("SHA224", PSA_ALG_SHA_224),
-	ATTR_HASH_PSA("SHA256", PSA_ALG_SHA_256),
-	ATTR_HASH_PSA("SHA384", PSA_ALG_SHA_384),
-	ATTR_HASH_PSA("SHA512", PSA_ALG_SHA_512),
-	ATTR_HASH_PSA("SHA3_SHA224", PSA_ALG_SHA3_224),
-	ATTR_HASH_PSA("SHA3_SHA256", PSA_ALG_SHA3_256),
-	ATTR_HASH_PSA("SHA3_SHA384", PSA_ALG_SHA3_384),
-	ATTR_HASH_PSA("SHA3_SHA512", PSA_ALG_SHA3_512),
-	ATTR_HASH_PSA("ANY_HASH", PSA_ALG_ANY_HASH),
-	{ .name = NULL }
+	ATTR_HASH_PSA(MD5, PSA_ALG_MD5),
+	ATTR_HASH_PSA(SHA1, PSA_ALG_SHA_1),
+	ATTR_HASH_PSA(SHA224, PSA_ALG_SHA_224),
+	ATTR_HASH_PSA(SHA256, PSA_ALG_SHA_256),
+	ATTR_HASH_PSA(SHA384, PSA_ALG_SHA_384),
+	ATTR_HASH_PSA(SHA512, PSA_ALG_SHA_512),
+	ATTR_HASH_PSA(SHA3_SHA224, PSA_ALG_SHA3_224),
+	ATTR_HASH_PSA(SHA3_SHA256, PSA_ALG_SHA3_256),
+	ATTR_HASH_PSA(SHA3_SHA384, PSA_ALG_SHA3_384),
+	ATTR_HASH_PSA(SHA3_SHA512, PSA_ALG_SHA3_512),
+	ATTR_HASH_PSA(ANY_HASH, PSA_ALG_ANY_HASH),
+	{ .string = NULL }
 };
 
 void algorithm_callback_psa(void *user_data, const char *params[],
@@ -485,7 +480,7 @@ void algorithm_callback_psa(void *user_data, const char *params[],
 static const struct util_attr_info lifetime_info_psa[] = {
 	ATTR_LIFETIME_PSA(VOLATILE),
 	ATTR_LIFETIME_PSA(PERSISTENT),
-	{ .name = NULL }
+	{ .string = NULL }
 };
 
 static void attributes_callback(void *user_data, const char *attributes[],
@@ -630,7 +625,7 @@ static int keypair_read(struct keypair_psa *key_test,
 {
 	int ret = ERR_CODE(PASSED);
 	struct json_object *okey = NULL;
-	const char *format_name = NULL;
+	const char *format_string = NULL;
 
 	if (!params || !key_test) {
 		DBG_PRINT_BAD_ARGS();
@@ -638,11 +633,11 @@ static int keypair_read(struct keypair_psa *key_test,
 	}
 
 	if (json_object_object_get_ex(params, FORMAT_OBJ, &okey))
-		format_name = json_object_get_string(okey);
+		format_string = json_object_get_string(okey);
 
 	if (json_object_object_get_ex(params, KEY_DATA_OBJ, &okey)) {
 		ret = read_key(&key_test->data, &key_test->data_length,
-			       format_name, okey);
+			       format_string, okey);
 
 		if (ret != ERR_CODE(PASSED))
 			return ret;
@@ -657,8 +652,8 @@ static int read_descriptor(struct llist *keys, struct keypair_psa *key_test,
 	int ret = ERR_CODE(PASSED);
 	struct key_data *data = NULL;
 	const char *parent_key_name = NULL;
-	const char *privacy_name = KEYPAIR_STR;
-	const char *type_name = NULL;
+	const char *privacy_string = KEYPAIR_STR;
+	const char *type_string = NULL;
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 	unsigned int security_size = 0;
 	psa_key_lifetime_t lifetime = PSA_KEY_LIFETIME_VOLATILE;
@@ -720,19 +715,20 @@ static int read_descriptor(struct llist *keys, struct keypair_psa *key_test,
 	}
 
 	/* Read 'privacy' parameter if defined */
-	ret = util_read_json_type(&privacy_name, PRIVACY_OBJ, t_string,
+	ret = util_read_json_type(&privacy_string, PRIVACY_OBJ, t_string,
 				  data->okey_params);
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
 	/* Read 'type' parameter if defined */
-	ret = util_read_json_type(&type_name, TYPE_OBJ, t_string,
+	ret = util_read_json_type(&type_string, TYPE_OBJ, t_string,
 				  data->okey_params);
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
-	if (type_name) {
-		ret = get_psa_key_type(&psa_key_type, type_name, privacy_name);
+	if (type_string) {
+		ret = get_psa_key_type(&psa_key_type, type_string,
+				       privacy_string);
 		if (ret != ERR_CODE(PASSED))
 			return ret;
 

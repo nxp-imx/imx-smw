@@ -1,7 +1,7 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 192,
 			"priv_key": [
 				"e5ce89a34adddf25ff3bf1ffe6803f57",
@@ -27,7 +27,7 @@
 			]
 		},
 		"key 3": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 224,
 			"priv_key": [
 				"e7c92383846a4e6887a10498d8eaca2b",
@@ -55,7 +55,7 @@
 			]
 		},
 		"key 5": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"priv_key": [
 				"c9806898a0334916c860748880a541f0",
@@ -83,7 +83,7 @@
 			]
 		},
 		"key 7": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 384,
 			"priv_key": [
 				"5394f7973ea868c52bf3ff8d8ceeb4db",
@@ -115,7 +115,7 @@
 			]
 		},
 		"key 9": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 521,
 			"priv_key": [
 				"0184258ea667ab99d09d4363b3f51384",
@@ -154,7 +154,7 @@
 			]
 		},
 		"key 11": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 192,
 			"pub_key": [
 				"39dc723b19527daa1e80425209c56463",

@@ -9,6 +9,8 @@
 
 #include <json.h>
 
+#include <smw/names.h>
+
 #include "types.h"
 #include "util.h"
 #include "util_attr.h"
@@ -16,38 +18,55 @@
 
 #include "key.h"
 
+#define KEY_TYPE(_name)                                                        \
+	{                                                                      \
+		.name = SMW_KEY_TYPE_NAME_##_name, .string = #_name            \
+	}
+
+static struct {
+	smw_key_type_t name;
+	const char *string;
+} key_type_names[] = { KEY_TYPE(SECP_R1),      KEY_TYPE(BRAINPOOL_R1),
+		       KEY_TYPE(BRAINPOOL_T1), KEY_TYPE(ED25519),
+		       KEY_TYPE(AES),	       KEY_TYPE(DES),
+		       KEY_TYPE(DES3),	       KEY_TYPE(DSA_SM2_FP),
+		       KEY_TYPE(SM4),	       KEY_TYPE(HMAC),
+		       KEY_TYPE(RSA),	       KEY_TYPE(DH),
+		       KEY_TYPE(TLS_MASTER),   KEY_TYPE(RAW) };
+
 static const struct util_attr_info algo_info[] = {
-	ATTR_ALGO("ECB_NO_PADDING", SYMMETRIC_ENCRYPTION, DEFAULT, ECB_NO_PAD,
+	ATTR_ALGO(ECB_NO_PADDING, SYMMETRIC_ENCRYPTION, DEFAULT, ECB_NO_PAD,
 		  ANY),
-	ATTR_ALGO("CFB", SYMMETRIC_ENCRYPTION, DEFAULT, CFB, ANY),
-	ATTR_ALGO("CTR", SYMMETRIC_ENCRYPTION, DEFAULT, CTR, ANY),
-	ATTR_ALGO("OFB", SYMMETRIC_ENCRYPTION, DEFAULT, OFB, ANY),
-	ATTR_ALGO("XTS", SYMMETRIC_ENCRYPTION, DEFAULT, XTS, ANY),
-	ATTR_ALGO("CCM", AEAD, DEFAULT, CCM, ANY),
-	ATTR_ALGO("GCM", AEAD, DEFAULT, GCM, ANY),
-	ATTR_ALGO("CHACHA20_POLY1305", AEAD, CHACHA20, POLY1305, ANY),
-	ATTR_ALGO("CMAC", MAC, DEFAULT, CMAC, ANY),
-	ATTR_ALGO("HMAC", MAC, HMAC, ANY, ANY),
-	ATTR_ALGO("DEFAULT", ASYMMETRIC_SIGNATURE, DEFAULT, ANY, ANY),
-	ATTR_ALGO_CURVE("ECDSA", ASYMMETRIC_SIGNATURE, ECDSA, ANY, ANY),
-	ATTR_ALGO_CURVE("EDDSA", ASYMMETRIC_SIGNATURE, EDDSA, ANY, ANY),
-	ATTR_ALGO("DSA", ASYMMETRIC_SIGNATURE, DSA, ANY, ANY),
-	ATTR_ALGO("RSA", ASYMMETRIC_SIGNATURE, RSA, ANY, ANY),
-	ATTR_ALGO("RSA_PKCS1V15", ASYMMETRIC_SIGNATURE, RSA, PKCS1_1_5, ANY),
-	ATTR_ALGO("RSA_PSS", ASYMMETRIC_SIGNATURE, RSA, PSS, ANY),
-	ATTR_ALGO("TLS_1_2", ASYMMETRIC_SIGNATURE, TLS_1_2, ANY, ANY),
-	ATTR_ALGO("TLS_1_2_CLIENT", ASYMMETRIC_SIGNATURE, TLS_1_2, CLIENT, ANY),
-	ATTR_ALGO("TLS_1_2_SERVER", ASYMMETRIC_SIGNATURE, TLS_1_2, SERVER, ANY),
-	ATTR_ALGO("ATTEST_CMAC", KEY_ATTESTATION, DEFAULT, CMAC, ANY),
-	ATTR_ALGO_CURVE("ATTEST_ECDSA", KEY_ATTESTATION, ECDSA, ANY, ANY),
-	{ .name = NULL }
+	ATTR_ALGO(CFB, SYMMETRIC_ENCRYPTION, DEFAULT, CFB, ANY),
+	ATTR_ALGO(CTR, SYMMETRIC_ENCRYPTION, DEFAULT, CTR, ANY),
+	ATTR_ALGO(OFB, SYMMETRIC_ENCRYPTION, DEFAULT, OFB, ANY),
+	ATTR_ALGO(XTS, SYMMETRIC_ENCRYPTION, DEFAULT, XTS, ANY),
+	ATTR_ALGO(CCM, AEAD, DEFAULT, CCM, ANY),
+	ATTR_ALGO(GCM, AEAD, DEFAULT, GCM, ANY),
+	ATTR_ALGO(CHACHA20_POLY1305, AEAD, CHACHA20, POLY1305, ANY),
+	ATTR_ALGO(CMAC, MAC, DEFAULT, CMAC, ANY),
+	ATTR_ALGO(HMAC, MAC, HMAC, ANY, ANY),
+	ATTR_ALGO(DEFAULT, ASYMMETRIC_SIGNATURE, DEFAULT, ANY, ANY),
+	ATTR_ALGO_CURVE(ECDSA, ASYMMETRIC_SIGNATURE, ECDSA, ANY, ANY),
+	ATTR_ALGO_CURVE(EDDSA, ASYMMETRIC_SIGNATURE, EDDSA, ANY, ANY),
+	ATTR_ALGO(DSA, ASYMMETRIC_SIGNATURE, DSA, ANY, ANY),
+	ATTR_ALGO(RSA, ASYMMETRIC_SIGNATURE, RSA, ANY, ANY),
+	ATTR_ALGO(RSA_PKCS1V15, ASYMMETRIC_SIGNATURE, RSA, PKCS1_1_5, ANY),
+	ATTR_ALGO(RSA_PSS, ASYMMETRIC_SIGNATURE, RSA, PSS, ANY),
+	ATTR_ALGO(TLS_1_2, ASYMMETRIC_SIGNATURE, TLS_1_2, ANY, ANY),
+	ATTR_ALGO(TLS_1_2_CLIENT, ASYMMETRIC_SIGNATURE, TLS_1_2, CLIENT, ANY),
+	ATTR_ALGO(TLS_1_2_SERVER, ASYMMETRIC_SIGNATURE, TLS_1_2, SERVER, ANY),
+	ATTR_ALGO(ATTEST_CMAC, KEY_ATTESTATION, DEFAULT, CMAC, ANY),
+	ATTR_ALGO_CURVE(ATTEST_ECDSA, KEY_ATTESTATION, ECDSA, ANY, ANY),
+	{ .string = NULL }
 };
 
 static const struct util_attr_info hash_info[] = {
 	ATTR_HASH(NONE),     ATTR_HASH(MD5),	  ATTR_HASH(SHA1),
 	ATTR_HASH(SHA224),   ATTR_HASH(SHA256),	  ATTR_HASH(SHA384),
-	ATTR_HASH(SHA512),   ATTR_HASH(SHA3_224), ATTR_HASH(SHA3_256),
-	ATTR_HASH(SHA3_384), ATTR_HASH(SHA3_512), { .name = NULL }
+	ATTR_HASH(SHA512),   ATTR_HASH(SM3),	  ATTR_HASH(SHA3_224),
+	ATTR_HASH(SHA3_256), ATTR_HASH(SHA3_384), ATTR_HASH(SHA3_512),
+	{ .string = NULL }
 };
 
 static const struct util_attr_info usage_info[] = {
@@ -56,14 +75,14 @@ static const struct util_attr_info usage_info[] = {
 	ATTR_USAGE(ENCRYPT),	 ATTR_USAGE(DECRYPT),
 	ATTR_USAGE(SIGN_HASH),	 ATTR_USAGE(SIGN_MESSAGE),
 	ATTR_USAGE(VERIFY_HASH), ATTR_USAGE(VERIFY_MESSAGE),
-	{ .name = NULL }
+	{ .string = NULL }
 };
 
 static const struct util_attr_info attributes_info[] = {
 	ATTR_PERSISTENCE(TRANSIENT),
 	ATTR_PERSISTENCE(PERSISTENT),
 	ATTR_PERSISTENCE(PERMANENT),
-	{ .name = NULL }
+	{ .string = NULL }
 };
 
 static struct smw_keypair_gen *get_keypair_gen(struct keypair_ops *this)
@@ -170,8 +189,7 @@ static void set_key_ops(struct keypair_ops *key_test)
 		return;
 	}
 
-	if (key_test->desc.type_name &&
-	    !strcmp(key_test->desc.type_name, RSA_KEY)) {
+	if (key_test->desc.type_name == SMW_KEY_TYPE_NAME_RSA) {
 		key_test->public_data = &get_public_data_rsa;
 		key_test->public_length = &get_public_length_rsa;
 		key_test->private_data = &get_private_data_rsa;
@@ -243,8 +261,7 @@ static int keypair_read(struct keypair_ops *key_test,
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
-	if (key_test->desc.type_name &&
-	    !strcmp(key_test->desc.type_name, RSA_KEY))
+	if (key_test->desc.type_name == SMW_KEY_TYPE_NAME_RSA)
 		ret = util_read_obj_value(key_modulus(key_test),
 					  key_modulus_length(key_test),
 					  MODULUS_OBJ, params);
@@ -269,6 +286,21 @@ static void key_free_key_buffers(struct keypair_ops *key_test)
 	}
 }
 
+smw_key_type_t key_get_type_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_KEY_TYPE_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(key_type_names); i++) {
+		if (!strcmp(key_type_names[i].string, string))
+			return key_type_names[i].name;
+	}
+
+	return SMW_KEY_TYPE_NAME_NB + 1;
+}
+
 static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 			   const char *key_name, struct llist *key_names)
 {
@@ -276,7 +308,7 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 	struct key_data *data = NULL;
 	const char *parent_key_name = NULL;
 	struct smw_key_descriptor *desc = NULL;
-	smw_key_type_t type_name = NULL;
+	const char *type_string = NULL;
 	void *dummy = NULL;
 
 	if (!key_test || !key_name) {
@@ -345,16 +377,16 @@ static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,
 	}
 
 	/* Read 'type' parameter if defined */
-	ret = util_read_json_type(&type_name, TYPE_OBJ, t_string,
+	ret = util_read_json_type(&type_string, TYPE_OBJ, t_string,
 				  data->okey_params);
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
 	if (ret == ERR_CODE(PASSED)) {
-		if (desc->type_name)
+		if (desc->type_name != SMW_KEY_TYPE_NAME_NONE)
 			key_free_key_buffers(key_test);
 
-		desc->type_name = type_name;
+		desc->type_name = key_get_type_name(type_string);
 	}
 
 	/* Read 'security_size' parameter if defined */
@@ -391,7 +423,7 @@ int key_desc_init(struct keypair_ops *key_test, struct smw_keypair_buffer *key)
 
 	desc = &key_test->desc;
 
-	desc->type_name = NULL;
+	desc->type_name = SMW_KEY_TYPE_NAME_NONE;
 	desc->security_size = KEY_SECURITY_NOT_SET;
 	desc->id = KEY_ID_NOT_SET;
 	desc->buffer = key;

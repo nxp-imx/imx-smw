@@ -16,13 +16,13 @@
 			"security_size": 128,
 		},
 		"key 6": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"format": "UNDEFINED",
 			"pub_key": 64
 		},
 		"key 7": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 192,
 			"priv_key": [
 				"55555555555555555555555555555555",
@@ -30,7 +30,7 @@
 			]
 		},
 		"key 8": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"priv_key": 32
 		},

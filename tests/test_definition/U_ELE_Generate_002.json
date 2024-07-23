@@ -14,8 +14,8 @@
 				"ECB_NO_PADDING"
 			]
 		},
-		"key NIST 1": {
-			"type": "NIST",
+		"key secp256r1 1": {
+			"type": "SECP_R1",
 			"security_size": 256,
 			"pub_key": 40,
 			"attributes_list": [
@@ -29,8 +29,8 @@
 				"HASH=SHA256"
 			]
 		},
-		"key NIST 2": {
-			"type": "NIST",
+		"key secp256r1 2": {
+			"type": "SECP_R1",
 			"security_size": 256,
 			"format": "BASE64",
 			"pub_key": 80,
@@ -55,13 +55,13 @@
 	"subtest 2": { // Public length is too short
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key NIST 1",
+		"key_name": "key secp256r1 1",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 3": { // Base64 public length is too short
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key NIST 2",
+		"key_name": "key secp256r1 2",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	}
 }

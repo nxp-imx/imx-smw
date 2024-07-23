@@ -12,7 +12,7 @@
 			]
 		},
 		"key 2": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 128,
 			"priv_key": "30313233343536373839414243444546"
 		},

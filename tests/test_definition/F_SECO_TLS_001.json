@@ -1,7 +1,7 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "ECDH_NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"pub_key": [
 				"76e656a9ea0d51412b83a48891bfb1e7",

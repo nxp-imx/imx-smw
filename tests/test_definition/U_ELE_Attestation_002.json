@@ -1,7 +1,7 @@
 {
 	"keys": {
 		"key attested": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
 				"TRANSIENT"
@@ -15,8 +15,8 @@
 				"HASH=SHA256"
 			]
 		},
-		"key NIST SHA224": {
-			"type": "NIST",
+		"key secp224r1": {
+			"type": "SECP_R1",
 			"security_size": 224,
 			"attributes_list": [
 				"TRANSIENT"
@@ -29,8 +29,8 @@
 				"HASH=SHA224"
 			]
 		},
-		"key NIST SHA256": {
-			"type": "NIST",
+		"key secp256r1": {
+			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
 				"TRANSIENT"
@@ -43,8 +43,8 @@
 				"HASH=SHA256"
 			]
 		},
-		"key NIST SHA384": {
-			"type": "NIST",
+		"key secp384r1": {
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
@@ -57,8 +57,8 @@
 				"HASH=SHA384"
 			]
 		},
-		"key NIST SHA512": {
-			"type": "NIST",
+		"key secp521r1": {
+			"type": "SECP_R1",
 			"security_size": 521,
 			"attributes_list": [
 				"TRANSIENT"
@@ -93,22 +93,22 @@
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key NIST SHA224"
+		"key_name": "key secp224r1"
 	},
 	"subtest 3": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key NIST SHA256"
+		"key_name": "key secp256r1"
 	},
 	"subtest 4": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key NIST SHA384"
+		"key_name": "key secp384r1"
 	},
 	"subtest 5": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "key NIST SHA512"
+		"key_name": "key secp521r1"
 	},
 	"subtest 6": {
 		"command": "GENERATE",
@@ -118,7 +118,7 @@
 	"subtest 7": { // EDCSA SHA224
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
-		"attest_key_name": "key NIST SHA224",
+		"attest_key_name": "key secp224r1",
 		"sign_attr": [
 			"ECDSA",
 			"HASH=SHA224"
@@ -130,7 +130,7 @@
 	"subtest 8": { // EDCSA SHA256
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
-		"attest_key_name": "key NIST SHA256",
+		"attest_key_name": "key secp256r1",
 		"sign_attr": [
 			"ECDSA",
 			"HASH=SHA256"
@@ -142,7 +142,7 @@
 	"subtest 9": { // EDCSA SHA384
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
-		"attest_key_name": "key NIST SHA384",
+		"attest_key_name": "key secp384r1",
 		"sign_attr": [
 			"ECDSA",
 			"HASH=SHA384"
@@ -154,7 +154,7 @@
 	"subtest 10": { // EDCSA SHA512
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
-		"attest_key_name": "key NIST SHA512",
+		"attest_key_name": "key secp521r1",
 		"sign_attr": [
 			"ECDSA",
 			"HASH=SHA512"
@@ -186,10 +186,10 @@
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"depends": [1, 6]
 	},
-	"subtest 13": { // ECDSA key and undefined signature type
+	"subtest 13": { // Secp R1 key and undefined signature type
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
-		"attest_key_name": "key NIST SHA256",
+		"attest_key_name": "key secp256r1",
 		"challenge": ["000102030405060708090A0B0C0D0E0F"],
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": [1, 3]
@@ -265,22 +265,22 @@
 	},
 	"subtest 21": {
 		"command": "DELETE",
-		"key_name": "key NIST SHA224",
+		"key_name": "key secp224r1",
 		"depends": 2
 	},
 	"subtest 22": {
 		"command": "DELETE",
-		"key_name": "key NIST SHA256",
+		"key_name": "key secp256r1",
 		"depends": 3
 	},
 	"subtest 23": {
 		"command": "DELETE",
-		"key_name": "key NIST SHA384",
+		"key_name": "key secp384r1",
 		"depends": 4
 	},
 	"subtest 24": {
 		"command": "DELETE",
-		"key_name": "key NIST SHA512",
+		"key_name": "key secp521r1",
 		"depends": 5
 	},
 	"subtest 25": {

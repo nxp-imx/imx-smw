@@ -14,13 +14,6 @@
 
 #include "util_app.h"
 
-/* List of key type */
-#define BR1_KEY	       "BRAINPOOL_R1"
-#define BT1_KEY	       "BRAINPOOL_T1"
-#define NIST_KEY       "NIST"
-#define RSA_KEY	       "RSA"
-#define TLS_MASTER_KEY "TLS_MASTER_KEY"
-
 /* Type of errors */
 enum err_num {
 	PASSED = 0,

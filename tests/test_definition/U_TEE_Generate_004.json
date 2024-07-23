@@ -11,8 +11,8 @@
 				"ENCRYPT"
 			]
 		},
-		"key NIST 1": {
-			"type": "NIST",
+		"key secp192r1 1": {
+			"type": "SECP_R1",
 			"security_size": 192,
 			"pub_key": 40,
 			"attributes_list": [
@@ -22,8 +22,8 @@
 				"SIGN_MESSAGE"
 			]
 		},
-		"key NIST 2": {
-			"type": "NIST",
+		"key secp192r1 2": {
+			"type": "SECP_R1",
 			"security_size": 192,
 			"format": "BASE64",
 			"pub_key": 40,
@@ -116,13 +116,13 @@
 	"subtest 2": { // Public length is too short
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_name": "key NIST 1",
+		"key_name": "key secp192r1 1",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 3": { // Base64 public length is too short
 		"command": "GENERATE",
 		"subsystem": "TEE",
-		"key_name": "key NIST 2",
+		"key_name": "key secp192r1 2",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 4": { // Public buffer set but not modulus

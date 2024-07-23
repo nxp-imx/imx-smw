@@ -12,7 +12,7 @@
 			]
 		},
 		"key 2": {
-			"type": "HMAC_SHA256",
+			"type": "HMAC",
 			"security_size": 256,
 			"priv_key": [
 				"addf88c1ab997eb58c0455288c3a4fa3",
@@ -24,6 +24,10 @@
 			"usage": [
 				"DERIVE",
 				"EXPORT"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
 			]
 		},
 		"key 3": {
@@ -74,10 +78,14 @@
 			]
 		},
 		"key 6": {
-			"type": "HMAC_SHA256",
+			"type": "HMAC",
 			"security_size": 256,
 			"format": "BASE64",
-			"priv_key": "CwsLCwsLCwsLCwsLCwsLCwsLCwsLCw=="
+			"priv_key": "CwsLCwsLCwsLCwsLCwsLCwsLCwsLCw==",
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			]
 		},
 		"key 7": {
 			"format": "BASE64",

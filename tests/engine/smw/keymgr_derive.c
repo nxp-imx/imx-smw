@@ -39,6 +39,7 @@ read_derived_key_descriptor(struct llist *keys,
 {
 	int ret = ERR_CODE(PASSED);
 	struct key_data *data = NULL;
+	const char *type_string = NULL;
 	struct tbuffer derived_key = { 0 };
 
 	if (!derived_key_desc || !key_name) {
@@ -54,10 +55,12 @@ read_derived_key_descriptor(struct llist *keys,
 		return ERR_CODE(KEY_NOTFOUND);
 
 	/* Read 'type' parameter if defined */
-	ret = util_read_json_type(&derived_key_desc->type_name, TYPE_OBJ,
-				  t_string, data->okey_params);
+	ret = util_read_json_type(&type_string, TYPE_OBJ, t_string,
+				  data->okey_params);
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
+
+	derived_key_desc->type_name = key_get_type_name(type_string);
 
 	/* Read 'security_size' parameter if defined */
 	ret = util_read_json_type(&derived_key_desc->security_size,

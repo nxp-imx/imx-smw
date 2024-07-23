@@ -16,7 +16,7 @@
 #include <psa/storage_common.h>
 
 struct util_attr_info {
-	const char *name;
+	const char *string;
 
 	union {
 		smw_attr_algo_t smw_algo;
@@ -33,87 +33,88 @@ struct util_attr_info {
 #define LENGTH_STR     "LENGTH="
 #define MIN_LENGTH_STR "MIN_LENGTH="
 
-#define ATTR_USAGE(_name)                                                      \
+#define ATTR_USAGE(_string)                                                    \
 	{                                                                      \
-		.name = #_name, .smw_usage = SMW_ATTR_USAGE_##_name            \
+		.string = #_string, .smw_usage = SMW_ATTR_USAGE_##_string      \
 	}
 
-#define ATTR_USAGE_PSA(_name)                                                  \
+#define ATTR_USAGE_PSA(_string)                                                \
 	{                                                                      \
-		.name = #_name, .psa_usage = PSA_KEY_USAGE_##_name             \
+		.string = #_string, .psa_usage = PSA_KEY_USAGE_##_string       \
 	}
 
-#define ATTR_HASH(_name)                                                       \
+#define ATTR_HASH(_string)                                                     \
 	{                                                                      \
-		.name = #_name, .smw_algo = SMW_ATTR_HASH_##_name              \
+		.string = #_string, .smw_algo = SMW_ATTR_HASH_##_string        \
 	}
 
-#define ATTR_HASH_PSA(_name, _algo)                                            \
+#define ATTR_HASH_PSA(_string, _algo)                                          \
 	{                                                                      \
-		.name = _name, .psa_algo = ((_algo) & (PSA_ALG_HASH_MASK))     \
+		.string = #_string,                                            \
+		.psa_algo = ((_algo) & (PSA_ALG_HASH_MASK))                    \
 	}
 
-#define ATTR_LIFECYCLE(_name)                                                  \
+#define ATTR_LIFECYCLE(_string)                                                \
 	{                                                                      \
-		.name = #_name,                                                \
-		.smw_attributes = SMW_ATTR_NAME(LIFECYCLE, _name)              \
+		.string = #_string,                                            \
+		.smw_attributes = SMW_ATTR_NAME(LIFECYCLE, _string)            \
 	}
 
-#define ATTR_RW_FLAGS(_name)                                                   \
+#define ATTR_RW_FLAGS(_string)                                                 \
 	{                                                                      \
-		.name = #_name,                                                \
-		.smw_attributes = SMW_ATTR_NAME(RW_FLAGS, _name)               \
+		.string = #_string,                                            \
+		.smw_attributes = SMW_ATTR_NAME(RW_FLAGS, _string)             \
 	}
 
-#define ATTR_PERSISTENCE(_name)                                                \
+#define ATTR_PERSISTENCE(_string)                                              \
 	{                                                                      \
-		.name = #_name,                                                \
-		.smw_attributes = SMW_ATTR_NAME(PERSISTENCE, _name)            \
+		.string = #_string,                                            \
+		.smw_attributes = SMW_ATTR_NAME(PERSISTENCE, _string)          \
 	}
 
-#define ATTR_LIFETIME_PSA(_name)                                               \
+#define ATTR_LIFETIME_PSA(_string)                                             \
 	{                                                                      \
-		.name = #_name, .psa_lifetime = PSA_KEY_LIFETIME_##_name       \
+		.string = #_string, .psa_lifetime = PSA_KEY_LIFETIME_##_string \
 	}
 
-#define ATTR_ALGO(_name, _class, _algo, _mode, _hash)                          \
+#define ATTR_ALGO(_string, _class, _algo, _mode, _hash)                        \
 	{                                                                      \
-		.name = _name,                                                 \
-		.smw_algo = (((SMW_ATTR_CLASS_##_class & SMW_ATTR_CLASS_MASK)  \
-			      << SMW_ATTR_CLASS_OFFSET) |                      \
-			     ((SMW_ATTR_ALGO_##_algo & SMW_ATTR_ALGO_MASK)     \
-			      << SMW_ATTR_ALGO_OFFSET) |                       \
+		.string = #_string,                                            \
+		.smw_algo = (((SMW_ATTR_HASH_##_hash & SMW_ATTR_HASH_MASK)     \
+			      << SMW_ATTR_HASH_OFFSET) |                       \
 			     ((SMW_ATTR_MODE_##_mode & SMW_ATTR_MODE_MASK)     \
 			      << SMW_ATTR_MODE_OFFSET) |                       \
-			     ((SMW_ATTR_HASH_##_hash & SMW_ATTR_HASH_MASK)     \
-			      << SMW_ATTR_HASH_OFFSET))                        \
-	}
-
-#define ATTR_ALGO_PSA(_name, _algo)                                            \
-	{                                                                      \
-		.name = _name, .psa_algo = _algo                               \
-	}
-
-#define ATTR_ALGO_CURVE(_name, _class, _algo, _curve, _hash)                   \
-	{                                                                      \
-		.name = _name,                                                 \
-		.smw_algo = (((SMW_ATTR_CLASS_##_class & SMW_ATTR_CLASS_MASK)  \
-			      << SMW_ATTR_CLASS_OFFSET) |                      \
 			     ((SMW_ATTR_ALGO_##_algo & SMW_ATTR_ALGO_MASK)     \
 			      << SMW_ATTR_ALGO_OFFSET) |                       \
-			     ((SMW_ATTR_CURVE_##_curve & SMW_ATTR_CURVE_MASK)  \
-			      << SMW_ATTR_CURVE_OFFSET) |                      \
-			     ((SMW_ATTR_HASH_##_hash & SMW_ATTR_HASH_MASK)     \
-			      << SMW_ATTR_HASH_OFFSET))                        \
+			     ((SMW_ATTR_CLASS_##_class & SMW_ATTR_CLASS_MASK)  \
+			      << SMW_ATTR_CLASS_OFFSET))                       \
 	}
 
-#define ATTR_ARRAY_FIND_MATCH(_array, _name)                                   \
+#define ATTR_ALGO_PSA(_string, _algo)                                          \
+	{                                                                      \
+		.string = #_string, .psa_algo = _algo                          \
+	}
+
+#define ATTR_ALGO_CURVE(_string, _class, _algo, _curve, _hash)                 \
+	{                                                                      \
+		.string = #_string,                                            \
+		.smw_algo = (((SMW_ATTR_HASH_##_hash & SMW_ATTR_HASH_MASK)     \
+			      << SMW_ATTR_HASH_OFFSET) |                       \
+			     ((SMW_ATTR_CURVE_##_curve & SMW_ATTR_CURVE_MASK)  \
+			      << SMW_ATTR_CURVE_OFFSET) |                      \
+			     ((SMW_ATTR_ALGO_##_algo & SMW_ATTR_ALGO_MASK)     \
+			      << SMW_ATTR_ALGO_OFFSET) |                       \
+			     ((SMW_ATTR_CLASS_##_class & SMW_ATTR_CLASS_MASK)  \
+			      << SMW_ATTR_CLASS_OFFSET))                       \
+	}
+
+#define ATTR_ARRAY_FIND_MATCH(_array, _string)                                 \
 	({                                                                     \
 		typeof(_array[0]) *_elm = (_array);                            \
-		typeof(_name) _n = (_name);                                    \
+		typeof(_string) _n = (_string);                                \
 		struct util_attr_info _ret = { 0 };                            \
-		while (_elm->name && _n) {                                     \
-			if (!strcmp(_elm->name, _n)) {                         \
+		while (_elm->string && _n) {                                   \
+			if (!strcmp(_elm->string, _n)) {                       \
 				_ret = *_elm;                                  \
 				break;                                         \
 			}                                                      \

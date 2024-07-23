@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
+
 #ifndef __UTIL_KEY_H__
 #define __UTIL_KEY_H__
 

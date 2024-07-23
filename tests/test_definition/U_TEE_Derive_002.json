@@ -1,9 +1,13 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "HMAC_SHA256",
+			"type": "HMAC",
 			"security_size": 256,
-			"priv_key": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"
+			"priv_key": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			]
 		},
 		"key 2": {
 			"shared_secret": [
@@ -22,7 +26,7 @@
 			]
 		},
 		"key 3": {
-			"type": "HMAC_SHA256",
+			"type": "HMAC",
 			"security_size": 640,
 			"priv_key": [
 				"000102030405060708090a0b0c0d0e0f",
@@ -30,6 +34,10 @@
 				"202122232425262728292a2b2c2d2e2f",
 				"303132333435363738393a3b3c3d3e3f",
 				"404142434445464748494a4b4c4d4e4f"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
 			]
 		},
 		"key 4": {
@@ -64,9 +72,13 @@
 			]
 		},
 		"key 6": {
-			"type": "HMAC_SHA256",
+			"type": "HMAC",
 			"security_size": 256,
-			"priv_key": "0b0b0b0b0b0b0b0b0b0b0b"
+			"priv_key": "0b0b0b0b0b0b0b0b0b0b0b",
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			]
 		},
 		"key 7": {
 			"shared_secret": [
@@ -114,11 +126,15 @@
 			]
 		},
 		"key 10": {
-			"type": "HMAC_SHA1",
+			"type": "HMAC",
 			"security_size": 256,
 			"priv_key": [
 				"0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
 				"0c0c0c0c0c0c"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA1"
 			]
 		},
 		"key 11": {

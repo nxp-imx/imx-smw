@@ -20,7 +20,7 @@
 		},
 		"key 4": {
 			"key_name": "key 1",
-			"type": "NIST"
+			"type": "SECP_R1"
 		}
 	},
 	"subtest 1": { // Generate an AES key

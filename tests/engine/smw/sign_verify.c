@@ -26,7 +26,7 @@
  */
 static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
 {
-	if (!key_desc->type_name &&
+	if (key_desc->type_name == SMW_KEY_TYPE_NAME_NONE &&
 	    smw_get_key_type_name(key_desc) != SMW_STATUS_OK)
 		return 0;
 
@@ -34,15 +34,15 @@ static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
 	    smw_get_security_size(key_desc) != SMW_STATUS_OK)
 		return 0;
 
-	if (!strcmp(key_desc->type_name, BR1_KEY) ||
-	    !strcmp(key_desc->type_name, BT1_KEY) ||
-	    !strcmp(key_desc->type_name, NIST_KEY))
+	if (key_desc->type_name == SMW_KEY_TYPE_NAME_SECP_R1 ||
+	    key_desc->type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_R1 ||
+	    key_desc->type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1)
 		return BITS_TO_BYTES_SIZE(key_desc->security_size) * 2;
 
-	if (!strcmp(key_desc->type_name, RSA_KEY))
+	if (key_desc->type_name == SMW_KEY_TYPE_NAME_RSA)
 		return BITS_TO_BYTES_SIZE(key_desc->security_size);
 
-	if (!strcmp(key_desc->type_name, TLS_MASTER_KEY))
+	if (key_desc->type_name == SMW_KEY_TYPE_NAME_TLS_MASTER)
 		return TLS12_MAC_FINISH_DEFAULT_LEN;
 
 	return 0;

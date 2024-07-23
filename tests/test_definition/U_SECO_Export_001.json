@@ -8,7 +8,7 @@
 			]
 		},
 		"key 2": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"

@@ -40,7 +40,7 @@
 			]
 		},
 		"key 4": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
 				"TRANSIENT"
@@ -54,7 +54,7 @@
 			]
 		},
 		"key 5": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"

@@ -15,11 +15,11 @@
 			"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17"
 		},
 		"key 5": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 192
 		},
 		"key 6": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 192,
 			"priv_key": [
 				"e5ce89a34adddf25ff3bf1ffe6803f57",
@@ -33,7 +33,7 @@
 			]
 		},
 		"key 7": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 192,
 			"priv_key": [
 				0,

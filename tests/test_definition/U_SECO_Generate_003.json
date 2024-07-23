@@ -1,50 +1,43 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "HMAC_MD5",
+			"type": "HMAC",
 			"security_size": 128,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
 		"key 2": {
-			"type": "HMAC_SHA1",
+			"type": "HMAC",
 			"security_size": 160,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
 		"key 3": {
-			"type": "HMAC_SHA224",
+			"type": "HMAC",
 			"security_size": 224,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
 		"key 4": {
-			"type": "HMAC_SHA256",
+			"type": "HMAC",
 			"security_size": 256,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
 		"key 5": {
-			"type": "HMAC_SHA384",
+			"type": "HMAC",
 			"security_size": 384,
 			"attributes_list": [
 				"TRANSIENT"
 			]
 		},
 		"key 6": {
-			"type": "HMAC_SHA512",
+			"type": "HMAC",
 			"security_size": 512,
-			"attributes_list": [
-				"TRANSIENT"
-			]
-		},
-		"key 7": {
-			"type": "HMAC_SM3",
-			"security_size": 256,
 			"attributes_list": [
 				"TRANSIENT"
 			]
@@ -83,27 +76,21 @@
 		"key_name": "key 6"
 	},
 	"subtest 7": {
-		"command": "GENERATE",
-		"subsystem": "SECO",
-		"key_name": "key 7",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
-	},
-	"subtest 8": {
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 3
 	},
-	"subtest 9": {
+	"subtest 8": {
 		"command": "DELETE",
 		"key_name": "key 4",
 		"depends": 4
 	},
-	"subtest 10": {
+	"subtest 9": {
 		"command": "DELETE",
 		"key_name": "key 5",
 		"depends": 5
 	},
-	"subtest 11": {
+	"subtest 10": {
 		"command": "DELETE",
 		"key_name": "key 6",
 		"depends": 6

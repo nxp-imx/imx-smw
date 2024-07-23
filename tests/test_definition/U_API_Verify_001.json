@@ -1,7 +1,7 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"pub_key": [
 				"d0720dc691aa80096ba32fed1cb97c2b",
@@ -11,7 +11,7 @@
 			]
 		},
 		"key 2": {
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
 				"TRANSIENT"

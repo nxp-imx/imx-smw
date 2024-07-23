@@ -1,8 +1,8 @@
 {
 	"keys": {
-		"key NIST": {
+		"key secp256r1": {
 			"id": 805310465,
-			"type": "NIST",
+			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
 				"PERSISTENT"
@@ -23,13 +23,13 @@
 			"subtest 1": {
 				"command": "GENERATE",
 				"subsystem": "TEE",
-				"key_name": "key NIST",
+				"key_name": "key secp256r1",
 				"post_to_after": ["App 2", "sem_a2_t1_start"],
 				"post_after": "sem_a1_t2_start"
 			},
 			"subtest 2": {
 				"command": "DELETE",
-				"key_name": "key NIST",
+				"key_name": "key secp256r1",
 				"wait_before": "sem_a1_a2_done",
 				"depends": 1
 			}
@@ -61,7 +61,7 @@
 					"100508"
 				],
 				"sign_id": 1,
-				"key_name": "key NIST"
+				"key_name": "key secp256r1"
 			},
 			"subtest 2": {
 				"command": "VERIFY",
@@ -88,7 +88,7 @@
 					"100508"
 				],
 				"sign_id": 1,
-				"key_name": "key NIST",
+				"key_name": "key secp256r1",
 				"post_to_after": ["App 2", "sem_a1_t2_done"],
 				"depends": 1
 			},
@@ -104,18 +104,18 @@
 			"subtest 1": {
 				"command": "GET_KEY_ATTRIBUTES",
 				"subsystem": "TEE",
-				"key_name": "key NIST",
+				"key_name": "key secp256r1",
 				"wait_before": "sem_a2_t1_start",
 				"post_after": "sem_a2_t2_start"
 			},
 			"subtest 2": {
 				"command": "EXPORT_PUBLIC",
-				"key_name": "key NIST",
+				"key_name": "key secp256r1",
 				"depends": 1
 			},
 			"subtest 3": {
 				"command": "DELETE",
-				"key_name": "key NIST",
+				"key_name": "key secp256r1",
 				"wait_before": "sem_a2_t2_done",
 				"post_to_after": ["App 1", "sem_a2_done"],
 				"depends": 1
@@ -148,7 +148,7 @@
 					"a4f7bb"
 				],
 				"sign_id": 1,
-				"key_name": "key NIST"
+				"key_name": "key secp256r1"
 			},
 			"subtest 2": {
 				"command": "VERIFY",
@@ -175,7 +175,7 @@
 					"a4f7bb"
 				],
 				"sign_id": 1,
-				"key_name": "key NIST",
+				"key_name": "key secp256r1",
 				"depends": 1
 			},
 			"wait_after": "sem_a1_t2_done",

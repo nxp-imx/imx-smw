@@ -21,7 +21,7 @@ static const struct util_attr_info attributes_info[] = {
 	ATTR_LIFECYCLE(CLOSED),	     ATTR_LIFECYCLE(CLOSED_LOCKED),
 	ATTR_RW_FLAGS(READ_ONCE),    ATTR_RW_FLAGS(READ_ONLY),
 	ATTR_PERSISTENCE(TRANSIENT), ATTR_PERSISTENCE(PERSISTENT),
-	ATTR_PERSISTENCE(PERMANENT), { .name = NULL }
+	ATTR_PERSISTENCE(PERMANENT), { .string = NULL }
 };
 
 static void attributes_callback(void *user_data, const char *attributes[],

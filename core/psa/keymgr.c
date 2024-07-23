@@ -19,18 +19,9 @@
 
 #define KEY_TYPE(_smw, _psa)                                                   \
 	{                                                                      \
-		.smw_key_type = _smw, .psa_key_type = PSA_KEY_TYPE_##_psa,     \
+		.smw_key_type = SMW_KEY_TYPE_NAME_##_smw,                      \
+		.psa_key_type = PSA_KEY_TYPE_##_psa,                           \
 	}
-
-/**
- * struct aead_key_type - AEAD key type
- * @smw_key_type: SMW key type name.
- * @psa_key_type: PSA key type.
- */
-static const struct aead_key_type {
-	smw_key_type_t smw_key_type;
-	psa_key_type_t psa_key_type;
-} aead_key_type[] = { KEY_TYPE("AES", AES), KEY_TYPE("CHACHA20", CHACHA20) };
 
 /**
  * struct - Key type
@@ -40,32 +31,13 @@ static const struct aead_key_type {
 static const struct cipher_key_type {
 	smw_key_type_t smw_key_type;
 	psa_key_type_t psa_key_type;
-} cipher_key_type[] = { KEY_TYPE("AES", AES), KEY_TYPE("DES", DES),
-			KEY_TYPE("DES3", DES), KEY_TYPE("SM4", SM4) };
-
-#define HMAC_HASH(_smw, _psa)                                                  \
-	{                                                                      \
-		.smw_key_type = _smw, .psa_hash = PSA_ALG_##_psa               \
-	}
-
-/**
- * struct - HMAC hash
- * @smw_key_type: SMW HMAC key type name.
- * @psa_hash: PSA hash id.
- */
-static const struct {
-	smw_key_type_t smw_key_type;
-	psa_algorithm_t psa_hash;
-} hmac_hash[] = {
-	HMAC_HASH("HMAC", NONE),	   HMAC_HASH("HMAC_MD5", MD5),
-	HMAC_HASH("HMAC_SHA1", SHA_1),	   HMAC_HASH("HMAC_SHA224", SHA_224),
-	HMAC_HASH("HMAC_SHA256", SHA_256), HMAC_HASH("HMAC_SHA384", SHA_384),
-	HMAC_HASH("HMAC_SHA512", SHA_512), HMAC_HASH("HMAC_SM3", SM3)
-};
+} cipher_key_type[] = { KEY_TYPE(AES, AES), KEY_TYPE(DES, DES),
+			KEY_TYPE(DES3, DES), KEY_TYPE(SM4, SM4) };
 
 #define ECC_KEY_TYPE(_smw, _family)                                            \
 	{                                                                      \
-		.smw_key_type = _smw, .ecc_family = PSA_ECC_FAMILY_##_family   \
+		.smw_key_type = SMW_KEY_TYPE_NAME_##_smw,                      \
+		.ecc_family = PSA_ECC_FAMILY_##_family                         \
 	}
 
 /**
@@ -78,14 +50,9 @@ struct ecc_key_type {
 	psa_ecc_family_t ecc_family;
 };
 
-static const struct ecc_key_type ecdsa_key_type[] = {
-	ECC_KEY_TYPE("NIST", SECP_R1),
-	ECC_KEY_TYPE("BRAINPOOL_R1", BRAINPOOL_P_R1)
-};
-
-static const struct ecc_key_type ecdh_key_type[] = {
-	ECC_KEY_TYPE("ECDH_NIST", SECP_R1),
-	ECC_KEY_TYPE("ECDH_BRAINPOOL_R1", BRAINPOOL_P_R1)
+static const struct ecc_key_type ecc_key_type[] = {
+	ECC_KEY_TYPE(SECP_R1, SECP_R1),
+	ECC_KEY_TYPE(BRAINPOOL_R1, BRAINPOOL_P_R1)
 };
 
 #define KEY_USAGE(_name)                                                       \
@@ -221,12 +188,9 @@ static bool is_ecc_key_type(smw_key_type_t type_name)
 	if (!type_name)
 		return false;
 
-	if (!SMW_UTILS_STRCMP(type_name, "NIST") ||
-	    !SMW_UTILS_STRCMP(type_name, "BRAINPOOL_R1") ||
-	    !SMW_UTILS_STRCMP(type_name, "BRAINPOOL_T1") ||
-	    !SMW_UTILS_STRCMP(type_name, "ECDH_NIST") ||
-	    !SMW_UTILS_STRCMP(type_name, "ECDH_BRAINPOOL_R1") ||
-	    !SMW_UTILS_STRCMP(type_name, "ECDH_BRAINPOOL_T1"))
+	if (type_name == SMW_KEY_TYPE_NAME_SECP_R1 ||
+	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_R1 ||
+	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1)
 		return true;
 
 	return false;
@@ -375,43 +339,18 @@ static void set_ecc_key_buffer(psa_key_type_t key_type, const uint8_t *data,
 		set_gen_private_key_buffer(data, data_length, keypair_gen);
 }
 
-static smw_key_type_t get_hmac_smw_key_type(psa_algorithm_t psa_hash)
+static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family)
 {
 	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (; i < ARRAY_SIZE(hmac_hash); i++) {
-		if (hmac_hash[i].psa_hash == psa_hash)
-			return hmac_hash[i].smw_key_type;
+	for (; i < ARRAY_SIZE(ecc_key_type); i++) {
+		if (ecc_key_type[i].ecc_family == ecc_family)
+			return ecc_key_type[i].smw_key_type;
 	}
 
-	return NULL;
-}
-
-static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family,
-					   psa_algorithm_t psa_hash)
-{
-	unsigned int i = 0;
-	unsigned int array_size = 0;
-	const struct ecc_key_type *array = NULL;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!psa_hash || PSA_ALG_IS_ECDSA(psa_hash)) {
-		array_size = ARRAY_SIZE(ecdsa_key_type);
-		array = ecdsa_key_type;
-	} else if (PSA_ALG_IS_ECDH(psa_hash)) {
-		array_size = ARRAY_SIZE(ecdh_key_type);
-		array = ecdh_key_type;
-	}
-
-	for (; i < array_size; i++) {
-		if (array[i].ecc_family == ecc_family)
-			return array[i].smw_key_type;
-	}
-
-	return NULL;
+	return SMW_KEY_TYPE_NAME_NONE;
 }
 
 static psa_key_type_t get_ecc_psa_key_type(smw_key_type_t smw_key_type,
@@ -423,16 +362,9 @@ static psa_key_type_t get_ecc_psa_key_type(smw_key_type_t smw_key_type,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (; !ecc_family && i < ARRAY_SIZE(ecdsa_key_type); i++) {
-		if (!SMW_UTILS_STRCMP(ecdsa_key_type[i].smw_key_type,
-				      smw_key_type))
-			ecc_family = ecdsa_key_type[i].ecc_family;
-	}
-
-	for (i = 0; !ecc_family && i < ARRAY_SIZE(ecdh_key_type); i++) {
-		if (!SMW_UTILS_STRCMP(ecdh_key_type[i].smw_key_type,
-				      smw_key_type))
-			ecc_family = ecdh_key_type[i].ecc_family;
+	for (; !ecc_family && i < ARRAY_SIZE(ecc_key_type); i++) {
+		if (ecc_key_type[i].smw_key_type == smw_key_type)
+			ecc_family = ecc_key_type[i].ecc_family;
 	}
 
 	if (!ecc_family)
@@ -451,7 +383,7 @@ static psa_key_type_t get_dh_psa_key_type(smw_key_type_t smw_key_type,
 {
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 
-	if (SMW_UTILS_STRCMP(smw_key_type, "DH"))
+	if (smw_key_type != SMW_KEY_TYPE_NAME_DH)
 		return psa_key_type;
 
 	if (is_keypair)
@@ -468,7 +400,7 @@ static psa_key_type_t get_rsa_psa_key_type(smw_key_type_t smw_key_type,
 {
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 
-	if (SMW_UTILS_STRCMP(smw_key_type, "RSA"))
+	if (smw_key_type != SMW_KEY_TYPE_NAME_RSA)
 		return psa_key_type;
 
 	if (is_keypair)
@@ -483,28 +415,10 @@ static psa_key_type_t get_hmac_psa_key_type(smw_key_type_t smw_key_type)
 {
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 
-	if (!SMW_UTILS_STRNCMP(smw_key_type, "HMAC", SMW_UTILS_STRLEN("HMAC")))
+	if (smw_key_type == SMW_KEY_TYPE_NAME_HMAC)
 		psa_key_type = PSA_KEY_TYPE_HMAC;
 
 	return psa_key_type;
-}
-
-psa_key_type_t get_aead_psa_key_type(smw_key_type_t smw_key_type)
-{
-	unsigned int i = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	for (; i < ARRAY_SIZE(aead_key_type); i++) {
-		if (!SMW_UTILS_STRCMP(aead_key_type[i].smw_key_type,
-				      smw_key_type)) {
-			SMW_DBG_PRINTF(DEBUG, "Key type name: %s\n",
-				       aead_key_type[i].smw_key_type);
-			return cipher_key_type[i].psa_key_type;
-		}
-	}
-
-	return PSA_KEY_TYPE_NONE;
 }
 
 psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type)
@@ -514,9 +428,8 @@ psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < ARRAY_SIZE(cipher_key_type); i++) {
-		if (!SMW_UTILS_STRCMP(cipher_key_type[i].smw_key_type,
-				      smw_key_type)) {
-			SMW_DBG_PRINTF(DEBUG, "Key type name: %s\n",
+		if (cipher_key_type[i].smw_key_type == smw_key_type) {
+			SMW_DBG_PRINTF(DEBUG, "Key type name: %d\n",
 				       cipher_key_type[i].smw_key_type);
 			return cipher_key_type[i].psa_key_type;
 		}
@@ -530,54 +443,52 @@ static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 {
 	unsigned int i = 0;
 
-	psa_key_type_t psa_key_type = 0;
-	psa_algorithm_t alg = 0;
+	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
 	psa_ecc_family_t ecc_family = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!attributes)
-		return NULL;
+		return SMW_KEY_TYPE_NAME_NONE;
 
 	psa_key_type = psa_get_key_type(attributes);
-	alg = psa_get_key_algorithm(attributes);
 
 	if (psa_key_type == PSA_KEY_TYPE_RAW_DATA)
-		return "RAW";
+		return SMW_KEY_TYPE_NAME_RAW;
 
 	if (PSA_KEY_TYPE_IS_DH(psa_key_type))
-		return "DH";
+		return SMW_KEY_TYPE_NAME_DH;
 
 	if (PSA_KEY_TYPE_IS_RSA(psa_key_type))
-		return "RSA";
+		return SMW_KEY_TYPE_NAME_RSA;
 
 	if (psa_key_type == PSA_KEY_TYPE_DES) {
 		if (security_size == 56)
-			return "DES";
+			return SMW_KEY_TYPE_NAME_DES;
 		else if (security_size == 112 || security_size == 168)
-			return "DES3";
+			return SMW_KEY_TYPE_NAME_DES3;
 		else
-			return NULL;
+			return SMW_KEY_TYPE_NAME_NONE;
 	}
 
 	if (psa_key_type == PSA_KEY_TYPE_HMAC)
-		return get_hmac_smw_key_type(PSA_ALG_GET_HASH(alg));
+		return SMW_KEY_TYPE_NAME_HMAC;
 
 	if (PSA_KEY_TYPE_IS_ECC(psa_key_type)) {
 		ecc_family = PSA_KEY_TYPE_ECC_GET_FAMILY(psa_key_type);
 
-		return get_ecc_smw_key_type(ecc_family, alg);
+		return get_ecc_smw_key_type(ecc_family);
 	}
 
 	for (; i < ARRAY_SIZE(cipher_key_type); i++) {
 		if (cipher_key_type[i].psa_key_type == psa_key_type) {
-			SMW_DBG_PRINTF(DEBUG, "Key type: %s\n",
+			SMW_DBG_PRINTF(DEBUG, "Key type: %d\n",
 				       cipher_key_type[i].smw_key_type);
 			return cipher_key_type[i].smw_key_type;
 		}
 	}
 
-	return NULL;
+	return SMW_KEY_TYPE_NAME_NONE;
 }
 
 static psa_status_t get_psa_key_type(psa_key_type_t *psa_key_type,
@@ -1250,7 +1161,7 @@ static psa_status_t export_key_common(psa_key_id_t key, uint8_t *data,
 
 	args.key_descriptor = &key_descriptor;
 
-	if (!SMW_UTILS_STRCMP(key_descriptor.type_name, "RSA")) {
+	if (key_descriptor.type_name == SMW_KEY_TYPE_NAME_RSA) {
 		return export_rsa_public_key(data, data_size, data_length,
 					     &args);
 	} else {
@@ -1343,7 +1254,7 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 
 	key_descriptor.type_name =
 		get_smw_key_type(attributes, key_descriptor.security_size);
-	if (!key_descriptor.type_name)
+	if (key_descriptor.type_name == SMW_KEY_TYPE_NAME_NONE)
 		return PSA_ERROR_NOT_SUPPORTED;
 
 	psa_status = set_key_attributes(attributes, &key_attributes);
@@ -1496,7 +1407,7 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 
 	key_descriptor.type_name =
 		get_smw_key_type(attributes, key_descriptor.security_size);
-	if (!key_descriptor.type_name)
+	if (key_descriptor.type_name == SMW_KEY_TYPE_NAME_NONE)
 		return PSA_ERROR_NOT_SUPPORTED;
 
 	psa_status = set_key_attributes(attributes, &key_attributes);

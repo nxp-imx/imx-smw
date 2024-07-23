@@ -792,7 +792,7 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_cipher_init_args *init = &args->init;
 	struct smw_cipher_data_args *data = &args->data;
-	psa_key_type_t key_type = 0;
+	psa_key_type_t key_type = PSA_KEY_TYPE_NONE;
 	unsigned char *iv = NULL;
 
 	if (!PSA_ALG_IS_CIPHER(alg) || !input || !input_length || !output ||

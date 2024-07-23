@@ -201,7 +201,7 @@ enum smw_status_code smw_hash(struct smw_hash_args *args);
  * @args: Pointer to the structure that contains the Sign arguments.
  *
  * This function generates a signature.
- * When TLS_MAC_FINISH attribute is set, the key type must be TLS_MASTER_KEY.
+ * When TLS_MAC_FINISH attribute is set, the key type must be TLS_MASTER.
  *
  * Return:
  * &enum smw_status_code

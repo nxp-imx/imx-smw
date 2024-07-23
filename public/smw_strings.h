@@ -9,33 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_key_type_t - Key type name
- * Values:
- *	- NIST
- *	- BRAINPOOL_R1
- *	- BRAINPOOL_T1
- *	- ED25519
- *	- AES
- *	- DES
- *	- DES3
- *	- DH
- *	- DSA_SM2_FP
- *	- SM4
- *	- HMAC
- *	- HMAC_MD5
- *	- HMAC_SHA1
- *	- HMAC_SHA224
- *	- HMAC_SHA256
- *	- HMAC_SHA384
- *	- HMAC_SHA512
- *	- HMAC_SM3
- *	- RAW
- *	- RSA
- *	- TLS_MASTER_KEY
- */
-typedef smw_string_t smw_key_type_t;
-
-/**
  * typedef smw_key_privacy_t - Key privacy name
  * Values:
  *	- PUBLIC

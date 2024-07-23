@@ -283,15 +283,15 @@ typedef uint32_t smw_attr_storage_id_t;
  * Curve associated to the main algorithm in &typedef smw_attr_algo_t
  *
  * - SMW_ATTR_CURVE_NONE: No curve defined.
- * - SMW_ATTR_CURVE_NIST: NIST curve.
+ * - SMW_ATTR_CURVE_SECP_R1: Secp R1 curve (aka NIST P).
  * - SMW_ATTR_CURVE_BRAINPOOL_R1: Brainpool R1 curve.
  * - SMW_ATTR_CURVE_BRAINPOOL_T1: Brainpool T1 curve.
- * - SMW_ATTR_CURVE_ED25519: Curve25519.
- * - SMW_ATTR_CURVE_ED448: Curve448-Goldilocks.
+ * - SMW_ATTR_CURVE_ED25519: Twisted Edwards25519.
+ * - SMW_ATTR_CURVE_ED448: Twisted Edwards448.
  * - SMW_ATTR_CURVE_ANY: Any curve.
  */
 #define SMW_ATTR_CURVE_NONE	    0x00
-#define SMW_ATTR_CURVE_NIST	    0x01
+#define SMW_ATTR_CURVE_SECP_R1	    0x01
 #define SMW_ATTR_CURVE_BRAINPOOL_R1 0x02
 #define SMW_ATTR_CURVE_BRAINPOOL_T1 0x03
 #define SMW_ATTR_CURVE_ED25519	    0x04

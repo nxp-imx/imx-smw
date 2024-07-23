@@ -96,7 +96,7 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
  * @param_types: Parameters types.
  * @params: Shared parameters between Secure and Normal world.
  *
- * This function only supports the export of a ECDSA NIST public key.
+ * This function only supports the export of a Secp R1 public key.
  *
  * Return:
  * TEE_SUCCESS			- Success.

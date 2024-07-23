@@ -45,7 +45,7 @@ enum tee_key_privacy {
 
 /* TEE key type */
 enum tee_key_type {
-	TEE_KEY_TYPE_ID_ECDSA,
+	TEE_KEY_TYPE_ID_SECP_R1,
 	TEE_KEY_TYPE_ID_ED25519,
 	TEE_KEY_TYPE_ID_AES,
 	TEE_KEY_TYPE_ID_DES,

@@ -37,7 +37,7 @@ struct security_size_range {
 		.min = _min, .max = _max, .mod = _mod                          \
 	}
 
-RANGE_DEF(ECDSA_NIST, 192, 256, 8);
+RANGE_DEF(SECP_R1, 192, 256, 8);
 RANGE_DEF(AES, 128, 256, 64);
 RANGE_DEF(DES3, 112, 168, 56);
 RANGE_DEF(HMAC_MD5, 64, 512, 8);
@@ -50,12 +50,11 @@ RANGE_DEF(HMAC_SM3, 80, 1024, 8);
 RANGE_DEF(RSA, 256, 4096, 2);
 RANGE_DEF(GENERIC_SECRET, 8, 4096, 8);
 
-/* This alias is aimed to simplify the definitions of the macros below. */
-#define TEE_KEY_TYPE_ID_ECDSA_NIST TEE_KEY_TYPE_ID_ECDSA
-
 #define KEY_DEF(_key_type, _security_size, _symmetric)                         \
 	{                                                                      \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type,             \
+		.hash_algo_id = SMW_CONFIG_HASH_ALGO_ID_INVALID,               \
+		.hash = SMW_ATTR_HASH_NONE,                                    \
 		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
 		.security_size = _security_size, .symmetric = _symmetric       \
 	}
@@ -69,6 +68,8 @@ RANGE_DEF(GENERIC_SECRET, 8, 4096, 8);
 #define KEY_DEF_RANGE(_key_type, _symmetric)                                   \
 	{                                                                      \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type,             \
+		.hash_algo_id = SMW_CONFIG_HASH_ALGO_ID_INVALID,               \
+		.hash = SMW_ATTR_HASH_NONE,                                    \
 		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
 		.security_size = SECURITY_SIZE_RANGE,                          \
 		.security_size_range = security_size_range_##_key_type,        \
@@ -79,10 +80,15 @@ RANGE_DEF(GENERIC_SECRET, 8, 4096, 8);
 
 #define KEY_DEF_RANGE_SYM(_key_type) KEY_DEF_RANGE(_key_type, true)
 
-#define KEY_DEF_INVALID(_key_type)                                             \
+#define KEY_DEF_HMAC(_hash_algo)                                               \
 	{                                                                      \
-		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type,             \
-		.key_type = TEE_KEY_TYPE_ID_INVALID                            \
+		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_HMAC,                    \
+		.hash_algo_id = SMW_CONFIG_HASH_ALGO_ID_##_hash_algo,          \
+		.hash = SMW_ATTR_HASH_##_hash_algo,                            \
+		.key_type = TEE_KEY_TYPE_ID_HMAC_##_hash_algo,                 \
+		.security_size = SECURITY_SIZE_RANGE,                          \
+		.security_size_range = security_size_range_HMAC_##_hash_algo,  \
+		.symmetric = true                                              \
 	}
 
 /**
@@ -101,29 +107,28 @@ RANGE_DEF(GENERIC_SECRET, 8, 4096, 8);
  */
 static const struct key_def {
 	enum smw_config_key_type_id key_type_id;
+	enum smw_config_hash_algo_id hash_algo_id;
+	smw_attr_algo_t hash;
 	enum tee_key_type key_type;
 	unsigned int security_size;
 	struct security_size_range security_size_range;
 	bool symmetric;
 } key_def_list[] = {
-	KEY_DEF_RANGE_ASYM(ECDSA_NIST),
-	KEY_DEF_ASYM(ECDSA_NIST, 384),
-	KEY_DEF_ASYM(ECDSA_NIST, 521),
-	KEY_DEF_INVALID(ECDSA_BRAINPOOL_R1),
-	KEY_DEF_INVALID(ECDSA_BRAINPOOL_T1),
+	KEY_DEF_RANGE_ASYM(SECP_R1),
+	KEY_DEF_ASYM(SECP_R1, 384),
+	KEY_DEF_ASYM(SECP_R1, 521),
 	KEY_DEF_ASYM(ED25519, 256),
 	KEY_DEF_RANGE_SYM(AES),
 	KEY_DEF_SYM(DES, 56),
 	KEY_DEF_RANGE_SYM(DES3),
-	KEY_DEF_INVALID(DSA_SM2_FP),
 	KEY_DEF_SYM(SM4, 128),
-	KEY_DEF_RANGE_SYM(HMAC_MD5),
-	KEY_DEF_RANGE_SYM(HMAC_SHA1),
-	KEY_DEF_RANGE_SYM(HMAC_SHA224),
-	KEY_DEF_RANGE_SYM(HMAC_SHA256),
-	KEY_DEF_RANGE_SYM(HMAC_SHA384),
-	KEY_DEF_RANGE_SYM(HMAC_SHA512),
-	KEY_DEF_RANGE_SYM(HMAC_SM3),
+	KEY_DEF_HMAC(MD5),
+	KEY_DEF_HMAC(SHA1),
+	KEY_DEF_HMAC(SHA224),
+	KEY_DEF_HMAC(SHA256),
+	KEY_DEF_HMAC(SHA384),
+	KEY_DEF_HMAC(SHA512),
+	KEY_DEF_HMAC(SM3),
 	KEY_DEF_RANGE_ASYM(RSA),
 	KEY_DEF_RANGE_ASYM(GENERIC_SECRET),
 };
@@ -151,22 +156,21 @@ static const struct {
 };
 
 int tee_convert_key_type(enum smw_config_key_type_id key_type_id,
+			 enum smw_config_hash_algo_id hash_algo_id,
 			 enum tee_key_type *key_type)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(key_def_list);
-	enum tee_key_type tmp_type = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < size; i++) {
-		if (key_def_list[i].key_type_id == key_type_id) {
-			tmp_type = key_def_list[i].key_type;
-			if (tmp_type != TEE_KEY_TYPE_ID_INVALID) {
-				*key_type = tmp_type;
-				status = SMW_STATUS_OK;
-			}
+		if (key_def_list[i].key_type_id == key_type_id &&
+		    (key_type_id != SMW_CONFIG_KEY_TYPE_ID_HMAC ||
+		     hash_algo_id == key_def_list[i].hash_algo_id)) {
+			*key_type = key_def_list[i].key_type;
+			status = SMW_STATUS_OK;
 			break;
 		}
 	}
@@ -178,7 +182,8 @@ int tee_convert_key_type(enum smw_config_key_type_id key_type_id,
 static enum smw_config_key_type_id
 key_type_tee_to_smw(enum tee_key_type key_type)
 {
-	enum smw_config_key_type_id ret_type = SMW_CONFIG_KEY_TYPE_ID_INVALID;
+	enum smw_config_key_type_id key_type_id =
+		SMW_CONFIG_KEY_TYPE_ID_INVALID;
 
 	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(key_def_list);
@@ -187,13 +192,13 @@ key_type_tee_to_smw(enum tee_key_type key_type)
 
 	for (; i < size; i++) {
 		if (key_def_list[i].key_type == key_type) {
-			SMW_DBG_PRINTF(DEBUG, "Key type: %d\n", ret_type);
-			ret_type = key_def_list[i].key_type_id;
+			SMW_DBG_PRINTF(DEBUG, "Key type ID: %d\n", key_type_id);
+			key_type_id = key_def_list[i].key_type_id;
 			break;
 		}
 	}
 
-	return ret_type;
+	return key_type_id;
 }
 
 void key_usage_to_tee(smw_attr_usage_t smw, unsigned int *tee)
@@ -299,21 +304,28 @@ static bool check_security_size(const struct key_def *key_def_list,
  */
 static const struct key_def *
 find_check_key_def(enum smw_config_key_type_id key_type_id,
-		   unsigned int security_size)
+		   unsigned int security_size,
+		   struct smw_key_attributes *key_attrs)
 {
 	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(key_def_list);
+	smw_attr_algo_t hash = SMW_ATTR_HASH_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_HMAC) {
+		if (!key_attrs)
+			return NULL;
+
+		hash = SMW_ATTR_GET_HASH(key_attrs->permitted_algo);
+	}
+
 	for (; i < size; i++) {
-		if (key_def_list[i].key_type_id == key_type_id) {
-			if (key_def_list[i].key_type !=
-				    TEE_KEY_TYPE_ID_INVALID &&
-			    check_security_size(&key_def_list[i],
-						security_size))
-				return &key_def_list[i];
-		}
+		if (key_def_list[i].key_type_id == key_type_id &&
+		    check_security_size(&key_def_list[i], security_size) &&
+		    (key_type_id != SMW_CONFIG_KEY_TYPE_ID_HMAC ||
+		     hash == key_def_list[i].hash))
+			return &key_def_list[i];
 	}
 
 	return NULL;
@@ -612,13 +624,15 @@ static int generate_key(void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!key_args)
+	if (!args)
 		goto exit;
 
 	key_identifier = &key_args->key_descriptor.identifier;
+	key_attrs = key_args->key_attributes;
+
 	/* Get key info and check key type and key security size */
 	key = find_check_key_def(key_identifier->type_id,
-				 key_identifier->security_size);
+				 key_identifier->security_size, key_attrs);
 	if (!key) {
 		SMW_DBG_PRINTF(ERROR,
 			       "%s: Key type or key size not supported\n",
@@ -635,8 +649,6 @@ static int generate_key(void *args)
 	shared_params.id = key_identifier->id;
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->key_type;
-
-	key_attrs = key_args->key_attributes;
 
 	if (key_attrs) {
 		status = check_persistence(key_attrs->attributes,
@@ -729,7 +741,7 @@ static int delete_key(void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!key_args)
+	if (!args)
 		goto exit;
 
 	status = tee_delete_key(key_args->key_descriptor.identifier.id);
@@ -789,7 +801,7 @@ static int check_import_key_buffers_presence(enum tee_key_type key_type,
 
 		break;
 
-	case TEE_KEY_TYPE_ID_ECDSA:
+	case TEE_KEY_TYPE_ID_SECP_R1:
 	case TEE_KEY_TYPE_ID_ED25519:
 	case TEE_KEY_TYPE_ID_RSA:
 		/*
@@ -827,7 +839,7 @@ static int check_import_key_buffers_presence(enum tee_key_type key_type,
 static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 {
 	switch (key_descriptor->identifier.type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		/*
@@ -896,9 +908,9 @@ set_params_import_pub_key(struct smw_keymgr_descriptor *key_descriptor,
 
 	/*
 	 * Check coherence between buffer length and security size for
-	 * ECDSA public key
+	 * Secp R1 public key
 	 */
-	if (key->key_type == TEE_KEY_TYPE_ID_ECDSA) {
+	if (key->key_type == TEE_KEY_TYPE_ID_SECP_R1) {
 		if (MUL_OVERFLOW(key_size_bytes, 2, &ecc_pub_size) ||
 		    hex_pub_len != ecc_pub_size) {
 			SMW_DBG_PRINTF(ERROR,
@@ -1136,10 +1148,11 @@ static int import_key(void *args)
 		goto exit;
 
 	key_identifier = &key_args->key_descriptor.identifier;
+	key_attrs = key_args->key_attributes;
 
 	/* Get key info and check key type and key security size */
 	key = find_check_key_def(key_identifier->type_id,
-				 key_identifier->security_size);
+				 key_identifier->security_size, key_attrs);
 	if (!key) {
 		SMW_DBG_PRINTF(ERROR,
 			       "%s: Key type or key size not supported\n",
@@ -1171,8 +1184,6 @@ static int import_key(void *args)
 	shared_params.id = key_identifier->id;
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->key_type;
-
-	key_attrs = key_args->key_attributes;
 
 	if (key_attrs) {
 		status = check_persistence(key_attrs->attributes,
@@ -1247,7 +1258,7 @@ exit:
  * export_key() - Export a key from OPTEE storage.
  * @args: Export key parameters.
  *
- * Only ECDSA NIST and RSA public key can be exported.
+ * Only Secp R1 and RSA public key can be exported.
  *
  * Return:
  * SMW_STATUS_OK			- Success.
@@ -1334,7 +1345,7 @@ static int get_key_lengths(void *args)
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
 	int tmp_status = SMW_STATUS_OK;
-	struct smw_keymgr_descriptor *key_desc = NULL;
+	struct smw_keymgr_descriptor *key_desc = args;
 	enum smw_config_key_type_id key_type_id = 0;
 	enum tee_key_type key_type = 0;
 	unsigned int length = 0;
@@ -1343,8 +1354,6 @@ static int get_key_lengths(void *args)
 
 	if (!args)
 		goto exit;
-
-	key_desc = args;
 
 	/*
 	 * params[0].value.a = TEE Key ID.
@@ -1424,7 +1433,7 @@ static int get_key_attributes(void *args)
 	TEEC_Operation op = { 0 };
 	int status = SMW_STATUS_INVALID_PARAM;
 
-	struct smw_keymgr_get_key_attributes_args *key_args = NULL;
+	struct smw_keymgr_get_key_attributes_args *key_args = args;
 	struct smw_keymgr_identifier *key_identifier = NULL;
 	struct smw_key_attributes *key_attributes = NULL;
 	enum tee_key_type tee_type = 0;
@@ -1436,7 +1445,6 @@ static int get_key_attributes(void *args)
 	if (!args)
 		goto exit;
 
-	key_args = args;
 	key_identifier = &key_args->identifier;
 
 	/*
@@ -1715,8 +1723,8 @@ int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	/* Key type is common for all keys */
 	status = tee_convert_key_type(key->identifier.type_id,
+				      SMW_CONFIG_HASH_ALGO_ID_INVALID,
 				      &import_shared_params.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;

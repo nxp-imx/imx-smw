@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <util.h>
@@ -14,11 +14,10 @@
 #include "sign_verify.h"
 #include "obj.h"
 
-#define ALGORITHM_ID(_key_type_id, _security_size)                             \
+#define ALGORITHM_ID(_security_size, _hash_algo)                               \
 	{                                                                      \
-		.key_type_id = TEE_KEY_TYPE_ID_##_key_type_id,                 \
 		.security_size = _security_size,                               \
-		.tee_algorithm_id = TEE_ALG_##_key_type_id##_P##_security_size \
+		.tee_algorithm_id = TEE_ALG_ECDSA_##_hash_algo                 \
 	}
 
 #define RSA_ALGORITHM_ID(_sign_type, _rsa_algo, _hash_algo)                    \
@@ -34,12 +33,11 @@
  * for 1 given Key type ID
  */
 static const struct {
-	enum tee_key_type key_type_id;
 	unsigned int security_size;
 	uint32_t tee_algorithm_id;
-} algorithm_ids[] = { ALGORITHM_ID(ECDSA, 192), ALGORITHM_ID(ECDSA, 224),
-		      ALGORITHM_ID(ECDSA, 256), ALGORITHM_ID(ECDSA, 384),
-		      ALGORITHM_ID(ECDSA, 521) };
+} algorithm_ids[] = { ALGORITHM_ID(192, SHA1), ALGORITHM_ID(224, SHA224),
+		      ALGORITHM_ID(256, SHA256), ALGORITHM_ID(384, SHA384),
+		      ALGORITHM_ID(521, SHA512) };
 
 /*
  * RSA algo must be ordered from lowest to highest.
@@ -114,8 +112,7 @@ static TEE_Result get_rsa_algo_id(enum tee_signature_type signature_type,
 	return TEE_SUCCESS;
 }
 
-static TEE_Result get_algorithm_id(enum tee_key_type key_type_id,
-				   unsigned int security_size,
+static TEE_Result get_algorithm_id(unsigned int security_size,
 				   enum tee_algorithm_id *algorithm_id)
 {
 	unsigned int i = 0;
@@ -127,10 +124,6 @@ static TEE_Result get_algorithm_id(enum tee_key_type key_type_id,
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	for (; i < size; i++) {
-		if (algorithm_ids[i].key_type_id < key_type_id)
-			continue;
-		if (algorithm_ids[i].key_type_id > key_type_id)
-			return TEE_ERROR_NOT_SUPPORTED;
 		if (algorithm_ids[i].security_size < security_size)
 			continue;
 		if (algorithm_ids[i].security_size > security_size)
@@ -317,8 +310,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 			attr_count = 1;
 		}
 	} else {
-		res = get_algorithm_id(shared_params->key_type,
-				       shared_params->security_size,
+		res = get_algorithm_id(shared_params->security_size,
 				       &algorithm_id);
 	}
 

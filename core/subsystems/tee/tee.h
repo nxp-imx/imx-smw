@@ -48,15 +48,17 @@ struct cipher_context {
 
 /**
  * tee_convert_key_type() - Convert SMW key type to TEE key type.
- * @smw_key_type: SMW key type.
- * @tee_key_type: TEE key type. Not updated if conversion can't be done.
+ * @key_type_id: SMW key type.
+ * @hash_algo_id: SMW hash algo ID.
+ * @key_type: TEE key type. Not updated if conversion can't be done.
  *
  * Return:
  * SMW_STATUS_OK			- Success.
  * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Invalid key type.
  */
-int tee_convert_key_type(enum smw_config_key_type_id smw_key_type,
-			 enum tee_key_type *tee_key_type);
+int tee_convert_key_type(enum smw_config_key_type_id key_type_id,
+			 enum smw_config_hash_algo_id hash_algo_id,
+			 enum tee_key_type *key_type);
 
 /**
  * tee_convert_hash_algorithm_id() - Convert SMW algorithm to TEE algorithm.

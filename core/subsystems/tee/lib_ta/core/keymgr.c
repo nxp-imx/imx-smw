@@ -13,13 +13,13 @@
 #include "keymgr.h"
 
 /* Number of attributes switch key type */
-#define NB_ATTR_ECDSA_PUB_KEY 3
-#define NB_ATTR_ECDSA_KEYPAIR 4
+#define NB_ATTR_SECP_R1_PUB_KEY 3
+#define NB_ATTR_SECP_R1_KEYPAIR 4
 #define NB_ATTR_ED25519_PUB_KEY 1
 #define NB_ATTR_ED25519_KEYPAIR 2
-#define NB_ATTR_RSA_PUB_KEY   2
-#define NB_ATTR_RSA_KEYPAIR   3
-#define NB_ATTR_SYMM_KEY      1
+#define NB_ATTR_RSA_PUB_KEY	2
+#define NB_ATTR_RSA_KEYPAIR	3
+#define NB_ATTR_SYMM_KEY	1
 
 #define SECURITY_SIZE_RANGE UINT_MAX
 
@@ -97,11 +97,11 @@ struct {
 	unsigned int obj_type;
 	unsigned int ecc_curve;
 } key_def_list[] = {
-	KEY_DEF_ECC(ECDSA, 192, ECDSA_KEYPAIR, P192),
-	KEY_DEF_ECC(ECDSA, 224, ECDSA_KEYPAIR, P224),
-	KEY_DEF_ECC(ECDSA, 256, ECDSA_KEYPAIR, P256),
-	KEY_DEF_ECC(ECDSA, 384, ECDSA_KEYPAIR, P384),
-	KEY_DEF_ECC(ECDSA, 521, ECDSA_KEYPAIR, P521),
+	KEY_DEF_ECC(SECP_R1, 192, ECDSA_KEYPAIR, P192),
+	KEY_DEF_ECC(SECP_R1, 224, ECDSA_KEYPAIR, P224),
+	KEY_DEF_ECC(SECP_R1, 256, ECDSA_KEYPAIR, P256),
+	KEY_DEF_ECC(SECP_R1, 384, ECDSA_KEYPAIR, P384),
+	KEY_DEF_ECC(SECP_R1, 521, ECDSA_KEYPAIR, P521),
 	KEY_DEF(ED25519, 256, ED25519_KEYPAIR),
 	KEY_DEF_RANGE(AES, AES),
 	KEY_DEF(DES, 56, DES),
@@ -902,17 +902,17 @@ set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
 
 	switch (object_type) {
 	case TEE_TYPE_ECDSA_PUBLIC_KEY:
-		*attr_count = NB_ATTR_ECDSA_PUB_KEY;
+		*attr_count = NB_ATTR_SECP_R1_PUB_KEY;
 		return set_import_key_public_attributes(attr,
-							NB_ATTR_ECDSA_PUB_KEY,
-							TEE_KEY_TYPE_ID_ECDSA,
+							NB_ATTR_SECP_R1_PUB_KEY,
+							TEE_KEY_TYPE_ID_SECP_R1,
 							security_size, pub_key,
 							pub_key_len);
 
 	case TEE_TYPE_ECDSA_KEYPAIR:
-		*attr_count = NB_ATTR_ECDSA_KEYPAIR;
-		return set_import_keypair_attrs(attr, NB_ATTR_ECDSA_KEYPAIR,
-						TEE_KEY_TYPE_ID_ECDSA,
+		*attr_count = NB_ATTR_SECP_R1_KEYPAIR;
+		return set_import_keypair_attrs(attr, NB_ATTR_SECP_R1_KEYPAIR,
+						TEE_KEY_TYPE_ID_SECP_R1,
 						security_size, priv_key,
 						priv_key_len, pub_key,
 						pub_key_len);
@@ -984,7 +984,7 @@ static TEE_Result get_import_key_obj_type(enum tee_key_type key_type,
 	if (!obj_type)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	if (key_type == TEE_KEY_TYPE_ID_ECDSA && !priv_key) {
+	if (key_type == TEE_KEY_TYPE_ID_SECP_R1 && !priv_key) {
 		*obj_type = TEE_TYPE_ECDSA_PUBLIC_KEY;
 		return TEE_SUCCESS;
 	}
@@ -1160,7 +1160,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	if (res)
 		return res;
 
-	if (key_type == TEE_KEY_TYPE_ID_ECDSA) {
+	if (key_type == TEE_KEY_TYPE_ID_SECP_R1) {
 		/* Configure key ECC attribute */
 		res = conf_key_ecc_attribute(key_type, security_size,
 					     &key_attr);
@@ -1217,7 +1217,7 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		/* Export RSA public key */
 		res = export_pub_key_rsa(obj_data.handle, modulus, modulus_size,
 					 pub_key, pub_key_size);
-	else if (key_type == TEE_KEY_TYPE_ID_ECDSA)
+	else if (key_type == TEE_KEY_TYPE_ID_SECP_R1)
 		/* Export ECDSA public key */
 		res = export_pub_key_ecc(obj_data.handle, pub_key,
 					 pub_key_size);

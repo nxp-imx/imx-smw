@@ -95,7 +95,9 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	key_descriptor = &args->key_descriptor;
 	key_identifier = &key_descriptor->identifier;
 
-	status = tee_convert_key_type(key_identifier->type_id, &key_type_id);
+	status = tee_convert_key_type(key_identifier->type_id,
+				      SMW_CONFIG_HASH_ALGO_ID_INVALID,
+				      &key_type_id);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 

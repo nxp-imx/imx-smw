@@ -158,9 +158,9 @@ static int tls12_validate_key_base(struct smw_keymgr_derive_key_args *args)
 		}
 		break;
 
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 		switch (tls_args->key_exchange_id) {
 		case SMW_TLS12_KEY_EXCHANGE_ID_ECDH_ECDSA:
 		case SMW_TLS12_KEY_EXCHANGE_ID_ECDH_RSA:

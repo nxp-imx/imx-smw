@@ -118,12 +118,9 @@ static int get_standard_public_length(struct smw_keymgr_identifier *identifier,
 	*length = 0;
 
 	switch (identifier->type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 		*length = BITS_TO_BYTES_SIZE(identifier->security_size) * 2;
 		break;
 
@@ -141,13 +138,6 @@ static int get_standard_public_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
@@ -207,24 +197,14 @@ static int get_standard_private_length(struct smw_keymgr_identifier *identifier,
 	*length = 0;
 
 	switch (identifier->type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_AES:
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		*length = BITS_TO_BYTES_SIZE(identifier->security_size);
 		break;
@@ -293,12 +273,9 @@ static int get_standard_modulus_length(struct smw_keymgr_identifier *identifier,
 	*length = 0;
 
 	switch (identifier->type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_DH:
 	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
 	case SMW_CONFIG_KEY_TYPE_ID_AES:
@@ -306,13 +283,6 @@ static int get_standard_modulus_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
@@ -373,12 +343,9 @@ get_standard_exponent_length(struct smw_keymgr_identifier *identifier,
 	*length = 0;
 
 	switch (identifier->type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDH_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_DH:
 	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
@@ -387,13 +354,6 @@ get_standard_exponent_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
@@ -1423,9 +1383,9 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	switch (type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
@@ -1437,14 +1397,7 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_MD5:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA1:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA224:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA256:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA384:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SHA512:
-	case SMW_CONFIG_KEY_TYPE_ID_HMAC_SM3:
-	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY:
+	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER:
 		*privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 		break;
 
@@ -1478,7 +1431,7 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 	if (!args || !args->key_descriptor)
 		goto end;
 
-	if (!args->key_descriptor->type_name ||
+	if (args->key_descriptor->type_name == SMW_KEY_TYPE_NAME_NONE ||
 	    !args->key_descriptor->security_size)
 		goto end;
 
@@ -1565,7 +1518,7 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->key_descriptor ||
-	    !args->key_descriptor->type_name ||
+	    args->key_descriptor->type_name == SMW_KEY_TYPE_NAME_NONE ||
 	    !args->key_descriptor->security_size)
 		goto end;
 
@@ -1727,7 +1680,8 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 	if (!descriptor)
 		goto end;
 
-	if (!descriptor->type_name || !descriptor->security_size)
+	if (descriptor->type_name == SMW_KEY_TYPE_NAME_NONE ||
+	    !descriptor->security_size)
 		goto end;
 
 	if (!descriptor->buffer) {
@@ -1787,7 +1741,7 @@ smw_get_key_type_name(struct smw_key_descriptor *descriptor)
 	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_identifier key_identifier = { 0 };
-	const char *name = NULL;
+	smw_key_type_t name = SMW_KEY_TYPE_NAME_NONE;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1799,7 +1753,7 @@ smw_get_key_type_name(struct smw_key_descriptor *descriptor)
 
 	descriptor->type_name = name;
 
-	if (!name)
+	if (name == SMW_KEY_TYPE_NAME_NONE)
 		status = SMW_STATUS_INVALID_PARAM;
 
 end:

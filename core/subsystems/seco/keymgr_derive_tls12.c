@@ -75,11 +75,11 @@ static const struct tls12_kdf_info {
 	unsigned char nb_shared_key_id;
 } tls12_kdf[] = {
 	/* TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 */
-	TLS12_KDF_DEF_WITH_MAC(ECDHE_ECDSA, AES_128_CBC, SHA256, HMAC_SHA256,
-			       256, AES, 128, HMAC_SHA_256_TLS_32_16_4),
+	TLS12_KDF_DEF_WITH_MAC(ECDHE_ECDSA, AES_128_CBC, SHA256, HMAC, 256, AES,
+			       128, HMAC_SHA_256_TLS_32_16_4),
 	/* TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384 */
-	TLS12_KDF_DEF_WITH_MAC(ECDHE_ECDSA, AES_256_CBC, SHA384, HMAC_SHA384,
-			       384, AES, 256, HMAC_SHA_384_TLS_48_32_4),
+	TLS12_KDF_DEF_WITH_MAC(ECDHE_ECDSA, AES_256_CBC, SHA384, HMAC, 384, AES,
+			       256, HMAC_SHA_384_TLS_48_32_4),
 	/* TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 */
 	TLS12_KDF_DEF_NO_MAC(ECDHE_ECDSA, AES_128_GCM, SHA256, AES, 128,
 			     HMAC_SHA_256_TLS_0_16_4),
@@ -101,11 +101,11 @@ static const struct key_def {
 	hsm_key_type_t key_initiator;
 	hsm_key_exchange_scheme_id_t key_exchange;
 } key_def_list[] = {
-	KEY_DEF(ECDH_NIST, 256, ECDSA_NIST_P256, ECDH_NIST_P256),
-	KEY_DEF(ECDH_NIST, 384, ECDSA_NIST_P384, ECDH_NIST_P384),
-	KEY_DEF(ECDH_BRAINPOOL_R1, 256, ECDSA_BRAINPOOL_R1_256,
+	KEY_DEF(SECP_R1, 256, ECDSA_NIST_P256, ECDH_NIST_P256),
+	KEY_DEF(SECP_R1, 384, ECDSA_NIST_P384, ECDH_NIST_P384),
+	KEY_DEF(BRAINPOOL_R1, 256, ECDSA_BRAINPOOL_R1_256,
 		ECDH_BRAINPOOL_R1_256),
-	KEY_DEF(ECDH_BRAINPOOL_R1, 384, ECDSA_BRAINPOOL_R1_384,
+	KEY_DEF(BRAINPOOL_R1, 384, ECDSA_BRAINPOOL_R1_384,
 		ECDH_BRAINPOOL_R1_384),
 };
 
@@ -394,7 +394,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	/*
 	 * Create the Master Key
 	 */
-	key_identifier.type_id = SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER_KEY;
+	key_identifier.type_id = SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
 	key_identifier.security_size = TLS12_MASTER_SECRET_SEC_SIZE;
 	status = smw_keymgr_get_privacy_id(key_identifier.type_id,
 					   &key_identifier.privacy_id);

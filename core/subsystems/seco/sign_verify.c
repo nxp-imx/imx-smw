@@ -26,7 +26,7 @@
 		.security_size = _security_size,                               \
 		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_algo_id,                 \
 		.signature_scheme_id =                                         \
-			HSM_SIGNATURE_SCHEME_##_signature_scheme_id            \
+			HSM_SIGNATURE_SCHEME_ECDSA_##_signature_scheme_id      \
 	}
 
 /* Key type IDs must be ordered from lowest to highest.
@@ -41,12 +41,11 @@ static const struct {
 	enum smw_config_hash_algo_id algo_id;
 	hsm_signature_scheme_id_t signature_scheme_id;
 } signature_scheme_ids[] = {
-	SIGNATURE_SCHEME_ID(ECDSA_NIST, 256, SHA256, ECDSA_NIST_P256_SHA_256),
-	SIGNATURE_SCHEME_ID(ECDSA_NIST, 384, SHA384, ECDSA_NIST_P384_SHA_384),
-	SIGNATURE_SCHEME_ID(ECDSA_BRAINPOOL_R1, 256, SHA256,
-			    ECDSA_BRAINPOOL_R1_256_SHA_256),
-	SIGNATURE_SCHEME_ID(ECDSA_BRAINPOOL_R1, 384, SHA384,
-			    ECDSA_BRAINPOOL_R1_384_SHA_384)
+	SIGNATURE_SCHEME_ID(SECP_R1, 256, SHA256, NIST_P256_SHA_256),
+	SIGNATURE_SCHEME_ID(SECP_R1, 384, SHA384, NIST_P384_SHA_384),
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, 256, SHA256,
+			    BRAINPOOL_R1_256_SHA_256),
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, 384, SHA384, BRAINPOOL_R1_384_SHA_384)
 };
 
 static int set_signature_scheme(enum smw_config_key_type_id key_type_id,

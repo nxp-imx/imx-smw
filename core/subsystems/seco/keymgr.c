@@ -18,7 +18,7 @@
 #include "common.h"
 
 /* There is no SECO master key type value */
-#define HSM_KEY_TYPE_TLS_MASTER_KEY 0
+#define HSM_KEY_TYPE_TLS_MASTER 0
 
 #define KEY_DEF(_key_type_id, _security_size, _public_key_size, _key_type)     \
 	{                                                                      \
@@ -38,20 +38,19 @@ static const struct key_def {
 	unsigned int security_size;
 	unsigned short public_key_size;
 	hsm_key_type_t key_type;
-} key_def_list[] = {
-	KEY_DEF(ECDSA_NIST, 256, 64, ECDSA_NIST_P256),
-	KEY_DEF(ECDSA_NIST, 384, 96, ECDSA_NIST_P384),
-	KEY_DEF(ECDSA_BRAINPOOL_R1, 256, 64, ECDSA_BRAINPOOL_R1_256),
-	KEY_DEF(ECDSA_BRAINPOOL_R1, 384, 96, ECDSA_BRAINPOOL_R1_384),
-	KEY_DEF(AES, 128, 0, AES_128),
-	KEY_DEF(AES, 192, 0, AES_192),
-	KEY_DEF(AES, 256, 0, AES_256),
-	KEY_DEF(HMAC_SHA224, 224, 0, HMAC_224),
-	KEY_DEF(HMAC_SHA256, 256, 0, HMAC_256),
-	KEY_DEF(HMAC_SHA384, 384, 0, HMAC_384),
-	KEY_DEF(HMAC_SHA512, 512, 0, HMAC_512),
-	KEY_DEF(TLS_MASTER_KEY, TLS12_MASTER_SECRET_SEC_SIZE, 0, TLS_MASTER_KEY)
-};
+} key_def_list[] = { KEY_DEF(SECP_R1, 256, 64, ECDSA_NIST_P256),
+		     KEY_DEF(SECP_R1, 384, 96, ECDSA_NIST_P384),
+		     KEY_DEF(BRAINPOOL_R1, 256, 64, ECDSA_BRAINPOOL_R1_256),
+		     KEY_DEF(BRAINPOOL_R1, 384, 96, ECDSA_BRAINPOOL_R1_384),
+		     KEY_DEF(AES, 128, 0, AES_128),
+		     KEY_DEF(AES, 192, 0, AES_192),
+		     KEY_DEF(AES, 256, 0, AES_256),
+		     KEY_DEF(HMAC, 224, 0, HMAC_224),
+		     KEY_DEF(HMAC, 256, 0, HMAC_256),
+		     KEY_DEF(HMAC, 384, 0, HMAC_384),
+		     KEY_DEF(HMAC, 512, 0, HMAC_512),
+		     KEY_DEF(TLS_MASTER, TLS12_MASTER_SECRET_SEC_SIZE, 0,
+			     TLS_MASTER) };
 
 static int set_key_type(enum smw_config_key_type_id key_type_id,
 			unsigned int security_size, hsm_key_type_t *key_type)
@@ -173,7 +172,7 @@ end:
  * check_export_key_config() - Check key descriptor configuration.
  * @key_descriptor: Pointer to key descriptor.
  *
- * SECO secure subsystem only exports ECDSA NIST and BR1 public key.
+ * SECO secure subsystem only exports Secp R1 and Brainpool R1 public key.
  *
  * Return:
  * SMW_STATUS_OK			- Configuration ok.
@@ -184,8 +183,8 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	switch (key_descriptor->identifier.type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 		if (smw_keymgr_get_public_data(key_descriptor) &&
 		    !smw_keymgr_get_private_data(key_descriptor)) {
 			status = SMW_STATUS_OK;

@@ -51,6 +51,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add ELE support for the CHACHA20_POLY1305 AEAD mode.
 * Fix SECO MAC length to be exact length due to SECO limitation.
 * Switch the SECO subsystem to the new Secure Enclave library.
+* Fix SECO Data length, return data length relying on the database content.
 
 ##### 3. ARM PSA APIs
 

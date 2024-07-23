@@ -5,6 +5,7 @@
 
 #include "debug.h"
 #include "storage.h"
+#include "object_db.h"
 
 #include "common.h"
 
@@ -50,6 +51,9 @@ static int data_storage(struct hdl *hdl,
 	hsm_hdl_t data_storage_hdl = 0;
 	op_data_storage_args_t op_args = { 0 };
 
+	union smw_object_db_info db_info = { 0 };
+	smw_attr_attributes_t attributes = 0;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (SET_OVERFLOW(smw_storage_get_data_identifier(data_descriptor),
@@ -60,6 +64,36 @@ static int data_storage(struct hdl *hdl,
 	op_args.data_size = smw_storage_get_data_length(data_descriptor);
 	op_args.flags = store ? HSM_OP_DATA_STORAGE_FLAGS_STORE :
 				HSM_OP_DATA_STORAGE_FLAGS_RETRIEVE;
+
+	if (!store) {
+		attributes = data_descriptor->data_attributes.attributes;
+
+		/*
+		 * Request the expected data size, assuming if the data
+		 * is present in the object database, that the size of the
+		 * data is correct
+		 */
+		status = smw_object_db_get_info(op_args.data_id, attributes,
+						&db_info);
+
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		if (!op_args.data) {
+			smw_storage_set_data_length(data_descriptor,
+						    db_info.data_info.size);
+			goto end;
+		} else if (op_args.data_size < db_info.data_info.size) {
+			smw_storage_set_data_length(data_descriptor,
+						    db_info.data_info.size);
+
+			status = SMW_STATUS_OUTPUT_TOO_SHORT;
+			goto end;
+		} else {
+			/* Ensure that data size requested is exact */
+			op_args.data_size = db_info.data_info.size;
+		}
+	}
 
 	err = open_data_storage_service(hdl, &data_storage_hdl);
 	if (err != HSM_NO_ERROR) {

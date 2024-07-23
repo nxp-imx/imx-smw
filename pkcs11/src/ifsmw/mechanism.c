@@ -30,16 +30,6 @@
 
 #include "trace.h"
 
-#define NIST_STR	 "NIST"
-#define BRAINPOOL_R1_STR "BRAINPOOL_R1"
-#define BRAINPOOL_T1_STR "BRAINPOOL_T1"
-
-#define AES_STR	 "AES"
-#define DES_STR	 "DES"
-#define DES3_STR "DES3"
-#define HMAC_STR "HMAC"
-#define SM4_STR	 "SM4"
-
 #define ENCRYPT_STR "ENCRYPT"
 #define DECRYPT_STR "DECRYPT"
 
@@ -94,28 +84,32 @@ static CK_RV info_mhmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 
-smw_string_t smw_ec_name[] = { NIST_STR, BRAINPOOL_R1_STR, BRAINPOOL_T1_STR };
+smw_key_type_t smw_ec_name[] = { SMW_KEY_TYPE_NAME_SECP_R1,
+				 SMW_KEY_TYPE_NAME_BRAINPOOL_R1,
+				 SMW_KEY_TYPE_NAME_BRAINPOOL_T1 };
 
 /**
  * struct mentry - Definition of a mechanism supported by each device
  * @type: Cryptoki Mechanism type
  * @slot_flag: Bit mask flag of a device supporting the mechanism
+ * @smw_key_type: SMW key types name for this mechanism, if only one
  * @smw_algo: SMW algorithm name for this mechanism
  * @smw_mode: SMW mode name for this mechanism, if any
  * @smw_hash: SMW hash name for this mechanism, if any
  * @smw_algo_id: SMW permitted algorithm for this mechanism
- * @nb_smw_curve: Number of SMW curves
- * @smw_curve: SMW curves names for this mechanism, if any
+ * @nb_smw_key_types: Number of SMW key types
+ * @smw_key_types: SMW key types names for this mechanism, if more than one
  */
 struct mentry {
 	CK_MECHANISM_TYPE type;
 	CK_FLAGS slot_flag;
+	smw_key_type_t smw_key_type;
 	smw_string_t smw_algo;
 	smw_string_t smw_mode;
 	smw_string_t smw_hash;
 	smw_attr_algo_t smw_algo_id;
-	unsigned int nb_smw_curve;
-	smw_string_t *smw_curve;
+	unsigned int nb_smw_key_types;
+	smw_key_type_t *smw_key_types;
 };
 
 /**
@@ -141,70 +135,75 @@ struct mgroup {
 };
 
 /* Macro filling a struct mentry for a single algo */
-#define M_ALGO(_algo_name, _mode_name, _hash_name, _algo_id, _id)              \
+#define M_ALGO(_key_type_name, _algo_name, _mode_name, _hash_name, _algo_id,   \
+	       _id)                                                            \
 	{                                                                      \
-		.type = CKM_##_id, .slot_flag = 0, .smw_algo = _algo_name,     \
-		.smw_hash = _hash_name, .smw_mode = _mode_name,                \
-		.smw_algo_id = _algo_id, .nb_smw_curve = 0, .smw_curve = NULL, \
-	}
-
-/* Macro filling a struct mentry for an algo or a list of algo */
-#define M_ECKEYGEN(_curve, _nb_curve, _id)                                     \
-	{                                                                      \
-		.type = CKM_##_id, .slot_flag = 0, .smw_algo = ECDSA_STR,      \
-		.smw_hash = NULL, .smw_mode = NULL, .smw_algo_id = 0,          \
-		.nb_smw_curve = _nb_curve, .smw_curve = _curve,                \
+		.type = CKM_##_id, .slot_flag = 0,                             \
+		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type_name,            \
+		.smw_algo = _algo_name, .smw_hash = _hash_name,                \
+		.smw_mode = _mode_name, .smw_algo_id = _algo_id,               \
+		.nb_smw_key_types = 0, .smw_key_types = NULL                   \
 	}
 
 #define M_DIGEST(_hash, _id)                                                   \
-	M_ALGO(STR(_hash), NULL, NULL, SMW_ATTR_HASH_##_hash, _id)
+	M_ALGO(NONE, STR(_hash), NULL, NULL, SMW_ATTR_HASH_##_hash, _id)
 
-#define M_KEYGEN(_algo, _id)                                                   \
+/* Macro filling a struct mentry for an algo or a list of algo */
+#define M_ECKEYGEN(_key_types, _nb_key_types, _id)                             \
 	{                                                                      \
-		.type = CKM_##_id, .slot_flag = 0, .smw_algo = STR(_algo),     \
+		.type = CKM_##_id, .slot_flag = 0, .smw_algo = NULL,           \
 		.smw_hash = NULL, .smw_mode = NULL, .smw_algo_id = 0,          \
-		.nb_smw_curve = 1, .smw_curve = NULL,                          \
+		.nb_smw_key_types = _nb_key_types, .smw_key_types = _key_types \
+	}
+
+#define M_KEYGEN(_key_type, _id)                                               \
+	{                                                                      \
+		.type = CKM_##_id, .slot_flag = 0,                             \
+		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
+		.smw_algo = NULL, .smw_hash = NULL, .smw_mode = NULL,          \
+		.smw_algo_id = 0, .nb_smw_key_types = 1,                       \
+		.smw_key_types = NULL,                                         \
 	}
 
 #define M_SIGN_ECDSA_ANY_HASH(_id)                                             \
-	M_ALGO(ECDSA_STR, NULL, NULL,                                          \
+	M_ALGO(NONE, ECDSA_STR, NULL, NULL,                                    \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_ANY,    \
 							SMW_ATTR_HASH_ANY),    \
 	       _id)
 
 #define M_SIGN_ECDSA(_hash, _id)                                               \
-	M_ALGO(ECDSA_STR, NULL, STR(_hash),                                    \
+	M_ALGO(NONE, ECDSA_STR, NULL, STR(_hash),                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(                       \
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
 	       _id)
 
 #define M_SIGN_RSA_ANY_HASH(_mode, _id)                                        \
-	M_ALGO(RSA_STR, STR(_mode), NULL,                                      \
+	M_ALGO(NONE, RSA_STR, STR(_mode), NULL,                                \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_ANY, 0),   \
 	       _id)
 
 #define M_SIGN_RSA(_mode, _hash, _id)                                          \
-	M_ALGO(RSA_STR, STR(_mode), STR(_hash),                                \
+	M_ALGO(NONE, RSA_STR, STR(_mode), STR(_hash),                          \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_##_hash,   \
 						      0),                      \
 	       _id)
 
 #define M_CIPHER(_algo, _mode, _mode_id, _id)                                  \
-	M_ALGO(STR(_algo), STR(_mode), NULL,                                   \
+	M_ALGO(_algo, NULL, STR(_mode), NULL,                                  \
 	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
 						  SMW_ATTR_MODE_##_mode_id),   \
 	       _id)
 
 #define M_MAC(_algo, _mode, _mode_id, _id)                                     \
-	M_ALGO(STR(_algo), STR(_mode), NULL,                                   \
+	M_ALGO(_algo, NULL, STR(_mode), NULL,                                  \
 	       SMW_ATTR_ALGO_MAC(SMW_ATTR_ALGO_##_algo,                        \
 				 SMW_ATTR_MODE_##_mode_id, 0),                 \
 	       _id)
 
 #define M_HMAC(_mode, _hash, _id)                                              \
-	M_ALGO(HMAC_STR, STR(_mode), STR(_hash),                               \
+	M_ALGO(HMAC, NULL, STR(_mode), STR(_hash),                             \
 	       SMW_ATTR_ALGO_MAC_HMAC(SMW_ATTR_HASH_##_hash, 0), _id)
 
 /* Macro filling a group of mechanisms */
@@ -454,17 +453,17 @@ static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
 				    CK_SLOT_ID slotid, struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_OK;
-	struct libmech_list *mech = NULL;
+	struct libmech_list *mech_list = NULL;
 	struct mentry *entry = NULL;
 
-	mech = get_key_mech(obj);
+	mech_list = get_key_mech_list(obj);
 
 	/* Only one permitted algorithm is supported. */
-	if (mech->number) {
-		ret = find_mechanism(slotid, mech->mech[0], NULL, &entry);
+	if (mech_list->number) {
+		ret = find_mechanism(slotid, mech_list->mech[0], NULL, &entry);
 		if (ret != CKR_OK) {
 			DBG_TRACE("Key allowed mechanism 0x%lx error %ld",
-				  mech->mech[0], ret);
+				  mech_list->mech[0], ret);
 		}
 
 		DBG_TRACE("Key permitted algorithm 0x%" PRIx64,
@@ -575,29 +574,33 @@ static void check_keygen_common(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct mentry *entry = NULL;
 	CK_FLAGS slot_flag = 0;
-	smw_string_t *curve = NULL;
-	unsigned int idx = 0;
-	unsigned int idx_algo = 0;
+	smw_key_type_t *key_type = NULL;
+	unsigned int entry_idx = 0;
+	unsigned int key_type_idx = 0;
 	struct smw_key_info info = { 0 };
 
 	slot_flag = BIT(slotid);
-	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
-		if (entry->nb_smw_curve > 1)
-			curve = &entry->smw_curve[0];
+	for (entry = mgroup->mechanism; entry_idx < mgroup->number;
+	     entry_idx++, entry++) {
+		if (entry->nb_smw_key_types > 1)
+			key_type = &entry->smw_key_types[0];
 		else
-			curve = &entry->smw_algo;
+			key_type = &entry->smw_key_type;
 
-		for (idx_algo = 0; idx_algo < entry->nb_smw_curve;
-		     idx_algo++, curve++) {
-			info.key_type_name = *curve;
+		for (key_type_idx = 0; key_type_idx < entry->nb_smw_key_types;
+		     key_type_idx++) {
+			info.key_type_name = *key_type;
 
 			status =
 				smw_config_check_generate_key(subsystem, &info);
-			DBG_TRACE("Subsystem #%d Key Generate %s: %d",
+			DBG_TRACE("Subsystem #%d Key Generate #%d: %d",
 				  subsystem, info.key_type_name, status);
 
 			if (status == SMW_STATUS_OK)
 				SET_BITS(entry->slot_flag, slot_flag);
+
+			if (entry->nb_smw_key_types > 1)
+				key_type++;
 		}
 	}
 }
@@ -623,7 +626,7 @@ static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	CK_RV ret = CKR_OK;
 	enum smw_status_code status = SMW_STATUS_OK;
 	const struct libdev *devinfo = NULL;
-	smw_string_t *curve = NULL;
+	smw_key_type_t *key_type = NULL;
 	unsigned int idx = 0;
 	struct smw_key_info keyinfo = { 0 };
 
@@ -631,17 +634,17 @@ static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	if (entry->nb_smw_curve > 1)
-		curve = &entry->smw_curve[0];
+	if (entry->nb_smw_key_types > 1)
+		key_type = &entry->smw_key_types[0];
 	else
-		curve = &entry->smw_algo;
+		key_type = &entry->smw_key_type;
 
-	for (; idx < entry->nb_smw_curve; idx++, curve++) {
-		keyinfo.key_type_name = *curve;
+	for (; idx < entry->nb_smw_key_types; idx++) {
+		keyinfo.key_type_name = *key_type;
 		keyinfo.security_size = 0;
 
 		status = smw_config_check_generate_key(devinfo->name, &keyinfo);
-		DBG_TRACE("Subsystem #%d Key Generate %s: %d", devinfo->name,
+		DBG_TRACE("Subsystem #%d Key Generate #%d: %d", devinfo->name,
 			  keyinfo.key_type_name, status);
 
 		if (status != SMW_STATUS_OK)
@@ -655,6 +658,9 @@ static CK_RV info_keygen_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 		else
 			info->ulMinKeySize = MIN(info->ulMinKeySize,
 						 keyinfo.security_size_min);
+
+		if (entry->nb_smw_key_types > 1)
+			key_type++;
 	}
 
 	/*
@@ -973,7 +979,7 @@ static void check_mcipher(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 
 	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
 	     idx++, entry++) {
-		info.key_type_name = entry->smw_algo;
+		info.key_type_name = entry->smw_key_type;
 		info.mode = entry->smw_mode;
 		info.op_type = ENCRYPT_STR;
 		status = smw_config_check_cipher(subsystem, &info);
@@ -1008,7 +1014,7 @@ static CK_RV info_mcipher(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	info->ulMinKeySize = 0;
 	info->flags = 0;
 
-	cipher_info.key_type_name = entry->smw_algo;
+	cipher_info.key_type_name = entry->smw_key_type;
 	cipher_info.mode = entry->smw_mode;
 
 	cipher_info.op_type = ENCRYPT_STR;
@@ -1149,7 +1155,7 @@ static CK_RV set_smw_init_args(struct lib_cipher_ctx *ctx,
 		for (; i < smw_init_args->nb_keys; i++) {
 			(*key_buffer)[i].gen.private_length = key_length;
 			key_desc_ptr[i].buffer = &(*key_buffer)[i];
-			key_desc_ptr[i].type_name = AES_STR;
+			key_desc_ptr[i].type_name = SMW_KEY_TYPE_NAME_AES;
 			key_desc_ptr[i].security_size =
 				BYTES_TO_BITS(key_length);
 		}
@@ -1244,6 +1250,29 @@ end:
 	return ret;
 }
 
+static void check_mmac(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
+		       struct mgroup *mgroup)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx = 0;
+	CK_FLAGS slot_flag = 0;
+	struct mentry *entry = NULL;
+	struct smw_mac_info info = { 0 };
+
+	slot_flag = BIT(slotid);
+	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
+		info.key_type_name = entry->smw_key_type;
+		info.mac_algo = entry->smw_mode;
+		info.hash_algo = entry->smw_hash;
+
+		status = smw_config_check_mac(subsystem, &info);
+		DBG_TRACE("Subsystem #%d MAC mechanism %lu: %d", subsystem,
+			  entry->type, status);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+	}
+}
+
 static CK_RV info_mmac_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
@@ -1265,7 +1294,7 @@ static CK_RV info_mmac_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	info->ulMinKeySize = 0;
 	info->flags = 0;
 
-	mac_info.key_type_name = entry->smw_algo;
+	mac_info.key_type_name = entry->smw_key_type;
 	mac_info.mac_algo = entry->smw_mode;
 	mac_info.hash_algo = entry->smw_hash;
 
@@ -1346,22 +1375,8 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 static void check_mcmac(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			struct mgroup *mgroup)
 {
-	enum smw_status_code status = SMW_STATUS_OK;
-	unsigned int idx;
-	CK_FLAGS slot_flag = 0;
-	struct mentry *entry = NULL;
-	struct smw_mac_info info = { 0 };
-
-	slot_flag = BIT(slotid);
-
-	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
-	     idx++, entry++) {
-		info.key_type_name = entry->smw_algo;
-		info.mac_algo = entry->smw_mode;
-		status = smw_config_check_mac(subsystem, &info);
-		if (status == SMW_STATUS_OK)
-			SET_BITS(entry->slot_flag, slot_flag);
-	}
+	DBG_TRACE("Check CMAC mechanism");
+	return check_mmac(slotid, subsystem, mgroup);
 }
 
 static CK_RV info_mcmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
@@ -1378,35 +1393,8 @@ static CK_RV op_mcmac(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 static void check_mhmac(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			struct mgroup *mgroup)
 {
-	enum smw_status_code status = SMW_STATUS_OK;
-	unsigned int idx = 0;
-	struct smw_mac_info info = { 0 };
-	struct mentry *entry = NULL;
-	CK_FLAGS slot_flag = 0;
-
 	DBG_TRACE("Check HMAC mechanism");
-
-	/*
-	 * smw_config_check_mac() checks the key type, the MAC algorithm
-	 * (optional) and the hash algorithm (optional).
-	 *
-	 * Slot flag is set if:
-	 *  - sign or verify or both operations are supported
-	 */
-
-	info.key_type_name = HMAC_STR;
-
-	slot_flag = BIT(slotid);
-	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
-		info.mac_algo = entry->smw_algo;
-		info.hash_algo = entry->smw_hash;
-
-		status = smw_config_check_mac(subsystem, &info);
-		DBG_TRACE("Subsystem #%d MAC mechanism %lu: %d", subsystem,
-			  entry->type, status);
-		if (status == SMW_STATUS_OK)
-			SET_BITS(entry->slot_flag, slot_flag);
-	}
+	return check_mmac(slotid, subsystem, mgroup);
 }
 
 static CK_RV info_mhmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,

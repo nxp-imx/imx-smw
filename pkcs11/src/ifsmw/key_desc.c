@@ -3,6 +3,8 @@
  * Copyright 2021, 2023-2024 NXP
  */
 
+#include "smw/names.h"
+
 #include "asn1_ec_curve.h"
 #include "libobj_types.h"
 #include "util.h"
@@ -58,17 +60,17 @@ const struct asn1_curve_def ec_asn1_curves[] = { EC_ASN1_CURVE(prime192v1),
  * Note: The last element must be NULL
  */
 struct dev_curve_def {
-	const char *name;
+	smw_key_type_t name;
 	const unsigned int security_size;
 };
 
 #define EC_SMW_CURVE(_name, _size)                                             \
 	{                                                                      \
-		.name = #_name, .security_size = _size                         \
+		.name = SMW_KEY_TYPE_NAME_##_name, .security_size = _size      \
 	}
 
-const struct dev_curve_def ec_smw_curves[] = { EC_SMW_CURVE(NIST, 192),
-					       EC_SMW_CURVE(NIST, 256),
+const struct dev_curve_def ec_smw_curves[] = { EC_SMW_CURVE(SECP_R1, 192),
+					       EC_SMW_CURVE(SECP_R1, 256),
 					       EC_SMW_CURVE(BRAINPOOL_R1, 160),
 					       EC_SMW_CURVE(BRAINPOOL_T1, 160),
 					       EC_SMW_CURVE(BRAINPOOL_R1, 192),
@@ -117,29 +119,29 @@ const struct curve_def ec_curves[] = {
 
 struct cipher_def {
 	CK_KEY_TYPE ck_key_type;
-	const char *smw_name;
+	smw_key_type_t smw_name;
 };
 
 #define CIPHERS(_type, _name)                                                  \
 	{                                                                      \
-		.ck_key_type = _type, .smw_name = #_name                       \
+		.ck_key_type = _type, .smw_name = SMW_KEY_TYPE_NAME_##_name    \
 	}
 
 const struct cipher_def ciphers[] = { CIPHERS(CKK_AES, AES),
 				      CIPHERS(CKK_DES, DES),
 				      CIPHERS(CKK_DES3, DES3),
 				      CIPHERS(CKK_SM4, SM4),
-				      CIPHERS(CKK_MD5_HMAC, HMAC_MD5),
-				      CIPHERS(CKK_SHA_1_HMAC, HMAC_SHA1),
-				      CIPHERS(CKK_SHA224_HMAC, HMAC_SHA224),
-				      CIPHERS(CKK_SHA256_HMAC, HMAC_SHA256),
-				      CIPHERS(CKK_SHA384_HMAC, HMAC_SHA384),
-				      CIPHERS(CKK_SHA512_HMAC, HMAC_SHA512),
-				      CIPHERS(CKK_SHA3_224_HMAC, HMAC_SHA3_224),
-				      CIPHERS(CKK_SHA3_256_HMAC, HMAC_SHA3_256),
-				      CIPHERS(CKK_SHA3_384_HMAC, HMAC_SHA3_384),
-				      CIPHERS(CKK_SHA3_512_HMAC, HMAC_SHA3_512),
-				      { 0 } };
+				      CIPHERS(CKK_MD5_HMAC, HMAC),
+				      CIPHERS(CKK_SHA_1_HMAC, HMAC),
+				      CIPHERS(CKK_SHA224_HMAC, HMAC),
+				      CIPHERS(CKK_SHA256_HMAC, HMAC),
+				      CIPHERS(CKK_SHA384_HMAC, HMAC),
+				      CIPHERS(CKK_SHA512_HMAC, HMAC),
+				      CIPHERS(CKK_SHA3_224_HMAC, HMAC),
+				      CIPHERS(CKK_SHA3_256_HMAC, HMAC),
+				      CIPHERS(CKK_SHA3_384_HMAC, HMAC),
+				      CIPHERS(CKK_SHA3_512_HMAC, HMAC),
+				      { .smw_name = SMW_KEY_TYPE_NAME_NONE } };
 
 static CK_RV ec_key_desc(struct smw_key_descriptor *desc,
 			 struct libobj_obj *obj)
@@ -231,7 +233,7 @@ static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 		return CKR_GENERAL_ERROR;
 	}
 
-	while (cipher->smw_name) {
+	while (cipher->smw_name != SMW_KEY_TYPE_NAME_NONE) {
 		if (key_type == cipher->ck_key_type)
 			break;
 		cipher++;
@@ -260,7 +262,7 @@ static CK_RV rsa_key_desc(struct smw_key_descriptor *desc,
 	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
 	size_t security_size = 0;
 
-	desc->type_name = "RSA";
+	desc->type_name = SMW_KEY_TYPE_NAME_RSA;
 
 	/*
 	 * Modulus length defines the RSA security size

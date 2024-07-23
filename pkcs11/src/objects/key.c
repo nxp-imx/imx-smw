@@ -42,8 +42,8 @@ const struct template_attr attr_key_common[] = {
 		TATTR(key, local, LOCAL, sizeof(CK_BBOOL), OPTIONAL, boolean),
 	[KEY_GEN_MECH] = TATTR(key, gen_mech, KEY_GEN_MECHANISM,
 			       sizeof(CK_MECHANISM_TYPE), OPTIONAL, mech),
-	[KEY_ALLOWED_MECH] =
-		TATTR(key, mech, ALLOWED_MECHANISMS, 0, OPTIONAL, mech_list),
+	[KEY_ALLOWED_MECH] = TATTR(key, mech_list, ALLOWED_MECHANISMS, 0,
+				   OPTIONAL, mech_list),
 };
 
 enum attr_key_public_list {
@@ -1317,8 +1317,8 @@ void key_free(struct libobj_obj *obj)
 	if (key->id.array)
 		free(key->id.array);
 
-	if (key->mech.mech)
-		free(key->mech.mech);
+	if (key->mech_list.mech)
+		free(key->mech_list.mech);
 
 	switch (obj->class) {
 	case CKO_PUBLIC_KEY:

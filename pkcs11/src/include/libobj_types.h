@@ -115,7 +115,7 @@ struct libobj_key {
 	bool derive;
 	bool local;
 	CK_MECHANISM_TYPE gen_mech;
-	struct libmech_list mech;
+	struct libmech_list mech_list;
 	void *key;
 	void *subkey;
 };
@@ -162,11 +162,11 @@ struct libobj_key {
 		_key->derive;                                                  \
 	})
 
-#define get_key_mech(obj)                                                      \
+#define get_key_mech_list(obj)                                                 \
 	({                                                                     \
 		struct libobj_key *_key = get_subobj_from(obj, storage);       \
 		assert(_key);                                                  \
-		&_key->mech;                                                   \
+		&_key->mech_list;                                              \
 	})
 
 /*

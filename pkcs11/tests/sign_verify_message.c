@@ -640,12 +640,16 @@ static int sign_verify_hmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_BBOOL ck_true = CK_TRUE;
 	CK_KEY_TYPE secret_key_type = CKK_SHA256_HMAC;
 	CK_ULONG key_length = 32;
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA256_HMAC };
+
 	CK_ATTRIBUTE hmac_secretkey_attrs[] = {
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_SIGN, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_VERIFY, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_KEY_TYPE, &secret_key_type, sizeof(secret_key_type) },
 		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();

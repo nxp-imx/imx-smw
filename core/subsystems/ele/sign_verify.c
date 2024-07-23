@@ -32,8 +32,8 @@
  * Array of security key sizes supported for the signature per key type.
  * Last item must be 0.
  */
-static const unsigned int ecdsa_nist_key_sizes[] = { 224, 256, 384, 521, 0 };
-static const unsigned int ecdsa_r1_key_sizes[] = { 224, 256, 384, 0 };
+static const unsigned int secp_r1_key_sizes[] = { 224, 256, 384, 521, 0 };
+static const unsigned int brainpool_r1_key_sizes[] = { 224, 256, 384, 0 };
 
 static const struct signature_scheme {
 	enum smw_config_key_type_id key_type_id;
@@ -41,23 +41,18 @@ static const struct signature_scheme {
 	enum smw_config_hash_algo_id algo_id;
 	hsm_signature_scheme_id_t scheme_id;
 } signature_schemes[] = {
-	SIGNATURE_SCHEME_ID(ECDSA_NIST, ecdsa_nist_key_sizes, INVALID,
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, INVALID, ECDSA_ANY),
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, SHA224, ECDSA_SHA224),
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, SHA256, ECDSA_SHA256),
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, SHA384, ECDSA_SHA384),
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, SHA512, ECDSA_SHA512),
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, INVALID,
 			    ECDSA_ANY),
-	SIGNATURE_SCHEME_ID(ECDSA_NIST, ecdsa_nist_key_sizes, SHA224,
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, SHA224,
 			    ECDSA_SHA224),
-	SIGNATURE_SCHEME_ID(ECDSA_NIST, ecdsa_nist_key_sizes, SHA256,
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, SHA256,
 			    ECDSA_SHA256),
-	SIGNATURE_SCHEME_ID(ECDSA_NIST, ecdsa_nist_key_sizes, SHA384,
-			    ECDSA_SHA384),
-	SIGNATURE_SCHEME_ID(ECDSA_NIST, ecdsa_nist_key_sizes, SHA512,
-			    ECDSA_SHA512),
-	SIGNATURE_SCHEME_ID(ECDSA_BRAINPOOL_R1, ecdsa_r1_key_sizes, INVALID,
-			    ECDSA_ANY),
-	SIGNATURE_SCHEME_ID(ECDSA_BRAINPOOL_R1, ecdsa_r1_key_sizes, SHA224,
-			    ECDSA_SHA224),
-	SIGNATURE_SCHEME_ID(ECDSA_BRAINPOOL_R1, ecdsa_r1_key_sizes, SHA256,
-			    ECDSA_SHA256),
-	SIGNATURE_SCHEME_ID(ECDSA_BRAINPOOL_R1, ecdsa_r1_key_sizes, SHA384,
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, SHA384,
 			    ECDSA_SHA384),
 };
 

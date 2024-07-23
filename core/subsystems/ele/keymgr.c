@@ -96,14 +96,9 @@ static const struct key_def {
 	unsigned int (*public_length)(unsigned int security_size);
 	unsigned int (*modulus_length)(unsigned int security_size);
 } key_def_list[] = {
-	KEY_DEF(ECDSA_NIST, ECC_NIST, ecc_public_key_length, NULL),
-	KEY_DEF(ECDSA_BRAINPOOL_R1, ECC_BP_R1, ecc_public_key_length, NULL),
-	KEY_DEF(AES, AES, NULL, NULL),
-	KEY_DEF(HMAC, HMAC, NULL, NULL),
-	KEY_DEF(HMAC_SHA224, HMAC, NULL, NULL),
-	KEY_DEF(HMAC_SHA256, HMAC, NULL, NULL),
-	KEY_DEF(HMAC_SHA384, HMAC, NULL, NULL),
-	KEY_DEF(HMAC_SHA512, HMAC, NULL, NULL),
+	KEY_DEF(SECP_R1, ECC_NIST, ecc_public_key_length, NULL),
+	KEY_DEF(BRAINPOOL_R1, ECC_BP_R1, ecc_public_key_length, NULL),
+	KEY_DEF(AES, AES, NULL, NULL), KEY_DEF(HMAC, HMAC, NULL, NULL),
 	KEY_DEF(RSA, RSA, rsa_public_key_length, rsa_modulus_length)
 };
 
@@ -287,9 +282,9 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	switch (key_descriptor->identifier.type_id) {
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_R1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_BRAINPOOL_T1:
-	case SMW_CONFIG_KEY_TYPE_ID_ECDSA_NIST:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		if (smw_keymgr_get_public_data(key_descriptor) &&
 		    !smw_keymgr_get_private_data(key_descriptor)) {

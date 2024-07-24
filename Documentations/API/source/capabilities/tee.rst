@@ -95,10 +95,6 @@ The TEE subsystem doesn't define algorithm restriction per key usage.
 Defining permitted algorithm(s) will not be taken into account and operation
 will return the warning status `SMW_STATUS_KEY_POLICY_WARNING_IGNORED`.
 
-.. caution::
-   If key attribute **POLICY** is not specified, all key usages listed in
-   the :numref:`tee_key_usage` are attributed to the created key.
-
 Hash
 ^^^^
 

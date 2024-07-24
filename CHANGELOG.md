@@ -54,6 +54,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Switch the SECO subsystem to the new Secure Enclave library.
 * Fix SECO Data length, return data length relying on the database content.
 * Add support for HKDF based key derivation in the TEE subsystem.
+* Remove default value assignment for key attributes when undefined by the user across all subsystems.
+  Additionally, remove default value assignment for key usage when undefined by the user for TEE subsystem.
 
 ##### 3. ARM PSA APIs
 

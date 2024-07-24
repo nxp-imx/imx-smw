@@ -280,6 +280,17 @@ void key_usage_to_tee(smw_attr_usage_t smw, unsigned int *tee);
 void key_usage_to_smw(unsigned int tee, smw_attr_usage_t *smw);
 
 /**
+ * check_persistence() - Check SMW key persistence.
+ * @attributes: SMW key attributes.
+ * @persistent_flag: Flag to specify whether to use persistent storage.
+ *
+ * Return:
+ * SMW_STATUS_OK                         - Success.
+ * SMW_STATUS_INVALID_PARAM              - One of the parameter is invalid.
+ */
+int check_persistence(smw_attr_attributes_t attributes, bool *persistent_flag);
+
+/**
  * set_hex_buffer() - Set HEX buffer.
  * @format_id: Format of the input buffer.
  * @buffer: Pointer to the input buffer.

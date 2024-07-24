@@ -236,20 +236,14 @@ static int hkdf_derive_key(void *args)
 
 	key_attrs = key_args->key_attributes;
 	if (key_attrs) {
-		if (SMW_ATTR_IS_PERSISTENT(key_attrs->attributes))
-			shared_params.persistent = true;
+		status = check_persistence(key_attrs->attributes,
+					   &shared_params.persistent);
+		if (status != SMW_STATUS_OK)
+			goto exit;
 
-		if (key_attrs->usage_flags == SMW_ATTR_USAGE_NONE) {
-			shared_params.key_usage = TEE_KEY_USAGE_ALL;
-		} else {
-			key_usage_to_tee(key_attrs->usage_flags,
-					 &shared_params.key_usage);
-			key_usage_to_smw(shared_params.key_usage,
-					 &actual_usage_flags);
-		}
-
-	} else {
-		shared_params.key_usage = TEE_KEY_USAGE_ALL;
+		key_usage_to_tee(key_attrs->usage_flags,
+				 &shared_params.key_usage);
+		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
 	}
 
 	okm_len = smw_keymgr_get_okm_len(hkdf_args);

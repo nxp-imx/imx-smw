@@ -243,6 +243,19 @@ static void key_persistence_to_smw(bool persistent_flag,
 		*attributes = SMW_ATTR_SET_TRANSIENT(*attributes);
 }
 
+int check_persistence(smw_attr_attributes_t attributes, bool *persistent_flag)
+{
+	int status = SMW_STATUS_OK;
+	*persistent_flag = false;
+
+	if (SMW_ATTR_IS_PERSISTENT(attributes))
+		*persistent_flag = true;
+	else if (!SMW_ATTR_IS_TRANSIENT(attributes))
+		status = SMW_STATUS_INVALID_PARAM;
+
+	return status;
+}
+
 /**
  * check_security_size() - Check security size.
  * @key_def_list: Pointer to key definition structure.
@@ -626,19 +639,14 @@ static int generate_key(void *args)
 	key_attrs = key_args->key_attributes;
 
 	if (key_attrs) {
-		if (SMW_ATTR_IS_PERSISTENT(key_attrs->attributes))
-			shared_params.persistent_storage = true;
+		status = check_persistence(key_attrs->attributes,
+					   &shared_params.persistent_storage);
+		if (status != SMW_STATUS_OK)
+			goto exit;
 
-		if (key_attrs->usage_flags == SMW_ATTR_USAGE_NONE) {
-			shared_params.key_usage = TEE_KEY_USAGE_ALL;
-		} else {
-			key_usage_to_tee(key_attrs->usage_flags,
-					 &shared_params.key_usage);
-			key_usage_to_smw(shared_params.key_usage,
-					 &actual_usage_flags);
-		}
-	} else {
-		shared_params.key_usage = TEE_KEY_USAGE_ALL;
+		key_usage_to_tee(key_attrs->usage_flags,
+				 &shared_params.key_usage);
+		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
 	}
 
 	op.params[0].tmpref.buffer = &shared_params;
@@ -1167,20 +1175,14 @@ static int import_key(void *args)
 	key_attrs = key_args->key_attributes;
 
 	if (key_attrs) {
-		if (SMW_ATTR_IS_PERSISTENT(key_attrs->attributes))
-			shared_params.persistent_storage = true;
+		status = check_persistence(key_attrs->attributes,
+					   &shared_params.persistent_storage);
+		if (status != SMW_STATUS_OK)
+			goto exit;
 
-		if (key_attrs->usage_flags == SMW_ATTR_USAGE_NONE) {
-			shared_params.key_usage = TEE_KEY_USAGE_ALL;
-		} else {
-			key_usage_to_tee(key_attrs->usage_flags,
-					 &shared_params.key_usage);
-			key_usage_to_smw(shared_params.key_usage,
-					 &actual_usage_flags);
-		}
-
-	} else {
-		shared_params.key_usage = TEE_KEY_USAGE_ALL;
+		key_usage_to_tee(key_attrs->usage_flags,
+				 &shared_params.key_usage);
+		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
 	}
 
 	/*

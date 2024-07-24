@@ -795,16 +795,20 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 
 	case SMW_ATTR_PERSISTENCE_PERMANENT:
 		op_args.key_lifetime = HSM_SE_KEY_STORAGE_PERS_PERM;
-		/* Force permanant key to be written in NVM */
+		/* Force permanent key to be written in NVM */
 		op_args.flags |= HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
 		key_group = ELE_FIRST_PERSISTENT_KEY_GROUP;
 		persistent_grp = true;
 		break;
 
-	default:
+	case SMW_ATTR_PERSISTENCE_TRANSIENT:
 		op_args.key_lifetime = HSM_SE_KEY_STORAGE_VOLATILE;
 		key_group = ELE_FIRST_TRANSIENT_KEY_GROUP;
 		break;
+
+	default:
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
 	}
 
 	status = open_key_mgmt_service(&ele_ctx->hdl, &key_mgt_hdl);

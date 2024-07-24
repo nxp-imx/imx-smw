@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2024 NXP
  */
 
 #ifndef __UTIL_ASN1_H__
@@ -62,5 +62,19 @@ struct curve_def {
 CK_RV util_asn1_ec_params_to_curve(const struct curve_def **out_curve,
 				   struct libbytes *params,
 				   const struct curve_def *curves);
+
+/**
+ * util_asn1_curve_to_ec_params() - Convert EC curve to EC parameters
+ * @curve: EC curve value
+ * @params: EC Parameters value encoded in ASN1
+ *
+ * return:
+ * CKR_ARGUMENTS_BAD             - Bad arguments
+ * CKR_GENERAL_ERROR             - Error in conversion
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_OK                        - Success
+ */
+CK_RV util_asn1_curve_to_ec_params(const struct curve_def *curve,
+				   struct libbytes *params);
 
 #endif /* __UTIL_ASN1_H__ */

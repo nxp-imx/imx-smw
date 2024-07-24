@@ -20,6 +20,17 @@ void args_attrs_key_usage(smw_attr_usage_t *usage_flags,
 			  struct libobj_obj *obj);
 
 /**
+ * args_attrs_get_key_usage() - Get the key usage flags
+ * @obj: Key object
+ * @usage_flags: Usage flags
+ *
+ * Return:
+ * None.
+ */
+void args_attr_get_key_usage(struct libobj_obj *obj,
+			     smw_attr_usage_t usage_flags);
+
+/**
  * args_attr_key_storage() - Set the key storage attributes
  * @attr: Attributes
  * @obj: Object
@@ -28,6 +39,17 @@ void args_attrs_key_usage(smw_attr_usage_t *usage_flags,
  * None.
  */
 void args_attr_key_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj);
+
+/**
+ * args_attr_get_key_storage() - Get the key storage attributes
+ * @obj: Object
+ * @attr: Attributes
+ *
+ * Return:
+ * None.
+ */
+void args_attr_get_key_storage(struct libobj_obj *obj,
+			       smw_attr_attributes_t attr);
 
 /**
  * args_attr_data_storage() - Set the data storage attributes

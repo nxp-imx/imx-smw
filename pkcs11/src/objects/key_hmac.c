@@ -9,6 +9,7 @@
 #include "key_hmac.h"
 
 #include "lib_device.h"
+#include "lib_object.h"
 #include "libobj_types.h"
 #include "util.h"
 
@@ -106,6 +107,41 @@ end:
 	return ret;
 }
 
+CK_RV key_hmac_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+			struct libattr_list *attrs)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_key_hmac *new_key = NULL;
+
+	ret = key_hmac_allocate(obj);
+	if (ret != CKR_OK)
+		goto end;
+
+	new_key = get_subkey_from(obj);
+
+	DBG_TRACE("Retrieve an HMAC secret key (%p)", new_key);
+
+	/* Verify the key size value is not defined */
+	ret = attr_get_value(new_key, &attr_key_hmac[SEC_VALUE_LEN], attrs,
+			     MUST);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = libobj_get_id(obj, &new_key->key_id);
+	if (ret != CKR_OK)
+		goto end;
+
+	/* Get the key attributes from the SMW library */
+	ret = libdev_get_key_attributes(hsession, obj);
+	DBG_TRACE("HMAC Key ID 0x%X", new_key->key_id);
+
+end:
+	if (ret != CKR_OK)
+		key_hmac_free(obj);
+
+	return ret;
+}
+
 CK_RV key_hmac_get_attribute(CK_ATTRIBUTE_PTR attr,
 			     const struct libobj_obj *obj, bool protect)
 {
@@ -174,8 +210,7 @@ end:
 	return ret;
 }
 
-CK_RV key_hmac_get_id(struct libbytes *id, struct libobj_obj *obj,
-		      size_t prefix_len)
+CK_RV key_hmac_get_id(unsigned int *id, struct libobj_obj *obj)
 {
 	struct libobj_key_hmac *key_hmac = NULL;
 
@@ -184,14 +219,9 @@ CK_RV key_hmac_get_id(struct libbytes *id, struct libobj_obj *obj,
 
 	key_hmac = get_subkey_from(obj);
 
-	id->number = prefix_len + sizeof(key_hmac->key_id);
-	id->array = malloc(id->number);
-	if (!id->array)
-		return CKR_HOST_MEMORY;
-
 	DBG_TRACE("HMAC Key ID 0x%X", key_hmac->key_id);
 
-	TO_CK_BYTES(&id->array[prefix_len], key_hmac->key_id);
+	*id = key_hmac->key_id;
 
 	return CKR_OK;
 }

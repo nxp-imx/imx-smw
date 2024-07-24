@@ -38,6 +38,9 @@ CK_RV smw_status_to_ck_rv(enum smw_status_code status)
 	case SMW_STATUS_SUBSYSTEM_LOADED:
 		return CKR_FUNCTION_FAILED;
 
+	case SMW_STATUS_UNKNOWN_ID:
+		return CKR_OBJECT_HANDLE_INVALID;
+
 	default:
 		return CKR_DEVICE_ERROR;
 	}

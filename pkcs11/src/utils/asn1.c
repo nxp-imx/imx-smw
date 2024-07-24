@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 #include <string.h>
+#include <stdlib.h>
 
 #include "util.h"
 #include "util_asn1.h"
@@ -175,4 +176,45 @@ CK_RV util_asn1_ec_params_to_curve(const struct curve_def **out_curve,
 		*out_curve = fcurve;
 
 	return ret;
+}
+
+CK_RV util_asn1_curve_to_ec_params(const struct curve_def *curve,
+				   struct libbytes *params)
+{
+	size_t str_len = 0;
+	/*
+	 * Parameters are encoded in ASN1 format:
+	 *
+	 * Parameters ::= CHOICE {
+	 *     ecParameters ECParameters,
+	 *     oId CURVES.&id({CurveNames}),
+	 *     implicitlyCA NULL,
+	 *     curveName PrintableString
+	 * }
+	 *
+	 * Prefer to use the curveName to convert curve to params.
+	 */
+	if (!curve || !params)
+		return CKR_ARGUMENTS_BAD;
+
+	str_len = strlen(curve->asn1->name);
+
+	if (ADD_OVERFLOW(str_len, 2, &params->number))
+		return CKR_GENERAL_ERROR;
+
+	params->array = malloc(params->number);
+	if (!params->array)
+		return CKR_HOST_MEMORY;
+
+	params->array[0] = ASN1_PRINTABLE_STRING;
+
+	if (SET_OVERFLOW(str_len, params->array[1])) {
+		free(params->array);
+		params->array = NULL_PTR;
+		return CKR_GENERAL_ERROR;
+	}
+
+	memcpy(&params->array[2], curve->asn1->oid, params->number - 2);
+
+	return CKR_OK;
 }

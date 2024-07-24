@@ -14,6 +14,7 @@
 
 #include "lib_session.h"
 #include "libobj_types.h"
+
 #include "util.h"
 
 #include "trace.h"
@@ -730,6 +731,62 @@ static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
 }
 
 /**
+ * subkey_secret_retrieve() - Retrieve a secret subkey object
+ * @hsession: Session handle
+ * @obj: Key object
+ * @attrs: List of object attributes
+ *
+ * Call the key object type retrieve function.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_secret_retrieve(CK_SESSION_HANDLE hsession,
+				    struct libobj_obj *obj,
+				    struct libattr_list *attrs)
+{
+	CK_RV ret = CKR_FUNCTION_FAILED;
+
+	switch (get_key_type(obj)) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+	case CKK_SM4:
+		ret = key_cipher_retrieve(hsession, obj, attrs);
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+		ret = key_hmac_retrieve(hsession, obj, attrs);
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+/**
  * subkey_secret_get_attribute() - Get an attribute from the secret key
  * @attr: Attribute to get
  * @obj: Key object
@@ -906,6 +963,50 @@ static CK_RV subkey_private_create(CK_SESSION_HANDLE hsession,
 }
 
 /**
+ * subkey_private_retrieve() - Retrieve a private subkey object
+ * @hsession: Session handle
+ * @obj: Key object
+ * @attrs: List of object attributes
+ *
+ * Call the key object type retrieve function.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_private_retrieve(CK_SESSION_HANDLE hsession,
+				     struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_FUNCTION_FAILED;
+
+	switch (get_key_type(obj)) {
+	case CKK_EC:
+		ret = key_ec_private_retrieve(hsession, obj);
+		break;
+
+	case CKK_RSA:
+		ret = key_rsa_private_retrieve(hsession, obj);
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+/**
  * subkey_private_get_attribute() - Get an attribute from the private key
  * @attr: Attribute to get
  * @obj: Key object
@@ -1049,6 +1150,50 @@ static CK_RV subkey_public_create(CK_SESSION_HANDLE hsession,
 
 	case CKK_RSA:
 		ret = key_rsa_public_create(hsession, obj, attrs);
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * subkey_public_retrieve() - Retrieve a public subkey object
+ * @hsession: Session handle
+ * @obj: Key object
+ * @attrs: List of object attributes
+ *
+ * Call the key object type retrieve function.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+static CK_RV subkey_public_retrieve(CK_SESSION_HANDLE hsession,
+				    struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_FUNCTION_FAILED;
+
+	switch (get_key_type(obj)) {
+	case CKK_EC:
+		ret = key_ec_public_retrieve(hsession, obj);
+		break;
+
+	case CKK_RSA:
+		ret = key_rsa_public_retrieve(hsession, obj);
 		break;
 
 	default:
@@ -1385,6 +1530,49 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	return ret;
 }
 
+CK_RV key_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+		   struct libattr_list *attrs)
+{
+	CK_RV ret = CKR_GENERAL_ERROR;
+
+	DBG_TRACE("Retrieve a key type object");
+
+	if (!obj)
+		return ret;
+
+	/* Import the common key object */
+	ret = create_key_new(obj, attrs);
+	if (ret == CKR_OK) {
+		switch (obj->class) {
+		case CKO_PUBLIC_KEY:
+			ret = key_public_new(hsession, obj, attrs);
+			if (ret == CKR_OK)
+				ret = subkey_public_retrieve(hsession, obj);
+			break;
+
+		case CKO_PRIVATE_KEY:
+			ret = key_private_new(obj, attrs);
+			if (ret == CKR_OK)
+				ret = subkey_private_retrieve(hsession, obj);
+			break;
+
+		case CKO_SECRET_KEY:
+			ret = key_secret_new(obj, attrs);
+			if (ret == CKR_OK)
+				ret = subkey_secret_retrieve(hsession, obj,
+							     attrs);
+			break;
+
+		default:
+			ret = CKR_GENERAL_ERROR;
+			break;
+		}
+	}
+
+	DBG_TRACE("Key type object (%p) import return %ld", obj, ret);
+	return ret;
+}
+
 CK_RV key_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_OK;
@@ -1602,7 +1790,7 @@ end:
 	return ret;
 }
 
-CK_RV key_get_id(struct libbytes *id, struct libobj_obj *obj, size_t prefix_len)
+CK_RV key_get_id(unsigned int *id, struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_GENERAL_ERROR;
 
@@ -1614,7 +1802,7 @@ CK_RV key_get_id(struct libbytes *id, struct libobj_obj *obj, size_t prefix_len)
 	case CKK_DES:
 	case CKK_DES3:
 	case CKK_SM4:
-		ret = key_cipher_get_id(id, obj, prefix_len);
+		ret = key_cipher_get_id(id, obj);
 		break;
 
 	case CKK_MD5_HMAC:
@@ -1627,15 +1815,15 @@ CK_RV key_get_id(struct libbytes *id, struct libobj_obj *obj, size_t prefix_len)
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
-		ret = key_hmac_get_id(id, obj, prefix_len);
+		ret = key_hmac_get_id(id, obj);
 		break;
 
 	case CKK_EC:
-		ret = key_ec_get_id(id, obj, prefix_len);
+		ret = key_ec_get_id(id, obj);
 		break;
 
 	case CKK_RSA:
-		ret = key_rsa_get_id(id, obj, prefix_len);
+		ret = key_rsa_get_id(id, obj);
 		break;
 
 	default:

@@ -39,6 +39,31 @@ void key_hmac_free(struct libobj_obj *obj);
 CK_RV key_hmac_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		      struct libattr_list *attrs);
 
+/*
+ * key_hmac_retrieve() - Retrieve a HMAC key object
+ * @hsession: Session handle
+ * @obj: HMAC Key object
+ * @attrs: List of object attributes
+ *
+ * If key attributes are corrects, retrieve a HMAC key object.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV key_hmac_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
+			struct libattr_list *attrs);
+
 /**
  * key_hmac_get_attribute() - Get an attribute from the HMAC key
  * @attr: Attribute to get
@@ -106,21 +131,16 @@ CK_RV key_hmac_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 /*
  * key_hmac_get_id() - Get the HMAC key ID returned by SMW
- * @id: Byte buffer of the key ID
+ * @id: key ID pointer
  * @obj: HMAC Key object
- * @prefix_len: Byte length of id prefix
  *
- * Allocates the @id buffer with a length of SMW Key ID added to the
- * given @prefix_len bytes.
- * Then copies in the @id buffer indexed of the @prefix_len the
- * SMW's id.
+ * Get the HMAC Key ID
  *
  * return:
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_OK                        - Success
  */
-CK_RV key_hmac_get_id(struct libbytes *id, struct libobj_obj *obj,
-		      size_t prefix_len);
+CK_RV key_hmac_get_id(unsigned int *id, struct libobj_obj *obj);
 
 #endif /* __KEY_HMAC_H__ */

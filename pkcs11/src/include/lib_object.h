@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2024 NXP
  */
 
 #ifndef __LIB_OBJECT_H__
@@ -41,6 +41,42 @@
  */
 CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		    CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj);
+
+/**
+ * libobj_retrieve() - Retrieve an object
+ * @hsession: Session handle
+ * @attrs: List of the object attributes
+ * @nb_attrs: Number of attributes
+ * @hobj: Object handle
+ * @id: Object identifier
+ *
+ * After verifing the validity of the @hsession, the function
+ * checks the attributes list @attrs function of the Object Class
+ * attributes.
+ * Finally, adds the object in the session's object list if all attributes
+ * are correct.
+ *
+ * return:
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
+ * CKR_TEMPLATE_INCONSISTENT     - Attribute type must not be defined
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_USER_NOT_LOGGED_IN        - User must log to create object
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SESSION_CLOSED            - Session closed
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
+		      CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj,
+		      unsigned int id);
 
 /**
  * libobj_destroy() - Destroy an object
@@ -261,5 +297,33 @@ CK_RV libobj_find_final(CK_SESSION_HANDLE hsession);
  * CKR_OK                        - Success
  */
 CK_RV libobj_list_destroy(struct libobj_list *list);
+
+/**
+ * libobj_get_id() - Get the object id
+ * @obj: Object
+ * @id: Id pointer
+ *
+ * Return the object id.
+ *
+ * return:
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_get_id(struct libobj_obj *obj, unsigned int *id);
+
+/**
+ * libobj_set_unique_id() - Set the object unique id
+ * @obj: Object
+ * @id: Object id
+ *
+ * Build the object unique id.
+ *
+ * return:
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_FUNCTION_FAILED           - Object not supported
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_set_unique_id(struct libobj_obj *obj, unsigned int id);
 
 #endif /* __LIB_OBJECT_H__ */

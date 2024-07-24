@@ -35,6 +35,22 @@ CK_RV data_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		  struct libattr_list *attrs);
 
 /**
+ * data_retrieve() - Retrieve a data object
+ * @obj: Data object
+ * @attrs: List of object attributes
+ *
+ * return:
+ * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_OK                        - Success
+ */
+CK_RV data_retrieve(struct libobj_obj *obj, struct libattr_list *attrs);
+
+/**
  * data_get_attribute() - Get an attribute from a data object
  * @attr: Attribute to get
  * @obj: Data object
@@ -67,12 +83,9 @@ CK_RV data_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj);
 CK_RV data_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj);
 
 /*
- * data_get_id() - Generate the data ID
- * @id: Byte buffer of the data ID
+ * data_get_id() - Get the data ID
+ * @id: data ID pointer
  * @obj: Data object
- * @prefix_len: Byte length of id prefix
- *
- * Generate a unique data ID.
  *
  * return:
  * CKR_HOST_MEMORY               - Allocation error
@@ -80,7 +93,6 @@ CK_RV data_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj);
  * CKR_FUNCTION_FAILED           - Function failure
  * CKR_OK                        - Success
  */
-CK_RV data_get_id(struct libbytes *id, struct libobj_obj *obj,
-		  size_t prefix_len);
+CK_RV data_get_id(unsigned int *id, struct libobj_obj *obj);
 
 #endif /* __DATA_H__ */

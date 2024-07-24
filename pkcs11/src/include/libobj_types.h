@@ -100,6 +100,13 @@ struct libobj_storage {
 		_obj_type->copyable;                                           \
 	})
 
+#define set_copyable_obj(obj, type)                                            \
+	({                                                                     \
+		struct libobj_##type *_obj_type = get_object_from(obj);        \
+		assert(_obj_type);                                             \
+		_obj_type->copyable = true;                                    \
+	})
+
 #define is_modifiable_obj(obj, type)                                           \
 	({                                                                     \
 		struct libobj_##type *_obj_type = get_object_from(obj);        \
@@ -155,6 +162,13 @@ struct libobj_key {
 		_key->type;                                                    \
 	})
 
+#define set_key_type(obj, _type)                                               \
+	({                                                                     \
+		struct libobj_key *_key = get_subobj_from(obj, storage);       \
+		assert(_key);                                                  \
+		_key->type = _type;                                            \
+	})
+
 #define get_key_from(obj)                                                      \
 	({                                                                     \
 		struct libobj_key *_key = get_subobj_from(obj, storage);       \
@@ -174,6 +188,13 @@ struct libobj_key {
 		struct libobj_key *_key = get_subobj_from(obj, storage);       \
 		assert(_key);                                                  \
 		_key->derive;                                                  \
+	})
+
+#define set_derive_key(obj)                                                    \
+	({                                                                     \
+		struct libobj_key *_key = get_subobj_from(obj, storage);       \
+		assert(_key);                                                  \
+		_key->derive = true;                                           \
 	})
 
 #define get_key_mech_list(obj)                                                 \

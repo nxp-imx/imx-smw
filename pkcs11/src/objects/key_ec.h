@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #ifndef __KEY_EC_H__
@@ -45,6 +45,31 @@ void key_ec_private_free(struct libobj_obj *obj);
  */
 CK_RV key_ec_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			   struct libattr_list *attrs);
+
+/*
+ * key_ec_public_retrieve() - Retrieve an EC public key object
+ * @hsession: Session handle
+ * @obj: EC Public Key object
+ *
+ * Retrieve an EC Public key object.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV key_ec_public_retrieve(CK_SESSION_HANDLE hsession,
+			     struct libobj_obj *obj);
 
 /**
  * key_ec_public_get_attribute() - Get an attribute from the EC public key
@@ -108,6 +133,31 @@ CK_RV key_ec_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
  */
 CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			    struct libattr_list *attrs);
+
+/*
+ * key_ec_private_retrieve() - Retrieve an EC private key object
+ * @hsession: Session handle
+ * @obj: EC Private Key object
+ *
+ * Retrieve an EC Private key object.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV key_ec_private_retrieve(CK_SESSION_HANDLE hsession,
+			      struct libobj_obj *obj);
 
 /**
  * key_ec_private_get_attribute() - Get an attribute from the EC private key
@@ -183,21 +233,16 @@ CK_RV key_ec_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 /*
  * key_ec_get_id() - Get the EC key ID returned by SMW
- * @id: Byte buffer of the key ID
+ * @id: key ID pointer
  * @obj: EC Key object
- * @prefix_len: Byte length of id prefix
  *
- * Allocates the @id buffer with a length of SMW Key ID added to the
- * given @prefix_len bytes.
- * Then copies in the @id buffer indexed of the @prefix_len the
- * SMW's id.
+ * Get the EC key ID
  *
  * return:
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_OK                        - Success
  */
-CK_RV key_ec_get_id(struct libbytes *id, struct libobj_obj *obj,
-		    size_t prefix_len);
+CK_RV key_ec_get_id(unsigned int *id, struct libobj_obj *obj);
 
 #endif /* __KEY_EC_H__ */

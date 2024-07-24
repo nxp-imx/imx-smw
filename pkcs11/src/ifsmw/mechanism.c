@@ -14,10 +14,12 @@
 #include "smw/attr.h"
 #include "smw/names.h"
 
+#include "attributes.h"
 #include "dev_config.h"
 #include "lib_cipher.h"
 #include "lib_context.h"
 #include "lib_device.h"
+#include "lib_object.h"
 #include "lib_session.h"
 #include "lib_digest.h"
 #include "libobj_types.h"
@@ -516,6 +518,159 @@ static smw_aead_mode_t get_aead_mode(CK_MECHANISM_TYPE mech_type)
 	return mode;
 }
 
+static bool get_aead_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
+{
+	bool found = false;
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(maead); i++) {
+		if (perm_algo == maead[i].smw_algo_id) {
+			*mech = maead[i].type;
+			found = true;
+			break;
+		}
+	}
+
+	DBG_TRACE("%s mechanism (0x%08lX)", found ? "Found" : "No", *mech);
+
+	return found;
+}
+
+static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
+{
+	bool found = false;
+	unsigned int i = 0;
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+
+	algo = SMW_ATTR_GET_ALGO(perm_algo);
+
+	if (algo == SMW_ATTR_ALGO_ECDSA) {
+		for (; i < ARRAY_SIZE(msign_ecdsa); i++) {
+			if (perm_algo == msign_ecdsa[i].smw_algo_id) {
+				*mech = msign_ecdsa[i].type;
+				found = true;
+				break;
+			}
+		}
+
+	} else if (algo == SMW_ATTR_ALGO_RSA) {
+		for (; i < ARRAY_SIZE(msign_rsa); i++) {
+			if (perm_algo == msign_rsa[i].smw_algo_id) {
+				*mech = msign_rsa[i].type;
+				found = true;
+				break;
+			}
+		}
+	}
+
+	DBG_TRACE("%s mechanism (0x%08lX)", found ? "Found" : "No", *mech);
+
+	return found;
+}
+
+static bool get_mac_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
+{
+	bool found = false;
+	unsigned int i = 0;
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+
+	algo = SMW_ATTR_GET_ALGO(perm_algo);
+
+	if (algo == SMW_ATTR_ALGO_HMAC) {
+		for (; i < ARRAY_SIZE(mhmac); i++) {
+			if (perm_algo == mhmac[i].smw_algo_id) {
+				*mech = mhmac[i].type;
+				found = true;
+				break;
+			}
+		}
+	} else {
+		for (; i < ARRAY_SIZE(mcmac); i++) {
+			if (perm_algo == mcmac[i].smw_algo_id) {
+				*mech = mcmac[i].type;
+				found = true;
+				break;
+			}
+		}
+	}
+
+	DBG_TRACE("%s mechanism (0x%08lX)", found ? "Found" : "No", *mech);
+
+	return found;
+}
+
+static bool get_cipher_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
+			    CK_MECHANISM_TYPE *mech)
+{
+	bool found = false;
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(mcipher); i++) {
+		if (smw_key == mcipher[i].smw_key_type &&
+		    perm_algo == mcipher[i].smw_algo_id) {
+			*mech = mcipher[i].type;
+			found = true;
+			break;
+		}
+	}
+
+	DBG_TRACE("%s mechanism (0x%08lX)", found ? "Found" : "No", *mech);
+
+	return found;
+}
+
+static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
+				  struct smw_get_key_attributes_args *attr_args)
+{
+	CK_RV ret = CKR_OK;
+	bool found = false;
+	smw_attr_algo_t class = SMW_ATTR_CLASS_NONE;
+	CK_MECHANISM_TYPE mech = 0;
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+	smw_key_type_t smw_key = SMW_KEY_TYPE_NAME_NONE;
+	struct libmech_list *mech_list = get_key_mech_list(obj);
+	CK_MECHANISM_TYPE key_allowed_mech[1] = { 0 };
+	struct CK_ATTRIBUTE mech_attr = { .type = CKA_ALLOWED_MECHANISMS,
+					  .pValue = &key_allowed_mech,
+					  .ulValueLen =
+						  sizeof(key_allowed_mech) };
+
+	algo = attr_args->key_attributes.permitted_algo;
+	class = SMW_ATTR_GET_CLASS(algo);
+	smw_key = attr_args->key_descriptor->type_name;
+
+	switch (class) {
+	case SMW_ATTR_CLASS_AEAD:
+		found = get_aead_mech(algo, &mech);
+		break;
+
+	case SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE:
+		found = get_sign_mech(algo, &mech);
+		break;
+
+	case SMW_ATTR_CLASS_MAC:
+		found = get_mac_mech(algo, &mech);
+		break;
+
+	case SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION:
+		found = get_cipher_mech(algo, smw_key, &mech);
+		break;
+
+	default:
+		break;
+	}
+
+	if (found) {
+		if (mech_list->mech)
+			free(mech_list->mech);
+
+		key_allowed_mech[0] = mech;
+		ret = attr_to_mech_list(mech_list, &mech_attr);
+	}
+
+	return ret;
+}
+
 static void check_mdigest(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			  struct mgroup *mgroup)
 {
@@ -734,6 +889,30 @@ static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return info_keygen_common(slotid, type, entry, info);
 }
 
+static CK_RV key_desc_to_smw(CK_SLOT_ID slotid, struct smw_key_descriptor *desc,
+			     struct smw_key_attributes *attributes,
+			     struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+
+	ret = key_desc_setup(desc, obj);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (attributes) {
+		ret = get_key_permitted_algo(&attributes->permitted_algo,
+					     slotid, obj);
+		if (ret != CKR_OK)
+			goto end;
+
+		args_attrs_key_usage(&attributes->usage_flags, obj);
+		args_attr_key_storage(&attributes->attributes, obj);
+	}
+
+end:
+	return ret;
+}
+
 static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_SLOT_ID_INVALID;
@@ -748,20 +927,12 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	if (!devinfo)
 		return ret;
 
-	ret = key_desc_setup(&key, obj);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = get_key_permitted_algo(&key_attributes.permitted_algo, slotid,
-				     obj);
+	ret = key_desc_to_smw(slotid, &key, &key_attributes, obj);
 	if (ret != CKR_OK)
 		return ret;
 
 	gen_args.subsystem_name = devinfo->name;
 	gen_args.key_descriptor = &key;
-
-	args_attrs_key_usage(&key_attributes.usage_flags, obj);
-	args_attr_key_storage(&key_attributes.attributes, obj);
 	gen_args.key_attributes = &key_attributes;
 
 	status = smw_generate_key(&gen_args);
@@ -1991,20 +2162,12 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	 */
 	key.buffer = &keypair_buffer;
 
-	ret = key_desc_setup(&key, obj);
-	if (ret != CKR_OK)
-		return ret;
-
-	ret = get_key_permitted_algo(&key_attributes.permitted_algo, slotid,
-				     obj);
+	ret = key_desc_to_smw(slotid, &key, &key_attributes, obj);
 	if (ret != CKR_OK)
 		return ret;
 
 	imp_args.subsystem_name = devinfo->name;
 	imp_args.key_descriptor = &key;
-
-	args_attrs_key_usage(&key_attributes.usage_flags, obj);
-	args_attr_key_storage(&key_attributes.attributes, obj);
 	imp_args.key_attributes = &key_attributes;
 
 	status = smw_import_key(&imp_args);
@@ -2015,6 +2178,58 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 
 	if (ret == CKR_OK)
 		key_desc_copy_key_id(obj, &key);
+
+	return ret;
+}
+
+CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
+				struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_SLOT_ID slotid = 0;
+	const struct libdev *devinfo = NULL;
+	struct smw_key_descriptor key_descriptor = { 0 };
+	struct smw_key_attributes *key_attr = NULL;
+	struct smw_get_key_attributes_args attr_args = { 0 };
+
+	DBG_TRACE("Get Key attributes");
+
+	ret = libsess_get_slotid(hsession, &slotid);
+	if (ret != CKR_OK)
+		goto end;
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo) {
+		ret = CKR_SLOT_ID_INVALID;
+		goto end;
+	}
+
+	ret = libobj_get_id(obj, &key_descriptor.id);
+	if (ret != CKR_OK)
+		goto end;
+
+	attr_args.subsystem_name = devinfo->name;
+	attr_args.key_descriptor = &key_descriptor;
+
+	status = smw_get_key_attributes(&attr_args);
+	ret = smw_status_to_ck_rv(status);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = key_desc_smw_to_pkcs11(obj, &attr_args);
+	if (ret == CKR_OK)
+		ret = get_key_allowed_algo(obj, &attr_args);
+
+	if (ret == CKR_OK) {
+		key_attr = &attr_args.key_attributes;
+		args_attr_get_key_usage(obj, key_attr->usage_flags);
+		args_attr_get_key_storage(obj, key_attr->attributes);
+	}
+
+end:
+	DBG_TRACE("Get Key attributes from SMW status %d return %ld", status,
+		  ret);
 
 	return ret;
 }

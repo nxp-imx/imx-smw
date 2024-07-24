@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021 NXP
+ * Copyright 2021, 2024 NXP
  */
 #ifndef __KEY_DESC_H__
 #define __KEY_DESC_H__
@@ -20,6 +20,19 @@
  * CKR_OK                        - Success
  */
 CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj);
+
+/**
+ * key_desc_smw_to_pkcs11() - Convert a SMW key descriptor to PKCS
+ * @obj: Key object
+ * @attributes: SMW key attributes
+ *
+ * Return:
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_OK                        - Success
+ */
+
+CK_RV key_desc_smw_to_pkcs11(struct libobj_obj *obj,
+			     struct smw_get_key_attributes_args *attributes);
 
 /**
  * key_desc_copy_key_id() - Copy the SMW key descriptor id to key object

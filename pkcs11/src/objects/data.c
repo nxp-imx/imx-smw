@@ -10,6 +10,7 @@
 #include "data.h"
 
 #include "lib_device.h"
+#include "lib_object.h"
 #include "libobj_types.h"
 #include "util.h"
 
@@ -111,6 +112,42 @@ CK_RV data_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	return ret;
 }
 
+CK_RV data_retrieve(struct libobj_obj *obj, struct libattr_list *attrs)
+{
+	CK_RV ret = CKR_GENERAL_ERROR;
+	struct libobj_data *new_data = NULL;
+
+	DBG_TRACE("Retrieve a data type object");
+
+	if (!obj)
+		return ret;
+
+	new_data = data_allocate(obj);
+	if (!new_data)
+		return CKR_HOST_MEMORY;
+
+	ret = attr_get_value(new_data, &attr_data[DATA_ID], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = libobj_get_id(obj, &new_data->data_id);
+	if (ret != CKR_OK)
+		goto end;
+
+	DBG_TRACE("Import a new data (%p)", new_data);
+
+	if (is_token_obj(obj, storage))
+		ret = libdev_retrieve_data(obj);
+
+end:
+	if (ret != CKR_OK)
+		data_free(obj);
+
+	DBG_TRACE("Data type object (%p) import return %ld", obj, ret);
+	return ret;
+}
+
 CK_RV data_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_OK;
@@ -142,8 +179,7 @@ CK_RV data_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
 	return ret;
 }
 
-CK_RV data_get_id(struct libbytes *id, struct libobj_obj *obj,
-		  size_t prefix_len)
+CK_RV data_get_id(unsigned int *id, struct libobj_obj *obj)
 {
 	struct libobj_data *data = NULL;
 
@@ -152,14 +188,9 @@ CK_RV data_get_id(struct libbytes *id, struct libobj_obj *obj,
 
 	data = get_subobj_from(obj, storage);
 
-	id->number = prefix_len + sizeof(data->data_id);
-	id->array = malloc(id->number);
-	if (!id->array)
-		return CKR_HOST_MEMORY;
-
 	DBG_TRACE("Token Data ID 0x%X", data->data_id);
 
-	TO_CK_BYTES(&id->array[prefix_len], data->data_id);
+	*id = data->data_id;
 
 	return CKR_OK;
 }

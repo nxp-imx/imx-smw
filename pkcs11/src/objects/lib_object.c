@@ -14,6 +14,9 @@
 #include "lib_object.h"
 #include "lib_session.h"
 #include "libobj_types.h"
+
+#include "key_desc.h"
+#include "object_desc.h"
 #include "util.h"
 
 #include "trace.h"
@@ -178,82 +181,6 @@ static CK_RV find_lock_object(CK_SESSION_HANDLE hsession,
 	}
 
 	// coverity[missing_unlock]
-	return ret;
-}
-
-/**
- * set_unique_id() - Set the object unique id
- * @obj: object
- *
- * Build and return the object unique id with the object class
- * and SMW returned ID.
- *
- * return:
- * CKR_GENERAL_ERROR             - General error defined
- * CKR_FUNCTION_FAILED           - Object not supported
- * CKR_OK                        - Success
- */
-static CK_RV set_unique_id(struct libobj_obj *obj)
-{
-	CK_RV ret = CKR_GENERAL_ERROR;
-	struct librfc2279 *unique_id = NULL;
-	struct libbytes id = { 0 };
-
-	if (!obj)
-		return ret;
-
-	DBG_TRACE("Class %lx", obj->class);
-
-	switch (obj->class) {
-	case CKO_SECRET_KEY:
-	case CKO_PUBLIC_KEY:
-	case CKO_PRIVATE_KEY:
-		unique_id = get_unique_id_obj(obj, storage);
-		ret = key_get_id(&id, obj, sizeof(obj->class));
-		break;
-
-	case CKO_DATA:
-		unique_id = get_unique_id_obj(obj, storage);
-		ret = data_get_id(&id, obj, sizeof(obj->class));
-		break;
-
-	default:
-		return CKR_FUNCTION_FAILED;
-	}
-
-	if (ret != CKR_OK)
-		goto end;
-
-	TO_CK_BYTES(id.array, obj->class);
-
-	/* Get RFC2279 length and allocate RFC2279 string */
-	unique_id->length = util_byte_to_rfc2279_len(id.array, id.number);
-	if (!unique_id->length) {
-		ret = CKR_FUNCTION_FAILED;
-		goto end;
-	}
-
-	unique_id->string = malloc(unique_id->length);
-	if (!unique_id->string) {
-		ret = CKR_HOST_MEMORY;
-		goto end;
-	}
-
-	ret = CKR_FUNCTION_FAILED;
-	if (util_byte_to_rfc2279(unique_id->string, unique_id->length, id.array,
-				 id.number) == id.number)
-		ret = CKR_OK;
-
-end:
-	if (id.array)
-		free(id.array);
-
-	if (ret != CKR_OK && unique_id->string) {
-		free(unique_id->string);
-		unique_id->string = NULL;
-		unique_id->length = 0;
-	}
-
 	return ret;
 }
 
@@ -798,6 +725,40 @@ static CK_RV class_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	return ret;
 }
 
+CK_RV libobj_get_id(struct libobj_obj *obj, unsigned int *object_id)
+{
+	int ret = CKR_OK;
+	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
+	struct libbytes id = { 0 };
+
+	if (!unique_id->length)
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	id.number =
+		util_rfc2279_to_byte_len(unique_id->string, unique_id->length);
+	if (!id.number)
+		return CKR_FUNCTION_FAILED;
+
+	id.array = malloc(id.number);
+	if (!id.array)
+		return CKR_HOST_MEMORY;
+
+	if (util_rfc2279_to_byte(id.array, id.number, unique_id->string,
+				 unique_id->length) != unique_id->length) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
+	if (TO_INT(*object_id, &id.array[sizeof(CK_OBJECT_CLASS)],
+		   sizeof(unsigned int)))
+		ret = CKR_ATTRIBUTE_VALUE_INVALID;
+
+end:
+	free(id.array);
+
+	return ret;
+}
+
 CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		    CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj)
 {
@@ -840,9 +801,81 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 			break;
 
 		ret = data_create(hsession, newobj, &attrs_list);
-		if (ret == CKR_OK)
-			ret = set_unique_id(newobj);
+		break;
 
+	default:
+		DBG_TRACE("Class object %lu not supported", newobj->class);
+		ret = CKR_FUNCTION_FAILED;
+		break;
+	}
+
+	if (ret == CKR_OK) {
+		ret = obj_db_update(newobj);
+		/*
+		 * Special Subsystem data object are not store.
+		 */
+		if (ret == CKR_OBJECT_HANDLE_INVALID)
+			ret = CKR_OK;
+	}
+
+	if (ret == CKR_OK)
+		ret = obj_add_to_list(hsession, newobj,
+				      is_token_obj(newobj, storage));
+
+end:
+	DBG_TRACE("Object (%p) creation return %ld", newobj, ret);
+
+	if (ret == CKR_OK)
+		*hobj = (CK_OBJECT_HANDLE)newobj;
+	else
+		obj_free(newobj, NULL);
+
+	return ret;
+}
+
+CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
+		      CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj,
+		      unsigned int id)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_obj *newobj = NULL;
+	struct libattr_list attrs_list = { .attr = attrs, .number = nb_attrs };
+
+	DBG_TRACE("Retrieve an object on session %lu", hsession);
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = obj_allocate(&newobj);
+	if (ret != CKR_OK)
+		goto end;
+
+	DBG_TRACE("Retrieve a new object (%p)", newobj);
+
+	/* Get the class of the object */
+	ret = attr_get_value(newobj, &attr_obj_common[OBJ_CLASS], &attrs_list,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = obj_storage_new(hsession, newobj, &attrs_list);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = libobj_set_unique_id(newobj, id);
+	if (ret != CKR_OK)
+		goto end;
+
+	switch (newobj->class) {
+	case CKO_PRIVATE_KEY:
+	case CKO_SECRET_KEY:
+	case CKO_PUBLIC_KEY:
+		ret = key_retrieve(hsession, newobj, &attrs_list);
+		break;
+
+	case CKO_DATA:
+		ret = data_retrieve(newobj, &attrs_list);
 		break;
 
 	default:
@@ -856,7 +889,7 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 				      is_token_obj(newobj, storage));
 
 end:
-	DBG_TRACE("Object (%p) creation return %ld", newobj, ret);
+	DBG_TRACE("Object (%p) retrieve return %ld", newobj, ret);
 
 	if (ret == CKR_OK)
 		*hobj = (CK_OBJECT_HANDLE)newobj;
@@ -986,6 +1019,9 @@ CK_RV libobj_modify_attribute(CK_SESSION_HANDLE hsession,
 			  attrs[idx].type, ret);
 	}
 
+	if (ret == CKR_OK)
+		ret = obj_db_update(libobj);
+
 	libmutex_unlock(libobj->lock);
 
 end:
@@ -1077,9 +1113,9 @@ CK_RV libobj_generate_keypair(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	ret = key_keypair_generate(hsession, mech, pub_key, &pub_attrs_list,
 				   priv_key, &priv_attrs_list);
 	if (ret == CKR_OK) {
-		ret = set_unique_id(pub_key);
+		ret = obj_db_update(pub_key);
 		if (ret == CKR_OK)
-			ret = set_unique_id(priv_key);
+			ret = obj_db_update(priv_key);
 	}
 
 	if (ret != CKR_OK)
@@ -1149,7 +1185,7 @@ CK_RV libobj_generate_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	ret = key_secret_key_generate(hsession, mech, new_key, &attrs_list);
 
 	if (ret == CKR_OK)
-		ret = set_unique_id(new_key);
+		ret = obj_db_update(new_key);
 
 	if (ret == CKR_OK)
 		ret = obj_add_to_list(hsession, new_key,
@@ -1230,7 +1266,7 @@ static CK_RV object_match(CK_SESSION_HANDLE hsession,
 		LIST_INSERT_TAIL(list_match, obj_match);
 	}
 
-	return ret;
+	return CKR_OK;
 }
 
 static void destroy_query_list(struct libobj_query *query)
@@ -1258,6 +1294,7 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	struct libobj_list *objects = NULL;
 	struct libdevice *dev = NULL;
 	CK_ULONG idx = 0;
+	CK_ULONG nb_retrieved = 0;
 	CK_ATTRIBUTE_PTR attrs_tmp = NULL_PTR;
 
 	DBG_TRACE("Start Find Object Query on session %lu", hsession);
@@ -1323,6 +1360,15 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	if (ret == CKR_OK)
 		ret = object_match(hsession, &query->objects, objects, attrs,
 				   attrs_tmp, nb_attrs);
+
+	if (ret == CKR_OK) {
+		ret = obj_db_retrieve(hsession, attrs, nb_attrs, &nb_retrieved);
+		if (ret == CKR_OK && nb_retrieved != 0) {
+			ret = object_match(hsession, &query->objects,
+					   &dev->objects, attrs, attrs_tmp,
+					   nb_attrs);
+		}
+	}
 
 	if (ret == CKR_OK) {
 		ret = libsess_set_query(hsession, query);
@@ -1436,6 +1482,56 @@ CK_RV libobj_list_destroy(struct libobj_list *list)
 
 	/* Close the list and destroy the list mutex */
 	LLIST_CLOSE(list);
+
+	return ret;
+}
+
+CK_RV libobj_set_unique_id(struct libobj_obj *obj, unsigned int uid)
+{
+	CK_RV ret = CKR_GENERAL_ERROR;
+	struct librfc2279 *unique_id = NULL;
+	struct libbytes id = { 0 };
+
+	if (!obj)
+		return ret;
+
+	id.number = sizeof(obj->class) + sizeof(uid);
+	id.array = malloc(id.number);
+	if (!id.array)
+		return CKR_HOST_MEMORY;
+
+	TO_CK_BYTES(&id.array[sizeof(obj->class)], uid);
+	TO_CK_BYTES(id.array, obj->class);
+
+	unique_id = get_unique_id_obj(obj, storage);
+
+	/* Get RFC2279 length and allocate RFC2279 string */
+	unique_id->length = util_byte_to_rfc2279_len(id.array, id.number);
+	if (!unique_id->length) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
+	unique_id->string = malloc(unique_id->length);
+	if (!unique_id->string) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	ret = CKR_FUNCTION_FAILED;
+	if (util_byte_to_rfc2279(unique_id->string, unique_id->length, id.array,
+				 id.number) == id.number)
+		ret = CKR_OK;
+
+end:
+	if (id.array)
+		free(id.array);
+
+	if (ret != CKR_OK && unique_id->string) {
+		free(unique_id->string);
+		unique_id->string = NULL;
+		unique_id->length = 0;
+	}
 
 	return ret;
 }

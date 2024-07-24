@@ -6,9 +6,11 @@
 #include <stdlib.h>
 
 #include "attributes.h"
+#include "key.h"
 #include "key_ec.h"
 
 #include "lib_device.h"
+#include "lib_object.h"
 #include "libobj_types.h"
 
 #include "trace.h"
@@ -192,6 +194,34 @@ end:
 	return ret;
 }
 
+CK_RV key_ec_public_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_key_ec_pair *new_key = NULL;
+
+	ret = key_ec_allocate(obj, NULL, LIBOBJ_KEY_PUBLIC);
+	if (ret != CKR_OK)
+		goto end;
+
+	new_key = get_subkey_from(obj);
+
+	DBG_TRACE("Retrieve an EC public key (%p)", new_key);
+
+	ret = libobj_get_id(obj, &new_key->key_id);
+	if (ret != CKR_OK)
+		goto end;
+
+	/* Get the EC public key attributes from the SMW library */
+	ret = libdev_get_key_attributes(hsession, obj);
+	DBG_TRACE("EC public Key ID 0x%X", new_key->key_id);
+
+end:
+	if (ret != CKR_OK)
+		key_ec_public_free(obj);
+
+	return ret;
+}
+
 CK_RV key_ec_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 				  const struct libobj_obj *obj)
 {
@@ -259,6 +289,35 @@ CK_RV key_ec_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 
 	ret = libdev_import_key(hsession, obj);
 	DBG_TRACE("Private Key ID 0x%X", new_key->key_id);
+
+end:
+	if (ret != CKR_OK)
+		key_ec_private_free(obj);
+
+	return ret;
+}
+
+CK_RV key_ec_private_retrieve(CK_SESSION_HANDLE hsession,
+			      struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_key_ec_pair *new_key = NULL;
+
+	ret = key_ec_allocate(NULL, obj, LIBOBJ_KEY_PRIVATE);
+	if (ret != CKR_OK)
+		goto end;
+
+	new_key = get_subkey_from(obj);
+
+	DBG_TRACE("Retrieve an EC private key (%p)", new_key);
+
+	ret = libobj_get_id(obj, &new_key->key_id);
+	if (ret != CKR_OK)
+		goto end;
+
+	/* Get the EC private key attributes from the SMW library */
+	ret = libdev_get_key_attributes(hsession, obj);
+	DBG_TRACE("EC private Key ID 0x%X", new_key->key_id);
 
 end:
 	if (ret != CKR_OK)
@@ -351,8 +410,7 @@ end:
 	return ret;
 }
 
-CK_RV key_ec_get_id(struct libbytes *id, struct libobj_obj *obj,
-		    size_t prefix_len)
+CK_RV key_ec_get_id(unsigned int *id, struct libobj_obj *obj)
 {
 	struct libobj_key_ec_pair *keypair = NULL;
 
@@ -361,14 +419,9 @@ CK_RV key_ec_get_id(struct libbytes *id, struct libobj_obj *obj,
 
 	keypair = get_subkey_from(obj);
 
-	id->number = prefix_len + sizeof(keypair->key_id);
-	id->array = malloc(id->number);
-	if (!id->array)
-		return CKR_HOST_MEMORY;
-
 	DBG_TRACE("EC Key ID 0x%X", keypair->key_id);
 
-	TO_CK_BYTES(&id->array[prefix_len], keypair->key_id);
+	*id = keypair->key_id;
 
 	return CKR_OK;
 }

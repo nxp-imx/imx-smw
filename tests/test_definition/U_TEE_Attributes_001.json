@@ -3,6 +3,9 @@
 		"key AES": {
 			"type": "AES",
 			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT",
 				"DECRYPT"
@@ -11,6 +14,9 @@
 		"key ECDSA sign": {
 			"type": "NIST",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE"
@@ -19,6 +25,9 @@
 		"key ECDSA verify": {
 			"type": "NIST",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"VERIFY_HASH",
 				"VERIFY_MESSAGE"

@@ -42,6 +42,9 @@
 				"377fbb316f1e69a763b1ec1265454e60",
 				"bf18ea22e64bf5142b3bcb8833800abd"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH"
 			]
@@ -70,6 +73,9 @@
 				"377fbb316f1e69a763b1ec1265454e60",
 				"bf18ea22e64bf5142b3bcb8833800abd"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"VERIFY_HASH"
 			]
@@ -91,6 +97,9 @@
 				"V2uERfDVz1c44pQwPLADFGVo4CEV6E7p",
 				"e//am5tX3rc3f7sxbx5pp2Ox7BJlRU5g",
 				"vxjqIuZL9RQrO8uIM4AKvQ=="
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"VERIFY_HASH"

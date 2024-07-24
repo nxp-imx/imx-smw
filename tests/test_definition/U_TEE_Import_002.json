@@ -4,6 +4,9 @@
 			"type": "AES",
 			"security_size": 128,
 			"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			]
@@ -14,6 +17,9 @@
 			"priv_key": [
 				"ba75f4d1d9d7cf7f551445d56cc1a8ab",
 				"2a078e15e049dc2c"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"ENCRYPT"
@@ -26,6 +32,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			]
@@ -34,6 +43,9 @@
 			"type": "DES",
 			"security_size": 56,
 			"priv_key": "752878397493cb70",
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			]
@@ -42,6 +54,9 @@
 			"type": "DES3",
 			"security_size": 112,
 			"priv_key": "a974cadbcccf5f2b76e4d66026685496",
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			]
@@ -52,6 +67,9 @@
 			"priv_key": [
 				"fe85e7dbfb940f695702d5e835af829a",
 				"5c5811573c3f2db8"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"ENCRYPT"
@@ -69,6 +87,9 @@
 				"73fa9ac60085840fa87f80182dcd56a6",
 				"a061f81f7da393e7cffd5e0738c6b245"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH"
 			]
@@ -80,6 +101,9 @@
 				"8abf7b3ceb2b02438af19543d3e5b1d5",
 				"73fa9ac60085840fa87f80182dcd56a6",
 				"a061f81f7da393e7cffd5e0738c6b245"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"VERIFY_HASH"
@@ -98,6 +122,9 @@
 				"8eff7a293222e0e3c7b4c6132489b332",
 				"55a61c3fc1ce2256"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH"
 			]
@@ -110,6 +137,9 @@
 				"507ab164b12f84843f4b7b96a6313a93",
 				"8eff7a293222e0e3c7b4c6132489b332",
 				"55a61c3fc1ce2256"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"VERIFY_HASH"
@@ -128,6 +158,9 @@
 				"9681b517b1cda17d0d83d335d9c4a8a9",
 				"a9b0b1b3c7106d8f3c72bc5093dc275f"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH"
 			]
@@ -140,6 +173,9 @@
 				"620690d06de0317b8618d5ce65eb728f",
 				"9681b517b1cda17d0d83d335d9c4a8a9",
 				"a9b0b1b3c7106d8f3c72bc5093dc275f"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"VERIFY_HASH"
@@ -161,6 +197,9 @@
 				"9d5123dd9c24f66f833846eeb5829619",
 				"6b42ec06425db5b70a4b81b7fcf705a0"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH"
 			]
@@ -175,6 +214,9 @@
 				"b83ca4126cfc4c4d1d18a4b6c21c7f69",
 				"9d5123dd9c24f66f833846eeb5829619",
 				"6b42ec06425db5b70a4b81b7fcf705a0"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"VERIFY_HASH"
@@ -201,6 +243,9 @@
 				"05f1e1bb2893da3b96d4f5ae78f25448",
 				"81a238f7"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH"
 			]
@@ -219,6 +264,9 @@
 				"05f1e1bb2893da3b96d4f5ae78f25448",
 				"81a238f7"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"VERIFY_HASH"
 			]
@@ -228,6 +276,9 @@
 			"security_size": 128,
 			"format": "BASE64",
 			"priv_key": "H45Jc5U/P7C9axZmLpo8Fw==",
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			]
@@ -240,6 +291,9 @@
 			"pub_key": [
 				"ir97POsrAkOK8ZVD0+Wx1XP6msYAhYQP",
 				"qH+AGC3NVqagYfgffaOT58/9Xgc4xrJF"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"SIGN_HASH",
@@ -287,6 +341,9 @@
 			"priv_key": [
 				"2ad3c7ce1696e52103572cc2aa396bfc",
 				"45069e5d82412f060805cda11677f658"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"SIGN_MESSAGE"

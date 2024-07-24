@@ -1,8 +1,11 @@
 {
 	"keys": {
-		"key 1":{
+		"key 1": {
 			"type": "NIST",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE",
 				"SIGN_HASH",
@@ -14,9 +17,12 @@
 				"HASH=SHA256"
 			]
 		},
-		"key 2":{
+		"key 2": {
 			"type": "NIST",
 			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE",
 				"SIGN_HASH",
@@ -145,7 +151,6 @@
 		"key_name": "key 2",
 		"depends": 7
 	},
-
 	"subtest 9": {
 		"command": "SIGN",
 		"subsystem": "ELE",

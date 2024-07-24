@@ -2,330 +2,572 @@
 	"keys": {
 		"key NIST 1": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 2": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 3": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 4": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 5": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 6": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 7": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 8": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 9": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 10": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 11": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 12": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 13": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 14": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 15": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 16": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 17": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 18": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 19": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 20": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 21": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 22": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 23": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 24": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 25": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 26": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 27": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 28": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 29": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 30": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 31": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 32": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 33": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 34": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 35": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 36": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 37": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 38": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 39": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 40": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 41": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 42": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 43": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 44": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 45": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 46": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 47": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 48": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 49": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 50": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 51": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 52": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 53": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 54": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 55": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 56": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 57": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 58": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 59": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 60": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 61": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 62": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 63": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 64": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 65": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 66": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 67": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 68": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 69": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 70": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 71": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 72": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 73": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 74": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 75": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 76": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 77": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 78": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key NIST 79": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key AES 1": {
 			"type": "AES",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key AES 2": {
 			"type": "AES",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		}
 	},
-
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "SECO",

@@ -13,6 +13,9 @@
 		"key 2": {
 			"type": "NIST",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"VERIFY_HASH",
 				"VERIFY_MESSAGE"

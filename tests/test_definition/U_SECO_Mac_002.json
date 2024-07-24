@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "HMAC_SHA256",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		}
 	},
 	"subtest 1": {

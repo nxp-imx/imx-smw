@@ -30,6 +30,9 @@
 		"key 3": {
 			"type": "AES",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			],

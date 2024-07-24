@@ -74,6 +74,9 @@
 				"84f5125f5200eb57868cce6b74c58334",
 				"17990e318372c9239a36dca1a0b28809"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE",

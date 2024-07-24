@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "NIST",
 			"security_size": 192,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE",
@@ -13,6 +16,9 @@
 		"key 2": {
 			"type": "NIST",
 			"security_size": 224,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE",
@@ -23,6 +29,9 @@
 		"key 3": {
 			"type": "NIST",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE",
@@ -33,6 +42,9 @@
 		"key 4": {
 			"type": "NIST",
 			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE",
@@ -43,6 +55,9 @@
 		"key 5": {
 			"type": "NIST",
 			"security_size": 521,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE",

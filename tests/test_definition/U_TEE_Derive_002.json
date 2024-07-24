@@ -10,6 +10,15 @@
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"30313233343536373839"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
 			]
 		},
 		"key 3": {
@@ -31,6 +40,13 @@
 				"303132333435363738393a3b3c3d3e3f",
 				"404142434445464748494a4b4c4d4e4f",
 				"4041"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		},
 		"key 5": {
@@ -41,6 +57,10 @@
 			],
 			"attributes_list": [
 				"PERSISTENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		},
 		"key 6": {
@@ -53,6 +73,13 @@
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"30313233343536373839"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		},
 		"key 8": {
@@ -63,6 +90,13 @@
 				"303132333435363738393a3b3c3d3e3f",
 				"404142434445464748494a4b4c4d4e4f",
 				"4041"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		},
 		"key 9": {
@@ -70,6 +104,13 @@
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"30313233343536373839"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		},
 		"key 10": {
@@ -85,6 +126,13 @@
 				"000102030405060708090a0b0c0d0e0f",
 				"101112131415161718191a1b1c1d1e1f",
 				"20212223242526272829"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		}
 	},

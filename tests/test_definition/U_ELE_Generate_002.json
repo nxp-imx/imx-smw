@@ -4,6 +4,9 @@
 			"type": "AES",
 			"security_size": 128,
 			"pub_key": 16,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			],
@@ -15,6 +18,9 @@
 			"type": "NIST",
 			"security_size": 256,
 			"pub_key": 40,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],
@@ -28,6 +34,9 @@
 			"security_size": 256,
 			"format": "BASE64",
 			"pub_key": 80,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],

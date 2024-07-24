@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "NIST",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"DERIVE"
 			]

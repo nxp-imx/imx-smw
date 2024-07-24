@@ -3,6 +3,9 @@
 		"generated aes-chacha20-256 key": {
 			"type": "AES",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT",
 				"DECRYPT"

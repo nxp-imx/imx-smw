@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "DES3",
 			"security_size": 112,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT",
 				"DECRYPT"

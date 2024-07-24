@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT",
 				"DECRYPT"
@@ -14,6 +17,9 @@
 		"key 2": {
 			"type": "NIST",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE",
 				"VERIFY_MESSAGE"
@@ -40,6 +46,9 @@
 			"priv_key": [
 				"d6c4cf73c639e025654dd3232fe3aa71",
 				"38f21bc8922271b4a6c0af999100b6b5"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"ENCRYPT"

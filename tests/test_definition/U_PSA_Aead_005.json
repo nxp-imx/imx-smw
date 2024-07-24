@@ -3,6 +3,9 @@
 		"generated aes-chacha-256 key encrypt": {
 			"type": "AES",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			],
@@ -13,6 +16,9 @@
 		"generated aes-chacha-256 key decrypt": {
 			"type": "AES",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"DECRYPT"
 			],

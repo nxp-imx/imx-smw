@@ -7,6 +7,9 @@
 				"603deb1015ca71be2b73aef0857d7781",
 				"1f352c073b6108d72d9810a30914dff4"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			]

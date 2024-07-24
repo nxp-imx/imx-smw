@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			]
@@ -10,6 +13,9 @@
 		"key 2": {
 			"type": "NIST",
 			"security_size": 224,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE"
@@ -56,6 +62,9 @@
 		"key 10": {
 			"type": "RSA",
 			"security_size": 512,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE"
@@ -68,6 +77,9 @@
 		"key 12": {
 			"type": "ED25519",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			]

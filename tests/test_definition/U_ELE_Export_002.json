@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "RSA",
 			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE"

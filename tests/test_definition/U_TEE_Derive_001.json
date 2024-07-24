@@ -7,8 +7,14 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
+				"SIGN_HASH",
 				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE",
 				"EXPORT"
 			]
 		},
@@ -17,6 +23,13 @@
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"30313233343536373839"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		},
 		"key 3": {
@@ -35,6 +48,12 @@
 				"duZWqeoNUUErg6SIkb+x5wy7jiElxiDj",
 				"JjYiLDLsKBCvyj0dN2bzUfRCMtCm9qbk",
 				"jSDkk6AavsoSHnGSFd8FQQ=="
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
 			]
 		},
 		"key 5": {
@@ -43,6 +62,12 @@
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555",
 				"555555555555555555555555"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
 			]
 		},
 		"client write encryption key": {},
@@ -59,6 +84,12 @@
 				"8abf7b3ceb2b02438af19543d3e5b1d5",
 				"73fa9ac60085840fa87f80182dcd56a6",
 				"a061f81f7da393e7cffd5e0738c6b245"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
 			]
 		}
 	},

@@ -3,6 +3,9 @@
 		"key RSA sign": {
 			"type": "RSA",
 			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE"
@@ -15,6 +18,9 @@
 		"key RSA verify": {
 			"type": "RSA",
 			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"VERIFY_HASH",
 				"VERIFY_MESSAGE"

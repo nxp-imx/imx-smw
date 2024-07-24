@@ -3,6 +3,9 @@
 		"generated aes-gcm-128 key": {
 			"type": "AES",
 			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT",
 				"DECRYPT"

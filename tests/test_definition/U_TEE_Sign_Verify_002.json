@@ -13,6 +13,9 @@
 				"9681b517b1cda17d0d83d335d9c4a8a9",
 				"a9b0b1b3c7106d8f3c72bc5093dc275f"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_HASH"
 			]

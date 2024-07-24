@@ -26,7 +26,10 @@
 		},
 		"key 6": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		}
 	},
 	"subtest 1": { // Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256

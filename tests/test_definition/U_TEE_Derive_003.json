@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"DERIVE",
 				"EXPORT"
@@ -14,6 +17,9 @@
 			"priv_key": [
 				"addf88c1ab997eb58c0455288c3a4fa3",
 				"20ada8c18a69cc90aa99c73b174dfde6"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"DERIVE",
@@ -27,6 +33,13 @@
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"30313233343536373839"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE",
+				"EXPORT"
 			]
 		},
 		"key 4": {
@@ -37,6 +50,13 @@
 				"303132333435363738393a3b3c3d3e3f",
 				"404142434445464748494a4b4c4d4e4f",
 				"4041"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		},
 		"key 5": {
@@ -44,6 +64,13 @@
 				10,
 				"addf88c1ab997eb58c0455288c3a4fa3",
 				"20ada8c18a69cc90aa99c73b174dfde6"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		},
 		"key 6": {
@@ -60,6 +87,9 @@
 				"addf88c1ab997eb58c0455288c3a4fa3",
 				"addf88c1ab997eb58c0455288c3a4fa3"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"DERIVE",
 				"EXPORT"
@@ -68,7 +98,14 @@
 		"key 8": {
 			"shared_secret": 0,
 			"type": "AES",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
 		}
 	},
 	"subtest 1": { // Generate Key 1

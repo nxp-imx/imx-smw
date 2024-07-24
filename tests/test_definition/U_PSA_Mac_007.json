@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "HMAC",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],
@@ -14,6 +17,9 @@
 		"key 2": {
 			"type": "HMAC",
 			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],

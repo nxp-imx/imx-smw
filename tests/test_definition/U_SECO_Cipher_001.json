@@ -2,11 +2,17 @@
 	"keys": {
 		"key 1": {
 			"type": "AES",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key 2": {
 			"type": "NIST",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key 3": {
 			"type": "AES",

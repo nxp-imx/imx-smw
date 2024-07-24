@@ -7,6 +7,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			]
@@ -17,6 +20,9 @@
 			"priv_key": [
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"SIGN_MESSAGE"
@@ -29,6 +35,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			]
@@ -39,6 +48,9 @@
 			"priv_key": [
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"SIGN_MESSAGE"
@@ -51,6 +63,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			]
@@ -62,6 +77,9 @@
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			]
@@ -72,6 +90,9 @@
 			"priv_key": [
 				"6ed76d2d97c69fd1339589523931f2a6",
 				"cff554b15f738f21ec72dd97a7330907"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			],
 			"usage": [
 				"SIGN_MESSAGE"
@@ -230,7 +251,7 @@
 	},
 	"subtest 12": { // SHA384
 		"command": "MAC_COMPUTE",
-		"algo":"HMAC",
+		"algo": "HMAC",
 		"hash": "SHA384",
 		"key_name": "key 5",
 		"input": [
@@ -260,7 +281,7 @@
 	},
 	"subtest 13": { // SHA512
 		"command": "MAC_COMPUTE",
-		"algo":"HMAC",
+		"algo": "HMAC",
 		"hash": "SHA512",
 		"key_name": "key 6",
 		"input": [
@@ -291,7 +312,7 @@
 	},
 	"subtest 14": { // SM3
 		"command": "MAC_COMPUTE",
-		"algo":"HMAC",
+		"algo": "HMAC",
 		"hash": "SM3",
 		"key_name": "key 7",
 		"input": [

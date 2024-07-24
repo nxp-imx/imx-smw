@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			],
@@ -13,6 +16,9 @@
 		"key 2": {
 			"type": "NIST",
 			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],

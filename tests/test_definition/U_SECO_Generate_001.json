@@ -2,31 +2,52 @@
 	"keys": {
 		"key 1": {
 			"type": "AES",
-			"security_size": 128
+			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key 2": {
 			"type": "AES",
-			"security_size": 192
+			"security_size": 192,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key 3": {
 			"type": "AES",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key 4": {
 			"type": "NIST",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key 5": {
 			"type": "NIST",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key 6": {
 			"type": "BRAINPOOL_R1",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key 7": {
 			"type": "BRAINPOOL_R1",
-			"security_size": 384
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key 8": {
 			"type": "NIST",
@@ -36,6 +57,9 @@
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555",
 				"555555555555555555555555555555"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			]
 		},
 		"key 9": {
@@ -45,6 +69,9 @@
 			"pub_key": [
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555"
+			],
+			"attributes_list": [
+				"TRANSIENT"
 			]
 		}
 	},

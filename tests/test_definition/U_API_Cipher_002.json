@@ -3,6 +3,9 @@
 		"key 1": {
 			"type": "AES",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			]
@@ -10,6 +13,9 @@
 		"key 2": {
 			"type": "DES",
 			"security_size": 56,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"ENCRYPT"
 			]

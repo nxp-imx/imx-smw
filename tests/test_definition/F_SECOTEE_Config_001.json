@@ -3,10 +3,20 @@
 		"key SECO": {
 			"type": "AES",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"key TEE": {
 			"type": "AES",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			]
 		}
 	},
 	"data_list": {

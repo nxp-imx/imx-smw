@@ -3,6 +3,9 @@
 		"key attested": {
 			"type": "NIST",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE",
 				"VERIFY_MESSAGE"
@@ -15,6 +18,9 @@
 		"key NIST SHA224": {
 			"type": "NIST",
 			"security_size": 224,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],
@@ -26,6 +32,9 @@
 		"key NIST SHA256": {
 			"type": "NIST",
 			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],
@@ -37,6 +46,9 @@
 		"key NIST SHA384": {
 			"type": "NIST",
 			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],
@@ -48,6 +60,9 @@
 		"key NIST SHA512": {
 			"type": "NIST",
 			"security_size": 521,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],
@@ -59,6 +74,9 @@
 		"key AES": {
 			"type": "AES",
 			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			],

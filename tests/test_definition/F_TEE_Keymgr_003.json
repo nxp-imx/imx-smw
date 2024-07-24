@@ -18,6 +18,9 @@
 				"b6cc3d592dd59b81462b894beb3b32d9",
 				"7680b326c3f0f93b89d885c417cb28df"
 			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			]
@@ -54,6 +57,9 @@
 						9,
 						"4000000041CB995001"
 					]
+				],
+				[
+					"TRANSIENT"
 				]
 			],
 			"usage": [
@@ -63,6 +69,9 @@
 		"key 5": {
 			"type": "RSA",
 			"security_size": 4096,
+			"attributes_list": [
+				"TRANSIENT"
+			],
 			"usage": [
 				"SIGN_MESSAGE"
 			]

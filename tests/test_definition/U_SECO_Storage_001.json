@@ -2,11 +2,17 @@
 	"keys": {
 		"encrypt key": {
 			"type": "AES",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		},
 		"sign key": {
 			"type": "AES",
-			"security_size": 256
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			]
 		}
 	},
 	"data_list": {

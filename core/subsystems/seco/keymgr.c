@@ -408,17 +408,21 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 
 	case SMW_ATTR_PERSISTENCE_PERMANENT:
 		op_generate_key_args.key_info = HSM_KEY_INFO_PERMANENT;
-		/* Force permanant key to be written in NVM */
+		/* Force permanent key to be written in NVM */
 		op_generate_key_args.flags |=
 			HSM_OP_KEY_GENERATION_FLAGS_STRICT_OPERATION;
 		key_group = SECO_FIRST_PERSISTENT_KEY_GROUP;
 		persistent_grp = true;
 		break;
 
-	default:
+	case SMW_ATTR_PERSISTENCE_TRANSIENT:
 		op_generate_key_args.key_info = HSM_KEY_INFO_TRANSIENT;
 		key_group = SECO_FIRST_TRANSIENT_KEY_GROUP;
 		break;
+
+	default:
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
 	}
 
 	status = seco_open_key_mgmt_service(&seco_ctx->hdl, &key_mgt_hdl);

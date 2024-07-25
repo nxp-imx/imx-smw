@@ -166,14 +166,15 @@ static void convert_algo_to_ele(smw_attr_algo_t smw, hsm_permitted_algo_t *ele)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < ARRAY_SIZE(permitted_algos); i++) {
-		if (permitted_algos[i].smw_algo == algo &&
+		if (permitted_algos[i].smw_class == class &&
+		    (permitted_algos[i].smw_algo == algo ||
+		     permitted_algos[i].smw_algo == SMW_ATTR_ALGO_DEFAULT) &&
 		    (permitted_algos[i].smw_mode == SMW_ATTR_MODE_NONE ||
 		     permitted_algos[i].smw_mode == mode ||
 		     permitted_algos[i].smw_curve == SMW_ATTR_CURVE_NONE ||
 		     permitted_algos[i].smw_curve == curve) &&
 		    (permitted_algos[i].smw_hash == SMW_ATTR_HASH_NONE ||
-		     permitted_algos[i].smw_hash == hash) &&
-		    permitted_algos[i].smw_class == class
+		     permitted_algos[i].smw_hash == hash)
 
 		) {
 			ele_algo = permitted_algos[i].ele_permitted_algo;
@@ -223,15 +224,8 @@ static void convert_algo_to_smw(hsm_permitted_algo_t ele, smw_attr_algo_t *smw)
 		}
 
 		if (permitted_algos[i].ele_permitted_algo == ele_algo) {
-			if (permitted_algos[i].smw_mode != SMW_ATTR_MODE_NONE)
-				mode = permitted_algos[i].smw_mode;
-			else
-				mode = SMW_ATTR_MODE_ANY;
-
-			if (permitted_algos[i].smw_hash != SMW_ATTR_HASH_NONE)
-				hash = permitted_algos[i].smw_hash;
-			else
-				hash = SMW_ATTR_HASH_ANY;
+			mode = permitted_algos[i].smw_mode;
+			hash = permitted_algos[i].smw_hash;
 
 			*smw = (((permitted_algos[i].smw_class &
 				  SMW_ATTR_CLASS_MASK)

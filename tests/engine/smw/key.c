@@ -46,16 +46,16 @@ static struct {
 
 static const struct util_attr_info algo_info[] = {
 	ATTR_ALGO(ECB_NO_PADDING, SYMMETRIC_ENCRYPTION, DEFAULT, ECB_NO_PAD,
-		  ANY),
-	ATTR_ALGO(CFB, SYMMETRIC_ENCRYPTION, DEFAULT, CFB, ANY),
-	ATTR_ALGO(CTR, SYMMETRIC_ENCRYPTION, DEFAULT, CTR, ANY),
-	ATTR_ALGO(OFB, SYMMETRIC_ENCRYPTION, DEFAULT, OFB, ANY),
-	ATTR_ALGO(XTS, SYMMETRIC_ENCRYPTION, DEFAULT, XTS, ANY),
+		  NONE),
+	ATTR_ALGO(CFB, SYMMETRIC_ENCRYPTION, DEFAULT, CFB, NONE),
+	ATTR_ALGO(CTR, SYMMETRIC_ENCRYPTION, DEFAULT, CTR, NONE),
+	ATTR_ALGO(OFB, SYMMETRIC_ENCRYPTION, DEFAULT, OFB, NONE),
+	ATTR_ALGO(XTS, SYMMETRIC_ENCRYPTION, DEFAULT, XTS, NONE),
 	ATTR_ALGO(CCM, AEAD, DEFAULT, CCM, ANY),
 	ATTR_ALGO(GCM, AEAD, DEFAULT, GCM, ANY),
 	ATTR_ALGO(CHACHA20_POLY1305, AEAD, CHACHA20, POLY1305, ANY),
-	ATTR_ALGO(CMAC, MAC, DEFAULT, CMAC, ANY),
-	ATTR_ALGO(HMAC, MAC, HMAC, ANY, ANY),
+	ATTR_ALGO(CMAC, MAC, DEFAULT, CMAC, NONE),
+	ATTR_ALGO(HMAC, MAC, HMAC, NONE, ANY),
 	ATTR_ALGO(DEFAULT, ASYMMETRIC_SIGNATURE, DEFAULT, ANY, ANY),
 	ATTR_ALGO_CURVE(ECDSA, ASYMMETRIC_SIGNATURE, ECDSA, ANY, ANY),
 	ATTR_ALGO_CURVE(EDDSA, ASYMMETRIC_SIGNATURE, EDDSA, ANY, ANY),
@@ -575,6 +575,20 @@ err:
 	return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 }
 
+static void perm_algo_callback(void *user_data, const char *params[],
+			       size_t n_params)
+{
+	smw_attr_algo_t *algo = user_data;
+
+	algorithm_callback(user_data, params, n_params);
+
+	if (SMW_ATTR_GET_CLASS(*algo) == SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE &&
+	    SMW_ATTR_GET_ALGO(*algo) == SMW_ATTR_ALGO_ECDSA)
+		*algo = SMW_ATTR_SET_CLEAR_NAME(*algo, CURVE, NONE);
+
+	DBG_PRINT("SMW permitted algorithm: %0" PRIx64, *algo);
+}
+
 void free_keys(struct keys *keys)
 {
 	unsigned int i = 0;
@@ -767,7 +781,7 @@ int key_read_attributes(struct json_object *params,
 		return ret;
 
 	ret = util_attr_read_attributes(params, PERMITTED_ALGO_OBJ,
-					&algorithm_callback,
+					&perm_algo_callback,
 					&((*attributes)->permitted_algo));
 	if (ret == ERR_CODE(PASSED))
 		found++;

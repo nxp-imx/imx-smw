@@ -9,15 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_key_privacy_t - Key privacy name
- * Values:
- *	- PUBLIC
- *	- PRIVATE
- *	- KEYPAIR
- */
-typedef smw_string_t smw_key_privacy_t;
-
-/**
  * typedef smw_hash_algo_t - Hash algorithm name
  * Values:
  *	- MD5

@@ -135,4 +135,24 @@ typedef enum {
 	SMW_KEY_TYPE_NAME_NB
 } smw_key_type_t;
 
+/**
+ * typedef smw_key_privacy_t - Key privacy name
+ *
+ * Values:
+ * * SMW_KEY_PRIVACY_NAME_NONE: No key privacy specified
+ * * SMW_KEY_PRIVACY_NAME_PUBLIC: Public key
+ * * SMW_KEY_PRIVACY_NAME_PRIVATE: Private key
+ * * SMW_KEY_PRIVACY_NAME_PAIR: Key pair
+ * * SMW_KEY_PRIVACY_NAME_SHARED_SECRET: Shared secret
+ * * SMW_KEY_PRIVACY_NAME_NB: Number of key privacies
+ */
+typedef enum {
+	SMW_KEY_PRIVACY_NAME_NONE,
+	SMW_KEY_PRIVACY_NAME_PUBLIC,
+	SMW_KEY_PRIVACY_NAME_PRIVATE,
+	SMW_KEY_PRIVACY_NAME_PAIR,
+	SMW_KEY_PRIVACY_NAME_SHARED_SECRET,
+	SMW_KEY_PRIVACY_NAME_NB
+} smw_key_privacy_t;
+
 #endif /* __SMW_NAMES_H__ */

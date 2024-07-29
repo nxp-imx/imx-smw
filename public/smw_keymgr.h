@@ -457,7 +457,7 @@ struct smw_delete_key_args {
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
- * @key_privacy: Key privacy type
+ * @key_privacy_name: Key privacy name
  * @key_attributes: Key attributes. See &smw_key_attributes
  *
  * The @key_descriptor fields @id must be given as input.
@@ -468,7 +468,7 @@ struct smw_get_key_attributes_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_descriptor;
-	smw_key_privacy_t key_privacy;
+	smw_key_privacy_t key_privacy_name;
 	struct smw_key_attributes key_attributes;
 };
 

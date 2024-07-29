@@ -493,15 +493,15 @@ static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 
 static psa_status_t get_psa_key_type(psa_key_type_t *psa_key_type,
 				     const smw_key_type_t smw_key_type,
-				     const char *privacy)
+				     smw_key_privacy_t privacy)
 {
 	psa_status_t status = PSA_ERROR_DATA_INVALID;
 	bool is_keypair = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (privacy && smw_key_type) {
-		if (!SMW_UTILS_STRCMP(privacy, "KEYPAIR"))
+	if (privacy != SMW_KEY_PRIVACY_NAME_NONE && smw_key_type) {
+		if (privacy == SMW_KEY_PRIVACY_NAME_PAIR)
 			is_keypair = true;
 
 		*psa_key_type = get_dh_psa_key_type(smw_key_type, is_keypair);
@@ -1308,7 +1308,7 @@ __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
 	psa_set_key_id(attributes, args.key_descriptor->id);
 
 	psa_status = get_psa_key_type(&key_type, key_descriptor.type_name,
-				      args.key_privacy);
+				      args.key_privacy_name);
 	if (psa_status != PSA_SUCCESS)
 		goto exit;
 

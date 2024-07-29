@@ -17,19 +17,18 @@
 #include "name.h"
 #include "base64.h"
 
-static const char *const key_privacy_names[] = {
-	[SMW_KEYMGR_PRIVACY_ID_PUBLIC] = "PUBLIC",
-	[SMW_KEYMGR_PRIVACY_ID_PRIVATE] = "PRIVATE",
-	[SMW_KEYMGR_PRIVACY_ID_PAIR] = "KEYPAIR",
-	[SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET] = "SHARED_SECRET",
-};
+static void get_key_privacy_name(enum smw_keymgr_privacy_id id,
+				 smw_key_privacy_t *name)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
 
-#define KEY_PRIVACY_ID_ASSERT(id)                                              \
-	do {                                                                   \
-		typeof(id) _id = (id);                                         \
-		SMW_DBG_ASSERT((_id < SMW_KEYMGR_PRIVACY_ID_NB) &&             \
-			       (_id != SMW_KEYMGR_PRIVACY_ID_INVALID));        \
-	} while (0)
+	*name = SMW_KEY_PRIVACY_NAME_NONE;
+
+	if (id < SMW_KEYMGR_PRIVACY_ID_NB &&
+	    id != SMW_KEYMGR_PRIVACY_ID_INVALID)
+		(void)ADD_OVERFLOW(id, SMW_KEYMGR_PRIVACY_ID_OFFSET,
+				   (int *)name);
+}
 
 static unsigned char **public_data_key_gen(struct smw_keymgr_key_ops *this)
 {
@@ -1793,7 +1792,6 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	struct smw_keymgr_identifier *key_identifier = &attr_args.identifier;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	bool key_not_present = false;
-	unsigned int index = 0;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1847,9 +1845,9 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	/* Set the key security size */
 	args->key_descriptor->security_size = key_identifier->security_size;
 
-	KEY_PRIVACY_ID_ASSERT(key_identifier->privacy_id);
-	index = key_identifier->privacy_id;
-	args->key_privacy = key_privacy_names[index];
+	/* Convert the key privacy */
+	get_key_privacy_name(key_identifier->privacy_id,
+			     &args->key_privacy_name);
 
 	if (key_not_present) {
 		key_identifier->subsystem_id = subsystem_id;

@@ -5,7 +5,7 @@
 
 #include <string.h>
 
-#include "smw/names.h"
+#include <smw/names.h>
 
 #include "util.h"
 #include "util_debug.h"

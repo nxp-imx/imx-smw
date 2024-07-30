@@ -5,40 +5,36 @@
 
 #include "config.h"
 #include "debug.h"
-#include "name.h"
+#include "utils.h"
 
-static const char *const mac_algo_names[] = {
-	[SMW_CONFIG_MAC_ALGO_ID_CMAC] = "CMAC",
-	[SMW_CONFIG_MAC_ALGO_ID_CMAC_TRUNCATED] = "CMAC_TRUNCATED",
-	[SMW_CONFIG_MAC_ALGO_ID_HMAC] = "HMAC",
-	[SMW_CONFIG_MAC_ALGO_ID_HMAC_TRUNCATED] = "HMAC_TRUNCATED",
-};
+/*
+ * Ordering must be the same for internal values and public values.
+ * This way the offset between the internal values and the public values
+ * can be used for conversion, and no conversion table is required.
+ *
+ * The offset between the internal values and the public values is
+ * given by the first public value.
+ */
 
-int smw_utils_get_mac_algo_id(const char *name, enum smw_config_mac_algo_id *id)
+#define SMW_CONFIG_MAC_ALGO_ID_OFFSET                                          \
+	(SMW_MAC_ALGO_NAME_CMAC - SMW_CONFIG_MAC_ALGO_ID_CMAC)
+
+int smw_utils_get_mac_algo_id(smw_mac_algo_t name,
+			      enum smw_config_mac_algo_id *id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_UNKNOWN_ALGO_NAME;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-	if (!name)
-		*id = SMW_CONFIG_MAC_ALGO_ID_INVALID;
-	else
-		status = smw_utils_get_string_index(name, mac_algo_names,
-						    SMW_CONFIG_MAC_ALGO_ID_NB,
-						    id);
 
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_ALGO_NAME;
+	if (name == SMW_MAC_ALGO_NAME_NONE) {
+		*id = SMW_CONFIG_MAC_ALGO_ID_INVALID;
+		status = SMW_STATUS_OK;
+	} else if (name < SMW_MAC_ALGO_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_CONFIG_MAC_ALGO_ID_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-int smw_utils_mac_algo_names(char **start, char *end, unsigned long *bitmap)
-{
-	int status = smw_config_read_strings(start, end, bitmap, mac_algo_names,
-					     SMW_CONFIG_MAC_ALGO_ID_NB);
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_ALGO_NAME;
-
 	return status;
 }

@@ -416,35 +416,15 @@ int smw_utils_cipher_op_type_names(char **start, char *end,
 				   unsigned long *bitmap);
 
 /**
- * smw_utils_cipher_mode_names() - Read a list of cipher mode names
- * @start: Address of the pointer to the current char.
- * @end: Pointer to the last char of the buffer being parsed.
- * @bitmap: Bitmap representing the configured names.
- *
- * This function reads a list of names from the current char
- * of the buffer being parsed until a semicolon is detected.
- * The pointer to the current char is moved to the next char
- * after the semicolon.
- * Insignificant chars are skipped if any.
- *
- * Names are compared with values set in @cipher_mode_names.
- * @bitmap is set with enum smw_config_cipher_mode_id values.
- *
- * Return:
- * error code.
- */
-int smw_utils_cipher_mode_names(char **start, char *end, unsigned long *bitmap);
-
-/**
  * smw_utils_get_cipher_mode_id() - Get the cipher mode ID associated to a name
- * @name: Name as a string.
+ * @name: Cipher mode name.
  * @id: Pointer where the ID is written.
  *
  * Return:
  * SMW_STATUS_UNKNOWN_MODE_NAME	- @name is unknown
  * SMW_STATUS_OK		- Success
  */
-int smw_utils_get_cipher_mode_id(const char *name,
+int smw_utils_get_cipher_mode_id(smw_cipher_mode_t name,
 				 enum smw_config_cipher_mode_id *id);
 
 /**

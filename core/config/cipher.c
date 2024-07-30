@@ -17,6 +17,26 @@
 
 #include "common.h"
 
+static const char *const cipher_mode_strings[] = {
+	[SMW_CONFIG_CIPHER_MODE_ID_CBC] = "CBC",
+	[SMW_CONFIG_CIPHER_MODE_ID_CFB] = "CFB",
+	[SMW_CONFIG_CIPHER_MODE_ID_CTR] = "CTR",
+	[SMW_CONFIG_CIPHER_MODE_ID_CTS] = "CTS",
+	[SMW_CONFIG_CIPHER_MODE_ID_ECB] = "ECB",
+	[SMW_CONFIG_CIPHER_MODE_ID_XTS] = "XTS"
+};
+
+int read_cipher_mode_strings(char **start, char *end, unsigned long *bitmap)
+{
+	int status =
+		smw_config_read_strings(start, end, bitmap, cipher_mode_strings,
+					SMW_CONFIG_CIPHER_MODE_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_MODE_NAME;
+
+	return status;
+}
+
 /**
  * cipher_common_read_params() - Read common cipher parameters
  * @start: Address of the pointer to the current char.
@@ -60,8 +80,8 @@ static int cipher_common_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, mode_values, length)) {
-			status = smw_utils_cipher_mode_names(&cur, end,
-							     &p->mode_bitmap);
+			status = read_cipher_mode_strings(&cur, end,
+							  &p->mode_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, op_type_values, length)) {
@@ -221,7 +241,7 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!info || info->key_type_name == SMW_KEY_TYPE_NAME_NONE ||
-	    !info->mode || !info->op_type)
+	    info->mode_name == SMW_CIPHER_MODE_NAME_NONE || !info->op_type)
 		return status;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);
@@ -232,7 +252,7 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_utils_get_cipher_mode_id(info->mode, &mode_id);
+	status = smw_utils_get_cipher_mode_id(info->mode_name, &mode_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 

@@ -118,7 +118,8 @@ static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)
 
 #define HASH_ALGO(_id, _name, _length, _block_size)                            \
 	{                                                                      \
-		.psa_alg_id = PSA_ALG_##_id, .smw_alg_name = #_name,           \
+		.psa_alg_id = PSA_ALG_##_id,                                   \
+		.smw_alg_name = SMW_HASH_ALGO_NAME_##_name,                    \
 		.smw_alg_id = SMW_ATTR_HASH_##_name, .length = _length,        \
 		.block_size = _block_size                                      \
 	}
@@ -141,7 +142,7 @@ static const struct hash_algo_info {
 		       HASH_ALGO(SHA3_512, SHA3_512, 64, 128),
 		       HASH_ALGO(SM3, SM3, 32, 64),
 		       { .psa_alg_id = PSA_ALG_NONE,
-			 .smw_alg_name = NULL,
+			 .smw_alg_name = SMW_HASH_ALGO_NAME_NONE,
 			 .smw_alg_id = SMW_ATTR_HASH_ANY,
 			 .length = 0,
 			 .block_size = 0 } };
@@ -160,7 +161,7 @@ static smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!info)
-		return NULL;
+		return SMW_HASH_ALGO_NAME_NONE;
 
 	return info->smw_alg_name;
 }
@@ -1138,7 +1139,7 @@ __export psa_status_t psa_hash_compute(psa_algorithm_t alg,
 		return psa_status;
 
 	args.algo_name = get_hash_algo_name(alg);
-	if (!args.algo_name)
+	if (args.algo_name == SMW_HASH_ALGO_NAME_NONE)
 		return PSA_ERROR_NOT_SUPPORTED;
 
 	args.input = (unsigned char *)input;

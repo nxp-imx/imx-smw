@@ -1,12 +1,21 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #ifndef __CIPHER_H__
 #define __CIPHER_H__
 
 #include "types.h"
+
+/**
+ * cipher_get_mode_name() - Convert cipher mode string value into integer value.
+ * @string: Cipher mode string.
+ *
+ * Return:
+ * Cipher mdoe name.
+ */
+smw_cipher_mode_t cipher_get_mode_name(const char *string);
 
 /**
  * cipher() - Do a cipher one-shot operation

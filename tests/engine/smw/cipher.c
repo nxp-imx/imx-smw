@@ -7,6 +7,7 @@
 
 #include <json.h>
 
+#include <smw/names.h>
 #include <smw_keymgr.h>
 #include <smw_crypto.h>
 
@@ -21,6 +22,32 @@
 #define INIT	1
 #define UPDATE	2
 #define FINAL	3
+
+#define CIPHER_MODE(_name)                                                     \
+	{                                                                      \
+		.name = SMW_CIPHER_MODE_NAME_##_name, .string = #_name         \
+	}
+
+static struct {
+	smw_cipher_mode_t name;
+	const char *string;
+} cipher_mode_names[] = { CIPHER_MODE(CBC), CIPHER_MODE(CFB), CIPHER_MODE(CTR),
+			  CIPHER_MODE(CTS), CIPHER_MODE(ECB), CIPHER_MODE(XTS) };
+
+smw_cipher_mode_t cipher_get_mode_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_CIPHER_MODE_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(cipher_mode_names); i++) {
+		if (!strcmp(cipher_mode_names[i].string, string))
+			return cipher_mode_names[i].name;
+	}
+
+	return SMW_CIPHER_MODE_NAME_NB + 1;
+}
 
 /**
  * cipher_bad_params() - Set cipher bad parameters
@@ -146,16 +173,19 @@ static int set_init_params(struct subtest_data *subtest,
 			   struct smw_cipher_init_args *args, struct keys *keys)
 {
 	int res = ERR_CODE(PASSED);
+	const char *mode_string = NULL;
 
 	args->subsystem_name = subtest->subsystem;
 
 	/* Get cipher mode */
-	res = util_read_json_type(&args->mode_name, MODE_OBJ, t_string,
+	res = util_read_json_type(&mode_string, MODE_OBJ, t_string,
 				  subtest->params);
 	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
 		DBG_PRINT_MISS_PARAM("Cipher mode");
 		return ERR_CODE(MISSING_PARAMS);
 	}
+
+	args->mode_name = cipher_get_mode_name(mode_string);
 
 	/* Get the operation type */
 	res = util_read_json_type(&args->operation_name, OP_TYPE_OBJ, t_string,

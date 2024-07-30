@@ -13,6 +13,7 @@
 #include "data.h"
 #include "key.h"
 #include "mac.h"
+#include "cipher.h"
 
 static void free_data(struct smw_data_descriptor *data_descriptor)
 {
@@ -36,6 +37,7 @@ int storage_store(struct subtest_data *subtest)
 	struct keypair_ops sign_key_test = { 0 };
 	struct smw_keypair_buffer sign_key_buffer = { 0 };
 	const char *data_name = NULL;
+	const char *cipher_mode_string = NULL;
 	const char *sign_key_name = NULL;
 	const char *algo_string = NULL;
 
@@ -82,12 +84,14 @@ int storage_store(struct subtest_data *subtest)
 		goto exit;
 	}
 
-	res = util_read_json_type(&encryption_args.mode_name, MODE_OBJ,
-				  t_string, subtest->params);
+	res = util_read_json_type(&cipher_mode_string, MODE_OBJ, t_string,
+				  subtest->params);
 	if (res == ERR_CODE(PASSED))
 		encryption_args_ptr = &encryption_args;
 	else if (res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
+
+	encryption_args.mode_name = cipher_get_mode_name(cipher_mode_string);
 
 	res = util_read_json_type(&sign_key_name, SIGN_KEY_NAME_OBJ, t_string,
 				  subtest->params);

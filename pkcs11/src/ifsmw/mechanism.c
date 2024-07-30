@@ -106,7 +106,7 @@ struct mentry {
 	smw_key_type_t smw_key_type;
 	smw_string_t smw_algo;
 	smw_string_t smw_mode;
-	smw_string_t smw_hash;
+	smw_hash_algo_t smw_hash;
 	smw_attr_algo_t smw_algo_id;
 	unsigned int nb_smw_key_types;
 	smw_key_type_t *smw_key_types;
@@ -146,64 +146,66 @@ struct mgroup {
 	}
 
 #define M_DIGEST(_hash, _id)                                                   \
-	M_ALGO(NONE, STR(_hash), NULL, NULL, SMW_ATTR_HASH_##_hash, _id)
+	M_ALGO(NONE, NULL, NULL, SMW_HASH_ALGO_NAME_##_hash,                   \
+	       SMW_ATTR_HASH_##_hash, _id)
 
 /* Macro filling a struct mentry for an algo or a list of algo */
 #define M_ECKEYGEN(_key_types, _nb_key_types, _id)                             \
 	{                                                                      \
 		.type = CKM_##_id, .slot_flag = 0, .smw_algo = NULL,           \
-		.smw_hash = NULL, .smw_mode = NULL, .smw_algo_id = 0,          \
-		.nb_smw_key_types = _nb_key_types, .smw_key_types = _key_types \
+		.smw_hash = SMW_HASH_ALGO_NAME_NONE, .smw_mode = NULL,         \
+		.smw_algo_id = 0, .nb_smw_key_types = _nb_key_types,           \
+		.smw_key_types = _key_types,                                   \
 	}
 
 #define M_KEYGEN(_key_type, _id)                                               \
 	{                                                                      \
 		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
-		.smw_algo = NULL, .smw_hash = NULL, .smw_mode = NULL,          \
-		.smw_algo_id = 0, .nb_smw_key_types = 1,                       \
+		.smw_algo = NULL, .smw_hash = SMW_HASH_ALGO_NAME_NONE,         \
+		.smw_mode = NULL, .smw_algo_id = 0, .nb_smw_key_types = 1,     \
 		.smw_key_types = NULL,                                         \
 	}
 
 #define M_SIGN_ECDSA_ANY_HASH(_id)                                             \
-	M_ALGO(NONE, ECDSA_STR, NULL, NULL,                                    \
+	M_ALGO(NONE, ECDSA_STR, NULL, SMW_HASH_ALGO_NAME_NONE,                 \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_ANY,    \
 							SMW_ATTR_HASH_ANY),    \
 	       _id)
 
 #define M_SIGN_ECDSA(_hash, _id)                                               \
-	M_ALGO(NONE, ECDSA_STR, NULL, STR(_hash),                              \
+	M_ALGO(NONE, ECDSA_STR, NULL, SMW_HASH_ALGO_NAME_##_hash,              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(                       \
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
 	       _id)
 
 #define M_SIGN_RSA_ANY_HASH(_mode, _id)                                        \
-	M_ALGO(NONE, RSA_STR, STR(_mode), NULL,                                \
+	M_ALGO(NONE, RSA_STR, STR(_mode), SMW_HASH_ALGO_NAME_NONE,             \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_ANY, 0),   \
 	       _id)
 
 #define M_SIGN_RSA(_mode, _hash, _id)                                          \
-	M_ALGO(NONE, RSA_STR, STR(_mode), STR(_hash),                          \
+	M_ALGO(NONE, RSA_STR, STR(_mode), SMW_HASH_ALGO_NAME_##_hash,          \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_##_hash,   \
 						      0),                      \
 	       _id)
 
 #define M_CIPHER(_algo, _mode, _mode_id, _id)                                  \
-	M_ALGO(_algo, NULL, STR(_mode), NULL,                                  \
+	M_ALGO(_algo, NULL, STR(_mode), SMW_HASH_ALGO_NAME_NONE,               \
 	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
 						  SMW_ATTR_MODE_##_mode_id),   \
 	       _id)
 
 #define M_MAC(_algo, _mode, _mode_id, _id)                                     \
-	M_ALGO(_algo, NULL, STR(_mode), NULL,                                  \
+	M_ALGO(_algo, NULL, STR(_mode), SMW_HASH_ALGO_NAME_NONE,               \
 	       SMW_ATTR_ALGO_MAC(SMW_ATTR_ALGO_##_algo,                        \
 				 SMW_ATTR_MODE_##_mode_id, 0),                 \
 	       _id)
 
 #define M_HMAC(_mode, _hash, _id)                                              \
-	M_ALGO(HMAC, NULL, STR(_mode), STR(_hash),                             \
+	M_ALGO(HMAC, NULL, STR(_mode), SMW_HASH_ALGO_NAME_##_hash,             \
 	       SMW_ATTR_ALGO_MAC_HMAC(SMW_ATTR_HASH_##_hash, 0), _id)
 
 /* Macro filling a group of mechanisms */
@@ -421,12 +423,12 @@ static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 
 static smw_hash_algo_t get_hash_algo(CK_MECHANISM_TYPE mech_type)
 {
-	smw_hash_algo_t hash_algo = NULL;
+	smw_hash_algo_t hash_algo = SMW_HASH_ALGO_NAME_NONE;
 	unsigned int i = 0;
 
 	for (; i < ARRAY_SIZE(mdigest); i++) {
 		if (mech_type == mdigest[i].type) {
-			hash_algo = mdigest[i].smw_algo;
+			hash_algo = mdigest[i].smw_hash;
 			break;
 		}
 	}
@@ -499,9 +501,9 @@ static void check_mdigest(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 
 	slot_flag = BIT(slotid);
 	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
-		status = smw_config_check_digest(subsystem, entry->smw_algo);
-		DBG_TRACE("Subsystem #%d digest %s: %d", subsystem,
-			  (char *)entry->smw_algo, status);
+		status = smw_config_check_digest(subsystem, entry->smw_hash);
+		DBG_TRACE("Subsystem #%d digest #%d: %d", subsystem,
+			  entry->smw_hash, status);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
 	}
@@ -546,7 +548,7 @@ static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 		return ret;
 
 	hash_args.subsystem_name = devinfo->name;
-	hash_args.algo_name = entry->smw_algo;
+	hash_args.algo_name = entry->smw_hash;
 
 	hash_args.input = params->pData;
 	if (SET_OVERFLOW(params->ulDataLen, hash_args.input_length))
@@ -786,7 +788,7 @@ static void check_msign_common(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
 		info.algo = entry->smw_algo;
 		info.type = entry->smw_mode;
-		info.hash = entry->smw_hash;
+		info.hash_algo_name = entry->smw_hash;
 
 		status = smw_config_check_sign(subsystem, &info);
 		DBG_TRACE("Subsystem #%d sign mechanism %lu: %d", subsystem,
@@ -841,7 +843,7 @@ static CK_RV info_msign_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 
 	sign_verify_info.algo = entry->smw_algo;
 	sign_verify_info.type = entry->smw_mode;
-	sign_verify_info.hash = entry->smw_hash;
+	sign_verify_info.hash_algo_name = entry->smw_hash;
 
 	/* @info flag is set with Sign flag or Verify flag or both */
 	status = smw_config_check_sign(devinfo->name, &sign_verify_info);
@@ -894,7 +896,7 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 	smw_args.key_descriptor = &key_desc;
 	smw_args.sign_algo = entry->smw_algo_id;
 
-	if (!entry->smw_hash)
+	if (entry->smw_hash == SMW_HASH_ALGO_NAME_NONE)
 		smw_args.sign_algo =
 			SMW_ATTR_SET_HASH(smw_args.sign_algo,
 					  get_hash_algo_id(ctx->hash_mech));
@@ -1263,7 +1265,7 @@ static void check_mmac(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 	for (entry = mgroup->mechanism; idx < mgroup->number; idx++, entry++) {
 		info.key_type_name = entry->smw_key_type;
 		info.mac_algo = entry->smw_mode;
-		info.hash_algo = entry->smw_hash;
+		info.hash_algo_name = entry->smw_hash;
 
 		status = smw_config_check_mac(subsystem, &info);
 		DBG_TRACE("Subsystem #%d MAC mechanism %lu: %d", subsystem,
@@ -1296,7 +1298,7 @@ static CK_RV info_mmac_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 
 	mac_info.key_type_name = entry->smw_key_type;
 	mac_info.mac_algo = entry->smw_mode;
-	mac_info.hash_algo = entry->smw_hash;
+	mac_info.hash_algo_name = entry->smw_hash;
 
 	status = smw_config_check_mac(devinfo->name, &mac_info);
 	if (status == SMW_STATUS_OK)
@@ -1347,7 +1349,7 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	smw_args.algo_name = entry->smw_mode;
 
 	/* Get hash algorithm */
-	if (entry->smw_hash)
+	if (entry->smw_hash != SMW_HASH_ALGO_NAME_NONE)
 		smw_args.hash_name = entry->smw_hash;
 	else if (ctx->hash_mech)
 		smw_args.hash_name = get_hash_algo(ctx->hash_mech);

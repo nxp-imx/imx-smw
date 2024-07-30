@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <smw/names.h>
 #include <smw_keymgr.h>
 #include <smw_crypto.h>
 
@@ -15,6 +16,32 @@
 #include "key.h"
 #include "hash.h"
 #include "mac.h"
+
+#define MAC_ALGO(_name)                                                        \
+	{                                                                      \
+		.name = SMW_MAC_ALGO_NAME_##_name, .string = #_name            \
+	}
+
+static struct {
+	smw_mac_algo_t name;
+	const char *string;
+} mac_algo_names[] = { MAC_ALGO(CMAC), MAC_ALGO(CMAC_TRUNCATED), MAC_ALGO(HMAC),
+		       MAC_ALGO(HMAC_TRUNCATED) };
+
+smw_mac_algo_t mac_get_algo_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_MAC_ALGO_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(mac_algo_names); i++) {
+		if (!strcmp(mac_algo_names[i].string, string))
+			return mac_algo_names[i].name;
+	}
+
+	return SMW_MAC_ALGO_NAME_NB + 1;
+}
 
 /**
  * set_mac_bad_args() - Set MAC bad parameters function of the test error.
@@ -82,6 +109,7 @@ int mac(struct subtest_data *subtest, bool verify)
 	struct keypair_ops key_test = { 0 };
 	const char *key_name = NULL;
 	struct smw_keypair_buffer key_buffer = { 0 };
+	const char *algo_string = NULL;
 	int mac_id = INT_MAX;
 	const char *hash_string = NULL;
 	unsigned int input_len = 0;
@@ -130,10 +158,12 @@ int mac(struct subtest_data *subtest, bool verify)
 	}
 
 	/* Algorithm is not mandatory in case of error test */
-	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string,
+	res = util_read_json_type(&algo_string, ALGO_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
+
+	args.algo_name = mac_get_algo_name(algo_string);
 
 	/* Hash algorithm is not mandatory */
 	res = util_read_json_type(&hash_string, HASH_OBJ, t_string,

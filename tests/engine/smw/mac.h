@@ -1,12 +1,21 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #ifndef __MAC_H__
 #define __MAC_H__
 
 #include "types.h"
+
+/**
+ * mac_get_algo_name() - Convert MAC algo string value into integer value.
+ * @string: MAC algo string.
+ *
+ * Return:
+ * MAC algorithm name.
+ */
+smw_mac_algo_t mac_get_algo_name(const char *string);
 
 /**
  * mac() - Do a MAC operation.

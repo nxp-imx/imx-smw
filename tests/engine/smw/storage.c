@@ -12,6 +12,7 @@
 #include "util.h"
 #include "data.h"
 #include "key.h"
+#include "mac.h"
 
 static void free_data(struct smw_data_descriptor *data_descriptor)
 {
@@ -36,6 +37,7 @@ int storage_store(struct subtest_data *subtest)
 	struct smw_keypair_buffer sign_key_buffer = { 0 };
 	const char *data_name = NULL;
 	const char *sign_key_name = NULL;
+	const char *algo_string = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -120,7 +122,7 @@ int storage_store(struct subtest_data *subtest)
 	}
 
 	/* Get 'algo' optional parameter */
-	res = util_read_json_type(&sign_args.algo_name, ALGO_OBJ, t_string,
+	res = util_read_json_type(&algo_string, ALGO_OBJ, t_string,
 				  subtest->params);
 	if (res == ERR_CODE(PASSED))
 		sign_args_ptr = &sign_args;
@@ -128,6 +130,8 @@ int storage_store(struct subtest_data *subtest)
 		res = ERR_CODE(PASSED);
 	else
 		goto exit;
+
+	sign_args.algo_name = mac_get_algo_name(algo_string);
 
 	args.data_descriptor = data_descriptor_ptr;
 	args.encryption_args = encryption_args_ptr;

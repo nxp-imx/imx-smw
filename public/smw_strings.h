@@ -9,19 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_hash_algo_t - Hash algorithm name
- * Values:
- *	- MD5
- *	- SHA1
- *	- SHA224
- *	- SHA256
- *	- SHA384
- *	- SHA512
- *	- SM3
- */
-typedef smw_string_t smw_hash_algo_t;
-
-/**
  * typedef smw_mac_algo_t - MAC algorithm name
  * Values:
  *	- CMAC

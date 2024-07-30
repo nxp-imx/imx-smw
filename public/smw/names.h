@@ -155,4 +155,38 @@ typedef enum {
 	SMW_KEY_PRIVACY_NAME_NB
 } smw_key_privacy_t;
 
+/**
+ * typedef smw_hash_algo_t - Hash algorithm name
+ *
+ * Values:
+ * * SMW_HASH_ALGO_NAME_NONE: No hash algorithm specified
+ * * SMW_HASH_ALGO_NAME_MD5: Message Digest 5
+ * * SMW_HASH_ALGO_NAME_SHA1: Secure Hash Algorithm 1
+ * * SMW_HASH_ALGO_NAME_SHA224: Secure Hash Algorithm 2, 224 bits
+ * * SMW_HASH_ALGO_NAME_SHA256: Secure Hash Algorithm 2, 256 bits
+ * * SMW_HASH_ALGO_NAME_SHA384: Secure Hash Algorithm 2, 384 bits
+ * * SMW_HASH_ALGO_NAME_SHA512: Secure Hash Algorithm 2, 512 bits
+ * * SMW_HASH_ALGO_NAME_SHA3_224: Secure Hash Algorithm 3, 224 bits
+ * * SMW_HASH_ALGO_NAME_SHA3_256: Secure Hash Algorithm 3, 256 bits
+ * * SMW_HASH_ALGO_NAME_SHA3_384: Secure Hash Algorithm 3, 384 bits
+ * * SMW_HASH_ALGO_NAME_SHA3_512: Secure Hash Algorithm 3, 512 bits
+ * * SMW_HASH_ALGO_NAME_SM3: ShangMi 3
+ * * SMW_HASH_ALGO_NAME_NB: Number of Hash algorithms
+ */
+typedef enum {
+	SMW_HASH_ALGO_NAME_NONE,
+	SMW_HASH_ALGO_NAME_MD5,
+	SMW_HASH_ALGO_NAME_SHA1,
+	SMW_HASH_ALGO_NAME_SHA224,
+	SMW_HASH_ALGO_NAME_SHA256,
+	SMW_HASH_ALGO_NAME_SHA384,
+	SMW_HASH_ALGO_NAME_SHA512,
+	SMW_HASH_ALGO_NAME_SHA3_224,
+	SMW_HASH_ALGO_NAME_SHA3_256,
+	SMW_HASH_ALGO_NAME_SHA3_384,
+	SMW_HASH_ALGO_NAME_SHA3_512,
+	SMW_HASH_ALGO_NAME_SM3,
+	SMW_HASH_ALGO_NAME_NB
+} smw_hash_algo_t;
+
 #endif /* __SMW_NAMES_H__ */

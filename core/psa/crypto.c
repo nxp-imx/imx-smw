@@ -168,13 +168,16 @@ static smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
 
 static const struct mac_algo_info {
 	psa_algorithm_t psa_alg_id;
-	const smw_mac_algo_t smw_alg_name;
+	smw_mac_algo_t smw_alg_name;
 } mac_algo_info[] = {
-	{ PSA_ALG_HMAC_BASE, "HMAC" },
-	{ PSA_ALG_HMAC_BASE | PSA_ALG_MAC_TRUNCATION_MASK, "HMAC_TRUNCATED" },
-	{ PSA_ALG_CMAC, "CMAC" },
-	{ PSA_ALG_CMAC | PSA_ALG_MAC_TRUNCATION_MASK, "CMAC_TRUNCATED" },
-	{ PSA_ALG_NONE, NULL }
+	{ .psa_alg_id = PSA_ALG_HMAC_BASE,
+	  .smw_alg_name = SMW_MAC_ALGO_NAME_HMAC },
+	{ .psa_alg_id = PSA_ALG_HMAC_BASE | PSA_ALG_MAC_TRUNCATION_MASK,
+	  .smw_alg_name = SMW_MAC_ALGO_NAME_HMAC_TRUNCATED },
+	{ .psa_alg_id = PSA_ALG_CMAC, .smw_alg_name = SMW_MAC_ALGO_NAME_CMAC },
+	{ .psa_alg_id = PSA_ALG_CMAC | PSA_ALG_MAC_TRUNCATION_MASK,
+	  .smw_alg_name = SMW_MAC_ALGO_NAME_CMAC_TRUNCATED },
+	{ .psa_alg_id = PSA_ALG_NONE, .smw_alg_name = SMW_MAC_ALGO_NAME_NONE }
 };
 
 static smw_mac_algo_t get_mac_algo_name(psa_algorithm_t alg)
@@ -193,7 +196,7 @@ static smw_mac_algo_t get_mac_algo_name(psa_algorithm_t alg)
 	if (info)
 		return info->smw_alg_name;
 
-	return NULL;
+	return SMW_MAC_ALGO_NAME_NONE;
 }
 
 static bool check_aead_tag_length(psa_algorithm_t alg, unsigned int tag_length)

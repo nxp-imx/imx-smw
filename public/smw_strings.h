@@ -9,17 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_cipher_mode_t - Cipher mode name
- * Values:
- *	- CBC
- *	- CFB
- *	- CTR
- *	- CTS
- *	- ECB
- *	- XTS
- */
-typedef smw_string_t smw_cipher_mode_t;
-/**
  * typedef smw_aead_mode_t - AEAD mode name
  * Values:
  *	- CCM

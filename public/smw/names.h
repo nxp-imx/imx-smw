@@ -209,4 +209,28 @@ typedef enum {
 	SMW_MAC_ALGO_NAME_NB
 } smw_mac_algo_t;
 
+/**
+ * typedef smw_cipher_mode_t - Cipher mode name
+ *
+ * Values:
+ * * SMW_CIPHER_MODE_NAME_NONE: No cipher mode specified
+ * * SMW_CIPHER_MODE_NAME_CBC: Cipher Block Chaining mode
+ * * SMW_CIPHER_MODE_NAME_CFB: Cipher Feedback Block mode
+ * * SMW_CIPHER_MODE_NAME_CTR: Counter mode
+ * * SMW_CIPHER_MODE_NAME_CTS: Ciphertext Stealing mode
+ * * SMW_CIPHER_MODE_NAME_ECB: Electronic Codebook Block mode
+ * * SMW_CIPHER_MODE_NAME_XTS: XEX Tweakable Block Cipher with Ciphertext Stealing mode
+ * * SMW_CIPHER_MODE_NAME_NB: Number of cipher modes
+ */
+typedef enum {
+	SMW_CIPHER_MODE_NAME_NONE,
+	SMW_CIPHER_MODE_NAME_CBC,
+	SMW_CIPHER_MODE_NAME_CFB,
+	SMW_CIPHER_MODE_NAME_CTR,
+	SMW_CIPHER_MODE_NAME_CTS,
+	SMW_CIPHER_MODE_NAME_ECB,
+	SMW_CIPHER_MODE_NAME_XTS,
+	SMW_CIPHER_MODE_NAME_NB
+} smw_cipher_mode_t;
+
 #endif /* __SMW_NAMES_H__ */

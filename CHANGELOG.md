@@ -46,6 +46,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Rename `smw_aead_update_add()` as `smw_aead_update_aad()`
 * The key type name is not a string anymore but an enum.
 * The key privacy name is not a string anymore but an enum.
+* The hash algorithm name is not a string anymore but an enum.
 
 ##### 2. Subsystems
 

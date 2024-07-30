@@ -293,12 +293,12 @@ enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 /**
  * struct smw_mac_info - MAC operation information
  * @key_type_name: Key type name. See &typedef smw_key_type_t
- * @mac_algo: MAC algorithm name. See &typedef smw_mac_algo_t
+ * @mac_algo_name: MAC algorithm name. See &typedef smw_mac_algo_t
  * @hash_algo: Hash algorithm name. See &typedef smw_hash_algo_t
  */
 struct smw_mac_info {
 	smw_key_type_t key_type_name;
-	smw_mac_algo_t mac_algo;
+	smw_mac_algo_t mac_algo_name;
 	smw_hash_algo_t hash_algo_name;
 };
 

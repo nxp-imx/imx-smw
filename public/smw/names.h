@@ -189,4 +189,24 @@ typedef enum {
 	SMW_HASH_ALGO_NAME_NB
 } smw_hash_algo_t;
 
+/**
+ * typedef smw_mac_algo_t - MAC algorithm name
+ *
+ * Values:
+ * * SMW_MAC_ALGO_NAME_NONE: No Message Authentication Code algorithm specified
+ * * SMW_MAC_ALGO_NAME_CMAC: Cipher-based Message Authentication Code algorithm
+ * * SMW_MAC_ALGO_NAME_CMAC_TRUNCATED: Cipher-based Message Authentication Code truncated algorithm
+ * * SMW_MAC_ALGO_NAME_HMAC: Hash-Based Message Authentication Code algorithm
+ * * SMW_MAC_ALGO_NAME_HMAC_TRUNCATED: Hash-Based Message Authentication Code truncated algorithm
+ * * SMW_MAC_ALGO_NAME_NB: Number of Message Authentication Code algorithms
+ */
+typedef enum {
+	SMW_MAC_ALGO_NAME_NONE,
+	SMW_MAC_ALGO_NAME_CMAC,
+	SMW_MAC_ALGO_NAME_CMAC_TRUNCATED,
+	SMW_MAC_ALGO_NAME_HMAC,
+	SMW_MAC_ALGO_NAME_HMAC_TRUNCATED,
+	SMW_MAC_ALGO_NAME_NB
+} smw_mac_algo_t;
+
 #endif /* __SMW_NAMES_H__ */

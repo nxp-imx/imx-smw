@@ -9,16 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_mac_algo_t - MAC algorithm name
- * Values:
- *	- CMAC
- *	- CMAC_TRUNCATED
- *	- HMAC
- *	- HMAC_TRUNCATED
- */
-typedef smw_string_t smw_mac_algo_t;
-
-/**
  * typedef smw_cipher_mode_t - Cipher mode name
  * Values:
  *	- CBC

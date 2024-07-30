@@ -103,8 +103,8 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values,
 					      length)) {
-			status = smw_utils_hash_algo_names(&cur, end,
-							   &p->hash_bitmap);
+			status = read_hash_algo_strings(&cur, end,
+							&p->hash_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else {
@@ -266,8 +266,9 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	}
 
 	/* Check hash algorithm if set */
-	if (info->hash) {
-		status = smw_utils_get_hash_algo_id(info->hash, &hash_id);
+	if (info->hash_algo_name != SMW_HASH_ALGO_NAME_NONE) {
+		status = smw_utils_get_hash_algo_id(info->hash_algo_name,
+						    &hash_id);
 		if (status != SMW_STATUS_OK)
 			return status;
 

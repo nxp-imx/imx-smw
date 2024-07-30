@@ -13,6 +13,7 @@
 #include "util_mac.h"
 
 #include "key.h"
+#include "hash.h"
 #include "mac.h"
 
 /**
@@ -82,6 +83,7 @@ int mac(struct subtest_data *subtest, bool verify)
 	const char *key_name = NULL;
 	struct smw_keypair_buffer key_buffer = { 0 };
 	int mac_id = INT_MAX;
+	const char *hash_string = NULL;
 	unsigned int input_len = 0;
 	unsigned int output_len = 0;
 	unsigned int mac_len = 0;
@@ -134,10 +136,12 @@ int mac(struct subtest_data *subtest, bool verify)
 		goto exit;
 
 	/* Hash algorithm is not mandatory */
-	res = util_read_json_type(&args.hash_name, HASH_OBJ, t_string,
+	res = util_read_json_type(&hash_string, HASH_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
+
+	args.hash_name = hash_get_algo_name(hash_string);
 
 	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
 				   INPUT_OBJ);

@@ -6,48 +6,60 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <smw/names.h>
 #include <smw_crypto.h>
 
 #include "hash.h"
 #include "json_types.h"
 #include "util.h"
 
-/**
- * struct hash
- * @algo_name: Hash algo name.
- * @digest_len: @algo_name digest length in bytes.
- */
-static struct hash {
-	const char *algo_name;
-	unsigned int digest_len;
-} hash_size[] = { { .algo_name = "MD5", .digest_len = 16 },
-		  { .algo_name = "SHA1", .digest_len = 20 },
-		  { .algo_name = "SHA224", .digest_len = 28 },
-		  { .algo_name = "SHA256", .digest_len = 32 },
-		  { .algo_name = "SHA384", .digest_len = 48 },
-		  { .algo_name = "SHA512", .digest_len = 64 },
-		  { .algo_name = "SHA3_224", .digest_len = 28 },
-		  { .algo_name = "SHA3_256", .digest_len = 32 },
-		  { .algo_name = "SHA3_384", .digest_len = 48 },
-		  { .algo_name = "SHA3_512", .digest_len = 64 },
-		  { .algo_name = "SM3", .digest_len = 32 },
-		  { .algo_name = "UNDEFINED", .digest_len = 20 } };
+#define HASH_DEF(_name, _len)                                                  \
+	{                                                                      \
+		.name = SMW_HASH_ALGO_NAME_##_name, .string = #_name,          \
+		.digest_len = _len                                             \
+	}
 
-int get_hash_digest_len(const char *algo_name, unsigned int *len)
+static struct {
+	smw_hash_algo_t name;
+	const char *string;
+	unsigned int digest_len;
+} hash_def[] = { HASH_DEF(MD5, 16),	 HASH_DEF(SHA1, 20),
+		 HASH_DEF(SHA224, 28),	 HASH_DEF(SHA256, 32),
+		 HASH_DEF(SHA384, 48),	 HASH_DEF(SHA512, 64),
+		 HASH_DEF(SHA3_224, 28), HASH_DEF(SHA3_256, 32),
+		 HASH_DEF(SHA3_384, 48), HASH_DEF(SHA3_512, 64),
+		 HASH_DEF(SM3, 32) };
+
+smw_hash_algo_t hash_get_algo_name(const char *string)
 {
 	unsigned int i = 0;
-	unsigned int array_size = ARRAY_SIZE(hash_size);
 
-	if (!algo_name || !len) {
+	if (!string)
+		return SMW_HASH_ALGO_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(hash_def); i++) {
+		if (!strcmp(hash_def[i].string, string))
+			return hash_def[i].name;
+	}
+
+	return SMW_HASH_ALGO_NAME_NB + 1;
+}
+
+static int get_hash_digest_len(smw_hash_algo_t name, unsigned int *len)
+{
+	unsigned int i = 0;
+	unsigned int array_size = ARRAY_SIZE(hash_def);
+
+	if (name == SMW_HASH_ALGO_NAME_NONE || !len) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	*len = 0;
+	*len = 20;
 
 	for (; i < array_size; i++) {
-		if (!strcmp(algo_name, hash_size[i].algo_name)) {
-			*len = hash_size[i].digest_len;
+		if (name == hash_def[i].name) {
+			*len = hash_def[i].digest_len;
 			break;
 		}
 	}
@@ -112,6 +124,7 @@ static int set_hash_bad_args(struct subtest_data *subtest,
 int hash(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
+	const char *algo_string = NULL;
 	unsigned int input_len = 0;
 	unsigned int output_len = 0;
 	unsigned int digest_len = 0;
@@ -130,10 +143,12 @@ int hash(struct subtest_data *subtest)
 	args.subsystem_name = subtest->subsystem;
 
 	/* Algorithm is mandatory */
-	res = util_read_json_type(&args.algo_name, ALGO_OBJ, t_string,
+	res = util_read_json_type(&algo_string, ALGO_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
+
+	args.algo_name = hash_get_algo_name(algo_string);
 
 	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
 				   INPUT_OBJ);

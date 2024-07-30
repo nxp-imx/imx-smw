@@ -13,6 +13,7 @@
 
 #include "key.h"
 #include "keymgr.h"
+#include "hash.h"
 
 #define HKDF_EXPAND  "HKDF_EXPAND"
 #define HKDF_EXTRACT "HKDF_EXTRACT"
@@ -127,6 +128,7 @@ static void key_prepare_derived_key_data(struct smw_derived_key_descriptor *key,
 static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 {
 	int res = ERR_CODE(BAD_ARGS);
+	const char *prf_string = NULL;
 	struct tbuffer buf = { 0 };
 
 	struct smw_kdf_tls12_args *tls_args = NULL;
@@ -149,9 +151,11 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
-	res = UTIL_READ_JSON_ST_FIELD(tls_args, prf_name, string, oargs);
+	res = util_read_json_type(&prf_string, "prf_name", t_string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
+
+	tls_args->prf_name = hash_get_algo_name(prf_string);
 
 	res = UTIL_READ_JSON_ST_FIELD(tls_args, ext_master_key, boolean, oargs);
 	if (res != ERR_CODE(PASSED))
@@ -405,6 +409,7 @@ static int kdf_hkdf_read_args(void **kdf_args, struct json_object *oargs)
 	int res = ERR_CODE(BAD_ARGS);
 
 	struct tbuffer buf = { 0 };
+	const char *hash_string = NULL;
 	char *hkdf_step = NULL;
 	unsigned int okm_len = 0;
 
@@ -420,10 +425,11 @@ static int kdf_hkdf_read_args(void **kdf_args, struct json_object *oargs)
 		return INTERNAL_OUT_OF_MEMORY;
 
 	/* Get the Hash algorithm, if defined */
-	res = util_read_json_type(&hkdf_args->hash_algo, ALGO_OBJ, t_string,
-				  oargs);
+	res = util_read_json_type(&hash_string, ALGO_OBJ, t_string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
+
+	hkdf_args->hash_algo = hash_get_algo_name(hash_string);
 
 	/* Get the HKDF step, if defined*/
 	res = util_read_json_type(&hkdf_step, TYPE_OBJ, t_string, oargs);

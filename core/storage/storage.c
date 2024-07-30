@@ -143,7 +143,8 @@ static int convert_sign_args(struct smw_sign_args *args,
 	converted_args->algo_id = SMW_CONFIG_MAC_ALGO_ID_INVALID;
 
 	if (args) {
-		if (!args->key_descriptor || !args->algo_name) {
+		if (!args->key_descriptor ||
+		    args->algo_name == SMW_MAC_ALGO_NAME_NONE) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}

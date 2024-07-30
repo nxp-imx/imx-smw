@@ -275,7 +275,7 @@ static bool tls12_is_encryption_gcm(enum smw_tls12_encryption_id id)
  * SMW_STATUS_INVALID_PARAM     - Invalid function parameter
  * SMW_STATUS_UNKNOWN_ALGO_NAME - String name is not referenced
  */
-static int get_prf_id(const char *name, enum smw_config_hash_algo_id *id)
+static int get_prf_id(smw_hash_algo_t name, enum smw_config_hash_algo_id *id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -283,7 +283,7 @@ static int get_prf_id(const char *name, enum smw_config_hash_algo_id *id)
 
 	*id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
 
-	if (name)
+	if (name != SMW_HASH_ALGO_NAME_NONE)
 		status = smw_utils_get_hash_algo_id(name, id);
 
 	if (status == SMW_STATUS_UNKNOWN_NAME)

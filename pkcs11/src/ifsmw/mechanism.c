@@ -97,6 +97,7 @@ smw_key_type_t smw_ec_name[] = { SMW_KEY_TYPE_NAME_SECP_R1,
  * @smw_mode: SMW mode name for this mechanism, if any
  * @smw_hash: SMW hash name for this mechanism, if any
  * @smw_mac: SMW MAC name for this mechansim, if any
+ * @smw_cipher_mode: SMW cipher mode name for this mechanism, if any
  * @smw_algo_id: SMW permitted algorithm for this mechanism
  * @nb_smw_key_types: Number of SMW key types
  * @smw_key_types: SMW key types names for this mechanism, if more than one
@@ -109,6 +110,7 @@ struct mentry {
 	smw_string_t smw_mode;
 	smw_hash_algo_t smw_hash;
 	smw_mac_algo_t smw_mac;
+	smw_cipher_mode_t smw_cipher_mode;
 	smw_attr_algo_t smw_algo_id;
 	unsigned int nb_smw_key_types;
 	smw_key_type_t *smw_key_types;
@@ -138,27 +140,30 @@ struct mgroup {
 
 /* Macro filling a struct mentry for a single algo */
 #define M_ALGO(_key_type_name, _algo_name, _mode_name, _hash_name, _mac_name,  \
-	       _algo_id, _id)                                                  \
+	       _cipher_mode_name, _algo_id, _id)                               \
 	{                                                                      \
 		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type_name,            \
 		.smw_algo = _algo_name, .smw_hash = _hash_name,                \
 		.smw_mode = _mode_name, .smw_mac = _mac_name,                  \
-		.smw_algo_id = _algo_id, .nb_smw_key_types = 0,                \
-		.smw_key_types = NULL,                                         \
+		.smw_cipher_mode = _cipher_mode_name, .smw_algo_id = _algo_id, \
+		.nb_smw_key_types = 0, .smw_key_types = NULL,                  \
 	}
 
 #define M_DIGEST(_hash, _id)                                                   \
 	M_ALGO(NONE, NULL, NULL, SMW_HASH_ALGO_NAME_##_hash,                   \
-	       SMW_MAC_ALGO_NAME_NONE, SMW_ATTR_HASH_##_hash, _id)
+	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
+	       SMW_ATTR_HASH_##_hash, _id)
 
 /* Macro filling a struct mentry for an algo or a list of algo */
 #define M_ECKEYGEN(_key_types, _nb_key_types, _id)                             \
 	{                                                                      \
 		.type = CKM_##_id, .slot_flag = 0, .smw_algo = NULL,           \
 		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
-		.smw_mac = SMW_MAC_ALGO_NAME_NONE, .smw_mode = NULL,           \
-		.smw_algo_id = 0, .nb_smw_key_types = _nb_key_types,           \
+		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
+		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_mode = NULL, .smw_algo_id = 0,                            \
+		.nb_smw_key_types = _nb_key_types,                             \
 		.smw_key_types = _key_types,                                   \
 	}
 
@@ -167,57 +172,58 @@ struct mgroup {
 		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
 		.smw_algo = NULL, .smw_hash = SMW_HASH_ALGO_NAME_NONE,         \
-		.smw_mac = SMW_MAC_ALGO_NAME_NONE, .smw_mode = NULL,           \
-		.smw_algo_id = 0, .nb_smw_key_types = 1,                       \
+		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
+		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_mode = NULL, .smw_algo_id = 0, .nb_smw_key_types = 1,     \
 		.smw_key_types = NULL,                                         \
 	}
 
 #define M_SIGN_ECDSA_ANY_HASH(_id)                                             \
 	M_ALGO(NONE, ECDSA_STR, NULL, SMW_HASH_ALGO_NAME_NONE,                 \
-	       SMW_MAC_ALGO_NAME_NONE,                                         \
+	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_ANY,    \
 							SMW_ATTR_HASH_ANY),    \
 	       _id)
 
 #define M_SIGN_ECDSA(_hash, _id)                                               \
 	M_ALGO(NONE, ECDSA_STR, NULL, SMW_HASH_ALGO_NAME_##_hash,              \
-	       SMW_MAC_ALGO_NAME_NONE,                                         \
+	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(                       \
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
 	       _id)
 
 #define M_SIGN_RSA_ANY_HASH(_mode, _id)                                        \
 	M_ALGO(NONE, RSA_STR, STR(_mode), SMW_HASH_ALGO_NAME_NONE,             \
-	       SMW_MAC_ALGO_NAME_NONE,                                         \
+	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_ANY, 0),   \
 	       _id)
 
 #define M_SIGN_RSA(_mode, _hash, _id)                                          \
 	M_ALGO(NONE, RSA_STR, STR(_mode), SMW_HASH_ALGO_NAME_##_hash,          \
-	       SMW_MAC_ALGO_NAME_NONE,                                         \
+	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_##_hash,   \
 						      0),                      \
 	       _id)
 
 #define M_CIPHER(_algo, _mode, _mode_id, _id)                                  \
-	M_ALGO(_algo, NULL, STR(_mode), SMW_HASH_ALGO_NAME_NONE,               \
-	       SMW_MAC_ALGO_NAME_NONE,                                         \
+	M_ALGO(_algo, NULL, NULL, SMW_HASH_ALGO_NAME_NONE,                     \
+	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_##_mode,           \
 	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
 						  SMW_ATTR_MODE_##_mode_id),   \
 	       _id)
 
 #define M_MAC(_algo, _mac, _mode_id, _id)                                      \
 	M_ALGO(_algo, NULL, NULL, SMW_HASH_ALGO_NAME_NONE,                     \
-	       SMW_MAC_ALGO_NAME_##_mac,                                       \
+	       SMW_MAC_ALGO_NAME_##_mac, SMW_CIPHER_MODE_NAME_NONE,            \
 	       SMW_ATTR_ALGO_MAC(SMW_ATTR_ALGO_##_algo,                        \
 				 SMW_ATTR_MODE_##_mode_id, 0),                 \
 	       _id)
 
 #define M_HMAC(_mac, _hash, _id)                                               \
 	M_ALGO(HMAC, NULL, NULL, SMW_HASH_ALGO_NAME_##_hash,                   \
-	       SMW_MAC_ALGO_NAME_##_mac,                                       \
+	       SMW_MAC_ALGO_NAME_##_mac, SMW_CIPHER_MODE_NAME_NONE,            \
 	       SMW_ATTR_ALGO_MAC_HMAC(SMW_ATTR_HASH_##_hash, 0), _id)
 
 /* Macro filling a group of mechanisms */
@@ -490,12 +496,12 @@ static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
 
 static smw_cipher_mode_t get_cipher_mode(CK_MECHANISM_TYPE mech_type)
 {
-	smw_cipher_mode_t mode = NULL;
+	smw_cipher_mode_t mode = SMW_CIPHER_MODE_NAME_NONE;
 	unsigned int i = 0;
 
 	for (; i < ARRAY_SIZE(mcipher); i++) {
 		if (mech_type == mcipher[i].type) {
-			mode = mcipher[i].smw_mode;
+			mode = mcipher[i].smw_cipher_mode;
 			break;
 		}
 	}
@@ -994,7 +1000,7 @@ static void check_mcipher(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
 	     idx++, entry++) {
 		info.key_type_name = entry->smw_key_type;
-		info.mode = entry->smw_mode;
+		info.mode_name = entry->smw_cipher_mode;
 		info.op_type = ENCRYPT_STR;
 		status = smw_config_check_cipher(subsystem, &info);
 		if (status == SMW_STATUS_OK)
@@ -1029,7 +1035,7 @@ static CK_RV info_mcipher(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	info->flags = 0;
 
 	cipher_info.key_type_name = entry->smw_key_type;
-	cipher_info.mode = entry->smw_mode;
+	cipher_info.mode_name = entry->smw_cipher_mode;
 
 	cipher_info.op_type = ENCRYPT_STR;
 	status = smw_config_check_cipher(devinfo->name, &cipher_info);
@@ -1190,7 +1196,7 @@ static CK_RV set_smw_init_args(struct lib_cipher_ctx *ctx,
 	if (SET_OVERFLOW(ctx->iv_length, smw_init_args->iv_length))
 		return CKR_ARGUMENTS_BAD;
 
-	DBG_TRACE("Cipher mode = %s", smw_init_args->mode_name);
+	DBG_TRACE("Cipher mode #%d", smw_init_args->mode_name);
 
 	if (op_flag == CKF_ENCRYPT)
 		smw_init_args->operation_name = ENCRYPT_STR;

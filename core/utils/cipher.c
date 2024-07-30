@@ -8,31 +8,44 @@
 #include "config.h"
 #include "debug.h"
 #include "name.h"
+#include "utils.h"
+
+/*
+ * Ordering must be the same for internal values and public values.
+ * This way the offset between the internal values and the public values
+ * can be used for conversion, and no conversion table is required.
+ *
+ * The offset between the internal values and the public values is
+ * given by the first public value.
+ */
+
+#define SMW_CONFIG_CIPHER_MODE_ID_OFFSET                                       \
+	(SMW_CIPHER_MODE_NAME_CBC - SMW_CONFIG_CIPHER_MODE_ID_CBC)
+
+int smw_utils_get_cipher_mode_id(smw_cipher_mode_t name,
+				 enum smw_config_cipher_mode_id *id)
+{
+	int status = SMW_STATUS_UNKNOWN_MODE_NAME;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (name == SMW_CIPHER_MODE_NAME_NONE) {
+		*id = SMW_CONFIG_CIPHER_MODE_ID_INVALID;
+		status = SMW_STATUS_OK;
+	} else if (name < SMW_CIPHER_MODE_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_CONFIG_CIPHER_MODE_ID_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
 
 static const char *const cipher_op_type_names[] = {
 	[SMW_CONFIG_CIPHER_OP_ID_ENCRYPT] = "ENCRYPT",
 	[SMW_CONFIG_CIPHER_OP_ID_DECRYPT] = "DECRYPT"
 };
-
-static const char *const cipher_mode_names[] = {
-	[SMW_CONFIG_CIPHER_MODE_ID_CBC] = "CBC",
-	[SMW_CONFIG_CIPHER_MODE_ID_CFB] = "CFB",
-	[SMW_CONFIG_CIPHER_MODE_ID_CTR] = "CTR",
-	[SMW_CONFIG_CIPHER_MODE_ID_CTS] = "CTS",
-	[SMW_CONFIG_CIPHER_MODE_ID_ECB] = "ECB",
-	[SMW_CONFIG_CIPHER_MODE_ID_XTS] = "XTS"
-};
-
-int smw_utils_cipher_mode_names(char **start, char *end, unsigned long *bitmap)
-{
-	int status =
-		smw_config_read_strings(start, end, bitmap, cipher_mode_names,
-					SMW_CONFIG_CIPHER_MODE_ID_NB);
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_MODE_NAME;
-
-	return status;
-}
 
 int smw_utils_cipher_op_type_names(char **start, char *end,
 				   unsigned long *bitmap)
@@ -43,28 +56,6 @@ int smw_utils_cipher_op_type_names(char **start, char *end,
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
 
-	return status;
-}
-
-int smw_utils_get_cipher_mode_id(const char *name,
-				 enum smw_config_cipher_mode_id *id)
-{
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!name)
-		*id = SMW_CONFIG_CIPHER_MODE_ID_INVALID;
-	else
-		status =
-			smw_utils_get_string_index(name, cipher_mode_names,
-						   SMW_CONFIG_CIPHER_MODE_ID_NB,
-						   id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_MODE_NAME;
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 

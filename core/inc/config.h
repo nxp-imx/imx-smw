@@ -461,28 +461,8 @@ int smw_utils_get_cipher_op_type_id(const char *name,
 				    enum smw_config_cipher_op_type_id *id);
 
 /**
- * smw_utils_mac_algo_names() - Read a list of MAC algos names.
- * @start: Address of the pointer to the current char.
- * @end: Pointer to the last char of the buffer being parsed.
- * @bitmap: Bitmap representing the configured names.
- *
- * This function reads a list of names from the current char
- * of the buffer being parsed until a semicolon is detected.
- * The pointer to the current char is moved to the next char
- * after the semicolon.
- * Insignificant chars are skipped if any.
- *
- * Names are compared with values set in @mac_algo_names.
- * @bitmap is set with enum smw_config_mac_algo_id values.
- *
- * Return:
- * error code.
- */
-int smw_utils_mac_algo_names(char **start, char *end, unsigned long *bitmap);
-
-/**
  * smw_utils_get_mac_algo_id() - Get MAC algo ID associated to a name.
- * @name: Name as a string.
+ * @name: MAC algo name.
  * @id: Pointer where the ID is written.
  *
  * This function gets the MAC algo ID associated to a name.
@@ -490,7 +470,7 @@ int smw_utils_mac_algo_names(char **start, char *end, unsigned long *bitmap);
  * Return:
  * error code.
  */
-int smw_utils_get_mac_algo_id(const char *name,
+int smw_utils_get_mac_algo_id(smw_mac_algo_t name,
 			      enum smw_config_mac_algo_id *id);
 
 /**

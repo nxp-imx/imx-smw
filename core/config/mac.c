@@ -14,6 +14,24 @@
 
 #include "common.h"
 
+static const char *const mac_algo_strings[] = {
+	[SMW_CONFIG_MAC_ALGO_ID_CMAC] = "CMAC",
+	[SMW_CONFIG_MAC_ALGO_ID_CMAC_TRUNCATED] = "CMAC_TRUNCATED",
+	[SMW_CONFIG_MAC_ALGO_ID_HMAC] = "HMAC",
+	[SMW_CONFIG_MAC_ALGO_ID_HMAC_TRUNCATED] = "HMAC_TRUNCATED",
+};
+
+int read_mac_algo_strings(char **start, char *end, unsigned long *bitmap)
+{
+	int status =
+		smw_config_read_strings(start, end, bitmap, mac_algo_strings,
+					SMW_CONFIG_MAC_ALGO_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_ALGO_NAME;
+
+	return status;
+}
+
 static int mac_read_params(char **start, char *end, void **params)
 {
 	int status = SMW_STATUS_OK;
@@ -46,8 +64,8 @@ static int mac_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, mac_algo_values, length)) {
-			status = smw_utils_mac_algo_names(&cur, end,
-							  &p->algo_bitmap);
+			status = read_mac_algo_strings(&cur, end,
+						       &p->algo_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 
@@ -159,8 +177,9 @@ __export enum smw_status_code smw_config_check_mac(smw_subsystem_t subsystem,
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	/* Check MAC algorithm if set */
-	if (info->mac_algo) {
-		status = smw_utils_get_mac_algo_id(info->mac_algo, &mac_id);
+	if (info->mac_algo_name != SMW_MAC_ALGO_NAME_NONE) {
+		status =
+			smw_utils_get_mac_algo_id(info->mac_algo_name, &mac_id);
 		if (status != SMW_STATUS_OK)
 			return status;
 

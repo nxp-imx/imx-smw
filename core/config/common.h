@@ -221,6 +221,26 @@ int skip_param(char **start, char *end);
 int read_hash_algo_strings(char **start, char *end, unsigned long *bitmap);
 
 /**
+ * read_mac_algo_strings() - Read a list of MAC algos strings.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured strings.
+ *
+ * This function reads a list of strings from the current char
+ * of the buffer being parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Strings are compared with values set in @mac_algo_strings.
+ * @bitmap is set with enum smw_config_mac_algo_id values.
+ *
+ * Return:
+ * error code.
+ */
+int read_mac_algo_strings(char **start, char *end, unsigned long *bitmap);
+
+/**
  * parse() - Parse a plaintext configuration.
  * @buffer: Address of the first char of the plaintext configuration.
  * @size: Size of of rth plaintext configuration.

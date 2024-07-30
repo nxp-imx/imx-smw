@@ -1,10 +1,50 @@
 {
-	"subtest 1": { // SHA224
+	"subtest 1": {
+		"description": [
+			"MD5",
+			"https://tools.ietf.org/html/rfc1321 Appendix A.5"
+		],
+		"command": "HASH",
+		"subsystem": "ELE",
+		"algo": "MD5",
+		"input": "6d65737361676520646967657374",
+		"digest": "f96b697d7cb7938d525a2f31aaf161d0",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 2": {
+		"description": [
+			"SHA1",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA1LongMsg.rsp"
+		],
+		"command": "HASH",
+		"subsystem": "ELE",
+		"algo": "SHA1",
+		"input": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c",
+			"c1f8d4"
+		],
+		"digest": "d8fd6a91ef3b6ced05b98358a99107c1fac8c807",
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 3": {
+		"description": [
+			"SHA224",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA224LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA224",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA224LongMsg.rsp
 		"input": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -23,12 +63,15 @@
 			"e48a71d0ba91a86b18393e5f"
 		]
 	},
-	"subtest 2": { // SHA256
+	"subtest 4": {
+		"description": [
+			"SHA256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA256LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA256",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA256LongMsg.rsp
 		"input": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -47,12 +90,15 @@
 			"34185c88f505b39775fb9ab137a10aa2"
 		]
 	},
-	"subtest 3": { // SHA384
+	"subtest 5": {
+		"description": [
+			"SHA384",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA384LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA384",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA384LongMsg.rsp
 		"input": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -76,12 +122,15 @@
 			"86d1f2447d5f85bcbe59d5689fc49425"
 		]
 	},
-	"subtest 4": { // SHA512
+	"subtest 6": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -106,12 +155,15 @@
 			"c459535e8816521ab714b2a6cd200525"
 		]
 	},
-	"subtest 5": { // SHA224
+	"subtest 7": {
+		"description": [
+			"SHA224",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA224LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA224",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA224LongMsg.rsp
 		"input": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -127,12 +179,15 @@
 		],
 		"digest": 28
 	},
-	"subtest 6": { // SHA256
+	"subtest 8": {
+		"description": [
+			"SHA256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA256LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA256",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA256LongMsg.rsp
 		"input": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -148,12 +203,15 @@
 		],
 		"digest": 32
 	},
-	"subtest 7": { // SHA384
+	"subtest 9": {
+		"description": [
+			"SHA384",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA384LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA384",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA384LongMsg.rsp
 		"input": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -173,12 +231,15 @@
 		],
 		"digest": 48
 	},
-	"subtest 8": { // SHA512
+	"subtest 10": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -198,12 +259,15 @@
 		],
 		"digest": 64
 	},
-	"subtest 9": { // SHA512
+	"subtest 11": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -224,12 +288,15 @@
 		"digest": 63,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 10": { // SHA512
+	"subtest 12": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "ELE",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",

@@ -18,12 +18,6 @@
 #include "util_status.h"
 #include "keymgr.h"
 
-#define CBC_STR "CBC"
-#define CFB_STR "CFB"
-#define CTR_STR "CTR"
-#define ECB_STR "ECB"
-#define XTS_STR "XTS"
-
 #define CCM_STR		      "CCM"
 #define CHACHA20_POLY1305_STR "CHACHA20_POLY1305"
 #define GCM_STR		      "GCM"
@@ -88,7 +82,8 @@ static smw_aead_mode_t get_aead_mode_name(psa_algorithm_t alg)
 
 #define CIPHER_ALGO(_id, _name)                                                \
 	{                                                                      \
-		.psa_alg_id = PSA_ALG_##_id, .smw_mode_name = _name##_STR      \
+		.psa_alg_id = PSA_ALG_##_id,                                   \
+		.smw_mode_name = SMW_CIPHER_MODE_NAME_##_name                  \
 	}
 
 static const struct cipher_algo_info {
@@ -99,8 +94,7 @@ static const struct cipher_algo_info {
 			 CIPHER_ALGO(CTR, CTR),
 			 CIPHER_ALGO(ECB_NO_PADDING, ECB),
 			 CIPHER_ALGO(XTS, XTS),
-			 { .psa_alg_id = PSA_ALG_NONE,
-			   .smw_mode_name = NULL } };
+			 CIPHER_ALGO(NONE, NONE) };
 
 static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)
 {
@@ -113,7 +107,7 @@ static smw_cipher_mode_t get_cipher_mode_name(psa_algorithm_t alg)
 	if (info)
 		return info->smw_mode_name;
 
-	return NULL;
+	return SMW_CIPHER_MODE_NAME_NONE;
 }
 
 #define HASH_ALGO(_id, _name, _length, _block_size)                            \
@@ -818,7 +812,7 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	init->mode_name = get_cipher_mode_name(alg);
-	if (!init->mode_name)
+	if (init->mode_name == SMW_CIPHER_MODE_NAME_NONE)
 		return PSA_ERROR_NOT_SUPPORTED;
 
 	init->iv_length = PSA_CIPHER_IV_LENGTH(key_type, alg);

@@ -7,13 +7,7 @@
 
 #include "config.h"
 #include "debug.h"
-#include "name.h"
 #include "utils.h"
-
-static const char *const aead_op_type_names[] = {
-	[SMW_CONFIG_AEAD_OP_ID_ENCRYPT] = "ENCRYPT",
-	[SMW_CONFIG_AEAD_OP_ID_DECRYPT] = "DECRYPT"
-};
 
 /*
  * Ordering must be the same for internal values and public values.
@@ -26,6 +20,9 @@ static const char *const aead_op_type_names[] = {
 
 #define SMW_CONFIG_AEAD_MODE_ID_OFFSET                                         \
 	(SMW_AEAD_MODE_NAME_CCM - SMW_CONFIG_AEAD_MODE_ID_CCM)
+
+#define SMW_CONFIG_AEAD_OP_TYPE_OFFSET                                         \
+	(SMW_AEAD_OP_TYPE_NAME_ENCRYPT - SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT)
 
 int smw_utils_get_aead_mode_id(smw_aead_mode_t name,
 			       enum smw_config_aead_mode_id *id)
@@ -47,33 +44,21 @@ int smw_utils_get_aead_mode_id(smw_aead_mode_t name,
 	return status;
 }
 
-int smw_utils_aead_op_type_names(char **start, char *end, unsigned long *bitmap)
-{
-	int status =
-		smw_config_read_strings(start, end, bitmap, aead_op_type_names,
-					SMW_CONFIG_AEAD_OP_ID_NB);
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
-
-	return status;
-}
-
-int smw_utils_get_aead_op_type_id(const char *name,
+int smw_utils_get_aead_op_type_id(smw_aead_op_type_t name,
 				  enum smw_config_aead_op_type_id *id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!name)
-		*id = SMW_CONFIG_AEAD_OP_ID_INVALID;
-	else
-		status = smw_utils_get_string_index(name, aead_op_type_names,
-						    SMW_CONFIG_AEAD_OP_ID_NB,
-						    id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
+	if (name == SMW_AEAD_OP_TYPE_NAME_NONE) {
+		*id = SMW_CONFIG_AEAD_OP_TYPE_ID_INVALID;
+		status = SMW_STATUS_OK;
+	} else if (name < SMW_AEAD_OP_TYPE_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_CONFIG_AEAD_OP_TYPE_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

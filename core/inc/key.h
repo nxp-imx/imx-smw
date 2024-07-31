@@ -6,7 +6,7 @@
 #ifndef __KEY_H__
 #define __KEY_H__
 
-#include "name.h"
+#include "smw/names.h"
 
 enum smw_keymgr_format_id {
 	/* Key format */
@@ -26,18 +26,19 @@ enum smw_keymgr_format_id {
  * Return:
  * error code.
  */
-int smw_keymgr_get_key_format_id(const char *name,
+int smw_keymgr_get_key_format_id(smw_key_format_t name,
 				 enum smw_keymgr_format_id *id);
 
 /**
  * smw_keymgr_get_key_format_name() - Get the key format name.
  * @format_id: Pointer to key format ID.
  *
- * This function gets the ID associated to a Key format name.
+ * This function gets the Key format name associated to an ID.
  *
  * Return:
- * pointer to the key format name.
+ * Key format name.
  */
-const char *smw_keymgr_get_key_format_name(enum smw_keymgr_format_id format_id);
+smw_key_format_t
+smw_keymgr_get_key_format_name(enum smw_keymgr_format_id format_id);
 
 #endif /* __KEY_H__ */

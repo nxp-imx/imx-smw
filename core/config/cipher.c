@@ -37,6 +37,22 @@ int read_cipher_mode_strings(char **start, char *end, unsigned long *bitmap)
 	return status;
 }
 
+static const char *const cipher_op_type_strings[] = {
+	[SMW_CONFIG_CIPHER_OP_TYPE_ID_ENCRYPT] = "ENCRYPT",
+	[SMW_CONFIG_CIPHER_OP_TYPE_ID_DECRYPT] = "DECRYPT"
+};
+
+int read_cipher_op_type_strings(char **start, char *end, unsigned long *bitmap)
+{
+	int status = smw_config_read_strings(start, end, bitmap,
+					     cipher_op_type_strings,
+					     SMW_CONFIG_CIPHER_OP_TYPE_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
+
+	return status;
+}
+
 /**
  * cipher_common_read_params() - Read common cipher parameters
  * @start: Address of the pointer to the current char.
@@ -85,8 +101,8 @@ static int cipher_common_read_params(char **start, char *end, void **params)
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, op_type_values, length)) {
-			status = smw_utils_cipher_op_type_names(&cur, end,
-								&p->op_bitmap);
+			status = read_cipher_op_type_strings(&cur, end,
+							     &p->op_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (read_key(buffer, length, &cur, end,
@@ -194,7 +210,7 @@ static int check_common_subsystem_caps(void *args, void *params)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!check_id(cipher_args->mode_id, cipher_params->mode_bitmap) ||
-	    !check_id(cipher_args->op_id, cipher_params->op_bitmap))
+	    !check_id(cipher_args->op_type_id, cipher_params->op_bitmap))
 		goto end;
 
 	for (; i < cipher_args->nb_keys; i++)
@@ -232,7 +248,7 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	enum smw_config_key_type_id key_type_id =
 		SMW_CONFIG_KEY_TYPE_ID_INVALID;
 	enum smw_config_cipher_op_type_id op_type_id =
-		SMW_CONFIG_CIPHER_OP_ID_INVALID;
+		SMW_CONFIG_CIPHER_OP_TYPE_ID_INVALID;
 	enum smw_config_cipher_mode_id mode_id =
 		SMW_CONFIG_CIPHER_MODE_ID_INVALID;
 	enum operation_id op_id = OPERATION_ID_CIPHER;
@@ -241,7 +257,8 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!info || info->key_type_name == SMW_KEY_TYPE_NAME_NONE ||
-	    info->mode_name == SMW_CIPHER_MODE_NAME_NONE || !info->op_type)
+	    info->mode_name == SMW_CIPHER_MODE_NAME_NONE ||
+	    info->op_type_name == SMW_CIPHER_OP_TYPE_NAME_NONE)
 		return status;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);
@@ -256,7 +273,8 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_utils_get_cipher_op_type_id(info->op_type, &op_type_id);
+	status = smw_utils_get_cipher_op_type_id(info->op_type_name,
+						 &op_type_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 

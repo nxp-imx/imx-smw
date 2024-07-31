@@ -18,6 +18,23 @@
 
 #include "common.h"
 
+static const char *const aead_mode_strings[] = {
+	[SMW_CONFIG_AEAD_MODE_ID_CCM] = "CCM",
+	[SMW_CONFIG_AEAD_MODE_ID_CHACHA20_POLY1305] = "CHACHA20_POLY1305",
+	[SMW_CONFIG_AEAD_MODE_ID_GCM] = "GCM",
+};
+
+int read_aead_mode_strings(char **start, char *end, unsigned long *bitmap)
+{
+	int status =
+		smw_config_read_strings(start, end, bitmap, aead_mode_strings,
+					SMW_CONFIG_AEAD_MODE_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_MODE_NAME;
+
+	return status;
+}
+
 /**
  * aead_common_read_params() - Read common AEAD parameters
  * @start: Address of the pointer to the current char.
@@ -62,8 +79,8 @@ static int aead_common_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, mode_values, length)) {
-			status = smw_utils_aead_mode_names(&cur, end,
-							   &p->mode_bitmap);
+			status = read_aead_mode_strings(&cur, end,
+							&p->mode_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 
@@ -223,7 +240,7 @@ __export enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!info || info->key_type_name == SMW_KEY_TYPE_NAME_NONE ||
-	    !info->mode || !info->op_type)
+	    info->mode_name == SMW_AEAD_MODE_NAME_NONE || !info->op_type)
 		return status;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);
@@ -234,7 +251,7 @@ __export enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_utils_get_aead_mode_id(info->mode, &mode_id);
+	status = smw_utils_get_aead_mode_id(info->mode_name, &mode_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 

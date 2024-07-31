@@ -31,6 +31,16 @@ static struct {
 } aead_mode_names[] = { AEAD_MODE(CCM), AEAD_MODE(CHACHA20_POLY1305),
 			AEAD_MODE(GCM) };
 
+#define AEAD_OP_TYPE(_name)                                                    \
+	{                                                                      \
+		.name = SMW_AEAD_OP_TYPE_NAME_##_name, .string = #_name        \
+	}
+
+static struct {
+	smw_aead_op_type_t name;
+	const char *string;
+} aead_op_type_names[] = { AEAD_OP_TYPE(ENCRYPT), AEAD_OP_TYPE(DECRYPT) };
+
 smw_aead_mode_t aead_get_mode_name(const char *string)
 {
 	unsigned int i = 0;
@@ -44,6 +54,21 @@ smw_aead_mode_t aead_get_mode_name(const char *string)
 	}
 
 	return SMW_AEAD_MODE_NAME_NB + 1;
+}
+
+smw_aead_op_type_t aead_get_op_type_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_AEAD_OP_TYPE_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(aead_op_type_names); i++) {
+		if (!strcmp(aead_op_type_names[i].string, string))
+			return aead_op_type_names[i].name;
+	}
+
+	return SMW_AEAD_OP_TYPE_NAME_NB + 1;
 }
 
 /**
@@ -191,6 +216,8 @@ static int set_init_params(struct subtest_data *subtest,
 	int res = ERR_CODE(PASSED);
 
 	const char *mode_string = NULL;
+	const char *op_type_string = NULL;
+
 	const char *key_name = NULL;
 
 	args->subsystem_name = subtest->subsystem;
@@ -214,12 +241,14 @@ static int set_init_params(struct subtest_data *subtest,
 	args->mode_name = aead_get_mode_name(mode_string);
 
 	/* Get the operation type - Mandatory */
-	res = util_read_json_type(&args->operation_name, OP_TYPE_OBJ, t_string,
+	res = util_read_json_type(&op_type_string, OP_TYPE_OBJ, t_string,
 				  subtest->params);
 	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
 		DBG_PRINT_MISS_PARAM("AEAD operation type");
 		return ERR_CODE(MISSING_PARAMS);
 	}
+
+	args->op_type_name = aead_get_op_type_name(op_type_string);
 
 	args->key_desc = &key->desc;
 
@@ -1068,21 +1097,21 @@ int aead(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
 
-	smw_aead_operation_t operation_name = NULL;
+	const char *op_type_string = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
-	res = util_read_json_type(&operation_name, OP_TYPE_OBJ, t_string,
+	res = util_read_json_type(&op_type_string, OP_TYPE_OBJ, t_string,
 				  subtest->params);
 	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
 		DBG_PRINT_MISS_PARAM("AEAD operation type");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	if (operation_name && !strcmp(operation_name, OP_TYPE_ENCRYPT_STR))
+	if (op_type_string && !strcmp(op_type_string, OP_TYPE_ENCRYPT_STR))
 		res = aead_encrypt(subtest);
 	else
 		res = aead_decrypt(subtest);
@@ -1308,6 +1337,7 @@ int aead_final(struct subtest_data *subtest)
 	struct smw_aead_final_args *aead_args = &args;
 	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
 
+	const char *op_type_string = NULL;
 	unsigned int expected_out_len = 0;
 	unsigned char *expected_output = NULL;
 	unsigned int expected_tag_len = 0;
@@ -1331,15 +1361,16 @@ int aead_final(struct subtest_data *subtest)
 		return res;
 
 	/* Get the operation type - Mandatory */
-	res = util_read_json_type(&args.operation_name, OP_TYPE_OBJ, t_string,
+	res = util_read_json_type(&op_type_string, OP_TYPE_OBJ, t_string,
 				  subtest->params);
 	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
 		DBG_PRINT_MISS_PARAM("AEAD operation type");
 		return ERR_CODE(MISSING_PARAMS);
 	}
 
-	if (args.operation_name &&
-	    !strcmp(args.operation_name, OP_TYPE_ENCRYPT_STR))
+	args.op_type_name = aead_get_op_type_name(op_type_string);
+
+	if (args.op_type_name == SMW_AEAD_OP_TYPE_NAME_ENCRYPT)
 		encrypt_op = true;
 
 	if (encrypt_op) {

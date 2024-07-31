@@ -54,6 +54,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * The AEAD operation type name is not a string anymore but an enum.
 * The key format name is not a string anymore but an enum.
 * The signature algorithm name is not a string anymore but an enum.
+* The signature type name is not a string anymore but an enum.
 
 ##### 2. Subsystems
 

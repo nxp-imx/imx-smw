@@ -30,6 +30,17 @@ static struct {
 			   KEA(DHE_RSA),     KEA(ECDH_ECDSA), KEA(ECDH_RSA),
 			   KEA(ECDHE_ECDSA), KEA(ECDHE_RSA),  KEA(RSA) };
 
+#define ENC(_name)                                                             \
+	{                                                                      \
+		.name = SMW_TLS12_ENC_NAME_##_name, .string = #_name           \
+	}
+
+static struct {
+	smw_tls12_enc_t name;
+	const char *string;
+} encryption_names[] = { ENC(3DES_EDE_CBC), ENC(AES_128_CBC), ENC(AES_128_GCM),
+			 ENC(AES_256_CBC),  ENC(AES_256_GCM), ENC(RC4_128) };
+
 static smw_tls12_kea_t get_tls12_key_exchange_name(const char *string)
 {
 	unsigned int i = 0;
@@ -43,6 +54,21 @@ static smw_tls12_kea_t get_tls12_key_exchange_name(const char *string)
 	}
 
 	return SMW_TLS12_KEA_NAME_NB + 1;
+}
+
+static smw_tls12_enc_t get_tls12_encryption_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_TLS12_ENC_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(encryption_names); i++) {
+		if (!strcmp(encryption_names[i].string, string))
+			return encryption_names[i].name;
+	}
+
+	return SMW_TLS12_ENC_NAME_NB + 1;
 }
 
 /**
@@ -163,6 +189,7 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 
 	struct smw_kdf_tls12_args *tls_args = NULL;
 	const char *key_exchange_string = NULL;
+	const char *encryption_string = NULL;
 
 	if (!kdf_args || !oargs) {
 		DBG_PRINT_BAD_ARGS();
@@ -181,9 +208,13 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	tls_args->key_exchange_name =
 		get_tls12_key_exchange_name(key_exchange_string);
 
-	res = UTIL_READ_JSON_ST_FIELD(tls_args, encryption_name, string, oargs);
+	res = util_read_json_type(&encryption_string, "encryption_name",
+				  t_string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
+
+	tls_args->encryption_name =
+		get_tls12_encryption_name(encryption_string);
 
 	res = util_read_json_type(&prf_string, "prf_name", t_string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
@@ -274,12 +305,12 @@ kdf_tls12_prepare_result(struct subtest_data *subtest,
  * True     - MAC key is expected
  * False    - MAC key is not expected
  */
-static bool kdf_tls12_is_mac_key_expected(const char *encryption_name)
+static bool kdf_tls12_is_mac_key_expected(smw_tls12_enc_t encryption_name)
 {
 	/* Server and client MAC keys are only generated for CBC cipher mode */
-	if (encryption_name && (!strcmp(encryption_name, "3DES_EDE_CBC") ||
-				!strcmp(encryption_name, "AES_128_CBC") ||
-				!strcmp(encryption_name, "AES_256_CBC")))
+	if (encryption_name == SMW_TLS12_ENC_NAME_3DES_EDE_CBC ||
+	    encryption_name == SMW_TLS12_ENC_NAME_AES_128_CBC ||
+	    encryption_name == SMW_TLS12_ENC_NAME_AES_256_CBC)
 		return true;
 
 	return false;

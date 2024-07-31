@@ -350,4 +350,34 @@ typedef enum {
 	SMW_SIGNATURE_TYPE_NAME_NB
 } smw_signature_type_t;
 
+/**
+ * typedef smw_tls12_kea_t - TLS 1.2 Key exchange algorithm name
+ *
+ * Values:
+ * * SMW_TLS12_KEA_NAME_NONE: No TLS 1.2 Key exchange algorithm specified
+ * * SMW_TLS12_KEA_NAME_DH_DSS: Diffie-Hellman signed with DSS
+ * * SMW_TLS12_KEA_NAME_DH_RSA: Diffie-Hellman signed with RSA
+ * * SMW_TLS12_KEA_NAME_DHE_DSS: Diffie-Hellman key Exchange signed with DSS
+ * * SMW_TLS12_KEA_NAME_DHE_RSA: Diffie-Hellman key Exchange signed with RSA
+ * * SMW_TLS12_KEA_NAME_ECDH_ECDSA: Elliptic Curve Diffie-Hellman signed with ECDSA
+ * * SMW_TLS12_KEA_NAME_ECDH_RSA: Elliptic Curve Diffie-Hellman signed with RSA
+ * * SMW_TLS12_KEA_NAME_ECDHE_ECDSA: Elliptic Curve Diffie-Hellman key Exchange signed with ECDSA
+ * * SMW_TLS12_KEA_NAME_ECDHE_RSA: Elliptic Curve Diffie-Hellman key Exchange signed with RSA
+ * * SMW_TLS12_KEA_NAME_RSA: Rivest–Shamir–Adleman
+ * * SMW_TLS12_KEA_NAME_NB: Number of TLS 1.2 Key exchange algorithms
+ */
+typedef enum {
+	SMW_TLS12_KEA_NAME_NONE,
+	SMW_TLS12_KEA_NAME_DH_DSS,
+	SMW_TLS12_KEA_NAME_DH_RSA,
+	SMW_TLS12_KEA_NAME_DHE_DSS,
+	SMW_TLS12_KEA_NAME_DHE_RSA,
+	SMW_TLS12_KEA_NAME_ECDH_ECDSA,
+	SMW_TLS12_KEA_NAME_ECDH_RSA,
+	SMW_TLS12_KEA_NAME_ECDHE_ECDSA,
+	SMW_TLS12_KEA_NAME_ECDHE_RSA,
+	SMW_TLS12_KEA_NAME_RSA,
+	SMW_TLS12_KEA_NAME_NB
+} smw_tls12_kea_t;
+
 #endif /* __SMW_NAMES_H__ */

@@ -250,13 +250,13 @@ enum smw_status_code smw_config_check_cipher(smw_subsystem_t subsystem,
  * @multipart: True if it's a AEAD multi-part operation
  * @key_type_name: Key type name. See &typedef smw_key_type_t
  * @mode_name: Operation mode name. See &typedef smw_aead_mode_t
- * @op_type: Operation type name. See &typedef smw_aead_operation_t
+ * @op_type_name: Operation type name. See &typedef smw_aead_op_type_t
  */
 struct smw_aead_info {
 	bool multipart;
 	smw_key_type_t key_type_name;
 	smw_aead_mode_t mode_name;
-	smw_aead_operation_t op_type;
+	smw_aead_op_type_t op_type_name;
 };
 
 /**

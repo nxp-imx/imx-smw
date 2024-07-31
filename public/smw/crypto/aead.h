@@ -16,7 +16,7 @@
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @key_desc: Pointer to a key descriptor object. See &struct smw_key_descriptor
  * @mode_name: AEAD mode name. See &typedef smw_aead_mode_t
- * @operation_name: AEAD operation name. See &typedef smw_aead_operation_t
+ * @op_type_name: AEAD operation name. See &typedef smw_aead_op_type_t
  * @iv: Pointer to initialization vector
  * @iv_length: IV buffer length in bytes
  * @aad_length: Additional authentication data length in bytes
@@ -36,7 +36,7 @@ struct smw_aead_init_args {
 	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_desc;
 	smw_aead_mode_t mode_name;
-	smw_aead_operation_t operation_name;
+	smw_aead_op_type_t op_type_name;
 	unsigned char *iv;
 	unsigned int iv_length;
 	unsigned int aad_length;
@@ -85,7 +85,7 @@ struct smw_aead_aad_args {
  * struct smw_aead_final_args - AEAD final arguments
  * @version: Version of this structure
  * @data: Pointer to AEAD data arguments. See &struct smw_aead_data_args
- * @operation_name: AEAD operation name. See &typedef smw_aead_operation_t
+ * @op_type_name: AEAD operation name. See &typedef smw_aead_op_type_t
  * @tag: Pointer to tag buffer
  * @tag_length: Tag buffer length in bytes
  * @output_iv_length: Length of output IV buffer
@@ -103,7 +103,7 @@ struct smw_aead_final_args {
 	/* Inputs */
 	unsigned char version;
 	struct smw_aead_data_args *data;
-	smw_aead_operation_t operation_name;
+	smw_aead_op_type_t op_type_name;
 	/* Input output */
 	unsigned char *tag;
 	unsigned int tag_length;

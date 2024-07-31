@@ -9,14 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_aead_operation_t - AEAD operation name
- * Values:
- *	- ENCRYPT
- *	- DECRYPT
- */
-typedef smw_string_t smw_aead_operation_t;
-
-/**
  * typedef smw_key_format_t - Key format name
  * Values:
  *	- HEX: hexadecimal value (no encoding)

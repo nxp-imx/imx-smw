@@ -49,6 +49,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * The hash algorithm name is not a string anymore but an enum.
 * The MAC algorithm name is not a string anymore but an enum.
 * The cipher mode name is not a string anymore but an enum.
+* The AEAD mode name is not a string anymore but an enum.
 
 ##### 2. Subsystems
 

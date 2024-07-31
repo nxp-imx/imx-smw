@@ -286,4 +286,20 @@ typedef enum {
 
 } smw_aead_op_type_t;
 
+/**
+ * typedef smw_key_format_t - Key format name
+ *
+ * Values:
+ * * SMW_KEY_FORMAT_NAME_NONE: No key format specified
+ * * SMW_KEY_FORMAT_NAME_HEX: Hexadecimal value (no encoding)
+ * * SMW_KEY_FORMAT_NAME_BASE64: Base 64 encoding value
+ * * SMW_KEY_FORMAT_NAME_NB: Number of key formats
+ */
+typedef enum {
+	SMW_KEY_FORMAT_NAME_NONE,
+	SMW_KEY_FORMAT_NAME_HEX,
+	SMW_KEY_FORMAT_NAME_BASE64,
+	SMW_KEY_FORMAT_NAME_NB,
+} smw_key_format_t;
+
 #endif /* __SMW_NAMES_H__ */

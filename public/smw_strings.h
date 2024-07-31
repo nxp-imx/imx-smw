@@ -9,14 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_key_format_t - Key format name
- * Values:
- *	- HEX: hexadecimal value (no encoding)
- *	- BASE64: base 64 encoding value
- */
-typedef smw_string_t smw_key_format_t;
-
-/**
  * typedef smw_signature_algo_t - Signature main algo name
  * Values:
  *	- DEFAULT

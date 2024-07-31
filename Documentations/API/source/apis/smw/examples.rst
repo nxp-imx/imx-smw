@@ -31,7 +31,7 @@ Example 1: AEAD one-shot encryption operation
         struct smw_key_descriptor key_desc = {0};
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
-        init_args.operation_name = "ENCRYPT";
+        init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
         init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.plaintext_length = DATA_LEN;
         init_args.iv = iv;
@@ -88,7 +88,7 @@ Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
         struct smw_key_descriptor key_desc = {0};
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
-        init_args.operation_name = "ENCRYPT";
+        init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
         init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.plaintext_length = DATA_LEN;
         init_args.iv = iv;
@@ -145,7 +145,7 @@ Example 3: AEAD one-shot decryption operation (Tag stored in tag field)
         struct smw_key_descriptor key_desc = {0};
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
-        init_args.operation_name = "DECRYPT";
+        init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
         init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.plaintext_length = DATA_LEN;
         init_args.iv = iv;
@@ -202,7 +202,7 @@ Example 4: AEAD multi-part encryption operation
         struct smw_context_args op_ctx = {0};
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
-        init_args.operation_name = "ENCRYPT";
+        init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
         init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.aad_length = AAD_LEN;
         init_args.tag_length = TAG_LEN;
@@ -261,7 +261,7 @@ Example 4: AEAD multi-part encryption operation
          * Finish encrypting the message in an active
          * multi-part AEAD operation.
          */
-        final_args.operation_name = "ENCRYPT";
+        final_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
         final_args.data->context = init_args.context;
         final_args.data->input = NULL;
         final_args.data->input_length = 0;
@@ -306,7 +306,7 @@ Example 5: AEAD multi-part decryption operation
         struct smw_context_args op_ctx = {0};
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
-        init_args.operation_name = "DECRYPT";
+        init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
         init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.aad_length = AAD_LEN;
         init_args.tag_length = TAG_LEN;
@@ -365,7 +365,7 @@ Example 5: AEAD multi-part decryption operation
          * Finish authenticating and decrypting the message
          * in an active multi-part AEAD operation.
          */
-        final_args.operation_name = "DECRYPT";
+        final_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
         final_args.data.context = init_args.context;
         // Pass the tag
         final_args.data->input = &input[32];

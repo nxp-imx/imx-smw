@@ -14,7 +14,6 @@
 #include "keymgr.h"
 #include "keymgr_db.h"
 #include "exec.h"
-#include "name.h"
 #include "base64.h"
 
 static void get_key_privacy_name(enum smw_keymgr_privacy_id id,

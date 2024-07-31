@@ -34,6 +34,16 @@ static struct {
 } cipher_mode_names[] = { CIPHER_MODE(CBC), CIPHER_MODE(CFB), CIPHER_MODE(CTR),
 			  CIPHER_MODE(CTS), CIPHER_MODE(ECB), CIPHER_MODE(XTS) };
 
+#define CIPHER_OP_TYPE(_name)                                                  \
+	{                                                                      \
+		.name = SMW_CIPHER_OP_TYPE_NAME_##_name, .string = #_name      \
+	}
+
+static struct {
+	smw_cipher_op_type_t name;
+	const char *string;
+} cipher_op_type_names[] = { CIPHER_OP_TYPE(ENCRYPT), CIPHER_OP_TYPE(DECRYPT) };
+
 smw_cipher_mode_t cipher_get_mode_name(const char *string)
 {
 	unsigned int i = 0;
@@ -47,6 +57,21 @@ smw_cipher_mode_t cipher_get_mode_name(const char *string)
 	}
 
 	return SMW_CIPHER_MODE_NAME_NB + 1;
+}
+
+smw_cipher_op_type_t cipher_get_op_type_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_CIPHER_OP_TYPE_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(cipher_op_type_names); i++) {
+		if (!strcmp(cipher_op_type_names[i].string, string))
+			return cipher_op_type_names[i].name;
+	}
+
+	return SMW_CIPHER_OP_TYPE_NAME_NB + 1;
 }
 
 /**
@@ -174,6 +199,7 @@ static int set_init_params(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(PASSED);
 	const char *mode_string = NULL;
+	const char *op_type_string = NULL;
 
 	args->subsystem_name = subtest->subsystem;
 
@@ -188,12 +214,14 @@ static int set_init_params(struct subtest_data *subtest,
 	args->mode_name = cipher_get_mode_name(mode_string);
 
 	/* Get the operation type */
-	res = util_read_json_type(&args->operation_name, OP_TYPE_OBJ, t_string,
+	res = util_read_json_type(&op_type_string, OP_TYPE_OBJ, t_string,
 				  subtest->params);
 	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
 		DBG_PRINT_MISS_PARAM("Cipher operation type");
 		return ERR_CODE(MISSING_PARAMS);
 	}
+
+	args->op_type_name = cipher_get_op_type_name(op_type_string);
 
 	/* Read IV buffer if any */
 	res = util_read_hex_buffer(&args->iv, &args->iv_length, subtest->params,

@@ -18,6 +18,15 @@
 smw_cipher_mode_t cipher_get_mode_name(const char *string);
 
 /**
+ * cipher_get_op_type_name() - Convert cipher operation type string value into integer value.
+ * @string: Cipher operation type string.
+ *
+ * Return:
+ * Cipher operation type name.
+ */
+smw_cipher_op_type_t cipher_get_op_type_name(const char *string);
+
+/**
  * cipher() - Do a cipher one-shot operation
  * @subtest: Subtest data.
  *

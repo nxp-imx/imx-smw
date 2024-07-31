@@ -9,18 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_signature_algo_t - Signature main algo name
- * Values:
- *	- DEFAULT
- *	- ECDSA
- *	- EDDSA
- *	- DSA
- *	- RSA
- *	- TLS_1_2
- */
-typedef smw_string_t smw_signature_algo_t;
-
-/**
  * typedef smw_signature_type_t - Signature type name
  * Values:
  *	- DEFAULT

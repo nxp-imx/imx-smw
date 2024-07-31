@@ -302,4 +302,28 @@ typedef enum {
 	SMW_KEY_FORMAT_NAME_NB,
 } smw_key_format_t;
 
+/**
+ * typedef smw_signature_algo_t - Signature algorithm name
+ *
+ * Values:
+ * * SMW_SIGNATURE_ALGO_NAME_NONE: No signature algorithm specified
+ * * SMW_SIGNATURE_ALGO_NAME_DEFAULT: Signature algorithm is given by the key type
+ * * SMW_SIGNATURE_ALGO_NAME_ECDSA: Elliptic Curve Digital Signature Algorithm
+ * * SMW_SIGNATURE_ALGO_NAME_EDDSA: Edwards-curve Digital Signature Algorithm
+ * * SMW_SIGNATURE_ALGO_NAME_DSA: Digital Signature Algorithm
+ * * SMW_SIGNATURE_ALGO_NAME_RSA: Rivest, Shamir and Adleman signature algorithm
+ * * SMW_SIGNATURE_ALGO_NAME_TLS_1_2: Transport Layer Security 1.2 signature algorithm
+ * * SMW_SIGNATURE_ALGO_NAME_NB: Number of signature algorithms
+ */
+typedef enum {
+	SMW_SIGNATURE_ALGO_NAME_NONE,
+	SMW_SIGNATURE_ALGO_NAME_DEFAULT,
+	SMW_SIGNATURE_ALGO_NAME_ECDSA,
+	SMW_SIGNATURE_ALGO_NAME_EDDSA,
+	SMW_SIGNATURE_ALGO_NAME_DSA,
+	SMW_SIGNATURE_ALGO_NAME_RSA,
+	SMW_SIGNATURE_ALGO_NAME_TLS_1_2,
+	SMW_SIGNATURE_ALGO_NAME_NB
+} smw_signature_algo_t;
+
 #endif /* __SMW_NAMES_H__ */

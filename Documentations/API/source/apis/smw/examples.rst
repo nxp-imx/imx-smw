@@ -32,7 +32,7 @@ Example 1: AEAD one-shot encryption operation
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "ENCRYPT";
-        init_args.mode_name = "GCM";
+        init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.plaintext_length = DATA_LEN;
         init_args.iv = iv;
         init.args.iv_length = IV_LEN;
@@ -89,7 +89,7 @@ Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "ENCRYPT";
-        init_args.mode_name = "GCM";
+        init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.plaintext_length = DATA_LEN;
         init_args.iv = iv;
         init.args.iv_length = IV_LEN;
@@ -146,7 +146,7 @@ Example 3: AEAD one-shot decryption operation (Tag stored in tag field)
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "DECRYPT";
-        init_args.mode_name = "GCM";
+        init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.plaintext_length = DATA_LEN;
         init_args.iv = iv;
         init.args.iv_length = IV_LEN;
@@ -203,7 +203,7 @@ Example 4: AEAD multi-part encryption operation
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "ENCRYPT";
-        init_args.mode_name = "GCM";
+        init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.aad_length = AAD_LEN;
         init_args.tag_length = TAG_LEN;
         init_args.plaintext_length = DATA_LEN;
@@ -307,7 +307,7 @@ Example 5: AEAD multi-part decryption operation
 
         init_args.subsystem_name = SMW_SUBSYSTEM_NAME_TEE;
         init_args.operation_name = "DECRYPT";
-        init_args.mode_name = "GCM";
+        init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.aad_length = AAD_LEN;
         init_args.tag_length = TAG_LEN;
         init_args.plaintext_length = DATA_LEN;

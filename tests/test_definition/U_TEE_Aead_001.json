@@ -52,6 +52,7 @@
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"iv": "3132333435363738",
+		"iv_len": 12,
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"plaintext_len": 0,
 		"tag": 16,

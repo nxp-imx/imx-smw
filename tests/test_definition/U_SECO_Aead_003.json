@@ -78,7 +78,7 @@
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
 		"depends": 1,
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_IV_SIZE"
 	},
 	"subtest 7": { // IV length  = 4
 		"command": "AEAD",
@@ -90,7 +90,7 @@
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
 		"depends": 1,
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_IV_SIZE"
 	},
 	"subtest 8": {
 		"command": "AEAD",

@@ -219,7 +219,7 @@
 		"input": "8bc1dbce367bfd014b1cf199cda0e9c4",
 		"tag": 16,
 		"depends": 1,
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_IV_SIZE"
 	},
 	"subtest 17": { // IV length = 6
 		"command": "AEAD",
@@ -235,7 +235,7 @@
 		],
 		"tag": 16,
 		"depends": 1,
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_INVALID_IV_SIZE"
 	},
 	"subtest 18": { // Tag length = 32
 		"command": "AEAD",

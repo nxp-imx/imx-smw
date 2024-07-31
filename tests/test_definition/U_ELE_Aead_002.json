@@ -119,7 +119,7 @@
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
 		"tag_field_set": true,
-		"result": "SMW_STATUS_INVALID_PARAM",
+		"result": "SMW_STATUS_INVALID_IV_SIZE",
 		"depends": 1
 	},
 	"subtest 9": {

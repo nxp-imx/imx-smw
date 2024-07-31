@@ -57,6 +57,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * The signature type name is not a string anymore but an enum.
 * The TLS1.2 KEA name is not a string anymore but an enum.
 * The TLS1.2 encryption name is not a string anymore but an enum.
+* The lifecycle name is not a string anymore but an enum.
 
 ##### 2. Subsystems
 

@@ -18,10 +18,6 @@
 #include "util_status.h"
 #include "keymgr.h"
 
-#define CCM_STR		      "CCM"
-#define CHACHA20_POLY1305_STR "CHACHA20_POLY1305"
-#define GCM_STR		      "GCM"
-
 #define GET_ALGO_INFO(_algo, _array)                                           \
 	({                                                                     \
 		typeof(_array[0]) *_ret = NULL;                                \
@@ -41,7 +37,8 @@
 
 #define AEAD_ALGO(_name)                                                       \
 	{                                                                      \
-		.psa_alg_id = PSA_ALG_##_name, .smw_mode_name = _name##_STR,   \
+		.psa_alg_id = PSA_ALG_##_name,                                 \
+		.smw_mode_name = SMW_AEAD_MODE_NAME_##_name,                   \
 		.tag_lengths = aead_tag_lengths_##_name,                       \
 		.tag_lengths_size = ARRAY_SIZE(aead_tag_lengths_##_name)       \
 	}
@@ -62,7 +59,7 @@ static const struct aead_algo_info {
 		       AEAD_ALGO(CHACHA20_POLY1305),
 		       AEAD_ALGO(GCM),
 		       { .psa_alg_id = PSA_ALG_NONE,
-			 .smw_mode_name = NULL,
+			 .smw_mode_name = SMW_AEAD_MODE_NAME_NONE,
 			 .tag_lengths = NULL,
 			 .tag_lengths_size = 0 } };
 
@@ -77,7 +74,7 @@ static smw_aead_mode_t get_aead_mode_name(psa_algorithm_t alg)
 	if (info)
 		return info->smw_mode_name;
 
-	return NULL;
+	return SMW_AEAD_MODE_NAME_NONE;
 }
 
 #define CIPHER_ALGO(_id, _name)                                                \
@@ -235,7 +232,7 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 	struct smw_aead_aad_args *aad = args->aad;
 	struct smw_aead_final_args *final = args->final;
 	struct smw_aead_data_args *data = final->data;
-	smw_aead_mode_t mode_name = NULL;
+	smw_aead_mode_t mode_name = SMW_AEAD_MODE_NAME_NONE;
 	unsigned int tag_length = 0;
 	unsigned int min_output_size = 0;
 	psa_algorithm_t psa_base_alg = PSA_ALG_NONE;
@@ -281,7 +278,7 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 	}
 
 	mode_name = get_aead_mode_name(psa_base_alg);
-	if (!mode_name)
+	if (mode_name == SMW_AEAD_MODE_NAME_NONE)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	if (!SMW_UTILS_STRCMP(operation_name, "ENCRYPT")) {

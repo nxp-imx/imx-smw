@@ -1001,12 +1001,12 @@ static void check_mcipher(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 	     idx++, entry++) {
 		info.key_type_name = entry->smw_key_type;
 		info.mode_name = entry->smw_cipher_mode;
-		info.op_type = ENCRYPT_STR;
+		info.op_type_name = SMW_CIPHER_OP_TYPE_NAME_ENCRYPT;
 		status = smw_config_check_cipher(subsystem, &info);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
 
-		info.op_type = DECRYPT_STR;
+		info.op_type_name = SMW_CIPHER_OP_TYPE_NAME_DECRYPT;
 		status = smw_config_check_cipher(subsystem, &info);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
@@ -1037,12 +1037,12 @@ static CK_RV info_mcipher(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	cipher_info.key_type_name = entry->smw_key_type;
 	cipher_info.mode_name = entry->smw_cipher_mode;
 
-	cipher_info.op_type = ENCRYPT_STR;
+	cipher_info.op_type_name = SMW_CIPHER_OP_TYPE_NAME_ENCRYPT;
 	status = smw_config_check_cipher(devinfo->name, &cipher_info);
 	if (status == SMW_STATUS_OK)
 		info->flags |= CKF_ENCRYPT;
 
-	cipher_info.op_type = DECRYPT_STR;
+	cipher_info.op_type_name = SMW_CIPHER_OP_TYPE_NAME_DECRYPT;
 	status = smw_config_check_cipher(devinfo->name, &cipher_info);
 	if (status == SMW_STATUS_OK)
 		info->flags |= CKF_DECRYPT;
@@ -1199,9 +1199,9 @@ static CK_RV set_smw_init_args(struct lib_cipher_ctx *ctx,
 	DBG_TRACE("Cipher mode #%d", smw_init_args->mode_name);
 
 	if (op_flag == CKF_ENCRYPT)
-		smw_init_args->operation_name = ENCRYPT_STR;
+		smw_init_args->op_type_name = SMW_CIPHER_OP_TYPE_NAME_ENCRYPT;
 	else
-		smw_init_args->operation_name = DECRYPT_STR;
+		smw_init_args->op_type_name = SMW_CIPHER_OP_TYPE_NAME_DECRYPT;
 
 	return CKR_OK;
 }

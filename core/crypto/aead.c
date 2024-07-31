@@ -84,7 +84,7 @@ static int is_output_iv_set(struct smw_crypto_aead_args *args)
 	int status = SMW_STATUS_OK;
 
 	if (!smw_crypto_get_aead_output_iv(args) &&
-	    args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT)
+	    args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT)
 		status = SMW_STATUS_INVALID_PARAM;
 
 	return status;
@@ -96,7 +96,7 @@ static int is_output_iv_set(struct smw_crypto_aead_args *args)
  * @converted_args: Pointer to AEAD converted arguments
  * @subsystem_id: Pointer to subsystem id.
  *
- * Fields @mode_id and @op_id of @converted_args are updated.
+ * Fields @mode_id and @op_type_id of @converted_args are updated.
  *
  * Return:
  * SMW_STATUS_OK		- Success
@@ -123,8 +123,8 @@ aead_get_ids_from_strings(struct smw_aead_init_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_utils_get_aead_op_type_id(args->operation_name,
-					       &converted_args->op_id);
+	status = smw_utils_get_aead_op_type_id(args->op_type_name,
+					       &converted_args->op_type_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -196,7 +196,8 @@ static int convert_init_args(struct smw_aead_init_args *args,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (args->mode_name == SMW_AEAD_MODE_NAME_NONE || !args->operation_name)
+	if (args->mode_name == SMW_AEAD_MODE_NAME_NONE ||
+	    args->op_type_name == SMW_AEAD_OP_TYPE_NAME_NONE)
 		goto end;
 
 	if (args->version != 0) {
@@ -285,7 +286,7 @@ static int get_tag_buffer(struct smw_crypto_aead_args *args)
 
 	tag_length = smw_crypto_get_aead_tag_len(args);
 
-	if (args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
+	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT) {
 		output_length = smw_crypto_get_aead_output_len(args);
 		tag_index = output_length;
 
@@ -298,7 +299,7 @@ static int get_tag_buffer(struct smw_crypto_aead_args *args)
 			status = SMW_STATUS_OUTPUT_TOO_SHORT;
 		}
 
-	} else if (args->op_id == SMW_CONFIG_AEAD_OP_ID_DECRYPT) {
+	} else if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT) {
 		input_length = smw_crypto_get_aead_input_len(args);
 		tag_index = input_length;
 
@@ -1106,8 +1107,8 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 
 	aead_args.op_step = SMW_OP_STEP_FINAL;
 
-	status = smw_utils_get_aead_op_type_id(args->operation_name,
-					       &aead_args.op_id);
+	status = smw_utils_get_aead_op_type_id(args->op_type_name,
+					       &aead_args.op_type_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

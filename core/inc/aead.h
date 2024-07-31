@@ -34,7 +34,7 @@
 struct smw_crypto_aead_args {
 	struct smw_keymgr_descriptor key_desc;
 	enum smw_config_aead_mode_id mode_id;
-	enum smw_config_aead_op_type_id op_id;
+	enum smw_config_aead_op_type_id op_type_id;
 	enum smw_op_step op_step;
 	unsigned char *tag;
 	union {

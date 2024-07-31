@@ -103,7 +103,9 @@ static int convert_encryption_args(struct smw_encryption_args *args,
 	converted_args->mode_id = SMW_CONFIG_CIPHER_MODE_ID_INVALID;
 
 	if (args) {
-		if (!args->nb_keys || !args->mode_name || !args->keys_desc) {
+		if (!args->nb_keys ||
+		    args->mode_name == SMW_CIPHER_MODE_NAME_NONE ||
+		    !args->keys_desc) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}

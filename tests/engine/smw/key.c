@@ -34,6 +34,16 @@ static struct {
 		       KEY_TYPE(RSA),	       KEY_TYPE(DH),
 		       KEY_TYPE(TLS_MASTER),   KEY_TYPE(RAW) };
 
+#define KEY_FORMAT(_name)                                                      \
+	{                                                                      \
+		.name = SMW_KEY_FORMAT_NAME_##_name, .string = #_name          \
+	}
+
+static struct {
+	smw_key_format_t name;
+	const char *string;
+} key_format_names[] = { KEY_FORMAT(HEX), KEY_FORMAT(BASE64) };
+
 static const struct util_attr_info algo_info[] = {
 	ATTR_ALGO(ECB_NO_PADDING, SYMMETRIC_ENCRYPTION, DEFAULT, ECB_NO_PAD,
 		  ANY),
@@ -208,7 +218,7 @@ static void set_key_ops(struct keypair_ops *key_test)
 		key_test->modulus_length = NULL;
 	}
 
-	key_test->keys->format_name = NULL;
+	key_test->keys->format_name = SMW_KEY_FORMAT_NAME_NONE;
 	*key_public_data(key_test) = NULL;
 	*key_public_length(key_test) = KEY_LENGTH_NOT_SET;
 	*key_private_data(key_test) = NULL;
@@ -236,16 +246,18 @@ static int keypair_read(struct keypair_ops *key_test,
 			struct json_object *params)
 {
 	int ret = ERR_CODE(PASSED);
+	const char *format_string = NULL;
 
 	if (!params || !key_test || !key_test->keys) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	ret = util_read_json_type(&key_test->keys->format_name, FORMAT_OBJ,
-				  t_string, params);
+	ret = util_read_json_type(&format_string, FORMAT_OBJ, t_string, params);
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
+
+	key_test->keys->format_name = key_get_format_name(format_string);
 
 	ret = util_read_obj_value(key_public_data(key_test),
 				  key_public_length(key_test), PUB_KEY_OBJ,
@@ -299,6 +311,21 @@ smw_key_type_t key_get_type_name(const char *string)
 	}
 
 	return SMW_KEY_TYPE_NAME_NB + 1;
+}
+
+smw_key_format_t key_get_format_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_KEY_FORMAT_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(key_format_names); i++) {
+		if (!strcmp(key_format_names[i].string, string))
+			return key_format_names[i].name;
+	}
+
+	return SMW_KEY_FORMAT_NAME_NB + 1;
 }
 
 static int read_descriptor(struct llist *keys, struct keypair_ops *key_test,

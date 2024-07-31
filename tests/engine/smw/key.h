@@ -224,9 +224,18 @@ static inline int key_is_modulus(struct keypair_ops *key_test)
  * @string: Name as a string
  *
  * Return:
- * The key type name.
+ * Key type name.
  */
 smw_key_type_t key_get_type_name(const char *string);
+
+/**
+ * key_get_format_name() - Get the key format name
+ * @string: Name as a string
+ *
+ * Return:
+ * Key format name.
+ */
+smw_key_format_t key_get_format_name(const char *string);
 
 /**
  * key_desc_init() - Initialize SMW key descriptor fields

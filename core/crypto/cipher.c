@@ -74,7 +74,8 @@ static int convert_init_args(struct smw_cipher_init_args *args,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args->keys_desc || !args->nb_keys || !args->mode_name ||
+	if (!args->keys_desc || !args->nb_keys ||
+	    args->mode_name == SMW_CIPHER_MODE_NAME_NONE ||
 	    !args->operation_name)
 		goto end;
 

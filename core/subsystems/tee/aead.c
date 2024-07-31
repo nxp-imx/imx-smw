@@ -63,12 +63,12 @@ get_tee_aead_operation_and_usage(enum smw_config_aead_op_type_id smw_op,
 				 uint32_t *tee_op, unsigned int *key_usage)
 {
 	switch (smw_op) {
-	case SMW_CONFIG_AEAD_OP_ID_ENCRYPT:
+	case SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT:
 		*tee_op = TEE_MODE_ENCRYPT;
 		*key_usage = TEE_KEY_USAGE_ENCRYPT;
 		break;
 
-	case SMW_CONFIG_AEAD_OP_ID_DECRYPT:
+	case SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT:
 		*tee_op = TEE_MODE_DECRYPT;
 		*key_usage = TEE_KEY_USAGE_DECRYPT;
 		break;
@@ -111,7 +111,7 @@ static int set_aead_context(struct smw_op_context *op_context,
 
 	op_context->op_id = SMW_CRYPTO_OP_ID_AEAD_MULTI_PART;
 
-	if (args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
+	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT) {
 		iv = smw_crypto_get_aead_iv(args);
 		iv_len = smw_crypto_get_aead_iv_len(args);
 
@@ -133,7 +133,7 @@ static int set_aead_context(struct smw_op_context *op_context,
 
 	aead_ctx->tee_handle = context->handle;
 
-	if (args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
+	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT) {
 		aead_ctx->iv_len = iv_len;
 		SMW_UTILS_MEMCPY(aead_ctx->iv, iv, iv_len);
 	}
@@ -183,7 +183,7 @@ static int aead_init(struct smw_op_context *op_context,
 		goto end;
 
 	/* Get OPTEE operation and key usage */
-	status = get_tee_aead_operation_and_usage(args->op_id,
+	status = get_tee_aead_operation_and_usage(args->op_type_id,
 						  &shared_params.aead_op,
 						  &key_usage);
 	if (status != SMW_STATUS_OK)
@@ -555,7 +555,7 @@ static int aead_one_shot(void *args)
 			goto end;
 	}
 
-	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_DECRYPT)
+	if (aead_args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT)
 		ta_cmd = CMD_AEAD_DECRYPT_FINAL;
 
 	/* AE final */
@@ -590,7 +590,7 @@ static int aead_multi_part(void *args)
 
 	case SMW_OP_STEP_FINAL:
 		op_context = smw_crypto_get_aead_data_op_context(aead_args);
-		if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT)
+		if (aead_args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT)
 			status = aead_multi_part_common(op_context, aead_args,
 							CMD_AEAD_ENCRYPT_FINAL);
 		else

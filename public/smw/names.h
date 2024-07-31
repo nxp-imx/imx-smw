@@ -404,4 +404,28 @@ typedef enum {
 	SMW_TLS12_ENC_NAME_NB
 } smw_tls12_enc_t;
 
+/**
+ * typedef smw_lifecycle_t - Device lifecycle name
+ *
+ * Values:
+ * * SMW_LIFECYCLE_NAME_NONE: No lifecycle specified
+ * * SMW_LIFECYCLE_NAME_OPEN: Current
+ * * SMW_LIFECYCLE_NAME_OPEN: Open
+ * * SMW_LIFECYCLE_NAME_CLOSED: Closed
+ * * SMW_LIFECYCLE_NAME_CLOSED_LOCKED: Closed-locked
+ * * SMW_LIFECYCLE_NAME_OEM_RETURN: OEM return
+ * * SMW_LIFECYCLE_NAME_NXP_RETURN: NXP return
+ * * SMW_LIFECYCLE_NAME_NXP_NB: Number of lifecycles
+ */
+typedef enum {
+	SMW_LIFECYCLE_NAME_NONE,
+	SMW_LIFECYCLE_NAME_CURRENT,
+	SMW_LIFECYCLE_NAME_OPEN,
+	SMW_LIFECYCLE_NAME_CLOSED,
+	SMW_LIFECYCLE_NAME_CLOSED_LOCKED,
+	SMW_LIFECYCLE_NAME_OEM_RETURN,
+	SMW_LIFECYCLE_NAME_NXP_RETURN,
+	SMW_LIFECYCLE_NAME_NB
+} smw_lifecycle_t;
+
 #endif /* __SMW_NAMES_H__ */

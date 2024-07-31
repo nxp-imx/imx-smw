@@ -16,17 +16,17 @@
 #include "utils.h"
 #include "base64.h"
 
-static const char *const tls12_key_exchange_name[] = {
-	[SMW_TLS12_KEY_EXCHANGE_ID_RSA] = "RSA",
-	[SMW_TLS12_KEY_EXCHANGE_ID_DH_DSS] = "DH_DSS",
-	[SMW_TLS12_KEY_EXCHANGE_ID_DH_RSA] = "DH_RSA",
-	[SMW_TLS12_KEY_EXCHANGE_ID_DHE_DSS] = "DHE_DSS",
-	[SMW_TLS12_KEY_EXCHANGE_ID_DHE_RSA] = "DHE_RSA",
-	[SMW_TLS12_KEY_EXCHANGE_ID_ECDH_ECDSA] = "ECDH_ECDSA",
-	[SMW_TLS12_KEY_EXCHANGE_ID_ECDH_RSA] = "ECDH_RSA",
-	[SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA] = "ECDHE_ECDSA",
-	[SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_RSA] = "ECDHE_RSA"
-};
+/*
+ * Ordering must be the same for internal values and public values.
+ * This way the offset between the internal values and the public values
+ * can be used for conversion, and no conversion table is required.
+ *
+ * The offset between the internal values and the public values is
+ * given by the first public value.
+ */
+
+#define SMW_TLS12_KEY_EXCHANGE_ID_OFFSET                                       \
+	(SMW_TLS12_KEA_NAME_DH_DSS - SMW_TLS12_KEY_EXCHANGE_ID_DH_DSS)
 
 static const char *const tls12_encryption_name[] = {
 	[SMW_TLS12_ENCRYPTION_ID_RC4_128] = "RC4_128",
@@ -47,21 +47,22 @@ static const char *const tls12_encryption_name[] = {
  * SMW_STATUS_INVALID_PARAM           - Invalid function parameter
  * SMW_STATUS_UNKNOWN_TLS12_KEA_NAME  - Unknown key exchange algorithm name
  */
-static int tls12_get_key_exchange_id(const char *name,
+static int tls12_get_key_exchange_id(smw_tls12_kea_t name,
 				     struct smw_keymgr_tls12_args *args)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_UNKNOWN_TLS12_KEA_NAME;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	args->key_exchange_id = SMW_TLS12_KEY_EXCHANGE_ID_INVALID;
 
-	if (name)
-		status =
-			smw_utils_get_string_index(name,
-						   tls12_key_exchange_name,
-						   SMW_TLS12_KEY_EXCHANGE_ID_NB,
-						   &args->key_exchange_id);
+	if (name == SMW_TLS12_KEA_NAME_NONE) {
+		status = SMW_STATUS_INVALID_PARAM;
+	} else if (name < SMW_TLS12_KEA_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_TLS12_KEY_EXCHANGE_ID_OFFSET,
+				  (int *)&args->key_exchange_id))
+			status = SMW_STATUS_OK;
+	}
 
 	if (status == SMW_STATUS_OK) {
 		/* Set if it's ephemeral key exchange or not */
@@ -76,8 +77,6 @@ static int tls12_get_key_exchange_id(const char *name,
 		default:
 			args->ephemeral_key = false;
 		}
-	} else if (status == SMW_STATUS_UNKNOWN_NAME) {
-		status = SMW_STATUS_UNKNOWN_TLS12_KEA_NAME;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

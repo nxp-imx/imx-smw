@@ -25,7 +25,6 @@ enum hkdf_step {
 };
 
 enum smw_tls12_key_exchange_id {
-	SMW_TLS12_KEY_EXCHANGE_ID_RSA,
 	SMW_TLS12_KEY_EXCHANGE_ID_DH_DSS,
 	SMW_TLS12_KEY_EXCHANGE_ID_DH_RSA,
 	SMW_TLS12_KEY_EXCHANGE_ID_DHE_DSS,
@@ -34,6 +33,7 @@ enum smw_tls12_key_exchange_id {
 	SMW_TLS12_KEY_EXCHANGE_ID_ECDH_RSA,
 	SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_ECDSA,
 	SMW_TLS12_KEY_EXCHANGE_ID_ECDHE_RSA,
+	SMW_TLS12_KEY_EXCHANGE_ID_RSA,
 	SMW_TLS12_KEY_EXCHANGE_ID_NB,
 	SMW_TLS12_KEY_EXCHANGE_ID_INVALID
 };
@@ -82,7 +82,6 @@ struct smw_keymgr_tls12_args {
 	enum smw_tls12_encryption_id encryption_id;
 	enum smw_config_hash_algo_id prf_id;
 	bool ephemeral_key;
-
 	struct smw_kdf_tls12_args *pub_args;
 };
 

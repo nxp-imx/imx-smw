@@ -8,6 +8,15 @@
 #include "types.h"
 
 /**
+ * device_get_lifecycle_name() - Convert lifecycle string value into integer value.
+ * @string: Lifecycle string.
+ *
+ * Return:
+ * Lifecycle name.
+ */
+smw_lifecycle_t device_get_lifecycle_name(const char *string);
+
+/**
  * device_uuid() - Get the device UUID
  * @subtest: Subtest data.
  *

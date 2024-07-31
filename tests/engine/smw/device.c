@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <smw/names.h>
 #include <smw_device.h>
 
 #include "device.h"
@@ -15,6 +16,32 @@
 #include "util.h"
 #include "util_certificate.h"
 #include "util_file.h"
+
+#define LIFECYCLE(_name)                                                       \
+	{                                                                      \
+		.name = SMW_LIFECYCLE_NAME_##_name, .string = #_name           \
+	}
+
+static struct {
+	smw_lifecycle_t name;
+	const char *string;
+} lifecycle_names[] = { LIFECYCLE(CURRENT), LIFECYCLE(OPEN), LIFECYCLE(CLOSED),
+			LIFECYCLE(CLOSED_LOCKED) };
+
+smw_lifecycle_t device_get_lifecycle_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_LIFECYCLE_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(lifecycle_names); i++) {
+		if (!strcmp(lifecycle_names[i].string, string))
+			return lifecycle_names[i].name;
+	}
+
+	return SMW_LIFECYCLE_NAME_NB + 1;
+}
 
 /**
  * set_device_uuid_bad_args() - Set device UUID bad parameters function
@@ -478,6 +505,7 @@ int device_lifecycle(struct subtest_data *subtest, bool set)
 	int res = ERR_CODE(BAD_ARGS);
 	struct smw_device_lifecycle_args args = { 0 };
 	struct smw_device_lifecycle_args *smw_args = &args;
+	const char *lifecycle_string = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -493,17 +521,19 @@ int device_lifecycle(struct subtest_data *subtest, bool set)
 		goto exit;
 
 	if (set) {
-		res = util_read_json_type(&args.lifecycle_name, LIFECYCLE_OBJ,
+		res = util_read_json_type(&lifecycle_string, LIFECYCLE_OBJ,
 					  t_string, subtest->params);
 		if (res != ERR_CODE(PASSED))
 			goto exit;
+
+		args.lifecycle_name =
+			device_get_lifecycle_name(lifecycle_string);
 
 		/*
 		 * If the test define a lifecycle `CURRENT` read the device
 		 * lifecycle and set the same.
 		 */
-		if (args.lifecycle_name &&
-		    !strcmp(args.lifecycle_name, "CURRENT")) {
+		if (args.lifecycle_name == SMW_LIFECYCLE_NAME_CURRENT) {
 			subtest->smw_status =
 				smw_device_get_lifecycle(smw_args);
 			if (subtest->smw_status != SMW_STATUS_OK) {
@@ -524,7 +554,7 @@ int device_lifecycle(struct subtest_data *subtest, bool set)
 			goto exit;
 		}
 
-		DBG_PRINT("Device Lifecycle is %s", smw_args->lifecycle_name);
+		DBG_PRINT("Device Lifecycle is #%d", smw_args->lifecycle_name);
 	}
 
 exit:

@@ -226,7 +226,7 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 		       const uint8_t *additional_data,
 		       size_t additional_data_length, const uint8_t *input,
 		       size_t input_length, uint8_t *output, size_t output_size,
-		       struct smw_aead_args *args, const char *operation_name)
+		       struct smw_aead_args *args, smw_aead_op_type_t op_name)
 {
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_aead_init_args *init = args->init;
@@ -239,7 +239,8 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 	psa_algorithm_t psa_base_alg = PSA_ALG_NONE;
 
 	if (!PSA_ALG_IS_AEAD(alg) || !input || !input_length || !output ||
-	    !output_size || !nonce || !nonce_length || !operation_name)
+	    !output_size || !nonce || !nonce_length ||
+	    op_name == SMW_AEAD_OP_TYPE_NAME_NONE)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	init->key_desc->id = key;
@@ -282,10 +283,10 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 	if (mode_name == SMW_AEAD_MODE_NAME_NONE)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	if (!SMW_UTILS_STRCMP(operation_name, "ENCRYPT")) {
+	if (op_name == SMW_AEAD_OP_TYPE_NAME_ENCRYPT) {
 		min_output_size = PSA_AEAD_ENCRYPT_OUTPUT_SIZE(key_type, alg,
 							       input_length);
-	} else if (!SMW_UTILS_STRCMP(operation_name, "DECRYPT")) {
+	} else if (op_name == SMW_AEAD_OP_TYPE_NAME_DECRYPT) {
 		if (input_length + 1 < tag_length)
 			return PSA_ERROR_BUFFER_TOO_SMALL;
 		min_output_size = PSA_AEAD_DECRYPT_OUTPUT_SIZE(key_type, alg,
@@ -301,7 +302,7 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 	init->plaintext_length = input_length;
 	init->iv = (unsigned char *)nonce;
 	init->iv_length = nonce_length;
-	init->operation_name = operation_name;
+	init->op_type_name = op_name;
 
 	data->input = (unsigned char *)input;
 	data->input_length = input_length;
@@ -311,7 +312,7 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 	final->tag = NULL;
 
 	final->tag_length = tag_length;
-	final->operation_name = operation_name;
+	final->op_type_name = op_name;
 
 	aad->data = (unsigned char *)additional_data;
 	aad->data_length = additional_data_length;
@@ -329,10 +330,11 @@ set_aead_encrypt_params(psa_key_id_t key, psa_algorithm_t alg,
 {
 	psa_status_t status;
 
-	status = set_aead_common_params(key, alg, nonce, nonce_length,
-					additional_data, additional_data_length,
-					input, input_length, output,
-					output_size, args, "ENCRYPT");
+	status =
+		set_aead_common_params(key, alg, nonce, nonce_length,
+				       additional_data, additional_data_length,
+				       input, input_length, output, output_size,
+				       args, SMW_AEAD_OP_TYPE_NAME_ENCRYPT);
 	if (status != PSA_SUCCESS)
 		return status;
 
@@ -356,10 +358,11 @@ set_aead_decrypt_params(psa_key_id_t key, psa_algorithm_t alg,
 {
 	psa_status_t status;
 
-	status = set_aead_common_params(key, alg, nonce, nonce_length,
-					additional_data, additional_data_length,
-					input, input_length, output,
-					output_size, args, "DECRYPT");
+	status =
+		set_aead_common_params(key, alg, nonce, nonce_length,
+				       additional_data, additional_data_length,
+				       input, input_length, output, output_size,
+				       args, SMW_AEAD_OP_TYPE_NAME_DECRYPT);
 	if (status != PSA_SUCCESS)
 		return status;
 

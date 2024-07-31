@@ -3,72 +3,54 @@
  * Copyright 2023-2024 NXP
  */
 
+#include "smw/names.h"
 #include "smw_device.h"
 
 #include "subsystems.h"
 
 #include "config.h"
-#include "constants.h"
+#include "lifecycle.h"
 #include "devmgr.h"
 #include "debug.h"
 #include "exec.h"
 #include "utils.h"
 
-#define LC_OPEN_STR	     "OPEN"
-#define LC_CLOSED_STR	     "CLOSED"
-#define LC_CLOSED_LOCKED_STR "CLOSED_LOCKED"
-#define LC_CURRENT_STR	     "CURRENT"
-#define LC_OEM_RETURN_STR    "OEM_RETURN"
-#define LC_NXP_RETURN_STR    "NXP_RETURN"
-
-#define LIFECYCLE(_name)                                                       \
-	{                                                                      \
-		.lifecycle_str = LC_##_name##_STR,                             \
-		.lifecycle = SMW_LIFECYCLE_##_name,                            \
-	}
-
-/**
- * struct - Lifecycle
- * @lifecycle_str: Lifecycle name.
- * @lifecycle: Lifecycle id.
+/*
+ * Ordering must be the same for internal values and public values.
+ * This way the offset between the internal values and the public values
+ * can be used for conversion, and no conversion table is required.
+ *
+ * The offset between the internal values and the public values is
+ * given by the first public value.
  */
-static const struct {
-	const char *lifecycle_str;
-	unsigned int lifecycle;
-} lifecycle_info[] = { LIFECYCLE(OPEN), LIFECYCLE(CLOSED),
-		       LIFECYCLE(CLOSED_LOCKED), LIFECYCLE(OEM_RETURN),
-		       LIFECYCLE(NXP_RETURN) };
 
-static int get_lifecycle(const char *name, unsigned int *id)
+#define SMW_LIFECYCLE_ID_OFFSET                                                \
+	(SMW_LIFECYCLE_NAME_CURRENT - SMW_LIFECYCLE_ID_CURRENT)
+
+static int get_lifecycle_id(smw_lifecycle_t name, enum smw_lifecycle_id *id)
 {
 	int status = SMW_STATUS_INVALID_LIFECYCLE;
-	unsigned int i = 0;
 
-	if (!name)
-		return status;
+	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (; i < ARRAY_SIZE(lifecycle_info); i++) {
-		if (!SMW_UTILS_STRCMP(name, lifecycle_info[i].lifecycle_str)) {
-			*id = lifecycle_info[i].lifecycle;
+	if (name != SMW_LIFECYCLE_NAME_NONE && name < SMW_LIFECYCLE_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_LIFECYCLE_ID_OFFSET, (int *)id))
 			status = SMW_STATUS_OK;
-			break;
-		}
 	}
 
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-static int set_lifecycle(unsigned int id, const char **name)
+static int get_lifecycle_name(enum smw_lifecycle_id id, smw_lifecycle_t *name)
 {
 	int status = SMW_STATUS_INVALID_LIFECYCLE;
-	unsigned int i = 0;
 
-	for (; i < ARRAY_SIZE(lifecycle_info); i++) {
-		if (id == lifecycle_info[i].lifecycle) {
-			*name = lifecycle_info[i].lifecycle_str;
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (id < SMW_LIFECYCLE_ID_NB && id != SMW_LIFECYCLE_ID_INVALID) {
+		if (!ADD_OVERFLOW(id, SMW_LIFECYCLE_ID_OFFSET, (int *)name))
 			status = SMW_STATUS_OK;
-			break;
-		}
 	}
 
 	return status;
@@ -97,7 +79,7 @@ smw_device_set_lifecycle(struct smw_device_lifecycle_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = get_lifecycle(args->lifecycle_name, &lc_args.lifecycle_id);
+	status = get_lifecycle_id(args->lifecycle_name, &lc_args.lifecycle_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -139,8 +121,8 @@ smw_device_get_lifecycle(struct smw_device_lifecycle_args *args)
 	status = smw_utils_execute_operation(OPERATION_ID_DEVICE_LIFECYCLE,
 					     &lc_args, subsystem_id);
 	if (status == SMW_STATUS_OK)
-		status = set_lifecycle(lc_args.lifecycle_id,
-				       &args->lifecycle_name);
+		status = get_lifecycle_name(lc_args.lifecycle_id,
+					    &args->lifecycle_name);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

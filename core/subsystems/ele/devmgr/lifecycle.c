@@ -4,21 +4,24 @@
  */
 
 #include "debug.h"
+#include "lifecycle.h"
 #include "devmgr.h"
 #include "utils.h"
 
 #include "local.h"
 
+#define LIFECYCLE(_smw, _ele)                                                  \
+	{                                                                      \
+		.smw = SMW_LIFECYCLE_ID_##_smw, .ele = HSM_##_ele##_STATE      \
+	}
+
 static const struct lifecycle {
-	unsigned int smw;
+	enum smw_lifecycle_id smw;
 	hsm_lc_new_state_t ele;
-} lifecycles[] = {
-	{ .smw = SMW_LIFECYCLE_OPEN, .ele = HSM_OEM_OPEN_STATE },
-	{ .smw = SMW_LIFECYCLE_CLOSED, .ele = HSM_OEM_CLOSE_STATE },
-	{ .smw = SMW_LIFECYCLE_CLOSED_LOCKED, .ele = HSM_OEM_LOCKED_STATE },
-	{ .smw = SMW_LIFECYCLE_OEM_RETURN, .ele = HSM_OEM_FIELD_RET_STATE },
-	{ .smw = SMW_LIFECYCLE_NXP_RETURN, .ele = HSM_NXP_FIELD_RET_STATE }
-};
+} lifecycles[] = { LIFECYCLE(OPEN, OEM_OPEN), LIFECYCLE(CLOSED, OEM_CLOSE),
+		   LIFECYCLE(CLOSED_LOCKED, OEM_LOCKED),
+		   LIFECYCLE(OEM_RETURN, OEM_FIELD_RET),
+		   LIFECYCLE(NXP_RETURN, NXP_FIELD_RET) };
 
 static int lifecycle_smw_to_ele(unsigned int smw_lc, hsm_lc_new_state_t *ele_lc)
 {

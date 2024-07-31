@@ -4,18 +4,19 @@
  */
 
 #include "debug.h"
+#include "lifecycle.h"
 #include "utils.h"
 
 #include "common.h"
 
 #define LIFECYCLE(_lifecycle)                                                  \
 	{                                                                      \
-		.smw = SMW_LIFECYCLE_##_lifecycle,                             \
+		.smw = SMW_LIFECYCLE_ID_##_lifecycle,                          \
 		.ele = HSM_KEY_LIFECYCLE_##_lifecycle                          \
 	}
 
 static const struct lifecycle {
-	unsigned int smw;
+	enum smw_lifecycle_id smw;
 	hsm_key_lifecycle_t ele;
 } lifecycles[] = { LIFECYCLE(OPEN), LIFECYCLE(CLOSED),
 		   LIFECYCLE(CLOSED_LOCKED) };

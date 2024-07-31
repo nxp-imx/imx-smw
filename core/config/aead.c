@@ -24,6 +24,11 @@ static const char *const aead_mode_strings[] = {
 	[SMW_CONFIG_AEAD_MODE_ID_GCM] = "GCM",
 };
 
+static const char *const aead_op_type_strings[] = {
+	[SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT] = "ENCRYPT",
+	[SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT] = "DECRYPT"
+};
+
 int read_aead_mode_strings(char **start, char *end, unsigned long *bitmap)
 {
 	int status =
@@ -31,6 +36,17 @@ int read_aead_mode_strings(char **start, char *end, unsigned long *bitmap)
 					SMW_CONFIG_AEAD_MODE_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_MODE_NAME;
+
+	return status;
+}
+
+int read_aead_op_type_strings(char **start, char *end, unsigned long *bitmap)
+{
+	int status = smw_config_read_strings(start, end, bitmap,
+					     aead_op_type_strings,
+					     SMW_CONFIG_AEAD_OP_TYPE_ID_NB);
+	if (status == SMW_STATUS_UNKNOWN_NAME)
+		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
 
 	return status;
 }
@@ -85,8 +101,8 @@ static int aead_common_read_params(char **start, char *end, void **params)
 				goto end;
 
 		} else if (!SMW_UTILS_STRNCMP(buffer, op_type_values, length)) {
-			status = smw_utils_aead_op_type_names(&cur, end,
-							      &p->op_bitmap);
+			status = read_aead_op_type_strings(&cur, end,
+							   &p->op_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 
@@ -196,7 +212,7 @@ static int check_common_subsystem_caps(void *args, void *params)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!check_id(aead_args->mode_id, aead_params->mode_bitmap) ||
-	    !check_id(aead_args->op_id, aead_params->op_bitmap))
+	    !check_id(aead_args->op_type_id, aead_params->op_bitmap))
 		goto end;
 
 	if (!check_key(&aead_args->key_desc.identifier, &aead_params->key))
@@ -232,7 +248,7 @@ __export enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 	enum smw_config_key_type_id key_type_id =
 		SMW_CONFIG_KEY_TYPE_ID_INVALID;
 	enum smw_config_aead_op_type_id op_type_id =
-		SMW_CONFIG_AEAD_OP_ID_INVALID;
+		SMW_CONFIG_AEAD_OP_TYPE_ID_INVALID;
 	enum smw_config_aead_mode_id mode_id = SMW_CONFIG_AEAD_MODE_ID_INVALID;
 	enum operation_id op_id = OPERATION_ID_AEAD;
 	struct aead_params params = { 0 };
@@ -240,7 +256,8 @@ __export enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!info || info->key_type_name == SMW_KEY_TYPE_NAME_NONE ||
-	    info->mode_name == SMW_AEAD_MODE_NAME_NONE || !info->op_type)
+	    info->mode_name == SMW_AEAD_MODE_NAME_NONE ||
+	    info->op_type_name == SMW_AEAD_OP_TYPE_NAME_NONE)
 		return status;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);
@@ -255,7 +272,7 @@ __export enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = smw_utils_get_aead_op_type_id(info->op_type, &op_type_id);
+	status = smw_utils_get_aead_op_type_id(info->op_type_name, &op_type_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 

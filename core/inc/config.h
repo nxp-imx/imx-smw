@@ -132,10 +132,10 @@ enum smw_config_aead_mode_id {
 };
 
 enum smw_config_aead_op_type_id {
-	SMW_CONFIG_AEAD_OP_ID_ENCRYPT,
-	SMW_CONFIG_AEAD_OP_ID_DECRYPT,
-	SMW_CONFIG_AEAD_OP_ID_NB,
-	SMW_CONFIG_AEAD_OP_ID_INVALID
+	SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT,
+	SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT,
+	SMW_CONFIG_AEAD_OP_TYPE_ID_NB,
+	SMW_CONFIG_AEAD_OP_TYPE_ID_INVALID
 };
 
 /**
@@ -447,35 +447,14 @@ int smw_utils_get_aead_mode_id(smw_aead_mode_t name,
 /**
  * smw_utils_get_aead_op_type_id() - Get the AEAD operation type ID
  *                                      associated to a name
- * @name: Name as a string.
+ * @name: AEAD operation type name.
  * @id: Pointer where the ID is written.
  *
  * Return:
  * SMW_STATUS_UNKNOWN_OP_TYPE_NAME	- @name is unknown
- * SMW_STATUS_OK		- Success
+ * SMW_STATUS_OK			- Success
  */
-int smw_utils_get_aead_op_type_id(const char *name,
+int smw_utils_get_aead_op_type_id(smw_aead_op_type_t name,
 				  enum smw_config_aead_op_type_id *id);
-
-/**
- * smw_utils_aead_op_type_names() - Read a list of AEAD operation types names
- * @start: Address of the pointer to the current char.
- * @end: Pointer to the last char of the buffer being parsed.
- * @bitmap: Bitmap representing the configured names.
- *
- * This function reads a list of names from the current char of the buffer being
- * parsed until a semicolon is detected.
- * The pointer to the current char is moved to the next char after the
- * semicolon.
- * Insignificant chars are skipped if any.
- *
- * Names are compared with values set in @aead_op_type_names.
- * @bitmap is set with enum smw_config_aead_op_type_id values.
- *
- * Return:
- * error code.
- */
-int smw_utils_aead_op_type_names(char **start, char *end,
-				 unsigned long *bitmap);
 
 #endif /* __CONFIG_H__ */

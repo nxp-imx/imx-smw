@@ -7,7 +7,6 @@
 
 #include "config.h"
 #include "debug.h"
-#include "name.h"
 #include "utils.h"
 
 /*
@@ -21,6 +20,9 @@
 
 #define SMW_CONFIG_CIPHER_MODE_ID_OFFSET                                       \
 	(SMW_CIPHER_MODE_NAME_CBC - SMW_CONFIG_CIPHER_MODE_ID_CBC)
+
+#define SMW_CONFIG_CIPHER_OP_TYPE_OFFSET                                       \
+	(SMW_CIPHER_OP_TYPE_NAME_ENCRYPT - SMW_CONFIG_CIPHER_OP_TYPE_ID_ENCRYPT)
 
 int smw_utils_get_cipher_mode_id(smw_cipher_mode_t name,
 				 enum smw_config_cipher_mode_id *id)
@@ -42,39 +44,21 @@ int smw_utils_get_cipher_mode_id(smw_cipher_mode_t name,
 	return status;
 }
 
-static const char *const cipher_op_type_names[] = {
-	[SMW_CONFIG_CIPHER_OP_ID_ENCRYPT] = "ENCRYPT",
-	[SMW_CONFIG_CIPHER_OP_ID_DECRYPT] = "DECRYPT"
-};
-
-int smw_utils_cipher_op_type_names(char **start, char *end,
-				   unsigned long *bitmap)
-{
-	int status = smw_config_read_strings(start, end, bitmap,
-					     cipher_op_type_names,
-					     SMW_CONFIG_CIPHER_OP_ID_NB);
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
-
-	return status;
-}
-
-int smw_utils_get_cipher_op_type_id(const char *name,
+int smw_utils_get_cipher_op_type_id(smw_cipher_op_type_t name,
 				    enum smw_config_cipher_op_type_id *id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!name)
-		*id = SMW_CONFIG_CIPHER_OP_ID_INVALID;
-	else
-		status = smw_utils_get_string_index(name, cipher_op_type_names,
-						    SMW_CONFIG_CIPHER_OP_ID_NB,
-						    id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
+	if (name == SMW_CIPHER_OP_TYPE_NAME_NONE) {
+		*id = SMW_CONFIG_CIPHER_OP_TYPE_ID_INVALID;
+		status = SMW_STATUS_OK;
+	} else if (name < SMW_CIPHER_OP_TYPE_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_CONFIG_CIPHER_OP_TYPE_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

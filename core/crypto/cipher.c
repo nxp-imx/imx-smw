@@ -46,8 +46,8 @@ cipher_get_ids_from_strings(struct smw_cipher_init_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = smw_utils_get_cipher_op_type_id(args->operation_name,
-						 &converted_args->op_id);
+	status = smw_utils_get_cipher_op_type_id(args->op_type_name,
+						 &converted_args->op_type_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -76,7 +76,7 @@ static int convert_init_args(struct smw_cipher_init_args *args,
 
 	if (!args->keys_desc || !args->nb_keys ||
 	    args->mode_name == SMW_CIPHER_MODE_NAME_NONE ||
-	    !args->operation_name)
+	    args->op_type_name == SMW_CIPHER_OP_TYPE_NAME_NONE)
 		goto end;
 
 	if (args->version != 0) {

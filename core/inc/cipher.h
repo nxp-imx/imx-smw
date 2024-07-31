@@ -17,7 +17,7 @@
  * @keys_desc: Pointer to an array of internal key descriptor structure pointer
  * @nb_keys: Number of entries of the array key descriptor pointer
  * @mode_id: Cipher mode ID
- * @type_id: Operation type ID
+ * @op_type_id: Operation type ID
  * @handle: Pointer to operation handle
  * @op_step: Multi-part operation step
  * @init_pub: Pointer to the public cipher init arguments structure
@@ -27,7 +27,7 @@ struct smw_crypto_cipher_args {
 	struct smw_keymgr_descriptor **keys_desc;
 	unsigned int nb_keys;
 	enum smw_config_cipher_mode_id mode_id;
-	enum smw_config_cipher_op_type_id op_id;
+	enum smw_config_cipher_op_type_id op_type_id;
 	enum smw_op_step op_step;
 	struct smw_cipher_init_args *init_pub;
 	struct smw_cipher_data_args *data_pub;

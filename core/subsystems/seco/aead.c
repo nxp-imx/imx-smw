@@ -67,7 +67,7 @@ static int set_aead_algo(enum smw_config_key_type_id key_type_id,
 
 #define AEAD_FLAG(_op_type_id)                                                 \
 	{                                                                      \
-		.smw_op_type_id = SMW_CONFIG_AEAD_OP_ID_##_op_type_id,         \
+		.smw_op_type_id = SMW_CONFIG_AEAD_OP_TYPE_ID_##_op_type_id,    \
 		.flags = HSM_AUTH_ENC_FLAGS_##_op_type_id                      \
 	}
 
@@ -105,12 +105,13 @@ static int set_aead_flags(struct smw_crypto_aead_args *aead_args,
 	unsigned int i = 0;
 
 	for (; i < ARRAY_SIZE(aead_flags); i++) {
-		if (aead_args->op_id != aead_flags[i].smw_op_type_id)
+		if (aead_args->op_type_id != aead_flags[i].smw_op_type_id)
 			continue;
 
 		*flags = aead_flags[i].flags;
 
-		if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT &&
+		if (aead_args->op_type_id ==
+			    SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT &&
 		    aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_GCM) {
 			if (!smw_crypto_get_aead_iv_len(aead_args))
 				*flags |= HSM_AUTH_ENC_FLAGS_GENERATE_FULL_IV;
@@ -176,7 +177,7 @@ end:
 static void set_all_outputs_length(struct smw_crypto_aead_args *args,
 				   unsigned int *output_len)
 {
-	if (args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
+	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT) {
 		smw_crypto_set_aead_output_iv_len(args, SECO_MAX_IV_LEN);
 		smw_crypto_set_aead_tag_len(args, SECO_TAG_LEN);
 	}
@@ -523,7 +524,7 @@ static int set_output_length(struct smw_crypto_aead_args *aead_args)
 
 	unsigned int output_len = smw_crypto_get_aead_input_len(aead_args);
 
-	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT) {
+	if (aead_args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT) {
 		if (!smw_crypto_is_aead_tag_field_set(aead_args)) {
 			if (INC_OVERFLOW(output_len, SECO_TAG_LEN))
 				goto end;
@@ -620,7 +621,7 @@ static int aead(struct hdl *hdl, void *args)
 		smw_crypto_set_aead_tag_len(args, SECO_TAG_LEN);
 	}
 
-	if (aead_args->op_id == SMW_CONFIG_AEAD_OP_ID_ENCRYPT)
+	if (aead_args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT)
 		is_encrypt_op = true;
 
 	key_desc = &aead_args->key_desc;

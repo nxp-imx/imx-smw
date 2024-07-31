@@ -196,7 +196,7 @@ static int convert_init_args(struct smw_aead_init_args *args,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args->mode_name || !args->operation_name)
+	if (args->mode_name == SMW_AEAD_MODE_NAME_NONE || !args->operation_name)
 		goto end;
 
 	if (args->version != 0) {

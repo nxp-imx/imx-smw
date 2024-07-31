@@ -252,4 +252,21 @@ typedef enum {
 
 } smw_aead_mode_t;
 
+/**
+ * typedef smw_cipher_op_type_t - Cipher operation type name
+ *
+ * Values:
+ * * SMW_CIPHER_OP_TYPE_NAME_NONE: No cipher operation type specified
+ * * SMW_CIPHER_OP_TYPE_NAME_ENCRYPT: Encrypt operation type
+ * * SMW_CIPHER_OP_TYPE_NAME_DECRYPT: Decrypt operation type
+ * * SMW_CIPHER_OP_TYPE_NAME_NB: Number of cipher operation types
+ */
+typedef enum {
+	SMW_CIPHER_OP_TYPE_NAME_NONE,
+	SMW_CIPHER_OP_TYPE_NAME_ENCRYPT,
+	SMW_CIPHER_OP_TYPE_NAME_DECRYPT,
+	SMW_CIPHER_OP_TYPE_NAME_NB
+
+} smw_cipher_op_type_t;
+
 #endif /* __SMW_NAMES_H__ */

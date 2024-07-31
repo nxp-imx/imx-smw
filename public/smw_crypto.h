@@ -126,7 +126,7 @@ struct smw_rng_args {
  *	       See &struct smw_key_descriptor
  * @nb_keys: Number of entries of @keys_desc
  * @mode_name: Cipher mode name. See &typedef smw_cipher_mode_t.
- * @operation_name: Cipher operation name. See &typedef smw_cipher_operation_t
+ * @op_type_name: Cipher operation type name. See &typedef smw_cipher_op_type_t
  * @iv: Pointer to initialization vector
  * @iv_length: @iv length in bytes
  * @context: Pointer to an opaque operation context structure
@@ -143,7 +143,7 @@ struct smw_cipher_init_args {
 	struct smw_key_descriptor **keys_desc;
 	unsigned int nb_keys;
 	smw_cipher_mode_t mode_name;
-	smw_cipher_operation_t operation_name;
+	smw_cipher_op_type_t op_type_name;
 	unsigned char *iv;
 	unsigned int iv_length;
 	/* Outputs */

@@ -9,14 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_cipher_operation_t - Cipher operation name
- * Values:
- *	- ENCRYPT
- *	- DECRYPT
- */
-typedef smw_string_t smw_cipher_operation_t;
-
-/**
  * typedef smw_aead_operation_t - AEAD operation name
  * Values:
  *	- ENCRYPT

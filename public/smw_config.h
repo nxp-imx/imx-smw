@@ -205,13 +205,13 @@ enum smw_status_code smw_config_check_verify(smw_subsystem_t subsystem,
  * @multipart: True if it's a cipher multi-part operation
  * @key_type_name: Key type name. See &typedef smw_key_type_t
  * @mode_name: Operation mode name. See &typedef smw_cipher_mode_t
- * @op_type: Operation type name. See &typedef smw_cipher_operation_t
+ * @op_type_name: Operation type name. See &typedef smw_cipher_op_type_t
  */
 struct smw_cipher_info {
 	bool multipart;
 	smw_key_type_t key_type_name;
 	smw_cipher_mode_t mode_name;
-	smw_cipher_operation_t op_type;
+	smw_cipher_op_type_t op_type_name;
 };
 
 /**

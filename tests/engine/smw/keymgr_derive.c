@@ -18,6 +18,33 @@
 #define HKDF_EXPAND  "HKDF_EXPAND"
 #define HKDF_EXTRACT "HKDF_EXTRACT"
 
+#define KEA(_name)                                                             \
+	{                                                                      \
+		.name = SMW_TLS12_KEA_NAME_##_name, .string = #_name           \
+	}
+
+static struct {
+	smw_tls12_kea_t name;
+	const char *string;
+} key_exchange_names[] = { KEA(DH_DSS),	     KEA(DH_RSA),     KEA(DHE_DSS),
+			   KEA(DHE_RSA),     KEA(ECDH_ECDSA), KEA(ECDH_RSA),
+			   KEA(ECDHE_ECDSA), KEA(ECDHE_RSA),  KEA(RSA) };
+
+static smw_tls12_kea_t get_tls12_key_exchange_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_TLS12_KEA_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(key_exchange_names); i++) {
+		if (!strcmp(key_exchange_names[i].string, string))
+			return key_exchange_names[i].name;
+	}
+
+	return SMW_TLS12_KEA_NAME_NB + 1;
+}
+
 /**
  * read_derived_key_descriptor() - Read the derived key descriptor definition
  * @keys: Keys list.
@@ -135,6 +162,7 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	struct tbuffer buf = { 0 };
 
 	struct smw_kdf_tls12_args *tls_args = NULL;
+	const char *key_exchange_string = NULL;
 
 	if (!kdf_args || !oargs) {
 		DBG_PRINT_BAD_ARGS();
@@ -145,10 +173,13 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	if (!tls_args)
 		return INTERNAL_OUT_OF_MEMORY;
 
-	res = UTIL_READ_JSON_ST_FIELD(tls_args, key_exchange_name, string,
-				      oargs);
+	res = util_read_json_type(&key_exchange_string, "key_exchange_name",
+				  t_string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
+
+	tls_args->key_exchange_name =
+		get_tls12_key_exchange_name(key_exchange_string);
 
 	res = UTIL_READ_JSON_ST_FIELD(tls_args, encryption_name, string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))

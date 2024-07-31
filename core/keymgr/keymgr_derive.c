@@ -12,7 +12,6 @@
 #include "keymgr_derive.h"
 #include "keymgr_db.h"
 #include "exec.h"
-#include "name.h"
 #include "utils.h"
 #include "base64.h"
 
@@ -28,14 +27,8 @@
 #define SMW_TLS12_KEY_EXCHANGE_ID_OFFSET                                       \
 	(SMW_TLS12_KEA_NAME_DH_DSS - SMW_TLS12_KEY_EXCHANGE_ID_DH_DSS)
 
-static const char *const tls12_encryption_name[] = {
-	[SMW_TLS12_ENCRYPTION_ID_RC4_128] = "RC4_128",
-	[SMW_TLS12_ENCRYPTION_ID_3DES_EDE_CBC] = "3DES_EDE_CBC",
-	[SMW_TLS12_ENCRYPTION_ID_AES_128_CBC] = "AES_128_CBC",
-	[SMW_TLS12_ENCRYPTION_ID_AES_256_CBC] = "AES_256_CBC",
-	[SMW_TLS12_ENCRYPTION_ID_AES_128_GCM] = "AES_128_GCM",
-	[SMW_TLS12_ENCRYPTION_ID_AES_256_GCM] = "AES_256_GCM"
-};
+#define SMW_TLS12_ENCRYPTION_ID_OFFSET                                         \
+	(SMW_TLS12_ENC_NAME_3DES_EDE_CBC - SMW_TLS12_ENCRYPTION_ID_3DES_EDE_CBC)
 
 /**
  * tls12_get_key_exchange_id() - Get ID of TLS 1.2 key exchange name
@@ -222,22 +215,22 @@ end:
  * SMW_STATUS_INVALID_PARAM          - Invalid function parameter
  * SMW_STATUS_UNKNOWN_TLS12_ENC_NAME - Unknown TLS 1.2 encryption algorithm name
  */
-static int tls12_get_encryption_id(const char *name,
+static int tls12_get_encryption_id(smw_tls12_enc_t name,
 				   enum smw_tls12_encryption_id *id)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_UNKNOWN_TLS12_ENC_NAME;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	*id = SMW_TLS12_ENCRYPTION_ID_INVALID;
 
-	if (name)
-		status = smw_utils_get_string_index(name, tls12_encryption_name,
-						    SMW_TLS12_ENCRYPTION_ID_NB,
-						    id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_TLS12_ENC_NAME;
+	if (name == SMW_TLS12_ENC_NAME_NONE) {
+		status = SMW_STATUS_INVALID_PARAM;
+	} else if (name < SMW_TLS12_ENC_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_TLS12_ENCRYPTION_ID_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 

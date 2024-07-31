@@ -313,14 +313,14 @@ void smw_config_get_key_type_name(enum smw_config_key_type_id id,
 /**
  * smw_config_get_signature_algo_id() - Get the signature algo ID associated to
  *                                      a name.
- * @name: Name as a string.
+ * @name: Signature algorithm name.
  * @id: Pointer where the ID is written.
  *
  * Return:
  * SMW_STATUS_SIGN_TYPE_NAME	- @name is unknown
  * SMW_STATUS_OK		- Success
  */
-int smw_config_get_signature_algo_id(const char *name,
+int smw_config_get_signature_algo_id(smw_signature_algo_t name,
 				     enum smw_config_sign_algo_id *id);
 
 /**

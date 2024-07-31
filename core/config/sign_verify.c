@@ -17,11 +17,24 @@
 #include "keymgr.h"
 #include "sign_verify.h"
 #include "name.h"
+#include "utils.h"
 
 #include "common.h"
 #include "tag.h"
 
-static const char *const sign_algo_names[] = {
+/*
+ * Ordering must be the same for internal values and public values.
+ * This way the offset between the internal values and the public values
+ * can be used for conversion, and no conversion table is required.
+ *
+ * The offset between the internal values and the public values is
+ * given by the first public value.
+ */
+
+#define SMW_CONFIG_SIGN_ALGO_ID_OFFSET                                         \
+	(SMW_SIGNATURE_ALGO_NAME_DEFAULT - SMW_CONFIG_SIGN_ALGO_ID_DEFAULT)
+
+static const char *const sign_algo_strings[] = {
 	[SMW_CONFIG_SIGN_ALGO_ID_DEFAULT] = DEFAULT_STR,
 	[SMW_CONFIG_SIGN_ALGO_ID_ECDSA] = ECDSA_STR,
 	[SMW_CONFIG_SIGN_ALGO_ID_EDDSA] = EDDSA_STR,
@@ -39,11 +52,11 @@ static const char *const sign_type_names[] = {
 	[SMW_CONFIG_SIGN_TYPE_ID_CMAC] = CMAC_STR,
 };
 
-static int read_signature_algo_names(char **start, char *end,
-				     unsigned long *bitmap)
+static int read_signature_algo_srings(char **start, char *end,
+				      unsigned long *bitmap)
 {
 	int status =
-		smw_config_read_strings(start, end, bitmap, sign_algo_names,
+		smw_config_read_strings(start, end, bitmap, sign_algo_strings,
 					SMW_CONFIG_SIGN_ALGO_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME;
@@ -91,8 +104,8 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, sign_algo_values, length)) {
-			status = read_signature_algo_names(&cur, end,
-							   &p->algo_bitmap);
+			status = read_signature_algo_srings(&cur, end,
+							    &p->algo_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, sign_type_values,
@@ -234,7 +247,7 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!info || !info->algo)
+	if (!info || info->algo_name == SMW_SIGNATURE_ALGO_NAME_NONE)
 		return status;
 
 	status = smw_config_get_subsystem_id(subsystem, &id);
@@ -245,15 +258,13 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	/* Check signature algo if set */
-	if (info->algo) {
-		status = smw_config_get_signature_algo_id(info->algo, &algo_id);
-		if (status != SMW_STATUS_OK)
-			return status;
+	/* Check signature algo */
+	status = smw_config_get_signature_algo_id(info->algo_name, &algo_id);
+	if (status != SMW_STATUS_OK)
+		return status;
 
-		if (!check_id(algo_id, params.algo_bitmap))
-			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
-	}
+	if (!check_id(algo_id, params.algo_bitmap))
+		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	/* Check signature type if set */
 	if (info->type) {
@@ -282,20 +293,20 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 DEFINE_CONFIG_OPERATION_FUNC(sign);
 DEFINE_CONFIG_OPERATION_FUNC(verify);
 
-int smw_config_get_signature_algo_id(const char *name,
+int smw_config_get_signature_algo_id(smw_signature_algo_t name,
 				     enum smw_config_sign_algo_id *id)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (name)
-		status = smw_utils_get_string_index(name, sign_algo_names,
-						    SMW_CONFIG_SIGN_ALGO_ID_NB,
-						    id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_SIGN_ALGO_NAME;
+	if (name == SMW_SIGNATURE_ALGO_NAME_NONE) {
+		status = SMW_STATUS_INVALID_PARAM;
+	} else if (name < SMW_SIGNATURE_ALGO_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_CONFIG_SIGN_ALGO_ID_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

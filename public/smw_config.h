@@ -125,12 +125,12 @@ enum smw_status_code smw_config_check_generate_key(smw_subsystem_t subsystem,
 /**
  * struct smw_signature_info - Signature operation information
  * @algo_name: Signature algo name. See &typedef smw_signature_algo_t
- * @type: Signature type name. See &typedef smw_signature_type_t
+ * @type_name: Signature type name. See &typedef smw_signature_type_t
  * @hash_algo_name: Hash algorithm name. See &typedef smw_hash_algo_t
  */
 struct smw_signature_info {
 	smw_signature_algo_t algo_name;
-	smw_signature_type_t type;
+	smw_signature_type_t type_name;
 	smw_hash_algo_t hash_algo_name;
 };
 

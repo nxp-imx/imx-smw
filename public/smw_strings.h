@@ -9,18 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_signature_type_t - Signature type name
- * Values:
- *	- DEFAULT
- *	- PKCS1_1_5
- *	- PSS
- *	- CLIENT
- *	- SERVER
- *	- CMAC
- */
-typedef smw_string_t smw_signature_type_t;
-
-/**
  * typedef smw_kdf_t - Key derivation function name
  * Values:
  *	- TLS12_KEY_EXCHANGE

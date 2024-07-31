@@ -326,4 +326,28 @@ typedef enum {
 	SMW_SIGNATURE_ALGO_NAME_NB
 } smw_signature_algo_t;
 
+/**
+ * typedef smw_signature_type_t - Signature type name
+ *
+ * Values:
+ * * SMW_SIGNATURE_TYPE_NAME_NONE: No signature type specified
+ * * SMW_SIGNATURE_TYPE_NAME_DEFAULT: Default signature type
+ * * SMW_SIGNATURE_TYPE_NAME_PKCS1_1_5: Public-Key Cryptography Standards #1 v1.5
+ * * SMW_SIGNATURE_TYPE_NAME_PSS: Probabilistic Signature Scheme
+ * * SMW_SIGNATURE_TYPE_NAME_CLIENT: TLS client signature
+ * * SMW_SIGNATURE_TYPE_NAME_SERVER: TLS server signature
+ * * SMW_SIGNATURE_TYPE_NAME_CMAC: Cipher-based Message Authentication Code
+ * * SMW_SIGNATURE_TYPE_NAME_NB: Number of signature types
+ */
+typedef enum {
+	SMW_SIGNATURE_TYPE_NAME_NONE,
+	SMW_SIGNATURE_TYPE_NAME_DEFAULT,
+	SMW_SIGNATURE_TYPE_NAME_PKCS1_1_5,
+	SMW_SIGNATURE_TYPE_NAME_PSS,
+	SMW_SIGNATURE_TYPE_NAME_CLIENT,
+	SMW_SIGNATURE_TYPE_NAME_SERVER,
+	SMW_SIGNATURE_TYPE_NAME_CMAC,
+	SMW_SIGNATURE_TYPE_NAME_NB
+} smw_signature_type_t;
+
 #endif /* __SMW_NAMES_H__ */

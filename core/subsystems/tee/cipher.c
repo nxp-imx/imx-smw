@@ -95,7 +95,7 @@ static int set_cipher_context(struct smw_op_context *op_context,
 
 	op_context->subsystem_context = cipher_ctx;
 
-	if (args->op_id == SMW_CONFIG_CIPHER_OP_ID_ENCRYPT)
+	if (args->op_type_id == SMW_CONFIG_CIPHER_OP_TYPE_ID_ENCRYPT)
 		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_ENCRYPT;
 	else
 		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_DECRYPT;
@@ -114,12 +114,12 @@ get_tee_cipher_operation_and_usage(enum smw_config_cipher_op_type_id smw_op,
 				   uint32_t *tee_op, unsigned int *key_usage)
 {
 	switch (smw_op) {
-	case SMW_CONFIG_CIPHER_OP_ID_ENCRYPT:
+	case SMW_CONFIG_CIPHER_OP_TYPE_ID_ENCRYPT:
 		*tee_op = TEE_MODE_ENCRYPT;
 		*key_usage = TEE_KEY_USAGE_ENCRYPT;
 		break;
 
-	case SMW_CONFIG_CIPHER_OP_ID_DECRYPT:
+	case SMW_CONFIG_CIPHER_OP_TYPE_ID_DECRYPT:
 		*tee_op = TEE_MODE_DECRYPT;
 		*key_usage = TEE_KEY_USAGE_DECRYPT;
 		break;
@@ -166,7 +166,7 @@ static int cipher_init(struct smw_op_context *op_context,
 		goto end;
 
 	/* Get OPTEE operation and key usage */
-	status = get_tee_cipher_operation_and_usage(args->op_id,
+	status = get_tee_cipher_operation_and_usage(args->op_type_id,
 						    &op.params[0].value.b,
 						    &key_usage);
 	if (status != SMW_STATUS_OK)

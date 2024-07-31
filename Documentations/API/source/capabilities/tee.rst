@@ -243,22 +243,24 @@ AEAD
 ^^^^
 
 .. table:: TEE AEAD
+   :name: tee_aead
    :align: center
    :class: wrap-table
 
-   +--------------+----------+-------------------------------+
-   | **Key type** | **Mode** |     **Tag length (bytes)**    |
-   +==============+==========+===============================+
-   | AES          |  CCM     | 4 / 6 / 8 / 10 / 12 / 14 / 16 |
-   +              +----------+-------------------------------+
-   |              |  GCM     | 12 / 13 / 14 / 15 / 16        |
-   +--------------+----------+-------------------------------+
+   +--------------+----------+------------------------+-------------------------------+
+   | **Key type** | **Mode** | **IV length (bytes)**  |     **Tag length (bytes)**    |
+   +==============+==========+========================+===============================+
+   | AES          |  CCM     |        Up to 13        | 4 / 6 / 8 / 10 / 12 / 14 / 16 |
+   +              +----------+------------------------+-------------------------------+
+   |              |  GCM     |        Up to 16        | 12 / 13 / 14 / 15 / 16        |
+   +--------------+----------+------------------------+-------------------------------+
+
+.. Note:: User has the capability to request the TA to generate part of full operation IV
+          in the limit of the maximum value depending of the operation mode as detailed in the :numref:`tee_aead`.
 
 Operations supported:
- - Encrypt [6]_
- - Decrypt [6]_
-
-.. [6] one shot and multi-part
+ - Encryption one shot and multi-part
+ - Decryption one shot and multi-part
 
 Data Storage manager
 ^^^^^^^^^^^^^^^^^^^^

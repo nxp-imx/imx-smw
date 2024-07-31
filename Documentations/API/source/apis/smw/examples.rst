@@ -34,7 +34,8 @@ Example 1: AEAD one-shot encryption operation
         init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
         init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.plaintext_length = DATA_LEN;
-        init_args.iv = iv;
+        init_args.user_iv = iv;
+        init.args.user_iv_length = IV_LEN;
         init.args.iv_length = IV_LEN;
         init_args.key_desc = &key_desc;
 
@@ -91,7 +92,8 @@ Example 2: AEAD one-shot encryption operation (Tag stored in tag field)
         init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
         init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.plaintext_length = DATA_LEN;
-        init_args.iv = iv;
+        init_args.user_iv = iv;
+        init.args.user_iv_length = IV_LEN;
         init.args.iv_length = IV_LEN;
         init_args.key_desc = &key_desc;
 
@@ -148,7 +150,8 @@ Example 3: AEAD one-shot decryption operation (Tag stored in tag field)
         init_args.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
         init_args.mode_name = SMW_AEAD_MODE_NAME_GCM;
         init_args.plaintext_length = DATA_LEN;
-        init_args.iv = iv;
+        init_args.user_iv = iv;
+        init.args.user_iv_length = IV_LEN;
         init.args.iv_length = IV_LEN;
         init_args.key_desc = &key_desc;
 
@@ -207,7 +210,8 @@ Example 4: AEAD multi-part encryption operation
         init_args.aad_length = AAD_LEN;
         init_args.tag_length = TAG_LEN;
         init_args.plaintext_length = DATA_LEN;
-        init_args.iv = iv;
+        init_args.user_iv = iv;
+        init.args.user_iv_length = IV_LEN;
         init.args.iv_length = IV_LEN;
 
         // Allocate memory to operation context
@@ -311,7 +315,8 @@ Example 5: AEAD multi-part decryption operation
         init_args.aad_length = AAD_LEN;
         init_args.tag_length = TAG_LEN;
         init_args.plaintext_length = DATA_LEN;
-        init_args.iv = iv;
+        init_args.user_iv = iv;
+        init.args.user_iv_length = IV_LEN;
         init.args.iv_length = IV_LEN;
 
         // Allocate memory to operation context

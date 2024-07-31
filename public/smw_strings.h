@@ -17,18 +17,6 @@ typedef const char *smw_string_t;
 typedef smw_string_t smw_kdf_t;
 
 /**
- * typedef smw_tls12_enc_t - TLS 1.2 encryption algorithm name
- * Values:
- *	- 3DES_EDE_CBC
- *	- AES_128_CBC
- *	- AES_128_GCM
- *	- AES_256_CBC
- *	- AES_256_GCM
- *	- RC4_128
- */
-typedef smw_string_t smw_tls12_enc_t;
-
-/**
  * typedef smw_lifecycle_t - Device lifecycle name
  * Values:
  *	- OPEN

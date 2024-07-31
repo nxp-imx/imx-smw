@@ -3,6 +3,7 @@
  * Copyright 2022-2024 NXP
  */
 
+#include "smw/names.h"
 #include "smw_keymgr.h"
 #include "smw_crypto.h"
 #include "smw_keymgr.h"
@@ -779,7 +780,7 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 				    const uint8_t *input, size_t input_length,
 				    uint8_t *output, size_t output_size,
 				    size_t *output_length,
-				    const char *operation_name,
+				    smw_cipher_op_type_t op_type_name,
 				    struct smw_key_descriptor *key_descriptor,
 				    struct smw_cipher_args *args)
 {
@@ -814,7 +815,7 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 
 	init->iv_length = PSA_CIPHER_IV_LENGTH(key_type, alg);
 
-	if (!SMW_UTILS_STRCMP(operation_name, "ENCRYPT")) {
+	if (op_type_name == SMW_CIPHER_OP_TYPE_NAME_ENCRYPT) {
 		if (output_size <= init->iv_length)
 			return PSA_ERROR_INVALID_ARGUMENT;
 
@@ -834,7 +835,7 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 
 		data->output = output + init->iv_length;
 		data->output_length = output_size - init->iv_length;
-	} else if (!SMW_UTILS_STRCMP(operation_name, "DECRYPT")) {
+	} else if (op_type_name == SMW_CIPHER_OP_TYPE_NAME_DECRYPT) {
 		if (input_length < init->iv_length)
 			return PSA_ERROR_INVALID_ARGUMENT;
 
@@ -862,7 +863,7 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 
 	init->keys_desc[0] = key_descriptor;
 
-	init->operation_name = operation_name;
+	init->op_type_name = op_type_name;
 
 end:
 	if (psa_status != PSA_SUCCESS)
@@ -888,7 +889,8 @@ __export psa_status_t psa_cipher_decrypt(psa_key_id_t key, psa_algorithm_t alg,
 		return psa_status;
 
 	psa_status = set_cipher_args(key, alg, input, input_length, output,
-				     output_size, output_length, "DECRYPT",
+				     output_size, output_length,
+				     SMW_CIPHER_OP_TYPE_NAME_DECRYPT,
 				     &key_descriptor, &args);
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
@@ -939,7 +941,8 @@ __export psa_status_t psa_cipher_encrypt(psa_key_id_t key, psa_algorithm_t alg,
 		return psa_status;
 
 	psa_status = set_cipher_args(key, alg, input, input_length, output,
-				     output_size, output_length, "ENCRYPT",
+				     output_size, output_length,
+				     SMW_CIPHER_OP_TYPE_NAME_ENCRYPT,
 				     &key_descriptor, &args);
 	if (psa_status != PSA_SUCCESS)
 		goto end;

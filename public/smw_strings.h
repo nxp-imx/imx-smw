@@ -9,15 +9,6 @@
 typedef const char *smw_string_t;
 
 /**
- * typedef smw_aead_mode_t - AEAD mode name
- * Values:
- *	- CCM
- *	- CHACHA20_POLY1305
- *	- GCM
- */
-typedef smw_string_t smw_aead_mode_t;
-
-/**
  * typedef smw_cipher_operation_t - Cipher operation name
  * Values:
  *	- ENCRYPT

@@ -233,4 +233,23 @@ typedef enum {
 	SMW_CIPHER_MODE_NAME_NB
 } smw_cipher_mode_t;
 
+/**
+ * typedef smw_aead_mode_t - AEAD mode name
+ *
+ * Values:
+ * * SMW_AEAD_MODE_NAME_NONE: No AEAD mode specficied
+ * * SMW_AEAD_MODE_NAME_CCM: Counter with CBC-MAC mode
+ * * SMW_AEAD_MODE_NAME_GCM: Galois Counter Mode
+ * * SMW_AEAD_MODE_NAME_CHACHA20_POLY1305: ChaCha20 stream cipher with Poly1305 MAC mode
+ * * SMW_AEAD_MODE_NAME_NB: Number of AEAD modes
+ */
+typedef enum {
+	SMW_AEAD_MODE_NAME_NONE,
+	SMW_AEAD_MODE_NAME_CCM,
+	SMW_AEAD_MODE_NAME_GCM,
+	SMW_AEAD_MODE_NAME_CHACHA20_POLY1305,
+	SMW_AEAD_MODE_NAME_NB
+
+} smw_aead_mode_t;
+
 #endif /* __SMW_NAMES_H__ */

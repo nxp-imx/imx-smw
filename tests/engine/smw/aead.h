@@ -1,12 +1,21 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #ifndef __AEAD_H__
 #define __AEAD_H__
 
 #include "types.h"
+
+/**
+ * aead_get_mode_name() - Convert AEAD mode string value into integer value.
+ * @string: AEAD mode string.
+ *
+ * Return:
+ * AEAD mode name.
+ */
+smw_aead_mode_t aead_get_mode_name(const char *string);
 
 /**
  * aead() - Execute AEAD one-shot operation

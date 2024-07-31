@@ -7,6 +7,7 @@
 
 #include <json.h>
 
+#include <smw/names.h>
 #include <smw_keymgr.h>
 #include <smw/crypto/aead.h>
 
@@ -18,6 +19,32 @@
 #include "aead.h"
 
 #define MAX_IV_LEN 12
+
+#define AEAD_MODE(_name)                                                       \
+	{                                                                      \
+		.name = SMW_AEAD_MODE_NAME_##_name, .string = #_name           \
+	}
+
+static struct {
+	smw_aead_mode_t name;
+	const char *string;
+} aead_mode_names[] = { AEAD_MODE(CCM), AEAD_MODE(CHACHA20_POLY1305),
+			AEAD_MODE(GCM) };
+
+smw_aead_mode_t aead_get_mode_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_AEAD_MODE_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(aead_mode_names); i++) {
+		if (!strcmp(aead_mode_names[i].string, string))
+			return aead_mode_names[i].name;
+	}
+
+	return SMW_AEAD_MODE_NAME_NB + 1;
+}
 
 /**
  * aead_bad_params() - Set AEAD bad parameters
@@ -163,6 +190,7 @@ static int set_init_params(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(PASSED);
 
+	const char *mode_string = NULL;
 	const char *key_name = NULL;
 
 	args->subsystem_name = subtest->subsystem;
@@ -176,12 +204,14 @@ static int set_init_params(struct subtest_data *subtest,
 	}
 
 	/* Get the mode - Mandatory */
-	res = util_read_json_type(&args->mode_name, MODE_OBJ, t_string,
+	res = util_read_json_type(&mode_string, MODE_OBJ, t_string,
 				  subtest->params);
 	if (!is_api_test(subtest) && res != ERR_CODE(PASSED)) {
 		DBG_PRINT_MISS_PARAM("AEAD mode");
 		return ERR_CODE(MISSING_PARAMS);
 	}
+
+	args->mode_name = aead_get_mode_name(mode_string);
 
 	/* Get the operation type - Mandatory */
 	res = util_read_json_type(&args->operation_name, OP_TYPE_OBJ, t_string,

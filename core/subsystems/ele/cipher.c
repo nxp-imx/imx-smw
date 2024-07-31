@@ -15,7 +15,7 @@
 
 #define CIPHER_FLAG(_op_type_id)                                               \
 	{                                                                      \
-		.smw_op_type_id = SMW_CONFIG_CIPHER_OP_ID_##_op_type_id,       \
+		.smw_op_type_id = SMW_CONFIG_CIPHER_OP_TYPE_ID_##_op_type_id,  \
 		.flags = HSM_CIPHER_ONE_GO_FLAGS_##_op_type_id                 \
 	}
 
@@ -69,7 +69,7 @@ static int cipher(struct hdl *hdl, void *args)
 		goto end;
 
 	/* Get ELE operation */
-	status = set_cipher_flags(cipher_args->op_id, &op_args.flags);
+	status = set_cipher_flags(cipher_args->op_type_id, &op_args.flags);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

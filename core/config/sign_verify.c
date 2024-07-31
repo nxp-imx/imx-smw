@@ -16,7 +16,6 @@
 #include "config.h"
 #include "keymgr.h"
 #include "sign_verify.h"
-#include "name.h"
 #include "utils.h"
 
 #include "common.h"
@@ -34,6 +33,9 @@
 #define SMW_CONFIG_SIGN_ALGO_ID_OFFSET                                         \
 	(SMW_SIGNATURE_ALGO_NAME_DEFAULT - SMW_CONFIG_SIGN_ALGO_ID_DEFAULT)
 
+#define SMW_CONFIG_SIGN_TYPE_ID_OFFSET                                         \
+	(SMW_SIGNATURE_TYPE_NAME_DEFAULT - SMW_CONFIG_SIGN_TYPE_ID_DEFAULT)
+
 static const char *const sign_algo_strings[] = {
 	[SMW_CONFIG_SIGN_ALGO_ID_DEFAULT] = DEFAULT_STR,
 	[SMW_CONFIG_SIGN_ALGO_ID_ECDSA] = ECDSA_STR,
@@ -43,7 +45,7 @@ static const char *const sign_algo_strings[] = {
 	[SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2] = TLS_1_2_STR,
 };
 
-static const char *const sign_type_names[] = {
+static const char *const sign_type_strings[] = {
 	[SMW_CONFIG_SIGN_TYPE_ID_DEFAULT] = DEFAULT_STR,
 	[SMW_CONFIG_SIGN_TYPE_ID_PKCS1_1_5] = PKCS1_1_5_STR,
 	[SMW_CONFIG_SIGN_TYPE_ID_PSS] = PSS_STR,
@@ -64,11 +66,11 @@ static int read_signature_algo_srings(char **start, char *end,
 	return status;
 }
 
-static int read_signature_type_names(char **start, char *end,
-				     unsigned long *bitmap)
+static int read_signature_type_strings(char **start, char *end,
+				       unsigned long *bitmap)
 {
 	int status =
-		smw_config_read_strings(start, end, bitmap, sign_type_names,
+		smw_config_read_strings(start, end, bitmap, sign_type_strings,
 					SMW_CONFIG_SIGN_TYPE_ID_NB);
 	if (status == SMW_STATUS_UNKNOWN_NAME)
 		status = SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME;
@@ -110,8 +112,8 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, sign_type_values,
 					      length)) {
-			status = read_signature_type_names(&cur, end,
-							   &p->type_bitmap);
+			status = read_signature_type_strings(&cur, end,
+							     &p->type_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, hash_algo_values,
@@ -267,8 +269,9 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 		return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	/* Check signature type if set */
-	if (info->type) {
-		status = smw_config_get_signature_type_id(info->type, &type_id);
+	if (info->type_name != SMW_SIGNATURE_TYPE_NAME_NONE) {
+		status = smw_config_get_signature_type_id(info->type_name,
+							  &type_id);
 		if (status != SMW_STATUS_OK)
 			return status;
 
@@ -312,20 +315,20 @@ int smw_config_get_signature_algo_id(smw_signature_algo_t name,
 	return status;
 }
 
-int smw_config_get_signature_type_id(const char *name,
+int smw_config_get_signature_type_id(smw_signature_type_t name,
 				     enum smw_config_sign_type_id *id)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (name)
-		status = smw_utils_get_string_index(name, sign_type_names,
-						    SMW_CONFIG_SIGN_TYPE_ID_NB,
-						    id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_SIGN_TYPE_NAME;
+	if (name == SMW_SIGNATURE_TYPE_NAME_NONE) {
+		status = SMW_STATUS_INVALID_PARAM;
+	} else if (name < SMW_SIGNATURE_TYPE_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_CONFIG_SIGN_TYPE_ID_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

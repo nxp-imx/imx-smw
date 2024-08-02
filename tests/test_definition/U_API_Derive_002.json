@@ -11,19 +11,16 @@
 			]
 		},
 		"key 2": {
-			"pub_key": [
+			"shared_secret": [
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555"
 			]
 		},
-		"client write encryption key": {
-		},
-		"server write encryption key": {
-		},
-		"master secret key": {
-		},
+		"client write encryption key": {},
+		"server write encryption key": {},
+		"master secret key": {},
 		"key 6": {
 			"type": "DH",
 			"security_size": 256,
@@ -114,7 +111,8 @@
 			]
 		}
 	},
-	"subtest 1": { // TLS 1.2 operation arguments is NULL
+	"subtest 1": {
+		"description": "TLS 1.2 operation arguments is NULL",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -122,7 +120,8 @@
 		"test_error": "KDF_ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": { // TLS 1.2 KDF input not set
+	"subtest 2": {
+		"description": "TLS 1.2 KDF input not set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -141,7 +140,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // TLS 1.2 KDF input length set to 0
+	"subtest 3": {
+		"description": "TLS 1.2 KDF input length set to 0",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -169,7 +169,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Key exchange name is undefined
+	"subtest 4": {
+		"description": "Key exchange name is undefined",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -196,7 +197,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_UNKNOWN_TLS12_KEA_NAME"
 	},
-	"subtest 5": { // Key exchange name is not set
+	"subtest 5": {
+		"description": "Key exchange name is not set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -222,7 +224,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Encryption name is undefined
+	"subtest 6": {
+		"description": "Encryption name is undefined",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -249,7 +252,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_UNKNOWN_TLS12_ENC_NAME"
 	},
-	"subtest 7": { // Encryption name is not set
+	"subtest 7": {
+		"description": "Encryption name is not set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -275,7 +279,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // PRF name is undefined
+	"subtest 8": {
+		"description": "PRF name is undefined",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -302,7 +307,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"
 	},
-	"subtest 9": { // PRF name is not set
+	"subtest 9": {
+		"description": "PRF name is not set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -328,7 +334,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Client write IV buffer not allocated with Cipher GCM encryption
+	"subtest 10": {
+		"description": "Client write IV buffer not allocated with Cipher GCM encryption",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -354,7 +361,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 11": { // Client write IV buffer length set to 0 with Cipher GCM encryption
+	"subtest 11": {
+		"description": "Client write IV buffer length set to 0 with Cipher GCM encryption",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -384,7 +392,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 12": { // Server write IV buffer length not allocated with Cipher GCM encryption
+	"subtest 12": {
+		"description": "Server write IV buffer length not allocated with Cipher GCM encryption",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -410,7 +419,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 13": { // Server write IV buffer length set to 0 with Cipher GCM encryption
+	"subtest 13": {
+		"description": "Server write IV buffer length set to 0 with Cipher GCM encryption",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -440,7 +450,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 14": { // Key base type not supported
+	"subtest 14": {
+		"description": "Key base type not supported",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -467,7 +478,8 @@
 		"op_input": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 15": { // RSA key base with bad key exchange
+	"subtest 15": {
+		"description": "RSA key base with bad key exchange",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -494,7 +506,8 @@
 		"op_input": "key 7",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 16": { // ECDH key base with bad key exchange
+	"subtest 16": {
+		"description": "ECDH key base with bad key exchange",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -521,7 +534,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 17": { // DH key base with bad key exchange
+	"subtest 17": {
+		"description": "DH key base with bad key exchange",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -548,7 +562,8 @@
 		"op_input": "key 8",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 18": { // Key base public buffer length set to 0
+	"subtest 18": {
+		"description": "Key base public buffer length set to 0",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -575,7 +590,8 @@
 		"op_input": "key 10",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 19": { // RSA modulus is missing
+	"subtest 19": {
+		"description": "RSA modulus is missing",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -602,7 +618,8 @@
 		"op_input": "key 11",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 20": { // RSA modulus length is set to 0
+	"subtest 20": {
+		"description": "RSA modulus length is set to 0",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",

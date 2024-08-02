@@ -11,23 +11,24 @@
 			]
 		},
 		"key 2": {
-			"pub_key": [
+			"shared_secret": [
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555"
 			]
 		},
-		"client write encryption key": {
-		},
-		"server write encryption key": {
-		},
-		"master secret key": {
-		}
+		"client write encryption key": {},
+		"server write encryption key": {},
+		"master secret key": {}
 	},
-	"subtest 1": { // Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	"subtest 1": {
+		"description": [
+			"Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+			"Ephemeral key 1 doesn't need to be deleted"
+		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "SECO",
 		"op_type": "TLS12_KEY_EXCHANGE",
 		"op_args": {
 			"key_exchange_name": "ECDHE_ECDSA",
@@ -51,7 +52,8 @@
 		"op_output": "key 2",
 		"op_input": "key 1"
 	},
-	"subtest 2": { // TLS MAC Finish with unsupported hash algorithm
+	"subtest 2": {
+		"description": "TLS MAC Finish with unsupported hash algorithm",
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
@@ -67,7 +69,8 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
 		"depends": 1
 	},
-	"subtest 3": { // TLS MAC Finish with client label
+	"subtest 3": {
+		"description": "TLS MAC Finish with client label",
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
@@ -82,7 +85,8 @@
 		"key_name": "master secret key",
 		"depends": 1
 	},
-	"subtest 4": { // TLS MAC Finish with server label
+	"subtest 4": {
+		"description": "TLS MAC Finish with server label",
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
@@ -113,4 +117,3 @@
 		"depends": 1
 	}
 }
-/* Ephemeral key (key 1) doesn't need to be deleted */

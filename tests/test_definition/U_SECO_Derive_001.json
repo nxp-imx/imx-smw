@@ -1,6 +1,6 @@
 {
 	"keys": {
-		"key 1":{
+		"key 1": {
 			"type": "SECP_R1",
 			"security_size": 256,
 			"priv_key": [
@@ -8,7 +8,7 @@
 				"0cbb8e2125c620e32636222c32ec2810"
 			]
 		},
-		"key 2":{
+		"key 2": {
 			"type": "SECP_R1",
 			"security_size": 256,
 			"pub_key": [
@@ -18,7 +18,7 @@
 				"8d20e493a01abeca121e719215df0541"
 			]
 		},
-		"key 3":{
+		"key 3": {
 			"shared_secret": [
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555",
@@ -26,13 +26,10 @@
 				"55555555555555555555555555555555"
 			]
 		},
-		"client write encryption key 1":{
-		},
-		"server write encryption key 1":{
-		},
-		"master secret key 1":{
-		},
-		"key 7":{
+		"client write encryption key 1": {},
+		"server write encryption key 1": {},
+		"master secret key 1": {},
+		"key 7": {
 			"shared_secret": [
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555",
@@ -40,17 +37,12 @@
 				"55555555555555555555555555555555"
 			]
 		},
-		"client write encryption key 2":{
-		},
-		"server write encryption key 2":{
-		},
-		"client write MAC key 2":{
-		},
-		"server write MAC key 2":{
-		},
-		"master secret key 2":{
-		},
-		"key 13":{
+		"client write encryption key 2": {},
+		"server write encryption key 2": {},
+		"client write MAC key 2": {},
+		"server write MAC key 2": {},
+		"master secret key 2": {},
+		"key 13": {
 			"type": "SECP_R1",
 			"security_size": 256,
 			"format": "BASE64",
@@ -60,30 +52,33 @@
 				"jSDkk6AavsoSHnGSFd8FQQ=="
 			]
 		},
-		"key 14":{
+		"key 14": {
 			"format": "BASE64",
 			"shared_secret": [
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555",
-				"555555555555555555555555"
+				"AAECAwQFBgcICQoLDA0ODxAREhMUFRYX",
+				"GBkaGxwdHh8AAQIDBAUGBwgJCgsMDQ4P",
+				"EBESExQVFhcYGRobHB0eHw=="
 			]
 		},
-		"client write encryption key 3":{
-		},
-		"server write encryption key 3":{
-		},
-		"master secret key 3":{
-		}
+		"client write encryption key 3": {},
+		"server write encryption key 3": {},
+		"master secret key 3": {}
 	},
-	"subtest 1": { // KDF name (NULL) not supported
+	"subtest 1": {
+		"description": "KDF name (NULL) not supported",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "SECO",
 		"op_input": "key 1",
+		"op_output": "key 3",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 2": { // Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	"subtest 2": {
+		"description": [
+			"Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+			"Ephemeral key 3 doesn't need to be deleted"
+		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "SECO",
 		"op_type": "TLS12_KEY_EXCHANGE",
 		"op_args": {
 			"key_exchange_name": "ECDHE_ECDSA",
@@ -107,9 +102,13 @@
 		"op_output": "key 3",
 		"op_input": "key 2"
 	},
-	"subtest 3": { // Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+	"subtest 3": {
+		"description": [
+			"Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256",
+			"Ephemeral key 7 doesn't need to be deleted"
+		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "SECO",
 		"op_type": "TLS12_KEY_EXCHANGE",
 		"op_args": {
 			"key_exchange_name": "ECDHE_ECDSA",
@@ -133,9 +132,13 @@
 		"op_output": "key 7",
 		"op_input": "key 2"
 	},
-	"subtest 4": { // Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	"subtest 4": {
+		"description": [
+			"Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+			"Ephemeral key 14 doesn't need to be deleted"
+		],
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
+		"subsystem": "SECO",
 		"op_type": "TLS12_KEY_EXCHANGE",
 		"op_args": {
 			"key_exchange_name": "ECDHE_ECDSA",
@@ -215,4 +218,3 @@
 		"depends": 4
 	}
 }
-/* Ephemeral key (3, 7 and 14) doesn't need to be deleted */

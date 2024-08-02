@@ -95,7 +95,6 @@ read_derived_key_descriptor(struct llist *keys,
 	struct key_data *data = NULL;
 	const char *type_string = NULL;
 	const char *format_string = NULL;
-	struct tbuffer derived_key = { 0 };
 
 	if (!derived_key_desc || !key_name) {
 		DBG_PRINT_BAD_ARGS();
@@ -138,15 +137,13 @@ read_derived_key_descriptor(struct llist *keys,
 	derived_key_desc->format_name = key_get_format_name(format_string);
 
 	/* Read shared secret buffer if defined */
-	ret = util_read_json_type(&derived_key, SHARED_SECRET_OBJ, t_buffer_hex,
-				  data->okey_params);
+	ret = util_read_obj_value(&derived_key_desc->shared_secret,
+				  &derived_key_desc->shared_secret_len,
+				  SHARED_SECRET_OBJ, data->okey_params);
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND)) {
 		DBG_PRINT("Failed to read OKM buffer");
 		return ret;
 	}
-
-	derived_key_desc->shared_secret = derived_key.data;
-	derived_key_desc->shared_secret_len = derived_key.length;
 
 	return ERR_CODE(PASSED);
 }

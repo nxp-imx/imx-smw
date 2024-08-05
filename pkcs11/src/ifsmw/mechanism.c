@@ -30,14 +30,6 @@
 
 #include "trace.h"
 
-#define ENCRYPT_STR "ENCRYPT"
-#define DECRYPT_STR "DECRYPT"
-
-#define ECDSA_STR "ECDSA"
-
-#define PKCS1_1_5_STR "PKCS1_1_5"
-#define PSS_STR	      "PSS"
-
 struct mgroup;
 struct mentry;
 
@@ -92,10 +84,8 @@ smw_key_type_t smw_ec_name[] = { SMW_KEY_TYPE_NAME_SECP_R1,
  * @type: Cryptoki Mechanism type
  * @slot_flag: Bit mask flag of a device supporting the mechanism
  * @smw_key_type: SMW key types name for this mechanism, if only one
- * @smw_algo: SMW algorithm name for this mechanism
- * @smw_mode: SMW mode name for this mechanism, if any
  * @smw_hash: SMW hash name for this mechanism, if any
- * @smw_mac: SMW MAC name for this mechansim, if any
+ * @smw_mac: SMW MAC name for this mechanism, if any
  * @smw_cipher_mode: SMW cipher mode name for this mechanism, if any
  * @smw_sign_algo: SMW signature algorithm name for this mechanism, if any
  * @smw_sign_type: SMW signature type name for this mechanism, if any
@@ -107,8 +97,6 @@ struct mentry {
 	CK_MECHANISM_TYPE type;
 	CK_FLAGS slot_flag;
 	smw_key_type_t smw_key_type;
-	smw_string_t smw_algo;
-	smw_string_t smw_mode;
 	smw_hash_algo_t smw_hash;
 	smw_mac_algo_t smw_mac;
 	smw_cipher_mode_t smw_cipher_mode;
@@ -142,14 +130,12 @@ struct mgroup {
 };
 
 /* Macro filling a struct mentry for a single algo */
-#define M_ALGO(_key_type_name, _algo_name, _mode_name, _hash_name, _mac_name,  \
-	       _cipher_mode_name, _sign_algo_name, _sign_type_name, _algo_id,  \
-	       _id)                                                            \
+#define M_ALGO(_key_type_name, _hash_name, _mac_name, _cipher_mode_name,       \
+	       _sign_algo_name, _sign_type_name, _algo_id, _id)                \
 	{                                                                      \
 		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type_name,            \
-		.smw_algo = _algo_name, .smw_hash = _hash_name,                \
-		.smw_mode = _mode_name, .smw_mac = _mac_name,                  \
+		.smw_hash = _hash_name, .smw_mac = _mac_name,                  \
 		.smw_cipher_mode = _cipher_mode_name,                          \
 		.smw_sign_algo = _sign_algo_name,                              \
 		.smw_sign_type = _sign_type_name, .smw_algo_id = _algo_id,     \
@@ -157,22 +143,20 @@ struct mgroup {
 	}
 
 #define M_DIGEST(_hash, _id)                                                   \
-	M_ALGO(NONE, NULL, NULL, SMW_HASH_ALGO_NAME_##_hash,                   \
-	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
-	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
-	       SMW_ATTR_HASH_##_hash, _id)
+	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_NONE,        \
+	       SMW_SIGNATURE_TYPE_NAME_NONE, SMW_ATTR_HASH_##_hash, _id)
 
 /* Macro filling a struct mentry for an algo or a list of algo */
 #define M_ECKEYGEN(_key_types, _nb_key_types, _id)                             \
 	{                                                                      \
-		.type = CKM_##_id, .slot_flag = 0, .smw_algo = NULL,           \
+		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
 		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
 		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
-		.smw_mode = NULL, .smw_algo_id = 0,                            \
-		.nb_smw_key_types = _nb_key_types,                             \
+		.smw_algo_id = 0, .nb_smw_key_types = _nb_key_types,           \
 		.smw_key_types = _key_types,                                   \
 	}
 
@@ -180,68 +164,68 @@ struct mgroup {
 	{                                                                      \
 		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
-		.smw_algo = NULL, .smw_hash = SMW_HASH_ALGO_NAME_NONE,         \
+		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
 		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
 		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
-		.smw_mode = NULL, .smw_algo_id = 0, .nb_smw_key_types = 1,     \
+		.smw_algo_id = 0, .nb_smw_key_types = 1,                       \
 		.smw_key_types = NULL,                                         \
 	}
 
 #define M_SIGN_ECDSA_ANY_HASH(_id)                                             \
-	M_ALGO(NONE, NULL, NULL, SMW_HASH_ALGO_NAME_NONE,                      \
-	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
-	       SMW_SIGNATURE_ALGO_NAME_ECDSA, SMW_SIGNATURE_TYPE_NAME_NONE,    \
+	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_ECDSA,       \
+	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_ANY,    \
 							SMW_ATTR_HASH_ANY),    \
 	       _id)
 
 #define M_SIGN_ECDSA(_hash, _id)                                               \
-	M_ALGO(NONE, NULL, NULL, SMW_HASH_ALGO_NAME_##_hash,                   \
-	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
-	       SMW_SIGNATURE_ALGO_NAME_ECDSA, SMW_SIGNATURE_TYPE_NAME_NONE,    \
+	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_ECDSA,       \
+	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(                       \
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
 	       _id)
 
 #define M_SIGN_RSA_ANY_HASH(_mode, _id)                                        \
-	M_ALGO(NONE, NULL, NULL, SMW_HASH_ALGO_NAME_NONE,                      \
-	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
-	       SMW_SIGNATURE_ALGO_NAME_RSA, SMW_SIGNATURE_TYPE_NAME_##_mode,   \
+	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_RSA,         \
+	       SMW_SIGNATURE_TYPE_NAME_##_mode,                                \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_ANY, 0),   \
 	       _id)
 
 #define M_SIGN_RSA(_mode, _hash, _id)                                          \
-	M_ALGO(NONE, NULL, NULL, SMW_HASH_ALGO_NAME_##_hash,                   \
-	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_NONE,              \
-	       SMW_SIGNATURE_ALGO_NAME_RSA, SMW_SIGNATURE_TYPE_NAME_##_mode,   \
+	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_RSA,         \
+	       SMW_SIGNATURE_TYPE_NAME_##_mode,                                \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_##_hash,   \
 						      0),                      \
 	       _id)
 
 #define M_CIPHER(_algo, _mode, _mode_id, _id)                                  \
-	M_ALGO(_algo, NULL, NULL, SMW_HASH_ALGO_NAME_NONE,                     \
-	       SMW_MAC_ALGO_NAME_NONE, SMW_CIPHER_MODE_NAME_##_mode,           \
-	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
+	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,         \
+	       SMW_CIPHER_MODE_NAME_##_mode, SMW_SIGNATURE_ALGO_NAME_NONE,     \
+	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
 	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
 						  SMW_ATTR_MODE_##_mode_id),   \
 	       _id)
 
 #define M_MAC(_algo, _mac, _mode_id, _id)                                      \
-	M_ALGO(_algo, NULL, NULL, SMW_HASH_ALGO_NAME_NONE,                     \
-	       SMW_MAC_ALGO_NAME_##_mac, SMW_CIPHER_MODE_NAME_NONE,            \
-	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
+	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_##_mac,       \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_NONE,        \
+	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
 	       SMW_ATTR_ALGO_MAC(SMW_ATTR_ALGO_##_algo,                        \
 				 SMW_ATTR_MODE_##_mode_id, 0),                 \
 	       _id)
 
 #define M_HMAC(_mac, _hash, _id)                                               \
-	M_ALGO(HMAC, NULL, NULL, SMW_HASH_ALGO_NAME_##_hash,                   \
-	       SMW_MAC_ALGO_NAME_##_mac, SMW_CIPHER_MODE_NAME_NONE,            \
-	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
+	M_ALGO(HMAC, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_##_mac,     \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_NONE,        \
+	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
 	       SMW_ATTR_ALGO_MAC_HMAC(SMW_ATTR_HASH_##_hash, 0), _id)
 
 /* Macro filling a group of mechanisms */
@@ -1153,7 +1137,7 @@ end:
 
 	ret = smw_status_to_ck_rv(status);
 	DBG_TRACE("%s on subsystem #%d SMW status = 0x%x return = 0x%lx",
-		  params->op_flag == CKF_ENCRYPT ? ENCRYPT_STR : DECRYPT_STR,
+		  params->op_flag == CKF_ENCRYPT ? "ENCRYPT" : "DECRYPT",
 		  smw_init_args->subsystem_name, status, ret);
 	return ret;
 }

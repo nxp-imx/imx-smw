@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022 NXP
+ * Copyright 2022, 2024 NXP
  */
 
 #include "smw_status.h"
@@ -29,7 +29,7 @@ int ele_derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	SMW_DBG_ASSERT(args);
 
 	switch (args->kdf_id) {
-	case SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE:
+	case SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE:
 		status = derive_tls12(hdl, args);
 		break;
 

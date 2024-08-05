@@ -237,7 +237,7 @@ typedef enum {
  * typedef smw_aead_mode_t - AEAD mode name
  *
  * Values:
- * * SMW_AEAD_MODE_NAME_NONE: No AEAD mode specficied
+ * * SMW_AEAD_MODE_NAME_NONE: No AEAD mode specified
  * * SMW_AEAD_MODE_NAME_CCM: Counter with CBC-MAC mode
  * * SMW_AEAD_MODE_NAME_GCM: Galois Counter Mode
  * * SMW_AEAD_MODE_NAME_CHACHA20_POLY1305: ChaCha20 stream cipher with Poly1305 MAC mode
@@ -427,5 +427,21 @@ typedef enum {
 	SMW_LIFECYCLE_NAME_NXP_RETURN,
 	SMW_LIFECYCLE_NAME_NB
 } smw_lifecycle_t;
+
+/**
+ * typedef smw_kdf_t - Key Derivation Function name
+ *
+ * Values:
+ * * SMW_KDF_NAME_NONE: No Key Derivation Function name specified
+ * * SMW_KDF_NAME_HKDF: HMAC-Based Key Derivation Function
+ * * SMW_KDF_NAME_TLS12_KEY_EXCHANGE: TLS 1.2 Key Exchange
+ * * SMW_KDF_NAME_NB: Number of Key Derivation Functions
+ */
+typedef enum {
+	SMW_KDF_NAME_NONE,
+	SMW_KDF_NAME_HKDF,
+	SMW_KDF_NAME_TLS12_KEY_EXCHANGE,
+	SMW_KDF_NAME_NB
+} smw_kdf_t;
 
 #endif /* __SMW_NAMES_H__ */

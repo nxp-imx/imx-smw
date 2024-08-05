@@ -9,7 +9,6 @@
 #include <stddef.h>
 
 #include "smw_status.h"
-#include "smw_strings.h"
 #include "smw/names.h"
 
 /**
@@ -53,7 +52,7 @@
  *        if (res != SMW_STATUS_OK)
  *            goto exit;
  *
- *        // Load and initialize the library. OSAL is loading the appplication
+ *        // Load and initialize the library. OSAL is loading the application
  *        // SMW configuration file defined by the system environment variable
  *        // 'SMW_CONFIG_FILE'
  *        res = smw_osal_lib_init();

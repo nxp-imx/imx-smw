@@ -7,7 +7,6 @@
 #define __SMW_STORAGE_H__
 
 #include "smw_status.h"
-#include "smw_strings.h"
 #include "smw/attr.h"
 #include "smw/names.h"
 

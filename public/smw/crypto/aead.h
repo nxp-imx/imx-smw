@@ -7,7 +7,6 @@
 #define __SMW_AEAD_H__
 
 #include "smw_status.h"
-#include "smw_strings.h"
 #include "smw/names.h"
 
 /**
@@ -161,7 +160,7 @@ struct smw_aead_args {
  * are updated with generated tag value length and IV length, respectively.
  *
  * On operation completion, the @args->final->data->output_length is updated to
- * the correct value when:
+ * the correct value when
  *
  *  - Output length is bigger than expected. In this case, operation succeeds.
  *  - Output length is shorter than expected. In this case, operation fails and

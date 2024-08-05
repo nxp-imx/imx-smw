@@ -38,7 +38,7 @@
  * @SMW_STATUS_SUBSYSTEM_NOT_LOADED: Secure Subsystem is not loaded.
  * @SMW_STATUS_KEY_INVALID: Key used for the operation is not valid.
  * @SMW_STATUS_INVALID_LIFECYCLE: Device lifecycle not valid, or object not
- * accessible in current device lifecyle.
+ * accessible in current device lifecycle.
  * @SMW_STATUS_UNKNOWN_MODE_NAME: Mode name provided by the user or set in the
  * user configuration is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_OP_TYPE_NAME: Operation type name provided by the user or
@@ -54,7 +54,7 @@
  * @SMW_STATUS_OEM_SRKH_NOT_FUSED: Device OEM SRKH is not fused.
  *
  * @SMW_STATUS_OPS_INVALID: OSAL operations structure is invalid.
- * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initalization has failed.
+ * @SMW_STATUS_MUTEX_INIT_FAILURE: Mutex initialization has failed.
  * @SMW_STATUS_MUTEX_DESTROY_FAILURE: Mutex destruction has failed.
  * @SMW_STATUS_LIBRARY_ALREADY_INIT: Library is already initialized.
  * @SMW_STATUS_MUTEX_LOCK_FAILURE: Mutex lock has failed.
@@ -171,6 +171,7 @@
  *	- SMW_STATUS_SIGNATURE_LEN_INVALID
  *
  ** Specific return codes - Object database
+ *
  *	- SMW_STATUS_ERROR_OBJ_DB_INIT
  *	- SMW_STATUS_ERROR_OBJ_DB_CREATE
  *	- SMW_STATUS_ERROR_OBJ_DB_UPDATE
@@ -178,6 +179,7 @@
  *	- SMW_STATUS_ERROR_OBJ_DB_GET_INFO
  *
  ** Specific return codes - Key manager
+ *
  *	- SMW_STATUS_KEY_POLICY_WARNING_IGNORED
  *	- SMW_STATUS_UNKNOWN_KEY_OP_NAME
  *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME
@@ -187,7 +189,8 @@
  *	- SMW_STATUS_UNKNOWN_TLS12_ENC_NAME
  *
  ** Specific return codes - Device manager
- *      - SMW_STATUS_OEM_SRKH_NOT_FUSED
+ *
+ *	- SMW_STATUS_OEM_SRKH_NOT_FUSED
  */
 
 /* Status codes */

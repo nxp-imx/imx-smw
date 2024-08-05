@@ -16,17 +16,20 @@
  * @key_desc: Pointer to a key descriptor object. See &struct smw_key_descriptor
  * @mode_name: AEAD mode name. See &typedef smw_aead_mode_t
  * @op_type_name: AEAD operation name. See &typedef smw_aead_op_type_t
- * @iv: Pointer to initialization vector
- * @iv_length: IV buffer length in bytes
+ * @user_iv: Pointer to user initialization vector
+ * @user_iv_length: User IV buffer length in bytes
+ * @iv_length: Requested IV buffer length in bytes
  * @aad_length: Additional authentication data length in bytes
  * @tag_length: Tag buffer length in bytes
  * @plaintext_length: Length in bytes of the data to encrypt
  * @context: Pointer to an opaque operation context structure
  *
  * If subsystem offers the capability to generate partial or complete IV,
- * the user can set the input @init->iv_length to 0 (requesting full generated
- * IV) or to 4 (requesting partial generated IV). Otherwise, if @init->iv_length
- * is set to 12 bytes or greater, the subsystem will use the user supplied IV.
+ * the user can set the input @init->user_iv_length to 0 (requesting full generated
+ * IV) or set @init->iv_length to the requested IV size (requesting partial generated IV).
+ * Otherwise, if @init->user_iv_length is set to the maximum IV size supported by the
+ * subsystem, @init->iv_length is not taking into consideration.
+ * Please refer to the AEAD subsystems capabilities.
  *
  */
 struct smw_aead_init_args {
@@ -36,7 +39,8 @@ struct smw_aead_init_args {
 	struct smw_key_descriptor *key_desc;
 	smw_aead_mode_t mode_name;
 	smw_aead_op_type_t op_type_name;
-	unsigned char *iv;
+	unsigned char *user_iv;
+	unsigned int user_iv_length;
 	unsigned int iv_length;
 	unsigned int aad_length;
 	unsigned int tag_length;

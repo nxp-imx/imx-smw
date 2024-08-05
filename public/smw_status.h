@@ -39,6 +39,7 @@
  * @SMW_STATUS_KEY_INVALID: Key used for the operation is not valid.
  * @SMW_STATUS_INVALID_LIFECYCLE: Device lifecycle not valid, or object not
  * accessible in current device lifecycle.
+ * @SMW_STATUS_INVALID_IV_SIZE: IV size used for the operation is not valid
  * @SMW_STATUS_UNKNOWN_MODE_NAME: Mode name provided by the user or set in the
  * user configuration is not recognized by SMW.
  * @SMW_STATUS_UNKNOWN_OP_TYPE_NAME: Operation type name provided by the user or
@@ -130,6 +131,7 @@
  *	- SMW_STATUS_SUBSYSTEM_NOT_LOADED
  *	- SMW_STATUS_KEY_INVALID
  *	- SMW_STATUS_INVALID_LIFECYCLE
+ *	- SMW_STATUS_INVALID_IV_SIZE
  *	- SMW_STATUS_UNKNOWN_MODE_NAME
  *	- SMW_STATUS_UNKNOWN_OP_TYPE_NAME
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME
@@ -261,6 +263,7 @@ enum smw_status_code {
 	SMW_STATUS_UNKNOWN_TLS12_ENC_NAME,
 	SMW_STATUS_OEM_SRKH_NOT_FUSED, /* 65 */
 	SMW_STATUS_CONFIGURATION_FAILURE,
+	SMW_STATUS_INVALID_IV_SIZE,
 };
 
 #endif /* __SMW_STATUS_H__ */

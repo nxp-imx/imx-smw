@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <smw_keymgr.h>
+#include <smw/names.h>
 
 #include "util.h"
 #include "util_key.h"
@@ -17,6 +18,16 @@
 
 #define HKDF_EXPAND  "HKDF_EXPAND"
 #define HKDF_EXTRACT "HKDF_EXTRACT"
+
+#define KDF_NAME(_name)                                                        \
+	{                                                                      \
+		.name = SMW_KDF_NAME_##_name, .string = #_name                 \
+	}
+
+static struct {
+	smw_kdf_t name;
+	const char *string;
+} kdf_names[] = { KDF_NAME(HKDF), KDF_NAME(TLS12_KEY_EXCHANGE) };
 
 #define KEA(_name)                                                             \
 	{                                                                      \
@@ -40,6 +51,21 @@ static struct {
 	const char *string;
 } encryption_names[] = { ENC(3DES_EDE_CBC), ENC(AES_128_CBC), ENC(AES_128_GCM),
 			 ENC(AES_256_CBC),  ENC(AES_256_GCM), ENC(RC4_128) };
+
+static smw_kdf_t get_kdf_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_KDF_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(kdf_names); i++) {
+		if (!strcmp(kdf_names[i].string, string))
+			return kdf_names[i].name;
+	}
+
+	return SMW_KDF_NAME_NB + 1;
+}
 
 static smw_tls12_kea_t get_tls12_key_exchange_name(const char *string)
 {
@@ -696,7 +722,7 @@ static void kdf_hkdf_free(struct smw_derive_key_args *args)
 }
 
 static const struct kdf_op {
-	const char *name;
+	smw_kdf_t name;
 	int (*read_args)(void **kdf_args, struct json_object *oargs);
 	int (*prepare_result)(struct subtest_data *subtest,
 			      struct smw_derived_key_descriptor *key_desc);
@@ -704,14 +730,14 @@ static const struct kdf_op {
 			     struct smw_derive_key_args *args);
 	void (*free)(struct smw_derive_key_args *args);
 } kdf_ops[] = { {
-			.name = "TLS12_KEY_EXCHANGE",
+			.name = SMW_KDF_NAME_TLS12_KEY_EXCHANGE,
 			.read_args = &kdf_tls12_read_args,
 			.prepare_result = &kdf_tls12_prepare_result,
 			.end_operation = &kdf_tls12_end_operation,
 			.free = &kdf_tls12_free,
 		},
 		{
-			.name = "HKDF",
+			.name = SMW_KDF_NAME_HKDF,
 			.read_args = &kdf_hkdf_read_args,
 			.prepare_result = &kdf_hkdf_prepare_result,
 			.end_operation = &kdf_hkdf_end_operation,
@@ -721,22 +747,21 @@ static const struct kdf_op {
 
 /**
  * get_kdf_op() - Find the Key Derivation name in the KDF operation
- * @kdf_name: Key Derivation name
+ * @kdf_name: Key Derivation Function name
  *
  * Return:
  * Pointer to the entry in the KDF operation list if found,
  * otherwise NULL
  */
-static const struct kdf_op *get_kdf_op(const char *kdf_name)
+static const struct kdf_op *get_kdf_op(smw_kdf_t kdf_name)
 {
-	const struct kdf_op *entry = kdf_ops;
+	unsigned int i = 0;
+	const struct kdf_op *entry = NULL;
 
-	if (kdf_name) {
-		while (entry->name) {
-			if (!strcmp(entry->name, kdf_name))
-				return entry;
-			entry++;
-		}
+	for (; i < ARRAY_SIZE(kdf_ops); i++) {
+		entry = &kdf_ops[i];
+		if (kdf_name != SMW_KDF_NAME_NONE && entry->name == kdf_name)
+			return entry;
 	}
 
 	return NULL;
@@ -767,19 +792,22 @@ static int kdf_args_read(struct smw_derive_key_args *args,
 
 	const struct kdf_op *kdf_op = NULL;
 	struct json_object *oargs = NULL;
+	const char *op_type_string = NULL;
 
 	/* Get the key derivation function if any */
-	res = util_read_json_type(&args->kdf_name, OP_TYPE_OBJ, t_string,
+	res = util_read_json_type(&op_type_string, OP_TYPE_OBJ, t_string,
 				  params);
 
 	if (res == ERR_CODE(VALUE_NOTFOUND)) {
-		args->kdf_name = NULL;
+		args->kdf_name = SMW_KDF_NAME_NONE;
 		args->kdf_arguments = NULL;
 		return ERR_CODE(PASSED);
 	}
 
 	if (res != ERR_CODE(PASSED))
 		return res;
+
+	args->kdf_name = get_kdf_name(op_type_string);
 
 	kdf_op = get_kdf_op(args->kdf_name);
 

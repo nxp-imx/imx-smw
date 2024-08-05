@@ -91,7 +91,7 @@ static bool is_key_type_supported(enum smw_config_key_type_id type_id,
 {
 	bool status = false;
 
-	if (kdf_id == SMW_CONFIG_KDF_HKDF) {
+	if (kdf_id == SMW_CONFIG_KDF_ID_HKDF) {
 		switch (type_id) {
 		case SMW_CONFIG_KEY_TYPE_ID_AES:
 		case SMW_CONFIG_KEY_TYPE_ID_DES:
@@ -400,7 +400,7 @@ int derive_key(void *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	switch (key_args->kdf_id) {
-	case SMW_CONFIG_KDF_HKDF:
+	case SMW_CONFIG_KDF_ID_HKDF:
 		status = hkdf_derive_key(args);
 		break;
 

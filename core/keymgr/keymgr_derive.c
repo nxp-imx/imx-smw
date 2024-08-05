@@ -638,7 +638,7 @@ static int convert_input_args(struct smw_derive_key_args *args,
 	 * function if specified.
 	 */
 	switch (conv_args->kdf_id) {
-	case SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE:
+	case SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE:
 		status = tls12_convert_args(args->kdf_arguments,
 					    &conv_args->kdf_args);
 
@@ -647,7 +647,7 @@ static int convert_input_args(struct smw_derive_key_args *args,
 
 		break;
 
-	case SMW_CONFIG_KDF_HKDF:
+	case SMW_CONFIG_KDF_ID_HKDF:
 		status = hkdf_convert_input_args(args->kdf_arguments,
 						 &conv_args->kdf_args);
 
@@ -680,11 +680,11 @@ static int convert_output_args(struct smw_derive_key_args *args,
 	 * function if specified.
 	 */
 	switch (conv_args->kdf_id) {
-	case SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE:
+	case SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE:
 		status = tls12_convert_output(args, conv_args);
 		break;
 
-	case SMW_CONFIG_KDF_HKDF:
+	case SMW_CONFIG_KDF_ID_HKDF:
 		status = hkdf_convert_output(args, conv_args);
 		break;
 
@@ -743,7 +743,7 @@ static int create_key_in_db(unsigned int *new_id, enum smw_config_kdf_id kdf_id,
 {
 	int status = SMW_STATUS_OK;
 
-	if (kdf_id == SMW_CONFIG_KDF_HKDF)
+	if (kdf_id == SMW_CONFIG_KDF_ID_HKDF)
 		status = smw_keymgr_db_create(new_id, identifier);
 
 	return status;
@@ -807,7 +807,7 @@ static int update_key_in_db(int status, unsigned int *id,
 	int ret_status = status;
 	int temp_status = SMW_STATUS_OK;
 
-	if (kdf_id == SMW_CONFIG_KDF_HKDF) {
+	if (kdf_id == SMW_CONFIG_KDF_ID_HKDF) {
 		if (status != SMW_STATUS_OK &&
 		    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
 			/* Delete the key from the database */

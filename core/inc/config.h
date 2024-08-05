@@ -117,8 +117,8 @@ enum smw_config_cipher_mode_id {
 };
 
 enum smw_config_kdf_id {
-	SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE,
-	SMW_CONFIG_KDF_HKDF,
+	SMW_CONFIG_KDF_ID_HKDF,
+	SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE,
 	SMW_CONFIG_KDF_ID_NB,
 	SMW_CONFIG_KDF_ID_INVALID
 };
@@ -337,18 +337,18 @@ int smw_config_get_signature_type_id(smw_signature_type_t name,
 				     enum smw_config_sign_type_id *id);
 
 /**
- * smw_config_get_kdf_id() - Get the id of the key derivation function name
- * @name: Name of the key derivation function
- * @id: Key derivation function id found
+ * smw_config_get_kdf_id() - Get the id of the Key Derivation Function name
+ * @name: Name of the Key Derivation Function
+ * @id: Key Derivation Function id found
  *
  * Note: If name is NULL, the returned @id is set SMW_CONFIG_KDF_ID_INVALID
  *       and function return SMW_STATUS_OK.
  *
  * Return:
- * SMW_STATUS_UNKNOWN_KDF_NAME	- @name is unknown
- * SMW_STATUS_OK		- Success
+ * SMW_STATUS_UNKNOWN_KDF_NAME  - @name is unknown
+ * SMW_STATUS_OK                - Success
  */
-int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id);
+int smw_config_get_kdf_id(smw_kdf_t name, enum smw_config_kdf_id *id);
 
 /**
  * smw_config_get_psa_config() - Get the PSA configuration.

@@ -20,6 +20,16 @@
 #include "common.h"
 #include "tag.h"
 
+/*
+ * Ordering must be the same for internal values and public values.
+ * This way the offset between the internal values and the public values
+ * can be used for conversion, and no conversion table is required.
+ *
+ * The offset between the internal values and the public values is
+ * given by the first public value.
+ */
+#define SMW_CONFIG_KDF_ID_OFFSET (SMW_KDF_NAME_HKDF - SMW_CONFIG_KDF_ID_HKDF)
+
 static const char *const key_type_strings[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_SECP_R1] = "SECP_R1",
 	[SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1] = "BRAINPOOL_R1",
@@ -38,9 +48,9 @@ static const char *const key_type_strings[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_GENERIC_SECRET] = "GENERIC_SECRET"
 };
 
-static const char *const key_derive_op_names[] = {
-	[SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE] = "TLS12_KEY_EXCHANGE",
-	[SMW_CONFIG_KDF_HKDF] = "HKDF"
+static const char *const kdf_strings[] = {
+	[SMW_CONFIG_KDF_ID_HKDF] = "HKDF",
+	[SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE] = "TLS12_KEY_EXCHANGE"
 };
 
 static int read_key_type_strings(char **start, char *end, unsigned long *bitmap)
@@ -115,8 +125,9 @@ end:
 	return status;
 }
 
-static bool read_key_op_names(char **start, char *end, enum operation_id op_id,
-			      unsigned long *bitmap, int *status)
+static bool read_key_op_strings(char **start, char *end,
+				enum operation_id op_id, unsigned long *bitmap,
+				int *status)
 {
 	bool read_key_op_type_value = false;
 	const char *const *op_names = NULL;
@@ -124,7 +135,7 @@ static bool read_key_op_names(char **start, char *end, enum operation_id op_id,
 
 	switch (op_id) {
 	case OPERATION_ID_DERIVE_KEY:
-		op_names = key_derive_op_names;
+		op_names = kdf_strings;
 		nb_op_names = SMW_CONFIG_KDF_ID_NB;
 		read_key_op_type_value = true;
 		break;
@@ -136,7 +147,7 @@ static bool read_key_op_names(char **start, char *end, enum operation_id op_id,
 	*status = smw_config_read_strings(start, end, bitmap, op_names,
 					  nb_op_names);
 	if (*status == SMW_STATUS_UNKNOWN_NAME)
-		*status = SMW_STATUS_UNKNOWN_KEY_OP_NAME;
+		*status = SMW_STATUS_UNKNOWN_KDF_NAME;
 
 	return read_key_op_type_value;
 }
@@ -199,8 +210,8 @@ static int read_params(char **start, char *end, enum operation_id operation_id,
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, op_type_values, length)) {
-			if (read_key_op_names(&cur, end, operation_id,
-					      &p->op_bitmap, &status)) {
+			if (read_key_op_strings(&cur, end, operation_id,
+						&p->op_bitmap, &status)) {
 				if (status != SMW_STATUS_OK)
 					goto end;
 			} else {
@@ -338,7 +349,7 @@ static int derive_key_check_subsystem_caps(void *args, void *params)
 	status = check_subsystem_caps(&derive_args->key_base, op_params);
 
 	/*
-	 * Check if the Key Derivation Function if specified is
+	 * Check if the Key Derivation Function ID specified is
 	 * supported by the subsystem.
 	 */
 	if (status == SMW_STATUS_OK &&
@@ -466,21 +477,19 @@ int smw_config_get_key_type_id(smw_key_type_t name,
 	return status;
 }
 
-int smw_config_get_kdf_id(const char *name, enum smw_config_kdf_id *id)
+int smw_config_get_kdf_id(smw_kdf_t name, enum smw_config_kdf_id *id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_UNKNOWN_KDF_NAME;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	/* It's not an error to have a @name parameter NULL */
-	*id = SMW_CONFIG_KDF_ID_INVALID;
-
-	if (name)
-		status = smw_utils_get_string_index(name, key_derive_op_names,
-						    SMW_CONFIG_KDF_ID_NB, id);
-
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_KDF_NAME;
+	if (name == SMW_KDF_NAME_NONE) {
+		*id = SMW_CONFIG_KDF_ID_INVALID;
+		status = SMW_STATUS_OK;
+	} else if (name < SMW_KDF_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_CONFIG_KDF_ID_OFFSET, (int *)id))
+			status = SMW_STATUS_OK;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 

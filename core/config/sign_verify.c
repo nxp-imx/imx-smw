@@ -54,8 +54,8 @@ static const char *const sign_type_strings[] = {
 	[SMW_CONFIG_SIGN_TYPE_ID_CMAC] = CMAC_STR,
 };
 
-static int read_signature_algo_srings(char **start, char *end,
-				      unsigned long *bitmap)
+static int read_signature_algo_strings(char **start, char *end,
+				       unsigned long *bitmap)
 {
 	int status =
 		smw_config_read_strings(start, end, bitmap, sign_algo_strings,
@@ -106,8 +106,8 @@ static int sign_verify_read_params(char **start, char *end, void **params)
 		skip_insignificant_chars(&cur, end);
 
 		if (!SMW_UTILS_STRNCMP(buffer, sign_algo_values, length)) {
-			status = read_signature_algo_srings(&cur, end,
-							    &p->algo_bitmap);
+			status = read_signature_algo_strings(&cur, end,
+							     &p->algo_bitmap);
 			if (status != SMW_STATUS_OK)
 				goto end;
 		} else if (!SMW_UTILS_STRNCMP(buffer, sign_type_values,

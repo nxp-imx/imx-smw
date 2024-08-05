@@ -32,7 +32,7 @@ int seco_derive_key(struct subsystem_context *seco_ctx,
 	SMW_DBG_ASSERT(seco_ctx && args);
 
 	switch (args->kdf_id) {
-	case SMW_CONFIG_KDF_TLS12_KEY_EXCHANGE:
+	case SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE:
 		status = seco_derive_tls12(seco_ctx, args);
 		break;
 

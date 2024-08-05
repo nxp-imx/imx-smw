@@ -110,15 +110,26 @@ static int set_aead_flags(struct smw_crypto_aead_args *aead_args,
 
 		*flags = aead_flags[i].flags;
 
-		if (aead_args->op_type_id ==
-			    SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT &&
-		    aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_GCM) {
-			if (!smw_crypto_get_aead_iv_len(aead_args))
-				*flags |= HSM_AUTH_ENC_FLAGS_GENERATE_FULL_IV;
-			else if (smw_crypto_get_aead_iv_len(aead_args) ==
-				 SECO_GEN_COUNTER_IV_LEN)
-				*flags |=
-					HSM_AUTH_ENC_FLAGS_GENERATE_COUNTER_IV;
+		if (aead_args->op_type_id !=
+			    SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT ||
+		    aead_args->mode_id != SMW_CONFIG_AEAD_MODE_ID_GCM) {
+			status = SMW_STATUS_OK;
+			break;
+		}
+
+		if (smw_crypto_get_aead_iv_len(aead_args) < SECO_MAX_IV_LEN) {
+			status = SMW_STATUS_INVALID_IV_SIZE;
+			break;
+		}
+
+		if (!smw_crypto_get_aead_user_iv_len(aead_args)) {
+			*flags |= HSM_AUTH_ENC_FLAGS_GENERATE_FULL_IV;
+		} else if (smw_crypto_get_aead_user_iv_len(aead_args) ==
+			   SECO_GEN_COUNTER_IV_LEN) {
+			*flags |= HSM_AUTH_ENC_FLAGS_GENERATE_COUNTER_IV;
+		} else {
+			status = SMW_STATUS_INVALID_IV_SIZE;
+			break;
 		}
 
 		status = SMW_STATUS_OK;
@@ -153,7 +164,7 @@ static int get_expected_encr_output_len(struct smw_crypto_aead_args *aead_args,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
-	unsigned int iv_len = smw_crypto_get_aead_iv_len(aead_args);
+	unsigned int iv_len = smw_crypto_get_aead_user_iv_len(aead_args);
 	unsigned int tag_len = smw_crypto_get_aead_tag_len(aead_args);
 
 	*length = smw_crypto_get_aead_input_len(aead_args);
@@ -203,9 +214,9 @@ static void set_all_outputs_length(struct smw_crypto_aead_args *args,
 static void set_output_iv(struct smw_crypto_aead_args *args,
 			  unsigned int iv_start_index, uint8_t *output)
 {
-	unsigned int iv_len = smw_crypto_get_aead_iv_len(args);
+	unsigned int iv_len = smw_crypto_get_aead_user_iv_len(args);
 	unsigned char *output_iv = smw_crypto_get_aead_output_iv(args);
-	unsigned char *iv = smw_crypto_get_aead_iv(args);
+	unsigned char *iv = smw_crypto_get_aead_user_iv(args);
 
 	if (output_iv) {
 		if (iv_len < SECO_MAX_IV_LEN)
@@ -414,7 +425,7 @@ static int set_user_encr_outputs_len(struct smw_crypto_aead_args *args,
 {
 	int status = SMW_STATUS_OPERATION_FAILURE;
 
-	if (smw_crypto_get_aead_iv_len(args) < SECO_MAX_IV_LEN) {
+	if (smw_crypto_get_aead_user_iv_len(args) < SECO_MAX_IV_LEN) {
 		if (DEC_OVERFLOW(*output_len, SECO_MAX_IV_LEN))
 			goto end;
 	}
@@ -470,7 +481,7 @@ static int copy_buffers_post_encr(uint8_t *received_output,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (smw_crypto_get_aead_iv_len(args) < SECO_MAX_IV_LEN) {
+	if (smw_crypto_get_aead_user_iv_len(args) < SECO_MAX_IV_LEN) {
 		iv_start_index = *output_len;
 
 		if (dedicated_tag_field_set) {
@@ -592,7 +603,7 @@ static int aead(struct hdl *hdl, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	iv_length = smw_crypto_get_aead_iv_len(aead_args);
+	iv_length = smw_crypto_get_aead_user_iv_len(aead_args);
 
 	/* For AES CCM mode, AAD should be 0, IV len should be 12 */
 	if (aead_args->mode_id == SMW_CONFIG_AEAD_MODE_ID_CCM) {
@@ -600,7 +611,7 @@ static int aead(struct hdl *hdl, void *args)
 			goto end;
 
 		if (iv_length != SECO_MAX_IV_LEN) {
-			status = SMW_STATUS_INVALID_PARAM;
+			status = SMW_STATUS_INVALID_IV_SIZE;
 			goto end;
 		}
 	}
@@ -647,7 +658,7 @@ static int aead(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	op_aead_args.iv = smw_crypto_get_aead_iv(aead_args);
+	op_aead_args.iv = smw_crypto_get_aead_user_iv(aead_args);
 
 	if (SET_OVERFLOW(iv_length, op_aead_args.iv_size)) {
 		status = SMW_STATUS_INVALID_PARAM;

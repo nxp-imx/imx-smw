@@ -8,7 +8,6 @@
 
 #include "smw/names.h"
 #include "smw_status.h"
-#include "smw_strings.h"
 
 #include "psa/error.h"
 

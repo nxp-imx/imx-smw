@@ -7,7 +7,6 @@
 #define __KEYMGR__H__
 
 #include "smw/names.h"
-#include "smw_strings.h"
 
 #include "psa/crypto_types.h"
 

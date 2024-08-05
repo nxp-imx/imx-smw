@@ -20,90 +20,195 @@
 #define MAX_COUNTER_BITS 128
 
 /**
- * check_cipher_mech_params() -  Check cipher mechanism parameters
- * @pmechanism: Pointer to mechanism
+ * destroy_context() - Destroy cipher context
  * @ctx: Pointer to cipher context
  *
- * Store cipher context parameters iv and iv length, if valid.
+ */
+static void destroy_context(struct lib_cipher_ctx *ctx)
+{
+	if (ctx) {
+		if (ctx->key_value)
+			free(ctx->key_value);
+
+		if (ctx->iv)
+			free(ctx->iv);
+
+		if (ctx->tag)
+			free(ctx->tag);
+
+		free(ctx);
+	}
+}
+
+/**
+ * set_iv_value() -  Set IV buffer value and IV length
+ * @iv: IV buffer address
+ * @ivlen: IV buffer length
+ * @ctx: Pointer to cipher context
+ *
+ * Allocate an IV buffer in the internal context and copy user IV given value.
+ *
+ * Return:
+ * CKR_HOST_MEMORY                     - Memory allocation error
+ * CKR_ARGUMENTS_BAD                   - Bad arguments
+ * CKR_OK                              - Success
+ */
+static CK_RV set_iv_value(CK_VOID_PTR iv, CK_ULONG ivlen,
+			  struct lib_cipher_ctx *ctx)
+{
+	if (!ctx)
+		return CKR_ARGUMENTS_BAD;
+
+	if (!ivlen)
+		return CKR_OK;
+
+	if (ctx->current_state == OP_INIT ||
+	    ctx->current_state == OP_ONE_SHOT) {
+		ctx->iv = calloc(1, ivlen);
+		if (!ctx->iv)
+			return CKR_HOST_MEMORY;
+
+		ctx->iv_length = ivlen;
+		ctx->fixed_iv_length = ivlen;
+	}
+
+	if (ctx->iv_length != ivlen)
+		return CKR_MECHANISM_PARAM_INVALID;
+
+	memcpy(ctx->iv, iv, ivlen);
+
+	return CKR_OK;
+}
+
+/**
+ * set_tag_value() -  Set Tag buffer value and Tag length
+ * @tag: Tag buffer address
+ * @taglen: Tag buffer length
+ * @ctx: Pointer to cipher context
+ *
+ * Allocate a Tag buffer in the internal context and copy Tag given value.
+ *
+ * Return:
+ * CKR_HOST_MEMORY                     - Memory allocation error
+ * CKR_ARGUMENTS_BAD                   - Bad arguments
+ * CKR_OK                              - Success
+ */
+static CK_RV set_tag_value(CK_VOID_PTR tag, CK_ULONG taglen, CK_FLAGS op_flag,
+			   struct lib_cipher_ctx *ctx)
+{
+	if (!ctx || !taglen)
+		return CKR_ARGUMENTS_BAD;
+
+	if (ctx->current_state == OP_INIT ||
+	    ctx->current_state == OP_ONE_SHOT) {
+		if (!ctx->tag) {
+			ctx->tag = calloc(1, taglen);
+			if (!ctx->tag)
+				return CKR_HOST_MEMORY;
+
+			ctx->tag_length = taglen;
+		}
+	}
+
+	if (op_flag & (CKF_DECRYPT | CKF_MESSAGE_DECRYPT)) {
+		if (!ctx->tag || ctx->tag_length != taglen)
+			return CKR_MECHANISM_PARAM_INVALID;
+
+		memcpy(ctx->tag, tag, taglen);
+	}
+
+	return CKR_OK;
+}
+
+/**
+ * check_cipher_params() -  Check cipher parameters
+ * @mechanism: Mechanism type
+ * @pparameter: Pointer to mechanism parameter
+ * @ulparameterlen: Mechanism parameter length
+ * @op_flag: Operation flag
+ * @ctx: Pointer to cipher context
+ *
+ * Store cipher context parameters IV and IV length, if valid.
  *
  * Return:
  * CKR_MECHANISM_PARAM_INVALID        - @pmechanism parameters are invalid
- * CKR_MECHANISM_INVALID			  - @pmechanism.mechanism is invalid
+ * CKR_MECHANISM_INVALID              - @pmechanism.mechanism is invalid
  * CKR_OK                             - Success
  */
-static CK_RV check_cipher_mech_params(CK_MECHANISM_PTR pmechanism,
-				      struct lib_cipher_ctx *ctx)
+static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
+				 CK_VOID_PTR pparameter,
+				 CK_ULONG ulparameterlen, CK_FLAGS op_flag,
+				 struct lib_cipher_ctx *ctx)
 {
+	CK_RV ret = CKR_OK;
+	CK_GCM_MESSAGE_PARAMS_PTR gcm_prms = NULL_PTR;
+	CK_CCM_MESSAGE_PARAMS_PTR ccm_prms = NULL_PTR;
 	CK_AES_CTR_PARAMS_PTR aes_ctr_params = NULL_PTR;
 	CK_SM4_CTR_PARAMS_PTR sm4_ctr_params = NULL_PTR;
 
-	switch (pmechanism->mechanism) {
+	switch (mechanism) {
 	case CKM_AES_CBC:
-		if (!pmechanism->pParameter) {
-			DBG_TRACE("CBC mode: iv is not set");
+		if (!pparameter) {
+			DBG_TRACE("CBC mode: IV is not set");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		if (pmechanism->ulParameterLen != AES_IV_LEN) {
-			DBG_TRACE("CBC mode: iv length is not correct");
+		if (ulparameterlen != AES_IV_LEN) {
+			DBG_TRACE("CBC mode: IV length is not correct");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		ctx->iv = pmechanism->pParameter;
-		ctx->iv_length = pmechanism->ulParameterLen;
+		ret = set_iv_value(pparameter, ulparameterlen, ctx);
 		break;
 
 	case CKM_DES_CBC:
 	case CKM_DES3_CBC:
-		if (!pmechanism->pParameter) {
-			DBG_TRACE("CBC mode: iv is not set");
+		if (!pparameter) {
+			DBG_TRACE("CBC mode: IV is not set");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		if (pmechanism->ulParameterLen != DES_IV_LEN) {
-			DBG_TRACE("CBC mode: iv length is not correct");
+		if (ulparameterlen != DES_IV_LEN) {
+			DBG_TRACE("CBC mode: IV length is not correct");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		ctx->iv = pmechanism->pParameter;
-		ctx->iv_length = pmechanism->ulParameterLen;
+		ret = set_iv_value(pparameter, ulparameterlen, ctx);
 		break;
 
 	case CKM_AES_CTR:
-		if (pmechanism->ulParameterLen != sizeof(CK_AES_CTR_PARAMS)) {
+		if (ulparameterlen != sizeof(CK_AES_CTR_PARAMS)) {
 			DBG_TRACE("ulParameterLen error");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		aes_ctr_params = (CK_AES_CTR_PARAMS_PTR)pmechanism->pParameter;
+		aes_ctr_params = (CK_AES_CTR_PARAMS_PTR)pparameter;
 
 		if (aes_ctr_params->ulCounterBits > MAX_COUNTER_BITS) {
 			DBG_TRACE("ulCounterBits error");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		ctx->iv = aes_ctr_params->cb;
-		ctx->iv_length = sizeof(aes_ctr_params->cb);
+		ret = set_iv_value(aes_ctr_params->cb,
+				   sizeof(aes_ctr_params->cb), ctx);
 		break;
 
 	case CKM_AES_CTS:
-		if (!pmechanism->pParameter) {
-			DBG_TRACE("CTS mode: iv is not set");
+		if (!pparameter) {
+			DBG_TRACE("CTS mode: IV is not set");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		ctx->iv = pmechanism->pParameter;
-		ctx->iv_length = pmechanism->ulParameterLen;
+		ret = set_iv_value(pparameter, ulparameterlen, ctx);
 		break;
 
 	case CKM_AES_XTS:
-		if (!pmechanism->pParameter) {
-			DBG_TRACE("XTS mode: iv is not set");
+		if (!pparameter) {
+			DBG_TRACE("XTS mode: IV is not set");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		ctx->iv = pmechanism->pParameter;
-		ctx->iv_length = pmechanism->ulParameterLen;
+		ret = set_iv_value(pparameter, ulparameterlen, ctx);
 		break;
 
 	case CKM_AES_ECB:
@@ -113,39 +218,197 @@ static CK_RV check_cipher_mech_params(CK_MECHANISM_PTR pmechanism,
 		break;
 
 	case CKM_SM4_CBC:
-		if (!pmechanism->pParameter) {
-			DBG_TRACE("SM4 CBC mode: iv is not set");
+		if (!pparameter) {
+			DBG_TRACE("SM4 CBC mode: IV is not set");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		if (pmechanism->ulParameterLen != SM4_IV_LEN) {
-			DBG_TRACE("SM4 CBC mode: iv length is not correct");
+		if (ulparameterlen != SM4_IV_LEN) {
+			DBG_TRACE("SM4 CBC mode: IV length is not correct");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		ctx->iv = pmechanism->pParameter;
-		ctx->iv_length = pmechanism->ulParameterLen;
+		ret = set_iv_value(pparameter, ulparameterlen, ctx);
 		break;
 
 	case CKM_SM4_CTR:
-		if (pmechanism->ulParameterLen != sizeof(CK_SM4_CTR_PARAMS)) {
+		if (ulparameterlen != sizeof(CK_SM4_CTR_PARAMS)) {
 			DBG_TRACE("ulParameterLen error");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		sm4_ctr_params = (CK_SM4_CTR_PARAMS_PTR)pmechanism->pParameter;
+		sm4_ctr_params = (CK_SM4_CTR_PARAMS_PTR)pparameter;
 
 		if (sm4_ctr_params->ulCounterBits > MAX_COUNTER_BITS) {
 			DBG_TRACE("ulCounterBits error");
 			return CKR_MECHANISM_PARAM_INVALID;
 		}
 
-		ctx->iv = sm4_ctr_params->cb;
-		ctx->iv_length = sizeof(sm4_ctr_params->cb);
+		ret = set_iv_value(sm4_ctr_params->cb,
+				   sizeof(sm4_ctr_params->cb), ctx);
+		break;
+
+	case CKM_AES_GCM:
+		if (ulparameterlen != sizeof(CK_GCM_MESSAGE_PARAMS)) {
+			DBG_TRACE("ulParameterLen error");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		gcm_prms = (CK_GCM_MESSAGE_PARAMS_PTR)pparameter;
+
+		ret = set_tag_value(gcm_prms->pTag,
+				    BITS_TO_BYTES_SIZE(gcm_prms->ulTagBits),
+				    op_flag, ctx);
+		if (ret)
+			break;
+
+		ret = set_iv_value(gcm_prms->pIv, gcm_prms->ulIvLen, ctx);
+		if (ret)
+			break;
+
+		switch (gcm_prms->ivGenerator) {
+		case CKG_NO_GENERATE:
+			break;
+		case CKG_GENERATE:
+		case CKG_GENERATE_RANDOM:
+		case CKG_GENERATE_COUNTER:
+			if (op_flag != CKF_MESSAGE_ENCRYPT)
+				return CKR_MECHANISM_PARAM_INVALID;
+
+			ctx->fixed_iv_length =
+				BITS_TO_BYTES_SIZE(gcm_prms->ulIvFixedBits);
+			break;
+		default:
+			ret = CKR_FUNCTION_NOT_SUPPORTED;
+			break;
+		}
+
+		break;
+
+	case CKM_AES_CCM:
+		if (ulparameterlen != sizeof(CK_CCM_MESSAGE_PARAMS)) {
+			DBG_TRACE("ulParameterLen error");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		ccm_prms = (CK_CCM_MESSAGE_PARAMS_PTR)pparameter;
+
+		ctx->payload_length = ccm_prms->ulDataLen;
+
+		ret = set_tag_value(ccm_prms->pMAC, ccm_prms->ulMACLen, op_flag,
+				    ctx);
+		if (ret)
+			break;
+
+		ret = set_iv_value(ccm_prms->pNonce, ccm_prms->ulNonceLen, ctx);
+		if (ret)
+			break;
+
+		switch (ccm_prms->nonceGenerator) {
+		case CKG_NO_GENERATE:
+			break;
+		case CKG_GENERATE:
+		case CKG_GENERATE_RANDOM:
+		case CKG_GENERATE_COUNTER:
+			if (op_flag != CKF_MESSAGE_ENCRYPT)
+				return CKR_MECHANISM_PARAM_INVALID;
+
+			ctx->fixed_iv_length =
+				BITS_TO_BYTES_SIZE(ccm_prms->ulNonceFixedBits);
+			break;
+		default:
+			ret = CKR_FUNCTION_NOT_SUPPORTED;
+			break;
+		}
+
 		break;
 
 	default:
-		return CKR_MECHANISM_INVALID;
+		ret = CKR_MECHANISM_INVALID;
+	}
+
+	return ret;
+}
+
+/**
+ * check_cipher_mech_params() -  Check cipher mechanism parameters
+ * @pmechanism: Pointer to mechanism
+ * @op_flag: Operation flag
+ * @ctx: Pointer to cipher context
+ *
+ * Store cipher context parameters IV and IV length, if valid.
+ *
+ * Return:
+ * CKR_MECHANISM_PARAM_INVALID        - @pmechanism parameters are invalid
+ * CKR_MECHANISM_INVALID			  - @pmechanism.mechanism is invalid
+ * CKR_OK                             - Success
+ */
+static CK_RV check_cipher_mech_params(CK_MECHANISM_PTR pmechanism,
+				      CK_FLAGS op_flag,
+				      struct lib_cipher_ctx *ctx)
+{
+	return check_cipher_params(pmechanism->mechanism,
+				   pmechanism->pParameter,
+				   pmechanism->ulParameterLen, op_flag, ctx);
+}
+
+/**
+ * update_params() -  Update aead parameters
+ * @mechanism: Mechanism type
+ * @pparameter: Pointer to mechanism parameter
+ * @ulparameterlen: Mechanism parameter length
+ * @ctx: Pointer to aead context
+ *
+ * Load aead context parameters IV and IV length, Tag and Tag length if valid.
+ *
+ * Return:
+ * CKR_MECHANISM_PARAM_INVALID        - @pmechanism parameters are invalid
+ * CKR_MECHANISM_INVALID              - @pmechanism.mechanism is invalid
+ * CKR_OK                             - Success
+ */
+static CK_RV update_params(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
+			   CK_ULONG ulparameterlen, struct lib_cipher_ctx *ctx)
+{
+	CK_GCM_MESSAGE_PARAMS_PTR gcm_prms = NULL_PTR;
+	CK_CCM_MESSAGE_PARAMS_PTR ccm_prms = NULL_PTR;
+
+	switch (mechanism) {
+	case CKM_AES_GCM:
+		if (ulparameterlen != sizeof(CK_GCM_MESSAGE_PARAMS)) {
+			DBG_TRACE("ulParameterLen error");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		gcm_prms = (CK_GCM_MESSAGE_PARAMS_PTR)pparameter;
+
+		if (ctx->iv_length && ctx->iv_length <= gcm_prms->ulIvLen) {
+			gcm_prms->ulIvLen = ctx->iv_length;
+			memcpy(gcm_prms->pIv, ctx->iv, ctx->iv_length);
+		}
+
+		if (MUL_OVERFLOW(ctx->tag_length, 8, &gcm_prms->ulTagBits))
+			return CKR_MECHANISM_PARAM_INVALID;
+
+		memcpy(gcm_prms->pTag, ctx->tag, ctx->tag_length);
+
+		break;
+
+	case CKM_AES_CCM:
+		if (ulparameterlen != sizeof(CK_CCM_MESSAGE_PARAMS)) {
+			DBG_TRACE("ulParameterLen error");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		ccm_prms = (CK_CCM_MESSAGE_PARAMS_PTR)pparameter;
+
+		ccm_prms->ulNonceLen = ctx->iv_length;
+		ccm_prms->ulMACLen = ctx->tag_length;
+
+		memcpy(ccm_prms->pMAC, ctx->tag, ctx->tag_length);
+		break;
+
+	default:
+		break;
 	}
 
 	return CKR_OK;
@@ -226,24 +489,7 @@ end:
 	return ret;
 }
 
-/**
- * cancel_operation() - Cancel the multi-part cipher operation, if active
- * @hsession: Session handle
- * @op_flag: Operation flag
- *
- * Check if any multi-part cipher operation is active.
- * If a multi-part operation is active, cancel the operation
- * and remove the operation context.
- *
- * Return:
- * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
- * CKR_GENERAL_ERROR                  - No context available
- * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
- * CKR_DEVICE_ERROR	                  - Device failure
- * CKR_OK                             - Success
- *
- */
-static CK_RV cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
+CK_RV lib_cipher_cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 {
 	CK_RV ret = CKR_OK;
 
@@ -252,20 +498,27 @@ static CK_RV cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 	CK_MECHANISM mechanism = { 0 };
 
 	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
-	if (ret == CKR_OPERATION_NOT_INITIALIZED) {
-		ret = CKR_OK;
-		goto end;
-	}
+	if (ret == CKR_OPERATION_NOT_INITIALIZED)
+		return CKR_OK;
 
 	if (ret != CKR_OK)
-		goto end;
+		return ret;
+
+	if (!ctx) {
+		ret = libsess_remove_opctx(hsession, op_flag);
+		return ret;
+	}
 
 	switch (ctx->current_state) {
 	case OP_INIT:
+	case OP_BEGIN:
+	case OP_END:
 		ret = libsess_remove_opctx(hsession, op_flag);
 		break;
 
 	case OP_UPDATE:
+	case OP_NEXT:
+	case OP_FINAL:
 		if (ctx->context)
 			ret = libsess_cancel_opctx(hsession, op_flag,
 						   (void **)&ctx->context);
@@ -278,18 +531,7 @@ static CK_RV cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 		break;
 	}
 
-end:
-
-	if (ctx) {
-		if (ret != CKR_OK) {
-			if (ctx->key_value) {
-				free(ctx->key_value);
-				ctx->key_value = NULL_PTR;
-			}
-
-			free(ctx);
-		}
-	}
+	destroy_context(ctx);
 
 	return ret;
 }
@@ -306,7 +548,8 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 	};
 
 	DBG_TRACE("Initialize %s operation",
-		  op_flag == CKF_ENCRYPT ? "Encrypt" : "Decrypt");
+		  op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT) ? "Encrypt" :
+								  "Decrypt");
 
 	if (pmechanism) {
 		/* Validate mechanism operation flag */
@@ -320,10 +563,10 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 		 * If a multi-part operation is active, cancel the operation
 		 * and remove the operation context.
 		 */
-		return cancel_operation(hsession, op_flag);
+		return lib_cipher_cancel_operation(hsession, op_flag);
 	}
 
-	if (op_flag == CKF_ENCRYPT)
+	if (op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
 		iskey_op[0].type = CKA_ENCRYPT;
 
 	ret = libobj_get_attribute(hsession, hkey, iskey_op,
@@ -351,8 +594,10 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 	ctx->iv_length = 0;
 	ctx->iv = NULL;
 	ctx->context = NULL;
+	/* Set the current state */
+	ctx->current_state = OP_INIT;
 
-	ret = check_cipher_mech_params(pmechanism, ctx);
+	ret = check_cipher_mech_params(pmechanism, op_flag, ctx);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -368,24 +613,52 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 
 end:
 
-	if (ctx) {
-		if (ret != CKR_OK) {
-			if (ctx->key_value) {
-				free(ctx->key_value);
-				ctx->key_value = NULL_PTR;
-			}
+	if (ctx && ret != CKR_OK)
+		destroy_context(ctx);
 
-			free(ctx);
-		} else {
-			/* Set the current state */
-			ctx->current_state = OP_INIT;
-		}
+	return ret;
+}
+
+CK_RV lib_encrypt_decrypt_reset(CK_SESSION_HANDLE hsession,
+				CK_VOID_PTR pparameter, CK_ULONG ulparameterlen,
+				CK_BYTE_PTR pAssociatedData,
+				CK_ULONG ulAssociatedDataLen, CK_FLAGS op_flag)
+{
+	CK_RV ret = CKR_OK;
+	CK_MECHANISM mechanism = { 0 };
+	struct lib_cipher_ctx *ctx = NULL;
+
+	/* Check that operation is initialized */
+	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (!pparameter != !ulparameterlen)
+		return CKR_MECHANISM_PARAM_INVALID;
+
+	if (ctx->current_state != OP_END && ctx->context)
+		return CKR_OPERATION_ACTIVE;
+
+	/* Update mechanism parameter */
+	if (pparameter)
+		ret = check_cipher_params(mechanism.mechanism, pparameter,
+					  ulparameterlen, op_flag, ctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	ctx->current_state = OP_BEGIN;
+
+	if (!pAssociatedData == !ulAssociatedDataLen) {
+		ctx->aad = pAssociatedData;
+		ctx->aad_length = ulAssociatedDataLen;
 	}
 
 	return ret;
 }
 
-CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pinput,
+CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
+			  CK_ULONG ulparameterlen, CK_BYTE_PTR pAssociatedData,
+			  CK_ULONG ulAssociatedDataLen, CK_BYTE_PTR pinput,
 			  CK_ULONG input_length, CK_BYTE_PTR poutput,
 			  CK_ULONG_PTR poutput_length, CK_FLAGS op_flag,
 			  enum op_state state)
@@ -395,16 +668,16 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pinput,
 	struct lib_cipher_ctx *ctx = NULL;
 	struct lib_cipher_params params = { 0 };
 
-	if (state == OP_ONE_SHOT || state == OP_UPDATE) {
+	if (state == OP_ONE_SHOT || state == OP_UPDATE || state == OP_NEXT) {
 		if (!input_length) {
-			ret = (op_flag == CKF_ENCRYPT) ?
+			ret = (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_ENCRYPT)) ?
 				      CKR_DATA_LEN_RANGE :
 				      CKR_ENCRYPTED_DATA_LEN_RANGE;
 			goto end;
 		}
 
 		if (!pinput) {
-			ret = (op_flag == CKF_ENCRYPT) ?
+			ret = (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_ENCRYPT)) ?
 				      CKR_DATA_INVALID :
 				      CKR_ENCRYPTED_DATA_INVALID;
 			goto end;
@@ -421,8 +694,16 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pinput,
 	if (ret != CKR_OK)
 		goto end;
 
+	if (!pparameter != !ulparameterlen) {
+		ret = CKR_MECHANISM_PARAM_INVALID;
+		goto end;
+	}
+
 	switch (ctx->current_state) {
 	case OP_INIT:
+		if (state != OP_BEGIN && state != OP_UPDATE &&
+		    state != OP_FINAL && state != OP_ONE_SHOT)
+			return CKR_ARGUMENTS_BAD;
 		break;
 
 	case OP_ONE_SHOT:
@@ -433,9 +714,30 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pinput,
 
 		break;
 
+	case OP_BEGIN:
+		if (state != OP_NEXT && state != OP_END) {
+			ret = CKR_OPERATION_NOT_INITIALIZED;
+			goto end;
+		}
+
+		break;
+
+	case OP_NEXT:
+		if (state != OP_END && state != OP_NEXT && state != OP_FINAL)
+			return CKR_OPERATION_NOT_INITIALIZED;
+		break;
+
 	case OP_UPDATE:
 		if (state != OP_UPDATE && state != OP_FINAL)
 			return CKR_OPERATION_NOT_INITIALIZED;
+		break;
+
+	case OP_END:
+		if (state != OP_END && state != OP_BEGIN &&
+		    state != OP_ONE_SHOT) {
+			ret = CKR_OPERATION_NOT_INITIALIZED;
+			goto end;
+		}
 
 		break;
 
@@ -460,6 +762,19 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pinput,
 	params.output_length = *poutput_length;
 	params.state = state;
 
+	/* Update mechanism parameter */
+	if (pparameter) {
+		ret = check_cipher_params(mechanism.mechanism, pparameter,
+					  ulparameterlen, op_flag, ctx);
+		if (ret != CKR_OK)
+			goto end;
+	}
+
+	if (!pAssociatedData == !ulAssociatedDataLen) {
+		ctx->aad = pAssociatedData;
+		ctx->aad_length = ulAssociatedDataLen;
+	}
+
 	/* Run operation */
 	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
 	if (ret == CKR_BUFFER_TOO_SMALL || ret == CKR_OK) {
@@ -468,8 +783,42 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pinput,
 
 		if (ret == CKR_OK) {
 			ctx->current_state = state;
-			if (state == OP_UPDATE)
-				return ret;
+			switch (state) {
+			case OP_ONE_SHOT:
+			case OP_FINAL:
+				if (pparameter &&
+				    (op_flag &
+				     (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))) {
+					ret = update_params(mechanism.mechanism,
+							    pparameter,
+							    ulparameterlen,
+							    ctx);
+					if (ret != CKR_OK)
+						goto end;
+				}
+
+				break;
+
+			case OP_END:
+				if (pparameter &&
+				    (op_flag &
+				     (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))) {
+					ret = update_params(mechanism.mechanism,
+							    pparameter,
+							    ulparameterlen,
+							    ctx);
+					if (ret != CKR_OK)
+						goto end;
+				}
+
+				return CKR_OK;
+
+			default:
+				// OP_BEGIN
+				// OP_NEXT
+				// OP_UPDATE
+				return CKR_OK;
+			}
 		}
 
 		if (ret == CKR_BUFFER_TOO_SMALL || !poutput)

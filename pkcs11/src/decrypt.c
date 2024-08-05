@@ -25,8 +25,9 @@ CK_RV C_Decrypt(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedData,
 	if (!hSession)
 		return CKR_SESSION_HANDLE_INVALID;
 
-	return lib_encrypt_decrypt(hSession, pEncryptedData, ulEncryptedDataLen,
-				   pData, pulDataLen, CKF_DECRYPT, OP_ONE_SHOT);
+	return lib_encrypt_decrypt(hSession, NULL_PTR, 0, NULL_PTR, 0,
+				   pEncryptedData, ulEncryptedDataLen, pData,
+				   pulDataLen, CKF_DECRYPT, OP_ONE_SHOT);
 }
 
 CK_RV C_DecryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedPart,
@@ -36,8 +37,9 @@ CK_RV C_DecryptUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pEncryptedPart,
 	if (!hSession)
 		return CKR_SESSION_HANDLE_INVALID;
 
-	return lib_encrypt_decrypt(hSession, pEncryptedPart, ulEncryptedPartLen,
-				   pPart, pulPartLen, CKF_DECRYPT, OP_UPDATE);
+	return lib_encrypt_decrypt(hSession, NULL_PTR, 0, NULL_PTR, 0,
+				   pEncryptedPart, ulEncryptedPartLen, pPart,
+				   pulPartLen, CKF_DECRYPT, OP_UPDATE);
 }
 
 CK_RV C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pLastPart,
@@ -46,6 +48,7 @@ CK_RV C_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pLastPart,
 	if (!hSession)
 		return CKR_SESSION_HANDLE_INVALID;
 
-	return lib_encrypt_decrypt(hSession, NULL_PTR, 0, pLastPart,
-				   pulLastPartLen, CKF_DECRYPT, OP_FINAL);
+	return lib_encrypt_decrypt(hSession, NULL_PTR, 0, NULL_PTR, 0, NULL_PTR,
+				   0, pLastPart, pulLastPartLen, CKF_DECRYPT,
+				   OP_FINAL);
 }

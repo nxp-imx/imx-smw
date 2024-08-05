@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023-2024 NXP
  */
 
 #ifndef __LIB_OPCTX_H__
@@ -8,7 +8,16 @@
 
 #include "types.h"
 
-enum op_state { NOT_INIT = 0, OP_INIT, OP_ONE_SHOT, OP_UPDATE, OP_FINAL };
+enum op_state { /* Operation state when calling encryption functions */
+		NOT_INIT = 0,
+		OP_INIT, /* C_(En|De)cryptInit or C_Message(En|De)cryptInit */
+		OP_ONE_SHOT, /* C_(En|De)crypt or C_(En|De)cryptMessage */
+		OP_UPDATE,   /* C_(En|De)cryptUpdate */
+		OP_BEGIN,    /* C_(En|De)cryptMessageBegin */
+		OP_NEXT,     /* C_(En|De)cryptMessageNext */
+		OP_END,	     /* C_(En|De)cryptMessageNext(CKF_END_OF_MESSAGE) */
+		OP_FINAL     /* C_Message(En|De)cryptFinal */
+};
 
 /**
  * libopctx_add() - Add an operation context to the list

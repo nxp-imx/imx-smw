@@ -1,18 +1,26 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2024 NXP
  */
 
+#include "lib_cipher.h"
 #include "pkcs11smw.h"
 
 CK_RV C_MessageDecryptInit(CK_SESSION_HANDLE hSession,
 			   CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
 {
-	(void)hSession;
-	(void)pMechanism;
-	(void)hKey;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!hKey)
+		return CKR_KEY_HANDLE_INVALID;
+
+	if (!pMechanism)
+		return lib_cipher_cancel_operation(hSession,
+						   CKF_MESSAGE_DECRYPT);
+
+	return lib_encrypt_decrypt_init(hSession, pMechanism, hKey,
+					CKF_MESSAGE_DECRYPT);
 }
 
 CK_RV C_DecryptMessage(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
@@ -21,17 +29,14 @@ CK_RV C_DecryptMessage(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
 		       CK_ULONG ulCiphertextLen, CK_BYTE_PTR pPlaintext,
 		       CK_ULONG_PTR pulPlaintextLen)
 {
-	(void)hSession;
-	(void)pParameter;
-	(void)ulParameterLen;
-	(void)pAssociatedData;
-	(void)ulAssociatedDataLen;
-	(void)pCiphertext;
-	(void)ulCiphertextLen;
-	(void)pPlaintext;
-	(void)pulPlaintextLen;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return lib_encrypt_decrypt(hSession, pParameter, ulParameterLen,
+				   pAssociatedData, ulAssociatedDataLen,
+				   pCiphertext, ulCiphertextLen, pPlaintext,
+				   pulPlaintextLen, CKF_MESSAGE_DECRYPT,
+				   OP_ONE_SHOT);
 }
 
 CK_RV C_DecryptMessageBegin(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
@@ -39,13 +44,12 @@ CK_RV C_DecryptMessageBegin(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
 			    CK_BYTE_PTR pAssociatedData,
 			    CK_ULONG ulAssociatedDataLen)
 {
-	(void)hSession;
-	(void)pParameter;
-	(void)ulParameterLen;
-	(void)pAssociatedData;
-	(void)ulAssociatedDataLen;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return lib_encrypt_decrypt_reset(hSession, pParameter, ulParameterLen,
+					 pAssociatedData, ulAssociatedDataLen,
+					 CKF_MESSAGE_DECRYPT);
 }
 
 CK_RV C_DecryptMessageNext(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
@@ -53,21 +57,23 @@ CK_RV C_DecryptMessageNext(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
 			   CK_ULONG ulCiphertextLen, CK_BYTE_PTR pPlaintext,
 			   CK_ULONG_PTR pulPlaintextLen, CK_FLAGS flags)
 {
-	(void)hSession;
-	(void)pParameter;
-	(void)ulParameterLen;
-	(void)pCiphertext;
-	(void)ulCiphertextLen;
-	(void)pPlaintext;
-	(void)pulPlaintextLen;
-	(void)flags;
+	enum op_state state = NOT_INIT;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	if (flags & CKF_END_OF_MESSAGE)
+		state = OP_END;
+	else
+		state = OP_NEXT;
+
+	return lib_encrypt_decrypt(hSession, pParameter, ulParameterLen,
+				   NULL_PTR, 0, pCiphertext, ulCiphertextLen,
+				   pPlaintext, pulPlaintextLen,
+				   CKF_MESSAGE_DECRYPT, state);
 }
 
 CK_RV C_MessageDecryptFinal(CK_SESSION_HANDLE hSession)
 {
-	(void)hSession;
-
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return lib_cipher_cancel_operation(hSession, CKF_MESSAGE_DECRYPT);
 }

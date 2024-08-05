@@ -15,6 +15,7 @@
 #include "smw/names.h"
 
 #include "dev_config.h"
+#include "lib_cipher.h"
 #include "lib_context.h"
 #include "lib_device.h"
 #include "lib_session.h"
@@ -23,7 +24,6 @@
 #include "pkcs11smw.h"
 #include "types.h"
 #include "lib_sign_verify.h"
-#include "lib_cipher.h"
 
 #include "args_attr.h"
 #include "key_desc.h"
@@ -74,6 +74,11 @@ static void check_mhmac(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 static CK_RV info_mhmac(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args);
+static CK_RV info_maead(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static void check_maead(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
+			struct mgroup *mgroup);
+static CK_RV op_maead(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 
 smw_key_type_t smw_ec_name[] = { SMW_KEY_TYPE_NAME_SECP_R1,
 				 SMW_KEY_TYPE_NAME_BRAINPOOL_R1,
@@ -89,6 +94,7 @@ smw_key_type_t smw_ec_name[] = { SMW_KEY_TYPE_NAME_SECP_R1,
  * @smw_cipher_mode: SMW cipher mode name for this mechanism, if any
  * @smw_sign_algo: SMW signature algorithm name for this mechanism, if any
  * @smw_sign_type: SMW signature type name for this mechanism, if any
+ * @smw_aead_mode: SMW AEAD mode name for this mechanism, if any
  * @smw_algo_id: SMW permitted algorithm for this mechanism
  * @nb_smw_key_types: Number of SMW key types
  * @smw_key_types: SMW key types names for this mechanism, if more than one
@@ -102,6 +108,7 @@ struct mentry {
 	smw_cipher_mode_t smw_cipher_mode;
 	smw_signature_algo_t smw_sign_algo;
 	smw_signature_type_t smw_sign_type;
+	smw_aead_mode_t smw_aead_mode;
 	smw_attr_algo_t smw_algo_id;
 	unsigned int nb_smw_key_types;
 	smw_key_type_t *smw_key_types;
@@ -131,12 +138,14 @@ struct mgroup {
 
 /* Macro filling a struct mentry for a single algo */
 #define M_ALGO(_key_type_name, _hash_name, _mac_name, _cipher_mode_name,       \
-	       _sign_algo_name, _sign_type_name, _algo_id, _id)                \
+	       _aead_mode_name, _sign_algo_name, _sign_type_name, _algo_id,    \
+	       _id)                                                            \
 	{                                                                      \
 		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type_name,            \
 		.smw_hash = _hash_name, .smw_mac = _mac_name,                  \
 		.smw_cipher_mode = _cipher_mode_name,                          \
+		.smw_aead_mode = _aead_mode_name,                              \
 		.smw_sign_algo = _sign_algo_name,                              \
 		.smw_sign_type = _sign_type_name, .smw_algo_id = _algo_id,     \
 		.nb_smw_key_types = 0, .smw_key_types = NULL,                  \
@@ -144,8 +153,9 @@ struct mgroup {
 
 #define M_DIGEST(_hash, _id)                                                   \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
-	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_NONE,        \
-	       SMW_SIGNATURE_TYPE_NAME_NONE, SMW_ATTR_HASH_##_hash, _id)
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
+	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
+	       SMW_ATTR_HASH_##_hash, _id)
 
 /* Macro filling a struct mentry for an algo or a list of algo */
 #define M_ECKEYGEN(_key_types, _nb_key_types, _id)                             \
@@ -154,6 +164,7 @@ struct mgroup {
 		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
 		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
 		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_algo_id = 0, .nb_smw_key_types = _nb_key_types,           \
@@ -167,6 +178,7 @@ struct mgroup {
 		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
 		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
 		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
 		.smw_algo_id = 0, .nb_smw_key_types = 1,                       \
@@ -175,32 +187,32 @@ struct mgroup {
 
 #define M_SIGN_ECDSA_ANY_HASH(_id)                                             \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
-	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_ECDSA,       \
-	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
+	       SMW_SIGNATURE_ALGO_NAME_ECDSA, SMW_SIGNATURE_TYPE_NAME_NONE,    \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_ANY,    \
 							SMW_ATTR_HASH_ANY),    \
 	       _id)
 
 #define M_SIGN_ECDSA(_hash, _id)                                               \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
-	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_ECDSA,       \
-	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
+	       SMW_SIGNATURE_ALGO_NAME_ECDSA, SMW_SIGNATURE_TYPE_NAME_NONE,    \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(                       \
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
 	       _id)
 
 #define M_SIGN_RSA_ANY_HASH(_mode, _id)                                        \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
-	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_RSA,         \
-	       SMW_SIGNATURE_TYPE_NAME_##_mode,                                \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
+	       SMW_SIGNATURE_ALGO_NAME_RSA, SMW_SIGNATURE_TYPE_NAME_##_mode,   \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_ANY, 0),   \
 	       _id)
 
 #define M_SIGN_RSA(_mode, _hash, _id)                                          \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
-	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_RSA,         \
-	       SMW_SIGNATURE_TYPE_NAME_##_mode,                                \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
+	       SMW_SIGNATURE_ALGO_NAME_RSA, SMW_SIGNATURE_TYPE_NAME_##_mode,   \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_##_hash,   \
 						      0),                      \
@@ -208,24 +220,32 @@ struct mgroup {
 
 #define M_CIPHER(_algo, _mode, _mode_id, _id)                                  \
 	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,         \
-	       SMW_CIPHER_MODE_NAME_##_mode, SMW_SIGNATURE_ALGO_NAME_NONE,     \
-	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
+	       SMW_CIPHER_MODE_NAME_##_mode, SMW_AEAD_MODE_NAME_NONE,          \
+	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
+	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
+						  SMW_ATTR_MODE_##_mode_id),   \
+	       _id)
+
+#define M_AEAD(_algo, _mode, _mode_id, _id)                                    \
+	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,         \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_##_mode,          \
+	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
 	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
 						  SMW_ATTR_MODE_##_mode_id),   \
 	       _id)
 
 #define M_MAC(_algo, _mac, _mode_id, _id)                                      \
 	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_##_mac,       \
-	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_NONE,        \
-	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
+	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
 	       SMW_ATTR_ALGO_MAC(SMW_ATTR_ALGO_##_algo,                        \
 				 SMW_ATTR_MODE_##_mode_id, 0),                 \
 	       _id)
 
 #define M_HMAC(_mac, _hash, _id)                                               \
 	M_ALGO(HMAC, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_##_mac,     \
-	       SMW_CIPHER_MODE_NAME_NONE, SMW_SIGNATURE_ALGO_NAME_NONE,        \
-	       SMW_SIGNATURE_TYPE_NAME_NONE,                                   \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
+	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
 	       SMW_ATTR_ALGO_MAC_HMAC(SMW_ATTR_HASH_##_hash, 0), _id)
 
 /* Macro filling a group of mechanisms */
@@ -308,6 +328,11 @@ static struct mentry mcipher[] = {
 	M_CIPHER(SM4, ECB, ECB_NO_PAD, SM4_ECB),
 };
 
+static struct mentry maead[] = {
+	M_AEAD(AES, GCM, GCM, AES_GCM),
+	M_AEAD(AES, CCM, CCM, AES_CCM),
+};
+
 /*
  * CMAC mechanisms
  */
@@ -354,6 +379,7 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(msign_ecdsa), msign_ecdsa),
 	M_GROUP(ARRAY_SIZE(msign_rsa), msign_rsa),
 	M_GROUP(ARRAY_SIZE(mcipher), mcipher),
+	M_GROUP(ARRAY_SIZE(maead), maead),
 	M_GROUP(ARRAY_SIZE(mcmac), mcmac),
 	M_GROUP(ARRAY_SIZE(mhmac), mhmac),
 	{ 0 }
@@ -390,6 +416,9 @@ static CK_RV smw_status_to_ck_rv(enum smw_status_code status)
 
 	case SMW_STATUS_SIGNATURE_LEN_INVALID:
 		return CKR_SIGNATURE_LEN_RANGE;
+
+	case SMW_STATUS_INVALID_IV_SIZE:
+		return CKR_MECHANISM_PARAM_INVALID;
 
 	default:
 		return CKR_DEVICE_ERROR;
@@ -504,6 +533,21 @@ static smw_cipher_mode_t get_cipher_mode(CK_MECHANISM_TYPE mech_type)
 	for (; i < ARRAY_SIZE(mcipher); i++) {
 		if (mech_type == mcipher[i].type) {
 			mode = mcipher[i].smw_cipher_mode;
+			break;
+		}
+	}
+
+	return mode;
+}
+
+static smw_aead_mode_t get_aead_mode(CK_MECHANISM_TYPE mech_type)
+{
+	smw_aead_mode_t mode = SMW_AEAD_MODE_NAME_NONE;
+	unsigned int i = 0;
+
+	for (i = 0; i < ARRAY_SIZE(maead); i++) {
+		if (mech_type == maead[i].type) {
+			mode = maead[i].smw_aead_mode;
 			break;
 		}
 	}
@@ -1042,12 +1086,12 @@ static CK_RV info_mcipher(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	cipher_info.op_type_name = SMW_CIPHER_OP_TYPE_NAME_ENCRYPT;
 	status = smw_config_check_cipher(devinfo->name, &cipher_info);
 	if (status == SMW_STATUS_OK)
-		info->flags |= CKF_ENCRYPT;
+		info->flags |= CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT;
 
 	cipher_info.op_type_name = SMW_CIPHER_OP_TYPE_NAME_DECRYPT;
 	status = smw_config_check_cipher(devinfo->name, &cipher_info);
 	if (status == SMW_STATUS_OK)
-		info->flags |= CKF_DECRYPT;
+		info->flags |= CKF_DECRYPT | CKF_MESSAGE_DECRYPT;
 
 	/*
 	 * Call specific device mechanism information function
@@ -1080,6 +1124,33 @@ static CK_RV cipher(struct lib_cipher_params *params,
 		status = smw_cipher(&smw_args);
 		break;
 
+	case OP_NEXT:
+		if (ctx->current_state == OP_BEGIN) {
+			op_ctx_args.subsystem_name =
+				smw_args.init.subsystem_name;
+			status = smw_allocate_context(&op_ctx_args);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			smw_init_args->context = op_ctx_args.context;
+
+			status = smw_cipher_init(smw_init_args);
+			if (status == SMW_STATUS_OK) {
+				ctx->context = smw_init_args->context;
+				smw_data_args->context = smw_init_args->context;
+				status = smw_cipher_update(smw_data_args);
+				ctx->context = smw_data_args->context;
+			}
+
+		} else if (ctx->current_state == OP_NEXT) {
+			smw_data_args->context =
+				(struct smw_op_context *)ctx->context;
+			status = smw_cipher_update(smw_data_args);
+			ctx->context = smw_data_args->context;
+		}
+
+		break;
+
 	case OP_UPDATE:
 		if (ctx->current_state == OP_INIT) {
 			op_ctx_args.subsystem_name =
@@ -1107,6 +1178,7 @@ static CK_RV cipher(struct lib_cipher_params *params,
 
 		break;
 
+	case OP_END:
 	case OP_FINAL:
 		if (ctx->context) {
 			smw_data_args->context =
@@ -1137,7 +1209,9 @@ end:
 
 	ret = smw_status_to_ck_rv(status);
 	DBG_TRACE("%s on subsystem #%d SMW status = 0x%x return = 0x%lx",
-		  params->op_flag == CKF_ENCRYPT ? "ENCRYPT" : "DECRYPT",
+		  params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT) ?
+			  "ENCRYPT" :
+			  "DECRYPT",
 		  smw_init_args->subsystem_name, status, ret);
 	return ret;
 }
@@ -1200,7 +1274,7 @@ static CK_RV set_smw_init_args(struct lib_cipher_ctx *ctx,
 
 	DBG_TRACE("Cipher mode #%d", smw_init_args->mode_name);
 
-	if (op_flag == CKF_ENCRYPT)
+	if (op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
 		smw_init_args->op_type_name = SMW_CIPHER_OP_TYPE_NAME_ENCRYPT;
 	else
 		smw_init_args->op_type_name = SMW_CIPHER_OP_TYPE_NAME_DECRYPT;
@@ -1236,7 +1310,9 @@ static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	ctx = params->ctx;
 
 	if (params->state == OP_ONE_SHOT ||
-	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE)) {
+	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE) ||
+	    (ctx->current_state == OP_BEGIN &&
+	     (params->state == OP_NEXT || params->state == OP_END))) {
 		if (set_smw_init_args(ctx, smw_init_args_ptr, &key_buffer,
 				      &keys_desc_ptr, &key_descriptor[0],
 				      devinfo->name, params->op_flag) != CKR_OK)
@@ -1244,7 +1320,7 @@ static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	}
 
 	if (SET_OVERFLOW(params->input_length, smw_data_args.input_length)) {
-		if (params->op_flag == CKF_ENCRYPT)
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
 			ret = CKR_DATA_LEN_RANGE;
 		else
 			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
@@ -1253,7 +1329,7 @@ static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	}
 
 	if (SET_OVERFLOW(params->output_length, smw_data_args.output_length)) {
-		if (params->op_flag == CKF_ENCRYPT)
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
 			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
 		else
 			ret = CKR_DATA_LEN_RANGE;
@@ -1268,6 +1344,386 @@ static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 end:
 	if (key_buffer)
 		free(key_buffer);
+
+	return ret;
+}
+
+static CK_RV info_maead(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_RV ret = CKR_OK;
+	const struct libdev *devinfo = NULL;
+	struct smw_aead_info aead_info = { 0 };
+
+	DBG_TRACE("Return info of 0x%lx AEAD mechanism", type);
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	/*
+	 * Global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = 0;
+
+	aead_info.key_type_name = entry->smw_key_type;
+	aead_info.mode_name = entry->smw_aead_mode;
+
+	aead_info.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
+	status = smw_config_check_aead(devinfo->name, &aead_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT;
+
+	aead_info.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
+	status = smw_config_check_aead(devinfo->name, &aead_info);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_DECRYPT | CKF_MESSAGE_DECRYPT;
+
+	/*
+	 * Call specific device mechanism information function
+	 * to complete the global setting.
+	 */
+	if (dev_mech_info[slotid])
+		ret = dev_mech_info[slotid](type, info);
+
+	return ret;
+}
+
+static void check_maead(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
+			struct mgroup *mgroup)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	unsigned int idx;
+	CK_FLAGS slot_flag = 0;
+	struct mentry *entry = NULL;
+	struct smw_aead_info info = { 0 };
+
+	/*
+	 * Slot flag is set if:
+	 * encryption or decryption operation is supported
+	 */
+
+	slot_flag = BIT(slotid);
+
+	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
+	     idx++, entry++) {
+		info.key_type_name = entry->smw_key_type;
+		info.mode_name = entry->smw_aead_mode;
+		info.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
+		status = smw_config_check_aead(subsystem, &info);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+
+		info.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
+		status = smw_config_check_aead(subsystem, &info);
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+	}
+}
+
+static CK_RV aead(struct lib_cipher_params *params,
+		  struct smw_aead_init_args *smw_init_args,
+		  struct smw_aead_aad_args *smw_aad_args,
+		  struct smw_aead_data_args *smw_data_args,
+		  struct smw_aead_final_args *smw_final_args)
+{
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_aead_args smw_args = { 0 };
+	struct smw_context_args op_ctx_args = { 0 };
+
+	struct lib_cipher_ctx *ctx = NULL;
+
+	ctx = params->ctx;
+
+	smw_args.final = smw_final_args;
+	smw_args.init = smw_init_args;
+	smw_args.aad = smw_aad_args;
+
+	switch (params->state) {
+	case OP_ONE_SHOT:
+		status = smw_aead(&smw_args);
+		if (status == SMW_STATUS_OK) {
+			if (params->op_flag &
+			    (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
+				ctx->iv_length =
+					smw_final_args->output_iv_length;
+			ctx->tag = smw_final_args->tag;
+			ctx->tag_length = smw_final_args->tag_length;
+		}
+		break;
+
+	case OP_NEXT:
+		if (ctx->current_state == OP_BEGIN) {
+			op_ctx_args.subsystem_name =
+				smw_args.init->subsystem_name;
+			status = smw_allocate_context(&op_ctx_args);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			smw_init_args->context = op_ctx_args.context;
+
+			status = smw_aead_init(smw_init_args);
+			if (status == SMW_STATUS_OK &&
+			    smw_aad_args->data_length) {
+				/*
+				 * before the first update operation, we need to
+				 * update AAD if there is some.
+				 */
+				ctx->context = smw_init_args->context;
+				smw_aad_args->context = smw_init_args->context;
+				status = smw_aead_update_aad(smw_aad_args);
+				/*
+				 * update the operation context
+				 * as it is release in case of error
+				 */
+				ctx->context = smw_aad_args->context;
+			}
+
+			if (status == SMW_STATUS_OK) {
+				ctx->context = smw_init_args->context;
+				smw_data_args->context = smw_init_args->context;
+				status = smw_aead_update(smw_data_args);
+				/*
+				 * update the operation context
+				 * as it is release in case of error
+				 */
+				ctx->context = smw_data_args->context;
+			}
+		} else if (ctx->current_state == OP_NEXT) {
+			smw_data_args->context =
+				(struct smw_op_context *)ctx->context;
+			status = smw_aead_update(smw_data_args);
+			/*
+			 * update the operation context
+			 * as it is release in case of error
+			 */
+			ctx->context = smw_data_args->context;
+		}
+
+		break;
+
+	case OP_UPDATE:
+		if (ctx->current_state == OP_INIT) {
+			op_ctx_args.subsystem_name =
+				smw_args.init->subsystem_name;
+			status = smw_allocate_context(&op_ctx_args);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			smw_init_args->context = op_ctx_args.context;
+
+			status = smw_aead_init(smw_init_args);
+			if (status == SMW_STATUS_OK &&
+			    smw_aad_args->data_length) {
+				/*
+				 * before the first update operation, we need to
+				 * update AAD if there is some.
+				 */
+				ctx->context = smw_init_args->context;
+				smw_aad_args->context = smw_init_args->context;
+				status = smw_aead_update_aad(smw_aad_args);
+				/*
+				 * update the operation context
+				 * as it is release in case of error
+				 */
+				ctx->context = smw_aad_args->context;
+			}
+
+			if (status == SMW_STATUS_OK) {
+				ctx->context = smw_init_args->context;
+				smw_data_args->context = smw_init_args->context;
+				status = smw_aead_update(smw_data_args);
+				/*
+				 * update the operation context
+				 * as it is release in case of error
+				 */
+				ctx->context = smw_data_args->context;
+			}
+
+		} else if (ctx->current_state == OP_UPDATE) {
+			smw_data_args->context =
+				(struct smw_op_context *)ctx->context;
+			status = smw_aead_update(smw_data_args);
+			/*
+			 * update the operation context
+			 * as it is release in case of error
+			 */
+			ctx->context = smw_data_args->context;
+		}
+
+		break;
+
+	case OP_END:
+	case OP_FINAL:
+		if (ctx->context) {
+			smw_final_args->data->context =
+				(struct smw_op_context *)ctx->context;
+			status = smw_aead_final(smw_final_args);
+			/*
+			 * update the operation context
+			 * as it is release in case of error
+			 */
+			ctx->context = smw_final_args->data->context;
+			if (status == SMW_STATUS_OK) {
+				if (params->op_flag &
+				    (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
+					ctx->iv_length =
+						smw_final_args->output_iv_length;
+				ctx->tag = smw_final_args->tag;
+				ctx->tag_length = smw_final_args->tag_length;
+			}
+
+		} else {
+			status = SMW_STATUS_OK;
+			params->output_length = 0;
+			goto end;
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
+	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT) {
+		/* Update output data buffer length */
+		if (params->state != OP_UPDATE && params->state != OP_NEXT)
+			params->output_length =
+				smw_args.final->data->output_length;
+		else
+			params->output_length = smw_data_args->output_length;
+	}
+
+end:
+
+	ret = smw_status_to_ck_rv(status);
+	DBG_TRACE("%s on subsystem #%d SMW status = 0x%x return = 0x%lx",
+		  params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT) ?
+			  "ENCRYPT" :
+			  "DECRYPT",
+		  smw_init_args->subsystem_name, status, ret);
+	return ret;
+}
+
+static CK_RV op_maead(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	(void)entry;
+	CK_RV ret = CKR_OK;
+
+	const struct libdev *devinfo = NULL;
+	struct lib_cipher_ctx *ctx = NULL;
+	struct lib_cipher_params *params = NULL;
+
+	struct smw_aead_init_args smw_init_args = { 0 };
+	struct smw_aead_aad_args smw_aad_args = { 0 };
+	struct smw_aead_data_args smw_data_args = { 0 };
+	struct smw_aead_final_args smw_final_args = { 0 };
+	struct smw_key_descriptor key_descriptor = { 0 };
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	params = (struct lib_cipher_params *)args;
+	ctx = params->ctx;
+
+	if (params->state == OP_ONE_SHOT ||
+	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE) ||
+	    (ctx->current_state == OP_BEGIN &&
+	     (params->state == OP_NEXT || params->state == OP_END))) {
+		key_descriptor.id =
+			get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
+
+		smw_init_args.key_desc = &key_descriptor;
+		smw_init_args.subsystem_name = devinfo->name;
+		smw_init_args.mode_name = get_aead_mode(ctx->cipher_mech);
+		smw_init_args.user_iv = ctx->iv;
+
+		if (SET_OVERFLOW(ctx->fixed_iv_length,
+				 smw_init_args.user_iv_length))
+			return CKR_ARGUMENTS_BAD;
+
+		if (SET_OVERFLOW(ctx->iv_length, smw_init_args.iv_length))
+			return CKR_ARGUMENTS_BAD;
+
+		if (SET_OVERFLOW(ctx->aad_length, smw_init_args.aad_length))
+			return CKR_ARGUMENTS_BAD;
+
+		if (SET_OVERFLOW(ctx->tag_length, smw_init_args.tag_length))
+			return CKR_ARGUMENTS_BAD;
+
+		if (SET_OVERFLOW(ctx->payload_length,
+				 smw_init_args.plaintext_length))
+			return CKR_ARGUMENTS_BAD;
+
+		smw_aad_args.data = ctx->aad;
+
+		if (SET_OVERFLOW(ctx->aad_length, smw_aad_args.data_length))
+			return CKR_ARGUMENTS_BAD;
+
+		DBG_TRACE("AEAD mode #%d", smw_init_args.mode_name);
+
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
+			smw_init_args.op_type_name =
+				SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
+		else
+			smw_init_args.op_type_name =
+				SMW_AEAD_OP_TYPE_NAME_DECRYPT;
+	}
+
+	if (params->state == OP_FINAL || params->state == OP_END ||
+	    params->state == OP_ONE_SHOT) {
+		smw_final_args.data = &smw_data_args;
+
+		if (ctx->tag) {
+			smw_final_args.tag = ctx->tag;
+			if (SET_OVERFLOW(ctx->tag_length,
+					 smw_final_args.tag_length))
+				return CKR_ARGUMENTS_BAD;
+		}
+
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT)) {
+			smw_final_args.op_type_name =
+				SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
+
+			smw_final_args.output_iv = ctx->iv;
+			if (SET_OVERFLOW(ctx->iv_length,
+					 smw_final_args.output_iv_length))
+				return CKR_ARGUMENTS_BAD;
+		} else {
+			smw_final_args.op_type_name =
+				SMW_AEAD_OP_TYPE_NAME_DECRYPT;
+		}
+	}
+
+	if (SET_OVERFLOW(params->input_length, smw_data_args.input_length)) {
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
+			ret = CKR_DATA_LEN_RANGE;
+		else
+			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
+
+		goto end;
+	}
+
+	if (SET_OVERFLOW(params->output_length, smw_data_args.output_length)) {
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
+			ret = CKR_ENCRYPTED_DATA_LEN_RANGE;
+		else
+			ret = CKR_DATA_LEN_RANGE;
+
+		goto end;
+	}
+
+	smw_data_args.input = params->pinput;
+	smw_data_args.output = params->poutput;
+	ret = aead(params, &smw_init_args, &smw_aad_args, &smw_data_args,
+		   &smw_final_args);
+
+end:
 
 	return ret;
 }

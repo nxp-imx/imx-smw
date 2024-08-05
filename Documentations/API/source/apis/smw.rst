@@ -15,5 +15,4 @@ SMW APIs
    smw/status
    smw/attr
    smw/names
-   smw/strings
    smw/examples

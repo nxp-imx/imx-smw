@@ -42,22 +42,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update `smw_derive_key()` API argument and add support for HKDF based key derivation.
 
 * Key attributes, data attributes and signature algorithm are no longer encoded with TLV format. They are now encoded with a dedicated bitmap.
-* The Secure Subsystem name is not a string anymore but an enum.
-* Rename `smw_aead_update_add()` as `smw_aead_update_aad()`
-* The key type name is not a string anymore but an enum.
-* The key privacy name is not a string anymore but an enum.
-* The hash algorithm name is not a string anymore but an enum.
-* The MAC algorithm name is not a string anymore but an enum.
-* The cipher mode name is not a string anymore but an enum.
-* The AEAD mode name is not a string anymore but an enum.
-* The cipher operation type name is not a string anymore but an enum.
-* The AEAD operation type name is not a string anymore but an enum.
-* The key format name is not a string anymore but an enum.
-* The signature algorithm name is not a string anymore but an enum.
-* The signature type name is not a string anymore but an enum.
-* The TLS1.2 KEA name is not a string anymore but an enum.
-* The TLS1.2 encryption name is not a string anymore but an enum.
-* The lifecycle name is not a string anymore but an enum.
+* Replace public string arguments with enum type in all SMW public APIs.
+* Rename `smw_aead_update_add()` as `smw_aead_update_aad()`.
 
 ##### 2. Subsystems
 

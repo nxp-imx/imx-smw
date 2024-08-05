@@ -281,7 +281,7 @@ systemctl start nvm_daemon
 ```
 
 ### 3.4. JSON-C Library
-The JOSN-C Library is required only if the SMW test suite is wanted.
+The JSON-C Library is required only if the SMW test suite is wanted.
 
 The following cmake script uploads into the `JSONC_SRC_PATH` if not already present
 and builds the JSON-C sources present by the `JSONC_SRC_PATH` using the
@@ -454,7 +454,7 @@ Before enabling a subsystem, the subsystem dependencies must be built as describ
 <tr>
   <td rowspan="2">TEE</td>
   <td>-DTEEC_ROOT=[/path/to/export]</td>
-  <td>Path to the OPTEE Client library and headres interface</td>
+  <td>Path to the OPTEE Client library and headers interface</td>
 </tr>
 <tr>
   <td>-DTA_DEV_KIT_ROOT=[/path/to/export]</td>
@@ -688,7 +688,7 @@ super-user privilege.
 
 > :memo: **Note 1**: The <i>y</i> is for the project minor version.
 
-> :memo: **Note 2**: The `usr/lib/cmake` folder is not present if the porject
+> :memo: **Note 2**: The `usr/lib/cmake` folder is not present if the project
 option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-environment-options)).
 
 <pre>
@@ -719,8 +719,7 @@ option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-envi
     |   |   |-- smw_keymgr.h
     |   |   |-- smw_osal.h
     |   |   |-- smw_status.h
-    |   |   |-- smw_storage.h
-    |   |   `-- smw_strings.h
+    |   |   `-- smw_storage.h
     |   `-- <span style="color:orange">smw_pkcs11</span>
     |       |-- pkcs11.h
     |       |-- pkcs11f.h

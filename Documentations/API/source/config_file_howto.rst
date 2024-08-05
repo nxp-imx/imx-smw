@@ -179,10 +179,6 @@ by its string name. The :numref:`security_operations` below lists all Security
    +------------------------+--------------------------------------------------+
    | DELETE_KEY             | Delete a key.                                    |
    +------------------------+--------------------------------------------------+
-   | CANCEL_OPERATION       | Cancel an active operation context.              |
-   +------------------------+--------------------------------------------------+
-   | COPY_CONTEXT           | Copy an active operation context.                |
-   +------------------------+--------------------------------------------------+
    | HASH                   | Hash a message.                                  |
    +------------------------+--------------------------------------------------+
    | MAC                    | Message Authentication Code.                     |
@@ -197,7 +193,7 @@ by its string name. The :numref:`security_operations` below lists all Security
    +------------------------+--------------------------------------------------+
    | AEAD                   | Authentication Encryption.                       |
    +------------------------+--------------------------------------------------+
-   | AEAD_MUTLI_PART        | Authentication Encryption multi-part.            |
+   | AEAD_MULTI_PART        | Authentication Encryption multi-part.            |
    +------------------------+--------------------------------------------------+
    | RNG                    | Generate a Random data number.                   |
    +------------------------+--------------------------------------------------+

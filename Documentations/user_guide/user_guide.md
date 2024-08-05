@@ -264,7 +264,7 @@ build directory.
 
 # 4. Running on target
 The Security Middleware library requires some configurations defining:
-  - The SMW object database storing necessary informations to manage object
+  - The SMW object database storing necessary information to manage object
     (key and data) present in the different subsystem.
   - The operations per subsystems and the priority between each
     operations/subsystems definition. It's the library configuration.
@@ -301,7 +301,7 @@ system environment to configure the database and the subsystem(s) at runtime.
 > The linux OSAL reference module tries to read the system configuration file
 > (smw.conf) during when the function `smw_osal_lib_init(void)` is called.
 > The OSAL APIs exposes for the same or system environment variable are
-> overwritting the system configuration file if both options are used.
+> overwriting the system configuration file if both options are used.
 
 ### 4.2.1. Use of system configuration file
 The `smw.conf` file must be present in the system folder `/etc/opt/smw/`.
@@ -380,7 +380,7 @@ Below is the organization of the project sources.
 |   |           `-- <span style="color:orange">include</span>         Static TA interface header
 |   `-- <span style="color:orange">utils</span>                       Core utilities
 |       `-- ...
-|-- <span style="color:orange">inc</span>                             Overall porject global includes
+|-- <span style="color:orange">inc</span>                             Overall project global includes
 |   `-- ...
 |-- <span style="color:orange">osal</span>                            OS'es Abstraction Layers
 |   |-- CMakeLists.txt              OSAL global CMake configuration
@@ -395,7 +395,7 @@ Below is the organization of the project sources.
 |   |   |   `-- ...
 |   |   |-- <span style="color:orange">include</span>                 PKCS#11 Common include files
 |   |   |   `-- ...
-|   |   |-- <span style="color:orange">objects</span>                 PKCS#11 Objects managenment sources
+|   |   |-- <span style="color:orange">objects</span>                 PKCS#11 Objects management sources
 |   |   |   `-- ...
 |   |   |-- <span style="color:orange">utils</span>                   PKCS#11 Utilities
 |   |   |   `-- ...
@@ -425,8 +425,7 @@ Below is the organization of the project sources.
 |   |-- smw_keymgr.h
 |   |-- smw_osal.h
 |   |-- smw_status.h
-|   |-- smw_storage.h
-|   `-- smw_strings.h
+|   `-- smw_storage.h
 |-- <span style="color:orange">scripts</span>                         Project building/environment scripts
 `-- <span style="color:orange">tests</span>                           SMW's Test suite
 </pre>

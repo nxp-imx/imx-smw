@@ -185,6 +185,7 @@ struct sign_verify_shared_params {
  * @payload_len: Length of the payload in bytes(only for AES-CCM).
  * @aead_algo: TEE Algo ID
  * @aead_op: TEE Operation
+ * @fixed_iv_len: Bytes of the original IV to preserve.
  */
 struct aead_shared_params {
 	uint32_t tag_len;
@@ -192,6 +193,7 @@ struct aead_shared_params {
 	size_t payload_len;
 	uint32_t aead_algo;
 	uint32_t aead_op;
+	size_t fixed_iv_len;
 };
 
 /**

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
+#include <types_ext.h>
 #include <util.h>
 
 #include "common.h"
@@ -22,6 +23,8 @@ TEE_Result aead_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	struct aead_shared_params *shared_params = NULL;
 	void *iv = NULL;
 	size_t iv_len = 0;
+	vaddr_t gen_iv = 0;
+	size_t gen_iv_len = 0;
 
 	FMSG("Executing %s", __func__);
 
@@ -32,8 +35,11 @@ TEE_Result aead_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	 * params[3] = Operation handle
 	 */
 
-	if (TEE_PARAM_TYPE_GET(param_types, 0) != TEE_PARAM_TYPE_MEMREF_INPUT ||
-	    TEE_PARAM_TYPE_GET(param_types, 3) != TEE_PARAM_TYPE_MEMREF_INOUT ||
+	if (TEE_PARAM_TYPE_GET(param_types, 0) != TEE_PARAM_TYPE_MEMREF_INOUT &&
+	    TEE_PARAM_TYPE_GET(param_types, 0) != TEE_PARAM_TYPE_MEMREF_INPUT)
+		return res;
+
+	if (TEE_PARAM_TYPE_GET(param_types, 3) != TEE_PARAM_TYPE_MEMREF_INOUT ||
 	    params[3].memref.size != sizeof(*context) ||
 	    !params[3].memref.buffer)
 		return res;
@@ -87,6 +93,30 @@ TEE_Result aead_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		/* AE initialization */
 		iv = params[0].memref.buffer;
 		iv_len = params[0].memref.size;
+
+		if (TEE_PARAM_TYPE_GET(param_types, 0) ==
+		    TEE_PARAM_TYPE_MEMREF_INOUT) {
+			if (shared_params->fixed_iv_len > iv_len) {
+				res = TEE_ERROR_OVERFLOW;
+				goto end;
+			}
+
+			if (SUB_OVERFLOW(iv_len, shared_params->fixed_iv_len,
+					 &gen_iv_len)) {
+				res = TEE_ERROR_OVERFLOW;
+				goto end;
+			}
+
+			if (gen_iv_len) {
+				if (ADD_OVERFLOW((vaddr_t)iv,
+						 shared_params->fixed_iv_len,
+						 &gen_iv)) {
+					res = TEE_ERROR_OVERFLOW;
+					goto end;
+				}
+				TEE_GenerateRandom((void *)gen_iv, gen_iv_len);
+			}
+		}
 
 		res = TEE_AEInit(op_handle, iv, iv_len, shared_params->tag_len,
 				 shared_params->aad_len,

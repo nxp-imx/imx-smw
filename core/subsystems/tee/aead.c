@@ -85,6 +85,7 @@ get_tee_aead_operation_and_usage(enum smw_config_aead_op_type_id smw_op,
  * @op_context: Pointer to operation context arguments structure
  * @args: Pointer to internal AEAD arguments structure
  * @context: Pointer to TEE context operation handle structure
+ * @iv: initial vector
  *
  * This function initializes the members of operation context structure. It also
  * allocates memory to aead subsystem specific context and initializes it's
@@ -97,25 +98,26 @@ get_tee_aead_operation_and_usage(enum smw_config_aead_op_type_id smw_op,
  */
 static int set_aead_context(struct smw_op_context *op_context,
 			    struct smw_crypto_aead_args *args,
-			    struct shared_context *context)
+			    struct shared_context *context, unsigned char *iv)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct aead_context *aead_ctx = NULL;
 
-	unsigned char *iv = NULL;
 	unsigned int iv_len = 0;
 
-	if (!op_context)
+	if (!iv || !op_context)
 		goto end;
 
 	op_context->op_id = SMW_CRYPTO_OP_ID_AEAD_MULTI_PART;
 
 	if (args->op_type_id == SMW_CONFIG_AEAD_OP_TYPE_ID_ENCRYPT) {
-		iv = smw_crypto_get_aead_iv(args);
-		iv_len = smw_crypto_get_aead_iv_len(args);
+		iv_len = smw_crypto_get_aead_user_iv_len(args);
 
-		if (!iv || !iv_len)
+		if (iv_len < smw_crypto_get_aead_iv_len(args))
+			iv_len = smw_crypto_get_aead_iv_len(args);
+
+		if (!iv_len)
 			goto end;
 
 		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_ENCRYPT;
@@ -152,15 +154,22 @@ static int aead_init(struct smw_op_context *op_context,
 		     struct smw_crypto_aead_args *args)
 {
 	TEEC_Operation op = { 0 };
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 	int res = SMW_STATUS_OK;
 	unsigned int key_id = INVALID_KEY_ID;
 	enum smw_config_key_type_id key_type = 0;
 	struct aead_shared_params shared_params = { 0 };
 	struct shared_context context = { 0 };
 	unsigned int key_usage = 0;
+	unsigned char iv[TEE_MAX_IV_LEN] = { 0 };
+	unsigned char *user_iv = NULL;
+	size_t user_iv_len = 0;
+	size_t iv_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args || !op_context)
+		goto end;
 
 	/* Get key type as reference */
 	key_type = args->key_desc.identifier.type_id;
@@ -171,9 +180,45 @@ static int aead_init(struct smw_op_context *op_context,
 	 * params[2] = Pointer to aead_shared_params structure
 	 * params[3] = Operation handle
 	 */
-	if (smw_crypto_get_aead_iv(args)) {
-		op.params[0].tmpref.buffer = smw_crypto_get_aead_iv(args);
-		op.params[0].tmpref.size = smw_crypto_get_aead_iv_len(args);
+	user_iv = smw_crypto_get_aead_user_iv(args);
+	user_iv_len = smw_crypto_get_aead_user_iv_len(args);
+	op.params[0].tmpref.buffer = iv;
+	if (user_iv) {
+		if (user_iv_len && user_iv_len <= TEE_MAX_IV_LEN)
+			memcpy(iv, user_iv, user_iv_len);
+
+		op.params[0].tmpref.size = user_iv_len;
+	}
+
+	/*
+	 * To generate complete or partial IV, the user can set
+	 * respectively, the input:
+	 *  - init->user_iv_length = 0.
+	 *  - init->user_iv_length < init->iv_length.
+	 *
+	 * Otherwise, the subsystem will use the user supplied IV.
+	 *
+	 */
+	iv_len = smw_crypto_get_aead_iv_len(args);
+	if (iv_len > TEE_MAX_IV_LEN) {
+		status = SMW_STATUS_INVALID_IV_SIZE;
+		goto end;
+	}
+
+	if (iv_len && user_iv_len < iv_len) {
+		shared_params.fixed_iv_len = user_iv_len;
+
+		op.params[0].tmpref.size = iv_len;
+
+		op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INOUT,
+						 TEEC_VALUE_INPUT,
+						 TEEC_MEMREF_TEMP_INPUT,
+						 TEEC_MEMREF_TEMP_INOUT);
+	} else {
+		op.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT,
+						 TEEC_VALUE_INPUT,
+						 TEEC_MEMREF_TEMP_INPUT,
+						 TEEC_MEMREF_TEMP_INOUT);
 	}
 
 	/* Get OPTEE algorithm */
@@ -219,11 +264,6 @@ static int aead_init(struct smw_op_context *op_context,
 	op.params[3].tmpref.buffer = &context;
 	op.params[3].tmpref.size = sizeof(context);
 
-	op.paramTypes =
-		TEEC_PARAM_TYPES(TEEC_MEMREF_TEMP_INPUT, TEEC_VALUE_INPUT,
-				 TEEC_MEMREF_TEMP_INPUT,
-				 TEEC_MEMREF_TEMP_INOUT);
-
 	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_TEE);
 
 	/* Invoke TA */
@@ -232,7 +272,7 @@ static int aead_init(struct smw_op_context *op_context,
 			    "%s: Operation failed\n", __func__);
 
 	if (status == SMW_STATUS_OK)
-		status = set_aead_context(op_context, args, &context);
+		status = set_aead_context(op_context, args, &context, iv);
 
 	key_id = args->key_desc.identifier.id;
 	if (key_id == INVALID_KEY_ID) {

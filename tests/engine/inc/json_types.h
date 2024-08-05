@@ -37,6 +37,7 @@
 #define INFO_OBJ		  "info"
 #define INPUT_OBJ		  "input"
 #define IV_OBJ			  "iv"
+#define IV_LEN_OBJ		  "iv_len"
 #define KEYS_OBJ		  "keys"
 #define KEY_DATA_OBJ		  "key_data"
 #define KEY_NAME_OBJ		  "key_name"

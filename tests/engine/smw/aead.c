@@ -529,25 +529,30 @@ static int set_update_output_params(struct subtest_data *subtest,
  * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed
  * Error code from util_read_hex_buffer
  */
-static int set_encrypt_iv_params(struct subtest_data *subtest,
-				 unsigned char **output_iv,
-				 unsigned int *output_iv_len,
-				 unsigned char **iv, unsigned int *iv_len)
+static int
+set_encrypt_iv_params(struct subtest_data *subtest, unsigned char **output_iv,
+		      unsigned int *output_iv_len, unsigned char **user_iv,
+		      unsigned int *user_iv_len, unsigned int *iv_len)
 {
 	int res = ERR_CODE(PASSED);
 
 	*iv_len = 0;
 
-	res = util_read_hex_buffer(iv, iv_len, subtest->params, IV_OBJ);
+	res = util_read_hex_buffer(user_iv, user_iv_len, subtest->params,
+				   IV_OBJ);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS)) {
 		DBG_PRINT("Failed to read AEAD IV");
 		return res;
 	}
 
-	if (*iv_len < MAX_IV_LEN)
+	util_read_json_type(iv_len, IV_LEN_OBJ, t_int, subtest->params);
+	if (*iv_len == 0)
+		*iv_len = MAX_IV_LEN;
+
+	if (*user_iv_len < MAX_IV_LEN)
 		*output_iv_len = MAX_IV_LEN;
 	else
-		*output_iv_len = *iv_len;
+		*output_iv_len = *user_iv_len;
 
 	*output_iv = calloc(1, *output_iv_len * (sizeof(**output_iv)));
 	if (!*output_iv)
@@ -773,7 +778,9 @@ static int aead_encrypt(struct subtest_data *subtest)
 
 	res = set_encrypt_iv_params(subtest, &args.final->output_iv,
 				    &args.final->output_iv_length,
-				    &args.init->iv, &args.init->iv_length);
+				    &args.init->user_iv,
+				    &args.init->user_iv_length,
+				    &args.init->iv_length);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
 		goto end;
 
@@ -802,7 +809,8 @@ static int aead_encrypt(struct subtest_data *subtest)
 					  &args.final->data->input_length,
 					  &args.final->tag,
 					  &args.final->tag_length,
-					  &args.init->iv, &args.init->iv_length,
+					  &args.init->user_iv,
+					  &args.init->user_iv_length,
 					  tag_field_set);
 
 		/* 'aead_id' must not be in the AEAD list */
@@ -877,8 +885,8 @@ static int aead_encrypt(struct subtest_data *subtest)
 
 end:
 
-	if (args.init->iv)
-		free(args.init->iv);
+	if (args.init->user_iv)
+		free(args.init->user_iv);
 
 	if (args.final->output_iv)
 		free(args.final->output_iv);
@@ -987,7 +995,8 @@ static int aead_decrypt(struct subtest_data *subtest)
 					  &args.final->data->input_length,
 					  &args.final->tag,
 					  &args.final->tag_length,
-					  &args.init->iv, &args.init->iv_length,
+					  &args.init->user_iv,
+					  &args.init->user_iv_length,
 					  tag_field_set);
 
 		/* 'aead_id' must be in the AEAD list */
@@ -1025,8 +1034,8 @@ static int aead_decrypt(struct subtest_data *subtest)
 		goto end;
 
 	if (iv) {
-		args.init->iv = iv;
-		args.init->iv_length = iv_len;
+		args.init->user_iv = iv;
+		args.init->user_iv_length = iv_len;
 	}
 
 	/*
@@ -1130,6 +1139,7 @@ int aead_init(struct subtest_data *subtest)
 	struct smw_keypair_buffer key_buffer = { 0 };
 	struct tbuffer iv = { 0 };
 	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
+	unsigned int iv_len = 0;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -1153,8 +1163,13 @@ int aead_init(struct subtest_data *subtest)
 		return res;
 	}
 
-	args.iv = iv.data;
-	args.iv_length = iv.length;
+	util_read_json_type(&iv_len, IV_LEN_OBJ, t_int, subtest->params);
+	if (!iv_len)
+		iv_len = MAX_IV_LEN;
+
+	args.user_iv = iv.data;
+	args.user_iv_length = iv.length;
+	args.iv_length = iv_len;
 
 	/* Get AAD length if any */
 	res = util_read_json_type(&args.aad_length, AAD_OBJ, t_uint,

@@ -67,21 +67,31 @@ unsigned char *smw_crypto_get_aead_aad(struct smw_crypto_aead_args *args);
 unsigned int smw_crypto_get_aead_aad_len(struct smw_crypto_aead_args *args);
 
 /**
- * smw_crypto_get_aead_iv() - Get IV buffer address
+ * smw_crypto_get_aead_user_iv() - Get user IV buffer address
  * @args: Pointer to internal AEAD argument structure
  *
  * Return:
- * address of IV buffer
+ * address of the user IV buffer
  * NULL
  */
-unsigned char *smw_crypto_get_aead_iv(struct smw_crypto_aead_args *args);
+unsigned char *smw_crypto_get_aead_user_iv(struct smw_crypto_aead_args *args);
 
 /**
- * smw_crypto_get_aead_iv_len() - Return the length of the IV buffer
+ * smw_crypto_get_aead_user_iv_len() - Return the length of the user IV buffer
  * @args: Pointer to internal AEAD argument structure
  *
  * Return:
- * IV buffer length
+ * User IV buffer length
+ * 0
+ */
+unsigned int smw_crypto_get_aead_user_iv_len(struct smw_crypto_aead_args *args);
+
+/**
+ * smw_crypto_get_aead_iv_len() - Return the operation's IV length requested
+ * @args: Pointer to internal AEAD argument structure
+ *
+ * Return:
+ * Requested IV buffer length
  * 0
  */
 unsigned int smw_crypto_get_aead_iv_len(struct smw_crypto_aead_args *args);

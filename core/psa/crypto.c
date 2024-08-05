@@ -300,7 +300,8 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 
 	init->mode_name = mode_name;
 	init->plaintext_length = input_length;
-	init->iv = (unsigned char *)nonce;
+	init->user_iv = (unsigned char *)nonce;
+	init->user_iv_length = nonce_length;
 	init->iv_length = nonce_length;
 	init->op_type_name = op_name;
 

@@ -23,7 +23,8 @@
  */
 static int is_iv_set(struct smw_crypto_aead_args *args)
 {
-	if (!smw_crypto_get_aead_iv(args) && smw_crypto_get_aead_iv_len(args))
+	if (!smw_crypto_get_aead_user_iv(args) &&
+	    smw_crypto_get_aead_user_iv_len(args))
 		return SMW_STATUS_INVALID_PARAM;
 	else
 		return SMW_STATUS_OK;
@@ -388,23 +389,23 @@ unsigned int smw_crypto_get_aead_aad_len(struct smw_crypto_aead_args *args)
 	return aad_length;
 }
 
-unsigned char *smw_crypto_get_aead_iv(struct smw_crypto_aead_args *args)
+unsigned char *smw_crypto_get_aead_user_iv(struct smw_crypto_aead_args *args)
 {
-	unsigned char *iv = NULL;
+	unsigned char *user_iv = NULL;
 
 	if (!args)
-		return iv;
+		return user_iv;
 
 	switch (args->op_step) {
 	case SMW_OP_STEP_ONESHOT:
 		if (args->oneshot_pub && args->oneshot_pub->init)
-			iv = args->oneshot_pub->init->iv;
+			user_iv = args->oneshot_pub->init->user_iv;
 
 		break;
 
 	case SMW_OP_STEP_INIT:
 		if (args->init_pub)
-			iv = args->init_pub->iv;
+			user_iv = args->init_pub->user_iv;
 
 		break;
 
@@ -412,7 +413,35 @@ unsigned char *smw_crypto_get_aead_iv(struct smw_crypto_aead_args *args)
 		break;
 	}
 
-	return iv;
+	return user_iv;
+}
+
+unsigned int smw_crypto_get_aead_user_iv_len(struct smw_crypto_aead_args *args)
+{
+	unsigned int user_iv_length = 0;
+
+	if (!args)
+		return user_iv_length;
+
+	switch (args->op_step) {
+	case SMW_OP_STEP_ONESHOT:
+		if (args->oneshot_pub && args->oneshot_pub->init)
+			user_iv_length =
+				args->oneshot_pub->init->user_iv_length;
+
+		break;
+
+	case SMW_OP_STEP_INIT:
+		if (args->init_pub)
+			user_iv_length = args->init_pub->user_iv_length;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return user_iv_length;
 }
 
 unsigned int smw_crypto_get_aead_iv_len(struct smw_crypto_aead_args *args)

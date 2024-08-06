@@ -385,6 +385,26 @@ end:
 }
 
 /**
+ * set_modulus_data() - Set the address of the modulus Key buffer.
+ * @descriptor: Pointer to the internal Key descriptor structure.
+ * @modulus_data: Address of the modulus Key buffer.
+ *
+ * This function sets the address of the modulus Key buffer.
+ * If the @buffer field @pub is NULL, the function returns with no action.
+ *
+ * Return:
+ * none.
+ */
+static void smw_keymgr_set_modulus(struct smw_keymgr_descriptor *descriptor,
+				   unsigned char *modulus_data)
+{
+	struct smw_keymgr_key_ops *ops = &descriptor->ops;
+
+	if (ops->modulus)
+		*ops->modulus(ops) = modulus_data;
+}
+
+/**
  * setup_key_ops() - Setup the key operations in the key descriptor
  * @descriptor: key descriptor
  *
@@ -880,7 +900,8 @@ end:
 
 int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
 				    unsigned int public_length,
-				    unsigned int private_length)
+				    unsigned int private_length,
+				    unsigned int modulus_length)
 {
 	int status = SMW_STATUS_OK;
 
@@ -888,6 +909,7 @@ int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
 	struct smw_keypair_buffer *buffer = NULL;
 	unsigned char *public_data = NULL;
 	unsigned char *private_data = NULL;
+	unsigned char *modulus_data = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -931,6 +953,18 @@ int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
 		}
 	}
 
+	if (descriptor->identifier.type_id == SMW_CONFIG_KEY_TYPE_ID_RSA &&
+	    modulus_length) {
+		modulus_data = SMW_UTILS_MALLOC(modulus_length);
+		if (!modulus_data) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		smw_keymgr_set_modulus(descriptor, modulus_data);
+		smw_keymgr_set_modulus_length(descriptor, modulus_length);
+	}
+
 	smw_keymgr_set_public_data(descriptor, public_data);
 	smw_keymgr_set_public_length(descriptor, public_length);
 	smw_keymgr_set_private_data(descriptor, private_data);
@@ -940,6 +974,9 @@ end:
 	if (status != SMW_STATUS_OK) {
 		if (descriptor)
 			descriptor->pub = NULL;
+
+		if (private_data)
+			SMW_UTILS_FREE(private_data);
 
 		if (public_data)
 			SMW_UTILS_FREE(public_data);
@@ -979,6 +1016,11 @@ int smw_keymgr_free_keypair_buffer(struct smw_keymgr_descriptor *descriptor)
 
 	/* Free private key data if defined */
 	data = smw_keymgr_get_private_data(descriptor);
+	if (data)
+		SMW_UTILS_FREE(data);
+
+	/* Free modulus key data if defined */
+	data = smw_keymgr_get_modulus(descriptor);
 	if (data)
 		SMW_UTILS_FREE(data);
 

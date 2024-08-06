@@ -186,16 +186,18 @@ struct smw_keymgr_commit_key_storage_args {
  * @descriptor: Pointer to the internal Key descriptor structure.
  * @public_length: Length of the public Key buffer.
  * @private_length: Length of the private Key buffer.
+ * @modulus_length: Length of the modulus Key buffer (RSA key).
  *
  * This function allocates a keypair buffer object and
- * the keys buffers (public/private) if corresponding lengths are set.
+ * the keys buffers (public/private/modulus) if corresponding lengths are set.
  *
  * Return:
  * error code.
  */
 int smw_keymgr_alloc_keypair_buffer(struct smw_keymgr_descriptor *descriptor,
 				    unsigned int public_length,
-				    unsigned int private_length);
+				    unsigned int private_length,
+				    unsigned int modulus_length);
 
 /**
  * smw_keymgr_free_keypair_buffer() - Free a keypair object.

@@ -682,7 +682,7 @@ int seco_export_public_key(struct hdl *hdl,
 	key_desc->format_id = SMW_KEYMGR_FORMAT_ID_HEX;
 
 	/* Allocate key descriptor's keypair buffer and its public data */
-	status = smw_keymgr_alloc_keypair_buffer(key_desc, public_length, 0);
+	status = smw_keymgr_alloc_keypair_buffer(key_desc, public_length, 0, 0);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

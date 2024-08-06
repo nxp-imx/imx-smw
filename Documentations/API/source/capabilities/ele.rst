@@ -111,7 +111,7 @@ applicable in ELE subsystem. Only one permitted algorithm is allowed per key.
    +----------------+----------+--------------------------+-------------------------------------+
    | ALL_AEAD       | N/A      | N/A                      | Support all AEAD                    |
    +----------------+----------+--------------------------+-------------------------------------+
-   | RSA_PKCS1V15   | N/A      | N/A                      | Support all hash                    |
+   | RSA PKCS1V15   | N/A      | N/A                      | Support all hash                    |
    +                +----------+--------------------------+-------------------------------------+
    |                | SHA1     | N/A                      |                                     |
    +                +----------+--------------------------+-------------------------------------+
@@ -123,7 +123,7 @@ applicable in ELE subsystem. Only one permitted algorithm is allowed per key.
    +                +----------+--------------------------+-------------------------------------+
    |                | SHA512   | N/A                      |                                     |
    +----------------+----------+--------------------------+-------------------------------------+
-   | RSA_PSS        | N/A      | N/A                      | Support all hash                    |
+   | RSA PSS        | N/A      | N/A                      | Support all hash                    |
    +                +----------+--------------------------+-------------------------------------+
    |                | SHA1     | N/A                      |                                     |
    +                +----------+--------------------------+-------------------------------------+
@@ -218,6 +218,22 @@ Signature
    +                    +              +                          +                       +
    |                    |              |                          | None (Message hashed) |
    +--------------------+--------------+--------------------------+-----------------------+
+   | RSA_PKCS1V15       | RSA          | 2048 / 3072 / 4096       | SHA224                |
+   +                    +              +                          +                       +
+   |                    |              |                          | SHA256                |
+   +                    +              +                          +                       +
+   |                    |              |                          | SHA384                |
+   +                    +              +                          +                       +
+   |                    |              |                          | SHA512                |
+   +--------------------+--------------+--------------------------+-----------------------+
+   | RSA_PSS            | RSA          | 2048 / 3072 / 4096       | SHA224                |
+   +                    +              +                          +                       +
+   |                    |              |                          | SHA256                |
+   +                    +              +                          +                       +
+   |                    |              |                          | SHA384                |
+   +                    +              +                          +                       +
+   |                    |              |                          | SHA512                |
+   +--------------------+--------------+--------------------------+-----------------------+
 
 Operations supported:
  - Sign
@@ -234,8 +250,10 @@ The following key policies must defined:
 
   - Algorithm:
 
-    - for an ECDSA Signature, ECDSA with any hash or a hash already as listed
+    - ECDSA Signature with hash or a message already hashed as listed
       in :numref:`ele_signature`
+    - RSA Signature, PKCS1 v1.5 and PSS with hash as listed
+      in :numref:`ele_signature`. Not supported on i.MX8ULP
 
 Verify operation
 """"""""""""""""
@@ -248,8 +266,10 @@ The following key policies must defined if a key identifier is used:
 
   - Algorithm:
 
-  -  ECDSA with any hash or a hash already as listed in :numref:`ele_signature`
-
+    - ECDSA Signature with hash or a message already hashed as listed
+      in :numref:`ele_signature`
+    - RSA PKCS1 v1.5 and PSS with hash as listed in :numref:`ele_signature`.
+      Not supported on i.MX8ULP
 
 Random
 ^^^^^^

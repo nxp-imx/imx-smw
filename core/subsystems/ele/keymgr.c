@@ -143,7 +143,7 @@ static unsigned int rsa_public_key_length(unsigned int security_size)
 
 static unsigned int rsa_modulus_length(unsigned int security_size)
 {
-	return security_size;
+	return BITS_TO_BYTES_SIZE(security_size);
 }
 
 static const struct key_def *
@@ -285,7 +285,6 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
-	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		if (smw_keymgr_get_public_data(key_descriptor) &&
 		    !smw_keymgr_get_private_data(key_descriptor)) {
 			status = SMW_STATUS_OK;
@@ -293,6 +292,17 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 		}
 
 		SMW_DBG_PRINTF(ERROR, "%s: ELE only exports public key\n",
+			       __func__);
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_RSA:
+		if (smw_keymgr_get_modulus(key_descriptor) &&
+		    !smw_keymgr_get_private_data(key_descriptor)) {
+			status = SMW_STATUS_OK;
+			break;
+		}
+
+		SMW_DBG_PRINTF(ERROR, "%s: ELE only exports public modulus\n",
 			       __func__);
 		break;
 
@@ -1333,6 +1343,7 @@ int ele_export_public_key(struct hdl *hdl,
 	int status = SMW_STATUS_OK;
 
 	unsigned int public_length = 0;
+	unsigned int modulus_length = 0;
 	op_get_key_attr_args_t key_attrs = { 0 };
 	const struct key_def *key_def = NULL;
 
@@ -1366,8 +1377,13 @@ int ele_export_public_key(struct hdl *hdl,
 
 	public_length = key_def->public_length(key_attrs.bit_key_sz);
 
+	/* In case of RSA key modulus is exported too */
+	if (key_def->modulus_length)
+		modulus_length = key_def->modulus_length(key_attrs.bit_key_sz);
+
 	/* Allocate key descriptor's keypair buffer and its public data */
-	status = smw_keymgr_alloc_keypair_buffer(key_desc, public_length, 0);
+	status = smw_keymgr_alloc_keypair_buffer(key_desc, public_length, 0,
+						 modulus_length);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

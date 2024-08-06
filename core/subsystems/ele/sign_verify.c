@@ -20,11 +20,12 @@
 /* Workaround */
 #define HSM_SIGNATURE_SCHEME_ECDSA_ANY 0x06000600
 
-#define SIGNATURE_SCHEME_ID(_key_type_id, _key_sizes, _hash, _scheme)          \
+#define SIGNATURE_SCHEME_ID(_key_type_id, _key_sizes, _type, _hash, _scheme)   \
 	{                                                                      \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,          \
 		.security_sizes = _key_sizes,                                  \
-		.algo_id = SMW_CONFIG_HASH_ALGO_ID_##_hash,                    \
+		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_type,                    \
+		.hash_id = SMW_CONFIG_HASH_ALGO_ID_##_hash,                    \
 		.scheme_id = HSM_SIGNATURE_SCHEME_##_scheme                    \
 	}
 
@@ -34,26 +35,49 @@
  */
 static const unsigned int secp_r1_key_sizes[] = { 224, 256, 384, 521, 0 };
 static const unsigned int brainpool_r1_key_sizes[] = { 224, 256, 384, 0 };
+static const unsigned int rsa_key_sizes[] = { 2048, 3072, 4096, 0 };
 
 static const struct signature_scheme {
 	enum smw_config_key_type_id key_type_id;
 	const unsigned int *security_sizes;
-	enum smw_config_hash_algo_id algo_id;
+	enum smw_config_sign_type_id type_id;
+	enum smw_config_hash_algo_id hash_id;
 	hsm_signature_scheme_id_t scheme_id;
 } signature_schemes[] = {
-	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, INVALID, ECDSA_ANY),
-	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, SHA224, ECDSA_SHA224),
-	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, SHA256, ECDSA_SHA256),
-	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, SHA384, ECDSA_SHA384),
-	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, SHA512, ECDSA_SHA512),
-	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, INVALID,
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, DEFAULT, INVALID,
 			    ECDSA_ANY),
-	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, SHA224,
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, DEFAULT, SHA224,
 			    ECDSA_SHA224),
-	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, SHA256,
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, DEFAULT, SHA256,
 			    ECDSA_SHA256),
-	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, SHA384,
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, DEFAULT, SHA384,
 			    ECDSA_SHA384),
+	SIGNATURE_SCHEME_ID(SECP_R1, secp_r1_key_sizes, DEFAULT, SHA512,
+			    ECDSA_SHA512),
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, DEFAULT,
+			    INVALID, ECDSA_ANY),
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, DEFAULT,
+			    SHA224, ECDSA_SHA224),
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, DEFAULT,
+			    SHA256, ECDSA_SHA256),
+	SIGNATURE_SCHEME_ID(BRAINPOOL_R1, brainpool_r1_key_sizes, DEFAULT,
+			    SHA384, ECDSA_SHA384),
+	SIGNATURE_SCHEME_ID(RSA, rsa_key_sizes, PKCS1_1_5, SHA224,
+			    RSA_PKCS1_V15_SHA224),
+	SIGNATURE_SCHEME_ID(RSA, rsa_key_sizes, PKCS1_1_5, SHA256,
+			    RSA_PKCS1_V15_SHA256),
+	SIGNATURE_SCHEME_ID(RSA, rsa_key_sizes, PKCS1_1_5, SHA384,
+			    RSA_PKCS1_V15_SHA384),
+	SIGNATURE_SCHEME_ID(RSA, rsa_key_sizes, PKCS1_1_5, SHA512,
+			    RSA_PKCS1_V15_SHA512),
+	SIGNATURE_SCHEME_ID(RSA, rsa_key_sizes, PSS, SHA224,
+			    RSA_PKCS1_PSS_MGF1_SHA224),
+	SIGNATURE_SCHEME_ID(RSA, rsa_key_sizes, PSS, SHA256,
+			    RSA_PKCS1_PSS_MGF1_SHA256),
+	SIGNATURE_SCHEME_ID(RSA, rsa_key_sizes, PSS, SHA384,
+			    RSA_PKCS1_PSS_MGF1_SHA384),
+	SIGNATURE_SCHEME_ID(RSA, rsa_key_sizes, PSS, SHA512,
+			    RSA_PKCS1_PSS_MGF1_SHA512),
 };
 
 static bool check_security_size(unsigned int security_size,
@@ -73,19 +97,26 @@ static bool check_security_size(unsigned int security_size,
 
 static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 				unsigned int security_size,
-				enum smw_config_hash_algo_id algo_id,
+				struct smw_sign_verify_attributes *attributes,
 				hsm_signature_scheme_id_t *scheme_id)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	unsigned int i = 0;
 	const struct signature_scheme *scheme = signature_schemes;
+	enum smw_config_hash_algo_id hash_id = attributes->hash_id;
+	enum smw_config_sign_type_id type_id = attributes->type_id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < ARRAY_SIZE(signature_schemes); i++, scheme++) {
 		if (scheme->key_type_id == key_type_id) {
-			if (scheme->algo_id != algo_id)
+			if (scheme->type_id !=
+				    SMW_CONFIG_SIGN_TYPE_ID_DEFAULT &&
+			    scheme->type_id != type_id)
+				continue;
+
+			if (scheme->hash_id != hash_id)
 				continue;
 
 			if (!check_security_size(security_size, scheme))
@@ -154,7 +185,7 @@ static int sign(struct hdl *hdl, void *args)
 
 	status = set_signature_scheme(key_identifier->type_id,
 				      key_identifier->security_size,
-				      sign_args->attributes.hash_id,
+				      &sign_args->attributes,
 				      &op_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -210,19 +241,37 @@ static int verify(struct hdl *hdl, void *args)
 
 	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_INVALID) {
 		export_key_desc.identifier.id = key_desc->identifier.id;
+
 		status = ele_export_public_key(hdl, &export_key_desc);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
-		key_size = smw_keymgr_get_public_length(&export_key_desc);
-		key_buf = smw_keymgr_get_public_data(&export_key_desc);
 		security_size = export_key_desc.identifier.security_size;
 		key_type_id = export_key_desc.identifier.type_id;
+
+		if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
+			key_size =
+				smw_keymgr_get_modulus_length(&export_key_desc);
+			key_buf = smw_keymgr_get_modulus(&export_key_desc);
+
+		} else {
+			key_size =
+				smw_keymgr_get_public_length(&export_key_desc);
+			key_buf = smw_keymgr_get_public_data(&export_key_desc);
+		}
+
 	} else {
-		key_size = smw_keymgr_get_public_length(key_desc);
-		key_buf = smw_keymgr_get_public_data(key_desc);
 		security_size = key_desc->identifier.security_size;
 		key_type_id = key_desc->identifier.type_id;
+
+		if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
+			key_size = smw_keymgr_get_modulus_length(key_desc);
+			key_buf = smw_keymgr_get_modulus(key_desc);
+
+		} else {
+			key_size = smw_keymgr_get_public_length(key_desc);
+			key_buf = smw_keymgr_get_public_data(key_desc);
+		}
 	}
 
 	if (!security_size) {
@@ -252,7 +301,7 @@ static int verify(struct hdl *hdl, void *args)
 	}
 
 	status = set_signature_scheme(key_type_id, security_size,
-				      verify_args->attributes.hash_id,
+				      &verify_args->attributes,
 				      &op_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;

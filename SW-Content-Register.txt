@@ -1,66 +1,32 @@
 NXP Software Content Register
 
-Date Created:             2021 June 29
-
-Package Category:         NXP Security Middleware Library
-License File:             COPYING
-Outgoing License:         BSD 3-Clause
+Package:                  imx-smw
+Outgoing License:         BSD-3-Clause
+License File:             LICENSE
 Type of content:          Source code
+Description and comments: NXP Security Middleware Library
+                          This SW proposes uniform application APIs use,
+                          to call Secure Subsystems running on NXP devices.
+Release Location:         https://github.com/nxp-imx/imx-smw
+Release branch/version:   refer to git information
+Origin:                   NXP (BSD-3-clause)
+                          ARM (Apache-2.0) - https://github.com/ARM-software/psa-arch-tests
+                          OASIS (MIT) - https://github.com/oasis-tcs/pkcs11/tree/pkcs11-3.10/published/3-01
+                          See details of non-NXP code below.
 
-Description and comments: This Security Middleware library (SMW) proposed
-  uniform application APIs use to call Secure Subsystems running on NXP
-  devices.
-
--------------------------------------------------------------------------------
-Description:        SMW Library exported APIs.
-Location:           public/*
-License:            BSD 3-Clause
-Origin:             NXP
--------------------------------------------------------------------------------
-Description:        SMW Library documentation squeleton.
-Location:           Documentations/*
-License:            BSD 3-Clause
-Origin:             NXP
--------------------------------------------------------------------------------
-Description:        SMW Core Library.
-Location:           core/*
-                    inc/*
-                    CMakeLists.txt
-                    README.md
-License:            BSD 3-Clause
-Origin:             NXP
--------------------------------------------------------------------------------
-Description:        SMW OSAL interface.
-Location:           osal/*
-License:            BSD 3-Clause
-Origin:             NXP
--------------------------------------------------------------------------------
-Description:        SMW cmake and other scripts.
-Location:           cmake/*
-                    scripts/*
-License:            BSD 3-Clause
-Origin:             NXP
---------------------------------------------------------------------------------
-Description:        Tests suite of the SMW Library.
-Location:           tests/*
-Except:             tests/psa/psa-arch-tests/crypto/pal_crypto_config.h
-License:            BSD 3-Clause
-Origin:             NXP
 --------------------------------------------------------------------------------
 Description:        Configuration options for crypto tests (set of defines).
 Location:           tests/psa/psa-arch-tests/crypto/pal_crypto_config.h
-License:            Apache-2.0
-                    (http://www.apache.org/licenses/LICENSE-2.0)
+License:            Apache-2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+License file:       LICENSE-APACHE2.txt
 Origin:             ARM
---------------------------------------------------------------------------------
-Description:        PKCS11 Library interfaced with SMW's library.
-Location:           pkcs11/* (except pkcs11/import/*)
-License:            BSD 3-Clause
-Origin:             NXP
+                    https://github.com/ARM-software/psa-arch-tests
 ---------------------------------------------------------------------------------
 Description:        PKCS11 APIs.
 Location:           pkcs11/import/*
-License:            OASIS IPR Policy
-                    (http://www.oasis-open.org/who/intellectualproperty.php)
+Version:            3.1
+License:            MIT (originally available under OASIS IPR Policy https://www.oasis-open.org/committees/pkcs11/ipr.php)
+License file:       LICENSE-MIT.txt
 Origin:             OASIS
+                    https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/os/include/pkcs11-v3.1/
 ---------------------------------------------------------------------------------

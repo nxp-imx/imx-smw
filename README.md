@@ -35,6 +35,6 @@ The list of changes can be found in the [ChangeLog](./CHANGELOG.md) file.
 
 ## Licenses
 Almost all sources are under the <a href="https://opensource.org/license/BSD-3-clause/">BSD 3-Clause license</a>,
-except sources inherit from external project like ARM, OASIS.
+except sources inherit from external projects.
 
-More details are available in the [SCR](./SW-Content-Register.txt) file.
+More details are available in the [Software Content Register (SCR)](./SW-Content-Register.txt) file.

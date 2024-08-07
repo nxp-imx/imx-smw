@@ -9,18 +9,6 @@
 
 #include "args_attr.h"
 
-static void set_sign_usage(smw_attr_usage_t *usage_flags)
-{
-	SMW_ATTR_USAGE_SET_SIGN_MESSAGE(*usage_flags);
-	SMW_ATTR_USAGE_SET_SIGN_HASH(*usage_flags);
-}
-
-static void set_verify_usage(smw_attr_usage_t *usage_flags)
-{
-	SMW_ATTR_USAGE_SET_VERIFY_MESSAGE(*usage_flags);
-	SMW_ATTR_USAGE_SET_VERIFY_HASH(*usage_flags);
-}
-
 static void set_common_key_usage(smw_attr_usage_t *usage_flags,
 				 struct libobj_obj *obj)
 {
@@ -39,8 +27,10 @@ static void set_public_key_usage(smw_attr_usage_t *usage_flags,
 	if (key->encrypt)
 		SMW_ATTR_USAGE_SET_ENCRYPT(*usage_flags);
 
-	if (key->verify)
-		set_verify_usage(usage_flags);
+	if (key->verify) {
+		SMW_ATTR_USAGE_SET_VERIFY_MESSAGE(*usage_flags);
+		SMW_ATTR_USAGE_SET_VERIFY_HASH(*usage_flags);
+	}
 }
 
 static void set_private_key_usage(smw_attr_usage_t *usage_flags,
@@ -51,8 +41,10 @@ static void set_private_key_usage(smw_attr_usage_t *usage_flags,
 	if (key->decrypt)
 		SMW_ATTR_USAGE_SET_DECRYPT(*usage_flags);
 
-	if (key->sign)
-		set_sign_usage(usage_flags);
+	if (key->sign) {
+		SMW_ATTR_USAGE_SET_SIGN_MESSAGE(*usage_flags);
+		SMW_ATTR_USAGE_SET_SIGN_HASH(*usage_flags);
+	}
 
 	if (key->extractable && !key->sensitive)
 		SMW_ATTR_USAGE_SET_EXPORT(*usage_flags);
@@ -70,10 +62,10 @@ static void set_secret_key_usage(smw_attr_usage_t *usage_flags,
 		SMW_ATTR_USAGE_SET_DECRYPT(*usage_flags);
 
 	if (key->sign)
-		set_sign_usage(usage_flags);
+		SMW_ATTR_USAGE_SET_SIGN_MESSAGE(*usage_flags);
 
 	if (key->verify)
-		set_verify_usage(usage_flags);
+		SMW_ATTR_USAGE_SET_VERIFY_MESSAGE(*usage_flags);
 
 	if (key->extractable && !key->sensitive)
 		SMW_ATTR_USAGE_SET_EXPORT(*usage_flags);

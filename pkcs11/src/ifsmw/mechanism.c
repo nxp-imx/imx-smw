@@ -222,7 +222,7 @@ struct mgroup {
 	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,         \
 	       SMW_CIPHER_MODE_NAME_##_mode, SMW_AEAD_MODE_NAME_NONE,          \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
-	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
+	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_DEFAULT,       \
 						  SMW_ATTR_MODE_##_mode_id),   \
 	       _id)
 
@@ -230,8 +230,8 @@ struct mgroup {
 	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,         \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_##_mode,          \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
-	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
-						  SMW_ATTR_MODE_##_mode_id),   \
+	       SMW_ATTR_ALGO_AEAD(SMW_ATTR_ALGO_##_algo,                       \
+				  SMW_ATTR_MODE_##_mode_id, 0),                \
 	       _id)
 
 #define M_MAC(_algo, _mac, _mode_id, _id)                                      \
@@ -420,6 +420,13 @@ static CK_RV smw_status_to_ck_rv(enum smw_status_code status)
 	case SMW_STATUS_INVALID_IV_SIZE:
 		return CKR_MECHANISM_PARAM_INVALID;
 
+	case SMW_STATUS_KEY_INVALID:
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
+	case SMW_STATUS_OPERATION_NOT_CONFIGURED:
+	case SMW_STATUS_OPERATION_NOT_SUPPORTED:
+		return CKR_FUNCTION_NOT_SUPPORTED;
+
 	default:
 		return CKR_DEVICE_ERROR;
 	}
@@ -515,11 +522,11 @@ static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
 		if (ret != CKR_OK) {
 			DBG_TRACE("Key allowed mechanism 0x%lx error %ld",
 				  mech_list->mech[0], ret);
+		} else {
+			DBG_TRACE("Key permitted algorithm 0x%" PRIx64,
+				  entry->smw_algo_id);
+			*permitted_algo = entry->smw_algo_id;
 		}
-
-		DBG_TRACE("Key permitted algorithm 0x%" PRIx64,
-			  entry->smw_algo_id);
-		*permitted_algo = entry->smw_algo_id;
 	}
 
 	return ret;

@@ -1119,6 +1119,7 @@ end:
 enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+	int tmp_status = SMW_STATUS_OK;
 	struct smw_crypto_aead_args aead_args = { 0 };
 
 	SMW_DBG_TRACE_API_CALL;
@@ -1166,8 +1167,11 @@ enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
 	 * SMW_STATUS_INVALID_PARAM.
 	 */
 	if (status != SMW_STATUS_OUTPUT_TOO_SHORT &&
-	    status != SMW_STATUS_INVALID_PARAM)
-		smw_utils_free_context(&args->data->context);
+	    status != SMW_STATUS_INVALID_PARAM) {
+		tmp_status = smw_utils_free_context(&args->data->context);
+		if (status == SMW_STATUS_OK)
+			status = tmp_status;
+	}
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the

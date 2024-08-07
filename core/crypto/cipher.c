@@ -397,7 +397,7 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args)
 	 * code except SMW_STATUS_OK and SMW_STATUS_INVALID_PARAM.
 	 */
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_INVALID_PARAM)
-		smw_utils_free_context(&args->context);
+		(void)smw_utils_free_context(&args->context);
 
 end:
 	/* Free keys descriptor allocated in convert_init_args() */
@@ -439,7 +439,7 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args)
 	 */
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_OUTPUT_TOO_SHORT &&
 	    status != SMW_STATUS_INVALID_PARAM)
-		smw_utils_free_context(&args->context);
+		(void)smw_utils_free_context(&args->context);
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
@@ -457,6 +457,7 @@ end:
 enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+	int tmp_status = SMW_STATUS_OK;
 	struct smw_crypto_cipher_args final_args = { 0 };
 
 	SMW_DBG_TRACE_API_CALL;
@@ -482,8 +483,11 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args)
 	 * except SMW_STATUS_OUTPUT_TOO_SHORT or SMW_STATUS_INVALID_PARAM.
 	 */
 	if (status != SMW_STATUS_OUTPUT_TOO_SHORT &&
-	    status != SMW_STATUS_INVALID_PARAM)
-		smw_utils_free_context(&args->context);
+	    status != SMW_STATUS_INVALID_PARAM) {
+		tmp_status = smw_utils_free_context(&args->context);
+		if (status == SMW_STATUS_OK)
+			status = tmp_status;
+	}
 
 	/*
 	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the

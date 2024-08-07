@@ -28,10 +28,14 @@
  */
 static int cancel_and_free_context(struct smw_op_context **args, bool cancel_op)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	struct subsystem_func *subsystem_func = NULL;
 	struct smw_crypto_context_ops *ops = NULL;
+
+	if ((*args)->subsystem_id >= SUBSYSTEM_ID_NB ||
+	    (*args)->subsystem_id == SUBSYSTEM_ID_INVALID)
+		goto end;
 
 	subsystem_func = smw_config_get_subsystem_func((*args)->subsystem_id);
 	if (!subsystem_func || !subsystem_func->ctx_ops) {
@@ -58,6 +62,7 @@ static int cancel_and_free_context(struct smw_op_context **args, bool cancel_op)
 	SMW_UTILS_FREE(*args);
 	*args = NULL;
 
+	status = SMW_STATUS_OK;
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

@@ -44,6 +44,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Key attributes, data attributes and signature algorithm are no longer encoded with TLV format. They are now encoded with a dedicated bitmap.
 * Replace public string arguments with enum type in all SMW public APIs.
 * Rename `smw_aead_update_add()` as `smw_aead_update_aad()`.
+* Fix context operation free function.
 
 ##### 2. Subsystems
 

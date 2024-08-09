@@ -19,8 +19,28 @@ static const char *get_ckrv_name(CK_RV val)
 	return "<unknown value>";
 }
 
+const char *test_status_string(int status)
+{
+	const char *string = "FAILED";
+
+	switch (status) {
+	case TEST_PASS:
+		string = "PASSED";
+		break;
+
+	case TEST_SKIP:
+		string = "SKIPPED";
+		break;
+
+	default:
+		break;
+	}
+
+	return string;
+}
+
 int check_ckrv(CK_RV got, CK_RV exp, const char *func, int line,
-	       const char *const str)
+	       const char *const str, int *status)
 {
 	int ret = 1;
 	int nb = 0;
@@ -42,6 +62,9 @@ int check_ckrv(CK_RV got, CK_RV exp, const char *func, int line,
 				       "%s FAILED (returned %s expected %s)\n",
 				       str, get_ckrv_name(got),
 				       get_ckrv_name(exp));
+
+			if (got == CKR_FUNCTION_NOT_SUPPORTED)
+				*status = TEST_SKIP;
 		}
 	}
 

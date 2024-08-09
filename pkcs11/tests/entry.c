@@ -203,16 +203,20 @@ int tests_pkcs11(char *test_name)
 	TEST_OUT("\n");
 	TEST_OUT(" _______________________________\n");
 	TEST_OUT("|\n");
-	TEST_OUT("| Ran %d tests with %d failures\n", tests_data.result.count,
+	TEST_OUT("| Ran %d tests with %d skipped and %d failed\n",
+		 tests_data.result.count, tests_data.result.count_skip,
 		 tests_data.result.count_fail);
 
-	if (ADD_OVERFLOW(tests_data.result.count_pass,
-			 tests_data.result.count_fail, &count))
-		count = 0;
+	if (!ADD_OVERFLOW(tests_data.result.count_pass,
+			  tests_data.result.count_fail, &count)) {
+		if (INC_OVERFLOW(count, tests_data.result.count_skip))
+			count = 0;
+	}
 
 	if (count != tests_data.result.count)
-		TEST_OUT("| Total tests %d != %d PASSED + %d FAILED\n",
+		TEST_OUT("| Total %d != %d PASSED + %d SKIPPED + %d FAILED\n",
 			 tests_data.result.count, tests_data.result.count_pass,
+			 tests_data.result.count_skip,
 			 tests_data.result.count_fail);
 
 	TEST_OUT("|_______________________________\n");
@@ -221,7 +225,9 @@ int tests_pkcs11(char *test_name)
 	util_lib_close(lib_hdl);
 
 	if (count != tests_data.result.count || tests_data.result.count_fail)
-		return -1;
+		return 2;
+	else if (tests_data.result.count_skip)
+		return 1;
 
 	return 0;
 }

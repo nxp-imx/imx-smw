@@ -226,5 +226,5 @@ void util_close_session(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE_PTR sess)
 
 	TEST_OUT("Close Session #%lu\n", *sess);
 	ret = pfunc->C_CloseSession(*sess);
-	(void)CHECK_CK_RV(ret, "C_CloseSession");
+	(void)CHECK_EXPECTED(ret == CKR_OK, "C_CloseSession");
 }

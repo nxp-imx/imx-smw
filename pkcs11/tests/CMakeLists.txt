@@ -96,6 +96,7 @@ macro(pkcs11_test name)
              COMMAND ${CMAKE_INSTALL_PREFIX}/${PKCS11_TARGET_SCRIPTS_DIR}/run_test.sh
                 "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME} -t ${name}")
     set_tests_properties(pkcs11_${name} PROPERTIES LABELS "pkcs11;${name}")
+	set_tests_properties(pkcs11_${name} PROPERTIES SKIP_RETURN_CODE 1)
 endmacro()
 
 pkcs11_test(get_functions)

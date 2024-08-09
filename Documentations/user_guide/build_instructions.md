@@ -172,10 +172,11 @@ The SECO Library interfaces the SMW's subsystem SECO with the kernel SECO
 Message Unit driver.
 
 The following cmake script builds the SECO pointed by the `SECO_SRC_PATH` using
-the default compiler. Installation of the ARM 32 or 64 bits cross-compiler is described in [Toolchains](#2-toolchains).
+the default compiler. Installation of the ARM 32 or 64 bits cross-compiler
+is described in [Toolchains](#2-toolchains).
 
-The built libraries and corresponding interface headers are installed in the `SECO_ROOT`
-directory.
+The built libraries and corresponding interface headers are installed in
+the `SECO_ROOT` directory.
 
 ```sh
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DSECO_ROOT=[export path] -DSECO_SRC_PATH=[source path] -P ./scripts/build_seco.cmake
@@ -202,20 +203,27 @@ built if the OPTEE Client and TA Development Kit options are set as defined
 in this section. This static library binary is present in the library folder of
 the project build directory.
 
-<u>This library is an example and is used by the test suite package</u>. To ensure TEE
-key storage protection against non-secure client application, an application
-must load a unique TA, else if applications load/share the same TA, the key
-storage is also shared. The section [Creating a simple OPTEE TA](#3223-creating-a-simple-optee-ta) hereafter gives an example to create a simple TA using the TA Library provided.
+<u>This library is a reference code and used by the test suite package</u>.
+To ensure TEE key storage protection against non-secure client application,
+an application must load a unique TA, else if applications load/share the same
+TA, the key storage is also shared.
+The section [Creating a simple OPTEE TA](./user_guide.md#3-creating-a-simple-optee-ta)
+of the [User Guide](./user_guide.md) gives an example to create a simple TA
+using the TA Library provided.
+
+A default OPTEE TA (with UUID=11b5c4aa-6d20-11ea-bc55-0242ac130003) is built
+and installed if TEE subsystem is enabled.
 
 #### 3.2.1. OPTEE Client Library
 The OPTEE Client library interfaces the SMW Library with the OPTEE Trusted
 Application (TA) running in Trustzone secure world.
 
 The following cmake script builds the OPTEE Client sources pointed by the
-`TEEC_SRC_PATH` using the default compiler. Installation of the ARM 32 or 64 bits cross-compiler is described in [Toolchains](#2-toolchains).
+`TEEC_SRC_PATH` using the default compiler. Installation of the ARM 32 or
+64 bits cross-compiler is described in [Toolchains](#2-toolchains).
 
-The built library and corresponding interface headers are installed in the `TEEC_ROOT`
-directory.
+The built library and corresponding interface headers are installed in
+the `TEEC_ROOT` directory.
 
 ```sh
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DTEEC_ROOT=[export path] -DTEEC_SRC_PATH=[source path] -P ./scripts/build_teec.cmake
@@ -229,14 +237,15 @@ are built in the `[BUILD_DIR]/optee_client` (by default `./ext_build/optee_clien
 #### 3.2.2. OPTEE TA Development Kit
 The OPTEE TA Development Kit is a OPTEE Trusted Application build kit.
 
-The following cmake script builds the OPTEE TA Development Kit sources pointed by the
-`OPTEE_OS_SRC_PATH` using the default compiler. Installation of the ARM 32 or 64 bits cross-compiler is described in [Toolchains](#2-toolchains).
+The following cmake script builds the OPTEE TA Development Kit sources pointed
+by the `OPTEE_OS_SRC_PATH` using the default compiler. Installation of the
+ARM 32 or 64 bits cross-compiler is described in [Toolchains](#2-toolchains).
 
 The OPTEE OS sources built are the NXP sources integrating the NXP platform and
 available in github (https://github.com/nxp-imx/imx-optee-os).
 
-The development kit and corresponding interface headers are installed in the `TA_DEV_KIT_ROOT`
-directory.
+The development kit and corresponding interface headers are installed in
+the `TA_DEV_KIT_ROOT` directory.
 
 ```sh
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DTA_dEV_KIT_ROOT=[export path] -DOPTEE_OS_SRC_PATH=[source path] -DPLATFORM=[platform] -P ./scripts/build_tadevkit.cmake
@@ -257,7 +266,8 @@ The ELE Library interfaces the SMW's subsystem ELE with the kernel ELE
 Message Unit driver.
 
 The following cmake script builds the ELE pointed by the `ELE_SRC_PATH` using
-the default compiler. Installation of the ARM 32 or 64 bits cross-compiler is described in [Toolchains](#2-toolchains).
+the default compiler. Installation of the ARM 32 or 64 bits cross-compiler is
+described in [Toolchains](#2-toolchains).
 
 The built libraries and corresponding interface headers are installed in the `ELE_ROOT`
 directory.
@@ -269,7 +279,8 @@ $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DELE_ROOT=[e
 #### 3.3.2. NVM Daemon
 The ELE Non-Volatile Memory (NVM) daemon used to store all persistent objects is
 built with the same command as the [ELE Library](#331-ele-library).
-The NVM Daemon is a linux service that must be started before loading the SMW Library.
+The NVM Daemon is a linux service that must be started before loading the
+SMW Library.
 
 The NVM Daemon service package is available in the `ELE_ROOT` directory.
 
@@ -283,11 +294,11 @@ systemctl start nvm_daemon
 ### 3.4. JSON-C Library
 The JSON-C Library is required only if the SMW test suite is wanted.
 
-The following cmake script uploads into the `JSONC_SRC_PATH` if not already present
-and builds the JSON-C sources present by the `JSONC_SRC_PATH` using the
+The following cmake script uploads into the `JSONC_SRC_PATH` if not already
+present and builds the JSON-C sources present by the `JSONC_SRC_PATH` using the
 default compiler, then the library and interface headers are copied in the path
-specified by `JSONC_ROOT`. Installation of the ARM 32 or 64 bits cross-compiler is
-described in [Toolchains](#2-toolchains).
+specified by `JSONC_ROOT`. Installation of the ARM 32 or 64 bits cross-compiler
+is described in [Toolchains](#2-toolchains).
 
 ```sh
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DJSONC_ROOT=[export path] -DJSONC_SRC_PATH=[source path] -P ./scripts/build_jsonc.cmake
@@ -686,12 +697,17 @@ super-user privilege.
 
 ## 5.2. Install result
 
-> :memo: **Note 1**: The <i>y</i> is for the project minor version.
+> :memo: **Note 1**: The <i>x</i> and <i>y</i> are respectively for the project major and minor version.
 
 > :memo: **Note 2**: The `usr/lib/cmake` folder is not present if the project
 option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-environment-options)).
 
 <pre>
+`-- <span style="color:orange">etc</span>
+    `-- <span style="color:orange">opt</span>
+        `-- <span style="color:orange">smw</span>
+            |-- smw.conf
+            `-- smw_system_conf.sh
 `-- <span style="color:orange">usr</span>
     |-- <span style="color:orange">include</span>
     |   |-- <span style="color:orange">smw</span>
@@ -724,18 +740,25 @@ option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-envi
     |       |-- pkcs11.h
     |       |-- pkcs11f.h
     |       `-- pkcs11t.h
-    `-- <span style="color:orange">lib</span>
-        |-- <span style="color:orange">cmake</span>
-        |   |-- NXP_SMWConfig.cmake
-        |   |-- NXP_SMWConfigVersion.cmake
-        |   |-- NXP_SMWTargets-debug.cmake
-        |   `-- NXP_SMWTargets.cmake
-        |-- libsmw.so -> libsmw.so.2
-        |-- libsmw.so.2 -> libsmw.so.2.<i>y</i>
-        |-- libsmw.so.2.<i>y</i>
-        |-- libsmw_pkcs11.so -> libsmw_pkcs11.so.2
-        |-- libsmw_pkcs11.so.2 -> libsmw_pkcs11.so.2.<i>y</i>
-        `-- libsmw_pkcs11.so.2.<i>y</i>
+    |-- <span style="color:orange">lib</span>
+    |   |-- <span style="color:orange">cmake</span>
+    |   |   |-- NXP_SMWConfig.cmake
+    |   |   |-- NXP_SMWConfigVersion.cmake
+    |   |   |-- NXP_SMWTargets-debug.cmake
+    |   |   `-- NXP_SMWTargets.cmake
+    |   |-- libsmw.so -> libsmw.so.<i>x</i>
+    |   |-- libsmw.so.<i>x</i> -> libsmw.so.<i>x.y</i>
+    |   |-- libsmw.so.<i>x.y</i>
+    |   |-- libsmw_pkcs11.so -> libsmw_pkcs11.so.<i>x</i>
+    |   |-- libsmw_pkcs11.so.<i>x</i> -> libsmw_pkcs11.so.<i>x.y</i>
+    |   |-- libsmw_pkcs11.so.<i>x.y</i>
+    |   `-- <span style="color:orange">optee_armtz</span>
+    |       `-- 11b5c4aa-6d20-11ea-bc55-0242ac130003.ta
+    `-- <span style="color:orange">share</span>
+        `-- <span style="color:orange">smw</span>
+            `-- <span style="color:orange">config</span>      SMW Library configuration files
+                |-- ...
+
 </pre>
 
 # 6. Tests
@@ -794,46 +817,31 @@ super-user privilege.
 
 ### 6.2.2. Install result
 
-> :memo: **Note 1**: The <i>y</i> is for the project minor version.
-
-> :memo: **Note 2**: The `usr/lib/cmake` folder is not present if the project
-option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-environment-options)).
-
-> :memo: **Note 3**: In this installation, the _`[TEE_TA_DESTDIR]`_ is
-set with the default value `/usr/lib/optee_armtz`
-
 <pre>
 `-- <span style="color:orange">usr</span>
-    |-- <span style="color:orange">lib</span>
-    |   `-- <span style="color:orange">optee_armtz</span>
-    |   |-- 11b5c4aa-6d20-11ea-bc55-0242ac130003.ta
-    |   `-- 218c6053-294e-4e96-830c-e6eba4aa4345.ta
     |-- <span style="color:orange">bin</span>
+    |   |-- psatest                            ARM PSA specific test (function of the device)
     |   |-- smwtest
     |   `-- testsmw_pkcs11
     `-- <span style="color:orange">share</span>
         `-- <span style="color:orange">smw</span>
             |-- <span style="color:orange">pkcs11</span>
-            |   |-- <span style="color:orange">config</span>
-            |   |   |-- default_config.txt
-            |   |   |-- ele_only_config.txt
-            |   |   |-- seco_only_config.txt
-            |   |   `-- tee_only_config.txt
             |   |-- <span style="color:orange">scripts</span>
-            |   |   `-- run_psa_test.sh
-            |   |   `-- run_simple_test.sh
+            |   |   `-- run_test.sh
             |   `-- <span style="color:orange">tests</span>
             |       `-- CTestTestfile.cmake
             `-- <span style="color:orange">tests</span>
                 |-- CTestTestfile.cmake
-                |-- <span style="color:orange">config</span>
-                |   |-- api_config.txt
+                |-- <span style="color:orange">config</span>                     Test specific library configuration
                 |   `-- ...
+                |-- <span style="color:orange">cst</span>                        Signed message template for specific ELE based device test
+                |-- <span style="color:orange">psa</span>                        ARM PSA specific test (function of the device)
                 |-- <span style="color:orange">scripts</span>
+                |   `-- run_psa_test.sh        ARM PSA specific test (function of the device)
                 |   `-- run_simple_test.sh
                 `-- <span style="color:orange">test_definition</span>
                     |-- F_TEE_App_001.json
-										`-- ...
+                    `-- ...
 </pre>
 
 ## 6.3. Execution
@@ -913,6 +921,10 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
   <td>aarch64</td>
 </tr>
 <tr>
+  <td>imx91evk</td>
+  <td>aarch64</td>
+</tr>
+<tr>
   <td>imx93evk</td>
   <td>aarch64</td>
 </tr>
@@ -967,6 +979,7 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
   <td><ul>
 	<li>imx95evk</li>
 	<li>imx93evk</li>
+	<li>imx91evk</li>
 	<li>imx8ulpevk</li>
 	</ul></td>
   <td>https://github.com/nxp-imx/imx-secure-enclave.git</td>
@@ -975,8 +988,8 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
 </tr>
 <tr>
   <td>imx8qxpc0mek</td>
-  <td>https://github.com/NXP/imx-seco-libs.git</td>
-	<td>../seco_libs</td>
+  <td>https://github.com/nxp-imx/imx-secure-enclave.git</td>
+	<td>../secure_enclave</td>
   <td>SECO library sources</td>
 </tr>
 </tbody>

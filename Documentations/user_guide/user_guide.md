@@ -243,7 +243,7 @@ guaranty to be stable or bug free (this library is used in the context of the
 SMW TEE subsystem validation).
 
 To create a simple OPTEE TA using the provided static TA library, the TA project
-present in the SMW test suite folder `tests/tee/ta/` can be re-used.
+present in the SMW subsystem folder `core/subsystems/tee/ta/` can be re-used.
 
 <pre>
 <span style="color:orange">ta</span>
@@ -293,6 +293,13 @@ The writing rules and content of the library configuration are available in the
 
 A configuration file example is available [here](../../osal/linux/config/smw_config.txt).
 
+The project provides device reference configuration in the folder
+[osal/linux/config/](../../osal/linux/config/).
+Function of the subsystem enabled, reference configuration are installed and
+referenced in the linux OS system configuration file
+detailed [hereafter](#421-use-of-system-configuration-file).
+
+
 ## 4.2. Linux OS
 The Security Middleware proposes a Linux OSAL reference module allowing to
 use a system configuration file (smw.conf) and exposing OSAL APIs plus
@@ -310,7 +317,13 @@ The file is divided into sections:
 
 ```
 [setup]
-# SMW configuration file describing the subsystem(s) operations.
+# General SMW library configuration
+# Define the SMW configuration file, database, ...
+
+[setup-<device>]
+# Device specific SMW library configuration.
+# Overwrite the general SMW library configuration define.
+# <device> is the platform hostname or beginning of the hostname (e.g. imx8ulp).
 
 [TEE]
 # OPTEE TA UUID to be loaded if subsystem used.
@@ -324,6 +337,49 @@ The file is divided into sections:
 
 The file present in the source tree [osal/linux/config/smw.conf](../../osal/linux/config/smw.conf)
 gives more details information how to configure the library and the subsystem.
+
+The `smw.conf` is prefilled with default configuration function of the
+device and the subsystems enabled.
+
+The default object database is
+```
+[setup]
+
+database=/usr/share/smw/smw_objects_database.dat
+```
+
+For TEE, the default TA (with UUID=11b5c4aa-6d20-11ea-bc55-0242ac130003) is
+installed and configured
+```
+[TEE]
+ta_uuid=11b5c4aa-6d20-11ea-bc55-0242ac130003
+```
+
+For SECO, the NVM Secure Storage configuration is
+```
+[SECO]
+id=0x534543EF
+nonce=0x534D57
+replay=3000
+```
+
+For ELE, the NVM Secure Storage configuration is
+```
+[ELE]
+id=0x534543EF
+nonce=0x534D57
+```
+
+The `smw_system_conf.sh` could be used to change the content of the `smw.conf`
+file. It's installed on in the `/etc/opt/smw/` system folder.
+Refer to the [Install result](./build_instructions.md#52-install-result) of
+the [Build instruction](./build_instructions.md)
+
+More help to use the script:
+```sh
+$ /etc/opt/smw/smw_system_conf.sh --help
+```
+
 
 ### 4.2.2. Use of OSAL APIs and system environment
 The [User API documentation - OSAL chapter](../API/SecurityMiddleware_API.pdf)
@@ -376,9 +432,10 @@ Below is the organization of the project sources.
 |   |       |-- ...
 |   |       |-- <span style="color:orange">common</span>              Common files Normal World/Secure World (TA)
 |   |       |   `-- ...
-|   |       `-- <span style="color:orange">lib_ta</span>              Example of static TA Library (use for test)
-|   |           |-- ...
-|   |           `-- <span style="color:orange">include</span>         Static TA interface header
+|   |       |-- <span style="color:orange">lib_ta</span>              Reference static TA Library (use for test)
+|   |       |   |-- ...
+|   |       |   `-- <span style="color:orange">include</span>         Static TA interface header
+|   |       `-- <span style="color:orange">ta</span>                  Default TA application
 |   `-- <span style="color:orange">utils</span>                       Core utilities
 |       `-- ...
 |-- <span style="color:orange">inc</span>                             Overall project global includes

@@ -220,6 +220,7 @@ struct libobj_key_hmac {
 	})
 
 struct libobj_data {
+	unsigned int data_id;	       // Data is returned by token
 	struct librfc2279 application; // Application managing object
 	struct libbytes id;	       // Object identifier
 	struct libbytes value;	       // Value of the object

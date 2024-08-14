@@ -141,24 +141,24 @@ CK_RV data_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
 	return ret;
 }
 
-CK_RV data_get_id(struct libbytes *data_id, struct libobj_obj *obj,
+CK_RV data_get_id(struct libbytes *id, struct libobj_obj *obj,
 		  size_t prefix_len)
 {
-	unsigned int id = 0;
+	struct libobj_data *data = NULL;
 
-	if (!obj || !data_id)
+	if (!obj || !id)
 		return CKR_GENERAL_ERROR;
 
-	id = (uintptr_t)obj & UINT_MAX;
+	data = get_subobj_from(obj, storage);
 
-	data_id->number = prefix_len + sizeof(id);
-	data_id->array = malloc(data_id->number);
-	if (!data_id->array)
+	id->number = prefix_len + sizeof(data->data_id);
+	id->array = malloc(id->number);
+	if (!id->array)
 		return CKR_HOST_MEMORY;
 
-	DBG_TRACE("Data ID 0x%X", id);
+	DBG_TRACE("Token Data ID 0x%X", data->data_id);
 
-	TO_CK_BYTES(&data_id->array[prefix_len], id);
+	TO_CK_BYTES(&id->array[prefix_len], data->data_id);
 
 	return CKR_OK;
 }

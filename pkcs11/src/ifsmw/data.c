@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include "smw_osal.h"
-#include "smw_status.h"
 #include "smw_storage.h"
 #include "smw/names.h"
 
@@ -19,6 +18,7 @@
 #include "libobj_types.h"
 
 #include "args_attr.h"
+#include "ifsmw_utils.h"
 
 #define DATA_LABEL(name)                                                       \
 	{                                                                      \
@@ -27,8 +27,6 @@
 
 static int set_tee_info(struct libobj_obj *obj)
 {
-	int ret = CKR_OK;
-
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
@@ -37,18 +35,12 @@ static int set_tee_info(struct libobj_obj *obj)
 	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_TEE,
 					     data->value.array,
 					     data->value.number);
-	if (status == SMW_STATUS_OK)
-		ret = CKR_OK;
-	else if (status == SMW_STATUS_SUBSYSTEM_LOADED)
-		ret = CKR_FUNCTION_FAILED;
 
-	return ret;
+	return smw_status_to_ck_rv(status);
 }
 
 static int set_seco_info(struct libobj_obj *obj)
 {
-	int ret = CKR_OK;
-
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
@@ -57,18 +49,12 @@ static int set_seco_info(struct libobj_obj *obj)
 	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_SECO,
 					     data->value.array,
 					     data->value.number);
-	if (status == SMW_STATUS_OK)
-		ret = CKR_OK;
-	else if (status == SMW_STATUS_SUBSYSTEM_LOADED)
-		ret = CKR_FUNCTION_FAILED;
 
-	return ret;
+	return smw_status_to_ck_rv(status);
 }
 
 static int set_ele_info(struct libobj_obj *obj)
 {
-	int ret = CKR_OK;
-
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
@@ -77,29 +63,19 @@ static int set_ele_info(struct libobj_obj *obj)
 	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_ELE,
 					     data->value.array,
 					     data->value.number);
-	if (status == SMW_STATUS_OK)
-		ret = CKR_OK;
-	else if (status == SMW_STATUS_SUBSYSTEM_LOADED)
-		ret = CKR_FUNCTION_FAILED;
 
-	return ret;
+	return smw_status_to_ck_rv(status);
 }
 
 static int set_obj_db(struct libobj_obj *obj)
 {
-	int ret = CKR_OK;
-
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
 	status = smw_osal_open_obj_db((const char *)data->value.array,
 				      data->value.number);
-	if (status == SMW_STATUS_OK)
-		ret = CKR_OK;
-	else
-		ret = CKR_FUNCTION_FAILED;
 
-	return ret;
+	return smw_status_to_ck_rv(status);
 }
 
 static int set_data_identifier(unsigned int *identifier,
@@ -156,10 +132,6 @@ static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	ret = set_data_identifier(&data_descriptor.identifier, obj);
-	if (ret != CKR_OK)
-		return ret;
-
 	data_descriptor.data = data->value.array;
 
 	if (SET_OVERFLOW(data->value.number, data_descriptor.length))
@@ -172,10 +144,10 @@ static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	args.data_descriptor = &data_descriptor;
 
 	status = smw_store_data(&args);
+	ret = smw_status_to_ck_rv(status);
+
 	if (status == SMW_STATUS_OK)
-		ret = CKR_OK;
-	else
-		ret = CKR_FUNCTION_FAILED;
+		data->data_id = data_descriptor.identifier;
 
 	return ret;
 }
@@ -212,10 +184,7 @@ static int retrieve_data(const struct libobj_obj *obj)
 		status = smw_retrieve_data(&args);
 	}
 
-	if (status != SMW_STATUS_OK) {
-		ret = CKR_FUNCTION_FAILED;
-		goto end;
-	}
+	ret = smw_status_to_ck_rv(status);
 
 	if (buffer) {
 		if (data->value.array)
@@ -226,7 +195,6 @@ static int retrieve_data(const struct libobj_obj *obj)
 
 	data->value.number = data_descriptor.length;
 
-end:
 	if (ret != CKR_OK && buffer)
 		free(buffer);
 
@@ -248,12 +216,7 @@ static int delete_data(struct libobj_obj *obj)
 	args.data_descriptor = &data_descriptor;
 
 	status = smw_delete_data(&args);
-	if (status == SMW_STATUS_OK)
-		ret = CKR_OK;
-	else
-		ret = CKR_FUNCTION_FAILED;
-
-	return ret;
+	return smw_status_to_ck_rv(status);
 }
 
 static const struct data_op {

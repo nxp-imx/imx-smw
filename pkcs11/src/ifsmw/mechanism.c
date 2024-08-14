@@ -27,6 +27,7 @@
 
 #include "args_attr.h"
 #include "key_desc.h"
+#include "ifsmw_utils.h"
 
 #include "trace.h"
 
@@ -384,53 +385,6 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(mhmac), mhmac),
 	{ 0 }
 };
-
-/**
- * smw_status_to_ck_rv() - Converts a SMW status to CK_RV value
- * @status: SMW status
- *
- * return:
- * CKR_DEVICE_MEMORY             - Device memory error
- * CKR_DEVICE_ERROR              - Device failure
- * CKR_BUFFER_TOO_SMALL          - Output buffer too small
- * CKR_OK                        - Success
- * CKR_BUFFER_TOO_SMALL          - Output buffer too small
- * CKR_SIGNATURE_INVALID         - Signature is invalid
- * CKR_SIGNATURE_LEN_RANGE       - Signature length is invalid
- */
-static CK_RV smw_status_to_ck_rv(enum smw_status_code status)
-{
-	switch (status) {
-	case SMW_STATUS_OK:
-	case SMW_STATUS_KEY_POLICY_WARNING_IGNORED:
-		return CKR_OK;
-
-	case SMW_STATUS_ALLOC_FAILURE:
-		return CKR_DEVICE_MEMORY;
-
-	case SMW_STATUS_OUTPUT_TOO_SHORT:
-		return CKR_BUFFER_TOO_SMALL;
-
-	case SMW_STATUS_SIGNATURE_INVALID:
-		return CKR_SIGNATURE_INVALID;
-
-	case SMW_STATUS_SIGNATURE_LEN_INVALID:
-		return CKR_SIGNATURE_LEN_RANGE;
-
-	case SMW_STATUS_INVALID_IV_SIZE:
-		return CKR_MECHANISM_PARAM_INVALID;
-
-	case SMW_STATUS_KEY_INVALID:
-		return CKR_KEY_FUNCTION_NOT_PERMITTED;
-
-	case SMW_STATUS_OPERATION_NOT_CONFIGURED:
-	case SMW_STATUS_OPERATION_NOT_SUPPORTED:
-		return CKR_FUNCTION_NOT_SUPPORTED;
-
-	default:
-		return CKR_DEVICE_ERROR;
-	}
-}
 
 static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mgroup **group, struct mentry **entry)

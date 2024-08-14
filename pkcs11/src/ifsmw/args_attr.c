@@ -164,4 +164,7 @@ void args_attr_data_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj)
 {
 	if (!is_modifiable_obj(obj, storage))
 		*attr = SMW_ATTR_SET_READ_ONLY(*attr);
+
+	if (is_token_obj(obj, storage))
+		*attr = SMW_ATTR_SET_PERSISTENT(*attr);
 }

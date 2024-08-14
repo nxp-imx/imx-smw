@@ -838,11 +838,10 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		if (ret != CKR_OK)
 			break;
 
-		ret = set_unique_id(newobj);
-		if (ret != CKR_OK)
-			break;
-
 		ret = data_create(hsession, newobj, &attrs_list);
+		if (ret == CKR_OK)
+			ret = set_unique_id(newobj);
+
 		break;
 
 	default:

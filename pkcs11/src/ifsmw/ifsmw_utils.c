@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Copyright 2024 NXP
+ */
+
+#include "ifsmw_utils.h"
+
+CK_RV smw_status_to_ck_rv(enum smw_status_code status)
+{
+	switch (status) {
+	case SMW_STATUS_OK:
+	case SMW_STATUS_KEY_POLICY_WARNING_IGNORED:
+		return CKR_OK;
+
+	case SMW_STATUS_ALLOC_FAILURE:
+		return CKR_DEVICE_MEMORY;
+
+	case SMW_STATUS_OUTPUT_TOO_SHORT:
+		return CKR_BUFFER_TOO_SMALL;
+
+	case SMW_STATUS_SIGNATURE_INVALID:
+		return CKR_SIGNATURE_INVALID;
+
+	case SMW_STATUS_SIGNATURE_LEN_INVALID:
+		return CKR_SIGNATURE_LEN_RANGE;
+
+	case SMW_STATUS_INVALID_IV_SIZE:
+		return CKR_MECHANISM_PARAM_INVALID;
+
+	case SMW_STATUS_KEY_INVALID:
+		return CKR_KEY_FUNCTION_NOT_PERMITTED;
+
+	case SMW_STATUS_OPERATION_NOT_CONFIGURED:
+	case SMW_STATUS_OPERATION_NOT_SUPPORTED:
+		return CKR_FUNCTION_NOT_SUPPORTED;
+
+	case SMW_STATUS_LIBRARY_ALREADY_INIT:
+	case SMW_STATUS_SUBSYSTEM_LOADED:
+		return CKR_FUNCTION_FAILED;
+
+	default:
+		return CKR_DEVICE_ERROR;
+	}
+}

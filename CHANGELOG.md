@@ -40,11 +40,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library - _version 4.0_
 ##### 1. SMW APIs
 * Update `smw_derive_key()` API argument and add support for HKDF based key derivation.
-
 * Key attributes, data attributes and signature algorithm are no longer encoded with TLV format. They are now encoded with a dedicated bitmap.
 * Replace public string arguments with enum type in all SMW public APIs.
 * Rename `smw_aead_update_add()` as `smw_aead_update_aad()`.
 * Fix context operation free function.
+* Generate a data ID if user calls the store data API with an ID set to 0.
 
 ##### 2. Subsystems
 
@@ -81,6 +81,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Update to PKCS#11 3.1 Specification.
 * Implement message-based encrypt/decrypt PKCS#11 APIs.
+* Change the data unique ID generation. Ask SMW to generate a data ID.
 
 #### PKCS#11 Tests - _version 4.0_
 

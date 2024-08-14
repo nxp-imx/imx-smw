@@ -11,14 +11,19 @@
 #include "object_db.h"
 #include "storage.h"
 
-static int data_db_create(struct smw_storage_data_descriptor *descriptor)
+static void set_data_identifier(struct smw_storage_data_descriptor *descriptor,
+				unsigned int id)
+{
+	if (descriptor->pub)
+		descriptor->pub->identifier = id;
+}
+
+static int data_db_create(unsigned int *id,
+			  struct smw_storage_data_descriptor *descriptor)
 {
 	union smw_object_db_info info = { 0 };
-	unsigned int id = 0;
 	smw_attr_attributes_t attributes =
 		descriptor->data_attributes.attributes;
-
-	id = smw_storage_get_data_identifier(descriptor);
 
 	if (descriptor->subsystem_id == SUBSYSTEM_ID_INVALID)
 		info.data_info.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
@@ -29,7 +34,7 @@ static int data_db_create(struct smw_storage_data_descriptor *descriptor)
 	info.data_info.size = smw_storage_get_data_length(descriptor);
 	info.data_info.attributes = attributes;
 
-	return smw_object_db_create(&id, attributes, &info);
+	return smw_object_db_create(id, attributes, &info);
 }
 
 static int data_db_update(struct smw_storage_data_descriptor *descriptor)
@@ -53,13 +58,11 @@ static int data_db_update(struct smw_storage_data_descriptor *descriptor)
 	return smw_object_db_update(id, attributes, &info);
 }
 
-static int data_db_delete(struct smw_storage_data_descriptor *descriptor)
+static int data_db_delete(unsigned int id,
+			  struct smw_storage_data_descriptor *descriptor)
 {
-	unsigned int id = 0;
 	smw_attr_attributes_t attributes =
 		descriptor->data_attributes.attributes;
-
-	id = smw_storage_get_data_identifier(descriptor);
 
 	return smw_object_db_delete(id, attributes);
 }
@@ -173,6 +176,62 @@ end:
 	return status;
 }
 
+static int query_subsystem_data(struct smw_storage_data_descriptor *desc)
+{
+	int status = SMW_STATUS_OK;
+
+	enum subsystem_id subsystem_id = 0;
+	enum subsystem_id max_subsystem_id = SUBSYSTEM_ID_NB;
+	enum operation_id op_ids[] = { OPERATION_ID_STORAGE_STORE,
+				       OPERATION_ID_STORAGE_RETRIEVE };
+	enum operation_id op_get_info = OPERATION_ID_STORAGE_IS_DATA_PRESENT;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!desc) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	subsystem_id = desc->subsystem_id;
+
+	/*
+	 * If the subsystem is not specified, try to get data information
+	 * querying each subsystem supporting either store or retrieve data.
+	 */
+	if (subsystem_id == SUBSYSTEM_ID_INVALID) {
+		subsystem_id = 0;
+	} else if (subsystem_id < SUBSYSTEM_ID_NB) {
+		max_subsystem_id = subsystem_id + 1;
+	} else {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	for (; subsystem_id < max_subsystem_id; subsystem_id++) {
+		status = smw_config_is_operations_supported(op_ids,
+							    ARRAY_SIZE(op_ids),
+							    subsystem_id);
+		if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED ||
+		    status == SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED) {
+			status = SMW_STATUS_UNKNOWN_ID;
+			continue;
+		}
+
+		status = smw_utils_execute_implicit(op_get_info, desc,
+						    subsystem_id);
+		if (status != SMW_STATUS_UNKNOWN_ID)
+			break;
+	}
+
+	if (status == SMW_STATUS_OK)
+		desc->subsystem_id = subsystem_id;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static int find_data(struct smw_storage_data_descriptor *in_desc,
 		     struct smw_storage_data_descriptor *out_desc)
 {
@@ -180,12 +239,8 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 
 	unsigned int data_id = 0;
 	struct smw_data_descriptor tmp_pub_desc = { 0 };
-	struct smw_storage_data_descriptor data_desc = { 0 };
+	struct smw_storage_data_descriptor tmp_desc = { 0 };
 	enum subsystem_id subsystem_id = 0;
-	enum subsystem_id max_subsystem_id = SUBSYSTEM_ID_NB;
-	enum operation_id op_ids[] = { OPERATION_ID_STORAGE_STORE,
-				       OPERATION_ID_STORAGE_RETRIEVE };
-	enum operation_id op_get_info = OPERATION_ID_STORAGE_IS_DATA_PRESENT;
 	union smw_object_db_info db_info = { 0 };
 	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	enum subsystem_id *out_subsystem_id = NULL;
@@ -242,43 +297,11 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 		goto end;
 	}
 
-	/*
-	 * If the subsystem is not specified, try to get data information
-	 * querying each subsystem supporting either store or retrieve data.
-	 */
-	if (subsystem_id == SUBSYSTEM_ID_INVALID) {
-		subsystem_id = 0;
-	} else if (subsystem_id < SUBSYSTEM_ID_NB) {
-		max_subsystem_id = subsystem_id + 1;
-	} else {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
-
-	/*
-	 * Set temporary public data descriptor in order to execute the
-	 * subsystem operation to find if data is present or not.
-	 */
-	data_desc.pub = &tmp_pub_desc;
-	data_desc.data_attributes = in_desc->data_attributes;
+	tmp_desc = *in_desc;
+	tmp_desc.pub = &tmp_pub_desc;
 	tmp_pub_desc.identifier = data_id;
 
-	for (; subsystem_id < max_subsystem_id; subsystem_id++) {
-		status = smw_config_is_operations_supported(op_ids,
-							    ARRAY_SIZE(op_ids),
-							    subsystem_id);
-		if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED ||
-		    status == SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED) {
-			status = SMW_STATUS_UNKNOWN_ID;
-			continue;
-		}
-
-		status = smw_utils_execute_implicit(op_get_info, &data_desc,
-						    subsystem_id);
-		if (status != SMW_STATUS_UNKNOWN_ID)
-			break;
-	}
-
+	status = query_subsystem_data(&tmp_desc);
 	if (status == SMW_STATUS_OK) {
 		/*
 		 * At this stage, the data is not present in the object
@@ -286,13 +309,12 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 		 * Create the input in the object database with attributes
 		 * returned by the subsystem.
 		 */
-		in_desc->subsystem_id = subsystem_id;
+		in_desc->subsystem_id = tmp_desc.subsystem_id;
 
 		if (out_desc)
-			out_desc->data_attributes.attributes =
-				data_desc.data_attributes.attributes;
+			out_desc->data_attributes = tmp_desc.data_attributes;
 
-		status = data_db_create(&data_desc);
+		status = data_db_create(&data_id, &tmp_desc);
 	}
 
 end:
@@ -300,13 +322,67 @@ end:
 	return status;
 }
 
+static int get_new_data_id(struct smw_storage_data_descriptor *desc)
+{
+	int status = SMW_STATUS_OK;
+
+	unsigned int data_id = INVALID_OBJ_ID;
+	unsigned int id = INVALID_OBJ_ID;
+	union smw_object_db_info db_info = { 0 };
+	struct smw_data_descriptor tmp_pub_desc = { 0 };
+	struct smw_storage_data_descriptor tmp_desc = { 0 };
+	smw_attr_attributes_t attributes = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/* First create a database entry to get an new free object id */
+	status = data_db_create(&data_id, desc);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	tmp_desc = *desc;
+	tmp_desc.pub = &tmp_pub_desc;
+	attributes = desc->data_attributes.attributes;
+
+	for (id = data_id; id < UINT32_MAX; id++) {
+		tmp_pub_desc.identifier = id;
+
+		if (id != data_id) {
+			status = smw_object_db_get_info(data_id, attributes,
+							&db_info);
+			if (status == SMW_STATUS_OK)
+				continue;
+			if (status != SMW_STATUS_UNKNOWN_ID)
+				goto end;
+		}
+
+		/* Query all subsystems to get if object id is known */
+		status = query_subsystem_data(&tmp_desc);
+		if (status == SMW_STATUS_UNKNOWN_ID) {
+			set_data_identifier(desc, id);
+			break;
+		} else if (status != SMW_STATUS_OK) {
+			goto end;
+		}
+	}
+
+end:
+	if (status != SMW_STATUS_UNKNOWN_ID)
+		data_db_delete(data_id, desc);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static int
 store_data_convert_args(struct smw_store_data_args *args,
-			struct smw_storage_store_data_args *converted_args)
+			struct smw_storage_store_data_args *conv_args)
 {
 	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+	unsigned int data_id = INVALID_OBJ_ID;
 
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
+	struct smw_storage_data_descriptor *conv_desc = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -319,25 +395,40 @@ store_data_convert_args(struct smw_store_data_args *args,
 		goto end;
 
 	status = convert_encryption_args(args->encryption_args,
-					 &converted_args->enc_args,
-					 &subsystem_id);
+					 &conv_args->enc_args, &subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = convert_sign_args(args->sign_args, &converted_args->sign_args,
+	status = convert_sign_args(args->sign_args, &conv_args->sign_args,
 				   &subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = convert_data_descriptor(args->data_descriptor,
-					 &converted_args->data_descriptor);
+	conv_desc = &conv_args->data_descriptor;
+	status = convert_data_descriptor(args->data_descriptor, conv_desc);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	converted_args->data_descriptor.subsystem_id = subsystem_id;
+	conv_args->data_descriptor.subsystem_id = subsystem_id;
 
-	status = find_data(&converted_args->data_descriptor, NULL);
+	if (smw_storage_get_data_identifier(conv_desc) == INVALID_OBJ_ID) {
+		status = get_new_data_id(conv_desc);
+	} else {
+		status = find_data(conv_desc, NULL);
+		if (status == SMW_STATUS_UNKNOWN_ID) {
+			data_id = smw_storage_get_data_identifier(conv_desc);
+			status = data_db_create(&data_id, conv_desc);
+			if (status != SMW_STATUS_OK)
+				goto end;
 
+			/*
+			 * Ensure returned status is SMW_STATUS_UNKNOWN_ID to
+			 * create the data in the subsystem even if data is
+			 * read-only.
+			 */
+			status = SMW_STATUS_UNKNOWN_ID;
+		}
+	}
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -528,8 +619,7 @@ enum smw_status_code smw_store_data(struct smw_store_data_args *args)
 		goto end;
 	}
 
-	if (!args->data_descriptor->identifier ||
-	    !args->data_descriptor->data || !args->data_descriptor->length) {
+	if (!args->data_descriptor->data || !args->data_descriptor->length) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
@@ -544,21 +634,19 @@ enum smw_status_code smw_store_data(struct smw_store_data_args *args)
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
-	} else if (status == SMW_STATUS_UNKNOWN_ID) {
-		status = data_db_create(data_desc);
-		if (status != SMW_STATUS_OK)
-			goto end;
-	} else {
+	} else if (status != SMW_STATUS_UNKNOWN_ID) {
 		goto end;
 	}
 
 	status = smw_utils_execute_operation(OPERATION_ID_STORAGE_STORE,
 					     &store_data_args,
 					     data_desc->subsystem_id);
-	if (status != SMW_STATUS_OK)
-		(void)data_db_delete(data_desc);
-	else
+	if (status != SMW_STATUS_OK) {
+		(void)data_db_delete(smw_storage_get_data_identifier(data_desc),
+				     data_desc);
+	} else {
 		status = data_db_update(data_desc);
+	}
 
 end:
 	smw_keymgr_free_keys_ptr_array(store_data_args.enc_args.keys_desc,
@@ -573,7 +661,7 @@ enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args)
 	int status = SMW_STATUS_OK;
 
 	struct smw_storage_retrieve_data_args retrieve_data_args = { 0 };
-	struct smw_storage_data_descriptor *data_desc = NULL;
+	struct smw_storage_data_descriptor *desc = NULL;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -587,7 +675,7 @@ enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args)
 		goto end;
 	}
 
-	data_desc = &retrieve_data_args.data_descriptor;
+	desc = &retrieve_data_args.data_descriptor;
 
 	status = retrieve_data_convert_args(args, &retrieve_data_args);
 	if (status != SMW_STATUS_OK)
@@ -595,18 +683,19 @@ enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args)
 
 	status = smw_utils_execute_operation(OPERATION_ID_STORAGE_RETRIEVE,
 					     &retrieve_data_args,
-					     data_desc->subsystem_id);
+					     desc->subsystem_id);
 
 	if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
-		status = data_db_update(data_desc);
+		status = data_db_update(desc);
 		goto end;
 	}
 
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (SMW_ATTR_IS_READ_ONCE(data_desc->data_attributes.attributes))
-		status = data_db_delete(data_desc);
+	if (SMW_ATTR_IS_READ_ONCE(desc->data_attributes.attributes))
+		status = data_db_delete(smw_storage_get_data_identifier(desc),
+					desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -644,7 +733,8 @@ enum smw_status_code smw_delete_data(struct smw_delete_data_args *args)
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_UNKNOWN_ID)
 		goto end;
 
-	status = data_db_delete(data_desc);
+	status = data_db_delete(smw_storage_get_data_identifier(data_desc),
+				data_desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

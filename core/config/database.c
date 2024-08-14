@@ -3,6 +3,7 @@
  * Copyright 2020-2024 NXP
  */
 
+#include "smw_osal.h"
 #include "smw_status.h"
 
 #include "compiler.h"
@@ -268,6 +269,9 @@ bool is_subsystem_configured(enum subsystem_id id)
 {
 	struct database *database = NULL;
 	unsigned int index = id;
+	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+	union subsystem_info info = { 0 };
+	bool fconfig = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -278,7 +282,14 @@ bool is_subsystem_configured(enum subsystem_id id)
 
 	SUBSYSTEM_ID_ASSERT(id);
 
-	return database->subsystem[index].configured;
+	fconfig = database->subsystem[index].configured;
+	if (fconfig) {
+		subsystem_name = smw_config_get_subsystem_name(id);
+		if (smw_utils_get_subsystem_info(subsystem_name, &info))
+			fconfig = false;
+	}
+
+	return fconfig;
 }
 
 static void set_subsystem_state(enum subsystem_id id,

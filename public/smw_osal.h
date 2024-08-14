@@ -93,6 +93,16 @@ struct se_info {
 };
 
 /**
+ * struct sysystem_info - Union of all subsystem information
+ * @tee - TEE Subsystem information
+ * @se - Secure Enclave information
+ */
+union subsystem_info {
+	struct tee_info tee;
+	struct se_info se;
+};
+
+/**
  * smw_osal_latest_subsystem_name() - Return the latest Secure Subsystem name
  *
  * In DEBUG mode only, function returns the name of the latest Secure Subsystem

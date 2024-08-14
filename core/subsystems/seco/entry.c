@@ -377,6 +377,10 @@ int seco_convert_err(hsm_err_t err)
 		status = SMW_STATUS_SUBSYSTEM_STORAGE_ERROR;
 		break;
 
+	case HSM_SIGNATURE_INVALID:
+		status = SMW_STATUS_SIGNATURE_INVALID;
+		break;
+
 	default:
 		/*
 		 * status = SMW_STATUS_SUBSYSTEM_FAILURE

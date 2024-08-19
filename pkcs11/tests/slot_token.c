@@ -88,6 +88,11 @@ static CK_MECHANISM_TYPE mlist[] = {
 	M(SHA3_512_HMAC_GENERAL),
 };
 
+/*
+ * Keep this list in the same order as the list generated from dev_config.c.in
+ * Currently, that order is: smw, ele, optee, seco; first is always smw, the rest
+ * are in lexicographic order, as they are added with file(GLOB ...)
+ */
 const struct test_slots exp_slots[] = { {
 						.num = 0,
 						.label = "SMW",
@@ -95,7 +100,7 @@ const struct test_slots exp_slots[] = { {
 					},
 					{
 						.num = 1,
-						.label = "SECO",
+						.label = "ELE",
 						.flags_slot = CKF_HW_SLOT,
 					},
 					{
@@ -105,7 +110,7 @@ const struct test_slots exp_slots[] = { {
 					},
 					{
 						.num = 3,
-						.label = "ELE",
+						.label = "SECO",
 						.flags_slot = CKF_HW_SLOT,
 					} };
 

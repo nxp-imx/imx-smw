@@ -11,6 +11,8 @@
 #include "config.h"
 #include "keymgr.h"
 
+struct node;
+
 enum subsystem_state { SUBSYSTEM_STATE_UNLOADED, SUBSYSTEM_STATE_LOADED };
 
 #define SMW_CONFIG_MAX_STRING_LENGTH 256
@@ -29,7 +31,8 @@ enum subsystem_state { SUBSYSTEM_STATE_UNLOADED, SUBSYSTEM_STATE_LOADED };
 		.read = operation##_read_params,                               \
 		.merge = operation##_merge_params,                             \
 		.print = operation##_print_params,                             \
-		.check_subsystem_caps = operation##_check_subsystem_caps       \
+		.check_subsystem_caps = operation##_check_subsystem_caps,      \
+		.check_key_usable = operation##_check_key_usable               \
 	};                                                                     \
 	struct operation_func *smw_##operation##_get_func(void)                \
 	{                                                                      \
@@ -447,18 +450,30 @@ int store_operation_params(enum operation_id operation_id, void *params,
 /**
  * get_operation_params() - Get an operation parameters.
  * @operation_id: Security Operation ID.
- * @subsystem_id: Secure Subsystem ID.
- * @params: Pointer to the data structure
- *          that describes the parameters.
+ * @ref: Pointer to the reference associated to the operation nodes.
+ * @params: Pointer to the data structure describing the parameters.
  *
- * This function gets the parameters configured for
- * this Security Operation.
+ * This function gets the parameters configured for subsystem's operation.
  *
  * Return:
  * error code.
  */
-int get_operation_params(enum operation_id operation_id,
-			 enum subsystem_id subsystem_id, void *params);
+int get_operation_params(enum operation_id operation_id, unsigned int *ref,
+			 void *params);
+
+/**
+ * get_operation_params_lock() - Get an operation parameters with mutex.
+ * @operation_id: Security Operation ID.
+ * @subsystem_id: Secure Subsystem ID.
+ * @params: Pointer to the data structure describing the parameters.
+ *
+ * This function gets the parameters configured for subsystem's operation.
+ *
+ * Return:
+ * error code.
+ */
+int get_operation_params_lock(enum operation_id operation_id,
+			      enum subsystem_id subsystem_id, void *params);
 
 /**
  * get_operation_func() - Get the Security Operation functions.

@@ -11,6 +11,7 @@
 #include "mac.h"
 #include "tag.h"
 #include "utils.h"
+#include "list.h"
 
 #include "common.h"
 
@@ -19,6 +20,14 @@ static const char *const mac_algo_strings[] = {
 	[SMW_CONFIG_MAC_ALGO_ID_CMAC_TRUNCATED] = "CMAC_TRUNCATED",
 	[SMW_CONFIG_MAC_ALGO_ID_HMAC] = "HMAC",
 	[SMW_CONFIG_MAC_ALGO_ID_HMAC_TRUNCATED] = "HMAC_TRUNCATED",
+};
+
+static unsigned int mac_algo_attrs[] = {
+	[SMW_CONFIG_MAC_ALGO_ID_CMAC] = SMW_ATTR_ALGO_AES,
+	[SMW_CONFIG_MAC_ALGO_ID_CMAC_TRUNCATED] = SMW_ATTR_ALGO_AES,
+	[SMW_CONFIG_MAC_ALGO_ID_HMAC] = SMW_ATTR_ALGO_HMAC,
+	[SMW_CONFIG_MAC_ALGO_ID_HMAC_TRUNCATED] = SMW_ATTR_ALGO_HMAC,
+	[SMW_CONFIG_MAC_ALGO_ID_NB] = 0,
 };
 
 int read_mac_algo_strings(char **start, char *end, unsigned long *bitmap)
@@ -126,11 +135,11 @@ __weak void mac_print_params(void *params)
 	(void)params;
 }
 
-static int mac_check_subsystem_caps(void *args, void *params)
+static int mac_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 	struct smw_crypto_mac_args *mac_args = args;
-	struct mac_params *mac_params = params;
+	struct mac_params *mac_params = smw_utils_list_get_data(node);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -138,6 +147,42 @@ static int mac_check_subsystem_caps(void *args, void *params)
 	    check_key(&mac_args->key_descriptor.identifier, &mac_params->key))
 		status = SMW_STATUS_OK;
 
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int mac_check_key_usable(unsigned int *ref,
+				enum smw_config_key_type_id key_type_id,
+				smw_attr_algo_t permitted_algo)
+{
+	int status = SMW_STATUS_OK;
+	struct mac_params params = { 0 };
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+	size_t idx = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = get_operation_params(OPERATION_ID_MAC, ref, &params);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	algo = SMW_ATTR_GET_ALGO(permitted_algo);
+
+	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	if (!check_id(key_type_id, params.key.type_bitmap))
+		goto end;
+
+	for (; idx < ARRAY_SIZE(mac_algo_attrs); idx++) {
+		if ((algo == SMW_ATTR_ALGO_NONE ||
+		     algo == mac_algo_attrs[idx]) &&
+		    check_id(idx, params.algo_bitmap)) {
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -168,7 +213,7 @@ __export enum smw_status_code smw_config_check_mac(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = get_operation_params(OPERATION_ID_MAC, id, &params);
+	status = get_operation_params_lock(OPERATION_ID_MAC, id, &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 

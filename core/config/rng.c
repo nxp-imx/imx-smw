@@ -14,6 +14,7 @@
 #include "subsystems.h"
 #include "config.h"
 #include "rng.h"
+#include "list.h"
 
 #include "common.h"
 #include "tag.h"
@@ -91,12 +92,12 @@ __weak void rng_print_params(void *params)
 	(void)params;
 }
 
-static int rng_check_subsystem_caps(void *args, void *params)
+static int rng_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OK;
 
 	struct smw_crypto_rng_args *rng_args = args;
-	struct rng_params *rng_params = params;
+	struct rng_params *rng_params = smw_utils_list_get_data(node);
 
 	unsigned int length = smw_crypto_get_rng_output_length(rng_args);
 
@@ -107,6 +108,17 @@ static int rng_check_subsystem_caps(void *args, void *params)
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+static int rng_check_key_usable(unsigned int *ref,
+				enum smw_config_key_type_id key_type_id,
+				smw_attr_algo_t permitted_algo)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)permitted_algo;
+
+	return SMW_STATUS_OK;
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(rng);

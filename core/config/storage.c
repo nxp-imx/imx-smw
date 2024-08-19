@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "storage.h"
 #include "tag.h"
+#include "list.h"
 
 #include "common.h"
 
@@ -191,14 +192,15 @@ static void storage_delete_print_params(void *params)
 	(void)params;
 }
 
-static int storage_store_check_subsystem_caps(void *args, void *params)
+static int storage_store_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 	unsigned int i = 0;
 	struct smw_storage_store_data_args *storage_args = args;
 	struct smw_storage_enc_args *enc_args = &storage_args->enc_args;
 	struct smw_storage_sign_args *sign_args = &storage_args->sign_args;
-	struct storage_store_params *store_params = params;
+	struct storage_store_params *store_params =
+		smw_utils_list_get_data(node);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -232,10 +234,10 @@ end:
 	return status;
 }
 
-static int storage_retrieve_check_subsystem_caps(void *args, void *params)
+static int storage_retrieve_check_subsystem_caps(void *args, void *node)
 {
 	(void)args;
-	(void)params;
+	(void)node;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -243,14 +245,50 @@ static int storage_retrieve_check_subsystem_caps(void *args, void *params)
 	return SMW_STATUS_OK;
 }
 
-static int storage_delete_check_subsystem_caps(void *args, void *params)
+static int storage_delete_check_subsystem_caps(void *args, void *node)
 {
 	(void)args;
-	(void)params;
+	(void)node;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, SMW_STATUS_OK);
+	return SMW_STATUS_OK;
+}
+
+static int
+storage_store_check_key_usable(unsigned int *ref,
+			       enum smw_config_key_type_id key_type_id,
+			       smw_attr_algo_t permitted_algo)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)permitted_algo;
+
+	return SMW_STATUS_OK;
+}
+
+static int
+storage_retrieve_check_key_usable(unsigned int *ref,
+				  enum smw_config_key_type_id key_type_id,
+				  smw_attr_algo_t permitted_algo)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)permitted_algo;
+
+	return SMW_STATUS_OK;
+}
+
+static int
+storage_delete_check_key_usable(unsigned int *ref,
+				enum smw_config_key_type_id key_type_id,
+				smw_attr_algo_t permitted_algo)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)permitted_algo;
+
 	return SMW_STATUS_OK;
 }
 

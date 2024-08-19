@@ -14,6 +14,7 @@
 #include "subsystems.h"
 #include "config.h"
 #include "hash.h"
+#include "list.h"
 
 #include "common.h"
 #include "tag.h"
@@ -112,12 +113,12 @@ __weak void hash_print_params(void *params)
 	(void)params;
 }
 
-static int hash_check_subsystem_caps(void *args, void *params)
+static int hash_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OK;
 
 	struct smw_crypto_hash_args *hash_args = args;
-	struct hash_params *hash_params = params;
+	struct hash_params *hash_params = smw_utils_list_get_data(node);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -126,6 +127,17 @@ static int hash_check_subsystem_caps(void *args, void *params)
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+static int hash_check_key_usable(unsigned int *ref,
+				 enum smw_config_key_type_id key_type_id,
+				 smw_attr_algo_t permitted_algo)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)permitted_algo;
+
+	return SMW_STATUS_OK;
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(hash);
@@ -151,7 +163,7 @@ __export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = get_operation_params(OPERATION_ID_HASH, id, &params);
+	status = get_operation_params_lock(OPERATION_ID_HASH, id, &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 

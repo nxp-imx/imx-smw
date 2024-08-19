@@ -141,7 +141,7 @@ static int find_subsystem_per_operation(enum operation_id operation_id,
 					unsigned int subsystem_id,
 					struct node **node)
 {
-	int status = SMW_STATUS_INVALID_CONFIG_DATABASE;
+	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	struct database *database = NULL;
 	unsigned int index = operation_id;
@@ -167,7 +167,8 @@ static int find_subsystem_per_operation(enum operation_id operation_id,
 		*node = smw_utils_list_find_next(*node, ref);
 	}
 
-	status = SMW_STATUS_OK;
+	if (*node)
+		status = SMW_STATUS_OK;
 
 end:
 	return status;
@@ -528,7 +529,7 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 
 	int status_mutex = SMW_STATUS_OK;
 	struct operation_func *operation_func = NULL;
-	int (*check_subsystem_caps)(void *args, void *params) = NULL;
+	int (*check_subsystem_caps)(void *args, void *node) = NULL;
 
 	struct node *node = NULL;
 	unsigned int ref_id = 0;
@@ -553,9 +554,13 @@ int smw_config_select_subsystem(enum operation_id operation_id, void *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	if (ref_id != SUBSYSTEM_ID_INVALID) {
+		status = check_subsystem_caps(args, node);
+		goto end;
+	}
+
 	while (node) {
-		status = check_subsystem_caps(args,
-					      smw_utils_list_get_data(node));
+		status = check_subsystem_caps(args, node);
 
 		if (status == SMW_STATUS_OK) {
 			ref_id = smw_utils_list_get_ref(node);
@@ -576,9 +581,6 @@ end:
 		if (status == SMW_STATUS_OK)
 			status = status_mutex;
 	}
-
-	if (status == SMW_STATUS_OK && !node)
-		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
 	return status;
 }
@@ -615,25 +617,20 @@ int smw_config_is_operations_supported(enum operation_id op_ids[],
 	if (status == SMW_STATUS_OK)
 		status = status_mutex;
 
-	if (status == SMW_STATUS_OK && !node)
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-
 	return status;
 }
 
-int get_operation_params(enum operation_id operation_id,
-			 enum subsystem_id subsystem_id, void *params)
+int get_operation_params(enum operation_id operation_id, unsigned int *ref,
+			 void *params)
 {
 	int status = SMW_STATUS_OK;
 
-	int status_mutex = SMW_STATUS_OK;
 	struct database *database = NULL;
 	struct operation_func *operation_func = NULL;
 	unsigned int index = operation_id;
 
 	struct smw_utils_list *list = NULL;
 	struct node *node = NULL;
-	unsigned int *key = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -645,37 +642,53 @@ int get_operation_params(enum operation_id operation_id,
 	SMW_DBG_ASSERT(params);
 	OPERATION_ID_ASSERT(operation_id);
 
+	if (ref)
+		SUBSYSTEM_ID_ASSERT(*ref);
+
 	SMW_DBG_PRINTF(DEBUG, "Security operation id: %d\n", operation_id);
-	SMW_DBG_PRINTF(DEBUG, "Secure subsystem id: %d\n", subsystem_id);
+	SMW_DBG_PRINTF(DEBUG, "Secure subsystem is: %s\n",
+		       ref ? subsystem_strings[*ref] : "Unknown");
 
 	operation_func = get_operation_func(operation_id);
 
 	list = &database->operation[index].subsystems_list;
 
-	if (subsystem_id != SUBSYSTEM_ID_INVALID)
-		key = &subsystem_id;
-
-	status_mutex = config_db_mutex_lock();
-	if (status_mutex != SMW_STATUS_OK)
-		goto end;
-
 	status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 
-	node = smw_utils_list_find_first(list, key);
+	node = smw_utils_list_find_first(list, ref);
 	if (node)
 		status = SMW_STATUS_OK;
 
 	while (node) {
 		operation_func->merge(params, smw_utils_list_get_data(node));
 
-		node = smw_utils_list_find_next(node, key);
+		node = smw_utils_list_find_next(node, ref);
 	}
 
-end:
-	if (status_mutex == SMW_STATUS_OK)
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int get_operation_params_lock(enum operation_id operation_id,
+			      enum subsystem_id subsystem_id, void *params)
+{
+	int status = SMW_STATUS_OK;
+	int status_mutex = SMW_STATUS_OK;
+	unsigned int *ref = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status_mutex = config_db_mutex_lock();
+	if (status_mutex == SMW_STATUS_OK) {
+		if (subsystem_id != SUBSYSTEM_ID_INVALID)
+			ref = &subsystem_id;
+
+		status = get_operation_params(operation_id, ref, params);
+
 		status_mutex = config_db_mutex_unlock();
-	if (status == SMW_STATUS_OK)
-		status = status_mutex;
+		if (status == SMW_STATUS_OK)
+			status = status_mutex;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

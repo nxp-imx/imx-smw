@@ -14,6 +14,7 @@
 #include "subsystems.h"
 #include "cipher.h"
 #include "tag.h"
+#include "list.h"
 
 #include "common.h"
 
@@ -24,6 +25,16 @@ static const char *const cipher_mode_strings[] = {
 	[SMW_CONFIG_CIPHER_MODE_ID_CTS] = "CTS",
 	[SMW_CONFIG_CIPHER_MODE_ID_ECB] = "ECB",
 	[SMW_CONFIG_CIPHER_MODE_ID_XTS] = "XTS"
+};
+
+static unsigned int cipher_mode_attrs[] = {
+	[SMW_CONFIG_CIPHER_MODE_ID_CBC] = SMW_ATTR_MODE_CBC_NO_PAD,
+	[SMW_CONFIG_CIPHER_MODE_ID_CFB] = SMW_ATTR_MODE_CFB,
+	[SMW_CONFIG_CIPHER_MODE_ID_CTR] = SMW_ATTR_MODE_CTR,
+	[SMW_CONFIG_CIPHER_MODE_ID_CTS] = SMW_ATTR_MODE_CTS,
+	[SMW_CONFIG_CIPHER_MODE_ID_ECB] = SMW_ATTR_MODE_ECB_NO_PAD,
+	[SMW_CONFIG_CIPHER_MODE_ID_XTS] = SMW_ATTR_MODE_XTS,
+	[SMW_CONFIG_CIPHER_MODE_ID_NB] = 0,
 };
 
 int read_cipher_mode_strings(char **start, char *end, unsigned long *bitmap)
@@ -186,26 +197,12 @@ static void cipher_multi_part_print_params(void *params)
 	cipher_common_print_params(params);
 }
 
-/**
- * check_common_subsystem_caps() - Check subsystem capabilities for cipher
- *                                 one-shot and multi-part operations
- * @args: Internal cipher arguments.
- * @params: Cipher operation subsystem parameters.
- *
- * This function checks if mode and operation type set in @args are supported
- * by the subsystem.
- * It also checks that all keys set in @args are supported.
- *
- * Return:
- * SMW_STATUS_OK			- Success
- * SMW_STATUS_OPERATION_NOT_CONFIGURED	- Operation not configured
- */
-static int check_common_subsystem_caps(void *args, void *params)
+static int check_common_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 	unsigned int i = 0;
 	struct smw_crypto_cipher_args *cipher_args = args;
-	struct cipher_params *cipher_params = params;
+	struct cipher_params *cipher_params = smw_utils_list_get_data(node);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -225,16 +222,71 @@ end:
 	return status;
 }
 
-static int cipher_check_subsystem_caps(void *args, void *params)
+static int cipher_check_subsystem_caps(void *args, void *node)
 {
-	return check_common_subsystem_caps(args, params);
+	return check_common_subsystem_caps(args, node);
 }
 
-static int cipher_multi_part_check_subsystem_caps(void *args, void *params)
+static int cipher_multi_part_check_subsystem_caps(void *args, void *node)
 {
 	/* This function is only called by cipher initialization */
 
-	return check_common_subsystem_caps(args, params);
+	return check_common_subsystem_caps(args, node);
+}
+
+static int check_common_key_usable(enum operation_id operation_id,
+				   unsigned int *ref,
+				   enum smw_config_key_type_id key_type_id,
+				   smw_attr_algo_t permitted_algo)
+{
+	int status = SMW_STATUS_OK;
+
+	struct cipher_params params = { 0 };
+	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
+	size_t idx = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = get_operation_params(operation_id, ref, &params);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	mode = SMW_ATTR_GET_MODE(permitted_algo);
+
+	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	if (!check_id(key_type_id, params.key.type_bitmap))
+		goto end;
+
+	for (; idx < ARRAY_SIZE(cipher_mode_attrs); idx++) {
+		if ((mode == SMW_ATTR_MODE_NONE ||
+		     mode == cipher_mode_attrs[idx]) &&
+		    check_id(idx, params.mode_bitmap)) {
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int cipher_check_key_usable(unsigned int *ref,
+				   enum smw_config_key_type_id key_type_id,
+				   smw_attr_algo_t permitted_algo)
+{
+	return check_common_key_usable(OPERATION_ID_CIPHER, ref, key_type_id,
+				       permitted_algo);
+}
+
+static int
+cipher_multi_part_check_key_usable(unsigned int *ref,
+				   enum smw_config_key_type_id key_type_id,
+				   smw_attr_algo_t permitted_algo)
+{
+	return check_common_key_usable(OPERATION_ID_CIPHER, ref, key_type_id,
+				       permitted_algo);
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(cipher);
@@ -281,7 +333,7 @@ smw_config_check_cipher(smw_subsystem_t subsystem, struct smw_cipher_info *info)
 	if (info->multipart)
 		op_id = OPERATION_ID_CIPHER_MULTI_PART;
 
-	status = get_operation_params(op_id, id, &params);
+	status = get_operation_params_lock(op_id, id, &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 

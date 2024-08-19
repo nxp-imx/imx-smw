@@ -1,10 +1,14 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2022 NXP
+ * Copyright 2020-2022, 2024 NXP
  */
 
 #ifndef __OPERATIONS_H__
 #define __OPERATIONS_H__
+
+#include "smw/attr.h"
+
+#include "config_ids.h"
 
 ${ENUM_OPERATION_ID} {
 	${LIST_OPERATION_ID}
@@ -16,7 +20,10 @@ ${STRUCT_OPERATION_FUNC} {
 	int (*read)(char **start, char *end, void **params);
 	void (*merge)(void *caps, void *params);
 	void (*print)(void *params);
-	int (*check_subsystem_caps)(void *args, void *params);
+	int (*check_subsystem_caps)(void *args, void *node);
+	int (*check_key_usable)(unsigned int *ref,
+				enum smw_config_key_type_id key_type_id,
+				smw_attr_algo_t permitted_algo);
 };
 
 #endif /* __OPERATIONS_H__ */

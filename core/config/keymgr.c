@@ -16,6 +16,7 @@
 #include "keymgr.h"
 #include "keymgr_derive.h"
 #include "name.h"
+#include "list.h"
 
 #include "common.h"
 #include "tag.h"
@@ -28,6 +29,9 @@
  * The offset between the internal values and the public values is
  * given by the first public value.
  */
+#define SMW_CONFIG_KEY_TYPE_ID_OFFSET                                          \
+	(SMW_KEY_TYPE_NAME_SECP_R1 - SMW_CONFIG_KEY_TYPE_ID_SECP_R1)
+
 #define SMW_CONFIG_KDF_ID_OFFSET (SMW_KDF_NAME_HKDF - SMW_CONFIG_KDF_ID_HKDF)
 
 static const char *const key_type_strings[] = {
@@ -308,7 +312,7 @@ __weak void print_key_operation_params(void *params)
 	(void)params;
 }
 
-static int check_subsystem_caps(struct smw_keymgr_descriptor *key_descriptor,
+static int check_key_descriptor(struct smw_keymgr_descriptor *key_descriptor,
 				struct key_operation_params *params)
 {
 	int status = SMW_STATUS_OK;
@@ -322,31 +326,156 @@ static int check_subsystem_caps(struct smw_keymgr_descriptor *key_descriptor,
 	return status;
 }
 
-static int generate_key_check_subsystem_caps(void *args, void *params)
+static int check_key_usable(enum operation_id operation_id, unsigned int ref,
+			    enum smw_config_key_type_id key_type_id,
+			    smw_attr_algo_t permitted_algo)
 {
 	int status = SMW_STATUS_OK;
-
-	struct smw_keymgr_descriptor *key_descriptor =
-		&((struct smw_keymgr_generate_key_args *)args)->key_descriptor;
+	struct operation_func *op_func = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = check_subsystem_caps(key_descriptor, params);
+	op_func = get_operation_func(operation_id);
+	SMW_DBG_ASSERT(op_func);
+
+	SMW_DBG_ASSERT(op_func->check_key_usable);
+
+	status = op_func->check_key_usable(&ref, key_type_id, permitted_algo);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-static int derive_key_check_subsystem_caps(void *args, void *params)
+static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
+				struct smw_key_attributes *attributes,
+				unsigned int ref)
+{
+	int status = SMW_STATUS_OK;
+
+	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
+	smw_attr_algo_t class = SMW_ATTR_CLASS_NONE;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!attributes) {
+		status = SMW_STATUS_OK;
+		goto end;
+	}
+
+	if (ref >= SUBSYSTEM_ID_NB) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	mode = SMW_ATTR_GET_MODE(attributes->permitted_algo);
+	class = SMW_ATTR_GET_CLASS(attributes->permitted_algo);
+
+	/*
+	 * There may be multiple subsystems which support an operation, but not
+	 * necessarily with the same key types/modes. For example, TEE could have:
+	 * [SECURITY_OPERATION]
+	 *   AEAD;
+	 *     KEY_TYPE_VALUES=AES;
+	 *     MODE_VALUES=CCM;
+	 * While ELE could have:
+	 * [SECURITY_OPERATION]
+	 *   AEAD;
+	 *     KEY_TYPE_VALUES=AES;
+	 *     MODE_VALUES=CCM:CHACHA20_POLY1305;
+	 *
+	 * In this case, both ELE and TEE support keys for the CCM mode. But
+	 * only ELE supports keys for the CHACHA20_POLY1305 mode. So, during key
+	 * generation, search for the configured operations for the first match
+	 * for both the key type and algorithm.
+	 */
+
+	if (mode == SMW_ATTR_MODE_NONE || mode == SMW_ATTR_MODE_ANY) {
+		status = SMW_STATUS_OK;
+		goto end;
+	}
+
+	switch (class) {
+	case SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION:
+		status = check_key_usable(OPERATION_ID_CIPHER, ref,
+					  key_desc->identifier.type_id,
+					  attributes->permitted_algo);
+		if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED)
+			status =
+				check_key_usable(OPERATION_ID_CIPHER_MULTI_PART,
+						 ref,
+						 key_desc->identifier.type_id,
+						 attributes->permitted_algo);
+		break;
+
+	case SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE:
+		status = check_key_usable(OPERATION_ID_SIGN, ref,
+					  key_desc->identifier.type_id,
+					  attributes->permitted_algo);
+		if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED)
+			status = check_key_usable(OPERATION_ID_VERIFY, ref,
+						  key_desc->identifier.type_id,
+						  attributes->permitted_algo);
+		break;
+
+	case SMW_ATTR_CLASS_AEAD:
+		status = check_key_usable(OPERATION_ID_AEAD, ref,
+					  key_desc->identifier.type_id,
+					  attributes->permitted_algo);
+		if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED)
+			status = check_key_usable(OPERATION_ID_AEAD_MULTI_PART,
+						  ref,
+						  key_desc->identifier.type_id,
+						  attributes->permitted_algo);
+		break;
+
+	case SMW_ATTR_CLASS_MAC:
+		status = check_key_usable(OPERATION_ID_MAC, ref,
+					  key_desc->identifier.type_id,
+					  attributes->permitted_algo);
+		break;
+
+	case SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION:
+	default:
+		status = SMW_STATUS_OK;
+		break;
+		;
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int generate_key_check_subsystem_caps(void *args, void *node)
+{
+	int status = SMW_STATUS_OK;
+
+	struct smw_keymgr_generate_key_args *key_args =
+		(struct smw_keymgr_generate_key_args *)args;
+	unsigned int ref = smw_utils_list_get_ref(node);
+	struct key_operation_params *op_params = smw_utils_list_get_data(node);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = check_key_descriptor(&key_args->key_descriptor, op_params);
+	if (status == SMW_STATUS_OK)
+		status = check_key_attributes(&key_args->key_descriptor,
+					      key_args->key_attributes, ref);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int derive_key_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_derive_key_args *derive_args = args;
-	struct key_operation_params *op_params = params;
+	struct key_operation_params *op_params = smw_utils_list_get_data(node);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = check_subsystem_caps(&derive_args->key_base, op_params);
+	status = check_key_descriptor(&derive_args->key_base, op_params);
 
 	/*
 	 * Check if the Key Derivation Function ID specified is
@@ -362,10 +491,10 @@ static int derive_key_check_subsystem_caps(void *args, void *params)
 	return status;
 }
 
-static int update_key_check_subsystem_caps(void *args, void *params)
+static int update_key_check_subsystem_caps(void *args, void *node)
 {
 	(void)args;
-	(void)params;
+	(void)node;
 
 	int status = SMW_STATUS_OK;
 
@@ -380,22 +509,27 @@ static int update_key_check_subsystem_caps(void *args, void *params)
 	return status;
 }
 
-static int import_key_check_subsystem_caps(void *args, void *params)
+static int import_key_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_descriptor *key_descriptor =
-		&((struct smw_keymgr_import_key_args *)args)->key_descriptor;
+	struct smw_keymgr_import_key_args *key_args =
+		(struct smw_keymgr_import_key_args *)args;
+	unsigned int ref = smw_utils_list_get_ref(node);
+	struct key_operation_params *op_params = smw_utils_list_get_data(node);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = check_subsystem_caps(key_descriptor, params);
+	status = check_key_descriptor(&key_args->key_descriptor, op_params);
+	if (status == SMW_STATUS_OK)
+		status = check_key_attributes(&key_args->key_descriptor,
+					      key_args->key_attributes, ref);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-static int export_key_check_subsystem_caps(void *args, void *params)
+static int export_key_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OK;
 
@@ -404,13 +538,14 @@ static int export_key_check_subsystem_caps(void *args, void *params)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = check_subsystem_caps(key_descriptor, params);
+	status = check_key_descriptor(key_descriptor,
+				      smw_utils_list_get_data(node));
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
-static int delete_key_check_subsystem_caps(void *args, void *params)
+static int delete_key_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OK;
 
@@ -419,7 +554,8 @@ static int delete_key_check_subsystem_caps(void *args, void *params)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = check_subsystem_caps(key_descriptor, params);
+	status = check_key_descriptor(key_descriptor,
+				      smw_utils_list_get_data(node));
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -521,7 +657,8 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = get_operation_params(OPERATION_ID_GENERATE_KEY, id, &params);
+	status = get_operation_params_lock(OPERATION_ID_GENERATE_KEY, id,
+					   &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 

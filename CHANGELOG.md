@@ -47,6 +47,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Generate a data ID if user calls the store data API with an ID set to 0.
 * Update `smw_derive_key()` API arguments and add support for HKDF (Full/
   Extract/Expand) based key derivation.
+* Selection of the subsystem during the key generate or import based on the permitted algorithm.
 
 ##### 2. Subsystems
 

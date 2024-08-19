@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "operations.h"
 #include "subsystems.h"
+#include "list.h"
 
 #include "aead.h"
 #include "tag.h"
@@ -22,6 +23,13 @@ static const char *const aead_mode_strings[] = {
 	[SMW_CONFIG_AEAD_MODE_ID_CCM] = "CCM",
 	[SMW_CONFIG_AEAD_MODE_ID_CHACHA20_POLY1305] = "CHACHA20_POLY1305",
 	[SMW_CONFIG_AEAD_MODE_ID_GCM] = "GCM",
+};
+
+static unsigned int aead_mode_attrs[] = {
+	[SMW_CONFIG_AEAD_MODE_ID_CCM] = SMW_ATTR_MODE_CCM,
+	[SMW_CONFIG_AEAD_MODE_ID_GCM] = SMW_ATTR_MODE_GCM,
+	[SMW_CONFIG_AEAD_MODE_ID_CHACHA20_POLY1305] = SMW_ATTR_MODE_POLY1305,
+	[SMW_CONFIG_AEAD_MODE_ID_NB] = 0,
 };
 
 static const char *const aead_op_type_strings[] = {
@@ -189,25 +197,11 @@ static void aead_multi_part_print_params(void *params)
 	aead_common_print_params(params);
 }
 
-/**
- * check_common_subsystem_caps() - Check subsystem capabilities for AEAD
- *                                 one-shot and multi-part operations
- * @args: Internal AEAD arguments.
- * @params: AEAD operation subsystem parameters.
- *
- * This function checks if mode and operation type set in @args are supported
- * by the subsystem.
- * It also check that the keysset in @args is supported.
- *
- * Return:
- * SMW_STATUS_OK			- Success
- * SMW_STATUS_OPERATION_NOT_CONFIGURED	- Operation not configured
- */
-static int check_common_subsystem_caps(void *args, void *params)
+static int check_common_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
 	struct smw_crypto_aead_args *aead_args = args;
-	struct aead_params *aead_params = params;
+	struct aead_params *aead_params = smw_utils_list_get_data(node);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -225,16 +219,70 @@ end:
 	return status;
 }
 
-static int aead_check_subsystem_caps(void *args, void *params)
+static int aead_check_subsystem_caps(void *args, void *node)
 {
-	return check_common_subsystem_caps(args, params);
+	return check_common_subsystem_caps(args, node);
 }
 
-static int aead_multi_part_check_subsystem_caps(void *args, void *params)
+static int aead_multi_part_check_subsystem_caps(void *args, void *node)
 {
 	/* This function is only called by AEAD initialization */
 
-	return check_common_subsystem_caps(args, params);
+	return check_common_subsystem_caps(args, node);
+}
+
+static int check_common_key_usable(enum operation_id operation_id,
+				   unsigned int *ref,
+				   enum smw_config_key_type_id key_type_id,
+				   smw_attr_algo_t permitted_algo)
+{
+	int status = SMW_STATUS_OK;
+	struct aead_params params = { 0 };
+	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
+	size_t idx = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = get_operation_params(operation_id, ref, &params);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	mode = SMW_ATTR_GET_MODE(permitted_algo);
+
+	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	if (!check_id(key_type_id, params.key.type_bitmap))
+		goto end;
+
+	for (; idx < ARRAY_SIZE(aead_mode_attrs); idx++) {
+		if ((mode == SMW_ATTR_MODE_NONE ||
+		     mode == aead_mode_attrs[idx]) &&
+		    check_id(idx, params.mode_bitmap)) {
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int aead_check_key_usable(unsigned int *ref,
+				 enum smw_config_key_type_id key_type_id,
+				 smw_attr_algo_t permitted_algo)
+{
+	return check_common_key_usable(OPERATION_ID_AEAD, ref, key_type_id,
+				       permitted_algo);
+}
+
+static int
+aead_multi_part_check_key_usable(unsigned int *ref,
+				 enum smw_config_key_type_id key_type_id,
+				 smw_attr_algo_t permitted_algo)
+{
+	return check_common_key_usable(OPERATION_ID_AEAD_MULTI_PART, ref,
+				       key_type_id, permitted_algo);
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(aead);
@@ -279,7 +327,7 @@ __export enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 	if (info->multipart)
 		op_id = OPERATION_ID_AEAD_MULTI_PART;
 
-	status = get_operation_params(op_id, id, &params);
+	status = get_operation_params_lock(op_id, id, &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 

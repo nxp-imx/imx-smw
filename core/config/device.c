@@ -48,14 +48,26 @@ static void device_attestation_print_params(void *params)
 	(void)params;
 }
 
-static int device_attestation_check_subsystem_caps(void *args, void *params)
+static int device_attestation_check_subsystem_caps(void *args, void *node)
 {
 	(void)args;
-	(void)params;
+	(void)node;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, SMW_STATUS_OK);
+	return SMW_STATUS_OK;
+}
+
+static int
+device_attestation_check_key_usable(unsigned int *ref,
+				    enum smw_config_key_type_id key_type_id,
+				    smw_attr_algo_t permitted_algo)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)permitted_algo;
+
 	return SMW_STATUS_OK;
 }
 
@@ -98,14 +110,26 @@ static void device_lifecycle_print_params(void *params)
 	(void)params;
 }
 
-static int device_lifecycle_check_subsystem_caps(void *args, void *params)
+static int device_lifecycle_check_subsystem_caps(void *args, void *node)
 {
 	(void)args;
-	(void)params;
+	(void)node;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, SMW_STATUS_OK);
+	return SMW_STATUS_OK;
+}
+
+static int
+device_lifecycle_check_key_usable(unsigned int *ref,
+				  enum smw_config_key_type_id key_type_id,
+				  smw_attr_algo_t permitted_algo)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)permitted_algo;
+
 	return SMW_STATUS_OK;
 }
 
@@ -149,14 +173,26 @@ static void device_reprovision_print_params(void *params)
 	(void)params;
 }
 
-static int device_reprovision_check_subsystem_caps(void *args, void *params)
+static int device_reprovision_check_subsystem_caps(void *args, void *node)
 {
 	(void)args;
-	(void)params;
+	(void)node;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, SMW_STATUS_OK);
+	return SMW_STATUS_OK;
+}
+
+static int
+device_reprovision_check_key_usable(unsigned int *ref,
+				    enum smw_config_key_type_id key_type_id,
+				    smw_attr_algo_t permitted_algo)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)permitted_algo;
+
 	return SMW_STATUS_OK;
 }
 

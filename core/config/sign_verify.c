@@ -16,7 +16,7 @@
 #include "config.h"
 #include "keymgr.h"
 #include "sign_verify.h"
-#include "utils.h"
+#include "list.h"
 
 #include "common.h"
 #include "tag.h"
@@ -43,6 +43,15 @@ static const char *const sign_algo_strings[] = {
 	[SMW_CONFIG_SIGN_ALGO_ID_DSA] = DSA_STR,
 	[SMW_CONFIG_SIGN_ALGO_ID_RSA] = RSA_STR,
 	[SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2] = TLS_1_2_STR,
+};
+
+static unsigned int sign_algo_attrs[] = {
+	[SMW_CONFIG_SIGN_ALGO_ID_ECDSA] = SMW_ATTR_ALGO_ECDSA,
+	[SMW_CONFIG_SIGN_ALGO_ID_EDDSA] = SMW_ATTR_ALGO_EDDSA,
+	[SMW_CONFIG_SIGN_ALGO_ID_DSA] = SMW_ATTR_ALGO_DSA,
+	[SMW_CONFIG_SIGN_ALGO_ID_RSA] = SMW_ATTR_ALGO_RSA,
+	[SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2] = SMW_ATTR_ALGO_TLS_1_2,
+	[SMW_CONFIG_CIPHER_MODE_ID_NB] = 0,
 };
 
 static const char *const sign_type_strings[] = {
@@ -205,12 +214,13 @@ static void verify_print_params(void *params)
 	sign_verify_print_params(params);
 }
 
-static int sign_verify_check_subsystem_caps(void *args, void *params)
+static int sign_verify_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OK;
 
 	struct smw_crypto_sign_verify_args *sign_verify_args = args;
-	struct sign_verify_params *sign_verify_params = params;
+	struct sign_verify_params *sign_verify_params =
+		smw_utils_list_get_data(node);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -226,14 +236,14 @@ static int sign_verify_check_subsystem_caps(void *args, void *params)
 	return status;
 }
 
-static int sign_check_subsystem_caps(void *args, void *params)
+static int sign_check_subsystem_caps(void *args, void *node)
 {
-	return sign_verify_check_subsystem_caps(args, params);
+	return sign_verify_check_subsystem_caps(args, node);
 }
 
-static int verify_check_subsystem_caps(void *args, void *params)
+static int verify_check_subsystem_caps(void *args, void *node)
 {
-	return sign_verify_check_subsystem_caps(args, params);
+	return sign_verify_check_subsystem_caps(args, node);
 }
 
 static int check_sign_verify_common(smw_subsystem_t subsystem,
@@ -256,7 +266,7 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	status = get_operation_params(op_id, id, &params);
+	status = get_operation_params_lock(op_id, id, &params);
 	if (status != SMW_STATUS_OK)
 		return status;
 
@@ -291,6 +301,59 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 	}
 
 	return SMW_STATUS_OK;
+}
+
+static int check_common_key_usable(enum operation_id operation_id,
+				   unsigned int *ref,
+				   enum smw_config_key_type_id key_type_id,
+				   smw_attr_algo_t permitted_algo)
+{
+	int status = SMW_STATUS_OK;
+	struct sign_verify_params params = { 0 };
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+	size_t idx = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = get_operation_params(operation_id, ref, &params);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	algo = SMW_ATTR_GET_ALGO(permitted_algo);
+
+	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	if (!check_id(key_type_id, params.type_bitmap))
+		goto end;
+
+	for (; idx < ARRAY_SIZE(sign_algo_attrs); idx++) {
+		if ((algo == SMW_ATTR_ALGO_NONE ||
+		     algo == sign_algo_attrs[idx]) &&
+		    check_id(idx, params.algo_bitmap)) {
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int sign_check_key_usable(unsigned int *ref,
+				 enum smw_config_key_type_id key_type_id,
+				 smw_attr_algo_t permitted_algo)
+{
+	return check_common_key_usable(OPERATION_ID_SIGN, ref, key_type_id,
+				       permitted_algo);
+}
+
+static int verify_check_key_usable(unsigned int *ref,
+				   enum smw_config_key_type_id key_type_id,
+				   smw_attr_algo_t permitted_algo)
+{
+	return check_common_key_usable(OPERATION_ID_VERIFY, ref, key_type_id,
+				       permitted_algo);
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(sign);

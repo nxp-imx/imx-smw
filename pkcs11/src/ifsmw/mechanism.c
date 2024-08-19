@@ -330,8 +330,8 @@ static struct mentry mcipher[] = {
 };
 
 static struct mentry maead[] = {
-	M_AEAD(AES, GCM, GCM, AES_GCM),
-	M_AEAD(AES, CCM, CCM, AES_CCM),
+	M_AEAD(AES, GCM, GCM, AES_GCM), M_AEAD(AES, CCM, CCM, AES_CCM),
+	M_AEAD(AES, CHACHA20_POLY1305, POLY1305, CHACHA20_POLY1305)
 };
 
 /*
@@ -1367,18 +1367,27 @@ static void check_maead(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 	 * encryption or decryption operation is supported
 	 */
 
+	DBG_TRACE("Check AEAD mechanism");
+
 	slot_flag = BIT(slotid);
 
 	for (idx = 0, entry = mgroup->mechanism; idx < mgroup->number;
 	     idx++, entry++) {
 		info.key_type_name = entry->smw_key_type;
 		info.mode_name = entry->smw_aead_mode;
+
 		info.op_type_name = SMW_AEAD_OP_TYPE_NAME_ENCRYPT;
+		DBG_TRACE("Subsystem #%d AEAD mechanism %lu encrypt: %d",
+			  subsystem, entry->type, status);
+
 		status = smw_config_check_aead(subsystem, &info);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
 
 		info.op_type_name = SMW_AEAD_OP_TYPE_NAME_DECRYPT;
+		DBG_TRACE("Subsystem #%d AEAD mechanism %lu decrypt: %d",
+			  subsystem, entry->type, status);
+
 		status = smw_config_check_aead(subsystem, &info);
 		if (status == SMW_STATUS_OK)
 			SET_BITS(entry->slot_flag, slot_flag);
@@ -1640,12 +1649,11 @@ static CK_RV op_maead(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	    params->state == OP_ONE_SHOT) {
 		smw_final_args.data = &smw_data_args;
 
-		if (ctx->tag) {
+		if (ctx->tag)
 			smw_final_args.tag = ctx->tag;
-			if (SET_OVERFLOW(ctx->tag_length,
-					 smw_final_args.tag_length))
-				return CKR_ARGUMENTS_BAD;
-		}
+
+		if (SET_OVERFLOW(ctx->tag_length, smw_final_args.tag_length))
+			return CKR_ARGUMENTS_BAD;
 
 		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT)) {
 			smw_final_args.op_type_name =

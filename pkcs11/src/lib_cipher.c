@@ -141,10 +141,17 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 				 struct lib_cipher_ctx *ctx)
 {
 	CK_RV ret = CKR_OK;
-	CK_GCM_MESSAGE_PARAMS_PTR gcm_prms = NULL_PTR;
-	CK_CCM_MESSAGE_PARAMS_PTR ccm_prms = NULL_PTR;
+	CK_ULONG bytes = 0;
 	CK_AES_CTR_PARAMS_PTR aes_ctr_params = NULL_PTR;
 	CK_SM4_CTR_PARAMS_PTR sm4_ctr_params = NULL_PTR;
+
+	CK_GCM_PARAMS_PTR gcm_prms = NULL_PTR;
+	CK_CCM_PARAMS_PTR ccm_prms = NULL_PTR;
+	CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR chacha_prms = NULL_PTR;
+
+	CK_GCM_MESSAGE_PARAMS_PTR gcm_msg_prms = NULL_PTR;
+	CK_CCM_MESSAGE_PARAMS_PTR ccm_msg_prms = NULL_PTR;
+	CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS_PTR chacha_msg_prms = NULL_PTR;
 
 	switch (mechanism) {
 	case CKM_AES_CBC:
@@ -249,76 +256,135 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
 		break;
 
 	case CKM_AES_GCM:
-		if (ulparameterlen != sizeof(CK_GCM_MESSAGE_PARAMS)) {
-			DBG_TRACE("ulParameterLen error");
-			return CKR_MECHANISM_PARAM_INVALID;
-		}
-
-		gcm_prms = (CK_GCM_MESSAGE_PARAMS_PTR)pparameter;
-
-		ret = set_tag_value(gcm_prms->pTag,
-				    BITS_TO_BYTES_SIZE(gcm_prms->ulTagBits),
-				    op_flag, ctx);
-		if (ret)
-			break;
-
-		ret = set_iv_value(gcm_prms->pIv, gcm_prms->ulIvLen, ctx);
-		if (ret)
-			break;
-
-		switch (gcm_prms->ivGenerator) {
-		case CKG_NO_GENERATE:
-			break;
-		case CKG_GENERATE:
-		case CKG_GENERATE_RANDOM:
-		case CKG_GENERATE_COUNTER:
-			if (op_flag != CKF_MESSAGE_ENCRYPT)
+		if (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_MESSAGE_DECRYPT)) {
+			if (ulparameterlen != sizeof(CK_GCM_MESSAGE_PARAMS)) {
+				DBG_TRACE("ulParameterLen error");
 				return CKR_MECHANISM_PARAM_INVALID;
+			}
 
-			ctx->fixed_iv_length =
-				BITS_TO_BYTES_SIZE(gcm_prms->ulIvFixedBits);
-			break;
-		default:
-			ret = CKR_FUNCTION_NOT_SUPPORTED;
-			break;
+			gcm_msg_prms = (CK_GCM_MESSAGE_PARAMS_PTR)pparameter;
+
+			bytes = BITS_TO_BYTES_SIZE(gcm_msg_prms->ulTagBits);
+			ret = set_tag_value(gcm_msg_prms->pTag, bytes, op_flag,
+					    ctx);
+			if (ret)
+				break;
+
+			ret = set_iv_value(gcm_msg_prms->pIv,
+					   gcm_msg_prms->ulIvLen, ctx);
+			if (ret)
+				break;
+
+			bytes = BITS_TO_BYTES_SIZE(gcm_msg_prms->ulIvFixedBits);
+
+			switch (gcm_msg_prms->ivGenerator) {
+			case CKG_NO_GENERATE:
+				break;
+			case CKG_GENERATE:
+			case CKG_GENERATE_RANDOM:
+			case CKG_GENERATE_COUNTER:
+				if (op_flag != CKF_MESSAGE_ENCRYPT)
+					return CKR_MECHANISM_PARAM_INVALID;
+
+				ctx->fixed_iv_length = bytes;
+				break;
+			default:
+				ret = CKR_FUNCTION_NOT_SUPPORTED;
+				break;
+			}
+		} else {
+			if (ulparameterlen != sizeof(CK_GCM_PARAMS)) {
+				DBG_TRACE("ulParameterLen error");
+				return CKR_MECHANISM_PARAM_INVALID;
+			}
+
+			gcm_prms = (CK_GCM_PARAMS_PTR)pparameter;
+
+			ret = set_iv_value(gcm_prms->pIv, gcm_prms->ulIvLen,
+					   ctx);
+			if (ret)
+				break;
+
+			ctx->aad = gcm_prms->pAAD;
+			ctx->aad_length = gcm_prms->ulAADLen;
+			ctx->tag_length =
+				BITS_TO_BYTES_SIZE(gcm_prms->ulTagBits);
 		}
 
 		break;
 
 	case CKM_AES_CCM:
-		if (ulparameterlen != sizeof(CK_CCM_MESSAGE_PARAMS)) {
-			DBG_TRACE("ulParameterLen error");
-			return CKR_MECHANISM_PARAM_INVALID;
+		if (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_MESSAGE_DECRYPT)) {
+			if (ulparameterlen != sizeof(CK_CCM_MESSAGE_PARAMS)) {
+				DBG_TRACE("ulParameterLen error");
+				return CKR_MECHANISM_PARAM_INVALID;
+			}
+
+			ccm_msg_prms = (CK_CCM_MESSAGE_PARAMS_PTR)pparameter;
+
+			ctx->payload_length = ccm_msg_prms->ulDataLen;
+
+			ret = set_tag_value(ccm_msg_prms->pMAC,
+					    ccm_msg_prms->ulMACLen, op_flag,
+					    ctx);
+			if (ret)
+				break;
+
+			ret = set_iv_value(ccm_msg_prms->pNonce,
+					   ccm_msg_prms->ulNonceLen, ctx);
+		} else {
+			if (ulparameterlen != sizeof(CK_CCM_PARAMS)) {
+				DBG_TRACE("ulParameterLen error");
+				return CKR_MECHANISM_PARAM_INVALID;
+			}
+
+			ccm_prms = (CK_CCM_PARAMS_PTR)pparameter;
+
+			set_iv_value(ccm_prms->pNonce, ccm_prms->ulNonceLen,
+				     ctx);
+			ctx->aad = ccm_prms->pAAD;
+			ctx->aad_length = ccm_prms->ulAADLen;
+			ctx->tag_length = ccm_prms->ulMACLen;
 		}
 
-		ccm_prms = (CK_CCM_MESSAGE_PARAMS_PTR)pparameter;
+		break;
 
-		ctx->payload_length = ccm_prms->ulDataLen;
-
-		ret = set_tag_value(ccm_prms->pMAC, ccm_prms->ulMACLen, op_flag,
-				    ctx);
-		if (ret)
-			break;
-
-		ret = set_iv_value(ccm_prms->pNonce, ccm_prms->ulNonceLen, ctx);
-		if (ret)
-			break;
-
-		switch (ccm_prms->nonceGenerator) {
-		case CKG_NO_GENERATE:
-			break;
-		case CKG_GENERATE:
-		case CKG_GENERATE_RANDOM:
-		case CKG_GENERATE_COUNTER:
-			if (op_flag != CKF_MESSAGE_ENCRYPT)
+	case CKM_CHACHA20_POLY1305:
+		if (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_MESSAGE_DECRYPT)) {
+			if (ulparameterlen !=
+			    sizeof(CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS)) {
+				DBG_TRACE("ulParameterLen error");
 				return CKR_MECHANISM_PARAM_INVALID;
+			}
 
-			ctx->fixed_iv_length =
-				BITS_TO_BYTES_SIZE(ccm_prms->ulNonceFixedBits);
-			break;
-		default:
-			ret = CKR_FUNCTION_NOT_SUPPORTED;
-			break;
+			chacha_msg_prms =
+				(CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS_PTR)
+					pparameter;
+
+			ctx->payload_length = 0;
+
+			ret = set_tag_value(chacha_msg_prms->pTag, 16, op_flag,
+					    ctx);
+			if (ret)
+				break;
+
+			bytes = BITS_TO_BYTES_SIZE(chacha_msg_prms->ulNonceLen);
+			ret = set_iv_value(chacha_msg_prms->pNonce, bytes, ctx);
+		} else {
+			if (ulparameterlen !=
+			    sizeof(CK_SALSA20_CHACHA20_POLY1305_PARAMS)) {
+				DBG_TRACE("ulParameterLen error");
+				return CKR_MECHANISM_PARAM_INVALID;
+			}
+
+			chacha_prms = (CK_SALSA20_CHACHA20_POLY1305_PARAMS_PTR)
+				pparameter;
+
+			set_iv_value(chacha_prms->pNonce,
+				     chacha_prms->ulNonceLen, ctx);
+			ctx->aad = chacha_prms->pAAD;
+			ctx->aad_length = chacha_prms->ulAADLen;
+			ctx->tag_length = 16;
 		}
 
 		break;
@@ -371,6 +437,7 @@ static CK_RV update_params(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
 {
 	CK_GCM_MESSAGE_PARAMS_PTR gcm_prms = NULL_PTR;
 	CK_CCM_MESSAGE_PARAMS_PTR ccm_prms = NULL_PTR;
+	CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS_PTR chacha_prms = NULL_PTR;
 
 	switch (mechanism) {
 	case CKM_AES_GCM:
@@ -405,6 +472,22 @@ static CK_RV update_params(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
 		ccm_prms->ulMACLen = ctx->tag_length;
 
 		memcpy(ccm_prms->pMAC, ctx->tag, ctx->tag_length);
+		break;
+
+	case CKM_CHACHA20_POLY1305:
+		if (ulparameterlen !=
+		    sizeof(CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS)) {
+			DBG_TRACE("ulParameterLen error");
+			return CKR_MECHANISM_PARAM_INVALID;
+		}
+
+		chacha_prms =
+			(CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS_PTR)pparameter;
+
+		chacha_prms->ulNonceLen = BYTES_TO_BITS(ctx->iv_length);
+		memcpy(chacha_prms->pNonce, ctx->iv, ctx->iv_length);
+
+		memcpy(chacha_prms->pTag, ctx->tag, 16);
 		break;
 
 	default:
@@ -770,10 +853,22 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 			goto end;
 	}
 
-	if (!pAssociatedData == !ulAssociatedDataLen) {
-		ctx->aad = pAssociatedData;
-		ctx->aad_length = ulAssociatedDataLen;
+	/* Only update aad for message-based encryption/decryption */
+	if (op_flag & (CKF_MESSAGE_ENCRYPT | CKF_MESSAGE_DECRYPT)) {
+		if (!pAssociatedData == !ulAssociatedDataLen) {
+			ctx->aad = pAssociatedData;
+			ctx->aad_length = ulAssociatedDataLen;
+		}
 	}
+
+	if (op_flag & CKF_ENCRYPT)
+		ctx->payload_length = params.input_length;
+	else if (op_flag & CKF_DECRYPT)
+		if (SUB_OVERFLOW(params.input_length, ctx->tag_length,
+				 &ctx->payload_length)) {
+			ret = CKR_DATA_LEN_RANGE;
+			goto end;
+		}
 
 	/* Run operation */
 	ret = libdev_operate_mechanism(hsession, &mechanism, &params);

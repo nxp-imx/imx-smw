@@ -140,11 +140,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update to PKCS#11 3.1 Specification.
 * Implement message-based encrypt/decrypt PKCS#11 APIs.
 * Change the data unique ID generation. Ask SMW to generate a data ID.
+* Add support for single-part AEAD mechanisms: CKM_AES_CCM, CKM_AES_GCM, CKM_CHACHA20_POLY1305.
 
 #### PKCS#11 Tests - _version 4.0_
 
 * Validation of message-based encrypt/decrypt PKCS#11 APIs.
 * Enable validation on Secure Enclave subsystem prior to TEE subsystem.
+* Add tests for single-part AEAD mechanisms.
 
 ---
 ### <a id ="rel_3_0"></a></br>**Release 3.0**

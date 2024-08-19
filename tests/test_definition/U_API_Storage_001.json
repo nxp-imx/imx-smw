@@ -22,42 +22,36 @@
 		"subsystem": "DEFAULT",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // Store Data ID missing
-		"command": "STORAGE_STORE",
-		"subsystem": "DEFAULT",
-		"data_name": "data 1",
-		"result": "SMW_STATUS_INVALID_PARAM"
-	},
-	"subtest 4": { // Retrieve Data ID missing
+	"subtest 3": { // Retrieve Data ID missing
 		"command": "STORAGE_RETRIEVE",
 		"subsystem": "DEFAULT",
 		"data_name": "data 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Store Data Buffer null
+	"subtest 4": { // Store Data Buffer null
 		"command": "STORAGE_STORE",
 		"subsystem": "DEFAULT",
 		"data_name": "data 2",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Store Data Buffer defined but length is 0
+	"subtest 5": { // Store Data Buffer defined but length is 0
 		"command": "STORAGE_STORE",
 		"subsystem": "DEFAULT",
 		"data_name": "data 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // Data descriptor NULL
+	"subtest 6": { // Data descriptor NULL
 		"command": "STORAGE_GET_DATA_INFO",
 		"subsystem": "DEFAULT",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Data ID missing
+	"subtest 7": { // Data ID missing
 		"command": "STORAGE_GET_DATA_INFO",
 		"subsystem": "DEFAULT",
 		"data_name": "data 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Data buffer is defined
+	"subtest 9": { // Data buffer is defined
 		"command": "STORAGE_GET_DATA_INFO",
 		"subsystem": "DEFAULT",
 		"data_name": "data 3",

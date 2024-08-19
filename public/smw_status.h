@@ -11,7 +11,7 @@
  *
  * @SMW_STATUS_OK: Function returned successfully.
  * @SMW_STATUS_UNKNOWN_NAME: Generic status code indicating that one of the
- * string name arguments is not valid.
+ * name arguments is not valid.
  * @SMW_STATUS_UNKNOWN_ID: One of the identifier arguments is not valid.
  * @SMW_STATUS_ALLOC_FAILURE: Internal allocation failure.
  * @SMW_STATUS_INVALID_PARAM: Generic status code indicating that one of the
@@ -104,6 +104,8 @@
  * @SMW_STATUS_UNKNOWN_TLS12_ENC_NAME: TLS 1.2 encryption algorithm name
  * provided by the user is not recognized by SMW.
  * @SMW_STATUS_CONFIGURATION_FAILURE: Library configuration failure.
+ * @SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME: Key privacy name set in the object database is not
+ * recognized by SMW.
  *
  * Status code classification:
  ** Common return codes
@@ -189,6 +191,7 @@
  *	- SMW_STATUS_UNKNOWN_KDF_NAME
  *	- SMW_STATUS_UNKNOWN_TLS12_KEA_NAME
  *	- SMW_STATUS_UNKNOWN_TLS12_ENC_NAME
+ *	- SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME
  *
  ** Specific return codes - Device manager
  *
@@ -264,6 +267,7 @@ enum smw_status_code {
 	SMW_STATUS_OEM_SRKH_NOT_FUSED, /* 65 */
 	SMW_STATUS_CONFIGURATION_FAILURE,
 	SMW_STATUS_INVALID_IV_SIZE,
+	SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME,
 };
 
 #endif /* __SMW_STATUS_H__ */

@@ -16,10 +16,47 @@
  * given by the first public value.
  */
 
+#define SMW_KEYMGR_PRIVACY_ID_OFFSET                                           \
+	(SMW_KEY_PRIVACY_NAME_PUBLIC - SMW_KEYMGR_PRIVACY_ID_PUBLIC)
+
 #define SMW_KEY_FORMAT_ID_OFFSET                                               \
 	(SMW_KEY_FORMAT_NAME_HEX - SMW_KEYMGR_FORMAT_ID_HEX)
 
 #define SMW_KEYMGR_FORMAT_ID_DEFAULT SMW_KEYMGR_FORMAT_ID_HEX
+
+int smw_keymgr_get_key_privacy_id(smw_key_privacy_t name,
+				  enum smw_keymgr_privacy_id *id)
+{
+	int status = SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (name == SMW_KEY_PRIVACY_NAME_NONE) {
+		*id = SMW_KEYMGR_PRIVACY_ID_INVALID;
+		status = SMW_STATUS_OK;
+	} else if (name < SMW_KEY_PRIVACY_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_KEYMGR_PRIVACY_ID_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+smw_key_privacy_t smw_keymgr_get_key_privacy_name(enum smw_keymgr_privacy_id id)
+{
+	smw_key_privacy_t name = SMW_KEY_PRIVACY_NAME_NONE;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (id < SMW_KEYMGR_PRIVACY_ID_NB &&
+	    id != SMW_KEYMGR_PRIVACY_ID_INVALID)
+		(void)ADD_OVERFLOW(id, SMW_KEYMGR_PRIVACY_ID_OFFSET,
+				   (int *)&name);
+
+	return name;
+}
 
 int smw_keymgr_get_key_format_id(smw_key_format_t name,
 				 enum smw_keymgr_format_id *id)

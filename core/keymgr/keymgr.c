@@ -16,19 +16,6 @@
 #include "exec.h"
 #include "base64.h"
 
-static void get_key_privacy_name(enum smw_keymgr_privacy_id id,
-				 smw_key_privacy_t *name)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	*name = SMW_KEY_PRIVACY_NAME_NONE;
-
-	if (id < SMW_KEYMGR_PRIVACY_ID_NB &&
-	    id != SMW_KEYMGR_PRIVACY_ID_INVALID)
-		(void)ADD_OVERFLOW(id, SMW_KEYMGR_PRIVACY_ID_OFFSET,
-				   (int *)name);
-}
-
 static unsigned char **public_data_key_gen(struct smw_keymgr_key_ops *this)
 {
 	SMW_DBG_ASSERT(this && this->keys && this->public_data);
@@ -1781,7 +1768,6 @@ smw_get_key_type_name(struct smw_key_descriptor *descriptor)
 	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_identifier key_identifier = { 0 };
-	smw_key_type_t name = SMW_KEY_TYPE_NAME_NONE;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1789,11 +1775,10 @@ smw_get_key_type_name(struct smw_key_descriptor *descriptor)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	smw_config_get_key_type_name(key_identifier.type_id, &name);
+	descriptor->type_name =
+		smw_config_get_key_type_name(key_identifier.type_id);
 
-	descriptor->type_name = name;
-
-	if (name == SMW_KEY_TYPE_NAME_NONE)
+	if (descriptor->type_name == SMW_KEY_TYPE_NAME_NONE)
 		status = SMW_STATUS_INVALID_PARAM;
 
 end:
@@ -1880,15 +1865,15 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 		goto end;
 
 	/* Convert the key type */
-	smw_config_get_key_type_name(key_identifier->type_id,
-				     &args->key_descriptor->type_name);
+	args->key_descriptor->type_name =
+		smw_config_get_key_type_name(key_identifier->type_id);
 
 	/* Set the key security size */
 	args->key_descriptor->security_size = key_identifier->security_size;
 
 	/* Convert the key privacy */
-	get_key_privacy_name(key_identifier->privacy_id,
-			     &args->key_privacy_name);
+	args->key_privacy_name =
+		smw_keymgr_get_key_privacy_name(key_identifier->privacy_id);
 
 	if (key_not_present) {
 		key_identifier->subsystem_id = subsystem_id;

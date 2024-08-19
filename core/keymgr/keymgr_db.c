@@ -19,8 +19,16 @@ static int key_info_to_identifier(struct smw_keymgr_key_info *key_info,
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	identifier->type_id = key_info->type_id;
-	identifier->privacy_id = key_info->privacy_id;
+	status = smw_config_get_key_type_id(key_info->type_name,
+					    &identifier->type_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = smw_keymgr_get_key_privacy_id(key_info->privacy_name,
+					       &identifier->privacy_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
 	identifier->security_size = key_info->security_size;
 	identifier->id = key_info->id;
 	identifier->attributes = key_info->attributes;
@@ -35,8 +43,9 @@ static void key_identifier_to_info(struct smw_keymgr_identifier *identifier,
 {
 	key_info->subsystem_name =
 		smw_config_get_subsystem_name(identifier->subsystem_id);
-	key_info->type_id = identifier->type_id;
-	key_info->privacy_id = identifier->privacy_id;
+	key_info->type_name = smw_config_get_key_type_name(identifier->type_id);
+	key_info->privacy_name =
+		smw_keymgr_get_key_privacy_name(identifier->privacy_id);
 	key_info->security_size = identifier->security_size;
 	key_info->id = identifier->id;
 	key_info->attributes = identifier->attributes;

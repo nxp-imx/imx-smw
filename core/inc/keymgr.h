@@ -22,30 +22,6 @@
 #define DEFAULT_RSA_PUB_EXP	65537
 #define DEFAULT_RSA_PUB_EXP_LEN 3
 
-/*
- * Ordering must be the same for internal values and public values.
- * This way the offset between the internal values and the public values
- * can be used for conversion, and no conversion table is required.
- *
- * The offset between the internal values and the public values is
- * given by the first public value.
- */
-
-#define SMW_KEYMGR_PRIVACY_ID_OFFSET                                           \
-	(SMW_KEY_PRIVACY_NAME_PUBLIC - SMW_KEYMGR_PRIVACY_ID_PUBLIC)
-
-enum smw_keymgr_privacy_id {
-	SMW_KEYMGR_PRIVACY_ID_PUBLIC,
-	SMW_KEYMGR_PRIVACY_ID_PRIVATE,
-	SMW_KEYMGR_PRIVACY_ID_PAIR,
-	/* This type is intended for secret data that has been derived using a
-	 * key derivation function.
-	 */
-	SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET,
-	SMW_KEYMGR_PRIVACY_ID_NB,
-	SMW_KEYMGR_PRIVACY_ID_INVALID
-};
-
 /**
  * struct smw_keymgr_identifier - Key identifier
  * @subsystem_id: Secure Subsystem ID

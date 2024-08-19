@@ -11,8 +11,8 @@
 /**
  * struct smw_keymgr_key_info - Key information stored in object database
  * @subsystem_name: Secure Subsystem name
- * @type_id: Key type ID
- * @privacy_id: Key privacy ID
+ * @type_name: Key type name
+ * @privacy_name: Key privacy name
  * @security_size: Security size in bits
  * @id: Key ID set by the subsystem
  * @attributes: Key attributes
@@ -21,8 +21,8 @@
  */
 struct smw_keymgr_key_info {
 	smw_subsystem_t subsystem_name;
-	enum smw_config_key_type_id type_id;
-	enum smw_keymgr_privacy_id privacy_id;
+	smw_key_type_t type_name;
+	smw_key_privacy_t privacy_name;
 	unsigned int security_size;
 	uint32_t id;
 	smw_attr_attributes_t attributes;

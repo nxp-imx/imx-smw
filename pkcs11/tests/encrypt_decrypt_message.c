@@ -882,10 +882,10 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 
-	CK_MECHANISM_TYPE aes_mech_type[] = { CKM_AES_CBC, CKM_AES_ECB,
-					      CKM_AES_CTR, CKM_AES_CTS,
-					      CKM_AES_GCM, CKM_AES_CCM,
-					      CKM_AES_XTS };
+	CK_MECHANISM_TYPE aes_mech_type[] = {
+		CKM_AES_CBC, CKM_AES_ECB, CKM_AES_CTR,		 CKM_AES_CTS,
+		CKM_AES_GCM, CKM_AES_CCM, CKM_CHACHA20_POLY1305, CKM_AES_XTS
+	};
 
 	CK_BYTE iv[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 			 0x09, 0x10, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
@@ -900,6 +900,12 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	/* CK_GCM_MESSAGE_PARAMS/CK_CCM_MESSAGE_PARAMS */
 	CK_BYTE tag[16] = { 0 };
 
+	/*
+	 * CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS: The application must provide
+	 * 16 bytes of space for the tag.
+	 */
+	CK_BYTE chacha_tag[16] = { 0 };
+
 	CK_MECHANISM enc_dec_mech = { 0 };
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_ULONG encrypted_data_len = 0;
@@ -910,6 +916,7 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_AES_CTR_PARAMS ctr_params = { 0 };
 	CK_GCM_MESSAGE_PARAMS gcm_params = { 0 };
 	CK_CCM_MESSAGE_PARAMS ccm_params = { 0 };
+	CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS chacha_params = { 0 };
 	CK_OBJECT_HANDLE aes_hsecretkey = 0;
 
 	CK_BYTE key_value[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
@@ -993,8 +1000,13 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 						   aes_key_attrs,
 						   ARRAY_SIZE(aes_key_attrs),
 						   &aes_hsecretkey);
-			if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+			if (ret == CKR_MECHANISM_INVALID &&
+			    aes_mech_type[i] == CKM_CHACHA20_POLY1305) {
+				TEST_OUT("CHACHA20 not supported!\n");
+				continue;
+			} else if (CHECK_CK_RV(CKR_OK, "C_GenerateKey")) {
 				goto end;
+			}
 		}
 
 		TEST_OUT("Initialize message encrypt operation\n");
@@ -1050,6 +1062,20 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			ccm_params.ulMACLen = sizeof(tag);
 			enc_dec_mech.pParameter = &ccm_params;
 			enc_dec_mech.ulParameterLen = sizeof(ccm_params);
+			break;
+
+		case CKM_CHACHA20_POLY1305:
+			chacha_params.pNonce = iv;
+			/*
+			 * ulNonceLen can be:
+			 * - 8 (original Salsa20)
+			 * - 12 (ChaCha20)
+			 * - 24 (XChaCha20/XSalsa20)
+			 */
+			chacha_params.ulNonceLen = BYTES_TO_BITS(12);
+			chacha_params.pTag = chacha_tag;
+			enc_dec_mech.pParameter = &chacha_params;
+			enc_dec_mech.ulParameterLen = sizeof(chacha_params);
 			break;
 
 		default:

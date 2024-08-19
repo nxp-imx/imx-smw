@@ -444,19 +444,6 @@ DEFINE_KEYMGR_OPERATION_FUNC(import_key);
 DEFINE_KEYMGR_OPERATION_FUNC(export_key);
 DEFINE_KEYMGR_OPERATION_FUNC(delete_key);
 
-void smw_config_get_key_type_name(enum smw_config_key_type_id id,
-				  smw_key_type_t *name)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	*name = SMW_KEY_TYPE_NAME_NONE;
-
-	if (id < SMW_CONFIG_KEY_TYPE_ID_NB &&
-	    id != SMW_CONFIG_KEY_TYPE_ID_INVALID)
-		(void)ADD_OVERFLOW(id, SMW_CONFIG_KEY_TYPE_ID_OFFSET,
-				   (int *)name);
-}
-
 int smw_config_get_key_type_id(smw_key_type_t name,
 			       enum smw_config_key_type_id *id)
 {
@@ -475,6 +462,20 @@ int smw_config_get_key_type_id(smw_key_type_t name,
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+smw_key_type_t smw_config_get_key_type_name(enum smw_config_key_type_id id)
+{
+	smw_key_type_t name = SMW_KEY_TYPE_NAME_NONE;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (id < SMW_CONFIG_KEY_TYPE_ID_NB &&
+	    id != SMW_CONFIG_KEY_TYPE_ID_INVALID)
+		(void)ADD_OVERFLOW(id, SMW_CONFIG_KEY_TYPE_ID_OFFSET,
+				   (int *)&name);
+
+	return name;
 }
 
 int smw_config_get_kdf_id(smw_kdf_t name, enum smw_config_kdf_id *id)

@@ -300,15 +300,13 @@ int smw_config_get_key_type_id(smw_key_type_t name,
 /**
  * smw_config_get_key_type_name() - Get the name associated to a Key type ID.
  * @id: Key type ID.
- * @name: Pointer to the Key type name.
  *
  * This function gets the name associated to a Key type ID.
  *
  * Return:
- * none.
+ * Key type name.
  */
-void smw_config_get_key_type_name(enum smw_config_key_type_id id,
-				  smw_key_type_t *name);
+smw_key_type_t smw_config_get_key_type_name(enum smw_config_key_type_id id);
 
 /**
  * smw_config_get_signature_algo_id() - Get the signature algo ID associated to

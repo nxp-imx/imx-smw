@@ -162,7 +162,8 @@ struct test_def test_list[] = { TEST_DEF(get_info_ifs),
 				TEST_DEF(encrypt_decrypt_message),
 				TEST_DEF(encrypt_decrypt_multipart),
 				TEST_DEF(encrypt_decrypt_multipart_message),
-				TEST_DEF(data_storage) };
+				TEST_DEF(data_storage),
+				TEST_DEF(objects) };
 
 void tests_pkcs11_list(void)
 {

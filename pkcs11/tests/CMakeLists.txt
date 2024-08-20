@@ -10,8 +10,9 @@ file(GLOB pkcs11_test *.c)
 target_sources(${PROJECT_NAME} PRIVATE  ${pkcs11_test})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-                           include
-                           ${CMAKE_SOURCE_DIR}/inc)
+    include
+    ${CMAKE_SOURCE_DIR}/inc
+    ${CMAKE_SOURCE_DIR}/public)
 
 set(LIBRARY_PATH ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
 
@@ -37,6 +38,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 find_package(Threads REQUIRED)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
+    smw
     ${CMAKE_DL_LIBS}
     rt
     ${CMAKE_THREAD_LIBS_INIT})
@@ -121,3 +123,4 @@ pkcs11_test(encrypt_decrypt_message)
 pkcs11_test(encrypt_decrypt_multipart)
 pkcs11_test(encrypt_decrypt_multipart_message)
 pkcs11_test(data_storage)
+pkcs11_test(objects)

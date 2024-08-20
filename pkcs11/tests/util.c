@@ -8,8 +8,36 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "builtin_macros.h"
+
 #include "util.h"
 #include "test_check.h"
+
+#define TO_CK_BYTES(out, val)                                                  \
+	({                                                                     \
+		__typeof__(out) _out = (out);                                  \
+		for (size_t i = 0; i < sizeof(val); i++)                       \
+			_out[i] = GET_BYTE(val, i);                            \
+	})
+
+#define TO_INT(out, buf, len)                                                  \
+	({                                                                     \
+		__typeof__(out) _out = 0;                                      \
+		__typeof__(buf) _buf = (buf);                                  \
+		size_t i = len;                                                \
+		int ret = 0;                                                   \
+		if (i > sizeof(_out)) {                                        \
+			ret = 1;                                               \
+		} else {                                                       \
+			_out = _buf[--i] & UINT8_MAX;                          \
+			for (; i; i--) {                                       \
+				_out <<= 8;                                    \
+				_out |= _buf[i - 1] & UINT8_MAX;               \
+			}                                                      \
+			out = _out;                                            \
+		}                                                              \
+		ret;                                                           \
+	})
 
 /**
  * string_to_lower() - Convert a string to lowercase
@@ -22,6 +50,97 @@ static void string_to_lower(char *src, size_t length)
 		if (src[idx] >= 'A' && src[idx] <= 'Z')
 			src[idx] += 'a' - 'A';
 	}
+}
+
+static size_t byte_to_rfc2279_len(const CK_BYTE_PTR src, size_t len_src)
+{
+	size_t len = 0;
+	size_t idx = 0;
+
+	for (; idx < len_src; idx++, len++)
+		if (src[idx] > 0x7F) {
+			if (INC_OVERFLOW(len, 1))
+				return 0;
+		}
+
+	return len;
+}
+
+static size_t byte_to_rfc2279(CK_UTF8CHAR_PTR dst, size_t len_dst,
+			      const CK_BYTE_PTR src, size_t len_src)
+{
+	size_t len = 0;
+	size_t idx = 0;
+
+	for (; idx < len_src && len < len_dst; idx++, len++) {
+		if (src[idx] > 0x7F) {
+			if (len_dst <= len + 1)
+				return idx;
+
+			dst[len] = ((src[idx] >> 6) & 0x1F) | 0xC0;
+			dst[++len] = (src[idx] & 0x3F) | 0x80;
+		} else {
+			dst[len] = src[idx];
+		}
+	}
+
+	return idx;
+}
+
+static size_t rfc2279_to_byte_len(const CK_UTF8CHAR_PTR src, size_t len_src)
+{
+	size_t len = 0;
+	size_t idx = 0;
+
+	for (; idx < len_src; idx++) {
+		if ((src[idx] & 0xE0) == 0xE0) {
+			return 0;
+		} else if ((src[idx] & 0xC0) == 0x80) {
+			return 0;
+		} else if ((src[idx] & 0xE0) == 0xC0) {
+			if (len_src <= idx + 1)
+				return 0;
+
+			if ((src[++idx] & 0xC0) != 0x80)
+				return 0;
+
+			if (INC_OVERFLOW(len, 1))
+				return 0;
+		} else {
+			if (INC_OVERFLOW(len, 1))
+				return 0;
+		}
+	}
+
+	return len;
+}
+
+static size_t rfc2279_to_byte(CK_BYTE_PTR dst, size_t len_dst,
+			      const CK_UTF8CHAR_PTR src, size_t len_src)
+{
+	size_t len = 0;
+	size_t idx = 0;
+
+	for (; idx < len_src && len < len_dst; idx++, len++) {
+		if ((src[idx] & 0xE0) == 0xE0) {
+			return idx;
+		} else if ((src[idx] & 0xC0) == 0x80) {
+			return idx;
+		} else if ((src[idx] & 0xE0) == 0xC0) {
+			if (len_src <= idx + 1)
+				return idx;
+
+			if ((src[idx + 1] & 0xC0) != 0x80)
+				return idx;
+
+			dst[len] = src[idx] << 6;
+			dst[len] |= src[++idx] & 0x3F;
+		} else {
+			dst[len] = src[idx];
+		}
+	}
+
+	return idx;
 }
 
 bool util_compare_buffers(unsigned char *buffer, size_t buffer_len,
@@ -75,4 +194,82 @@ bool is_8ulp(void)
 		return true;
 
 	return false;
+}
+
+CK_RV util_set_unique_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG_PTR length,
+			 CK_OBJECT_CLASS class, unsigned int id)
+{
+	CK_RV ret = CKR_GENERAL_ERROR;
+	CK_BYTE_PTR buffer = NULL;
+	CK_ULONG size = 0;
+	CK_ULONG unique_id_length = 0;
+
+	if (!length)
+		return ret;
+
+	size = sizeof(CK_OBJECT_CLASS) + sizeof(id);
+	buffer = malloc(size);
+	if (!buffer)
+		return CKR_HOST_MEMORY;
+
+	TO_CK_BYTES(&buffer[sizeof(CK_OBJECT_CLASS)], id);
+	TO_CK_BYTES(buffer, class);
+
+	/* Get RFC2279 length and allocate RFC2279 string */
+	unique_id_length = byte_to_rfc2279_len(buffer, size);
+	if (!unique_id_length) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
+	if (!unique_id || *length < unique_id_length) {
+		ret = CKR_BUFFER_TOO_SMALL;
+		*length = unique_id_length;
+		goto end;
+	}
+
+	ret = CKR_FUNCTION_FAILED;
+	if (byte_to_rfc2279(unique_id, unique_id_length, buffer, size) == size)
+		ret = CKR_OK;
+
+end:
+	if (buffer)
+		free(buffer);
+
+	return ret;
+}
+
+CK_RV util_get_object_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG length,
+			 unsigned int *object_id)
+{
+	int ret = CKR_OK;
+
+	CK_BYTE_PTR buffer = NULL;
+	CK_ULONG size = 0;
+
+	if (!length)
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	size = rfc2279_to_byte_len(unique_id, length);
+	if (!size)
+		return CKR_FUNCTION_FAILED;
+
+	buffer = malloc(size);
+	if (!buffer)
+		return CKR_HOST_MEMORY;
+
+	if (rfc2279_to_byte(buffer, size, unique_id, length) != length) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
+	if (TO_INT(*object_id, &buffer[sizeof(CK_OBJECT_CLASS)],
+		   sizeof(unsigned int)))
+		ret = CKR_ATTRIBUTE_VALUE_INVALID;
+
+end:
+	if (buffer)
+		free(buffer);
+
+	return ret;
 }

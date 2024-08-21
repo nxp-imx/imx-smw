@@ -356,9 +356,64 @@ end:
 }
 
 /**
+ * smw_keymgr_convert_prk_desc() - Convert PRK descriptor structure.
+ * @in: Pointer to public key descriptor structure.
+ * @out: Pointer to an internal key descriptor structure.
+ *
+ * This function converts public PRK descriptor structure to internal PRK
+ * descriptor structure. Either the PRK ID is set or the buffer (public buffer)
+ * is set. PRK key type is set to SMW_CONFIG_KEY_TYPE_ID_RAW.
+ *
+ * Return:
+ * SMW_STATUS_OK                    - Success
+ * SMW_STATUS_UNKNOWN_KEY_TYPE_NAME - Unknown key type name
+ * SMW_STATUS_INVALID_PARAM         - One of the parameter is invalid
+ */
+static int smw_keymgr_convert_prk_desc(struct smw_key_descriptor *in,
+				       struct smw_keymgr_descriptor *out)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(out);
+
+	if (!in)
+		goto end;
+
+	out->identifier.type_id = SMW_CONFIG_KEY_TYPE_ID_RAW;
+
+	if (!in->buffer) {
+		out->format_id = SMW_KEYMGR_FORMAT_ID_INVALID;
+	} else {
+		status = smw_keymgr_get_key_format_id(in->buffer->format_name,
+						      &out->format_id);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
+
+	out->identifier.id = in->id;
+	out->pub = in;
+
+	status = setup_key_ops(out);
+	/*
+	 * In case of PRK, key can be either key id or a key buffer. If no buffer
+	 * defined, assume it's a key id and it's correct.
+	 */
+	if (status == SMW_STATUS_NO_KEY_BUFFER)
+		status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
  * tls12_convert_args() - Convert additional operation argument for TLS 1.2
  * @args: Input API additional argument
- * @conv_args: Converted arguments
+ * @pub_args: Pointer to public derive key arguments structure
+ * @conv_args: Pointer to internal derive key arguments structure
+ * @subsystem_id: Subsystem ID
  *
  * Function allocates the TLS 1.2 internal arguments object and converts
  * additional operation argument.
@@ -379,13 +434,23 @@ end:
  * SMW_STATUS_UNKNOWN_TLS12_KEA_NAME - Unknown TLS 1.2 Key exchange algo name
  * SMW_STATUS_UNKNOWN_TLS12_ENC_NAME - Unknown TLS 1.2 encryption algorithm name
  */
-static int tls12_convert_args(struct smw_kdf_tls12_args *args, void **conv_args)
+static int tls12_convert_args(struct smw_derive_key_args *pub_args,
+			      struct smw_keymgr_derive_key_args *conv_args,
+			      enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_tls12_args *tls_args = NULL;
+	struct smw_kdf_tls12_args *args = pub_args->kdf_arguments;
 
 	if (!args || !args->kdf_input || !args->kdf_input_length)
 		goto end;
+
+	/* Get the input key base for the derivation */
+	status = smw_keymgr_convert_descriptor(pub_args->key_descriptor_base,
+					       &conv_args->key_base, false,
+					       subsystem_id);
+	if (status != SMW_STATUS_OK)
+		return status;
 
 	tls_args = SMW_UTILS_MALLOC(sizeof(*tls_args));
 	if (!tls_args) {
@@ -415,7 +480,7 @@ static int tls12_convert_args(struct smw_kdf_tls12_args *args, void **conv_args)
 	}
 
 	tls_args->pub_args = args;
-	*conv_args = tls_args;
+	conv_args->kdf_args = tls_args;
 	SMW_DBG_PRINTF(DEBUG, "KDF Input %p\n", args);
 
 end:
@@ -534,8 +599,9 @@ end:
 
 /**
  * hkdf_convert_input_args() - Convert additional operation arguments for HKDF
- * @args: Pointer to additional HKDF operation arguments
- * @conv_args: Converted arguments
+ * @pub_args: Pointer to public derive key arguments structure
+ * @conv_args: Pointer to internal derive key arguments structure
+ * @subsystem_id: Subsystem ID
  *
  * Function allocates the HKDF internal arguments object and converts
  * additional operation arguments.
@@ -547,17 +613,48 @@ end:
  * SMW_STATUS_INVALID_PARAM          - Invalid function parameter
  * SMW_STATUS_UNKNOWN_ALGO_NAME      - Unknown hash algorithm name
  */
-static int hkdf_convert_input_args(struct smw_kdf_hkdf_args *args,
-				   void **conv_args)
+static int hkdf_convert_input_args(struct smw_derive_key_args *pub_args,
+				   struct smw_keymgr_derive_key_args *conv_args,
+				   enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
+	struct smw_key_descriptor *base_key_desc = NULL;
+	struct smw_kdf_hkdf_args *hkdf_pub_args = pub_args->kdf_arguments;
 
-	if (!args)
+	if (!hkdf_pub_args)
 		goto end;
 
-	if (!args->expand && !args->extract)
+	if (!hkdf_pub_args->expand && !hkdf_pub_args->extract)
 		goto end;
+
+	base_key_desc = pub_args->key_descriptor_base;
+
+	if (hkdf_pub_args->expand && !hkdf_pub_args->extract) {
+		/* The HKDF Extract operation produces the PRK which serves as the base
+		 * key to the HKDF Expand operation.
+		 */
+		/* Get the PRK key base for the derivation */
+		status = smw_keymgr_convert_prk_desc(base_key_desc,
+						     &conv_args->key_base);
+
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		status = check_key_definition(&conv_args->key_base,
+					      SMW_KEYMGR_PRIVACY_ID_PUBLIC);
+
+	} else {
+		/* Get the input key base for the derivation */
+		status = smw_keymgr_convert_descriptor(base_key_desc,
+						       &conv_args->key_base,
+						       false, subsystem_id);
+		if (status == SMW_STATUS_OK)
+			status = hkdf_validate_key_base(conv_args);
+	}
+
+	if (status != SMW_STATUS_OK)
+		return status;
 
 	hkdf_args = SMW_UTILS_MALLOC(sizeof(*hkdf_args));
 	if (!hkdf_args) {
@@ -565,12 +662,12 @@ static int hkdf_convert_input_args(struct smw_kdf_hkdf_args *args,
 		goto end;
 	}
 
-	status = get_prf_id(args->hash_algo, &hkdf_args->prf_id);
+	status = get_prf_id(hkdf_pub_args->hash_algo, &hkdf_args->prf_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	hkdf_args->pub_args = args;
-	*conv_args = hkdf_args;
+	hkdf_args->pub_args = hkdf_pub_args;
+	conv_args->kdf_args = hkdf_args;
 
 end:
 	if (status != SMW_STATUS_OK && hkdf_args)
@@ -621,17 +718,12 @@ static int convert_input_args(struct smw_derive_key_args *args,
 			      struct smw_keymgr_derive_key_args *conv_args,
 			      enum subsystem_id *subsystem_id)
 {
-	/* Get the input key base for the derivation */
-	int status = smw_keymgr_convert_descriptor(args->key_descriptor_base,
-						   &conv_args->key_base, false,
-						   subsystem_id);
+	/* Get the Key Derivation Function if any */
+	int status = smw_config_get_kdf_id(args->kdf_name, &conv_args->kdf_id);
 	if (status != SMW_STATUS_OK)
 		return status;
 
-	/* Get the Key Derivation Function if any */
-	status = smw_config_get_kdf_id(args->kdf_name, &conv_args->kdf_id);
-	if (status != SMW_STATUS_OK)
-		return status;
+	conv_args->store_key = args->store_derived_key;
 
 	/*
 	 * The key derivation arguments depends on the key derivation
@@ -639,8 +731,7 @@ static int convert_input_args(struct smw_derive_key_args *args,
 	 */
 	switch (conv_args->kdf_id) {
 	case SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE:
-		status = tls12_convert_args(args->kdf_arguments,
-					    &conv_args->kdf_args);
+		status = tls12_convert_args(args, conv_args, subsystem_id);
 
 		if (status == SMW_STATUS_OK)
 			status = tls12_validate_key_base(conv_args);
@@ -648,22 +739,11 @@ static int convert_input_args(struct smw_derive_key_args *args,
 		break;
 
 	case SMW_CONFIG_KDF_ID_HKDF:
-		status = hkdf_convert_input_args(args->kdf_arguments,
-						 &conv_args->kdf_args);
-
-		if (status == SMW_STATUS_OK)
-			status = hkdf_validate_key_base(conv_args);
-
+		status = hkdf_convert_input_args(args, conv_args, subsystem_id);
 		break;
 
 	default:
-		/*
-		 * Key base must be either a
-		 *  - key identifier
-		 *  - or a key private buffer
-		 */
-		status = check_key_definition(&conv_args->key_base,
-					      SMW_KEYMGR_PRIVACY_ID_PRIVATE);
+		status = SMW_STATUS_INVALID_PARAM;
 		break;
 	}
 
@@ -724,28 +804,57 @@ end:
 }
 
 /**
+ * is_hkdf_extract_step() - Check if the step is HKDF_STEP_EXTRACT
+ * @args: Pointer to additional HKDF arguments structure
+ *
+ * Return:
+ * True if HKDF step is EXTRACT
+ * False otherwise
+ */
+static bool is_hkdf_extract_step(struct smw_keymgr_hkdf_args *args)
+{
+	bool is_extract_step = false;
+	enum hkdf_step step = smw_keymgr_get_hkdf_step(args);
+
+	if (step == HKDF_STEP_EXTRACT)
+		is_extract_step = true;
+
+	return is_extract_step;
+}
+
+/**
  * create_key_in_db() - Create a key in the database
  * @id: New key identifier created in the database
- * @kdf_id: Key derivation function id
- * @identifier: Internal Key identifier object
+ * @derive_key_args: Pointer to internal Key derivation arguments structure
  *
- * Function creates a new key in the OSAL object database if the key
- * derivation function is HKDF. The given @identifier is stored in the
- * object entry.
+ * Function creates a new key in the OSAL object database if the KDF is HKDF.
+ * The result of HKDF Extract step is PRK. This key is not stored in the SMW
+ * key database.
+ *
+ * The given @identifier is stored in the object entry.
  *
  * Return:
  * SMW_STATUS_OK                - Success
  * SMW_STATUS_OPS_INVALID       - OSAL operation invalid
  * SMW_STATUS_KEY_DB_CREATE     - Key creation error
  */
-static int create_key_in_db(unsigned int *new_id, enum smw_config_kdf_id kdf_id,
-			    struct smw_keymgr_identifier *identifier)
+static int create_key_in_db(unsigned int *new_id,
+			    struct smw_keymgr_derive_key_args *derive_key_args)
 {
 	int status = SMW_STATUS_OK;
 
-	if (kdf_id == SMW_CONFIG_KDF_ID_HKDF)
-		status = smw_keymgr_db_create(new_id, identifier);
+	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
+	struct smw_keymgr_identifier *identifier =
+		&derive_key_args->key_derived.identifier;
 
+	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF) {
+		hkdf_args = derive_key_args->kdf_args;
+
+		if (!is_hkdf_extract_step(hkdf_args))
+			status = smw_keymgr_db_create(new_id, identifier);
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
 
@@ -787,12 +896,14 @@ set_derived_key_identifier(unsigned int id,
 /**
  * update_key_in_db() - Set the derived key identifier in the DB
  * @id: New key identifier created in the database
- * @descriptor: Derived key descriptor structure
+ * @derive_key_args: Pointer to internal Key derivation arguments structure
  *
  * If the HKDF based key derivation operation returns a status other than
  * SMW_STATUS_OK and SMW_STATUS_KEY_POLICY_WARNING_IGNORED, delete the key from
  * the database. If the key derivation operation is successful, update the
  * derived key identifier in the database.
+ * If the current HKDF step is HKDF Extract, as the key identifier of PRK is not
+ * stored in the database, do not update the database.
  *
  * Return:
  * SMW_STATUS_OK                - Success
@@ -801,13 +912,20 @@ set_derived_key_identifier(unsigned int id,
  * SMW_STATUS_KEY_DB_DELETE     - Key delete error
  */
 static int update_key_in_db(int status, unsigned int *id,
-			    enum smw_config_kdf_id kdf_id,
-			    struct smw_keymgr_derived_key_desc *key_desc)
+			    struct smw_keymgr_derive_key_args *derive_key_args)
 {
 	int ret_status = status;
 	int temp_status = SMW_STATUS_OK;
+	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
+	struct smw_keymgr_derived_key_desc *key_desc =
+		&derive_key_args->key_derived;
 
-	if (kdf_id == SMW_CONFIG_KDF_ID_HKDF) {
+	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF) {
+		hkdf_args = derive_key_args->kdf_args;
+
+		if (is_hkdf_extract_step(hkdf_args))
+			goto end;
+
 		if (status != SMW_STATUS_OK &&
 		    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
 			/* Delete the key from the database */
@@ -823,6 +941,7 @@ static int update_key_in_db(int status, unsigned int *id,
 	}
 
 end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return ret_status;
 }
 
@@ -832,6 +951,19 @@ bool smw_keymgr_tls12_is_encryption_aead(enum smw_tls12_encryption_id id)
 		return true;
 
 	return false;
+}
+
+bool smw_keymgr_is_store_key_set(struct smw_keymgr_derive_key_args *args)
+{
+	return args->store_key;
+}
+
+inline void
+smw_keymgr_set_shared_secret_id(struct smw_keymgr_derived_key_desc *desc,
+				uint32_t id)
+{
+	if (desc && desc->pub)
+		desc->pub->id = id;
 }
 
 unsigned char *
@@ -985,74 +1117,34 @@ unsigned int smw_keymgr_get_info_len(struct smw_keymgr_hkdf_args *args)
 	return info_len;
 }
 
-unsigned int smw_keymgr_get_prk_id(struct smw_keymgr_hkdf_args *args)
+unsigned char *smw_keymgr_get_peer_pub_buffer(struct smw_keymgr_hkdf_args *args)
 {
-	unsigned int id = 0;
-	enum hkdf_step step = smw_keymgr_get_hkdf_step(args);
-
-	if (step == HKDF_STEP_EXPAND)
-		id = args->pub_args->hkdf_expand_args.prk_id;
-	else if (step == HKDF_STEP_EXTRACT)
-		id = args->pub_args->hkdf_extract_args.prk_id;
-
-	return id;
-}
-
-inline void smw_keymgr_set_prk_id(struct smw_keymgr_hkdf_args *args,
-				  unsigned int id)
-{
+	unsigned char *peer_pub_buffer = NULL;
 	enum hkdf_step step = smw_keymgr_get_hkdf_step(args);
 
 	if (step == HKDF_STEP_EXTRACT)
-		args->pub_args->hkdf_extract_args.prk_id = id;
-}
-
-unsigned char *smw_keymgr_get_prk(struct smw_keymgr_hkdf_args *args)
-{
-	unsigned char *prk = NULL;
-	enum hkdf_step step = smw_keymgr_get_hkdf_step(args);
-
-	if (step == HKDF_STEP_EXPAND)
-		prk = args->pub_args->hkdf_expand_args.prk;
-	else if (step == HKDF_STEP_EXTRACT)
-		prk = args->pub_args->hkdf_extract_args.prk;
-
-	return prk;
-}
-
-unsigned int smw_keymgr_get_prk_len(struct smw_keymgr_hkdf_args *args)
-{
-	unsigned int prk_len = 0;
-	enum hkdf_step step = smw_keymgr_get_hkdf_step(args);
-
-	if (step == HKDF_STEP_EXTRACT)
-		prk_len = args->pub_args->hkdf_extract_args.prk_len;
-	else if (step == HKDF_STEP_EXPAND)
-		prk_len = args->pub_args->hkdf_expand_args.prk_len;
-
-	return prk_len;
-}
-
-inline void smw_keymgr_set_prk_len(struct smw_keymgr_hkdf_args *args,
-				   unsigned int length)
-{
-	enum hkdf_step step = smw_keymgr_get_hkdf_step(args);
-
-	if (step == HKDF_STEP_EXTRACT)
-		args->pub_args->hkdf_extract_args.prk_len = length;
-}
-
-unsigned int smw_keymgr_get_okm_len(struct smw_keymgr_hkdf_args *args)
-{
-	unsigned int okm_len = 0;
-	enum hkdf_step step = smw_keymgr_get_hkdf_step(args);
-
-	if (step == HKDF_STEP_EXPAND)
-		okm_len = args->pub_args->hkdf_expand_args.okm_len;
+		peer_pub_buffer =
+			args->pub_args->hkdf_extract_args.peer_public_buffer;
 	else if (step == HKDF_STEP_FULL)
-		okm_len = args->pub_args->hkdf_args.okm_len;
+		peer_pub_buffer = args->pub_args->hkdf_args.peer_public_buffer;
 
-	return okm_len;
+	return peer_pub_buffer;
+}
+
+unsigned int
+smw_keymgr_get_peer_pub_buffer_len(struct smw_keymgr_hkdf_args *args)
+{
+	unsigned int peer_pub_buffer_len = 0;
+	enum hkdf_step step = smw_keymgr_get_hkdf_step(args);
+
+	if (step == HKDF_STEP_EXTRACT)
+		peer_pub_buffer_len =
+			args->pub_args->hkdf_extract_args.peer_public_buffer_len;
+	else if (step == HKDF_STEP_FULL)
+		peer_pub_buffer_len =
+			args->pub_args->hkdf_args.peer_public_buffer_len;
+
+	return peer_pub_buffer_len;
 }
 
 enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
@@ -1075,16 +1167,17 @@ enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = create_key_in_db(&new_id, derive_key_args.kdf_id,
-				  &derive_key_args.key_derived.identifier);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	if (args->store_derived_key) {
+		status = create_key_in_db(&new_id, &derive_key_args);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
 
 	status = smw_utils_execute_operation(OPERATION_ID_DERIVE_KEY,
 					     &derive_key_args, subsystem_id);
 
-	status = update_key_in_db(status, &new_id, derive_key_args.kdf_id,
-				  &derive_key_args.key_derived);
+	if (args->store_derived_key)
+		status = update_key_in_db(status, &new_id, &derive_key_args);
 
 end:
 	if (derive_key_args.kdf_args)

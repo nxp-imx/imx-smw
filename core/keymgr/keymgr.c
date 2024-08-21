@@ -391,59 +391,6 @@ static void smw_keymgr_set_modulus(struct smw_keymgr_descriptor *descriptor,
 		*ops->modulus(ops) = modulus_data;
 }
 
-/**
- * setup_key_ops() - Setup the key operations in the key descriptor
- * @descriptor: key descriptor
- *
- * The operations depends on the key type.
- *
- * Return:
- * SMW_STATUS_OK             - Success
- * SMW_STATUS_INVALID_PARAM  - Wrong key descriptor
- * SMW_STATUS_NO_KEY_BUFFER  - Key buffer is not setup
- */
-static int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
-{
-	int status = SMW_STATUS_INVALID_PARAM;
-	struct smw_keymgr_key_ops *ops = NULL;
-
-	if (descriptor->pub) {
-		ops = &descriptor->ops;
-		/* Clear all operations */
-		SMW_UTILS_MEMSET(ops, 0, sizeof(*ops));
-		if (!descriptor->pub->buffer)
-			return SMW_STATUS_NO_KEY_BUFFER;
-
-		switch (descriptor->identifier.type_id) {
-		case SMW_CONFIG_KEY_TYPE_ID_NB:
-		case SMW_CONFIG_KEY_TYPE_ID_INVALID:
-			break;
-
-		case SMW_CONFIG_KEY_TYPE_ID_RSA:
-			ops->keys = descriptor->pub->buffer;
-			ops->public_data = &public_data_key_rsa;
-			ops->public_length = &public_length_key_rsa;
-			ops->private_data = &private_data_key_rsa;
-			ops->private_length = &private_length_key_rsa;
-			ops->modulus = &modulus_key_rsa;
-			ops->modulus_length = &modulus_length_key_rsa;
-			status = SMW_STATUS_OK;
-			break;
-
-		default:
-			ops->keys = descriptor->pub->buffer;
-			ops->public_data = &public_data_key_gen;
-			ops->public_length = &public_length_key_gen;
-			ops->private_data = &private_data_key_gen;
-			ops->private_length = &private_length_key_gen;
-			status = SMW_STATUS_OK;
-			break;
-		}
-	}
-
-	return status;
-}
-
 static int check_public_key_buffer(struct smw_keymgr_descriptor *key_desc,
 				   bool mandatory)
 {
@@ -610,6 +557,48 @@ static int get_key_identifier(struct smw_keymgr_identifier *key_identifier,
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keymgr_key_ops *ops = NULL;
+
+	if (descriptor->pub) {
+		ops = &descriptor->ops;
+		/* Clear all operations */
+		SMW_UTILS_MEMSET(ops, 0, sizeof(*ops));
+		if (!descriptor->pub->buffer)
+			return SMW_STATUS_NO_KEY_BUFFER;
+
+		switch (descriptor->identifier.type_id) {
+		case SMW_CONFIG_KEY_TYPE_ID_NB:
+		case SMW_CONFIG_KEY_TYPE_ID_INVALID:
+			break;
+
+		case SMW_CONFIG_KEY_TYPE_ID_RSA:
+			ops->keys = descriptor->pub->buffer;
+			ops->public_data = &public_data_key_rsa;
+			ops->public_length = &public_length_key_rsa;
+			ops->private_data = &private_data_key_rsa;
+			ops->private_length = &private_length_key_rsa;
+			ops->modulus = &modulus_key_rsa;
+			ops->modulus_length = &modulus_length_key_rsa;
+			status = SMW_STATUS_OK;
+			break;
+
+		default:
+			ops->keys = descriptor->pub->buffer;
+			ops->public_data = &public_data_key_gen;
+			ops->public_length = &public_length_key_gen;
+			ops->private_data = &private_data_key_gen;
+			ops->private_length = &private_length_key_gen;
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
 	return status;
 }
 
@@ -1208,7 +1197,6 @@ int smw_keymgr_update_public_buffer(struct smw_keymgr_descriptor *descriptor,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	pub_data = smw_keymgr_get_public_data(descriptor);
-	pub_length = smw_keymgr_get_public_length(descriptor);
 
 	if (!length) {
 		smw_keymgr_set_public_length(descriptor, length);
@@ -1216,6 +1204,12 @@ int smw_keymgr_update_public_buffer(struct smw_keymgr_descriptor *descriptor,
 
 		status = SMW_STATUS_OK;
 	} else if (data && pub_data) {
+		pub_length = smw_keymgr_get_public_length(descriptor);
+		if (!pub_length) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
 		/* Update buffer data and length */
 		if (descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
 			/* Encode hex_buffer in BASE64 buffer */
@@ -1247,6 +1241,7 @@ int smw_keymgr_update_public_buffer(struct smw_keymgr_descriptor *descriptor,
 		status = SMW_STATUS_OK;
 	}
 
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -1428,7 +1423,11 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 		*privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 		break;
 
-	case SMW_CONFIG_KEY_TYPE_ID_GENERIC_SECRET:
+	case SMW_CONFIG_KEY_TYPE_ID_RAW:
+		*privacy_id = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_DERIVE:
 		*privacy_id = SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET;
 		break;
 

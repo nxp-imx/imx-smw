@@ -226,6 +226,19 @@ unsigned char *
 smw_keymgr_get_public_data(struct smw_keymgr_descriptor *descriptor);
 
 /**
+ * setup_key_ops() - Setup the key operations in the key descriptor structure
+ * @descriptor: Pointer to internal key descriptor structure
+ *
+ * The operations depends on the key type.
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success
+ * SMW_STATUS_INVALID_PARAM  - Wrong key descriptor
+ * SMW_STATUS_NO_KEY_BUFFER  - Key buffer is not setup
+ */
+int setup_key_ops(struct smw_keymgr_descriptor *descriptor);
+
+/**
  * smw_keymgr_get_public_length() - Return the length of the public Key buffer.
  * @descriptor: Pointer to the internal Key descriptor structure.
  *

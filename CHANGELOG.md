@@ -45,6 +45,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Rename `smw_aead_update_add()` as `smw_aead_update_aad()`.
 * Fix context operation free function.
 * Generate a data ID if user calls the store data API with an ID set to 0.
+* Update `smw_derive_key()` API arguments and add support for HKDF (Full/
+  Extract/Expand) based key derivation.
 
 ##### 2. Subsystems
 
@@ -60,6 +62,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE subsystem add MD5 and SHA1 digest.
 * ELE subsystem add RSA signature.
 * Add TEE subsystem random IV generation.
+* Add support for HKDF based key derivation in the ELE subsystem.
+* TEE subsystems: Add support for importing the derived key buffer with
+  user-supplied key attributes upon request.
 
 ##### 3. ARM PSA APIs
 
@@ -76,6 +81,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add ELE tests for CHACHA20_POLY1305 (U_ELE_Aead_001 and U_ELE_Aead_004).
 * Add PSA tests for CHACHA20_POLY1305 (U_PSA_Aead_005 and U_PSA_Aead_006).
 * Add tests for HKDF based key derivation.
+* Add tests for HKDF Full, Extract and Expand steps.
 
 #### PKCS#11 Library - _version 4.0_
 

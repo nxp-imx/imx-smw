@@ -29,6 +29,7 @@ Operations supported:
  - Import (only EdgeLock 2GO object)
  - Export (only public key in HEX or Base64 format)
  - Delete
+ - Derive key using HKDF
  - Get key attributes
  - Get key buffers' length
  - Get key security size
@@ -700,3 +701,16 @@ buffer returned must be signed with CST tool and given as parameter of the
 :ref:smw_device_reprovision API.
 
 .. Note:: The OEM SRKH must be fused.
+
+Key Derivation
+^^^^^^^^^^^^^^
+Supported Key Derivation Functions
+ - HMAC-based Key Derivation Function (HKDF)
+
+The subsystem supports HKDF Extract step, Expand step and Full step (Extract and
+Expand combined). The subsystem supports deriving a key from an existing stored
+asymmetric key as well as from a plaintext buffer. It allows the derived key to
+either be stored in the ELE storage if requested by user or exported as a buffer
+if the derived key buffer is set.
+
+.. Note:: Not supported on i.MX8ULP and i.MX95

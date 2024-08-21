@@ -276,3 +276,13 @@ The subsystem allows to:
 The subsystem doesn't allow to:
 
   - encrypt and sign data before storing it.
+
+Key Derivation
+^^^^^^^^^^^^^^
+Supported Key Derivation Functions
+ - HMAC-based Key Derivation Function (HKDF)
+
+The subsystem supports deriving a key from an existing symmetric key
+as well as from a plaintext buffer. Subsystem allows to store the derived key
+upon user request and also allows exporting the derived key if the derived key
+buffer is set.

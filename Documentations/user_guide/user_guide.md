@@ -100,7 +100,7 @@ and supported by the SMW Library.
   <td colspan="2">Key Derivation</td>
 	<td>✔️<sup><a href="#t_note_1">1</a>, <a href="#t_note_2">2</a></sup></td>
 	<td>✔️<sup><a href="#t_note_3">3</a></sup></td>
-	<td>❌</td>
+	<td>✔️<sup><a href="#t_note_6">6</a></sup></td>
 </tr>
 <tr>
   <td colspan="2">Get key attributes</td>
@@ -233,6 +233,7 @@ and supported by the SMW Library.
 <a name="t_note_3"><sup>3</sup></a> Supports HKDF.<br>
 <a name="t_note_4"><sup>4</sup></a> Do nothing, returns always success.<br>
 <a name="t_note_5"><sup>5</sup></a> Retrieve only information from SMW object database.<br>
+<a name="t_note_6"><sup>6</sup></a> Supports HKDF (Full/Extract/Expand step).<br>
 </p>
 
 # 3. Creating a simple OPTEE TA

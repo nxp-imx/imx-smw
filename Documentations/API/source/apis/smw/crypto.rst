@@ -3,6 +3,13 @@ Cryptography APIs
 
 .. kernel-doc:: ../../../../../public/smw_crypto.h
 
+
+Operation Context
+-------------------------------------------
+
+.. kernel-doc:: ../../../../../public/smw/crypto/op_context.h
+
+
 Authentication Encryption/Decryption (AEAD)
 -------------------------------------------
 

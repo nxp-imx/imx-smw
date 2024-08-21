@@ -40,70 +40,81 @@
 			"pub_key": 3
 		}
 	},
-	"subtest 1": { // Generate args pointer is NULL
+	"subtest 1": {
+		"description": "Generate args pointer is NULL",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"test_error": "ARGS_NULL"
 	},
-	"subtest 2": { // Key descriptor pointer is NULL
+	"subtest 2": {
+		"description": "Key descriptor pointer is NULL",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"test_error": "KEY_DESC_NULL"
 	},
-	"subtest 3": { // Key type is not set
+	"subtest 3": {
+		"description": "Key type is not set",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 2",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Key security size is not set
+	"subtest 4": {
+		"description": "Key security size is not set",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Version is not supported
+	"subtest 5": {
+		"description": "Version is not supported",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"version": 255
 	},
-	"subtest 6": { // Subsystem is not set in the config file
+	"subtest 6": {
+		"description": "Subsystem is not set in the config file",
 		"command": "GENERATE",
 		"subsystem": "UNDEFINED",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
-	"subtest 7": { // Key type is undefined
+	"subtest 7": {
+		"description": "Key type is undefined",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 5",
 		"result": "SMW_STATUS_UNKNOWN_KEY_TYPE_NAME"
 	},
-	"subtest 8": { // Key format is undefined
+	"subtest 8": {
+		"description": "Key format is undefined",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 6",
 		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
-	"subtest 9": { // Private key buffer is set
+	"subtest 9": {
+		"description": "Private key buffer is set",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 7",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Private key buffer len is set (buffer NULL)
+	"subtest 10": {
+		"description": "Private key buffer len is set (buffer NULL)",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 8",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 11": { // Public buffer set, modulus buffer not
+	"subtest 11": {
+		"description": "Public buffer set, modulus buffer not",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 9",

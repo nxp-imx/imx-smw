@@ -42,7 +42,8 @@
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // Key descriptor structure is NULL
+	"subtest 2": {
+		"description": "Key descriptor structure is NULL",
 		"command": "AEAD_INIT",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
@@ -50,14 +51,16 @@
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // Key Format is undefined
+	"subtest 3": {
+		"description": "Key Format is undefined",
 		"command": "AEAD_INIT",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 2",
 		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
-	"subtest 4": { // ID set and wrong key type
+	"subtest 4": {
+		"description": "ID set and wrong key type",
 		"command": "AEAD_INIT",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -65,7 +68,8 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 5": { // ID set and wrong key security size
+	"subtest 5": {
+		"description": "ID set and wrong key security size",
 		"command": "AEAD_INIT",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -73,7 +77,8 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 6": { // Key buffer is nULL
+	"subtest 6": {
+		"description": "Key buffer is NULL",
 		"command": "AEAD_INIT",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -81,14 +86,16 @@
 		"test_error": "KEY_BUFFER_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // Key type is missing
+	"subtest 7": {
+		"description": "Key type is missing",
 		"command": "AEAD_INIT",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
 		"key_name": "key 5",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Security size is 0
+	"subtest 8": {
+		"description": "Security size is 0",
 		"command": "AEAD_INIT",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",

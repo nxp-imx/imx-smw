@@ -116,12 +116,13 @@
 			]
 		}
 	},
-	"subtest 1": { // Generate Key 1
+	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // Use already existing base key
+	"subtest 2": {
+		"description": "Use already existing base key",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 1",
@@ -140,7 +141,8 @@
 		"subsystem": "TEE",
 		"key_name": "key 2"
 	},
-	"subtest 4": { // Use already existing base key
+	"subtest 4": {
+		"description": "Use already existing base key",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 2",
@@ -153,7 +155,8 @@
 		"op_output": "key 4",
 		"depends": 3
 	},
-	"subtest 5": { // SMW_STATUS_OUTPUT_TOO_SHORT
+	"subtest 5": {
+		"description": "Output shared key too short",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 1",
@@ -168,7 +171,8 @@
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"depends": 1
 	},
-	"subtest 6": { // Base key format Base64 & RFC5869 - Test case 1
+	"subtest 6": {
+		"description": "Base key format Base64 & RFC5869 - Test case 1",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 6",
@@ -181,7 +185,8 @@
 		},
 		"op_output": "key 7"
 	},
-	"subtest 7": { // Derived key buffer not set
+	"subtest 7": {
+		"description": "Missing shared secret key buffer",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 6",

@@ -36,7 +36,8 @@
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 4": { // Try to delete a key already deleted
+	"subtest 4": {
+		"description": "Try to delete a key already deleted",
 		"command": "DELETE",
 		"key_name": "key 2",
 		"result": "SMW_STATUS_UNKNOWN_ID",

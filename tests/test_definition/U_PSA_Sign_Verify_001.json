@@ -154,7 +154,6 @@
 		"key_name": "key 2",
 		"depends": 7
 	},
-
 	"subtest 9": {
 		"command": "SIGN",
 		"api": "PSA",
@@ -212,7 +211,8 @@
 		"key_name": "key 2",
 		"depends": 9
 	},
-	"subtest 11": { // Invalid signature verify
+	"subtest 11": {
+		"description": "Invalid signature verify",
 		"command": "VERIFY",
 		"api": "PSA",
 		"sign_attr": [

@@ -1,10 +1,13 @@
 {
-	"subtest 1": { // SHA3_224
+	"subtest 1": {
+		"description": [
+			"SHA3_224",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"sha-3bytetestvectors.zip/SHA3_224LongMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA3_224",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//sha-3bytetestvectors.zip/SHA3_224LongMsg.rsp
 		"input": [
 			"31c82d71785b7ca6b651cb6c8c9ad5e2",
 			"aceb0b0633c088d33aa247ada7a594ff",
@@ -32,12 +35,15 @@
 		],
 		"restriction_list": "imx8ulp"
 	},
-	"subtest 2": { // SHA3_256
+	"subtest 2": {
+		"description": [
+			"SHA3_256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"sha-3bytetestvectors.zip/SHA3_256ShortMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA3_256",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//sha-3bytetestvectors.zip/SHA3_256ShortMsg.rsp
 		"input": [
 			"84b60cb3720bf29748483cf7abd0d1f1",
 			"d9380459dfa968460c86e5d1a54f0b19",
@@ -54,12 +60,15 @@
 		],
 		"restriction_list": "imx8ulp"
 	},
-	"subtest 3": { // SHA3_384
+	"subtest 3": {
+		"description": [
+			"SHA3_384",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"sha-3bytetestvectors.zip/SHA3_384ShortMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA3_384",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//sha-3bytetestvectors.zip/SHA3_384ShortMsg.rsp
 		"input": [
 			"093e56d33bd9337ad2ad268d14bac69a",
 			"64a8a7361350cf9f787e69a043f5beb5",
@@ -76,12 +85,15 @@
 		],
 		"restriction_list": "imx8ulp"
 	},
-	"subtest 4": { // SHA3_512
+	"subtest 4": {
+		"description": [
+			"SHA3_512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"sha-3bytetestvectors.zip/SHA3_512ShortMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA3_512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//sha-3bytetestvectors.zip/SHA3_512ShortMsg.rsp
 		"input": [
 			"0ce9f8c3a990c268f34efd9befdb0f7c",
 			"4ef8466cfdb01171f8de70dc5fefa92a",

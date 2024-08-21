@@ -146,7 +146,10 @@
 		"mode": "ECB",
 		"sign_key_name": "sign key",
 		"algo": "CMAC",
-		"depends": [1,3]
+		"depends": [
+			1,
+			3
+		]
 	},
 	"subtest 5": {
 		"command": "STORAGE_RETRIEVE",
@@ -155,7 +158,8 @@
 		"output": 54,
 		"depends": 4
 	},
-	"subtest 6": { // Second retrieve must failed
+	"subtest 6": {
+		"description": "Second retrieve must failed",
 		"command": "STORAGE_RETRIEVE",
 		"subsystem": "ELE",
 		"data_name": "data 1 retrieve",
@@ -171,9 +175,13 @@
 		"mode": "ECB",
 		"sign_key_name": "sign key",
 		"algo": "CMAC",
-		"depends": [1,3]
+		"depends": [
+			1,
+			3
+		]
 	},
-	"subtest 8": { // Data is only accessible in closed mode.
+	"subtest 8": {
+		"description": "Data is only accessible in closed mode",
 		"command": "STORAGE_RETRIEVE",
 		"subsystem": "ELE",
 		"data_name": "data 2 retrieve",
@@ -189,7 +197,10 @@
 		"mode": "ECB",
 		"sign_key_name": "sign key",
 		"algo": "CMAC",
-		"depends": [1,3]
+		"depends": [
+			1,
+			3
+		]
 	},
 	"subtest 10": {
 		"command": "STORAGE_RETRIEVE",
@@ -207,7 +218,10 @@
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
 		"sign_key_name": "sign key",
 		"algo": "CMAC",
-		"depends": [2,3]
+		"depends": [
+			2,
+			3
+		]
 	},
 	"subtest 12": {
 		"command": "STORAGE_RETRIEVE",

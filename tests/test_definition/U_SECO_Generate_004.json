@@ -963,7 +963,8 @@
 		"subsystem": "SECO",
 		"key_name": "key secp384r1 79"
 	},
-	"subtest 80": { // Delete the first Secp R1 key
+	"subtest 80": {
+		"description": "Delete the first Secp R1 key",
 		"command": "DELETE",
 		"key_name": "key secp384r1 1",
 		"depends": 1

@@ -1,5 +1,6 @@
 {
-	"subtest 1": { // Digest length is zero
+	"subtest 1": {
+		"description": "Digest length is zero",
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA256",
@@ -11,7 +12,8 @@
 		],
 		"result": "PSA_ERROR_INVALID_ARGUMENT"
 	},
-	"subtest 2": { // Digest length is too small
+	"subtest 2": {
+		"description": "Digest length is too small",
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA256",
@@ -23,7 +25,8 @@
 		],
 		"result": "PSA_ERROR_BUFFER_TOO_SMALL"
 	},
-	"subtest 3": { // Algo is not valid
+	"subtest 3": {
+		"description": "Algo is not valid",
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "UNDEFINED",
@@ -34,12 +37,15 @@
 		],
 		"result": "PSA_ERROR_NOT_SUPPORTED"
 	},
-	"subtest 4": { // SHA224
+	"subtest 4": {
+		"description": [
+			"SHA224",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA224LongMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA224",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA224LongMsg.rsp
 		"input": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -58,12 +64,15 @@
 			"e48a71d0ba91a86b18393e5f"
 		]
 	},
-	"subtest 5": { // SHA256
+	"subtest 5": {
+		"description": [
+			"SHA256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA256LongMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA256",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA256LongMsg.rsp
 		"input": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -82,12 +91,15 @@
 			"34185c88f505b39775fb9ab137a10aa2"
 		]
 	},
-	"subtest 6": { // SHA384
+	"subtest 6": {
+		"description": [
+			"SHA384",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA384LongMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA384",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA384LongMsg.rsp
 		"input": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -111,12 +123,15 @@
 			"86d1f2447d5f85bcbe59d5689fc49425"
 		]
 	},
-	"subtest 7": { // SHA512
+	"subtest 7": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -141,12 +156,15 @@
 			"c459535e8816521ab714b2a6cd200525"
 		]
 	},
-	"subtest 8": { // SHA512
+	"subtest 8": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -173,12 +191,15 @@
 		],
 		"result": "PSA_ERROR_BUFFER_TOO_SMALL"
 	},
-	"subtest 9": { // SHA512
+	"subtest 9": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"api": "PSA",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",

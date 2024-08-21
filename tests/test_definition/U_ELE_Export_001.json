@@ -75,47 +75,55 @@
 		"subsystem": "ELE",
 		"key_name": "key 2"
 	},
-	"subtest 3": { // Export symmetric key
+	"subtest 3": {
+		"description": "Export symmetric key",
 		"command": "EXPORT_PRIVATE",
 		"key_name": "key 3",
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 4": { // Export ECDSA keypair
+	"subtest 4": {
+		"description": "Export ECDSA keypair",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 4",
 		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 5": { // Export ECDSA private key
+	"subtest 5": {
+		"description": "Export ECDSA private key",
 		"command": "EXPORT_PRIVATE",
 		"key_name": "key 4",
 		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 6": { // Export ECDSA public key in HEX format
+	"subtest 6": {
+		"description": "Export ECDSA public key in HEX format",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 7": { // Export ECDSA public key in BASE64 format
+	"subtest 7": {
+		"description": "Export ECDSA public key in BASE64 format",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 5",
 		"depends": 2
 	},
-	"subtest 8": { // Export ECDSA public key with length bigger
+	"subtest 8": {
+		"description": "Export ECDSA public key with length bigger",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 6",
 		"result": "SMW_STATUS_OK",
 		"depends": 2
 	},
-	"subtest 9": { // Export ECDSA public key with length too short
+	"subtest 9": {
+		"description": "Export ECDSA public key with length too short",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 7",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"depends": 2
 	},
-	"subtest 10": { // Export ECDSA public key with length too short (base64)
+	"subtest 10": {
+		"description": "Export ECDSA public key with length too short (base64)",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 8",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",

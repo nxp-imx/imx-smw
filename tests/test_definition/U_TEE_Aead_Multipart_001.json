@@ -46,7 +46,8 @@
 		"context_id": 0,
 		"depends": 3
 	},
-	"subtest 6": { // output length too short
+	"subtest 6": {
+		"description": "Output length too short",
 		"command": "AEAD_UPDATE",
 		"input": "32333435363738394142434445463031",
 		"output": 5,
@@ -60,7 +61,8 @@
 		"context_id": 0,
 		"depends": 3
 	},
-	"subtest 8": { // Get the output length
+	"subtest 8": {
+		"description": "Get the output length",
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": "32333435363738394142434445463031",
@@ -70,7 +72,8 @@
 		"context_id": 0,
 		"depends": 3
 	},
-	"subtest 9": { // Get the output length and dedicated tag field set
+	"subtest 9": {
+		"description": "Get the output length and dedicated tag field set",
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": "32333435363738394142434445463031",

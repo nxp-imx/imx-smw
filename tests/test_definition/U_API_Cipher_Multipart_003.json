@@ -14,7 +14,8 @@
 		"test_error": "CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Input data set and input length is 0
+	"subtest 4": {
+		"description": "Input data set and input length is 0",
 		"command": "CIPHER_FINAL",
 		"input": [
 			0,
@@ -22,7 +23,8 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Cipher output pointer is set and output length not
+	"subtest 5": {
+		"description": "Cipher output pointer is set and output length not",
 		"command": "CIPHER_FINAL",
 		"output": [
 			0,

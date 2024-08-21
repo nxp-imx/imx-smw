@@ -1,5 +1,6 @@
 {
-	"subtest 1": { // Hash args pointer is NULL
+	"subtest 1": {
+		"description": "Hash args pointer is NULL",
 		"command": "HASH",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
@@ -7,7 +8,8 @@
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": { // Version is not supported
+	"subtest 2": {
+		"description": "Version is not supported",
 		"command": "HASH",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",
@@ -19,7 +21,8 @@
 		"version": 255,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
-	"subtest 3": { // Subsystem is not set in SMW config file
+	"subtest 3": {
+		"description": "Subsystem is not set in SMW config file",
 		"command": "HASH",
 		"subsystem": "UNDEFINED",
 		"algo": "SHA256",
@@ -30,7 +33,8 @@
 		],
 		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
-	"subtest 4": { // Algo is undefined
+	"subtest 4": {
+		"description": "Algo is undefined",
 		"command": "HASH",
 		"subsystem": "DEFAULT",
 		"algo": "UNDEFINED",
@@ -41,7 +45,8 @@
 		],
 		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"
 	},
-	"subtest 5": { // Digest length is zero
+	"subtest 5": {
+		"description": "Digest length is zero",
 		"command": "HASH",
 		"subsystem": "DEFAULT",
 		"algo": "SHA256",

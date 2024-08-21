@@ -17,7 +17,8 @@
 		"subsystem": "TEE",
 		"key_name": "key 1",
 	},
-	"subtest 2": { // iv_length = 0
+	"subtest 2": {
+		"description": "IV length = 0",
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -44,7 +45,8 @@
 			2
 		]
 	},
-	"subtest 4": { // iv_length = 4
+	"subtest 4": {
+		"description": "IV length = 4",
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -73,7 +75,8 @@
 			4
 		]
 	},
-	"subtest 6": { // User supplied IV
+	"subtest 6": {
+		"descriptor": "User supplies full IV",
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -101,7 +104,8 @@
 			6
 		]
 	},
-	"subtest 8": { // Dedicated Tag field & iv_length = 0
+	"subtest 8": {
+		"description": "Dedicated Tag field and IV length = 0",
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -130,7 +134,8 @@
 			8
 		]
 	},
-	"subtest 10": { // Dedicated Tag field and iv_length = 4
+	"subtest 10": {
+		"description": "Dedicated Tag field and IV length = 4",
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -161,7 +166,8 @@
 			10
 		]
 	},
-	"subtest 12": { // generated iv_length > 16
+	"subtest 12": {
+		"description": "User IV length > 16",
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",

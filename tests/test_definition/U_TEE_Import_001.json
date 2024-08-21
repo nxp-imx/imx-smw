@@ -174,67 +174,78 @@
 			]
 		}
 	},
-	"subtest 1": { // Key type is not supported
+	"subtest 1": {
+		"description": "Key type is not supported",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 2": { // Import only ECDSA private key
+	"subtest 2": {
+		"description": "Import only ECDSA private key",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 2",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 3": { // Import symmetric key without private key set
+	"subtest 3": {
+		"description": "Import symmetric key without secret key set",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Import symmetric key with public key set
+	"subtest 4": {
+		"description": "Import symmetric key with public and secret key set",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 4",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Key size is not supported by TEE
+	"subtest 5": {
+		"description": "Key size is not supported by TEE",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 5",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 6": { // Private buffer size doesn't match key security size
+	"subtest 6": {
+		"description": "Private buffer size doesn't match key security size",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // Public buffer size doesn't match key security size
+	"subtest 7": {
+		"description": "Public buffer size doesn't match key security size",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 7",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Import RSA private key only
+	"subtest 8": {
+		"description": "Import RSA private key only",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 8",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 9": { // Wrong modulus length
+	"subtest 9": {
+		"description": "Wrong modulus length",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 9",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Import asymmetric key with public buffer NULL
+	"subtest 10": {
+		"description": "Import asymmetric key with public buffer NULL",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 10",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 11": { // Import asymmetric key with private buffer NULL
+	"subtest 11": {
+		"description": "Import asymmetric key with private buffer NULL",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 11",

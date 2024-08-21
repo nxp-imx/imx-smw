@@ -29,19 +29,31 @@
 		},
 		"key 3": {
 			"key_name": "key 1",
-			"key_data": [16, ""]
+			"key_data": [
+				16,
+				""
+			]
 		},
 		"key 4": {
 			"key_name": "key 2",
-			"key_data": [97, ""]
+			"key_data": [
+				97,
+				""
+			]
 		},
 		"key 5": {
 			"key_name": "key 2",
-			"key_data": [98, ""]
+			"key_data": [
+				98,
+				""
+			]
 		},
 		"key 6": {
 			"key_name": "key 2",
-			"key_data": [96, ""]
+			"key_data": [
+				96,
+				""
+			]
 		}
 	},
 	"subtest 1": {
@@ -54,38 +66,44 @@
 		"api": "PSA",
 		"key_name": "key 2"
 	},
-	"subtest 3": { // Export symmetric key
+	"subtest 3": {
+		"description": "Export symmetric key",
 		"command": "EXPORT_PRIVATE",
 		"api": "PSA",
 		"key_name": "key 3",
 		"depends": 1,
 		"result": "PSA_ERROR_INVALID_ARGUMENT"
 	},
-	"subtest 4": { // Export ECDSA keypair
+	"subtest 4": {
+		"description": "Export ECDSA keypair",
 		"command": "EXPORT_KEYPAIR",
 		"api": "PSA",
 		"key_name": "key 4",
 		"depends": 2
 	},
-	"subtest 5": { // Export ECDSA private key
+	"subtest 5": {
+		"description": "Export ECDSA private key",
 		"command": "EXPORT_PRIVATE",
 		"api": "PSA",
 		"key_name": "key 4",
 		"depends": 2
 	},
-	"subtest 6": { // Export ECDSA public key
+	"subtest 6": {
+		"description": "Export ECDSA public key",
 		"command": "EXPORT_PUBLIC",
 		"api": "PSA",
 		"key_name": "key 4",
 		"depends": 2
 	},
-	"subtest 7": { // Export ECDSA public key with length bigger
+	"subtest 7": {
+		"description": "Export ECDSA public key with length bigger",
 		"command": "EXPORT_PUBLIC",
 		"api": "PSA",
 		"key_name": "key 5",
 		"depends": 2
 	},
-	"subtest 8": { // Export ECDSA public key with length too short
+	"subtest 8": {
+		"description": "Export ECDSA public key with length too short",
 		"command": "EXPORT_PUBLIC",
 		"api": "PSA",
 		"key_name": "key 6",

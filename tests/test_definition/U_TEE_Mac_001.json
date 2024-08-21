@@ -20,7 +20,8 @@
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // Get the MAC size - Output buffer is NULL
+	"subtest 2": {
+		"description": "Get the MAC size - Output buffer is NULL",
 		"command": "MAC_COMPUTE",
 		"algo": "CMAC",
 		"key_name": "key 1",
@@ -30,7 +31,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OK"
 	},
-	"subtest 3": { // Buffer too short
+	"subtest 3": {
+		"description": "Buffer too short",
 		"command": "MAC_COMPUTE",
 		"algo": "CMAC",
 		"key_name": "key 1",

@@ -75,9 +75,13 @@
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 3",
-		"restriction_list": [ "imx8ulp", "imx95" ]
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
 	},
-	"subtest 4": { // Key type not supported
+	"subtest 4": {
+		"description": "(CCM) Key type not supported",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 2",
@@ -90,7 +94,8 @@
 		"depends": 2,
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
-	"subtest 5": { // Mode not supported
+	"subtest 5": {
+		"description": "Mode not supported",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -103,7 +108,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_UNKNOWN_MODE_NAME"
 	},
-	"subtest 6": { // Key buffer not supported
+	"subtest 6": {
+		"description": "(CCM) Key buffer not supported",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 4",
@@ -115,7 +121,8 @@
 		"tag": 16,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 7": { // Get output length
+	"subtest 7": {
+		"description": "(CCM) Get output length",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -128,7 +135,8 @@
 		"output": 0,
 		"depends": 1
 	},
-	"subtest 8": { // Get output length & tag field set
+	"subtest 8": {
+		"description": "(CCM) Get output length and tag field set",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -142,7 +150,8 @@
 		"output": 0,
 		"depends": 1
 	},
-	"subtest 9": { // Output length too small
+	"subtest 9": {
+		"description": "(CCM) Output length too small",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CCM",
@@ -156,7 +165,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 10": { // Output length too small and dedicated tag field set
+	"subtest 10": {
+		"description": "(CCM) Output length too small and dedicated tag field set",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CCM",
@@ -171,7 +181,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 11": { // Output length too big
+	"subtest 11": {
+		"description": "(CCM) Output length too big",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CCM",
@@ -184,7 +195,8 @@
 		"output": 50,
 		"depends": 1
 	},
-	"subtest 12": { // Dedicated Tag field and Output length too big
+	"subtest 12": {
+		"description": "(CCM) Dedicated Tag field and Output length too big",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -198,7 +210,8 @@
 		"output": 60,
 		"depends": 1
 	},
-	"subtest 13": { // Output length too small  - decryption
+	"subtest 13": {
+		"description": "(CCM) Output length too small  - decryption",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CCM",
@@ -215,7 +228,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 14": { // Output length too small - decryption
+	"subtest 14": {
+		"description": "(CCM) Output length too small - decryption",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CCM",
@@ -230,7 +244,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 15": { // Get output length & tag field set
+	"subtest 15": {
+		"description": "(CCM) Get output length and tag field set",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CCM",
@@ -244,7 +259,8 @@
 		"output": 0,
 		"depends": 1
 	},
-	"subtest 16": { // Get output length - decryption
+	"subtest 16": {
+		"description": "(CCM) Get output length - decryption",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CCM",
@@ -260,7 +276,8 @@
 		"output": 0,
 		"depends": 1
 	},
-	"subtest 17": { // Tag length = 10
+	"subtest 17": {
+		"description": "(CCM) Tag length = 10",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -273,7 +290,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 18": { // Tag length = 32
+	"subtest 18": {
+		"description": "(CCM) Tag length = 32",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -285,7 +303,8 @@
 		"tag": 32,
 		"depends": 1
 	},
-	"subtest 19": { // Get output length
+	"subtest 19": {
+		"description": "(CHACHA20-POLY1305) Get output length",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 3",
@@ -298,7 +317,8 @@
 		"output": 0,
 		"depends": 3
 	},
-	"subtest 20": { // Get output length & tag field set
+	"subtest 20": {
+		"description": "(CHACHA20-POLY1305) Get output length and tag field set",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 3",
@@ -312,7 +332,8 @@
 		"output": 0,
 		"depends": 3
 	},
-	"subtest 21": { // Output length too small
+	"subtest 21": {
+		"description": "(CHACHA20-POLY1305) Output length too small",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CHACHA20_POLY1305",
@@ -326,7 +347,8 @@
 		"depends": 3,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 22": { // Output length too small and dedicated tag field set
+	"subtest 22": {
+		"description": "(CHACHA20-POLY1305) Output length too small and dedicated tag field set",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CHACHA20_POLY1305",
@@ -341,7 +363,8 @@
 		"depends": 3,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 23": { // Output length too big
+	"subtest 23": {
+		"description": "(CHACHA20-POLY1305) Output length too big",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CHACHA20_POLY1305",
@@ -354,7 +377,8 @@
 		"output": 50,
 		"depends": 3
 	},
-	"subtest 24": { // Dedicated Tag field and Output length too big
+	"subtest 24": {
+		"description": "(CHACHA20-POLY1305) Dedicated Tag field and Output length too big",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 3",
@@ -368,7 +392,8 @@
 		"output": 60,
 		"depends": 3
 	},
-	"subtest 25": { // Output length too small  - decryption
+	"subtest 25": {
+		"description": "(CHACHA20-POLY1305) Output length too small  - decryption",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CHACHA20_POLY1305",
@@ -385,7 +410,8 @@
 		"depends": 3,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 26": { // Output length too small - decryption
+	"subtest 26": {
+		"description": "(CHACHA20-POLY1305) Output length too small - decryption",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CHACHA20_POLY1305",
@@ -400,7 +426,8 @@
 		"depends": 3,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 27": { // Get output length & tag field set
+	"subtest 27": {
+		"description": "(CHACHA20-POLY1305) Get output length & tag field set - decryption",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CHACHA20_POLY1305",
@@ -414,7 +441,8 @@
 		"output": 0,
 		"depends": 3
 	},
-	"subtest 28": { // Get output length - decryption
+	"subtest 28": {
+		"description": "(CHACHA20-POLY1305) Get output length - decryption",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"mode": "CHACHA20_POLY1305",
@@ -430,7 +458,8 @@
 		"output": 0,
 		"depends": 3
 	},
-	"subtest 29": { // Tag length = 10
+	"subtest 29": {
+		"description": "(CHACHA20-POLY1305) Tag length = 10",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 3",
@@ -443,7 +472,8 @@
 		"depends": 3,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 30": { // Tag length = 32
+	"subtest 30": {
+		"description": "(CHACHA20-POLY1305) Tag length = 32",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 3",
@@ -455,17 +485,17 @@
 		"tag": 32,
 		"depends": 3
 	},
-	"subtest 100": {
+	"subtest 31": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 101": {
+	"subtest 32": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 102": {
+	"subtest 33": {
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 3

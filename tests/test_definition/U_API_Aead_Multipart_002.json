@@ -1,25 +1,30 @@
 {
-	"subtest 1": { // Argument is NULL
+	"subtest 1": {
+		"description": "Argument is NULL",
 		"command": "AEAD_UPDATE",
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": { // Unsupported version no is set
+	"subtest 2": {
+		"description": "Unsupported version no is set",
 		"command": "AEAD_UPDATE",
 		"version": 255,
 		"input": "5555555555",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
-	"subtest 3": { // Context is NULL
+	"subtest 3": {
+		"description": "Context is NULL",
 		"command": "AEAD_UPDATE",
 		"test_error": "CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // No input data
+	"subtest 4": {
+		"description": "No input data",
 		"command": "AEAD_UPDATE",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Input data length is 0
+	"subtest 5": {
+		"description": "Input data length is 0",
 		"command": "AEAD_UPDATE",
 		"input": [
 			0,
@@ -27,7 +32,8 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Output pointer is set and output length is not set
+	"subtest 6": {
+		"description": "Output pointer is set and output length is not set",
 		"command": "AEAD_UPDATE",
 		"input": "5555555555",
 		"output": [

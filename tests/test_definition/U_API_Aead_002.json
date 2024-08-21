@@ -43,7 +43,8 @@
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // Key Format is undefined
+	"subtest 3": {
+		"description": "Key Format is undefined",
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -51,7 +52,8 @@
 		"key_name": "key 2",
 		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
-	"subtest 4": { // Key type is missing
+	"subtest 4": {
+		"description": "Key type is missing",
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -59,7 +61,8 @@
 		"key_name": "key 3",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Key descriptor buffer is NULL
+	"subtest 5": {
+		"description": "Key descriptor buffer is NULL",
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",
@@ -68,7 +71,8 @@
 		"test_error": "KEY_BUFFER_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Security size is 0
+	"subtest 6": {
+		"description": "Security size is 0",
 		"command": "AEAD",
 		"mode": "GCM",
 		"op_type": "ENCRYPT",

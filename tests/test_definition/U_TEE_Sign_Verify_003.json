@@ -19,7 +19,8 @@
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // Sign type is undefued
+	"subtest 2": {
+		"description": "Sign type is undefined",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
@@ -44,7 +45,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // MD5 algorithm is set for PSS signature type
+	"subtest 3": {
+		"description": "MD5 algorithm is set for PSS signature type",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
@@ -70,7 +72,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 4": { // Salt length is set for PKCS1 V1_5 signature type
+	"subtest 4": {
+		"description": "Salt length is set for PKCS1 V1_5 signature type",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
@@ -120,7 +123,8 @@
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 6": { // Signature type different from the one use for signature operation
+	"subtest 6": {
+		"description": "Signature type different from the one use for signature operation",
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
@@ -170,7 +174,8 @@
 		"depends": 5,
 		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	},
-	"subtest 8": { // No hash algo set and bad hashed message length
+	"subtest 8": {
+		"description": "No hash algo set and bad hashed message length",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [

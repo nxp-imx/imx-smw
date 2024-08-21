@@ -1,19 +1,23 @@
 {
-	"subtest 1": { // Argument is NULL
+	"subtest 1": {
+		"description": "Argument is NULL",
 		"command": "AEAD_UPDATE_AAD",
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": { // Context is NULL
+	"subtest 2": {
+		"description": "Context is NULL",
 		"command": "AEAD_UPDATE_AAD",
 		"test_error": "CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // AAD is not set
+	"subtest 3": {
+		"description": "AAD is not set",
 		"command": "AEAD_UPDATE_AAD",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Version not supported
+	"subtest 4": {
+		"description": "Version not supported",
 		"command": "AEAD_UPDATE_AAD",
 		"version": 255,
 		"aad": [

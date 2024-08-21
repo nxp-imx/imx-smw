@@ -20,7 +20,8 @@
 		"subsystem": "ELE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // One-shot AEAD Encryption - tag is part of output
+	"subtest 2": {
+		"description": "(CCM) One-shot AEAD Encryption - tag is part of output",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -33,7 +34,8 @@
 		"aead_id": 1,
 		"depends": 1
 	},
-	"subtest 3": { // One-shot AEAD Decryption operation
+	"subtest 3": {
+		"description": "(CCM) One-shot AEAD Decryption operation",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -48,7 +50,8 @@
 			2
 		]
 	},
-	"subtest 4": { // One-shot AEAD Encryption - tag is part of output
+	"subtest 4": {
+		"description": "(CCM) One-shot AEAD Encryption - tag is part of output",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -60,7 +63,8 @@
 		"aead_id": 2,
 		"depends": 1
 	},
-	"subtest 5": { // Invalid input buffer overrides the saved input
+	"subtest 5": {
+		"description": "(CCM) Invalid input buffer overrides the saved input",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -79,7 +83,8 @@
 			4
 		]
 	},
-	"subtest 6": { // Dedicated Tag field
+	"subtest 6": {
+		"description": "(CCM) Dedicated Tag field - encrypt",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -93,7 +98,8 @@
 		"aead_id": 3,
 		"depends": 1
 	},
-	"subtest 7": { // Dedicated Tag field
+	"subtest 7": {
+		"description": "(CCM) Dedicated Tag field - decrypt",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -109,7 +115,8 @@
 			6
 		]
 	},
-	"subtest 8": { // Encryption using CCM mode and iv length = 0
+	"subtest 8": {
+		"description": "(CCM) Encryption using CCM mode and IV length = 0",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",

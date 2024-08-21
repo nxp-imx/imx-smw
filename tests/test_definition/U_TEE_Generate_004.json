@@ -113,49 +113,57 @@
 		"key_name": "key AES",
 		"result": "SMW_STATUS_OK"
 	},
-	"subtest 2": { // Public length is too short
+	"subtest 2": {
+		"description": "Public length is too short",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key secp192r1 1",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 3": { // Base64 public length is too short
+	"subtest 3": {
+		"description": "Base64 public length is too short",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key secp192r1 2",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 4": { // Public buffer set but not modulus
+	"subtest 4": {
+		"description": "Public buffer set but not modulus",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key RSA 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Modulus buffer set but not public buffer
+	"subtest 5": {
+		"description": "Modulus buffer set but not public buffer",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key RSA 2",
 		"result": "SMW_STATUS_OK"
 	},
-	"subtest 6": { // Public buffer len is too small
+	"subtest 6": {
+		"description": "Public buffer len is too small",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key RSA 3",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 7": { // Modulus buffer len is too small
+	"subtest 7": {
+		"description": "Modulus buffer len is too small",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key RSA 4",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 8": { // Public buffer len is too small (base64)
+	"subtest 8": {
+		"description": "Public buffer len is too small (base64)",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key RSA 5",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 9": { // Modulus buffer len is too small (base64)
+	"subtest 9": {
+		"description": "Modulus buffer len is too small (base64)",
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key RSA 6",

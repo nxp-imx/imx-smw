@@ -1,24 +1,28 @@
 {
-	"subtest 1": { // Argument is NULL
+	"subtest 1": {
+		"description": "Argument is NULL",
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": { // Unsupported version no is set
+	"subtest 2": {
+		"description": "Unsupported version no is set",
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"version": 255,
 		"tag": "35363738313233343536373839404142",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
-	"subtest 3": { // Context is NULL
+	"subtest 3": {
+		"description": "Context is NULL",
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"test_error": "CTX_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Input data set and input length is 0
+	"subtest 4": {
+		"description": "Input data set and input length is 0",
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": [
@@ -27,7 +31,8 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Aead output pointer is set and output length not
+	"subtest 5": {
+		"description": "Aead output pointer is set and output length not",
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"output": [

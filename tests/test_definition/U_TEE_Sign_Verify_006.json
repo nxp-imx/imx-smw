@@ -90,7 +90,8 @@
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // NIST SigVer15_186-3.rsp
+	"subtest 2": {
+		"description": "NIST SigVer15_186-3.rsp",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [

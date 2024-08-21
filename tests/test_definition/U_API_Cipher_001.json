@@ -24,28 +24,32 @@
 		"input": "5555555555",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
-	"subtest 3": { // Mode is not set
+	"subtest 3": {
+		"description": "Mode is not set",
 		"command": "CIPHER",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
 		"input": "5555555555",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Operation type is not set
+	"subtest 4": {
+		"description": "Operation type is not set",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"key_name": "key 1",
 		"input": "5555555555",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // No input data
+	"subtest 5": {
+		"description": "No input data",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
 		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Input data length is 0
+	"subtest 6": {
+		"description": "Input data length is 0",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -56,7 +60,8 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // Cipher output pointer is set and output length not
+	"subtest 7": {
+		"description": "Cipher output pointer is set and output length not",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -68,7 +73,8 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Mode is undefined
+	"subtest 8": {
+		"description": "Mode is undefined",
 		"command": "CIPHER",
 		"mode": "UNDEFINED",
 		"op_type": "ENCRYPT",
@@ -76,7 +82,8 @@
 		"input": "5555555555",
 		"result": "SMW_STATUS_UNKNOWN_MODE_NAME"
 	},
-	"subtest 9": { // Operation type is undefined
+	"subtest 9": {
+		"description": "Operation type is undefined",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "UNDEFINED",
@@ -84,7 +91,8 @@
 		"input": "5555555555",
 		"result": "SMW_STATUS_UNKNOWN_OP_TYPE_NAME"
 	},
-	"subtest 10": { // Subsystem name is undefined
+	"subtest 10": {
+		"description": "Subsystem name is undefined",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -93,7 +101,8 @@
 		"subsystem": "UNDEFINED",
 		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
-	"subtest 11": { // IV is missing
+	"subtest 11": {
+		"description": "IV is missing",
 		"command": "CIPHER",
 		"mode": "CBC",
 		"op_type": "ENCRYPT",

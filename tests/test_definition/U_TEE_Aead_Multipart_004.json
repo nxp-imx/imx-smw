@@ -14,7 +14,8 @@
 		"subsystem": "TEE",
 		"context_id": 0
 	},
-	"subtest 2": { // AAD length = 0
+	"subtest 2": {
+		"description": "AAD length = 0",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -36,7 +37,8 @@
 		"context_id": 0,
 		"depends": 2
 	},
-	"subtest 4": { // Expected tag is set and tag is part of output data
+	"subtest 4": {
+		"description": "Expected tag is set and tag is part of output data",
 		"command": "AEAD_FINAL",
 		"op_type": "ENCRYPT",
 		"input": [
@@ -53,7 +55,8 @@
 		"subsystem": "TEE",
 		"context_id": 1
 	},
-	"subtest 6": { // AAD length = 0
+	"subtest 6": {
+		"description": "AAD length = 0",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -76,7 +79,8 @@
 		"save_output": true,
 		"depends": 6
 	},
-	"subtest 8": { // Invalid tag
+	"subtest 8": {
+		"description": "Invalid tag",
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"input": [

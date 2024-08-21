@@ -18,12 +18,9 @@
 				"55555555555555555555555555555555"
 			]
 		},
-		"client write encryption key": {
-		},
-		"server write encryption key": {
-		},
-		"master secret key": {
-		},
+		"client write encryption key": {},
+		"server write encryption key": {},
+		"master secret key": {},
 		"key 6": {
 			"type": "SECP_R1",
 			"security_size": 384,
@@ -32,7 +29,8 @@
 			]
 		}
 	},
-	"subtest 1": { // Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+	"subtest 1": {
+		"description": "Cipher suite: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "TLS12_KEY_EXCHANGE",
@@ -59,7 +57,8 @@
 		"op_input": "key 1",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 2": { // Generate a "fake key"
+	"subtest 2": {
+		"description": "Generate a fake key",
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 6"

@@ -47,7 +47,8 @@
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 4": { // Verify with bad verification key
+	"subtest 4": {
+		"description": "Verify with bad verification key",
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
@@ -62,7 +63,8 @@
 		"result": "SMW_STATUS_SIGNATURE_INVALID",
 		"depends": 3
 	},
-	"subtest 5": { // Verify with non-verification key
+	"subtest 5": {
+		"description": "Verify with non-verification key",
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [

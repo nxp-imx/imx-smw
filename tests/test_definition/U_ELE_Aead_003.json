@@ -21,7 +21,8 @@
 		"key_name": "key 1",
 		"restriction_list": "imx8ulp"
 	},
-	"subtest 2": { // iv_length = 0
+	"subtest 2": {
+		"description": "(GCM) IV length = 0",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -48,7 +49,8 @@
 			2
 		]
 	},
-	"subtest 4": { // iv_length = 4
+	"subtest 4": {
+		"description": "(GCM) IV length = 4",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -77,7 +79,8 @@
 			4
 		]
 	},
-	"subtest 6": { // User supplied IV
+	"subtest 6": {
+		"description": "(GCM) User supplies full IV",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -105,7 +108,8 @@
 			6
 		]
 	},
-	"subtest 8": { // Dedicated Tag field & iv_length = 0
+	"subtest 8": {
+		"description": "(GCM) Dedicated Tag field & IV length = 0",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -134,7 +138,8 @@
 			8
 		]
 	},
-	"subtest 10": { // Dedicated Tag field and iv_length = 4
+	"subtest 10": {
+		"description": "(GCM) Dedicated Tag field and IV length = 4",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -165,7 +170,8 @@
 			10
 		]
 	},
-	"subtest 12": { // Dedicated Tag field and user supplied IV
+	"subtest 12": {
+		"description": "(GCM) Dedicated Tag field and user supplies full IV",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -195,7 +201,8 @@
 			12
 		]
 	},
-	"subtest 14": { // Output length short & tag field set & iv_length = 4
+	"subtest 14": {
+		"description": "(GCM) Output length short & tag field set & IV length = 4",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -211,7 +218,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 15": { // Output length short and iv_length = 0
+	"subtest 15": {
+		"description": "(GCM) Output length short and IV length = 0",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -224,7 +232,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 16": { // Dedicated tag field set and iv_length = 4
+	"subtest 16": {
+		"description": "(GCM) Dedicated tag field set and IV length = 4",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -239,7 +248,8 @@
 		"aead_id": 7,
 		"depends": 1
 	},
-	"subtest 17": { // Tag buffer overrides saved tag
+	"subtest 17": {
+		"description": "(GCM) Tag buffer overrides saved tag",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -256,7 +266,8 @@
 		"aead_id": 7,
 		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	},
-	"subtest 18": { // iv_length = 6
+	"subtest 18": {
+		"description": "(GCM) IV length = 6",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -270,7 +281,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 19": { // iv_length > 12
+	"subtest 19": {
+		"description": "(GMC) IV length > 12",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",
@@ -283,7 +295,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_IV_SIZE"
 	},
-	"subtest 20": { // generated iv_length = 6
+	"subtest 20": {
+		"description": "(GCM) Generated IV length = 6",
 		"command": "AEAD",
 		"subsystem": "ELE",
 		"key_name": "key 1",

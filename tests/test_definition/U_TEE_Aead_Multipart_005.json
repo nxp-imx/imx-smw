@@ -19,7 +19,8 @@
 		"context_id": 0,
 		"depends": 1
 	},
-	"subtest 3": { // AEAD encryption init with full generated IV
+	"subtest 3": {
+		"description": "AEAD encryption init with full generated IV",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -31,7 +32,8 @@
 		"context_id": 0,
 		"depends": 2
 	},
-	"subtest 4": { // AEAD encryption init with partial generated IV
+	"subtest 4": {
+		"description": "AEAD encryption init with partial generated IV",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -45,6 +47,12 @@
 		"depends": 2
 	},
 	"subtest 5": {
+		"description": "Release the context",
+		"command": "OP_CONTEXT_CANCEL",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 6": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

@@ -106,17 +106,20 @@
 			]
 		}
 	},
-	"subtest 1": { // Import RSA 2048bits keypair
+	"subtest 1": {
+		"description": "Import RSA 2048bits keypair",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // Import RSA 2048bits public key
+	"subtest 2": {
+		"description": "Import RSA 2048bits public key",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 2"
 	},
-	"subtest 3": { // Import RSA 2048bits public key base 64 format
+	"subtest 3": {
+		"description": "Import RSA 2048bits public key base 64 format",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 3"

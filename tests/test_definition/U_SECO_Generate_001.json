@@ -110,13 +110,15 @@
 		"subsystem": "SECO",
 		"key_name": "key 7"
 	},
-	"subtest 8": { // Public buffer is set, but length is too small
+	"subtest 8": {
+		"description": "Public buffer is set, but length is too small",
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 8",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 9": { // Public buffer is set, but length is too small base64
+	"subtest 9": {
+		"description": "Public buffer is set, but length is too small base64",
 		"command": "GENERATE",
 		"subsystem": "SECO",
 		"key_name": "key 9",

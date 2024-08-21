@@ -1,7 +1,7 @@
 {
 	"keys": {
 		"key secp521r1 1": {
-			"id": 805310464, // 0x30001000
+			"id": 805310464,
 			"type": "SECP_R1",
 			"security_size": 521,
 			"attributes_list": [
@@ -16,8 +16,8 @@
 			]
 		},
 		"key secp521r1 2": {
-			"id": 805310465, // 0x30001001
-			"key_name":"key secp521r1 1",
+			"id": 805310465,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -30,8 +30,8 @@
 			]
 		},
 		"key secp521r1 3": {
-			"id": 805310466, // 0x30001002
-			"key_name":"key secp521r1 1",
+			"id": 805310466,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -44,8 +44,8 @@
 			]
 		},
 		"key secp521r1 4": {
-			"id": 805310467, // 0x30001003
-			"key_name":"key secp521r1 1",
+			"id": 805310467,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -58,8 +58,8 @@
 			]
 		},
 		"key secp521r1 5": {
-			"id": 805310468, // 0x30001004
-			"key_name":"key secp521r1 1",
+			"id": 805310468,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -72,8 +72,8 @@
 			]
 		},
 		"key secp521r1 6": {
-			"id": 805310469, // 0x30001005
-			"key_name":"key secp521r1 1",
+			"id": 805310469,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -86,8 +86,8 @@
 			]
 		},
 		"key secp521r1 7": {
-			"id": 805310470, // 0x30001006
-			"key_name":"key secp521r1 1",
+			"id": 805310470,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -100,8 +100,8 @@
 			]
 		},
 		"key secp521r1 8": {
-			"id": 805310471, // 0x30001007
-			"key_name":"key secp521r1 1",
+			"id": 805310471,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -114,8 +114,8 @@
 			]
 		},
 		"key secp521r1 9": {
-			"id": 805310472, // 0x30001008
-			"key_name":"key secp521r1 1",
+			"id": 805310472,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -142,8 +142,8 @@
 			]
 		},
 		"key secp521r1 11": {
-			"id": 805310474, // 0x3000100A
-			"key_name":"key secp521r1 1",
+			"id": 805310474,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -156,8 +156,8 @@
 			]
 		},
 		"key secp521r1 12": {
-			"id": 805310475, // 0x3000100B
-			"key_name":"key secp521r1 1",
+			"id": 805310475,
+			"key_name": "key secp521r1 1",
 			"attributes_list": [
 				"PERSISTENT"
 			],
@@ -171,7 +171,7 @@
 		},
 		"key AES 1": {
 			"type": "AES",
-			"id": 805314560, // 0x30002000
+			"id": 805314560,
 			"security_size": 128,
 			"attributes_list": [
 				"PERSISTENT"
@@ -185,7 +185,7 @@
 		},
 		"key AES 2": {
 			"type": "AES",
-			"id": 805314561, // 0x30002001
+			"id": 805314561,
 			"security_size": 256,
 			"attributes_list": [
 				"PERSISTENT"
@@ -199,7 +199,7 @@
 		},
 		"key AES 3": {
 			"type": "AES",
-			"id": 805314562, // 0x30002002
+			"id": 805314562,
 			"security_size": 256,
 			"attributes_list": [
 				"PERSISTENT"
@@ -272,7 +272,8 @@
 		"subsystem": "ELE",
 		"key_name": "key secp521r1 12"
 	},
-	"subtest 13": { // Delete the first secp521r1 key
+	"subtest 13": {
+		"description": "Delete the first secp521r1 key",
 		"command": "DELETE",
 		"key_name": "key secp521r1 1",
 		"depends": 1

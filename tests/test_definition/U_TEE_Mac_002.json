@@ -162,7 +162,8 @@
 		"subsystem": "TEE",
 		"key_name": "key 7"
 	},
-	"subtest 8": { // MD5
+	"subtest 8": {
+		"description": "MD5",
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "MD5",
@@ -190,7 +191,8 @@
 		],
 		"depends": 1
 	},
-	"subtest 9": { // SHA1
+	"subtest 9": {
+		"description": "SHA1",
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "SHA1",
@@ -219,7 +221,8 @@
 		],
 		"depends": 2
 	},
-	"subtest 10": { // SHA224
+	"subtest 10": {
+		"description": "SHA224",
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "SHA224",
@@ -248,7 +251,8 @@
 		],
 		"depends": 3
 	},
-	"subtest 11": { // SHA256
+	"subtest 11": {
+		"description": "SHA256",
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "SHA256",
@@ -277,7 +281,8 @@
 		],
 		"depends": 4
 	},
-	"subtest 12": { // SHA384
+	"subtest 12": {
+		"description": "SHA384",
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "SHA384",
@@ -307,7 +312,8 @@
 		],
 		"depends": 5
 	},
-	"subtest 13": { // SHA512
+	"subtest 13": {
+		"description": "SHA512",
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "SHA512",
@@ -338,7 +344,8 @@
 		],
 		"depends": 6
 	},
-	"subtest 14": { // SM3
+	"subtest 14": {
+		"description": "SM3",
 		"command": "MAC_COMPUTE",
 		"algo": "HMAC",
 		"hash": "SM3",

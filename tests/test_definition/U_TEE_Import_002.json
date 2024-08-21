@@ -350,82 +350,98 @@
 			]
 		}
 	},
-	"subtest 1": { // Import AES 128
+	"subtest 1": {
+		"description": "Import AES 128",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // Import AES 192
+	"subtest 2": {
+		"description": "Import AES 192",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 2"
 	},
-	"subtest 3": { // Import AES 256
+	"subtest 3": {
+		"description": "Import AES 256",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 3"
 	},
-	"subtest 4": { // Import DES 56
+	"subtest 4": {
+		"description": "Import DES 56",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 4"
 	},
-	"subtest 5": { // Import DES3 112
+	"subtest 5": {
+		"description": "Import DES3 112",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 5"
 	},
-	"subtest 6": { // Import DES3 168
+	"subtest 6": {
+		"description": "Import DES3 168",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 6"
 	},
-	"subtest 7": { // Import secp192r1 keypair
+	"subtest 7": {
+		"description": "Import secp192r1 keypair",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 7"
 	},
-	"subtest 8": { // Import secp192r1 public key
+	"subtest 8": {
+		"description": "Import secp192r1 public key",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 8"
 	},
-	"subtest 9": { // Import secp224r1 keypair
+	"subtest 9": {
+		"description": "Import secp224r1 keypair",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 9"
 	},
-	"subtest 10": { // Import secp224r1 public key
+	"subtest 10": {
+		"description": "Import secp224r1 public key",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 10"
 	},
-	"subtest 11": { // Import secp256r1 keypair
+	"subtest 11": {
+		"description": "Import secp256r1 keypair",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 11"
 	},
-	"subtest 12": { // Import secp256r1 public key
+	"subtest 12": {
+		"description": "Import secp256r1 public key",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 12"
 	},
-	"subtest 13": { // Import secp384r1 keypair
+	"subtest 13": {
+		"description": "Import secp384r1 keypair",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 13"
 	},
-	"subtest 14": { // Import secp384r1 public key
+	"subtest 14": {
+		"description": "Import secp384r1 public key",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 14"
 	},
-	"subtest 15": { // Import secp521r1 keypair
+	"subtest 15": {
+		"description": "Import secp521r1 keypair",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 15"
 	},
-	"subtest 16": { // Import secp521r1 public key
+	"subtest 16": {
+		"description": "Import secp521r1 public key",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 16"
@@ -510,12 +526,14 @@
 		"key_name": "key 16",
 		"depends": 16
 	},
-	"subtest 33": { // Import AES 128 in base64 format
+	"subtest 33": {
+		"description": "Import AES 128 in base64 format",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 17"
 	},
-	"subtest 34": { // Import secp192r1 keypair in base64 format
+	"subtest 34": {
+		"description": "Import secp192r1 keypair in base64 format",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 18"
@@ -530,12 +548,14 @@
 		"key_name": "key 18",
 		"depends": 34
 	},
-	"subtest 37": { // Import AES 128 key as persistent object
+	"subtest 37": {
+		"description": "Import AES 128 key as persistent object",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 19"
 	},
-	"subtest 38": { // Import secp192r1 Keypair as persistent object
+	"subtest 38": {
+		"description": "Import secp192r1 Keypair as persistent object",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 20"
@@ -550,7 +570,8 @@
 		"key_name": "key 20",
 		"depends": 38
 	},
-	"subtest 41": { // Import ED25519 keypair
+	"subtest 41": {
+		"description": "Import ED25519 keypair",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 21"

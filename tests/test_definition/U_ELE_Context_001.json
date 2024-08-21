@@ -29,7 +29,8 @@
 		"context_id": 0,
 		"depends": 1
 	},
-	"subtest 5": { // Context is NULL
+	"subtest 5": {
+		"description": "Context is NULL",
 		"command": "OP_CONTEXT_CANCEL",
 		"subsystem": "ELE",
 		"context_id": 0,

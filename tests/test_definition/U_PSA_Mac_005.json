@@ -22,7 +22,8 @@
 		"key_name": "key 1",
 		"restriction_list": "imx95"
 	},
-	"subtest 2": { // Get the MAC size - Output buffer is NULL
+	"subtest 2": {
+		"description": "Get the MAC size - Output buffer is NULL",
 		"command": "MAC_COMPUTE",
 		"api": "PSA",
 		"algo": "HMAC",
@@ -33,7 +34,8 @@
 		],
 		"depends": 1
 	},
-	"subtest 3": { // Buffer too short
+	"subtest 3": {
+		"description": "Buffer too short",
 		"command": "MAC_COMPUTE",
 		"api": "PSA",
 		"algo": "HMAC",
@@ -73,7 +75,8 @@
 		"mac_id": 2,
 		"depends": 1
 	},
-	"subtest 6": { // MAC length truncated but key not valid
+	"subtest 6": {
+		"description": "MAC length truncated but key not valid",
 		"command": "MAC_COMPUTE",
 		"api": "PSA",
 		"algo": "HMAC_TRUNCATED",
@@ -98,7 +101,8 @@
 		"mac_id": 1,
 		"depends": 4
 	},
-	"subtest 8": { // Verify signature invalid
+	"subtest 8": {
+		"description": "Verify signature invalid",
 		"command": "MAC_VERIFY",
 		"api": "PSA",
 		"algo": "HMAC",
@@ -121,7 +125,8 @@
 		"mac_id": 2,
 		"depends": 5
 	},
-	"subtest 10": { // MAC length set to minimal but key not valid
+	"subtest 10": {
+		"description": "MAC length set to minimal but key not valid",
 		"command": "MAC_VERIFY",
 		"api": "PSA",
 		"algo": "HMAC",

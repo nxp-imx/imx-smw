@@ -55,47 +55,55 @@
 		"key_name": "key 1",
 		"restriction_list": "imx8ulp"
 	},
-	"subtest 2": { // Export RSA keypair
+	"subtest 2": {
+		"description": "Export RSA keypair",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 2",
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 3": { // Export RSA private key
+	"subtest 3": {
+		"description": "Export RSA private key",
 		"command": "EXPORT_PRIVATE",
 		"key_name": "key 2",
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 4": { // Export RSA public key in HEX format
+	"subtest 4": {
+		"description": "Export RSA public key in HEX format",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 5": { // Export RSA public key in BASE64 format
+	"subtest 5": {
+		"description": "Export RSA public key in BASE64 format",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 3",
 		"depends": 1
 	},
-	"subtest 6": { // Export RSA modulus key with length bigger
+	"subtest 6": {
+		"description": "Export RSA modulus key with length bigger",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 4",
 		"result": "SMW_STATUS_OK",
 		"depends": 1
 	},
-	"subtest 7": { // Export RSA modulus key with length too short
+	"subtest 7": {
+		"description": "Export RSA modulus key with length too short",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 5",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"depends": 1
 	},
-	"subtest 8": { // Export RSA public key with length bigger
+	"subtest 8": {
+		"description": "Export RSA public key with length bigger",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 6",
 		"result": "SMW_STATUS_OK",
 		"depends": 1
 	},
-	"subtest 9": { // Export RSA public key with length too short
+	"subtest 9": {
+		"description": "Export RSA public key with length too short",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 7",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",

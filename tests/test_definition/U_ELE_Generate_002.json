@@ -52,13 +52,15 @@
 		"key_name": "key AES",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": { // Public length is too short
+	"subtest 2": {
+		"description": "Public length is too short",
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key secp256r1 1",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 3": { // Base64 public length is too short
+	"subtest 3": {
+		"description": "Base64 public length is too short",
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key secp256r1 2",

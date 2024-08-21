@@ -65,7 +65,8 @@
 			]
 		}
 	},
-	"subtest 1": { // Key type not supported
+	"subtest 1": {
+		"description": "Key type not supported",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"subsystem": "TEE",
@@ -89,7 +90,8 @@
 		"subsystem": "TEE",
 		"key_name": "key 3"
 	},
-	"subtest 5": { // Encrypt with key ID
+	"subtest 5": {
+		"description": "Encrypt with key ID",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -97,7 +99,8 @@
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 4
 	},
-	"subtest 6": { // Decrypt with key ID
+	"subtest 6": {
+		"description": "Decrypt with key ID",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "DECRYPT",
@@ -105,7 +108,8 @@
 		"input": "ebabce95b14d3c8d6fb350390790311c",
 		"depends": 4
 	},
-	"subtest 7": { // Encrypt with key buffer
+	"subtest 7": {
+		"description": "Encrypt with key buffer",
 		"command": "CIPHER",
 		"mode": "CBC",
 		"op_type": "ENCRYPT",
@@ -121,7 +125,8 @@
 			"be541f63f6eea24c7ceb847ddaca1eb2ed5e96b8014b7702"
 		]
 	},
-	"subtest 8": { // Decrypt with key buffer
+	"subtest 8": {
+		"description": "Decrypt with key buffer",
 		"command": "CIPHER",
 		"mode": "CBC",
 		"op_type": "DECRYPT",
@@ -137,7 +142,8 @@
 			"424344454630313234353637383941424344454630313233"
 		]
 	},
-	"subtest 9": { // Encrypt with 2 key ids
+	"subtest 9": {
+		"description": "Encrypt with 2 key ids",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
@@ -152,7 +158,8 @@
 			3
 		]
 	},
-	"subtest 10": { // Decrypt with 2 key ids
+	"subtest 10": {
+		"description": "Decrypt with 2 key ids",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "DECRYPT",
@@ -167,7 +174,8 @@
 			3
 		]
 	},
-	"subtest 11": { // Encrypt with 2 key buffers
+	"subtest 11": {
+		"description": "Encrypt with 2 key buffers",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
@@ -186,7 +194,8 @@
 			"fb186fff7480adc4289382ecd6d394f0"
 		]
 	},
-	"subtest 12": { // Decrypt with 2 key buffers
+	"subtest 12": {
+		"description": "Decrypt with 2 key buffers",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "DECRYPT",
@@ -205,7 +214,8 @@
 			"44444444444444444444444444444444"
 		]
 	},
-	"subtest 13": { // Encrypt with 1 key id, 1 key buffer
+	"subtest 13": {
+		"description": "Encrypt with 1 key id, 1 key buffer",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
@@ -217,7 +227,8 @@
 		"iv": "33333333330000000000000000000000",
 		"depends": 2
 	},
-	"subtest 14": { // Decrypt with 1 key id, 1 key buffer
+	"subtest 14": {
+		"description": "Decrypt with 1 key id, 1 key buffer",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "DECRYPT",
@@ -229,7 +240,8 @@
 		"iv": "33333333330000000000000000000000",
 		"depends": 2
 	},
-	"subtest 15": { // Output length too small
+	"subtest 15": {
+		"description": "Output length too small",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -239,7 +251,8 @@
 		"depends": 2,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 16": { // Get output length
+	"subtest 16": {
+		"description": "Get output length",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",

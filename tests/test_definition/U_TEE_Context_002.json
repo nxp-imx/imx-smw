@@ -14,7 +14,8 @@
 		"subsystem": "TEE",
 		"context_id": 0
 	},
-	"subtest 2": { // AEAD encryption init using CCM mode
+	"subtest 2": {
+		"description": "AEAD encryption init using CCM mode",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -62,7 +63,8 @@
 			6
 		]
 	},
-	"subtest 8": { // Dedicated tag field is set
+	"subtest 8": {
+		"description": "Dedicated tag field is set",
 		"command": "AEAD_FINAL",
 		"tag_field_set": true,
 		"op_type": "ENCRYPT",
@@ -82,7 +84,8 @@
 		"subsystem": "TEE",
 		"context_id": 3
 	},
-	"subtest 11": { // AEAD decryption init using CCM mode
+	"subtest 11": {
+		"description": "AEAD decryption init using CCM mode",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -128,7 +131,8 @@
 		"context_id": 3,
 		"depends": 14
 	},
-	"subtest 16": { // Dedicated tag field is set
+	"subtest 16": {
+		"description": "Dedicated tag field is set",
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"input": "7a5228b420b731e983e7405ef32c4cf9",
@@ -142,7 +146,8 @@
 		"tag_field_set": true,
 		"depends": 14
 	},
-	"subtest 17": { // Context is NULL
+	"subtest 17": {
+		"description": "Context is NULL",
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"input": "7a5228b420b731e983e7405ef32c4cf9",
@@ -152,12 +157,14 @@
 		"depends": 16,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 18": { // Release the context
+	"subtest 18": {
+		"description": "Release the context",
 		"command": "OP_CONTEXT_CANCEL",
 		"context_id": 0,
 		"depends": 1
 	},
-	"subtest 19": { // Release the context
+	"subtest 19": {
+		"description": "Release the context",
 		"command": "OP_CONTEXT_CANCEL",
 		"context_id": 2,
 		"depends": 9

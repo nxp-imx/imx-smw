@@ -111,76 +111,88 @@
 			]
 		}
 	},
-	"subtest 1": { // Generate a keypair for the test
+	"subtest 1": {
+		"description": "Generate a keypair for the test",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // Export args pointer is NULL
+	"subtest 2": {
+		"description": "Export args pointer is NULL",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 1",
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 3": { // Key descriptor pointer is NULL
+	"subtest 3": {
+		"description": "Key descriptor pointer is NULL",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 1",
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 4": { // Key descriptor ID is not set
+	"subtest 4": {
+		"description": "Key descriptor ID is not set",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 2",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 5": { // Key descriptor buffer is NULL
+	"subtest 5": {
+		"description": "Key descriptor buffer is NULL",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 1",
 		"test_error": "KEY_BUFFER_NULL",
 		"result": "SMW_STATUS_NO_KEY_BUFFER",
 		"depends": 1
 	},
-	"subtest 6": { // No buffers are set
+	"subtest 6": {
+		"description": "No buffers are set",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 3",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 7": { // Public data length is not set
+	"subtest 7": {
+		"description": "Public data length is not set but buffer valid",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 4",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 8": { // Private data length is not set
+	"subtest 8": {
+		"description": "Private data length is not set but buffer valid",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 9": { // Bad version
+	"subtest 9": {
+		"description": "Bad version",
 		"command": "EXPORT_PUBLIC",
 		"version": 255,
 		"key_name": "key 1",
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"depends": 1
 	},
-	"subtest 10": { // Buffer key format is undefined
+	"subtest 10": {
+		"description": "Buffer key format is undefined",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 8",
 		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME",
 		"depends": 1
 	},
-	"subtest 11": { // Key descriptor type name doesn't match key identifier
+	"subtest 11": {
+		"description": "Key descriptor type name doesn't match key identifier",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 9",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 12": { // Key descriptor security size doesn't match key identifier
+	"subtest 12": {
+		"description": "Key descriptor security size doesn't match key identifier",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 10",
 		"result": "SMW_STATUS_INVALID_PARAM",
@@ -191,18 +203,21 @@
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 14": { // Generate RSA key
+	"subtest 14": {
+		"description": "Generate RSA key",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key 12"
 	},
-	"subtest 15": { // Modulus length not set
+	"subtest 15": {
+		"description": "Modulus length not set but buffer valid",
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 13",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 14
 	},
-	"subtest 16": { // Modulus length not set
+	"subtest 16": {
+		"description": "Modulus length not set but buffer valid",
 		"command": "EXPORT_KEYPAIR",
 		"key_name": "key 13",
 		"result": "SMW_STATUS_INVALID_PARAM",

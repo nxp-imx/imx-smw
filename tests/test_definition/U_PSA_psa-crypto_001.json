@@ -1,4 +1,6 @@
 {
-	// Empty file
-	// PSA test suite does not require input parameters.
+	"description": [
+		"Empty file",
+		"PSA test suite does not require input parameters."
+	]
 }

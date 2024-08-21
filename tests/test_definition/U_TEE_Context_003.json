@@ -24,12 +24,14 @@
 		"context_id": 0,
 		"depends": 1
 	},
-	"subtest 3": { // Release the context
+	"subtest 3": {
+		"description": "Release the context",
 		"command": "OP_CONTEXT_CANCEL",
 		"context_id": 0,
 		"depends": 1
 	},
-	"subtest 4": { // Context is NULL
+	"subtest 4": {
+		"description": "Context is NULL",
 		"command": "CIPHER_UPDATE",
 		"input": "50e9eee1ac528009e8cbcd356975881f",
 		"context_id": 0,
@@ -41,12 +43,14 @@
 		"subsystem": "TEE",
 		"context_id": 1
 	},
-	"subtest 6": { // Release the context
+	"subtest 6": {
+		"description": "Release the context",
 		"command": "OP_CONTEXT_CANCEL",
 		"context_id": 1,
 		"depends": 5
 	},
-	"subtest 7": { // Context is NULL
+	"subtest 7": {
+		"description": "Context is NULL",
 		"command": "CIPHER_INIT",
 		"subsystem": "TEE",
 		"mode": "CBC",
@@ -115,7 +119,8 @@
 		"subsystem": "TEE",
 		"context_id": 4
 	},
-	"subtest 16": { // tag length is not supported
+	"subtest 16": {
+		"description": "Tag length is not supported",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -129,7 +134,8 @@
 		"depends": 15,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 17": { // Context is NULL because of init failure
+	"subtest 17": {
+		"description": "Context is NULL because of init failure",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -161,7 +167,8 @@
 		"context_id": 5,
 		"depends": 18
 	},
-	"subtest 20": { // tag is invalid
+	"subtest 20": {
+		"description": "Tag is invalid",
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"input": "7a5228b420b731e983e7405ef32c4cf9",
@@ -172,7 +179,8 @@
 		"depends": 19,
 		"result": "SMW_STATUS_SIGNATURE_INVALID"
 	},
-	"subtest 21": { // Context is NULL due to final operation failure
+	"subtest 21": {
+		"description": "Context is NULL due to final operation failure",
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"input": "7a5228b420b731e983e7405ef32c4cf9",
@@ -212,7 +220,8 @@
 		"depends": 23,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 25": { // Context is valid
+	"subtest 25": {
+		"description": "Context is valid",
 		"command": "AEAD_UPDATE",
 		"input": "7a5228b420b731e983e7405ef32c4cf9",
 		"output": "30313233343536373839404142434445",

@@ -23,51 +23,59 @@
 			"type": "SECP_R1"
 		}
 	},
-	"subtest 1": { // Generate an AES key
+	"subtest 1": {
+		"description": "Generate an AES key",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // Delete args pointer is NULL
+	"subtest 2": {
+		"description": "Delete args pointer is NULL",
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1,
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 3": { // Key descriptor pointer is NULL
+	"subtest 3": {
+		"description": "Key descriptor pointer is NULL",
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1,
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Key descriptor key type field is set and undefined
+	"subtest 4": {
+		"description": "Key descriptor key type is set as undefined",
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 1,
 		"result": "SMW_STATUS_UNKNOWN_KEY_TYPE_NAME"
 	},
-	"subtest 5": { // Key descriptor security size field is set and doesn't match id
+	"subtest 5": {
+		"description": "Key descriptor security size not matching generated key",
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Key descriptor key type field is set and doesn't match id
+	"subtest 6": {
+		"description": "Key descriptor key type not matching generated key",
 		"command": "DELETE",
 		"key_name": "key 4",
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // Version is not supported
+	"subtest 7": {
+		"description": "Version is not supported",
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1,
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED",
 		"version": 255
 	},
-	"subtest 8": { // Delete Generate AES Key
+	"subtest 8": {
+		"description": "Delete Generate AES Key",
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

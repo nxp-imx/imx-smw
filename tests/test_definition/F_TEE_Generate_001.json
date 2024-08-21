@@ -1,7 +1,7 @@
 {
 	"keys": {
 		"key secp256r1": {
-			"id": 805310466, // "0x30001002"
+			"id": 805310466,
 			"type": "SECP_R1",
 			"security_size": 256,
 			"attributes_list": [
@@ -12,12 +12,14 @@
 			]
 		}
 	},
-	"subtest 1": { // Generate key persistent with correct ID
+	"subtest 1": {
+		"description": "Generate key persistent with correct ID",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key secp256r1"
 	},
-	"subtest 2": { // Generate key persistent again with correct ID
+	"subtest 2": {
+		"description": "Generate key persistent again with correct ID",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key secp256r1",

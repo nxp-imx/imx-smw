@@ -19,7 +19,9 @@
 		"command": "GENERATE",
 		"api": "PSA",
 		"key_name": "generated aes-gcm-128 key",
-		"restriction_list": [ "imx8ulp" ]
+		"restriction_list": [
+			"imx8ulp"
+		]
 	},
 	"subtest 2": {
 		"command": "AEAD",

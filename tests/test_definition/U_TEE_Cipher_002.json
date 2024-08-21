@@ -114,7 +114,7 @@
 			"ac3236cb861dd316e6413b4e3c7524b7",
 			"69d4c54ed433b9a0346009beb37b2b3f"
 		],
-		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED" // not configured, but also not supported
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 8": {
 		"command": "CIPHER",
@@ -131,7 +131,7 @@
 			"5dcccd25a84ba16560d7f26588706849",
 			"0d9b86ff20c3bfe115ffa02ca6192cc5"
 		],
-		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED" // not configured, but also not supported
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 9": {
 		"command": "CIPHER",

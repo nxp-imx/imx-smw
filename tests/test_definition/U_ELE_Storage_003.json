@@ -100,7 +100,10 @@
 		"mode": "ECB",
 		"sign_key_name": "sign key",
 		"algo": "CMAC",
-		"depends": [7, 8]
+		"depends": [
+			7,
+			8
+		]
 	},
 	"subtest 10": {
 		"command": "STORAGE_GET_DATA_INFO",

@@ -59,7 +59,8 @@
 		"api": "PSA",
 		"key_name": "key 3"
 	},
-	"subtest 4": { // Key type not supported
+	"subtest 4": {
+		"description": "Key type not supported",
 		"command": "CIPHER",
 		"api": "PSA",
 		"mode": "ECB_NO_PADDING",
@@ -69,7 +70,8 @@
 		"depends": 2,
 		"result": "PSA_ERROR_INVALID_ARGUMENT"
 	},
-	"subtest 5": { // Mode not supported
+	"subtest 5": {
+		"description": "Mode not supported",
 		"command": "CIPHER",
 		"api": "PSA",
 		"mode": "CBC_NO_PADDING",
@@ -79,7 +81,8 @@
 		"depends": 1,
 		"result": "PSA_ERROR_INVALID_ARGUMENT"
 	},
-	"subtest 6": { // No input data
+	"subtest 6": {
+		"description": "No input data",
 		"command": "CIPHER",
 		"api": "PSA",
 		"mode": "ECB_NO_PADDING",
@@ -89,7 +92,8 @@
 		"depends": 1,
 		"result": "PSA_ERROR_INVALID_ARGUMENT"
 	},
-	"subtest 7": { // Input data length is 0
+	"subtest 7": {
+		"description": "Input data length is 0",
 		"command": "CIPHER",
 		"api": "PSA",
 		"mode": "ECB_NO_PADDING",
@@ -102,7 +106,8 @@
 		"depends": 1,
 		"result": "PSA_ERROR_INVALID_ARGUMENT"
 	},
-	"subtest 8": { // Cipher output pointer is set and output length not
+	"subtest 8": {
+		"description": "Cipher output pointer is set and output length not",
 		"command": "CIPHER",
 		"api": "PSA",
 		"mode": "ECB_NO_PADDING",
@@ -135,7 +140,8 @@
 		"depends": 1,
 		"result": "PSA_SUCCESS"
 	},
-	"subtest 11": { // Output length too small
+	"subtest 11": {
+		"description": "Output length too small",
 		"command": "CIPHER",
 		"api": "PSA",
 		"mode": "ECB_NO_PADDING",

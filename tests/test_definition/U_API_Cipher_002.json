@@ -66,14 +66,16 @@
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 4": { // Nb Keys = 0
+	"subtest 4": {
+		"description": "Nb Keys = 0",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
 		"input": "5555555555",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Key Format is undefined
+	"subtest 5": {
+		"description": "Key Format is undefined",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -81,7 +83,8 @@
 		"key_name": "key 3",
 		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
-	"subtest 6": { // ID set and wrong key type
+	"subtest 6": {
+		"description": "ID set and wrong key type",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -90,7 +93,8 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 7": { // ID set and wrong key security size
+	"subtest 7": {
+		"description": "ID set and wrong key security size",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -99,7 +103,8 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 1
 	},
-	"subtest 8": { // Wrong number of keys
+	"subtest 8": {
+		"description": "Wrong number of keys",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
@@ -107,7 +112,8 @@
 		"key_name": "key 1",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 9": { // No key is set
+	"subtest 9": {
+		"description": "No key is set",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -116,7 +122,8 @@
 		"test_error": "KEY_BUFFER_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Key type is missing
+	"subtest 10": {
+		"description": "Key type is missing",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -124,7 +131,8 @@
 		"key_name": "key 6",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 11": { // Security size is 0
+	"subtest 11": {
+		"description": "Security size is 0",
 		"command": "CIPHER",
 		"mode": "ECB",
 		"op_type": "ENCRYPT",
@@ -132,7 +140,8 @@
 		"key_name": "key 7",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 12": { // Not same key type
+	"subtest 12": {
+		"description": "Not same key type",
 		"command": "CIPHER",
 		"mode": "XTS",
 		"op_type": "ENCRYPT",

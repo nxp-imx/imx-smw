@@ -14,7 +14,8 @@
 		"subsystem": "TEE",
 		"context_id": 0
 	},
-	"subtest 2": { // AEAD encryption init using CCM mode
+	"subtest 2": {
+		"description": "AEAD encryption init using CCM mode",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -45,7 +46,8 @@
 		"context_id": 0,
 		"depends": 2
 	},
-	"subtest 6": { // Dedicated tag field is set
+	"subtest 6": {
+		"description": "Dedicated tag field is set",
 		"command": "AEAD_FINAL",
 		"tag_field_set": true,
 		"op_type": "ENCRYPT",
@@ -60,7 +62,8 @@
 		"subsystem": "TEE",
 		"context_id": 1
 	},
-	"subtest 8": { // AEAD decryption init using CCM mode
+	"subtest 8": {
+		"description": "AEAD decryption init using CCM mode",
 		"command": "AEAD_INIT",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -93,7 +96,8 @@
 		"context_id": 1,
 		"depends": 8
 	},
-	"subtest 12": { // Dedicated tag field is set and output length too short
+	"subtest 12": {
+		"description": "Dedicated tag field is set and output length too short",
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"input": "7a5228b420b731e983e7405ef32c4cf9",
@@ -104,7 +108,8 @@
 		"depends": 8,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 13": { // Context (ID = 1) is valid
+	"subtest 13": {
+		"description": "Context (ID = 1) is valid",
 		"command": "AEAD_FINAL",
 		"op_type": "DECRYPT",
 		"input": "7a5228b420b731e983e7405ef32c4cf9",

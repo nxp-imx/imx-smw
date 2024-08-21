@@ -17,7 +17,8 @@
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // AEAD ID and dedicated tag field are set
+	"subtest 2": {
+		"description": "AEAD ID and dedicated tag field are set",
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",
@@ -51,7 +52,8 @@
 			2
 		]
 	},
-	"subtest 4": { // AEAD ID is set and tag is part of output
+	"subtest 4": {
+		"description": "AEAD ID is set and tag is part of output",
 		"command": "AEAD",
 		"subsystem": "TEE",
 		"key_name": "key 1",

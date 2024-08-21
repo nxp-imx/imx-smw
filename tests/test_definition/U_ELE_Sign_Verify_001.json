@@ -207,7 +207,8 @@
 		"key_name": "key 2",
 		"depends": 9
 	},
-	"subtest 11": { // Invalid signature verify
+	"subtest 11": {
+		"description": "Invalid signature verify",
 		"command": "VERIFY",
 		"subsystem": "ELE",
 		"sign_attr": [

@@ -17,7 +17,8 @@
 			]
 		}
 	},
-	"subtest 1": { // HKDF operation argument is NULL
+	"subtest 1": {
+		"description": "HKDF operation argument is NULL",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "HKDF",
@@ -26,7 +27,8 @@
 		"test_error": "KDF_ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": { // PRF name is undefined
+	"subtest 2": {
+		"description": "PRF name is undefined",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "HKDF",
@@ -38,7 +40,8 @@
 		"op_output": "key 2",
 		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"
 	},
-	"subtest 3": { // PRF name is not set
+	"subtest 3": {
+		"description": "PRF name is not set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_type": "HKDF",

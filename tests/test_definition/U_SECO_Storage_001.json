@@ -47,7 +47,10 @@
 		"sign_key_name": "sign key",
 		"algo": "CMAC",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
-		"depends": [1,2]
+		"depends": [
+			1,
+			2
+		]
 	},
 	"subtest 4": {
 		"command": "DELETE",

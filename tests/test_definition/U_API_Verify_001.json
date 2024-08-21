@@ -22,7 +22,8 @@
 			]
 		}
 	},
-	"subtest 1": { // Verify args pointer is NULL
+	"subtest 1": {
+		"description": "Verify args pointer is NULL",
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
@@ -52,7 +53,8 @@
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 2": { // Version is not supported
+	"subtest 2": {
+		"description": "Version is not supported",
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"version": 255,
@@ -82,7 +84,8 @@
 		],
 		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
 	},
-	"subtest 3": { // Subsystem is not set in SMW config file
+	"subtest 3": {
+		"description": "Subsystem is not set in SMW config file",
 		"command": "VERIFY",
 		"subsystem": "UNDEFINED",
 		"sign_attr": [
@@ -111,7 +114,8 @@
 		],
 		"result": "SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME"
 	},
-	"subtest 4": { // Key descriptor pointer is NULL
+	"subtest 4": {
+		"description": "Key descriptor pointer is NULL",
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
@@ -141,7 +145,8 @@
 		"test_error": "KEY_DESC_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": { // Sign algo is undefined
+	"subtest 5": {
+		"description": "Sign algo is undefined",
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"key_name": "key 1",
@@ -166,7 +171,8 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 6": { // Message buffer is NULL
+	"subtest 6": {
+		"description": "Message buffer is NULL",
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
@@ -183,7 +189,8 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 7": { // Message length is 0
+	"subtest 7": {
+		"description": "Message length is 0",
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
@@ -204,7 +211,8 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 8": { // Signature buffer is NULL
+	"subtest 8": {
+		"description": "Signature buffer is NULL",
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
@@ -228,7 +236,8 @@
 		"signature": 64,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 9": { // Signature length is 0
+	"subtest 9": {
+		"description": "Signature length is 0",
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
@@ -258,12 +267,14 @@
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 10": { // Add a keypair for the test
+	"subtest 10": {
+		"description": "Add a keypair for the test",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key 2"
 	},
-	"subtest 11": { // Signature length not valid
+	"subtest 11": {
+		"description": "Signature length not valid",
 		"command": "VERIFY",
 		"subsystem": "DEFAULT",
 		"sign_attr": [

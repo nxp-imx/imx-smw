@@ -3,7 +3,10 @@
 		"key 1": {
 			"type": "HMAC",
 			"security_size": 256,
-			"priv_key": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+			"priv_key": [
+				"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+				"0b0b0b0b0b0b"
+			],
 			"permitted_algo": [
 				"HMAC",
 				"HASH=SHA256"
@@ -152,7 +155,8 @@
 			]
 		}
 	},
-	"subtest 1": { // RFC5869 - Test case 1
+	"subtest 1": {
+		"description": "RFC5869 - Test case 1",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 1",
@@ -169,7 +173,8 @@
 			"34007208d5b887185865"
 		]
 	},
-	"subtest 2": { // RFC5869 - Test case 2
+	"subtest 2": {
+		"description": "RFC5869 - Test case 2",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 3",
@@ -201,7 +206,8 @@
 			"1d87"
 		]
 	},
-	"subtest 3": { // RFC5869 - Test case 3
+	"subtest 3": {
+		"description": "RFC5869 - Test case 3",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 1",
@@ -216,7 +222,8 @@
 			"9d201395faa4b61a96c8"
 		]
 	},
-	"subtest 4": { // RFC5869 - Test case 4
+	"subtest 4": {
+		"description": "RFC5869 - Test case 4",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 6",
@@ -233,7 +240,8 @@
 			"c22e422478d305f3f896"
 		]
 	},
-	"subtest 5": { // RFC5869 - Test case 5
+	"subtest 5": {
+		"description": "RFC5869 - Test case 5",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 3",
@@ -265,7 +273,8 @@
 			"d3b4"
 		]
 	},
-	"subtest 6": { // RFC5869 - Test case 6
+	"subtest 6": {
+		"description": "RFC5869 - Test case 6",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 1",
@@ -280,7 +289,8 @@
 			"ea00033de03984d34918"
 		]
 	},
-	"subtest 7": { // RFC5869 - Test case 7
+	"subtest 7": {
+		"description": "RFC5869 - Test case 7",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 10",

@@ -24,7 +24,10 @@
 				"command": "GENERATE",
 				"subsystem": "TEE",
 				"key_name": "key secp256r1",
-				"post_to_after": ["App 2", "sem_a2_t1_start"],
+				"post_to_after": [
+					"App 2",
+					"sem_a2_t1_start"
+				],
 				"post_after": "sem_a1_t2_start"
 			},
 			"subtest 2": {
@@ -89,7 +92,10 @@
 				],
 				"sign_id": 1,
 				"key_name": "key secp256r1",
-				"post_to_after": ["App 2", "sem_a1_t2_done"],
+				"post_to_after": [
+					"App 2",
+					"sem_a1_t2_done"
+				],
 				"depends": 1
 			},
 			"wait_after": "sem_a2_done",
@@ -117,7 +123,10 @@
 				"command": "DELETE",
 				"key_name": "key secp256r1",
 				"wait_before": "sem_a2_t2_done",
-				"post_to_after": ["App 1", "sem_a2_done"],
+				"post_to_after": [
+					"App 1",
+					"sem_a2_done"
+				],
 				"depends": 1
 			}
 		},

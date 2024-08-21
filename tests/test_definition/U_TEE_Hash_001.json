@@ -1,18 +1,24 @@
 {
-	"subtest 1": { // MD5
+	"subtest 1": {
+		"description": [
+			"MD5",
+			"https://tools.ietf.org/html/rfc1321 Appendix A.5"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "MD5",
-		//https://tools.ietf.org/html/rfc1321 Appendix A.5
 		"input": "6d65737361676520646967657374",
 		"digest": "f96b697d7cb7938d525a2f31aaf161d0"
 	},
-	"subtest 2": { // SHA1
+	"subtest 2": {
+		"description": [
+			"SHA1",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA1LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA1",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA1LongMsg.rsp
 		"input": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -28,12 +34,15 @@
 		],
 		"digest": "d8fd6a91ef3b6ced05b98358a99107c1fac8c807"
 	},
-	"subtest 3": { // SHA224
+	"subtest 3": {
+		"description": [
+			"SHA224",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA224LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA224",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA224LongMsg.rsp
 		"input": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -52,12 +61,15 @@
 			"e48a71d0ba91a86b18393e5f"
 		]
 	},
-	"subtest 4": { // SHA256
+	"subtest 4": {
+		"description": [
+			"SHA256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA256LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA256",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA256LongMsg.rsp
 		"input": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -76,12 +88,15 @@
 			"34185c88f505b39775fb9ab137a10aa2"
 		]
 	},
-	"subtest 5": { // SHA384
+	"subtest 5": {
+		"description": [
+			"SHA384",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA384LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA384",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA384LongMsg.rsp
 		"input": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -105,12 +120,15 @@
 			"86d1f2447d5f85bcbe59d5689fc49425"
 		]
 	},
-	"subtest 6": { // SHA512
+	"subtest 6": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -135,11 +153,14 @@
 			"c459535e8816521ab714b2a6cd200525"
 		]
 	},
-	"subtest 7": { // SM3
+	"subtest 7": {
+		"description": [
+			"SM3",
+			"https://tools.ietf.org/html/draft-oscca-cfrg-sm3-02 Appendix B.2"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SM3",
-		//https://tools.ietf.org/html/draft-oscca-cfrg-sm3-02 Appendix B.2
 		"input": [
 			"F4A38489E32B45B6F876E3AC2168CA39",
 			"2362DC8F23459C1D1146FC3DBFB7BC9A",
@@ -150,20 +171,26 @@
 			"9A87E6FC682D48BB5D42E3D9B9EFFE76"
 		]
 	},
-	"subtest 8": { // MD5
+	"subtest 8": {
+		"description": [
+			"MD5",
+			"https://tools.ietf.org/html/rfc1321 Appendix A.5"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "MD5",
-		//https://tools.ietf.org/html/rfc1321 Appendix A.5
 		"input": "6d65737361676520646967657374",
 		"digest": 16
 	},
-	"subtest 9": { // SHA1
+	"subtest 9": {
+		"description": [
+			"SHA1",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA1LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA1",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA1LongMsg.rsp
 		"input": [
 			"7c9c67323a1df1adbfe5ceb415eaef01",
 			"55ece2820f4d50c1ec22cba4928ac656",
@@ -179,12 +206,15 @@
 		],
 		"digest": 20
 	},
-	"subtest 10": { // SHA224
+	"subtest 10": {
+		"description": [
+			"SHA224",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA224LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA224",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA224LongMsg.rsp
 		"input": [
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a",
@@ -200,12 +230,15 @@
 		],
 		"digest": 28
 	},
-	"subtest 11": { // SHA256
+	"subtest 11": {
+		"description": [
+			"SHA256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA256LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA256",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA256LongMsg.rsp
 		"input": [
 			"451101250ec6f26652249d59dc974b73",
 			"61d571a8101cdfd36aba3b5854d3ae08",
@@ -221,12 +254,15 @@
 		],
 		"digest": 32
 	},
-	"subtest 12": { // SHA384
+	"subtest 12": {
+		"description": [
+			"SHA384",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA384LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA384",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA384LongMsg.rsp
 		"input": [
 			"62c6a169b9be02b3d7b471a964fc0bcc",
 			"72b480d26aecb2ed460b7f50016ddaf0",
@@ -246,12 +282,15 @@
 		],
 		"digest": 48
 	},
-	"subtest 13": { // SHA512
+	"subtest 13": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -271,11 +310,14 @@
 		],
 		"digest": 64
 	},
-	"subtest 14": { // SM3
+	"subtest 14": {
+		"description": [
+			"SM3",
+			"https://tools.ietf.org/html/draft-oscca-cfrg-sm3-02 Appendix B.2"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SM3",
-		//https://tools.ietf.org/html/draft-oscca-cfrg-sm3-02 Appendix B.2
 		"input": [
 			"F4A38489E32B45B6F876E3AC2168CA39",
 			"2362DC8F23459C1D1146FC3DBFB7BC9A",
@@ -283,12 +325,15 @@
 		],
 		"digest": 32
 	},
-	"subtest 15": { // SHA512
+	"subtest 15": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",
@@ -309,12 +354,15 @@
 		"digest": 63,
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
-	"subtest 16": { // SHA512
+	"subtest 16": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
 		"command": "HASH",
 		"subsystem": "TEE",
 		"algo": "SHA512",
-		//https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing
-		//shabytetestvectors.zip/SHA512LongMsg.rsp
 		"input": [
 			"4f05600950664d5190a2ebc29c9edb89",
 			"c20079a4d3e6bc3b27d75e34e2fa3d02",

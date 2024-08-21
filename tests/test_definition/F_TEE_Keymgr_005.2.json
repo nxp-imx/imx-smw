@@ -59,7 +59,8 @@
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 6": { // Key 3 re-use key 2 id of previous test part
+	"subtest 6": {
+		"description": "Key 3 re-use key 2 id of previous test part",
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 1

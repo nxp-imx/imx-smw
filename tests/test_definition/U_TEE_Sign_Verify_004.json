@@ -67,7 +67,8 @@
 		"key_name": "key 1",
 		"depends": 2
 	},
-	"subtest 4": { // Already hashed message (SHA256)
+	"subtest 4": {
+		"description": "Already hashed message (SHA256)",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [

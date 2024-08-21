@@ -13,7 +13,8 @@
 		"subsystem": "SECO",
 		"key_name": "key 1"
 	},
-	"subtest 2": { // IV length = 0
+	"subtest 2": {
+		"description": "(GCM) IV length = 0 and AAD",
 		"command": "AEAD",
 		"subsystem": "SECO",
 		"key_name": "key 1",
@@ -40,7 +41,8 @@
 			2
 		]
 	},
-	"subtest 4": { // IV length = 4
+	"subtest 4": {
+		"description": "(GCM) IV length = 4",
 		"command": "AEAD",
 		"subsystem": "SECO",
 		"key_name": "key 1",
@@ -75,7 +77,8 @@
 			4
 		]
 	},
-	"subtest 6": { // Dedicated tag field set and IV length = 0
+	"subtest 6": {
+		"description": "(GCM) Dedicated tag field set and IV length = 0",
 		"command": "AEAD",
 		"subsystem": "SECO",
 		"key_name": "key 1",
@@ -110,7 +113,8 @@
 			6
 		]
 	},
-	"subtest 8": { // Dedicated tag field set and IV length = 4
+	"subtest 8": {
+		"description": "(GMC) Dedicated tag field set and IV length = 4",
 		"command": "AEAD",
 		"subsystem": "SECO",
 		"key_name": "key 1",
@@ -141,7 +145,8 @@
 			8
 		]
 	},
-	"subtest 10": { // IV length = 0
+	"subtest 10": {
+		"description": "(GCM) IV length = 0 and no AAD",
 		"command": "AEAD",
 		"subsystem": "SECO",
 		"key_name": "key 1",
@@ -151,7 +156,8 @@
 		"input": "30313233343536373839404142434445",
 		"depends": 1
 	},
-	"subtest 11": { // Invalid tag
+	"subtest 11": {
+		"description": "(GMC) Invalid tag",
 		"command": "AEAD",
 		"subsystem": "SECO",
 		"key_name": "key 1",
@@ -169,7 +175,8 @@
 			10
 		]
 	},
-	"subtest 12": { // generated_iv_length = 6
+	"subtest 12": {
+		"description": "(GCM) User fixed IV length = 6",
 		"command": "AEAD",
 		"subsystem": "SECO",
 		"key_name": "key 1",
@@ -183,7 +190,8 @@
 		"depends": 1,
 		"result": "SMW_STATUS_INVALID_IV_SIZE"
 	},
-	"subtest 13": { // iv_length > 12
+	"subtest 13": {
+		"description": "(GCM) User fixed IV length > 12",
 		"command": "AEAD",
 		"subsystem": "SECO",
 		"key_name": "key 1",

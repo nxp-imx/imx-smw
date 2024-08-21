@@ -67,7 +67,8 @@
 		"key_name": "key 1",
 		"depends": 2
 	},
-	"subtest 4": { // Salt length set to 480 (0x01E0)
+	"subtest 4": {
+		"description": "Salt length set to 480",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
@@ -117,7 +118,8 @@
 		"key_name": "key 1",
 		"depends": 4
 	},
-	"subtest 6": { // Already hashed message (SHA256)
+	"subtest 6": {
+		"description": "Already hashed message (SHA256)",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [

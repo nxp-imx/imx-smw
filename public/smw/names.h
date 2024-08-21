@@ -113,6 +113,7 @@ typedef enum {
  * * SMW_KEY_TYPE_NAME_DH: DH key
  * * SMW_KEY_TYPE_NAME_TLS_MASTER: TLS master key
  * * SMW_KEY_TYPE_NAME_RAW: Raw key
+ * * SMW_KEY_TYPE_NAME_DERIVE: Derived key
  * * SMW_KEY_TYPE_NAME_NB: Number of key types
  */
 typedef enum {
@@ -131,7 +132,7 @@ typedef enum {
 	SMW_KEY_TYPE_NAME_DH,
 	SMW_KEY_TYPE_NAME_TLS_MASTER,
 	SMW_KEY_TYPE_NAME_RAW,
-	SMW_KEY_TYPE_NAME_GENERIC_SECRET,
+	SMW_KEY_TYPE_NAME_DERIVE,
 	SMW_KEY_TYPE_NAME_NB
 } smw_key_type_t;
 

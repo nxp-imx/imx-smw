@@ -20,7 +20,8 @@ struct smw_op_context;
  *
  * This opaque structure is dynamically allocated by the SMW library upon
  * invoking the function smw_allocate_context(). It is deallocated when any of
- * the following conditions are met:
+ * the following conditions are met:\
+ *
  *  - Upon successful completion of the associated multi-part final operation.
  *  - In the event of critical failure during the associated operation.
  *  - When smw_cancel_operation() function is invoked.

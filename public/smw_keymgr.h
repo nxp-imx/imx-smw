@@ -169,6 +169,7 @@ struct smw_generate_key_args {
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @kdf_name: Key derivation function name. See &typedef smw_kdf_t
  * @kdf_arguments: Key derivation function arguments
+ * @store_derived_key: If true, store the derived key.
  * @key_descriptor_base: Pointer to a Key base descriptor.
  *			 See &struct smw_key_descriptor
  * @key_attributes: Pointer to a Key attributes object. See &smw_key_attributes
@@ -176,8 +177,8 @@ struct smw_generate_key_args {
  *			    See &struct smw_derived_key_descriptor
  *
  * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default Secure Subsystem configured for
- * this Security Operation is used.
+ * If this field is set to SMW_SUBSYSTEM_NAME_NONE, the default Secure Subsystem
+ * configured for this Security Operation is used.
  *
  * A new key is derived from a given key base (@key_descriptor_base) using
  * the key derivation function @kdf_name.
@@ -185,16 +186,19 @@ struct smw_generate_key_args {
  * the @kdf_arguments refers to the associated key derivation function
  * arguments, else this pointer is not used and can be NULL.
  *
- * Upon successful completion of the key derivation operation, new key ID
+ * Upon successful completion of the key derivation operation, if
+ * @store_derived_key is set to true, new key ID
  * is set in the @key_descriptor_derived->id and shared secret data is exported
  * if @key_descriptor_derived->shared_secret and
- * @key_descriptor_derived->shared_secret_len are set.
+ * @key_descriptor_derived->shared_secret_len are set. Refer to the subsystem
+ * capabilities for more details.
  */
 struct smw_derive_key_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
 	smw_kdf_t kdf_name;
 	void *kdf_arguments;
+	bool store_derived_key;
 	struct smw_key_descriptor *key_descriptor_base;
 	struct smw_key_attributes *key_attributes;
 	struct smw_derived_key_descriptor *key_descriptor_derived;
@@ -265,16 +269,20 @@ struct smw_kdf_tls12_args {
  * @salt_len: [in] @salt length in bytes
  * @info: [in] Context and application specific information buffer
  * @info_len: [in] @info length in bytes
- * @okm_len: [in] derived key length in bytes
+ * @peer_public_buffer: [in] Peer public buffer
+ * @peer_public_buffer_len: [in] @peer_public_buffer in bytes
  *
- * @info, @info_len, @salt and @salt_len are optional parameters.
+ * @info and @salt are optional parameters.
+ * If @info and @salt are set, length of the respective buffers should be set.
+ * @peer_public_buffer should be a valid public key and should be in hex format.
  */
 struct smw_hkdf_args {
 	unsigned char *salt;
 	unsigned int salt_len;
 	unsigned char *info;
 	unsigned int info_len;
-	unsigned int okm_len;
+	unsigned char *peer_public_buffer;
+	unsigned int peer_public_buffer_len;
 };
 
 /**
@@ -283,12 +291,10 @@ struct smw_hkdf_args {
  * @salt_len: [in] @salt length in bytes
  * @peer_public_buffer: [in] Peer public buffer
  * @peer_public_buffer_len: [in] @peer_public_buffer in bytes
- * @prk_id: [out] Pseudo Random Key ID
- * @prk: [out] Pseudo random key
- * @prk_len: [in/out] @prk length in bytes
  *
  * @salt and @salt_len are optional parameters.
- * @prk_id is ignored, if @prk and @prk_len are set.
+ *
+ * @peer_public_buffer should be a valid public key and should be in hex format.
  *
  */
 struct smw_hkdf_extract_args {
@@ -296,30 +302,18 @@ struct smw_hkdf_extract_args {
 	unsigned int salt_len;
 	unsigned char *peer_public_buffer;
 	unsigned int peer_public_buffer_len;
-	unsigned int prk_id;
-	unsigned char *prk;
-	unsigned int prk_len;
 };
 
 /**
  * struct smw_kdf_hkdf_args - HKDF expand arguments structure
- * @prk_id: [in] Pseudo Random Key ID
- * @prk: [in] Pseudo Random Key buffer
- * @prk_len: [in] @prk length in bytes
  * @info: [in] Context and application specific information
  * @info_len: [in] @info length in bytes
- * @okm_len: [in] derived key length in bytes
  *
  * @info and @info_len are optional parameters.
- * @prk_id is ignored, if @prk and @prk_len are set.
  */
 struct smw_hkdf_expand_args {
-	unsigned int prk_id;
-	unsigned char *prk;
-	unsigned int prk_len;
 	unsigned char *info;
 	unsigned int info_len;
-	unsigned int okm_len;
 };
 
 /**
@@ -333,38 +327,50 @@ struct smw_hkdf_expand_args {
  * @hkdf_expand_args: [in] HKDF expand step arguments.
  *						See &struct hkdf_expand_args
  *
+ * If user requests to store the derived key, user must provide
+ * @smw_derive_key_args.key_descriptor_derived.type_name,
+ * @smw_derive_key_args.key_descriptor_derived.security_size,
+ * @smw_derive_key_args.key_attributes.usage_flags,
+ * @smw_derive_key_args.key_attributes.attributes and, if required by
+ * the subsystem, the @smw_derive_key_args.key_attributes.permitted_algo.
+ *
  * Key derivation using HKDF can be performed either in two dedicated steps
  * (extract and expand) or combined into a single step, but only if the
  * subsystem supports this capability.
  *
  *  - Step #1: Extract
  *
- *    - Upon successful completion of this step, if PRK buffer
- *      @hkdf_extract_args.prk and @hkdf_extract_args.prk_len are set, PRK is
- *      exported else, PRK ID @hkdf_extract_args.prk_id is set.
+ *    - @smw_derive_key_args.store_derived_key is ignored. Upon successful
+ *      completion of this step, PRK buffer is exported if
+ *      @smw_derive_key_args.key_descriptor_derived.shared_secret and
+ *      @hkdf_extract_args.prk_len are set or PRK ID
+ *      @smw_derive_key_args.key_descriptor_derived.id is set.
  *    - PRK is temporarily stored in subsystem key storage. It’s deleted when
  *      the key derivation operation is completed.
- *    - Derived key descriptor (key_descriptor_derived member of SMW key
- *      derivation structure smw_derive_key_args) structure is ignored.
+ *    - If base key is a plaintext buffer, the base key type should be set to
+ *      SMW_KEY_TYPE_NAME_RAW.
  *
  *  - Step #2: Expand
  *
- *    - If PRK is exported, @hkdf_expand_args.prk_id is ignored.
- *    - Base key descriptor (key_descriptor_base member of SMW key
- *      derivation structure smw_derive_key_args) is ignored.
+ *    - If PRK ID @smw_derive_key_args.key_descriptor_base.id is set, PRK
+ *      buffer @smw_derive_key_args.key_descriptor_base.buffer->gen.public_data
+ *      is ignored. If PRK buffer is exported, the base key type should be set
+ *      to SMW_KEY_TYPE_NAME_RAW.
  *    - Upon successful completion of the key derivation operation, derived key
- *      descriptor - key_descriptor_derived (member of SMW key derivation
- *      structure smw_derive_key_args) is updated. The new key ID
- *      is set and shared secret data is exported if shared_secret and
- *      shared_secret_len are set in the derived key descriptor.
+ *      descriptor structure @smw_derive_key_args.key_descriptor_derived is
+ *      updated. The new key ID is set and shared secret data is exported if
+ *      shared_secret and shared_secret_len are set in the derived key
+ *      descriptor structure @smw_derive_key_args.key_descriptor_derived.
  *
  *  - Full HKDF (step 1 and step 2 combined)
  *
  *    - Upon successful completion of the key derivation operation, derived key
- *      descriptor structure - key_descriptor_derived (member of SMW key
- *      derivation structure - smw_derive_key_args) is updated. The new key ID
- *      is set, and shared secret data is exported if shared_secret and
- *      shared_secret_len are set in the derived key descriptor structure.
+ *      descriptor structure @smw_derive_key_args.key_descriptor_derived is
+ *      updated. The new derived key ID is set, and shared secret data is
+ *      exported if shared_secret and shared_secret_len are set in the derived
+ *      key descriptor structure @smw_derive_key_args.key_descriptor_derived.
+ *    - If base key is a plaintext buffer, the base key type should be set to
+ *      SMW_KEY_TYPE_NAME_RAW.
  */
 struct smw_kdf_hkdf_args {
 	bool extract;

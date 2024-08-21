@@ -212,27 +212,31 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_ALGO_DH: Diffie–Hellman.
  * - SMW_ATTR_ALGO_ECDH: Elliptic-curve Diffie–Hellman.
  * - SMW_ATTR_ALGO_HKDF: HMAC-based Key Derivation Function.
+ * - SMW_ATTR_ALGO_HKDF_EXTRACT: HMAC-based Key Derivation Function Extract step.
+ * - SMW_ATTR_ALGO_HKDF_EXPAND: HMAC-based Key Derivation Function Expand step.
  * - SMW_ATTR_ALGO_TLS_1_2: Transport Layer Security 1.2.
  * - SMW_ATTR_ALGO_HASH: Hash.
  */
-#define SMW_ATTR_ALGO_DEFAULT  0x00
-#define SMW_ATTR_ALGO_NONE     0x00
-#define SMW_ATTR_ALGO_AES      0x01
-#define SMW_ATTR_ALGO_DES      0x02
-#define SMW_ATTR_ALGO_DES3     0x03
-#define SMW_ATTR_ALGO_CHACHA20 0x04
-#define SMW_ATTR_ALGO_SM4      0x05
-#define SMW_ATTR_ALGO_RSA      0x06
-#define SMW_ATTR_ALGO_SM2      0x07
-#define SMW_ATTR_ALGO_HMAC     0x08
-#define SMW_ATTR_ALGO_DSA      0x09
-#define SMW_ATTR_ALGO_ECDSA    0x0A
-#define SMW_ATTR_ALGO_EDDSA    0x0B
-#define SMW_ATTR_ALGO_DH       0x0C
-#define SMW_ATTR_ALGO_ECDH     0x0D
-#define SMW_ATTR_ALGO_HKDF     0x0E
-#define SMW_ATTR_ALGO_TLS_1_2  0x1F
-#define SMW_ATTR_ALGO_HASH     0xFF
+#define SMW_ATTR_ALGO_DEFAULT	   0x00
+#define SMW_ATTR_ALGO_NONE	   0x00
+#define SMW_ATTR_ALGO_AES	   0x01
+#define SMW_ATTR_ALGO_DES	   0x02
+#define SMW_ATTR_ALGO_DES3	   0x03
+#define SMW_ATTR_ALGO_CHACHA20	   0x04
+#define SMW_ATTR_ALGO_SM4	   0x05
+#define SMW_ATTR_ALGO_RSA	   0x06
+#define SMW_ATTR_ALGO_SM2	   0x07
+#define SMW_ATTR_ALGO_HMAC	   0x08
+#define SMW_ATTR_ALGO_DSA	   0x09
+#define SMW_ATTR_ALGO_ECDSA	   0x0A
+#define SMW_ATTR_ALGO_EDDSA	   0x0B
+#define SMW_ATTR_ALGO_DH	   0x0C
+#define SMW_ATTR_ALGO_ECDH	   0x0D
+#define SMW_ATTR_ALGO_HKDF	   0x0E
+#define SMW_ATTR_ALGO_HKDF_EXTRACT 0x0F
+#define SMW_ATTR_ALGO_HKDF_EXPAND  0x10
+#define SMW_ATTR_ALGO_TLS_1_2	   0x1F
+#define SMW_ATTR_ALGO_HASH	   0xFF
 
 /**
  * DOC: SMW_ATTR_MODE_xxx

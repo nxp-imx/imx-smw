@@ -102,11 +102,6 @@ if(TEE_TESTS_ENABLED AND ELE_TESTS_ENABLED)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/eletee_tests.cmake)
 endif()
 
-
-if(TEE_TESTS_ENABLED)
-    add_subdirectory(tee)
-endif()
-
 if(ELE_TESTS_ENABLED OR ENABLE_PSA_DEFAULT_ALT)
     if(NOT DEFINED PSA_ARCH_TESTS_SRC_PATH)
         message(WARNING

@@ -20,10 +20,6 @@
 
 #define DEFAULT_OBJ_DB "/var/tmp/obj_db_smw_test.dat"
 
-static const struct tee_info tee_default_info = {
-	{ "11b5c4aa-6d20-11ea-bc55-0242ac130003" }
-};
-
 static const struct se_info se_default_info = { 0x534d5754, 0x444546,
 						1000 }; // SMWT, DEF
 
@@ -66,14 +62,16 @@ const struct thread_type {
 static int setup_tee_info(struct json_object *test_def)
 {
 	int res = ERR_CODE(PASSED);
-	struct tee_info info = tee_default_info;
+	struct tee_info info = { 0 };
 	struct json_object *oinfo = NULL;
 	char *ta_uuid = NULL;
 	size_t ta_uuid_len = 0;
 
 	res = util_read_json_type(&oinfo, TEE_INFO_OBJ, t_object, test_def);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND) &&
-	    !oinfo)
+	if (res == ERR_CODE(VALUE_NOTFOUND))
+		return ERR_CODE(PASSED);
+
+	if (res != ERR_CODE(PASSED) && !oinfo)
 		return res;
 
 	if (res == ERR_CODE(PASSED)) {

@@ -115,10 +115,6 @@ int main(int argc, char **argv)
 		unsigned short storage_replay;
 	} se_default_info = { 0x50534154, 0x444546, 1000 }; // PSA, DEF
 
-	struct tee_info {
-		char ta_uuid[37];
-	} tee_default_info = { { "1682dada-20de-4b02-9eaa-284776931233" } };
-
 	if (argc > 1) {
 		/* Parse command line argument to get the options. */
 		do {
@@ -146,12 +142,6 @@ int main(int argc, char **argv)
 	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_ELE,
 					     &se_default_info,
 					     sizeof(se_default_info));
-	if (status != SMW_STATUS_OK)
-		return -1;
-
-	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_TEE,
-					     &tee_default_info,
-					     sizeof(tee_default_info));
 	if (status != SMW_STATUS_OK)
 		return -1;
 

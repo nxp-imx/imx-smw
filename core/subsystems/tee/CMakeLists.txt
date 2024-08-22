@@ -53,3 +53,4 @@ set(EXT_LIBS ${EXT_LIBS} ${TEEC_LIBRARY} PARENT_SCOPE)
 string(REGEX REPLACE "-gcc$" "-" CROSS_COMPILE  ${CMAKE_C_COMPILER})
 
 add_subdirectory(lib_ta)
+add_subdirectory(ta)

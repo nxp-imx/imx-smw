@@ -74,6 +74,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 4. OSAL
 
 * Add management of a linux system configuration file (/etc/opt/smw/smw.conf).
+* Create common SMW library configuration definition file.
 
 #### SMW Tests - _version 4.0_
 
@@ -95,6 +96,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Tests - _version 4.0_
 
 * Validation of message-based encrypt/decrypt PKCS#11 APIs.
+* Enable validation on Secure Enclave subsystem prior to TEE subsystem.
 
 ---
 ### <a id ="rel_3_0"></a></br>**Release 3.0**

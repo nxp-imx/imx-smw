@@ -217,6 +217,7 @@ struct shared_context {
  * @base_key_sec_size: Base key security size in bits.
  * @derived_key_sec_size: Derived key security size in bits.
  * @derived_key_len: Derived key length in bytes.
+ * @store_derived_key: If true, store derived key.
  */
 struct key_derive_shared_params {
 	uint32_t salt_length;
@@ -230,6 +231,7 @@ struct key_derive_shared_params {
 	unsigned int base_key_sec_size;
 	unsigned int derived_key_sec_size;
 	unsigned int derived_key_len;
+	bool store_derived_key;
 };
 
 #endif /* TEE_SUBSYSTEM_H */

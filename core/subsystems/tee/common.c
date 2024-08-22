@@ -9,7 +9,6 @@
 
 #include "config.h"
 #include "debug.h"
-#include "base64.h"
 
 #include "tee.h"
 
@@ -52,34 +51,6 @@ int tee_convert_hash_algorithm_id(enum smw_config_hash_algo_id smw_id,
 		}
 	}
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-int set_hex_buffer(enum smw_keymgr_format_id format_id, unsigned char *buffer,
-		   unsigned int buffer_len, unsigned char **hex_buffer,
-		   unsigned int *hex_buffer_len)
-{
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
-		/* Convert buffer in hex format */
-		status = smw_utils_base64_decode(buffer, buffer_len, hex_buffer,
-						 hex_buffer_len);
-		if (status != SMW_STATUS_OK) {
-			SMW_DBG_PRINTF(ERROR, "%s: Failed to decode base64\n",
-				       __func__);
-			goto exit;
-		}
-	} else {
-		*hex_buffer = buffer;
-		*hex_buffer_len = buffer_len;
-		status = SMW_STATUS_OK;
-	}
-
-exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

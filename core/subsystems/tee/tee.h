@@ -61,6 +61,15 @@ int tee_convert_key_type(enum smw_config_key_type_id key_type_id,
 			 enum tee_key_type *key_type);
 
 /**
+ * key_type_tee_to_smw() - Convert TEE key type to SMW key type.
+ * @key_type: TEE key type.
+ *
+ * Return:
+ * SMW key type
+ */
+enum smw_config_key_type_id key_type_tee_to_smw(enum tee_key_type key_type);
+
+/**
  * tee_convert_hash_algorithm_id() - Convert SMW algorithm to TEE algorithm.
  * @smw_id: Hash algorithm ID as defined in SMW.
  * @tee_id: Hash algorithm ID as defined in TEE subsystem.
@@ -262,7 +271,7 @@ int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
 int derive_key(void *args);
 
 /**
- * key_usage_to_value() - Convert SMW key usage to TEE key usage value.
+ * key_usage_to_tee() - Convert SMW key usage to TEE key usage value.
  * @smw: SMW key usage.
  * @tee: TEE key usage.
  *
@@ -272,7 +281,7 @@ int derive_key(void *args);
 void key_usage_to_tee(smw_attr_usage_t smw, unsigned int *tee);
 
 /**
- * key_usage_to_value() - Convert TEE key usage to SMW key usage.
+ * key_usage_to_smw() - Convert TEE key usage to SMW key usage.
  * @tee: TEE key usage.
  * @smw: SMW key usage.
  *
@@ -293,26 +302,6 @@ void key_usage_to_smw(unsigned int tee, smw_attr_usage_t *smw);
 int check_persistence(smw_attr_attributes_t attributes, bool *persistent_flag);
 
 /**
- * set_hex_buffer() - Set HEX buffer.
- * @format_id: Format of the input buffer.
- * @buffer: Pointer to the input buffer.
- * @buffer_len: @buffer length in bytes.
- * @hex_buffer: Pointer to the HEX buffer to update.
- * @hex_buffer_len: Pointer @hex_buffer length to update.
- *
- * If format id is BASE64, the input buffer in converted in HEX format.
- * Memory allocated to @hex_buffer in smw_utils_base64_decode() should
- * be freed at the end of the operation.
- *
- * Return:
- * SMW_STATUS_OK  - Success.
- * Error code from smw_utils_base64_decode().
- */
-int set_hex_buffer(enum smw_keymgr_format_id format_id, unsigned char *buffer,
-		   unsigned int buffer_len, unsigned char **hex_buffer,
-		   unsigned int *hex_buffer_len);
-
-/**
  * set_tmpref_buffer() - Set a shared tmpref buffer parameter.
  * @buffer_type: TEEC memory type.
  * @param_idx: Index of the parameter in @op structure.
@@ -327,5 +316,22 @@ int set_hex_buffer(enum smw_keymgr_format_id format_id, unsigned char *buffer,
 int set_tmpref_buffer(unsigned int mem_type, unsigned int param_idx,
 		      unsigned char *buffer, unsigned int buffer_len,
 		      TEEC_Operation *op);
+
+/**
+ * find_check_sym_key_def() - Get and check TEE Key type.
+ * @key_type_id: Key type ID.
+ * @security_size: Key security size in bits.
+ * @key_attrs: Pointer to Key attributes.
+ *
+ * Check if key type and key security size are supported by TEE and return the
+ * TEE Key type ID.
+ *
+ * Return:
+ * TEE Key type ID.
+ */
+enum tee_key_type
+find_check_sym_key_def(enum smw_config_key_type_id key_type_id,
+		       unsigned int security_size,
+		       struct smw_key_attributes *key_attrs);
 
 #endif /* TEE_H */

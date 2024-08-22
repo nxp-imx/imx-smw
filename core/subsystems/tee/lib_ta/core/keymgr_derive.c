@@ -134,7 +134,7 @@ static TEE_Result get_secret_key_length(TEE_ObjectHandle handle,
 }
 
 /**
- * get_object_buffer_attribute() - Retrieve attribute from an object.
+ * get_obj_buffer_attr() - Retrieve attribute from an object.
  * @handle: Object handle.
  * @key_buf: Output buffer to get the content of the attribute.
  * @key_buf_len: key_buf length.
@@ -151,10 +151,9 @@ static TEE_Result get_secret_key_length(TEE_ObjectHandle handle,
  * TEE_ERROR_STORAGE_NOT_AVAILABLE - Persistent object is stored in a storage
  *                                   area which is currently inaccessible.
  */
-static TEE_Result get_object_buffer_attribute(TEE_ObjectHandle handle,
-					      unsigned char **key_buf,
-					      size_t *key_buf_len,
-					      bool create_buffer)
+static TEE_Result get_obj_buffer_attr(TEE_ObjectHandle handle,
+				      unsigned char **key_buf,
+				      size_t *key_buf_len, bool create_buffer)
 {
 	TEE_Result res = TEE_SUCCESS;
 
@@ -213,6 +212,47 @@ static TEE_Result is_derive_usage_set(uint32_t key_id, TEE_ObjectHandle handle,
 	return res;
 }
 
+static TEE_Result
+import_derived_key(struct key_derive_shared_params *shared_params,
+		   struct obj_data *derived_key_object,
+		   unsigned char *shared_secret, unsigned int shared_secret_len)
+{
+	uint32_t key_usage = 0;
+	TEE_Result res = TEE_SUCCESS;
+
+	/* Convert SMW key usage to TEE key usage */
+	res = key_usage_to_tee(shared_params->key_usage, &key_usage);
+	if (res)
+		goto exit;
+
+	/* Find a new ID for derived key */
+	res = ta_find_unused_object_id(&derived_key_object->id,
+				       shared_params->persistent);
+	if (res)
+		goto exit;
+
+	res = ta_import_key(&derived_key_object->handle,
+			    shared_params->key_type,
+			    shared_params->derived_key_sec_size, key_usage,
+			    shared_secret, shared_secret_len, NULL, 0, NULL, 0);
+	if (res) {
+		EMSG("Failed to import key: 0x%x", res);
+		goto exit;
+	}
+
+	if (shared_params->persistent)
+		res = ta_register_persistent_object(derived_key_object);
+	else
+		res = ta_register_transient_object(derived_key_object);
+
+	/* Share key ID with Normal World in case of operation success */
+	if (res == TEE_SUCCESS)
+		shared_params->derived_key_id = derived_key_object->id;
+
+exit:
+	return res;
+}
+
 static TEE_Result hkdf_derive_key(uint32_t param_types,
 				  TEE_Param params[TEE_NUM_PARAMS])
 {
@@ -223,8 +263,8 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 
 	struct key_derive_shared_params *shared_params = NULL;
 	struct key_handle imported_key_handle = { 0 };
-	struct obj_data derived_key_object = { 0 };
-	uint32_t key_usage = 0;
+	struct obj_data derived_key_obj = { 0 };
+	struct obj_data new_key_object = { 0 };
 	unsigned int sec_size = 0;
 
 	size_t base_key_len = 0;
@@ -232,6 +272,7 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 	unsigned char *base_key = NULL;
 	unsigned char *derived_key = NULL;
 	unsigned char *base_key_priv_data = NULL;
+	bool mem_allocated_to_der_key = false;
 
 	/* Max key size in bits */
 	uint32_t max_key_size = 0;
@@ -288,9 +329,9 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 		if (res != TEE_SUCCESS)
 			goto exit;
 
-		res = get_object_buffer_attribute(imported_key_handle.handle,
-						  &base_key_priv_data,
-						  &base_key_len, true);
+		res = get_obj_buffer_attr(imported_key_handle.handle,
+					  &base_key_priv_data, &base_key_len,
+					  true);
 		if (res) {
 			EMSG("Failed to get the derived key attribute: 0x%x",
 			     res);
@@ -364,12 +405,16 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 	/* Allocate a shared secret output object */
 	res = TEE_AllocateTransientObject(TEE_TYPE_GENERIC_SECRET,
 					  shared_params->derived_key_sec_size,
-					  &derived_key_object.handle);
+					  &derived_key_obj.handle);
 	if (res) {
 		EMSG("Failed to allocate shared secret output object: 0x%x",
 		     res);
 		goto exit;
 	}
+
+	if (!derived_key_len)
+		derived_key_len =
+			BITS_TO_BYTES_SIZE(shared_params->derived_key_sec_size);
 
 	/* Set HKDF operation parameters */
 	res = set_derive_key_attr(shared_params, params[DER_SHARED_MEM_IDX],
@@ -379,48 +424,45 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 		goto exit;
 	}
 
-	TEE_DeriveKey(op_handle, key_attr, attr_count,
-		      derived_key_object.handle);
+	TEE_DeriveKey(op_handle, key_attr, attr_count, derived_key_obj.handle);
 
-	/* If shared secret buffer and length are set, export shared secret buffer
-	 * Else, set only the shared secret buffer length.
+	/*
+	 * If shared secret buffer and length are set, export shared secret buffer.
+	 * If the user has requested to store the derived key and shared secret
+	 * buffer is not set, allocate memory to store the shared secret
+	 * and free it after the operation.
 	 */
-	if (!derived_key)
-		res = get_secret_key_length(derived_key_object.handle,
-					    &derived_key_len);
-	else
-		res = get_object_buffer_attribute(derived_key_object.handle,
+	if (!derived_key) {
+		if (shared_params->store_derived_key) {
+			mem_allocated_to_der_key = true;
+			res = get_obj_buffer_attr(derived_key_obj.handle,
 						  &derived_key,
-						  &derived_key_len, false);
+						  &derived_key_len, true);
+		} else {
+			res = get_secret_key_length(derived_key_obj.handle,
+						    &derived_key_len);
+		}
+
+	} else {
+		res = get_obj_buffer_attr(derived_key_obj.handle, &derived_key,
+					  &derived_key_len, false);
+	}
+
 	if (res)
 		goto exit;
-
-	/* Convert SMW key usage to TEE key usage */
-	res = key_usage_to_tee(shared_params->key_usage, &key_usage);
-	if (res)
-		goto exit;
-
-	/* Set key usage */
-	res = set_key_usage(key_usage, derived_key_object.handle);
-	if (res)
-		goto exit;
-
-	/* Find a new ID for derived key */
-	res = ta_find_unused_object_id(&derived_key_object.id,
-				       shared_params->persistent);
-	if (res)
-		goto exit;
-
-	if (shared_params->persistent)
-		res = ta_register_persistent_object(&derived_key_object);
-	else
-		res = ta_register_transient_object(&derived_key_object);
-
-	/* Share key ID with Normal World in case of operation success */
-	if (res == TEE_SUCCESS)
-		shared_params->derived_key_id = derived_key_object.id;
 
 	params[DER_DERIVED_KEY_PARAM_IDX].memref.size = derived_key_len;
+
+	/* If user has requested to store the derived key,
+	 * derived key buffer will be imported and user defined key type will be
+	 * set and the ID would be returned.
+	 */
+	if (shared_params->store_derived_key) {
+		res = import_derived_key(shared_params, &new_key_object,
+					 derived_key, derived_key_len);
+		if (res)
+			goto exit;
+	}
 
 exit:
 	TEE_FreeOperation(op_handle);
@@ -428,12 +470,19 @@ exit:
 	if (!base_key_exists)
 		TEE_FreeTransientObject(base_key_handle);
 
-	TEE_FreeTransientObject(derived_key_object.handle);
+	TEE_FreeTransientObject(derived_key_obj.handle);
+
+	TEE_FreeTransientObject(new_key_object.handle);
 
 	if (imported_key_handle.persistent)
 		TEE_CloseObject(imported_key_handle.handle);
 
 	TEE_Free(base_key_priv_data);
+
+	if (mem_allocated_to_der_key)
+		TEE_Free(derived_key);
+
+	FMSG("%s returned %d\n", __func__, res);
 
 	return res;
 }
@@ -471,6 +520,8 @@ TEE_Result derive_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	shared_params = params[DER_SHARED_PARAM_IDX].memref.buffer;
 	if (is_hkdf_algo(shared_params->hash_algo))
 		res = hkdf_derive_key(param_types, params);
+
+	FMSG("%s returned %d\n", __func__, res);
 
 	return res;
 }

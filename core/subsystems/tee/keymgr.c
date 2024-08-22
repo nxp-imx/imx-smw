@@ -48,7 +48,7 @@ RANGE_DEF(HMAC_SHA384, 256, 1024, 8);
 RANGE_DEF(HMAC_SHA512, 256, 1024, 8);
 RANGE_DEF(HMAC_SM3, 80, 1024, 8);
 RANGE_DEF(RSA, 256, 4096, 2);
-RANGE_DEF(GENERIC_SECRET, 8, 4096, 8);
+RANGE_DEF(DERIVE, 8, 4096, 8);
 
 #define KEY_DEF(_key_type, _security_size, _symmetric)                         \
 	{                                                                      \
@@ -91,6 +91,16 @@ RANGE_DEF(GENERIC_SECRET, 8, 4096, 8);
 		.symmetric = true                                              \
 	}
 
+#define KEY_DEF_DERIVE(_key_type)                                              \
+	{                                                                      \
+		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type,             \
+		.hash_algo_id = SMW_CONFIG_HASH_ALGO_ID_INVALID,               \
+		.hash = SMW_ATTR_HASH_NONE,                                    \
+		.key_type = TEE_KEY_TYPE_ID_GENERIC_SECRET,                    \
+		.security_size_range = security_size_range_##_key_type,        \
+		.symmetric = true                                              \
+	}
+
 /**
  * struct key_def - TEE Key definition
  * @key_type_id: SMW key type ID
@@ -114,23 +124,15 @@ static const struct key_def {
 	struct security_size_range security_size_range;
 	bool symmetric;
 } key_def_list[] = {
-	KEY_DEF_RANGE_ASYM(SECP_R1),
-	KEY_DEF_ASYM(SECP_R1, 384),
-	KEY_DEF_ASYM(SECP_R1, 521),
-	KEY_DEF_ASYM(ED25519, 256),
-	KEY_DEF_RANGE_SYM(AES),
-	KEY_DEF_SYM(DES, 56),
-	KEY_DEF_RANGE_SYM(DES3),
-	KEY_DEF_SYM(SM4, 128),
-	KEY_DEF_HMAC(MD5),
-	KEY_DEF_HMAC(SHA1),
-	KEY_DEF_HMAC(SHA224),
-	KEY_DEF_HMAC(SHA256),
-	KEY_DEF_HMAC(SHA384),
-	KEY_DEF_HMAC(SHA512),
-	KEY_DEF_HMAC(SM3),
-	KEY_DEF_RANGE_ASYM(RSA),
-	KEY_DEF_RANGE_ASYM(GENERIC_SECRET),
+	KEY_DEF_RANGE_ASYM(SECP_R1), KEY_DEF_ASYM(SECP_R1, 384),
+	KEY_DEF_ASYM(SECP_R1, 521),  KEY_DEF_ASYM(ED25519, 256),
+	KEY_DEF_RANGE_SYM(AES),	     KEY_DEF_SYM(DES, 56),
+	KEY_DEF_RANGE_SYM(DES3),     KEY_DEF_SYM(SM4, 128),
+	KEY_DEF_HMAC(MD5),	     KEY_DEF_HMAC(SHA1),
+	KEY_DEF_HMAC(SHA224),	     KEY_DEF_HMAC(SHA256),
+	KEY_DEF_HMAC(SHA384),	     KEY_DEF_HMAC(SHA512),
+	KEY_DEF_HMAC(SM3),	     KEY_DEF_RANGE_ASYM(RSA),
+	KEY_DEF_DERIVE(DERIVE),
 };
 
 /**
@@ -179,8 +181,7 @@ int tee_convert_key_type(enum smw_config_key_type_id key_type_id,
 	return status;
 }
 
-static enum smw_config_key_type_id
-key_type_tee_to_smw(enum tee_key_type key_type)
+enum smw_config_key_type_id key_type_tee_to_smw(enum tee_key_type key_type)
 {
 	enum smw_config_key_type_id key_type_id =
 		SMW_CONFIG_KEY_TYPE_ID_INVALID;
@@ -331,6 +332,41 @@ find_check_key_def(enum smw_config_key_type_id key_type_id,
 	return NULL;
 }
 
+enum tee_key_type
+find_check_sym_key_def(enum smw_config_key_type_id key_type_id,
+		       unsigned int security_size,
+		       struct smw_key_attributes *key_attrs)
+{
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(key_def_list);
+	smw_attr_algo_t hash = SMW_ATTR_HASH_NONE;
+	enum tee_key_type key_type = TEE_KEY_TYPE_ID_INVALID;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_HMAC) {
+		if (!key_attrs)
+			return key_type;
+
+		hash = SMW_ATTR_GET_HASH(key_attrs->permitted_algo);
+	}
+
+	for (; i < size; i++) {
+		if (key_def_list[i].symmetric &&
+		    key_def_list[i].key_type_id == key_type_id &&
+		    check_security_size(&key_def_list[i], security_size) &&
+		    (key_type_id != SMW_CONFIG_KEY_TYPE_ID_HMAC ||
+		     hash == key_def_list[i].hash)) {
+			key_type = key_def_list[i].key_type;
+			break;
+		}
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned key_type = %d\n", __func__,
+		       key_type);
+	return key_type;
+}
+
 /**
  * free_tmpref_buffer() - Free a shared tmpref buffer parameter.
  * @param_idx: Index of the parameter in @op structure.
@@ -431,9 +467,12 @@ static int set_hex_exp_buffer(enum smw_keymgr_format_id format_id,
 			      unsigned char *buffer, unsigned char **hex_buffer,
 			      unsigned int hex_buffer_len)
 {
-	int status = SMW_STATUS_ALLOC_FAILURE;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!hex_buffer_len)
+		goto exit;
 
 	if (format_id == SMW_KEYMGR_FORMAT_ID_HEX) {
 		*hex_buffer = buffer;
@@ -443,6 +482,7 @@ static int set_hex_exp_buffer(enum smw_keymgr_format_id format_id,
 
 	*hex_buffer = SMW_UTILS_MALLOC(hex_buffer_len);
 	if (!*hex_buffer) {
+		status = SMW_STATUS_ALLOC_FAILURE;
 		SMW_DBG_PRINTF(ERROR, "Allocation failure\n");
 		goto exit;
 	}
@@ -877,7 +917,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Private key buffer length invalid.
- * Error code from set_hex_buffer().
+ * Error code from smw_keymgr_set_hex_key_buffer().
  * Error code from set_tmpref_buffer().
  */
 static int
@@ -901,8 +941,9 @@ set_params_import_pub_key(struct smw_keymgr_descriptor *key_descriptor,
 		goto exit;
 	}
 
-	status = set_hex_buffer(key_descriptor->format_id, pub_data,
-				pub_data_len, &hex_pub_data, &hex_pub_len);
+	status = smw_keymgr_set_hex_key_buffer(key_descriptor->format_id,
+					       pub_data, pub_data_len,
+					       &hex_pub_data, &hex_pub_len);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -948,7 +989,7 @@ exit:
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Private key buffer length invalid.
- * Error code from set_hex_buffer().
+ * Error code from smw_keymgr_set_hex_key_buffer().
  * Error code from set_tmpref_buffer().
  */
 static int
@@ -968,8 +1009,9 @@ set_params_import_priv_key(enum tee_key_type key_type,
 	if (!priv_data_len)
 		goto exit;
 
-	status = set_hex_buffer(key_descriptor->format_id, priv_data,
-				priv_data_len, &hex_priv_data, &hex_priv_len);
+	status = smw_keymgr_set_hex_key_buffer(key_descriptor->format_id,
+					       priv_data, priv_data_len,
+					       &hex_priv_data, &hex_priv_len);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -1009,7 +1051,7 @@ exit:
  * Return:
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Modulus buffer length invalid.
- * Error code from set_hex_buffer().
+ * Error code from smw_keymgr_set_hex_key_buffer().
  * Error code from set_tmpref_buffer().
  */
 static int
@@ -1025,8 +1067,9 @@ set_params_import_modulus(struct smw_keymgr_descriptor *key_descriptor,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = set_hex_buffer(key_descriptor->format_id, modulus, modulus_len,
-				&hex_modulus, &hex_modulus_len);
+	status = smw_keymgr_set_hex_key_buffer(key_descriptor->format_id,
+					       modulus, modulus_len,
+					       &hex_modulus, &hex_modulus_len);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 

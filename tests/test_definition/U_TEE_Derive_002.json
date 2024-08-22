@@ -1,46 +1,24 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "HMAC",
-			"security_size": 256,
-			"priv_key": [
-				"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
-				"0b0b0b0b0b0b"
-			],
-			"permitted_algo": [
-				"HMAC",
-				"HASH=SHA256"
-			]
+			"type": "RAW",
+			"pub_key": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"
 		},
 		"key 2": {
 			"shared_secret": [
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"30313233343536373839"
-			],
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"SIGN_HASH",
-				"SIGN_MESSAGE",
-				"VERIFY_HASH",
-				"VERIFY_MESSAGE"
 			]
 		},
 		"key 3": {
-			"type": "HMAC",
-			"security_size": 640,
-			"priv_key": [
+			"type": "RAW",
+			"pub_key": [
 				"000102030405060708090a0b0c0d0e0f",
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"303132333435363738393a3b3c3d3e3f",
 				"404142434445464748494a4b4c4d4e4f"
-			],
-			"permitted_algo": [
-				"HMAC",
-				"HASH=SHA256"
 			]
 		},
 		"key 4": {
@@ -51,13 +29,6 @@
 				"303132333435363738393a3b3c3d3e3f",
 				"404142434445464748494a4b4c4d4e4f",
 				"4041"
-			],
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"ENCRYPT",
-				"DECRYPT"
 			]
 		},
 		"key 5": {
@@ -65,36 +36,17 @@
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"30313233343536373839"
-			],
-			"attributes_list": [
-				"PERSISTENT"
-			],
-			"usage": [
-				"ENCRYPT",
-				"DECRYPT"
 			]
 		},
 		"key 6": {
-			"type": "HMAC",
-			"security_size": 256,
-			"priv_key": "0b0b0b0b0b0b0b0b0b0b0b",
-			"permitted_algo": [
-				"HMAC",
-				"HASH=SHA256"
-			]
+			"type": "RAW",
+			"pub_key": "0b0b0b0b0b0b0b0b0b0b0b"
 		},
 		"key 7": {
 			"shared_secret": [
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"30313233343536373839"
-			],
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"ENCRYPT",
-				"DECRYPT"
 			]
 		},
 		"key 8": {
@@ -105,13 +57,6 @@
 				"303132333435363738393a3b3c3d3e3f",
 				"404142434445464748494a4b4c4d4e4f",
 				"4041"
-			],
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"ENCRYPT",
-				"DECRYPT"
 			]
 		},
 		"key 9": {
@@ -119,25 +64,13 @@
 				"101112131415161718191a1b1c1d1e1f",
 				"202122232425262728292a2b2c2d2e2f",
 				"30313233343536373839"
-			],
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"ENCRYPT",
-				"DECRYPT"
 			]
 		},
 		"key 10": {
-			"type": "HMAC",
-			"security_size": 256,
-			"priv_key": [
+			"type": "RAW",
+			"pub_key": [
 				"0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
 				"0c0c0c0c0c0c"
-			],
-			"permitted_algo": [
-				"HMAC",
-				"HASH=SHA1"
 			]
 		},
 		"key 11": {
@@ -145,13 +78,6 @@
 				"000102030405060708090a0b0c0d0e0f",
 				"101112131415161718191a1b1c1d1e1f",
 				"20212223242526272829"
-			],
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"ENCRYPT",
-				"DECRYPT"
 			]
 		}
 	},
@@ -304,40 +230,5 @@
 			"b3bae548aa53d423b0d1f27ebba6f5e5",
 			"673a081d70cce7acfc48"
 		]
-	},
-	"subtest 8": {
-		"command": "DELETE",
-		"key_name": "key 2",
-		"depends": 1
-	},
-	"subtest 9": {
-		"command": "DELETE",
-		"key_name": "key 4",
-		"depends": 2
-	},
-	"subtest 10": {
-		"command": "DELETE",
-		"key_name": "key 5",
-		"depends": 3
-	},
-	"subtest 11": {
-		"command": "DELETE",
-		"key_name": "key 7",
-		"depends": 4
-	},
-	"subtest 12": {
-		"command": "DELETE",
-		"key_name": "key 8",
-		"depends": 5
-	},
-	"subtest 13": {
-		"command": "DELETE",
-		"key_name": "key 9",
-		"depends": 6
-	},
-	"subtest 14": {
-		"command": "DELETE",
-		"key_name": "key 11",
-		"depends": 7
 	}
 }

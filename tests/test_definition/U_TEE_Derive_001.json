@@ -130,15 +130,6 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 3": {
-		"description": "KDF name (NULL) not supported",
-		"command": "DERIVE",
-		"subsystem": "DEFAULT",
-		"op_input": "key 1",
-		"op_output": "key 2",
-		"depends": 1,
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
-	},
-	"subtest 4": {
 		"description": "Base key private key buffer is not set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
@@ -150,7 +141,7 @@
 		"op_output": "key 2",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
-	"subtest 5": {
+	"subtest 4": {
 		"description": "HKDF_EXTRACT step is set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
@@ -164,7 +155,7 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 6": {
+	"subtest 5": {
 		"description": "HKDF_EXPAND step is set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
@@ -178,7 +169,7 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 7": {
+	"subtest 6": {
 		"description": "Unsupported KDF",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
@@ -206,13 +197,14 @@
 		"op_output": "key 5",
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
-	"subtest 8": {
+	"subtest 7": {
+		"description": "Import Key 6",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 6"
 	},
-	"subtest 9": {
-		"descriptor": "Asymmetric base key",
+	"subtest 8": {
+		"description": "Asymmetric base key",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 6",
@@ -221,17 +213,17 @@
 			"algo": "SHA256"
 		},
 		"op_output": "key 2",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 8
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+		"depends": 7
 	},
-	"subtest 10": {
+	"subtest 9": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 11": {
+	"subtest 10": {
 		"command": "DELETE",
 		"key_name": "key 6",
-		"depends": 8
+		"depends": 7
 	}
 }

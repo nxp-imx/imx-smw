@@ -99,6 +99,13 @@
 			"usage": [
 				"DERIVE"
 			]
+		},
+		"key 7": {
+			"type": "RAW",
+			"pub_key": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
 		}
 	},
 	"subtest 1": {
@@ -161,7 +168,7 @@
 		"description": "HKDF_EXPAND step is set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
-		"op_input": "key 1",
+		"op_input": "key 7",
 		"op_type": "HKDF",
 		"op_args": {
 			"algo": "SHA256",

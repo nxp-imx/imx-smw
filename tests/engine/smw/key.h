@@ -253,6 +253,17 @@ smw_key_format_t key_get_format_name(const char *string);
 int key_desc_init(struct keypair_ops *key_test, struct smw_keypair_buffer *key);
 
 /**
+ * set_key_ops() - Set a SMW keypair to the key descriptor
+ * @key_test: Test keypair structure with operations
+ *
+ * Setup the test keypair operations.
+ *
+ * Return:
+ * None.
+ */
+void set_key_ops(struct keypair_ops *key_test);
+
+/**
  * key_read_descriptor() - Read the key descriptor definition
  * @keys: Keys list.
  * @key_test: Test keypair structure with operations.

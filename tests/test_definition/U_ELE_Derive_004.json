@@ -1,0 +1,317 @@
+{
+	"keys": {
+		"base key 1": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"HKDF_EXTRACT",
+				"HASH=SHA256"
+			]
+		},
+		"prk 1": {},
+		"derived key 1": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		},
+		"base key 2": {
+			"type": "SECP_R1",
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"HKDF_EXTRACT",
+				"HASH=SHA384"
+			]
+		},
+		"prk 2": {
+			"shared_secret": [
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"303132333435363738393a3b3c3d3e3f"
+			]
+		},
+		"derived key 2": {
+			"security_size": 384,
+			"shared_secret": [
+				"000102030405060708090a0b0c0d0e0f",
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f"
+			]
+		},
+		"base key 3": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"HKDF_EXTRACT",
+				"HASH=SHA256"
+			]
+		},
+		"derived key 3": {
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		},
+		"derived key 4": {
+			"security_size": 128,
+			"shared_secret": "101112131415161718191a1b1c1d1e1f"
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "base key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"Symmetric base key (security size 256) is used",
+			"Key derivation algo is HKDF EXTRACT SHA256",
+			"PRK is stored"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 1",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXTRACT",
+			"salt": [
+				"000102030090a0b0c0d0e0f405060708",
+				"0d0e0f0001020708090a0b0c30405060"
+			],
+			"algo": "SHA256",
+			"peer_public_key": [
+				"e458390739c8326b4a14b17b1c94d8a6",
+				"9121841f0178ff517d5144511564b6a3",
+				"784e071fb18b71b4626bbe77396325b7",
+				"d334e00d28e0557a05fd78424d2968e8"
+			]
+		},
+		"op_output": "prk 1",
+		"depends": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 3": {
+		"description": [
+			"Key derivation algo is HKDF EXPAND SHA256",
+			"PRK ID is set",
+			"Derived key is stored"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "prk 1",
+		"op_type": "HKDF",
+		"store_key": true,
+		"op_args": {
+			"type": "HKDF_EXPAND",
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256"
+		},
+		"op_output": "derived key 1",
+		"depends": 2,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 4": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "base key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 5": {
+		"description": [
+			"Symmetric base key (security size 384) is used",
+			"Key derivation algo is HKDF EXTRACT SHA384",
+			"PRK is exported"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 2",
+		"op_output": "prk 2",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXTRACT",
+			"salt": [
+				"606162636465666768696a6b6c6d6e6f",
+				"707172737475767778797a7b7c7d7e7f",
+				"808182838485868788898a8b8c8d8e8f"
+			],
+			"algo": "SHA384",
+			"peer_public_key": [
+				"0eb3a6a20ab7c0f6c9cf33d2ced49935",
+				"59b493c90c0c00ad67c8bea44a0b99c7",
+				"952a09760107fb89fb7b8cc75aa65123",
+				"89dd5e57d19b20a515ac38620bee7b4f",
+				"6e806961f9c9196c928568ff9c5ee633",
+				"959eae46fb978e2069d243124571a299"
+			]
+		},
+		"depends": 4,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 6": {
+		"description": [
+			"Key derivation algo is HKDF EXPAND SHA384",
+			"PRK buffer is set",
+			"Derived key buffer is exported"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "prk 2",
+		"op_output": "derived key 2",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXPAND",
+			"info": [
+				"b0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+				"c0c1c2c3c4c5c6c7c8c9cacbcccdcecf",
+				"d0d1d2d3d4d5d6d7d8d9dadbdcdddedf",
+				"e0e1e2e3e4e5e6e7e8e9eaebecedeeef"
+			],
+			"algo": "SHA384"
+		},
+		"depends": 5,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 7": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "base key 3",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 8": {
+		"description": [
+			"Symmetric base key (security size 256) is used",
+			"Key derivation algo is HKDF FULL SHA256",
+			"Derived Key is stored"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 3",
+		"op_type": "HKDF",
+		"store_key": true,
+		"op_args": {
+			"salt": "000102030405060708090a0b0c0d0e0f",
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256",
+			"peer_public_key": [
+				"e458390739c8326b4a14b17b1c94d8a6",
+				"9121841f0178ff517d5144511564b6a3",
+				"784e071fb18b71b4626bbe77396325b7",
+				"d334e00d28e0557a05fd78424d2968e8"
+			]
+		},
+		"op_output": "derived key 3",
+		"depends": 7,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 9": {
+		"description": [
+			"Symmetric base key (security size 256) is used",
+			"Key derivation algo is HKDF FULL SHA256",
+			"Derived Key is exported"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 3",
+		"op_type": "HKDF",
+		"op_args": {
+			"salt": "000102030405060708090a0b0c0d0e0f",
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256",
+			"peer_public_key": [
+				"e458390739c8326b4a14b17b1c94d8a6",
+				"9121841f0178ff517d5144511564b6a3",
+				"784e071fb18b71b4626bbe77396325b7",
+				"d334e00d28e0557a05fd78424d2968e8"
+			]
+		},
+		"op_output": "derived key 4",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "base key 1",
+		"depends": 1
+	},
+	"subtest 11": {
+		"command": "DELETE",
+		"key_name": "derived key 1",
+		"depends": 3
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "base key 2",
+		"depends": 4
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "base key 3",
+		"depends": 7
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "derived key 3",
+		"depends": 8
+	}
+}

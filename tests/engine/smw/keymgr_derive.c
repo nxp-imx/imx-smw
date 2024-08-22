@@ -16,8 +16,15 @@
 #include "keymgr.h"
 #include "hash.h"
 
-#define HKDF_EXPAND  "HKDF_EXPAND"
-#define HKDF_EXTRACT "HKDF_EXTRACT"
+enum hkdf_step {
+	HKDF_STEP_INVALID,
+	/* HKDF step 1 expand */
+	HKDF_STEP_EXPAND,
+	/* HKDF step 2 extract */
+	HKDF_STEP_EXTRACT,
+	/* HKDF Step 1 and step 2 combined */
+	HKDF_STEP_FULL
+};
 
 #define KDF_NAME(_name)                                                        \
 	{                                                                      \
@@ -100,7 +107,7 @@ static smw_tls12_enc_t get_tls12_encryption_name(const char *string)
 /**
  * read_derived_key_descriptor() - Read the derived key descriptor definition
  * @keys: Keys list.
- * @derived_key_desc: Derived key descriptor structure.
+ * @derived_key_desc: Pointer to derived key descriptor structure.
  * @key_name: Key name.
  *
  * Read the test definition to extract SMW derived key descriptor fields
@@ -188,6 +195,180 @@ static void key_prepare_derived_key_data(struct smw_derived_key_descriptor *key,
 		key_data->pub_key.data = key->shared_secret;
 		key_data->pub_key.length = key->shared_secret_len;
 	}
+}
+
+/**
+ * setup_derive_base() - Setup the key derivation base argument.
+ * @subtest: Subtest data.
+ * @key_base: Test keypair operations.
+ * @base_buffer: Pointer to base keypair buffer structure.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
+ */
+static int setup_derive_base(struct subtest_data *subtest,
+			     struct keypair_ops *key_base,
+			     struct smw_keypair_buffer *base_buffer)
+{
+	int res = ERR_CODE(FAILED);
+	const char *key_name = NULL;
+
+	/* Initialize key descriptor */
+	res = key_desc_init(key_base, base_buffer);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = util_read_json_type(&key_name, OP_INPUT_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	/* Read the json-c key description */
+	res = key_read_descriptor(list_keys(subtest), key_base, key_name);
+
+	return res;
+}
+
+/**
+ * read_prk_descriptor() - Read PRK descriptor definition
+ * @subtest: Subtest data
+ * @key_test: Test keypair operations.
+ * @key_buffer: Pointer to base keypair buffer structure.
+ *
+ * Read the test definition to extract PRK descriptor field key format, if
+ * defined.
+ * Read PRK ID/ buffer stored from the key linked list.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -FAILED                  - Error in definition file
+ */
+static int setup_prk_descriptor(struct subtest_data *subtest,
+				struct keypair_ops *key_test,
+				struct smw_keypair_buffer *key_buffer)
+{
+	int ret = ERR_CODE(PASSED);
+	struct key_data *data = NULL;
+	const char *key_name = NULL;
+	const char *format_string = NULL;
+	const char *type_string = NULL;
+	struct smw_key_descriptor *prk_desc = NULL;
+
+	prk_desc = &key_test->desc;
+
+	ret = util_read_json_type(&key_name, OP_INPUT_OBJ, t_string,
+				  subtest->params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	if (!prk_desc || !key_name) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	ret = util_list_find_node(list_keys(subtest), (uintptr_t)key_name,
+				  (void **)&data);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	if (!data)
+		return ERR_CODE(KEY_NOTFOUND);
+
+	/* Initialize key descriptor */
+	ret = key_desc_init(key_test, key_buffer);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	/* Read 'format' parameter if defined */
+	ret = util_read_json_type(&format_string, FORMAT_OBJ, t_string,
+				  data->okey_params);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		return ret;
+
+	key_buffer->format_name = key_get_format_name(format_string);
+
+	/* Read PRK Type name, if set */
+	ret = util_read_json_type(&type_string, TYPE_OBJ, t_string,
+				  data->okey_params);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	prk_desc->type_name = key_get_type_name(type_string);
+
+	/* Read PRK ID, if set */
+	ret = util_read_json_type(&prk_desc->id, ID_OBJ, t_uint,
+				  data->okey_params);
+	if (ret == ERR_CODE(PASSED))
+		goto end;
+
+	/* Read public key buffer, if any */
+	ret = util_read_obj_value(key_public_data(key_test),
+				  key_public_length(key_test), PUB_KEY_OBJ,
+				  data->okey_params);
+	if (ret == ERR_CODE(PASSED)) {
+		prk_desc->type_name = SMW_KEY_TYPE_NAME_RAW;
+		goto end;
+	}
+
+	/* If the PRK ID or public key buffer are not defined in the test
+	 * definition, fetch the PRK ID or public key buffer from the
+	 * key linked list.
+	 */
+	if (data->identifier) {
+		prk_desc->id = data->identifier;
+	} else if (data->pub_key.data) {
+		prk_desc->buffer->format_name =
+			key_get_format_name(format_string);
+		prk_desc->type_name = SMW_KEY_TYPE_NAME_RAW;
+
+		*key_public_length(key_test) = data->pub_key.length;
+		*key_public_data(key_test) = malloc(data->pub_key.length);
+		if (!*key_public_data(key_test)) {
+			DBG_PRINT_ALLOC_FAILURE();
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		memcpy(*key_public_data(key_test), data->pub_key.data,
+		       data->pub_key.length);
+	}
+
+end:
+	return ERR_CODE(PASSED);
+}
+
+/**
+ * kdf_tls12_setup_base_key() - Setup the base key for key derivation operation.
+ * @subtest: Subtest data.
+ * @args: Pointer to public key derivation argument structure.
+ * @key_base: Test keypair operations.
+ * @base_buffer: Pointer to base keypair buffer structure.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
+ */
+static int kdf_tls12_setup_base_key(struct subtest_data *subtest,
+				    struct smw_derive_key_args *args,
+				    struct keypair_ops *key_base,
+				    struct smw_keypair_buffer *base_buffer)
+{
+	int res = ERR_CODE(PASSED);
+	(void)args;
+
+	res = setup_derive_base(subtest, key_base, base_buffer);
+
+	return res;
 }
 
 /**
@@ -293,7 +474,7 @@ end:
 /**
  * kdf_tls12_prepare_result() - Prepare the TLS 1.2 results
  * @subtest: Subtest data
- * @derived_key_desc: Derived key descriptor structure
+ * @args: Pointer to public key derivation argument structure
  *
  * Return:
  * PASSED                   - Success.
@@ -302,17 +483,23 @@ end:
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  * -FAILED                  - Error in definition file
  */
-static int
-kdf_tls12_prepare_result(struct subtest_data *subtest,
-			 struct smw_derived_key_descriptor *derived_key_desc)
+static int kdf_tls12_prepare_result(struct subtest_data *subtest,
+				    struct smw_derive_key_args *args)
 {
 	int res = ERR_CODE(PASSED);
 	const char *key_name = NULL;
+	struct smw_derived_key_descriptor *derived_key_desc = NULL;
 
 	res = util_read_json_type(&key_name, OP_OUTPUT_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
+
+	res = key_read_attributes(subtest->params, &args->key_attributes);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	derived_key_desc = args->key_descriptor_derived;
 
 	res = read_derived_key_descriptor(list_keys(subtest), derived_key_desc,
 					  key_name);
@@ -482,6 +669,70 @@ static int compare_output(unsigned char *received_output,
 }
 
 /**
+ * get_hkdf_step() - Return HKDF step.
+ * @args: Pointer to public Key derivation arguments structure
+ *
+ * Return:
+ * HKDF step
+ */
+static int get_hkdf_step(struct smw_derive_key_args *args)
+{
+	enum hkdf_step step = HKDF_STEP_INVALID;
+	struct smw_kdf_hkdf_args *hkdf_args = NULL;
+
+	if (args && args->kdf_arguments) {
+		hkdf_args = args->kdf_arguments;
+		if (!hkdf_args->extract && hkdf_args->expand)
+			step = HKDF_STEP_EXPAND;
+		else if (!hkdf_args->expand && hkdf_args->extract)
+			step = HKDF_STEP_EXTRACT;
+		else if (hkdf_args->expand && hkdf_args->extract)
+			step = HKDF_STEP_FULL;
+	}
+
+	return step;
+}
+
+/**
+ * kdf_hkdf_setup_base_key() - Setup the base key for HKDF.
+ * @subtest: Subtest data.
+ * @args: Pointer to public key derivation argument structure.
+ * @key_base: Test keypair operations.
+ * @base_buffer: Pointer to base keypair buffer structure.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
+ */
+static int kdf_hkdf_setup_base_key(struct subtest_data *subtest,
+				   struct smw_derive_key_args *args,
+				   struct keypair_ops *key_base,
+				   struct smw_keypair_buffer *base_buffer)
+{
+	int res = ERR_CODE(PASSED);
+
+	enum hkdf_step step = HKDF_STEP_INVALID;
+
+	if (!args || !subtest || !base_buffer || !key_base) {
+		DBG_PRINT_BAD_ARGS();
+		res = ERR_CODE(BAD_ARGS);
+		return res;
+	}
+
+	step = get_hkdf_step(args);
+	if (step == HKDF_STEP_EXTRACT || step == HKDF_STEP_FULL)
+		res = setup_derive_base(subtest, key_base, base_buffer);
+	else if (step == HKDF_STEP_EXPAND)
+		res = setup_prk_descriptor(subtest, key_base, base_buffer);
+
+	return res;
+}
+
+/**
  * kdf_hkdf_read_args() - Read the HKDF function arguments
  * @kdf_args: SMW's HMAC-based Key derivation function arguments
  * @oargs: Reference to the test definition json-c arguments array
@@ -496,12 +747,14 @@ static int kdf_hkdf_read_args(void **kdf_args, struct json_object *oargs)
 {
 	int res = ERR_CODE(BAD_ARGS);
 
-	struct tbuffer buf = { 0 };
+	struct tbuffer salt_buf = { 0 };
+	struct tbuffer info_buf = { 0 };
+	struct tbuffer peer_pub_buf = { 0 };
 	const char *hash_string = NULL;
 	char *hkdf_step = NULL;
-	unsigned int okm_len = 0;
 
 	struct smw_kdf_hkdf_args *hkdf_args = NULL;
+	enum hkdf_step step = HKDF_STEP_INVALID;
 
 	if (!kdf_args || !oargs) {
 		DBG_PRINT_BAD_ARGS();
@@ -524,64 +777,75 @@ static int kdf_hkdf_read_args(void **kdf_args, struct json_object *oargs)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
-	if (hkdf_step && (!strcmp(hkdf_step, HKDF_EXPAND))) {
+	if (hkdf_step && (!strcmp(hkdf_step, "HKDF_EXPAND"))) {
 		hkdf_args->expand = true;
-	} else if (hkdf_step && (!strcmp(hkdf_step, HKDF_EXTRACT))) {
+		step = HKDF_STEP_EXPAND;
+	} else if (hkdf_step && (!strcmp(hkdf_step, "HKDF_EXTRACT"))) {
 		hkdf_args->extract = true;
+		step = HKDF_STEP_EXTRACT;
 	} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
 		hkdf_args->expand = true;
 		hkdf_args->extract = true;
+		step = HKDF_STEP_FULL;
+	} else {
+		res = ERR_CODE(BAD_ARGS);
+		goto end;
 	}
 
 	/* Get info buffer, if defined */
-	res = util_read_json_type(&buf, INFO_OBJ, t_buffer_hex, oargs);
+	res = util_read_json_type(&info_buf, INFO_OBJ, t_buffer_hex, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
 		DBG_PRINT("Failed to read info buffer");
 		goto end;
 	}
 
-	if (hkdf_args->extract && hkdf_args->expand) {
-		hkdf_args->hkdf_args.info = buf.data;
-		hkdf_args->hkdf_args.info_len = buf.length;
-	} else if (!hkdf_args->extract && hkdf_args->expand) {
-		hkdf_args->hkdf_expand_args.info = buf.data;
-		hkdf_args->hkdf_expand_args.info_len = buf.length;
-	}
-
 	/* Get salt buffer, if defined */
-	res = util_read_json_type(&buf, SALT_OBJ, t_buffer_hex, oargs);
+	res = util_read_json_type(&salt_buf, SALT_OBJ, t_buffer_hex, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
 		DBG_PRINT("Failed to read salt buffer");
 		goto end;
 	}
 
-	if (hkdf_args->extract && hkdf_args->expand) {
-		hkdf_args->hkdf_args.salt = buf.data;
-		hkdf_args->hkdf_args.salt_len = buf.length;
-	} else if (hkdf_args->extract && !hkdf_args->expand) {
-		hkdf_args->hkdf_extract_args.salt = buf.data;
-		hkdf_args->hkdf_extract_args.salt_len = buf.length;
-	}
-
-	/* Get OKM length (derived key length), if defined */
-	res = util_read_json_type(&okm_len, OKM_LEN_OBJ, t_uint, oargs);
+	res = util_read_json_type(&peer_pub_buf, PEER_PUB_KEY_OBJ, t_buffer_hex,
+				  oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
-		DBG_PRINT("Failed to read OKM length");
+		DBG_PRINT("Failed to read peer public buffer");
 		goto end;
 	}
 
-	if (hkdf_args->extract && hkdf_args->expand)
-		hkdf_args->hkdf_args.okm_len = okm_len;
-	else if (!hkdf_args->extract && hkdf_args->expand)
-		hkdf_args->hkdf_expand_args.okm_len = okm_len;
+	if (step == HKDF_STEP_FULL) {
+		hkdf_args->hkdf_args.info = info_buf.data;
+		hkdf_args->hkdf_args.info_len = info_buf.length;
+		hkdf_args->hkdf_args.salt = salt_buf.data;
+		hkdf_args->hkdf_args.salt_len = salt_buf.length;
+		hkdf_args->hkdf_args.peer_public_buffer = peer_pub_buf.data;
+		hkdf_args->hkdf_args.peer_public_buffer_len =
+			peer_pub_buf.length;
+	} else if (step == HKDF_STEP_EXTRACT) {
+		hkdf_args->hkdf_extract_args.salt = salt_buf.data;
+		hkdf_args->hkdf_extract_args.salt_len = salt_buf.length;
+		hkdf_args->hkdf_extract_args.peer_public_buffer =
+			peer_pub_buf.data;
+		hkdf_args->hkdf_extract_args.peer_public_buffer_len =
+			peer_pub_buf.length;
+	} else if (step == HKDF_STEP_EXPAND) {
+		hkdf_args->hkdf_expand_args.info = info_buf.data;
+		hkdf_args->hkdf_expand_args.info_len = info_buf.length;
+	}
 
 	*kdf_args = hkdf_args;
 	res = ERR_CODE(PASSED);
 
 end:
 	if (res != ERR_CODE(PASSED) && hkdf_args) {
-		if (buf.data)
-			free(buf.data);
+		if (salt_buf.data)
+			free(salt_buf.data);
+
+		if (info_buf.data)
+			free(info_buf.data);
+
+		if (peer_pub_buf.data)
+			free(peer_pub_buf.data);
 
 		free(hkdf_args);
 	}
@@ -593,6 +857,7 @@ end:
  * kdf_hkdf_prepare_result() - Prepare the HKDF results
  * @subtest: Subtest data
  * @key: Derived key descriptor structure
+ * @args: Pointer to public key derivation argument structure
  *
  * Return:
  * PASSED                   - Success.
@@ -602,20 +867,36 @@ end:
  * -FAILED                  - Error in definition file
  */
 static int kdf_hkdf_prepare_result(struct subtest_data *subtest,
-				   struct smw_derived_key_descriptor *key)
+				   struct smw_derive_key_args *args)
 {
 	int res = ERR_CODE(PASSED);
 
 	const char *key_name = NULL;
+	struct smw_derived_key_descriptor *key = NULL;
+	struct json_object *okey_params = NULL;
+
+	enum hkdf_step step = get_hkdf_step(args);
+
+	if (step == HKDF_STEP_EXPAND || step == HKDF_STEP_FULL) {
+		res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ,
+					      &okey_params);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		res = key_read_attributes(okey_params, &args->key_attributes);
+		if (res != ERR_CODE(PASSED))
+			return res;
+	}
 
 	res = util_read_json_type(&key_name, OP_OUTPUT_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED))
-		goto end;
+		return res;
+
+	key = args->key_descriptor_derived;
 
 	res = read_derived_key_descriptor(list_keys(subtest), key, key_name);
 
-end:
 	return res;
 }
 
@@ -680,21 +961,36 @@ end:
 }
 
 /**
- * free_info_salt_buffers() - Release memory allocated to salt and info buffers
+ * free_buffers() - Release memory allocated to buffers
  * @hkdf_args: Pointer to HMAC-based Key derivation function arguments
+ *
+ * Release info, salt or peer public key buffer based on HKDF step.
  *
  * Return:
  * None.
  */
-static void free_info_salt_buffers(struct smw_kdf_hkdf_args *hkdf_args)
+static void free_buffers(struct smw_kdf_hkdf_args *hkdf_args)
 {
 	if (hkdf_args->expand && !hkdf_args->extract) {
-		free(hkdf_args->hkdf_expand_args.info);
+		if (hkdf_args->hkdf_expand_args.info)
+			free(hkdf_args->hkdf_expand_args.info);
+
 	} else if (!hkdf_args->expand && hkdf_args->extract) {
-		free(hkdf_args->hkdf_extract_args.salt);
+		if (hkdf_args->hkdf_extract_args.salt)
+			free(hkdf_args->hkdf_extract_args.salt);
+
+		if (hkdf_args->hkdf_extract_args.peer_public_buffer)
+			free(hkdf_args->hkdf_extract_args.peer_public_buffer);
+
 	} else if (hkdf_args->expand && hkdf_args->extract) {
-		free(hkdf_args->hkdf_args.info);
-		free(hkdf_args->hkdf_args.salt);
+		if (hkdf_args->hkdf_args.info)
+			free(hkdf_args->hkdf_args.info);
+
+		if (hkdf_args->hkdf_args.salt)
+			free(hkdf_args->hkdf_args.salt);
+
+		if (hkdf_args->hkdf_args.peer_public_buffer)
+			free(hkdf_args->hkdf_args.peer_public_buffer);
 	}
 }
 
@@ -713,7 +1009,7 @@ static void kdf_hkdf_free(struct smw_derive_key_args *args)
 		if (args->kdf_arguments) {
 			hkdf_args = args->kdf_arguments;
 
-			free_info_salt_buffers(hkdf_args);
+			free_buffers(hkdf_args);
 
 			free(args->kdf_arguments);
 			args->kdf_arguments = NULL;
@@ -723,14 +1019,19 @@ static void kdf_hkdf_free(struct smw_derive_key_args *args)
 
 static const struct kdf_op {
 	smw_kdf_t name;
+	int (*setup_base)(struct subtest_data *subtest,
+			  struct smw_derive_key_args *args,
+			  struct keypair_ops *key_base,
+			  struct smw_keypair_buffer *base_buffer);
 	int (*read_args)(void **kdf_args, struct json_object *oargs);
 	int (*prepare_result)(struct subtest_data *subtest,
-			      struct smw_derived_key_descriptor *key_desc);
+			      struct smw_derive_key_args *args);
 	int (*end_operation)(struct subtest_data *subtest,
 			     struct smw_derive_key_args *args);
 	void (*free)(struct smw_derive_key_args *args);
 } kdf_ops[] = { {
 			.name = SMW_KDF_NAME_TLS12_KEY_EXCHANGE,
+			.setup_base = &kdf_tls12_setup_base_key,
 			.read_args = &kdf_tls12_read_args,
 			.prepare_result = &kdf_tls12_prepare_result,
 			.end_operation = &kdf_tls12_end_operation,
@@ -738,6 +1039,7 @@ static const struct kdf_op {
 		},
 		{
 			.name = SMW_KDF_NAME_HKDF,
+			.setup_base = &kdf_hkdf_setup_base_key,
 			.read_args = &kdf_hkdf_read_args,
 			.prepare_result = &kdf_hkdf_prepare_result,
 			.end_operation = &kdf_hkdf_end_operation,
@@ -765,6 +1067,37 @@ static const struct kdf_op *get_kdf_op(smw_kdf_t kdf_name)
 	}
 
 	return NULL;
+}
+
+/**
+ * kdf_setup_base() - Setup the key derivation base key arguments.
+ * @subtest: Subtest data.
+ * @args: Pointer to public key derivation argument structure.
+ * @key_base: Test keypair operations.
+ * @base_buffer: Pointer to base keypair buffer structure.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
+ */
+static int kdf_setup_base(struct subtest_data *subtest,
+			  struct smw_derive_key_args *args,
+			  struct keypair_ops *key_base,
+			  struct smw_keypair_buffer *base_buffer)
+{
+	int res = ERR_CODE(FAILED);
+
+	const struct kdf_op *kdf_op;
+
+	kdf_op = get_kdf_op(args->kdf_name);
+	if (kdf_op && kdf_op->setup_base)
+		res = kdf_op->setup_base(subtest, args, key_base, base_buffer);
+
+	return res;
 }
 
 /**
@@ -838,20 +1171,16 @@ static int setup_derive_opt_params(struct subtest_data *subtest,
 				   struct smw_derive_key_args *args)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	struct json_object *okey_params = NULL;
 
 	if (!subtest || !args || !args->key_attributes) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
-	res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ, &okey_params);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	res = key_read_attributes(okey_params, &args->key_attributes);
-	if (res != ERR_CODE(PASSED))
-		return res;
+	res = util_read_json_type(&args->store_derived_key, STORE_KEY_OBJ,
+				  t_boolean, subtest->params);
+	if (res == ERR_CODE(VALUE_NOTFOUND))
+		res = ERR_CODE(PASSED);
 
 	/* Read (if any) the key derivation function name and arguments */
 	res = kdf_args_read(args, subtest->params);
@@ -881,45 +1210,7 @@ static int setup_derive_output(struct subtest_data *subtest,
 	kdf_op = get_kdf_op(args->kdf_name);
 
 	if (kdf_op && kdf_op->prepare_result)
-		res = kdf_op->prepare_result(subtest,
-					     args->key_descriptor_derived);
-
-	return res;
-}
-
-/**
- * setup_derive_base() - Setup the key derivation base argument.
- * @subtest: Subtest data.
- * @key_base: Test keypair operation's base.
- * @base_buffer: Pointer to base keypair buffer structure.
- *
- * Return:
- * PASSED                   - Success.
- * -BAD_ARGS                - One of the arguments is bad.
- * -BAD_PARAM_TYPE          - A parameter value is undefined.
- * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
- * -FAILED                  - Error in definition file
- * -API_STATUS_NOK          - SMW API Call return error
- */
-static int setup_derive_base(struct subtest_data *subtest,
-			     struct keypair_ops *key_base,
-			     struct smw_keypair_buffer *base_buffer)
-{
-	int res = ERR_CODE(FAILED);
-	const char *key_name = NULL;
-
-	/* Initialize key descriptor */
-	res = key_desc_init(key_base, base_buffer);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	res = util_read_json_type(&key_name, OP_INPUT_OBJ, t_string,
-				  subtest->params);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
-	/* Read the json-c key description */
-	res = key_read_descriptor(list_keys(subtest), key_base, key_name);
+		res = kdf_op->prepare_result(subtest, args);
 
 	return res;
 }
@@ -1027,13 +1318,12 @@ int derive_key(struct subtest_data *subtest)
 	args.key_descriptor_base = &key_base.desc;
 	args.key_descriptor_derived = &key_derived;
 
-	/* Setup key descriptor or the key base */
-	res = setup_derive_base(subtest, &key_base, &base_buffer);
+	/* Setup optional parameters */
+	res = setup_derive_opt_params(subtest, &args);
 	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))
 		goto exit;
 
-	/* Setup optional parameters */
-	res = setup_derive_opt_params(subtest, &args);
+	res = kdf_setup_base(subtest, &args, &key_base, &base_buffer);
 	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))
 		goto exit;
 
@@ -1047,6 +1337,9 @@ int derive_key(struct subtest_data *subtest)
 		goto exit;
 
 	subtest->smw_status = smw_derive_key(smw_args);
+	if (subtest->smw_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
+		subtest->smw_status = SMW_STATUS_OK;
+
 	if (subtest->smw_status == SMW_STATUS_OUTPUT_TOO_SHORT)
 		DBG_PRINT("Shared secret buffer too short, expected length = %u",
 			  args.key_descriptor_derived->shared_secret_len);

@@ -91,12 +91,14 @@
 		"key_name": "key 1"
 	},
 	"subtest 2": {
+		"description": "Key derivation argument is NULL",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"test_error": "ARGS_NULL",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 3": {
+		"description": "Unsupported version no is set",
 		"command": "DERIVE",
 		"version": 255,
 		"subsystem": "DEFAULT",
@@ -138,6 +140,10 @@
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 3",
+		"op_type": "HKDF",
+		"op_args": {
+			"algo": "SHA256"
+		},
 		"result": "SMW_STATUS_UNKNOWN_KEY_TYPE_NAME"
 	},
 	"subtest 9": {
@@ -145,6 +151,10 @@
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 4",
+		"op_type": "HKDF",
+		"op_args": {
+			"algo": "SHA256"
+		},
 		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
 	},
 	"subtest 10": {
@@ -191,6 +201,15 @@
 		"depends": 1
 	},
 	"subtest 15": {
+		"description": "Key derivation name function not defined",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "key 2",
+		"op_output": "key 9",
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 16": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

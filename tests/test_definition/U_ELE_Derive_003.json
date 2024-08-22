@@ -1,0 +1,463 @@
+{
+	"keys": {
+		"base key 1": {
+			"type": "RAW",
+			"pub_key": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"
+		},
+		"prk 1": {
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
+		},
+		"derived key 1": {
+			"security_size": 256,
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
+		},
+		"base key 2": {
+			"type": "RAW",
+			"pub_key": [
+				"000102030405060708090a0b0c0d0e0f",
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"303132333435363738393a3b3c3d3e3f"
+			]
+		},
+		"prk 2": {
+			"shared_secret": [
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"303132333435363738393a3b3c3d3e3f"
+			]
+		},
+		"derived key 2": {
+			"security_size": 384,
+			"shared_secret": [
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
+			]
+		},
+		"prk 3": {},
+		"derived key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
+		},
+		"prk 4": {},
+		"derived key 4": {
+			"type": "HMAC",
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA384",
+				"LENGTH=8"
+			]
+		},
+		"prk 5": {
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
+		},
+		"derived key 5": {
+			"security_size": 256,
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
+		},
+		"prk 6": {
+			"shared_secret": [
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"303132333435363738393a3b3c3d3e3f"
+			]
+		},
+		"derived key 6": {
+			"security_size": 384,
+			"shared_secret": [
+				"101112131415161718191a1b1c1d1e1f",
+				"202122232425262728292a2b2c2d2e2f",
+				"d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": [
+			"Key derivation algo is HKDF EXTRACT SHA256",
+			"IKM buffer is set",
+			"PRK is exported"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 1",
+		"op_output": "prk 1",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXTRACT",
+			"salt": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"algo": "SHA256"
+		},
+		"output": [
+			"93f8178a53b9f8e095d6bb1d2c5ba595",
+			"c70589904a38fc0a4f8565b6992cda24"
+		],
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"Key derivation algo is HKDF EXPAND SHA256",
+			"PRK buffer is set",
+			"Derived key buffer is exported"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "prk 1",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXPAND",
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256"
+		},
+		"op_output": "derived key 1",
+		"output": [
+			"1538be1af9d801e2ee4b0286635423d9",
+			"59e36caa3392030ec249709ea4ff1d49"
+		],
+		"depends": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 3": {
+		"description": [
+			"Key derivation algo is HKDF EXTRACT SHA384",
+			"IKM buffer is set",
+			"PRK buffer is set"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 2",
+		"op_output": "prk 2",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXTRACT",
+			"salt": [
+				"606162636465666768696a6b6c6d6e6f",
+				"707172737475767778797a7b7c7d7e7f",
+				"606162636465666768696a6b6c6d6e6f"
+			],
+			"algo": "SHA384"
+		},
+		"output": [
+			"480676af331a46dacfd98deb4dc8ced1",
+			"20a5547492ef45f28a14377724d7fe30",
+			"a76dac9096a74c1c1f20c87d36fdd0b7"
+		],
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 4": {
+		"description": [
+			"Key derivation algo is HKDF EXPAND SHA384",
+			"PRK buffer is set",
+			"Derived key buffer is set"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "prk 2",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXPAND",
+			"info": "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+			"algo": "SHA384"
+		},
+		"op_output": "derived key 2",
+		"output": [
+			"c37bb12188fd7bee566605a0a7327495",
+			"cc448e5c31a7abaf19866b72d3a159bb",
+			"115f1c206a91b659108f22d3405e0e71"
+		],
+		"depends": 3,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 5": {
+		"description": [
+			"Key derivation algo is HKDF EXTRACT SHA256",
+			"IKM buffer is set",
+			"PRK is stored"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 1",
+		"op_output": "prk 3",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXTRACT",
+			"salt": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"algo": "SHA256"
+		},
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 6": {
+		"description": [
+			"Key derivation algo is HKDF EXPAND SHA256",
+			"PRK ID is set",
+			"Derived key is stored"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "prk 3",
+		"op_type": "HKDF",
+		"store_key": true,
+		"op_args": {
+			"type": "HKDF_EXPAND",
+			"info": "f0f1f2f3f4f5f6f7f8f9",
+			"algo": "SHA256"
+		},
+		"op_output": "derived key 3",
+		"depends": 5,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 7": {
+		"description": [
+			"Key derivation algo is HKDF EXTRACT SHA384.",
+			"IKM buffer is set",
+			"PRK is stored."
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 2",
+		"op_output": "prk 4",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXTRACT",
+			"salt": [
+				"606162636465666768696a6b6c6d6e6f",
+				"707172737475767778797a7b7c7d7e7f",
+				"606162636465666768696a6b6c6d6e6f"
+			],
+			"algo": "SHA384"
+		},
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 8": {
+		"description": [
+			"Key derivation algo is HKDF EXPAND SHA384",
+			"PRK ID is set",
+			"Derived key ID is stored"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "prk 4",
+		"op_type": "HKDF",
+		"store_key": true,
+		"op_args": {
+			"type": "HKDF_EXPAND",
+			"info": "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
+			"algo": "SHA384"
+		},
+		"op_output": "derived key 4",
+		"depends": 7,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 9": {
+		"description": [
+			"Key derivation algo is HKDF EXTRACT SHA256",
+			"Salt buffer is not set",
+			"IKM buffer is set",
+			"PRK is exported"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 1",
+		"op_output": "prk 5",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXTRACT",
+			"algo": "SHA256"
+		},
+		"output": [
+			"19ef24a32c717b167f33a91d6f648bdf",
+			"96596776afdb6377ac434c1c293ccb04"
+		],
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 10": {
+		"description": [
+			"Key derivation algo is HKDF EXPAND SHA256",
+			"PRK buffer is set",
+			"info buffer is not set",
+			"Derived key buffer is exported"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "prk 5",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXPAND",
+			"algo": "SHA256"
+		},
+		"op_output": "derived key 5",
+		"output": [
+			"8da4e775a563c18f715f802a063c5a31",
+			"b8a11f5c5ee1879ec3454e5f3c738d2d"
+		],
+		"depends": 9,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 11": {
+		"description": [
+			"Key derivation algo is HKDF EXTRACT SHA384",
+			"Salt buffer is not set",
+			"IKM buffer is set",
+			"PRK buffer is exported"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "base key 2",
+		"op_output": "prk 6",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXTRACT",
+			"algo": "SHA384"
+		},
+		"output": [
+			"6fb586f8cf73b2a3872a0d41da36c955",
+			"f8ec3c49e2577ec1090d5ad849886bcb",
+			"a9c554dcc233efab762715e842aaf392"
+		],
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 12": {
+		"description": [
+			"Key derivation algo is HKDF EXPAND SHA384",
+			"PRK buffer is set",
+			"info buffer is not set",
+			"Derived key is exported"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_input": "prk 6",
+		"op_type": "HKDF",
+		"op_args": {
+			"type": "HKDF_EXPAND",
+			"algo": "SHA384"
+		},
+		"op_output": "derived key 6",
+		"output": [
+			"8e69b02056cc013686697507eff0191b",
+			"2c88bd8a86fd466df60aefebb2686bd7",
+			"6f25cea52b163e2a003efea908efbf03"
+		],
+		"depends": 11,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 13": {
+		"description": [
+			"Perform AEAD encryption using previously derived key (derived key 3)",
+			"tag is part of output."
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "derived key 3",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"input": "30313233343536373839404142434445",
+		"tag": 16,
+		"aead_id": 1,
+		"depends": 6,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 14": {
+		"description": "Perform AEAD decryption using previously derived key (derived key 3)",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "derived key 3",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"aad": "353637383132333435363738",
+		"tag": 16,
+		"aead_id": 1,
+		"output": "30313233343536373839404142434445",
+		"depends": 13,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 15": {
+		"command": "DELETE",
+		"key_name": "derived key 3",
+		"depends": 6
+	},
+	"subtest 16": {
+		"command": "DELETE",
+		"key_name": "derived key 4",
+		"depends": 8
+	}
+}

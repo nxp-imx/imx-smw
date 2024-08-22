@@ -68,6 +68,8 @@ static const struct util_attr_info algo_info[] = {
 	ATTR_ALGO(TLS_1_2_SERVER, ASYMMETRIC_SIGNATURE, TLS_1_2, SERVER, ANY),
 	ATTR_ALGO(ATTEST_CMAC, KEY_ATTESTATION, DEFAULT, CMAC, ANY),
 	ATTR_ALGO_CURVE(ATTEST_ECDSA, KEY_ATTESTATION, ECDSA, ANY, ANY),
+	ATTR_ALGO(HKDF_EXTRACT, KEY_DERIVATION, HKDF_EXTRACT, NONE, ANY),
+	ATTR_ALGO(HKDF_EXPAND, KEY_DERIVATION, HKDF_EXPAND, NONE, ANY),
 	{ .string = NULL }
 };
 
@@ -177,16 +179,7 @@ static unsigned int *get_modulus_length_rsa(struct keypair_ops *this)
 	return &key->modulus_length;
 }
 
-/**
- * set_key_ops() - Set a SMW keypair to the key descriptor
- * @key_test: Test keypair structure with operations
- *
- * Setup the test keypair operations.
- *
- * Return:
- * None.
- */
-static void set_key_ops(struct keypair_ops *key_test)
+void set_key_ops(struct keypair_ops *key_test)
 {
 	if (!key_test->keys) {
 		key_test->public_data = NULL;

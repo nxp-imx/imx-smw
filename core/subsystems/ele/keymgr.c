@@ -315,7 +315,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 	return status;
 }
 
-static int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl)
+int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl)
 {
 	hsm_err_t err = HSM_NO_ERROR;
 	open_svc_key_management_args_t open_svc_key_management_args = { 0 };
@@ -332,7 +332,7 @@ static int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl)
 	return ele_convert_err(err);
 }
 
-static int close_key_mgt_service(hsm_hdl_t key_management_hdl)
+int close_key_mgt_service(hsm_hdl_t key_management_hdl)
 {
 	hsm_err_t err = HSM_NO_ERROR;
 

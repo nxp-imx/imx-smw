@@ -432,4 +432,25 @@ int ele_is_oem_srkh_fused(struct subsystem_context *ele_ctx, bool *fused);
  */
 void *ele_get_ctx_ops(void);
 
+/**
+ * open_key_mgmt_service() - Open a key management service flow
+ * @hdl: Pointer to subsystem context handlers
+ * @key_management_hdl: Return the key manager service handler
+ *
+ * Return:
+ * SMW_STATUS_OK                   - Success
+ * SMW_STATUS_SUBSYSTEM_FAILURE    - Subsystem failure
+ */
+int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl);
+
+/**
+ * close_key_mgt_service() - Close the key management service flow
+ * @key_management_hdl: Key manager service handler to close
+ *
+ * Return:
+ * SMW_STATUS_OK                   - Success
+ * SMW_STATUS_SUBSYSTEM_FAILURE    - Subsystem failure
+ */
+int close_key_mgt_service(hsm_hdl_t key_management_hdl);
+
 #endif /* __COMMON_H__ */

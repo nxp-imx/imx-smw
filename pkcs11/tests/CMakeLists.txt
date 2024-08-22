@@ -109,9 +109,3 @@ pkcs11_test(encrypt_decrypt_message)
 pkcs11_test(encrypt_decrypt_multipart)
 pkcs11_test(encrypt_decrypt_multipart_message)
 pkcs11_test(data_storage)
-
-# If TEE subsystem defined, include tests
-if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
-   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TA_dev_kit)
-    add_subdirectory(tee)
-endif()

@@ -8,45 +8,11 @@
 
 #include "util_session.h"
 
-static struct tee_info {
-	char ta_uuid[37];
-} tee_default_info = { { "218c6053-294e-4e96-830c-e6eba4aa4345" } };
-
 static struct se_info {
 	unsigned int storage_id;
 	unsigned int storage_nonce;
 	unsigned short storage_replay;
 } se_default_info = { 0x504b3131, 0x444546, 1000 }; // PK11, DEF
-
-static CK_RV create_tee_info(CK_SESSION_HANDLE_PTR sess,
-			     CK_FUNCTION_LIST_PTR pfunc)
-{
-	CK_RV ret = CKR_OK;
-	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
-	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = CK_TRUE;
-	CK_UTF8CHAR label[] = "TEE Info";
-
-	CK_ATTRIBUTE data_template[] = {
-		{ CKA_CLASS, &data_class, sizeof(data_class) },
-		{ CKA_LABEL, &label, sizeof(label) - 1 },
-		{ CKA_VALUE, &tee_default_info, sizeof(struct tee_info) },
-		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
-	};
-
-	TEST_OUT("Create %sTEE Info (UUID=%s) data object\n",
-		 token ? "Token " : "", tee_default_info.ta_uuid);
-
-	ret = pfunc->C_CreateObject(*sess, data_template,
-				    ARRAY_SIZE(data_template), &hdata);
-	if (!CHECK_EXPECTED(ret == CKR_OK || ret == CKR_FUNCTION_FAILED,
-			    "C_CreateObject returned 0x%lx", ret)) {
-		TEST_OUT("TEE Info created #%lu\n", hdata);
-		ret = CKR_OK;
-	}
-
-	return ret;
-}
 
 static CK_RV create_seco_info(CK_SESSION_HANDLE_PTR sess,
 			      CK_FUNCTION_LIST_PTR pfunc)
@@ -201,10 +167,6 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	TEST_OUT("Opened Session #%lu\n", *sess);
 
 	TEST_OUT("Create subsystems configuration Data objects\n");
-	ret = create_tee_info(sess, pfunc);
-	if (CHECK_CK_RV(CKR_OK, "create_tee_info"))
-		goto end;
-
 	ret = create_seco_info(sess, pfunc);
 	if (CHECK_CK_RV(CKR_OK, "create_seco_info"))
 		goto end;

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #ifndef __PSA_CRYPTO_STRUCT_H__
@@ -14,9 +14,9 @@
 /**
  * DOC: Reference
  * Documentation:
- *	PSA Cryptography API v1.1.0
+ *	PSA Cryptography API v1.2.1
  * Link:
- *	https://developer.arm.com/documentation/ihi0086/b
+ *	https://arm-software.github.io/psa-api/crypto/1.2/about
  */
 
 /* To be defined */
@@ -169,11 +169,6 @@ psa_get_key_usage_flags(const psa_key_attributes_t *attributes)
 {
 	psa_key_usage_t usages = attributes->usage_flags;
 
-	/*
-	 * DOC: Reference
-	 * Documentation: PSA Cryptography API v1.1.0
-	 * Link: https://developer.arm.com/documentation/ihi0086/b
-	 */
 	if (usages & PSA_KEY_USAGE_SIGN_HASH)
 		usages |= PSA_KEY_USAGE_SIGN_MESSAGE;
 

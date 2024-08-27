@@ -30,14 +30,14 @@
 /**
  * DOC: Reference
  * Documentation:
- *	PSA Cryptography API v1.1.0
+ *	PSA Cryptography API v1.2.1
  * Link:
- *	https://developer.arm.com/documentation/ihi0086/b
+ *	https://arm-software.github.io/psa-api/crypto/1.2/about
  */
 
 /**
  * PSA_AEAD_DECRYPT_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_aead_decrypt(), for
- * any of the supported key types and AEAD algorithms.
+ *                                      any of the supported key types and AEAD algorithms.
  * @ciphertext_length: Size of the ciphertext in bytes.
  *
  * If the size of the plaintext buffer is at least this large, it is guaranteed that
@@ -49,7 +49,7 @@
 
 /**
  * PSA_AEAD_DECRYPT_OUTPUT_SIZE() - The maximum size of the output of psa_aead_decrypt(), in
- * bytes.
+ *                                  bytes.
  * @key_type: A symmetric key type that is compatible with algorithm @alg.
  * @alg: An AEAD algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_AEAD(alg) is true).
  * @ciphertext_length: Size of the ciphertext in bytes.
@@ -74,7 +74,7 @@
 
 /**
  * PSA_AEAD_ENCRYPT_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_aead_encrypt(), for
- * any of the supported key types and AEAD algorithms.
+ *                                      any of the supported key types and AEAD algorithms.
  * @plaintext_length: Size of the plaintext in bytes.
  *
  * If the size of the ciphertext buffer is at least this large, it is guaranteed that
@@ -208,7 +208,7 @@
 
 /**
  * PSA_AEAD_UPDATE_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_aead_update(), for
- * any of the supported key types and AEAD algorithms.
+ *                                     any of the supported key types and AEAD algorithms.
  * @input_length: Size of the input in bytes.
  *
  * **Warning: Not supported**
@@ -291,7 +291,7 @@
 
 /**
  * PSA_ASYMMETRIC_DECRYPT_OUTPUT_SIZE() - Sufficient output buffer size for
- * psa_asymmetric_decrypt().
+ *                                        psa_asymmetric_decrypt().
  * @key_type: An asymmetric key type, either a key pair or a public key.
  * @key_bits: The size of the key in bits.
  * @alg: The asymmetric encryption algorithm.
@@ -332,7 +332,7 @@
 
 /**
  * PSA_ASYMMETRIC_ENCRYPT_OUTPUT_SIZE() - Sufficient output buffer size for
- * psa_asymmetric_encrypt().
+ *                                        psa_asymmetric_encrypt().
  * @key_type: An asymmetric key type, either a key pair or a public key.
  * @key_bits: The size of the key in bits.
  * @alg: The asymmetric encryption algorithm.
@@ -369,7 +369,7 @@
 
 /**
  * PSA_CIPHER_DECRYPT_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_cipher_decrypt(),
- * for any of the supported key types and cipher algorithms.
+ *                                        for any of the supported key types and cipher algorithms.
  * @input_length: Size of the input in bytes.
  *
  * If the size of the output buffer is at least this large, it is guaranteed that
@@ -381,7 +381,7 @@
 
 /**
  * PSA_CIPHER_DECRYPT_OUTPUT_SIZE() - The maximum size of the output of psa_cipher_decrypt(), in
- * bytes.
+ *                                    bytes.
  * @key_type: A symmetric key type that is compatible with algorithm @alg.
  * @alg: A cipher algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_CIPHER(alg) is true).
  * @input_length: Size of the input in bytes.
@@ -407,7 +407,7 @@
 
 /**
  * PSA_CIPHER_ENCRYPT_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_cipher_encrypt(),
- * for any of the supported key types and cipher algorithms.
+ *                                        for any of the supported key types and cipher algorithms.
  * @input_length: Size of the input in bytes.
  *
  * If the size of the output buffer is at least this large, it is guaranteed that
@@ -426,7 +426,7 @@ size_t psa_cipher_encrypt_output_size(psa_key_type_t key_type,
 
 /**
  * PSA_CIPHER_ENCRYPT_OUTPUT_SIZE() - The maximum size of the output of psa_cipher_encrypt(), in
- * bytes.
+ *                                    bytes.
  * @key_type: A symmetric key type that is compatible with algorithm @alg.
  * @alg: A cipher algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_CIPHER(alg) is true).
  * @input_length: Size of the input in bytes.
@@ -512,7 +512,7 @@ size_t psa_cipher_iv_length(psa_key_type_t key_type, psa_algorithm_t alg);
 
 /**
  * PSA_CIPHER_UPDATE_OUTPUT_MAX_SIZE() - A sufficient output buffer size for psa_cipher_update(),
- * for any of the supported key types and cipher algorithms.
+ *                                       for any of the supported key types and cipher algorithms.
  * @input_length: Size of the input in bytes.
  *
  * **Warning: Not supported**
@@ -809,7 +809,7 @@ size_t psa_hash_length(psa_algorithm_t alg);
 
 /**
  * PSA_HASH_SUSPEND_HASH_STATE_FIELD_LENGTH() - The size of the hash-state field that is part of the
- * output of psa_hash_suspend(), in bytes.
+ *                                              output of psa_hash_suspend(), in bytes.
  * @alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true).
  *
  * Applications can use this value to unpack the hash suspend state that is output by
@@ -840,7 +840,7 @@ size_t psa_hash_length(psa_algorithm_t alg);
 
 /**
  * PSA_HASH_SUSPEND_INPUT_LENGTH_FIELD_LENGTH() - The size of the input-length field that is part of
- * the output of psa_hash_suspend(), in bytes.
+ *                                                the output of psa_hash_suspend(), in bytes.
  * @alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true).
  *
  * Applications can use this value to unpack the hash suspend state that is output by
@@ -882,7 +882,7 @@ size_t psa_hash_length(psa_algorithm_t alg);
 
 /**
  * PSA_HASH_SUSPEND_OUTPUT_SIZE() - A sufficient hash suspend state buffer size for
- * psa_hash_suspend().
+ *                                  psa_hash_suspend().
  * @alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true).
  *
  * If the size of the hash state buffer is at least this large, it is guaranteed that
@@ -916,7 +916,7 @@ size_t psa_hash_length(psa_algorithm_t alg);
 
 /**
  * PSA_MAC_TRUNCATED_LENGTH() - Size of the truncated MAC algorithm
- * in bytes.
+ *                              in bytes.
  * @alg: A MAC algorithm (such that PSA_ALG_IS_MAC_TRUNCATED(alg) is true).
  *
  * Return:
@@ -971,7 +971,7 @@ size_t psa_hash_length(psa_algorithm_t alg);
 
 /**
  * PSA_MAC_LENGTH() - The size of the output of psa_mac_compute() and
- * psa_mac_sign_finish(), in bytes.
+ *                    psa_mac_sign_finish(), in bytes.
  * @key_type: The type of the MAC key.
  * @key_bits: The size of the MAC key in bits.
  * @alg: A MAC algorithm (such that PSA_ALG_IS_MAC(alg) is true).
@@ -1069,7 +1069,7 @@ size_t psa_hash_length(psa_algorithm_t alg);
 
 /**
  * PSA_SIGN_OUTPUT_SIZE() - Sufficient signature buffer size for psa_sign_message() and
- * psa_sign_hash().
+ *                          psa_sign_hash().
  * @key_type: An asymmetric key type. This can be a key pair type or a public key type.
  * @key_bits: The size of the key in bits.
  * @alg: The signature algorithm.
@@ -1093,6 +1093,15 @@ size_t psa_hash_length(psa_algorithm_t alg);
 		 PSA_KEY_TYPE_IS_ECC(key_type) ?                               \
 		 PSA_ECC_SIGNATURE_SIZE(key_bits) :                            \
 		 ((void)alg, 0))
+
+/**
+ * DOC: PSA_TLS12_ECJPAKE_TO_PMS_OUTPUT_SIZE
+ * The size of the output from the TLS 1.2 ECJPAKE-to-PMS key-derivation algorithm, in bytes.
+ *
+ * This value can be used when extracting the result of a key-derivation operation that was set up
+ * with the PSA_ALG_TLS12_ECJPAKE_TO_PMS algorithm.
+ */
+#define PSA_TLS12_ECJPAKE_TO_PMS_OUTPUT_SIZE 32
 
 /**
  * DOC: PSA_TLS12_PSK_TO_MS_PSK_MAX_SIZE

@@ -16,9 +16,9 @@
 /**
  * DOC: Reference
  * Documentation:
- *	PSA Cryptography API v1.1.0
+ *	PSA Cryptography API v1.2.1
  * Link:
- *	https://developer.arm.com/documentation/ihi0086/b
+ *	https://arm-software.github.io/psa-api/crypto/1.2/about
  */
 
 /**

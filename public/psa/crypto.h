@@ -21,9 +21,9 @@
 /**
  * DOC: Reference
  * Documentation:
- *	PSA Cryptography API v1.1.0
+ *	PSA Cryptography API v1.2.1
  * Link:
- *	https://developer.arm.com/documentation/ihi0086/b
+ *	https://arm-software.github.io/psa-api/crypto/1.2/about
  */
 
 /**
@@ -267,7 +267,7 @@ typedef struct psa_key_attributes_s psa_key_attributes_t;
 
 /**
  * typedef psa_key_derivation_operation_t - The type of the state object for key derivation
- * operations.
+ *                                          operations.
  *
  * Before calling any function on a key derivation operation object, the application must
  * initialize it by any of the following means\:
@@ -353,7 +353,7 @@ typedef struct psa_mac_operation_s psa_mac_operation_t;
  * DOC: PSA_CRYPTO_API_VERSION_MINOR
  * The minor version of this implementation of the PSA Crypto API.
  */
-#define PSA_CRYPTO_API_VERSION_MINOR 1
+#define PSA_CRYPTO_API_VERSION_MINOR 2
 
 /**
  * DOC: PSA_KEY_DERIVATION_UNLIMITED_CAPACITY
@@ -1086,7 +1086,6 @@ psa_status_t psa_aead_verify(psa_aead_operation_t *operation,
 
 /**
  * psa_asymmetric_decrypt() - Decrypt a short message with a private key.
- *
  * @key: Identifier of the key to use for the operation. It must be an asymmetric key pair. It must
  *       allow the usage PSA_KEY_USAGE_DECRYPT.
  * @alg: An asymmetric encryption algorithm that is compatible with the type of key.
@@ -1543,7 +1542,7 @@ psa_status_t psa_cipher_finish(psa_cipher_operation_t *operation,
 
 /**
  * psa_cipher_generate_iv() - Generate an initialization vector (IV) for a symmetric encryption
- * operation.
+ *                            operation.
  * @operation: Active cipher operation.
  * @iv: Buffer where the generated IV is to be written.
  * @iv_size: Size of the @iv buffer in bytes. This must be at least
@@ -1606,7 +1605,7 @@ static psa_cipher_operation_t psa_cipher_operation_init(void);
 
 /**
  * psa_cipher_set_iv() - Set the initialization vector (IV) for a symmetric encryption or decryption
- * operation.
+ *                       operation.
  * @operation: Active cipher operation.
  * @iv: Buffer containing the IV to use.
  * @iv_length: Size of the IV in bytes.
@@ -1753,7 +1752,7 @@ psa_status_t psa_cipher_update(psa_cipher_operation_t *operation,
  *
  * The effect of this function on implementation-defined attributes is implementation-defined.
  *
- * This function uses the attributes as follows\:
+ * This function uses the @attributes as follows\:
  *
  * - The key type and size can be 0. If either is nonzero, it must match the corresponding attribut
  *   of the source key.
@@ -2109,7 +2108,7 @@ psa_status_t psa_export_public_key(psa_key_id_t key, uint8_t *data,
  *   product of two probabilistic primes between 2^{n-1} and 2^n where n is the bit size specified
  *   in the attributes.
  *
- * This function uses the attributes as follows\:
+ * This function uses the @attributes as follows\:
  *
  * - The key type is required. It cannot be an asymmetric public key.
  *
@@ -2410,7 +2409,7 @@ psa_status_t psa_hash_clone(const psa_hash_operation_t *source_operation,
 
 /**
  * psa_hash_compare() - Calculate the hash (digest) of a message and compare it with a reference
- * value.
+ *                      value.
  * @alg: The hash algorithm to compute (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(alg) is true).
  * @input: Buffer containing the message to hash.
  * @input_length: Size of the @input buffer in bytes.
@@ -2531,7 +2530,7 @@ static psa_hash_operation_t psa_hash_operation_init(void);
 
 /**
  * psa_hash_resume() - Set up a multi-part hash operation using the hash suspend state from a
- * previously suspended hash operation.
+ *                     previously suspended hash operation.
  * @operation: The operation object to set up. It must have been initialized as per the
  *             documentation for &typedef psa_hash_operation_t and not yet in use.
  * @hash_state: A buffer containing the suspended hash state which is to be resumed. This must be in
@@ -2630,7 +2629,7 @@ psa_status_t psa_hash_setup(psa_hash_operation_t *operation,
 
 /**
  * psa_hash_suspend() - Halt the hash operation and extract the intermediate state of the hash
- * computation.
+ *                      computation.
  * @operation: Active hash operation.
  * @hash_state: Buffer where the hash suspend state is to be written.
  * @hash_state_size: Size of the @hash_state buffer in bytes.
@@ -2719,7 +2718,7 @@ psa_status_t psa_hash_update(psa_hash_operation_t *operation,
 
 /**
  * psa_hash_verify() - Finish the calculation of the hash of a message and compare it with an
- * expected value.
+ *                     expected value.
  * @operation: Active hash operation.
  * @hash: Buffer containing the expected hash value.
  * @hash_length: Size of the @hash buffer in bytes.
@@ -2792,7 +2791,7 @@ psa_status_t psa_hash_verify(psa_hash_operation_t *operation,
  *	on the key type, either the import format contains the public key data or the implementation
  *	will reconstruct the public key from the private key as needed.
  *
- * This function uses the attributes as follows\:
+ * This function uses the @attributes as follows\:
  *
  * - The key type is required, and determines how the @data buffer is interpreted.
  *
@@ -2962,7 +2961,7 @@ psa_key_derivation_input_bytes(psa_key_derivation_operation_t *operation,
 
 /**
  * psa_key_derivation_input_integer() - Provide a numeric input for key derivation or key
- * agreement.
+ *                                      agreement.
  * @operation: The key derivation operation object to use. It must have been set up with
  *             psa_key_derivation_setup() and must not have produced any output yet.
  * @step: Which step the input data is for.
@@ -3064,7 +3063,7 @@ psa_key_derivation_input_key(psa_key_derivation_operation_t *operation,
 
 /**
  * psa_key_derivation_key_agreement() - Perform a key agreement and use the shared secret as input
- * to a key derivation.
+ *                                      to a key derivation.
  * @operation: The key derivation operation object to use. It must have been set up with
  *             psa_key_derivation_setup() with a key agreement and derivation algorithm alg
  *             (PSA_ALG_XXX value such that PSA_ALG_IS_KEY_AGREEMENT(alg) is true and
@@ -3130,7 +3129,7 @@ psa_key_derivation_key_agreement(psa_key_derivation_operation_t *operation,
 
 /**
  * psa_key_derivation_operation_init() - Return an initial value for a key derivation operation
- * object.
+ *                                       object.
  *
  * Return:
  * &typedef psa_key_derivation_operation_t
@@ -3482,7 +3481,7 @@ psa_status_t psa_key_derivation_setup(psa_key_derivation_operation_t *operation,
 
 /**
  * psa_key_derivation_verify_bytes - Compare output data from a key derivation operation to an
- * expected value.
+ *                                   expected value.
  * @operation: The key derivation operation object to read from.
  * @expected_output: Buffer containing the expected derivation output.
  * @output_length: Length ot the expected output. This is also the number of bytes that will be
@@ -3546,7 +3545,7 @@ psa_key_derivation_verify_bytes(psa_key_derivation_operation_t *operation,
 
 /**
  * psa_key_derivation_verify_key() - Compare output data from a key derivation operation to an
- * expected value stored in a key.
+ *                                   expected value stored in a key.
  * @operation: The key derivation operation object to read from.
  * @expected: A key of type PSA_KEY_TYPE_PASSWORD_HASH containing the expected output. The key must
  *            allow the usage PSA_KEY_USAGE_VERIFY_DERIVATION, and the permitted algorithm must
@@ -3905,7 +3904,7 @@ psa_status_t psa_mac_verify(psa_key_id_t key, psa_algorithm_t alg,
 
 /**
  * psa_mac_verify_finish() - Finish the calculation of the MAC of a message and compare it with an
- * expected value.
+ *                           expected value.
  * @operation: Active MAC operation.
  * @mac: Buffer containing the expected MAC value.
  * @mac_length: Size of the @mac buffer in bytes.
@@ -4048,6 +4047,114 @@ psa_status_t psa_mac_verify_setup(psa_mac_operation_t *operation,
  *	implementation-dependent whether a failure to initialize results in this error code.
  */
 psa_status_t psa_purge_key(psa_key_id_t key);
+
+/**
+ * psa_key_agreement() - Perform a key agreement and return the shared secret as a derivation key.
+ * @private_key: Identifier of the private key to use. It must permit the usage
+ *               PSA_KEY_USAGE_DERIVE.
+ * @peer_key: Public key of the peer. The peer key data is parsed with the type
+ *            PSA_KEY_TYPE_PUBLIC_KEY_OF_KEY_PAIR(type) where type is the type of @private_key,
+ *            and with the same bit-size as private_key. The peer key must be in the format that
+ *            psa_import_key() accepts for this public key type. These formats are described in
+ *            Key formats.
+ * @peer_key_length: Size of @peer_key in bytes.
+ * @alg: The standalone key agreement algorithm to compute: a value of type psa_algorithm_t such
+ *       that PSA_ALG_IS_STANDALONE_KEY_AGREEMENT(alg) is true.
+ * @attributes: The attributes for the new key.
+ * @key: On success, an identifier for the newly created key. PSA_KEY_ID_NULL on failure.
+ *
+ * **Warning: Not supported**
+ *
+ * A key agreement algorithm takes two inputs: a private key @private_key, and a public key
+ * @peer_key. The result of this function is a shared secret, returned as a derivation key.
+ * This key can be input to a key derivation operation using psa_key_derivation_input_key().
+ *
+ * **Warning**
+ *	The shared secret resulting from a key agreement algorithm such as finite-field
+ *	Diffie-Hellman or elliptic curve Diffie-Hellman has biases. This makes it unsuitable for
+ *	use as key material, for example, as an AES key. Instead, it is recommended that a key
+ *	derivation algorithm is applied to the result, to derive unbiased cryptographic keys.
+ *
+ * This function uses the @attributes as follows\:
+ *
+ * - The key type must be one of PSA_KEY_TYPE_DERIVE, PSA_KEY_TYPE_RAW_DATA,
+ *   PSA_KEY_TYPE_HMAC, or PSA_KEY_TYPE_PASSWORD.
+ *   Implementations must support the PSA_KEY_TYPE_DERIVE and PSA_KEY_TYPE_RAW_DATA key
+ *   types.
+ *
+ * - The size of the returned key is always the bit-size of the shared secret, rounded up to
+ *   a whole number of bytes. The key size in @attributes can be zero; if it is nonzero, it
+ *   must be equal to the output size of the key agreement, in bits.
+ *   The output size, in bits, of the key agreement is
+ *   8 * PSA_RAW_KEY_AGREEMENT_OUTPUT_SIZE(type, bits), where type and bits are the type and
+ *   bit-size of @private_key.
+ *
+ * - The key permitted-algorithm policy is required for keys that will be used for a
+ *   cryptographic operation, see Permitted algorithms.
+ *
+ * - The key usage flags define what operations are permitted with the key, see Key usage
+ *   flags.
+ *
+ * - The key lifetime and identifier are required for a persistent key.
+ *
+ *   **Note**:
+ *	This is an input parameter: it is not updated with the final key attributes. The final
+ *	attributes of the new key can be queried by calling psa_get_key_attributes() with the
+ *	key’s identifier.
+ *
+ * Return:
+ * * PSA_SUCCESS:
+ *	Success. The new key contains the share secret. If the key is persistent, the key material
+ *	and the key’s metadata have been saved to persistent storage.
+ * * PSA_ERROR_BAD_STATE:
+ *	The library requires initializing by a call to psa_crypto_init().
+ * * PSA_ERROR_INVALID_HANDLE:
+ *	@private_key is not a valid key identifier.
+ * * PSA_ERROR_NOT_PERMITTED:
+ *	The following conditions can result in this error\:
+ *
+ *	- @private_key does not have the PSA_KEY_USAGE_DERIVE flag, or it does not permit the
+ *	  requested algorithm.
+ *	- The implementation does not permit creating a key with the specified @attributes due to
+ *	  some implementation-specific policy.
+ * * PSA_ERROR_ALREADY_EXISTS:
+ *	This is an attempt to create a persistent key, and there is already a persistent key with
+ *	the given identifier.
+ * * PSA_ERROR_INVALID_ARGUMENT:
+ *	The following conditions can result in this error\:
+ *
+ *	- @alg is not a key agreement algorithm.
+ *	- @private_key is not compatible with @alg.
+ *	- @peer_key is not a valid public key corresponding to @private_key.
+ *	- The output key attributes in @attributes are not valid\:
+ *
+ *		- The key type is not valid for key agreement output.
+ *		- The key size is nonzero, and is not the size of the shared secret.
+ *		- The key lifetime is invalid.
+ *		- The key identifier is not valid for the key lifetime.
+ *		- The key usage flags include invalid values.
+ *		- The key’s permitted-usage algorithm is invalid.
+ *		- The key attributes, as a whole, are invalid.
+ * * PSA_ERROR_NOT_SUPPORTED:
+ *	The following conditions can result in this error\:
+ *
+ *	- @alg is not supported or is not a key agreement algorithm.
+ *	- @private_key is not supported for use with @alg.
+ *	- The output key attributes, as a whole, are not supported, either by the implementation
+ *	  in general or in the specified storage location.
+ * * PSA_ERROR_INSUFFICIENT_MEMORY
+ * * PSA_ERROR_INSUFFICIENT_STORAGE
+ * * PSA_ERROR_COMMUNICATION_FAILURE
+ * * PSA_ERROR_CORRUPTION_DETECTED
+ * * PSA_ERROR_STORAGE_FAILURE
+ * * PSA_ERROR_DATA_CORRUPT
+ * * PSA_ERROR_DATA_INVALID
+ */
+psa_status_t psa_key_agreement(psa_key_id_t private_key,
+			       const uint8_t *peer_key, size_t peer_key_length,
+			       psa_algorithm_t alg,
+			       const psa_key_attributes_t *attributes,
+			       psa_key_id_t *key);
 
 /**
  * psa_raw_key_agreement() - Perform a key agreement and return the raw shared secret.
@@ -4356,7 +4463,7 @@ psa_status_t psa_sign_hash(psa_key_id_t key, psa_algorithm_t alg,
 
 /**
  * psa_sign_message() - Sign a message with a private key. For hash-and-sign algorithms, this
- * includes the hashing step.
+ *                      includes the hashing step.
  * @key: Identifier of the key to use for the operation. It must be an asymmetric key pair. The key
  *       must allow the usage PSA_KEY_USAGE_SIGN_MESSAGE.
  * @alg: An asymmetric signature algorithm (PSA_ALG_XXX value such that
@@ -4465,7 +4572,7 @@ psa_status_t psa_verify_hash(psa_key_id_t key, psa_algorithm_t alg,
 
 /**
  * psa_verify_message() - Verify the signature of a message with a public key, using a hash-and-sign
- * verification algorithm.
+ *                        verification algorithm.
  * @key: Identifier of the key to use for the operation. It must be a public key or an asymmetric
  *       key pair. The key must allow the usage PSA_KEY_USAGE_VERIFY_MESSAGE.
  * @alg: An asymmetric signature algorithm (PSA_ALG_XXX value such that

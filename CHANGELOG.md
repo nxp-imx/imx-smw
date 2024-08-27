@@ -68,6 +68,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 3. ARM PSA APIs
 
+* Upgrade ARM PSA Crypto API to version 1.2.1.
+
 ##### 4. OSAL
 
 * Add management of a linux system configuration file (/etc/opt/smw/smw.conf).

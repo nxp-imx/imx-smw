@@ -20,7 +20,7 @@
  * @id: Object identifier
  * @type: Defines the object type. See &typedef smw_object_type_t
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @attributes: Object persistency attributes
+ * @attributes: Object persistency attributes. See &typedef smw_attr_attributes_t.
  * @label: Object description
  * @group: Key group (may not be used by all subsystems)
  * @key: Key descriptor. See &struct smw_key_descriptor
@@ -38,5 +38,75 @@ struct smw_object_descriptor {
 		struct smw_data_descriptor data;
 	};
 };
+
+/**
+ * smw_update_object_db() - Update a database object.
+ * @descriptor: Object descriptor. See &struct smw_object_descriptor.
+ *
+ * This function updates the Object attribute list.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *  - Common return codes
+ */
+enum smw_status_code
+smw_update_object_db(struct smw_object_descriptor *descriptor);
+
+/**
+ * smw_find_object_db() - Find an object by its id.
+ * @descriptor: Object descriptor. See &struct smw_object_descriptor.
+ *
+ * This function return the find Object descriptor.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *  - Common return codes
+ */
+enum smw_status_code
+smw_find_object_db(struct smw_object_descriptor *descriptor);
+
+/**
+ * smw_find_object_db_init() - Initialize the find context.
+ * @ctx: Pointer to the find context pointer
+ * @attributes: Object persistency attributes. See &typedef smw_attr_attributes_t.
+ * @descriptor: Object descriptor. See &struct smw_object_descriptor.
+ *
+ * This function allocates and initialises the find context.
+ * If this API returns success, smw_find_object_db_final() must be called
+ * to free the allocated context operation.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *  - Common return codes
+ */
+enum smw_status_code
+smw_find_object_db_init(void **ctx, smw_attr_attributes_t attributes,
+			struct smw_object_descriptor *descriptor);
+
+/**
+ * smw_find_object_db_next() - Find next matching Object.
+ * @ctx: Pointer to the find context created by smw_find_object_db_init()
+ * @descriptor: Matching object descriptor. See &struct smw_object_descriptor.
+ *
+ * This function returns the next find Object.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *  - Common return codes
+ */
+enum smw_status_code
+smw_find_object_db_next(void *ctx, struct smw_object_descriptor *descriptor);
+
+/**
+ * smw_find_object_db_final() - Finalize the find context.
+ * @ctx: Pointer to the find context created by smw_find_object_db_init()
+ *
+ * This function destroys the given find context.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *  - Common return codes
+ */
+enum smw_status_code smw_find_object_db_final(void *ctx);
 
 #endif /* __SMW_OBJECT_H__ */

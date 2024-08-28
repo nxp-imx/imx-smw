@@ -89,6 +89,7 @@
  * @SMW_STATUS_OBJ_DB_UPDATE: Object database update error.
  * @SMW_STATUS_OBJ_DB_DELETE: Object database delete error.
  * @SMW_STATUS_OBJ_DB_GET_INFO: Object database get information error.
+ * @SMW_STATUS_OBJ_DB_FIND: Object database find object error.
  *
  * @SMW_STATUS_KEY_POLICY_WARNING_IGNORED: At least one element of the key policy is ignored.
  * @SMW_STATUS_UNKNOWN_KEY_OP_NAME: Key operation name provided by the user or
@@ -181,6 +182,7 @@
  *	- SMW_STATUS_ERROR_OBJ_DB_UPDATE
  *	- SMW_STATUS_ERROR_OBJ_DB_DELETE
  *	- SMW_STATUS_ERROR_OBJ_DB_GET_INFO
+ *  - SMW_STATUS_ERROR_OBJ_DB_FIND
  *
  ** Specific return codes - Key manager
  *
@@ -268,6 +270,7 @@ enum smw_status_code {
 	SMW_STATUS_CONFIGURATION_FAILURE,
 	SMW_STATUS_INVALID_IV_SIZE,
 	SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME,
+	SMW_STATUS_OBJ_DB_FIND,
 };
 
 #endif /* __SMW_STATUS_H__ */

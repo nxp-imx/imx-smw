@@ -12,18 +12,6 @@
 #include "keymgr.h"
 
 /**
- * struct smw_storage_data_info - Data information stored in object database.
- * @subsystem_name: Secure Subsystem name
- * @size: Data size
- * @attributes: Data attributes
- */
-struct smw_storage_data_info {
-	smw_subsystem_t subsystem_name;
-	unsigned int size;
-	smw_attr_attributes_t attributes;
-};
-
-/**
  * struct smw_storage_enc_args - Encryption arguments.
  * @keys_desc: Pointer to an array of internal key descriptor structure pointer
  * @nb_keys: Number of entries of the array key descriptor pointer

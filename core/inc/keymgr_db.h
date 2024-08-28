@@ -9,28 +9,6 @@
 #include "keymgr.h"
 
 /**
- * struct smw_keymgr_key_info - Key information stored in object database
- * @subsystem_name: Secure Subsystem name
- * @type_name: Key type name
- * @privacy_name: Key privacy name
- * @security_size: Security size in bits
- * @id: Key ID set by the subsystem
- * @attributes: Key attributes
- * @storage_id: Key storage identifier
- * @group: Key group (may not be used by all subsystems)
- */
-struct smw_keymgr_key_info {
-	smw_subsystem_t subsystem_name;
-	smw_key_type_t type_name;
-	smw_key_privacy_t privacy_name;
-	unsigned int security_size;
-	uint32_t id;
-	smw_attr_attributes_t attributes;
-	uint32_t storage_id;
-	uint16_t group;
-};
-
-/**
  * smw_keymgr_db_create() - Create a key in the database
  * @id: New key identifier created in the database
  * @identifier: Internal Key identifier object

@@ -4,32 +4,25 @@
  */
 
 #include "smw_status.h"
+#include "smw/object.h"
 
 #include "debug.h"
 #include "global.h"
 #include "object_db.h"
 
 static void prepare_osal_obj(unsigned int id, smw_attr_attributes_t attributes,
-			     union smw_object_db_info *info,
+			     struct smw_object_descriptor *descriptor,
 			     struct osal_obj *obj)
 {
+	if (descriptor)
+		descriptor->id = id;
 	obj->id = id;
 	obj->attributes = attributes;
-	obj->info = info;
-	obj->info_size = sizeof(*info);
-
-	/* If the object id is known, there is no object id range */
-	if (obj->id == INVALID_OBJ_ID) {
-		obj->range.min = 1;
-		obj->range.max = UINT32_MAX;
-	} else {
-		obj->range.min = obj->id;
-		obj->range.max = obj->id;
-	}
+	obj->descriptor = descriptor;
 }
 
 int smw_object_db_create(unsigned int *id, smw_attr_attributes_t attributes,
-			 union smw_object_db_info *info)
+			 struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_CREATE;
 	struct smw_ops *ops = get_smw_ops();
@@ -37,13 +30,13 @@ int smw_object_db_create(unsigned int *id, smw_attr_attributes_t attributes,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!id || !info)
+	if (!id || !descriptor)
 		return SMW_STATUS_INVALID_PARAM;
 
 	if (!ops || !ops->add_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(*id, attributes, info, &obj);
+	prepare_osal_obj(*id, attributes, descriptor, &obj);
 
 	if (!ops->add_obj_info(&obj) && obj.id != INVALID_OBJ_ID) {
 		*id = obj.id;
@@ -54,7 +47,7 @@ int smw_object_db_create(unsigned int *id, smw_attr_attributes_t attributes,
 }
 
 int smw_object_db_update(unsigned int id, smw_attr_attributes_t attributes,
-			 union smw_object_db_info *info)
+			 struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_UPDATE;
 	struct smw_ops *ops = get_smw_ops();
@@ -62,13 +55,13 @@ int smw_object_db_update(unsigned int id, smw_attr_attributes_t attributes,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!info)
+	if (!descriptor)
 		return SMW_STATUS_INVALID_PARAM;
 
 	if (!ops || !ops->update_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(id, attributes, info, &obj);
+	prepare_osal_obj(id, attributes, descriptor, &obj);
 
 	if (!ops->update_obj_info(&obj))
 		ret = SMW_STATUS_OK;
@@ -77,7 +70,6 @@ int smw_object_db_update(unsigned int id, smw_attr_attributes_t attributes,
 }
 
 int smw_object_db_delete(unsigned int id, smw_attr_attributes_t attributes)
-
 {
 	int ret = SMW_STATUS_OBJ_DB_DELETE;
 	struct smw_ops *ops = get_smw_ops();
@@ -97,7 +89,7 @@ int smw_object_db_delete(unsigned int id, smw_attr_attributes_t attributes)
 }
 
 int smw_object_db_get_info(unsigned int id, smw_attr_attributes_t attributes,
-			   union smw_object_db_info *info)
+			   struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_GET_INFO;
 	struct smw_ops *ops = get_smw_ops();
@@ -105,13 +97,13 @@ int smw_object_db_get_info(unsigned int id, smw_attr_attributes_t attributes,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!info)
+	if (!descriptor)
 		return SMW_STATUS_INVALID_PARAM;
 
 	if (!ops || !ops->get_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(id, attributes, info, &obj);
+	prepare_osal_obj(id, attributes, descriptor, &obj);
 
 	if (!ops->get_obj_info(&obj))
 		ret = SMW_STATUS_OK;

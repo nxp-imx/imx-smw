@@ -9,16 +9,14 @@
 #include "keymgr_db.h"
 #include "storage.h"
 
-union smw_object_db_info {
-	struct smw_keymgr_key_info key_info;
-	struct smw_storage_data_info data_info;
-};
+#define KEY_DEFAULT_LABEL  "Key"
+#define DATA_DEFAULT_LABEL "Data"
 
 /**
  * smw_object_db_create() - Create an object in the database
  * @id: New object identifier created in the database
  * @attributes: Object attributes
- * @info: Object information
+ * @obj: Object descriptor
  *
  * Function creates a new object in the OSAL object database. The
  * given @info is stored in the object entry.
@@ -32,13 +30,13 @@ union smw_object_db_info {
  * SMW_STATUS_OBJ_DB_CREATE     - Object creation error
  */
 int smw_object_db_create(unsigned int *id, smw_attr_attributes_t attributes,
-			 union smw_object_db_info *info);
+			 struct smw_object_descriptor *obj);
 
 /**
  * smw_object_db_update() - Update an object in the database
  * @id: Object identifier to update in the database
  * @attributes: Object attributes
- * @info: Object information
+ * @obj: Object descriptor
  *
  * Function updates an object in the database. The given @identifier
  * replaces the key entry's data.
@@ -47,9 +45,10 @@ int smw_object_db_create(unsigned int *id, smw_attr_attributes_t attributes,
  * SMW_STATUS_OK                - Success
  * SMW_STATUS_OPS_INVALID       - OSAL operation invalid
  * SMW_STATUS_OBJ_DB_UPDATE     - Object update error
+ * SMW_STATUS_UNKNOWN_ID        - Object ID is unknown
  */
 int smw_object_db_update(unsigned int id, smw_attr_attributes_t attributes,
-			 union smw_object_db_info *info);
+			 struct smw_object_descriptor *obj);
 
 /**
  * smw_object_db_delete() - Delete an object in the database
@@ -60,6 +59,7 @@ int smw_object_db_update(unsigned int id, smw_attr_attributes_t attributes,
  * SMW_STATUS_OK                - Success
  * SMW_STATUS_OPS_INVALID       - OSAL operation invalid
  * SMW_STATUS_OBJ_DB_DELETE     - Object delete error
+ * SMW_STATUS_UNKNOWN_ID        - Object ID is unknown
  */
 int smw_object_db_delete(unsigned int id, smw_attr_attributes_t attributes);
 
@@ -67,7 +67,7 @@ int smw_object_db_delete(unsigned int id, smw_attr_attributes_t attributes);
  * smw_object_db_get_info() - Retrieve the object information from the database
  * @id: Object identifier in the database
  * @attributes: Object attributes
- * @info: Object information
+ * @obj: Object descriptor
  *
  * Return:
  * SMW_STATUS_OK                - Success
@@ -76,6 +76,6 @@ int smw_object_db_delete(unsigned int id, smw_attr_attributes_t attributes);
  * SMW_STATUS_UNKNOWN_ID        - Object ID is unknown
  */
 int smw_object_db_get_info(unsigned int id, smw_attr_attributes_t attributes,
-			   union smw_object_db_info *info);
+			   struct smw_object_descriptor *obj);
 
 #endif /* __OBJECT_DB_H__ */

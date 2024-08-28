@@ -1579,6 +1579,9 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	if (key_attrs)
+		key_desc->identifier.attributes = key_attrs->attributes;
+
 	/*
 	 * Try to create the key in the database before
 	 * importing the key.
@@ -1606,9 +1609,6 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 	else
 		key_desc->identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_INVALID;
-
-	if (key_attrs)
-		key_desc->identifier.attributes = key_attrs->attributes;
 
 	ret = set_key_identifier(new_id, key_desc);
 	if (ret == SMW_STATUS_OK)

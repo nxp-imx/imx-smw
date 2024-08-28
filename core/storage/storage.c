@@ -3,6 +3,9 @@
  * Copyright 2023-2024 NXP
  */
 
+#include <string.h>
+
+#include "smw/object.h"
 #include "smw_storage.h"
 
 #include "debug.h"
@@ -21,25 +24,27 @@ static void set_data_identifier(struct smw_storage_data_descriptor *descriptor,
 static int data_db_create(unsigned int *id,
 			  struct smw_storage_data_descriptor *descriptor)
 {
-	union smw_object_db_info info = { 0 };
+	struct smw_object_descriptor obj = { 0 };
 	smw_attr_attributes_t attributes =
 		descriptor->data_attributes.attributes;
 
 	if (descriptor->subsystem_id == SUBSYSTEM_ID_INVALID)
-		info.data_info.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+		obj.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	else
-		info.data_info.subsystem_name =
+		obj.subsystem_name =
 			smw_config_get_subsystem_name(descriptor->subsystem_id);
 
-	info.data_info.size = smw_storage_get_data_length(descriptor);
-	info.data_info.attributes = attributes;
+	obj.type = SMW_OBJECT_TYPE_NAME_DATA;
+	obj.data.length = smw_storage_get_data_length(descriptor);
+	obj.attributes = attributes;
+	obj.label = DATA_DEFAULT_LABEL;
 
-	return smw_object_db_create(id, attributes, &info);
+	return smw_object_db_create(id, attributes, &obj);
 }
 
 static int data_db_update(struct smw_storage_data_descriptor *descriptor)
 {
-	union smw_object_db_info info = { 0 };
+	struct smw_object_descriptor obj = { 0 };
 	unsigned int id = 0;
 	smw_attr_attributes_t attributes =
 		descriptor->data_attributes.attributes;
@@ -47,15 +52,16 @@ static int data_db_update(struct smw_storage_data_descriptor *descriptor)
 	id = smw_storage_get_data_identifier(descriptor);
 
 	if (descriptor->subsystem_id == SUBSYSTEM_ID_INVALID)
-		info.data_info.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+		obj.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	else
-		info.data_info.subsystem_name =
+		obj.subsystem_name =
 			smw_config_get_subsystem_name(descriptor->subsystem_id);
 
-	info.data_info.size = smw_storage_get_data_length(descriptor);
-	info.data_info.attributes = attributes;
+	obj.type = SMW_OBJECT_TYPE_NAME_DATA;
+	obj.data.length = smw_storage_get_data_length(descriptor);
+	obj.attributes = attributes;
 
-	return smw_object_db_update(id, attributes, &info);
+	return smw_object_db_update(id, attributes, &obj);
 }
 
 static int data_db_delete(unsigned int id,
@@ -241,7 +247,7 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 	struct smw_data_descriptor tmp_pub_desc = { 0 };
 	struct smw_storage_data_descriptor tmp_desc = { 0 };
 	enum subsystem_id subsystem_id = 0;
-	union smw_object_db_info db_info = { 0 };
+	struct smw_object_descriptor data_info = { 0 };
 	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	enum subsystem_id *out_subsystem_id = NULL;
 
@@ -268,9 +274,10 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 	 */
 	status = smw_object_db_get_info(data_id,
 					in_desc->data_attributes.attributes,
-					&db_info);
+					&data_info);
+
 	if (status == SMW_STATUS_OK) {
-		subsystem_name = db_info.data_info.subsystem_name;
+		subsystem_name = data_info.subsystem_name;
 
 		if (subsystem_id != SUBSYSTEM_ID_INVALID &&
 		    smw_config_get_subsystem_name(subsystem_id) !=
@@ -281,9 +288,9 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 
 		if (out_desc) {
 			out_desc->data_attributes.attributes =
-				db_info.data_info.attributes;
+				data_info.attributes;
 			smw_storage_set_data_length(out_desc,
-						    db_info.data_info.size);
+						    data_info.data.length);
 
 			out_subsystem_id = &out_desc->subsystem_id;
 			status = smw_config_get_subsystem_id(subsystem_name,
@@ -318,6 +325,9 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 	}
 
 end:
+	if (data_info.label)
+		free(data_info.label);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -328,7 +338,7 @@ static int get_new_data_id(struct smw_storage_data_descriptor *desc)
 
 	unsigned int data_id = INVALID_OBJ_ID;
 	unsigned int id = INVALID_OBJ_ID;
-	union smw_object_db_info db_info = { 0 };
+	struct smw_object_descriptor data_info = { 0 };
 	struct smw_data_descriptor tmp_pub_desc = { 0 };
 	struct smw_storage_data_descriptor tmp_desc = { 0 };
 	smw_attr_attributes_t attributes = 0;
@@ -349,9 +359,14 @@ static int get_new_data_id(struct smw_storage_data_descriptor *desc)
 
 		if (id != data_id) {
 			status = smw_object_db_get_info(data_id, attributes,
-							&db_info);
+							&data_info);
+
+			if (data_info.label)
+				free(data_info.label);
+
 			if (status == SMW_STATUS_OK)
 				continue;
+
 			if (status != SMW_STATUS_UNKNOWN_ID)
 				goto end;
 		}
@@ -687,6 +702,12 @@ enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args)
 
 	if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
 		status = data_db_update(desc);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		if (args->data_descriptor->data)
+			status = SMW_STATUS_OUTPUT_TOO_SHORT;
+
 		goto end;
 	}
 

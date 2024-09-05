@@ -200,6 +200,52 @@ static void close_db_file(struct obj_db *db)
 	}
 }
 
+static int create_directory(const char *filename)
+{
+	int ret = -1;
+	char *end = NULL;
+	char *directory = NULL;
+	size_t length = 0;
+
+	end = strrchr(filename, '/');
+	if (!end)
+		goto end;
+
+	if (SUB_OVERFLOW((uintptr_t)end, (uintptr_t)filename, &length))
+		goto end;
+
+	if (!length) {
+		ret = 0;
+		goto end;
+	}
+
+	if (INC_OVERFLOW(length, 1))
+		goto end;
+
+	directory = malloc(length);
+	if (!directory)
+		goto end;
+
+	memcpy(directory, filename, length);
+	directory[length - 1] = '\0';
+
+	if (mkdir(directory, 0777)) {
+		if (__errno_location() && errno != EEXIST) {
+			DBG_PRINTF(ERROR, "%s (%d): %s\n", __func__, __LINE__,
+				   get_strerr());
+			goto end;
+		}
+	}
+
+	ret = 0;
+
+end:
+	if (directory)
+		free(directory);
+
+	return ret;
+}
+
 int obj_db_open(const char *obj_db)
 {
 	int ret = -1;
@@ -231,6 +277,9 @@ int obj_db_open(const char *obj_db)
 	 * Try to open it for read/write assuming file exist, if
 	 * file doesn't exist create a new file.
 	 */
+	if (create_directory(obj_db))
+		goto end;
+
 	db->fp = open(obj_db, O_RDWR | O_SYNC | O_CREAT, 0777);
 	if (db->fp < 0) {
 		DBG_PRINTF(ERROR, "%s (%d): %s\n", __func__, __LINE__,
@@ -242,6 +291,7 @@ int obj_db_open(const char *obj_db)
 	ret = mutex_init(&db->mutex);
 
 end:
+
 	if (ret && db) {
 		close_db_file(db);
 		(void)mutex_destroy(&db->mutex);

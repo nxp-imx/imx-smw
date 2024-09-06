@@ -179,6 +179,20 @@ static unsigned int *get_modulus_length_rsa(struct keypair_ops *this)
 	return &key->modulus_length;
 }
 
+static unsigned char **get_public_exponent_rsa(struct keypair_ops *this)
+{
+	struct smw_keypair_rsa *key = get_keypair_rsa(this);
+
+	return &key->public_exponent;
+}
+
+static unsigned int *get_public_exponent_length_rsa(struct keypair_ops *this)
+{
+	struct smw_keypair_rsa *key = get_keypair_rsa(this);
+
+	return &key->public_exponent_length;
+}
+
 void set_key_ops(struct keypair_ops *key_test)
 {
 	if (!key_test->keys) {
@@ -188,6 +202,8 @@ void set_key_ops(struct keypair_ops *key_test)
 		key_test->private_length = NULL;
 		key_test->modulus = NULL;
 		key_test->modulus_length = NULL;
+		key_test->public_exponent = NULL;
+		key_test->public_exponent_length = NULL;
 
 		return;
 	}
@@ -199,6 +215,9 @@ void set_key_ops(struct keypair_ops *key_test)
 		key_test->private_length = &get_private_length_rsa;
 		key_test->modulus = &get_modulus_rsa;
 		key_test->modulus_length = &get_modulus_length_rsa;
+		key_test->public_exponent = &get_public_exponent_rsa;
+		key_test->public_exponent_length =
+			&get_public_exponent_length_rsa;
 
 		*key_modulus(key_test) = NULL;
 		*key_modulus_length(key_test) = KEY_LENGTH_NOT_SET;
@@ -209,6 +228,8 @@ void set_key_ops(struct keypair_ops *key_test)
 		key_test->private_length = &get_private_length_gen;
 		key_test->modulus = NULL;
 		key_test->modulus_length = NULL;
+		key_test->public_exponent = NULL;
+		key_test->public_exponent_length = NULL;
 	}
 
 	key_test->keys->format_name = SMW_KEY_FORMAT_NAME_NONE;
@@ -266,10 +287,17 @@ static int keypair_read(struct keypair_ops *key_test,
 	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
-	if (key_test->desc.type_name == SMW_KEY_TYPE_NAME_RSA)
+	if (key_test->desc.type_name == SMW_KEY_TYPE_NAME_RSA) {
 		ret = util_read_obj_value(key_modulus(key_test),
 					  key_modulus_length(key_test),
 					  MODULUS_OBJ, params);
+		if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+			return ret;
+
+		ret = util_read_obj_value(key_public_exponent(key_test),
+					  key_public_exponent_length(key_test),
+					  PUB_EXP_OBJ, params);
+	}
 
 	if (ret == ERR_CODE(VALUE_NOTFOUND))
 		ret = ERR_CODE(PASSED);

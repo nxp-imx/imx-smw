@@ -28,8 +28,10 @@
  * @public_length: Get the @keys' public length reference
  * @private_data: Get the @keys' private data reference
  * @private_length: Get the @keys' private length reference
- * @modulus: Get the @key's modulus data reference
+ * @modulus: Get the @key's modulus reference
  * @modulus_length: Get the @key's modulus length reference
+ * @public_exponent: Get the @key's s public exponent reference
+ * @public_exponent_length: Get the @key's public exponent length reference
  *
  * This structure is internal to the test enabling to handle any
  * SMW keypair object referenced in the `struct smw_keypair_buffer`.
@@ -45,6 +47,8 @@ struct keypair_ops {
 	unsigned int *(*private_length)(struct keypair_ops *this);
 	unsigned char **(*modulus)(struct keypair_ops *this);
 	unsigned int *(*modulus_length)(struct keypair_ops *this);
+	unsigned char **(*public_exponent)(struct keypair_ops *this);
+	unsigned int *(*public_exponent_length)(struct keypair_ops *this);
 };
 
 /**
@@ -107,6 +111,22 @@ struct keys {
 		assert(_this);                                                 \
 		assert(_this->modulus_length);                                 \
 		_this->modulus_length(_this);                                  \
+	})
+
+#define key_public_exponent(this)                                              \
+	({                                                                     \
+		__typeof__(this) _this = (this);                               \
+		assert(_this);                                                 \
+		assert(_this->public_exponent);                                \
+		_this->public_exponent(_this);                                 \
+	})
+
+#define key_public_exponent_length(this)                                       \
+	({                                                                     \
+		__typeof__(this) _this = (this);                               \
+		assert(_this);                                                 \
+		assert(_this->public_exponent_length);                         \
+		_this->public_exponent_length(_this);                          \
 	})
 
 /**

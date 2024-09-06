@@ -65,6 +65,7 @@
 #define POST_TO_BEFORE		  "post_to_before"
 #define PRIVACY_OBJ		  "privacy"
 #define PRIV_KEY_OBJ		  "priv_key"
+#define PUB_EXP_OBJ		  "pub_exp"
 #define PUB_KEY_OBJ		  "pub_key"
 #define RANDOM_OBJ		  "random"
 #define RESTORE_OBJ		  "restore"

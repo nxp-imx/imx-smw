@@ -71,6 +71,19 @@
 		"key RSA 4": {
 			"type": "RSA",
 			"security_size": 256,
+			"pub_key": 6,
+			"modulus": 32,
+			"pub_exp": "4000000041CB995001",
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			]
+		},
+		"key RSA 5": {
+			"type": "RSA",
+			"security_size": 256,
 			"pub_key": 3,
 			"modulus": 30,
 			"attributes_list": [
@@ -80,7 +93,7 @@
 				"SIGN_MESSAGE"
 			]
 		},
-		"key RSA 5": {
+		"key RSA 6": {
 			"type": "RSA",
 			"security_size": 256,
 			"format": "BASE64",
@@ -93,7 +106,21 @@
 				"SIGN_MESSAGE"
 			]
 		},
-		"key RSA 6": {
+		"key RSA 7": {
+			"type": "RSA",
+			"security_size": 256,
+			"format": "BASE64",
+			"pub_key": 9,
+			"modulus": 44,
+			"pub_exp": "QAAAAEHLmVAB",
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			]
+		},
+		"key RSA 8": {
 			"type": "RSA",
 			"security_size": 256,
 			"format": "BASE64",
@@ -149,32 +176,46 @@
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 7": {
-		"description": "Modulus buffer len is too small",
+		"description": "Public buffer len too small (with RSA attribute set)",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key RSA 4",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 8": {
-		"description": "Public buffer len is too small (base64)",
+		"description": "Modulus buffer len is too small",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key RSA 5",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 9": {
-		"description": "Modulus buffer len is too small (base64)",
+		"description": "Public buffer len is too small (base64)",
 		"command": "GENERATE",
 		"subsystem": "TEE",
 		"key_name": "key RSA 6",
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 10": {
+		"description": "Public buffer len too small (base64) (with RSA attribute set)",
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key RSA 7",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 11": {
+		"description": "Modulus buffer len is too small (base64)",
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key RSA 8",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key AES",
 		"depends": 1
 	},
-	"subtest 11": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key RSA 2",
 		"depends": 5

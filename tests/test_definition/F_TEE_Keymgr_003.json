@@ -50,17 +50,9 @@
 		"key 4": {
 			"type": "RSA",
 			"security_size": 1024,
+			"pub_exp": "4000000041CB995001",
 			"attributes_list": [
-				[
-					"RSA_PUB_EXP",
-					[
-						9,
-						"4000000041CB995001"
-					]
-				],
-				[
-					"TRANSIENT"
-				]
+				"TRANSIENT"
 			],
 			"usage": [
 				"SIGN_MESSAGE"

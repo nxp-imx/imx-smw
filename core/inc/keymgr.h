@@ -53,8 +53,8 @@ struct smw_keymgr_identifier {
  * @private_length: Get the @pub's private length reference
  * @modulus: Get the @pub's modulus reference
  * @modulus_length: Get the @pub's modulus length reference
- * @exponent: Get the @pub's exponent reference
- * @exponent_length: Get the @pub's exponent length reference
+ * @public_exponent: Get the @pub's public exponent reference
+ * @public_exponent_length: Get the @pub's public exponent length reference
  *
  * This structure is initialized by the function
  * smw_keymgr_convert_descriptor().
@@ -70,8 +70,8 @@ struct smw_keymgr_key_ops {
 	unsigned int *(*private_length)(struct smw_keymgr_key_ops *this);
 	unsigned char **(*modulus)(struct smw_keymgr_key_ops *this);
 	unsigned int *(*modulus_length)(struct smw_keymgr_key_ops *this);
-	unsigned char **(*exponent)(struct smw_keymgr_key_ops *this);
-	unsigned int *(*exponent_length)(struct smw_keymgr_key_ops *this);
+	unsigned char **(*public_exponent)(struct smw_keymgr_key_ops *this);
+	unsigned int *(*public_exponent_length)(struct smw_keymgr_key_ops *this);
 };
 
 /**
@@ -313,34 +313,33 @@ unsigned int
 smw_keymgr_get_modulus_length(struct smw_keymgr_descriptor *descriptor);
 
 /**
- * smw_keymgr_get_exponent() - Return the address of the exponent buffer.
+ * smw_keymgr_get_pub_exp() - Return the address of the public exponent buffer.
  * @descriptor: Pointer to the internal Key descriptor structure.
  *
- * This function returns the address of the exponent buffer.
+ * This function returns the address of the public exponent buffer.
  * If the @descriptor field @pub is NULL or if the @pub field @buffer is NULL,
  * the function returns NULL.
  *
  * Return:
  * NULL
- * address of the exponent buffer.
+ * address of the public exponent buffer.
  */
-unsigned char *
-smw_keymgr_get_exponent(struct smw_keymgr_descriptor *descriptor);
+unsigned char *smw_keymgr_get_pub_exp(struct smw_keymgr_descriptor *descriptor);
 
 /**
- * smw_keymgr_get_exponent_length() - Return the length of the exponent buffer.
+ * smw_keymgr_get_pub_exp_length() - Return the length of the public exponent buffer.
  * @descriptor: Pointer to the internal Key descriptor structure.
  *
- * This function returns the length of the exponent buffer.
+ * This function returns the length of the public exponent buffer.
  * If the @descriptor field @pub is NULL or if the @pub field @buffer is NULL,
  * the function returns 0.
  *
  * Return:
  * 0
- * length of the exponent Key buffer.
+ * length of the public exponent Key buffer.
  */
 unsigned int
-smw_keymgr_get_exponent_length(struct smw_keymgr_descriptor *descriptor);
+smw_keymgr_get_pub_exp_length(struct smw_keymgr_descriptor *descriptor);
 
 /**
  * smw_keymgr_set_public_data() - Set the address of the public Key buffer.
@@ -413,18 +412,18 @@ void smw_keymgr_set_modulus_length(struct smw_keymgr_descriptor *descriptor,
 				   unsigned int modulus_length);
 
 /**
- * smw_keymgr_set_exponent_length() - Set the length of the exponent buffer.
+ * smw_keymgr_set_pub_exp_length() - Set the length of the public exponent buffer.
  * @descriptor: Pointer to the internal Key descriptor structure.
- * @modulus_length: Length of the exponent buffer.
+ * @pub_exp_length: Length of the public exponent buffer.
  *
- * This function sets the length of the exponent buffer.
+ * This function sets the length of the public exponent buffer.
  * If the @buffer field @pub is NULL, the function returns with no action.
  *
  * Return:
  * none.
  */
-void smw_keymgr_set_exponent_length(struct smw_keymgr_descriptor *descriptor,
-				    unsigned int exponent_length);
+void smw_keymgr_set_pub_exp_length(struct smw_keymgr_descriptor *descriptor,
+				   unsigned int public_exponent_length);
 
 /**
  * smw_keymgr_update_public_buffer() - Update the public buffer fields

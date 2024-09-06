@@ -76,6 +76,19 @@ static unsigned int *modulus_length_key_rsa(struct smw_keymgr_key_ops *this)
 	return &this->keys->rsa.modulus_length;
 }
 
+static unsigned char **public_exponent_key_rsa(struct smw_keymgr_key_ops *this)
+{
+	SMW_DBG_ASSERT(this && this->keys && this->public_exponent);
+	return &this->keys->rsa.public_exponent;
+}
+
+static unsigned int *
+public_exponent_length_key_rsa(struct smw_keymgr_key_ops *this)
+{
+	SMW_DBG_ASSERT(this && this->keys && this->public_exponent_length);
+	return &this->keys->rsa.public_exponent_length;
+}
+
 /**
  * get_standard_public_length() - Get the public buffer standard length.
  * @identifier: Pointer to key identifier structure.
@@ -301,12 +314,12 @@ end:
 }
 
 /**
- * get_standard_exponent_length() - Get the exponent buffer standard length.
+ * get_standard_pub_exp_length() - Get the public exponent buffer standard length.
  * @identifier: Pointer to key identifier structure.
  * @format_id: Format ID.
  * @length: Pointer to the buffer length in bytes.
  *
- * This function computes the exponent key length depending of the
+ * This function computes the public exponent key length depending of the
  * key type and format. The length is based on the cryptographic standard
  * and may be different on subsystem.
  *
@@ -314,10 +327,9 @@ end:
  * SMW_STATUS_OK             - Success.
  * SMW_STATUS_INVALID_PARAM  - Key type or format not valid
  */
-static int
-get_standard_exponent_length(struct smw_keymgr_identifier *identifier,
-			     enum smw_keymgr_format_id format_id,
-			     unsigned int *length)
+static int get_standard_pub_exp_length(struct smw_keymgr_identifier *identifier,
+				       enum smw_keymgr_format_id format_id,
+				       unsigned int *length)
 {
 	int status = SMW_STATUS_OK;
 
@@ -585,6 +597,9 @@ int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
 			ops->private_length = &private_length_key_rsa;
 			ops->modulus = &modulus_key_rsa;
 			ops->modulus_length = &modulus_length_key_rsa;
+			ops->public_exponent = &public_exponent_key_rsa;
+			ops->public_exponent_length =
+				&public_exponent_length_key_rsa;
 			status = SMW_STATUS_OK;
 			break;
 
@@ -1105,27 +1120,27 @@ smw_keymgr_get_modulus_length(struct smw_keymgr_descriptor *descriptor)
 }
 
 inline unsigned char *
-smw_keymgr_get_exponent(struct smw_keymgr_descriptor *descriptor)
+smw_keymgr_get_pub_exp(struct smw_keymgr_descriptor *descriptor)
 {
 	struct smw_keymgr_key_ops *ops = &descriptor->ops;
-	unsigned char *exponent = NULL;
+	unsigned char *public_exponent = NULL;
 
-	if (ops->exponent)
-		exponent = *ops->exponent(ops);
+	if (ops->public_exponent)
+		public_exponent = *ops->public_exponent(ops);
 
-	return exponent;
+	return public_exponent;
 }
 
 inline unsigned int
-smw_keymgr_get_exponent_length(struct smw_keymgr_descriptor *descriptor)
+smw_keymgr_get_pub_exp_length(struct smw_keymgr_descriptor *descriptor)
 {
 	struct smw_keymgr_key_ops *ops = &descriptor->ops;
-	unsigned int exponent_length = 0;
+	unsigned int public_exponent_length = 0;
 
-	if (ops->exponent_length)
-		exponent_length = *ops->exponent_length(ops);
+	if (ops->public_exponent_length)
+		public_exponent_length = *ops->public_exponent_length(ops);
 
-	return exponent_length;
+	return public_exponent_length;
 }
 
 inline void smw_keymgr_set_public_data(struct smw_keymgr_descriptor *descriptor,
@@ -1178,13 +1193,13 @@ smw_keymgr_set_modulus_length(struct smw_keymgr_descriptor *descriptor,
 }
 
 inline void
-smw_keymgr_set_exponent_length(struct smw_keymgr_descriptor *descriptor,
-			       unsigned int exponent_length)
+smw_keymgr_set_pub_exp_length(struct smw_keymgr_descriptor *descriptor,
+			      unsigned int public_exponent_length)
 {
 	struct smw_keymgr_key_ops *ops = &descriptor->ops;
 
-	if (ops->exponent_length)
-		*ops->exponent_length(ops) = exponent_length;
+	if (ops->public_exponent_length)
+		*ops->public_exponent_length(ops) = public_exponent_length;
 }
 
 int smw_keymgr_update_public_buffer(struct smw_keymgr_descriptor *descriptor,
@@ -1697,7 +1712,7 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 	unsigned int public_length = 0;
 	unsigned int private_length = 0;
 	unsigned int modulus_length = 0;
-	unsigned int exponent_length = 0;
+	unsigned int public_exponent_length = 0;
 
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
@@ -1739,16 +1754,17 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 		if (status != SMW_STATUS_OK)
 			goto end;
 
-		status = get_standard_exponent_length(&key_desc.identifier,
-						      key_desc.format_id,
-						      &exponent_length);
+		status = get_standard_pub_exp_length(&key_desc.identifier,
+						     key_desc.format_id,
+						     &public_exponent_length);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
 		smw_keymgr_set_public_length(&key_desc, public_length);
 		smw_keymgr_set_private_length(&key_desc, private_length);
 		smw_keymgr_set_modulus_length(&key_desc, modulus_length);
-		smw_keymgr_set_exponent_length(&key_desc, exponent_length);
+		smw_keymgr_set_pub_exp_length(&key_desc,
+					      public_exponent_length);
 
 		goto end;
 	}

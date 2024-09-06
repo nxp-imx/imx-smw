@@ -582,30 +582,46 @@ static int set_params_gen_key(struct smw_keymgr_generate_key_args *key_args,
 			      TEEC_Operation *op)
 {
 	int status = SMW_STATUS_OK;
-	unsigned char *exponent = NULL;
-	unsigned int exponent_length = 0;
+	struct smw_keymgr_descriptor *key_descriptor =
+		&key_args->key_descriptor;
+	enum smw_keymgr_format_id format_id = key_descriptor->format_id;
+	unsigned char *public_exponent = NULL;
+	unsigned int public_exponent_length = 0;
+	unsigned char *hex_pub_exp = NULL;
+	unsigned int hex_pub_exp_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	exponent = smw_keymgr_get_exponent(&key_args->key_descriptor);
-	exponent_length =
-		smw_keymgr_get_exponent_length(&key_args->key_descriptor);
+	public_exponent = smw_keymgr_get_pub_exp(key_descriptor);
+	public_exponent_length = smw_keymgr_get_pub_exp_length(key_descriptor);
 
 	/* RSA public exponent is set by the user */
-	if (exponent) {
+	if (public_exponent) {
+		status = smw_keymgr_set_hex_key_buffer(format_id,
+						       public_exponent,
+						       public_exponent_length,
+						       &hex_pub_exp,
+						       &hex_pub_exp_len);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+
 		status = set_tmpref_buffer(TEEC_MEMREF_TEMP_INPUT,
-					   GEN_PUB_EXP_PARAM_IDX, exponent,
-					   exponent_length, op);
+					   GEN_PUB_EXP_PARAM_IDX, hex_pub_exp,
+					   hex_pub_exp_len, op);
 		if (status != SMW_STATUS_OK)
 			goto exit;
 	}
 
-	status = set_params_exp_public_keys(&key_args->key_descriptor,
-					    CMD_GENERATE_KEY, op);
+	status = set_params_exp_public_keys(key_descriptor, CMD_GENERATE_KEY,
+					    op);
 	if (status == SMW_STATUS_NO_KEY_BUFFER)
 		status = SMW_STATUS_OK;
 
 exit:
+	if (status != SMW_STATUS_OK &&
+	    format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && hex_pub_exp)
+		SMW_UTILS_FREE(hex_pub_exp);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -747,6 +763,9 @@ exit:
 
 		/* Free HEX modulus buffer allocated */
 		free_tmpref_buffer(GEN_MOD_PARAM_IDX, &op);
+
+		/* Free RSA public exponent buffer allocated */
+		free_tmpref_buffer(GEN_PUB_EXP_PARAM_IDX, &op);
 	}
 
 	if (status != SMW_STATUS_OK) {

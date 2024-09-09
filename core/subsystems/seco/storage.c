@@ -51,7 +51,7 @@ static int data_storage(struct hdl *hdl,
 	hsm_hdl_t data_storage_hdl = 0;
 	op_data_storage_args_t op_args = { 0 };
 
-	union smw_object_db_info db_info = { 0 };
+	struct smw_object_descriptor obj = { 0 };
 	smw_attr_attributes_t attributes = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -74,24 +74,24 @@ static int data_storage(struct hdl *hdl,
 		 * data is correct
 		 */
 		status = smw_object_db_get_info(op_args.data_id, attributes,
-						&db_info);
+						&obj);
 
 		if (status != SMW_STATUS_OK)
 			goto end;
 
 		if (!op_args.data) {
 			smw_storage_set_data_length(data_descriptor,
-						    db_info.data_info.size);
+						    obj.data.length);
 			goto end;
-		} else if (op_args.data_size < db_info.data_info.size) {
+		} else if (op_args.data_size < obj.data.length) {
 			smw_storage_set_data_length(data_descriptor,
-						    db_info.data_info.size);
+						    obj.data.length);
 
 			status = SMW_STATUS_OUTPUT_TOO_SHORT;
 			goto end;
 		} else {
 			/* Ensure that data size requested is exact */
-			op_args.data_size = db_info.data_info.size;
+			op_args.data_size = obj.data.length;
 		}
 	}
 
@@ -127,6 +127,9 @@ static int data_storage(struct hdl *hdl,
 		status = seco_convert_err(err);
 
 end:
+	if (obj.label)
+		free(obj.label);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

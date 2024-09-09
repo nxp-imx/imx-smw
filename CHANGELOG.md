@@ -37,6 +37,15 @@ The releases are listed from the most recent to the first one.
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
+##### 2. SMW APIs
+
+* RSA public exponent set by the user is ignored by TEE subsystem. Default value 65537 is used instead.
+  Other subsystems use hardcoded default value 65537 anyway.
+
+##### 3. OSAL
+
+* Cannot create the SMW datbase if the user specifies a directory that does not exist in the file system.
+
 #### SMW Library - _version 4.0_
 ##### 1. SMW APIs
 * Update `smw_derive_key()` API argument and add support for HKDF based key derivation.

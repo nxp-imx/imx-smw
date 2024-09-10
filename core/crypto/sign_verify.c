@@ -194,7 +194,7 @@ sign_verify_convert_args(struct smw_sign_verify_args *args,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (args->version != 0) {
+	if (args->version > 1) {
 		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
@@ -286,6 +286,28 @@ smw_sign_verify_set_sign_len(struct smw_crypto_sign_verify_args *args,
 		args->pub->signature_length = signature_length;
 }
 
+inline unsigned char *
+smw_sign_verify_get_ed25519ctx_buf(struct smw_crypto_sign_verify_args *args)
+{
+	unsigned char *context_buffer = NULL;
+
+	if (args->pub && args->pub->version >= 1 && args->pub->ed25519_params)
+		context_buffer = args->pub->ed25519_params->context;
+
+	return context_buffer;
+}
+
+inline unsigned int
+smw_sign_verify_get_ed25519ctx_len(struct smw_crypto_sign_verify_args *args)
+{
+	unsigned int context_length = 0;
+
+	if (args->pub && args->pub->version >= 1 && args->pub->ed25519_params)
+		context_length = args->pub->ed25519_params->context_length;
+
+	return context_length;
+}
+
 static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 {
 	unsigned int size = 0;
@@ -294,6 +316,7 @@ static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 		/* Signature size is public key size */
 		size = key->identifier.security_size;
 

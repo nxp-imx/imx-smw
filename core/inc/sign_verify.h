@@ -154,4 +154,30 @@ void smw_sign_verify_copy_sign_buf(struct smw_crypto_sign_verify_args *args,
 void smw_sign_verify_set_sign_len(struct smw_crypto_sign_verify_args *args,
 				  unsigned int signature_length);
 
+/**
+ * smw_sign_verify_get_ed25519ctx_buf() - Return the ed25519 context buffer.
+ * @args: Pointer to the internal Sign/Verify args structure.
+ *
+ * This function returns the address of the Sign/Verify ed25519 context buffer.
+ *
+ * Return:
+ * NULL
+ * address of the Sign/Verify ed25519 context buffer.
+ */
+unsigned char *
+smw_sign_verify_get_ed25519ctx_buf(struct smw_crypto_sign_verify_args *args);
+
+/**
+ * smw_sign_verify_get_ctx_len() - Return the ed25519 context length.
+ * @args: Pointer to the internal Sign/Verify args structure.
+ *
+ * This function returns the length of the Sign/Verify ed25519 context buffer.
+ *
+ * Return:
+ * 0
+ * length of the Sign/Verify ed25519 context buffer.
+ */
+unsigned int
+smw_sign_verify_get_ed25519ctx_len(struct smw_crypto_sign_verify_args *args);
+
 #endif /* __SIGN_VERIFY_H__ */

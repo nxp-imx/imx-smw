@@ -17,6 +17,7 @@ Each component handles its own version number specified in each component main C
 ## List of releases
 
 The releases are listed from the most recent to the first one.
+
 1. [Release 4.1](#rel_4_1)
 2. [Release 4.0](#rel_4_0)
 3. [Release 3.0](#rel_3_0)
@@ -49,6 +50,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. Subsystems
 
 * TEE: Fix subsystem load() function to return error if TA and context failed.
+* TEE: Add support of ed25519 Sign and Verify operations.
 
 ##### 3. ARM PSA APIs
 
@@ -59,6 +61,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### SMW Tests - _version 4.1_
 
+* Add tests to validate ed25519 Sign and Verify operations with TEE subsystem.
+
 #### PKCS#11 Library - _version 4.1_
 
 #### PKCS#11 Tests - _version 4.1_
@@ -66,7 +70,6 @@ The failure is due to the storage manager which is already loaded and a new inst
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**
 ---
-
 #### Known Issues
 ##### 1. SECO Subsystem
 

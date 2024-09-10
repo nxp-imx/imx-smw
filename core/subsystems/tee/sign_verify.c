@@ -76,7 +76,11 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 
 	struct smw_keymgr_descriptor *key_descriptor = NULL;
 	struct smw_keymgr_identifier *key_identifier = NULL;
-	struct sign_verify_shared_params shared_params = { 0 };
+	struct sign_verify_shared_params *shared_params = NULL;
+	unsigned int shared_params_size =
+		sizeof(struct sign_verify_shared_params);
+	unsigned char *ctx = NULL;
+	unsigned int ctx_length = 0;
 	unsigned int sign_length = 0;
 
 	uint32_t param0_type = TEEC_NONE;
@@ -123,13 +127,32 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		}
 	}
 
+	if (key_type_id == TEE_KEY_TYPE_ID_ED25519) {
+		ctx = smw_sign_verify_get_ed25519ctx_buf(args);
+		ctx_length = smw_sign_verify_get_ed25519ctx_len(args);
+	}
+
+	if (ctx && ctx_length) {
+		if (ADD_OVERFLOW(shared_params_size, ctx_length,
+				 &shared_params_size)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto exit;
+		}
+	}
+
+	shared_params = SMW_UTILS_CALLOC(1, shared_params_size);
+	if (!shared_params) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto exit;
+	}
+
 	status = tee_convert_hash_algorithm_id(args->attributes.hash_id,
-					       &shared_params.hash_algorithm);
+					       &shared_params->hash_algorithm);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
 	status = tee_convert_signature_type_id(args->attributes.type_id,
-					       &shared_params.signature_type);
+					       &shared_params->signature_type);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -173,7 +196,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		goto exit;
 	}
 
-	shared_params.pub_key_len =
+	shared_params->pub_key_len =
 		smw_keymgr_get_public_length(key_descriptor);
 
 	if (param0_type == TEEC_MEMREF_PARTIAL_INPUT) {
@@ -187,21 +210,29 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	} else if (param0_type == TEEC_MEMREF_TEMP_INPUT) {
 		operation.params[0].tmpref.buffer =
 			smw_keymgr_get_public_data(key_descriptor);
-		operation.params[0].tmpref.size = shared_params.pub_key_len;
+		operation.params[0].tmpref.size = shared_params->pub_key_len;
 	} else {
-		shared_params.id = key_identifier->id;
+		shared_params->id = key_identifier->id;
 	}
 
-	shared_params.key_type = key_type_id;
-	shared_params.security_size = key_identifier->security_size;
-	shared_params.salt_length = args->attributes.salt_length;
+	shared_params->key_type = key_type_id;
+	shared_params->security_size = key_identifier->security_size;
+	shared_params->salt_length = args->attributes.salt_length;
+
+	if (SET_OVERFLOW(ctx_length, shared_params->ctx_length)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
+	}
+
+	if (ctx && ctx_length)
+		SMW_UTILS_MEMCPY(shared_params->ctx, ctx, ctx_length);
 
 	operation.paramTypes =
 		TEEC_PARAM_TYPES(param0_type, TEEC_MEMREF_TEMP_INPUT,
 				 TEEC_MEMREF_TEMP_INPUT, param3_type);
 
-	operation.params[1].tmpref.buffer = &shared_params;
-	operation.params[1].tmpref.size = sizeof(shared_params);
+	operation.params[1].tmpref.buffer = shared_params;
+	operation.params[1].tmpref.size = shared_params_size;
 	operation.params[2].tmpref.buffer = smw_sign_verify_get_msg_buf(args);
 	operation.params[2].tmpref.size = smw_sign_verify_get_msg_len(args);
 	operation.params[3].tmpref.buffer = smw_sign_verify_get_sign_buf(args);
@@ -227,6 +258,9 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	}
 
 exit:
+	if (shared_params)
+		free(shared_params);
+
 	if (param0_type == TEEC_MEMREF_PARTIAL_INPUT)
 		TEEC_ReleaseSharedMemory(&shm);
 

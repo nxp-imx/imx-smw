@@ -14,7 +14,7 @@
 #include "sign_verify.h"
 #include "obj.h"
 
-#define ALGORITHM_ID(_security_size, _hash_algo)                               \
+#define ECDSA_ALGORITHM_ID(_security_size, _hash_algo)                         \
 	{                                                                      \
 		.security_size = _security_size,                               \
 		.tee_algorithm_id = TEE_ALG_ECDSA_##_hash_algo                 \
@@ -28,16 +28,15 @@
 			TEE_ALG_RSASSA_PKCS1_##_rsa_algo##_##_hash_algo        \
 	}
 
-/* Key type IDs must be ordered from lowest to highest.
- * Security size must be ordered from lowest to highest
- * for 1 given Key type ID
- */
+/* Security size must be ordered from lowest to highest */
 static const struct {
 	unsigned int security_size;
 	uint32_t tee_algorithm_id;
-} algorithm_ids[] = { ALGORITHM_ID(192, SHA1), ALGORITHM_ID(224, SHA224),
-		      ALGORITHM_ID(256, SHA256), ALGORITHM_ID(384, SHA384),
-		      ALGORITHM_ID(521, SHA512) };
+} ecdsa_algorithm_ids[] = { ECDSA_ALGORITHM_ID(192, SHA1),
+			    ECDSA_ALGORITHM_ID(224, SHA224),
+			    ECDSA_ALGORITHM_ID(256, SHA256),
+			    ECDSA_ALGORITHM_ID(384, SHA384),
+			    ECDSA_ALGORITHM_ID(521, SHA512) };
 
 /*
  * RSA algo must be ordered from lowest to highest.
@@ -112,11 +111,11 @@ static TEE_Result get_rsa_algo_id(enum tee_signature_type signature_type,
 	return TEE_SUCCESS;
 }
 
-static TEE_Result get_algorithm_id(unsigned int security_size,
-				   enum tee_algorithm_id *algorithm_id)
+static TEE_Result get_ecdsa_algo_id(unsigned int security_size,
+				    enum tee_algorithm_id *algorithm_id)
 {
 	unsigned int i = 0;
-	unsigned int size = ARRAY_SIZE(algorithm_ids);
+	unsigned int size = ARRAY_SIZE(ecdsa_algorithm_ids);
 
 	FMSG("Executing %s", __func__);
 
@@ -124,12 +123,12 @@ static TEE_Result get_algorithm_id(unsigned int security_size,
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	for (; i < size; i++) {
-		if (algorithm_ids[i].security_size < security_size)
+		if (ecdsa_algorithm_ids[i].security_size < security_size)
 			continue;
-		if (algorithm_ids[i].security_size > security_size)
+		if (ecdsa_algorithm_ids[i].security_size > security_size)
 			return TEE_ERROR_NOT_SUPPORTED;
 
-		*algorithm_id = algorithm_ids[i].tee_algorithm_id;
+		*algorithm_id = ecdsa_algorithm_ids[i].tee_algorithm_id;
 		break;
 	}
 
@@ -225,7 +224,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_OperationHandle operation = TEE_HANDLE_NULL;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
-	TEE_Attribute sign_verify_attr[1] = { 0 };
+	TEE_Attribute sign_verify_attr[2] = { 0 };
 	TEE_ObjectInfo key_info = { 0 };
 	uint32_t param0_type = TEE_PARAM_TYPE_GET(param_types, 0);
 	uint32_t exp_param3_type = 0;
@@ -258,7 +257,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	}
 	if ((TEE_PARAM_TYPE_GET(param_types, 1) !=
 	     TEE_PARAM_TYPE_MEMREF_INPUT) ||
-	    params[1].memref.size != sizeof(*shared_params) ||
+	    params[1].memref.size < sizeof(*shared_params) ||
 	    !params[1].memref.buffer ||
 	    (TEE_PARAM_TYPE_GET(param_types, 2) !=
 	     TEE_PARAM_TYPE_MEMREF_INPUT) ||
@@ -266,6 +265,10 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 		return res;
 
 	shared_params = params[1].memref.buffer;
+
+	if (params[1].memref.size !=
+	    sizeof(*shared_params) + shared_params->ctx_length)
+		return res;
 
 	res = set_key(cmd_id, params[0], param0_type, shared_params,
 		      &key_handle, &persistent);
@@ -304,14 +307,30 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 
 		/* Set salt length attribute if needed */
 		if (!res && shared_params->salt_length) {
-			TEE_InitValueAttribute(sign_verify_attr,
+			TEE_InitValueAttribute(&sign_verify_attr[attr_count],
 					       TEE_ATTR_RSA_PSS_SALT_LENGTH,
 					       shared_params->salt_length, 0);
-			attr_count = 1;
+			attr_count++;
+		}
+	} else if (shared_params->key_type == TEE_KEY_TYPE_ID_ED25519) {
+		algorithm_id = TEE_ALG_ED25519;
+
+		if (shared_params->hash_algorithm == TEE_ALGORITHM_ID_INVALID) {
+			TEE_InitValueAttribute(&sign_verify_attr[attr_count],
+					       TEE_ATTR_EDDSA_PREHASH, 1, 0);
+			attr_count++;
+		}
+
+		if (shared_params->ctx_length) {
+			TEE_InitRefAttribute(&sign_verify_attr[attr_count],
+					     TEE_ATTR_EDDSA_CTX,
+					     shared_params->ctx,
+					     shared_params->ctx_length);
+			attr_count++;
 		}
 	} else {
-		res = get_algorithm_id(shared_params->security_size,
-				       &algorithm_id);
+		res = get_ecdsa_algo_id(shared_params->security_size,
+					&algorithm_id);
 	}
 
 	if (res) {

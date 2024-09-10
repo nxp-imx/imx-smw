@@ -165,8 +165,10 @@ struct keymgr_shared_params {
  * @security_size: Key security size.
  * @hash_algorithm: Hash algorithm.
  * @signature_type: Signature type.
- * @salt_length: Optional salt length (only for TEE_RSA_PKCS1_PSS_MGF1).
+ * @salt_length: Optional salt length (only for TEE_ALG_RSASSA_PKCS1_PSS_MGF1).
  * @pub_key_len: Key public length in bytes.
+ * @ctx_length: Context length (only for TEE_KEY_TYPE_ID_ED25519)
+ * @ctx: Context buffer (only for TEE_KEY_TYPE_ID_ED25519)
  */
 struct sign_verify_shared_params {
 	uint32_t id;
@@ -176,6 +178,8 @@ struct sign_verify_shared_params {
 	enum tee_signature_type signature_type;
 	uint32_t salt_length;
 	unsigned int pub_key_len;
+	uint8_t ctx_length;
+	uint8_t ctx[];
 };
 
 /**

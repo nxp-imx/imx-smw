@@ -283,6 +283,7 @@ static int load(void)
 	if (tee_res != TEEC_SUCCESS) {
 		SMW_DBG_PRINTF(ERROR, "Can't init TEE context: 0x%x\n",
 			       tee_res);
+		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 		goto exit;
 	}
 
@@ -293,6 +294,7 @@ static int load(void)
 	if (tee_res != TEEC_SUCCESS) {
 		SMW_DBG_PRINTF(ERROR, "Can't open TEE Session: 0x%x\n",
 			       tee_res);
+		status = SMW_STATUS_SUBSYSTEM_NOT_CONFIGURED;
 		goto exit;
 	}
 

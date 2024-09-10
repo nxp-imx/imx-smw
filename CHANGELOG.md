@@ -40,6 +40,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library - _version 4.1_
 ##### 1. SMW APIs
 
+* RSA public exponent set by the user is handled by TEE subsystem.
+
 ##### 2. Subsystems
 
 * TEE: Fix subsystem load() function to return error if TA and context failed.
@@ -65,11 +67,6 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
-
-##### 2. SMW APIs
-
-* RSA public exponent set by the user is ignored by TEE subsystem. Default value 65537 is used instead.
-  Other subsystems use hardcoded default value 65537 anyway.
 
 ##### 3. OSAL
 

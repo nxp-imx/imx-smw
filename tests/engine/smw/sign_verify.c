@@ -36,7 +36,8 @@ static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
 
 	if (key_desc->type_name == SMW_KEY_TYPE_NAME_SECP_R1 ||
 	    key_desc->type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_R1 ||
-	    key_desc->type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1)
+	    key_desc->type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1 ||
+	    key_desc->type_name == SMW_KEY_TYPE_NAME_ED25519)
 		return BITS_TO_BYTES_SIZE(key_desc->security_size) * 2;
 
 	if (key_desc->type_name == SMW_KEY_TYPE_NAME_RSA)
@@ -121,15 +122,18 @@ int sign_verify(struct subtest_data *subtest, int operation)
 	const char *key_name = NULL;
 	int sign_id = INT_MAX;
 	unsigned int message_length = 0;
+	unsigned int context_length = 0;
 	unsigned int list_sign_length = 0;
 	unsigned int new_sign_length = 0;
 	unsigned int exp_sign_length = 0;
 	unsigned char *message = NULL;
+	unsigned char *context = NULL;
 	unsigned char *list_sign = NULL;
 	unsigned char *new_sign = NULL;
 	unsigned char *exp_sign = NULL;
 	struct smw_sign_verify_args args = { 0 };
 	struct smw_sign_verify_args *smw_sign_verify_args = &args;
+	struct smw_ed25519_params ed25519_params = { 0 };
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -187,6 +191,21 @@ int sign_verify(struct subtest_data *subtest, int operation)
 
 	args.message = message;
 	args.message_length = message_length;
+
+	/* Read message buffer if any */
+	res = util_read_hex_buffer(&context, &context_length, subtest->params,
+				   CTX_OBJ);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
+		goto exit;
+
+	if (res == ERR_CODE(PASSED)) {
+		if (key_test.desc.type_name == SMW_KEY_TYPE_NAME_ED25519) {
+			ed25519_params.context = context;
+			ed25519_params.context_length = context_length;
+
+			args.ed25519_params = &ed25519_params;
+		}
+	}
 
 	/* Get 'sign_id' parameter */
 	res = util_read_json_type(&sign_id, SIGN_ID_OBJ, t_int,
@@ -278,6 +297,9 @@ exit:
 
 	if (message)
 		free(message);
+
+	if (context)
+		free(context);
 
 	if (new_sign && new_sign != args.signature)
 		free(new_sign);

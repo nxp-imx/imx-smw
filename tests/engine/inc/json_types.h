@@ -21,6 +21,7 @@
 #define CLIENT_W_MAC_KEY_NAME_OBJ "client_w_mac_key_name"
 #define CMD_OBJ			  "command"
 #define COPY_OUTPUT_OBJ		  "copy_output"
+#define CTX_OBJ			  "context"
 #define CTX_ID_OBJ		  "context_id"
 #define DATA_LIST_OBJ		  "data_list"
 #define DATA_NAME_OBJ		  "data_name"

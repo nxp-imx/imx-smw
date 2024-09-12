@@ -551,6 +551,9 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	ops.add_obj_info = obj_db_add;
 	ops.update_obj_info = obj_db_update;
 	ops.delete_obj_info = obj_db_delete;
+	ops.find_obj_init = obj_db_find_init;
+	ops.find_obj_next = obj_db_find_next;
+	ops.find_obj_final = obj_db_find_finalize;
 
 	status = smw_init(&ops);
 	if (status != SMW_STATUS_OK)

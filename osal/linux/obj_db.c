@@ -135,7 +135,7 @@ static sqlite3 *get_database_handle(smw_attr_attributes_t attributes)
 static bool sql_print(char *out, size_t *length, const char *format, ...)
 {
 	int l = 0;
-	va_list args;
+	va_list args = { 0 };
 
 	if (out && (out + *length < out))
 		return true;
@@ -428,6 +428,98 @@ static int sql_print_select(struct osal_obj *obj, char *sql, size_t *length)
 	return 0;
 }
 
+static int sql_print_find(struct osal_obj *obj, char *sql, size_t *length)
+{
+	struct smw_object_descriptor *descriptor = NULL;
+	bool and_operator = false;
+	static const char *select = "SELECT * FROM %s";
+
+	if (!obj || !obj->descriptor)
+		return -1;
+
+	descriptor = obj->descriptor;
+
+	if (sql_print(sql, length, select, OBJECT_DB_TABLE_NAME))
+		return -1;
+
+	if (descriptor->id || descriptor->type || descriptor->label)
+		if (sql_print(sql, length, " WHERE "))
+			return -1;
+
+	if (descriptor->id) {
+		if (sql_print(sql, length, "\"0x%X\" = %d", TAG_PERSISTENCE_ID,
+			      descriptor->id))
+			return -1;
+
+		and_operator = true;
+	}
+
+	if (descriptor->type) {
+		if (and_operator) {
+			if (sql_print(sql, length, " AND "))
+				return -1;
+		} else {
+			and_operator = true;
+		}
+
+		if (sql_print(sql, length, "\"0x%X\" = %d", TAG_CLASS,
+			      descriptor->type))
+			return -1;
+
+		if (descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR) {
+			if (descriptor->key.type_name != SMW_KEY_TYPE_NAME_NONE)
+				if (sql_print(sql, length, " AND \"0x%X\" = %d",
+					      TAG_TYPE,
+					      descriptor->key.type_name))
+					return -1;
+
+			if (descriptor->key.security_size)
+				if (sql_print(sql, length, " AND \"0x%X\" = %d",
+					      TAG_SIZE,
+					      descriptor->key.security_size))
+					return -1;
+
+			if (descriptor->key.id)
+				if (sql_print(sql, length, " AND \"0x%X\" = %d",
+					      TAG_ID, descriptor->key.id))
+					return -1;
+
+		} else if (descriptor->type == SMW_OBJECT_TYPE_NAME_DATA) {
+			if (descriptor->data.length)
+				if (sql_print(sql, length, " AND \"0x%X\" = %d",
+					      TAG_SIZE,
+					      descriptor->data.length))
+					return -1;
+
+			if (descriptor->data.identifier)
+				if (sql_print(sql, length, " AND \"0x%X\" = %d",
+					      TAG_ID,
+					      descriptor->data.identifier))
+					return -1;
+		}
+	}
+
+	if (descriptor->label) {
+		if (and_operator) {
+			if (sql_print(sql, length, " AND "))
+				return -1;
+		}
+
+		if (sql_print(sql, length, "\"0x%X\" = %s", TAG_LABEL,
+			      descriptor->label))
+			return -1;
+	}
+
+	if (sql_print(sql, length, ";"))
+		return -1;
+
+	if (ADD_OVERFLOW(*length, 1, length)) // null terminated char
+		return -1;
+
+	return 0;
+}
+
 static int obj_db_create_table(char *name, smw_attr_attributes_t smw_attributes,
 			       uint32_t start_id,
 			       struct obj_attribute attributes[],
@@ -539,6 +631,139 @@ static int obj_db_init(void)
 }
 
 /**
+ * osal_obj_set_common_attribute() - Set OSAL object common attribute
+ * @obj: Reference to the OSAL object
+ * @attribute_tag_str: Tag id in string format
+ * @value_str: Value in string format
+ *
+ */
+static int osal_obj_set_common_attribute(struct osal_obj *obj,
+					 const char *attribute_tag_str,
+					 const unsigned char *value_str)
+{
+	enum obj_attribute_tag attribute_tag = 0;
+	unsigned int attribute_value = 0;
+	const char *attribute_value_str = (const char *)value_str;
+	unsigned long l = 0;
+	char *endPtr = NULL;
+
+	if (!obj || !attribute_tag_str || !value_str)
+		return -1;
+
+	l = strtoul(attribute_tag_str, &endPtr, 0);
+	if (!l && endPtr == attribute_tag_str)
+		return -1;
+
+	if (SET_OVERFLOW(l, attribute_tag))
+		return -1;
+
+	l = strtoul(attribute_value_str, &endPtr, 0);
+	if (l || endPtr != attribute_value_str)
+		if (SET_OVERFLOW(l, attribute_value))
+			return -1;
+
+	switch (attribute_tag) {
+	case TAG_CLASS:
+		obj->descriptor->type = (smw_object_type_t)attribute_value;
+		break;
+
+	case TAG_PERSISTENCE_ID:
+		obj->id = attribute_value;
+		obj->descriptor->id = attribute_value;
+		break;
+
+	case TAG_GROUP:
+		obj->descriptor->group = attribute_value;
+		break;
+
+	case TAG_LABEL:
+		obj->descriptor->label = strdup(attribute_value_str);
+		break;
+
+	case TAG_ATTRIBUTES:
+		obj->descriptor->attributes =
+			(smw_attr_attributes_t)attribute_value;
+		break;
+
+	case TAG_SUBSYSTEM_NAME:
+		obj->descriptor->subsystem_name =
+			(smw_subsystem_t)attribute_value;
+		break;
+
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+/**
+ * osal_obj_set_specific_attribute() - Set OSAL object specific attribute
+ * @obj: Reference to the OSAL object
+ * @attribute_tag_str: Tag id in string format
+ * @value_str: Value in string format
+ *
+ */
+static int osal_obj_set_specific_attribute(struct osal_obj *obj,
+					   const char *attribute_tag_str,
+					   const unsigned char *value_str)
+{
+	enum obj_attribute_tag attribute_tag = 0;
+	unsigned int attribute_value = 0;
+	const char *attribute_value_str = (const char *)value_str;
+	unsigned long l = 0;
+	char *endPtr = NULL;
+
+	if (!obj || !attribute_tag_str || !value_str)
+		return -1;
+
+	l = strtoul(attribute_tag_str, &endPtr, 0);
+	if (!l && endPtr == attribute_tag_str)
+		return -1;
+
+	if (SET_OVERFLOW(l, attribute_tag))
+		return -1;
+
+	l = strtoul(attribute_value_str, &endPtr, 0);
+	if (l || endPtr != attribute_value_str)
+		if (SET_OVERFLOW(l, attribute_value))
+			return -1;
+
+	switch (attribute_tag) {
+	case TAG_TYPE:
+		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+			obj->descriptor->key.type_name =
+				(smw_key_type_t)attribute_value;
+		break;
+
+	case TAG_ID:
+		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+			obj->descriptor->key.id = attribute_value;
+		break;
+
+	case TAG_PERSISTENCE_ID:
+		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA)
+			obj->descriptor->data.identifier = attribute_value;
+		break;
+
+	case TAG_SIZE:
+		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+			obj->descriptor->key.security_size = attribute_value;
+		else if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA)
+			obj->descriptor->data.length = attribute_value;
+		break;
+
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+/**
  * obj_db_to_osal_obj() - Convert SQLite object to OSAL object
  * @data: Reference to the OSAL object
  *
@@ -549,12 +774,7 @@ static int obj_db_to_osal_obj(void *data, int argc, char **argv,
 			      char **azColName)
 {
 	struct osal_obj *obj = (struct osal_obj *)data;
-	char *endPtr = NULL;
 	int i = 0;
-
-	enum obj_attribute_tag attribute_tag = 0;
-	unsigned int attribute_value = 0;
-	unsigned long l = 0;
 
 	if (!obj || !obj->descriptor)
 		return -1;
@@ -564,111 +784,18 @@ static int obj_db_to_osal_obj(void *data, int argc, char **argv,
 		if (!argv[i])
 			continue;
 
-		l = strtoul(azColName[i], &endPtr, 0);
-		if (!l && endPtr == azColName[i])
-			continue;
-
-		if (SET_OVERFLOW(l, attribute_tag))
-			continue;
-
-		l = strtoul(argv[i], &endPtr, 0);
-		if (!l && endPtr == argv[i])
-			continue;
-
-		if (SET_OVERFLOW(l, attribute_value))
-			continue;
-
-		switch (attribute_tag) {
-		case TAG_CLASS:
-			obj->descriptor->type =
-				(smw_object_type_t)attribute_value;
-			break;
-
-		case TAG_PERSISTENCE_ID:
-			obj->id = attribute_value;
-			obj->descriptor->id = attribute_value;
-			break;
-
-		case TAG_GROUP:
-			obj->descriptor->group = attribute_value;
-			break;
-
-		case TAG_LABEL:
-			obj->descriptor->label = strdup(argv[i]);
-			break;
-
-		case TAG_ATTRIBUTES:
-			obj->descriptor->attributes =
-				(smw_attr_attributes_t)attribute_value;
-			break;
-
-		case TAG_SUBSYSTEM_NAME:
-			obj->descriptor->subsystem_name =
-				(smw_subsystem_t)attribute_value;
-			break;
-
-		default:
-			break;
-		}
+		if (osal_obj_set_common_attribute(obj, azColName[i],
+						  (unsigned char *)argv[i]))
+			return -1;
 	}
 
 	for (i = 0; i < argc; i++) {
 		if (!argv[i])
 			continue;
 
-		l = strtoul(azColName[i], &endPtr, 0);
-		if (!l && endPtr == azColName[i])
-			continue;
-
-		if (SET_OVERFLOW(l, attribute_tag))
-			continue;
-
-		l = strtoul(argv[i], &endPtr, 0);
-		if (!l && endPtr == argv[i])
-			continue;
-
-		if (SET_OVERFLOW(l, attribute_value))
-			continue;
-
-		switch (attribute_tag) {
-		case TAG_TYPE:
-			if (obj->descriptor->type ==
-				    SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
-			    obj->descriptor->type ==
-				    SMW_OBJECT_TYPE_NAME_KEY_PAIR)
-				obj->descriptor->key.type_name =
-					(smw_key_type_t)attribute_value;
-			break;
-
-		case TAG_ID:
-			if (obj->descriptor->type ==
-				    SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
-			    obj->descriptor->type ==
-				    SMW_OBJECT_TYPE_NAME_KEY_PAIR)
-				obj->descriptor->key.id = attribute_value;
-			break;
-
-		case TAG_PERSISTENCE_ID:
-			if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA)
-				obj->descriptor->data.identifier =
-					attribute_value;
-			break;
-
-		case TAG_SIZE:
-			if (obj->descriptor->type ==
-				    SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
-			    obj->descriptor->type ==
-				    SMW_OBJECT_TYPE_NAME_KEY_PAIR)
-				obj->descriptor->key.security_size =
-					attribute_value;
-			else if (obj->descriptor->type ==
-				 SMW_OBJECT_TYPE_NAME_DATA)
-				obj->descriptor->data.length = attribute_value;
-			break;
-
-		default:
-			break;
-		}
+		if (osal_obj_set_specific_attribute(obj, azColName[i],
+						    (unsigned char *)argv[i]))
+			return -1;
 	}
 
 	return 0;
@@ -1032,4 +1159,150 @@ int obj_db_get_info(struct osal_obj *obj)
 end:
 	free(sql);
 	return ret;
+}
+
+int obj_db_find_init(void **find_ctx, struct osal_obj *obj)
+{
+	int ret = -1;
+	int result = SQLITE_OK;
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct obj_db *db = NULL;
+	sqlite3 *sql_db = NULL;
+	sqlite3_stmt *stmt = NULL;
+	char *sql = NULL;
+	size_t length = 0;
+
+	if (!find_ctx)
+		return ret;
+
+	*find_ctx = NULL;
+
+	if (!ctx)
+		return ret;
+
+	db = ctx->obj_db;
+
+	if (!db) {
+		DBG_PRINTF(ERROR, "Object database not valid");
+		return ret;
+	}
+
+	if (!obj)
+		return ret;
+
+	if (obj->descriptor->id != 0) {
+		if (obj->descriptor->id < PSA_KEY_ID_VENDOR_MIN ||
+		    obj->descriptor->id >= OEM_INJECTED_OBJECTS)
+			sql_db = db->persistent_db;
+		else
+			sql_db = db->transient_db;
+	} else {
+		sql_db = get_database_handle(obj->attributes);
+	}
+
+	if (!sql_db) {
+		DBG_PRINTF(ERROR, "Object database not open");
+		return ret;
+	}
+
+	if (lock_db(db))
+		return ret;
+
+	if (sql_print_find(obj, NULL, &length))
+		goto end;
+
+	sql = malloc(length);
+	if (!sql)
+		goto end;
+
+	length = 0;
+	if (sql_print_find(obj, sql, &length))
+		goto end;
+
+	result = sqlite3_prepare_v2(sql_db, sql, -1, &stmt, NULL);
+	if (result != SQLITE_OK) {
+		DBG_PRINTF(ERROR, "SQL Error: %s\n", sqlite3_errmsg(sql_db));
+		goto end;
+	}
+
+	*find_ctx = stmt;
+	ret = 0;
+
+end:
+	if (sql)
+		free(sql);
+
+	if (ret) {
+		DBG_PRINTF_COND(ERROR, unlock_db(db),
+				"Object database unlock fail");
+	}
+
+	return ret;
+}
+
+int obj_db_find_next(void *find_ctx, struct osal_obj *obj)
+{
+	int i = 0;
+	int num_cols = 0;
+	sqlite3_stmt *stmt = (sqlite3_stmt *)find_ctx;
+	const char *column_name = NULL;
+	const unsigned char *column_value = NULL;
+
+	if (!stmt || !obj)
+		return -1;
+
+	if (sqlite3_step(stmt) != SQLITE_ROW)
+		return -1;
+
+	num_cols = sqlite3_column_count(stmt);
+
+	for (; i < num_cols; i++) {
+		column_name = sqlite3_column_name(stmt, i);
+		column_value = sqlite3_column_text(stmt, i);
+		if (!column_value)
+			continue;
+
+		if (osal_obj_set_common_attribute(obj, column_name,
+						  column_value))
+			return -1;
+	}
+
+	for (i = 0; i < num_cols; i++) {
+		column_name = sqlite3_column_name(stmt, i);
+		column_value = sqlite3_column_text(stmt, i);
+		if (!column_value)
+			continue;
+
+		if (osal_obj_set_specific_attribute(obj, column_name,
+						    column_value))
+			return -1;
+	}
+
+	return 0;
+}
+
+int obj_db_find_finalize(void *find_ctx)
+{
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct obj_db *db = NULL;
+	sqlite3_stmt *stmt = (sqlite3_stmt *)find_ctx;
+
+	if (!ctx || !stmt)
+		return -1;
+
+	db = ctx->obj_db;
+
+	if (!db) {
+		DBG_PRINTF(ERROR, "Object database not valid");
+		return -1;
+	}
+
+	sqlite3_finalize(stmt);
+
+	if (unlock_db(db)) {
+		DBG_PRINTF(ERROR, "Object database unlock fail");
+		return -1;
+	}
+
+	return 0;
 }

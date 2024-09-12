@@ -92,6 +92,9 @@ struct smw_ops {
 	int (*add_obj_info)(struct osal_obj *obj);
 	int (*update_obj_info)(struct osal_obj *obj);
 	int (*delete_obj_info)(struct osal_obj *obj);
+	int (*find_obj_init)(void **find_ctx, struct osal_obj *obj);
+	int (*find_obj_next)(void *find_ctx, struct osal_obj *obj);
+	int (*find_obj_final)(void *find_ctx);
 };
 
 /**

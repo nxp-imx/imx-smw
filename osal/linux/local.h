@@ -43,12 +43,19 @@
 		}                                                              \
 	} while (0)
 
+#define DBG_PRINTF_COND(level, cond, ...)                                      \
+	do {                                                                   \
+		if (cond)                                                      \
+			DBG_PRINTF(level, __VA_ARGS__);                        \
+	} while (0)
+
 #define TRACE_FUNCTION_CALL DBG_PRINTF(VERBOSE, "Executing %s\n", __func__)
 
 #define TRACE_EXTRA_FUNCTION_CALL DBG_PRINTF(EXTRA, "Executing %s\n", __func__)
 
 #else
 #define DBG_PRINTF(level, ...)
+#define DBG_PRINTF_COND(...)
 #define TRACE_FUNCTION_CALL
 #define TRACE_EXTRA_FUNCTION_CALL
 #endif /* ENABLE_TRACE */
@@ -190,6 +197,35 @@ int obj_db_update(struct osal_obj *obj);
  * 0 if success, -1 otherwise
  */
 int obj_db_delete(struct osal_obj *obj);
+
+/**
+ * obj_db_find_init() - Init find object
+ * @ctx: A pointer to the find context pointer
+ * @obj: OSAL object
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int obj_db_find_init(void **ctx, struct osal_obj *obj);
+
+/**
+ * obj_db_find_next() - Get next find object
+ * @ctx: The find context pointer
+ * @obj: OSAL object
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int obj_db_find_next(void *ctx, struct osal_obj *obj);
+
+/**
+ * obj_db_find_finalize() - Release the find context
+ * @ctx: The find context pointer
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+int obj_db_find_finalize(void *ctx);
 
 /**
  * get_strerr() - Return the system error message

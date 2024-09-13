@@ -1,0 +1,114 @@
+{
+    "data_list": {
+        "data 1": {
+            "id": 111,
+            "data": "CAFE",
+            "attributes_list": [
+                "PERSISTENT"
+            ]
+        }
+    },
+    "keys": {
+        "key 1": {
+            "type": "AES",
+            "security_size": 128,
+            "attributes_list": [
+                "TRANSIENT"
+            ],
+            "usage": [
+                "ENCRYPT"
+            ],
+            "permitted_algo": [
+                "ECB_NO_PADDING"
+            ]
+        },
+        "key 2": {
+            "type": "SECP_R1",
+            "security_size": 256,
+            "attributes_list": [
+                "PERSISTENT"
+            ],
+            "usage": [
+                "SIGN_MESSAGE"
+            ],
+            "permitted_algo": [
+                "ECDSA",
+                "HASH=SHA256"
+            ]
+        }
+    },
+    "subtest 1": {
+        "command": "GENERATE",
+        "key_name": "key 1"
+    },
+    "subtest 2": {
+        "command": "GENERATE",
+        "key_name": "key 2"
+    },
+    "subtest 3": {
+        "command": "STORAGE_STORE",
+        "data_name": "data 1"
+    },
+    "subtest 4": {
+        "command": "OBJECT_FIND",
+        "object_name": "data 1",
+        "depends": 3
+    },
+    "subtest 5": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 1",
+        "depends": 1
+    },
+    "subtest 6": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 2",
+        "depends": 2
+    },
+    "subtest 7": {
+        "command": "OBJECT_FIND",
+        "attributes_list": [
+            "PERSISTENT"
+        ],
+        "depends": [
+            2,
+            3
+        ],
+        "object_found": 2
+    },
+    "subtest 8": {
+        "command": "DELETE",
+        "key_name": "key 1",
+        "depends": 1
+    },
+    "subtest 9": {
+        "command": "DELETE",
+        "key_name": "key 2",
+        "depends": 2
+    },
+    "subtest 10": {
+        "command": "STORAGE_DELETE",
+        "data_name": "data 1",
+        "depends": 3,
+        "restriction_list": [
+            "imx8qxp"
+        ]
+    },
+    "subtest 11": {
+        "command": "OBJECT_FIND",
+        "object_name": "data 1",
+        "depends": 10,
+        "result": "SMW_STATUS_UNKNOWN_ID"
+    },
+    "subtest 12": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 1",
+        "depends": 8,
+        "result": "SMW_STATUS_UNKNOWN_ID"
+    },
+    "subtest 13": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 2",
+        "depends": 9,
+        "result": "SMW_STATUS_UNKNOWN_ID"
+    }
+}

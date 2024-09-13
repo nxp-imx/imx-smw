@@ -40,6 +40,7 @@ enum err_num {
 	BAD_SUBSYSTEM,
 	UNDEFINED_API,
 	DATA_NOTFOUND,
+	OBJECT_NOTFOUND,
 	MAX_TEST_ERROR, /* Maximum test error constant - keep last item */
 };
 

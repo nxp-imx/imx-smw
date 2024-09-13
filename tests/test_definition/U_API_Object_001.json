@@ -1,0 +1,55 @@
+{
+        "data_list": {
+                "data 1": {
+                        "id": 11,
+                        "data": "CAFE",
+                        "attributes_list": [
+                                "PERSISTENT"
+                        ]
+                }
+        },
+        "keys": {
+                "key 1": {
+                        "type": "AES",
+                        "security_size": 256,
+                        "attributes_list": [
+                                "PERSISTENT"
+                        ],
+                        "usage": [
+                                "ENCRYPT"
+                        ],
+                        "permitted_algo": [
+                                "ECB_NO_PADDING"
+                        ]
+                }
+        },
+        "subtest 1": {
+                "command": "GENERATE",
+                "key_name": "key 1"
+        },
+        "subtest 2": {
+                "command": "OBJECT_FIND",
+                "test_error": "ARGS_NULL",
+                "object_name": "key 1",
+                "depends": 1,
+                "result": "SMW_STATUS_INVALID_PARAM"
+        },
+        "subtest 3": {
+                "command": "OBJECT_FIND",
+                "test_error": "ARGS_NULL",
+                "attributes_list": [
+                        "PERSISTENT"
+                ],
+                "result": "SMW_STATUS_INVALID_PARAM"
+        },
+        "subtest 4": {
+                "command": "OBJECT_FIND",
+                "object_name": "data 1",
+                "result": "SMW_STATUS_UNKNOWN_ID"
+        },
+        "subtest 5": {
+                "command": "DELETE",
+                "key_name": "key 1",
+                "depends": 1
+        }
+}

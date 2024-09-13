@@ -12,6 +12,7 @@
 #include "sign_verify.h"
 #include "rng.h"
 #include "cipher.h"
+#include "object.h"
 #include "operation_context.h"
 #include "config.h"
 #include "info.h"
@@ -368,6 +369,27 @@ static int execute_storage_cmd(char *cmd, struct subtest_data *subtest)
 }
 
 /**
+ * execute_object_cmd() - Execute object command
+ * @cmd: Command name.
+ * @subtest: Subtest data.
+ *
+ * Return:
+ * PASSED		- Success.
+ * -UNDEFINED_CMD	- Command is undefined.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -API_STATUS_NOK          - SMW API Call return error
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ */
+static int execute_object_cmd(char *cmd, struct subtest_data *subtest)
+{
+	if (!strcmp(cmd, OBJECT_FIND))
+		return object_find(subtest);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
+/**
  * execute_commit_key_storage_cmd() - Execute commit key storage command
  * @cmd: Command name.
  * @subtest: Subtest data.
@@ -461,7 +483,8 @@ int execute_command_smw(char *cmd, struct subtest_data *subtest)
 			 { COMMIT_KEY_STORAGE,
 			   &execute_commit_key_storage_cmd },
 			 { AEAD, &execute_aead_cmd },
-			 { KEY_ATTESTATION, &execute_key_attestation_cmd } };
+			 { KEY_ATTESTATION, &execute_key_attestation_cmd },
+			 { OBJECT, &execute_object_cmd } };
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {
 		if (!strncmp(cmd, cmd_list[idx].cmd_prefix,

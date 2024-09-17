@@ -41,6 +41,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 1. SMW APIs
 
 * RSA public exponent set by the user is handled by TEE subsystem.
+* Add SMW Object descriptor structure
 
 ##### 2. Subsystems
 
@@ -51,6 +52,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 4. OSAL
 
 * Create the database directory if not existing
+* Add support of SQLite3 to handle database
 
 #### SMW Tests - _version 4.1_
 

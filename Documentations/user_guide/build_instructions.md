@@ -17,6 +17,7 @@
       - [3.3.2. NVM Daemon](#332-nvm-daemon)
     - [3.4. JSON-C Library](#34-json-c-library)
     - [3.5 ARM PSA Test Suite](#35-arm-psa-test-suite)
+    - [3.6. SQLite3 Library](#36-sqlite3-library)
 - [4. Project configuration and compilation](#4-project-configuration-and-compilation)
   - [4.1. Build environment options](#41-build-environment-options)
   - [4.2. Enabling Secure Subsystems](#42-enabling-secure-subsystems)
@@ -162,6 +163,11 @@ this section to build external dependencies using provided cmake scripts.
 	<td>JSON-C Library</td>
 	<td>Shared library libjson-c.so and json.h/json_config.h header</td>
 </tr>
+<tr>
+  <td>OSAL</td>
+	<td>SQLite3 Library</td>
+	<td>Shared library libsqlite3.so and sqlite3.h header</td>
+</tr>
 </tbody>
 </table>
 
@@ -295,7 +301,7 @@ systemctl start nvm_daemon
 The JSON-C Library is required only if the SMW test suite is wanted.
 
 The following cmake script uploads into the `JSONC_SRC_PATH` if not already
-present and builds the JSON-C sources present by the `JSONC_SRC_PATH` using the
+present and builds the JSON-C sources present in `JSONC_SRC_PATH` using the
 default compiler, then the library and interface headers are copied in the path
 specified by `JSONC_ROOT`. Installation of the ARM 32 or 64 bits cross-compiler
 is described in [Toolchains](#2-toolchains).
@@ -322,6 +328,19 @@ A SMW cmake script is available to clone the version used as reference.
 
 ```sh
 $ cmake -DPSA_ARCH_TESTS_SRC_PATH=[source path] -P ./scripts/fetch_psaarchtests.cmake
+```
+
+### 3.6. SQLite3 Library
+The SQLite3 Library is required to handle the OSAL database support.
+
+The following cmake script uploads into the `SQLite3_SRC_PATH` if not already
+present and builds the SQLite3 sources present in `SQLite3_SRC_PATH` using the
+default compiler, then the library and interface headers are copied in the path
+specified by `SQLite3_ROOT`. Installation of the ARM 32 or 64 bits cross-compiler
+is described in [Toolchains](#2-toolchains).
+
+```sh
+$ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DSQLite3_ROOT=[export path] -DSQLite3_SRC_PATH=[source path] -P ./scripts/build_libsqlite.cmake
 ```
 
 # 4. Project configuration and compilation

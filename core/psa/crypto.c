@@ -284,13 +284,18 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	if (op_name == SMW_AEAD_OP_TYPE_NAME_ENCRYPT) {
-		min_output_size = PSA_AEAD_ENCRYPT_OUTPUT_SIZE(key_type, alg,
-							       input_length);
+		if (SET_OVERFLOW(PSA_AEAD_ENCRYPT_OUTPUT_SIZE(key_type, alg,
+							      input_length),
+				 min_output_size))
+			return PSA_ERROR_INVALID_ARGUMENT;
 	} else if (op_name == SMW_AEAD_OP_TYPE_NAME_DECRYPT) {
 		if (input_length + 1 < tag_length)
 			return PSA_ERROR_BUFFER_TOO_SMALL;
-		min_output_size = PSA_AEAD_DECRYPT_OUTPUT_SIZE(key_type, alg,
-							       input_length);
+
+		if (SET_OVERFLOW(PSA_AEAD_DECRYPT_OUTPUT_SIZE(key_type, alg,
+							      input_length),
+				 min_output_size))
+			return PSA_ERROR_INVALID_ARGUMENT;
 	} else {
 		return PSA_ERROR_INVALID_ARGUMENT;
 	}
@@ -316,7 +321,9 @@ set_aead_common_params(psa_key_id_t key, psa_algorithm_t alg,
 	final->op_type_name = op_name;
 
 	aad->data = (unsigned char *)additional_data;
-	aad->data_length = additional_data_length;
+
+	if (SET_OVERFLOW(additional_data_length, aad->data_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	return PSA_SUCCESS;
 }
@@ -817,7 +824,8 @@ static psa_status_t set_cipher_args(psa_key_id_t key, psa_algorithm_t alg,
 	if (init->mode_name == SMW_CIPHER_MODE_NAME_NONE)
 		return PSA_ERROR_NOT_SUPPORTED;
 
-	init->iv_length = PSA_CIPHER_IV_LENGTH(key_type, alg);
+	if (SET_OVERFLOW(PSA_CIPHER_IV_LENGTH(key_type, alg), init->iv_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	if (op_type_name == SMW_CIPHER_OP_TYPE_NAME_ENCRYPT) {
 		if (output_size <= init->iv_length)
@@ -1462,9 +1470,14 @@ set_sign_verify_args(psa_key_id_t key, psa_algorithm_t alg,
 
 	args->key_descriptor = key_descriptor;
 	args->message = (unsigned char *)message;
-	args->message_length = message_length;
+
+	if (SET_OVERFLOW(message_length, args->message_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
 	args->signature = signature;
-	args->signature_length = signature_size;
+
+	if (SET_OVERFLOW(signature_size, args->signature_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
 
 	return set_signature_attributes(alg, hashed, &args->sign_algo);
 }

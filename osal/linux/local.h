@@ -95,37 +95,6 @@ struct osal_ctx {
 	void *obj_db;
 };
 
-enum obj_flags {
-	ENTRY_FREE = 0,
-	ENTRY_USE,
-};
-
-/**
- * struct obj_entry - Object entry header in object database
- * @id: 32 bits object id in the DB
- * @attributes: Object attributes
- * @flags: Flags state of the entry
- * @info_size: Object information block size
- *
- * The object database is a binary file build with
- * -------------------------
- * | Object header         |
- * | (struct obj_entry)    |
- * -------------------------
- * |                       |
- * | Object information of |
- * | info_size bytes       |
- * |                       |
- * -------------------------
- */
-struct obj_entry {
-	unsigned int id;
-	enum obj_flags flags;
-	smw_attr_attributes_t attributes;
-	size_t info_size;
-	/* Info data block is right after the object entry header */
-};
-
 /**
  * get_osal_ctx() - Get the OSAL context
  *
@@ -230,25 +199,6 @@ int obj_db_delete(struct osal_obj *obj);
  * Else pointer to default "Unknown error" string.
  */
 char *get_strerr(void);
-
-/**
- * dbg_entry() - Debug print the object database entry
- * @entry: Object entry
- */
-void dbg_entry(struct obj_entry *entry);
-
-/**
- * dbg_entry_info() - Debug print the object database data
- * @buf: Data buffer
- * @len: Length in bytes of the buffer
- */
-void dbg_entry_info(void *buf, size_t len);
-
-/**
- * dbg_get_lock_file - Debug print the lock status of file
- * @fp: File id opened
- */
-void dbg_get_lock_file(int fp);
 
 /**
  * config_read_system_cnf() - Read the system configuration file

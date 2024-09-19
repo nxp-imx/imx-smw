@@ -2,6 +2,7 @@
 /*
  * Copyright 2019-2024 NXP
  */
+#include <sqlite3.h>
 
 #include "local.h"
 
@@ -10,6 +11,7 @@
 #include "smw/names.h"
 
 __attribute__((destructor)) static void destructor(void);
+__attribute__((constructor)) static void constructor(void);
 
 static struct osal_ctx *osal_ctx;
 
@@ -18,18 +20,28 @@ inline struct osal_ctx *get_osal_ctx(void)
 	return osal_ctx;
 }
 
-static inline int alloc_context(void)
+static void constructor(void)
 {
-	if (!osal_ctx) {
-		DBG_PRINTF(DEBUG, "OSAL context allocation\n");
-		osal_ctx = calloc(1, sizeof(struct osal_ctx));
-		if (!osal_ctx) {
-			DBG_PRINTF(DEBUG, "OSAL context allocation failed\n");
-			return SMW_STATUS_ALLOC_FAILURE;
+	DBG_PRINTF(DEBUG, "OSAL database configuration\n");
+
+	/*
+	 * Enables all mutexes if they are enabled and SQLite is threadsafe.
+	 */
+	if (sqlite3_threadsafe()) {
+		if (sqlite3_config(SQLITE_CONFIG_SERIALIZED)) {
+			DBG_PRINTF(ERROR, "Error configuring sqlite db\n");
+			return;
 		}
 	}
 
-	return SMW_STATUS_OK;
+	DBG_PRINTF(DEBUG, "OSAL context allocation\n");
+	osal_ctx = calloc(1, sizeof(struct osal_ctx));
+	if (!osal_ctx) {
+		DBG_PRINTF(DEBUG, "OSAL context allocation failed\n");
+		return;
+	}
+
+	DBG_PRINTF(DEBUG, "OSAL context ready\n");
 }
 
 static inline void free_context(void)
@@ -42,6 +54,8 @@ static inline void free_context(void)
 
 	free(osal_ctx);
 	osal_ctx = NULL;
+
+	sqlite3_shutdown();
 }
 
 int mutex_init(void **mutex)
@@ -448,10 +462,6 @@ smw_osal_set_subsystem_info(smw_subsystem_t subsystem_name, void *info,
 
 	TRACE_FUNCTION_CALL;
 
-	status = alloc_context();
-	if (status != SMW_STATUS_OK)
-		return status;
-
 	if (!info || subsystem_name >= SMW_SUBSYSTEM_NAME_NB)
 		return SMW_STATUS_INVALID_PARAM;
 
@@ -479,10 +489,6 @@ __export enum smw_status_code smw_osal_open_obj_db(const char *file,
 	TRACE_FUNCTION_CALL;
 
 	DBG_PRINTF(INFO, "Open object database %s (%zu)\n", file, len);
-
-	status = alloc_context();
-	if (status != SMW_STATUS_OK)
-		goto end;
 
 	ctx = get_osal_ctx();
 	if (!ctx) {
@@ -514,10 +520,6 @@ __export enum smw_status_code smw_osal_lib_init(void)
 	unsigned int offset = 0;
 
 	TRACE_FUNCTION_CALL;
-
-	status = alloc_context();
-	if (status != SMW_STATUS_OK)
-		goto end;
 
 	ctx = get_osal_ctx();
 	if (!ctx) {

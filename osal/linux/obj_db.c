@@ -4,49 +4,96 @@
  */
 
 #include <errno.h>
-#include <sys/file.h>
+#include <stdio.h>
+#include <string.h>
+#include <sqlite3.h>
 #include <sys/stat.h>
+
+#include "psa/crypto.h"
 
 #include "local.h"
 
-#define PRIxID "0x%08X"
+#include "smw_keymgr.h"
+#include "smw_storage.h"
 
-struct obj_db {
-	int fp;
-	void *mutex;
+enum obj_attribute_tag {
+	TAG_NONE,
+	TAG_ID,
+	TAG_PERSISTENCE_ID,
+	TAG_SLOT_ID,
+	TAG_SUBSYSTEM_ID,
+	TAG_SUBSYSTEM_NAME,
+	TAG_SUBSYSTEM_BLOB,
+	TAG_TYPE,
+	TAG_PRIVACY,
+	TAG_SIZE,
+	TAG_ATTRIBUTES,
+	TAG_STORAGE_ID,
+	TAG_GROUP,
+	TAG_CLASS,
+	TAG_LABEL,
+	TAG_PIN_SO,
 };
 
-__weak void dbg_entry(struct obj_entry *entry)
-{
-	(void)entry;
-}
+#define OBJECT_DB_TABLE_NAME "OBJECTS"
 
-__weak void dbg_entry_info(void *buf, size_t len)
-{
-	(void)buf;
-	(void)len;
-}
+enum obj_attribute_type {
+	OBJ_TYPE_TEXT,
+	OBJ_TYPE_INTEGER,
+	OBJ_TYPE_REAL,
+	OBJ_TYPE_BLOB
+};
 
-__weak void dbg_get_lock_file(int fp)
-{
-	(void)fp;
-}
+#define OBJ_FLAG_NONE	     0x00
+#define OBJ_FLAG_PRIMARY_KEY 0x01
+#define OBJ_FLAG_UNIQUE	     0x02
+#define OBJ_FLAG_NOT_NULL    0x04
+
+/*
+ * Supported attribute clause
+ * separated by a whitespace.
+ */
+#define OBJ_CLAUSE_PRIMARY_KEY " PRIMARY KEY AUTOINCREMENT"
+#define OBJ_CLAUSE_UNIQUE      " UNIQUE"
+#define OBJ_CLAUSE_NOT_NULL    " NOT NULL"
+
+/**
+ * struct obj_attribute - Object attribute
+ * @type: Object attribute type. See &enum obj_attribute_type
+ * @flags: Object attribute flags
+ * @tag: Object attribute tag
+ */
+struct obj_attribute {
+	enum obj_attribute_type type;
+	unsigned int flags;
+	enum obj_attribute_tag tag;
+};
+
+#define ATTRIBUTE(_type, _flag, _tag)                                          \
+	{                                                                      \
+		.type = OBJ_TYPE_##_type, .flags = OBJ_FLAG_##_flag,           \
+		.tag = TAG_##_tag                                              \
+	}
+
+#define PRIxID "0x%08X"
+#define OEM_INJECTED_OBJECTS 0x70000000
+#define OBJ_DB_BUSY_TIMEOUT  50 /* ms */
+
+struct obj_db {
+	sqlite3 *persistent_db;
+	sqlite3 *transient_db;
+	void *mutex;
+	bool threadsafe;
+};
 
 static int lock_db(struct obj_db *db)
 {
 	int ret = 0;
-	struct flock lock = { 0 };
 
-	ret = mutex_lock(db->mutex);
-	if (ret)
-		return ret;
-
-	lock.l_type = F_WRLCK;
-	if (fcntl(db->fp, F_SETLKW, &lock)) {
-		dbg_get_lock_file(db->fp);
-		DBG_PRINTF(DEBUG, "Unable to lock: %s\n", get_strerr());
-		(void)mutex_unlock(db->mutex);
-		ret = -1;
+	if (!db->threadsafe) {
+		ret = mutex_lock(db->mutex);
+		if (ret)
+			return ret;
 	}
 
 	// coverity[missing_unlock]
@@ -55,149 +102,684 @@ static int lock_db(struct obj_db *db)
 
 static int unlock_db(struct obj_db *db)
 {
-	struct flock lock = { 0 };
+	if (!db->threadsafe)
+		return mutex_unlock(db->mutex);
 
-	lock.l_type = F_UNLCK;
-	if (fcntl(db->fp, F_SETLKW, &lock)) {
-		DBG_PRINTF(DEBUG, "Unable to unlock: %s\n", get_strerr());
-		return -1;
-	}
-
-	return mutex_unlock(db->mutex);
+	return 0;
 }
 
-/**
- * find_db_obj_id() - Find an object ID in the database
- * @db: Object database
- * @id: Object id to find
- * @obj: Object entry found
- * @pos: File position to the object header if object id found, else -1
- *
- */
-static void find_db_obj_id(struct obj_db *db, unsigned int id,
-			   struct obj_entry *obj, long *pos)
+static sqlite3 *get_database_handle(smw_attr_attributes_t attributes)
 {
-	off_t off = 0;
-	ssize_t nb_bytes = 0;
-	size_t inc = 0;
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct obj_db *db = NULL;
 
-	*pos = -1;
+	if (!ctx)
+		return NULL;
 
-	while ((nb_bytes = pread(db->fp, obj, sizeof(*obj), off)) > 0 &&
-	       nb_bytes == sizeof(*obj)) {
-		DBG_PRINTF(EXTRA, "%s ID=%u vs %u\n", __func__, obj->id, id);
-		if (obj->id != id) {
-			/* Go to the next entry */
-			if (ADD_OVERFLOW(sizeof(*obj), obj->info_size, &inc) ||
-			    ADD_OVERFLOW(off, inc, &off))
-				break;
-			continue;
+	db = ctx->obj_db;
+
+	if (!db) {
+		DBG_PRINTF(ERROR, "Object database not valid");
+		return NULL;
+	}
+
+	if (SMW_ATTR_GET_PERSISTENCE(attributes) ==
+	    SMW_ATTR_PERSISTENCE_TRANSIENT)
+		return db->transient_db;
+	else
+		return db->persistent_db;
+
+	return NULL;
+}
+
+static bool sql_print(char *out, size_t *length, const char *format, ...)
+{
+	int l = 0;
+	va_list args;
+
+	if (out && (out + *length < out))
+		return true;
+
+	va_start(args, format);
+
+	if (out)
+		l = vsprintf(out + *length, format, args);
+	else
+		l = vsnprintf(NULL, 0, format, args);
+
+	if (l < 0)
+		l = 0;
+
+	va_end(args);
+
+	if (ADD_OVERFLOW(*length, l, length)) {
+		DBG_PRINTF(ERROR, "SQL print fail");
+		return true;
+	}
+
+	return false;
+}
+
+static int sql_print_create(char *name, uint32_t start_id,
+			    struct obj_attribute attributes[],
+			    unsigned int nb_attributes, char *sql,
+			    size_t *length)
+{
+	int ret = -1;
+	static char *create = "CREATE TABLE IF NOT EXISTS %s(";
+	static char *const type[] = { "TEXT", "INTEGER", "REAL", "BLOB" };
+	static char *update_sequence =
+		"\nBEGIN TRANSACTION;\n"
+		" UPDATE sqlite_sequence SET seq = %d WHERE name = '%s';\n"
+		" INSERT INTO sqlite_sequence (name, seq)\n"
+		" SELECT '%s', %d WHERE NOT EXISTS\n"
+		" (SELECT changes() AS change FROM sqlite_sequence WHERE change <> 0);\n"
+		" COMMIT;";
+	unsigned int i = 0;
+
+	if (!name || !attributes)
+		return ret;
+
+	if (sql_print(sql, length, create, name))
+		return ret;
+
+	for (; i < nb_attributes; i++) {
+		if (sql_print(sql, length, "\"0x%X\" %s", attributes[i].tag,
+			      type[attributes[i].type]))
+			return ret;
+
+		if (attributes[i].flags & OBJ_FLAG_PRIMARY_KEY) {
+			if (sql_print(sql, length, OBJ_CLAUSE_PRIMARY_KEY))
+				return ret;
 		}
 
-		*pos = off;
+		if (attributes[i].flags & OBJ_FLAG_UNIQUE) {
+			if (sql_print(sql, length, OBJ_CLAUSE_UNIQUE))
+				return ret;
+		}
+
+		if (attributes[i].flags & OBJ_FLAG_NOT_NULL) {
+			if (sql_print(sql, length, OBJ_CLAUSE_NOT_NULL))
+				return ret;
+		}
+
+		if (i < nb_attributes - 1) {
+			if (sql_print(sql, length, ", "))
+				return ret;
+		}
+	}
+
+	if (sql_print(sql, length, ");"))
+		return ret;
+
+	if (sql_print(sql, length, update_sequence, start_id, name, name,
+		      start_id))
+		return ret;
+
+	if (ADD_OVERFLOW(*length, 1, length)) /* null terminated char */
+		return ret;
+
+	return 0;
+}
+
+static int sql_print_insert(struct osal_obj *obj, char *sql, size_t *length)
+{
+	static const char *insert = "INSERT INTO %s (";
+
+	if (sql_print(sql, length, insert, OBJECT_DB_TABLE_NAME))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_PERSISTENCE_ID))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_ATTRIBUTES))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_SUBSYSTEM_NAME))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_CLASS))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_GROUP))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_LABEL))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_ID))
+		return -1;
+
+	if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+	    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+		if (sql_print(sql, length, "\"0x%X\", ", TAG_TYPE))
+			return -1;
+
+	if (sql_print(sql, length, "\"0x%X\"", TAG_SIZE))
+		return -1;
+
+	if (sql_print(sql, length, ") VALUES ("))
+		return -1;
+
+	if (!obj->id) {
+		if (sql_print(sql, length, "null, "))
+			return -1;
+	} else {
+		if (sql_print(sql, length, "%d, ", obj->id))
+			return -1;
+	}
+
+	if (sql_print(sql, length, "%d, ", obj->descriptor->attributes))
+		return -1;
+
+	if (sql_print(sql, length, "%d, ", obj->descriptor->subsystem_name))
+		return -1;
+
+	if (sql_print(sql, length, "%d, ", obj->descriptor->type))
+		return -1;
+
+	if (sql_print(sql, length, "%d, ", obj->descriptor->group))
+		return -1;
+
+	if (sql_print(sql, length, "\"%s\", ", obj->descriptor->label))
+		return -1;
+
+	switch (obj->descriptor->type) {
+	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+		if (sql_print(sql, length, "%d, ", obj->descriptor->key.id))
+			return -1;
+
+		if (sql_print(sql, length, "%d, ",
+			      obj->descriptor->key.type_name))
+			return -1;
+
+		if (sql_print(sql, length, "%d",
+			      obj->descriptor->key.security_size))
+			return -1;
+		break;
+
+	case SMW_OBJECT_TYPE_NAME_DATA:
+		if (sql_print(sql, length, "%d, ",
+			      obj->descriptor->data.identifier))
+			return -1;
+
+		if (sql_print(sql, length, "%d", obj->descriptor->data.length))
+			return -1;
+		break;
+
+	default:
+		if (sql_print(sql, length, "null, null"))
+			return -1;
 		break;
 	}
+
+	if (sql_print(sql, length, ");"))
+		return -1;
+
+	if (ADD_OVERFLOW(*length, 1, length)) /* null terminated char */
+		return -1;
+
+	return 0;
 }
 
-/**
- * find_db_obj_free() - Find an object ID free in the database
- * @db: Object database
- * @obj: OSAL object
- * @free_id: Free object id in range
- * @pos: File position to the object header if object id found, else -1
- *
- * The @free_id value is the free object id in the database matching
- * the OSAL object range given if the free entry found.
- * If no free object entry found, the @free_id is the next free object id
- * in the given OSAL object range.
- *
- */
-static void find_db_obj_free(struct obj_db *db, struct osal_obj *obj,
-			     unsigned int *free_id, long *pos)
+static int sql_print_update(struct osal_obj *obj, char *sql, size_t *length)
 {
-	struct obj_entry rd_obj = { 0 };
-	unsigned int last_id = obj->range.min;
+	static const char *update = "UPDATE %s SET ";
 
-	for (; last_id <= obj->range.max; last_id++) {
-		find_db_obj_id(db, last_id, &rd_obj, pos);
-		if (*pos < 0 || rd_obj.flags == ENTRY_FREE)
-			break;
+	if (sql_print(sql, length, update, OBJECT_DB_TABLE_NAME))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_ATTRIBUTES,
+		      obj->descriptor->attributes))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_SUBSYSTEM_NAME,
+		      obj->descriptor->subsystem_name))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_CLASS,
+		      obj->descriptor->type))
+		return -1;
+
+	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_GROUP,
+		      obj->descriptor->group))
+		return -1;
+
+	if (obj->descriptor->label) {
+		if (sql_print(sql, length, "\"0x%X\" = \"%s\", ", TAG_LABEL,
+			      obj->descriptor->label))
+			return -1;
 	}
 
-	*free_id = last_id;
+	switch (obj->descriptor->type) {
+	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_ID,
+			      obj->descriptor->key.id))
+			return -1;
+
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_TYPE,
+			      obj->descriptor->key.type_name))
+			return -1;
+
+		if (sql_print(sql, length, "\"0x%X\" = %d ", TAG_SIZE,
+			      obj->descriptor->key.security_size))
+			return -1;
+		break;
+
+	case SMW_OBJECT_TYPE_NAME_DATA:
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_ID,
+			      obj->descriptor->data.identifier))
+			return -1;
+
+		if (sql_print(sql, length, "\"0x%X\" = %d ", TAG_SIZE,
+			      obj->descriptor->data.length))
+			return -1;
+		break;
+
+	default:
+		if (sql_print(sql, length, "null, null"))
+			return -1;
+		break;
+	}
+
+	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_PERSISTENCE_ID,
+		      obj->id))
+		return -1;
+
+	if (ADD_OVERFLOW(*length, 1, length)) /* null terminated char */
+		return -1;
+
+	return 0;
+}
+
+static int sql_print_delete(struct osal_obj *obj, char *sql, size_t *length)
+{
+	static const char *delete = "DELETE FROM %s";
+
+	if (sql_print(sql, length, delete, OBJECT_DB_TABLE_NAME))
+		return -1;
+
+	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_PERSISTENCE_ID,
+		      obj->id))
+		return -1;
+
+	if (ADD_OVERFLOW(*length, 1, length)) /* null terminated char */
+		return -1;
+
+	return 0;
+}
+
+static int sql_print_select(struct osal_obj *obj, char *sql, size_t *length)
+{
+	static const char *select = "SELECT * FROM %s";
+
+	if (sql_print(sql, length, select, OBJECT_DB_TABLE_NAME))
+		return -1;
+
+	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_PERSISTENCE_ID,
+		      obj->id))
+		return -1;
+
+	if (ADD_OVERFLOW(*length, 1, length)) /* null terminated char */
+		return -1;
+
+	return 0;
+}
+
+static int obj_db_create_table(char *name, smw_attr_attributes_t smw_attributes,
+			       uint32_t start_id,
+			       struct obj_attribute attributes[],
+			       unsigned int nb_attributes)
+{
+	int result = 0;
+	int ret = -1;
+	char *sql = NULL;
+	char *messageError = NULL;
+	size_t length = 0;
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct obj_db *db = NULL;
+
+	if (!name || !attributes)
+		return ret;
+
+	if (!ctx)
+		return ret;
+
+	db = ctx->obj_db;
+
+	if (!db) {
+		DBG_PRINTF(ERROR, "Object database not valid");
+		return ret;
+	}
+
+	if (lock_db(db)) {
+		DBG_PRINTF(ERROR, "Object database lock fail");
+		return ret;
+	}
+
+	if (sql_print_create(name, start_id, attributes, nb_attributes, NULL,
+			     &length))
+		goto end;
+
+	sql = calloc(1, length);
+	if (!sql)
+		goto end;
+
+	length = 0;
+	if (sql_print_create(name, start_id, attributes, nb_attributes, sql,
+			     &length))
+		goto end;
+
+	result = sqlite3_exec(get_database_handle(smw_attributes), sql, NULL,
+			      NULL, &messageError);
+	if (result != SQLITE_OK) {
+		DBG_PRINTF(ERROR, "SQL Error: %s\n", messageError);
+		sqlite3_free(messageError);
+	} else {
+		ret = 0;
+	}
+
+end:
+	if (sql)
+		free(sql);
+
+	if (unlock_db(db)) {
+		DBG_PRINTF(ERROR, "Object database unlock fail");
+		ret = -1;
+	}
+
+	return ret;
 }
 
 /**
- * write_obj_db() - Write an object in the database
- * @db: Object database
- * @obj: Object entry
- * @info: Object information
- * @pos: Position from the beginning to write
+ * obj_db_create_object_table() - Create the objects tables if not exist.
+ * Create a persistent and transient objects table.
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-static int write_obj_db(struct obj_db *db, struct obj_entry *obj, void *info,
-			long pos)
+static int obj_db_create_object_table(void)
 {
-	int err = -1;
-	off_t off = pos;
-	struct stat f_stat = { 0 };
-	ssize_t nb_bytes = 0;
+	int result = 0;
 
-	DBG_PRINTF(DEBUG, "%s (%d) pos = %ld\n", __func__, __LINE__, pos);
+	struct obj_attribute attributes[] = {
+		ATTRIBUTE(INTEGER, PRIMARY_KEY, PERSISTENCE_ID),
+		ATTRIBUTE(INTEGER, NONE, ID),
+		ATTRIBUTE(INTEGER, NONE, SUBSYSTEM_NAME),
+		ATTRIBUTE(INTEGER, NONE, TYPE),
+		ATTRIBUTE(INTEGER, NONE, PRIVACY),
+		ATTRIBUTE(INTEGER, NONE, SIZE),
+		ATTRIBUTE(INTEGER, NONE, ATTRIBUTES),
+		ATTRIBUTE(INTEGER, NONE, STORAGE_ID),
+		ATTRIBUTE(INTEGER, NONE, GROUP),
+		ATTRIBUTE(INTEGER, NONE, CLASS),
+		ATTRIBUTE(TEXT, NOT_NULL, LABEL),
+	};
+	unsigned int nb_attributes = ARRAY_SIZE(attributes);
 
-	dbg_entry(obj);
+	/* Create Volatile Object table */
+	result = obj_db_create_table(OBJECT_DB_TABLE_NAME,
+				     SMW_ATTR_PERSISTENCE_TRANSIENT,
+				     PSA_KEY_ID_USER_MAX, attributes,
+				     nb_attributes);
+	if (result)
+		return result;
 
-	if (off < 0) {
-		if (fstat(db->fp, &f_stat)) {
-			DBG_PRINTF(ERROR, "%s (%d) DB fstat error\n", __func__,
-				   __LINE__);
-			goto end;
+	/* Create Persistent Object table */
+	return obj_db_create_table(OBJECT_DB_TABLE_NAME,
+				   SMW_ATTR_PERSISTENCE_PERSISTENT, 0,
+				   attributes, nb_attributes);
+}
+
+static int obj_db_init(void)
+{
+	return obj_db_create_object_table();
+}
+
+/**
+ * obj_db_to_osal_obj() - Convert SQLite object to OSAL object
+ * @data: Reference to the OSAL object
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+static int obj_db_to_osal_obj(void *data, int argc, char **argv,
+			      char **azColName)
+{
+	struct osal_obj *obj = (struct osal_obj *)data;
+	char *endPtr = NULL;
+	int i = 0;
+
+	enum obj_attribute_tag attribute_tag = 0;
+	unsigned int attribute_value = 0;
+	unsigned long l = 0;
+
+	if (!obj || !obj->descriptor)
+		return -1;
+
+	/* Get common attributes */
+	for (; i < argc; i++) {
+		if (!argv[i])
+			continue;
+
+		l = strtoul(azColName[i], &endPtr, 0);
+		if (!l && endPtr == azColName[i])
+			continue;
+
+		if (SET_OVERFLOW(l, attribute_tag))
+			continue;
+
+		l = strtoul(argv[i], &endPtr, 0);
+		if (!l && endPtr == argv[i])
+			continue;
+
+		if (SET_OVERFLOW(l, attribute_value))
+			continue;
+
+		switch (attribute_tag) {
+		case TAG_CLASS:
+			obj->descriptor->type =
+				(smw_object_type_t)attribute_value;
+			break;
+
+		case TAG_PERSISTENCE_ID:
+			obj->id = attribute_value;
+			obj->descriptor->id = attribute_value;
+			break;
+
+		case TAG_GROUP:
+			obj->descriptor->group = attribute_value;
+			break;
+
+		case TAG_LABEL:
+			obj->descriptor->label = strdup(argv[i]);
+			break;
+
+		case TAG_ATTRIBUTES:
+			obj->descriptor->attributes =
+				(smw_attr_attributes_t)attribute_value;
+			break;
+
+		case TAG_SUBSYSTEM_NAME:
+			obj->descriptor->subsystem_name =
+				(smw_subsystem_t)attribute_value;
+			break;
+
+		default:
+			break;
 		}
-		off = f_stat.st_size;
 	}
 
-	nb_bytes = pwrite(db->fp, obj, sizeof(*obj), off);
-	if (nb_bytes < 0 || nb_bytes != (ssize_t)sizeof(*obj)) {
-		DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
-			   __LINE__);
+	for (i = 0; i < argc; i++) {
+		if (!argv[i])
+			continue;
+
+		l = strtoul(azColName[i], &endPtr, 0);
+		if (!l && endPtr == azColName[i])
+			continue;
+
+		if (SET_OVERFLOW(l, attribute_tag))
+			continue;
+
+		l = strtoul(argv[i], &endPtr, 0);
+		if (!l && endPtr == argv[i])
+			continue;
+
+		if (SET_OVERFLOW(l, attribute_value))
+			continue;
+
+		switch (attribute_tag) {
+		case TAG_TYPE:
+			if (obj->descriptor->type ==
+				    SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+			    obj->descriptor->type ==
+				    SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+				obj->descriptor->key.type_name =
+					(smw_key_type_t)attribute_value;
+			break;
+
+		case TAG_ID:
+			if (obj->descriptor->type ==
+				    SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+			    obj->descriptor->type ==
+				    SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+				obj->descriptor->key.id = attribute_value;
+			break;
+
+		case TAG_PERSISTENCE_ID:
+			if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA)
+				obj->descriptor->data.identifier =
+					attribute_value;
+			break;
+
+		case TAG_SIZE:
+			if (obj->descriptor->type ==
+				    SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+			    obj->descriptor->type ==
+				    SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+				obj->descriptor->key.security_size =
+					attribute_value;
+			else if (obj->descriptor->type ==
+				 SMW_OBJECT_TYPE_NAME_DATA)
+				obj->descriptor->data.length = attribute_value;
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * obj_db_exec() - Run database request
+ * @obj: OSAL object
+ * @sql: SQL request
+ * @data: First argument of the callback
+ * @callback: Function called for each request result
+ *
+ * Return:
+ * 0 if success, -1 otherwise
+ */
+static int obj_db_exec(struct osal_obj *obj, char *sql, void *data,
+		       int (*callback)(void *, int, char **, char **))
+{
+	struct osal_ctx *ctx = get_osal_ctx();
+	struct obj_db *db = NULL;
+	sqlite3 *sql_db = NULL;
+	sqlite3_stmt *stmt = NULL;
+	sqlite3_int64 rowid = 0;
+	char *messageError = NULL;
+	int ret = -1;
+	int result = SQLITE_OK;
+
+	if (!ctx)
+		return ret;
+
+	db = ctx->obj_db;
+
+	if (!db) {
+		DBG_PRINTF(ERROR, "Object database not valid");
+		return ret;
+	}
+
+	if (!obj || !sql)
+		return ret;
+
+	if (obj->id != 0) {
+		if (obj->id < PSA_KEY_ID_VENDOR_MIN ||
+		    obj->id >= OEM_INJECTED_OBJECTS)
+			sql_db = db->persistent_db;
+		else
+			sql_db = db->transient_db;
+	} else {
+		sql_db = get_database_handle(obj->attributes);
+	}
+
+	if (!sql_db) {
+		DBG_PRINTF(ERROR, "Object database not open");
+		return ret;
+	}
+
+	if (lock_db(db)) {
+		DBG_PRINTF(ERROR, "Object database lock fail");
+		return ret;
+	}
+
+	if (callback) {
+		result = sqlite3_prepare_v2(sql_db, sql, -1, &stmt, NULL);
+		if (result != SQLITE_OK) {
+			DBG_PRINTF(ERROR, "SQL Error: %s\n",
+				   sqlite3_errmsg(sql_db));
+			goto end;
+		}
+
+		result = sqlite3_step(stmt);
+		sqlite3_finalize(stmt);
+		if (result != SQLITE_ROW) {
+			obj->id = 0;
+			goto end;
+		}
+	}
+
+	result = sqlite3_exec(sql_db, sql, callback, data, &messageError);
+	if (result != SQLITE_OK) {
+		DBG_PRINTF(ERROR, "SQL Error: %s\n", messageError);
+		sqlite3_free(messageError);
 		goto end;
 	}
 
-	if (info) {
-		dbg_entry_info(info, obj->info_size);
+	rowid = sqlite3_last_insert_rowid(sql_db);
+	if (SET_OVERFLOW(rowid, obj->id))
+		goto end;
 
-		off += sizeof(*obj);
-		nb_bytes = pwrite(db->fp, info, obj->info_size, off);
-		if (nb_bytes < 0 || (size_t)nb_bytes != obj->info_size) {
-			DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
-				   __LINE__);
-			goto end;
-		}
-
-		if (fsync(db->fp)) {
-			DBG_PRINTF(ERROR, "%s (%d) DB write error\n", __func__,
-				   __LINE__);
-			goto end;
-		}
-	}
-
-	err = 0;
+	ret = 0;
 
 end:
-	return err;
+	if (unlock_db(db)) {
+		DBG_PRINTF(ERROR, "Object database unlock fail");
+		ret = -1;
+	}
+
+	return ret;
 }
 
 static void close_db_file(struct obj_db *db)
 {
-	if (db->fp) {
+	if (!db->threadsafe)
 		(void)mutex_destroy(&db->mutex);
 
-		(void)close(db->fp);
+	if (db->persistent_db)
+		sqlite3_close(db->persistent_db);
 
-		db->fp = 0;
-	}
+	if (db->transient_db)
+		sqlite3_close(db->transient_db);
+
+	db->persistent_db = NULL;
+	db->transient_db = NULL;
 }
 
 static int create_directory(const char *filename)
@@ -268,33 +850,66 @@ int obj_db_open(const char *obj_db)
 		}
 
 		ctx->obj_db = db;
-	} else if (db->fp) {
+
+		db->threadsafe = sqlite3_threadsafe();
+	} else {
 		close_db_file(db);
 	}
 
 	/*
 	 * Open the application object database file.
-	 * Try to open it for read/write assuming file exist, if
-	 * file doesn't exist create a new file.
 	 */
 	if (create_directory(obj_db))
 		goto end;
 
-	db->fp = open(obj_db, O_RDWR | O_SYNC | O_CREAT, 0777);
-	if (db->fp < 0) {
-		DBG_PRINTF(ERROR, "%s (%d): %s\n", __func__, __LINE__,
-			   get_strerr());
-		db->fp = 0;
+	ret = sqlite3_open(obj_db, &db->persistent_db);
+	if (ret) {
+		DBG_PRINTF(ERROR, "Error opening/creating sqlite db %s\n",
+			   sqlite3_errmsg(db->persistent_db));
+		ret = -1;
 		goto end;
 	}
 
-	ret = mutex_init(&db->mutex);
+	ret = sqlite3_busy_timeout(db->persistent_db, OBJ_DB_BUSY_TIMEOUT);
+	if (ret) {
+		DBG_PRINTF(ERROR, "Error sqlite db %s\n",
+			   sqlite3_errmsg(db->persistent_db));
+		ret = -1;
+		goto end;
+	}
+
+	ret = sqlite3_open_v2(obj_db, &db->transient_db,
+			      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+				      SQLITE_OPEN_MEMORY,
+			      NULL);
+	if (ret) {
+		DBG_PRINTF(ERROR, "Error opening/creating sqlite db %s\n",
+			   sqlite3_errmsg(db->transient_db));
+		ret = -1;
+		goto end;
+	}
+
+	ret = sqlite3_busy_timeout(db->transient_db, OBJ_DB_BUSY_TIMEOUT);
+	if (ret) {
+		DBG_PRINTF(ERROR, "Error sqlite db %s\n",
+			   sqlite3_errmsg(db->persistent_db));
+		ret = -1;
+		goto end;
+	}
+
+	if (!db->threadsafe) {
+		ret = mutex_init(&db->mutex);
+		if (ret) {
+			DBG_PRINTF(ERROR, "Mutex initialization failed\n");
+			goto end;
+		}
+	}
+
+	ret = obj_db_init();
 
 end:
-
 	if (ret && db) {
 		close_db_file(db);
-		(void)mutex_destroy(&db->mutex);
 
 		free(db);
 		ctx->obj_db = NULL;
@@ -323,231 +938,98 @@ void obj_db_close(void)
 	ctx->obj_db = NULL;
 }
 
-int obj_db_get_info(struct osal_obj *obj)
-{
-	int ret = -1;
-	ssize_t nb_bytes = 0;
-	long pos = -1;
-	off_t offset = 0;
-	struct osal_ctx *ctx = get_osal_ctx();
-	struct obj_db *db = NULL;
-	struct obj_entry entry = { 0 };
-
-	if (!ctx)
-		return ret;
-
-	db = ctx->obj_db;
-
-	if (!db || !db->fp) {
-		DBG_PRINTF(ERROR, "Object database not valid");
-		return ret;
-	}
-
-	if (!obj || !obj->info || !obj->info_size)
-		return ret;
-
-	if (lock_db(db))
-		return ret;
-
-	find_db_obj_id(db, obj->id, &entry, &pos);
-
-	DBG_PRINTF(INFO, "%s (%d) object id " PRIxID " @%ld\n", __func__,
-		   __LINE__, obj->id, pos);
-
-	if (pos < 0) {
-		/* Set object id to 0 - invalid */
-		obj->id = 0;
-		goto end;
-	}
-
-	dbg_entry(&entry);
-
-	if (entry.flags != ENTRY_USE) {
-		DBG_PRINTF(ERROR, "%s (%d) object id " PRIxID " not valid\n",
-			   __func__, __LINE__, obj->id);
-		/* Set object id to 0 - invalid */
-		obj->id = 0;
-		goto end;
-	}
-
-	if (obj->info_size < entry.info_size) {
-		DBG_PRINTF(ERROR, "%s (%d) out too short (%zu) expected %zu\n",
-			   __func__, __LINE__, obj->info_size, entry.info_size);
-		goto end;
-	}
-
-	/* Read the object information and exit */
-	if (ADD_OVERFLOW(pos, sizeof(entry), &offset))
-		goto end;
-
-	nb_bytes = pread(db->fp, obj->info, entry.info_size, offset);
-	if (nb_bytes > 0 || nb_bytes == (ssize_t)entry.info_size) {
-		dbg_entry_info(obj->info, entry.info_size);
-		ret = 0;
-	} else {
-		DBG_PRINTF(ERROR, "%s (%d) bad info\n", __func__, __LINE__);
-	}
-
-end:
-	if (unlock_db(db))
-		ret = -1;
-
-	return ret;
-}
-
 int obj_db_add(struct osal_obj *obj)
 {
-	struct osal_ctx *ctx = get_osal_ctx();
-	struct obj_db *db = NULL;
 	int ret = -1;
-	long pos = -1;
-	unsigned int free_id = 0;
-	struct obj_entry entry = { 0 };
+	char *sql = NULL;
+	size_t length = 0;
 
-	if (!ctx)
+	if (sql_print_insert(obj, NULL, &length))
 		return ret;
 
-	db = ctx->obj_db;
-
-	if (!db || !db->fp) {
-		DBG_PRINTF(ERROR, "Object database not valid");
-		return ret;
-	}
-
-	if (!obj || !obj->info || !obj->info_size)
+	sql = calloc(1, length);
+	if (!sql)
 		return ret;
 
-	if (lock_db(db))
-		return ret;
-
-	entry.id = obj->range.min;
-
-	/* Try to find a free object entry */
-	find_db_obj_free(db, obj, &free_id, &pos);
-
-	/*
-	 * No free object entry found add the object entry at the end.
-	 * Object ID must be in the given object range.
-	 * Note the free_id value has been incremented by the
-	 * function find_db_obj_free()
-	 */
-	if (pos == -1 && free_id > obj->range.max)
+	length = 0;
+	if (sql_print_insert(obj, sql, &length))
 		goto end;
 
-	entry.id = free_id;
-	entry.flags = ENTRY_USE;
-	entry.attributes = obj->attributes;
-	entry.info_size = obj->info_size;
-
-	ret = write_obj_db(db, &entry, obj->info, pos);
+	ret = obj_db_exec(obj, sql, NULL, NULL);
 
 end:
-	if (!ret) {
-		obj->id = entry.id;
-		DBG_PRINTF(INFO, "%s (%d) Added object id " PRIxID "\n",
-			   __func__, __LINE__, obj->id);
-	}
-
-	if (unlock_db(db))
-		ret = -1;
-
+	free(sql);
 	return ret;
 }
 
 int obj_db_update(struct osal_obj *obj)
 {
 	int ret = -1;
-	long pos = -1;
-	struct osal_ctx *ctx = get_osal_ctx();
-	struct obj_db *db = NULL;
-	struct obj_entry entry = { 0 };
+	char *sql = NULL;
+	size_t length = 0;
 
-	if (!ctx)
+	if (sql_print_update(obj, NULL, &length))
 		return ret;
 
-	db = ctx->obj_db;
-
-	if (!db || !db->fp) {
-		DBG_PRINTF(ERROR, "Object database not valid");
-		return ret;
-	}
-
-	if (!obj || !obj->info || !obj->info_size)
+	sql = calloc(1, length);
+	if (!sql)
 		return ret;
 
-	if (lock_db(db))
-		return ret;
-
-	find_db_obj_id(db, obj->id, &entry, &pos);
-
-	DBG_PRINTF(INFO, "%s (%d) object id " PRIxID " @%ld\n", __func__,
-		   __LINE__, obj->id, pos);
-
-	if (pos < 0)
+	length = 0;
+	if (sql_print_update(obj, sql, &length))
 		goto end;
 
-	dbg_entry(&entry);
-
-	if (entry.flags != ENTRY_USE) {
-		DBG_PRINTF(ERROR, "%s (%d) object id " PRIxID " not valid\n",
-			   __func__, __LINE__, obj->id);
-		goto end;
-	}
-
-	if (obj->info_size > entry.info_size) {
-		DBG_PRINTF(ERROR, "%s (%d) input too long (%zu) expected %zu\n",
-			   __func__, __LINE__, obj->info_size, entry.info_size);
-		goto end;
-	}
-
-	entry.info_size = obj->info_size;
-	ret = write_obj_db(db, &entry, obj->info, pos);
+	ret = obj_db_exec(obj, sql, NULL, NULL);
 
 end:
-	if (unlock_db(db))
-		ret = -1;
-
+	free(sql);
 	return ret;
 }
 
 int obj_db_delete(struct osal_obj *obj)
 {
 	int ret = -1;
-	long pos = -1;
-	struct osal_ctx *ctx = get_osal_ctx();
-	struct obj_db *db = NULL;
-	struct obj_entry entry = { 0 };
+	char *sql = NULL;
+	size_t length = 0;
 
-	if (!ctx)
+	if (sql_print_delete(obj, NULL, &length))
 		return ret;
 
-	db = ctx->obj_db;
-
-	if (!db || !db->fp) {
-		DBG_PRINTF(ERROR, "Object database not valid");
-		return ret;
-	}
-
-	if (!obj)
+	sql = calloc(1, length);
+	if (!sql)
 		return ret;
 
-	if (lock_db(db))
+	length = 0;
+	if (sql_print_delete(obj, sql, &length))
+		goto end;
+
+	ret = obj_db_exec(obj, sql, NULL, NULL);
+
+end:
+	free(sql);
+	return ret;
+}
+
+int obj_db_get_info(struct osal_obj *obj)
+{
+	int ret = -1;
+	char *sql = NULL;
+	size_t length = 0;
+
+	if (sql_print_select(obj, NULL, &length))
 		return ret;
 
-	find_db_obj_id(db, obj->id, &entry, &pos);
+	sql = calloc(1, length);
+	if (!sql)
+		return ret;
 
-	DBG_PRINTF(INFO, "%s (%d) object id " PRIxID " @%ld\n", __func__,
-		   __LINE__, obj->id, pos);
+	length = 0;
+	if (sql_print_select(obj, sql, &length))
+		goto end;
 
-	if (pos >= 0) {
-		dbg_entry(&entry);
+	ret = obj_db_exec(obj, sql, obj, obj_db_to_osal_obj);
 
-		entry.flags = ENTRY_FREE;
-		ret = write_obj_db(db, &entry, NULL, pos);
-	}
-
-	if (unlock_db(db))
-		ret = -1;
-
+end:
+	free(sql);
 	return ret;
 }

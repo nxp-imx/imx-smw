@@ -13,6 +13,7 @@
 #include "smw_status.h"
 #include "smw/attr.h"
 #include "smw/names.h"
+#include "smw/object.h"
 
 /**
  * DOC:
@@ -24,30 +25,18 @@
 
 /**
  * struct osal_obj - OSAL object database operation parameters
- * @id: Object id output when object added, else input
- * @range: Object id range to generate (set by SMW at object creation)
- * @range.min: Minimum value
- * @range.max: Maximum value
+ * @id: Object unique id
  * @attributes: Object attributes (set by SMW at object creation)
- * @info: Object information to store or restore
- * @info_size: Size of the object information
+ * @descriptor: Object descriptor
  *
  * This structure defines the object information to be handled by the OSAL
  * object database if needed.
  *
- * Note: if object range min and max are equal, the object id is not generated
- * by the object database manager.
  */
 struct osal_obj {
 	unsigned int id;
-	struct {
-		unsigned int min;
-		unsigned int max;
-	} range;
-
 	smw_attr_attributes_t attributes;
-	void *info;
-	size_t info_size;
+	struct smw_object_descriptor *descriptor;
 };
 
 /**

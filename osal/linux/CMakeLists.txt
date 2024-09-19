@@ -6,6 +6,8 @@ set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:osal> PARENT_SCOPE)
 #
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+find_package(SQLite3 REQUIRED)
+
 add_library(osal OBJECT "")
 
 set_target_properties(osal PROPERTIES C_VISIBILITY_PRESET hidden)
@@ -18,8 +20,11 @@ target_sources(osal PRIVATE
                $<$<CONFIG:DEBUG>:osal_debug.c>)
 
 target_include_directories(osal
+			   PRIVATE ${SQLite3_INCLUDE_DIR}
                            PRIVATE ${CMAKE_SOURCE_DIR}/inc
                            PUBLIC ${CMAKE_SOURCE_DIR}/public)
+
+set(EXT_LIBS ${EXT_LIBS} ${SQLite3_LIBRARY} PARENT_SCOPE)
 
 macro(make_smw_conf)
   #

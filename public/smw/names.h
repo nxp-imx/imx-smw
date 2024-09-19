@@ -95,6 +95,26 @@ typedef enum {
 } smw_operation_t;
 
 /**
+ * typedef smw_object_type_t - Object type name
+ *
+ * Values:
+ * * SMW_OBJECT_TYPE_NAME_NONE: No object type specified
+ * * SMW_OBJECT_TYPE_NAME_DATA: Data Object
+ * * SMW_OBJECT_TYPE_NAME_SECRET_KEY: Symmetric Secret Key Object
+ * * SMW_OBJECT_TYPE_NAME_KEY_PAIR: Asymmetric Key Pair Object
+ * * SMW_OBJECT_TYPE_NAME_CERT: Certificate Object
+ * * SMW_OBJECT_TYPE_NAME_NB: Number of object types
+ */
+typedef enum {
+	SMW_OBJECT_TYPE_NAME_NONE,
+	SMW_OBJECT_TYPE_NAME_DATA,
+	SMW_OBJECT_TYPE_NAME_SECRET_KEY,
+	SMW_OBJECT_TYPE_NAME_KEY_PAIR,
+	SMW_OBJECT_TYPE_NAME_CERT,
+	SMW_OBJECT_TYPE_NAME_NB
+} smw_object_type_t;
+
+/**
  * typedef smw_key_type_t - Key type name
  *
  * Values:

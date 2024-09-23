@@ -41,6 +41,16 @@ struct smw_hash_args {
 };
 
 /**
+ * struct smw_ed25519_params - ed25519 parameters
+ * @context: Location of the context
+ * @context_length: Length of the context
+ */
+struct smw_ed25519_params {
+	unsigned char *context;
+	unsigned int context_length;
+};
+
+/**
  * struct smw_sign_verify_args - Sign or verify arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
@@ -51,9 +61,12 @@ struct smw_hash_args {
  * @message_length: Length of the message
  * @signature: Location of the signature
  * @signature_length: Length of the signature
+ * @ed25519_params: Pointer to ed25519 parameters
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is NULL, the default configured Secure Subsystem is used.
+ *
+ * @ed25519_params is handled if @version is equal to 1.
  */
 struct smw_sign_verify_args {
 	/* Inputs */
@@ -65,6 +78,9 @@ struct smw_sign_verify_args {
 	unsigned int message_length;
 	unsigned char *signature;
 	unsigned int signature_length;
+	union {
+		struct smw_ed25519_params *ed25519_params;
+	};
 };
 
 /**

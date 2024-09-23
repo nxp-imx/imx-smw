@@ -46,6 +46,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Unload the subsystem when smw_cancel_operation() is called or when a
   cryptographic multi-part operation terminates to respect the subsystem
   load/unload method `AT_CONTEXT_CREATION_DESTRUCTION`.
+* Add SMW Object find API.
 
 ##### 2. Subsystems
 
@@ -58,10 +59,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Create the database directory if not existing
 * Add support of SQLite3 to handle database
+* Add OSAL DB find API.
 
 #### SMW Tests - _version 4.1_
 
 * Add tests to validate ed25519 Sign and Verify operations with TEE subsystem.
+* Add U_API_Object_001 and U_API_Object_002.
 
 #### PKCS#11 Library - _version 4.1_
 

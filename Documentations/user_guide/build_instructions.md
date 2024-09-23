@@ -558,6 +558,12 @@ The default option value is in **bold**.
 	<td>ENABLE_KEYMGR_MODULE</td>
 </tr>
 <tr>
+  <td>-DENABLE_OBJECT_MODULE=[<b>ON</b>|OFF]</td>
+  <td>Enable/disable the support of data base object operations.
+	Default is ON (enable).</td>
+	<td>ENABLE_KEYMGR_MODULE</td>
+</tr>
+<tr>
   <td>-DENABLE_DEVMGR_MODULE=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of Device Manager operations.
 	Default is ON (enable).</td>

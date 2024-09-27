@@ -78,12 +78,17 @@ is called.
 * Fix data object label.
 * Remove the data hardcoded label used to configure SMW library, use the
   system configuration file (smw.conf) instead.
+* Find and retrieve token object from the database objects table
+* Update token object in the database objects table
 
 #### PKCS#11 Tests - _version 4.1_
 
 * Remove the C_InitToken calls every time session is opened.
 * Add SMW's system configuration in the ctest test script.
 * Add tests for single-part AEAD mechanisms.
+* Test crypto operation using a persistent key generated with the PSA and SMW API
+* Test data object retrieve using a persistent data created with the PSA API
+* Test object persistency after killing the library context.
 
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**

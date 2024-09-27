@@ -96,6 +96,26 @@ CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject);
 
 /**
+ * libobj_get_size() - Return object size
+ * @hsession: Session handle
+ * @hobject: Object handle
+ * @pulSize: Size of object
+ *
+ * After verifing the validity of the @hsession and the @hobj,
+ * the function returns the size of the given object handle.
+ *
+ * return:
+ * CKR_OBJECT_HANDLE_INVALID     - Object not found
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_get_size(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
+		      CK_ULONG_PTR pulSize);
+
+/**
  * libobj_get_attribute() - Return object's attributes
  * @hsession: Session handle
  * @hobject: Object handle

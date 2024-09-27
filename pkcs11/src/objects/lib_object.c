@@ -926,6 +926,45 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 	return ret;
 }
 
+CK_RV libobj_get_size(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
+		      CK_ULONG_PTR pulSize)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_obj *libobj = (struct libobj_obj *)hobject;
+	struct smw_object_descriptor desc = { 0 };
+
+	DBG_TRACE("Get size(s) of object (%p) in session %lu", libobj,
+		  hsession);
+
+	*pulSize = 0;
+
+	ret = find_lock_object(hsession, libobj, NULL);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = obj_db_get(libobj, &desc);
+	if (ret == CKR_OK) {
+		switch (desc.type) {
+		case SMW_OBJECT_TYPE_NAME_DATA:
+			*pulSize = desc.data.length;
+			break;
+		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+			*pulSize = BITS_TO_BYTES_SIZE(desc.key.security_size);
+			break;
+		default:
+			break;
+		}
+	}
+
+	libmutex_unlock(libobj->lock);
+
+end:
+	DBG_TRACE("Get size(s) of object (%p) return %lu", libobj, ret);
+	return ret;
+}
+
 CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 			   CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs)
 {

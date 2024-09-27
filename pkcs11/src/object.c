@@ -41,11 +41,13 @@ CK_RV C_DestroyObject(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject)
 CK_RV C_GetObjectSize(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
 		      CK_ULONG_PTR pulSize)
 {
-	(void)hSession;
-	(void)hObject;
-	(void)pulSize;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!hObject || !pulSize)
+		return CKR_ARGUMENTS_BAD;
+
+	return libobj_get_size(hSession, hObject, pulSize);
 }
 
 CK_RV C_GetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,

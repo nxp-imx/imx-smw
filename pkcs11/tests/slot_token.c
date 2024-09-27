@@ -10,9 +10,22 @@
 #include "os_mutex.h"
 #include "local.h"
 
-#define M(id) CKM_##id
+struct smw_mech_def {
+	CK_MECHANISM_TYPE type;
+	CK_BBOOL optional;
+	CK_BBOOL found;
+};
 
-static CK_MECHANISM_TYPE mlist[] = {
+#define M(id)                                                                  \
+	{                                                                      \
+		.type = CKM_##id, .optional = CK_FALSE, .found = CK_FALSE      \
+	}
+#define M_OPT(id)                                                              \
+	{                                                                      \
+		.type = CKM_##id, .optional = CK_TRUE, .found = CK_FALSE       \
+	}
+
+static struct smw_mech_def mlist[] = {
 	M(MD5),
 	M(SHA_1),
 	M(SHA224),
@@ -62,7 +75,7 @@ static CK_MECHANISM_TYPE mlist[] = {
 	M(SM4_ECB),
 	M(AES_GCM),
 	M(AES_CCM),
-	M(CHACHA20_POLY1305),
+	M_OPT(CHACHA20_POLY1305),
 	M(AES_CMAC),
 	M(DES3_CMAC),
 	M(AES_CMAC_GENERAL),
@@ -562,6 +575,7 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG idx_m = 0;
+	CK_ULONG idx_l = 0;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_mechs = 0;
 	CK_SLOT_ID_PTR slots = NULL_PTR;
@@ -598,7 +612,7 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_GetMechanisms"))
 			goto end;
 
-		if (CHECK_EXPECTED(nb_mechs == ARRAY_SIZE(mlist),
+		if (CHECK_EXPECTED(nb_mechs <= ARRAY_SIZE(mlist),
 				   "Slot [%s] Got %lu Expected %lu Mechanism",
 				   get_slot_label(slots[idx]), nb_mechs,
 				   ARRAY_SIZE(mlist)))
@@ -616,10 +630,29 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 
 		for (idx_m = 0; idx_m < nb_mechs; idx_m++) {
-			if (CHECK_EXPECTED(mechs[idx_m] == mlist[idx_m],
-					   "Mech %lu Got 0x%lx Expected 0x%lx",
-					   idx_m, mechs[idx_m], mlist[idx_m]))
+			for (idx_l = 0; idx_l < ARRAY_SIZE(mlist); idx_l++) {
+				if (mechs[idx_m] == mlist[idx_l].type) {
+					mlist[idx_l].found = CK_TRUE;
+					break;
+				}
+			}
+
+			if (idx_l == ARRAY_SIZE(mlist)) {
+				TEST_OUT("Found extra mech (0x%lx) not in list!",
+					 mechs[idx_m]);
 				goto end;
+			}
+		}
+
+		for (idx_l = 0; idx_l < ARRAY_SIZE(mlist); idx_l++) {
+			if (mlist[idx_l].found)
+				continue;
+
+			if (!mlist[idx_l].optional) {
+				TEST_OUT("Mech %lu (0x%lx) not found!\n", idx_l,
+					 mlist[idx_l].type);
+				goto end;
+			}
 		}
 	}
 
@@ -656,12 +689,12 @@ static int get_mechanismsinfo(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("\nGet Mechanism Info NULL\n");
-	ret = pfunc->C_GetMechanismInfo(0, mlist[0], NULL_PTR);
+	ret = pfunc->C_GetMechanismInfo(0, mlist[0].type, NULL_PTR);
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GetMechanismInfo"))
 		goto end;
 
 	TEST_OUT("\nGet Mechanism Info Bad Slot ID\n");
-	ret = pfunc->C_GetMechanismInfo(nb_slots, mlist[0], &info);
+	ret = pfunc->C_GetMechanismInfo(nb_slots, mlist[0].type, &info);
 	if (CHECK_CK_RV(CKR_SLOT_ID_INVALID, "C_GetMechanismInfo"))
 		goto end;
 

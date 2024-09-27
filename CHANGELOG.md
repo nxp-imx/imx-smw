@@ -56,12 +56,17 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support of hash multi-part with TEE and ELE subsystems.
 * As CHACHA20 POLY1305 is not supported on i.MX95, remove it from
   AEAD supported algorithm in ele_imx95_config file.
+* Add a new key type `SMW_KEY_TYPE_NAME_HKDF_IKM`.
 
 ##### 2. Subsystems
 
 * TEE: Fix subsystem load() function to return error if TA and context failed.
 * TEE: Add support of ed25519 Sign and Verify operations.
 * ELE: Move selection of the EdgeLock 2GO data import selection in generic part.
+* TEE: Add support for key import using HKDF IKM key.
+* TEE: Remove exporting of symmetric base key in key derivation in TA.
+* TEE: Updated the supported base key type for HKDF key derivation. Only a
+  previously imported HKDF IKM key or a plaintext buffer is supported.
 
 ##### 3. ARM PSA APIs
 
@@ -75,6 +80,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add tests to validate ed25519 Sign and Verify operations with TEE subsystem.
 * Add U_API_Object_001 and U_API_Object_002.
+* Add import tests for new key type `SMW_KEY_TYPE_NAME_HKDF_IKM` for TEE.
+* Update the base key type to `SMW_KEY_TYPE_NAME_HKDF_IKM` in the TEE key
+  derivation tests.
 
 #### PKCS#11 Library - _version 4.1_
 

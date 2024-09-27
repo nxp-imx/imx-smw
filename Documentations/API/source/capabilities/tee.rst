@@ -27,6 +27,8 @@ Key manager
    +--------------+-----------------------------+
    | SM4          | 128                         |
    +--------------+-----------------------------+
+   | HKDF IKM [3]_| 8 to 4096 bits [2]_         |
+   +--------------+-----------------------------+
 
 Operations supported:
  - Generate
@@ -43,6 +45,8 @@ Operations supported:
 
 .. [1] multiple of 2 bits
 .. [2] multiple of 8 bits
+.. [3] Only key import is supported. HKDF IKM keys cannot be generated. This key
+       can be used as IKM for key derivation using HKDF.
 
 
 Key policy
@@ -274,7 +278,7 @@ Key Derivation
 Supported Key Derivation Functions
  - HMAC-based Key Derivation Function (HKDF)
 
-The subsystem supports deriving a key from an existing symmetric key
-as well as from a plaintext buffer. Subsystem allows to store the derived key
+The subsystem supports deriving a key from an existing HKDF IKM key as well as
+from a plaintext buffer. Subsystem allows to store the derived key
 upon user request and also allows exporting the derived key if the derived key
 buffer is set.

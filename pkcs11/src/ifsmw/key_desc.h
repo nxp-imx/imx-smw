@@ -74,6 +74,7 @@ void derived_key_desc_copy_key_id(struct libobj_obj *obj,
  * base_key_desc_setup() - Set key ID/buffer in base key descr struct
  * @obj: Key object
  * @desc: SMW key descriptor
+ *
  * This function sets key ID or buffer in the base key descriptor structure,
  * depending on whether the base key object is a session or a token object.
  * For an already imported or generated token key or a generated session key,

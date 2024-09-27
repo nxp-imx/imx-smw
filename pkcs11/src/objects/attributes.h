@@ -516,7 +516,7 @@ attr_get_value(void *obj, const struct template_attr *tattr,
  * @req_overwrite: Overwrite the attribute requirement (!= NO_OVERWRITE)
  *
  * Find the attribute @tattr->type in the @attrs list and validate attribute
- * depending on attribute requirement. If valid, Copy @cattr value to the
+ * depending on attribute requirement. If valid, copy @cattr value to the
  * object @obj.
  *
  * return:

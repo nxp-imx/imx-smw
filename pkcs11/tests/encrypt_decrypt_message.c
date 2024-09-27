@@ -805,7 +805,7 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 				if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
 						"C_EncryptMessage"))
 					goto end;
-			} else if (CHECK_CK_RV(CKR_DEVICE_ERROR,
+			} else if (CHECK_CK_RV(CKR_ARGUMENTS_BAD,
 					       "C_EncryptMessage")) {
 				goto end;
 			}

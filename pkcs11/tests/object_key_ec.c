@@ -75,7 +75,7 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 			goto end;
 	} else {
-		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
 			goto end;
 	}
 
@@ -101,7 +101,7 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 			goto end;
 	} else {
-		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
 			goto end;
 	}
 
@@ -184,7 +184,7 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 			goto end;
 	} else {
-		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
 			goto end;
 	}
 
@@ -210,7 +210,7 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 			goto end;
 	} else {
-		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
 			goto end;
 	}
 
@@ -398,7 +398,7 @@ static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 			goto end;
 	} else {
-		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_GenerateKeyPair"))
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GenerateKeyPair"))
 			goto end;
 	}
 

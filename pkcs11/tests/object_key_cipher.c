@@ -54,7 +54,7 @@ static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 			goto end;
 	} else {
-		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
 			goto end;
 	}
 
@@ -112,7 +112,7 @@ static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 			goto end;
 	} else {
-		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_GenerateKey"))
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GenerateKey"))
 			goto end;
 	}
 

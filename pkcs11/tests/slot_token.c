@@ -43,6 +43,7 @@ static struct smw_mech_def mlist[] = {
 	M(SM4_KEY_GEN),
 	M(GENERIC_SECRET_KEY_GEN),
 	M(RSA_PKCS_KEY_PAIR_GEN),
+	M(HKDF_DERIVE),
 	M(ECDSA),
 	M(ECDSA_SHA1),
 	M(ECDSA_SHA224),

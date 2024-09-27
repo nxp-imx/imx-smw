@@ -106,8 +106,7 @@ CK_RV C_DeriveKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism,
 	if (!hBaseKey)
 		return CKR_KEY_HANDLE_INVALID;
 
-	if ((!pTemplate && ulAttributeCount) ||
-	    (pTemplate && !ulAttributeCount))
+	if (!pTemplate != !ulAttributeCount)
 		return CKR_TEMPLATE_INCOMPLETE;
 
 	if (!phKey)

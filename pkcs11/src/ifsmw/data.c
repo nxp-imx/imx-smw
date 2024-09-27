@@ -100,6 +100,7 @@ static int retrieve_data(const struct libobj_obj *obj)
 
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_retrieve_data_args args = { 0 };
+	struct smw_data_info_args data_info = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
 	struct libobj_data *data = get_subobj_from(obj, storage);
 	unsigned char *buffer = NULL;
@@ -109,10 +110,11 @@ static int retrieve_data(const struct libobj_obj *obj)
 		return ret;
 
 	args.data_descriptor = &data_descriptor;
+	data_info.data_descriptor = &data_descriptor;
 
-	status = smw_retrieve_data(&args);
+	status = smw_get_data_info(&data_info);
 
-	if (status == SMW_STATUS_OUTPUT_TOO_SHORT && data_descriptor.length) {
+	if (status == SMW_STATUS_OK) {
 		if (data->value.number < data_descriptor.length) {
 			buffer = malloc(data_descriptor.length);
 			if (!buffer)

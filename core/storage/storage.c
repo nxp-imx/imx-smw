@@ -717,6 +717,8 @@ enum smw_status_code smw_retrieve_data(struct smw_retrieve_data_args *args)
 	if (SMW_ATTR_IS_READ_ONCE(desc->data_attributes.attributes))
 		status = data_db_delete(smw_storage_get_data_identifier(desc),
 					desc);
+	else
+		status = data_db_update(desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

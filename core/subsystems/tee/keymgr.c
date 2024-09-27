@@ -49,6 +49,7 @@ RANGE_DEF(HMAC_SHA512, 256, 1024, 8);
 RANGE_DEF(HMAC_SM3, 80, 1024, 8);
 RANGE_DEF(RSA, 256, 4096, 2);
 RANGE_DEF(DERIVE, 8, 4096, 8);
+RANGE_DEF(HKDF_IKM, 8, 4096, 8);
 
 #define KEY_DEF(_key_type, _security_size, _symmetric)                         \
 	{                                                                      \
@@ -91,12 +92,13 @@ RANGE_DEF(DERIVE, 8, 4096, 8);
 		.symmetric = true                                              \
 	}
 
-#define KEY_DEF_DERIVE(_key_type)                                              \
+#define KEY_DEF_DERIVE(_key_type, _tee_key_type)                               \
 	{                                                                      \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type,             \
 		.hash_algo_id = SMW_CONFIG_HASH_ALGO_ID_INVALID,               \
 		.hash = SMW_ATTR_HASH_NONE,                                    \
-		.key_type = TEE_KEY_TYPE_ID_GENERIC_SECRET,                    \
+		.key_type = TEE_KEY_TYPE_ID_##_tee_key_type,                   \
+		.security_size = SECURITY_SIZE_RANGE,                          \
 		.security_size_range = security_size_range_##_key_type,        \
 		.symmetric = true                                              \
 	}
@@ -124,15 +126,24 @@ static const struct key_def {
 	struct security_size_range security_size_range;
 	bool symmetric;
 } key_def_list[] = {
-	KEY_DEF_RANGE_ASYM(SECP_R1), KEY_DEF_ASYM(SECP_R1, 384),
-	KEY_DEF_ASYM(SECP_R1, 521),  KEY_DEF_ASYM(ED25519, 256),
-	KEY_DEF_RANGE_SYM(AES),	     KEY_DEF_SYM(DES, 56),
-	KEY_DEF_RANGE_SYM(DES3),     KEY_DEF_SYM(SM4, 128),
-	KEY_DEF_HMAC(MD5),	     KEY_DEF_HMAC(SHA1),
-	KEY_DEF_HMAC(SHA224),	     KEY_DEF_HMAC(SHA256),
-	KEY_DEF_HMAC(SHA384),	     KEY_DEF_HMAC(SHA512),
-	KEY_DEF_HMAC(SM3),	     KEY_DEF_RANGE_ASYM(RSA),
-	KEY_DEF_DERIVE(DERIVE),
+	KEY_DEF_RANGE_ASYM(SECP_R1),
+	KEY_DEF_ASYM(SECP_R1, 384),
+	KEY_DEF_ASYM(SECP_R1, 521),
+	KEY_DEF_ASYM(ED25519, 256),
+	KEY_DEF_RANGE_SYM(AES),
+	KEY_DEF_SYM(DES, 56),
+	KEY_DEF_RANGE_SYM(DES3),
+	KEY_DEF_SYM(SM4, 128),
+	KEY_DEF_HMAC(MD5),
+	KEY_DEF_HMAC(SHA1),
+	KEY_DEF_HMAC(SHA224),
+	KEY_DEF_HMAC(SHA256),
+	KEY_DEF_HMAC(SHA384),
+	KEY_DEF_HMAC(SHA512),
+	KEY_DEF_HMAC(SM3),
+	KEY_DEF_RANGE_ASYM(RSA),
+	KEY_DEF_DERIVE(DERIVE, GENERIC_SECRET),
+	KEY_DEF_DERIVE(HKDF_IKM, HKDF_IKM),
 };
 
 /**
@@ -843,6 +854,7 @@ static int check_import_key_buffers_presence(enum tee_key_type key_type,
 	case TEE_KEY_TYPE_ID_HMAC_SHA384:
 	case TEE_KEY_TYPE_ID_HMAC_SHA512:
 	case TEE_KEY_TYPE_ID_HMAC_SM3:
+	case TEE_KEY_TYPE_ID_HKDF_IKM:
 		/* Symmetric key cases */
 		if (!priv_data) {
 			SMW_DBG_PRINTF(ERROR,

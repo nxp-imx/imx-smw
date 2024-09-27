@@ -93,13 +93,8 @@ static bool is_base_key_type_supported(enum smw_config_key_type_id type_id,
 
 	if (kdf_id == SMW_CONFIG_KDF_ID_HKDF) {
 		switch (type_id) {
-		case SMW_CONFIG_KEY_TYPE_ID_AES:
-		case SMW_CONFIG_KEY_TYPE_ID_DES:
-		case SMW_CONFIG_KEY_TYPE_ID_DES3:
-		case SMW_CONFIG_KEY_TYPE_ID_SM4:
-		case SMW_CONFIG_KEY_TYPE_ID_HMAC:
 		case SMW_CONFIG_KEY_TYPE_ID_RAW:
-		case SMW_CONFIG_KEY_TYPE_ID_DERIVE:
+		case SMW_CONFIG_KEY_TYPE_ID_HKDF_IKM:
 			status = true;
 			break;
 

@@ -265,10 +265,10 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 	struct key_handle imported_key_handle = { 0 };
 	struct obj_data derived_key_obj = { 0 };
 	struct obj_data new_key_object = { 0 };
-	unsigned int sec_size = 0;
 
 	size_t base_key_len = 0;
 	size_t derived_key_len = 0;
+	unsigned int key_len = 0;
 	unsigned char *base_key = NULL;
 	unsigned char *derived_key = NULL;
 	unsigned char *base_key_priv_data = NULL;
@@ -329,30 +329,7 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 		if (res != TEE_SUCCESS)
 			goto exit;
 
-		res = get_obj_buffer_attr(imported_key_handle.handle,
-					  &base_key_priv_data, &base_key_len,
-					  true);
-		if (res) {
-			EMSG("Failed to get the derived key attribute: 0x%x",
-			     res);
-			goto exit;
-		}
-
-		/* If the base key already exists in TEE storage, it must be of type
-		 * TEE_TYPE_HKDF_IKM to derive a new key from it using HKDF.
-		 * Therefore, first fetch the private key buffer of the base key and
-		 * import it again with object type set to TEE_TYPE_HKDF_IKM.
-		 */
-		sec_size = shared_params->base_key_sec_size;
-		res = TEE_AllocateTransientObject(TEE_TYPE_HKDF_IKM, sec_size,
-						  &base_key_handle);
-		if (res) {
-			EMSG("Failed to allocate transient object: 0x%x", res);
-			goto exit;
-		}
-
-		set_attr_buffer(attr_count, key_attr, TEE_ATTR_HKDF_IKM,
-				base_key_priv_data, base_key_len);
+		base_key_handle = imported_key_handle.handle;
 
 	} else if ((shared_params->base_key_id == INVALID_KEY_ID) && base_key) {
 		if (MUL_OVERFLOW(base_key_len, 8, &max_key_size))
@@ -368,11 +345,13 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 
 		set_attr_buffer(attr_count, key_attr, TEE_ATTR_HKDF_IKM,
 				base_key, base_key_len);
-	}
 
-	res = TEE_PopulateTransientObject(base_key_handle, key_attr, 1);
-	if (res) {
-		EMSG("Failed to populate transient object: 0x%x", res);
+		res = TEE_PopulateTransientObject(base_key_handle, key_attr, 1);
+		if (res) {
+			EMSG("Failed to populate transient object: 0x%x", res);
+			goto exit;
+		}
+	} else {
 		goto exit;
 	}
 
@@ -385,13 +364,8 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 	}
 
 	/* Check if "derive" usage is set for base key */
-	if (base_key_exists)
-		res = is_derive_usage_set(shared_params->base_key_id,
-					  imported_key_handle.handle,
-					  op_handle);
-	else
-		res = is_derive_usage_set(shared_params->base_key_id,
-					  base_key_handle, op_handle);
+	res = is_derive_usage_set(shared_params->base_key_id, base_key_handle,
+				  op_handle);
 	if (res)
 		goto exit;
 
@@ -453,13 +427,18 @@ static TEE_Result hkdf_derive_key(uint32_t param_types,
 
 	params[DER_DERIVED_KEY_PARAM_IDX].memref.size = derived_key_len;
 
+	if (ADD_OVERFLOW(derived_key_len, 0, &key_len)) {
+		res = TEE_ERROR_BAD_PARAMETERS;
+		goto exit;
+	}
+
 	/* If user has requested to store the derived key,
 	 * derived key buffer will be imported and user defined key type will be
 	 * set and the ID would be returned.
 	 */
 	if (shared_params->store_derived_key) {
 		res = import_derived_key(shared_params, &new_key_object,
-					 derived_key, derived_key_len);
+					 derived_key, key_len);
 		if (res)
 			goto exit;
 	}

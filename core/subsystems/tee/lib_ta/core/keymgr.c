@@ -116,6 +116,7 @@ struct {
 	KEY_DEF_RANGE(HMAC_SM3, HMAC_SM3),
 	KEY_DEF_RANGE(RSA, RSA_KEYPAIR),
 	KEY_DEF_RANGE(GENERIC_SECRET, GENERIC_SECRET),
+	KEY_DEF_RANGE(HKDF_IKM, HKDF_IKM),
 };
 
 static TEE_Result roundup_even_size(size_t *size)
@@ -709,6 +710,29 @@ static TEE_Result set_import_key_private_attributes(TEE_Attribute **attr,
 	return TEE_SUCCESS;
 }
 
+static TEE_Result set_import_ikm_attributes(TEE_Attribute **attr,
+					    uint32_t attr_count,
+					    unsigned char *priv_key,
+					    unsigned int priv_key_len)
+{
+	size_t attr_size = 0;
+
+	FMSG("Executing %s", __func__);
+
+	if (MUL_OVERFLOW(attr_count, sizeof(TEE_Attribute), &attr_size))
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	*attr = TEE_Malloc(attr_size, TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!*attr) {
+		EMSG("TEE_Malloc failed");
+		return TEE_ERROR_OUT_OF_MEMORY;
+	}
+
+	TEE_InitRefAttribute(*attr, TEE_ATTR_HKDF_IKM, priv_key, priv_key_len);
+
+	return TEE_SUCCESS;
+}
+
 /**
  * set_import_public_ed25519_attrs() - Set import attributes for public key.
  * @attr: TEE Attribute structure to allocate and set.
@@ -959,6 +983,12 @@ set_import_key_attributes(TEE_Attribute **attr, uint32_t *attr_count,
 		return set_import_key_private_attributes(attr, NB_ATTR_SYMM_KEY,
 							 priv_key,
 							 priv_key_len);
+		break;
+
+	case TEE_TYPE_HKDF_IKM:
+		*attr_count = NB_ATTR_SYMM_KEY;
+		return set_import_ikm_attributes(attr, NB_ATTR_SYMM_KEY,
+						 priv_key, priv_key_len);
 
 	default:
 		return res;

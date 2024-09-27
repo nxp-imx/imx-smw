@@ -1,18 +1,20 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "AES",
-			"security_size": 256,
+			"type": "HKDF_IKM",
+			"security_size": 128,
+			"priv_key": [
+				"addf88c1ab997eb58c0455288c3a4fa3"
+			],
 			"attributes_list": [
 				"TRANSIENT"
 			],
 			"usage": [
-				"DERIVE",
-				"EXPORT"
+				"DERIVE"
 			]
 		},
 		"key 2": {
-			"type": "HMAC",
+			"type": "HKDF_IKM",
 			"security_size": 256,
 			"priv_key": [
 				"addf88c1ab997eb58c0455288c3a4fa3",
@@ -22,12 +24,7 @@
 				"TRANSIENT"
 			],
 			"usage": [
-				"DERIVE",
-				"EXPORT"
-			],
-			"permitted_algo": [
-				"HMAC",
-				"HASH=SHA256"
+				"DERIVE"
 			]
 		},
 		"key 3": {
@@ -37,8 +34,8 @@
 				"TRANSIENT"
 			],
 			"usage": [
-				"DERIVE",
-				"EXPORT"
+				"ENCRYPT",
+				"DECRYPT"
 			]
 		},
 		"key 4": {
@@ -53,8 +50,7 @@
 			],
 			"usage": [
 				"SIGN_MESSAGE",
-				"DERIVE",
-				"EXPORT"
+				"VERIFY_MESSAGE"
 			],
 			"permitted_algo": [
 				"HMAC",
@@ -62,19 +58,11 @@
 			]
 		},
 		"key 5": {
-			"security_size": 384,
-			"shared_secret": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			]
-		},
-		"key 6": {
 			"type": "RAW",
 			"format": "BASE64",
 			"pub_key": "CwsLCwsLCwsLCwsLCwsLCwsLCwsLCw=="
 		},
-		"key 7": {
+		"key 6": {
 			"format": "BASE64",
 			"security_size": 512,
 			"shared_secret": [
@@ -84,7 +72,7 @@
 				"addf88c1ab997eb58c0455288c3a4fa3"
 			]
 		},
-		"key 8": {
+		"key 7": {
 			"type": "AES",
 			"security_size": 256,
 			"attributes_list": [
@@ -97,8 +85,8 @@
 		}
 	},
 	"subtest 1": {
-		"description": "Generate AES Key",
-		"command": "GENERATE",
+		"description": "Import Key",
+		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 1"
 	},
@@ -148,30 +136,28 @@
 		"depends": 3
 	},
 	"subtest 5": {
-		"description": "Derive a key from previously derived key(key 4)",
+		"description": "Base key format Base64",
 		"command": "DERIVE",
-		"subsystem": "DEFAULT",
-		"op_input": "key 4",
+		"subsystem": "TEE",
+		"op_input": "key 5",
 		"op_type": "HKDF",
 		"op_args": {
 			"salt": "000102030405060708090a0b0c",
 			"info": "f0f1f2f3f4f5f6f7f8f9",
-			"algo": "SHA384"
+			"algo": "SHA256"
 		},
-		"op_output": "key 5",
-		"output": [
-			"6caa38bec6f332c85014b3a12a450e29",
-			"cd8e0ff3a50c3719fab8434c54f3a823",
-			"82161d6908b1b0b726417a60b90c039d"
-		],
-		"depends": 1
+		"op_output": "key 6"
 	},
 	"subtest 6": {
-		"description": "Base key format Base64",
+		"description": [
+			"Derived key buffer not set",
+			"Store the derived key"
+		],
 		"command": "DERIVE",
 		"subsystem": "TEE",
-		"op_input": "key 6",
+		"op_input": "key 5",
 		"op_type": "HKDF",
+		"store_key": true,
 		"op_args": {
 			"salt": "000102030405060708090a0b0c",
 			"info": "f0f1f2f3f4f5f6f7f8f9",
@@ -181,29 +167,12 @@
 	},
 	"subtest 7": {
 		"description": [
-			"Derived key buffer not set",
-			"Store the derived key"
-		],
-		"command": "DERIVE",
-		"subsystem": "TEE",
-		"op_input": "key 6",
-		"op_type": "HKDF",
-		"store_key": true,
-		"op_args": {
-			"salt": "000102030405060708090a0b0c",
-			"info": "f0f1f2f3f4f5f6f7f8f9",
-			"algo": "SHA256"
-		},
-		"op_output": "key 8"
-	},
-	"subtest 8": {
-		"description": [
 			"Perform AEAD encryption using previously derived key",
 			"AEAD ID is set and tag is part of output"
 		],
 		"command": "AEAD",
 		"subsystem": "TEE",
-		"key_name": "key 8",
+		"key_name": "key 7",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
 		"iv": "9dbfc7aed2484e2577246c14",
@@ -215,9 +184,9 @@
 		"plaintext_len": 32,
 		"tag": 16,
 		"aead_id": 1,
-		"depends": 7
+		"depends": 6
 	},
-	"subtest 9": {
+	"subtest 8": {
 		"description": [
 			"Perform AEAD decryption using derived key",
 			"AEAD ID is set and tag is part of output",
@@ -225,7 +194,7 @@
 		],
 		"command": "AEAD",
 		"subsystem": "TEE",
-		"key_name": "key 8",
+		"key_name": "key 7",
 		"mode": "CCM",
 		"op_type": "DECRYPT",
 		"aad": "353637383132333435363738",
@@ -236,9 +205,9 @@
 		],
 		"tag": 16,
 		"aead_id": 1,
-		"depends": 8
+		"depends": 7
 	},
-	"subtest 10": {
+	"subtest 9": {
 		"description": [
 			"Compute HMAC using previously derived key (key 4)",
 			"Compare the output with expected output"
@@ -271,29 +240,29 @@
 		],
 		"depends": 4
 	},
-	"subtest 11": {
+	"subtest 10": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 12": {
+	"subtest 11": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 3
 	},
-	"subtest 13": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 2
 	},
-	"subtest 14": {
+	"subtest 13": {
 		"command": "DELETE",
 		"key_name": "key 4",
 		"depends": 4
 	},
-	"subtest 15": {
+	"subtest 14": {
 		"command": "DELETE",
-		"key_name": "key 8",
-		"depends": 7
+		"key_name": "key 7",
+		"depends": 6
 	}
 }

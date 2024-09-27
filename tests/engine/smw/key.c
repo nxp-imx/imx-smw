@@ -26,13 +26,14 @@
 static struct {
 	smw_key_type_t name;
 	const char *string;
-} key_type_names[] = { KEY_TYPE(SECP_R1),      KEY_TYPE(BRAINPOOL_R1),
-		       KEY_TYPE(BRAINPOOL_T1), KEY_TYPE(ED25519),
-		       KEY_TYPE(AES),	       KEY_TYPE(DES),
-		       KEY_TYPE(DES3),	       KEY_TYPE(DSA_SM2_FP),
-		       KEY_TYPE(SM4),	       KEY_TYPE(HMAC),
-		       KEY_TYPE(RSA),	       KEY_TYPE(DH),
-		       KEY_TYPE(TLS_MASTER),   KEY_TYPE(RAW) };
+} key_type_names[] = {
+	KEY_TYPE(SECP_R1),    KEY_TYPE(BRAINPOOL_R1), KEY_TYPE(BRAINPOOL_T1),
+	KEY_TYPE(ED25519),    KEY_TYPE(AES),	      KEY_TYPE(DES),
+	KEY_TYPE(DES3),	      KEY_TYPE(DSA_SM2_FP),   KEY_TYPE(SM4),
+	KEY_TYPE(HMAC),	      KEY_TYPE(RSA),	      KEY_TYPE(DH),
+	KEY_TYPE(TLS_MASTER), KEY_TYPE(RAW),	      KEY_TYPE(DERIVE),
+	KEY_TYPE(HKDF_IKM),
+};
 
 #define KEY_FORMAT(_name)                                                      \
 	{                                                                      \

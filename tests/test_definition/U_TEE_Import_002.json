@@ -348,6 +348,17 @@
 			"usage": [
 				"SIGN_MESSAGE"
 			]
+		},
+		"key 22": {
+			"type": "HKDF_IKM",
+			"security_size": 128,
+			"priv_key": "1f8e4973953f3fb0bd6b16662e9a3c17",
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
 		}
 	},
 	"subtest 1": {
@@ -580,5 +591,16 @@
 		"command": "DELETE",
 		"key_name": "key 21",
 		"depends": 41
+	},
+	"subtest 43": {
+		"description": "Import HKDF IKM key",
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key 22"
+	},
+	"subtest 44": {
+		"command": "DELETE",
+		"key_name": "key 22",
+		"depends": 43
 	}
 }

@@ -1,7 +1,7 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "HMAC",
+			"type": "HKDF_IKM",
 			"security_size": 256,
 			"priv_key": [
 				"6ed76d2d97c69fd1339589523931f2a6",
@@ -11,15 +11,7 @@
 				"TRANSIENT"
 			],
 			"usage": [
-				"SIGN_HASH",
-				"SIGN_MESSAGE",
-				"VERIFY_HASH",
-				"VERIFY_MESSAGE",
 				"EXPORT"
-			],
-			"permitted_algo": [
-				"HMAC",
-				"HASH=SHA256"
 			]
 		},
 		"key 2": {
@@ -39,13 +31,15 @@
 		"key 3": {
 			"type": "HMAC",
 			"security_size": 256,
-			"pub_key": [
-				"000102030405060708090a0b0c0d0e0f",
-				"101112131415161718191a1b1c1d1e1f"
-			],
 			"permitted_algo": [
 				"HMAC",
 				"HASH=SHA256"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
 			]
 		},
 		"key 4": {
@@ -130,7 +124,13 @@
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 3": {
-		"description": "Base key private key buffer is not set",
+		"description": "Generate Key 3",
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 3"
+	},
+	"subtest 4": {
+		"description": "Unsupported Base key",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 3",
@@ -139,9 +139,10 @@
 			"algo": "SHA256"
 		},
 		"op_output": "key 2",
-		"result": "SMW_STATUS_INVALID_PARAM"
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+		"depends": 3
 	},
-	"subtest 4": {
+	"subtest 5": {
 		"description": "HKDF_EXTRACT step is set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
@@ -155,7 +156,7 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 5": {
+	"subtest 6": {
 		"description": "HKDF_EXPAND step is set",
 		"command": "DERIVE",
 		"subsystem": "TEE",
@@ -169,7 +170,7 @@
 		"depends": 1,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
-	"subtest 6": {
+	"subtest 7": {
 		"description": "Unsupported KDF",
 		"command": "DERIVE",
 		"subsystem": "TEE",
@@ -197,13 +198,13 @@
 		"op_output": "key 5",
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
-	"subtest 7": {
+	"subtest 8": {
 		"description": "Import Key 6",
 		"command": "IMPORT",
 		"subsystem": "TEE",
 		"key_name": "key 6"
 	},
-	"subtest 8": {
+	"subtest 9": {
 		"description": "Asymmetric base key",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
@@ -214,16 +215,21 @@
 		},
 		"op_output": "key 2",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
-		"depends": 7
+		"depends": 8
 	},
-	"subtest 9": {
+	"subtest 10": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 10": {
+	"subtest 11": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key 6",
-		"depends": 7
+		"depends": 8
 	}
 }

@@ -676,3 +676,38 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 
 	return SMW_STATUS_OK;
 }
+
+__export enum smw_status_code
+smw_config_check_derive_key(smw_subsystem_t subsystem, smw_kdf_t kdf)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	enum subsystem_id id = SUBSYSTEM_ID_INVALID;
+
+	enum smw_config_kdf_id kdf_id = SMW_CONFIG_KDF_ID_INVALID;
+
+	struct key_operation_params op_params = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (kdf == SMW_KDF_NAME_NONE)
+		return status;
+
+	status = smw_config_get_subsystem_id(subsystem, &id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = smw_config_get_kdf_id(kdf, &kdf_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	status = get_operation_params_lock(OPERATION_ID_DERIVE_KEY, id,
+					   &op_params);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	if (!check_id(kdf_id, op_params.op_bitmap))
+		status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}

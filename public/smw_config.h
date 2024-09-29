@@ -152,6 +152,32 @@ enum smw_status_code smw_config_check_generate_key(smw_subsystem_t subsystem,
 						   struct smw_key_info *info);
 
 /**
+ * smw_config_check_derive_key() - Check if KDF @kdf is supported.
+ * @subsystem: Name of the subsystem.
+ * @kdf: KDF name.
+ *
+ * Function checks if the KDF @kdf is supported on the given subsystem.
+ *
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, function checks if the KDF is
+ * supported on the default subsystem.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		KDF is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@kdf is SMW_KDF_NAME_NONE
+ *	- SMW_STATUS_UNKNOWN_KDF_NAME:
+ *		@kdf is not valid KDF
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		@kdf is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not valid
+ */
+enum smw_status_code smw_config_check_derive_key(smw_subsystem_t subsystem,
+						 smw_kdf_t kdf);
+
+/**
  * struct smw_signature_info - Signature operation information
  * @algo_name: Signature algo name. See &typedef smw_signature_algo_t
  * @type_name: Signature type name. See &typedef smw_signature_type_t

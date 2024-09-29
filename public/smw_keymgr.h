@@ -264,7 +264,7 @@ struct smw_kdf_tls12_args {
 };
 
 /**
- * struct smw_kdf_hkdf_args - HKDF full arguments structure
+ * struct smw_hkdf_args - HKDF full arguments structure
  * @salt: [in] Salt buffer
  * @salt_len: [in] @salt length in bytes
  * @info: [in] Context and application specific information buffer
@@ -305,7 +305,7 @@ struct smw_hkdf_extract_args {
 };
 
 /**
- * struct smw_kdf_hkdf_args - HKDF expand arguments structure
+ * struct smw_hkdf_expand_args - HKDF expand arguments structure
  * @info: [in] Context and application specific information
  * @info_len: [in] @info length in bytes
  *

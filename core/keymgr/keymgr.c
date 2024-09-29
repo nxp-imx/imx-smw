@@ -143,6 +143,7 @@ static int get_standard_public_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
+	case SMW_CONFIG_KEY_TYPE_ID_HKDF_IKM:
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
@@ -211,6 +212,7 @@ static int get_standard_private_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
+	case SMW_CONFIG_KEY_TYPE_ID_HKDF_IKM:
 		*length = BITS_TO_BYTES_SIZE(identifier->security_size);
 		break;
 
@@ -288,6 +290,7 @@ static int get_standard_modulus_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
+	case SMW_CONFIG_KEY_TYPE_ID_HKDF_IKM:
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
@@ -358,6 +361,7 @@ static int get_standard_pub_exp_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
+	case SMW_CONFIG_KEY_TYPE_ID_HKDF_IKM:
 		break;
 
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
@@ -1489,6 +1493,7 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
 	case SMW_CONFIG_KEY_TYPE_ID_HMAC:
 	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER:
+	case SMW_CONFIG_KEY_TYPE_ID_HKDF_IKM:
 		*privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 		break;
 

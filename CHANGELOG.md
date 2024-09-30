@@ -65,7 +65,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Move selection of the EdgeLock 2GO data import selection in generic part.
 * TEE: Add support for key import using HKDF IKM key.
 * TEE: Remove exporting of symmetric base key in key derivation in TA.
-* TEE: Updated the supported base key type for HKDF key derivation. Only a
+* TEE: Update the supported base key type for HKDF key derivation. Only a
   previously imported HKDF IKM key or a plaintext buffer is supported.
 
 ##### 3. ARM PSA APIs
@@ -83,6 +83,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add import tests for new key type `SMW_KEY_TYPE_NAME_HKDF_IKM` for TEE.
 * Update the base key type to `SMW_KEY_TYPE_NAME_HKDF_IKM` in the TEE key
   derivation tests.
+* Add a new configuration API smw_config_check_derive_key() to check if the
+  provided KDF name is supported by the subsystem.
 
 #### PKCS#11 Library - _version 4.1_
 
@@ -95,6 +97,7 @@ is called.
   system configuration file (smw.conf) instead.
 * Find and retrieve token object from the database objects table
 * Update token object in the database objects table
+* Add support for Key derivation using HKDF.
 
 #### PKCS#11 Tests - _version 4.1_
 
@@ -104,6 +107,7 @@ is called.
 * Test crypto operation using a persistent key generated with the PSA and SMW API
 * Test data object retrieve using a persistent data created with the PSA API
 * Test object persistency after killing the library context.
+* Add tests for Key derivation using HKDF.
 
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**

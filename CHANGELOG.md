@@ -42,6 +42,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * RSA public exponent set by the user is handled by TEE subsystem.
 * Add SMW Object descriptor structure
+* Unload the subsystem when smw_cancel_operation() is called or when a
+  cryptographic multi-part operation terminates to respect the subsystem
+  load/unload method `AT_CONTEXT_CREATION_DESTRUCTION`.
 
 ##### 2. Subsystems
 

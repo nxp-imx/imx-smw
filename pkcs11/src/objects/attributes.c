@@ -523,6 +523,64 @@ CK_RV attr_get_value(void *obj, const struct template_attr *tattr,
 	return ret;
 }
 
+CK_RV attr_set_value(void *obj, CK_ATTRIBUTE_PTR cattr,
+		     const struct template_attr *tattr,
+		     struct libattr_list *attrs, enum attr_req req_overwrite)
+{
+	CK_RV ret = CKR_OK;
+	CK_ATTRIBUTE_PTR attr = NULL_PTR;
+	enum attr_req req = tattr->req;
+
+	ret = obj_find_attr(&attr, tattr->type, attrs);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (req_overwrite != NO_OVERWRITE)
+		req = req_overwrite;
+
+	if (!attr) {
+		if (req == MUST) {
+			DBG_TRACE("Attribute Type 0x%lx must be present",
+				  tattr->type);
+			ret = CKR_TEMPLATE_INCOMPLETE;
+			return ret;
+		}
+	} else {
+		switch (req) {
+		case MUST_NOT:
+			DBG_TRACE("Attribute Type 0x%lx must not be present",
+				  tattr->type);
+			return CKR_TEMPLATE_INCONSISTENT;
+
+		case READ_ONLY:
+			DBG_TRACE("Attribute Type 0x%lx is read only",
+				  tattr->type);
+			return CKR_ATTRIBUTE_READ_ONLY;
+
+		default:
+			break;
+		}
+	}
+
+	if (!cattr->pValue) {
+		DBG_TRACE("Attribute Type 0x%lx not defined", tattr->type);
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	/*
+	 * If attribute expected length = 0, length is not known, hence don't
+	 * verify it.
+	 */
+	if (tattr->val_len && cattr->ulValueLen != tattr->val_len) {
+		DBG_TRACE("Attribute Type 0x%lx size not correct", tattr->type);
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+	}
+
+	ret = tattr->attr_to(obj + tattr->of_field, cattr);
+
+	return ret;
+}
+
 CK_RV attr_get_obj_prot_value(CK_ATTRIBUTE_PTR attr,
 			      const struct template_attr *tattrs,
 			      size_t nb_tattrs, const void *obj, bool protect)

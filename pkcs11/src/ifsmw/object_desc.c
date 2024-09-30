@@ -222,6 +222,10 @@ static CK_RV get_pkcs11_key_type(smw_key_type_t type, smw_attr_algo_t algo,
 		*key_type = CKK_EC;
 		break;
 
+	case SMW_KEY_TYPE_NAME_HKDF_IKM:
+		*key_type = CKK_HKDF;
+		break;
+
 	default:
 		goto end;
 	}

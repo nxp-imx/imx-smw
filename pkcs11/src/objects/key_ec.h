@@ -26,7 +26,7 @@ void key_ec_private_free(struct libobj_obj *obj);
  * @obj: EC Public Key object
  * @attrs: List of object attributes
  *
- * If key attributes are corrects, create a new EC Public key object.
+ * If key attributes are correct, create a new EC Public key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -114,7 +114,7 @@ CK_RV key_ec_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
  * @obj: EC Private Key object
  * @attrs: List of object attributes
  *
- * If key attributes are corrects, create a new EC Private key object.
+ * If key attributes are correct, create a new EC Private key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -206,7 +206,7 @@ CK_RV key_ec_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
  * @priv_obj: EC Private Key object
  * @priv_attrs: List of Private key object attributes
  *
- * If key attributes are corrects, create and generate an EC Keypair object.
+ * If key attributes are correct, create and generate an EC Keypair object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized

@@ -13,6 +13,7 @@
 #include "key_rsa.h"
 
 #include "lib_session.h"
+#include "lib_object.h"
 #include "libobj_types.h"
 
 #include "util.h"
@@ -290,6 +291,7 @@ static void key_secret_free(struct libobj_obj *obj)
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
 		key_hmac_free(obj);
 		break;
 
@@ -391,9 +393,13 @@ static void key_public_free(struct libobj_obj *obj)
  * key_secret_new() - Create a new secret key object
  * @obj: Key object
  * @attrs: List of object attributes
+ * @is_derived_key: True, if @obj is a derived key object.
  *
  * Allocate a new secret key object and setup it with given object
  * attribute list.
+ *
+ * For derived key, the SECR_ALWAYS_SENSITIVE and SECR_NEVER_EXTRACTABLE are set
+ * based on the base key attributes in the function set_derived_key_attr().
  *
  * return:
  * CKR_FUNCTION_FAILED           - Function failure
@@ -403,7 +409,8 @@ static void key_public_free(struct libobj_obj *obj)
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_OK                        - Success
  */
-static CK_RV key_secret_new(struct libobj_obj *obj, struct libattr_list *attrs)
+static CK_RV key_secret_new(struct libobj_obj *obj, struct libattr_list *attrs,
+			    bool is_derived_key)
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_key_secret *new_key = NULL;
@@ -421,10 +428,13 @@ static CK_RV key_secret_new(struct libobj_obj *obj, struct libattr_list *attrs)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(new_key, &attr_key_secret[SECR_ALWAYS_SENSITIVE],
-			     attrs, MUST_NOT);
-	if (ret != CKR_OK)
-		return ret;
+	if (!is_derived_key) {
+		ret = attr_get_value(new_key,
+				     &attr_key_secret[SECR_ALWAYS_SENSITIVE],
+				     attrs, MUST_NOT);
+		if (ret != CKR_OK)
+			return ret;
+	}
 
 	ret = attr_get_value(new_key, &attr_key_secret[SECR_ENCRYPT], attrs,
 			     NO_OVERWRITE);
@@ -451,10 +461,13 @@ static CK_RV key_secret_new(struct libobj_obj *obj, struct libattr_list *attrs)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = attr_get_value(new_key, &attr_key_secret[SECR_NEVER_EXTRACTABLE],
-			     attrs, MUST_NOT);
-	if (ret != CKR_OK)
-		return ret;
+	if (!is_derived_key) {
+		ret = attr_get_value(new_key,
+				     &attr_key_secret[SECR_NEVER_EXTRACTABLE],
+				     attrs, MUST_NOT);
+		if (ret != CKR_OK)
+			return ret;
+	}
 
 	ret = attr_get_value(new_key, &attr_key_secret[SECR_WRAP], attrs,
 			     NO_OVERWRITE);
@@ -720,6 +733,7 @@ static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
 		ret = key_hmac_create(hsession, obj, attrs);
 		break;
 
@@ -776,6 +790,7 @@ static CK_RV subkey_secret_retrieve(CK_SESSION_HANDLE hsession,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
 		ret = key_hmac_retrieve(hsession, obj, attrs);
 		break;
 
@@ -843,6 +858,7 @@ static CK_RV subkey_secret_get_attribute(CK_ATTRIBUTE_PTR attr,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
 		ret = key_hmac_get_attribute(attr, obj, protect);
 		break;
 
@@ -906,6 +922,7 @@ static CK_RV subkey_secret_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
 		ret = key_hmac_modify_attribute(attr, obj);
 		break;
 
@@ -1450,6 +1467,59 @@ static CK_RV generate_key_new(struct libobj_obj *obj,
 	return ret;
 }
 
+static CK_RV allocate_derived_key(struct libobj_obj *obj,
+				  struct libattr_list *attrs)
+{
+	CK_RV ret = CKR_HOST_MEMORY;
+	struct libobj_key *new_key = NULL;
+
+	new_key = key_allocate(obj);
+	if (!new_key)
+		return ret;
+
+	DBG_TRACE("Derived key (%p)", new_key);
+
+	ret = attr_get_value(new_key, &attr_key_common[KEY_TYPE], attrs,
+			     OPTIONAL);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_common[KEY_ID], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_common[KEY_START_DATE], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_common[KEY_END_DATE], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_common[KEY_DERIVE], attrs,
+			     NO_OVERWRITE);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_common[KEY_LOCAL], attrs,
+			     MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_common[KEY_GEN_MECH], attrs,
+			     MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_get_value(new_key, &attr_key_common[KEY_ALLOWED_MECH], attrs,
+			     NO_OVERWRITE);
+
+	return ret;
+}
+
 void key_free(struct libobj_obj *obj)
 {
 	struct libobj_key *key = get_subobj_from(obj, storage);
@@ -1514,7 +1584,7 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			break;
 
 		case CKO_SECRET_KEY:
-			ret = key_secret_new(obj, attrs);
+			ret = key_secret_new(obj, attrs, false);
 			if (ret == CKR_OK)
 				ret = subkey_secret_create(hsession, obj,
 							   attrs);
@@ -1557,7 +1627,7 @@ CK_RV key_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 			break;
 
 		case CKO_SECRET_KEY:
-			ret = key_secret_new(obj, attrs);
+			ret = key_secret_new(obj, attrs, false);
 			if (ret == CKR_OK)
 				ret = subkey_secret_retrieve(hsession, obj,
 							     attrs);
@@ -1745,6 +1815,10 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		key_type = CKK_GENERIC_SECRET;
 		break;
 
+	case CKM_HKDF_KEY_GEN:
+		key_type = CKK_HKDF;
+		break;
+
 	default:
 		return CKR_MECHANISM_INVALID;
 	}
@@ -1755,7 +1829,7 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 	key_type = get_key_type(obj);
 
-	ret = key_secret_new(obj, attrs);
+	ret = key_secret_new(obj, attrs, false);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -1777,6 +1851,7 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
 		ret = key_hmac_generate(hsession, mech, obj, attrs);
 		break;
 
@@ -1815,6 +1890,7 @@ CK_RV key_get_id(unsigned int *id, struct libobj_obj *obj)
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
 		ret = key_hmac_get_id(id, obj);
 		break;
 
@@ -1832,4 +1908,269 @@ CK_RV key_get_id(unsigned int *id, struct libobj_obj *obj)
 	}
 
 	return ret;
+}
+
+static CK_RV
+check_hkdf_derive_mech_params(CK_MECHANISM_PTR mech,
+			      struct libobj_key_derive_params *derive_params)
+{
+	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
+	CK_HKDF_PARAMS_PTR hkdf_params = NULL_PTR;
+
+	if (!mech->pParameter) {
+		DBG_TRACE("CKM_HKDF_DERIVE mechanism pParameter not set");
+		goto end;
+	}
+
+	if (mech->ulParameterLen != sizeof(CK_HKDF_PARAMS)) {
+		DBG_TRACE("CKM_HKDF_DERIVE mechanism ulParameterLen error");
+		goto end;
+	}
+
+	hkdf_params = (CK_HKDF_PARAMS_PTR)mech->pParameter;
+	if (!hkdf_params->bExtract && !hkdf_params->bExpand)
+		goto end;
+
+	derive_params->hkdf_params.extract = hkdf_params->bExtract;
+	derive_params->hkdf_params.expand = hkdf_params->bExpand;
+
+	derive_params->hkdf_params.prf_hash_mech =
+		hkdf_params->prfHashMechanism;
+
+	derive_params->hkdf_params.salt_type = hkdf_params->ulSaltType;
+	if (hkdf_params->bExtract) {
+		if (hkdf_params->ulSaltType == CKF_HKDF_SALT_KEY) {
+			DBG_TRACE("CKF_HKDF_SALT_KEY not supported");
+			ret = CKR_FUNCTION_NOT_SUPPORTED;
+			goto end;
+		} else if (hkdf_params->ulSaltType == CKF_HKDF_SALT_DATA) {
+			if (!hkdf_params->pSalt != !hkdf_params->ulSaltLen)
+				goto end;
+
+			derive_params->hkdf_params.salt = hkdf_params->pSalt;
+			derive_params->hkdf_params.salt_len =
+				hkdf_params->ulSaltLen;
+		}
+	}
+
+	if (hkdf_params->bExpand) {
+		if (!hkdf_params->pInfo != !hkdf_params->ulInfoLen)
+			goto end;
+
+		derive_params->hkdf_params.info = hkdf_params->pInfo;
+		derive_params->hkdf_params.info_len = hkdf_params->ulInfoLen;
+	}
+
+	ret = CKR_OK;
+
+end:
+	return ret;
+}
+
+static CK_RV check_input_params(CK_KEY_TYPE base_key_type,
+				CK_MECHANISM_PTR mech,
+				struct libobj_key_derive_params *derive_params)
+{
+	CK_RV ret = CKR_FUNCTION_NOT_SUPPORTED;
+
+	switch (mech->mechanism) {
+	case CKM_HKDF_DERIVE:
+		if (base_key_type != CKK_HKDF &&
+		    base_key_type != CKK_GENERIC_SECRET) {
+			ret = CKR_KEY_FUNCTION_NOT_PERMITTED;
+			break;
+		}
+
+		ret = check_hkdf_derive_mech_params(mech, derive_params);
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+static CK_RV set_hkdf_derived_key_attr(CK_SESSION_HANDLE hsession,
+				       CK_OBJECT_HANDLE base_key,
+				       struct libobj_obj *derived_key,
+				       struct libattr_list *attrs)
+{
+	CK_RV ret = CKR_OK;
+
+	CK_BBOOL base_key_always_sens = CK_FALSE;
+	CK_BBOOL base_key_never_extr = CK_FALSE;
+
+	CK_BBOOL derived_key_always_sens = CK_FALSE;
+	CK_BBOOL derived_key_never_extr = CK_FALSE;
+	CK_BBOOL derived_key_sensitive = CK_FALSE;
+	CK_BBOOL derived_key_extractable = CK_FALSE;
+
+	unsigned int i = 0;
+
+	CK_ATTRIBUTE base_key_attr[] = {
+		{ CKA_ALWAYS_SENSITIVE, &base_key_always_sens,
+		  sizeof(base_key_always_sens) },
+		{ CKA_NEVER_EXTRACTABLE, &base_key_never_extr,
+		  sizeof(base_key_never_extr) },
+	};
+
+	CK_ATTRIBUTE derived_key_attr[] = {
+		{ CKA_SENSITIVE, &derived_key_sensitive,
+		  sizeof(derived_key_sensitive) },
+		{ CKA_EXTRACTABLE, &derived_key_extractable,
+		  sizeof(derived_key_extractable) },
+	};
+
+	CK_ATTRIBUTE attr[] = {
+		{ CKA_ALWAYS_SENSITIVE, &derived_key_always_sens,
+		  sizeof(derived_key_always_sens) },
+		{ CKA_NEVER_EXTRACTABLE, &derived_key_never_extr,
+		  sizeof(derived_key_never_extr) }
+	};
+
+	ret = libobj_get_attribute(hsession, base_key, base_key_attr,
+				   ARRAY_SIZE(base_key_attr));
+	if (ret != CKR_OK)
+		return ret;
+
+	for (; i < ARRAY_SIZE(derived_key_attr); i++) {
+		ret = attr_get_obj_value(&derived_key_attr[i], attr_key_secret,
+					 ARRAY_SIZE(attr_key_secret),
+					 get_key_from(derived_key));
+		if (ret != CKR_OK)
+			return ret;
+	}
+
+	derived_key_always_sens =
+		(!base_key_always_sens ? base_key_always_sens :
+					 derived_key_sensitive);
+	derived_key_never_extr =
+		(!base_key_never_extr ? base_key_never_extr :
+					!derived_key_extractable);
+
+	/* Based on the base key attributes, set the derived key attributes. */
+	ret = attr_set_value(get_key_from(derived_key), &attr[0],
+			     &attr_key_secret[SECR_ALWAYS_SENSITIVE], attrs,
+			     MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = attr_set_value(get_key_from(derived_key), &attr[1],
+			     &attr_key_secret[SECR_NEVER_EXTRACTABLE], attrs,
+			     MUST_NOT);
+	if (ret != CKR_OK)
+		return ret;
+
+	return ret;
+}
+
+static CK_RV
+set_derived_key_attr(CK_SESSION_HANDLE hsession,
+		     struct libobj_key_derive_params *derive_params,
+		     CK_MECHANISM_TYPE mech, struct libattr_list *attrs)
+{
+	CK_RV ret = CKR_FUNCTION_NOT_SUPPORTED;
+
+	CK_OBJECT_HANDLE base_key = derive_params->base_key;
+	struct libobj_obj *derived_key = derive_params->derived_key;
+
+	switch (mech) {
+	case CKM_HKDF_DERIVE:
+		ret = set_hkdf_derived_key_attr(hsession, base_key, derived_key,
+						attrs);
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}
+
+CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+		 CK_OBJECT_HANDLE base_key, struct libobj_obj *derived_key,
+		 struct libattr_list *attrs)
+{
+	CK_RV ret = CKR_GENERAL_ERROR;
+	CK_KEY_TYPE key_type = 0;
+	CK_KEY_TYPE base_key_type = 0;
+
+	struct libobj_key_derive_params derive_params = { 0 };
+
+	DBG_TRACE("Derive a secret key from base key object");
+
+	if (!derived_key)
+		goto end;
+
+	base_key_type = get_key_type((struct libobj_obj *)base_key);
+
+	ret = check_input_params(base_key_type, mech, &derive_params);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = allocate_derived_key(derived_key, attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = key_secret_new(derived_key, attrs, true);
+	if (ret != CKR_OK)
+		goto end;
+
+	derive_params.derived_key = derived_key;
+	derive_params.base_key = base_key;
+
+	ret = set_derived_key_attr(hsession, &derive_params, mech->mechanism,
+				   attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	key_type = get_key_type(derived_key);
+
+	switch (key_type) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+	case CKK_SM4:
+		ret = key_cipher_derive(hsession, mech, &derive_params, attrs);
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
+		ret = key_hmac_derive(hsession, mech, &derive_params, attrs);
+		break;
+
+	default:
+		ret = CKR_KEY_TYPE_INCONSISTENT;
+		break;
+	}
+
+end:
+	DBG_TRACE("Derive secret Key object (%p) return %ld",
+		  derive_params.derived_key, ret);
+	return ret;
+}
+
+CK_BBOOL is_hkdf_extract_set(CK_MECHANISM_PTR mech)
+{
+	CK_BBOOL is_hkdf_extract_set = false;
+
+	CK_HKDF_PARAMS_PTR hkdf_params = NULL_PTR;
+
+	if (mech->mechanism == CKM_HKDF_DERIVE) {
+		hkdf_params = (CK_HKDF_PARAMS_PTR)mech->pParameter;
+		if (hkdf_params->bExtract && !hkdf_params->bExpand)
+			is_hkdf_extract_set = true;
+	}
+
+	return is_hkdf_extract_set;
 }

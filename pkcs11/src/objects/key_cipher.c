@@ -237,3 +237,39 @@ CK_RV key_cipher_get_id(unsigned int *id, struct libobj_obj *obj)
 
 	return CKR_OK;
 }
+
+CK_RV key_cipher_derive(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			struct libobj_key_derive_params *derive_params,
+			struct libattr_list *attrs)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_key_cipher *cipher_key = NULL;
+
+	ret = key_cipher_allocate(derive_params->derived_key);
+	if (ret != CKR_OK)
+		goto end;
+
+	cipher_key = get_subkey_from(derive_params->derived_key);
+
+	DBG_TRACE("Derive a cipher key (%p)", cipher_key);
+
+	/* Verify the key attributes */
+	ret = attr_get_value(cipher_key, &attr_key_cipher[SEC_VALUE], attrs,
+			     MUST_NOT);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = attr_get_value(cipher_key, &attr_key_cipher[SEC_VALUE_LEN], attrs,
+			     MUST);
+	if (ret != CKR_OK)
+		goto end;
+
+	/* Derive a secret key with SMW library */
+	ret = libdev_operate_mechanism(hsession, mech, derive_params);
+
+end:
+	if (ret != CKR_OK)
+		key_cipher_free(derive_params->derived_key);
+
+	return ret;
+}

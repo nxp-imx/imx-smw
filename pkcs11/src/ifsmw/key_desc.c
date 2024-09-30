@@ -9,7 +9,7 @@
 #include "libobj_types.h"
 #include "util.h"
 #include "util_asn1.h"
-
+#include "trace.h"
 #include "key_desc.h"
 
 #define EC_ASN1_CURVE(_name)                                                   \
@@ -145,6 +145,12 @@ struct hmac_def {
 		.hash_id = SMW_ATTR_HASH_##_hash                               \
 	}
 
+#define HKDF(_type, _name)                                                     \
+	{                                                                      \
+		.ck_key_type = _type, .smw_name = SMW_KEY_TYPE_NAME_##_name,   \
+		.hash_id = SMW_ATTR_HASH_NONE                                  \
+	}
+
 const struct hmac_def hmacs[] = { HMAC(CKK_MD5_HMAC, MD5),
 				  HMAC(CKK_SHA_1_HMAC, SHA1),
 				  HMAC(CKK_SHA224_HMAC, SHA224),
@@ -155,6 +161,7 @@ const struct hmac_def hmacs[] = { HMAC(CKK_MD5_HMAC, MD5),
 				  HMAC(CKK_SHA3_256_HMAC, SHA3_256),
 				  HMAC(CKK_SHA3_384_HMAC, SHA3_384),
 				  HMAC(CKK_SHA3_512_HMAC, SHA3_512),
+				  HKDF(CKK_HKDF, HKDF_IKM),
 				  { .smw_name = SMW_KEY_TYPE_NAME_NONE } };
 
 static bool get_cipher_key_from_smw(struct libobj_obj *obj,
@@ -184,7 +191,7 @@ static bool get_cipher_key_from_smw(struct libobj_obj *obj,
 	return true;
 }
 
-static CK_RV get_cipher_type_from_pkcs(struct smw_key_descriptor *desc,
+static CK_RV get_cipher_type_from_pkcs(smw_key_type_t *key_type_name,
 				       CK_KEY_TYPE ck_key_type)
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
@@ -192,7 +199,7 @@ static CK_RV get_cipher_type_from_pkcs(struct smw_key_descriptor *desc,
 
 	while (cipher->smw_name != SMW_KEY_TYPE_NAME_NONE) {
 		if (ck_key_type == cipher->ck_key_type) {
-			desc->type_name = cipher->smw_name;
+			*key_type_name = cipher->smw_name;
 			ret = CKR_OK;
 			break;
 		}
@@ -236,7 +243,7 @@ static bool get_hmac_key_from_smw(struct libobj_obj *obj,
 	return true;
 }
 
-static CK_RV get_hmac_type_from_pkcs(struct smw_key_descriptor *desc,
+static CK_RV get_hmac_type_from_pkcs(smw_key_type_t *key_type_name,
 				     CK_KEY_TYPE ck_key_type)
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
@@ -244,7 +251,7 @@ static CK_RV get_hmac_type_from_pkcs(struct smw_key_descriptor *desc,
 
 	while (hmac->smw_name != SMW_KEY_TYPE_NAME_NONE) {
 		if (ck_key_type == hmac->ck_key_type) {
-			desc->type_name = hmac->smw_name;
+			*key_type_name = hmac->smw_name;
 			ret = CKR_OK;
 			break;
 		}
@@ -383,12 +390,14 @@ static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 	case CKK_AES:
 		if (key_length != 16 && key_length != 24 && key_length != 32)
 			return CKR_ATTRIBUTE_VALUE_INVALID;
+
 		desc->security_size = key_length * 8;
 		break;
 
 	case CKK_SM4:
 		if (key_length != 16)
 			return CKR_ATTRIBUTE_VALUE_INVALID;
+
 		desc->security_size = key_length * 8;
 		break;
 
@@ -397,7 +406,7 @@ static CK_RV cipher_key_desc(struct smw_key_descriptor *desc,
 		return ret;
 	}
 
-	ret = get_cipher_type_from_pkcs(desc, key_type);
+	ret = get_cipher_type_from_pkcs(&desc->type_name, key_type);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -435,8 +444,10 @@ static CK_RV hmac_key_desc(struct smw_key_descriptor *desc,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
 		if (MUL_OVERFLOW(key_length, 8, &desc->security_size))
 			return CKR_ARGUMENTS_BAD;
+
 		break;
 
 	default:
@@ -444,7 +455,7 @@ static CK_RV hmac_key_desc(struct smw_key_descriptor *desc,
 		return ret;
 	}
 
-	ret = get_hmac_type_from_pkcs(desc, key_type);
+	ret = get_hmac_type_from_pkcs(&desc->type_name, key_type);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -566,6 +577,7 @@ CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj)
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
 		ret = hmac_key_desc(desc, obj);
 		break;
 
@@ -587,11 +599,20 @@ CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj)
 void key_desc_copy_key_id(struct libobj_obj *obj,
 			  struct smw_key_descriptor *desc)
 {
+	struct libobj_key_cipher *cipher_key = NULL;
+	struct libobj_key_hmac *hmac_key = NULL;
+	struct libobj_key_ec_pair *ec_key = NULL;
+	struct libobj_key_rsa_pair *rsa_key = NULL;
+
 	switch (get_key_type(obj)) {
 	case CKK_AES:
 	case CKK_DES:
 	case CKK_DES3:
 	case CKK_SM4:
+		cipher_key = get_subkey_from(obj);
+		cipher_key->key_id = desc->id;
+		break;
+
 	case CKK_MD5_HMAC:
 	case CKK_SHA_1_HMAC:
 	case CKK_SHA224_HMAC:
@@ -601,28 +622,261 @@ void key_desc_copy_key_id(struct libobj_obj *obj,
 	case CKK_SHA3_224_HMAC:
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
-	case CKK_SHA3_512_HMAC: {
-		struct libobj_key_cipher *key = get_subkey_from(obj);
-
-		key->key_id = desc->id;
+	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
+		hmac_key = get_subkey_from(obj);
+		hmac_key->key_id = desc->id;
 		break;
-	}
 
-	case CKK_EC: {
-		struct libobj_key_ec_pair *key = get_subkey_from(obj);
-
-		key->key_id = desc->id;
+	case CKK_EC:
+		ec_key = get_subkey_from(obj);
+		ec_key->key_id = desc->id;
 		break;
-	}
 
-	case CKK_RSA: {
-		struct libobj_key_rsa_pair *key = get_subkey_from(obj);
-
-		key->key_id = desc->id;
+	case CKK_RSA:
+		rsa_key = get_subkey_from(obj);
+		rsa_key->key_id = desc->id;
 		break;
-	}
 
 	default:
+		break;
+	}
+}
+
+static int set_key_buffer(CK_BYTE_PTR key_buffer, size_t key_length,
+			  struct smw_key_descriptor *desc)
+{
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+
+	struct smw_keypair_gen *smw_key = NULL;
+
+	if (desc->buffer) {
+		smw_key = &desc->buffer->gen;
+		smw_key->public_data = key_buffer;
+		if (!SET_OVERFLOW(key_length, smw_key->public_length))
+			ret = CKR_OK;
+	}
+
+	return ret;
+}
+
+int base_key_desc_setup(struct libobj_obj *obj, struct smw_key_descriptor *desc)
+{
+	CK_RV ret = CKR_OK;
+
+	struct libobj_key_cipher *cipher_key = NULL;
+	struct libobj_key_hmac *hmac_key = NULL;
+	CK_KEY_TYPE key_type = get_key_type(obj);
+
+	switch (key_type) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+	case CKK_SM4:
+		cipher_key = get_subkey_from(obj);
+		desc->id = cipher_key->key_id;
+		if (desc->id == 0) {
+			desc->type_name = SMW_KEY_TYPE_NAME_RAW;
+			ret = set_key_buffer(cipher_key->value.array,
+					     cipher_key->value.number, desc);
+		}
+
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
+		hmac_key = get_subkey_from(obj);
+		desc->id = hmac_key->key_id;
+		if (desc->id == 0) {
+			desc->type_name = SMW_KEY_TYPE_NAME_RAW;
+			ret = set_key_buffer(hmac_key->value.array,
+					     hmac_key->value.number, desc);
+		}
+
+		break;
+
+	default:
+		ret = CKR_ARGUMENTS_BAD;
+		break;
+	}
+
+	return ret;
+}
+
+CK_RV derived_key_desc_setup(struct smw_derived_key_descriptor *desc,
+			     struct libobj_obj *obj)
+{
+	int status = CKR_ATTRIBUTE_VALUE_INVALID;
+
+	struct libobj_key_cipher *cipher_key = NULL;
+	struct libobj_key_hmac *hmac_key = NULL;
+	CK_KEY_TYPE key_type = get_key_type(obj);
+	size_t key_length = 0;
+
+	switch (key_type) {
+	case CKK_DES:
+		desc->security_size = 56;
+
+		status = get_cipher_type_from_pkcs(&desc->type_name, key_type);
+
+		break;
+
+	case CKK_DES3:
+		desc->security_size = 168;
+
+		status = get_cipher_type_from_pkcs(&desc->type_name, key_type);
+
+		break;
+
+	case CKK_AES:
+		cipher_key = get_subkey_from(obj);
+		key_length = cipher_key->value_len;
+		if (key_length != 16 && key_length != 24 && key_length != 32)
+			goto exit;
+
+		desc->security_size = key_length * 8;
+
+		status = get_cipher_type_from_pkcs(&desc->type_name, key_type);
+
+		break;
+
+	case CKK_SM4:
+		cipher_key = get_subkey_from(obj);
+		key_length = cipher_key->value_len;
+		if (key_length != 16)
+			goto exit;
+
+		desc->security_size = key_length * 8;
+
+		status = get_cipher_type_from_pkcs(&desc->type_name, key_type);
+
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
+		hmac_key = get_subkey_from(obj);
+		key_length = hmac_key->value_len;
+
+		if (MUL_OVERFLOW(key_length, 8, &desc->security_size)) {
+			status = CKR_ARGUMENTS_BAD;
+			goto exit;
+		}
+
+		status = get_hmac_type_from_pkcs(&desc->type_name, key_type);
+
+		break;
+
+	default:
+		status = CKR_FUNCTION_FAILED;
+	}
+
+exit:
+	return status;
+}
+
+int get_key_desc_key_id(struct libobj_obj *obj, struct smw_key_descriptor *desc)
+{
+	int status = CKR_OK;
+
+	struct libobj_key_cipher *cipher_key = NULL;
+	struct libobj_key_hmac *hmac_key = NULL;
+	struct libobj_key_ec_pair *ec_key = NULL;
+	struct libobj_key_rsa_pair *rsa_key = NULL;
+
+	switch (get_key_type(obj)) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+	case CKK_SM4:
+		cipher_key = get_subkey_from(obj);
+		desc->id = cipher_key->key_id;
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
+		hmac_key = get_subkey_from(obj);
+		desc->id = hmac_key->key_id;
+		break;
+
+	case CKK_EC:
+		ec_key = get_subkey_from(obj);
+		desc->id = ec_key->key_id;
+		break;
+
+	case CKK_RSA:
+		rsa_key = get_subkey_from(obj);
+		desc->id = rsa_key->key_id;
+		break;
+
+	default:
+		status = CKR_ARGUMENTS_BAD;
+		break;
+	}
+
+	return status;
+}
+
+void derived_key_desc_copy_key_id(struct libobj_obj *obj,
+				  struct smw_derived_key_descriptor *desc)
+{
+	struct libobj_key_cipher *cipher_key = NULL;
+	struct libobj_key_hmac *hmac_key = NULL;
+
+	switch (get_key_type(obj)) {
+	case CKK_AES:
+	case CKK_DES:
+	case CKK_DES3:
+	case CKK_SM4:
+		cipher_key = get_subkey_from(obj);
+		cipher_key->key_id = desc->id;
+		DBG_TRACE("Cipher key ID = %d", cipher_key->key_id);
+		break;
+
+	case CKK_MD5_HMAC:
+	case CKK_SHA_1_HMAC:
+	case CKK_SHA224_HMAC:
+	case CKK_SHA256_HMAC:
+	case CKK_SHA384_HMAC:
+	case CKK_SHA512_HMAC:
+	case CKK_SHA3_224_HMAC:
+	case CKK_SHA3_256_HMAC:
+	case CKK_SHA3_384_HMAC:
+	case CKK_SHA3_512_HMAC:
+	case CKK_HKDF:
+		hmac_key = get_subkey_from(obj);
+		hmac_key->key_id = desc->id;
+		DBG_TRACE("HMAC key ID = %d", hmac_key->key_id);
+		break;
+
+	default:
+		DBG_TRACE("Non matched key type");
 		return;
 	}
 }

@@ -247,6 +247,23 @@ struct libobj_key_hmac {
 	size_t value_len;
 };
 
+struct libobj_key_derive_params {
+	CK_OBJECT_HANDLE base_key;
+	struct libobj_obj *derived_key;
+	union {
+		struct {
+			CK_BBOOL extract;
+			CK_BBOOL expand;
+			CK_MECHANISM_TYPE prf_hash_mech;
+			CK_ULONG salt_type;
+			CK_BYTE_PTR salt;
+			CK_ULONG salt_len;
+			CK_BYTE_PTR info;
+			CK_ULONG info_len;
+		} hkdf_params;
+	};
+};
+
 #define get_key_id_from(obj, type)                                             \
 	({                                                                     \
 		struct libobj_key_##type *_key = get_subkey_from(obj);         \

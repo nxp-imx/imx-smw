@@ -1202,8 +1202,71 @@ end:
 	return ret;
 }
 
+CK_RV libobj_derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+			CK_OBJECT_HANDLE hbasekey, CK_ATTRIBUTE_PTR attrs,
+			CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hderivedkey)
+{
+	CK_RV ret = CKR_OK;
+
+	struct libobj_obj *derived_key = NULL;
+	struct libattr_list attrs_list = { .attr = attrs, .number = nb_attrs };
+
+	DBG_TRACE("Derive a secret key on session %lu", hsession);
+
+	ret = libsess_validate_mechanism(hsession, mech, CKF_DERIVE);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * First create the storage object for the derived key
+	 */
+	ret = obj_allocate(&derived_key);
+	if (ret != CKR_OK)
+		goto end;
+
+	derived_key->class = CKO_SECRET_KEY;
+	ret = attr_get_value(derived_key, &attr_obj_common[OBJ_CLASS],
+			     &attrs_list, OPTIONAL);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (derived_key->class != CKO_SECRET_KEY) {
+		ret = CKR_TEMPLATE_INCONSISTENT;
+		goto end;
+	}
+
+	ret = obj_storage_new(hsession, derived_key, &attrs_list);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = derive_key(hsession, mech, hbasekey, derived_key, &attrs_list);
+	if (ret == CKR_OK) {
+		ret = obj_db_update(derived_key);
+		/* For HKDF Extract operation, PRK is not stored in the DB,
+		 * Hence, ignore if CKR_OBJECT_HANDLE_INVALID is returned.
+		 */
+		if (is_hkdf_extract_set(mech) &&
+		    ret == CKR_OBJECT_HANDLE_INVALID)
+			ret = CKR_OK;
+	}
+
+	if (ret == CKR_OK)
+		ret = obj_add_to_list(hsession, derived_key,
+				      is_token_obj(derived_key, storage));
+
+end:
+	DBG_TRACE("Derive a secret key returned %ld", ret);
+
+	if (ret == CKR_OK)
+		*hderivedkey = (CK_OBJECT_HANDLE)derived_key;
+	else
+		obj_free(derived_key, NULL);
+
+	return ret;
+}
+
 /**
- * object_match() - Find objects in list matching atttributes
+ * object_match() - Find objects in list matching attributes
  * @hsession: Session handle
  * @list_match: List of objects matching
  * @list: List of objects

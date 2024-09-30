@@ -51,6 +51,11 @@ static void check_mkeygen(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 static CK_RV info_mkeygen(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			  struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args);
+static void check_mkeyderive(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
+			     struct mgroup *mgroup);
+static CK_RV info_mkeyderive(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			     struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 static void check_msign_ecdsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			      struct mgroup *mgroup);
 static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
@@ -98,6 +103,7 @@ smw_key_type_t smw_ec_name[] = { SMW_KEY_TYPE_NAME_SECP_R1,
  * @smw_sign_algo: SMW signature algorithm name for this mechanism, if any
  * @smw_sign_type: SMW signature type name for this mechanism, if any
  * @smw_aead_mode: SMW AEAD mode name for this mechanism, if any
+ * @smw_kdf: SMW Key Derivation Function name
  * @smw_algo_id: SMW permitted algorithm for this mechanism
  * @nb_smw_key_types: Number of SMW key types
  * @smw_key_types: SMW key types names for this mechanism, if more than one
@@ -112,6 +118,7 @@ struct mentry {
 	smw_signature_algo_t smw_sign_algo;
 	smw_signature_type_t smw_sign_type;
 	smw_aead_mode_t smw_aead_mode;
+	smw_kdf_t smw_kdf;
 	smw_attr_algo_t smw_algo_id;
 	unsigned int nb_smw_key_types;
 	smw_key_type_t *smw_key_types;
@@ -141,8 +148,8 @@ struct mgroup {
 
 /* Macro filling a struct mentry for a single algo */
 #define M_ALGO(_key_type_name, _hash_name, _mac_name, _cipher_mode_name,       \
-	       _aead_mode_name, _sign_algo_name, _sign_type_name, _algo_id,    \
-	       _id)                                                            \
+	       _aead_mode_name, _sign_algo_name, _sign_type_name, _kdf_name,   \
+	       _algo_id, _id)                                                  \
 	{                                                                      \
 		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type_name,            \
@@ -150,15 +157,16 @@ struct mgroup {
 		.smw_cipher_mode = _cipher_mode_name,                          \
 		.smw_aead_mode = _aead_mode_name,                              \
 		.smw_sign_algo = _sign_algo_name,                              \
-		.smw_sign_type = _sign_type_name, .smw_algo_id = _algo_id,     \
-		.nb_smw_key_types = 0, .smw_key_types = NULL,                  \
+		.smw_sign_type = _sign_type_name, .smw_kdf = _kdf_name,        \
+		.smw_algo_id = _algo_id, .nb_smw_key_types = 0,                \
+		.smw_key_types = NULL,                                         \
 	}
 
 #define M_DIGEST(_hash, _id)                                                   \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
-	       SMW_ATTR_HASH_##_hash, _id)
+	       SMW_KDF_NAME_NONE, SMW_ATTR_HASH_##_hash, _id)
 
 /* Macro filling a struct mentry for an algo or a list of algo */
 #define M_ECKEYGEN(_key_types, _nb_key_types, _id)                             \
@@ -170,7 +178,8 @@ struct mgroup {
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
-		.smw_algo_id = 0, .nb_smw_key_types = _nb_key_types,           \
+		.smw_kdf = SMW_KDF_NAME_NONE, .smw_algo_id = 0,                \
+		.nb_smw_key_types = _nb_key_types,                             \
 		.smw_key_types = _key_types,                                   \
 	}
 
@@ -184,14 +193,30 @@ struct mgroup {
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
-		.smw_algo_id = 0, .nb_smw_key_types = 1,                       \
-		.smw_key_types = NULL,                                         \
+		.smw_kdf = SMW_KDF_NAME_NONE, .smw_algo_id = 0,                \
+		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
+	}
+
+#define M_KEYDERIVE(_key_type, _algo_id, _id)                                  \
+	{                                                                      \
+		.type = CKM_##_id##_DERIVE, .slot_flag = 0,                    \
+		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
+		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
+		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
+		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
+		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
+		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
+		.smw_kdf = SMW_KDF_NAME_##_algo_id,                            \
+		.smw_algo_id = SMW_ATTR_ALGO_##_algo_id,                       \
+		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
 	}
 
 #define M_SIGN_ECDSA_ANY_HASH(_id)                                             \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_ECDSA, SMW_SIGNATURE_TYPE_NAME_NONE,    \
+	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_ANY,    \
 							SMW_ATTR_HASH_ANY),    \
 	       _id)
@@ -200,6 +225,7 @@ struct mgroup {
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_ECDSA, SMW_SIGNATURE_TYPE_NAME_NONE,    \
+	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(                       \
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
 	       _id)
@@ -208,6 +234,7 @@ struct mgroup {
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_RSA, SMW_SIGNATURE_TYPE_NAME_##_mode,   \
+	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_ANY, 0),   \
 	       _id)
@@ -216,6 +243,7 @@ struct mgroup {
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_RSA, SMW_SIGNATURE_TYPE_NAME_##_mode,   \
+	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_mode,   \
 						      SMW_ATTR_HASH_##_hash,   \
 						      0),                      \
@@ -225,6 +253,7 @@ struct mgroup {
 	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,         \
 	       SMW_CIPHER_MODE_NAME_##_mode, SMW_AEAD_MODE_NAME_NONE,          \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
+	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_DEFAULT,       \
 						  SMW_ATTR_MODE_##_mode_id),   \
 	       _id)
@@ -233,6 +262,7 @@ struct mgroup {
 	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,         \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_##_mode,          \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
+	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_AEAD(SMW_ATTR_ALGO_##_algo,                       \
 				  SMW_ATTR_MODE_##_mode_id, 0),                \
 	       _id)
@@ -241,6 +271,7 @@ struct mgroup {
 	M_ALGO(_algo, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_##_mac,       \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
+	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_MAC(SMW_ATTR_ALGO_##_algo,                        \
 				 SMW_ATTR_MODE_##_mode_id, 0),                 \
 	       _id)
@@ -249,6 +280,7 @@ struct mgroup {
 	M_ALGO(HMAC, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_##_mac,     \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
+	       SMW_KDF_NAME_NONE,                                              \
 	       SMW_ATTR_ALGO_MAC_HMAC(SMW_ATTR_HASH_##_hash, 0), _id)
 
 /* Macro filling a group of mechanisms */
@@ -288,6 +320,11 @@ static struct mentry mkeygen[] = {
 	M_KEYGEN(HMAC, GENERIC_SECRET_KEY_GEN),
 	M_KEYGEN(RSA, RSA_PKCS_KEY_PAIR_GEN),
 };
+
+/*
+ * Key Derive mechanism
+ */
+static struct mentry mkeyderive[] = { M_KEYDERIVE(HKDF_IKM, HKDF, HKDF) };
 
 /*
  * Signature mechanism
@@ -379,6 +416,7 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(mdigest), mdigest),
 	M_GROUP(ARRAY_SIZE(meckeygen), meckeygen),
 	M_GROUP(ARRAY_SIZE(mkeygen), mkeygen),
+	M_GROUP(ARRAY_SIZE(mkeyderive), mkeyderive),
 	M_GROUP(ARRAY_SIZE(msign_ecdsa), msign_ecdsa),
 	M_GROUP(ARRAY_SIZE(msign_rsa), msign_rsa),
 	M_GROUP(ARRAY_SIZE(mcipher), mcipher),
@@ -461,6 +499,21 @@ static smw_attr_algo_t get_hash_algo_id(CK_MECHANISM_TYPE mech_type)
 	}
 
 	return hash_algo_id;
+}
+
+static smw_kdf_t get_kdf(CK_MECHANISM_TYPE mech_type)
+{
+	smw_kdf_t kdf = SMW_KDF_NAME_NONE;
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(mkeyderive); i++) {
+		if (mech_type == mkeyderive[i].type) {
+			kdf = mkeyderive[i].smw_kdf;
+			break;
+		}
+	}
+
+	return kdf;
 }
 
 static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
@@ -959,6 +1012,186 @@ static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	(void)entry;
 	DBG_TRACE("Generate Key mechanism");
 	return op_keygen_common(slotid, args);
+}
+
+static void check_mkeyderive(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
+			     struct mgroup *mgroup)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct mentry *entry = NULL;
+	CK_FLAGS slot_flag = 0;
+	unsigned int entry_idx = 0;
+
+	/*
+	 * Slot flag is set if:
+	 * key derivation using entry->smw_kdf is supported
+	 */
+	slot_flag = BIT(slotid);
+	for (entry = mgroup->mechanism; entry_idx < mgroup->number;
+	     entry_idx++, entry++) {
+		status = smw_config_check_derive_key(subsystem, entry->smw_kdf);
+		DBG_TRACE("Subsystem # %d KDF : %d status = %d", subsystem,
+			  entry->smw_kdf, status);
+
+		if (status == SMW_STATUS_OK)
+			SET_BITS(entry->slot_flag, slot_flag);
+	}
+}
+
+static CK_RV info_mkeyderive(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			     struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_RV ret = CKR_OK;
+	const struct libdev *devinfo = NULL;
+
+	DBG_TRACE("Return info of 0x%lx Key derivation mechanism", type);
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	/*
+	 * Global settings.
+	 */
+	info->ulMaxKeySize = 0;
+	info->ulMinKeySize = 0;
+	info->flags = 0;
+
+	status = smw_config_check_derive_key(devinfo->name, entry->smw_kdf);
+	if (status == SMW_STATUS_OK)
+		info->flags |= CKF_DERIVE;
+
+	/*
+	 * Call specific device mechanism information function
+	 * to complete the global setting.
+	 */
+	if (dev_mech_info[slotid])
+		ret = dev_mech_info[slotid](type, info);
+
+	return ret;
+}
+
+static int set_hkdf_args(struct libobj_key_derive_params *derive_params,
+			 struct smw_derive_key_args *derive_args)
+{
+	CK_RV status = CKR_ARGUMENTS_BAD;
+
+	unsigned char **salt = NULL;
+	unsigned int *salt_len = NULL;
+	unsigned char **info = NULL;
+	unsigned int *info_len = NULL;
+	struct smw_kdf_hkdf_args *hkdf_args = NULL;
+
+	if (!derive_params || !derive_args)
+		return status;
+
+	hkdf_args = derive_args->kdf_arguments;
+	hkdf_args->expand = derive_params->hkdf_params.expand;
+	hkdf_args->extract = derive_params->hkdf_params.extract;
+	hkdf_args->hash_algo =
+		get_hash_algo(derive_params->hkdf_params.prf_hash_mech);
+
+	if (hkdf_args->extract && hkdf_args->expand) {
+		salt = &hkdf_args->hkdf_args.salt;
+		salt_len = &hkdf_args->hkdf_args.salt_len;
+		info = &hkdf_args->hkdf_args.info;
+		info_len = &hkdf_args->hkdf_args.info_len;
+	} else if (hkdf_args->extract && !hkdf_args->expand) {
+		salt = &hkdf_args->hkdf_extract_args.salt;
+		salt_len = &hkdf_args->hkdf_extract_args.salt_len;
+	} else if (!hkdf_args->extract && hkdf_args->expand) {
+		info = &hkdf_args->hkdf_expand_args.info;
+		info_len = &hkdf_args->hkdf_expand_args.info_len;
+	}
+
+	if (hkdf_args->extract) {
+		if (derive_params->hkdf_params.salt_type ==
+		    CKF_HKDF_SALT_DATA) {
+			*salt = derive_params->hkdf_params.salt;
+
+			if (SET_OVERFLOW(derive_params->hkdf_params.salt_len,
+					 *salt_len))
+				return status;
+		}
+	}
+
+	if (hkdf_args->expand) {
+		*info = derive_params->hkdf_params.info;
+
+		if (SET_OVERFLOW(derive_params->hkdf_params.info_len,
+				 *info_len))
+			return status;
+	}
+
+	status = CKR_OK;
+
+	return status;
+}
+
+static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	CK_RV ret = CKR_SLOT_ID_INVALID;
+	enum smw_status_code status = SMW_STATUS_OK;
+	const struct libdev *devinfo = NULL;
+	struct smw_key_attributes key_attributes = { 0 };
+	struct smw_derive_key_args derive_args = { 0 };
+	struct smw_key_descriptor base_key = { 0 };
+	struct smw_keypair_buffer keypair_buffer = { 0 };
+	struct smw_derived_key_descriptor der_key_desc = { 0 };
+	struct smw_kdf_hkdf_args hkdf_args = { 0 };
+	struct libobj_key_derive_params *derive_params = args;
+	struct libobj_obj *obj = derive_params->derived_key;
+
+	if (entry->type == CKM_HKDF_DERIVE) {
+		derive_args.kdf_arguments = &hkdf_args;
+		ret = set_hkdf_args(derive_params, &derive_args);
+		if (ret != CKR_OK)
+			return ret;
+	}
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return ret;
+
+	base_key.buffer = &keypair_buffer;
+
+	ret = base_key_desc_setup((struct libobj_obj *)derive_params->base_key,
+				  &base_key);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = derived_key_desc_setup(&der_key_desc, obj);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = get_key_permitted_algo(&key_attributes.permitted_algo, slotid,
+				     obj);
+	if (ret != CKR_OK)
+		return ret;
+
+	derive_args.subsystem_name = devinfo->name;
+	derive_args.key_descriptor_base = &base_key;
+	derive_args.key_descriptor_derived = &der_key_desc;
+	derive_args.kdf_name = get_kdf(entry->type);
+	derive_args.store_derived_key = true;
+
+	args_attrs_key_usage(&key_attributes.usage_flags, obj);
+	args_attr_key_storage(&key_attributes.attributes, obj);
+	derive_args.key_attributes = &key_attributes;
+
+	status = smw_derive_key(&derive_args);
+	ret = smw_status_to_ck_rv(status);
+
+	DBG_TRACE("Derive Key on subsystem #%d status %d return %ld",
+		  devinfo->name, status, ret);
+
+	if (ret == CKR_OK) {
+		DBG_TRACE("Derive Key ID = #%d", der_key_desc.id);
+		derived_key_desc_copy_key_id(obj, &der_key_desc);
+	}
+
+	return ret;
 }
 
 static void check_msign_common(CK_SLOT_ID slotid, smw_subsystem_t subsystem,

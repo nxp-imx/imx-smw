@@ -41,6 +41,9 @@ CK_RV smw_status_to_ck_rv(enum smw_status_code status)
 	case SMW_STATUS_UNKNOWN_ID:
 		return CKR_OBJECT_HANDLE_INVALID;
 
+	case SMW_STATUS_INVALID_PARAM:
+		return CKR_ARGUMENTS_BAD;
+
 	default:
 		return CKR_DEVICE_ERROR;
 	}

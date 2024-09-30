@@ -7,6 +7,7 @@
 #define __KEY_HMAC_H__
 
 #include "types.h"
+#include "libobj_types.h"
 
 /**
  * key_hmac_free() - Free a HMAC key
@@ -20,7 +21,7 @@ void key_hmac_free(struct libobj_obj *obj);
  * @obj: HMAC Key object
  * @attrs: List of object attributes
  *
- * If key attributes are corrects, create a new HMAC key object.
+ * If key attributes are correct, create a new HMAC key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -108,7 +109,7 @@ CK_RV key_hmac_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj);
  * @obj: HMAC Key object
  * @attrs: List of key attributes
  *
- * If key attributes are corrects, create and generate a HMAC key object.
+ * If key attributes are correct, create and generate a HMAC key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -142,5 +143,34 @@ CK_RV key_hmac_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
  * CKR_OK                        - Success
  */
 CK_RV key_hmac_get_id(unsigned int *id, struct libobj_obj *obj);
+
+/*
+ * key_hmac_derive() - Derive a HMAC object
+ * @hsession: Session handle
+ * @mech: Key derivation mechanism
+ * @derive_params: Pointer to key derivation parameters structure
+ * @attrs: List of key attributes
+ *
+ * If key attributes are correct, create and derive a HMAC key object.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_MECHANISM_INVALID         - Mechanism not supported
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_FUNCTION_CANCELED         - Application callback canceled function
+ * CKR_OK                        - Success
+ */
+CK_RV key_hmac_derive(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+		      struct libobj_key_derive_params *derive_params,
+		      struct libattr_list *attrs);
 
 #endif /* __KEY_HMAC_H__ */

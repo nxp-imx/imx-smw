@@ -20,7 +20,7 @@ void key_free(struct libobj_obj *obj);
  * @obj: Key object
  * @attrs: List of object attributes
  *
- * If key attributes are corrects, create a new key object.
+ * If key attributes are correct, create a new key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -141,7 +141,7 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
  * @obj: Secret Key object
  * @attrs: List of the key attributes
  *
- * If key attributes are corrects, create a secret key object.
+ * If key attributes are correct, create a secret key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -177,5 +177,46 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
  * CKR_OK                        - Success
  */
 CK_RV key_get_id(unsigned int *id, struct libobj_obj *obj);
+
+/**
+ * derive_key() - Derive a secret key object
+ * @hsession: Session handle
+ * @mech: Key Derivation mechanism
+ * @base_key: Base key handle
+ * @derived_key: Derived key object
+ * @attrs: List of the key attributes
+ *
+ * If key attributes are correct, allocate memory to a derived key object.
+ * Key attributes CKA_SENSITIVE, CKA_ALWAYS_SENSITIVE, CKA_EXTRACTABLE, and
+ * CKA_NEVER_EXTRACTABLE attributes for the base key affect the values that
+ * these attributes can hold for the derived key.
+ * This function also checks if the derive mechanism parameters are valid.
+ *
+ * return:
+ * CKR_ATTRIBUTE_VALUE_INVALID    - Attribute value is not valid
+ * CKR_HOST_MEMORY                - Memory allocation error
+ * CKR_KEY_FUNCTION_NOT_PERMITTED - Function not permitted with key
+ * CKR_FUNCTION_NOT_SUPPORTED     - Operation not supported
+ * CKR_MECHANISM_PARAM_INVALID    - Mechanism parameter is invalid
+ * CKR_OK                         - Success
+ * Return values from attr_get_value().
+ * Return values from attr_set_value().
+ * Return values from key_secret_new().
+ */
+CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
+		 CK_OBJECT_HANDLE base_key, struct libobj_obj *derived_key,
+		 struct libattr_list *attrs);
+
+/**
+ * is_hkdf_extract_set() - Check if HKDF-Extract key derivation mech is set
+ * @mech: Key Derivation mechanism
+ *
+ * Check if only extract section of the HKDF is set.
+ *
+ * return:
+ * True, if extract section of the HKDF is set.
+ * False, otherwise
+ */
+CK_BBOOL is_hkdf_extract_set(CK_MECHANISM_PTR mech);
 
 #endif /* __KEY_H__ */

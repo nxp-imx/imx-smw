@@ -26,7 +26,7 @@ void key_rsa_private_free(struct libobj_obj *obj);
  * @obj: RSA Public Key object
  * @attrs: List of object attributes
  *
- * If key attributes are corrects, create a new RSA Public key object.
+ * If key attributes are correct, create a new RSA Public key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -114,7 +114,7 @@ CK_RV key_rsa_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
  * @obj: RSA Private Key object
  * @attrs: List of object attributes
  *
- * If key attributes are corrects, create a new RSA Private key object.
+ * If key attributes are correct, create a new RSA Private key object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
@@ -207,7 +207,7 @@ CK_RV key_rsa_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
  * @priv_obj: RSA Private Key object
  * @priv_attrs: List of Private key object attributes
  *
- * If key attributes are corrects, create and generate a RSA Keypair object.
+ * If key attributes are correct, create and generate a RSA Keypair object.
  *
  * return:
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized

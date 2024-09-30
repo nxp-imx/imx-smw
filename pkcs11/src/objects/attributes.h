@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #ifndef __ATTRIBUTE_H__
@@ -506,6 +506,29 @@ CK_RV ulong_to_attr(CK_ATTRIBUTE_PTR attr, const void *src);
 CK_RV
 attr_get_value(void *obj, const struct template_attr *tattr,
 	       struct libattr_list *attrs, enum attr_req req_overwrite);
+
+/**
+ * attr_set_value() - Copy attribute to object
+ * @obj: Object containing the field to set
+ * @cattr: Attribute values to be copied to @obj
+ * @tattr: Object attribute definition
+ * @attrs: Attributes list
+ * @req_overwrite: Overwrite the attribute requirement (!= NO_OVERWRITE)
+ *
+ * Find the attribute @tattr->type in the @attrs list and validate attribute
+ * depending on attribute requirement. If valid, Copy @cattr value to the
+ * object @obj.
+ *
+ * return:
+ * CKR_ATTRIBUTE_READ_ONLY     - Attribute is read only
+ * CKR_TEMPLATE_INCOMPLETE     - Attribute type not found
+ * CKR_TEMPLATE_INCONSISTENT   - Attribute type must not be defined
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
+ * CKR_OK                      - Success
+ */
+CK_RV attr_set_value(void *obj, CK_ATTRIBUTE_PTR cattr,
+		     const struct template_attr *tattr,
+		     struct libattr_list *attrs, enum attr_req req_overwrite);
 
 /**
  * attr_get_obj_value() - Get an object attribute's value

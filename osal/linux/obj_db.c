@@ -77,7 +77,7 @@ struct obj_attribute {
 
 #define PRIxID "0x%08X"
 #define OEM_INJECTED_OBJECTS 0x70000000
-#define OBJ_DB_BUSY_TIMEOUT  50 /* ms */
+#define OBJ_DB_BUSY_TIMEOUT  80 /* ms */
 
 struct obj_db {
 	sqlite3 *persistent_db;

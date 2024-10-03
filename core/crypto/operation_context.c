@@ -25,7 +25,6 @@ void smw_crypto_copy_ctx_members(struct smw_op_context *dst_context,
 	dst_context->op_state = src_context->op_state;
 	dst_context->subsystem_id = src_context->subsystem_id;
 	dst_context->op_id = src_context->op_id;
-	dst_context->op_type_id = src_context->op_type_id;
 }
 
 enum smw_status_code smw_allocate_context(struct smw_context_args *args)

@@ -2,6 +2,7 @@ set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:crypto> PARENT_SCOPE)
 
 if(ENABLE_HASH)
 add_operation(HASH)
+add_operation(HASH_MULTI_PART)
 endif()
 
 if(ENABLE_SIGN_VERIFY)
@@ -32,7 +33,7 @@ endif()
 # If at least one of the operation that supports MULTI_PART is enabled, context
 # features are enabled
 #
-if (ENABLE_CIPHER OR ENABLE_AEAD)
+if (ENABLE_CIPHER OR ENABLE_AEAD OR ENABLE_HASH)
 set(ENABLE_CONTEXT ON)
 endif()
 

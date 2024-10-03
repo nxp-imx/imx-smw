@@ -21,6 +21,33 @@ __weak enum smw_status_code smw_hash(struct smw_hash_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
+__weak enum smw_status_code smw_hash_init(struct smw_hash_init_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code smw_hash_update(struct smw_hash_update_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code smw_hash_final(struct smw_hash_final_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
 __weak enum smw_status_code smw_sign(struct smw_sign_verify_args *args)
 {
 	(void)args;

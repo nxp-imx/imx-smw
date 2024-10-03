@@ -6,7 +6,6 @@
 #ifndef __AEAD_H__
 #define __AEAD_H__
 
-#include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
 #include "exec.h"

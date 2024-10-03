@@ -12,15 +12,9 @@
 enum smw_crypto_op_id {
 	SMW_CRYPTO_OP_ID_AEAD_MULTI_PART,
 	SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART,
+	SMW_CRYPTO_OP_ID_HASH_MULTI_PART,
 	SMW_CRYPTO_OP_ID_NB,
 	SMW_CRYPTO_OP_ID_INVALID
-};
-
-enum smw_crypto_op_type_id {
-	SMW_CRYPTO_OP_TYPE_ID_ENCRYPT,
-	SMW_CRYPTO_OP_TYPE_ID_DECRYPT,
-	SMW_CRYPTO_OP_TYPE_ID_NB,
-	SMW_CRYPTO_OP_TYPE_ID_INVALID
 };
 
 enum ctx_op_state {
@@ -35,7 +29,6 @@ enum ctx_op_state {
  * struct smw_op_context - Cryptographic operation context structure
  * @subsystem_id: Subsystem ID
  * @op_id: Operation ID
- * @op_type_id: Operation type ID
  * @op_state: Context operation state
  * @subsystem_context: Pointer to subsystem specific context
  *
@@ -44,7 +37,6 @@ enum ctx_op_state {
 struct smw_op_context {
 	enum subsystem_id subsystem_id;
 	enum smw_crypto_op_id op_id;
-	enum smw_crypto_op_type_id op_type_id;
 	enum ctx_op_state op_state;
 	void *subsystem_context;
 };
@@ -59,7 +51,7 @@ struct smw_crypto_context_ops {
 	int (*cancel)(struct smw_op_context *ctx);
 	int (*copy)(struct smw_op_context *src_ctx,
 		    struct smw_op_context *dst_ctx);
-	void (*free)(struct smw_op_context **ctx);
+	void (*free)(struct smw_op_context *ctx);
 };
 
 /**

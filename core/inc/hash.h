@@ -1,23 +1,35 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #ifndef __HASH_H__
 #define __HASH_H__
 
 #include "config.h"
+#include "exec.h"
+#include "operation_context.h"
 
 /**
  * struct smw_crypto_hash_args - Hash arguments
  * @algo_id: Algorithm ID
- * @pub: Pointer to the public API arguments structure
+ * @op_step: Multi-part operation step
+ * @one_shot_pub: Pointer to the public API one-shot arguments structure
+ * @init_pub: Pointer to the public API initialization arguments structure
+ * @update_pub: Pointer to the public API update arguments structure
+ * @final_pub: Pointer to the public API final arguments structure
  *
  */
 struct smw_crypto_hash_args {
 	/* Inputs */
 	enum smw_config_hash_algo_id algo_id;
-	struct smw_hash_args *pub;
+	enum smw_op_step op_step;
+	union {
+		struct smw_hash_args *oneshot_pub;
+		struct smw_hash_init_args *init_pub;
+		struct smw_hash_update_args *update_pub;
+		struct smw_hash_final_args *final_pub;
+	};
 };
 
 /**
@@ -84,5 +96,15 @@ smw_crypto_get_hash_output_length(struct smw_crypto_hash_args *args);
  */
 void smw_crypto_set_hash_output_length(struct smw_crypto_hash_args *args,
 				       unsigned int output_length);
+
+/**
+ * smw_crypto_get_hash_op_context() - Get Hash operation context pointer
+ * @args: Pointer to internal Hash arguments.
+ *
+ * Return:
+ * Address of Hash operation context structure
+ */
+struct smw_op_context *
+smw_crypto_get_hash_op_context(struct smw_crypto_hash_args *args);
 
 #endif /* __HASH_H__ */

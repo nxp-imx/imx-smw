@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2023 NXP
+ * Copyright 2020-2024 NXP
  */
 
 #ifndef __EXEC_H___
@@ -9,10 +9,10 @@
 #include "subsystems.h"
 
 enum smw_op_step {
+	SMW_OP_STEP_ONESHOT = 0,
 	SMW_OP_STEP_INIT,
 	SMW_OP_STEP_UPDATE,
-	SMW_OP_STEP_FINAL,
-	SMW_OP_STEP_ONESHOT
+	SMW_OP_STEP_FINAL
 };
 
 /**

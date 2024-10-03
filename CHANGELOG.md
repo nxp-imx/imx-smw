@@ -49,6 +49,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add SMW Object find API.
 * Key import: redirect the EdgeLock 2GO data import to data storage module.
 * Define EdgeLock 2GO Key and Data object label.
+* Add support of hash multi-part with TEE and ELE subsystems.
 
 ##### 2. Subsystems
 
@@ -209,7 +210,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Implement AEAD one-shot operation for SECO subsystem.
 * Add ELE subsystem RSA key management.
 * Implement storage re-provisioning for ELE subsystem.
-* Add support of SHA-3 hash with TEE and ELE subsystem.
+* Add support of SHA-3 hash with TEE and ELE subsystems.
 * Implement context management for TEE subsystem.
 * Implement context management for ELE subsystem.
 * Implement context management for HSM subsystem.

@@ -109,7 +109,7 @@ TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 
 	/* Get TEE algorithm ID */
 	res = get_algorithm_info(tee_algorithm_id, &algorithm_info);
-	if (res) {
+	if (res != TEE_SUCCESS || !algorithm_info) {
 		EMSG("Failed to get algorithm info: 0x%x", res);
 		return res;
 	}
@@ -121,14 +121,14 @@ TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 
 	res = TEE_AllocateOperation(&operation, algorithm_info->ta_id,
 				    TEE_MODE_DIGEST, 0);
-	if (res) {
+	if (res != TEE_SUCCESS) {
 		EMSG("Failed to alloc operation: 0x%x", res);
 		return res;
 	}
 
 	/* Compute digest */
 	res = TEE_DigestDoFinal(operation, chunk, chunk_len, hash, hash_len);
-	if (res)
+	if (res != TEE_SUCCESS)
 		EMSG("Failed to compute digest: 0x%x", res);
 
 	TEE_FreeOperation(operation);
@@ -139,7 +139,9 @@ TEE_Result ta_compute_digest(enum tee_algorithm_id tee_algorithm_id,
 TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	enum tee_algorithm_id algo = 0;
+
+	int tee_algorithm_id = TEE_ALGORITHM_ID_INVALID;
+
 	FMSG("Executing %s", __func__);
 
 	/*
@@ -153,14 +155,127 @@ TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 					   TEE_PARAM_TYPE_NONE))
 		return res;
 
-	if (params[0].value.a < TEE_ALGORITHM_ID_INVALID) {
-		algo = params[0].value.a;
+	if (ADD_OVERFLOW(params[0].value.a, 0, &tee_algorithm_id))
+		return res;
 
-		res = ta_compute_digest(algo, params[1].memref.buffer,
-					params[1].memref.size,
-					params[2].memref.buffer,
-					&params[2].memref.size);
+	res = ta_compute_digest(tee_algorithm_id, params[1].memref.buffer,
+				params[1].memref.size, params[2].memref.buffer,
+				&params[2].memref.size);
+
+	return res;
+}
+
+TEE_Result hash_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+
+	TEE_OperationHandle operation = TEE_HANDLE_NULL;
+	int tee_algorithm_id = TEE_ALGORITHM_ID_INVALID;
+	const struct algorithm_info *algorithm_info = NULL;
+	struct shared_context *context = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	/*
+	 * params[0] = Algorithm ID
+	 * params[1] = Message
+	 * params[3] = Shared context
+	 */
+	if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_VALUE_INPUT,
+					   TEE_PARAM_TYPE_MEMREF_INPUT,
+					   TEE_PARAM_TYPE_NONE,
+					   TEE_PARAM_TYPE_MEMREF_OUTPUT) ||
+	    !params[1].memref.buffer != !params[1].memref.size ||
+	    params[3].memref.size != sizeof(*context) ||
+	    !params[3].memref.buffer)
+		return res;
+
+	if (ADD_OVERFLOW(params[0].value.a, 0, &tee_algorithm_id))
+		return res;
+
+	/* Get TEE algorithm ID */
+	res = get_algorithm_info(tee_algorithm_id, &algorithm_info);
+	if (res != TEE_SUCCESS || !algorithm_info) {
+		EMSG("!Failed to get algorithm info: 0x%x", res);
+		return res;
 	}
+
+	res = TEE_AllocateOperation(&operation, algorithm_info->ta_id,
+				    TEE_MODE_DIGEST, 0);
+	if (res != TEE_SUCCESS) {
+		EMSG("Failed to alloc operation: 0x%x", res);
+		return res;
+	}
+
+	/* Compute digest */
+	if (params[1].memref.buffer && params[1].memref.size)
+		TEE_DigestUpdate(operation, params[1].memref.buffer,
+				 params[1].memref.size);
+
+	/* Share operation handle */
+	context = params[3].memref.buffer;
+	context->handle = operation;
+
+	return res;
+}
+
+TEE_Result hash_update(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
+{
+	struct shared_context *context = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	/*
+	 * params[1] = Message
+	 * params[3] = Shared context
+	 */
+	if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_NONE,
+					   TEE_PARAM_TYPE_MEMREF_INPUT,
+					   TEE_PARAM_TYPE_NONE,
+					   TEE_PARAM_TYPE_MEMREF_INPUT) ||
+	    !params[1].memref.buffer != !params[1].memref.size ||
+	    params[3].memref.size != sizeof(*context) ||
+	    !params[3].memref.buffer)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	context = params[3].memref.buffer;
+
+	/* Compute digest */
+	TEE_DigestUpdate(context->handle, params[1].memref.buffer,
+			 params[1].memref.size);
+
+	return TEE_SUCCESS;
+}
+
+TEE_Result hash_final(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+
+	struct shared_context *context = NULL;
+
+	FMSG("Executing %s", __func__);
+
+	/*
+	 * params[1] = Message
+	 * params[2] = Digest
+	 * params[3] = Shared context
+	 */
+	if (param_types != TEE_PARAM_TYPES(TEE_PARAM_TYPE_NONE,
+					   TEE_PARAM_TYPE_MEMREF_INPUT,
+					   TEE_PARAM_TYPE_MEMREF_OUTPUT,
+					   TEE_PARAM_TYPE_MEMREF_INPUT) ||
+	    !params[1].memref.buffer != !params[1].memref.size ||
+	    params[3].memref.size != sizeof(*context) ||
+	    !params[3].memref.buffer)
+		return res;
+
+	context = params[3].memref.buffer;
+
+	res = TEE_DigestDoFinal(context->handle, params[1].memref.buffer,
+				params[1].memref.size, params[2].memref.buffer,
+				&params[2].memref.size);
+	if (res != TEE_SUCCESS)
+		EMSG("Failed to compute digest: 0x%x", res);
 
 	return res;
 }

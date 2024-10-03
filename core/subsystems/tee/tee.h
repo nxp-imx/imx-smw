@@ -33,6 +33,14 @@ struct cipher_context {
 	void *tee_handle;
 };
 
+/**
+ * struct hash_context - Hash context
+ * @tee_handle: TEE operation handle
+ */
+struct hash_context {
+	void *tee_handle;
+};
+
 /*
  * Set the type @p of the parameter @i in the operation parameter
  * type @t.

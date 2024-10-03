@@ -24,6 +24,42 @@
 TEE_Result hash(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
 
 /**
+ * hash_init() - Hash a message, init step.
+ * @param_types: Parameters types.
+ * @params: Shared parameters between Secure and Normal world.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * Error code from internal functions.
+ */
+TEE_Result hash_init(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
+
+/**
+ * hash_update() - Hash a message, update step.
+ * @param_types: Parameters types.
+ * @params: Shared parameters between Secure and Normal world.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * Error code from internal functions.
+ */
+TEE_Result hash_update(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
+
+/**
+ * hash_final() - Hash a message, final step.
+ * @param_types: Parameters types.
+ * @params: Shared parameters between Secure and Normal world.
+ *
+ * Return:
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- One of the parameters is invalid.
+ * Error code from internal functions.
+ */
+TEE_Result hash_final(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS]);
+
+/**
  * ta_get_digest_length() - Get digest length.
  * @tee_algorithm_id: Hash algorithm ID.
  * @digest_len: Pointer to the digest length.

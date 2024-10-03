@@ -58,8 +58,7 @@ static int get_tee_cipher_algo_id(enum smw_config_key_type_id key_type,
 /**
  * set_cipher_context() - Allocate and initialize cipher subsystem specific ctx
  * @op_context: Pointer to operation context arguments structure
- * @args: Pointer to internal cipher arguments structure
- * @context: Pointer to TEE context operation handle structure
+ * @handle: Pointer to TEE context operation handle structure
  *
  * This function initializes the members of operation context structure. It also
  * allocates memory to cipher subsystem specific context and initializes it's
@@ -70,9 +69,7 @@ static int get_tee_cipher_algo_id(enum smw_config_key_type_id key_type,
  * SMW_STATUS_INVALID_PARAM - One of the parameters is invalid
  * SMW_STATUS_ALLOC_FAILURE - Memory allocation failure
  */
-static int set_cipher_context(struct smw_op_context *op_context,
-			      struct smw_crypto_cipher_args *args,
-			      struct shared_context *context)
+static int set_cipher_context(struct smw_op_context *op_context, void *handle)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -91,15 +88,9 @@ static int set_cipher_context(struct smw_op_context *op_context,
 		goto end;
 	}
 
-	cipher_ctx->tee_handle = context->handle;
+	cipher_ctx->tee_handle = handle;
 
 	op_context->subsystem_context = cipher_ctx;
-
-	if (args->op_type_id == SMW_CONFIG_CIPHER_OP_TYPE_ID_ENCRYPT)
-		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_ENCRYPT;
-	else
-		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_DECRYPT;
-
 	op_context->op_state = CTX_OP_STATE_INIT;
 
 	status = SMW_STATUS_OK;
@@ -220,7 +211,7 @@ static int cipher_init(struct smw_op_context *op_context,
 			    "%s: Operation failed\n", __func__);
 
 	if (status == SMW_STATUS_OK)
-		status = set_cipher_context(op_context, args, &context);
+		status = set_cipher_context(op_context, context.handle);
 
 	/* Delete imported ephemeral keys */
 	for (key_idx = 0; key_idx < args->nb_keys; key_idx++) {

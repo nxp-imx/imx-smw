@@ -15,7 +15,7 @@
 
 #include "smw_status.h"
 
-static void *get_subsystem_context_handle(struct smw_op_context *context,
+static void *get_subsystem_context_handle(struct smw_op_context *ctx,
 					  int *status)
 {
 	*status = SMW_STATUS_INVALID_PARAM;
@@ -25,18 +25,18 @@ static void *get_subsystem_context_handle(struct smw_op_context *context,
 	struct aead_context *aead_ctx = NULL;
 	struct cipher_context *cipher_ctx = NULL;
 
-	if (!context->subsystem_context)
+	if (!ctx->subsystem_context)
 		goto end;
 
-	switch (context->op_id) {
+	switch (ctx->op_id) {
 	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
-		aead_ctx = context->subsystem_context;
+		aead_ctx = ctx->subsystem_context;
 		handle = aead_ctx->tee_handle;
 
 		break;
 
 	case SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART:
-		cipher_ctx = context->subsystem_context;
+		cipher_ctx = ctx->subsystem_context;
 		handle = cipher_ctx->tee_handle;
 
 		break;
@@ -54,18 +54,18 @@ end:
 
 /**
  * free_context() - Free all the memory allocated to operation context
- * @args: Pointer to SMW operation context arguments structure
+ * @ctx: Pointer to SMW operation context arguments structure
  *
  * Return:
  * None.
  */
-static void free_context(struct smw_op_context **args)
+static void free_context(struct smw_op_context *ctx)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if ((*args)->subsystem_context) {
-		SMW_UTILS_FREE((*args)->subsystem_context);
-		(*args)->subsystem_context = NULL;
+	if (ctx->subsystem_context) {
+		SMW_UTILS_FREE(ctx->subsystem_context);
+		ctx->subsystem_context = NULL;
 	}
 }
 
@@ -141,24 +141,16 @@ static int allocate_copy_subsystem_context(struct smw_op_context *src_context,
 	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
 		src_aead_ctx = src_context->subsystem_context;
 
-		if (src_context->op_type_id == SMW_CRYPTO_OP_TYPE_ID_ENCRYPT) {
-			if (!src_aead_ctx || !src_aead_ctx->iv_len)
-				goto end;
-		}
-
 		dst_aead_ctx = SMW_UTILS_MALLOC(sizeof(*dst_aead_ctx));
 		if (!dst_aead_ctx) {
 			status = SMW_STATUS_ALLOC_FAILURE;
 			goto end;
 		}
 
-		if (src_context->op_type_id == SMW_CRYPTO_OP_TYPE_ID_ENCRYPT) {
-			dst_aead_ctx->iv_len = src_aead_ctx->iv_len;
+		dst_aead_ctx->iv_len = src_aead_ctx->iv_len;
+		if (dst_aead_ctx->iv_len)
 			SMW_UTILS_MEMCPY(dst_aead_ctx->iv, src_aead_ctx->iv,
 					 src_aead_ctx->iv_len);
-		} else {
-			dst_aead_ctx->iv_len = 0;
-		}
 
 		dst_aead_ctx->tee_handle = tee_dst_ctx->handle;
 		dst_context->subsystem_context = dst_aead_ctx;

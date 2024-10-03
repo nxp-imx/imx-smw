@@ -65,6 +65,18 @@ TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 		res = hash(param_types, params);
 		break;
 
+	case CMD_HASH_INIT:
+		res = hash_init(param_types, params);
+		break;
+
+	case CMD_HASH_UPDATE:
+		res = hash_update(param_types, params);
+		break;
+
+	case CMD_HASH_FINAL:
+		res = hash_final(param_types, params);
+		break;
+
 	case CMD_SIGN:
 	case CMD_VERIFY:
 		res = sign_verify(param_types, params, cmd_id);

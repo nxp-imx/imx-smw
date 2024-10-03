@@ -119,10 +119,6 @@ static int set_aead_context(struct smw_op_context *op_context,
 
 		if (!iv_len)
 			goto end;
-
-		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_ENCRYPT;
-	} else {
-		op_context->op_type_id = SMW_CRYPTO_OP_TYPE_ID_DECRYPT;
 	}
 
 	aead_ctx = SMW_UTILS_CALLOC(1, sizeof(*aead_ctx));

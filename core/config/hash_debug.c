@@ -7,7 +7,7 @@
 
 #include "common.h"
 
-void hash_print_params(void *params)
+void hash_common_print_params(void *params)
 {
 	struct hash_params *p = params;
 

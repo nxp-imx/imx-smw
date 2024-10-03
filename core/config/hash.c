@@ -44,7 +44,7 @@ int read_hash_algo_strings(char **start, char *end, unsigned long *bitmap)
 	return status;
 }
 
-static int hash_read_params(char **start, char *end, void **params)
+static int hash_common_read_params(char **start, char *end, void **params)
 {
 	int status = SMW_STATUS_OK;
 	char *cur = *start;
@@ -98,7 +98,17 @@ end:
 	return status;
 }
 
-static void hash_merge_params(void *caps, void *params)
+static int hash_read_params(char **start, char *end, void **params)
+{
+	return hash_common_read_params(start, end, params);
+}
+
+static int hash_multi_part_read_params(char **start, char *end, void **params)
+{
+	return hash_common_read_params(start, end, params);
+}
+
+static void hash_common_merge_params(void *caps, void *params)
 {
 	struct hash_params *hash_caps = caps;
 	struct hash_params *hash_params = params;
@@ -108,12 +118,32 @@ static void hash_merge_params(void *caps, void *params)
 	hash_caps->algo_bitmap |= hash_params->algo_bitmap;
 }
 
-__weak void hash_print_params(void *params)
+static void hash_merge_params(void *caps, void *params)
+{
+	hash_common_merge_params(caps, params);
+}
+
+static void hash_multi_part_merge_params(void *caps, void *params)
+{
+	hash_common_merge_params(caps, params);
+}
+
+__weak void hash_common_print_params(void *params)
 {
 	(void)params;
 }
 
-static int hash_check_subsystem_caps(void *args, void *node)
+static void hash_print_params(void *params)
+{
+	hash_common_print_params(params);
+}
+
+static void hash_multi_part_print_params(void *params)
+{
+	hash_common_print_params(params);
+}
+
+static int hash_common_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OK;
 
@@ -129,9 +159,19 @@ static int hash_check_subsystem_caps(void *args, void *node)
 	return status;
 }
 
-static int hash_check_key_usable(unsigned int *ref,
-				 enum smw_config_key_type_id key_type_id,
-				 smw_attr_algo_t permitted_algo)
+static int hash_check_subsystem_caps(void *args, void *node)
+{
+	return hash_common_check_subsystem_caps(args, node);
+}
+
+static int hash_multi_part_check_subsystem_caps(void *args, void *node)
+{
+	return hash_common_check_subsystem_caps(args, node);
+}
+
+static int hash_common_check_key_usable(unsigned int *ref,
+					enum smw_config_key_type_id key_type_id,
+					smw_attr_algo_t permitted_algo)
 {
 	(void)ref;
 	(void)key_type_id;
@@ -140,7 +180,23 @@ static int hash_check_key_usable(unsigned int *ref,
 	return SMW_STATUS_OK;
 }
 
+static int hash_check_key_usable(unsigned int *ref,
+				 enum smw_config_key_type_id key_type_id,
+				 smw_attr_algo_t permitted_algo)
+{
+	return hash_common_check_key_usable(ref, key_type_id, permitted_algo);
+}
+
+static int
+hash_multi_part_check_key_usable(unsigned int *ref,
+				 enum smw_config_key_type_id key_type_id,
+				 smw_attr_algo_t permitted_algo)
+{
+	return hash_common_check_key_usable(ref, key_type_id, permitted_algo);
+}
+
 DEFINE_CONFIG_OPERATION_FUNC(hash);
+DEFINE_CONFIG_OPERATION_FUNC(hash_multi_part);
 
 __export enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
 						      smw_hash_algo_t algo)

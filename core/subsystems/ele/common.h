@@ -18,6 +18,20 @@
 #define ELE_UID_SIZE	(ELE_NB_UID_WORD * sizeof(uint32_t))
 
 /**
+ * struct hash_context - Hash context
+ * @ele_algo: ELE Hash algorithm
+ * @ele_ctx: ELE operation context
+ * @ele_ctx_size: ELE operation context size
+ * @digest_length: Digest length
+ */
+struct hash_context {
+	hsm_hash_algo_t ele_algo;
+	uint8_t *ele_ctx;
+	uint16_t ele_ctx_size;
+	uint32_t digest_length;
+};
+
+/**
  * struct hdl - ELE handles
  * @session: Session handle
  * @key_store: Key store service flow handle
@@ -76,7 +90,7 @@ struct ele_hash_algo {
 };
 
 /**
- * get_hash_algo() - Get the ELE hash algorithm information
+ * ele_get_hash_algo() - Get the ELE hash algorithm information
  * @algo_id: SMW Hash algorithm id.
  *
  * Return:
@@ -452,5 +466,14 @@ int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl);
  * SMW_STATUS_SUBSYSTEM_FAILURE    - Subsystem failure
  */
 int close_key_mgt_service(hsm_hdl_t key_management_hdl);
+
+/**
+ * ele_free_hash_context() - Free the ELE Hash context
+ * @ctx: Hash context
+ *
+ * Return:
+ * None.
+ */
+void ele_free_hash_context(struct hash_context *ctx);
 
 #endif /* __COMMON_H__ */

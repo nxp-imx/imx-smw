@@ -3,6 +3,8 @@
  * Copyright 2024 NXP
  */
 
+#include "utils.h"
+#include "common.h"
 #include "operation_context.h"
 
 static int cancel_operation(struct smw_op_context *ctx)
@@ -19,9 +21,24 @@ static int copy_context(struct smw_op_context *src_ctx,
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-static void free_context(struct smw_op_context **args)
+static void free_context(struct smw_op_context *ctx)
 {
-	(void)args;
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!ctx->subsystem_context)
+		return;
+
+	switch (ctx->op_id) {
+	case SMW_CRYPTO_OP_ID_HASH_MULTI_PART:
+		ele_free_hash_context(ctx->subsystem_context);
+		break;
+
+	default:
+		break;
+	}
+
+	SMW_UTILS_FREE(ctx->subsystem_context);
+	ctx->subsystem_context = NULL;
 }
 
 /* ELE context operations structure */

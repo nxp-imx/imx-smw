@@ -87,3 +87,12 @@ __weak int ele_get_device_info(struct subsystem_context *ele_ctx)
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
+
+void ele_free_hash_context(struct hash_context *ctx)
+{
+	if (ctx->ele_ctx) {
+		SMW_UTILS_FREE(ctx->ele_ctx);
+		ctx->ele_ctx = NULL;
+		ctx->ele_ctx_size = 0;
+	}
+}

@@ -11,6 +11,8 @@ PSA_DEFAULT=ELE:ALT;
     TEE;
     [SECURITY_OPERATION]
         HASH;
+    [SECURITY_OPERATION]
+        HASH_MULTI_PART;
 
 /* Define the ELE subsystem operations to be executed */
 [SECURE_SUBSYSTEM]
@@ -30,6 +32,8 @@ PSA_DEFAULT=ELE:ALT;
         DELETE_KEY;
     [SECURITY_OPERATION]
         HASH;
+    [SECURITY_OPERATION]
+        HASH_MULTI_PART;
     [SECURITY_OPERATION]
         SIGN;
         SIGN_ALGO_VALUES=ECDSA;

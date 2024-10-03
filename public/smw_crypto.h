@@ -26,13 +26,71 @@
  * @output_length: Length of the digest
  *
  * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
+ * If this field is SMW_SUBSYSTEM_NAME_NONE, the default configured
+ * Secure Subsystem is used.
  */
 struct smw_hash_args {
 	/* Inputs */
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
 	smw_hash_algo_t algo_name;
+	unsigned char *input;
+	unsigned int input_length;
+	/* Outputs */
+	unsigned char *output;
+	unsigned int output_length;
+};
+
+/**
+ * struct smw_hash_init_args - Hash multi-part initialization arguments
+ * @version: Version of this structure
+ * @algo_name: Algorithm name. See &typedef smw_hash_algo_t
+ * @input: Location of the stream to be hashed
+ * @input_length: Length of the stream to be hashed
+ * @context: Pointer to an opaque operation context structure
+ *
+ * @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is SMW_SUBSYSTEM_NAME_NONE, the default configured
+ * Secure Subsystem is used.
+ */
+struct smw_hash_init_args {
+	/* Inputs */
+	unsigned char version;
+	smw_hash_algo_t algo_name;
+	unsigned char *input;
+	unsigned int input_length;
+	/* Outputs */
+	struct smw_op_context *context;
+};
+
+/**
+ * struct smw_hash_update_args - Hash multi-part update arguments
+ * @version: Version of this structure
+ * @context: Pointer to an opaque operation context structure
+ * @input: Location of the stream to be hashed
+ * @input_length: Length of the stream to be hashed
+ */
+struct smw_hash_update_args {
+	/* Inputs */
+	unsigned char version;
+	struct smw_op_context *context;
+	unsigned char *input;
+	unsigned int input_length;
+};
+
+/**
+ * struct smw_hash_final_args - Hash multi-part final arguments
+ * @version: Version of this structure
+ * @context: Pointer to an opaque operation context structure
+ * @input: Location of the stream to be hashed
+ * @input_length: Length of the stream to be hashed
+ * @output: Location where the digest has to be written
+ * @output_length: Length of the digest
+ */
+struct smw_hash_final_args {
+	/* Inputs */
+	unsigned char version;
+	struct smw_op_context *context;
 	unsigned char *input;
 	unsigned int input_length;
 	/* Outputs */
@@ -64,7 +122,8 @@ struct smw_ed25519_params {
  * @ed25519_params: Pointer to ed25519 parameters
  *
  * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
+ * If this field is SMW_SUBSYSTEM_NAME_NONE, the default configured
+ * Secure Subsystem is used.
  *
  * @ed25519_params is handled if @version is equal to 1.
  */
@@ -97,8 +156,8 @@ struct smw_sign_verify_args {
  * @mac_length: Length of the MAC
  *
  * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used or
- * the Secure Subsystem handling the key specified.
+ * If this field is SMW_SUBSYSTEM_NAME_NONE, the default configured
+ * Secure Subsystem is used or the Secure Subsystem handling the key specified.
  */
 struct smw_mac_args {
 	/* Inputs */
@@ -122,7 +181,8 @@ struct smw_mac_args {
  * @output_length: Length of the random number
  *
  * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
+ * If this field is SMW_SUBSYSTEM_NAME_NONE, the default configured
+ * Secure Subsystem is used.
  */
 struct smw_rng_args {
 	/* Inputs */
@@ -212,6 +272,75 @@ struct smw_cipher_args {
 enum smw_status_code smw_hash(struct smw_hash_args *args);
 
 /**
+ * smw_hash_init() - Hash multi-part initialization
+ * @args: Pointer to the structure that contains the hash multi-part
+ *        initialization arguments.
+ *
+ * This function executes a hash multi-part initialization.
+ * The operation context must be allocated using smw_allocate_context() API
+ * prior to invoking this API.
+ *
+ * If the returned error code is SMW_STATUS_OK or SMW_STATUS_INVALID_PARAM, the
+ * operation is not terminated and the context remains valid.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_hash_init(struct smw_hash_init_args *args);
+
+/**
+ * smw_hash_update() - Hash multi-part update
+ * @args: Pointer to the structure that contains the hash multi-part update
+ *        arguments.
+ *
+ * This function executes a hash multi-part update operation.
+ *
+ * The context used must be initialized by the hash multi-part initialization.
+ *
+ * If the returned error code is SMW_STATUS_OK, SMW_STATUS_INVALID_PARAM or
+ * SMW_STATUS_VERSION_NOT_SUPPORTED the operation is not terminated and the
+ * context remains valid.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_hash_update(struct smw_hash_update_args *args);
+
+/**
+ * smw_hash_final() - Hash multi-part final
+ * @args: Pointer to the structure that contains the hash multi-part final
+ *        arguments.
+ *
+ * This function executes a hash multi-part final operation.
+ *
+ * The context used must be initialized by the hash multi-part initialization.
+ *
+ * Input data field of @args can be a NULL pointer if no additional data are
+ * used.
+ *
+ * Output data field of @args can be a NULL pointer to get the required output
+ * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK
+ * and the operation is no terminated (context remains valid) unless required
+ * output buffer length is 0.
+ *
+ * Output length @args field is updated to the correct value when:
+ *  - Output length is bigger than expected. In this case operation succeeded.
+ *  - Output length is shorter than expected. In this case operation failed and
+ *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * If the returned error code is SMW_STATUS_INVALID_PARAM,
+ * SMW_STATUS_VERSION_NOT_SUPPORTED or SMW_STATUS_OUTPUT_TOO_SHORT the operation
+ * is not terminated and the context remains valid.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_hash_final(struct smw_hash_final_args *args);
+
+/**
  * smw_sign() - Generate a signature.
  * @args: Pointer to the structure that contains the Sign arguments.
  *
@@ -284,6 +413,7 @@ enum smw_status_code smw_cipher(struct smw_cipher_args *args);
  * initialization.
  * The operation context must be allocated using smw_allocate_context() API
  * prior to invoking this API.
+ *
  * If the returned error code is SMW_STATUS_OK or SMW_STATUS_INVALID_PARAM, the
  * operation is not terminated and the context remains valid.
  *

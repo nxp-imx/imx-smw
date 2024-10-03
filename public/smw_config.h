@@ -28,9 +28,9 @@
  *	- SMW_STATUS_OK:
  *		@subsystem is present
  *	- SMW_STATUS_INVALID_PARAM:
- *		@subsystem is NULL
+ *		@subsystem is SMW_SUBSYSTEM_NAME_NONE
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
- *		@subsystem is not a valid string
+ *		@subsystem is not valid
  */
 enum smw_status_code smw_config_subsystem_present(smw_subsystem_t subsystem);
 
@@ -45,9 +45,9 @@ enum smw_status_code smw_config_subsystem_present(smw_subsystem_t subsystem);
  *	- SMW_STATUS_SUBSYSTEM_NOT_LOADED:
  *		@subsystem is not loaded
  *	- SMW_STATUS_INVALID_PARAM:
- *		@subsystem is NULL
+ *		@subsystem is SMW_SUBSYSTEM_NAME_NONE
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
- *		@subsystem is not a valid string
+ *		@subsystem is not valid
  *	- SMW_STATUS_INVALID_LIBRARY_CONTEXT:
  *		Library context is not valid
  */
@@ -55,27 +55,56 @@ enum smw_status_code smw_config_subsystem_loaded(smw_subsystem_t subsystem);
 
 /**
  * smw_config_check_digest() - Check if a digest @algo is supported
- * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @subsystem: Name of the subsystem.
  * @algo: Digest algorithm name.
  *
  * Function checks if the digest @algo is supported on the given @subsystem.
- * If @subsystem is NULL, default subsystem digest capability is checked.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem digest
+ * capability is checked.
  *
  * Return:
  * See &enum smw_status_code
  *	- SMW_STATUS_OK:
  *		@algo is supported
  *	- SMW_STATUS_INVALID_PARAM:
- *		@algo is NULL
+ *		@algo is SMW_HASH_ALGO_NAME_NONE
  *	- SMW_STATUS_UNKNOWN_ALGO_NAME:
- *		@algo is not a valid string
+ *		@algo is not valid
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		@algo is not supported
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
- *		@subsystem is not a valid string
+ *		@subsystem is not valid
  */
 enum smw_status_code smw_config_check_digest(smw_subsystem_t subsystem,
 					     smw_hash_algo_t algo);
+
+/**
+ * smw_config_check_digest_multi_part() - Check if a digest multi part @algo
+ * is supported
+ * @subsystem: Name of the subsystem.
+ * @algo: Digest algorithm name.
+ *
+ * Function checks if the digest multi part @algo is supported on the given
+ * @subsystem.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem digest
+ * multi-part capability is checked.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		@algo is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@algo is SMW_HASH_ALGO_NAME_NONE
+ *	- SMW_STATUS_UNKNOWN_ALGO_NAME:
+ *		@algo is not valid
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		@algo is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not valid
+ */
+enum smw_status_code
+smw_config_check_digest_multi_part(smw_subsystem_t subsystem,
+				   smw_hash_algo_t algo);
 
 /**
  * struct smw_key_info - Key information
@@ -93,7 +122,7 @@ struct smw_key_info {
 
 /**
  * smw_config_check_generate_key() - Check generate key type
- * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @subsystem: Name of the subsystem.
  * @info: Key information.
  *
  * Function checks if the key type provided in the @info structure is
@@ -103,20 +132,21 @@ struct smw_key_info {
  * range size in bits supported by the subsystem for the key type. Else
  * checks if the security size is supported.
  *
- * If @subsystem is NULL, default subsystem key generation is checked.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem key generation
+ * is checked.
  *
  * Return:
  * See &enum smw_status_code
  *	- SMW_STATUS_OK:
  *		Key type is supported
  *	- SMW_STATUS_INVALID_PARAM:
- *		@info or @info->key_type_name is NULL
+ *		@info is NULL or @info->key_type_name is SMW_KEY_TYPE_NAME_NONE
  *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
- *		@info->key_type_name is not a valid string
+ *		@info->key_type_name is not valid
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Key type is not supported
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
- *		@subsystem is not a valid string
+ *		@subsystem is not valid
  */
 enum smw_status_code smw_config_check_generate_key(smw_subsystem_t subsystem,
 						   struct smw_key_info *info);
@@ -136,7 +166,7 @@ struct smw_signature_info {
 /**
  * smw_config_check_sign() - Check if signature generation operation is
  *                           supported
- * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @subsystem: Name of the subsystem.
  * @info: Signature information.
  *
  * @info key type name field is mandatory.
@@ -149,20 +179,22 @@ struct smw_signature_info {
  * If set, function checks if the signature type is supported on the given
  * @subsystem for the signature generation operation.
  *
- * If @subsystem is NULL, default subsystem digest capability is checked.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem digest
+ * capability is checked.
  *
  * Return:
  * See &enum smw_status_code
  *	- SMW_STATUS_OK:
  *		Signature operation is supported
  *	- SMW_STATUS_INVALID_PARAM:
- *		@info or @info->key_type_name is NULL
+ *		@info is NULL or @info->algo_name is
+ *		SMW_SIGNATURE_ALGO_NAME_NONE
  *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
- *		@info->key_type_name is not a valid string
+ *		@info->key_type_name is not valid
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Signature operation is not supported
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
- *		@subsystem is not a valid string
+ *		@subsystem is not valid
  */
 enum smw_status_code smw_config_check_sign(smw_subsystem_t subsystem,
 					   struct smw_signature_info *info);
@@ -170,7 +202,7 @@ enum smw_status_code smw_config_check_sign(smw_subsystem_t subsystem,
 /**
  * smw_config_check_verify() - Check if signature verification operation is
  *                             supported
- * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @subsystem: Name of the subsystem.
  * @info: Signature information.
  *
  * @info key type name field is mandatory.
@@ -183,16 +215,18 @@ enum smw_status_code smw_config_check_sign(smw_subsystem_t subsystem,
  * If set, function checks if the signature type is supported on the given
  * @subsystem for the signature verification operation.
  *
- * If @subsystem is NULL, default subsystem digest capability is checked.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem digest
+ * capability is checked.
  *
  * Return:
  * See &enum smw_status_code
  *	- SMW_STATUS_OK:
  *		Verify operation is supported
  *	- SMW_STATUS_INVALID_PARAM:
- *		@info or @info->key_type_name is NULL
+ *		@info is NULL or @info->algo_name is
+ *		SMW_SIGNATURE_ALGO_NAME_NONE
  *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
- *		@info->key_type_name is not a valid string
+ *		@info->key_type_name is not valid
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Verify operation is not supported
  */
@@ -215,31 +249,34 @@ struct smw_cipher_info {
 
 /**
  * smw_config_check_cipher() - Check if cipher operation is supported
- * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @subsystem: Name of the subsystem.
  * @info: Cipher information.
  *
  * Function checks if all fields provided in the @info structure are
  * supported on the given @subsystem for a cipher one-shot or multi-part
  * operation.
  *
- * If @subsystem is NULL, default subsystem cipher capability is checked.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem cipher
+ * capability is checked.
  *
  * Return:
  * See &enum smw_status_code
  *	- SMW_STATUS_OK:
  *		Cipher operation is supported
  *	- SMW_STATUS_INVALID_PARAM:
- *		@info, @info->key_type_name, @info->mode or @info->op_type is NULL
+ *		@info is NULL or @info->key_type_name is SMW_KEY_TYPE_NAME_NONE
+ *		or @info->mode_name is SMW_CIPHER_MODE_NAME_NONE or
+ *		@info->op_type_name is SMW_CIPHER_OP_TYPE_NAME_NONE
  *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
- *		@info->key_type_name is not a valid string
+ *		@info->key_type_name is not valid
  *	- SMW_STATUS_UNKNOWN_MODE_NAME:
- *		 @info->mode is not a valid string
+ *		 @info->mode is not valid
  *	- SMW_STATUS_UNKNOWN_OP_TYPE_NAME:
- *		@info->op_type is not a valid string
+ *		@info->op_type is not valid
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Cipher operation is not supported
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
- *		@subsystem is not a valid string
+ *		@subsystem is not valid
  */
 enum smw_status_code smw_config_check_cipher(smw_subsystem_t subsystem,
 					     struct smw_cipher_info *info);
@@ -260,31 +297,34 @@ struct smw_aead_info {
 
 /**
  * smw_config_check_aead() - Check if AEAD operation is supported
- * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @subsystem: Name of the subsystem.
  * @info: AEAD information.
  *
  * Function checks if all fields provided in the @info structure are
  * supported on the given @subsystem for a AEAD one-shot or multi-part
  * operation.
  *
- * If @subsystem is NULL, default subsystem AEAD capability is checked.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem AEAD capability
+ * is checked.
  *
  * Return:
  * See &enum smw_status_code
  *	- SMW_STATUS_OK:
  *		AEAD operation is supported
  *	- SMW_STATUS_INVALID_PARAM:
- *		@info, @info->key_type_name, @info->mode or @info->op_type is NULL
+ *		@info is NULL or @info->key_type_name is SMW_KEY_TYPE_NAME_NONE
+ *		or @info->mode_name is SMW_AEAD_MODE_NAME_NONE or
+ *		@info->op_type_name is SMW_AEAD_OP_TYPE_NAME_NONE
  *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
- *		@info->key_type_name is not a valid string
+ *		@info->key_type_name is not valid
  *	- SMW_STATUS_UNKNOWN_MODE_NAME:
- *		 @info->mode is not a valid string
+ *		 @info->mode is not valid
  *	- SMW_STATUS_UNKNOWN_OP_TYPE_NAME:
- *		@info->op_type is not a valid string
+ *		@info->op_type is not valid
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		AEAD operation is not supported
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
- *		@subsystem is not a valid string
+ *		@subsystem is not valid
  */
 enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 					   struct smw_aead_info *info);
@@ -303,7 +343,7 @@ struct smw_mac_info {
 
 /**
  * smw_config_check_mac() - Check if MAC operation is supported
- * @subsystem: Name of the subsystem (if NULL default subsystem).
+ * @subsystem: Name of the subsystem.
  * @info: MAC information.
  *
  * Function checks if all fields provided in the @info structure are
@@ -313,22 +353,23 @@ struct smw_mac_info {
  * If set, function checks if the MAC algorithm is supported on the given
  * @subsystem for the signature generation operation.
  *
- * If @subsystem is NULL, default subsystem AEAD capability is checked.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem AEAD capability
+ * is checked.
  *
  * Return:
  * See &enum smw_status_code
  *	- SMW_STATUS_OK:
  *		MAC operation is supported
  *	- SMW_STATUS_INVALID_PARAM:
- *		@info, @info->key_type_name is NULL
+ *		@info is NULL or @info->key_type_name is SMW_KEY_TYPE_NAME_NONE
  *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
- *		@info->key_type_name is not a valid string
+ *		@info->key_type_name is not valid
  *	- SMW_STATUS_UNKNOWN_ALGO_NAME:
- *		 @info->mac_algo or @info->hash_algo is not a valid string
+ *		 @info->mac_algo or @info->hash_algo is not valid
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		MAC operation is not supported
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
- *		@subsystem is not a valid string
+ *		@subsystem is not valid
  */
 enum smw_status_code smw_config_check_mac(smw_subsystem_t subsystem,
 					  struct smw_mac_info *info);

@@ -66,9 +66,17 @@ static int execute_generate_cmd(char *cmd, struct subtest_data *subtest)
  */
 static int execute_hash_cmd(char *cmd, struct subtest_data *subtest)
 {
-	(void)cmd;
+	if (!strcmp(cmd, HASH))
+		return hash(subtest);
+	else if (!strcmp(cmd, HASH_INIT))
+		return hash_init(subtest);
+	else if (!strcmp(cmd, HASH_UPDATE))
+		return hash_update(subtest);
+	else if (!strcmp(cmd, HASH_FINAL))
+		return hash_final(subtest);
 
-	return hash(subtest);
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
 }
 
 /**

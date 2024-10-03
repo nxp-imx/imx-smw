@@ -1,0 +1,32 @@
+{
+	"subtest 1": {
+		"command": "HASH_UPDATE",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"command": "HASH_UPDATE",
+		"version": 255,
+		"input": "5555555555",
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"command": "HASH_UPDATE",
+		"test_error": "CTX_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"description": "No input data",
+		"command": "HASH_UPDATE",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"description": "Input data length is 0",
+		"command": "HASH_UPDATE",
+		"input": [
+			0,
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

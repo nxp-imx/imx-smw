@@ -12,6 +12,7 @@
 #include "hash.h"
 #include "json_types.h"
 #include "util.h"
+#include "util_context.h"
 
 #define HASH_DEF(_name, _len)                                                  \
 	{                                                                      \
@@ -121,6 +122,149 @@ static int set_hash_bad_args(struct subtest_data *subtest,
 	return ret;
 }
 
+/**
+ * set_hash_init_bad_args() - Set hash init bad parameters function of the test error.
+ * @subtest: Subtest data
+ * @args: SMW Hash init parameters.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ */
+static int set_hash_init_bad_args(struct subtest_data *subtest,
+				  struct smw_hash_init_args **args)
+{
+	int ret = ERR_CODE(PASSED);
+	enum arguments_test_err_case error = NOT_DEFINED;
+
+	if (!subtest || !args)
+		return ERR_CODE(BAD_ARGS);
+
+	ret = util_read_test_error(&error, subtest->params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	switch (error) {
+	case NOT_DEFINED:
+		break;
+
+	case ARGS_NULL:
+		*args = NULL;
+		break;
+
+	default:
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
+		ret = ERR_CODE(BAD_PARAM_TYPE);
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * set_hash_update_bad_args() - Set hash update bad parameters function of the test error.
+ * @subtest: Subtest data
+ * @args: SMW Hash update parameters.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ */
+static int set_hash_update_bad_args(struct subtest_data *subtest,
+				    struct smw_hash_update_args **args)
+{
+	int ret = ERR_CODE(PASSED);
+	enum arguments_test_err_case error = NOT_DEFINED;
+
+	if (!subtest || !args)
+		return ERR_CODE(BAD_ARGS);
+
+	ret = util_read_test_error(&error, subtest->params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	switch (error) {
+	case NOT_DEFINED:
+		break;
+
+	case ARGS_NULL:
+		*args = NULL;
+		break;
+
+	case CTX_NULL:
+		(*args)->context = NULL;
+		break;
+
+	default:
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
+		ret = ERR_CODE(BAD_PARAM_TYPE);
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * set_hash_final_bad_args() - Set hash final bad parameters function of the test error.
+ * @subtest: Subtest data
+ * @args: SMW Hash final parameters.
+ * @digest_hex: expected digest buffer argument parameter.
+ * @digest_len: expected digest length argument parameter.
+ *
+ * Return:
+ * PASSED			- Success.
+ * -INTERNAL_OUT_OF_MEMORY	- Memory allocation failed.
+ * -BAD_ARGS			- One of the arguments is bad.
+ * -BAD_PARAM_TYPE		- A parameter value is undefined.
+ */
+static int set_hash_final_bad_args(struct subtest_data *subtest,
+				   struct smw_hash_final_args **args,
+				   unsigned char *digest_hex,
+				   unsigned int digest_len)
+{
+	int ret = ERR_CODE(PASSED);
+	enum arguments_test_err_case error = NOT_DEFINED;
+
+	if (!subtest || !args)
+		return ERR_CODE(BAD_ARGS);
+
+	ret = util_read_test_error(&error, subtest->params);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	switch (error) {
+	case NOT_DEFINED:
+		/*
+		 * Test error code is not defined, if it's a test
+		 * concerning the hash API, the digest buffer data
+		 * and length are defined by the parameter 'digest'
+		 * in the test definition file.
+		 */
+		if (is_api_test(subtest)) {
+			(*args)->output = digest_hex;
+			(*args)->output_length = digest_len;
+		}
+		break;
+
+	case ARGS_NULL:
+		*args = NULL;
+		break;
+
+	case CTX_NULL:
+		(*args)->context = NULL;
+		break;
+
+	default:
+		DBG_PRINT_BAD_PARAM(TEST_ERR_OBJ);
+		ret = ERR_CODE(BAD_PARAM_TYPE);
+		break;
+	}
+
+	return ret;
+}
+
 int hash(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
@@ -207,6 +351,227 @@ int hash(struct subtest_data *subtest)
 	res = get_hash_digest_len(args.algo_name, &output_len);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
+
+	if (output_len < digest_len)
+		digest_len = output_len;
+
+	res = util_compare_buffers(args.output, args.output_length, digest_hex,
+				   digest_len);
+
+exit:
+	if (input_hex)
+		free(input_hex);
+
+	if (output_hex)
+		free(output_hex);
+
+	if (digest_hex)
+		free(digest_hex);
+
+	return res;
+}
+
+int hash_init(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(PASSED);
+	unsigned int ctx_id = UINT_MAX;
+	const char *algo_string = NULL;
+	struct smw_hash_init_args args = { 0 };
+	struct smw_hash_init_args *smw_hash_args = &args;
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	args.version = subtest->version;
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	/* Algorithm is mandatory */
+	res = util_read_json_type(&algo_string, ALGO_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) &&
+	    (!is_api_test(subtest) || res != ERR_CODE(VALUE_NOTFOUND)))
+		goto exit;
+
+	args.algo_name = hash_get_algo_name(algo_string);
+
+	/* Specific test cases */
+	res = set_hash_init_bad_args(subtest, &smw_hash_args);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Call hash init function */
+	subtest->smw_status = smw_hash_init(smw_hash_args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
+		goto exit;
+	}
+
+exit:
+	return res;
+}
+
+int hash_update(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(PASSED);
+	unsigned int ctx_id = UINT_MAX;
+	unsigned int input_len = 0;
+	unsigned char *input_hex = NULL;
+	struct smw_hash_update_args args = { 0 };
+	struct smw_hash_update_args *smw_hash_args = &args;
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	args.version = subtest->version;
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
+				   INPUT_OBJ);
+	if ((!is_api_test(subtest) && res != ERR_CODE(PASSED)) ||
+	    (is_api_test(subtest) && res != ERR_CODE(PASSED) &&
+	     res != ERR_CODE(MISSING_PARAMS))) {
+		DBG_PRINT("Failed to read input buffer");
+		goto exit;
+	}
+
+	args.input = input_hex;
+	args.input_length = input_len;
+
+	/* Specific test cases */
+	res = set_hash_update_bad_args(subtest, &smw_hash_args);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Call hash update function */
+	subtest->smw_status = smw_hash_update(smw_hash_args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
+		goto exit;
+	}
+
+exit:
+	if (input_hex)
+		free(input_hex);
+
+	return res;
+}
+
+int hash_final(struct subtest_data *subtest)
+{
+	int res = ERR_CODE(PASSED);
+	unsigned int ctx_id = UINT_MAX;
+	const char *algo_string = NULL;
+	smw_hash_algo_t algo_name = SMW_HASH_ALGO_NAME_NONE;
+	unsigned int input_len = 0;
+	unsigned int output_len = 0;
+	unsigned int digest_len = 0;
+	unsigned char *input_hex = NULL;
+	unsigned char *output_hex = NULL;
+	unsigned char *digest_hex = NULL;
+	struct smw_hash_final_args args = { 0 };
+	struct smw_hash_final_args *smw_hash_args = &args;
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
+
+	if (!subtest) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	args.version = subtest->version;
+
+	res = util_context_set_op_ctx(subtest, &ctx_id, &args.context, api_ctx);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	/* Algorithm is mandatory */
+	res = util_read_json_type(&algo_string, ALGO_OBJ, t_string,
+				  subtest->params);
+	if ((!is_api_test(subtest) && res != ERR_CODE(PASSED)) ||
+	    (is_api_test(subtest) && res != ERR_CODE(PASSED) &&
+	     res != ERR_CODE(VALUE_NOTFOUND))) {
+		DBG_PRINT("Failed to read algorithm");
+		goto exit;
+	}
+
+	algo_name = hash_get_algo_name(algo_string);
+
+	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
+				   INPUT_OBJ);
+	if ((!is_api_test(subtest) && res != ERR_CODE(PASSED)) ||
+	    (is_api_test(subtest) && res != ERR_CODE(PASSED) &&
+	     res != ERR_CODE(MISSING_PARAMS))) {
+		DBG_PRINT("Failed to read input buffer");
+		goto exit;
+	}
+
+	args.input = input_hex;
+	args.input_length = input_len;
+
+	if (!is_api_test(subtest)) {
+		res = get_hash_digest_len(algo_name, &output_len);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+	}
+
+	/*
+	 * Read expected digest buffer if any.
+	 * Test definition might not set the expected digest buffer.
+	 */
+	res = util_read_hex_buffer(&digest_hex, &digest_len, subtest->params,
+				   DIGEST_OBJ);
+	if (res == ERR_CODE(PASSED))
+		output_len = digest_len;
+	else if (res == ERR_CODE(MISSING_PARAMS))
+		digest_len = output_len;
+	else
+		goto exit;
+
+	if (output_len) {
+		output_hex = malloc(output_len);
+		if (!output_hex) {
+			DBG_PRINT_ALLOC_FAILURE();
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto exit;
+		}
+	}
+
+	args.output = output_hex;
+	args.output_length = output_len;
+
+	/* Specific test cases */
+	res = set_hash_final_bad_args(subtest, &smw_hash_args, digest_hex,
+				      digest_len);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Call hash final function */
+	subtest->smw_status = smw_hash_final(smw_hash_args);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		res = ERR_CODE(API_STATUS_NOK);
+		goto exit;
+	}
+
+	if (!is_api_test(subtest)) {
+		/*
+		 * If Hash operation succeeded and expected digest or digest length
+		 * is set in the test definition file then compare operation result.
+		 */
+		res = get_hash_digest_len(algo_name, &output_len);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+	}
 
 	if (output_len < digest_len)
 		digest_len = output_len;

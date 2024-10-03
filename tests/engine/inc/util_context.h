@@ -39,7 +39,7 @@ int util_context_add_node(struct llist *list, unsigned int id,
  * util_context_find_node() - Search an operation context.
  * @list: Context linked list where the research is done.
  * @id: Context ID.
- * @smw_context: Pointer to smw context structure.
+ * @smw_context: Pointer to SMW context structure.
  *
  * Return:
  * PASSED                  - Success.
@@ -53,7 +53,7 @@ int util_context_find_node(struct llist *list, unsigned int id,
  * util_context_update_node() - Update an operation context node
  * @list: Context linked list where the search is done.
  * @id: Context ID.
- * @context: Pointer to smw context structure.
+ * @context: Pointer to SMW context structure.
  *
  * Update the node corresponding to the operation context ID @id if it exists.
  *

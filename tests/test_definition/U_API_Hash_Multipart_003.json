@@ -1,0 +1,35 @@
+{
+	"subtest 1": {
+		"command": "HASH_FINAL",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"command": "HASH_FINAL",
+		"version": 255,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"command": "HASH_FINAL",
+		"test_error": "CTX_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"description": "Input data set and input length is 0",
+		"command": "HASH_FINAL",
+		"input": [
+			0,
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"description": "Digest pointer is set and digest length not",
+		"command": "HASH_FINAL",
+		"digest": [
+			0,
+			"5555555555"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

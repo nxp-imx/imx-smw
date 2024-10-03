@@ -1,0 +1,403 @@
+{
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 0,
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 2": {
+		"description": [
+			"MD5",
+			"https://tools.ietf.org/html/rfc1321 Appendix A.5"
+		],
+		"command": "HASH_INIT",
+		"algo": "MD5",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"MD5",
+			"https://tools.ietf.org/html/rfc1321 Appendix A.5"
+		],
+		"command": "HASH_UPDATE",
+		"algo": "MD5",
+		"input": "6d65737361676520",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": [
+			"MD5",
+			"https://tools.ietf.org/html/rfc1321 Appendix A.5"
+		],
+		"command": "HASH_FINAL",
+		"algo": "MD5",
+		"input": "646967657374",
+		"digest": "f96b697d7cb7938d525a2f31aaf161d0",
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 5": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 1,
+		"restriction_list": "imx8ulp"
+	},
+	"subtest 6": {
+		"description": [
+			"SHA1",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA1LongMsg.rsp"
+		],
+		"command": "HASH_INIT",
+		"algo": "SHA1",
+		"context_id": 1,
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": [
+			"SHA1",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA1LongMsg.rsp"
+		],
+		"command": "HASH_UPDATE",
+		"input": [
+			"7c9c67323a1df1adbfe5ceb415eaef01",
+			"55ece2820f4d50c1ec22cba4928ac656",
+			"c83fe585db6a78ce40bc42757aba7e5a",
+			"3f582428d6ca68d0c3978336a6efb729",
+			"613e8d9979016204bfd921322fdd5222",
+			"183554447de5e6e9bbe6edf76d7b71e1",
+			"8dc2e8d6dc89b7398364f652fafc7343",
+			"29aafa3dcd45d4f31e388e4fafd7fc64",
+			"95f37ca5cbab7f54d586463da4bfeaa3",
+			"bae09f7b8e9239d832b4f0a733aa609c"
+		],
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": [
+			"SHA1",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA1LongMsg.rsp"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHA1",
+		"input": [
+			"c1f8d4"
+		],
+		"digest": "d8fd6a91ef3b6ced05b98358a99107c1fac8c807",
+		"context_id": 1,
+		"depends": 6
+	},
+	"subtest 9": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 2
+	},
+	"subtest 10": {
+		"description": [
+			"SHA224",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA224LongMsg.rsp"
+		],
+		"command": "HASH_INIT",
+		"algo": "SHA224",
+		"context_id": 2,
+		"depends": 9
+	},
+	"subtest 11": {
+		"description": [
+			"SHA224",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA224LongMsg.rsp"
+		],
+		"command": "HASH_UPDATE",
+		"input": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a",
+			"59f8237a1cb51b42f3ded6b202d9af09",
+			"97898fdd03cf60bda951c514547a0850",
+			"cec25444ae2f24cb711bfbafcc3956c9",
+			"41d3de69f155e3f8b10f06db5f37359b",
+			"772ddd43e1035a0a0d3db33242d58430",
+			"33833b0dd43b870c6bf60e8deab55f31",
+			"7cc3273f5e3ba747f0cb65050cb72287",
+			"96210d9254873643008d45f29cfd6c5b"
+		],
+		"context_id": 2,
+		"depends": 10
+	},
+	"subtest 12": {
+		"description": [
+			"SHA224",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA224LongMsg.rsp"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHA224",
+		"input": [
+			"060c9a"
+		],
+		"digest": [
+			"9db6dc3a23abd7b6c3d72c38f4843c7d",
+			"e48a71d0ba91a86b18393e5f"
+		],
+		"context_id": 2,
+		"depends": 10
+	},
+	"subtest 13": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 3
+	},
+	"subtest 14": {
+		"description": [
+			"SHA256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA256LongMsg.rsp"
+		],
+		"command": "HASH_INIT",
+		"algo": "SHA256",
+		"context_id": 3,
+		"depends": 13
+	},
+	"subtest 15": {
+		"description": [
+			"SHA256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA256LongMsg.rsp"
+		],
+		"command": "HASH_UPDATE",
+		"input": [
+			"451101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8",
+			"5c8a61ac8924711f895c5ed90ef17745",
+			"ed2d728abd22a5f7a13479a462d71b56",
+			"c19a74a40b655c58edfe0a188ad2cf46",
+			"cbf30524f65d423c837dd1ff2bf462ac",
+			"4198007345bb44dbb7b1c861298cdf61",
+			"982a833afc728fae1eda2f87aa2c9480"
+		],
+		"context_id": 3,
+		"depends": 14
+	},
+	"subtest 16": {
+		"description": [
+			"SHA256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA256LongMsg.rsp"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHA256",
+		"input": [
+			"858bec"
+		],
+		"digest": [
+			"3c593aa539fdcdae516cdf2f15000f66",
+			"34185c88f505b39775fb9ab137a10aa2"
+		],
+		"context_id": 3,
+		"depends": 14
+	},
+	"subtest 17": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 4
+	},
+	"subtest 18": {
+		"description": [
+			"SHA384",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA384LongMsg.rsp"
+		],
+		"command": "HASH_INIT",
+		"algo": "SHA384",
+		"context_id": 4,
+		"depends": 17
+	},
+	"subtest 19": {
+		"description": [
+			"SHA384",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA384LongMsg.rsp"
+		],
+		"command": "HASH_UPDATE",
+		"input": [
+			"62c6a169b9be02b3d7b471a964fc0bcc",
+			"72b480d26aecb2ed460b7f50016ddaf0",
+			"4c51218783f3aadfdff5a04ded030d7b",
+			"3fb7376b61ba30b90e2da921a4470740",
+			"d63fb99fa16cc8ed81abaf8ce4016e50",
+			"df81da832070372c24a80890aa3a26fa",
+			"675710b8fb718266249d496f313c55d0",
+			"bada101f8f56eeccee4345a8f98f60a3",
+			"6662cfda794900d12f9414fcbdfdeb85",
+			"388a814996b47e24d5c8086e7a8edcc5",
+			"3d299d0d033e6bb60c58b83d6e8b57f6",
+			"c258d6081dd10eb942fdf8ec157ec3e7",
+			"5371235a8196eb9d22b1de3a2d30c2ab",
+			"be0db7650cf6c7159bacbe29b3a93c92"
+		],
+		"context_id": 4,
+		"depends": 18
+	},
+	"subtest 20": {
+		"description": [
+			"SHA384",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA384LongMsg.rsp"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHA384",
+		"input": [
+			"100508"
+		],
+		"digest": [
+			"0730e184e7795575569f87030260bb8e",
+			"54498e0e5d096b18285e988d245b6f34",
+			"86d1f2447d5f85bcbe59d5689fc49425"
+		],
+		"context_id": 4,
+		"depends": 18
+	},
+	"subtest 21": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 5
+	},
+	"subtest 22": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
+		"command": "HASH_INIT",
+		"algo": "SHA512",
+		"context_id": 5,
+		"depends": 21
+	},
+	"subtest 23": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
+		"command": "HASH_UPDATE",
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba"
+		],
+		"context_id": 5,
+		"depends": 22
+	},
+	"subtest 24": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHA512",
+		"input": [
+			"a4f7bb"
+		],
+		"digest": [
+			"a9db490c708cc72548d78635aa7da79b",
+			"b253f945d710e5cb677a474efc7c65a2",
+			"aab45bc7ca1113c8ce0f3c32e1399de9",
+			"c459535e8816521ab714b2a6cd200525"
+		],
+		"context_id": 5,
+		"depends": 22
+	},
+	"subtest 25": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 6
+	},
+	"subtest 26": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
+		"command": "HASH_INIT",
+		"algo": "SHA512",
+		"context_id": 6,
+		"depends": 25
+	},
+	"subtest 27": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
+		"command": "HASH_UPDATE",
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba"
+		],
+		"context_id": 6,
+		"depends": 26
+	},
+	"subtest 28": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHA512",
+		"input": [
+			"a4f7bb"
+		],
+		"digest": 63,
+		"context_id": 6,
+		"depends": 26,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 29": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHA512",
+		"input": [
+			"a4f7bb"
+		],
+		"digest": 65,
+		"context_id": 6,
+		"depends": 26
+	}
+}

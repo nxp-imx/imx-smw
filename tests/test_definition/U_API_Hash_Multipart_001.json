@@ -1,0 +1,20 @@
+{
+	"subtest 1": {
+		"command": "HASH_INIT",
+		"test_error": "ARGS_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"description": "Version not supported",
+		"command": "HASH_INIT",
+		"version": 255,
+		"algo": "SHA512",
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"description": "Algo is undefined",
+		"command": "HASH_INIT",
+		"algo": "UNDEFINED",
+		"result": "SMW_STATUS_UNKNOWN_ALGO_NAME"
+	}
+}

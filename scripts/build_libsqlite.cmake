@@ -91,7 +91,7 @@ endif()
 
 message(STATUS "Building ${SQLite3_AR_DIR}")
 set(SQLite3_MAKE_ARGS clean all install)
-execute_process(COMMAND make ${SQLite3_MAKE_ARGS} CFLAGS="-DUSE_PREAD -DSQLITE_ENABLE_COLUMN_METADATA"
+execute_process(COMMAND make ${SQLite3_MAKE_ARGS} CFLAGS="-DSQLITE_ENABLE_COLUMN_METADATA"
                 WORKING_DIRECTORY ${SQLite3_SRC}
                 RESULT_VARIABLE res)
 

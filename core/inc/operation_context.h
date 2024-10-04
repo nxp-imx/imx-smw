@@ -81,7 +81,7 @@ void smw_crypto_copy_ctx_members(struct smw_op_context *dst_context,
 
 /**
  * smw_utils_free_context() - Free resources allocated to operation context
- * @args: Pointer to operation context argument structure
+ * @op_context: Pointer to operation context argument structure
  *
  * This function releases all the memory allocated to operation context based on
  * the internal context operation state.
@@ -95,11 +95,11 @@ void smw_crypto_copy_ctx_members(struct smw_op_context *dst_context,
  * SMW_STATUS_INVALID_PARAM            - Invalid argument parameter
  * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Operation not supported
  */
-int smw_utils_free_context(struct smw_op_context **args);
+int smw_utils_free_context(struct smw_op_context **op_context);
 
 /**
  * smw_utils_cancel_operation() - Cancel multi-part operation and free resources
- * @args: Pointer to operation context argument structure
+ * @op_context: Pointer to operation context argument structure
  *
  * This function cancels the on-going multi-part operation. Additionally, it
  * releases all the memory allocated to operation context based on the internal
@@ -114,6 +114,6 @@ int smw_utils_free_context(struct smw_op_context **args);
  * SMW_STATUS_INVALID_PARAM            - Invalid argument parameter
  * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Operation not supported
  */
-int smw_utils_cancel_operation(struct smw_op_context **args);
+int smw_utils_cancel_operation(struct smw_op_context **op_context);
 
 #endif /* __OPERATION_CONTEXT_H__ */

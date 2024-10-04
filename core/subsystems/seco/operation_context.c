@@ -19,9 +19,9 @@ static int copy_context(struct smw_op_context *src_ctx,
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-static void free_context(struct smw_op_context **args)
+static void free_context(struct smw_op_context *ctx)
 {
-	(void)args;
+	(void)ctx;
 }
 
 /* ELE context operations structure */

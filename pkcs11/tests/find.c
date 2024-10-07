@@ -358,7 +358,7 @@ static int find_all_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE_PTR sess,
 			goto end;
 
 		if (nb_match == 2) {
-			if (ADD_OVERFLOW(ARRAY_SIZE(hkeys_match), nb_keys_match,
+			if (SUB_OVERFLOW(ARRAY_SIZE(hkeys_match), nb_keys_match,
 					 &nb_max_obj))
 				goto end;
 

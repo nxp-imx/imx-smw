@@ -65,6 +65,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### PKCS#11 Library - _version 4.1_
 
+* Add Linux pthread mutex callbacks if none given by the application.
+
 #### PKCS#11 Tests - _version 4.1_
 
 ---

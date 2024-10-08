@@ -21,7 +21,7 @@ option(PKCS11_MULTI_THREAD "PKCS11 Require Multiple Thread support")
 message(STATUS "    Require Multiple Thread support: ${PKCS11_MULTI_THREAD}")
 option(PKCS11_OS_THREAD_SUPPORT "PKCS11 Use OS Thread primitives")
 message(STATUS "    Use OS Thread primitives: ${PKCS11_OS_THREAD_SUPPORT}")
-option(PKCS11_OS_MUTEX_SUPPORT "PKCS11 Use OS Mutex primitives")
+option(PKCS11_OS_MUTEX_SUPPORT "PKCS11 Use OS Mutex primitives" ON)
 message(STATUS "    Use OS Mutex primitives: ${PKCS11_OS_MUTEX_SUPPORT}")
 
 add_subdirectory(src)

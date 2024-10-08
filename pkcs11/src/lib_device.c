@@ -16,6 +16,44 @@
 #include "trace.h"
 
 /**
+ * init_token() - Initialize internal token structure
+ * @dev: Reference to the slot's device objects
+ * @label: Token label
+ * @label_len: Label length in bytes
+ *
+ * return:
+ * CKR_GENERAL_ERROR             - General error
+ * CKR_OK                        - Success
+ * other mutex error.
+ */
+static CK_RV init_token(struct libdevice *dev, const char *label,
+			size_t label_len)
+{
+	memset(dev->token.label, ' ', sizeof(dev->token.label));
+	memcpy(dev->token.label, label,
+	       MIN(sizeof(dev->token.label), label_len));
+
+	/*
+	 * Initialize the Token counter and flags
+	 */
+	dev->token.ro_session_count = 0;
+	dev->token.rw_session_count = 0;
+
+	dev->login_as = NO_LOGIN;
+
+	/*
+	 * Initializze the R/W and Read Only Sessions list
+	 */
+	LIST_INIT(&dev->rw_sessions);
+	LIST_INIT(&dev->ro_sessions);
+
+	/*
+	 * Initialize the token objects list
+	 */
+	return LLIST_INIT(&dev->objects);
+}
+
+/**
  * clean_token() - Clean the token
  * @device: reference to the slot's device objects
  * @slotid: Token ID
@@ -76,6 +114,12 @@ static void init_device_info(struct libdevice *device,
 	device->token.free_pub_mem = CK_UNAVAILABLE_INFORMATION;
 	device->token.total_priv_mem = CK_UNAVAILABLE_INFORMATION;
 	device->token.free_priv_mem = CK_UNAVAILABLE_INFORMATION;
+
+	if (device->token.flags & CKF_TOKEN_INITIALIZED) {
+		if (init_token(device, devinfo->label_token,
+			       strlen(devinfo->label_token)) != CKR_OK)
+			CLEAR_BITS(device->token.flags, CKF_TOKEN_INITIALIZED);
+	}
 }
 
 CK_RV libdev_get_slotdev(struct libdevice **dev, CK_SLOT_ID slotid)
@@ -311,29 +355,7 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = libdev_mechanisms_init(slotid);
-	if (ret != CKR_OK)
-		return ret;
-
-	memcpy(dev->token.label, label, sizeof(dev->token.label));
-
-	/*
-	 * Initialize the Token counter and flags
-	 */
-	dev->token.ro_session_count = 0;
-	dev->token.rw_session_count = 0;
-	dev->login_as = NO_LOGIN;
-
-	/*
-	 * Initializze the R/W and Read Only Sessions list
-	 */
-	LIST_INIT(&dev->rw_sessions);
-	LIST_INIT(&dev->ro_sessions);
-
-	/*
-	 * Initialize the token objects list
-	 */
-	ret = LLIST_INIT(&dev->objects);
+	ret = init_token(dev, (const char *)label, sizeof(dev->token.label));
 	if (ret == CKR_OK)
 		SET_BITS(dev->token.flags, CKF_TOKEN_INITIALIZED);
 
@@ -373,6 +395,10 @@ CK_RV libdev_initialize(struct libdevice **devices)
 		}
 
 		init_device_info(&dev[slotid], devinfo);
+
+		ret = libdev_mechanisms_init(slotid);
+		if (ret != CKR_OK)
+			break;
 
 		/* Create mutexes */
 		ret = libmutex_create(&dev[slotid].mutex_session);

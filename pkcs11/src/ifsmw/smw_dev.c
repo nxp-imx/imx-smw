@@ -24,7 +24,8 @@ const struct libdev smw_info = {
 	.serial = "",
 	.version = { 0, 0 },
 	.flags_slot = 0,
-	.flags_token = 0,
+	.flags_token = CKF_TOKEN_INITIALIZED,
+	.label_token = "smw",
 };
 
 FUNC_DEV_MECH_INFO(smw_mech_info)

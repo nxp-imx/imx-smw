@@ -21,6 +21,7 @@
  * @version: Device's version
  * @flags_slot: Bits flag of the slot's harcoded capabilities
  * @flags_token: Bits flag of the token's hardcoded capabilities
+ * @label_token: Default token label
  */
 struct libdev {
 	smw_subsystem_t name;
@@ -31,6 +32,7 @@ struct libdev {
 	CK_VERSION version;
 	CK_FLAGS flags_slot;
 	CK_FLAGS flags_token;
+	const char *label_token;
 };
 
 /**

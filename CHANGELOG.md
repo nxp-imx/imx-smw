@@ -72,8 +72,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Library - _version 4.1_
 
 * Add Linux pthread mutex callbacks if none given by the application.
+* Initialize SMW's token when pkcs11 library is initialize (C_Initialize).
+* Initialize the SMW library and then fill the Mechanism list when C_Initialize
+is called.
 
 #### PKCS#11 Tests - _version 4.1_
+
+* Remove the C_InitToken calls every time session is opened.
 
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**

@@ -22,7 +22,8 @@ const struct libdev optee_info = {
 	.serial = "",
 	.version = { 3, 7 },
 	.flags_slot = 0,
-	.flags_token = 0,
+	.flags_token = CKF_TOKEN_INITIALIZED,
+	.label_token = "smw-tee",
 };
 
 FUNC_DEV_MECH_INFO(optee_mech_info)

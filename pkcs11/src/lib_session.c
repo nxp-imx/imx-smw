@@ -228,6 +228,10 @@ CK_RV libsess_close(CK_SESSION_HANDLE hsession)
 	else
 		ret = close_ro_session(dev, sess);
 
+	/* If no more session opened, reset login state */
+	if (!dev->token.rw_session_count && !dev->token.ro_session_count)
+		dev->login_as = NO_LOGIN;
+
 end:
 	/* Unlock session mutex */
 	libmutex_unlock(dev->mutex_session);
@@ -279,6 +283,8 @@ CK_RV libsess_close_all(CK_SLOT_ID slotid)
 			sess = next;
 		}
 	}
+
+	dev->login_as = NO_LOGIN;
 
 end:
 	/* Unlock session mutex */

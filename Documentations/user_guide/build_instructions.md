@@ -622,8 +622,8 @@ The default option value is in **bold**.
   <td>Library multi-threading is supported. Default is OFF (disable).</td>
 </tr>
 <tr>
-  <td>-DPKCS11_OS_MUTEX_SUPPORT=[ON|<b>OFF</b>]</td>
-  <td>Library use OS Thread primitives. Default is OFF (disable).</td>
+  <td>-DPKCS11_OS_MUTEX_SUPPORT=[<b>ON</b>|OFF]</td>
+  <td>Library use OS Thread primitives. Default is ON (enable).</td>
 </tr>
 <tr>
   <td>-DPKCS11_OS_TRHEAD_SUPPORT=[ON|<b>OFF</b>]</td>

@@ -783,13 +783,13 @@ void tests_pkcs11_slot_token(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (get_slotinfo(pfunc) == TEST_FAIL)
 		goto end;
 
+	if (get_mechanisms(pfunc) == TEST_FAIL)
+		goto end;
+
 	if (init_token(pfunc) == TEST_FAIL)
 		goto end;
 
 	if (get_tokeninfo(pfunc) == TEST_FAIL)
-		goto end;
-
-	if (get_mechanisms(pfunc) == TEST_FAIL)
 		goto end;
 
 	status = get_mechanismsinfo(pfunc);

@@ -110,7 +110,7 @@ static int open_session_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 
 		for (idx_p = 0; idx_p < nb_slots_present; idx_p++) {
 			if (slots_present[idx_p] == slots[idx]) {
-				exp_ret = CKR_TOKEN_NOT_RECOGNIZED;
+				exp_ret = CKR_OK;
 				break;
 			}
 		}
@@ -120,6 +120,9 @@ static int open_session_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 							      "Present");
 		ret = pfunc->C_OpenSession(slots[idx], CKF_SERIAL_SESSION,
 					   NULL_PTR, NULL_PTR, &sess);
+
+		if (ret == CKR_OK)
+			pfunc->C_CloseSession(sess);
 
 		if (CHECK_CK_RV(exp_ret, "C_OpenSession"))
 			goto end;
@@ -773,9 +776,9 @@ static int open_session_ro_so_login(CK_FUNCTION_LIST_PTR pfunc)
 				   "Bad Session flags expected %lu",
 				   CKF_SERIAL_SESSION | CKF_RW_SESSION))
 			goto end;
-		if (CHECK_EXPECTED(info.state == CKS_RW_SO_FUNCTIONS,
+		if (CHECK_EXPECTED(info.state == CKS_RW_PUBLIC_SESSION,
 				   "Bad Session state expected %lu",
-				   CKS_RW_SO_FUNCTIONS))
+				   CKS_RW_PUBLIC_SESSION))
 			goto end;
 
 		TEST_OUT("Close Session R/O #%lu\n", sess[0]);

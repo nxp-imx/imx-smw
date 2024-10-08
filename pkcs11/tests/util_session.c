@@ -115,7 +115,6 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	CK_RV ret = CKR_OK;
 	CK_ULONG nb_slots = 0;
 	CK_SLOT_ID_PTR slots = NULL_PTR;
-	CK_UTF8CHAR label[32] = { 0 };
 	const char *slot_label = NULL;
 
 	TEST_OUT("Get Nb slots present\n");
@@ -140,13 +139,6 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	}
 
 	if (CHECK_EXPECTED(slot_label, "Slot id %lu not present", p11_slot))
-		goto end;
-
-	memset(label, ' ', sizeof(label));
-	memcpy(label, slot_label, strlen(slot_label));
-
-	ret = pfunc->C_InitToken(p11_slot, NULL_PTR, 0, label);
-	if (CHECK_CK_RV(CKR_OK, "C_InitToken"))
 		goto end;
 
 	TEST_OUT("-- Process #%u Open Session on Slot %lu [%s] --\n", getpid(),

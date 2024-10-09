@@ -20,64 +20,6 @@
 #include "args_attr.h"
 #include "ifsmw_utils.h"
 
-#define DATA_LABEL(name)                                                       \
-	{                                                                      \
-		.string = (CK_UTF8CHAR *)name, .length = sizeof(name) - 1,     \
-	}
-
-static int set_tee_info(struct libobj_obj *obj)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	struct libobj_data *data = get_subobj_from(obj, storage);
-
-	DBG_TRACE("Set TEE info (%d)", SMW_SUBSYSTEM_NAME_TEE);
-
-	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_TEE,
-					     data->value.array,
-					     data->value.number);
-
-	return smw_status_to_ck_rv(status);
-}
-
-static int set_seco_info(struct libobj_obj *obj)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	struct libobj_data *data = get_subobj_from(obj, storage);
-
-	DBG_TRACE("Set SECO info (%d)", SMW_SUBSYSTEM_NAME_SECO);
-
-	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_SECO,
-					     data->value.array,
-					     data->value.number);
-
-	return smw_status_to_ck_rv(status);
-}
-
-static int set_ele_info(struct libobj_obj *obj)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	struct libobj_data *data = get_subobj_from(obj, storage);
-
-	DBG_TRACE("Set ELE info (%d)", SMW_SUBSYSTEM_NAME_ELE);
-
-	status = smw_osal_set_subsystem_info(SMW_SUBSYSTEM_NAME_ELE,
-					     data->value.array,
-					     data->value.number);
-
-	return smw_status_to_ck_rv(status);
-}
-
-static int set_obj_db(struct libobj_obj *obj)
-{
-	enum smw_status_code status = SMW_STATUS_OK;
-	struct libobj_data *data = get_subobj_from(obj, storage);
-
-	status = smw_osal_open_obj_db((const char *)data->value.array,
-				      data->value.number);
-
-	return smw_status_to_ck_rv(status);
-}
-
 static int set_data_identifier(unsigned int *identifier,
 			       const struct libobj_obj *obj)
 {
@@ -219,42 +161,15 @@ static int delete_data(struct libobj_obj *obj)
 	return smw_status_to_ck_rv(status);
 }
 
-static const struct data_op {
-	struct librfc2279 label;
-	int (*set)(struct libobj_obj *obj);
-} data_op[] = {
-	{ DATA_LABEL("TEE Info"), .set = &set_tee_info },
-	{ DATA_LABEL("SECO Info"), .set = &set_seco_info },
-	{ DATA_LABEL("ELE Info"), .set = &set_ele_info },
-	{ DATA_LABEL("Object DB"), .set = &set_obj_db },
-};
-
-struct librfc2279 data_label = DATA_LABEL("Data");
-
 CK_RV libdev_create_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 {
 	struct libobj_storage *objstorage = NULL;
-	const struct data_op *op = data_op;
-	size_t index = 0;
 
 	objstorage = get_object_from(obj);
 	if (!objstorage)
 		return CKR_ARGUMENTS_BAD;
 
-	if (objstorage->label.length == data_label.length &&
-	    !memcmp(objstorage->label.string, data_label.string,
-		    data_label.length))
-		return store_data(hsession, obj);
-
-	for (; index < ARRAY_SIZE(data_op); index++, op++) {
-		if (objstorage->label.length == op->label.length &&
-		    !memcmp(objstorage->label.string, op->label.string,
-			    op->label.length)) {
-			return op->set(obj);
-		}
-	}
-
-	return CKR_FUNCTION_FAILED;
+	return store_data(hsession, obj);
 }
 
 CK_RV libdev_retrieve_data(const struct libobj_obj *obj)
@@ -265,12 +180,7 @@ CK_RV libdev_retrieve_data(const struct libobj_obj *obj)
 	if (!objstorage)
 		return CKR_ARGUMENTS_BAD;
 
-	if (objstorage->label.length == data_label.length &&
-	    !memcmp(objstorage->label.string, data_label.string,
-		    data_label.length))
-		return retrieve_data(obj);
-
-	return CKR_FUNCTION_FAILED;
+	return retrieve_data(obj);
 }
 
 CK_RV libdev_delete_data(struct libobj_obj *obj)
@@ -281,10 +191,5 @@ CK_RV libdev_delete_data(struct libobj_obj *obj)
 	if (!objstorage)
 		return CKR_ARGUMENTS_BAD;
 
-	if (objstorage->label.length == data_label.length &&
-	    !memcmp(objstorage->label.string, data_label.string,
-		    data_label.length))
-		return delete_data(obj);
-
-	return CKR_FUNCTION_FAILED;
+	return delete_data(obj);
 }

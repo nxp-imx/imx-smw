@@ -583,6 +583,7 @@ void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc)
 	(void)lib_hdl;
 
 	int status = TEST_FAIL;
+	unsigned int i = 0;
 
 	CK_RV ret = CKR_OK;
 	CK_OBJECT_HANDLE hkeys[NB_MAX_KEY] = { 0 };
@@ -640,6 +641,15 @@ void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc)
 	status = find_while_active(pfunc, &sess, hkeys);
 
 end:
+	for (; i < NB_MAX_KEY; i++) {
+		if (hkeys[i] != CK_INVALID_HANDLE) {
+			ret = ((CK_FUNCTION_LIST_PTR)pfunc)
+				      ->C_DestroyObject(sess, hkeys[i]);
+			if (ret != CKR_OK)
+				break;
+		}
+	}
+
 	util_close_session(pfunc, &sess);
 
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

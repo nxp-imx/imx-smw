@@ -173,6 +173,11 @@ static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 			goto end;
 
 		TEST_OUT("RSA Key private created #%lu\n", hkey);
+
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
 	} else {
 		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
 			goto end;
@@ -254,6 +259,16 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	TEST_OUT("RSA Keypair generated pub=#%lu priv=#%lu\n", hpubkey,
 		 hprivkey);
 
+	TEST_OUT("Key Destroy #%lu\n", hpubkey);
+	ret = pfunc->C_DestroyObject(sess, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hprivkey);
+	ret = pfunc->C_DestroyObject(sess, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
 	status = TEST_PASS;
 
 end:
@@ -332,6 +347,16 @@ static int object_rsa_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	TEST_OUT("Generate RSA %sKeypair with only verify usage\n",
 		 token ? "Token " : "");
 
+	TEST_OUT("Key Destroy #%lu\n", hpubkey);
+	ret = pfunc->C_DestroyObject(sess, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hprivkey);
+	ret = pfunc->C_DestroyObject(sess, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
 	bsign = CK_FALSE;
 	bverify = CK_TRUE;
 
@@ -341,6 +366,16 @@ static int object_rsa_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 				       &hprivkey);
 
 	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hpubkey);
+	ret = pfunc->C_DestroyObject(sess, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hprivkey);
+	ret = pfunc->C_DestroyObject(sess, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 		goto end;
 
 	status = TEST_PASS;

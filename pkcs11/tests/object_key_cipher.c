@@ -48,6 +48,11 @@ static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 			goto end;
 
 		TEST_OUT("Key secret created #%lu\n", hkey);
+
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
 	} else {
 		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_CreateObject"))
 			goto end;
@@ -101,6 +106,11 @@ static int object_generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 			goto end;
 
 		TEST_OUT("Key generated #%lu\n", hkey);
+
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
 	} else {
 		if (CHECK_CK_RV(CKR_DEVICE_ERROR, "C_GenerateKey"))
 			goto end;
@@ -236,8 +246,13 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 		goto end;
 
-	if (CHECK_EXPECTED(bvalue, "Got key sensitive %d exptected %d", bvalue,
+	if (CHECK_EXPECTED(bvalue, "Got key sensitive %d expected %d", bvalue,
 			   CK_TRUE))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hkey);
+	ret = pfunc->C_DestroyObject(sess, hkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 		goto end;
 
 	status = TEST_PASS;

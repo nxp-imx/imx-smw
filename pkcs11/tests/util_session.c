@@ -8,104 +8,6 @@
 
 #include "util_session.h"
 
-static struct se_info {
-	unsigned int storage_id;
-	unsigned int storage_nonce;
-	unsigned short storage_replay;
-} se_default_info = { 0x504b3131, 0x444546, 1000 }; // PK11, DEF
-
-static CK_RV create_seco_info(CK_SESSION_HANDLE_PTR sess,
-			      CK_FUNCTION_LIST_PTR pfunc)
-{
-	CK_RV ret = CKR_OK;
-	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
-	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = CK_TRUE;
-	CK_UTF8CHAR label[] = "SECO Info";
-
-	CK_ATTRIBUTE data_template[] = {
-		{ CKA_CLASS, &data_class, sizeof(data_class) },
-		{ CKA_LABEL, &label, sizeof(label) - 1 },
-		{ CKA_VALUE, &se_default_info, sizeof(struct se_info) },
-		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
-	};
-
-	TEST_OUT("Create %sSECO Info (Storage ID=0x%x) data object\n",
-		 token ? "Token " : "", se_default_info.storage_id);
-
-	ret = pfunc->C_CreateObject(*sess, data_template,
-				    ARRAY_SIZE(data_template), &hdata);
-	if (!CHECK_EXPECTED(ret == CKR_OK || ret == CKR_FUNCTION_FAILED,
-			    "C_CreateObject returned 0x%lx", ret)) {
-		TEST_OUT("SECO Info created #%lu\n", hdata);
-		ret = CKR_OK;
-	}
-
-	return ret;
-}
-
-static CK_RV create_ele_info(CK_SESSION_HANDLE_PTR sess,
-			     CK_FUNCTION_LIST_PTR pfunc)
-{
-	CK_RV ret = CKR_OK;
-	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
-	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = CK_TRUE;
-	CK_UTF8CHAR label[] = "ELE Info";
-
-	CK_ATTRIBUTE data_template[] = {
-		{ CKA_CLASS, &data_class, sizeof(data_class) },
-		{ CKA_LABEL, &label, sizeof(label) - 1 },
-		{ CKA_VALUE, &se_default_info, sizeof(struct se_info) },
-		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
-	};
-
-	TEST_OUT("Create %sELE Info (Storage ID=0x%x) data object\n",
-		 token ? "Token " : "", se_default_info.storage_id);
-
-	ret = pfunc->C_CreateObject(*sess, data_template,
-				    ARRAY_SIZE(data_template), &hdata);
-	if (!CHECK_EXPECTED(ret == CKR_OK || ret == CKR_FUNCTION_FAILED,
-			    "C_CreateObject returned 0x%lx", ret)) {
-		TEST_OUT("ELE Info created #%lu\n", hdata);
-		ret = CKR_OK;
-	}
-
-	return ret;
-}
-
-static CK_RV create_obj_db(CK_SESSION_HANDLE_PTR sess,
-			   CK_FUNCTION_LIST_PTR pfunc)
-{
-	CK_RV ret = CKR_OK;
-	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
-	CK_OBJECT_CLASS data_class = CKO_DATA;
-	CK_BBOOL token = CK_TRUE;
-	CK_UTF8CHAR label[] = "Object DB";
-	CK_UTF8CHAR app[] = "Test PKCS11";
-	CK_BYTE obj_db_file[] = "/var/tmp/obj_db_pkcs11_test.dat";
-
-	CK_ATTRIBUTE data_template[] = {
-		{ CKA_CLASS, &data_class, sizeof(data_class) },
-		{ CKA_APPLICATION, &app, sizeof(app) },
-		{ CKA_LABEL, &label, sizeof(label) - 1 },
-		{ CKA_VALUE, &obj_db_file, sizeof(obj_db_file) },
-		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
-	};
-
-	TEST_OUT("Create %sobject Database\n", token ? "Token " : "");
-
-	ret = pfunc->C_CreateObject(*sess, data_template,
-				    ARRAY_SIZE(data_template), &hdata);
-	if (!CHECK_EXPECTED(ret == CKR_OK, "C_CreateObject returned 0x%lx",
-			    ret)) {
-		TEST_OUT("Object Database created #%lu\n", hdata);
-		ret = CKR_OK;
-	}
-
-	return ret;
-}
-
 static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 			CK_NOTIFY callback, CK_VOID_PTR cb_args,
 			CK_FLAGS sess_flags, CK_SESSION_HANDLE_PTR sess)
@@ -157,19 +59,6 @@ static int open_session(CK_FUNCTION_LIST_PTR pfunc, CK_SLOT_ID p11_slot,
 	if (CHECK_CK_RV(CKR_OK, "C_OpenSession"))
 		goto end;
 	TEST_OUT("Opened Session #%lu\n", *sess);
-
-	TEST_OUT("Create subsystems configuration Data objects\n");
-	ret = create_seco_info(sess, pfunc);
-	if (CHECK_CK_RV(CKR_OK, "create_seco_info"))
-		goto end;
-
-	ret = create_ele_info(sess, pfunc);
-	if (CHECK_CK_RV(CKR_OK, "create_ele_info"))
-		goto end;
-
-	ret = create_obj_db(sess, pfunc);
-	if (CHECK_CK_RV(CKR_OK, "create_obj_db"))
-		goto end;
 
 	status = TEST_PASS;
 end:

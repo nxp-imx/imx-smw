@@ -21,7 +21,6 @@ static int data_storage_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_CLASS data_class = CKO_DATA;
 	CK_BBOOL token = CK_TRUE;
 	CK_UTF8CHAR label[] = "Data";
-	CK_UTF8CHAR invalid_label[] = "Invalid label";
 	CK_BYTE data[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 	CK_BYTE retrieved_data[] = { 0x00, 0x00, 0x00, 0x00, 0x00 };
 	CK_ATTRIBUTE data_template[] = {
@@ -44,18 +43,7 @@ static int data_storage_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_SESSION_HANDLE_INVALID, "C_CreateObject"))
 		goto end;
 
-	TEST_OUT("Check invalid label\n");
-	data_template[1].pValue = invalid_label;
-	data_template[1].ulValueLen = sizeof(invalid_label) - 1;
-
-	ret = pfunc->C_CreateObject(sess, data_template,
-				    ARRAY_SIZE(data_template), &hdata);
-	if (CHECK_CK_RV(CKR_FUNCTION_FAILED, "C_CreateObject"))
-		goto end;
-
 	TEST_OUT("Check data pointer NULL\n");
-	data_template[1].pValue = label;
-	data_template[1].ulValueLen = sizeof(label) - 1;
 	data_template[2].pValue = NULL_PTR;
 
 	ret = pfunc->C_CreateObject(sess, data_template,

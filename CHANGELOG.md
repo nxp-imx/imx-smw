@@ -75,10 +75,15 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Initialize SMW's token when pkcs11 library is initialize (C_Initialize).
 * Initialize the SMW library and then fill the Mechanism list when C_Initialize
 is called.
+* Fix data object label.
+* Remove the data hardcoded label used to configure SMW library, use the
+  system configuration file (smw.conf) instead.
 
 #### PKCS#11 Tests - _version 4.1_
 
 * Remove the C_InitToken calls every time session is opened.
+* Add SMW's system configuration in the ctest test script.
+* Add tests for single-part AEAD mechanisms.
 
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**
@@ -154,7 +159,6 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Validation of message-based encrypt/decrypt PKCS#11 APIs.
 * Enable validation on Secure Enclave subsystem prior to TEE subsystem.
-* Add tests for single-part AEAD mechanisms.
 
 ---
 ### <a id ="rel_3_0"></a></br>**Release 3.0**

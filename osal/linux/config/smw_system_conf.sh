@@ -19,7 +19,7 @@ find_in_file()
     if [ "${index}" -gt "${start_at}" ]; then
       case $line in
         \[*)
-          line=$(echo "${line}" | sed -e "s/.*/\L&/")
+          line=$(echo "${line}" | awk '{print tolower($0)}')
 
           if [ "${line}" = "${pattern}" ]; then
             found=1
@@ -76,8 +76,7 @@ find_replace_entry()
       line_nb="${section_at}"
     fi
 
-    line_nb=$((line_nb+1))
-    sed -i "${line_nb}i ${entry}=${value}" "${filename}"
+    sed -i -e "${line_nb}a ${entry}=${value}" "${filename}"
   else
     value=$(echo "${value}" | sed -e "s/\//\\\\\//g")
     sed -i -e "${line_nb} s/.*/${entry}=${value}/" "${filename}"
@@ -119,8 +118,8 @@ usage()
   printf "\n"
 
   printf "%s in=[path/to/file] out=[path/to/file] conf=[section] ...\n" "${script_name}"
-  printf "  --help, -h: Display this help"
-  printf "  --trace   : Trace script"
+  printf "  --help, -h: Display this help\n"
+  printf "  --trace   : Trace script\n"
   printf "  <in>      : Mandatory input file (path absolue or relative to %s)\n" "$PWD"
   printf "  <out>     : [optional] output file (path absolue or relative to %s)\n" "$PWD"
   printf "  <conf>    : Mandatory section to fill as following detailled.\n"
@@ -204,7 +203,7 @@ do
 
       conf=*)
         opt_section="${arg#*=}"
-        opt_section=$(echo "${opt_section}" | sed -e "s/.*/\L&/")
+        opt_section=$(echo "${opt_section}" | awk '{print tolower($0)}')
         ;;
 
       id=*)

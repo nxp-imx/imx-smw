@@ -16,23 +16,38 @@
 #include "smw_keymgr.h"
 #include "smw_storage.h"
 
+/**
+ * enum obj_attribute_tag - OSAL object attribute tag
+ *
+ * @TAG_NONE: Invalid attribute tag.
+ * @TAG_DATABASE_ID: Unique object id in DB table
+ * @TAG_SUBSYSTEM_ID: ID return by the subsystem
+ * @TAG_USER_ID: User define ID
+ * @TAG_SUBSYSTEM_NAME: SMW subsystem name
+ * @TAG_OBJECT_TYPE: SMW object type
+ * @TAG_SIZE: SMW object size
+ * @TAG_ATTRIBUTES: SMW object attributes
+ * @TAG_TYPE: SMW key type name
+ * @TAG_PRIVACY: SMW key privacy name
+ * @TAG_STORAGE_ID: SMW key storage id
+ * @TAG_GROUP: SMW key group
+ * @TAG_LABEL: PKCS11 storage object label
+ */
+/* Attribute tag */
 enum obj_attribute_tag {
-	TAG_NONE,
-	TAG_ID,
-	TAG_PERSISTENCE_ID,
-	TAG_SLOT_ID,
+	TAG_NONE = 0,
+	TAG_DATABASE_ID,
 	TAG_SUBSYSTEM_ID,
+	TAG_USER_ID,
 	TAG_SUBSYSTEM_NAME,
-	TAG_SUBSYSTEM_BLOB,
-	TAG_TYPE,
-	TAG_PRIVACY,
+	TAG_OBJECT_TYPE, /* 5 */
 	TAG_SIZE,
 	TAG_ATTRIBUTES,
-	TAG_STORAGE_ID,
+	TAG_TYPE,
+	TAG_PRIVACY,
+	TAG_STORAGE_ID, /* 10 */
 	TAG_GROUP,
-	TAG_CLASS,
 	TAG_LABEL,
-	TAG_PIN_SO,
 };
 
 #define OBJECT_DB_TABLE_NAME "OBJECTS"
@@ -261,7 +276,7 @@ static int sql_print_insert(struct osal_obj *obj, char *sql, size_t *length)
 	if (sql_print(sql, length, insert, OBJECT_DB_TABLE_NAME))
 		goto end;
 
-	if (sql_print(sql, length, "\"0x%X\", ", TAG_PERSISTENCE_ID))
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_DATABASE_ID))
 		goto end;
 
 	if (sql_print(sql, length, "\"0x%X\", ", TAG_ATTRIBUTES))
@@ -270,7 +285,7 @@ static int sql_print_insert(struct osal_obj *obj, char *sql, size_t *length)
 	if (sql_print(sql, length, "\"0x%X\", ", TAG_SUBSYSTEM_NAME))
 		goto end;
 
-	if (sql_print(sql, length, "\"0x%X\", ", TAG_CLASS))
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_OBJECT_TYPE))
 		goto end;
 
 	if (sql_print(sql, length, "\"0x%X\", ", TAG_GROUP))
@@ -279,13 +294,23 @@ static int sql_print_insert(struct osal_obj *obj, char *sql, size_t *length)
 	if (sql_print(sql, length, "\"0x%X\", ", TAG_LABEL))
 		goto end;
 
-	if (sql_print(sql, length, "\"0x%X\", ", TAG_ID))
+	if (obj->descriptor->user_id)
+		if (sql_print(sql, length, "\"0x%X\", ", TAG_USER_ID))
+			goto end;
+
+	if (sql_print(sql, length, "\"0x%X\", ", TAG_SUBSYSTEM_ID))
 		goto end;
 
-	if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
-	    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+	switch (obj->descriptor->type) {
+	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
 		if (sql_print(sql, length, "\"0x%X\", ", TAG_TYPE))
 			goto end;
+		break;
+	default:
+		break;
+	}
 
 	if (sql_print(sql, length, "\"0x%X\"", TAG_SIZE))
 		goto end;
@@ -313,11 +338,16 @@ static int sql_print_insert(struct osal_obj *obj, char *sql, size_t *length)
 	if (sql_print(sql, length, "%d, ", obj->descriptor->group))
 		goto end;
 
-	if (sql_print(sql, length, "\"%s\", ", obj->descriptor->label))
+	if (sql_print(sql, length, "'%s', ", obj->descriptor->label))
 		goto end;
+
+	if (obj->descriptor->user_id)
+		if (sql_print(sql, length, "'%s', ", obj->descriptor->user_id))
+			goto end;
 
 	switch (obj->descriptor->type) {
 	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
 	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
 		if (sql_print(sql, length, "%d, ", obj->descriptor->key.id))
 			goto end;
@@ -376,7 +406,7 @@ static int sql_print_update(struct osal_obj *obj, char *sql, size_t *length)
 		      obj->descriptor->subsystem_name))
 		goto end;
 
-	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_CLASS,
+	if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_OBJECT_TYPE,
 		      obj->descriptor->type))
 		goto end;
 
@@ -385,15 +415,22 @@ static int sql_print_update(struct osal_obj *obj, char *sql, size_t *length)
 		goto end;
 
 	if (obj->descriptor->label) {
-		if (sql_print(sql, length, "\"0x%X\" = \"%s\", ", TAG_LABEL,
+		if (sql_print(sql, length, "\"0x%X\" = '%s', ", TAG_LABEL,
 			      obj->descriptor->label))
+			goto end;
+	}
+
+	if (obj->descriptor->user_id) {
+		if (sql_print(sql, length, "\"0x%X\" = '%s', ", TAG_USER_ID,
+			      obj->descriptor->user_id))
 			goto end;
 	}
 
 	switch (obj->descriptor->type) {
 	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
 	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
-		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_ID,
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_SUBSYSTEM_ID,
 			      obj->descriptor->key.id))
 			goto end;
 
@@ -408,7 +445,7 @@ static int sql_print_update(struct osal_obj *obj, char *sql, size_t *length)
 		break;
 
 	case SMW_OBJECT_TYPE_NAME_DATA:
-		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_ID,
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_SUBSYSTEM_ID,
 			      obj->descriptor->data.identifier))
 			goto end;
 
@@ -425,7 +462,7 @@ static int sql_print_update(struct osal_obj *obj, char *sql, size_t *length)
 		break;
 	}
 
-	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_PERSISTENCE_ID,
+	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_DATABASE_ID,
 		      obj->id))
 		goto end;
 
@@ -445,7 +482,7 @@ static int sql_print_delete(struct osal_obj *obj, char *sql, size_t *length)
 	if (sql_print(sql, length, delete, OBJECT_DB_TABLE_NAME))
 		goto end;
 
-	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_PERSISTENCE_ID,
+	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_DATABASE_ID,
 		      obj->id))
 		goto end;
 
@@ -465,7 +502,7 @@ static int sql_print_select(struct osal_obj *obj, char *sql, size_t *length)
 	if (sql_print(sql, length, select, OBJECT_DB_TABLE_NAME))
 		goto end;
 
-	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_PERSISTENCE_ID,
+	if (sql_print(sql, length, " WHERE \"0x%X\" = %d;", TAG_DATABASE_ID,
 		      obj->id))
 		goto end;
 
@@ -492,12 +529,13 @@ static int sql_print_find(struct osal_obj *obj, char *sql, size_t *length)
 	if (sql_print(sql, length, select, OBJECT_DB_TABLE_NAME))
 		goto end;
 
-	if (descriptor->id || descriptor->type || descriptor->label)
+	if (descriptor->id || descriptor->type || descriptor->label ||
+	    descriptor->user_id)
 		if (sql_print(sql, length, " WHERE "))
 			goto end;
 
 	if (descriptor->id) {
-		if (sql_print(sql, length, "\"0x%X\" = %d", TAG_PERSISTENCE_ID,
+		if (sql_print(sql, length, "\"0x%X\" = %d", TAG_DATABASE_ID,
 			      descriptor->id))
 			goto end;
 
@@ -512,12 +550,14 @@ static int sql_print_find(struct osal_obj *obj, char *sql, size_t *length)
 			and_operator = true;
 		}
 
-		if (sql_print(sql, length, "\"0x%X\" = %d", TAG_CLASS,
+		if (sql_print(sql, length, "\"0x%X\" = %d", TAG_OBJECT_TYPE,
 			      descriptor->type))
 			goto end;
 
-		if (descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
-		    descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR) {
+		switch (obj->descriptor->type) {
+		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
 			if (descriptor->key.type_name != SMW_KEY_TYPE_NAME_NONE)
 				if (sql_print(sql, length, " AND \"0x%X\" = %d",
 					      TAG_TYPE,
@@ -532,10 +572,12 @@ static int sql_print_find(struct osal_obj *obj, char *sql, size_t *length)
 
 			if (descriptor->key.id)
 				if (sql_print(sql, length, " AND \"0x%X\" = %d",
-					      TAG_ID, descriptor->key.id))
+					      TAG_SUBSYSTEM_ID,
+					      descriptor->key.id))
 					goto end;
+			break;
 
-		} else if (descriptor->type == SMW_OBJECT_TYPE_NAME_DATA) {
+		case SMW_OBJECT_TYPE_NAME_DATA:
 			if (descriptor->data.length)
 				if (sql_print(sql, length, " AND \"0x%X\" = %d",
 					      TAG_SIZE,
@@ -544,9 +586,12 @@ static int sql_print_find(struct osal_obj *obj, char *sql, size_t *length)
 
 			if (descriptor->data.identifier)
 				if (sql_print(sql, length, " AND \"0x%X\" = %d",
-					      TAG_ID,
+					      TAG_SUBSYSTEM_ID,
 					      descriptor->data.identifier))
 					goto end;
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -554,10 +599,23 @@ static int sql_print_find(struct osal_obj *obj, char *sql, size_t *length)
 		if (and_operator) {
 			if (sql_print(sql, length, " AND "))
 				goto end;
+		} else {
+			and_operator = true;
 		}
 
-		if (sql_print(sql, length, "\"0x%X\" = %s", TAG_LABEL,
+		if (sql_print(sql, length, "\"0x%X\" = '%s'", TAG_LABEL,
 			      descriptor->label))
+			goto end;
+	}
+
+	if (descriptor->user_id) {
+		if (and_operator) {
+			if (sql_print(sql, length, " AND "))
+				goto end;
+		}
+
+		if (sql_print(sql, length, "\"0x%X\" = '%s'", TAG_USER_ID,
+			      descriptor->user_id))
 			goto end;
 	}
 
@@ -640,16 +698,17 @@ end:
 static int obj_db_create_object_table(struct obj_db *db)
 {
 	struct obj_attribute attributes[] = {
-		ATTRIBUTE(INTEGER, PRIMARY_KEY, PERSISTENCE_ID),
-		ATTRIBUTE(INTEGER, NONE, ID),
+		ATTRIBUTE(INTEGER, PRIMARY_KEY, DATABASE_ID),
+		ATTRIBUTE(INTEGER, NONE, SUBSYSTEM_ID),
+		ATTRIBUTE(TEXT, NONE, USER_ID),
 		ATTRIBUTE(INTEGER, NONE, SUBSYSTEM_NAME),
-		ATTRIBUTE(INTEGER, NONE, TYPE),
-		ATTRIBUTE(INTEGER, NONE, PRIVACY),
+		ATTRIBUTE(INTEGER, NONE, OBJECT_TYPE),
 		ATTRIBUTE(INTEGER, NONE, SIZE),
 		ATTRIBUTE(INTEGER, NONE, ATTRIBUTES),
+		ATTRIBUTE(INTEGER, NONE, TYPE),
+		ATTRIBUTE(INTEGER, NONE, PRIVACY),
 		ATTRIBUTE(INTEGER, NONE, STORAGE_ID),
 		ATTRIBUTE(INTEGER, NONE, GROUP),
-		ATTRIBUTE(INTEGER, NONE, CLASS),
 		ATTRIBUTE(TEXT, NOT_NULL, LABEL),
 	};
 	unsigned int nb_attributes = ARRAY_SIZE(attributes);
@@ -696,11 +755,11 @@ static int osal_obj_set_common_attribute(struct osal_obj *obj,
 	}
 
 	switch (attribute_tag) {
-	case TAG_CLASS:
+	case TAG_OBJECT_TYPE:
 		obj->descriptor->type = (smw_object_type_t)attribute_value;
 		break;
 
-	case TAG_PERSISTENCE_ID:
+	case TAG_DATABASE_ID:
 		obj->id = attribute_value;
 		obj->descriptor->id = attribute_value;
 		break;
@@ -711,6 +770,10 @@ static int osal_obj_set_common_attribute(struct osal_obj *obj,
 
 	case TAG_LABEL:
 		obj->descriptor->label = strdup(attribute_value_str);
+		break;
+
+	case TAG_USER_ID:
+		obj->descriptor->user_id = strdup(attribute_value_str);
 		break;
 
 	case TAG_ATTRIBUTES:
@@ -772,24 +835,27 @@ static int osal_obj_set_specific_attribute(struct osal_obj *obj,
 	switch (attribute_tag) {
 	case TAG_TYPE:
 		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_PUBLIC_KEY ||
 		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
 			obj->descriptor->key.type_name =
 				(smw_key_type_t)attribute_value;
 		break;
 
-	case TAG_ID:
+	case TAG_SUBSYSTEM_ID:
 		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_PUBLIC_KEY ||
 		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
 			obj->descriptor->key.id = attribute_value;
 		break;
 
-	case TAG_PERSISTENCE_ID:
+	case TAG_DATABASE_ID:
 		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA)
 			obj->descriptor->data.identifier = attribute_value;
 		break;
 
 	case TAG_SIZE:
 		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_PUBLIC_KEY ||
 		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
 			obj->descriptor->key.security_size = attribute_value;
 		else if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA)
@@ -1334,6 +1400,7 @@ end:
 
 int obj_db_find_next(void *find_ctx, struct osal_obj *obj)
 {
+	int ret = -1;
 	int i = 0;
 	int num_cols = 0;
 	struct op_find_context *op_ctx = find_ctx;
@@ -1342,12 +1409,12 @@ int obj_db_find_next(void *find_ctx, struct osal_obj *obj)
 	const unsigned char *column_value = NULL;
 
 	if (!op_ctx || !op_ctx->stmt || !obj)
-		return -1;
+		goto end;
 
 	stmt = op_ctx->stmt;
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
-		return -1;
+		goto end;
 
 	num_cols = sqlite3_column_count(stmt);
 
@@ -1359,7 +1426,7 @@ int obj_db_find_next(void *find_ctx, struct osal_obj *obj)
 
 		if (osal_obj_set_common_attribute(obj, column_name,
 						  column_value))
-			return -1;
+			goto end;
 	}
 
 	for (i = 0; i < num_cols; i++) {
@@ -1370,10 +1437,13 @@ int obj_db_find_next(void *find_ctx, struct osal_obj *obj)
 
 		if (osal_obj_set_specific_attribute(obj, column_name,
 						    column_value))
-			return -1;
+			goto end;
 	}
 
-	return 0;
+	ret = 0;
+
+end:
+	return ret;
 }
 
 int obj_db_find_finalize(void *find_ctx)

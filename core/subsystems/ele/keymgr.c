@@ -32,13 +32,6 @@ static unsigned int rsa_public_key_length(unsigned int security_size);
 static unsigned int rsa_modulus_length(unsigned int security_size);
 
 /*
- * OEM SRKH Key Identifier - Hardcoded value
- * This object is imported by EL2GO as RAW Type but must use the import key
- * operation.
- */
-#define ELE_OEM_SRKH_KEY_ID 0x7FFF817A
-
-/*
  * Bit mask identifing the key category, asymmetric public, keypair
  * symmetric key and raw key.
  */
@@ -981,44 +974,6 @@ end:
 	return status;
 }
 
-static int import_el2go_data(struct hdl *hdl,
-			     struct smw_keymgr_descriptor *key_desc)
-{
-	int status = SMW_STATUS_OK;
-
-	hsm_err_t err = HSM_NO_ERROR;
-
-	op_data_storage_args_t op_args = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	op_args.data_id = key_desc->identifier.id;
-	op_args.data = smw_keymgr_get_private_data(key_desc);
-	op_args.data_size = smw_keymgr_get_private_length(key_desc);
-	op_args.flags = HSM_OP_DATA_STORAGE_FLAGS_STORE |
-			HSM_OP_DATA_STORAGE_FLAGS_EL2GO;
-
-	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_data_ops()\n"
-		       "  op_data_storage_args_t\n"
-		       "    Data\n"
-		       "      - id: %d\n"
-		       "      - buffer: %p\n"
-		       "      - size: %d\n"
-		       "    flags: 0x%X\n",
-		       __func__, __LINE__, op_args.data_id, op_args.data,
-		       op_args.data_size, op_args.flags);
-
-	err = hsm_data_ops(hdl->key_store, &op_args);
-
-	SMW_DBG_PRINTF(DEBUG, "hsm_data_ops returned %d\n", err);
-
-	status = ele_convert_err(err);
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 static int import_key(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -1044,12 +999,8 @@ static int import_key(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	if (NXP_IS_EL2GO_KEY(storage_id) ||
-	    (NXP_IS_EL2GO_OBJECT(storage_id) &&
-	     key_desc->identifier.id == ELE_OEM_SRKH_KEY_ID))
-		status = import_el2go_key(hdl, key_desc);
-	else
-		status = import_el2go_data(hdl, key_desc);
+	status = import_el2go_key(hdl, key_desc);
+
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

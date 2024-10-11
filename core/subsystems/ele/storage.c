@@ -46,6 +46,10 @@ static int data_ops(struct hdl *hdl,
 	op_args.flags = store ? HSM_OP_DATA_STORAGE_FLAGS_STORE :
 				HSM_OP_DATA_STORAGE_FLAGS_RETRIEVE;
 
+	if (store &&
+	    NXP_IS_EL2GO_OBJECT(data_descriptor->data_attributes.storage_id))
+		op_args.flags |= HSM_OP_DATA_STORAGE_FLAGS_EL2GO;
+
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_data_ops() - %s\n"
 		       "  op_data_storage_args_t\n"

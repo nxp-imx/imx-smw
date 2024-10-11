@@ -16,6 +16,13 @@
 #include "exec.h"
 #include "base64.h"
 
+/*
+ * OEM SRKH Key Identifier - Hardcoded value
+ * This object is imported by EL2GO as RAW Type but must use the import key
+ * operation.
+ */
+#define ELE_OEM_SRKH_KEY_ID 0x7FFF817A
+
 static unsigned char **public_data_key_gen(struct smw_keymgr_key_ops *this)
 {
 	SMW_DBG_ASSERT(this && this->keys && this->public_data);
@@ -1412,6 +1419,53 @@ static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
 		smw_keymgr_get_key_format_name(descriptor->format_id);
 }
 
+static bool import_el2go_data(struct smw_import_key_args *args,
+			      struct smw_keymgr_descriptor *key_desc,
+			      int *status)
+{
+	bool ret = false;
+
+	struct smw_store_data_args data_args = { 0 };
+	struct smw_data_descriptor data_desc = { 0 };
+	struct smw_data_attributes data_attr = { 0 };
+	unsigned int storage_id = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args->key_attributes)
+		goto end;
+
+	storage_id = args->key_attributes->storage_id;
+
+	if (!NXP_IS_EL2GO_OBJECT(storage_id))
+		goto end;
+
+	if (NXP_IS_EL2GO_KEY(storage_id) ||
+	    (NXP_IS_EL2GO_OBJECT(storage_id) &&
+	     key_desc->identifier.id == ELE_OEM_SRKH_KEY_ID))
+		goto end;
+
+	data_args.subsystem_name = args->subsystem_name;
+	data_args.data_descriptor = &data_desc;
+
+	data_desc.identifier = key_desc->identifier.id;
+
+	data_desc.data = smw_keymgr_get_private_data(key_desc);
+	data_desc.length = smw_keymgr_get_private_length(key_desc);
+
+	data_desc.data_attributes = &data_attr;
+	data_attr.attributes = args->key_attributes->attributes;
+	data_attr.storage_id = args->key_attributes->storage_id;
+
+	*status = smw_store_data(&data_args);
+	ret = true;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s (%s) returned %d\n", __func__,
+		       ret ? "True" : "False", *status);
+	return ret;
+}
+
 int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 			      enum smw_keymgr_privacy_id *privacy_id)
 {
@@ -1581,6 +1635,9 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 
 	if (key_attrs)
 		key_desc->identifier.attributes = key_attrs->attributes;
+
+	if (import_el2go_data(args, key_desc, &status))
+		goto end;
 
 	/*
 	 * Try to create the key in the database before

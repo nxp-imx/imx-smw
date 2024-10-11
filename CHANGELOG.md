@@ -47,11 +47,13 @@ The failure is due to the storage manager which is already loaded and a new inst
   cryptographic multi-part operation terminates to respect the subsystem
   load/unload method `AT_CONTEXT_CREATION_DESTRUCTION`.
 * Add SMW Object find API.
+* Key import: redirect the EdgeLock 2GO data import to data storage module.
 
 ##### 2. Subsystems
 
 * TEE: Fix subsystem load() function to return error if TA and context failed.
 * TEE: Add support of ed25519 Sign and Verify operations.
+* ELE: Move selection of the EdgeLock 2GO data import selection in generic part.
 
 ##### 3. ARM PSA APIs
 

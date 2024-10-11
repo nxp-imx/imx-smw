@@ -37,7 +37,11 @@ static int data_db_create(unsigned int *id,
 	obj.type = SMW_OBJECT_TYPE_NAME_DATA;
 	obj.data.length = smw_storage_get_data_length(descriptor);
 	obj.attributes = attributes;
-	obj.label = DATA_DEFAULT_LABEL;
+
+	if (NXP_IS_EL2GO_OBJECT(descriptor->data_attributes.storage_id))
+		obj.label = DATA_DEFAULT_EL2GO_LABEL;
+	else
+		obj.label = DATA_DEFAULT_LABEL;
 
 	return smw_object_db_create(id, attributes, &obj);
 }
@@ -432,6 +436,7 @@ store_data_convert_args(struct smw_store_data_args *args,
 		status = find_data(conv_desc, NULL);
 		if (status == SMW_STATUS_UNKNOWN_ID) {
 			data_id = smw_storage_get_data_identifier(conv_desc);
+
 			status = data_db_create(&data_id, conv_desc);
 			if (status != SMW_STATUS_OK)
 				goto end;

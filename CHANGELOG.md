@@ -48,6 +48,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   load/unload method `AT_CONTEXT_CREATION_DESTRUCTION`.
 * Add SMW Object find API.
 * Key import: redirect the EdgeLock 2GO data import to data storage module.
+* Define EdgeLock 2GO Key and Data object label.
 
 ##### 2. Subsystems
 

@@ -9,8 +9,10 @@
 #include "keymgr_db.h"
 #include "storage.h"
 
-#define KEY_DEFAULT_LABEL  "Key"
-#define DATA_DEFAULT_LABEL "Data"
+#define KEY_DEFAULT_LABEL	 "Key"
+#define KEY_DEFAULT_EL2GO_LABEL	 "Key-EdgeLock2GO"
+#define DATA_DEFAULT_LABEL	 "Data"
+#define DATA_DEFAULT_EL2GO_LABEL "Data-EdgeLock2GO"
 
 /**
  * smw_object_db_create() - Create an object in the database

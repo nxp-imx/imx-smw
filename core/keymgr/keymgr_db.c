@@ -47,6 +47,8 @@ static void key_identifier_to_object(struct smw_keymgr_identifier *identifier,
 			obj->type = SMW_OBJECT_TYPE_NAME_KEY_PAIR;
 			break;
 		case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
+			obj->type = SMW_OBJECT_TYPE_NAME_PUBLIC_KEY;
+			break;
 		case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
 		case SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET:
 			obj->type = SMW_OBJECT_TYPE_NAME_SECRET_KEY;

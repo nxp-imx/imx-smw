@@ -39,7 +39,9 @@ psa_status_t call_smw_api(enum smw_status_code (*api)(void *a), void *args,
 	*subsystem_name = config.subsystem_name;
 
 	status = api(args);
-	if (config.alt && status == SMW_STATUS_OPERATION_NOT_SUPPORTED &&
+	if (config.alt &&
+	    (status == SMW_STATUS_OPERATION_NOT_SUPPORTED ||
+	     status == SMW_STATUS_OPERATION_NOT_CONFIGURED) &&
 	    *subsystem_name) {
 		*subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 		status = api(args);

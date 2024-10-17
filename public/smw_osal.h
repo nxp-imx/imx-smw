@@ -151,14 +151,20 @@ enum smw_status_code smw_osal_set_subsystem_info(smw_subsystem_t subsystem,
 						 void *info, size_t info_size);
 
 /**
- * smw_osal_open_obj_db() - Open a object database file
+ * smw_osal_open_obj_db() - Setup the object database file to open
  * @file: Fullname of the object database
  * @len: Length of the @file string
  *
+ * If the library is already initialized, database may be already in use by
+ * another thread. Hence it can be reconfigured.
+ * This function must be called before smw_osal_lib_init().
+ *
  * Return:
  * See &enum smw_status_code
- *  - SMW_STATUS_OK                - Success
- *  - SMW_STATUS_OBJ_DB_INIT       - Initialization error of the database
+ *  - SMW_STATUS_OK                    - Success
+ *  - SMW_STATUS_LIBRARY_ALREADY_INIT  - Library already initialized
+ *  - SMW_STATUS_CONFIGURATION_FAILURE - Error of configuration
+ *  - SMW_STATUS_ALLOC_FAILURE         - Out of memory
  */
 enum smw_status_code smw_osal_open_obj_db(const char *file, size_t len);
 

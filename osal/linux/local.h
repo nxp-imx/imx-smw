@@ -99,7 +99,8 @@ struct osal_ctx {
 	int lib_initialized;
 	struct lib_config_args config;
 	smw_subsystem_t active_subsystem_name;
-	void *obj_db;
+	void *obj_db_persistent;
+	void *obj_db_transient;
 };
 
 /**

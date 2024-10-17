@@ -22,18 +22,6 @@ inline struct osal_ctx *get_osal_ctx(void)
 
 static void constructor(void)
 {
-	DBG_PRINTF(DEBUG, "OSAL database configuration\n");
-
-	/*
-	 * Enables all mutexes if they are enabled and SQLite is threadsafe.
-	 */
-	if (sqlite3_threadsafe()) {
-		if (sqlite3_config(SQLITE_CONFIG_SERIALIZED)) {
-			DBG_PRINTF(ERROR, "Error configuring sqlite db\n");
-			return;
-		}
-	}
-
 	DBG_PRINTF(DEBUG, "OSAL context allocation\n");
 	osal_ctx = calloc(1, sizeof(struct osal_ctx));
 	if (!osal_ctx) {
@@ -496,15 +484,15 @@ __export enum smw_status_code smw_osal_open_obj_db(const char *file,
 		goto end;
 	}
 
+	if (ctx->lib_initialized) {
+		DBG_PRINTF(INFO, "Library is already initialized\n");
+		status = SMW_STATUS_LIBRARY_ALREADY_INIT;
+		goto end;
+	}
+
 	if (config_smw_db(file, &ctx->config))
 		status = SMW_STATUS_CONFIGURATION_FAILURE;
 
-	if (ctx->config.config_flags & CONFIG_SMW_DATABASE) {
-		if (obj_db_open(ctx->config.smw_info.smw_database) < 0) {
-			status = SMW_STATUS_OBJ_DB_INIT;
-			goto end;
-		}
-	}
 end:
 	return status;
 }

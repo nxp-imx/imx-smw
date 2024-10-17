@@ -136,6 +136,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add management of a linux system configuration file (/etc/opt/smw/smw.conf).
 * Create common SMW library configuration definition file.
+* Manage independently persistent and transient database mutex. Don't rely on
+  the SQlite threadsafe protection.
+* Ensure database(s) can't be changed after library initialization.
 
 #### SMW Tests - _version 4.0_
 

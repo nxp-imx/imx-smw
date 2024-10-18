@@ -22,7 +22,8 @@ const struct libdev optee_info = {
 	.serial = "",
 	.version = { 3, 7 },
 	.flags_slot = 0,
-	.flags_token = CKF_TOKEN_INITIALIZED,
+	.flags_token =
+		CKF_TOKEN_INITIALIZED | CKF_PROTECTED_AUTHENTICATION_PATH,
 	.label_token = "smw-tee",
 };
 

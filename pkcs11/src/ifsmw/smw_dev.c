@@ -24,7 +24,8 @@ const struct libdev smw_info = {
 	.serial = "",
 	.version = { 0, 0 },
 	.flags_slot = 0,
-	.flags_token = CKF_TOKEN_INITIALIZED,
+	.flags_token =
+		CKF_TOKEN_INITIALIZED | CKF_PROTECTED_AUTHENTICATION_PATH,
 	.label_token = "smw",
 };
 

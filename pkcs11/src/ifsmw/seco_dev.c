@@ -22,7 +22,8 @@ const struct libdev seco_info = {
 	.serial = "",
 	.version = { 0, 0 },
 	.flags_slot = CKF_HW_SLOT,
-	.flags_token = CKF_TOKEN_INITIALIZED,
+	.flags_token =
+		CKF_TOKEN_INITIALIZED | CKF_PROTECTED_AUTHENTICATION_PATH,
 	.label_token = "smw-seco",
 };
 

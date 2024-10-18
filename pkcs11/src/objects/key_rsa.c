@@ -221,8 +221,11 @@ CK_RV key_rsa_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = libdev_import_key(hsession, obj);
-	DBG_TRACE("Public Key ID 0x%X", new_key->key_id);
+	/* Import only the token key to the subsystem */
+	if (is_token_obj(obj, storage)) {
+		ret = libdev_import_key(hsession, obj);
+		DBG_TRACE("Public Key ID 0x%X", new_key->key_id);
+	}
 
 end:
 	if (ret != CKR_OK)
@@ -356,8 +359,11 @@ CK_RV key_rsa_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = libdev_import_key(hsession, obj);
-	DBG_TRACE("Private Key ID 0x%X", new_key->key_id);
+	/* Import only the token key to the subsystem */
+	if (is_token_obj(obj, storage)) {
+		ret = libdev_import_key(hsession, obj);
+		DBG_TRACE("Private Key ID 0x%X", new_key->key_id);
+	}
 
 end:
 	if (ret != CKR_OK)

@@ -97,9 +97,11 @@ CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	/* Set the Key object value length equal to the buffer value length */
 	new_key->value_len = new_key->value.number;
 
-	/* Import the secret key in the SMW library session's subsystem */
-	ret = libdev_import_key(hsession, obj);
-	DBG_TRACE("Cipher Key ID 0x%X", new_key->key_id);
+	/* Import only the token key to the subsystem */
+	if (is_token_obj(obj, storage)) {
+		ret = libdev_import_key(hsession, obj);
+		DBG_TRACE("Cipher Key ID 0x%X", new_key->key_id);
+	}
 
 end:
 	if (ret != CKR_OK)

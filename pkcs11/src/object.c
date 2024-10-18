@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #include "lib_object.h"
@@ -85,7 +85,7 @@ CK_RV C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate,
 		return CKR_SESSION_HANDLE_INVALID;
 
 	/* ulCount=0 is valid and will find all objects */
-	if ((pTemplate && !ulCount) || (!pTemplate && ulCount))
+	if (!pTemplate && ulCount)
 		return CKR_ARGUMENTS_BAD;
 
 	return libobj_find_init(hSession, pTemplate, ulCount);

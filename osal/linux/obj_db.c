@@ -1392,8 +1392,7 @@ end:
 	if (sql)
 		free(sql);
 
-	if (ret)
-		(void)unlock_db(db);
+	(void)unlock_db(db);
 
 	return ret;
 }
@@ -1409,9 +1408,12 @@ int obj_db_find_next(void *find_ctx, struct osal_obj *obj)
 	const unsigned char *column_value = NULL;
 
 	if (!op_ctx || !op_ctx->stmt || !obj)
-		goto end;
+		return ret;
 
 	stmt = op_ctx->stmt;
+
+	if (lock_db(op_ctx->db))
+		return ret;
 
 	if (sqlite3_step(stmt) != SQLITE_ROW)
 		goto end;
@@ -1443,6 +1445,8 @@ int obj_db_find_next(void *find_ctx, struct osal_obj *obj)
 	ret = 0;
 
 end:
+	(void)unlock_db(op_ctx->db);
+
 	return ret;
 }
 
@@ -1456,6 +1460,9 @@ int obj_db_find_finalize(void *find_ctx)
 		goto end;
 
 	if (!op_ctx->db || !op_ctx->stmt)
+		goto end;
+
+	if (lock_db(op_ctx->db))
 		goto end;
 
 	sqlite3_finalize(op_ctx->stmt);

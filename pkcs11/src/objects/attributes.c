@@ -10,6 +10,7 @@
 
 #include "trace.h"
 #include "util.h"
+#include "util_asn1.h"
 
 /**
  * obj_find_attr() - Find an attribute type in object template
@@ -219,6 +220,51 @@ CK_RV key_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
 		return ret;
 
 	*(CK_KEY_TYPE *)attr->pValue = *in;
+
+	return ret;
+}
+
+CK_RV attr_to_ec_point(void *dest, CK_ATTRIBUTE_PTR attr)
+{
+	CK_RV ret = CKR_OK;
+	struct libbytes *out = dest;
+
+	if (!attr->pValue || !attr->ulValueLen)
+		return CKR_ATTRIBUTE_VALUE_INVALID;
+
+	ret = util_asn1_decode_octet_string(attr->pValue, attr->ulValueLen,
+					    NULL, &out->number);
+	if (ret != CKR_BUFFER_TOO_SMALL)
+		return CKR_DATA_INVALID;
+
+	out->array = malloc(out->number);
+	if (!out->array)
+		return CKR_HOST_MEMORY;
+
+	ret = util_asn1_decode_octet_string(attr->pValue, attr->ulValueLen,
+					    out->array, &out->number);
+	if (ret != CKR_OK)
+		free(out->array);
+
+	return ret;
+}
+
+CK_RV ec_point_to_attr(CK_ATTRIBUTE_PTR attr, const void *src)
+{
+	CK_RV ret = CKR_OK;
+	const struct libbytes *in = src;
+	size_t attrValueLen = 0;
+
+	if (SET_OVERFLOW(attr->ulValueLen, attrValueLen))
+		return CKR_ARGUMENTS_BAD;
+
+	ret = util_asn1_encode_octet_string(in->array, in->number, attr->pValue,
+					    &attrValueLen);
+	if (!attr->pValue && ret == CKR_BUFFER_TOO_SMALL)
+		ret = CKR_OK;
+
+	if (ret == CKR_OK)
+		attr->ulValueLen = attrValueLen;
 
 	return ret;
 }

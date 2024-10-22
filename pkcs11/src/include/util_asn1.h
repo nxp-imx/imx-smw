@@ -77,4 +77,34 @@ CK_RV util_asn1_ec_params_to_curve(const struct curve_def **out_curve,
 CK_RV util_asn1_curve_to_ec_params(const struct curve_def *curve,
 				   struct libbytes *params);
 
+/**
+ * util_asn1_encode_octet_string() -   Store an OCTET STRING
+ * @in:       The array of OCTETS to store (one per char)
+ * @inlen:    The number of OCTETS to store
+ * @out:      [out] The destination for the DER encoded OCTET STRING
+ * @outlen:   [in/out] The max size and resulting size of the DER OCTET STRING
+ *
+ * return:
+ * CKR_BUFFER_TOO_SMALL          - Out buffer too small
+ * CKR_ARGUMENTS_BAD             - In buffer invalid
+ * CKR_OK                        - Success
+ */
+CK_RV util_asn1_encode_octet_string(const uint8_t *in, size_t inlen,
+				    uint8_t *out, size_t *outlen);
+
+/**
+ * util_asn1_decode_octet_string() -   Decode an OCTET STRING
+ * @in:      The DER encoded OCTET STRING
+ * @inlen:   The size of the DER OCTET STRING
+ * @out:     [out] The array of octets stored (one per char)
+ * @outlen:  [in/out] The number of octets stored
+ *
+ * return:
+ * CKR_DATA_INVALID              - In buffer too small
+ * CKR_ARGUMENTS_BAD             - In len invalid
+ * CKR_OK                        - Success
+ */
+CK_RV util_asn1_decode_octet_string(uint8_t *in, size_t inlen, uint8_t *out,
+				    size_t *outlen);
+
 #endif /* __UTIL_ASN1_H__ */

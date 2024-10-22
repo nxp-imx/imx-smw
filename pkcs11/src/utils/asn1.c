@@ -181,7 +181,7 @@ CK_RV util_asn1_ec_params_to_curve(const struct curve_def **out_curve,
 CK_RV util_asn1_curve_to_ec_params(const struct curve_def *curve,
 				   struct libbytes *params)
 {
-	size_t str_len = 0;
+	size_t oid_len = 0;
 	/*
 	 * Parameters are encoded in ASN1 format:
 	 *
@@ -197,24 +197,205 @@ CK_RV util_asn1_curve_to_ec_params(const struct curve_def *curve,
 	if (!curve || !params)
 		return CKR_ARGUMENTS_BAD;
 
-	str_len = strlen(curve->asn1->name);
+	oid_len = sizeof(curve->asn1->oid);
 
-	if (ADD_OVERFLOW(str_len, 2, &params->number))
+	if (ADD_OVERFLOW(oid_len, 2, &params->number))
 		return CKR_GENERAL_ERROR;
 
-	params->array = malloc(params->number);
+	params->array = calloc(1, params->number);
 	if (!params->array)
 		return CKR_HOST_MEMORY;
 
-	params->array[0] = ASN1_PRINTABLE_STRING;
+	params->array[0] = ASN1_OBJECT_IDENTIFIER;
 
-	if (SET_OVERFLOW(str_len, params->array[1])) {
+	if (SET_OVERFLOW(oid_len, params->array[1])) {
 		free(params->array);
 		params->array = NULL_PTR;
 		return CKR_GENERAL_ERROR;
 	}
 
 	memcpy(&params->array[2], curve->asn1->oid, params->number - 2);
+
+	return CKR_OK;
+}
+
+static CK_RV encode_asn1_length(size_t len, uint8_t *out, size_t *outlen)
+{
+	size_t x = len;
+	size_t y = 0;
+
+	while (x != 0) {
+		if (INC_OVERFLOW(y, 1))
+			return CKR_ARGUMENTS_BAD;
+
+		x >>= 8;
+	}
+
+	if (y == 0) {
+		DBG_TRACE("Nothing to encode");
+		return CKR_ARGUMENTS_BAD;
+	}
+
+	if (!out || *outlen < y) {
+		*outlen = y;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	x = 0;
+	if (len < 128) {
+		out[x++] = (unsigned char)len;
+	} else if (len <= 0xffUL) {
+		out[x++] = 0x81;
+		out[x++] = (unsigned char)len;
+	}
+	*outlen = x;
+
+	return CKR_OK;
+}
+
+static CK_RV decode_asn1_length(const uint8_t *in, size_t *inlen,
+				size_t *outlen)
+{
+	size_t real_len = 0;
+	size_t decoded_len = 0;
+	size_t offset = 0;
+	size_t x = 0;
+	size_t i = 0;
+
+	if (*inlen < 1)
+		return CKR_ARGUMENTS_BAD;
+
+	real_len = in[0];
+
+	if (real_len < 128) {
+		decoded_len = real_len;
+		offset = 1;
+	} else {
+		real_len &= 0x7F;
+
+		if (real_len == 0)
+			return CKR_DATA_INVALID;
+
+		if (real_len > sizeof(decoded_len))
+			return CKR_DATA_INVALID;
+
+		if (real_len > (*inlen - 1))
+			return CKR_DATA_INVALID;
+
+		decoded_len = 0;
+		offset = 1 + real_len;
+
+		for (; i < real_len; i++)
+			decoded_len = (decoded_len << 8) | in[1 + i];
+	}
+
+	if (outlen)
+		*outlen = decoded_len;
+
+	if (SUB_OVERFLOW(*inlen, offset, &x))
+		return CKR_ARGUMENTS_BAD;
+
+	if (decoded_len > x)
+		return CKR_DATA_INVALID;
+
+	*inlen = offset;
+
+	return CKR_OK;
+}
+
+CK_RV util_asn1_encode_octet_string(const uint8_t *in, size_t inlen,
+				    uint8_t *out, size_t *outlen)
+{
+	CK_RV ret = CKR_OK;
+	size_t x = 0;
+	size_t len = 0;
+
+	if (!outlen)
+		return CKR_ARGUMENTS_BAD;
+
+	/* get the size */
+	ret = encode_asn1_length(inlen, NULL, &len);
+	if (ret != CKR_BUFFER_TOO_SMALL)
+		return ret;
+
+	/* octet string tag */
+	if (INC_OVERFLOW(len, 1))
+		return CKR_ARGUMENTS_BAD;
+
+	/* octet string len */
+	if (INC_OVERFLOW(len, inlen))
+		return CKR_ARGUMENTS_BAD;
+
+	if (len > *outlen) {
+		*outlen = len;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	if (!out)
+		return CKR_ARGUMENTS_BAD;
+
+	/* encode the header+len */
+	x = 0;
+	out[x++] = 0x04;
+
+	if (SUB_OVERFLOW(*outlen, x, &len))
+		return CKR_ARGUMENTS_BAD;
+
+	ret = encode_asn1_length(inlen, out + x, &len);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (INC_OVERFLOW(x, len))
+		return CKR_ARGUMENTS_BAD;
+
+	/* store octets */
+	if (in)
+		memcpy(out + x, in, inlen);
+
+	x += inlen;
+
+	/* return length */
+	*outlen = x;
+
+	return CKR_OK;
+}
+
+CK_RV util_asn1_decode_octet_string(uint8_t *in, size_t inlen, uint8_t *out,
+				    size_t *outlen)
+{
+	CK_RV ret = CKR_OK;
+	size_t x = 0;
+	size_t y = 0;
+	size_t len = 0;
+
+	/* must have header at least */
+	if (!in || inlen < 2 || !outlen)
+		return CKR_ARGUMENTS_BAD;
+
+	/* check for 0x04 */
+	if ((in[0] & 0x1F) != 0x04)
+		return CKR_DATA_INVALID;
+	x = 1;
+
+	/* get the length of the data */
+	y = inlen - x;
+
+	ret = decode_asn1_length(in + x, &y, &len);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (INC_OVERFLOW(x, y))
+		return CKR_ARGUMENTS_BAD;
+
+	if (len > (inlen - x))
+		return CKR_DATA_INVALID;
+
+	if (!out || *outlen < len) {
+		*outlen = len;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	memcpy(out, in + x, len);
 
 	return CKR_OK;
 }

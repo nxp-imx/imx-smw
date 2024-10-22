@@ -22,10 +22,10 @@
 #include "lib_object.h"
 #include "lib_session.h"
 #include "lib_digest.h"
+#include "lib_sign_verify.h"
 #include "libobj_types.h"
 #include "pkcs11smw.h"
 #include "types.h"
-#include "lib_sign_verify.h"
 
 #include "args_attr.h"
 #include "key_desc.h"
@@ -2259,6 +2259,109 @@ static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	return op_mmac_common(slotid, entry, args);
 }
 
+static CK_RV export_rsa_public_key(struct libobj_obj *obj,
+				   struct smw_export_key_args *args)
+{
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_keypair_rsa *keypair_rsa = NULL;
+	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
+	uint8_t *modulus = NULL;
+	uint8_t *public_data = NULL;
+
+	if (!obj || !args || !args->key_descriptor ||
+	    !args->key_descriptor->buffer)
+		return ret;
+
+	keypair_rsa = &args->key_descriptor->buffer->rsa;
+
+	modulus = calloc(1, keypair_rsa->modulus_length);
+	if (!modulus)
+		return CKR_HOST_MEMORY;
+
+	public_data = calloc(1, keypair_rsa->public_length);
+	if (!public_data) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	keypair_rsa->modulus = modulus;
+	keypair_rsa->public_data = public_data;
+
+	status = smw_export_key(args);
+	ret = smw_status_to_ck_rv(status);
+
+end:
+	if (ret != CKR_OK) {
+		if (modulus)
+			free(modulus);
+
+		if (public_data)
+			free(public_data);
+	} else {
+		key->modulus.value = keypair_rsa->modulus;
+		key->modulus.length = keypair_rsa->modulus_length;
+
+		key->pub_exp.value = keypair_rsa->public_data;
+		key->pub_exp.length = keypair_rsa->public_length;
+	}
+
+	return ret;
+}
+
+static CK_RV export_ecc_public_key(struct libobj_obj *obj,
+				   struct smw_export_key_args *args)
+{
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_keypair_gen *keypair_gen = NULL;
+	struct libobj_key_ec_pair *key = get_subkey_from(obj);
+	uint8_t *point_q = NULL;
+	size_t point_q_len = 0;
+	size_t in_len = 0;
+
+	if (!obj || !args || !args->key_descriptor ||
+	    !args->key_descriptor->buffer)
+		return CKR_ARGUMENTS_BAD;
+
+	keypair_gen = &args->key_descriptor->buffer->gen;
+	in_len = keypair_gen->public_length;
+
+	/* Add DER ANSI X9.62 uncompress code byte */
+	if (ADD_OVERFLOW(in_len, 1, &point_q_len))
+		return CKR_ARGUMENTS_BAD;
+
+	point_q = calloc(1, point_q_len);
+	if (!point_q)
+		return CKR_HOST_MEMORY;
+
+	keypair_gen->public_data = &point_q[1];
+
+	/* DER ANSI X9.62 uncompress code byte */
+	point_q[0] = 0x04;
+
+	status = smw_export_key(args);
+	ret = smw_status_to_ck_rv(status);
+	if (ret == CKR_OK) {
+		key->point_q.number = point_q_len;
+		key->point_q.array = point_q;
+	} else {
+		free(point_q);
+	}
+
+	return ret;
+}
+
+static bool is_ecc_key_type(smw_key_type_t type_name)
+{
+	if (type_name == SMW_KEY_TYPE_NAME_SECP_R1 ||
+	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_R1 ||
+	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1)
+		return true;
+
+	return false;
+}
+
 CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
 			    CK_MECHANISM_TYPE_PTR mechanismlist,
 			    CK_ULONG_PTR count)
@@ -2425,6 +2528,8 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_key_attributes *key_attr = NULL;
 	struct smw_get_key_attributes_args attr_args = { 0 };
+	struct smw_export_key_args args = { 0 };
+	struct smw_keypair_buffer keypair_buffer = { 0 };
 
 	DBG_TRACE("Get Key attributes");
 
@@ -2451,14 +2556,28 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 		goto end;
 
 	ret = key_desc_smw_to_pkcs11(obj, &attr_args);
-	if (ret == CKR_OK)
-		ret = get_key_allowed_algo(obj, &attr_args);
+	if (ret != CKR_OK)
+		goto end;
 
-	if (ret == CKR_OK) {
-		key_attr = &attr_args.key_attributes;
-		args_attr_get_key_usage(obj, key_attr->usage_flags);
-		args_attr_get_key_storage(obj, key_attr->attributes);
-	}
+	ret = get_key_allowed_algo(obj, &attr_args);
+	if (ret != CKR_OK)
+		goto end;
+
+	key_attr = &attr_args.key_attributes;
+	args_attr_get_key_usage(obj, key_attr->usage_flags);
+	args_attr_get_key_storage(obj, key_attr->attributes);
+
+	key_descriptor.buffer = &keypair_buffer;
+	status = smw_get_key_buffers_lengths(&key_descriptor);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	args.key_descriptor = &key_descriptor;
+
+	if (key_descriptor.type_name == SMW_KEY_TYPE_NAME_RSA)
+		return export_rsa_public_key(obj, &args);
+	else if (is_ecc_key_type(key_descriptor.type_name))
+		return export_ecc_public_key(obj, &args);
 
 end:
 	DBG_TRACE("Get Key attributes from SMW status %d return %ld", status,

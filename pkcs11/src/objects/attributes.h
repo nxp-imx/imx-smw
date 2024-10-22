@@ -283,6 +283,35 @@ CK_RV attr_to_byte_array(void *dest, CK_ATTRIBUTE_PTR attr);
 CK_RV byte_array_to_attr(CK_ATTRIBUTE_PTR attr, const void *src);
 
 /**
+ * attr_to_ec_point() - Copy attribute to EC point
+ * @dest: Destination value
+ * @attr: Attribute to copy into @dest
+ *
+ * If attribute value is defined, allocates and copies the
+ * attribute to EC point
+ *
+ * return:
+ * CKR_ATTRIBUTE_VALUE_INVALID - Attribute value or length not valid
+ * CKR_HOST_MEMORY             - Out of memory
+ * CKR_OK                      - Success
+ */
+CK_RV attr_to_ec_point(void *dest, CK_ATTRIBUTE_PTR attr);
+
+/**
+ * ec_point_to_attr() - Copy a EC point to attribute
+ * @attr: Attribute destination
+ * @src: Source value
+ *
+ * If attribute value is defined and have enough size,
+ * copies the @src into attribute. If not, return the needed length.
+ *
+ * return:
+ * CKR_BUFFER_TOO_SMALL        - Attribute length too small
+ * CKR_OK                      - Success
+ */
+CK_RV ec_point_to_attr(CK_ATTRIBUTE_PTR attr, const void *src);
+
+/**
  * modify_byte_array() - Modify a CK_BYTE array attribute
  * @dest: Destination value
  * @attr: New attribute

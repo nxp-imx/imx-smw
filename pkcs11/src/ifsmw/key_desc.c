@@ -350,7 +350,7 @@ static CK_RV ec_key_desc(struct smw_key_descriptor *desc,
 	if (desc->buffer) {
 		smw_key = &desc->buffer->gen;
 		/*
-		 * Remove the first byte of the Public Buffer
+		 * Remove the header of the Public Buffer
 		 * DER ANSI X9.62 uncompress code byte
 		 */
 		if (key->point_q.array) {

@@ -23,8 +23,7 @@ enum attr_key_ec_public_list {
 const struct template_attr attr_key_ec_public[] = {
 	[PUB_PARAMS] =
 		TATTR(key_ec_pair, params, EC_PARAMS, 0, MUST, byte_array),
-	[PUB_POINT] =
-		TATTR(key_ec_pair, point_q, EC_POINT, 0, MUST, byte_array),
+	[PUB_POINT] = TATTR(key_ec_pair, point_q, EC_POINT, 0, MUST, ec_point),
 };
 
 enum attr_key_ec_private_list {
@@ -38,7 +37,7 @@ const struct template_attr attr_key_ec_private[] = {
 		TATTR(key_ec_pair, params, EC_PARAMS, 0, MUST, byte_array),
 	[PRIV_VALUE] = TATTR_P(key_ec_pair, value_d, VALUE, 0, MUST, bignumber),
 	[PRIV_PUB_POINT] =
-		TATTR(key_ec_pair, point_q, EC_POINT, 0, MUST, byte_array),
+		TATTR(key_ec_pair, point_q, EC_POINT, 0, MUST, ec_point),
 };
 
 /**

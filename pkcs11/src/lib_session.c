@@ -10,6 +10,7 @@
 #include "lib_mutex.h"
 #include "lib_object.h"
 #include "lib_opctx.h"
+#include "lib_session.h"
 
 #include "trace.h"
 
@@ -205,9 +206,31 @@ CK_RV libsess_close(CK_SESSION_HANDLE hsession)
 {
 	CK_RV ret = CKR_OK;
 	struct libdevice *dev = NULL;
+	struct libobj_query *query = NULL;
+	struct libobj_handles *obj = NULL;
+	struct libobj_handles *next = NULL;
 	struct libsess *sess = (struct libsess *)hsession;
 
 	DBG_TRACE("Try to close session %p (slotid = %ld)", sess, sess->slotid);
+
+	/* First clean query list if any */
+	ret = libsess_get_query(hsession, &query);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (query) {
+		obj = LIST_FIRST(&query->objects);
+		while (obj) {
+			next = LIST_NEXT(obj);
+			free(obj);
+			obj = next;
+		}
+
+		free(query);
+		ret = libsess_set_query(hsession, NULL);
+		if (ret != CKR_OK)
+			return ret;
+	}
 
 	ret = get_slotdev(&dev, sess);
 	if (ret != CKR_OK)

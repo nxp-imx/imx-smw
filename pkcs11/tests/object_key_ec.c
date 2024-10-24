@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <smw_status.h>
+#include <smw/object.h>
+
 #include "os_mutex.h"
 #include "util_session.h"
 #include "util.h"
@@ -28,7 +31,8 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
 	CK_KEY_TYPE key_type = CKK_EC;
-	CK_BYTE pubkey[65] = { 0 };
+	CK_BYTE pubkey[67] = { 0 };
+	CK_ULONG ec_point_size = 0;
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
 						 CKM_ECDSA_SHA256 };
@@ -48,13 +52,19 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
+	/* Set the CKA_EC_POINT size function of the security size */
+	if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(192), 2, &ec_point_size) ||
+	    INC_OVERFLOW(ec_point_size, 1))
+		goto end;
+
 	/*
 	 * Set EC Public point
 	 */
-	pubkey[0] = 0x04; /* Uncompress point */
-	/* Set the CKA_EC_POINT size function of the security size */
-	keyTemplate[3].ulValueLen =
-		BITS_TO_BYTES_SIZE((size_t)ec_curves[0].security_size) * 2 + 1;
+	pubkey[0] = 0x04;	   /* octet string tag */
+	pubkey[1] = ec_point_size; /* EC point size */
+	pubkey[2] = 0x04;	   /* Uncompress point */
+
+	keyTemplate[3].ulValueLen = ec_point_size + 2;
 
 	TEST_OUT("Create %sKey Public by curve name\n", token ? "Token " : "");
 	if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
@@ -127,7 +137,8 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
 	CK_KEY_TYPE key_type = CKK_EC;
 	CK_BYTE privkey[32] = { 0 };
-	CK_BYTE pubkey[65] = { 0 };
+	CK_BYTE pubkey[67] = { 0 };
+	CK_ULONG ec_point_size = 0;
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
 						 CKM_ECDSA_SHA256 };
@@ -159,17 +170,22 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 			   "ASN1 Conversion"))
 		goto end;
 
+	/* Set the CKA_EC_POINT size function of the security size */
+	if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(192), 2, &ec_point_size) ||
+	    INC_OVERFLOW(ec_point_size, 1))
+		goto end;
+
 	/*
 	 * Set EC Public point
 	 */
-	pubkey[0] = 0x04; /* Uncompress point */
+	pubkey[0] = 0x04;	   /* octet string tag */
+	pubkey[1] = ec_point_size; /* EC point size */
+	pubkey[2] = 0x04;	   /* Uncompress point */
 
-	/* Set the CKA_EC_POINT size function of the security size */
-	keyTemplate[4].ulValueLen = BITS_TO_BYTES_SIZE(192) * 2 + 1;
+	keyTemplate[4].ulValueLen = ec_point_size + 2;
 
 	/* Set the CKA_VALUE size function of the security size */
-	keyTemplate[3].ulValueLen =
-		BITS_TO_BYTES_SIZE((size_t)ec_curves[0].security_size);
+	keyTemplate[3].ulValueLen = BITS_TO_BYTES_SIZE(192);
 	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    &hkey);
 
@@ -461,6 +477,151 @@ end:
 	return status;
 }
 
+static int object_ec_public_export(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_generate_key_args genkey_args = { 0 };
+	struct smw_delete_key_args delkey_args = { 0 };
+	struct smw_key_attributes key_attributes = { 0 };
+	struct smw_key_descriptor key_descriptor = { 0 };
+
+	CK_RV ret = CKR_OK;
+	CK_BBOOL btrue = CK_TRUE;
+	CK_SESSION_HANDLE sess = 0;
+
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_ULONG nb_match = 0;
+
+	CK_ULONG unique_id_len = 0;
+	CK_UTF8CHAR_PTR unique_id = NULL;
+	CK_ULONG key_length = 32;
+	CK_OBJECT_CLASS public_key_class = CKO_PUBLIC_KEY;
+	CK_BYTE pubkey[68] = { 0 };
+
+	CK_ATTRIBUTE public_key_attrs[] = {
+		{ CKA_CLASS, &public_key_class, sizeof(public_key_class) },
+		{ CKA_UNIQUE_ID, unique_id, unique_id_len },
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+	};
+
+	CK_ATTRIBUTE getkeyAttr[] = {
+		{ CKA_EC_POINT, &pubkey, sizeof(pubkey) },
+	};
+
+	uint8_t *point_q = NULL;
+	size_t point_q_len = 0;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	/* Set key attributes */
+	if (SET_OVERFLOW(BYTES_TO_BITS(key_length),
+			 key_descriptor.security_size))
+		goto end;
+
+	key_descriptor.type_name = SMW_KEY_TYPE_NAME_SECP_R1;
+	key_attributes.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT;
+	key_attributes.permitted_algo =
+		SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_SECP_R1,
+							 SMW_ATTR_HASH_SHA256);
+	key_attributes.usage_flags =
+		SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_VERIFY_MESSAGE;
+
+	genkey_args.key_descriptor = &key_descriptor;
+	genkey_args.key_attributes = &key_attributes;
+	delkey_args.key_descriptor = &key_descriptor;
+
+	/* Generate a key pair with SMW API */
+	smw_status = smw_generate_key(&genkey_args);
+	if (smw_status != SMW_STATUS_OK &&
+	    smw_status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
+		TEST_OUT("Generate key pair failed\n");
+		goto end;
+	}
+
+	ret = util_set_unique_id(unique_id, &unique_id_len, public_key_class,
+				 key_descriptor.id);
+	if (ret != CKR_BUFFER_TOO_SMALL) {
+		TEST_OUT("Get unique id len failed\n");
+		goto end;
+	}
+
+	unique_id = calloc(1, unique_id_len);
+	if (!unique_id) {
+		TEST_OUT("Out of memory\n");
+		goto end;
+	}
+
+	ret = util_set_unique_id(unique_id, &unique_id_len, public_key_class,
+				 key_descriptor.id);
+	if (ret != CKR_OK) {
+		TEST_OUT("Set unique id failed\n");
+		goto end;
+	}
+
+	public_key_attrs[1].pValue = unique_id;
+	public_key_attrs[1].ulValueLen = unique_id_len;
+
+	/* Retrieve public key generated with SMW API */
+	TEST_OUT("Find EC public key\n");
+	ret = pfunc->C_FindObjectsInit(sess, public_key_attrs,
+				       ARRAY_SIZE(public_key_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+		goto end;
+
+	ret = pfunc->C_FindObjects(sess, &hpubkey, 1, &nb_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_match == 1, "Got %lu but expected one object",
+			   nb_match))
+		goto end;
+
+	TEST_OUT("Get Public key attribute\n");
+	ret = pfunc->C_GetAttributeValue(sess, hpubkey, getkeyAttr,
+					 ARRAY_SIZE(getkeyAttr));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	ret = util_decode_octet_string(getkeyAttr->pValue,
+				       getkeyAttr->ulValueLen, &point_q,
+				       &point_q_len);
+	if (CHECK_CK_RV(CKR_OK, "decode_octet_string"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hpubkey);
+	ret = pfunc->C_DestroyObject(sess, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &sess);
+
+	/* Destroy the key */
+	if (key_descriptor.id)
+		smw_delete_key(&delkey_args);
+
+	if (unique_id)
+		free(unique_id);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_object_key_ec(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -511,6 +672,9 @@ void tests_pkcs11_object_key_ec(void *lib_hdl, CK_VOID_PTR pfunc)
 		goto end;
 
 	if (object_generate_ec_keypair(pfunc, CK_TRUE) == TEST_FAIL)
+		goto end;
+
+	if (object_ec_public_export(pfunc) == TEST_FAIL)
 		goto end;
 
 	status = object_ec_keypair_usage(pfunc, CK_TRUE);

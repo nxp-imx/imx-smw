@@ -22,7 +22,7 @@ static int create_ec_key_public(CK_FUNCTION_LIST_PTR pfunc,
 	CK_RV ret = CKR_OK;
 	CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
 	CK_KEY_TYPE key_type = CKK_EC;
-	CK_BYTE pubkey[65] = { 0 };
+	CK_BYTE pubkey[67] = { 0 };
 	CK_BBOOL btrue = CK_TRUE;
 	CK_ULONG ec_point_size = 0;
 
@@ -40,17 +40,19 @@ static int create_ec_key_public(CK_FUNCTION_LIST_PTR pfunc,
 
 	SUBTEST_START();
 
-	/*
-	 * Set EC Public point
-	 */
-	pubkey[0] = 0x04; /* Uncompress point */
-
 	/* Set the CKA_EC_POINT size function of the security size */
 	if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(192), 2, &ec_point_size) ||
 	    INC_OVERFLOW(ec_point_size, 1))
 		goto end;
 
-	keyTemplate[3].ulValueLen = ec_point_size;
+	/*
+	 * Set EC Public point
+	 */
+	pubkey[0] = 0x04;	   /* octet string tag */
+	pubkey[1] = ec_point_size; /* EC point size */
+	pubkey[2] = 0x04;	   /* Uncompress point */
+
+	keyTemplate[3].ulValueLen = ec_point_size + 2;
 
 	TEST_OUT("Create %sKey Public by curve oid\n", token ? "Token " : "");
 	if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2], prime192v1),
@@ -82,8 +84,9 @@ static int create_ec_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
 	CK_KEY_TYPE key_type = CKK_EC;
 	CK_BYTE privkey[32] = { 0 };
-	CK_BYTE pubkey[65] = { 0 };
+	CK_BYTE pubkey[67] = { 0 };
 	CK_BBOOL btrue = CK_TRUE;
+	CK_ULONG ec_point_size = 0;
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA };
 	CK_ATTRIBUTE keyTemplate[] = {
@@ -113,13 +116,20 @@ static int create_ec_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	/* Set the CKA_VALUE size function of the security size */
 	keyTemplate[3].ulValueLen = BITS_TO_BYTES_SIZE(192);
 
+	/* Set the CKA_EC_POINT size function of the security size */
+	if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(192), 2, &ec_point_size) ||
+	    INC_OVERFLOW(ec_point_size, 1))
+		goto end;
+
 	/*
 	 * Set EC Public point
 	 */
-	pubkey[0] = 0x04; /* Uncompress point */
+	pubkey[0] = 0x04;	   /* octet string tag */
+	pubkey[1] = ec_point_size; /* EC point size */
+	pubkey[2] = 0x04;	   /* Uncompress point */
 
 	/* Set the CKA_EC_POINT size function of the security size */
-	keyTemplate[4].ulValueLen = BITS_TO_BYTES_SIZE(192) * 2 + 1;
+	keyTemplate[4].ulValueLen = ec_point_size + 2;
 
 	ret = pfunc->C_CreateObject(*sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    hkey);
@@ -641,7 +651,6 @@ void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc)
 	status = find_while_active(pfunc, &sess, hkeys);
 
 end:
-
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)
 		      ->C_Login(sess, CKU_USER, NULL_PTR, 0);

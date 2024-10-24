@@ -23,5 +23,7 @@ CK_RV util_set_unique_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG_PTR length,
 			 CK_OBJECT_CLASS class, unsigned int id);
 CK_RV util_get_object_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG length,
 			 unsigned int *object_id);
+CK_RV util_decode_octet_string(uint8_t *in, size_t inlen, uint8_t **out,
+			       size_t *outlen);
 
 #endif /* __UTIL_H__ */

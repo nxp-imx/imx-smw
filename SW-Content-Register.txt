@@ -10,10 +10,20 @@ Description and comments: NXP Security Middleware Library
 Release Location:         https://github.com/nxp-imx/imx-smw
 Release branch/version:   refer to git information
 Origin:                   NXP (BSD-3-clause)
+                          IETF (BSD-2-clause) - https://datatracker.ietf.org/doc/html/rfc6234
                           ARM (Apache-2.0) - https://github.com/ARM-software/psa-arch-tests
                           OASIS (MIT) - https://github.com/oasis-tcs/pkcs11/tree/pkcs11-3.10/published/3-01
                           See details of non-NXP code below.
 
+--------------------------------------------------------------------------------
+Description:        SHA-1 and SHA-2 computation.
+Location:           core/utils/hash.c
+                    core/utils/sha.h
+License:            BSD-2-Clause, BSD-3-Clause
+License File:       LICENSE
+Origin:             NXP (BSD-3-Clause)
+                    IETF (BSD-2-Clause)
+                    https://datatracker.ietf.org/doc/html/rfc6234
 --------------------------------------------------------------------------------
 Description:        Configuration options for crypto tests (set of defines).
 Location:           tests/psa/psa-arch-tests/crypto/pal_crypto_config.h

@@ -57,6 +57,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * As CHACHA20 POLY1305 is not supported on i.MX95, remove it from
   AEAD supported algorithm in ele_imx95_config file.
 * Add a new key type `SMW_KEY_TYPE_NAME_HKDF_IKM`.
+* Add support of hash multi-part.
 
 ##### 2. Subsystems
 
@@ -67,6 +68,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Remove exporting of symmetric base key in key derivation in TA.
 * TEE: Update the supported base key type for HKDF key derivation. Only a
   previously imported HKDF IKM key or a plaintext buffer is supported.
+* SECO: Add support of hash multi-part with SHA1, SHA224, SHA256, SHA384 and SHA512.
+* SECO: Add support of hash one-shot with SHA1.
 
 ##### 3. ARM PSA APIs
 
@@ -85,6 +88,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   derivation tests.
 * Add a new configuration API smw_config_check_derive_key() to check if the
   provided KDF name is supported by the subsystem.
+* Add tests to validate hash multi-part.
 
 #### PKCS#11 Library - _version 4.1_
 

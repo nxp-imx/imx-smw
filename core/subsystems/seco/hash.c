@@ -5,11 +5,8 @@
 
 #include "smw_status.h"
 
-#include "global.h"
 #include "debug.h"
 #include "utils.h"
-#include "operations.h"
-#include "subsystems.h"
 #include "config.h"
 #include "hash.h"
 
@@ -55,6 +52,77 @@ get_hash_algo_info(enum smw_config_hash_algo_id algo_id)
 	return info;
 }
 
+/**
+ * struct hash_context - Hash context
+ * @context: Hash operation context
+ */
+struct hash_context {
+	struct smw_hash_context context;
+};
+
+static int set_hash_context(struct smw_op_context *op_context,
+			    enum smw_config_hash_algo_id hash_id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct hash_context *hash_context = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!op_context)
+		goto end;
+
+	op_context->op_id = SMW_CRYPTO_OP_ID_HASH_MULTI_PART;
+
+	hash_context = SMW_UTILS_MALLOC(sizeof(*hash_context));
+	if (!hash_context) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		SMW_DBG_PRINTF(DEBUG,
+			       "Hash subsystem context allocation failure\n");
+		goto end;
+	}
+
+	status = smw_utils_hash_init(hash_id, &hash_context->context);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	op_context->subsystem_context = hash_context;
+	op_context->op_state = CTX_OP_STATE_INIT;
+
+end:
+	if (status != SMW_STATUS_OK && hash_context)
+		SMW_UTILS_FREE(hash_context);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int hash_smw(struct smw_crypto_hash_args *args)
+{
+	int status = SMW_STATUS_OK;
+
+	unsigned char *input = NULL;
+	unsigned int input_length = 0;
+	unsigned char *digest = NULL;
+	unsigned int digest_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	input = smw_crypto_get_hash_input_data(args);
+	input_length = smw_crypto_get_hash_input_length(args);
+	digest = smw_crypto_get_hash_output_data(args);
+	digest_length = smw_crypto_get_hash_output_length(args);
+
+	status = smw_utils_hash(args->algo_id, input, input_length, digest,
+				&digest_length);
+
+	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT)
+		smw_crypto_set_hash_output_length(args, digest_length);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static int hash(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OK;
@@ -70,7 +138,7 @@ static int hash(struct hdl *hdl, void *args)
 
 	hash_algo_info = get_hash_algo_info(hash_args->algo_id);
 	if (!hash_algo_info) {
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		status = hash_smw(hash_args);
 		goto end;
 	}
 
@@ -126,12 +194,145 @@ end:
 	return status;
 }
 
+static int hash_init(struct smw_op_context *op_context,
+		     struct smw_crypto_hash_args *args)
+{
+	int status = SMW_STATUS_OK;
+
+	struct hash_context *hash_context = NULL;
+	unsigned char *input = NULL;
+	unsigned int input_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = set_hash_context(op_context, args->algo_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	hash_context = op_context->subsystem_context;
+	if (!hash_context) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	input = smw_crypto_get_hash_input_data(args);
+	input_length = smw_crypto_get_hash_input_length(args);
+
+	status = smw_utils_hash_update(&hash_context->context, input,
+				       input_length);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int hash_update(struct smw_op_context *op_context,
+		       struct smw_crypto_hash_args *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct hash_context *hash_context = NULL;
+	unsigned char *input = NULL;
+	unsigned int input_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	hash_context = op_context->subsystem_context;
+	if (!hash_context)
+		goto end;
+
+	input = smw_crypto_get_hash_input_data(args);
+	input_length = smw_crypto_get_hash_input_length(args);
+
+	status = smw_utils_hash_update(&hash_context->context, input,
+				       input_length);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int hash_final(struct smw_op_context *op_context,
+		      struct smw_crypto_hash_args *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct hash_context *hash_context = NULL;
+	unsigned char *input = NULL;
+	unsigned int input_length = 0;
+	unsigned char *digest = NULL;
+	unsigned int digest_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	hash_context = op_context->subsystem_context;
+	if (!hash_context)
+		goto end;
+
+	input = smw_crypto_get_hash_input_data(args);
+	input_length = smw_crypto_get_hash_input_length(args);
+
+	status = smw_utils_hash_update(&hash_context->context, input,
+				       input_length);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	digest = smw_crypto_get_hash_output_data(args);
+	digest_length = smw_crypto_get_hash_output_length(args);
+
+	status = smw_utils_hash_final(&hash_context->context, digest,
+				      &digest_length);
+
+	if (status == SMW_STATUS_OK || status == SMW_STATUS_OUTPUT_TOO_SHORT)
+		smw_crypto_set_hash_output_length(args, digest_length);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int hash_multi_part(void *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_crypto_hash_args *hash_args = args;
+	struct smw_op_context *op_context =
+		smw_crypto_get_hash_op_context(args);
+
+	if (!op_context)
+		goto end;
+
+	switch (hash_args->op_step) {
+	case SMW_OP_STEP_INIT:
+		status = hash_init(op_context, hash_args);
+		break;
+
+	case SMW_OP_STEP_UPDATE:
+		status = hash_update(op_context, hash_args);
+		break;
+
+	case SMW_OP_STEP_FINAL:
+		status = hash_final(op_context, hash_args);
+		break;
+
+	default:
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		break;
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 bool seco_hash_handle(struct hdl *hdl, enum operation_id operation_id,
 		      void *args, int *status)
 {
 	switch (operation_id) {
 	case OPERATION_ID_HASH:
 		*status = hash(hdl, args);
+		break;
+	case OPERATION_ID_HASH_MULTI_PART:
+		*status = hash_multi_part(args);
 		break;
 	default:
 		return false;

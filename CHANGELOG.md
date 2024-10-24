@@ -99,6 +99,7 @@ is called.
 * Update token object in the database objects table
 * Add support for Key derivation using HKDF.
 * Import only the token key to subsystem.
+* Retrieve public buffer of a key generated or imported using SMW API.
 
 #### PKCS#11 Tests - _version 4.1_
 
@@ -109,6 +110,7 @@ is called.
 * Test data object retrieve using a persistent data created with the PSA API
 * Test object persistency after killing the library context.
 * Add tests for Key derivation using HKDF.
+* Validate public buffer retrieval of a key generated or imported using the SMW API.
 
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**

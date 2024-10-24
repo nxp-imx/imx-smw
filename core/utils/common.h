@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021 NXP
+ * Copyright 2020-2021, 2024 NXP
  */
+
+#ifndef __COMMON_H__
+#define __COMMON_H__
 
 /**
  * struct node - Linked list node
@@ -19,3 +22,5 @@ struct node {
 	void (*printer)(void *params);
 	unsigned int ref;
 };
+
+#endif /* __COMMON_H__ */

@@ -10,6 +10,67 @@
 #include "exec.h"
 #include "operation_context.h"
 
+#define SMW_HASH_BLOCK_SIZE_SHA1   64
+#define SMW_HASH_BLOCK_SIZE_SHA224 64
+#define SMW_HASH_BLOCK_SIZE_SHA256 64
+#define SMW_HASH_BLOCK_SIZE_SHA384 128
+#define SMW_HASH_BLOCK_SIZE_SHA512 128
+
+#define SMW_HASH_DIGEST_SIZE_SHA1   20
+#define SMW_HASH_DIGEST_SIZE_SHA224 28
+#define SMW_HASH_DIGEST_SIZE_SHA256 32
+#define SMW_HASH_DIGEST_SIZE_SHA384 48
+#define SMW_HASH_DIGEST_SIZE_SHA512 64
+
+#define SMW_HASH_PAD_LENGTH_SHA1   8
+#define SMW_HASH_PAD_LENGTH_SHA224 8
+#define SMW_HASH_PAD_LENGTH_SHA256 8
+#define SMW_HASH_PAD_LENGTH_SHA384 16
+#define SMW_HASH_PAD_LENGTH_SHA512 16
+
+#define SMW_HASH_INTERMEDIATE_SIZE_SHA1                                        \
+	(SMW_HASH_DIGEST_SIZE_SHA1 / sizeof(uint32_t))
+#define SMW_HASH_INTERMEDIATE_SIZE_SHA224                                      \
+	(SMW_HASH_DIGEST_SIZE_SHA256 / sizeof(uint32_t))
+#define SMW_HASH_INTERMEDIATE_SIZE_SHA256                                      \
+	(SMW_HASH_DIGEST_SIZE_SHA256 / sizeof(uint32_t))
+#define SMW_HASH_INTERMEDIATE_SIZE_SHA384                                      \
+	(SMW_HASH_DIGEST_SIZE_SHA512 / sizeof(uint32_t))
+#define SMW_HASH_INTERMEDIATE_SIZE_SHA512                                      \
+	(SMW_HASH_DIGEST_SIZE_SHA512 / sizeof(uint32_t))
+
+union smw_hash_intermediate {
+	uint32_t sha1[SMW_HASH_INTERMEDIATE_SIZE_SHA1];
+	uint32_t sha224[SMW_HASH_INTERMEDIATE_SIZE_SHA224];
+	uint32_t sha256[SMW_HASH_INTERMEDIATE_SIZE_SHA256];
+	uint32_t sha384[SMW_HASH_INTERMEDIATE_SIZE_SHA384];
+	uint32_t sha512[SMW_HASH_INTERMEDIATE_SIZE_SHA512];
+};
+
+union smw_hash_block {
+	uint8_t sha1[SMW_HASH_BLOCK_SIZE_SHA1];
+	uint8_t sha224[SMW_HASH_BLOCK_SIZE_SHA224];
+	uint8_t sha256[SMW_HASH_BLOCK_SIZE_SHA256];
+	uint8_t sha384[SMW_HASH_BLOCK_SIZE_SHA384];
+	uint8_t sha512[SMW_HASH_BLOCK_SIZE_SHA512];
+};
+
+/**
+ * struct smw_hash_context - Hash context
+ * @hash_id: Hash algorithm ID
+ * @intermediate: Intermediate hash
+ * @block: Message block remainder
+ * @block_length: Length of message block remainder in bytes
+ * @message_length: Total length of the message in bits
+ */
+struct smw_hash_context {
+	enum smw_config_hash_algo_id hash_id;
+	union smw_hash_intermediate intermediate;
+	union smw_hash_block block;
+	unsigned int block_length;
+	unsigned long long message_length;
+};
+
 /**
  * struct smw_crypto_hash_args - Hash arguments
  * @algo_id: Algorithm ID
@@ -106,5 +167,72 @@ void smw_crypto_set_hash_output_length(struct smw_crypto_hash_args *args,
  */
 struct smw_op_context *
 smw_crypto_get_hash_op_context(struct smw_crypto_hash_args *args);
+
+/**
+ * smw_utils_hash() - Hash one-shot.
+ * @hash_id: Hash algorithm ID.
+ * @input: Location of the stream to be hashed.
+ * @input_length: Length of the stream to be hashed.
+ * @digest: Location where the digest has to be written.
+ * @digest_length: Length of the digest.
+ *
+ * This function computes a hash.
+ *
+ * Return:
+ * SMW_STATUS_OK                        - Success.
+ * SMW_STATUS_INVALID_PARAM             - One of the parameter is invalid.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED   - Hash algorithm not supported.
+ */
+int smw_utils_hash(enum smw_config_hash_algo_id hash_id, unsigned char *input,
+		   unsigned int input_length, unsigned char *digest,
+		   unsigned int *digest_length);
+
+/**
+ * smw_utils_hash_init() - Initialize hash multi-part.
+ * @hash_id: Hash algorithm ID.
+ * @context: Pointer to operation context arguments structure.
+ *
+ * This function intializes hash multi-part.
+ *
+ * Return:
+ * SMW_STATUS_OK                        - Success.
+ * SMW_STATUS_INVALID_PARAM             - One of the parameter is invalid.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED   - Hash algorithm not supported.
+ */
+int smw_utils_hash_init(enum smw_config_hash_algo_id hash_id,
+			struct smw_hash_context *context);
+
+/**
+ * smw_utils_hash_update() - Update hash multi-part.
+ * @context: Pointer to operation context arguments structure.
+ * @input: Location of the stream to be hashed.
+ * @input_length: Length of the stream to be hashed.
+ *
+ * This function updates hash multi-part.
+ *
+ * Return:
+ * SMW_STATUS_OK                        - Success.
+ * SMW_STATUS_INVALID_PARAM             - One of the parameter is invalid.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED   - Hash algorithm not supported.
+ */
+int smw_utils_hash_update(struct smw_hash_context *context,
+			  const uint8_t *input, unsigned int input_length);
+
+/**
+ * smw_utils_hash_final() - Finalize hash multi-part.
+ * @context: Pointer to operation context arguments structure.
+ * @digest: Location where the digest has to be written.
+ * @digest_length: Length of the digest.
+ *
+ * This function finalizes hash multi-part.
+ *
+ * Return:
+ * SMW_STATUS_OK                        - Success.
+ * SMW_STATUS_INVALID_PARAM             - One of the parameter is invalid.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED   - Hash algorithm not supported.
+ * SMW_STATUS_OUTPUT_TOO_SHORT          - Ouptut buffer is too short.
+ */
+int smw_utils_hash_final(struct smw_hash_context *context, uint8_t *digest,
+			 unsigned int *digest_length);
 
 #endif /* __HASH_H__ */

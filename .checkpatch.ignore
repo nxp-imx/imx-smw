@@ -12,3 +12,4 @@ tests/psa/psa-arch-tests/crypto
 *.pub
 public/psa/*.h
 Documentations
+core/utils/sha.h

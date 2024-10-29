@@ -50,6 +50,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Key import: redirect the EdgeLock 2GO data import to data storage module.
 * Define EdgeLock 2GO Key and Data object label.
 * Add support of hash multi-part with TEE and ELE subsystems.
+* As CHACHA20 POLY1305 is not supported on i.MX95, remove it from
+  AEAD supported algorithm in ele_imx.95_config file.
 
 ##### 2. Subsystems
 

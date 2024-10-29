@@ -151,11 +151,7 @@ static int encrypt_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 		encrypt_mech.pParameter = &aead_mech[i].bad_params;
 		encrypt_mech.ulParameterLen = sizeof(aead_mech[i].bad_params);
 		ret = pfunc->C_EncryptInit(sess, &encrypt_mech, aes_hsecretkey);
-		if (ret == CKR_MECHANISM_INVALID && aead_mech[i].optional)
-			TEST_OUT("Mechanism 0x%lx not supported!\n",
-				 aead_mech[i].mech_type);
-		else if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
-				     "C_EncryptInit"))
+		if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_EncryptInit"))
 			goto end;
 
 		ret = pfunc->C_DestroyObject(sess, aes_hsecretkey);
@@ -234,11 +230,7 @@ static int decrypt_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 		decrypt_mech.pParameter = &aead_mech[i].bad_params;
 		decrypt_mech.ulParameterLen = sizeof(aead_mech[i].bad_params);
 		ret = pfunc->C_DecryptInit(sess, &decrypt_mech, aes_hsecretkey);
-		if (ret == CKR_MECHANISM_INVALID && aead_mech[i].optional)
-			TEST_OUT("Mechanism 0x%lx not supported!\n",
-				 aead_mech[i].mech_type);
-		else if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
-				     "C_DecryptInit"))
+		if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_DecryptInit"))
 			goto end;
 
 		ret = pfunc->C_DestroyObject(sess, aes_hsecretkey);
@@ -558,12 +550,8 @@ static int encrypt_decrypt_aead(CK_FUNCTION_LIST_PTR pfunc)
 		TEST_OUT("Encrypt message\n");
 		ret = pfunc->C_Encrypt(sess, data, sizeof(data), encrypted_data,
 				       &encrypted_data_len);
-		if (ret == CKR_DEVICE_ERROR && aead_mech[i].optional) {
-			TEST_OUT("Mechanism 0x%lx not usable!\n",
-				 aead_mech[i].mech_type);
-		} else if (CHECK_CK_RV(CKR_OK, "C_Encrypt")) {
+		if (CHECK_CK_RV(CKR_OK, "C_Encrypt"))
 			goto end;
-		}
 
 		TEST_OUT("Initialize decrypt operation\n");
 		ret = pfunc->C_DecryptInit(sess, &encrypt_decrypt_mech,

@@ -140,6 +140,8 @@ static int hash_init(struct hdl *hdl, struct smw_crypto_hash_args *hash_args)
 	if (!op_context)
 		goto end;
 
+	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_ELE);
+
 	hash_algo = ele_get_hash_algo(hash_args->algo_id);
 	if (!hash_algo)
 		goto end;

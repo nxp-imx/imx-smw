@@ -76,6 +76,40 @@
 		"depends": 2
 	},
 	"subtest 4": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=NONE"
+		],
+		"message": [
+			"bad101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8"
+		],
+		"sign_id": 1,
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=NONE"
+		],
+		"message": [
+			"bad101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8"
+		],
+		"sign_id": 1,
+		"key_name": "key 1",
+		"depends": 4
+	},
+	"subtest 6": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1

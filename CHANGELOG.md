@@ -38,6 +38,10 @@ The releases are listed from the most recent to the first one.
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
+##### 1. ELE Subsystem
+
+* System hang may occur while generating RSA key on i.MX95.
+
 #### SMW Library - _version 4.1_
 ##### 1. SMW APIs
 
@@ -51,7 +55,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Define EdgeLock 2GO Key and Data object label.
 * Add support of hash multi-part with TEE and ELE subsystems.
 * As CHACHA20 POLY1305 is not supported on i.MX95, remove it from
-  AEAD supported algorithm in ele_imx.95_config file.
+  AEAD supported algorithm in ele_imx95_config file.
 
 ##### 2. Subsystems
 

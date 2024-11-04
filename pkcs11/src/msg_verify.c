@@ -14,7 +14,8 @@ CK_RV C_MessageVerifyInit(CK_SESSION_HANDLE hSession,
 	if (!hKey)
 		return CKR_KEY_HANDLE_INVALID;
 
-	return lib_sign_verify_init(hSession, pMechanism, hKey, CKF_VERIFY);
+	return lib_sign_verify_init(hSession, pMechanism, hKey,
+				    CKF_MESSAGE_VERIFY);
 }
 
 CK_RV C_VerifyMessage(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
@@ -26,17 +27,18 @@ CK_RV C_VerifyMessage(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
 		return CKR_SESSION_HANDLE_INVALID;
 
 	return lib_verify(hSession, pParameter, ulParameterLen, pData,
-			  ulDataLen, pSignature, ulSignatureLen);
+			  ulDataLen, pSignature, ulSignatureLen,
+			  CKF_MESSAGE_VERIFY, OP_ONE_SHOT);
 }
 
 CK_RV C_VerifyMessageBegin(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
 			   CK_ULONG ulParameterLen)
 {
-	(void)hSession;
-	(void)pParameter;
-	(void)ulParameterLen;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return lib_sign_verify_reset(hSession, pParameter, ulParameterLen,
+				     CKF_MESSAGE_VERIFY);
 }
 
 CK_RV C_VerifyMessageNext(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
@@ -44,20 +46,22 @@ CK_RV C_VerifyMessageNext(CK_SESSION_HANDLE hSession, CK_VOID_PTR pParameter,
 			  CK_ULONG ulDataLen, CK_BYTE_PTR pSignature,
 			  CK_ULONG ulSignatureLen)
 {
-	(void)hSession;
-	(void)pParameter;
-	(void)ulParameterLen;
-	(void)pData;
-	(void)ulDataLen;
-	(void)pSignature;
-	(void)ulSignatureLen;
+	enum op_state state = NOT_INIT;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
+
+	if (pSignature)
+		state = OP_END;
+	else
+		state = OP_NEXT;
+
+	return lib_verify(hSession, pParameter, ulParameterLen, pData,
+			  ulDataLen, pSignature, ulSignatureLen,
+			  CKF_MESSAGE_VERIFY, state);
 }
 
 CK_RV C_MessageVerifyFinal(CK_SESSION_HANDLE hSession)
 {
-	(void)hSession;
-
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return lib_sign_verify_cancel_operation(hSession, CKF_MESSAGE_VERIFY);
 }

@@ -15,6 +15,17 @@
 #include "trace.h"
 
 /**
+ * destroy_context() - Destroy signature context
+ * @ctx: Pointer to cipher context
+ *
+ */
+static void destroy_context(struct lib_signature_ctx *ctx)
+{
+	if (ctx)
+		free(ctx);
+}
+
+/**
  * is_rsa_pss_mechanism() - Check if mechanism type is RSA PKCS PSS
  * @type: Mechanism type
  *
@@ -113,14 +124,17 @@ static CK_RV get_hash_mech_from_mgf(CK_RSA_PKCS_MGF_TYPE mgf,
 
 /**
  * check_rsa_pss() - Check RSA PSS mechanism parameters
- * @pmechanism: Pointer to mechanism
+ * @mechanism: Mechanism type
+ * @pparameter: Pointer to mechanism parameter
+ * @ulparameterlen: Mechanism parameter length
  * @ctx: Pointer to signature context
  *
  * Return:
  * CKR_MECHANISM_PARAM_INVALID        - Mechanism parameters invalid
  * CKR_OK                             - Success
  */
-static CK_RV check_rsa_pss(CK_MECHANISM_PTR pmechanism,
+static CK_RV check_rsa_pss(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
+			   CK_ULONG ulparameterlen,
 			   struct lib_signature_ctx *ctx)
 {
 	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
@@ -130,13 +144,13 @@ static CK_RV check_rsa_pss(CK_MECHANISM_PTR pmechanism,
 
 	DBG_TRACE("Check RSA PSS signature mechanism parameter");
 
-	if (pmechanism->ulParameterLen != sizeof(CK_RSA_PKCS_PSS_PARAMS))
+	if (ulparameterlen != sizeof(CK_RSA_PKCS_PSS_PARAMS))
 		return ret;
 
 	/* Get hash mechanism from mechanism type */
-	mech_hash = get_hash_mech_from_rsa_pss_mech(pmechanism->mechanism);
+	mech_hash = get_hash_mech_from_rsa_pss_mech(mechanism);
 
-	mech_params = (CK_RSA_PKCS_PSS_PARAMS_PTR)pmechanism->pParameter;
+	mech_params = (CK_RSA_PKCS_PSS_PARAMS_PTR)pparameter;
 
 	if (mech_params->hashAlg) {
 		/*
@@ -176,15 +190,15 @@ static CK_RV check_rsa_pss(CK_MECHANISM_PTR pmechanism,
 /**
  * is_general_length_mac_mechanism() - Check if mechanism type is
  *                                     general-length CMAC/HMAC
- * @type: Mechanism type
+ * @mechanism: Mechanism type
  *
  * Return:
  * True if CMAC/HMAC mechanism
  * False otherwise
  */
-static CK_BBOOL is_general_length_mac_mechanism(CK_MECHANISM_TYPE type)
+static CK_BBOOL is_general_length_mac_mechanism(CK_MECHANISM_TYPE mechanism)
 {
-	switch (type) {
+	switch (mechanism) {
 	case CKM_AES_CMAC_GENERAL:
 	case CKM_DES3_CMAC_GENERAL:
 	case CKM_MD5_HMAC_GENERAL:
@@ -206,14 +220,15 @@ static CK_BBOOL is_general_length_mac_mechanism(CK_MECHANISM_TYPE type)
 
 /**
  * check_mac() - Check MAC mechanism parameters
- * @pmechanism: Pointer to mechanism
+ * @pparameter: Pointer to mechanism parameter
+ * @ulparameterlen: Mechanism parameter length
  * @ctx: Pointer to signature context
  *
  * Return:
  * CKR_MECHANISM_PARAM_INVALID        - Mechanism parameters invalid
  * CKR_OK                             - Success
  */
-static CK_RV check_mac(CK_MECHANISM_PTR pmechanism,
+static CK_RV check_mac(CK_VOID_PTR pparameter, CK_ULONG ulparameterlen,
 		       struct lib_signature_ctx *ctx)
 {
 	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
@@ -221,10 +236,10 @@ static CK_RV check_mac(CK_MECHANISM_PTR pmechanism,
 
 	DBG_TRACE("Check MAC signature mechanism parameter");
 
-	if (pmechanism->ulParameterLen != sizeof(CK_MAC_GENERAL_PARAMS))
+	if (ulparameterlen != sizeof(CK_MAC_GENERAL_PARAMS))
 		return ret;
 
-	mech_params = (CK_MAC_GENERAL_PARAMS_PTR)pmechanism->pParameter;
+	mech_params = (CK_MAC_GENERAL_PARAMS_PTR)pparameter;
 
 	if (!*mech_params)
 		return ret;
@@ -236,33 +251,106 @@ static CK_RV check_mac(CK_MECHANISM_PTR pmechanism,
 }
 
 /**
- * check_mech_params() - Check Sign Verify mechanism parameters
+ * check_signature_params() -  Check signature parameters
+ * @mechanism: Mechanism type
+ * @pparameter: Pointer to mechanism parameter
+ * @ulparameterlen: Mechanism parameter length
+ * @op_flag: Operation flag
+ * @ctx: Pointer to signature context
+ *
+ * Store signature context parameters, if valid.
+ *
+ * Return:
+ * CKR_MECHANISM_PARAM_INVALID        - @pparameter is invalid
+ * CKR_MECHANISM_INVALID              - @mechanism is invalid
+ * CKR_OK                             - Success
+ */
+static CK_RV check_signature_params(CK_MECHANISM_TYPE mechanism,
+				    CK_VOID_PTR pparameter,
+				    CK_ULONG ulparameterlen,
+				    struct lib_signature_ctx *ctx)
+{
+	DBG_TRACE("Check signature mechanism parameter");
+
+	if (!pparameter != !ulparameterlen)
+		return CKR_MECHANISM_PARAM_INVALID;
+
+	if (!pparameter)
+		return CKR_OK;
+
+	if (is_rsa_pss_mechanism(mechanism))
+		return check_rsa_pss(mechanism, pparameter, ulparameterlen,
+				     ctx);
+
+	if (is_general_length_mac_mechanism(mechanism))
+		return check_mac(pparameter, ulparameterlen, ctx);
+
+	/* Parameters are set but ignored */
+	return CKR_OK;
+}
+
+/**
+ * check_signature_mech_params() - Check signature mechanism parameters
  * @pmechanism: Pointer to mechanism
  * @ctx: Pointer to signature context
  *
- * This functions checks that @pmechanism parameters are consistent with
- * @pmechanism type.
+ * Store signature context parameters, if valid.
  *
  * Return:
  * CKR_MECHANISM_PARAM_INVALID        - @pmechanism parameters are invalid
  * CKR_OK                             - Success
  */
-static CK_RV check_mech_params(CK_MECHANISM_PTR pmechanism,
-			       struct lib_signature_ctx *ctx)
+static CK_RV check_signature_mech_params(CK_MECHANISM_PTR pmechanism,
+					 struct lib_signature_ctx *ctx)
 {
-	DBG_TRACE("Check Sign Verify mechanism parameter");
+	return check_signature_params(pmechanism->mechanism,
+				      pmechanism->pParameter,
+				      pmechanism->ulParameterLen, ctx);
+}
 
-	if (!pmechanism->pParameter)
-		return CKR_OK;
+CK_RV lib_sign_verify_cancel_operation(CK_SESSION_HANDLE hsession,
+				       CK_FLAGS op_flag)
+{
+	CK_RV ret = CKR_OK;
 
-	if (is_rsa_pss_mechanism(pmechanism->mechanism))
-		return check_rsa_pss(pmechanism, ctx);
+	struct lib_signature_ctx *ctx = NULL;
 
-	if (is_general_length_mac_mechanism(pmechanism->mechanism))
-		return check_mac(pmechanism, ctx);
+	CK_MECHANISM mechanism = { 0 };
 
-	/* Parameters are set but ignored */
-	return CKR_OK;
+	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (!ctx) {
+		ret = libsess_remove_opctx(hsession, op_flag);
+		return ret;
+	}
+
+	switch (ctx->current_state) {
+	case OP_INIT:
+	case OP_BEGIN:
+	case OP_END:
+		ret = libsess_remove_opctx(hsession, op_flag);
+		break;
+
+	case OP_UPDATE:
+	case OP_NEXT:
+	case OP_FINAL:
+		if (ctx->context)
+			ret = libsess_cancel_opctx(hsession, op_flag,
+						   (void **)&ctx->context);
+		else
+			ret = libsess_remove_opctx(hsession, op_flag);
+
+		break;
+
+	default:
+		break;
+	}
+
+	destroy_context(ctx);
+
+	return ret;
 }
 
 CK_RV lib_sign_verify_init(CK_SESSION_HANDLE hsession,
@@ -277,217 +365,362 @@ CK_RV lib_sign_verify_init(CK_SESSION_HANDLE hsession,
 	};
 
 	DBG_TRACE("Initialize %s operation",
-		  op_flag == CKF_SIGN ? "Sign" : "Verify");
+		  op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN) ? "Sign" : "Verify");
 
-	if (pmechanism) {
-		/* Validate mechanism operation flag */
-		ret = libsess_validate_mechanism(hsession, pmechanism, op_flag);
-		if (ret != CKR_OK)
-			return ret;
-	} else {
-		/* Remove operation context */
-		return libsess_remove_opctx(hsession, op_flag);
+	if (!pmechanism) {
+		/*
+		 * Check if any multi-part sign/verify operation is active.
+		 * If a multi-part operation is active, cancel the operation
+		 * and remove the operation context.
+		 */
+		ret = lib_sign_verify_cancel_operation(hsession, op_flag);
+		if (ret == CKR_OPERATION_NOT_INITIALIZED)
+			ret = CKR_OK;
+
+		return ret;
 	}
 
-	if (op_flag == CKF_SIGN)
+	/* Validate mechanism operation flag */
+	ret = libsess_validate_mechanism(hsession, pmechanism, op_flag);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN))
 		iskey_op[0].type = CKA_SIGN;
 
 	ret = libobj_get_attribute(hsession, hkey, iskey_op,
 				   ARRAY_SIZE(iskey_op));
+	if (ret == CKR_ATTRIBUTE_TYPE_INVALID) {
+		ret = CKR_KEY_FUNCTION_NOT_PERMITTED;
+		goto end;
+	}
 
-	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
-		return CKR_KEY_FUNCTION_NOT_PERMITTED;
-
-	if (ret != CKR_OK)
-		return ret;
-
-	if (!key_op)
-		return CKR_KEY_FUNCTION_NOT_PERMITTED;
-
-	ctx = calloc(1, sizeof(*ctx));
-	if (!ctx)
-		return CKR_HOST_MEMORY;
-
-	/* Check mechanism parameters */
-	ret = check_mech_params(pmechanism, ctx);
 	if (ret != CKR_OK)
 		goto end;
 
+	if (!key_op) {
+		ret = CKR_KEY_FUNCTION_NOT_PERMITTED;
+		goto end;
+	}
+
+	ctx = calloc(1, sizeof(*ctx));
+	if (!ctx) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	ctx->context = NULL;
+	/* Set the current state */
+	ctx->current_state = OP_INIT;
+
 	/* Set context key handle */
 	ctx->hkey = hkey;
+
+	ret = check_signature_mech_params(pmechanism, ctx);
+	if (ret != CKR_OK)
+		goto end;
 
 	/* Add operation context to list */
 	ret = libsess_add_opctx(hsession, op_flag, pmechanism, ctx);
 
 end:
 	if (ret != CKR_OK)
-		free(ctx);
+		destroy_context(ctx);
+
+	return ret;
+}
+
+CK_RV lib_sign_verify_reset(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
+			    CK_ULONG ulparameterlen, CK_FLAGS op_flag)
+{
+	CK_RV ret = CKR_OK;
+	CK_MECHANISM mechanism = { 0 };
+	struct lib_signature_ctx *ctx = NULL;
+
+	if (!pparameter != !ulparameterlen)
+		return CKR_MECHANISM_PARAM_INVALID;
+
+	/* Check that operation is initialized */
+	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (ctx->current_state != OP_END && ctx->context)
+		return CKR_OPERATION_ACTIVE;
+
+	/* Update mechanism parameter */
+	if (pparameter) {
+		ret = check_signature_params(mechanism.mechanism, pparameter,
+					     ulparameterlen, ctx);
+		if (ret != CKR_OK)
+			return ret;
+	}
+
+	ctx->current_state = OP_BEGIN;
 
 	return ret;
 }
 
 CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	       CK_ULONG ulparameterlen, CK_BYTE_PTR pdata, CK_ULONG uldatalen,
-	       CK_BYTE_PTR psignature, CK_ULONG_PTR pulsignaturelen)
+	       CK_BYTE_PTR psignature, CK_ULONG_PTR pulsignaturelen,
+	       CK_FLAGS op_flag, enum op_state state)
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
-	CK_RV ret_ctx = CKR_OK;
 	CK_MECHANISM mechanism = { 0 };
 	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params params = { 0 };
-	CK_ULONG ulmaclen = 0;
+	CK_BBOOL terminate = CK_TRUE;
 
 	DBG_TRACE("Sign operation");
 
-	if (!pulsignaturelen)
+	if (state != OP_ONE_SHOT && state != OP_NEXT && state != OP_END &&
+	    state != OP_FINAL)
 		goto end;
 
-	if (psignature && !pdata) {
-		ret = CKR_DATA_INVALID;
+	if (state != OP_NEXT && !pulsignaturelen)
 		goto end;
+
+	if (state == OP_NEXT || (state == OP_ONE_SHOT && psignature)) {
+		if (!uldatalen) {
+			ret = CKR_DATA_LEN_RANGE;
+			goto end;
+		}
+
+		if (!pdata) {
+			ret = CKR_DATA_INVALID;
+			goto end;
+		}
 	}
 
-	if (psignature && !uldatalen) {
-		ret = CKR_DATA_LEN_RANGE;
-		goto end;
-	}
-
-	if ((ulparameterlen &&
-	     ulparameterlen != sizeof(CK_MAC_GENERAL_PARAMS)) ||
-	    !pparameter != !ulparameterlen) {
+	if (!pparameter != !ulparameterlen) {
 		ret = CKR_MECHANISM_PARAM_INVALID;
 		goto end;
 	}
 
 	/* Check that operation is initialized */
-	ret = libsess_find_opctx(hsession, CKF_SIGN, &mechanism, (void **)&ctx);
+	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
 	if (ret != CKR_OK)
 		goto end;
 
-	params.op_flag = CKF_SIGN;
+	ret = libopctx_check_next_state(ctx->current_state, state, &terminate);
+	if (ret != CKR_OK)
+		goto end;
+
+	params.op_flag = op_flag;
 	params.ctx = ctx;
 	params.pdata = pdata;
 	params.uldatalen = uldatalen;
 	params.psignature = psignature;
-	params.ulsignaturelen = *pulsignaturelen;
+	params.ulsignaturelen = pulsignaturelen ? *pulsignaturelen : 0;
+	params.state = state;
 
+	/* Update mechanism parameter */
 	if (pparameter) {
-		ulmaclen = *((CK_MAC_GENERAL_PARAMS_PTR)pparameter);
-
-		if (params.ulsignaturelen < ulmaclen) {
-			ret = CKR_BUFFER_TOO_SMALL;
+		ret = check_signature_params(mechanism.mechanism, pparameter,
+					     ulparameterlen, ctx);
+		if (ret != CKR_OK)
 			goto end;
-		}
-
-		params.ulsignaturelen = ulmaclen;
-	} else if (ctx->mac_len) {
-		if (params.ulsignaturelen < ctx->mac_len) {
-			ret = CKR_BUFFER_TOO_SMALL;
-			goto end;
-		}
-
-		params.ulsignaturelen = ctx->mac_len;
 	}
 
 	/* Run operation */
 	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
+	if (ret != CKR_BUFFER_TOO_SMALL && ret != CKR_OK)
+		goto end;
 
-	if (ret == CKR_BUFFER_TOO_SMALL || ret == CKR_OK) {
-		/* Update signature length in case of Sign operation */
+	/* Update signature length in case of Sign operation */
+	if (pulsignaturelen)
 		*pulsignaturelen = params.ulsignaturelen;
 
-		/*
-		 * Return CKR_BUFFER_TOO_SMALL doesn't terminate the
-		 * active signing operation
-		 * Return CKR_OK when goal is to determine the length of
-		 * the buffer needed to hold the signature doesn't
-		 * terminate the active signing operation
-		 */
-		if (ret == CKR_BUFFER_TOO_SMALL || !psignature)
-			return ret;
+	if (ret == CKR_OK) {
+		ctx->current_state = state;
+
+		if (psignature && (state == OP_ONE_SHOT || state == OP_FINAL))
+			ret = libsess_remove_opctx(hsession, op_flag);
 	}
 
-end:
-	/* Remove operation context */
-	ret_ctx = libsess_remove_opctx(hsession, CKF_SIGN);
+	terminate = CK_FALSE;
 
-	if (ret == CKR_OK)
-		ret = ret_ctx;
+end:
+	if (!terminate)
+		return ret;
+
+	if (ctx && ctx->context) {
+		/*
+		 * Cancel the on-going multipart operation and
+		 * remove operation context.
+		 */
+		(void)libsess_cancel_opctx(hsession, op_flag,
+					   (void **)&ctx->context);
+	} else {
+		(void)libsess_remove_opctx(hsession, op_flag);
+	}
 
 	return ret;
 }
 
 CK_RV lib_verify(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 		 CK_ULONG ulparameterlen, CK_BYTE_PTR pdata, CK_ULONG uldatalen,
-		 CK_BYTE_PTR psignature, CK_ULONG ulsignaturelen)
+		 CK_BYTE_PTR psignature, CK_ULONG ulsignaturelen,
+		 CK_FLAGS op_flag, enum op_state state)
 {
-	CK_RV ret = CKR_DATA_INVALID;
-	CK_RV ret_ctx = CKR_OK;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 	CK_MECHANISM mechanism = { 0 };
 	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params params = { 0 };
-	CK_ULONG ulmaclen = 0;
+	CK_BBOOL terminate = CK_TRUE;
 
 	DBG_TRACE("Verify operation");
 
-	if (!pdata)
+	if (state != OP_ONE_SHOT && state != OP_NEXT && state != OP_END &&
+	    state != OP_FINAL)
 		goto end;
 
-	if (!uldatalen) {
-		ret = CKR_DATA_LEN_RANGE;
-		goto end;
+	if (state != OP_NEXT) {
+		if (!psignature) {
+			ret = CKR_SIGNATURE_INVALID;
+			goto end;
+		}
+
+		if (!ulsignaturelen) {
+			ret = CKR_SIGNATURE_LEN_RANGE;
+			goto end;
+		}
 	}
 
-	if (!psignature) {
-		ret = CKR_SIGNATURE_INVALID;
-		goto end;
+	if (state != OP_FINAL && state != OP_END) {
+		if (!uldatalen) {
+			ret = CKR_DATA_LEN_RANGE;
+			goto end;
+		}
+
+		if (!pdata) {
+			ret = CKR_DATA_INVALID;
+			goto end;
+		}
 	}
 
-	if (!ulsignaturelen) {
-		ret = CKR_SIGNATURE_LEN_RANGE;
-		goto end;
-	}
-
-	if ((ulparameterlen &&
-	     ulparameterlen != sizeof(CK_MAC_GENERAL_PARAMS)) ||
-	    !pparameter != !ulparameterlen) {
+	if (!pparameter != !ulparameterlen) {
 		ret = CKR_MECHANISM_PARAM_INVALID;
 		goto end;
 	}
 
 	/* Check that operation is initialized */
-	ret = libsess_find_opctx(hsession, CKF_VERIFY, &mechanism,
-				 (void **)&ctx);
+	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
 	if (ret != CKR_OK)
 		goto end;
 
-	params.op_flag = CKF_VERIFY;
+	ret = libopctx_check_next_state(ctx->current_state, state, &terminate);
+	if (ret != CKR_OK)
+		goto end;
+
+	params.op_flag = op_flag;
 	params.ctx = ctx;
 	params.pdata = pdata;
 	params.uldatalen = uldatalen;
 	params.psignature = psignature;
 	params.ulsignaturelen = ulsignaturelen;
+	params.state = state;
 
+	/* Update mechanism parameter */
 	if (pparameter) {
-		ulmaclen = *((CK_MAC_GENERAL_PARAMS_PTR)pparameter);
-
-		if (params.ulsignaturelen < ulmaclen) {
-			ret = CKR_SIGNATURE_LEN_RANGE;
+		ret = check_signature_params(mechanism.mechanism, pparameter,
+					     ulparameterlen, ctx);
+		if (ret != CKR_OK)
 			goto end;
-		}
-
-		params.ulsignaturelen = ulmaclen;
 	}
 
 	/* Run operation */
 	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
+	if (ret != CKR_OK)
+		goto end;
+
+	ctx->current_state = state;
+
+	if (state == OP_ONE_SHOT || state == OP_FINAL)
+		ret = libsess_remove_opctx(hsession, op_flag);
+
+	terminate = CK_FALSE;
 
 end:
-	/* Remove operation context */
-	ret_ctx = libsess_remove_opctx(hsession, CKF_VERIFY);
+	if (!terminate)
+		return ret;
 
-	if (ret == CKR_OK)
-		ret = ret_ctx;
+	if (ctx && ctx->context) {
+		/*
+		 * Cancel the on-going multipart operation and
+		 * remove operation context.
+		 */
+		(void)libsess_cancel_opctx(hsession, op_flag,
+					   (void **)&ctx->context);
+	} else {
+		(void)libsess_remove_opctx(hsession, op_flag);
+	}
+
+	return ret;
+}
+
+CK_RV lib_sign_verify_update(CK_SESSION_HANDLE hsession, CK_BYTE_PTR ppart,
+			     CK_ULONG ulpartLen, CK_FLAGS op_flag)
+{
+	CK_RV ret = CKR_OK;
+	struct lib_signature_ctx *ctx = NULL;
+	CK_MECHANISM mechanism = { 0 };
+	struct lib_signature_params params = { 0 };
+	CK_BBOOL terminate = CK_TRUE;
+
+	DBG_TRACE("Update %s operation",
+		  op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN) ? "Sign" : "Verify");
+
+	if (!ppart) {
+		ret = CKR_DATA_INVALID;
+		goto end;
+	}
+
+	if (!ulpartLen) {
+		ret = CKR_DATA_LEN_RANGE;
+		goto end;
+	}
+
+	/* Check that operation is initialized */
+	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = libopctx_check_next_state(ctx->current_state, OP_UPDATE,
+					&terminate);
+	if (ret != CKR_OK)
+		goto end;
+
+	params.op_flag = op_flag;
+	params.ctx = ctx;
+	params.pdata = ppart;
+	params.uldatalen = ulpartLen;
+	params.state = OP_UPDATE;
+
+	/* Run operation */
+	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
+	if (ret != CKR_OK)
+		goto end;
+
+	ctx->current_state = OP_UPDATE;
+
+	terminate = CK_FALSE;
+
+end:
+	if (!terminate)
+		return ret;
+
+	if (ctx && ctx->context) {
+		/*
+		 * Cancel the on-going multipart operation and
+		 * remove operation context.
+		 */
+		(void)libsess_cancel_opctx(hsession, op_flag,
+					   (void **)&ctx->context);
+	} else {
+		(void)libsess_remove_opctx(hsession, op_flag);
+	}
 
 	return ret;
 }

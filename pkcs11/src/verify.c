@@ -25,27 +25,26 @@ CK_RV C_Verify(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pData,
 		return CKR_SESSION_HANDLE_INVALID;
 
 	return lib_verify(hSession, NULL_PTR, 0, pData, ulDataLen, pSignature,
-			  ulSignatureLen);
+			  ulSignatureLen, CKF_VERIFY, OP_ONE_SHOT);
 }
 
 CK_RV C_VerifyUpdate(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pPart,
 		     CK_ULONG ulPartLen)
 {
-	(void)hSession;
-	(void)pPart;
-	(void)ulPartLen;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return lib_sign_verify_update(hSession, pPart, ulPartLen, CKF_VERIFY);
 }
 
 CK_RV C_VerifyFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pSignature,
 		    CK_ULONG ulSignatureLen)
 {
-	(void)hSession;
-	(void)pSignature;
-	(void)ulSignatureLen;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	return lib_verify(hSession, NULL_PTR, 0, NULL_PTR, 0, pSignature,
+			  ulSignatureLen, CKF_VERIFY, OP_FINAL);
 }
 
 CK_RV C_VerifyRecoverInit(CK_SESSION_HANDLE hSession,

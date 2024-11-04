@@ -8,15 +8,31 @@
 
 #include "types.h"
 
-enum op_state { /* Operation state when calling encryption functions */
-		NOT_INIT = 0,
-		OP_INIT, /* C_(En|De)cryptInit or C_Message(En|De)cryptInit */
-		OP_ONE_SHOT, /* C_(En|De)crypt or C_(En|De)cryptMessage */
-		OP_UPDATE,   /* C_(En|De)cryptUpdate */
-		OP_BEGIN,    /* C_(En|De)cryptMessageBegin */
-		OP_NEXT,     /* C_(En|De)cryptMessageNext */
-		OP_END,	     /* C_(En|De)cryptMessageNext(CKF_END_OF_MESSAGE) */
-		OP_FINAL     /* C_Message(En|De)cryptFinal */
+/**
+ * enum op_state - Operation state
+ *
+ * Set when calling encryption or sign/verify functions
+ *
+ * @NOT_INIT: State not initialized.
+ * @OP_INIT: C_(Encrypt|Decrypt|Sign|Verify)Init
+ * or C_Message(Encrypt|Decrypt|Sign|Verify)Init.
+ * @OP_ONE_SHOT: C_(Encrypt|Decrypt|Sign|Verify)
+ * or C_(Encrypt|Decrypt|Sign|Verify)cryptMessage.
+ * @OP_UPDATE: C_(Encrypt|Decrypt|Sign|Verify)Update.
+ * @OP_BEGIN: C_(Encrypt|Decrypt|Sign|Verify)MessageBegin.
+ * @OP_NEXT: C_(Encrypt|Decrypt|Sign|Verify)MessageNext, more input.
+ * @OP_END: C_(Encrypt|Decrypt|Sign|Verify)MessageNext, no more input.
+ * @OP_FINAL: C_(Encrypt|Decrypt|Sign|Verify)Final.
+ */
+enum op_state {
+	NOT_INIT = 0,
+	OP_INIT,
+	OP_ONE_SHOT,
+	OP_UPDATE,
+	OP_BEGIN,
+	OP_NEXT,
+	OP_END,
+	OP_FINAL
 };
 
 /**
@@ -71,7 +87,7 @@ CK_RV libopctx_destroy(struct libopctx_list *list, struct libopctx *opctx);
 CK_RV libopctx_list_destroy(struct libopctx_list *list);
 
 /**
- * libopctx_cancel() - Cancel the ongoing multipart crypto operation.
+ * libopctx_cancel() - Cancel the ongoing multi-part crypto operation.
  * @list: List of operations contexts
  * @opctx: Pointer to operation context structure
  * @context: Double pointer to multi-part operation context
@@ -87,5 +103,25 @@ CK_RV libopctx_list_destroy(struct libopctx_list *list);
  */
 CK_RV libopctx_cancel(struct libopctx_list *list, struct libopctx *opctx,
 		      void **context);
+
+/**
+ * libopctx_check_next_state() - Check the next state of the ongoing multi-part
+ * crypto operation.
+ * @current_state: Current operation state
+ * @next_state: Next operation state
+ * @terminate: Whether or not the operation must be terminated
+ *
+ * The next state of the multi-part crypto operation is checked against its
+ * current state.
+ * @terminate is set to CK_TRUE if the ongoing multi-part crypto operation must
+ * be terminated.
+ *
+ * Return:
+ * CKR_OPERATION_NOT_INITIALIZED - Operation not initialized
+ * CKR_ARGUMENTS_BAD             - Next state is not valid
+ * CKR_OK                        - Success
+ */
+CK_RV libopctx_check_next_state(enum op_state current_state,
+				enum op_state next_state, CK_BBOOL *terminate);
 
 #endif /* __LIB_OPCTX_H__ */

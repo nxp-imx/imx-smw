@@ -991,7 +991,7 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	status = smw_generate_key(&gen_args);
 	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("Generate Key on subsystem #%d status %d return %ld",
+	DBG_TRACE("Generate Key on subsystem #%d SMW status %d return 0x%lx",
 		  devinfo->name, status, ret);
 
 	if (ret == CKR_OK)
@@ -1277,11 +1277,11 @@ static CK_RV info_msign_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	/* @info flag is set with Sign flag or Verify flag or both */
 	status = smw_config_check_sign(devinfo->name, &sign_verify_info);
 	if (status == SMW_STATUS_OK)
-		info->flags |= CKF_SIGN;
+		info->flags |= CKF_SIGN | CKF_MESSAGE_SIGN;
 
 	status = smw_config_check_verify(devinfo->name, &sign_verify_info);
 	if (status == SMW_STATUS_OK)
-		info->flags |= CKF_VERIFY;
+		info->flags |= CKF_VERIFY | CKF_MESSAGE_VERIFY;
 
 	/*
 	 * Call specific device mechanism information function
@@ -1305,63 +1305,246 @@ static CK_RV info_msign_rsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return info_msign_common(slotid, type, entry, info);
 }
 
+static CK_RV sign(struct lib_signature_params *params,
+		  smw_subsystem_t subsystem_name,
+		  struct smw_key_descriptor *key_desc,
+		  smw_attr_algo_t sign_algo, smw_hash_algo_t hash_algo,
+		  unsigned char *input, unsigned int input_length,
+		  unsigned char *output, unsigned int output_length)
+{
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_context_args op_ctx_args = { 0 };
+	struct smw_sign_verify_args smw_sign_verify_args = { 0 };
+	struct smw_hash_init_args smw_hash_init_args = { 0 };
+	struct smw_hash_update_args smw_hash_update_args = { 0 };
+	struct smw_hash_final_args smw_hash_final_args = { 0 };
+
+	struct lib_signature_ctx *ctx = params->ctx;
+
+	switch (params->state) {
+	case OP_ONE_SHOT:
+		smw_sign_verify_args.subsystem_name = subsystem_name;
+		smw_sign_verify_args.key_descriptor = key_desc;
+		smw_sign_verify_args.sign_algo = sign_algo;
+		smw_sign_verify_args.message = input;
+		smw_sign_verify_args.message_length = input_length;
+		smw_sign_verify_args.signature = output;
+		smw_sign_verify_args.signature_length = output_length;
+
+		if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN)) {
+			status = smw_sign(&smw_sign_verify_args);
+
+			/* Update signature length */
+			if (status == SMW_STATUS_OK ||
+			    status == SMW_STATUS_OUTPUT_TOO_SHORT)
+				params->ulsignaturelen =
+					smw_sign_verify_args.signature_length;
+		} else {
+			status = smw_verify(&smw_sign_verify_args);
+		}
+
+		break;
+
+	case OP_UPDATE:
+	case OP_NEXT:
+		if (ctx->current_state == OP_INIT ||
+		    ctx->current_state == OP_BEGIN) {
+			op_ctx_args.subsystem_name = subsystem_name;
+			status = smw_allocate_context(&op_ctx_args);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			ctx->context = op_ctx_args.context;
+
+			smw_hash_init_args.context = op_ctx_args.context;
+			smw_hash_init_args.algo_name = hash_algo;
+			smw_hash_init_args.input = input;
+			smw_hash_init_args.input_length = input_length;
+
+			status = smw_hash_init(&smw_hash_init_args);
+			if (status == SMW_STATUS_OK)
+				ctx->context = smw_hash_init_args.context;
+		} else if (ctx->current_state == OP_UPDATE ||
+			   ctx->current_state == OP_NEXT) {
+			smw_hash_update_args.context = ctx->context;
+			smw_hash_update_args.input = input;
+			smw_hash_update_args.input_length = input_length;
+
+			status = smw_hash_update(&smw_hash_update_args);
+			if (status == SMW_STATUS_OK)
+				ctx->context = smw_hash_update_args.context;
+		}
+
+		break;
+
+	case OP_FINAL:
+	case OP_END:
+		if (ctx->context) {
+			if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN)) {
+				smw_sign_verify_args.subsystem_name =
+					subsystem_name;
+				smw_sign_verify_args.key_descriptor = key_desc;
+				smw_sign_verify_args.sign_algo = sign_algo;
+				smw_sign_verify_args.message = NULL;
+				smw_sign_verify_args.message_length = 0;
+				smw_sign_verify_args.signature = NULL;
+				smw_sign_verify_args.signature_length = 0;
+
+				status = smw_sign(&smw_sign_verify_args);
+				if (status != SMW_STATUS_OK)
+					goto end;
+
+				if (!params->psignature ||
+				    output_length < smw_sign_verify_args
+							    .signature_length) {
+					if (params->psignature)
+						status =
+							SMW_STATUS_OUTPUT_TOO_SHORT;
+
+					params->ulsignaturelen =
+						smw_sign_verify_args
+							.signature_length;
+					goto end;
+				}
+			}
+
+			smw_hash_final_args.context = ctx->context;
+			status = smw_hash_final(&smw_hash_final_args);
+			ctx->context = smw_hash_final_args.context;
+			if (status != SMW_STATUS_OK &&
+			    status != SMW_STATUS_OUTPUT_TOO_SHORT)
+				goto end;
+
+			smw_hash_final_args.output =
+				malloc(smw_hash_final_args.output_length);
+			if (!smw_hash_final_args.output) {
+				status = SMW_STATUS_ALLOC_FAILURE;
+				goto end;
+			}
+
+			smw_hash_final_args.input = input;
+			smw_hash_final_args.input_length = input_length;
+			status = smw_hash_final(&smw_hash_final_args);
+			ctx->context = smw_hash_final_args.context;
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			sign_algo = SMW_ATTR_SET_HASH(sign_algo,
+						      SMW_ATTR_HASH_NONE);
+
+			smw_sign_verify_args.message =
+				smw_hash_final_args.output;
+			smw_sign_verify_args.message_length =
+				smw_hash_final_args.output_length;
+		} else {
+			smw_sign_verify_args.message = input;
+			smw_sign_verify_args.message_length = input_length;
+		}
+
+		smw_sign_verify_args.subsystem_name = subsystem_name;
+		smw_sign_verify_args.key_descriptor = key_desc;
+		smw_sign_verify_args.sign_algo = sign_algo;
+		smw_sign_verify_args.signature = output;
+		smw_sign_verify_args.signature_length = output_length;
+
+		if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN)) {
+			status = smw_sign(&smw_sign_verify_args);
+
+			/* Update signature length */
+			if (status == SMW_STATUS_OK ||
+			    status == SMW_STATUS_OUTPUT_TOO_SHORT)
+				params->ulsignaturelen =
+					smw_sign_verify_args.signature_length;
+		} else {
+			status = smw_verify(&smw_sign_verify_args);
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
+end:
+	if (smw_hash_final_args.output)
+		free(smw_hash_final_args.output);
+
+	ret = smw_status_to_ck_rv(status);
+
+	DBG_TRACE("%s on subsystem #%d SMW status %d return 0x%lx",
+		  params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN) ? "Sign" :
+								    "Verify",
+		  subsystem_name, status, ret);
+
+	return ret;
+}
+
 static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 			     struct lib_signature_params *params,
 			     unsigned int key_id)
 {
-	CK_RV ret = CKR_OK;
-	enum smw_status_code status = SMW_STATUS_OK;
 	const struct libdev *devinfo = NULL;
 	struct lib_signature_ctx *ctx = params->ctx;
+	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	struct smw_key_descriptor key_desc = { 0 };
-	struct smw_sign_verify_args smw_args = { 0 };
+	smw_attr_algo_t sign_algo = 0;
+	smw_hash_algo_t hash_algo = SMW_HASH_ALGO_NAME_NONE;
+	unsigned char *input = NULL;
+	unsigned int input_length = 0;
+	unsigned char *output = NULL;
+	unsigned int output_length = 0;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	smw_args.subsystem_name = devinfo->name;
 	key_desc.id = key_id;
-	smw_args.key_descriptor = &key_desc;
-	smw_args.sign_algo = entry->smw_algo_id;
 
-	if (entry->smw_hash == SMW_HASH_ALGO_NAME_NONE)
-		smw_args.sign_algo =
-			SMW_ATTR_SET_HASH(smw_args.sign_algo,
-					  get_hash_algo_id(ctx->hash_mech));
+	subsystem_name = devinfo->name;
+	sign_algo = entry->smw_algo_id;
 
-	if (ctx->salt_len)
-		if (SET_OVERFLOW(SMW_ATTR_SET_SALT_LENGTH(smw_args.sign_algo,
-							  ctx->salt_len),
-				 smw_args.sign_algo))
-			return CKR_ARGUMENTS_BAD;
-
-	smw_args.message = params->pdata;
-	if (SET_OVERFLOW(params->uldatalen, smw_args.message_length))
-		return CKR_ARGUMENTS_BAD;
-
-	smw_args.signature = params->psignature;
-	if (SET_OVERFLOW(params->ulsignaturelen, smw_args.signature_length))
-		return CKR_ARGUMENTS_BAD;
-
-	if (params->op_flag == CKF_SIGN) {
-		status = smw_sign(&smw_args);
-
-		/* Update signature length */
-		if (status == SMW_STATUS_OK ||
-		    status == SMW_STATUS_OUTPUT_TOO_SHORT)
-			params->ulsignaturelen = smw_args.signature_length;
+	if (entry->smw_hash == SMW_HASH_ALGO_NAME_NONE) {
+		hash_algo = get_hash_algo(ctx->hash_mech);
+		sign_algo = SMW_ATTR_SET_HASH(sign_algo,
+					      get_hash_algo_id(ctx->hash_mech));
 	} else {
-		status = smw_verify(&smw_args);
+		hash_algo = entry->smw_hash;
 	}
 
-	ret = smw_status_to_ck_rv(status);
+	if ((ctx->current_state == OP_BEGIN && params->state == OP_NEXT) ||
+	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE)) {
+		if (hash_algo == SMW_HASH_ALGO_NAME_NONE)
+			return CKR_ARGUMENTS_BAD;
+	}
 
-	DBG_TRACE("%s on subsystem #%d status %d return %ld",
-		  params->op_flag == CKF_SIGN ? "Sign" : "Verify",
-		  smw_args.subsystem_name, status, ret);
+	if (ctx->salt_len) {
+		if (SET_OVERFLOW(SMW_ATTR_SET_SALT_LENGTH(sign_algo,
+							  ctx->salt_len),
+				 sign_algo))
+			return CKR_ARGUMENTS_BAD;
+	}
 
-	return ret;
+	if (ctx->mac_len) {
+		if (params->ulsignaturelen) {
+			if (params->ulsignaturelen < ctx->mac_len)
+				return CKR_BUFFER_TOO_SMALL;
+
+			params->ulsignaturelen = ctx->mac_len;
+		}
+	}
+
+	input = params->pdata;
+	output = params->psignature;
+
+	if (SET_OVERFLOW(params->uldatalen, input_length))
+		return CKR_DATA_LEN_RANGE;
+
+	if (SET_OVERFLOW(params->ulsignaturelen, output_length))
+		return CKR_SIGNATURE_LEN_RANGE;
+
+	return sign(params, subsystem_name, &key_desc, sign_algo, hash_algo,
+		    input, input_length, output, output_length);
 }
 
 static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
@@ -2151,7 +2334,8 @@ static CK_RV info_mmac_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 
 	status = smw_config_check_mac(devinfo->name, &mac_info);
 	if (status == SMW_STATUS_OK)
-		info->flags |= CKF_SIGN | CKF_VERIFY;
+		info->flags |= CKF_SIGN | CKF_MESSAGE_SIGN | CKF_VERIFY |
+			       CKF_MESSAGE_VERIFY;
 
 	/*
 	 * Call specific device mechanism information function
@@ -2182,6 +2366,10 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	params = args;
 	ctx = params->ctx;
 
+	if (params->state != OP_ONE_SHOT &&
+	    (ctx->context || params->state != OP_END))
+		return ret;
+
 	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
 
 	smw_args.subsystem_name = devinfo->name;
@@ -2203,7 +2391,7 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	else if (ctx->hash_mech)
 		smw_args.hash_name = get_hash_algo(ctx->hash_mech);
 
-	if (params->op_flag == CKF_SIGN) {
+	if (params->op_flag & (CKF_SIGN | CKF_MESSAGE_SIGN)) {
 		status = smw_mac(&smw_args);
 
 		/* Update MAC length */
@@ -2216,7 +2404,7 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("%s on subsystem #%d status %d return %ld",
+	DBG_TRACE("%s on subsystem #%d SMW status %d return 0x%lx",
 		  params->op_flag == CKF_SIGN ? "Sign" : "Verify",
 		  smw_args.subsystem_name, status, ret);
 
@@ -2509,7 +2697,7 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	status = smw_import_key(&imp_args);
 	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("Import Key on subsystem #%d status %d return %ld",
+	DBG_TRACE("Import Key on subsystem #%d SMW status %d return 0x%lx",
 		  devinfo->name, status, ret);
 
 	if (ret == CKR_OK)
@@ -2658,8 +2846,8 @@ CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
 
 	ret = smw_status_to_ck_rv(status);
 
-	DBG_TRACE("RNG on subsystem #%d status %d return %ld", devinfo->name,
-		  status, ret);
+	DBG_TRACE("RNG on subsystem #%d SMW status %d return 0x%lx",
+		  devinfo->name, status, ret);
 	return ret;
 }
 
@@ -2669,7 +2857,7 @@ CK_RV libdev_cancel_operation(void **context)
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_context_args args = { 0 };
 
-	args.context = (struct smw_op_context *)*context;
+	args.context = *context;
 
 	status = smw_cancel_operation(&args);
 	ret = smw_status_to_ck_rv(status);

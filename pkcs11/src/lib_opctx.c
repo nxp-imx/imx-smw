@@ -134,3 +134,77 @@ CK_RV libopctx_cancel(struct libopctx_list *list, struct libopctx *opctx,
 	ret = libopctx_destroy(list, opctx);
 	return ret;
 }
+
+CK_RV libopctx_check_next_state(enum op_state current_state,
+				enum op_state next_state, CK_BBOOL *terminate)
+{
+	CK_RV ret = CKR_OK;
+
+	switch (current_state) {
+	case OP_INIT:
+		if (next_state != OP_BEGIN && next_state != OP_UPDATE &&
+		    next_state != OP_FINAL && next_state != OP_ONE_SHOT) {
+			*terminate = CK_FALSE;
+			ret = CKR_ARGUMENTS_BAD;
+		}
+		break;
+
+	case OP_ONE_SHOT:
+		if (next_state != OP_ONE_SHOT) {
+			*terminate = CK_TRUE;
+			ret = CKR_OPERATION_NOT_INITIALIZED;
+		}
+
+		break;
+
+	case OP_BEGIN:
+		if (next_state != OP_NEXT && next_state != OP_END) {
+			*terminate = CK_TRUE;
+			ret = CKR_OPERATION_NOT_INITIALIZED;
+		}
+
+		break;
+
+	case OP_NEXT:
+		if (next_state != OP_END && next_state != OP_NEXT &&
+		    next_state != OP_FINAL) {
+			*terminate = CK_FALSE;
+			ret = CKR_OPERATION_NOT_INITIALIZED;
+		}
+		break;
+
+	case OP_UPDATE:
+		if (next_state != OP_UPDATE && next_state != OP_FINAL) {
+			*terminate = CK_FALSE;
+			ret = CKR_OPERATION_NOT_INITIALIZED;
+		}
+		break;
+
+	case OP_END:
+		if (next_state != OP_END && next_state != OP_BEGIN &&
+		    next_state != OP_ONE_SHOT) {
+			*terminate = CK_TRUE;
+			ret = CKR_OPERATION_NOT_INITIALIZED;
+		}
+
+		break;
+
+	case OP_FINAL:
+		if (next_state != OP_FINAL) {
+			*terminate = CK_TRUE;
+			ret = CKR_OPERATION_NOT_INITIALIZED;
+		}
+
+		break;
+
+	default:
+		*terminate = CK_TRUE;
+		ret = CKR_OPERATION_NOT_INITIALIZED;
+		break;
+	}
+
+	DBG_TRACE("Operation state: %d -> %d, ret = 0x%lx, terminate = %d",
+		  current_state, next_state, ret, *terminate);
+
+	return ret;
+}

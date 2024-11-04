@@ -797,7 +797,7 @@ CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
 	struct libsess *sess = (struct libsess *)hsession;
 	struct libopctx *opctx = NULL;
 
-	DBG_TRACE("Remove operation context (sess: %p, op: %lx)", sess,
+	DBG_TRACE("Cancel operation context (sess: %p, op: %lx)", sess,
 		  op_flag);
 
 	ret = libsess_validate(hsession);

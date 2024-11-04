@@ -383,25 +383,14 @@ enum smw_status_code smw_hash_final(struct smw_hash_final_args *args)
 	status = smw_utils_execute_final(OPERATION_ID_HASH_MULTI_PART,
 					 &hash_args,
 					 args->context->subsystem_id);
+	if (status == SMW_STATUS_OUTPUT_TOO_SHORT ||
+	    status == SMW_STATUS_INVALID_PARAM ||
+	    (status == SMW_STATUS_OK && !args->output))
+		goto end;
 
-	/*
-	 * Release the context if the final operation has returned any status code
-	 * except SMW_STATUS_OUTPUT_TOO_SHORT or SMW_STATUS_INVALID_PARAM.
-	 */
-	if (status != SMW_STATUS_OUTPUT_TOO_SHORT &&
-	    status != SMW_STATUS_INVALID_PARAM) {
-		tmp_status = smw_utils_free_context(&args->context);
-		if (status == SMW_STATUS_OK)
-			status = tmp_status;
-	}
-
-	/*
-	 * SMW_STATUS_OUTPUT_TOO_SHORT is the expected internal status if the
-	 * 'get output buffer length' feature succeed and must be convert to
-	 * SMW_STATUS_OK
-	 */
-	if (status == SMW_STATUS_OUTPUT_TOO_SHORT && !args->output)
-		status = SMW_STATUS_OK;
+	tmp_status = smw_utils_free_context(&args->context);
+	if (status == SMW_STATUS_OK)
+		status = tmp_status;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

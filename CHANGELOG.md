@@ -101,6 +101,7 @@ is called.
 * Import only the token key to subsystem.
 * Retrieve public buffer of a key generated or imported using SMW API.
 * Add C_GetObjectSize support
+* Implement multi-part sign/verify PKCS#11 APIs.
 
 #### PKCS#11 Tests - _version 4.1_
 
@@ -113,6 +114,7 @@ is called.
 * Add tests for Key derivation using HKDF.
 * Validate public buffer retrieval of a key generated or imported using the SMW API.
 * Add get object size unit test.
+* Validate multi-part sign/verify PKCS#11 APIs.
 
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**

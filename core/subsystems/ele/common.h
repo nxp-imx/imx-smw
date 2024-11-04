@@ -101,6 +101,15 @@ const struct ele_hash_algo *
 ele_get_hash_algo(enum smw_config_hash_algo_id algo_id);
 
 /**
+ * ele_get_hash_algo_id() - Get hash algorithm ID
+ * @digest_length: Digest length.
+ *
+ * Return:
+ * 0 if algorithm not found, otherwise the ELE hash algorithm.
+ */
+enum smw_config_hash_algo_id ele_get_hash_algo_id(uint32_t digest_length);
+
+/**
  * ele_key_handle() - Handle the Key operations.
  * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @operation_id: Security Operation ID.

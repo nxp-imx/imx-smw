@@ -98,6 +98,7 @@ static bool check_security_size(unsigned int security_size,
 static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 				unsigned int security_size,
 				struct smw_sign_verify_attributes *attributes,
+				uint32_t message_size,
 				hsm_signature_scheme_id_t *scheme_id)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -108,6 +109,9 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 	enum smw_config_sign_type_id type_id = attributes->type_id;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (hash_id == SMW_CONFIG_HASH_ALGO_ID_INVALID)
+		hash_id = ele_get_hash_algo_id(message_size);
 
 	for (; i < ARRAY_SIZE(signature_schemes); i++, scheme++) {
 		if (scheme->key_type_id == key_type_id) {
@@ -178,20 +182,20 @@ static int sign(struct hdl *hdl, void *args)
 		goto end;
 	}
 
+	status = set_signature_scheme(key_identifier->type_id,
+				      key_identifier->security_size,
+				      &sign_args->attributes,
+				      op_args.message_size, &op_args.scheme_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
 	if (sign_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 	else
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
 
-	status = set_signature_scheme(key_identifier->type_id,
-				      key_identifier->security_size,
-				      &sign_args->attributes,
-				      &op_args.scheme_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
 	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_generate_signature()\n"
+		       "[%s (%d)] Call hsm_do_sign()\n"
 		       "op_generate_sign_args_t\n"
 		       "    key_identifier: 0x%08X\n"
 		       "    scheme_id: 0x%08X\n"
@@ -208,7 +212,7 @@ static int sign(struct hdl *hdl, void *args)
 		       op_args.signature_size);
 
 	err = hsm_do_sign(hdl->key_store, &op_args);
-	SMW_DBG_PRINTF(DEBUG, "hsm_generate_signature returned %d\n", err);
+	SMW_DBG_PRINTF(DEBUG, "hsm_do_sign returned %d\n", err);
 
 	status = ele_convert_err(err);
 
@@ -302,7 +306,7 @@ static int verify(struct hdl *hdl, void *args)
 
 	status = set_signature_scheme(key_type_id, security_size,
 				      &verify_args->attributes,
-				      &op_args.scheme_id);
+				      op_args.message_size, &op_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

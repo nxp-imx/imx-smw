@@ -339,6 +339,11 @@ static int sign_verify_no_init(CK_FUNCTION_LIST_PTR pfunc)
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
 	TEST_OUT("Sign init with NULL mechanism");
 	ret = pfunc->C_SignInit(sess, NULL_PTR, 1);
 	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
@@ -480,8 +485,8 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG signature_len = 0;
 	CK_ULONG tmp = 0;
 
-	CK_OBJECT_HANDLE hpubkey;
-	CK_OBJECT_HANDLE hprivkey;
+	CK_OBJECT_HANDLE hpubkey = 0;
+	CK_OBJECT_HANDLE hprivkey = 0;
 	CK_MECHANISM key_mech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA256 };
 	CK_BBOOL ec_verify = CK_TRUE;

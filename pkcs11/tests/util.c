@@ -250,7 +250,7 @@ CK_RV util_set_unique_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG_PTR length,
 			 CK_OBJECT_CLASS class, unsigned int id)
 {
 	CK_RV ret = CKR_GENERAL_ERROR;
-	CK_BYTE_PTR buffer = NULL;
+	CK_BYTE_PTR buffer = NULL_PTR;
 	CK_ULONG size = 0;
 	CK_ULONG unique_id_length = 0;
 
@@ -294,7 +294,7 @@ CK_RV util_get_object_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG length,
 {
 	int ret = CKR_OK;
 
-	CK_BYTE_PTR buffer = NULL;
+	CK_BYTE_PTR buffer = NULL_PTR;
 	CK_ULONG size = 0;
 
 	if (!length)

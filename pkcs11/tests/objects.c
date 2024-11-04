@@ -57,7 +57,7 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 	CK_MECHANISM encrypt_decrypt_mech = { 0 };
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_ULONG encrypted_data_len = 0;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_BYTE_PTR recovered_data = NULL_PTR;
 	CK_ULONG recovered_data_len = 0;
 
@@ -69,7 +69,7 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG key_length = 32;
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_ULONG unique_id_len = 0;
-	CK_UTF8CHAR_PTR unique_id = NULL;
+	CK_UTF8CHAR_PTR unique_id = NULL_PTR;
 
 	CK_ATTRIBUTE aes_key_attrs[] = {
 		{ CKA_UNIQUE_ID, unique_id, unique_id_len },
@@ -162,12 +162,12 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 			case CKM_AES_CBC:
 				encrypt_decrypt_mech.pParameter = iv;
 				encrypt_decrypt_mech.ulParameterLen =
-					ARRAY_SIZE(iv);
+					sizeof(iv);
 				break;
 
 			case CKM_AES_CTR:
 				memcpy(ctr_params.cb, counter_block,
-				       ARRAY_SIZE(counter_block));
+				       sizeof(counter_block));
 				ctr_params.ulCounterBits = counter_bits;
 				encrypt_decrypt_mech.pParameter = &ctr_params;
 				encrypt_decrypt_mech.ulParameterLen =
@@ -245,7 +245,7 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 		psa_destroy_key(psa_id);
 
 		free(unique_id);
-		unique_id = NULL;
+		unique_id = NULL_PTR;
 		unique_id_len = 0;
 	}
 
@@ -291,13 +291,13 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
 
-	CK_OBJECT_HANDLE hpubkey;
-	CK_OBJECT_HANDLE hprivkey;
+	CK_OBJECT_HANDLE hpubkey = 0;
+	CK_OBJECT_HANDLE hprivkey = 0;
 	CK_ULONG nb_match = 0;
 
 	CK_ULONG key_length = 32;
 	CK_ULONG unique_id_len = 0;
-	CK_UTF8CHAR_PTR unique_id = NULL;
+	CK_UTF8CHAR_PTR unique_id = NULL_PTR;
 	CK_OBJECT_CLASS public_key_class = CKO_PUBLIC_KEY;
 	CK_OBJECT_CLASS private_key_class = CKO_PRIVATE_KEY;
 
@@ -379,7 +379,7 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	free(unique_id);
-	unique_id = NULL;
+	unique_id = NULL_PTR;
 	unique_id_len = 0;
 
 	ret = util_set_unique_id(unique_id, &unique_id_len, private_key_class,
@@ -514,7 +514,7 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG nb_match = 0;
 
 	CK_ULONG unique_id_len = 0;
-	CK_UTF8CHAR_PTR unique_id = NULL;
+	CK_UTF8CHAR_PTR unique_id = NULL_PTR;
 	CK_ULONG key_length = 256;
 	CK_OBJECT_CLASS public_key_class = CKO_PUBLIC_KEY;
 	CK_OBJECT_CLASS private_key_class = CKO_PRIVATE_KEY;
@@ -599,7 +599,7 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	free(unique_id);
-	unique_id = NULL;
+	unique_id = NULL_PTR;
 	unique_id_len = 0;
 
 	ret = util_set_unique_id(unique_id, &unique_id_len, private_key_class,
@@ -712,7 +712,7 @@ static int data_storage_store(CK_FUNCTION_LIST_PTR pfunc)
 	CK_BBOOL btrue = CK_TRUE;
 	CK_SESSION_HANDLE sess = 0;
 	CK_ULONG unique_id_len = 0;
-	CK_UTF8CHAR_PTR unique_id = NULL;
+	CK_UTF8CHAR_PTR unique_id = NULL_PTR;
 	CK_OBJECT_HANDLE hdata = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS data_class = CKO_DATA;
 	CK_BYTE data[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
@@ -829,7 +829,7 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 
 	/* AES - 256 bits key length */
 	CK_ULONG unique_id_len = 0;
-	CK_UTF8CHAR_PTR unique_id = NULL;
+	CK_UTF8CHAR_PTR unique_id = NULL_PTR;
 	CK_ULONG key_length = 32;
 	CK_ULONG nb_match = 0;
 
@@ -1000,7 +1000,7 @@ static int find_all_objects(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Key secret generated #%lu\n", hkey);
 
-	ret = pfunc->C_FindObjectsInit(sess, NULL, 0);
+	ret = pfunc->C_FindObjectsInit(sess, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
 		goto end;
 

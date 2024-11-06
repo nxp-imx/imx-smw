@@ -98,6 +98,7 @@ is called.
 * Find and retrieve token object from the database objects table
 * Update token object in the database objects table
 * Add support for Key derivation using HKDF.
+* Import only the token key to subsystem.
 
 #### PKCS#11 Tests - _version 4.1_
 

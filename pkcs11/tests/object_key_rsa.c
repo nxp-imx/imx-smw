@@ -104,7 +104,7 @@ static int object_rsa_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    &hkey);
 
-	if (bverify) {
+	if (bverify || !token) {
 		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
 			goto end;
 
@@ -168,7 +168,7 @@ static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    &hkey);
 
-	if (bsign) {
+	if (bsign || !token) {
 		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
 			goto end;
 

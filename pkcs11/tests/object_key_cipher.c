@@ -43,7 +43,7 @@ static int object_cipher_key(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	TEST_OUT("Create %sKey Secret key\n", token ? "Token " : "");
 	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    &hkey);
-	if (bencrypt) {
+	if (bencrypt || !token) {
 		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
 			goto end;
 
@@ -145,6 +145,7 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_VALUE, &key, sizeof(key) },
 		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
 		{ CKA_DECRYPT, &btrue, sizeof(btrue) },
+		{ CKA_TOKEN, &btrue, sizeof(btrue) },
 	};
 
 	CK_ATTRIBUTE getkeyAttr[] = {

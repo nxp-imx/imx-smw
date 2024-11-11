@@ -641,15 +641,22 @@ void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc)
 	status = find_while_active(pfunc, &sess, hkeys);
 
 end:
-	for (; i < NB_MAX_KEY; i++) {
-		if (hkeys[i] != CK_INVALID_HANDLE) {
-			ret = ((CK_FUNCTION_LIST_PTR)pfunc)
-				      ->C_DestroyObject(sess, hkeys[i]);
-			if (ret != CKR_OK)
-				break;
-		}
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = ((CK_FUNCTION_LIST_PTR)pfunc)
+		      ->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login")) {
+		status = TEST_FAIL;
+		goto error;
 	}
 
+	for (; i < NB_MAX_KEY; i++) {
+		if (hkeys[i] != CK_INVALID_HANDLE)
+			(void)((CK_FUNCTION_LIST_PTR)pfunc)
+				->C_DestroyObject(sess, hkeys[i]);
+	}
+
+error:
 	util_close_session(pfunc, &sess);
 
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

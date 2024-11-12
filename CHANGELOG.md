@@ -150,6 +150,7 @@ is called.
 * Retrieve public buffer of a key generated or imported using SMW API.
 * Add C_GetObjectSize support
 * Implement multi-part sign/verify PKCS#11 APIs.
+* Add implementation for C_(Get|Set)OperationState functions
 
 #### PKCS#11 Tests - _version 4.1_
 
@@ -163,6 +164,7 @@ is called.
 * Validate public buffer retrieval of a key generated or imported using the SMW API.
 * Add get object size unit test.
 * Validate multi-part sign/verify PKCS#11 APIs.
+* Add tests for C_(Get|Set)OperationState functions
 
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**

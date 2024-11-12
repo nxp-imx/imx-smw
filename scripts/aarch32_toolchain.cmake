@@ -9,14 +9,14 @@ if(_IN_TC)
     return()
 endif()
 
-# https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-a/downloads
+# https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
 
 # Set the default aarch32 Cross-compiler toolchain
 if(NOT TOOLCHAIN_NAME)
     set(TOOLCHAIN_NAME "arm-none-linux-gnueabihf")
-    set(TOOLCHAIN_VERSION "10.3-2021.07" CACHE STRING "Default Toolchain Version")
-    set(TOOLCHAIN_HASH "SHA256=aa074fa8371a4f73fecbd16bd62c8b1945f23289e26414794f130d6ccdf8e39c")
-    set(TOOLCHAIN_SERVER "https://developer.arm.com/-/media/Files/downloads/gnu-a/")
+    set(TOOLCHAIN_VERSION "11.2-2022.02" CACHE STRING "Default Toolchain Version")
+    set(TOOLCHAIN_HASH "SHA256=c254f7199261fe76c32ef42187502839bda7efad0a66646cf739d074eff45fad")
+    set(TOOLCHAIN_SERVER "https://developer.arm.com/-/media/Files/downloads/gnu/")
     set(TOOLCHAIN_URL ${TOOLCHAIN_SERVER}${TOOLCHAIN_VERSION}/binrel/)
 endif()
 

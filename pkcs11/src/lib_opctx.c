@@ -11,6 +11,10 @@
 #include "lib_opctx.h"
 #include "lib_device.h"
 
+#include "lib_cipher.h"
+#include "lib_digest.h"
+#include "lib_sign_verify.h"
+
 #include "trace.h"
 
 CK_RV libopctx_add(struct libopctx_list *list, struct libopctx *opctx)
@@ -207,4 +211,46 @@ CK_RV libopctx_check_next_state(enum op_state current_state,
 		  current_state, next_state, ret, *terminate);
 
 	return ret;
+}
+
+CK_RV libopctx_copy(struct libopctx *src, struct libopctx *dst)
+{
+	memset(&dst->mech, 0, sizeof(dst->mech));
+
+	if (src->mech.pParameter) {
+		dst->mech.pParameter = calloc(1, src->mech.ulParameterLen);
+		if (!dst->mech.pParameter)
+			return CKR_HOST_MEMORY;
+
+		memcpy(dst->mech.pParameter, src->mech.pParameter,
+		       dst->mech.ulParameterLen);
+	}
+
+	dst->mech.mechanism = src->mech.mechanism;
+	dst->mech.ulParameterLen = src->mech.ulParameterLen;
+
+	dst->op_flag = src->op_flag;
+
+	switch (src->op_flag) {
+	case CKF_ENCRYPT:
+	case CKF_DECRYPT:
+	case CKF_MESSAGE_ENCRYPT:
+	case CKF_MESSAGE_DECRYPT:
+		return lib_cipher_copy_operation((void *)src->ctx,
+						 (void **)&dst->ctx);
+
+	case CKF_SIGN:
+	case CKF_VERIFY:
+	case CKF_MESSAGE_SIGN:
+	case CKF_MESSAGE_VERIFY:
+		return lib_sign_verify_copy_operation((void *)src->ctx,
+						      (void **)&dst->ctx);
+
+	case CKF_DIGEST:
+		return lib_digest_copy_operation((void *)src->ctx,
+						 (void **)&dst->ctx);
+
+	default:
+		return CKR_GENERAL_ERROR;
+	}
 }

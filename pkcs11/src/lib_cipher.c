@@ -619,6 +619,40 @@ CK_RV lib_cipher_cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 	return ret;
 }
 
+CK_RV lib_cipher_copy_operation(void *src, void **dst)
+{
+	CK_RV ret = CKR_OK;
+	struct lib_cipher_ctx *src_ctx = src;
+	struct lib_cipher_ctx *dst_ctx = NULL;
+
+	dst_ctx = calloc(1, sizeof(struct lib_cipher_ctx));
+	if (!dst_ctx)
+		return CKR_HOST_MEMORY;
+
+	memcpy(dst_ctx, src_ctx, sizeof(*dst_ctx));
+
+	dst_ctx->key_value = NULL_PTR;
+	dst_ctx->iv = NULL_PTR;
+	dst_ctx->tag = NULL_PTR;
+	dst_ctx->context = NULL;
+
+	ret = libdev_copy_operation(src_ctx->context, &dst_ctx->context);
+	if (ret != CKR_OK)
+		goto end;
+
+	*dst = dst_ctx;
+
+end:
+	if (ret != CKR_OK) {
+		if (dst_ctx->context)
+			free(dst_ctx->context);
+
+		free(dst_ctx);
+	}
+
+	return ret;
+}
+
 CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 			       CK_MECHANISM_PTR pmechanism,
 			       CK_OBJECT_HANDLE hkey, CK_FLAGS op_flag)

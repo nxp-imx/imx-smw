@@ -124,4 +124,22 @@ CK_RV libopctx_cancel(struct libopctx_list *list, struct libopctx *opctx,
 CK_RV libopctx_check_next_state(enum op_state current_state,
 				enum op_state next_state, CK_BBOOL *terminate);
 
+/**
+ * libopctx_copy() - Copy the ongoing multi-part crypto operation.
+ * @src: Source multi-part operation context
+ * @dst: Destination multi-part operation context
+ *
+ * The operation specific context field @src->ctx is copied.
+ *
+ * Return:
+ * CKR_STATE_UNSAVEABLE               - State cannot be saved
+ * CKR_DEVICE_MEMORY                  - Device memory error
+ * CKR_FUNCTION_FAILED                - Operation failed
+ * CKR_OBJECT_HANDLE_INVALID          - Object not found
+ * CKR_DEVICE_ERROR                   - Device failure
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_OK                             - Success
+ */
+CK_RV libopctx_copy(struct libopctx *src, struct libopctx *dst);
+
 #endif /* __LIB_OPCTX_H__ */

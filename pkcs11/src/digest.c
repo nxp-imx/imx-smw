@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023-2024 NXP
  */
 
 #include "pkcs11smw.h"
@@ -95,4 +95,13 @@ CK_RV C_DigestFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pDigest,
 		    CK_ULONG_PTR pulDigestLen)
 {
 	return digest(hSession, NULL_PTR, 0, pDigest, pulDigestLen);
+}
+
+CK_RV lib_digest_copy_operation(void *src, void **dst)
+{
+	(void)src;
+	(void)dst;
+
+	/* Not supported for now */
+	return CKR_STATE_UNSAVEABLE;
 }

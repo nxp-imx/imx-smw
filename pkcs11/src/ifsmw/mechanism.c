@@ -2786,3 +2786,38 @@ CK_RV libdev_cancel_operation(void **context)
 
 	return ret;
 }
+
+CK_RV libdev_copy_operation(void *src, void **dst)
+{
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_context_args allocate = { 0 };
+	struct smw_copy_context_args copy = { 0 };
+
+	if (*dst)
+		return CKR_ARGUMENTS_BAD;
+
+	status = smw_allocate_context(&allocate);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	copy.src_context = src;
+	copy.dst_context = allocate.context;
+
+	status = smw_copy_context(&copy);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	*dst = allocate.context;
+
+end:
+	if (status != SMW_STATUS_OK) {
+		if (allocate.context)
+			smw_cancel_operation(&allocate);
+	}
+
+	ret = smw_status_to_ck_rv(status);
+
+	DBG_TRACE("Copy operation ret = %lx\n", ret);
+	return ret;
+}

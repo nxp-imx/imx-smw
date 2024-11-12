@@ -461,6 +461,39 @@ CK_RV lib_sign_verify_reset(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	return ret;
 }
 
+CK_RV lib_sign_verify_copy_operation(void *src, void **dst)
+{
+	CK_RV ret = CKR_OK;
+	struct lib_signature_ctx *src_ctx = src;
+	struct lib_signature_ctx *dst_ctx = NULL;
+
+	dst_ctx = calloc(1, sizeof(struct lib_signature_ctx));
+	if (!dst_ctx)
+		return CKR_HOST_MEMORY;
+
+	memcpy(dst_ctx, src_ctx, sizeof(*dst_ctx));
+
+	dst_ctx->context = NULL;
+
+	ret = libdev_copy_operation(src_ctx->context, &dst_ctx->context);
+	if (ret != CKR_OK)
+		goto end;
+
+	*dst = dst_ctx;
+
+end:
+	if (ret != CKR_OK) {
+		if (dst_ctx) {
+			if (dst_ctx->context)
+				free(dst_ctx->context);
+
+			free(dst_ctx);
+		}
+	}
+
+	return ret;
+}
+
 CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	       CK_ULONG ulparameterlen, CK_BYTE_PTR pdata, CK_ULONG uldatalen,
 	       CK_BYTE_PTR psignature, CK_ULONG_PTR pulsignaturelen,

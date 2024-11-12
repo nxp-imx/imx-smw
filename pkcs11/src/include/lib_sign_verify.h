@@ -114,6 +114,26 @@ CK_RV lib_sign_verify_reset(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 			    CK_ULONG ulparameterlen, CK_FLAGS op_flag);
 
 /**
+ * lib_sign_verify_copy_operation() - Create a copy of the multi-part digest
+ * operation, if active
+ * @src: The source context
+ * @dst: The destination context
+ *
+ * Check if any multi-part digest operation is active.
+ * If a multi-part operation is active, copy the operation
+ * context into @dst.
+ *
+ * Return:
+ * CKR_STATE_UNSAVEABLE               - State cannot be saved
+ * CKR_DEVICE_MEMORY                  - Device memory error
+ * CKR_FUNCTION_FAILED                - Operation failed
+ * CKR_OBJECT_HANDLE_INVALID          - Object not found
+ * CKR_DEVICE_ERROR                   - Device failure
+ * CKR_OK                             - Success
+ */
+CK_RV lib_sign_verify_copy_operation(void *src, void **dst);
+
+/**
  * lib_sign() - Run a sign operation
  * @hsession: Session handle
  * @pparameter: Pointer to parameter

@@ -382,4 +382,18 @@ CK_RV libdev_delete_data(struct libobj_obj *obj);
  */
 CK_RV libdev_cancel_operation(void **context);
 
+/**
+ * libdev_copy_operation() - Copy an on-going cryptographic multi-part operation.
+ * @src: The source operation context
+ * @dst: The destination operation context
+ *
+ * Return:
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_OBJECT_HANDLE_INVALID     - Object not found
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_copy_operation(void *src, void **dst);
+
 #endif /* __LIB_DEVICE_H__ */

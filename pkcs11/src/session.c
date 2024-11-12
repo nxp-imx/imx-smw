@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2024 NXP
  */
 
 #include "lib_session.h"
@@ -58,11 +58,14 @@ CK_RV C_GetOperationState(CK_SESSION_HANDLE hSession,
 			  CK_BYTE_PTR pOperationState,
 			  CK_ULONG_PTR pulOperationStateLen)
 {
-	(void)hSession;
-	(void)pOperationState;
-	(void)pulOperationStateLen;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!pulOperationStateLen)
+		return CKR_ARGUMENTS_BAD;
+
+	return libsess_get_operation_state(hSession, pOperationState,
+					   pulOperationStateLen);
 }
 
 CK_RV C_SetOperationState(CK_SESSION_HANDLE hSession,
@@ -71,13 +74,18 @@ CK_RV C_SetOperationState(CK_SESSION_HANDLE hSession,
 			  CK_OBJECT_HANDLE hEncryptionKey,
 			  CK_OBJECT_HANDLE hAuthenticationKey)
 {
-	(void)hSession;
-	(void)pOperationState;
-	(void)ulOperationStateLen;
-	(void)hEncryptionKey;
-	(void)hAuthenticationKey;
+	if (!hSession)
+		return CKR_SESSION_HANDLE_INVALID;
 
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!pOperationState || !ulOperationStateLen)
+		return CKR_ARGUMENTS_BAD;
+
+	if (hEncryptionKey != CK_INVALID_HANDLE ||
+	    hAuthenticationKey != CK_INVALID_HANDLE)
+		return CKR_KEY_NOT_NEEDED;
+
+	return libsess_set_operation_state(hSession, pOperationState,
+					   ulOperationStateLen);
 }
 
 CK_RV C_Login(CK_SESSION_HANDLE hSession, CK_USER_TYPE userType,

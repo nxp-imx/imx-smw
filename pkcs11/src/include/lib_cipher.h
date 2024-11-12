@@ -86,6 +86,26 @@ struct lib_cipher_params {
 CK_RV lib_cipher_cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag);
 
 /**
+ * lib_cipher_copy_operation() - Create a copy of the multi-part cipher
+ * operation, if active
+ * @src: The source context
+ * @dst: The destination context
+ *
+ * Check if any multi-part cipher operation is active.
+ * If a multi-part operation is active, copy the operation
+ * context into @dst.
+ *
+ * Return:
+ * CKR_STATE_UNSAVEABLE               - State cannot be saved
+ * CKR_DEVICE_MEMORY                  - Device memory error
+ * CKR_FUNCTION_FAILED                - Operation failed
+ * CKR_OBJECT_HANDLE_INVALID          - Object not found
+ * CKR_DEVICE_ERROR                   - Device failure
+ * CKR_OK                             - Success
+ */
+CK_RV lib_cipher_copy_operation(void *src, void **dst);
+
+/**
  * lib_encrypt_decrypt_init() - Initialize an encrypt or decrypt operation
  * @hsession: Session handle
  * @pmechanism: Pointer to operation mechanism

@@ -308,4 +308,47 @@ CK_RV libsess_remove_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag);
 CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
 			   void **context);
 
+/**
+ * libsess_get_operation_state() - Obtain a copy of the cryptographic operations
+ * state, if any
+ * @hSession: Session handle
+ * @pOperationState: Buffer that receives the state
+ * @pulOperationStateLen: Length of buffer that receives the state
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_SESSION_HANDLE_INVALID         - Session handle invalid
+ * CKR_HOST_MEMORY                    - Allocation error
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_OPERATION_NOT_INITIALIZED      - Operation not initialized
+ * CKR_ARGUMENTS_BAD                  - Bad arguments
+ * CKR_BUFFER_TOO_SMALL               - Output buffer too small
+ * CKR_STATE_UNSAVEABLE               - State cannot be saved
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_get_operation_state(CK_SESSION_HANDLE hSession,
+				  CK_BYTE_PTR pOperationState,
+				  CK_ULONG_PTR pulOperationStateLen);
+
+/**
+ * libsess_set_operation_state() - Restore the cryptographic operations state
+ * @hSession: Session handle
+ * @pOperationState: Buffer that holds the state
+ * @pulOperationStateLen: Length of buffer that holds the state
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_HOST_MEMORY                    - Allocation error
+ * CKR_SAVED_STATE_INVALID            - The saved state is not valid
+ * CKR_ARGUMENTS_BAD                  - Bad arguments
+ * CKR_KEY_NOT_NEEDED                 - An extraneous key was supplied
+ * CKR_OPERATION_ACTIVE               - Operation is already initialized
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_OK                             - Success
+ */
+CK_RV libsess_set_operation_state(CK_SESSION_HANDLE hSession,
+				  CK_BYTE_PTR pOperationState,
+				  CK_ULONG ulOperationStateLen);
+
 #endif /* __LIB_SESSION_H__ */

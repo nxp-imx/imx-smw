@@ -4,6 +4,7 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "lib_context.h"
 #include "lib_device.h"
@@ -817,5 +818,133 @@ CK_RV libsess_cancel_opctx(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag,
 
 end:
 	LLIST_UNLOCK(&sess->opctx);
+	return ret;
+}
+
+CK_RV libsess_get_operation_state(CK_SESSION_HANDLE hSession,
+				  CK_BYTE_PTR pOperationState,
+				  CK_ULONG_PTR pulOperationStateLen)
+{
+	struct libsess *sess = (struct libsess *)hSession;
+	struct libopctx destctx = { 0 };
+	size_t i = 0;
+
+	CK_ULONG op_flags[] = {
+		CKF_ENCRYPT,
+		CKF_DECRYPT,
+		CKF_MESSAGE_ENCRYPT,
+		CKF_MESSAGE_DECRYPT,
+
+		CKF_SIGN,
+		CKF_VERIFY,
+		CKF_MESSAGE_SIGN,
+		CKF_MESSAGE_VERIFY,
+
+		CKF_DIGEST,
+	};
+
+	struct libopctx *opctx = NULL;
+	CK_RV ret = CKR_OK;
+	CK_ULONG op_state_len = 0;
+	CK_ULONG n_ops = 0;
+
+	ret = libsess_validate(hSession);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = LLIST_LOCK(&sess->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	for (; i < ARRAY_SIZE(op_flags); i++) {
+		ret = libopctx_find(&sess->opctx, op_flags[i], &opctx);
+		if (ret == CKR_OK && opctx)
+			if (INC_OVERFLOW(n_ops, 1)) {
+				ret = CKR_GENERAL_ERROR;
+				goto end;
+			}
+	}
+
+	if (n_ops == 0) {
+		ret = CKR_OPERATION_NOT_INITIALIZED;
+		goto end;
+	}
+
+	if (MUL_OVERFLOW(n_ops, sizeof(struct libopctx), &op_state_len)) {
+		ret = CKR_STATE_UNSAVEABLE;
+		goto end;
+	}
+
+	if (!pOperationState || *pulOperationStateLen < op_state_len) {
+		*pulOperationStateLen = op_state_len;
+		ret = CKR_BUFFER_TOO_SMALL;
+		goto end;
+	}
+
+	op_state_len = 0;
+
+	for (i = 0; i < ARRAY_SIZE(op_flags); i++) {
+		ret = libopctx_find(&sess->opctx, op_flags[i], &opctx);
+		if (ret != CKR_OK || !opctx)
+			continue;
+
+		memset(&destctx, 0, sizeof(destctx));
+		ret = libopctx_copy(opctx, &destctx);
+
+		if (ret != CKR_OK) {
+			op_state_len = 0;
+			ret = CKR_STATE_UNSAVEABLE;
+			goto end;
+		}
+
+		memcpy(pOperationState + op_state_len, &destctx,
+		       sizeof(destctx));
+		if (ADD_OVERFLOW(op_state_len, sizeof(struct libopctx),
+				 &op_state_len)) {
+			ret = CKR_STATE_UNSAVEABLE;
+			goto end;
+		}
+	}
+
+end:
+	if (ret != CKR_OK) {
+		if (pOperationState && op_state_len > 0)
+			memset(pOperationState, 0, op_state_len);
+	}
+
+	LLIST_UNLOCK(&sess->opctx);
+
+	return ret;
+}
+
+CK_RV libsess_set_operation_state(CK_SESSION_HANDLE hSession,
+				  CK_BYTE_PTR pOperationState,
+				  CK_ULONG ulOperationStateLen)
+{
+	struct libopctx srcctx = { 0 };
+	CK_RV ret = CKR_OK;
+
+	if (ulOperationStateLen % sizeof(struct libopctx))
+		return CKR_SAVED_STATE_INVALID;
+
+	ret = libsess_validate(hSession);
+	if (ret != CKR_OK)
+		return ret;
+
+	while (ulOperationStateLen > 0) {
+		memcpy(&srcctx,
+		       pOperationState +
+			       (ulOperationStateLen - sizeof(struct libopctx)),
+		       sizeof(srcctx));
+
+		libsess_add_opctx(hSession, srcctx.op_flag, &srcctx.mech,
+				  srcctx.ctx);
+
+		ulOperationStateLen -= sizeof(struct libopctx);
+
+		if (srcctx.mech.pParameter)
+			free(srcctx.mech.pParameter);
+	}
+
 	return ret;
 }

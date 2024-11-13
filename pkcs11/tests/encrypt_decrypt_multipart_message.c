@@ -20,26 +20,9 @@ static int encrypt_decrypt_multipart_no_init(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 
-	/* AES - 128 bits key length */
-	CK_ULONG key_length = 16;
-	CK_MECHANISM_TYPE aes_mech_type[] = { CKM_AES_CTR };
-	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
-	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
-	CK_BBOOL ck_true = CK_TRUE;
-
-	CK_ATTRIBUTE aes_secretkey_attrs[] = {
-		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
-		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
-		{ CKA_ALLOWED_MECHANISMS, &aes_mech_type,
-		  sizeof(aes_mech_type) }
-	};
-	CK_OBJECT_HANDLE hsecretkey = 0;
-
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	/* Size of the input data part */
 	CK_ULONG part_len = 16;
 	CK_ULONG encrypted_part_len = part_len;
@@ -61,13 +44,6 @@ static int encrypt_decrypt_multipart_no_init(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	recovered_data = (CK_BYTE_PTR)calloc(data_len, sizeof(CK_BYTE));
 	if (CHECK_EXPECTED(recovered_data, "Allocation error"))
-		goto end;
-
-	TEST_OUT("Generate AES secret Key\n");
-	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
-				   ARRAY_SIZE(aes_secretkey_attrs),
-				   &hsecretkey);
-	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 		goto end;
 
 	TEST_OUT("Encrypt first data part without init\n");
@@ -144,7 +120,7 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG encrypted_data_len = data_len;
 	/* Size of the input data part */
 	CK_ULONG part_len = 16;
@@ -173,7 +149,7 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	encrypt_decrypt_mech.pParameter = iv;
-	encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+	encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 
 	TEST_OUT("Initialize encryption operation\n");
 	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
@@ -181,6 +157,7 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part encryption operation\n");
 	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
 		goto end;
@@ -232,12 +209,9 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_EncryptMessageNext"))
 		goto end;
 
-	TEST_OUT("Finish multi-part encryption operation without init\n");
-	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, &data[0], part_len,
-					  &encrypted_data[0],
-					  &encrypted_part_len,
-					  CKF_END_OF_MESSAGE);
-	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_EncryptMessageNext"))
+	TEST_OUT("Finish multi-part encryption process without init\n");
+	ret = pfunc->C_MessageEncryptFinal(sess);
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageEncryptFinal"))
 		goto end;
 
 	status = TEST_PASS;
@@ -279,7 +253,7 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG encrypted_data_len = data_len;
 	/* Size of the input data part */
 	CK_ULONG encrypted_part_len = 16;
@@ -317,6 +291,7 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part decryption operation\n");
 	ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
 		goto end;
@@ -336,7 +311,7 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_DecryptMessage"))
 		goto end;
 
-	TEST_OUT("Finish a multiple-part decryption operation\n");
+	TEST_OUT("Finish multi-part decryption operation\n");
 	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, &encrypted_data[0],
 					  encrypted_part_len,
 					  &recovered_data[0],
@@ -371,18 +346,9 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_DecryptMessageNext"))
 		goto end;
 
-	TEST_OUT("Finish a multiple-part decryption operation without init\n");
-	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, &encrypted_data[0],
-					  encrypted_part_len,
-					  &recovered_data[0],
-					  &part_recovered_len,
-					  CKF_END_OF_MESSAGE);
-	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_DecryptMessageNext"))
-		goto end;
-
-	TEST_OUT("Finish multi-part decryption process\n");
+	TEST_OUT("Finish multi-part decryption process without init\n");
 	ret = pfunc->C_MessageDecryptFinal(sess);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptFinal"))
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageDecryptFinal"))
 		goto end;
 
 	status = TEST_PASS;
@@ -431,7 +397,7 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	/* Size of the input data part */
 	CK_ULONG part_len = 16;
 	CK_ULONG encrypted_part_len = part_len;
@@ -463,7 +429,7 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	encrypt_decrypt_mech.pParameter = iv;
-	encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+	encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 
 	TEST_OUT("Initialize multi-part encryption operation\n");
 	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
@@ -471,89 +437,96 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part encryption operation\n");
 	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
 		goto end;
 
-	TEST_OUT("Session's handle in NULL\n");
+	TEST_OUT("Session's handle is NULL\n");
 	ret = pfunc->C_EncryptMessageNext(0, NULL_PTR, 0, &data[0], part_len,
 					  &encrypted_data[0],
 					  &encrypted_part_len, 0);
-	if (CHECK_CK_RV(CKR_SESSION_HANDLE_INVALID, "C_DecryptMessageNext"))
+	if (CHECK_CK_RV(CKR_SESSION_HANDLE_INVALID, "C_EncryptMessageNext"))
 		goto end;
 
 	TEST_OUT("Pointer to input data is NULL\n");
 	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, NULL_PTR, part_len,
 					  &encrypted_data[0],
 					  &encrypted_part_len, 0);
-	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_DecryptMessageNext"))
+	if (CHECK_CK_RV(CKR_DATA_INVALID, "C_EncryptMessageNext"))
 		goto end;
 
 	TEST_OUT("Finish multi-part encryption process\n");
 	ret = pfunc->C_MessageEncryptFinal(sess);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptFinal"))
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageEncryptFinal"))
+		goto end;
+
+	TEST_OUT("Initialize multi-part encryption operation\n");
+	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
+					  hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
+		goto end;
+
+	TEST_OUT("Begin multi-part encryption operation\n");
+	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
 		goto end;
 
 	TEST_OUT("Input data length is 0\n");
-	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
-					  hsecretkey);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
-		goto end;
-
-	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
-	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
-		goto end;
-
 	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, &data[0], 0,
 					  &encrypted_data[0],
 					  &encrypted_part_len, 0);
-	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_DecryptMessageNext"))
+	if (CHECK_CK_RV(CKR_DATA_LEN_RANGE, "C_EncryptMessageNext"))
 		goto end;
 
 	TEST_OUT("Finish multi-part encryption process\n");
 	ret = pfunc->C_MessageEncryptFinal(sess);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptFinal"))
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageEncryptFinal"))
+		goto end;
+
+	TEST_OUT("Initialize multi-part encryption operation\n");
+	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
+					  hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
+		goto end;
+
+	TEST_OUT("Begin multi-part encryption operation\n");
+	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
 		goto end;
 
 	TEST_OUT("Pointer to hold the length of encrypted data is NULL\n");
+	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, &data[0], part_len,
+					  &encrypted_data[0], NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_EncryptMessageNext"))
+		goto end;
+
+	TEST_OUT("Finish multi-part encryption process\n");
+	ret = pfunc->C_MessageEncryptFinal(sess);
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageEncryptFinal"))
+		goto end;
+
+	TEST_OUT("Initialize multi-part encryption operation\n");
 	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
 					  hsecretkey);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part encryption operation\n");
 	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
-		goto end;
-
-	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, &data[0], part_len,
-					  &encrypted_data[0], NULL_PTR, 0);
-	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DecryptMessageNext"))
-		goto end;
-
-	TEST_OUT("Finish multi-part encryption process\n");
-	ret = pfunc->C_MessageEncryptFinal(sess);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptFinal"))
 		goto end;
 
 	TEST_OUT("Pointer to hold length of last encrypted part is NULL\n");
-	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
-					  hsecretkey);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
-		goto end;
-
-	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
-	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
-		goto end;
-
 	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, &data[0], part_len,
 					  &encrypted_data[0], NULL_PTR,
 					  CKF_END_OF_MESSAGE);
-	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DecryptMessageNext"))
+	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_EncryptMessageNext"))
 		goto end;
 
 	TEST_OUT("Finish multi-part encryption process\n");
 	ret = pfunc->C_MessageEncryptFinal(sess);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptFinal"))
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageEncryptFinal"))
 		goto end;
 
 	TEST_OUT("Initialize multi-part decryption operation\n");
@@ -562,11 +535,12 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part decryption operation\n");
 	ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
 		goto end;
 
-	TEST_OUT("Session's handle in NULL\n");
+	TEST_OUT("Session's handle is NULL\n");
 	ret = pfunc->C_DecryptMessageNext(0, NULL_PTR, 0, &encrypted_data[0],
 					  encrypted_part_len,
 					  &recovered_data[0], &part_len, 0);
@@ -582,19 +556,21 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Finish multi-part decryption process\n");
 	ret = pfunc->C_MessageDecryptFinal(sess);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptFinal"))
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageDecryptFinal"))
 		goto end;
 
-	TEST_OUT("Length of the encrypted data is 0\n");
+	TEST_OUT("Initialize multi-part decryption operation\n");
 	ret = pfunc->C_MessageDecryptInit(sess, &encrypt_decrypt_mech,
 					  hsecretkey);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part decryption operation\n");
 	ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
 		goto end;
 
+	TEST_OUT("Length of the encrypted data is 0\n");
 	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, &encrypted_data[0],
 					  0, &recovered_data[0], &part_len, 0);
 	if (CHECK_CK_RV(CKR_ENCRYPTED_DATA_LEN_RANGE, "C_DecryptMessageNext"))
@@ -602,19 +578,21 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Finish multi-part decryption process\n");
 	ret = pfunc->C_MessageDecryptFinal(sess);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptFinal"))
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageDecryptFinal"))
 		goto end;
 
-	TEST_OUT("Pointer to hold the length of recovered data is NULL\n");
+	TEST_OUT("Initialize multi-part decryption operation\n");
 	ret = pfunc->C_MessageDecryptInit(sess, &encrypt_decrypt_mech,
 					  hsecretkey);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part decryption operation\n");
 	ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
 		goto end;
 
+	TEST_OUT("Pointer to hold the length of recovered data is NULL\n");
 	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, &encrypted_data[0],
 					  encrypted_part_len,
 					  &recovered_data[0], NULL_PTR, 0);
@@ -623,19 +601,21 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Finish multi-part decryption process\n");
 	ret = pfunc->C_MessageDecryptFinal(sess);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptFinal"))
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageDecryptFinal"))
 		goto end;
 
-	TEST_OUT("Pointer to hold the length of last data part is NULL\n");
+	TEST_OUT("Initialize multi-part decryption operation\n");
 	ret = pfunc->C_MessageDecryptInit(sess, &encrypt_decrypt_mech,
 					  hsecretkey);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part decryption operation\n");
 	ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
 		goto end;
 
+	TEST_OUT("Pointer to hold the length of last data part is NULL\n");
 	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, &encrypted_data[0],
 					  encrypted_part_len,
 					  &recovered_data[0], NULL_PTR,
@@ -645,7 +625,7 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Finish multi-part decryption process\n");
 	ret = pfunc->C_MessageDecryptFinal(sess);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptFinal"))
+	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_MessageDecryptFinal"))
 		goto end;
 
 	status = TEST_PASS;
@@ -675,7 +655,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG part_len = 0;
 	CK_ULONG encrypted_part_len = 0;
 	/* Size of the input data part */
@@ -733,6 +713,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	part_len = input_data_block_size;
 	encrypted_part_len = input_data_block_size;
 
+	TEST_OUT("Begin multi-part encryption operation\n");
 	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
 		goto end;
@@ -749,7 +730,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
 		goto end;
 
-	TEST_OUT("C_EncryptMessageNext after finishing the operation\n");
+	TEST_OUT("Encrypt first data part without init\n");
 	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, &data[0], part_len,
 					  &encrypted_data[0],
 					  &encrypted_part_len, 0);
@@ -765,6 +746,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	encrypted_part_len = input_data_block_size;
 	part_len = input_data_block_size;
 
+	TEST_OUT("Begin multi-part decryption operation\n");
 	ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
 		goto end;
@@ -781,7 +763,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 		goto end;
 
-	TEST_OUT("C_DecryptMessageNext after finishing the operation\n");
+	TEST_OUT("Decrypt first encrypted data part without init\n");
 	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, &encrypted_data[0],
 					  encrypted_part_len,
 					  &recovered_data[0], &part_len, 0);
@@ -815,7 +797,7 @@ static int encrypt_decrypt_multiple_begin(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG part_len = 0;
 	CK_ULONG encrypted_part_len = 0;
 	/* Size of the input data part */
@@ -873,6 +855,7 @@ static int encrypt_decrypt_multiple_begin(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	part_len = input_data_block_size;
 	encrypted_part_len = input_data_block_size;
 
+	TEST_OUT("Begin multi-part encryption operation\n");
 	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
 		goto end;
@@ -890,7 +873,7 @@ static int encrypt_decrypt_multiple_begin(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
 		goto end;
 
-	TEST_OUT("C_EncryptMessageNext after finishing the operation\n");
+	TEST_OUT("Decrypt the encrypted data\n");
 	ret = pfunc->C_EncryptMessageNext(sess, NULL_PTR, 0, &data[0], part_len,
 					  &encrypted_data[0],
 					  &encrypted_part_len,
@@ -898,7 +881,7 @@ static int encrypt_decrypt_multiple_begin(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
 		goto end;
 
-	TEST_OUT("Finish multi-part encryption operation\n");
+	TEST_OUT("Finish multi-part encryption process\n");
 	ret = pfunc->C_MessageEncryptFinal(sess);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptFinal"))
 		goto end;
@@ -912,11 +895,12 @@ static int encrypt_decrypt_multiple_begin(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	encrypted_part_len = input_data_block_size;
 	part_len = input_data_block_size;
 
+	TEST_OUT("Begin multi-part decryption operation\n");
 	ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
 		goto end;
 
-	TEST_OUT("Decrypt the first encrypted data part\n");
+	TEST_OUT("Decrypt the encrypted data\n");
 	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, &encrypted_data[0],
 					  encrypted_part_len,
 					  &recovered_data[0], &part_len,
@@ -929,7 +913,7 @@ static int encrypt_decrypt_multiple_begin(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
 		goto end;
 
-	TEST_OUT("C_DecryptMessageNext after finishing the operation\n");
+	TEST_OUT("Decrypt the encrypted data\n");
 	ret = pfunc->C_DecryptMessageNext(sess, NULL_PTR, 0, &encrypted_data[0],
 					  encrypted_part_len,
 					  &recovered_data[0], &part_len,
@@ -937,7 +921,7 @@ static int encrypt_decrypt_multiple_begin(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageNext"))
 		goto end;
 
-	TEST_OUT("Finish multi-part decryption operation\n");
+	TEST_OUT("Finish multi-part decryption process\n");
 	ret = pfunc->C_MessageDecryptFinal(sess);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptFinal"))
 		goto end;
@@ -970,11 +954,11 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM_TYPE aes_mech_type[] = { CKM_AES_CBC };
 	CK_MECHANISM encrypt_decrypt_mech = { .mechanism = CKM_AES_CBC };
-	CK_ULONG data_len = ARRAY_SIZE(data);
-	CK_ULONG cipher_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
+	CK_ULONG cipher_len = sizeof(data);
 	CK_BYTE cipher[data_len];
 	CK_BYTE recovered_data[data_len];
-	CK_ULONG recovered_data_len = ARRAY_SIZE(data);
+	CK_ULONG recovered_data_len = sizeof(data);
 
 	CK_BYTE iv[] = { 0x01, 0x02,  0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
@@ -1014,7 +998,7 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	encrypt_decrypt_mech.pParameter = iv;
-	encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+	encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 
 	TEST_OUT("Initialize Encrypt Message operation\n");
 	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
@@ -1022,17 +1006,18 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part encryption operation\n");
 	ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
 		goto end;
 
 	TEST_OUT("Encrypt Message with iv parameter\n");
-	ret = pfunc->C_EncryptMessageNext(sess, iv, ARRAY_SIZE(iv), data,
-					  data_len, cipher, &cipher_len, 0);
+	ret = pfunc->C_EncryptMessageNext(sess, iv, sizeof(iv), data, data_len,
+					  cipher, &cipher_len, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageNext"))
 		goto end;
 
-	TEST_OUT("Finish multi-part encryption operation\n");
+	TEST_OUT("Finish multi-part encryption process\n");
 	ret = pfunc->C_MessageEncryptFinal(sess);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptFinal"))
 		goto end;
@@ -1043,18 +1028,19 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 		goto end;
 
+	TEST_OUT("Begin multi-part decryption operation\n");
 	ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
 		goto end;
 
 	TEST_OUT("Decrypt Message with iv parameter\n");
-	ret = pfunc->C_DecryptMessageNext(sess, iv, ARRAY_SIZE(iv), cipher,
+	ret = pfunc->C_DecryptMessageNext(sess, iv, sizeof(iv), cipher,
 					  cipher_len, recovered_data,
 					  &recovered_data_len, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageNext"))
 		goto end;
 
-	TEST_OUT("Finish multi-part decryption operation\n");
+	TEST_OUT("Finish multi-part decryption process\n");
 	ret = pfunc->C_MessageDecryptFinal(sess);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptFinal"))
 		goto end;
@@ -1202,7 +1188,7 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_MECHANISM enc_dec_mech = { 0 };
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_BYTE_PTR recovered_data = NULL_PTR;
 	CK_ULONG total_encrypted_len = 0;
 	CK_ULONG total_recovered_len = 0;
@@ -1281,6 +1267,7 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
 			goto end;
 
+		TEST_OUT("Begin multi-part encryption operation\n");
 		ret = pfunc->C_EncryptMessageBegin(sess,
 						   enc_dec_mech.pParameter,
 						   enc_dec_mech.ulParameterLen,
@@ -1320,6 +1307,7 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 			goto end;
 
+		TEST_OUT("Begin multi-part decryption operation\n");
 		ret = pfunc->C_DecryptMessageBegin(sess,
 						   enc_dec_mech.pParameter,
 						   enc_dec_mech.ulParameterLen,
@@ -1441,7 +1429,7 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_ULONG total_encrypted_len = 0;
 	CK_ULONG total_recovered_len = 0;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	/* Size of the input data part */
 	CK_ULONG input_data_block_size = 32;
 
@@ -1503,12 +1491,12 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		switch (enc_dec_mech.mechanism) {
 		case CKM_AES_CBC:
 			enc_dec_mech.pParameter = iv;
-			enc_dec_mech.ulParameterLen = ARRAY_SIZE(iv);
+			enc_dec_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		case CKM_AES_CTR:
 			memcpy(ctr_params.cb, counter_block,
-			       ARRAY_SIZE(counter_block));
+			       sizeof(counter_block));
 			ctr_params.ulCounterBits = counter_bits;
 			enc_dec_mech.pParameter = &ctr_params;
 			enc_dec_mech.ulParameterLen = sizeof(ctr_params);
@@ -1516,17 +1504,17 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		case CKM_AES_CTS:
 			enc_dec_mech.pParameter = iv;
-			enc_dec_mech.ulParameterLen = ARRAY_SIZE(iv);
+			enc_dec_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		case CKM_AES_XTS:
 			enc_dec_mech.pParameter = iv;
-			enc_dec_mech.ulParameterLen = ARRAY_SIZE(iv);
+			enc_dec_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		case CKM_AES_GCM:
 			gcm_params.pIv = iv;
-			gcm_params.ulIvLen = ARRAY_SIZE(iv);
+			gcm_params.ulIvLen = sizeof(iv);
 			gcm_params.pTag = tag;
 			gcm_params.ulTagBits = tag_bits;
 			enc_dec_mech.pParameter = &gcm_params;
@@ -1557,6 +1545,7 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
 			goto end;
 
+		TEST_OUT("Begin multi-part encryption operation\n");
 		ret = pfunc->C_EncryptMessageBegin(sess,
 						   enc_dec_mech.pParameter,
 						   enc_dec_mech.ulParameterLen,
@@ -1586,6 +1575,7 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_MessageDecryptInit"))
 			goto end;
 
+		TEST_OUT("Begin multi-part decryption operation\n");
 		ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR,
 						   0);
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
@@ -1657,7 +1647,7 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	/* Size of the input data part */
 	CK_ULONG input_data_block_size = 32;
 	CK_ULONG total_encrypted_len = 0;
@@ -1721,8 +1711,7 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des;
-			encrypt_decrypt_mech.ulParameterLen =
-				ARRAY_SIZE(iv_des);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv_des);
 		}
 
 		memset(encrypted_data, 0, data_len);
@@ -1736,6 +1725,7 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		total_encrypted_len = 0;
 
+		TEST_OUT("Begin multi-part encryption operation\n");
 		ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR,
 						   0);
 		if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
@@ -1761,6 +1751,7 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		total_recovered_len = 0;
 
+		TEST_OUT("Begin multi-part decryption operation\n");
 		ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR,
 						   0);
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))
@@ -1827,7 +1818,7 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_MECHANISM encrypt_decrypt_mech = { 0 };
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG total_encrypted_len = 0;
 	CK_ULONG total_recovered_len = 0;
 	/* Size of the input data part */
@@ -1888,8 +1879,7 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES3_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des3;
-			encrypt_decrypt_mech.ulParameterLen =
-				ARRAY_SIZE(iv_des3);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv_des3);
 		}
 
 		memset(encrypted_data, 0, data_len);
@@ -1903,6 +1893,7 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		total_encrypted_len = 0;
 
+		TEST_OUT("Begin multi-part encryption operation\n");
 		ret = pfunc->C_EncryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR,
 						   0);
 		if (CHECK_CK_RV(CKR_OK, "C_EncryptMessageBegin"))
@@ -1928,6 +1919,7 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		total_recovered_len = 0;
 
+		TEST_OUT("Begin multi-part decryption operation\n");
 		ret = pfunc->C_DecryptMessageBegin(sess, NULL_PTR, 0, NULL_PTR,
 						   0);
 		if (CHECK_CK_RV(CKR_OK, "C_DecryptMessageBegin"))

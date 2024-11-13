@@ -75,7 +75,7 @@ static int encrypt_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Wrong CKM_AES_CTR mechanism parameters:\n");
 	encrypt_mech.mechanism = CKM_AES_CTR;
-	encrypt_mech.pParameter = NULL;
+	encrypt_mech.pParameter = NULL_PTR;
 	encrypt_mech.ulParameterLen = 0;
 	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_mech, aes_hsecretkey);
 	if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_MessageEncryptInit"))
@@ -152,7 +152,7 @@ static int decrypt_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Check bad mechanism parameters:\n");
 	decrypt_mech.mechanism = CKM_AES_CBC;
-	decrypt_mech.pParameter = NULL;
+	decrypt_mech.pParameter = NULL_PTR;
 	decrypt_mech.ulParameterLen = 0;
 	ret = pfunc->C_MessageDecryptInit(sess, &decrypt_mech,
 					  secret_key_handle);
@@ -535,7 +535,7 @@ static int encrypt_decrypt_multiple_init(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	encrypt_decrypt_mech.pParameter = iv;
-	encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+	encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
 					  aes_hsecretkey);
 	if (CHECK_CK_RV(CKR_OK, "C_MessageEncryptInit"))
@@ -645,7 +645,7 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	encrypt_decrypt_mech.pParameter = iv;
-	encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+	encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 
 	TEST_OUT("Initialize Encrypt Message operation\n");
 	ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
@@ -654,8 +654,8 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Encrypt Message with iv parameter\n");
-	ret = pfunc->C_EncryptMessage(sess, iv, ARRAY_SIZE(iv), NULL_PTR, 0,
-				      data, data_len, cipher, &cipher_len);
+	ret = pfunc->C_EncryptMessage(sess, iv, sizeof(iv), NULL_PTR, 0, data,
+				      data_len, cipher, &cipher_len);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptMessage"))
 		goto end;
 
@@ -666,8 +666,8 @@ static int encrypt_decrypt_iv_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Decrypt Message with iv parameter\n");
-	ret = pfunc->C_DecryptMessage(sess, iv, ARRAY_SIZE(iv), NULL_PTR, 0,
-				      cipher, cipher_len, recovered_data,
+	ret = pfunc->C_DecryptMessage(sess, iv, sizeof(iv), NULL_PTR, 0, cipher,
+				      cipher_len, recovered_data,
 				      &recovered_data_len);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptMessage"))
 		goto end;
@@ -1019,7 +1019,7 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		case CKM_AES_CTR:
 			memcpy(ctr_params.cb, counter_block,
-			       ARRAY_SIZE(counter_block));
+			       sizeof(counter_block));
 			ctr_params.ulCounterBits = counter_bits;
 			enc_dec_mech.pParameter = &ctr_params;
 			enc_dec_mech.ulParameterLen = sizeof(ctr_params);
@@ -1244,8 +1244,7 @@ static int encrypt_decrypt_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des;
-			encrypt_decrypt_mech.ulParameterLen =
-				ARRAY_SIZE(iv_des);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv_des);
 		}
 
 		ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,
@@ -1393,8 +1392,7 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES3_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des3;
-			encrypt_decrypt_mech.ulParameterLen =
-				ARRAY_SIZE(iv_des3);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv_des3);
 		}
 
 		ret = pfunc->C_MessageEncryptInit(sess, &encrypt_decrypt_mech,

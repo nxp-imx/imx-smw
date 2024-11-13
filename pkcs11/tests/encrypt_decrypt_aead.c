@@ -298,13 +298,13 @@ static int encrypt_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 
 		TEST_OUT("Check valid session\n");
-		ret = pfunc->C_Encrypt(0, data, ARRAY_SIZE(data), NULL_PTR,
+		ret = pfunc->C_Encrypt(0, data, sizeof(data), NULL_PTR,
 				       NULL_PTR);
 		if (CHECK_CK_RV(CKR_SESSION_HANDLE_INVALID, "C_Encrypt"))
 			goto end;
 
 		TEST_OUT("Check output length NULL\n");
-		ret = pfunc->C_Encrypt(sess, data, ARRAY_SIZE(data), NULL_PTR,
+		ret = pfunc->C_Encrypt(sess, data, sizeof(data), NULL_PTR,
 				       NULL_PTR);
 		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_Encrypt"))
 			goto end;
@@ -414,13 +414,13 @@ static int decrypt_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 
 		TEST_OUT("Check valid session\n");
-		ret = pfunc->C_Decrypt(0, data, ARRAY_SIZE(data), NULL_PTR,
+		ret = pfunc->C_Decrypt(0, data, sizeof(data), NULL_PTR,
 				       NULL_PTR);
 		if (CHECK_CK_RV(CKR_SESSION_HANDLE_INVALID, "C_Decrypt"))
 			goto end;
 
 		TEST_OUT("Check output length NULL\n");
-		ret = pfunc->C_Decrypt(sess, data, ARRAY_SIZE(data), NULL_PTR,
+		ret = pfunc->C_Decrypt(sess, data, sizeof(data), NULL_PTR,
 				       NULL_PTR);
 		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_Decrypt"))
 			goto end;

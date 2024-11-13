@@ -20,26 +20,9 @@ static int encrypt_decrypt_multipart_no_init(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 
-	/* AES - 128 bits key length */
-	CK_ULONG key_length = 16;
-	CK_MECHANISM aes_key_mech = { .mechanism = CKM_AES_KEY_GEN };
-	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
-	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
-	CK_BBOOL ck_true = CK_TRUE;
-
-	CK_ATTRIBUTE aes_secretkey_attrs[] = {
-		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
-		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
-		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
-		  sizeof(key_allowed_mech) },
-	};
-	CK_OBJECT_HANDLE hsecretkey = 0;
-
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	/* Size of the input data part */
 	CK_ULONG part_len = 16;
 	CK_ULONG encrypted_part_len = part_len;
@@ -60,13 +43,6 @@ static int encrypt_decrypt_multipart_no_init(CK_FUNCTION_LIST_PTR pfunc)
 
 	recovered_data = (CK_BYTE_PTR)calloc(data_len, sizeof(CK_BYTE));
 	if (CHECK_EXPECTED(recovered_data, "Allocation error"))
-		goto end;
-
-	TEST_OUT("Generate AES secret Key\n");
-	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
-				   ARRAY_SIZE(aes_secretkey_attrs),
-				   &hsecretkey);
-	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 		goto end;
 
 	TEST_OUT("Encrypt first data part without init\n");
@@ -137,7 +113,7 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_PTR pfunc)
 			 0x09, 0x010, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG encrypted_data_len = data_len;
 	/* Size of the input data part */
 	CK_ULONG part_len = 16;
@@ -165,7 +141,7 @@ static int encrypt_multipart_wrong_order(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	encrypt_decrypt_mech.pParameter = iv;
-	encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+	encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 
 	TEST_OUT("Initialize encryption operation\n");
 	ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech, hsecretkey);
@@ -252,7 +228,7 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG encrypted_data_len = data_len;
 	/* Size of the input data part */
 	CK_ULONG encrypted_part_len = 16;
@@ -301,7 +277,7 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_Decrypt"))
 		goto end;
 
-	TEST_OUT("Finish a multiple-part decryption operation\n");
+	TEST_OUT("Finish multi-part decryption operation\n");
 	ret = pfunc->C_DecryptFinal(sess, &recovered_data[part_recovered_len],
 				    &part_recovered_len);
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptFinal"))
@@ -325,7 +301,7 @@ static int decrypt_multipart_wrong_order(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_DecryptUpdate"))
 		goto end;
 
-	TEST_OUT("Finish a multiple-part decryption operation without init\n");
+	TEST_OUT("Finish multi-part decryption operation without init\n");
 	ret = pfunc->C_DecryptFinal(sess, &recovered_data[part_recovered_len],
 				    &part_recovered_len);
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_DecryptFinal"))
@@ -377,7 +353,7 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	/* Size of the input data part */
 	CK_ULONG part_len = 16;
 	CK_ULONG encrypted_part_len = part_len;
@@ -408,14 +384,14 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	encrypt_decrypt_mech.pParameter = iv;
-	encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+	encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 
 	TEST_OUT("Initialize multi-part encryption operation\n");
 	ret = pfunc->C_EncryptInit(sess, &encrypt_decrypt_mech, hsecretkey);
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
 		goto end;
 
-	TEST_OUT("Session's handle in NULL\n");
+	TEST_OUT("Session's handle is NULL\n");
 	ret = pfunc->C_EncryptUpdate(0, &data[0], part_len, &encrypted_data[0],
 				     &encrypted_part_len);
 	if (CHECK_CK_RV(CKR_SESSION_HANDLE_INVALID, "C_EncryptUpdate"))
@@ -449,7 +425,7 @@ static int encrypt_decrypt_multipart_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
 		goto end;
 
-	TEST_OUT("Session's handle in NULL\n");
+	TEST_OUT("Session's handle is NULL\n");
 	ret = pfunc->C_DecryptUpdate(0, &encrypted_data[0], encrypted_part_len,
 				     &recovered_data[0], &part_len);
 	if (CHECK_CK_RV(CKR_SESSION_HANDLE_INVALID, "C_DecryptUpdate"))
@@ -505,7 +481,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG part_len = 0;
 	CK_ULONG encrypted_part_len = 0;
 	/* Size of the input data part */
@@ -573,7 +549,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_EncryptInit"))
 		goto end;
 
-	TEST_OUT("C_EncryptUpdate after finishing the operation\n");
+	TEST_OUT("Encrypt first data part without init\n");
 	ret = pfunc->C_EncryptUpdate(sess, &data[0], part_len,
 				     &encrypted_data[0], &encrypted_part_len);
 	if (CHECK_CK_RV(CKR_OPERATION_NOT_INITIALIZED, "C_EncryptUpdate"))
@@ -599,7 +575,7 @@ static int encrypt_decrypt_cancel_op(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_DecryptInit"))
 		goto end;
 
-	TEST_OUT("C_DecryptUpdate after finishing the operation\n");
+	TEST_OUT("Decrypt first encrypted data part without init\n");
 	ret = pfunc->C_DecryptUpdate(sess, &encrypted_data[0],
 				     encrypted_part_len, &recovered_data[0],
 				     &part_len);
@@ -789,7 +765,7 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_ULONG total_encrypted_len = 0;
 	CK_ULONG total_recovered_len = 0;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	/* Size of the input data part */
 	CK_ULONG input_data_block_size = 32;
 
@@ -815,6 +791,9 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	for (; i < ARRAY_SIZE(aes_mech_type); i++) {
+		TEST_OUT("AES Encryption mechanism = 0x%lx\n",
+			 aes_mech_type[i]);
+
 		memset(encrypted_data, 0, data_len);
 		memset(recovered_data, 0, data_len);
 		encrypt_decrypt_mech.pParameter = NULL_PTR;
@@ -823,7 +802,7 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 		key_allowed_mech[0] = aes_mech_type[i];
 
 		if (encrypt_decrypt_mech.mechanism == CKM_AES_XTS) {
-			TEST_OUT("Createobject AES secret Key\n");
+			TEST_OUT("Createobject AES XTS secret Key\n");
 			ret = pfunc->C_CreateObject(sess, xts_key_attrs,
 						    ARRAY_SIZE(xts_key_attrs),
 						    &aes_hsecretkey);
@@ -842,12 +821,12 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 		switch (encrypt_decrypt_mech.mechanism) {
 		case CKM_AES_CBC:
 			encrypt_decrypt_mech.pParameter = iv;
-			encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		case CKM_AES_CTR:
 			memcpy(ctr_params.cb, counter_block,
-			       ARRAY_SIZE(counter_block));
+			       sizeof(counter_block));
 			ctr_params.ulCounterBits = counter_bits;
 			encrypt_decrypt_mech.pParameter = &ctr_params;
 			encrypt_decrypt_mech.ulParameterLen =
@@ -856,12 +835,12 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 
 		case CKM_AES_CTS:
 			encrypt_decrypt_mech.pParameter = iv;
-			encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		case CKM_AES_XTS:
 			encrypt_decrypt_mech.pParameter = iv;
-			encrypt_decrypt_mech.ulParameterLen = ARRAY_SIZE(iv);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv);
 			break;
 
 		default:
@@ -918,6 +897,12 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		aes_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;
@@ -951,7 +936,7 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	/* Size of the input data part */
 	CK_ULONG input_data_block_size = 32;
 	CK_ULONG total_encrypted_len = 0;
@@ -1004,12 +989,14 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_PTR pfunc)
 	encrypt_decrypt_mech.ulParameterLen = 0;
 
 	for (; i < ARRAY_SIZE(des_mech_type); i++) {
+		TEST_OUT("DES Encryption mechanism = 0x%lx\n",
+			 des_mech_type[i]);
+
 		encrypt_decrypt_mech.mechanism = des_mech_type[i];
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des;
-			encrypt_decrypt_mech.ulParameterLen =
-				ARRAY_SIZE(iv_des);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv_des);
 		}
 
 		memset(encrypted_data, 0, data_len);
@@ -1097,7 +1084,7 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_PTR pfunc)
 	CK_MECHANISM encrypt_decrypt_mech = { 0 };
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG total_encrypted_len = 0;
 	CK_ULONG total_recovered_len = 0;
 	/* Size of the input data part */
@@ -1147,12 +1134,14 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	for (; i < ARRAY_SIZE(des3_mech_type); i++) {
+		TEST_OUT("3DES Encryption mechanism = 0x%lx\n",
+			 des3_mech_type[i]);
+
 		encrypt_decrypt_mech.mechanism = des3_mech_type[i];
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES3_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des3;
-			encrypt_decrypt_mech.ulParameterLen =
-				ARRAY_SIZE(iv_des3);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv_des3);
 		}
 
 		memset(encrypted_data, 0, data_len);
@@ -1249,7 +1238,7 @@ static int encrypt_decrypt_multipart_sm4(CK_FUNCTION_LIST_PTR pfunc)
 	CK_MECHANISM encrypt_decrypt_mech = { 0 };
 	CK_BYTE_PTR encrypted_data = NULL_PTR;
 	CK_BYTE_PTR recovered_data = NULL_PTR;
-	CK_ULONG data_len = ARRAY_SIZE(data);
+	CK_ULONG data_len = sizeof(data);
 	CK_ULONG total_encrypted_len = 0;
 	CK_ULONG total_recovered_len = 0;
 	/* Size of the input data part */
@@ -1301,11 +1290,10 @@ static int encrypt_decrypt_multipart_sm4(CK_FUNCTION_LIST_PTR pfunc)
 
 		if (encrypt_decrypt_mech.mechanism == CKM_SM4_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_sm4;
-			encrypt_decrypt_mech.ulParameterLen =
-				ARRAY_SIZE(iv_sm4);
+			encrypt_decrypt_mech.ulParameterLen = sizeof(iv_sm4);
 		} else if (encrypt_decrypt_mech.mechanism == CKM_SM4_CTR) {
 			memcpy(ctr_params.cb, counter_block,
-			       ARRAY_SIZE(counter_block));
+			       sizeof(counter_block));
 			ctr_params.ulCounterBits = counter_bits;
 			encrypt_decrypt_mech.pParameter = &ctr_params;
 			encrypt_decrypt_mech.ulParameterLen =

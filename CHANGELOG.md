@@ -100,6 +100,7 @@ is called.
 * Add support for Key derivation using HKDF.
 * Import only the token key to subsystem.
 * Retrieve public buffer of a key generated or imported using SMW API.
+* Add C_GetObjectSize support
 
 #### PKCS#11 Tests - _version 4.1_
 
@@ -111,6 +112,7 @@ is called.
 * Test object persistency after killing the library context.
 * Add tests for Key derivation using HKDF.
 * Validate public buffer retrieval of a key generated or imported using the SMW API.
+* Add get object size unit test.
 
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**

@@ -1657,12 +1657,10 @@ static CK_RV cipher(struct lib_cipher_params *params,
 {
 	CK_RV ret = CKR_OK;
 	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_cipher_args smw_args = { 0 };
 	struct smw_context_args op_ctx_args = { 0 };
+	struct smw_cipher_args smw_args = { 0 };
 
-	struct lib_cipher_ctx *ctx = NULL;
-
-	ctx = params->ctx;
+	struct lib_cipher_ctx *ctx = params->ctx;
 
 	smw_args.data = *smw_data_args;
 	smw_args.init = *smw_init_args;
@@ -1672,35 +1670,10 @@ static CK_RV cipher(struct lib_cipher_params *params,
 		status = smw_cipher(&smw_args);
 		break;
 
-	case OP_NEXT:
-		if (ctx->current_state == OP_BEGIN) {
-			op_ctx_args.subsystem_name =
-				smw_args.init.subsystem_name;
-			status = smw_allocate_context(&op_ctx_args);
-			if (status != SMW_STATUS_OK)
-				goto end;
-
-			smw_init_args->context = op_ctx_args.context;
-
-			status = smw_cipher_init(smw_init_args);
-			if (status == SMW_STATUS_OK) {
-				ctx->context = smw_init_args->context;
-				smw_data_args->context = smw_init_args->context;
-				status = smw_cipher_update(smw_data_args);
-				ctx->context = smw_data_args->context;
-			}
-
-		} else if (ctx->current_state == OP_NEXT) {
-			smw_data_args->context =
-				(struct smw_op_context *)ctx->context;
-			status = smw_cipher_update(smw_data_args);
-			ctx->context = smw_data_args->context;
-		}
-
-		break;
-
 	case OP_UPDATE:
-		if (ctx->current_state == OP_INIT) {
+	case OP_NEXT:
+		if (ctx->current_state == OP_INIT ||
+		    ctx->current_state == OP_BEGIN) {
 			op_ctx_args.subsystem_name =
 				smw_args.init.subsystem_name;
 			status = smw_allocate_context(&op_ctx_args);
@@ -1716,21 +1689,19 @@ static CK_RV cipher(struct lib_cipher_params *params,
 				status = smw_cipher_update(smw_data_args);
 				ctx->context = smw_data_args->context;
 			}
-
-		} else if (ctx->current_state == OP_UPDATE) {
-			smw_data_args->context =
-				(struct smw_op_context *)ctx->context;
+		} else if (ctx->current_state == OP_UPDATE ||
+			   ctx->current_state == OP_NEXT) {
+			smw_data_args->context = ctx->context;
 			status = smw_cipher_update(smw_data_args);
 			ctx->context = smw_data_args->context;
 		}
 
 		break;
 
-	case OP_END:
 	case OP_FINAL:
+	case OP_END:
 		if (ctx->context) {
-			smw_data_args->context =
-				(struct smw_op_context *)ctx->context;
+			smw_data_args->context = ctx->context;
 			status = smw_cipher_final(smw_data_args);
 			ctx->context = smw_data_args->context;
 		} else {
@@ -1756,7 +1727,7 @@ static CK_RV cipher(struct lib_cipher_params *params,
 end:
 
 	ret = smw_status_to_ck_rv(status);
-	DBG_TRACE("%s on subsystem #%d SMW status = 0x%x return = 0x%lx",
+	DBG_TRACE("%s on subsystem #%d SMW status %d return 0x%lx",
 		  params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT) ?
 			  "ENCRYPT" :
 			  "DECRYPT",
@@ -1764,12 +1735,13 @@ end:
 	return ret;
 }
 
-static CK_RV set_smw_init_args(struct lib_cipher_ctx *ctx,
-			       struct smw_cipher_init_args *smw_init_args,
-			       struct smw_keypair_buffer **key_buffer,
-			       struct smw_key_descriptor ***keys_desc,
-			       struct smw_key_descriptor *key_desc_ptr,
-			       smw_subsystem_t subsystem_name, CK_FLAGS op_flag)
+static CK_RV
+set_smw_cipher_init_args(struct lib_cipher_ctx *ctx,
+			 struct smw_cipher_init_args *smw_init_args,
+			 struct smw_keypair_buffer **key_buffer,
+			 struct smw_key_descriptor **keys_desc,
+			 struct smw_key_descriptor *key_desc_ptr,
+			 smw_subsystem_t subsystem_name, CK_FLAGS op_flag)
 {
 	CK_RV ret = CKR_HOST_MEMORY;
 
@@ -1810,9 +1782,9 @@ static CK_RV set_smw_init_args(struct lib_cipher_ctx *ctx,
 	}
 
 	for (i = 0; i < smw_init_args->nb_keys; i++)
-		(*keys_desc)[i] = &key_desc_ptr[i];
+		keys_desc[i] = &key_desc_ptr[i];
 
-	smw_init_args->keys_desc = *keys_desc;
+	smw_init_args->keys_desc = keys_desc;
 	smw_init_args->subsystem_name = subsystem_name;
 	smw_init_args->mode_name = get_cipher_mode(ctx->cipher_mech);
 	smw_init_args->iv = ctx->iv;
@@ -1841,14 +1813,9 @@ static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	struct smw_keypair_buffer *key_buffer = NULL;
 	struct smw_cipher_init_args smw_init_args = { 0 };
-	struct smw_cipher_init_args *smw_init_args_ptr = NULL;
 	struct smw_cipher_data_args smw_data_args = { 0 };
 	struct smw_key_descriptor *keys_desc[2] = { NULL };
 	struct smw_key_descriptor key_descriptor[2] = { 0 };
-	struct smw_key_descriptor **keys_desc_ptr = NULL;
-
-	keys_desc_ptr = keys_desc;
-	smw_init_args_ptr = &smw_init_args;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
@@ -1861,9 +1828,10 @@ static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE) ||
 	    (ctx->current_state == OP_BEGIN &&
 	     (params->state == OP_NEXT || params->state == OP_END))) {
-		if (set_smw_init_args(ctx, smw_init_args_ptr, &key_buffer,
-				      &keys_desc_ptr, &key_descriptor[0],
-				      devinfo->name, params->op_flag) != CKR_OK)
+		if (set_smw_cipher_init_args(ctx, &smw_init_args, &key_buffer,
+					     keys_desc, &key_descriptor[0],
+					     devinfo->name,
+					     params->op_flag) != CKR_OK)
 			goto end;
 	}
 
@@ -2013,58 +1981,10 @@ static CK_RV aead(struct lib_cipher_params *params,
 		}
 		break;
 
-	case OP_NEXT:
-		if (ctx->current_state == OP_BEGIN) {
-			op_ctx_args.subsystem_name =
-				smw_args.init->subsystem_name;
-			status = smw_allocate_context(&op_ctx_args);
-			if (status != SMW_STATUS_OK)
-				goto end;
-
-			smw_init_args->context = op_ctx_args.context;
-
-			status = smw_aead_init(smw_init_args);
-			if (status == SMW_STATUS_OK &&
-			    smw_aad_args->data_length) {
-				/*
-				 * before the first update operation, we need to
-				 * update AAD if there is some.
-				 */
-				ctx->context = smw_init_args->context;
-				smw_aad_args->context = smw_init_args->context;
-				status = smw_aead_update_aad(smw_aad_args);
-				/*
-				 * update the operation context
-				 * as it is release in case of error
-				 */
-				ctx->context = smw_aad_args->context;
-			}
-
-			if (status == SMW_STATUS_OK) {
-				ctx->context = smw_init_args->context;
-				smw_data_args->context = smw_init_args->context;
-				status = smw_aead_update(smw_data_args);
-				/*
-				 * update the operation context
-				 * as it is release in case of error
-				 */
-				ctx->context = smw_data_args->context;
-			}
-		} else if (ctx->current_state == OP_NEXT) {
-			smw_data_args->context =
-				(struct smw_op_context *)ctx->context;
-			status = smw_aead_update(smw_data_args);
-			/*
-			 * update the operation context
-			 * as it is release in case of error
-			 */
-			ctx->context = smw_data_args->context;
-		}
-
-		break;
-
 	case OP_UPDATE:
-		if (ctx->current_state == OP_INIT) {
+	case OP_NEXT:
+		if (ctx->current_state == OP_INIT ||
+		    ctx->current_state == OP_BEGIN) {
 			op_ctx_args.subsystem_name =
 				smw_args.init->subsystem_name;
 			status = smw_allocate_context(&op_ctx_args);
@@ -2100,10 +2020,9 @@ static CK_RV aead(struct lib_cipher_params *params,
 				 */
 				ctx->context = smw_data_args->context;
 			}
-
-		} else if (ctx->current_state == OP_UPDATE) {
-			smw_data_args->context =
-				(struct smw_op_context *)ctx->context;
+		} else if (ctx->current_state == OP_UPDATE ||
+			   ctx->current_state == OP_NEXT) {
+			smw_data_args->context = ctx->context;
 			status = smw_aead_update(smw_data_args);
 			/*
 			 * update the operation context
@@ -2114,11 +2033,10 @@ static CK_RV aead(struct lib_cipher_params *params,
 
 		break;
 
-	case OP_END:
 	case OP_FINAL:
+	case OP_END:
 		if (ctx->context) {
-			smw_final_args->data->context =
-				(struct smw_op_context *)ctx->context;
+			smw_final_args->data->context = ctx->context;
 			status = smw_aead_final(smw_final_args);
 			/*
 			 * update the operation context
@@ -2158,7 +2076,7 @@ static CK_RV aead(struct lib_cipher_params *params,
 end:
 
 	ret = smw_status_to_ck_rv(status);
-	DBG_TRACE("%s on subsystem #%d SMW status = 0x%x return = 0x%lx",
+	DBG_TRACE("%s on subsystem #%d SMW status %d return 0x%lx",
 		  params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT) ?
 			  "ENCRYPT" :
 			  "DECRYPT",

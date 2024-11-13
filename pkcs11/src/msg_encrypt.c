@@ -4,7 +4,6 @@
  */
 
 #include "lib_cipher.h"
-#include "pkcs11smw.h"
 
 CK_RV C_MessageEncryptInit(CK_SESSION_HANDLE hSession,
 			   CK_MECHANISM_PTR pMechanism, CK_OBJECT_HANDLE hKey)
@@ -14,10 +13,6 @@ CK_RV C_MessageEncryptInit(CK_SESSION_HANDLE hSession,
 
 	if (!hKey)
 		return CKR_KEY_HANDLE_INVALID;
-
-	if (!pMechanism)
-		return lib_cipher_cancel_operation(hSession,
-						   CKF_MESSAGE_ENCRYPT);
 
 	return lib_encrypt_decrypt_init(hSession, pMechanism, hKey,
 					CKF_MESSAGE_ENCRYPT);

@@ -67,12 +67,12 @@ struct lib_cipher_params {
 };
 
 /**
- * lib_cipher_cancel_operation() - Cancel the multi-part aead operation,
+ * lib_cipher_cancel_operation() - Cancel the multi-part cipher operation,
  * if active
  * @hsession: Session handle
  * @op_flag: Operation flag
  *
- * Check if any multi-part aead operation is active.
+ * Check if any multi-part cipher operation is active.
  * If a multi-part operation is active, cancel the operation
  * and remove the operation context.
  *
@@ -80,9 +80,8 @@ struct lib_cipher_params {
  * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
  * CKR_GENERAL_ERROR                  - No context available
  * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
- * CKR_DEVICE_ERROR	                  - Device failure
+ * CKR_DEVICE_ERROR                   - Device failure
  * CKR_OK                             - Success
- *
  */
 CK_RV lib_cipher_cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag);
 

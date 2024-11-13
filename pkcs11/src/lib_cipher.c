@@ -406,7 +406,7 @@ static CK_RV check_cipher_params(CK_MECHANISM_TYPE mechanism,
  *
  * Return:
  * CKR_MECHANISM_PARAM_INVALID        - @pmechanism parameters are invalid
- * CKR_MECHANISM_INVALID			  - @pmechanism.mechanism is invalid
+ * CKR_MECHANISM_INVALID              - @pmechanism.mechanism is invalid
  * CKR_OK                             - Success
  */
 static CK_RV check_cipher_mech_params(CK_MECHANISM_PTR pmechanism,
@@ -438,6 +438,9 @@ static CK_RV update_params(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
 	CK_GCM_MESSAGE_PARAMS_PTR gcm_prms = NULL_PTR;
 	CK_CCM_MESSAGE_PARAMS_PTR ccm_prms = NULL_PTR;
 	CK_SALSA20_CHACHA20_POLY1305_MSG_PARAMS_PTR chacha_prms = NULL_PTR;
+
+	if (!pparameter)
+		return CKR_OK;
 
 	switch (mechanism) {
 	case CKM_AES_GCM:
@@ -498,7 +501,7 @@ static CK_RV update_params(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
 }
 
 /**
- * set_key_value() -  sets key buffer value and key length
+ * set_key_value() - Sets key buffer value and key length
  * @hsession: Session handle
  * @ctx: Pointer to cipher context
  *
@@ -581,9 +584,6 @@ CK_RV lib_cipher_cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 	CK_MECHANISM mechanism = { 0 };
 
 	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
-	if (ret == CKR_OPERATION_NOT_INITIALIZED)
-		return CKR_OK;
-
 	if (ret != CKR_OK)
 		return ret;
 
@@ -634,20 +634,23 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 		  op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT) ? "Encrypt" :
 								  "Decrypt");
 
-	if (pmechanism) {
-		/* Validate mechanism operation flag */
-		ret = libsess_validate_mechanism(hsession, pmechanism, op_flag);
-		if (ret != CKR_OK)
-			goto end;
-
-	} else {
+	if (!pmechanism) {
 		/*
 		 * Check if any multi-part cipher operation is active.
 		 * If a multi-part operation is active, cancel the operation
 		 * and remove the operation context.
 		 */
-		return lib_cipher_cancel_operation(hsession, op_flag);
+		ret = lib_cipher_cancel_operation(hsession, op_flag);
+		if (ret == CKR_OPERATION_NOT_INITIALIZED)
+			ret = CKR_OK;
+
+		return ret;
 	}
+
+	/* Validate mechanism operation flag */
+	ret = libsess_validate_mechanism(hsession, pmechanism, op_flag);
+	if (ret != CKR_OK)
+		goto end;
 
 	if (op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))
 		iskey_op[0].type = CKA_ENCRYPT;
@@ -695,8 +698,7 @@ CK_RV lib_encrypt_decrypt_init(CK_SESSION_HANDLE hsession,
 	ret = libsess_add_opctx(hsession, op_flag, pmechanism, ctx);
 
 end:
-
-	if (ctx && ret != CKR_OK)
+	if (ret != CKR_OK)
 		destroy_context(ctx);
 
 	return ret;
@@ -711,23 +713,24 @@ CK_RV lib_encrypt_decrypt_reset(CK_SESSION_HANDLE hsession,
 	CK_MECHANISM mechanism = { 0 };
 	struct lib_cipher_ctx *ctx = NULL;
 
+	if (!pparameter != !ulparameterlen)
+		return CKR_MECHANISM_PARAM_INVALID;
+
 	/* Check that operation is initialized */
 	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
 	if (ret != CKR_OK)
 		return ret;
 
-	if (!pparameter != !ulparameterlen)
-		return CKR_MECHANISM_PARAM_INVALID;
-
 	if (ctx->current_state != OP_END && ctx->context)
 		return CKR_OPERATION_ACTIVE;
 
 	/* Update mechanism parameter */
-	if (pparameter)
+	if (pparameter) {
 		ret = check_cipher_params(mechanism.mechanism, pparameter,
 					  ulparameterlen, op_flag, ctx);
-	if (ret != CKR_OK)
-		return ret;
+		if (ret != CKR_OK)
+			return ret;
+	}
 
 	ctx->current_state = OP_BEGIN;
 
@@ -750,6 +753,7 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	CK_MECHANISM mechanism = { 0 };
 	struct lib_cipher_ctx *ctx = NULL;
 	struct lib_cipher_params params = { 0 };
+	CK_BBOOL terminate = CK_TRUE;
 
 	if (state == OP_ONE_SHOT || state == OP_UPDATE || state == OP_NEXT) {
 		if (!input_length) {
@@ -772,70 +776,19 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 		goto end;
 	}
 
-	/* Check that operation is initialized */
-	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
-	if (ret != CKR_OK)
-		goto end;
-
 	if (!pparameter != !ulparameterlen) {
 		ret = CKR_MECHANISM_PARAM_INVALID;
 		goto end;
 	}
 
-	switch (ctx->current_state) {
-	case OP_INIT:
-		if (state != OP_BEGIN && state != OP_UPDATE &&
-		    state != OP_FINAL && state != OP_ONE_SHOT)
-			return CKR_ARGUMENTS_BAD;
-		break;
-
-	case OP_ONE_SHOT:
-		if (state != OP_ONE_SHOT) {
-			ret = CKR_OPERATION_NOT_INITIALIZED;
-			goto end;
-		}
-
-		break;
-
-	case OP_BEGIN:
-		if (state != OP_NEXT && state != OP_END) {
-			ret = CKR_OPERATION_NOT_INITIALIZED;
-			goto end;
-		}
-
-		break;
-
-	case OP_NEXT:
-		if (state != OP_END && state != OP_NEXT && state != OP_FINAL)
-			return CKR_OPERATION_NOT_INITIALIZED;
-		break;
-
-	case OP_UPDATE:
-		if (state != OP_UPDATE && state != OP_FINAL)
-			return CKR_OPERATION_NOT_INITIALIZED;
-		break;
-
-	case OP_END:
-		if (state != OP_END && state != OP_BEGIN &&
-		    state != OP_ONE_SHOT) {
-			ret = CKR_OPERATION_NOT_INITIALIZED;
-			goto end;
-		}
-
-		break;
-
-	case OP_FINAL:
-		if (state != OP_FINAL) {
-			ret = CKR_OPERATION_NOT_INITIALIZED;
-			goto end;
-		}
-
-		break;
-
-	default:
-		ret = CKR_OPERATION_NOT_INITIALIZED;
+	/* Check that operation is initialized */
+	ret = libsess_find_opctx(hsession, op_flag, &mechanism, (void **)&ctx);
+	if (ret != CKR_OK)
 		goto end;
-	}
+
+	ret = libopctx_check_next_state(ctx->current_state, state, &terminate);
+	if (ret != CKR_OK)
+		goto end;
 
 	params.op_flag = op_flag;
 	params.ctx = ctx;
@@ -872,55 +825,34 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 
 	/* Run operation */
 	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
-	if (ret == CKR_BUFFER_TOO_SMALL || ret == CKR_OK) {
-		/* Update output data buffer length */
-		*poutput_length = params.output_length;
+	if (ret != CKR_BUFFER_TOO_SMALL && ret != CKR_OK)
+		goto end;
 
-		if (ret == CKR_OK) {
-			ctx->current_state = state;
-			switch (state) {
-			case OP_ONE_SHOT:
-			case OP_FINAL:
-				if (pparameter &&
-				    (op_flag &
-				     (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))) {
-					ret = update_params(mechanism.mechanism,
-							    pparameter,
-							    ulparameterlen,
-							    ctx);
-					if (ret != CKR_OK)
-						goto end;
-				}
+	/* Update output data buffer length */
+	*poutput_length = params.output_length;
 
-				break;
+	if (ret == CKR_OK) {
+		ctx->current_state = state;
 
-			case OP_END:
-				if (pparameter &&
-				    (op_flag &
-				     (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT))) {
-					ret = update_params(mechanism.mechanism,
-							    pparameter,
-							    ulparameterlen,
-							    ctx);
-					if (ret != CKR_OK)
-						goto end;
-				}
-
-				return CKR_OK;
-
-			default:
-				// OP_BEGIN
-				// OP_NEXT
-				// OP_UPDATE
-				return CKR_OK;
-			}
+		if (op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT) &&
+		    (state == OP_ONE_SHOT || state == OP_FINAL ||
+		     state == OP_END)) {
+			ret = update_params(mechanism.mechanism, pparameter,
+					    ulparameterlen, ctx);
+			if (ret != CKR_OK)
+				goto end;
 		}
 
-		if (ret == CKR_BUFFER_TOO_SMALL || !poutput)
-			return ret;
+		if (poutput && (state == OP_ONE_SHOT || state == OP_FINAL))
+			goto end;
 	}
 
+	terminate = CK_FALSE;
+
 end:
+	if (!terminate)
+		return ret;
+
 	if (ctx && ctx->key_value) {
 		free(ctx->key_value);
 		ctx->key_value = NULL_PTR;
@@ -934,11 +866,9 @@ end:
 			 */
 			(void)libsess_cancel_opctx(hsession, op_flag,
 						   (void **)&ctx->context);
-
 		} else {
 			(void)libsess_remove_opctx(hsession, op_flag);
 		}
-
 	} else {
 		ret = libsess_remove_opctx(hsession, op_flag);
 	}

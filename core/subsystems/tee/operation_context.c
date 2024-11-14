@@ -15,15 +15,13 @@
 
 #include "smw_status.h"
 
-static void *get_subsystem_context_handle(struct smw_op_context *ctx,
-					  int *status)
+static int get_subsystem_context_handle(struct smw_op_context *ctx,
+					void **handle)
 {
-	*status = SMW_STATUS_INVALID_PARAM;
-
-	void *handle = NULL;
-
 	struct aead_context *aead_ctx = NULL;
 	struct cipher_context *cipher_ctx = NULL;
+	struct hash_context *hash_ctx = NULL;
+	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 
 	if (!ctx->subsystem_context)
 		goto end;
@@ -31,25 +29,33 @@ static void *get_subsystem_context_handle(struct smw_op_context *ctx,
 	switch (ctx->op_id) {
 	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
 		aead_ctx = ctx->subsystem_context;
-		handle = aead_ctx->tee_handle;
+		*handle = aead_ctx->tee_handle;
 
+		status = SMW_STATUS_OK;
 		break;
 
 	case SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART:
 		cipher_ctx = ctx->subsystem_context;
-		handle = cipher_ctx->tee_handle;
+		*handle = cipher_ctx->tee_handle;
 
+		status = SMW_STATUS_OK;
+		break;
+
+	case SMW_CRYPTO_OP_ID_HASH_MULTI_PART:
+		hash_ctx = ctx->subsystem_context;
+		*handle = hash_ctx->tee_handle;
+
+		status = SMW_STATUS_OK;
 		break;
 
 	default:
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		break;
 	}
 
-	*status = SMW_STATUS_OK;
-
 end:
-	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, *status);
-	return handle;
+	SMW_DBG_PRINTF(EXTRA, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 /**
@@ -74,19 +80,21 @@ static void free_context(struct smw_op_context *ctx)
  * @ctx: Pointer to SMW operation context arguments structure
  *
  * Return:
- * SMW_STATUS_OK            - Success
- * SMW_STATUS_INVALID_PARAM - One of the parameters is invalid
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_INVALID_PARAM           - One of the parameters is invalid
+ * SMW_STATUS_SUBSYSTEM_FAILURE       - Subsystem failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED - Operation not supported by subsystem
  */
 static int cancel_operation(struct smw_op_context *ctx)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 
 	struct shared_context shared_ctx = { 0 };
 	TEEC_Operation op = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	shared_ctx.handle = get_subsystem_context_handle(ctx, &status);
+	status = get_subsystem_context_handle(ctx, &shared_ctx.handle);
 	if (status != SMW_STATUS_OK || !shared_ctx.handle)
 		goto end;
 
@@ -136,6 +144,7 @@ static int allocate_copy_subsystem_context(struct smw_op_context *src_context,
 	struct aead_context *src_aead_ctx = NULL;
 	struct aead_context *dst_aead_ctx = NULL;
 	struct cipher_context *dst_cipher_ctx = NULL;
+	struct hash_context *dst_hash_ctx = NULL;
 
 	switch (src_context->op_id) {
 	case SMW_CRYPTO_OP_ID_AEAD_MULTI_PART:
@@ -169,6 +178,18 @@ static int allocate_copy_subsystem_context(struct smw_op_context *src_context,
 
 		break;
 
+	case SMW_CRYPTO_OP_ID_HASH_MULTI_PART:
+		dst_hash_ctx = SMW_UTILS_MALLOC(sizeof(*dst_hash_ctx));
+		if (!dst_hash_ctx) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		dst_hash_ctx->tee_handle = tee_dst_ctx->handle;
+		dst_context->subsystem_context = dst_hash_ctx;
+
+		break;
+
 	default:
 		goto end;
 	}
@@ -196,7 +217,7 @@ end:
 static int copy_context(struct smw_op_context *src_ctx,
 			struct smw_op_context *dst_ctx)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OK;
 
 	struct shared_context src_shared_ctx = { 0 };
 	struct shared_context dst_shared_ctx = { 0 };
@@ -204,7 +225,7 @@ static int copy_context(struct smw_op_context *src_ctx,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	src_shared_ctx.handle = get_subsystem_context_handle(src_ctx, &status);
+	status = get_subsystem_context_handle(src_ctx, &src_shared_ctx.handle);
 	if (status != SMW_STATUS_OK || !src_shared_ctx.handle)
 		goto end;
 

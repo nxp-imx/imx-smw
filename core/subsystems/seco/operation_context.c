@@ -3,6 +3,7 @@
  * Copyright 2024 NXP
  */
 
+#include "utils.h"
 #include "operation_context.h"
 
 static int cancel_operation(struct smw_op_context *ctx)
@@ -21,7 +22,12 @@ static int copy_context(struct smw_op_context *src_ctx,
 
 static void free_context(struct smw_op_context *ctx)
 {
-	(void)ctx;
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (ctx->subsystem_context) {
+		SMW_UTILS_FREE(ctx->subsystem_context);
+		ctx->subsystem_context = NULL;
+	}
 }
 
 /* ELE context operations structure */

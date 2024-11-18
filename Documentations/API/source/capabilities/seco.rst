@@ -67,6 +67,8 @@ Hash
    +--------------------+
    | **Hash Algorithm** |
    +====================+
+   | SHA1 [2]_          |
+   +--------------------+
    | SHA224             |
    +--------------------+
    | SHA256             |
@@ -75,6 +77,11 @@ Hash
    +--------------------+
    | SHA512             |
    +--------------------+
+
+Operations supported:
+ - One shot and multi-part [2]_
+
+.. [2] Operation is performed by the SMW library
 
 Signature
 ^^^^^^^^^
@@ -96,10 +103,10 @@ Signature
    +--------------+--------------------------+--------------------+
 
 Operations supported:
- - Sign [2]_
+ - Sign [3]_
  - Verify
 
-.. [2] Attribute TLS_MAC_FINISH available only when hardware supports it
+.. [3] Attribute TLS_MAC_FINISH available only when hardware supports it
 
 Random
 ^^^^^^
@@ -153,6 +160,13 @@ One-shot operations supported:
  - Encrypt
  - Decrypt
 
+Operation context
+^^^^^^^^^^^^^^^^^
+
+Operations supported:
+ - Allocate
+ - Cancel
+
 Data Storage manager
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -178,20 +192,21 @@ AEAD
    +--------------+----------+------------------------+------------------------+
    | **Key type** | **Mode** | **IV length (bytes)**  | **Tag length (bytes)** |
    +==============+==========+========================+========================+
-   | AES          |   CCM    |       12 [3]_          |        16              |
+   | AES          |   CCM    |       12 [4]_          |        16              |
    +              +----------+------------------------+------------------------+
-   |              |   GCM    | Encryption: 0 or 4 [4]_|        16              |
+   |              |   GCM    | Encryption: 0 or 4 [5]_|        16              |
    +              +          +                        +                        +
    |              |          | Decryption: 12         |                        |
    +--------------+----------+------------------------+------------------------+
 
-.. [3] For CCM AEAD encryption and decryption operation, IV length should be
+.. [4] For CCM AEAD encryption and decryption operation, IV length should be
        12 bytes.
 
-.. [4] For GCM AEAD Encryption operation, IV length can be either
+.. [5] For GCM AEAD Encryption operation, IV length can be either
 
-  - 0 bytes, to request the subsystem to fully generate the IV.
-  - 4 bytes, to request the subsystem to generate the rest of the IV bytes.
+   0 bytes, to request the subsystem to fully generate the IV.
+
+   4 bytes, to request the subsystem to generate the rest of the IV bytes.
 
    For decryption operation, IV length should be 12 bytes.
 

@@ -121,6 +121,9 @@ Hash
    | SM3                |
    +--------------------+
 
+Operations supported:
+ - One shot and multi-part
+
 Signature
 ^^^^^^^^^
 
@@ -133,7 +136,7 @@ Signature
    +==============+=============================+====================+====================+
    | Secp R1      | 192 / 224 / 256 / 384 / 521 | ECDSA              | N/A                |
    +--------------+-----------------------------+--------------------+--------------------+
-   | RSA          | 256 to 4096 [3]_            | RSA                | PKCS1-V1_5         |
+   | RSA          | 256 to 4096 [4]_            | RSA                | PKCS1-V1_5         |
    +--------------+-----------------------------+--------------------+--------------------+
    | Ed25519      | 256                         | EDDSA              | N/A                |
    +--------------+-----------------------------+--------------------+--------------------+
@@ -145,7 +148,7 @@ Operations supported:
 Sign or verify a message in full or a hashed message as per the hash algorithm set by the user. 
 The list of supported hash algorithms is :numref:`tee_hash`.
 
-.. [3] multiple of 2 bits
+.. [4] multiple of 2 bits
 
 
 MAC
@@ -160,22 +163,22 @@ MAC
    +==============+==========================+===============+==========+
    | AES          | 128 / 192 / 256          | CMAC          | N/A      |
    +--------------+--------------------------+---------------+----------+
-   | HMAC         | 64 to 512 bits [4]_   /  | HMAC          | MD5      |
+   | HMAC         | 64 to 512 bits [5]_   /  | HMAC          | MD5      |
    +              +                       /  +---------------+----------+
-   |              | 80 to 512 bits [4]_   /  | HMAC          | SHA1     |
+   |              | 80 to 512 bits [5]_   /  | HMAC          | SHA1     |
    +              +                       /  +---------------+----------+
-   |              | 112 to 512 bits [4]_  /  | HMAC          | SHA224   |
+   |              | 112 to 512 bits [5]_  /  | HMAC          | SHA224   |
    +              +                       /  +---------------+----------+
-   |              | 192 to 1024 bits [4]_ /  | HMAC          | SHA256   |
+   |              | 192 to 1024 bits [5]_ /  | HMAC          | SHA256   |
    +              +                       /  +---------------+----------+
-   |              | 256 to 1024 bits [4]_ /  | HMAC          | SHA384   |
+   |              | 256 to 1024 bits [5]_ /  | HMAC          | SHA384   |
    +              +                       /  +---------------+----------+
-   |              | 256 to 1024 bits [4]_ /  | HMAC          | SHA512   |
+   |              | 256 to 1024 bits [5]_ /  | HMAC          | SHA512   |
    +              +                       /  +---------------+----------+
-   |              | 80 to 1024 bits [4]_     | HMAC          | SM3      |
+   |              | 80 to 1024 bits [5]_     | HMAC          | SM3      |
    +--------------+--------------------------+---------------+----------+
 
-.. [4] multiple of 8 bits
+.. [5] multiple of 8 bits
 
 Operations supported:
  - Compute MAC
@@ -222,10 +225,10 @@ Cipher
    +--------------+----------+
 
 Operations supported:
- - Encrypt [5]_
- - Decrypt [5]_
+ - Encrypt [6]_
+ - Decrypt [6]_
 
-.. [5] one shot and multi-part
+.. [6] one shot and multi-part
 
 Operation context
 ^^^^^^^^^^^^^^^^^

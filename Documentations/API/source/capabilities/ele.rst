@@ -190,6 +190,9 @@ Hash
    | SHA3_512           |      |  X   |
    +--------------------+------+------+
 
+Operations supported:
+ - One shot and multi-part
+
 Signature
 ^^^^^^^^^
 
@@ -549,8 +552,16 @@ get or set device lifecycle.
    |               |         |         | must be returned to NXP            |
    +---------------+---------+---------+------------------------------------+
 
+Operation context
+^^^^^^^^^^^^^^^^^
+
+Operations supported:
+ - Allocate
+ - Cancel
+
 Data Storage manager
 ^^^^^^^^^^^^^^^^^^^^
+
 Data Storage manager allows to store and retrieve data. The data ID is a 32-bits
 value with the exception of the 0xF00000E0 reserved for EdgeLock 2GO claimcode.
 

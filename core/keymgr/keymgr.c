@@ -1938,6 +1938,15 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	status = smw_utils_execute_implicit(OPERATION_ID_GET_KEY_ATTRIBUTES,
 					    &attr_args, subsystem_id);
 
+	if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED) {
+		attr_args.key_attributes->usage_flags |=
+			SMW_ATTR_USAGE_DECRYPT | SMW_ATTR_USAGE_ENCRYPT |
+			SMW_ATTR_USAGE_SIGN_HASH | SMW_ATTR_USAGE_SIGN_MESSAGE |
+			SMW_ATTR_USAGE_VERIFY_HASH |
+			SMW_ATTR_USAGE_VERIFY_MESSAGE | SMW_ATTR_USAGE_DERIVE;
+		status = SMW_STATUS_OK;
+	}
+
 	if (status != SMW_STATUS_OK)
 		goto end;
 

@@ -634,7 +634,7 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 	(void)hdl;
 	(void)args;
 
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 

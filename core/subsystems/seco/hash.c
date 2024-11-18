@@ -205,6 +205,8 @@ static int hash_init(struct smw_op_context *op_context,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_SECO);
+
 	status = set_hash_context(op_context, args->algo_id);
 	if (status != SMW_STATUS_OK)
 		goto end;

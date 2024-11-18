@@ -58,6 +58,8 @@ The failure is due to the storage manager which is already loaded and a new inst
   AEAD supported algorithm in ele_imx95_config file.
 * Add a new key type `SMW_KEY_TYPE_NAME_HKDF_IKM`.
 * Add support of hash multi-part.
+* Set default key usage flags if get key attributes operation is not supported by the subsystem.
+
 
 ##### 2. Subsystems
 

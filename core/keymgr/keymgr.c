@@ -1470,6 +1470,48 @@ end:
 	return ret;
 }
 
+static bool delete_el2go_data(struct smw_delete_key_args *args, int *status)
+{
+	bool ret = false;
+
+	struct smw_delete_data_args data_args = { 0 };
+	struct smw_data_descriptor data_desc = { 0 };
+	struct smw_data_attributes data_attributes = { 0 };
+	struct smw_object_descriptor obj_desc = { 0 };
+	unsigned int object_id = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!args->key_descriptor)
+		goto end;
+
+	object_id = args->key_descriptor->id;
+	obj_desc.id = object_id;
+	obj_desc.data.data_attributes = &data_attributes;
+
+	*status = smw_find_object_db(&obj_desc);
+	if (*status != SMW_STATUS_OK)
+		goto end;
+
+	if (obj_desc.type != SMW_OBJECT_TYPE_NAME_DATA)
+		goto end;
+
+	if (!NXP_IS_EL2GO_DATA(data_attributes.storage_id))
+		goto end;
+
+	data_args.data_descriptor = &data_desc;
+
+	data_desc.identifier = args->key_descriptor->id;
+
+	*status = smw_delete_data(&data_args);
+	ret = true;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s (%s) returned %d\n", __func__,
+		       ret ? "True" : "False", *status);
+	return ret;
+}
+
 int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 			      enum smw_keymgr_privacy_id *privacy_id)
 {
@@ -1740,6 +1782,9 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
+
+	if (delete_el2go_data(args, &status))
+		goto end;
 
 	status = delete_key_convert_args(args, &delete_key_args, &subsystem_id);
 	if (status != SMW_STATUS_OK)

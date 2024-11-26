@@ -8,16 +8,24 @@
 			],
 			"usage": [
 				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
 			]
 		},
 		"key 2": {
-			"type": "DES",
-			"security_size": 56,
+			"type": "SECP_R1",
+			"security_size": 256,
 			"attributes_list": [
 				"TRANSIENT"
 			],
 			"usage": [
-				"ENCRYPT"
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
 			]
 		},
 		"key 3": {
@@ -49,12 +57,12 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "TEE",
+		"subsystem": "DEFAULT",
 		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"command": "GENERATE",
-		"subsystem": "TEE",
+		"subsystem": "DEFAULT",
 		"key_name": "key 2"
 	},
 	"subtest 3": {

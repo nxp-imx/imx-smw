@@ -68,37 +68,52 @@ target_link_libraries(${PROJECT_NAME} PRIVATE smw)
 # Include utils
 include(${CMAKE_SOURCE_DIR}/tests/cmake/utils.cmake)
 
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
+   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TA_dev_kit)
+    set(TEE_TESTS_ENABLED ON)
+endif()
+
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco)
+    set(SECO_TESTS_ENABLED ON)
+endif()
+
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Ele)
+    set(ELE_TESTS_ENABLED ON)
+endif()
+
+if(TEE_TESTS_ENABLED AND SECO_TESTS_ENABLED)
+    set(SECOTEE_TESTS ON)
+endif()
+
+if(TEE_TESTS_ENABLED AND ELE_TESTS_ENABLED)
+    set(ELETEE_TESTS ON)
+endif()
+
 # Include SMW API tests
 include(${CMAKE_SOURCE_DIR}/tests/cmake/api_tests.cmake)
 
 # If TEE subsystem defined, include tests
-if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
-   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TA_dev_kit)
-    set(TEE_TESTS_ENABLED ON)
+if(TEE_TESTS_ENABLED)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/tee_tests.cmake)
 endif()
 
 # If SECO subsystem defined, include tests
-if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco)
-    set(SECO_TESTS_ENABLED ON)
+if(SECO_TESTS_ENABLED)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/seco_tests.cmake)
 endif()
 
 # If ELE subsystem defined, include tests
-if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Ele)
-    set(ELE_TESTS_ENABLED ON)
+if(ELE_TESTS_ENABLED)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/ele_tests.cmake)
 endif()
 
 # If SECO subsystem and TEE subsystem defined, include tests
-if(TEE_TESTS_ENABLED AND SECO_TESTS_ENABLED)
-    set(SECOTEE_TESTS ON)
+if(SECOTEE_TESTS)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/secotee_tests.cmake)
 endif()
 
 # If ELE subsystem and TEE subsystem defined, include tests
-if(TEE_TESTS_ENABLED AND ELE_TESTS_ENABLED)
-    set(ELETEE_TESTS ON)
+if(ELETEE_TESTS)
     include(${CMAKE_SOURCE_DIR}/tests/cmake/eletee_tests.cmake)
 endif()
 

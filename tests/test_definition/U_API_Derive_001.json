@@ -8,6 +8,10 @@
 			],
 			"usage": [
 				"DERIVE"
+			],
+			"permitted_algo": [
+				"HKDF",
+				"HASH=SHA256"
 			]
 		},
 		"key 2": {
@@ -87,7 +91,7 @@
 	},
 	"subtest 1": {
 		"command": "GENERATE",
-		"subsystem": "TEE",
+		"subsystem": "DEFAULT",
 		"key_name": "key 1"
 	},
 	"subtest 2": {

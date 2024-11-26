@@ -8,6 +8,14 @@
 				"620690d06de0317b8618d5ce65eb728f",
 				"9681b517b1cda17d0d83d335d9c4a8a9",
 				"a9b0b1b3c7106d8f3c72bc5093dc275f"
+			],
+			"usage": [
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
 			]
 		},
 		"key 2": {
@@ -19,6 +27,10 @@
 			"usage": [
 				"VERIFY_HASH",
 				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
 			]
 		}
 	},
@@ -270,7 +282,7 @@
 	"subtest 10": {
 		"description": "Add a keypair for the test",
 		"command": "GENERATE",
-		"subsystem": "TEE",
+		"subsystem": "DEFAULT",
 		"key_name": "key 2"
 	},
 	"subtest 11": {

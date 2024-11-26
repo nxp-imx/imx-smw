@@ -6,6 +6,19 @@ file(GLOB CFG_FILES ${SMW_CONFIG_SRC_DIR}/config_*.txt)
 
 file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}*.json)
 
+if(NOT TEE_TESTS_ENABLED)
+  # Remove all configuration test due to missing TEE subsystem
+  list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Config_001.json)
+  list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Config_002.json)
+  list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Config_003.json)
+  list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Config_004.json)
+
+  if(SECO_TESTS_ENABLED)
+      list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Derive_001.json)
+      list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Export_002.json)
+  endif()
+endif()
+
 add_and_install_tests("${TESTS}" "${CMD}")
 
 # Install the test configuration files

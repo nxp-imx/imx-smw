@@ -69,6 +69,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Add tests to validate ed25519 Sign and Verify operations with ELE subsystem.
 * Fix coverity 2024.9.0 findings.
 * Fix object descriptor when finding data.
+* Correct the test definition to run when TEE subsystem not enabled.
 
 #### PKCS#11 Library - _version 4.2_
 

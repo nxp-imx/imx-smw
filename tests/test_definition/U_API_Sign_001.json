@@ -6,6 +6,14 @@
 			"priv_key": [
 				"c9806898a0334916c860748880a541f0",
 				"93b579a9b1f32934d86c363c39800357"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
 			]
 		},
 		"key 2": {
@@ -17,6 +25,10 @@
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
 			]
 		}
 	},
@@ -252,7 +264,7 @@
 	"subtest 9": {
 		"description": "Add a keypair for the test",
 		"command": "GENERATE",
-		"subsystem": "TEE",
+		"subsystem": "DEFAULT",
 		"key_name": "key 2"
 	},
 	"subtest 10": {

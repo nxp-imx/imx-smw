@@ -1,0 +1,61 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=SHA384"
+			]
+		},
+		"key 2": {
+			"key_name": "key 1",
+			"priv_key": [
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				0,
+				"55555555555555555555555555555555",
+				"55555555555555555555555555555555"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": "Generate RSA key",
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"description": "Modulus length not set but buffer valid",
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 2",
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "Modulus length not set but buffer valid",
+		"command": "EXPORT_KEYPAIR",
+		"key_name": "key 2",
+		"result": "SMW_STATUS_INVALID_PARAM",
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

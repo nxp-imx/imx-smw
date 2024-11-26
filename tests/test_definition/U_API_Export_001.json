@@ -9,6 +9,10 @@
 			"usage": [
 				"SIGN_HASH",
 				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
 			]
 		},
 		"key 2": {
@@ -81,40 +85,12 @@
 				"55555555555555555555555555555555",
 				"55555555555555555555555555555555"
 			]
-		},
-		"key 12": {
-			"type": "RSA",
-			"security_size": 256,
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"SIGN_HASH",
-				"SIGN_MESSAGE"
-			]
-		},
-		"key 13": {
-			"key_name": "key 12",
-			"priv_key": [
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555"
-			],
-			"pub_key": [
-				"010001"
-			],
-			"modulus": [
-				0,
-				"55555555555555555555555555555555",
-				"55555555555555555555555555555555"
-			]
 		}
 	},
 	"subtest 1": {
 		"description": "Generate a keypair for the test",
 		"command": "GENERATE",
-		"subsystem": "TEE",
+		"subsystem": "DEFAULT",
 		"key_name": "key 1"
 	},
 	"subtest 2": {
@@ -202,30 +178,5 @@
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
-	},
-	"subtest 14": {
-		"description": "Generate RSA key",
-		"command": "GENERATE",
-		"subsystem": "TEE",
-		"key_name": "key 12"
-	},
-	"subtest 15": {
-		"description": "Modulus length not set but buffer valid",
-		"command": "EXPORT_PUBLIC",
-		"key_name": "key 13",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 14
-	},
-	"subtest 16": {
-		"description": "Modulus length not set but buffer valid",
-		"command": "EXPORT_KEYPAIR",
-		"key_name": "key 13",
-		"result": "SMW_STATUS_INVALID_PARAM",
-		"depends": 14
-	},
-	"subtest 17": {
-		"command": "DELETE",
-		"key_name": "key 12",
-		"depends": 14
 	}
 }

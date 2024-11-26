@@ -308,6 +308,12 @@ static int sql_print_insert(struct osal_obj *obj, char *sql, size_t *length)
 		if (sql_print(sql, length, "\"0x%X\", ", TAG_TYPE))
 			goto end;
 		break;
+	case SMW_OBJECT_TYPE_NAME_DATA:
+		if (obj->descriptor->data.data_attributes)
+			if (sql_print(sql, length, "\"0x%X\", ",
+				      TAG_STORAGE_ID))
+				goto end;
+		break;
 	default:
 		break;
 	}
@@ -366,6 +372,12 @@ static int sql_print_insert(struct osal_obj *obj, char *sql, size_t *length)
 		if (sql_print(sql, length, "%d, ",
 			      obj->descriptor->data.identifier))
 			goto end;
+
+		if (obj->descriptor->data.data_attributes)
+			if (sql_print(sql, length, "%d, ",
+				      obj->descriptor->data.data_attributes
+					      ->storage_id))
+				goto end;
 
 		if (sql_print(sql, length, "%d", obj->descriptor->data.length))
 			goto end;
@@ -445,6 +457,13 @@ static int sql_print_update(struct osal_obj *obj, char *sql, size_t *length)
 		break;
 
 	case SMW_OBJECT_TYPE_NAME_DATA:
+		if (obj->descriptor->data.data_attributes)
+			if (sql_print(sql, length, "\"0x%X\" = %d, ",
+				      TAG_STORAGE_ID,
+				      obj->descriptor->data.data_attributes
+					      ->storage_id))
+				goto end;
+
 		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_SUBSYSTEM_ID,
 			      obj->descriptor->data.identifier))
 			goto end;
@@ -589,6 +608,16 @@ static int sql_print_find(struct osal_obj *obj, char *sql, size_t *length)
 					      TAG_SUBSYSTEM_ID,
 					      descriptor->data.identifier))
 					goto end;
+
+			if (descriptor->data.data_attributes)
+				if (descriptor->data.data_attributes->storage_id)
+					if (sql_print(sql, length,
+						      " AND \"0x%X\" = %d",
+						      TAG_STORAGE_ID,
+						      descriptor->data
+							      .data_attributes
+							      ->storage_id))
+						goto end;
 			break;
 		default:
 			break;
@@ -851,6 +880,13 @@ static int osal_obj_set_specific_attribute(struct osal_obj *obj,
 	case TAG_DATABASE_ID:
 		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA)
 			obj->descriptor->data.identifier = attribute_value;
+		break;
+
+	case TAG_STORAGE_ID:
+		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA &&
+		    obj->descriptor->data.data_attributes)
+			obj->descriptor->data.data_attributes->storage_id =
+				attribute_value;
 		break;
 
 	case TAG_SIZE:

@@ -36,6 +36,7 @@ static int data_db_create(unsigned int *id,
 
 	obj.type = SMW_OBJECT_TYPE_NAME_DATA;
 	obj.data.length = smw_storage_get_data_length(descriptor);
+	obj.data.data_attributes = &descriptor->data_attributes;
 	obj.attributes = attributes;
 
 	if (NXP_IS_EL2GO_OBJECT(descriptor->data_attributes.storage_id))
@@ -63,6 +64,7 @@ static int data_db_update(struct smw_storage_data_descriptor *descriptor)
 
 	obj.type = SMW_OBJECT_TYPE_NAME_DATA;
 	obj.data.length = smw_storage_get_data_length(descriptor);
+	obj.data.data_attributes = &descriptor->data_attributes;
 	obj.attributes = attributes;
 
 	return smw_object_db_update(id, attributes, &obj);

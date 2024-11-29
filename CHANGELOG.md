@@ -18,16 +18,46 @@ Each component handles its own version number specified in each component main C
 
 The releases are listed from the most recent to the first one.
 
-1. [Release 4.1](#rel_4_1)
-2. [Release 4.0](#rel_4_0)
-3. [Release 3.0](#rel_3_0)
-4. [Release 2.5](#rel_2_5)
-5. [Release 2.4](#rel_2_4)
-6. [Release 2.3](#rel_2_3)
-7. [Release 2.2](#rel_2_2)
-8. [Release 2.1](#rel_2_1)
-9. [Release 2.0](#rel_2_0)
-10. [Release 1.0](#rel_1_0)
+1. [Release 4.2](#rel_4_2)
+2. [Release 4.1](#rel_4_1)
+3. [Release 4.0](#rel_4_0)
+4. [Release 3.0](#rel_3_0)
+5. [Release 2.5](#rel_2_5)
+6. [Release 2.4](#rel_2_4)
+7. [Release 2.3](#rel_2_3)
+8. [Release 2.2](#rel_2_2)
+9. [Release 2.1](#rel_2_1)
+10. [Release 2.0](#rel_2_0)
+11. [Release 1.0](#rel_1_0)
+
+---
+### <a id ="rel_4_2"></a></br>**Release 4.2**
+---
+#### Known Issues
+##### 1. SECO Subsystem
+
+* When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
+The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+##### 1. ELE Subsystem
+
+#### SMW Library - _version 4.2_
+##### 1. SMW APIs
+
+##### 2. Subsystems
+
+##### 3. ARM PSA APIs
+
+##### 4. OSAL
+
+* Add SMW_LOG_FILE and SMW_LOG_LEVEL environment variable in debug build.
+At init time, log can be redirected to a file and log level could be set.
+
+#### SMW Tests - _version 4.2_
+
+#### PKCS#11 Library - _version 4.2_
+
+#### PKCS#11 Tests - _version 4.2_
 
 ---
 ### <a id ="rel_4_1"></a></br>**Release 4.1**

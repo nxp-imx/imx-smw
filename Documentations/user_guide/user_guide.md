@@ -391,6 +391,27 @@ configuration (operations per subsystem).
 $ export SMW_CONFIG_FILE=[/path/to/configuration/file]
 ```
 
+The system environment variable `SMW_LOG_FILE` can be set in debug build to
+obtain debug information in the specified debug file.
+```sh
+$ export SMW_LOG_FILE=[/path/to/log/file]
+```
+
+The system environment variable `SMW_LOG_LEVEL` can be set in debug build to
+update the debug level set at build time, if a higher level is provider then
+additional information is printed in the specified debug file.
+
+0. No trace
+1. Failures of which the user must be aware
+2. Traces which could interest the user
+3. First level of debugging information
+4. Second level of debugging information
+5. Maximum level of debugging information
+
+```sh
+$ export SMW_LOG_LEVEL=[0-5]
+```
+
 # 5. Files Organization
 Below is the organization of the project sources.
 

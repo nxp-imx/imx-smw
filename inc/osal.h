@@ -78,9 +78,9 @@ struct smw_ops {
 			     void *(*start_routine)(void *), void *arg);
 	int (*thread_cancel)(unsigned long thread);
 
-	void (*vprint)(const char *format, va_list arg);
-	void (*hex_dump)(const unsigned char *addr, unsigned int size,
-			 unsigned int align);
+	void (*vprint)(unsigned int level, const char *format, va_list arg);
+	void (*hex_dump)(unsigned int level, const unsigned char *addr,
+			 unsigned int size, unsigned int align);
 
 	void (*register_active_subsystem)(smw_subsystem_t subsystem_name);
 

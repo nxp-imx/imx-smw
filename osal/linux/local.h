@@ -32,15 +32,11 @@
 
 #if defined(ENABLE_TRACE)
 
-#define DBG_LEVEL TRACE_LEVEL
-
 #define DBG_PRINTF(level, ...)                                                 \
 	do {                                                                   \
-		if (DBG_LEVEL_##level <= DBG_LEVEL) {                          \
-			printf("[OSAL] (%d) [0x%lx] ", getpid(),               \
-			       pthread_self());                                \
-			printf(__VA_ARGS__);                                   \
-		}                                                              \
+		dbg_printf(DBG_LEVEL_##level, "[OSAL] (%d) [0x%lx] ",          \
+			   getpid(), pthread_self());                          \
+		dbg_printf(DBG_LEVEL_##level, __VA_ARGS__);                    \
 	} while (0)
 
 #define DBG_PRINTF_COND(level, cond, ...)                                      \
@@ -238,6 +234,26 @@ int obj_db_find_finalize(void *ctx);
 char *get_strerr(void);
 
 /**
+ * set_log_file() - Set log file
+ *
+ */
+void set_log_file(void);
+
+/**
+ * set_log_level() - Set log level
+ *
+ */
+void set_log_level(void);
+
+/**
+ * log_printf() - Print log
+ * @level: log level
+ * @format: log format
+ *
+ */
+void log_printf(unsigned int level, const char *format, va_list args);
+
+/**
  * config_read_system_cnf() - Read the system configuration file
  *
  * If present, the function reads the system configuration file containing
@@ -262,5 +278,16 @@ int config_read_system_cnf(void);
  * -1 - Failure
  */
 int config_smw_db(const char *file, struct lib_config_args *config);
+
+static inline void dbg_printf(unsigned int level, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+
+	log_printf(level, fmt, args);
+
+	va_end(args);
+}
 
 #endif /* __LOCAL_H__ */

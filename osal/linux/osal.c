@@ -22,6 +22,9 @@ inline struct osal_ctx *get_osal_ctx(void)
 
 static void constructor(void)
 {
+	set_log_file();
+	set_log_level();
+
 	DBG_PRINTF(DEBUG, "OSAL context allocation\n");
 	osal_ctx = calloc(1, sizeof(struct osal_ctx));
 	if (!osal_ctx) {
@@ -115,17 +118,30 @@ static int thread_cancel(unsigned long thread)
 	return pthread_cancel(thread);
 }
 
-static void vprint(const char *format, va_list arg)
+static void vprint(unsigned int level, const char *format, va_list args)
 {
-	printf("[SMW] (%d) [0x%lx] ", getpid(), pthread_self());
-
-	vprintf(format, arg);
-
-	(void)fflush(stdout);
+	dbg_printf(level, "[SMW] (%d) [0x%lx] ", getpid(), pthread_self());
+	log_printf(level, format, args);
 }
 
-static int fill_dbg_buffer(char *out, size_t size, unsigned int *off,
-			   const char *fmt, size_t fmt_size, char c)
+__weak void set_log_file(void)
+{
+}
+
+__weak void set_log_level(void)
+{
+}
+
+__weak void log_printf(unsigned int level, const char *fmt, va_list args)
+{
+	(void)level;
+	(void)fmt;
+	(void)args;
+}
+
+static int fill_dbg_buffer(unsigned int level, char *out, size_t size,
+			   unsigned int *off, const char *fmt, size_t fmt_size,
+			   char c)
 {
 	int ret = -1;
 
@@ -133,10 +149,10 @@ static int fill_dbg_buffer(char *out, size_t size, unsigned int *off,
 		return ret;
 
 	if (fmt_size >= size)
-		printf(fmt, c);
+		dbg_printf(level, fmt, c);
 
 	if (fmt_size >= size - *off) {
-		printf("%.*s", *off, out);
+		dbg_printf(level, "%.*s", *off, out);
 		*off = 0;
 	}
 
@@ -149,8 +165,8 @@ static int fill_dbg_buffer(char *out, size_t size, unsigned int *off,
 	return ret;
 }
 
-static void hex_dump(const unsigned char *addr, unsigned int size,
-		     unsigned int align)
+static void hex_dump(unsigned int level, const unsigned char *addr,
+		     unsigned int size, unsigned int align)
 {
 	unsigned int i = 0;
 	/* Size of out must be at least equal to 3. */
@@ -158,10 +174,11 @@ static void hex_dump(const unsigned char *addr, unsigned int size,
 	unsigned int off = 0;
 	unsigned int align_mask = 0;
 
-	printf("(%d) [0x%lx] (%p-%u)\n", getpid(), pthread_self(), addr, size);
+	dbg_printf(level, "(%d) [0x%lx] (%p-%u)\n", getpid(), pthread_self(),
+		   addr, size);
 
 	if (!addr) {
-		printf("Buffer address is NULL\n");
+		dbg_printf(level, "Buffer address is NULL\n");
 		return;
 	}
 
@@ -174,19 +191,18 @@ static void hex_dump(const unsigned char *addr, unsigned int size,
 		align_mask -= 1;
 
 	for (i = 0; i < size; i++) {
-		if (fill_dbg_buffer(out, sizeof(out), &off, "%.2x ", 3,
+		if (fill_dbg_buffer(level, out, sizeof(out), &off, "%.2x ", 3,
 				    addr[i]))
 			break;
 
 		if (!((i + 1) & align_mask)) {
-			if (fill_dbg_buffer(out, sizeof(out), &off, "%c", 1,
-					    '\n'))
+			if (fill_dbg_buffer(level, out, sizeof(out), &off, "%c",
+					    1, '\n'))
 				break;
 		}
 	}
-	printf("%.*s\n", off, out);
 
-	(void)fflush(stdout);
+	dbg_printf(level, "%.*s\n", off, out);
 }
 
 static void register_active_subsystem(smw_subsystem_t subsystem_name)

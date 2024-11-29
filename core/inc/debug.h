@@ -22,9 +22,7 @@
 
 #if defined(ENABLE_TRACE)
 
-#define SMW_DBG_LEVEL TRACE_LEVEL
-
-static inline void dbg_printf(const char *fmt, ...)
+static inline void dbg_printf(unsigned int level, const char *fmt, ...)
 {
 	struct smw_ops *ops = get_smw_ops();
 	va_list args;
@@ -32,63 +30,52 @@ static inline void dbg_printf(const char *fmt, ...)
 	if (ops && ops->vprint) {
 		va_start(args, fmt);
 
-		ops->vprint(fmt, args);
+		ops->vprint(level, fmt, args);
 
 		va_end(args);
 	}
 }
 
-#define SMW_PRINTF(...)                                                        \
-	do {                                                                   \
-		dbg_printf(__VA_ARGS__);                                       \
-	} while (0)
-
-#define SMW_FFLUSH fflush
+#define SMW_PRINTF(level, ...) dbg_printf(level, __VA_ARGS__)
 
 #define SMW_DBG_TRACE_API_CALL                                                 \
 	do {                                                                   \
-		if (SMW_DBG_LEVEL_VERBOSE <= SMW_DBG_LEVEL)                    \
-			SMW_PRINTF("Executing %s\n", __func__);                \
+		SMW_PRINTF(SMW_DBG_LEVEL_VERBOSE, "Executing %s\n", __func__); \
 	} while (0)
 
 #define SMW_DBG_TRACE_FUNCTION_CALL                                            \
 	do {                                                                   \
-		if (SMW_DBG_LEVEL_EXTRA <= SMW_DBG_LEVEL)                      \
-			SMW_PRINTF("Executing %s\n", __func__);                \
+		SMW_PRINTF(SMW_DBG_LEVEL_EXTRA, "Executing %s\n", __func__);   \
 	} while (0)
 
 #define SMW_DBG_PRINTF(level, ...)                                             \
 	do {                                                                   \
-		if (SMW_DBG_LEVEL_##level <= SMW_DBG_LEVEL)                    \
-			SMW_PRINTF(__VA_ARGS__);                               \
+		SMW_PRINTF(SMW_DBG_LEVEL_##level, __VA_ARGS__);                \
 	} while (0)
 
 #define SMW_DBG_PRINTF_COND(level, cond, ...)                                  \
 	do {                                                                   \
-		if (SMW_DBG_LEVEL_##level <= SMW_DBG_LEVEL)                    \
-			if (cond)                                              \
-				SMW_PRINTF(__VA_ARGS__);                       \
+		if (cond)                                                      \
+			SMW_PRINTF(SMW_DBG_LEVEL_##level, __VA_ARGS__);        \
 	} while (0)
 
-static inline void dbg_hex_dump(const unsigned char *addr, unsigned int size,
-				unsigned int align)
+static inline void dbg_hex_dump(unsigned int level, const unsigned char *addr,
+				unsigned int size, unsigned int align)
 {
 	struct smw_ops *ops = get_smw_ops();
 
 	if (ops && ops->hex_dump)
-		ops->hex_dump(addr, size, align);
+		ops->hex_dump(level, addr, size, align);
 }
 
 #define SMW_DBG_HEX_DUMP(level, addr, size, align)                             \
 	do {                                                                   \
-		if (SMW_DBG_LEVEL_##level <= SMW_DBG_LEVEL)                    \
-			dbg_hex_dump(addr, size, align);                       \
+		dbg_hex_dump(SMW_DBG_LEVEL_##level, addr, size, align);        \
 	} while (0)
 
 #else /* ENABLE_TRACE */
 
 #define SMW_PRINTF(...)
-#define SMW_FFLUSH(...)
 #define SMW_DBG_TRACE_API_CALL
 #define SMW_DBG_TRACE_FUNCTION_CALL
 #define SMW_DBG_PRINTF(level, ...)
@@ -101,10 +88,10 @@ static inline void dbg_hex_dump(const unsigned char *addr, unsigned int size,
 	do {                                                                   \
 		if ((exp))                                                     \
 			break;                                                 \
-		SMW_PRINTF("Assertion \"%s\" failed: file \"%s\","             \
+		SMW_PRINTF(SMW_DBG_LEVEL_ERROR,                                \
+			   "Assertion \"%s\" failed: file \"%s\","             \
 			   "line %d\n",                                        \
 			   #exp, __FILE__, __LINE__);                          \
-		SMW_FFLUSH(stdout);                                            \
 		/* Exit in error properly flushing/closing streams */          \
 		exit(EXIT_FAILURE);                                            \
 	} while (0)

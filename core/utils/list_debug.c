@@ -25,9 +25,6 @@ void smw_utils_list_print(struct smw_utils_list *list)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (SMW_DBG_LEVEL < SMW_DBG_LEVEL_DEBUG)
-		return;
-
 	SMW_DBG_PRINTF(EXTRA,
 		       "Print list: %p,\n"
 		       "    first : %p,\n"

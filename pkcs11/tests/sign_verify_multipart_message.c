@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "os_mutex.h"
+#include "util_lib.h"
 #include "util_session.h"
 
 /* messagetosign */
@@ -113,6 +114,11 @@ static int sign_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
@@ -243,6 +249,11 @@ static int verify_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
@@ -384,6 +395,11 @@ static int sign_verify_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
@@ -558,6 +574,11 @@ static int sign_verify_cancel_op(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
 					       ec_curves[1].name),
@@ -678,6 +699,11 @@ static int sign_verify_multiple_begin(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					       ec_curves[1].name),
 			   "ASN1 Conversion"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,
 				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
@@ -815,6 +841,11 @@ static int sign_verify_multipart_ecdsa(CK_FUNCTION_LIST_3_0_PTR pfunc)
 					       ec_curves[1].name),
 			   "ASN1 Conversion"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,
 				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
@@ -994,6 +1025,11 @@ static int sign_verify_multipart_rsa_pkcs(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	    TEST_FAIL)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -1116,6 +1152,11 @@ static int sign_verify_multipart_rsa_pss(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (util_open_rw_session((CK_FUNCTION_LIST_PTR)pfunc, 0, &sess) ==
 	    TEST_FAIL)
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
@@ -1248,6 +1289,11 @@ static int sign_verify_multipart_cmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Generate AES secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
 				   ARRAY_SIZE(aes_secretkey_attrs),
@@ -1360,6 +1406,11 @@ static int sign_verify_multipart_hmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate HMAC secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &hmac_key_mech, hmac_secretkey_attrs,

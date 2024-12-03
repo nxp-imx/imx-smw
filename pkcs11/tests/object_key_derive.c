@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "os_mutex.h"
+#include "util_lib.h"
 #include "util_session.h"
-
 #include "util.h"
 
 static CK_BYTE base_key_1[] = { 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
@@ -110,6 +110,11 @@ static int object_derive_key_hkdf_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, base_key_allowed_mech)) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
@@ -277,6 +282,11 @@ static int object_derive_key_hkdf_bad_attr(CK_FUNCTION_LIST_PTR pfunc)
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, base_key_allowed_mech)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -427,6 +437,11 @@ static int object_derive_key_hkdf(CK_FUNCTION_LIST_PTR pfunc)
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, base_key_allowed_mech)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -568,6 +583,11 @@ static int object_derive_key_perform_op(CK_FUNCTION_LIST_PTR pfunc)
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, base_key_allowed_mech)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -696,6 +716,11 @@ static int object_derive_key_hkdf_step(CK_FUNCTION_LIST_PTR pfunc)
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, base_key_allowed_mech)) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);

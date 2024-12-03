@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "os_mutex.h"
+#include "util_lib.h"
 #include "util_session.h"
 
 /* messagetosign */
@@ -57,6 +58,11 @@ static int sign_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Generate AES secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
 				   ARRAY_SIZE(aes_secretkey_attrs),
@@ -88,25 +94,33 @@ static int sign_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_MECHANISM_INVALID, "C_MessageSignInit"))
 		goto end;
 
-	TEST_OUT("Check CKA_SIGN key flag\n");
 	sign_mech.mechanism = CKM_AES_CMAC_GENERAL;
-	ret = pfunc->C_MessageSignInit(sess, &sign_mech,
-				       aes_hsecretkey_not_permitted);
-	if (CHECK_CK_RV(CKR_KEY_FUNCTION_NOT_PERMITTED, "C_MessageSignInit"))
-		goto end;
+	if (util_lib_is_mech_supported(pfunc, 0, sign_mech.mechanism)) {
+		TEST_OUT("Check CKA_SIGN key flag\n");
+		ret = pfunc->C_MessageSignInit(sess, &sign_mech,
+					       aes_hsecretkey_not_permitted);
+		if (CHECK_CK_RV(CKR_KEY_FUNCTION_NOT_PERMITTED,
+				"C_MessageSignInit"))
+			goto end;
 
-	TEST_OUT("Check bad MAC mechanism parameters\n");
-	sign_mech.pParameter = &mac_params;
-	sign_mech.ulParameterLen = sizeof(mac_params);
-	ret = pfunc->C_MessageSignInit(sess, &sign_mech, aes_hsecretkey);
-	if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_MessageSignInit"))
-		goto end;
+		TEST_OUT("Check bad MAC mechanism parameters\n");
+		sign_mech.pParameter = &mac_params;
+		sign_mech.ulParameterLen = sizeof(mac_params);
+		ret = pfunc->C_MessageSignInit(sess, &sign_mech,
+					       aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
+				"C_MessageSignInit"))
+			goto end;
+	}
 
-	TEST_OUT("Check ignored MAC mechanism parameters\n");
 	sign_mech.mechanism = CKM_AES_CMAC;
-	ret = pfunc->C_MessageSignInit(sess, &sign_mech, aes_hsecretkey);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
-		goto end;
+	if (util_lib_is_mech_supported(pfunc, 0, sign_mech.mechanism)) {
+		TEST_OUT("Check ignored MAC mechanism parameters\n");
+		ret = pfunc->C_MessageSignInit(sess, &sign_mech,
+					       aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
+			goto end;
+	}
 
 	status = TEST_PASS;
 
@@ -159,6 +173,11 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Generate AES secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
 				   ARRAY_SIZE(aes_secretkey_attrs),
@@ -184,31 +203,42 @@ static int verify_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_KEY_HANDLE_INVALID, "C_MessageVerifyInit"))
 		goto end;
 
-	TEST_OUT("Check invalid mechanism\n");
 	verify_mech.mechanism = CKM_AES_KEY_GEN;
-	ret = pfunc->C_MessageVerifyInit(sess, &verify_mech, aes_hsecretkey);
-	if (CHECK_CK_RV(CKR_MECHANISM_INVALID, "C_MessageVerifyInit"))
-		goto end;
+	if (util_lib_is_mech_supported(pfunc, 0, verify_mech.mechanism)) {
+		TEST_OUT("Check invalid mechanism\n");
+		ret = pfunc->C_MessageVerifyInit(sess, &verify_mech,
+						 aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_MECHANISM_INVALID, "C_MessageVerifyInit"))
+			goto end;
+	}
 
-	TEST_OUT("Check CKA_VERIFY key flag\n");
 	verify_mech.mechanism = CKM_AES_CMAC_GENERAL;
-	ret = pfunc->C_MessageVerifyInit(sess, &verify_mech,
-					 aes_hsecretkey_not_permitted);
-	if (CHECK_CK_RV(CKR_KEY_FUNCTION_NOT_PERMITTED, "C_MessageVerifyInit"))
-		goto end;
+	if (util_lib_is_mech_supported(pfunc, 0, verify_mech.mechanism)) {
+		TEST_OUT("Check CKA_VERIFY key flag\n");
+		ret = pfunc->C_MessageVerifyInit(sess, &verify_mech,
+						 aes_hsecretkey_not_permitted);
+		if (CHECK_CK_RV(CKR_KEY_FUNCTION_NOT_PERMITTED,
+				"C_MessageVerifyInit"))
+			goto end;
 
-	TEST_OUT("Check bad MAC mechanism parameters\n");
-	verify_mech.pParameter = &mac_params;
-	verify_mech.ulParameterLen = sizeof(mac_params);
-	ret = pfunc->C_MessageVerifyInit(sess, &verify_mech, aes_hsecretkey);
-	if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_MessageVerifyInit"))
-		goto end;
+		TEST_OUT("Check bad MAC mechanism parameters\n");
+		verify_mech.pParameter = &mac_params;
+		verify_mech.ulParameterLen = sizeof(mac_params);
+		ret = pfunc->C_MessageVerifyInit(sess, &verify_mech,
+						 aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
+				"C_MessageVerifyInit"))
+			goto end;
+	}
 
-	TEST_OUT("Check ignored MAC mechanism parameters\n");
 	verify_mech.mechanism = CKM_AES_CMAC;
-	ret = pfunc->C_MessageVerifyInit(sess, &verify_mech, aes_hsecretkey);
-	if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyInit"))
-		goto end;
+	if (util_lib_is_mech_supported(pfunc, 0, verify_mech.mechanism)) {
+		TEST_OUT("Check ignored MAC mechanism parameters\n");
+		ret = pfunc->C_MessageVerifyInit(sess, &verify_mech,
+						 aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyInit"))
+			goto end;
+	}
 
 	status = TEST_PASS;
 
@@ -448,6 +478,11 @@ static int sign_verify_multiple_init(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Generate AES secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
 				   ARRAY_SIZE(aes_secretkey_attrs),
@@ -545,6 +580,11 @@ static int sign_verify_cmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate AES secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
@@ -678,6 +718,11 @@ static int sign_verify_hmac(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate HMAC secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &hmac_key_mech, hmac_secretkey_attrs,

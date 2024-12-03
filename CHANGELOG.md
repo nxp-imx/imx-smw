@@ -81,6 +81,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Add tests for C_(Get|Set)OperationState functions
 * Fix coverity 2024.9.0 findings.
 * Add tests for `CKO_PROFILE` object.
+* Fix tests to run when TEE subsystem not enabled.
 
 ---
 ### <a id ="rel_4_1"></a></br>**Release 4.1**

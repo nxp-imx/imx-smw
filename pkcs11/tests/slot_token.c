@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <stdlib.h>
@@ -9,6 +9,7 @@
 #include "config.h"
 #include "os_mutex.h"
 #include "local.h"
+#include "util.h"
 
 struct smw_mech_def {
 	CK_MECHANISM_TYPE type;
@@ -26,30 +27,60 @@ struct smw_mech_def {
 	}
 
 static struct smw_mech_def mlist[] = {
-	M(MD5),
-	M(SHA_1),
 	M(SHA224),
 	M(SHA256),
 	M(SHA384),
 	M(SHA512),
-	M(SHA3_224),
-	M(SHA3_256),
-	M(SHA3_384),
-	M(SHA3_512),
 	M(EC_KEY_PAIR_GEN),
 	M(AES_KEY_GEN),
-	M(DES_KEY_GEN),
-	M(DES3_KEY_GEN),
-	M(SM4_KEY_GEN),
-	M(GENERIC_SECRET_KEY_GEN),
-	M(RSA_PKCS_KEY_PAIR_GEN),
-	M(HKDF_DERIVE),
+	M_OPT(GENERIC_SECRET_KEY_GEN),
 	M(ECDSA),
 	M(ECDSA_SHA1),
 	M(ECDSA_SHA224),
 	M(ECDSA_SHA256),
 	M(ECDSA_SHA384),
 	M(ECDSA_SHA512),
+	M(AES_CBC),
+	M(AES_ECB),
+	M(AES_CCM),
+	M(AES_CMAC),
+	M(DES3_CMAC),
+	M_OPT(SHA224_HMAC),
+	M_OPT(SHA256_HMAC),
+	M_OPT(SHA384_HMAC),
+	M_OPT(SHA512_HMAC),
+	M_OPT(SHA224_HMAC_GENERAL),
+	M_OPT(SHA256_HMAC_GENERAL),
+	M_OPT(SHA384_HMAC_GENERAL),
+	M_OPT(SHA512_HMAC_GENERAL),
+};
+
+/*
+ * Array must list mechanisms supported only by SMW TEE subsystem.
+ */
+static struct smw_mech_def mlist_tee[] = {
+	M(MD5),
+	M(SHA_1),
+	M(SHA3_224),
+	M(SHA3_256),
+	M(SHA3_384),
+	M(SHA3_512),
+	M(AES_CTS),
+	M(AES_CTR),
+	M(DES_KEY_GEN),
+	M(DES3_KEY_GEN),
+	M(SM4_KEY_GEN),
+	M(AES_GCM),
+	M(AES_XTS),
+	M(DES_CBC),
+	M(DES_ECB),
+	M(DES3_CBC),
+	M(DES3_ECB),
+	M(SM4_CBC),
+	M(SM4_CTR),
+	M(SM4_ECB),
+	M(HKDF_DERIVE),
+	M(RSA_PKCS_KEY_PAIR_GEN),
 	M(RSA_PKCS),
 	M(SHA1_RSA_PKCS),
 	M(SHA224_RSA_PKCS),
@@ -62,45 +93,80 @@ static struct smw_mech_def mlist[] = {
 	M(SHA256_RSA_PKCS_PSS),
 	M(SHA384_RSA_PKCS_PSS),
 	M(SHA512_RSA_PKCS_PSS),
-	M(AES_CBC),
-	M(AES_CTR),
-	M(AES_CTS),
-	M(AES_ECB),
-	M(AES_XTS),
-	M(DES_CBC),
-	M(DES_ECB),
-	M(DES3_CBC),
-	M(DES3_ECB),
-	M(SM4_CBC),
-	M(SM4_CTR),
-	M(SM4_ECB),
-	M(AES_GCM),
-	M(AES_CCM),
-	M_OPT(CHACHA20_POLY1305),
-	M(AES_CMAC),
-	M(DES3_CMAC),
 	M(AES_CMAC_GENERAL),
 	M(DES3_CMAC_GENERAL),
-	M(MD5_HMAC),
-	M(SHA_1_HMAC),
-	M(SHA224_HMAC),
-	M(SHA256_HMAC),
-	M(SHA384_HMAC),
-	M(SHA512_HMAC),
 	M(SHA3_224_HMAC),
 	M(SHA3_256_HMAC),
 	M(SHA3_384_HMAC),
 	M(SHA3_512_HMAC),
 	M(MD5_HMAC_GENERAL),
 	M(SHA_1_HMAC_GENERAL),
-	M(SHA224_HMAC_GENERAL),
-	M(SHA256_HMAC_GENERAL),
-	M(SHA384_HMAC_GENERAL),
-	M(SHA512_HMAC_GENERAL),
+	M(MD5_HMAC),
+	M(SHA_1_HMAC),
 	M(SHA3_224_HMAC_GENERAL),
 	M(SHA3_256_HMAC_GENERAL),
 	M(SHA3_384_HMAC_GENERAL),
 	M(SHA3_512_HMAC_GENERAL),
+};
+
+/*
+ * Array must list mechanisms supported only by SMW ELE subsystem but i.MX8ULP.
+ */
+static struct smw_mech_def mlist_ele[] = {
+	M(MD5),
+	M(SHA_1),
+	M(SHA3_224),
+	M(SHA3_256),
+	M(SHA3_384),
+	M(SHA3_512),
+	M(AES_CTR),
+	M(AES_GCM),
+	M_OPT(CHACHA20_POLY1305),
+	M(HKDF_DERIVE),
+	M(RSA_PKCS_KEY_PAIR_GEN),
+	M(RSA_PKCS),
+	M(SHA1_RSA_PKCS),
+	M(SHA224_RSA_PKCS),
+	M(SHA256_RSA_PKCS),
+	M(SHA384_RSA_PKCS),
+	M(SHA512_RSA_PKCS),
+	M(RSA_PKCS_PSS),
+	M(SHA1_RSA_PKCS_PSS),
+	M(SHA224_RSA_PKCS_PSS),
+	M(SHA256_RSA_PKCS_PSS),
+	M(SHA384_RSA_PKCS_PSS),
+	M(SHA512_RSA_PKCS_PSS),
+	M(AES_CMAC_GENERAL),
+	M(DES3_CMAC_GENERAL),
+	M(SHA3_224_HMAC),
+	M(SHA3_256_HMAC),
+	M(SHA3_384_HMAC),
+	M(SHA3_512_HMAC),
+	M(MD5_HMAC_GENERAL),
+	M(SHA_1_HMAC_GENERAL),
+	M(MD5_HMAC),
+	M(SHA_1_HMAC),
+	M(SHA3_224_HMAC_GENERAL),
+	M(SHA3_256_HMAC_GENERAL),
+	M(SHA3_384_HMAC_GENERAL),
+	M(SHA3_512_HMAC_GENERAL),
+};
+
+/*
+ * Array must list mechanisms supported only by SMW ELE subsystem i.MX8ULP.
+ */
+static struct smw_mech_def mlist_ele_8ulp[] = {
+	M(AES_CTR),
+	M(AES_CMAC_GENERAL),
+	M(DES3_CMAC_GENERAL),
+};
+
+/*
+ * Array must list mechanisms supported only by SMW SECO subsystem.
+ */
+static struct smw_mech_def mlist_seco[] = {
+	M(SHA_1),
+	M(AES_GCM),
 };
 
 /*
@@ -569,6 +635,42 @@ end:
 	return status;
 }
 
+static CK_BBOOL find_and_set_mechanisms(struct smw_mech_def *list,
+					size_t nb_elem, CK_MECHANISM_TYPE mech)
+{
+	CK_BBOOL found = CK_FALSE;
+	CK_ULONG idx = 0;
+
+	for (; idx < nb_elem; idx++) {
+		if (mech == list[idx].type) {
+			list[idx].found = CK_TRUE;
+			found = CK_TRUE;
+			break;
+		}
+	}
+
+	return found;
+}
+
+static CK_BBOOL check_missing_mechanisms(struct smw_mech_def *list,
+					 const char *name, size_t nb_elem)
+{
+	CK_BBOOL missing = CK_FALSE;
+	CK_ULONG idx = 0;
+
+	for (; idx < nb_elem; idx++) {
+		if (!list[idx].found) {
+			TEST_OUT("%sMech #%lu of %s list (0x%lx) not found\n",
+				 (list[idx].optional) ? "Optional " : "", idx,
+				 name, list[idx].type);
+			if (!list[idx].optional)
+				missing = CK_TRUE;
+		}
+	}
+
+	return missing;
+}
+
 static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status = TEST_FAIL;
@@ -576,13 +678,27 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_ULONG idx = 0;
 	CK_ULONG idx_m = 0;
-	CK_ULONG idx_l = 0;
 	CK_ULONG nb_slots = 0;
 	CK_ULONG nb_mechs = 0;
+	CK_ULONG nb_mechs_exp = ARRAY_SIZE(mlist);
+	CK_ULONG err_mechs = 0;
 	CK_SLOT_ID_PTR slots = NULL_PTR;
 	CK_MECHANISM_TYPE_PTR mechs = NULL_PTR;
+	CK_BBOOL fmech = CK_FALSE;
 
 	SUBTEST_START();
+
+	if (is_tee_subsystem())
+		nb_mechs_exp += ARRAY_SIZE(mlist_tee);
+
+	if (is_ele_subsystem() && !is_8ulp())
+		nb_mechs_exp += ARRAY_SIZE(mlist_ele);
+
+	if (is_ele_subsystem() && is_8ulp())
+		nb_mechs_exp += ARRAY_SIZE(mlist_ele_8ulp);
+
+	if (is_seco_subsystem())
+		nb_mechs_exp += ARRAY_SIZE(mlist_seco);
 
 	TEST_OUT("\nGet number of slots\n");
 	ret = pfunc->C_GetSlotList(CK_FALSE, NULL_PTR, &nb_slots);
@@ -613,7 +729,7 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_GetMechanisms"))
 			goto end;
 
-		if (CHECK_EXPECTED(nb_mechs <= ARRAY_SIZE(mlist),
+		if (CHECK_EXPECTED(nb_mechs <= nb_mechs_exp,
 				   "Slot [%s] Got %lu Expected %lu Mechanism",
 				   get_slot_label(slots[idx]), nb_mechs,
 				   ARRAY_SIZE(mlist)))
@@ -631,33 +747,69 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 
 		for (idx_m = 0; idx_m < nb_mechs; idx_m++) {
-			for (idx_l = 0; idx_l < ARRAY_SIZE(mlist); idx_l++) {
-				if (mechs[idx_m] == mlist[idx_l].type) {
-					mlist[idx_l].found = CK_TRUE;
-					break;
-				}
-			}
-
-			if (idx_l == ARRAY_SIZE(mlist)) {
-				TEST_OUT("Found extra mech (0x%lx) not in list!",
-					 mechs[idx_m]);
-				goto end;
-			}
-		}
-
-		for (idx_l = 0; idx_l < ARRAY_SIZE(mlist); idx_l++) {
-			if (mlist[idx_l].found)
+			if (find_and_set_mechanisms(mlist, ARRAY_SIZE(mlist),
+						    mechs[idx_m]))
 				continue;
 
-			if (!mlist[idx_l].optional) {
-				TEST_OUT("Mech %lu (0x%lx) not found!\n", idx_l,
-					 mlist[idx_l].type);
-				goto end;
-			}
+			if (is_tee_subsystem() &&
+			    find_and_set_mechanisms(mlist_tee,
+						    ARRAY_SIZE(mlist_tee),
+						    mechs[idx_m]))
+				fmech = CK_TRUE;
+
+			if (is_ele_subsystem() && !is_8ulp() &&
+			    find_and_set_mechanisms(mlist_ele,
+						    ARRAY_SIZE(mlist_ele),
+						    mechs[idx_m]))
+				fmech = CK_TRUE;
+
+			if (is_ele_subsystem() && is_8ulp() &&
+			    find_and_set_mechanisms(mlist_ele_8ulp,
+						    ARRAY_SIZE(mlist_ele_8ulp),
+						    mechs[idx_m]))
+				fmech = CK_TRUE;
+
+			if (is_seco_subsystem() &&
+			    find_and_set_mechanisms(mlist_seco,
+						    ARRAY_SIZE(mlist_seco),
+						    mechs[idx_m]))
+				fmech = CK_TRUE;
+
+			if (fmech)
+				continue;
+
+			TEST_OUT("Found extra mech (0x%lx) not in list!\n",
+				 mechs[idx_m]);
+			goto end;
 		}
+
+		/* Parse all mechanism lists to check the missing ones */
+		if (check_missing_mechanisms(mlist, "mlist", ARRAY_SIZE(mlist)))
+			err_mechs++;
+
+		if (is_tee_subsystem() &&
+		    check_missing_mechanisms(mlist_tee, "mlist_tee",
+					     ARRAY_SIZE(mlist_tee)))
+			err_mechs++;
+
+		if (is_ele_subsystem() && !is_8ulp() &&
+		    check_missing_mechanisms(mlist_ele, "mlist_ele",
+					     ARRAY_SIZE(mlist_ele)))
+			err_mechs++;
+
+		if (is_ele_subsystem() && is_8ulp() &&
+		    check_missing_mechanisms(mlist_ele_8ulp, "mlist_ele_8ulp",
+					     ARRAY_SIZE(mlist_ele_8ulp)))
+			err_mechs++;
+
+		if (is_seco_subsystem() &&
+		    check_missing_mechanisms(mlist_seco, "mlist_seco",
+					     ARRAY_SIZE(mlist_seco)))
+			err_mechs++;
 	}
 
-	status = TEST_PASS;
+	if (!err_mechs)
+		status = TEST_PASS;
 end:
 	if (slots)
 		free(slots);
@@ -732,7 +884,7 @@ static int get_mechanismsinfo(CK_FUNCTION_LIST_PTR pfunc)
 			ret = pfunc->C_GetMechanismInfo(slots[idx],
 							mechs[idx_m], &info);
 			if (CHECK_CK_RV(CKR_OK, "C_GetMechanismInfo")) {
-				TEST_OUT("Slot %lu Mechanism 0x%lx info error",
+				TEST_OUT("Slot %lu Mechanism 0x%lx info error\n",
 					 slots[idx], mechs[idx_m]);
 				goto end;
 			}

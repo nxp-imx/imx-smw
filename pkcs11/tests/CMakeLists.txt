@@ -43,6 +43,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     rt
     ${CMAKE_THREAD_LIBS_INIT})
 
+# If TEE subsystem defined, include tests
+if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
+   DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TA_dev_kit)
+    set(TEE_TESTS_ENABLED ON)
+endif()
+
 # If SECO subsystem defined, include tests
 if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco)
     set(SECO_TESTS_ENABLED ON)

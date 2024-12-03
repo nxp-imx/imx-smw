@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <stdlib.h>
@@ -9,13 +9,15 @@
 #include <asn1_ec_curve.h>
 
 #include "os_mutex.h"
+#include "util.h"
 #include "util_session.h"
 
-#define NB_MAX_KEY 8
+#define NB_MAX_KEYS_HDL 9
 
 static int create_ec_key_public(CK_FUNCTION_LIST_PTR pfunc,
 				CK_SESSION_HANDLE_PTR sess, CK_BBOOL token,
-				CK_OBJECT_HANDLE_PTR hkey)
+				CK_OBJECT_HANDLE_PTR hkey,
+				CK_ULONG *nb_key_created)
 {
 	int status = TEST_FAIL;
 
@@ -39,6 +41,8 @@ static int create_ec_key_public(CK_FUNCTION_LIST_PTR pfunc,
 	};
 
 	SUBTEST_START();
+
+	*nb_key_created = 0;
 
 	/* Set the CKA_EC_POINT size function of the security size */
 	if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(192), 2, &ec_point_size) ||
@@ -65,6 +69,7 @@ static int create_ec_key_public(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 	TEST_OUT("Key public created by curve oid #%lu\n", *hkey);
 
+	*nb_key_created = 1;
 	status = TEST_PASS;
 end:
 	if (keyTemplate[2].pValue)
@@ -76,7 +81,8 @@ end:
 
 static int create_ec_key_private(CK_FUNCTION_LIST_PTR pfunc,
 				 CK_SESSION_HANDLE_PTR sess, CK_BBOOL token,
-				 CK_OBJECT_HANDLE_PTR hkey)
+				 CK_OBJECT_HANDLE_PTR hkey,
+				 CK_ULONG *nb_key_created)
 {
 	int status = TEST_FAIL;
 
@@ -102,6 +108,8 @@ static int create_ec_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	};
 
 	SUBTEST_START();
+
+	*nb_key_created = 0;
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(*sess, CKU_USER, NULL_PTR, 0);
@@ -137,6 +145,7 @@ static int create_ec_key_private(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 	TEST_OUT("Key private created by curve oid #%lu\n", *hkey);
 
+	*nb_key_created = 1;
 	status = TEST_PASS;
 end:
 	TEST_OUT("Logout User");
@@ -153,7 +162,8 @@ end:
 
 static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 			       CK_SESSION_HANDLE_PTR sess, CK_BBOOL token,
-			       CK_OBJECT_HANDLE_PTR hkeys)
+			       CK_OBJECT_HANDLE_PTR hkeys,
+			       CK_ULONG *nb_key_created)
 {
 	int status = TEST_FAIL;
 
@@ -170,9 +180,7 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
 	};
-	CK_ATTRIBUTE_PTR privkey_attrs = NULL_PTR;
-	CK_ULONG nb_privkey_attrs = 0;
-	CK_ATTRIBUTE privkey_token[] = {
+	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_SIGN, &btrue, sizeof(btrue) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
@@ -181,10 +189,7 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 
 	SUBTEST_START();
 
-	if (token) {
-		privkey_attrs = privkey_token;
-		nb_privkey_attrs = ARRAY_SIZE(privkey_token);
-	}
+	*nb_key_created = 0;
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(*sess, CKU_USER, NULL_PTR, 0);
@@ -192,13 +197,14 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Generate %sKeypair by curve oid\n", token ? "Token " : "");
-	if (CHECK_EXPECTED(util_to_asn1_oid(&pubkey_attrs[0], prime192v1),
+	if (CHECK_EXPECTED(util_to_asn1_oid(&pubkey_attrs[0], prime256v1),
 			   "ASN1 Conversion"))
 		goto end;
 
 	ret = pfunc->C_GenerateKeyPair(*sess, &genmech, pubkey_attrs,
 				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
-				       nb_privkey_attrs, &hpubkey, &hprivkey);
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
 	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
 		goto end;
 
@@ -208,6 +214,7 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	hkeys[0] = hpubkey;
 	hkeys[1] = hprivkey;
 
+	*nb_key_created = 2;
 	status = TEST_PASS;
 end:
 	TEST_OUT("Logout User");
@@ -224,7 +231,8 @@ end:
 
 static int create_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 			     CK_SESSION_HANDLE_PTR sess, CK_BBOOL token,
-			     CK_OBJECT_HANDLE_PTR hkey)
+			     CK_OBJECT_HANDLE_PTR hkey,
+			     CK_ULONG *nb_key_created)
 {
 	int status = TEST_FAIL;
 
@@ -234,15 +242,20 @@ static int create_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 	CK_BYTE key[32] = { 0 };
 	CK_BBOOL btrue = CK_TRUE;
 
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
 		{ CKA_VALUE, &key, sizeof(key) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	SUBTEST_START();
+
+	*nb_key_created = 0;
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(*sess, CKU_USER, NULL_PTR, 0);
@@ -257,6 +270,7 @@ static int create_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 
 	TEST_OUT("Key secret created #%lu\n", *hkey);
 
+	*nb_key_created = 1;
 	status = TEST_PASS;
 end:
 	TEST_OUT("Logout User");
@@ -270,7 +284,8 @@ end:
 
 static int generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 			       CK_SESSION_HANDLE_PTR sess, CK_BBOOL token,
-			       CK_OBJECT_HANDLE_PTR hkey)
+			       CK_OBJECT_HANDLE_PTR hkey,
+			       CK_ULONG *nb_key_created)
 {
 	int status = TEST_FAIL;
 
@@ -290,6 +305,8 @@ static int generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 
 	SUBTEST_START();
 
+	*nb_key_created = 0;
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(*sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -304,6 +321,7 @@ static int generate_cipher_key(CK_FUNCTION_LIST_PTR pfunc,
 
 	TEST_OUT("Key generated #%lu\n", *hkey);
 
+	*nb_key_created = 1;
 	status = TEST_PASS;
 end:
 	TEST_OUT("Logout User");
@@ -319,19 +337,19 @@ static int is_key_expected(CK_OBJECT_HANDLE_PTR hkey, CK_OBJECT_HANDLE_PTR hexp,
 			   size_t nb_exp)
 {
 	for (size_t idx = 0; idx < nb_exp; idx++)
-		if (*hkey == hexp[idx])
+		if (hexp[idx] != CK_INVALID_HANDLE && *hkey == hexp[idx])
 			return 1;
 
 	return 0;
 }
 
 static int find_all_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE_PTR sess,
-			 CK_OBJECT_HANDLE_PTR hkeys)
+			 CK_OBJECT_HANDLE_PTR hkeys, CK_ULONG keys_counter)
 {
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
-	CK_OBJECT_HANDLE hkeys_match[NB_MAX_KEY + 1] = { 0 };
+	CK_OBJECT_HANDLE hkeys_match[NB_MAX_KEYS_HDL] = { 0 };
 	CK_ULONG nb_match = 0;
 	CK_ULONG nb_keys_match = 0;
 	CK_ULONG nb_max_obj = 0;
@@ -387,9 +405,9 @@ static int find_all_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE_PTR sess,
 			goto end;
 	}
 
-	if (CHECK_EXPECTED(nb_keys_match == NB_MAX_KEY,
-			   "Got %lu but expected %u objects", nb_keys_match,
-			   NB_MAX_KEY))
+	if (CHECK_EXPECTED(nb_keys_match == keys_counter,
+			   "Got %lu but expected %lu objects", nb_keys_match,
+			   keys_counter))
 		goto end;
 
 	/*
@@ -399,8 +417,8 @@ static int find_all_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE_PTR sess,
 	 * matching.
 	 */
 	status = TEST_PASS;
-	for (idx = 0; idx < NB_MAX_KEY; idx++) {
-		match = is_key_expected(&hkeys_match[idx], hkeys, NB_MAX_KEY);
+	for (idx = 0; idx < keys_counter; idx++) {
+		match = is_key_expected(&hkeys_match[idx], hkeys, keys_counter);
 		if (CHECK_EXPECTED(match, "Key #%lu not expected",
 				   hkeys_match[idx]))
 			status = TEST_FAIL;
@@ -418,12 +436,12 @@ end:
 
 static int find_while_active(CK_FUNCTION_LIST_PTR pfunc,
 			     CK_SESSION_HANDLE_PTR sess,
-			     CK_OBJECT_HANDLE_PTR hkeys)
+			     CK_OBJECT_HANDLE_PTR hkeys, CK_ULONG keys_counter)
 {
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
-	CK_OBJECT_HANDLE hkeys_match[NB_MAX_KEY + 1] = { 0 };
+	CK_OBJECT_HANDLE hkeys_match[NB_MAX_KEYS_HDL] = { 0 };
 	CK_ULONG nb_match = 0;
 	CK_ULONG nb_keys_match = 0;
 	CK_ULONG idx = 0;
@@ -481,9 +499,9 @@ static int find_while_active(CK_FUNCTION_LIST_PTR pfunc,
 			goto end;
 	}
 
-	if (CHECK_EXPECTED(nb_keys_match == NB_MAX_KEY,
-			   "Got %lu but expected %u objects", nb_keys_match,
-			   NB_MAX_KEY))
+	if (CHECK_EXPECTED(nb_keys_match == keys_counter,
+			   "Got %lu but expected %lu objects", nb_keys_match,
+			   keys_counter))
 		goto end;
 
 	/*
@@ -493,8 +511,8 @@ static int find_while_active(CK_FUNCTION_LIST_PTR pfunc,
 	 * matching.
 	 */
 	status = TEST_PASS;
-	for (idx = 0; idx < NB_MAX_KEY; idx++) {
-		match = is_key_expected(&hkeys_match[idx], hkeys, NB_MAX_KEY);
+	for (idx = 0; idx < keys_counter; idx++) {
+		match = is_key_expected(&hkeys_match[idx], hkeys, keys_counter);
 		if (CHECK_EXPECTED(match, "Key #%lu not expected",
 				   hkeys_match[idx]))
 			status = TEST_FAIL;
@@ -513,12 +531,13 @@ end:
 static int find_cipher_aes_keys(CK_FUNCTION_LIST_PTR pfunc,
 				CK_SESSION_HANDLE_PTR sess,
 				CK_OBJECT_HANDLE_PTR hkeys,
-				CK_ULONG nb_keys_exp, CK_BBOOL token)
+				CK_ULONG nb_keys_exp, CK_BBOOL token,
+				CK_ULONG keys_counter)
 {
 	int status = TEST_FAIL;
 
 	CK_RV ret = CKR_OK;
-	CK_OBJECT_HANDLE hkeys_match[NB_MAX_KEY + 1] = { 0 };
+	CK_OBJECT_HANDLE hkeys_match[NB_MAX_KEYS_HDL] = { 0 };
 	CK_ULONG nb_match = 0;
 	CK_ULONG nb_keys_match = 0;
 	CK_ULONG idx = 0;
@@ -572,7 +591,7 @@ static int find_cipher_aes_keys(CK_FUNCTION_LIST_PTR pfunc,
 	 */
 	status = TEST_PASS;
 	for (idx = 0; idx < nb_keys_match; idx++) {
-		match = is_key_expected(&hkeys_match[idx], hkeys, NB_MAX_KEY);
+		match = is_key_expected(&hkeys_match[idx], hkeys, keys_counter);
 		if (CHECK_EXPECTED(match, "Key #%lu not expected",
 				   hkeys_match[idx]))
 			status = TEST_FAIL;
@@ -596,9 +615,15 @@ void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc)
 	unsigned int i = 0;
 
 	CK_RV ret = CKR_OK;
-	CK_OBJECT_HANDLE hkeys[NB_MAX_KEY] = { 0 };
+	CK_OBJECT_HANDLE hkeys[NB_MAX_KEYS_HDL] = { 0 };
 	CK_SESSION_HANDLE sess = 0;
 	CK_C_INITIALIZE_ARGS init = { 0 };
+	CK_ULONG keys_counter = 0;
+	CK_ULONG idx_aes_key_not_token = 0;
+	CK_ULONG idx_aes_key_token = 0;
+	CK_ULONG nb_key_created = 0;
+	CK_ULONG nb_aes_not_token_key = 0;
+	CK_ULONG nb_aes_token_key = 0;
 
 	init.CreateMutex = mutex_create;
 	init.DestroyMutex = mutex_destroy;
@@ -614,41 +639,83 @@ void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
-	if (create_ec_key_public(pfunc, &sess, CK_FALSE, &hkeys[0]) ==
-	    TEST_FAIL)
+	if (create_ec_key_public(pfunc, &sess, CK_FALSE, &hkeys[keys_counter],
+				 &nb_key_created) == TEST_FAIL)
+		goto end;
+	keys_counter += nb_key_created;
+
+	if (create_ec_key_private(pfunc, &sess, CK_FALSE, &hkeys[keys_counter],
+				  &nb_key_created) == TEST_FAIL)
+		goto end;
+	keys_counter += nb_key_created;
+
+	if (generate_ec_keypair(pfunc, &sess, CK_FALSE, &hkeys[keys_counter],
+				&nb_key_created) == TEST_FAIL)
+		goto end;
+	keys_counter += nb_key_created;
+
+	if (create_cipher_key(pfunc, &sess, CK_FALSE, &hkeys[keys_counter],
+			      &nb_key_created) == TEST_FAIL)
 		goto end;
 
-	if (create_ec_key_private(pfunc, &sess, CK_FALSE, &hkeys[1]) ==
-	    TEST_FAIL)
+	if (nb_key_created) {
+		idx_aes_key_not_token = keys_counter;
+		nb_aes_not_token_key = nb_key_created;
+	}
+
+	keys_counter += nb_key_created;
+
+	if (generate_cipher_key(pfunc, &sess, CK_FALSE, &hkeys[keys_counter],
+				&nb_key_created) == TEST_FAIL)
 		goto end;
 
-	if (generate_ec_keypair(pfunc, &sess, CK_FALSE, &hkeys[2]) == TEST_FAIL)
+	if (nb_key_created) {
+		if (!idx_aes_key_not_token)
+			idx_aes_key_not_token = keys_counter;
+
+		nb_aes_not_token_key += nb_key_created;
+	}
+
+	keys_counter += nb_key_created;
+
+	if (create_cipher_key(pfunc, &sess, CK_TRUE, &hkeys[keys_counter],
+			      &nb_key_created) == TEST_FAIL)
 		goto end;
 
-	if (create_cipher_key(pfunc, &sess, CK_FALSE, &hkeys[4]) == TEST_FAIL)
+	if (nb_key_created) {
+		idx_aes_key_token = keys_counter;
+		nb_aes_token_key = nb_key_created;
+	}
+
+	keys_counter += nb_key_created;
+
+	if (generate_cipher_key(pfunc, &sess, CK_TRUE, &hkeys[keys_counter],
+				&nb_key_created) == TEST_FAIL)
 		goto end;
 
-	if (generate_cipher_key(pfunc, &sess, CK_FALSE, &hkeys[5]) == TEST_FAIL)
+	if (nb_key_created) {
+		if (!idx_aes_key_token)
+			idx_aes_key_token = keys_counter;
+
+		nb_aes_token_key += nb_key_created;
+	}
+
+	keys_counter += nb_key_created;
+
+	if (find_all_keys(pfunc, &sess, hkeys, keys_counter) == TEST_FAIL)
 		goto end;
 
-	if (create_cipher_key(pfunc, &sess, CK_TRUE, &hkeys[6]) == TEST_FAIL)
+	if (find_cipher_aes_keys(pfunc, &sess, &hkeys[idx_aes_key_not_token],
+				 nb_aes_not_token_key, CK_FALSE,
+				 keys_counter) == TEST_FAIL)
 		goto end;
 
-	if (generate_cipher_key(pfunc, &sess, CK_TRUE, &hkeys[7]) == TEST_FAIL)
+	if (find_cipher_aes_keys(pfunc, &sess, &hkeys[idx_aes_key_token],
+				 nb_aes_token_key, CK_TRUE,
+				 keys_counter) == TEST_FAIL)
 		goto end;
 
-	if (find_all_keys(pfunc, &sess, hkeys) == TEST_FAIL)
-		goto end;
-
-	if (find_cipher_aes_keys(pfunc, &sess, &hkeys[4], 2, CK_FALSE) ==
-	    TEST_FAIL)
-		goto end;
-
-	if (find_cipher_aes_keys(pfunc, &sess, &hkeys[6], 2, CK_TRUE) ==
-	    TEST_FAIL)
-		goto end;
-
-	status = find_while_active(pfunc, &sess, hkeys);
+	status = find_while_active(pfunc, &sess, hkeys, keys_counter);
 
 end:
 	TEST_OUT("Login to R/W Session as User\n");
@@ -659,7 +726,7 @@ end:
 		goto error;
 	}
 
-	for (; i < NB_MAX_KEY; i++) {
+	for (; i < NB_MAX_KEYS_HDL; i++) {
 		if (hkeys[i] != CK_INVALID_HANDLE)
 			(void)((CK_FUNCTION_LIST_PTR)pfunc)
 				->C_DestroyObject(sess, hkeys[i]);

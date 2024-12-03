@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <errno.h>
@@ -221,6 +221,15 @@ bool is_seco_subsystem(void)
 bool is_ele_subsystem(void)
 {
 #if ELE_TESTS_ENABLED
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool is_tee_subsystem(void)
+{
+#if TEE_TESTS_ENABLED
 	return true;
 #else
 	return false;

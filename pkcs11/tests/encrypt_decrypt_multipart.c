@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "os_mutex.h"
+#include "util_lib.h"
 #include "util_session.h"
 #include "util.h"
 
@@ -801,6 +802,9 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_PTR pfunc)
 		encrypt_decrypt_mech.mechanism = aes_mech_type[i];
 		key_allowed_mech[0] = aes_mech_type[i];
 
+		if (!util_lib_is_mech_supported(pfunc, 0, aes_mech_type[i]))
+			continue;
+
 		if (encrypt_decrypt_mech.mechanism == CKM_AES_XTS) {
 			TEST_OUT("Createobject AES XTS secret Key\n");
 			ret = pfunc->C_CreateObject(sess, xts_key_attrs,
@@ -945,7 +949,7 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE des_hsecretkey = 0;
 
 	CK_MECHANISM des_key_mech = { .mechanism = CKM_DES_KEY_GEN };
-	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_DES_ECB };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
@@ -970,13 +974,6 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	TEST_OUT("Generate DES secret Key\n");
-	ret = pfunc->C_GenerateKey(sess, &des_key_mech, des_secretkey_attrs,
-				   ARRAY_SIZE(des_secretkey_attrs),
-				   &des_hsecretkey);
-	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
-		goto end;
-
 	encrypted_data = (CK_BYTE_PTR)calloc(data_len, sizeof(CK_BYTE));
 	if (CHECK_EXPECTED(encrypted_data, "Allocation error"))
 		goto end;
@@ -993,6 +990,18 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_PTR pfunc)
 			 des_mech_type[i]);
 
 		encrypt_decrypt_mech.mechanism = des_mech_type[i];
+		key_allowed_mech[0] = des_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, des_mech_type[i]))
+			continue;
+
+		TEST_OUT("Generate DES secret Key\n");
+		ret = pfunc->C_GenerateKey(sess, &des_key_mech,
+					   des_secretkey_attrs,
+					   ARRAY_SIZE(des_secretkey_attrs),
+					   &des_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+			goto end;
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des;
@@ -1052,6 +1061,12 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, des_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		des_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;
@@ -1093,11 +1108,11 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE des3_hsecretkey = 0;
 
 	CK_MECHANISM des3_key_mech = { .mechanism = CKM_DES3_KEY_GEN };
-	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_DES3_ECB };
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
-	CK_ATTRIBUTE des_secretkey_attrs[] = {
+	CK_ATTRIBUTE des3_secretkey_attrs[] = {
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
@@ -1118,13 +1133,6 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	TEST_OUT("Generate DES secret Key\n");
-	ret = pfunc->C_GenerateKey(sess, &des3_key_mech, des_secretkey_attrs,
-				   ARRAY_SIZE(des_secretkey_attrs),
-				   &des3_hsecretkey);
-	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
-		goto end;
-
 	encrypted_data = (CK_BYTE_PTR)calloc(data_len, sizeof(CK_BYTE));
 	if (CHECK_EXPECTED(encrypted_data, "Allocation error"))
 		goto end;
@@ -1138,6 +1146,18 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_PTR pfunc)
 			 des3_mech_type[i]);
 
 		encrypt_decrypt_mech.mechanism = des3_mech_type[i];
+		key_allowed_mech[0] = des3_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, des3_mech_type[i]))
+			continue;
+
+		TEST_OUT("Generate 3DES secret Key\n");
+		ret = pfunc->C_GenerateKey(sess, &des3_key_mech,
+					   des3_secretkey_attrs,
+					   ARRAY_SIZE(des3_secretkey_attrs),
+					   &des3_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+			goto end;
 
 		if (encrypt_decrypt_mech.mechanism == CKM_DES3_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_des3;
@@ -1196,6 +1216,12 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, des3_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		des3_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;
@@ -1250,11 +1276,14 @@ static int encrypt_decrypt_multipart_sm4(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
 	CK_BBOOL ck_true = CK_TRUE;
 
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SM4_CBC };
 	CK_ATTRIBUTE sm4_secretkey_attrs[] = {
 		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
 		{ CKA_ENCRYPT, &ck_true, sizeof(CK_BBOOL) },
 		{ CKA_DECRYPT, &ck_true, sizeof(CK_BBOOL) },
-		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) }
+		{ CKA_VALUE_LEN, &key_length, sizeof(CK_ULONG) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
 	};
 
 	unsigned int update_loop_count = 2;
@@ -1270,13 +1299,6 @@ static int encrypt_decrypt_multipart_sm4(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	TEST_OUT("Generate SM4 secret Key\n");
-	ret = pfunc->C_GenerateKey(sess, &sm4_key_mech, sm4_secretkey_attrs,
-				   ARRAY_SIZE(sm4_secretkey_attrs),
-				   &sm4_hsecretkey);
-	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
-		goto end;
-
 	encrypted_data = (CK_BYTE_PTR)calloc(data_len, sizeof(CK_BYTE));
 	if (CHECK_EXPECTED(encrypted_data, "Allocation error"))
 		goto end;
@@ -1287,6 +1309,18 @@ static int encrypt_decrypt_multipart_sm4(CK_FUNCTION_LIST_PTR pfunc)
 
 	for (; i < ARRAY_SIZE(sm4_mech_type); i++) {
 		encrypt_decrypt_mech.mechanism = sm4_mech_type[i];
+		key_allowed_mech[0] = sm4_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, sm4_mech_type[i]))
+			continue;
+
+		TEST_OUT("Generate SM4 secret Key\n");
+		ret = pfunc->C_GenerateKey(sess, &sm4_key_mech,
+					   sm4_secretkey_attrs,
+					   ARRAY_SIZE(sm4_secretkey_attrs),
+					   &sm4_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+			goto end;
 
 		if (encrypt_decrypt_mech.mechanism == CKM_SM4_CBC) {
 			encrypt_decrypt_mech.pParameter = iv_sm4;
@@ -1352,6 +1386,12 @@ static int encrypt_decrypt_multipart_sm4(CK_FUNCTION_LIST_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, sm4_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		sm4_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;

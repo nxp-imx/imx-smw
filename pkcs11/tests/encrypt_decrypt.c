@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "os_mutex.h"
+#include "util_lib.h"
 #include "util_session.h"
-
 #include "util.h"
 
 static CK_BYTE data[] =
@@ -48,6 +48,11 @@ static int encrypt_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Generate AES secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
 				   ARRAY_SIZE(aes_secretkey_attrs),
@@ -65,19 +70,23 @@ static int encrypt_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_KEY_HANDLE_INVALID, "C_EncryptInit"))
 		goto end;
 
-	TEST_OUT("Check invalid mechanism\n");
-	encrypt_mech.mechanism = CKM_ECDSA;
-	ret = pfunc->C_EncryptInit(sess, &encrypt_mech, aes_hsecretkey);
-	if (CHECK_CK_RV(CKR_MECHANISM_INVALID, "C_EncryptInit"))
-		goto end;
+	if (util_lib_is_mech_supported(pfunc, 0, CKM_ECDSA)) {
+		TEST_OUT("Check invalid mechanism\n");
+		encrypt_mech.mechanism = CKM_ECDSA;
+		ret = pfunc->C_EncryptInit(sess, &encrypt_mech, aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_MECHANISM_INVALID, "C_EncryptInit"))
+			goto end;
+	}
 
-	TEST_OUT("Wrong CKM_AES_CTR mechanism parameters:\n");
-	encrypt_mech.mechanism = CKM_AES_CTR;
-	encrypt_mech.pParameter = NULL_PTR;
-	encrypt_mech.ulParameterLen = 0;
-	ret = pfunc->C_EncryptInit(sess, &encrypt_mech, aes_hsecretkey);
-	if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_EncryptInit"))
-		goto end;
+	if (util_lib_is_mech_supported(pfunc, 0, CKM_AES_CTR)) {
+		TEST_OUT("Wrong CKM_AES_CTR mechanism parameters:\n");
+		encrypt_mech.mechanism = CKM_AES_CTR;
+		encrypt_mech.pParameter = NULL_PTR;
+		encrypt_mech.ulParameterLen = 0;
+		ret = pfunc->C_EncryptInit(sess, &encrypt_mech, aes_hsecretkey);
+		if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_EncryptInit"))
+			goto end;
+	}
 
 	status = TEST_PASS;
 
@@ -121,6 +130,11 @@ static int decrypt_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate AES secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &key_gen_mech, secretkey_attrs,
@@ -199,6 +213,11 @@ static int encrypt_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate AES secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
@@ -290,6 +309,11 @@ static int decrypt_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate AES secret Key\n");
 	ret = pfunc->C_GenerateKey(sess, &aes_key_mech, aes_secretkey_attrs,
@@ -444,6 +468,11 @@ static int encrypt_decrypt_multiple_init(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	ret = pfunc->C_GenerateKey(sess, &key_mech, secretkey_attrs,
 				   ARRAY_SIZE(secretkey_attrs),
 				   &aes_hsecretkey);
@@ -597,6 +626,9 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 		encrypt_decrypt_mech.ulParameterLen = 0;
 		encrypt_decrypt_mech.mechanism = aes_mech_type[i];
 		key_allowed_mech[0] = aes_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, aes_mech_type[i]))
+			continue;
 
 		if (encrypt_decrypt_mech.mechanism == CKM_AES_XTS) {
 			TEST_OUT("Createobject AES XTS secret Key\n");
@@ -772,6 +804,9 @@ static int encrypt_decrypt_des(CK_FUNCTION_LIST_PTR pfunc)
 			 des_mech_type[i]);
 		encrypt_decrypt_mech.mechanism = des_mech_type[i];
 
+		if (!util_lib_is_mech_supported(pfunc, 0, des_mech_type[i]))
+			continue;
+
 		TEST_OUT("Generate DES secret Key\n");
 		key_allowed_mech[0] = des_mech_type[i];
 		ret = pfunc->C_GenerateKey(sess, &des_key_mech,
@@ -861,6 +896,7 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_PTR pfunc)
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
 	CK_MECHANISM encrypt_decrypt_mech = { 0 };
+
 	CK_MECHANISM_TYPE des3_mech_type[] = { CKM_DES3_CBC, CKM_DES3_ECB };
 
 	static CK_BYTE iv_des3[] = { 0x05, 0x08, 0x03, 0x04,
@@ -909,6 +945,9 @@ static int encrypt_decrypt_des3(CK_FUNCTION_LIST_PTR pfunc)
 		TEST_OUT("3DES Encryption mechanism = 0x%lx\n",
 			 des3_mech_type[i]);
 		encrypt_decrypt_mech.mechanism = des3_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, des3_mech_type[i]))
+			continue;
 
 		TEST_OUT("Generate 3DES secret Key\n");
 		key_allowed_mech[0] = des3_mech_type[i];
@@ -1066,6 +1105,10 @@ static int encrypt_decrypt_sm4(CK_FUNCTION_LIST_PTR pfunc)
 		encrypt_decrypt_mech.pParameter = NULL_PTR;
 		encrypt_decrypt_mech.ulParameterLen = 0;
 		encrypt_decrypt_mech.mechanism = sm4_mech_type[i];
+		key_allowed_mech[0] = sm4_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, sm4_mech_type[i]))
+			continue;
 
 		TEST_OUT("Generate SM4 secret Key\n");
 		ret = pfunc->C_GenerateKey(sess, &sm4_key_mech, sm4_key_attrs,
@@ -1130,6 +1173,12 @@ static int encrypt_decrypt_sm4(CK_FUNCTION_LIST_PTR pfunc)
 			TEST_OUT("Decrypted data and plaintext are not same\n");
 			goto end;
 		}
+
+		ret = pfunc->C_DestroyObject(sess, sm4_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+
+		sm4_hsecretkey = 0;
 	}
 
 	status = TEST_PASS;
@@ -1190,6 +1239,11 @@ static int encrypt_decrypt_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Generate AES secret key with CKA_ENCRYPT attribute set\n");
 	ret = pfunc->C_GenerateKey(sess, &key_mech, secretkey_attrs,

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "os_mutex.h"
-
+#include "util_lib.h"
 #include "util_session.h"
 
 enum mechanism_id {
@@ -684,6 +684,10 @@ static int digest_all_mechanisms(CK_FUNCTION_LIST_PTR pfunc, bool final)
 	for (; i < MECH_ID_NB; i++) {
 		TEST_OUT("Check digest %s\n", DIGEST_NAME(i));
 		digmech.mechanism = DIGEST_MECHANISM(i);
+
+		if (!util_lib_is_mech_supported(pfunc, 0, digmech.mechanism))
+			continue;
+
 		ret = pfunc->C_DigestInit(sess, &digmech);
 		if (CHECK_CK_RV(CKR_OK, "C_DigestInit"))
 			goto end;

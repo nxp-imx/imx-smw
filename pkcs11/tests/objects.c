@@ -13,8 +13,8 @@
 #include <smw/object.h>
 
 #include "os_mutex.h"
+#include "util_lib.h"
 #include "util_session.h"
-
 #include "util.h"
 
 /* messagetosign */
@@ -104,6 +104,9 @@ static int encrypt_decrypt_aes(CK_FUNCTION_LIST_PTR pfunc)
 		encrypt_decrypt_mech.pParameter = NULL_PTR;
 		encrypt_decrypt_mech.ulParameterLen = 0;
 		encrypt_decrypt_mech.mechanism = aes_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, aes_mech_type[i]))
+			continue;
 
 		TEST_OUT("Generate AES secret Key\n");
 		/* Set key attributes */
@@ -535,6 +538,11 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, sign_verify_mech.mechanism)) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);

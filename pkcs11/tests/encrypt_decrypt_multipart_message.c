@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "os_mutex.h"
+#include "util_lib.h"
 #include "util_session.h"
 #include "util.h"
 
@@ -1226,6 +1227,11 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	    TEST_FAIL)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, aes_mech_type[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -1465,6 +1471,9 @@ static int encrypt_decrypt_multipart_aes(CK_FUNCTION_LIST_3_0_PTR pfunc)
 		enc_dec_mech.ulParameterLen = 0;
 		enc_dec_mech.mechanism = aes_mech_type[i];
 
+		if (!util_lib_is_mech_supported(pfunc, 0, aes_mech_type[i]))
+			continue;
+
 		if (enc_dec_mech.mechanism == CKM_AES_XTS) {
 			TEST_OUT("Createobject AES secret Key\n");
 
@@ -1698,6 +1707,9 @@ static int encrypt_decrypt_multipart_des(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 		encrypt_decrypt_mech.mechanism = des_mech_type[i];
 
+		if (!util_lib_is_mech_supported(pfunc, 0, des_mech_type[i]))
+			continue;
+
 		TEST_OUT("Generate DES secret Key\n");
 
 		des_secretkey_attrs[3].pValue = &des_mech_type[i];
@@ -1865,6 +1877,9 @@ static int encrypt_decrypt_multipart_des3(CK_FUNCTION_LIST_3_0_PTR pfunc)
 			 des3_mech_type[i]);
 
 		encrypt_decrypt_mech.mechanism = des3_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, des3_mech_type[i]))
+			continue;
 
 		TEST_OUT("Generate DES secret Key\n");
 

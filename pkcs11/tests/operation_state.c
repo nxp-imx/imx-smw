@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "os_mutex.h"
+#include "util_lib.h"
 #include "util_session.h"
-
 #include "util.h"
 
 static CK_BYTE data1[] =
@@ -819,6 +819,9 @@ static int operation_state_cipher_des(CK_FUNCTION_LIST_PTR pfunc)
 		encrypt_decrypt_mech.mechanism = des_mech_type[i];
 		key_allowed_mech[0] = des_mech_type[i];
 
+		if (!util_lib_is_mech_supported(pfunc, 0, des_mech_type[i]))
+			continue;
+
 		ret = pfunc->C_GenerateKey(session, &des_key_mech,
 					   des_key_attrs,
 					   ARRAY_SIZE(des_key_attrs),
@@ -904,6 +907,9 @@ static int operation_state_cipher_des3(CK_FUNCTION_LIST_PTR pfunc)
 		encrypt_decrypt_mech.ulParameterLen = 0;
 		encrypt_decrypt_mech.mechanism = des_mech_type[i];
 		key_allowed_mech[0] = des_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, des_mech_type[i]))
+			continue;
 
 		ret = pfunc->C_GenerateKey(session, &des3_key_mech,
 					   des3_key_attrs,
@@ -999,6 +1005,9 @@ static int operation_state_cipher_sm4(CK_FUNCTION_LIST_PTR pfunc)
 		encrypt_decrypt_mech.ulParameterLen = 0;
 		encrypt_decrypt_mech.mechanism = sm4_mech_type[i];
 		key_allowed_mech[0] = sm4_mech_type[i];
+
+		if (!util_lib_is_mech_supported(pfunc, 0, sm4_mech_type[i]))
+			continue;
 
 		ret = pfunc->C_GenerateKey(session, &sm4_key_mech,
 					   sm4_key_attrs,
@@ -1133,6 +1142,11 @@ static int operation_state_sign_verify_rsa_pss(CK_FUNCTION_LIST_PTR pfunc)
 	if (util_open_rw_session(pfunc, 0, &session) != TEST_PASS)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_mech.mechanism)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(session, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -1189,6 +1203,11 @@ static int operation_state_sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 
 	if (util_open_rw_session(pfunc, 0, &session) != TEST_PASS)
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_mech.mechanism)) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(session, CKU_USER, NULL_PTR, 0);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <stdlib.h>
@@ -10,6 +10,7 @@
 #include <smw/object.h>
 
 #include "os_mutex.h"
+#include "util_lib.h"
 #include "util_session.h"
 #include "util.h"
 
@@ -104,6 +105,11 @@ static int object_rsa_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Create RSA %sKey Public\n", token ? "Token " : "");
 	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
 				    &hkey);
@@ -163,6 +169,11 @@ static int object_rsa_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
@@ -219,9 +230,7 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		  sizeof(rsa_pub_exp) },
 	};
 	CK_ULONG nb_pubkey_attrs = 0;
-	CK_ATTRIBUTE_PTR privkey_attrs = NULL_PTR;
-	CK_ULONG nb_privkey_attrs = 0;
-	CK_ATTRIBUTE privkey_token[] = {
+	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_SIGN, &btrue, sizeof(btrue) },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
@@ -232,11 +241,13 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 
 	modulus_bits = sizeof(rsa_modulus) * 8;
 
-	privkey_attrs = privkey_token;
-	nb_privkey_attrs = ARRAY_SIZE(privkey_token);
-
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, genmech.mechanism)) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
@@ -255,7 +266,8 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 
 	ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
 				       nb_pubkey_attrs, privkey_attrs,
-				       nb_privkey_attrs, &hpubkey, &hprivkey);
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
 
 	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
 		goto end;
@@ -319,6 +331,11 @@ static int object_rsa_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, genmech.mechanism)) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
@@ -412,11 +429,12 @@ static int object_rsa_public_export(CK_FUNCTION_LIST_PTR pfunc)
 	CK_ULONG key_length = 256;
 	CK_OBJECT_CLASS public_key_class = CKO_PUBLIC_KEY;
 	CK_BYTE modulus[256] = { 0 };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA512_RSA_PKCS };
 
 	CK_ATTRIBUTE public_key_attrs[] = {
 		{ CKA_CLASS, &public_key_class, sizeof(public_key_class) },
 		{ CKA_UNIQUE_ID, unique_id, unique_id_len },
-		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) }
 	};
 
 	CK_ATTRIBUTE getkeyAttr[] = {
@@ -427,6 +445,11 @@ static int object_rsa_public_export(CK_FUNCTION_LIST_PTR pfunc)
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
+		status = TEST_SKIP;
+		goto end;
+	}
 
 	TEST_OUT("Login to R/W Session as User\n");
 	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
@@ -462,7 +485,7 @@ static int object_rsa_public_export(CK_FUNCTION_LIST_PTR pfunc)
 
 	ret = util_set_unique_id(unique_id, &unique_id_len, public_key_class,
 				 key_descriptor.id);
-	if (ret != CKR_BUFFER_TOO_SMALL) {
+	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "util_set_unique_id")) {
 		TEST_OUT("Get unique id len failed\n");
 		goto end;
 	}
@@ -475,7 +498,7 @@ static int object_rsa_public_export(CK_FUNCTION_LIST_PTR pfunc)
 
 	ret = util_set_unique_id(unique_id, &unique_id_len, public_key_class,
 				 key_descriptor.id);
-	if (ret != CKR_OK) {
+	if (CHECK_CK_RV(CKR_OK, "util_set_unique_id")) {
 		TEST_OUT("Set unique id failed\n");
 		goto end;
 	}
@@ -484,7 +507,7 @@ static int object_rsa_public_export(CK_FUNCTION_LIST_PTR pfunc)
 	public_key_attrs[1].ulValueLen = unique_id_len;
 
 	/* Retrieve public key generated with SMW API */
-	TEST_OUT("Find RSA public key\n");
+	TEST_OUT("Find RSA public key (0x%08X)\n", key_descriptor.id);
 	ret = pfunc->C_FindObjectsInit(sess, public_key_attrs,
 				       ARRAY_SIZE(public_key_attrs));
 	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
@@ -560,10 +583,10 @@ void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (object_rsa_key_private(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_rsa_keypair(pfunc, CK_FALSE, false) == TEST_FAIL)
+	if (object_generate_rsa_keypair(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_rsa_keypair(pfunc, CK_FALSE, true) == TEST_FAIL)
+	if (object_generate_rsa_keypair(pfunc, CK_FALSE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
 	if (object_rsa_keypair_usage(pfunc, CK_FALSE) == TEST_FAIL)
@@ -581,10 +604,10 @@ void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (object_rsa_key_private(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_rsa_keypair(pfunc, CK_TRUE, false) == TEST_FAIL)
+	if (object_generate_rsa_keypair(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_rsa_keypair(pfunc, CK_TRUE, true) == TEST_FAIL)
+	if (object_generate_rsa_keypair(pfunc, CK_TRUE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
 	if (object_rsa_public_export(pfunc) == TEST_FAIL)

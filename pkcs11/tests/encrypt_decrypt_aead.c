@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <stdlib.h>
@@ -88,7 +88,7 @@ static struct {
 	CK_RC5_PARAMS bad_params;
 	CK_VOID_PTR good_params_ptr;
 	CK_ULONG good_params_len;
-} aead_mech[] = { MECH_DATA(AES_CCM), MECH_DATA(AES_GCM),
+} aead_mech[] = { MECH_DATA(AES_CCM), MECH_DATA_OPT(AES_GCM),
 		  MECH_DATA_OPT(CHACHA20_POLY1305) };
 
 static int encrypt_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)

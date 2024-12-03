@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 #include <stdlib.h>
 #include <string.h>
@@ -82,19 +82,12 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
 	};
-	CK_ATTRIBUTE_PTR privkey_attrs = NULL_PTR;
-	CK_ULONG nb_privkey_attrs = 0;
-	CK_ATTRIBUTE privkey_token[] = {
+	CK_ATTRIBUTE privkey_attrs[] = {
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_SIGN, &btrue, sizeof(btrue) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
 		  sizeof(key_allowed_mech) },
 	};
-
-	if (token) {
-		privkey_attrs = privkey_token;
-		nb_privkey_attrs = ARRAY_SIZE(privkey_token);
-	}
 
 	SUBTEST_START();
 
@@ -110,7 +103,8 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 
 	ret = pfunc->C_GenerateKeyPair(*sess, &genmech, pubkey_attrs,
 				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
-				       nb_privkey_attrs, &hpubkey, &hprivkey);
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
 	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
 		goto end;
 

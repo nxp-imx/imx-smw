@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2024 NXP
+ * Copyright 2021, 2024-2025 NXP
  */
 
 #include <dlfcn.h>
@@ -88,4 +88,21 @@ CK_FUNCTION_LIST_PTR util_lib_get_func_list(void *handle)
 	}
 
 	return NULL_PTR;
+}
+
+CK_BBOOL util_lib_is_mech_supported(CK_VOID_PTR pfunc, CK_SLOT_ID slot,
+				    CK_MECHANISM_TYPE mech)
+{
+	CK_RV ret = CKR_OK;
+	CK_MECHANISM_INFO info = { 0 };
+	CK_BBOOL supported = CK_FALSE;
+	CK_FUNCTION_LIST_3_0_PTR pfunc_3_0 = pfunc;
+
+	ret = pfunc_3_0->C_GetMechanismInfo(slot, mech, &info);
+	if (ret == CKR_MECHANISM_INVALID)
+		TEST_OUT("Mechanism 0x%lx not supported", mech);
+	else if (ret == CKR_OK)
+		supported = CK_TRUE;
+
+	return supported;
 }

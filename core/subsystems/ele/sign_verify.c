@@ -36,6 +36,7 @@
 static const unsigned int secp_r1_key_sizes[] = { 224, 256, 384, 521, 0 };
 static const unsigned int brainpool_r1_key_sizes[] = { 224, 256, 384, 0 };
 static const unsigned int rsa_key_sizes[] = { 2048, 3072, 4096, 0 };
+static const unsigned int ed25519_key_sizes[] = { 255, 0 };
 
 static const struct signature_scheme {
 	enum smw_config_key_type_id key_type_id;
@@ -78,6 +79,10 @@ static const struct signature_scheme {
 			    RSA_PKCS1_PSS_MGF1_SHA384),
 	SIGNATURE_SCHEME_ID(RSA, rsa_key_sizes, PSS, SHA512,
 			    RSA_PKCS1_PSS_MGF1_SHA512),
+	SIGNATURE_SCHEME_ID(ED25519, ed25519_key_sizes, DEFAULT, INVALID,
+			    PURE_EDDSA),
+	SIGNATURE_SCHEME_ID(ED25519, ed25519_key_sizes, DEFAULT, SHA512,
+			    ED25519PH),
 };
 
 static bool check_security_size(unsigned int security_size,
@@ -110,7 +115,8 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (hash_id == SMW_CONFIG_HASH_ALGO_ID_INVALID)
+	if (key_type_id != SMW_CONFIG_KEY_TYPE_ID_ED25519 &&
+	    hash_id == SMW_CONFIG_HASH_ALGO_ID_INVALID)
 		hash_id = ele_get_hash_algo_id(message_size);
 
 	for (; i < ARRAY_SIZE(signature_schemes); i++, scheme++) {
@@ -189,10 +195,16 @@ static int sign(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (sign_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
-		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
-	else
+	op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
+
+	if (key_identifier->type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519) {
+		if (sign_args->attributes.hash_id !=
+		    SMW_CONFIG_HASH_ALGO_ID_INVALID)
+			op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
+	} else if (sign_args->attributes.hash_id ==
+		   SMW_CONFIG_HASH_ALGO_ID_INVALID) {
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_do_sign()\n"
@@ -310,10 +322,16 @@ static int verify(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (verify_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
-		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
-	else
+	op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
+
+	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519) {
+		if (verify_args->attributes.hash_id !=
+		    SMW_CONFIG_HASH_ALGO_ID_INVALID)
+			op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
+	} else if (verify_args->attributes.hash_id ==
+		   SMW_CONFIG_HASH_ALGO_ID_INVALID) {
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
+	}
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_verify_signature()\n"

@@ -91,8 +91,10 @@ static const struct key_def {
 } key_def_list[] = {
 	KEY_DEF(SECP_R1, ECC_NIST, ecc_public_key_length, NULL),
 	KEY_DEF(BRAINPOOL_R1, ECC_BP_R1, ecc_public_key_length, NULL),
-	KEY_DEF(AES, AES, NULL, NULL), KEY_DEF(HMAC, HMAC, NULL, NULL),
-	KEY_DEF(RSA, RSA, rsa_public_key_length, rsa_modulus_length)
+	KEY_DEF(AES, AES, NULL, NULL),
+	KEY_DEF(HMAC, HMAC, NULL, NULL),
+	KEY_DEF(RSA, RSA, rsa_public_key_length, rsa_modulus_length),
+	KEY_DEF(ED25519, ECC_TWISTED_EDWARDS, ecc_public_key_length, NULL),
 };
 
 #define SIGN_ALGO(_algo_id, _type_id, _hash_id, _sign_algo)                    \
@@ -278,6 +280,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
+	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 		if (smw_keymgr_get_public_data(key_descriptor) &&
 		    !smw_keymgr_get_private_data(key_descriptor)) {
 			status = SMW_STATUS_OK;

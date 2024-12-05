@@ -44,17 +44,24 @@ and supported by the SMW Library.
 <tr>
   <th colspan="3" rowspan="2">Operations</th>
   <th colspan="3">Subsystems</th>
+  <th colspan="3">APIs</th>
 </tr>
 <tr>
   <th>SECO</th>
   <th>TEE</th>
   <th>ELE</th>
+  <th>SMW</th>
+  <th>PKCS#11</th>
+  <th>PSA</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td rowspan="13">Key Management</td>
+  <td rowspan="14">Key Management</td>
   <td colspan="2">Generate</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -65,11 +72,17 @@ and supported by the SMW Library.
 	<td>❌</td>
 	<td>✔️</td>
 	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 </tr>
 <tr>
   <td>EdgeLock 2GO blob</td>
 	<td>❌</td>
 	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>️❌</td>
 	<td>✔️</td>
 </tr>
 <tr>
@@ -77,17 +90,25 @@ and supported by the SMW Library.
 	<td>❌</td>
 	<td>❌</td>
 	<td>❌</td>
+	<td>❌️</td>
+	<td>❌️</td>
+	<td>❌️</td>
 </tr>
 <tr>
   <td colspan="2">Export public key</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
-</tr>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 <tr>
   <td colspan="2">Update</td>
 	<td>❌</td>
 	<td>❌</td>
+	<td>❌️</td>
+	<td>❌️</td>
+	<td>❌️</td>
 	<td>❌</td>
 </tr>
 <tr>
@@ -95,15 +116,34 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 </tr>
 <tr>
-  <td colspan="2">Key Derivation</td>
-	<td>✔️<sup><a href="#t_note_1">1</a>, <a href="#t_note_2">2</a></sup></td>
-	<td>✔️<sup><a href="#t_note_3">3</a></sup></td>
-	<td>✔️<sup><a href="#t_note_6">6</a></sup></td>
+  <td rowspan="2">Key Derivation</td>
+  <td>TLS 1.2 key agreement</td>
+	<td>✔️<sup><a href="#t_note_1">1</a></sup></td>
+	<td>❌</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>❌</td>
+	<td>❌</td>
+</tr>
+<tr>
+  <td>HKDF</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️<sup><a href="#t_note_2">2</a></sup></td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>❌️</td>
 </tr>
 <tr>
   <td colspan="2">Get key attributes</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -113,9 +153,15 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>❌</td>
 </tr>
 <tr>
-  <td colspan="2">Get key type name</td>
+  <td colspan="2">Get key type</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -125,15 +171,24 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
-</tr>
-<tr>
-  <td colspan="2">Commit key storage</td>
-	<td>✔️<sup><a href="#t_note_4">4</a></td>
-	<td>✔️<sup><a href="#t_note_4">4</a></td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 </tr>
 <tr>
+  <td colspan="2">Commit key storage</td>
+	<td>✔️<sup><a href="#t_note_3">3</a></td>
+	<td>✔️<sup><a href="#t_note_3">3</a></td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>❌️️</td>
+	<td>❌️️</td>
+</tr>
+<tr>
   <td colspan="3">Hash</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -143,10 +198,16 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 </tr>
 <tr>
   <td colspan="3">HMAC</td>
-	<td>❌<sup><a href="#t_note_2">2</a></sup></td>
+	<td>❌<sup><a href="#t_note_1">1</a></sup></td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 </tr>
@@ -155,9 +216,15 @@ and supported by the SMW Library.
 	<td>❌</td>
 	<td>✔️</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 </tr>
 <tr>
   <td colspan="3">Asymmetric Signature</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -167,9 +234,15 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 </tr>
 <tr>
   <td colspan="3">Random Number Generation</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -180,34 +253,52 @@ and supported by the SMW Library.
 	<td>❌</td>
 	<td>❌</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>❌️️</td>
+	<td>❌️️</td>
 </tr>
 <tr>
   <td colspan="2">Get Device UUID</td>
 	<td>❌</td>
 	<td>❌</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>️❌️</td>
+	<td>️❌️</td>
 </tr>
 <tr>
   <td colspan="2">Device Lifecycle</td>
 	<td>❌</td>
 	<td>❌</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>❌️</td>
+	<td>❌️</td>
 </tr>
 <tr>
   <td colspan="2">Storage Reprovisioning</td>
 	<td>❌</td>
 	<td>❌</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>❌</td>
+	<td>❌</td>
 </tr>
 <tr>
   <td rowspan="4">Data Storage</td>
 	<td colspan="2">Get information</td>
-	<td>✔️<sup><a href="#t_note_5">5</a></sup></td>
+	<td>✔️<sup><a href="#t_note_4">4</a></sup></td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 </tr>
 <tr>
   <td colspan="2">Store</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -217,10 +308,16 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 </tr>
 <tr>
   <td colspan="2">Delete</td>
 	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
 </tr>
@@ -228,12 +325,10 @@ and supported by the SMW Library.
 </table>
 
 <p>
-<a name="t_note_1"><sup>1</sup></a> Require specific SECO Firmware.<br>
-<a name="t_note_2"><sup>2</sup></a> Supports TLS 1.2. Build option ENABLE_TLS12 must be set ON.<br>
-<a name="t_note_3"><sup>3</sup></a> Supports HKDF.<br>
-<a name="t_note_4"><sup>4</sup></a> Do nothing, returns always success.<br>
-<a name="t_note_5"><sup>5</sup></a> Retrieve only information from SMW object database.<br>
-<a name="t_note_6"><sup>6</sup></a> Supports HKDF (Full/Extract/Expand step).<br>
+<a name="t_note_1"><sup>1</sup></a> Require specific SECO Firmware (TLS 1.2 + HMAC). Build option ENABLE_TLS12 must be set ON<br>
+<a name="t_note_2"><sup>2</sup></a> Supports HKDF (Full/Extract/Expand step).<br>
+<a name="t_note_3"><sup>3</sup></a> Do nothing, returns always success.<br>
+<a name="t_note_4"><sup>4</sup></a> Retrieve only information from SMW object database.<br>
 </p>
 
 # 3. Creating a simple OPTEE TA

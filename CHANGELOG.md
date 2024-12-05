@@ -44,6 +44,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library - _version 4.2_
 ##### 1. SMW APIs
 
+* Save data storage ID in database to check for ELE EL2GO certificate object.
+* Call `smw_delete_data()` to delete ELE EL2GO object.
+
 ##### 2. Subsystems
 
 ##### 3. ARM PSA APIs

@@ -49,14 +49,23 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. Subsystems
 
+* ELE: Add ed25519 key management.
+* ELE: Add support of ed25519 Sign and Verify operations.
+
 ##### 3. ARM PSA APIs
 
 ##### 4. OSAL
 
 * Add SMW_LOG_FILE and SMW_LOG_LEVEL environment variable in debug build.
 At init time, log can be redirected to a file and log level could be set.
+* ED25519 is supported by ELE on i.MX93 and i.MX91, add support to Key management
+Sign and Verify algorithm in ELE configuration file.
+
 
 #### SMW Tests - _version 4.2_
+
+* Add tests to validate ed25519 Key generation operations with ELE subsystem.
+* Add tests to validate ed25519 Sign and Verify operations with ELE subsystem.
 
 #### PKCS#11 Library - _version 4.2_
 

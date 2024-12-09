@@ -63,6 +63,27 @@
 				"55555555555555555555555555555555",
 				"5555555555555555555555555555"
 			]
+		},
+		"key 9": {
+			"type": "ED25519",
+			"security_size": 255,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"EDDSA"
+			]
+		},
+		"key 10": {
+			"key_name": "key 9",
+			"pub_key": 32
+		},
+		"key 11": {
+			"key_name": "key 9",
+			"priv_key": 32
 		}
 	},
 	"subtest 1": {
@@ -144,5 +165,42 @@
 		"key_name": "key 2",
 		"depends": 12,
 		"result": "SMW_STATUS_UNKNOWN_ID"
+	},
+	"subtest 14": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 9",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 15": {
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 10",
+		"depends": 14,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 16": {
+		"command": "EXPORT_PRIVATE",
+		"key_name": "key 11",
+		"depends": 14,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 17": {
+		"command": "DELETE",
+		"key_name": "key 9",
+		"depends": 14,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
 	}
 }

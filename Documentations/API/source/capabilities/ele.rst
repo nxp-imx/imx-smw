@@ -23,6 +23,10 @@ Key manager
    +--------------+-----------------------------+------+------+------+------+
    | RSA          | 2048 / 3072 / 4096          |      |  X   |  X   |  X   |
    +--------------+-----------------------------+------+------+------+------+
+   | ED25519PH    | 255                         |      |  X   |      |  X   |
+   +--------------+-----------------------------+------+------+------+------+
+   | PURE EDDSA   | 255                         |      |  X   |      |  X   |
+   +--------------+-----------------------------+------+------+------+------+
 
 Operations supported:
  - Generate
@@ -156,6 +160,10 @@ applicable in ELE subsystem. Only one permitted algorithm is allowed per key.
    +                +----------+--------------------------+-------------------------------------+
    |                | SHA512   | N/A                      |                                     |
    +----------------+----------+--------------------------+-------------------------------------+
+   | PURE EDDSA     | SHA512   | N/A                      |                                     |
+   +----------------+----------+--------------------------+-------------------------------------+
+   | ED25519PH      | N/A      | N/A                      |                                     |
+   +----------------+----------+--------------------------+-------------------------------------+
 
 Hash
 ^^^^
@@ -240,6 +248,10 @@ Signature
    +                    +              +                          +                       +
    |                    |              |                          | SHA512                |
    +--------------------+--------------+--------------------------+-----------------------+
+   | ED25519            | PURE_EDDSA   | 255                      | SHA512                |
+   +                    +--------------+--------------------------+-----------------------+
+   |                    | ED25519PH    | 255                      | None (Message hashed) |
+   +--------------------+--------------+--------------------------+-----------------------+
 
 Operations supported:
  - Sign
@@ -260,6 +272,8 @@ The following key policies must defined:
       in :numref:`ele_signature`
     - RSA Signature, PKCS1 v1.5 and PSS with hash as listed
       in :numref:`ele_signature`. Not supported on i.MX8ULP
+    - EDDSA Signature with hash or a message already hashed as listed
+      in :numref:`ele_signature`. Not supported on i.MX8ULP and i.MX95
 
 Verify operation
 """"""""""""""""
@@ -276,6 +290,8 @@ The following key policies must defined if a key identifier is used:
       in :numref:`ele_signature`
     - RSA PKCS1 v1.5 and PSS with hash as listed in :numref:`ele_signature`.
       Not supported on i.MX8ULP
+    - EDDSA Signature with hash or a message already hashed as listed
+      in :numref:`ele_signature`. Not supported on i.MX8ULP and i.MX95
 
 Random
 ^^^^^^

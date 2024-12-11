@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2022, 2024 NXP
+ * Copyright 2020-2022, 2024-2025 NXP
  */
 
 #include "smw/names.h"
@@ -25,6 +25,8 @@ const struct libdev optee_info = {
 	.flags_token =
 		CKF_TOKEN_INITIALIZED | CKF_PROTECTED_AUTHENTICATION_PATH,
 	.label_token = "smw-tee",
+	.profile_id_list = { CKP_BASELINE_PROVIDER },
+	.profile_count = 1
 };
 
 FUNC_DEV_MECH_INFO(optee_mech_info)

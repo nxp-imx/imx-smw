@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #include <stdlib.h>
@@ -20,6 +20,7 @@
  * @dev: Reference to the slot's device objects
  * @label: Token label
  * @label_len: Label length in bytes
+ * @devinfo: Pointer to device information structure
  *
  * return:
  * CKR_GENERAL_ERROR             - General error
@@ -27,8 +28,12 @@
  * other mutex error.
  */
 static CK_RV init_token(struct libdevice *dev, const char *label,
-			size_t label_len)
+			size_t label_len, const struct libdev *devinfo)
 {
+	CK_RV ret = CKR_OK;
+
+	unsigned int i = 0;
+
 	memset(dev->token.label, ' ', sizeof(dev->token.label));
 	memcpy(dev->token.label, label,
 	       MIN(sizeof(dev->token.label), label_len));
@@ -42,7 +47,7 @@ static CK_RV init_token(struct libdevice *dev, const char *label,
 	dev->login_as = NO_LOGIN;
 
 	/*
-	 * Initializze the R/W and Read Only Sessions list
+	 * Initialize the R/W and Read Only Sessions list
 	 */
 	LIST_INIT(&dev->rw_sessions);
 	LIST_INIT(&dev->ro_sessions);
@@ -50,7 +55,19 @@ static CK_RV init_token(struct libdevice *dev, const char *label,
 	/*
 	 * Initialize the token objects list
 	 */
-	return LLIST_INIT(&dev->objects);
+	ret = LLIST_INIT(&dev->objects);
+	if (ret != CKR_OK)
+		return ret;
+
+	/* Create profile objects (token objects) */
+	for (; i < devinfo->profile_count; i++) {
+		ret = libobj_profile_create(&dev->objects,
+					    &devinfo->profile_id_list[i]);
+		if (ret != CKR_OK)
+			return ret;
+	}
+
+	return ret;
 }
 
 /**
@@ -117,7 +134,7 @@ static void init_device_info(struct libdevice *device,
 
 	if (device->token.flags & CKF_TOKEN_INITIALIZED) {
 		if (init_token(device, devinfo->label_token,
-			       strlen(devinfo->label_token)) != CKR_OK)
+			       strlen(devinfo->label_token), devinfo) != CKR_OK)
 			CLEAR_BITS(device->token.flags, CKF_TOKEN_INITIALIZED);
 	}
 }
@@ -331,6 +348,7 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 {
 	CK_RV ret = CKR_OK;
 	struct libdevice *dev = NULL;
+	const struct libdev *devinfo = NULL;
 
 	ret = libdev_get_slotdev(&dev, slotid);
 	if (ret)
@@ -355,7 +373,12 @@ CK_RV libdev_init_token(CK_SLOT_ID slotid, CK_UTF8CHAR_PTR label)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = init_token(dev, (const char *)label, sizeof(dev->token.label));
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo)
+		return CKR_SLOT_ID_INVALID;
+
+	ret = init_token(dev, (const char *)label, sizeof(dev->token.label),
+			 devinfo);
 	if (ret == CKR_OK)
 		SET_BITS(dev->token.flags, CKF_TOKEN_INITIALIZED);
 

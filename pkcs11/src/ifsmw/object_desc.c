@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <string.h>
@@ -753,7 +753,6 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	const struct libdev *devinfo = NULL;
 	struct libdevice *dev = NULL;
 	struct libobj_obj *libobj = NULL;
-	struct libobj_list *list = NULL;
 	bool class_found = false;
 	unsigned int i = 0;
 	unsigned int k = 0;
@@ -764,6 +763,16 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		return CKR_ARGUMENTS_BAD;
 
 	*pnb_retrieved = 0;
+
+	/*
+	 * Do not search the DB for profile objects, as they are not stored
+	 * there and exit this function.
+	 */
+	for (; i < nb_attrs; i++) {
+		if (attrs[i].type == CKA_CLASS &&
+		    *(CK_OBJECT_CLASS *)attrs[i].pValue == CKO_PROFILE)
+			goto end;
+	}
 
 	ret = libsess_get_slotid(hsession, &slotid);
 	if (ret != CKR_OK)
@@ -779,10 +788,6 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = libsess_get_objects(hsession, &list);
-	if (ret != CKR_OK)
-		goto end;
-
 	ret = attrs_to_object_descriptor(&descriptor, attrs, nb_attrs);
 	if (ret != CKR_OK) {
 		/*
@@ -790,6 +795,7 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		 */
 		if (ret == CKR_ATTRIBUTE_VALUE_INVALID)
 			ret = CKR_OK;
+
 		goto end;
 	}
 
@@ -800,7 +806,7 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		SMW_ATTR_SET_PERSISTENCE(descriptor.attributes,
 					 SMW_ATTR_PERSISTENCE_PERSISTENT);
 
-	for (; i < nb_attrs; i++) {
+	for (i = 0; i < nb_attrs; i++) {
 		if (attrs[i].type == CKA_CLASS) {
 			ret = attr_to_class(&object_class, &attrs[i]);
 			if (ret != CKR_OK)
@@ -826,6 +832,9 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		is_present = false;
 		for (libobj = LIST_FIRST(&dev->objects); libobj;
 		     libobj = LIST_NEXT(libobj)) {
+			if (libobj->class == CKO_PROFILE)
+				continue;
+
 			ret = obj_match_descriptor(libobj, &descriptor,
 						   &is_present);
 			if (ret != CKR_OK)

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2024 NXP
+ * Copyright 2020-2021, 2024-2025 NXP
  */
 
 #ifndef __LIB_OBJECT_H__
@@ -43,6 +43,25 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		    CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj);
 
 /**
+ * libobj_profile_create() - Create a profile object
+ * @objects: Object List
+ * @profile_id: Pointer to Profile ID
+ *
+ * This function creates a profile object and sets the profile ID.
+ * It also adds the profile object to token objects list @objects.
+ *
+ * Unlike other pkcs11 objects, no storage object is allocated for profile
+ * objects, and they are not stored in the database like other token objects.
+ *
+ * return:
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_profile_create(struct libobj_list *objects,
+			    const CK_PROFILE_ID *profile_id);
+
+/**
  * libobj_retrieve() - Retrieve an object
  * @hsession: Session handle
  * @attrs: List of the object attributes
@@ -50,7 +69,7 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
  * @hobj: Object handle
  * @id: Object identifier
  *
- * After verifing the validity of the @hsession, the function
+ * After verifying the validity of the @hsession, the function
  * checks the attributes list @attrs function of the Object Class
  * attributes.
  * Finally, adds the object in the session's object list if all attributes
@@ -101,7 +120,7 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject);
  * @hobject: Object handle
  * @pulSize: Size of object
  *
- * After verifing the validity of the @hsession and the @hobj,
+ * After verifying the validity of the @hsession and the @hobj,
  * the function returns the size of the given object handle.
  *
  * return:
@@ -122,7 +141,7 @@ CK_RV libobj_get_size(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
  * @attrs: List of the object attributes to return
  * @nb_attrs: Number of attributes
  *
- * After verifing the validity of the @hsession and the @hobj,
+ * After verifying the validity of the @hsession and the @hobj,
  * the function returns the value of the given attributes list @attrs.
  *
  * return:
@@ -146,7 +165,7 @@ CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
  * @attrs: List of the object attributes to modify
  * @nb_attrs: Number of attributes
  *
- * After verifing the validity of the @hsession and the @hobj,
+ * After verifying the validity of the @hsession and the @hobj,
  * the function modifies the value of the given attributes list @attrs.
  * If an attribute is not modifiable, the attribute is not changed and
  * CKR_ACTION_PROHIBITED error is returned.

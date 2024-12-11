@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2024 NXP
+ * Copyright 2020-2021, 2024-2025 NXP
  */
 
 #ifndef __TYPES_H__
@@ -11,6 +11,8 @@
 #include "list.h"
 #include "pkcs11smw.h"
 
+#define MAX_PROFILE_COUNT 1
+
 /**
  * struct libdev - constant information about a device
  * @name: Name of the device
@@ -19,9 +21,11 @@
  * @model: Device's model
  * @serial: Device's serial number
  * @version: Device's version
- * @flags_slot: Bits flag of the slot's harcoded capabilities
+ * @flags_slot: Bits flag of the slot's hardcoded capabilities
  * @flags_token: Bits flag of the token's hardcoded capabilities
  * @label_token: Default token label
+ * @profile_id_list: Profile object ID list
+ * @profile_count: Number of profile objects
  */
 struct libdev {
 	smw_subsystem_t name;
@@ -33,6 +37,8 @@ struct libdev {
 	CK_FLAGS flags_slot;
 	CK_FLAGS flags_token;
 	const char *label_token;
+	const CK_PROFILE_ID profile_id_list[MAX_PROFILE_COUNT];
+	CK_BYTE profile_count;
 };
 
 /**

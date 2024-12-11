@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <stdlib.h>
@@ -833,6 +833,33 @@ end:
 	return ret;
 }
 
+CK_RV libobj_profile_create(struct libobj_list *objects,
+			    const CK_PROFILE_ID *profile_id)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_obj *newobj = NULL;
+
+	DBG_TRACE("Create a new object (%p) of profile ID = %lu", newobj,
+		  *profile_id);
+
+	ret = obj_allocate(&newobj);
+	if (ret != CKR_OK)
+		goto end;
+
+	newobj->force_destroy = true;
+	newobj->class = CKO_PROFILE;
+	newobj->object = (void *)profile_id;
+
+	ret = LLIST_INSERT_TAIL(objects, newobj);
+	if (ret != CKR_OK)
+		obj_free(newobj, NULL);
+
+end:
+	DBG_TRACE("Profile object (%p) creation return %ld", newobj, ret);
+
+	return ret;
+}
+
 CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		      CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj,
 		      unsigned int id)
@@ -965,6 +992,37 @@ end:
 	return ret;
 }
 
+static CK_RV libobj_get_profile_attribute(struct libobj_obj *libobj,
+					  CK_ATTRIBUTE_PTR attrs,
+					  CK_ULONG nb_attrs)
+{
+	CK_RV ret = CKR_OK;
+
+	unsigned int i = 0;
+
+	for (; i < nb_attrs; i++) {
+		switch ((attrs + i)->type) {
+		case CKA_CLASS:
+			*(CK_OBJECT_CLASS *)(attrs + i)->pValue = CKO_PROFILE;
+			break;
+
+		case CKA_PROFILE_ID:
+			*(CK_ULONG *)(attrs + i)->pValue =
+				*(CK_PROFILE_ID *)libobj->object;
+			break;
+
+		case CKA_TOKEN:
+			*(CK_BBOOL *)(attrs + i)->pValue = CK_TRUE;
+			break;
+
+		default:
+			ret = CKR_ATTRIBUTE_TYPE_INVALID;
+		}
+	}
+
+	return ret;
+}
+
 CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 			   CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs)
 {
@@ -979,6 +1037,12 @@ CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 	ret = find_lock_object(hsession, libobj, NULL);
 	if (ret != CKR_OK)
 		goto end;
+
+	if (libobj->class == CKO_PROFILE) {
+		ret = libobj_get_profile_attribute(libobj, attrs, nb_attrs);
+
+		goto unlock;
+	}
 
 	DBG_TRACE("Get %lu attribute(s)", nb_attrs);
 	for (; idx < nb_attrs; idx++) {
@@ -1015,6 +1079,7 @@ CK_RV libobj_get_attribute(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 			ret = status;
 	}
 
+unlock:
 	libmutex_unlock(libobj->lock);
 
 end:
@@ -1388,6 +1453,27 @@ static void destroy_query_list(struct libobj_query *query)
 	}
 }
 
+static void check_cka_token_attr(CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs,
+				 bool *is_token_attr_defined,
+				 bool *is_token_attr_set)
+{
+	unsigned int i = 0;
+	*is_token_attr_set = false;
+	*is_token_attr_defined = false;
+
+	for (; i < nb_attrs; i++) {
+		if (attrs[i].type == CKA_TOKEN) {
+			*is_token_attr_defined = true;
+
+			if (attrs[i].pValue != NULL_PTR &&
+			    *(CK_BBOOL *)attrs[i].pValue == CK_TRUE) {
+				*is_token_attr_set = true;
+				break;
+			}
+		}
+	}
+}
+
 CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		       CK_ULONG nb_attrs)
 {
@@ -1398,6 +1484,8 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	CK_ULONG idx = 0;
 	CK_ULONG nb_retrieved = 0;
 	CK_ATTRIBUTE_PTR attrs_tmp = NULL_PTR;
+	bool is_token_attr_set = false;
+	bool is_token_attr_defined = false;
 
 	DBG_TRACE("Start Find Object Query on session %lu", hsession);
 
@@ -1445,31 +1533,31 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 
 	LIST_INIT(&query->objects);
 
-	/*
-	 * First go thru token's objects
-	 */
-	DBG_TRACE("Check if token's objects");
-	ret = object_match(hsession, &query->objects, &dev->objects, attrs,
-			   attrs_tmp, nb_attrs);
-	if (ret != CKR_OK)
-		goto end;
+	check_cka_token_attr(attrs, nb_attrs, &is_token_attr_defined,
+			     &is_token_attr_set);
 
-	/*
-	 * Next go thru session's objects
-	 */
-	DBG_TRACE("Check if session's objects");
-	ret = libsess_get_objects(hsession, &objects);
-	if (ret == CKR_OK)
-		ret = object_match(hsession, &query->objects, objects, attrs,
-				   attrs_tmp, nb_attrs);
+	if (!is_token_attr_defined || is_token_attr_set) {
+		/* Go through the token objects list */
+		ret = object_match(hsession, &query->objects, &dev->objects,
+				   attrs, attrs_tmp, nb_attrs);
+		if (ret != CKR_OK)
+			goto end;
 
-	if (ret == CKR_OK) {
 		ret = obj_db_retrieve(hsession, attrs, nb_attrs, &nb_retrieved);
-		if (ret == CKR_OK && nb_retrieved != 0) {
+		if (ret == CKR_OK && nb_retrieved != 0)
 			ret = object_match(hsession, &query->objects,
 					   &dev->objects, attrs, attrs_tmp,
 					   nb_attrs);
-		}
+	}
+
+	if (!is_token_attr_defined || !is_token_attr_set) {
+		/* Go through the session objects list */
+		ret = libsess_get_objects(hsession, &objects);
+		if (ret != CKR_OK)
+			goto end;
+
+		ret = object_match(hsession, &query->objects, objects, attrs,
+				   attrs_tmp, nb_attrs);
 	}
 
 	if (ret == CKR_OK) {

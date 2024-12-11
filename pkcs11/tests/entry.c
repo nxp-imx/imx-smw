@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 #include <string.h>
 
@@ -167,7 +167,8 @@ struct test_def test_list[] = { TEST_DEF(get_info_ifs),
 				TEST_DEF(data_storage),
 				TEST_DEF(objects),
 				TEST_DEF(derive_key),
-				TEST_DEF(operation_state) };
+				TEST_DEF(operation_state),
+				TEST_DEF(object_profile) };
 
 void tests_pkcs11_list(void)
 {

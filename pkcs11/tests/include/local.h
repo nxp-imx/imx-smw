@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 #ifndef __LOCAL_H__
 #define __LOCAL_H__
@@ -75,5 +75,6 @@ void tests_pkcs11_data_storage(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_derive_key(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_operation_state(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_object_profile(void *lib_hdl, CK_VOID_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

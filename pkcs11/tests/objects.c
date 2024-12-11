@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <stdlib.h>
@@ -961,13 +961,16 @@ static int find_all_objects(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	/* Maximum unique id rfc2279 len */
 	CK_BYTE key_id[(sizeof(CK_OBJECT_CLASS) + sizeof(uint32_t)) * 2] = { 0 };
+	CK_OBJECT_CLASS obj_class = CKO_SECRET_KEY;
 
 	/* AES - 256 bits key length */
 	CK_ULONG key_length = 32;
 	CK_ULONG nb_match = 0;
 
-	CK_ATTRIBUTE retrieve_template[] = { { CKA_UNIQUE_ID, &key_id,
-					       sizeof(key_id) } };
+	CK_ATTRIBUTE retrieve_template[] = {
+		{ CKA_CLASS, &obj_class, sizeof(obj_class) },
+		{ CKA_UNIQUE_ID, &key_id, sizeof(key_id) }
+	};
 
 	SUBTEST_START();
 
@@ -1015,9 +1018,18 @@ static int find_all_objects(CK_FUNCTION_LIST_PTR pfunc)
 
 		TEST_OUT("Retrieve Key ID\n");
 
-		retrieve_template[0].ulValueLen = sizeof(key_id);
+		retrieve_template[1].ulValueLen = sizeof(key_id);
 		ret = pfunc->C_GetAttributeValue(sess, hkey, retrieve_template,
 						 ARRAY_SIZE(retrieve_template));
+
+		/* For profile objects CKA_UNIQUE_ID attribute is not set.
+		 * Hence, continue finding the next object if CKR_ATTRIBUTE_TYPE_INVALID
+		 * is returned.
+		 */
+		if (obj_class == CKO_PROFILE &&
+		    ret == CKR_ATTRIBUTE_TYPE_INVALID)
+			continue;
+
 		if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 			goto end;
 

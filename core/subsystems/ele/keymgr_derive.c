@@ -574,8 +574,12 @@ static int hkdf(struct smw_keymgr_derive_key_args *args, hsm_hdl_t *key_mgt_hdl)
 	}
 
 	if (buffer && hkdf_op_payload.buffer_len) {
-		buffer_size = sizeof(struct hkdf_ele_op_payload) +
-			      hkdf_op_payload.buffer_len;
+		if (ADD_OVERFLOW(sizeof(struct hkdf_ele_op_payload),
+				 hkdf_op_payload.buffer_len, &buffer_size)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto exit;
+		}
+
 		arg_buffer = SMW_UTILS_CALLOC(1, buffer_size);
 		if (!arg_buffer) {
 			SMW_DBG_PRINTF(ERROR, "Allocation failure\n");

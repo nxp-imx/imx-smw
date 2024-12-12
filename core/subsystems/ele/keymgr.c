@@ -925,6 +925,8 @@ end:
 		SMW_UTILS_FREE(tmp_key);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 

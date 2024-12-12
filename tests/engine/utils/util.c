@@ -612,8 +612,10 @@ int check_file_extension(char *filename, char *extension)
 
 char *util_get_strerr(void)
 {
-	if (__errno_location())
-		return strerror(errno);
+	int *err = __errno_location();
+
+	if (err)
+		return strerror(*err);
 
 	return "Unknown error";
 }

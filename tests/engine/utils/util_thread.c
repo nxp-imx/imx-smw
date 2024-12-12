@@ -24,10 +24,11 @@ static int get_active_thread_data(struct app_data *app,
 	if (!app || !thr)
 		return ERR_CODE(BAD_ARGS);
 
-	tid = pthread_self();
-
 	util_list_lock(app->threads);
 	node = util_list_next(app->threads, node, NULL);
+	if (node)
+		tid = pthread_self();
+
 	while (node) {
 		*thr = util_list_data(node);
 
@@ -60,29 +61,29 @@ static void thr_free_data(void *data)
 	free(thr_data);
 }
 
-static int read_thread_loop(struct json_object_iter *thr_obj, int *loop,
-			    struct json_object **thr_def)
+static int read_thread_loop(const char *thr_name, struct json_object *thr_obj,
+			    int *loop, struct json_object **thr_def)
 {
 	struct json_object *otmp = NULL;
 
-	if (json_object_array_length(thr_obj->val) != 2) {
-		DBG_PRINT("\"%s\" is more than 2 array entries", thr_obj->key);
+	if (json_object_array_length(thr_obj) != 2) {
+		DBG_PRINT("\"%s\" is more than 2 array entries", thr_name);
 		return ERR_CODE(BAD_PARAM_TYPE);
 	}
 
-	otmp = json_object_array_get_idx(thr_obj->val, 0);
+	otmp = json_object_array_get_idx(thr_obj, 0);
 	if (json_object_get_type(otmp) != json_type_int) {
 		DBG_PRINT("\"%s\" first entry is not a json-c integer",
-			  thr_obj->key);
+			  thr_name);
 		return ERR_CODE(BAD_PARAM_TYPE);
 	}
 
 	*loop = json_object_get_int(otmp);
 
-	otmp = json_object_array_get_idx(thr_obj->val, 1);
+	otmp = json_object_array_get_idx(thr_obj, 1);
 	if (json_object_get_type(otmp) != json_type_object) {
 		DBG_PRINT("\"%s\" first entry is not a json-c object",
-			  thr_obj->key);
+			  thr_name);
 		return ERR_CODE(BAD_PARAM_TYPE);
 	}
 
@@ -399,18 +400,18 @@ int util_thread_init(struct llist **list)
 	return util_list_init(list, thr_free_data, LIST_ID_TYPE_UINT);
 }
 
-int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
-		      unsigned int thr_num)
+int util_thread_start(struct app_data *app, const char *thr_name,
+		      struct json_object *thr_obj, unsigned int thr_num)
 {
 	int err = ERR_CODE(BAD_ARGS);
 	int loop = 0;
 	struct thread_data *thr = NULL;
 	struct json_object *def_obj = NULL;
 
-	if (!app || !thr_obj)
+	if (!app || !thr_name || !thr_obj)
 		return err;
 
-	DBG_PRINT("%s", thr_obj->key);
+	DBG_PRINT("%s", thr_name);
 
 	/*
 	 * Thread can be a defined with a JSON-C object or an array
@@ -420,26 +421,26 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 	 *    2 entries where first is a integer and second is a
 	 *    an object.
 	 */
-	switch (json_object_get_type(thr_obj->val)) {
+	switch (json_object_get_type(thr_obj)) {
 	case json_type_array:
-		err = read_thread_loop(thr_obj, &loop, &def_obj);
+		err = read_thread_loop(thr_name, thr_obj, &loop, &def_obj);
 		if (err != ERR_CODE(PASSED)) {
 			FPRINT_MESSAGE(app, "Error in test definiton file: ");
 			FPRINT_MESSAGE(app, "\"%s\" is not a json-c object\n",
-				       thr_obj->key);
+				       thr_name);
 			return err;
 		}
 		break;
 
 	case json_type_object:
-		def_obj = thr_obj->val;
+		def_obj = thr_obj;
 		break;
 
 	default:
 		FPRINT_MESSAGE(app, "Error in test definiton file: ");
 		FPRINT_MESSAGE(app, "\"%s\" is not a json-c object\n",
-			       thr_obj->key);
-		DBG_PRINT("\"%s\" is not a json-c object", thr_obj->key);
+			       thr_name);
+		DBG_PRINT("\"%s\" is not a json-c object", thr_name);
 
 		return ERR_CODE(BAD_PARAM_TYPE);
 	}
@@ -451,7 +452,7 @@ int util_thread_start(struct app_data *app, struct json_object_iter *thr_obj,
 	}
 
 	thr->app = app;
-	thr->parent_def = thr_obj->val;
+	thr->parent_def = thr_obj;
 	(void)sprintf(thr->name, "Thread %d", thr_num);
 	thr->loop = loop;
 

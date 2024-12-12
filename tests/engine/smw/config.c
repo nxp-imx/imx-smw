@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <string.h>
@@ -38,22 +38,25 @@ static int read_config_file(char *file_name, char **buffer, unsigned int *size)
 	DBG_PRINT("File size: %ld", fsize);
 
 	/* Check of file size is not too big */
-	if (fsize > (long)(UINT16_MAX - 1)) {
+	if (SET_OVERFLOW(fsize, *size)) {
 		DBG_PRINT("File size too big");
 		goto end;
 	}
 
-	*size = fsize;
 	if (fseek(f, 0, SEEK_SET)) {
 		DBG_PRINT("fseek(SEEK_SET) %s", util_get_strerr());
 		goto end;
 	}
 
-	*buffer = malloc(*size + 1);
+	if (INC_OVERFLOW(fsize, 1))
+		goto end;
+
+	*buffer = malloc(fsize);
 	if (!*buffer) {
 		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 		goto end;
 	}
+
 	if (*size != fread(*buffer, sizeof **buffer, *size, f)) {
 		if (feof(f))
 			DBG_PRINT("Error reading %s: unexpected EOF",
@@ -63,6 +66,7 @@ static int read_config_file(char *file_name, char **buffer, unsigned int *size)
 
 		goto end;
 	}
+
 	*(*buffer + *size) = '\0';
 
 	res = ERR_CODE(PASSED);

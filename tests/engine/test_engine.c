@@ -68,30 +68,26 @@ static int run_multiapp(struct test_data *test)
 {
 	int status = ERR_CODE(FAILED);
 	int res = ERR_CODE(PASSED);
-	struct json_object_iter obj = { 0 };
+
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 	unsigned int app_counter = 1;
 	unsigned int first = 0;
 	unsigned int last = 0;
 
-	if (!json_object_get_object(test->definition)) {
-		DBG_PRINT("Test definition json_object_get_object error");
-		status = ERR_CODE(INTERNAL);
-		goto exit;
-	}
-
 	test->is_multi_apps = 1;
 
-	json_object_object_foreachC(test->definition, obj)
+	util_json_object_foreach(test->definition, obj_key, obj_val)
 	{
 		first = 0;
 		last = 0;
 
 		/* Run the JSON-C "App" object, other tag is ignored */
-		if (strncmp(obj.key, APP_OBJ, strlen(APP_OBJ)))
+		if (strncmp(obj_key, APP_OBJ, strlen(APP_OBJ)))
 			continue;
 
 		/* Get Application ID */
-		status = util_get_json_obj_ids(obj.key, APP_OBJ, &first, &last);
+		status = util_get_json_obj_ids(obj_key, APP_OBJ, &first, &last);
 		if (status != ERR_CODE(PASSED)) {
 			status = ERR_CODE(FAILED);
 			goto exit;
@@ -102,13 +98,13 @@ static int run_multiapp(struct test_data *test)
 		 * application counter.
 		 */
 		if (first != app_counter) {
-			DBG_PRINT("\"%s\" first ID is not contiguous", obj.key);
+			DBG_PRINT("\"%s\" first ID is not contiguous", obj_key);
 			status = ERR_CODE(FAILED);
 			goto exit;
 		}
 
 		for (; app_counter <= last; app_counter++) {
-			status = util_app_create(test, app_counter, obj.val);
+			status = util_app_create(test, app_counter, obj_val);
 			if (status != ERR_CODE(PASSED))
 				goto exit;
 		}
@@ -142,19 +138,17 @@ exit:
  */
 static const struct app_type *get_app_type(struct test_data *test_data)
 {
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 	const struct app_type *test = NULL;
-	struct json_object_iter obj = { 0 };
 
 	if (!test_data || !test_data->definition)
 		return NULL;
 
-	if (!json_object_get_object(test_data->definition))
-		return NULL;
-
-	json_object_object_foreachC(test_data->definition, obj)
+	util_json_object_foreach(test_data->definition, obj_key, obj_val)
 	{
 		for (test = app_types; test->name; test++) {
-			if (!strncmp(obj.key, test->name, strlen(test->name))) {
+			if (!strncmp(obj_key, test->name, strlen(test->name))) {
 				if (!test->run_app)
 					break;
 
@@ -164,9 +158,9 @@ static const struct app_type *get_app_type(struct test_data *test_data)
 
 		if (!test->name) {
 			util_log(test_data, "JSON-C tag name %s ignored\n",
-				 obj.key);
+				 obj_key);
 			DBG_PRINT("WARNING: JSON-C object tag %s ignored",
-				  obj.key);
+				  obj_key);
 		}
 	}
 

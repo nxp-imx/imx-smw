@@ -103,7 +103,7 @@ struct test_data {
 struct subtest_data {
 	struct json_object *params;
 	struct app_data *app;
-	char *name;
+	const char *name;
 	int *status;
 	union {
 		int api_status;

@@ -97,7 +97,8 @@ int util_thread_init(struct llist **list);
 /**
  * util_thread_start() - Start a new thread linked to the application.
  * @app: Application data
- * @obj: Thread JSON-C definition
+ * @thr_name: Thread JSON-C name definition
+ * @thr_obj: Thread JSON-C object definition
  * @thr_num: Thread number in the application
  *
  * Function adds the new thread in the application list and
@@ -109,8 +110,8 @@ int util_thread_init(struct llist **list);
  * -BAD_ARGS               - One of the argument is not correct.
  * -BAD_PARAM_TYPE         - Thread definition is not correct.
  */
-int util_thread_start(struct app_data *app, struct json_object_iter *obj,
-		      unsigned int thr_num);
+int util_thread_start(struct app_data *app, const char *thr_name,
+		      struct json_object *thr_obj, unsigned int thr_num);
 
 /**
  * util_get_thread_name() - Get the thread name

@@ -65,6 +65,25 @@
 		_ret;                                                          \
 	})
 
+/*
+ * Prefer to use this macro in place of the json_object_object_foreachC()
+ * JSON-C nactive macro.
+ * More details:
+ * https://json-c.github.io/json-c/json-c-0.10/doc/html/json__object__iterator_8h.html
+ */
+#define util_json_object_foreach(_obj, _obj_key, _obj_val)                     \
+	struct json_object_iterator _iter = { 0 };                             \
+	struct json_object_iterator _iter_end = { 0 };                         \
+	typeof(_obj) __obj = (_obj);                                           \
+	_iter = json_object_iter_init_default();                               \
+	_iter_end = json_object_iter_end(__obj);                               \
+	for (_iter = json_object_iter_begin(__obj);                            \
+	     (!json_object_iter_equal(&_iter, &_iter_end) ?                    \
+		      (_obj_key = json_object_iter_peek_name(&_iter),          \
+		      _obj_val = json_object_iter_peek_value(&_iter)) :        \
+		      0);                                                      \
+	     json_object_iter_next(&_iter))
+
 /**
  * util_check_result() - Compare API status with expected status
  *

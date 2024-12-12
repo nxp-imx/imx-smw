@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2024 NXP
  */
 
 #include <stdlib.h>
@@ -27,31 +27,28 @@ static void key_free_data(void *data)
 static int register_keys(struct json_object *okeys, struct llist *keys)
 {
 	int res = ERR_CODE(PASSED);
-	struct json_object_iter okey_params = { 0 };
+
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 	void *data = NULL;
 
-	if (!json_object_get_object(okeys))
-		return ERR_CODE(BAD_ARGS);
-
-	json_object_object_foreachC(okeys, okey_params)
+	util_json_object_foreach(okeys, obj_key, obj_val)
 	{
-		if (!json_object_get_object(okey_params.val)) {
-			DBG_PRINT("Ignore %s", okey_params.key);
+		if (!json_object_get_object(obj_val)) {
+			DBG_PRINT("Ignore %s", obj_key);
 			continue;
 		}
 
-		res = util_list_find_node(keys, (uintptr_t)okey_params.key,
-					  &data);
+		res = util_list_find_node(keys, (uintptr_t)obj_key, &data);
 		if (res != ERR_CODE(PASSED))
 			return res;
 
 		if (data) {
-			DBG_PRINT("Key already registered: %s",
-				  okey_params.key);
+			DBG_PRINT("Key already registered: %s", obj_key);
 			return ERR_CODE(BAD_ARGS);
 		}
 
-		res = util_key_add_node(keys, okey_params.key, okey_params.val);
+		res = util_key_add_node(keys, obj_key, obj_val);
 		if (res != ERR_CODE(PASSED))
 			return res;
 	}
@@ -63,9 +60,11 @@ static int build_keys_list(char *dir_def_file, struct json_object *definition,
 			   struct llist *keys, struct llist *files)
 {
 	int res = ERR_CODE(BAD_ARGS);
+
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 	struct json_object *okeys = NULL;
 	struct json_object *odef = NULL;
-	struct json_object_iter obj = { 0 };
 	char *def_file = NULL;
 	void *dummy = NULL;
 
@@ -126,17 +125,14 @@ static int build_keys_list(char *dir_def_file, struct json_object *definition,
 		}
 	}
 
-	if (!json_object_get_object(definition))
-		return ERR_CODE(PASSED);
-
-	json_object_object_foreachC(definition, obj)
+	util_json_object_foreach(definition, obj_key, obj_val)
 	{
-		if (!strcmp(obj.key, KEYS_OBJ) ||
-		    !strncmp(obj.key, SUBTEST_OBJ, SUBTEST_OBJ_LEN))
+		if (!strcmp(obj_key, KEYS_OBJ) ||
+		    !strncmp(obj_key, SUBTEST_OBJ, SUBTEST_OBJ_LEN))
 			continue;
 
-		if (json_object_get_type(obj.val) == json_type_object) {
-			res = build_keys_list(dir_def_file, obj.val, keys,
+		if (json_object_get_type(obj_val) == json_type_object) {
+			res = build_keys_list(dir_def_file, obj_val, keys,
 					      files);
 			if (res != ERR_CODE(PASSED))
 				return res;
@@ -286,9 +282,11 @@ static int restore_keys_from_json_file(struct subtest_data *subtest,
 				       char *filepath)
 {
 	int res = ERR_CODE(FAILED);
+
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 	struct json_object *restore_obj = NULL;
 	struct json_object *okeys = NULL;
-	struct json_object_iter okey_params = { 0 };
 	struct key_data key_data = { 0 };
 	int64_t key_id = 0;
 
@@ -309,13 +307,9 @@ static int restore_keys_from_json_file(struct subtest_data *subtest,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	if (!json_object_get_object(okeys))
-		return ERR_CODE(BAD_ARGS);
-
-	json_object_object_foreachC(okeys, okey_params)
+	util_json_object_foreach(okeys, obj_key, obj_val)
 	{
-		res = util_read_json_type(&key_id, ID_OBJ, t_int64,
-					  okey_params.val);
+		res = util_read_json_type(&key_id, ID_OBJ, t_int64, obj_val);
 		if (res != ERR_CODE(PASSED))
 			return res;
 
@@ -327,16 +321,16 @@ static int restore_keys_from_json_file(struct subtest_data *subtest,
 		 * present.
 		 * Else create a new key in the list and add the information.
 		 */
-		res = util_key_update_node(list_keys(subtest), okey_params.key,
+		res = util_key_update_node(list_keys(subtest), obj_key,
 					   &key_data);
 		if (res == ERR_CODE(KEY_NOTFOUND)) {
-			res = util_key_add_node(list_keys(subtest),
-						okey_params.key, NULL);
+			res = util_key_add_node(list_keys(subtest), obj_key,
+						NULL);
 			if (res != ERR_CODE(PASSED))
 				return res;
 
-			res = util_key_update_node(list_keys(subtest),
-						   okey_params.key, &key_data);
+			res = util_key_update_node(list_keys(subtest), obj_key,
+						   &key_data);
 		}
 
 		if (res != ERR_CODE(PASSED))

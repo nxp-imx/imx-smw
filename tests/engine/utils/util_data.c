@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -46,32 +46,31 @@ static int data_add_node(struct llist *data_list, const char *data_name,
 static int register_data(struct json_object *odata, struct llist *data_list)
 {
 	int res = ERR_CODE(PASSED);
-	struct json_object_iter odata_params = { 0 };
+
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 	void *data = NULL;
 
 	if (!json_object_get_object(odata))
 		return ERR_CODE(BAD_ARGS);
 
-	json_object_object_foreachC(odata, odata_params)
+	util_json_object_foreach(odata, obj_key, obj_val)
 	{
-		if (!json_object_get_object(odata_params.val)) {
-			DBG_PRINT("Ignore %s", odata_params.key);
+		if (!json_object_get_object(obj_val)) {
+			DBG_PRINT("Ignore %s", obj_key);
 			continue;
 		}
 
-		res = util_list_find_node(data_list,
-					  (uintptr_t)odata_params.key, &data);
+		res = util_list_find_node(data_list, (uintptr_t)obj_key, &data);
 		if (res != ERR_CODE(PASSED))
 			return res;
 
 		if (data) {
-			DBG_PRINT("Data already registered: %s",
-				  odata_params.key);
+			DBG_PRINT("Data already registered: %s", obj_key);
 			return ERR_CODE(BAD_ARGS);
 		}
 
-		res = data_add_node(data_list, odata_params.key,
-				    odata_params.val);
+		res = data_add_node(data_list, obj_key, obj_val);
 		if (res != ERR_CODE(PASSED))
 			return res;
 	}
@@ -83,9 +82,11 @@ static int build_data_list(char *dir_def_file, struct json_object *definition,
 			   struct llist *data_list, struct llist *files)
 {
 	int res = ERR_CODE(BAD_ARGS);
+
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 	struct json_object *odata_list = NULL;
 	struct json_object *odef = NULL;
-	struct json_object_iter obj = { 0 };
 	char *def_file = NULL;
 	void *dummy = NULL;
 
@@ -148,16 +149,13 @@ static int build_data_list(char *dir_def_file, struct json_object *definition,
 		}
 	}
 
-	if (!json_object_get_object(definition))
-		return ERR_CODE(PASSED);
-
-	json_object_object_foreachC(definition, obj)
+	util_json_object_foreach(definition, obj_key, obj_val)
 	{
-		if (!strcmp(obj.key, DATA_LIST_OBJ))
+		if (!strcmp(obj_key, DATA_LIST_OBJ))
 			continue;
 
-		if (json_object_get_type(obj.val) == json_type_object) {
-			res = build_data_list(dir_def_file, obj.val, data_list,
+		if (json_object_get_type(obj_val) == json_type_object) {
+			res = build_data_list(dir_def_file, obj_val, data_list,
 					      files);
 			if (res != ERR_CODE(PASSED))
 				return res;

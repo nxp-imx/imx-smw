@@ -277,7 +277,9 @@ static int run_multithread(struct app_data *app)
 {
 	int status = ERR_CODE(FAILED);
 	int res = ERR_CODE(PASSED);
-	struct json_object_iter obj;
+
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 	unsigned int thr_counter = 1;
 	unsigned int first, last;
 
@@ -296,17 +298,17 @@ static int run_multithread(struct app_data *app)
 		goto end;
 	}
 
-	json_object_object_foreachC(app->def, obj)
+	util_json_object_foreach(app->def, obj_key, obj_val)
 	{
 		first = 0;
 		last = 0;
 
 		/* Run the JSON-C "Thread" object, other tag is ignored */
-		if (strncmp(obj.key, THREAD_OBJ, strlen(THREAD_OBJ)))
+		if (strncmp(obj_key, THREAD_OBJ, strlen(THREAD_OBJ)))
 			continue;
 
 		/* Get Thread ID */
-		res = util_get_json_obj_ids(obj.key, THREAD_OBJ, &first, &last);
+		res = util_get_json_obj_ids(obj_key, THREAD_OBJ, &first, &last);
 		if (res != ERR_CODE(PASSED)) {
 			status = ERR_CODE(FAILED);
 			break;
@@ -317,14 +319,15 @@ static int run_multithread(struct app_data *app)
 		 * thread counter.
 		 */
 		if (first != thr_counter) {
-			DBG_PRINT("\"%s\" first ID is not contiguous", obj.key);
+			DBG_PRINT("\"%s\" first ID is not contiguous", obj_key);
 			status = ERR_CODE(FAILED);
 			break;
 		}
 
 		/* Create and start all threads */
 		for (; thr_counter <= last; thr_counter++) {
-			res = util_thread_start(app, &obj, thr_counter);
+			res = util_thread_start(app, obj_key, obj_val,
+						thr_counter);
 			status = (status == ERR_CODE(PASSED)) ? res : status;
 		}
 	}
@@ -387,19 +390,17 @@ static int run_singlethread(struct app_data *app)
  */
 static const struct thread_type *get_thread_type(struct app_data *app)
 {
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 	const struct thread_type *test = NULL;
-	struct json_object_iter obj = { 0 };
 
 	if (!app || !app->parent_def)
 		return NULL;
 
-	if (!json_object_get_object(app->parent_def))
-		return NULL;
-
-	json_object_object_foreachC(app->parent_def, obj)
+	util_json_object_foreach(app->parent_def, obj_key, obj_val)
 	{
 		for (test = thread_types; test->name; test++) {
-			if (!strncmp(obj.key, test->name, strlen(test->name))) {
+			if (!strncmp(obj_key, test->name, strlen(test->name))) {
 				if (!test->run_thread)
 					break;
 
@@ -409,9 +410,9 @@ static const struct thread_type *get_thread_type(struct app_data *app)
 
 		if (!test->name) {
 			FPRINT_MESSAGE(app, "JSON-C tag name %s ignored\n",
-				       obj.key);
+				       obj_key);
 			DBG_PRINT("WARNING: JSON-C object tag %s ignored",
-				  obj.key);
+				  obj_key);
 		}
 	}
 

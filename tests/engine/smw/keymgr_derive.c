@@ -837,7 +837,7 @@ static int kdf_hkdf_read_args(void **kdf_args, struct json_object *oargs)
 	res = ERR_CODE(PASSED);
 
 end:
-	if (res != ERR_CODE(PASSED) && hkdf_args) {
+	if (res != ERR_CODE(PASSED)) {
 		if (salt_buf.data)
 			free(salt_buf.data);
 
@@ -847,7 +847,8 @@ end:
 		if (peer_pub_buf.data)
 			free(peer_pub_buf.data);
 
-		free(hkdf_args);
+		if (hkdf_args)
+			free(hkdf_args);
 	}
 
 	return res;

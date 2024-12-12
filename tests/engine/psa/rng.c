@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <stdlib.h>
@@ -59,7 +59,7 @@ int rng_psa(struct subtest_data *subtest)
 			DBG_DHEX("Random number", random.data, random.length);
 
 		/* Verify there is not zero value in the random bufffer */
-		while (random.length--) {
+		while (random.length && random.length--) {
 			if (*(random.data + random.length))
 				goto exit;
 		}

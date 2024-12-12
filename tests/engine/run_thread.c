@@ -530,8 +530,9 @@ void *process_thread(void *arg)
 	int idx_stat = 0;
 	size_t status_array_size = 0;
 	struct thread_data *thr = arg;
-	struct json_object_iter obj = { 0 };
 	struct subtest_data subtest = { 0 };
+	const char *obj_key = NULL;
+	struct json_object *obj_val = NULL;
 
 	if (!thr || !thr->def) {
 		DBG_PRINT_BAD_ARGS();
@@ -544,20 +545,14 @@ void *process_thread(void *arg)
 	thr->stat.skipped = 0;
 	thr->stat.passed = 0;
 
-	if (!json_object_get_object(thr->def)) {
-		DBG_PRINT("Thread definition json_object_get_object error");
-		thr->status = ERR_CODE(INTERNAL);
-		goto exit;
-	}
-
 	/*
 	 * Get the number of subtests defined and allocate the
 	 * subtest status array.
 	 */
-	json_object_object_foreachC(thr->def, obj)
+	util_json_object_foreach(thr->def, obj_key, obj_val)
 	{
 		/* Count the JSON-C "subtest" objects, other tags are ignored */
-		if (!strncmp(obj.key, SUBTEST_OBJ, strlen(SUBTEST_OBJ)))
+		if (!strncmp(obj_key, SUBTEST_OBJ, strlen(SUBTEST_OBJ)))
 			thr->stat.number++;
 	}
 
@@ -616,18 +611,19 @@ void *process_thread(void *arg)
 			thr->stat.status_array[idx_stat] = ERR_CODE(FAILED);
 
 		idx_stat = 0;
-		json_object_object_foreachC(thr->def, obj)
+
+		util_json_object_foreach(thr->def, obj_key, obj_val)
 		{
 			/* Run the JSON-C "subtest" object, other tag is ignored */
-			if (strncmp(obj.key, SUBTEST_OBJ, strlen(SUBTEST_OBJ)))
+			if (strncmp(obj_key, SUBTEST_OBJ, strlen(SUBTEST_OBJ)))
 				continue;
 
 			/* Reset the subtest data */
 			memset(&subtest, 0, sizeof(subtest));
 
 			subtest.app = thr->app;
-			subtest.name = obj.key;
-			subtest.params = obj.val;
+			subtest.name = obj_key;
+			subtest.params = obj_val;
 			subtest.status = &thr->stat.status_array[idx_stat];
 			if (INC_OVERFLOW(idx_stat, 1)) {
 				err = ERR_CODE(INTERNAL);

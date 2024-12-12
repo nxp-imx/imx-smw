@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include <errno.h>
@@ -30,6 +30,7 @@ static void *process_ipc(void *arg)
 	unsigned int priority = 0;
 	struct app_data *app = arg;
 	struct ipc_op op = { 0 };
+	int *err = NULL;
 
 	if (!app || !app->ipc || !app->ipc->queue)
 		exit(ERR_CODE(BAD_ARGS));
@@ -46,8 +47,9 @@ static void *process_ipc(void *arg)
 		if (rsize == -1) {
 			DBG_PRINT("IPC Message receive %s", util_get_strerr());
 
-			if (__errno_location()) {
-				switch (errno) {
+			err = __errno_location();
+			if (err) {
+				switch (*err) {
 				case EBADF:
 				case EINVAL:
 				case EBADMSG:

@@ -386,22 +386,26 @@ static int get_smw_config(char **buffer, unsigned int *size,
 	DBG_PRINTF(INFO, "File size: %ld\n", fsize);
 
 	/* Check of file size is not too big */
-	if (fsize > (long)(UINT16_MAX - 1)) {
+	if (SET_OVERFLOW(fsize, *size)) {
 		DBG_PRINTF(ERROR, "File size too big\n");
 		goto end;
 	}
 
-	*size = fsize;
 	if (fseek(f, 0, SEEK_SET)) {
 		if (ferror(f))
 			perror("fseek() SEEK_SET");
 		goto end;
 	}
 
-	*buffer = malloc(*size + 1);
+	/* Allocate NULL termination character */
+	if (INC_OVERFLOW(fsize, 1))
+		goto end;
+
+	*buffer = malloc(fsize);
 	if (!*buffer)
 		goto end;
-	if (*size != fread(*buffer, sizeof **buffer, *size, f)) {
+
+	if (*size != fread(*buffer, sizeof(**buffer), *size, f)) {
 		if (feof(f)) {
 			DBG_PRINTF(ERROR, "Error reading %s: unexpected EOF\n",
 				   file_name);
@@ -413,7 +417,9 @@ static int get_smw_config(char **buffer, unsigned int *size,
 
 		goto end;
 	}
+
 	*(*buffer + *size) = '\0';
+
 	DBG_PRINTF(INFO, "Plaintext configuration (size: %d):\n%.*s\n", *size,
 		   *size, *buffer);
 

@@ -1047,6 +1047,7 @@ static int create_directory(const char *filename)
 	char *end = NULL;
 	char *directory = NULL;
 	size_t length = 0;
+	int *err = NULL;
 
 	end = strrchr(filename, '/');
 	if (!end) {
@@ -1073,7 +1074,8 @@ static int create_directory(const char *filename)
 	directory[length - 1] = '\0';
 
 	if (mkdir(directory, 0777)) {
-		if (__errno_location() && errno != EEXIST) {
+		err = __errno_location();
+		if (err && *err != EEXIST) {
 			DBG_PRINTF(ERROR, "%s (%d): %s\n", __func__, __LINE__,
 				   get_strerr());
 			goto end;

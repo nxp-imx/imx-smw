@@ -13,8 +13,10 @@ static FILE *stddebug;
 
 char *get_strerr(void)
 {
-	if (__errno_location())
-		return strerror(errno);
+	int *err = __errno_location();
+
+	if (err)
+		return strerror(*err);
 
 	return "Unknown error";
 }

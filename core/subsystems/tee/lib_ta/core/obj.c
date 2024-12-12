@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023-2024 NXP
  */
 
 #include <util.h>
@@ -150,10 +150,13 @@ TEE_Result ta_find_and_get_transient_id(uint32_t id, struct obj_data *obj_data)
 
 TEE_Result ta_register_persistent_object(struct obj_data *obj_data)
 {
-	TEE_Result res = TEE_SUCCESS;
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_ObjectHandle handle = TEE_HANDLE_NULL;
 
 	FMSG("Executing %s", __func__);
+
+	if (!obj_data)
+		return res;
 
 	res = TEE_CreatePersistentObject(SMW_TEE_STORAGE, &obj_data->id,
 					 sizeof(obj_data->id),

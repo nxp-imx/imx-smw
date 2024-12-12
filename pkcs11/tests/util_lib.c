@@ -14,8 +14,10 @@
 
 char *util_lib_get_strerror(void)
 {
-	if (__errno_location())
-		return strerror(errno);
+	int *err = __errno_location();
+
+	if (err)
+		return strerror(*err);
 
 	return "error unknown";
 }

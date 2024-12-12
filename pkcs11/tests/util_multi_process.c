@@ -78,6 +78,7 @@ int util_create_open_shm(struct mp_args *args)
 {
 	int ret = 0;
 	off_t shm_size = 0;
+	int *err = NULL;
 
 	ret = sprintf(args->shm.name, "/%s", args->testname);
 	if (ret <= 0) {
@@ -93,7 +94,8 @@ int util_create_open_shm(struct mp_args *args)
 	 */
 	ret = shm_open(args->shm.name, O_CREAT | O_EXCL | O_RDWR, 0600);
 	if (ret == -1) {
-		if (__errno_location() && errno == EEXIST) {
+		err = __errno_location();
+		if (err && *err == EEXIST) {
 			args->child = 1;
 			ret = shm_open(args->shm.name, O_RDWR, 0);
 		}

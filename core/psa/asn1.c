@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2023 NXP
+ * Copyright 2022-2024 NXP
  */
 
 #include <stdint.h>
@@ -98,13 +98,14 @@ static int encode_length(uint8_t **data, const uint8_t *end, size_t length)
 	i = len - 1;
 	p = *data;
 
-	if (!i)
+	if (!i) {
 		*p++ = length & UINT8_MAX;
-	else
+	} else {
 		*p++ = ASN1_LONG_LENGTH | i;
 
-	while (i--)
-		*p++ = (length >> (8 * i)) & UINT8_MAX;
+		while (i--)
+			*p++ = (length >> (8 * i)) & UINT8_MAX;
+	}
 
 	SMW_DBG_ASSERT(*data + len == p);
 	if (*data + len != p)

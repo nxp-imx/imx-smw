@@ -39,18 +39,18 @@ The releases are listed from the most recent to the first one.
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
-##### 1. ELE Subsystem
-
 #### SMW Library - _version 4.2_
 ##### 1. SMW APIs
 
 * Save data storage ID in database to check for ELE EL2GO certificate object.
 * Call `smw_delete_data()` to delete ELE EL2GO object.
+* Fix coverity 2024.9.0 findings.
 
 ##### 2. Subsystems
 
 * ELE: Add ed25519 key management.
 * ELE: Add support of ed25519 Sign and Verify operations.
+* Fix coverity 2024.9.0 findings.
 
 ##### 3. ARM PSA APIs
 
@@ -60,16 +60,22 @@ The failure is due to the storage manager which is already loaded and a new inst
 At init time, log can be redirected to a file and log level could be set.
 * ED25519 is supported by ELE on i.MX93 and i.MX91, add support to Key management
 Sign and Verify algorithm in ELE configuration file.
-
+* Fix coverity 2024.9.0 findings.
 
 #### SMW Tests - _version 4.2_
 
 * Add tests to validate ed25519 Key generation operations with ELE subsystem.
 * Add tests to validate ed25519 Sign and Verify operations with ELE subsystem.
+* Fix coverity 2024.9.0 findings.
 
 #### PKCS#11 Library - _version 4.2_
 
+* Add implementation for C_(Get|Set)OperationState functions
+
 #### PKCS#11 Tests - _version 4.2_
+
+* Add tests for C_(Get|Set)OperationState functions
+* Fix coverity 2024.9.0 findings.
 
 ---
 ### <a id ="rel_4_1"></a></br>**Release 4.1**
@@ -150,7 +156,6 @@ is called.
 * Retrieve public buffer of a key generated or imported using SMW API.
 * Add C_GetObjectSize support
 * Implement multi-part sign/verify PKCS#11 APIs.
-* Add implementation for C_(Get|Set)OperationState functions
 
 #### PKCS#11 Tests - _version 4.1_
 
@@ -164,7 +169,6 @@ is called.
 * Validate public buffer retrieval of a key generated or imported using the SMW API.
 * Add get object size unit test.
 * Validate multi-part sign/verify PKCS#11 APIs.
-* Add tests for C_(Get|Set)OperationState functions
 
 ---
 ### <a id ="rel_4_0"></a></br>**Release 4.0**

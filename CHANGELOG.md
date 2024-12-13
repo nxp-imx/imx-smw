@@ -73,11 +73,13 @@ Sign and Verify algorithm in ELE configuration file.
 #### PKCS#11 Library - _version 4.2_
 
 * Add implementation for C_(Get|Set)OperationState functions
+* Add support for `CKO_PROFILE` object handling.
 
 #### PKCS#11 Tests - _version 4.2_
 
 * Add tests for C_(Get|Set)OperationState functions
 * Fix coverity 2024.9.0 findings.
+* Add tests for `CKO_PROFILE` object.
 
 ---
 ### <a id ="rel_4_1"></a></br>**Release 4.1**

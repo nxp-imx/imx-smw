@@ -731,6 +731,8 @@ int ele_derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 		break;
 
 	case SMW_CONFIG_KDF_ID_HKDF:
+	case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
+	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
 		status = derive_hkdf(hdl, args);
 		break;
 

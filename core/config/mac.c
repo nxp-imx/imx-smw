@@ -158,6 +158,7 @@ static int mac_check_key_usable(unsigned int *ref,
 	int status = SMW_STATUS_OK;
 	struct mac_params params = { 0 };
 	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
 	size_t idx = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -166,8 +167,13 @@ static int mac_check_key_usable(unsigned int *ref,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	algo = SMW_ATTR_GET_ALGO(permitted_algo);
+	mode = SMW_ATTR_GET_MODE(permitted_algo);
+	if (mode == SMW_ATTR_MODE_NONE || mode == SMW_ATTR_MODE_ANY) {
+		status = SMW_STATUS_OK;
+		goto end;
+	}
 
+	algo = SMW_ATTR_GET_ALGO(permitted_algo);
 	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	if (!check_id(key_type_id, params.key.type_bitmap))

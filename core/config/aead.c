@@ -248,6 +248,10 @@ static int check_common_key_usable(enum operation_id operation_id,
 		goto end;
 
 	mode = SMW_ATTR_GET_MODE(permitted_algo);
+	if (mode == SMW_ATTR_MODE_NONE || mode == SMW_ATTR_MODE_ANY) {
+		status = SMW_STATUS_OK;
+		goto end;
+	}
 
 	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 

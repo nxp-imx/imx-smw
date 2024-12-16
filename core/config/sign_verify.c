@@ -311,6 +311,7 @@ static int check_common_key_usable(enum operation_id operation_id,
 	int status = SMW_STATUS_OK;
 	struct sign_verify_params params = { 0 };
 	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+	smw_attr_algo_t curve = SMW_ATTR_CURVE_NONE;
 	size_t idx = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -319,8 +320,13 @@ static int check_common_key_usable(enum operation_id operation_id,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	algo = SMW_ATTR_GET_ALGO(permitted_algo);
+	curve = SMW_ATTR_GET_CURVE(permitted_algo);
+	if (curve == SMW_ATTR_CURVE_NONE || curve == SMW_ATTR_CURVE_ANY) {
+		status = SMW_STATUS_OK;
+		goto end;
+	}
 
+	algo = SMW_ATTR_GET_ALGO(permitted_algo);
 	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	if (!check_id(key_type_id, params.type_bitmap))

@@ -54,7 +54,17 @@ static const char *const key_type_strings[] = {
 
 static const char *const kdf_strings[] = {
 	[SMW_CONFIG_KDF_ID_HKDF] = "HKDF",
+	[SMW_CONFIG_KDF_ID_HKDF_EXTRACT] = "HKDF_EXTRACT",
+	[SMW_CONFIG_KDF_ID_HKDF_EXPAND] = "HKDF_EXPAND",
 	[SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE] = "TLS12_KEY_EXCHANGE"
+};
+
+static unsigned int derive_algo_attrs[] = {
+	[SMW_CONFIG_KDF_ID_HKDF] = SMW_ATTR_ALGO_HKDF,
+	[SMW_CONFIG_KDF_ID_HKDF_EXTRACT] = SMW_ATTR_ALGO_HKDF_EXTRACT,
+	[SMW_CONFIG_KDF_ID_HKDF_EXPAND] = SMW_ATTR_ALGO_HKDF_EXPAND,
+	[SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE] = SMW_ATTR_ALGO_TLS_1_2,
+	[SMW_CONFIG_KDF_ID_NB] = 0,
 };
 
 static int read_key_type_strings(char **start, char *end, unsigned long *bitmap)
@@ -268,6 +278,43 @@ static int derive_key_read_params(char **start, char *end, void **params)
 	return read_params(start, end, OPERATION_ID_DERIVE_KEY, params);
 }
 
+static int derive_check_key_usable(unsigned int *ref,
+				   enum smw_config_key_type_id key_type_id,
+				   smw_attr_algo_t permitted_algo)
+{
+	int status = SMW_STATUS_OK;
+
+	struct key_operation_params params = { 0 };
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_DEFAULT;
+	size_t idx = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	status = get_operation_params(OPERATION_ID_DERIVE_KEY, ref, &params);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	algo = SMW_ATTR_GET_ALGO(permitted_algo);
+
+	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	if (!check_id(key_type_id, params.key.type_bitmap))
+		goto end;
+
+	for (; idx < ARRAY_SIZE(derive_algo_attrs); idx++) {
+		if ((algo == SMW_ATTR_ALGO_DEFAULT ||
+		     algo == derive_algo_attrs[idx]) &&
+		    check_id(idx, params.op_bitmap)) {
+			status = SMW_STATUS_OK;
+			break;
+		}
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 static int update_key_read_params(char **start, char *end, void **params)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -352,7 +399,6 @@ static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 {
 	int status = SMW_STATUS_OK;
 
-	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
 	smw_attr_algo_t class = SMW_ATTR_CLASS_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -367,7 +413,6 @@ static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 		goto end;
 	}
 
-	mode = SMW_ATTR_GET_MODE(attributes->permitted_algo);
 	class = SMW_ATTR_GET_CLASS(attributes->permitted_algo);
 
 	/*
@@ -388,11 +433,6 @@ static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 	 * generation, search for the configured operations for the first match
 	 * for both the key type and algorithm.
 	 */
-
-	if (mode == SMW_ATTR_MODE_NONE || mode == SMW_ATTR_MODE_ANY) {
-		status = SMW_STATUS_OK;
-		goto end;
-	}
 
 	switch (class) {
 	case SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION:
@@ -432,6 +472,12 @@ static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 		status = check_key_usable(OPERATION_ID_MAC, ref,
 					  key_desc->identifier.type_id,
 					  attributes->permitted_algo);
+		break;
+
+	case SMW_ATTR_CLASS_KEY_DERIVATION:
+		status = derive_check_key_usable(&ref,
+						 key_desc->identifier.type_id,
+						 attributes->permitted_algo);
 		break;
 
 	case SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION:

@@ -628,6 +628,20 @@ static int hkdf_convert_input_args(struct smw_derive_key_args *pub_args,
 	if (!hkdf_pub_args->expand && !hkdf_pub_args->extract)
 		goto end;
 
+	if (conv_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXPAND) {
+		if (!hkdf_pub_args->expand || hkdf_pub_args->extract) {
+			SMW_DBG_PRINTF(ERROR,
+				       "HKDF expand and arguments invalid\n");
+			goto end;
+		}
+	} else if (conv_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXTRACT) {
+		if (!hkdf_pub_args->extract || hkdf_pub_args->expand) {
+			SMW_DBG_PRINTF(ERROR,
+				       "HKDF extract and arguments invalid\n");
+			goto end;
+		}
+	}
+
 	base_key_desc = pub_args->key_descriptor_base;
 
 	if (hkdf_pub_args->expand && !hkdf_pub_args->extract) {
@@ -739,6 +753,8 @@ static int convert_input_args(struct smw_derive_key_args *args,
 		break;
 
 	case SMW_CONFIG_KDF_ID_HKDF:
+	case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
+	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
 		status = hkdf_convert_input_args(args, conv_args, subsystem_id);
 		break;
 
@@ -765,6 +781,8 @@ static int convert_output_args(struct smw_derive_key_args *args,
 		break;
 
 	case SMW_CONFIG_KDF_ID_HKDF:
+	case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
+	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
 		status = hkdf_convert_output(args, conv_args);
 		break;
 
@@ -847,7 +865,8 @@ static int create_key_in_db(unsigned int *new_id,
 	struct smw_keymgr_identifier *identifier =
 		&derive_key_args->key_derived.identifier;
 
-	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF) {
+	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF ||
+	    derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXPAND) {
 		hkdf_args = derive_key_args->kdf_args;
 
 		if (!is_hkdf_extract_step(hkdf_args))

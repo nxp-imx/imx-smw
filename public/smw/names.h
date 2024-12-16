@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #ifndef __SMW_NAMES_H__
@@ -461,12 +461,16 @@ typedef enum {
  * Values:
  * * SMW_KDF_NAME_NONE: No Key Derivation Function name specified
  * * SMW_KDF_NAME_HKDF: HMAC-Based Key Derivation Function
+ * * SMW_KDF_NAME_HKDF_EXTRACT: HMAC-Based Key Derivation Extract step Function
+ * * SMW_KDF_NAME_HKDF_EXPAND: HMAC-Based Key Derivation Expand step Function
  * * SMW_KDF_NAME_TLS12_KEY_EXCHANGE: TLS 1.2 Key Exchange
  * * SMW_KDF_NAME_NB: Number of Key Derivation Functions
  */
 typedef enum {
 	SMW_KDF_NAME_NONE,
 	SMW_KDF_NAME_HKDF,
+	SMW_KDF_NAME_HKDF_EXTRACT,
+	SMW_KDF_NAME_HKDF_EXPAND,
 	SMW_KDF_NAME_TLS12_KEY_EXCHANGE,
 	SMW_KDF_NAME_NB
 } smw_kdf_t;

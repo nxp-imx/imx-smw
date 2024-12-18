@@ -15,7 +15,7 @@
 #include "data.h"
 #include "key.h"
 
-bool is_data_object(const char *object_name)
+static bool is_data_object(const char *object_name)
 {
 	static const char data_name[] = "data";
 
@@ -25,7 +25,7 @@ bool is_data_object(const char *object_name)
 	return false;
 }
 
-bool is_key_object(const char *object_name)
+static bool is_key_object(const char *object_name)
 {
 	static const char key_name[] = "key";
 
@@ -35,8 +35,8 @@ bool is_key_object(const char *object_name)
 	return false;
 }
 
-int key_type_to_object_type(smw_key_type_t key_type_name,
-			    smw_object_type_t *obj_type_name)
+static int key_type_to_object_type(smw_key_type_t key_type_name,
+				   smw_object_type_t *obj_type_name)
 {
 	switch (key_type_name) {
 	case SMW_KEY_TYPE_NAME_SECP_R1:
@@ -67,8 +67,8 @@ int key_type_to_object_type(smw_key_type_t key_type_name,
 	return ERR_CODE(PASSED);
 }
 
-int object_read_attributes(struct json_object *params,
-			   smw_attr_attributes_t *attributes)
+static int object_read_attributes(struct json_object *params,
+				  smw_attr_attributes_t *attributes)
 {
 	if (!params || !attributes) {
 		DBG_PRINT_BAD_ARGS();
@@ -81,32 +81,27 @@ int object_read_attributes(struct json_object *params,
 					 &attributes_callback, attributes);
 }
 
-int object_read_descriptor(struct subtest_data *subtest,
-			   struct smw_object_descriptor *object_descriptor,
-			   const char *object_name)
+static int
+object_read_descriptor(struct subtest_data *subtest,
+		       struct smw_object_descriptor *object_descriptor,
+		       const char *object_name)
 {
 	int res = ERR_CODE(BAD_ARGS);
-	struct smw_data_attributes data_attributes = { 0 };
 	struct keypair_ops key = { 0 };
 	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_key_attributes *key_attributes_ptr = NULL;
 	struct json_object *okey_params = NULL;
-
-	struct smw_data_descriptor *data_descriptor_ptr =
-		&object_descriptor->data;
-	struct smw_key_descriptor *key_descriptor_ptr = &object_descriptor->key;
+	struct smw_data_descriptor *data_descriptor = &object_descriptor->data;
 
 	if (is_data_object(object_name)) {
-		data_descriptor_ptr->data_attributes = &data_attributes;
-
-		res = data_read_descriptor(list_data(subtest),
-					   data_descriptor_ptr, object_name);
+		res = data_read_descriptor(list_data(subtest), data_descriptor,
+					   object_name);
 
 		if (res == ERR_CODE(PASSED)) {
-			object_descriptor->id = data_descriptor_ptr->identifier;
+			object_descriptor->id = data_descriptor->identifier;
 			object_descriptor->type = SMW_OBJECT_TYPE_NAME_DATA;
 			object_descriptor->attributes =
-				data_descriptor_ptr->data_attributes->attributes;
+				data_descriptor->data_attributes->attributes;
 		}
 
 	} else if (is_key_object(object_name)) {
@@ -115,7 +110,7 @@ int object_read_descriptor(struct subtest_data *subtest,
 
 		if (res == ERR_CODE(PASSED)) {
 			object_descriptor->key = key.desc;
-			object_descriptor->id = key_descriptor_ptr->id;
+			object_descriptor->id = key.desc.id;
 
 			res = key_type_to_object_type(key.desc.type_name,
 						      &object_descriptor->type);
@@ -133,17 +128,16 @@ int object_read_descriptor(struct subtest_data *subtest,
 			if (res != ERR_CODE(PASSED))
 				return res;
 
-			if (key_attributes_ptr) {
+			if (key_attributes_ptr)
 				object_descriptor->attributes =
-					key_attributes_ptr->attributes;
-			}
+					key_attributes.attributes;
 		}
 	}
 
 	return res;
 }
 
-int object_find_test_args_null(struct subtest_data *subtest)
+static int object_find_test_args_null(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
 
@@ -179,11 +173,12 @@ exit:
 	return res;
 }
 
-int object_find_no_test_error(struct subtest_data *subtest)
+static int object_find_no_test_error(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
 
 	struct smw_object_descriptor object_descriptor = { 0 };
+	struct smw_data_attributes data_attributes = { 0 };
 	const char *object_name = NULL;
 	uint32_t found = 0;
 	uint32_t object_found = 0;
@@ -194,6 +189,8 @@ int object_find_no_test_error(struct subtest_data *subtest)
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
+
+	object_descriptor.data.data_attributes = &data_attributes;
 
 	res = util_read_json_type(&object_name, OBJECT_NAME, t_string,
 				  subtest->params);

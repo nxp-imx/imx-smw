@@ -40,8 +40,7 @@ Operations supported:
  - Get key security size
  - Get key type name
  - Commit key storage (do nothing)
- - Key Derivation: Derive a key from a symmetric base key using the HMAC based
-   Key Derivation Function (HKDF)
+ - `Key Derivation`_
 
 .. [1] multiple of 2 bits
 .. [2] multiple of 8 bits
@@ -145,7 +144,7 @@ Operations supported:
  - Sign
  - Verify
 
-Sign or verify a message in full or a hashed message as per the hash algorithm set by the user. 
+Sign or verify a message in full or a hashed message as per the hash algorithm set by the user.
 The list of supported hash algorithms is :numref:`tee_hash`.
 
 .. [4] multiple of 2 bits

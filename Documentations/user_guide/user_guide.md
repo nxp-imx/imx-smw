@@ -35,7 +35,7 @@ This guide aims to explain how to build and integrate the Security Middleware Li
 
 # 2. Secure Subsystems versus Operations
 Following <a href="#table-secure-subsystem-vs-operations">Secure Subsystems vs
-Opertions table</a> summarizes the Operations supported per Secure Subsystem
+Operations table</a> summarizes the Operations supported per Secure Subsystem
 and supported by the SMW Library.
 
 <table>

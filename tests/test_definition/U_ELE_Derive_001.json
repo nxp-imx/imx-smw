@@ -125,7 +125,7 @@
 		]
 	},
 	"subtest 5": {
-		"description": "Unsupported KDF",
+		"description": "KDF not configured",
 		"command": "DERIVE",
 		"subsystem": "ELE",
 		"op_input": "key 4",
@@ -150,7 +150,7 @@
 			"master_sec_key_name": "master secret key"
 		},
 		"op_output": "key 2",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED",
 		"restriction_list": [
 			"imx8ulp",
 			"imx95"

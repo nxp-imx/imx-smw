@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include <inttypes.h>
@@ -52,7 +52,8 @@ struct ecc_key_type {
 
 static const struct ecc_key_type ecc_key_type[] = {
 	ECC_KEY_TYPE(SECP_R1, SECP_R1),
-	ECC_KEY_TYPE(BRAINPOOL_R1, BRAINPOOL_P_R1)
+	ECC_KEY_TYPE(BRAINPOOL_R1, BRAINPOOL_P_R1),
+	ECC_KEY_TYPE(ED25519, TWISTED_EDWARDS)
 };
 
 #define KEY_USAGE(_name)                                                       \
@@ -114,7 +115,7 @@ static const struct {
 	KEY_ALGORITHM(CCM, DEFAULT, CCM, AEAD),
 	KEY_ALGORITHM(GCM, DEFAULT, GCM, AEAD),
 	KEY_ALGORITHM(CHACHA20_POLY1305, CHACHA20, ANY, AEAD),
-	KEY_ALGORITHM_CURVE(PURE_EDDSA, EDDSA, ANY, ASYMMETRIC_SIGNATURE),
+	KEY_ALGORITHM_CURVE(PURE_EDDSA, EDDSA, ED25519, ASYMMETRIC_SIGNATURE),
 	KEY_ALGORITHM_CURVE(ED25519PH, EDDSA, ED25519, ASYMMETRIC_SIGNATURE),
 	KEY_ALGORITHM_CURVE(ED448PH, EDDSA, ED448, ASYMMETRIC_SIGNATURE),
 	KEY_ALGORITHM(RSA_PKCS1V15_CRYPT, RSA, PKCS1_1_5,
@@ -190,7 +191,8 @@ static bool is_ecc_key_type(smw_key_type_t type_name)
 
 	if (type_name == SMW_KEY_TYPE_NAME_SECP_R1 ||
 	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_R1 ||
-	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1)
+	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1 ||
+	    type_name == SMW_KEY_TYPE_NAME_ED25519)
 		return true;
 
 	return false;
@@ -845,6 +847,7 @@ static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg)
 			algo = key_algorithm[i].smw_algo;
 			class = key_algorithm[i].smw_class;
 			mode = key_algorithm[i].smw_mode;
+			hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
 			break;
 		}
 	}

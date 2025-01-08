@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include "smw/names.h"
@@ -442,14 +442,17 @@ static psa_status_t set_signature_attributes(psa_algorithm_t alg, bool hashed,
 	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
 	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
 	smw_attr_algo_t hash = SMW_ATTR_HASH_NONE;
+	smw_attr_algo_t curve = SMW_ATTR_CURVE_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!hashed && !info)
-		return PSA_ERROR_INVALID_ARGUMENT;
+	if (alg != PSA_ALG_PURE_EDDSA) {
+		if (!hashed && !info)
+			return PSA_ERROR_INVALID_ARGUMENT;
 
-	if (!hashed)
-		hash = info->smw_alg_id;
+		if (!hashed)
+			hash = info->smw_alg_id;
+	}
 
 	if (PSA_ALG_IS_RSA_PKCS1V15_SIGN(alg)) {
 		algo = SMW_ATTR_ALGO_RSA;
@@ -460,6 +463,20 @@ static psa_status_t set_signature_attributes(psa_algorithm_t alg, bool hashed,
 	} else if (PSA_ALG_IS_ECDSA(alg)) {
 		algo = SMW_ATTR_ALGO_ECDSA;
 		mode = SMW_ATTR_MODE_NONE;
+	} else if (PSA_ALG_IS_HASH_EDDSA(alg) || alg == PSA_ALG_PURE_EDDSA) {
+		algo = SMW_ATTR_ALGO_EDDSA;
+
+		if (alg == PSA_ALG_ED448PH) {
+			curve = SMW_ATTR_CURVE_ED448;
+			hash = SMW_ATTR_HASH_SHAKE256;
+		} else if (alg == PSA_ALG_ED25519PH) {
+			curve = SMW_ATTR_CURVE_ED25519;
+			hash = SMW_ATTR_HASH_SHA512;
+		} else if (alg == PSA_ALG_PURE_EDDSA) {
+			curve = SMW_ATTR_CURVE_ANY;
+		} else {
+			return PSA_ERROR_INVALID_ARGUMENT;
+		}
 	}
 
 	if (algo == SMW_ATTR_ALGO_RSA)
@@ -468,6 +485,9 @@ static psa_status_t set_signature_attributes(psa_algorithm_t alg, bool hashed,
 	else if (algo == SMW_ATTR_ALGO_ECDSA)
 		*sign_algo =
 			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(mode, hash);
+	else if (algo == SMW_ATTR_ALGO_EDDSA)
+		*sign_algo =
+			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(curve, hash);
 
 	return PSA_SUCCESS;
 }
@@ -1482,6 +1502,19 @@ set_sign_verify_args(psa_key_id_t key, psa_algorithm_t alg,
 	return set_signature_attributes(alg, hashed, &args->sign_algo);
 }
 
+static psa_status_t get_sign_hash_algo(psa_algorithm_t alg,
+				       psa_algorithm_t *hash_algo)
+{
+	if (alg == PSA_ALG_ED25519PH)
+		*hash_algo = PSA_ALG_SHA_512;
+	else if (alg == PSA_ALG_ED448PH)
+		*hash_algo = PSA_ALG_SHAKE256_512;
+	else
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	return PSA_SUCCESS;
+}
+
 static psa_status_t sign_common(psa_key_id_t key, psa_algorithm_t alg,
 				const uint8_t *message, size_t message_length,
 				uint8_t *signature, size_t signature_size,
@@ -1490,13 +1523,41 @@ static psa_status_t sign_common(psa_key_id_t key, psa_algorithm_t alg,
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_sign_verify_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
+	size_t computed_digest_length = 0;
+	uint8_t digest[PSA_HASH_MAX_SIZE] = { 0 };
+	psa_algorithm_t hash_algo = PSA_ALG_NONE;
+	const uint8_t *input = NULL;
+	size_t input_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!smw_utils_is_lib_initialized())
 		return psa_status;
 
-	psa_status = set_sign_verify_args(key, alg, message, message_length,
+	/*
+	 * Input message should be pre-hashed only when using HashEdDSA
+	 * algo with psa_sign_message() or psa_verify_message().
+	 */
+	if (!hashed && PSA_ALG_IS_HASH_EDDSA(alg)) {
+		psa_status = get_sign_hash_algo(alg, &hash_algo);
+		if (psa_status != PSA_SUCCESS)
+			return psa_status;
+
+		psa_status =
+			psa_hash_compute(hash_algo, message, message_length,
+					 digest, sizeof(digest),
+					 &computed_digest_length);
+		if (psa_status != PSA_SUCCESS)
+			return psa_status;
+
+		input = digest;
+		input_length = computed_digest_length;
+	} else {
+		input = message;
+		input_length = message_length;
+	}
+
+	psa_status = set_sign_verify_args(key, alg, input, input_length,
 					  signature, signature_size, hashed,
 					  &key_descriptor, &args);
 	if (psa_status != PSA_SUCCESS)
@@ -1538,6 +1599,11 @@ static psa_status_t verify_common(psa_key_id_t key, psa_algorithm_t alg,
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_sign_verify_args args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
+	size_t computed_digest_length = 0;
+	uint8_t digest[PSA_HASH_MAX_SIZE] = { 0 };
+	psa_algorithm_t hash_algo = PSA_ALG_NONE;
+	const uint8_t *input = NULL;
+	size_t input_length = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1547,8 +1613,28 @@ static psa_status_t verify_common(psa_key_id_t key, psa_algorithm_t alg,
 	if (!signature || !signature_length)
 		return PSA_ERROR_INVALID_SIGNATURE;
 
+	if (!hashed && PSA_ALG_IS_HASH_EDDSA(alg)) {
+		psa_status = get_sign_hash_algo(alg, &hash_algo);
+		if (psa_status != PSA_SUCCESS)
+			return psa_status;
+
+		psa_status =
+			psa_hash_compute(hash_algo, message, message_length,
+					 digest, sizeof(digest),
+					 &computed_digest_length);
+		if (psa_status != PSA_SUCCESS)
+			return psa_status;
+
+		input = digest;
+		input_length = computed_digest_length;
+
+	} else {
+		input = message;
+		input_length = message_length;
+	}
+
 	psa_status =
-		set_sign_verify_args(key, alg, message, message_length,
+		set_sign_verify_args(key, alg, input, input_length,
 				     (uint8_t *)signature, signature_length,
 				     hashed, &key_descriptor, &args);
 	if (psa_status != PSA_SUCCESS)

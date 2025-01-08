@@ -1,0 +1,239 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "ED25519",
+			"security_size": 255,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ED25519PH"
+			]
+		},
+		"key 2": {
+			"type": "ED25519",
+			"security_size": 255,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"PURE_EDDSA"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 3": {
+		"command": "SIGN",
+		"api": "PSA",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"message": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"output": 64,
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 4": {
+		"command": "VERIFY",
+		"api": "PSA",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"message": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 3,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 5": {
+		"command": "SIGN",
+		"api": "PSA",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"digest": [
+			"bad101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8"
+		],
+		"output": 64,
+		"sign_id": 1,
+		"key_name": "key 1",
+		"depends": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 6": {
+		"command": "VERIFY",
+		"api": "PSA",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"digest": [
+			"bad101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8"
+		],
+		"sign_id": 1,
+		"key_name": "key 1",
+		"depends": 5,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 7": {
+		"command": "SIGN",
+		"api": "PSA",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"message": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"sign_id": 2,
+		"output": 64,
+		"key_name": "key 2",
+		"depends": 2,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 8": {
+		"command": "VERIFY",
+		"api": "PSA",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"message": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"sign_id": 2,
+		"key_name": "key 2",
+		"depends": 7,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"depends": 2,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	}
+}

@@ -1,0 +1,69 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "ED25519",
+			"security_size": 255,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"PURE_EDDSA"
+			]
+		},
+		"key 2": {
+			"type": "ED25519",
+			"security_size": 255,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE",
+				"SIGN_HASH"
+			],
+			"permitted_algo": [
+				"ED25519PH"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 3": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 4": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"depends": 2,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	}
+}

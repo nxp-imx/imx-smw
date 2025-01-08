@@ -1,0 +1,76 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "ED25519",
+			"security_size": 255,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"ED25519PH"
+			]
+		},
+		"key 2": {
+			"type": "ED25519",
+			"security_size": 255,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"PURE_EDDSA"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"command": "GET_KEY_ATTRIBUTES",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 5": {
+		"command": "GET_KEY_ATTRIBUTES",
+		"api": "PSA",
+		"key_name": "key 2",
+		"depends": 4
+	},
+	"subtest 6": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 2",
+		"depends": 4
+	}
+}

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023, 2025 NXP
  */
 
 #ifndef __SIGN_VERIFY_H__
@@ -12,9 +12,9 @@
 #define VERIFY_OPERATION 1
 
 /**
- * sign_verify() - Do a sign or verify operation.
+ * sign_verify() - Do a sign/sign hash/verify/verify hash operation.
  * @subtest: Subtest data.
- * @operation: SIGN_OPERATION or VERIFY_OPERATION
+ * @operation: Operation type
  *
  * Return:
  * PASSED                       - Success.

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <stdlib.h>
@@ -22,25 +22,23 @@ int sign_verify_psa(struct subtest_data *subtest, int operation)
 	const char *key_name = NULL;
 	psa_algorithm_t psa_alg_id = PSA_ALG_NONE;
 	int sign_id = INT_MAX;
-	unsigned int message_length = 0;
+	unsigned int input_length = 0;
 	unsigned int list_sign_length = 0;
 	unsigned int output_length = 0;
 	unsigned int exp_sign_length = 0;
 	unsigned int signature_size = 0;
 	size_t signature_length = 0;
-	unsigned char *message = NULL;
+	unsigned char *input = NULL;
 	unsigned char *list_sign = NULL;
 	unsigned char *output = NULL;
 	unsigned char *exp_sign = NULL;
 	unsigned char *signature = NULL;
+	bool is_hashed = false;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
-
-	if (operation != SIGN_OPERATION && operation != VERIFY_OPERATION)
-		return ERR_CODE(UNDEFINED_CMD);
 
 	/* Key name is mandatory */
 	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string,
@@ -71,10 +69,17 @@ int sign_verify_psa(struct subtest_data *subtest, int operation)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
-	/* Read message buffer if any */
-	res = util_read_hex_buffer(&message, &message_length, subtest->params,
+	/* Read input (message/digest) buffer if any */
+	res = util_read_hex_buffer(&input, &input_length, subtest->params,
 				   MESS_OBJ);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
+	if (res == ERR_CODE(MISSING_PARAMS)) {
+		/* If 'message' tag is not present, check for 'digest' tag */
+		res = util_read_hex_buffer(&input, &input_length,
+					   subtest->params, DIGEST_OBJ);
+		is_hashed = true;
+	}
+
+	if (res != ERR_CODE(PASSED))
 		goto exit;
 
 	/* Get 'sign_id' parameter */
@@ -131,34 +136,31 @@ int sign_verify_psa(struct subtest_data *subtest, int operation)
 
 	/* Call operation function and compare result with expected one */
 	if (operation == SIGN_OPERATION) {
-		if (PSA_ALG_GET_HASH(psa_alg_id) != PSA_ALG_NONE)
-			subtest->psa_status =
-				psa_sign_message(key_test.attributes.id,
-						 psa_alg_id, message,
-						 message_length, signature,
-						 signature_size,
-						 &signature_length);
-		else
+		if (is_hashed)
 			subtest->psa_status =
 				psa_sign_hash(key_test.attributes.id,
-					      psa_alg_id, message,
-					      message_length, signature,
-					      signature_size,
+					      psa_alg_id, input, input_length,
+					      signature, signature_size,
 					      &signature_length);
-
-	} else { /* operation == VERIFY_OPERATION */
-		if (PSA_ALG_GET_HASH(psa_alg_id) != PSA_ALG_NONE)
-			subtest->psa_status =
-				psa_verify_message(key_test.attributes.id,
-						   psa_alg_id, message,
-						   message_length, signature,
-						   signature_size);
 		else
 			subtest->psa_status =
+				psa_sign_message(key_test.attributes.id,
+						 psa_alg_id, input,
+						 input_length, signature,
+						 signature_size,
+						 &signature_length);
+	} else if (operation == VERIFY_OPERATION) {
+		if (is_hashed)
+			subtest->psa_status =
 				psa_verify_hash(key_test.attributes.id,
-						psa_alg_id, message,
-						message_length, signature,
-						signature_size);
+						psa_alg_id, input, input_length,
+						signature, signature_size);
+		else
+			subtest->psa_status =
+				psa_verify_message(key_test.attributes.id,
+						   psa_alg_id, input,
+						   input_length, signature,
+						   signature_size);
 	}
 
 	if (subtest->psa_status != PSA_SUCCESS) {
@@ -185,8 +187,8 @@ int sign_verify_psa(struct subtest_data *subtest, int operation)
 	}
 
 exit:
-	if (message)
-		free(message);
+	if (input)
+		free(input);
 
 	if (output && output != signature)
 		free(output);

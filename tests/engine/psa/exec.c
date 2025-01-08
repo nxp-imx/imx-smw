@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <string.h>
@@ -23,7 +23,7 @@
  *
  * Return:
  * PASSED		- Passed.
- * Error code from delete_key().
+ * Error code from delete_key_psa().
  */
 static int execute_delete_key_cmd(char *cmd, struct subtest_data *subtest)
 {
@@ -40,7 +40,7 @@ static int execute_delete_key_cmd(char *cmd, struct subtest_data *subtest)
  * Return:
  * PASSED          - Passed.
  * -MISSING_PARAMS - Subsystem missing
- * Error code from generate_key().
+ * Error code from generate_key_psa().
  */
 static int execute_generate_cmd(char *cmd, struct subtest_data *subtest)
 {
@@ -57,7 +57,7 @@ static int execute_generate_cmd(char *cmd, struct subtest_data *subtest)
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
- * Error code from hash().
+ * Error code from hash_psa().
  */
 static int execute_hash_cmd(char *cmd, struct subtest_data *subtest)
 {
@@ -74,7 +74,7 @@ static int execute_hash_cmd(char *cmd, struct subtest_data *subtest)
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
- * Error code from mac().
+ * Error code from mac_psa().
  */
 static int execute_mac_cmd(char *cmd, struct subtest_data *subtest)
 {
@@ -95,7 +95,7 @@ static int execute_mac_cmd(char *cmd, struct subtest_data *subtest)
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
- * Error code from import_key().
+ * Error code from import_key_psa().
  */
 static int execute_import_cmd(char *cmd, struct subtest_data *subtest)
 {
@@ -112,7 +112,7 @@ static int execute_import_cmd(char *cmd, struct subtest_data *subtest)
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
- * Error code from export_key().
+ * Error code from export_key_psa().
  */
 static int execute_export_cmd(char *cmd, struct subtest_data *subtest)
 {
@@ -133,9 +133,7 @@ static int execute_export_cmd(char *cmd, struct subtest_data *subtest)
  * @subtest: Subtest data.
  *
  * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from sign_verify().
+ * Error code from sign_verify_psa().
  */
 static int execute_sign_cmd(char *cmd, struct subtest_data *subtest)
 {
@@ -145,14 +143,12 @@ static int execute_sign_cmd(char *cmd, struct subtest_data *subtest)
 }
 
 /**
- * execute_verify_cmd() - Execute sign or verify command.
+ * execute_verify_cmd() - Execute verify command.
  * @cmd: Command name.
  * @subtest: Subtest data.
  *
  * Return:
- * PASSED		- Passed.
- * -UNDEFINED_CMD	- Command is undefined.
- * Error code from sign_verify().
+ * Error code from sign_verify_psa().
  */
 static int execute_verify_cmd(char *cmd, struct subtest_data *subtest)
 {
@@ -169,7 +165,7 @@ static int execute_verify_cmd(char *cmd, struct subtest_data *subtest)
  * Return:
  * PASSED		- Passed.
  * -UNDEFINED_CMD	- Command is undefined.
- * Error code from hash().
+ * Error code from rng_psa().
  */
 static int execute_rng_cmd(char *cmd, struct subtest_data *subtest)
 {
@@ -197,7 +193,7 @@ static int execute_cipher_cmd(char *cmd, struct subtest_data *subtest)
 }
 
 /**
- * execute_get_key_attrs_cmd() - Execute get key attibutes command
+ * execute_get_key_attrs_cmd() - Execute get key attributes command
  * @cmd: Command name.
  * @subtest: Subtest data.
  *

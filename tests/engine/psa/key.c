@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <stdbool.h>
@@ -122,7 +122,8 @@ struct ecc_key_type {
 
 static const struct ecc_key_type ecc_key_type[] = {
 	ECC_KEY_TYPE("SECP_R1", SECP_R1),
-	ECC_KEY_TYPE("BRAINPOOL_R1", BRAINPOOL_P_R1)
+	ECC_KEY_TYPE("BRAINPOOL_R1", BRAINPOOL_P_R1),
+	ECC_KEY_TYPE("ED25519", TWISTED_EDWARDS)
 };
 
 #define KEY_HASH(_string)                                                      \

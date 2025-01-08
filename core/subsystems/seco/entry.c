@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <time.h>
@@ -76,7 +76,9 @@ static int open_key_store_service(hsm_hdl_t session_hdl,
 					 key_store_hdl);
 	if (err != HSM_NO_ERROR) {
 		/* Key store does not exists. Try to create it */
-		open_svc_key_store_args.flags = HSM_SVC_KEY_STORE_FLAGS_CREATE;
+		open_svc_key_store_args.flags =
+			HSM_SVC_KEY_STORE_FLAGS_CREATE |
+			HSM_SVC_KEY_STORE_FLAGS_STRICT_OPERATION;
 		err = hsm_open_key_store_service(session_hdl,
 						 &open_svc_key_store_args,
 						 key_store_hdl);

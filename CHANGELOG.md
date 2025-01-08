@@ -53,6 +53,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Add support of ed25519 Sign and Verify operations.
 * Fix coverity 2024.9.0 findings.
 * ELE: Fix HKDF key permitted algorithm.
+* SECO: Fix key store creation by setting strict operation flag.
 
 ##### 3. ARM PSA APIs
 

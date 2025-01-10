@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <inttypes.h>
@@ -119,6 +119,8 @@ static const struct {
 } sign_type_list[] = { { .attr = SMW_ATTR_MODE_NONE,
 			 .type_id = SMW_CONFIG_SIGN_TYPE_ID_INVALID },
 		       { .attr = SMW_ATTR_MODE_ANY,
+			 .type_id = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT },
+		       { .attr = SMW_ATTR_CURVE_ED25519,
 			 .type_id = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT },
 		       SIGN_TYPE(CMAC),
 		       SIGN_TYPE(PKCS1_1_5),

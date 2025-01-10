@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "smw_config.h"
@@ -127,6 +127,8 @@ static void mac_merge_params(void *caps, void *params)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	mac_caps->algo_bitmap |= mac_params->algo_bitmap;
+	mac_caps->hash_bitmap |= mac_params->hash_bitmap;
+
 	merge_key_params(&mac_caps->key, &mac_params->key);
 }
 
@@ -245,7 +247,7 @@ __export enum smw_status_code smw_config_check_mac(smw_subsystem_t subsystem,
 		if (status != SMW_STATUS_OK)
 			return status;
 
-		if (!check_id(hash_id, params.algo_bitmap))
+		if (!check_id(hash_id, params.hash_bitmap))
 			return SMW_STATUS_OPERATION_NOT_CONFIGURED;
 	}
 

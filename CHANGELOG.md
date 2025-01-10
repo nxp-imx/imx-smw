@@ -58,6 +58,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 3. ARM PSA APIs
 
+* Add support for ed25519 key management.
+* Add support for Edwards-curve digital signature algorithms (PureEdDSA and ED25519PH).
+
 ##### 4. OSAL
 
 * Add SMW_LOG_FILE and SMW_LOG_LEVEL environment variable in debug build.

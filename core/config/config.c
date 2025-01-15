@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <stdbool.h>
@@ -69,6 +69,15 @@ smw_config_check_generate_key(smw_subsystem_t subsystem,
 {
 	(void)subsystem;
 	(void)info;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__export __weak enum smw_status_code
+smw_config_check_derive_key(smw_subsystem_t subsystem, smw_kdf_t kdf)
+{
+	(void)subsystem;
+	(void)kdf;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }

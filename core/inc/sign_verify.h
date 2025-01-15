@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __SIGN_VERIFY_H__
@@ -58,20 +58,6 @@ struct smw_crypto_sign_verify_args {
 	struct smw_sign_verify_attributes attributes;
 	struct smw_sign_verify_args *pub;
 };
-
-/**
- * smw_sign_verify_convert_attributes() - Signature attributes conversion.
- * @in: Public Signature algorithm and attributes.
- * @out: Pointer to an internal Signature attributes structure.
- *
- * This function converts a public Signature algorithm and attributes
- * structure into an internal Signature attributes structure.
- *
- * Return:
- * error code.
- */
-int smw_sign_verify_convert_attributes(smw_attr_algo_t in,
-				       struct smw_sign_verify_attributes *out);
 
 /**
  * smw_sign_verify_get_msg_buf() - Return the message buffer.

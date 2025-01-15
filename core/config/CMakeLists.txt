@@ -8,6 +8,9 @@ target_sources(config PRIVATE
                database.c
                config.c
                tag.c
+               hash_parser.c
+               mac_parser.c
+               cipher_parser.c
                $<$<BOOL:${ENABLE_KEYMGR_MODULE}>:keymgr.c>
                $<$<BOOL:${ENABLE_HASH}>:hash.c>
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>

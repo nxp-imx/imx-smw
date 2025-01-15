@@ -18,15 +18,6 @@
 
 #include "common.h"
 
-static const char *const cipher_mode_strings[] = {
-	[SMW_CONFIG_CIPHER_MODE_ID_CBC] = "CBC",
-	[SMW_CONFIG_CIPHER_MODE_ID_CFB] = "CFB",
-	[SMW_CONFIG_CIPHER_MODE_ID_CTR] = "CTR",
-	[SMW_CONFIG_CIPHER_MODE_ID_CTS] = "CTS",
-	[SMW_CONFIG_CIPHER_MODE_ID_ECB] = "ECB",
-	[SMW_CONFIG_CIPHER_MODE_ID_XTS] = "XTS"
-};
-
 static unsigned int cipher_mode_attrs[] = {
 	[SMW_CONFIG_CIPHER_MODE_ID_CBC] = SMW_ATTR_MODE_CBC_NO_PAD,
 	[SMW_CONFIG_CIPHER_MODE_ID_CFB] = SMW_ATTR_MODE_CFB,
@@ -37,23 +28,31 @@ static unsigned int cipher_mode_attrs[] = {
 	[SMW_CONFIG_CIPHER_MODE_ID_NB] = 0,
 };
 
-int read_cipher_mode_strings(char **start, char *end, unsigned long *bitmap)
-{
-	int status =
-		smw_config_read_strings(start, end, bitmap, cipher_mode_strings,
-					SMW_CONFIG_CIPHER_MODE_ID_NB);
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_MODE_NAME;
-
-	return status;
-}
-
 static const char *const cipher_op_type_strings[] = {
 	[SMW_CONFIG_CIPHER_OP_TYPE_ID_ENCRYPT] = "ENCRYPT",
 	[SMW_CONFIG_CIPHER_OP_TYPE_ID_DECRYPT] = "DECRYPT"
 };
 
-int read_cipher_op_type_strings(char **start, char *end, unsigned long *bitmap)
+/**
+ * read_cipher_op_type_strings() - Read a list of cipher operation types strings
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured strings.
+ *
+ * This function reads a list of strings from the current char of the buffer being
+ * parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char after the
+ * semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Strings are compared with values set in @cipher_op_type_strings.
+ * @bitmap is set with enum smw_config_cipher_op_type_id values.
+ *
+ * Return:
+ * error code.
+ */
+static int read_cipher_op_type_strings(char **start, char *end,
+				       unsigned long *bitmap)
 {
 	int status = smw_config_read_strings(start, end, bitmap,
 					     cipher_op_type_strings,

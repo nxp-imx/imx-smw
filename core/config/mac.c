@@ -15,13 +15,6 @@
 
 #include "common.h"
 
-static const char *const mac_algo_strings[] = {
-	[SMW_CONFIG_MAC_ALGO_ID_CMAC] = "CMAC",
-	[SMW_CONFIG_MAC_ALGO_ID_CMAC_TRUNCATED] = "CMAC_TRUNCATED",
-	[SMW_CONFIG_MAC_ALGO_ID_HMAC] = "HMAC",
-	[SMW_CONFIG_MAC_ALGO_ID_HMAC_TRUNCATED] = "HMAC_TRUNCATED",
-};
-
 static unsigned int mac_algo_attrs[] = {
 	[SMW_CONFIG_MAC_ALGO_ID_CMAC] = SMW_ATTR_ALGO_AES,
 	[SMW_CONFIG_MAC_ALGO_ID_CMAC_TRUNCATED] = SMW_ATTR_ALGO_AES,
@@ -29,17 +22,6 @@ static unsigned int mac_algo_attrs[] = {
 	[SMW_CONFIG_MAC_ALGO_ID_HMAC_TRUNCATED] = SMW_ATTR_ALGO_HMAC,
 	[SMW_CONFIG_MAC_ALGO_ID_NB] = 0,
 };
-
-int read_mac_algo_strings(char **start, char *end, unsigned long *bitmap)
-{
-	int status =
-		smw_config_read_strings(start, end, bitmap, mac_algo_strings,
-					SMW_CONFIG_MAC_ALGO_ID_NB);
-	if (status == SMW_STATUS_UNKNOWN_NAME)
-		status = SMW_STATUS_UNKNOWN_ALGO_NAME;
-
-	return status;
-}
 
 static int mac_read_params(char **start, char *end, void **params)
 {

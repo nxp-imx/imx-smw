@@ -37,7 +37,26 @@ static const char *const aead_op_type_strings[] = {
 	[SMW_CONFIG_AEAD_OP_TYPE_ID_DECRYPT] = "DECRYPT"
 };
 
-int read_aead_mode_strings(char **start, char *end, unsigned long *bitmap)
+/**
+ * read_aead_mode_strings() - Read a list of aead mode strings.
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured strings.
+ *
+ * This function reads a list of strings from the current char
+ * of the buffer being parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char
+ * after the semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Strings are compared with values set in @aead_mode_strings.
+ * @bitmap is set with enum smw_config_aead_mode_id values.
+ *
+ * Return:
+ * error code.
+ */
+static int read_aead_mode_strings(char **start, char *end,
+				  unsigned long *bitmap)
 {
 	int status =
 		smw_config_read_strings(start, end, bitmap, aead_mode_strings,
@@ -48,7 +67,26 @@ int read_aead_mode_strings(char **start, char *end, unsigned long *bitmap)
 	return status;
 }
 
-int read_aead_op_type_strings(char **start, char *end, unsigned long *bitmap)
+/**
+ * read_aead_op_type_strings() - Read a list of AEAD operation types strings
+ * @start: Address of the pointer to the current char.
+ * @end: Pointer to the last char of the buffer being parsed.
+ * @bitmap: Bitmap representing the configured strings.
+ *
+ * This function reads a list of strings from the current char of the buffer being
+ * parsed until a semicolon is detected.
+ * The pointer to the current char is moved to the next char after the
+ * semicolon.
+ * Insignificant chars are skipped if any.
+ *
+ * Strings are compared with values set in @aead_op_type_strings.
+ * @bitmap is set with enum smw_config_aead_op_type_id values.
+ *
+ * Return:
+ * error code.
+ */
+static int read_aead_op_type_strings(char **start, char *end,
+				     unsigned long *bitmap)
 {
 	int status = smw_config_read_strings(start, end, bitmap,
 					     aead_op_type_strings,

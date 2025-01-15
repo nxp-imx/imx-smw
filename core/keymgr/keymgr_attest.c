@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
+
+#include <inttypes.h>
 
 #include "smw_status.h"
 #include "smw_keymgr.h"
@@ -15,6 +17,39 @@
 #include "keymgr_attest.h"
 #include "sign_verify.h"
 #include "exec.h"
+
+static int
+key_attestation_convert_attributes(smw_attr_algo_t in,
+				   struct smw_sign_verify_attributes *out)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_PRINTF(DEBUG, "Signature attributes: 0x%" PRIx64 "\n", in);
+
+	if (SMW_ATTR_GET_CLASS(in) != SMW_ATTR_CLASS_KEY_ATTESTATION)
+		goto end;
+
+	status = smw_utils_sign_attr_to_algo_id(in, &out->algo_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_utils_sign_type_attr_to_id(in, &out->type_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = smw_utils_hash_attr_to_algo_id(in, &out->hash_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (SET_OVERFLOW(SMW_ATTR_GET_SALT_LENGTH(in), out->salt_length))
+		status = SMW_STATUS_INVALID_PARAM;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
 
 static int
 key_attestation_convert_args(struct smw_key_attestation_args *args,
@@ -42,7 +77,7 @@ key_attestation_convert_args(struct smw_key_attestation_args *args,
 		goto end;
 
 	status =
-		smw_sign_verify_convert_attributes(args->sign_algo,
+		key_attestation_convert_attributes(args->sign_algo,
 						   &conv_args->sign_attributes);
 	if (status != SMW_STATUS_OK)
 		goto end;

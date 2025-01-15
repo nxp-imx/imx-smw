@@ -4,6 +4,7 @@ add_library(utils OBJECT "")
 set_target_properties(utils PROPERTIES C_VISIBILITY_PRESET hidden)
 target_sources(utils PRIVATE
                aead.c
+               attrs.c
                base64.c
                cipher.c
                exec.c

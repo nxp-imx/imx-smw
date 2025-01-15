@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -346,24 +346,56 @@ end:
 	return status;
 }
 
-static int sign_check_key_usable(unsigned int *ref,
-				 enum smw_config_key_type_id key_type_id,
-				 smw_attr_algo_t permitted_algo)
-{
-	return check_common_key_usable(OPERATION_ID_SIGN, ref, key_type_id,
-				       permitted_algo);
-}
-
-static int verify_check_key_usable(unsigned int *ref,
-				   enum smw_config_key_type_id key_type_id,
-				   smw_attr_algo_t permitted_algo)
-{
-	return check_common_key_usable(OPERATION_ID_VERIFY, ref, key_type_id,
-				       permitted_algo);
-}
-
 DEFINE_CONFIG_OPERATION_FUNC(sign);
 DEFINE_CONFIG_OPERATION_FUNC(verify);
+
+int sign_key_usable(unsigned int *ref, enum smw_config_key_type_id key_type_id,
+		    struct smw_key_attributes *attributes)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	bool check_sign = false;
+	bool check_verify = false;
+	smw_attr_usage_t usages = attributes->usage_flags;
+	smw_attr_usage_t mask_usages =
+		SMW_ATTR_USAGE_CACHE | SMW_ATTR_USAGE_COPY |
+		SMW_ATTR_USAGE_EXPORT | SMW_ATTR_USAGE_DERIVE;
+
+	/*
+	 * If key usage is not set check both sign and verify operations,
+	 * else check operation(s) corresponding to the key usage set.
+	 */
+	CLEAR_BITS(usages, mask_usages);
+
+	if (usages) {
+		if (SMW_ATTR_USAGE_IS_SIGN_MESSAGE(usages) ||
+		    SMW_ATTR_USAGE_IS_SIGN_HASH(usages))
+			check_sign = true;
+
+		if (SMW_ATTR_USAGE_IS_VERIFY_MESSAGE(usages) ||
+		    SMW_ATTR_USAGE_IS_VERIFY_HASH(usages))
+			check_verify = true;
+	} else if (!usages) {
+		check_sign = true;
+		check_verify = true;
+	}
+
+	if (check_sign) {
+		status = check_common_key_usable(OPERATION_ID_SIGN, ref,
+						 key_type_id,
+						 attributes->permitted_algo);
+
+		if (usages && status == SMW_STATUS_OPERATION_NOT_SUPPORTED)
+			goto end;
+	}
+
+	if (check_verify)
+		status = check_common_key_usable(OPERATION_ID_VERIFY, ref,
+						 key_type_id,
+						 attributes->permitted_algo);
+
+end:
+	return status;
+}
 
 int smw_config_get_signature_algo_id(smw_signature_algo_t name,
 				     enum smw_config_sign_algo_id *id)

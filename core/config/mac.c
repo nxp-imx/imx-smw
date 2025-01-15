@@ -153,9 +153,10 @@ static int mac_check_subsystem_caps(void *args, void *node)
 	return status;
 }
 
-static int mac_check_key_usable(unsigned int *ref,
-				enum smw_config_key_type_id key_type_id,
-				smw_attr_algo_t permitted_algo)
+DEFINE_CONFIG_OPERATION_FUNC(mac);
+
+int mac_key_usable(unsigned int *ref, enum smw_config_key_type_id key_type_id,
+		   struct smw_key_attributes *attributes)
 {
 	int status = SMW_STATUS_OK;
 	struct mac_params params = { 0 };
@@ -169,13 +170,13 @@ static int mac_check_key_usable(unsigned int *ref,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	mode = SMW_ATTR_GET_MODE(permitted_algo);
+	mode = SMW_ATTR_GET_MODE(attributes->permitted_algo);
 	if (mode == SMW_ATTR_MODE_NONE || mode == SMW_ATTR_MODE_ANY) {
 		status = SMW_STATUS_OK;
 		goto end;
 	}
 
-	algo = SMW_ATTR_GET_ALGO(permitted_algo);
+	algo = SMW_ATTR_GET_ALGO(attributes->permitted_algo);
 	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	if (!check_id(key_type_id, params.key.type_bitmap))
@@ -194,8 +195,6 @@ end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
-
-DEFINE_CONFIG_OPERATION_FUNC(mac);
 
 __export enum smw_status_code smw_config_check_mac(smw_subsystem_t subsystem,
 						   struct smw_mac_info *info)

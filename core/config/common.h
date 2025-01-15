@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __COMMON_H__
@@ -32,7 +32,6 @@ enum subsystem_state { SUBSYSTEM_STATE_UNLOADED, SUBSYSTEM_STATE_LOADED };
 		.merge = operation##_merge_params,                             \
 		.print = operation##_print_params,                             \
 		.check_subsystem_caps = operation##_check_subsystem_caps,      \
-		.check_key_usable = operation##_check_key_usable               \
 	};                                                                     \
 	struct operation_func *smw_##operation##_get_func(void)                \
 	{                                                                      \

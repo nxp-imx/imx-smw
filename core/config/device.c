@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -59,18 +59,6 @@ static int device_attestation_check_subsystem_caps(void *args, void *node)
 	return SMW_STATUS_OK;
 }
 
-static int
-device_attestation_check_key_usable(unsigned int *ref,
-				    enum smw_config_key_type_id key_type_id,
-				    smw_attr_algo_t permitted_algo)
-{
-	(void)ref;
-	(void)key_type_id;
-	(void)permitted_algo;
-
-	return SMW_STATUS_OK;
-}
-
 DEFINE_CONFIG_OPERATION_FUNC(device_attestation);
 
 static int device_lifecycle_read_params(char **start, char *end, void **params)
@@ -118,18 +106,6 @@ static int device_lifecycle_check_subsystem_caps(void *args, void *node)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, SMW_STATUS_OK);
-	return SMW_STATUS_OK;
-}
-
-static int
-device_lifecycle_check_key_usable(unsigned int *ref,
-				  enum smw_config_key_type_id key_type_id,
-				  smw_attr_algo_t permitted_algo)
-{
-	(void)ref;
-	(void)key_type_id;
-	(void)permitted_algo;
-
 	return SMW_STATUS_OK;
 }
 
@@ -181,18 +157,6 @@ static int device_reprovision_check_subsystem_caps(void *args, void *node)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, SMW_STATUS_OK);
-	return SMW_STATUS_OK;
-}
-
-static int
-device_reprovision_check_key_usable(unsigned int *ref,
-				    enum smw_config_key_type_id key_type_id,
-				    smw_attr_algo_t permitted_algo)
-{
-	(void)ref;
-	(void)key_type_id;
-	(void)permitted_algo;
-
 	return SMW_STATUS_OK;
 }
 

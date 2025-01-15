@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -108,17 +108,6 @@ static int rng_check_subsystem_caps(void *args, void *node)
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
-}
-
-static int rng_check_key_usable(unsigned int *ref,
-				enum smw_config_key_type_id key_type_id,
-				smw_attr_algo_t permitted_algo)
-{
-	(void)ref;
-	(void)key_type_id;
-	(void)permitted_algo;
-
-	return SMW_STATUS_OK;
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(rng);

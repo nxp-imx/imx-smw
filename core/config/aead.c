@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "smw_config.h"
@@ -272,25 +272,23 @@ end:
 	return status;
 }
 
-static int aead_check_key_usable(unsigned int *ref,
-				 enum smw_config_key_type_id key_type_id,
-				 smw_attr_algo_t permitted_algo)
-{
-	return check_common_key_usable(OPERATION_ID_AEAD, ref, key_type_id,
-				       permitted_algo);
-}
-
-static int
-aead_multi_part_check_key_usable(unsigned int *ref,
-				 enum smw_config_key_type_id key_type_id,
-				 smw_attr_algo_t permitted_algo)
-{
-	return check_common_key_usable(OPERATION_ID_AEAD_MULTI_PART, ref,
-				       key_type_id, permitted_algo);
-}
-
 DEFINE_CONFIG_OPERATION_FUNC(aead);
 DEFINE_CONFIG_OPERATION_FUNC(aead_multi_part);
+
+int aead_key_usable(unsigned int *ref, enum smw_config_key_type_id key_type_id,
+		    struct smw_key_attributes *attributes)
+{
+	int status =
+		check_common_key_usable(OPERATION_ID_AEAD, ref, key_type_id,
+					attributes->permitted_algo);
+
+	if (status == SMW_STATUS_OPERATION_NOT_CONFIGURED)
+		status = check_common_key_usable(OPERATION_ID_AEAD_MULTI_PART,
+						 ref, key_type_id,
+						 attributes->permitted_algo);
+
+	return status;
+}
 
 __export enum smw_status_code smw_config_check_aead(smw_subsystem_t subsystem,
 						    struct smw_aead_info *info)

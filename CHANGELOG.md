@@ -47,6 +47,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix coverity 2024.9.0 findings.
 * Add key derivation permitted algorithm validation when key created.
 * Fix MAC hash bitmap management.
+* Fix library to build modularly.
 
 ##### 2. Subsystems
 

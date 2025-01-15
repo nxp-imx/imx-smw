@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -167,32 +167,6 @@ static int hash_check_subsystem_caps(void *args, void *node)
 static int hash_multi_part_check_subsystem_caps(void *args, void *node)
 {
 	return hash_common_check_subsystem_caps(args, node);
-}
-
-static int hash_common_check_key_usable(unsigned int *ref,
-					enum smw_config_key_type_id key_type_id,
-					smw_attr_algo_t permitted_algo)
-{
-	(void)ref;
-	(void)key_type_id;
-	(void)permitted_algo;
-
-	return SMW_STATUS_OK;
-}
-
-static int hash_check_key_usable(unsigned int *ref,
-				 enum smw_config_key_type_id key_type_id,
-				 smw_attr_algo_t permitted_algo)
-{
-	return hash_common_check_key_usable(ref, key_type_id, permitted_algo);
-}
-
-static int
-hash_multi_part_check_key_usable(unsigned int *ref,
-				 enum smw_config_key_type_id key_type_id,
-				 smw_attr_algo_t permitted_algo)
-{
-	return hash_common_check_key_usable(ref, key_type_id, permitted_algo);
 }
 
 DEFINE_CONFIG_OPERATION_FUNC(hash);

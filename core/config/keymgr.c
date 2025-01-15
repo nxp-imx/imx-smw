@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include "smw_config.h"
@@ -278,9 +278,9 @@ static int derive_key_read_params(char **start, char *end, void **params)
 	return read_params(start, end, OPERATION_ID_DERIVE_KEY, params);
 }
 
-static int derive_check_key_usable(unsigned int *ref,
-				   enum smw_config_key_type_id key_type_id,
-				   smw_attr_algo_t permitted_algo)
+static int derive_key_usable(unsigned int *ref,
+			     enum smw_config_key_type_id key_type_id,
+			     struct smw_key_attributes *attributes)
 {
 	int status = SMW_STATUS_OK;
 
@@ -294,7 +294,7 @@ static int derive_check_key_usable(unsigned int *ref,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	algo = SMW_ATTR_GET_ALGO(permitted_algo);
+	algo = SMW_ATTR_GET_ALGO(attributes->permitted_algo);
 
 	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
@@ -373,24 +373,48 @@ static int check_key_descriptor(struct smw_keymgr_descriptor *key_descriptor,
 	return status;
 }
 
-static int check_key_usable(enum operation_id operation_id, unsigned int ref,
-			    enum smw_config_key_type_id key_type_id,
-			    smw_attr_algo_t permitted_algo)
+__weak int cipher_key_usable(unsigned int *ref,
+			     enum smw_config_key_type_id key_type_id,
+			     struct smw_key_attributes *attributes)
 {
-	int status = SMW_STATUS_OK;
-	struct operation_func *op_func = NULL;
+	(void)ref;
+	(void)key_type_id;
+	(void)attributes;
 
-	SMW_DBG_TRACE_FUNCTION_CALL;
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
 
-	op_func = get_operation_func(operation_id);
-	SMW_DBG_ASSERT(op_func);
+__weak int sign_key_usable(unsigned int *ref,
+			   enum smw_config_key_type_id key_type_id,
+			   struct smw_key_attributes *attributes)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)attributes;
 
-	SMW_DBG_ASSERT(op_func->check_key_usable);
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
 
-	status = op_func->check_key_usable(&ref, key_type_id, permitted_algo);
+__weak int aead_key_usable(unsigned int *ref,
+			   enum smw_config_key_type_id key_type_id,
+			   struct smw_key_attributes *attributes)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)attributes;
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak int mac_key_usable(unsigned int *ref,
+			  enum smw_config_key_type_id key_type_id,
+			  struct smw_key_attributes *attributes)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)attributes;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
 static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
@@ -436,48 +460,28 @@ static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 
 	switch (class) {
 	case SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION:
-		status = check_key_usable(OPERATION_ID_CIPHER, ref,
-					  key_desc->identifier.type_id,
-					  attributes->permitted_algo);
-		if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED)
-			status =
-				check_key_usable(OPERATION_ID_CIPHER_MULTI_PART,
-						 ref,
-						 key_desc->identifier.type_id,
-						 attributes->permitted_algo);
+		status = cipher_key_usable(&ref, key_desc->identifier.type_id,
+					   attributes);
 		break;
 
 	case SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE:
-		status = check_key_usable(OPERATION_ID_SIGN, ref,
-					  key_desc->identifier.type_id,
-					  attributes->permitted_algo);
-		if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED)
-			status = check_key_usable(OPERATION_ID_VERIFY, ref,
-						  key_desc->identifier.type_id,
-						  attributes->permitted_algo);
+		status = sign_key_usable(&ref, key_desc->identifier.type_id,
+					 attributes);
 		break;
 
 	case SMW_ATTR_CLASS_AEAD:
-		status = check_key_usable(OPERATION_ID_AEAD, ref,
-					  key_desc->identifier.type_id,
-					  attributes->permitted_algo);
-		if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED)
-			status = check_key_usable(OPERATION_ID_AEAD_MULTI_PART,
-						  ref,
-						  key_desc->identifier.type_id,
-						  attributes->permitted_algo);
+		status = aead_key_usable(&ref, key_desc->identifier.type_id,
+					 attributes);
 		break;
 
 	case SMW_ATTR_CLASS_MAC:
-		status = check_key_usable(OPERATION_ID_MAC, ref,
-					  key_desc->identifier.type_id,
-					  attributes->permitted_algo);
+		status = mac_key_usable(&ref, key_desc->identifier.type_id,
+					attributes);
 		break;
 
 	case SMW_ATTR_CLASS_KEY_DERIVATION:
-		status = derive_check_key_usable(&ref,
-						 key_desc->identifier.type_id,
-						 attributes->permitted_algo);
+		status = derive_key_usable(&ref, key_desc->identifier.type_id,
+					   attributes);
 		break;
 
 	case SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION:

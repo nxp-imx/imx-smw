@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #ifndef __CONFIG_IDS_H__
@@ -113,6 +113,7 @@ enum smw_config_kdf_id {
 	SMW_CONFIG_KDF_ID_HKDF_EXTRACT,
 	SMW_CONFIG_KDF_ID_HKDF_EXPAND,
 	SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE,
+	SMW_CONFIG_KDF_ID_ECDH,
 	SMW_CONFIG_KDF_ID_NB,
 	SMW_CONFIG_KDF_ID_INVALID
 };

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <stdlib.h>
@@ -34,7 +34,8 @@ enum hkdf_step {
 static struct {
 	smw_kdf_t name;
 	const char *string;
-} kdf_names[] = { KDF_NAME(HKDF), KDF_NAME(TLS12_KEY_EXCHANGE) };
+} kdf_names[] = { KDF_NAME(HKDF), KDF_NAME(TLS12_KEY_EXCHANGE),
+		  KDF_NAME(ECDH) };
 
 #define KEA(_name)                                                             \
 	{                                                                      \
@@ -1018,6 +1019,204 @@ static void kdf_hkdf_free(struct smw_derive_key_args *args)
 	}
 }
 
+/**
+ * kdf_ecdh_setup_base_key() - Setup the base key for key derivation operation.
+ * @subtest: Subtest data.
+ * @args: Pointer to public key derivation argument structure.
+ * @key_base: Test keypair operations.
+ * @base_buffer: Pointer to base keypair buffer structure.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
+ */
+static int kdf_ecdh_setup_base_key(struct subtest_data *subtest,
+				   struct smw_derive_key_args *args,
+				   struct keypair_ops *key_base,
+				   struct smw_keypair_buffer *base_buffer)
+{
+	int res = ERR_CODE(PASSED);
+	(void)args;
+
+	res = setup_derive_base(subtest, key_base, base_buffer);
+
+	return res;
+}
+
+/**
+ * kdf_ecdh_read_args() - Read the ECDH function arguments
+ * @kdf_args: SMW's ECDH arguments read
+ * @oargs: Reference to the test definition json-c arguments array
+ *
+ * Note: the test definition array must define the arguments in the same
+ * order as the SMW's structure definition.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ */
+static int kdf_ecdh_read_args(void **kdf_args, struct json_object *oargs)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	struct tbuffer peer_pub_buf = { 0 };
+
+	struct smw_kdf_ecdh_args *ecdh_args = NULL;
+
+	if (!kdf_args || !oargs) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	ecdh_args = calloc(1, sizeof(*ecdh_args));
+	if (!ecdh_args)
+		return INTERNAL_OUT_OF_MEMORY;
+
+	res = util_read_json_type(&peer_pub_buf, PEER_PUB_KEY_OBJ, t_buffer_hex,
+				  oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
+		DBG_PRINT("Failed to read peer public buffer");
+		goto end;
+	}
+
+	ecdh_args->peer_public_buffer = peer_pub_buf.data;
+	ecdh_args->peer_public_buffer_length = peer_pub_buf.length;
+
+	*kdf_args = ecdh_args;
+	res = ERR_CODE(PASSED);
+
+end:
+	if (res != ERR_CODE(PASSED)) {
+		if (peer_pub_buf.data)
+			free(peer_pub_buf.data);
+
+		if (ecdh_args)
+			free(ecdh_args);
+	}
+
+	return res;
+}
+
+/**
+ * kdf_ecdh_prepare_result() - Prepare the ECDH results
+ * @subtest: Subtest data
+ * @args: Pointer to public key derivation argument structure
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ * -FAILED                  - Error in definition file
+ */
+static int kdf_ecdh_prepare_result(struct subtest_data *subtest,
+				   struct smw_derive_key_args *args)
+{
+	int res = ERR_CODE(PASSED);
+	const char *key_name = NULL;
+	struct smw_derived_key_descriptor *derived_key_desc = NULL;
+	struct json_object *okey_params = NULL;
+
+	res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ, &okey_params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = key_read_attributes(okey_params, &args->key_attributes);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = util_read_json_type(&key_name, OP_OUTPUT_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	derived_key_desc = args->key_descriptor_derived;
+
+	res = read_derived_key_descriptor(list_keys(subtest), derived_key_desc,
+					  key_name);
+
+	return res;
+}
+
+/**
+ * kdf_ecdh_end_operation() - Finalize the ECDH operation
+ * @subtest: Subtest data
+ * @args: SMW's Key derivation arguments
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - Parameter type is not correct or not supported.
+ * -VALUE_NOTFOUND          - Value not found.
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ * -FAILED                  - Error in definition file
+ */
+static int kdf_ecdh_end_operation(struct subtest_data *subtest,
+				  struct smw_derive_key_args *args)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	struct key_data key_data = { 0 };
+	unsigned char *expected_okm = NULL;
+	unsigned int expected_out_len = 0;
+	struct tbuffer buf = { 0 };
+
+	if (!args || !subtest || !args->kdf_arguments) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	/* Read expected OKM buffer */
+	res = util_read_json_type(&buf, OUTPUT_OBJ, t_buffer_hex,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
+		DBG_PRINT("Failed to read expected shared secret buffer");
+		return res;
+	}
+
+	expected_okm = buf.data;
+	expected_out_len = buf.length;
+
+	res = compare_output(args->key_descriptor_derived->shared_secret,
+			     args->key_descriptor_derived->shared_secret_len,
+			     expected_okm, expected_out_len);
+	if (res)
+		goto end;
+
+	key_prepare_derived_key_data(args->key_descriptor_derived, &key_data);
+	res = store_key_data(list_keys(subtest), OP_OUTPUT_OBJ, &key_data,
+			     subtest->params);
+
+end:
+	if (buf.data)
+		free(buf.data);
+
+	return res;
+}
+
+/**
+ * kdf_ecdh_free() - Free the ECDH operation arguments
+ * @args: SMW's Key derivation arguments
+ */
+static void kdf_ecdh_free(struct smw_derive_key_args *args)
+{
+	struct smw_kdf_ecdh_args *ecdh_args = NULL;
+
+	if (args) {
+		if (args->kdf_arguments) {
+			ecdh_args = args->kdf_arguments;
+
+			free(ecdh_args);
+
+			args->kdf_arguments = NULL;
+		}
+	}
+}
+
 static const struct kdf_op {
 	smw_kdf_t name;
 	int (*setup_base)(struct subtest_data *subtest,
@@ -1045,6 +1244,14 @@ static const struct kdf_op {
 			.prepare_result = &kdf_hkdf_prepare_result,
 			.end_operation = &kdf_hkdf_end_operation,
 			.free = &kdf_hkdf_free,
+		},
+		{
+			.name = SMW_KDF_NAME_ECDH,
+			.setup_base = &kdf_ecdh_setup_base_key,
+			.read_args = &kdf_ecdh_read_args,
+			.prepare_result = &kdf_ecdh_prepare_result,
+			.end_operation = &kdf_ecdh_end_operation,
+			.free = &kdf_ecdh_free,
 		},
 		{ 0 } };
 

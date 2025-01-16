@@ -1,0 +1,501 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key 2": {
+			"type": "SECP_R1",
+			"security_size": 384,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key 3": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
+		},
+		"key 4": {
+			"type": "SECP_R1",
+			"security_size": 192,
+			"priv_key": [
+				"beabedd0154a1afcfc85d52181c10f5e",
+				"b47adc51f655047d"
+			],
+			"pub_key": [
+				"0d045f30254adc1fcefa8a5b1f31bf4e",
+				"739dd327cd18d594",
+				"542c314e41427c08278a08ce8d7305f3",
+				"b5b849c72d8aff73"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			]
+		},
+		"key 5": {
+			"type": "HMAC",
+			"security_size": 256,
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key 6": {
+			"type": "SECP_R1",
+			"security_size": 192,
+			"priv_key": [
+				"beabedd0154a1afcfc85d52181c10f5e",
+				"b47adc51f655047d"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key 7": {
+			"type": "SECP_R1",
+			"security_size": 192,
+			"pub_key": [
+				"0d045f30254adc1fcefa8a5b1f31bf4e",
+				"739dd327cd18d594",
+				"542c314e41427c08278a08ce8d7305f3",
+				"b5b849c72d8aff73"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key 192": {
+			"type": "SECP_R1",
+			"security_size": 192,
+			"priv_key": [
+				"beabedd0154a1afcfc85d52181c10f5e",
+				"b47adc51f655047d"
+			],
+			"pub_key": [
+				"0d045f30254adc1fcefa8a5b1f31bf4e",
+				"739dd327cd18d594",
+				"542c314e41427c08278a08ce8d7305f3",
+				"b5b849c72d8aff73"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key 256": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"priv_key": [
+				"C88F01F510D9AC3F70A292DAA2316DE5",
+				"44E9AAB8AFE84049C62A9C57862D1433"
+			],
+			"pub_key": [
+				"DAD0B65394221CF9B051E1FECA5787D0",
+				"98DFE637FC90B9EF945D0C3772581180",
+				"5271A0461CDB8252D61F1C456FA3E59A",
+				"B1F45B33ACCF5F58389E0577B8990BB3"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key 384": {
+			"type": "SECP_R1",
+			"security_size": 384,
+			"priv_key": [
+				"099F3C7034D4A2C699884D73A375A67F",
+				"7624EF7C6B3C0F160647B67414DCE655",
+				"E35B538041E649EE3FAEF896783AB194"
+			],
+			"pub_key": [
+				"667842D7D180AC2CDE6F74F37551F557",
+				"55C7645C20EF73E31634FE72B4C55EE6",
+				"DE3AC808ACB4BDB4C88732AEE95F41AA",
+				"9482ED1FC0EEB9CAFC4984625CCFC23F",
+				"65032149E0E144ADA024181535A0F38E",
+				"EB9FCFF3C2C947DAE69B4C634573A81C"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key 521": {
+			"type": "SECP_R1",
+			"security_size": 521,
+			"format": "BASE64",
+			"priv_key": [
+				"ADet6TGaifTavbPvQRqszKUSPGGsq1e1",
+				"OT3OR2CBcqCVqoWjD+HClSxncdk3upd3",
+				"9ZV7Jjm6sHJGL2jCelc4LUpS"
+			],
+			"pub_key": [
+				"ABVBfoTb8owK08J4cTNJ3H3xU8iXoYkb",
+				"2YurQ1fJ7L7h479C4AuOOArq5XwtEHVk",
+				"lBiFlCr1p/RgFyPEGV0XbO0+AXyuILZk",
+				"HS7raVeG2MlGFGI50Jnhjh1aUUxznXy0",
+				"oQrYp4gBWsQF13mdx157fVts8iYaan8V",
+				"B0OL8BvrbKOSb5WC"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"derived key 192": {
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"0000000000000000"
+			]
+		},
+		"derived key 256": {
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
+		},
+		"derived key 384": {
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000"
+			]
+		},
+		"derived key 521": {
+			"shared_secret": [
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000",
+				"00000000000000000000000000000000",
+				"0000"
+			]
+		},
+		"base 64 derived key": {
+			"format": "BASE64",
+			"shared_secret": [
+				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+				"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+				"AAAAAAAAAAAAAAAAAAAAAAAA"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": "Generate Key 1",
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"description": "Generate Key 2",
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"description": "Import Key 4",
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key 4"
+	},
+	"subtest 4": {
+		"description": "Generate Key 5",
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 5"
+	},
+	"subtest 5": {
+		"description": "DERIVE usage is not set for base key",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 4",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"0d045f30254adc1fcefa8a5b1f31bf4e",
+				"739dd327cd18d594",
+				"542c314e41427c08278a08ce8d7305f3",
+				"b5b849c72d8aff73"
+			]
+		},
+		"op_output": "derived key 192",
+		"depends": 3,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": {
+		"description": "Unsupported Base key",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 5",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"e458390739c8326b4a14b17b1c94d8a6",
+				"9121841f0178ff517d5144511564b6a3",
+				"784e071fb18b71b4626bbe77396325b7",
+				"d334e00d28e0557a05fd78424d2968e8"
+			]
+		},
+		"op_output": "derived key 256",
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+		"depends": 4
+	},
+	"subtest 7": {
+		"description": "Plain key without public buffer",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 6",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"0d045f30254adc1fcefa8a5b1f31bf4e",
+				"739dd327cd18d594",
+				"542c314e41427c08278a08ce8d7305f3",
+				"b5b849c72d8aff73"
+			]
+		},
+		"op_output": "derived key 192",
+		"output": [
+			"716e743b1b37a2cd8479f0a3d5a74c10",
+			"ba2599be18d7e2f4"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": {
+		"description": "Plain key without private buffer",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 7",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"0d045f30254adc1fcefa8a5b1f31bf4e",
+				"739dd327cd18d594",
+				"542c314e41427c08278a08ce8d7305f3",
+				"b5b849c72d8aff73"
+			]
+		},
+		"op_output": "derived key 192",
+		"output": [
+			"716e743b1b37a2cd8479f0a3d5a74c10",
+			"ba2599be18d7e2f4"
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 9": {
+		"description": "Derive and store key",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 1",
+		"op_type": "ECDH",
+		"store_key": true,
+		"op_args": {
+			"peer_public_key": [
+				"e458390739c8326b4a14b17b1c94d8a6",
+				"9121841f0178ff517d5144511564b6a3",
+				"784e071fb18b71b4626bbe77396325b7",
+				"d334e00d28e0557a05fd78424d2968e8"
+			]
+		},
+		"op_output": "key 3",
+		"depends": 1
+	},
+	"subtest 10": {
+		"description": "Derive key",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 2",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"0eb3a6a20ab7c0f6c9cf33d2ced49935",
+				"59b493c90c0c00ad67c8bea44a0b99c7",
+				"952a09760107fb89fb7b8cc75aa65123",
+				"89dd5e57d19b20a515ac38620bee7b4f",
+				"6e806961f9c9196c928568ff9c5ee633",
+				"959eae46fb978e2069d243124571a299"
+			]
+		},
+		"op_output": "derived key 384",
+		"depends": 2
+	},
+	"subtest 11": {
+		"description": "secp192r1",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 192",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"0d045f30254adc1fcefa8a5b1f31bf4e",
+				"739dd327cd18d594",
+				"542c314e41427c08278a08ce8d7305f3",
+				"b5b849c72d8aff73"
+			]
+		},
+		"op_output": "derived key 192",
+		"output": [
+			"716e743b1b37a2cd8479f0a3d5a74c10",
+			"ba2599be18d7e2f4"
+		]
+	},
+	"subtest 12": {
+		"description": "secp256r1",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 256",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"D12DFB5289C8D4F81208B70270398C34",
+				"2296970A0BCCB74C736FC7554494BF63",
+				"56FBF3CA366CC23E8157854C13C58D6A",
+				"AC23F046ADA30F8353E74F33039872AB"
+			]
+		},
+		"op_output": "derived key 256",
+		"output": [
+			"D6840F6B42F6EDAFD13116E0E1256520",
+			"2FEF8E9ECE7DCE03812464D04B9442DE"
+		]
+	},
+	"subtest 13": {
+		"description": "secp384r1",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 384",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"E558DBEF53EECDE3D3FCCFC1AEA08A89",
+				"A987475D12FD950D83CFA41732BC509D",
+				"0D1AC43A0336DEF96FDA41D0774A3571",
+				"DCFBEC7AACF3196472169E838430367F",
+				"66EEBE3C6E70C416DD5F0C68759DD1FF",
+				"F83FA40142209DFF5EAAD96DB9E6386C"
+			]
+		},
+		"op_output": "derived key 384",
+		"output": [
+			"11187331C279962D93D604243FD592CB",
+			"9D0A926F422E47187521287E7156C5C4",
+			"D603135569B9E9D09CF5D4A270F59746"
+		]
+	},
+	"subtest 14": {
+		"description": "secp521r1",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 521",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"00D0B3975AC4B799F5BEA16D5E13E9AF",
+				"971D5E9B984C9F39728B5E5739735A21",
+				"9B97C356436ADC6E95BB0352F6BE64A6",
+				"C2912D4EF2D0433CED2B6171640012D9",
+				"460F",
+				"015C68226383956E3BD066E797B623C2",
+				"7CE0EAC2F551A10C2C724D9852077B87",
+				"220B6536C5C408A1D2AEBB8E86D678AE",
+				"49CB57091F4732296579AB44FCD17F0F",
+				"C56A"
+			]
+		},
+		"op_output": "derived key 521",
+		"output": [
+			"01144C7D79AE6956BC8EDB8E7C787C45",
+			"21CB086FA64407F97894E5E6B2D79B04",
+			"D1427E73CA4BAA240A34786859810C06",
+			"B3C715A3A8CC3151F2BEE417996D19F3",
+			"DDEA"
+		]
+	},
+	"subtest 15": {
+		"description": "secp521r1",
+		"command": "DERIVE",
+		"subsystem": "TEE",
+		"op_input": "key 521",
+		"op_type": "ECDH",
+		"op_args": {
+			"peer_public_key": [
+				"00D0B3975AC4B799F5BEA16D5E13E9AF",
+				"971D5E9B984C9F39728B5E5739735A21",
+				"9B97C356436ADC6E95BB0352F6BE64A6",
+				"C2912D4EF2D0433CED2B6171640012D9",
+				"460F",
+				"015C68226383956E3BD066E797B623C2",
+				"7CE0EAC2F551A10C2C724D9852077B87",
+				"220B6536C5C408A1D2AEBB8E86D678AE",
+				"49CB57091F4732296579AB44FCD17F0F",
+				"C56A"
+			]
+		},
+		"op_output": "base 64 derived key"
+	},
+	"subtest 16": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 17": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 18": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 9
+	},
+	"subtest 19": {
+		"command": "DELETE",
+		"key_name": "key 4",
+		"depends": 3
+	},
+	"subtest 20": {
+		"command": "DELETE",
+		"key_name": "key 5",
+		"depends": 4
+	}
+}

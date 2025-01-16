@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef TEE_SUBSYSTEM_H
@@ -219,7 +219,7 @@ struct shared_context {
  * @key_type: Key type.
  * @key_usage: Key usage.
  * @persistent: Use persistent subsystem storage or not.
- * @hash_algo: Hash algorithm.
+ * @derive_algo: Derivation algorithm.
  * @base_key_id: Key ID of base key.
  * @derived_key_id: Key ID of the derived key.
  * @base_key_sec_size: Base key security size in bits.
@@ -233,7 +233,7 @@ struct key_derive_shared_params {
 	enum tee_key_type key_type;
 	unsigned int key_usage;
 	bool persistent;
-	uint32_t hash_algo;
+	uint32_t derive_algo;
 	uint32_t base_key_id;
 	uint32_t derived_key_id;
 	unsigned int base_key_sec_size;

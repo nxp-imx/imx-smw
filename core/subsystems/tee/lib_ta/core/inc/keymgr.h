@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef TA_KEYMGR_H
@@ -166,5 +166,18 @@ TEE_Result set_key_usage(uint32_t key_usage, TEE_ObjectHandle key_handle);
  * TEE_ERROR_ITEM_NOT_FOUND - Key type isn't present.
  */
 TEE_Result get_key_obj_type(enum tee_key_type key_type, uint32_t *obj_type);
+
+/**
+ * get_key_ecc_curve() - Get key's ecc curve.
+ * @key_type: Key type.
+ * @security_size: Key security size in bits.
+ * @ecc_curve: Pointer to ecc curve. Not updated if an error is returned.
+ *
+ * TEE_SUCCESS			- Success.
+ * TEE_ERROR_BAD_PARAMETERS	- @ecc_curve is NULL.
+ * TEE_ERROR_NOT_SUPPORTED	- Key type/size combination isn't supported.
+ */
+TEE_Result get_key_ecc_curve(enum tee_key_type key_type,
+			     unsigned int security_size, uint32_t *ecc_curve);
 
 #endif /* TA_KEYMGR_H */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <tee_client_api.h>
@@ -101,13 +101,22 @@ static bool is_base_key_type_supported(enum smw_config_key_type_id type_id,
 		default:
 			break;
 		}
+	} else if (kdf_id == SMW_CONFIG_KDF_ID_ECDH) {
+		switch (type_id) {
+		case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+			status = true;
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	return status;
 }
 
 /**
- * get_base_key_buffer() - Get the base key buffer in HEX format.
+ * get_base_key_public_buffer() - Get the base key public buffer in HEX format.
  * @key_desc: Pointer to internal Key descriptor structure
  * @hex_key: Pointer to the HEX buffer to update
  * @hex_key_len: @hex_key length to update
@@ -117,9 +126,9 @@ static bool is_base_key_type_supported(enum smw_config_key_type_id type_id,
  * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
  * Error code from smw_keymgr_set_hex_key_buffer()
  */
-static int get_base_key_buffer(struct smw_keymgr_descriptor *key_desc,
-			       unsigned char **hex_key,
-			       unsigned int *hex_key_len)
+static int get_base_key_public_buffer(struct smw_keymgr_descriptor *key_desc,
+				      unsigned char **hex_key,
+				      unsigned int *hex_key_len)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -135,6 +144,99 @@ static int get_base_key_buffer(struct smw_keymgr_descriptor *key_desc,
 					       key_len, hex_key, hex_key_len);
 
 exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
+ * get_base_key_private_buffer() - Get the base key private buffers in HEX format.
+ * @key_desc: Pointer to internal Key descriptor structure
+ * @hex_key: Pointer to the HEX buffer to update
+ * @hex_key_len: @hex_key length to update
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success.
+ * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
+ * Error code from smw_keymgr_set_hex_key_buffer()
+ */
+static int get_base_key_private_buffer(struct smw_keymgr_descriptor *key_desc,
+				       unsigned char **hex_key,
+				       unsigned int *hex_key_len)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	unsigned char *key = NULL;
+	unsigned int key_len = 0;
+
+	key = smw_keymgr_get_private_data(key_desc);
+	key_len = smw_keymgr_get_private_length(key_desc);
+	if (!key || !key_len)
+		goto exit;
+
+	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, key,
+					       key_len, hex_key, hex_key_len);
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+/**
+ * get_base_key_pair__buffer() - Get the base key pair buffers in HEX format.
+ * @key_desc: Pointer to internal Key descriptor structure
+ * @hex_key: Pointer to the HEX buffer to update
+ * @hex_key_len: @hex_key length to update
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success.
+ * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
+ * Error code from smw_keymgr_set_hex_key_buffer()
+ */
+static int get_base_key_pair_buffer(struct smw_keymgr_descriptor *key_desc,
+				    unsigned char **hex_key,
+				    unsigned int *hex_key_len)
+{
+	int status = SMW_STATUS_OK;
+	unsigned char *hex_key_base_public = NULL;
+	unsigned char *hex_key_base_private = NULL;
+	unsigned int hex_key_base_public_len = 0;
+	unsigned int hex_key_base_private_len = 0;
+
+	status = get_base_key_public_buffer(key_desc, &hex_key_base_public,
+					    &hex_key_base_public_len);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	status = get_base_key_private_buffer(key_desc, &hex_key_base_private,
+					     &hex_key_base_private_len);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	if (ADD_OVERFLOW(hex_key_base_public_len, hex_key_base_private_len,
+			 hex_key_len)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
+	}
+
+	*hex_key = SMW_UTILS_MALLOC(*hex_key_len);
+	if (!*hex_key) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto exit;
+	}
+
+	SMW_UTILS_MEMCPY(*hex_key, hex_key_base_public,
+			 hex_key_base_public_len);
+	SMW_UTILS_MEMCPY(*hex_key + hex_key_base_public_len,
+			 hex_key_base_private, hex_key_base_private_len);
+
+exit:
+	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+		if (hex_key_base_public)
+			SMW_UTILS_FREE(hex_key_base_public);
+		if (hex_key_base_private)
+			SMW_UTILS_FREE(hex_key_base_private);
+	}
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -246,7 +348,7 @@ static int hkdf_derive_key(void *args)
 	}
 
 	status = get_tee_hkdf_algo_id(hkdf_args->prf_id,
-				      &shared_params.hash_algo);
+				      &shared_params.derive_algo);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -283,8 +385,9 @@ static int hkdf_derive_key(void *args)
 			     DER_SHARED_PARAM_IDX);
 
 	if (shared_params.base_key_id == INVALID_KEY_ID) {
-		status = get_base_key_buffer(&key_args->key_base, &hex_key_base,
-					     &hex_key_base_len);
+		status = get_base_key_public_buffer(&key_args->key_base,
+						    &hex_key_base,
+						    &hex_key_base_len);
 		if (status != SMW_STATUS_OK)
 			goto exit;
 	}
@@ -420,6 +523,227 @@ exit:
 	return status;
 }
 
+/**
+ * ecdh_derive_key() - Derive a key from base key using ECDH algo.
+ * @args: Key derive arguments.
+ *
+ * The derived key is stored in the tee subsystem storage.
+ * Depending on the derived key attributes set by the user, the derived key is
+ * transient or persistent object.
+ *
+ * Return:
+ * SMW_STATUS_OK                - Success.
+ * SMW_STATUS_INVALID_PARAM     - One of the parameters is invalid.
+ * SMW_STATUS_ALLOC_FAILURE     - Memory allocation failure.
+ * SMW_STATUS_OUTPUT_TOO_SHORT  - Output buffer is too short
+ * SMW_STATUS_OPERATION_FAILURE - Operation failed
+ * SMW_STATUS_SUBSYSTEM_FAILURE - Subsytem failed.
+ */
+static int ecdh_derive_key(void *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	int temp_status = SMW_STATUS_OK;
+
+	struct smw_keymgr_derive_key_args *key_args = args;
+	struct smw_keymgr_ecdh_args *ecdh_args = NULL;
+	struct key_derive_shared_params shared_params = { 0 };
+	struct smw_keymgr_identifier *key_id_base = NULL;
+	struct smw_keymgr_identifier *key_id_derived = NULL;
+	struct smw_key_attributes *key_attrs = NULL;
+	smw_attr_usage_t actual_usage_flags = 0;
+
+	unsigned int key_len = 0;
+	unsigned char *key_derived = NULL;
+	unsigned char *hex_key_derived = NULL;
+	unsigned char *hex_key_base = NULL;
+	unsigned char *peer_public_buffer = NULL;
+	unsigned int hex_key_base_len = 0;
+	unsigned int hex_key_derived_len = 0;
+	unsigned int peer_public_buffer_len = 0;
+
+	TEEC_Operation op = { 0 };
+	TEEC_SharedMemory shared_mem = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!key_args)
+		goto exit;
+
+	key_id_base = &key_args->key_base.identifier;
+	key_id_derived = &key_args->key_derived.identifier;
+	ecdh_args = key_args->kdf_args;
+	if (!ecdh_args || !key_id_base || !key_id_derived)
+		goto exit;
+
+	peer_public_buffer = smw_keymgr_get_peer_pub_buffer(key_args);
+	if (!peer_public_buffer)
+		goto exit;
+
+	peer_public_buffer_len = smw_keymgr_get_peer_pub_buffer_len(key_args);
+	if (!peer_public_buffer_len)
+		goto exit;
+
+	if (!is_base_key_type_supported(key_id_base->type_id,
+					key_args->kdf_id)) {
+		SMW_DBG_PRINTF(ERROR, "%s unsupported base key type\n",
+			       __func__);
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto exit;
+	}
+
+	shared_params.derive_algo = TEE_ALG_ECDH_DERIVE_SHARED_SECRET;
+
+	key_attrs = key_args->key_attributes;
+	if (key_attrs) {
+		status = check_persistence(key_attrs->attributes,
+					   &shared_params.persistent);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+
+		key_usage_to_tee(key_attrs->usage_flags,
+				 &shared_params.key_usage);
+		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
+	}
+
+	/*
+	 * params[0] = Pointer to derive key shared params structure.
+	 * params[1] = Pointer to public key buffer.
+	 * params[2] = Pointer to derived key buffer.
+	 * params[3] = Pointer to peer public buffer.
+	 */
+
+	shared_params.derived_key_id = key_id_derived->id;
+	shared_params.base_key_id = key_id_base->id;
+	shared_params.base_key_sec_size = key_id_base->security_size;
+	shared_params.store_derived_key = smw_keymgr_is_store_key_set(key_args);
+
+	op.params[DER_SHARED_PARAM_IDX].tmpref.buffer = &shared_params;
+	op.params[DER_SHARED_PARAM_IDX].tmpref.size = sizeof(shared_params);
+
+	SET_TEEC_PARAMS_TYPE(op.paramTypes, TEEC_MEMREF_TEMP_INPUT,
+			     DER_SHARED_PARAM_IDX);
+
+	if (shared_params.base_key_id == INVALID_KEY_ID) {
+		status = get_base_key_pair_buffer(&key_args->key_base,
+						  &hex_key_base,
+						  &hex_key_base_len);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+	}
+
+	status = set_tmpref_buffer(TEEC_MEMREF_TEMP_INPUT,
+				   DER_BASE_KEY_PARAM_IDX, hex_key_base,
+				   hex_key_base_len, &op);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	status = get_derived_key_buffer(&key_args->key_derived,
+					&hex_key_derived, &hex_key_derived_len);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	status = set_tmpref_buffer(TEEC_MEMREF_TEMP_OUTPUT,
+				   DER_DERIVED_KEY_PARAM_IDX, hex_key_derived,
+				   hex_key_derived_len, &op);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	status = set_tmpref_buffer(TEEC_MEMREF_TEMP_INPUT, DER_SHARED_MEM_IDX,
+				   peer_public_buffer, peer_public_buffer_len,
+				   &op);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	/*
+	 * If the derived key security size is not defined by the user and derived
+	 * key to be exported, calculate the derived key security size based on the
+	 * derived key buffer length.
+	 */
+	if (key_id_derived->security_size) {
+		shared_params.derived_key_sec_size =
+			key_id_derived->security_size;
+	} else if (hex_key_derived && hex_key_derived_len) {
+		if (MUL_OVERFLOW(hex_key_derived_len, 8,
+				 &shared_params.derived_key_sec_size)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto exit;
+		}
+	}
+
+	if (shared_params.store_derived_key) {
+		/* Get TEE key type and check key type and key security size */
+		shared_params.key_type =
+			find_check_sym_key_def(key_id_derived->type_id,
+					       key_id_derived->security_size,
+					       key_attrs);
+		if (shared_params.key_type == TEE_KEY_TYPE_ID_INVALID) {
+			SMW_DBG_PRINTF(ERROR,
+				       "%s: Unsupported Key type or size.\n",
+				       __func__);
+			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+			goto exit;
+		}
+	}
+
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_DERIVE_KEY, &op);
+	if (status != SMW_STATUS_OK)
+		goto exit;
+
+	/* Update derived key_identifier struct if user has requested to store the
+	 * derived key, else return the derived key buffer if derived key buffer
+	 * is set.
+	 */
+	if (shared_params.store_derived_key) {
+		key_id_derived->subsystem_id = SUBSYSTEM_ID_TEE;
+		key_id_derived->id = shared_params.derived_key_id;
+		key_id_derived->security_size =
+			shared_params.derived_key_sec_size;
+		key_id_derived->type_id =
+			key_type_tee_to_smw(shared_params.key_type);
+		status = smw_keymgr_get_privacy_id(key_id_derived->type_id,
+						   &key_id_derived->privacy_id);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+
+		SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated.\n", __func__,
+			       key_id_derived->id);
+	}
+
+	if (SET_OVERFLOW(op.params[DER_DERIVED_KEY_PARAM_IDX].tmpref.size,
+			 key_len)) {
+		status = SMW_STATUS_OPERATION_FAILURE;
+		goto exit;
+	}
+
+	key_derived = op.params[DER_DERIVED_KEY_PARAM_IDX].tmpref.buffer;
+	temp_status = smw_keymgr_update_shared_secret(&key_args->key_derived,
+						      key_derived, key_len);
+	if (temp_status != SMW_STATUS_OK)
+		status = temp_status;
+
+exit:
+	if (hex_key_base)
+		SMW_UTILS_FREE(hex_key_base);
+
+	if (status != SMW_STATUS_OK) {
+		if (shared_params.derived_key_id)
+			(void)tee_delete_key(shared_params.derived_key_id);
+	} else if (key_attrs &&
+		   (key_attrs->permitted_algo ||
+		    key_attrs->usage_flags != actual_usage_flags)) {
+		key_attrs->permitted_algo = 0;
+		key_attrs->usage_flags = actual_usage_flags;
+
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	}
+
+	TEEC_ReleaseSharedMemory(&shared_mem);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 int derive_key(void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -431,6 +755,10 @@ int derive_key(void *args)
 	switch (key_args->kdf_id) {
 	case SMW_CONFIG_KDF_ID_HKDF:
 		status = hkdf_derive_key(args);
+		break;
+
+	case SMW_CONFIG_KDF_ID_ECDH:
+		status = ecdh_derive_key(args);
 		break;
 
 	default:

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <util.h>
@@ -213,19 +213,8 @@ TEE_Result get_key_obj_type(enum tee_key_type key_type, uint32_t *obj_type)
 	return TEE_ERROR_ITEM_NOT_FOUND;
 }
 
-/**
- * get_key_ecc_curve() - Get key's ecc curve.
- * @key_type: Key type.
- * @security_size: Key security size in bits.
- * @ecc_curve: Pointer to ecc curve. Not updated if an error is returned.
- *
- * TEE_SUCCESS			- Success.
- * TEE_ERROR_BAD_PARAMETERS	- @ecc_curve is NULL.
- * TEE_ERROR_NOT_SUPPORTED	- Key type/size combination isn't supported.
- */
-static TEE_Result get_key_ecc_curve(enum tee_key_type key_type,
-				    unsigned int security_size,
-				    uint32_t *ecc_curve)
+TEE_Result get_key_ecc_curve(enum tee_key_type key_type,
+			     unsigned int security_size, uint32_t *ecc_curve)
 {
 	unsigned int i = 0;
 	unsigned int array_size = ARRAY_SIZE(key_def_list);
@@ -1201,6 +1190,16 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		}
 
 		attr_count = 1;
+
+		/*
+		 * As TEE EC key derivation could only be done on the
+		 * TEE_TYPE_ECDH_KEYPAIR key type.
+		 * We must enable the ECDSA key attribute extraction
+		 * to enable the creation of a temporary TEE_TYPE_ECDH_KEYPAIR.
+		 */
+		if (shared_params->key_usage & TEE_KEY_USAGE_DERIVE)
+			shared_params->key_usage |= TEE_KEY_USAGE_EXPORTABLE;
+
 	} else if (key_type == TEE_KEY_TYPE_ID_RSA && rsa_pub_exp_attr) {
 		/* Configure RSA public exponent attribute */
 		res = set_key_rsa_attribute(rsa_pub_exp_attr,
@@ -1423,6 +1422,17 @@ TEE_Result import_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	res = ta_find_unused_object_id(&obj_data.id, persistent);
 	if (res)
 		return res;
+
+	if (key_type == TEE_KEY_TYPE_ID_SECP_R1) {
+		/*
+		 * As TEE EC key derivation could only be done on the
+		 * TEE_TYPE_ECDH_KEYPAIR key type.
+		 * We must enable the ECDSA key attribute extraction
+		 * to enable the creation of a temporary TEE_TYPE_ECDH_KEYPAIR.
+		 */
+		if (shared_params->key_usage & TEE_KEY_USAGE_DERIVE)
+			shared_params->key_usage |= TEE_KEY_USAGE_EXPORTABLE;
+	}
 
 	res = key_usage_to_tee(shared_params->key_usage, &key_usage);
 	if (res) {

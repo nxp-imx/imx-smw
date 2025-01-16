@@ -464,6 +464,7 @@ typedef enum {
  * * SMW_KDF_NAME_HKDF_EXTRACT: HMAC-Based Key Derivation Extract step Function
  * * SMW_KDF_NAME_HKDF_EXPAND: HMAC-Based Key Derivation Expand step Function
  * * SMW_KDF_NAME_TLS12_KEY_EXCHANGE: TLS 1.2 Key Exchange
+ * * SMW_KDF_NAME_ECDH: ECDH Key Exchange
  * * SMW_KDF_NAME_NB: Number of Key Derivation Functions
  */
 typedef enum {
@@ -472,6 +473,7 @@ typedef enum {
 	SMW_KDF_NAME_HKDF_EXTRACT,
 	SMW_KDF_NAME_HKDF_EXPAND,
 	SMW_KDF_NAME_TLS12_KEY_EXCHANGE,
+	SMW_KDF_NAME_ECDH,
 	SMW_KDF_NAME_NB
 } smw_kdf_t;
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __SMW_KEYMGR_H__
@@ -381,6 +381,26 @@ struct smw_kdf_hkdf_args {
 		struct smw_hkdf_extract_args hkdf_extract_args;
 		struct smw_hkdf_expand_args hkdf_expand_args;
 	};
+};
+
+/**
+ * struct smw_kdf_ecdh_args - Key derivation function ECDH arguments
+ * @peer_public_buffer: Key derivation input data used to generate the shared
+ * secret key
+ * @peer_public_buffer_length: Length in bytes of the @peer_public_buffer buffer
+ *
+ * This structure defines the additional arguments needed for the ECDH
+ * Key derivation (&smw_derive_key_args->kdf_name = `ECDH`).
+ *
+ * Upon successful completion of the key derivation operation, derived key
+ * descriptor structure @smw_derive_key_args.key_descriptor_derived is
+ * updated. The new derived key ID is set, and shared secret data is
+ * exported if shared_secret and shared_secret_len are set in the derived
+ * key descriptor structure @smw_derive_key_args.key_descriptor_derived.
+ */
+struct smw_kdf_ecdh_args {
+	unsigned char *peer_public_buffer;
+	unsigned int peer_public_buffer_length;
 };
 
 /**

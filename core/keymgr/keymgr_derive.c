@@ -633,6 +633,40 @@ end:
 	return status;
 }
 
+/**
+ * ecdh_convert_output() - Convert ECDH output arguments
+ * @args: Pointer to public SMW derive key arguments structure
+ * @conv_args: Pointer to internal derive key arguments structure
+ *
+ * Return:
+ * SMW_STATUS_OK                     - Success
+ * SMW_STATUS_INVALID_PARAM          - Invalid function parameter
+ * SMW_STATUS_UNKNOWN_KEY_TYPE_NAME  - Unknown key type name
+ * SMW_STATUS_UNKNOWN_FORMAT_NAME    - Unknown key format name
+ */
+static int ecdh_convert_output(struct smw_derive_key_args *args,
+			       struct smw_keymgr_derive_key_args *conv_args)
+
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct smw_derived_key_descriptor *key_derived = NULL;
+	struct smw_keymgr_derived_key_desc *desc = NULL;
+
+	key_derived = args->key_descriptor_derived;
+
+	if (key_derived->id != INVALID_KEY_ID || !conv_args->kdf_args)
+		goto end;
+
+	desc = &conv_args->key_derived;
+	status = smw_keymgr_convert_derived_key_desc(key_derived, desc);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	return status;
+}
+
 static int convert_output_args(struct smw_derive_key_args *args,
 			       struct smw_keymgr_derive_key_args *conv_args)
 {
@@ -651,6 +685,10 @@ static int convert_output_args(struct smw_derive_key_args *args,
 	case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
 	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
 		status = hkdf_convert_output(args, conv_args);
+		break;
+
+	case SMW_CONFIG_KDF_ID_ECDH:
+		status = ecdh_convert_output(args, conv_args);
 		break;
 
 	default:
@@ -684,7 +722,8 @@ static bool is_hkdf_extract_step(struct smw_keymgr_hkdf_args *args)
  * @id: New key identifier created in the database
  * @derive_key_args: Pointer to internal Key derivation arguments structure
  *
- * Function creates a new key in the OSAL object database if the KDF is HKDF.
+ * Function creates a new key in the OSAL object database if the KDF is HKDF
+ * or ECDH.
  * The result of HKDF Extract step is PRK. This key is not stored in the SMW
  * key database.
  *
@@ -700,16 +739,15 @@ static int create_key_in_db(unsigned int *new_id,
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
 	struct smw_keymgr_identifier *identifier =
 		&derive_key_args->key_derived.identifier;
 
 	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF ||
 	    derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXPAND) {
-		hkdf_args = derive_key_args->kdf_args;
-
-		if (!is_hkdf_extract_step(hkdf_args))
+		if (!is_hkdf_extract_step(derive_key_args->kdf_args))
 			status = smw_keymgr_db_create(new_id, identifier);
+	} else if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_ECDH) {
+		status = smw_keymgr_db_create(new_id, identifier);
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -756,7 +794,7 @@ set_derived_key_identifier(unsigned int id,
  * @id: New key identifier created in the database
  * @derive_key_args: Pointer to internal Key derivation arguments structure
  *
- * If the HKDF based key derivation operation returns a status other than
+ * If the KDF based key derivation operation returns a status other than
  * SMW_STATUS_OK and SMW_STATUS_KEY_POLICY_WARNING_IGNORED, delete the key from
  * the database. If the key derivation operation is successful, update the
  * derived key identifier in the database.
@@ -774,29 +812,26 @@ static int update_key_in_db(int status, unsigned int *id,
 {
 	int ret_status = status;
 	int temp_status = SMW_STATUS_OK;
-	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
 	struct smw_keymgr_derived_key_desc *key_desc =
 		&derive_key_args->key_derived;
 
 	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF) {
-		hkdf_args = derive_key_args->kdf_args;
-
-		if (is_hkdf_extract_step(hkdf_args))
+		if (is_hkdf_extract_step(derive_key_args->kdf_args))
 			goto end;
-
-		if (status != SMW_STATUS_OK &&
-		    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
-			/* Delete the key from the database */
-			(void)smw_keymgr_db_delete(*id, &key_desc->identifier);
-			goto end;
-		}
-
-		temp_status = set_derived_key_identifier(*id, key_desc);
-		if (temp_status == SMW_STATUS_OK)
-			set_derived_key_buffer_format(key_desc);
-		else
-			ret_status = temp_status;
 	}
+
+	if (status != SMW_STATUS_OK &&
+	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
+		/* Delete the key from the database */
+		(void)smw_keymgr_db_delete(*id, &key_desc->identifier);
+		goto end;
+	}
+
+	temp_status = set_derived_key_identifier(*id, key_desc);
+	if (temp_status == SMW_STATUS_OK)
+		set_derived_key_buffer_format(key_desc);
+	else
+		ret_status = temp_status;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1094,6 +1129,48 @@ smw_keymgr_hkdf_get_peer_pub_buffer_len(struct smw_keymgr_derive_key_args *args)
 }
 
 /**
+ * smw_keymgr_ecdh_get_peer_pub_buffer_len() - Get peer public key buffer length
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Length of peer public key buffer
+ */
+static unsigned int
+smw_keymgr_ecdh_get_peer_pub_buffer_len(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_ecdh_args *ecdh_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	ecdh_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(ecdh_args->pub_args);
+
+	return ecdh_args->pub_args->peer_public_buffer_length;
+}
+
+/**
+ * smw_keymgr_ecdh_get_peer_pub_buffer() - Get peer public key buffer address
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Address of peer public key buffer
+ */
+static unsigned char *
+smw_keymgr_ecdh_get_peer_pub_buffer(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_ecdh_args *ecdh_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	ecdh_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(ecdh_args->pub_args);
+
+	return ecdh_args->pub_args->peer_public_buffer;
+}
+
+/**
  * hkdf_convert_input_args() - Convert additional operation arguments for HKDF
  * @pub_args: Pointer to public derive key arguments structure
  * @conv_args: Pointer to internal derive key arguments structure
@@ -1194,6 +1271,57 @@ end:
 	return status;
 }
 
+/**
+ * ecdh_convert_input_args() - Convert additional operation arguments for ECDH
+ * @pub_args: Pointer to public derive key arguments structure
+ * @conv_args: Pointer to internal derive key arguments structure
+ * @subsystem_id: Subsystem ID
+ *
+ * Function allocates the KDF internal arguments object and converts
+ * additional operation arguments.
+ * If conversion failed, free the KDF internal arguments object.
+ *
+ * Return :
+ * SMW_STATUS_OK                     - Success
+ * SMW_STATUS_ALLOC_FAILURE          - Out of memory
+ * SMW_STATUS_INVALID_PARAM          - Invalid function parameter
+ * SMW_STATUS_UNKNOWN_ALGO_NAME      - Unknown hash algorithm name
+ */
+static int ecdh_convert_input_args(struct smw_derive_key_args *pub_args,
+				   struct smw_keymgr_derive_key_args *conv_args,
+				   enum subsystem_id *subsystem_id)
+{
+	int status = SMW_STATUS_OK;
+	struct smw_keymgr_ecdh_args *ecdh_args = NULL;
+	struct smw_key_descriptor *base_key_desc = NULL;
+	struct smw_kdf_ecdh_args *ecdh_pub_args = pub_args->kdf_arguments;
+
+	base_key_desc = pub_args->key_descriptor_base;
+
+	/* Get the input key base for the derivation */
+	status = smw_keymgr_convert_descriptor(base_key_desc,
+					       &conv_args->key_base, false,
+					       subsystem_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	ecdh_args = SMW_UTILS_MALLOC(sizeof(*ecdh_args));
+	if (!ecdh_args) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+
+	ecdh_args->pub_args = ecdh_pub_args;
+	conv_args->kdf_args = ecdh_args;
+	conv_args->ops.get_peer = smw_keymgr_ecdh_get_peer_pub_buffer;
+	conv_args->ops.get_peer_len = smw_keymgr_ecdh_get_peer_pub_buffer_len;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	return status;
+}
+
 static int convert_input_args(struct smw_derive_key_args *args,
 			      struct smw_keymgr_derive_key_args *conv_args,
 			      enum subsystem_id *subsystem_id)
@@ -1223,6 +1351,10 @@ static int convert_input_args(struct smw_derive_key_args *args,
 	case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
 	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
 		status = hkdf_convert_input_args(args, conv_args, subsystem_id);
+		break;
+
+	case SMW_CONFIG_KDF_ID_ECDH:
+		status = ecdh_convert_input_args(args, conv_args, subsystem_id);
 		break;
 
 	default:

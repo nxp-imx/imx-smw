@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #ifndef __KEYMGR_DERIVE_H__
@@ -115,6 +115,10 @@ struct smw_keymgr_tls12_args {
 struct smw_keymgr_hkdf_args {
 	enum smw_config_hash_algo_id prf_id;
 	struct smw_kdf_hkdf_args *pub_args;
+};
+
+struct smw_keymgr_ecdh_args {
+	struct smw_kdf_ecdh_args *pub_args;
 };
 
 /**

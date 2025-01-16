@@ -121,7 +121,7 @@
 		"key_name": "key attested",
 		"attest_key_name": "key secp224r1",
 		"sign_attr": [
-			"ECDSA",
+			"ATTEST_ECDSA",
 			"HASH=SHA224"
 		],
 		"challenge": [
@@ -139,7 +139,7 @@
 		"key_name": "key attested",
 		"attest_key_name": "key secp256r1",
 		"sign_attr": [
-			"ECDSA",
+			"ATTEST_ECDSA",
 			"HASH=SHA256"
 		],
 		"challenge": [
@@ -157,7 +157,7 @@
 		"key_name": "key attested",
 		"attest_key_name": "key secp384r1",
 		"sign_attr": [
-			"ECDSA",
+			"ATTEST_ECDSA",
 			"HASH=SHA384"
 		],
 		"challenge": [
@@ -175,7 +175,7 @@
 		"key_name": "key attested",
 		"attest_key_name": "key secp521r1",
 		"sign_attr": [
-			"ECDSA",
+			"ATTEST_ECDSA",
 			"HASH=SHA512"
 		],
 		"challenge": [
@@ -193,7 +193,7 @@
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
 		"sign_attr": [
-			"CMAC"
+			"ATTEST_CMAC"
 		],
 		"challenge": [
 			"000102030405060708090A0B0C0D0E0F"
@@ -211,7 +211,7 @@
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
 		"sign_attr": [
-			"CMAC"
+			"ATTEST_CMAC"
 		],
 		"challenge": [
 			"000102030405060708090A0B0C0D0E0F"
@@ -255,7 +255,7 @@
 		"command": "KEY_ATTESTATION",
 		"attest_key_name": "key AES",
 		"sign_attr": [
-			"CMAC"
+			"ATTEST_CMAC"
 		],
 		"challenge": [
 			"000102030405060708090A0B0C0D0E0F"
@@ -268,7 +268,7 @@
 		"command": "KEY_ATTESTATION",
 		"key_name": "key attested",
 		"sign_attr": [
-			"CMAC"
+			"ATTEST_CMAC"
 		],
 		"challenge": [
 			"000102030405060708090A0B0C0D0E0F"
@@ -282,7 +282,7 @@
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
 		"sign_attr": [
-			"CMAC"
+			"ATTEST_CMAC"
 		],
 		"challenge": [
 			"000102030405060708090A0B0C0D0E0F"
@@ -301,7 +301,7 @@
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
 		"sign_attr": [
-			"CMAC"
+			"ATTEST_CMAC"
 		],
 		"challenge": 16,
 		"result": "SMW_STATUS_INVALID_PARAM",
@@ -317,7 +317,7 @@
 		"key_name": "key attested",
 		"attest_key_name": "key AES",
 		"sign_attr": [
-			"CMAC"
+			"ATTEST_CMAC"
 		],
 		"challenge": [
 			0,

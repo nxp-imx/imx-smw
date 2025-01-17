@@ -56,6 +56,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix coverity 2024.9.0 findings.
 * ELE: Fix HKDF key permitted algorithm.
 * SECO: Fix key store creation by setting strict operation flag.
+* TEE: Add support for key derivation using ECDH.
 
 ##### 3. ARM PSA APIs
 
@@ -78,6 +79,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Fix object descriptor when finding data.
 * Correct the test definition to run when TEE subsystem not enabled.
 * Correct the certificate length in U_ELE_Attestation_001 test.
+* Add U_TEE_Derive_004.
 
 #### PKCS#11 Library - _version 4.2_
 

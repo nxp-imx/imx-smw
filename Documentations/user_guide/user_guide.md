@@ -57,7 +57,7 @@ and supported by the SMW Library.
 </thead>
 <tbody>
 <tr>
-  <td rowspan="14">Key Management</td>
+  <td rowspan="15">Key Management</td>
   <td colspan="2">Generate</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -121,7 +121,7 @@ and supported by the SMW Library.
 	<td>✔️</td>
 </tr>
 <tr>
-  <td rowspan="2">Key Derivation</td>
+  <td rowspan="3">Key Derivation</td>
   <td>TLS 1.2 key agreement</td>
 	<td>✔️<sup><a href="#t_note_1">1</a></sup></td>
 	<td>❌</td>
@@ -137,6 +137,15 @@ and supported by the SMW Library.
 	<td>✔️<sup><a href="#t_note_2">2</a></sup></td>
 	<td>✔️</td>
 	<td>✔️</td>
+	<td>❌️</td>
+</tr>
+<tr>
+  <td>ECDH</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>❌</td>
 	<td>❌️</td>
 </tr>
 <tr>

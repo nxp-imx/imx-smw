@@ -279,8 +279,9 @@ Key Derivation
 ^^^^^^^^^^^^^^
 Supported Key Derivation Functions
  - HMAC-based Key Derivation Function (HKDF)
+ - ECDH Key Derivation Function
 
-The subsystem supports deriving a key from an existing HKDF IKM key as well as
-from a plaintext buffer. Subsystem allows to store the derived key
+The subsystem supports deriving a key from an existing HKDF IKM or EC key
+as well as from a plaintext buffer. Subsystem allows to store the derived key
 upon user request and also allows exporting the derived key if the derived key
 buffer is set.

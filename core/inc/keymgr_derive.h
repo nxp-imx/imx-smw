@@ -61,6 +61,30 @@ struct smw_keymgr_derived_key_desc {
 	struct smw_derived_key_descriptor *pub;
 };
 
+struct smw_keymgr_derive_key_args;
+
+/**
+ * struct smw_keymgr_kdf_ops - kdf with operations
+ * @get_peer: Get peer public key buffer address
+ * @get_peer_len: Get peer public key buffer length
+ * @get_salt: Get salt buffer address
+ * @get_salt_len: Get salt buffer length
+ * @get_info: Get info buffer address
+ * @get_info_len: Get info buffer length
+ *
+ * This structure is initialized by the specific convert_input_args
+ * function.
+ * The operations are function of the kdf algorithm.
+ */
+struct smw_keymgr_kdf_ops {
+	unsigned char *(*get_peer)(struct smw_keymgr_derive_key_args *self);
+	unsigned int (*get_peer_len)(struct smw_keymgr_derive_key_args *self);
+	unsigned char *(*get_salt)(struct smw_keymgr_derive_key_args *self);
+	unsigned int (*get_salt_len)(struct smw_keymgr_derive_key_args *self);
+	unsigned char *(*get_info)(struct smw_keymgr_derive_key_args *self);
+	unsigned int (*get_info_len)(struct smw_keymgr_derive_key_args *self);
+};
+
 /**
  * struct smw_keymgr_derive_key_args - Key derivation arguments
  * @key_base: Descriptor of the base key
@@ -77,6 +101,7 @@ struct smw_keymgr_derive_key_args {
 	bool store_key;
 	enum smw_config_kdf_id kdf_id;
 	void *kdf_args;
+	struct smw_keymgr_kdf_ops ops;
 };
 
 struct smw_keymgr_tls12_args {
@@ -412,64 +437,64 @@ enum hkdf_step smw_keymgr_get_hkdf_step(struct smw_keymgr_hkdf_args *args);
 
 /**
  * smw_keymgr_get_salt() - Get salt buffer address
- * @args: Pointer to internal HKDF argument structure
+ * @args: Pointer to internal argument structure
  *
  * Return:
  * address of salt buffer
  * NULL
  */
-unsigned char *smw_keymgr_get_salt(struct smw_keymgr_hkdf_args *args);
+unsigned char *smw_keymgr_get_salt(struct smw_keymgr_derive_key_args *args);
 
 /**
  * smw_keymgr_get_info() - Get info buffer address
- * @args: Pointer to internal HKDF argument structure
+ * @args: Pointer to internal argument structure
  *
  * Return:
  * address of info buffer
  * NULL
  */
-unsigned char *smw_keymgr_get_info(struct smw_keymgr_hkdf_args *args);
+unsigned char *smw_keymgr_get_info(struct smw_keymgr_derive_key_args *args);
 
 /**
  * smw_keymgr_get_salt_len() - Get salt buffer length
- * @args: Pointer to internal HKDF arguments
+ * @args: Pointer to internal arguments structure
  *
  * Return:
  * Salt buffer length
  * 0
  */
-unsigned int smw_keymgr_get_salt_len(struct smw_keymgr_hkdf_args *args);
+unsigned int smw_keymgr_get_salt_len(struct smw_keymgr_derive_key_args *args);
 
 /**
  * smw_keymgr_get_info_len() - Get info buffer length
- * @args: Pointer to internal HKDF arguments
+ * @args: Pointer to internal arguments structure
  *
  * Return:
  * Info buffer length
  * 0
  */
-unsigned int smw_keymgr_get_info_len(struct smw_keymgr_hkdf_args *args);
+unsigned int smw_keymgr_get_info_len(struct smw_keymgr_derive_key_args *args);
 
 /**
  * smw_keymgr_get_peer_pub_buffer() - Get peer public key buffer address
- * @args: Pointer to internal HKDF argument structure
+ * @args: Pointer to internal arguments structure
  *
  * Return:
  * Address of peer public key buffer
  * NULL
  */
 unsigned char *
-smw_keymgr_get_peer_pub_buffer(struct smw_keymgr_hkdf_args *args);
+smw_keymgr_get_peer_pub_buffer(struct smw_keymgr_derive_key_args *args);
 
 /**
  * smw_keymgr_get_peer_pub_buffer_len() - Get peer public key buffer length
- * @args: Pointer to internal HKDF arguments
+ * @args: Pointer to internal arguments structure
  *
  * Return:
  * Length of peer public key buffer
  * 0
  */
 unsigned int
-smw_keymgr_get_peer_pub_buffer_len(struct smw_keymgr_hkdf_args *args);
+smw_keymgr_get_peer_pub_buffer_len(struct smw_keymgr_derive_key_args *args);
 
 #endif /* __KEYMGR_DERIVE_H__ */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <stdlib.h>
@@ -115,6 +115,7 @@ CK_RV key_cipher_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_key_cipher *new_key = NULL;
+	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	ret = key_cipher_allocate(obj);
 	if (ret != CKR_OK)
@@ -130,7 +131,7 @@ CK_RV key_cipher_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = libobj_get_id(obj, &new_key->key_id);
+	ret = libobj_get_id(unique_id, &new_key->key_id);
 	if (ret != CKR_OK)
 		goto end;
 

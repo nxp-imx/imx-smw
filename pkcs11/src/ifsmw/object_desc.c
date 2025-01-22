@@ -16,44 +16,10 @@
 #include "lib_session.h"
 #include "libobj_types.h"
 
+#include "key_desc.h"
 #include "object_desc.h"
 
 #include "trace.h"
-
-static CK_RV get_object_id(struct librfc2279 *unique_id,
-			   unsigned int *object_id)
-{
-	int ret = CKR_OK;
-
-	struct libbytes id = { 0 };
-
-	if (!unique_id->length)
-		return CKR_ATTRIBUTE_VALUE_INVALID;
-
-	id.number =
-		util_rfc2279_to_byte_len(unique_id->string, unique_id->length);
-	if (!id.number)
-		return CKR_FUNCTION_FAILED;
-
-	id.array = malloc(id.number);
-	if (!id.array)
-		return CKR_HOST_MEMORY;
-
-	if (util_rfc2279_to_byte(id.array, id.number, unique_id->string,
-				 unique_id->length) != unique_id->length) {
-		ret = CKR_FUNCTION_FAILED;
-		goto end;
-	}
-
-	if (TO_INT(*object_id, &id.array[sizeof(CK_OBJECT_CLASS)],
-		   sizeof(unsigned int)))
-		ret = CKR_ATTRIBUTE_VALUE_INVALID;
-
-end:
-	free(id.array);
-
-	return ret;
-}
 
 static CK_RV get_object_class(struct librfc2279 *unique_id,
 			      CK_OBJECT_CLASS_PTR object_class)
@@ -86,23 +52,16 @@ end:
 	return ret;
 }
 
-static CK_RV obj_match_descriptor(struct libobj_obj *obj,
-				  struct smw_object_descriptor *desc,
-				  bool *match)
+static CK_RV obj_match_id(struct libobj_obj *obj,
+			  struct smw_object_descriptor *desc, bool *match)
 {
 	CK_RV ret = CKR_OK;
 	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 	unsigned int id = 0;
 
-	if (!match)
-		return CKR_ARGUMENTS_BAD;
-
 	*match = false;
 
-	if (!unique_id->length)
-		return CKR_OK;
-
-	ret = get_object_id(unique_id, &id);
+	ret = libobj_get_id(unique_id, &id);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -122,118 +81,6 @@ cleanup_smw_object_descriptor(struct smw_object_descriptor *descriptor)
 		free(descriptor->user_id);
 
 	memset(descriptor, 0, sizeof(struct smw_object_descriptor));
-}
-
-static CK_RV get_pkcs11_key_type(smw_key_type_t type, smw_attr_algo_t algo,
-				 CK_KEY_TYPE *key_type)
-{
-	CK_RV ret = CKR_ARGUMENTS_BAD;
-
-	if (!key_type)
-		goto end;
-
-	switch (type) {
-	case SMW_KEY_TYPE_NAME_AES:
-		*key_type = CKK_AES;
-		break;
-
-	case SMW_KEY_TYPE_NAME_DES:
-		*key_type = CKK_DES;
-		break;
-
-	case SMW_KEY_TYPE_NAME_DES3:
-		*key_type = CKK_DES3;
-		break;
-
-	case SMW_KEY_TYPE_NAME_DSA_SM2_FP:
-		*key_type = CKK_DSA;
-		break;
-
-	case SMW_KEY_TYPE_NAME_SM4:
-		*key_type = CKK_SM4;
-		break;
-
-	case SMW_KEY_TYPE_NAME_RSA:
-		*key_type = CKK_RSA;
-		break;
-
-	case SMW_KEY_TYPE_NAME_DH:
-		*key_type = CKK_DH;
-		break;
-
-	case SMW_KEY_TYPE_NAME_HMAC:
-		switch (SMW_ATTR_GET_HASH(algo)) {
-		case SMW_HASH_ALGO_NAME_MD5:
-			*key_type = CKK_MD5_HMAC;
-			break;
-
-		case SMW_HASH_ALGO_NAME_SHA1:
-			*key_type = CKK_SHA_1_HMAC;
-			break;
-
-		case SMW_HASH_ALGO_NAME_SHA224:
-			*key_type = CKK_SHA224_HMAC;
-			break;
-
-		case SMW_HASH_ALGO_NAME_SHA256:
-			*key_type = CKK_SHA256_HMAC;
-			break;
-
-		case SMW_HASH_ALGO_NAME_SHA384:
-			*key_type = CKK_SHA384_HMAC;
-			break;
-
-		case SMW_HASH_ALGO_NAME_SHA512:
-			*key_type = CKK_SHA512_HMAC;
-			break;
-
-		case SMW_HASH_ALGO_NAME_SHA3_224:
-			*key_type = CKK_SHA3_224_HMAC;
-			break;
-
-		case SMW_HASH_ALGO_NAME_SHA3_256:
-			*key_type = CKK_SHA3_256_HMAC;
-			break;
-
-		case SMW_HASH_ALGO_NAME_SHA3_384:
-			*key_type = CKK_SHA3_384_HMAC;
-			break;
-
-		case SMW_HASH_ALGO_NAME_SHA3_512:
-			*key_type = CKK_SHA3_512_HMAC;
-			break;
-
-		default:
-			goto end;
-		}
-		break;
-
-	case SMW_KEY_TYPE_NAME_DERIVE:
-		*key_type = CKK_GENERIC_SECRET;
-		break;
-
-	case SMW_KEY_TYPE_NAME_ED25519:
-		*key_type = CKK_EC_EDWARDS;
-		break;
-
-	case SMW_KEY_TYPE_NAME_BRAINPOOL_R1:
-	case SMW_KEY_TYPE_NAME_BRAINPOOL_T1:
-	case SMW_KEY_TYPE_NAME_SECP_R1:
-		*key_type = CKK_EC;
-		break;
-
-	case SMW_KEY_TYPE_NAME_HKDF_IKM:
-		*key_type = CKK_HKDF;
-		break;
-
-	default:
-		goto end;
-	}
-
-	ret = CKR_OK;
-
-end:
-	return ret;
 }
 
 static CK_RV get_pkcs11_class(smw_object_type_t type,
@@ -291,11 +138,12 @@ static CK_RV attrs_to_object_descriptor(struct smw_object_descriptor *desc,
 					CK_ULONG nb_attrs)
 {
 	CK_RV ret = CKR_OK;
-	CK_BBOOL token = CK_TRUE;
 	CK_OBJECT_CLASS object_class = CKO_DATA;
+	CK_KEY_TYPE key_type = CKK_RSA;
 	struct librfc2279 unique_id = { 0 };
 	struct librfc2279 label = { 0 };
 	struct libbytes user_id = { 0 };
+	struct libbytes ec_params = { 0 };
 	unsigned int i = 0;
 	size_t len = 0;
 
@@ -319,7 +167,7 @@ static CK_RV attrs_to_object_descriptor(struct smw_object_descriptor *desc,
 			if (ret != CKR_OK)
 				break;
 
-			ret = get_object_id(&unique_id, &desc->id);
+			ret = libobj_get_id(&unique_id, &desc->id);
 			if (ret != CKR_OK)
 				break;
 
@@ -346,13 +194,24 @@ static CK_RV attrs_to_object_descriptor(struct smw_object_descriptor *desc,
 
 			break;
 
-		case CKA_TOKEN:
-			ret = attr_to_boolean(&token, &attrs[i]);
-			if (token)
-				desc->attributes =
-					SMW_ATTR_PERSISTENCE_PERSISTENT;
-			else
-				ret = CKR_ATTRIBUTE_VALUE_INVALID;
+		case CKA_KEY_TYPE:
+			ret = attr_to_key(&key_type, &attrs[i]);
+			if (ret == CKR_OK && !(key_type == CKK_EC))
+				ret = key_desc_set_key_type(&desc->key,
+							    key_type, NULL);
+
+			break;
+
+		case CKA_EC_PARAMS:
+			if (ec_params.array) {
+				ret = CKR_ARGUMENTS_BAD;
+				break;
+			}
+
+			ret = attr_to_byte_array(&ec_params, &attrs[i]);
+			if (ret == CKR_OK)
+				ret = key_desc_set_key_type(&desc->key, CKK_EC,
+							    &ec_params);
 
 			break;
 
@@ -403,22 +262,21 @@ end:
 	if (label.string)
 		free(label.string);
 
-	if (ret != CKR_OK) {
-		if (desc->label)
-			free(desc->label);
+	if (ec_params.array)
+		free(ec_params.array);
 
-		if (desc->user_id)
-			free(desc->user_id);
-	}
+	if (ret != CKR_OK)
+		cleanup_smw_object_descriptor(desc);
 
-	DBG_TRACE("%s returning ret = %lx", __func__, ret);
+	DBG_TRACE("%s return %lx", __func__, ret);
 
 	return ret;
 }
 
 static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 					struct smw_key_attributes *key_attr,
-					CK_ATTRIBUTE_PTR attrs,
+					CK_OBJECT_CLASS req_class,
+					CK_ATTRIBUTE_PTR *attrs,
 					CK_ULONG_PTR attrs_count)
 {
 	CK_RV ret = CKR_OK;
@@ -428,41 +286,57 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 	CK_KEY_TYPE key_type = CKK_RSA;
 	CK_ULONG obj_length = 0;
 	struct libbytes label = { 0 };
-	CK_ULONG attrs_index = 0;
+	CK_ULONG nb_attrs = 0;
+	CK_ATTRIBUTE_PTR p_attr = NULL;
 	struct smw_key_descriptor *key = &desc->key;
 	struct smw_data_descriptor *data = &desc->data;
+	CK_ULONG i = 0;
 
-	if (desc->label) {
-		label.array = (CK_BYTE_PTR)desc->label;
-		label.number = strlen(desc->label);
-		if (attrs) {
-			attrs[attrs_index].type = CKA_LABEL;
-			ret = byte_array_to_attr(&attrs[attrs_index], &label);
-			if (ret != CKR_OK)
-				goto end;
-		}
-
-		attrs_index++;
+	if (!attrs) {
+		ret = CKR_GENERAL_ERROR;
+		goto end;
 	}
 
-	switch (desc->attributes) {
-	case SMW_ATTR_PERSISTENCE_PERSISTENT:
-	case SMW_ATTR_PERSISTENCE_PERMANENT:
-		if (attrs) {
-			attrs[attrs_index].type = CKA_TOKEN;
-			ret = boolean_to_attr(&attrs[attrs_index], &bTrue);
+	p_attr = *attrs;
+
+	if (desc->label) {
+		if (p_attr) {
+			label.array = (CK_BYTE_PTR)desc->label;
+			label.number = strlen(desc->label);
+
+			p_attr->type = CKA_LABEL;
+			ret = byte_array_to_attr(p_attr, &label);
+			if (ret != CKR_OK)
+				goto end;
+
+			p_attr++;
 		}
 
-		attrs_index++;
+		nb_attrs++;
+	}
+
+	switch (SMW_ATTR_GET_PERSISTENCE(desc->attributes)) {
+	case SMW_ATTR_PERSISTENCE_PERSISTENT:
+	case SMW_ATTR_PERSISTENCE_PERMANENT:
+		if (p_attr) {
+			p_attr->type = CKA_TOKEN;
+			ret = boolean_to_attr(p_attr, &bTrue);
+
+			p_attr++;
+		}
+
+		nb_attrs++;
 		break;
 
 	case SMW_ATTR_PERSISTENCE_TRANSIENT:
-		if (attrs) {
-			attrs[attrs_index].type = CKA_TOKEN;
-			ret = boolean_to_attr(&attrs[attrs_index], &bFalse);
+		if (p_attr) {
+			p_attr->type = CKA_TOKEN;
+			ret = boolean_to_attr(p_attr, &bFalse);
+
+			p_attr++;
 		}
 
-		attrs_index++;
+		nb_attrs++;
 		break;
 
 	default:
@@ -476,43 +350,40 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 	switch (desc->type) {
 	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
 	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
-		obj_length = key->security_size;
-		if (attrs) {
-			attrs[attrs_index].type = CKA_VALUE_LEN;
-			ret = ulong_to_attr(&attrs[attrs_index], &obj_length);
-			if (ret != CKR_OK)
-				goto end;
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+		if (p_attr) {
+			obj_length = key->security_size;
+			p_attr->type = CKA_VALUE_LEN;
+			ret = ulong_to_attr(p_attr, &obj_length);
+
+			p_attr++;
 		}
 
-		attrs_index++;
+		nb_attrs++;
 
-		ret = get_pkcs11_key_type(key->type_name,
-					  key_attr->permitted_algo, &key_type);
-		if (ret != CKR_OK)
-			goto end;
+		if (p_attr) {
+			ret = key_desc_get_key_type(&key_type, key, key_attr);
+			if (ret == CKR_OK) {
+				p_attr->type = CKA_KEY_TYPE;
+				ret = key_to_attr(p_attr, &key_type);
+			}
 
-		if (attrs) {
-			attrs[attrs_index].type = CKA_KEY_TYPE;
-			ret = key_to_attr(&attrs[attrs_index], &key_type);
-			if (ret != CKR_OK)
-				goto end;
+			p_attr++;
 		}
 
-		attrs_index++;
-
+		nb_attrs++;
 		break;
 
 	case SMW_OBJECT_TYPE_NAME_DATA:
-		obj_length = data->length;
-		if (attrs) {
-			attrs[attrs_index].type = CKA_VALUE_LEN;
-			ret = ulong_to_attr(&attrs[attrs_index], &obj_length);
-			if (ret != CKR_OK)
-				goto end;
+		if (p_attr) {
+			obj_length = data->length;
+			p_attr->type = CKA_VALUE_LEN;
+			ret = ulong_to_attr(p_attr, &obj_length);
+
+			p_attr++;
 		}
 
-		attrs_index++;
-
+		nb_attrs++;
 		break;
 
 	default:
@@ -527,53 +398,98 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 	if (ret != CKR_OK)
 		goto end;
 
-	if (attrs) {
-		attrs[attrs_index].type = CKA_CLASS;
-		ret = class_to_attr(&attrs[attrs_index], &object_class);
+	if (p_attr) {
+		if (req_class != CK_UNAVAILABLE_INFORMATION)
+			object_class = req_class;
+
+		p_attr->type = CKA_CLASS;
+		ret = class_to_attr(p_attr, &object_class);
+		if (ret != CKR_OK)
+			goto end;
+
+		p_attr++;
+	}
+
+	nb_attrs++;
+
+	if (desc->user_id) {
+		if (p_attr) {
+			if (object_class == CKO_DATA)
+				p_attr->type = CKA_OBJECT_ID;
+			else
+				p_attr->type = CKA_ID;
+
+			if (p_attr->ulValueLen < strlen(desc->user_id))
+				p_attr->ulValueLen = strlen(desc->user_id);
+			else
+				memcpy(p_attr->pValue, desc->user_id,
+				       strlen(desc->user_id));
+		}
+
+		nb_attrs++;
+	}
+
+	if (!*attrs) {
+		*attrs_count = nb_attrs;
+
+		/* Step 1. Allocate the attributes array */
+		*attrs = calloc(1, nb_attrs * sizeof(CK_ATTRIBUTE));
+		if (!*attrs) {
+			ret = CKR_HOST_MEMORY;
+			goto end;
+		}
+
+		/* Step 2. Get all values length */
+		ret = object_descriptor_to_attrs(desc, key_attr, req_class,
+						 attrs, attrs_count);
+		if (ret != CKR_OK)
+			goto end;
+
+		/* Step 3. Allocate attribute value buffer */
+		for (p_attr = *attrs; i < nb_attrs; i++, p_attr++) {
+			p_attr->pValue = calloc(1, p_attr->ulValueLen);
+			if (!p_attr->pValue) {
+				ret = CKR_HOST_MEMORY;
+				goto end;
+			}
+		}
+
+		/* Step 4. Get all values */
+		ret = object_descriptor_to_attrs(desc, key_attr, req_class,
+						 attrs, attrs_count);
 		if (ret != CKR_OK)
 			goto end;
 	}
 
-	attrs_index++;
-
-	if (desc->user_id) {
-		if (attrs) {
-			if (object_class == CKO_DATA)
-				attrs[attrs_index].type = CKA_OBJECT_ID;
-			else
-				attrs[attrs_index].type = CKA_ID;
-
-			if (attrs[attrs_index].ulValueLen <
-			    strlen(desc->user_id))
-				attrs[attrs_index].ulValueLen =
-					strlen(desc->user_id);
-			else
-				memcpy(attrs[attrs_index].pValue, desc->user_id,
-				       strlen(desc->user_id));
-		}
-
-		attrs_index++;
-	}
-
-	*attrs_count = attrs_index;
-
 	ret = CKR_OK;
 
 end:
-	DBG_TRACE("%s returning ret = %lx", __func__, ret);
 
+	if (ret != CKR_OK)
+		attr_free(attrs, attrs_count);
+
+	DBG_TRACE("%s return %lx", __func__, ret);
 	return ret;
 }
 
-static void free_attrs(CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs)
+static bool is_obj_class_retrievable(CK_OBJECT_CLASS object_class)
 {
-	unsigned int idx = 0;
+	bool ret = false;
 
-	for (; idx < nb_attrs; idx++)
-		if (attrs[idx].pValue)
-			free(attrs[idx].pValue);
+	switch (object_class) {
+	case CK_UNAVAILABLE_INFORMATION:
+	case CKO_DATA:
+	case CKO_PRIVATE_KEY:
+	case CKO_PUBLIC_KEY:
+	case CKO_SECRET_KEY:
+		ret = true;
+		break;
 
-	free(attrs);
+	default:
+		break;
+	}
+
+	return ret;
 }
 
 CK_RV obj_db_get(struct libobj_obj *obj,
@@ -734,7 +650,7 @@ end:
 CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		      CK_ULONG nb_attrs, CK_ULONG *pnb_retrieved)
 {
-	CK_RV ret = CKR_OK;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 	void *find_ctx = NULL;
 	int status = SMW_STATUS_OK;
 	struct smw_object_descriptor descriptor = { 0 };
@@ -744,30 +660,38 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	CK_ATTRIBUTE_PTR attributes = NULL_PTR;
 	CK_ULONG attributes_count = 0;
 	CK_ULONG nb_retrieved = 0;
-	CK_OBJECT_CLASS object_class = CKO_DATA;
+	CK_OBJECT_CLASS object_class = CK_UNAVAILABLE_INFORMATION;
 	CK_SLOT_ID slotid = 0;
 	const struct libdev *devinfo = NULL;
 	struct libdevice *dev = NULL;
 	struct libobj_obj *libobj = NULL;
-	bool class_found = false;
 	unsigned int i = 0;
-	unsigned int k = 0;
 	bool is_present = false;
-	unsigned int nb_match = 0;
 
 	if (!pnb_retrieved)
-		return CKR_ARGUMENTS_BAD;
-
-	*pnb_retrieved = 0;
+		goto end;
 
 	/*
 	 * Do not search the DB for profile objects, as they are not stored
 	 * there and exit this function.
 	 */
 	for (; i < nb_attrs; i++) {
-		if (attrs[i].type == CKA_CLASS &&
-		    *(CK_OBJECT_CLASS *)attrs[i].pValue == CKO_PROFILE)
-			goto end;
+		if (attrs[i].type == CKA_CLASS) {
+			object_class = *(CK_OBJECT_CLASS *)attrs[i].pValue;
+			break;
+		}
+	}
+
+	/*
+	 * If the input attributes template to search defined the class,
+	 * operation check the class value and if not supported, exit with
+	 * status ok but no object retrieved.
+	 */
+	if (!is_obj_class_retrievable(object_class)) {
+		DBG_TRACE("%s object class 0x%lx not supported", __func__,
+			  object_class);
+		ret = CKR_OK;
+		goto end;
 	}
 
 	ret = libsess_get_slotid(hsession, &slotid);
@@ -785,15 +709,8 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		return ret;
 
 	ret = attrs_to_object_descriptor(&descriptor, attrs, nb_attrs);
-	if (ret != CKR_OK) {
-		/*
-		 *  Ignore CKA_TOKEN = false attribute.
-		 */
-		if (ret == CKR_ATTRIBUTE_VALUE_INVALID)
-			ret = CKR_OK;
-
+	if (ret != CKR_OK)
 		goto end;
-	}
 
 	/*
 	 * Only retrieve persistent token object.
@@ -802,20 +719,10 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		SMW_ATTR_SET_PERSISTENCE(descriptor.attributes,
 					 SMW_ATTR_PERSISTENCE_PERSISTENT);
 
-	for (i = 0; i < nb_attrs; i++) {
-		if (attrs[i].type == CKA_CLASS) {
-			ret = attr_to_class(&object_class, &attrs[i]);
-			if (ret != CKR_OK)
-				goto end;
-
-			class_found = true;
-			break;
-		}
-	}
-
 	status = smw_find_object_db_init(&find_ctx, descriptor.attributes,
 					 &descriptor);
-	if (status != SMW_STATUS_OK)
+	ret = smw_status_to_ck_rv(status);
+	if (ret != CKR_OK)
 		goto end;
 
 	cleanup_smw_object_descriptor(&descriptor);
@@ -823,28 +730,27 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	while (smw_find_object_db_next(find_ctx, &descriptor) ==
 	       SMW_STATUS_OK) {
 		/*
-		 * Look in token objects
+		 * Look in token list objects of object token id already
+		 * present or not. If not, get all object information and
+		 * add it in the token list.
 		 */
 		is_present = false;
 		for (libobj = LIST_FIRST(&dev->objects); libobj;
 		     libobj = LIST_NEXT(libobj)) {
-			if (libobj->class == CKO_PROFILE)
+			if (!is_obj_class_retrievable(libobj->class))
 				continue;
 
-			ret = obj_match_descriptor(libobj, &descriptor,
-						   &is_present);
+			ret = obj_match_id(libobj, &descriptor, &is_present);
 			if (ret != CKR_OK)
 				goto end;
 
 			if (is_present) {
-				if (class_found) {
-					if (libobj->class == object_class)
-						break;
-
+				if (object_class !=
+					    CK_UNAVAILABLE_INFORMATION &&
+				    libobj->class != object_class)
 					is_present = false;
-				} else {
-					break;
-				}
+
+				break;
 			}
 		}
 
@@ -874,99 +780,39 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 			break;
 		}
 
-		/* Get number of attributes */
+		/* Build the attributes template to create the PKCS11 object */
 		ret = object_descriptor_to_attrs(&descriptor, key_attr,
-						 attributes, &attributes_count);
+						 object_class, &attributes,
+						 &attributes_count);
 		if (ret != CKR_OK)
 			goto end;
 
-		attributes = calloc(1, attributes_count * sizeof(CK_ATTRIBUTE));
-		if (!attributes)
-			return CKR_HOST_MEMORY;
-
-		/* Get size of attributes values */
-		ret = object_descriptor_to_attrs(&descriptor, key_attr,
-						 attributes, &attributes_count);
+		ret = libobj_retrieve(hsession, attributes, attributes_count,
+				      &hObj, descriptor.id);
 		if (ret != CKR_OK)
 			goto end;
 
-		for (i = 0; i < attributes_count; i++)
-			if (!attributes[i].pValue)
-				attributes[i].pValue =
-					calloc(1, attributes[i].ulValueLen);
+		nb_retrieved++;
 
-		/* Get attributes values */
-		ret = object_descriptor_to_attrs(&descriptor, key_attr,
-						 attributes, &attributes_count);
-		if (ret != CKR_OK)
-			goto end;
-
-		if (class_found) {
-			for (i = 0; i < attributes_count; i++) {
-				if (attributes[i].type == CKA_CLASS) {
-					class_to_attr(&attributes[i],
-						      &object_class);
-					break;
-				}
-			}
-		}
-
-		nb_match = 0;
-		for (k = 0; k < nb_attrs; k++) {
-			/*
-			 * Unique ID attribute could not be define when
-			 * creating an object
-			 */
-			if (attrs[k].type == CKA_UNIQUE_ID) {
-				nb_match++;
-				continue;
-			}
-
-			for (i = 0; i < attributes_count; i++) {
-				if (attrs[k].type == attributes[i].type) {
-					if (attrs[k].ulValueLen ==
-						    attributes[i].ulValueLen &&
-					    !memcmp(attrs[k].pValue,
-						    attributes[i].pValue,
-						    attributes[i].ulValueLen)) {
-						nb_match++;
-						break;
-					}
-				}
-			}
-		}
-
-		if (nb_match == nb_attrs) {
-			ret = libobj_retrieve(hsession, attributes,
-					      attributes_count, &hObj,
-					      descriptor.id);
-			if (ret != CKR_OK)
-				goto end;
-
-			nb_retrieved++;
-		}
-
-		free_attrs(attributes, attributes_count);
-		attributes = NULL_PTR;
-		attributes_count = 0;
+		attr_free(&attributes, &attributes_count);
 		cleanup_smw_object_descriptor(&descriptor);
 	}
 
 end:
-	*pnb_retrieved = nb_retrieved;
+	if (pnb_retrieved)
+		*pnb_retrieved = nb_retrieved;
 
-	if (find_ctx)
+	if (find_ctx) {
 		status = smw_find_object_db_final(find_ctx);
+		if (ret == CKR_OK)
+			ret = smw_status_to_ck_rv(status);
+	}
 
-	if (attributes)
-		free_attrs(attributes, attributes_count);
+	attr_free(&attributes, &attributes_count);
 
 	cleanup_smw_object_descriptor(&descriptor);
 
-	if (ret == CKR_OK)
-		ret = smw_status_to_ck_rv(status);
-
-	DBG_TRACE("%s returning ret = %lx", __func__, ret);
+	DBG_TRACE("%s return %lx", __func__, ret);
 
 	return ret;
 }

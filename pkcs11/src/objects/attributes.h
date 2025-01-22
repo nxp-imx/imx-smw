@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #ifndef __ATTRIBUTE_H__
@@ -643,5 +643,15 @@ attr_get_obj_prot_value(CK_ATTRIBUTE_PTR attr,
 CK_RV
 attr_modify_obj_value(CK_ATTRIBUTE_PTR attr, const struct template_attr *tattrs,
 		      size_t nb_tattrs, void *obj);
+
+/**
+ * attr_free() - Free each attribute value buffer and the attributes array
+ * @attrs: Attributes array
+ * @nb_attrs: Number of entries in the array
+ *
+ * Free each attribute value buffer and the attributes array. Re-initialized
+ * both @attrs and @nb_attrs.
+ */
+void attr_free(CK_ATTRIBUTE_PTR *attrs, CK_ULONG_PTR nb_attrs);
 
 #endif /* __ATTRIBUTE_H__ */

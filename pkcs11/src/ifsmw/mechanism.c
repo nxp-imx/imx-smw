@@ -996,7 +996,7 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 		  devinfo->name, status, ret);
 
 	if (ret == CKR_OK)
-		key_desc_copy_key_id(obj, &key);
+		key_desc_copy_key_id(obj, key.id);
 
 	return ret;
 }
@@ -1222,7 +1222,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	if (ret == CKR_OK) {
 		DBG_TRACE("Derive Key ID = #%d", der_key_desc.id);
-		derived_key_desc_copy_key_id(obj, &der_key_desc);
+		key_desc_copy_key_id(obj, der_key_desc.id);
 	}
 
 	return ret;
@@ -2653,7 +2653,7 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 		  devinfo->name, status, ret);
 
 	if (ret == CKR_OK)
-		key_desc_copy_key_id(obj, &key);
+		key_desc_copy_key_id(obj, key.id);
 
 	return ret;
 }
@@ -2670,6 +2670,7 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 	struct smw_get_key_attributes_args attr_args = { 0 };
 	struct smw_export_key_args args = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
+	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	DBG_TRACE("Get Key attributes");
 
@@ -2683,7 +2684,7 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 		goto end;
 	}
 
-	ret = libobj_get_id(obj, &key_descriptor.id);
+	ret = libobj_get_id(unique_id, &key_descriptor.id);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -2709,7 +2710,8 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 
 	key_descriptor.buffer = &keypair_buffer;
 	status = smw_get_key_buffers_lengths(&key_descriptor);
-	if (status != SMW_STATUS_OK)
+	ret = smw_status_to_ck_rv(status);
+	if (ret != CKR_OK)
 		goto end;
 
 	args.key_descriptor = &key_descriptor;

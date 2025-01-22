@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include <stdlib.h>
@@ -15,44 +15,11 @@
 
 #include "lib_session.h"
 #include "lib_device.h"
+#include "lib_object.h"
 #include "libobj_types.h"
 
 #include "args_attr.h"
 #include "ifsmw_utils.h"
-
-static int set_data_identifier(unsigned int *identifier,
-			       const struct libobj_obj *obj)
-{
-	int ret = CKR_OK;
-
-	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
-	struct libbytes data_id = { 0 };
-
-	data_id.number =
-		util_rfc2279_to_byte_len(unique_id->string, unique_id->length);
-	if (!data_id.number)
-		return CKR_FUNCTION_FAILED;
-
-	data_id.array = malloc(data_id.number);
-	if (!data_id.array)
-		return CKR_HOST_MEMORY;
-
-	if (util_rfc2279_to_byte(data_id.array, data_id.number,
-				 unique_id->string,
-				 unique_id->length) != unique_id->length) {
-		ret = CKR_FUNCTION_FAILED;
-		goto end;
-	}
-
-	if (TO_INT(*identifier, &data_id.array[sizeof(obj->class)],
-		   sizeof(*identifier)))
-		ret = CKR_ATTRIBUTE_VALUE_INVALID;
-
-end:
-	free(data_id.array);
-
-	return ret;
-}
 
 static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 {
@@ -104,8 +71,9 @@ static int retrieve_data(const struct libobj_obj *obj)
 	struct smw_data_descriptor data_descriptor = { 0 };
 	struct libobj_data *data = get_subobj_from(obj, storage);
 	unsigned char *buffer = NULL;
+	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
-	ret = set_data_identifier(&data_descriptor.identifier, obj);
+	ret = libobj_get_id(unique_id, &data_descriptor.identifier);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -152,8 +120,9 @@ static int delete_data(struct libobj_obj *obj)
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_delete_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
+	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
-	ret = set_data_identifier(&data_descriptor.identifier, obj);
+	ret = libobj_get_id(unique_id, &data_descriptor.identifier);
 	if (ret != CKR_OK)
 		return ret;
 

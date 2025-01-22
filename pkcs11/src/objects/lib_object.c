@@ -82,7 +82,8 @@ static CK_RV obj_add_to_list(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	struct libdevice *dev = NULL;
 	struct libobj_list *objects = NULL;
 
-	DBG_TRACE("Add object (%p) in session %lu list", obj, hsession);
+	DBG_TRACE("Add object (%p) in %s list (session %lu)", obj,
+		  token ? "token" : "session", hsession);
 
 	if (token) {
 		ret = libsess_get_device(hsession, &dev);
@@ -762,10 +763,9 @@ static CK_RV class_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	return ret;
 }
 
-CK_RV libobj_get_id(struct libobj_obj *obj, unsigned int *object_id)
+CK_RV libobj_get_id(struct librfc2279 *unique_id, unsigned int *object_id)
 {
 	int ret = CKR_OK;
-	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 	struct libbytes id = { 0 };
 
 	if (!unique_id->length)
@@ -988,13 +988,11 @@ CK_RV libobj_destroy(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject)
 
 		libmutex_unlock(obj->lock);
 
-		if (ret == CKR_OK) {
+		if (ret == CKR_OK)
 			obj_free(obj, objects);
-			obj = NULL;
-		}
 	}
 
-	DBG_TRACE("Destroy object (%p) return %lu", obj, ret);
+	DBG_TRACE("Destroy object return %lu", ret);
 	return ret;
 }
 
@@ -1515,27 +1513,6 @@ static void destroy_query_list(struct libobj_query *query)
 	}
 }
 
-static void check_cka_token_attr(CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs,
-				 bool *is_token_attr_defined,
-				 bool *is_token_attr_set)
-{
-	unsigned int i = 0;
-	*is_token_attr_set = false;
-	*is_token_attr_defined = false;
-
-	for (; i < nb_attrs; i++) {
-		if (attrs[i].type == CKA_TOKEN) {
-			*is_token_attr_defined = true;
-
-			if (attrs[i].pValue != NULL_PTR &&
-			    *(CK_BBOOL *)attrs[i].pValue == CK_TRUE) {
-				*is_token_attr_set = true;
-				break;
-			}
-		}
-	}
-}
-
 CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		       CK_ULONG nb_attrs)
 {
@@ -1546,8 +1523,9 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	CK_ULONG idx = 0;
 	CK_ULONG nb_retrieved = 0;
 	CK_ATTRIBUTE_PTR attrs_tmp = NULL_PTR;
-	bool is_token_attr_set = false;
-	bool is_token_attr_defined = false;
+	CK_ULONG nb_attrs_tmp = nb_attrs;
+	CK_BBOOL is_token = CK_FALSE;
+	CK_BBOOL is_token_defined = CK_FALSE;
 
 	DBG_TRACE("Start Find Object Query on session %lu", hsession);
 
@@ -1567,6 +1545,11 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		return ret;
 
 	if (nb_attrs) {
+		/*
+		 * Create a copy of the input attributes without the value.
+		 * The template will be used to compare the object's attributes
+		 * extract from the list.
+		 */
 		attrs_tmp = calloc(1, nb_attrs * sizeof(CK_ATTRIBUTE));
 		if (!attrs_tmp)
 			return CKR_HOST_MEMORY;
@@ -1578,12 +1561,22 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 				ret = CKR_ATTRIBUTE_VALUE_INVALID;
 				goto end;
 			}
+
 			attrs_tmp[idx].pValue =
 				calloc(1, attrs_tmp[idx].ulValueLen);
 			if (!attrs_tmp[idx].pValue) {
 				ret = CKR_HOST_MEMORY;
 				goto end;
 			}
+
+			if (attrs[idx].type != CKA_TOKEN)
+				continue;
+
+			/* Token attribute is defined, get it's value */
+			is_token_defined = CK_TRUE;
+
+			if (attrs[idx].pValue != NULL_PTR)
+				is_token = *(CK_BBOOL *)attrs[idx].pValue;
 		}
 	}
 
@@ -1595,24 +1588,30 @@ CK_RV libobj_find_init(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 
 	LIST_INIT(&query->objects);
 
-	check_cka_token_attr(attrs, nb_attrs, &is_token_attr_defined,
-			     &is_token_attr_set);
-
-	if (!is_token_attr_defined || is_token_attr_set) {
-		/* Go through the token objects list */
-		ret = object_match(hsession, &query->objects, &dev->objects,
-				   attrs, attrs_tmp, nb_attrs);
+	/*
+	 * If the CKA_TOKEN attribute is not set, both token and session lists
+	 * must be parsed.
+	 * Else depending on the CLA_TOKEN value true or false, parse either
+	 * token or session list.
+	 */
+	if (!is_token_defined || is_token) {
+		/*
+		 * Run a query request on the token in order to get all
+		 * objects not yet present in PKCS11 list.
+		 * Then parse the toekn object list.
+		 */
+		ret = obj_db_retrieve(hsession, attrs, nb_attrs, &nb_retrieved);
 		if (ret != CKR_OK)
 			goto end;
 
-		ret = obj_db_retrieve(hsession, attrs, nb_attrs, &nb_retrieved);
-		if (ret == CKR_OK && nb_retrieved != 0)
-			ret = object_match(hsession, &query->objects,
-					   &dev->objects, attrs, attrs_tmp,
-					   nb_attrs);
+		ret = object_match(hsession, &query->objects, &dev->objects,
+				   attrs, attrs_tmp, nb_attrs);
+
+		if (ret != CKR_OK)
+			goto end;
 	}
 
-	if (!is_token_attr_defined || !is_token_attr_set) {
+	if (!is_token_defined || !is_token) {
 		/* Go through the session objects list */
 		ret = libsess_get_objects(hsession, &objects);
 		if (ret != CKR_OK)
@@ -1632,13 +1631,7 @@ end:
 	DBG_TRACE("Start Find Object Query on session %lu return %ld", hsession,
 		  ret);
 
-	if (attrs_tmp) {
-		for (idx = 0; idx < nb_attrs; idx++)
-			if (attrs_tmp[idx].pValue)
-				free(attrs_tmp[idx].pValue);
-
-		free(attrs_tmp);
-	}
+	attr_free(&attrs_tmp, &nb_attrs_tmp);
 
 	if (ret != CKR_OK && query)
 		destroy_query_list(query);

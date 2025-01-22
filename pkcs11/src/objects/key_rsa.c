@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <stdlib.h>
@@ -239,6 +239,7 @@ CK_RV key_rsa_public_retrieve(CK_SESSION_HANDLE hsession,
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_key_rsa_pair *new_key = NULL;
+	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	ret = key_rsa_allocate(obj, NULL, LIBOBJ_KEY_PUBLIC);
 	if (ret != CKR_OK)
@@ -248,7 +249,7 @@ CK_RV key_rsa_public_retrieve(CK_SESSION_HANDLE hsession,
 
 	DBG_TRACE("Retrieve a RSA public key (%p)", new_key);
 
-	ret = libobj_get_id(obj, &new_key->key_id);
+	ret = libobj_get_id(unique_id, &new_key->key_id);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -377,6 +378,7 @@ CK_RV key_rsa_private_retrieve(CK_SESSION_HANDLE hsession,
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_key_rsa_pair *new_key = NULL;
+	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	ret = key_rsa_allocate(NULL, obj, LIBOBJ_KEY_PRIVATE);
 	if (ret != CKR_OK)
@@ -386,7 +388,7 @@ CK_RV key_rsa_private_retrieve(CK_SESSION_HANDLE hsession,
 
 	DBG_TRACE("Retrieve a RSA public key (%p)", new_key);
 
-	ret = libobj_get_id(obj, &new_key->key_id);
+	ret = libobj_get_id(unique_id, &new_key->key_id);
 	if (ret != CKR_OK)
 		goto end;
 

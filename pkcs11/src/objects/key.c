@@ -1639,7 +1639,7 @@ CK_RV key_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		}
 	}
 
-	DBG_TRACE("Key type object (%p) import return %ld", obj, ret);
+	DBG_TRACE("Key type object (%p) return %ld", obj, ret);
 	return ret;
 }
 

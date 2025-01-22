@@ -338,8 +338,8 @@ CK_RV libobj_find_final(CK_SESSION_HANDLE hsession);
 CK_RV libobj_list_destroy(struct libobj_list *list);
 
 /**
- * libobj_get_id() - Get the object id
- * @obj: Object
+ * libobj_get_id() - Get the id from a unique id
+ * @unique_id: Unique id value
  * @id: Id pointer
  *
  * Return the object id.
@@ -349,7 +349,7 @@ CK_RV libobj_list_destroy(struct libobj_list *list);
  * CKR_FUNCTION_FAILED           - Object not supported
  * CKR_OK                        - Success
  */
-CK_RV libobj_get_id(struct libobj_obj *obj, unsigned int *id);
+CK_RV libobj_get_id(struct librfc2279 *unique_id, unsigned int *id);
 
 /**
  * libobj_set_unique_id() - Set the object unique id

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include <stdlib.h>
@@ -116,6 +116,7 @@ CK_RV data_retrieve(struct libobj_obj *obj, struct libattr_list *attrs)
 {
 	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libobj_data *new_data = NULL;
+	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	DBG_TRACE("Retrieve a data type object");
 
@@ -131,7 +132,7 @@ CK_RV data_retrieve(struct libobj_obj *obj, struct libattr_list *attrs)
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = libobj_get_id(obj, &new_data->data_id);
+	ret = libobj_get_id(unique_id, &new_data->data_id);
 	if (ret != CKR_OK)
 		goto end;
 

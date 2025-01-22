@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <stdlib.h>
@@ -673,4 +673,20 @@ CK_RV attr_modify_obj_value(CK_ATTRIBUTE_PTR attr,
 	}
 
 	return CKR_ATTRIBUTE_TYPE_INVALID;
+}
+
+void attr_free(CK_ATTRIBUTE_PTR *attrs, CK_ULONG_PTR nb_attrs)
+{
+	CK_ULONG idx = 0;
+
+	if (!attrs || !nb_attrs || !*attrs || !*nb_attrs)
+		return;
+
+	for (; idx < *nb_attrs; idx++)
+		if ((*attrs)[idx].pValue)
+			free((*attrs)[idx].pValue);
+
+	free(*attrs);
+	*attrs = NULL;
+	*nb_attrs = 0;
 }

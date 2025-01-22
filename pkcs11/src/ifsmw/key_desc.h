@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2024 NXP
+ * Copyright 2021, 2025 NXP
  */
 #ifndef __KEY_DESC_H__
 #define __KEY_DESC_H__
@@ -14,6 +14,7 @@
  * @obj: Key object
  *
  * Return:
+ * CKR_KEY_TYPE_INCONSISTENT     - Key type not supported
  * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
  * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute type is not valid
  * CKR_FUNCTION_FAILED           - Operation failed
@@ -22,28 +23,59 @@
 CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj);
 
 /**
+ * key_desc_set_key_type() - Setup the key type in the SMW key descriptor
+ * @desc: SMW key descriptor
+ * @key_type: PKCS11 key type
+ * @ec_params: PKCS11 EC ey parameters
+ *
+ * Return:
+ * CKR_KEY_TYPE_INCONSISTENT     - Key type not supported
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_TYPE_INVALID    - Attribute type is not valid
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_OK                        - Success
+ */
+CK_RV key_desc_set_key_type(struct smw_key_descriptor *desc,
+			    CK_KEY_TYPE key_type, struct libbytes *ec_params);
+
+/**
  * key_desc_smw_to_pkcs11() - Convert a SMW key descriptor to PKCS
  * @obj: Key object
  * @attributes: SMW key attributes
  *
  * Return:
+ * CKR_KEY_TYPE_INCONSISTENT     - Key type not supported
  * CKR_FUNCTION_FAILED           - Operation failed
  * CKR_OK                        - Success
  */
-
 CK_RV key_desc_smw_to_pkcs11(struct libobj_obj *obj,
 			     struct smw_get_key_attributes_args *attributes);
 
 /**
+ * key_desc_smw_to_pkcs11() - Convert a SMW key descriptor to PKCS
+ * @key_type: PKCS11 Key type
+ * @desc: SMW key descriptor
+ * @attributes: SMW key attributes
+ *
+ * Return:
+ * CKR_KEY_TYPE_INCONSISTENT     - Key type not supported
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_OK                        - Success
+ */
+CK_RV key_desc_get_key_type(CK_KEY_TYPE *key_type,
+			    struct smw_key_descriptor *desc,
+			    struct smw_key_attributes *attributes);
+
+/**
  * key_desc_copy_key_id() - Copy the SMW key descriptor id to key object
  * @obj: Key object
- * @desc: SMW key descriptor
+ * @id: SMW key identifier
  *
  * Return:
  * None.
  */
-void key_desc_copy_key_id(struct libobj_obj *obj,
-			  struct smw_key_descriptor *desc);
+void key_desc_copy_key_id(struct libobj_obj *obj, unsigned int id);
 
 /**
  * derived_key_desc_setup() - Setup the SMW derived key descriptor
@@ -58,17 +90,6 @@ void key_desc_copy_key_id(struct libobj_obj *obj,
  */
 CK_RV derived_key_desc_setup(struct smw_derived_key_descriptor *desc,
 			     struct libobj_obj *obj);
-
-/**
- * derived_key_desc_copy_key_id() - Copy SMW derived key desc id to key object
- * @obj: Key object
- * @desc: SMW derived key descriptor
- *
- * Return:
- * None.
- */
-void derived_key_desc_copy_key_id(struct libobj_obj *obj,
-				  struct smw_derived_key_descriptor *desc);
 
 /**
  * base_key_desc_setup() - Set key ID/buffer in base key descr struct

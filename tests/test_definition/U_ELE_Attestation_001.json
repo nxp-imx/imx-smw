@@ -11,14 +11,14 @@
 	"subtest 2": {
 		"command": "DEVICE_ATTESTATION",
 		"subsystem": "ELE",
-		"output": 300,
+		"output": 368,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 3": {
 		"command": "DEVICE_ATTESTATION",
 		"subsystem": "ELE",
 		"challenge": 16,
-		"output": 300,
+		"output": 368,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 4": {
@@ -28,7 +28,7 @@
 			0,
 			"0102030405060708090A0B0C0D0E0F1617"
 		],
-		"output": 300,
+		"output": 368,
 		"result": "SMW_STATUS_INVALID_PARAM"
 	},
 	"subtest 5": {
@@ -37,7 +37,7 @@
 		"challenge": [
 			"01"
 		],
-		"output": 300
+		"output": 368
 	},
 	"subtest 6": {
 		"command": "DEVICE_ATTESTATION",

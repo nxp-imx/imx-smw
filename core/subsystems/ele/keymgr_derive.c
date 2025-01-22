@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022, 2024 NXP
+ * Copyright 2022, 2024-2025 NXP
  */
 #include "smw_osal.h"
 #include "smw_status.h"
@@ -488,9 +488,9 @@ static int hkdf(struct smw_keymgr_derive_key_args *args, hsm_hdl_t *key_mgt_hdl)
 
 		if (step == HKDF_STEP_EXTRACT || step == HKDF_STEP_FULL) {
 			key_ex_args.in_pub_buffer =
-				smw_keymgr_get_peer_pub_buffer(hkdf_args);
+				smw_keymgr_get_peer_pub_buffer(args);
 			key_ex_args.in_pub_buffer_sz =
-				smw_keymgr_get_peer_pub_buffer_len(hkdf_args);
+				smw_keymgr_get_peer_pub_buffer_len(args);
 		}
 	} else if (key_id_base->type_id == SMW_CONFIG_KEY_TYPE_ID_RAW) {
 		status = get_base_key_buffer(&args->key_base, &hex_key_base,
@@ -563,14 +563,13 @@ static int hkdf(struct smw_keymgr_derive_key_args *args, hsm_hdl_t *key_mgt_hdl)
 			}
 		}
 
-		key_ex_args.user_fixed_info_sz =
-			smw_keymgr_get_info_len(hkdf_args);
-		key_ex_args.user_fixed_info = smw_keymgr_get_info(hkdf_args);
+		key_ex_args.user_fixed_info_sz = smw_keymgr_get_info_len(args);
+		key_ex_args.user_fixed_info = smw_keymgr_get_info(args);
 	}
 
 	if (step == HKDF_STEP_EXTRACT || step == HKDF_STEP_FULL) {
-		buffer = smw_keymgr_get_salt(hkdf_args);
-		hkdf_op_payload.buffer_len = smw_keymgr_get_salt_len(hkdf_args);
+		buffer = smw_keymgr_get_salt(args);
+		hkdf_op_payload.buffer_len = smw_keymgr_get_salt_len(args);
 	}
 
 	if (buffer && hkdf_op_payload.buffer_len) {

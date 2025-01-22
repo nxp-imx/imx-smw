@@ -76,6 +76,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Fix coverity 2024.9.0 findings.
 * Fix object descriptor when finding data.
 * Correct the test definition to run when TEE subsystem not enabled.
+* Correct the certificate length in U_ELE_Attestation_001 test.
 
 #### PKCS#11 Library - _version 4.2_
 
@@ -119,7 +120,6 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add a new key type `SMW_KEY_TYPE_NAME_HKDF_IKM`.
 * Add support of hash multi-part.
 * Set default key usage flags if get key attributes operation is not supported by the subsystem.
-
 
 ##### 2. Subsystems
 

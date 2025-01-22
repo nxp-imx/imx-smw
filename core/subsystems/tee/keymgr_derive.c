@@ -59,12 +59,12 @@ static int get_tee_hkdf_algo_id(enum smw_config_hash_algo_id hash_id,
  * None
  */
 static void fill_shared_memory(TEEC_SharedMemory *shared_mem,
-			       struct smw_keymgr_hkdf_args *hkdf_args,
+			       struct smw_keymgr_derive_key_args *key_args,
 			       struct key_derive_shared_params *shared_params)
 {
 	void *buffer = shared_mem->buffer;
-	unsigned char *salt = smw_keymgr_get_salt(hkdf_args);
-	unsigned char *info = smw_keymgr_get_info(hkdf_args);
+	unsigned char *salt = smw_keymgr_get_salt(key_args);
+	unsigned char *info = smw_keymgr_get_info(key_args);
 
 	if (salt)
 		SMW_UTILS_MEMCPY(buffer, salt, shared_params->salt_length);
@@ -271,8 +271,8 @@ static int hkdf_derive_key(void *args)
 
 	shared_params.derived_key_id = key_id_derived->id;
 	shared_params.base_key_id = key_id_base->id;
-	shared_params.salt_length = smw_keymgr_get_salt_len(hkdf_args);
-	shared_params.info_length = smw_keymgr_get_info_len(hkdf_args);
+	shared_params.salt_length = smw_keymgr_get_salt_len(key_args);
+	shared_params.info_length = smw_keymgr_get_info_len(key_args);
 	shared_params.base_key_sec_size = key_id_base->security_size;
 	shared_params.store_derived_key = smw_keymgr_is_store_key_set(key_args);
 
@@ -347,7 +347,7 @@ static int hkdf_derive_key(void *args)
 			goto exit;
 		}
 
-		fill_shared_memory(&shared_mem, hkdf_args, &shared_params);
+		fill_shared_memory(&shared_mem, key_args, &shared_params);
 
 		op.params[DER_SHARED_MEM_IDX].memref.parent = &shared_mem;
 		op.params[DER_SHARED_MEM_IDX].memref.offset = 0;

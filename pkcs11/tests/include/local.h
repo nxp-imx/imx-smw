@@ -82,5 +82,6 @@ void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_derive_key(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_operation_state(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_profile(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_object_cert(void *lib_hdl, CK_VOID_PTR pfunc);
 
 #endif /* __LOCAL_H__ */

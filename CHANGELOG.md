@@ -90,6 +90,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Add support for `CKM_ECDH1_DERIVE` mechanism.
 * Fix a memory leak in object database support.
 * Add support for secp224r1, secp384r1 and secp521r1 curves.
+* Add support for handling only session `CKO_CERTIFICATE` objects. Token `CKO_CERTIFICATE` objects remain unsupported.
 
 #### PKCS#11 Tests - _version 4.2_
 
@@ -99,6 +100,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Fix tests to run when TEE subsystem not enabled.
 * Add tests for `CKM_ECDH1_DERIVE` mechanism.
 * Update EC key test to validate all supported NIST curves.
+* Add tests for `CKO_CERTIFICATE` object.
 
 ---
 ### <a id ="rel_4_1"></a></br>**Release 4.1**

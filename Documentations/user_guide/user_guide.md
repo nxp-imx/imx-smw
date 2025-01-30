@@ -340,6 +340,46 @@ and supported by the SMW Library.
 <a name="t_note_4"><sup>4</sup></a> Retrieve only information from SMW object database.<br>
 </p>
 
+Following <a href="#table-certificate">Certificates table</a> lists the certificate types supported by SMW, PKCS#11 and PSA libraries.
+
+<table>
+<caption id="table-certificate">Certificates</caption>
+<thead>
+<tr>
+  <th rowspan="2">Certificates</th>
+  <th colspan="3">APIs</th>
+  <th rowspan="2">Comments</th>
+</tr>
+<tr>
+  <th>SMW</th>
+  <th>PKCS#11</th>
+  <th>PSA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>X.509 Public Key</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>❌</td>
+  <td>Supports only PKCS#11 session object</td>
+</tr>
+<tr>
+  <td>WTLS Public Key</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>❌</td>
+  <td>Supports only PKCS#11 session object</td>
+</tr>
+<tr>
+  <td>X.509 Attribute</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>❌</td>
+  <td>Supports only PKCS#11 session object</td>
+</tr>
+</table>
+
 # 3. Creating a simple OPTEE TA
 The Security Middleware provides <u>a reference code of a static OPTEE TA Library</u>
 that could be used to build a OPTEE Trusted Application. The OPTEE TA Library is not

@@ -204,6 +204,27 @@ struct libobj_key {
 		&_key->mech_list;                                              \
 	})
 
+#define get_cert_type(obj)                                                     \
+	({                                                                     \
+		struct libobj_cert *_cert = get_subobj_from(obj, storage);     \
+		assert(_cert);                                                 \
+		_cert->type;                                                   \
+	})
+
+#define set_cert_to(obj, ptr)                                                  \
+	({                                                                     \
+		struct libobj_cert *_cert = get_subobj_from(obj, storage);     \
+		assert(_cert);                                                 \
+		_cert->cert = ptr;                                             \
+	})
+
+#define get_cert_from(obj)                                                     \
+	({                                                                     \
+		struct libobj_cert *_cert = get_subobj_from(obj, storage);     \
+		assert(_cert);                                                 \
+		_cert->cert;                                                   \
+	})
+
 /*
  * Define the libobj public/private/keypair type
  */
@@ -328,6 +349,51 @@ struct libobj_key_secret {
 	struct libattr_list unwrap_attrs;
 	bool trusted;
 	struct libbytes checksum;
+};
+
+struct libobj_cert {
+	unsigned int token_id; // Token certificate ID
+	CK_CERTIFICATE_TYPE type;
+	bool trusted;
+	CK_CERTIFICATE_CATEGORY cat;
+	struct libbytes checksum;
+	CK_DATE start_date;
+	CK_DATE end_date;
+	struct libbytes pub_key_info;
+	void *cert;
+};
+
+struct libobj_x_509_cert {
+	struct libbytes subject;
+	struct libbytes id;
+	struct libbytes issuer;
+	struct libbytes ser_num;
+	struct libbytes value;
+	struct librfc2279 url;
+	struct libbytes spk_hash;
+	struct libbytes ipk_hash;
+	CK_JAVA_MIDP_SECURITY_DOMAIN sec_domain;
+	CK_MECHANISM_TYPE mech;
+};
+
+struct libobj_wtls_cert {
+	unsigned int cert_id;
+	struct libbytes subject;
+	struct libbytes issuer;
+	struct libbytes value;
+	struct librfc2279 url;
+	struct libbytes spk_hash;
+	struct libbytes ipk_hash;
+	CK_MECHANISM_TYPE mech;
+};
+
+struct libobj_x_509_attr_cert {
+	unsigned int cert_id;
+	struct libbytes owner;
+	struct libbytes issuer;
+	struct libbytes ser_num;
+	struct libbytes attr_types;
+	struct libbytes value;
 };
 
 #endif /* __LIBOBJ_TYPES_H__ */

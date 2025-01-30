@@ -9,6 +9,7 @@
 #include "attributes.h"
 #include "data.h"
 #include "key.h"
+#include "cert.h"
 
 #include "lib_mutex.h"
 #include "lib_object.h"
@@ -282,6 +283,7 @@ static CK_RV obj_is_destroyable(CK_SESSION_HANDLE hsession,
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
 	case CKO_DATA:
+	case CKO_CERTIFICATE:
 		is_destroyable = is_destroyable_obj(obj, storage);
 		is_private = is_private_obj(obj, storage);
 		DBG_TRACE("Storage object class %lu, destroy=%d, private=%d",
@@ -330,6 +332,8 @@ static CK_RV obj_is_modifiable(CK_SESSION_HANDLE hsession,
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
+	case CKO_DATA:
+	case CKO_CERTIFICATE:
 		is_modifiable = is_modifiable_obj(obj, storage);
 		is_token = is_token_obj(obj, storage);
 		DBG_TRACE("Storage object class %lu, modifiable=%d, token=%d",
@@ -463,6 +467,10 @@ static void obj_storage_free(struct libobj_obj *obj)
 		data_free(obj);
 		break;
 
+	case CKO_CERTIFICATE:
+		cert_free(obj);
+		break;
+
 	default:
 		DBG_TRACE("Class object %lu not supported", obj->class);
 		break;
@@ -496,6 +504,7 @@ static void obj_free(struct libobj_obj *obj, struct libobj_list *list)
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
 	case CKO_DATA:
+	case CKO_CERTIFICATE:
 		obj_storage_free(obj);
 		break;
 
@@ -656,6 +665,20 @@ static CK_RV class_get_attribute(CK_ATTRIBUTE_PTR attr,
 
 		break;
 
+	case CKO_CERTIFICATE:
+		ret = attr_get_obj_value(attr, attr_obj_storage,
+					 ARRAY_SIZE(attr_obj_storage),
+					 get_object_from(libobj));
+		/*
+		 * If attribute is not present in the common storage
+		 * object attributes, try to get it from
+		 * the specific certificate object
+		 */
+		if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+			ret = cert_get_attribute(attr, libobj);
+
+		break;
+
 	default:
 		break;
 	}
@@ -714,6 +737,20 @@ static CK_RV class_modify_attribute(CK_ATTRIBUTE_PTR attr,
 		 */
 		if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
 			ret = data_modify_attribute(attr, libobj);
+
+		break;
+
+	case CKO_CERTIFICATE:
+		ret = attr_modify_obj_value(attr, attr_obj_storage,
+					    ARRAY_SIZE(attr_obj_storage),
+					    get_object_from(libobj));
+		/*
+		 * If attribute is not present in the common storage
+		 * object attributes, try to modify it in
+		 * the specific certificate type object
+		 */
+		if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
+			ret = cert_modify_attribute(attr, libobj);
 
 		break;
 
@@ -801,6 +838,14 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 			break;
 
 		ret = data_create(hsession, newobj, &attrs_list);
+		break;
+
+	case CKO_CERTIFICATE:
+		ret = obj_storage_new(hsession, newobj, &attrs_list);
+		if (ret != CKR_OK)
+			break;
+
+		ret = cert_create(hsession, newobj, &attrs_list);
 		break;
 
 	default:
@@ -969,22 +1014,35 @@ CK_RV libobj_get_size(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 	if (ret != CKR_OK)
 		goto end;
 
+	/*
+	 * Since we currently support only session CKO_CERTIFICATE objects and
+	 * they are not stored in the DB, retrieve the size from certificate object.
+	 */
+	if (libobj->class == CKO_CERTIFICATE) {
+		ret = cert_get_size(libobj, pulSize);
+
+		goto unlock;
+	}
+
 	ret = obj_db_get(libobj, &desc);
 	if (ret == CKR_OK) {
 		switch (desc.type) {
 		case SMW_OBJECT_TYPE_NAME_DATA:
 			*pulSize = desc.data.length;
 			break;
+
 		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
 		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
 		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
 			*pulSize = BITS_TO_BYTES_SIZE(desc.key.security_size);
 			break;
+
 		default:
 			break;
 		}
 	}
 
+unlock:
 	libmutex_unlock(libobj->lock);
 
 end:
@@ -1123,7 +1181,11 @@ CK_RV libobj_modify_attribute(CK_SESSION_HANDLE hsession,
 			  attrs[idx].type, ret);
 	}
 
-	if (ret == CKR_OK)
+	/*
+	 * Since we currently support only session CKO_CERTIFICATE objects and
+	 * they are not stored in the DB. Hence, do not update the DB.
+	 */
+	if (ret == CKR_OK && libobj->class != CKO_CERTIFICATE)
 		ret = obj_db_update(libobj);
 
 	libmutex_unlock(libobj->lock);

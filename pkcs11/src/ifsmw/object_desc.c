@@ -497,12 +497,11 @@ CK_RV obj_db_get(struct libobj_obj *obj,
 {
 	CK_RV ret = CKR_OBJECT_HANDLE_INVALID;
 	enum smw_status_code status = SMW_STATUS_OK;
-	struct libobj_storage *obj_storage = get_object_from(obj);
 
 	if (!obj)
 		return CKR_ARGUMENTS_BAD;
 
-	if (obj_storage->token)
+	if (is_token_obj(obj, storage))
 		descriptor->attributes = SMW_ATTR_PERSISTENCE_PERSISTENT;
 	else
 		descriptor->attributes = SMW_ATTR_PERSISTENCE_TRANSIENT;
@@ -529,7 +528,8 @@ CK_RV obj_db_get(struct libobj_obj *obj,
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
 	case CKO_PRIVATE_KEY:
-		ret = key_get_id(&descriptor->id, obj);
+		descriptor->id = get_key_token_id(obj);
+		ret = CKR_OK;
 		break;
 
 	case CKO_DATA:

@@ -130,7 +130,8 @@ struct libobj_storage {
 
 struct libobj_key {
 	CK_KEY_TYPE type;
-	struct libbytes id;
+	struct libbytes id;    // User defined key ID. Same for Public/Private
+	unsigned int token_id; // Token key ID. Same for Public/Private
 	CK_DATE start_date;
 	CK_DATE end_date;
 	bool derive;
@@ -225,6 +226,20 @@ struct libobj_key {
 		_cert->cert;                                                   \
 	})
 
+#define set_key_token_id(obj, _token_id)                                       \
+	({                                                                     \
+		struct libobj_key *_key = get_subobj_from(obj, storage);       \
+		assert(_key);                                                  \
+		_key->token_id = _token_id;                                    \
+	})
+
+#define get_key_token_id(obj)                                                  \
+	({                                                                     \
+		struct libobj_key *_key = get_subobj_from(obj, storage);       \
+		assert(_key);                                                  \
+		_key->token_id;                                                \
+	})
+
 /*
  * Define the libobj public/private/keypair type
  */
@@ -233,8 +248,7 @@ struct libobj_key {
 #define LIBOBJ_KEY_PAIR	   (LIBOBJ_KEY_PUBLIC | LIBOBJ_KEY_PRIVATE)
 
 struct libobj_key_ec_pair {
-	unsigned int key_id;
-	unsigned int type;
+	unsigned int type;	    // Private/Public key type
 	struct libobj_obj *pub_obj; // Reference to public key obj
 	struct libbytes params;
 	struct libbytes point_q;     // Public Key point
@@ -242,8 +256,7 @@ struct libobj_key_ec_pair {
 };
 
 struct libobj_key_rsa_pair {
-	unsigned int key_id;
-	unsigned int type;
+	unsigned int type;	      // Private/Public key type
 	struct libobj_obj *pub_obj;   // Reference to public key obj
 	struct libbignumber modulus;  // Modulus n
 	CK_ULONG modulus_length;      // Modulus length in bits
@@ -257,13 +270,11 @@ struct libobj_key_rsa_pair {
 };
 
 struct libobj_key_cipher {
-	unsigned int key_id;
 	struct libbytes value;
 	size_t value_len;
 };
 
 struct libobj_key_hmac {
-	unsigned int key_id;
 	struct libbytes value;
 	size_t value_len;
 };
@@ -291,13 +302,6 @@ struct libobj_key_derive_params {
 		} ecdh_params;
 	};
 };
-
-#define get_key_id_from(obj, type)                                             \
-	({                                                                     \
-		struct libobj_key_##type *_key = get_subkey_from(obj);         \
-		assert(_key);                                                  \
-		_key->key_id;                                                  \
-	})
 
 struct libobj_data {
 	unsigned int data_id;	       // Data is returned by token

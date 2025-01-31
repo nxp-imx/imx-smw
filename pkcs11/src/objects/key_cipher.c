@@ -10,7 +10,6 @@
 #include "key_cipher.h"
 
 #include "lib_device.h"
-#include "lib_object.h"
 #include "libobj_types.h"
 #include "util.h"
 
@@ -59,7 +58,7 @@ void key_cipher_free(struct libobj_obj *obj)
 		return;
 
 	if (is_force_destroy_obj(obj) || !is_token_obj(obj, storage))
-		(void)libdev_delete_key(key->key_id);
+		(void)libdev_delete_key(get_key_token_id(obj));
 
 	if (key->value.array)
 		free(key->value.array);
@@ -100,7 +99,7 @@ CK_RV key_cipher_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	/* Import only the token key to the subsystem */
 	if (is_token_obj(obj, storage)) {
 		ret = libdev_import_key(hsession, obj);
-		DBG_TRACE("Cipher Key ID 0x%X", new_key->key_id);
+		DBG_TRACE("Cipher Key ID 0x%X", get_key_token_id(obj));
 	}
 
 end:
@@ -115,7 +114,6 @@ CK_RV key_cipher_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_key_cipher *new_key = NULL;
-	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	ret = key_cipher_allocate(obj);
 	if (ret != CKR_OK)
@@ -131,13 +129,9 @@ CK_RV key_cipher_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = libobj_get_id(unique_id, &new_key->key_id);
-	if (ret != CKR_OK)
-		goto end;
-
 	/* Get the secret key attributes from the SMW library */
 	ret = libdev_get_key_attributes(hsession, obj);
-	DBG_TRACE("Cipher Key ID 0x%X", new_key->key_id);
+	DBG_TRACE("Cipher Key ID 0x%X", get_key_token_id(obj));
 
 end:
 	if (ret != CKR_OK)
@@ -216,29 +210,13 @@ CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 	/* Generate the secret key with SMW library */
 	ret = libdev_operate_mechanism(hsession, mech, obj);
-	DBG_TRACE("Cipher Key ID 0x%X", new_key->key_id);
+	DBG_TRACE("Cipher Key ID 0x%X", get_key_token_id(obj));
 
 end:
 	if (ret != CKR_OK)
 		key_cipher_free(obj);
 
 	return ret;
-}
-
-CK_RV key_cipher_get_id(unsigned int *id, struct libobj_obj *obj)
-{
-	struct libobj_key_cipher *key_cipher = NULL;
-
-	if (!obj || !id)
-		return CKR_GENERAL_ERROR;
-
-	key_cipher = get_subkey_from(obj);
-
-	DBG_TRACE("Cipher Key ID 0x%X", key_cipher->key_id);
-
-	*id = key_cipher->key_id;
-
-	return CKR_OK;
 }
 
 CK_RV key_cipher_derive(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,

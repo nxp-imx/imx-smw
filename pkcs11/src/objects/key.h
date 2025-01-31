@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2024 NXP
+ * Copyright 2020-2021, 2024-2025 NXP
  */
 
 #ifndef __KEY_H__
@@ -45,6 +45,7 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
  * @hsession: Session handle
  * @obj: Key object
  * @attrs: List of object attributes
+ * @id: Token key ID
  *
  * If key attributes are corrects, retrieve a key object.
  *
@@ -64,7 +65,7 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
  * CKR_OK                        - Success
  */
 CK_RV key_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
-		   struct libattr_list *attrs);
+		   struct libattr_list *attrs, unsigned int id);
 
 /**
  * key_get_attribute() - Get an attribute from a key object
@@ -161,22 +162,6 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			      struct libobj_obj *obj,
 			      struct libattr_list *attrs);
-
-/*
- * key_get_id() - Get the key ID returned by SMW
- * @id: key ID pointer
- * @obj: Key object
- *
- * Call the specific key get id function that will return
- * the SMW Key ID.
- *
- * return:
- * CKR_HOST_MEMORY               - Allocation error
- * CKR_GENERAL_ERROR             - General error defined
- * CKR_FUNCTION_FAILED           - Function failure
- * CKR_OK                        - Success
- */
-CK_RV key_get_id(unsigned int *id, struct libobj_obj *obj);
 
 /**
  * derive_key() - Derive a secret key object

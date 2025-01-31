@@ -171,7 +171,7 @@ static void key_rsa_free(struct libobj_obj *obj, unsigned int type)
 			free(key->pub_exp.value);
 
 		if (is_force_destroy_obj(obj) || !is_token_obj(obj, storage))
-			(void)libdev_delete_key(key->key_id);
+			(void)libdev_delete_key(get_key_token_id(obj));
 
 		free(key);
 	} else {
@@ -224,7 +224,7 @@ CK_RV key_rsa_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	/* Import only the token key to the subsystem */
 	if (is_token_obj(obj, storage)) {
 		ret = libdev_import_key(hsession, obj);
-		DBG_TRACE("Public Key ID 0x%X", new_key->key_id);
+		DBG_TRACE("Public Key ID 0x%X", get_key_token_id(obj));
 	}
 
 end:
@@ -238,24 +238,16 @@ CK_RV key_rsa_public_retrieve(CK_SESSION_HANDLE hsession,
 			      struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_OK;
-	struct libobj_key_rsa_pair *new_key = NULL;
-	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	ret = key_rsa_allocate(obj, NULL, LIBOBJ_KEY_PUBLIC);
 	if (ret != CKR_OK)
 		goto end;
 
-	new_key = get_subkey_from(obj);
-
-	DBG_TRACE("Retrieve a RSA public key (%p)", new_key);
-
-	ret = libobj_get_id(unique_id, &new_key->key_id);
-	if (ret != CKR_OK)
-		goto end;
+	DBG_TRACE("Retrieve a RSA public key (%p)", get_subkey_from(obj));
 
 	/* Get the public key attributes from the SMW library */
 	ret = libdev_get_key_attributes(hsession, obj);
-	DBG_TRACE("RSA public Key ID 0x%X", new_key->key_id);
+	DBG_TRACE("RSA public Key ID 0x%X", get_key_token_id(obj));
 
 end:
 	if (ret != CKR_OK)
@@ -363,7 +355,7 @@ CK_RV key_rsa_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	/* Import only the token key to the subsystem */
 	if (is_token_obj(obj, storage)) {
 		ret = libdev_import_key(hsession, obj);
-		DBG_TRACE("Private Key ID 0x%X", new_key->key_id);
+		DBG_TRACE("Private Key ID 0x%X", get_key_token_id(obj));
 	}
 
 end:
@@ -377,24 +369,16 @@ CK_RV key_rsa_private_retrieve(CK_SESSION_HANDLE hsession,
 			       struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_OK;
-	struct libobj_key_rsa_pair *new_key = NULL;
-	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	ret = key_rsa_allocate(NULL, obj, LIBOBJ_KEY_PRIVATE);
 	if (ret != CKR_OK)
 		goto end;
 
-	new_key = get_subkey_from(obj);
-
-	DBG_TRACE("Retrieve a RSA public key (%p)", new_key);
-
-	ret = libobj_get_id(unique_id, &new_key->key_id);
-	if (ret != CKR_OK)
-		goto end;
+	DBG_TRACE("Retrieve a RSA public key (%p)", get_subkey_from(obj));
 
 	/* Get the private key attributes from the SMW library */
 	ret = libdev_get_key_attributes(hsession, obj);
-	DBG_TRACE("RSA private Key ID 0x%X", new_key->key_id);
+	DBG_TRACE("RSA private Key ID 0x%X", get_key_token_id(obj));
 
 end:
 	if (ret != CKR_OK)
@@ -512,7 +496,10 @@ CK_RV key_rsa_keypair_generate(CK_SESSION_HANDLE hsession,
 		goto end;
 
 	ret = libdev_operate_mechanism(hsession, mech, priv_obj);
-	DBG_TRACE("Key Pair ID 0x%X", keypair->key_id);
+	if (ret == CKR_OK) {
+		DBG_TRACE("Key Pair ID 0x%X", get_key_token_id(priv_obj));
+		set_key_token_id(pub_obj, get_key_token_id(priv_obj));
+	}
 
 end:
 	if (ret != CKR_OK) {
@@ -521,20 +508,4 @@ end:
 	}
 
 	return ret;
-}
-
-CK_RV key_rsa_get_id(unsigned int *id, struct libobj_obj *obj)
-{
-	struct libobj_key_rsa_pair *keypair = NULL;
-
-	if (!obj || !id)
-		return CKR_GENERAL_ERROR;
-
-	keypair = get_subkey_from(obj);
-
-	DBG_TRACE("RSA Key ID 0x%X", keypair->key_id);
-
-	*id = keypair->key_id;
-
-	return CKR_OK;
 }

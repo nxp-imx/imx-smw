@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #ifndef __KEY_RSA_H__
@@ -232,20 +232,5 @@ CK_RV key_rsa_keypair_generate(CK_SESSION_HANDLE hsession,
 			       struct libattr_list *pub_attrs,
 			       struct libobj_obj *priv_obj,
 			       struct libattr_list *priv_attrs);
-
-/*
- * key_rsa_get_id() - Get the RSA key ID returned by SMW
- * @id: key ID pointer
- * @obj: RSA Key object
- * @prefix_len: Byte length of id prefix
- *
- * Get the RSA key ID
- *
- * return:
- * CKR_HOST_MEMORY               - Allocation error
- * CKR_GENERAL_ERROR             - General error defined
- * CKR_OK                        - Success
- */
-CK_RV key_rsa_get_id(unsigned int *id, struct libobj_obj *obj);
 
 #endif /* __KEY_RSA_H__ */

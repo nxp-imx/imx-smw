@@ -943,7 +943,7 @@ CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	case CKO_PRIVATE_KEY:
 	case CKO_SECRET_KEY:
 	case CKO_PUBLIC_KEY:
-		ret = key_retrieve(hsession, newobj, &attrs_list);
+		ret = key_retrieve(hsession, newobj, &attrs_list, id);
 		break;
 
 	case CKO_DATA:

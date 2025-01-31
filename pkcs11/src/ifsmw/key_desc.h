@@ -68,16 +68,6 @@ CK_RV key_desc_get_key_type(CK_KEY_TYPE *key_type,
 			    struct smw_key_attributes *attributes);
 
 /**
- * key_desc_copy_key_id() - Copy the SMW key descriptor id to key object
- * @obj: Key object
- * @id: SMW key identifier
- *
- * Return:
- * None.
- */
-void key_desc_copy_key_id(struct libobj_obj *obj, unsigned int id);
-
-/**
  * derived_key_desc_setup() - Setup the SMW derived key descriptor
  * @desc: SMW derived key descriptor
  * @obj: Key object

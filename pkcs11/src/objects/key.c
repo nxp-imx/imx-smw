@@ -1601,7 +1601,7 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 }
 
 CK_RV key_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
-		   struct libattr_list *attrs)
+		   struct libattr_list *attrs, unsigned int id)
 {
 	CK_RV ret = CKR_GENERAL_ERROR;
 
@@ -1616,21 +1616,27 @@ CK_RV key_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		switch (obj->class) {
 		case CKO_PUBLIC_KEY:
 			ret = key_public_new(hsession, obj, attrs);
-			if (ret == CKR_OK)
+			if (ret == CKR_OK) {
+				set_key_token_id(obj, id);
 				ret = subkey_public_retrieve(hsession, obj);
+			}
 			break;
 
 		case CKO_PRIVATE_KEY:
 			ret = key_private_new(obj, attrs);
-			if (ret == CKR_OK)
+			if (ret == CKR_OK) {
+				set_key_token_id(obj, id);
 				ret = subkey_private_retrieve(hsession, obj);
+			}
 			break;
 
 		case CKO_SECRET_KEY:
 			ret = key_secret_new(obj, attrs, false);
-			if (ret == CKR_OK)
+			if (ret == CKR_OK) {
+				set_key_token_id(obj, id);
 				ret = subkey_secret_retrieve(hsession, obj,
 							     attrs);
+			}
 			break;
 
 		default:
@@ -1862,51 +1868,6 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 end:
 	DBG_TRACE("Secret Key object (%p) generate return %ld", obj, ret);
-	return ret;
-}
-
-CK_RV key_get_id(unsigned int *id, struct libobj_obj *obj)
-{
-	CK_RV ret = CKR_GENERAL_ERROR;
-
-	if (!id || !obj)
-		return ret;
-
-	switch (get_key_type(obj)) {
-	case CKK_AES:
-	case CKK_DES:
-	case CKK_DES3:
-	case CKK_SM4:
-		ret = key_cipher_get_id(id, obj);
-		break;
-
-	case CKK_MD5_HMAC:
-	case CKK_SHA_1_HMAC:
-	case CKK_SHA224_HMAC:
-	case CKK_SHA256_HMAC:
-	case CKK_SHA384_HMAC:
-	case CKK_SHA512_HMAC:
-	case CKK_SHA3_224_HMAC:
-	case CKK_SHA3_256_HMAC:
-	case CKK_SHA3_384_HMAC:
-	case CKK_SHA3_512_HMAC:
-	case CKK_HKDF:
-		ret = key_hmac_get_id(id, obj);
-		break;
-
-	case CKK_EC:
-		ret = key_ec_get_id(id, obj);
-		break;
-
-	case CKK_RSA:
-		ret = key_rsa_get_id(id, obj);
-		break;
-
-	default:
-		ret = CKR_FUNCTION_FAILED;
-		break;
-	}
-
 	return ret;
 }
 

@@ -996,7 +996,7 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 		  devinfo->name, status, ret);
 
 	if (ret == CKR_OK)
-		key_desc_copy_key_id(obj, key.id);
+		set_key_token_id(obj, key.id);
 
 	return ret;
 }
@@ -1222,7 +1222,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	if (ret == CKR_OK) {
 		DBG_TRACE("Derive Key ID = #%d", der_key_desc.id);
-		key_desc_copy_key_id(obj, der_key_desc.id);
+		set_key_token_id(obj, der_key_desc.id);
 	}
 
 	return ret;
@@ -1590,7 +1590,7 @@ static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	ctx = ((struct lib_signature_params *)args)->ctx;
 
-	key_id = get_key_id_from((struct libobj_obj *)ctx->hkey, ec_pair);
+	key_id = get_key_token_id((struct libobj_obj *)ctx->hkey);
 
 	return op_msign_common(slotid, entry, args, key_id);
 }
@@ -1604,7 +1604,7 @@ static CK_RV op_msign_rsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	ctx = ((struct lib_signature_params *)args)->ctx;
 
-	key_id = get_key_id_from((struct libobj_obj *)ctx->hkey, rsa_pair);
+	key_id = get_key_token_id((struct libobj_obj *)ctx->hkey);
 
 	return op_msign_common(slotid, entry, args, key_id);
 }
@@ -1812,7 +1812,7 @@ set_smw_cipher_init_args(struct lib_cipher_ctx *ctx,
 
 	} else {
 		key_desc_ptr[0].id =
-			get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
+			get_key_token_id((struct libobj_obj *)ctx->hkey);
 	}
 
 	for (i = 0; i < smw_init_args->nb_keys; i++)
@@ -2145,7 +2145,7 @@ static CK_RV op_maead(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	    (ctx->current_state == OP_BEGIN &&
 	     (params->state == OP_NEXT || params->state == OP_END))) {
 		key_descriptor.id =
-			get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
+			get_key_token_id((struct libobj_obj *)ctx->hkey);
 
 		smw_init_args.key_desc = &key_descriptor;
 		smw_init_args.subsystem_name = devinfo->name;
@@ -2322,8 +2322,7 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	    (ctx->context || params->state != OP_END))
 		return ret;
 
-	key_desc.id = get_key_id_from((struct libobj_obj *)ctx->hkey, cipher);
-
+	key_desc.id = get_key_token_id((struct libobj_obj *)ctx->hkey);
 	smw_args.subsystem_name = devinfo->name;
 	smw_args.key_descriptor = &key_desc;
 
@@ -2653,7 +2652,7 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 		  devinfo->name, status, ret);
 
 	if (ret == CKR_OK)
-		key_desc_copy_key_id(obj, key.id);
+		set_key_token_id(obj, key.id);
 
 	return ret;
 }
@@ -2670,7 +2669,6 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 	struct smw_get_key_attributes_args attr_args = { 0 };
 	struct smw_export_key_args args = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
-	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	DBG_TRACE("Get Key attributes");
 
@@ -2684,9 +2682,7 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 		goto end;
 	}
 
-	ret = libobj_get_id(unique_id, &key_descriptor.id);
-	if (ret != CKR_OK)
-		goto end;
+	key_descriptor.id = get_key_token_id(obj);
 
 	attr_args.subsystem_name = devinfo->name;
 	attr_args.key_descriptor = &key_descriptor;

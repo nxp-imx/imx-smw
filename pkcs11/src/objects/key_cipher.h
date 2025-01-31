@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #ifndef __KEY_CIPHER_H__
@@ -130,20 +130,6 @@ CK_RV key_cipher_modify_attribute(CK_ATTRIBUTE_PTR attr,
  */
 CK_RV key_cipher_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			  struct libobj_obj *obj, struct libattr_list *attrs);
-
-/*
- * key_cipher_get_id() - Get the Cipher key ID returned by SMW
- * @id: key ID pointer
- * @obj: Cipher Key object
- *
- * Get the key id.
- *
- * return:
- * CKR_HOST_MEMORY               - Allocation error
- * CKR_GENERAL_ERROR             - General error defined
- * CKR_OK                        - Success
- */
-CK_RV key_cipher_get_id(unsigned int *id, struct libobj_obj *obj);
 
 /*
  * key_cipher_derive() - Derive a cipher key object

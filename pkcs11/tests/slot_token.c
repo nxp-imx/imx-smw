@@ -80,6 +80,7 @@ static struct smw_mech_def mlist_tee[] = {
 	M(SM4_CTR),
 	M(SM4_ECB),
 	M(HKDF_DERIVE),
+	M(ECDH1_DERIVE),
 	M(RSA_PKCS_KEY_PAIR_GEN),
 	M(RSA_PKCS),
 	M(SHA1_RSA_PKCS),

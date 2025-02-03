@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <stdlib.h>
@@ -1967,6 +1967,39 @@ end:
 	return ret;
 }
 
+static CK_RV
+check_ecdh_derive_mech_params(CK_MECHANISM_PTR mech,
+			      struct libobj_key_derive_params *derive_params)
+{
+	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
+	CK_ECDH1_DERIVE_PARAMS_PTR ecdh_params = NULL_PTR;
+
+	if (!mech->pParameter) {
+		DBG_TRACE("CK_ECDH1_DERIVE mechanism pParameter not set");
+		goto end;
+	}
+
+	if (mech->ulParameterLen != sizeof(CK_ECDH1_DERIVE_PARAMS)) {
+		DBG_TRACE("CK_ECDH1_DERIVE mechanism ulParameterLen error");
+		goto end;
+	}
+
+	ecdh_params = (CK_ECDH1_DERIVE_PARAMS_PTR)mech->pParameter;
+
+	derive_params->ecdh_params.kdf = ecdh_params->kdf;
+	derive_params->ecdh_params.pPublicData = ecdh_params->pPublicData;
+	derive_params->ecdh_params.pSharedData = ecdh_params->pSharedData;
+	derive_params->ecdh_params.ulPublicDataLen =
+		ecdh_params->ulPublicDataLen;
+	derive_params->ecdh_params.ulSharedDataLen =
+		ecdh_params->ulSharedDataLen;
+
+	ret = CKR_OK;
+
+end:
+	return ret;
+}
+
 static CK_RV check_input_params(CK_KEY_TYPE base_key_type,
 				CK_MECHANISM_PTR mech,
 				struct libobj_key_derive_params *derive_params)
@@ -1984,6 +2017,15 @@ static CK_RV check_input_params(CK_KEY_TYPE base_key_type,
 		ret = check_hkdf_derive_mech_params(mech, derive_params);
 		break;
 
+	case CKM_ECDH1_DERIVE:
+		if (base_key_type != CKK_EC) {
+			ret = CKR_KEY_FUNCTION_NOT_PERMITTED;
+			break;
+		}
+
+		ret = check_ecdh_derive_mech_params(mech, derive_params);
+		break;
+
 	default:
 		break;
 	}
@@ -1991,10 +2033,10 @@ static CK_RV check_input_params(CK_KEY_TYPE base_key_type,
 	return ret;
 }
 
-static CK_RV set_hkdf_derived_key_attr(CK_SESSION_HANDLE hsession,
-				       CK_OBJECT_HANDLE base_key,
-				       struct libobj_obj *derived_key,
-				       struct libattr_list *attrs)
+static CK_RV set_kdf_derived_key_attr(CK_SESSION_HANDLE hsession,
+				      CK_OBJECT_HANDLE base_key,
+				      struct libobj_obj *derived_key,
+				      struct libattr_list *attrs)
 {
 	CK_RV ret = CKR_OK;
 
@@ -2077,8 +2119,9 @@ set_derived_key_attr(CK_SESSION_HANDLE hsession,
 
 	switch (mech) {
 	case CKM_HKDF_DERIVE:
-		ret = set_hkdf_derived_key_attr(hsession, base_key, derived_key,
-						attrs);
+	case CKM_ECDH1_DERIVE:
+		ret = set_kdf_derived_key_attr(hsession, base_key, derived_key,
+					       attrs);
 		break;
 
 	default:

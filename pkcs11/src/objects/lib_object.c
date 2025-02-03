@@ -809,7 +809,7 @@ CK_RV libobj_create(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		break;
 	}
 
-	if (ret == CKR_OK) {
+	if (ret == CKR_OK && is_token_obj(newobj, storage)) {
 		ret = obj_db_update(newobj);
 		/*
 		 * Special Subsystem data object are not store.

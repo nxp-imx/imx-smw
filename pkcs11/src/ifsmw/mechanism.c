@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <string.h>
@@ -324,7 +324,8 @@ static struct mentry mkeygen[] = {
 /*
  * Key Derive mechanism
  */
-static struct mentry mkeyderive[] = { M_KEYDERIVE(HKDF_IKM, HKDF, HKDF) };
+static struct mentry mkeyderive[] = { M_KEYDERIVE(HKDF_IKM, HKDF, HKDF),
+				      M_KEYDERIVE(SECP_R1, ECDH, ECDH1) };
 
 /*
  * Signature mechanism
@@ -1072,8 +1073,8 @@ static CK_RV info_mkeyderive(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return ret;
 }
 
-static int set_hkdf_args(struct libobj_key_derive_params *derive_params,
-			 struct smw_derive_key_args *derive_args)
+static CK_RV set_hkdf_args(struct libobj_key_derive_params *derive_params,
+			   struct smw_derive_key_args *derive_args)
 {
 	CK_RV status = CKR_ARGUMENTS_BAD;
 
@@ -1129,6 +1130,33 @@ static int set_hkdf_args(struct libobj_key_derive_params *derive_params,
 	return status;
 }
 
+static CK_RV set_ecdh_args(struct libobj_key_derive_params *derive_params,
+			   struct smw_derive_key_args *derive_args)
+{
+	CK_RV status = CKR_ARGUMENTS_BAD;
+
+	struct smw_kdf_ecdh_args *ecdh_args = NULL;
+
+	if (!derive_params || !derive_args)
+		return status;
+
+	if (derive_params->ecdh_params.kdf != CKD_NULL ||
+	    derive_params->ecdh_params.pSharedData ||
+	    derive_params->ecdh_params.ulSharedDataLen)
+		return CKR_FUNCTION_NOT_SUPPORTED;
+
+	ecdh_args = derive_args->kdf_arguments;
+
+	ecdh_args->peer_public_buffer = derive_params->ecdh_params.pPublicData;
+	if (SET_OVERFLOW(derive_params->ecdh_params.ulPublicDataLen,
+			 ecdh_args->peer_public_buffer_length))
+		return CKR_DATA_LEN_RANGE;
+
+	status = CKR_OK;
+
+	return status;
+}
+
 static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
 	CK_RV ret = CKR_SLOT_ID_INVALID;
@@ -1140,12 +1168,18 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	struct smw_keypair_buffer keypair_buffer = { 0 };
 	struct smw_derived_key_descriptor der_key_desc = { 0 };
 	struct smw_kdf_hkdf_args hkdf_args = { 0 };
+	struct smw_kdf_ecdh_args ecdh_args = { 0 };
 	struct libobj_key_derive_params *derive_params = args;
 	struct libobj_obj *obj = derive_params->derived_key;
 
 	if (entry->type == CKM_HKDF_DERIVE) {
 		derive_args.kdf_arguments = &hkdf_args;
 		ret = set_hkdf_args(derive_params, &derive_args);
+		if (ret != CKR_OK)
+			return ret;
+	} else if (entry->type == CKM_ECDH1_DERIVE) {
+		derive_args.kdf_arguments = &ecdh_args;
+		ret = set_ecdh_args(derive_params, &derive_args);
 		if (ret != CKR_OK)
 			return ret;
 	}

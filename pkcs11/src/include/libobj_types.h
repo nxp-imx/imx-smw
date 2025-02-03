@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #ifndef __LIBOBJ_TYPES_H__
@@ -261,6 +261,13 @@ struct libobj_key_derive_params {
 			CK_BYTE_PTR info;
 			CK_ULONG info_len;
 		} hkdf_params;
+		struct {
+			CK_EC_KDF_TYPE kdf;
+			CK_ULONG ulSharedDataLen;
+			CK_BYTE_PTR pSharedData;
+			CK_ULONG ulPublicDataLen;
+			CK_BYTE_PTR pPublicData;
+		} ecdh_params;
 	};
 };
 

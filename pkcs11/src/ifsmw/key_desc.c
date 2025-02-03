@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include "smw/names.h"
@@ -701,6 +701,11 @@ int base_key_desc_setup(struct libobj_obj *obj, struct smw_key_descriptor *desc)
 			ret = set_key_buffer(hmac_key->value.array,
 					     hmac_key->value.number, desc);
 		}
+
+		break;
+
+	case CKK_EC:
+		ret = ec_key_desc(desc, obj);
 
 		break;
 

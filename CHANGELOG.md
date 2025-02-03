@@ -85,6 +85,7 @@ Sign and Verify algorithm in ELE configuration file.
 
 * Add implementation for C_(Get|Set)OperationState functions
 * Add support for `CKO_PROFILE` object handling.
+* Add support for `CKM_ECDH1_DERIVE` mechanism.
 
 #### PKCS#11 Tests - _version 4.2_
 
@@ -92,6 +93,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Fix coverity 2024.9.0 findings.
 * Add tests for `CKO_PROFILE` object.
 * Fix tests to run when TEE subsystem not enabled.
+* Add tests for `CKM_ECDH1_DERIVE` mechanism.
 
 ---
 ### <a id ="rel_4_1"></a></br>**Release 4.1**

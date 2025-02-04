@@ -19,6 +19,9 @@
 
 const CK_BYTE prime192v1[] = ASN1_OID_PRIME192;
 const CK_BYTE prime256v1[] = ASN1_OID_PRIME256;
+const CK_BYTE secp224r1[] = ASN1_OID_SEC_P224R1;
+const CK_BYTE secp384r1[] = ASN1_OID_SEC_P384R1;
+const CK_BYTE secp521r1[] = ASN1_OID_SEC_P521R1;
 const CK_BYTE brainpoolP160r1[] = ASN1_OID_BRAINPOOL_P160R1;
 const CK_BYTE brainpoolP160t1[] = ASN1_OID_BRAINPOOL_P160T1;
 const CK_BYTE brainpoolP192r1[] = ASN1_OID_BRAINPOOL_P192R1;
@@ -34,23 +37,18 @@ const CK_BYTE brainpoolP384t1[] = ASN1_OID_BRAINPOOL_P384T1;
 const CK_BYTE brainpoolP512r1[] = ASN1_OID_BRAINPOOL_P512R1;
 const CK_BYTE brainpoolP512t1[] = ASN1_OID_BRAINPOOL_P512T1;
 
-const struct asn1_curve_def ec_asn1_curves[] = { EC_ASN1_CURVE(prime192v1),
-						 EC_ASN1_CURVE(prime256v1),
-						 EC_ASN1_CURVE(brainpoolP160r1),
-						 EC_ASN1_CURVE(brainpoolP160t1),
-						 EC_ASN1_CURVE(brainpoolP192r1),
-						 EC_ASN1_CURVE(brainpoolP192t1),
-						 EC_ASN1_CURVE(brainpoolP224r1),
-						 EC_ASN1_CURVE(brainpoolP224t1),
-						 EC_ASN1_CURVE(brainpoolP256r1),
-						 EC_ASN1_CURVE(brainpoolP256t1),
-						 EC_ASN1_CURVE(brainpoolP320r1),
-						 EC_ASN1_CURVE(brainpoolP320t1),
-						 EC_ASN1_CURVE(brainpoolP384r1),
-						 EC_ASN1_CURVE(brainpoolP384t1),
-						 EC_ASN1_CURVE(brainpoolP512r1),
-						 EC_ASN1_CURVE(brainpoolP512t1),
-						 { 0 } };
+const struct asn1_curve_def ec_asn1_curves[] = {
+	EC_ASN1_CURVE(prime192v1),	EC_ASN1_CURVE(prime256v1),
+	EC_ASN1_CURVE(secp224r1),	EC_ASN1_CURVE(secp384r1),
+	EC_ASN1_CURVE(secp521r1),	EC_ASN1_CURVE(brainpoolP160r1),
+	EC_ASN1_CURVE(brainpoolP160t1), EC_ASN1_CURVE(brainpoolP192r1),
+	EC_ASN1_CURVE(brainpoolP192t1), EC_ASN1_CURVE(brainpoolP224r1),
+	EC_ASN1_CURVE(brainpoolP224t1), EC_ASN1_CURVE(brainpoolP256r1),
+	EC_ASN1_CURVE(brainpoolP256t1), EC_ASN1_CURVE(brainpoolP320r1),
+	EC_ASN1_CURVE(brainpoolP320t1), EC_ASN1_CURVE(brainpoolP384r1),
+	EC_ASN1_CURVE(brainpoolP384t1), EC_ASN1_CURVE(brainpoolP512r1),
+	EC_ASN1_CURVE(brainpoolP512t1), { 0 }
+};
 
 /**
  * struct dev_curve_def - Definition of SMW curve
@@ -69,23 +67,18 @@ struct dev_curve_def {
 		.name = SMW_KEY_TYPE_NAME_##_name, .security_size = _size      \
 	}
 
-const struct dev_curve_def ec_smw_curves[] = { EC_SMW_CURVE(SECP_R1, 192),
-					       EC_SMW_CURVE(SECP_R1, 256),
-					       EC_SMW_CURVE(BRAINPOOL_R1, 160),
-					       EC_SMW_CURVE(BRAINPOOL_T1, 160),
-					       EC_SMW_CURVE(BRAINPOOL_R1, 192),
-					       EC_SMW_CURVE(BRAINPOOL_T1, 192),
-					       EC_SMW_CURVE(BRAINPOOL_R1, 224),
-					       EC_SMW_CURVE(BRAINPOOL_T1, 224),
-					       EC_SMW_CURVE(BRAINPOOL_R1, 256),
-					       EC_SMW_CURVE(BRAINPOOL_T1, 256),
-					       EC_SMW_CURVE(BRAINPOOL_R1, 320),
-					       EC_SMW_CURVE(BRAINPOOL_T1, 320),
-					       EC_SMW_CURVE(BRAINPOOL_R1, 384),
-					       EC_SMW_CURVE(BRAINPOOL_T1, 384),
-					       EC_SMW_CURVE(BRAINPOOL_R1, 512),
-					       EC_SMW_CURVE(BRAINPOOL_T1, 512),
-					       { 0 } };
+const struct dev_curve_def ec_smw_curves[] = {
+	EC_SMW_CURVE(SECP_R1, 192),	 EC_SMW_CURVE(SECP_R1, 256),
+	EC_SMW_CURVE(SECP_R1, 224),	 EC_SMW_CURVE(SECP_R1, 384),
+	EC_SMW_CURVE(SECP_R1, 521),	 EC_SMW_CURVE(BRAINPOOL_R1, 160),
+	EC_SMW_CURVE(BRAINPOOL_T1, 160), EC_SMW_CURVE(BRAINPOOL_R1, 192),
+	EC_SMW_CURVE(BRAINPOOL_T1, 192), EC_SMW_CURVE(BRAINPOOL_R1, 224),
+	EC_SMW_CURVE(BRAINPOOL_T1, 224), EC_SMW_CURVE(BRAINPOOL_R1, 256),
+	EC_SMW_CURVE(BRAINPOOL_T1, 256), EC_SMW_CURVE(BRAINPOOL_R1, 320),
+	EC_SMW_CURVE(BRAINPOOL_T1, 320), EC_SMW_CURVE(BRAINPOOL_R1, 384),
+	EC_SMW_CURVE(BRAINPOOL_T1, 384), EC_SMW_CURVE(BRAINPOOL_R1, 512),
+	EC_SMW_CURVE(BRAINPOOL_T1, 512), { 0 }
+};
 
 /*
  * Definition of the ASN1 EC Curves supported (function )
@@ -114,6 +107,9 @@ const struct curve_def ec_curves[] = {
 	EC_CURVE(&ec_asn1_curves[14], &ec_smw_curves[14]),
 	EC_CURVE(&ec_asn1_curves[15], &ec_smw_curves[15]),
 	EC_CURVE(&ec_asn1_curves[16], &ec_smw_curves[16]),
+	EC_CURVE(&ec_asn1_curves[17], &ec_smw_curves[17]),
+	EC_CURVE(&ec_asn1_curves[18], &ec_smw_curves[18]),
+	EC_CURVE(&ec_asn1_curves[19], &ec_smw_curves[19]),
 	{ 0 }
 };
 

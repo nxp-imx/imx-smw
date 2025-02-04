@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020 NXP
+ * Copyright 2020, 2025 NXP
  */
 #ifndef __ASN1_EC_CURVE_H__
 #define __ASN1_EC_CURVE_H__
@@ -18,6 +18,24 @@
 #define ASN1_OID_PRIME256                                                      \
 	{                                                                      \
 		0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07                 \
+	}
+
+/* secp224r1: 1.3.132.0.33 */
+#define ASN1_OID_SEC_P224R1                                                    \
+	{                                                                      \
+		0x2B, 0x81, 0x04, 0x00, 0x21                                   \
+	}
+
+/* secp384r1: 1.3.132.0.34 */
+#define ASN1_OID_SEC_P384R1                                                    \
+	{                                                                      \
+		0x2B, 0x81, 0x04, 0x00, 0x22                                   \
+	}
+
+/* secp521r1: 1.3.132.0.35 */
+#define ASN1_OID_SEC_P521R1                                                    \
+	{                                                                      \
+		0x2B, 0x81, 0x04, 0x00, 0x23                                   \
 	}
 
 /* BrainpoolP160r1: 1.3.36.3.3.2.8.1.1.1 */

@@ -122,7 +122,7 @@ static int sign_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -257,7 +257,7 @@ static int verify_multipart_wrong_order(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -403,7 +403,7 @@ static int sign_verify_multipart_bad_param(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -581,7 +581,7 @@ static int sign_verify_cancel_op(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -696,7 +696,7 @@ static int sign_verify_multiple_begin(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -838,7 +838,7 @@ static int sign_verify_multipart_ecdsa(CK_FUNCTION_LIST_3_0_PTR pfunc)
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 

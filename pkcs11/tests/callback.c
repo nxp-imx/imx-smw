@@ -97,7 +97,8 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Generate %sKeypair by curve oid\n", token ? "Token " : "");
-	if (CHECK_EXPECTED(util_to_asn1_oid(&pubkey_attrs[0], prime192v1),
+	if (CHECK_EXPECTED(util_to_asn1_oid(&pubkey_attrs[0],
+					    &ec_curves[SECP_R1_192]),
 			   "ASN1 Conversion"))
 		goto end;
 

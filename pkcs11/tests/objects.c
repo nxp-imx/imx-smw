@@ -1432,8 +1432,8 @@ static int get_key_pair_size(CK_FUNCTION_LIST_PTR pfunc)
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
 	CK_ULONG pubkey_size = 0;
 	CK_ULONG privkey_size = 0;
-	CK_ULONG key_size =
-		BITS_TO_BYTES_SIZE((size_t)ec_curves[0].security_size);
+	const struct asn1_ec_curve *curve = &ec_curves[SECP_R1_192];
+	CK_ULONG key_size = BITS_TO_BYTES_SIZE((size_t)curve->security_size);
 	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
 	CK_BBOOL bverify = CK_TRUE;
 	CK_BBOOL bsign = CK_TRUE;
@@ -1465,8 +1465,7 @@ static int get_key_pair_size(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Generate Keypair by curve name\n");
-	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[0].name),
+	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0], curve),
 			   "ASN1 Conversion"))
 		goto end;
 

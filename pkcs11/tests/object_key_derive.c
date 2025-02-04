@@ -897,7 +897,7 @@ static int object_derive_key_ecdh_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	if (CHECK_EXPECTED(util_to_asn1_string(&base_key_template[5],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -1055,7 +1055,7 @@ static int object_derive_key_ecdh(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	if (CHECK_EXPECTED(util_to_asn1_string(&base_key_template[5],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 

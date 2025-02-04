@@ -59,7 +59,8 @@ static int create_ec_key_public(CK_FUNCTION_LIST_PTR pfunc,
 	keyTemplate[3].ulValueLen = ec_point_size + 2;
 
 	TEST_OUT("Create %sKey Public by curve oid\n", token ? "Token " : "");
-	if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2], prime192v1),
+	if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2],
+					    &ec_curves[SECP_R1_192]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -117,7 +118,8 @@ static int create_ec_key_private(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Create %sKey Private by curve oid\n", token ? "Token " : "");
-	if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2], prime192v1),
+	if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2],
+					    &ec_curves[SECP_R1_192]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -197,7 +199,8 @@ static int generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	TEST_OUT("Generate %sKeypair by curve oid\n", token ? "Token " : "");
-	if (CHECK_EXPECTED(util_to_asn1_oid(&pubkey_attrs[0], prime256v1),
+	if (CHECK_EXPECTED(util_to_asn1_oid(&pubkey_attrs[0],
+					    &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 

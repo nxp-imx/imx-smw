@@ -420,7 +420,7 @@ static int sign_verify_multiple_init(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[0].name),
+					       &ec_curves[SECP_R1_192]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -524,7 +524,7 @@ static int sign_verify_ecdsa(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Generate EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 
@@ -873,7 +873,7 @@ static int sign_verify_key_usage(CK_FUNCTION_LIST_PTR pfunc)
 
 	TEST_OUT("Generate signature EC Keypair by curve name\n");
 	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       ec_curves[1].name),
+					       &ec_curves[SECP_R1_256]),
 			   "ASN1 Conversion"))
 		goto end;
 

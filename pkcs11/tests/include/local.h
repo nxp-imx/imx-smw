@@ -34,19 +34,25 @@ const char *get_slot_label(CK_ULONG slotid);
 
 #define CK_FUNCTION_PTR(name) CK_DECLARE_FUNCTION_POINTER(CK_RV, name)
 
-extern const CK_BYTE prime192v1[];
-extern const CK_BYTE prime256v1[];
+#define SECP_R1_192 0
+#define SECP_R1_224 1
+#define SECP_R1_521 2
+#define SECP_R1_256 3
+#define SECP_R1_384 4
 
 struct asn1_ec_curve {
 	size_t security_size;
 	const char *name;
 	const unsigned char *oid;
+	size_t oid_len;
 };
 
 extern const struct asn1_ec_curve ec_curves[];
 
-int util_to_asn1_string(CK_ATTRIBUTE_PTR attr, const char *str);
-int util_to_asn1_oid(CK_ATTRIBUTE_PTR attr, const CK_BYTE *oid);
+int util_to_asn1_string(CK_ATTRIBUTE_PTR attr,
+			const struct asn1_ec_curve *curve);
+int util_to_asn1_oid(CK_ATTRIBUTE_PTR attr, const struct asn1_ec_curve *curve);
+int util_encode_asn1_length(size_t len, uint8_t *out, size_t *outlen);
 
 void tests_pkcs11_get_info_ifs(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_get_ifs(void *lib_hdl, CK_VOID_PTR pfunc);

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 #ifndef __ARGS_ATTR_H__
 #define __ARGS_ATTR_H__
@@ -31,35 +31,24 @@ void args_attr_get_key_usage(struct libobj_obj *obj,
 			     smw_attr_usage_t usage_flags);
 
 /**
- * args_attr_key_storage() - Set the key storage attributes
+ * args_attr_obj_storage() - Set the object storage attributes
  * @attr: Attributes
  * @obj: Object
  *
  * Return:
  * None.
  */
-void args_attr_key_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj);
+void args_attr_obj_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj);
 
 /**
- * args_attr_get_key_storage() - Get the key storage attributes
+ * args_attr_get_obj_storage() - Get the object storage attributes
  * @obj: Object
  * @attr: Attributes
  *
  * Return:
  * None.
  */
-void args_attr_get_key_storage(struct libobj_obj *obj,
+void args_attr_get_obj_storage(struct libobj_obj *obj,
 			       smw_attr_attributes_t attr);
-
-/**
- * args_attr_data_storage() - Set the data storage attributes
- * @attr: Attributes
- * @obj: Object
- *
- * Return:
- * None.
- */
-void args_attr_data_storage(smw_attr_attributes_t *attr,
-			    struct libobj_obj *obj);
 
 #endif /* __ARGS_ATTR_H__ */

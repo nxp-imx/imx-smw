@@ -960,7 +960,7 @@ static CK_RV key_desc_to_smw(CK_SLOT_ID slotid, struct smw_key_descriptor *desc,
 			goto end;
 
 		args_attrs_key_usage(&attributes->usage_flags, obj);
-		args_attr_key_storage(&attributes->attributes, obj);
+		args_attr_obj_storage(&attributes->attributes, obj);
 	}
 
 end:
@@ -1211,7 +1211,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	derive_args.store_derived_key = true;
 
 	args_attrs_key_usage(&key_attributes.usage_flags, obj);
-	args_attr_key_storage(&key_attributes.attributes, obj);
+	args_attr_obj_storage(&key_attributes.attributes, obj);
 	derive_args.key_attributes = &key_attributes;
 
 	status = smw_derive_key(&derive_args);
@@ -2702,7 +2702,7 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 
 	key_attr = &attr_args.key_attributes;
 	args_attr_get_key_usage(obj, key_attr->usage_flags);
-	args_attr_get_key_storage(obj, key_attr->attributes);
+	args_attr_get_obj_storage(obj, key_attr->attributes);
 
 	key_descriptor.buffer = &keypair_buffer;
 	status = smw_get_key_buffers_lengths(&key_descriptor);

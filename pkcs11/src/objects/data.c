@@ -112,11 +112,11 @@ CK_RV data_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	return ret;
 }
 
-CK_RV data_retrieve(struct libobj_obj *obj, struct libattr_list *attrs)
+CK_RV data_retrieve(struct libobj_obj *obj, struct libattr_list *attrs,
+		    unsigned int id)
 {
 	CK_RV ret = CKR_GENERAL_ERROR;
 	struct libobj_data *new_data = NULL;
-	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
 
 	DBG_TRACE("Retrieve a data type object");
 
@@ -132,20 +132,15 @@ CK_RV data_retrieve(struct libobj_obj *obj, struct libattr_list *attrs)
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = libobj_get_id(unique_id, &new_data->data_id);
-	if (ret != CKR_OK)
-		goto end;
+	set_data_token_id(obj, id);
 
-	DBG_TRACE("Import a new data (%p)", new_data);
+	DBG_TRACE("Retrieve a data (%p)", new_data);
 
 	if (is_token_obj(obj, storage))
-		ret = libdev_retrieve_data(obj);
+		ret = libdev_get_data_attributes(obj);
 
 end:
-	if (ret != CKR_OK)
-		data_free(obj);
-
-	DBG_TRACE("Data type object (%p) import return %ld", obj, ret);
+	DBG_TRACE("Data type object (%p) return %ld", obj, ret);
 	return ret;
 }
 
@@ -156,9 +151,9 @@ CK_RV data_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj)
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 
 	if (is_token_obj(obj, storage) && attr->type == CKA_VALUE)
-		ret = libdev_retrieve_data(obj);
+		ret = libdev_get_data_value(obj);
 
-	if (ret == CKR_OK || ret == CKR_BUFFER_TOO_SMALL)
+	if (ret == CKR_OK)
 		ret = attr_get_obj_value(attr, attr_data, ARRAY_SIZE(attr_data),
 					 get_subobj_from(obj, storage));
 
@@ -172,26 +167,10 @@ CK_RV data_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj)
 
 	DBG_TRACE("Modify attribute type=%#lx", attr->type);
 
-	/* Get attribute from the common key attribute */
+	/* Modify attribute from the common key attribute */
 	ret = attr_modify_obj_value(attr, attr_data, ARRAY_SIZE(attr_data),
 				    get_subobj_from(obj, storage));
 
 	DBG_TRACE("Modify attribute type=%#lx ret %ld", attr->type, ret);
 	return ret;
-}
-
-CK_RV data_get_id(unsigned int *id, struct libobj_obj *obj)
-{
-	struct libobj_data *data = NULL;
-
-	if (!obj || !id)
-		return CKR_GENERAL_ERROR;
-
-	data = get_subobj_from(obj, storage);
-
-	DBG_TRACE("Token Data ID 0x%X", data->data_id);
-
-	*id = data->data_id;
-
-	return CKR_OK;
 }

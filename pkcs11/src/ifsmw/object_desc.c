@@ -533,7 +533,8 @@ CK_RV obj_db_get(struct libobj_obj *obj,
 		break;
 
 	case CKO_DATA:
-		ret = data_get_id(&descriptor->id, obj);
+		descriptor->id = get_data_token_id(obj);
+		ret = CKR_OK;
 		break;
 
 	default:

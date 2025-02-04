@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022, 2024 NXP
+ * Copyright 2022, 2024-2025 NXP
  */
 
 #ifndef __DATA_H__
@@ -38,6 +38,7 @@ CK_RV data_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
  * data_retrieve() - Retrieve a data object
  * @obj: Data object
  * @attrs: List of object attributes
+ * @id: Token ID
  *
  * return:
  * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
@@ -48,7 +49,8 @@ CK_RV data_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_OK                        - Success
  */
-CK_RV data_retrieve(struct libobj_obj *obj, struct libattr_list *attrs);
+CK_RV data_retrieve(struct libobj_obj *obj, struct libattr_list *attrs,
+		    unsigned int id);
 
 /**
  * data_get_attribute() - Get an attribute from a data object
@@ -81,18 +83,5 @@ CK_RV data_get_attribute(CK_ATTRIBUTE_PTR attr, const struct libobj_obj *obj);
  * CKR_OK                        - Success
  */
 CK_RV data_modify_attribute(CK_ATTRIBUTE_PTR attr, struct libobj_obj *obj);
-
-/*
- * data_get_id() - Get the data ID
- * @id: data ID pointer
- * @obj: Data object
- *
- * return:
- * CKR_HOST_MEMORY               - Allocation error
- * CKR_GENERAL_ERROR             - General error defined
- * CKR_FUNCTION_FAILED           - Function failure
- * CKR_OK                        - Success
- */
-CK_RV data_get_id(unsigned int *id, struct libobj_obj *obj);
 
 #endif /* __DATA_H__ */

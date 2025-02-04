@@ -114,6 +114,13 @@ struct libobj_storage {
 		_obj_type->modifiable;                                         \
 	})
 
+#define set_non_modifiable_obj(obj, type)                                      \
+	({                                                                     \
+		struct libobj_##type *_obj_type = get_object_from(obj);        \
+		assert(_obj_type);                                             \
+		_obj_type->modifiable = false;                                 \
+	})
+
 #define is_private_obj(obj, type)                                              \
 	({                                                                     \
 		struct libobj_##type *_obj_type = get_object_from(obj);        \
@@ -240,6 +247,19 @@ struct libobj_key {
 		_key->token_id;                                                \
 	})
 
+#define set_data_token_id(obj, _token_id)                                      \
+	({                                                                     \
+		struct libobj_data *_data = get_subobj_from(obj, storage);     \
+		assert(_data);                                                 \
+		_data->token_id = _token_id;                                   \
+	})
+
+#define get_data_token_id(obj)                                                 \
+	({                                                                     \
+		struct libobj_data *_data = get_subobj_from(obj, storage);     \
+		assert(_data);                                                 \
+		_data->token_id;                                               \
+	})
 /*
  * Define the libobj public/private/keypair type
  */
@@ -304,7 +324,7 @@ struct libobj_key_derive_params {
 };
 
 struct libobj_data {
-	unsigned int data_id;	       // Data is returned by token
+	unsigned int token_id;	       // Token data ID
 	struct librfc2279 application; // Application managing object
 	struct libbytes id;	       // Object identifier
 	struct libbytes value;	       // Value of the object

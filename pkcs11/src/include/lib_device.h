@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __LIB_DEVICE_H__
@@ -341,11 +341,10 @@ CK_RV libdev_rng(CK_SESSION_HANDLE hsession, CK_BYTE_PTR pRandomData,
 CK_RV libdev_create_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj);
 
 /**
- * libdev_retrieve_data() - Retrieve SMW data
+ * libdev_get_data_attributes() - Get the SMW data attributes
  * @obj: Data object
  *
- * Function calls the SMW API to retrieve data if data label
- * is supported.
+ * Function calls the SMW API to get the data attributes.
  *
  * Return:
  * CKR_ARGUMENTS_BAD             - Bad arguments
@@ -353,7 +352,21 @@ CK_RV libdev_create_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj);
  * CKR_FUNCTION_FAILED           - Operation failed
  * CKR_OK                        - Success
  */
-CK_RV libdev_retrieve_data(const struct libobj_obj *obj);
+CK_RV libdev_get_data_attributes(struct libobj_obj *obj);
+
+/**
+ * libdev_get_data_value() - Get the SMW data value
+ * @obj: Data object
+ *
+ * Function calls the SMW API to get data value.
+ *
+ * Return:
+ * CKR_ARGUMENTS_BAD             - Bad arguments
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_get_data_value(const struct libobj_obj *obj);
 
 /**
  * libdev_delete_data() - Delete SMW data

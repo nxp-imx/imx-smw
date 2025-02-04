@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include "smw/attr.h"
@@ -305,24 +305,21 @@ void args_attr_get_key_usage(struct libobj_obj *obj,
 	get_common_key_usage(obj, usage_flags);
 }
 
-void args_attr_key_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj)
+void args_attr_obj_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj)
 {
 	if (is_token_obj(obj, storage))
 		*attr = SMW_ATTR_SET_PERSISTENT(*attr);
+
+	if (!is_modifiable_obj(obj, storage))
+		*attr = SMW_ATTR_SET_READ_ONLY(*attr);
 }
 
-void args_attr_get_key_storage(struct libobj_obj *obj,
+void args_attr_get_obj_storage(struct libobj_obj *obj,
 			       smw_attr_attributes_t attr)
 {
 	if (SMW_ATTR_IS_PERSISTENT(attr) || SMW_ATTR_IS_PERMANENT(attr))
 		set_token_obj(obj, storage);
-}
 
-void args_attr_data_storage(smw_attr_attributes_t *attr, struct libobj_obj *obj)
-{
-	if (!is_modifiable_obj(obj, storage))
-		*attr = SMW_ATTR_SET_READ_ONLY(*attr);
-
-	if (is_token_obj(obj, storage))
-		*attr = SMW_ATTR_SET_PERSISTENT(*attr);
+	if (SMW_ATTR_IS_READ_ONLY(attr))
+		set_non_modifiable_obj(obj, storage);
 }

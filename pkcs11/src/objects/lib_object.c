@@ -947,7 +947,7 @@ CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		break;
 
 	case CKO_DATA:
-		ret = data_retrieve(newobj, &attrs_list);
+		ret = data_retrieve(newobj, &attrs_list, id);
 		break;
 
 	default:

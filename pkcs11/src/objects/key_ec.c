@@ -221,12 +221,20 @@ CK_RV key_ec_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 				  const struct libobj_obj *obj)
 {
 	CK_RV ret = CKR_OK;
+	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 
 	DBG_TRACE("Get attribute type=%#lx", attr->type);
 
-	ret = attr_get_obj_value(attr, attr_key_ec_public,
-				 ARRAY_SIZE(attr_key_ec_public),
-				 get_subkey_from(obj));
+	if (is_token_obj(obj, storage) && attr->type == CKA_EC_POINT) {
+		if (!key->point_q.array)
+			ret = libdev_export_public_key(obj);
+	}
+
+	if (ret == CKR_OK)
+		ret = attr_get_obj_value(attr, attr_key_ec_public,
+					 ARRAY_SIZE(attr_key_ec_public),
+					 get_subkey_from(obj));
+
 	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
 		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
 
@@ -321,13 +329,32 @@ CK_RV key_ec_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 				   const struct libobj_obj *obj, bool protect)
 {
 	CK_RV ret = CKR_OK;
+	struct libobj_key_ec_pair *key = get_subkey_from(obj);
+	const struct libobj_obj *obj_attr = obj;
 
 	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
 		  protect ? "YES" : "NO");
 
-	ret = attr_get_obj_prot_value(attr, attr_key_ec_private,
-				      ARRAY_SIZE(attr_key_ec_private),
-				      get_subkey_from(obj), protect);
+	if (is_token_obj(obj, storage) && attr->type == CKA_EC_POINT) {
+		/*
+		 * If it's a keypair, public key object is set and
+		 * don't export the public key if already exported.
+		 */
+		if (key->pub_obj) {
+			obj_attr = key->pub_obj;
+			key = get_subkey_from(key->pub_obj);
+		}
+
+		if (!key->point_q.array)
+			ret = libdev_export_public_key(obj_attr);
+	}
+
+	if (ret == CKR_OK)
+		ret = attr_get_obj_prot_value(attr, attr_key_ec_private,
+					      ARRAY_SIZE(attr_key_ec_private),
+					      get_subkey_from(obj_attr),
+					      protect);
+
 	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
 		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
 

@@ -1015,6 +1015,134 @@ static CK_RV op_mkeygen(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	return op_keygen_common(slotid, args);
 }
 
+static CK_RV op_export_common(struct smw_key_descriptor *key_desc,
+			      const struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_export_key_args args = { 0 };
+
+	DBG_TRACE("Common Export Key mechanism");
+
+	/*
+	 * As the 3rd parameter "attributes" is NULL, the 1st parameter
+	 * "slotid" is not used, hence can be 0.
+	 */
+	ret = key_desc_to_smw(0, key_desc, NULL, (struct libobj_obj *)obj);
+	if (ret != CKR_OK)
+		return ret;
+
+	args.key_descriptor = key_desc;
+
+	status = smw_export_key(&args);
+	ret = smw_status_to_ck_rv(status);
+
+	DBG_TRACE("return %ld", ret);
+	return ret;
+}
+
+static CK_RV export_ec_public_key(struct smw_key_descriptor *key_desc,
+				  const struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+
+	struct libobj_key_ec_pair *key = get_subkey_from(obj);
+
+	unsigned int public_length = 0;
+
+	DBG_TRACE("Export EC Public Key");
+
+	/* Assign EC public key length */
+	public_length = key_desc->buffer->gen.public_length;
+	if (!public_length) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
+	/* Add DER ANSI X9.62 uncompress code byte */
+	if (ADD_OVERFLOW(public_length, 1, &key->point_q.number))
+		return CKR_ARGUMENTS_BAD;
+
+	/* Allocate the public key buffer */
+	key->point_q.array = calloc(1, key->point_q.number);
+	if (!key->point_q.array) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	ret = op_export_common(key_desc, obj);
+	if (ret == CKR_OK)
+		/* DER ANSI X9.62 uncompress code byte */
+		key->point_q.array[0] = 0x04;
+
+end:
+	if (ret != CKR_OK) {
+		if (key->point_q.array)
+			free(key->point_q.array);
+
+		key->point_q.array = NULL;
+		key->point_q.number = 0;
+	}
+
+	DBG_TRACE("return %ld", ret);
+
+	return ret;
+}
+
+static CK_RV export_rsa_public_key(struct smw_key_descriptor *key_desc,
+				   const struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+
+	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
+
+	DBG_TRACE("Export RSA Public Key");
+
+	/* Assign RSA public buffer length */
+	key->modulus.length = key_desc->buffer->rsa.modulus_length;
+	key->pub_exp.length = MAX(key_desc->buffer->rsa.public_length,
+				  key_desc->buffer->rsa.public_exponent_length);
+
+	/* Allocate the public buffer */
+	if (!key->modulus_length || !key->pub_exp.length) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
+	key->modulus.value = calloc(1, key->modulus_length);
+	if (!key->modulus.value) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	key->pub_exp.value = calloc(1, key->pub_exp.length);
+	if (!key->pub_exp.value) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	ret = op_export_common(key_desc, obj);
+
+end:
+	if (ret != CKR_OK) {
+		if (key->modulus.value)
+			free(key->modulus.value);
+
+		if (key->pub_exp.value)
+			free(key->pub_exp.value);
+
+		key->modulus.value = NULL;
+		key->modulus.length = 0;
+
+		key->pub_exp.value = NULL;
+		key->pub_exp.length = 0;
+	}
+
+	DBG_TRACE("return %ld", ret);
+
+	return ret;
+}
+
 static void check_mkeyderive(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			     struct mgroup *mgroup)
 {
@@ -2398,109 +2526,6 @@ static CK_RV op_mhmac(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	return op_mmac_common(slotid, entry, args);
 }
 
-static CK_RV export_rsa_public_key(struct libobj_obj *obj,
-				   struct smw_export_key_args *args)
-{
-	CK_RV ret = CKR_ARGUMENTS_BAD;
-	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_keypair_rsa *keypair_rsa = NULL;
-	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
-	uint8_t *modulus = NULL;
-	uint8_t *public_data = NULL;
-
-	if (!obj || !args || !args->key_descriptor ||
-	    !args->key_descriptor->buffer)
-		return ret;
-
-	keypair_rsa = &args->key_descriptor->buffer->rsa;
-
-	modulus = calloc(1, keypair_rsa->modulus_length);
-	if (!modulus)
-		return CKR_HOST_MEMORY;
-
-	public_data = calloc(1, keypair_rsa->public_length);
-	if (!public_data) {
-		ret = CKR_HOST_MEMORY;
-		goto end;
-	}
-
-	keypair_rsa->modulus = modulus;
-	keypair_rsa->public_data = public_data;
-
-	status = smw_export_key(args);
-	ret = smw_status_to_ck_rv(status);
-
-end:
-	if (ret != CKR_OK) {
-		if (modulus)
-			free(modulus);
-
-		if (public_data)
-			free(public_data);
-	} else {
-		key->modulus.value = keypair_rsa->modulus;
-		key->modulus.length = keypair_rsa->modulus_length;
-
-		key->pub_exp.value = keypair_rsa->public_data;
-		key->pub_exp.length = keypair_rsa->public_length;
-	}
-
-	return ret;
-}
-
-static CK_RV export_ecc_public_key(struct libobj_obj *obj,
-				   struct smw_export_key_args *args)
-{
-	CK_RV ret = CKR_OK;
-	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_keypair_gen *keypair_gen = NULL;
-	struct libobj_key_ec_pair *key = get_subkey_from(obj);
-	uint8_t *point_q = NULL;
-	size_t point_q_len = 0;
-	size_t in_len = 0;
-
-	if (!obj || !args || !args->key_descriptor ||
-	    !args->key_descriptor->buffer)
-		return CKR_ARGUMENTS_BAD;
-
-	keypair_gen = &args->key_descriptor->buffer->gen;
-	in_len = keypair_gen->public_length;
-
-	/* Add DER ANSI X9.62 uncompress code byte */
-	if (ADD_OVERFLOW(in_len, 1, &point_q_len))
-		return CKR_ARGUMENTS_BAD;
-
-	point_q = calloc(1, point_q_len);
-	if (!point_q)
-		return CKR_HOST_MEMORY;
-
-	keypair_gen->public_data = &point_q[1];
-
-	/* DER ANSI X9.62 uncompress code byte */
-	point_q[0] = 0x04;
-
-	status = smw_export_key(args);
-	ret = smw_status_to_ck_rv(status);
-	if (ret == CKR_OK) {
-		key->point_q.number = point_q_len;
-		key->point_q.array = point_q;
-	} else {
-		free(point_q);
-	}
-
-	return ret;
-}
-
-static bool is_ecc_key_type(smw_key_type_t type_name)
-{
-	if (type_name == SMW_KEY_TYPE_NAME_SECP_R1 ||
-	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_R1 ||
-	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1)
-		return true;
-
-	return false;
-}
-
 CK_RV libdev_get_mechanisms(CK_SLOT_ID slotid,
 			    CK_MECHANISM_TYPE_PTR mechanismlist,
 			    CK_ULONG_PTR count)
@@ -2667,8 +2692,6 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_key_attributes *key_attr = NULL;
 	struct smw_get_key_attributes_args attr_args = { 0 };
-	struct smw_export_key_args args = { 0 };
-	struct smw_keypair_buffer keypair_buffer = { 0 };
 
 	DBG_TRACE("Get Key attributes");
 
@@ -2704,22 +2727,56 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 	args_attr_get_key_usage(obj, key_attr->usage_flags);
 	args_attr_get_obj_storage(obj, key_attr->attributes);
 
-	key_descriptor.buffer = &keypair_buffer;
+end:
+	DBG_TRACE("Get Key attributes from SMW status %d return %ld", status,
+		  ret);
+
+	return ret;
+}
+
+CK_RV libdev_export_public_key(const struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+
+	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_key_descriptor key_descriptor = { 0 };
+	struct smw_keypair_buffer keypair = { 0 };
+
+	key_descriptor.id = get_key_token_id(obj);
+	DBG_TRACE("Export Public Key 0x%X", key_descriptor.id);
+
+	ret = key_desc_setup(&key_descriptor, (struct libobj_obj *)obj);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * Set the key buffer after filling the key descriptor to setup
+	 * only the key type and the security size
+	 */
+	key_descriptor.buffer = &keypair;
+
+	/* If the public key length is not set, first get the length */
 	status = smw_get_key_buffers_lengths(&key_descriptor);
 	ret = smw_status_to_ck_rv(status);
 	if (ret != CKR_OK)
 		goto end;
 
-	args.key_descriptor = &key_descriptor;
+	switch (get_key_type(obj)) {
+	case CKK_EC:
+		ret = export_ec_public_key(&key_descriptor, obj);
+		break;
 
-	if (key_descriptor.type_name == SMW_KEY_TYPE_NAME_RSA)
-		return export_rsa_public_key(obj, &args);
-	else if (is_ecc_key_type(key_descriptor.type_name))
-		return export_ecc_public_key(obj, &args);
+	case CKK_RSA:
+		ret = export_rsa_public_key(&key_descriptor, obj);
+		break;
+
+	default:
+		ret = CKR_ARGUMENTS_BAD;
+		break;
+	}
 
 end:
-	DBG_TRACE("Get Key attributes from SMW status %d return %ld", status,
-		  ret);
+	DBG_TRACE("return %ld", ret);
 
 	return ret;
 }

@@ -283,6 +283,21 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 				struct libobj_obj *obj);
 
 /**
+ * libdev_export_public_key() - Call SMW export key API
+ * @obj: Key object to export
+ *
+ * Return:
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_FUNCTION_FAILED           - Operation failed
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_HOST_MEMORY               - Out of memory
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV libdev_export_public_key(const struct libobj_obj *obj);
+
+/**
  * libdev_delete_key() - Call SMW delete key API
  * @key_id: Key id to deleete
  *

@@ -39,6 +39,12 @@ The releases are listed from the most recent to the first one.
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
+##### 2. PKCS#11
+
+* As some subsystems are not handling key usage and permitted algorithm, the
+  find operation is not able to find all keys whose template defines key usage
+  and permitted algorithm.
+
 #### SMW Library - _version 4.2_
 ##### 1. SMW APIs
 
@@ -94,7 +100,12 @@ Sign and Verify algorithm in ELE configuration file.
 * Add support for `CKM_ECDH1_DERIVE` mechanism.
 * Fix a memory leak in object database support.
 * Add support for secp224r1, secp384r1 and secp521r1 curves.
-* Add support for handling only session `CKO_CERTIFICATE` objects. Token `CKO_CERTIFICATE` objects remain unsupported.
+* Add support for handling only session `CKO_CERTIFICATE` objects.
+  Token `CKO_CERTIFICATE` objects remain unsupported.
+* Optimize code to merge common function and manipulate key and data SMW
+  descriptor at one place.
+* Move token key id in generic key object.
+* Export token public key from SMW only on demand.
 
 #### PKCS#11 Tests - _version 4.2_
 
@@ -105,6 +116,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Add tests for `CKM_ECDH1_DERIVE` mechanism.
 * Update EC key test to validate all supported NIST curves.
 * Add tests for `CKO_CERTIFICATE` object.
+* Add tests finding keys generated without using PKCS11 generate operation.
 
 ---
 ### <a id ="rel_4_1"></a></br>**Release 4.1**

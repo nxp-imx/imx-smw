@@ -14,7 +14,7 @@
 
 #define EC_ASN1_CURVE(_name)                                                   \
 	{                                                                      \
-		.name = #_name, .oid = _name                                   \
+		.name = #_name, .oid = _name, .oid_len = sizeof(_name)         \
 	}
 
 const CK_BYTE prime192v1[] = ASN1_OID_PRIME192;

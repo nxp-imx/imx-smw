@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2024 NXP
+ * Copyright 2021, 2024-2025 NXP
  */
 
 #ifndef __UTIL_ASN1_H__
@@ -12,12 +12,14 @@
  * struct asn1_curve_def - Definition of ASN1 curve
  * @name: Printable curve name
  * @oid: OID curve
+ * @oid_len: OID curve length
  *
  * Note: The last element must be NULL
  */
 struct asn1_curve_def {
 	const char *name;
 	const CK_BYTE *oid;
+	const size_t oid_len;
 };
 
 struct dev_curve_def;

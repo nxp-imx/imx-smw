@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 #include <string.h>
 #include <stdlib.h>
@@ -86,7 +86,7 @@ static const struct curve_def *get_curve_by_oid(struct asn1_tlv *tlv,
 		return NULL;
 
 	while (curve->asn1 && curve->asn1->oid) {
-		if (tlv->length == sizeof(curve->asn1->oid)) {
+		if (tlv->length == curve->asn1->oid_len) {
 			if (!memcmp(curve->asn1->oid, tlv->value, tlv->length))
 				return curve;
 		}
@@ -197,7 +197,7 @@ CK_RV util_asn1_curve_to_ec_params(const struct curve_def *curve,
 	if (!curve || !params)
 		return CKR_ARGUMENTS_BAD;
 
-	oid_len = sizeof(curve->asn1->oid);
+	oid_len = curve->asn1->oid_len;
 
 	if (ADD_OVERFLOW(oid_len, 2, &params->number))
 		return CKR_GENERAL_ERROR;

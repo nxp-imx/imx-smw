@@ -11,6 +11,11 @@
 
 #include "test_check.h"
 
+/*
+ * ANSI Uncompress key tag
+ */
+#define ANSI_UNCOMPRESS_KEY_TAG 0x04
+
 struct ckr_enum {
 	CK_RV val;
 	const char *const name;
@@ -52,7 +57,10 @@ extern const struct asn1_ec_curve ec_curves[];
 int util_to_asn1_string(CK_ATTRIBUTE_PTR attr,
 			const struct asn1_ec_curve *curve);
 int util_to_asn1_oid(CK_ATTRIBUTE_PTR attr, const struct asn1_ec_curve *curve);
-int util_encode_asn1_length(size_t len, uint8_t *out, size_t *outlen);
+int util_asn1_encode_octet_string(CK_BYTE_PTR in, CK_ULONG inlen, uint8_t *out,
+				  size_t *outlen);
+int util_asn1_get_field_octet_string(CK_BYTE_PTR in, CK_ULONG inlen,
+				     CK_BYTE_PTR *out, size_t *outlen);
 
 void tests_pkcs11_get_info_ifs(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_get_ifs(void *lib_hdl, CK_VOID_PTR pfunc);
@@ -62,6 +70,7 @@ void tests_pkcs11_object_key_ec(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_find_ext(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_parallel(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_callback(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_digest(void *lib_hdl, CK_VOID_PTR pfunc);

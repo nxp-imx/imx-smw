@@ -7,6 +7,25 @@ res=0
 conf_file=/etc/opt/smw/smw.conf
 script_conf=/etc/opt/smw/smw_system_conf.sh
 
+function pr_err()
+{
+  printf "\033[1;31m\n"
+  printf "%s\n" "$@"
+  printf "\033[0m\n"
+}
+
+function exit_err()
+{
+  pr_err "$@"
+
+  if [ -e ${script_conf} ]; then
+    # Restore the original smw.conf
+    mv ${conf_file}.bak ${conf_file}
+  fi
+
+  exit 2
+}
+
 # Check if the ELE Daemon is present
 # If not active, start it
 #
@@ -31,22 +50,19 @@ if [ -e ${script_conf} ]; then
   # Setup the database
   res=$(${script_conf} in=${conf_file} conf=setup database=/var/tmp/obj_db_pkcs11_test.dat)
   if [ "${res}" ]; then
-    echo "${res}"
-    exit 2
+    exit_err_conf "${res}"
   fi
 
   # Setup the seco subsystem
   res=$(${script_conf} in=${conf_file} conf=seco id=0x504b3131 nonce=0x444546 replay=1000)
    if [ "${res}" ]; then
-    echo "${res}"
-    exit 2
+    exit_err_conf "${res}"
   fi
 
   # Setup the ele subsystem
   res=$(${script_conf} in=${conf_file} conf=ele id=0x504b3131 nonce=0x444546)
    if [ "${res}" ]; then
-    echo "${res}"
-    exit 2
+    exit_err_conf "${res}"
   fi
 fi
 

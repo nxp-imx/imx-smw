@@ -143,56 +143,6 @@ static size_t rfc2279_to_byte(CK_BYTE_PTR dst, size_t len_dst,
 	return idx;
 }
 
-static CK_RV decode_asn1_length(const uint8_t *in, size_t *inlen,
-				size_t *outlen)
-{
-	size_t real_len = 0;
-	size_t decoded_len = 0;
-	size_t offset = 0;
-	size_t x = 0;
-	size_t i = 0;
-
-	if (*inlen < 1)
-		return CKR_ARGUMENTS_BAD;
-
-	real_len = in[0];
-
-	if (real_len < 128) {
-		decoded_len = real_len;
-		offset = 1;
-	} else {
-		real_len &= 0x7F;
-
-		if (real_len == 0)
-			return CKR_DATA_INVALID;
-
-		if (real_len > sizeof(decoded_len))
-			return CKR_DATA_INVALID;
-
-		if (real_len > (*inlen - 1))
-			return CKR_DATA_INVALID;
-
-		decoded_len = 0;
-		offset = 1 + real_len;
-
-		for (; i < real_len; i++)
-			decoded_len = (decoded_len << 8) | in[1 + i];
-	}
-
-	if (outlen)
-		*outlen = decoded_len;
-
-	if (SUB_OVERFLOW(*inlen, offset, &x))
-		return CKR_ARGUMENTS_BAD;
-
-	if (decoded_len > x)
-		return CKR_DATA_INVALID;
-
-	*inlen = offset;
-
-	return CKR_OK;
-}
-
 bool util_compare_buffers(unsigned char *buffer, size_t buffer_len,
 			  unsigned char *expected_buffer, size_t expected_len)
 {
@@ -331,44 +281,4 @@ end:
 		free(buffer);
 
 	return ret;
-}
-
-CK_RV util_decode_octet_string(uint8_t *in, size_t inlen, uint8_t **out,
-			       size_t *outlen)
-{
-	CK_RV ret = CKR_OK;
-	size_t x = 0;
-	size_t y = 0;
-	size_t len = 0;
-
-	/* must have header at least */
-	if (inlen < 2)
-		return CKR_ARGUMENTS_BAD;
-
-	/* check for 0x04 */
-	if ((in[0] & 0x1F) != 0x04)
-		return CKR_DATA_INVALID;
-
-	x = 1;
-
-	/* get the length of the data */
-	y = inlen - x;
-
-	ret = decode_asn1_length(in + x, &y, &len);
-	if (ret != CKR_OK)
-		return ret;
-
-	if (ADD_OVERFLOW(x, y, &x))
-		return CKR_ARGUMENTS_BAD;
-
-	if (SUB_OVERFLOW(inlen, x, &inlen))
-		return CKR_ARGUMENTS_BAD;
-
-	if (len > inlen)
-		return CKR_DATA_INVALID;
-
-	*out = in + x;
-	*outlen = len;
-
-	return CKR_OK;
 }

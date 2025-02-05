@@ -19,11 +19,6 @@
  * Max supported EC private key size is 521bits
  */
 #define MAX_PRIVATE_KEY_LEN 66
-/*
- * Max public EC key size is twice 521bits
- * plus ASN.1 octets string header
- */
-#define MAX_PUBLIC_KEY_LEN 136
 
 #define EC_STR_PRIME192_V1 "prime192v1"
 #define EC_STR_PRIME256_V1 "prime256v1"
@@ -55,10 +50,11 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
 	CK_KEY_TYPE key_type = CKK_EC;
-	CK_BYTE pubkey[MAX_PUBLIC_KEY_LEN] = { 0 };
-	CK_ULONG ec_point_size = 0;
+	CK_BYTE_PTR pubkey = NULL;
+	CK_ULONG pubkey_len = 0;
+	CK_BYTE_PTR ec_point = NULL;
+	size_t ec_point_len = 0;
 	size_t security_size = 0;
-	size_t offset = sizeof(pubkey);
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
 						 CKM_ECDSA_SHA256 };
@@ -66,7 +62,7 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
 		{ CKA_EC_PARAMS, NULL_PTR, 0 },
-		{ CKA_EC_POINT, &pubkey, sizeof(pubkey) },
+		{ CKA_EC_POINT, NULL_PTR, 0 },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_VERIFY, &bverify, sizeof(bverify) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
@@ -84,25 +80,47 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		/* Set the CKA_EC_POINT size function of the security size */
 		security_size = ec_curves[i].security_size;
 		if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(security_size), 2,
-				 &ec_point_size) ||
-		    INC_OVERFLOW(ec_point_size, 1))
+				 &pubkey_len))
 			goto end;
 
-		/*
-		 * Set EC Public point
-		 */
-		pubkey[0] = 0x04; /* octet string tag */
-		if (CHECK_EXPECTED(util_encode_asn1_length(ec_point_size,
-							   &pubkey[1], &offset),
-				   "ASN1 Conversion"))
+		/* Add the Uncompress key Tag */
+		if (INC_OVERFLOW(pubkey_len, 1))
 			goto end;
 
-		if (INC_OVERFLOW(offset, 1))
+		if (pubkey)
+			free(pubkey);
+
+		pubkey = calloc(1, pubkey_len);
+		if (CHECK_EXPECTED(pubkey, "Out of memory"))
 			goto end;
 
-		pubkey[offset] = 0x04; /* Uncompress point */
+		/* Build the octet-string of the public key */
+		if (ec_point) {
+			free(ec_point);
+			ec_point = NULL;
+		}
 
-		keyTemplate[3].ulValueLen = ec_point_size + offset;
+		/* Start with Uncompress key tage */
+		pubkey[0] = ANSI_UNCOMPRESS_KEY_TAG;
+
+		if (!util_asn1_encode_octet_string(pubkey, pubkey_len, NULL,
+						   &ec_point_len)) {
+			TEST_OUT("Get public key object-string length\n");
+			goto end;
+		}
+
+		ec_point = calloc(1, ec_point_len);
+		if (CHECK_EXPECTED(ec_point, "Out of memory"))
+			goto end;
+
+		if (!util_asn1_encode_octet_string(pubkey, pubkey_len, ec_point,
+						   &ec_point_len)) {
+			TEST_OUT("Get public key object-string\n");
+			goto end;
+		}
+
+		keyTemplate[3].pValue = ec_point;
+		keyTemplate[3].ulValueLen = ec_point_len;
 
 		TEST_OUT("Create %sKey Public by curve name\n",
 			 token ? "Token " : "");
@@ -171,6 +189,12 @@ end:
 	if (keyTemplate[2].pValue)
 		free(keyTemplate[2].pValue);
 
+	if (pubkey)
+		free(pubkey);
+
+	if (ec_point)
+		free(ec_point);
+
 	SUBTEST_END(status);
 	return status;
 }
@@ -186,10 +210,11 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
 	CK_KEY_TYPE key_type = CKK_EC;
 	CK_BYTE privkey[MAX_PRIVATE_KEY_LEN] = { 0 };
-	CK_BYTE pubkey[MAX_PUBLIC_KEY_LEN] = { 0 };
-	CK_ULONG ec_point_size = 0;
+	CK_BYTE_PTR ec_point = NULL;
+	CK_BYTE_PTR pubkey = NULL;
+	CK_ULONG pubkey_len = 0;
+	size_t ec_point_len = 0;
 	size_t security_size = 0;
-	size_t offset = sizeof(pubkey);
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
 						 CKM_ECDSA_SHA256 };
@@ -198,7 +223,7 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
 		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VALUE, &privkey, sizeof(privkey) },
-		{ CKA_EC_POINT, &pubkey, sizeof(pubkey) },
+		{ CKA_EC_POINT, NULL_PTR, 0 },
 		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
 		{ CKA_SIGN, &bsign, sizeof(bsign) },
 		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
@@ -228,25 +253,47 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		/* Set the CKA_EC_POINT size according to the security size */
 		security_size = ec_curves[i].security_size;
 		if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(security_size), 2,
-				 &ec_point_size) ||
-		    INC_OVERFLOW(ec_point_size, 1))
+				 &pubkey_len))
 			goto end;
 
-		/*
-		 * Set EC Public point
-		 */
-		pubkey[0] = 0x04; /* octet string tag */
-		if (CHECK_EXPECTED(util_encode_asn1_length(ec_point_size,
-							   &pubkey[1], &offset),
-				   "ASN1 Conversion"))
+		/* Add the Uncompress key Tag */
+		if (INC_OVERFLOW(pubkey_len, 1))
 			goto end;
 
-		if (INC_OVERFLOW(offset, 1))
+		if (pubkey)
+			free(pubkey);
+
+		pubkey = calloc(1, pubkey_len);
+		if (CHECK_EXPECTED(pubkey, "Out of memory"))
 			goto end;
 
-		pubkey[offset] = 0x04; /* Uncompress point */
+		/* Build the octet-string of the public key */
+		if (ec_point) {
+			free(ec_point);
+			ec_point = NULL;
+		}
 
-		keyTemplate[4].ulValueLen = ec_point_size + offset;
+		/* Start with Uncompress key tage */
+		pubkey[0] = ANSI_UNCOMPRESS_KEY_TAG;
+
+		if (!util_asn1_encode_octet_string(pubkey, pubkey_len, NULL,
+						   &ec_point_len)) {
+			TEST_OUT("Get public key object-string length\n");
+			goto end;
+		}
+
+		ec_point = calloc(1, ec_point_len);
+		if (CHECK_EXPECTED(ec_point, "Out of memory"))
+			goto end;
+
+		if (!util_asn1_encode_octet_string(pubkey, pubkey_len, ec_point,
+						   &ec_point_len)) {
+			TEST_OUT("Get public key object-string\n");
+			goto end;
+		}
+
+		keyTemplate[4].pValue = ec_point;
+		keyTemplate[4].ulValueLen = ec_point_len;
 
 		/* Set the CKA_VALUE size according to the security size */
 		keyTemplate[3].ulValueLen = BITS_TO_BYTES_SIZE(security_size);
@@ -309,6 +356,12 @@ end:
 
 	if (keyTemplate[2].pValue)
 		free(keyTemplate[2].pValue);
+
+	if (pubkey)
+		free(pubkey);
+
+	if (ec_point)
+		free(ec_point);
 
 	SUBTEST_END(status);
 	return status;
@@ -643,7 +696,8 @@ static int object_ec_public_export(CK_FUNCTION_LIST_PTR pfunc)
 	CK_UTF8CHAR_PTR unique_id = NULL;
 	CK_ULONG key_length = 32;
 	CK_OBJECT_CLASS public_key_class = CKO_PUBLIC_KEY;
-	CK_BYTE pubkey[68] = { 0 };
+	CK_BYTE_PTR ec_point = NULL;
+	CK_ULONG ec_point_len = 0;
 
 	CK_ATTRIBUTE public_key_attrs[] = {
 		{ CKA_CLASS, &public_key_class, sizeof(public_key_class) },
@@ -652,7 +706,7 @@ static int object_ec_public_export(CK_FUNCTION_LIST_PTR pfunc)
 	};
 
 	CK_ATTRIBUTE getkeyAttr[] = {
-		{ CKA_EC_POINT, &pubkey, sizeof(pubkey) },
+		{ CKA_EC_POINT, NULL_PTR, 0 },
 	};
 
 	uint8_t *point_q = NULL;
@@ -735,26 +789,45 @@ static int object_ec_public_export(CK_FUNCTION_LIST_PTR pfunc)
 			   nb_match))
 		goto end;
 
-	TEST_OUT("Get Public key attribute\n");
+	TEST_OUT("Get Public key attribute length\n");
 	ret = pfunc->C_GetAttributeValue(sess, hpubkey, getkeyAttr,
 					 ARRAY_SIZE(getkeyAttr));
 	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 		goto end;
 
-	ret = util_decode_octet_string(getkeyAttr->pValue,
-				       getkeyAttr->ulValueLen, &point_q,
-				       &point_q_len);
-	if (CHECK_CK_RV(CKR_OK, "decode_octet_string"))
+	ec_point_len = getkeyAttr[0].ulValueLen;
+
+	TEST_OUT("Get Public key attribute\n");
+	if (CHECK_EXPECTED(ec_point_len, "Invalid public key length"))
 		goto end;
 
-	TEST_OUT("Key Destroy #%lu\n", hpubkey);
-	ret = pfunc->C_DestroyObject(sess, hpubkey);
-	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+	ec_point = calloc(1, ec_point_len);
+	if (CHECK_EXPECTED(ec_point, "Out of memory"))
 		goto end;
 
-	status = TEST_PASS;
+	getkeyAttr[0].pValue = ec_point;
+	ret = pfunc->C_GetAttributeValue(sess, hpubkey, getkeyAttr,
+					 ARRAY_SIZE(getkeyAttr));
+	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+		goto end;
+
+	if (util_asn1_get_field_octet_string(ec_point, ec_point_len, &point_q,
+					     &point_q_len)) {
+		if (!CHECK_EXPECTED(ec_point[0] == ANSI_UNCOMPRESS_KEY_TAG,
+				    "Invalid EC point"))
+			status = TEST_PASS;
+	} else {
+		TEST_OUT("util_asn1_get_field_octet_string failed\n");
+	}
 
 end:
+	if (hpubkey) {
+		TEST_OUT("Key Destroy #%lu\n", hpubkey);
+		ret = pfunc->C_DestroyObject(sess, hpubkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			status = TEST_FAIL;
+	}
+
 	util_close_session(pfunc, &sess);
 
 	/* Destroy the key */
@@ -763,6 +836,9 @@ end:
 
 	if (unique_id)
 		free(unique_id);
+
+	if (ec_point)
+		free(ec_point);
 
 	SUBTEST_END(status);
 	return status;

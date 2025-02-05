@@ -1009,7 +1009,7 @@ static int find_all_objects(CK_FUNCTION_LIST_PTR pfunc)
 	if (psa_status != PSA_SUCCESS)
 		goto end;
 
-	TEST_OUT("Key secret generated #%lu\n", hkey);
+	TEST_OUT("Key secret generated #%u\n", psa_id);
 
 	ret = pfunc->C_FindObjectsInit(sess, NULL_PTR, 0);
 	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))

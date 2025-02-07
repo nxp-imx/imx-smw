@@ -48,6 +48,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add key derivation permitted algorithm validation when key created.
 * Fix MAC hash bitmap management.
 * Fix library to build modularly.
+* Fix a memory leak in keymgr.
 
 ##### 2. Subsystems
 
@@ -86,6 +87,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Add implementation for C_(Get|Set)OperationState functions
 * Add support for `CKO_PROFILE` object handling.
 * Add support for `CKM_ECDH1_DERIVE` mechanism.
+* Fix a memory leak in object database support.
 
 #### PKCS#11 Tests - _version 4.2_
 

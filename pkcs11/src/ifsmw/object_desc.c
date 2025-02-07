@@ -726,11 +726,7 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 		ret = smw_status_to_ck_rv(status);
 
 end:
-	if (label.array)
-		free(label.array);
-
-	if (descriptor.user_id)
-		free(descriptor.user_id);
+	cleanup_smw_object_descriptor(&descriptor);
 
 	return ret;
 }

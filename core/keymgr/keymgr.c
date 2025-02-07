@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include "smw_status.h"
@@ -1507,6 +1507,12 @@ static bool delete_el2go_data(struct smw_delete_key_args *args, int *status)
 	ret = true;
 
 end:
+	if (obj_desc.label)
+		SMW_UTILS_FREE(obj_desc.label);
+
+	if (obj_desc.user_id)
+		SMW_UTILS_FREE(obj_desc.user_id);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s (%s) returned %d\n", __func__,
 		       ret ? "True" : "False", *status);
 	return ret;

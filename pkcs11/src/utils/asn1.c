@@ -17,56 +17,156 @@ struct asn1_tlv {
 };
 
 /**
- * get_tlv() - Get the ASN1 TLV encoded
- * @tlv: TLV structure filled
- * @string: Start of the string to decode
- * @offset: Offset in the @string to decode
+ * decode_asn1_length() - Decode the length of a ASN1 string
+ * @src: [in/out] Pointer to the string, output the incremented pointer
+ * @end: [in] Pointer to the last byte of the string.
+ * @outlen: [out] ASN1 string length
  *
  * return:
- * CKR_FUNCTION_FAILED - Function failure
- * CKR_OK              - Success
+ * CKR_OK            - Success
+ * CKR_DATA_INVALID  - Decoding error
+ * CKR_ARGUMENTS_BAD - Bad arguments
  */
-static CK_RV get_tlv(struct asn1_tlv *tlv, CK_BYTE_PTR string, size_t offset)
+static CK_RV decode_asn1_length(uint8_t **src, uint8_t *end, size_t *outlen)
 {
-	CK_BYTE_PTR str = string;
-	int idx = 0;
-	int nb_octets = 0;
-	size_t tmp_len = 0;
+	size_t decoded_len = 0;
+	size_t nb_octets = 0;
+	size_t i = 0;
+	uint8_t *p = NULL;
 
-	if (!str) {
-		DBG_TRACE("Error TLV String empty");
-		return CKR_FUNCTION_FAILED;
-	}
+	if (!src || !*src)
+		return CKR_ARGUMENTS_BAD;
 
-	str += offset;
-
-	tlv->tag = *str++;
-	if (!(*str & ASN1_LONG_LENGTH)) {
-		tlv->length = *str++;
-		goto end;
-	}
+	p = *src;
 
 	/*
 	 * If long form of length, first byte bit 8 set.
 	 * The first byte bit 7-1 give the number of
 	 * bytes coding the length
 	 */
-	nb_octets = *str++ & ~ASN1_LONG_LENGTH;
-	if (nb_octets > (int)sizeof(tlv->length))
-		return CKR_FUNCTION_FAILED;
+	if (!(*p & ASN1_LONG_LENGTH)) {
+		decoded_len = *p++;
+	} else {
+		nb_octets = *p++ & ~ASN1_LONG_LENGTH;
+		if (!nb_octets || nb_octets > sizeof(decoded_len))
+			return CKR_DATA_INVALID;
 
-	tlv->length = 0;
-	for (idx = nb_octets - 1; idx > 0; idx--, str++) {
-		tmp_len = *str;
-		tmp_len <<= 8 * idx;
-		tlv->length |= tmp_len;
+		decoded_len = 0;
+		for (; i < nb_octets; i++)
+			decoded_len = (decoded_len << 8) | *p++;
 	}
 
-end:
-	tlv->value = str;
+	/*
+	 * Check if the decoded length doesn't overflow the string
+	 */
+	if (*src + decoded_len + 1 > end)
+		return CKR_DATA_INVALID;
 
-	DBG_TRACE("ASN1 T=%d L=%zu", tlv->tag, tlv->length);
+	if (outlen)
+		*outlen = decoded_len;
+
+	*src = p;
+
 	return CKR_OK;
+}
+
+/**
+ * encode_asn1_length() - Encode a length in ASN1 length format
+ * @len: [in] Length to encode
+ * @out: [out] Resulting encoding. Output the incremented pointer
+ * @outlen: [in/out] Length of the result
+ *
+ * If the @out is NULL, function calculates the output buffer length and
+ * returns CKR_OK.
+ *
+ * return:
+ * CKR_OK                - Success
+ * CKR_ARGUMENTS_BAD     - Invalid argument
+ * CKR_BUFFER_TOO_SMALL  - Output buffer length too small
+ */
+static CK_RV encode_asn1_length(size_t len, uint8_t **out, size_t *outlen)
+{
+	uint8_t *p = NULL;
+	size_t x = len;
+	size_t nb_octets = 1;
+
+	if (x > ASN1_LONG_LENGTH - 1) {
+		while (x != 0) {
+			if (INC_OVERFLOW(nb_octets, 1))
+				return CKR_ARGUMENTS_BAD;
+
+			x >>= 8;
+		}
+	}
+
+	if (nb_octets > sizeof(*outlen))
+		return CKR_ARGUMENTS_BAD;
+
+	if (!out) {
+		*outlen = nb_octets;
+		return CKR_OK;
+	}
+
+	if (*outlen < nb_octets) {
+		*outlen = nb_octets;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	p = *out;
+	if (!p)
+		return CKR_ARGUMENTS_BAD;
+
+	*outlen = nb_octets;
+
+	nb_octets--;
+	if (!nb_octets) {
+		*p++ = len & UINT8_MAX;
+	} else {
+		*p++ = (ASN1_LONG_LENGTH | nb_octets) & UINT8_MAX;
+
+		while (nb_octets--)
+			*p++ = (len >> (8 * nb_octets)) & UINT8_MAX;
+	}
+
+	*out = p;
+
+	return CKR_OK;
+}
+
+/**
+ * get_tlv() - Get the ASN1 TLV encoded
+ * @tlv: TLV structure filled
+ * @string: Start of the string to decode
+ * @length: String length
+ * @offset: Offset in the @string to decode
+ *
+ * return:
+ * CKR_FUNCTION_FAILED - Function failure
+ * CKR_OK              - Success
+ */
+static CK_RV get_tlv(struct asn1_tlv *tlv, CK_BYTE_PTR string, size_t length,
+		     size_t offset)
+{
+	CK_RV ret = CKR_FUNCTION_FAILED;
+	CK_BYTE_PTR str = string;
+	CK_BYTE_PTR end = str + length;
+
+	if (!str) {
+		DBG_TRACE("Error TLV String empty");
+		return ret;
+	}
+
+	str += offset;
+
+	tlv->tag = *str++;
+	ret = decode_asn1_length(&str, end, &tlv->length);
+
+	if (ret == CKR_OK) {
+		tlv->value = str;
+		DBG_TRACE("ASN1 T=%d L=%zu", tlv->tag, tlv->length);
+	}
+
+	return ret;
 }
 
 /**
@@ -146,7 +246,7 @@ CK_RV util_asn1_ec_params_to_curve(const struct curve_def **out_curve,
 	 * Only oId and curveName are supported with the Security
 	 * Middleware library.
 	 */
-	ret = get_tlv(&tlv, params->array, 0);
+	ret = get_tlv(&tlv, params->array, params->number, 0);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -219,183 +319,94 @@ CK_RV util_asn1_curve_to_ec_params(const struct curve_def *curve,
 	return CKR_OK;
 }
 
-static CK_RV encode_asn1_length(size_t len, uint8_t *out, size_t *outlen)
-{
-	size_t x = len;
-	size_t y = 0;
-
-	while (x != 0) {
-		if (INC_OVERFLOW(y, 1))
-			return CKR_ARGUMENTS_BAD;
-
-		x >>= 8;
-	}
-
-	if (y == 0) {
-		DBG_TRACE("Nothing to encode");
-		return CKR_ARGUMENTS_BAD;
-	}
-
-	if (!out || *outlen < y) {
-		*outlen = y;
-		return CKR_BUFFER_TOO_SMALL;
-	}
-
-	x = 0;
-	if (len < 128) {
-		out[x++] = (unsigned char)len;
-	} else if (len <= 0xffUL) {
-		out[x++] = 0x81;
-		out[x++] = (unsigned char)len;
-	}
-	*outlen = x;
-
-	return CKR_OK;
-}
-
-static CK_RV decode_asn1_length(const uint8_t *in, size_t *inlen,
-				size_t *outlen)
-{
-	size_t real_len = 0;
-	size_t decoded_len = 0;
-	size_t offset = 0;
-	size_t x = 0;
-	size_t i = 0;
-
-	if (*inlen < 1)
-		return CKR_ARGUMENTS_BAD;
-
-	real_len = in[0];
-
-	if (real_len < 128) {
-		decoded_len = real_len;
-		offset = 1;
-	} else {
-		real_len &= 0x7F;
-
-		if (real_len == 0)
-			return CKR_DATA_INVALID;
-
-		if (real_len > sizeof(decoded_len))
-			return CKR_DATA_INVALID;
-
-		if (real_len > (*inlen - 1))
-			return CKR_DATA_INVALID;
-
-		decoded_len = 0;
-		offset = 1 + real_len;
-
-		for (; i < real_len; i++)
-			decoded_len = (decoded_len << 8) | in[1 + i];
-	}
-
-	if (outlen)
-		*outlen = decoded_len;
-
-	if (SUB_OVERFLOW(*inlen, offset, &x))
-		return CKR_ARGUMENTS_BAD;
-
-	if (decoded_len > x)
-		return CKR_DATA_INVALID;
-
-	*inlen = offset;
-
-	return CKR_OK;
-}
-
 CK_RV util_asn1_encode_octet_string(const uint8_t *in, size_t inlen,
 				    uint8_t *out, size_t *outlen)
 {
-	CK_RV ret = CKR_OK;
-	size_t x = 0;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	uint8_t *p = out;
 	size_t len = 0;
 
 	if (!outlen)
-		return CKR_ARGUMENTS_BAD;
+		goto end;
 
-	/* get the size */
+	/* Get the number of bytes of the ASN1 length to encode */
 	ret = encode_asn1_length(inlen, NULL, &len);
-	if (ret != CKR_BUFFER_TOO_SMALL)
-		return ret;
+	if (ret != CKR_OK)
+		goto end;
 
-	/* octet string tag */
-	if (INC_OVERFLOW(len, 1))
-		return CKR_ARGUMENTS_BAD;
-
-	/* octet string len */
-	if (INC_OVERFLOW(len, inlen))
-		return CKR_ARGUMENTS_BAD;
-
-	if (len > *outlen) {
-		*outlen = len;
-		return CKR_BUFFER_TOO_SMALL;
+	/* Add the octet string tag */
+	if (INC_OVERFLOW(len, 1)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
 	}
 
-	if (!out)
-		return CKR_ARGUMENTS_BAD;
+	/* Add the length of the octet string itself */
+	if (INC_OVERFLOW(len, inlen)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
 
-	/* encode the header+len */
-	x = 0;
-	out[x++] = 0x04;
+	if (!out || len > *outlen) {
+		*outlen = len;
+		ret = CKR_BUFFER_TOO_SMALL;
+		goto end;
+	}
 
-	if (SUB_OVERFLOW(*outlen, x, &len))
-		return CKR_ARGUMENTS_BAD;
+	/* Encode the header */
+	*p++ = ASN1_OCTET_STRING_TAG;
+	len--;
 
-	ret = encode_asn1_length(inlen, out + x, &len);
+	/* Encode the octet-string length */
+	ret = encode_asn1_length(inlen, &p, &len);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
-	if (INC_OVERFLOW(x, len))
-		return CKR_ARGUMENTS_BAD;
-
-	/* store octets */
+	/* Copy the octet string */
 	if (in)
-		memcpy(out + x, in, inlen);
+		memcpy(p, in, inlen);
 
-	x += inlen;
+	p += inlen;
 
-	/* return length */
-	*outlen = x;
+	/* Return length */
+	if (SUB_OVERFLOW((uintptr_t)p, (uintptr_t)out, outlen))
+		ret = CKR_ARGUMENTS_BAD;
+	else
+		ret = CKR_OK;
 
-	return CKR_OK;
+end:
+	return ret;
 }
 
 CK_RV util_asn1_decode_octet_string(uint8_t *in, size_t inlen, uint8_t *out,
 				    size_t *outlen)
 {
-	CK_RV ret = CKR_OK;
-	size_t x = 0;
-	size_t y = 0;
+	CK_RV ret = CKR_ARGUMENTS_BAD;
 	size_t len = 0;
+	uint8_t *p = in;
+	uint8_t *end = in + inlen;
 
-	/* must have header at least */
+	/* Must have header at least */
 	if (!in || inlen < 2 || !outlen)
-		return CKR_ARGUMENTS_BAD;
+		goto end;
 
-	/* check for 0x04 */
-	if ((in[0] & 0x1F) != 0x04)
-		return CKR_DATA_INVALID;
-	x = 1;
+	/* Check for 0x04 */
+	if (*p++ != ASN1_OCTET_STRING_TAG) {
+		ret = CKR_DATA_INVALID;
+		goto end;
+	}
 
-	/* get the length of the data */
-	y = inlen - x;
-
-	ret = decode_asn1_length(in + x, &y, &len);
+	ret = decode_asn1_length(&p, end, &len);
 	if (ret != CKR_OK)
-		return ret;
-
-	if (INC_OVERFLOW(x, y))
-		return CKR_ARGUMENTS_BAD;
-
-	if (len > (inlen - x))
-		return CKR_DATA_INVALID;
+		goto end;
 
 	if (!out || *outlen < len) {
 		*outlen = len;
-		return CKR_BUFFER_TOO_SMALL;
+		ret = CKR_BUFFER_TOO_SMALL;
+	} else {
+		memcpy(out, p, len);
+		ret = CKR_OK;
 	}
 
-	memcpy(out, in + x, len);
-
-	return CKR_OK;
+end:
+	return ret;
 }

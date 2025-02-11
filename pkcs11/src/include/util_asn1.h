@@ -44,6 +44,7 @@ struct curve_def {
  */
 #define ASN1_PRINTABLE_STRING  19
 #define ASN1_OBJECT_IDENTIFIER 6
+#define ASN1_OCTET_STRING_TAG  0x04
 
 /**
  * util_asn1_ec_params_to_curve() - Convert EC parameters to a defined EC curve
@@ -80,11 +81,13 @@ CK_RV util_asn1_curve_to_ec_params(const struct curve_def *curve,
 				   struct libbytes *params);
 
 /**
- * util_asn1_encode_octet_string() -   Store an OCTET STRING
+ * util_asn1_encode_octet_string() - Store an OCTET STRING
  * @in:       The array of OCTETS to store (one per char)
  * @inlen:    The number of OCTETS to store
  * @out:      [out] The destination for the DER encoded OCTET STRING
  * @outlen:   [in/out] The max size and resulting size of the DER OCTET STRING
+ *
+ * If @out is NULL, calculates the @outlen and returns CKR_OK.
  *
  * return:
  * CKR_BUFFER_TOO_SMALL          - Out buffer too small
@@ -100,6 +103,9 @@ CK_RV util_asn1_encode_octet_string(const uint8_t *in, size_t inlen,
  * @inlen:   The size of the DER OCTET STRING
  * @out:     [out] The array of octets stored (one per char)
  * @outlen:  [in/out] The number of octets stored
+ *
+ * If @out is NULL, the function calculates the output length and
+ * returns CKR_OK.
  *
  * return:
  * CKR_DATA_INVALID              - In buffer too small

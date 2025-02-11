@@ -363,6 +363,59 @@ static CK_RV ec_key_smw_to_pkcs11(unsigned int op, CK_KEY_TYPE *ck_key_type,
 	return ret;
 }
 
+static CK_RV ec_key_set_buffer_from_obj(struct smw_key_descriptor *desc,
+					struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+	struct smw_keypair_gen *smw_key = NULL;
+	struct libobj_key_ec_pair *key = NULL;
+	unsigned char *public_data = NULL;
+	size_t public_length = 0;
+
+	/*
+	 * If SMW key's descriptor buffer field is set, setup it
+	 * with the EC key object's buffer
+	 */
+	if (!desc->buffer)
+		goto end;
+
+	if (!obj) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
+	key = get_subkey_from(obj);
+	smw_key = &desc->buffer->gen;
+
+	if (key->point_q.array) {
+		ret = util_asn1_get_field_octet_string(key->point_q.array,
+						       key->point_q.number,
+						       &public_data,
+						       &public_length);
+		if (ret != CKR_OK)
+			goto end;
+
+		/*
+		 * Remove the DER ANSI X9.62 uncompress code byte
+		 */
+		smw_key->public_data = public_data + 1;
+		if (SUB_OVERFLOW(public_length, 1, &smw_key->public_length)) {
+			ret = CKR_ARGUMENTS_BAD;
+			goto end;
+		}
+	}
+
+	smw_key->private_data = key->value_d.value;
+
+	if (SET_OVERFLOW(key->value_d.length, smw_key->private_length))
+		ret = CKR_ARGUMENTS_BAD;
+	else
+		ret = CKR_OK;
+
+end:
+	return ret;
+}
+
 static CK_RV ec_key_pkcs11_to_smw(unsigned int op,
 				  struct smw_key_descriptor *desc,
 				  struct libbytes *ec_params,
@@ -370,7 +423,6 @@ static CK_RV ec_key_pkcs11_to_smw(unsigned int op,
 {
 	CK_RV ret = CKR_KEY_TYPE_INCONSISTENT;
 
-	struct smw_keypair_gen *smw_key = NULL;
 	struct libobj_key_ec_pair *key = NULL;
 	struct libbytes *params = ec_params;
 
@@ -389,42 +441,8 @@ static CK_RV ec_key_pkcs11_to_smw(unsigned int op,
 			goto end;
 	}
 
-	if (op & OP_KEY_DESC_SET_BUFFER) {
-		/*
-		 * If SMW key's descriptor buffer field is set, setup it
-		 * with the EC key object's buffer
-		 */
-		if (desc->buffer) {
-			if (!obj) {
-				ret = CKR_FUNCTION_FAILED;
-				goto end;
-			}
-
-			key = get_subkey_from(obj);
-			smw_key = &desc->buffer->gen;
-
-			/*
-			 * Remove the header of the Public Buffer
-			 * DER ANSI X9.62 uncompress code byte
-			 */
-			if (key->point_q.array) {
-				smw_key->public_data = key->point_q.array + 1;
-				if (SUB_OVERFLOW(key->point_q.number, 1,
-						 &smw_key->public_length)) {
-					ret = CKR_ARGUMENTS_BAD;
-					goto end;
-				}
-			}
-
-			smw_key->private_data = key->value_d.value;
-
-			if (SET_OVERFLOW(key->value_d.length,
-					 smw_key->private_length))
-				ret = CKR_ARGUMENTS_BAD;
-			else
-				ret = CKR_OK;
-		}
-	}
+	if (op & OP_KEY_DESC_SET_BUFFER)
+		ret = ec_key_set_buffer_from_obj(desc, obj);
 
 end:
 	return ret;

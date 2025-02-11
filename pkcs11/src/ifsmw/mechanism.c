@@ -26,6 +26,7 @@
 #include "libobj_types.h"
 #include "pkcs11smw.h"
 #include "types.h"
+#include "util_asn1.h"
 
 #include "args_attr.h"
 #include "key_desc.h"
@@ -1048,10 +1049,15 @@ static CK_RV export_ec_public_key(struct smw_key_descriptor *key_desc,
 
 	struct libobj_key_ec_pair *key = get_subkey_from(obj);
 
-	unsigned int public_length = 0;
+	unsigned char *public_data = NULL;
+	size_t public_length = 0;
 
 	DBG_TRACE("Export EC Public Key");
 
+	/*
+	 * Allocate the EC public key that will be DER-encoded
+	 * of the ANSI X9.62 EC public point value
+	 */
 	/* Assign EC public key length */
 	public_length = key_desc->buffer->gen.public_length;
 	if (!public_length) {
@@ -1060,20 +1066,44 @@ static CK_RV export_ec_public_key(struct smw_key_descriptor *key_desc,
 	}
 
 	/* Add DER ANSI X9.62 uncompress code byte */
-	if (ADD_OVERFLOW(public_length, 1, &key->point_q.number))
-		return CKR_ARGUMENTS_BAD;
+	if (INC_OVERFLOW(public_length, 1)) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
 
-	/* Allocate the public key buffer */
+	ret = util_asn1_encode_octet_string(NULL, public_length, NULL,
+					    &key->point_q.number);
+	if (ret != CKR_OK)
+		goto end;
+
 	key->point_q.array = calloc(1, key->point_q.number);
 	if (!key->point_q.array) {
 		ret = CKR_HOST_MEMORY;
 		goto end;
 	}
 
+	/*
+	 * Pre-encode the DER octet string with not key, just to get
+	 * the encapsulation in order to set the SMW's key buffer.
+	 */
+	ret = util_asn1_encode_octet_string(NULL, public_length,
+					    key->point_q.array,
+					    &key->point_q.number);
+	if (ret != CKR_OK)
+		goto end;
+
 	ret = op_export_common(key_desc, obj);
-	if (ret == CKR_OK)
+	if (ret == CKR_OK) {
+		ret = util_asn1_get_field_octet_string(key->point_q.array,
+						       key->point_q.number,
+						       &public_data,
+						       &public_length);
+		if (ret != CKR_OK)
+			goto end;
+
 		/* DER ANSI X9.62 uncompress code byte */
-		key->point_q.array[0] = 0x04;
+		public_data[0] = ANSI_UNCOMPRESS_KEY_TAG;
+	}
 
 end:
 	if (ret != CKR_OK) {

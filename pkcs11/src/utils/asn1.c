@@ -348,7 +348,9 @@ CK_RV util_asn1_encode_octet_string(const uint8_t *in, size_t inlen,
 
 	if (!out || len > *outlen) {
 		*outlen = len;
-		ret = CKR_BUFFER_TOO_SMALL;
+		if (out)
+			ret = CKR_BUFFER_TOO_SMALL;
+
 		goto end;
 	}
 
@@ -401,11 +403,43 @@ CK_RV util_asn1_decode_octet_string(uint8_t *in, size_t inlen, uint8_t *out,
 
 	if (!out || *outlen < len) {
 		*outlen = len;
-		ret = CKR_BUFFER_TOO_SMALL;
+		if (!out)
+			ret = CKR_OK;
+		else
+			ret = CKR_BUFFER_TOO_SMALL;
 	} else {
 		memcpy(out, p, len);
 		ret = CKR_OK;
 	}
+
+end:
+	return ret;
+}
+
+CK_RV util_asn1_get_field_octet_string(uint8_t *in, size_t inlen, uint8_t **out,
+				       size_t *outlen)
+{
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	uint8_t *p = in;
+	uint8_t *end = in + inlen;
+
+	if (!in || !out || !outlen)
+		goto end;
+
+	/*
+	 * Octet string is encapsulated with a OCTET-STRING tag followed
+	 * by the ASN1 length of the octet string buffer.
+	 * Length must be at least 2 bytes
+	 */
+	if (inlen < 2)
+		goto end;
+
+	if (*p++ != ASN1_OCTET_STRING_TAG)
+		return CKR_DATA_INVALID;
+
+	ret = decode_asn1_length(&p, end, outlen);
+	if (ret == CKR_OK)
+		*out = p;
 
 end:
 	return ret;

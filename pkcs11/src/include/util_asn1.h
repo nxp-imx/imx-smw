@@ -46,6 +46,11 @@ struct curve_def {
 #define ASN1_OBJECT_IDENTIFIER 6
 #define ASN1_OCTET_STRING_TAG  0x04
 
+/*
+ * DER ANSI X9.62 Uncompress key tag
+ */
+#define ANSI_UNCOMPRESS_KEY_TAG 0x04
+
 /**
  * util_asn1_ec_params_to_curve() - Convert EC parameters to a defined EC curve
  * @out_curve: EC curve found (may be NULL)
@@ -114,5 +119,21 @@ CK_RV util_asn1_encode_octet_string(const uint8_t *in, size_t inlen,
  */
 CK_RV util_asn1_decode_octet_string(uint8_t *in, size_t inlen, uint8_t *out,
 				    size_t *outlen);
+
+/**
+ * util_asn1_get_field_octet_string() - Get the point and length of the octet
+ *                                      string
+ * @in: [in] Encapsulated OCTET-STRING
+ * @inlen: [in] Length of @inlen
+ * @out: [out] Pointer to the octet-string
+ * @outlen: [out] Length of the octet-string
+ *
+ * return:
+ * CKR_ARGUMENTS_BAD             - Bad arguments
+ * CKR_DATA_INVALID              - Input buffer invalid
+ * CKR_OK                        - Success
+ */
+CK_RV util_asn1_get_field_octet_string(uint8_t *in, size_t inlen, uint8_t **out,
+				       size_t *outlen);
 
 #endif /* __UTIL_ASN1_H__ */

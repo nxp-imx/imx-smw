@@ -106,6 +106,7 @@ Sign and Verify algorithm in ELE configuration file.
   descriptor at one place.
 * Move token key id in generic key object.
 * Export token public key from SMW only on demand.
+* Add `CKK_GENERIC_SECRET` key support
 
 #### PKCS#11 Tests - _version 4.2_
 
@@ -117,6 +118,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Update EC key test to validate all supported NIST curves.
 * Add tests for `CKO_CERTIFICATE` object.
 * Add tests finding keys generated without using PKCS11 generate operation.
+* Add tests for `CKK_GENERIC_SECRET` key type.
 
 ---
 ### <a id ="rel_4_1"></a></br>**Release 4.1**

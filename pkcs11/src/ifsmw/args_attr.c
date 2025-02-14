@@ -249,6 +249,7 @@ void args_attrs_key_usage(smw_attr_usage_t *usage_flags, struct libobj_obj *obj)
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		set_secret_key_usage(usage_flags, obj);
 		break;
@@ -286,6 +287,7 @@ void args_attr_get_key_usage(struct libobj_obj *obj,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		get_secret_key_usage(obj, usage_flags);
 		break;

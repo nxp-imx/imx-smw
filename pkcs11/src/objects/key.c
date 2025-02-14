@@ -291,6 +291,7 @@ static void key_secret_free(struct libobj_obj *obj)
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		key_hmac_free(obj);
 		break;
@@ -733,6 +734,7 @@ static CK_RV subkey_secret_create(CK_SESSION_HANDLE hsession,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		ret = key_hmac_create(hsession, obj, attrs);
 		break;
@@ -790,6 +792,7 @@ static CK_RV subkey_secret_retrieve(CK_SESSION_HANDLE hsession,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		ret = key_hmac_retrieve(hsession, obj, attrs);
 		break;
@@ -858,6 +861,7 @@ static CK_RV subkey_secret_get_attribute(CK_ATTRIBUTE_PTR attr,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		ret = key_hmac_get_attribute(attr, obj, protect);
 		break;
@@ -922,6 +926,7 @@ static CK_RV subkey_secret_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		ret = key_hmac_modify_attribute(attr, obj);
 		break;
@@ -1908,6 +1913,7 @@ CK_RV key_secret_key_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		ret = key_hmac_generate(hsession, mech, obj, attrs);
 		break;
@@ -2200,6 +2206,7 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		ret = key_hmac_derive(hsession, mech, &derive_params, attrs);
 		break;

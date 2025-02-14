@@ -173,6 +173,7 @@ const struct hmac_def hmacs[] = { HMAC(CKK_MD5_HMAC, MD5),
 				  HMAC(CKK_SHA3_256_HMAC, SHA3_256),
 				  HMAC(CKK_SHA3_384_HMAC, SHA3_384),
 				  HMAC(CKK_SHA3_512_HMAC, SHA3_512),
+				  HKDF(CKK_GENERIC_SECRET, HKDF_IKM),
 				  HKDF(CKK_HKDF, HKDF_IKM),
 				  { .smw_name = SMW_KEY_TYPE_NAME_NONE } };
 
@@ -818,6 +819,7 @@ static CK_RV op_key_desc_setup(unsigned int op, struct smw_key_descriptor *desc,
 	case CKK_SHA3_256_HMAC:
 	case CKK_SHA3_384_HMAC:
 	case CKK_SHA3_512_HMAC:
+	case CKK_GENERIC_SECRET:
 	case CKK_HKDF:
 		if (op & OP_KEY_DESC_GET_ALL)
 			ret = hmac_key_smw_to_pkcs11(op, &tmp_key_type, obj,
@@ -938,6 +940,7 @@ int base_key_desc_setup(struct libobj_obj *obj, struct smw_key_descriptor *desc)
 		case CKK_SHA3_256_HMAC:
 		case CKK_SHA3_384_HMAC:
 		case CKK_SHA3_512_HMAC:
+		case CKK_GENERIC_SECRET:
 		case CKK_HKDF:
 			hmac_key = get_subkey_from(obj);
 			key_value = &hmac_key->value;

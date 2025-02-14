@@ -91,6 +91,8 @@ struct {
 			 ARRAY_SIZE(info), AES, AES_ECB, 32, false),
 	HKDF_TEST_VECTOR(2, SHA384, NULL, 0, info, ARRAY_SIZE(info),
 			 SHA384_HMAC, SHA384_HMAC, 48, false),
+	HKDF_TEST_VECTOR(2, SHA384, NULL, 0, info, ARRAY_SIZE(info),
+			 GENERIC_SECRET, SHA384_HMAC, 48, false),
 	HKDF_TEST_VECTOR(3, SHA256, salt, ARRAY_SIZE(salt), NULL, 0, AES,
 			 AES_CBC, 32, false),
 	HKDF_TEST_VECTOR(4, SHA384, NULL, 0, NULL, 0, SHA384_HMAC, SHA384_HMAC,
@@ -123,6 +125,7 @@ struct {
 	CK_BBOOL is_token_key;
 } ecdh_derive_tests[] = {
 	ECDH_TEST_VECTOR(5, AES, AES_ECB, 24, false),
+	ECDH_TEST_VECTOR(5, GENERIC_SECRET, SHA_1_HMAC, 24, false),
 };
 
 static int object_derive_key_hkdf_bad_param(CK_FUNCTION_LIST_PTR pfunc)

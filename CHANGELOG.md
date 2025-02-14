@@ -58,6 +58,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Fix HKDF key permitted algorithm.
 * SECO: Fix key store creation by setting strict operation flag.
 * TEE: Add support for key derivation using ECDH.
+* TEE: Fix key usage conversion TEE to SMW
 
 ##### 3. ARM PSA APIs
 

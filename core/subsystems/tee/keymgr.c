@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <inttypes.h>
@@ -241,7 +241,7 @@ void key_usage_to_smw(unsigned int tee, smw_attr_usage_t *smw)
 	*smw = 0;
 
 	for (; i < ARRAY_SIZE(key_usage); i++) {
-		if (key_usage[i].tee & tee) {
+		if ((key_usage[i].tee & tee) == key_usage[i].tee) {
 			SMW_DBG_PRINTF(DEBUG, "Key usage: 0x%x\n",
 				       key_usage[i].tee);
 			*smw |= key_usage[i].smw;

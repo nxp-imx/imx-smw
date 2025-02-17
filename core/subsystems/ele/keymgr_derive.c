@@ -143,55 +143,6 @@ exit:
 	return status;
 }
 
-/**
- * set_derived_key_buffer() - Set the derived key buffer in HEX format
- * @key_ex_args: Pointer to ELE key exchange argument structure
- * @key_desc: Pointer to internal derived Key descriptor structure
- * @hex_key: Pointer to the HEX buffer to update
- * @hex_key_len: @hex_key length to update
- *
- * Set the derived key buffer in HEX format in key exchange argument if the
- * derived key is to be exported.
- *
- * Return:
- * SMW_STATUS_OK             - Success.
- * SMW_STATUS_INVALID_PARAM  - One of the parameters is invalid.
- * Error code from smw_keymgr_set_hex_key_buffer()
- */
-static int set_derived_key_buffer(op_key_exchange_args_t *key_ex_args,
-				  struct smw_keymgr_derived_key_desc *key_desc,
-				  unsigned char **hex_key,
-				  unsigned int *hex_key_len)
-{
-	int status = SMW_STATUS_OK;
-
-	unsigned char *key = NULL;
-	unsigned int key_len = 0;
-
-	if (!(key_ex_args->flags & HSM_OP_KEY_EXCHANGE_FLAGS_RETURN_OUTPUT))
-		return status;
-
-	key = smw_keymgr_get_shared_secret_buffer(key_desc);
-	key_len = smw_keymgr_get_shared_secret_len(key_desc);
-	if (!key || !key_len) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto exit;
-	}
-
-	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, key,
-					       key_len, hex_key, hex_key_len);
-	if (status != SMW_STATUS_OK)
-		goto exit;
-
-	key_ex_args->output = *hex_key;
-	if (key_ex_args->output)
-		key_ex_args->output_sz = *hex_key_len;
-
-exit:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 static int get_key_store_id(uint32_t *keystore_id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -236,16 +187,6 @@ static int get_key_lifetime(smw_attr_attributes_t attributes,
 	}
 
 	return status;
-}
-
-static void set_hkdf_op_flags(struct smw_keymgr_derive_key_args *args,
-			      hsm_op_key_exchange_flags_t *flags)
-{
-	*flags = HSM_OP_KEY_EXCHANGE_FLAGS_INPUT_PLAINTEXT_CONTENT;
-
-	if (smw_keymgr_get_shared_secret_buffer(&args->key_derived) &&
-	    smw_keymgr_get_shared_secret_len(&args->key_derived))
-		*flags |= HSM_OP_KEY_EXCHANGE_FLAGS_RETURN_OUTPUT;
 }
 
 /**
@@ -361,18 +302,15 @@ static int set_derived_key_params(op_key_exchange_args_t *key_ex_args,
 	struct hkdf_ele_op_payload *hkdf_op_payload = NULL;
 	smw_attr_attributes_t *key_attr = NULL;
 
-	if (!(key_ex_args->flags & HSM_OP_KEY_EXCHANGE_FLAGS_RETURN_OUTPUT)) {
-		hkdf_op_payload =
-			(struct hkdf_ele_op_payload *)key_ex_args->in_content;
+	hkdf_op_payload = (struct hkdf_ele_op_payload *)key_ex_args->in_content;
 
-		if (step == HKDF_STEP_EXTRACT) {
-			key_attr = &args->key_derived.identifier.attributes;
-			status = set_prk_attributes(key_attr, hkdf_op_payload);
-		} else {
-			status = set_derived_key_attr(args, hkdf_op_payload,
-						      actual_permitted_algo,
-						      actual_usage_flags);
-		}
+	if (step == HKDF_STEP_EXTRACT) {
+		key_attr = &args->key_derived.identifier.attributes;
+		status = set_prk_attributes(key_attr, hkdf_op_payload);
+	} else {
+		status = set_derived_key_attr(args, hkdf_op_payload,
+					      actual_permitted_algo,
+					      actual_usage_flags);
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -381,14 +319,10 @@ static int set_derived_key_params(op_key_exchange_args_t *key_ex_args,
 }
 
 /**
- * set_derived_key_id_length() - Set the derived key parameters
+ * set_derived_key_id() - Set the derived key parameters
  * @step: HKDF Step
- * @status: Status of key derivation operation
  * @args: Pointer to ELE key exchange arguments structure
  * @desc: Pointer to internal derived Key descriptor structure
- *
- * If derived key to be exported and the key derivation has returned
- * SMW_STATUS_OUTPUT_TOO_SHORT, update the derived key buffer length.
  *
  * If the derived key is stored in the ELE storage, update the derived key
  * identifier structure members (key ID, subsystem ID, privacy ID).
@@ -400,35 +334,21 @@ static int set_derived_key_params(op_key_exchange_args_t *key_ex_args,
  * SMW_STATUS_OK                      - Success
  * SMW_STATUS_INVALID_PARAM           - One of the parameters is invalid
  */
-static int set_derived_key_id_length(enum hkdf_step step, int status,
-				     op_key_exchange_args_t *args,
-				     struct smw_keymgr_derived_key_desc *desc)
+static int set_derived_key_id(enum hkdf_step step, op_key_exchange_args_t *args,
+			      struct smw_keymgr_derived_key_desc *desc)
 {
 	struct smw_keymgr_identifier *key_id = NULL;
-	bool return_output_flag = false;
-	int result = status;
+	int result = SMW_STATUS_OK;
 
-	if (args->flags & HSM_OP_KEY_EXCHANGE_FLAGS_RETURN_OUTPUT)
-		return_output_flag = true;
+	key_id = &desc->identifier;
+	key_id->subsystem_id = SUBSYSTEM_ID_ELE;
+	key_id->id = args->out_derived_key_id;
 
-	if (status == SMW_STATUS_OUTPUT_TOO_SHORT) {
-		if (return_output_flag)
-			smw_keymgr_set_shared_secret_len(desc,
-							 args->exp_output_sz);
-	} else if (status == SMW_STATUS_OK) {
-		if (return_output_flag)
-			return result;
-
-		key_id = &desc->identifier;
-		key_id->subsystem_id = SUBSYSTEM_ID_ELE;
-		key_id->id = args->out_derived_key_id;
-
-		if (step == HKDF_STEP_EXTRACT)
-			smw_keymgr_set_shared_secret_id(desc, key_id->id);
-		else
-			result = smw_keymgr_get_privacy_id(key_id->type_id,
-							   &key_id->privacy_id);
-	}
+	if (step == HKDF_STEP_EXTRACT)
+		smw_keymgr_set_shared_secret_id(desc, key_id->id);
+	else
+		result = smw_keymgr_get_privacy_id(key_id->type_id,
+						   &key_id->privacy_id);
 
 	return result;
 }
@@ -457,8 +377,6 @@ static int hkdf(struct smw_keymgr_derive_key_args *args, hsm_hdl_t *key_mgt_hdl)
 
 	unsigned char *hex_key_base = NULL;
 	unsigned int hex_key_base_len = 0;
-	unsigned char *hex_key_derived = NULL;
-	unsigned int hex_key_derived_len = 0;
 	unsigned char *buffer = NULL;
 	uint8_t *arg_buffer = NULL;
 	unsigned int buffer_size = 0;
@@ -517,47 +435,22 @@ static int hkdf(struct smw_keymgr_derive_key_args *args, hsm_hdl_t *key_mgt_hdl)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	set_hkdf_op_flags(args, &key_ex_args.flags);
-
-	status = set_derived_key_buffer(&key_ex_args, &args->key_derived,
-					&hex_key_derived, &hex_key_derived_len);
-	if (status != SMW_STATUS_OK)
-		goto exit;
+	key_ex_args.flags = HSM_OP_KEY_EXCHANGE_FLAGS_INPUT_PLAINTEXT_CONTENT;
 
 	if (step == HKDF_STEP_FULL || step == HKDF_STEP_EXPAND) {
 		/*
-		 * Currently, user can either store the derived key or export the
-		 * derived key buffer, but can't do both.
+		 * Currently, user can only store the derived key.
 		 */
-		if (smw_keymgr_is_store_key_set(args) && hex_key_derived &&
-		    hex_key_derived_len) {
-			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-			goto exit;
-		}
-
-		if (!smw_keymgr_is_store_key_set(args) &&
-		    (!hex_key_derived || !hex_key_derived_len)) {
+		if (!smw_keymgr_is_store_key_set(args)) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto exit;
 		}
 	}
 
-	/*
-	 * For HKDF FULL/EXPAND step, if the derived key security size is not
-	 * defined by the user and user has set the derived key buffer to export the
-	 * derived key, calculate the derived key security size based on derived
-	 * key buffer length.
-	 */
 	if (step == HKDF_STEP_FULL || step == HKDF_STEP_EXPAND) {
 		if (key_id_derived->security_size) {
 			if (SET_OVERFLOW(key_id_derived->security_size,
 					 hkdf_op_payload.key_size)) {
-				status = SMW_STATUS_INVALID_PARAM;
-				goto exit;
-			}
-		} else if (hex_key_derived && hex_key_derived_len) {
-			if (MUL_OVERFLOW(hex_key_derived_len, 8,
-					 &hkdf_op_payload.key_size)) {
 				status = SMW_STATUS_INVALID_PARAM;
 				goto exit;
 			}
@@ -626,9 +519,6 @@ static int hkdf(struct smw_keymgr_derive_key_args *args, hsm_hdl_t *key_mgt_hdl)
 		       "    - derived_key_id: %d\n"
 		       "    - PRK_len/salt_len: %d\n"
 		       "  out_derived_key_id: %d\n"
-		       "  expected_out_sz: %d\n"
-		       "  output_sz: %d\n"
-		       "  output: %p\n"
 		       "  PRK/salt: %p\n",
 		       key_ex_args.flags, key_ex_args.in_pub_buffer_sz,
 		       key_ex_args.user_fixed_info_sz,
@@ -641,17 +531,16 @@ static int hkdf(struct smw_keymgr_derive_key_args *args, hsm_hdl_t *key_mgt_hdl)
 		       hkdf_op_payload.key_lifecycle,
 		       hkdf_op_payload.derived_key_id,
 		       hkdf_op_payload.buffer_len,
-		       key_ex_args.out_derived_key_id,
-		       key_ex_args.exp_output_sz, key_ex_args.output_sz,
-		       key_ex_args.output, buffer);
+		       key_ex_args.out_derived_key_id, buffer);
 
 	err = hsm_key_exchange(*key_mgt_hdl, &key_ex_args);
 	SMW_DBG_PRINTF(DEBUG, "hsm_key_exchange returned %d\n", err);
 
 	status = ele_convert_err(err);
 
-	status = set_derived_key_id_length(step, status, &key_ex_args,
-					   &args->key_derived);
+	if (status == SMW_STATUS_OK)
+		status = set_derived_key_id(step, &key_ex_args,
+					    &args->key_derived);
 
 exit:
 
@@ -661,10 +550,6 @@ exit:
 	if (args->key_base.format_id == SMW_KEYMGR_FORMAT_ID_BASE64 &&
 	    hex_key_base)
 		SMW_UTILS_FREE(hex_key_base);
-
-	if (args->key_derived.format_id == SMW_KEYMGR_FORMAT_ID_BASE64 &&
-	    hex_key_derived)
-		SMW_UTILS_FREE(hex_key_derived);
 
 	if (step != HKDF_STEP_EXTRACT && key_attrs &&
 	    (key_attrs->usage_flags != actual_usage ||

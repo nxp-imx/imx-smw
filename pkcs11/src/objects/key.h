@@ -41,6 +41,36 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		 struct libattr_list *attrs);
 
 /**
+ * key_keypair_retrieve() - Retrieve a keypair object
+ * @hsession: Session handle
+ * @pub_obj: Public Key object
+ * @priv_obj: Private Key object
+ * @attrs: List of object attributes
+ * @id: Token key ID
+ *
+ * If key attributes are corrects, retrieve a keypair object.
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
+ * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV key_keypair_retrieve(CK_SESSION_HANDLE hsession,
+			   struct libobj_obj *pub_obj,
+			   struct libobj_obj *priv_obj,
+			   struct libattr_list *attrs, unsigned int id);
+
+/**
  * key_retrieve() - Retrieve a key object
  * @hsession: Session handle
  * @obj: Key object

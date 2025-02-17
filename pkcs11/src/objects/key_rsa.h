@@ -57,11 +57,8 @@ CK_RV key_rsa_public_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
  * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
  * CKR_SLOT_ID_INVALID           - Slot ID is not valid
- * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
  * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
  * CKR_FUNCTION_FAILED           - Function failure
- * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
- * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_DEVICE_MEMORY             - Device memory error
@@ -145,11 +142,8 @@ CK_RV key_rsa_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
  * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
  * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
  * CKR_SLOT_ID_INVALID           - Slot ID is not valid
- * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
  * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
  * CKR_FUNCTION_FAILED           - Function failure
- * CKR_TEMPLATE_INCOMPLETE       - Attribute template incomplete
- * CKR_TEMPLATE_INCONSISTENT     - One of the attribute is not valid
  * CKR_HOST_MEMORY               - Allocation error
  * CKR_GENERAL_ERROR             - General error defined
  * CKR_DEVICE_MEMORY             - Device memory error
@@ -232,5 +226,27 @@ CK_RV key_rsa_keypair_generate(CK_SESSION_HANDLE hsession,
 			       struct libattr_list *pub_attrs,
 			       struct libobj_obj *priv_obj,
 			       struct libattr_list *priv_attrs);
+
+/*
+ * key_rsa_keypair_retrieve() - Retrieve a RSA keypair object
+ * @hsession: Session handle
+ * @pub_obj: RSA Public Key object
+ * @priv_obj: RSA Private Key object
+ *
+ * return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_GENERAL_ERROR             - General error defined
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV key_rsa_keypair_retrieve(CK_SESSION_HANDLE hsession,
+			       struct libobj_obj *pub_obj,
+			       struct libobj_obj *priv_obj);
 
 #endif /* __KEY_RSA_H__ */

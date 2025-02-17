@@ -905,9 +905,84 @@ end:
 	return ret;
 }
 
+CK_RV libobj_keypair_retrieve(CK_SESSION_HANDLE hsession,
+			      CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs,
+			      unsigned int id)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_obj *pub_key = NULL;
+	struct libobj_obj *priv_key = NULL;
+	struct libattr_list attrs_list = { .attr = attrs, .number = nb_attrs };
+
+	DBG_TRACE("Retrieve keypair object on session %lu", hsession);
+
+	ret = libsess_validate(hsession);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * First create the storage object for the public key
+	 */
+	ret = obj_allocate(&pub_key);
+	if (ret != CKR_OK)
+		goto end;
+
+	/* Set the CKO_PUBLIC_KEY class */
+	pub_key->class = CKO_PUBLIC_KEY;
+	ret = obj_storage_new(hsession, pub_key, &attrs_list);
+	if (ret != CKR_OK)
+		goto end;
+
+	/* Set the Public key unique ID */
+	ret = libobj_set_unique_id(pub_key, id);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * Next create the storage object for the private key
+	 */
+	ret = obj_allocate(&priv_key);
+	if (ret != CKR_OK)
+		goto end;
+
+	/* Set the CKO_PRIVATE_KEY class */
+	priv_key->class = CKO_PRIVATE_KEY;
+	ret = obj_storage_new(hsession, priv_key, &attrs_list);
+	if (ret != CKR_OK)
+		goto end;
+
+	/* Set the Private key unique ID */
+	ret = libobj_set_unique_id(priv_key, id);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = key_keypair_retrieve(hsession, pub_key, priv_key, &attrs_list,
+				   id);
+
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = obj_add_to_list(hsession, pub_key,
+			      is_token_obj(pub_key, storage));
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = obj_add_to_list(hsession, priv_key,
+			      is_token_obj(priv_key, storage));
+
+end:
+	DBG_TRACE("Retrieve keypair return %ld", ret);
+
+	if (ret != CKR_OK) {
+		obj_free(pub_key, NULL);
+		obj_free(priv_key, NULL);
+	}
+
+	return ret;
+}
+
 CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
-		      CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj,
-		      unsigned int id)
+		      CK_ULONG nb_attrs, unsigned int id)
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_obj *newobj = NULL;
@@ -963,9 +1038,7 @@ CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 end:
 	DBG_TRACE("Object (%p) retrieve return %ld", newobj, ret);
 
-	if (ret == CKR_OK)
-		*hobj = (CK_OBJECT_HANDLE)newobj;
-	else
+	if (ret != CKR_OK)
 		obj_free(newobj, NULL);
 
 	return ret;

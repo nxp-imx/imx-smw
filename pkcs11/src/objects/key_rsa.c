@@ -401,29 +401,19 @@ CK_RV key_rsa_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_key_rsa_pair *key = get_subkey_from(obj);
-	const struct libobj_obj *obj_attr = obj;
 
 	DBG_TRACE("Get attribute type=%#lx protected=%s", attr->type,
 		  protect ? "YES" : "NO");
 
 	if (is_token_obj(obj, storage) &&
 	    (attr->type == CKA_MODULUS || attr->type == CKA_PUBLIC_EXPONENT)) {
-		/*
-		 * If it's a keypair, public key object is set and
-		 * don't export the public key if already exported.
-		 */
-		if (key->pub_obj) {
-			obj_attr = key->pub_obj;
-			key = get_subkey_from(key->pub_obj);
-		}
-
 		if (!key->modulus.value && !key->pub_exp.value)
-			ret = libdev_export_public_key(obj_attr);
+			ret = libdev_export_public_key(obj);
 	}
 
 	ret = attr_get_obj_prot_value(attr, attr_key_rsa_private,
 				      ARRAY_SIZE(attr_key_rsa_private),
-				      get_subkey_from(obj_attr), protect);
+				      get_subkey_from(obj), protect);
 	if (ret == CKR_ATTRIBUTE_TYPE_INVALID)
 		attr->ulValueLen = CK_UNAVAILABLE_INFORMATION;
 
@@ -526,6 +516,31 @@ CK_RV key_rsa_keypair_generate(CK_SESSION_HANDLE hsession,
 		DBG_TRACE("Key Pair ID 0x%X", get_key_token_id(priv_obj));
 		set_key_token_id(pub_obj, get_key_token_id(priv_obj));
 	}
+
+end:
+	if (ret != CKR_OK) {
+		key_rsa_public_free(pub_obj);
+		key_rsa_private_free(priv_obj);
+	}
+
+	return ret;
+}
+
+CK_RV key_rsa_keypair_retrieve(CK_SESSION_HANDLE hsession,
+			       struct libobj_obj *pub_obj,
+			       struct libobj_obj *priv_obj)
+{
+	CK_RV ret = CKR_OK;
+
+	ret = key_rsa_allocate(pub_obj, priv_obj, LIBOBJ_KEY_PAIR);
+	if (ret != CKR_OK)
+		goto end;
+
+	DBG_TRACE("Retrieve a RSA keypair key (%p)", get_subkey_from(priv_obj));
+
+	/* Get the RSA private key attributes from the SMW library */
+	ret = libdev_get_key_attributes(hsession, priv_obj);
+	DBG_TRACE("RSA keypair ID 0x%X", get_key_token_id(priv_obj));
 
 end:
 	if (ret != CKR_OK) {

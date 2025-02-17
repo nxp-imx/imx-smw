@@ -53,20 +53,31 @@ end:
 }
 
 static CK_RV obj_match_id(struct libobj_obj *obj,
-			  struct smw_object_descriptor *desc, bool *match)
+			  struct smw_object_descriptor *desc,
+			  CK_OBJECT_CLASS exp_class, bool *match)
 {
-	CK_RV ret = CKR_OK;
-	struct librfc2279 *unique_id = get_unique_id_obj(obj, storage);
-	unsigned int id = 0;
+	unsigned int token_id = 0;
 
 	*match = false;
 
-	ret = libobj_get_id(unique_id, &id);
-	if (ret != CKR_OK)
-		return ret;
+	switch (obj->class) {
+	case CKO_PRIVATE_KEY:
+	case CKO_PUBLIC_KEY:
+	case CKO_SECRET_KEY:
+		token_id = get_key_token_id(obj);
+		break;
 
-	if (id == desc->id)
-		*match = true;
+	case CKO_DATA:
+		token_id = get_data_token_id(obj);
+		break;
+
+	default:
+		DBG_TRACE("Class object %lu not supported", obj->class);
+		return CKR_FUNCTION_FAILED;
+	}
+
+	if (exp_class == CK_UNAVAILABLE_INFORMATION || exp_class == obj->class)
+		*match = (token_id == desc->id) ? true : false;
 
 	return CKR_OK;
 }
@@ -657,7 +668,6 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	struct smw_object_descriptor descriptor = { 0 };
 	struct smw_key_attributes *key_attr = NULL;
 	struct smw_get_key_attributes_args attr_args = { 0 };
-	CK_OBJECT_HANDLE hObj = CK_INVALID_HANDLE;
 	CK_ATTRIBUTE_PTR attributes = NULL_PTR;
 	CK_ULONG attributes_count = 0;
 	CK_ULONG nb_retrieved = 0;
@@ -741,18 +751,13 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 			if (!is_obj_class_retrievable(libobj->class))
 				continue;
 
-			ret = obj_match_id(libobj, &descriptor, &is_present);
+			ret = obj_match_id(libobj, &descriptor, object_class,
+					   &is_present);
 			if (ret != CKR_OK)
 				goto end;
 
-			if (is_present) {
-				if (object_class !=
-					    CK_UNAVAILABLE_INFORMATION &&
-				    libobj->class != object_class)
-					is_present = false;
-
+			if (is_present)
 				break;
-			}
 		}
 
 		if (is_present)
@@ -788,8 +793,14 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		if (ret != CKR_OK)
 			goto end;
 
-		ret = libobj_retrieve(hsession, attributes, attributes_count,
-				      &hObj, descriptor.id);
+		if (descriptor.type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+			ret = libobj_keypair_retrieve(hsession, attributes,
+						      attributes_count,
+						      descriptor.id);
+		else
+			ret = libobj_retrieve(hsession, attributes,
+					      attributes_count, descriptor.id);
+
 		if (ret != CKR_OK)
 			goto end;
 

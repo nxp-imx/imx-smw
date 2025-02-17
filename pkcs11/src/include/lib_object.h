@@ -62,11 +62,45 @@ CK_RV libobj_profile_create(struct libobj_list *objects,
 			    const CK_PROFILE_ID *profile_id);
 
 /**
+ * libobj_keypair_retrieve() - Retrieve a keypair
+ * @hsession: Session handle
+ * @attrs: List of the object attributes
+ * @nb_attrs: Number of attributes
+ * @id: Object identifier
+ *
+ * After verifying the validity of the @hsession, the function
+ * checks the attributes list @attrs function of the Object Class
+ * attributes.
+ * Finally, adds the object in the session's object list if all attributes
+ * are correct.
+ *
+ * return:
+ * CKR_SLOT_ID_INVALID           - Slot ID is not valid
+ * CKR_CURVE_NOT_SUPPORTED       - Curve is not supported
+ * CKR_ATTRIBUTE_READ_ONLY       - One attribute is read only
+ * CKR_TEMPLATE_INCOMPLETE       - Attribute type not found
+ * CKR_TEMPLATE_INCONSISTENT     - Attribute type must not be defined
+ * CKR_ATTRIBUTE_VALUE_INVALID   - Attribute value is not valid
+ * CKR_USER_NOT_LOGGED_IN        - User must log to create object
+ * CKR_HOST_MEMORY               - Allocation error
+ * CKR_CRYPTOKI_NOT_INITIALIZED  - Context not initialized
+ * CKR_GENERAL_ERROR             - No slot defined
+ * CKR_SESSION_HANDLE_INVALID    - Session Handle invalid
+ * CKR_SESSION_CLOSED            - Session closed
+ * CKR_FUNCTION_FAILED           - Function failure
+ * CKR_DEVICE_MEMORY             - Device memory error
+ * CKR_DEVICE_ERROR              - Device failure
+ * CKR_OK                        - Success
+ */
+CK_RV libobj_keypair_retrieve(CK_SESSION_HANDLE hsession,
+			      CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs,
+			      unsigned int id);
+
+/**
  * libobj_retrieve() - Retrieve an object
  * @hsession: Session handle
  * @attrs: List of the object attributes
  * @nb_attrs: Number of attributes
- * @hobj: Object handle
  * @id: Object identifier
  *
  * After verifying the validity of the @hsession, the function
@@ -94,8 +128,7 @@ CK_RV libobj_profile_create(struct libobj_list *objects,
  * CKR_OK                        - Success
  */
 CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
-		      CK_ULONG nb_attrs, CK_OBJECT_HANDLE_PTR hobj,
-		      unsigned int id);
+		      CK_ULONG nb_attrs, unsigned int id);
 
 /**
  * libobj_destroy() - Destroy an object

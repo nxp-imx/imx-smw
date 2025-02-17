@@ -1600,6 +1600,57 @@ CK_RV key_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	return ret;
 }
 
+CK_RV key_keypair_retrieve(CK_SESSION_HANDLE hsession,
+			   struct libobj_obj *pub_obj,
+			   struct libobj_obj *priv_obj,
+			   struct libattr_list *attrs, unsigned int id)
+{
+	CK_RV ret = CKR_GENERAL_ERROR;
+
+	DBG_TRACE("Retrieve a keypair object Public key (%p) Private key (%p)",
+		  pub_obj, priv_obj);
+
+	if (!pub_obj || !priv_obj)
+		return ret;
+
+	/*
+	 * Create the public key
+	 */
+	ret = create_key_new(pub_obj, attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = key_public_new(hsession, pub_obj, attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * Create the private key
+	 */
+	ret = create_key_new(priv_obj, attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = key_private_new(priv_obj, attrs);
+	if (ret != CKR_OK)
+		goto end;
+
+	set_key_token_id(pub_obj, id);
+	set_key_token_id(priv_obj, id);
+
+	if (get_key_type(priv_obj) == CKK_EC)
+		ret = key_ec_keypair_retrieve(hsession, pub_obj, priv_obj);
+	else if (get_key_type(priv_obj) == CKK_RSA)
+		ret = key_rsa_keypair_retrieve(hsession, pub_obj, priv_obj);
+	else
+		ret = CKR_FUNCTION_FAILED;
+
+end:
+	DBG_TRACE("Keypair object (pub=%p priv=%p) retrieve return %ld",
+		  pub_obj, priv_obj, ret);
+	return ret;
+}
+
 CK_RV key_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 		   struct libattr_list *attrs, unsigned int id)
 {
@@ -1610,41 +1661,41 @@ CK_RV key_retrieve(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	if (!obj)
 		return ret;
 
-	/* Import the common key object */
 	ret = create_key_new(obj, attrs);
-	if (ret == CKR_OK) {
-		switch (obj->class) {
-		case CKO_PUBLIC_KEY:
-			ret = key_public_new(hsession, obj, attrs);
-			if (ret == CKR_OK) {
-				set_key_token_id(obj, id);
-				ret = subkey_public_retrieve(hsession, obj);
-			}
-			break;
+	if (ret != CKR_OK)
+		goto end;
 
-		case CKO_PRIVATE_KEY:
-			ret = key_private_new(obj, attrs);
-			if (ret == CKR_OK) {
-				set_key_token_id(obj, id);
-				ret = subkey_private_retrieve(hsession, obj);
-			}
-			break;
-
-		case CKO_SECRET_KEY:
-			ret = key_secret_new(obj, attrs, false);
-			if (ret == CKR_OK) {
-				set_key_token_id(obj, id);
-				ret = subkey_secret_retrieve(hsession, obj,
-							     attrs);
-			}
-			break;
-
-		default:
-			ret = CKR_GENERAL_ERROR;
-			break;
+	switch (obj->class) {
+	case CKO_PUBLIC_KEY:
+		ret = key_public_new(hsession, obj, attrs);
+		if (ret == CKR_OK) {
+			set_key_token_id(obj, id);
+			ret = subkey_public_retrieve(hsession, obj);
 		}
+		break;
+
+	case CKO_PRIVATE_KEY:
+		ret = key_private_new(obj, attrs);
+		if (ret == CKR_OK) {
+			set_key_token_id(obj, id);
+			ret = subkey_private_retrieve(hsession, obj);
+		}
+		break;
+
+	case CKO_SECRET_KEY:
+		ret = key_secret_new(obj, attrs, false);
+		if (ret == CKR_OK) {
+			set_key_token_id(obj, id);
+			ret = subkey_secret_retrieve(hsession, obj, attrs);
+		}
+		break;
+
+	default:
+		ret = CKR_GENERAL_ERROR;
+		break;
 	}
 
+end:
 	DBG_TRACE("Key type object (%p) return %ld", obj, ret);
 	return ret;
 }

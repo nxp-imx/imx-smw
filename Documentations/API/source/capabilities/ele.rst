@@ -748,8 +748,7 @@ Supported Key Derivation Functions
 
 The subsystem supports HKDF Extract step, Expand step and Full step (Extract and
 Expand combined). The subsystem supports deriving a key from an existing stored
-asymmetric key as well as from a plaintext buffer. It allows the derived key to
-either be stored in the ELE storage if requested by user or exported as a buffer
-if the derived key buffer is set.
+asymmetric key as well as from a plaintext buffer. The derived key has to
+be stored in the ELE storage.
 
 .. Note:: Not supported on i.MX8ULP and i.MX95

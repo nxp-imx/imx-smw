@@ -61,6 +61,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Fix key usage conversion TEE to SMW.
 * TEE: TA: Fix key type conversion TEE to SMW.
 * TEE: Add hardcoded permitted algorithm for keys with unique permitted algorithm.
+* ELE: HKDF: Remove derived key buffer export capability.
 
 ##### 3. ARM PSA APIs
 
@@ -84,6 +85,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Correct the test definition to run when TEE subsystem not enabled.
 * Correct the certificate length in U_ELE_Attestation_001 test.
 * Add U_TEE_Derive_004.
+* U_ELE_Derive tests: Remove tests exporting the derived key buffer.
 
 #### PKCS#11 Library - _version 4.2_
 

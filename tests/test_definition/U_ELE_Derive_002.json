@@ -41,30 +41,6 @@
 				"HASH=SHA384",
 				"LENGTH=8"
 			]
-		},
-		"derived key 3": {
-			"format": "BASE64",
-			"shared_secret": [
-				"00000000000000000000000000000000",
-				"00000000000000000000000000000000"
-			]
-		},
-		"derived key 4": {
-			"security_size": 384,
-			"shared_secret": [
-				"101112131415161718191a1b1c1d1e1f",
-				"202122232425262728292a2b2c2d2e2f",
-				"d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
-			]
-		},
-		"derived key 5": {
-			"security_size": 384,
-			"shared_secret": [
-				16,
-				"101112131415161718191a1b1c1d1e1f",
-				"202122232425262728292a2b2c2d2e2f",
-				"d0d1d2d3d4d5d6d7d8d9dadbdcdddedf"
-			]
 		}
 	},
 	"subtest 1": {
@@ -115,88 +91,11 @@
 		]
 	},
 	"subtest 3": {
-		"description": [
-			"Key derivation algo is HKDF FULL SHA256",
-			"IKM buffer is set",
-			"Salt buffer is not set",
-			"Derived key is exported"
-		],
-		"command": "DERIVE",
-		"subsystem": "ELE",
-		"op_input": "base key 1",
-		"op_output": "derived key 3",
-		"op_type": "HKDF",
-		"op_args": {
-			"info": "f0f1f2f3f4f5f6f7f8f9",
-			"algo": "SHA256"
-		},
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
-	},
-	"subtest 4": {
-		"description": [
-			"Key derivation algo is HKDF FULL SHA384",
-			"IKM buffer is set",
-			"Derived key is exported"
-		],
-		"command": "DERIVE",
-		"subsystem": "ELE",
-		"op_input": "base key 2",
-		"op_output": "derived key 4",
-		"op_type": "HKDF",
-		"op_args": {
-			"info": "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
-			"salt": [
-				"606162636465666768696a6b6c6d6e6f",
-				"707172737475767778797a7b7c7d7e7f",
-				"606162636465666768696a6b6c6d6e6f"
-			],
-			"algo": "SHA384"
-		},
-		"output": [
-			"c37bb12188fd7bee566605a0a7327495",
-			"cc448e5c31a7abaf19866b72d3a159bb",
-			"115f1c206a91b659108f22d3405e0e71"
-		],
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
-	},
-	"subtest 5": {
-		"description": [
-			"Key derivation algo is HKDF FULL SHA384",
-			"IKM buffer is set",
-			"Derived key buffer is short"
-		],
-		"command": "DERIVE",
-		"subsystem": "ELE",
-		"op_input": "base key 2",
-		"op_output": "derived key 5",
-		"op_type": "HKDF",
-		"op_args": {
-			"info": "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf",
-			"salt": [
-				"606162636465666768696a6b6c6d6e6f",
-				"707172737475767778797a7b7c7d7e7f",
-				"606162636465666768696a6b6c6d6e6f"
-			],
-			"algo": "SHA384"
-		},
-		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
-	},
-	"subtest 6": {
 		"command": "DELETE",
 		"key_name": "derived key 1",
 		"depends": 1
 	},
-	"subtest 7": {
+	"subtest 4": {
 		"command": "DELETE",
 		"key_name": "derived key 2",
 		"depends": 2

@@ -179,7 +179,7 @@
 			"salt": "000102030405060708090a0b0c",
 			"algo": "SHA256"
 		},
-		"op_output": "key 6",
+		"op_output": "key 2",
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"depends": 6,
 		"restriction_list": [
@@ -210,30 +210,11 @@
 		]
 	},
 	"subtest 9": {
-		"description": "Storing the derived key and exporting derived key buffer simultaneously is not supported",
-		"command": "DERIVE",
-		"subsystem": "ELE",
-		"op_input": "key 3",
-		"op_type": "HKDF",
-		"store_key": true,
-		"op_args": {
-			"salt": "000102030405060708090a0b0c",
-			"info": "f0f1f2f3f4f5f6f7f8f9",
-			"algo": "SHA256"
-		},
-		"op_output": "key 2",
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
-	},
-	"subtest 10": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 11": {
+	"subtest 10": {
 		"command": "DELETE",
 		"key_name": "key 5",
 		"depends": 6

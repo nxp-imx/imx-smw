@@ -59,6 +59,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * SECO: Fix key store creation by setting strict operation flag.
 * TEE: Add support for key derivation using ECDH.
 * TEE: Fix key usage conversion TEE to SMW
+* TEE: TA: Fix key type conversion TEE to SMW
 
 ##### 3. ARM PSA APIs
 

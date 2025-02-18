@@ -106,6 +106,8 @@ RANGE_DEF(HKDF_IKM, 8, 4096, 8);
 /**
  * struct key_def - TEE Key definition
  * @key_type_id: SMW key type ID
+ * @hash_algo_id: SMW Hash ID
+ * @hash: API Hash attribute value
  * @key_type: TEE key type
  * @security_size: Key security size in bits
  * @security_size_range: Key security size range

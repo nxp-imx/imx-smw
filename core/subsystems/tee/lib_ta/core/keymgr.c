@@ -23,9 +23,6 @@
 
 #define SECURITY_SIZE_RANGE UINT_MAX
 
-/* TEE Key type is keypair */
-#define TEE_TYPE_KEYPAIR BIT(24)
-
 #define USAGE(_usage, _tee_usage)                                              \
 	{                                                                      \
 		.usage = TEE_KEY_USAGE_##_usage,                               \
@@ -56,67 +53,123 @@ struct {
 		       USAGE(DERIVE, DERIVE),
 		       USAGE(MAC, MAC) };
 
-#define KEY_DEF(_key_type, _security_size, _obj_type)                          \
+#define KEY_DEF_KEYPAIR(_key_type, _security_size, _obj_type)                  \
 	{                                                                      \
 		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
+		.key_privacy = TEE_KEY_PAIR, .security_size = _security_size,  \
+		.obj_type = TEE_TYPE_##_obj_type##_KEYPAIR, .ecc_curve = 0     \
+	}
+
+#define KEY_DEF_PUBLIC_KEY(_key_type, _security_size, _obj_type)               \
+	{                                                                      \
+		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
+		.key_privacy = TEE_KEY_PUBLIC,                                 \
+		.security_size = _security_size,                               \
+		.obj_type = TEE_TYPE_##_obj_type##_PUBLIC_KEY, .ecc_curve = 0  \
+	}
+
+#define KEY_DEF_SYMMETRIC(_key_type, _security_size, _obj_type)                \
+	{                                                                      \
+		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
+		.key_privacy = TEE_KEY_PRIVATE,                                \
 		.security_size = _security_size,                               \
 		.obj_type = TEE_TYPE_##_obj_type, .ecc_curve = 0               \
 	}
 
-#define KEY_DEF_RANGE(_key_type, _obj_type)                                    \
+#define KEY_DEF_RANGE_KEYPAIR(_key_type, _obj_type)                            \
 	{                                                                      \
 		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
+		.key_privacy = TEE_KEY_PAIR,                                   \
+		.security_size = SECURITY_SIZE_RANGE,                          \
+		.obj_type = TEE_TYPE_##_obj_type##_KEYPAIR, .ecc_curve = 0     \
+	}
+
+#define KEY_DEF_RANGE_PUBLIC_KEY(_key_type, _obj_type)                         \
+	{                                                                      \
+		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
+		.key_privacy = TEE_KEY_PUBLIC,                                 \
+		.security_size = SECURITY_SIZE_RANGE,                          \
+		.obj_type = TEE_TYPE_##_obj_type##_PUBLIC_KEY, .ecc_curve = 0  \
+	}
+
+#define KEY_DEF_RANGE_PRIVATE(_key_type, _obj_type)                            \
+	{                                                                      \
+		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
+		.key_privacy = TEE_KEY_PRIVATE,                                \
 		.security_size = SECURITY_SIZE_RANGE,                          \
 		.obj_type = TEE_TYPE_##_obj_type, .ecc_curve = 0               \
 	}
 
-#define KEY_DEF_ECC(_key_type, _security_size, _obj_type, _ecc_curve)          \
+#define KEY_DEF_RANGE_SECRET(_key_type, _obj_type)                             \
 	{                                                                      \
 		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
+		.key_privacy = TEE_KEY_SHARED_SECRET,                          \
+		.security_size = SECURITY_SIZE_RANGE,                          \
+		.obj_type = TEE_TYPE_##_obj_type, .ecc_curve = 0               \
+	}
+
+#define KEY_DEF_ECC_KEYPAIR(_key_type, _security_size, _ecc_curve)             \
+	{                                                                      \
+		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
+		.key_privacy = TEE_KEY_PAIR, .security_size = _security_size,  \
+		.obj_type = TEE_TYPE_ECDSA_KEYPAIR,                            \
+		.ecc_curve = TEE_ECC_CURVE_NIST_##_ecc_curve                   \
+	}
+
+#define KEY_DEF_ECC_PUBLIC_KEY(_key_type, _security_size, _ecc_curve)          \
+	{                                                                      \
+		.key_type = TEE_KEY_TYPE_ID_##_key_type,                       \
+		.key_privacy = TEE_KEY_PUBLIC,                                 \
 		.security_size = _security_size,                               \
-		.obj_type = TEE_TYPE_##_obj_type,                              \
+		.obj_type = TEE_TYPE_ECDSA_PUBLIC_KEY,                         \
 		.ecc_curve = TEE_ECC_CURVE_NIST_##_ecc_curve                   \
 	}
 
 /**
  * struct key_def - TEE TA Key definition
  * @key_type: TEE key type.
+ * @key_privacy: Key privacy.
  * @security_size: Key security size in bits.
  * @obj_type: Key TEE object type.
  * @ecc_curve: Type of ecc curve if needed.
  *
- * key_def_list must be ordered from lowest to highest.
- * Security sizes must be ordered from lowest to highest for one given
- * key type ID.
  * If @security_size in set to SECURITY_SIZE_RANGE, the size is a range of value
  * and the field is not used.
  */
 struct {
 	enum tee_key_type key_type;
+	enum tee_key_privacy key_privacy;
 	unsigned int security_size;
 	unsigned int obj_type;
 	unsigned int ecc_curve;
 } key_def_list[] = {
-	KEY_DEF_ECC(SECP_R1, 192, ECDSA_KEYPAIR, P192),
-	KEY_DEF_ECC(SECP_R1, 224, ECDSA_KEYPAIR, P224),
-	KEY_DEF_ECC(SECP_R1, 256, ECDSA_KEYPAIR, P256),
-	KEY_DEF_ECC(SECP_R1, 384, ECDSA_KEYPAIR, P384),
-	KEY_DEF_ECC(SECP_R1, 521, ECDSA_KEYPAIR, P521),
-	KEY_DEF(ED25519, 256, ED25519_KEYPAIR),
-	KEY_DEF_RANGE(AES, AES),
-	KEY_DEF(DES, 56, DES),
-	KEY_DEF_RANGE(DES3, DES3),
-	KEY_DEF(SM4, 128, SM4),
-	KEY_DEF_RANGE(HMAC_MD5, HMAC_MD5),
-	KEY_DEF_RANGE(HMAC_SHA1, HMAC_SHA1),
-	KEY_DEF_RANGE(HMAC_SHA224, HMAC_SHA224),
-	KEY_DEF_RANGE(HMAC_SHA256, HMAC_SHA256),
-	KEY_DEF_RANGE(HMAC_SHA384, HMAC_SHA384),
-	KEY_DEF_RANGE(HMAC_SHA512, HMAC_SHA512),
-	KEY_DEF_RANGE(HMAC_SM3, HMAC_SM3),
-	KEY_DEF_RANGE(RSA, RSA_KEYPAIR),
-	KEY_DEF_RANGE(GENERIC_SECRET, GENERIC_SECRET),
-	KEY_DEF_RANGE(HKDF_IKM, HKDF_IKM),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 192, P192),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 224, P224),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 256, P256),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 384, P384),
+	KEY_DEF_ECC_KEYPAIR(SECP_R1, 521, P521),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 192, P192),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 224, P224),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 256, P256),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 384, P384),
+	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 521, P521),
+	KEY_DEF_KEYPAIR(ED25519, 256, ED25519),
+	KEY_DEF_PUBLIC_KEY(ED25519, 256, ED25519),
+	KEY_DEF_RANGE_PRIVATE(AES, AES),
+	KEY_DEF_SYMMETRIC(DES, 56, DES),
+	KEY_DEF_RANGE_PRIVATE(DES3, DES3),
+	KEY_DEF_SYMMETRIC(SM4, 128, SM4),
+	KEY_DEF_RANGE_PRIVATE(HMAC_MD5, HMAC_MD5),
+	KEY_DEF_RANGE_PRIVATE(HMAC_SHA1, HMAC_SHA1),
+	KEY_DEF_RANGE_PRIVATE(HMAC_SHA224, HMAC_SHA224),
+	KEY_DEF_RANGE_PRIVATE(HMAC_SHA256, HMAC_SHA256),
+	KEY_DEF_RANGE_PRIVATE(HMAC_SHA384, HMAC_SHA384),
+	KEY_DEF_RANGE_PRIVATE(HMAC_SHA512, HMAC_SHA512),
+	KEY_DEF_RANGE_PRIVATE(HMAC_SM3, HMAC_SM3),
+	KEY_DEF_RANGE_KEYPAIR(RSA, RSA),
+	KEY_DEF_RANGE_PUBLIC_KEY(RSA, RSA),
+	KEY_DEF_RANGE_SECRET(GENERIC_SECRET, GENERIC_SECRET),
+	KEY_DEF_RANGE_PRIVATE(HKDF_IKM, HKDF_IKM),
 };
 
 static TEE_Result roundup_even_size(size_t *size)
@@ -146,6 +199,7 @@ static TEE_Result key_obj_type_to_ta_type(enum tee_key_type *key_type,
 					  enum tee_key_privacy *key_privacy,
 					  uint32_t obj_type)
 {
+	TEE_Result ret = TEE_ERROR_ITEM_NOT_FOUND;
 	unsigned int i = 0;
 	unsigned int array_size = ARRAY_SIZE(key_def_list);
 
@@ -154,43 +208,17 @@ static TEE_Result key_obj_type_to_ta_type(enum tee_key_type *key_type,
 	if (!key_type || !key_privacy)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	/* If the obj_type is TEE_TYPE_GENERIC_SECRET, bitwise ANDing it with any
-	 * object in the key_def_list array would also result in
-	 * TEE_TYPE_GENERIC_SECRET, leading to the wrong key type being returned.
-	 * To prevent this, update the key type and key privacy if the obj_type is
-	 * TEE_TYPE_GENERIC_SECRET, and then return from the function.
-	 */
-	if (obj_type == TEE_TYPE_GENERIC_SECRET) {
-		*key_type = TEE_KEY_TYPE_ID_GENERIC_SECRET;
-		*key_privacy = TEE_KEY_SHARED_SECRET;
-		return TEE_SUCCESS;
-	}
-
 	for (; i < array_size; i++) {
-		if ((key_def_list[i].obj_type & obj_type) == obj_type) {
+		if (key_def_list[i].obj_type == obj_type) {
 			*key_type = key_def_list[i].key_type;
+			*key_privacy = key_def_list[i].key_privacy;
 
-			/*
-			 * @obj_type is the TEE retrieved object type, then:
-			 *  - If the TEE_TYPE_KEYPAIR is set in @obj_type, it's
-			 *    a key pair object.
-			 *  - Else if TA defined key_def_list[i].obj_type is a
-			 *    key pair object, then TEE @obj_type is a public
-			 *    key object.
-			 * Otherwise, it's a private key (symmetric key).
-			 */
-			if (obj_type & TEE_TYPE_KEYPAIR)
-				*key_privacy = TEE_KEY_PAIR;
-			else if (key_def_list[i].obj_type & TEE_KEY_PAIR)
-				*key_privacy = TEE_KEY_PUBLIC;
-			else
-				*key_privacy = TEE_KEY_PRIVATE;
-
-			return TEE_SUCCESS;
+			ret = TEE_SUCCESS;
+			break;
 		}
 	}
 
-	return TEE_ERROR_ITEM_NOT_FOUND;
+	return ret;
 }
 
 TEE_Result get_key_obj_type(enum tee_key_type key_type, uint32_t *obj_type)
@@ -216,6 +244,7 @@ TEE_Result get_key_obj_type(enum tee_key_type key_type, uint32_t *obj_type)
 TEE_Result get_key_ecc_curve(enum tee_key_type key_type,
 			     unsigned int security_size, uint32_t *ecc_curve)
 {
+	TEE_Result ret = TEE_ERROR_NOT_SUPPORTED;
 	unsigned int i = 0;
 	unsigned int array_size = ARRAY_SIZE(key_def_list);
 
@@ -225,20 +254,18 @@ TEE_Result get_key_ecc_curve(enum tee_key_type key_type,
 		return TEE_ERROR_BAD_PARAMETERS;
 
 	for (; i < array_size; i++) {
-		if (key_def_list[i].key_type < key_type)
+		if (key_def_list[i].key_type != key_type)
 			continue;
-		if (key_def_list[i].key_type > key_type)
-			return TEE_ERROR_NOT_SUPPORTED;
-		if (key_def_list[i].security_size < security_size)
+
+		if (key_def_list[i].security_size != security_size)
 			continue;
-		if (key_def_list[i].security_size > security_size)
-			return TEE_ERROR_NOT_SUPPORTED;
 
 		*ecc_curve = key_def_list[i].ecc_curve;
+		ret = TEE_SUCCESS;
 		break;
 	}
 
-	return TEE_SUCCESS;
+	return ret;
 }
 
 /**

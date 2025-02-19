@@ -170,89 +170,6 @@ static const struct {
 	{ .smw = SMW_ATTR_USAGE_DERIVE, .tee = TEE_KEY_USAGE_DERIVE }
 };
 
-int tee_convert_key_type(enum smw_config_key_type_id key_type_id,
-			 enum smw_config_hash_algo_id hash_algo_id,
-			 enum tee_key_type *key_type)
-{
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-	unsigned int i = 0;
-	unsigned int size = ARRAY_SIZE(key_def_list);
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	for (; i < size; i++) {
-		if (key_def_list[i].key_type_id == key_type_id &&
-		    (key_type_id != SMW_CONFIG_KEY_TYPE_ID_HMAC ||
-		     hash_algo_id == key_def_list[i].hash_algo_id)) {
-			*key_type = key_def_list[i].key_type;
-			status = SMW_STATUS_OK;
-			break;
-		}
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-enum smw_config_key_type_id key_type_tee_to_smw(enum tee_key_type key_type)
-{
-	enum smw_config_key_type_id key_type_id =
-		SMW_CONFIG_KEY_TYPE_ID_INVALID;
-
-	unsigned int i = 0;
-	unsigned int size = ARRAY_SIZE(key_def_list);
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	for (; i < size; i++) {
-		if (key_def_list[i].key_type == key_type) {
-			SMW_DBG_PRINTF(DEBUG, "Key type ID: %d\n", key_type_id);
-			key_type_id = key_def_list[i].key_type_id;
-			break;
-		}
-	}
-
-	return key_type_id;
-}
-
-void key_usage_to_tee(smw_attr_usage_t smw, unsigned int *tee)
-{
-	unsigned int i = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	*tee = 0;
-
-	for (; i < ARRAY_SIZE(key_usage); i++) {
-		if (key_usage[i].smw & smw) {
-			SMW_DBG_PRINTF(DEBUG, "Key usage: 0x%" PRIx32 "\n",
-				       key_usage[i].smw);
-			*tee |= key_usage[i].tee;
-		}
-	}
-
-	SMW_DBG_PRINTF(DEBUG, "TEE key usage: 0x%" PRIx32 "\n", *tee);
-}
-
-void key_usage_to_smw(unsigned int tee, smw_attr_usage_t *smw)
-{
-	unsigned int i = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	*smw = 0;
-
-	for (; i < ARRAY_SIZE(key_usage); i++) {
-		if ((key_usage[i].tee & tee) == key_usage[i].tee) {
-			SMW_DBG_PRINTF(DEBUG, "Key usage: 0x%x\n",
-				       key_usage[i].tee);
-			*smw |= key_usage[i].smw;
-		}
-	}
-
-	SMW_DBG_PRINTF(DEBUG, "SMW key usage: 0x%" PRIx32 "\n", *smw);
-}
-
 static void key_persistence_to_smw(bool persistent_flag,
 				   smw_attr_attributes_t *attributes)
 {
@@ -260,19 +177,6 @@ static void key_persistence_to_smw(bool persistent_flag,
 		*attributes = SMW_ATTR_SET_PERSISTENT(*attributes);
 	else
 		*attributes = SMW_ATTR_SET_TRANSIENT(*attributes);
-}
-
-int check_persistence(smw_attr_attributes_t attributes, bool *persistent_flag)
-{
-	int status = SMW_STATUS_OK;
-	*persistent_flag = false;
-
-	if (SMW_ATTR_IS_PERSISTENT(attributes))
-		*persistent_flag = true;
-	else if (!SMW_ATTR_IS_TRANSIENT(attributes))
-		status = SMW_STATUS_INVALID_PARAM;
-
-	return status;
 }
 
 /**
@@ -307,8 +211,8 @@ static bool check_security_size(const struct key_def *key_def_list,
 
 /**
  * find_check_key_def() - Get and check key definition.
- * @key_type_id: Key type ID.
- * @security_size: Key security size in bits.
+ * @key_identifier: Pointer to the key identifier.
+ * @hash_id: Hash algorithm id.
  *
  * Check if key type and key security size are supported by OPTEE.
  *
@@ -317,67 +221,37 @@ static bool check_security_size(const struct key_def *key_def_list,
  * NULL if not supported.
  */
 static const struct key_def *
-find_check_key_def(enum smw_config_key_type_id key_type_id,
-		   unsigned int security_size,
-		   struct smw_key_attributes *key_attrs)
+find_check_key_def(struct smw_keymgr_identifier *key_identifier,
+		   enum smw_config_hash_algo_id hash_id)
 {
 	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(key_def_list);
-	smw_attr_algo_t hash = SMW_ATTR_HASH_NONE;
+	enum smw_config_key_type_id type_id = 0;
+	unsigned int security_size = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_HMAC) {
-		if (!key_attrs)
-			return NULL;
+	if (!key_identifier)
+		return NULL;
 
-		hash = SMW_ATTR_GET_HASH(key_attrs->permitted_algo);
-	}
+	type_id = key_identifier->type_id;
+	security_size = key_identifier->security_size;
 
 	for (; i < size; i++) {
-		if (key_def_list[i].key_type_id == key_type_id &&
-		    check_security_size(&key_def_list[i], security_size) &&
-		    (key_type_id != SMW_CONFIG_KEY_TYPE_ID_HMAC ||
-		     hash == key_def_list[i].hash))
-			return &key_def_list[i];
+		if (key_def_list[i].key_type_id != type_id)
+			continue;
+
+		if (!check_security_size(&key_def_list[i], security_size))
+			continue;
+
+		if (type_id == SMW_CONFIG_KEY_TYPE_ID_HMAC &&
+		    hash_id != key_def_list[i].hash_algo_id)
+			continue;
+
+		return &key_def_list[i];
 	}
 
 	return NULL;
-}
-
-enum tee_key_type
-find_check_sym_key_def(enum smw_config_key_type_id key_type_id,
-		       unsigned int security_size,
-		       struct smw_key_attributes *key_attrs)
-{
-	unsigned int i = 0;
-	unsigned int size = ARRAY_SIZE(key_def_list);
-	smw_attr_algo_t hash = SMW_ATTR_HASH_NONE;
-	enum tee_key_type key_type = TEE_KEY_TYPE_ID_INVALID;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_HMAC) {
-		if (!key_attrs)
-			return key_type;
-
-		hash = SMW_ATTR_GET_HASH(key_attrs->permitted_algo);
-	}
-
-	for (; i < size; i++) {
-		if (key_def_list[i].symmetric &&
-		    key_def_list[i].key_type_id == key_type_id &&
-		    check_security_size(&key_def_list[i], security_size) &&
-		    (key_type_id != SMW_CONFIG_KEY_TYPE_ID_HMAC ||
-		     hash == key_def_list[i].hash)) {
-			key_type = key_def_list[i].key_type;
-			break;
-		}
-	}
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned key_type = %d\n", __func__,
-		       key_type);
-	return key_type;
 }
 
 /**
@@ -639,31 +513,6 @@ exit:
 	return status;
 }
 
-int tee_delete_key(uint32_t id)
-{
-	int status = SMW_STATUS_INVALID_PARAM;
-	TEEC_Operation op = { 0 };
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (id == INVALID_KEY_ID)
-		goto exit;
-
-	/* params[0] = Key ID */
-	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_NONE, TEEC_NONE,
-					 TEEC_NONE);
-
-	/* Key research is done with Key ID */
-	op.params[0].value.a = id;
-
-	/* Invoke TA */
-	status = execute_tee_cmd(CMD_DELETE_KEY, &op);
-
-exit:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 /**
  * generate_key() - Generate a key.
  * @args: Key generation arguments.
@@ -690,6 +539,8 @@ static int generate_key(void *args)
 	const struct key_def *key = NULL;
 	struct keymgr_shared_params shared_params = { 0 };
 	smw_attr_usage_t actual_usage_flags = 0;
+	enum smw_config_hash_algo_id hash_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
+	smw_attr_algo_t perm_algo = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -699,9 +550,14 @@ static int generate_key(void *args)
 	key_identifier = &key_args->key_descriptor.identifier;
 	key_attrs = key_args->key_attributes;
 
-	/* Get key info and check key type and key security size */
-	key = find_check_key_def(key_identifier->type_id,
-				 key_identifier->security_size, key_attrs);
+	if (key_attrs) {
+		perm_algo = key_attrs->permitted_algo;
+		status = smw_utils_hash_attr_to_algo_id(perm_algo, &hash_id);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+	}
+
+	key = find_check_key_def(key_identifier, hash_id);
 	if (!key) {
 		SMW_DBG_PRINTF(ERROR,
 			       "%s: Key type or key size not supported\n",
@@ -1217,6 +1073,8 @@ static int import_key(void *args)
 	const struct key_def *key = NULL;
 	struct keymgr_shared_params shared_params = { 0 };
 	smw_attr_usage_t actual_usage_flags = SMW_ATTR_USAGE_NONE;
+	enum smw_config_hash_algo_id hash_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
+	smw_attr_algo_t perm_algo = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -1225,10 +1083,14 @@ static int import_key(void *args)
 
 	key_identifier = &key_args->key_descriptor.identifier;
 	key_attrs = key_args->key_attributes;
+	if (key_attrs) {
+		perm_algo = key_attrs->permitted_algo;
+		status = smw_utils_hash_attr_to_algo_id(perm_algo, &hash_id);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+	}
 
-	/* Get key info and check key type and key security size */
-	key = find_check_key_def(key_identifier->type_id,
-				 key_identifier->security_size, key_attrs);
+	key = find_check_key_def(key_identifier, hash_id);
 	if (!key) {
 		SMW_DBG_PRINTF(ERROR,
 			       "%s: Key type or key size not supported\n",
@@ -1799,7 +1661,7 @@ int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = tee_convert_key_type(key->identifier.type_id,
+	status = tee_convert_key_type(&key->identifier,
 				      SMW_CONFIG_HASH_ALGO_ID_INVALID,
 				      &import_shared_params.key_type);
 	if (status != SMW_STATUS_OK)
@@ -1833,6 +1695,122 @@ int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
 	*key_id = import_shared_params.id;
 
 end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+int tee_convert_key_type(struct smw_keymgr_identifier *key_identifier,
+			 enum smw_config_hash_algo_id hash_algo_id,
+			 enum tee_key_type *key_type)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	const struct key_def *key = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key = find_check_key_def(key_identifier, hash_algo_id);
+	if (key) {
+		*key_type = key->key_type;
+		status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+enum smw_config_key_type_id key_type_tee_to_smw(enum tee_key_type key_type)
+{
+	enum smw_config_key_type_id key_type_id =
+		SMW_CONFIG_KEY_TYPE_ID_INVALID;
+
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(key_def_list);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < size; i++) {
+		if (key_def_list[i].key_type == key_type) {
+			SMW_DBG_PRINTF(DEBUG, "Key type ID: %d\n", key_type_id);
+			key_type_id = key_def_list[i].key_type_id;
+			break;
+		}
+	}
+
+	return key_type_id;
+}
+
+void key_usage_to_tee(smw_attr_usage_t smw, unsigned int *tee)
+{
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*tee = 0;
+
+	for (; i < ARRAY_SIZE(key_usage); i++) {
+		if (key_usage[i].smw & smw) {
+			SMW_DBG_PRINTF(DEBUG, "Key usage: 0x%" PRIx32 "\n",
+				       key_usage[i].smw);
+			*tee |= key_usage[i].tee;
+		}
+	}
+
+	SMW_DBG_PRINTF(DEBUG, "TEE key usage: 0x%" PRIx32 "\n", *tee);
+}
+
+void key_usage_to_smw(unsigned int tee, smw_attr_usage_t *smw)
+{
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*smw = 0;
+
+	for (; i < ARRAY_SIZE(key_usage); i++) {
+		if ((key_usage[i].tee & tee) == key_usage[i].tee) {
+			SMW_DBG_PRINTF(DEBUG, "Key usage: 0x%x\n",
+				       key_usage[i].tee);
+			*smw |= key_usage[i].smw;
+		}
+	}
+
+	SMW_DBG_PRINTF(DEBUG, "SMW key usage: 0x%" PRIx32 "\n", *smw);
+}
+
+int check_persistence(smw_attr_attributes_t attributes, bool *persistent_flag)
+{
+	int status = SMW_STATUS_OK;
+	*persistent_flag = false;
+
+	if (SMW_ATTR_IS_PERSISTENT(attributes))
+		*persistent_flag = true;
+	else if (!SMW_ATTR_IS_TRANSIENT(attributes))
+		status = SMW_STATUS_INVALID_PARAM;
+
+	return status;
+}
+
+int tee_delete_key(uint32_t id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	TEEC_Operation op = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (id == INVALID_KEY_ID)
+		goto exit;
+
+	/* params[0] = Key ID */
+	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_NONE, TEEC_NONE,
+					 TEEC_NONE);
+
+	/* Key research is done with Key ID */
+	op.params[0].value.a = id;
+
+	/* Invoke TA */
+	status = execute_tee_cmd(CMD_DELETE_KEY, &op);
+
+exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

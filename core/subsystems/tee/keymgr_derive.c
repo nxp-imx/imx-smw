@@ -282,6 +282,31 @@ exit:
 }
 
 /**
+ * tee_key_derived_type() - Get the TEE key type of expected derived key
+ * @key_identifier: [in] Pointer to the derived key identifier
+ * @permitted_algo: [in] Derived key permitted algorithm
+ * @key_type: [out] TEE key type
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED - Key type not supported
+ */
+static int tee_key_derived_type(struct smw_keymgr_identifier *key_identifier,
+				smw_attr_algo_t permitted_algo,
+				enum tee_key_type *key_type)
+{
+	int status = SMW_STATUS_OK;
+	enum smw_config_hash_algo_id hash_id = SMW_CONFIG_HASH_ALGO_ID_INVALID;
+
+	status = smw_utils_hash_attr_to_algo_id(permitted_algo, &hash_id);
+	if (status == SMW_STATUS_OK)
+		status =
+			tee_convert_key_type(key_identifier, hash_id, key_type);
+
+	return status;
+}
+
+/**
  * hkdf_derive_key() - Derive a key from base key using HKDF algo.
  * @args: Key derive arguments.
  *
@@ -422,18 +447,12 @@ static int hkdf_derive_key(void *args)
 	}
 
 	if (shared_params.store_derived_key) {
-		/* Get TEE key type and check key type and key security size */
-		shared_params.key_type =
-			find_check_sym_key_def(key_id_derived->type_id,
-					       key_id_derived->security_size,
-					       key_attrs);
-		if (shared_params.key_type == TEE_KEY_TYPE_ID_INVALID) {
-			SMW_DBG_PRINTF(ERROR,
-				       "%s: Unsupported Key type or size.\n",
-				       __func__);
-			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		/* Get TEE key type of derived key */
+		status = tee_key_derived_type(key_id_derived,
+					      key_attrs->permitted_algo,
+					      &shared_params.key_type);
+		if (status != SMW_STATUS_OK)
 			goto exit;
-		}
 	}
 
 	size = shared_params.salt_length + shared_params.info_length;
@@ -671,18 +690,12 @@ static int ecdh_derive_key(void *args)
 	}
 
 	if (shared_params.store_derived_key) {
-		/* Get TEE key type and check key type and key security size */
-		shared_params.key_type =
-			find_check_sym_key_def(key_id_derived->type_id,
-					       key_id_derived->security_size,
-					       key_attrs);
-		if (shared_params.key_type == TEE_KEY_TYPE_ID_INVALID) {
-			SMW_DBG_PRINTF(ERROR,
-				       "%s: Unsupported Key type or size.\n",
-				       __func__);
-			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		/* Get TEE key type of derived key */
+		status = tee_key_derived_type(key_id_derived,
+					      key_attrs->permitted_algo,
+					      &shared_params.key_type);
+		if (status != SMW_STATUS_OK)
 			goto exit;
-		}
 	}
 
 	/* Invoke TA */

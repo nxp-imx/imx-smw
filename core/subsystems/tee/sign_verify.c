@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include <tee_client_api.h>
@@ -99,7 +99,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	key_descriptor = &args->key_descriptor;
 	key_identifier = &key_descriptor->identifier;
 
-	status = tee_convert_key_type(key_identifier->type_id,
+	status = tee_convert_key_type(key_identifier,
 				      SMW_CONFIG_HASH_ALGO_ID_INVALID,
 				      &key_type_id);
 	if (status != SMW_STATUS_OK)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <tee_client_api.h>
@@ -69,9 +69,8 @@ static int mac(void *args)
 	key_descriptor = &mac_args->key_descriptor;
 	key_identifier = &key_descriptor->identifier;
 
-	status =
-		tee_convert_key_type(key_identifier->type_id, mac_args->hash_id,
-				     &shared_params.tee_key_type);
+	status = tee_convert_key_type(key_identifier, mac_args->hash_id,
+				      &shared_params.tee_key_type);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 

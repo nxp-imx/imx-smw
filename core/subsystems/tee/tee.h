@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #ifndef TEE_H
@@ -56,15 +56,15 @@ struct hash_context {
 
 /**
  * tee_convert_key_type() - Convert SMW key type to TEE key type.
- * @key_type_id: SMW key type.
- * @hash_algo_id: SMW hash algo ID.
+ * @key_identifier: Pointer to the key identifier.
+ * @hash_algo_id: SMW hash algorithm ID.
  * @key_type: TEE key type. Not updated if conversion can't be done.
  *
  * Return:
  * SMW_STATUS_OK			- Success.
  * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Invalid key type.
  */
-int tee_convert_key_type(enum smw_config_key_type_id key_type_id,
+int tee_convert_key_type(struct smw_keymgr_identifier *key_identifier,
 			 enum smw_config_hash_algo_id hash_algo_id,
 			 enum tee_key_type *key_type);
 
@@ -324,22 +324,5 @@ int check_persistence(smw_attr_attributes_t attributes, bool *persistent_flag);
 int set_tmpref_buffer(unsigned int mem_type, unsigned int param_idx,
 		      unsigned char *buffer, unsigned int buffer_len,
 		      TEEC_Operation *op);
-
-/**
- * find_check_sym_key_def() - Get and check TEE Key type.
- * @key_type_id: Key type ID.
- * @security_size: Key security size in bits.
- * @key_attrs: Pointer to Key attributes.
- *
- * Check if key type and key security size are supported by TEE and return the
- * TEE Key type ID.
- *
- * Return:
- * TEE Key type ID.
- */
-enum tee_key_type
-find_check_sym_key_def(enum smw_config_key_type_id key_type_id,
-		       unsigned int security_size,
-		       struct smw_key_attributes *key_attrs);
 
 #endif /* TEE_H */

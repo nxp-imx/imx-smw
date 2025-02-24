@@ -242,6 +242,10 @@ struct smw_derive_key_args {
  *  - @security_size: Size in bits of the derived key
  *  - @shared_secret: Shared secret buffer
  *  - @shared_secret_len: Shared secret buffer length
+ *
+ * **WARNING**
+ *	This structure is deprecated and will be removed in a future library
+ *	release. Please use the new @smw_kdf_tls12_op_args API instead.
  */
 struct smw_kdf_tls12_args {
 	// Input parameters
@@ -261,6 +265,135 @@ struct smw_kdf_tls12_args {
 	unsigned int client_w_iv_length;
 	unsigned char *server_w_iv;
 	unsigned int server_w_iv_length;
+};
+
+/**
+ * struct smw_kdf_tls12_random_data - TLS 1.2 random data
+ * @version: [in] Version of this structure
+ * @client_random: [in] Client generated random data buffer
+ * @client_random_length: [in] @client_random length in bytes
+ * @server_random: [in] Server generated random data buffer
+ * @server_random_length: [in] @server_random length in bytes
+ */
+struct smw_kdf_tls12_random_data {
+	unsigned char version;
+	unsigned char *client_random;
+	unsigned int client_random_length;
+	unsigned char *server_random;
+	unsigned int server_random_length;
+};
+
+/**
+ * struct smw_kdf_tls12_session_hash - TLS 1.2 session hash
+ * @version: [in] Version of this structure
+ * @hash: [in] Hash of the session data
+ * @hash_length: [in] @hash length in bytes
+ */
+struct smw_kdf_tls12_session_hash {
+	unsigned char version;
+	unsigned char *hash;
+	unsigned int hash_length;
+};
+
+/**
+ * struct smw_kdf_tls12_master_secret_args - TLS 1.2 master secret arguments
+ * @version: [in] Version of this structure
+ * @key_exchange_name: [in] Name of the key exchange algorithm
+ *                     See &typedef smw_tls12_kea_t
+ * @ext_master_key: [in] If true, generates an extended master secret key
+ * @peer_public_buffer: [in] Peer public key used for ECDH(E)
+ * @peer_public_buffer_length: [in] @peer_public_buffer length in bytes
+ * @random_data: [in] The session random data, to be used when @ext_master_key is false
+ * @session_hash: [in] The session hash, to be used when @ext_master_key is true
+ *
+ * This structure defines the additional arguments needed for the TLS 1.2
+ * Master Secret. (&smw_derive_key_args->kdf_name = `TLS12_OP_KEY_EXCHANGE`).
+ *
+ * When @ext_master_key is true (Extended Master Secret - TLS1.2 extension, RFC 7627),
+ * the @session_hash should be set appropriately. Otherwise, @random_data should be
+ * filled in.
+ */
+struct smw_kdf_tls12_master_secret_args {
+	unsigned char version;
+	smw_tls12_kea_t key_exchange_name;
+	bool ext_master_key;
+	unsigned char *peer_public_buffer;
+	unsigned int peer_public_buffer_length;
+	union {
+		struct smw_kdf_tls12_random_data *random_data;
+		struct smw_kdf_tls12_session_hash *session_hash;
+	};
+};
+
+/**
+ * struct smw_kdf_tls12_key_expansion_args - TLS 1.2 key expansion arguments
+ * @version: [in] Version of this structure
+ * @encryption_name: [in] Name of the encryption algorithm
+ *                   See &typedef smw_tls12_enc_t
+ * @random_data: [in] The session random data
+ * @client_w_enc_key_id: [out] Generated client write encryption key identifier
+ * @server_w_enc_key_id: [out] Generated server write encryption key identifier
+ * @client_w_mac_key_id: [out] Generated client write MAC key identifier (see note 1)
+ * @server_w_mac_key_id: [out] Generated server write MAC key identifier (see note 1)
+ * @client_w_iv: [in/out] Pointer to the Client IV buffer (see note 2)
+ * @client_w_iv_length: [in/out] @client_w_iv length in bytes (see note 2)
+ * @server_w_iv: [in/out] Pointer to the Server IV buffer (see note 2)
+ * @server_w_iv_length: [in/out] @server_w_iv length in bytes (see note 2)
+ *
+ * This structure defines the additional arguments needed for the TLS 1.2
+ * Key Expansion (&smw_derive_key_args->kdf_name = `TLS12_OP_KEY_EXCHANGE`).
+ *
+ * Note 1: Client/Server write MAC key are not generated with AEAD cipher
+ *         encryption (CCM, GCM, CHACHA20_POLY1305).
+ * Note 2: Client/Server write IVs are generated only in case of AEAD
+ *         cipher modes (CCM, GCM, CHACHA20_POLY1305).
+ */
+struct smw_kdf_tls12_key_expansion_args {
+	/* Inputs */
+	unsigned char version;
+	smw_tls12_enc_t encryption_name;
+	struct smw_kdf_tls12_random_data *random_data;
+	/* Outputs */
+	unsigned int client_w_enc_key_id;
+	unsigned int server_w_enc_key_id;
+	unsigned int client_w_mac_key_id;
+	unsigned int server_w_mac_key_id;
+	unsigned char *client_w_iv;
+	unsigned int client_w_iv_length;
+	unsigned char *server_w_iv;
+	unsigned int server_w_iv_length;
+};
+
+/**
+ * struct smw_kdf_tls12_op_args - TLS 1.2 "operation-based" arguments
+ * @version: [in] Version of this structure
+ * @prf_name: [in] Name of the Pseudo-Random Function (PRF)
+ *            See &typedef smw_hash_algo_t
+ * @op_name: [in] Name of the operation to execute
+ *            See &typedef smw_tls12_op_t
+ * @context: [in] Pointer to an opaque operation context structure
+ *           See &struct smw_op_context
+ * @master_secret: [in] The TLS1.2 Master Secret parameters
+ * @key_expansion: [in] The TLS1.2 Key Expansion parameters
+ *
+ * The @context passed through this structure must be a valid context which
+ * is the result of the @smw_allocate_context function. Subsystems may allocate
+ * data internally and associate it with the context. The same context needs to
+ * be passed to the master secret and key expansion operations.
+ *
+ * Upon completion of the operations (with either success or error), the context
+ * is not released and remains valid. Calling @smw_cancel_operation will release
+ * it and any associated data.
+ */
+struct smw_kdf_tls12_op_args {
+	unsigned char version;
+	smw_hash_algo_t prf_name;
+	smw_tls12_op_t op_name;
+	struct smw_op_context *context;
+	union {
+		struct smw_kdf_tls12_master_secret_args master_secret;
+		struct smw_kdf_tls12_key_expansion_args key_expansion;
+	};
 };
 
 /**

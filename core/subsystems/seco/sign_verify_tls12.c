@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <internal/hsm_tls_finish.h>
@@ -79,7 +79,7 @@ set_tls_finish_algo_id(enum smw_config_hash_algo_id hash_algo_id,
 	return status;
 }
 
-int tls_mac_finish(struct hdl *hdl, void *args)
+int seco_tls_mac_finish(struct hdl *hdl, void *args)
 {
 	int status = SMW_STATUS_OK;
 	int tmp_status = SMW_STATUS_OK;

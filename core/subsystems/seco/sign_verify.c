@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include "smw_status.h"
@@ -95,7 +95,7 @@ static uint16_t get_signature_size(unsigned int security_size)
 	return (BITS_TO_BYTES_SIZE(security_size) * 2 + 1) & UINT16_MAX;
 }
 
-__weak int tls_mac_finish(struct hdl *hdl, void *args)
+__weak int seco_tls_mac_finish(struct hdl *hdl, void *args)
 {
 	(void)hdl;
 	(void)args;
@@ -132,7 +132,7 @@ static int sign(struct hdl *hdl, void *args)
 
 	/* TLS finish case */
 	if (sign_args->attributes.algo_id == SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2) {
-		status = tls_mac_finish(hdl, args);
+		status = seco_tls_mac_finish(hdl, args);
 		goto end;
 	}
 

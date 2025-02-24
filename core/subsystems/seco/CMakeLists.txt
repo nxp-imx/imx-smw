@@ -32,8 +32,8 @@ target_sources(seco PRIVATE
                $<$<BOOL:${ENABLE_SIGN_VERIFY}>:sign_verify.c>
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
                $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
-               $<$<AND:$<BOOL:${ENABLE_TLS12}>,$<BOOL:${ENABLE_KEYMGR_MODULE}>>:keymgr_derive_tls12.c>
-               $<$<AND:$<BOOL:${ENABLE_TLS12}>,$<BOOL:${ENABLE_SIGN_VERIFY}>>:sign_verify_tls12.c>
+               $<$<BOOL:${ENABLE_TLS12}>:keymgr_derive_tls12.c>
+               $<$<BOOL:${ENABLE_TLS12}>:sign_verify_tls12.c>
                $<$<BOOL:${ENABLE_STORAGE_MODULE}>:storage.c>)
 
 target_include_directories(seco PRIVATE ${INCLUDE_DIR}

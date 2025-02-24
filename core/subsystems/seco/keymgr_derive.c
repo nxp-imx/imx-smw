@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -22,6 +22,15 @@ __weak int seco_derive_tls12(struct subsystem_context *seco_ctx,
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
+__weak int seco_derive_tls12_op(struct subsystem_context *seco_ctx,
+				struct smw_keymgr_derive_key_args *args)
+{
+	(void)seco_ctx;
+	(void)args;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
 int seco_derive_key(struct subsystem_context *seco_ctx,
 		    struct smw_keymgr_derive_key_args *args)
 {
@@ -34,6 +43,10 @@ int seco_derive_key(struct subsystem_context *seco_ctx,
 	switch (args->kdf_id) {
 	case SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE:
 		status = seco_derive_tls12(seco_ctx, args);
+		break;
+
+	case SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE:
+		status = seco_derive_tls12_op(seco_ctx, args);
 		break;
 
 	default:

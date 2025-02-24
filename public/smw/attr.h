@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #ifndef __SMW_ATTR_H__
@@ -836,7 +836,7 @@ typedef uint32_t smw_attr_storage_id_t;
  */
 #define SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_TLS_1_2_CLIENT(hash)                \
 	(SMW_ATTR_NAME(CLASS, ASYMMETRIC_SIGNATURE) |                          \
-	 SMW_ATTR_NAME(ALGO, TLS_1_2) | SMW_ATTR_NAME(MODE, TLS_1_2_CLIENT) |  \
+	 SMW_ATTR_NAME(ALGO, TLS_1_2) | SMW_ATTR_NAME(MODE, CLIENT) |          \
 	 SMW_ATTR_VALUE(HASH, hash))
 
 /**
@@ -852,7 +852,7 @@ typedef uint32_t smw_attr_storage_id_t;
  */
 #define SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_TLS_1_2_SERVER(hash)                \
 	(SMW_ATTR_NAME(CLASS, ASYMMETRIC_SIGNATURE) |                          \
-	 SMW_ATTR_NAME(ALGO, TLS_1_2) | SMW_ATTR_NAME(MODE, TLS_1_2_SERVER) |  \
+	 SMW_ATTR_NAME(ALGO, TLS_1_2) | SMW_ATTR_NAME(MODE, SERVER) |          \
 	 SMW_ATTR_VALUE(HASH, hash))
 
 /**
@@ -953,14 +953,16 @@ typedef uint32_t smw_attr_storage_id_t;
 
 /**
  * SMW_ATTR_ALGO_KEY_DERIVATION_TLS12() - Build the TLS 1.2 derivation algorithm.
+ * @hash: A valid hash algorithm. See smw_attr_algo_t.
  *
  * This macro builds the TLS 1.2 key derivation algorithm.
  *
  * Return:
  * TLS 1.2 key derivation algorithm.
  */
-#define SMW_ATTR_ALGO_KEY_DERIVATION_TLS12()                                   \
-	(SMW_ATTR_NAME(CLASS, KEY_DERIVATION) | SMW_ATTR_NAME(ALGO, TLS_1_2))
+#define SMW_ATTR_ALGO_KEY_DERIVATION_TLS12(hash)                               \
+	(SMW_ATTR_NAME(CLASS, KEY_DERIVATION) | SMW_ATTR_NAME(ALGO, TLS_1_2) | \
+	 SMW_ATTR_VALUE(HASH, hash))
 
 /**
  * SMW_ATTR_ALGO_KEY_ATTESTATION_MAC() - Build a MAC key attestation algorithm.

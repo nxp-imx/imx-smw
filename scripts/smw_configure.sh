@@ -52,10 +52,13 @@ shift 3
 optee_plat=
 opt_seco=0
 opt_ele=0
+opt_tls=0
+
 case ${platform} in
   imx91evk)
     optee_plat="imx-mx91evk"
     opt_ele=1
+    opt_tls=1
     ;;
 
   imx95evk)
@@ -66,6 +69,7 @@ case ${platform} in
   imx93evk)
     optee_plat="imx-mx93evk"
     opt_ele=1
+    opt_tls=1
     ;;
 
   imx8qxpc0mek)
@@ -171,6 +175,10 @@ if [[ ${opt_ele} -eq 1 ]]; then
     conf_opts="${conf_opts} ele=${ele_export}"
 fi
 
+# Enable TLS features if supported
+if [[ ${opt_tls} -eq 1 ]]; then
+    conf_opts="${conf_opts} tls12"
+fi
 
 # Enable optee
 conf_opts="${conf_opts} libuuid_config=${export}/usr teec=${export} tadevkit=${ta_export}"

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2019-2024 NXP
+ * Copyright 2019-2025 NXP
  */
 
 #ifndef __UTILS_H__
@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <byteswap.h>
 
 #include "builtin_macros.h"
 
@@ -31,6 +32,10 @@
 #define SMW_UTILS_STRNCMP strncmp
 #define SMW_UTILS_STRTOK  strtok
 #define SMW_UTILS_STRTOL  strtol
+
+#define SMW_UTILS_BSWAP_16 bswap_16
+#define SMW_UTILS_BSWAP_32 bswap_32
+#define SMW_UTILS_BSWAP_64 bswap_64
 
 #define SMW_UTILS_CRITICAL_SECTION_START                                       \
 	do {                                                                   \

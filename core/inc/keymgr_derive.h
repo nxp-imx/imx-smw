@@ -45,6 +45,9 @@ enum smw_tls12_encryption_id {
 	SMW_TLS12_ENCRYPTION_ID_AES_256_CBC,
 	SMW_TLS12_ENCRYPTION_ID_AES_256_GCM,
 	SMW_TLS12_ENCRYPTION_ID_RC4_128,
+	SMW_TLS12_ENCRYPTION_ID_AES_128_CCM,
+	SMW_TLS12_ENCRYPTION_ID_AES_256_CCM,
+	SMW_TLS12_ENCRYPTION_ID_CHACHA20_POLY1305,
 	SMW_TLS12_ENCRYPTION_ID_NB,
 	SMW_TLS12_ENCRYPTION_ID_INVALID
 };
@@ -109,7 +112,11 @@ struct smw_keymgr_tls12_args {
 	enum smw_tls12_encryption_id encryption_id;
 	enum smw_config_hash_algo_id prf_id;
 	bool ephemeral_key;
-	struct smw_kdf_tls12_args *pub_args;
+	bool is_operation;
+	union {
+		struct smw_kdf_tls12_args *pub_args;
+		struct smw_kdf_tls12_op_args *pub_op_args;
+	};
 };
 
 struct smw_keymgr_hkdf_args {
@@ -128,13 +135,8 @@ struct smw_keymgr_ecdh_args {
  * Return:
  * Client write IV buffer reference
  */
-static inline unsigned char *
-smw_keymgr_tls12_get_client_w_iv(struct smw_keymgr_tls12_args *args)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	return args->pub_args->client_w_iv;
-}
+unsigned char *
+smw_keymgr_tls12_get_client_w_iv(struct smw_keymgr_tls12_args *args);
 
 /**
  * smw_keymgr_tls12_get_client_w_iv_length() - Return the length of Client
@@ -144,13 +146,8 @@ smw_keymgr_tls12_get_client_w_iv(struct smw_keymgr_tls12_args *args)
  * Return:
  * Length in bytes of Client write IV
  */
-static inline unsigned int
-smw_keymgr_tls12_get_client_w_iv_length(struct smw_keymgr_tls12_args *args)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	return args->pub_args->client_w_iv_length;
-}
+unsigned int
+smw_keymgr_tls12_get_client_w_iv_length(struct smw_keymgr_tls12_args *args);
 
 /**
  * smw_keymgr_tls12_set_client_w_iv_length() - Set the length of Client
@@ -159,15 +156,8 @@ smw_keymgr_tls12_get_client_w_iv_length(struct smw_keymgr_tls12_args *args)
  * @length: Length to set
  *
  */
-static inline void
-smw_keymgr_tls12_set_client_w_iv_length(struct smw_keymgr_tls12_args *args,
-					unsigned int length)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	args->pub_args->client_w_iv_length = length;
-}
-
+void smw_keymgr_tls12_set_client_w_iv_length(struct smw_keymgr_tls12_args *args,
+					     unsigned int length);
 /**
  * smw_keymgr_tls12_get_server_w_iv() - Return the Server write IV buffer
  * @args: TLS 1.2 internal arguments
@@ -175,13 +165,8 @@ smw_keymgr_tls12_set_client_w_iv_length(struct smw_keymgr_tls12_args *args,
  * Return:
  * Server write IV buffer reference
  */
-static inline unsigned char *
-smw_keymgr_tls12_get_server_w_iv(struct smw_keymgr_tls12_args *args)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	return args->pub_args->server_w_iv;
-}
+unsigned char *
+smw_keymgr_tls12_get_server_w_iv(struct smw_keymgr_tls12_args *args);
 
 /**
  * smw_keymgr_tls12_get_server_w_iv_length() - Return the length of Server
@@ -191,13 +176,8 @@ smw_keymgr_tls12_get_server_w_iv(struct smw_keymgr_tls12_args *args)
  * Return:
  * Length in bytes of Server write IV
  */
-static inline unsigned int
-smw_keymgr_tls12_get_server_w_iv_length(struct smw_keymgr_tls12_args *args)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	return args->pub_args->server_w_iv_length;
-}
+unsigned int
+smw_keymgr_tls12_get_server_w_iv_length(struct smw_keymgr_tls12_args *args);
 
 /**
  * smw_keymgr_tls12_set_server_w_iv_length() - Set the length of server
@@ -206,14 +186,8 @@ smw_keymgr_tls12_get_server_w_iv_length(struct smw_keymgr_tls12_args *args)
  * @length: Length to set
  *
  */
-static inline void
-smw_keymgr_tls12_set_server_w_iv_length(struct smw_keymgr_tls12_args *args,
-					unsigned int length)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	args->pub_args->server_w_iv_length = length;
-}
+void smw_keymgr_tls12_set_server_w_iv_length(struct smw_keymgr_tls12_args *args,
+					     unsigned int length);
 
 /**
  * smw_keymgr_tls12_get_kdf_input_length() - Return the length of KDF input
@@ -222,13 +196,8 @@ smw_keymgr_tls12_set_server_w_iv_length(struct smw_keymgr_tls12_args *args,
  * Return:
  * Length in bytes of KDF input
  */
-static inline unsigned int
-smw_keymgr_tls12_get_kdf_input_length(struct smw_keymgr_tls12_args *args)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	return args->pub_args->kdf_input_length;
-}
+unsigned int
+smw_keymgr_tls12_get_kdf_input_length(struct smw_keymgr_tls12_args *args);
 
 /**
  * smw_keymgr_tls12_get_kdf_input() - Return the KDF input buffer
@@ -237,13 +206,8 @@ smw_keymgr_tls12_get_kdf_input_length(struct smw_keymgr_tls12_args *args)
  * Return:
  * KDF input buffer reference
  */
-static inline unsigned char *
-smw_keymgr_tls12_get_kdf_input(struct smw_keymgr_tls12_args *args)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	return args->pub_args->kdf_input;
-}
+unsigned char *
+smw_keymgr_tls12_get_kdf_input(struct smw_keymgr_tls12_args *args);
 
 /**
  * smw_keymgr_tls12_get_ext_master_key() - Return if extended master key
@@ -253,75 +217,55 @@ smw_keymgr_tls12_get_kdf_input(struct smw_keymgr_tls12_args *args)
  * True, if extended master key
  * False, otherwise
  */
-static inline bool
-smw_keymgr_tls12_get_ext_master_key(struct smw_keymgr_tls12_args *args)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	return args->pub_args->ext_master_key;
-}
+bool smw_keymgr_tls12_get_ext_master_key(struct smw_keymgr_tls12_args *args);
 
 /**
- * smw_keymgr_tls12_set_client_w_mac_key_id() - Set the Client write MAC key id
+ * smw_keymgr_tls12_set_client_mac_key_id() - Set the Client write MAC key id
  * @args: TLS 1.2 internal arguments
  * @id: Key id to set
  *
  */
-static inline void
-smw_keymgr_tls12_set_client_w_mac_key_id(struct smw_keymgr_tls12_args *args,
-					 unsigned int id)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	args->pub_args->client_w_mac_key_id = id;
-}
+void smw_keymgr_tls12_set_client_mac_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id);
 
 /**
- * smw_keymgr_tls12_set_server_w_mac_key_id() - Set the Server write MAC key id
+ * smw_keymgr_tls12_set_server_mac_key_id() - Set the Server write MAC key id
  * @args: TLS 1.2 internal arguments
  * @id: Key id to set
  *
  */
-static inline void
-smw_keymgr_tls12_set_server_w_mac_key_id(struct smw_keymgr_tls12_args *args,
-					 unsigned int id)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	args->pub_args->server_w_mac_key_id = id;
-}
+void smw_keymgr_tls12_set_server_mac_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id);
 
 /**
- * smw_keymgr_tls12_set_client_w_enc_key_id() - Set the Client write encryption
+ * smw_keymgr_tls12_set_client_enc_key_id() - Set the Client write encryption
  *                                              key id
  * @args: TLS 1.2 internal arguments
  * @id: Key id to set
  *
  */
-static inline void
-smw_keymgr_tls12_set_client_w_enc_key_id(struct smw_keymgr_tls12_args *args,
-					 unsigned int id)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
-
-	args->pub_args->client_w_enc_key_id = id;
-}
+void smw_keymgr_tls12_set_client_enc_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id);
 
 /**
- * smw_keymgr_tls12_set_server_w_enc_key_id() - Set the Server write encryption
+ * smw_keymgr_tls12_set_server_enc_key_id() - Set the Server write encryption
  *                                              key id
  * @args: TLS 1.2 internal arguments
  * @id: Key id to set
  *
  */
-static inline void
-smw_keymgr_tls12_set_server_w_enc_key_id(struct smw_keymgr_tls12_args *args,
-					 unsigned int id)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
+void smw_keymgr_tls12_set_server_enc_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id);
 
-	args->pub_args->server_w_enc_key_id = id;
-}
+/**
+ * smw_keymgr_tls12_get_master_sec_key_id() - Return the Master Secret key id
+ * @args: TLS 1.2 internal arguments
+ *
+ * Return:
+ * Master Secret key id
+ */
+unsigned int
+smw_keymgr_tls12_get_master_sec_key_id(struct smw_keymgr_tls12_args *args);
 
 /**
  * smw_keymgr_tls12_set_master_sec_key_id() - Set the Master secret key id
@@ -329,14 +273,68 @@ smw_keymgr_tls12_set_server_w_enc_key_id(struct smw_keymgr_tls12_args *args,
  * @id: Key id to set
  *
  */
-static inline void
-smw_keymgr_tls12_set_master_sec_key_id(struct smw_keymgr_tls12_args *args,
-				       unsigned int id)
-{
-	SMW_DBG_ASSERT(args && args->pub_args);
+void smw_keymgr_tls12_set_master_sec_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id);
 
-	args->pub_args->master_sec_key_id = id;
-}
+/**
+ * smw_keymgr_tls12_get_session_hash() - Return the session hash buffer
+ * @args: TLS 1.2 internal arguments
+ *
+ * Return:
+ * Session hash buffer reference
+ */
+unsigned char *
+smw_keymgr_tls12_get_session_hash(struct smw_keymgr_tls12_args *args);
+
+/**
+ * smw_keymgr_tls12_get_session_hash_length() - Return the length of session hash
+ * @args: TLS 1.2 internal arguments
+ *
+ * Return:
+ * Length in bytes of session hash
+ */
+unsigned int
+smw_keymgr_tls12_get_session_hash_length(struct smw_keymgr_tls12_args *args);
+
+/**
+ * smw_keymgr_tls12_get_client_random() - Return the client random buffer
+ * @args: TLS 1.2 internal arguments
+ *
+ * Return:
+ * Client random buffer reference
+ */
+unsigned char *
+smw_keymgr_tls12_get_client_random(struct smw_keymgr_tls12_args *args);
+
+/**
+ * smw_keymgr_tls12_get_client_random_length() - Return the length of client random
+ * @args: TLS 1.2 internal arguments
+ *
+ * Return:
+ * Length in bytes of client random
+ */
+unsigned int
+smw_keymgr_tls12_get_client_random_length(struct smw_keymgr_tls12_args *args);
+
+/**
+ * smw_keymgr_tls12_get_server_random() - Return the server random buffer
+ * @args: TLS 1.2 internal arguments
+ *
+ * Return:
+ * Server random buffer reference
+ */
+unsigned char *
+smw_keymgr_tls12_get_server_random(struct smw_keymgr_tls12_args *args);
+
+/**
+ * smw_keymgr_tls12_get_client_random_length() - Return the length of server random
+ * @args: TLS 1.2 internal arguments
+ *
+ * Return:
+ * Length in bytes of server random
+ */
+unsigned int
+smw_keymgr_tls12_get_server_random_length(struct smw_keymgr_tls12_args *args);
 
 /**
  * smw_keymgr_tls12_is_encryption_aead() - Return if the Cipher mode is AEAD

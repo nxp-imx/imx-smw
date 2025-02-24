@@ -30,6 +30,13 @@
 #define SMW_TLS12_ENCRYPTION_ID_OFFSET                                         \
 	(SMW_TLS12_ENC_NAME_3DES_EDE_CBC - SMW_TLS12_ENCRYPTION_ID_3DES_EDE_CBC)
 
+#define MASTER_SECRET_STR     ((unsigned char *)"master secret")
+#define MASTER_SECRET_LEN     (13)
+#define KEY_EXPANSION_STR     ((unsigned char *)"key expansion")
+#define KEY_EXPANSION_LEN     (13)
+#define EXT_MASTER_SECRET_STR ((unsigned char *)"extended master secret")
+#define EXT_MASTER_SECRET_LEN (22)
+
 /**
  * tls12_get_key_exchange_id() - Get ID of TLS 1.2 key exchange name
  * @name: Key exchange name
@@ -141,6 +148,10 @@ static int tls12_validate_key_base(struct smw_keymgr_derive_key_args *args)
 	 * value.
 	 */
 	switch (args->key_base.identifier.type_id) {
+	case SMW_CONFIG_KEY_TYPE_ID_DERIVE:
+	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER:
+		break;
+
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		if (tls_args->key_exchange_id !=
 		    SMW_TLS12_KEY_EXCHANGE_ID_RSA) {
@@ -235,6 +246,26 @@ static int tls12_get_encryption_id(smw_tls12_enc_t name,
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
 	return status;
+}
+
+/**
+ * tls12_is_encryption_ccm() - Return if the cipher encryption is CCM
+ * @id: Cipher encryption mode
+ *
+ * Function returns if the TLS cipher encryption mode is an Authentication
+ * Encryption with Additional Data (AEAD) CCM.
+ *
+ * Return:
+ * True if AEAD CCM cipher mode,
+ * False otherwise
+ */
+static bool tls12_is_encryption_ccm(enum smw_tls12_encryption_id id)
+{
+	if (id == SMW_TLS12_ENCRYPTION_ID_AES_128_CCM ||
+	    id == SMW_TLS12_ENCRYPTION_ID_AES_256_CCM)
+		return true;
+
+	return false;
 }
 
 /**
@@ -535,7 +566,7 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 
 	tls_args = conv_args->kdf_args;
 
-	if (tls_args->ephemeral_key) {
+	if (!tls_args->is_operation && tls_args->ephemeral_key) {
 		if (!key_out->shared_secret) {
 			status = SMW_STATUS_NO_KEY_BUFFER;
 			goto end;
@@ -551,13 +582,10 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 		/* Input base key defines the key type and size */
 		key_out->type_name = key_base->type_name;
 		key_out->security_size = key_base->security_size;
-
-		key_desc = &conv_args->key_derived;
-
-		status = smw_keymgr_convert_derived_key_desc(key_out, key_desc);
-	} else {
-		status = SMW_STATUS_OK;
 	}
+
+	key_desc = &conv_args->key_derived;
+	status = smw_keymgr_convert_derived_key_desc(key_out, key_desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -678,6 +706,7 @@ static int convert_output_args(struct smw_derive_key_args *args,
 	 */
 	switch (conv_args->kdf_id) {
 	case SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE:
+	case SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE:
 		status = tls12_convert_output(args, conv_args);
 		break;
 
@@ -746,7 +775,9 @@ static int create_key_in_db(unsigned int *new_id,
 	    derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXPAND) {
 		if (!is_hkdf_extract_step(derive_key_args->kdf_args))
 			status = smw_keymgr_db_create(new_id, identifier);
-	} else if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_ECDH) {
+	} else if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_ECDH ||
+		   derive_key_args->kdf_id ==
+			   SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE) {
 		status = smw_keymgr_db_create(new_id, identifier);
 	}
 
@@ -840,7 +871,10 @@ end:
 
 bool smw_keymgr_tls12_is_encryption_aead(enum smw_tls12_encryption_id id)
 {
-	if (tls12_is_encryption_gcm(id))
+	if (tls12_is_encryption_ccm(id) || tls12_is_encryption_gcm(id))
+		return true;
+
+	if (id == SMW_TLS12_ENCRYPTION_ID_CHACHA20_POLY1305)
 		return true;
 
 	return false;
@@ -1171,6 +1205,397 @@ smw_keymgr_ecdh_get_peer_pub_buffer(struct smw_keymgr_derive_key_args *args)
 }
 
 /**
+ * smw_keymgr_tls12_get_peer_pub_buffer() - Get peer public key buffer address
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Address of peer public key buffer
+ */
+static unsigned char *
+smw_keymgr_tls12_get_peer_pub_buffer(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls12_args *tls_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	tls_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(tls_args && tls_args->pub_op_args);
+
+	return tls_args->pub_op_args->master_secret.peer_public_buffer;
+}
+
+/**
+ * smw_keymgr_tls12_get_peer_pub_buffer_len() - Get peer public key buffer length
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Length of peer public key buffer
+ */
+static unsigned int
+smw_keymgr_tls12_get_peer_pub_len(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls12_args *tls_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	tls_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(tls_args && tls_args->pub_op_args);
+
+	return tls_args->pub_op_args->master_secret.peer_public_buffer_length;
+}
+
+/**
+ * smw_keymgr_tls12_get_label_len() - Get TLS1.2 label buffer length
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Length of TLS1.2 label buffer length
+ */
+unsigned int
+smw_keymgr_tls12_get_label_len(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls12_args *tls12_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	tls12_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(tls12_args->pub_op_args);
+
+	switch (tls12_args->pub_op_args->op_name) {
+	case SMW_TLS12_OP_NAME_MASTER_SECRET:
+		if (tls12_args->pub_op_args->master_secret.ext_master_key)
+			return EXT_MASTER_SECRET_LEN;
+		else
+			return MASTER_SECRET_LEN;
+
+	case SMW_TLS12_OP_NAME_KEY_EXPANSION:
+		return KEY_EXPANSION_LEN;
+
+	default:
+		return 0;
+	}
+}
+
+/**
+ * smw_keymgr_tls12_get_label() - Get TLS1.2 label buffer address
+ * @args: Pointer to internal argument structure
+ *
+ * Return:
+ * address of TLS1.2 label buffer
+ * NULL
+ */
+unsigned char *
+smw_keymgr_tls12_get_label(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls12_args *tls12_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	tls12_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(tls12_args->pub_op_args);
+
+	switch (tls12_args->pub_op_args->op_name) {
+	case SMW_TLS12_OP_NAME_MASTER_SECRET:
+		if (tls12_args->pub_op_args->master_secret.ext_master_key)
+			return EXT_MASTER_SECRET_STR;
+		else
+			return MASTER_SECRET_STR;
+
+	case SMW_TLS12_OP_NAME_KEY_EXPANSION:
+		return KEY_EXPANSION_STR;
+
+	default:
+		return NULL;
+	}
+}
+
+unsigned char *
+smw_keymgr_tls12_get_client_w_iv(struct smw_keymgr_tls12_args *args)
+{
+	unsigned char *client_iv = NULL;
+
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		client_iv = args->pub_op_args->key_expansion.client_w_iv;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		client_iv = args->pub_args->client_w_iv;
+	}
+
+	return client_iv;
+}
+
+unsigned int
+smw_keymgr_tls12_get_client_w_iv_length(struct smw_keymgr_tls12_args *args)
+{
+	unsigned int length = 0;
+
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		length = args->pub_op_args->key_expansion.client_w_iv_length;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		length = args->pub_args->client_w_iv_length;
+	}
+
+	return length;
+}
+
+void smw_keymgr_tls12_set_client_w_iv_length(struct smw_keymgr_tls12_args *args,
+					     unsigned int length)
+{
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		args->pub_op_args->key_expansion.client_w_iv_length = length;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		args->pub_args->client_w_iv_length = length;
+	}
+}
+
+unsigned char *
+smw_keymgr_tls12_get_server_w_iv(struct smw_keymgr_tls12_args *args)
+{
+	unsigned char *server_iv = NULL;
+
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		server_iv = args->pub_op_args->key_expansion.server_w_iv;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		server_iv = args->pub_args->server_w_iv;
+	}
+
+	return server_iv;
+}
+
+unsigned int
+smw_keymgr_tls12_get_server_w_iv_length(struct smw_keymgr_tls12_args *args)
+{
+	unsigned int length = 0;
+
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		length = args->pub_op_args->key_expansion.server_w_iv_length;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		length = args->pub_args->server_w_iv_length;
+	}
+
+	return length;
+}
+
+void smw_keymgr_tls12_set_server_w_iv_length(struct smw_keymgr_tls12_args *args,
+					     unsigned int length)
+{
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		args->pub_op_args->key_expansion.server_w_iv_length = length;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		args->pub_args->server_w_iv_length = length;
+	}
+}
+
+unsigned int
+smw_keymgr_tls12_get_kdf_input_length(struct smw_keymgr_tls12_args *args)
+{
+	unsigned int length = 0;
+
+	if (!args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		length = args->pub_args->kdf_input_length;
+	}
+
+	return length;
+}
+
+unsigned char *
+smw_keymgr_tls12_get_kdf_input(struct smw_keymgr_tls12_args *args)
+{
+	unsigned char *kdf_input = NULL;
+
+	if (!args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		kdf_input = args->pub_args->kdf_input;
+	}
+
+	return kdf_input;
+}
+
+bool smw_keymgr_tls12_get_ext_master_key(struct smw_keymgr_tls12_args *args)
+{
+	bool ext_master_key = false;
+
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		ext_master_key =
+			args->pub_op_args->master_secret.ext_master_key;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		ext_master_key = args->pub_args->ext_master_key;
+	}
+
+	return ext_master_key;
+}
+
+void smw_keymgr_tls12_set_client_mac_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id)
+{
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		args->pub_op_args->key_expansion.client_w_mac_key_id = id;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		args->pub_args->client_w_mac_key_id = id;
+	}
+}
+
+void smw_keymgr_tls12_set_server_mac_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id)
+{
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		args->pub_op_args->key_expansion.server_w_mac_key_id = id;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		args->pub_args->server_w_mac_key_id = id;
+	}
+}
+
+void smw_keymgr_tls12_set_client_enc_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id)
+{
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		args->pub_op_args->key_expansion.client_w_enc_key_id = id;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		args->pub_args->client_w_enc_key_id = id;
+	}
+}
+
+void smw_keymgr_tls12_set_server_enc_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id)
+{
+	if (args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_op_args);
+		args->pub_op_args->key_expansion.server_w_enc_key_id = id;
+	} else {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		args->pub_args->server_w_enc_key_id = id;
+	}
+}
+
+unsigned int
+smw_keymgr_tls12_get_master_sec_key_id(struct smw_keymgr_tls12_args *args)
+{
+	unsigned int key_id = 0;
+
+	if (!args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		key_id = args->pub_args->master_sec_key_id;
+	}
+
+	return key_id;
+}
+
+void smw_keymgr_tls12_set_master_sec_key_id(struct smw_keymgr_tls12_args *args,
+					    unsigned int id)
+{
+	if (!args->is_operation) {
+		SMW_DBG_ASSERT(args && args->pub_args);
+		args->pub_args->master_sec_key_id = id;
+	}
+}
+
+unsigned char *
+smw_keymgr_tls12_get_session_hash(struct smw_keymgr_tls12_args *args)
+{
+	SMW_DBG_ASSERT(args && args->is_operation && args->pub_op_args &&
+		       args->pub_op_args->master_secret.session_hash);
+
+	return args->pub_op_args->master_secret.session_hash->hash;
+}
+
+unsigned int
+smw_keymgr_tls12_get_session_hash_length(struct smw_keymgr_tls12_args *args)
+{
+	SMW_DBG_ASSERT(args && args->is_operation && args->pub_op_args &&
+		       args->pub_op_args->master_secret.session_hash);
+
+	return args->pub_op_args->master_secret.session_hash->hash_length;
+}
+
+unsigned char *
+smw_keymgr_tls12_get_client_random(struct smw_keymgr_tls12_args *args)
+{
+	struct smw_kdf_tls12_random_data *rd = NULL;
+
+	SMW_DBG_ASSERT(args && args->is_operation && args->pub_op_args);
+
+	if (args->pub_op_args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET)
+		rd = args->pub_op_args->master_secret.random_data;
+	else if (args->pub_op_args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION)
+		rd = args->pub_op_args->key_expansion.random_data;
+
+	SMW_DBG_ASSERT(rd && rd->client_random);
+	return rd->client_random;
+}
+
+unsigned int
+smw_keymgr_tls12_get_client_random_length(struct smw_keymgr_tls12_args *args)
+{
+	struct smw_kdf_tls12_random_data *rd = NULL;
+
+	SMW_DBG_ASSERT(args && args->is_operation && args->pub_op_args);
+
+	if (args->pub_op_args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET)
+		rd = args->pub_op_args->master_secret.random_data;
+	else if (args->pub_op_args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION)
+		rd = args->pub_op_args->key_expansion.random_data;
+
+	SMW_DBG_ASSERT(rd);
+	return rd->client_random_length;
+}
+
+unsigned char *
+smw_keymgr_tls12_get_server_random(struct smw_keymgr_tls12_args *args)
+{
+	struct smw_kdf_tls12_random_data *rd = NULL;
+
+	SMW_DBG_ASSERT(args && args->is_operation && args->pub_op_args);
+
+	if (args->pub_op_args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET)
+		rd = args->pub_op_args->master_secret.random_data;
+	else if (args->pub_op_args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION)
+		rd = args->pub_op_args->key_expansion.random_data;
+
+	SMW_DBG_ASSERT(rd && rd->server_random);
+	return rd->server_random;
+}
+
+unsigned int
+smw_keymgr_tls12_get_server_random_length(struct smw_keymgr_tls12_args *args)
+{
+	struct smw_kdf_tls12_random_data *rd = NULL;
+
+	SMW_DBG_ASSERT(args && args->is_operation && args->pub_op_args);
+
+	if (args->pub_op_args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET)
+		rd = args->pub_op_args->master_secret.random_data;
+	else if (args->pub_op_args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION)
+		rd = args->pub_op_args->key_expansion.random_data;
+
+	SMW_DBG_ASSERT(rd);
+	return rd->server_random_length;
+}
+
+/**
  * hkdf_convert_input_args() - Convert additional operation arguments for HKDF
  * @pub_args: Pointer to public derive key arguments structure
  * @conv_args: Pointer to internal derive key arguments structure
@@ -1322,6 +1747,148 @@ end:
 	return status;
 }
 
+static int
+tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
+			    struct smw_keymgr_derive_key_args *conv_args,
+			    enum subsystem_id *subsystem_id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keymgr_tls12_args *tls_args = NULL;
+	struct smw_kdf_tls12_op_args *args = NULL;
+	struct smw_kdf_tls12_master_secret_args *ms = NULL;
+	struct smw_kdf_tls12_key_expansion_args *ke = NULL;
+	enum smw_tls12_encryption_id enc_id = SMW_TLS12_ENCRYPTION_ID_INVALID;
+
+	if (!pub_args)
+		goto end;
+
+	args = pub_args->kdf_arguments;
+
+	if (!args)
+		goto end;
+
+	if (!args->context)
+		goto end;
+
+	if (args->version != 0) {
+		status = SMW_STATUS_INVALID_VERSION;
+		goto end;
+	}
+
+	if (args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET) {
+		ms = &args->master_secret;
+
+		if (ms->version != 0) {
+			status = SMW_STATUS_INVALID_VERSION;
+			goto end;
+		}
+
+		if (!ms->peer_public_buffer || !ms->peer_public_buffer_length)
+			goto end;
+
+		if (ms->ext_master_key) {
+			if (!ms->session_hash || !ms->session_hash->hash ||
+			    !ms->session_hash->hash_length)
+				goto end;
+
+			if (ms->session_hash->version != 0) {
+				status = SMW_STATUS_INVALID_VERSION;
+				goto end;
+			}
+		} else {
+			if (!ms->random_data ||
+			    !ms->random_data->client_random ||
+			    !ms->random_data->client_random_length ||
+			    !ms->random_data->server_random ||
+			    !ms->random_data->server_random_length)
+				goto end;
+
+			if (ms->random_data->version != 0) {
+				status = SMW_STATUS_INVALID_VERSION;
+				goto end;
+			}
+		}
+	} else if (args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION) {
+		ke = &args->key_expansion;
+
+		if (ke->version != 0) {
+			status = SMW_STATUS_INVALID_VERSION;
+			goto end;
+		}
+
+		if (!ke->random_data || !ke->random_data->client_random ||
+		    !ke->random_data->client_random_length ||
+		    !ke->random_data->server_random ||
+		    !ke->random_data->server_random_length)
+			goto end;
+
+		if (ke->random_data->version != 0) {
+			status = SMW_STATUS_INVALID_VERSION;
+			goto end;
+		}
+	} else {
+		goto end;
+	}
+
+	/* Get the input key base for the derivation */
+	status = smw_keymgr_convert_descriptor(pub_args->key_descriptor_base,
+					       &conv_args->key_base, false,
+					       subsystem_id);
+	if (status != SMW_STATUS_OK)
+		return status;
+
+	tls_args = SMW_UTILS_MALLOC(sizeof(*tls_args));
+	if (!tls_args) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+
+	tls_args->is_operation = true;
+
+	status = get_prf_id(args->prf_name, &tls_args->prf_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET) {
+		status = tls12_get_key_exchange_id(ms->key_exchange_name,
+						   tls_args);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	} else if (args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION) {
+		status = tls12_get_encryption_id(ke->encryption_name, &enc_id);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		tls_args->encryption_id = enc_id;
+
+		if (smw_keymgr_tls12_is_encryption_aead(enc_id)) {
+			if (!ke->client_w_iv || !ke->client_w_iv_length ||
+			    !ke->server_w_iv || !ke->server_w_iv_length) {
+				status = SMW_STATUS_INVALID_PARAM;
+				goto end;
+			}
+		}
+	}
+
+	tls_args->pub_op_args = args;
+	conv_args->kdf_args = tls_args;
+
+	conv_args->ops.get_salt = smw_keymgr_tls12_get_label;
+	conv_args->ops.get_salt_len = smw_keymgr_tls12_get_label_len;
+	conv_args->ops.get_peer = smw_keymgr_tls12_get_peer_pub_buffer;
+	conv_args->ops.get_peer_len = smw_keymgr_tls12_get_peer_pub_len;
+
+	SMW_DBG_PRINTF(DEBUG, "KDF Input %p\n", args);
+
+end:
+	if (status != SMW_STATUS_OK && tls_args)
+		free(tls_args);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	return status;
+}
+
 static int convert_input_args(struct smw_derive_key_args *args,
 			      struct smw_keymgr_derive_key_args *conv_args,
 			      enum subsystem_id *subsystem_id)
@@ -1355,6 +1922,15 @@ static int convert_input_args(struct smw_derive_key_args *args,
 
 	case SMW_CONFIG_KDF_ID_ECDH:
 		status = ecdh_convert_input_args(args, conv_args, subsystem_id);
+		break;
+
+	case SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE:
+		status = tls12_op_convert_input_args(args, conv_args,
+						     subsystem_id);
+
+		if (status == SMW_STATUS_OK)
+			status = tls12_validate_key_base(conv_args);
+
 		break;
 
 	default:

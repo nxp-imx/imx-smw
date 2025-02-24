@@ -70,6 +70,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Add hardcoded permitted algorithm for keys with unique permitted algorithm.
 * ELE: HKDF: Remove derived key buffer export capability.
 * ELE: Update RSA permitted algorithms
+* ELE: Add support for TLS1.2 KDF
+* SECO: Updated support for TLS1.2 to the new API
 
 ##### 3. ARM PSA APIs
 
@@ -95,6 +97,8 @@ Sign and Verify algorithm in ELE configuration file.
 * Add U_TEE_Derive_004.
 * U_ELE_Derive tests: Remove tests exporting the derived key buffer.
 * Add privacy check in U_API_Object test.
+* Add tests to validate TLS1.2 operations with ELE: U_ELE_Derive_005.
+* Add tests to validate TLS1.2 operations with SECO: U_SECO_Derive_003.
 
 #### PKCS#11 Library - _version 4.2_
 

@@ -143,23 +143,6 @@ exit:
 	return status;
 }
 
-static int get_key_store_id(uint32_t *keystore_id)
-{
-	int status = SMW_STATUS_INVALID_PARAM;
-
-	struct se_info info = { 0 };
-
-	if (smw_utils_get_subsystem_info(SMW_SUBSYSTEM_NAME_ELE, &info))
-		goto end;
-
-	*keystore_id = info.storage_id;
-	status = SMW_STATUS_OK;
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 static int get_key_lifetime(smw_attr_attributes_t attributes,
 			    hsm_key_lifetime_t *key_lifetime)
 {
@@ -427,7 +410,7 @@ static int hkdf(struct smw_keymgr_derive_key_args *args, hsm_hdl_t *key_mgt_hdl)
 
 	hkdf_op_payload.ver = 1;
 
-	status = get_key_store_id(&hkdf_op_payload.keystore_id);
+	status = ele_get_key_store_id(&hkdf_op_payload.keystore_id);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
@@ -601,6 +584,15 @@ __weak int derive_tls12(struct hdl *hdl,
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
+__weak int derive_tls12_op(struct hdl *hdl,
+			   struct smw_keymgr_derive_key_args *args)
+{
+	(void)hdl;
+	(void)args;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
 int ele_derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -612,6 +604,10 @@ int ele_derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	switch (args->kdf_id) {
 	case SMW_CONFIG_KDF_ID_TLS12_KEY_EXCHANGE:
 		status = derive_tls12(hdl, args);
+		break;
+
+	case SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE:
+		status = derive_tls12_op(hdl, args);
 		break;
 
 	case SMW_CONFIG_KDF_ID_HKDF:

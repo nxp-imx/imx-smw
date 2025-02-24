@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "compiler.h"
+#include "smw_osal.h"
 
 #include "config.h"
 #include "debug.h"
@@ -112,4 +113,21 @@ void ele_free_hash_context(struct hash_context *ctx)
 		ctx->ele_ctx = NULL;
 		ctx->ele_ctx_size = 0;
 	}
+}
+
+int ele_get_key_store_id(uint32_t *keystore_id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct se_info info = { 0 };
+
+	if (smw_utils_get_subsystem_info(SMW_SUBSYSTEM_NAME_ELE, &info))
+		goto end;
+
+	*keystore_id = info.storage_id;
+	status = SMW_STATUS_OK;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }

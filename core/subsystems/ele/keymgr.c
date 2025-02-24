@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include "smw_status.h"
@@ -95,6 +95,7 @@ static const struct key_def {
 	KEY_DEF(HMAC, HMAC, NULL, NULL),
 	KEY_DEF(RSA, RSA, rsa_public_key_length, rsa_modulus_length),
 	KEY_DEF(ED25519, ECC_TWISTED_EDWARDS, ecc_public_key_length, NULL),
+	KEY_DEF(DERIVE, DERIVE, NULL, NULL)
 };
 
 #define SIGN_ALGO(_algo_id, _type_id, _hash_id, _sign_algo)                    \

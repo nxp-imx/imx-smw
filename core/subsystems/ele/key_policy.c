@@ -132,6 +132,10 @@ static const struct {
 			     KEY_ATTESTATION),
 	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA512, ECDSA, NONE, SHA512,
 			     KEY_ATTESTATION),
+	PERMITTED_ALGO(TLS1_2_MASTER_SECRET_SHA256, TLS_1_2, NONE, SHA256,
+		       KEY_DERIVATION),
+	PERMITTED_ALGO(TLS1_2_MASTER_SECRET_SHA384, TLS_1_2, NONE, SHA384,
+		       KEY_DERIVATION),
 };
 
 static void convert_usage_to_ele(smw_attr_usage_t smw, hsm_key_usage_t *ele)

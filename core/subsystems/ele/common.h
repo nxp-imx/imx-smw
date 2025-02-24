@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #ifndef __COMMON_H__
@@ -484,5 +484,15 @@ int close_key_mgt_service(hsm_hdl_t key_management_hdl);
  * None.
  */
 void ele_free_hash_context(struct hash_context *ctx);
+
+/**
+ * ele_get_key_store_id() - Get the configured ELE keystore identifier
+ * @keystore_id: The ELE keystore identifier
+ *
+ * Return:
+ * SMW_STATUS_OK                   - Success
+ * SMW_STATUS_INVALID_PARAM        - Cannot retrieve ELE configuration
+ */
+int ele_get_key_store_id(uint32_t *keystore_id);
 
 #endif /* __COMMON_H__ */

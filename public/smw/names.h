@@ -418,6 +418,9 @@ typedef enum {
  * * SMW_TLS12_ENC_NAME_AES_256_CBC: Advanced Encryption Standard 256 bits with CBC
  * * SMW_TLS12_ENC_NAME_AES_256_GCM: Advanced Encryption Standard 256 bits with GCM
  * * SMW_TLS12_ENC_NAME_RC4_128: Rivest Cipher 4 128 bits
+ * * SMW_TLS12_ENC_NAME_AES_128_CCM: Advanced Encryption Standard 128 bits with CCM
+ * * SMW_TLS12_ENC_NAME_AES_256_CCM: Advanced Encryption Standard 256 bits with CCM
+ * * SMW_TLS12_ENC_NAME_CHACHA20_POLY1305: ChaCha20 stream cipher with Poly1305 MAC
  * * SMW_TLS12_ENC_NAME_NB: Number of TLS 1.2 encryption algorithms
  */
 typedef enum {
@@ -428,8 +431,27 @@ typedef enum {
 	SMW_TLS12_ENC_NAME_AES_256_CBC,
 	SMW_TLS12_ENC_NAME_AES_256_GCM,
 	SMW_TLS12_ENC_NAME_RC4_128,
+	SMW_TLS12_ENC_NAME_AES_128_CCM,
+	SMW_TLS12_ENC_NAME_AES_256_CCM,
+	SMW_TLS12_ENC_NAME_CHACHA20_POLY1305,
 	SMW_TLS12_ENC_NAME_NB
 } smw_tls12_enc_t;
+
+/**
+ * typedef smw_tls12_op_t - TLS 1.2 operation name
+ *
+ * Values:
+ * * SMW_TLS12_OP_NAME_NONE: No TLS 1.2 operation name specified
+ * * SMW_TLS12_OP_NAME_MASTER_SECRET: TLS 1.2 master secret
+ * * SMW_TLS12_OP_NAME_KEY_EXPANSION: TLS 1.2 key expansion
+ * * SMW_TLS12_OP_NAME_NB: Number of TLS 1.2 operation names
+ */
+typedef enum {
+	SMW_TLS12_OP_NAME_NONE,
+	SMW_TLS12_OP_NAME_MASTER_SECRET,
+	SMW_TLS12_OP_NAME_KEY_EXPANSION,
+	SMW_TLS12_OP_NAME_NB
+} smw_tls12_op_t;
 
 /**
  * typedef smw_lifecycle_t - Device lifecycle name
@@ -465,6 +487,7 @@ typedef enum {
  * * SMW_KDF_NAME_HKDF_EXPAND: HMAC-Based Key Derivation Expand step Function
  * * SMW_KDF_NAME_TLS12_KEY_EXCHANGE: TLS 1.2 Key Exchange
  * * SMW_KDF_NAME_ECDH: ECDH Key Exchange
+ * * SMW_KDF_NAME_TLS12_OP_KEY_EXCHANGE: TLS 1.2 "Operation-based" Key Exchange
  * * SMW_KDF_NAME_NB: Number of Key Derivation Functions
  */
 typedef enum {
@@ -474,6 +497,7 @@ typedef enum {
 	SMW_KDF_NAME_HKDF_EXPAND,
 	SMW_KDF_NAME_TLS12_KEY_EXCHANGE,
 	SMW_KDF_NAME_ECDH,
+	SMW_KDF_NAME_TLS12_OP_KEY_EXCHANGE,
 	SMW_KDF_NAME_NB
 } smw_kdf_t;
 

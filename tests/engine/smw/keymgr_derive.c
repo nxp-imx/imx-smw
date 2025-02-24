@@ -8,9 +8,11 @@
 
 #include <smw_keymgr.h>
 #include <smw/names.h>
+#include <smw/crypto/op_context.h>
 
 #include "util.h"
 #include "util_key.h"
+#include "util_context.h"
 
 #include "key.h"
 #include "keymgr.h"
@@ -34,8 +36,8 @@ enum hkdf_step {
 static struct {
 	smw_kdf_t name;
 	const char *string;
-} kdf_names[] = { KDF_NAME(HKDF), KDF_NAME(TLS12_KEY_EXCHANGE),
-		  KDF_NAME(ECDH) };
+} kdf_names[] = { KDF_NAME(HKDF), KDF_NAME(TLS12_KEY_EXCHANGE), KDF_NAME(ECDH),
+		  KDF_NAME(TLS12_OP_KEY_EXCHANGE) };
 
 #define KEA(_name)                                                             \
 	{                                                                      \
@@ -57,8 +59,20 @@ static struct {
 static struct {
 	smw_tls12_enc_t name;
 	const char *string;
-} encryption_names[] = { ENC(3DES_EDE_CBC), ENC(AES_128_CBC), ENC(AES_128_GCM),
-			 ENC(AES_256_CBC),  ENC(AES_256_GCM), ENC(RC4_128) };
+} encryption_names[] = { ENC(NONE),	   ENC(3DES_EDE_CBC),
+			 ENC(AES_128_CBC), ENC(AES_128_CCM),
+			 ENC(AES_128_GCM), ENC(RC4_128),
+			 ENC(AES_256_CBC), ENC(AES_256_CCM),
+			 ENC(AES_256_GCM), ENC(CHACHA20_POLY1305) };
+
+#define OP(_name)                                                              \
+	{                                                                      \
+		.name = SMW_TLS12_OP_NAME_##_name, .string = #_name            \
+	}
+static struct {
+	smw_tls12_op_t name;
+	const char *string;
+} op_names[] = { OP(NONE), OP(MASTER_SECRET), OP(KEY_EXPANSION) };
 
 static smw_kdf_t get_kdf_name(const char *string)
 {
@@ -103,6 +117,21 @@ static smw_tls12_enc_t get_tls12_encryption_name(const char *string)
 	}
 
 	return SMW_TLS12_ENC_NAME_NB + 1;
+}
+
+static smw_tls12_op_t get_tls12_operation_name(const char *string)
+{
+	unsigned int i = 0;
+
+	if (!string)
+		return SMW_TLS12_OP_NAME_NONE;
+
+	for (; i < ARRAY_SIZE(op_names); i++) {
+		if (!strcmp(op_names[i].string, string))
+			return op_names[i].name;
+	}
+
+	return SMW_TLS12_OP_NAME_NB;
 }
 
 /**
@@ -386,8 +415,11 @@ static int kdf_tls12_setup_base_key(struct subtest_data *subtest,
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
+static int kdf_tls12_read_args(void **kdf_args, struct subtest_data *subtest,
+			       struct json_object *oargs)
 {
+	(void)subtest;
+
 	int res = ERR_CODE(BAD_ARGS);
 	const char *prf_string = NULL;
 	struct tbuffer buf = { 0 };
@@ -405,7 +437,7 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	if (!tls_args)
 		return INTERNAL_OUT_OF_MEMORY;
 
-	res = util_read_json_type(&key_exchange_string, "key_exchange_name",
+	res = util_read_json_type(&key_exchange_string, KEY_EXCHANGE_NAME_OBJ,
 				  t_string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
@@ -413,7 +445,7 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	tls_args->key_exchange_name =
 		get_tls12_key_exchange_name(key_exchange_string);
 
-	res = util_read_json_type(&encryption_string, "encryption_name",
+	res = util_read_json_type(&encryption_string, ENCRYPTION_NAME_OBJ,
 				  t_string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
@@ -421,7 +453,7 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	tls_args->encryption_name =
 		get_tls12_encryption_name(encryption_string);
 
-	res = util_read_json_type(&prf_string, "prf_name", t_string, oargs);
+	res = util_read_json_type(&prf_string, PRF_NAME_OBJ, t_string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
@@ -431,7 +463,7 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	if (res != ERR_CODE(PASSED))
 		goto end;
 
-	res = util_read_json_type(&buf, "kdf_input", t_buffer_hex, oargs);
+	res = util_read_json_type(&buf, KDF_INPUT_OBJ, t_buffer_hex, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
@@ -441,7 +473,8 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	buf.data = NULL;
 	buf.length = 0;
 
-	res = util_read_json_type(&buf, "client_write_iv", t_buffer_hex, oargs);
+	res = util_read_json_type(&buf, CLIENT_WRITE_IV_OBJ, t_buffer_hex,
+				  oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
@@ -451,7 +484,8 @@ static int kdf_tls12_read_args(void **kdf_args, struct json_object *oargs)
 	buf.data = NULL;
 	buf.length = 0;
 
-	res = util_read_json_type(&buf, "server_write_iv", t_buffer_hex, oargs);
+	res = util_read_json_type(&buf, SERVER_WRITE_IV_OBJ, t_buffer_hex,
+				  oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
 
@@ -465,6 +499,287 @@ end:
 	if (res != ERR_CODE(PASSED) && tls_args) {
 		if (buf.data)
 			free(buf.data);
+
+		if (tls_args->client_w_iv)
+			free(tls_args->client_w_iv);
+
+		if (tls_args->server_w_iv)
+			free(tls_args->server_w_iv);
+
+		free(tls_args);
+	}
+
+	return res;
+}
+
+static void kdf_tls12_op_free_random_data(struct smw_kdf_tls12_random_data *rd)
+{
+	if (!rd)
+		return;
+
+	if (rd->client_random)
+		free(rd->client_random);
+
+	if (rd->server_random)
+		free(rd->server_random);
+
+	free(rd);
+}
+
+static void
+kdf_tls12_op_free_master_secret(struct smw_kdf_tls12_op_args *tls_args)
+{
+	struct smw_kdf_tls12_session_hash *sh = NULL;
+	struct smw_kdf_tls12_random_data *rd = NULL;
+
+	if (tls_args->master_secret.ext_master_key) {
+		sh = tls_args->master_secret.session_hash;
+		if (sh) {
+			if (sh->hash)
+				free(sh->hash);
+
+			free(sh);
+		}
+	} else {
+		rd = tls_args->master_secret.random_data;
+		kdf_tls12_op_free_random_data(rd);
+	}
+
+	if (tls_args->master_secret.peer_public_buffer)
+		free(tls_args->master_secret.peer_public_buffer);
+}
+
+static void
+kdf_tls12_op_free_key_expansion(struct smw_kdf_tls12_op_args *tls_args)
+{
+	kdf_tls12_op_free_random_data(tls_args->key_expansion.random_data);
+
+	if (tls_args->key_expansion.client_w_iv)
+		free(tls_args->key_expansion.client_w_iv);
+
+	if (tls_args->key_expansion.server_w_iv)
+		free(tls_args->key_expansion.server_w_iv);
+}
+
+static int
+kdf_tls12_op_read_master_secret(struct smw_kdf_tls12_op_args *tls_args,
+				struct json_object *oargs)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	const char *key_exchange_string = NULL;
+	bool ext_master_key = false;
+	struct smw_kdf_tls12_session_hash *sh = NULL;
+	struct smw_kdf_tls12_random_data *rd = NULL;
+	struct tbuffer buf = { 0 };
+
+	res = util_read_json_type(&key_exchange_string, KEY_EXCHANGE_NAME_OBJ,
+				  t_string, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->master_secret.key_exchange_name =
+		get_tls12_key_exchange_name(key_exchange_string);
+
+	res = util_read_json_type(&ext_master_key, EXT_MASTER_KEY_OBJ,
+				  t_boolean, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->master_secret.ext_master_key = ext_master_key;
+
+	if (ext_master_key) {
+		sh = calloc(1, sizeof(*sh));
+		if (!sh) {
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto end;
+		}
+
+		tls_args->master_secret.session_hash = sh;
+
+		res = util_read_json_type(&buf, SESSION_HASH_OBJ, t_buffer_hex,
+					  oargs);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			goto end;
+
+		sh->hash = buf.data;
+		sh->hash_length = buf.length;
+
+		buf.data = NULL;
+		buf.length = 0;
+	} else {
+		rd = calloc(1, sizeof(*rd));
+		if (!rd) {
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto end;
+		}
+
+		tls_args->master_secret.random_data = rd;
+
+		res = util_read_json_type(&buf, CLIENT_RANDOM_OBJ, t_buffer_hex,
+					  oargs);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			goto end;
+
+		rd->client_random = buf.data;
+		rd->client_random_length = buf.length;
+		buf.data = NULL;
+		buf.length = 0;
+
+		res = util_read_json_type(&buf, SERVER_RANDOM_OBJ, t_buffer_hex,
+					  oargs);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			goto end;
+
+		rd->server_random = buf.data;
+		rd->server_random_length = buf.length;
+
+		buf.data = NULL;
+		buf.length = 0;
+	}
+
+	res = util_read_json_type(&buf, PEER_PUB_KEY_OBJ, t_buffer_hex, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->master_secret.peer_public_buffer = buf.data;
+	tls_args->master_secret.peer_public_buffer_length = buf.length;
+
+	res = ERR_CODE(PASSED);
+
+end:
+	if (res != ERR_CODE(PASSED))
+		kdf_tls12_op_free_master_secret(tls_args);
+
+	return res;
+}
+
+static int
+kdf_tls12_op_read_key_expansion(struct smw_kdf_tls12_op_args *tls_args,
+				struct json_object *oargs)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	const char *encryption_string = NULL;
+	struct smw_kdf_tls12_random_data *rd = NULL;
+	struct tbuffer buf = { 0 };
+
+	res = util_read_json_type(&encryption_string, ENCRYPTION_NAME_OBJ,
+				  t_string, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->key_expansion.encryption_name =
+		get_tls12_encryption_name(encryption_string);
+
+	rd = calloc(1, sizeof(*rd));
+	if (!rd) {
+		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto end;
+	}
+
+	tls_args->key_expansion.random_data = rd;
+
+	res = util_read_json_type(&buf, CLIENT_RANDOM_OBJ, t_buffer_hex, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	rd->client_random = buf.data;
+	rd->client_random_length = buf.length;
+	buf.data = NULL;
+	buf.length = 0;
+
+	res = util_read_json_type(&buf, SERVER_RANDOM_OBJ, t_buffer_hex, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	rd->server_random = buf.data;
+	rd->server_random_length = buf.length;
+	buf.data = NULL;
+	buf.length = 0;
+
+	res = util_read_json_type(&buf, CLIENT_WRITE_IV_OBJ, t_buffer_hex,
+				  oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->key_expansion.client_w_iv = buf.data;
+	tls_args->key_expansion.client_w_iv_length = buf.length;
+	buf.data = NULL;
+	buf.length = 0;
+
+	res = util_read_json_type(&buf, SERVER_WRITE_IV_OBJ, t_buffer_hex,
+				  oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->key_expansion.server_w_iv = buf.data;
+	tls_args->key_expansion.server_w_iv_length = buf.length;
+
+	res = ERR_CODE(PASSED);
+
+end:
+	if (res != ERR_CODE(PASSED))
+		kdf_tls12_op_free_key_expansion(tls_args);
+
+	return res;
+}
+
+static int kdf_tls12_op_read_args(void **kdf_args, struct subtest_data *subtest,
+				  struct json_object *oargs)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	const char *prf_string = NULL;
+	const char *op_string = NULL;
+	unsigned int context_id = 0;
+
+	struct smw_kdf_tls12_op_args *tls_args = NULL;
+
+	struct smw_op_context *ctx = NULL;
+
+	if (!kdf_args || !oargs) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	tls_args = calloc(1, sizeof(*tls_args));
+	if (!tls_args)
+		return INTERNAL_OUT_OF_MEMORY;
+
+	*kdf_args = tls_args;
+
+	res = util_read_json_type(&context_id, CTX_ID_OBJ, t_uint,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	res = util_context_find_node(list_op_ctxs(subtest), context_id, &ctx);
+	if (res == ERR_CODE(PASSED))
+		tls_args->context = ctx;
+
+	res = util_read_json_type(&op_string, OP_NAME_OBJ, t_string, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->op_name = get_tls12_operation_name(op_string);
+
+	res = util_read_json_type(&prf_string, PRF_NAME_OBJ, t_string, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->prf_name = hash_get_algo_name(prf_string);
+
+	if (tls_args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET)
+		res = kdf_tls12_op_read_master_secret(tls_args, oargs);
+	else if (tls_args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION)
+		res = kdf_tls12_op_read_key_expansion(tls_args, oargs);
+
+end:
+	if (res != ERR_CODE(PASSED)) {
+		if (tls_args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET) {
+			kdf_tls12_op_free_master_secret(tls_args);
+		} else if (tls_args->op_name ==
+			   SMW_TLS12_OP_NAME_KEY_EXPANSION) {
+			kdf_tls12_op_free_key_expansion(tls_args);
+		}
 
 		free(tls_args);
 	}
@@ -506,6 +821,24 @@ static int kdf_tls12_prepare_result(struct subtest_data *subtest,
 					  key_name);
 
 	return res;
+}
+
+static void kdf_tls12_op_free(struct smw_derive_key_args *args)
+{
+	struct smw_kdf_tls12_op_args *tls_args = NULL;
+
+	if (!args || !args->kdf_arguments)
+		return;
+
+	tls_args = args->kdf_arguments;
+
+	if (tls_args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET)
+		kdf_tls12_op_free_master_secret(tls_args);
+	else if (tls_args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION)
+		kdf_tls12_op_free_key_expansion(tls_args);
+
+	free(tls_args);
+	args->kdf_arguments = NULL;
 }
 
 /**
@@ -586,6 +919,11 @@ static int kdf_tls12_end_operation(struct subtest_data *subtest,
 	if (!oargs)
 		return ERR_CODE(MISSING_PARAMS);
 
+	key_data.identifier = tls_args->master_sec_key_id;
+	res = store_key_data(keys, MASTER_SEC_KEY_NAME_OBJ, &key_data, oargs);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
 	/* Even if it should not occur at this stage, check oargs */
 	if (kdf_tls12_is_mac_key_expected(tls_args->encryption_name)) {
 		key_data.identifier = tls_args->client_w_mac_key_id;
@@ -611,13 +949,86 @@ static int kdf_tls12_end_operation(struct subtest_data *subtest,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	key_data.identifier = tls_args->master_sec_key_id;
-	res = store_key_data(keys, MASTER_SEC_KEY_NAME_OBJ, &key_data, oargs);
+	key_prepare_derived_key_data(args->key_descriptor_derived, &key_data);
+	res = store_key_data(keys, OP_OUTPUT_OBJ, &key_data, subtest->params);
+
+	return res;
+}
+
+/**
+ * kdf_tls12_end_operation() - Finalize the TLS 1.2 operation
+ * @subtest: Subtest data
+ * @args: SMW's Key derivation arguments
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - Parameter type is not correct or not supported.
+ * -VALUE_NOTFOUND          - Value not found.
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ * -FAILED                  - Error in definition file
+ */
+static int kdf_tls12_op_end_operation(struct subtest_data *subtest,
+				      struct smw_derive_key_args *args)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	struct json_object *oargs = NULL;
+	struct key_data key_data = { 0 };
+	struct smw_kdf_tls12_op_args *tls_args = NULL;
+	struct smw_kdf_tls12_key_expansion_args *ke = NULL;
+	struct llist *keys = NULL;
+
+	if (!args || !subtest || !args->kdf_arguments) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	keys = list_keys(subtest);
+	tls_args = args->kdf_arguments;
+
+	/* Registers all generated keys in the test keys list */
+	res = util_read_json_type(&oargs, OP_ARGS_OBJ, t_object,
+				  subtest->params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	key_prepare_derived_key_data(args->key_descriptor_derived, &key_data);
-	res = store_key_data(keys, OP_OUTPUT_OBJ, &key_data, subtest->params);
+	if (!oargs)
+		return ERR_CODE(MISSING_PARAMS);
+
+	if (tls_args->op_name == SMW_TLS12_OP_NAME_MASTER_SECRET) {
+		key_prepare_derived_key_data(args->key_descriptor_derived,
+					     &key_data);
+		res = store_key_data(keys, OP_OUTPUT_OBJ, &key_data,
+				     subtest->params);
+	} else if (tls_args->op_name == SMW_TLS12_OP_NAME_KEY_EXPANSION) {
+		ke = &tls_args->key_expansion;
+
+		if (kdf_tls12_is_mac_key_expected(ke->encryption_name)) {
+			key_data.identifier = ke->client_w_mac_key_id;
+			res = store_key_data(keys, CLIENT_W_MAC_KEY_NAME_OBJ,
+					     &key_data, oargs);
+			if (res != ERR_CODE(PASSED))
+				return res;
+
+			key_data.identifier = ke->server_w_mac_key_id;
+			res = store_key_data(keys, SERVER_W_MAC_KEY_NAME_OBJ,
+					     &key_data, oargs);
+			if (res != ERR_CODE(PASSED))
+				return res;
+		}
+
+		key_data.identifier = ke->client_w_enc_key_id;
+		res = store_key_data(keys, CLIENT_W_ENC_KEY_NAME_OBJ, &key_data,
+				     oargs);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		key_data.identifier = ke->server_w_enc_key_id;
+		res = store_key_data(keys, SERVER_W_ENC_KEY_NAME_OBJ, &key_data,
+				     oargs);
+		if (res != ERR_CODE(PASSED))
+			return res;
+	}
 
 	return res;
 }
@@ -636,6 +1047,12 @@ static void kdf_tls12_free(struct smw_derive_key_args *args)
 
 			if (tls_args->kdf_input)
 				free(tls_args->kdf_input);
+
+			if (tls_args->client_w_iv)
+				free(tls_args->client_w_iv);
+
+			if (tls_args->server_w_iv)
+				free(tls_args->server_w_iv);
 
 			free(args->kdf_arguments);
 			args->kdf_arguments = NULL;
@@ -744,8 +1161,11 @@ static int kdf_hkdf_setup_base_key(struct subtest_data *subtest,
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int kdf_hkdf_read_args(void **kdf_args, struct json_object *oargs)
+static int kdf_hkdf_read_args(void **kdf_args, struct subtest_data *subtest,
+			      struct json_object *oargs)
 {
+	(void)subtest;
+
 	int res = ERR_CODE(BAD_ARGS);
 
 	struct tbuffer salt_buf = { 0 };
@@ -1061,8 +1481,11 @@ static int kdf_ecdh_setup_base_key(struct subtest_data *subtest,
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int kdf_ecdh_read_args(void **kdf_args, struct json_object *oargs)
+static int kdf_ecdh_read_args(void **kdf_args, struct subtest_data *subtest,
+			      struct json_object *oargs)
 {
+	(void)subtest;
+
 	int res = ERR_CODE(BAD_ARGS);
 	struct tbuffer peer_pub_buf = { 0 };
 
@@ -1223,7 +1646,8 @@ static const struct kdf_op {
 			  struct smw_derive_key_args *args,
 			  struct keypair_ops *key_base,
 			  struct smw_keypair_buffer *base_buffer);
-	int (*read_args)(void **kdf_args, struct json_object *oargs);
+	int (*read_args)(void **kdf_args, struct subtest_data *subtest,
+			 struct json_object *oargs);
 	int (*prepare_result)(struct subtest_data *subtest,
 			      struct smw_derive_key_args *args);
 	int (*end_operation)(struct subtest_data *subtest,
@@ -1252,6 +1676,14 @@ static const struct kdf_op {
 			.prepare_result = &kdf_ecdh_prepare_result,
 			.end_operation = &kdf_ecdh_end_operation,
 			.free = &kdf_ecdh_free,
+		},
+		{
+			.name = SMW_KDF_NAME_TLS12_OP_KEY_EXCHANGE,
+			.setup_base = &kdf_tls12_setup_base_key,
+			.read_args = &kdf_tls12_op_read_args,
+			.prepare_result = &kdf_tls12_prepare_result,
+			.end_operation = &kdf_tls12_op_end_operation,
+			.free = &kdf_tls12_op_free,
 		},
 		{ 0 } };
 
@@ -1327,7 +1759,7 @@ static int kdf_setup_base(struct subtest_data *subtest,
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
 static int kdf_args_read(struct smw_derive_key_args *args,
-			 struct json_object *params)
+			 struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
 
@@ -1337,7 +1769,7 @@ static int kdf_args_read(struct smw_derive_key_args *args,
 
 	/* Get the key derivation function if any */
 	res = util_read_json_type(&op_type_string, OP_TYPE_OBJ, t_string,
-				  params);
+				  subtest->params);
 
 	if (res == ERR_CODE(VALUE_NOTFOUND)) {
 		args->kdf_name = SMW_KDF_NAME_NONE;
@@ -1356,9 +1788,10 @@ static int kdf_args_read(struct smw_derive_key_args *args,
 		args->kdf_arguments = NULL;
 	} else if (kdf_op->read_args) {
 		res = util_read_json_type(&oargs, OP_ARGS_OBJ, t_object,
-					  params);
+					  subtest->params);
 		if (res == ERR_CODE(PASSED) && oargs)
-			res = kdf_op->read_args(&args->kdf_arguments, oargs);
+			res = kdf_op->read_args(&args->kdf_arguments, subtest,
+						oargs);
 	}
 
 	return res;
@@ -1391,7 +1824,7 @@ static int setup_derive_opt_params(struct subtest_data *subtest,
 		res = ERR_CODE(PASSED);
 
 	/* Read (if any) the key derivation function name and arguments */
-	res = kdf_args_read(args, subtest->params);
+	res = kdf_args_read(args, subtest);
 
 	return res;
 }

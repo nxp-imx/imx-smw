@@ -1,0 +1,575 @@
+{
+	"keys": {
+		"master secret 256": {},
+		"master secret 384": {},
+		"key expansion 256": {},
+		"key expansion 384": {},
+		"client write enc key": {},
+		"server write enc key": {},
+		"client write mac key": {},
+		"server write mac key": {},
+		"self 256-bit ecdh key": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"pub_key": 64,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_2",
+				"HASH=SHA256"
+			]
+		},
+		"self 384-bit ecdh key": {
+			"type": "SECP_R1",
+			"security_size": 384,
+			"pub_key": 96,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_2",
+				"HASH=SHA384"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "self 256-bit ecdh key",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "self 384-bit ecdh key",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 3": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 0,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 4": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "ELE",
+		"context_id": 1,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 5": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"session_hash": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self 256-bit ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			3
+		]
+	},
+	"subtest 6": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self 256-bit ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			3
+		]
+	},
+	"subtest 7": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDHE_ECDSA",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"session_hash": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self 256-bit ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			3
+		]
+	},
+	"subtest 8": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDHE_ECDSA",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self 256-bit ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			3
+		]
+	},
+	"subtest 9": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA384",
+			"ext_master_key": true,
+			"session_hash": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			]
+		},
+		"op_output": "master secret 384",
+		"op_input": "self 384-bit ecdh key",
+		"context_id": 1,
+		"depends": [
+			2,
+			4
+		]
+	},
+	"subtest 10": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA384",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			]
+		},
+		"op_output": "master secret 384",
+		"op_input": "self 384-bit ecdh key",
+		"context_id": 1,
+		"depends": [
+			2,
+			4
+		]
+	},
+	"subtest 11": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDHE_ECDSA",
+			"prf_name": "SHA384",
+			"ext_master_key": true,
+			"session_hash": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			]
+		},
+		"op_output": "master secret 384",
+		"op_input": "self 384-bit ecdh key",
+		"context_id": 1,
+		"depends": [
+			2,
+			4
+		]
+	},
+	"subtest 12": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDHE_ECDSA",
+			"prf_name": "SHA384",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			]
+		},
+		"op_output": "master secret 384",
+		"op_input": "self 384-bit ecdh key",
+		"context_id": 1,
+		"depends": [
+			2,
+			4
+		]
+	},
+	"subtest 13": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_CCM",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": [
+			1,
+			3
+		]
+	},
+	"subtest 14": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_GCM",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": [
+			1,
+			3
+		]
+	},
+	"subtest 15": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_CBC",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key",
+			"client_w_mac_key_name": "client write mac key",
+			"server_w_mac_key_name": "server write mac key"
+		},
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": [
+			1,
+			3
+		]
+	},
+	"subtest 16": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_256_CCM",
+			"prf_name": "SHA384",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 384",
+		"op_input": "master secret 384",
+		"context_id": 1,
+		"depends": [
+			2,
+			4
+		]
+	},
+	"subtest 17": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_256_GCM",
+			"prf_name": "SHA384",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 384",
+		"op_input": "master secret 384",
+		"context_id": 1,
+		"depends": [
+			2,
+			4
+		]
+	},
+	"subtest 18": {
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_256_CBC",
+			"prf_name": "SHA384",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key",
+			"client_w_mac_key_name": "client write mac key",
+			"server_w_mac_key_name": "server write mac key"
+		},
+		"op_output": "key expansion 384",
+		"op_input": "master secret 384",
+		"context_id": 1,
+		"depends": [
+			2,
+			4
+		]
+	},
+	"subtest 19": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"TLS_1_2_CLIENT",
+			"HASH=SHA256"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a"
+		],
+		"key_name": "master secret 256",
+		"sign_id": 0,
+		"depends": 5
+	},
+	"subtest 20": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"TLS_1_2_SERVER",
+			"HASH=SHA256"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a"
+		],
+		"key_name": "master secret 256",
+		"sign_id": 1,
+		"depends": 5
+	},
+	"subtest 21": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"TLS_1_2_CLIENT",
+			"HASH=SHA384"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a"
+		],
+		"key_name": "master secret 384",
+		"sign_id": 2,
+		"depends": 9
+	},
+	"subtest 22": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"TLS_1_2_SERVER",
+			"HASH=SHA384"
+		],
+		"message": [
+			"f149e41d848f59276cfddd743bafa9a9",
+			"0e1ee4a263a118142b33e3702176ef0a"
+		],
+		"key_name": "master secret 384",
+		"sign_id": 3,
+		"depends": 9
+	},
+	"subtest 23": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "ELE",
+		"context_id": 1,
+		"depends": 4
+	},
+	"subtest 24": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "ELE",
+		"context_id": 0,
+		"depends": 3
+	},
+	"subtest 25": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "self 384-bit ecdh key",
+		"depends": 2
+	},
+	"subtest 26": {
+		"command": "DELETE",
+		"key_name": "self 256-bit ecdh key",
+		"depends": 1
+	}
+}

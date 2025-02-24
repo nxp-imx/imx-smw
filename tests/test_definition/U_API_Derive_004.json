@@ -1,0 +1,467 @@
+{
+	"keys": {
+		"master secret": {},
+		"key expansion": {},
+		"client write enc key": {},
+		"server write enc key": {},
+		"client write mac key": {},
+		"server write mac key": {},
+		"self ecdh key": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"pub_key": 64,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_2",
+				"HASH=SHA256"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"key_name": "self ecdh key",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"context_id": 0,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 3": {
+		"description": "TLS1.2 context is NULL",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"session_hash": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self ecdh key",
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"description": "TLS1.2 operation argument is NULL",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_output": "master secret 256",
+		"op_input": "self ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"description": "TLS1.2 op_args op_name is unknown",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "UNKNOWN",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"session_hash": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": {
+		"description": "TLS1.2 op_args key_exchange_name is unknown",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_UNKNOWN",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"session_hash": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": {
+		"description": "TLS1.2 op_args prf_name is unknown",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "UNKNOWN",
+			"ext_master_key": true,
+			"session_hash": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": {
+		"description": "TLS1.2 ms.session_hash is NULL",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 9": {
+		"description": "TLS1.2 ms.peer_public_key is NULL",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA256",
+			"ext_master_key": true,
+			"session_hash": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": {
+		"description": "TLS1.2 ms.random_data.client_random is NULL",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA256",
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": {
+		"description": "TLS1.2 ms.random_data.server_random is NULL",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "MASTER_SECRET",
+			"key_exchange_name": "ECDH_ECDSA",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			]
+		},
+		"op_output": "master secret 256",
+		"op_input": "self ecdh key",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 12": {
+		"description": "TLS1.2 ke.encryption_name is unknown",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "UNKNOWN",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 13": {
+		"description": "TLS1.2 ke.prf_name is unknown",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_CCM",
+			"prf_name": "UNKNOWN",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 14": {
+		"description": "TLS1.2 ke.client_random is null",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_CCM",
+			"prf_name": "SHA256",
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 15": {
+		"description": "TLS1.2 ke.server_random is null",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_CCM",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_write_iv": "000000000000000000000000",
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 16": {
+		"description": "TLS1.2 ke.client_write_iv is null",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_CCM",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 17": {
+		"description": "TLS1.2 ke.server_write_iv is null",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS12_OP_KEY_EXCHANGE",
+		"op_args": {
+			"op_name": "KEY_EXPANSION",
+			"encryption_name": "AES_128_CCM",
+			"prf_name": "SHA256",
+			"client_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"server_random": [
+				"000102030405060708090a0b0c0d0e0f",
+				"000102030405060708090a0b0c0d0e0f"
+			],
+			"client_write_iv": "000000000000000000000000",
+			"client_w_enc_key_name": "client write enc key",
+			"server_w_enc_key_name": "server write enc key"
+		},
+		"op_output": "key expansion 256",
+		"op_input": "master secret 256",
+		"context_id": 0,
+		"depends": [
+			1,
+			2
+		],
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 18": {
+		"command": "OP_CONTEXT_CANCEL",
+		"subsystem": "DEFAULT",
+		"context_id": 0,
+		"depends": 2,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 19": {
+		"command": "DELETE",
+		"key_name": "self ecdh key",
+		"depends": 1
+	}
+}

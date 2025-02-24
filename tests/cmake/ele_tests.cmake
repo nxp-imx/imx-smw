@@ -4,8 +4,17 @@ set(CMD ${TEST_CMD})
 # Get all test definition files
 file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}_*.json)
 
+# These tests depend on TLS feature support
+if(NOT ENABLE_TLS12)
+	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_005.json)
+endif()
+
 # Remove failing test due to ELE Library or FW issues
-list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/F_${GROUP}_Thread_001.json)
+list(APPEND REM_TESTS_LIST ${TEST_DEF_SRC_DIR}/F_${GROUP}_Thread_001.json)
+
+foreach(REM_TESTS IN LISTS REM_TESTS_LIST)
+	list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/${REM_TESTS})
+endforeach()
 
 add_and_install_tests("${TESTS}" "${CMD}")
 

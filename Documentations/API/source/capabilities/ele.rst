@@ -743,8 +743,8 @@ buffer returned must be signed with CST tool and given as parameter of the
 
 Key Derivation
 ^^^^^^^^^^^^^^
-Supported Key Derivation Functions
- - HMAC-based Key Derivation Function (HKDF)
+
+- HMAC-based Key Derivation Function (HKDF)
 
 The subsystem supports HKDF Extract step, Expand step and Full step (Extract and
 Expand combined). The subsystem supports deriving a key from an existing stored
@@ -752,3 +752,39 @@ asymmetric key as well as from a plaintext buffer. The derived key has to
 be stored in the ELE storage.
 
 .. Note:: Not supported on i.MX8ULP and i.MX95
+
+- TLS 1.2 (TLS1-PRF)
+
+The subsystem supports generating the master secret, encryption/decryption
+keys and IVs, and verify data. ELE does not allow some operations on data with
+length less than the key size, so the key size of the base key used for ECDH(E)
+dictates which ciphersuites can be used. For example, if the key size is 384
+bits, you may only use ciphersuites that use SHA384.
+
+Only ECDH(E) key exchange is supported, and the following ciphersuites:
+
+.. table:: ELE supported ciphersuites
+   :name: ele_ciphersuites
+   :align: center
+   :width: 100%
+   :class: wrap-table
+
+   +--------------------------------------+-------------------------------+
+   | **SMW encryption name**              | **OpenSSL equivalent**        |
+   +======================================+===============================+
+   | SMW_TLS12_ENC_NAME_AES_128_CBC       | ECDHE-ECDSA-AES128-SHA256     |
+   +--------------------------------------+-------------------------------+
+   | SMW_TLS12_ENC_NAME_AES_128_CCM       | ECDHE-ECDSA-AES128-CCM        |
+   +--------------------------------------+-------------------------------+
+   | SMW_TLS12_ENC_NAME_AES_128_GCM       | ECDHE-ECDSA-AES128-GCM-SHA256 |
+   +--------------------------------------+-------------------------------+
+   | SMW_TLS12_ENC_NAME_AES_256_CBC       | ECDHE-ECDSA-AES256-SHA384     |
+   +--------------------------------------+-------------------------------+
+   | SMW_TLS12_ENC_NAME_AES_256_CCM       | ECDHE-ECDSA-AES256-CCM        |
+   +--------------------------------------+-------------------------------+
+   | SMW_TLS12_ENC_NAME_AES_256_GCM       | ECDHE-ECDSA-AES256-GCM-SHA384 |
+   +--------------------------------------+-------------------------------+
+   | SMW_TLS12_ENC_NAME_CHACHA20_POLY1305 | ECDHE-ECDSA-CHACHA20-POLY1305 |
+   +--------------------------------------+-------------------------------+
+
+.. Note:: Only supported on i.MX91 and i.MX93

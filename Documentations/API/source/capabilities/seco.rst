@@ -213,3 +213,38 @@ AEAD
 One-shot operations supported:
  - AEAD Encryption
  - AEAD Decryption
+
+Key Derivation
+^^^^^^^^^^^^^^
+
+- TLS 1.2 (TLS1-PRF) [6]_
+
+SECO does not support multiple TLS1.2 operations, so the implementation of the
+TLS1.2 API uses the context supplied as a parameter to store intermediate data when
+attempting to generate the master secret. When calling the TLS1.2 API to compute
+the key expansion, the input of this operation is merged with the context and the
+actual operation is being executed. Thus, the master secret key id returned from
+the first operation is not valid, and only be used after the subsequent key
+expansion operation.
+
+Only ECDH(E) key exchange is supported, and the following ciphersuites:
+
+.. table:: SECO supported ciphersuites
+   :name: seco_ciphersuites
+   :align: center
+   :width: 100%
+   :class: wrap-table
+
+   +--------------------------------------+-------------------------------+
+   | **SMW encryption name**              | **OpenSSL equivalent**        |
+   +======================================+===============================+
+   | SMW_TLS12_ENC_NAME_AES_128_CBC       | ECDHE-ECDSA-AES128-SHA256     |
+   +--------------------------------------+-------------------------------+
+   | SMW_TLS12_ENC_NAME_AES_128_GCM       | ECDHE-ECDSA-AES128-GCM-SHA256 |
+   +--------------------------------------+-------------------------------+
+   | SMW_TLS12_ENC_NAME_AES_256_CBC       | ECDHE-ECDSA-AES256-SHA384     |
+   +--------------------------------------+-------------------------------+
+   | SMW_TLS12_ENC_NAME_AES_256_GCM       | ECDHE-ECDSA-AES256-GCM-SHA384 |
+   +--------------------------------------+-------------------------------+
+
+.. [6] Only when supported by the hardware

@@ -329,6 +329,7 @@ static void key_private_free(struct libobj_obj *obj)
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		key_ec_private_free(obj);
 		break;
 
@@ -367,6 +368,7 @@ static void key_public_free(struct libobj_obj *obj)
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		key_ec_public_free(obj);
 		break;
 
@@ -970,6 +972,7 @@ static CK_RV subkey_private_create(CK_SESSION_HANDLE hsession,
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_private_create(hsession, obj, attrs);
 		break;
 
@@ -1014,6 +1017,7 @@ static CK_RV subkey_private_retrieve(CK_SESSION_HANDLE hsession,
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_private_retrieve(hsession, obj);
 		break;
 
@@ -1069,6 +1073,7 @@ static CK_RV subkey_private_get_attribute(CK_ATTRIBUTE_PTR attr,
 	 */
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_private_get_attribute(attr, obj, protect);
 		break;
 
@@ -1121,6 +1126,7 @@ static CK_RV subkey_private_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	 */
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_private_modify_attribute(attr, obj);
 		break;
 
@@ -1167,6 +1173,7 @@ static CK_RV subkey_public_create(CK_SESSION_HANDLE hsession,
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_public_create(hsession, obj, attrs);
 		break;
 
@@ -1211,6 +1218,7 @@ static CK_RV subkey_public_retrieve(CK_SESSION_HANDLE hsession,
 
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_public_retrieve(hsession, obj);
 		break;
 
@@ -1259,6 +1267,7 @@ static CK_RV subkey_public_get_attribute(CK_ATTRIBUTE_PTR attr,
 	 */
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_public_get_attribute(attr, obj);
 		break;
 
@@ -1310,6 +1319,7 @@ static CK_RV subkey_public_modify_attribute(CK_ATTRIBUTE_PTR attr,
 	 */
 	switch (get_key_type(obj)) {
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_public_modify_attribute(attr, obj);
 		break;
 
@@ -1643,12 +1653,20 @@ CK_RV key_keypair_retrieve(CK_SESSION_HANDLE hsession,
 	set_key_token_id(pub_obj, id);
 	set_key_token_id(priv_obj, id);
 
-	if (get_key_type(priv_obj) == CKK_EC)
+	switch (get_key_type(priv_obj)) {
+	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_keypair_retrieve(hsession, pub_obj, priv_obj);
-	else if (get_key_type(priv_obj) == CKK_RSA)
+		break;
+
+	case CKK_RSA:
 		ret = key_rsa_keypair_retrieve(hsession, pub_obj, priv_obj);
-	else
+		break;
+
+	default:
 		ret = CKR_FUNCTION_FAILED;
+		break;
+	}
 
 end:
 	DBG_TRACE("Keypair object (pub=%p priv=%p) retrieve return %ld",
@@ -1802,6 +1820,10 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		key_type = CKK_EC;
 		break;
 
+	case CKM_EC_EDWARDS_KEY_PAIR_GEN:
+		key_type = CKK_EC_EDWARDS;
+		break;
+
 	case CKM_RSA_PKCS_KEY_PAIR_GEN:
 	case CKM_RSA_X9_31_KEY_PAIR_GEN:
 		key_type = CKK_RSA;
@@ -1831,12 +1853,18 @@ CK_RV key_keypair_generate(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	if (ret != CKR_OK)
 		goto end;
 
-	if (key_type == CKK_EC)
+	switch (key_type) {
+	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		ret = key_ec_keypair_generate(hsession, mech, pub_key,
 					      pub_attrs, priv_key, priv_attrs);
-	else
+		break;
+
+	case CKK_RSA:
 		ret = key_rsa_keypair_generate(hsession, mech, pub_key,
 					       pub_attrs, priv_key, priv_attrs);
+		break;
+	}
 
 end:
 	DBG_TRACE("Keypair object (pub=%p priv=%p) generate return %ld",

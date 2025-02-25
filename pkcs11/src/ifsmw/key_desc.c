@@ -52,18 +52,54 @@ const CK_BYTE brainpoolP384r1[] = ASN1_OID_BRAINPOOL_P384R1;
 const CK_BYTE brainpoolP384t1[] = ASN1_OID_BRAINPOOL_P384T1;
 const CK_BYTE brainpoolP512r1[] = ASN1_OID_BRAINPOOL_P512R1;
 const CK_BYTE brainpoolP512t1[] = ASN1_OID_BRAINPOOL_P512T1;
+const CK_BYTE ed25519[] = ASN1_OID_ED25519;
+
+enum name_ec_key {
+	EC_PRIME192V1,
+	EC_PRIME256V1,
+	EC_SECP224R1,
+	EC_SECP384R1,
+	EC_SECP521R1,
+	EC_BRAINPOOL160R1,
+	EC_BRAINPOOL160T1,
+	EC_BRAINPOOL192R1,
+	EC_BRAINPOOL192T1,
+	EC_BRAINPOOL224R1,
+	EC_BRAINPOOL224T1,
+	EC_BRAINPOOL256R1,
+	EC_BRAINPOOL256T1,
+	EC_BRAINPOOL320R1,
+	EC_BRAINPOOL320T1,
+	EC_BRAINPOOL384R1,
+	EC_BRAINPOOL384T1,
+	EC_BRAINPOOL512R1,
+	EC_BRAINPOOL512T1,
+	EC_ED25519,
+	EC_NB_KEY_NAME
+};
 
 const struct asn1_curve_def ec_asn1_curves[] = {
-	EC_ASN1_CURVE(prime192v1),	EC_ASN1_CURVE(prime256v1),
-	EC_ASN1_CURVE(secp224r1),	EC_ASN1_CURVE(secp384r1),
-	EC_ASN1_CURVE(secp521r1),	EC_ASN1_CURVE(brainpoolP160r1),
-	EC_ASN1_CURVE(brainpoolP160t1), EC_ASN1_CURVE(brainpoolP192r1),
-	EC_ASN1_CURVE(brainpoolP192t1), EC_ASN1_CURVE(brainpoolP224r1),
-	EC_ASN1_CURVE(brainpoolP224t1), EC_ASN1_CURVE(brainpoolP256r1),
-	EC_ASN1_CURVE(brainpoolP256t1), EC_ASN1_CURVE(brainpoolP320r1),
-	EC_ASN1_CURVE(brainpoolP320t1), EC_ASN1_CURVE(brainpoolP384r1),
-	EC_ASN1_CURVE(brainpoolP384t1), EC_ASN1_CURVE(brainpoolP512r1),
-	EC_ASN1_CURVE(brainpoolP512t1), { 0 }
+	[EC_PRIME192V1] = EC_ASN1_CURVE(prime192v1),
+	[EC_PRIME256V1] = EC_ASN1_CURVE(prime256v1),
+	[EC_SECP224R1] = EC_ASN1_CURVE(secp224r1),
+	[EC_SECP384R1] = EC_ASN1_CURVE(secp384r1),
+	[EC_SECP521R1] = EC_ASN1_CURVE(secp521r1),
+	[EC_BRAINPOOL160R1] = EC_ASN1_CURVE(brainpoolP160r1),
+	[EC_BRAINPOOL160T1] = EC_ASN1_CURVE(brainpoolP160t1),
+	[EC_BRAINPOOL192R1] = EC_ASN1_CURVE(brainpoolP192r1),
+	[EC_BRAINPOOL192T1] = EC_ASN1_CURVE(brainpoolP192t1),
+	[EC_BRAINPOOL224R1] = EC_ASN1_CURVE(brainpoolP224r1),
+	[EC_BRAINPOOL224T1] = EC_ASN1_CURVE(brainpoolP224t1),
+	[EC_BRAINPOOL256R1] = EC_ASN1_CURVE(brainpoolP256r1),
+	[EC_BRAINPOOL256T1] = EC_ASN1_CURVE(brainpoolP256t1),
+	[EC_BRAINPOOL320R1] = EC_ASN1_CURVE(brainpoolP320r1),
+	[EC_BRAINPOOL320T1] = EC_ASN1_CURVE(brainpoolP320t1),
+	[EC_BRAINPOOL384R1] = EC_ASN1_CURVE(brainpoolP384r1),
+	[EC_BRAINPOOL384T1] = EC_ASN1_CURVE(brainpoolP384t1),
+	[EC_BRAINPOOL512R1] = EC_ASN1_CURVE(brainpoolP512r1),
+	[EC_BRAINPOOL512T1] = EC_ASN1_CURVE(brainpoolP512t1),
+	[EC_ED25519] = EC_ASN1_CURVE(ed25519),
+	[EC_NB_KEY_NAME] = { 0 }
 };
 
 /**
@@ -84,49 +120,63 @@ struct dev_curve_def {
 	}
 
 const struct dev_curve_def ec_smw_curves[] = {
-	EC_SMW_CURVE(SECP_R1, 192),	 EC_SMW_CURVE(SECP_R1, 256),
-	EC_SMW_CURVE(SECP_R1, 224),	 EC_SMW_CURVE(SECP_R1, 384),
-	EC_SMW_CURVE(SECP_R1, 521),	 EC_SMW_CURVE(BRAINPOOL_R1, 160),
-	EC_SMW_CURVE(BRAINPOOL_T1, 160), EC_SMW_CURVE(BRAINPOOL_R1, 192),
-	EC_SMW_CURVE(BRAINPOOL_T1, 192), EC_SMW_CURVE(BRAINPOOL_R1, 224),
-	EC_SMW_CURVE(BRAINPOOL_T1, 224), EC_SMW_CURVE(BRAINPOOL_R1, 256),
-	EC_SMW_CURVE(BRAINPOOL_T1, 256), EC_SMW_CURVE(BRAINPOOL_R1, 320),
-	EC_SMW_CURVE(BRAINPOOL_T1, 320), EC_SMW_CURVE(BRAINPOOL_R1, 384),
-	EC_SMW_CURVE(BRAINPOOL_T1, 384), EC_SMW_CURVE(BRAINPOOL_R1, 512),
-	EC_SMW_CURVE(BRAINPOOL_T1, 512), { 0 }
+	[EC_PRIME192V1] = EC_SMW_CURVE(SECP_R1, 192),
+	[EC_PRIME256V1] = EC_SMW_CURVE(SECP_R1, 256),
+	[EC_SECP224R1] = EC_SMW_CURVE(SECP_R1, 224),
+	[EC_SECP384R1] = EC_SMW_CURVE(SECP_R1, 384),
+	[EC_SECP521R1] = EC_SMW_CURVE(SECP_R1, 521),
+	[EC_BRAINPOOL160R1] = EC_SMW_CURVE(BRAINPOOL_R1, 160),
+	[EC_BRAINPOOL160T1] = EC_SMW_CURVE(BRAINPOOL_T1, 160),
+	[EC_BRAINPOOL192R1] = EC_SMW_CURVE(BRAINPOOL_R1, 192),
+	[EC_BRAINPOOL192T1] = EC_SMW_CURVE(BRAINPOOL_T1, 192),
+	[EC_BRAINPOOL224R1] = EC_SMW_CURVE(BRAINPOOL_R1, 224),
+	[EC_BRAINPOOL224T1] = EC_SMW_CURVE(BRAINPOOL_T1, 224),
+	[EC_BRAINPOOL256R1] = EC_SMW_CURVE(BRAINPOOL_R1, 256),
+	[EC_BRAINPOOL256T1] = EC_SMW_CURVE(BRAINPOOL_T1, 256),
+	[EC_BRAINPOOL320R1] = EC_SMW_CURVE(BRAINPOOL_R1, 320),
+	[EC_BRAINPOOL320T1] = EC_SMW_CURVE(BRAINPOOL_T1, 320),
+	[EC_BRAINPOOL384R1] = EC_SMW_CURVE(BRAINPOOL_R1, 384),
+	[EC_BRAINPOOL384T1] = EC_SMW_CURVE(BRAINPOOL_T1, 384),
+	[EC_BRAINPOOL512R1] = EC_SMW_CURVE(BRAINPOOL_R1, 512),
+	[EC_BRAINPOOL512T1] = EC_SMW_CURVE(BRAINPOOL_T1, 512),
+	[EC_ED25519] = EC_SMW_CURVE(ED25519, 255),
+	[EC_NB_KEY_NAME] = { 0 }
 };
 
 /*
- * Definition of the ASN1 EC Curves supported (function )
+ * Definition of the ASN1 EC Curves supported
  */
+#define CKK_UNKNOWN_KEY_TYPE CK_UNAVAILABLE_INFORMATION
 
-#define EC_CURVE(_asn1, _smw)                                                  \
+#define EC_CURVE(_key_name, _ck_type)                                          \
 	{                                                                      \
-		.asn1 = _asn1, .dev = _smw                                     \
+		.asn1 = &ec_asn1_curves[EC_##_key_name],                       \
+		.dev = &ec_smw_curves[EC_##_key_name],                         \
+		.ck_key_type = CKK_##_ck_type                                  \
 	}
 
 const struct curve_def ec_curves[] = {
-	EC_CURVE(&ec_asn1_curves[0], &ec_smw_curves[0]),
-	EC_CURVE(&ec_asn1_curves[1], &ec_smw_curves[1]),
-	EC_CURVE(&ec_asn1_curves[2], &ec_smw_curves[2]),
-	EC_CURVE(&ec_asn1_curves[3], &ec_smw_curves[3]),
-	EC_CURVE(&ec_asn1_curves[4], &ec_smw_curves[4]),
-	EC_CURVE(&ec_asn1_curves[5], &ec_smw_curves[5]),
-	EC_CURVE(&ec_asn1_curves[6], &ec_smw_curves[6]),
-	EC_CURVE(&ec_asn1_curves[7], &ec_smw_curves[7]),
-	EC_CURVE(&ec_asn1_curves[8], &ec_smw_curves[8]),
-	EC_CURVE(&ec_asn1_curves[9], &ec_smw_curves[9]),
-	EC_CURVE(&ec_asn1_curves[10], &ec_smw_curves[10]),
-	EC_CURVE(&ec_asn1_curves[11], &ec_smw_curves[11]),
-	EC_CURVE(&ec_asn1_curves[12], &ec_smw_curves[12]),
-	EC_CURVE(&ec_asn1_curves[13], &ec_smw_curves[13]),
-	EC_CURVE(&ec_asn1_curves[14], &ec_smw_curves[14]),
-	EC_CURVE(&ec_asn1_curves[15], &ec_smw_curves[15]),
-	EC_CURVE(&ec_asn1_curves[16], &ec_smw_curves[16]),
-	EC_CURVE(&ec_asn1_curves[17], &ec_smw_curves[17]),
-	EC_CURVE(&ec_asn1_curves[18], &ec_smw_curves[18]),
-	EC_CURVE(&ec_asn1_curves[19], &ec_smw_curves[19]),
-	{ 0 }
+	EC_CURVE(PRIME192V1, EC),
+	EC_CURVE(PRIME256V1, EC),
+	EC_CURVE(SECP224R1, EC),
+	EC_CURVE(SECP384R1, EC),
+	EC_CURVE(SECP521R1, EC),
+	EC_CURVE(BRAINPOOL160R1, EC),
+	EC_CURVE(BRAINPOOL160T1, EC),
+	EC_CURVE(BRAINPOOL192R1, EC),
+	EC_CURVE(BRAINPOOL192T1, EC),
+	EC_CURVE(BRAINPOOL224R1, EC),
+	EC_CURVE(BRAINPOOL224T1, EC),
+	EC_CURVE(BRAINPOOL256R1, EC),
+	EC_CURVE(BRAINPOOL256T1, EC),
+	EC_CURVE(BRAINPOOL320R1, EC),
+	EC_CURVE(BRAINPOOL320T1, EC),
+	EC_CURVE(BRAINPOOL384R1, EC),
+	EC_CURVE(BRAINPOOL384T1, EC),
+	EC_CURVE(BRAINPOOL512R1, EC),
+	EC_CURVE(BRAINPOOL512T1, EC),
+	EC_CURVE(ED25519, EC_EDWARDS),
+	EC_CURVE(NB_KEY_NAME, UNKNOWN_KEY_TYPE),
 };
 
 struct cipher_def {
@@ -261,7 +311,8 @@ static CK_RV get_hmac_type_from_pkcs(smw_key_type_t *key_type_name,
 
 static CK_RV get_ec_curve_from_smw(struct libbytes *ec_params,
 				   smw_key_type_t key_type_name,
-				   unsigned int security_size)
+				   unsigned int security_size,
+				   CK_KEY_TYPE *ck_key_type)
 {
 	CK_RV ret = CKR_KEY_TYPE_INCONSISTENT;
 
@@ -278,6 +329,7 @@ static CK_RV get_ec_curve_from_smw(struct libbytes *ec_params,
 	if (curve->dev->name) {
 		/* Convert the curve to EC params */
 		ret = util_asn1_curve_to_ec_params(curve, ec_params);
+		*ck_key_type = curve->ck_key_type;
 	}
 
 	return ret;
@@ -333,12 +385,9 @@ static CK_RV ec_key_smw_to_pkcs11(unsigned int op, CK_KEY_TYPE *ck_key_type,
 	 * the @obj key type because @obj key structure allocated may not
 	 * an EC key.
 	 */
-	if (op & OP_KEY_DESC_GET_KEY_TYPE) {
+	if (op & OP_KEY_DESC_GET_KEY_TYPE)
 		ret = get_ec_curve_from_smw(&params, desc->type_name,
-					    desc->security_size);
-		if (ret == CKR_OK && ck_key_type)
-			*ck_key_type = CKK_EC;
-	}
+					    desc->security_size, ck_key_type);
 
 	if (ret == CKR_OK && (op & OP_KEY_DESC_GET_SECURITY_SIZE)) {
 		/* Convert the curve to EC params */
@@ -417,6 +466,47 @@ end:
 	return ret;
 }
 
+static CK_RV edwards_key_set_buffer_from_obj(struct smw_key_descriptor *desc,
+					     struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+	struct smw_keypair_gen *smw_key = NULL;
+	struct libobj_key_ec_pair *key = NULL;
+
+	/*
+	 * If SMW key's descriptor buffer field is set, setup it
+	 * with the EC key object's buffer
+	 */
+	if (!desc->buffer)
+		goto end;
+
+	if (!obj) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
+	key = get_subkey_from(obj);
+	smw_key = &desc->buffer->gen;
+
+	if (key->point_q.array) {
+		smw_key->public_data = key->point_q.array;
+		if (SET_OVERFLOW(key->point_q.number, smw_key->public_length)) {
+			ret = CKR_ARGUMENTS_BAD;
+			goto end;
+		}
+	}
+
+	smw_key->private_data = key->value_d.value;
+
+	if (SET_OVERFLOW(key->value_d.length, smw_key->private_length))
+		ret = CKR_ARGUMENTS_BAD;
+	else
+		ret = CKR_OK;
+
+end:
+	return ret;
+}
+
 static CK_RV ec_key_pkcs11_to_smw(unsigned int op,
 				  struct smw_key_descriptor *desc,
 				  struct libbytes *ec_params,
@@ -442,8 +532,24 @@ static CK_RV ec_key_pkcs11_to_smw(unsigned int op,
 			goto end;
 	}
 
-	if (op & OP_KEY_DESC_SET_BUFFER)
-		ret = ec_key_set_buffer_from_obj(desc, obj);
+	if (op & OP_KEY_DESC_SET_BUFFER) {
+		if (!obj)
+			goto end;
+
+		switch (get_key_type(obj)) {
+		case CKK_EC:
+			ret = ec_key_set_buffer_from_obj(desc, obj);
+			break;
+
+		case CKK_EC_EDWARDS:
+			ret = edwards_key_set_buffer_from_obj(desc, obj);
+			break;
+
+		default:
+			ret = CKR_KEY_TYPE_INCONSISTENT;
+			break;
+		}
+	}
 
 end:
 	return ret;
@@ -830,6 +936,7 @@ static CK_RV op_key_desc_setup(unsigned int op, struct smw_key_descriptor *desc,
 		break;
 
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		if (op & OP_KEY_DESC_GET_ALL)
 			ret = ec_key_smw_to_pkcs11(op, &tmp_key_type, obj,
 						   desc);

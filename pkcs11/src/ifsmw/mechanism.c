@@ -63,6 +63,12 @@ static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry,
 			    void *args);
+static void check_msign_eddsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
+			      struct mgroup *mgroup);
+static CK_RV info_msign_eddsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_msign_eddsa(CK_SLOT_ID slotid, struct mentry *entry,
+			    void *args);
 static void check_msign_rsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			    struct mgroup *mgroup);
 static CK_RV info_msign_rsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
@@ -231,6 +237,15 @@ struct mgroup {
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
 	       _id)
 
+#define M_SIGN_EDDSA_ANY_HASH(_id)                                             \
+	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
+	       SMW_SIGNATURE_ALGO_NAME_EDDSA, SMW_SIGNATURE_TYPE_NAME_NONE,    \
+	       SMW_KDF_NAME_NONE,                                              \
+	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(SMW_ATTR_CURVE_ANY,    \
+							SMW_ATTR_HASH_ANY),    \
+	       _id)
+
 #define M_SIGN_RSA_ANY_HASH(_mode, _id)                                        \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
@@ -307,6 +322,7 @@ static struct mentry mdigest[] = {
  */
 static struct mentry meckeygen[] = {
 	M_ECKEYGEN(smw_ec_name, ARRAY_SIZE(smw_ec_name), EC_KEY_PAIR_GEN),
+	M_KEYGEN(ED25519, EC_EDWARDS_KEY_PAIR_GEN),
 };
 
 /*
@@ -335,6 +351,10 @@ static struct mentry msign_ecdsa[] = {
 	M_SIGN_ECDSA_ANY_HASH(ECDSA),	    M_SIGN_ECDSA(SHA1, ECDSA_SHA1),
 	M_SIGN_ECDSA(SHA224, ECDSA_SHA224), M_SIGN_ECDSA(SHA256, ECDSA_SHA256),
 	M_SIGN_ECDSA(SHA384, ECDSA_SHA384), M_SIGN_ECDSA(SHA512, ECDSA_SHA512),
+};
+
+static struct mentry msign_eddsa[] = {
+	M_SIGN_EDDSA_ANY_HASH(EDDSA),
 };
 
 static struct mentry msign_rsa[] = {
@@ -420,6 +440,7 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(mkeygen), mkeygen),
 	M_GROUP(ARRAY_SIZE(mkeyderive), mkeyderive),
 	M_GROUP(ARRAY_SIZE(msign_ecdsa), msign_ecdsa),
+	M_GROUP(ARRAY_SIZE(msign_eddsa), msign_eddsa),
 	M_GROUP(ARRAY_SIZE(msign_rsa), msign_rsa),
 	M_GROUP(ARRAY_SIZE(mcipher), mcipher),
 	M_GROUP(ARRAY_SIZE(maead), maead),
@@ -599,7 +620,8 @@ static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 
 	algo = SMW_ATTR_GET_ALGO(perm_algo);
 
-	if (algo == SMW_ATTR_ALGO_ECDSA) {
+	switch (algo) {
+	case SMW_ATTR_ALGO_ECDSA:
 		for (; i < ARRAY_SIZE(msign_ecdsa); i++) {
 			if (perm_algo == msign_ecdsa[i].smw_algo_id) {
 				*mech = msign_ecdsa[i].type;
@@ -607,8 +629,19 @@ static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 				break;
 			}
 		}
+		break;
 
-	} else if (algo == SMW_ATTR_ALGO_RSA) {
+	case SMW_ATTR_ALGO_EDDSA:
+		for (; i < ARRAY_SIZE(msign_eddsa); i++) {
+			if (perm_algo == msign_eddsa[i].smw_algo_id) {
+				*mech = msign_eddsa[i].type;
+				found = true;
+				break;
+			}
+		}
+		break;
+
+	case SMW_ATTR_ALGO_RSA:
 		for (; i < ARRAY_SIZE(msign_rsa); i++) {
 			if (perm_algo == msign_rsa[i].smw_algo_id) {
 				*mech = msign_rsa[i].type;
@@ -616,6 +649,10 @@ static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 				break;
 			}
 		}
+		break;
+
+	default:
+		break;
 	}
 
 	DBG_TRACE("%s mechanism (0x%08lX)", found ? "Found" : "No", *mech);
@@ -1119,6 +1156,46 @@ end:
 	return ret;
 }
 
+static CK_RV export_edwards_public_key(struct smw_key_descriptor *key_desc,
+				       const struct libobj_obj *obj)
+{
+	CK_RV ret = CKR_OK;
+
+	struct libobj_key_ec_pair *key = get_subkey_from(obj);
+	size_t public_length = 0;
+
+	DBG_TRACE("Export Edwards Public Key");
+
+	/* Assign EC public key length */
+	public_length = key_desc->buffer->gen.public_length;
+	if (!public_length) {
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
+	key->point_q.number = public_length;
+	key->point_q.array = calloc(1, key->point_q.number);
+	if (!key->point_q.array) {
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	ret = op_export_common(key_desc, obj);
+
+end:
+	if (ret != CKR_OK) {
+		if (key->point_q.array)
+			free(key->point_q.array);
+
+		key->point_q.array = NULL;
+		key->point_q.number = 0;
+	}
+
+	DBG_TRACE("return %ld", ret);
+
+	return ret;
+}
+
 static CK_RV export_rsa_public_key(struct smw_key_descriptor *key_desc,
 				   const struct libobj_obj *obj)
 {
@@ -1433,6 +1510,14 @@ static void check_msign_ecdsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 	check_msign_common(slotid, subsystem, mgroup);
 }
 
+static void check_msign_eddsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
+			      struct mgroup *mgroup)
+{
+	DBG_TRACE("Check EDDSA Signature mechanism");
+
+	check_msign_common(slotid, subsystem, mgroup);
+}
+
 static void check_msign_rsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			    struct mgroup *mgroup)
 {
@@ -1486,6 +1571,12 @@ static CK_RV info_msign_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 }
 
 static CK_RV info_msign_ecdsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	return info_msign_common(slotid, type, entry, info);
+}
+
+static CK_RV info_msign_eddsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
 	return info_msign_common(slotid, type, entry, info);
@@ -1749,6 +1840,20 @@ static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	unsigned int key_id = 0;
 
 	DBG_TRACE("ECDSA Signature mechanism");
+
+	ctx = ((struct lib_signature_params *)args)->ctx;
+
+	key_id = get_key_token_id((struct libobj_obj *)ctx->hkey);
+
+	return op_msign_common(slotid, entry, args, key_id);
+}
+
+static CK_RV op_msign_eddsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	struct lib_signature_ctx *ctx = NULL;
+	unsigned int key_id = 0;
+
+	DBG_TRACE("EDDSA Signature mechanism");
 
 	ctx = ((struct lib_signature_params *)args)->ctx;
 
@@ -2798,6 +2903,10 @@ CK_RV libdev_export_public_key(const struct libobj_obj *obj)
 	switch (get_key_type(obj)) {
 	case CKK_EC:
 		ret = export_ec_public_key(&key_descriptor, obj);
+		break;
+
+	case CKK_EC_EDWARDS:
+		ret = export_edwards_public_key(&key_descriptor, obj);
 		break;
 
 	case CKK_RSA:

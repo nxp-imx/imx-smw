@@ -255,6 +255,7 @@ void args_attrs_key_usage(smw_attr_usage_t *usage_flags, struct libobj_obj *obj)
 		break;
 
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		set_ec_key_usage(usage_flags, obj);
 		break;
 
@@ -293,6 +294,7 @@ void args_attr_get_key_usage(struct libobj_obj *obj,
 		break;
 
 	case CKK_EC:
+	case CKK_EC_EDWARDS:
 		get_ec_key_usage(obj, usage_flags);
 		break;
 

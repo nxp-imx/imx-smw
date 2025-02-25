@@ -27,13 +27,15 @@ struct dev_curve_def;
 /**
  * struct curve_def - Definition of ASN1 vs SMW curves
  * @asm1: ASN1 curve definition
- * @dev: device curve definition
+ * @dev: Device curve definition
+ * @ck_key_type: PKCS11 Key type
  *
  * Note: The last element must be NULL
  */
 struct curve_def {
 	const struct asn1_curve_def *asn1;
 	const struct dev_curve_def *dev;
+	const CK_KEY_TYPE ck_key_type;
 };
 
 /* ASN1 Long format length encoding tag */

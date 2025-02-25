@@ -84,6 +84,8 @@ static const struct {
 		       ASYMMETRIC_SIGNATURE),
 	PERMITTED_ALGO(RSA_PKCS1_V15_SHA512, RSA, PKCS1_1_5, SHA512,
 		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_V15_SHA_ANY, RSA, PKCS1_1_5, ANY,
+		       ASYMMETRIC_SIGNATURE),
 	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA224, RSA, PSS, SHA224,
 		       ASYMMETRIC_SIGNATURE),
 	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA256, RSA, PSS, SHA256,
@@ -91,6 +93,8 @@ static const struct {
 	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA384, RSA, PSS, SHA384,
 		       ASYMMETRIC_SIGNATURE),
 	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA512, RSA, PSS, SHA512,
+		       ASYMMETRIC_SIGNATURE),
+	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA_ANY, RSA, PSS, ANY,
 		       ASYMMETRIC_SIGNATURE),
 	PERMITTED_ALGO_CURVE(ECDSA_SHA224, ECDSA, NONE, SHA224,
 			     ASYMMETRIC_SIGNATURE),
@@ -188,9 +192,8 @@ static void convert_algo_to_ele(smw_attr_algo_t smw, hsm_permitted_algo_t *ele)
 		     permitted_algos[i].smw_curve == SMW_ATTR_CURVE_NONE ||
 		     permitted_algos[i].smw_curve == curve) &&
 		    (permitted_algos[i].smw_hash == SMW_ATTR_HASH_NONE ||
-		     permitted_algos[i].smw_hash == hash)
-
-		) {
+		     permitted_algos[i].smw_hash == SMW_ATTR_HASH_ANY ||
+		     permitted_algos[i].smw_hash == hash)) {
 			ele_algo = permitted_algos[i].ele_permitted_algo;
 
 			if (class == SMW_ATTR_CLASS_MAC) {

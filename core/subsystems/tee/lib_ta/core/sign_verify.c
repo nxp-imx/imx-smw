@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <util.h>
@@ -235,6 +235,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	bool persistent = false;
 	uint32_t attr_count = 0;
 	struct sign_verify_shared_params *shared_params = NULL;
+	uint32_t op_max_key_size = 0;
 
 	FMSG("Executing %s (%d)", __func__, cmd_id);
 
@@ -299,6 +300,8 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 		digest_len = params[2].memref.size;
 	}
 
+	op_max_key_size = shared_params->security_size;
+
 	/* Get TEE algorithm ID */
 	if (shared_params->key_type == TEE_KEY_TYPE_ID_RSA) {
 		res = get_rsa_algo_id(shared_params->signature_type,
@@ -314,6 +317,11 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 		}
 	} else if (shared_params->key_type == TEE_KEY_TYPE_ID_ED25519) {
 		algorithm_id = TEE_ALG_ED25519;
+
+		if (ROUNDUP_OVERFLOW(op_max_key_size, 2, &op_max_key_size)) {
+			res = TEE_ERROR_GENERIC;
+			goto err;
+		}
 
 		if (shared_params->hash_algorithm == TEE_ALGORITHM_ID_INVALID) {
 			TEE_InitValueAttribute(&sign_verify_attr[attr_count],
@@ -339,7 +347,7 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	}
 
 	res = TEE_AllocateOperation(&operation, algorithm_id, mode,
-				    shared_params->security_size);
+				    op_max_key_size);
 	if (res) {
 		EMSG("Failed to alloc operation: 0x%x", res);
 		goto err;

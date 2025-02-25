@@ -243,10 +243,16 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	SMW_DBG_PRINTF_COND(ERROR, status != SMW_STATUS_OK,
 			    "%s: Operation failed\n", __func__);
 
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_OUTPUT_TOO_SHORT)
+		goto exit;
+
 	if (op_id == OPERATION_ID_SIGN) {
 		if (!SET_OVERFLOW(operation.params[3].tmpref.size,
 				  sign_length)) {
 			smw_sign_verify_set_sign_len(args, sign_length);
+
+			if (status != SMW_STATUS_OK)
+				goto exit;
 
 			SMW_DBG_PRINTF(DEBUG, "Output (%u):\n", sign_length);
 			SMW_DBG_HEX_DUMP(DEBUG,

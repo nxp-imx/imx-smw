@@ -11,6 +11,7 @@
 #include "tee_subsystem.h"
 #include "obj.h"
 #include "keymgr.h"
+#include "common.h"
 
 /* Number of attributes switch key type */
 #define NB_ATTR_SECP_R1_PUB_KEY 3
@@ -153,8 +154,8 @@ struct {
 	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 256, P256),
 	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 384, P384),
 	KEY_DEF_ECC_PUBLIC_KEY(SECP_R1, 521, P521),
-	KEY_DEF_KEYPAIR(ED25519, 256, ED25519),
-	KEY_DEF_PUBLIC_KEY(ED25519, 256, ED25519),
+	KEY_DEF_KEYPAIR(ED25519, 255, ED25519),
+	KEY_DEF_PUBLIC_KEY(ED25519, 255, ED25519),
 	KEY_DEF_RANGE_PRIVATE(AES, AES),
 	KEY_DEF_SYMMETRIC(DES, 56, DES),
 	KEY_DEF_RANGE_PRIVATE(DES3, DES3),
@@ -171,18 +172,6 @@ struct {
 	KEY_DEF_RANGE_SECRET(GENERIC_SECRET, GENERIC_SECRET),
 	KEY_DEF_RANGE_PRIVATE(HKDF_IKM, HKDF_IKM),
 };
-
-static TEE_Result roundup_even_size(size_t *size)
-{
-	TEE_Result res = TEE_SUCCESS;
-
-	if (*size & 1) {
-		if (ADD_OVERFLOW(*size, 1, size))
-			res = TEE_ERROR_GENERIC;
-	}
-
-	return res;
-}
 
 /**
  * key_obj_type_to_ta_type() - Get SMW key type of an object type.
@@ -393,11 +382,10 @@ static TEE_Result get_ecc_public_key_size(TEE_ObjectHandle handle, size_t *size)
 	if (!res) {
 		res = TEE_ERROR_GENERIC;
 	} else if (res == TEE_ERROR_SHORT_BUFFER) {
-		res = roundup_even_size(&x_size);
-		if (!res)
-			res = roundup_even_size(&y_size);
-
-		if (!res) {
+		if (ROUNDUP_OVERFLOW(x_size, 2, &x_size) ||
+		    ROUNDUP_OVERFLOW(y_size, 2, &y_size)) {
+			res = TEE_ERROR_GENERIC;
+		} else {
 			if (ADD_OVERFLOW(x_size, y_size, size))
 				res = TEE_ERROR_GENERIC;
 			else
@@ -514,9 +502,8 @@ static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
 					   pub_key, &x_size);
 	if (!res) {
 		/* Get second part of the public key */
-		res = roundup_even_size(&x_size);
-		if (res)
-			return res;
+		if (ROUNDUP_OVERFLOW(x_size, 2, &x_size))
+			return TEE_ERROR_GENERIC;
 
 		if (SUB_OVERFLOW(*pub_key_size, x_size, &y_size))
 			return TEE_ERROR_GENERIC;
@@ -1126,13 +1113,44 @@ static TEE_Result export_pub_key_rsa(TEE_ObjectHandle handle,
 	return res;
 }
 
+static TEE_Result export_public_key(uint32_t obj_type, TEE_ObjectHandle handle,
+				    unsigned char *pub_data, size_t *pub_len,
+				    unsigned char *modulus, size_t *modulus_len)
+{
+	TEE_Result res = TEE_ERROR_NOT_SUPPORTED;
+
+	switch (obj_type) {
+	case TEE_TYPE_RSA_PUBLIC_KEY:
+	case TEE_TYPE_RSA_KEYPAIR:
+		res = export_pub_key_rsa(handle, modulus, modulus_len, pub_data,
+					 pub_len);
+
+		break;
+
+	case TEE_TYPE_ECDSA_PUBLIC_KEY:
+	case TEE_TYPE_ECDSA_KEYPAIR:
+		res = export_pub_key_ecc(handle, pub_data, pub_len);
+		break;
+
+	case TEE_TYPE_ED25519_PUBLIC_KEY:
+	case TEE_TYPE_ED25519_KEYPAIR:
+		res = export_pub_key_ed25519(handle, pub_data, pub_len);
+		break;
+
+	default:
+		break;
+	}
+
+	return res;
+}
+
 TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_Attribute key_attr = { 0 };
 	uint32_t object_type = 0;
 	uint32_t attr_count = 0;
-	unsigned int security_size = 0;
+	uint32_t security_size = 0;
 	unsigned char *pub_key = NULL;
 	unsigned char *modulus = NULL;
 	unsigned char *rsa_pub_exp_attr = NULL;
@@ -1238,6 +1256,10 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		}
 
 		attr_count = 1;
+	} else if (key_type == TEE_KEY_TYPE_ID_ED25519) {
+		/* Roundup the security size */
+		if (ROUNDUP_OVERFLOW(security_size, 2, &security_size))
+			return TEE_ERROR_GENERIC;
 	}
 
 	res = key_usage_to_tee(shared_params->key_usage, &key_usage);
@@ -1269,16 +1291,11 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		goto err;
 	}
 
-	if (key_type == TEE_KEY_TYPE_ID_RSA)
-		/* Export RSA public key */
-		res = export_pub_key_rsa(obj_data.handle, modulus, modulus_size,
-					 pub_key, pub_key_size);
-	else if (key_type == TEE_KEY_TYPE_ID_SECP_R1)
-		/* Export ECDSA public key */
-		res = export_pub_key_ecc(obj_data.handle, pub_key,
-					 pub_key_size);
+	res = export_public_key(object_type, obj_data.handle, pub_key,
+				pub_key_size, modulus, modulus_size);
 
-	if (res != TEE_SUCCESS && res != TEE_ERROR_NO_DATA) {
+	if (res != TEE_SUCCESS && res != TEE_ERROR_NO_DATA &&
+	    res != TEE_ERROR_NOT_SUPPORTED) {
 		EMSG("Failed to export public key: 0x%x", res);
 		goto err;
 	}
@@ -1336,6 +1353,7 @@ TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 	TEE_Attribute *key_attr = NULL;
 	uint32_t object_type = 0;
 	uint32_t attr_count = 0;
+	uint32_t op_max_key_size = security_size;
 
 	FMSG("Executing %s", __func__);
 
@@ -1354,8 +1372,16 @@ TEE_Result ta_import_key(TEE_ObjectHandle *key_handle,
 	if (res)
 		goto exit;
 
+	if (key_type == TEE_KEY_TYPE_ID_ED25519) {
+		/* Roundup the security size */
+		if (ROUNDUP_OVERFLOW(op_max_key_size, 2, &op_max_key_size)) {
+			res = TEE_ERROR_GENERIC;
+			goto exit;
+		}
+	}
+
 	/* Allocate a transient object */
-	res = TEE_AllocateTransientObject(object_type, security_size,
+	res = TEE_AllocateTransientObject(object_type, op_max_key_size,
 					  key_handle);
 	if (res) {
 		EMSG("Failed to allocate transient object: 0x%x", res);
@@ -1539,17 +1565,8 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 	pub_data = params[EXP_PUB_KEY_PARAM_IDX].memref.buffer;
 	pub_len = &params[EXP_PUB_KEY_PARAM_IDX].memref.size;
 
-	if (obj_info.objectType == TEE_TYPE_RSA_PUBLIC_KEY ||
-	    obj_info.objectType == TEE_TYPE_RSA_KEYPAIR)
-		res = export_pub_key_rsa(key_handle, modulus, modulus_len,
-					 pub_data, pub_len);
-	else if (obj_info.objectType == TEE_TYPE_ECDSA_PUBLIC_KEY ||
-		 obj_info.objectType == TEE_TYPE_ECDSA_KEYPAIR)
-		res = export_pub_key_ecc(key_handle, pub_data, pub_len);
-	else if (obj_info.objectType == TEE_TYPE_ED25519_PUBLIC_KEY ||
-		 obj_info.objectType == TEE_TYPE_ED25519_KEYPAIR) {
-		res = export_pub_key_ed25519(key_handle, pub_data, pub_len);
-	}
+	res = export_public_key(obj_info.objectType, key_handle, pub_data,
+				pub_len, modulus, modulus_len);
 
 exit:
 	if (persistent)
@@ -1708,7 +1725,13 @@ TEE_Result get_key_attributes(uint32_t param_types,
 	params[GET_KEY_ATTRS_KEY_USAGE_IDX].value.b = key_usage;
 	params[GET_KEY_ATTRS_KEYPAIR_FLAG_IDX].value.a = key_privacy;
 	params[GET_KEY_ATTRS_PERSISTENT_FLAG_IDX].value.b = persistent;
-	params[GET_KEY_ATTRS_KEY_SIZE_IDX].value.a = obj_info.objectSize;
+
+	/* Particular cases */
+	if (key_type == TEE_KEY_TYPE_ID_ED25519)
+		params[GET_KEY_ATTRS_KEY_SIZE_IDX].value.a = 255;
+	else
+		params[GET_KEY_ATTRS_KEY_SIZE_IDX].value.a =
+			obj_info.objectSize;
 
 exit:
 	if (persistent)

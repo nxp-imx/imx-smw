@@ -41,6 +41,34 @@
 				"RSA_PSS",
 				"HASH=SHA512"
 			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PKCS1V15",
+				"HASH=ANY"
+			]
+		},
+		"key 5": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"RSA_PSS",
+				"HASH=ANY"
+			]
 		}
 	},
 	"subtest 1": {
@@ -71,18 +99,46 @@
 		]
 	},
 	"subtest 4": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 4",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 5": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 5",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 6": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 5": {
+	"subtest 7": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 6": {
+	"subtest 8": {
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 3
+	},
+	"subtest 9": {
+		"command": "DELETE",
+		"key_name": "key 4",
+		"depends": 4
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "key 5",
+		"depends": 5
 	}
 }

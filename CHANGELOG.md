@@ -68,6 +68,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: TA: Fix key type conversion TEE to SMW.
 * TEE: Add hardcoded permitted algorithm for keys with unique permitted algorithm.
 * ELE: HKDF: Remove derived key buffer export capability.
+* ELE: Update RSA permitted algorithms
 
 ##### 3. ARM PSA APIs
 

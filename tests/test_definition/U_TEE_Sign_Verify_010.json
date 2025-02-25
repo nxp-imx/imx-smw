@@ -2,7 +2,7 @@
 	"keys": {
 		"key 1": {
 			"type": "ED25519",
-			"security_size": 256,
+			"security_size": 255,
 			"attributes_list": [
 				"TRANSIENT"
 			],

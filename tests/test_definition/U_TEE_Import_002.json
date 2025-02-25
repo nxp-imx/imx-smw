@@ -333,7 +333,7 @@
 		},
 		"key 21": {
 			"type": "ED25519",
-			"security_size": 256,
+			"security_size": 255,
 			"pub_key": [
 				"43e75272720043d875999b82e370b0cc",
 				"1a10bd07d8fe2e01d7801abf47771559"

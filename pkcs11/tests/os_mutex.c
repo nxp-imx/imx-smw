@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023 NXP
+ * Copyright 2021, 2023, 2025 NXP
  */
 
 #include <stdlib.h>
@@ -110,28 +110,37 @@ CK_RV mutex_destroy(CK_VOID_PTR mutex)
 
 CK_RV mutex_lock(CK_VOID_PTR mutex)
 {
-	TEST_OUT("Lock mutex (%p)\n", mutex);
-	if (!mutex)
-		return CKR_MUTEX_BAD;
+	CK_RV ret = CKR_OK;
+
+	if (!mutex) {
+		ret = CKR_MUTEX_BAD;
+		goto end;
+	}
 
 	if (pthread_mutex_lock(mutex))
-		return CKR_MUTEX_BAD;
+		ret = CKR_MUTEX_BAD;
 
-	TEST_OUT("Locked mutex (%p)\n", mutex);
+end:
+	if (ret != CKR_OK)
+		TEST_OUT("Lock mutex (%p) err = 0x%lX\n", mutex, ret);
 
-	return CKR_OK;
+	return ret;
 }
 
 CK_RV mutex_unlock(CK_VOID_PTR mutex)
 {
-	TEST_OUT("Unlock mutex (%p)\n", mutex);
-	if (!mutex)
-		return CKR_MUTEX_BAD;
+	CK_RV ret = CKR_OK;
+
+	if (!mutex) {
+		ret = CKR_MUTEX_BAD;
+		goto end;
+	}
 
 	if (pthread_mutex_unlock(mutex))
-		return CKR_MUTEX_NOT_LOCKED;
+		ret = CKR_MUTEX_NOT_LOCKED;
+end:
+	if (ret != CKR_OK)
+		TEST_OUT("Unlock mutex (%p) err = 0x%lX\n", mutex, ret);
 
-	TEST_OUT("Unlocked mutex (%p)\n", mutex);
-
-	return CKR_OK;
+	return ret;
 }

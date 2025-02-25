@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2025 NXP
+ * Copyright 2025 NXP
  */
 
 #include <stdlib.h>
@@ -16,37 +16,25 @@
 #include "util.h"
 
 /*
- * Max supported EC private key size is 521bits
+ * Max supported EC Edwards private key size is 448 bits
  */
-#define MAX_PRIVATE_KEY_LEN 66
+#define MAX_PRIVATE_KEY_LEN 56
 
-#define EC_STR_PRIME192_V1 "prime192v1"
-#define EC_STR_PRIME256_V1 "prime256v1"
-#define EC_STR_SECP224_R1  "secp224r1"
-#define EC_STR_SECP384_R1  "secp384r1"
-#define EC_STR_SECP521_R1  "secp521r1"
+#define SMW_SIGN_EDDSA(_curve, _hash, _param)                                  \
+	SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(                              \
+		SMW_ATTR_CURVE_##_curve, SMW_ATTR_HASH_##_hash,                \
+		SMW_ATTR_SIGN_PARAM_EDDSA_##_param)
 
-const CK_BYTE prime192v1[] = ASN1_OID_PRIME192;
-const CK_BYTE prime256v1[] = ASN1_OID_PRIME256;
-const CK_BYTE secp224r1[] = ASN1_OID_SEC_P224R1;
-const CK_BYTE secp384r1[] = ASN1_OID_SEC_P384R1;
-const CK_BYTE secp521r1[] = ASN1_OID_SEC_P521R1;
+#define EC_STR_ED25519 "ed25519"
 
-const struct asn1_ec_curve ec_curves[] = {
-	[SECP_R1_192] = { 192, EC_STR_PRIME192_V1, prime192v1,
-			  sizeof(prime192v1) },
-	[SECP_R1_224] = { 224, EC_STR_SECP224_R1, secp224r1,
-			  sizeof(secp224r1) },
-	[SECP_R1_521] = { 521, EC_STR_SECP521_R1, secp521r1,
-			  sizeof(secp521r1) },
-	[SECP_R1_256] = { 256, EC_STR_PRIME256_V1, prime256v1,
-			  sizeof(prime256v1) },
-	[SECP_R1_384] = { 384, EC_STR_SECP384_R1, secp384r1,
-			  sizeof(secp384r1) },
+const CK_BYTE ed25519[] = ASN1_OID_ED25519;
+
+const struct asn1_ec_curve ed_curves[] = {
+	[EC_ED25519] = { 255, EC_STR_ED25519, ed25519, sizeof(ed25519) },
 };
 
-static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
-				CK_BBOOL bverify)
+static int object_edwards_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
+				     CK_BBOOL bverify)
 {
 	int status = TEST_FAIL;
 
@@ -54,15 +42,12 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	CK_SESSION_HANDLE sess = 0;
 	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
-	CK_KEY_TYPE key_type = CKK_EC;
+	CK_KEY_TYPE key_type = CKK_EC_EDWARDS;
 	CK_BYTE_PTR pubkey = NULL;
 	CK_ULONG pubkey_len = 0;
-	CK_BYTE_PTR ec_point = NULL;
-	size_t ec_point_len = 0;
 	size_t security_size = 0;
 
-	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
-						 CKM_ECDSA_SHA256 };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_EDDSA };
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
@@ -81,16 +66,10 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
-	for (; i < ARRAY_SIZE(ec_curves); i++) {
+	for (; i < ARRAY_SIZE(ed_curves); i++) {
 		/* Set the CKA_EC_POINT size function of the security size */
-		security_size = ec_curves[i].security_size;
-		if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(security_size), 2,
-				 &pubkey_len))
-			goto end;
-
-		/* Add the Uncompress key Tag */
-		if (INC_OVERFLOW(pubkey_len, 1))
-			goto end;
+		security_size = ed_curves[i].security_size;
+		pubkey_len = BITS_TO_BYTES_SIZE(security_size);
 
 		if (pubkey)
 			free(pubkey);
@@ -99,38 +78,13 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		if (CHECK_EXPECTED(pubkey, "Out of memory"))
 			goto end;
 
-		/* Build the octet-string of the public key */
-		if (ec_point) {
-			free(ec_point);
-			ec_point = NULL;
-		}
-
-		/* Start with Uncompress key tage */
-		pubkey[0] = ANSI_UNCOMPRESS_KEY_TAG;
-
-		if (!util_asn1_encode_octet_string(pubkey, pubkey_len, NULL,
-						   &ec_point_len)) {
-			TEST_OUT("Get public key object-string length\n");
-			goto end;
-		}
-
-		ec_point = calloc(1, ec_point_len);
-		if (CHECK_EXPECTED(ec_point, "Out of memory"))
-			goto end;
-
-		if (!util_asn1_encode_octet_string(pubkey, pubkey_len, ec_point,
-						   &ec_point_len)) {
-			TEST_OUT("Get public key object-string\n");
-			goto end;
-		}
-
-		keyTemplate[3].pValue = ec_point;
-		keyTemplate[3].ulValueLen = ec_point_len;
+		keyTemplate[3].pValue = pubkey;
+		keyTemplate[3].ulValueLen = pubkey_len;
 
 		TEST_OUT("Create %sKey Public by curve name\n",
 			 token ? "Token " : "");
 		if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
-						       &ec_curves[i]),
+						       &ed_curves[i]),
 				   "ASN1 Conversion"))
 			goto end;
 
@@ -160,7 +114,7 @@ static int object_ec_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 			 token ? "Token " : "");
 
 		if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2],
-						    &ec_curves[i]),
+						    &ed_curves[i]),
 				   "ASN1 Conversion"))
 			goto end;
 
@@ -197,15 +151,12 @@ end:
 	if (pubkey)
 		free(pubkey);
 
-	if (ec_point)
-		free(ec_point);
-
 	SUBTEST_END(status);
 	return status;
 }
 
-static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
-				 CK_BBOOL bsign)
+static int object_edwards_key_private(CK_FUNCTION_LIST_PTR pfunc,
+				      CK_BBOOL token, CK_BBOOL bsign)
 {
 	int status = TEST_FAIL;
 
@@ -213,16 +164,13 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	CK_SESSION_HANDLE sess = 0;
 	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
 	CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
-	CK_KEY_TYPE key_type = CKK_EC;
+	CK_KEY_TYPE key_type = CKK_EC_EDWARDS;
 	CK_BYTE privkey[MAX_PRIVATE_KEY_LEN] = { 0 };
-	CK_BYTE_PTR ec_point = NULL;
 	CK_BYTE_PTR pubkey = NULL;
 	CK_ULONG pubkey_len = 0;
-	size_t ec_point_len = 0;
 	size_t security_size = 0;
 
-	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_ECDSA_SHA224,
-						 CKM_ECDSA_SHA256 };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_EDDSA };
 	CK_ATTRIBUTE keyTemplate[] = {
 		{ CKA_CLASS, &key_class, sizeof(key_class) },
 		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
@@ -247,23 +195,17 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	for (; i < ARRAY_SIZE(ec_curves); i++) {
+	for (; i < ARRAY_SIZE(ed_curves); i++) {
 		TEST_OUT("Create %sKey Private by curve name\n",
 			 token ? "Token " : "");
 		if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
-						       &ec_curves[i]),
+						       &ed_curves[i]),
 				   "ASN1 Conversion"))
 			goto end;
 
 		/* Set the CKA_EC_POINT size according to the security size */
-		security_size = ec_curves[i].security_size;
-		if (MUL_OVERFLOW(BITS_TO_BYTES_SIZE(security_size), 2,
-				 &pubkey_len))
-			goto end;
-
-		/* Add the Uncompress key Tag */
-		if (INC_OVERFLOW(pubkey_len, 1))
-			goto end;
+		security_size = ed_curves[i].security_size;
+		pubkey_len = BITS_TO_BYTES_SIZE(security_size);
 
 		if (pubkey)
 			free(pubkey);
@@ -272,33 +214,8 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		if (CHECK_EXPECTED(pubkey, "Out of memory"))
 			goto end;
 
-		/* Build the octet-string of the public key */
-		if (ec_point) {
-			free(ec_point);
-			ec_point = NULL;
-		}
-
-		/* Start with Uncompress key tage */
-		pubkey[0] = ANSI_UNCOMPRESS_KEY_TAG;
-
-		if (!util_asn1_encode_octet_string(pubkey, pubkey_len, NULL,
-						   &ec_point_len)) {
-			TEST_OUT("Get public key object-string length\n");
-			goto end;
-		}
-
-		ec_point = calloc(1, ec_point_len);
-		if (CHECK_EXPECTED(ec_point, "Out of memory"))
-			goto end;
-
-		if (!util_asn1_encode_octet_string(pubkey, pubkey_len, ec_point,
-						   &ec_point_len)) {
-			TEST_OUT("Get public key object-string\n");
-			goto end;
-		}
-
-		keyTemplate[4].pValue = ec_point;
-		keyTemplate[4].ulValueLen = ec_point_len;
+		keyTemplate[4].pValue = pubkey;
+		keyTemplate[4].ulValueLen = pubkey_len;
 
 		/* Set the CKA_VALUE size according to the security size */
 		keyTemplate[3].ulValueLen = BITS_TO_BYTES_SIZE(security_size);
@@ -328,7 +245,7 @@ static int object_ec_key_private(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 			 token ? "Token " : "");
 
 		if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2],
-						    &ec_curves[i]),
+						    &ed_curves[i]),
 				   "ASN1 Conversion"))
 			goto end;
 
@@ -365,40 +282,12 @@ end:
 	if (pubkey)
 		free(pubkey);
 
-	if (ec_point)
-		free(ec_point);
-
 	SUBTEST_END(status);
 	return status;
 }
 
-static CK_MECHANISM_TYPE get_signature_mechanism(size_t security_size)
-{
-	/*
-	 * The hash type uses in the asymmetric signature must be equal or
-	 * higher of the key security size.
-	 * As ELE only support one permitted algorithm, the hash uses for
-	 * the signature is aligned with the key security size.
-	 */
-	switch (security_size) {
-	case 192:
-		return CKM_ECDSA_SHA1;
-	case 224:
-		return CKM_ECDSA_SHA224;
-	case 256:
-		return CKM_ECDSA_SHA256;
-	case 384:
-		return CKM_ECDSA_SHA384;
-	case 521:
-		return CKM_ECDSA_SHA512;
-	default:
-		break;
-	}
-	return CKM_ECDSA;
-}
-
-static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
-				      CK_BBOOL token)
+static int object_generate_edwards_keypair(CK_FUNCTION_LIST_PTR pfunc,
+					   CK_BBOOL token)
 {
 	int status = TEST_FAIL;
 
@@ -406,11 +295,11 @@ static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_SESSION_HANDLE sess = 0;
 	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
-	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_MECHANISM genmech = { .mechanism = CKM_EC_EDWARDS_KEY_PAIR_GEN };
 	CK_BBOOL bverify = CK_TRUE;
 	CK_BBOOL bsign = CK_TRUE;
 
-	CK_MECHANISM_TYPE key_allowed_mech[] = { (CK_MECHANISM_TYPE)0 };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_EDDSA };
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VERIFY, &bverify, sizeof(bverify) },
@@ -436,27 +325,13 @@ static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	/*
-	 * ELE only support 224, 256, 384 and 521 key size
-	 */
-	if (is_ele_subsystem())
-		i = SECP_R1_224;
-	/*
-	 * SECO only support 256 and 384 key size
-	 */
-	else if (is_seco_subsystem())
-		i = SECP_R1_256;
-
-	for (; i < ARRAY_SIZE(ec_curves); i++) {
+	for (; i < ARRAY_SIZE(ed_curves); i++) {
 		TEST_OUT("Generate %sKeypair by curve name\n",
 			 token ? "Token " : "");
 		if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-						       &ec_curves[i]),
+						       &ed_curves[i]),
 				   "ASN1 Conversion"))
 			goto end;
-
-		key_allowed_mech[0] =
-			get_signature_mechanism(ec_curves[i].security_size);
 
 		ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
 					       ARRAY_SIZE(pubkey_attrs),
@@ -487,7 +362,7 @@ static int object_generate_ec_keypair(CK_FUNCTION_LIST_PTR pfunc,
 			 token ? "Token " : "");
 
 		if (CHECK_EXPECTED(util_to_asn1_oid(&pubkey_attrs[0],
-						    &ec_curves[i]),
+						    &ed_curves[i]),
 				   "ASN1 Conversion"))
 			goto end;
 
@@ -529,7 +404,8 @@ end:
 	return status;
 }
 
-static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
+static int object_edwards_keypair_usage(CK_FUNCTION_LIST_PTR pfunc,
+					CK_BBOOL token)
 {
 	int status = TEST_FAIL;
 
@@ -537,11 +413,11 @@ static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	CK_SESSION_HANDLE sess = 0;
 	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
 	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
-	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_MECHANISM genmech = { .mechanism = CKM_EC_EDWARDS_KEY_PAIR_GEN };
 	CK_BBOOL bverify = CK_FALSE;
 	CK_BBOOL bsign = CK_FALSE;
 
-	CK_MECHANISM_TYPE key_allowed_mech[] = { (CK_MECHANISM_TYPE)0 };
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_EDDSA };
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_EC_PARAMS, NULL_PTR, 0 },
 		{ CKA_VERIFY, &bverify, sizeof(bverify) },
@@ -567,30 +443,16 @@ static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	/*
-	 * ELE only support 224, 256, 384 and 521 key size
-	 */
-	if (is_ele_subsystem())
-		i = SECP_R1_224;
-	/*
-	 * SECO only support 256 and 384 key size
-	 */
-	else if (is_seco_subsystem())
-		i = SECP_R1_256;
-
-	for (; i < ARRAY_SIZE(ec_curves); i++) {
+	for (; i < ARRAY_SIZE(ed_curves); i++) {
 		TEST_OUT("Generate %sKeypair no usage by curve name\n",
 			 token ? "Token " : "");
 		if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-						       &ec_curves[i]),
+						       &ed_curves[i]),
 				   "ASN1 Conversion"))
 			goto end;
 
 		bsign = CK_FALSE;
 		bverify = CK_FALSE;
-
-		key_allowed_mech[0] =
-			get_signature_mechanism(ec_curves[i].security_size);
 
 		ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
 					       ARRAY_SIZE(pubkey_attrs),
@@ -598,23 +460,8 @@ static int object_ec_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 					       ARRAY_SIZE(privkey_attrs),
 					       &hpubkey, &hprivkey);
 
-		if (is_seco_subsystem()) {
-			if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
-				goto end;
-
-			TEST_OUT("Key Destroy #%lu\n", hpubkey);
-			ret = pfunc->C_DestroyObject(sess, hpubkey);
-			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-				goto end;
-
-			TEST_OUT("Key Destroy #%lu\n", hprivkey);
-			ret = pfunc->C_DestroyObject(sess, hprivkey);
-			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-				goto end;
-		} else {
-			if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GenerateKeyPair"))
-				goto end;
-		}
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_GenerateKeyPair"))
+			goto end;
 
 		TEST_OUT("Generate %sKeypair sign only usage by curve name\n",
 			 token ? "Token " : "");
@@ -681,7 +528,7 @@ end:
 	return status;
 }
 
-static int object_ec_public_export(CK_FUNCTION_LIST_PTR pfunc)
+static int object_edwards_public_export(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status = TEST_FAIL;
 	enum smw_status_code smw_status = SMW_STATUS_OK;
@@ -699,7 +546,6 @@ static int object_ec_public_export(CK_FUNCTION_LIST_PTR pfunc)
 
 	CK_ULONG unique_id_len = 0;
 	CK_UTF8CHAR_PTR unique_id = NULL;
-	CK_ULONG key_length = 32;
 	CK_OBJECT_CLASS public_key_class = CKO_PUBLIC_KEY;
 	CK_BYTE_PTR ec_point = NULL;
 	CK_ULONG ec_point_len = 0;
@@ -714,9 +560,6 @@ static int object_ec_public_export(CK_FUNCTION_LIST_PTR pfunc)
 		{ CKA_EC_POINT, NULL_PTR, 0 },
 	};
 
-	uint8_t *point_q = NULL;
-	size_t point_q_len = 0;
-
 	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
@@ -728,15 +571,10 @@ static int object_ec_public_export(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	/* Set key attributes */
-	if (SET_OVERFLOW(BYTES_TO_BITS(key_length),
-			 key_descriptor.security_size))
-		goto end;
-
-	key_descriptor.type_name = SMW_KEY_TYPE_NAME_SECP_R1;
+	key_descriptor.type_name = SMW_KEY_TYPE_NAME_ED25519;
+	key_descriptor.security_size = 255;
 	key_attributes.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT;
-	key_attributes.permitted_algo =
-		SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_SECP_R1,
-							 SMW_ATTR_HASH_SHA256);
+	key_attributes.permitted_algo = SMW_SIGN_EDDSA(ED25519, NONE, NONE);
 	key_attributes.usage_flags =
 		SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_VERIFY_MESSAGE;
 
@@ -816,14 +654,7 @@ static int object_ec_public_export(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 		goto end;
 
-	if (util_asn1_get_field_octet_string(ec_point, ec_point_len, &point_q,
-					     &point_q_len)) {
-		if (!CHECK_EXPECTED(ec_point[0] == ANSI_UNCOMPRESS_KEY_TAG,
-				    "Invalid EC point"))
-			status = TEST_PASS;
-	} else {
-		TEST_OUT("util_asn1_get_field_octet_string failed\n");
-	}
+	status = TEST_PASS;
 
 end:
 	if (hpubkey) {
@@ -842,14 +673,11 @@ end:
 	if (unique_id)
 		free(unique_id);
 
-	if (ec_point)
-		free(ec_point);
-
 	SUBTEST_END(status);
 	return status;
 }
 
-void tests_pkcs11_object_key_ec(void *lib_hdl, CK_VOID_PTR pfunc)
+void tests_pkcs11_object_key_edwards(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
 	int status = TEST_FAIL;
@@ -868,43 +696,43 @@ void tests_pkcs11_object_key_ec(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 
-	if (object_ec_key_public(pfunc, CK_FALSE, CK_TRUE) == TEST_FAIL)
+	if (object_edwards_key_public(pfunc, CK_FALSE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_public(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
+	if (object_edwards_key_public(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_private(pfunc, CK_FALSE, CK_TRUE) == TEST_FAIL)
+	if (object_edwards_key_private(pfunc, CK_FALSE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_private(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
+	if (object_edwards_key_private(pfunc, CK_FALSE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_ec_keypair(pfunc, CK_FALSE) == TEST_FAIL)
+	if (object_generate_edwards_keypair(pfunc, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_keypair_usage(pfunc, CK_FALSE) == TEST_FAIL)
+	if (object_edwards_keypair_usage(pfunc, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_public(pfunc, CK_TRUE, CK_TRUE) == TEST_FAIL)
+	if (object_edwards_key_public(pfunc, CK_TRUE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_public(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
+	if (object_edwards_key_public(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_private(pfunc, CK_TRUE, CK_TRUE) == TEST_FAIL)
+	if (object_edwards_key_private(pfunc, CK_TRUE, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_key_private(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
+	if (object_edwards_key_private(pfunc, CK_TRUE, CK_FALSE) == TEST_FAIL)
 		goto end;
 
-	if (object_generate_ec_keypair(pfunc, CK_TRUE) == TEST_FAIL)
+	if (object_generate_edwards_keypair(pfunc, CK_TRUE) == TEST_FAIL)
 		goto end;
 
-	if (object_ec_public_export(pfunc) == TEST_FAIL)
+	if (object_edwards_public_export(pfunc) == TEST_FAIL)
 		goto end;
 
-	status = object_ec_keypair_usage(pfunc, CK_TRUE);
+	status = object_edwards_keypair_usage(pfunc, CK_TRUE);
 
 end:
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

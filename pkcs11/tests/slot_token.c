@@ -108,6 +108,8 @@ static struct smw_mech_def mlist_tee[] = {
 	M(SHA3_256_HMAC_GENERAL),
 	M(SHA3_384_HMAC_GENERAL),
 	M(SHA3_512_HMAC_GENERAL),
+	M(EC_EDWARDS_KEY_PAIR_GEN),
+	M(EDDSA),
 };
 
 /*
@@ -151,6 +153,8 @@ static struct smw_mech_def mlist_ele[] = {
 	M(SHA3_256_HMAC_GENERAL),
 	M(SHA3_384_HMAC_GENERAL),
 	M(SHA3_512_HMAC_GENERAL),
+	M(EC_EDWARDS_KEY_PAIR_GEN),
+	M(EDDSA),
 };
 
 /*
@@ -733,7 +737,7 @@ static int get_mechanisms(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_EXPECTED(nb_mechs <= nb_mechs_exp,
 				   "Slot [%s] Got %lu Expected %lu Mechanism",
 				   get_slot_label(slots[idx]), nb_mechs,
-				   ARRAY_SIZE(mlist)))
+				   nb_mechs_exp))
 			goto end;
 
 		if (mechs)

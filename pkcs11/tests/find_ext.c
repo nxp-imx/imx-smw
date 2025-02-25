@@ -15,6 +15,11 @@
 	SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(SMW_ATTR_CURVE_##_curve,      \
 						 SMW_ATTR_HASH_##_hash)
 
+#define SMW_SIGN_EDDSA(_curve, _hash, _param)                                  \
+	SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(                              \
+		SMW_ATTR_CURVE_##_curve, SMW_ATTR_HASH_##_hash,                \
+		SMW_ATTR_SIGN_PARAM_EDDSA_##_param)
+
 #define SMW_SIGN_RSA(_scheme, _hash)                                           \
 	SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_##_scheme,        \
 					       SMW_ATTR_HASH_##_hash, 0)
@@ -40,6 +45,19 @@
 		.key_attrs.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT,       \
 		.key_attrs.permitted_algo = _perm_algo,                        \
 		.p11_key.key_type = CKK_EC,                                    \
+		.p11_key.allowed_mech = _allowed_mech,                         \
+		.p11_key.verify = _verify, .p11_key.sign = _sign,              \
+	}
+
+#define ED_KEYPAIR(_type, _size, _perm_algo, _allowed_mech, _curve, _verify,   \
+		   _sign)                                                      \
+	{                                                                      \
+		.is_public = true, .is_private = true, .ec_curve = _curve,     \
+		.key_desc.type_name = SMW_KEY_TYPE_NAME_##_type,               \
+		.key_desc.security_size = _size,                               \
+		.key_attrs.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT,       \
+		.key_attrs.permitted_algo = _perm_algo,                        \
+		.p11_key.key_type = CKK_EC_EDWARDS,                            \
 		.p11_key.allowed_mech = _allowed_mech,                         \
 		.p11_key.verify = _verify, .p11_key.sign = _sign,              \
 	}
@@ -101,6 +119,8 @@ static struct smw_object {
 } objects_key[] = {
 	EC_KEYPAIR(SECP_R1, 256, SMW_SIGN_ECDSA(SECP_R1, SHA256),
 		   CKM_ECDSA_SHA256, SECP_R1_256, CK_TRUE, CK_FALSE),
+	ED_KEYPAIR(ED25519, 255, SMW_SIGN_EDDSA(ED25519, NONE, NONE), CKM_EDDSA,
+		   EC_ED25519, CK_TRUE, CK_TRUE),
 	RSA_KEYPAIR(2048, SMW_SIGN_RSA(PKCS1_1_5, SHA512), CKM_SHA512_RSA_PKCS,
 		    CK_TRUE, CK_FALSE),
 	AES_KEY(256, SMW_ENCRYPT(AES, ECB_NO_PAD), CKM_AES_ECB, CK_TRUE,
@@ -120,7 +140,9 @@ static int export_ec_public_key(struct smw_object *obj, CK_BYTE_PTR ec_point,
 	struct smw_export_key_args args = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
 	uint8_t *public_data = NULL;
+	uint8_t *check_pub_data = NULL;
 	size_t public_len = 0;
+	size_t check_pub_len = 0;
 
 	args.key_descriptor = &obj->key_desc;
 	obj->key_desc.buffer = &key_buffer;
@@ -144,18 +166,27 @@ static int export_ec_public_key(struct smw_object *obj, CK_BYTE_PTR ec_point,
 			   smw_status))
 		goto end;
 
-	if (!util_asn1_get_field_octet_string(ec_point, ec_point_len,
-					      &public_data, &public_len))
-		goto end;
+	if (obj->p11_key.key_type == CKK_EC) {
+		if (!util_asn1_get_field_octet_string(ec_point, ec_point_len,
+						      &public_data,
+						      &public_len))
+			goto end;
 
-	/* Check if ec_point start with Uncompress key tag */
-	if (CHECK_EXPECTED(public_data[0] == ANSI_UNCOMPRESS_KEY_TAG,
-			   "EC Public point start with 0x%02x", public_data[0]))
-		goto end;
+		/* Check if ec_point start with Uncompress key tag */
+		if (CHECK_EXPECTED(public_data[0] == ANSI_UNCOMPRESS_KEY_TAG,
+				   "EC Public point start with 0x%02x",
+				   public_data[0]))
+			goto end;
+		check_pub_data = &public_data[1];
+		check_pub_len = public_len - 1;
+
+	} else {
+		check_pub_data = ec_point;
+		check_pub_len = ec_point_len;
+	}
 
 	/* Verify Public buffer */
-	if (!CHECK_EXPECTED(util_compare_buffers(&public_data[1],
-						 public_len - 1,
+	if (!CHECK_EXPECTED(util_compare_buffers(check_pub_data, check_pub_len,
 						 key_buffer.gen.public_data,
 						 key_buffer.gen.public_length),
 			    "Invalid EC Public key"))
@@ -343,7 +374,19 @@ static int check_ec_public_key(CK_FUNCTION_LIST_PTR pfunc,
 		goto end;
 
 	/* Verify all expected attributes */
-	ec_curve = &ec_curves[obj->ec_curve];
+	switch (obj->p11_key.key_type) {
+	case CKK_EC:
+		ec_curve = &ec_curves[obj->ec_curve];
+		break;
+
+	case CKK_EC_EDWARDS:
+		ec_curve = &ed_curves[obj->ec_curve];
+		break;
+
+	default:
+		goto end;
+	}
+
 	if (CHECK_EXPECTED(util_compare_buffers(&ec_params[2],
 						ec_params_len - 2,
 						(unsigned char *)ec_curve->oid,
@@ -614,6 +657,7 @@ static int check_public_keys(CK_FUNCTION_LIST_PTR pfunc, CK_SESSION_HANDLE sess,
 
 		switch (objects_key[idx].p11_key.key_type) {
 		case CKK_EC:
+		case CKK_EC_EDWARDS:
 			status = check_ec_public_key(pfunc, sess, hpubkey,
 						     &objects_key[idx]);
 			break;
@@ -692,6 +736,7 @@ static int check_private_keys(CK_FUNCTION_LIST_PTR pfunc,
 		/* If it's a keypair, verify also the public key values */
 		switch (objects_key[idx].p11_key.key_type) {
 		case CKK_EC:
+		case CKK_EC_EDWARDS:
 			status = check_ec_public_key(pfunc, sess, hprivkey,
 						     &objects_key[idx]);
 			break;

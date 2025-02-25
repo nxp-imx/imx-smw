@@ -39,11 +39,15 @@ const char *get_slot_label(CK_ULONG slotid);
 
 #define CK_FUNCTION_PTR(name) CK_DECLARE_FUNCTION_POINTER(CK_RV, name)
 
+/* ECDSA curves index */
 #define SECP_R1_192 0
 #define SECP_R1_224 1
 #define SECP_R1_521 2
 #define SECP_R1_256 3
 #define SECP_R1_384 4
+
+/* Edwards curves index */
+#define EC_ED25519 0
 
 struct asn1_ec_curve {
 	size_t security_size;
@@ -53,6 +57,7 @@ struct asn1_ec_curve {
 };
 
 extern const struct asn1_ec_curve ec_curves[];
+extern const struct asn1_ec_curve ed_curves[];
 
 int util_to_asn1_string(CK_ATTRIBUTE_PTR attr,
 			const struct asn1_ec_curve *curve);
@@ -67,6 +72,7 @@ void tests_pkcs11_get_ifs(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_slot_token(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_session(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_key_ec(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_object_key_edwards(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_key_cipher(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_object_key_rsa(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_find(void *lib_hdl, CK_VOID_PTR pfunc);

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include "smw_status.h"
@@ -38,25 +38,30 @@ static void key_identifier_to_object(struct smw_keymgr_identifier *identifier,
 				     struct smw_object_descriptor *obj)
 {
 	int status = SMW_STATUS_OK;
-	enum smw_keymgr_privacy_id privacy = SMW_KEYMGR_PRIVACY_ID_INVALID;
+	enum smw_keymgr_privacy_id privacy = identifier->privacy_id;
 
-	status = smw_keymgr_get_privacy_id(identifier->type_id, &privacy);
-	if (status == SMW_STATUS_OK) {
-		switch (privacy) {
-		case SMW_KEYMGR_PRIVACY_ID_PAIR:
-			obj->type = SMW_OBJECT_TYPE_NAME_KEY_PAIR;
-			break;
-		case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
-			obj->type = SMW_OBJECT_TYPE_NAME_PUBLIC_KEY;
-			break;
-		case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
-		case SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET:
-			obj->type = SMW_OBJECT_TYPE_NAME_SECRET_KEY;
-			break;
-		default:
-			break;
-		}
+	if (privacy == SMW_KEYMGR_PRIVACY_ID_INVALID) {
+		status = smw_keymgr_get_privacy_id(identifier->type_id,
+						   &privacy);
+		if (status != SMW_STATUS_OK)
+			return;
 	}
+
+	switch (privacy) {
+	case SMW_KEYMGR_PRIVACY_ID_PAIR:
+		obj->type = SMW_OBJECT_TYPE_NAME_KEY_PAIR;
+		break;
+	case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
+		obj->type = SMW_OBJECT_TYPE_NAME_PUBLIC_KEY;
+		break;
+	case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
+	case SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET:
+		obj->type = SMW_OBJECT_TYPE_NAME_SECRET_KEY;
+		break;
+	default:
+		break;
+	}
+
 	obj->attributes = identifier->attributes;
 	obj->subsystem_name =
 		smw_config_get_subsystem_name(identifier->subsystem_id);

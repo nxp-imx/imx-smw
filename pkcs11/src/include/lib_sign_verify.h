@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2024 NXP
+ * Copyright 2021, 2024-2025 NXP
  */
 
 #ifndef __LIB_SIGN_VERIFY_H__
@@ -10,21 +10,44 @@
 
 #include "types.h"
 
+enum signature_type {
+	SIGN_TYPE_ECDSA,
+	SIGN_TYPE_EDDSA,
+	SIGN_TYPE_RSA,
+	SIGN_TYPE_MAC,
+};
+
 /**
  * lib_signature_ctx - Signature context
  * @hkey: Operation key handle
  * @hash_mech: Hash mechanism
- * @salt_len: Salt length in bytes
- * @mac_len: MAC length in bytes
  * @current_state: Current cipher operation state
+ * @type: Type of the signature
+ * @sign.rsa.salt_len: RSA Salt length in bytes
+ * @sign.mac.len: MAC length in bytes
+ * @sign.eddsa.prehashed: True if input is prehashed
+ * @sign.eddsa.context_data: Signature context
+ * @sign.eddsa.context_len: Signature context length
  * @context: Pointer to multi-part operation context
  */
 struct lib_signature_ctx {
 	CK_OBJECT_HANDLE hkey;
 	CK_MECHANISM_TYPE hash_mech;
-	CK_ULONG salt_len;
-	CK_ULONG mac_len;
 	enum op_state current_state;
+	enum signature_type type;
+	union {
+		struct {
+			CK_ULONG salt_len;
+		} rsa;
+		struct {
+			CK_ULONG len;
+		} mac;
+		struct {
+			CK_BBOOL prehashed;
+			CK_BYTE_PTR context_data;
+			CK_ULONG context_len;
+		} eddsa;
+	} sign;
 	void *context;
 };
 

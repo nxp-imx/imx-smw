@@ -68,6 +68,16 @@ CK_RV key_desc_get_key_type(CK_KEY_TYPE *key_type,
 			    struct smw_key_attributes *attributes);
 
 /**
+ * is_edwards_key_type() - Check if edwards key corresponds to given key type
+ * @obj: PKCS11 key object
+ * @key_type: SMW key type
+ *
+ * Return:
+ * CK_TRUE if PKCS11 key is a SMW key type, CK_FALSE otherwise
+ */
+CK_BBOOL is_edwards_key_type(struct libobj_obj *obj, smw_key_type_t _key_type);
+
+/**
  * derived_key_desc_setup() - Setup the SMW derived key descriptor
  * @desc: SMW derived key descriptor
  * @obj: Key object

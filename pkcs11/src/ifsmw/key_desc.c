@@ -1012,6 +1012,20 @@ end:
 	return ret;
 }
 
+CK_BBOOL is_edwards_key_type(struct libobj_obj *obj, smw_key_type_t key_type)
+{
+	CK_RV ret = CKR_OK;
+
+	struct smw_key_descriptor desc = { 0 };
+
+	ret = ec_key_pkcs11_to_smw(OP_KEY_DESC_SET_KEY_TYPE, &desc, NULL, obj);
+
+	if (ret != CKR_OK)
+		return CK_FALSE;
+
+	return (desc.type_name == key_type) ? CK_TRUE : CK_FALSE;
+}
+
 int base_key_desc_setup(struct libobj_obj *obj, struct smw_key_descriptor *desc)
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include <stdlib.h>
@@ -21,8 +21,15 @@
  */
 static void destroy_context(struct lib_signature_ctx *ctx)
 {
-	if (ctx)
-		free(ctx);
+	if (!ctx)
+		return;
+
+	if (ctx->type == SIGN_TYPE_EDDSA) {
+		if (ctx->sign.eddsa.context_data)
+			free(ctx->sign.eddsa.context_data);
+	}
+
+	free(ctx);
 }
 
 /**
@@ -144,6 +151,9 @@ static CK_RV check_rsa_pss(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
 
 	DBG_TRACE("Check RSA PSS signature mechanism parameter");
 
+	if (!pparameter)
+		return CKR_OK;
+
 	if (ulparameterlen != sizeof(CK_RSA_PKCS_PSS_PARAMS))
 		return ret;
 
@@ -181,8 +191,10 @@ static CK_RV check_rsa_pss(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
 	/* Set context with mechanism parameters */
 	ctx->hash_mech = mech_hash;
 
+	ctx->type = SIGN_TYPE_RSA;
+
 	if (mech_params->sLen)
-		ctx->salt_len = mech_params->sLen;
+		ctx->sign.rsa.salt_len = mech_params->sLen;
 
 	return CKR_OK;
 }
@@ -236,6 +248,9 @@ static CK_RV check_mac(CK_VOID_PTR pparameter, CK_ULONG ulparameterlen,
 
 	DBG_TRACE("Check MAC signature mechanism parameter");
 
+	if (!pparameter)
+		return CKR_OK;
+
 	if (ulparameterlen != sizeof(CK_MAC_GENERAL_PARAMS))
 		return ret;
 
@@ -245,9 +260,100 @@ static CK_RV check_mac(CK_VOID_PTR pparameter, CK_ULONG ulparameterlen,
 		return ret;
 
 	/* Set context with mechanism parameters */
-	ctx->mac_len = *mech_params;
+	ctx->type = SIGN_TYPE_MAC;
+	ctx->sign.mac.len = *mech_params;
 
 	return CKR_OK;
+}
+
+/**
+ * is_eddsa_mechanism() - Check if mechanism type is EDDSA
+ * @type: Mechanism type
+ *
+ * Return:
+ * True if EDDSA mechanism
+ * False otherwise
+ */
+static CK_BBOOL is_eddsa_mechanism(CK_MECHANISM_TYPE type)
+{
+	switch (type) {
+	case CKM_EDDSA:
+		return CK_TRUE;
+
+	default:
+		return CK_FALSE;
+	}
+}
+
+/**
+ * check_eddsa() - Check EDDSA mechanism parameters
+ * @pparameter: Pointer to mechanism parameter
+ * @ulparameterlen: Mechanism parameter length
+ * @ctx: Pointer to signature context
+ *
+ * Return:
+ * CKR_MECHANISM_PARAM_INVALID        - Mechanism parameters invalid
+ * CKR_OK                             - Success
+ */
+static CK_RV check_eddsa(CK_VOID_PTR pparameter, CK_ULONG ulparameterlen,
+			 struct lib_signature_ctx *ctx)
+{
+	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
+	CK_EDDSA_PARAMS_PTR mech_params = pparameter;
+
+	DBG_TRACE("Check EDDSA signature mechanism parameter");
+
+	ctx->hash_mech = 0;
+
+	if (!pparameter)
+		return CKR_OK;
+
+	if (ulparameterlen != sizeof(CK_EDDSA_PARAMS))
+		goto end;
+
+	if (mech_params && mech_params->pContextData) {
+		if (!mech_params->ulContextDataLen ||
+		    mech_params->ulContextDataLen > 255)
+			goto end;
+	}
+
+	ctx->type = SIGN_TYPE_EDDSA;
+
+	if (mech_params) {
+		ctx->sign.eddsa.prehashed = mech_params->phFlag;
+
+		if (!mech_params->ulContextDataLen) {
+			ret = CKR_OK;
+			goto end;
+		}
+
+		if (!mech_params->pContextData) {
+			ret = CKR_MECHANISM_PARAM_INVALID;
+			goto end;
+		}
+
+		/* Context already defined */
+		if (ctx->sign.eddsa.context_data) {
+			ret = CKR_OK;
+			goto end;
+		}
+
+		ctx->sign.eddsa.context_len = mech_params->ulContextDataLen;
+		ctx->sign.eddsa.context_data =
+			malloc(ctx->sign.eddsa.context_len);
+		if (!ctx->sign.eddsa.context_data) {
+			ret = CKR_HOST_MEMORY;
+			goto end;
+		}
+
+		memcpy(ctx->sign.eddsa.context_data, mech_params->pContextData,
+		       ctx->sign.eddsa.context_len);
+	}
+
+	ret = CKR_OK;
+
+end:
+	return ret;
 }
 
 /**
@@ -270,23 +376,29 @@ static CK_RV check_signature_params(CK_MECHANISM_TYPE mechanism,
 				    CK_ULONG ulparameterlen,
 				    struct lib_signature_ctx *ctx)
 {
+	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
+
 	DBG_TRACE("Check signature mechanism parameter");
 
 	if (!pparameter != !ulparameterlen)
-		return CKR_MECHANISM_PARAM_INVALID;
+		return ret;
 
-	if (!pparameter)
-		return CKR_OK;
+	if (is_rsa_pss_mechanism(mechanism)) {
+		ctx->type = SIGN_TYPE_RSA;
+		ret = check_rsa_pss(mechanism, pparameter, ulparameterlen, ctx);
+	} else if (is_general_length_mac_mechanism(mechanism)) {
+		ctx->type = SIGN_TYPE_MAC;
+		ret = check_mac(pparameter, ulparameterlen, ctx);
+	} else if (is_eddsa_mechanism(mechanism)) {
+		ctx->type = SIGN_TYPE_EDDSA;
+		ret = check_eddsa(pparameter, ulparameterlen, ctx);
+	} else {
+		/* By default signature is ECDSA */
+		ctx->type = SIGN_TYPE_ECDSA;
+		ret = CKR_OK;
+	}
 
-	if (is_rsa_pss_mechanism(mechanism))
-		return check_rsa_pss(mechanism, pparameter, ulparameterlen,
-				     ctx);
-
-	if (is_general_length_mac_mechanism(mechanism))
-		return check_mac(pparameter, ulparameterlen, ctx);
-
-	/* Parameters are set but ignored */
-	return CKR_OK;
+	return ret;
 }
 
 /**
@@ -475,6 +587,23 @@ CK_RV lib_sign_verify_copy_operation(void *src, void **dst)
 
 	dst_ctx->context = NULL;
 
+	if (dst_ctx->type == SIGN_TYPE_EDDSA) {
+		dst_ctx->sign.eddsa.context_data = NULL_PTR;
+
+		if (src_ctx->sign.eddsa.context_data) {
+			dst_ctx->sign.eddsa.context_data =
+				malloc(dst_ctx->sign.eddsa.context_len);
+			if (!dst_ctx->sign.eddsa.context_data) {
+				ret = CKR_HOST_MEMORY;
+				goto end;
+			}
+
+			memcpy(dst_ctx->sign.eddsa.context_data,
+			       src_ctx->sign.eddsa.context_data,
+			       dst_ctx->sign.eddsa.context_len);
+		}
+	}
+
 	ret = libdev_copy_operation(src_ctx->context, &dst_ctx->context);
 	if (ret != CKR_OK)
 		goto end;
@@ -575,18 +704,12 @@ CK_RV lib_sign(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	terminate = CK_FALSE;
 
 end:
-	if (!terminate)
-		return ret;
-
-	if (ctx && ctx->context) {
+	if (terminate) {
 		/*
 		 * Cancel the on-going multipart operation and
 		 * remove operation context.
 		 */
-		(void)libsess_cancel_opctx(hsession, op_flag,
-					   (void **)&ctx->context);
-	} else {
-		(void)libsess_remove_opctx(hsession, op_flag);
+		(void)lib_sign_verify_cancel_operation(hsession, op_flag);
 	}
 
 	return ret;
@@ -741,18 +864,12 @@ CK_RV lib_sign_verify_update(CK_SESSION_HANDLE hsession, CK_BYTE_PTR ppart,
 	terminate = CK_FALSE;
 
 end:
-	if (!terminate)
-		return ret;
-
-	if (ctx && ctx->context) {
+	if (terminate) {
 		/*
 		 * Cancel the on-going multipart operation and
 		 * remove operation context.
 		 */
-		(void)libsess_cancel_opctx(hsession, op_flag,
-					   (void **)&ctx->context);
-	} else {
-		(void)libsess_remove_opctx(hsession, op_flag);
+		(void)lib_sign_verify_cancel_operation(hsession, op_flag);
 	}
 
 	return ret;

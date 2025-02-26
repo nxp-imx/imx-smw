@@ -153,6 +153,11 @@ struct mgroup {
 	CK_RV (*op)(CK_SLOT_ID slotid, struct mentry *entry, void *args);
 };
 
+#define SMW_SIGN_EDDSA(_curve, _hash, _param)                                  \
+	SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(                              \
+		SMW_ATTR_CURVE_##_curve, SMW_ATTR_HASH_##_hash,                \
+		SMW_ATTR_SIGN_PARAM_EDDSA_##_param)
+
 /* Macro filling a struct mentry for a single algo */
 #define M_ALGO(_key_type_name, _hash_name, _mac_name, _cipher_mode_name,       \
 	       _aead_mode_name, _sign_algo_name, _sign_type_name, _kdf_name,   \
@@ -241,10 +246,7 @@ struct mgroup {
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
 	       SMW_SIGNATURE_ALGO_NAME_EDDSA, SMW_SIGNATURE_TYPE_NAME_NONE,    \
-	       SMW_KDF_NAME_NONE,                                              \
-	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(SMW_ATTR_CURVE_ANY,    \
-							SMW_ATTR_HASH_ANY),    \
-	       _id)
+	       SMW_KDF_NAME_NONE, SMW_SIGN_EDDSA(ANY, ANY, NONE), _id)
 
 #define M_SIGN_RSA_ANY_HASH(_mode, _id)                                        \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
@@ -1602,14 +1604,22 @@ static CK_RV sign(struct lib_signature_params *params,
 	struct smw_hash_init_args smw_hash_init_args = { 0 };
 	struct smw_hash_update_args smw_hash_update_args = { 0 };
 	struct smw_hash_final_args smw_hash_final_args = { 0 };
+	struct smw_ed25519_params ed25519_params = { 0 };
 
 	struct lib_signature_ctx *ctx = params->ctx;
 
+	if (ctx->type == SIGN_TYPE_EDDSA && ctx->sign.eddsa.context_data) {
+		smw_sign_verify_args.ed25519_params = &ed25519_params;
+		ed25519_params.context = ctx->sign.eddsa.context_data;
+		if (SET_OVERFLOW(ctx->sign.eddsa.context_len,
+				 ed25519_params.context_length)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+	}
+
 	switch (params->state) {
 	case OP_ONE_SHOT:
-		if (hash_algo == SMW_HASH_ALGO_NAME_NONE)
-			sign_algo = SMW_ATTR_SET_MSG_HASHED(sign_algo);
-
 		smw_sign_verify_args.subsystem_name = subsystem_name;
 		smw_sign_verify_args.key_descriptor = key_desc;
 		smw_sign_verify_args.sign_algo = sign_algo;
@@ -1768,8 +1778,7 @@ end:
 }
 
 static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
-			     struct lib_signature_params *params,
-			     unsigned int key_id)
+			     struct lib_signature_params *params)
 {
 	const struct libdev *devinfo = NULL;
 	struct lib_signature_ctx *ctx = params->ctx;
@@ -1781,12 +1790,15 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 	unsigned int input_length = 0;
 	unsigned char *output = NULL;
 	unsigned int output_length = 0;
+	struct libobj_obj *obj_key = NULL;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	key_desc.id = key_id;
+	obj_key = (struct libobj_obj *)ctx->hkey;
+
+	key_desc.id = get_key_token_id(obj_key);
 
 	subsystem_name = devinfo->name;
 	sign_algo = entry->smw_algo_id;
@@ -1801,24 +1813,64 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 
 	if ((ctx->current_state == OP_BEGIN && params->state == OP_NEXT) ||
 	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE)) {
+		/*
+		 * Operation requesting hashing of the message in multipart
+		 * is not supported for EDDSA.
+		 */
+		if (ctx->type == SIGN_TYPE_EDDSA)
+			return CKR_FUNCTION_NOT_SUPPORTED;
+
 		if (hash_algo == SMW_HASH_ALGO_NAME_NONE)
 			return CKR_ARGUMENTS_BAD;
 	}
 
-	if (ctx->salt_len) {
-		if (SET_OVERFLOW(SMW_ATTR_SET_SALT_LENGTH(sign_algo,
-							  ctx->salt_len),
-				 sign_algo))
-			return CKR_ARGUMENTS_BAD;
-	}
+	switch (ctx->type) {
+	case SIGN_TYPE_MAC:
+		if (!ctx->sign.mac.len)
+			break;
 
-	if (ctx->mac_len) {
 		if (params->ulsignaturelen) {
-			if (params->ulsignaturelen < ctx->mac_len)
+			if (params->ulsignaturelen < ctx->sign.mac.len)
 				return CKR_BUFFER_TOO_SMALL;
 
-			params->ulsignaturelen = ctx->mac_len;
+			params->ulsignaturelen = ctx->sign.mac.len;
 		}
+		break;
+
+	case SIGN_TYPE_RSA:
+		if (!ctx->sign.rsa.salt_len)
+			break;
+
+		sign_algo = SMW_ATTR_SET_SALT_LENGTH(sign_algo,
+						     ctx->sign.rsa.salt_len);
+
+		break;
+
+	case SIGN_TYPE_ECDSA:
+		if (hash_algo == SMW_HASH_ALGO_NAME_NONE)
+			sign_algo = SMW_ATTR_SET_MSG_HASHED(sign_algo);
+
+		break;
+
+	case SIGN_TYPE_EDDSA:
+		if (ctx->sign.eddsa.prehashed) {
+			if (is_edwards_key_type(obj_key,
+						SMW_KEY_TYPE_NAME_ED25519))
+				sign_algo = SMW_SIGN_EDDSA(ED25519, NONE,
+							   PREHASHED);
+
+			sign_algo = SMW_ATTR_SET_MSG_HASHED(sign_algo);
+		} else if (ctx->sign.eddsa.context_data) {
+			if (is_edwards_key_type(obj_key,
+						SMW_KEY_TYPE_NAME_ED25519))
+				sign_algo =
+					SMW_SIGN_EDDSA(ED25519, NONE, CONTEXT);
+		}
+
+		break;
+
+	default:
+		break;
 	}
 
 	input = params->pdata;
@@ -1836,44 +1888,23 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 
 static CK_RV op_msign_ecdsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
-	struct lib_signature_ctx *ctx = NULL;
-	unsigned int key_id = 0;
-
 	DBG_TRACE("ECDSA Signature mechanism");
 
-	ctx = ((struct lib_signature_params *)args)->ctx;
-
-	key_id = get_key_token_id((struct libobj_obj *)ctx->hkey);
-
-	return op_msign_common(slotid, entry, args, key_id);
+	return op_msign_common(slotid, entry, args);
 }
 
 static CK_RV op_msign_eddsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
-	struct lib_signature_ctx *ctx = NULL;
-	unsigned int key_id = 0;
-
 	DBG_TRACE("EDDSA Signature mechanism");
 
-	ctx = ((struct lib_signature_params *)args)->ctx;
-
-	key_id = get_key_token_id((struct libobj_obj *)ctx->hkey);
-
-	return op_msign_common(slotid, entry, args, key_id);
+	return op_msign_common(slotid, entry, args);
 }
 
 static CK_RV op_msign_rsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
-	struct lib_signature_ctx *ctx = NULL;
-	unsigned int key_id = 0;
-
 	DBG_TRACE("RSA Signature mechanism");
 
-	ctx = ((struct lib_signature_params *)args)->ctx;
-
-	key_id = get_key_token_id((struct libobj_obj *)ctx->hkey);
-
-	return op_msign_common(slotid, entry, args, key_id);
+	return op_msign_common(slotid, entry, args);
 }
 
 static void check_mcipher(CK_SLOT_ID slotid, smw_subsystem_t subsystem,

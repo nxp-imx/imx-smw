@@ -32,7 +32,6 @@
 
 #define DH_STR	     "DH"
 #define RSA_STR	     "RSA"
-#define KEYPAIR_STR  "KEYPAIR"
 #define RAW_DATA_STR "RAW_DATA"
 
 #define ANY_STR			    "ANY"

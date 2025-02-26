@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __JSON_TYPES_H__
@@ -195,5 +195,12 @@ enum export_type {
  */
 #define OBJ_FORMAT_BASE64 "BASE64"
 #define OBJ_FORMAT_HEX	  "HEX"
+
+/*
+ * Privacy values
+ */
+#define KEYPAIR_STR "KEYPAIR"
+#define PUBLIC_STR  "PUBLIC_KEY"
+#define SECRET_STR  "SECRET_KEY"
 
 #endif /* __JSON_TYPES_H__ */

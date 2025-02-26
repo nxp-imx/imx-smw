@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <stdlib.h>
@@ -65,6 +65,72 @@ static int key_type_to_object_type(smw_key_type_t key_type_name,
 	}
 
 	return ERR_CODE(PASSED);
+}
+
+static int object_type_to_key_privacy(smw_object_type_t obj_type_name,
+				      smw_key_privacy_t *key_privacy_name)
+{
+	switch (obj_type_name) {
+	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+		*key_privacy_name = SMW_KEY_PRIVACY_NAME_PAIR;
+		break;
+
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+		*key_privacy_name = SMW_KEY_PRIVACY_NAME_PUBLIC;
+		break;
+
+	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+		*key_privacy_name = SMW_KEY_PRIVACY_NAME_SHARED_SECRET;
+		break;
+
+	default:
+		return ERR_CODE(FAILED);
+	}
+
+	return ERR_CODE(PASSED);
+}
+
+static int object_check_privacy(struct smw_object_descriptor *object_descriptor,
+				const char *privacy_string)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	smw_key_privacy_t key_privacy_name = SMW_KEY_PRIVACY_NAME_NONE;
+
+	if (!object_descriptor)
+		goto error;
+
+	res = object_type_to_key_privacy(object_descriptor->type,
+					 &key_privacy_name);
+	if (res != ERR_CODE(PASSED))
+		goto error;
+
+	switch (key_privacy_name) {
+	case SMW_KEY_PRIVACY_NAME_PAIR:
+		if (strcmp(privacy_string, KEYPAIR_STR))
+			goto error;
+
+		break;
+
+	case SMW_KEY_PRIVACY_NAME_PUBLIC:
+		if (strcmp(privacy_string, PUBLIC_STR))
+			goto error;
+
+		break;
+
+	case SMW_KEY_PRIVACY_NAME_SHARED_SECRET:
+		if (strcmp(privacy_string, SECRET_STR))
+			goto error;
+
+		break;
+
+	default:
+		goto error;
+	}
+
+	return ERR_CODE(PASSED);
+
+error:
+	return ERR_CODE(FAILED);
 }
 
 static int object_read_attributes(struct json_object *params,
@@ -180,6 +246,7 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 	struct smw_object_descriptor object_descriptor = { 0 };
 	struct smw_data_attributes data_attributes = { 0 };
 	const char *object_name = NULL;
+	const char *privacy_string = NULL;
 	uint32_t found = 0;
 	uint32_t object_found = 0;
 	smw_attr_attributes_t object_attributes = 0;
@@ -234,17 +301,30 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 	res = util_read_json_type(&object_found, OBJECT_FOUND, t_uint,
 				  subtest->params);
 	if (res == ERR_CODE(PASSED)) {
-		if (found != object_found)
+		if (found != object_found) {
 			res = ERR_CODE(FAILED);
-		else
+			goto exit;
+		} else {
 			DBG_PRINT("Found %l objects", found);
+		}
 	} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
 		if (found == 1) {
 			DBG_PRINT("Found one object");
 			res = ERR_CODE(PASSED);
 		} else {
 			res = ERR_CODE(FAILED);
+			goto exit;
 		}
+	}
+
+	if (found == 1) {
+		res = util_read_json_type(&privacy_string, PRIVACY_OBJ,
+					  t_string, subtest->params);
+		if (res == ERR_CODE(PASSED))
+			res = object_check_privacy(&object_descriptor,
+						   privacy_string);
+		else if (res == ERR_CODE(VALUE_NOTFOUND))
+			res = ERR_CODE(PASSED);
 	}
 
 exit:

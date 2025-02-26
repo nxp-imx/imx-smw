@@ -35,7 +35,24 @@
                 "ECDSA",
                 "HASH=SHA256"
             ]
-        }
+        },
+		"key 3": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"pub_key": [
+				"01234567890123456789012345678901",
+				"01234567890123456789012345678901",
+				"01234567890123456789012345678901",
+				"01234567890123456789012345678901"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			]
+		}
     },
     "subtest 1": {
         "command": "GENERATE",
@@ -49,22 +66,34 @@
         "command": "STORAGE_STORE",
         "data_name": "data 1"
     },
-    "subtest 4": {
+	"subtest 4": {
+		"command": "IMPORT",
+		"key_name": "key 3"
+	},
+    "subtest 5": {
         "command": "OBJECT_FIND",
         "object_name": "data 1",
         "depends": 3
     },
-    "subtest 5": {
-        "command": "OBJECT_FIND",
-        "object_name": "key 1",
-        "depends": 1
-    },
     "subtest 6": {
         "command": "OBJECT_FIND",
-        "object_name": "key 2",
-        "depends": 2
+        "object_name": "key 1",
+        "privacy": "SECRET_KEY",
+        "depends": 1
     },
     "subtest 7": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 2",
+        "privacy": "KEYPAIR",
+        "depends": 2
+    },
+    "subtest 8": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 3",
+        "depends": 4,
+        "privacy": "PUBLIC_KEY"
+    },
+    "subtest 9": {
         "command": "OBJECT_FIND",
         "attributes_list": [
             "PERSISTENT"
@@ -75,17 +104,22 @@
         ],
         "object_found": 2
     },
-    "subtest 8": {
+    "subtest 10": {
         "command": "DELETE",
         "key_name": "key 1",
         "depends": 1
     },
-    "subtest 9": {
+    "subtest 11": {
         "command": "DELETE",
         "key_name": "key 2",
         "depends": 2
     },
-    "subtest 10": {
+    "subtest 12": {
+        "command": "DELETE",
+        "key_name": "key 3",
+        "depends": 4
+    },
+    "subtest 13": {
         "command": "STORAGE_DELETE",
         "data_name": "data 1",
         "depends": 3,
@@ -93,22 +127,28 @@
             "imx8qxp"
         ]
     },
-    "subtest 11": {
+    "subtest 14": {
         "command": "OBJECT_FIND",
         "object_name": "data 1",
+        "depends": 13,
+        "result": "SMW_STATUS_UNKNOWN_ID"
+    },
+    "subtest 15": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 1",
         "depends": 10,
         "result": "SMW_STATUS_UNKNOWN_ID"
     },
-    "subtest 12": {
-        "command": "OBJECT_FIND",
-        "object_name": "key 1",
-        "depends": 8,
-        "result": "SMW_STATUS_UNKNOWN_ID"
-    },
-    "subtest 13": {
+    "subtest 16": {
         "command": "OBJECT_FIND",
         "object_name": "key 2",
-        "depends": 9,
+        "depends": 11,
+        "result": "SMW_STATUS_UNKNOWN_ID"
+    },
+    "subtest 17": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 3",
+        "depends": 12,
         "result": "SMW_STATUS_UNKNOWN_ID"
     }
 }

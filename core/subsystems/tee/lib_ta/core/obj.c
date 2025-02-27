@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <util.h>
 #include <string.h>
+#include <sys/queue.h>
 #include <tee_internal_api.h>
 #include <tee_internal_api_extensions.h>
 
@@ -32,17 +33,205 @@
 #define OBJECT_ID_BUFFER_MAX (TEE_OBJECT_ID_MAX_LEN / sizeof(uint32_t) + 1)
 
 /**
- * struct obj_list - Transient object list.
+ * struct obj_entry - Transient object entry.
  * @obj_data: Object data.
  * @next: Next object of the list.
  */
-struct obj_list {
+struct obj_entry {
 	struct obj_data *obj_data;
-	struct obj_list *next;
+	SLIST_ENTRY(obj_entry) next;
 };
 
-/* Linked list containing transient objects */
-static struct obj_list *transient_object_list;
+/* Linked list containing objects */
+static SLIST_HEAD(obj_list, obj_entry) object_list = { NULL };
+
+static TEE_Result allocate_object(uint32_t id, struct obj_entry **obj)
+{
+	struct obj_data *new_obj_data = NULL;
+	struct obj_entry *new_obj = NULL;
+
+	if (!id || !obj)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	new_obj_data = TEE_Malloc(sizeof(*new_obj_data),
+				  TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!new_obj_data) {
+		EMSG("TEE_Malloc failed");
+		goto exit;
+	}
+
+	new_obj_data->id = id;
+	new_obj_data->handle = TEE_HANDLE_NULL;
+	new_obj_data->data = NULL;
+	new_obj_data->data_size = 0;
+
+	new_obj = TEE_Malloc(sizeof(*new_obj), TEE_USER_MEM_HINT_NO_FILL_ZERO);
+	if (!new_obj) {
+		EMSG("TEE_Malloc failed");
+		goto exit;
+	}
+
+	new_obj->obj_data = new_obj_data;
+	*obj = new_obj;
+
+	return TEE_SUCCESS;
+
+exit:
+	if (new_obj_data)
+		TEE_Free(new_obj_data);
+
+	return TEE_ERROR_OUT_OF_MEMORY;
+}
+
+static TEE_Result add_object(uint32_t id, struct obj_entry **new_obj)
+{
+	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
+	struct obj_entry *obj = NULL;
+	struct obj_entry *entry = NULL;
+	struct obj_entry *previous = NULL;
+
+	if (!id)
+		return res;
+
+	res = allocate_object(id, &obj);
+	if (res != TEE_SUCCESS)
+		return res;
+
+	if (new_obj)
+		*new_obj = obj;
+
+	entry = SLIST_FIRST(&object_list);
+	if (entry && entry->obj_data->id < id) {
+		do {
+			previous = entry;
+			entry = SLIST_NEXT(entry, next);
+		} while (entry && entry->obj_data->id < id);
+
+		SLIST_INSERT_AFTER(previous, obj, next);
+	} else {
+		SLIST_INSERT_HEAD(&object_list, obj, next);
+	}
+
+	return TEE_SUCCESS;
+}
+
+static TEE_Result get_object(uint32_t id, struct obj_data *obj_data)
+{
+	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
+	struct obj_entry *entry = NULL;
+
+	if (!id)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	SLIST_FOREACH(entry, &object_list, next)
+	{
+		if (entry->obj_data->id == id) {
+			if (obj_data)
+				*obj_data = *entry->obj_data;
+
+			res = TEE_SUCCESS;
+			goto end;
+		} else if (entry->obj_data->id > id) {
+			goto end;
+		}
+	}
+
+end:
+	return res;
+}
+
+static TEE_Result get_free_object_slot(uint32_t *id, bool persistent)
+{
+	uint32_t next_id = 0;
+	uint32_t max_id = 0;
+	struct obj_entry *entry = NULL;
+
+	if (!id)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	if (persistent) {
+		next_id = OBJECT_ID_PERSISTENT_MIN;
+		max_id = OBJECT_ID_PERSISTENT_MAX;
+	} else {
+		next_id = OBJECT_ID_TRANSIENT_MIN;
+		max_id = OBJECT_ID_TRANSIENT_MAX;
+	}
+
+	SLIST_FOREACH(entry, &object_list, next)
+	{
+		if (entry->obj_data->id > next_id)
+			break;
+
+		if (ADD_OVERFLOW(next_id, 1, &next_id))
+			return TEE_ERROR_STORAGE_NO_SPACE;
+
+		if (next_id == max_id)
+			return TEE_ERROR_STORAGE_NO_SPACE;
+	}
+
+	*id = next_id;
+
+	return TEE_SUCCESS;
+}
+
+static void free_object(struct obj_data *obj_data)
+{
+	if (obj_data) {
+		if (obj_data->handle)
+			TEE_FreeTransientObject(obj_data->handle);
+
+		if (obj_data->data)
+			TEE_Free(obj_data->data);
+
+		TEE_Free(obj_data);
+	}
+}
+
+static TEE_Result remove_object(uint32_t id)
+{
+	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
+	struct obj_entry *entry = NULL;
+	struct obj_data *obj_data = NULL;
+
+	if (!id)
+		return TEE_ERROR_BAD_PARAMETERS;
+
+	SLIST_FOREACH(entry, &object_list, next)
+	{
+		obj_data = entry->obj_data;
+
+		if (obj_data->id == id) {
+			free_object(obj_data);
+
+			SLIST_REMOVE(&object_list, entry, obj_entry, next);
+
+			TEE_Free(entry);
+
+			res = TEE_SUCCESS;
+			goto end;
+		} else if (entry->obj_data->id > id) {
+			goto end;
+		}
+	}
+
+end:
+	return res;
+}
+
+static void remove_all_objects(void)
+{
+	struct obj_entry *entry = NULL;
+
+	while (!SLIST_EMPTY(&object_list)) {
+		entry = SLIST_FIRST(&object_list);
+
+		free_object(entry->obj_data);
+
+		SLIST_REMOVE_HEAD(&object_list, next);
+
+		TEE_Free(entry);
+	}
+}
 
 /**
  * is_object_id_used() - Check if an ID is already used.
@@ -55,97 +244,42 @@ static struct obj_list *transient_object_list;
  */
 static TEE_Result is_object_id_used(uint32_t id)
 {
-	TEE_Result res = TEE_SUCCESS;
-
 	FMSG("Executing %s", __func__);
 
-	res = ta_find_and_open_persistent_id(id, NULL, true);
-	if (res == TEE_ERROR_ITEM_NOT_FOUND)
-		res = ta_find_and_get_transient_id(id, NULL);
-
-	return res;
+	return get_object(id, NULL);
 }
 
 TEE_Result ta_find_and_open_persistent_id(uint32_t id, TEE_ObjectHandle *handle,
 					  bool shared)
 {
 	TEE_Result res = TEE_SUCCESS;
-	TEE_ObjectEnumHandle obj_enum = TEE_HANDLE_NULL;
-	TEE_ObjectInfo obj_info = { 0 };
-	uint32_t *obj_id = NULL;
-	size_t obj_id_length = 0;
-	bool found = false;
+	TEE_ObjectHandle hdl = TEE_HANDLE_NULL;
 	uint32_t persistent_object_flags =
 		PERSISTENT_OBJECT_FLAGS |
 		(shared ? 0 : TEE_DATA_FLAG_ACCESS_WRITE_META);
 
 	FMSG("Executing %s", __func__);
 
-	res = TEE_AllocatePersistentObjectEnumerator(&obj_enum);
+	res = get_object(id, NULL);
+	if (res != TEE_SUCCESS)
+		return res;
+
+	res = TEE_OpenPersistentObject(SMW_TEE_STORAGE, &id, sizeof(id),
+				       persistent_object_flags, &hdl);
 	if (res == TEE_SUCCESS) {
-		obj_id = TEE_Malloc(OBJECT_ID_BUFFER_MAX,
-				    TEE_USER_MEM_HINT_NO_FILL_ZERO);
-		if (!obj_id) {
-			res = TEE_ERROR_OUT_OF_MEMORY;
-			goto exit;
-		}
-
-		DMSG("Enumerate all Persistent objects");
-		res = TEE_StartPersistentObjectEnumerator(obj_enum,
-							  SMW_TEE_STORAGE);
-
-		while (res == TEE_SUCCESS && !found) {
-			TEE_MemFill(&obj_info, 0, sizeof(obj_info));
-			TEE_MemFill(obj_id, 0, OBJECT_ID_BUFFER_MAX);
-			obj_id_length = 0;
-
-			res = TEE_GetNextPersistentObject(obj_enum, &obj_info,
-							  obj_id,
-							  &obj_id_length);
-			if (res == TEE_SUCCESS && obj_id_length == sizeof(id) &&
-			    id == obj_id[0])
-				found = true;
-		}
-	}
-
-	if (found) {
 		DMSG("Persistent object ID 0x%08" PRIx32 " found", id);
 		if (handle)
-			res = TEE_OpenPersistentObject(SMW_TEE_STORAGE, obj_id,
-						       sizeof(*obj_id),
-						       persistent_object_flags,
-						       handle);
-	} else {
-		res = TEE_ERROR_ITEM_NOT_FOUND;
+			*handle = hdl;
 	}
-
-exit:
-	TEE_FreePersistentObjectEnumerator(obj_enum);
-
-	if (obj_id)
-		TEE_Free(obj_id);
 
 	return res;
 }
 
 TEE_Result ta_find_and_get_transient_id(uint32_t id, struct obj_data *obj_data)
 {
-	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
-	struct obj_list *head = transient_object_list;
-
 	FMSG("Executing %s", __func__);
 
-	while (head && res != TEE_SUCCESS) {
-		if (head->obj_data->id == id) {
-			res = TEE_SUCCESS;
-			if (obj_data)
-				*obj_data = *head->obj_data;
-		}
-
-		head = head->next;
-	}
-
-	return res;
+	return get_object(id, obj_data);
 }
 
 TEE_Result ta_register_persistent_object(struct obj_data *obj_data)
@@ -158,20 +292,21 @@ TEE_Result ta_register_persistent_object(struct obj_data *obj_data)
 	if (!obj_data)
 		return res;
 
+	if (!obj_data->data != !obj_data->data_size)
+		return res;
+
 	res = TEE_CreatePersistentObject(SMW_TEE_STORAGE, &obj_data->id,
 					 sizeof(obj_data->id),
 					 PERSISTENT_OBJECT_FLAGS,
-					 obj_data->handle, NULL, 0, &handle);
-
-	if (obj_data->data && obj_data->data_size) {
-		res = TEE_WriteObjectData(handle, obj_data->data,
-					  obj_data->data_size);
-		if (res != TEE_SUCCESS)
-			(void)TEE_CloseAndDeletePersistentObject1(handle);
-	}
+					 obj_data->handle, obj_data->data,
+					 obj_data->data_size, &handle);
+	if (res == TEE_SUCCESS)
+		res = add_object(obj_data->id, NULL);
 
 	if (res == TEE_SUCCESS)
 		TEE_CloseObject(handle);
+	else
+		TEE_CloseAndDeletePersistentObject(handle);
 
 	return res;
 }
@@ -184,8 +319,14 @@ TEE_Result ta_find_and_delete_persistent_id(uint32_t id)
 	FMSG("Executing %s", __func__);
 
 	res = ta_find_and_open_persistent_id(id, &handle, false);
-	if (res == TEE_SUCCESS)
-		res = TEE_CloseAndDeletePersistentObject1(handle);
+	if (res != TEE_SUCCESS)
+		return res;
+
+	res = remove_object(id);
+	if (res != TEE_SUCCESS)
+		return res;
+
+	TEE_CloseAndDeletePersistentObject(handle);
 
 	return res;
 }
@@ -193,74 +334,43 @@ TEE_Result ta_find_and_delete_persistent_id(uint32_t id)
 TEE_Result ta_register_transient_object(struct obj_data *obj_data)
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	struct obj_data *new_obj_data = NULL;
-	struct obj_list *new_obj = NULL;
-	struct obj_list *head = NULL;
+	struct obj_entry *new_obj = NULL;
 
 	FMSG("Executing %s", __func__);
 
 	if (!obj_data)
 		goto exit;
 
-	new_obj_data = TEE_Malloc(sizeof(*new_obj_data),
-				  TEE_USER_MEM_HINT_NO_FILL_ZERO);
-	if (!new_obj_data) {
-		EMSG("TEE_Malloc failed");
-		res = TEE_ERROR_OUT_OF_MEMORY;
+	res = add_object(obj_data->id, &new_obj);
+	if (res != TEE_SUCCESS)
 		goto exit;
-	}
 
-	*new_obj_data = *obj_data;
-	new_obj_data->data = NULL;
-	new_obj_data->data_size = 0;
+	*new_obj->obj_data = *obj_data;
+	new_obj->obj_data->data = NULL;
+	new_obj->obj_data->data_size = 0;
 
 	if (obj_data->data && obj_data->data_size) {
-		new_obj_data->data = TEE_Malloc(obj_data->data_size,
-						TEE_USER_MEM_HINT_NO_FILL_ZERO);
-		if (!new_obj_data->data) {
+		new_obj->obj_data->data =
+			TEE_Malloc(obj_data->data_size,
+				   TEE_USER_MEM_HINT_NO_FILL_ZERO);
+		if (!new_obj->obj_data->data) {
 			EMSG("TEE_Malloc failed");
 			res = TEE_ERROR_OUT_OF_MEMORY;
 			goto exit;
 		}
 
-		TEE_MemMove(new_obj_data->data, obj_data->data,
+		TEE_MemMove(new_obj->obj_data->data, obj_data->data,
 			    obj_data->data_size);
 
-		new_obj_data->data_size = obj_data->data_size;
+		new_obj->obj_data->data_size = obj_data->data_size;
 	}
 
-	new_obj = TEE_Malloc(sizeof(*new_obj), TEE_USER_MEM_HINT_NO_FILL_ZERO);
-	if (!new_obj) {
-		EMSG("TEE_Malloc failed");
-		res = TEE_ERROR_OUT_OF_MEMORY;
-		goto exit;
-	}
-
-	new_obj->obj_data = new_obj_data;
-	new_obj->next = NULL;
-
-	if (!transient_object_list) {
-		/* New object is the first of the list */
-		transient_object_list = new_obj;
-	} else {
-		head = transient_object_list;
-		while (head->next)
-			head = head->next;
-		/* New object is the last of the list */
-		head->next = new_obj;
-	}
-
-	res = TEE_SUCCESS;
 	obj_data->handle = TEE_HANDLE_NULL;
 
 exit:
 	if (res != TEE_SUCCESS) {
-		if (new_obj_data) {
-			if (new_obj_data->data)
-				TEE_Free(new_obj_data->data);
-
-			TEE_Free(new_obj_data);
-		}
+		if (new_obj)
+			remove_object(obj_data->id);
 	}
 
 	return res;
@@ -268,53 +378,17 @@ exit:
 
 TEE_Result ta_find_and_delete_transient_id(uint32_t id)
 {
-	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
-
-	struct obj_list *head = NULL;
-	struct obj_list *prev = NULL;
-	struct obj_list *next = NULL;
-
 	FMSG("Executing %s", __func__);
 
 	if (!id)
 		return TEE_ERROR_BAD_PARAMETERS;
 
-	head = transient_object_list;
-	prev = transient_object_list;
-
-	while (head && res != TEE_SUCCESS) {
-		next = head->next;
-		if (head->obj_data->id == id) {
-			res = TEE_SUCCESS;
-
-			if (head == transient_object_list)
-				transient_object_list = next;
-			else
-				prev->next = next;
-
-			TEE_FreeTransientObject(head->obj_data->handle);
-
-			if (head->obj_data->data)
-				TEE_Free(head->obj_data->data);
-			TEE_Free(head->obj_data);
-			TEE_Free(head);
-
-			break;
-		}
-
-		prev = head;
-		head = next;
-	};
-
-	return res;
+	return remove_object(id);
 }
 
 TEE_Result ta_find_unused_object_id(uint32_t *id, bool persistent)
 {
-	TEE_Result res = TEE_ERROR_ITEM_NOT_FOUND;
-
-	uint32_t i = OBJECT_ID_TRANSIENT_MIN;
-	uint32_t max_id = OBJECT_ID_TRANSIENT_MAX;
+	TEE_Result res = TEE_SUCCESS;
 
 	FMSG("Executing %s", __func__);
 
@@ -325,29 +399,10 @@ TEE_Result ta_find_unused_object_id(uint32_t *id, bool persistent)
 			res = TEE_ERROR_BAD_PARAMETERS;
 		else if (res == TEE_ERROR_ITEM_NOT_FOUND)
 			res = TEE_SUCCESS;
-
 	} else {
-		if (persistent) {
-			i = OBJECT_ID_PERSISTENT_MIN;
-			max_id = OBJECT_ID_PERSISTENT_MAX;
-		}
-
-		for (; i < max_id; i++) {
-			res = is_object_id_used(i);
-			if (res == TEE_SUCCESS)
-				continue;
-
-			if (res == TEE_ERROR_ITEM_NOT_FOUND) {
-				*id = i;
-				DMSG("Found new ID=0x%08" PRIx32, *id);
-				res = TEE_SUCCESS;
-			}
-
-			break;
-		}
-
-		if (i == max_id)
-			res = TEE_ERROR_STORAGE_NO_SPACE;
+		res = get_free_object_slot(id, persistent);
+		if (res == TEE_SUCCESS)
+			DMSG("Found new ID=0x%08" PRIx32, *id);
 	}
 
 	EMSG("returned 0x%" PRIx32, res);
@@ -378,22 +433,58 @@ TEE_Result ta_get_obj_handle(TEE_ObjectHandle *obj_handle, uint32_t obj_id,
 
 TEE_Result ta_clear_obj_linked_list(void)
 {
+	FMSG("Executing %s", __func__);
+
+	remove_all_objects();
+
+	return TEE_SUCCESS;
+}
+
+TEE_Result ta_get_all_persisents_obj(void)
+{
 	TEE_Result res = TEE_SUCCESS;
-	struct obj_list *head = transient_object_list;
-	struct obj_list *next = NULL;
+	TEE_ObjectEnumHandle obj_enum = TEE_HANDLE_NULL;
+	TEE_ObjectInfo obj_info = { 0 };
+	uint32_t *obj_id = NULL;
+	size_t obj_id_len = 0;
 
 	FMSG("Executing %s", __func__);
 
-	while (head) {
-		next = head->next;
-		res = ta_find_and_delete_transient_id(head->obj_data->id);
-		if (res != TEE_SUCCESS) {
-			EMSG("Can't delete object from linked list: 0x%x", res);
-			break;
+	/*
+	 * Update object list with existing secure storage content.
+	 */
+	res = TEE_AllocatePersistentObjectEnumerator(&obj_enum);
+	if (res != TEE_SUCCESS)
+		goto exit;
+
+	DMSG("Enumerate all Persistent objects");
+	res = TEE_StartPersistentObjectEnumerator(obj_enum, SMW_TEE_STORAGE);
+	if (res == TEE_SUCCESS) {
+		obj_id = TEE_Malloc(OBJECT_ID_BUFFER_MAX,
+				    TEE_USER_MEM_HINT_NO_FILL_ZERO);
+		if (!obj_id) {
+			res = TEE_ERROR_OUT_OF_MEMORY;
+			goto exit;
 		}
 
-		head = next;
+		while (res == TEE_SUCCESS) {
+			TEE_MemFill(obj_id, 0, OBJECT_ID_BUFFER_MAX);
+			obj_id_len = 0;
+
+			res = TEE_GetNextPersistentObject(obj_enum, &obj_info,
+							  obj_id, &obj_id_len);
+			if (res == TEE_SUCCESS &&
+			    obj_id_len == sizeof(uint32_t))
+				res = add_object(*obj_id, NULL);
+		}
 	}
+
+	if (res == TEE_ERROR_ITEM_NOT_FOUND)
+		res = TEE_SUCCESS;
+
+exit:
+	if (res != TEE_SUCCESS)
+		remove_all_objects();
 
 	return res;
 }

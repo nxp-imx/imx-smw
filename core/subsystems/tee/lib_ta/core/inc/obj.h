@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023 NXP
+ * Copyright 2023, 2025 NXP
  */
 
 #ifndef TA_OBJ_H
@@ -137,8 +137,19 @@ TEE_Result ta_get_obj_handle(TEE_ObjectHandle *obj_handle, uint32_t obj_id,
  *
  * Return:
  * TEE_SUCCESS	- Success.
- * Error code from ta_find_and_delete_transient_id() function.
  */
 TEE_Result ta_clear_obj_linked_list(void);
+
+/**
+ * ta_get_all_persisents_obj() - Build the persistent object linked list.
+ *
+ * This function is called when the TA session is open. Its goal is to
+ * build persistent object linked list resources.
+ *
+ * Return:
+ * TEE_SUCCESS		   - Success.
+ * TEE_ERROR_OUT_OF_MEMORY - Memory allocation failed.
+ */
+TEE_Result ta_get_all_persisents_obj(void);
 
 #endif /* TA_OBJ_H */

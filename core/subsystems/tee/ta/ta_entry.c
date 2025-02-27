@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <tee_internal_api.h>
@@ -13,11 +13,21 @@
  * First call in the TA. Called when the instance of the TA is created.
  *
  * Return:
- * TEE_SUCCESS	- Success.
+ * TEE_SUCCESS		- Success.
+ * TEE_ERROR_GENERIC	- Error during library attach operation.
  */
 TEE_Result TA_CreateEntryPoint(void)
 {
+	TEE_Result res;
+
 	FMSG("Executing %s", __func__);
+
+	res = libsmw_attach();
+	if (res) {
+		EMSG("Error while attaching to the library");
+		return res;
+	}
+
 	return TEE_SUCCESS;
 }
 
@@ -31,14 +41,14 @@ TEE_Result TA_CreateEntryPoint(void)
  */
 void TA_DestroyEntryPoint(void)
 {
-	TEE_Result res;
+	TEE_Result res = TEE_SUCCESS;
 
 	FMSG("Executing %s", __func__);
 
-	/* Make sure to free transient resources */
+	/* Make sure to free all resources */
 	res = libsmw_detach();
 	if (res)
-		EMSG("Error while detaching for the library");
+		EMSG("Error while detaching to the library");
 }
 
 /**

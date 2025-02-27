@@ -1,10 +1,19 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022 NXP
+ * Copyright 2022, 2025 NXP
  */
 
 #ifndef __LIBSMW_TA_H__
 #define __LIBSMW_TA_H__
+
+/**
+ * libsmw_attach() - Attach to the library instance.
+ *
+ * Return:
+ * TEE_SUCCESS        - Operation succeed.
+ * TEE_ERROR_GENERIC  - Error during library attach operation.
+ */
+TEE_Result libsmw_attach(void);
 
 /**
  * libsmw_detach() - Detach from library instance.

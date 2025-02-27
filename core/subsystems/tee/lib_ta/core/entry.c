@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include <tee_internal_api.h>
@@ -19,6 +19,19 @@
 #include "operation_context.h"
 #include "obj.h"
 #include "storage.h"
+
+TEE_Result libsmw_attach(void)
+{
+	TEE_Result res = ta_get_all_persisents_obj();
+
+	if (res) {
+		EMSG("Error 0x%" PRIx32 " while building object linked list",
+		     res);
+		res = TEE_ERROR_GENERIC;
+	}
+
+	return res;
+}
 
 TEE_Result libsmw_detach(void)
 {

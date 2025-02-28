@@ -55,6 +55,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix MAC hash bitmap management.
 * Fix library to build modularly.
 * Fix a memory leak in keymgr.
+* Fix key privacy update in keymgr.
 
 ##### 2. Subsystems
 
@@ -93,6 +94,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Correct the certificate length in U_ELE_Attestation_001 test.
 * Add U_TEE_Derive_004.
 * U_ELE_Derive tests: Remove tests exporting the derived key buffer.
+* Add privacy check in U_API_Object test.
 
 #### PKCS#11 Library - _version 4.2_
 

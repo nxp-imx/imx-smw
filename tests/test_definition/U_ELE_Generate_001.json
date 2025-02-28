@@ -120,6 +120,19 @@
 			"permitted_algo": [
 				"ED25519PH"
 			]
+		},
+		"key 10": {
+			"type": "ED25519",
+			"security_size": 255,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"EDDSA"
+			]
 		}
 	},
 	"subtest 1": {
@@ -178,58 +191,63 @@
 		]
 	},
 	"subtest 10": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 10",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 11": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 11": {
+	"subtest 12": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 12": {
+	"subtest 13": {
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 3
 	},
-	"subtest 13": {
+	"subtest 14": {
 		"command": "DELETE",
 		"key_name": "key 4",
 		"depends": 4
 	},
-	"subtest 14": {
+	"subtest 15": {
 		"command": "DELETE",
 		"key_name": "key 5",
 		"depends": 5
 	},
-	"subtest 15": {
+	"subtest 16": {
 		"command": "DELETE",
 		"key_name": "key 6",
 		"depends": 6
 	},
-	"subtest 16": {
+	"subtest 17": {
 		"command": "DELETE",
 		"key_name": "key 7",
 		"depends": 7
 	},
-	"subtest 17": {
-		"command": "DELETE",
-		"key_name": "key 8",
-		"depends": 8,
-		"restriction_list": [
-			"imx8ulp",
-			"imx95",
-			"imx943"
-		]
-	},
 	"subtest 18": {
 		"command": "DELETE",
+		"key_name": "key 8",
+		"depends": 8
+	},
+	"subtest 19": {
+		"command": "DELETE",
 		"key_name": "key 9",
-		"depends": 9,
-		"restriction_list": [
-			"imx8ulp",
-			"imx95",
-			"imx943"
-		]
+		"depends": 9
+	},
+	"subtest 20": {
+		"command": "DELETE",
+		"key_name": "key 10",
+		"depends": 10
 	}
 }

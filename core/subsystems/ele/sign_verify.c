@@ -109,6 +109,7 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 
 	unsigned int i = 0;
 	const struct signature_scheme *scheme = signature_schemes;
+
 	enum smw_config_hash_algo_id hash_id = attributes->hash_id;
 	enum smw_config_sign_type_id type_id = attributes->type_id;
 
@@ -128,7 +129,8 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 				break;
 
 			*scheme_id = scheme->scheme_id;
-			SMW_DBG_PRINTF(DEBUG, "ELE Signature Scheme ID: 0x%X\n",
+			SMW_DBG_PRINTF(DEBUG,
+				       "ELE Signature Scheme ID: 0x%08X\n",
 				       *scheme_id);
 			status = SMW_STATUS_OK;
 			break;
@@ -189,6 +191,12 @@ static int sign(struct hdl *hdl, void *args)
 				      &op_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	if (key_identifier->type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519 &&
+	    smw_sign_verify_get_ed25519ctx_buf(args)) {
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
+	}
 
 	if (sign_args->attributes.msg_hashed)
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
@@ -310,6 +318,12 @@ static int verify(struct hdl *hdl, void *args)
 				      &op_args.scheme_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519 &&
+	    smw_sign_verify_get_ed25519ctx_buf(args)) {
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+		goto end;
+	}
 
 	if (verify_args->attributes.msg_hashed)
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;

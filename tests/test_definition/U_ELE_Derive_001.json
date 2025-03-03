@@ -68,7 +68,8 @@
 		"key_name": "key 1",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 2": {
@@ -87,7 +88,8 @@
 		"result": "SMW_STATUS_INVALID_PARAM",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 3": {
@@ -105,7 +107,8 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 4": {
@@ -121,7 +124,8 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 5": {
@@ -153,7 +157,8 @@
 		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 6": {
@@ -162,7 +167,8 @@
 		"key_name": "key 5",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 7": {
@@ -184,7 +190,8 @@
 		"depends": 6,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 8": {
@@ -206,7 +213,8 @@
 		"depends": 6,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 9": {

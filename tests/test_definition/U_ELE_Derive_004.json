@@ -64,7 +64,8 @@
 		"key_name": "base key 1",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 2": {
@@ -95,7 +96,8 @@
 		"depends": 1,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 3": {
@@ -118,7 +120,8 @@
 		"depends": 2,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 4": {
@@ -127,7 +130,8 @@
 		"key_name": "base key 2",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 5": {
@@ -156,7 +160,8 @@
 		"depends": 4,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 6": {

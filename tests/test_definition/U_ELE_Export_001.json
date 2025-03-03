@@ -172,7 +172,8 @@
 		"key_name": "key 9",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 15": {
@@ -181,7 +182,8 @@
 		"depends": 14,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 16": {
@@ -191,7 +193,8 @@
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 17": {
@@ -200,7 +203,8 @@
 		"depends": 14,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	}
 }

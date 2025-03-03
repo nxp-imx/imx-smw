@@ -164,7 +164,8 @@
 		"key_name": "key 8",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 9": {
@@ -173,7 +174,8 @@
 		"key_name": "key 9",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 10": {
@@ -217,7 +219,8 @@
 		"depends": 8,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 18": {
@@ -226,7 +229,8 @@
 		"depends": 9,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	}
 }

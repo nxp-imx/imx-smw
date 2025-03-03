@@ -77,7 +77,8 @@
 		"key_name": "key 3",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95"
+			"imx95",
+			"imx943"
 		]
 	},
 	"subtest 4": {

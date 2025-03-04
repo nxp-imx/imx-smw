@@ -56,6 +56,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Remove HKDF support. Secure Enclave doesn't support it anymore.
 * ELE: Remove TLS 1.2 plain text versus key ids output buffer flag.
 * TEE: Fix the ed25519 key security size to be 255 bits.
+* TEE: Improve object storage management.
 
 ##### 3. ARM PSA APIs
 
@@ -78,6 +79,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 
 #### PKCS#11 Tests - _version 5.0_
+
+* Add DES key generation performance test.
 
 ---
 ### <a id ="rel_4_2"></a></br>**Release 4.2**

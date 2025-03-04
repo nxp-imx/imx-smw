@@ -54,6 +54,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * ELE: Remove HKDF support. Secure Enclave doesn't support it anymore.
 * ELE: Remove TLS 1.2 plain text versus key ids output buffer flag.
+* TEE: Fix the ed25519 key security size to be 255 bits.
 
 ##### 3. ARM PSA APIs
 
@@ -62,12 +63,15 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add a dedicated configuration file for i.MX943.
 * Remove HKDF key derivation in all ELE based configurations.
+* Add support of the EDDSA signature for TEE subsystem in all configurations
 
 #### SMW Tests - _version 5.0_
 
-* Disable the tests that validate algorithms and key types that are currently unsupported on the i.MX943 platform.
+* Disable the tests that validate algorithms and key types that are currently
+  unsupported on the i.MX943 platform.
 * Disable TLS1.2 tests on i.MX943 platform.
 * ELE tests: Disable HKDF validation.
+* Fix TEE ed25519 key security size in the tests.
 
 #### PKCS#11 Library - _version 5.0_
 

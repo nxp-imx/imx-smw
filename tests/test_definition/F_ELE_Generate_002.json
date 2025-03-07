@@ -55,7 +55,7 @@
 		"command": "SIGN",
 		"subsystem": "ELE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",

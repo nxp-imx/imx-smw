@@ -95,7 +95,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -109,7 +109,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -123,7 +123,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA224"
 		],
 		"message": [
@@ -147,7 +147,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA224"
 		],
 		"message": [
@@ -171,7 +171,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -195,7 +195,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -219,7 +219,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -247,7 +247,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -275,7 +275,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [
@@ -303,7 +303,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [
@@ -331,7 +331,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -345,7 +345,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -359,7 +359,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA224"
 		],
 		"message": [
@@ -383,7 +383,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA224"
 		],
 		"message": [
@@ -407,7 +407,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -431,7 +431,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -455,7 +455,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -483,7 +483,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -511,7 +511,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [
@@ -539,7 +539,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [
@@ -567,7 +567,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -581,7 +581,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -595,7 +595,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -619,7 +619,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -643,7 +643,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -671,7 +671,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -699,7 +699,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [
@@ -727,7 +727,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [
@@ -755,7 +755,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -769,7 +769,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -783,7 +783,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -811,7 +811,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -839,7 +839,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [
@@ -867,7 +867,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [
@@ -895,7 +895,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -909,7 +909,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -923,7 +923,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [
@@ -951,7 +951,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA512"
 		],
 		"message": [

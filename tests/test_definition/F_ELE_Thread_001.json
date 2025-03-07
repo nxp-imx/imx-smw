@@ -58,7 +58,9 @@
 			"command": "SIGN",
 			"subsystem": "ELE",
 			"sign_attr": [
-				"DEFAULT"
+				"ECDSA",
+				"HASH=SHA256",
+				"MSG_HASHED"
 			],
 			"message": [
 				"54686973207068726173652069732033",

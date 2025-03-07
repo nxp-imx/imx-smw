@@ -45,7 +45,9 @@
 			"wait_before": "sem_t2",
 			"command": "SIGN",
 			"sign_attr": [
-				"DEFAULT"
+				"ECDSA",
+				"HASH=SHA256",
+				"MSG_HASHED"
 			],
 			"subsystem": "SECO",
 			"message": [

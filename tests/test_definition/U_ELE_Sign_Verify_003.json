@@ -11,8 +11,7 @@
 				"VERIFY_HASH"
 			],
 			"permitted_algo": [
-				"EDDSA",
-				"HASH=SHA512"
+				"ED25519PH"
 			]
 		},
 		"key 2": {
@@ -26,7 +25,7 @@
 				"VERIFY_MESSAGE"
 			],
 			"permitted_algo": [
-				"EDDSA"
+				"PURE_EDDSA"
 			]
 		}
 	},
@@ -54,8 +53,7 @@
 		"command": "SIGN",
 		"subsystem": "ELE",
 		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA512"
+			"ED25519PH"
 		],
 		"message": [
 			"bad101250ec6f26652249d59dc974b73",
@@ -76,8 +74,7 @@
 		"command": "VERIFY",
 		"subsystem": "ELE",
 		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA512"
+			"ED25519PH"
 		],
 		"message": [
 			"bad101250ec6f26652249d59dc974b73",
@@ -98,7 +95,7 @@
 		"command": "SIGN",
 		"subsystem": "ELE",
 		"sign_attr": [
-			"DEFAULT"
+			"PURE_EDDSA"
 		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",
@@ -130,7 +127,7 @@
 		"command": "VERIFY",
 		"subsystem": "ELE",
 		"sign_attr": [
-			"DEFAULT"
+			"PURE_EDDSA"
 		],
 		"message": [
 			"4f05600950664d5190a2ebc29c9edb89",

@@ -37,7 +37,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -52,7 +52,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",
@@ -68,7 +68,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA"
 		],
 		"message": [
 			"54686973207068726173652069732033",

@@ -40,7 +40,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [

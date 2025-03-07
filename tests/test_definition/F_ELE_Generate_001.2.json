@@ -12,7 +12,7 @@
 		"command": "SIGN",
 		"subsystem": "ELE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -36,7 +36,7 @@
 		"command": "VERIFY",
 		"subsystem": "ELE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [

@@ -74,7 +74,7 @@
 				"SIGN_MESSAGE"
 			],
 			"permitted_algo": [
-				"EDDSA"
+				"PURE_EDDSA"
 			]
 		},
 		"key 10": {

@@ -80,7 +80,8 @@
 		"subsystem": "ELE",
 		"sign_attr": [
 			"RSA_PSS",
-			"HASH=NONE"
+			"HASH=SHA512",
+			"MSG_HASHED"
 		],
 		"message": [
 			"bad101250ec6f26652249d59dc974b73",
@@ -97,7 +98,8 @@
 		"subsystem": "ELE",
 		"sign_attr": [
 			"RSA_PSS",
-			"HASH=NONE"
+			"HASH=SHA512",
+			"MSG_HASHED"
 		],
 		"message": [
 			"bad101250ec6f26652249d59dc974b73",

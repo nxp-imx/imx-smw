@@ -37,7 +37,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"key_name": "key 1",
@@ -69,7 +69,7 @@
 		"subsystem": "DEFAULT",
 		"version": 255,
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"key_name": "key 1",
@@ -99,7 +99,7 @@
 		"command": "SIGN",
 		"subsystem": "UNDEFINED",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"key_name": "key 1",
@@ -129,7 +129,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"key_name": "key 1",
@@ -186,7 +186,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"key_name": "key 1",
@@ -204,7 +204,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"key_name": "key 1",
@@ -235,7 +235,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"key_name": "key 1",
@@ -272,7 +272,7 @@
 		"command": "SIGN",
 		"subsystem": "DEFAULT",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"signature": 64,

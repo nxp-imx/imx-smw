@@ -105,7 +105,7 @@
 				"SIGN_MESSAGE"
 			],
 			"permitted_algo": [
-				"EDDSA"
+				"PURE_EDDSA"
 			]
 		},
 		"key 9": {
@@ -118,8 +118,7 @@
 				"SIGN_MESSAGE"
 			],
 			"permitted_algo": [
-				"EDDSA",
-				"HASH=SHA512"
+				"ED25519PH"
 			]
 		}
 	},

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #ifndef __UTIL_ATTR_H__
@@ -32,6 +32,7 @@ struct util_attr_info {
 #define HASH_STR       "HASH="
 #define LENGTH_STR     "LENGTH="
 #define MIN_LENGTH_STR "MIN_LENGTH="
+#define MSG_HASHED_STR "MSG_HASHED"
 
 #define ATTR_USAGE(_string)                                                    \
 	{                                                                      \
@@ -99,6 +100,22 @@ struct util_attr_info {
 	{                                                                      \
 		.string = #_string,                                            \
 		.smw_algo = (((SMW_ATTR_HASH_##_hash & SMW_ATTR_HASH_MASK)     \
+			      << SMW_ATTR_HASH_OFFSET) |                       \
+			     ((SMW_ATTR_CURVE_##_curve & SMW_ATTR_CURVE_MASK)  \
+			      << SMW_ATTR_CURVE_OFFSET) |                      \
+			     ((SMW_ATTR_ALGO_##_algo & SMW_ATTR_ALGO_MASK)     \
+			      << SMW_ATTR_ALGO_OFFSET) |                       \
+			     ((SMW_ATTR_CLASS_##_class & SMW_ATTR_CLASS_MASK)  \
+			      << SMW_ATTR_CLASS_OFFSET))                       \
+	}
+
+#define ATTR_ALGO_EDDSA(_string, _class, _algo, _curve, _hash, _type)          \
+	{                                                                      \
+		.string = #_string,                                            \
+		.smw_algo = (((SMW_ATTR_SIGN_PARAM_EDDSA_##_type &             \
+			       SMW_ATTR_SIGN_PARAM_MASK)                       \
+			      << SMW_ATTR_SIGN_PARAM_OFFSET) |                 \
+			     ((SMW_ATTR_HASH_##_hash & SMW_ATTR_HASH_MASK)     \
 			      << SMW_ATTR_HASH_OFFSET) |                       \
 			     ((SMW_ATTR_CURVE_##_curve & SMW_ATTR_CURVE_MASK)  \
 			      << SMW_ATTR_CURVE_OFFSET) |                      \

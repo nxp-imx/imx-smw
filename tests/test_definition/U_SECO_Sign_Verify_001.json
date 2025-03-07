@@ -53,7 +53,9 @@
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA",
+			"HASH=SHA256",
+			"MSG_HASHED"
 		],
 		"message": [
 			"3c593aa539fdcdae516cdf2f15000f66",
@@ -67,7 +69,9 @@
 		"command": "VERIFY",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA",
+			"HASH=SHA256",
+			"MSG_HASHED"
 		],
 		"message": [
 			"3c593aa539fdcdae516cdf2f15000f66",
@@ -81,7 +85,7 @@
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -105,7 +109,7 @@
 		"command": "VERIFY",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -129,7 +133,9 @@
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA",
+			"HASH=SHA384",
+			"MSG_HASHED"
 		],
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
@@ -144,7 +150,9 @@
 		"command": "VERIFY",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA",
+			"HASH=SHA384",
+			"MSG_HASHED"
 		],
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
@@ -159,7 +167,7 @@
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -187,7 +195,7 @@
 		"command": "VERIFY",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -215,7 +223,9 @@
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA",
+			"HASH=SHA256",
+			"MSG_HASHED"
 		],
 		"message": [
 			"3c593aa539fdcdae516cdf2f15000f66",
@@ -229,7 +239,9 @@
 		"command": "VERIFY",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA",
+			"HASH=SHA256",
+			"MSG_HASHED"
 		],
 		"message": [
 			"3c593aa539fdcdae516cdf2f15000f66",
@@ -243,7 +255,7 @@
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -267,7 +279,7 @@
 		"command": "VERIFY",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -291,7 +303,9 @@
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA",
+			"HASH=SHA384",
+			"MSG_HASHED"
 		],
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
@@ -306,7 +320,9 @@
 		"command": "VERIFY",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT"
+			"ECDSA",
+			"HASH=SHA384",
+			"MSG_HASHED"
 		],
 		"message": [
 			"0730e184e7795575569f87030260bb8e",
@@ -321,7 +337,7 @@
 		"command": "SIGN",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [
@@ -349,7 +365,7 @@
 		"command": "VERIFY",
 		"subsystem": "SECO",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA384"
 		],
 		"message": [

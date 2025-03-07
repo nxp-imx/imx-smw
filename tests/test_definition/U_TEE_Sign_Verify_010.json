@@ -1,8 +1,100 @@
 {
 	"keys": {
-		"key 1": {
+		"key test 2": {
 			"type": "ED25519",
 			"security_size": 255,
+			"priv_key": [
+				"4ccd089b28ff96da9db6c346ec114e0f",
+				"5b8a319f35aba624da8cf6ed4fb8a6fb"
+			],
+			"pub_key": [
+				"3d4017c3e843895a92b70aa74d1b7ebc",
+				"9c982ccf2ec4968cc0cd55f12af4660c"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		},
+		"key test 1024": {
+			"type": "ED25519",
+			"security_size": 255,
+			"priv_key": [
+				"f5e5767cf153319517630f226876b86c",
+				"8160cc583bc013744c6bf255f5cc0ee5"
+			],
+			"pub_key": [
+				"278117fc144c72340f67d0f2316e8386",
+				"ceffbf2b2428c9c51fef7c597f1d426e"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		},
+		"key test sha(abc)": {
+			"type": "ED25519",
+			"security_size": 255,
+			"priv_key": [
+				"833fe62409237b9d62ec77587520911e",
+				"9a759cec1d19755b7da901b96dca3d42"
+			],
+			"pub_key": [
+				"ec172b93ad5e563bf4932c70e1245034",
+				"c35467ef2efd4d64ebf819683467e2bf"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		},
+		"key test ctx": {
+			"type": "ED25519",
+			"security_size": 255,
+			"priv_key": [
+				"0305334e381af78f141cb666f6199f57",
+				"bc3495335a256a95bd2a55bf546663f6"
+			],
+			"pub_key": [
+				"dfc9425e4f968f7f0c29f0259cf5f9ae",
+				"d6851c2bb4ad8bfb860cfee0ab248292"
+			],
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			]
+		},
+		"key test ph": {
+			"type": "ED25519",
+			"security_size": 255,
+			"priv_key": [
+				"833fe62409237b9d62ec77587520911e",
+				"9a759cec1d19755b7da901b96dca3d42"
+			],
+			"pub_key": [
+				"ec172b93ad5e563bf4932c70e1245034",
+				"c35467ef2efd4d64ebf819683467e2bf"
+			],
 			"attributes_list": [
 				"TRANSIENT"
 			],
@@ -15,365 +107,401 @@
 		}
 	},
 	"subtest 1": {
-		"command": "GENERATE",
+		"command": "IMPORT",
 		"subsystem": "TEE",
-		"key_name": "key 1"
+		"key_name": "key test 2"
 	},
 	"subtest 2": {
+		"description": "Pure EDDSA message (1 byte) RFC8032 - test 2",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"PURE_EDDSA"
 		],
 		"message": [
-			"54686973207068726173652069732033",
-			"32206279746573206c6f6e6720212121"
+			"72"
+		],
+		"signature": [
+			"92a009a9f0d4cab8720e820b5f642540",
+			"a2b27b5416503f8fb3762223ebdb69da",
+			"085ac1e43e15996e458f3613d0f11d8c",
+			"387b2eaeb4302aeeb00d291612bb0c00"
 		],
 		"sign_id": 0,
-		"key_name": "key 1",
+		"key_name": "key test 2",
 		"depends": 1
 	},
 	"subtest 3": {
+		"description": "Pure EDDSA message (1 byte) RFC8032 - test 2",
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT"
+			"PURE_EDDSA"
 		],
 		"message": [
-			"54686973207068726173652069732033",
-			"32206279746573206c6f6e6720212121"
+			"72"
 		],
 		"sign_id": 0,
-		"key_name": "key 1",
+		"key_name": "key test 2",
 		"depends": 2
 	},
 	"subtest 4": {
-		"command": "SIGN",
-		"subsystem": "TEE",
-		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA224"
-		],
-		"message": [
-			"f149e41d848f59276cfddd743bafa9a9",
-			"0e1ee4a263a118142b33e3702176ef0a",
-			"59f8237a1cb51b42f3ded6b202d9af09",
-			"97898fdd03cf60bda951c514547a0850",
-			"cec25444ae2f24cb711bfbafcc3956c9",
-			"41d3de69f155e3f8b10f06db5f37359b",
-			"772ddd43e1035a0a0d3db33242d58430",
-			"33833b0dd43b870c6bf60e8deab55f31",
-			"7cc3273f5e3ba747f0cb65050cb72287",
-			"96210d9254873643008d45f29cfd6c5b",
-			"060c9a"
-		],
-		"sign_id": 1,
-		"key_name": "key 1",
+		"command": "DELETE",
+		"key_name": "key test 2",
 		"depends": 1
 	},
 	"subtest 5": {
-		"command": "VERIFY",
+		"command": "IMPORT",
 		"subsystem": "TEE",
-		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA224"
-		],
-		"message": [
-			"f149e41d848f59276cfddd743bafa9a9",
-			"0e1ee4a263a118142b33e3702176ef0a",
-			"59f8237a1cb51b42f3ded6b202d9af09",
-			"97898fdd03cf60bda951c514547a0850",
-			"cec25444ae2f24cb711bfbafcc3956c9",
-			"41d3de69f155e3f8b10f06db5f37359b",
-			"772ddd43e1035a0a0d3db33242d58430",
-			"33833b0dd43b870c6bf60e8deab55f31",
-			"7cc3273f5e3ba747f0cb65050cb72287",
-			"96210d9254873643008d45f29cfd6c5b",
-			"060c9a"
-		],
-		"sign_id": 1,
-		"key_name": "key 1",
-		"depends": 4
+		"key_name": "key test 1024"
 	},
 	"subtest 6": {
+		"description": "Pure EDDSA message (1023 bytes) RFC8032 - test 1024",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA256"
+			"PURE_EDDSA"
 		],
 		"message": [
-			"451101250ec6f26652249d59dc974b73",
-			"61d571a8101cdfd36aba3b5854d3ae08",
-			"6b5fdd4597721b66e3c0dc5d8c606d96",
-			"57d0e323283a5217d1f53f2f284f57b8",
-			"5c8a61ac8924711f895c5ed90ef17745",
-			"ed2d728abd22a5f7a13479a462d71b56",
-			"c19a74a40b655c58edfe0a188ad2cf46",
-			"cbf30524f65d423c837dd1ff2bf462ac",
-			"4198007345bb44dbb7b1c861298cdf61",
-			"982a833afc728fae1eda2f87aa2c9480",
-			"858bec"
+			"08b8b2b733424243760fe426a4b54908",
+			"632110a66c2f6591eabd3345e3e4eb98",
+			"fa6e264bf09efe12ee50f8f54e9f77b1",
+			"e355f6c50544e23fb1433ddf73be84d8",
+			"79de7c0046dc4996d9e773f4bc9efe57",
+			"38829adb26c81b37c93a1b270b20329d",
+			"658675fc6ea534e0810a4432826bf58c",
+			"941efb65d57a338bbd2e26640f89ffbc",
+			"1a858efcb8550ee3a5e1998bd177e93a",
+			"7363c344fe6b199ee5d02e82d522c4fe",
+			"ba15452f80288a821a579116ec6dad2b",
+			"3b310da903401aa62100ab5d1a36553e",
+			"06203b33890cc9b832f79ef80560ccb9",
+			"a39ce767967ed628c6ad573cb116dbef",
+			"efd75499da96bd68a8a97b928a8bbc10",
+			"3b6621fcde2beca1231d206be6cd9ec7",
+			"aff6f6c94fcd7204ed3455c68c83f4a4",
+			"1da4af2b74ef5c53f1d8ac70bdcb7ed1",
+			"85ce81bd84359d44254d95629e9855a9",
+			"4a7c1958d1f8ada5d0532ed8a5aa3fb2",
+			"d17ba70eb6248e594e1a2297acbbb39d",
+			"502f1a8c6eb6f1ce22b3de1a1f40cc24",
+			"554119a831a9aad6079cad88425de6bd",
+			"e1a9187ebb6092cf67bf2b13fd65f270",
+			"88d78b7e883c8759d2c4f5c65adb7553",
+			"878ad575f9fad878e80a0c9ba63bcbcc",
+			"2732e69485bbc9c90bfbd62481d9089b",
+			"eccf80cfe2df16a2cf65bd92dd597b07",
+			"07e0917af48bbb75fed413d238f5555a",
+			"7a569d80c3414a8d0859dc65a46128ba",
+			"b27af87a71314f318c782b23ebfe808b",
+			"82b0ce26401d2e22f04d83d1255dc51a",
+			"ddd3b75a2b1ae0784504df543af8969b",
+			"e3ea7082ff7fc9888c144da2af58429e",
+			"c96031dbcad3dad9af0dcbaaaf268cb8",
+			"fcffead94f3c7ca495e056a9b47acdb7",
+			"51fb73e666c6c655ade8297297d07ad1",
+			"ba5e43f1bca32301651339e22904cc8c",
+			"42f58c30c04aafdb038dda0847dd988d",
+			"cda6f3bfd15c4b4c4525004aa06eeff8",
+			"ca61783aacec57fb3d1f92b0fe2fd1a8",
+			"5f6724517b65e614ad6808d6f6ee34df",
+			"f7310fdc82aebfd904b01e1dc54b2927",
+			"094b2db68d6f903b68401adebf5a7e08",
+			"d78ff4ef5d63653a65040cf9bfd4aca7",
+			"984a74d37145986780fc0b16ac451649",
+			"de6188a7dbdf191f64b5fc5e2ab47b57",
+			"f7f7276cd419c17a3ca8e1b939ae49e4",
+			"88acba6b965610b5480109c8b17b80e1",
+			"b7b750dfc7598d5d5011fd2dcc5600a3",
+			"2ef5b52a1ecc820e308aa342721aac09",
+			"43bf6686b64b2579376504ccc493d97e",
+			"6aed3fb0f9cd71a43dd497f01f17c0e2",
+			"cb3797aa2a2f256656168e6c496afc5f",
+			"b93246f6b1116398a346f1a641f3b041",
+			"e989f7914f90cc2c7fff357876e506b5",
+			"0d334ba77c225bc307ba537152f3f161",
+			"0e4eafe595f6d9d90d11faa933a15ef1",
+			"369546868a7f3a45a96768d40fd9d034",
+			"12c091c6315cf4fde7cb68606937380d",
+			"b2eaaa707b4c4185c32eddcdd306705e",
+			"4dc1ffc872eeee475a64dfac86aba41c",
+			"0618983f8741c5ef68d3a101e8a3b8ca",
+			"c60c905c15fc910840b94c00a0b9d0"
 		],
-		"sign_id": 2,
-		"key_name": "key 1",
-		"depends": 1
+		"signature": [
+			"0aab4c900501b3e24d7cdf4663326a3a",
+			"87df5e4843b2cbdb67cbf6e460fec350",
+			"aa5371b1508f9f4528ecea23c436d94b",
+			"5e8fcd4f681e30a6ac00a9704a188a03"
+		],
+		"sign_id": 1,
+		"key_name": "key test 1024",
+		"depends": 5
 	},
 	"subtest 7": {
+		"description": "Pure EDDSA message (1023 bytes) RFC8032 - test 1024",
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA256"
+			"PURE_EDDSA"
 		],
 		"message": [
-			"451101250ec6f26652249d59dc974b73",
-			"61d571a8101cdfd36aba3b5854d3ae08",
-			"6b5fdd4597721b66e3c0dc5d8c606d96",
-			"57d0e323283a5217d1f53f2f284f57b8",
-			"5c8a61ac8924711f895c5ed90ef17745",
-			"ed2d728abd22a5f7a13479a462d71b56",
-			"c19a74a40b655c58edfe0a188ad2cf46",
-			"cbf30524f65d423c837dd1ff2bf462ac",
-			"4198007345bb44dbb7b1c861298cdf61",
-			"982a833afc728fae1eda2f87aa2c9480",
-			"858bec"
+			"08b8b2b733424243760fe426a4b54908",
+			"632110a66c2f6591eabd3345e3e4eb98",
+			"fa6e264bf09efe12ee50f8f54e9f77b1",
+			"e355f6c50544e23fb1433ddf73be84d8",
+			"79de7c0046dc4996d9e773f4bc9efe57",
+			"38829adb26c81b37c93a1b270b20329d",
+			"658675fc6ea534e0810a4432826bf58c",
+			"941efb65d57a338bbd2e26640f89ffbc",
+			"1a858efcb8550ee3a5e1998bd177e93a",
+			"7363c344fe6b199ee5d02e82d522c4fe",
+			"ba15452f80288a821a579116ec6dad2b",
+			"3b310da903401aa62100ab5d1a36553e",
+			"06203b33890cc9b832f79ef80560ccb9",
+			"a39ce767967ed628c6ad573cb116dbef",
+			"efd75499da96bd68a8a97b928a8bbc10",
+			"3b6621fcde2beca1231d206be6cd9ec7",
+			"aff6f6c94fcd7204ed3455c68c83f4a4",
+			"1da4af2b74ef5c53f1d8ac70bdcb7ed1",
+			"85ce81bd84359d44254d95629e9855a9",
+			"4a7c1958d1f8ada5d0532ed8a5aa3fb2",
+			"d17ba70eb6248e594e1a2297acbbb39d",
+			"502f1a8c6eb6f1ce22b3de1a1f40cc24",
+			"554119a831a9aad6079cad88425de6bd",
+			"e1a9187ebb6092cf67bf2b13fd65f270",
+			"88d78b7e883c8759d2c4f5c65adb7553",
+			"878ad575f9fad878e80a0c9ba63bcbcc",
+			"2732e69485bbc9c90bfbd62481d9089b",
+			"eccf80cfe2df16a2cf65bd92dd597b07",
+			"07e0917af48bbb75fed413d238f5555a",
+			"7a569d80c3414a8d0859dc65a46128ba",
+			"b27af87a71314f318c782b23ebfe808b",
+			"82b0ce26401d2e22f04d83d1255dc51a",
+			"ddd3b75a2b1ae0784504df543af8969b",
+			"e3ea7082ff7fc9888c144da2af58429e",
+			"c96031dbcad3dad9af0dcbaaaf268cb8",
+			"fcffead94f3c7ca495e056a9b47acdb7",
+			"51fb73e666c6c655ade8297297d07ad1",
+			"ba5e43f1bca32301651339e22904cc8c",
+			"42f58c30c04aafdb038dda0847dd988d",
+			"cda6f3bfd15c4b4c4525004aa06eeff8",
+			"ca61783aacec57fb3d1f92b0fe2fd1a8",
+			"5f6724517b65e614ad6808d6f6ee34df",
+			"f7310fdc82aebfd904b01e1dc54b2927",
+			"094b2db68d6f903b68401adebf5a7e08",
+			"d78ff4ef5d63653a65040cf9bfd4aca7",
+			"984a74d37145986780fc0b16ac451649",
+			"de6188a7dbdf191f64b5fc5e2ab47b57",
+			"f7f7276cd419c17a3ca8e1b939ae49e4",
+			"88acba6b965610b5480109c8b17b80e1",
+			"b7b750dfc7598d5d5011fd2dcc5600a3",
+			"2ef5b52a1ecc820e308aa342721aac09",
+			"43bf6686b64b2579376504ccc493d97e",
+			"6aed3fb0f9cd71a43dd497f01f17c0e2",
+			"cb3797aa2a2f256656168e6c496afc5f",
+			"b93246f6b1116398a346f1a641f3b041",
+			"e989f7914f90cc2c7fff357876e506b5",
+			"0d334ba77c225bc307ba537152f3f161",
+			"0e4eafe595f6d9d90d11faa933a15ef1",
+			"369546868a7f3a45a96768d40fd9d034",
+			"12c091c6315cf4fde7cb68606937380d",
+			"b2eaaa707b4c4185c32eddcdd306705e",
+			"4dc1ffc872eeee475a64dfac86aba41c",
+			"0618983f8741c5ef68d3a101e8a3b8ca",
+			"c60c905c15fc910840b94c00a0b9d0"
 		],
-		"sign_id": 2,
-		"key_name": "key 1",
+		"sign_id": 1,
+		"key_name": "key test 1024",
 		"depends": 6
 	},
 	"subtest 8": {
-		"command": "SIGN",
-		"subsystem": "TEE",
-		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA384"
-		],
-		"message": [
-			"62c6a169b9be02b3d7b471a964fc0bcc",
-			"72b480d26aecb2ed460b7f50016ddaf0",
-			"4c51218783f3aadfdff5a04ded030d7b",
-			"3fb7376b61ba30b90e2da921a4470740",
-			"d63fb99fa16cc8ed81abaf8ce4016e50",
-			"df81da832070372c24a80890aa3a26fa",
-			"675710b8fb718266249d496f313c55d0",
-			"bada101f8f56eeccee4345a8f98f60a3",
-			"6662cfda794900d12f9414fcbdfdeb85",
-			"388a814996b47e24d5c8086e7a8edcc5",
-			"3d299d0d033e6bb60c58b83d6e8b57f6",
-			"c258d6081dd10eb942fdf8ec157ec3e7",
-			"5371235a8196eb9d22b1de3a2d30c2ab",
-			"be0db7650cf6c7159bacbe29b3a93c92",
-			"100508"
-		],
-		"sign_id": 3,
-		"key_name": "key 1",
-		"depends": 1
+		"command": "DELETE",
+		"key_name": "key test 1024",
+		"depends": 5
 	},
 	"subtest 9": {
-		"command": "VERIFY",
+		"command": "IMPORT",
 		"subsystem": "TEE",
-		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA384"
-		],
-		"message": [
-			"62c6a169b9be02b3d7b471a964fc0bcc",
-			"72b480d26aecb2ed460b7f50016ddaf0",
-			"4c51218783f3aadfdff5a04ded030d7b",
-			"3fb7376b61ba30b90e2da921a4470740",
-			"d63fb99fa16cc8ed81abaf8ce4016e50",
-			"df81da832070372c24a80890aa3a26fa",
-			"675710b8fb718266249d496f313c55d0",
-			"bada101f8f56eeccee4345a8f98f60a3",
-			"6662cfda794900d12f9414fcbdfdeb85",
-			"388a814996b47e24d5c8086e7a8edcc5",
-			"3d299d0d033e6bb60c58b83d6e8b57f6",
-			"c258d6081dd10eb942fdf8ec157ec3e7",
-			"5371235a8196eb9d22b1de3a2d30c2ab",
-			"be0db7650cf6c7159bacbe29b3a93c92",
-			"100508"
-		],
-		"sign_id": 3,
-		"key_name": "key 1",
-		"depends": 8
+		"key_name": "key test sha(abc)"
 	},
 	"subtest 10": {
+		"description": "Pure EDDSA message (abc) RFC8032 - test sha(abc)",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"PURE_EDDSA",
 			"HASH=SHA512"
 		],
 		"message": [
-			"4f05600950664d5190a2ebc29c9edb89",
-			"c20079a4d3e6bc3b27d75e34e2fa3d02",
-			"768502bd69790078598d5fcf3d6779bf",
-			"ed1284bbe5ad72fb456015181d9587d6",
-			"e864c940564eaafb4f2fead4346ea09b",
-			"6877d9340f6b82eb1515880872213da3",
-			"ad88feba9f4f13817a71d6f90a1a17c4",
-			"3a15c038d988b5b29edffe2d6a062813",
-			"cedbe852cde302b3e33b696846d2a8e3",
-			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
-			"5244d131677140399176ed46700019a0",
-			"04a163806f7fa467fc4e17b4617bbd76",
-			"41aaff7ff56396ba8c08a8be100b33a2",
-			"0b5daf134a2aefa5e1c3496770dcf6ba",
-			"a4f7bb"
+			"616263"
 		],
-		"sign_id": 4,
-		"key_name": "key 1",
-		"depends": 1
+		"signature": [
+			"dc2a4459e7369633a52b1bf277839a00",
+			"201009a3efbf3ecb69bea2186c26b589",
+			"09351fc9ac90b3ecfdfbc7c66431e030",
+			"3dca179c138ac17ad9bef1177331a704"
+		],
+		"sign_id": 2,
+		"key_name": "key test sha(abc)",
+		"depends": 9
 	},
 	"subtest 11": {
+		"description": "Pure EDDSA message (abc) RFC8032 - test sha(abc)",
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"PURE_EDDSA",
 			"HASH=SHA512"
 		],
 		"message": [
-			"4f05600950664d5190a2ebc29c9edb89",
-			"c20079a4d3e6bc3b27d75e34e2fa3d02",
-			"768502bd69790078598d5fcf3d6779bf",
-			"ed1284bbe5ad72fb456015181d9587d6",
-			"e864c940564eaafb4f2fead4346ea09b",
-			"6877d9340f6b82eb1515880872213da3",
-			"ad88feba9f4f13817a71d6f90a1a17c4",
-			"3a15c038d988b5b29edffe2d6a062813",
-			"cedbe852cde302b3e33b696846d2a8e3",
-			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
-			"5244d131677140399176ed46700019a0",
-			"04a163806f7fa467fc4e17b4617bbd76",
-			"41aaff7ff56396ba8c08a8be100b33a2",
-			"0b5daf134a2aefa5e1c3496770dcf6ba",
-			"a4f7bb"
+			"616263"
 		],
-		"sign_id": 4,
-		"key_name": "key 1",
+		"sign_id": 2,
+		"key_name": "key test sha(abc)",
 		"depends": 10
 	},
 	"subtest 12": {
+		"description": "Pure EDDSA message sha512(abc) RFC8032 - test sha(abc)",
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
-			"HASH=NONE"
+			"PURE_EDDSA",
+			"HASH=SHA512",
+			"MSG_HASHED"
 		],
 		"message": [
-			"4f05600950664d5190a2ebc29c9edb89",
-			"c20079a4d3e6bc3b27d75e34e2fa3d02",
-			"768502bd69790078598d5fcf3d6779bf",
-			"ed1284bbe5ad72fb456015181d9587d6",
-			"e864c940564eaafb4f2fead4346ea09b",
-			"6877d9340f6b82eb1515880872213da3",
-			"ad88feba9f4f13817a71d6f90a1a17c4",
-			"3a15c038d988b5b29edffe2d6a062813",
-			"cedbe852cde302b3e33b696846d2a8e3",
-			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
-			"5244d131677140399176ed46700019a0",
-			"04a163806f7fa467fc4e17b4617bbd76",
-			"41aaff7ff56396ba8c08a8be100b33a2",
-			"0b5daf134a2aefa5e1c3496770dcf6ba",
-			"a4f7bb"
+			"ddaf35a193617abacc417349ae204131",
+			"12e6fa4e89a97ea20a9eeee64b55d39a",
+			"2192992a274fc1a836ba3c23a3feebbd",
+			"454d4423643ce80e2a9ac94fa54ca49f"
 		],
-		"sign_id": 5,
-		"key_name": "key 1",
-		"depends": 1
+		"signature": [
+			"dc2a4459e7369633a52b1bf277839a00",
+			"201009a3efbf3ecb69bea2186c26b589",
+			"09351fc9ac90b3ecfdfbc7c66431e030",
+			"3dca179c138ac17ad9bef1177331a704"
+		],
+		"sign_id": 3,
+		"key_name": "key test sha(abc)",
+		"depends": 9
 	},
 	"subtest 13": {
+		"description": "Pure EDDSA message sha512(abc) RFC8032 - test sha(abc)",
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
-			"HASH=NONE"
+			"PURE_EDDSA",
+			"HASH=SHA512",
+			"MSG_HASHED"
 		],
 		"message": [
-			"4f05600950664d5190a2ebc29c9edb89",
-			"c20079a4d3e6bc3b27d75e34e2fa3d02",
-			"768502bd69790078598d5fcf3d6779bf",
-			"ed1284bbe5ad72fb456015181d9587d6",
-			"e864c940564eaafb4f2fead4346ea09b",
-			"6877d9340f6b82eb1515880872213da3",
-			"ad88feba9f4f13817a71d6f90a1a17c4",
-			"3a15c038d988b5b29edffe2d6a062813",
-			"cedbe852cde302b3e33b696846d2a8e3",
-			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
-			"5244d131677140399176ed46700019a0",
-			"04a163806f7fa467fc4e17b4617bbd76",
-			"41aaff7ff56396ba8c08a8be100b33a2",
-			"0b5daf134a2aefa5e1c3496770dcf6ba",
-			"a4f7bb"
+			"ddaf35a193617abacc417349ae204131",
+			"12e6fa4e89a97ea20a9eeee64b55d39a",
+			"2192992a274fc1a836ba3c23a3feebbd",
+			"454d4423643ce80e2a9ac94fa54ca49f"
 		],
-		"sign_id": 5,
-		"key_name": "key 1",
+		"sign_id": 3,
+		"key_name": "key test sha(abc)",
 		"depends": 12
 	},
 	"subtest 14": {
-		"command": "SIGN",
-		"subsystem": "TEE",
-		"version": 1,
-		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA512"
-		],
-		"message": [
-			"4f05600950664d5190a2ebc29c9edb89",
-			"c20079a4d3e6bc3b27d75e34e2fa3d02",
-			"768502bd69790078598d5fcf3d6779bf",
-			"ed1284bbe5ad72fb456015181d9587d6",
-			"e864c940564eaafb4f2fead4346ea09b",
-			"6877d9340f6b82eb1515880872213da3",
-			"ad88feba9f4f13817a71d6f90a1a17c4",
-			"3a15c038d988b5b29edffe2d6a062813",
-			"cedbe852cde302b3e33b696846d2a8e3",
-			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
-			"5244d131677140399176ed46700019a0",
-			"04a163806f7fa467fc4e17b4617bbd76",
-			"41aaff7ff56396ba8c08a8be100b33a2",
-			"0b5daf134a2aefa5e1c3496770dcf6ba",
-			"a4f7bb"
-		],
-		"context": "656464323535313920636f6e74657874",
-		"sign_id": 6,
-		"key_name": "key 1",
-		"depends": 1
+		"command": "DELETE",
+		"key_name": "key test sha(abc)",
+		"depends": 9
 	},
 	"subtest 15": {
-		"command": "VERIFY",
+		"command": "IMPORT",
 		"subsystem": "TEE",
-		"version": 1,
-		"sign_attr": [
-			"DEFAULT",
-			"HASH=SHA512"
-		],
-		"message": [
-			"4f05600950664d5190a2ebc29c9edb89",
-			"c20079a4d3e6bc3b27d75e34e2fa3d02",
-			"768502bd69790078598d5fcf3d6779bf",
-			"ed1284bbe5ad72fb456015181d9587d6",
-			"e864c940564eaafb4f2fead4346ea09b",
-			"6877d9340f6b82eb1515880872213da3",
-			"ad88feba9f4f13817a71d6f90a1a17c4",
-			"3a15c038d988b5b29edffe2d6a062813",
-			"cedbe852cde302b3e33b696846d2a8e3",
-			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
-			"5244d131677140399176ed46700019a0",
-			"04a163806f7fa467fc4e17b4617bbd76",
-			"41aaff7ff56396ba8c08a8be100b33a2",
-			"0b5daf134a2aefa5e1c3496770dcf6ba",
-			"a4f7bb"
-		],
-		"context": "656464323535313920636f6e74657874",
-		"sign_id": 6,
-		"key_name": "key 1",
-		"depends": 14
+		"key_name": "key test ctx"
 	},
 	"subtest 16": {
+		"description": "Ed25519ctx RFC8032 - test foo",
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519CTX"
+		],
+		"message": [
+			"f726936d19c800494e3fdaff20b276a8"
+		],
+		"context": [
+			"666f6f"
+		],
+		"signature": [
+			"55a4cc2f70a54e04288c5f4cd1e45a7b",
+			"b520b36292911876cada7323198dd87a",
+			"8b36950b95130022907a7fb7c4e9b2d5",
+			"f6cca685a587b4b21f4b888e4e7edb0d"
+		],
+		"sign_id": 4,
+		"key_name": "key test ctx",
+		"depends": 15
+	},
+	"subtest 17": {
+		"description": "Ed25519ctx RFC8032 - test foo",
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519CTX"
+		],
+		"message": [
+			"f726936d19c800494e3fdaff20b276a8"
+		],
+		"context": [
+			"666f6f"
+		],
+		"sign_id": 4,
+		"key_name": "key test ctx",
+		"depends": 15
+	},
+	"subtest 18": {
 		"command": "DELETE",
-		"key_name": "key 1",
-		"depends": 1
+		"key_name": "key test ctx",
+		"depends": 15
+	},
+	"subtest 19": {
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key test ph"
+	},
+	"subtest 20": {
+		"description": "Ed25519ph RFC8032 - test abc",
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"message": [
+			"616263"
+		],
+		"signature": [
+			"98a70222f0b8121aa9d30f813d683f80",
+			"9e462b469c7ff87639499bb94e6dae41",
+			"31f85042463c2a355a2003d062adf5aa",
+			"a10b8c61e636062aaad11c2a26083406"
+		],
+		"sign_id": 5,
+		"key_name": "key test ph",
+		"depends": 19
+	},
+	"subtest 21": {
+		"description": "Ed25519ph RFC8032 - test abc",
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ED25519PH"
+		],
+		"message": [
+			"616263"
+		],
+		"sign_id": 5,
+		"key_name": "key test ph",
+		"depends": 20
+	},
+	"subtest 22": {
+		"command": "DELETE",
+		"key_name": "key test ph",
+		"depends": 19
 	}
 }

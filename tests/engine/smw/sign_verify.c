@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <stdlib.h>
@@ -283,6 +283,14 @@ int sign_verify(struct subtest_data *subtest, int operation)
 			}
 
 			goto exit;
+		}
+
+		if (args.signature && exp_sign) {
+			res = util_compare_buffers(args.signature,
+						   args.signature_length,
+						   exp_sign, exp_sign_length);
+			if (res != ERR_CODE(PASSED))
+				goto exit;
 		}
 
 		/* Store signature */

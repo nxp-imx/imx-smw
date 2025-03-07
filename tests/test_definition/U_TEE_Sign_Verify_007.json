@@ -94,7 +94,7 @@
 		"command": "SIGN",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [
@@ -117,7 +117,7 @@
 		"command": "VERIFY",
 		"subsystem": "TEE",
 		"sign_attr": [
-			"DEFAULT",
+			"ECDSA",
 			"HASH=SHA256"
 		],
 		"message": [

@@ -49,7 +49,8 @@
 		"command": "SIGN",
 		"api": "PSA",
 		"sign_attr": [
-			"ECDSA"
+			"ECDSA",
+			"HASH=SHA256"
 		],
 		"digest": [
 			"54686973207068726173652069732033",
@@ -64,7 +65,8 @@
 		"command": "VERIFY",
 		"api": "PSA",
 		"sign_attr": [
-			"ECDSA"
+			"ECDSA",
+			"HASH=SHA256"
 		],
 		"digest": [
 			"54686973207068726173652069732033",
@@ -127,7 +129,8 @@
 		"command": "SIGN",
 		"api": "PSA",
 		"sign_attr": [
-			"ECDSA"
+			"ECDSA",
+			"HASH=SHA384"
 		],
 		"digest": [
 			"0730e184e7795575569f87030260bb8e",
@@ -143,7 +146,8 @@
 		"command": "VERIFY",
 		"api": "PSA",
 		"sign_attr": [
-			"ECDSA"
+			"ECDSA",
+			"HASH=SHA384"
 		],
 		"digest": [
 			"0730e184e7795575569f87030260bb8e",

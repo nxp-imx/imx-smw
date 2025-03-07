@@ -28,6 +28,7 @@
  * - Salt length, if any
  * - MAC length, if any
  * - Tag length, if any
+ * - Signature parameters, if any
  *
  * +------------------------------------------------------------------+
  * | Bits                                                             |
@@ -39,18 +40,67 @@
  * |         | parameters  | class     |         | Curve  | algorithm |
  * +---------+-------------+-----------+---------+--------+-----------+
  *
- * Additional parameters are Salt length, MAC length or Tag length and
- * are all encoded as followed\:
+ * Additional parameters:
  *
- * +------------+
- * | Bits       |
- * +---+--------+
- * | 8 | [7:0]  |
- * +---+--------+
- * | M | Length |
- * +---+--------+
+ *  - MAC Truncated length
+ *
+ * +-------------+--------------------------------------+
+ * | Bits[39:32] | Description                          |
+ * +---+---------+                                      +
+ * | 8 | [7:0]   |                                      |
+ * +---+---------+--------------------------------------+
+ * | M | Length  | Length of the MAC truncated length   |
+ * +---+---------+--------------------------------------+
  *
  * M is 1 if Length is minimum length, 0 otherwise.
+ *
+ *  - AEAD Tag length
+ *
+ * +-------------+--------------------------------------+
+ * | Bits[39:32] | Description                          |
+ * +---+---------+                                      +
+ * | 8 | [7:0]   |                                      |
+ * +---+---------+--------------------------------------+
+ * | M | Length  | AEAD Tag length                      |
+ * +---+---------+--------------------------------------+
+ *
+ * M is 1 if Length is minimum length, 0 otherwise.
+ *
+ *  - Signature (RSA-PSS) Salt length
+ *
+ * +-------------+--------------------------------------+
+ * | Bits[39:32] | Description                          |
+ * +---+---------+                                      +
+ * | 8 | [7:0]   |                                      |
+ * +---+---------+--------------------------------------+
+ * | M | Length  | RSA-PSS Salt length                  |
+ * +---+---------+--------------------------------------+
+ *
+ * M is 1 if Length is minimum length, 0 otherwise.
+ *
+ *  - Signature (ECDSA)
+ *
+ * +-------------+--------------------------------------+
+ * | Bits[39:32] | Description                          |
+ * +---+---------+                                      +
+ * | 8 | [7:0]   |                                      |
+ * +---+---------+--------------------------------------+
+ * | 1 | --      | ECDSA signature message is hashed    |
+ * +---+---------+--------------------------------------+
+ *
+ *  - Signature (EDDSA)
+ *
+ * +-------------+--------------------------------------+
+ * | Bits[39:32] | Description                          |
+ * +---+---------+                                      +
+ * | 8 | [7:0]   |                                      |
+ * +---+---------+--------------------------------------+
+ * | H | 0x01    | EDDSA signature type is pre-hashed   |
+ * +---+---------+--------------------------------------+
+ * | H | 0x02    | EDDSA signature type is with context |
+ * +---+---------+--------------------------------------+
+ *
+ * H is 1 if message to sign or verify is already hashed, 0 otherwise.
  */
 typedef uint64_t smw_attr_algo_t;
 
@@ -122,14 +172,14 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_CURVE_OFFSET: Curve offset.
  * - SMW_ATTR_HASH_OFFSET: Hash offset.
  * - SMW_ATTR_CLASS_OFFSET: Class offset.
- * - SMW_ATTR_LENGTH_OFFSET: Length offset.
+ * - SMW_ATTR_ADD_ATTR_OFFSET: Additional parameters offset.
  */
-#define SMW_ATTR_ALGO_OFFSET   0u
-#define SMW_ATTR_MODE_OFFSET   8u
-#define SMW_ATTR_CURVE_OFFSET  8u
-#define SMW_ATTR_HASH_OFFSET   16u
-#define SMW_ATTR_CLASS_OFFSET  24u
-#define SMW_ATTR_LENGTH_OFFSET 32u
+#define SMW_ATTR_ALGO_OFFSET	  0u
+#define SMW_ATTR_MODE_OFFSET	  8u
+#define SMW_ATTR_CURVE_OFFSET	  8u
+#define SMW_ATTR_HASH_OFFSET	  16u
+#define SMW_ATTR_CLASS_OFFSET	  24u
+#define SMW_ATTR_ADD_PARAM_OFFSET 32u
 
 /**
  * DOC: SMW_ATTR_xxx_MASK (smw_attr_algo_t)
@@ -140,14 +190,14 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_CURVE_MASK: Curve mask.
  * - SMW_ATTR_HASH_MASK: Hash mask.
  * - SMW_ATTR_CLASS_MASK: Class mask.
- * - SMW_ATTR_LENGTH_MASK: Length mask.
+ * - SMW_ATTR_ADD_PARAM_MASK: Additional parameters mask.
  */
-#define SMW_ATTR_ALGO_MASK   ((smw_attr_algo_t)0xFF)
-#define SMW_ATTR_MODE_MASK   ((smw_attr_algo_t)0xFF)
-#define SMW_ATTR_CURVE_MASK  ((smw_attr_algo_t)0xFF)
-#define SMW_ATTR_HASH_MASK   ((smw_attr_algo_t)0xFF)
-#define SMW_ATTR_CLASS_MASK  ((smw_attr_algo_t)0xFF)
-#define SMW_ATTR_LENGTH_MASK ((smw_attr_algo_t)0xFF)
+#define SMW_ATTR_ALGO_MASK	((smw_attr_algo_t)0xFF)
+#define SMW_ATTR_MODE_MASK	((smw_attr_algo_t)0xFF)
+#define SMW_ATTR_CURVE_MASK	((smw_attr_algo_t)0xFF)
+#define SMW_ATTR_HASH_MASK	((smw_attr_algo_t)0xFF)
+#define SMW_ATTR_CLASS_MASK	((smw_attr_algo_t)0xFF)
+#define SMW_ATTR_ADD_PARAM_MASK ((smw_attr_algo_t)0xFF)
 
 /**
  * DOC: SMW_ATTR_LENGTH_MIN_FLAG
@@ -164,8 +214,8 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_SALT_MASK: Salt length mask.
  * - SMW_ATTR_SALT_MIN_FLAG: Salt length is a minimum salt length.
  */
-#define SMW_ATTR_SALT_OFFSET   SMW_ATTR_LENGTH_OFFSET
-#define SMW_ATTR_SALT_MASK     SMW_ATTR_LENGTH_MASK
+#define SMW_ATTR_SALT_OFFSET   SMW_ATTR_ADD_PARAM_OFFSET
+#define SMW_ATTR_SALT_MASK     SMW_ATTR_ADD_PARAM_MASK
 #define SMW_ATTR_SALT_MIN_FLAG SMW_ATTR_LENGTH_MIN_FLAG
 
 /**
@@ -176,8 +226,8 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_MAC_MASK: MAC length mask.
  * - SMW_ATTR_MAC_MIN_FLAG: MAC length is a minimum MAC length.
  */
-#define SMW_ATTR_MAC_OFFSET   SMW_ATTR_LENGTH_OFFSET
-#define SMW_ATTR_MAC_MASK     SMW_ATTR_LENGTH_MASK
+#define SMW_ATTR_MAC_OFFSET   SMW_ATTR_ADD_PARAM_OFFSET
+#define SMW_ATTR_MAC_MASK     SMW_ATTR_ADD_PARAM_MASK
 #define SMW_ATTR_MAC_MIN_FLAG SMW_ATTR_LENGTH_MIN_FLAG
 
 /**
@@ -188,15 +238,38 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_TAG_MASK: Tag length mask.
  * - SMW_ATTR_TAG_MIN_FLAG: Tag length is a minimum tag length.
  */
-#define SMW_ATTR_TAG_OFFSET   SMW_ATTR_LENGTH_OFFSET
-#define SMW_ATTR_TAG_MASK     SMW_ATTR_LENGTH_MASK
+#define SMW_ATTR_TAG_OFFSET   SMW_ATTR_ADD_PARAM_OFFSET
+#define SMW_ATTR_TAG_MASK     SMW_ATTR_ADD_PARAM_MASK
 #define SMW_ATTR_TAG_MIN_FLAG SMW_ATTR_LENGTH_MIN_FLAG
+
+/**
+ * DOC: SMW_ATTR_SIGN_PARAM_xxx
+ * Asymmetric Signature parameters in &typedef smw_attr_algo_t
+ *
+ * - SMW_ATTR_SIGN_PARAM_OFFSET: Signature parameters offset.
+ * - SMW_ATTR_SIGN_PARAM_MASK: Signature parameters mask.
+ * - SMW_ATTR_SIGN_PARAM_EDDSA_NONE: No Signature EDDSA type.
+ * - SMW_ATTR_SIGN_PARAM_EDDSA_PREHASHED: Signature EDDSA is pre-hashed type.
+ * - SMW_ATTR_SIGN_PARAM_EDDSA_CONTEXT: Signature EDDSA is context type.
+ */
+#define SMW_ATTR_SIGN_PARAM_OFFSET SMW_ATTR_ADD_PARAM_OFFSET
+#define SMW_ATTR_SIGN_PARAM_MASK                                               \
+	(SMW_ATTR_ADD_PARAM_MASK & ~SMW_ATTR_SIGN_HASHED_FLAG)
+#define SMW_ATTR_SIGN_PARAM_EDDSA_NONE	    0x00
+#define SMW_ATTR_SIGN_PARAM_EDDSA_PREHASHED 0x01
+#define SMW_ATTR_SIGN_PARAM_EDDSA_CONTEXT   0x02
+
+/**
+ * DOC: SMW_ATTR_SIGN_HASHED_FLAG
+ * Flag indicating if the message to sign or verify given in signature
+ * operation is already hashed in &typedef smw_attr_algo_t
+ */
+#define SMW_ATTR_SIGN_HASHED_FLAG ((smw_attr_algo_t)0x80)
 
 /**
  * DOC: SMW_ATTR_ALGO_xxx
  * Main algorithm identifier in &typedef smw_attr_algo_t
  *
- * - SMW_ATTR_ALGO_DEFAULT: Default algorithm (e.g. defined by the key type).
  * - SMW_ATTR_ALGO_NONE: No algorithm defined.
  * - SMW_ATTR_ALGO_AES: Advanced Encryption Standard.
  * - SMW_ATTR_ALGO_DES: Data Encryption Standard.
@@ -218,7 +291,6 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_ALGO_TLS_1_3: Transport Layer Security 1.3.
  * - SMW_ATTR_ALGO_HASH: Hash.
  */
-#define SMW_ATTR_ALGO_DEFAULT	   0x00
 #define SMW_ATTR_ALGO_NONE	   0x00
 #define SMW_ATTR_ALGO_AES	   0x01
 #define SMW_ATTR_ALGO_DES	   0x02
@@ -507,10 +579,10 @@ typedef uint32_t smw_attr_storage_id_t;
  * A valid algorithm with length bits set to @length.
  */
 #define SMW_ATTR_SET_LENGTH(algo, length)                                      \
-	(((algo) & ~(SMW_ATTR_LENGTH_MASK << SMW_ATTR_LENGTH_OFFSET)) |        \
-	 (((smw_attr_algo_t)(length) & (SMW_ATTR_LENGTH_MASK) &                \
+	(((algo) & ~(SMW_ATTR_ADD_PARAM_MASK << SMW_ATTR_ADD_PARAM_OFFSET)) |  \
+	 (((smw_attr_algo_t)(length) & (SMW_ATTR_ADD_PARAM_MASK) &             \
 	   ~SMW_ATTR_LENGTH_MIN_FLAG)                                          \
-	  << SMW_ATTR_LENGTH_OFFSET))
+	  << SMW_ATTR_ADD_PARAM_OFFSET))
 
 /**
  * SMW_ATTR_SET_MIN_LENGTH() - Set min length.
@@ -523,10 +595,10 @@ typedef uint32_t smw_attr_storage_id_t;
  * A valid algorithm with min length bits set to @length.
  */
 #define SMW_ATTR_SET_MIN_LENGTH(algo, length)                                  \
-	(((algo) & ~(SMW_ATTR_LENGTH_MASK << SMW_ATTR_LENGTH_OFFSET)) |        \
-	 ((((smw_attr_algo_t)(length) & (SMW_ATTR_LENGTH_MASK)) |              \
+	(((algo) & ~(SMW_ATTR_ADD_PARAM_MASK << SMW_ATTR_ADD_PARAM_OFFSET)) |  \
+	 ((((smw_attr_algo_t)(length) & (SMW_ATTR_ADD_PARAM_MASK)) |           \
 	   SMW_ATTR_LENGTH_MIN_FLAG)                                           \
-	  << SMW_ATTR_LENGTH_OFFSET))
+	  << SMW_ATTR_ADD_PARAM_OFFSET))
 
 /**
  * SMW_ATTR_IS_MIN_LENGTH() - Whether the min length bit is set.
@@ -538,7 +610,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * 1 if the min length bit is set, 0 otherwise.
  */
 #define SMW_ATTR_IS_MIN_LENGTH(algo)                                           \
-	((((algo) >> SMW_ATTR_LENGTH_OFFSET) & SMW_ATTR_LENGTH_MASK &          \
+	((((algo) >> SMW_ATTR_ADD_PARAM_OFFSET) & SMW_ATTR_ADD_PARAM_MASK &    \
 	  SMW_ATTR_LENGTH_MIN_FLAG) == SMW_ATTR_LENGTH_MIN_FLAG)
 
 /**
@@ -551,7 +623,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * Length set for @algo.
  */
 #define SMW_ATTR_GET_LENGTH(algo)                                              \
-	(((algo) >> SMW_ATTR_LENGTH_OFFSET) & SMW_ATTR_LENGTH_MASK &           \
+	(((algo) >> SMW_ATTR_ADD_PARAM_OFFSET) & SMW_ATTR_ADD_PARAM_MASK &     \
 	 ~SMW_ATTR_LENGTH_MIN_FLAG)
 
 /**
@@ -696,6 +768,112 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_GET_TAG_LENGTH(algo) SMW_ATTR_GET_LENGTH(algo)
 
 /**
+ * SMW_ATTR_SET_MSG_HASHED() - Set Asymmetric signature message hashed flag.
+ * @algo: A valid algorithm. See &smw_attr_algo_t.
+ *
+ * This macro sets the signature flag indicating input message is hashed.
+ *
+ * Return:
+ * A valid algorithm with signature message flag set.
+ */
+#define SMW_ATTR_SET_MSG_HASHED(algo)                                          \
+	((algo) | (SMW_ATTR_SIGN_HASHED_FLAG << SMW_ATTR_SIGN_PARAM_OFFSET))
+
+/**
+ * SMW_ATTR_IS_MSG_HASHED() - Whether signature message hashed flag is set.
+ * @algo: A valid algorithm. See &smw_attr_algo_t.
+ *
+ * This macro returns whether the signature input message hashed flag is set or
+ * not.
+ *
+ * Return:
+ * 1 if the message hashed flag is set, 0 otherwise.
+ */
+#define SMW_ATTR_IS_MSG_HASHED(algo)                                           \
+	((((algo) >> SMW_ATTR_SIGN_PARAM_OFFSET) &                             \
+	  SMW_ATTR_SIGN_HASHED_FLAG) == SMW_ATTR_SIGN_HASHED_FLAG)
+
+/**
+ * SMW_ATTR_GET_SIGN_PARAM() - Get Asymmetric signature parameter.
+ * @algo: A valid algorithm. See &smw_attr_algo_t.
+ *
+ * This macro returns the signature parameter set for @algo.
+ *
+ * Return:
+ * Signature parameter set for @algo.
+ */
+#define SMW_ATTR_GET_SIGN_PARAM(algo)                                          \
+	(((algo) >> SMW_ATTR_SIGN_PARAM_OFFSET) & SMW_ATTR_SIGN_PARAM_MASK)
+
+/**
+ * SMW_ATTR_SET_SIGN_PARAM() - Set Asymmetric signature parameter.
+ * @algo: A valid algorithm. See &smw_attr_algo_t.
+ * @param: Parameter associated to @algo.
+ *
+ * This macro sets the signature parameter.
+ *
+ * Return:
+ * A valid algorithm with signature parameter set to @param.
+ */
+#define SMW_ATTR_SET_SIGN_PARAM(algo, param)                                   \
+	(((algo) &                                                             \
+	  ~(SMW_ATTR_SIGN_PARAM_MASK << SMW_ATTR_SIGN_PARAM_OFFSET)) |         \
+	 (((smw_attr_algo_t)(param) & (SMW_ATTR_SIGN_PARAM_MASK))              \
+	  << SMW_ATTR_SIGN_PARAM_OFFSET))
+
+/**
+ * SMW_ATTR_SET_SIGN_EDDSA_PREHASHED() - Set EDDSA pre-hashed signature.
+ * @algo: A valid algorithm. See &smw_attr_algo_t.
+ *
+ * This macro sets the asymmetric EDDSA signature parameter pre-hashed.
+ *
+ * Return:
+ * A valid algorithm with EDDSA signature parameter pre-hashed set.
+ */
+#define SMW_ATTR_SET_SIGN_EDDSA_PREHASHED(algo)                                \
+	SMW_ATTR_SET_SIGN_PARAM(algo, SMW_ATTR_SIGN_PARAM_EDDSA_PREHASHED)
+
+/**
+ * SMW_ATTR_IS_SIGN_EDDSA_PREHASHED() - Whether the signature EDDSA is pre-hashed.
+ * @algo: A valid algorithm. See &smw_attr_algo_t.
+ *
+ * This macro returns whether the asymmetric EDDSA signature parameter
+ * pre-hashed is set or not.
+ *
+ * Return:
+ * 1 if the signature message is pre-hashed type, 0 otherwise.
+ */
+#define SMW_ATTR_IS_SIGN_EDDSA_PREHASHED(algo)                                 \
+	SMW_ATTR_IS_MASK_SET(SMW_ATTR_GET_SIGN_PARAM(algo), SIGN_PARAM,        \
+			     EDDSA_PREHASHED)
+
+/**
+ * SMW_ATTR_SET_SIGN_EDDSA_CONTEXT() - Set EDDSA context signature.
+ * @algo: A valid algorithm. See &smw_attr_algo_t.
+ *
+ * This macro sets the asymmetric EDDSA signature parameter context.
+ *
+ * Return:
+ * A valid algorithm with EDDSA signature parameter context set.
+ */
+#define SMW_ATTR_SET_SIGN_EDDSA_CONTEXT(algo)                                  \
+	SMW_ATTR_SET_SIGN_PARAM(algo, SMW_ATTR_SIGN_PARAM_EDDSA_CONTEXT)
+
+/**
+ * SMW_ATTR_IS_SIGN_EDDSA_CONTEXT() - Whether the EDDSE signature uses a context.
+ * @algo: A valid algorithm. See &smw_attr_algo_t.
+ *
+ * This macro returns whether the asymmetric EDDSA signature parameter context
+ * is set or not.
+ *
+ * Return:
+ * 1 if the signature message uses a context, 0 otherwise.
+ */
+#define SMW_ATTR_IS_SIGN_EDDSA_CONTEXT(algo)                                   \
+	SMW_ATTR_IS_MASK_SET(SMW_ATTR_GET_SIGN_PARAM(algo), SIGN_PARAM,        \
+			     EDDSA_CONTEXT)
+
+/**
  * SMW_ATTR_ALGO_DIGEST() - Build a digest algorithm.
  * @hash: A valid hash algorithm. See smw_attr_algo_t.
  *
@@ -740,25 +918,6 @@ typedef uint32_t smw_attr_storage_id_t;
 	 SMW_ATTR_VALUE(ALGO, algo) | SMW_ATTR_VALUE(MODE, mode))
 
 /**
- * SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_DEFAULT() - Build an asymmetric signature
- * default algorithm.
- * @mode: A valid mode. See smw_attr_algo_t.
- * @hash: A valid hash algorithm. See smw_attr_algo_t.
- *
- * This macro builds an asymmetric signature default algorithm given
- * the @mode and the @hash algorithm.
- * The main algorithm is given by the key type and is not ECDSA, EDDSA, DSA, RSA or
- * TLS1.2.
- *
- * Return:
- * A valid asymmetric signature default algorithm.
- */
-#define SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_DEFAULT(mode, hash)                 \
-	(SMW_ATTR_NAME(CLASS, ASYMMETRIC_SIGNATURE) |                          \
-	 SMW_ATTR_NAME(ALGO, DEFAULT) | SMW_ATTR_VALUE(MODE, mode) |           \
-	 SMW_ATTR_VALUE(HASH, hash))
-
-/**
  * SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA() - Build an asymmetric signature
  * ECDSA algorithm.
  * @curve: A valid curve. See smw_attr_algo_t.
@@ -780,17 +939,20 @@ typedef uint32_t smw_attr_storage_id_t;
  * EDDSA algorithm.
  * @curve: A valid curve. See smw_attr_algo_t.
  * @hash: A valid hash algorithm. See smw_attr_algo_t.
+ * @param: A valid EDDSA parameter algorithm. See smw_attr_algo_t
  *
  * This macro builds an asymmetric signature EDDSA algorithm given
- * the @curve and the @hash algorithm.
+ * the @curve, the @hash algorithm and the @param parameter.
+ *
+ * The @hash algorithm function of the signature scheme and may not be used.
  *
  * Return:
  * A valid asymmetric signature EDDSA algorithm.
  */
-#define SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(curve, hash)                  \
+#define SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(curve, hash, param)           \
 	(SMW_ATTR_NAME(CLASS, ASYMMETRIC_SIGNATURE) |                          \
 	 SMW_ATTR_NAME(ALGO, EDDSA) | SMW_ATTR_VALUE(CURVE, curve) |           \
-	 SMW_ATTR_VALUE(HASH, hash))
+	 SMW_ATTR_VALUE(HASH, hash) | SMW_ATTR_VALUE(SIGN_PARAM, param))
 
 /**
  * SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_DSA() - Build an asymmetric signature

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __SMW_CRYPTO_H__
@@ -124,8 +124,6 @@ struct smw_ed25519_params {
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is SMW_SUBSYSTEM_NAME_NONE, the default configured
  * Secure Subsystem is used.
- *
- * @ed25519_params is handled if @version is equal to 1.
  */
 struct smw_sign_verify_args {
 	/* Inputs */

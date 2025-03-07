@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #ifndef __SMW_OSAL_H__
@@ -93,9 +93,9 @@ struct se_info {
 };
 
 /**
- * struct sysystem_info - Union of all subsystem information
- * @tee - TEE Subsystem information
- * @se - Secure Enclave information
+ * union subsystem_info - Union of all subsystem information
+ * @tee: TEE Subsystem information
+ * @se: Secure Enclave information
  */
 union subsystem_info {
 	struct tee_info tee;

@@ -267,8 +267,9 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 
 	shared_params = params[1].memref.buffer;
 
-	if (params[1].memref.size !=
-	    sizeof(*shared_params) + shared_params->ctx_length)
+	if (shared_params->sign_algorithm == TEE_ALGORITHM_ID_EDDSA &&
+	    params[1].memref.size !=
+		    sizeof(*shared_params) + shared_params->ctx_length)
 		return res;
 
 	res = set_key(cmd_id, params[0], param0_type, shared_params,
@@ -276,7 +277,8 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	if (res)
 		goto err;
 
-	if (shared_params->hash_algorithm != TEE_ALGORITHM_ID_INVALID) {
+	if (!shared_params->msg_hashed &&
+	    shared_params->hash_algorithm != TEE_ALGORITHM_ID_INVALID) {
 		res = ta_get_digest_length(shared_params->hash_algorithm,
 					   &digest_len);
 		if (res)
@@ -303,19 +305,26 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	op_max_key_size = shared_params->security_size;
 
 	/* Get TEE algorithm ID */
-	if (shared_params->key_type == TEE_KEY_TYPE_ID_RSA) {
+	switch (shared_params->sign_algorithm) {
+	case TEE_ALGORITHM_ID_RSA:
 		res = get_rsa_algo_id(shared_params->signature_type,
 				      shared_params->hash_algorithm, digest_len,
 				      &algorithm_id);
 
+		if (!res)
+			break;
+
 		/* Set salt length attribute if needed */
-		if (!res && shared_params->salt_length) {
+		if (shared_params->salt_length) {
 			TEE_InitValueAttribute(&sign_verify_attr[attr_count],
 					       TEE_ATTR_RSA_PSS_SALT_LENGTH,
 					       shared_params->salt_length, 0);
 			attr_count++;
 		}
-	} else if (shared_params->key_type == TEE_KEY_TYPE_ID_ED25519) {
+
+		break;
+
+	case TEE_ALGORITHM_ID_EDDSA:
 		algorithm_id = TEE_ALG_ED25519;
 
 		if (ROUNDUP_OVERFLOW(op_max_key_size, 2, &op_max_key_size)) {
@@ -323,7 +332,8 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 			goto err;
 		}
 
-		if (shared_params->hash_algorithm == TEE_ALGORITHM_ID_INVALID) {
+		if (shared_params->signature_type ==
+		    TEE_SIGNATURE_TYPE_EDDSA_PH) {
 			TEE_InitValueAttribute(&sign_verify_attr[attr_count],
 					       TEE_ATTR_EDDSA_PREHASH, 1, 0);
 			attr_count++;
@@ -336,9 +346,16 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 					     shared_params->ctx_length);
 			attr_count++;
 		}
-	} else {
+		break;
+
+	case TEE_ALGORITHM_ID_ECDSA:
 		res = get_ecdsa_algo_id(shared_params->security_size,
 					&algorithm_id);
+		break;
+
+	default:
+		res = TEE_ERROR_NOT_SUPPORTED;
+		break;
 	}
 
 	if (res) {
@@ -393,7 +410,8 @@ err:
 			TEE_FreeTransientObject(key_handle);
 	}
 
-	if (shared_params->hash_algorithm != TEE_ALGORITHM_ID_INVALID && digest)
+	if (!shared_params->msg_hashed &&
+	    shared_params->hash_algorithm != TEE_ALGORITHM_ID_INVALID && digest)
 		if (digest)
 			TEE_Free(digest);
 

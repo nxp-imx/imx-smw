@@ -30,9 +30,14 @@
 static const struct {
 	enum smw_config_sign_type_id smw_id;
 	enum tee_signature_type tee_id;
-} signature_type_ids[] = { SIGNATURE_TYPE_ID(DEFAULT, DEFAULT),
-			   SIGNATURE_TYPE_ID(PKCS1_1_5, RSASSA_PKCS1_V1_5),
-			   SIGNATURE_TYPE_ID(PSS, RSASSA_PSS) };
+} signature_type_ids[] = {
+	SIGNATURE_TYPE_ID(DEFAULT, DEFAULT),
+	SIGNATURE_TYPE_ID(PKCS1_1_5, RSASSA_PKCS1_V1_5),
+	SIGNATURE_TYPE_ID(PSS, RSASSA_PSS),
+	SIGNATURE_TYPE_ID(PURE_EDDSA, PURE_EDDSA),
+	SIGNATURE_TYPE_ID(EDDSA_PH, EDDSA_PH),
+	SIGNATURE_TYPE_ID(EDDSA_CTX, EDDSA_CTX),
+};
 
 static int tee_convert_signature_type_id(enum smw_config_sign_type_id smw_id,
 					 enum tee_signature_type *tee_id)
@@ -76,6 +81,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 
 	struct smw_keymgr_descriptor *key_descriptor = NULL;
 	struct smw_keymgr_identifier *key_identifier = NULL;
+	struct smw_sign_verify_attributes *sign_attrs = NULL;
 	struct sign_verify_shared_params *shared_params = NULL;
 	unsigned int shared_params_size =
 		sizeof(struct sign_verify_shared_params);
@@ -98,6 +104,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 
 	key_descriptor = &args->key_descriptor;
 	key_identifier = &key_descriptor->identifier;
+	sign_attrs = &args->attributes;
 
 	status = tee_convert_key_type(key_identifier,
 				      SMW_CONFIG_HASH_ALGO_ID_INVALID,
@@ -105,38 +112,36 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	if (key_type_id == TEE_KEY_TYPE_ID_RSA) {
+	if (sign_attrs->algo_id == SMW_CONFIG_SIGN_ALGO_ID_RSA) {
 		/*
 		 * Signature type is mandatory.
 		 * Salt length optional attribute is only for RSASSA-PSS
 		 * signature type.
 		 */
-		if (args->attributes.type_id ==
-		    SMW_CONFIG_SIGN_TYPE_ID_DEFAULT) {
+		if (sign_attrs->type_id == SMW_CONFIG_SIGN_TYPE_ID_DEFAULT) {
 			SMW_DBG_PRINTF(ERROR, "No signature type set\n");
 			status = SMW_STATUS_INVALID_PARAM;
 			goto exit;
-		} else if (args->attributes.type_id ==
+		} else if (sign_attrs->type_id ==
 				   SMW_CONFIG_SIGN_TYPE_ID_PKCS1_1_5 &&
-			   args->attributes.salt_length) {
+			   sign_attrs->salt_length) {
 			SMW_DBG_PRINTF(ERROR,
 				       "Salt length not supported for %s\n",
 				       "RSA PKCS1_V1_5");
 			status = SMW_STATUS_INVALID_PARAM;
 			goto exit;
 		}
-	}
 
-	if (key_type_id == TEE_KEY_TYPE_ID_ED25519) {
+	} else if (sign_attrs->algo_id == SMW_CONFIG_SIGN_ALGO_ID_EDDSA) {
 		ctx = smw_sign_verify_get_ed25519ctx_buf(args);
 		ctx_length = smw_sign_verify_get_ed25519ctx_len(args);
-	}
 
-	if (ctx && ctx_length) {
-		if (ADD_OVERFLOW(shared_params_size, ctx_length,
-				 &shared_params_size)) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto exit;
+		if (ctx && ctx_length) {
+			if (ADD_OVERFLOW(shared_params_size, ctx_length,
+					 &shared_params_size)) {
+				status = SMW_STATUS_INVALID_PARAM;
+				goto exit;
+			}
 		}
 	}
 
@@ -146,12 +151,12 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		goto exit;
 	}
 
-	status = tee_convert_hash_algorithm_id(args->attributes.hash_id,
+	status = tee_convert_hash_algorithm_id(sign_attrs->hash_id,
 					       &shared_params->hash_algorithm);
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	status = tee_convert_signature_type_id(args->attributes.type_id,
+	status = tee_convert_signature_type_id(sign_attrs->type_id,
 					       &shared_params->signature_type);
 	if (status != SMW_STATUS_OK)
 		goto exit;
@@ -176,7 +181,8 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 
 	case OPERATION_ID_VERIFY:
 		if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
-			if (key_type_id == TEE_KEY_TYPE_ID_RSA) {
+			if (sign_attrs->algo_id ==
+			    SMW_CONFIG_SIGN_ALGO_ID_RSA) {
 				param0_type = TEEC_MEMREF_PARTIAL_INPUT;
 				key_privacy = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
 			} else {
@@ -217,15 +223,35 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 
 	shared_params->key_type = key_type_id;
 	shared_params->security_size = key_identifier->security_size;
-	shared_params->salt_length = args->attributes.salt_length;
+	shared_params->msg_hashed = sign_attrs->msg_hashed;
 
-	if (SET_OVERFLOW(ctx_length, shared_params->ctx_length)) {
-		status = SMW_STATUS_INVALID_PARAM;
+	switch (sign_attrs->algo_id) {
+	case SMW_CONFIG_SIGN_ALGO_ID_RSA:
+		shared_params->sign_algorithm = TEE_ALGORITHM_ID_RSA;
+		shared_params->salt_length = sign_attrs->salt_length;
+		break;
+
+	case SMW_CONFIG_SIGN_ALGO_ID_EDDSA:
+		shared_params->sign_algorithm = TEE_ALGORITHM_ID_EDDSA;
+		if (ctx && ctx_length) {
+			if (SET_OVERFLOW(ctx_length,
+					 shared_params->ctx_length)) {
+				status = SMW_STATUS_INVALID_PARAM;
+				goto exit;
+			}
+
+			SMW_UTILS_MEMCPY(shared_params->ctx, ctx, ctx_length);
+		}
+		break;
+
+	case SMW_CONFIG_SIGN_ALGO_ID_ECDSA:
+		shared_params->sign_algorithm = TEE_ALGORITHM_ID_ECDSA;
+		break;
+
+	default:
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto exit;
 	}
-
-	if (ctx && ctx_length)
-		SMW_UTILS_MEMCPY(shared_params->ctx, ctx, ctx_length);
 
 	operation.paramTypes =
 		TEEC_PARAM_TYPES(param0_type, TEEC_MEMREF_TEMP_INPUT,

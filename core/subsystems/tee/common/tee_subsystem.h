@@ -94,6 +94,9 @@ enum tee_algorithm_id {
 	TEE_ALGORITHM_ID_SHA3_512,
 	TEE_ALGORITHM_ID_SM3,
 	TEE_ALGORITHM_ID_CMAC,
+	TEE_ALGORITHM_ID_ECDSA,
+	TEE_ALGORITHM_ID_EDDSA,
+	TEE_ALGORITHM_ID_RSA,
 	TEE_ALGORITHM_ID_INVALID
 };
 
@@ -102,6 +105,9 @@ enum tee_signature_type {
 	TEE_SIGNATURE_TYPE_DEFAULT,
 	TEE_SIGNATURE_TYPE_RSASSA_PKCS1_V1_5,
 	TEE_SIGNATURE_TYPE_RSASSA_PSS,
+	TEE_SIGNATURE_TYPE_PURE_EDDSA,
+	TEE_SIGNATURE_TYPE_EDDSA_PH,
+	TEE_SIGNATURE_TYPE_EDDSA_CTX
 };
 
 /* TA commands */
@@ -167,23 +173,33 @@ struct keymgr_shared_params {
  * @id: Key ID. Not set if a buffer is used.
  * @key_type: Key type.
  * @security_size: Key security size.
+ * @sign_algorithm: Signature algorithm.
  * @hash_algorithm: Hash algorithm.
  * @signature_type: Signature type.
- * @salt_length: Optional salt length (only for TEE_ALG_RSASSA_PKCS1_PSS_MGF1).
+ * @msg_hashed: Message already hashed
  * @pub_key_len: Key public length in bytes.
- * @ctx_length: Context length (only for TEE_KEY_TYPE_ID_ED25519)
- * @ctx: Context buffer (only for TEE_KEY_TYPE_ID_ED25519)
+ * @rsa.salt_length: Optional salt length (for TEE_ALG_RSASSA_PKCS1_PSS_MGF1).
+ * @eddsa.ctx_length: Context length (for TEE_KEY_TYPE_ID_ED25519)
+ * @eddsa.ctx: Context buffer (for TEE_KEY_TYPE_ID_ED25519)
  */
 struct sign_verify_shared_params {
 	uint32_t id;
 	enum tee_key_type key_type;
 	unsigned int security_size;
+	enum tee_algorithm_id sign_algorithm;
 	enum tee_algorithm_id hash_algorithm;
 	enum tee_signature_type signature_type;
-	uint32_t salt_length;
+	bool msg_hashed;
 	unsigned int pub_key_len;
-	uint8_t ctx_length;
-	uint8_t ctx[];
+	union {
+		struct {
+			uint32_t salt_length;
+		};
+		struct {
+			uint8_t ctx_length;
+			uint8_t ctx[];
+		};
+	};
 };
 
 /**

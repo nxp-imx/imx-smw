@@ -443,16 +443,12 @@ static psa_status_t set_signature_attributes(psa_algorithm_t alg, bool hashed,
 	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
 	smw_attr_algo_t hash = SMW_ATTR_HASH_NONE;
 	smw_attr_algo_t curve = SMW_ATTR_CURVE_NONE;
+	smw_attr_algo_t eddsa_param = SMW_ATTR_SIGN_PARAM_EDDSA_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (alg != PSA_ALG_PURE_EDDSA) {
-		if (!hashed && !info)
-			return PSA_ERROR_INVALID_ARGUMENT;
-
-		if (!hashed)
-			hash = info->smw_alg_id;
-	}
+	if (info)
+		hash = info->smw_alg_id;
 
 	if (PSA_ALG_IS_RSA_PKCS1V15_SIGN(alg)) {
 		algo = SMW_ATTR_ALGO_RSA;
@@ -462,16 +458,17 @@ static psa_status_t set_signature_attributes(psa_algorithm_t alg, bool hashed,
 		mode = SMW_ATTR_MODE_PSS;
 	} else if (PSA_ALG_IS_ECDSA(alg)) {
 		algo = SMW_ATTR_ALGO_ECDSA;
-		mode = SMW_ATTR_MODE_NONE;
+		curve = SMW_ATTR_MODE_ANY;
 	} else if (PSA_ALG_IS_HASH_EDDSA(alg) || alg == PSA_ALG_PURE_EDDSA) {
 		algo = SMW_ATTR_ALGO_EDDSA;
+		hash = SMW_ATTR_HASH_NONE;
 
 		if (alg == PSA_ALG_ED448PH) {
 			curve = SMW_ATTR_CURVE_ED448;
-			hash = SMW_ATTR_HASH_SHAKE256;
+			eddsa_param = SMW_ATTR_SIGN_PARAM_EDDSA_PREHASHED;
 		} else if (alg == PSA_ALG_ED25519PH) {
 			curve = SMW_ATTR_CURVE_ED25519;
-			hash = SMW_ATTR_HASH_SHA512;
+			eddsa_param = SMW_ATTR_SIGN_PARAM_EDDSA_PREHASHED;
 		} else if (alg == PSA_ALG_PURE_EDDSA) {
 			curve = SMW_ATTR_CURVE_ANY;
 		} else {
@@ -484,10 +481,14 @@ static psa_status_t set_signature_attributes(psa_algorithm_t alg, bool hashed,
 			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(mode, hash, 0);
 	else if (algo == SMW_ATTR_ALGO_ECDSA)
 		*sign_algo =
-			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(mode, hash);
+			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_ECDSA(curve, hash);
 	else if (algo == SMW_ATTR_ALGO_EDDSA)
 		*sign_algo =
-			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(curve, hash);
+			SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_EDDSA(curve, hash,
+								 eddsa_param);
+
+	if (hashed)
+		*sign_algo = SMW_ATTR_SET_MSG_HASHED(*sign_algo);
 
 	return PSA_SUCCESS;
 }

@@ -20,19 +20,26 @@
 #define KEY_TYPE(_smw, _psa)                                                   \
 	{                                                                      \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_smw,                      \
+		.smw_algo = SMW_ATTR_ALGO_##_smw,                              \
 		.psa_key_type = PSA_KEY_TYPE_##_psa,                           \
 	}
 
 /**
- * struct - Key type
+ * struct - Cipher key type
  * @smw_key_type: SMW key type name.
+ * @smw_algo: SMW main algorithm based on key name.
  * @psa_key_type: PSA key type.
  */
 static const struct cipher_key_type {
 	smw_key_type_t smw_key_type;
+	smw_attr_algo_t smw_algo;
 	psa_key_type_t psa_key_type;
-} cipher_key_type[] = { KEY_TYPE(AES, AES), KEY_TYPE(DES, DES),
-			KEY_TYPE(DES3, DES), KEY_TYPE(SM4, SM4) };
+} cipher_key_type[] = {
+	KEY_TYPE(AES, AES),
+	KEY_TYPE(DES, DES),
+	KEY_TYPE(DES3, DES),
+	KEY_TYPE(SM4, SM4),
+};
 
 #define ECC_KEY_TYPE(_smw, _family)                                            \
 	{                                                                      \
@@ -92,37 +99,6 @@ static const struct {
 		.smw_class = SMW_ATTR_CLASS_##_smw_class,                      \
 	}
 
-static const struct {
-	psa_algorithm_t psa_alg;
-	smw_attr_algo_t smw_algo;
-	union {
-		smw_attr_algo_t smw_mode;
-		smw_attr_algo_t smw_curve;
-	};
-	smw_attr_algo_t smw_class;
-} key_algorithm[] = {
-	KEY_ALGORITHM(CBC_MAC, DEFAULT, CBC_NO_PAD, MAC),
-	KEY_ALGORITHM(CMAC, DEFAULT, CMAC, MAC),
-	KEY_ALGORITHM(STREAM_CIPHER, DEFAULT, ANY, SYMMETRIC_ENCRYPTION),
-	KEY_ALGORITHM(CTR, DEFAULT, CTR, SYMMETRIC_ENCRYPTION),
-	KEY_ALGORITHM(CFB, DEFAULT, CFB, SYMMETRIC_ENCRYPTION),
-	KEY_ALGORITHM(OFB, DEFAULT, OFB, SYMMETRIC_ENCRYPTION),
-	KEY_ALGORITHM(XTS, DEFAULT, XTS, SYMMETRIC_ENCRYPTION),
-	KEY_ALGORITHM(ECB_NO_PADDING, DEFAULT, ECB_NO_PAD,
-		      SYMMETRIC_ENCRYPTION),
-	KEY_ALGORITHM(CBC_NO_PADDING, DEFAULT, CBC_NO_PAD,
-		      SYMMETRIC_ENCRYPTION),
-	KEY_ALGORITHM(CCM, DEFAULT, CCM, AEAD),
-	KEY_ALGORITHM(GCM, DEFAULT, GCM, AEAD),
-	KEY_ALGORITHM(CHACHA20_POLY1305, CHACHA20, ANY, AEAD),
-	KEY_ALGORITHM_CURVE(PURE_EDDSA, EDDSA, ED25519, ASYMMETRIC_SIGNATURE),
-	KEY_ALGORITHM_CURVE(ED25519PH, EDDSA, ED25519, ASYMMETRIC_SIGNATURE),
-	KEY_ALGORITHM_CURVE(ED448PH, EDDSA, ED448, ASYMMETRIC_SIGNATURE),
-	KEY_ALGORITHM(RSA_PKCS1V15_CRYPT, RSA, PKCS1_1_5,
-		      ASYMMETRIC_ENCRYPTION),
-	KEY_ALGORITHM_CURVE(ECDH, ECDH, ANY, KEY_DERIVATION)
-};
-
 #define KEY_HASH(_smw, _psa)                                                   \
 	{                                                                      \
 		.smw_hash = SMW_ATTR_HASH_##_smw, .psa_hash = PSA_ALG_##_psa   \
@@ -150,19 +126,19 @@ static const struct {
 	}
 
 /**
- * struct - Key cipher
+ * struct - Cipher Mode
  * @smw_cipher: SMW cipher algo ID.
  * @psa_cipher: PSA cipher id.
  */
 static const struct {
 	smw_attr_algo_t smw_cipher;
 	psa_algorithm_t psa_cipher;
-} key_cipher[] = { KEY_CIPHER(ECB_NO_PAD, ECB_NO_PADDING),
-		   KEY_CIPHER(CBC_NO_PAD, CBC_NO_PADDING),
-		   KEY_CIPHER(CFB, CFB),
-		   KEY_CIPHER(CTR, CTR),
-		   KEY_CIPHER(OFB, OFB),
-		   KEY_CIPHER(XTS, XTS) };
+} cipher_mode[] = { KEY_CIPHER(ECB_NO_PAD, ECB_NO_PADDING),
+		    KEY_CIPHER(CBC_NO_PAD, CBC_NO_PADDING),
+		    KEY_CIPHER(CFB, CFB),
+		    KEY_CIPHER(CTR, CTR),
+		    KEY_CIPHER(OFB, OFB),
+		    KEY_CIPHER(XTS, XTS) };
 
 #define KEY_PERSISTENCE(_smw, _psa)                                            \
 	{                                                                      \
@@ -440,6 +416,25 @@ psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type)
 	return PSA_KEY_TYPE_NONE;
 }
 
+static smw_attr_algo_t get_cipher_algo_key_type(smw_key_type_t smw_key_type)
+{
+	smw_attr_algo_t smw_algo = SMW_ATTR_ALGO_NONE;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(cipher_key_type); i++) {
+		if (cipher_key_type[i].smw_key_type == smw_key_type) {
+			smw_algo = cipher_key_type[i].smw_algo;
+			SMW_DBG_PRINTF(DEBUG, "SMW Cipher Algo: 0x%.8x\n",
+				       smw_algo);
+			break;
+		}
+	}
+
+	return smw_algo;
+}
+
 static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 				       unsigned int security_size)
 {
@@ -564,6 +559,25 @@ static psa_algorithm_t get_psa_hash(smw_attr_algo_t smw_hash)
 	return psa_alg;
 }
 
+static smw_attr_algo_t get_smw_cipher_mode(psa_algorithm_t psa_alg)
+{
+	smw_attr_algo_t smw_mode = SMW_ATTR_MODE_NONE;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(cipher_mode); i++) {
+		if (psa_alg == cipher_mode[i].psa_cipher) {
+			smw_mode = cipher_mode[i].smw_cipher;
+			SMW_DBG_PRINTF(DEBUG, "SMW Cipher Mode: 0x%.8x\n",
+				       smw_mode);
+			break;
+		}
+	}
+
+	return smw_mode;
+}
+
 static psa_algorithm_t get_psa_cipher_alg(smw_attr_algo_t mode)
 {
 	psa_algorithm_t psa_alg = PSA_ALG_NONE;
@@ -571,10 +585,11 @@ static psa_algorithm_t get_psa_cipher_alg(smw_attr_algo_t mode)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	for (; i < ARRAY_SIZE(key_cipher); i++) {
-		if (mode == key_cipher[i].smw_cipher) {
-			psa_alg = key_cipher[i].psa_cipher;
-			SMW_DBG_PRINTF(DEBUG, "Key cipher: 0x%.8x\n", psa_alg);
+	for (; i < ARRAY_SIZE(cipher_mode); i++) {
+		if (mode == cipher_mode[i].smw_cipher) {
+			psa_alg = cipher_mode[i].psa_cipher;
+			SMW_DBG_PRINTF(DEBUG, "PSA Cipher Mode: 0x%.8x\n",
+				       psa_alg);
 			break;
 		}
 	}
@@ -657,45 +672,6 @@ static void set_mac_length(psa_algorithm_t *psa_alg, uint8_t length,
 		*psa_alg = PSA_ALG_TRUNCATED_MAC(*psa_alg, length);
 }
 
-static void get_smw_aead(psa_algorithm_t psa_alg, smw_attr_algo_t *smw_algo,
-			 smw_attr_algo_t *smw_mode, smw_attr_algo_t *smw_class)
-{
-	if (PSA_ALG_AEAD_WITH_SHORTENED_TAG(psa_alg, 0) ==
-	    PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CCM, 0)) {
-		*smw_class = SMW_ATTR_CLASS_AEAD;
-		*smw_algo = SMW_ATTR_ALGO_DEFAULT;
-		*smw_mode = SMW_ATTR_MODE_CCM;
-	} else if (PSA_ALG_AEAD_WITH_SHORTENED_TAG(psa_alg, 0) ==
-		   PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_GCM, 0)) {
-		*smw_class = SMW_ATTR_CLASS_AEAD;
-		*smw_algo = SMW_ATTR_ALGO_DEFAULT;
-		*smw_mode = SMW_ATTR_MODE_GCM;
-	} else if (PSA_ALG_AEAD_WITH_SHORTENED_TAG(psa_alg, 0) ==
-		   PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CHACHA20_POLY1305,
-						   0)) {
-		*smw_class = SMW_ATTR_CLASS_AEAD;
-		*smw_algo = SMW_ATTR_ALGO_CHACHA20;
-		*smw_mode = SMW_ATTR_MODE_ANY;
-	}
-}
-
-static void get_smw_mac(psa_algorithm_t psa_alg, smw_attr_algo_t *smw_algo,
-			smw_attr_algo_t *smw_mode, smw_attr_algo_t *smw_class)
-{
-	psa_alg = psa_alg & ~(PSA_ALG_MAC_TRUNCATION_MASK |
-			      PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG);
-
-	if (psa_alg == PSA_ALG_CBC_MAC) {
-		*smw_class = SMW_ATTR_CLASS_MAC;
-		*smw_algo = SMW_ATTR_ALGO_DEFAULT;
-		*smw_mode = SMW_ATTR_MODE_CBC_NO_PAD;
-	} else if (psa_alg == PSA_ALG_CMAC) {
-		*smw_class = SMW_ATTR_CLASS_MAC;
-		*smw_algo = SMW_ATTR_ALGO_DEFAULT;
-		*smw_mode = SMW_ATTR_MODE_CMAC;
-	}
-}
-
 static psa_status_t get_psa_alg(psa_algorithm_t *psa_alg,
 				smw_attr_algo_t permitted_algo)
 {
@@ -746,14 +722,20 @@ static psa_status_t get_psa_alg(psa_algorithm_t *psa_alg,
 		if (algo == SMW_ATTR_ALGO_ECDSA) {
 			*psa_alg = PSA_ALG_ECDSA(psa_hash);
 		} else if (algo == SMW_ATTR_ALGO_EDDSA) {
-			if (curve == SMW_ATTR_CURVE_ED25519) {
-				if (hash == SMW_ATTR_HASH_NONE)
-					*psa_alg = PSA_ALG_PURE_EDDSA;
-				else if (hash == SMW_ATTR_HASH_SHA512)
-					*psa_alg = PSA_ALG_ED25519PH;
-			} else if (curve == SMW_ATTR_CURVE_ED448 &&
-				   hash == SMW_ATTR_HASH_SHAKE256) {
+			switch (curve) {
+			case SMW_ATTR_CURVE_ED25519:
+				*psa_alg = PSA_ALG_ED25519PH;
+				break;
+			case SMW_ATTR_CURVE_ED448:
 				*psa_alg = PSA_ALG_ED448PH;
+				break;
+
+			case SMW_ATTR_CURVE_ANY:
+				*psa_alg = PSA_ALG_PURE_EDDSA;
+				break;
+
+			default:
+				goto end;
 			}
 		} else if ((algo == SMW_ATTR_ALGO_RSA) &&
 			   (mode == SMW_ATTR_MODE_PKCS1_1_5)) {
@@ -816,7 +798,8 @@ end:
 	return psa_status;
 }
 
-static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg)
+static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg,
+				    smw_key_type_t key_type)
 {
 	smw_attr_algo_t smw_algo = 0;
 
@@ -827,8 +810,8 @@ static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg)
 	smw_attr_algo_t class = SMW_ATTR_CLASS_NONE;
 	smw_attr_algo_t length = 0;
 	smw_attr_algo_t min_length = 0;
+	psa_algorithm_t psa_alg_base = PSA_ALG_NONE;
 
-	unsigned int i = 0;
 	uint8_t l = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -836,55 +819,25 @@ static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg)
 	if (!psa_alg)
 		goto end;
 
-	if (PSA_ALG_IS_KEY_AGREEMENT(psa_alg)) {
-		hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
-		class = SMW_ATTR_CLASS_KEY_DERIVATION;
-		psa_alg = PSA_ALG_KEY_AGREEMENT_GET_KDF(psa_alg);
-	}
+	switch (psa_alg & PSA_ALG_CATEGORY_MASK) {
+	case PSA_ALG_CATEGORY_AEAD:
+		class = SMW_ATTR_CLASS_AEAD;
+		algo = get_cipher_algo_key_type(key_type);
+		psa_alg_base = PSA_ALG_AEAD_WITH_DEFAULT_LENGTH_TAG(psa_alg);
 
-	for (; i < ARRAY_SIZE(key_algorithm); i++) {
-		if (psa_alg == key_algorithm[i].psa_alg) {
-			algo = key_algorithm[i].smw_algo;
-			class = key_algorithm[i].smw_class;
-			mode = key_algorithm[i].smw_mode;
-			hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
+		switch (psa_alg_base) {
+		case PSA_ALG_CCM:
+			mode = SMW_ATTR_MODE_CCM;
+			break;
+
+		case PSA_ALG_GCM:
+			mode = SMW_ATTR_MODE_GCM;
+			break;
+
+		case PSA_ALG_CHACHA20_POLY1305:
+			mode = SMW_ATTR_MODE_POLY1305;
 			break;
 		}
-	}
-
-	if (algo == SMW_ATTR_ALGO_NONE) {
-		if (PSA_ALG_IS_HMAC(psa_alg)) {
-			algo = SMW_ATTR_ALGO_HMAC;
-			class = SMW_ATTR_CLASS_MAC;
-		} else if (PSA_ALG_IS_HKDF(psa_alg)) {
-			algo = SMW_ATTR_ALGO_HKDF;
-			class = SMW_ATTR_CLASS_KEY_DERIVATION;
-		} else if (PSA_ALG_IS_RSA_PKCS1V15_SIGN(psa_alg)) {
-			algo = SMW_ATTR_ALGO_RSA;
-			mode = SMW_ATTR_MODE_PKCS1_1_5;
-			class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
-		} else if (PSA_ALG_IS_RSA_PSS(psa_alg)) {
-			algo = SMW_ATTR_ALGO_RSA;
-			mode = SMW_ATTR_MODE_PSS;
-			class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
-		} else if (PSA_ALG_IS_ECDSA(psa_alg) ||
-			   PSA_ALG_IS_DETERMINISTIC_ECDSA(psa_alg)) {
-			algo = SMW_ATTR_ALGO_ECDSA;
-			curve = SMW_ATTR_CURVE_ANY;
-			class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
-		} else if (PSA_ALG_IS_RSA_OAEP(psa_alg)) {
-			algo = SMW_ATTR_ALGO_RSA;
-			mode = SMW_ATTR_MODE_OAEP;
-			class = SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION;
-		}
-
-		if (algo != SMW_ATTR_ALGO_NONE)
-			hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
-	}
-
-	if (PSA_ALG_IS_AEAD(psa_alg)) {
-		class = SMW_ATTR_CLASS_AEAD;
-		get_smw_aead(psa_alg, &algo, &mode, &class);
 
 		l = (psa_alg & PSA_ALG_AEAD_TAG_LENGTH_MASK) >>
 		    PSA_AEAD_TAG_LENGTH_OFFSET;
@@ -893,9 +846,35 @@ static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg)
 			min_length = l;
 		else
 			length = l;
-	} else if (PSA_ALG_IS_MAC(psa_alg)) {
+
+		break;
+
+	case PSA_ALG_CATEGORY_ASYMMETRIC_ENCRYPTION:
+		class = SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION;
+		if (PSA_ALG_IS_RSA_OAEP(psa_alg)) {
+			hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
+			mode = SMW_ATTR_MODE_OAEP;
+		} else {
+			mode = SMW_ATTR_MODE_PKCS1_1_5;
+		}
+
+		break;
+
+	case PSA_ALG_CATEGORY_CIPHER:
+		class = SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION;
+		algo = get_cipher_algo_key_type(key_type);
+		mode = get_smw_cipher_mode(psa_alg);
+		break;
+
+	case PSA_ALG_CATEGORY_MAC:
 		class = SMW_ATTR_CLASS_MAC;
-		get_smw_mac(psa_alg, &algo, &mode, &class);
+		if (PSA_ALG_IS_HMAC(psa_alg)) {
+			algo = SMW_ATTR_ALGO_HMAC;
+			hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
+		} else {
+			mode = SMW_ATTR_MODE_CMAC;
+			algo = get_cipher_algo_key_type(key_type);
+		}
 
 		l = (psa_alg & PSA_ALG_MAC_TRUNCATION_MASK) >>
 		    PSA_MAC_TRUNCATION_OFFSET;
@@ -904,6 +883,36 @@ static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg)
 			min_length = l;
 		else
 			length = l;
+
+		break;
+
+	case PSA_ALG_CATEGORY_SIGN:
+		class = SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE;
+		hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
+
+		if (PSA_ALG_IS_ECDSA(psa_alg)) {
+			algo = SMW_ATTR_ALGO_ECDSA;
+			curve = SMW_ATTR_CURVE_ANY;
+		} else if (PSA_ALG_IS_RSA_PKCS1V15_SIGN(psa_alg)) {
+			algo = SMW_ATTR_ALGO_RSA;
+			mode = SMW_ATTR_MODE_PKCS1_1_5;
+		} else if (PSA_ALG_IS_RSA_PSS(psa_alg)) {
+			algo = SMW_ATTR_ALGO_RSA;
+			mode = SMW_ATTR_MODE_PSS;
+		} else if (psa_alg == PSA_ALG_PURE_EDDSA) {
+			algo = SMW_ATTR_ALGO_EDDSA;
+			curve = SMW_ATTR_CURVE_ANY;
+			hash = SMW_ATTR_HASH_NONE;
+		} else if (psa_alg == PSA_ALG_ED25519PH) {
+			algo = SMW_ATTR_ALGO_EDDSA;
+			curve = SMW_ATTR_CURVE_ED25519;
+			hash = SMW_ATTR_HASH_NONE;
+		}
+
+		break;
+
+	default:
+		goto end;
 	}
 
 	smw_algo = (((class & SMW_ATTR_CLASS_MASK) << SMW_ATTR_CLASS_OFFSET) |
@@ -935,7 +944,8 @@ end:
 
 static psa_status_t
 set_key_attributes(const psa_key_attributes_t *psa_attributes,
-		   struct smw_key_attributes *smw_attributes)
+		   struct smw_key_attributes *smw_attributes,
+		   struct smw_key_descriptor *smw_key_descriptor)
 {
 	psa_algorithm_t algorithm = PSA_ALG_NONE;
 	psa_key_usage_t usage_flags = 0;
@@ -944,14 +954,21 @@ set_key_attributes(const psa_key_attributes_t *psa_attributes,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!psa_attributes || !smw_attributes)
+	if (!psa_attributes || !smw_attributes || !smw_key_descriptor)
 		return PSA_ERROR_INVALID_ARGUMENT;
+
+	smw_key_descriptor->type_name =
+		get_smw_key_type(psa_attributes,
+				 smw_key_descriptor->security_size);
+	if (smw_key_descriptor->type_name == SMW_KEY_TYPE_NAME_NONE)
+		return PSA_ERROR_NOT_SUPPORTED;
 
 	algorithm = psa_get_key_algorithm(psa_attributes);
 	usage_flags = psa_get_key_usage_flags(psa_attributes);
 	lifetime = psa_get_key_lifetime(psa_attributes);
 
-	smw_attributes->permitted_algo = get_smw_algo(algorithm);
+	smw_attributes->permitted_algo =
+		get_smw_algo(algorithm, smw_key_descriptor->type_name);
 	smw_attributes->usage_flags = get_smw_usage_flags(usage_flags);
 	smw_attributes->storage_id = PSA_KEY_LIFETIME_GET_LOCATION(lifetime);
 	persistence = get_smw_persistence(lifetime);
@@ -1255,12 +1272,8 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 	if (SET_OVERFLOW(security_size, key_descriptor.security_size))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	key_descriptor.type_name =
-		get_smw_key_type(attributes, key_descriptor.security_size);
-	if (key_descriptor.type_name == SMW_KEY_TYPE_NAME_NONE)
-		return PSA_ERROR_NOT_SUPPORTED;
-
-	psa_status = set_key_attributes(attributes, &key_attributes);
+	psa_status = set_key_attributes(attributes, &key_attributes,
+					&key_descriptor);
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
 
@@ -1408,12 +1421,8 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	if (SET_OVERFLOW(security_size, key_descriptor.security_size))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	key_descriptor.type_name =
-		get_smw_key_type(attributes, key_descriptor.security_size);
-	if (key_descriptor.type_name == SMW_KEY_TYPE_NAME_NONE)
-		return PSA_ERROR_NOT_SUPPORTED;
-
-	psa_status = set_key_attributes(attributes, &key_attributes);
+	psa_status = set_key_attributes(attributes, &key_attributes,
+					&key_descriptor);
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
 

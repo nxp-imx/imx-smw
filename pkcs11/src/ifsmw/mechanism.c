@@ -255,7 +255,7 @@ struct mgroup {
 	       SMW_CIPHER_MODE_NAME_##_mode, SMW_AEAD_MODE_NAME_NONE,          \
 	       SMW_SIGNATURE_ALGO_NAME_NONE, SMW_SIGNATURE_TYPE_NAME_NONE,     \
 	       SMW_KDF_NAME_NONE,                                              \
-	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_DEFAULT,       \
+	       SMW_ATTR_ALGO_SYMMETRIC_ENCRYPTION(SMW_ATTR_ALGO_##_algo,       \
 						  SMW_ATTR_MODE_##_mode_id),   \
 	       _id)
 
@@ -1516,6 +1516,9 @@ static CK_RV sign(struct lib_signature_params *params,
 
 	switch (params->state) {
 	case OP_ONE_SHOT:
+		if (hash_algo == SMW_HASH_ALGO_NAME_NONE)
+			sign_algo = SMW_ATTR_SET_MSG_HASHED(sign_algo);
+
 		smw_sign_verify_args.subsystem_name = subsystem_name;
 		smw_sign_verify_args.key_descriptor = key_desc;
 		smw_sign_verify_args.sign_algo = sign_algo;
@@ -1624,6 +1627,7 @@ static CK_RV sign(struct lib_signature_params *params,
 
 			sign_algo = SMW_ATTR_SET_HASH(sign_algo,
 						      SMW_ATTR_HASH_NONE);
+			sign_algo = SMW_ATTR_SET_MSG_HASHED(sign_algo);
 
 			smw_sign_verify_args.message =
 				smw_hash_final_args.output;

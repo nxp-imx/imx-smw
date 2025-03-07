@@ -291,7 +291,7 @@ static int derive_key_usable(unsigned int *ref,
 	int status = SMW_STATUS_OK;
 
 	struct key_operation_params params = { 0 };
-	smw_attr_algo_t algo = SMW_ATTR_ALGO_DEFAULT;
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
 	size_t idx = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -308,8 +308,7 @@ static int derive_key_usable(unsigned int *ref,
 		goto end;
 
 	for (; idx < ARRAY_SIZE(derive_algo_attrs); idx++) {
-		if ((algo == SMW_ATTR_ALGO_DEFAULT ||
-		     algo == derive_algo_attrs[idx]) &&
+		if (algo == derive_algo_attrs[idx] &&
 		    check_id(idx, params.op_bitmap)) {
 			status = SMW_STATUS_OK;
 			break;

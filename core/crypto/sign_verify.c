@@ -31,11 +31,7 @@ sign_verify_convert_attributes(smw_attr_algo_t in,
 	if (SMW_ATTR_GET_CLASS(in) != SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE)
 		goto end;
 
-	status = smw_utils_sign_attr_to_algo_id(in, &out->algo_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = smw_utils_sign_type_attr_to_id(in, &out->type_id);
+	status = smw_utils_sign_attr_to_ids(in, &out->algo_id, &out->type_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -43,8 +39,22 @@ sign_verify_convert_attributes(smw_attr_algo_t in,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (SET_OVERFLOW(SMW_ATTR_GET_SALT_LENGTH(in), out->salt_length))
-		status = SMW_STATUS_INVALID_PARAM;
+	switch (out->algo_id) {
+	case SMW_CONFIG_SIGN_ALGO_ID_RSA:
+		if (SET_OVERFLOW(SMW_ATTR_GET_SALT_LENGTH(in),
+				 out->salt_length))
+			status = SMW_STATUS_INVALID_PARAM;
+
+		break;
+
+	case SMW_CONFIG_SIGN_ALGO_ID_EDDSA:
+	case SMW_CONFIG_SIGN_ALGO_ID_ECDSA:
+		out->msg_hashed = SMW_ATTR_IS_MSG_HASHED(in);
+		break;
+
+	default:
+		break;
+	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -156,7 +166,7 @@ smw_sign_verify_get_ed25519ctx_buf(struct smw_crypto_sign_verify_args *args)
 {
 	unsigned char *context_buffer = NULL;
 
-	if (args->pub && args->pub->version >= 1 && args->pub->ed25519_params)
+	if (args->pub && args->pub->ed25519_params)
 		context_buffer = args->pub->ed25519_params->context;
 
 	return context_buffer;
@@ -167,7 +177,7 @@ smw_sign_verify_get_ed25519ctx_len(struct smw_crypto_sign_verify_args *args)
 {
 	unsigned int context_length = 0;
 
-	if (args->pub && args->pub->version >= 1 && args->pub->ed25519_params)
+	if (args->pub && args->pub->ed25519_params)
 		context_length = args->pub->ed25519_params->context_length;
 
 	return context_length;

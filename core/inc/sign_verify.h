@@ -33,6 +33,7 @@
  * @type_id: Signature type ID
  * @hash_id: Hash algorithm ID
  * @salt_length: Optional salt length in bytes.
+ * @msg_hashed: True if input message is already hashed.
  *
  * Parameter @salt_length is only for 'RSA' signature type. If not set,
  * the salt length is equal to the hash length.
@@ -42,6 +43,7 @@ struct smw_sign_verify_attributes {
 	enum smw_config_sign_type_id type_id;
 	enum smw_config_hash_algo_id hash_id;
 	uint32_t salt_length;
+	bool msg_hashed;
 };
 
 /**

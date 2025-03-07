@@ -197,17 +197,19 @@ int smw_config_get_signature_algo_id(smw_signature_algo_t name,
 				     enum smw_config_sign_algo_id *id);
 
 /**
- * smw_utils_sign_attr_to_algo_id() - Get the Signature algo ID from the
- *                                    algorithm attribute.
+ * smw_utils_sign_attr_to_ids() - Get the Signature algo and type IDs from the
+ *                                algorithm attribute.
  * @attr: Algorithm attribute.
- * @algo_id: Pointer where the ID is written.
+ * @algo_id: Pointer where the algorithm ID is written.
+ * @type_id: Pointer where the signature type ID is written.
  *
  * Return:
  * SMW_STATUS_OK                       - Success
  * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Not supported
  */
-int smw_utils_sign_attr_to_algo_id(smw_attr_algo_t attr,
-				   enum smw_config_sign_algo_id *algo_id);
+int smw_utils_sign_attr_to_ids(smw_attr_algo_t attr,
+			       enum smw_config_sign_algo_id *algo_id,
+			       enum smw_config_sign_type_id *type_id);
 
 /**
  * smw_config_get_signature_type_id() - Get the signature type ID associated to
@@ -221,19 +223,6 @@ int smw_utils_sign_attr_to_algo_id(smw_attr_algo_t attr,
  */
 int smw_config_get_signature_type_id(smw_signature_type_t name,
 				     enum smw_config_sign_type_id *id);
-
-/**
- * smw_utils_sign_type_attr_to_id() - Get the Signature type id from the
- *                                    algorithm attribute.
- * @attr: Algorithm attribute.
- * @type_id: Pointer where the ID is written.
- *
- * Return:
- * SMW_STATUS_OK                       - Success
- * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Not supported
- */
-int smw_utils_sign_type_attr_to_id(smw_attr_algo_t attr,
-				   enum smw_config_sign_type_id *type_id);
 
 /**
  * smw_config_get_kdf_id() - Get the id of the Key Derivation Function name

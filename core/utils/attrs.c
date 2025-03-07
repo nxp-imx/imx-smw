@@ -2,6 +2,7 @@
 /*
  * Copyright 2025 NXP
  */
+#include <inttypes.h>
 
 #include "smw_crypto.h"
 
@@ -59,85 +60,114 @@ int smw_utils_hash_attr_to_algo_id(smw_attr_algo_t attr,
 	return status;
 }
 
-#define SIGN_ALGO(_id)                                                         \
+#define SIGN_ALGO_ECDSA(_class, _curve, _type)                                 \
 	{                                                                      \
-		.attr = SMW_ATTR_ALGO_##_id,                                   \
-		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_##_id                       \
+		.is_curve = true, .class = SMW_ATTR_CLASS_##_class,            \
+		.algo = SMW_ATTR_ALGO_ECDSA, .param = 0,                       \
+		.curve = SMW_ATTR_CURVE_##_curve,                              \
+		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_ECDSA,                      \
+		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_type                     \
 	}
 
+#define SIGN_ALGO_EDDSA(_class, _algo, _curve, _param, _type)                  \
+	{                                                                      \
+		.is_curve = true, .class = SMW_ATTR_CLASS_##_class,            \
+		.algo = SMW_ATTR_ALGO_##_algo,                                 \
+		.param = SMW_ATTR_SIGN_PARAM_EDDSA_##_param,                   \
+		.curve = SMW_ATTR_CURVE_##_curve,                              \
+		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_EDDSA,                      \
+		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_type                     \
+	}
+
+#define SIGN_ALGO_MODE(_class, _algo, _mode, _algo_id, _type)                  \
+	{                                                                      \
+		.is_curve = false, .class = SMW_ATTR_CLASS_##_class,           \
+		.algo = SMW_ATTR_ALGO_##_algo, .param = 0,                     \
+		.mode = SMW_ATTR_MODE_##_mode,                                 \
+		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_##_algo_id,                 \
+		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_type                     \
+	}
+
+#define SIGN_ALGO_TLS(_class, _algo, _type)                                    \
+	{                                                                      \
+		.is_curve = false, .class = SMW_ATTR_CLASS_##_class,           \
+		.algo = SMW_ATTR_ALGO_##_algo, .param = 0,                     \
+		.mode = SMW_ATTR_MODE_##_type,                                 \
+		.algo_id = SMW_CONFIG_SIGN_ALGO_ID_##_algo,                    \
+		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_type                     \
+	}
 static const struct {
-	smw_attr_algo_t attr;
+	smw_attr_algo_t class;
+	smw_attr_algo_t algo;
+	smw_attr_algo_t param;
+
+	bool is_curve;
+	union {
+		smw_attr_algo_t mode;
+		smw_attr_algo_t curve;
+	};
+
 	enum smw_config_sign_algo_id algo_id;
-} sign_algo_list[] = {
-	SIGN_ALGO(DEFAULT), SIGN_ALGO(ECDSA), SIGN_ALGO(EDDSA),
-	SIGN_ALGO(DSA),	    SIGN_ALGO(RSA),   SIGN_ALGO(TLS_1_2)
+	enum smw_config_sign_type_id type_id;
+} sign_list[] = {
+	SIGN_ALGO_ECDSA(ASYMMETRIC_SIGNATURE, ANY, DEFAULT),
+	SIGN_ALGO_EDDSA(ASYMMETRIC_SIGNATURE, EDDSA, ANY, NONE, PURE_EDDSA),
+	SIGN_ALGO_EDDSA(ASYMMETRIC_SIGNATURE, EDDSA, ED25519, PREHASHED,
+			EDDSA_PH),
+	SIGN_ALGO_EDDSA(ASYMMETRIC_SIGNATURE, EDDSA, ED25519, CONTEXT,
+			EDDSA_CTX),
+	SIGN_ALGO_MODE(ASYMMETRIC_SIGNATURE, DSA, NONE, DSA, DEFAULT),
+	SIGN_ALGO_MODE(ASYMMETRIC_SIGNATURE, RSA, NONE, RSA, DEFAULT),
+	SIGN_ALGO_MODE(ASYMMETRIC_SIGNATURE, RSA, ANY, RSA, DEFAULT),
+	SIGN_ALGO_MODE(ASYMMETRIC_SIGNATURE, RSA, PKCS1_1_5, RSA, PKCS1_1_5),
+	SIGN_ALGO_MODE(ASYMMETRIC_SIGNATURE, RSA, PSS, RSA, PSS),
+	SIGN_ALGO_TLS(ASYMMETRIC_SIGNATURE, TLS_1_2, CLIENT),
+	SIGN_ALGO_TLS(ASYMMETRIC_SIGNATURE, TLS_1_2, SERVER),
+	SIGN_ALGO_MODE(KEY_ATTESTATION, AES, CMAC, DEFAULT, CMAC),
+	SIGN_ALGO_ECDSA(KEY_ATTESTATION, ANY, DEFAULT),
 };
 
-int smw_utils_sign_attr_to_algo_id(smw_attr_algo_t attr,
-				   enum smw_config_sign_algo_id *algo_id)
+int smw_utils_sign_attr_to_ids(smw_attr_algo_t attr,
+			       enum smw_config_sign_algo_id *algo_id,
+			       enum smw_config_sign_type_id *type_id)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	unsigned int i = 0;
-	unsigned int size = ARRAY_SIZE(sign_algo_list);
+	unsigned int size = ARRAY_SIZE(sign_list);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < size; i++) {
-		if (SMW_ATTR_GET_ALGO(attr) == sign_algo_list[i].attr) {
-			*algo_id = sign_algo_list[i].algo_id;
+		if (sign_list[i].class != SMW_ATTR_GET_CLASS(attr))
+			continue;
 
-			SMW_DBG_PRINTF(DEBUG, "Signature algo: %d\n", *algo_id);
+		if (sign_list[i].algo != SMW_ATTR_GET_ALGO(attr))
+			continue;
 
-			status = SMW_STATUS_OK;
-			break;
+		if (sign_list[i].is_curve) {
+			if (sign_list[i].curve != SMW_ATTR_CURVE_ANY &&
+			    sign_list[i].curve != SMW_ATTR_GET_CURVE(attr))
+				continue;
+		} else if (sign_list[i].mode != SMW_ATTR_GET_MODE(attr)) {
+			continue;
 		}
-	}
 
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-#define SIGN_TYPE(_id)                                                         \
-	{                                                                      \
-		.attr = SMW_ATTR_MODE_##_id,                                   \
-		.type_id = SMW_CONFIG_SIGN_TYPE_ID_##_id                       \
-	}
-
-static const struct {
-	smw_attr_algo_t attr;
-	enum smw_config_sign_type_id type_id;
-} sign_type_list[] = { { .attr = SMW_ATTR_MODE_NONE,
-			 .type_id = SMW_CONFIG_SIGN_TYPE_ID_INVALID },
-		       { .attr = SMW_ATTR_MODE_ANY,
-			 .type_id = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT },
-		       { .attr = SMW_ATTR_CURVE_ED25519,
-			 .type_id = SMW_CONFIG_SIGN_TYPE_ID_DEFAULT },
-		       SIGN_TYPE(CMAC),
-		       SIGN_TYPE(PKCS1_1_5),
-		       SIGN_TYPE(PSS),
-		       SIGN_TYPE(CLIENT),
-		       SIGN_TYPE(SERVER) };
-
-int smw_utils_sign_type_attr_to_id(smw_attr_algo_t attr,
-				   enum smw_config_sign_type_id *type_id)
-{
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-
-	unsigned int i = 0;
-	unsigned int size = ARRAY_SIZE(sign_type_list);
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	for (; i < size; i++) {
-		if (SMW_ATTR_GET_MODE(attr) == sign_type_list[i].attr) {
-			*type_id = sign_type_list[i].type_id;
-
-			SMW_DBG_PRINTF(DEBUG, "Signature type: %d\n", *type_id);
-
-			status = SMW_STATUS_OK;
-			break;
+		if (sign_list[i].algo == SMW_ATTR_ALGO_EDDSA) {
+			if (SMW_ATTR_GET_SIGN_PARAM(attr) != sign_list[i].param)
+				continue;
 		}
+
+		*algo_id = sign_list[i].algo_id;
+		*type_id = sign_list[i].type_id;
+
+		SMW_DBG_PRINTF(DEBUG,
+			       "Signature scheme (attr 0x%" PRIx64
+			       ") algo_id=%d type_id=%d\n",
+			       attr, *algo_id, *type_id);
+
+		status = SMW_STATUS_OK;
+		break;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

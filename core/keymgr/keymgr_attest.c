@@ -31,20 +31,13 @@ key_attestation_convert_attributes(smw_attr_algo_t in,
 	if (SMW_ATTR_GET_CLASS(in) != SMW_ATTR_CLASS_KEY_ATTESTATION)
 		goto end;
 
-	status = smw_utils_sign_attr_to_algo_id(in, &out->algo_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = smw_utils_sign_type_attr_to_id(in, &out->type_id);
+	status = smw_utils_sign_attr_to_ids(in, &out->algo_id, &out->type_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
 	status = smw_utils_hash_attr_to_algo_id(in, &out->hash_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	if (SET_OVERFLOW(SMW_ATTR_GET_SALT_LENGTH(in), out->salt_length))
-		status = SMW_STATUS_INVALID_PARAM;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

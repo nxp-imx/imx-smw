@@ -31,7 +31,7 @@ static const struct {
 		       _smw_class)                                             \
 	{                                                                      \
 		.ele_permitted_algo = PERMITTED_ALGO_##_ele_permitted_algo,    \
-		.smw_algo = SMW_ATTR_ALGO_##_smw_algo,                         \
+		.smw_algo = SMW_ATTR_ALGO_##_smw_algo, .is_curve = false,      \
 		.smw_mode = SMW_ATTR_MODE_##_smw_mode,                         \
 		.smw_hash = SMW_ATTR_HASH_##_smw_hash,                         \
 		.smw_class = SMW_ATTR_CLASS_##_smw_class,                      \
@@ -41,7 +41,7 @@ static const struct {
 			     _smw_hash, _smw_class)                            \
 	{                                                                      \
 		.ele_permitted_algo = PERMITTED_ALGO_##_ele_permitted_algo,    \
-		.smw_algo = SMW_ATTR_ALGO_##_smw_algo,                         \
+		.smw_algo = SMW_ATTR_ALGO_##_smw_algo, .is_curve = true,       \
 		.smw_curve = SMW_ATTR_CURVE_##_smw_curve,                      \
 		.smw_hash = SMW_ATTR_HASH_##_smw_hash,                         \
 		.smw_class = SMW_ATTR_CLASS_##_smw_class,                      \
@@ -56,6 +56,7 @@ static const struct {
 static const struct {
 	hsm_permitted_algo_t ele_permitted_algo;
 	smw_attr_algo_t smw_algo;
+	bool is_curve;
 	union {
 		smw_attr_algo_t smw_mode;
 		smw_attr_algo_t smw_curve;
@@ -65,17 +66,17 @@ static const struct {
 } permitted_algos[] = {
 	PERMITTED_ALGO(HMAC_SHA256, HMAC, NONE, SHA256, MAC),
 	PERMITTED_ALGO(HMAC_SHA384, HMAC, NONE, SHA384, MAC),
-	PERMITTED_ALGO(CMAC, DEFAULT, CMAC, NONE, MAC),
-	PERMITTED_ALGO(CTR, DEFAULT, CTR, NONE, SYMMETRIC_ENCRYPTION),
-	PERMITTED_ALGO(CFB, DEFAULT, CFB, NONE, SYMMETRIC_ENCRYPTION),
-	PERMITTED_ALGO(OFB, DEFAULT, OFB, NONE, SYMMETRIC_ENCRYPTION),
-	PERMITTED_ALGO(ECB_NO_PADDING, DEFAULT, ECB_NO_PAD, NONE,
+	PERMITTED_ALGO(CMAC, AES, CMAC, NONE, MAC),
+	PERMITTED_ALGO(CTR, AES, CTR, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(CFB, AES, CFB, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(OFB, AES, OFB, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(ECB_NO_PADDING, AES, ECB_NO_PAD, NONE,
 		       SYMMETRIC_ENCRYPTION),
-	PERMITTED_ALGO(CBC_NO_PADDING, DEFAULT, CBC_NO_PAD, NONE,
+	PERMITTED_ALGO(CBC_NO_PADDING, AES, CBC_NO_PAD, NONE,
 		       SYMMETRIC_ENCRYPTION),
-	PERMITTED_ALGO(CCM, DEFAULT, CCM, NONE, AEAD),
-	PERMITTED_ALGO(GCM, DEFAULT, GCM, NONE, AEAD),
-	PERMITTED_ALGO(CHACHA20_POLY1305, DEFAULT, POLY1305, NONE, AEAD),
+	PERMITTED_ALGO(CCM, AES, CCM, NONE, AEAD),
+	PERMITTED_ALGO(GCM, AES, GCM, NONE, AEAD),
+	PERMITTED_ALGO(CHACHA20_POLY1305, CHACHA20, POLY1305, NONE, AEAD),
 	PERMITTED_ALGO(RSA_PKCS1_V15_SHA224, RSA, PKCS1_1_5, SHA224,
 		       ASYMMETRIC_SIGNATURE),
 	PERMITTED_ALGO(RSA_PKCS1_V15_SHA256, RSA, PKCS1_1_5, SHA256,
@@ -96,40 +97,40 @@ static const struct {
 		       ASYMMETRIC_SIGNATURE),
 	PERMITTED_ALGO(RSA_PKCS1_PSS_MGF1_SHA_ANY, RSA, PSS, ANY,
 		       ASYMMETRIC_SIGNATURE),
-	PERMITTED_ALGO_CURVE(ECDSA_SHA224, ECDSA, NONE, SHA224,
+	PERMITTED_ALGO_CURVE(ECDSA_SHA224, ECDSA, ANY, SHA224,
 			     ASYMMETRIC_SIGNATURE),
-	PERMITTED_ALGO_CURVE(ECDSA_SHA256, ECDSA, NONE, SHA256,
+	PERMITTED_ALGO_CURVE(ECDSA_SHA256, ECDSA, ANY, SHA256,
 			     ASYMMETRIC_SIGNATURE),
-	PERMITTED_ALGO_CURVE(ECDSA_SHA384, ECDSA, NONE, SHA384,
+	PERMITTED_ALGO_CURVE(ECDSA_SHA384, ECDSA, ANY, SHA384,
 			     ASYMMETRIC_SIGNATURE),
-	PERMITTED_ALGO_CURVE(ECDSA_SHA512, ECDSA, NONE, SHA512,
+	PERMITTED_ALGO_CURVE(ECDSA_SHA512, ECDSA, ANY, SHA512,
 			     ASYMMETRIC_SIGNATURE),
-	PERMITTED_ALGO_CURVE(ED25519PH, EDDSA, ED25519, SHA512,
+	PERMITTED_ALGO_CURVE(ED25519PH, EDDSA, ED25519, NONE,
 			     ASYMMETRIC_SIGNATURE),
-	PERMITTED_ALGO_CURVE(PURE_EDDSA, EDDSA, ED25519, NONE,
+	PERMITTED_ALGO_CURVE(PURE_EDDSA, EDDSA, ANY, NONE,
 			     ASYMMETRIC_SIGNATURE),
-	PERMITTED_ALGO(ALL_CIPHER, DEFAULT, ANY, NONE, SYMMETRIC_ENCRYPTION),
-	PERMITTED_ALGO(ALL_AEAD, DEFAULT, ANY, NONE, AEAD),
+	PERMITTED_ALGO(ALL_CIPHER, AES, ANY, NONE, SYMMETRIC_ENCRYPTION),
+	PERMITTED_ALGO(ALL_AEAD, AES, ANY, NONE, AEAD),
 	PERMITTED_ALGO(ECDH_HKDF_SHA256, ECDH, NONE, SHA256, KEY_DERIVATION),
 	PERMITTED_ALGO(ECDH_HKDF_SHA384, ECDH, NONE, SHA384, KEY_DERIVATION),
-	PERMITTED_ALGO(ATTEST_CMAC, DEFAULT, CMAC, NONE, KEY_ATTESTATION),
-	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA224, ECDSA, NONE, SHA224,
+	PERMITTED_ALGO(ATTEST_CMAC, AES, CMAC, NONE, KEY_ATTESTATION),
+	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA224, ECDSA, ANY, SHA224,
 			     KEY_ATTESTATION),
-	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA256, ECDSA, NONE, SHA256,
+	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA256, ECDSA, ANY, SHA256,
 			     KEY_ATTESTATION),
-	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA384, ECDSA, NONE, SHA384,
+	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA384, ECDSA, ANY, SHA384,
 			     KEY_ATTESTATION),
-	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA512, ECDSA, NONE, SHA512,
+	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA512, ECDSA, ANY, SHA512,
 			     KEY_ATTESTATION),
 	PERMITTED_ALGO(TLS1_2_MASTER_SECRET_SHA256, TLS_1_2, NONE, SHA256,
 		       KEY_DERIVATION),
 	PERMITTED_ALGO(TLS1_2_MASTER_SECRET_SHA384, TLS_1_2, NONE, SHA384,
 		       KEY_DERIVATION),
-	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA256, TLS_1_3, NONE, SHA256,
+	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA256, TLS_1_3, ANY, SHA256,
 			     KEY_DERIVATION),
-	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA384, TLS_1_3, NONE, SHA384,
+	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA384, TLS_1_3, ANY, SHA384,
 			     KEY_DERIVATION),
-	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA_ANY, TLS_1_3, NONE, ANY,
+	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA_ANY, TLS_1_3, ANY, ANY,
 			     KEY_DERIVATION),
 };
 
@@ -183,37 +184,46 @@ static void convert_algo_to_ele(smw_attr_algo_t smw, hsm_permitted_algo_t *ele)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	for (; i < ARRAY_SIZE(permitted_algos); i++) {
-		if (permitted_algos[i].smw_class == class &&
-		    (permitted_algos[i].smw_algo == algo ||
-		     permitted_algos[i].smw_algo == SMW_ATTR_ALGO_DEFAULT) &&
-		    (permitted_algos[i].smw_mode == SMW_ATTR_MODE_NONE ||
-		     permitted_algos[i].smw_mode == mode ||
-		     permitted_algos[i].smw_curve == SMW_ATTR_CURVE_NONE ||
-		     permitted_algos[i].smw_curve == curve) &&
-		    (permitted_algos[i].smw_hash == SMW_ATTR_HASH_NONE ||
-		     permitted_algos[i].smw_hash == SMW_ATTR_HASH_ANY ||
-		     permitted_algos[i].smw_hash == hash)) {
-			ele_algo = permitted_algos[i].ele_permitted_algo;
+		if (permitted_algos[i].smw_class != class)
+			continue;
 
-			if (class == SMW_ATTR_CLASS_MAC) {
-				length <<= ELE_LENGTH_OFFSET;
-				ele_algo =
-					SET_CLEAR_MASK(ele_algo, length,
-						       ELE_LENGTH_MASK_OFFSET);
+		if (permitted_algos[i].smw_algo != algo)
+			continue;
 
-				if (SMW_ATTR_IS_MIN_LENGTH(smw))
-					ele_algo |= ELE_MIN_LENGTH_BIT;
-			}
-
-			(void)SET_OVERFLOW(ele_algo, *ele);
-
-			break;
+		if (permitted_algos[i].is_curve) {
+			if (permitted_algos[i].smw_curve !=
+				    SMW_ATTR_CURVE_ANY &&
+			    permitted_algos[i].smw_curve != curve)
+				continue;
+		} else {
+			if (permitted_algos[i].smw_mode != SMW_ATTR_MODE_ANY &&
+			    permitted_algos[i].smw_mode != mode)
+				continue;
 		}
+
+		if (permitted_algos[i].smw_hash != SMW_ATTR_HASH_ANY &&
+		    permitted_algos[i].smw_hash != hash)
+			continue;
+
+		ele_algo = permitted_algos[i].ele_permitted_algo;
+
+		if (class == SMW_ATTR_CLASS_MAC) {
+			length <<= ELE_LENGTH_OFFSET;
+			ele_algo = SET_CLEAR_MASK(ele_algo, length,
+						  ELE_LENGTH_MASK_OFFSET);
+
+			if (SMW_ATTR_IS_MIN_LENGTH(smw))
+				ele_algo |= ELE_MIN_LENGTH_BIT;
+		}
+
+		(void)SET_OVERFLOW(ele_algo, *ele);
+
+		break;
 	}
 
 	SMW_DBG_PRINTF(DEBUG,
-		       "Permitted algo - SMW: 0x%" PRIx64 "-> ELE: 0x%" PRIx32
-		       "\n",
+		       "Permitted algo - SMW: %#" PRIx64 "->ELE : %#" PRIx32
+		       "\n ",
 		       smw, *ele);
 }
 

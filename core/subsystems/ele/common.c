@@ -44,23 +44,6 @@ ele_get_hash_algo(enum smw_config_hash_algo_id algo_id)
 	return hash_algo;
 }
 
-enum smw_config_hash_algo_id ele_get_hash_algo_id(uint32_t digest_length)
-{
-	enum smw_config_hash_algo_id algo_id = 0;
-	unsigned int i = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	for (; i < ARRAY_SIZE(hash_algos); i++) {
-		if (hash_algos[i].length == digest_length) {
-			algo_id = hash_algos[i].algo_id;
-			break;
-		}
-	}
-
-	return algo_id;
-}
-
 #define CIPHER_ALGO(_key_type_id, _cipher_mode_id)                             \
 	{                                                                      \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,          \

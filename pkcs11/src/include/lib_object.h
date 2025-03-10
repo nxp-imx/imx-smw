@@ -67,6 +67,8 @@ CK_RV libobj_profile_create(struct libobj_list *objects,
  * @attrs: List of the object attributes
  * @nb_attrs: Number of attributes
  * @id: Object identifier
+ * @opub_key: Public key object
+ * @opriv_key: Private key object
  *
  * After verifying the validity of the @hsession, the function
  * checks the attributes list @attrs function of the Object Class
@@ -94,7 +96,8 @@ CK_RV libobj_profile_create(struct libobj_list *objects,
  */
 CK_RV libobj_keypair_retrieve(CK_SESSION_HANDLE hsession,
 			      CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs,
-			      unsigned int id);
+			      unsigned int id, struct libobj_obj **opub_key,
+			      struct libobj_obj **opriv_key);
 
 /**
  * libobj_retrieve() - Retrieve an object
@@ -102,6 +105,7 @@ CK_RV libobj_keypair_retrieve(CK_SESSION_HANDLE hsession,
  * @attrs: List of the object attributes
  * @nb_attrs: Number of attributes
  * @id: Object identifier
+ * @obj: Object
  *
  * After verifying the validity of the @hsession, the function
  * checks the attributes list @attrs function of the Object Class
@@ -128,7 +132,8 @@ CK_RV libobj_keypair_retrieve(CK_SESSION_HANDLE hsession,
  * CKR_OK                        - Success
  */
 CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
-		      CK_ULONG nb_attrs, unsigned int id);
+		      CK_ULONG nb_attrs, unsigned int id,
+		      struct libobj_obj **obj);
 
 /**
  * libobj_destroy() - Destroy an object

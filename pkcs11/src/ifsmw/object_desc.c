@@ -672,6 +672,38 @@ end:
 	return ret;
 }
 
+CK_RV obj_db_retrieve_obj(CK_SESSION_HANDLE hsession,
+			  struct smw_object_descriptor *descriptor,
+			  CK_OBJECT_CLASS object_class,
+			  struct libobj_obj **opub_key,
+			  struct libobj_obj **opriv_key)
+{
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	CK_ATTRIBUTE_PTR attributes = NULL_PTR;
+	CK_ULONG attributes_count = 0;
+
+	if (!hsession || !descriptor)
+		return ret;
+
+	/* Build the attributes template to create the PKCS11 object */
+	ret = object_descriptor_to_attrs(descriptor, object_class,
+					 &attributes, &attributes_count);
+	if (ret != CKR_OK)
+		return ret;
+
+	if (descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+		ret = libobj_keypair_retrieve(hsession, attributes,
+					      attributes_count, descriptor->id,
+					      opub_key, opriv_key);
+	else
+		ret = libobj_retrieve(hsession, attributes, attributes_count,
+				      descriptor->id, opub_key);
+
+	attr_free(&attributes, &attributes_count);
+
+	return ret;
+}
+
 CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		      CK_ULONG nb_attrs, CK_ULONG *pnb_retrieved)
 {
@@ -680,12 +712,9 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	struct smw_find_object_db_args find_args = { 0 };
 	struct smw_object_descriptor descriptor = { 0 };
 	smw_attr_attributes_t persistence = 0;
-	CK_ATTRIBUTE_PTR attributes = NULL_PTR;
-	CK_ULONG attributes_count = 0;
 	CK_ULONG nb_retrieved = 0;
 	CK_OBJECT_CLASS object_class = CK_UNAVAILABLE_INFORMATION;
 	CK_SLOT_ID slotid = 0;
-	const struct libdev *devinfo = NULL;
 	struct libdevice *dev = NULL;
 	struct libobj_obj *libobj = NULL;
 	unsigned int i = 0;
@@ -720,12 +749,6 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	ret = libsess_get_slotid(hsession, &slotid);
 	if (ret != CKR_OK)
 		goto end;
-
-	devinfo = libdev_get_devinfo(slotid);
-	if (!devinfo) {
-		ret = CKR_SLOT_ID_INVALID;
-		goto end;
-	}
 
 	ret = libsess_get_device(hsession, &dev);
 	if (ret != CKR_OK)
@@ -789,27 +812,13 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		if (is_present)
 			continue;
 
-		/* Build the attributes template to create the PKCS11 object */
-		ret = object_descriptor_to_attrs(&descriptor, object_class,
-						 &attributes,
-						 &attributes_count);
-		if (ret != CKR_OK)
-			goto end;
-
-		if (descriptor.type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
-			ret = libobj_keypair_retrieve(hsession, attributes,
-						      attributes_count,
-						      descriptor.id);
-		else
-			ret = libobj_retrieve(hsession, attributes,
-					      attributes_count, descriptor.id);
-
+		ret = obj_db_retrieve_obj(hsession, &descriptor, object_class,
+					  NULL, NULL);
 		if (ret != CKR_OK)
 			goto end;
 
 		nb_retrieved++;
 
-		attr_free(&attributes, &attributes_count);
 		cleanup_smw_object_descriptor(&descriptor);
 	}
 
@@ -820,8 +829,6 @@ end:
 	status = smw_find_object_db_final(&find_args);
 	if (ret == CKR_OK)
 		ret = smw_status_to_ck_rv(status);
-
-	attr_free(&attributes, &attributes_count);
 
 	cleanup_smw_object_descriptor(&descriptor);
 

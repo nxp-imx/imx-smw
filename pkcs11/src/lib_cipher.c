@@ -604,7 +604,7 @@ static CK_RV tls_update_buffers(struct lib_cipher_params *params,
 		goto end;
 
 	obj = (struct libobj_obj *)ctx->hkey;
-	if (!get_key_is_tls(obj))
+	if (get_key_tls(obj) == NOT_TLS_KEY)
 		return CKR_OK;
 
 	if (!params->poutput)
@@ -986,7 +986,7 @@ end:
 		ctx->key_value = NULL_PTR;
 	}
 
-	if (obj && get_key_is_tls(obj))
+	if (obj && get_key_tls(obj))
 		destroy_context(ctx);
 
 	if (ret != CKR_OK) {

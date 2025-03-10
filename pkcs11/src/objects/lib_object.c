@@ -1020,7 +1020,8 @@ end:
 
 CK_RV libobj_keypair_retrieve(CK_SESSION_HANDLE hsession,
 			      CK_ATTRIBUTE_PTR attrs, CK_ULONG nb_attrs,
-			      unsigned int id)
+			      unsigned int id, struct libobj_obj **opub_key,
+			      struct libobj_obj **opriv_key)
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_obj *pub_key = NULL;
@@ -1089,13 +1090,17 @@ end:
 	if (ret != CKR_OK) {
 		obj_free(pub_key, NULL);
 		obj_free(priv_key, NULL);
+	} else if (opub_key && opriv_key) {
+		*opub_key = pub_key;
+		*opriv_key = priv_key;
 	}
 
 	return ret;
 }
 
 CK_RV libobj_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
-		      CK_ULONG nb_attrs, unsigned int id)
+		      CK_ULONG nb_attrs, unsigned int id,
+		      struct libobj_obj **obj)
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_obj *newobj = NULL;
@@ -1153,6 +1158,8 @@ end:
 
 	if (ret != CKR_OK)
 		obj_free(newobj, NULL);
+	else if (obj)
+		*obj = newobj;
 
 	return ret;
 }
@@ -1580,7 +1587,8 @@ CK_RV libobj_derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			 * Hence, ignore if CKR_OBJECT_HANDLE_INVALID is returned.
 			 */
 			if (is_hkdf_extract_set(mech) ||
-			    is_tls_hkdf(hsession, mech))
+			    is_tls_hkdf(hsession, mech) ||
+			    mech->mechanism == CKM_TLS12_KEY_AND_MAC_DERIVE)
 				ret = CKR_OK;
 		}
 	}

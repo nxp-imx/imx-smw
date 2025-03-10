@@ -10,6 +10,28 @@
 #include "pkcs11smw.h"
 
 /**
+ * obj_db_retrieve_obj() - Retrieve one object from database
+ * @hsession: Session handle
+ * @descriptor: SMW Object descriptor
+ * @object_class: PKCS11 Object class
+ * @opub_key: Public object reference pointer
+ * @opriv_key: Private object reference pointer
+ *
+ * return:
+ * CKR_OK                       - Success
+ * CKR_GENERAL_ERROR            - Handle invalid
+ * CKR_ARGUMENTS_BAD            - Wrong argument
+ * CKR_SESSION_HANDLE_INVALID   - Session Handle invalid
+ * CKR_HOST_MEMORY              - Allocation error
+ * CKR_OK                       - Object imported
+ */
+CK_RV obj_db_retrieve_obj(CK_SESSION_HANDLE hsession,
+			  struct smw_object_descriptor *descriptor,
+			  CK_OBJECT_CLASS object_class,
+			  struct libobj_obj **opub_key,
+			  struct libobj_obj **opriv_key);
+
+/**
  * obj_db_retrieve() - Retrieve objects from database
  * @hsession: Session handle
  * @attrs: List of object attributes

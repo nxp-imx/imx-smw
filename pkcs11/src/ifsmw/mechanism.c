@@ -14,6 +14,7 @@
 #include "smw/attr.h"
 #include "smw/names.h"
 #include "smw/tls.h"
+#include "smw/object.h"
 
 #include "attributes.h"
 #include "dev_config.h"
@@ -31,6 +32,7 @@
 
 #include "args_attr.h"
 #include "key_desc.h"
+#include "object_desc.h"
 #include "ifsmw_utils.h"
 
 #include "trace.h"
@@ -123,10 +125,10 @@ struct mentry {
 	smw_hash_algo_t smw_hash;
 	smw_mac_algo_t smw_mac;
 	smw_cipher_mode_t smw_cipher_mode;
+	smw_kdf_t smw_kdf;
+	smw_aead_mode_t smw_aead_mode;
 	smw_signature_algo_t smw_sign_algo;
 	smw_signature_type_t smw_sign_type;
-	smw_aead_mode_t smw_aead_mode;
-	smw_kdf_t smw_kdf;
 	smw_attr_algo_t smw_algo_id;
 	unsigned int nb_smw_key_types;
 	smw_key_type_t *smw_key_types;
@@ -167,12 +169,11 @@ struct mgroup {
 		.type = CKM_##_id, .slot_flag = 0,                             \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type_name,            \
 		.smw_hash = _hash_name, .smw_mac = _mac_name,                  \
-		.smw_cipher_mode = _cipher_mode_name,                          \
+		.smw_cipher_mode = _cipher_mode_name, .smw_kdf = _kdf_name,    \
 		.smw_aead_mode = _aead_mode_name,                              \
 		.smw_sign_algo = _sign_algo_name,                              \
-		.smw_sign_type = _sign_type_name, .smw_kdf = _kdf_name,        \
-		.smw_algo_id = _algo_id, .nb_smw_key_types = 0,                \
-		.smw_key_types = NULL,                                         \
+		.smw_sign_type = _sign_type_name, .smw_algo_id = _algo_id,     \
+		.nb_smw_key_types = 0, .smw_key_types = NULL,                  \
 	}
 
 #define M_DIGEST(_hash, _id)                                                   \
@@ -188,11 +189,11 @@ struct mgroup {
 		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
 		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
 		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_kdf = SMW_KDF_NAME_NONE,                                  \
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
-		.smw_kdf = SMW_KDF_NAME_NONE, .smw_algo_id = 0,                \
-		.nb_smw_key_types = _nb_key_types,                             \
+		.smw_algo_id = 0, .nb_smw_key_types = _nb_key_types,           \
 		.smw_key_types = _key_types,                                   \
 	}
 
@@ -203,41 +204,74 @@ struct mgroup {
 		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
 		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
 		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_kdf = SMW_KDF_NAME_NONE,                                  \
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
-		.smw_kdf = SMW_KDF_NAME_NONE, .smw_algo_id = 0,                \
-		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
+		.smw_algo_id = 0, .nb_smw_key_types = 1,                       \
+		.smw_key_types = NULL,                                         \
 	}
 
-#define M_KEYDERIVE(_key_type, _algo_id, _id)                                  \
+#define M_KEYDERIVE(_key_type, _kdf_id, _algo_id, _id)                         \
 	{                                                                      \
 		.type = CKM_##_id##_DERIVE, .slot_flag = 0,                    \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
 		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
 		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
 		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_kdf = SMW_KDF_NAME_##_kdf_id,                             \
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
-		.smw_kdf = SMW_KDF_NAME_##_algo_id,                            \
 		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_##_algo_id(),      \
 		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
 	}
 
-#define M_KEYDERIVE_ANY_HASH(_key_type, _algo_id, _id)                         \
+#define M_KEYDERIVE_ANY_HASH(_key_type, _kdf_id, _algo_id, _id)                \
 	{                                                                      \
 		.type = CKM_##_id##_DERIVE, .slot_flag = 0,                    \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
 		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
 		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
 		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_kdf = SMW_KDF_NAME_##_kdf_id,                             \
 		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
-		.smw_kdf = SMW_KDF_NAME_##_algo_id,                            \
 		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_##_algo_id(        \
 			SMW_ATTR_HASH_ANY),                                    \
+		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
+	}
+
+#define M_KEYDERIVE_TLS12(_key_type, _kdf_id, _hash, _id)                      \
+	{                                                                      \
+		.type = CKM_TLS12_##_id##_DERIVE, .slot_flag = 0,              \
+		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
+		.smw_hash = SMW_HASH_ALGO_NAME_##_hash,                        \
+		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
+		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_kdf = SMW_KDF_NAME_TLS12_##_kdf_id,                       \
+		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
+		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
+		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
+		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_TLS12(             \
+			SMW_ATTR_HASH_##_hash),                                \
+		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
+	}
+
+#define M_KEYDERIVE_TLS12_DH(_key_type, _kdf_id, _hash, _id)                   \
+	{                                                                      \
+		.type = CKM_TLS12_##_id##_DERIVE_DH, .slot_flag = 0,           \
+		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
+		.smw_hash = SMW_HASH_ALGO_NAME_##_hash,                        \
+		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
+		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_kdf = SMW_KDF_NAME_TLS12_##_kdf_id,                       \
+		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
+		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
+		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
+		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_TLS12(             \
+			SMW_ATTR_HASH_##_hash),                                \
 		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
 	}
 
@@ -360,9 +394,12 @@ static struct mentry mkeygen[] = {
 /*
  * Key Derive mechanism
  */
-static struct mentry mkeyderive[] = { M_KEYDERIVE_ANY_HASH(HKDF_IKM, HKDF,
-							   HKDF),
-				      M_KEYDERIVE(SECP_R1, ECDH, ECDH1) };
+static struct mentry mkeyderive[] = {
+	M_KEYDERIVE_ANY_HASH(HKDF_IKM, HKDF, HKDF, HKDF),
+	M_KEYDERIVE(SECP_R1, ECDH, ECDH, ECDH1),
+	M_KEYDERIVE_TLS12(SECP_R1, OP_KEY_EXCHANGE, NONE, KEY_AND_MAC),
+	M_KEYDERIVE_TLS12_DH(SECP_R1, OP_KEY_EXCHANGE, NONE, MASTER_KEY),
+};
 
 /*
  * Signature mechanism
@@ -467,6 +504,26 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(mcmac), mcmac),
 	M_GROUP(ARRAY_SIZE(mhmac), mhmac),
 	{ 0 }
+};
+
+#define ENC(_name, _id, _size)                                                 \
+	{                                                                      \
+		.name = SMW_TLS12_ENC_NAME_##_name, .type = CKM_##_id,         \
+		.size = _size                                                  \
+	}
+
+static struct {
+	smw_tls12_enc_t name;
+	CK_MECHANISM_TYPE type;
+	size_t size;
+} encryption_names[] = {
+	ENC(AES_128_CBC, AES_CBC, 128),
+	ENC(AES_128_CCM, AES_CCM, 128),
+	ENC(AES_128_GCM, AES_GCM, 128),
+	ENC(AES_256_CBC, AES_CBC, 256),
+	ENC(AES_256_CCM, AES_CCM, 256),
+	ENC(AES_256_GCM, AES_GCM, 256),
+	ENC(CHACHA20_POLY1305, CHACHA20_POLY1305, 256),
 };
 
 static const char *const keying_material[] = { "key", "traffic upd", "iv",
@@ -784,6 +841,79 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 	}
 
 	return ret;
+}
+
+static CK_RV get_transient_secret_key(CK_SESSION_HANDLE hsession,
+				      unsigned int id,
+				      CK_OBJECT_HANDLE_PTR hobj)
+{
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	enum smw_status_code status = SMW_STATUS_OK;
+	CK_SLOT_ID slotid = 0;
+	const struct libdev *devinfo = NULL;
+	struct smw_object_descriptor descriptor = { 0 };
+	struct smw_get_key_attributes_args attr_args = { 0 };
+	struct libobj_obj *obj = NULL;
+
+	if (!hsession || !id || !hobj)
+		return ret;
+
+	ret = libsess_get_slotid(hsession, &slotid);
+	if (ret != CKR_OK)
+		goto end;
+
+	devinfo = libdev_get_devinfo(slotid);
+	if (!devinfo) {
+		ret = CKR_SLOT_ID_INVALID;
+		goto end;
+	}
+
+	descriptor.id = id;
+	descriptor.key.id = id;
+	descriptor.type = SMW_OBJECT_TYPE_NAME_SECRET_KEY;
+	descriptor.key.attributes.attributes =
+		SMW_ATTR_SET_TRANSIENT(descriptor.key.attributes.attributes);
+
+	attr_args.subsystem_name = devinfo->name;
+	attr_args.key_descriptor = &descriptor.key;
+
+	status = smw_get_key_attributes(&attr_args);
+	ret = smw_status_to_ck_rv(status);
+	if (ret != CKR_OK)
+		goto end;
+
+	/*
+	 * Retrieve as a persistent object
+	 * to prevent key deletion when closing the session.
+	 */
+	descriptor.key.attributes.attributes =
+		SMW_ATTR_SET_PERSISTENT(descriptor.key.attributes.attributes);
+	ret = obj_db_retrieve_obj(hsession, &descriptor, CKO_SECRET_KEY, &obj,
+				  NULL);
+	if (ret != CKR_OK)
+		goto end;
+
+	set_key_tls(obj, TLS12_KEY);
+
+	*hobj = (CK_OBJECT_HANDLE)obj;
+
+end:
+	return ret;
+}
+
+static smw_tls12_enc_t get_tls12_encryption_name(CK_MECHANISM_TYPE type,
+						 size_t size)
+{
+	unsigned int i = 0;
+
+	for (; i < ARRAY_SIZE(encryption_names); i++) {
+		if (encryption_names[i].type == type &&
+		    (encryption_names[i].size == size ||
+		     encryption_names[i].size == 0))
+			return encryption_names[i].name;
+	}
+
+	return SMW_TLS12_ENC_NAME_NB;
 }
 
 static void check_mdigest(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
@@ -1408,9 +1538,10 @@ static CK_RV set_ecdh_args(struct libobj_key_derive_params *derive_params,
 		return CKR_FUNCTION_NOT_SUPPORTED;
 
 	key_attributes = &derive_args->key_descriptor_derived->attributes;
-	/* Check if ECDH key derivation is used for TLS 1.3 Key exchange */
-	if (SMW_ATTR_GET_ALGO(key_attributes->permitted_algo) ==
-	    SMW_ATTR_ALGO_HKDF) {
+	/* Check if ECDH key derivation is used for TLS Key exchange */
+	switch (SMW_ATTR_GET_ALGO(key_attributes->permitted_algo)) {
+	case SMW_ATTR_ALGO_HKDF:
+	case SMW_ATTR_ALGO_TLS_1_2:
 		ctx = derive_params->ctx;
 		if (!ctx)
 			return status;
@@ -1438,13 +1569,201 @@ static CK_RV set_ecdh_args(struct libobj_key_derive_params *derive_params,
 	}
 
 	ecdh_args = derive_args->kdf_arguments;
-
 	ecdh_args->peer_public_buffer = derive_params->ecdh_params.pPublicData;
 	if (SET_OVERFLOW(derive_params->ecdh_params.ulPublicDataLen,
 			 ecdh_args->peer_public_buffer_length))
 		return CKR_DATA_LEN_RANGE;
 
 	return CKR_OK;
+}
+
+static CK_RV set_tls12_args(CK_MECHANISM_TYPE type,
+			    struct libobj_key_derive_params *params,
+			    struct smw_derive_key_args *derive_args)
+{
+	CK_RV status = CKR_ARGUMENTS_BAD;
+	enum smw_status_code smw_status = SMW_STATUS_OK;
+	CK_SSL3_RANDOM_DATA *random_info = NULL_PTR;
+	CK_ULONG iv_size = 0;
+
+	struct smw_context_args ctx_args = { 0 };
+	struct smw_kdf_tls12_op_args *tls12_args = NULL;
+	struct smw_kdf_tls12_master_secret_args *ms = NULL;
+	struct smw_kdf_tls12_key_expansion_args *ke = NULL;
+	struct smw_kdf_tls12_random_data *rd = NULL;
+	struct smw_key_descriptor *base_key = NULL;
+	struct smw_derived_key_descriptor *derived_key = NULL;
+	struct lib_derive_ctx *ctx = NULL;
+	struct libobj_obj *obj = NULL;
+	struct libmech_list *mech_list = NULL;
+
+	if (!params || !derive_args)
+		return status;
+
+	obj = params->derived_key;
+	mech_list = get_key_mech_list(obj);
+	base_key = derive_args->key_descriptor_base;
+
+	ctx = params->ctx;
+	if (!ctx)
+		return status;
+
+	tls12_args = derive_args->kdf_arguments;
+	if (!tls12_args)
+		return status;
+
+	derived_key = derive_args->key_descriptor_derived;
+
+	random_info = &params->tls12_params.RandomInfo;
+
+	if (!random_info->ulClientRandomLen || !random_info->ulServerRandomLen)
+		return status;
+
+	if (params->tls12_params.bIsExport)
+		return CKR_MECHANISM_PARAM_INVALID;
+
+	rd = calloc(1, sizeof(*rd));
+	if (!rd)
+		return CKR_HOST_MEMORY;
+
+	rd->client_random = random_info->pClientRandom;
+	rd->client_random_length = random_info->ulClientRandomLen;
+	rd->server_random = random_info->pServerRandom;
+	rd->server_random_length = random_info->ulServerRandomLen;
+
+	switch (type) {
+	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+		tls12_args->op_name = SMW_TLS12_OP_NAME_MASTER_SECRET;
+		ms = &tls12_args->master_secret;
+
+		ms->ext_master_key = false;
+		ms->key_exchange_name = SMW_TLS12_KEA_NAME_ECDHE_ECDSA;
+		ms->peer_public_buffer = ctx->peer_buffer;
+		if (SET_OVERFLOW(ctx->peer_buffer_len,
+				 ms->peer_public_buffer_length)) {
+			status = CKR_ARGUMENTS_BAD;
+			goto end;
+		}
+
+		ms->random_data = rd;
+
+		ctx_args.subsystem_name = derive_args->subsystem_name;
+		smw_status = smw_allocate_context(&ctx_args);
+		if (smw_status != SMW_STATUS_OK) {
+			status = smw_status_to_ck_rv(smw_status);
+			goto end;
+		}
+
+		tls12_args->context = ctx_args.context;
+		ctx->context = ctx_args.context;
+
+		status = key_desc_setup(base_key,
+					(struct libobj_obj *)ctx->hkey);
+		if (status != CKR_OK)
+			goto end;
+
+		status = base_key_desc_setup((struct libobj_obj *)ctx->hkey,
+					     base_key);
+		if (status != CKR_OK)
+			goto end;
+
+		break;
+
+	case CKM_TLS12_KEY_AND_MAC_DERIVE:
+		tls12_args->op_name = SMW_TLS12_OP_NAME_KEY_EXPANSION;
+		tls12_args->context = ctx->context;
+
+		ke = &tls12_args->key_expansion;
+
+		if (!params->tls12_params.pReturnedKeyMaterial)
+			goto end;
+
+		ke->random_data = rd;
+		ke->encryption_name =
+			get_tls12_encryption_name(mech_list->mech[0],
+						  derived_key->security_size);
+
+		ke->client_w_iv =
+			params->tls12_params.pReturnedKeyMaterial->pIVClient;
+		iv_size =
+			BITS_TO_BYTES_SIZE(params->tls12_params.ulIVSizeInBits);
+		if (SET_OVERFLOW(iv_size, ke->client_w_iv_length)) {
+			status = CKR_ARGUMENTS_BAD;
+			goto end;
+		}
+
+		ke->server_w_iv =
+			params->tls12_params.pReturnedKeyMaterial->pIVServer;
+		if (SET_OVERFLOW(iv_size, ke->server_w_iv_length)) {
+			status = CKR_ARGUMENTS_BAD;
+			goto end;
+		}
+
+		break;
+
+	default:
+		goto end;
+	}
+
+	tls12_args->prf_name =
+		get_hash_algo(params->tls12_params.prfHashMechanism);
+
+	status = CKR_OK;
+
+end:
+	if (status != CKR_OK) {
+		if (rd)
+			free(rd);
+
+		smw_cancel_operation(&ctx_args);
+	}
+
+	return status;
+}
+
+static CK_RV get_tls12_objects(struct libobj_key_derive_params *derive_params,
+			       struct smw_derive_key_args *derive_args)
+{
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	struct smw_kdf_tls12_op_args *tls12_args = NULL;
+	struct smw_kdf_tls12_key_expansion_args *ke = NULL;
+	CK_SESSION_HANDLE hsession = CK_INVALID_HANDLE;
+	CK_SSL3_KEY_MAT_OUT_PTR pReturnedKeyMaterial = NULL_PTR;
+
+	if (!derive_params || !derive_args)
+		return ret;
+
+	tls12_args = derive_args->kdf_arguments;
+	ke = &tls12_args->key_expansion;
+	hsession = derive_params->hsession;
+	pReturnedKeyMaterial = derive_params->tls12_params.pReturnedKeyMaterial;
+
+	ret = get_transient_secret_key(hsession, ke->client_w_enc_key_id,
+				       &pReturnedKeyMaterial->hClientKey);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = get_transient_secret_key(hsession, ke->server_w_enc_key_id,
+				       &pReturnedKeyMaterial->hServerKey);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (!ke->client_w_mac_key_id && !ke->server_w_mac_key_id) {
+		pReturnedKeyMaterial->hServerMacSecret = CK_INVALID_HANDLE;
+		pReturnedKeyMaterial->hClientMacSecret = CK_INVALID_HANDLE;
+		goto end;
+	}
+
+	ret = get_transient_secret_key(hsession, ke->client_w_mac_key_id,
+				       &pReturnedKeyMaterial->hClientMacSecret);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = get_transient_secret_key(hsession, ke->server_w_mac_key_id,
+				       &pReturnedKeyMaterial->hServerMacSecret);
+
+end:
+	return ret;
 }
 
 static CK_RV set_tls13_args(struct libobj_key_derive_params *derive_params,
@@ -1559,6 +1878,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	struct smw_kdf_hkdf_args hkdf_args = { 0 };
 	struct smw_kdf_ecdh_args ecdh_args = { 0 };
 	struct smw_kdf_tls13_args tls13_args = { 0 };
+	struct smw_kdf_tls12_op_args tls12_args = { 0 };
 	struct libobj_key_derive_params *derive_params = args;
 	struct libobj_obj *obj = derive_params->derived_key;
 
@@ -1593,7 +1913,8 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	args_attrs_key_usage(&der_key_attrs->usage_flags, obj);
 	args_attr_obj_storage(&der_key_attrs->attributes, obj);
 
-	if (entry->type == CKM_HKDF_DERIVE) {
+	switch (entry->type) {
+	case CKM_HKDF_DERIVE:
 		if (derive_params->ctx) {
 			if (!(derive_params->hkdf_params.extract ^
 			      derive_params->hkdf_params.expand))
@@ -1609,7 +1930,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 			if (ret != CKR_OK)
 				return ret;
 
-			set_key_is_tls(obj, true);
+			set_key_tls(obj, TLS13_KEY);
 
 			if (derive_params->ctx->skipped)
 				return CKR_OK;
@@ -1619,18 +1940,41 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 			if (ret != CKR_OK)
 				return ret;
 		}
-	} else if (entry->type == CKM_ECDH1_DERIVE) {
+
+		break;
+
+	case CKM_ECDH1_DERIVE:
 		derive_args.kdf_arguments = &ecdh_args;
 		ret = set_ecdh_args(derive_params, &derive_args);
 		if (ret != CKR_OK)
 			return ret;
 
-		if (SMW_ATTR_GET_ALGO(der_key_attrs->permitted_algo) ==
-		    SMW_ATTR_ALGO_HKDF) {
+		switch (SMW_ATTR_GET_ALGO(der_key_attrs->permitted_algo)) {
+		case SMW_ATTR_ALGO_HKDF:
+		case SMW_ATTR_ALGO_TLS_1_2:
 			DBG_TRACE("ECDH Derive Key for TLS detected");
 			derive_params->ctx->skipped = true;
 			return CKR_OK;
+
+		default:
+			break;
 		}
+
+		break;
+
+	case CKM_TLS12_KEY_AND_MAC_DERIVE:
+	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+		derive_args.kdf_arguments = &tls12_args;
+		ret = set_tls12_args(entry->type, derive_params, &derive_args);
+		if (ret != CKR_OK)
+			return ret;
+
+		set_key_tls(obj, TLS12_KEY);
+
+		break;
+
+	default:
+		return CKR_ARGUMENTS_BAD;
 	}
 
 	status = smw_derive_key(&derive_args);
@@ -1642,6 +1986,9 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	if (ret == CKR_OK) {
 		DBG_TRACE("Derive Key ID = #%d", der_key_desc.id);
 		set_key_token_id(obj, der_key_desc.id);
+
+		if (entry->type == CKM_TLS12_KEY_AND_MAC_DERIVE)
+			ret = get_tls12_objects(derive_params, &derive_args);
 	}
 
 	if (entry->type == CKM_HKDF_DERIVE && derive_params->ctx) {

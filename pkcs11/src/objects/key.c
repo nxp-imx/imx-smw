@@ -2024,12 +2024,12 @@ check_ecdh_derive_mech_params(CK_MECHANISM_PTR mech,
 	CK_ECDH1_DERIVE_PARAMS_PTR ecdh_params = NULL_PTR;
 
 	if (!mech->pParameter) {
-		DBG_TRACE("CK_ECDH1_DERIVE mechanism pParameter not set");
+		DBG_TRACE("CKM_ECDH1_DERIVE mechanism pParameter not set");
 		goto end;
 	}
 
 	if (mech->ulParameterLen != sizeof(CK_ECDH1_DERIVE_PARAMS)) {
-		DBG_TRACE("CK_ECDH1_DERIVE mechanism ulParameterLen error");
+		DBG_TRACE("CKM_ECDH1_DERIVE mechanism ulParameterLen error");
 		goto end;
 	}
 
@@ -2044,6 +2044,68 @@ check_ecdh_derive_mech_params(CK_MECHANISM_PTR mech,
 		ecdh_params->ulSharedDataLen;
 
 	ret = CKR_OK;
+
+end:
+	return ret;
+}
+
+static CK_RV
+check_tls12_derive_mech_params(CK_MECHANISM_PTR mech,
+			       struct libobj_key_derive_params *derive_params)
+{
+	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
+	CK_TLS12_KEY_MAT_PARAMS_PTR tls12_params = NULL_PTR;
+	CK_TLS12_MASTER_KEY_DERIVE_PARAMS_PTR tls12_master_params = NULL_PTR;
+
+	if (!mech->pParameter) {
+		DBG_TRACE("TLS 1.2 mechanism pParameter not set");
+		goto end;
+	}
+
+	switch (mech->mechanism) {
+	case CKM_TLS12_KEY_AND_MAC_DERIVE:
+		if (mech->ulParameterLen != sizeof(CK_TLS12_KEY_MAT_PARAMS)) {
+			DBG_TRACE("TLS 1.2 mechanism ulParameterLen error");
+			goto end;
+		}
+		tls12_params = (CK_TLS12_KEY_MAT_PARAMS_PTR)mech->pParameter;
+
+		derive_params->tls12_params.bIsExport = tls12_params->bIsExport;
+		derive_params->tls12_params.pReturnedKeyMaterial =
+			tls12_params->pReturnedKeyMaterial;
+		derive_params->tls12_params.prfHashMechanism =
+			tls12_params->prfHashMechanism;
+		derive_params->tls12_params.RandomInfo =
+			tls12_params->RandomInfo;
+		derive_params->tls12_params.ulIVSizeInBits =
+			tls12_params->ulIVSizeInBits;
+		derive_params->tls12_params.ulKeySizeInBits =
+			tls12_params->ulKeySizeInBits;
+		derive_params->tls12_params.ulMacSizeInBits =
+			tls12_params->ulMacSizeInBits;
+		ret = CKR_OK;
+		break;
+
+	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+		if (mech->ulParameterLen !=
+		    sizeof(CK_TLS12_MASTER_KEY_DERIVE_PARAMS)) {
+			DBG_TRACE("TLS 1.2 mechanism ulParameterLen error");
+			goto end;
+		}
+		tls12_master_params =
+			(CK_TLS12_MASTER_KEY_DERIVE_PARAMS_PTR)mech->pParameter;
+
+		derive_params->tls12_params.prfHashMechanism =
+			tls12_master_params->prfHashMechanism;
+		derive_params->tls12_params.RandomInfo =
+			tls12_master_params->RandomInfo;
+		derive_params->tls12_params.pVersion =
+			tls12_master_params->pVersion;
+		ret = CKR_OK;
+
+	default:
+		break;
+	}
 
 end:
 	return ret;
@@ -2073,6 +2135,16 @@ static CK_RV check_input_params(CK_KEY_TYPE base_key_type,
 		}
 
 		ret = check_ecdh_derive_mech_params(mech, derive_params);
+		break;
+
+	case CKM_TLS12_KEY_AND_MAC_DERIVE:
+	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+		if (base_key_type != CKK_GENERIC_SECRET) {
+			ret = CKR_KEY_FUNCTION_NOT_PERMITTED;
+			break;
+		}
+
+		ret = check_tls12_derive_mech_params(mech, derive_params);
 		break;
 
 	default:
@@ -2178,6 +2250,8 @@ set_derived_key_attr(CK_SESSION_HANDLE hsession,
 	switch (mech) {
 	case CKM_HKDF_DERIVE:
 	case CKM_ECDH1_DERIVE:
+	case CKM_TLS12_KEY_AND_MAC_DERIVE:
+	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
 		ret = set_kdf_derived_key_attr(hsession, derive_params, attrs);
 		break;
 
@@ -2210,7 +2284,6 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	CK_RV ret = CKR_GENERAL_ERROR;
 	CK_KEY_TYPE key_type = 0;
 	CK_KEY_TYPE base_key_type = 0;
-
 	CK_MECHANISM find_mech = { 0 };
 	struct lib_derive_ctx *ctx = NULL;
 	struct libdevice *device = NULL;
@@ -2225,7 +2298,10 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	if (ret != CKR_OK)
 		goto end;
 
-	if (mech->mechanism == CKM_HKDF_DERIVE) {
+	switch (mech->mechanism) {
+	case CKM_HKDF_DERIVE:
+	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+	case CKM_TLS12_KEY_AND_MAC_DERIVE:
 		/* Get the previous ECDH parameters */
 		ret = libdev_find_opctx(device, CKF_DERIVE, &find_mech,
 					(void **)&ctx);
@@ -2237,6 +2313,11 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 			ctx->shared_buffer = NULL;
 			ctx->shared_buffer_len = 0;
 		}
+
+		break;
+
+	default:
+		break;
 	}
 
 	base_key_type = get_key_type((struct libobj_obj *)base_key);
@@ -2276,6 +2357,7 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		derive_params.ctx = ctx;
 	}
 
+	derive_params.hsession = hsession;
 	derive_params.derived_key = derived_key;
 	derive_params.base_key = base_key;
 

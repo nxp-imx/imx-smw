@@ -135,6 +135,8 @@ struct libobj_storage {
 		&_obj_type->unique_id;                                         \
 	})
 
+enum tls_key { NOT_TLS_KEY = 0, TLS12_KEY, TLS13_KEY };
+
 struct libobj_key {
 	CK_KEY_TYPE type;
 	struct libbytes id;    // User defined key ID. Same for Public/Private
@@ -143,7 +145,7 @@ struct libobj_key {
 	CK_DATE end_date;
 	bool derive;
 	bool local;
-	bool is_tls;
+	enum tls_key tls_key;
 	CK_MECHANISM_TYPE gen_mech;
 	struct libmech_list mech_list;
 	void *key;
@@ -262,18 +264,18 @@ struct libobj_key {
 		_data->token_id;                                               \
 	})
 
-#define set_key_is_tls(obj, _is_tls)                                           \
+#define set_key_tls(obj, _tls_key)                                             \
 	({                                                                     \
 		struct libobj_key *_key = get_subobj_from(obj, storage);       \
 		assert(_key);                                                  \
-		_key->is_tls = _is_tls;                                        \
+		_key->tls_key = _tls_key;                                      \
 	})
 
-#define get_key_is_tls(obj)                                                    \
+#define get_key_tls(obj)                                                       \
 	({                                                                     \
 		struct libobj_key *_key = get_subobj_from(obj, storage);       \
 		assert(_key);                                                  \
-		_key->is_tls;                                                  \
+		_key->tls_key;                                                 \
 	})
 
 /*
@@ -338,6 +340,7 @@ struct lib_derive_ctx {
 };
 
 struct libobj_key_derive_params {
+	CK_SESSION_HANDLE hsession;
 	CK_OBJECT_HANDLE base_key;
 	struct libobj_obj *derived_key;
 	struct lib_derive_ctx *ctx;
@@ -359,6 +362,16 @@ struct libobj_key_derive_params {
 			CK_ULONG ulPublicDataLen;
 			CK_BYTE_PTR pPublicData;
 		} ecdh_params;
+		struct {
+			CK_ULONG ulMacSizeInBits;
+			CK_ULONG ulKeySizeInBits;
+			CK_ULONG ulIVSizeInBits;
+			CK_BBOOL bIsExport;
+			CK_SSL3_RANDOM_DATA RandomInfo;
+			CK_VERSION_PTR pVersion;
+			CK_SSL3_KEY_MAT_OUT_PTR pReturnedKeyMaterial;
+			CK_MECHANISM_TYPE prfHashMechanism;
+		} tls12_params;
 	};
 };
 

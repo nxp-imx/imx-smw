@@ -57,6 +57,19 @@ static CK_BBOOL is_rsa_pss_mechanism(CK_MECHANISM_TYPE type)
 }
 
 /**
+ * is_tls_mac_mechanism() - Check if mechanism type is TLS MAC
+ * @type: Mechanism type
+ *
+ * Return:
+ * True if TLS MAC mechanism
+ * False otherwise
+ */
+static CK_BBOOL is_tls_mac_mechanism(CK_MECHANISM_TYPE type)
+{
+	return (type == CKM_TLS_MAC) ? CK_TRUE : CK_FALSE;
+}
+
+/**
  * is_rsa_pkcs_mechanism() - Check if mechanism type is RSA PKCS
  * @type: Mechanism type
  *
@@ -224,6 +237,37 @@ static CK_RV check_rsa_pss(CK_MECHANISM_TYPE mechanism, CK_VOID_PTR pparameter,
 
 	if (mech_params->sLen)
 		ctx->sign.rsa.salt_len = mech_params->sLen;
+
+	return CKR_OK;
+}
+
+/**
+ * check_tls_mac() - Check TLS MAC mechanism parameters
+ * @pparameter: Pointer to mechanism parameter
+ * @ulparameterlen: Mechanism parameter length
+ * @ctx: Pointer to signature context
+ *
+ * Return:
+ * CKR_MECHANISM_PARAM_INVALID        - Mechanism parameters invalid
+ * CKR_OK                             - Success
+ */
+static CK_RV check_tls_mac(CK_VOID_PTR pparameter, CK_ULONG ulparameterlen,
+			   struct lib_signature_ctx *ctx)
+{
+	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
+	CK_TLS_MAC_PARAMS_PTR mech_params = NULL_PTR;
+
+	DBG_TRACE("Check TLS signature mechanism parameter");
+
+	if (ulparameterlen != sizeof(CK_TLS_MAC_PARAMS))
+		return ret;
+
+	mech_params = (CK_TLS_MAC_PARAMS_PTR)pparameter;
+
+	/* Set context with mechanism parameters */
+	ctx->hash_mech = mech_params->prfHashMechanism;
+	ctx->sign.tls12.mac_len = mech_params->ulMacLength;
+	ctx->sign.tls12.server_client = mech_params->ulServerOrClient;
 
 	return CKR_OK;
 }
@@ -471,7 +515,10 @@ static CK_RV check_signature_params(CK_MECHANISM_TYPE mechanism,
 	if (!pparameter != !ulparameterlen)
 		return ret;
 
-	if (is_rsa_pss_mechanism(mechanism)) {
+	if (is_tls_mac_mechanism(mechanism)) {
+		ctx->type = SIGN_TYPE_TLS12;
+		ret = check_tls_mac(pparameter, ulparameterlen, ctx);
+	} else if (is_rsa_pss_mechanism(mechanism)) {
 		ctx->type = SIGN_TYPE_RSA;
 		ret = check_rsa_pss(mechanism, pparameter, ulparameterlen, ctx);
 	} else if (is_rsa_pkcs_mechanism(mechanism)) {

@@ -1294,6 +1294,18 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_SET_HASH(algo, hash) SMW_ATTR_SET_CLEAR_VALUE(algo, HASH, hash)
 
 /**
+ * SMW_ATTR_SET_MODE() - Set the algorithm mode.
+ * @algo: A valid algorithm. See smw_attr_algo_t.
+ * @mode: A valid algorithm mode. See smw_attr_algo_t.
+ *
+ * This macro sets the algorithm mode of @algo.
+ *
+ * Return:
+ * A valid algorithm.
+ */
+#define SMW_ATTR_SET_MODE(algo, mode) SMW_ATTR_SET_CLEAR_VALUE(algo, MODE, mode)
+
+/**
  * SMW_ATTR_USAGE_SET_CACHE() - Set cache operation.
  * @usage: A usage. See smw_attr_usage_t.
  *

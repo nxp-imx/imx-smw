@@ -15,6 +15,7 @@ enum signature_type {
 	SIGN_TYPE_EDDSA,
 	SIGN_TYPE_RSA,
 	SIGN_TYPE_MAC,
+	SIGN_TYPE_TLS12,
 };
 
 /**
@@ -28,6 +29,8 @@ enum signature_type {
  * @sign.eddsa.prehashed: True if input is prehashed
  * @sign.eddsa.context_data: Signature context
  * @sign.eddsa.context_len: Signature context length
+ * @sign.tls12.mac_len: MAC length in bytes
+ * @sign.tls12.server_client: Server or client signature
  * @context: Pointer to multi-part operation context
  */
 struct lib_signature_ctx {
@@ -47,6 +50,10 @@ struct lib_signature_ctx {
 			CK_BYTE_PTR context_data;
 			CK_ULONG context_len;
 		} eddsa;
+		struct {
+			CK_ULONG mac_len;
+			CK_ULONG server_client;
+		} tls12;
 	} sign;
 	void *context;
 };

@@ -77,6 +77,12 @@ static void check_msign_rsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 static CK_RV info_msign_rsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mentry *entry, CK_MECHANISM_INFO_PTR info);
 static CK_RV op_msign_rsa(CK_SLOT_ID slotid, struct mentry *entry, void *args);
+static void check_msign_tls12(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
+			      struct mgroup *mgroup);
+static CK_RV info_msign_tls12(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info);
+static CK_RV op_msign_tls12(CK_SLOT_ID slotid, struct mentry *entry,
+			    void *args);
 static void check_mcipher(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 			  struct mgroup *mgroup);
 static CK_RV info_mcipher(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
@@ -293,6 +299,15 @@ struct mgroup {
 		       SMW_ATTR_CURVE_ANY, SMW_ATTR_HASH_##_hash),             \
 	       _id)
 
+#define M_SIGN_TLS12(_hash, _id)                                               \
+	M_ALGO(NONE, SMW_HASH_ALGO_NAME_##_hash, SMW_MAC_ALGO_NAME_NONE,       \
+	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
+	       SMW_SIGNATURE_ALGO_NAME_TLS_1_2, SMW_SIGNATURE_TYPE_NAME_NONE,  \
+	       SMW_KDF_NAME_NONE,                                              \
+	       SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_TLS_1_2_NO_LABEL(            \
+		       SMW_ATTR_HASH_##_hash),                                 \
+	       _id)
+
 #define M_SIGN_EDDSA_ANY_HASH(_id)                                             \
 	M_ALGO(NONE, SMW_HASH_ALGO_NAME_NONE, SMW_MAC_ALGO_NAME_NONE,          \
 	       SMW_CIPHER_MODE_NAME_NONE, SMW_AEAD_MODE_NAME_NONE,             \
@@ -429,6 +444,11 @@ static struct mentry msign_rsa[] = {
 	M_SIGN_RSA(PSS, SHA512, SHA512_RSA_PKCS_PSS),
 };
 
+static struct mentry msign_tls12[] = {
+	M_SIGN_TLS12(SHA256, TLS_MAC),
+	M_SIGN_TLS12(SHA384, TLS_MAC),
+};
+
 /*
  * Cipher mechanisms
  */
@@ -499,6 +519,7 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(msign_ecdsa), msign_ecdsa),
 	M_GROUP(ARRAY_SIZE(msign_eddsa), msign_eddsa),
 	M_GROUP(ARRAY_SIZE(msign_rsa), msign_rsa),
+	M_GROUP(ARRAY_SIZE(msign_tls12), msign_tls12),
 	M_GROUP(ARRAY_SIZE(mcipher), mcipher),
 	M_GROUP(ARRAY_SIZE(maead), maead),
 	M_GROUP(ARRAY_SIZE(mcmac), mcmac),
@@ -2062,6 +2083,14 @@ static void check_msign_rsa(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
 	check_msign_common(slotid, subsystem, mgroup);
 }
 
+static void check_msign_tls12(CK_SLOT_ID slotid, smw_subsystem_t subsystem,
+			      struct mgroup *mgroup)
+{
+	DBG_TRACE("Check TLS Signature mechanism");
+
+	check_msign_common(slotid, subsystem, mgroup);
+}
+
 static CK_RV info_msign_common(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			       struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
@@ -2120,6 +2149,12 @@ static CK_RV info_msign_eddsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 
 static CK_RV info_msign_rsa(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mentry *entry, CK_MECHANISM_INFO_PTR info)
+{
+	return info_msign_common(slotid, type, entry, info);
+}
+
+static CK_RV info_msign_tls12(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
+			      struct mentry *entry, CK_MECHANISM_INFO_PTR info)
 {
 	return info_msign_common(slotid, type, entry, info);
 }
@@ -2411,6 +2446,30 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 
 		break;
 
+	case SIGN_TYPE_TLS12:
+		if (!ctx->sign.tls12.mac_len)
+			break;
+
+		if (ctx->sign.tls12.server_client == TLS12_SERVER)
+			sign_algo = SMW_ATTR_SET_MODE(sign_algo,
+						      SMW_ATTR_MODE_SERVER);
+		else if (ctx->sign.tls12.server_client == TLS12_CLIENT)
+			sign_algo = SMW_ATTR_SET_MODE(sign_algo,
+						      SMW_ATTR_MODE_CLIENT);
+		else
+			return CKR_ARGUMENTS_BAD;
+
+		if (params->ulsignaturelen) {
+			if (params->ulsignaturelen < ctx->sign.tls12.mac_len) {
+				params->ulsignaturelen =
+					ctx->sign.tls12.mac_len;
+				return CKR_BUFFER_TOO_SMALL;
+			}
+
+			params->ulsignaturelen = ctx->sign.tls12.mac_len;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -2445,6 +2504,13 @@ static CK_RV op_msign_eddsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 static CK_RV op_msign_rsa(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
 	DBG_TRACE("RSA Signature mechanism");
+
+	return op_msign_common(slotid, entry, args);
+}
+
+static CK_RV op_msign_tls12(CK_SLOT_ID slotid, struct mentry *entry, void *args)
+{
+	DBG_TRACE("TLS Signature mechanism");
 
 	return op_msign_common(slotid, entry, args);
 }

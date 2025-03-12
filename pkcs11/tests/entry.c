@@ -173,7 +173,8 @@ struct test_def test_list[] = { TEST_DEF(get_info_ifs),
 				TEST_DEF(object_profile),
 				TEST_DEF(object_cert),
 				TEST_DEF(performance),
-				TEST_DEF(derive_key_tls1_3) };
+				TEST_DEF(derive_key_tls1_3),
+				TEST_DEF(derive_key_tls1_2) };
 
 void tests_pkcs11_list(void)
 {

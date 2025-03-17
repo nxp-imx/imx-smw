@@ -998,6 +998,21 @@ typedef uint32_t smw_attr_storage_id_t;
 	 SMW_ATTR_VALUE(HASH, hash) | SMW_ATTR_VALUE(SALT, salt))
 
 /**
+ * SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_TLS_1_2_NO_LABEL() - Build an asymmetric
+ * signature TLS1.2 algorithm without label.
+ * @hash: A valid hash algorithm. See smw_attr_algo_t.
+ *
+ * This macro builds an asymmetric signature TLS1.2 algorithm
+ * given the @hash algorithm.
+ *
+ * Return:
+ * A valid asymmetric signature TLS1.2 algorithm.
+ */
+#define SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_TLS_1_2_NO_LABEL(hash)              \
+	(SMW_ATTR_NAME(CLASS, ASYMMETRIC_SIGNATURE) |                          \
+	 SMW_ATTR_NAME(ALGO, TLS_1_2) | SMW_ATTR_VALUE(HASH, hash))
+
+/**
  * SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_TLS_1_2_CLIENT() - Build an asymmetric
  * signature TLS1.2 algorithm with label `CLIENT`.
  * @hash: A valid hash algorithm. See smw_attr_algo_t.

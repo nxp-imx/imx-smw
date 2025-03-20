@@ -433,12 +433,13 @@ tls12_op_derive_master_secret(struct smw_keymgr_derive_key_args *args,
 	args->key_derived.identifier.security_size =
 		TLS12_MASTER_SECRET_SEC_SIZE;
 	args->key_derived.identifier.subsystem_id = SUBSYSTEM_ID_ELE;
-	args->key_derived.identifier.type_id = SMW_CONFIG_KEY_TYPE_ID_DERIVE;
+	args->key_derived.identifier.type_id =
+		SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
 
 	args->key_derived.pub->format_name = SMW_KEY_FORMAT_NAME_HEX;
 	args->key_derived.pub->id = key_ex_args.out_derived_key_id;
 	args->key_derived.pub->security_size = TLS12_MASTER_SECRET_SEC_SIZE;
-	args->key_derived.pub->type_name = SMW_KEY_TYPE_NAME_DERIVE;
+	args->key_derived.pub->type_name = SMW_KEY_TYPE_NAME_TLS_MASTER;
 
 end:
 	if (key_ex_args.user_fixed_info)
@@ -494,7 +495,6 @@ tls12_op_derive_key_expansion(struct smw_keymgr_derive_key_args *args,
 
 	payload->cipher_algo = ciphersuite.permitted_algo;
 	payload->cipher_bits = ciphersuite.bits;
-	payload->key_id = args->key_base.pub->id;
 
 	status = build_user_info(&key_ex_args.user_fixed_info,
 				 &key_ex_args.user_fixed_info_sz,
@@ -592,7 +592,6 @@ static int tls12_op_derive_ivs(struct smw_keymgr_derive_key_args *args,
 
 	payload->cipher_algo = ciphersuite.permitted_algo;
 	payload->cipher_bits = ciphersuite.bits;
-	payload->key_id = args->key_base.pub->id;
 
 	/* Allocate and fill the user fixed info with: label + server_random + client_random */
 	status = build_user_info(&key_ex_args.user_fixed_info,

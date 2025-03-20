@@ -52,6 +52,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. Subsystems
 
+* ELE: Remove HKDF support. Secure Enclave doesn't support it anymore.
+* ELE: Remove TLS 1.2 plain text versus key ids output buffer flag.
 
 ##### 3. ARM PSA APIs
 
@@ -59,11 +61,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 4. OSAL
 
 * Add a dedicated configuration file for i.MX943.
+* Remove HKDF key derivation in all ELE based configurations.
 
 #### SMW Tests - _version 5.0_
 
 * Disable the tests that validate algorithms and key types that are currently unsupported on the i.MX943 platform.
 * Disable TLS1.2 tests on i.MX943 platform.
+* ELE tests: Disable HKDF validation.
 
 #### PKCS#11 Library - _version 5.0_
 

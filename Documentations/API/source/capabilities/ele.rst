@@ -164,16 +164,6 @@ applicable in ELE subsystem. Only one permitted algorithm is allowed per key.
    +----------------+----------+--------------------------+-------------------------------------+
    | ED25519PH      | N/A      | N/A                      |                                     |
    +----------------+----------+--------------------------+-------------------------------------+
-   | HKDF_EXTRACT   | SHA256   | N/A                      |                                     |
-   +                +----------+--------------------------+-------------------------------------+
-   |                | SHA384   | N/A                      |                                     |
-   +                +----------+--------------------------+-------------------------------------+
-   |                | ANY      | N/A                      |                                     |
-   +----------------+----------+--------------------------+-------------------------------------+
-   | HKDF_EXPAND    | SHA256   | N/A                      |                                     |
-   +                +----------+--------------------------+-------------------------------------+
-   |                | SHA384   | N/A                      |                                     |
-   +----------------+----------+--------------------------+-------------------------------------+
 
 Hash
 ^^^^
@@ -745,15 +735,6 @@ buffer returned must be signed with CST tool and given as parameter of the
 
 Key Derivation
 ^^^^^^^^^^^^^^
-
-- HMAC-based Key Derivation Function (HKDF)
-
-The subsystem supports HKDF Extract step, Expand step and Full step (Extract and
-Expand combined). The subsystem supports deriving a key from an existing stored
-asymmetric key as well as from a plaintext buffer. The derived key has to
-be stored in the ELE storage.
-
-.. Note:: Not supported on i.MX8ULP and i.MX95
 
 - TLS 1.2 (TLS1-PRF)
 

@@ -285,6 +285,7 @@ static int tls12_set_derive_args(struct smw_keymgr_derive_key_args *args,
 				 unsigned int payload_len,
 				 op_key_exchange_args_t *key_ex_args)
 {
+	int status = SMW_STATUS_OK;
 	key_ex_args->flags = HSM_OP_KEY_EXCHANGE_FLAGS_INPUT_PLAINTEXT_CONTENT;
 
 	key_ex_args->in_content_sz = payload_len;
@@ -292,8 +293,6 @@ static int tls12_set_derive_args(struct smw_keymgr_derive_key_args *args,
 
 	switch (op) {
 	case MASTER_SECRET:
-		key_ex_args->flags |= HSM_OP_KEY_EXCHANGE_FLAGS_RETURN_KEY_IDS;
-
 		key_ex_args->in_pub_buffer_sz =
 			smw_keymgr_get_peer_pub_buffer_len(args);
 		key_ex_args->in_pub_buffer =
@@ -306,9 +305,8 @@ static int tls12_set_derive_args(struct smw_keymgr_derive_key_args *args,
 		key_ex_args->output =
 			SMW_UTILS_CALLOC(1, key_ex_args->output_sz);
 		if (!key_ex_args->output)
-			return SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+			status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
 
-		key_ex_args->flags |= HSM_OP_KEY_EXCHANGE_FLAGS_RETURN_KEY_IDS;
 		break;
 
 	case IV:
@@ -317,16 +315,16 @@ static int tls12_set_derive_args(struct smw_keymgr_derive_key_args *args,
 		key_ex_args->output =
 			SMW_UTILS_CALLOC(1, key_ex_args->output_sz);
 		if (!key_ex_args->output)
-			return SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+			status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
 
-		key_ex_args->flags |= HSM_OP_KEY_EXCHANGE_FLAGS_RETURN_OUTPUT;
 		break;
 
 	default:
+		status = SMW_STATUS_OPERATION_FAILURE;
 		break;
 	}
 
-	return SMW_STATUS_OK;
+	return status;
 }
 
 static int

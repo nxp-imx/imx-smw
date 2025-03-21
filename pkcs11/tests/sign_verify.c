@@ -10,6 +10,7 @@
 #include "util.h"
 #include "util_lib.h"
 #include "util_session.h"
+#include "util.h"
 
 /* Message to sign */
 static CK_BYTE msg[] = {
@@ -132,6 +133,27 @@ static CK_BYTE sha512_signature[] = {
 	0x35, 0x3a, 0x17, 0xcb, 0x3a, 0x73, 0x3e, 0x35, 0x06, 0x7a, 0x5a, 0x96,
 	0x8f, 0x55, 0x3f, 0xfb
 };
+
+static CK_BYTE peer_buffer[] = {
+	0xd1, 0x2d, 0xfb, 0x52, 0x89, 0xc8, 0xd4, 0xf8, 0x12, 0x08, 0xb7,
+	0x02, 0x70, 0x39, 0x8c, 0x34, 0x22, 0x96, 0x97, 0x0a, 0x0b, 0xcc,
+	0xb7, 0x4c, 0x73, 0x6f, 0xc7, 0x55, 0x44, 0x94, 0xbf, 0x63, 0x56,
+	0xfb, 0xf3, 0xca, 0x36, 0x6c, 0xc2, 0x3e, 0x81, 0x57, 0x85, 0x4c,
+	0x13, 0xc5, 0x8d, 0x6a, 0xac, 0x23, 0xf0, 0x46, 0xad, 0xa3, 0x0f,
+	0x83, 0x53, 0xe7, 0x4f, 0x33, 0x03, 0x98, 0x72, 0xab
+};
+
+static CK_BYTE client_random[] = { 0x2e, 0xf5, 0xf5, 0x95, 0x3a, 0xe3, 0x91,
+				   0x8a, 0x6c, 0xef, 0x3d, 0x51, 0x14, 0x06,
+				   0xe9, 0xa0, 0x2c, 0x65, 0x26, 0x16, 0xd7,
+				   0x8f, 0x68, 0xc7, 0x0f, 0x0e, 0x21, 0x69,
+				   0xa7, 0x86, 0x4d, 0xbe };
+
+static CK_BYTE server_random[] = { 0x12, 0xd4, 0xd9, 0x0c, 0x3c, 0x89, 0xce,
+				   0x1d, 0x50, 0x2a, 0x6a, 0xa2, 0x43, 0x6c,
+				   0xb3, 0x2f, 0xb4, 0x98, 0xb0, 0x94, 0x8f,
+				   0x63, 0xa5, 0xd0, 0x5c, 0x41, 0x3c, 0xe4,
+				   0xa3, 0x42, 0xeb, 0x8d };
 
 static int sign_init_bad_params(CK_FUNCTION_LIST_PTR pfunc)
 {
@@ -1325,6 +1347,199 @@ end:
 	return status;
 }
 
+static int sign_verify_tls(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_TLS_MAC };
+	CK_BYTE_PTR signature = NULL_PTR;
+	CK_ULONG signature_len = 0;
+	CK_ULONG tmp = 0;
+	CK_BBOOL ck_true = CK_TRUE;
+
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
+	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_MECHANISM_TYPE base_key_allowed_mech = {
+		CKM_TLS12_MASTER_KEY_DERIVE_DH
+	};
+	CK_ATTRIBUTE pubkey_attrs[] = {
+		{ CKA_EC_PARAMS, NULL_PTR, 0 },
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &base_key_allowed_mech,
+		  sizeof(base_key_allowed_mech) },
+	};
+	CK_ATTRIBUTE privkey_attrs[] = {
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &base_key_allowed_mech,
+		  sizeof(base_key_allowed_mech) },
+	};
+
+	CK_TLS12_MASTER_KEY_DERIVE_PARAMS tls12_master_params = { 0 };
+	CK_MECHANISM tls12_master_mech = { CKM_TLS12_MASTER_KEY_DERIVE_DH,
+					   (void *)&tls12_master_params,
+					   sizeof(tls12_master_params) };
+
+	CK_OBJECT_HANDLE master_hsecretkey = 0;
+	CK_MECHANISM_TYPE key_allowed_mech = { CKM_TLS_MAC };
+	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
+	CK_KEY_TYPE secret_key_type = CKK_GENERIC_SECRET;
+	CK_ULONG secret_key_len = 32;
+	CK_TLS_MAC_PARAMS tls_mac_params = { 0 };
+
+	CK_ATTRIBUTE master_secretkey_template[] = {
+		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
+		{ CKA_SIGN, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_VERIFY, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_KEY_TYPE, &secret_key_type, sizeof(secret_key_type) },
+		{ CKA_VALUE_LEN, &secret_key_len, sizeof(secret_key_len) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
+	};
+
+	CK_MECHANISM_TYPE ecdhe_key_allowed_mech = {
+		CKM_TLS12_MASTER_KEY_DERIVE_DH
+	};
+	CK_ECDH1_DERIVE_PARAMS ecdh_params = { 0 };
+	CK_MECHANISM ecdh_mech = { CKM_ECDH1_DERIVE, (void *)&ecdh_params,
+				   sizeof(ecdh_params) };
+	CK_OBJECT_HANDLE ecdhe_key = CK_INVALID_HANDLE;
+	CK_ATTRIBUTE ecdhe_key_template[] = {
+		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
+		{ CKA_KEY_TYPE, &secret_key_type, sizeof(secret_key_type) },
+		{ CKA_VALUE_LEN, &secret_key_len, sizeof(secret_key_len) },
+		{ CKA_ALLOWED_MECHANISMS, &ecdhe_key_allowed_mech,
+		  sizeof(ecdhe_key_allowed_mech) },
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+	};
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, base_key_allowed_mech) ||
+	    !util_lib_is_mech_supported(pfunc, 0, key_allowed_mech) ||
+	    !util_lib_is_mech_supported(pfunc, 0, ecdhe_key_allowed_mech)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
+					       &ec_curves[SECP_R1_256]),
+			   "ASN1 Conversion"))
+		goto end;
+
+	TEST_OUT("Generate a base key\n");
+	ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
+				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+		goto end;
+
+	TEST_OUT("Set CKM_ECDH1_DERIVE mechanism parameters\n");
+	ecdh_params.kdf = CKD_NULL;
+	ecdh_params.pSharedData = NULL;
+	ecdh_params.ulSharedDataLen = 0;
+	ecdh_params.pPublicData = peer_buffer;
+	ecdh_params.ulPublicDataLen = ARRAY_SIZE(peer_buffer);
+
+	ret = pfunc->C_DeriveKey(sess, &ecdh_mech, hprivkey, ecdhe_key_template,
+				 ARRAY_SIZE(ecdhe_key_template), &ecdhe_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Set CKM_TLS12_MASTER_DERIVE mechanism parameters\n");
+	tls12_master_params.prfHashMechanism = CKM_SHA256;
+	tls12_master_params.pVersion = NULL;
+	tls12_master_params.RandomInfo.pClientRandom = client_random;
+	tls12_master_params.RandomInfo.pServerRandom = server_random;
+	tls12_master_params.RandomInfo.ulClientRandomLen =
+		sizeof(client_random);
+	tls12_master_params.RandomInfo.ulServerRandomLen =
+		sizeof(server_random);
+
+	ret = pfunc->C_DeriveKey(sess, &tls12_master_mech, ecdhe_key,
+				 master_secretkey_template,
+				 ARRAY_SIZE(master_secretkey_template),
+				 &master_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	tls_mac_params.prfHashMechanism = CKM_SHA256;
+	tls_mac_params.ulMacLength = 12;
+	tls_mac_params.ulServerOrClient = 1; /* server */
+	sign_verify_mech.pParameter = &tls_mac_params;
+	sign_verify_mech.ulParameterLen = sizeof(tls_mac_params);
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, master_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	/* Set a wrong signature length */
+	signature_len = 10;
+	signature = malloc(signature_len);
+	if (CHECK_EXPECTED(signature, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Sign message with signature buffer too small\n");
+	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
+	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_Sign"))
+		goto end;
+
+	/* Realloc signature buffer with new signature length */
+	signature = realloc(signature, signature_len);
+	if (CHECK_EXPECTED(signature, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Sign message\n");
+	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	tmp = signature_len;
+	signature_len *= 2;
+	signature = realloc(signature, signature_len);
+	if (CHECK_EXPECTED(signature, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Initialize sign operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, master_hsecretkey);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	TEST_OUT("Sign message with signature buffer bigger that needed\n");
+	ret = pfunc->C_Sign(sess, msg_sha256, msg_sha256_len, signature,
+			    &signature_len);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Check updated signature buffer length\n");
+	if (CHECK_EXPECTED(signature_len == tmp,
+			   "Signature length not updated"))
+		goto end;
+
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &sess);
+
+	if (signature)
+		free(signature);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_sign_verify(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -1377,7 +1592,10 @@ void tests_pkcs11_sign_verify(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (sign_verify_key_usage(pfunc) == TEST_FAIL)
 		goto end;
 
-	status = sign_verify_rsa_pkcs_plaintext_key(pfunc);
+	if (sign_verify_rsa_pkcs_plaintext_key(pfunc) == TEST_FAIL)
+		goto end;
+
+	status = sign_verify_tls(pfunc);
 
 end:
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

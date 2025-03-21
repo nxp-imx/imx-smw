@@ -63,6 +63,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Tests - _version 5.0_
 
 * Disable the tests that validate algorithms and key types that are currently unsupported on the i.MX943 platform.
+* Disable TLS1.2 tests on i.MX943 platform.
 
 #### PKCS#11 Library - _version 5.0_
 

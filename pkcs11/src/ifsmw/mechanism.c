@@ -2023,8 +2023,10 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 			break;
 
 		if (params->ulsignaturelen) {
-			if (params->ulsignaturelen < ctx->sign.mac.len)
+			if (params->ulsignaturelen < ctx->sign.mac.len) {
+				params->ulsignaturelen = ctx->sign.mac.len;
 				return CKR_BUFFER_TOO_SMALL;
+			}
 
 			params->ulsignaturelen = ctx->sign.mac.len;
 		}

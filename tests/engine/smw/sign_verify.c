@@ -298,6 +298,12 @@ int sign_verify(struct subtest_data *subtest, int operation)
 					 args.signature, args.signature_length);
 		if (res)
 			args.signature = NULL;
+
+		/* Compare signature with expected signature */
+		if (exp_sign && args.signature)
+			res = util_compare_buffers(args.signature,
+						   args.signature_length,
+						   exp_sign, exp_sign_length);
 	}
 
 exit:

@@ -1,0 +1,203 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"security_size": 224,
+			"priv_key": [
+				"16797b5c0c7ed5461e2ff1b88e6eafa0",
+				"3c0f46bf072000dfc830d615"
+			],
+			"pub_key": [
+				"605495756e6e88f1d07ae5f98787af9b",
+				"4da8a641d1a9492a12174eabf5cc733b",
+				"17decc806ef1df861a42505d0af9ef7c",
+				"3df3959b8dfc6669"
+			]
+		},
+		"key 2": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"priv_key": [
+				"519b423d715f8b581f4fa8ee59f4771a",
+				"5b44c8130b4e3eacca54a56dda72b464"
+			],
+			"pub_key": [
+				"1ccbe91c075fc7f4f033bfa248db8fcc",
+				"d3565de94bbfb12f3c59ff46c271bf83",
+				"ce4014c68811f9a21a1fdb2c0e6113e0",
+				"6db7ca93b7404e78dc7ccd5ca89a4ca9"
+			]
+		},
+		"key 3": {
+			"type": "SECP_R1",
+			"security_size": 384,
+			"format": "BASE64",
+			"priv_key": [
+				"IBtDLY3xQyQYLWJh2z5LP0aoKESC1S43",
+				"DaQebL30XsKVL123zLzjvClEn0+wgKyX"
+			],
+			"pub_key": [
+				"wrR5RPtd40LQMoWIAXfKX30PL8rXZ4zO",
+				"QinW4ZMvysEb/Dw+l9lCo8Vr80EjAT2/",
+				"NyV5BqgiOGbtoHQ8UZYWp2p1iuWK7oHF",
+				"/TX786hVt3VKNtSgZy35XWxEqBz3Ygwt"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA224"
+		],
+		"message": [
+			"699325d6fc8fbbb4981a6ded3c3a54ad",
+			"2e4e3db8a5669201912064c64e700c13",
+			"9248cdc19495df081c3fc60245b9f25f",
+			"c9e301b845b3d703a694986e4641ae3c",
+			"7e5a19e6d6edbf1d61e535f49a8fad5f",
+			"4ac26397cfec682f161a5fcd32c5e780",
+			"668b0181a91955157635536a22367308",
+			"036e2070f544ad4fff3d5122c76fad5d"
+		],
+		"sign_id": 0,
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA224"
+		],
+		"message": [
+			"699325d6fc8fbbb4981a6ded3c3a54ad",
+			"2e4e3db8a5669201912064c64e700c13",
+			"9248cdc19495df081c3fc60245b9f25f",
+			"c9e301b845b3d703a694986e4641ae3c",
+			"7e5a19e6d6edbf1d61e535f49a8fad5f",
+			"4ac26397cfec682f161a5fcd32c5e780",
+			"668b0181a91955157635536a22367308",
+			"036e2070f544ad4fff3d5122c76fad5d"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"message": [
+			"5905238877c77421f73e43ee3da6f2d9",
+			"e2ccad5fc942dcec0cbd25482935faaf",
+			"416983fe165b1a045ee2bcd2e6dca3bd",
+			"f46c4310a7461f9a37960ca672d3feb5",
+			"473e253605fb1ddfd28065b53cb5858a",
+			"8ad28175bf9bd386a5e471ea7a65c17c",
+			"c934a9d791e91491eb3754d03799790f",
+			"e2d308d16146d5c9b0d0debd97d79ce8"
+		],
+		"sign_id": 1,
+		"key_name": "key 2"
+	},
+	"subtest 4": {
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA256"
+		],
+		"message": [
+			"5905238877c77421f73e43ee3da6f2d9",
+			"e2ccad5fc942dcec0cbd25482935faaf",
+			"416983fe165b1a045ee2bcd2e6dca3bd",
+			"f46c4310a7461f9a37960ca672d3feb5",
+			"473e253605fb1ddfd28065b53cb5858a",
+			"8ad28175bf9bd386a5e471ea7a65c17c",
+			"c934a9d791e91491eb3754d03799790f",
+			"e2d308d16146d5c9b0d0debd97d79ce8"
+		],
+		"sign_id": 1,
+		"key_name": "key 2",
+		"depends": 3
+	},
+	"subtest 5": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA384"
+		],
+		"message": [
+			"6b45d88037392e1371d9fd1cd174e9c1",
+			"838d11c3d6133dc17e65fa0c485dcca9",
+			"f52d41b60161246039e42ec784d49400",
+			"bffdb51459f5de654091301a09378f93",
+			"464d52118b48d44b30d781eb1dbed09d",
+			"a11fb4c818dbd442d161aba4b9edc79f",
+			"05e4b7e401651395b53bd8b5bd3f2aaa",
+			"6a00877fa9b45cadb8e648550b4c6cbe"
+		],
+		"sign_id": 2,
+		"key_name": "key 3"
+	},
+	"subtest 6": {
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA384"
+		],
+		"message": [
+			"6b45d88037392e1371d9fd1cd174e9c1",
+			"838d11c3d6133dc17e65fa0c485dcca9",
+			"f52d41b60161246039e42ec784d49400",
+			"bffdb51459f5de654091301a09378f93",
+			"464d52118b48d44b30d781eb1dbed09d",
+			"a11fb4c818dbd442d161aba4b9edc79f",
+			"05e4b7e401651395b53bd8b5bd3f2aaa",
+			"6a00877fa9b45cadb8e648550b4c6cbe"
+		],
+		"sign_id": 2,
+		"key_name": "key 3",
+		"depends": 5
+	},
+	"subtest 7": {
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA384",
+			"MSG_HASHED"
+		],
+		"message": [
+			"31a452d6164d904bb5724c878280231e",
+			"ae705c29ce9d4bc7d58e020e1085f17e",
+			"ebcc1a38f0ed0bf2b344d81fbd896825"
+		],
+		"sign_id": 3,
+		"key_name": "key 3"
+	},
+	"subtest 8": {
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA384",
+			"MSG_HASHED"
+		],
+		"message": [
+			"31a452d6164d904bb5724c878280231e",
+			"ae705c29ce9d4bc7d58e020e1085f17e",
+			"ebcc1a38f0ed0bf2b344d81fbd896825"
+		],
+		"sign_id": 3,
+		"key_name": "key 3",
+		"depends": 7
+	}
+}

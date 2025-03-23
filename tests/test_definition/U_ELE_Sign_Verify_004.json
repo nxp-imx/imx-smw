@@ -1,0 +1,651 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 2048,
+			"format": "BASE64",
+			"priv_key": [
+				"AT8TCNOEXEXSYfuSIHhPwisiWy5NBccN",
+				"H9F5oStltOCvjQjNPFvasl5kRDC9fpdT",
+				"tvN8jrh/N20Z36PODvGNWGdFfuxJa341",
+				"azLuy3XNLKJrFDwRWQFnTnzwOb5/et/D",
+				"pdgZUgqFdlvHldJxbl5pLs112irA4cYb",
+				"fRyMkIX+q2/QONR7tqvPqMJvJcnewUmw",
+				"mxt7QVd7y2IuXw7TrxYIz5312qNkcayh",
+				"EgFbwnIK3+zmoyMYEuJkMVl3u0ToD48N",
+				"JV66K7YAuETCjcNSaEsXBQfNxip57kfU",
+				"8ki/VvVRKmaj+9ZfyEE+cdT+J45LijlC",
+				"XQSqtBITm2OW2/9c0mE8AQ=="
+			],
+			"pub_key": [
+				"AQAB"
+			],
+			"modulus": [
+				"1Lgv7wjKhsnFM/gSsaAm/JhZixrNYrdE",
+				"lGZMbgSVhELz0DwuG2S0Jg8XDgEfjeGJ",
+				"hM0BeLP1SDYzKR53KmgxTb6ZdoWP2mtG",
+				"RZFUQxBsSmUkb25jYdWKmCnPHyYmP38D",
+				"vSocF+UAlilLvATV3+UIzxhvwGddr1OC",
+				"JVvItwog9FRDgZTGRyfdVkgTKLY8EpCA",
+				"1EtBKlh0iIGp5j9aNH1yvRGPCc9bnmLq",
+				"7GCjmNbHDC9cIoa+xl8qj0IvZvzdErww",
+				"E901XRzD1X17RK5H0TxGw8UU6PuyeL3j",
+				"FhEQjW1Ya1TBlbaPM3mOQTh7Fax+6rIT",
+				"8ffG4+SG4UDy3zxw3bxy/w=="
+			]
+		},
+		"key 2": {
+			"type": "RSA",
+			"security_size": 3072,
+			"priv_key": [
+				"16a8137384ad3e12b06520f612fbc8bf",
+				"5bbfab3618a14ff56fe838121bd67348",
+				"55af13f2e6f2cc7a430aee2fcedd89e7",
+				"9b53316a38bbf0f81a54a90a280de0c3",
+				"1b109b562ca2250691c47ace2f9af4c3",
+				"49f04f9cfeffa966815f1e979b80b03c",
+				"9e823dbe202022095113bd6c727e273b",
+				"95238f1e92d97de5be85a0dfd99aee5b",
+				"2247d362c79cf7f2d9b3b4aaec3d999e",
+				"a58fe057ab1e17499e56d4461a7f13d1",
+				"74f3b4f1b61c321241c6b3bccf21d8ed",
+				"24fc52822aaf33ec32c899103019f1e1",
+				"b0d92a66253dd5a63c831074012d4b0e",
+				"1bea50303af9be2f7c8fd6d919353f3d",
+				"32dd7517105546e8014cde18fc1275dd",
+				"8d54dc67aa45af8f96023a0d76597459",
+				"a3b73a6c1654633ef186f7ba6b993657",
+				"fece22820ee4b701df980c8328a88b52",
+				"9b72f279e6c5b3dfb63090fd267e0b70",
+				"d48776ea2dba81a59751ab61ddf3b42b",
+				"378e174f2dc604a2d1d341e43624fb02",
+				"7197bf14e5cb94f9d65f9603f294fd29",
+				"7a4fac4fc70bc7d5e236a731615e5cf9",
+				"331af423fbac45ff20ad9d169830818d"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"c33d352988946719e8d17bf024d2006c",
+				"f18d4c87586a74ad62116b367800d877",
+				"64f0175c2b2d4bf7667a9587ae3fcbee",
+				"6fcc525941cde2bbb86dc7e5d93d95bf",
+				"a6b8b1c1932265fff9e8b585b4ec8c46",
+				"0137145997a80610896432f4187b41f5",
+				"e8f451d795e8cbd50d6c9943bf8f39ff",
+				"528cc311d901880e9f7b388a908cb395",
+				"598fe186078c64bdbc2cd0af78b35744",
+				"13b592893c003fcfb7b619e65c04b080",
+				"9c5c541961d7426fccbba4ba8b6dcffb",
+				"7c8937fc78daf388a0dbde43b6ed30ff",
+				"1cec657b59654b45299f6ad1cc6df1b2",
+				"392c400a7778ffa474bba5347b04c90a",
+				"371d8034893ed5b078f5e014aa0f9aa3",
+				"58fa12b85f99a68578e398eea82d4d57",
+				"9dea81e5de45a5ee01fd871aed2ebd0a",
+				"4b5b693da322f7da115e0375c7430fa0",
+				"d746036f886312e840838f83942aedab",
+				"8f46edb80d200cd81e83c6d3cd2d854c",
+				"a3e85c6f85877b0f4eb73ad9d39185af",
+				"d7eaef36460f49054f6433da8104d6e9",
+				"6974268713238dbec09e113f91b0787c",
+				"a5257bddfa87837e4869906c6c0b2451"
+			]
+		},
+		"key 3": {
+			"type": "RSA",
+			"security_size": 4096,
+			"priv_key": [
+				"25e0b881e32da938611b4156525ce242",
+				"16c168837fa84479ecb72207e9984adb",
+				"6eb7393bb3d607b1469d9b7c3f4fdbbe",
+				"faa4b0218850919a7d66a954b315129c",
+				"39eb99f7dc08df5c4c8c90968f3ce37b",
+				"66ee184ef3d485f83d308521aa2649d2",
+				"8c319eafa2aec87031a1ff5d7e933ca5",
+				"6a2410593425fb865981b7976fca021b",
+				"9d7c3198312fcfea5d0093a62b4a7c49",
+				"a985c005c3a7ad816e270b25c507fc36",
+				"be1c4cc0a07cb7c6fa130240062793b1",
+				"8047189aa5e79b16fe80a6955191f591",
+				"0b701bc1aee6dcd5cefd57194bf54d8e",
+				"208ae41202744190d5ec8bcc2f977f11",
+				"461a5cb4306fc9b73afff2863a7b580d",
+				"454bb1fb8dccb1cbef27945109a8f5a3",
+				"d2b1a32566aa4e8c01a62a1d735117ff",
+				"5a6a3cc7e70756e7df10e97ee75c5f8e",
+				"f89fb0a97d7a35698069f59a9f365d43",
+				"96ab9a764c2fbefb840faf5f57737801",
+				"b73ac6f9f524167b4f3a567aff999a0d",
+				"b10d55d82155720a5ddc63c35b6a632a",
+				"3da59c16bd0c143c437661dcd339652a",
+				"e42f54f8b2d8e52672613772abfe8cf0",
+				"d6ebbbccc764b51b3eda2ae28d4ba874",
+				"7a430ccc32c73baea63d050b86210c48",
+				"5ac9554606070764cd06b423efdda405",
+				"9fc45ffd7193f7123d14014d5bbe5b54",
+				"2476e7bfdc4905731a0d9987fe4a68cf",
+				"6077c3df63778af08a1f4eb8f00a4a8e",
+				"03aa8726f43fa829d87c2d0a32e16b47",
+				"a3f0472a6368ec50a144234c802e6919"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"b10935650754c1a27e54f9ee525c7704",
+				"5d1a056baedc8c1ba05a3d66322c8e2e",
+				"41689ca02b8e6ec55d3331cd714e161b",
+				"35c774311540c6410cc3b130e65cec32",
+				"5377ccf18a5d77054afaa737e65b6866",
+				"2327627f5d1092df98c08b60a3ba6759",
+				"9b1406986f441528d2f1f5d6fe5ec6b8",
+				"aa797dbdb3162876b08298237af81c70",
+				"04863576af572ddd66c487cf32a82d0f",
+				"9fe260f8f2681613208aec55723622f5",
+				"0d3cb3bd33b1226d5b5b9ea2c97a2c59",
+				"054e31536849ec2f0f2597c077e621dd",
+				"ea0a22ddfb1df925c9f1941cd431afce",
+				"0398d28e736cfeab3dd7f062a65a2a4c",
+				"1ddca1f32afa03b4ddfd8b7ca40cc0ce",
+				"2ed42229d753f03cc6d8bcdca76ab7c2",
+				"703c5ddad08aa9bf9a27740a8b23168c",
+				"6b55917bd3d5c1c057c34d1efb1411da",
+				"51ab745519bd92b9432fea8fadcb9a70",
+				"e5dc3adcd3081d3333507b7b998886e9",
+				"88296628dd7265e64eab557712556cc4",
+				"92377f15a078dcb620a6e7f051a1fb87",
+				"54efdca3de253dd0aad4205b032659e4",
+				"a4fb307f074fbde340702b5911acb347",
+				"37d7834600cf2ac77f62f83ccc9ba78f",
+				"f911021b9f8ad1bf421430ae0d649169",
+				"44b504542c0f6263c48e5e233ef1869d",
+				"f1efc2ccf6f4a95e4db2de7b4cb1a992",
+				"bef6573511bab4bf2cd58e72a0c235f5",
+				"6dfc182df4dfffb69433a5677415f35d",
+				"84f5125f5200eb57868cce6b74c58334",
+				"17990e318372c9239a36dca1a0b28809"
+			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 2048,
+			"priv_key": [
+				"0997634c477c1a039d44c810b2aaa3c7",
+				"862b0b88d3708272e1e15f66fc938970",
+				"9f8a11f3ea6a5af7effa2d01c189c50f",
+				"0d5bcbe3fa272e56cfc4a4e1d388a9dc",
+				"d65df8628902556c8b6bb6a641709b5a",
+				"35dd2622c73d4640bfa1359d0e76e1f2",
+				"19f8e33eb9bd0b59ec198eb2fccaae03",
+				"46bd8b401e12e3c67cb629569c185a2e",
+				"0f35a2f741644c1cca5ebb139d77a89a",
+				"2953fc5e30048c0e619f07c8d21d1e56",
+				"b8af07193d0fdf3f49cd49f2ef3138b5",
+				"138862f1470bd2d16e34a2b9e7777a6c",
+				"8c8d4cb94b4e8b5d616cd5393753e7b0",
+				"f31cc7da559ba8e98d888914e334773b",
+				"af498ad88d9631eb5fe32e53a4145bf0",
+				"ba548bf2b0a50c63f67b14e398a34b0d"
+			],
+			"modulus": [
+				"cea80475324c1dc8347827818da58bac",
+				"069d3419c614a6ea1ac6a3b510dcd72c",
+				"c516954905e9fef908d45e13006adf27",
+				"d467a7d83c111d1a5df15ef293771aef",
+				"b920032a5bb989f8e4f5e1b05093d3f1",
+				"30f984c07a772a3683f4dc6fb28a9681",
+				"5b32123ccdd13954f19d5b8b24a103e7",
+				"71a34c328755c65ed64e1924ffd04d30",
+				"b2142cc262f6e0048fef6dbc652f2147",
+				"9ea1c4b1d66d28f4d46ef7185e390cbf",
+				"a2e02380582f3188bb94ebbf05d31487",
+				"a09aff01fcbb4cd4bfd1f0a833b38c11",
+				"813c84360bb53c7d4481031c40bad871",
+				"3bb6b835cb08098ed15ba31ee4ba728a",
+				"8c8e10f7294e1b4163b7aee57277bfd8",
+				"81a6f9d43e02c6925aa3a043fb7fb78d"
+			],
+			"pub_key": [
+				"260445"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": [
+			"Generate Signature using 2048 RSA key,",
+			"PKCS1V15 padding and SHA-256 hashing"
+		],
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA256"
+		],
+		"message": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"signature": [
+			"bf3f3653dad1814fd5f9b426c01d34ec",
+			"7d4dcb153865b4b3075dcadbf5455b3c",
+			"8f3e394d3d7785f2b365ef7853fb2490",
+			"a357b63e1dacc0435bec751716e7813d",
+			"f7417c4eb4b62ce8fb5fe9eb91b032d4",
+			"9d6de179a23159e64f7f915250b68f07",
+			"27ef4cb8c7dfbbe65d023598e41f23c8",
+			"223d208514c5313009351a3b21dfec43",
+			"7aa91d4ac85849a384fe0c97a8826df3",
+			"ec90b6529a2cc545befbf4c70349f22b",
+			"3411d9dd446c2d610af63c3754b803e5",
+			"5f6250853a6fabbbe8826a693ba63652",
+			"8f9897d3c82a13888db191583214e522",
+			"e233c0fb88fa6d9151fc3f0f2ea265d5",
+			"0e2b3ea18e231c3822c38e525460cfaf",
+			"a5ba71409f9b43c2673349ef9d7928b4"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"Verify signature using 2048 RSA key,",
+			"PKCS1V15 padding and SHA-256 hashing"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA256"
+		],
+		"message": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"Generate Signature using 2048 RSA key,",
+			"PSS padding and SHA-256 hashing"
+		],
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA256"
+		],
+		"message": [
+			"42c5ea617a25f019329ee172e4932485",
+			"20525341207369676e"
+		],
+		"sign_id": 1,
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 4": {
+		"description": [
+			"Verify signature using 2048 RSA key,",
+			"PSS padding and SHA-256 hashing"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA256"
+		],
+		"message": [
+			"42c5ea617a25f019329ee172e4932485",
+			"20525341207369676e"
+		],
+		"sign_id": 1,
+		"key_name": "key 1",
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": [
+			"Generate Signature using 3072 RSA key,",
+			"PKCS1V15 padding and SHA-384 hashing"
+		],
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA384"
+		],
+		"message": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"signature": [
+			"16e8dcb2894f878f30ee72bf4a43a76c",
+			"795c6516928b5a6010758005b30b20df",
+			"52a06ad5f322b9c9fa0be75237bcc106",
+			"c61455ff8556f78ee8b7f15e1fb13348",
+			"0b949bebc747ea1d342a02ad91cf40c3",
+			"b33d73d2c86bc6e387d4964ccd1dacee",
+			"bed33a934939dbbc9a60abfa1ae8fa09",
+			"e247425a1d6b4f5cffac1cae6d57a824",
+			"e22467da5ac2eea6ea42f13f6c773509",
+			"d9615592614b87aecbaa948354471838",
+			"5b0a89fb001a0b8cda1fc5c75f68d614",
+			"c91d6babe2e08275501fabe5c27468ff",
+			"edac9b14ad85d35c810daa3173c4c752",
+			"7e7bc37f395c88ba6e23009021741608",
+			"97a3edbf4e29e78c3a4cfdb938a671bf",
+			"bdd72f13aa9609b1e09e5a318303b67e",
+			"e165b9b6e7d667ea83d853ad120c5d89",
+			"196ce0d3930406264aba3dbbc9a58890",
+			"7ea00815fcbd6f81e44c478d27f65a14",
+			"65e01e8872d1aae9837eaa016969052a",
+			"236ba6e4fca7018e73ab7491cb5ab24d",
+			"7f156bd773a720f724887447236d224c",
+			"9992800bec879589b1ec9c787b6e8941",
+			"26e54c07055744a0f46004fbe4ccfa42"
+		],
+		"sign_id": 2,
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 6": {
+		"description": [
+			"Verify signature using 3072 RSA key,",
+			"PKCS1V15 padding and SHA-384 hashing"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA384"
+		],
+		"message": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"sign_id": 2,
+		"key_name": "key 2",
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": [
+			"Generate Signature using 3072 RSA key,",
+			"PSS padding and SHA-384 hashing"
+		],
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA384"
+		],
+		"message": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c"
+		],
+		"sign_id": 3,
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 8": {
+		"description": [
+			"Verify signature using 3072 RSA key,",
+			"PSS padding and SHA-384 hashing"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA384"
+		],
+		"message": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c"
+		],
+		"sign_id": 3,
+		"key_name": "key 2",
+		"depends": 7
+	},
+	"subtest 9": {
+		"description": [
+			"Generate Signature using 4096 RSA key,",
+			"PKCS1V15 padding and SHA-512 hashing"
+		],
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512"
+		],
+		"message": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"11ecb24cee2cb7358f7593b9fa8b904a",
+			"ec0573eb6d99af92a899d9d0fabe5cb3",
+			"49256eec9797422dd60d7fd5fe73f2cf",
+			"5ead7fb72fd85e3f6fd284d2edfc5e77",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"signature": [
+			"6836dff1bea541916b9ccce2695e921f",
+			"f27a737ac54f4a5c3b2facee80a8dd3b",
+			"bfe86c93a1af8da5c6b3a92c445dfac7",
+			"e215fa9f3d67c9589dba858a223f326a",
+			"feb8f5d0f92f28ac4e3671c22b5b4e0b",
+			"4266f776aca928bb0309929f2c452b62",
+			"d462675cef09388e5720cf0cb99351d4",
+			"4059790720db82ce014d7e7958268332",
+			"84bd4205c64e1330e30e09ff6220f62c",
+			"013c117ace4f4286cd46e52694c4925a",
+			"ba12a5278e47de910dcdd820396febe5",
+			"179bbc6ccecdac1883bd408530bde92e",
+			"93c49db2c6fbb42e9705f29703763b21",
+			"a8172489d2831889bb060505040940e6",
+			"0f7c5cb9f58327c3d3f7cf7e18ad60e8",
+			"77edb65222a699d4acdcb358fbc87e1e",
+			"461468cfdc82a8cd7fb1f82e05378737",
+			"f4aa741a63ddf6039b23e1aa19d94e70",
+			"87915899685add8a8da8f64a93707be0",
+			"b6354c8e9a8aefc7484bb45cd0beca49",
+			"3a4a0aef0b6aaae801866b905683c582",
+			"bf39f9cc0768d880c6e4b331da86506b",
+			"298c180cf95fa45e532483c555443714",
+			"68088b4e378f37976c397e09f89081f0",
+			"f0b6f4ba3be6929957f55f14a88f6beb",
+			"456b70e6fbc6227e98c1e8a4a6f734c9",
+			"080c13ed58bcfb3456cbbc2176538350",
+			"00f54956d839d4073571d8a42fa2294d",
+			"f1a747e88af53a16df1834203009cccd",
+			"6d61304739872ab92be79a4462125ebc",
+			"8bba909ca2b4d91b9e520d6c681c2f92",
+			"070f156e31a6875122993e1d94fc3568"
+		],
+		"sign_id": 4,
+		"key_name": "key 3",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 10": {
+		"description": [
+			"Verify signature using 4096 RSA key,",
+			"PKCS1V15 padding and SHA-512 hashing"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA512"
+		],
+		"message": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"11ecb24cee2cb7358f7593b9fa8b904a",
+			"ec0573eb6d99af92a899d9d0fabe5cb3",
+			"49256eec9797422dd60d7fd5fe73f2cf",
+			"5ead7fb72fd85e3f6fd284d2edfc5e77",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"sign_id": 4,
+		"key_name": "key 3",
+		"depends": 9
+	},
+	"subtest 11": {
+		"description": [
+			"Generate Signature using 4096 RSA key,",
+			"PSS padding and SHA-512 hashing"
+		],
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512"
+		],
+		"message": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"11ecb24cee2cb7358f7593b9fa8b904a",
+			"ec0573eb6d99af92a899d9d0fabe5cb3",
+			"49256eec9797422dd60d7fd5fe73f2cf",
+			"5ead7fb72fd85e3f6fd284d2edfc5e77",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"sign_id": 5,
+		"key_name": "key 3",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 12": {
+		"description": [
+			"Verify signature using 4096 RSA key,",
+			"PSS padding and SHA-512 hashing"
+		],
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PSS",
+			"HASH=SHA512"
+		],
+		"message": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"11ecb24cee2cb7358f7593b9fa8b904a",
+			"ec0573eb6d99af92a899d9d0fabe5cb3",
+			"49256eec9797422dd60d7fd5fe73f2cf",
+			"5ead7fb72fd85e3f6fd284d2edfc5e77",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"sign_id": 5,
+		"key_name": "key 3",
+		"depends": 11
+	},
+	"subtest 13": {
+		"description": "NIST SigVer15_186-3.rsp",
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA224"
+		],
+		"message": [
+			"74230447bcd492f2f8a8c594a0437927",
+			"1690bf0c8a13ddfc1b7b96413e77ab26",
+			"64cba1acd7a3c57ee5276e27414f8283",
+			"a6f93b73bd392bd541f07eb461a080bb",
+			"667e5ff095c9319f575b3893977e658c",
+			"6c001ceef88a37b7902d4db31c3e34f3",
+			"c164c47bbeefde3b946bad416a752c2c",
+			"afcee9e401ae08884e5b8aa839f9d0b5"
+		],
+		"signature": [
+			"27da4104eace1991e08bd8e7cfccd97e",
+			"c48b896a0e156ce7bdc23fd570aaa9a0",
+			"0ed015101f0c6261c7371ceca327a73c",
+			"3cecfcf6b2d9ed920c9698046e25c89a",
+			"db2360887d99983bf632f9e6eb0e5df6",
+			"0715902b9aeaa74bf5027aa246510891",
+			"c74ae366a16f397e2c8ccdc8bd56aa10",
+			"e0d01585e69f8c4856e76b53acfd3d78",
+			"2b8171529008fa5eff030f46956704a3",
+			"f5d9167348f37021fc277c6c0a8f93b8",
+			"a23cfbf918990f982a56d0ed2aa08161",
+			"560755adc0ce2c3e2ab2929f79bfc0b2",
+			"4ff3e0ff352e6445d8a617f1785d66c3",
+			"2295bb365d61cfb107e9993bbd93421f",
+			"2d344a86e4127827fa0d0b2535f9b1d5",
+			"47de12ba2868acdecf2cb5f92a6a159a"
+		],
+		"sign_id": 6,
+		"key_name": "key 4",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95"
+		]
+	},
+	"subtest 14": {
+		"description": "Unsupported RSA public exponent",
+		"command": "VERIFY",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA224"
+		],
+		"message": [
+			"74230447bcd492f2f8a8c594a0437927",
+			"1690bf0c8a13ddfc1b7b96413e77ab26",
+			"64cba1acd7a3c57ee5276e27414f8283",
+			"a6f93b73bd392bd541f07eb461a080bb",
+			"667e5ff095c9319f575b3893977e658c",
+			"6c001ceef88a37b7902d4db31c3e34f3",
+			"c164c47bbeefde3b946bad416a752c2c",
+			"afcee9e401ae08884e5b8aa839f9d0b5"
+		],
+		"signature": [
+			"27da4104eace1991e08bd8e7cfccd97e",
+			"c48b896a0e156ce7bdc23fd570aaa9a0",
+			"0ed015101f0c6261c7371ceca327a73c",
+			"3cecfcf6b2d9ed920c9698046e25c89a",
+			"db2360887d99983bf632f9e6eb0e5df6",
+			"0715902b9aeaa74bf5027aa246510891",
+			"c74ae366a16f397e2c8ccdc8bd56aa10",
+			"e0d01585e69f8c4856e76b53acfd3d78",
+			"2b8171529008fa5eff030f46956704a3",
+			"f5d9167348f37021fc277c6c0a8f93b8",
+			"a23cfbf918990f982a56d0ed2aa08161",
+			"560755adc0ce2c3e2ab2929f79bfc0b2",
+			"4ff3e0ff352e6445d8a617f1785d66c3",
+			"2295bb365d61cfb107e9993bbd93421f",
+			"2d344a86e4127827fa0d0b2535f9b1d5",
+			"47de12ba2868acdecf2cb5f92a6a159a"
+		],
+		"sign_id": 6,
+		"key_name": "key 4",
+		"depends": 13,
+		"result": "SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED"
+	}
+}

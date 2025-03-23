@@ -487,13 +487,13 @@ void ele_free_hash_context(struct hash_context *ctx);
 int ele_get_key_store_id(uint32_t *keystore_id);
 
 /**
- * ele_get_key_type() - Get ELE key type from SMW key type
- * @key_type_id: The SMW key type identifier
- * @ele_key_type: The ELE key type
+ * ele_get_key_type() - Get the ELE key type
+ * @key_type_id: SMW Key type ID.
+ * @ele_key_type: ELE Key type ID.
  *
  * Return:
- * SMW_STATUS_OK                      - Success
- * SMW_STATUS_OPERATION_NOT_SUPPORTED - Cannot retrieve ELE key type
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Key type not supported
  */
 int ele_get_key_type(enum smw_config_key_type_id key_type_id,
 		     hsm_key_type_t *ele_key_type);

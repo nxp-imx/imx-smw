@@ -162,10 +162,10 @@ static int sign(struct hdl *hdl, void *args)
 		op_args.signature = signature;
 	}
 
-	if (sign_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
-		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
-	else
+	if (sign_args->attributes.msg_hashed)
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
+	else
+		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 
 	status = set_signature_scheme(key_identifier->type_id,
 				      key_identifier->security_size,
@@ -306,10 +306,10 @@ static int verify(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (verify_args->attributes.hash_id != SMW_CONFIG_HASH_ALGO_ID_INVALID)
-		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
-	else
+	if (verify_args->attributes.msg_hashed)
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_DIGEST;
+	else
+		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_INPUT_MESSAGE;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_verify_sign()\n"

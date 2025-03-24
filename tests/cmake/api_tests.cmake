@@ -9,6 +9,7 @@ file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}*.json)
 # These tests depend on TLS feature support
 if(NOT ENABLE_TLS)
   list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Derive_004.json)
+  list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Derive_005.json)
 endif()
 
 if(NOT TEE_TESTS_ENABLED)

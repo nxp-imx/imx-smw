@@ -9,6 +9,7 @@
 #include <smw_keymgr.h>
 #include <smw/names.h>
 #include <smw/crypto/op_context.h>
+#include <smw/tls.h>
 
 #include "util.h"
 #include "util_key.h"
@@ -37,7 +38,8 @@ static struct {
 	smw_kdf_t name;
 	const char *string;
 } kdf_names[] = { KDF_NAME(HKDF), KDF_NAME(TLS12_KEY_EXCHANGE), KDF_NAME(ECDH),
-		  KDF_NAME(TLS12_OP_KEY_EXCHANGE) };
+		  KDF_NAME(TLS12_OP_KEY_EXCHANGE),
+		  KDF_NAME(TLS13_KEY_EXCHANGE) };
 
 #define KEA(_name)                                                             \
 	{                                                                      \
@@ -209,6 +211,43 @@ read_derived_key_descriptor(struct llist *keys,
 	}
 
 	return ERR_CODE(PASSED);
+}
+
+/**
+ * read_derived_key_attributes() - Read the derived key attributes
+ * @keys: Keys list.
+ * @attributes: Pointer to derived key attributes.
+ * @key_name: Key name.
+ *
+ * Read the test definition to extract SMW derived key attribute fields
+ * (usage, permitted_algo, etc.), if defined.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -KEY_NOTFOUND            - Key definition not found.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -FAILED                  - Error in definition file
+ */
+static int read_derived_key_attributes(struct llist *keys,
+				       struct smw_key_attributes *attributes,
+				       const char *key_name)
+{
+	int ret = ERR_CODE(BAD_ARGS);
+	struct key_data *data = NULL;
+
+	if (!attributes || !key_name) {
+		DBG_PRINT_BAD_ARGS();
+		return ret;
+	}
+
+	ret = util_list_find_node(keys, (uintptr_t)key_name, (void **)&data);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	if (!data)
+		return ERR_CODE(KEY_NOTFOUND);
+
+	return key_read_attributes(data->okey_params, &attributes);
 }
 
 /**
@@ -1131,6 +1170,264 @@ static void kdf_tls12_free(struct smw_derive_key_args *args)
 }
 
 /**
+ * kdf_tls13_setup_base_key() - Setup the base key for TLS1.3 key derivation operation.
+ * @subtest: Subtest data.
+ * @args: Pointer to public key derivation argument structure.
+ * @key_base: Test keypair operations.
+ * @base_buffer: Pointer to base keypair buffer structure.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
+ */
+static int kdf_tls13_setup_base_key(struct subtest_data *subtest,
+				    struct smw_derive_key_args *args,
+				    struct keypair_ops *key_base,
+				    struct smw_keypair_buffer *base_buffer)
+{
+	int res = ERR_CODE(PASSED);
+
+	res = setup_derive_base(subtest, key_base, base_buffer);
+
+	if (res == ERR_CODE(VALUE_NOTFOUND)) {
+		args->key_descriptor_base = NULL;
+		res = ERR_CODE(PASSED);
+	}
+
+	return res;
+}
+
+/**
+ * kdf_tls13_read_args() - Read the TLS 1.3 function arguments
+ * @kdf_args: SMW's TLS 1.3 arguments read
+ * @subtest: Subtest data
+ * @oargs: Reference to the test definition json-c arguments array
+ *
+ * Note: the test definition array must define the arguments in the same
+ * order as the SMW's structure definition.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ */
+static int kdf_tls13_read_args(void **kdf_args, struct subtest_data *subtest,
+			       struct json_object *oargs)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	const char *prf_string = NULL;
+	struct tbuffer peer_pub_buf = { 0 };
+	const char *psk_name = NULL;
+	struct keypair_ops psk_ops = { 0 };
+
+	struct smw_key_descriptor *psk = NULL;
+	struct smw_tls13_expand_label_args exp_args = { 0 };
+	struct smw_kdf_tls13_args *tls_args = NULL;
+
+	if (!kdf_args || !oargs) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	tls_args = calloc(1, sizeof(*tls_args));
+	if (!tls_args)
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+
+	*kdf_args = tls_args;
+
+	res = util_read_json_type(&prf_string, PRF_NAME_OBJ, t_string, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->prf_name = hash_get_algo_name(prf_string);
+
+	res = util_read_json_type(&exp_args.version, VERSION_OBJ, t_int8,
+				  oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	res = util_read_json_type(&exp_args.length, LENGTH_OBJ, t_uint, oargs);
+	if (res != ERR_CODE(PASSED)) {
+		DBG_PRINT_MISS_PARAM(LENGTH_OBJ);
+		goto end;
+	}
+
+	res = util_read_json_type(&exp_args.label, LABEL_OBJ, t_string, oargs);
+	if (res != ERR_CODE(PASSED)) {
+		DBG_PRINT_MISS_PARAM(LABEL_OBJ);
+		goto end;
+	}
+
+	if (SET_OVERFLOW(strlen((const char *)exp_args.label),
+			 exp_args.label_length)) {
+		res = ERR_CODE(BAD_ARGS);
+		goto end;
+	}
+
+	res = util_read_hex_buffer(&exp_args.context, &exp_args.context_length,
+				   oargs, CTX_OBJ);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
+		goto end;
+
+	tls_args->expanded_label_length =
+		SMW_TLS13_EXPANDED_LABEL_LENGTH(&exp_args);
+	tls_args->expanded_label = malloc(tls_args->expanded_label_length);
+	if (!tls_args->expanded_label) {
+		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto end;
+	}
+
+	exp_args.expanded_label_length = tls_args->expanded_label_length;
+	exp_args.expanded_label = tls_args->expanded_label;
+
+	res = smw_tls13_expand_label(&exp_args);
+	if (res != SMW_STATUS_OK) {
+		subtest->api_status = res;
+		res = ERR_CODE(API_STATUS_NOK);
+		goto end;
+	}
+
+	exp_args.expanded_label = NULL;
+
+	res = util_read_json_type(&peer_pub_buf, PEER_PUB_KEY_OBJ, t_buffer_hex,
+				  oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	tls_args->peer_public_buffer = peer_pub_buf.data;
+	tls_args->peer_public_buffer_length = peer_pub_buf.length;
+
+	res = util_read_json_type(&psk_name, PSK_NAME_OBJ, t_string, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
+
+	if (psk_name) {
+		res = key_read_descriptor(list_keys(subtest), &psk_ops,
+					  psk_name);
+		if (res != ERR_CODE(PASSED))
+			goto end;
+
+		psk = calloc(1, sizeof(*psk));
+		if (!psk) {
+			res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			goto end;
+		}
+
+		memcpy(psk, &psk_ops.desc, sizeof(*psk));
+
+		tls_args->psk = psk;
+	}
+
+	*kdf_args = tls_args;
+	res = ERR_CODE(PASSED);
+
+end:
+	if (exp_args.context)
+		free(exp_args.context);
+
+	if (res != ERR_CODE(PASSED) && tls_args) {
+		if (tls_args->peer_public_buffer)
+			free(tls_args->peer_public_buffer);
+
+		if (tls_args->expanded_label)
+			free(tls_args->expanded_label);
+
+		if (tls_args->psk)
+			free(tls_args->psk);
+
+		free(tls_args);
+		*kdf_args = NULL;
+	}
+
+	return res;
+}
+
+static int kdf_tls13_prepare_result(struct subtest_data *subtest,
+				    struct smw_derive_key_args *args)
+{
+	int res = ERR_CODE(PASSED);
+	const char *key_name = NULL;
+	struct smw_derived_key_descriptor *derived_key_desc = NULL;
+
+	res = util_read_json_type(&key_name, OP_OUTPUT_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	derived_key_desc = args->key_descriptor_derived;
+
+	res = read_derived_key_descriptor(list_keys(subtest), derived_key_desc,
+					  key_name);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	return read_derived_key_attributes(list_keys(subtest),
+					   args->key_attributes, key_name);
+}
+
+/**
+ * kdf_tls13_free() - Free the TLS 1.3 operation arguments
+ * @args: SMW's Key derivation arguments
+ */
+static void kdf_tls13_free(struct smw_derive_key_args *args)
+{
+	struct smw_kdf_tls13_args *tls_args = NULL;
+
+	if (args) {
+		if (args->kdf_arguments) {
+			tls_args = args->kdf_arguments;
+
+			if (tls_args->peer_public_buffer)
+				free(tls_args->peer_public_buffer);
+
+			if (tls_args->expanded_label)
+				free(tls_args->expanded_label);
+
+			if (tls_args->psk)
+				free(tls_args->psk);
+
+			free(tls_args);
+			args->kdf_arguments = NULL;
+		}
+	}
+}
+
+static int kdf_tls13_end_operation(struct subtest_data *subtest,
+				   struct smw_derive_key_args *args)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	struct json_object *oargs = NULL;
+	struct key_data key_data = { 0 };
+	struct llist *keys = NULL;
+
+	if (!args || !subtest || !args->kdf_arguments) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	keys = list_keys(subtest);
+
+	/* Registers all generated keys in the test keys list */
+	res = util_read_json_type(&oargs, OP_ARGS_OBJ, t_object,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (!oargs)
+		return ERR_CODE(MISSING_PARAMS);
+
+	key_prepare_derived_key_data(args->key_descriptor_derived, &key_data);
+	res = store_key_data(keys, OP_OUTPUT_OBJ, &key_data, subtest->params);
+
+	return res;
+}
+
+/**
  * compare_output() - Compare received output with expected output
  * @received_output: Pointer to received output buffer
  * @received_output_len: Length of @received_output
@@ -1755,6 +2052,14 @@ static const struct kdf_op {
 			.end_operation = &kdf_tls12_op_end_operation,
 			.free = &kdf_tls12_op_free,
 		},
+		{
+			.name = SMW_KDF_NAME_TLS13_KEY_EXCHANGE,
+			.setup_base = &kdf_tls13_setup_base_key,
+			.read_args = &kdf_tls13_read_args,
+			.prepare_result = &kdf_tls13_prepare_result,
+			.end_operation = &kdf_tls13_end_operation,
+			.free = &kdf_tls13_free,
+		},
 		{ 0 } };
 
 /**
@@ -2034,8 +2339,10 @@ int derive_key(struct subtest_data *subtest)
 
 	/* Setup optional parameters */
 	res = setup_derive_opt_params(subtest, &args);
-	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))
-		goto exit;
+	if (res != ERR_CODE(PASSED)) {
+		if (!is_api_test(subtest) || res == ERR_CODE(API_STATUS_NOK))
+			goto exit;
+	}
 
 	res = kdf_setup_base(subtest, &args, &key_base, &base_buffer);
 	if (res != ERR_CODE(PASSED) && !is_api_test(subtest))

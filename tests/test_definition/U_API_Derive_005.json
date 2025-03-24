@@ -1,0 +1,380 @@
+{
+	"keys": {
+		"output key": {},
+		"self 256-bit ecdh key": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"pub_key": 64,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_3",
+				"HASH=SHA256"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "self 256-bit ecdh key",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"description": "Invalid prf_name",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "MD5",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": {
+		"description": "Invalid prf_name",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA1",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"description": "Invalid prf_name",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SM3",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"description": "Invalid label",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "invalid lbl",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 6": {
+		"description": "Invalid label - `trafic` instead of `traffic`",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c hs trafic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 7": {
+		"description": [
+			"Invalid label - `trafficc` instead of `traffic`"
+		],
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c hs trafficc",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 8": {
+		"description": "No input key and deriving handshake secret",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 9": {
+		"description": "No input key and deriving master secret",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c ap trafficc",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": {
+		"description": "No input key and no PSK",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": {
+		"description": "Invalid version for TLS1.3 API",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"version": 1,
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 12": {
+		"description": "Invalid version for TLS1.3 label expansion",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"version": 1,
+			"length": 32,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+	},
+	"subtest 13": {
+		"description": "Length too large for TLS1.3 label expansion",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 300,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 14": {
+		"description": "Label too large for TLS1.3 label expansion",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": 300,
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 15": {
+		"description": "Context too large for TLS1.3 label expansion",
+		"command": "DERIVE",
+		"subsystem": "DEFAULT",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"0a8fbf8511ca8258cc31b27c8f909001",
+				"c8346fde247056c6f292d809689a65cd",
+				"35048f6c58851a70e2f905781a608863",
+				"5af3369ef67443a72c741115e70f7b55"
+			],
+			"length": 32,
+			"label": "c hs traffic",
+			"context": 300
+		},
+		"op_output": "output key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 16": {
+		"command": "DELETE",
+		"key_name": "self 256-bit ecdh key",
+		"depends": 1
+	}
+}

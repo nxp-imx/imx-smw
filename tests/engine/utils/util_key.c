@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <stdlib.h>
@@ -396,6 +396,10 @@ int util_key_update_node(struct llist *keys, const char *key_name,
 	data->identifier = key_data->identifier;
 
 	if (!data->identifier) {
+		/* Already has some stored data? Free it first. */
+		if (data->pub_key.data)
+			free(data->pub_key.data);
+
 		/*
 		 * Key is ephemeral. Save public key data to be able to use it
 		 * later

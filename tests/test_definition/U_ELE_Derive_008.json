@@ -1,0 +1,550 @@
+{
+	"keys": {
+		"ext binder key": {},
+		"res binder key": {},
+		"c e traffic key": {},
+		"e exp master key": {},
+		"c hs traffic key": {},
+		"s hs traffic key": {},
+		"c ap traffic key": {},
+		"s ap traffic key": {},
+		"exp master key": {},
+		"res master key": {},
+		"self 256-bit ecdh key": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_3"
+			]
+		},
+		"self 384-bit ecdh key": {
+			"type": "SECP_R1",
+			"security_size": 384,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_3"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "self 256-bit ecdh key",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "self 384-bit ecdh key",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 3": {
+		"description": [
+			"Derive `ext binder` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"length": 32,
+			"label": "ext binder",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "ext binder key",
+		"depends": 1
+	},
+	"subtest 4": {
+		"description": [
+			"Derive `res binder` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"length": 32,
+			"label": "res binder",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "res binder key",
+		"depends": 1
+	},
+	"subtest 5": {
+		"description": [
+			"Derive `c e traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"length": 32,
+			"label": "c e traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "c e traffic key",
+		"depends": 1
+	},
+	"subtest 6": {
+		"description": [
+			"Derive `e exp master` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"length": 32,
+			"label": "e exp master",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "e exp master key",
+		"depends": 1
+	},
+	"subtest 7": {
+		"description": [
+			"Derive `c hs traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
+			],
+			"length": 32,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "c hs traffic key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1
+	},
+	"subtest 8": {
+		"description": [
+			"Derive `s hs traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
+			],
+			"length": 32,
+			"label": "s hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "s hs traffic key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1
+	},
+	"subtest 9": {
+		"description": [
+			"Derive `c ap traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
+			],
+			"length": 32,
+			"label": "c ap traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "c ap traffic key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1
+	},
+	"subtest 10": {
+		"description": [
+			"Derive `s ap traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
+			],
+			"length": 32,
+			"label": "s ap traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "s ap traffic key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1
+	},
+	"subtest 11": {
+		"description": [
+			"Derive `exp master` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
+			],
+			"length": 32,
+			"label": "exp master",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "exp master key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1
+	},
+	"subtest 12": {
+		"description": [
+			"Derive `res master` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA256",
+			"peer_public_key": [
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
+			],
+			"length": 32,
+			"label": "res master",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "res master key",
+		"op_input": "self 256-bit ecdh key",
+		"depends": 1
+	},
+	"subtest 13": {
+		"description": [
+			"Derive `ext binder` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"length": 48,
+			"label": "ext binder",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "ext binder key",
+		"depends": 2
+	},
+	"subtest 14": {
+		"description": [
+			"Derive `res binder` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"length": 48,
+			"label": "res binder",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "res binder key",
+		"depends": 2
+	},
+	"subtest 15": {
+		"description": [
+			"Derive `c e traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"length": 48,
+			"label": "c e traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "c e traffic key",
+		"depends": 2
+	},
+	"subtest 16": {
+		"description": [
+			"Derive `e exp master` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"length": 48,
+			"label": "e exp master",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "e exp master key",
+		"depends": 2
+	},
+	"subtest 17": {
+		"description": [
+			"Derive `c hs traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			],
+			"length": 48,
+			"label": "c hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "c hs traffic key",
+		"op_input": "self 384-bit ecdh key",
+		"depends": 2
+	},
+	"subtest 18": {
+		"description": [
+			"Derive `s hs traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			],
+			"length": 48,
+			"label": "s hs traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "s hs traffic key",
+		"op_input": "self 384-bit ecdh key",
+		"depends": 2
+	},
+	"subtest 19": {
+		"description": [
+			"Derive `c ap traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			],
+			"length": 48,
+			"label": "c ap traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "c ap traffic key",
+		"op_input": "self 384-bit ecdh key",
+		"depends": 2
+	},
+	"subtest 20": {
+		"description": [
+			"Derive `s ap traffic` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			],
+			"length": 48,
+			"label": "s ap traffic",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "s ap traffic key",
+		"op_input": "self 384-bit ecdh key",
+		"depends": 2
+	},
+	"subtest 21": {
+		"description": [
+			"Derive `exp master` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			],
+			"length": 48,
+			"label": "exp master",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "exp master key",
+		"op_input": "self 384-bit ecdh key",
+		"depends": 2
+	},
+	"subtest 22": {
+		"description": [
+			"Derive `res master` using TLS1.3 API"
+		],
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "TLS13_KEY_EXCHANGE",
+		"op_args": {
+			"prf_name": "SHA384",
+			"peer_public_key": [
+				"856277b7c97e7344447fa6611bcb257f",
+				"0410a4720a0c850256d35cc8853331db",
+				"20658e0055afaf32f6286111ba025b25",
+				"230f75fc9adc273d5c244590dd45dc6b",
+				"b64faca0f30a91bb9f4dc99a99af21a3",
+				"f484aec5acfd2b03f1afe811eb75d61f"
+			],
+			"length": 48,
+			"label": "res master",
+			"context": [
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10",
+				"0102030405060708090a0b0c0d0e0f10"
+			]
+		},
+		"op_output": "res master key",
+		"op_input": "self 384-bit ecdh key",
+		"depends": 2
+	},
+	"subtest 23": {
+		"command": "DELETE",
+		"key_name": "self 384-bit ecdh key",
+		"depends": 2
+	},
+	"subtest 24": {
+		"command": "DELETE",
+		"key_name": "self 256-bit ecdh key",
+		"depends": 1
+	}
+}

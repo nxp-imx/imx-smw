@@ -7,6 +7,9 @@ file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}_*.json)
 # These tests depend on TLS feature support
 if(NOT ENABLE_TLS)
 	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_005.json)
+	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_006.json)
+	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_007.json)
+	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_008.json)
 endif()
 
 # Remove failing test due to ELE Library or FW issues

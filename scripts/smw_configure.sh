@@ -182,7 +182,7 @@ fi
 
 # Enable TLS features if supported
 if [[ ${opt_tls} -eq 1 ]]; then
-    conf_opts="${conf_opts} tls12"
+    conf_opts="${conf_opts} tls"
 fi
 
 # Enable optee

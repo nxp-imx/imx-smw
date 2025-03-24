@@ -12,7 +12,7 @@ opt_buildtype="-DCMAKE_BUILD_TYPE=Release"
 opt_verbose="-DVERBOSE=0"
 opt_format="-DFORMAT=html"
 opt_psa="-DENABLE_PSA_DEFAULT_ALT=OFF"
-opt_tls12="-DENABLE_TLS12=OFF"
+opt_tls="-DENABLE_TLS=OFF"
 opt_cmake_ver="3.13"
 
 #
@@ -310,7 +310,7 @@ function configure()
     cmd_script="${cmd_script} ${opt_libuuid_config} ${opt_teec} ${opt_tadevkit}"
     cmd_script="${cmd_script} ${opt_jsonc} ${opt_psaarchtests}"
     cmd_script="${cmd_script} ${opt_psa}"
-    cmd_script="${cmd_script} ${opt_tls12}"
+    cmd_script="${cmd_script} ${opt_tls}"
     cmd_script="${cmd_script} ${opt_libsqlite}"
 
     printf "Execute %s\n" "${cmd_script}"
@@ -617,7 +617,7 @@ function usage_configure()
     printf "    psaarchtests = psa-arch-tests sources directory\n"
     printf "  To enable library option off by default\n"
     printf "    all_options     = [optional] Enable all options described below\n"
-    printf "    tls12           = [optional] Enable TLS1.2\n"
+    printf "    tls             = [optional] Enable TLS\n"
     printf "    psa_default_alt = [optional] Enable PSA interface\n"
     printf "\n"
 }
@@ -848,13 +848,13 @@ do
             opt_psa="-DENABLE_PSA_DEFAULT_ALT=ON"
             ;;
 
-        tls12)
-            opt_tls12="-DENABLE_TLS12=ON"
+        tls)
+            opt_tls="-DENABLE_TLS=ON"
             ;;
 
         all_options)
             opt_psa="-DENABLE_PSA_DEFAULT_ALT=ON"
-            opt_tls12="-DENABLE_TLS12=ON"
+            opt_tls="-DENABLE_TLS=ON"
             ;;
 
         #

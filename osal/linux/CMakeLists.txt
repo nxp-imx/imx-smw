@@ -67,7 +67,7 @@ macro(make_smw_conf)
   if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Seco)
     set(CONFIG_FILE "${SMW_CONFIG_FILES_INSTALL}/seco_config.txt")
 
-    if (ENABLE_TLS12)
+    if (ENABLE_TLS)
       install(FILES ${SMW_CONFIG_FILES_DIR}/seco_with_hmac_tls12_config.txt
               DESTINATION ${SMW_CONFIG_FILES_INSTALL}
               RENAME seco_config.txt)

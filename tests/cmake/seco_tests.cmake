@@ -4,7 +4,7 @@ set(CMD ${TEST_CMD})
 # Get all test definition files
 file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}_*.json)
 
-if(ENABLE_TLS12)
+if(ENABLE_TLS)
 	list(APPEND REM_TESTS_LIST U_SECO_TLS_001.json)
 	list(APPEND REM_TESTS_LIST U_SECO_Generate_002.json)
 else()

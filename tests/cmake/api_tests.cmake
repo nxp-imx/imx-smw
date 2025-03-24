@@ -7,7 +7,7 @@ file(GLOB CFG_FILES ${SMW_CONFIG_SRC_DIR}/config_*.txt)
 file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}*.json)
 
 # These tests depend on TLS feature support
-if(NOT ENABLE_TLS12)
+if(NOT ENABLE_TLS)
   list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Derive_004.json)
 endif()
 

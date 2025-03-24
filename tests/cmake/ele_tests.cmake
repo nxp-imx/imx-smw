@@ -5,7 +5,7 @@ set(CMD ${TEST_CMD})
 file(GLOB TESTS ${TEST_DEF_SRC_DIR}/*_${GROUP}_*.json)
 
 # These tests depend on TLS feature support
-if(NOT ENABLE_TLS12)
+if(NOT ENABLE_TLS)
 	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_005.json)
 endif()
 

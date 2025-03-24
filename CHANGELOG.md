@@ -61,6 +61,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Fix the ed25519 key security size to be 255 bits.
 * TEE: Improve object storage management.
 * SECO: Fix coverity finding.
+* ELE: Add support for TLS1.3 KDF.
 
 ##### 3. ARM PSA APIs
 
@@ -80,6 +81,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix TEE ed25519 key security size in the tests.
 * Validate hash multipart when input is a multiple of block.
 * Add subtests in U_API_Derive_004 to verify the management of the arguments version.
+* ELE tests: Add tests to validate TLS1.3 operations: U_API_Derive_005, U_ELE_Derive_006, U_ELE_Derive_007, U_ELE_Derive_008.
 
 #### PKCS#11 Library - _version 5.0_
 

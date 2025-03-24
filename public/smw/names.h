@@ -488,6 +488,7 @@ typedef enum {
  * * SMW_KDF_NAME_TLS12_KEY_EXCHANGE: TLS 1.2 Key Exchange
  * * SMW_KDF_NAME_ECDH: ECDH Key Exchange
  * * SMW_KDF_NAME_TLS12_OP_KEY_EXCHANGE: TLS 1.2 "Operation-based" Key Exchange
+ * * SMW_KDF_NAME_TLS13_KEY_EXCHANGE: TLS 1.3 Key Exchange
  * * SMW_KDF_NAME_NB: Number of Key Derivation Functions
  */
 typedef enum {
@@ -498,6 +499,7 @@ typedef enum {
 	SMW_KDF_NAME_TLS12_KEY_EXCHANGE,
 	SMW_KDF_NAME_ECDH,
 	SMW_KDF_NAME_TLS12_OP_KEY_EXCHANGE,
+	SMW_KDF_NAME_TLS13_KEY_EXCHANGE,
 	SMW_KDF_NAME_NB
 } smw_kdf_t;
 

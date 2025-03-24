@@ -11,6 +11,7 @@
 #include "smw_status.h"
 #include "smw/attr.h"
 #include "smw/names.h"
+#include "smw/tls.h"
 
 /*
  * Define the NXP and NXP's EdgeLock 2GO key/data storage identifier
@@ -394,6 +395,43 @@ struct smw_kdf_tls12_op_args {
 		struct smw_kdf_tls12_master_secret_args master_secret;
 		struct smw_kdf_tls12_key_expansion_args key_expansion;
 	};
+};
+
+/**
+ * struct smw_kdf_tls13_args - TLS1.3 KDF arguments structure
+ * @version: [in] Version of this structure.
+ * @psk: [in, optional] The Pre-Shared Key to use for Early Secret derivation.
+ *       See &struct smw_key_descriptor
+ * @prf_name: [in] Name of the Pseudo-Random Function (PRF).
+ *            See &typedef smw_hash_algo_t
+ * @peer_public_buffer: [in] Peer public buffer
+ * @peer_public_buffer_length: [in] @peer_public_buffer length in bytes
+ * @expanded_label: [in] The expanded label to use for the TLS1.3 "Derived-Secret" function.
+ * @expanded_label_length: [in] @expanded_label length in bytes
+ *
+ * The @expand_label must be a buffer that contains the output of TLS1.3's
+ * "HKDF-Expand_label". @smw_tls13_expand_label() is a helper function you may
+ * use to compute the expanded label, from the input label and context data
+ * (the context is usually the Transcript Hash).
+ *
+ * The value of the input label controls which actual secrets get derived, e.g.:
+ *
+ * * "ext binder" -> binder_key
+ *
+ * * "c hs traffic" -> client_handshake_traffic_secret
+ *
+ * * "c ap traffic" -> client_application_traffic_secret_0
+ *
+ * Please refer to RFC 8446, section 7.1, to see the possible values for the label.
+ */
+struct smw_kdf_tls13_args {
+	unsigned char version;
+	struct smw_key_descriptor *psk;
+	smw_hash_algo_t prf_name;
+	unsigned char *peer_public_buffer;
+	unsigned int peer_public_buffer_length;
+	unsigned char *expanded_label;
+	unsigned int expanded_label_length;
 };
 
 /**

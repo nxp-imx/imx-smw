@@ -215,6 +215,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_ALGO_HKDF_EXTRACT: HMAC-based Key Derivation Function Extract step.
  * - SMW_ATTR_ALGO_HKDF_EXPAND: HMAC-based Key Derivation Function Expand step.
  * - SMW_ATTR_ALGO_TLS_1_2: Transport Layer Security 1.2.
+ * - SMW_ATTR_ALGO_TLS_1_3: Transport Layer Security 1.3.
  * - SMW_ATTR_ALGO_HASH: Hash.
  */
 #define SMW_ATTR_ALGO_DEFAULT	   0x00
@@ -236,6 +237,7 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_ALGO_HKDF_EXTRACT 0x0F
 #define SMW_ATTR_ALGO_HKDF_EXPAND  0x10
 #define SMW_ATTR_ALGO_TLS_1_2	   0x1F
+#define SMW_ATTR_ALGO_TLS_1_3	   0x20
 #define SMW_ATTR_ALGO_HASH	   0xFF
 
 /**
@@ -962,6 +964,19 @@ typedef uint32_t smw_attr_storage_id_t;
  */
 #define SMW_ATTR_ALGO_KEY_DERIVATION_TLS12(hash)                               \
 	(SMW_ATTR_NAME(CLASS, KEY_DERIVATION) | SMW_ATTR_NAME(ALGO, TLS_1_2) | \
+	 SMW_ATTR_VALUE(HASH, hash))
+
+/**
+ * SMW_ATTR_ALGO_KEY_DERIVATION_TLS13() - Build the TLS 1.3 derivation algorithm.
+ * @hash: A valid hash algorithm. See smw_attr_algo_t.
+ *
+ * This macro builds the TLS 1.3 key derivation algorithm.
+ *
+ * Return:
+ * TLS 1.3 key derivation algorithm.
+ */
+#define SMW_ATTR_ALGO_KEY_DERIVATION_TLS13(hash)                               \
+	(SMW_ATTR_NAME(CLASS, KEY_DERIVATION) | SMW_ATTR_NAME(ALGO, TLS_1_3) | \
 	 SMW_ATTR_VALUE(HASH, hash))
 
 /**

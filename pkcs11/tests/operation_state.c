@@ -1153,7 +1153,7 @@ static int operation_state_sign_verify_rsa_pss(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	pss_params.hashAlg = CKM_SHA384;
-	pss_params.sLen = 100;
+	pss_params.sLen = 48;
 	sign_verify_mech.pParameter = &pss_params;
 	sign_verify_mech.ulParameterLen = sizeof(pss_params);
 

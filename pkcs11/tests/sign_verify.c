@@ -803,7 +803,7 @@ static int sign_verify_rsa_pss(CK_FUNCTION_LIST_PTR pfunc)
 	sign_verify_mech.pParameter = &pss_params;
 	sign_verify_mech.ulParameterLen = sizeof(pss_params);
 	pss_params.hashAlg = CKM_SHA384;
-	pss_params.sLen = 100;
+	pss_params.sLen = 48;
 
 	TEST_OUT("Generate RSA Keypair\n");
 	ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,

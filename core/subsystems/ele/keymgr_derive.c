@@ -35,6 +35,15 @@ __weak int derive_tls12_op(struct hdl *hdl,
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
+__weak int derive_tls13(struct hdl *hdl,
+			struct smw_keymgr_derive_key_args *args)
+{
+	(void)hdl;
+	(void)args;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
 int ele_derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -50,6 +59,10 @@ int ele_derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 
 	case SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE:
 		status = derive_tls12_op(hdl, args);
+		break;
+
+	case SMW_CONFIG_KDF_ID_TLS13_KEY_EXCHANGE:
+		status = derive_tls13(hdl, args);
 		break;
 
 	case SMW_CONFIG_KDF_ID_HKDF:

@@ -193,8 +193,8 @@ static void get_key_privacy_by_ele_type(unsigned int key_type,
 		*privacy = SMW_KEYMGR_PRIVACY_ID_PUBLIC;
 }
 
-static int get_full_ele_key_type(enum smw_config_key_type_id key_type_id,
-				 hsm_key_type_t *ele_key_type)
+int ele_get_key_type(enum smw_config_key_type_id key_type_id,
+		     hsm_key_type_t *ele_key_type)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
@@ -735,8 +735,7 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = get_full_ele_key_type(key_identifier->type_id,
-				       &op_args.key_type);
+	status = ele_get_key_type(key_identifier->type_id, &op_args.key_type);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

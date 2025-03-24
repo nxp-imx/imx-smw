@@ -334,9 +334,9 @@ and supported by the SMW Library.
 </table>
 
 <p>
-<a name="t_note_1"><sup>1</sup></a> Require specific SECO Firmware (TLS 1.2 + HMAC). Build option ENABLE_TLS12 must be set ON<br>
-<a name="t_note_2"><sup>3</sup></a> Do nothing, returns always success.<br>
-<a name="t_note_3"><sup>4</sup></a> Retrieve only information from SMW object database.<br>
+<a name="t_note_1"><sup>1</sup></a> Require specific SECO Firmware (TLS 1.2 + HMAC). Build option ENABLE_TLS must be set ON.<br>
+<a name="t_note_2"><sup>2</sup></a> Do nothing, returns always success.<br>
+<a name="t_note_3"><sup>3</sup></a> Retrieve only information from SMW object database.<br>
 </p>
 
 Following <a href="#table-certificate">Certificates table</a> lists the certificate types supported by SMW, PKCS#11 and PSA libraries.

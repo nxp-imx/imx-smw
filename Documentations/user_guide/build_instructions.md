@@ -593,8 +593,9 @@ The default option value is in **bold**.
 	Default is ON (enable).</td>
 	<td></td>
 <tr>
-  <td>-DENABLE_TLS12=[ON|<b>OFF</b>]</td>
-  <td>Enable/disable the support of TLS 1.2 key derivation features.
+  <td>-DENABLE_TLS=[ON|<b>OFF</b>]</td>
+  <td>Enable/disable the support of TLS key derivation features.
+  This covers TLS 1.2 and TLS 1.3, depending on subsystem support.
 	Default is OFF (disable).</td>
 	<td></td>
 </tr>

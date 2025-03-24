@@ -119,6 +119,12 @@ struct smw_keymgr_tls12_args {
 	};
 };
 
+struct smw_keymgr_tls13_args {
+	enum smw_config_hash_algo_id prf_id;
+	struct smw_keymgr_descriptor psk;
+	struct smw_kdf_tls13_args *pub_args;
+};
+
 struct smw_keymgr_hkdf_args {
 	enum smw_config_hash_algo_id prf_id;
 	struct smw_kdf_hkdf_args *pub_args;
@@ -498,5 +504,16 @@ smw_keymgr_get_peer_pub_buffer(struct smw_keymgr_derive_key_args *args);
  */
 unsigned int
 smw_keymgr_get_peer_pub_buffer_len(struct smw_keymgr_derive_key_args *args);
+
+/**
+ * smw_keymgr_tls13_get_psk() - Get pre-shared key descriptor
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Address of pre-shared key descriptor
+ * NULL
+ */
+struct smw_keymgr_descriptor *
+smw_keymgr_tls13_get_psk(struct smw_keymgr_derive_key_args *args);
 
 #endif /* __KEYMGR_DERIVE_H__ */

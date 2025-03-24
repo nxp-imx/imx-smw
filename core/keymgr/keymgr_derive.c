@@ -216,6 +216,51 @@ end:
 	return status;
 }
 
+static int tls13_validate_key_base(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls13_args *tls_args = args->kdf_args;
+	struct smw_keymgr_identifier *identifier = &args->key_base.identifier;
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	if (!tls_args)
+		goto end;
+
+	/* Some TLS1.3 secrets don't need a base key */
+	if (!args->key_base.pub) {
+		status = SMW_STATUS_OK;
+		goto end;
+	}
+
+	switch (identifier->type_id) {
+	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER:
+	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_DERIVE:
+		break;
+
+	default:
+		SMW_DBG_PRINTF(DEBUG, "Invalid key base (%d)\n",
+			       identifier->type_id);
+		goto end;
+	}
+
+	status = smw_keymgr_get_privacy_id(identifier->type_id,
+					   &identifier->privacy_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	/*
+	 * Base key must be either already registered or
+	 * key public/private buffer must be set.
+	 */
+	status = check_key_definition(&args->key_base,
+				      args->key_base.identifier.privacy_id);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	return status;
+}
+
 /**
  * tsl12_get_encryption_id() - Get ID of TLS 1.2 cipher encryption name
  * @name: Cipher encryption name
@@ -516,7 +561,7 @@ static int tls12_convert_args(struct smw_derive_key_args *pub_args,
 
 end:
 	if (status != SMW_STATUS_OK && tls_args)
-		free(tls_args);
+		SMW_UTILS_FREE(tls_args);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
@@ -586,6 +631,38 @@ static int tls12_convert_output(struct smw_derive_key_args *args,
 
 	key_desc = &conv_args->key_derived;
 	status = smw_keymgr_convert_derived_key_desc(key_out, key_desc);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	return status;
+}
+
+/**
+ * tls13_convert_output() - Convert TLS 1.3 output arguments
+ * @args: Input API additional argument
+ * @conv_args: Converted arguments
+ *
+ * SMW_STATUS_OK                     - Success
+ * SMW_STATUS_INVALID_PARAM          - Invalid function parameter
+ * SMW_STATUS_UNKNOWN_KEY_TYPE_NAME  - Unknown key type name
+ * SMW_STATUS_UNKNOWN_FORMAT_NAME    - Unknown key format name
+ */
+static int tls13_convert_output(struct smw_derive_key_args *args,
+				struct smw_keymgr_derive_key_args *conv_args)
+
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct smw_derived_key_descriptor *key_derived = NULL;
+
+	key_derived = args->key_descriptor_derived;
+
+	if (key_derived->id)
+		goto end;
+
+	status = smw_keymgr_convert_derived_key_desc(key_derived,
+						     &conv_args->key_derived);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -720,6 +797,10 @@ static int convert_output_args(struct smw_derive_key_args *args,
 		status = ecdh_convert_output(args, conv_args);
 		break;
 
+	case SMW_CONFIG_KDF_ID_TLS13_KEY_EXCHANGE:
+		status = tls13_convert_output(args, conv_args);
+		break;
+
 	default:
 		break;
 	}
@@ -762,23 +843,33 @@ static bool is_hkdf_extract_step(struct smw_keymgr_hkdf_args *args)
  * SMW_STATUS_OK                - Success
  * SMW_STATUS_OPS_INVALID       - OSAL operation invalid
  * SMW_STATUS_KEY_DB_CREATE     - Key creation error
+ * SMW_STATUS_INVALID_PARAM     - One of the parameters is invalid
  */
 static int create_key_in_db(unsigned int *new_id,
 			    struct smw_keymgr_derive_key_args *derive_key_args)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_keymgr_identifier *identifier =
 		&derive_key_args->key_derived.identifier;
 
-	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF ||
-	    derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXPAND) {
+	switch (derive_key_args->kdf_id) {
+	case SMW_CONFIG_KDF_ID_HKDF:
+	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
 		if (!is_hkdf_extract_step(derive_key_args->kdf_args))
 			status = smw_keymgr_db_create(new_id, identifier);
-	} else if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_ECDH ||
-		   derive_key_args->kdf_id ==
-			   SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE) {
+		else
+			status = SMW_STATUS_OK;
+		break;
+
+	case SMW_CONFIG_KDF_ID_ECDH:
+	case SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE:
+	case SMW_CONFIG_KDF_ID_TLS13_KEY_EXCHANGE:
 		status = smw_keymgr_db_create(new_id, identifier);
+		break;
+
+	default:
+		break;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1596,6 +1687,112 @@ smw_keymgr_tls12_get_server_random_length(struct smw_keymgr_tls12_args *args)
 }
 
 /**
+ * smw_keymgr_tls13_get_peer_len() - Get peer public key buffer length
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Length of peer public key buffer
+ */
+static unsigned int
+smw_keymgr_tls13_get_peer_len(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls13_args *tls13_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	tls13_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(tls13_args->pub_args);
+
+	return tls13_args->pub_args->peer_public_buffer_length;
+}
+
+/**
+ * smw_keymgr_tls13_get_peer_buffer() - Get peer public key buffer address
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Address of peer public key buffer
+ */
+static unsigned char *
+smw_keymgr_tls13_get_peer_buffer(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls13_args *tls13_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	tls13_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(tls13_args->pub_args);
+
+	return tls13_args->pub_args->peer_public_buffer;
+}
+
+/**
+ * smw_keymgr_tls13_get_expanded_label_len() - Get expanded label buffer length
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Expanded label buffer length
+ * 0
+ */
+static unsigned int
+smw_keymgr_tls13_get_expanded_label_len(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls13_args *tls13_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	tls13_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(tls13_args->pub_args);
+
+	return tls13_args->pub_args->expanded_label_length;
+}
+
+/**
+ * smw_keymgr_tls13_get_expanded_label() - Get expanded label buffer address
+ * @args: Pointer to internal argument structure
+ *
+ * Return:
+ * address of expanded label buffer
+ * NULL
+ */
+static unsigned char *
+smw_keymgr_tls13_get_expanded_label(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls13_args *tls13_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	tls13_args = args->kdf_args;
+
+	SMW_DBG_ASSERT(tls13_args->pub_args);
+
+	return tls13_args->pub_args->expanded_label;
+}
+
+/**
+ * smw_keymgr_tls13_get_psk() - Get pre-shared key descriptor
+ * @args: Pointer to internal argument structure
+ *
+ * Return:
+ * address of pre-shared key descriptor
+ * NULL
+ */
+struct smw_keymgr_descriptor *
+smw_keymgr_tls13_get_psk(struct smw_keymgr_derive_key_args *args)
+{
+	struct smw_keymgr_tls13_args *tls13_args = NULL;
+
+	SMW_DBG_ASSERT(args && args->kdf_args);
+
+	tls13_args = args->kdf_args;
+
+	return &tls13_args->psk;
+}
+
+/**
  * hkdf_convert_input_args() - Convert additional operation arguments for HKDF
  * @pub_args: Pointer to public derive key arguments structure
  * @conv_args: Pointer to internal derive key arguments structure
@@ -1689,7 +1886,7 @@ static int hkdf_convert_input_args(struct smw_derive_key_args *pub_args,
 
 end:
 	if (status != SMW_STATUS_OK && hkdf_args)
-		free(hkdf_args);
+		SMW_UTILS_FREE(hkdf_args);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
@@ -1882,7 +2079,68 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 
 end:
 	if (status != SMW_STATUS_OK && tls_args)
-		free(tls_args);
+		SMW_UTILS_FREE(tls_args);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	return status;
+}
+
+static int
+tls13_convert_input_args(struct smw_derive_key_args *pub_args,
+			 struct smw_keymgr_derive_key_args *conv_args,
+			 enum subsystem_id *subsystem_id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	struct smw_keymgr_tls13_args *tls_args = NULL;
+	struct smw_kdf_tls13_args *args = pub_args->kdf_arguments;
+	struct smw_key_descriptor *base = pub_args->key_descriptor_base;
+
+	if (!args)
+		goto end;
+
+	if (!args->expanded_label || !args->expanded_label_length)
+		goto end;
+
+	if (base) {
+		status = smw_keymgr_convert_descriptor(base,
+						       &conv_args->key_base,
+						       false, subsystem_id);
+		if (status != SMW_STATUS_OK)
+			return status;
+	}
+
+	tls_args = SMW_UTILS_CALLOC(1, sizeof(*tls_args));
+	if (!tls_args) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+
+	if (args->psk) {
+		status =
+			smw_keymgr_convert_descriptor(args->psk, &tls_args->psk,
+						      false, subsystem_id);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
+
+	status = get_prf_id(args->prf_name, &tls_args->prf_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	tls_args->pub_args = args;
+	conv_args->kdf_args = tls_args;
+
+	conv_args->ops.get_info = smw_keymgr_tls13_get_expanded_label;
+	conv_args->ops.get_info_len = smw_keymgr_tls13_get_expanded_label_len;
+	conv_args->ops.get_peer = smw_keymgr_tls13_get_peer_buffer;
+	conv_args->ops.get_peer_len = smw_keymgr_tls13_get_peer_len;
+
+	SMW_DBG_PRINTF(DEBUG, "KDF Input %p\n", args);
+
+end:
+	if (status != SMW_STATUS_OK && tls_args)
+		SMW_UTILS_FREE(tls_args);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
@@ -1930,6 +2188,15 @@ static int convert_input_args(struct smw_derive_key_args *args,
 
 		if (status == SMW_STATUS_OK)
 			status = tls12_validate_key_base(conv_args);
+
+		break;
+
+	case SMW_CONFIG_KDF_ID_TLS13_KEY_EXCHANGE:
+		status =
+			tls13_convert_input_args(args, conv_args, subsystem_id);
+
+		if (status == SMW_STATUS_OK)
+			status = tls13_validate_key_base(conv_args);
 
 		break;
 
@@ -2029,8 +2296,13 @@ enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 
 	SMW_DBG_TRACE_API_CALL;
 
-	if (!args || !args->key_descriptor_base ||
-	    !args->key_descriptor_derived) {
+	if (!args || !args->key_descriptor_derived) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	if (args->kdf_name != SMW_KDF_NAME_TLS13_KEY_EXCHANGE &&
+	    !args->key_descriptor_base) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
@@ -2053,8 +2325,83 @@ enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 
 end:
 	if (derive_key_args.kdf_args)
-		free(derive_key_args.kdf_args);
+		SMW_UTILS_FREE(derive_key_args.kdf_args);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+enum smw_status_code
+smw_tls13_expand_label(struct smw_tls13_expand_label_args *args)
+{
+	unsigned char *p = NULL;
+	unsigned int length = 0;
+	unsigned int expanded_label_length = 0;
+
+	if (!args)
+		return SMW_STATUS_INVALID_PARAM;
+
+	if (args->version != 0)
+		return SMW_STATUS_VERSION_NOT_SUPPORTED;
+
+	/* Mandatory parameters */
+	if (!args->length || !args->label || !args->label_length)
+		return SMW_STATUS_INVALID_PARAM;
+
+	/* Context is optional; but if length is specified, it should be valid */
+	if (args->context_length && !args->context)
+		return SMW_STATUS_INVALID_PARAM;
+
+	/* These should fit in 1 byte each */
+	if (args->length > UCHAR_MAX ||
+	    args->label_length > (UCHAR_MAX - SMW_TLS13_PREFIX_LENGTH) ||
+	    args->context_length > UCHAR_MAX)
+		return SMW_STATUS_INVALID_PARAM;
+
+	/*
+	 * Check if the expanded_label_length is large enough to fit the input data.
+	 *
+	 * Final expanded_label is composed of:
+	 * - 2 bytes: args->length as uint16_t
+	 * - 1 byte: prefix_length (6) + args->label_length
+	 * - 6 bytes: the prefix ("tls13 ")
+	 * - `args->label_length` bytes: the input args->label
+	 * - 1 byte: args->context_length
+	 * - `args->context_length` bytes: the input args->context
+	 *
+	 * An example: if `label` is "c hs traffic" and the context is 32 bytes long,
+	 * length = 2 + 1 + 6 + 12 + 1 + 32 = 54 bytes.
+	 */
+	length = SMW_TLS13_EXPANDED_LABEL_LENGTH(args);
+
+	if (!args->expanded_label || args->expanded_label_length < length) {
+		args->expanded_label_length = length;
+		return SMW_STATUS_OUTPUT_TOO_SHORT;
+	}
+
+	p = args->expanded_label;
+
+	*p++ = 0;
+	*p++ = (unsigned char)(args->length & 0xff);
+
+	*p++ = (unsigned char)((SMW_TLS13_PREFIX_LENGTH + args->label_length) &
+			       0xff);
+	SMW_UTILS_MEMCPY(p, SMW_TLS13_PREFIX, SMW_TLS13_PREFIX_LENGTH);
+	p += SMW_TLS13_PREFIX_LENGTH;
+	SMW_UTILS_MEMCPY(p, args->label, args->label_length);
+	p += args->label_length;
+
+	*p++ = (unsigned char)(args->context_length & 0xff);
+	if (args->context_length) {
+		SMW_UTILS_MEMCPY(p, args->context, args->context_length);
+		p += args->context_length;
+	}
+
+	if (SUB_OVERFLOW((uintptr_t)p, (uintptr_t)args->expanded_label,
+			 &expanded_label_length))
+		return SMW_STATUS_INVALID_PARAM;
+
+	args->expanded_label_length = expanded_label_length;
+
+	return SMW_STATUS_OK;
 }

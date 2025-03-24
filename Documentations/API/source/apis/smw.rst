@@ -12,6 +12,7 @@ SMW APIs
    smw/keymgr
    smw/device
    smw/storage
+   smw/tls
    smw/status
    smw/attr
    smw/names

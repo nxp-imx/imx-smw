@@ -770,4 +770,46 @@ Only ECDH(E) key exchange is supported, and the following ciphersuites:
    | SMW_TLS12_ENC_NAME_CHACHA20_POLY1305 | ECDHE-ECDSA-CHACHA20-POLY1305 |
    +--------------------------------------+-------------------------------+
 
+- TLS 1.3 (TLS13-KDF)
+
+The early secret, ECDH shared secret, handshake secret and master secret are
+computed internally and not exported. The subsystem supports derivation of the following
+TLS1.3 secrets:
+
+.. table:: ELE TLS1.3 secrets
+   :name: ele_tls13_secrets
+   :align: center
+   :class: wrap-table
+
+   +-------------------------------------+------------------------------------+
+   | **TLS1.3 secret name**              | **Label without null termination** |
+   +=====================================+====================================+
+   | Binder key                          | "ext binder" or "res binder"       |
+   +-------------------------------------+------------------------------------+
+   | Client early traffic secret         | "c e traffic"                      |
+   +-------------------------------------+------------------------------------+
+   | Early exporter master secret        | "e exp master"                     |
+   +-------------------------------------+------------------------------------+
+   | Client handshake traffic secret     | "c hs traffic"                     |
+   +-------------------------------------+------------------------------------+
+   | Server handshake traffic secret     | "s hs traffic"                     |
+   +-------------------------------------+------------------------------------+
+   | Client application traffic secret 0 | "c ap traffic"                     |
+   +-------------------------------------+------------------------------------+
+   | Server application traffic secret 0 | "s ap traffic"                     |
+   +-------------------------------------+------------------------------------+
+   | Exporter master secret              | "exp master"                       |
+   +-------------------------------------+------------------------------------+
+   | Resumption master secret            | "res master"                       |
+   +-------------------------------------+------------------------------------+
+
+After the required secret is computed, the TLS1.3 API may be used to
+further derive other keys and IVs, as required by `RFC 8446 <https://www.rfc-editor.org/rfc/rfc8446/>`_.
+
+Any keys that are derived from these secrets need to have the proper attributes
+set before doing the derivation. For example, from "s hs traffic", you may
+derive an AES-128-GCM key to decrypt data and an HMAC-256 key to compute
+the Finished data. In both cases, the key type, size, algorithm and usage
+need to be set for the derived key.
+
 .. Note:: Only supported on i.MX91 and i.MX93

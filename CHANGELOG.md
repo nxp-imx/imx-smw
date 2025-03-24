@@ -68,6 +68,7 @@ The failure is due to the storage manager which is already loaded and a new inst
     - smw_get_key_attributes()
     - smw_derive_key()
     - smw_import_key()
+* Add a new status code `SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED`.
 
 ##### 2. Subsystems
 
@@ -81,6 +82,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Handle EDDSA additional parameters and signature message hashed flag.
 * SECO: Fix coverity finding.
 * SECO: Handle signature message hashed flag.
+* ELE: Add support for signature generation using plaintext private key buffer.
 
 ##### 3. ARM PSA APIs
 
@@ -107,6 +109,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   U_ELE_Derive_006, U_ELE_Derive_007, U_ELE_Derive_008.
 * Remove "DEFAULT" algorithm and introduce "MSG_HASHED" parameter.
 * Update U_API_Objects_002 to find key by permitted algo or usage.
+* Add tests to validate signature generation and verification using plaintext key buffer.
 
 #### PKCS#11 Library - _version 5.0_
 

@@ -235,10 +235,9 @@ Signature
    |                    |              |                          | - SHA384                |
    |                    |              |                          | - SHA512                |
    +--------------------+--------------+--------------------------+-------------------------+
-   | PURE_EDDSA         | ED25519      | 255                      | None (Message hashed    |
-   |                    |              |                          | or not)                 |
+   | PURE_EDDSA         | ED25519      | 255                      | None (Message)          |
    +--------------------+--------------+--------------------------+-------------------------+
-   | EDDSA_PH           | ED25519      | 255                      | None (pre-hashed)       |
+   | EDDSA_PH           | ED25519      | 255                      | None (Message or digest)|
    +--------------------+--------------+--------------------------+-------------------------+
 
 Operations supported:
@@ -265,7 +264,13 @@ The following key policies must defined:
     - RSA Signature, PKCS1 v1.5 and PSS with hash as listed
       in :numref:`ele_signature`. Not supported on i.MX8ULP
     - EDDSA Signature with hash or a message already hashed as listed
-      in :numref:`ele_signature`. Not supported on i.MX8ULP and i.MX95
+      in :numref:`ele_signature`. Not supported on i.MX8ULP, i.MX943 and i.MX95.
+
+  - ELE subsystem supports signature generation using either a key ID or a plaintext key buffer.
+    - Signature generation using plaintext key buffer:
+      - For an EC key pair (Secp R1 and Twisted edwards), private key buffer must be set.
+      - For RSA key pair, private key and modulus buffers must be set. ELE subsystem only supports RSA key pairs
+        with default public exponent of 0x010001.
 
 Verify operation
 """"""""""""""""
@@ -283,7 +288,16 @@ The following key policies must defined if a key identifier is used:
     - RSA PKCS1 v1.5 and PSS with hash as listed in :numref:`ele_signature`.
       Not supported on i.MX8ULP
     - EDDSA Signature with hash or a message already hashed as listed
-      in :numref:`ele_signature`. Not supported on i.MX8ULP and i.MX95
+      in :numref:`ele_signature`. Not supported on i.MX8ULP, i.MX943 and i.MX95.
+      Please note that the generated signature will be encoded in big-endian format.
+
+  - ELE subsystem supports signature verification using either a key ID or a plaintext key buffer.
+    - Signature verification using plaintext key buffer:
+      - For an EC key pair (Secp R1 and Twisted edwards), public key buffer must be set.
+      - For RSA key, public exponent and modulus buffer must be set. ELE subsystem only supports RSA key pairs
+        with default public exponent of 0x010001.
+      - For ED25519 key pair, the public key should be encoded in big-endian format.
+
 
 Random
 ^^^^^^

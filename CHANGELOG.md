@@ -49,19 +49,30 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library - _version 5.0_
 ##### 1. SMW APIs
 
-* Device manager returns the correct status code if the arguments version is not supported.
+* Device manager returns the correct status code if the arguments version is
+  not supported.
 * Fix SW implementation of the hash multipart when input is a multiple of block.
-* Key manager returns the correct status code if the arguments version is not supported.
-* The `ENABLE_TLS12` cmake option has been superseded by `ENABLE_TLS`. Likewise, the 'tls12' argument for the `smw_build.sh` script has been renamed to 'tls'.
+* Key manager returns the correct status code if the arguments version is
+  not supported.
+* The `ENABLE_TLS12` cmake option has been superseded by `ENABLE_TLS`.
+  Likewise, the 'tls12' argument for the `smw_build.sh` script has been
+  renamed to 'tls'.
+* Add additional parameters in the algorithm definition to manage EDDSA pure
+  prehashed, context key permitted algorithm.
+* Add additional parameters in the algorithm definition to manage signature
+  message input already hashed.
 
 ##### 2. Subsystems
 
 * ELE: Remove HKDF support. Secure Enclave doesn't support it anymore.
 * ELE: Remove TLS 1.2 plain text versus key ids output buffer flag.
+* ELE: Handle EDDSA additional parameters and signature message hashed flag.
+* ELE: Add support for TLS1.3 KDF.
 * TEE: Fix the ed25519 key security size to be 255 bits.
 * TEE: Improve object storage management.
+* TEE: Handle EDDSA additional parameters and signature message hashed flag.
 * SECO: Fix coverity finding.
-* ELE: Add support for TLS1.3 KDF.
+* SECO: Handle signature message hashed flag.
 
 ##### 3. ARM PSA APIs
 
@@ -80,8 +91,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE tests: Disable HKDF validation.
 * Fix TEE ed25519 key security size in the tests.
 * Validate hash multipart when input is a multiple of block.
-* Add subtests in U_API_Derive_004 to verify the management of the arguments version.
-* ELE tests: Add tests to validate TLS1.3 operations: U_API_Derive_005, U_ELE_Derive_006, U_ELE_Derive_007, U_ELE_Derive_008.
+* Add subtests in U_API_Derive_004 to verify the management of the
+  arguments version.
+* ELE tests: Add tests to validate TLS1.3 operations: U_API_Derive_005,
+  U_ELE_Derive_006, U_ELE_Derive_007, U_ELE_Derive_008.
+* Remove "DEFAULT" algorithm and introduce "MSG_HASHED" parameter.
 
 #### PKCS#11 Library - _version 5.0_
 

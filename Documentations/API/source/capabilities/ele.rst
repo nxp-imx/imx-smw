@@ -8,25 +8,25 @@ Key manager
    :align: center
    :class: wrap-table
 
-   +--------------+-----------------------------+--------------------+------+------+
-   | **Key type** | **Key security size(s)**    |         **Devices**              |
-   |              |                             +------+------+------+------+------+
-   |              |                             | 8ULP |  91  |  93  |  943 |  95  |
-   +==============+=============================+======+======+======+======+======+
-   | AES          | 128 / 192 / 256             |  X   |  X   |  X   |  X   |  X   |
-   +--------------+-----------------------------+------+------+------+------+------+
-   | Secp R1      | 224 / 256 / 384 / 521       |  X   |  X   |  X   |  X   |  X   |
-   +--------------+-----------------------------+------+------+------+------+------+
-   | Brainpool R1 | 224 / 256 / 384             |  X   |  X   |  X   |  X   |  X   |
-   +--------------+-----------------------------+------+------+------+------+------+
-   | HMAC         | 224 / 256 / 384 / 512       |  X   |  X   |  X   |  X   |      |
-   +--------------+-----------------------------+------+------+------+------+------+
-   | RSA          | 2048 / 3072 / 4096          |      |  X   |  X   |  X   |  X   | 
-   +--------------+-----------------------------+------+------+------+------+------+
-   | ED25519PH    | 255                         |      |  X   |  X   |      |      |
-   +--------------+-----------------------------+------+------+------+------+------+
-   | PURE EDDSA   | 255                         |      |  X   |  X   |      |      |
-   +--------------+-----------------------------+------+------+------+------+------+
+   +--------------+-----------------------------+--------------------------------+
+   | **Key type** | **Key security size(s)**    |         **Devices**            |
+   |              |                             +------+---------+------+------+
+   |              |                             | 8ULP |  91/93  |  943 |  95  |
+   +==============+=============================+======+=========+======+======+
+   | AES          | 128 / 192 / 256             |  X   |   X     |  X   |  X   |
+   +--------------+-----------------------------+------+---------+------+------+
+   | Secp R1      | 224 / 256 / 384 / 521       |  X   |   X     |  X   |  X   |
+   +--------------+-----------------------------+------+---------+------+------+
+   | Brainpool R1 | 224 / 256 / 384             |  X   |   X     |  X   |  X   |
+   +--------------+-----------------------------+------+---------+------+------+
+   | HMAC         | 224 / 256 / 384 / 512       |  X   |   X     |  X   |      |
+   +--------------+-----------------------------+------+---------+------+------+
+   | RSA          | 2048 / 3072 / 4096          |      |   X     |  X   |  X   |
+   +--------------+-----------------------------+------+---------+------+------+
+   | ED25519PH    | 255                         |      |   X     |      |      |
+   +--------------+-----------------------------+------+---------+------+------+
+   | PURE EDDSA   | 255                         |      |   X     |      |      |
+   +--------------+-----------------------------+------+---------+------+------+
 
 Operations supported:
  - Generate
@@ -160,7 +160,7 @@ applicable in ELE subsystem. Only one permitted algorithm is allowed per key.
    +                +----------+--------------------------+-------------------------------------+
    |                | SHA512   | N/A                      |                                     |
    +----------------+----------+--------------------------+-------------------------------------+
-   | PURE EDDSA     | SHA512   | N/A                      |                                     |
+   | PURE EDDSA     | N/A      | N/A                      |                                     |
    +----------------+----------+--------------------------+-------------------------------------+
    | ED25519PH      | N/A      | N/A                      |                                     |
    +----------------+----------+--------------------------+-------------------------------------+
@@ -207,55 +207,45 @@ Signature
 .. table:: ELE Signature
    :name: ele_signature
    :align: center
-   :widths: 20 27 25 28
+   :widths: 20 13 35 32
    :width: 100%
    :class: wrap-table
 
-   +--------------------+--------------+--------------------------+-----------------------+
-   | **Signature Type** | **Key type** | **Key security size(s)** | **Hash algorithm**    |
-   +====================+==============+==========================+=======================+
-   | ECDSA              | Secp R1      | 224 / 256 / 384 / 521    | SHA224                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA256                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA384                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA512                |
-   +                    +              +                          +                       +
-   |                    |              |                          | None (Message hashed) |
-   +                    +--------------+--------------------------+-----------------------+
-   |                    | Brainpool R1 |  224 / 256 / 384 / 521   | SHA224                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA256                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA384                |
-   +                    +              +                          +                       +
-   |                    |              |                          | None (Message hashed) |
-   +--------------------+--------------+--------------------------+-----------------------+
-   | RSA_PKCS1V15       | RSA          | 2048 / 3072 / 4096       | SHA224                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA256                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA384                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA512                |
-   +--------------------+--------------+--------------------------+-----------------------+
-   | RSA_PSS            | RSA          | 2048 / 3072 / 4096       | SHA224                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA256                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA384                |
-   +                    +              +                          +                       +
-   |                    |              |                          | SHA512                |
-   +--------------------+--------------+--------------------------+-----------------------+
-   | ED25519            | PURE_EDDSA   | 255                      | SHA512                |
-   +                    +--------------+--------------------------+-----------------------+
-   |                    | ED25519PH    | 255                      | None (Message hashed) |
-   +--------------------+--------------+--------------------------+-----------------------+
+   +--------------------+--------------+--------------------------+-------------------------+
+   | **Signature Type** | **Key type** | **Key security size(s)** | **Hash algorithm**      |
+   +====================+==============+==========================+=========================+
+   | ECDSA              | Secp R1      | 224 / 256 / 384 / 521    | - SHA224                |
+   |                    |              |                          | - SHA256                |
+   |                    |              |                          | - SHA384                |
+   |                    |              |                          | - SHA512                |
+   +                    +--------------+--------------------------+-------------------------+
+   |                    | Brainpool R1 |  224 / 256 / 384         | - SHA224                |
+   |                    |              |                          | - SHA256                |
+   |                    |              |                          | - SHA384                |
+   +--------------------+--------------+--------------------------+-------------------------+
+   | RSA_PKCS1V15       | RSA          | 2048 / 3072 / 4096       | - SHA224                |
+   |                    |              |                          | - SHA256                |
+   |                    |              |                          | - SHA384                |
+   |                    |              |                          | - SHA512                |
+   +--------------------+--------------+--------------------------+-------------------------+
+   | RSA_PSS            | RSA          | 2048 / 3072 / 4096       | - SHA224                |
+   |                    |              |                          | - SHA256                |
+   |                    |              |                          | - SHA384                |
+   |                    |              |                          | - SHA512                |
+   +--------------------+--------------+--------------------------+-------------------------+
+   | PURE_EDDSA         | ED25519      | 255                      | None (Message hashed    |
+   |                    |              |                          | or not)                 |
+   +--------------------+--------------+--------------------------+-------------------------+
+   | EDDSA_PH           | ED25519      | 255                      | None (pre-hashed)       |
+   +--------------------+--------------+--------------------------+-------------------------+
 
 Operations supported:
  - Sign
  - Verify
+
+.. note::
+  Message to sign/verify is full or hashed depending on the algorithm 64-bits
+  word definition additional parameters (bits[39:32]).
 
 Sign operation
 """"""""""""""
@@ -304,17 +294,13 @@ MAC
    :align: center
    :class: wrap-table
 
-   +--------------+--------------------------+----------------+
-   | **Key type** | **Key security size(s)** | **Algorithm**  |
-   +==============+==========================+================+
-   | AES          | 128 / 192 / 256          | CMAC           |
-   +              +                          +                +
-   |              |                          | CMAC_TRUNCATED |
-   +--------------+--------------------------+----------------+
-   | HMAC         | 224 / 256 / 384 / 512    | HMAC           |
-   +              +                          +                +
-   |              |                          | HMAC_TRUNCATED |
-   +--------------+--------------------------+----------------+
+   +--------------+--------------+--------------------------+
+   | **MAC Type** | **Key type** | **Key security size(s)** |
+   +==============+==============+==========================+
+   | CMAC         | AES          | 128 / 192 / 256          |
+   +--------------+--------------+--------------------------+
+   | HMAC         | HMAC         | 224 / 256 / 384 / 512    |
+   +--------------+--------------+--------------------------+
 
 The MAC size can be truncated if the key permitted algorithm limits the
 MAC output length.
@@ -424,17 +410,19 @@ Cipher
    :align: center
    :class: wrap-table
 
-   +--------------+----------+
-   | **Key type** | **Mode** |
-   +==============+==========+
-   | AES          |   CBC    |
-   +              +          +
-   |              |   CFB    |
-   +              +          +
-   |              |   CTR    |
-   +              +          +
-   |              |   ECB    |
-   +--------------+----------+
+   +-----------------+--------------+--------------------------+
+   | **Cipher Mode** | **Key type** | **Key security size(s)** |
+   +=================+==============+==========================+
+   | ECB No Padding  | AES          | 128 / 192 / 256          |
+   +-----------------+              +                          +
+   | CBC No Padding  |              |                          |
+   +-----------------+              +                          +
+   | CTR             |              |                          |
+   +-----------------+              +                          +
+   | CFB             |              |                          |
+   +-----------------+              +                          +
+   | OFB             |              |                          |
+   +-----------------+--------------+--------------------------+
 
 One-shot operations supported:
  - Encrypt
@@ -447,10 +435,11 @@ The following key policies must defined:
   - Usage: ENCRYPT
   - Algorithm:
 
+    - ECB_NO_PADDING
     - CBC_NO_PADDING
     - CFB
     - CTR
-    - ECB_NO_PADDING
+    - OFB
     - ALL_CIPHER (any cipher mode)
 
 Decrypt operation
@@ -460,10 +449,11 @@ The following key policies must defined if a key identifier is used:
   - Usage: DECRYPT
   - Algorithm:
 
+    - ECB_NO_PADDING
     - CBC_NO_PADDING
     - CFB
     - CTR
-    - ECB_NO_PADDING
+    - OFB
     - ALL_CIPHER (any cipher mode)
 
 AEAD
@@ -471,29 +461,29 @@ AEAD
 
 .. table:: ELE AEAD
    :align: center
-   :widths: 13 32 40 15
+   :widths: 30 12 43 15
    :width: 100%
    :class: wrap-table
 
-   +--------------+-------------------------+-----------------------------------------+----------------+
-   | **Key type** | **Mode**                | **IV length**                           | **Tag length** |
-   +              +                         +                                         +                +
-   |              |                         | **(bytes)**                             | **(bytes)**    |
-   +==============+=========================+=========================================+================+
-   | AES          | CCM                     | 12                                      |       16       |
-   +              +-------------------------+-----------------------------------------+----------------+
-   |              | GCM [1]_                | Encryption:                             |       16       |
-   |              |                         |                                         |                |
-   |              |                         | - 0 (subsystem generates full IV)       |                |
-   |              |                         | - 4 (subsystem generates 8 bytes of IV) |                |
-   |              |                         | - 12 (user supplied full IV)            |                |
-   +              +                         +-----------------------------------------+                +
-   |              |                         | Decryption:                             |                |
-   |              |                         |                                         |                |
-   |              |                         | - 12 (user supplied full IV)            |                |
-   +              +-------------------------+-----------------------------------------+----------------+
-   |              | CHACHA20_POLY1305 [2]_  | 12                                      |       16       |
-   +--------------+-------------------------+-----------------------------------------+----------------+
+   +------------------------+--------------+-----------------------------------------+----------------+
+   | **AEAD Mode**          | **Key type** | **IV length**                           | **Tag length** |
+   +                        +              +                                         +                +
+   |                        |              | **(bytes)**                             | **(bytes)**    |
+   +========================+==============+=========================================+================+
+   | CCM                    | AES          | 12                                      |       16       |
+   +------------------------+              +-----------------------------------------+----------------+
+   | GCM [1]_               |              | Encryption:                             |       16       |
+   |                        |              |                                         |                |
+   |                        |              | - 0 (subsystem generates full IV)       |                |
+   |                        |              | - 4 (subsystem generates 8 bytes of IV) |                |
+   |                        |              | - 12 (user supplied full IV)            |                |
+   +                        +              +-----------------------------------------+                +
+   |                        |              | Decryption:                             |                |
+   |                        |              |                                         |                |
+   |                        |              | - 12 (user supplied full IV)            |                |
+   +------------------------+              +-----------------------------------------+----------------+
+   | CHACHA20_POLY1305 [2]_ |              | 12                                      |       16       |
+   +------------------------+--------------+-----------------------------------------+----------------+
 
 .. [1] Not supported on i.MX8ULP
 
@@ -527,16 +517,11 @@ the following table.
    +------------+-------------------------------+
    | **Device** | **Challenge Length in bytes** |
    +============+===============================+
-   | i.MX8ULP   |  4                            |
+   | 8ULP       |  4                            |
    +------------+-------------------------------+
-   | i.MX91     |  16                           |
+   | 9x         |  16                           |
    +------------+-------------------------------+
-   | i.MX93     |  16                           |
-   +------------+-------------------------------+
-   | i.MX943    |  16                           |
-   +------------+-------------------------------+
-   | i.MX95     |  16                           |
-   +------------+-------------------------------+
+
 
 Device lifecycle
 """"""""""""""""
@@ -591,12 +576,12 @@ The subsystem allows to:
   - set encrypted and signed data as READ_ONCE, meaning that when data is
     retrieved the subsystem deletes the data.
 
-**Notes**:
-
+.. note::
   - Data size is limited to 2048 bytes.
   - Data size must be aligned on a cipher block in case of data encryption. in
     other word, user must pad to the data.
   - Data lifecycle can be defined only when storing encrypted/signed data.
+
 
 .. table:: ELE Data Encrypt/Sign
    :name: ele_data_encrypt
@@ -606,18 +591,19 @@ The subsystem allows to:
    +----------------+--------+---------------+
    | **Encryption** | **IV** | **Signature** |
    +================+========+===============+
-   | CBC_NO_PADDING |  Yes   |               |
+   | ECB No Padding |  N/A   |  CMAC         |
+   +----------------+--------+               +
+   | CBC No Padding |  Yes   |               |
    +----------------+--------+               +
    | CFB            |  Yes   |               |
    +----------------+--------+               +
    | CTR            |  Yes   |               |
-   +----------------+--------+               +
-   | ECB_NO_PADDING |  N/A   |  CMAC         |
    +----------------+--------+---------------+
 
 .. table:: ELE Data blob (encrypted and signed)
    :name: ele_data_blob
    :align: center
+   :widths: 10 20 70
    :width: 100%
    :class: wrap-table
 
@@ -652,7 +638,7 @@ in the table below (:numref:`key_attest_cert`):
 .. table:: Key attestation certificate
    :name: key_attest_cert
    :align: center
-   :widths: 10 10 80
+   :widths: 10 20 70
    :width: 100%
    :class: wrap-table
 
@@ -731,7 +717,8 @@ signed with the CST tools (see :ref:smw_device_reprovision_prepare). The
 buffer returned must be signed with CST tool and given as parameter of the
 :ref:smw_device_reprovision API.
 
-.. Note:: The OEM SRKH must be fused.
+.. note::
+  The OEM SRKH must be fused.
 
 Key Derivation
 ^^^^^^^^^^^^^^
@@ -773,8 +760,8 @@ Only ECDH(E) key exchange is supported, and the following ciphersuites:
 - TLS 1.3 (TLS13-KDF)
 
 The early secret, ECDH shared secret, handshake secret and master secret are
-computed internally and not exported. The subsystem supports derivation of the following
-TLS1.3 secrets:
+computed internally and not exported. The subsystem supports derivation of the
+following TLS1.3 secrets:
 
 .. table:: ELE TLS1.3 secrets
    :name: ele_tls13_secrets
@@ -812,4 +799,5 @@ derive an AES-128-GCM key to decrypt data and an HMAC-256 key to compute
 the Finished data. In both cases, the key type, size, algorithm and usage
 need to be set for the derived key.
 
-.. Note:: Only supported on i.MX91 and i.MX93
+.. note::
+  Only supported on i.MX91 and i.MX93

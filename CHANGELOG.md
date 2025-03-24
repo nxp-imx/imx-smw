@@ -52,6 +52,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Device manager returns the correct status code if the arguments version is not supported.
 * Fix SW implementation of the hash multipart when input is a multiple of block.
 * Key manager returns the correct status code if the arguments version is not supported.
+* The `ENABLE_TLS12` cmake option has been superseded by `ENABLE_TLS`. Likewise, the 'tls12' argument for the `smw_build.sh` script has been renamed to 'tls'.
 
 ##### 2. Subsystems
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2019-2024 NXP
+ * Copyright 2019-2025 NXP
  */
 
 #ifndef __OSAL_H__
@@ -58,6 +58,9 @@ struct osal_obj {
  * @add_obj_info: [mandatory] Add an object information into database
  * @update_obj_info: [mandatory] Update an object information into database
  * @delete_obj_info: [mandatory] Delete an object information from database
+ * @find_obj_init: [mandatory] Initialize the find object query
+ * @find_obj_next: [mandatory] Find the next object
+ * @find_obj_final: [mandatory] Close the find object query
  *
  * This structure defines the SMW OSAL.
  * Functions pointers marked as [mandatory] must be assigned.

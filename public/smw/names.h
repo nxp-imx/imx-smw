@@ -137,6 +137,7 @@ typedef enum {
  * * SMW_KEY_TYPE_NAME_RAW: Raw key
  * * SMW_KEY_TYPE_NAME_DERIVE: Derived key
  * * SMW_KEY_TYPE_NAME_HKDF_IKM: HKDF IKM Key
+ * * SMW_KEY_TYPE_NAME_X25519: X25519 key
  * * SMW_KEY_TYPE_NAME_NB: Number of key types
  */
 typedef enum {
@@ -157,6 +158,7 @@ typedef enum {
 	SMW_KEY_TYPE_NAME_RAW,
 	SMW_KEY_TYPE_NAME_DERIVE,
 	SMW_KEY_TYPE_NAME_HKDF_IKM,
+	SMW_KEY_TYPE_NAME_X25519,
 	SMW_KEY_TYPE_NAME_NB
 } smw_key_type_t;
 

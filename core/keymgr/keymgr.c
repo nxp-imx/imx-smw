@@ -131,6 +131,7 @@ static int get_standard_public_length(struct smw_keymgr_identifier *identifier,
 
 	case SMW_CONFIG_KEY_TYPE_ID_DH:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
+	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 		*length = BITS_TO_BYTES_SIZE(identifier->security_size);
 		break;
 
@@ -207,6 +208,7 @@ static int get_standard_private_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
+	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_AES:
 	case SMW_CONFIG_KEY_TYPE_ID_DES3:
 	case SMW_CONFIG_KEY_TYPE_ID_SM4:
@@ -354,6 +356,7 @@ static int get_standard_pub_exp_length(struct smw_keymgr_identifier *identifier,
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
+	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_DH:
 	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
 	case SMW_CONFIG_KEY_TYPE_ID_AES:
@@ -1507,6 +1510,7 @@ int smw_keymgr_get_privacy_id(enum smw_config_key_type_id type_id,
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_R1:
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
+	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_DSA_SM2_FP:
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		*privacy_id = SMW_KEYMGR_PRIVACY_ID_PAIR;

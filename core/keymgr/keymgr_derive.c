@@ -237,6 +237,7 @@ static int tls13_validate_key_base(struct smw_keymgr_derive_key_args *args)
 	switch (identifier->type_id) {
 	case SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER:
 	case SMW_CONFIG_KEY_TYPE_ID_SECP_R1:
+	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_DERIVE:
 		break;
 

@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <math.h>
 
 #include <psa/crypto.h>
 #include <psa/internal_trusted_storage.h>
@@ -16,6 +18,10 @@
 #include "util_lib.h"
 #include "util_session.h"
 #include "util.h"
+
+#define SEC_TO_MICROSEC	   1000000u
+#define SEC_TO_MILLISEC	   1000u
+#define GENERATE_KEY_COUNT 50
 
 /* messagetosign */
 static CK_BYTE msg[] = { 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
@@ -1675,6 +1681,98 @@ end:
 	return status;
 }
 
+static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_MECHANISM genmech = { .mechanism = CKM_DES_KEY_GEN };
+	CK_OBJECT_HANDLE hkey[GENERATE_KEY_COUNT] = { CK_INVALID_HANDLE };
+	CK_BBOOL btrue = CK_TRUE;
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_DES_CBC };
+
+	CK_ATTRIBUTE key_attrs[] = {
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
+	};
+
+	unsigned int i = 0;
+	struct timespec start = { 0 };
+	struct timespec end = { 0 };
+	unsigned long start_ms = 0;
+	unsigned long end_ms = 0;
+	unsigned long next_run = 0;
+	unsigned long average = 0;
+	double deviation = 0;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	for (i = 0; i < GENERATE_KEY_COUNT; i++) {
+		clock_gettime(CLOCK_REALTIME, &start);
+		ret = pfunc->C_GenerateKey(sess, &genmech, key_attrs,
+					   ARRAY_SIZE(key_attrs), &hkey[i]);
+		clock_gettime(CLOCK_REALTIME, &end);
+		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+			goto end;
+
+		if (ADD_OVERFLOW(start.tv_sec * SEC_TO_MILLISEC,
+				 start.tv_nsec / SEC_TO_MICROSEC, &start_ms))
+			goto end;
+
+		if (ADD_OVERFLOW(end.tv_sec * SEC_TO_MILLISEC,
+				 end.tv_nsec / SEC_TO_MICROSEC, &end_ms))
+			goto end;
+
+		if (SUB_OVERFLOW(end_ms, start_ms, &next_run))
+			goto end;
+
+		if (ADD_OVERFLOW(average, next_run, &average))
+			goto end;
+
+		if (MUL_OVERFLOW(next_run, next_run, &next_run))
+			goto end;
+
+		deviation += next_run;
+	}
+
+	TEST_OUT("Key Destroy\n");
+	for (i = 0; i < GENERATE_KEY_COUNT; i++) {
+		ret = pfunc->C_DestroyObject(sess, hkey[i]);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+	}
+
+	average = average / GENERATE_KEY_COUNT;
+	TEST_OUT("Average time %ld\n", average);
+	deviation = deviation / GENERATE_KEY_COUNT - average * average;
+	deviation = sqrt(deviation);
+	TEST_OUT("Standard deviation %f\n", deviation);
+
+	if (2 * deviation > average) {
+		TEST_OUT("Key generation performance issue\n");
+		status = TEST_FAIL;
+	} else {
+		status = TEST_PASS;
+	}
+
+end:
+	util_close_session(pfunc, &sess);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -1725,6 +1823,9 @@ void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 		goto end;
 
 	if (get_key_pair_size(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (generate_cipher_key_performance(pfunc) == TEST_FAIL)
 		goto end;
 
 	/*

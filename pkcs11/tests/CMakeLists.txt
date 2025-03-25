@@ -41,6 +41,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     smw
     ${CMAKE_DL_LIBS}
     rt
+    m
     ${CMAKE_THREAD_LIBS_INIT})
 
 # If TEE subsystem defined, include tests

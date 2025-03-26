@@ -100,10 +100,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### PKCS#11 Library - _version 5.0_
 
+* Add support for ed25519 key generation and signature
 
 #### PKCS#11 Tests - _version 5.0_
 
 * Add DES key generation performance test.
+* Add test to validate ed25519 key generation and signature
 
 ---
 ### <a id ="rel_4_2"></a></br>**Release 4.2**

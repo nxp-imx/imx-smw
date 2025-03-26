@@ -68,6 +68,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Remove TLS 1.2 plain text versus key ids output buffer flag.
 * ELE: Handle EDDSA additional parameters and signature message hashed flag.
 * ELE: Add support for TLS1.3 KDF.
+* ELE: Add any EDDSA variant for key creation permitted algorithm.
 * TEE: Fix the ed25519 key security size to be 255 bits.
 * TEE: Improve object storage management.
 * TEE: Handle EDDSA additional parameters and signature message hashed flag.

@@ -235,6 +235,11 @@ CK_RV key_hmac_derive(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 
 	/* Derive a secret key with SMW library */
 	ret = libdev_operate_mechanism(hsession, mech, derive_params);
+	if (ret == CKR_OK && derive_params->ctx &&
+	    derive_params->ctx->shared_buffer) {
+		hmac_key->value.array = derive_params->ctx->shared_buffer;
+		hmac_key->value.number = derive_params->ctx->shared_buffer_len;
+	}
 
 end:
 	if (ret != CKR_OK)

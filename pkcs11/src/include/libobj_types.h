@@ -143,6 +143,7 @@ struct libobj_key {
 	CK_DATE end_date;
 	bool derive;
 	bool local;
+	bool is_tls;
 	CK_MECHANISM_TYPE gen_mech;
 	struct libmech_list mech_list;
 	void *key;
@@ -260,6 +261,21 @@ struct libobj_key {
 		assert(_data);                                                 \
 		_data->token_id;                                               \
 	})
+
+#define set_key_is_tls(obj, _is_tls)                                           \
+	({                                                                     \
+		struct libobj_key *_key = get_subobj_from(obj, storage);       \
+		assert(_key);                                                  \
+		_key->is_tls = _is_tls;                                        \
+	})
+
+#define get_key_is_tls(obj)                                                    \
+	({                                                                     \
+		struct libobj_key *_key = get_subobj_from(obj, storage);       \
+		assert(_key);                                                  \
+		_key->is_tls;                                                  \
+	})
+
 /*
  * Define the libobj public/private/keypair type
  */
@@ -299,9 +315,32 @@ struct libobj_key_hmac {
 	size_t value_len;
 };
 
+/**
+ * lib_derive_ctx - Derive context
+ * @hkey: Operation key handle
+ * @peer_buffer: Peer public buffer
+ * @peer_buffer_len: Peer public buffer length in bytes
+ * @shared_buffer: Shared secret buffer
+ * @shared_buffer_len: Shared secret buffer length in bytes
+ * @skipped: Is derivation to be skip
+ * @extractable: Is derived object to be extractable
+ * @context: Internal operation context
+ */
+struct lib_derive_ctx {
+	CK_OBJECT_HANDLE hkey;
+	CK_BYTE_PTR peer_buffer;
+	CK_ULONG peer_buffer_len;
+	CK_BYTE_PTR shared_buffer;
+	CK_ULONG shared_buffer_len;
+	CK_BBOOL skipped;
+	CK_BBOOL extractable;
+	void *context;
+};
+
 struct libobj_key_derive_params {
 	CK_OBJECT_HANDLE base_key;
 	struct libobj_obj *derived_key;
+	struct lib_derive_ctx *ctx;
 	union {
 		struct {
 			CK_BBOOL extract;

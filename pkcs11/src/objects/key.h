@@ -234,4 +234,17 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
  */
 CK_BBOOL is_hkdf_extract_set(CK_MECHANISM_PTR mech);
 
+/**
+ * is_tls_hkdf() - Check if key derivation is skipped
+ * @hsession: Session handle
+ * @mech: Key Derivation mechanism
+ *
+ * Check if key derivation is skipped.
+ *
+ * return:
+ * True, if derivation is skipped.
+ * False, otherwise
+ */
+CK_BBOOL is_tls_hkdf(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech);
+
 #endif /* __KEY_H__ */

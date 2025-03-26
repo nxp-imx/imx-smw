@@ -13,6 +13,7 @@
 #include "smw_osal.h"
 #include "smw/attr.h"
 #include "smw/names.h"
+#include "smw/tls.h"
 
 #include "attributes.h"
 #include "dev_config.h"
@@ -220,7 +221,23 @@ struct mgroup {
 		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
 		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
 		.smw_kdf = SMW_KDF_NAME_##_algo_id,                            \
-		.smw_algo_id = SMW_ATTR_ALGO_##_algo_id,                       \
+		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_##_algo_id(),      \
+		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
+	}
+
+#define M_KEYDERIVE_ANY_HASH(_key_type, _algo_id, _id)                         \
+	{                                                                      \
+		.type = CKM_##_id##_DERIVE, .slot_flag = 0,                    \
+		.smw_key_type = SMW_KEY_TYPE_NAME_##_key_type,                 \
+		.smw_hash = SMW_HASH_ALGO_NAME_NONE,                           \
+		.smw_mac = SMW_MAC_ALGO_NAME_NONE,                             \
+		.smw_cipher_mode = SMW_CIPHER_MODE_NAME_NONE,                  \
+		.smw_aead_mode = SMW_AEAD_MODE_NAME_NONE,                      \
+		.smw_sign_type = SMW_SIGNATURE_TYPE_NAME_NONE,                 \
+		.smw_sign_algo = SMW_SIGNATURE_ALGO_NAME_NONE,                 \
+		.smw_kdf = SMW_KDF_NAME_##_algo_id,                            \
+		.smw_algo_id = SMW_ATTR_ALGO_KEY_DERIVATION_##_algo_id(        \
+			SMW_ATTR_HASH_ANY),                                    \
 		.nb_smw_key_types = 1, .smw_key_types = NULL,                  \
 	}
 
@@ -343,7 +360,8 @@ static struct mentry mkeygen[] = {
 /*
  * Key Derive mechanism
  */
-static struct mentry mkeyderive[] = { M_KEYDERIVE(HKDF_IKM, HKDF, HKDF),
+static struct mentry mkeyderive[] = { M_KEYDERIVE_ANY_HASH(HKDF_IKM, HKDF,
+							   HKDF),
 				      M_KEYDERIVE(SECP_R1, ECDH, ECDH1) };
 
 /*
@@ -450,6 +468,9 @@ static struct mgroup smw_mechanims[] = {
 	M_GROUP(ARRAY_SIZE(mhmac), mhmac),
 	{ 0 }
 };
+
+static const char *const keying_material[] = { "key", "traffic upd", "iv",
+					       "finished", "resumption" };
 
 static CK_RV find_mechanism(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 			    struct mgroup **group, struct mentry **entry)
@@ -1371,6 +1392,8 @@ static CK_RV set_ecdh_args(struct libobj_key_derive_params *derive_params,
 	CK_RV status = CKR_ARGUMENTS_BAD;
 
 	struct smw_kdf_ecdh_args *ecdh_args = NULL;
+	struct smw_key_attributes *key_attributes = NULL;
+	struct lib_derive_ctx *ctx = NULL;
 
 	if (!derive_params || !derive_args)
 		return status;
@@ -1380,6 +1403,36 @@ static CK_RV set_ecdh_args(struct libobj_key_derive_params *derive_params,
 	    derive_params->ecdh_params.ulSharedDataLen)
 		return CKR_FUNCTION_NOT_SUPPORTED;
 
+	key_attributes = &derive_args->key_descriptor_derived->attributes;
+	/* Check if ECDH key derivation is used for TLS 1.3 Key exchange */
+	if (SMW_ATTR_GET_ALGO(key_attributes->permitted_algo) ==
+	    SMW_ATTR_ALGO_HKDF) {
+		ctx = derive_params->ctx;
+		if (!ctx)
+			return status;
+
+		ctx->hkey = derive_params->base_key;
+
+		if (derive_params->ecdh_params.ulPublicDataLen & 0x01) {
+			if (derive_params->ecdh_params.pPublicData[0] !=
+			    ANSI_UNCOMPRESS_KEY_TAG)
+				return CKR_ARGUMENTS_BAD;
+
+			derive_params->ecdh_params.ulPublicDataLen--;
+			derive_params->ecdh_params.pPublicData++;
+		}
+
+		ctx->peer_buffer =
+			malloc(derive_params->ecdh_params.ulPublicDataLen);
+		if (!ctx->peer_buffer)
+			return CKR_HOST_MEMORY;
+
+		ctx->peer_buffer_len =
+			derive_params->ecdh_params.ulPublicDataLen;
+		memcpy(ctx->peer_buffer, derive_params->ecdh_params.pPublicData,
+		       ctx->peer_buffer_len);
+	}
+
 	ecdh_args = derive_args->kdf_arguments;
 
 	ecdh_args->peer_public_buffer = derive_params->ecdh_params.pPublicData;
@@ -1387,7 +1440,104 @@ static CK_RV set_ecdh_args(struct libobj_key_derive_params *derive_params,
 			 ecdh_args->peer_public_buffer_length))
 		return CKR_DATA_LEN_RANGE;
 
-	status = CKR_OK;
+	return CKR_OK;
+}
+
+static CK_RV set_tls13_args(struct libobj_key_derive_params *derive_params,
+			    struct smw_derive_key_args *derive_args)
+{
+	CK_RV status = CKR_ARGUMENTS_BAD;
+
+	struct smw_key_descriptor *base_key = NULL;
+	struct smw_derived_key_descriptor *derived_key = NULL;
+	struct smw_key_attributes *key_attributes = NULL;
+	smw_attr_algo_t tls_permitted_algo = 0;
+	struct smw_kdf_tls13_args *tls13_args = NULL;
+	struct lib_derive_ctx *ctx = NULL;
+	CK_BYTE_PTR label = NULL;
+	static const char derived_secret_label[] =
+		"\x64\x65\x72\x69\x76\x65\x64";
+	static const char iv_label[] = "\x69\x76";
+	unsigned int i = 0;
+
+	if (!derive_params || !derive_args)
+		return status;
+
+	base_key = derive_args->key_descriptor_base;
+	base_key->type_name = SMW_KEY_TYPE_NAME_NONE;
+	derived_key = derive_args->key_descriptor_derived;
+	key_attributes = &derived_key->attributes;
+
+	if (!derive_params->hkdf_params.info)
+		return status;
+
+	ctx = derive_params->ctx;
+	if (!ctx)
+		return status;
+
+	tls13_args = derive_args->kdf_arguments;
+	if (!tls13_args)
+		return status;
+
+	tls13_args->prf_name =
+		get_hash_algo(derive_params->hkdf_params.prf_hash_mech);
+
+	tls13_args->expanded_label = derive_params->hkdf_params.info;
+	if (SET_OVERFLOW(derive_params->hkdf_params.info_len,
+			 tls13_args->expanded_label_length))
+		return status;
+
+	tls13_args->peer_public_buffer = ctx->peer_buffer;
+	if (SET_OVERFLOW(ctx->peer_buffer_len,
+			 tls13_args->peer_public_buffer_length))
+		return status;
+
+	derive_args->kdf_name = SMW_KDF_NAME_TLS13_KEY_EXCHANGE;
+	tls_permitted_algo =
+		SMW_ATTR_ALGO_KEY_DERIVATION_TLS13(tls13_args->prf_name);
+	if (key_attributes->permitted_algo ==
+	    SMW_ATTR_ALGO_KEY_DERIVATION_HKDF(SMW_ATTR_HASH_ANY))
+		key_attributes->permitted_algo = tls_permitted_algo;
+
+	/*
+	 * expanded_label is composed of:
+	 * - 2 bytes: args->length as uint16_t
+	 * - 1 byte: prefix_length (6) + args->label_length
+	 * - 6 bytes: the prefix ("tls13 ")
+	 * - `args->label_length` bytes: the input args->label
+	 */
+	label = &derive_params->hkdf_params.info[2 + 1 + 6];
+
+	/* Check if we are getting IV material */
+	if (!strncmp(iv_label, (char *)label, strlen(iv_label))) {
+		ctx->shared_buffer_len =
+			BITS_TO_BYTES_SIZE(derived_key->security_size);
+		ctx->shared_buffer = malloc(ctx->shared_buffer_len);
+		if (!ctx->shared_buffer)
+			return CKR_HOST_MEMORY;
+
+		ctx->extractable = true;
+
+		derived_key->shared_secret = ctx->shared_buffer;
+		derived_key->shared_secret_len = ctx->shared_buffer_len;
+	}
+
+	/* Check if we are doing keying material derivation */
+	for (; i < ARRAY_SIZE(keying_material); i++) {
+		if (!strncmp(keying_material[i], (char *)label,
+			     strlen(keying_material[i]))) {
+			return CKR_OK;
+		}
+	}
+
+	/* Check if we are doing early secret derivation */
+	if (!strncmp(derived_secret_label, (char *)label,
+		     strlen(derived_secret_label))) {
+		derive_params->ctx->skipped = true;
+		return CKR_OK;
+	}
+
+	status = base_key_desc_setup((struct libobj_obj *)ctx->hkey, base_key);
 
 	return status;
 }
@@ -1401,22 +1551,13 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	struct smw_key_descriptor base_key = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
 	struct smw_derived_key_descriptor der_key_desc = { 0 };
+	struct smw_key_attributes *der_key_attributes =
+		&der_key_desc.attributes;
 	struct smw_kdf_hkdf_args hkdf_args = { 0 };
 	struct smw_kdf_ecdh_args ecdh_args = { 0 };
+	struct smw_kdf_tls13_args tls13_args = { 0 };
 	struct libobj_key_derive_params *derive_params = args;
 	struct libobj_obj *obj = derive_params->derived_key;
-
-	if (entry->type == CKM_HKDF_DERIVE) {
-		derive_args.kdf_arguments = &hkdf_args;
-		ret = set_hkdf_args(derive_params, &derive_args);
-		if (ret != CKR_OK)
-			return ret;
-	} else if (entry->type == CKM_ECDH1_DERIVE) {
-		derive_args.kdf_arguments = &ecdh_args;
-		ret = set_ecdh_args(derive_params, &derive_args);
-		if (ret != CKR_OK)
-			return ret;
-	}
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
@@ -1433,7 +1574,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = get_key_permitted_algo(&der_key_desc.attributes.permitted_algo,
+	ret = get_key_permitted_algo(&der_key_attributes->permitted_algo,
 				     slotid, obj);
 	if (ret != CKR_OK)
 		return ret;
@@ -1444,8 +1585,48 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	derive_args.kdf_name = get_kdf(entry->type);
 	derive_args.store_derived_key = true;
 
-	args_attrs_key_usage(&der_key_desc.attributes.usage_flags, obj);
-	args_attr_obj_storage(&der_key_desc.attributes.attributes, obj);
+	args_attrs_key_usage(&der_key_attributes->usage_flags, obj);
+	args_attr_obj_storage(&der_key_attributes->attributes, obj);
+
+	if (entry->type == CKM_HKDF_DERIVE) {
+		if (derive_params->ctx) {
+			if (!(derive_params->hkdf_params.extract ^
+			      derive_params->hkdf_params.expand))
+				return CKR_ARGUMENTS_BAD;
+
+			if (derive_params->hkdf_params.extract) {
+				DBG_TRACE("HKDF Extract for TLS detected");
+				return CKR_OK;
+			}
+
+			derive_args.kdf_arguments = &tls13_args;
+			ret = set_tls13_args(derive_params, &derive_args);
+			if (ret != CKR_OK)
+				return ret;
+
+			set_key_is_tls(obj, true);
+
+			if (derive_params->ctx->skipped)
+				return CKR_OK;
+		} else {
+			derive_args.kdf_arguments = &hkdf_args;
+			ret = set_hkdf_args(derive_params, &derive_args);
+			if (ret != CKR_OK)
+				return ret;
+		}
+	} else if (entry->type == CKM_ECDH1_DERIVE) {
+		derive_args.kdf_arguments = &ecdh_args;
+		ret = set_ecdh_args(derive_params, &derive_args);
+		if (ret != CKR_OK)
+			return ret;
+
+		if (SMW_ATTR_GET_ALGO(der_key_attributes->permitted_algo) ==
+		    SMW_ATTR_ALGO_HKDF) {
+			DBG_TRACE("ECDH Derive Key for TLS detected");
+			derive_params->ctx->skipped = true;
+			return CKR_OK;
+		}
+	}
 
 	status = smw_derive_key(&derive_args);
 	ret = smw_status_to_ck_rv(status);
@@ -1456,6 +1637,11 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	if (ret == CKR_OK) {
 		DBG_TRACE("Derive Key ID = #%d", der_key_desc.id);
 		set_key_token_id(obj, der_key_desc.id);
+	}
+
+	if (entry->type == CKM_HKDF_DERIVE && derive_params->ctx) {
+		if (tls13_args.psk)
+			free(tls13_args.psk);
 	}
 
 	return ret;

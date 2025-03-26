@@ -12,6 +12,7 @@
 #include "key_ec.h"
 #include "key_rsa.h"
 
+#include "lib_device.h"
 #include "lib_session.h"
 #include "lib_object.h"
 #include "libobj_types.h"
@@ -1986,9 +1987,11 @@ check_hkdf_derive_mech_params(CK_MECHANISM_PTR mech,
 	derive_params->hkdf_params.salt_type = hkdf_params->ulSaltType;
 	if (hkdf_params->bExtract) {
 		if (hkdf_params->ulSaltType == CKF_HKDF_SALT_KEY) {
-			DBG_TRACE("CKF_HKDF_SALT_KEY not supported");
-			ret = CKR_FUNCTION_NOT_SUPPORTED;
-			goto end;
+			if (!derive_params->ctx) {
+				DBG_TRACE("CKF_HKDF_SALT_KEY not supported");
+				ret = CKR_FUNCTION_NOT_SUPPORTED;
+				goto end;
+			}
 		} else if (hkdf_params->ulSaltType == CKF_HKDF_SALT_DATA) {
 			if (!hkdf_params->pSalt != !hkdf_params->ulSaltLen)
 				goto end;
@@ -2079,10 +2082,10 @@ static CK_RV check_input_params(CK_KEY_TYPE base_key_type,
 	return ret;
 }
 
-static CK_RV set_kdf_derived_key_attr(CK_SESSION_HANDLE hsession,
-				      CK_OBJECT_HANDLE base_key,
-				      struct libobj_obj *derived_key,
-				      struct libattr_list *attrs)
+static CK_RV
+set_kdf_derived_key_attr(CK_SESSION_HANDLE hsession,
+			 struct libobj_key_derive_params *derive_params,
+			 struct libattr_list *attrs)
 {
 	CK_RV ret = CKR_OK;
 
@@ -2094,6 +2097,8 @@ static CK_RV set_kdf_derived_key_attr(CK_SESSION_HANDLE hsession,
 	CK_BBOOL derived_key_sensitive = CK_FALSE;
 	CK_BBOOL derived_key_extractable = CK_FALSE;
 
+	CK_OBJECT_HANDLE base_key = derive_params->base_key;
+	struct libobj_obj *derived_key = derive_params->derived_key;
 	unsigned int i = 0;
 
 	CK_ATTRIBUTE base_key_attr[] = {
@@ -2130,12 +2135,24 @@ static CK_RV set_kdf_derived_key_attr(CK_SESSION_HANDLE hsession,
 			return ret;
 	}
 
-	derived_key_always_sens =
-		(!base_key_always_sens ? base_key_always_sens :
-					 derived_key_sensitive);
-	derived_key_never_extr =
-		(!base_key_never_extr ? base_key_never_extr :
-					!derived_key_extractable);
+	if (derive_params->ctx && derive_params->ctx->extractable) {
+		derived_key_always_sens = CK_FALSE;
+		derived_key_never_extr = CK_FALSE;
+		derived_key_extractable = CK_TRUE;
+		ret = attr_set_value(get_key_from(derived_key),
+				     &derived_key_attr[1],
+				     &attr_key_secret[SECR_EXTRACTABLE], attrs,
+				     NO_OVERWRITE);
+		if (ret != CKR_OK)
+			return ret;
+	} else {
+		derived_key_always_sens =
+			(!base_key_always_sens ? base_key_always_sens :
+						 derived_key_sensitive);
+		derived_key_never_extr =
+			(!base_key_never_extr ? base_key_never_extr :
+						!derived_key_extractable);
+	}
 
 	/* Based on the base key attributes, set the derived key attributes. */
 	ret = attr_set_value(get_key_from(derived_key), &attr[0],
@@ -2147,8 +2164,6 @@ static CK_RV set_kdf_derived_key_attr(CK_SESSION_HANDLE hsession,
 	ret = attr_set_value(get_key_from(derived_key), &attr[1],
 			     &attr_key_secret[SECR_NEVER_EXTRACTABLE], attrs,
 			     MUST_NOT);
-	if (ret != CKR_OK)
-		return ret;
 
 	return ret;
 }
@@ -2160,14 +2175,10 @@ set_derived_key_attr(CK_SESSION_HANDLE hsession,
 {
 	CK_RV ret = CKR_FUNCTION_NOT_SUPPORTED;
 
-	CK_OBJECT_HANDLE base_key = derive_params->base_key;
-	struct libobj_obj *derived_key = derive_params->derived_key;
-
 	switch (mech) {
 	case CKM_HKDF_DERIVE:
 	case CKM_ECDH1_DERIVE:
-		ret = set_kdf_derived_key_attr(hsession, base_key, derived_key,
-					       attrs);
+		ret = set_kdf_derived_key_attr(hsession, derive_params, attrs);
 		break;
 
 	default:
@@ -2175,6 +2186,21 @@ set_derived_key_attr(CK_SESSION_HANDLE hsession,
 	}
 
 	return ret;
+}
+
+/**
+ * destroy_context() - Destroy derive context
+ * @ctx: Pointer to derive context
+ *
+ */
+static void destroy_context(struct lib_derive_ctx *ctx)
+{
+	if (ctx) {
+		if (ctx->peer_buffer)
+			free(ctx->peer_buffer);
+
+		free(ctx);
+	}
 }
 
 CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
@@ -2185,12 +2211,33 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	CK_KEY_TYPE key_type = 0;
 	CK_KEY_TYPE base_key_type = 0;
 
+	CK_MECHANISM find_mech = { 0 };
+	struct lib_derive_ctx *ctx = NULL;
+	struct libdevice *device = NULL;
 	struct libobj_key_derive_params derive_params = { 0 };
 
 	DBG_TRACE("Derive a secret key from base key object");
 
 	if (!derived_key)
 		goto end;
+
+	ret = libsess_get_device(hsession, &device);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (mech->mechanism == CKM_HKDF_DERIVE) {
+		/* Get the previous ECDH parameters */
+		ret = libdev_find_opctx(device, CKF_DERIVE, &find_mech,
+					(void **)&ctx);
+
+		if (ret == CKR_OK && find_mech.mechanism == CKM_ECDH1_DERIVE) {
+			derive_params.ctx = ctx;
+			ctx->skipped = false;
+			ctx->extractable = false;
+			ctx->shared_buffer = NULL;
+			ctx->shared_buffer_len = 0;
+		}
+	}
 
 	base_key_type = get_key_type((struct libobj_obj *)base_key);
 
@@ -2206,13 +2253,31 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	if (ret != CKR_OK)
 		goto end;
 
+	if (mech->mechanism == CKM_ECDH1_DERIVE) {
+		/* Remove previous operation context */
+		ret = libdev_find_opctx(device, CKF_DERIVE, &find_mech,
+					(void **)&ctx);
+		if (ret == CKR_OK) {
+			(void)libdev_remove_opctx(device, CKF_DERIVE);
+			destroy_context(ctx);
+		}
+
+		ctx = calloc(1, sizeof(*ctx));
+		if (!ctx) {
+			ret = CKR_HOST_MEMORY;
+			goto end;
+		}
+
+		/* Set current operation context */
+		ret = libdev_add_opctx(device, CKF_DERIVE, mech, ctx);
+		if (ret != CKR_OK)
+			goto end;
+
+		derive_params.ctx = ctx;
+	}
+
 	derive_params.derived_key = derived_key;
 	derive_params.base_key = base_key;
-
-	ret = set_derived_key_attr(hsession, &derive_params, mech->mechanism,
-				   attrs);
-	if (ret != CKR_OK)
-		goto end;
 
 	key_type = get_key_type(derived_key);
 
@@ -2244,7 +2309,20 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 		break;
 	}
 
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = set_derived_key_attr(hsession, &derive_params, mech->mechanism,
+				   attrs);
+
 end:
+	if (ret != CKR_OK) {
+		if (mech->mechanism == CKM_ECDH1_DERIVE && ctx) {
+			(void)libdev_remove_opctx(device, CKF_DERIVE);
+			destroy_context(ctx);
+		}
+	}
+
 	DBG_TRACE("Derive secret Key object (%p) return %ld",
 		  derive_params.derived_key, ret);
 	return ret;
@@ -2263,4 +2341,28 @@ CK_BBOOL is_hkdf_extract_set(CK_MECHANISM_PTR mech)
 	}
 
 	return is_hkdf_extract_set;
+}
+
+CK_BBOOL is_tls_hkdf(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech)
+{
+	CK_RV ret = CKR_OK;
+	CK_BBOOL skip_tls_hkdf = false;
+	CK_MECHANISM find_mech = { 0 };
+
+	struct lib_derive_ctx *ctx = NULL;
+	struct libdevice *device = NULL;
+
+	if (mech->mechanism == CKM_ECDH1_DERIVE ||
+	    mech->mechanism == CKM_HKDF_DERIVE) {
+		ret = libsess_get_device(hsession, &device);
+		if (ret == CKR_OK) {
+			(void)libdev_find_opctx(device, CKF_DERIVE, &find_mech,
+						(void **)&ctx);
+			if (ctx)
+				skip_tls_hkdf =
+					ctx->skipped || ctx->shared_buffer;
+		}
+	}
+
+	return skip_tls_hkdf;
 }

@@ -1479,12 +1479,14 @@ CK_RV libobj_derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	ret = derive_key(hsession, mech, hbasekey, derived_key, &attrs_list);
 	if (ret == CKR_OK) {
 		ret = obj_db_update(derived_key);
-		/* For HKDF Extract operation, PRK is not stored in the DB,
-		 * Hence, ignore if CKR_OBJECT_HANDLE_INVALID is returned.
-		 */
-		if (is_hkdf_extract_set(mech) &&
-		    ret == CKR_OBJECT_HANDLE_INVALID)
-			ret = CKR_OK;
+		if (ret == CKR_OBJECT_HANDLE_INVALID) {
+			/* For HKDF Extract operation, PRK is not stored in the DB,
+			 * Hence, ignore if CKR_OBJECT_HANDLE_INVALID is returned.
+			 */
+			if (is_hkdf_extract_set(mech) ||
+			    is_tls_hkdf(hsession, mech))
+				ret = CKR_OK;
+		}
 	}
 
 	if (ret == CKR_OK)

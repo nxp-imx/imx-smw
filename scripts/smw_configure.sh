@@ -55,14 +55,13 @@ opt_ele=0
 opt_tls=0
 
 case ${platform} in
-  imx91evk)
-    optee_plat="imx-mx91evk"
-    opt_ele=1
-    opt_tls=1
-    ;;
-
   imx95evk)
     optee_plat="imx-mx95evk"
+    opt_ele=1
+    ;;
+
+  imx943evk)
+    optee_plat="imx-mx943evk"
     opt_ele=1
     ;;
 
@@ -72,14 +71,20 @@ case ${platform} in
     opt_tls=1
     ;;
 
-  imx8qxpc0mek)
-    optee_plat="imx-mx8qxpmek"
-    opt_seco=1
+  imx91evk)
+    optee_plat="imx-mx91evk"
+    opt_ele=1
+    opt_tls=1
     ;;
 
   imx8ulpevk)
     optee_plat="imx-mx8ulpevk"
     opt_ele=1
+    ;;
+
+  imx8qxpc0mek)
+    optee_plat="imx-mx8qxpmek"
+    opt_seco=1
     ;;
 
   imx8mmevk)

@@ -133,6 +133,8 @@ static const struct {
 			     KEY_DERIVATION),
 	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA_ANY, TLS_1_3, ANY, ANY,
 			     KEY_DERIVATION),
+	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA_ANY, HKDF, NONE, ANY,
+			     KEY_DERIVATION),
 };
 
 static void convert_usage_to_ele(smw_attr_usage_t smw, hsm_key_usage_t *ele)

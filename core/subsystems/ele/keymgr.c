@@ -28,6 +28,7 @@ struct key_group {
 };
 
 static unsigned int ecc_public_key_length(unsigned int security_size);
+static unsigned int ed_public_key_length(unsigned int security_size);
 static unsigned int rsa_public_key_length(unsigned int security_size);
 static unsigned int rsa_modulus_length(unsigned int security_size);
 
@@ -94,7 +95,7 @@ static const struct key_def {
 	KEY_DEF(AES, AES, NULL, NULL),
 	KEY_DEF(HMAC, HMAC, NULL, NULL),
 	KEY_DEF(RSA, RSA, rsa_public_key_length, rsa_modulus_length),
-	KEY_DEF(ED25519, ECC_TWISTED_EDWARDS, ecc_public_key_length, NULL),
+	KEY_DEF(ED25519, ECC_TWISTED_EDWARDS, ed_public_key_length, NULL),
 	KEY_DEF(DERIVE, DERIVE, NULL, NULL)
 };
 
@@ -127,6 +128,11 @@ static const struct signature_algo {
 static unsigned int ecc_public_key_length(unsigned int security_size)
 {
 	return BITS_TO_BYTES_SIZE(security_size) * 2;
+}
+
+static unsigned int ed_public_key_length(unsigned int security_size)
+{
+	return BITS_TO_BYTES_SIZE(security_size);
 }
 
 static unsigned int rsa_public_key_length(unsigned int security_size)

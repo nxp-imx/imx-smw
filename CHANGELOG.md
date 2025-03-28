@@ -116,12 +116,17 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Library - _version 5.0_
 
 * Add support for ed25519 key generation and signature
+* Add TLS 1.3 Key exchange support
+* TLS AES GCM mulpti-part operation transforms to one shot operation.
 
 #### PKCS#11 Tests - _version 5.0_
 
 * Add DES key generation performance test.
 * Add test to validate ed25519 key generation and signature
 * Do not run DES key generation performance test in debug build.
+* Test TLS 1.3 Key exchange tests.
+* Test TLS 1.3 AES GCM multi-part operation.
+* Test TLS 1.3 Hash MAC operation.
 
 ---
 ### <a id ="rel_4_2"></a></br>**Release 4.2**

@@ -954,6 +954,10 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
   <td>aarch64</td>
 </tr>
 <tr>
+  <td>imx943evk</td>
+  <td>aarch64</td>
+</tr>
+<tr>
   <td>imx95evk</td>
   <td>aarch64</td>
 </tr>
@@ -1003,6 +1007,7 @@ $ ./scripts/smw_configure.sh [build directory] [architecture] [platform] toolpat
 <tr>
   <td><ul>
 	<li>imx95evk</li>
+  <li>imx943evk</li>
 	<li>imx93evk</li>
 	<li>imx91evk</li>
 	<li>imx8ulpevk</li>

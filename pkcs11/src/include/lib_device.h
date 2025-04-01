@@ -424,4 +424,57 @@ CK_RV libdev_cancel_operation(void **context);
  */
 CK_RV libdev_copy_operation(void *src, void **dst);
 
+/**
+ * libdev_add_opctx() - Add an active operation in device
+ * @device: Reference to the library device
+ * @op_flag: Operation flag
+ * @mech: Mechanism definition
+ * @ctx: Operation context
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OPERATION_ACTIVE               - Operation is already initialized
+ * CKR_HOST_MEMORY                    - Allocation error
+ * CKR_OK                             - Success
+ */
+CK_RV libdev_add_opctx(struct libdevice *device, CK_FLAGS op_flag,
+		       CK_MECHANISM_PTR mech, void *ctx);
+
+/**
+ * libsess_find_opctx() - Find an active session operation
+ * @device: Reference to the library device
+ * @op_flag: Operation flag
+ * @mech: Mechanism definition
+ * @ctx: Operation context
+ *
+ * If the operation mechanism @op_flag is present in the list,
+ * returns the mechanism parameters in @mech and the operation
+ * context in the @ctx.
+ * Else return CKR_OPERATION_NOT_INITIALIZED error.
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OPERATION_NOT_INITIALIZED      - Operation not initialized
+ * CKR_OK                             - Success
+ */
+CK_RV libdev_find_opctx(struct libdevice *device, CK_FLAGS op_flag,
+			CK_MECHANISM_PTR mech, void **ctx);
+
+/**
+ * libsess_remove_opctx() - Remove an active session operation
+ * @device: Reference to the library device
+ * @op_flag: Operation flag
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No context available
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OK                             - Success
+ */
+CK_RV libdev_remove_opctx(struct libdevice *device, CK_FLAGS op_flag);
+
 #endif /* __LIB_DEVICE_H__ */

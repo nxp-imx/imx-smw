@@ -11,6 +11,7 @@
 #include "lib_device.h"
 #include "lib_mutex.h"
 #include "lib_object.h"
+#include "lib_opctx.h"
 #include "lib_session.h"
 
 #include "trace.h"
@@ -59,6 +60,11 @@ static CK_RV init_token(struct libdevice *dev, const char *label,
 	if (ret != CKR_OK)
 		return ret;
 
+	/* Initialize operations context list and its mutex */
+	ret = LLIST_INIT(&dev->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
 	/* Create profile objects (token objects) */
 	for (; i < devinfo->profile_count; i++) {
 		ret = libobj_profile_create(&dev->objects,
@@ -96,6 +102,9 @@ static CK_RV clean_token(struct libdevice *device, CK_SLOT_ID slotid)
 
 	if (ret == CKR_OK) {
 		ret = libobj_list_destroy(&device->objects);
+		if (ret == CKR_OK)
+			ret = libopctx_list_destroy(&device->opctx);
+
 		if (ret == CKR_OK)
 			CLEAR_BITS(device->token.flags, CKF_TOKEN_INITIALIZED);
 	}
@@ -471,4 +480,92 @@ CK_RV libdev_destroy(struct libdevice **devices)
 	*devices = NULL;
 
 	return CKR_OK;
+}
+
+CK_RV libdev_add_opctx(struct libdevice *device, CK_FLAGS op_flag,
+		       CK_MECHANISM_PTR mech, void *ctx)
+{
+	CK_RV ret = CKR_OK;
+	struct libopctx *opctx_find = NULL;
+	struct libopctx opctx_add = { 0 };
+
+	DBG_TRACE("Store operation context (device: %p, op: %lx, mech: %lx)",
+		  device, op_flag, mech->mechanism);
+
+	ret = LLIST_LOCK(&device->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_find(&device->opctx, op_flag, &opctx_find);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (opctx_find) {
+		ret = CKR_OPERATION_ACTIVE;
+		goto end;
+	}
+
+	opctx_add.op_flag = op_flag;
+	opctx_add.mech = *mech;
+	opctx_add.ctx = ctx;
+	ret = libopctx_add(&device->opctx, &opctx_add);
+
+end:
+	LLIST_UNLOCK(&device->opctx);
+	return ret;
+}
+
+CK_RV libdev_find_opctx(struct libdevice *device, CK_FLAGS op_flag,
+			CK_MECHANISM_PTR mech, void **ctx)
+{
+	CK_RV ret = CKR_OK;
+	struct libopctx *opctx = NULL;
+
+	DBG_TRACE("Find operation context (device: %p, op: %lx, mech: %lx)",
+		  device, op_flag, mech->mechanism);
+
+	ret = LLIST_LOCK(&device->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_find(&device->opctx, op_flag, &opctx);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (!opctx) {
+		ret = CKR_OPERATION_NOT_INITIALIZED;
+		goto end;
+	}
+
+	*mech = opctx->mech;
+	if (ctx)
+		*ctx = opctx->ctx;
+
+end:
+	LLIST_UNLOCK(&device->opctx);
+	return ret;
+}
+
+CK_RV libdev_remove_opctx(struct libdevice *device, CK_FLAGS op_flag)
+{
+	CK_RV ret = CKR_OK;
+	struct libopctx *opctx = NULL;
+
+	DBG_TRACE("Remove operation context (device: %p, op: %lx)", device,
+		  op_flag);
+
+	ret = LLIST_LOCK(&device->opctx);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = libopctx_find(&device->opctx, op_flag, &opctx);
+	if (ret != CKR_OK)
+		goto end;
+
+	if (opctx)
+		ret = libopctx_destroy(&device->opctx, opctx);
+
+end:
+	LLIST_UNLOCK(&device->opctx);
+	return ret;
 }

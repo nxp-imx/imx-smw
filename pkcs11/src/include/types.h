@@ -157,6 +157,7 @@ struct libsess {
  * @rw_session: List of the Read/Write Sessions
  * @ro_session: List of the Read Only Sessions
  * @objects: List of the token objects (accessible to all devices sessions)
+ * @opctx: Active operations on the device
  *
  * A device is the cryptographic module storing keys, making cryptographic
  * operation, ...
@@ -171,6 +172,7 @@ struct libdevice {
 	LIST_HEAD(rw_sessions, libsess) rw_sessions;
 	LIST_HEAD(ro_sessions, libsess) ro_sessions;
 	struct libobj_list objects;
+	struct libopctx_list opctx;
 };
 
 /**

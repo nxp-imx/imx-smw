@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include "smw_device.h"
@@ -58,7 +58,7 @@ smw_device_reprovision_prepare(struct smw_device_reprovision_args *args)
 		goto end;
 
 	if (args->version != 0) {
-		status = SMW_STATUS_INVALID_VERSION;
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
 
@@ -92,7 +92,7 @@ smw_device_reprovision(struct smw_device_reprovision_args *args)
 		goto end;
 
 	if (args->version != 0) {
-		status = SMW_STATUS_INVALID_VERSION;
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
 

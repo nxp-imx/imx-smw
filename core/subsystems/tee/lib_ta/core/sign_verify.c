@@ -230,8 +230,10 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	uint32_t exp_param3_type = 0;
 	uint32_t mode = 0;
 	enum tee_algorithm_id algorithm_id = 0;
+	enum tee_algorithm_id hash_algo = TEE_ALGORITHM_ID_INVALID;
 	void *digest = NULL;
 	size_t digest_len = 0;
+	size_t sign_len = 0;
 	bool persistent = false;
 	uint32_t attr_count = 0;
 	struct sign_verify_shared_params *shared_params = NULL;
@@ -277,16 +279,17 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	if (res)
 		goto err;
 
-	if (!shared_params->msg_hashed &&
-	    shared_params->hash_algorithm != TEE_ALGORITHM_ID_INVALID) {
-		res = ta_get_digest_length(shared_params->hash_algorithm,
-					   &digest_len);
+	if (!shared_params->msg_hashed)
+		hash_algo = shared_params->hash_algorithm;
+
+	if (hash_algo != TEE_ALGORITHM_ID_INVALID) {
+		res = ta_get_digest_length(hash_algo, &digest_len);
 		if (res)
 			goto err;
 
 		digest = TEE_Malloc(digest_len, TEE_USER_MEM_HINT_NO_FILL_ZERO);
 		if (digest) {
-			res = ta_compute_digest(shared_params->hash_algorithm,
+			res = ta_compute_digest(hash_algo,
 						params[2].memref.buffer,
 						params[2].memref.size, digest,
 						&digest_len);
@@ -307,9 +310,8 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 	/* Get TEE algorithm ID */
 	switch (shared_params->sign_algorithm) {
 	case TEE_ALGORITHM_ID_RSA:
-		res = get_rsa_algo_id(shared_params->signature_type,
-				      shared_params->hash_algorithm, digest_len,
-				      &algorithm_id);
+		res = get_rsa_algo_id(shared_params->signature_type, hash_algo,
+				      digest_len, &algorithm_id);
 
 		if (!res)
 			break;
@@ -337,14 +339,28 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 			TEE_InitValueAttribute(&sign_verify_attr[attr_count],
 					       TEE_ATTR_EDDSA_PREHASH, 1, 0);
 			attr_count++;
-		}
-
-		if (shared_params->ctx_length) {
+		} else if (shared_params->signature_type ==
+				   TEE_SIGNATURE_TYPE_EDDSA_CTX &&
+			   shared_params->ctx_length) {
 			TEE_InitRefAttribute(&sign_verify_attr[attr_count],
 					     TEE_ATTR_EDDSA_CTX,
 					     shared_params->ctx,
 					     shared_params->ctx_length);
 			attr_count++;
+		}
+
+		/* Workaround the TA dead */
+		if (cmd_id == CMD_SIGN && params[3].memref.buffer) {
+			res = ta_get_digest_length(TEE_ALGORITHM_ID_SHA512,
+						   &sign_len);
+			if (res)
+				goto err;
+
+			if (params[3].memref.size < sign_len) {
+				params[3].memref.size = sign_len;
+				res = TEE_ERROR_SHORT_BUFFER;
+				goto err;
+			}
 		}
 		break;
 
@@ -410,10 +426,8 @@ err:
 			TEE_FreeTransientObject(key_handle);
 	}
 
-	if (!shared_params->msg_hashed &&
-	    shared_params->hash_algorithm != TEE_ALGORITHM_ID_INVALID && digest)
-		if (digest)
-			TEE_Free(digest);
+	if (hash_algo != TEE_ALGORITHM_ID_INVALID && digest)
+		TEE_Free(digest);
 
 	if (operation != TEE_HANDLE_NULL)
 		TEE_FreeOperation(operation);

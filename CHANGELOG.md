@@ -51,6 +51,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Device manager returns the correct status code if the arguments version is not supported.
 * Fix SW implementation of the hash multipart when input is a multiple of block.
+* Key manager returns the correct status code if the arguments version is not supported.
 
 ##### 2. Subsystems
 
@@ -77,6 +78,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE tests: Disable HKDF validation.
 * Fix TEE ed25519 key security size in the tests.
 * Validate hash multipart when input is a multiple of block.
+* Add subtests in U_API_Derive_004 to verify the management of the arguments version.
 
 #### PKCS#11 Library - _version 5.0_
 
@@ -97,6 +99,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 2. SMW APIs
 
 * Device manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported in case of reprovisioning.
+* Key manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported in case of TLS1.2 KDF.
 
 ##### 3. PKCS#11
 

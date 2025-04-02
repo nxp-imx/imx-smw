@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -728,7 +728,7 @@ int smw_utils_hash_update(struct smw_hash_context *context,
 		}
 	}
 
-	while (remaining_length > info->block_size) {
+	while (remaining_length >= info->block_size) {
 		info->update(input, (uint32_t *)&context->intermediate);
 
 		if (SUB_OVERFLOW(remaining_length, info->block_size,

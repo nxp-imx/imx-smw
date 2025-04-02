@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <stdlib.h>
@@ -509,9 +509,7 @@ int hash_final(struct subtest_data *subtest)
 
 	res = util_read_hex_buffer(&input_hex, &input_len, subtest->params,
 				   INPUT_OBJ);
-	if ((!is_api_test(subtest) && res != ERR_CODE(PASSED)) ||
-	    (is_api_test(subtest) && res != ERR_CODE(PASSED) &&
-	     res != ERR_CODE(MISSING_PARAMS))) {
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS)) {
 		DBG_PRINT("Failed to read input buffer");
 		goto exit;
 	}

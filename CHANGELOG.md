@@ -49,6 +49,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library - _version 5.0_
 ##### 1. SMW APIs
 
+* Device manager returns the correct status code if the arguments version is not supported.
 
 ##### 2. Subsystems
 
@@ -87,7 +88,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
-##### 2. PKCS#11
+##### 2. SMW APIs
+
+* Device manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported in case of reprovisioning.
+
+##### 3. PKCS#11
 
 * As some subsystems are not handling key usage and permitted algorithm, the
   find operation is not able to find all keys whose template defines key usage
@@ -184,9 +189,13 @@ Sign and Verify algorithm in ELE configuration file.
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
-##### 1. ELE Subsystem
+##### 2. ELE Subsystem
 
 * System hang may occur while generating RSA key on i.MX95.
+
+##### 3. SMW APIs
+
+* Device manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported in case of reprovisioning.
 
 #### SMW Library - _version 4.1_
 ##### 1. SMW APIs
@@ -276,6 +285,10 @@ is called.
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
+##### 2. SMW APIs
+
+* Device manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported in case of reprovisioning.
+
 ##### 3. OSAL
 
 * Cannot create the SMW datbase if the user specifies a directory that does not exist in the file system.
@@ -354,13 +367,17 @@ The failure is due to the storage manager which is already loaded and a new inst
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
+##### 2. SMW APIs
+
+* Device manager returns `SMW_STATUS_INVALID_VERSION` instead of `SMW_STATUS_VERSION_NOT_SUPPORTED` if the arguments version is not supported in case of reprovisioning.
+
 #### SMW Library - _version 3.0_
 ##### 1. SMW APIs
 
 * Fix the selection of the subsystem for cryptographic operations using one or more key(s).
   The selection is based on the content of the configuration file unless the cryptographic operation
   uses one or more key(s). In this case, the subsystem associated to the key(s) must be selected.
-* Device manager returns the correct status code if the arguments version is not supported.
+* Device manager returns the correct status code if the arguments version is not supported except in case of reprovisioning .
 * Change public AEAD arguments structure members (`struct smw_aead_args`, `struct smw_aead_aad_args` and `struct smw_aead_final_args`).
 * Add support of key attestation.
 * Add dedicated status codes for cases where the argument string name provided by the user or the parameter set in the user configuration file is not recognized by SMW.

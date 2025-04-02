@@ -1771,7 +1771,7 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 		goto end;
 
 	if (args->version != 0) {
-		status = SMW_STATUS_INVALID_VERSION;
+		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
 
@@ -1779,7 +1779,7 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 		ms = &args->master_secret;
 
 		if (ms->version != 0) {
-			status = SMW_STATUS_INVALID_VERSION;
+			status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 			goto end;
 		}
 
@@ -1792,7 +1792,7 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 				goto end;
 
 			if (ms->session_hash->version != 0) {
-				status = SMW_STATUS_INVALID_VERSION;
+				status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 				goto end;
 			}
 		} else {
@@ -1804,7 +1804,7 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 				goto end;
 
 			if (ms->random_data->version != 0) {
-				status = SMW_STATUS_INVALID_VERSION;
+				status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 				goto end;
 			}
 		}
@@ -1812,7 +1812,7 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 		ke = &args->key_expansion;
 
 		if (ke->version != 0) {
-			status = SMW_STATUS_INVALID_VERSION;
+			status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 			goto end;
 		}
 
@@ -1823,7 +1823,7 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 			goto end;
 
 		if (ke->random_data->version != 0) {
-			status = SMW_STATUS_INVALID_VERSION;
+			status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 			goto end;
 		}
 	} else {

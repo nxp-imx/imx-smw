@@ -23,10 +23,11 @@ opt_src_dir=
 opt_merge_dir=
 opt_merge=1
 opt_out="code-coverage"
+opt_lcov=
 opt_html=
 opt_gcov_path=
 opt_lcov_path=
-opt_lcov_ver="1.15"
+opt_lcov_ver="2.3"
 opt_info="code_cover.info"
 opt_info_list=
 
@@ -167,6 +168,7 @@ function parse_param()
         ;;
 
       conf=*)
+        opt_lcov="${opt_lcov} --config-file ${arg#*=}"
         opt_html="${opt_html} --config-file ${arg#*=}"
         ;;
 
@@ -292,7 +294,7 @@ function check_lcov_version()
   fi
 
   # Get the current lcov version installed
-  lcov_ver=$(${lcov_tool} -ver 2>&1 | grep -Eo "LCOV version [0-9]\.[0-9]+")
+  lcov_ver=$(${lcov_tool} -version 2>&1 | grep -Eo "LCOV version [0-9]\.[0-9]+")
   lcov_ver=$(echo "${lcov_ver}" | grep -Eo '[0-9]\.[0-9]+')
 
   IFS='.' read -ra alcov_ver <<< "${lcov_ver}"
@@ -339,7 +341,7 @@ function check_gcov_tools()
 
     find_file gcov_tool "${opt_gcov_path}" "*"
     if [[ ${ret_func} -eq 1 ]]; then
-      opt_html="${opt_html} --rc geninfo_gcov_tool=${gcov_tool}"
+      opt_lcov="${opt_lcov} --gcov-tool ${gcov_tool}"
     fi
   fi
 }
@@ -351,7 +353,8 @@ function copy_file()
 
 function lcov_generate()
 {
-  eval "${lcov_tool} --gcov-tool ${gcov_tool} -c -b ${opt_src_dir} \
+  eval "${lcov_tool} ${opt_lcov} -c  \
+        --substitute=\"s#${opt_gc_src_prefix}#${opt_src_dir}#g\" \
         -d ${opt_merge_dir} -o ${opt_info}"
 }
 
@@ -470,7 +473,7 @@ function merge_generate_report()
     usage
   fi
 
-  cmd="${lcov_tool}"
+  cmd="${lcov_tool} ${opt_lcov}"
 
   IFS=':' read -ra files <<< "${opt_info_list}"
 

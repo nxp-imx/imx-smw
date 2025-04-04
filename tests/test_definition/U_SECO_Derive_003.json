@@ -50,14 +50,16 @@
 			"op_name": "MASTER_SECRET",
 			"key_exchange_name": "ECDHE_ECDSA",
 			"prf_name": "SHA256",
-			"client_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
-			"server_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
+			"random_data" : {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
 			"peer_public_key": [
 				"0a8fbf8511ca8258cc31b27c8f909001",
 				"c8346fde247056c6f292d809689a65cd",
@@ -78,14 +80,16 @@
 			"op_name": "KEY_EXPANSION",
 			"encryption_name": "AES_128_CBC",
 			"prf_name": "SHA256",
-			"client_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
-			"server_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
+			"random_data" : {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
 			"client_w_mac_key_name": "client write mac key",
 			"server_w_mac_key_name": "server write mac key",
 			"client_w_enc_key_name": "client write enc key",
@@ -107,14 +111,16 @@
 			"op_name": "KEY_EXPANSION",
 			"encryption_name": "AES_128_GCM",
 			"prf_name": "SHA256",
-			"client_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
-			"server_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
+			"random_data" : {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
 			"client_write_iv": "000000000000000000000000",
 			"server_write_iv": "000000000000000000000000",
 			"client_w_enc_key_name": "client write enc key",
@@ -152,14 +158,16 @@
 			"op_name": "MASTER_SECRET",
 			"key_exchange_name": "ECDHE_ECDSA",
 			"prf_name": "SHA384",
-			"client_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
-			"server_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
+			"random_data" : {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
 			"peer_public_key": [
 				"856277b7c97e7344447fa6611bcb257f",
 				"0410a4720a0c850256d35cc8853331db",
@@ -182,14 +190,16 @@
 			"op_name": "KEY_EXPANSION",
 			"encryption_name": "AES_256_CBC",
 			"prf_name": "SHA384",
-			"client_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
-			"server_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
+			"random_data" : {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
 			"client_w_mac_key_name": "client write mac key",
 			"server_w_mac_key_name": "server write mac key",
 			"client_w_enc_key_name": "client write enc key",
@@ -211,14 +221,16 @@
 			"op_name": "KEY_EXPANSION",
 			"encryption_name": "AES_256_GCM",
 			"prf_name": "SHA384",
-			"client_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
-			"server_random": [
-				"000102030405060708090a0b0c0d0e0f",
-				"000102030405060708090a0b0c0d0e0f"
-			],
+			"random_data" : {
+				"client_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				],
+				"server_random": [
+					"000102030405060708090a0b0c0d0e0f",
+					"000102030405060708090a0b0c0d0e0f"
+				]
+			},
 			"client_write_iv": "000000000000000000000000",
 			"server_write_iv": "000000000000000000000000",
 			"client_w_enc_key_name": "client write enc key",

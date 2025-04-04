@@ -566,11 +566,18 @@ kdf_tls12_op_read_master_secret(struct smw_kdf_tls12_op_args *tls_args,
 				struct json_object *oargs)
 {
 	int res = ERR_CODE(BAD_ARGS);
+	struct json_object *osession_hash = NULL;
+	struct json_object *orandom_data = NULL;
 	const char *key_exchange_string = NULL;
 	bool ext_master_key = false;
 	struct smw_kdf_tls12_session_hash *sh = NULL;
 	struct smw_kdf_tls12_random_data *rd = NULL;
 	struct tbuffer buf = { 0 };
+
+	res = util_read_json_type(&tls_args->master_secret.version, VERSION_OBJ,
+				  t_int8, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
 
 	res = util_read_json_type(&key_exchange_string, KEY_EXCHANGE_NAME_OBJ,
 				  t_string, oargs);
@@ -596,10 +603,24 @@ kdf_tls12_op_read_master_secret(struct smw_kdf_tls12_op_args *tls_args,
 
 		tls_args->master_secret.session_hash = sh;
 
-		res = util_read_json_type(&buf, SESSION_HASH_OBJ, t_buffer_hex,
-					  oargs);
+		res = util_read_json_type(&osession_hash, SESSION_HASH_OBJ,
+					  t_object, oargs);
 		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 			goto end;
+
+		if (osession_hash) {
+			res = util_read_json_type(&sh->version, VERSION_OBJ,
+						  t_int8, osession_hash);
+			if (res != ERR_CODE(PASSED) &&
+			    res != ERR_CODE(VALUE_NOTFOUND))
+				goto end;
+
+			res = util_read_json_type(&buf, HASH_OBJ, t_buffer_hex,
+						  osession_hash);
+			if (res != ERR_CODE(PASSED) &&
+			    res != ERR_CODE(VALUE_NOTFOUND))
+				goto end;
+		}
 
 		sh->hash = buf.data;
 		sh->hash_length = buf.length;
@@ -615,20 +636,38 @@ kdf_tls12_op_read_master_secret(struct smw_kdf_tls12_op_args *tls_args,
 
 		tls_args->master_secret.random_data = rd;
 
-		res = util_read_json_type(&buf, CLIENT_RANDOM_OBJ, t_buffer_hex,
-					  oargs);
+		res = util_read_json_type(&orandom_data, RANDOM_DATA_OBJ,
+					  t_object, oargs);
 		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 			goto end;
+
+		if (orandom_data) {
+			res = util_read_json_type(&rd->version, VERSION_OBJ,
+						  t_int8, orandom_data);
+			if (res != ERR_CODE(PASSED) &&
+			    res != ERR_CODE(VALUE_NOTFOUND))
+				goto end;
+
+			res = util_read_json_type(&buf, CLIENT_RANDOM_OBJ,
+						  t_buffer_hex, orandom_data);
+			if (res != ERR_CODE(PASSED) &&
+			    res != ERR_CODE(VALUE_NOTFOUND))
+				goto end;
+		}
 
 		rd->client_random = buf.data;
 		rd->client_random_length = buf.length;
+
 		buf.data = NULL;
 		buf.length = 0;
 
-		res = util_read_json_type(&buf, SERVER_RANDOM_OBJ, t_buffer_hex,
-					  oargs);
-		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-			goto end;
+		if (orandom_data) {
+			res = util_read_json_type(&buf, SERVER_RANDOM_OBJ,
+						  t_buffer_hex, orandom_data);
+			if (res != ERR_CODE(PASSED) &&
+			    res != ERR_CODE(VALUE_NOTFOUND))
+				goto end;
+		}
 
 		rd->server_random = buf.data;
 		rd->server_random_length = buf.length;
@@ -658,9 +697,15 @@ kdf_tls12_op_read_key_expansion(struct smw_kdf_tls12_op_args *tls_args,
 				struct json_object *oargs)
 {
 	int res = ERR_CODE(BAD_ARGS);
+	struct json_object *orandom_data = NULL;
 	const char *encryption_string = NULL;
 	struct smw_kdf_tls12_random_data *rd = NULL;
 	struct tbuffer buf = { 0 };
+
+	res = util_read_json_type(&tls_args->key_expansion.version, VERSION_OBJ,
+				  t_int8, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto end;
 
 	res = util_read_json_type(&encryption_string, ENCRYPTION_NAME_OBJ,
 				  t_string, oargs);
@@ -678,18 +723,34 @@ kdf_tls12_op_read_key_expansion(struct smw_kdf_tls12_op_args *tls_args,
 
 	tls_args->key_expansion.random_data = rd;
 
-	res = util_read_json_type(&buf, CLIENT_RANDOM_OBJ, t_buffer_hex, oargs);
+	res = util_read_json_type(&orandom_data, RANDOM_DATA_OBJ, t_object,
+				  oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
+
+	if (orandom_data) {
+		res = util_read_json_type(&rd->version, VERSION_OBJ, t_int8,
+					  orandom_data);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			goto end;
+
+		res = util_read_json_type(&buf, CLIENT_RANDOM_OBJ, t_buffer_hex,
+					  orandom_data);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			goto end;
+	}
 
 	rd->client_random = buf.data;
 	rd->client_random_length = buf.length;
 	buf.data = NULL;
 	buf.length = 0;
 
-	res = util_read_json_type(&buf, SERVER_RANDOM_OBJ, t_buffer_hex, oargs);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-		goto end;
+	if (orandom_data) {
+		res = util_read_json_type(&buf, SERVER_RANDOM_OBJ, t_buffer_hex,
+					  orandom_data);
+		if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+			goto end;
+	}
 
 	rd->server_random = buf.data;
 	rd->server_random_length = buf.length;
@@ -729,11 +790,11 @@ static int kdf_tls12_op_read_args(void **kdf_args, struct subtest_data *subtest,
 	int res = ERR_CODE(BAD_ARGS);
 	const char *prf_string = NULL;
 	const char *op_string = NULL;
-	unsigned int context_id = 0;
+	unsigned int ctx_id = UINT_MAX;
+	struct smw_op_context *api_ctx = (struct smw_op_context *)INTPTR_MAX;
+	enum arguments_test_err_case error = NOT_DEFINED;
 
 	struct smw_kdf_tls12_op_args *tls_args = NULL;
-
-	struct smw_op_context *ctx = NULL;
 
 	if (!kdf_args || !oargs) {
 		DBG_PRINT_BAD_ARGS();
@@ -746,14 +807,23 @@ static int kdf_tls12_op_read_args(void **kdf_args, struct subtest_data *subtest,
 
 	*kdf_args = tls_args;
 
-	res = util_read_json_type(&context_id, CTX_ID_OBJ, t_uint,
+	res = util_read_test_error(&error, subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (error == CTX_NULL) {
+		tls_args->context = NULL;
+	} else {
+		res = util_context_set_op_ctx(subtest, &ctx_id,
+					      &tls_args->context, api_ctx);
+		if (res != ERR_CODE(PASSED))
+			return res;
+	}
+
+	res = util_read_json_type(&tls_args->version, VERSION_OBJ, t_int8,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
-
-	res = util_context_find_node(list_op_ctxs(subtest), context_id, &ctx);
-	if (res == ERR_CODE(PASSED))
-		tls_args->context = ctx;
 
 	res = util_read_json_type(&op_string, OP_NAME_OBJ, t_string, oargs);
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
@@ -1916,6 +1986,9 @@ static int derive_bad_params(struct json_object *params,
 
 	case ARGS_NULL:
 		*args = NULL;
+		break;
+
+	case CTX_NULL:
 		break;
 
 	case KEY_DESC_NULL:

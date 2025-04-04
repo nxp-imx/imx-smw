@@ -80,6 +80,7 @@
 #define PUB_EXP_OBJ		  "pub_exp"
 #define PUB_KEY_OBJ		  "pub_key"
 #define RANDOM_OBJ		  "random"
+#define RANDOM_DATA_OBJ		  "random_data"
 #define RESTORE_OBJ		  "restore"
 #define RESTRICTION_LIST_OBJ	  "restriction_list"
 #define RES_OBJ			  "result"

@@ -548,10 +548,6 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 		goto end;
 
 	nb_shared_keys = kdf_info->nb_shared_key_id;
-	if (sizeof(unsigned int) * nb_shared_keys > UINT8_MAX) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
 
 	status = get_tls_key_exchange_ids(key_derived_id, &op_args);
 	if (status != SMW_STATUS_OK)
@@ -580,8 +576,11 @@ int seco_derive_tls12(struct subsystem_context *seco_ctx,
 	op_args.ke_output_size = key_size;
 
 	op_args.kdf_algorithm = kdf_info->kdf;
-	op_args.shared_key_identifier_array_size =
-		sizeof(unsigned int) * nb_shared_keys;
+	if (MUL_OVERFLOW(nb_shared_keys, sizeof(unsigned int),
+			 &op_args.shared_key_identifier_array_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	/*
 	 * Shared key identifier array size depends if KDF is HMAC or not.

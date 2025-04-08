@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __KEYMGR_H__
@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 #include "smw/names.h"
+#include "smw_keymgr.h"
 
 #include "constants.h"
 #include "config.h"
@@ -39,7 +40,7 @@ struct smw_keymgr_identifier {
 	enum smw_keymgr_privacy_id privacy_id;
 	unsigned int security_size;
 	uint32_t id;
-	smw_attr_attributes_t attributes;
+	struct smw_key_attributes key_attributes;
 	uint32_t storage_id;
 	uint16_t group;
 };

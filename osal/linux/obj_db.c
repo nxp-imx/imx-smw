@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <errno.h>
@@ -32,6 +32,8 @@
  * @TAG_STORAGE_ID: SMW key storage id
  * @TAG_GROUP: SMW key group
  * @TAG_LABEL: PKCS11 storage object label
+ * @TAG_PERMITTED_ALGO: SMW key permitted algo
+ * @TAG_USAGE: SMW key usage flag
  */
 /* Attribute tag */
 enum obj_attribute_tag {
@@ -48,6 +50,8 @@ enum obj_attribute_tag {
 	TAG_STORAGE_ID, /* 10 */
 	TAG_GROUP,
 	TAG_LABEL,
+	TAG_PERMITTED_ALGO,
+	TAG_USAGE,
 };
 
 #define OBJECT_DB_TABLE_NAME "OBJECTS"
@@ -307,6 +311,12 @@ static int sql_print_insert(struct osal_obj *obj, char *sql, size_t *length)
 	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
 		if (sql_print(sql, length, "\"0x%X\", ", TAG_TYPE))
 			goto end;
+
+		if (sql_print(sql, length, "\"0x%X\", ", TAG_PERMITTED_ALGO))
+			goto end;
+
+		if (sql_print(sql, length, "\"0x%X\", ", TAG_USAGE))
+			goto end;
 		break;
 	case SMW_OBJECT_TYPE_NAME_DATA:
 		if (obj->descriptor->data.data_attributes)
@@ -360,6 +370,14 @@ static int sql_print_insert(struct osal_obj *obj, char *sql, size_t *length)
 
 		if (sql_print(sql, length, "%d, ",
 			      obj->descriptor->key.type_name))
+			goto end;
+
+		if (sql_print(sql, length, "%llu, ",
+			      obj->descriptor->key_attributes.permitted_algo))
+			goto end;
+
+		if (sql_print(sql, length, "%d, ",
+			      obj->descriptor->key_attributes.usage_flags))
 			goto end;
 
 		if (sql_print(sql, length, "%d",
@@ -448,6 +466,15 @@ static int sql_print_update(struct osal_obj *obj, char *sql, size_t *length)
 
 		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_TYPE,
 			      obj->descriptor->key.type_name))
+			goto end;
+
+		if (sql_print(sql, length, "\"0x%X\" = %llu, ",
+			      TAG_PERMITTED_ALGO,
+			      obj->descriptor->key_attributes.permitted_algo))
+			goto end;
+
+		if (sql_print(sql, length, "\"0x%X\" = %d, ", TAG_USAGE,
+			      obj->descriptor->key_attributes.usage_flags))
 			goto end;
 
 		if (sql_print(sql, length, "\"0x%X\" = %d ", TAG_SIZE,
@@ -581,6 +608,21 @@ static int sql_print_find(struct osal_obj *obj, char *sql, size_t *length)
 				if (sql_print(sql, length, " AND \"0x%X\" = %d",
 					      TAG_TYPE,
 					      descriptor->key.type_name))
+					goto end;
+
+			if (descriptor->key_attributes.permitted_algo)
+				if (sql_print(sql, length,
+					      " AND \"0x%X\" = %llu",
+					      TAG_PERMITTED_ALGO,
+					      descriptor->key_attributes
+						      .permitted_algo))
+					goto end;
+
+			if (descriptor->key_attributes.usage_flags)
+				if (sql_print(sql, length, " AND \"0x%X\" = %d",
+					      TAG_USAGE,
+					      descriptor->key_attributes
+						      .usage_flags))
 					goto end;
 
 			if (descriptor->key.security_size)
@@ -739,6 +781,8 @@ static int obj_db_create_object_table(struct obj_db *db)
 		ATTRIBUTE(INTEGER, NONE, STORAGE_ID),
 		ATTRIBUTE(INTEGER, NONE, GROUP),
 		ATTRIBUTE(TEXT, NOT_NULL, LABEL),
+		ATTRIBUTE(INTEGER, NONE, PERMITTED_ALGO),
+		ATTRIBUTE(INTEGER, NONE, USAGE),
 	};
 	unsigned int nb_attributes = ARRAY_SIZE(attributes);
 
@@ -870,6 +914,22 @@ static int osal_obj_set_specific_attribute(struct osal_obj *obj,
 				(smw_key_type_t)attribute_value;
 		break;
 
+	case TAG_PERMITTED_ALGO:
+		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_PUBLIC_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+			obj->descriptor->key_attributes.permitted_algo =
+				(smw_attr_algo_t)attribute_value;
+		break;
+
+	case TAG_USAGE:
+		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_PUBLIC_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+			obj->descriptor->key_attributes.usage_flags =
+				(smw_attr_usage_t)attribute_value;
+		break;
+
 	case TAG_SUBSYSTEM_ID:
 		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
 		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_PUBLIC_KEY ||
@@ -883,9 +943,26 @@ static int osal_obj_set_specific_attribute(struct osal_obj *obj,
 		break;
 
 	case TAG_STORAGE_ID:
-		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA &&
-		    obj->descriptor->data.data_attributes)
+		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_PUBLIC_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+			obj->descriptor->key_attributes.storage_id =
+				(smw_attr_usage_t)attribute_value;
+		else if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA &&
+			 obj->descriptor->data.data_attributes)
 			obj->descriptor->data.data_attributes->storage_id =
+				attribute_value;
+		break;
+
+	case TAG_ATTRIBUTES:
+		if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_SECRET_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_PUBLIC_KEY ||
+		    obj->descriptor->type == SMW_OBJECT_TYPE_NAME_KEY_PAIR)
+			obj->descriptor->key_attributes.attributes =
+				(smw_attr_usage_t)attribute_value;
+		else if (obj->descriptor->type == SMW_OBJECT_TYPE_NAME_DATA &&
+			 obj->descriptor->data.data_attributes)
+			obj->descriptor->data.data_attributes->attributes =
 				attribute_value;
 		break;
 

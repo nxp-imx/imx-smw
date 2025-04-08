@@ -363,8 +363,8 @@ static int delete_key_operation(hsm_hdl_t key_mgt_hdl,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	op_args.key_identifier = key_identifier->id;
-	if (SMW_ATTR_IS_PERSISTENT(key_identifier->attributes) ||
-	    SMW_ATTR_IS_PERMANENT(key_identifier->attributes))
+	if (SMW_ATTR_IS_PERSISTENT(key_identifier->key_attributes.attributes) ||
+	    SMW_ATTR_IS_PERMANENT(key_identifier->key_attributes.attributes))
 		op_args.flags = HSM_OP_DEL_KEY_FLAGS_STRICT_OPERATION;
 
 	SMW_DBG_PRINTF(VERBOSE,
@@ -789,7 +789,8 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 				   op_args.permitted_algo, op_args.key_usage);
 	}
 
-	persistence = SMW_ATTR_GET_PERSISTENCE(key_identifier->attributes);
+	persistence = key_identifier->key_attributes.attributes;
+	persistence = SMW_ATTR_GET_PERSISTENCE(persistence);
 
 	switch (persistence) {
 	case SMW_ATTR_PERSISTENCE_PERSISTENT:
@@ -1056,7 +1057,7 @@ static int delete_key(struct subsystem_context *ele_ctx, void *args)
 		status = tmp_status;
 
 		/* Let assume there is place to add a new key */
-		attributes = key_desc->identifier.attributes;
+		attributes = key_desc->identifier.key_attributes.attributes;
 		is_transient = SMW_ATTR_IS_TRANSIENT(attributes);
 
 		tmp_status =
@@ -1159,9 +1160,9 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 	key_identifier->storage_id =
 		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
 	ele_get_key_lifecycles(op_key_attrs.lifecycle,
-			       &key_identifier->attributes);
+			       &key_identifier->key_attributes.attributes);
 	get_key_persistence(op_key_attrs.key_lifetime,
-			    &key_identifier->attributes);
+			    &key_identifier->key_attributes.attributes);
 
 	if (key_attributes) {
 		ele_get_key_policy(&key_attributes->permitted_algo,
@@ -1169,7 +1170,8 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 				   op_key_attrs.permitted_algo,
 				   op_key_attrs.key_usage);
 		key_attributes->storage_id = key_identifier->storage_id;
-		key_attributes->attributes = key_identifier->attributes;
+		key_attributes->attributes =
+			key_identifier->key_attributes.attributes;
 	}
 
 end:

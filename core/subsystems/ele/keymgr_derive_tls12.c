@@ -141,6 +141,8 @@ static int tls12_store_key_id(struct smw_keymgr_derive_key_args *args,
 			      unsigned int bits, uint32_t *key_id)
 {
 	struct smw_keymgr_identifier key_identifier = { 0 };
+	struct smw_key_attributes *key_attributes =
+		&key_identifier.key_attributes;
 
 	if (!args->store_key)
 		return SMW_STATUS_OK;
@@ -149,8 +151,8 @@ static int tls12_store_key_id(struct smw_keymgr_derive_key_args *args,
 	key_identifier.id = *key_id;
 	key_identifier.subsystem_id = SUBSYSTEM_ID_ELE;
 	key_identifier.security_size = bits;
-	key_identifier.attributes =
-		SMW_ATTR_SET_TRANSIENT(key_identifier.attributes);
+	key_attributes->attributes =
+		SMW_ATTR_SET_TRANSIENT(key_attributes->attributes);
 	key_identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 
 	return smw_keymgr_db_create(key_id, &key_identifier);

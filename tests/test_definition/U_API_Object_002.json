@@ -52,7 +52,23 @@
 				"SIGN_HASH",
 				"SIGN_MESSAGE"
 			]
-		}
+		},
+        "key find algo": {
+            "type": "SECP_R1",
+            "attributes_list": [
+                "PERSISTENT"
+            ],
+            "permitted_algo": [
+                "ECDSA",
+                "HASH=SHA256"
+            ]
+        },
+        "key find usage": {
+            "type": "AES",
+            "usage": [
+                "ENCRYPT"
+            ]
+        }
     },
     "subtest 1": {
         "command": "GENERATE",
@@ -105,21 +121,33 @@
         "object_found": 2
     },
     "subtest 10": {
+        "command": "OBJECT_FIND",
+        "object_name": "key find algo",
+        "depends": 2,
+        "privacy": "KEYPAIR"
+    },
+    "subtest 11": {
+        "command": "OBJECT_FIND",
+        "object_name": "key find usage",
+        "depends": 1,
+        "privacy": "SECRET_KEY"
+    },
+    "subtest 12": {
         "command": "DELETE",
         "key_name": "key 1",
         "depends": 1
     },
-    "subtest 11": {
+    "subtest 13": {
         "command": "DELETE",
         "key_name": "key 2",
         "depends": 2
     },
-    "subtest 12": {
+    "subtest 14": {
         "command": "DELETE",
         "key_name": "key 3",
         "depends": 4
     },
-    "subtest 13": {
+    "subtest 15": {
         "command": "STORAGE_DELETE",
         "data_name": "data 1",
         "depends": 3,
@@ -127,28 +155,28 @@
             "imx8qxp"
         ]
     },
-    "subtest 14": {
-        "command": "OBJECT_FIND",
-        "object_name": "data 1",
-        "depends": 13,
-        "result": "SMW_STATUS_UNKNOWN_ID"
-    },
-    "subtest 15": {
-        "command": "OBJECT_FIND",
-        "object_name": "key 1",
-        "depends": 10,
-        "result": "SMW_STATUS_UNKNOWN_ID"
-    },
     "subtest 16": {
         "command": "OBJECT_FIND",
-        "object_name": "key 2",
-        "depends": 11,
+        "object_name": "data 1",
+        "depends": 15,
         "result": "SMW_STATUS_UNKNOWN_ID"
     },
     "subtest 17": {
         "command": "OBJECT_FIND",
-        "object_name": "key 3",
+        "object_name": "key 1",
         "depends": 12,
+        "result": "SMW_STATUS_UNKNOWN_ID"
+    },
+    "subtest 18": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 2",
+        "depends": 13,
+        "result": "SMW_STATUS_UNKNOWN_ID"
+    },
+    "subtest 19": {
+        "command": "OBJECT_FIND",
+        "object_name": "key 3",
+        "depends": 14,
         "result": "SMW_STATUS_UNKNOWN_ID"
     }
 }

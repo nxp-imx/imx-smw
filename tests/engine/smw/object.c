@@ -133,18 +133,20 @@ error:
 	return ERR_CODE(FAILED);
 }
 
-static int object_read_attributes(struct json_object *params,
-				  smw_attr_attributes_t *attributes)
+static int
+object_read_attributes(struct json_object *params,
+		       struct smw_object_descriptor *object_descriptor)
 {
-	if (!params || !attributes) {
+	if (!params || !object_descriptor) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	*attributes = 0;
+	object_descriptor->attributes = 0;
 
 	return util_attr_read_attributes(params, ATTR_LIST_OBJ,
-					 &attributes_callback, attributes);
+					 &attributes_callback,
+					 &object_descriptor->attributes);
 }
 
 static int
@@ -194,9 +196,12 @@ object_read_descriptor(struct subtest_data *subtest,
 			if (res != ERR_CODE(PASSED))
 				return res;
 
-			if (key_attributes_ptr)
+			if (key_attributes_ptr) {
+				object_descriptor->key_attributes =
+					key_attributes;
 				object_descriptor->attributes =
 					key_attributes.attributes;
+			}
 		}
 	}
 
@@ -208,7 +213,7 @@ static int object_find_test_args_null(struct subtest_data *subtest)
 	int res = ERR_CODE(BAD_ARGS);
 
 	const char *object_name = NULL;
-	smw_attr_attributes_t object_attributes = 0;
+	struct smw_object_descriptor object_descriptor = { 0 };
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -219,18 +224,16 @@ static int object_find_test_args_null(struct subtest_data *subtest)
 				  subtest->params);
 	if (res == ERR_CODE(VALUE_NOTFOUND)) {
 		res = object_read_attributes(subtest->params,
-					     &object_attributes);
+					     &object_descriptor);
 	}
 
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	if (object_name)
+	if (object_descriptor.id)
 		subtest->smw_status = smw_find_object_db(NULL);
-	else if (object_attributes)
-		subtest->smw_status = smw_find_object_db_init(NULL, 0, NULL);
 	else
-		subtest->smw_status = SMW_STATUS_UNKNOWN_ID;
+		subtest->smw_status = smw_find_object_db_init(NULL, 0, NULL);
 
 	if (subtest->smw_status != SMW_STATUS_OK)
 		res = ERR_CODE(API_STATUS_NOK);
@@ -249,7 +252,6 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 	const char *privacy_string = NULL;
 	uint32_t found = 0;
 	uint32_t object_found = 0;
-	smw_attr_attributes_t object_attributes = 0;
 	void *ctx = NULL;
 
 	if (!subtest) {
@@ -266,19 +268,20 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 					     object_name);
 	} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
 		res = object_read_attributes(subtest->params,
-					     &object_attributes);
+					     &object_descriptor);
 	}
 
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	if (object_name) {
+	if (object_descriptor.id) {
 		subtest->smw_status = smw_find_object_db(&object_descriptor);
 		if (subtest->smw_status == SMW_STATUS_OK)
 			found++;
-	} else if (object_attributes) {
+	} else {
 		subtest->smw_status =
-			smw_find_object_db_init(&ctx, object_attributes,
+			smw_find_object_db_init(&ctx,
+						object_descriptor.attributes,
 						&object_descriptor);
 		if (subtest->smw_status == SMW_STATUS_OK) {
 			while (smw_find_object_db_next(ctx,
@@ -289,8 +292,6 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 
 			subtest->smw_status = smw_find_object_db_final(ctx);
 		}
-	} else {
-		subtest->smw_status = SMW_STATUS_UNKNOWN_ID;
 	}
 
 	if (subtest->smw_status != SMW_STATUS_OK) {

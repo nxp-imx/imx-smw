@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #ifndef __SMW_OBJECT_H__
@@ -26,6 +26,7 @@
  * @group: Key group (may not be used by all subsystems)
  * @key: Key descriptor. See &struct smw_key_descriptor
  * @data: Data descriptor. See &struct smw_data_descriptor
+ * @key_attributes: Key attributes. See &struct smw_key_attributes
  */
 struct smw_object_descriptor {
 	unsigned int id;
@@ -39,6 +40,7 @@ struct smw_object_descriptor {
 		struct smw_key_descriptor key;
 		struct smw_data_descriptor data;
 	};
+	struct smw_key_attributes key_attributes;
 };
 
 /**

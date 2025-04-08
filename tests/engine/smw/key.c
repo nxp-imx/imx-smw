@@ -32,7 +32,7 @@ static struct {
 	KEY_TYPE(DES3),	      KEY_TYPE(DSA_SM2_FP),   KEY_TYPE(SM4),
 	KEY_TYPE(HMAC),	      KEY_TYPE(RSA),	      KEY_TYPE(DH),
 	KEY_TYPE(TLS_MASTER), KEY_TYPE(RAW),	      KEY_TYPE(DERIVE),
-	KEY_TYPE(HKDF_IKM),
+	KEY_TYPE(HKDF_IKM),   KEY_TYPE(X25519),
 };
 
 #define KEY_FORMAT(_name)                                                      \

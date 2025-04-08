@@ -12,7 +12,7 @@
 		"res master key": {},
 		"derived encryption key": {
 			"type": "AES",
-			"security_size": 256,
+			"security_size": 128,
 			"usage": [
 				"ENCRYPT",
 				"DECRYPT"
@@ -26,43 +26,43 @@
 		},
 		"derived finished key": {
 			"type": "HMAC",
-			"security_size": 384,
+			"security_size": 256,
 			"usage": [
 				"SIGN_MESSAGE",
 				"VERIFY_MESSAGE"
 			],
 			"permitted_algo": [
 				"HMAC",
-				"HASH=SHA384"
+				"HASH=SHA256"
 			]
 		},
 		"derived PSK": {
 			"type": "DERIVE",
-			"security_size": 384,
+			"security_size": 256,
 			"usage": [
 				"DERIVE"
 			],
 			"permitted_algo": [
 				"TLS_1_3",
-				"HASH=SHA384"
+				"HASH=SHA256"
 			]
 		},
-		"self 384-bit ecdh key": {
-			"type": "SECP_R1",
-			"security_size": 384,
+		"self x25519 key": {
+			"type": "X25519",
+			"security_size": 255,
 			"usage": [
 				"DERIVE"
 			],
 			"permitted_algo": [
 				"TLS_1_3",
-				"HASH=SHA384"
+				"HASH=SHA256"
 			]
 		}
 	},
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "self 384-bit ecdh key",
+		"key_name": "self x25519 key",
 		"restriction_list": [
 			"imx8ulp",
 			"imx95",
@@ -77,11 +77,10 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 48,
+			"prf_name": "SHA256",
+			"length": 32,
 			"label": "ext binder",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
@@ -97,11 +96,10 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 48,
+			"prf_name": "SHA256",
+			"length": 32,
 			"label": "res binder",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
@@ -117,11 +115,10 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 48,
+			"prf_name": "SHA256",
+			"length": 32,
 			"label": "c e traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
@@ -137,11 +134,10 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 48,
+			"prf_name": "SHA256",
+			"length": 32,
 			"label": "e exp master",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
@@ -157,26 +153,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "c hs traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"store_key": true,
 		"op_output": "c hs traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 7": {
@@ -187,8 +180,8 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 32,
+			"prf_name": "SHA256",
+			"length": 16,
 			"label": "key"
 		},
 		"op_output": "derived encryption key",
@@ -236,7 +229,7 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"length": 12,
 			"label": "iv"
 		},
@@ -252,8 +245,8 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 48,
+			"prf_name": "SHA256",
+			"length": 32,
 			"label": "finished"
 		},
 		"op_output": "derived finished key",
@@ -267,10 +260,10 @@
 		"command": "MAC_COMPUTE",
 		"subsystem": "ELE",
 		"algo": "HMAC",
-		"hash": "SHA384",
+		"hash": "SHA256",
 		"key_name": "derived finished key",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
-		"output": 48,
+		"output": 32,
 		"mac_id": 1,
 		"depends": 11
 	},
@@ -281,7 +274,7 @@
 		"command": "MAC_VERIFY",
 		"subsystem": "ELE",
 		"algo": "HMAC",
-		"hash": "SHA384",
+		"hash": "SHA256",
 		"key_name": "derived finished key",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"mac_id": 1,
@@ -295,26 +288,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "s hs traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"store_key": true,
 		"op_output": "s hs traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 15": {
@@ -325,8 +315,8 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 32,
+			"prf_name": "SHA256",
+			"length": 16,
 			"label": "key"
 		},
 		"op_output": "derived encryption key",
@@ -374,7 +364,7 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"length": 12,
 			"label": "iv"
 		},
@@ -390,8 +380,8 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 48,
+			"prf_name": "SHA256",
+			"length": 32,
 			"label": "finished"
 		},
 		"op_output": "derived finished key",
@@ -405,10 +395,10 @@
 		"command": "MAC_COMPUTE",
 		"subsystem": "ELE",
 		"algo": "HMAC",
-		"hash": "SHA384",
+		"hash": "SHA256",
 		"key_name": "derived finished key",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
-		"output": 48,
+		"output": 32,
 		"mac_id": 2,
 		"depends": 19
 	},
@@ -419,7 +409,7 @@
 		"command": "MAC_VERIFY",
 		"subsystem": "ELE",
 		"algo": "HMAC",
-		"hash": "SHA384",
+		"hash": "SHA256",
 		"key_name": "derived finished key",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"mac_id": 2,
@@ -433,26 +423,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "c ap traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"store_key": true,
 		"op_output": "c ap traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 23": {
@@ -463,8 +450,8 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 32,
+			"prf_name": "SHA256",
+			"length": 16,
 			"label": "key"
 		},
 		"op_output": "derived encryption key",
@@ -512,7 +499,7 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"length": 12,
 			"label": "iv"
 		},
@@ -528,8 +515,8 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 48,
+			"prf_name": "SHA256",
+			"length": 32,
 			"label": "finished"
 		},
 		"op_output": "derived finished key",
@@ -543,10 +530,10 @@
 		"command": "MAC_COMPUTE",
 		"subsystem": "ELE",
 		"algo": "HMAC",
-		"hash": "SHA384",
+		"hash": "SHA256",
 		"key_name": "derived finished key",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
-		"output": 48,
+		"output": 32,
 		"mac_id": 3,
 		"depends": 27
 	},
@@ -557,7 +544,7 @@
 		"command": "MAC_VERIFY",
 		"subsystem": "ELE",
 		"algo": "HMAC",
-		"hash": "SHA384",
+		"hash": "SHA256",
 		"key_name": "derived finished key",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"mac_id": 3,
@@ -571,26 +558,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "s ap traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"store_key": true,
 		"op_output": "s ap traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 31": {
@@ -601,7 +585,7 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"length": 32,
 			"label": "key"
 		},
@@ -650,7 +634,7 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"length": 12,
 			"label": "iv"
 		},
@@ -666,8 +650,8 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 48,
+			"prf_name": "SHA256",
+			"length": 32,
 			"label": "finished"
 		},
 		"op_output": "derived finished key",
@@ -681,10 +665,10 @@
 		"command": "MAC_COMPUTE",
 		"subsystem": "ELE",
 		"algo": "HMAC",
-		"hash": "SHA384",
+		"hash": "SHA256",
 		"key_name": "derived finished key",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
-		"output": 48,
+		"output": 32,
 		"mac_id": 4,
 		"depends": 35
 	},
@@ -695,7 +679,7 @@
 		"command": "MAC_VERIFY",
 		"subsystem": "ELE",
 		"algo": "HMAC",
-		"hash": "SHA384",
+		"hash": "SHA256",
 		"key_name": "derived finished key",
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"mac_id": 4,
@@ -709,25 +693,22 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "exp master",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"op_output": "exp master key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 39": {
@@ -738,26 +719,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "res master",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"store_key": true,
 		"op_output": "res master key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 40": {
@@ -768,8 +746,8 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
-			"length": 48,
+			"prf_name": "SHA256",
+			"length": 32,
 			"label": "resumption"
 		},
 		"store_key": true,
@@ -785,12 +763,11 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
-			"length": 48,
+			"length": 32,
 			"label": "ext binder",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
@@ -806,12 +783,11 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
-			"length": 48,
+			"length": 32,
 			"label": "res binder",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
@@ -827,12 +803,11 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
-			"length": 48,
+			"length": 32,
 			"label": "c e traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
@@ -848,12 +823,11 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
-			"length": 48,
+			"length": 32,
 			"label": "e exp master",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
@@ -869,26 +843,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "c hs traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"op_output": "c hs traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 46": {
@@ -899,26 +870,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "s hs traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"op_output": "s hs traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 47": {
@@ -929,26 +897,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "c ap traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"op_output": "c ap traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 48": {
@@ -959,26 +924,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "s ap traffic",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"op_output": "s ap traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 49": {
@@ -989,26 +951,23 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "exp master",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"op_output": "exp master key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 50": {
@@ -1019,31 +978,28 @@
 		"subsystem": "ELE",
 		"op_type": "TLS13_KEY_EXCHANGE",
 		"op_args": {
-			"prf_name": "SHA384",
+			"prf_name": "SHA256",
 			"psk_name": "derived PSK",
 			"peer_public_key": [
-				"856277b7c97e7344447fa6611bcb257f",
-				"0410a4720a0c850256d35cc8853331db",
-				"20658e0055afaf32f6286111ba025b25",
-				"230f75fc9adc273d5c244590dd45dc6b",
-				"b64faca0f30a91bb9f4dc99a99af21a3",
-				"f484aec5acfd2b03f1afe811eb75d61f"
+				"60fed4ba255a9d31c961eb74c6356d68",
+				"c049b8923b61fa6ce669622e60f29fb6",
+				"7903fe1008b8bc99a41ae9e95628bc64",
+				"f2f1b20c2d7e9f5177a3c294d4462299"
 			],
-			"length": 48,
+			"length": 32,
 			"label": "res master",
 			"context": [
-				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10",
 				"0102030405060708090a0b0c0d0e0f10"
 			]
 		},
 		"op_output": "res master key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 51": {
 		"command": "DELETE",
-		"key_name": "self 384-bit ecdh key",
+		"key_name": "self x25519 key",
 		"depends": 1
 	}
 }

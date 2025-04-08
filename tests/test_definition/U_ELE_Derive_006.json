@@ -190,7 +190,7 @@
 	},
 	"subtest 8": {
 		"description": [
-			"Encrypt some data with the encryption key"
+			"Encrypt data with the encryption key"
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
@@ -207,7 +207,7 @@
 	},
 	"subtest 9": {
 		"description": [
-			"Decrypt some data with the encryption key"
+			"Decrypt data with the encryption key"
 		],
 		"command": "AEAD",
 		"subsystem": "ELE",
@@ -255,21 +255,32 @@
 	},
 	"subtest 12": {
 		"description": [
-			"Sign some data with the finished key"
+			"Sign data with the finished key"
 		],
 		"command": "MAC_COMPUTE",
 		"subsystem": "ELE",
 		"algo": "HMAC",
 		"hash": "SHA256",
 		"key_name": "derived finished key",
-		"input": [
-			"6bc1bee22e409f96e93d7e117393172a"
-		],
+		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 32,
 		"mac_id": 1,
 		"depends": 11
 	},
 	"subtest 13": {
+		"description": [
+			"Verify signature with the finished key"
+		],
+		"command": "MAC_VERIFY",
+		"subsystem": "ELE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished key",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 1,
+		"depends": 12
+	},
+	"subtest 14": {
 		"description": [
 			"Derive `s hs traffic` using TLS1.3 API"
 		],
@@ -296,7 +307,7 @@
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
-	"subtest 14": {
+	"subtest 15": {
 		"description": [
 			"Derive encryption key from `s hs traffic`"
 		],
@@ -310,9 +321,9 @@
 		},
 		"op_output": "derived encryption key",
 		"op_input": "s hs traffic key",
-		"depends": 13
+		"depends": 14
 	},
-	"subtest 15": {
+	"subtest 16": {
 		"description": [
 			"Encrypt data with the encryption key"
 		],
@@ -327,9 +338,9 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 2,
-		"depends": 14
+		"depends": 15
 	},
-	"subtest 16": {
+	"subtest 17": {
 		"description": [
 			"Decrypt data with the encryption key"
 		],
@@ -343,9 +354,9 @@
 		"tag": 16,
 		"aead_id": 2,
 		"output": "30313233343536373839404142434445",
-		"depends": 15
+		"depends": 16
 	},
-	"subtest 17": {
+	"subtest 18": {
 		"description": [
 			"Derive encryption IV from `s hs traffic`"
 		],
@@ -359,9 +370,9 @@
 		},
 		"op_output": "derived encryption IV",
 		"op_input": "s hs traffic key",
-		"depends": 13
+		"depends": 14
 	},
-	"subtest 18": {
+	"subtest 19": {
 		"description": [
 			"Derive finished key from `s hs traffic`"
 		],
@@ -375,9 +386,9 @@
 		},
 		"op_output": "derived finished key",
 		"op_input": "s hs traffic key",
-		"depends": 13
+		"depends": 14
 	},
-	"subtest 19": {
+	"subtest 20": {
 		"description": [
 			"Sign data with the finished key"
 		],
@@ -389,9 +400,22 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 32,
 		"mac_id": 2,
-		"depends": 18
+		"depends": 19
 	},
-	"subtest 20": {
+	"subtest 21": {
+		"description": [
+			"Verify signature with the finished key"
+		],
+		"command": "MAC_VERIFY",
+		"subsystem": "ELE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished key",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 2,
+		"depends": 20
+	},
+	"subtest 22": {
 		"description": [
 			"Derive `c ap traffic` using TLS1.3 API"
 		],
@@ -418,7 +442,7 @@
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
-	"subtest 21": {
+	"subtest 23": {
 		"description": [
 			"Derive encryption key from `c ap traffic`"
 		],
@@ -432,9 +456,9 @@
 		},
 		"op_output": "derived encryption key",
 		"op_input": "c ap traffic key",
-		"depends": 20
+		"depends": 22
 	},
-	"subtest 22": {
+	"subtest 24": {
 		"description": [
 			"Encrypt data with the encryption key"
 		],
@@ -449,9 +473,9 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 3,
-		"depends": 21
+		"depends": 23
 	},
-	"subtest 23": {
+	"subtest 25": {
 		"description": [
 			"Decrypt data with the encryption key"
 		],
@@ -465,9 +489,9 @@
 		"tag": 16,
 		"aead_id": 3,
 		"output": "30313233343536373839404142434445",
-		"depends": 22
+		"depends": 24
 	},
-	"subtest 24": {
+	"subtest 26": {
 		"description": [
 			"Derive encryption IV from `c ap traffic`"
 		],
@@ -481,9 +505,9 @@
 		},
 		"op_output": "derived encryption IV",
 		"op_input": "c ap traffic key",
-		"depends": 20
+		"depends": 22
 	},
-	"subtest 25": {
+	"subtest 27": {
 		"description": [
 			"Derive finished key from `c ap traffic`"
 		],
@@ -497,9 +521,9 @@
 		},
 		"op_output": "derived finished key",
 		"op_input": "c ap traffic key",
-		"depends": 20
+		"depends": 22
 	},
-	"subtest 26": {
+	"subtest 28": {
 		"description": [
 			"Sign data with the finished key"
 		],
@@ -511,9 +535,22 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 32,
 		"mac_id": 3,
-		"depends": 25
+		"depends": 27
 	},
-	"subtest 27": {
+	"subtest 29": {
+		"description": [
+			"Verify signature with the finished key"
+		],
+		"command": "MAC_VERIFY",
+		"subsystem": "ELE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished key",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 3,
+		"depends": 28
+	},
+	"subtest 30": {
 		"description": [
 			"Derive `s ap traffic` using TLS1.3 API"
 		],
@@ -540,7 +577,7 @@
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
-	"subtest 28": {
+	"subtest 31": {
 		"description": [
 			"Derive encryption key from `s ap traffic`"
 		],
@@ -554,9 +591,9 @@
 		},
 		"op_output": "derived encryption key",
 		"op_input": "s ap traffic key",
-		"depends": 27
+		"depends": 30
 	},
-	"subtest 29": {
+	"subtest 32": {
 		"description": [
 			"Encrypt data with the encryption key"
 		],
@@ -571,9 +608,9 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 4,
-		"depends": 28
+		"depends": 31
 	},
-	"subtest 30": {
+	"subtest 33": {
 		"description": [
 			"Decrypt data with the encryption key"
 		],
@@ -587,9 +624,9 @@
 		"tag": 16,
 		"aead_id": 4,
 		"output": "30313233343536373839404142434445",
-		"depends": 29
+		"depends": 32
 	},
-	"subtest 31": {
+	"subtest 34": {
 		"description": [
 			"Derive encryption IV from `s ap traffic`"
 		],
@@ -603,9 +640,9 @@
 		},
 		"op_output": "derived encryption IV",
 		"op_input": "s ap traffic key",
-		"depends": 27
+		"depends": 30
 	},
-	"subtest 32": {
+	"subtest 35": {
 		"description": [
 			"Derive finished key from `s ap traffic`"
 		],
@@ -619,9 +656,9 @@
 		},
 		"op_output": "derived finished key",
 		"op_input": "s ap traffic key",
-		"depends": 27
+		"depends": 30
 	},
-	"subtest 33": {
+	"subtest 36": {
 		"description": [
 			"Sign data with the finished key"
 		],
@@ -633,9 +670,22 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 32,
 		"mac_id": 4,
-		"depends": 32
+		"depends": 35
 	},
-	"subtest 34": {
+	"subtest 37": {
+		"description": [
+			"Verify signature with the finished key"
+		],
+		"command": "MAC_VERIFY",
+		"subsystem": "ELE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished key",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 4,
+		"depends": 36
+	},
+	"subtest 38": {
 		"description": [
 			"Derive `exp master` using TLS1.3 API"
 		],
@@ -661,7 +711,7 @@
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
-	"subtest 35": {
+	"subtest 39": {
 		"description": [
 			"Derive `res master` using TLS1.3 API"
 		],
@@ -688,7 +738,7 @@
 		"op_input": "self 256-bit ecdh key",
 		"depends": 1
 	},
-	"subtest 36": {
+	"subtest 40": {
 		"description": [
 			"Derive resumption PSK from `res master`"
 		],
@@ -703,9 +753,9 @@
 		"store_key": true,
 		"op_output": "derived PSK",
 		"op_input": "res master key",
-		"depends": 35
+		"depends": 39
 	},
-	"subtest 37": {
+	"subtest 41": {
 		"description": [
 			"Derive `ext binder` using TLS1.3 API, with a PSK"
 		],
@@ -723,9 +773,9 @@
 			]
 		},
 		"op_output": "ext binder key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 38": {
+	"subtest 42": {
 		"description": [
 			"Derive `res binder` using TLS1.3 API, with a PSK"
 		],
@@ -743,9 +793,9 @@
 			]
 		},
 		"op_output": "res binder key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 39": {
+	"subtest 43": {
 		"description": [
 			"Derive `c e traffic` using TLS1.3 API, with a PSK"
 		],
@@ -763,9 +813,9 @@
 			]
 		},
 		"op_output": "c e traffic key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 40": {
+	"subtest 44": {
 		"description": [
 			"Derive `e exp master` using TLS1.3 API, with a PSK"
 		],
@@ -783,9 +833,9 @@
 			]
 		},
 		"op_output": "e exp master key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 41": {
+	"subtest 45": {
 		"description": [
 			"Derive `c hs traffic` using TLS1.3 API, with a PSK"
 		],
@@ -810,9 +860,9 @@
 		},
 		"op_output": "c hs traffic key",
 		"op_input": "self 256-bit ecdh key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 42": {
+	"subtest 46": {
 		"description": [
 			"Derive `s hs traffic` using TLS1.3 API, with a PSK"
 		],
@@ -837,9 +887,9 @@
 		},
 		"op_output": "s hs traffic key",
 		"op_input": "self 256-bit ecdh key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 43": {
+	"subtest 47": {
 		"description": [
 			"Derive `c ap traffic` using TLS1.3 API, with a PSK"
 		],
@@ -864,9 +914,9 @@
 		},
 		"op_output": "c ap traffic key",
 		"op_input": "self 256-bit ecdh key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 44": {
+	"subtest 48": {
 		"description": [
 			"Derive `s ap traffic` using TLS1.3 API, with a PSK"
 		],
@@ -891,9 +941,9 @@
 		},
 		"op_output": "s ap traffic key",
 		"op_input": "self 256-bit ecdh key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 45": {
+	"subtest 49": {
 		"description": [
 			"Derive `exp master` using TLS1.3 API, with a PSK"
 		],
@@ -918,9 +968,9 @@
 		},
 		"op_output": "exp master key",
 		"op_input": "self 256-bit ecdh key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 46": {
+	"subtest 50": {
 		"description": [
 			"Derive `res master` using TLS1.3 API, with a PSK"
 		],
@@ -945,9 +995,9 @@
 		},
 		"op_output": "res master key",
 		"op_input": "self 256-bit ecdh key",
-		"depends": 36
+		"depends": 40
 	},
-	"subtest 47": {
+	"subtest 51": {
 		"command": "DELETE",
 		"key_name": "self 256-bit ecdh key",
 		"depends": 1

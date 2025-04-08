@@ -38,6 +38,11 @@
 			"type": "RSA",
 			"security_size": 256,
 			"pub_key": 3
+		},
+		"key 10": {
+			"type": "X25519",
+			"security_size": 255,
+			"priv_key": 32
 		}
 	},
 	"subtest 1": {
@@ -118,6 +123,13 @@
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 9",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 12": {
+		"description": "Private key buffer len is set (buffer NULL)",
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key 10",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

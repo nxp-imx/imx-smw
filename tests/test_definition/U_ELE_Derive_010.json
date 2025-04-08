@@ -47,9 +47,9 @@
 				"HASH=SHA384"
 			]
 		},
-		"self 384-bit ecdh key": {
-			"type": "SECP_R1",
-			"security_size": 384,
+		"self x25519 key": {
+			"type": "X25519",
+			"security_size": 255,
 			"usage": [
 				"DERIVE"
 			],
@@ -62,7 +62,7 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
-		"key_name": "self 384-bit ecdh key",
+		"key_name": "self x25519 key",
 		"restriction_list": [
 			"imx8ulp",
 			"imx95",
@@ -176,7 +176,7 @@
 		},
 		"store_key": true,
 		"op_output": "c hs traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 7": {
@@ -314,7 +314,7 @@
 		},
 		"store_key": true,
 		"op_output": "s hs traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 15": {
@@ -452,7 +452,7 @@
 		},
 		"store_key": true,
 		"op_output": "c ap traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 23": {
@@ -590,7 +590,7 @@
 		},
 		"store_key": true,
 		"op_output": "s ap traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 31": {
@@ -727,7 +727,7 @@
 			]
 		},
 		"op_output": "exp master key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 39": {
@@ -757,7 +757,7 @@
 		},
 		"store_key": true,
 		"op_output": "res master key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 1
 	},
 	"subtest 40": {
@@ -888,7 +888,7 @@
 			]
 		},
 		"op_output": "c hs traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 46": {
@@ -918,7 +918,7 @@
 			]
 		},
 		"op_output": "s hs traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 47": {
@@ -948,7 +948,7 @@
 			]
 		},
 		"op_output": "c ap traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 48": {
@@ -978,7 +978,7 @@
 			]
 		},
 		"op_output": "s ap traffic key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 49": {
@@ -1008,7 +1008,7 @@
 			]
 		},
 		"op_output": "exp master key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 50": {
@@ -1038,12 +1038,12 @@
 			]
 		},
 		"op_output": "res master key",
-		"op_input": "self 384-bit ecdh key",
+		"op_input": "self x25519 key",
 		"depends": 40
 	},
 	"subtest 51": {
 		"command": "DELETE",
-		"key_name": "self 384-bit ecdh key",
+		"key_name": "self x25519 key",
 		"depends": 1
 	}
 }

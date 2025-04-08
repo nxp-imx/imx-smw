@@ -84,6 +84,44 @@
 		"key 11": {
 			"key_name": "key 9",
 			"priv_key": 32
+		},
+		"key 12": {
+			"type": "X25519",
+			"security_size": 255,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_3",
+				"HASH=SHA256"
+			]
+		},
+		"key 13": {
+			"key_name": "key 12",
+			"pub_key": 32
+		},
+		"key 14": {
+			"key_name": "key 12",
+			"priv_key": 32
+		},
+		"key 15": {
+			"type": "X25519",
+			"security_size": 255,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_3",
+				"HASH=SHA384"
+			]
+		},
+		"key 16": {
+			"key_name": "key 15",
+			"pub_key": 32
+		},
+		"key 17": {
+			"key_name": "key 15",
+			"priv_key": 32
 		}
 	},
 	"subtest 1": {
@@ -206,5 +244,57 @@
 			"imx95",
 			"imx943"
 		]
+	},
+	"subtest 18": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 12",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 19": {
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 13",
+		"depends": 18
+	},
+	"subtest 20": {
+		"command": "EXPORT_PRIVATE",
+		"key_name": "key 14",
+		"depends": 18,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 21": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 15",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 22": {
+		"command": "EXPORT_PUBLIC",
+		"key_name": "key 16",
+		"depends": 18
+	},
+	"subtest 23": {
+		"command": "EXPORT_PRIVATE",
+		"key_name": "key 17",
+		"depends": 18,
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+	},
+	"subtest 24": {
+		"command": "DELETE",
+		"key_name": "key 12",
+		"depends": 18
+	},
+	"subtest 25": {
+		"command": "DELETE",
+		"key_name": "key 15",
+		"depends": 18
 	}
 }

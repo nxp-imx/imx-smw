@@ -10,6 +10,9 @@ if(NOT ENABLE_TLS)
 	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_006.json)
 	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_007.json)
 	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_008.json)
+	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_009.json)
+	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_010.json)
+	list(APPEND REM_TESTS_LIST U_${GROUP}_Derive_011.json)
 endif()
 
 # Remove failing test due to ELE Library or FW issues

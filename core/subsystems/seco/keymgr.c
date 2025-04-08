@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include "smw_status.h"
@@ -273,6 +273,8 @@ static int delete_key_operation(struct subsystem_context *seco_ctx,
 {
 	int status = SMW_STATUS_OK;
 	int tmp_status = SMW_STATUS_OK;
+	struct smw_key_attributes *key_attributes =
+		&key_identifier->key_attributes;
 
 	hsm_err_t err = HSM_NO_ERROR;
 
@@ -285,8 +287,8 @@ static int delete_key_operation(struct subsystem_context *seco_ctx,
 	manage_key_args.key_identifier = &key_identifier->id;
 	manage_key_args.flags = HSM_OP_MANAGE_KEY_FLAGS_DELETE;
 
-	if (SMW_ATTR_IS_PERSISTENT(key_identifier->attributes) ||
-	    SMW_ATTR_IS_PERMANENT(key_identifier->attributes))
+	if (SMW_ATTR_IS_PERSISTENT(key_attributes->attributes) ||
+	    SMW_ATTR_IS_PERMANENT(key_attributes->attributes))
 		manage_key_args.flags |=
 			HSM_OP_MANAGE_KEY_FLAGS_STRICT_OPERATION;
 
@@ -326,7 +328,7 @@ static int delete_key_operation(struct subsystem_context *seco_ctx,
 		goto end;
 
 	/* Let assume there is place to add a new key */
-	is_transient = SMW_ATTR_IS_TRANSIENT(key_identifier->attributes);
+	is_transient = SMW_ATTR_IS_TRANSIENT(key_attributes->attributes);
 	status = seco_set_key_group_state(seco_ctx, key_identifier->group,
 					  !is_transient, false);
 
@@ -393,7 +395,8 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	persistence = SMW_ATTR_GET_PERSISTENCE(key_identifier->attributes);
+	persistence = key_identifier->key_attributes.attributes;
+	persistence = SMW_ATTR_GET_PERSISTENCE(persistence);
 
 	switch (persistence) {
 	case SMW_ATTR_PERSISTENCE_PERSISTENT:

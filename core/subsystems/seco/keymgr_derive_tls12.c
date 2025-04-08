@@ -273,12 +273,14 @@ static void delete_db_shared_keys(unsigned int *ids_array, int nb_shared_keys)
 {
 	int idx = 0;
 	struct smw_keymgr_identifier key_identifier = { 0 };
+	struct smw_key_attributes *key_attributes =
+		&key_identifier.key_attributes;
 
 	key_identifier.id = INVALID_KEY_ID;
 	key_identifier.subsystem_id = SUBSYSTEM_ID_SECO;
 	/* Only transient key are generated */
-	key_identifier.attributes =
-		SMW_ATTR_SET_TRANSIENT(key_identifier.attributes);
+	key_attributes->attributes =
+		SMW_ATTR_SET_TRANSIENT(key_attributes->attributes);
 
 	/* Delete all keys from the database */
 	for (; idx < nb_shared_keys && ids_array[idx] != INVALID_KEY_ID;
@@ -299,6 +301,8 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	unsigned int *new_key_id = new_key_ids;
 	unsigned int *shared_key_id = shared_key_ids;
 	struct smw_keymgr_identifier key_identifier = { 0 };
+	struct smw_key_attributes *key_attributes =
+		&key_identifier.key_attributes;
 	struct smw_keymgr_tls12_args *tls_args = NULL;
 	const struct tls12_kdf_info *kdf_info = NULL;
 
@@ -315,8 +319,8 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	key_identifier.id = INVALID_KEY_ID;
 	key_identifier.subsystem_id = SUBSYSTEM_ID_SECO;
 	/* Only transient key are generated */
-	key_identifier.attributes =
-		SMW_ATTR_SET_TRANSIENT(key_identifier.attributes);
+	key_attributes->attributes =
+		SMW_ATTR_SET_TRANSIENT(key_attributes->attributes);
 	if (SET_OVERFLOW(key_group, key_identifier.group))
 		return SMW_STATUS_OPERATION_FAILURE;
 

@@ -1478,7 +1478,8 @@ static int get_key_attributes(void *args)
 
 	persistent_flag = op.params[GET_KEY_ATTRS_PERSISTENT_FLAG_IDX].value.b;
 
-	key_persistence_to_smw(persistent_flag, &key_identifier->attributes);
+	key_persistence_to_smw(persistent_flag,
+			       &key_identifier->key_attributes.attributes);
 
 	key_identifier->storage_id = 0;
 	key_identifier->type_id = key_def->key_type_id;
@@ -1488,7 +1489,8 @@ static int get_key_attributes(void *args)
 	key_attributes = key_args->key_attributes;
 	if (key_attributes) {
 		key_attributes->storage_id = key_identifier->storage_id;
-		key_attributes->attributes = key_identifier->attributes;
+		key_attributes->attributes =
+			key_identifier->key_attributes.attributes;
 		key_attributes->permitted_algo = key_def->permitted_algo;
 		key_usage_to_smw(tee_usage, &key_attributes->usage_flags);
 	}

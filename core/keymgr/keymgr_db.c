@@ -27,7 +27,7 @@ static int object_to_key_identifier(struct smw_object_descriptor *obj,
 
 	identifier->security_size = obj->key.security_size;
 	identifier->id = obj->key.id;
-	identifier->attributes = obj->attributes;
+	identifier->key_attributes = obj->key_attributes;
 	if (SET_OVERFLOW(obj->group, identifier->group))
 		status = SMW_STATUS_INVALID_PARAM;
 
@@ -62,7 +62,8 @@ static void key_identifier_to_object(struct smw_keymgr_identifier *identifier,
 		break;
 	}
 
-	obj->attributes = identifier->attributes;
+	obj->attributes = identifier->key_attributes.attributes;
+	obj->key_attributes = identifier->key_attributes;
 	obj->subsystem_name =
 		smw_config_get_subsystem_name(identifier->subsystem_id);
 	obj->key.type_name = smw_config_get_key_type_name(identifier->type_id);
@@ -85,7 +86,8 @@ int smw_keymgr_db_create(unsigned int *id,
 	else
 		obj.label = KEY_DEFAULT_LABEL;
 
-	return smw_object_db_create(id, identifier->attributes, &obj);
+	return smw_object_db_create(id, identifier->key_attributes.attributes,
+				    &obj);
 }
 
 int smw_keymgr_db_update(unsigned int id,
@@ -95,13 +97,14 @@ int smw_keymgr_db_update(unsigned int id,
 
 	key_identifier_to_object(identifier, &obj);
 
-	return smw_object_db_update(id, identifier->attributes, &obj);
+	return smw_object_db_update(id, identifier->key_attributes.attributes,
+				    &obj);
 }
 
 int smw_keymgr_db_delete(unsigned int id,
 			 struct smw_keymgr_identifier *identifier)
 {
-	return smw_object_db_delete(id, identifier->attributes);
+	return smw_object_db_delete(id, identifier->key_attributes.attributes);
 }
 
 int smw_keymgr_db_get_info(unsigned int id,
@@ -112,7 +115,8 @@ int smw_keymgr_db_get_info(unsigned int id,
 
 	key_identifier_to_object(identifier, &obj);
 
-	ret = smw_object_db_get_info(id, identifier->attributes, &obj);
+	ret = smw_object_db_get_info(id, identifier->key_attributes.attributes,
+				     &obj);
 	if (ret == SMW_STATUS_OK)
 		ret = object_to_key_identifier(&obj, identifier);
 

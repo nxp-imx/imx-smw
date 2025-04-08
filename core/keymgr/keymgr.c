@@ -1596,7 +1596,7 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 		goto end;
 
 	if (key_attrs)
-		key_desc->identifier.attributes = key_attrs->attributes;
+		key_desc->identifier.key_attributes = *key_attrs;
 
 	/*
 	 * Try to create the key in the database before
@@ -1687,7 +1687,7 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 		goto end;
 
 	if (key_attrs)
-		key_desc->identifier.attributes = key_attrs->attributes;
+		key_desc->identifier.key_attributes = *key_attrs;
 
 	if (import_el2go_data(args, key_desc, &status))
 		goto end;
@@ -1781,6 +1781,7 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 	struct smw_keymgr_delete_key_args delete_key_args = { 0 };
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	struct smw_keymgr_descriptor *key_desc = NULL;
+	struct smw_keymgr_identifier *identifier = NULL;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1797,6 +1798,7 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 		goto end;
 
 	key_desc = &delete_key_args.key_descriptor;
+	identifier = &key_desc->identifier;
 
 	status = smw_utils_execute_operation(OPERATION_ID_DELETE_KEY,
 					     &delete_key_args, subsystem_id);
@@ -1804,11 +1806,10 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 	if (status != SMW_STATUS_OK && status != SMW_STATUS_UNKNOWN_ID)
 		goto end;
 
-	tmp_status = smw_keymgr_db_delete(args->key_descriptor->id,
-					  &key_desc->identifier);
+	tmp_status = smw_keymgr_db_delete(args->key_descriptor->id, identifier);
 
 	if (status == SMW_STATUS_OK ||
-	    !SMW_ATTR_IS_TRANSIENT(key_desc->identifier.attributes))
+	    !SMW_ATTR_IS_TRANSIENT(identifier->key_attributes.attributes))
 		status = tmp_status;
 
 end:

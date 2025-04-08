@@ -7,12 +7,12 @@ trap 'error ${LINENO}' ERR
 #
 opt_build=all
 opt_jsonc_lib=
-opt_coverage="-DCODE_COVERAGE=OFF"
-opt_buildtype="-DCMAKE_BUILD_TYPE=Release"
-opt_verbose="-DVERBOSE=0"
-opt_format="-DFORMAT=html"
-opt_psa="-DENABLE_PSA_DEFAULT_ALT=OFF"
-opt_tls="-DENABLE_TLS=OFF"
+opt_coverage=
+opt_buildtype=
+opt_verbose=
+opt_format=
+opt_psa=
+opt_tls=
 opt_cmake_ver="3.13"
 
 #

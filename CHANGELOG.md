@@ -83,6 +83,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add a dedicated configuration file for i.MX943.
 * Remove HKDF key derivation in all ELE based configurations.
 * Add support of the EDDSA signature for TEE subsystem in all configurations
+* Add support of key permitted algo and key usage in Object database.
+* Add a database version information and verification.
 
 #### SMW Tests - _version 5.0_
 
@@ -97,6 +99,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE tests: Add tests to validate TLS1.3 operations: U_API_Derive_005,
   U_ELE_Derive_006, U_ELE_Derive_007, U_ELE_Derive_008.
 * Remove "DEFAULT" algorithm and introduce "MSG_HASHED" parameter.
+* Update U_API_Objects_002 to find key by permitted algo or usage.
 
 #### PKCS#11 Library - _version 5.0_
 

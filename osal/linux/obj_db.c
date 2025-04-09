@@ -214,7 +214,8 @@ static int sql_print_create(char *name, uint32_t start_id,
 			    size_t *length)
 {
 	int ret = -1;
-	static char *create = "CREATE TABLE IF NOT EXISTS %s(";
+	static char *user_version = "PRAGMA user_version = %d;";
+	static char *create = "CREATE TABLE %s(";
 	static char *const type[] = { "TEXT", "INTEGER", "REAL", "BLOB" };
 	static char *update_sequence =
 		"\nBEGIN TRANSACTION;\n"
@@ -226,6 +227,9 @@ static int sql_print_create(char *name, uint32_t start_id,
 	unsigned int i = 0;
 
 	if (!name || !attributes)
+		goto end;
+
+	if (sql_print(sql, length, user_version, CONFIG_SMW_DATABASE_VERSION))
 		goto end;
 
 	if (sql_print(sql, length, create, name))
@@ -760,7 +764,40 @@ end:
 }
 
 /**
- * obj_db_create_object_table() - Create the objects tables if not exist.
+ * obj_db_object_table_exist() - Return true if the objects tables exist.
+ * @db: Object database
+ *
+ * Return:
+ * true if table exist, false otherwise
+ */
+static bool obj_db_object_table_exist(struct obj_db *db)
+{
+	int ret = 0;
+	sqlite3_stmt *stmt = NULL;
+	const char *sql =
+		"SELECT name FROM sqlite_master WHERE type='table' AND name=?;";
+
+	if (!db)
+		goto end;
+
+	ret = sqlite3_prepare_v2(db->handle, sql, -1, &stmt, 0);
+	if (ret != SQLITE_OK)
+		goto end;
+
+	sqlite3_bind_text(stmt, 1, OBJECT_DB_TABLE_NAME, -1, SQLITE_STATIC);
+
+	ret = sqlite3_step(stmt);
+	sqlite3_finalize(stmt);
+
+	if (ret == SQLITE_ROW)
+		return true;
+
+end:
+	return false;
+}
+
+/**
+ * obj_db_create_object_table() - Create the objects tables.
  * @db: Object database
  *
  * Return:
@@ -1203,6 +1240,9 @@ end:
 static int open_db(struct obj_db *db, const char *filename)
 {
 	int ret = -1;
+	const char *sql = "PRAGMA user_version;";
+	sqlite3_stmt *stmt = NULL;
+	int version = 0;
 
 	if (filename) {
 		DBG_PRINTF(INFO, "Create physical database %s\n", filename);
@@ -1232,7 +1272,30 @@ static int open_db(struct obj_db *db, const char *filename)
 		goto end;
 	}
 
-	ret = obj_db_create_object_table(db);
+	if (obj_db_object_table_exist(db)) {
+		ret = sqlite3_prepare_v2(db->handle, sql, -1, &stmt, 0);
+		if (ret != SQLITE_OK)
+			goto end;
+
+		ret = sqlite3_step(stmt);
+		if (ret != SQLITE_ROW)
+			goto end;
+
+		version = sqlite3_column_int(stmt, 0);
+		sqlite3_finalize(stmt);
+
+		if (version != CONFIG_SMW_DATABASE_VERSION) {
+			DBG_PRINTF(ERROR,
+				   "Invalid data base version %d, expected %d\n",
+				   version, CONFIG_SMW_DATABASE_VERSION);
+			ret = SQLITE_ERROR;
+			goto end;
+		}
+
+		ret = SQLITE_OK;
+	} else {
+		ret = obj_db_create_object_table(db);
+	}
 
 end:
 	return ret;

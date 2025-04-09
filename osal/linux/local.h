@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #ifndef __LOCAL_H__
@@ -64,6 +64,8 @@
 #define CONFIG_TEE	       BIT(2)
 #define CONFIG_SECO	       BIT(3)
 #define CONFIG_ELE	       BIT(4)
+
+#define CONFIG_SMW_DATABASE_VERSION 1
 
 /**
  * struct smw_info - SMW library configuration

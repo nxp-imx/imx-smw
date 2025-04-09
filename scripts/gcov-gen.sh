@@ -354,6 +354,7 @@ function copy_file()
 function lcov_generate()
 {
   eval "${lcov_tool} ${opt_lcov} -c  \
+        --exclude=\"*weak.c\" \
         --substitute=\"s#${opt_gc_src_prefix}#${opt_src_dir}#g\" \
         -d ${opt_merge_dir} -o ${opt_info}"
 }

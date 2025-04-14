@@ -14,18 +14,7 @@
 #include "keymgr.h"
 #include "keymgr_attest.h"
 
-#include "common.h"
-
-#define ELE_MAX_KEY_GROUP	       100U
-#define ELE_FIRST_PERSISTENT_KEY_GROUP 0U
-#define ELE_FIRST_TRANSIENT_KEY_GROUP  (ELE_MAX_KEY_GROUP / 2)
-#define ELE_LAST_PERSISTENT_KEY_GROUP  (ELE_FIRST_TRANSIENT_KEY_GROUP - 1)
-#define ELE_LAST_TRANSIENT_KEY_GROUP   (ELE_MAX_KEY_GROUP - 1)
-
-struct key_group {
-	bool persistent;
-	bool full;
-};
+#include "key_group.h"
 
 static unsigned int ecc_public_key_length(unsigned int security_size);
 static unsigned int ed_public_key_length(unsigned int security_size);
@@ -596,129 +585,6 @@ end:
 	return status;
 }
 
-static int append_key_group(struct smw_utils_list *key_grp_list,
-			    unsigned int grp, bool persistent, bool full)
-{
-	int status = SMW_STATUS_ALLOC_FAILURE;
-	struct key_group *key_grp = NULL;
-
-	key_grp = SMW_UTILS_MALLOC(sizeof(*key_grp));
-	if (key_grp) {
-		key_grp->persistent = persistent;
-		key_grp->full = full;
-		if (!smw_utils_list_append_data(key_grp_list, key_grp, grp,
-						NULL)) {
-			SMW_UTILS_FREE(key_grp);
-			status = SMW_STATUS_ALLOC_FAILURE;
-		} else {
-			status = SMW_STATUS_OK;
-		}
-	}
-
-	return status;
-}
-
-static int get_key_group(struct subsystem_context *ele_ctx, bool persistent,
-			 unsigned int *out_grp)
-{
-	int status = SMW_STATUS_OPERATION_FAILURE;
-	int status_mutex = SMW_STATUS_OK;
-
-	struct node *node = NULL;
-	struct key_group *key_grp = NULL;
-	unsigned int grp = 0;
-	unsigned int first_grp = *out_grp;
-	unsigned int last_grp = ELE_LAST_TRANSIENT_KEY_GROUP;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (smw_utils_mutex_lock(ele_ctx->key_grp_mutex)) {
-		status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
-		goto end;
-	}
-
-	if (persistent)
-		last_grp = ELE_LAST_PERSISTENT_KEY_GROUP;
-
-	for (grp = first_grp; grp <= last_grp; grp++) {
-		node = smw_utils_list_find_first(&ele_ctx->key_grp_list, &grp);
-		if (node) {
-			key_grp = smw_utils_list_get_data(node);
-			if (!key_grp)
-				break;
-
-			if (key_grp->persistent == persistent &&
-			    !key_grp->full) {
-				*out_grp = grp;
-				status = SMW_STATUS_OK;
-				break;
-			}
-		} else {
-			/* Create a new node entry in the list */
-			status = append_key_group(&ele_ctx->key_grp_list, grp,
-						  persistent, false);
-			break;
-		}
-	}
-
-	if (smw_utils_mutex_unlock(ele_ctx->key_grp_mutex))
-		status_mutex = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
-
-end:
-	if (status == SMW_STATUS_OK)
-		status = status_mutex;
-
-	SMW_DBG_PRINTF(VERBOSE, "%s key group #%d returned %d\n", __func__,
-		       *out_grp, status);
-	return status;
-}
-
-static int set_key_group_state(struct subsystem_context *ele_ctx,
-			       unsigned int grp, bool persistent, bool full)
-{
-	int status = SMW_STATUS_OK;
-	int status_mutex = SMW_STATUS_OK;
-
-	struct node *node = NULL;
-	struct key_group *key_grp = NULL;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (smw_utils_mutex_lock(ele_ctx->key_grp_mutex)) {
-		status_mutex = SMW_STATUS_MUTEX_LOCK_FAILURE;
-		goto end;
-	}
-
-	node = smw_utils_list_find_first(&ele_ctx->key_grp_list, &grp);
-	if (node) {
-		key_grp = smw_utils_list_get_data(node);
-		if (key_grp && key_grp->persistent == persistent) {
-			key_grp->full = full;
-		} else {
-			SMW_DBG_PRINTF(ERROR,
-				       "%s: key group %u list data error (%p)",
-				       __func__, grp, key_grp);
-			status = SMW_STATUS_OPERATION_FAILURE;
-		}
-
-	} else {
-		/* Create a new node entry in the list */
-		status = append_key_group(&ele_ctx->key_grp_list, grp,
-					  persistent, full);
-	}
-
-	if (smw_utils_mutex_unlock(ele_ctx->key_grp_mutex))
-		status_mutex = SMW_STATUS_MUTEX_UNLOCK_FAILURE;
-
-end:
-	if (status == SMW_STATUS_OK)
-		status = status_mutex;
-
-	SMW_DBG_PRINTF(VERBOSE, "%s key group #%d returned %d\n", __func__, grp,
-		       status);
-	return status;
-}
-
 static int generate_key(struct subsystem_context *ele_ctx, void *args)
 {
 	int status = SMW_STATUS_OK;
@@ -834,7 +700,7 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		 */
 		key_id = key_identifier->id;
 
-		status = get_key_group(ele_ctx, persistent_grp, &key_group);
+		status = ele_get_key_group(ele_ctx, persistent_grp, &key_group);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
@@ -870,8 +736,8 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		SMW_DBG_PRINTF(DEBUG, "hsm_generate_key returned %d\n", err);
 
 		if (err == HSM_KEY_GROUP_FULL) {
-			status = set_key_group_state(ele_ctx, key_group,
-						     persistent_grp, true);
+			status = ele_set_key_group_state(ele_ctx, key_group,
+							 persistent_grp, true);
 			if (status != SMW_STATUS_OK)
 				goto end;
 
@@ -940,15 +806,28 @@ end:
 	return status;
 }
 
-static int import_el2go_key(struct hdl *hdl,
-			    struct smw_keymgr_descriptor *key_desc)
+static int import_key(struct hdl *hdl, void *args)
 {
-	int status = SMW_STATUS_OK;
-	int tmp_status = SMW_STATUS_OK;
-	hsm_err_t err = HSM_NO_ERROR;
+	int status = SMW_STATUS_INVALID_PARAM;
 
+	int tmp_status = SMW_STATUS_OK;
+	struct smw_keymgr_import_key_args *key_args = args;
+	struct smw_keymgr_descriptor *key_desc = NULL;
+	unsigned int storage_id = 0;
+
+	hsm_err_t err = HSM_NO_ERROR;
 	hsm_hdl_t key_mgt_hdl = 0;
 	op_import_key_args_t op_args = { 0 };
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key_desc = &key_args->key_descriptor;
+	storage_id = key_desc->identifier.storage_id;
+
+	if (!smw_keymgr_get_private_data(key_desc)) {
+		SMW_DBG_PRINTF(ERROR, "Missing import key buffer");
+		goto end;
+	}
 
 	status = open_key_mgmt_service(hdl, &key_mgt_hdl);
 	if (status != SMW_STATUS_OK)
@@ -956,18 +835,24 @@ static int import_el2go_key(struct hdl *hdl,
 
 	op_args.input_lsb_addr = smw_keymgr_get_private_data(key_desc);
 	op_args.input_size = smw_keymgr_get_private_length(key_desc);
-	op_args.flags = HSM_OP_IMPORT_KEY_INPUT_E2GO_TLV |
-			HSM_OP_IMPORT_KEY_FLAGS_STRICT_OPERATION;
+
+	if (NXP_IS_EL2GO_OBJECT(storage_id))
+		op_args.flags = HSM_OP_IMPORT_KEY_INPUT_E2GO_TLV |
+				HSM_OP_IMPORT_KEY_FLAGS_STRICT_OPERATION;
+	else
+		op_args.flags = HSM_OP_IMPORT_KEY_INPUT_ELE_TLV |
+				HSM_OP_IMPORT_KEY_FLAGS_STRICT_OPERATION;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_import_key()\n"
 		       "  key_store_hdl: 0x%x\n"
-		       "  op_import_key_args_t (EdgeLock 2GO)\n"
+		       "  op_import_key_args_t\n"
+		       "    Flags: 0x%x\n"
 		       "    Key\n"
 		       "      - buffer: %p\n"
 		       "      - size: %d\n",
-		       __func__, __LINE__, key_mgt_hdl, op_args.input_lsb_addr,
-		       op_args.input_size);
+		       __func__, __LINE__, key_mgt_hdl, op_args.flags,
+		       op_args.input_lsb_addr, op_args.input_size);
 
 	err = hsm_import_key(key_mgt_hdl, &op_args);
 	SMW_DBG_PRINTF(DEBUG, "hsm_import_key returned %d\n", err);
@@ -977,6 +862,12 @@ static int import_el2go_key(struct hdl *hdl,
 		SMW_DBG_PRINTF(DEBUG, "hsm_import_key key id 0x%08X\n",
 			       op_args.key_identifier);
 		key_desc->identifier.id = op_args.key_identifier;
+
+		/*
+		 * In case of key importation, the key group is unknown.
+		 * The FW selects the key group.
+		 */
+		key_desc->identifier.group = ELE_UNDEFINED_KEY_GROUP;
 	}
 
 end:
@@ -986,37 +877,6 @@ end:
 			status = tmp_status;
 	}
 
-	return status;
-}
-
-static int import_key(struct hdl *hdl, void *args)
-{
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-
-	struct smw_keymgr_import_key_args *key_args = args;
-	struct smw_keymgr_descriptor *key_desc = NULL;
-	unsigned int storage_id = 0;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	key_desc = &key_args->key_descriptor;
-	storage_id = key_desc->identifier.storage_id;
-
-	if (!NXP_IS_EL2GO_OBJECT(storage_id)) {
-		SMW_DBG_PRINTF(ERROR,
-			       "Support only EdgeLock 2GO key/data import");
-		goto end;
-	}
-
-	if (!smw_keymgr_get_private_data(key_desc)) {
-		SMW_DBG_PRINTF(ERROR, "EdgeLock 2GO import key missing buffer");
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
-
-	status = import_el2go_key(hdl, key_desc);
-
-end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
@@ -1056,22 +916,26 @@ static int delete_key(struct subsystem_context *ele_ctx, void *args)
 	status = delete_key_operation(key_mgt_hdl, &key_desc->identifier);
 
 	tmp_status = close_key_mgt_service(key_mgt_hdl);
-	if (status == SMW_STATUS_OK) {
+
+	if (status == SMW_STATUS_OK &&
+	    key_desc->identifier.group != ELE_UNDEFINED_KEY_GROUP) {
 		status = tmp_status;
 
 		/* Let assume there is place to add a new key */
 		attributes = key_desc->identifier.key_attributes.attributes;
 		is_transient = SMW_ATTR_IS_TRANSIENT(attributes);
 
-		tmp_status =
-			set_key_group_state(ele_ctx, key_desc->identifier.group,
-					    !is_transient, false);
+		tmp_status = ele_set_key_group_state(ele_ctx,
+						     key_desc->identifier.group,
+						     !is_transient, false);
 		if (status == SMW_STATUS_OK)
 			status = tmp_status;
 	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	// coverity[missing_unlock]
 	return status;
 }
 
@@ -1379,7 +1243,7 @@ bool ele_key_handle(struct subsystem_context *ele_ctx,
 		*status = generate_key(ele_ctx, args);
 		break;
 	case OPERATION_ID_DERIVE_KEY:
-		*status = ele_derive_key(hdl, args);
+		*status = ele_derive_key(ele_ctx, args);
 		break;
 	case OPERATION_ID_IMPORT_KEY:
 		*status = import_key(hdl, args);

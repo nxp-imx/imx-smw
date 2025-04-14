@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <time.h>
 
 #include "compiler.h"
 #include "debug.h"
-#include "devmgr.h"
 #include "utils.h"
 
-#include "local.h"
+#include "common.h"
 
 struct __packed msg_block {
 	uint8_t version;
@@ -41,11 +40,11 @@ struct __packed msg_block {
 #define MSG_BLOCK_SIZE sizeof(struct msg_block)
 
 #define MSG_BLOCK_TAG	      0x89
-#define MSG_BLOCK_SW_VERSION  4
+#define MSG_BLOCK_SW_VERSION  0
 #define MSG_BLOCK_MONTH_SHIFT 12
 
-void ele_devmgr_fill_msg_block(void *msg, unsigned char cmd,
-			       unsigned int payload_length)
+void ele_fill_sign_msg_block(void *msg, unsigned char cmd,
+			     unsigned int payload_length)
 {
 	time_t sys_time = 0;
 	struct tm *cur_tm = NULL;
@@ -78,7 +77,7 @@ void ele_devmgr_fill_msg_block(void *msg, unsigned char cmd,
 	msg_block->header.command = cmd;
 }
 
-unsigned int ele_devmgr_get_msg_block_length(void)
+unsigned int ele_get_sign_msg_block_length(void)
 {
 	return MSG_BLOCK_SIZE;
 }

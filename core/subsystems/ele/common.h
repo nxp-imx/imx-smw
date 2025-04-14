@@ -257,13 +257,14 @@ bool ele_aead_handle(struct hdl *hdl, enum operation_id operation_id,
 
 /**
  * ele_derive_key() - ELE key derivation operation.
- * @hdl: Pointer to the ELE handles structure.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @args: Pointer to the derive key arguments.
  *
  * Return:
  * SMW status
  */
-int ele_derive_key(struct hdl *hdl, struct smw_keymgr_derive_key_args *args);
+int ele_derive_key(struct subsystem_context *ele_ctx,
+		   struct smw_keymgr_derive_key_args *args);
 
 /**
  * ele_convert_err() - Convert ELE error into SMW status.
@@ -497,5 +498,35 @@ int ele_get_key_store_id(uint32_t *keystore_id);
  */
 int ele_get_key_type(enum smw_config_key_type_id key_type_id,
 		     hsm_key_type_t *ele_key_type);
+
+/**
+ * ele_fill_sign_msg_block() - Fill the signed message block
+ * @msg: Message block to be filled
+ * @cmd: Payload command
+ * @payload_length: Length of the signed message payload
+ *
+ * Fill the signed message block fields that are not fixed.
+ */
+void ele_fill_sign_msg_block(void *msg, unsigned char cmd,
+			     unsigned int payload_length);
+
+/**
+ * ele_get_sign_msg_block_length() - Return the signed message block length
+ *
+ * Return:
+ * Length of signed message block
+ */
+unsigned int ele_get_sign_msg_block_length(void);
+
+/**
+ * derive_oem_mk() - ELE OEM Master key derivation operation.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
+ * @args: Pointer to the derive key arguments.
+ *
+ * Return:
+ * SMW status
+ */
+int derive_oem_mk(struct subsystem_context *ele_ctx,
+		  struct smw_keymgr_derive_key_args *args);
 
 #endif /* __COMMON_H__ */

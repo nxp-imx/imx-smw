@@ -32,7 +32,7 @@ static const struct {
 	{                                                                      \
 		.ele_permitted_algo = PERMITTED_ALGO_##_ele_permitted_algo,    \
 		.smw_algo = SMW_ATTR_ALGO_##_smw_algo, .is_curve = false,      \
-		.smw_mode = SMW_ATTR_MODE_##_smw_mode,                         \
+		.is_kdf = false, .smw_mode = SMW_ATTR_MODE_##_smw_mode,        \
 		.smw_hash = SMW_ATTR_HASH_##_smw_hash,                         \
 		.smw_class = SMW_ATTR_CLASS_##_smw_class,                      \
 	}
@@ -42,9 +42,20 @@ static const struct {
 	{                                                                      \
 		.ele_permitted_algo = PERMITTED_ALGO_##_ele_permitted_algo,    \
 		.smw_algo = SMW_ATTR_ALGO_##_smw_algo, .is_curve = true,       \
-		.smw_curve = SMW_ATTR_CURVE_##_smw_curve,                      \
+		.is_kdf = false, .smw_curve = SMW_ATTR_CURVE_##_smw_curve,     \
 		.smw_hash = SMW_ATTR_HASH_##_smw_hash,                         \
 		.smw_class = SMW_ATTR_CLASS_##_smw_class,                      \
+	}
+
+#define PERMITTED_ALGO_KEY_AGREEMENT(_smw_algo, _smw_kdf, _smw_hash)           \
+	{                                                                      \
+		.ele_permitted_algo =                                          \
+			PERMITTED_ALGO_##_smw_algo##_##_smw_kdf##_##_smw_hash, \
+		.is_curve = false, .is_kdf = true,                             \
+		.smw_algo = SMW_ATTR_ALGO_##_smw_algo,                         \
+		.smw_kdf = SMW_ATTR_ALGO_##_smw_kdf,                           \
+		.smw_hash = SMW_ATTR_HASH_##_smw_hash,                         \
+		.smw_class = SMW_ATTR_CLASS_KEY_AGREEMENT,                     \
 	}
 
 #define ELE_MIN_LENGTH_BIT ((hsm_permitted_algo_t)BIT(15))
@@ -57,9 +68,11 @@ static const struct {
 	hsm_permitted_algo_t ele_permitted_algo;
 	smw_attr_algo_t smw_algo;
 	bool is_curve;
+	bool is_kdf;
 	union {
 		smw_attr_algo_t smw_mode;
 		smw_attr_algo_t smw_curve;
+		smw_attr_algo_t smw_kdf;
 	};
 	smw_attr_algo_t smw_hash;
 	smw_attr_algo_t smw_class;
@@ -112,8 +125,6 @@ static const struct {
 	PERMITTED_ALGO_CURVE(EDDSA_ALL, EDDSA, ANY, ANY, ASYMMETRIC_SIGNATURE),
 	PERMITTED_ALGO(ALL_CIPHER, AES, ANY, NONE, SYMMETRIC_ENCRYPTION),
 	PERMITTED_ALGO(ALL_AEAD, AES, ANY, NONE, AEAD),
-	PERMITTED_ALGO(ECDH_HKDF_SHA256, ECDH, NONE, SHA256, KEY_DERIVATION),
-	PERMITTED_ALGO(ECDH_HKDF_SHA384, ECDH, NONE, SHA384, KEY_DERIVATION),
 	PERMITTED_ALGO(ATTEST_CMAC, AES, CMAC, NONE, KEY_ATTESTATION),
 	PERMITTED_ALGO_CURVE(ATTEST_ECDSA_SHA224, ECDSA, ANY, SHA224,
 			     KEY_ATTESTATION),
@@ -135,6 +146,7 @@ static const struct {
 			     KEY_DERIVATION),
 	PERMITTED_ALGO_CURVE(TLS1_3_MASTER_SECRET_SHA_ANY, HKDF, NONE, ANY,
 			     KEY_DERIVATION),
+	PERMITTED_ALGO_KEY_AGREEMENT(ECDH, HKDF, SHA256),
 };
 
 static void convert_usage_to_ele(smw_attr_usage_t smw, hsm_key_usage_t *ele)
@@ -179,6 +191,7 @@ static void convert_algo_to_ele(smw_attr_algo_t smw, hsm_permitted_algo_t *ele)
 	smw_attr_algo_t algo = SMW_ATTR_GET_ALGO(smw);
 	smw_attr_algo_t mode = SMW_ATTR_GET_MODE(smw);
 	smw_attr_algo_t curve = SMW_ATTR_GET_CURVE(smw);
+	smw_attr_algo_t kdf = SMW_ATTR_GET_KDF(smw);
 	smw_attr_algo_t hash = SMW_ATTR_GET_HASH(smw);
 	smw_attr_algo_t class = SMW_ATTR_GET_CLASS(smw);
 	smw_attr_algo_t length = SMW_ATTR_GET_LENGTH(smw);
@@ -197,6 +210,10 @@ static void convert_algo_to_ele(smw_attr_algo_t smw, hsm_permitted_algo_t *ele)
 			if (permitted_algos[i].smw_curve !=
 				    SMW_ATTR_CURVE_ANY &&
 			    permitted_algos[i].smw_curve != curve)
+				continue;
+		} else if (permitted_algos[i].is_kdf) {
+			if (permitted_algos[i].smw_kdf != SMW_ATTR_CURVE_ANY &&
+			    permitted_algos[i].smw_kdf != kdf)
 				continue;
 		} else {
 			if (permitted_algos[i].smw_mode != SMW_ATTR_MODE_ANY &&

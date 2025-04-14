@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #ifndef __LOCAL_H__
@@ -62,24 +62,5 @@ bool ele_device_lifecycle_handle(struct subsystem_context *ele_ctx,
 bool ele_device_reprovisioning_handle(struct subsystem_context *ele_ctx,
 				      enum operation_id operation_id,
 				      void *args, int *status);
-
-/**
- * ele_devmgr_fill_msg_block() - Fill the signed message block
- * @msg: Message block to be filled
- * @cmd: Payload command
- * @payload_length: Length of the signed message payload
- *
- * Fill the signed message block fields that are not fixed.
- */
-void ele_devmgr_fill_msg_block(void *msg, unsigned char cmd,
-			       unsigned int payload_length);
-
-/**
- * ele_devmgr_get_msg_block_length() - Return the signed message block length
- *
- * Return:
- * Length of signed message block
- */
-unsigned int ele_devmgr_get_msg_block_length(void);
 
 #endif /* __LOCAL_H__ */

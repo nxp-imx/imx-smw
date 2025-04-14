@@ -3,7 +3,6 @@ file(TO_NATIVE_PATH "${folder}/" folder)
 
 list(APPEND folder_files
             devmgr.c
-            sign_message.c
             $<$<BOOL:${ENABLE_DEVICE_ATTESTATION}>:attestation.c>
             $<$<BOOL:${ENABLE_DEVICE_LIFECYCLE}>:lifecycle.c>
             $<$<BOOL:${ENABLE_DEVICE_REPROVISION}>:reprovisioning.c>)

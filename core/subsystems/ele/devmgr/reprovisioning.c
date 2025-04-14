@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <time.h>
@@ -52,7 +52,7 @@ static int device_repro_prepare(struct subsystem_context *ele_ctx,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	msg_block_length = ele_devmgr_get_msg_block_length();
+	msg_block_length = ele_get_sign_msg_block_length();
 	msg_length = msg_block_length + PAYLOAD_LENGTH;
 	msg = smw_devmgr_get_reprovision_data(args);
 	if (!msg) {
@@ -66,7 +66,7 @@ static int device_repro_prepare(struct subsystem_context *ele_ctx,
 		goto end;
 	}
 
-	ele_devmgr_fill_msg_block(msg, COMMAND, PAYLOAD_LENGTH);
+	ele_fill_sign_msg_block(msg, COMMAND, PAYLOAD_LENGTH);
 
 	status = fw_info_operation(&ele_ctx->hdl, &fw_info);
 	if (status == SMW_STATUS_OK) {

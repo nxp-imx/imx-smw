@@ -132,6 +132,10 @@ struct smw_keymgr_ecdh_args {
 	struct smw_kdf_ecdh_args *pub_args;
 };
 
+struct smw_keymgr_oem_mk_args {
+	struct smw_kdf_oem_master_key_args *pub_args;
+};
+
 /**
  * smw_keymgr_tls12_get_client_w_iv() - Return the Client write IV buffer
  * @args: TLS 1.2 internal arguments
@@ -513,5 +517,77 @@ smw_keymgr_get_peer_pub_buffer_len(struct smw_keymgr_derive_key_args *args);
  */
 struct smw_keymgr_descriptor *
 smw_keymgr_tls13_get_psk(struct smw_keymgr_derive_key_args *args);
+
+/**
+ * smw_keymgr_oem_get_payload() - Get OEM Master key payload buffer
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Length of payload key buffer
+ */
+unsigned char *
+smw_keymgr_oem_get_payload(struct smw_keymgr_derive_key_args *args);
+
+/**
+ * smw_keymgr_oem_get_payload_len() - Get OEM Master key payload buffer length
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * Length of payload key buffer
+ */
+unsigned int
+smw_keymgr_oem_get_payload_len(struct smw_keymgr_derive_key_args *args);
+
+/**
+ * smw_keymgr_oem_set_payload_len() - Set OEM Master key payload buffer length
+ * @args: Pointer to internal arguments structure
+ * @length: Length to set
+ */
+void smw_keymgr_oem_set_payload_len(struct smw_keymgr_derive_key_args *args,
+				    unsigned int length);
+
+/**
+ * smw_keymgr_oem_get_op() - Get the OEM Master key derivation operation
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * The OEM Master key derivation operation name
+ */
+smw_oem_master_key_op_t
+smw_keymgr_oem_get_op(struct smw_keymgr_derive_key_args *args);
+
+/**
+ * smw_keymgr_oem_use_srkh() - True if OEM SRKH is used to derive key
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * True if the OEM SRKH is used to derive key from the OEM Master key
+ */
+bool smw_keymgr_oem_use_srkh(struct smw_keymgr_derive_key_args *args);
+
+/**
+ * smw_keymgr_oem_use_peer_key_digest() - True if peer key digest is used to
+ *                                        derive key
+ * @args: Pointer to internal arguments structure
+ *
+ * Return:
+ * True if the peer key digest is used to derive the OEM Master key
+ */
+bool smw_keymgr_oem_use_peer_key_digest(struct smw_keymgr_derive_key_args *args);
+
+/**
+ * smw_keymgr_oem_mk_convert_input() - Convert OEM Master key input arguments
+ * @args: [in] Pointer to user arguments
+ * @conv_args: [out] Pointer to internal arguments converted
+ * @subsystem_id: [in] Subsystem identifier
+ *
+ * Return:
+ * SMW_STATUS_OK             - Success
+ * SMW_STATUS_ALLOC_FAILURE  - Out of memory
+ * SMW_STATUS_INVALID_PARAM  - Invalid parameter
+ */
+int smw_keymgr_oem_mk_convert_input(struct smw_derive_key_args *args,
+				    struct smw_keymgr_derive_key_args *conv_args,
+				    enum subsystem_id *subsystem_id);
 
 #endif /* __KEYMGR_DERIVE_H__ */

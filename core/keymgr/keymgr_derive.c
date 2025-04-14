@@ -760,10 +760,15 @@ static int hkdf_convert_output(struct smw_derive_key_args *args,
 
 	key_derived = args->key_descriptor_derived;
 
-	if (key_derived->id || !conv_args->kdf_args)
+	if (!conv_args->kdf_args)
 		goto end;
 
-	key_derived->id = INVALID_KEY_ID;
+	if (!SMW_ATTR_IS_PERSISTENT(key_derived->attributes.attributes)) {
+		if (key_derived->id)
+			goto end;
+
+		key_derived->id = INVALID_KEY_ID;
+	}
 
 	desc = &conv_args->key_derived;
 	status = smw_keymgr_convert_derived_key_desc(key_derived, desc);
@@ -826,6 +831,7 @@ static int convert_output_args(struct smw_derive_key_args *args,
 	case SMW_CONFIG_KDF_ID_HKDF:
 	case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
 	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
+	case SMW_CONFIG_KDF_ID_OEM_MASTER_KEY:
 		status = hkdf_convert_output(args, conv_args);
 		break;
 
@@ -883,6 +889,7 @@ static int create_key_in_db(unsigned int *new_id,
 	case SMW_CONFIG_KDF_ID_ECDH:
 	case SMW_CONFIG_KDF_ID_TLS12_OP_KEY_EXCHANGE:
 	case SMW_CONFIG_KDF_ID_TLS13_KEY_EXCHANGE:
+	case SMW_CONFIG_KDF_ID_OEM_MASTER_KEY:
 		status = smw_keymgr_db_create(new_id, identifier);
 		break;
 
@@ -2194,6 +2201,11 @@ static int convert_input_args(struct smw_derive_key_args *args,
 		if (status == SMW_STATUS_OK)
 			status = tls13_validate_key_base(conv_args);
 
+		break;
+
+	case SMW_CONFIG_KDF_ID_OEM_MASTER_KEY:
+		status = smw_keymgr_oem_mk_convert_input(args, conv_args,
+							 subsystem_id);
 		break;
 
 	default:

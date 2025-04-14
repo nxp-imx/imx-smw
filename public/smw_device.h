@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #ifndef __SMW_DEVICE_H__
@@ -182,6 +182,7 @@ smw_device_get_lifecycle(struct smw_device_lifecycle_args *args);
  *
  * This function is used to fill the reprovisioning message.
  * The field data_length of @args is updated to the correct value when:
+ *
  *  - Length is bigger than expected. In this case operation succeeded.
  *  - Length is shorter than expected. In this case operation failed and
  *    returned SMW_STATUS_OUTPUT_TOO_SHORT.

@@ -458,6 +458,22 @@ typedef enum {
 } smw_tls12_op_t;
 
 /**
+ * typedef smw_oem_master_key_op_t - OEM Master key derivation operation name
+ *
+ * Values:
+ * * SMW_OEM_MK_OP_NAME_NONE: No operation name specified
+ * * SMW_OEM_MK_OP_NAME_DERIVE: Derive the OEM Master key
+ * * SMW_OEM_MK_OP_NAME_PREPARE: Prepare the OEM Master key payload to sign
+ * * SMW_OEM_MK_OP_NAME_NB: Number of operation names
+ */
+typedef enum {
+	SMW_OEM_MK_OP_NAME_NONE,
+	SMW_OEM_MK_OP_NAME_DERIVE,
+	SMW_OEM_MK_OP_NAME_PREPARE,
+	SMW_OEM_MK_OP_NAME_NB
+} smw_oem_master_key_op_t;
+
+/**
  * typedef smw_lifecycle_t - Device lifecycle name
  *
  * Values:
@@ -493,6 +509,7 @@ typedef enum {
  * * SMW_KDF_NAME_ECDH: ECDH Key Exchange
  * * SMW_KDF_NAME_TLS12_OP_KEY_EXCHANGE: TLS 1.2 "Operation-based" Key Exchange
  * * SMW_KDF_NAME_TLS13_KEY_EXCHANGE: TLS 1.3 Key Exchange
+ * * SMW_KDF_NAME_OEM_MASTER_KEY: OEM Master key derivation
  * * SMW_KDF_NAME_NB: Number of Key Derivation Functions
  */
 typedef enum {
@@ -504,6 +521,7 @@ typedef enum {
 	SMW_KDF_NAME_ECDH,
 	SMW_KDF_NAME_TLS12_OP_KEY_EXCHANGE,
 	SMW_KDF_NAME_TLS13_KEY_EXCHANGE,
+	SMW_KDF_NAME_OEM_MASTER_KEY,
 	SMW_KDF_NAME_NB
 } smw_kdf_t;
 

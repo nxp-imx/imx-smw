@@ -12,6 +12,7 @@
 #include "smw/attr.h"
 #include "smw/names.h"
 #include "smw/tls.h"
+#include "smw/kdf/oem_master_key.h"
 
 /*
  * Define the NXP and NXP's EdgeLock 2GO key/data storage identifier

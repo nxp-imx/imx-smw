@@ -110,6 +110,7 @@
  * @SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED: Provided RSA public exponent is unsupported.
  *
  * Status code classification:
+ *
  ** Common return codes
  *
  *	- SMW_STATUS_OK
@@ -183,7 +184,7 @@
  *	- SMW_STATUS_ERROR_OBJ_DB_UPDATE
  *	- SMW_STATUS_ERROR_OBJ_DB_DELETE
  *	- SMW_STATUS_ERROR_OBJ_DB_GET_INFO
- *  - SMW_STATUS_ERROR_OBJ_DB_FIND
+ *	- SMW_STATUS_ERROR_OBJ_DB_FIND
  *
  ** Specific return codes - Key manager
  *

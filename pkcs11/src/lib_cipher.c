@@ -10,6 +10,7 @@
 #include "lib_device.h"
 #include "lib_session.h"
 #include "lib_object.h"
+#include "libobj_types.h"
 
 #include "util.h"
 #include "trace.h"
@@ -575,6 +576,87 @@ end:
 	return ret;
 }
 
+/**
+ * tls_update_buffers() -  Update aead input and output buffers for TLS cipher
+ *                         operation.
+ * @params: Cipher parameters
+ * @ctx: Pointer to aead context
+ *
+ * Update aead context parameters input and input length, output and output
+ * length if valid.
+ * This is a workaround for TLS record encrypt/decryption operation.
+ *
+ * Return:
+ * CKR_HOST_MEMORY                     - Memory allocation error
+ * CKR_ARGUMENTS_BAD                   - Bad arguments
+ * CKR_OK                              - Success
+ */
+static CK_RV tls_update_buffers(struct lib_cipher_params *params,
+				struct lib_cipher_ctx *ctx)
+{
+	CK_RV ret = CKR_ARGUMENTS_BAD;
+	CK_BYTE_PTR input = NULL;
+	CK_ULONG input_len = 0;
+
+	struct libobj_obj *obj = NULL;
+
+	if (!ctx || !params)
+		goto end;
+
+	obj = (struct libobj_obj *)ctx->hkey;
+	if (!get_key_is_tls(obj))
+		return CKR_OK;
+
+	if (!params->poutput)
+		return CKR_OK;
+
+	if (params->state == OP_UPDATE) {
+		if (ctx->input) {
+			if (ADD_OVERFLOW(ctx->input_length,
+					 params->input_length, &input_len))
+				goto end;
+
+			input = realloc(ctx->input, input_len);
+		} else {
+			input_len = params->input_length;
+			input = malloc(input_len);
+		}
+
+		if (!input) {
+			ret = CKR_HOST_MEMORY;
+			goto end;
+		}
+
+		ctx->input = input;
+		input = input + ctx->input_length;
+		memcpy(input, params->pinput, params->input_length);
+		ctx->input_length = input_len;
+
+		if (!ctx->output) {
+			ctx->output = params->poutput;
+			ctx->output_length = params->output_length;
+		} else if (ctx->output + ctx->output_length ==
+			   params->poutput) {
+			if (ADD_OVERFLOW(ctx->output_length,
+					 params->output_length,
+					 &ctx->output_length))
+				goto end;
+		} else {
+			/* Support only one contiguous output buffer */
+			goto end;
+		}
+	} else if (params->state == OP_FINAL) {
+		/* Support only one contiguous output buffer */
+		if (ctx->output + ctx->output_length != params->poutput)
+			goto end;
+	}
+
+	ret = CKR_OK;
+
+end:
+	return ret;
+}
+
 CK_RV lib_cipher_cancel_operation(CK_SESSION_HANDLE hsession, CK_FLAGS op_flag)
 {
 	CK_RV ret = CKR_OK;
@@ -787,6 +869,7 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	CK_MECHANISM mechanism = { 0 };
 	struct lib_cipher_ctx *ctx = NULL;
 	struct lib_cipher_params params = { 0 };
+	struct libobj_obj *obj = NULL;
 	CK_BBOOL terminate = CK_TRUE;
 
 	if (state == OP_ONE_SHOT || state == OP_UPDATE || state == OP_NEXT) {
@@ -832,6 +915,10 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	params.output_length = *poutput_length;
 	params.state = state;
 
+	ret = tls_update_buffers(&params, ctx);
+	if (ret != CKR_OK)
+		goto end;
+
 	/* Update mechanism parameter */
 	if (pparameter) {
 		ret = check_cipher_params(mechanism.mechanism, pparameter,
@@ -865,7 +952,12 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 		goto end;
 
 	/* Update output data buffer length */
-	*poutput_length = params.output_length;
+	obj = (struct libobj_obj *)ctx->hkey;
+	if (!get_key_is_tls(obj) || ret == CKR_BUFFER_TOO_SMALL) {
+		*poutput_length = params.output_length;
+		if (!poutput)
+			ret = CKR_OK;
+	}
 
 	if (ret == CKR_OK) {
 		ctx->current_state = state;
@@ -893,6 +985,9 @@ end:
 		free(ctx->key_value);
 		ctx->key_value = NULL_PTR;
 	}
+
+	if (obj && get_key_is_tls(obj))
+		destroy_context(ctx);
 
 	if (ret != CKR_OK) {
 		if (ctx && ctx->context) {

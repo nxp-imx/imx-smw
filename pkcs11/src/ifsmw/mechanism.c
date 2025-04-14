@@ -2322,8 +2322,8 @@ static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	CK_RV ret = CKR_OK;
 
 	const struct libdev *devinfo = NULL;
-	struct lib_cipher_ctx *ctx = NULL;
-	struct lib_cipher_params *params = NULL;
+	struct lib_cipher_params *params = (struct lib_cipher_params *)args;
+	struct lib_cipher_ctx *ctx = params->ctx;
 
 	struct smw_keypair_buffer *key_buffer = NULL;
 	struct smw_cipher_init_args smw_init_args = { 0 };
@@ -2335,17 +2335,14 @@ static CK_RV op_mcipher(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	params = (struct lib_cipher_params *)args;
-	ctx = params->ctx;
-
 	if (params->state == OP_ONE_SHOT ||
 	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE) ||
 	    (ctx->current_state == OP_BEGIN &&
 	     (params->state == OP_NEXT || params->state == OP_END))) {
-		if (set_smw_cipher_init_args(ctx, &smw_init_args, &key_buffer,
-					     keys_desc, &key_descriptor[0],
-					     devinfo->name,
-					     params->op_flag) != CKR_OK)
+		ret = set_smw_cipher_init_args(ctx, &smw_init_args, &key_buffer,
+					       keys_desc, &key_descriptor[0],
+					       devinfo->name, params->op_flag);
+		if (ret != CKR_OK)
 			goto end;
 	}
 
@@ -2602,23 +2599,79 @@ static CK_RV op_maead(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
 	(void)entry;
 	CK_RV ret = CKR_OK;
+	CK_ULONG output_length = 0;
 
 	const struct libdev *devinfo = NULL;
-	struct lib_cipher_ctx *ctx = NULL;
-	struct lib_cipher_params *params = NULL;
+	struct lib_cipher_params *params = (struct lib_cipher_params *)args;
+	struct lib_cipher_ctx *ctx = params->ctx;
 
 	struct smw_aead_init_args smw_init_args = { 0 };
 	struct smw_aead_aad_args smw_aad_args = { 0 };
 	struct smw_aead_data_args smw_data_args = { 0 };
 	struct smw_aead_final_args smw_final_args = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
+	struct libobj_obj *obj = (struct libobj_obj *)ctx->hkey;
 
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return CKR_SLOT_ID_INVALID;
 
-	params = (struct lib_cipher_params *)args;
-	ctx = params->ctx;
+	/*
+	 * TLS AEAD operations are using multipart API, which is not supported
+	 * by all subsystems.
+	 * As TLS Record only needs one update operation, multipart operation
+	 * is converted to an one-shot AEAD one.
+	 */
+	if (get_key_is_tls(obj) && params->state != OP_ONE_SHOT) {
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT)) {
+			if (params->state == OP_UPDATE)
+				output_length = params->input_length;
+			else if (params->state == OP_FINAL)
+				output_length = ctx->tag_length;
+		} else {
+			if (params->state == OP_UPDATE) {
+				if (SUB_OVERFLOW(params->input_length,
+						 ctx->tag_length,
+						 &output_length)) {
+					ret = CKR_ARGUMENTS_BAD;
+					goto end;
+				}
+			} else if (params->state == OP_FINAL) {
+				if (SUB_OVERFLOW(ctx->input_length,
+						 ctx->tag_length,
+						 &output_length)) {
+					ret = CKR_ARGUMENTS_BAD;
+					goto end;
+				}
+				if (SUB_OVERFLOW(output_length,
+						 ctx->output_length,
+						 &output_length)) {
+					ret = CKR_ARGUMENTS_BAD;
+					goto end;
+				}
+			}
+		}
+
+		if (params->output_length < output_length) {
+			params->output_length = output_length;
+			ret = CKR_BUFFER_TOO_SMALL;
+			goto end;
+		}
+
+		if (params->state == OP_UPDATE)
+			/* Wait for final operation */
+			goto end;
+		else if (params->state == OP_FINAL) {
+			if (!params->poutput)
+				goto end;
+
+			params->state = OP_ONE_SHOT;
+			params->pinput = ctx->input;
+			params->input_length = ctx->input_length;
+			params->poutput = ctx->output;
+			params->output_length = ctx->output_length;
+		}
+	}
 
 	if (params->state == OP_ONE_SHOT ||
 	    (ctx->current_state == OP_INIT && params->state == OP_UPDATE) ||

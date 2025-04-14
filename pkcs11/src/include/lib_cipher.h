@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #ifndef __LIB_CIPHER_H__
@@ -26,6 +26,10 @@
  * @tag: Pointer to tag data
  * @tag_length: @tag length in bytes
  * @fixed_iv_length: fixed iv part length
+ * @input: Input buffer for TLS one-shot operation
+ * @input_length: Input buffer length
+ * @output: Output buffer for TLS one-shot operation
+ * @output_length: Output buffer length
  */
 struct lib_cipher_ctx {
 	CK_OBJECT_HANDLE hkey;
@@ -44,6 +48,11 @@ struct lib_cipher_ctx {
 	CK_BYTE_PTR tag;
 	CK_ULONG tag_length;
 	CK_ULONG fixed_iv_length;
+	/* TLS Specific context members */
+	CK_BYTE_PTR input;
+	CK_ULONG input_length;
+	CK_BYTE_PTR output;
+	CK_ULONG output_length;
 };
 
 /**
@@ -51,9 +60,9 @@ struct lib_cipher_ctx {
  * @op_flag: Operation flag
  * @ctx: Pointer to cipher context
  * @pinput: Pointer to input data buffer
- * @uldatalen: input data buffer length in bytes
+ * @input_length: Input data buffer length in bytes
  * @poutput: Pointer to output data buffer
- * @output_length: output buffer length in bytes
+ * @output_length: Output buffer length in bytes
  * @state: Operation state to be performed
  */
 struct lib_cipher_params {

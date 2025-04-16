@@ -195,18 +195,15 @@ struct smw_signature_info {
  * @subsystem: Name of the subsystem.
  * @info: Signature information.
  *
- * @info key type name field is mandatory.
  * @info hash algorithm name and signature type name fields are optional.
  *
- * Function checks if the key type provided in the @info structure is
- * supported on the given @subsystem for a signature generation operation.
  * If set, function checks if the hash algorithm is supported on the given
  * @subsystem for the signature generation operation.
  * If set, function checks if the signature type is supported on the given
  * @subsystem for the signature generation operation.
  *
- * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem digest
- * capability is checked.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem signature
+ * generation capability is checked.
  *
  * Return:
  * See &enum smw_status_code
@@ -215,8 +212,6 @@ struct smw_signature_info {
  *	- SMW_STATUS_INVALID_PARAM:
  *		@info is NULL or @info->algo_name is
  *		SMW_SIGNATURE_ALGO_NAME_NONE
- *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
- *		@info->key_type_name is not valid
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Signature operation is not supported
  *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
@@ -231,18 +226,15 @@ enum smw_status_code smw_config_check_sign(smw_subsystem_t subsystem,
  * @subsystem: Name of the subsystem.
  * @info: Signature information.
  *
- * @info key type name field is mandatory.
  * @info hash algorithm name and signature type name fields are optional.
  *
- * Function checks if the key type provided in the @info structure is
- * supported on the given @subsystem for a signature verification operation.
  * If set, function checks if the hash algorithm is supported on the given
  * @subsystem for the signature verification operation.
  * If set, function checks if the signature type is supported on the given
  * @subsystem for the signature verification operation.
  *
- * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem digest
- * capability is checked.
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem signature
+ * verification capability is checked.
  *
  * Return:
  * See &enum smw_status_code
@@ -251,8 +243,6 @@ enum smw_status_code smw_config_check_sign(smw_subsystem_t subsystem,
  *	- SMW_STATUS_INVALID_PARAM:
  *		@info is NULL or @info->algo_name is
  *		SMW_SIGNATURE_ALGO_NAME_NONE
- *	- SMW_STATUS_UNKNOWN_KEY_TYPE_NAME:
- *		@info->key_type_name is not valid
  *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
  *		Verify operation is not supported
  */
@@ -379,7 +369,7 @@ struct smw_mac_info {
  * If set, function checks if the MAC algorithm is supported on the given
  * @subsystem for the signature generation operation.
  *
- * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem AEAD capability
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem MAC capability
  * is checked.
  *
  * Return:
@@ -436,5 +426,86 @@ enum smw_status_code smw_config_load(char *buffer, unsigned int size,
  * SMW_STATUS_NO_CONFIG_LOADED		- No configuration is loaded
  */
 enum smw_status_code smw_config_unload(void);
+
+/**
+ * struct smw_asymmetric_encrypt_info - Asymmetric encryption/decryption
+ *                                      operation information
+ * @algo_name: Encryption/decryption algorithm name.
+ *             See &typedef smw_asymmetric_encryption_algo_t
+ * @mode_name: Encryption/decryption mode (padding scheme) name.
+ *             See &typedef smw_asymmetric_encryption_mode_t
+ * @hash_algo_name: Hash algorithm name. See &typedef smw_hash_algo_t
+ */
+struct smw_asymmetric_encrypt_info {
+	smw_asymmetric_encryption_algo_t algo_name;
+	smw_asymmetric_encryption_mode_t mode_name;
+	smw_hash_algo_t hash_algo_name;
+};
+
+/**
+ * smw_config_check_asymmetric_encrypt() - Check if asymmetric encryption
+ *                                         operation is supported
+ * @subsystem: Name of the subsystem.
+ * @info: Asymmetric encryption/decryption operation information.
+ *
+ * @info.hash_algo_name and @info.mode_name fields are optional.
+ * @info.algo_name is mandatory filed and the function checks if the algorithm
+ * is supported on the given @subsystem for the asymmetric encryption operation.
+ * If @info.hash_algo_name is set, function checks if the hash algorithm is
+ * supported on the given @subsystem for the asymmetric encryption operation.
+ * If @info.mode_name is set, function checks if the encryption mode is
+ * supported on the given @subsystem for the asymmetric encryption operation.
+ *
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem asymmetric
+ * encryption capability is checked.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		Encryption operation is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@info is NULL or @info->algo_name is
+ *		SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		Encryption operation is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not valid
+ */
+enum smw_status_code
+smw_config_check_asymmetric_encrypt(smw_subsystem_t subsystem,
+				    struct smw_asymmetric_encrypt_info *info);
+
+/**
+ * smw_config_check_asymmetric_decrypt() - Check if asymmetric decryption
+ *                                         operation is supported
+ * @subsystem: Name of the subsystem.
+ * @info: Asymmetric encryption/decryption operation information.
+ *
+ * @info.hash_algo_name and @info.mode_name fields are optional.
+ * @info.algo_name is mandatory filed and the function checks if the algorithm
+ * is supported on the given @subsystem for the asymmetric decryption operation.
+ * If @info.hash_algo_name is set, function checks if the hash algorithm is
+ * supported on the given @subsystem for the asymmetric decryption operation.
+ * If @info.mode_name is set, function checks if the decryption mode is
+ * supported on the given @subsystem for the asymmetric decryption operation.
+ *
+ * If @subsystem is SMW_SUBSYSTEM_NAME_NONE, default subsystem asymmetric
+ * decryption capability is checked.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- SMW_STATUS_OK:
+ *		Decryption operation is supported
+ *	- SMW_STATUS_INVALID_PARAM:
+ *		@info is NULL or @info->algo_name is
+ *		SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE
+ *	- SMW_STATUS_OPERATION_NOT_CONFIGURED:
+ *		Decryption operation is not supported
+ *	- SMW_STATUS_UNKNOWN_SUBSYSTEM_NAME:
+ *		@subsystem is not valid
+ */
+enum smw_status_code
+smw_config_check_asymmetric_decrypt(smw_subsystem_t subsystem,
+				    struct smw_asymmetric_encrypt_info *info);
 
 #endif /* __SMW_CONFIG_H__ */

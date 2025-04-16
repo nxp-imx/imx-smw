@@ -58,6 +58,8 @@ typedef enum {
  * * SMW_OPERATION_NAME_STORAGE_IS_DATA_PRESENT: Check if data is present in storage
  * * SMW_OPERATION_NAME_STORAGE_GET_DATA_INFO: Get data info
  * * SMW_OPERATION_NAME_HASH_MULTI_PART: Hash multi-part
+ * * SMW_OPERATION_NAME_ASYMM_ENCRYPT: Asymmetric encryption
+ * * SMW_OPERATION_NAME_ASYMM_DECRYPT: Asymmetric decryption
  * * SMW_OPERATION_NAME_NB: Number of operations
  */
 typedef enum {
@@ -91,6 +93,8 @@ typedef enum {
 	SMW_OPERATION_NAME_STORAGE_IS_DATA_PRESENT,
 	SMW_OPERATION_NAME_STORAGE_GET_DATA_INFO,
 	SMW_OPERATION_NAME_HASH_MULTI_PART,
+	SMW_OPERATION_NAME_ASYMM_ENCRYPT,
+	SMW_OPERATION_NAME_ASYMM_DECRYPT,
 	SMW_OPERATION_NAME_NB
 } smw_operation_t;
 
@@ -502,5 +506,37 @@ typedef enum {
 	SMW_KDF_NAME_TLS13_KEY_EXCHANGE,
 	SMW_KDF_NAME_NB
 } smw_kdf_t;
+
+/**
+ * typedef smw_asymmetric_encryption_algo_t - Asymmetric encryption/decryption algo name
+ *
+ * Values:
+ * * SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE: No encryption/decryption algorithm specified
+ * * SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_RSA: RSA encryption/decryption algorithm
+ * * SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NB: Number of encryption/decryption algorithms
+ */
+typedef enum {
+	SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NONE,
+	SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_RSA,
+	SMW_ASYMMETRIC_ENCRYPTION_ALGO_NAME_NB
+} smw_asymmetric_encryption_algo_t;
+
+/**
+ * typedef smw_asymmetric_encryption_mode_t - Asymmetric encryption/decryption padding scheme name
+ *
+ * Values:
+ * * SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NONE: No Encryption padding scheme name specified
+ * * SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_PKCS1_1_5: Public-Key Cryptography Standards #1 v1.5
+ * * SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_OAEP: Optimal Asymmetric Encryption Padding
+ * * SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NO_PAD: Asymmetric Encryption/decryption with no padding
+ * * SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NB: Number of encryption padding schemes
+ */
+typedef enum {
+	SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NONE,
+	SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_PKCS1_1_5,
+	SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_OAEP,
+	SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NO_PAD,
+	SMW_ASYMMETRIC_ENCRYPTION_MODE_NAME_NB
+} smw_asymmetric_encryption_mode_t;
 
 #endif /* __SMW_NAMES_H__ */

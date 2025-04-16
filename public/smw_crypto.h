@@ -10,6 +10,7 @@
 #include "smw/attr.h"
 #include "smw/names.h"
 #include "smw/crypto/aead.h"
+#include "smw/crypto/asymmetric_encryption.h"
 #include "smw/crypto/op_context.h"
 
 /* Default TLS 1.2 verify data length for Finished message */

@@ -308,8 +308,8 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_ALGO_HKDF	   0x0E
 #define SMW_ATTR_ALGO_HKDF_EXTRACT 0x0F
 #define SMW_ATTR_ALGO_HKDF_EXPAND  0x10
-#define SMW_ATTR_ALGO_TLS_1_2	   0x1F
-#define SMW_ATTR_ALGO_TLS_1_3	   0x20
+#define SMW_ATTR_ALGO_TLS_1_2	   0x11
+#define SMW_ATTR_ALGO_TLS_1_3	   0x12
 #define SMW_ATTR_ALGO_HASH	   0xFF
 
 /**
@@ -334,6 +334,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_MODE_POLY1305: Poly1305-AES.
  * - SMW_ATTR_MODE_CLIENT: Client (TLS 1.2).
  * - SMW_ATTR_MODE_SERVER: Sever (TLS 1.2).
+ * - SMW_ATTR_MODE_NO_PAD: Asymmetric Encryption with no padding.
  * - SMW_ATTR_MODE_ANY: Any mode.
  */
 #define SMW_ATTR_MODE_NONE	 0x00
@@ -353,7 +354,8 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_MODE_CMAC	 0x0E
 #define SMW_ATTR_MODE_POLY1305	 0x0F
 #define SMW_ATTR_MODE_CLIENT	 0x10
-#define SMW_ATTR_MODE_SERVER	 0x20
+#define SMW_ATTR_MODE_SERVER	 0x11
+#define SMW_ATTR_MODE_NO_PAD	 0x12
 #define SMW_ATTR_MODE_ANY	 0xFF
 
 /**

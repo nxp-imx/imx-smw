@@ -2,14 +2,14 @@
         Target = AHAB
         Version = 1.0
 
-    [Install SRK]
+[Install SRK]
         File = "/usr/share/imx-common-pki/crts/SRK_1_2_3_4_table.bin"
         Source = "/usr/share/imx-common-pki/crts/SRK1_sha384_secp384r1_v3_usr_crt.pem"
         Source index = 0
         Source set = OEM
         Revocations = 0x0
 
-    [Authenticate Data]
+[Authenticate Data]
         File = "REPLACE_CONTAINER"
         Offsets = 0x0 REPLACE_SIGN_OFFSET
 

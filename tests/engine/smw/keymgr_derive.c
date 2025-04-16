@@ -14,6 +14,9 @@
 #include "util.h"
 #include "util_key.h"
 #include "util_context.h"
+#include "util_cst.h"
+#include "util_file.h"
+#include "paths.h"
 
 #include "key.h"
 #include "keymgr.h"
@@ -33,7 +36,8 @@ static struct {
 		  KDF_NAME(TLS12_KEY_EXCHANGE),
 		  KDF_NAME(ECDH),
 		  KDF_NAME(TLS12_OP_KEY_EXCHANGE),
-		  KDF_NAME(TLS13_KEY_EXCHANGE) };
+		  KDF_NAME(TLS13_KEY_EXCHANGE),
+		  KDF_NAME(OEM_MASTER_KEY) };
 
 #define KEA(_name)                                                             \
 	{                                                                      \
@@ -1968,6 +1972,293 @@ static void kdf_ecdh_free(struct smw_derive_key_args *args)
 	}
 }
 
+/**
+ * kdf_oem_mk_setup_base_key() - Setup the base key for OEM Master key
+ *                               derivation.
+ * @subtest: Subtest data.
+ * @args: Pointer to public key derivation argument structure.
+ * @key_base: Test keypair operations.
+ * @base_buffer: Pointer to base keypair buffer structure.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -FAILED                  - Error in definition file
+ * -API_STATUS_NOK          - SMW API Call return error
+ */
+static int kdf_oem_mk_setup_base_key(struct subtest_data *subtest,
+				     struct smw_derive_key_args *args,
+				     struct keypair_ops *key_base,
+				     struct smw_keypair_buffer *base_buffer)
+{
+	int res = ERR_CODE(PASSED);
+
+	if (!args || !subtest || !base_buffer || !key_base) {
+		DBG_PRINT_BAD_ARGS();
+		res = ERR_CODE(BAD_ARGS);
+		return res;
+	}
+
+	res = setup_derive_base(subtest, key_base, base_buffer);
+
+	return res;
+}
+
+/**
+ * kdf_oem_mk_read_args() - Read the OEM Master key derivation arguments
+ * @kdf_args: SMW's OEM Master key derivation function arguments
+ * @kdf_name: KDF name
+ * @subtest: Subtest data
+ * @oargs: Reference to the test definition json-c arguments array
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ */
+static int kdf_oem_mk_read_args(void **kdf_args, smw_kdf_t kdf_name,
+				struct subtest_data *subtest,
+				struct json_object *oargs)
+{
+	(void)subtest;
+	(void)kdf_name;
+
+	int res = ERR_CODE(BAD_ARGS);
+
+	struct tbuffer info_buf = { 0 };
+	struct tbuffer peer_pub_buf = { 0 };
+	struct tbuffer payload_buf = { 0 };
+
+	struct smw_kdf_oem_master_key_args *oem_mk_args = NULL;
+
+	if (!kdf_args || !oargs) {
+		DBG_PRINT_BAD_ARGS();
+		return res;
+	}
+
+	oem_mk_args = calloc(1, sizeof(*oem_mk_args));
+	if (!oem_mk_args)
+		return INTERNAL_OUT_OF_MEMORY;
+
+	/* Get info buffer, if defined */
+	res = util_read_json_type(&info_buf, INFO_OBJ, t_buffer_hex, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
+		DBG_PRINT("Failed to read info buffer");
+		goto end;
+	}
+
+	res = util_read_json_type(&peer_pub_buf, PEER_PUB_KEY_OBJ, t_buffer_hex,
+				  oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
+		DBG_PRINT("Failed to read peer public buffer");
+		goto end;
+	}
+
+	res = util_read_json_type(&payload_buf, INPUT_OBJ, t_buffer_hex, oargs);
+	if (res == ERR_CODE(PASSED)) {
+		oem_mk_args->payload = payload_buf.data;
+		oem_mk_args->payload_length = payload_buf.length;
+	} else if (res != ERR_CODE(VALUE_NOTFOUND)) {
+		goto end;
+	}
+
+	oem_mk_args->peer_public_buffer = peer_pub_buf.data;
+	oem_mk_args->peer_public_buffer_length = peer_pub_buf.length;
+	oem_mk_args->info = info_buf.data;
+	oem_mk_args->info_len = info_buf.length;
+
+	*kdf_args = oem_mk_args;
+	res = ERR_CODE(PASSED);
+
+end:
+	if (res != ERR_CODE(PASSED)) {
+		if (info_buf.data)
+			free(info_buf.data);
+
+		if (peer_pub_buf.data)
+			free(peer_pub_buf.data);
+
+		if (payload_buf.data)
+			free(payload_buf.data);
+
+		if (oem_mk_args)
+			free(oem_mk_args);
+	}
+
+	return res;
+}
+
+/**
+ * kdf_oem_mk_prepare_result() - Prepare the OEM Master key results
+ * @subtest: Subtest data
+ * @args: Pointer to public key derivation argument structure
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ * -FAILED                  - Error in definition file
+ */
+static int kdf_oem_mk_prepare_result(struct subtest_data *subtest,
+				     struct smw_derive_key_args *args)
+{
+	int res = ERR_CODE(PASSED);
+
+	const char *key_name = NULL;
+	struct smw_derived_key_descriptor *key = NULL;
+	struct json_object *okey_params = NULL;
+	char file_csf[] = "oem_master_key.csf";
+	char file_bin[] = "oem_master_key.bin";
+	size_t signed_msg_length = 0;
+
+	struct smw_kdf_oem_master_key_args *oem_mk_args = NULL;
+
+	res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ, &okey_params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = key_read_attributes(okey_params, &args->key_attributes);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = util_read_json_type(&key_name, OP_OUTPUT_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	key = args->key_descriptor_derived;
+
+	res = read_derived_key_descriptor(list_keys(subtest), key, key_name);
+
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	/* Get the payload buffer size to allocate */
+	oem_mk_args = args->kdf_arguments;
+
+	if (!oem_mk_args->payload) {
+		oem_mk_args->op = SMW_OEM_MK_OP_NAME_PREPARE;
+
+		subtest->smw_status = smw_derive_key(args);
+		if (subtest->smw_status != SMW_STATUS_OK ||
+		    !oem_mk_args->payload_length) {
+			DBG_PRINT("Unable to get OEM Master key payload size");
+			return ERR_CODE(API_STATUS_NOK);
+		}
+
+		oem_mk_args->payload = calloc(1, oem_mk_args->payload_length);
+		if (!oem_mk_args->payload)
+			return INTERNAL_OUT_OF_MEMORY;
+
+		/* Fill the OEM Master key payload */
+		subtest->smw_status = smw_derive_key(args);
+		if (subtest->smw_status != SMW_STATUS_OK) {
+			DBG_PRINT("Unable to fill OEM Master key payload");
+			return ERR_CODE(API_STATUS_NOK);
+		}
+
+		DBG_DHEX("OEM Master key payload", oem_mk_args->payload,
+			 oem_mk_args->payload_length);
+
+		res = util_cst_is_present();
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		res = util_cst_create_files(file_bin, file_csf,
+					    (char *)oem_mk_args->payload,
+					    oem_mk_args->payload_length);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		res = util_cst_sign(file_bin, file_csf);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		free(oem_mk_args->payload);
+		oem_mk_args->payload = NULL;
+
+		res = util_file_to_buffer(CST_WORKING_DIR, file_bin,
+					  (char **)&oem_mk_args->payload,
+					  &signed_msg_length);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		if (SET_OVERFLOW(signed_msg_length,
+				 oem_mk_args->payload_length))
+			return ERR_CODE(INTERNAL);
+	}
+
+	DBG_DHEX("OEM Master key payload signed", oem_mk_args->payload,
+		 oem_mk_args->payload_length);
+
+	oem_mk_args->op = SMW_OEM_MK_OP_NAME_DERIVE;
+	args->store_derived_key = true;
+
+	return res;
+}
+
+/**
+ * kdf_oem_mk_end_operation() - End OEM Master key derivation operation
+ * @subtest: Subtest data
+ * @args: SMW's Key derivation arguments
+ * @key_derived: Key derived result
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - Parameter type is not correct or not supported.
+ * -VALUE_NOTFOUND          - Value not found.
+ * -INTERNAL_OUT_OF_MEMORY  - Out of memory
+ * -FAILED                  - Error in definition file
+ */
+static int kdf_oem_mk_end_operation(struct subtest_data *subtest,
+				    struct smw_derive_key_args *args)
+{
+	int res = ERR_CODE(PASSED);
+
+	struct key_data key_data = { 0 };
+
+	key_prepare_derived_key_data(args->key_descriptor_derived, &key_data);
+	res = store_key_data(list_keys(subtest), OP_OUTPUT_OBJ, &key_data,
+			     subtest->params);
+
+	return res;
+}
+
+/**
+ * kdf_oem_mk_free() - Free the OEM Master key operation arguments
+ * @args: SMW's Key derivation arguments structure
+ *
+ * Return:
+ * None.
+ */
+static void kdf_oem_mk_free(struct smw_derive_key_args *args)
+{
+	struct smw_kdf_oem_master_key_args *oem_mk_args = NULL;
+
+	if (args) {
+		if (args->kdf_arguments) {
+			oem_mk_args = args->kdf_arguments;
+
+			if (oem_mk_args->peer_public_buffer)
+				free(oem_mk_args->peer_public_buffer);
+
+			if (oem_mk_args->info)
+				free(oem_mk_args->info);
+
+			if (oem_mk_args->payload)
+				free(oem_mk_args->payload);
+
+			free(args->kdf_arguments);
+			args->kdf_arguments = NULL;
+		}
+	}
+}
+
 static const struct kdf_op {
 	smw_kdf_t name;
 	int (*setup_base)(struct subtest_data *subtest,
@@ -2037,6 +2328,14 @@ static const struct kdf_op {
 			.prepare_result = &kdf_tls13_prepare_result,
 			.end_operation = &kdf_tls13_end_operation,
 			.free = &kdf_tls13_free,
+		},
+		{
+			.name = SMW_KDF_NAME_OEM_MASTER_KEY,
+			.setup_base = &kdf_oem_mk_setup_base_key,
+			.read_args = &kdf_oem_mk_read_args,
+			.prepare_result = &kdf_oem_mk_prepare_result,
+			.end_operation = &kdf_oem_mk_end_operation,
+			.free = &kdf_oem_mk_free,
 		},
 		{ 0 } };
 
@@ -2176,8 +2475,9 @@ static int setup_derive_opt_params(struct subtest_data *subtest,
 	if (res == ERR_CODE(VALUE_NOTFOUND))
 		res = ERR_CODE(PASSED);
 
-	/* Read (if any) the key derivation function name and arguments */
-	res = kdf_args_read(args, subtest);
+	if (res == ERR_CODE(PASSED))
+		/* Read (if any) the key derivation function name and arguments */
+		res = kdf_args_read(args, subtest);
 
 	return res;
 }

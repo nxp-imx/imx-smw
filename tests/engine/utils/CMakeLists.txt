@@ -8,6 +8,7 @@ target_sources(${PROJECT_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/util_cipher.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_cond.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_context.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_cst.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_data.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_file.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_ipc.c

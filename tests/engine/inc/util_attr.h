@@ -125,6 +125,20 @@ struct util_attr_info {
 			      << SMW_ATTR_CLASS_OFFSET))                       \
 	}
 
+#define ATTR_ALGO_KEY_AGREEMENT(_string, _algo, _kdf, _hash)                   \
+	{                                                                      \
+		.string = #_string,                                            \
+		.smw_algo =                                                    \
+			(((SMW_ATTR_HASH_##_hash & SMW_ATTR_HASH_MASK)         \
+			  << SMW_ATTR_HASH_OFFSET) |                           \
+			 ((SMW_ATTR_ALGO_##_kdf & SMW_ATTR_KDF_MASK)           \
+			  << SMW_ATTR_KDF_OFFSET) |                            \
+			 ((SMW_ATTR_ALGO_##_algo & SMW_ATTR_ALGO_MASK)         \
+			  << SMW_ATTR_ALGO_OFFSET) |                           \
+			 ((SMW_ATTR_CLASS_KEY_AGREEMENT & SMW_ATTR_CLASS_MASK) \
+			  << SMW_ATTR_CLASS_OFFSET))                           \
+	}
+
 #define ATTR_ARRAY_FIND_MATCH(_array, _string)                                 \
 	({                                                                     \
 		typeof(_array[0]) *_elm = (_array);                            \

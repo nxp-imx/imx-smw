@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __TYPES_H__
@@ -184,6 +184,13 @@ struct subtest_data {
 		struct subtest_data *_this = (this);                           \
 		assert(_this->app);                                            \
 		_this->app->aead_output;                                       \
+	})
+
+#define list_encrypted_texts(this)                                             \
+	({                                                                     \
+		struct subtest_data *_this = (this);                           \
+		assert(_this->app);                                            \
+		_this->app->encrypted_texts;                                   \
 	})
 
 /**

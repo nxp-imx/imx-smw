@@ -31,6 +31,8 @@
 #define DEPENDS_OBJ		  "depends"
 #define DIGEST_OBJ		  "digest"
 #define ELE_INFO_OBJ		  "ele_info"
+#define ENC_ATTR_OBJ		  "enc_attr"
+#define ENC_ID_OBJ		  "enc_id"
 #define ENCRYPT_KEY_NAME_OBJ	  "encrypt_key_name"
 #define ENCRYPTION_NAME_OBJ	  "encryption_name"
 #define EXT_MASTER_KEY_OBJ	  "ext_master_key"
@@ -183,6 +185,8 @@
 #define STORAGE_STORE	      "STORAGE_STORE"
 #define SUSPEND		      "SUSPEND"
 #define VERIFY		      "VERIFY"
+#define ASYMMETRIC_ENCRYPT    "ASYMMETRIC_ENCRYPT"
+#define ASYMMETRIC_DECRYPT    "ASYMMETRIC_DECRYPT"
 
 /* 'test_error' parameter values */
 enum arguments_test_err_case {

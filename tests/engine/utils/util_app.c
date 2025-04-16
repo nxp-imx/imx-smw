@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include <errno.h>
@@ -21,6 +21,7 @@
 #include "util_thread.h"
 #include "run_app.h"
 #include "util_aead.h"
+#include "util_asymm_encryption.h"
 
 static struct app_data *util_app_get_data(pid_t pid)
 {
@@ -82,6 +83,10 @@ static void util_app_destroy(void *data)
 	err = util_list_clear(app_data->aead_output);
 	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list aead_output error %d",
 		   err);
+
+	err = util_list_clear(app_data->encrypted_texts);
+	DBG_ASSERT(err == ERR_CODE(PASSED),
+		   "Clear list encrypted_texts error %d", err);
 
 	err = util_list_clear(app_data->threads);
 	DBG_ASSERT(err == ERR_CODE(PASSED), "Clear list threads error %d", err);
@@ -182,6 +187,10 @@ static int app_register(struct test_data *test, unsigned int id,
 		goto exit;
 
 	err = util_certificate_init(&app_data->certificates);
+	if (err != ERR_CODE(PASSED))
+		goto exit;
+
+	err = util_asymm_enc_init(&app_data->encrypted_texts);
 	if (err != ERR_CODE(PASSED))
 		goto exit;
 

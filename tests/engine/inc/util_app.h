@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 #ifndef __UTIL_APP_H__
 #define __UTIL_APP_H__
@@ -25,6 +25,7 @@
  * @certificates:    Certificates to verify list
  * @aeads:           AEADs to verify list
  * @aead_output:     AEAD output result list
+ * @encrypted_texts: Encrypted output list
  * @threads:         Application threads list
  * @semaphores:      Semaphores list
  * @is_multithread:  Application is multithread
@@ -48,6 +49,7 @@ struct app_data {
 	struct llist *certificates;
 	struct llist *aeads;
 	struct llist *aead_output;
+	struct llist *encrypted_texts;
 	struct llist *threads;
 	struct llist *semaphores;
 	int is_multithread;

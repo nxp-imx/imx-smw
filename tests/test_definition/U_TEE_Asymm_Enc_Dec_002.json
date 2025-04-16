@@ -1,0 +1,414 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
+		},
+		"key 2": {
+			"type": "RSA",
+			"security_size": 3072,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
+		},
+		"key 3": {
+			"type": "RSA",
+			"security_size": 4096,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT",
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 3"
+	},
+	"subtest 4": {
+		"description": [
+			"Perform asymmetric encryption using 2048 RSA key,",
+			"RSA PKCS1V15 padding"
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"output": 256,
+		"enc_id": 0,
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"description": [
+			"Perform asymmetric decryption using 2048 RSA key,",
+			"RSA PKCS1V15 padding"
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"output": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"enc_id": 0,
+		"key_name": "key 1",
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": [
+			"Perform asymmetric encryption using 2048 RSA key,",
+			"RSA OAEP padding and SHA-256 hashing"
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA256"
+		],
+		"input": [
+			"42c5ea617a25f019329ee172e4932485",
+			"20525341207369676e"
+		],
+		"output": 256,
+		"enc_id": 1,
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 7": {
+		"description": [
+			"Perform asymmetric decryption using 2048 RSA key,",
+			"RSA OAEP padding and SHA-256 hashing"
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA256"
+		],
+		"output": [
+			"42c5ea617a25f019329ee172e4932485",
+			"20525341207369676e"
+		],
+		"enc_id": 1,
+		"key_name": "key 1",
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": [
+			"Perform asymmetric encryption using 3072 RSA key,",
+			"RSA PKCS1V15 padding and SHA-384 hashing"
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"output": 384,
+		"enc_id": 2,
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 9": {
+		"description": [
+			"Perform asymmetric decryption using 3072 RSA key,",
+			"RSA PKCS1V15 padding"
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"output": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"enc_id": 2,
+		"key_name": "key 2",
+		"depends": 8
+	},
+	"subtest 10": {
+		"description": [
+			"Perform asymmetric encryption using 3072 RSA key,",
+			"RSA OAEP padding and SHA-384 hashing"
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA384"
+		],
+		"input": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c"
+		],
+		"output": 384,
+		"enc_id": 3,
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 11": {
+		"description": [
+			"Perform asymmetric decryption using 3072 RSA key,",
+			"RSA OAEP padding and SHA-384 hashing"
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA384"
+		],
+		"output": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c"
+		],
+		"enc_id": 3,
+		"key_name": "key 2",
+		"depends": 10
+	},
+	"subtest 12": {
+		"description": [
+			"Perform asymmetric encryption using 4096 RSA key,",
+			"RSA OAEP padding and SHA-512 hashing with salt buffer",
+			"with salt buffer"
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA512"
+		],
+		"input": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"11ecb24cee2cb7358f7593b9fa8b904a",
+			"ec0573eb6d99af92a899d9d0fabe5cb3",
+			"49256eec9797422dd60d7fd5fe73f2cf",
+			"5ead7fb72fd85e3f6fd284d2edfc5e77",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"salt": "11ecb24cee2cb7358f7593b9fa8b904a",
+		"output": 512,
+		"enc_id": 4,
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 13": {
+		"description": [
+			"Perform asymmetric decryption using 4096 RSA key,",
+			"RSA OAEP padding and SHA-512 hashing with salt buffer",
+			"with salt buffer"
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA512"
+		],
+		"salt": "11ecb24cee2cb7358f7593b9fa8b904a",
+		"output": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"11ecb24cee2cb7358f7593b9fa8b904a",
+			"ec0573eb6d99af92a899d9d0fabe5cb3",
+			"49256eec9797422dd60d7fd5fe73f2cf",
+			"5ead7fb72fd85e3f6fd284d2edfc5e77",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"enc_id": 4,
+		"key_name": "key 3",
+		"depends": 12
+	},
+	"subtest 14": {
+		"description": [
+			"Perform asymmetric encryption using 4096 RSA key,",
+			"RSA PKCS1V15 padding."
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"11ecb24cee2cb7358f7593b9fa8b904a",
+			"ec0573eb6d99af92a899d9d0fabe5cb3",
+			"49256eec9797422dd60d7fd5fe73f2cf",
+			"5ead7fb72fd85e3f6fd284d2edfc5e77",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"output": 512,
+		"enc_id": 5,
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 15": {
+		"description": [
+			"Perform asymmetric decryption using 4096 RSA key,",
+			"RSA PKCS1V15 padding."
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"output": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"11ecb24cee2cb7358f7593b9fa8b904a",
+			"ec0573eb6d99af92a899d9d0fabe5cb3",
+			"49256eec9797422dd60d7fd5fe73f2cf",
+			"5ead7fb72fd85e3f6fd284d2edfc5e77",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"enc_id": 5,
+		"key_name": "key 3",
+		"depends": 14
+	},
+	"subtest 16": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 4"
+	},
+	"subtest 17": {
+		"description": [
+			"Encrypt data using 2048 RSA key,",
+			"RSA no padding"
+		],
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_NO_PAD"
+		],
+		"input": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"a03ec5f73c4c2f420728220fe9e9efc3",
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"a03ec5f73c4c2f420728220fe9e9efc3",
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"a03ec5f73c4c2f420728220fe9e9efc3",
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"enc_id": 6,
+		"key_name": "key 4",
+		"depends": 16
+	},
+	"subtest 18": {
+		"description": [
+			"Encrypt data using 2048 RSA key,",
+			"with RSA no padding"
+		],
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_NO_PAD"
+		],
+		"output": [
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"a03ec5f73c4c2f420728220fe9e9efc3",
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"a03ec5f73c4c2f420728220fe9e9efc3",
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"a03ec5f73c4c2f420728220fe9e9efc3",
+			"42c5ea617a25f019329ee172e4932485",
+			"518dabd01983249189597473b4a6616c",
+			"c5ba8ee693e0ad1d76e0f0c85ac8c0fb",
+			"a03ec5f73c4c2f420728220fe9e9efc3"
+		],
+		"enc_id": 6,
+		"key_name": "key 4",
+		"depends": 16
+	},
+	"subtest 19": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 20": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 21": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 22": {
+		"command": "DELETE",
+		"key_name": "key 4",
+		"depends": 16
+	}
+}

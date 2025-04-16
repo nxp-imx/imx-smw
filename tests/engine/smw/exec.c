@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <string.h>
@@ -20,6 +20,7 @@
 #include "device.h"
 #include "storage.h"
 #include "aead.h"
+#include "asymmetric_encryption.h"
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -466,33 +467,52 @@ static int execute_key_attestation_cmd(char *cmd, struct subtest_data *subtest)
 	return key_attestation(subtest);
 }
 
+static int execute_asymmetric_encrypt_cmd(char *cmd,
+					  struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	return asymmetric_encrypt(subtest);
+}
+
+static int execute_asymmetric_decrypt_cmd(char *cmd,
+					  struct subtest_data *subtest)
+{
+	(void)cmd;
+
+	return asymmetric_decrypt(subtest);
+}
+
 int execute_command_smw(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
 		const char *cmd_prefix;
 		int (*op)(char *cmd, struct subtest_data *subtest);
-	} cmd_list[] = { { DELETE, &execute_delete_key_cmd },
-			 { GENERATE, &execute_generate_cmd },
-			 { IMPORT, &execute_import_cmd },
-			 { EXPORT, &execute_export_cmd },
-			 { DERIVE, &execute_derive_cmd },
-			 { HASH, &execute_hash_cmd },
-			 { MAC, &execute_mac_cmd },
-			 { SIGN, &execute_sign_cmd },
-			 { VERIFY, &execute_verify_cmd },
-			 { RNG, &execute_rng_cmd },
-			 { CIPHER, &execute_cipher_cmd },
-			 { OP_CTX, &execute_op_context_cmd },
-			 { CONFIG, &execute_config_cmd },
-			 { GET_VERSION, &execute_get_version_cmd },
-			 { GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
-			 { DEVICE, &execute_device_cmd },
-			 { STORAGE, &execute_storage_cmd },
-			 { COMMIT_KEY_STORAGE,
-			   &execute_commit_key_storage_cmd },
-			 { AEAD, &execute_aead_cmd },
-			 { KEY_ATTESTATION, &execute_key_attestation_cmd },
-			 { OBJECT, &execute_object_cmd } };
+	} cmd_list[] = {
+		{ DELETE, &execute_delete_key_cmd },
+		{ GENERATE, &execute_generate_cmd },
+		{ IMPORT, &execute_import_cmd },
+		{ EXPORT, &execute_export_cmd },
+		{ DERIVE, &execute_derive_cmd },
+		{ HASH, &execute_hash_cmd },
+		{ MAC, &execute_mac_cmd },
+		{ SIGN, &execute_sign_cmd },
+		{ VERIFY, &execute_verify_cmd },
+		{ RNG, &execute_rng_cmd },
+		{ CIPHER, &execute_cipher_cmd },
+		{ OP_CTX, &execute_op_context_cmd },
+		{ CONFIG, &execute_config_cmd },
+		{ GET_VERSION, &execute_get_version_cmd },
+		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
+		{ DEVICE, &execute_device_cmd },
+		{ STORAGE, &execute_storage_cmd },
+		{ COMMIT_KEY_STORAGE, &execute_commit_key_storage_cmd },
+		{ AEAD, &execute_aead_cmd },
+		{ KEY_ATTESTATION, &execute_key_attestation_cmd },
+		{ OBJECT, &execute_object_cmd },
+		{ ASYMMETRIC_ENCRYPT, &execute_asymmetric_encrypt_cmd },
+		{ ASYMMETRIC_DECRYPT, &execute_asymmetric_decrypt_cmd },
+	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {
 		if (!strncmp(cmd, cmd_list[idx].cmd_prefix,

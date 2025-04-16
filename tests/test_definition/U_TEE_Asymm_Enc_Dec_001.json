@@ -1,0 +1,184 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
+		},
+		"key 2": {
+			"type": "RSA",
+			"security_size": 2048,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"description": "Invalid key type",
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"output": 256,
+		"key_name": "key 1",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 2"
+	},
+	"subtest 4": {
+		"description": "Get output length",
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"key_name": "key 2",
+		"output": 0,
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": "Output length too small",
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"output": 10,
+		"key_name": "key 2",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
+		"depends": 3
+	},
+	"subtest 6": {
+		"description": "Output length too big",
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"output": 512,
+		"key_name": "key 2",
+		"enc_id": 0,
+		"depends": 3
+	},
+	"subtest 7": {
+		"description": "Output length too small",
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"enc_id": 0,
+		"output": 10,
+		"key_name": "key 2",
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": "Output length too big",
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"enc_id": 0,
+		"output": 512,
+		"key_name": "key 2",
+		"depends": 6
+	},
+	"subtest 9": {
+		"description": "Salt length is set while salt buffer is not set",
+		"command": "ASYMMETRIC_ENCRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA256"
+		],
+		"input": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"salt": 10,
+		"key_name": "key 2",
+		"output": 256,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 10": {
+		"description": "Salt length is set while salt buffer is not set",
+		"command": "ASYMMETRIC_DECRYPT",
+		"subsystem": "TEE",
+		"enc_attr": [
+			"RSA_OAEP",
+			"HASH=SHA256"
+		],
+		"input": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"salt": 10,
+		"key_name": "key 2",
+		"output": 256,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 11": {
+		"description": "Hash algo is not set for RSA OAEP mode",
+		"command": "ASYMMETRIC_ENCRYPT",
+		"key_name": "key 2",
+		"enc_attr": [
+			"RSA_OAEP"
+		],
+		"input": "0123456789abcdef1011121314151617",
+		"output": 256,
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 3
+	}
+}

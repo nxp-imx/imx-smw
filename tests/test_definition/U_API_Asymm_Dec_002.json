@@ -1,0 +1,120 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "RSA",
+			"security_size": 2048,
+			"priv_key": [
+				"013f1308d3845c45d261fb9220784fc2",
+				"2b225b2e4d05c70d1fd179a12b65b4e0",
+				"af8d08cd3c5bdab25e644430bd7e9753",
+				"b6f37c8eb87f376d19dfa3ce0ef18d58",
+				"67457eec496b7e356b32eecb75cd2ca2",
+				"6b143c115901674e7cf039be7f7adfc3",
+				"a5d819520a85765bc795d2716e5e692e",
+				"cd75da2ac0e1c61b7d1c8c9085feab6f",
+				"d038d47bb6abcfa8c26f25c9dec149b0",
+				"9b1b7b41577bcb622e5f0ed3af1608cf",
+				"9df5daa36471aca112015bc2720adfec",
+				"e6a3231812e264315977bb44e80f8f0d",
+				"255eba2bb600b844c28dc352684b1705",
+				"07cdc62a79ee47d4f248bf56f5512a66",
+				"a3fbd65fc8413e71d4fe278e4b8a3942",
+				"5d04aab412139b6396dbff5cd2613c01"
+			],
+			"pub_key": [
+				"010001"
+			],
+			"modulus": [
+				"d4b82fef08ca86c9c533f812b1a026fc",
+				"98598b1acd62b74494664c6e04958442",
+				"f3d03c2e1b64b4260f170e011f8de189",
+				"84cd0178b3f5483633291e772a68314d",
+				"be9976858fda6b4645915443106c4a65",
+				"246f6e6361d58a9829cf1f26263f7f03",
+				"bd2a1c17e50096294bbc04d5dfe508cf",
+				"186fc0675daf5382255bc8b70a20f454",
+				"438194c64727dd56481328b63c129080",
+				"d44b412a58748881a9e63f5a347d72bd",
+				"118f09cf5b9e62eaec60a398d6c70c2f",
+				"5c2286bec65f2a8f422f66fcdd12bc30",
+				"13dd355d1cc3d57d7b44ae47d13c46c3",
+				"c514e8fbb278bde31611108d6d586b54",
+				"c195b68f33798e41387b15ac7eeab213",
+				"f1f7c6e3e486e140f2df3c70ddbc72ff"
+			]
+		},
+		"key 2": {
+			"format": "UNDEFINED"
+		},
+		"key 3": {
+			"security_size": 128,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 0,
+			"priv_key": [
+				"a1b90cba3f06ac353b2c343876081762",
+				"090923026e91771815f29dab01932f2f"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "ASYMMETRIC_DECRYPT",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"key_name": "key 1",
+		"input": "5555555555",
+		"test_error": "KEY_DESC_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 2": {
+		"description": "Key Format is undefined",
+		"command": "ASYMMETRIC_DECRYPT",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": "5555555555",
+		"output": [
+			"42c5ea617a25f019329ee172e4932485",
+			"20525341207369676e"
+		],
+		"key_name": "key 2",
+		"result": "SMW_STATUS_UNKNOWN_FORMAT_NAME"
+	},
+	"subtest 3": {
+		"description": "Key type is missing",
+		"command": "ASYMMETRIC_DECRYPT",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": "5555555555",
+		"key_name": "key 3",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 4": {
+		"description": "Security size is 0",
+		"command": "ASYMMETRIC_DECRYPT",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"input": "5555555555",
+		"key_name": "key 4",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 5": {
+		"description": "Key descriptor buffer is NULL",
+		"command": "ASYMMETRIC_DECRYPT",
+		"enc_attr": [
+			"RSA_PKCS1_V15"
+		],
+		"key_name": "key 4",
+		"input": "5555555555",
+		"test_error": "KEY_BUFFER_NULL",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	}
+}

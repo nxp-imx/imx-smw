@@ -192,6 +192,10 @@ by its string name. The :numref:`security_operations` below lists all Security
    | AEAD                   | Authentication Encryption.                       |
    +------------------------+--------------------------------------------------+
    | AEAD_MULTI_PART        | Authentication Encryption multi-part.            |
+   +------------------------+--------------------------------------------------+  
+   | ASYMM_ENCRYPT          | Asymmetric Encryption.                           |
+   +------------------------+--------------------------------------------------+
+   | ASYMM_DECRYPT          | Asymmetric Decryption.                           |
    +------------------------+--------------------------------------------------+
    | RNG                    | Generate a Random data number.                   |
    +------------------------+--------------------------------------------------+
@@ -228,6 +232,8 @@ Range tags definition as listed in the following tables.
    +------------------+--------------------------------------------------------+
    | MODE_VALUES      | Define the modes supported for a cryptographic         |
    |                  | security operation.                                    |
+   |                  |e.g. Cipher modes(CBC, ECB etc.) for cipher operations  |   
+   |                  |     Encryption padding schemes(PKCS1_1_5, OAEP, NO_PAD)|
    +------------------+--------------------------------------------------------+
    | HASH_ALGO_VALUES | Define the Hash algorithms supported for a             |
    |                  | cryptographic security operation.                      |
@@ -244,6 +250,9 @@ Range tags definition as listed in the following tables.
    | OP_TYPE_VALUES   | Define the type of operation when it has multiple      |
    |                  | possibilities.                                         |
    |                  | (ex: encryption vs decryption for cipher operation).   |
+   +------------------+--------------------------------------------------------+
+   | ENC_ALGO_VALUES  | Define the asymmetric encryption algorithms supported  |
+   |                  | for a cryptographic security operation.                |
    +------------------+--------------------------------------------------------+
 
 

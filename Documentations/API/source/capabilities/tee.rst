@@ -303,6 +303,36 @@ Operations supported:
  - Encryption one shot and multi-part
  - Decryption one shot and multi-part
 
+Asymmetric encryption and decryption
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 
+.. table:: TEE Asymmetric encryption and decryption
+   :align: center
+   :widths: 20 13 35 32
+   :width: 100%
+   :class: wrap-table
+
+   +--------------------+--------------+-----------------------------+--------------------------+
+   |**Encryption mode** | **Key type** | **Key security size(s)**    | **Hash algorithm**       |
+   +====================+==============+=============================+==========================+
+   | PKCS1V15           | RSA          |  256 to 4096 [7]_           | - SHA1                   |
+   |                    |              |                             | - SHA224                 |
+   |                    |              |                             | - SHA256                 |
+   |                    |              |                             | - SHA384                 |
+   |                    |              |                             | - SHA512                 |
+   +--------------------+--------------+-----------------------------+--------------------------+
+   | OAEP               | RSA          |  256 to 4096 [7]_           |  N/A                     |
+   +--------------------+--------------+-----------------------------+--------------------------+
+   | No Padding         | RSA          |  256 to 4096 [7]_           |  N/A                     |
+   +--------------------+--------------+-----------------------------+--------------------------+
+
+
+Operations supported:
+ - Encryption
+ - Decryption
+
+.. [7] multiple of 2 bits
+
 Data Storage manager
 ^^^^^^^^^^^^^^^^^^^^
 

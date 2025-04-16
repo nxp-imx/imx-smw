@@ -552,6 +552,12 @@ The default option value is in **bold**.
 	<td>ENABLE_KEYMGR_MODULE</td>
 </tr>
 <tr>
+  <td>-DENABLE_ASYMMETRIC_ENCRYPTION=[<b>ON</b>|OFF]</td>
+  <td>Enable/disable the support of asymmetric encryption and decryption
+	operations. Default is ON (enable).</td>
+	<td>ENABLE_KEYMGR_MODULE</td>
+</tr>
+<tr>
   <td>-DENABLE_STORAGE_MODULE=[<b>ON</b>|OFF]</td>
   <td>Enable/disable the support of data storage operations.
 	Default is ON (enable).</td>
@@ -749,11 +755,14 @@ option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-envi
     |   |   |   |-- protected_storage.h
     |   |   |   `-- storage_common.h
     |   |   |-- <span style="color:orange">smw</span>
+    |   |   |   |-- <span style="color:orange">crypto</span>
+    |   |   |   |    |-- aead.h
+    |   |   |   |    |-- asymmetric_encryption.h
+    |   |   |   |    `-- op_context.h
     |   |   |   |-- attr.h
     |   |   |   |-- names.h
-    |   |   |   `-- <span style="color:orange">crypto</span>
-    |   |   |       |-- aead.h
-    |   |   |       `-- op_context.h
+    |   |   |   |-- object.h
+|   |   |   |   `-- tls.h
     |   |   |-- smw_config.h
     |   |   |-- smw_crypto.h
     |   |   |-- smw_device.h

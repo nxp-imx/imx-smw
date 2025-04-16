@@ -70,6 +70,7 @@ The failure is due to the storage manager which is already loaded and a new inst
     - smw_import_key()
 * Add a new status code `SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED`.
 * Add support for X25519 key type (used for x25519 TLS key exchange).
+* Add asymmetric encryption and decryption APIs.
 
 ##### 2. Subsystems
 
@@ -85,6 +86,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * SECO: Handle signature message hashed flag.
 * ELE: Add support for signature generation using plaintext private key buffer.
 * ELE: Add support for hash mac generation using plaintext private key buffer.
+* TEE: Add support for asymmetric encryption and decryption for TEE subsystem.
 
 ##### 3. ARM PSA APIs
 
@@ -93,10 +95,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add a dedicated configuration file for i.MX943.
 * Remove HKDF key derivation in all ELE based configurations.
-* Add support of the EDDSA signature for TEE subsystem in all configurations
+* Add support of the EDDSA signature for TEE subsystem in all configurations.
 * Add support of key permitted algo and key usage in Object database.
 * Add a database version information and verification.
 * Remove AEAD support for ELE subsystem in i.MX95 and i.MX943 configuration files.
+* Add support for asymmetric encryption and decryption for TEE subsystem in all
+  configurations.
 
 #### SMW Tests - _version 5.0_
 
@@ -117,6 +121,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE tests: Add tests to validate X25519 key exchange: U_ELE_Generate_005, U_ELE_Derive_009,
   U_ELE_Derive_010, U_ELE_Derive_011.
 * Add tests to validate HMAC generation and verification using plaintext key buffer.
+* Add tests to validate asymmetric encryption and decryption APIs.
 
 #### PKCS#11 Library - _version 5.0_
 

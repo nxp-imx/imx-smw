@@ -248,6 +248,14 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 </tr>
+  <td colspan="3">Asymmetric Encryption</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>❌</td>
+	<td>❌</td>
+</tr>
 <tr>
   <td colspan="3">Random Number Generation</td>
 	<td>✔️</td>
@@ -637,10 +645,14 @@ Below is the organization of the project sources.
 |   |   |-- protected_storage.h
 |   |   `-- storage_common.h
 |   |-- <span style="color:orange">smw</span>
+|   |   |-- <span style="color:orange">crypto</span>                 SMW's cryptographic interface headers (refer to APIs documentation)
+|   |   |   |-- aead.h
+|   |   |   |-- asymmetric_encryption.h
+|   |   |   `-- op_context.h
 |   |   |-- attr.h
 |   |   |-- names.h
-|   |   `-- <span style="color:orange">crypto</span>                 SMW's cryptographic interface headers (refer to APIs documentation)
-|   |       `-- aead.h
+|   |   |-- object.h
+|   |   `-- tls.h
 |   |-- smw_config.h
 |   |-- smw_crypto.h
 |   |-- smw_device.h

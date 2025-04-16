@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023 NXP
+ * Copyright 2020-2021, 2023, 2025 NXP
  */
 
 #include "smw_status.h"
@@ -39,36 +39,6 @@ unsigned int smw_utils_get_base64_len(unsigned int hex_len)
 }
 
 /**
- * get_hex_len - Calculate the hexadecimal length of a base64 buffer.
- * @base64: Base64 buffer.
- * @base64_len: @base64 length in bytes.
- *
- * Return:
- * 0	- @base64_len is invalid.
- * Hex buffer length in bytes.
- */
-static unsigned int get_hex_len(const unsigned char *base64,
-				unsigned int base64_len)
-{
-	unsigned int hex_len = 0;
-	unsigned int i = base64_len;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	SMW_DBG_ASSERT(base64);
-
-	if (base64_len % 4 || !base64_len)
-		return 0;
-
-	hex_len = (base64_len / 4) * 3;
-
-	while (--i && base64[i] == PADDING_CHAR && hex_len)
-		hex_len--;
-
-	return hex_len;
-}
-
-/**
  * convert_char() - Convert base64 char into hex char.
  * @c: Char to convert.
  *
@@ -92,6 +62,36 @@ static unsigned char convert_char(unsigned char c)
 		return 63;
 
 	return BAD_CHAR;
+}
+
+/**
+ * smw_utils_get_hex_len - Calculate the hexadecimal length of a base64 buffer.
+ * @base64: Base64 buffer.
+ * @base64_len: @base64 length in bytes.
+ *
+ * Return:
+ * 0	- @base64_len is invalid.
+ * Hex buffer length in bytes.
+ */
+unsigned int smw_utils_get_hex_len(const unsigned char *base64,
+				   unsigned int base64_len)
+{
+	unsigned int hex_len = 0;
+	unsigned int i = base64_len;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	SMW_DBG_ASSERT(base64);
+
+	if (base64_len % 4 || !base64_len)
+		return 0;
+
+	hex_len = (base64_len / 4) * 3;
+
+	while (--i && base64[i] == PADDING_CHAR && hex_len)
+		hex_len--;
+
+	return hex_len;
 }
 
 int smw_utils_base64_encode(const unsigned char *in, unsigned int in_len,
@@ -189,7 +189,7 @@ int smw_utils_base64_decode(const unsigned char *base64,
 
 	SMW_DBG_ASSERT(base64 && hex_len);
 
-	len = get_hex_len(base64, base64_len);
+	len = smw_utils_get_hex_len(base64, base64_len);
 	if (!len) {
 		SMW_DBG_PRINTF(ERROR, "%s: Base64 buffer length is invalid\n",
 			       __func__);

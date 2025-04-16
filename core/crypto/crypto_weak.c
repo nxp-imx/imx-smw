@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #include "compiler.h"
@@ -193,6 +193,26 @@ __weak enum smw_status_code smw_aead_update(struct smw_aead_data_args *args)
 }
 
 __weak enum smw_status_code smw_aead_final(struct smw_aead_final_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_asymmetric_encrypt(struct smw_asymmetric_encryption_args *args)
+{
+	(void)args;
+
+	SMW_DBG_TRACE_API_CALL;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak enum smw_status_code
+smw_asymmetric_decrypt(struct smw_asymmetric_encryption_args *args)
 {
 	(void)args;
 

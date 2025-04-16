@@ -239,6 +239,49 @@ int smw_config_get_signature_type_id(smw_signature_type_t name,
 int smw_config_get_kdf_id(smw_kdf_t name, enum smw_config_kdf_id *id);
 
 /**
+ * smw_config_get_asymm_encrypt_algo_id() - Get the asymmetric encryption algo
+ *                                          ID associated to a name.
+ * @name: Asymmetric encryption algorithm name.
+ * @id: Pointer where the ID is written.
+ *
+ * Return:
+ * SMW_STATUS_UNKNOWN_ALGO_NAME	- @name is unknown
+ * SMW_STATUS_OK		        - Success
+ */
+int smw_config_get_asymm_encrypt_algo_id(smw_asymmetric_encryption_algo_t name,
+					 enum smw_config_asymm_enc_algo_id *id);
+
+/**
+ * smw_config_get_asymm_encrypt_mode_id() - Get the asymmetric encryption mode
+ *                                          ID associated to a name.
+ * @name: Asymmetric encryption mode name.
+ * @id: Pointer where the ID is written.
+ *
+ * Return:
+ * SMW_STATUS_UNKNOWN_MODE_NAME	- @name is unknown
+ * SMW_STATUS_OK		        - Success
+ */
+int smw_config_get_asymm_encrypt_mode_id(smw_asymmetric_encryption_mode_t name,
+					 enum smw_config_asymm_enc_mode_id *id);
+
+/**
+ * smw_utils_asymm_enc_attr_to_ids() - Get the asymmetric encryption algo and
+ *                                     mode IDs from algorithm attribute.
+ * @attr: Algorithm attribute.
+ * @algo_id: Pointer where the algorithm ID is written.
+ * @mode_id: Pointer where the encryption mode ID is written.
+ * @key_type_id: Pointer where the key type ID is written.
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Not supported
+ */
+int smw_utils_asymm_enc_attr_to_ids(smw_attr_algo_t attr,
+				    enum smw_config_asymm_enc_algo_id *algo_id,
+				    enum smw_config_asymm_enc_mode_id *mode_id,
+				    enum smw_config_key_type_id *key_type_id);
+
+/**
  * smw_config_get_psa_config() - Get the PSA configuration.
  * @config: PSA configuration.
  *

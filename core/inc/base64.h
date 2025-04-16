@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020, 2023 NXP
+ * Copyright 2020, 2023, 2025 NXP
  */
 
 #ifndef __BASE64_H__
@@ -14,6 +14,18 @@
  * Base64 buffer length in bytes.
  */
 unsigned int smw_utils_get_base64_len(unsigned int hex_len);
+
+/**
+ * smw_utils_get_hex_len - Calculate the hexadecimal length of a base64 buffer.
+ * @base64: Base64 buffer.
+ * @base64_len: @base64 length in bytes.
+ *
+ * Return:
+ * 0	- @base64_len is invalid.
+ * Hex length in bytes.
+ */
+unsigned int smw_utils_get_hex_len(const unsigned char *base64,
+				   unsigned int base64_len);
 
 /**
  * smw_utils_base64_encode() - Encode hex buffer into base64 buffer.

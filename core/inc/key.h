@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #ifndef __KEY_H__
@@ -99,5 +99,21 @@ int smw_keymgr_set_hex_key_buffer(enum smw_keymgr_format_id format_id,
 				  unsigned int buffer_len,
 				  unsigned char **hex_buffer,
 				  unsigned int *hex_buffer_len);
+
+/**
+ * smw_keymgr_get_hex_key_buffer_len() - Calculate the hex length of a buffer.
+ * @format_id: Format of the input buffer.
+ * @buffer: Pointer to the input buffer.
+ * @buffer_len: @buffer length in bytes.
+ * @hex_buffer_len: Length of @buffer in hex.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success.
+ * SMW_STATUS_INVALID_PARAM - One of the parameter is invalid.
+ */
+int smw_keymgr_get_hex_key_buffer_len(enum smw_keymgr_format_id format_id,
+				      unsigned char *buffer,
+				      unsigned int buffer_len,
+				      unsigned int *hex_buffer_len);
 
 #endif /* __KEY_H__ */

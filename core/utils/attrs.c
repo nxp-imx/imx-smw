@@ -173,3 +173,76 @@ int smw_utils_sign_attr_to_ids(smw_attr_algo_t attr,
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
+
+#define ASYMM_ENC_RSA_ALGO(_mode_id)                                           \
+	{                                                                      \
+		.algo = SMW_ATTR_ALGO_RSA, .mode = SMW_ATTR_MODE_##_mode_id,   \
+		.algo_id = SMW_CONFIG_ASYMM_ENC_ALGO_ID_RSA,                   \
+		.mode_id = SMW_CONFIG_ASYMM_ENC_MODE_ID_##_mode_id,            \
+		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_RSA,                     \
+	}
+
+static const struct {
+	smw_attr_algo_t algo;
+	smw_attr_algo_t mode;
+	enum smw_config_asymm_enc_algo_id algo_id;
+	enum smw_config_asymm_enc_mode_id mode_id;
+	enum smw_config_key_type_id key_type_id;
+} asymm_enc_list[] = { ASYMM_ENC_RSA_ALGO(OAEP), ASYMM_ENC_RSA_ALGO(PKCS1_1_5),
+		       ASYMM_ENC_RSA_ALGO(NO_PAD) };
+
+int smw_utils_asymm_enc_attr_to_ids(smw_attr_algo_t attr,
+				    enum smw_config_asymm_enc_algo_id *algo_id,
+				    enum smw_config_asymm_enc_mode_id *mode_id,
+				    enum smw_config_key_type_id *key_type_id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(asymm_enc_list);
+	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
+	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!algo_id || !mode_id)
+		goto end;
+
+	mode = SMW_ATTR_GET_MODE(attr);
+	algo = SMW_ATTR_GET_ALGO(attr);
+
+	*algo_id = SMW_CONFIG_ASYMM_ENC_ALGO_ID_INVALID;
+	*mode_id = SMW_CONFIG_ASYMM_ENC_MODE_ID_INVALID;
+
+	if (key_type_id)
+		*key_type_id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
+
+	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	for (; i < size; i++) {
+		if (asymm_enc_list[i].algo != algo)
+			continue;
+
+		*algo_id = asymm_enc_list[i].algo_id;
+
+		if (key_type_id)
+			*key_type_id = asymm_enc_list[i].key_type_id;
+
+		if (asymm_enc_list[i].mode != mode)
+			continue;
+
+		*mode_id = asymm_enc_list[i].mode_id;
+
+		SMW_DBG_PRINTF(DEBUG,
+			       "Asymmetric encryption scheme (attr 0x%" PRIx64
+			       ") algo_id=%d mode_id=%d\n",
+			       attr, *algo_id, *mode_id);
+
+		status = SMW_STATUS_OK;
+		break;
+	}
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}

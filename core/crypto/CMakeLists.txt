@@ -29,6 +29,11 @@ add_operation(AEAD_MULTI_PART)
 add_operation_implicit(AEAD_UPDATE_AAD)
 endif()
 
+if(ENABLE_ASYMMETRIC_ENCRYPTION)
+add_operation(ASYMM_ENCRYPT)
+add_operation(ASYMM_DECRYPT)
+endif()
+
 #
 # If at least one of the operation that supports MULTI_PART is enabled, context
 # features are enabled
@@ -46,5 +51,6 @@ target_sources(crypto PRIVATE
                $<$<BOOL:${ENABLE_RNG}>:rng.c>
                $<$<BOOL:${ENABLE_CIPHER}>:cipher.c>
                $<$<BOOL:${ENABLE_CONTEXT}>:operation_context.c>
-               $<$<BOOL:${ENABLE_AEAD}>:aead.c>)
+               $<$<BOOL:${ENABLE_AEAD}>:aead.c>
+               $<$<BOOL:${ENABLE_ASYMMETRIC_ENCRYPTION}>:asymmetric_encryption.c>)
 target_include_directories(crypto PRIVATE ${INCLUDE_DIR})

@@ -121,3 +121,27 @@ exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
+
+int smw_keymgr_get_hex_key_buffer_len(enum smw_keymgr_format_id format_id,
+				      unsigned char *buffer,
+				      unsigned int buffer_len,
+				      unsigned int *hex_buffer_len)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!buffer || !buffer_len || !hex_buffer_len)
+		goto exit;
+
+	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64)
+		*hex_buffer_len = smw_utils_get_hex_len(buffer, buffer_len);
+	else
+		*hex_buffer_len = buffer_len;
+
+	status = SMW_STATUS_OK;
+
+exit:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}

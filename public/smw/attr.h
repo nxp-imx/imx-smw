@@ -170,6 +170,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_ALGO_OFFSET: Algorithm offset.
  * - SMW_ATTR_MODE_OFFSET: Mode offset.
  * - SMW_ATTR_CURVE_OFFSET: Curve offset.
+ * - SMW_ATTR_KDF_OFFSET: Key agreement's key derivation function offset.
  * - SMW_ATTR_HASH_OFFSET: Hash offset.
  * - SMW_ATTR_CLASS_OFFSET: Class offset.
  * - SMW_ATTR_ADD_ATTR_OFFSET: Additional parameters offset.
@@ -177,6 +178,7 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_ALGO_OFFSET	  0u
 #define SMW_ATTR_MODE_OFFSET	  8u
 #define SMW_ATTR_CURVE_OFFSET	  8u
+#define SMW_ATTR_KDF_OFFSET	  8u
 #define SMW_ATTR_HASH_OFFSET	  16u
 #define SMW_ATTR_CLASS_OFFSET	  24u
 #define SMW_ATTR_ADD_PARAM_OFFSET 32u
@@ -188,6 +190,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_ALGO_MASK: Algorithm mask.
  * - SMW_ATTR_MODE_MASK: Mode mask.
  * - SMW_ATTR_CURVE_MASK: Curve mask.
+ * - SMW_ATTR_KDF_MASK: Key agreement's key derivation function mask.
  * - SMW_ATTR_HASH_MASK: Hash mask.
  * - SMW_ATTR_CLASS_MASK: Class mask.
  * - SMW_ATTR_ADD_PARAM_MASK: Additional parameters mask.
@@ -195,6 +198,7 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_ALGO_MASK	((smw_attr_algo_t)0xFF)
 #define SMW_ATTR_MODE_MASK	((smw_attr_algo_t)0xFF)
 #define SMW_ATTR_CURVE_MASK	((smw_attr_algo_t)0xFF)
+#define SMW_ATTR_KDF_MASK	((smw_attr_algo_t)0xFF)
 #define SMW_ATTR_HASH_MASK	((smw_attr_algo_t)0xFF)
 #define SMW_ATTR_CLASS_MASK	((smw_attr_algo_t)0xFF)
 #define SMW_ATTR_ADD_PARAM_MASK ((smw_attr_algo_t)0xFF)
@@ -429,6 +433,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_CLASS_AEAD: Authenticated Encryption with Associated Data.
  * - SMW_ATTR_CLASS_KEY_DERIVATION: Key derivation.
  * - SMW_ATTR_CLASS_KEY_ATTESTATION: Key attestation.
+ * - SMW_ATTR_CLASS_KEY_AGREEMENT: Key agreement.
  */
 #define SMW_ATTR_CLASS_NONE		     0x00
 #define SMW_ATTR_CLASS_DIGEST		     0x01
@@ -439,6 +444,7 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_CLASS_AEAD		     0x06
 #define SMW_ATTR_CLASS_KEY_DERIVATION	     0x07
 #define SMW_ATTR_CLASS_KEY_ATTESTATION	     0x08
+#define SMW_ATTR_CLASS_KEY_AGREEMENT	     0x09
 
 /**
  * DOC: SMW_ATTR_USAGE_xxx
@@ -1176,6 +1182,23 @@ typedef uint32_t smw_attr_storage_id_t;
 	 SMW_ATTR_VALUE(CURVE, curve) | SMW_ATTR_VALUE(HASH, hash))
 
 /**
+ * SMW_ATTR_ALGO_KEY_AGREEMENT() - Build a key agreement
+ * algorithm.
+ * @algo: Key agreement algorithm. See smw_attr_algo_t.
+ * @kdf: Combined key derivation algorithm. See smw_attr_algo_t.
+ * @hash: A valid hash algorithm. See smw_attr_algo_t.
+ *
+ * This macro builds a key agreement with or without combined key derivation
+ * algorithm.
+ *
+ * Return:
+ * A valid key agreement algorithm with or without combined key derivation.
+ */
+#define SMW_ATTR_ALGO_KEY_AGREEMENT(algo, kdf, hash)                           \
+	(SMW_ATTR_NAME(CLASS, KEY_AGREEMENT) | SMW_ATTR_NAME(ALGO, algo) |     \
+	 SMW_ATTR_VALUE(KDF, kdf) | SMW_ATTR_VALUE(HASH, hash))
+
+/**
  * SMW_ATTR_GET_ALGO() - Get the main algorithm.
  * @algo: A valid algorithm. See smw_attr_algo_t.
  *
@@ -1207,6 +1230,17 @@ typedef uint32_t smw_attr_storage_id_t;
  * The curve.
  */
 #define SMW_ATTR_GET_CURVE(algo) SMW_ATTR_GET_VALUE(algo, CURVE)
+
+/**
+ * SMW_ATTR_GET_KDF() - Get the key agreement's key derivation algorithm.
+ * @algo: A valid algorithm. See smw_attr_algo_t.
+ *
+ * This macro extracts the key derivation of key agreement @algo.
+ *
+ * Return:
+ * The curve.
+ */
+#define SMW_ATTR_GET_KDF(algo) SMW_ATTR_GET_VALUE(algo, KDF)
 
 /**
  * SMW_ATTR_GET_HASH() - Get the hash algorithm.

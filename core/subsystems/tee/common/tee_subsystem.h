@@ -110,6 +110,13 @@ enum tee_signature_type {
 	TEE_SIGNATURE_TYPE_EDDSA_CTX
 };
 
+/* TEE asymmetric encryption padding mode */
+enum tee_asymm_enc_mode {
+	TEE_ASYMM_ENC_MODE_RSAES_PKCS1_V1_5,
+	TEE_ASYMM_ENC_MODE_RSAES_PKCS1_OAEP,
+	TEE_ASYMM_ENC_MODE_RSA_NOPAD,
+};
+
 /* TA commands */
 enum ta_commands {
 	CMD_GENERATE_KEY,
@@ -143,6 +150,8 @@ enum ta_commands {
 	CMD_HASH_INIT,
 	CMD_HASH_UPDATE,
 	CMD_HASH_FINAL,
+	CMD_ASYMM_ENCRYPT,
+	CMD_ASYMM_DECRYPT,
 	CMD_INVALID,
 };
 
@@ -256,6 +265,31 @@ struct key_derive_shared_params {
 	unsigned int derived_key_sec_size;
 	unsigned int derived_key_len;
 	bool store_derived_key;
+};
+
+/**
+ * struct asymm_enc_shared_params - Asymmetric encryption shared parameters.
+ * @id: Key ID. Not set if a buffer is used.
+ * @key_type: Key type.
+ * @security_size: Key security size.
+ * @hash_algorithm: Hash algorithm.
+ * @mode: Asymmetric encryption padding mode.
+ * @pub_key_len: Public key buffer length in bytes.
+ * @salt_length: Salt buffer length.
+ * @salt: Salt buffer.
+ *
+ * @salt and @salt_length are optional parameters for
+ * TEE_ALG_RSAES_PKCS1_OAEP_MGF1_XXX algorithms.
+ */
+struct asymm_enc_shared_params {
+	uint32_t id;
+	enum tee_key_type key_type;
+	unsigned int security_size;
+	enum tee_algorithm_id hash_algorithm;
+	enum tee_asymm_enc_mode mode;
+	unsigned int pub_key_len;
+	unsigned int salt_length;
+	unsigned char salt[];
 };
 
 #endif /* TEE_SUBSYSTEM_H */

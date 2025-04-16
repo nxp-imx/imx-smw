@@ -19,6 +19,7 @@
 #include "operation_context.h"
 #include "obj.h"
 #include "storage.h"
+#include "asymmetric_encryption.h"
 
 TEE_Result libsmw_attach(void)
 {
@@ -170,6 +171,11 @@ TEE_Result libsmw_dispatcher(uint32_t cmd_id, uint32_t param_types,
 
 	case CMD_STORAGE_GET_DATA_INFO:
 		res = storage_get_data_info(param_types, params);
+		break;
+
+	case CMD_ASYMM_ENCRYPT:
+	case CMD_ASYMM_DECRYPT:
+		res = asymm_encrypt_decrypt(param_types, params, cmd_id);
 		break;
 
 	default:

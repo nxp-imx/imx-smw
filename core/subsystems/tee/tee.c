@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <tee_client_api.h>
@@ -106,6 +106,17 @@ __weak bool tee_aead_handle(enum operation_id operation_id, void *args,
 
 __weak bool tee_storage_handle(enum operation_id operation_id, void *args,
 			       int *status)
+
+{
+	(void)operation_id;
+	(void)args;
+	(void)status;
+
+	return false;
+}
+
+__weak bool tee_asymm_encrypt_decrypt_handle(enum operation_id operation_id,
+					     void *args, int *status)
 
 {
 	(void)operation_id;
@@ -356,8 +367,10 @@ static int execute(enum operation_id op_id, void *args)
 		goto end;
 	else if (tee_aead_handle(op_id, args, &status))
 		goto end;
+	else if (tee_storage_handle(op_id, args, &status))
+		goto end;
+	tee_asymm_encrypt_decrypt_handle(op_id, args, &status);
 
-	tee_storage_handle(op_id, args, &status);
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

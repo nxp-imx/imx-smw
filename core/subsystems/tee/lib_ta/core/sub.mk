@@ -16,3 +16,4 @@ srcs-y += common.c
 srcs-y += aead.c
 srcs-y += obj.c
 srcs-y += storage.c
+srcs-y += asymmetric_encryption.c

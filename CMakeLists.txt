@@ -69,6 +69,7 @@ cmake_dependent_option(ENABLE_MAC "Enable MAC" ON "ENABLE_KEYMGR_MODULE" OFF)
 cmake_dependent_option(ENABLE_AEAD "Enable authenticated encryption" ON "ENABLE_KEYMGR_MODULE" OFF)
 option(ENABLE_RNG "Enable Random number generator" ON)
 cmake_dependent_option(ENABLE_TLS "Enable TLS features" OFF "ENABLE_KEYMGR_MODULE; ENABLE_SIGN_VERIFY; ENABLE_MAC" OFF)
+cmake_dependent_option(ENABLE_ASYMMETRIC_ENCRYPTION "Enable asymmetric encryption" ON "ENABLE_KEYMGR_MODULE" OFF)
 
 option(ENABLE_PSA_DEFAULT_ALT "Enable alternative subsystem selection for PSA API" OFF)
 

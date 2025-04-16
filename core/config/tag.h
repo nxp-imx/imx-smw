@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #ifndef __TAG_H__
@@ -36,5 +36,6 @@ extern const char *op_type_values;
 extern const char *mode_values;
 extern const char *_size_range;
 extern const char *rng_range;
+extern const char *enc_algo_values;
 
 #endif /* __TAG_H__ */

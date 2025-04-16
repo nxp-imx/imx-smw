@@ -100,6 +100,12 @@ struct aead_params {
 	struct op_key key;
 };
 
+struct asymmetric_encryption_params {
+	unsigned long algo_bitmap;
+	unsigned long mode_bitmap;
+	unsigned long hash_bitmap;
+};
+
 /**
  * get_tag_prefix() - Get a tag prefix.
  * @tag: In/Out tag string.

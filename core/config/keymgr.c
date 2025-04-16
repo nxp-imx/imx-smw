@@ -416,6 +416,17 @@ __weak int mac_key_usable(unsigned int *ref,
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
+__weak int asymm_encrypt_key_usable(unsigned int *ref,
+				    enum smw_config_key_type_id key_type_id,
+				    struct smw_key_attributes *attributes)
+{
+	(void)ref;
+	(void)key_type_id;
+	(void)attributes;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
 static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 				struct smw_key_attributes *attributes,
 				unsigned int ref)
@@ -484,6 +495,11 @@ static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 		break;
 
 	case SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION:
+		status = asymm_encrypt_key_usable(&ref,
+						  key_desc->identifier.type_id,
+						  attributes);
+		break;
+
 	default:
 		status = SMW_STATUS_OK;
 		break;

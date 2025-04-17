@@ -102,14 +102,6 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
-<tr>
-  <td colspan="2">Update</td>
-	<td>❌</td>
-	<td>❌</td>
-	<td>❌️</td>
-	<td>❌️</td>
-	<td>❌️</td>
-	<td>❌</td>
 </tr>
 <tr>
   <td colspan="2">Delete</td>
@@ -121,7 +113,7 @@ and supported by the SMW Library.
 	<td>✔️</td>
 </tr>
 <tr>
-  <td rowspan="3">Key Derivation</td>
+  <td rowspan="4">Key Derivation</td>
   <td>TLS 1.2 key agreement</td>
 	<td>✔️<sup><a href="#t_note_1">1</a></sup></td>
 	<td>❌</td>

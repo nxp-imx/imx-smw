@@ -168,8 +168,6 @@ by its string name. The :numref:`security_operations` below lists all Security
    +------------------------+--------------------------------------------------+
    | DERIVE_KEY             | Derive a key from an existing cryptographic key. |
    +------------------------+--------------------------------------------------+
-   | UPDATE_KEY             | Update imported or generated key attributes.     |
-   +------------------------+--------------------------------------------------+
    | IMPORT_KEY             | Import cryptographic key (public, private,       |
    |                        | keypair).                                        |
    +------------------------+--------------------------------------------------+

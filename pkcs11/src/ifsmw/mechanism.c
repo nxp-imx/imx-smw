@@ -1012,7 +1012,6 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	CK_RV ret = CKR_SLOT_ID_INVALID;
 	enum smw_status_code status = SMW_STATUS_OK;
 	const struct libdev *devinfo = NULL;
-	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_generate_key_args gen_args = { 0 };
 	struct smw_key_descriptor key = { 0 };
 
@@ -1021,13 +1020,12 @@ static CK_RV op_keygen_common(CK_SLOT_ID slotid, struct libobj_obj *obj)
 	if (!devinfo)
 		return ret;
 
-	ret = key_desc_to_smw(slotid, &key, &key_attributes, obj);
+	ret = key_desc_to_smw(slotid, &key, &key.attributes, obj);
 	if (ret != CKR_OK)
 		return ret;
 
 	gen_args.subsystem_name = devinfo->name;
 	gen_args.key_descriptor = &key;
-	gen_args.key_attributes = &key_attributes;
 
 	status = smw_generate_key(&gen_args);
 	ret = smw_status_to_ck_rv(status);
@@ -1399,7 +1397,6 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	CK_RV ret = CKR_SLOT_ID_INVALID;
 	enum smw_status_code status = SMW_STATUS_OK;
 	const struct libdev *devinfo = NULL;
-	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_derive_key_args derive_args = { 0 };
 	struct smw_key_descriptor base_key = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
@@ -1436,8 +1433,8 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = get_key_permitted_algo(&key_attributes.permitted_algo, slotid,
-				     obj);
+	ret = get_key_permitted_algo(&der_key_desc.attributes.permitted_algo,
+				     slotid, obj);
 	if (ret != CKR_OK)
 		return ret;
 
@@ -1447,9 +1444,8 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	derive_args.kdf_name = get_kdf(entry->type);
 	derive_args.store_derived_key = true;
 
-	args_attrs_key_usage(&key_attributes.usage_flags, obj);
-	args_attr_obj_storage(&key_attributes.attributes, obj);
-	derive_args.key_attributes = &key_attributes;
+	args_attrs_key_usage(&der_key_desc.attributes.usage_flags, obj);
+	args_attr_obj_storage(&der_key_desc.attributes.attributes, obj);
 
 	status = smw_derive_key(&derive_args);
 	ret = smw_status_to_ck_rv(status);
@@ -2811,7 +2807,6 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	enum smw_status_code status = SMW_STATUS_OK;
 	CK_SLOT_ID slotid = 0;
 	const struct libdev *devinfo = NULL;
-	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_import_key_args imp_args = { 0 };
 	struct smw_key_descriptor key = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
@@ -2832,13 +2827,12 @@ CK_RV libdev_import_key(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	 */
 	key.buffer = &keypair_buffer;
 
-	ret = key_desc_to_smw(slotid, &key, &key_attributes, obj);
+	ret = key_desc_to_smw(slotid, &key, &key.attributes, obj);
 	if (ret != CKR_OK)
 		return ret;
 
 	imp_args.subsystem_name = devinfo->name;
 	imp_args.key_descriptor = &key;
-	imp_args.key_attributes = &key_attributes;
 
 	status = smw_import_key(&imp_args);
 	ret = smw_status_to_ck_rv(status);

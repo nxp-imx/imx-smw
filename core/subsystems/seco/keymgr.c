@@ -527,22 +527,6 @@ end:
 	return status;
 }
 
-static int update_key(struct hdl *hdl, void *args)
-{
-	(void)hdl;
-	(void)args;
-
-	int status = SMW_STATUS_OK;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	//TODO: implement update_key()
-	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 static int import_key(struct hdl *hdl, void *args)
 {
 	(void)hdl;
@@ -718,9 +702,6 @@ bool seco_key_handle(struct subsystem_context *seco_ctx,
 		break;
 	case OPERATION_ID_DERIVE_KEY:
 		*status = seco_derive_key(seco_ctx, args);
-		break;
-	case OPERATION_ID_UPDATE_KEY:
-		*status = update_key(hdl, args);
 		break;
 	case OPERATION_ID_IMPORT_KEY:
 		*status = import_key(hdl, args);

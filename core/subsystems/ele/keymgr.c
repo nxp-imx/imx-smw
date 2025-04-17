@@ -1378,9 +1378,6 @@ bool ele_key_handle(struct subsystem_context *ele_ctx,
 	case OPERATION_ID_DERIVE_KEY:
 		*status = ele_derive_key(hdl, args);
 		break;
-	case OPERATION_ID_UPDATE_KEY:
-		*status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-		break;
 	case OPERATION_ID_IMPORT_KEY:
 		*status = import_key(hdl, args);
 		break;

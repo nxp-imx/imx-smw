@@ -944,9 +944,10 @@ end:
 
 static psa_status_t
 set_key_attributes(const psa_key_attributes_t *psa_attributes,
-		   struct smw_key_attributes *smw_attributes,
 		   struct smw_key_descriptor *smw_key_descriptor)
 {
+	struct smw_key_attributes *smw_attributes = NULL;
+
 	psa_algorithm_t algorithm = PSA_ALG_NONE;
 	psa_key_usage_t usage_flags = 0;
 	psa_key_lifetime_t lifetime = PSA_KEY_LIFETIME_VOLATILE;
@@ -954,7 +955,7 @@ set_key_attributes(const psa_key_attributes_t *psa_attributes,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!psa_attributes || !smw_attributes || !smw_key_descriptor)
+	if (!psa_attributes || !smw_key_descriptor)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
 	smw_key_descriptor->type_name =
@@ -966,6 +967,8 @@ set_key_attributes(const psa_key_attributes_t *psa_attributes,
 	algorithm = psa_get_key_algorithm(psa_attributes);
 	usage_flags = psa_get_key_usage_flags(psa_attributes);
 	lifetime = psa_get_key_lifetime(psa_attributes);
+
+	smw_attributes = &smw_key_descriptor->attributes;
 
 	smw_attributes->permitted_algo =
 		get_smw_algo(algorithm, smw_key_descriptor->type_name);
@@ -1254,7 +1257,6 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 {
 	psa_status_t psa_status = PSA_ERROR_BAD_STATE;
 	struct smw_generate_key_args args = { 0 };
-	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_key_descriptor key_descriptor = { 0 };
 	size_t security_size = 0;
 
@@ -1272,13 +1274,11 @@ __export psa_status_t psa_generate_key(const psa_key_attributes_t *attributes,
 	if (SET_OVERFLOW(security_size, key_descriptor.security_size))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	psa_status = set_key_attributes(attributes, &key_attributes,
-					&key_descriptor);
+	psa_status = set_key_attributes(attributes, &key_descriptor);
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
 
 	args.key_descriptor = &key_descriptor;
-	args.key_attributes = &key_attributes;
 
 	psa_status =
 		call_smw_api((enum smw_status_code(*)(void *))smw_generate_key,
@@ -1332,7 +1332,8 @@ __export psa_status_t psa_get_key_attributes(psa_key_id_t key,
 
 	psa_set_key_bits(attributes, args.key_descriptor->security_size);
 
-	psa_status = read_key_attributes(attributes, &args.key_attributes);
+	psa_status =
+		read_key_attributes(attributes, &key_descriptor.attributes);
 
 exit:
 	return psa_status;
@@ -1347,7 +1348,6 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	struct smw_key_descriptor key_descriptor = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
 	struct smw_keypair_gen *keypair_gen = NULL;
-	struct smw_key_attributes key_attributes = { 0 };
 	psa_key_type_t key_type = 0;
 	size_t security_size = 0;
 	unsigned int location = 0;
@@ -1421,13 +1421,11 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 	if (SET_OVERFLOW(security_size, key_descriptor.security_size))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	psa_status = set_key_attributes(attributes, &key_attributes,
-					&key_descriptor);
+	psa_status = set_key_attributes(attributes, &key_descriptor);
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
 
 	args.key_descriptor = &key_descriptor;
-	args.key_attributes = &key_attributes;
 
 	psa_status =
 		call_smw_api((enum smw_status_code(*)(void *))smw_import_key,

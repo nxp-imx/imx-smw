@@ -1862,9 +1862,6 @@ bool tee_key_handle(enum operation_id op_id, void *args, int *status)
 	case OPERATION_ID_DERIVE_KEY:
 		*status = derive_key(args);
 		break;
-	case OPERATION_ID_UPDATE_KEY:
-		*status = SMW_STATUS_OPERATION_NOT_CONFIGURED;
-		break;
 	case OPERATION_ID_IMPORT_KEY:
 		*status = import_key(args);
 		break;

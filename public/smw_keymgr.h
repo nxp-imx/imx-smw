@@ -92,39 +92,6 @@ struct smw_keypair_buffer {
 };
 
 /**
- * struct smw_key_descriptor - Key descriptor
- * @type_name: Key type name. See &typedef smw_key_type_t
- * @security_size: Security size in bits
- * @id: Key identifier
- * @buffer: Key pair buffer. See &struct smw_keypair_buffer
- */
-struct smw_key_descriptor {
-	smw_key_type_t type_name;
-	unsigned int security_size;
-	unsigned int id;
-	struct smw_keypair_buffer *buffer;
-};
-
-/**
- * struct smw_derived_key_descriptor - Derived key descriptor structure
- * @type_name: Key type name. See &typedef smw_key_type_t
- * @security_size: Security size in bits
- * @id: Key identifier
- * @format_name: Defines the encoding format of shared secret buffer
- *		 See &typedef smw_key_format_t
- * @shared_secret: Shared secret buffer
- * @shared_secret_len: @shared_secret length in bytes
- */
-struct smw_derived_key_descriptor {
-	smw_key_type_t type_name;
-	unsigned int security_size;
-	unsigned int id;
-	smw_key_format_t format_name;
-	unsigned char *shared_secret;
-	unsigned int shared_secret_len;
-};
-
-/**
  * struct smw_key_attributes - Key attributes
  * @permitted_algo: Permitted algorithm. See &typedef smw_attr_algo_t
  * @usage_flags: Permitted usage flags. See &typedef smw_attr_usage_t
@@ -139,10 +106,50 @@ struct smw_key_attributes {
 };
 
 /**
+ * struct smw_key_descriptor - Key descriptor
+ * @type_name: Key type name. See &typedef smw_key_type_t
+ * @security_size: Security size in bits
+ * @id: Key identifier
+ * @attributes: Key attributes. see &struct smw_key_attributes
+ * @buffer: Key pair buffer. See &struct smw_keypair_buffer
+ *
+ * @attributes field is not used by all APIs. It's documented
+ * in API's argument when this field is used.
+ *
+ */
+struct smw_key_descriptor {
+	smw_key_type_t type_name;
+	unsigned int security_size;
+	unsigned int id;
+	struct smw_key_attributes attributes;
+	struct smw_keypair_buffer *buffer;
+};
+
+/**
+ * struct smw_derived_key_descriptor - Derived key descriptor structure
+ * @type_name: Key type name. See &typedef smw_key_type_t
+ * @security_size: Security size in bits
+ * @id: Key identifier
+ * @attributes: Key attributes. see &struct smw_key_attributes
+ * @format_name: Defines the encoding format of shared secret buffer
+ *		 See &typedef smw_key_format_t
+ * @shared_secret: Shared secret buffer
+ * @shared_secret_len: @shared_secret length in bytes
+ */
+struct smw_derived_key_descriptor {
+	smw_key_type_t type_name;
+	unsigned int security_size;
+	unsigned int id;
+	struct smw_key_attributes attributes;
+	smw_key_format_t format_name;
+	unsigned char *shared_secret;
+	unsigned int shared_secret_len;
+};
+
+/**
  * struct smw_generate_key_args - Key generation arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @key_attributes: Pointer to a Key attributes object. See &smw_key_attributes
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
  *
@@ -156,11 +163,13 @@ struct smw_key_attributes {
  * The @key_descriptor field @id, if set by the caller (other than 0) will be
  * the created key identifier on operation success. Else the API will returned
  * a new key identifier if @id is set as 0.
+ *
+ * The @key_descriptor.attributes is used to define the key attributes of the
+ * generated key.
  */
 struct smw_generate_key_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
-	struct smw_key_attributes *key_attributes;
 	struct smw_key_descriptor *key_descriptor;
 };
 
@@ -173,7 +182,6 @@ struct smw_generate_key_args {
  * @store_derived_key: If true, store the derived key.
  * @key_descriptor_base: Pointer to a Key base descriptor.
  *			 See &struct smw_key_descriptor
- * @key_attributes: Pointer to a Key attributes object. See &smw_key_attributes
  * @key_descriptor_derived: Pointer to the Key derived descriptor structure.
  *			    See &struct smw_derived_key_descriptor
  *
@@ -193,6 +201,9 @@ struct smw_generate_key_args {
  * if @key_descriptor_derived->shared_secret and
  * @key_descriptor_derived->shared_secret_len are set. Refer to the subsystem
  * capabilities for more details.
+ *
+ * The @key_descriptor_derived.attributes is used to define the key attributes
+ * of the derived key.
  */
 struct smw_derive_key_args {
 	unsigned char version;
@@ -201,7 +212,6 @@ struct smw_derive_key_args {
 	void *kdf_arguments;
 	bool store_derived_key;
 	struct smw_key_descriptor *key_descriptor_base;
-	struct smw_key_attributes *key_attributes;
 	struct smw_derived_key_descriptor *key_descriptor_derived;
 };
 
@@ -578,7 +588,6 @@ struct smw_kdf_ecdh_args {
  * struct smw_import_key_args - Key import arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- * @key_attributes: Pointer to a Key attributes object. See &smw_key_attributes
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
  *
@@ -593,11 +602,13 @@ struct smw_kdf_ecdh_args {
  * the created key identifier on operation success. Else the API will returned
  * a new key identifier if @id is set as 0.
  * The @buffer field @format_name is optional. The default value is "HEX".
+ *
+ * The @key_descriptor.attributes is used to define the key attributes of the
+ * imported key.
  */
 struct smw_import_key_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
-	struct smw_key_attributes *key_attributes;
 	struct smw_key_descriptor *key_descriptor;
 };
 
@@ -643,18 +654,18 @@ struct smw_delete_key_args {
  * @key_descriptor: Pointer to a Key descriptor object.
  *		    See &struct smw_key_descriptor
  * @key_privacy_name: Key privacy name
- * @key_attributes: Key attributes. See &smw_key_attributes
  *
  * The @key_descriptor fields @id must be given as input.
  * The @key_descriptor fields @buffer is ignored.
  * The @key_descriptor fields @type_name and @security_size are output.
+ *
+ * The @key_descriptor.attributes is used to get the key attributes.
  */
 struct smw_get_key_attributes_args {
 	unsigned char version;
 	smw_subsystem_t subsystem_name;
 	struct smw_key_descriptor *key_descriptor;
 	smw_key_privacy_t key_privacy_name;
-	struct smw_key_attributes key_attributes;
 };
 
 /**

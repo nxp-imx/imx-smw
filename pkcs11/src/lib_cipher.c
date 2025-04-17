@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <stdlib.h>
@@ -850,7 +850,9 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 
 	if (op_flag & CKF_ENCRYPT)
 		ctx->payload_length = params.input_length;
-	else if (op_flag & CKF_DECRYPT)
+	else if ((op_flag & CKF_DECRYPT) &&
+		 (state == OP_ONE_SHOT || state == OP_UPDATE ||
+		  state == OP_NEXT))
 		if (SUB_OVERFLOW(params.input_length, ctx->tag_length,
 				 &ctx->payload_length)) {
 			ret = CKR_DATA_LEN_RANGE;

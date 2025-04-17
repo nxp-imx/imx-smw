@@ -55,7 +55,6 @@ CK_RV key_desc_smw_to_pkcs11(struct libobj_obj *obj,
  * key_desc_smw_to_pkcs11() - Convert a SMW key descriptor to PKCS
  * @key_type: PKCS11 Key type
  * @desc: SMW key descriptor
- * @attributes: SMW key attributes
  *
  * Return:
  * CKR_KEY_TYPE_INCONSISTENT     - Key type not supported
@@ -64,8 +63,7 @@ CK_RV key_desc_smw_to_pkcs11(struct libobj_obj *obj,
  * CKR_OK                        - Success
  */
 CK_RV key_desc_get_key_type(CK_KEY_TYPE *key_type,
-			    struct smw_key_descriptor *desc,
-			    struct smw_key_attributes *attributes);
+			    struct smw_key_descriptor *desc);
 
 /**
  * is_edwards_key_type() - Check if edwards key corresponds to given key type

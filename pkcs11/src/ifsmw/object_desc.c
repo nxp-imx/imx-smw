@@ -373,7 +373,7 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 		nb_attrs++;
 
 		if (p_attr) {
-			ret = key_desc_get_key_type(&key_type, key, key_attr);
+			ret = key_desc_get_key_type(&key_type, key);
 			if (ret == CKR_OK) {
 				p_attr->type = CKA_KEY_TYPE;
 				ret = key_to_attr(p_attr, &key_type);
@@ -779,7 +779,7 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 			if (ret != CKR_OK)
 				goto end;
 
-			key_attr = &attr_args.key_attributes;
+			key_attr = &attr_args.key_descriptor->attributes;
 			break;
 
 		default:

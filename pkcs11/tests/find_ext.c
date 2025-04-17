@@ -42,8 +42,9 @@
 		.is_public = true, .is_private = true, .ec_curve = _curve,     \
 		.key_desc.type_name = SMW_KEY_TYPE_NAME_##_type,               \
 		.key_desc.security_size = _size,                               \
-		.key_attrs.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT,       \
-		.key_attrs.permitted_algo = _perm_algo,                        \
+		.key_desc.attributes.attributes =                              \
+			SMW_ATTR_PERSISTENCE_PERSISTENT,                       \
+		.key_desc.attributes.permitted_algo = _perm_algo,              \
 		.p11_key.key_type = CKK_EC,                                    \
 		.p11_key.allowed_mech = _allowed_mech,                         \
 		.p11_key.verify = _verify, .p11_key.sign = _sign,              \
@@ -55,8 +56,9 @@
 		.is_public = true, .is_private = true, .ec_curve = _curve,     \
 		.key_desc.type_name = SMW_KEY_TYPE_NAME_##_type,               \
 		.key_desc.security_size = _size,                               \
-		.key_attrs.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT,       \
-		.key_attrs.permitted_algo = _perm_algo,                        \
+		.key_desc.attributes.attributes =                              \
+			SMW_ATTR_PERSISTENCE_PERSISTENT,                       \
+		.key_desc.attributes.permitted_algo = _perm_algo,              \
 		.p11_key.key_type = CKK_EC_EDWARDS,                            \
 		.p11_key.allowed_mech = _allowed_mech,                         \
 		.p11_key.verify = _verify, .p11_key.sign = _sign,              \
@@ -67,8 +69,9 @@
 		.is_public = true, .is_private = true,                         \
 		.key_desc.type_name = SMW_KEY_TYPE_NAME_RSA,                   \
 		.key_desc.security_size = _size,                               \
-		.key_attrs.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT,       \
-		.key_attrs.permitted_algo = _perm_algo,                        \
+		.key_desc.attributes.attributes =                              \
+			SMW_ATTR_PERSISTENCE_PERSISTENT,                       \
+		.key_desc.attributes.permitted_algo = _perm_algo,              \
 		.p11_key.key_type = CKK_RSA,                                   \
 		.p11_key.allowed_mech = _allowed_mech,                         \
 		.p11_key.verify = _verify, .p11_key.sign = _sign,              \
@@ -79,8 +82,9 @@
 		.is_secret = true,                                             \
 		.key_desc.type_name = SMW_KEY_TYPE_NAME_AES,                   \
 		.key_desc.security_size = _size,                               \
-		.key_attrs.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT,       \
-		.key_attrs.permitted_algo = _perm_algo,                        \
+		.key_desc.attributes.attributes =                              \
+			SMW_ATTR_PERSISTENCE_PERSISTENT,                       \
+		.key_desc.attributes.permitted_algo = _perm_algo,              \
 		.p11_key.key_type = CKK_AES,                                   \
 		.p11_key.allowed_mech = _allowed_mech,                         \
 		.p11_key.encrypt = _encrypt, .p11_key.decrypt = _decrypt,      \
@@ -91,8 +95,9 @@
 		.is_secret = true,                                             \
 		.key_desc.type_name = SMW_KEY_TYPE_NAME_HMAC,                  \
 		.key_desc.security_size = _size,                               \
-		.key_attrs.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT,       \
-		.key_attrs.permitted_algo = _perm_algo,                        \
+		.key_desc.attributes.attributes =                              \
+			SMW_ATTR_PERSISTENCE_PERSISTENT,                       \
+		.key_desc.attributes.permitted_algo = _perm_algo,              \
 		.p11_key.key_type = CKK_##_hash##_HMAC,                        \
 		.p11_key.allowed_mech = _allowed_mech, .p11_key.sign = _sign,  \
 		.p11_key.verify = _verify,                                     \
@@ -114,7 +119,6 @@ static struct smw_object {
 	bool is_secret;
 	unsigned int ec_curve;
 	struct smw_key_descriptor key_desc;
-	struct smw_key_attributes key_attrs;
 	struct p11_key p11_key;
 } objects_key[] = {
 	EC_KEYPAIR(SECP_R1, 256, SMW_SIGN_ECDSA(SECP_R1, SHA256),
@@ -285,12 +289,11 @@ static int generate_objects_key(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 		}
 
-		obj->key_attrs.usage_flags =
+		obj->key_desc.attributes.usage_flags =
 			SMW_USAGE_FLAGS(obj->p11_key.sign, obj->p11_key.verify,
 					obj->p11_key.encrypt,
 					obj->p11_key.decrypt);
 		genkey_args.key_descriptor = &obj->key_desc;
-		genkey_args.key_attributes = &obj->key_attrs;
 
 		/* Generate a key pair with SMW API */
 		smw_status = smw_generate_key(&genkey_args);

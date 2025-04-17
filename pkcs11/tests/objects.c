@@ -508,8 +508,7 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 	enum smw_status_code smw_status = SMW_STATUS_OK;
 	struct smw_generate_key_args genkey_args = { 0 };
 	struct smw_delete_key_args delkey_args = { 0 };
-	struct smw_key_attributes key_attributes = { 0 };
-	struct smw_key_descriptor key_descriptor = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
 
 	CK_RV ret = CKR_OK;
 	CK_BBOOL btrue = CK_TRUE;
@@ -556,21 +555,19 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	/* Set key attributes */
-	if (SET_OVERFLOW(BYTES_TO_BITS(key_length),
-			 key_descriptor.security_size))
+	if (SET_OVERFLOW(BYTES_TO_BITS(key_length), key_desc.security_size))
 		goto end;
 
-	key_descriptor.type_name = SMW_KEY_TYPE_NAME_RSA;
-	key_attributes.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT;
-	key_attributes.permitted_algo =
+	key_desc.type_name = SMW_KEY_TYPE_NAME_RSA;
+	key_desc.attributes.attributes = SMW_ATTR_PERSISTENCE_PERSISTENT;
+	key_desc.attributes.permitted_algo =
 		SMW_ATTR_ALGO_ASYMMETRIC_SIGNATURE_RSA(SMW_ATTR_MODE_PKCS1_1_5,
 						       SMW_ATTR_HASH_SHA512, 0);
-	key_attributes.usage_flags =
+	key_desc.attributes.usage_flags =
 		SMW_ATTR_USAGE_SIGN_MESSAGE | SMW_ATTR_USAGE_VERIFY_MESSAGE;
 
-	genkey_args.key_descriptor = &key_descriptor;
-	genkey_args.key_attributes = &key_attributes;
-	delkey_args.key_descriptor = &key_descriptor;
+	genkey_args.key_descriptor = &key_desc;
+	delkey_args.key_descriptor = &key_desc;
 
 	smw_status = smw_generate_key(&genkey_args);
 	if (smw_status != SMW_STATUS_OK &&
@@ -578,7 +575,7 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	ret = util_set_unique_id(unique_id, &unique_id_len, public_key_class,
-				 key_descriptor.id);
+				 key_desc.id);
 	if (ret != CKR_BUFFER_TOO_SMALL)
 		goto end;
 
@@ -587,7 +584,7 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	ret = util_set_unique_id(unique_id, &unique_id_len, public_key_class,
-				 key_descriptor.id);
+				 key_desc.id);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -617,7 +614,7 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 	unique_id_len = 0;
 
 	ret = util_set_unique_id(unique_id, &unique_id_len, private_key_class,
-				 key_descriptor.id);
+				 key_desc.id);
 	if (ret != CKR_BUFFER_TOO_SMALL)
 		goto end;
 
@@ -626,7 +623,7 @@ static int sign_verify_rsa_pkcs(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	ret = util_set_unique_id(unique_id, &unique_id_len, private_key_class,
-				 key_descriptor.id);
+				 key_desc.id);
 	if (ret != CKR_OK)
 		goto end;
 
@@ -703,7 +700,7 @@ end:
 	util_close_session(pfunc, &sess);
 
 	/* Destroy the key */
-	if (key_descriptor.id)
+	if (key_desc.id)
 		smw_delete_key(&delkey_args);
 
 	if (signature)

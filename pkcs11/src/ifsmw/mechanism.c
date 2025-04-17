@@ -729,7 +729,7 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 					  .ulValueLen =
 						  sizeof(key_allowed_mech) };
 
-	algo = attr_args->key_attributes.permitted_algo;
+	algo = attr_args->key_descriptor->attributes.permitted_algo;
 	class = SMW_ATTR_GET_CLASS(algo);
 	smw_key = attr_args->key_descriptor->type_name;
 
@@ -2853,8 +2853,7 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 	enum smw_status_code status = SMW_STATUS_OK;
 	CK_SLOT_ID slotid = 0;
 	const struct libdev *devinfo = NULL;
-	struct smw_key_descriptor key_descriptor = { 0 };
-	struct smw_key_attributes *key_attr = NULL;
+	struct smw_key_descriptor key_desc = { 0 };
 	struct smw_get_key_attributes_args attr_args = { 0 };
 
 	DBG_TRACE("Get Key attributes");
@@ -2869,10 +2868,10 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 		goto end;
 	}
 
-	key_descriptor.id = get_key_token_id(obj);
+	key_desc.id = get_key_token_id(obj);
 
 	attr_args.subsystem_name = devinfo->name;
-	attr_args.key_descriptor = &key_descriptor;
+	attr_args.key_descriptor = &key_desc;
 
 	status = smw_get_key_attributes(&attr_args);
 	ret = smw_status_to_ck_rv(status);
@@ -2887,9 +2886,8 @@ CK_RV libdev_get_key_attributes(CK_SESSION_HANDLE hsession,
 	if (ret != CKR_OK)
 		goto end;
 
-	key_attr = &attr_args.key_attributes;
-	args_attr_get_key_usage(obj, key_attr->usage_flags);
-	args_attr_get_obj_storage(obj, key_attr->attributes);
+	args_attr_get_key_usage(obj, key_desc.attributes.usage_flags);
+	args_attr_get_obj_storage(obj, key_desc.attributes.attributes);
 
 end:
 	DBG_TRACE("Get Key attributes from SMW status %d return %ld", status,

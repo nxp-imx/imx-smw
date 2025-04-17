@@ -266,18 +266,17 @@ static CK_RV get_cipher_type_from_pkcs(smw_key_type_t *key_type_name,
 }
 
 static CK_RV get_hmac_type_from_smw(CK_KEY_TYPE *ck_key_type,
-				    smw_key_type_t key_type_name,
-				    smw_attr_algo_t permitted_algo)
+				    struct smw_key_descriptor *desc)
 {
 	CK_RV ret = CKR_KEY_TYPE_INCONSISTENT;
 
 	const struct hmac_def *hmac = hmacs;
 	smw_attr_algo_t hash_id = SMW_ATTR_HASH_NONE;
 
-	hash_id = SMW_ATTR_GET_HASH(permitted_algo);
+	hash_id = SMW_ATTR_GET_HASH(desc->attributes.permitted_algo);
 
 	while (hmac->smw_name != SMW_KEY_TYPE_NAME_NONE) {
-		if (key_type_name == hmac->smw_name &&
+		if (desc->type_name == hmac->smw_name &&
 		    hash_id == hmac->hash_id) {
 			*ck_key_type = hmac->ck_key_type;
 			ret = CKR_OK;
@@ -674,8 +673,7 @@ end:
 
 static CK_RV hmac_key_smw_to_pkcs11(unsigned int op, CK_KEY_TYPE *ck_key_type,
 				    struct libobj_obj *obj,
-				    struct smw_key_descriptor *desc,
-				    struct smw_key_attributes *attributes)
+				    struct smw_key_descriptor *desc)
 {
 	CK_RV ret = CKR_KEY_TYPE_INCONSISTENT;
 
@@ -686,15 +684,8 @@ static CK_RV hmac_key_smw_to_pkcs11(unsigned int op, CK_KEY_TYPE *ck_key_type,
 	 * the @obj key type because @obj key structure allocated may not
 	 * a symmetric key.
 	 */
-	if (op & OP_KEY_DESC_GET_KEY_TYPE) {
-		if (!attributes) {
-			ret = CKR_ARGUMENTS_BAD;
-			goto end;
-		}
-
-		ret = get_hmac_type_from_smw(ck_key_type, desc->type_name,
-					     attributes->permitted_algo);
-	}
+	if (op & OP_KEY_DESC_GET_KEY_TYPE)
+		ret = get_hmac_type_from_smw(ck_key_type, desc);
 
 	if (ret == CKR_OK && (op & OP_KEY_DESC_GET_SECURITY_SIZE)) {
 		if (obj) {
@@ -706,7 +697,6 @@ static CK_RV hmac_key_smw_to_pkcs11(unsigned int op, CK_KEY_TYPE *ck_key_type,
 		}
 	}
 
-end:
 	return ret;
 }
 
@@ -894,7 +884,6 @@ end:
 }
 
 static CK_RV op_key_desc_setup(unsigned int op, struct smw_key_descriptor *desc,
-			       struct smw_key_attributes *attr,
 			       CK_KEY_TYPE key_type, struct libbytes *ec_params,
 			       struct libobj_obj *obj)
 {
@@ -929,7 +918,7 @@ static CK_RV op_key_desc_setup(unsigned int op, struct smw_key_descriptor *desc,
 	case CKK_HKDF:
 		if (op & OP_KEY_DESC_GET_ALL)
 			ret = hmac_key_smw_to_pkcs11(op, &tmp_key_type, obj,
-						     desc, attr);
+						     desc);
 		else
 			ret = hmac_key_pkcs11_to_smw(op, desc, key_type, obj);
 
@@ -965,28 +954,26 @@ CK_RV key_desc_smw_to_pkcs11(struct libobj_obj *obj,
 			     struct smw_get_key_attributes_args *attributes)
 {
 	struct smw_key_descriptor *desc = attributes->key_descriptor;
-	struct smw_key_attributes *attr = &attributes->key_attributes;
 
-	return op_key_desc_setup(OP_KEY_DESC_GET_ALL, desc, attr,
-				 get_key_type(obj), NULL, obj);
+	return op_key_desc_setup(OP_KEY_DESC_GET_ALL, desc, get_key_type(obj),
+				 NULL, obj);
 }
 
 CK_RV key_desc_setup(struct smw_key_descriptor *desc, struct libobj_obj *obj)
 {
-	return op_key_desc_setup(OP_KEY_DESC_SET_ALL, desc, NULL,
-				 get_key_type(obj), NULL, obj);
+	return op_key_desc_setup(OP_KEY_DESC_SET_ALL, desc, get_key_type(obj),
+				 NULL, obj);
 }
 
 CK_RV key_desc_set_key_type(struct smw_key_descriptor *desc,
 			    CK_KEY_TYPE key_type, struct libbytes *ec_params)
 {
-	return op_key_desc_setup(OP_KEY_DESC_SET_KEY_TYPE, desc, NULL, key_type,
+	return op_key_desc_setup(OP_KEY_DESC_SET_KEY_TYPE, desc, key_type,
 				 ec_params, NULL);
 }
 
 CK_RV key_desc_get_key_type(CK_KEY_TYPE *key_type,
-			    struct smw_key_descriptor *desc,
-			    struct smw_key_attributes *attributes)
+			    struct smw_key_descriptor *desc)
 {
 	CK_RV ret = CKR_OK;
 
@@ -996,7 +983,7 @@ CK_RV key_desc_get_key_type(CK_KEY_TYPE *key_type,
 		goto end;
 
 	ret = hmac_key_smw_to_pkcs11(OP_KEY_DESC_GET_KEY_TYPE, key_type, NULL,
-				     desc, attributes);
+				     desc);
 	if (ret == CKR_OK)
 		goto end;
 
@@ -1095,7 +1082,7 @@ CK_RV derived_key_desc_setup(struct smw_derived_key_descriptor *desc,
 
 	ret = op_key_desc_setup(OP_KEY_DESC_SET_KEY_TYPE |
 					OP_KEY_DESC_SET_SECURITY_SIZE,
-				&tmp_desc, NULL, get_key_type(obj), NULL, obj);
+				&tmp_desc, get_key_type(obj), NULL, obj);
 	if (ret == CKR_OK) {
 		desc->security_size = tmp_desc.security_size;
 		desc->type_name = tmp_desc.type_name;

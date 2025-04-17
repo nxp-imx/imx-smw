@@ -575,17 +575,6 @@ struct smw_kdf_ecdh_args {
 };
 
 /**
- * struct smw_update_key_args - Key update arguments
- * @version: Version of this structure
- * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
- */
-struct smw_update_key_args {
-	unsigned char version;
-	smw_subsystem_t subsystem_name;
-	//TODO: define smw_update_key_args
-};
-
-/**
  * struct smw_import_key_args - Key import arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
@@ -736,18 +725,6 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args);
  *	- Common return codes
  */
 enum smw_status_code smw_derive_key(struct smw_derive_key_args *args);
-
-/**
- * smw_update_key() - Update a Key.
- * @args: Pointer to the structure that contains the Key update arguments.
- *
- * This function updates the Key attribute list.
- *
- * Return:
- * See &enum smw_status_code
- *	- Common return codes
- */
-enum smw_status_code smw_update_key(struct smw_update_key_args *args);
 
 /**
  * smw_import_key() - Import a Key.

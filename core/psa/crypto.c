@@ -554,9 +554,6 @@ psa_aead_decrypt(psa_key_id_t key, psa_algorithm_t alg, const uint8_t *nonce,
 
 	*plaintext_length = data.output_length;
 
-	if (psa_status == PSA_SUCCESS)
-		SMW_UTILS_MEMCPY(plaintext, data.output, data.output_length);
-
 end:
 	return psa_status;
 }
@@ -625,9 +622,6 @@ psa_aead_encrypt(psa_key_id_t key, psa_algorithm_t alg, const uint8_t *nonce,
 		goto end;
 
 	*ciphertext_length = data.output_length;
-
-	if (psa_status == PSA_SUCCESS)
-		SMW_UTILS_MEMCPY(ciphertext, data.output, data.output_length);
 
 end:
 	if (oneshot_args.final->output_iv)

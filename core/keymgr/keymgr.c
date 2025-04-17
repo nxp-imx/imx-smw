@@ -775,7 +775,7 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	converted_args->key_attributes = args->key_attributes;
+	converted_args->key_attributes = &args->key_descriptor->attributes;
 
 	if (converted_args->key_attributes)
 		converted_args->key_descriptor.identifier.storage_id =
@@ -813,7 +813,7 @@ import_key_convert_args(struct smw_import_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	converted_args->key_attributes = args->key_attributes;
+	converted_args->key_attributes = &args->key_descriptor->attributes;
 
 	if (converted_args->key_attributes)
 		converted_args->key_descriptor.identifier.storage_id =
@@ -1413,10 +1413,10 @@ static bool import_el2go_data(struct smw_import_key_args *args,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!args->key_attributes)
+	if (!args->key_descriptor)
 		goto end;
 
-	storage_id = args->key_attributes->storage_id;
+	storage_id = args->key_descriptor->attributes.storage_id;
 
 	if (!NXP_IS_EL2GO_OBJECT(storage_id))
 		goto end;
@@ -1435,8 +1435,8 @@ static bool import_el2go_data(struct smw_import_key_args *args,
 	data_desc.length = smw_keymgr_get_private_length(key_desc);
 
 	data_desc.data_attributes = &data_attr;
-	data_attr.attributes = args->key_attributes->attributes;
-	data_attr.storage_id = args->key_attributes->storage_id;
+	data_attr.attributes = args->key_descriptor->attributes.attributes;
+	data_attr.storage_id = args->key_descriptor->attributes.storage_id;
 
 	*status = smw_store_data(&data_args);
 	ret = true;
@@ -1936,7 +1936,7 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 		goto end;
 	}
 
-	attr_args.key_attributes = &args->key_attributes;
+	attr_args.key_attributes = &args->key_descriptor->attributes;
 
 	status = smw_utils_execute_implicit(OPERATION_ID_GET_KEY_ATTRIBUTES,
 					    &attr_args, subsystem_id);

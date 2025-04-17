@@ -2224,7 +2224,7 @@ static int derive_key_convert_args(struct smw_derive_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	conv_args->key_attributes = args->key_attributes;
+	conv_args->key_attributes = &args->key_descriptor_derived->attributes;
 
 	status = convert_input_args(args, conv_args, subsystem_id);
 

@@ -247,7 +247,7 @@ static int read_derived_key_attributes(struct llist *keys,
 	if (!data)
 		return ERR_CODE(KEY_NOTFOUND);
 
-	return key_read_attributes(data->okey_params, &attributes);
+	return key_read_attributes(data->okey_params, attributes);
 }
 
 /**
@@ -920,14 +920,14 @@ static int kdf_tls12_prepare_result(struct subtest_data *subtest,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	res = key_read_attributes(subtest->params, &args->key_attributes);
+	derived_key_desc = args->key_descriptor_derived;
+	res = read_derived_key_descriptor(list_keys(subtest), derived_key_desc,
+					  key_name);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	derived_key_desc = args->key_descriptor_derived;
-
-	res = read_derived_key_descriptor(list_keys(subtest), derived_key_desc,
-					  key_name);
+	res = key_read_attributes(subtest->params,
+				  &derived_key_desc->attributes);
 
 	return res;
 }
@@ -1367,7 +1367,8 @@ static int kdf_tls13_prepare_result(struct subtest_data *subtest,
 		return res;
 
 	return read_derived_key_attributes(list_keys(subtest),
-					   args->key_attributes, key_name);
+					   &derived_key_desc->attributes,
+					   key_name);
 }
 
 /**
@@ -1666,17 +1667,6 @@ static int kdf_hkdf_prepare_result(struct subtest_data *subtest,
 
 	enum hkdf_step step = get_hkdf_step(args);
 
-	if (step == HKDF_STEP_EXPAND || step == HKDF_STEP_FULL) {
-		res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ,
-					      &okey_params);
-		if (res != ERR_CODE(PASSED))
-			return res;
-
-		res = key_read_attributes(okey_params, &args->key_attributes);
-		if (res != ERR_CODE(PASSED))
-			return res;
-	}
-
 	res = util_read_json_type(&key_name, OP_OUTPUT_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED))
@@ -1685,6 +1675,19 @@ static int kdf_hkdf_prepare_result(struct subtest_data *subtest,
 	key = args->key_descriptor_derived;
 
 	res = read_derived_key_descriptor(list_keys(subtest), key, key_name);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	if (step == HKDF_STEP_EXPAND || step == HKDF_STEP_FULL) {
+		res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ,
+					      &okey_params);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		res = key_read_attributes(okey_params, &key->attributes);
+		if (res != ERR_CODE(PASSED))
+			return res;
+	}
 
 	return res;
 }
@@ -1916,10 +1919,6 @@ static int kdf_ecdh_prepare_result(struct subtest_data *subtest,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	res = key_read_attributes(okey_params, &args->key_attributes);
-	if (res != ERR_CODE(PASSED))
-		return res;
-
 	res = util_read_json_type(&key_name, OP_OUTPUT_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED))
@@ -1929,6 +1928,12 @@ static int kdf_ecdh_prepare_result(struct subtest_data *subtest,
 
 	res = read_derived_key_descriptor(list_keys(subtest), derived_key_desc,
 					  key_name);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	res = key_read_attributes(okey_params, &derived_key_desc->attributes);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
 	return res;
 }
@@ -2188,7 +2193,7 @@ static int setup_derive_opt_params(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(BAD_ARGS);
 
-	if (!subtest || !args || !args->key_attributes) {
+	if (!subtest || !args) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
@@ -2323,7 +2328,6 @@ int derive_key(struct subtest_data *subtest)
 	struct smw_derived_key_descriptor key_derived = { 0 };
 	struct smw_keypair_buffer base_buffer = { 0 };
 	struct smw_derive_key_args args = { 0 };
-	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_derive_key_args *smw_args = &args;
 
 	if (!subtest) {
@@ -2333,7 +2337,6 @@ int derive_key(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 	args.subsystem_name = subtest->subsystem;
-	args.key_attributes = &key_attributes;
 	args.key_descriptor_base = &key_base.desc;
 	args.key_descriptor_derived = &key_derived;
 

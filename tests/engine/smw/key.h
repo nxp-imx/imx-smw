@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 #ifndef __KEY_H__
 #define __KEY_H__
@@ -408,13 +408,12 @@ void attributes_callback(void *user_data, const char *attributes[],
  * @attributes: Address where the attributes are written.
  *
  * This function reads the key attributes present in the test definition file.
- * If no attribute is defined, @attributes is set to NULL.
  *
  * Return:
  * PASSED		- Success
  * Error code from util_attr_read_attributes
  */
 int key_read_attributes(struct json_object *params,
-			struct smw_key_attributes **attributes);
+			struct smw_key_attributes *attributes);
 
 #endif /* __KEY_H__ */

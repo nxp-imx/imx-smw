@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <stdlib.h>
@@ -45,14 +45,16 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 	unsigned int modulus_length = 0;
 
 	if (!subtest || !args || !key_test || !key_test->keys ||
-	    !args->key_attributes)
+	    !args->key_descriptor)
 		return res;
+
+	desc = args->key_descriptor;
 
 	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	res = key_read_attributes(okey_params, &args->key_attributes);
+	res = key_read_attributes(okey_params, &desc->attributes);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -63,8 +65,6 @@ static int set_gen_opt_params(struct subtest_data *subtest,
 	 * Else if 'pub_key' not set, public key length is not set and
 	 * there is not public key to export.
 	 */
-	desc = args->key_descriptor;
-
 	if (key_is_public_len_set(key_test)) {
 		public_length = *key_public_length(key_test);
 		if (public_length == 1) {
@@ -135,14 +135,15 @@ static int set_import_opt_params(struct subtest_data *subtest,
 	int res = ERR_CODE(BAD_ARGS);
 	struct json_object *okey_params = NULL;
 
-	if (!subtest || !args || !args->key_attributes)
+	if (!subtest || !args || !args->key_descriptor)
 		return res;
 
 	res = util_key_get_key_params(subtest, KEY_NAME_OBJ, &okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	res = key_read_attributes(okey_params, &args->key_attributes);
+	res = key_read_attributes(okey_params,
+				  &args->key_descriptor->attributes);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -627,7 +628,6 @@ int generate_key(struct subtest_data *subtest)
 	struct key_data key_data = { 0 };
 	struct smw_keypair_buffer key_buffer = { 0 };
 	struct smw_generate_key_args args = { 0 };
-	struct smw_key_attributes attributes = { 0 };
 	struct smw_generate_key_args *smw_gen_args = &args;
 	const char *key_name = NULL;
 
@@ -638,7 +638,6 @@ int generate_key(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 	args.subsystem_name = subtest->subsystem;
-	args.key_attributes = &attributes;
 	args.key_descriptor = &key_test.desc;
 
 	/* Key name is mandatory */
@@ -757,7 +756,6 @@ int import_key(struct subtest_data *subtest)
 	struct key_data key_data = { 0 };
 	struct smw_keypair_buffer key_buffer;
 	struct smw_import_key_args args = { 0 };
-	struct smw_key_attributes key_attributes = { 0 };
 	struct smw_import_key_args *smw_import_args = &args;
 	const char *key_name = NULL;
 
@@ -768,7 +766,6 @@ int import_key(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 	args.subsystem_name = subtest->subsystem;
-	args.key_attributes = &key_attributes;
 	args.key_descriptor = &key_test.desc;
 
 	/* Key name is mandatory */
@@ -920,7 +917,6 @@ int get_key_attributes(struct subtest_data *subtest)
 	struct keypair_ops key_ref = { 0 };
 	struct smw_get_key_attributes_args args = { 0 };
 	struct smw_key_attributes key_ref_attributes = { 0 };
-	struct smw_key_attributes *key_ref_attributes_ptr = NULL;
 	const char *key_name = NULL;
 	struct json_object *okey_params = NULL;
 
@@ -957,9 +953,7 @@ int get_key_attributes(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
-	key_ref_attributes_ptr = &key_ref_attributes;
-
-	res = key_read_attributes(okey_params, &key_ref_attributes_ptr);
+	res = key_read_attributes(okey_params, &key_ref_attributes);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
@@ -969,11 +963,6 @@ int get_key_attributes(struct subtest_data *subtest)
 	subtest->smw_status = smw_get_key_attributes(&args);
 	if (subtest->smw_status != SMW_STATUS_OK) {
 		res = ERR_CODE(API_STATUS_NOK);
-		goto exit;
-	}
-
-	if (!key_ref_attributes_ptr) {
-		res = ERR_CODE(PASSED);
 		goto exit;
 	}
 
@@ -993,28 +982,28 @@ int get_key_attributes(struct subtest_data *subtest)
 		error++;
 	}
 
-	if ((args.key_attributes.usage_flags &
+	if ((key_test.desc.attributes.usage_flags &
 	     key_ref_attributes.usage_flags) !=
 	    key_ref_attributes.usage_flags) {
 		DBG_PRINT("Invalid usage flags %08x expected %08x",
-			  args.key_attributes.usage_flags,
+			  key_test.desc.attributes.usage_flags,
 			  key_ref_attributes.usage_flags);
 		error++;
 	}
 
-	if ((args.key_attributes.permitted_algo &
+	if ((key_test.desc.attributes.permitted_algo &
 	     key_ref_attributes.permitted_algo) !=
 	    key_ref_attributes.permitted_algo) {
 		DBG_PRINT("Invalid algorithm %016x expected %016x",
-			  args.key_attributes.permitted_algo,
+			  key_test.desc.attributes.permitted_algo,
 			  key_ref_attributes.permitted_algo);
 		error++;
 	}
 
-	if ((args.key_attributes.attributes & key_ref_attributes.attributes) !=
-	    key_ref_attributes.attributes) {
+	if ((key_test.desc.attributes.attributes &
+	     key_ref_attributes.attributes) != key_ref_attributes.attributes) {
 		DBG_PRINT("Invalid algorithm %08x expected %08x",
-			  args.key_attributes.attributes,
+			  key_test.desc.attributes.attributes,
 			  key_ref_attributes.attributes);
 		error++;
 	}

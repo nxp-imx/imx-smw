@@ -809,41 +809,31 @@ void attributes_callback(void *user_data, const char *attributes[],
 }
 
 int key_read_attributes(struct json_object *params,
-			struct smw_key_attributes **attributes)
+			struct smw_key_attributes *attributes)
 {
 	int ret = ERR_CODE(PASSED);
-	int found = 0;
 
-	if (!params || !attributes || !*attributes) {
+	if (!params || !attributes) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
 	ret = util_attr_read_attributes(params, USAGE_OBJ, &usage_callback,
-					&((*attributes)->usage_flags));
-	if (ret == ERR_CODE(PASSED))
-		found++;
-	else if (ret != ERR_CODE(VALUE_NOTFOUND))
+					&attributes->usage_flags);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
 	ret = util_attr_read_attributes(params, PERMITTED_ALGO_OBJ,
 					&perm_algo_callback,
-					&((*attributes)->permitted_algo));
-	if (ret == ERR_CODE(PASSED))
-		found++;
-	else if (ret != ERR_CODE(VALUE_NOTFOUND))
+					&attributes->permitted_algo);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
 	ret = util_attr_read_attributes(params, ATTR_LIST_OBJ,
 					&attributes_callback,
-					&((*attributes)->attributes));
-	if (ret == ERR_CODE(PASSED))
-		found++;
-	else if (ret != ERR_CODE(VALUE_NOTFOUND))
+					&attributes->attributes);
+	if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
-
-	if (!found)
-		*attributes = NULL;
 
 	return ERR_CODE(PASSED);
 }

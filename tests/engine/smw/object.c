@@ -157,7 +157,6 @@ object_read_descriptor(struct subtest_data *subtest,
 	int res = ERR_CODE(BAD_ARGS);
 	struct keypair_ops key = { 0 };
 	struct smw_key_attributes key_attributes = { 0 };
-	struct smw_key_attributes *key_attributes_ptr = NULL;
 	struct json_object *okey_params = NULL;
 	struct smw_data_descriptor *data_descriptor = &object_descriptor->data;
 
@@ -190,18 +189,13 @@ object_read_descriptor(struct subtest_data *subtest,
 			if (res != ERR_CODE(PASSED))
 				return res;
 
-			key_attributes_ptr = &key_attributes;
-			res = key_read_attributes(okey_params,
-						  &key_attributes_ptr);
+			res = key_read_attributes(okey_params, &key_attributes);
 			if (res != ERR_CODE(PASSED))
 				return res;
 
-			if (key_attributes_ptr) {
-				object_descriptor->key_attributes =
-					key_attributes;
-				object_descriptor->attributes =
-					key_attributes.attributes;
-			}
+			object_descriptor->key_attributes = key_attributes;
+			object_descriptor->attributes =
+				key_attributes.attributes;
 		}
 	}
 

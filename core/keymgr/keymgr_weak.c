@@ -29,15 +29,6 @@ __weak enum smw_status_code smw_derive_key(struct smw_derive_key_args *args)
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak enum smw_status_code smw_update_key(struct smw_update_key_args *args)
-{
-	(void)args;
-
-	SMW_DBG_TRACE_API_CALL;
-
-	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
-}
-
 __weak enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 {
 	(void)args;

@@ -788,29 +788,6 @@ end:
 	return status;
 }
 
-//TODO: implement update_key_convert_args()
-static int
-update_key_convert_args(struct smw_update_key_args *args,
-			struct smw_keymgr_update_key_args *converted_args,
-			enum subsystem_id *subsystem_id)
-{
-	(void)converted_args;
-
-	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (args->version != 0)
-		goto end;
-
-	status =
-		smw_config_get_subsystem_id(args->subsystem_name, subsystem_id);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 static int
 import_key_convert_args(struct smw_import_key_args *args,
 			struct smw_keymgr_import_key_args *converted_args,
@@ -1620,32 +1597,6 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 		set_key_buffer_format(key_desc);
 	else
 		status = ret;
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
-enum smw_status_code smw_update_key(struct smw_update_key_args *args)
-{
-	int status = SMW_STATUS_OK;
-
-	struct smw_keymgr_update_key_args update_key_args = { 0 };
-	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-
-	SMW_DBG_TRACE_API_CALL;
-
-	if (!args) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
-
-	status = update_key_convert_args(args, &update_key_args, &subsystem_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	status = smw_utils_execute_operation(OPERATION_ID_UPDATE_KEY,
-					     &update_key_args, subsystem_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

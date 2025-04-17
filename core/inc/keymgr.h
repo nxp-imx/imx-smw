@@ -101,15 +101,6 @@ struct smw_keymgr_generate_key_args {
 };
 
 /**
- * struct smw_keymgr_update_key_args - Key update arguments
- *
- */
-struct smw_keymgr_update_key_args {
-	//TODO: define smw_keymgr_update_key_args
-	int dummy;
-};
-
-/**
  * struct smw_keymgr_import_key_args - Key import arguments
  * @key_descriptor: Descriptor of the imported Key
  * @key_attributes: Pointer to the public Key attributes structure

@@ -320,13 +320,6 @@ end:
 	return status;
 }
 
-static int update_key_read_params(char **start, char *end, void **params)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	return read_params(start, end, OPERATION_ID_UPDATE_KEY, params);
-}
-
 static int import_key_read_params(char **start, char *end, void **params)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -546,24 +539,6 @@ static int derive_key_check_subsystem_caps(void *args, void *node)
 	return status;
 }
 
-static int update_key_check_subsystem_caps(void *args, void *node)
-{
-	(void)args;
-	(void)node;
-
-	int status = SMW_STATUS_OK;
-
-	//struct smw_keymgr_update_key_args *update_key_args = args;
-	//struct key_operation_params *update_key_params = params;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	//TODO: implement update_key_check_subsystem_caps()
-
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 static int import_key_check_subsystem_caps(void *args, void *node)
 {
 	int status = SMW_STATUS_OK;
@@ -630,7 +605,6 @@ static int delete_key_check_subsystem_caps(void *args, void *node)
 
 DEFINE_KEYMGR_OPERATION_FUNC(generate_key);
 DEFINE_KEYMGR_OPERATION_FUNC(derive_key);
-DEFINE_KEYMGR_OPERATION_FUNC(update_key);
 DEFINE_KEYMGR_OPERATION_FUNC(import_key);
 DEFINE_KEYMGR_OPERATION_FUNC(export_key);
 DEFINE_KEYMGR_OPERATION_FUNC(delete_key);

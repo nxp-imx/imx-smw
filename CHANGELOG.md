@@ -62,6 +62,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add additional parameters in the algorithm definition to manage signature
   message input already hashed.
 * Remove Update key operation.
+* Integrate key attributes in the key descriptor. Breaking compatibility for
+  the APIs:
+    - smw_generate_key()
+    - smw_get_key_attributes()
+    - smw_derive_key()
+    - smw_import_key()
 
 ##### 2. Subsystems
 

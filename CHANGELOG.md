@@ -61,6 +61,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   prehashed, context key permitted algorithm.
 * Add additional parameters in the algorithm definition to manage signature
   message input already hashed.
+* Remove Update key operation.
 
 ##### 2. Subsystems
 

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __SMW_STATUS_H__
@@ -107,6 +107,7 @@
  * @SMW_STATUS_CONFIGURATION_FAILURE: Library configuration failure.
  * @SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME: Key privacy name set in the object database is not
  * recognized by SMW.
+ * @SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED: Provided RSA public exponent is unsupported.
  *
  * Status code classification:
  ** Common return codes
@@ -194,6 +195,7 @@
  *	- SMW_STATUS_UNKNOWN_TLS12_KEA_NAME
  *	- SMW_STATUS_UNKNOWN_TLS12_ENC_NAME
  *	- SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME
+ *	- SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED
  *
  ** Specific return codes - Device manager
  *
@@ -271,6 +273,7 @@ enum smw_status_code {
 	SMW_STATUS_INVALID_IV_SIZE,
 	SMW_STATUS_UNKNOWN_KEY_PRIVACY_NAME,
 	SMW_STATUS_OBJ_DB_FIND,
+	SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED /* 70 */
 };
 
 #endif /* __SMW_STATUS_H__ */

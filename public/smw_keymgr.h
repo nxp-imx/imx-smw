@@ -56,11 +56,14 @@ struct smw_keypair_gen {
  * @private_length: Length of @private_data in bytes
  * @modulus: Pointer to the RSA modulus
  * @modulus_length: Length of @modulus in bytes
- * @public_exponent: Pointer to the RSA public exponent
+ * @public_exponent: Pointer to the input RSA public exponent
  * @public_exponent_length: Length of @public_exponent in bytes
  *
  * First fields are common to the struct smw_keypair_gen and must be
  * kept common.
+ * Input parameters @public_exponent and @public_exponent_length are only
+ * used for key generation. For other operations, they are ignored, and
+ * @public_data and @public_length must be set instead.
  */
 struct smw_keypair_rsa {
 	unsigned char *public_data;

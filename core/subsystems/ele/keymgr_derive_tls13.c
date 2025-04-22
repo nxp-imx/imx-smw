@@ -348,11 +348,10 @@ tls13_set_derived_identifier(struct smw_keymgr_derive_key_args *args,
 	 * derived from them. For example, an encryption key used in the
 	 * handshake is indirectly derived from the handshake secret.
 	 */
-	args->key_derived.identifier.type_id =
-		(is_master_secret(payload->tls1_3_algo) ||
-		 is_handshake_secret(payload->tls1_3_algo)) ?
-			SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER :
-			SMW_CONFIG_KEY_TYPE_ID_DERIVE;
+	if (is_master_secret(payload->tls1_3_algo) ||
+	    is_handshake_secret(payload->tls1_3_algo))
+		args->key_derived.identifier.type_id =
+			SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
 
 	/* Hardcoded by ELE */
 	args->key_derived.identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;

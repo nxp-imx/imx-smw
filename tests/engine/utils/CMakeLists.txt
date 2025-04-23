@@ -24,4 +24,5 @@ target_sources(${PROJECT_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/util_status.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_subsystem.c
                ${CMAKE_CURRENT_SOURCE_DIR}/util_thread.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/util_tlv.c
                $<$<CONFIG:Debug>:${CMAKE_CURRENT_SOURCE_DIR}/util_debug.c>)

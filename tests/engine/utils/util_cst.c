@@ -16,12 +16,14 @@
 int util_cst_is_present(void)
 {
 	int res = ERR_CODE(PASSED);
+	int *err = NULL;
 	DIR *dir = NULL;
 
 	/* Check if the CST keys are installed, else skip the test */
 	dir = opendir(CST_KEYS_DIR);
 	if (!dir) {
-		if (__errno_location() && errno == ENOENT)
+		err = __errno_location();
+		if (err && *err == ENOENT)
 			res = ERR_CODE(SKIPPED);
 		else
 			res = ERR_CODE(FAILED);

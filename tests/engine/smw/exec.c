@@ -113,9 +113,12 @@ static int execute_mac_cmd(char *cmd, struct subtest_data *subtest)
  */
 static int execute_import_cmd(char *cmd, struct subtest_data *subtest)
 {
-	(void)cmd;
+	bool is_blob = false;
 
-	return import_key(subtest);
+	if (!strcmp(cmd, IMPORT_BLOB))
+		is_blob = true;
+
+	return import_key(subtest, is_blob);
 }
 
 /**

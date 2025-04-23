@@ -9,15 +9,25 @@
 #include <json.h>
 
 #include <smw_keymgr.h>
+#include <smw_crypto.h>
 
 #include "util.h"
 #include "util_key.h"
 #include "util_attr.h"
+#include "util_tlv.h"
 
 #include "key.h"
 #include "keymgr.h"
 
 #define KEY_JSON_OBJECT_STRING_MAX_LEN 10
+
+/* Size of an AES CBC block */
+#define AES_CBC_BLOCK_SIZE 16
+/* Padding byte marker CBC ISO7816-4 */
+#define AES_CBC_ISO7816_4_TAG 0x80
+
+/* Sign of the CMAC signature */
+#define CMAC_SIGN_LENGTH 16
 
 /**
  * set_gen_opt_params() - Set key generation optional parameters.
@@ -621,6 +631,249 @@ static int compare_keys(struct keypair_ops *key_test,
 	return res;
 }
 
+/**
+ * ele_wrap_key_cbc() - Wrap the key to import with AES CBC ISO7816-4
+ * @subtest: Subtest data
+ * @ele_import_key: Key to import
+ * @wrap_key: Key wrapped
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -FAILED                  - Error in definition file
+ */
+static int ele_wrap_key_cbc(struct subtest_data *subtest,
+			    struct keypair_ops *ele_import_key,
+			    struct tbuffer *wrap_key)
+{
+	int res = ERR_CODE(PASSED);
+
+	unsigned int pad_bytes = 0;
+	struct tbuffer import_key = { 0 };
+	struct tbuffer iv = { 0 };
+	struct keys cipher_keys = { 0 };
+	struct json_object *oargs = NULL;
+
+	struct smw_cipher_args cipher_args = { 0 };
+
+	res = util_read_json_type(&oargs, OP_ARGS_OBJ, t_object,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	res = key_read_descriptors(subtest, WRAP_KEY_NAME_OBJ,
+				   &cipher_args.init.nb_keys,
+				   &cipher_args.init.keys_desc, &cipher_keys);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	if (!*key_private_length(ele_import_key) ||
+	    !*key_private_data(ele_import_key)) {
+		DBG_PRINT("Missing import key private buffer");
+		res = ERR_CODE(FAILED);
+		goto end;
+	}
+
+	/* Pad the import key buffer according to ISO7816-4 padding */
+	pad_bytes = *key_private_length(ele_import_key) % AES_CBC_BLOCK_SIZE;
+	if (!pad_bytes)
+		pad_bytes = AES_CBC_BLOCK_SIZE;
+
+	import_key.length = *key_private_length(ele_import_key) + pad_bytes;
+	import_key.data = calloc(1, import_key.length);
+	if (!import_key.data) {
+		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto end;
+	}
+
+	wrap_key->length = import_key.length;
+	wrap_key->data = calloc(1, wrap_key->length);
+	if (!wrap_key->data) {
+		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto end;
+	}
+
+	memcpy(import_key.data, *key_private_data(ele_import_key),
+	       *key_private_length(ele_import_key));
+	import_key.data[*key_private_length(ele_import_key)] =
+		AES_CBC_ISO7816_4_TAG;
+
+	res = util_read_json_type(&iv, IV_OBJ, t_buffer_hex, oargs);
+	if (res != ERR_CODE(PASSED)) {
+		DBG_PRINT("Missing wrapping IV");
+		res = ERR_CODE(MISSING_PARAMS);
+		goto end;
+	};
+
+	cipher_args.init.mode_name = SMW_CIPHER_MODE_NAME_CBC;
+	cipher_args.init.op_type_name = SMW_CIPHER_OP_TYPE_NAME_ENCRYPT;
+	cipher_args.init.iv = iv.data;
+	cipher_args.init.iv_length = iv.length;
+
+	cipher_args.data.input = import_key.data;
+	cipher_args.data.input_length = import_key.length;
+	cipher_args.data.output = wrap_key->data;
+	cipher_args.data.output_length = wrap_key->length;
+
+	subtest->smw_status = smw_cipher(&cipher_args);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		res = ERR_CODE(API_STATUS_NOK);
+	else
+		res = ERR_CODE(PASSED);
+
+end:
+	if (iv.data)
+		free(iv.data);
+
+	if (import_key.data)
+		free(import_key.data);
+
+	free_keys(&cipher_keys);
+
+	return res;
+}
+
+/**
+ * ele_sign_blob() - Sign the ELE import key blob
+ * @subtest: Subtest data
+ * @blob: Blob to sign
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -FAILED                  - Error in definition file
+ */
+static int ele_sign_blob(struct subtest_data *subtest, struct tbuffer *blob)
+{
+	int res = ERR_CODE(BAD_ARGS);
+
+	const char *key_name = NULL;
+	struct keypair_ops oem_sign_key = { 0 };
+
+	struct smw_mac_args mac_args = { 0 };
+
+	if (!blob || !blob->data || !blob->length)
+		goto end;
+
+	res = util_read_json_type(&key_name, SIGN_KEY_NAME_OBJ, t_string,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	/* Initialize key descriptor */
+	res = key_desc_init(&oem_sign_key, NULL);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	/* Read the json-c key description */
+	res = key_read_descriptor(list_keys(subtest), &oem_sign_key, key_name);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	mac_args.key_descriptor = &oem_sign_key.desc;
+	mac_args.algo_name = SMW_MAC_ALGO_NAME_CMAC;
+	mac_args.hash_name = SMW_HASH_ALGO_NAME_NONE;
+	mac_args.input = blob->data;
+	mac_args.input_length = blob->length - CMAC_SIGN_LENGTH;
+	mac_args.mac = blob->data + mac_args.input_length;
+	mac_args.mac_length = CMAC_SIGN_LENGTH;
+
+	subtest->smw_status = smw_mac(&mac_args);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		res = ERR_CODE(API_STATUS_NOK);
+	else
+		res = ERR_CODE(PASSED);
+
+	DBG_DHEX("ELE Import key blob", blob->data, blob->length);
+
+end:
+	return res;
+}
+
+/**
+ * create_import_blob() - Create the blob of the key to import
+ * @subtest: Subtest data
+ * @import_key: Key to import
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -BAD_PARAM_TYPE          - A parameter value is undefined.
+ * -FAILED                  - Error in definition file
+ */
+static int create_import_blob(struct subtest_data *subtest,
+			      struct keypair_ops *import_key)
+{
+	int res = ERR_CODE(BAD_ARGS);
+
+	struct json_object *oargs = NULL;
+	const char *key_name = NULL;
+	struct keypair_ops oem_mk = { 0 };
+	struct tbuffer blob = { 0 };
+	struct tbuffer wrap_key = { 0 };
+
+	if (!subtest)
+		return res;
+
+	if (!*key_private_length(import_key) ||
+	    !*key_private_data(import_key)) {
+		DBG_PRINT("Missing import key private buffer");
+		res = ERR_CODE(FAILED);
+		goto end;
+	}
+
+	res = util_read_json_type(&oargs, OP_ARGS_OBJ, t_object,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	/*
+	 * Step 1: pad and encrypt the key to import
+	 */
+	res = ele_wrap_key_cbc(subtest, import_key, &wrap_key);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	res = util_read_json_type(&key_name, KEY_NAME_OBJ, t_string, oargs);
+	if (res != ERR_CODE(PASSED)) {
+		DBG_PRINT("Missing OEM Master key");
+		res = ERR_CODE(MISSING_PARAMS);
+		goto end;
+	}
+
+	res = key_read_descriptor(list_keys(subtest), &oem_mk, key_name);
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	res = util_tlv_encode_ele_import_tlv(subtest, &blob, &wrap_key,
+					     oem_mk.desc.id, CMAC_SIGN_LENGTH);
+
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	res = ele_sign_blob(subtest, &blob);
+
+	if (res != ERR_CODE(PASSED))
+		goto end;
+
+	free(*key_private_data(import_key));
+
+	*key_private_length(import_key) = blob.length;
+	*key_private_data(import_key) = blob.data;
+
+end:
+	if (wrap_key.data)
+		free(wrap_key.data);
+
+	if (res != ERR_CODE(PASSED) && blob.data)
+		free(blob.data);
+
+	return res;
+}
+
 int generate_key(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
@@ -749,7 +1002,7 @@ exit:
 	return res;
 }
 
-int import_key(struct subtest_data *subtest)
+int import_key(struct subtest_data *subtest, bool is_blob)
 {
 	int res = ERR_CODE(PASSED);
 	struct keypair_ops key_test = { 0 };
@@ -794,6 +1047,13 @@ int import_key(struct subtest_data *subtest)
 	res = set_import_opt_params(subtest, smw_import_args);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
+
+	/* Check if the key to import must be blobed */
+	if (is_blob) {
+		res = create_import_blob(subtest, &key_test);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+	}
 
 	/* Specific test cases */
 	res = set_import_bad_args(subtest->params, &smw_import_args);

@@ -53,7 +53,7 @@ genhtml_branch_med_limit = 75
 # Ignore some errors during geninfo/lcov/genhtml processing - comma-separated
 # string.  Same as using "--ignore-errors a,b,c" command line option.
 # See man pages for list of ignorable messages
-#ignore_errors = empty,mismatch
+ignore_errors = negative
 
 # Stop emitting message after this number have been printed
 # 0 == no limit

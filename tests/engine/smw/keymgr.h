@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #ifndef __KEYMGR_H__
@@ -42,6 +42,7 @@ int delete_key(struct subtest_data *subtest);
 /**
  * import_key() - Import a key.
  * @subtest: Subtest data.
+ * @is_blob: True if the key to import must be blobed.
  *
  * Return:
  * PASSED                       - Success.
@@ -54,7 +55,7 @@ int delete_key(struct subtest_data *subtest);
  * Error code from set_import_opt_params().
  * Error code from util_key_add_node().
  */
-int import_key(struct subtest_data *subtest);
+int import_key(struct subtest_data *subtest, bool is_blob);
 
 /**
  * export_key() - Export a key.

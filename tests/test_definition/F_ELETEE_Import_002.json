@@ -1,0 +1,405 @@
+{
+	"keys": {
+		"key ECDSA ELE": {
+			"id": 1879048192,
+			"type": "SECP_R1",
+			"security_size": 256
+		},
+		"key OEM_MK ELE": {
+			"id": 10,
+			"type": "DERIVE",
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"HKDF",
+				"HASH=SHA256"
+			]
+		},
+		"key ECDSA TEE": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			],
+			"priv_key": [
+				"7d7dc5f71eb29ddaf80d6214632eeae0",
+				"3d9058af1fb6d22ed80badb62bc1a534"
+			],
+			"pub_key": [
+				"ead218590119e8876b29146ff89ca617",
+				"70c4edbbf97d38ce385ed281d8a6b230",
+				"28af61281fd35e2fa7002523acc85a42",
+				"9cb06ee6648325389f59edfce1405141"
+			]
+		},
+		"key ECDH TEE": {
+			"type": "HKDF_IKM",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key OEM_MK TEE": {
+			"type": "HKDF_IKM",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"key OEM_WRAP TEE": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			]
+		},
+		"key OEM_CMAC TEE": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE"
+			]
+		},
+		"Import key AES ECB": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			],
+			"priv_key": [
+				"f9e8389f5b80712e3886cc1fa2d28a3b",
+				"8c9cd88a2d4a54c6aa86ce0fef944be0"
+			]
+		},
+		"Import key AES CBC": {
+			"type": "AES",
+			"security_size": 256,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			],
+			"priv_key": [
+				"603DEB1015CA71BE2B73AEF0857D7781",
+				"1F352C073B6108D72D9810A30914DFF4"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": "Import the base key ECDSA on TEE",
+		"command": "IMPORT",
+		"subsystem": "TEE",
+		"key_name": "key ECDSA TEE",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"description": "Get the attributes of the ELE ECDSA key",
+		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem": "ELE",
+		"key_name": "key ECDSA ELE",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 3": {
+		"description": "Derive the OEM Master key on ELE",
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "OEM_MASTER_KEY",
+		"op_input": "key ECDSA ELE",
+		"op_args": {
+			"peer_public_key": "key ECDSA TEE"
+		},
+		"op_output": "key OEM_MK ELE",
+		"depends": [
+			1,
+			2
+		]
+	},
+	"subtest 4": {
+		"description": "Derive the TEE ECDH key",
+		"command": "DERIVE",
+		"op_type": "ECDH",
+		"op_input": "key ECDSA TEE",
+		"store_key": true,
+		"op_args": {
+			"peer_public_key": "key ECDSA ELE"
+		},
+		"op_output": "key ECDH TEE",
+		"depends": [
+			1
+		]
+	},
+	"subtest 5": {
+		"description": "Derive the TEE OEM Master key",
+		"command": "DERIVE",
+		"op_type": "HKDF",
+		"op_input": "key ECDH TEE",
+		"store_key": true,
+		"op_args": {
+			"algo": "SHA256"
+		},
+		"op_output": "key OEM_MK TEE",
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": "Derive the TEE OEM WRAP key info:oemelefwkeyimportwrap256",
+		"command": "DERIVE",
+		"op_type": "HKDF",
+		"op_input": "key OEM_MK TEE",
+		"store_key": true,
+		"op_args": {
+			"info": "6f656d656c6566776b6579696d706f727477726170323536",
+			"algo": "SHA256"
+		},
+		"op_output": "key OEM_WRAP TEE",
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": "Derive the TEE OEM CMAC key info:oemelefwkeyimportcmac256",
+		"command": "DERIVE",
+		"op_type": "HKDF",
+		"op_input": "key OEM_MK TEE",
+		"store_key": true,
+		"op_args": {
+			"info": "6f656d656c6566776b6579696d706f7274636d6163323536",
+			"algo": "SHA256"
+		},
+		"op_output": "key OEM_CMAC TEE",
+		"depends": 5
+	},
+	"subtest 8": {
+		"description": "Blob and Import AES key",
+		"command": "IMPORT_BLOB",
+		"subsystem": "ELE",
+		"key_name": "Import key AES ECB",
+		"wrap_key_name": "key OEM_WRAP TEE",
+		"sign_key_name": "key OEM_CMAC TEE",
+		"op_args": {
+			"id": 0,
+			"permitted_algo": "04404400",
+			"usage": "00000100",
+			"type": "2400",
+			"security_size": 256,
+			"lifetime": "C0020000",
+			"lifecycle": "00000000",
+			"key_name": "key OEM_MK ELE",
+			"iv": "123456789ABCEF12456789ABCDEF1234"
+		},
+		"depends": [
+			3,
+			6,
+			7
+		]
+	},
+	"subtest 9": {
+		"description": "Encrypt pattern with inported key",
+		"command": "CIPHER",
+		"mode": "ECB",
+		"op_type": "ENCRYPT",
+		"key_name": "Import key AES ECB",
+		"input": "b379777f9050e2a818f2940cbbd9aba4",
+		"output": "bc0009b162b6377d57f811a99d6795f2",
+		"depends": 8
+	},
+	"subtest 10": {
+		"command": "DELETE",
+		"key_name": "Import key AES ECB",
+		"depends": 8
+	},
+	"subtest 11": {
+		"command": "DELETE",
+		"key_name": "key OEM_MK ELE",
+		"depends": 3
+	},
+	"subtest 12": {
+		"command": "DELETE",
+		"key_name": "key OEM_MK TEE",
+		"depends": 5
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "key OEM_WRAP TEE",
+		"depends": 6
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "key OEM_CMAC TEE",
+		"depends": 7
+	},
+	"subtest 15": {
+		"description": "Derive the OEM Master key on ELE rely on peer digest",
+		"command": "DERIVE",
+		"subsystem": "ELE",
+		"op_type": "OEM_MASTER_KEY",
+		"op_input": "key ECDSA ELE",
+		"op_args": {
+			"oem_salt_peer_key": true,
+			"peer_public_key": "key ECDSA TEE"
+		},
+		"op_output": "key OEM_MK ELE",
+		"depends": [
+			1,
+			2
+		]
+	},
+	"subtest 16": {
+		"description": "Derive the TEE OEM Master key rely on peer digest",
+		"command": "DERIVE",
+		"op_type": "HKDF",
+		"op_input": "key ECDH TEE",
+		"store_key": true,
+		"op_args": {
+			"salt": [
+				"df0d835d982ace647881786ff72baebf",
+				"13e5732d3389f3f5053a286b25b99252"
+			],
+			"algo": "SHA256"
+		},
+		"op_output": "key OEM_MK TEE",
+		"depends": 4
+	},
+	"subtest 17": {
+		"description": "Derive the TEE OEM WRAP key info:oemelefwkeyimportwrap256",
+		"command": "DERIVE",
+		"op_type": "HKDF",
+		"op_input": "key OEM_MK TEE",
+		"store_key": true,
+		"op_args": {
+			"info": "6f656d656c6566776b6579696d706f727477726170323536",
+			"algo": "SHA256"
+		},
+		"op_output": "key OEM_WRAP TEE",
+		"depends": 16
+	},
+	"subtest 18": {
+		"description": "Derive the TEE OEM CMAC key info:oemelefwkeyimportcmac256",
+		"command": "DERIVE",
+		"op_type": "HKDF",
+		"op_input": "key OEM_MK TEE",
+		"store_key": true,
+		"op_args": {
+			"info": "6f656d656c6566776b6579696d706f7274636d6163323536",
+			"algo": "SHA256"
+		},
+		"op_output": "key OEM_CMAC TEE",
+		"depends": 16
+	},
+	"subtest 19": {
+		"description": "Blob and Import AES key",
+		"command": "IMPORT_BLOB",
+		"subsystem": "ELE",
+		"key_name": "Import key AES CBC",
+		"wrap_key_name": "key OEM_WRAP TEE",
+		"sign_key_name": "key OEM_CMAC TEE",
+		"op_args": {
+			"id": 0,
+			"permitted_algo": "04404000",
+			"usage": "00000100",
+			"type": "2400",
+			"security_size": 256,
+			"lifetime": "C0020000",
+			"lifecycle": "00000000",
+			"key_name": "key OEM_MK ELE",
+			"iv": "123456789ABCEF12456789ABCDEF1234"
+		},
+		"depends": [
+			15,
+			17,
+			18
+		]
+	},
+	"subtest 20": {
+		"description": "Encrypt pattern with inported key",
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"key_name": "Import key AES CBC",
+		"iv": "000102030405060708090A0B0C0D0E0F",
+		"input": [
+			"6BC1BEE22E409F96E93D7E117393172A",
+			"AE2D8A571E03AC9C9EB76FAC45AF8E51",
+			"30C81C46A35CE411E5FBC1191A0A52EF",
+			"F69F2445DF4F9B17AD2B417BE66C3710"
+		],
+		"output": [
+			"F58C4C04D6E5F1BA779EABFB5F7BFBD6",
+			"9CFC4E967EDB808D679F777BC6702C7D",
+			"39F23369A9D9BACFA530E26304231461",
+			"B2EB05E2C39BE9FCDA6C19078C6A9D1B"
+		],
+		"depends": 19
+	},
+	"subtest 21": {
+		"command": "DELETE",
+		"key_name": "Import key AES CBC",
+		"depends": 19
+	},
+	"subtest 22": {
+		"command": "DELETE",
+		"key_name": "key OEM_MK ELE",
+		"depends": 15
+	},
+	"subtest 23": {
+		"command": "DELETE",
+		"key_name": "key OEM_MK TEE",
+		"depends": 16
+	},
+	"subtest 24": {
+		"command": "DELETE",
+		"key_name": "key OEM_WRAP TEE",
+		"depends": 17
+	},
+	"subtest 25": {
+		"command": "DELETE",
+		"key_name": "key OEM_CMAC TEE",
+		"depends": 18
+	},
+	"subtest 26": {
+		"command": "DELETE",
+		"key_name": "key ECDSA TEE",
+		"depends": 1
+	},
+	"subtest 27": {
+		"command": "DELETE",
+		"key_name": "key ECDH TEE",
+		"depends": 4
+	},
+}

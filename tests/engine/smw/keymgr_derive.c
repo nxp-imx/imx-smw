@@ -248,6 +248,115 @@ static int read_derived_key_attributes(struct llist *keys,
 	return key_read_attributes(data->okey_params, attributes);
 }
 
+static int export_peer_pub_key(struct subtest_data *subtest,
+			       const char *key_name,
+			       struct keypair_ops *peer_key,
+			       struct smw_keypair_buffer *key_buffer)
+{
+	int res = ERR_CODE(PASSED);
+
+	struct smw_export_key_args args = { 0 };
+
+	/*
+	 * Initialize exported keys operation argument.
+	 * Don't set the buffer now to not read the
+	 * defined public/private key if set in the
+	 * test definition file.
+	 */
+	res = key_desc_init(peer_key, NULL);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/* Read the json-c key description */
+	res = key_read_descriptor(list_keys(subtest), peer_key, key_name);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	/*
+	 * Set the empty key buffer to get exported key and do key allocation
+	 * function of the exported key query.
+	 */
+	res = key_desc_set_key(peer_key, key_buffer);
+	if (res != ERR_CODE(PASSED))
+		goto exit;
+
+	subtest->smw_status = smw_get_key_buffers_lengths(&peer_key->desc);
+	if (subtest->smw_status != SMW_STATUS_OK) {
+		DBG_PRINT("SMW Get key buffers lengths returned %d",
+			  subtest->smw_status);
+		return ERR_CODE(API_STATUS_NOK);
+	}
+
+	if (!*key_public_length(peer_key)) {
+		DBG_PRINT("Unable to export peer key because length 0");
+		res = ERR_CODE(FAILED);
+		goto exit;
+	}
+
+	*key_public_data(peer_key) = malloc(*key_public_length(peer_key));
+	if (!*key_public_data(peer_key)) {
+		DBG_PRINT_ALLOC_FAILURE();
+		res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		goto exit;
+	}
+
+	args.key_descriptor = &peer_key->desc;
+
+	subtest->smw_status = smw_export_key(&args);
+	if (subtest->smw_status != SMW_STATUS_OK)
+		res = ERR_CODE(API_STATUS_NOK);
+
+exit:
+	return res;
+}
+
+static int get_or_export_peer_key(struct tbuffer *peer_pub_buf,
+				  struct subtest_data *subtest,
+				  struct json_object *oargs)
+{
+	int res = ERR_CODE(BAD_ARGS);
+
+	const char *key_name = NULL;
+	struct keypair_ops peer_key = { 0 };
+	struct smw_keypair_buffer key_buffer = { 0 };
+
+	/*
+	 * If the peer key is the name of a key get the public key buffer, else
+	 * it's the peer key buffer.
+	 */
+	res = util_read_json_type(&key_name, PEER_PUB_KEY_OBJ, t_string, oargs);
+	if (res == ERR_CODE(PASSED)) {
+		res = export_peer_pub_key(subtest, key_name, &peer_key,
+					  &key_buffer);
+		if (res != ERR_CODE(PASSED))
+			goto end;
+
+		peer_pub_buf->length = *key_public_length(&peer_key);
+		if (peer_pub_buf->length && *key_public_data(&peer_key)) {
+			peer_pub_buf->data = malloc(peer_pub_buf->length);
+			if (!peer_pub_buf->data)
+				res = ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+			else
+				memcpy(peer_pub_buf->data,
+				       *key_public_data(&peer_key),
+				       peer_pub_buf->length);
+		} else {
+			res = ERR_CODE(FAILED);
+		}
+
+	} else if (res == ERR_CODE(BAD_PARAM_TYPE)) {
+		res = util_read_json_type(peer_pub_buf, PEER_PUB_KEY_OBJ,
+					  t_buffer_hex, oargs);
+	}
+
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		DBG_PRINT("Failed to read peer public buffer");
+end:
+	key_free_key(&peer_key);
+
+	return res;
+}
+
 /**
  * key_prepare_derived_key_data() - Fill key data structure for derived key
  * @key: Derived key descriptor structure
@@ -1813,10 +1922,10 @@ static int kdf_ecdh_read_args(void **kdf_args, smw_kdf_t kdf_name,
 			      struct subtest_data *subtest,
 			      struct json_object *oargs)
 {
-	(void)subtest;
 	(void)kdf_name;
 
 	int res = ERR_CODE(BAD_ARGS);
+
 	struct tbuffer peer_pub_buf = { 0 };
 
 	struct smw_kdf_ecdh_args *ecdh_args = NULL;
@@ -1830,12 +1939,9 @@ static int kdf_ecdh_read_args(void **kdf_args, smw_kdf_t kdf_name,
 	if (!ecdh_args)
 		return INTERNAL_OUT_OF_MEMORY;
 
-	res = util_read_json_type(&peer_pub_buf, PEER_PUB_KEY_OBJ, t_buffer_hex,
-				  oargs);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
-		DBG_PRINT("Failed to read peer public buffer");
+	res = get_or_export_peer_key(&peer_pub_buf, subtest, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
-	}
 
 	ecdh_args->peer_public_buffer = peer_pub_buf.data;
 	ecdh_args->peer_public_buffer_length = peer_pub_buf.length;
@@ -2041,7 +2147,7 @@ static int kdf_oem_mk_read_args(void **kdf_args, smw_kdf_t kdf_name,
 
 	oem_mk_args = calloc(1, sizeof(*oem_mk_args));
 	if (!oem_mk_args)
-		return INTERNAL_OUT_OF_MEMORY;
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
 
 	/* Get info buffer, if defined */
 	res = util_read_json_type(&info_buf, INFO_OBJ, t_buffer_hex, oargs);
@@ -2050,12 +2156,9 @@ static int kdf_oem_mk_read_args(void **kdf_args, smw_kdf_t kdf_name,
 		goto end;
 	}
 
-	res = util_read_json_type(&peer_pub_buf, PEER_PUB_KEY_OBJ, t_buffer_hex,
-				  oargs);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
-		DBG_PRINT("Failed to read peer public buffer");
+	res = get_or_export_peer_key(&peer_pub_buf, subtest, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto end;
-	}
 
 	res = util_read_json_type(&payload_buf, INPUT_OBJ, t_buffer_hex, oargs);
 	if (res == ERR_CODE(PASSED)) {
@@ -2065,12 +2168,27 @@ static int kdf_oem_mk_read_args(void **kdf_args, smw_kdf_t kdf_name,
 		goto end;
 	}
 
+	res = util_read_json_type(&oem_mk_args->use_oem_srkh_kdf,
+				  OEM_SALT_HKDF_OBJ, t_boolean, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
+		DBG_PRINT("Failed to read %s", OEM_SALT_HKDF_OBJ);
+		goto end;
+	}
+
+	res = util_read_json_type(&oem_mk_args->use_peer_key_digest_kdf,
+				  OEM_SALT_PEER_KEY_OBJ, t_boolean, oargs);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND)) {
+		DBG_PRINT("Failed to read %s", OEM_SALT_HKDF_OBJ);
+		goto end;
+	}
+
 	oem_mk_args->peer_public_buffer = peer_pub_buf.data;
 	oem_mk_args->peer_public_buffer_length = peer_pub_buf.length;
 	oem_mk_args->info = info_buf.data;
 	oem_mk_args->info_len = info_buf.length;
 
 	*kdf_args = oem_mk_args;
+
 	res = ERR_CODE(PASSED);
 
 end:
@@ -2106,7 +2224,7 @@ end:
 static int kdf_oem_mk_prepare_result(struct subtest_data *subtest,
 				     struct smw_derive_key_args *args)
 {
-	int res = ERR_CODE(PASSED);
+	int res = ERR_CODE(BAD_ARGS);
 
 	const char *key_name = NULL;
 	struct smw_derived_key_descriptor *key = NULL;
@@ -2117,11 +2235,10 @@ static int kdf_oem_mk_prepare_result(struct subtest_data *subtest,
 
 	struct smw_kdf_oem_master_key_args *oem_mk_args = NULL;
 
-	res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ, &okey_params);
-	if (res != ERR_CODE(PASSED))
+	if (!args || !args->kdf_arguments)
 		return res;
 
-	res = key_read_attributes(okey_params, &args->key_attributes);
+	res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ, &okey_params);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -2133,7 +2250,10 @@ static int kdf_oem_mk_prepare_result(struct subtest_data *subtest,
 	key = args->key_descriptor_derived;
 
 	res = read_derived_key_descriptor(list_keys(subtest), key, key_name);
+	if (res != ERR_CODE(PASSED))
+		return res;
 
+	res = key_read_attributes(okey_params, &key->attributes);
 	if (res != ERR_CODE(PASSED))
 		return res;
 
@@ -2144,6 +2264,11 @@ static int kdf_oem_mk_prepare_result(struct subtest_data *subtest,
 		oem_mk_args->op = SMW_OEM_MK_OP_NAME_PREPARE;
 
 		subtest->smw_status = smw_derive_key(args);
+		if (subtest->smw_status == SMW_STATUS_OEM_SRKH_NOT_FUSED) {
+			DBG_PRINT("OEM SRKH is not fused, can't be tested");
+			return ERR_CODE(SKIPPED);
+		}
+
 		if (subtest->smw_status != SMW_STATUS_OK ||
 		    !oem_mk_args->payload_length) {
 			DBG_PRINT("Unable to get OEM Master key payload size");
@@ -2634,6 +2759,12 @@ int derive_key(struct subtest_data *subtest)
 		goto exit;
 
 	subtest->smw_status = smw_derive_key(smw_args);
+	if (subtest->smw_status == SMW_STATUS_OEM_SRKH_NOT_FUSED) {
+		DBG_PRINT("OEM SRKH is not fused, can't be tested");
+		res = ERR_CODE(SKIPPED);
+		goto exit;
+	}
+
 	if (subtest->smw_status == SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
 		subtest->smw_status = SMW_STATUS_OK;
 

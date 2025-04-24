@@ -59,6 +59,13 @@ static CK_BYTE context[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
 static const char label_s_hs_traffic[] = "s hs traffic";
 static const char label_key[] = TLS13_HS_KEY_LABEL;
 static const char label_iv[] = TLS13_HS_IV_LABEL;
+static const char label_finished[] = TLS13_HS_FINISHED_LABEL;
+
+/* messagetosign */
+static CK_BYTE msg[] = { 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+			 0x74, 0x6f, 0x73, 0x69, 0x67, 0x6e };
+
+static CK_ULONG msg_len = 13;
 
 static CK_BYTE data[] =
 	"message to encrypt using authenticated encryption (CCM, GCM, POLY1305)";
@@ -735,6 +742,224 @@ end:
 	return status;
 }
 
+static int object_derive_key_tls13_sign_verify(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_BBOOL ck_true = CK_TRUE;
+
+	CK_OBJECT_HANDLE hpubkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hprivkey = CK_INVALID_HANDLE;
+	CK_MECHANISM genmech = { .mechanism = CKM_EC_KEY_PAIR_GEN };
+	CK_MECHANISM_TYPE base_key_allowed_mech = { CKM_HKDF_DERIVE };
+	CK_ATTRIBUTE pubkey_attrs[] = {
+		{ CKA_EC_PARAMS, NULL_PTR, 0 },
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &base_key_allowed_mech,
+		  sizeof(base_key_allowed_mech) },
+	};
+	CK_ATTRIBUTE privkey_attrs[] = {
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_ALLOWED_MECHANISMS, &base_key_allowed_mech,
+		  sizeof(base_key_allowed_mech) },
+	};
+
+	CK_ECDH1_DERIVE_PARAMS ecdh_params = { 0 };
+	CK_MECHANISM ecdh_mech = { CKM_ECDH1_DERIVE, (void *)&ecdh_params,
+				   sizeof(ecdh_params) };
+	CK_HKDF_PARAMS tls13_params = { 0 };
+	CK_MECHANISM tls13_mech = { CKM_HKDF_DERIVE, (void *)&tls13_params,
+				    sizeof(tls13_params) };
+
+	CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
+	CK_OBJECT_HANDLE derived_finished_key = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE s_hs_traffic_key = CK_INVALID_HANDLE;
+	CK_MECHANISM_TYPE derived_key_allowed_mech = { CKM_HKDF_DERIVE };
+	CK_MECHANISM_TYPE finished_key_allowed_mech = { CKM_SHA256_HMAC };
+	CK_ULONG key_len = 32;
+	CK_KEY_TYPE key_type = CKK_GENERIC_SECRET;
+	CK_ATTRIBUTE derived_key_template[] = {
+		{ CKA_CLASS, &key_class, sizeof(key_class) },
+		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
+		{ CKA_ALLOWED_MECHANISMS, &derived_key_allowed_mech,
+		  sizeof(derived_key_allowed_mech) },
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) }
+	};
+	CK_ATTRIBUTE finished_key_template[] = {
+		{ CKA_CLASS, &key_class, sizeof(key_class) },
+		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
+		{ CKA_ALLOWED_MECHANISMS, &finished_key_allowed_mech,
+		  sizeof(finished_key_allowed_mech) },
+		{ CKA_SIGN, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_VERIFY, &ck_true, sizeof(CK_BBOOL) }
+	};
+	CK_MECHANISM_TYPE ecdhe_key_allowed_mech = { CKM_HKDF_DERIVE };
+	CK_OBJECT_HANDLE ecdhe_key = CK_INVALID_HANDLE;
+	CK_ATTRIBUTE ecdhe_key_template[] = {
+		{ CKA_CLASS, &key_class, sizeof(key_class) },
+		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
+		{ CKA_ALLOWED_MECHANISMS, &ecdhe_key_allowed_mech,
+		  sizeof(ecdhe_key_allowed_mech) },
+		{ CKA_DERIVE, &ck_true, sizeof(CK_BBOOL) },
+	};
+
+	CK_MECHANISM sign_verify_mech = { .mechanism = CKM_SHA256_HMAC };
+	CK_BYTE_PTR signature = NULL_PTR;
+	CK_ULONG signature_len = 0;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, base_key_allowed_mech)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
+					       &ec_curves[SECP_R1_256]),
+			   "ASN1 Conversion"))
+		goto end;
+
+	TEST_OUT("Generate a base key\n");
+	ret = pfunc->C_GenerateKeyPair(sess, &genmech, pubkey_attrs,
+				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
+				       ARRAY_SIZE(privkey_attrs), &hpubkey,
+				       &hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+		goto end;
+
+	TEST_OUT("Set CKM_ECDH1_DERIVE mechanism parameters\n");
+	ecdh_params.kdf = CKD_NULL;
+	ecdh_params.pSharedData = NULL;
+	ecdh_params.ulSharedDataLen = 0;
+	ecdh_params.pPublicData = peer_buffer;
+	ecdh_params.ulPublicDataLen = sizeof(peer_buffer);
+
+	ret = pfunc->C_DeriveKey(sess, &ecdh_mech, hprivkey, ecdhe_key_template,
+				 ARRAY_SIZE(ecdhe_key_template), &ecdhe_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Set CKM_HKDF_DERIVE mechanism parameters\n");
+	tls13_params.prfHashMechanism = CKM_SHA256;
+	tls13_params.bExpand = true;
+	tls13_params.bExtract = false;
+	ret = tls13_expand_label(&tls13_params, label_s_hs_traffic,
+				 strlen(label_s_hs_traffic), context,
+				 ARRAY_SIZE(context), key_len);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = pfunc->C_DeriveKey(sess, &tls13_mech, ecdhe_key,
+				 derived_key_template,
+				 ARRAY_SIZE(derived_key_template),
+				 &s_hs_traffic_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	free(tls13_params.pInfo);
+	tls13_params.pInfo = NULL;
+
+	TEST_OUT("Set CKM_HKDF_DERIVE mechanism parameters\n");
+	tls13_params.prfHashMechanism = CKM_SHA256;
+	tls13_params.bExpand = true;
+	tls13_params.bExtract = false;
+	key_len = 32;
+	key_type = CKK_SHA256_HMAC;
+	ret = tls13_expand_label(&tls13_params, label_finished,
+				 strlen(label_finished), NULL, 0, key_len);
+	if (ret != CKR_OK)
+		goto end;
+
+	ret = pfunc->C_DeriveKey(sess, &tls13_mech, s_hs_traffic_key,
+				 finished_key_template,
+				 ARRAY_SIZE(finished_key_template),
+				 &derived_finished_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Initialize encrypt operation\n");
+	ret = pfunc->C_SignInit(sess, &sign_verify_mech, derived_finished_key);
+	if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+		goto end;
+
+	TEST_OUT("Get signature length (use NULL signature buffer)\n");
+	ret = pfunc->C_Sign(sess, NULL_PTR, 0, signature, &signature_len);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	signature = malloc(signature_len);
+	if (CHECK_EXPECTED(signature, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Sign message\n");
+	ret = pfunc->C_Sign(sess, msg, msg_len, signature, &signature_len);
+	if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+		goto end;
+
+	TEST_OUT("Initialize verify operation\n");
+	ret = pfunc->C_VerifyInit(sess, &sign_verify_mech,
+				  derived_finished_key);
+	if (CHECK_CK_RV(CKR_OK, "C_VerifyInit"))
+		goto end;
+
+	TEST_OUT("Verify signature\n");
+	ret = pfunc->C_Verify(sess, msg, msg_len, signature, signature_len);
+	if (CHECK_CK_RV(CKR_OK, "C_Verify"))
+		goto end;
+
+	TEST_OUT("Delete the handshake key\n");
+	ret = pfunc->C_DestroyObject(sess, derived_finished_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the secret key\n");
+	ret = pfunc->C_DestroyObject(sess, s_hs_traffic_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the ecdhe key\n");
+	ret = pfunc->C_DestroyObject(sess, ecdhe_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hpubkey);
+	ret = pfunc->C_DestroyObject(sess, hpubkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hprivkey);
+	ret = pfunc->C_DestroyObject(sess, hprivkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	status = TEST_PASS;
+
+end:
+	if (signature)
+		free(signature);
+
+	if (tls13_params.pInfo)
+		free(tls13_params.pInfo);
+
+	util_close_session(pfunc, &sess);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_derive_key_tls1_3(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -760,7 +985,10 @@ void tests_pkcs11_derive_key_tls1_3(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (object_derive_key_tls13(pfunc) == TEST_FAIL)
 		goto end;
 
-	status = object_derive_key_tls13_encrypt_decrypt(pfunc);
+	if (object_derive_key_tls13_encrypt_decrypt(pfunc) == TEST_FAIL)
+		goto end;
+
+	status = object_derive_key_tls13_sign_verify(pfunc);
 
 end:
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

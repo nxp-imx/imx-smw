@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include "debug.h"
@@ -99,7 +99,7 @@ int smw_keymgr_set_hex_key_buffer(enum smw_keymgr_format_id format_id,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!buffer_len)
+	if (!buffer_len || !buffer || !hex_buffer || !hex_buffer_len)
 		goto exit;
 
 	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {

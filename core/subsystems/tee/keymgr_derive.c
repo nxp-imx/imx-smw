@@ -388,6 +388,10 @@ static int hkdf_derive_key(void *args)
 		key_usage_to_tee(key_attrs->usage_flags,
 				 &shared_params.key_usage);
 		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
+	} else if (smw_keymgr_is_store_key_set(key_args)) {
+		SMW_DBG_PRINTF(ERROR, "Missing key derivation attributes");
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
 	}
 
 	/*
@@ -623,6 +627,10 @@ static int ecdh_derive_key(void *args)
 		key_usage_to_tee(key_attrs->usage_flags,
 				 &shared_params.key_usage);
 		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
+	} else if (smw_keymgr_is_store_key_set(key_args)) {
+		SMW_DBG_PRINTF(ERROR, "Missing key derivation attributes");
+		status = SMW_STATUS_INVALID_PARAM;
+		goto exit;
 	}
 
 	/*

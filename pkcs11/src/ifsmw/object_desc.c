@@ -235,10 +235,10 @@ static CK_RV attrs_to_object_descriptor(struct smw_object_descriptor *desc,
 	}
 
 	if (label.string) {
-		len = util_rfc2279_to_byte_len(label.string, label.length) +
-		      1 /* zero terminated string */;
+		len = util_rfc2279_to_byte_len(label.string, label.length);
 		if (len) {
-			desc->label = malloc(len);
+			desc->label =
+				calloc(1, len + 1 /* zero terminated string */);
 			if (!desc->label) {
 				ret = CKR_HOST_MEMORY;
 				goto end;
@@ -246,21 +246,25 @@ static CK_RV attrs_to_object_descriptor(struct smw_object_descriptor *desc,
 
 			util_rfc2279_to_byte((CK_CHAR_PTR)desc->label, len,
 					     label.string, label.length);
-			desc->label[len - 1] = 0;
 		}
 	}
 
 	if (user_id.number) {
-		desc->user_id = malloc(user_id.number + 1);
-		if (!desc->user_id) {
-			ret = CKR_HOST_MEMORY;
-			goto end;
+		len = user_id.number * 2;
+		if (len) {
+			desc->user_id =
+				calloc(1, len + 1 /* zero terminated string */);
+			if (!desc->user_id) {
+				ret = CKR_HOST_MEMORY;
+				goto end;
+			}
+
+			if (!util_byte_to_hex((CK_CHAR_PTR)desc->user_id, len,
+					      user_id.array, user_id.number)) {
+				ret = CKR_ARGUMENTS_BAD;
+				goto end;
+			}
 		}
-
-		memcpy(desc->user_id, user_id.array, user_id.number);
-
-		/* zero terminated string */;
-		desc->user_id[user_id.number] = 0;
 	}
 
 end:
@@ -297,6 +301,7 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 	CK_KEY_TYPE key_type = CKK_RSA;
 	CK_ULONG obj_length = 0;
 	struct libbytes label = { 0 };
+	struct libbytes user_id = { 0 };
 	CK_ULONG nb_attrs = 0;
 	CK_ATTRIBUTE_PTR p_attr = NULL;
 	struct smw_key_descriptor *key = &desc->key;
@@ -430,11 +435,18 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 			else
 				p_attr->type = CKA_ID;
 
-			if (p_attr->ulValueLen < strlen(desc->user_id))
-				p_attr->ulValueLen = strlen(desc->user_id);
-			else
-				memcpy(p_attr->pValue, desc->user_id,
-				       strlen(desc->user_id));
+			user_id.array = (CK_BYTE_PTR)desc->user_id;
+			user_id.number = strlen(desc->user_id);
+
+			if (p_attr->ulValueLen < user_id.number / 2) {
+				p_attr->ulValueLen = user_id.number / 2;
+			} else if (!util_hex_to_byte(p_attr->pValue,
+						     p_attr->ulValueLen,
+						     user_id.array,
+						     user_id.number)) {
+				ret = CKR_ARGUMENTS_BAD;
+				goto end;
+			}
 		}
 
 		nb_attrs++;
@@ -573,7 +585,9 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	struct libobj_data *data = NULL;
 	struct libobj_storage *obj_storage = get_object_from(obj);
 	struct libbytes label = { 0 };
+	struct libbytes user_id = { 0 };
 	struct smw_object_descriptor descriptor = { 0 };
+	size_t len = 0;
 
 	ret = obj_db_get(obj, &descriptor);
 	if (ret)
@@ -610,17 +624,8 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	case CKO_DATA:
 		data = get_subobj_from(obj, storage);
 		if (data && data->id.number) {
-			descriptor.user_id = malloc(data->id.number + 1);
-			if (!descriptor.user_id) {
-				ret = CKR_HOST_MEMORY;
-				goto end;
-			}
-
-			memcpy(descriptor.user_id, data->id.array,
-			       data->id.number);
-
-			/* zero terminated string */;
-			descriptor.user_id[data->id.number] = 0;
+			user_id.number = data->id.number;
+			user_id.array = data->id.array;
 		}
 
 		break;
@@ -630,23 +635,29 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	case CKO_SECRET_KEY:
 		key = get_subobj_from(obj, storage);
 		if (key && key->id.number) {
-			descriptor.user_id = malloc(key->id.number + 1);
-			if (!descriptor.user_id) {
-				ret = CKR_HOST_MEMORY;
-				goto end;
-			}
-
-			memcpy(descriptor.user_id, key->id.array,
-			       key->id.number);
-
-			/* zero terminated string */;
-			descriptor.user_id[key->id.number] = 0;
+			user_id.number = key->id.number;
+			user_id.array = key->id.array;
 		}
 
 		break;
 
 	default:
 		break;
+	}
+
+	if (user_id.number) {
+		len = user_id.number * 2;
+		descriptor.user_id = calloc(1, len + 1);
+		if (!descriptor.user_id) {
+			ret = CKR_HOST_MEMORY;
+			goto end;
+		}
+
+		if (!util_byte_to_hex((CK_CHAR_PTR)descriptor.user_id, len,
+				      user_id.array, user_id.number)) {
+			ret = CKR_ARGUMENTS_BAD;
+			goto end;
+		}
 	}
 
 	status = smw_update_object_db(&descriptor);

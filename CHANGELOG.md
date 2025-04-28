@@ -69,6 +69,7 @@ The failure is due to the storage manager which is already loaded and a new inst
     - smw_derive_key()
     - smw_import_key()
 * Add a new status code `SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED`.
+* Add support for X25519 key type (used for x25519 TLS key exchange).
 
 ##### 2. Subsystems
 
@@ -112,6 +113,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update U_API_Objects_002 to find key by permitted algo or usage.
 * Add tests to validate signature generation and verification using plaintext key buffer.
 * Disable ELE AEAD tests for i.MX95 and i.MX943 platforms.
+* ELE tests: Add tests to validate X25519 key exchange: U_ELE_Generate_005, U_ELE_Derive_009,
+  U_ELE_Derive_010, U_ELE_Derive_011.
 
 #### PKCS#11 Library - _version 5.0_
 

@@ -27,6 +27,8 @@ Key manager
    +--------------+-----------------------------+------+---------+------+------+
    | PURE EDDSA   | 255                         |      |   X     |      |      |
    +--------------+-----------------------------+------+---------+------+------+
+   | X25519       | 255                         |      |   X     |      |      |
+   +--------------+-----------------------------+------+---------+------+------+
 
 Operations supported:
  - Generate
@@ -756,7 +758,8 @@ length less than the key size, so the key size of the base key used for ECDH(E)
 dictates which ciphersuites can be used. For example, if the key size is 384
 bits, you may only use ciphersuites that use SHA384.
 
-Only ECDH(E) key exchange is supported, and the following ciphersuites:
+Only ECDH(E) key exchange is supported, with SECP_R1 key type, and the following
+ciphersuites:
 
 .. table:: ELE supported ciphersuites
    :name: ele_ciphersuites
@@ -785,8 +788,8 @@ Only ECDH(E) key exchange is supported, and the following ciphersuites:
 - TLS 1.3 (TLS13-KDF)
 
 The early secret, ECDH shared secret, handshake secret and master secret are
-computed internally and not exported. The subsystem supports derivation of the
-following TLS1.3 secrets:
+computed internally and not exported. Both SECP_R1 and X25519 key types are
+supported. The subsystem supports derivation of the following TLS1.3 secrets:
 
 .. table:: ELE TLS1.3 secrets
    :name: ele_tls13_secrets

@@ -796,17 +796,23 @@ static unsigned char *seco_memdup(const unsigned char *in, unsigned int len)
 
 static int tls12_op_copy_partial_data(struct smw_keymgr_derive_key_args *args)
 {
-	enum smw_status_code status = SMW_STATUS_ALLOC_FAILURE;
+	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_tls12_args *tls_args = args->kdf_args;
-	struct smw_op_context *ctx = tls_args->pub_op_args->context;
+	struct smw_op_context *ctx = NULL;
 	struct seco_tls12_partial_data *partial_data = NULL;
 	const struct key_def *key_def = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	ctx = smw_keymgr_tls12_get_context(tls_args);
+	if (!ctx)
+		return status;
+
 	partial_data = SMW_UTILS_CALLOC(1, sizeof(*partial_data));
-	if (!partial_data)
+	if (!partial_data) {
+		status = SMW_STATUS_ALLOC_FAILURE;
 		goto end;
+	}
 
 	key_def = get_key_def(&args->key_base.identifier);
 	if (!key_def) {
@@ -886,6 +892,7 @@ static int tls12_op_derive(struct subsystem_context *seco_ctx,
 
 	struct smw_keymgr_tls12_args *tls_args = args->kdf_args;
 	const struct tls12_kdf_info *kdf_info = NULL;
+	struct smw_op_context *ctx = NULL;
 
 	unsigned char kdf_output[TLS12_KDF_OUTPUT_SIZE] = { 0 };
 	unsigned int *shared_key_ids = NULL;
@@ -910,7 +917,11 @@ static int tls12_op_derive(struct subsystem_context *seco_ctx,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	partial_data = tls_args->pub_op_args->context->subsystem_context;
+	ctx = smw_keymgr_tls12_get_context(tls_args);
+	if (!ctx)
+		return status;
+
+	partial_data = (struct seco_tls12_partial_data *)ctx->subsystem_context;
 
 	kdf_info = get_tls12_kdf_info_partial(args->kdf_args, partial_data);
 	if (!kdf_info)
@@ -1166,12 +1177,12 @@ int seco_derive_tls12_op(struct subsystem_context *seco_ctx,
 
 	tls12_args = args->kdf_args;
 
-	switch (tls12_args->pub_op_args->op_name) {
-	case SMW_TLS12_OP_NAME_MASTER_SECRET:
+	switch (tls12_args->op_id) {
+	case SMW_TLS12_OPERATION_ID_MASTER_SECRET:
 		status = tls12_op_copy_partial_data(args);
 		break;
 
-	case SMW_TLS12_OP_NAME_KEY_EXPANSION:
+	case SMW_TLS12_OPERATION_ID_KEY_EXPANSION:
 		status = tls12_op_derive(seco_ctx, args);
 		break;
 

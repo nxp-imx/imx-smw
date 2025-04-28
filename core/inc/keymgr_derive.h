@@ -52,6 +52,13 @@ enum smw_tls12_encryption_id {
 	SMW_TLS12_ENCRYPTION_ID_INVALID
 };
 
+enum smw_tls12_operation_id {
+	SMW_TLS12_OPERATION_ID_MASTER_SECRET,
+	SMW_TLS12_OPERATION_ID_KEY_EXPANSION,
+	SMW_TLS12_OPERATION_ID_NB,
+	SMW_TLS12_OPERATION_ID_INVALID
+};
+
 /**
  * struct smw_keymgr_derived_key_desc - Derived key descriptor
  * @identifier: Key identifier
@@ -110,6 +117,7 @@ struct smw_keymgr_derive_key_args {
 struct smw_keymgr_tls12_args {
 	enum smw_tls12_key_exchange_id key_exchange_id;
 	enum smw_tls12_encryption_id encryption_id;
+	enum smw_tls12_operation_id op_id;
 	enum smw_config_hash_algo_id prf_id;
 	bool ephemeral_key;
 	bool is_operation;
@@ -341,6 +349,16 @@ smw_keymgr_tls12_get_server_random(struct smw_keymgr_tls12_args *args);
  */
 unsigned int
 smw_keymgr_tls12_get_server_random_length(struct smw_keymgr_tls12_args *args);
+
+/**
+ * smw_keymgr_tls12_get_context() - Return the TLS1.2 operation context
+ * @args: TLS 1.2 internal arguments
+ *
+ * Return:
+ * Address of the TLS1.2 operation context
+ */
+struct smw_op_context *
+smw_keymgr_tls12_get_context(struct smw_keymgr_tls12_args *args);
 
 /**
  * smw_keymgr_tls12_is_encryption_aead() - Return if the Cipher mode is AEAD

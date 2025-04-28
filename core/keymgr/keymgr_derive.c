@@ -30,6 +30,9 @@
 #define SMW_TLS12_ENCRYPTION_ID_OFFSET                                         \
 	(SMW_TLS12_ENC_NAME_3DES_EDE_CBC - SMW_TLS12_ENCRYPTION_ID_3DES_EDE_CBC)
 
+#define SMW_TLS12_OPERATION_ID_OFFSET                                          \
+	(SMW_TLS12_OP_NAME_MASTER_SECRET - SMW_TLS12_OPERATION_ID_MASTER_SECRET)
+
 #define MASTER_SECRET_STR     ((unsigned char *)"master secret")
 #define MASTER_SECRET_LEN     (13)
 #define KEY_EXPANSION_STR     ((unsigned char *)"key expansion")
@@ -284,6 +287,38 @@ static int tls12_get_encryption_id(smw_tls12_enc_t name,
 		status = SMW_STATUS_INVALID_PARAM;
 	} else if (name < SMW_TLS12_ENC_NAME_NB) {
 		if (!SUB_OVERFLOW(name, SMW_TLS12_ENCRYPTION_ID_OFFSET,
+				  (int *)id))
+			status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	return status;
+}
+
+/**
+ * tsl12_get_operation_id() - Get ID of TLS 1.2 operation name
+ * @name: Operation name
+ * @id: ID of the operation name
+ *
+ * Return:
+ * SMW_STATUS_OK                     - Success
+ * SMW_STATUS_INVALID_PARAM          - Invalid function parameter
+ * SMW_STATUS_UNKNOWN_OP_TYPE_NAME   - Unknown TLS 1.2 operation name
+ */
+static int tls12_get_operation_id(smw_tls12_op_t name,
+				  enum smw_tls12_operation_id *id)
+{
+	int status = SMW_STATUS_UNKNOWN_OP_TYPE_NAME;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*id = SMW_TLS12_OPERATION_ID_INVALID;
+
+	if (name == SMW_TLS12_OP_NAME_NONE) {
+		status = SMW_STATUS_INVALID_PARAM;
+	} else if (name < SMW_TLS12_OP_NAME_NB) {
+		if (!SUB_OVERFLOW(name, SMW_TLS12_OPERATION_ID_OFFSET,
 				  (int *)id))
 			status = SMW_STATUS_OK;
 	}
@@ -1686,6 +1721,14 @@ smw_keymgr_tls12_get_server_random_length(struct smw_keymgr_tls12_args *args)
 	return rd->server_random_length;
 }
 
+struct smw_op_context *
+smw_keymgr_tls12_get_context(struct smw_keymgr_tls12_args *args)
+{
+	SMW_DBG_ASSERT(args && args->is_operation && args->pub_op_args);
+
+	return args->pub_op_args->context;
+}
+
 /**
  * smw_keymgr_tls13_get_peer_len() - Get peer public key buffer length
  * @args: Pointer to internal arguments structure
@@ -2041,6 +2084,10 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 	}
 
 	tls_args->is_operation = true;
+
+	status = tls12_get_operation_id(args->op_name, &tls_args->op_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	status = get_prf_id(args->prf_name, &tls_args->prf_id);
 	if (status != SMW_STATUS_OK)

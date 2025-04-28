@@ -380,6 +380,6 @@ Example 5: AEAD multi-part decryption operation
         final_args.tag_length = TAG_LEN;
         res = smw_aead_final(&final_args);
 
-exit:
-        return res;
+        exit:
+            return res;
     }

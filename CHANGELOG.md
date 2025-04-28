@@ -72,6 +72,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support for X25519 key type (used for x25519 TLS key exchange).
 * Add asymmetric encryption and decryption APIs.
 * Update public HKDF arguments structures `smw_hkdf_args` and `smw_kdf_hkdf_args`.
+* Add support for EdgeLock Enclave key import.
+* Add algorithm operation class key agreement.
 
 ##### 2. Subsystems
 
@@ -80,14 +82,15 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Handle EDDSA additional parameters and signature message hashed flag.
 * ELE: Add support for TLS1.3 KDF.
 * ELE: Add any EDDSA variant for key creation permitted algorithm.
+* ELE: Add support for signature generation using plaintext private key buffer.
+* ELE: Add key import using EdgeLock Enclave blob.
+* ELE: Add support for hash mac generation using plaintext private key buffer.
 * TEE: Fix the ed25519 key security size to be 255 bits.
 * TEE: Improve object storage management.
 * TEE: Handle EDDSA additional parameters and signature message hashed flag.
+* TEE: Add support for asymmetric encryption and decryption for TEE subsystem.
 * SECO: Fix coverity finding.
 * SECO: Handle signature message hashed flag.
-* ELE: Add support for signature generation using plaintext private key buffer.
-* ELE: Add support for hash mac generation using plaintext private key buffer.
-* TEE: Add support for asymmetric encryption and decryption for TEE subsystem.
 
 ##### 3. ARM PSA APIs
 
@@ -123,6 +126,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   U_ELE_Derive_010, U_ELE_Derive_011.
 * Add tests to validate HMAC generation and verification using plaintext key buffer.
 * Add tests to validate asymmetric encryption and decryption APIs.
+* Add key import using EdgeLock Enclave blob tests.
 
 #### PKCS#11 Library - _version 5.0_
 

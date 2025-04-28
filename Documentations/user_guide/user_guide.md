@@ -57,7 +57,7 @@ and supported by the SMW Library.
 </thead>
 <tbody>
 <tr>
-  <td rowspan="15">Key Management</td>
+  <td rowspan="16">Key Management</td>
   <td colspan="2">Generate</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -89,8 +89,8 @@ and supported by the SMW Library.
   <td>EdgeLock Enclave blob</td>
 	<td>❌</td>
 	<td>❌</td>
-	<td>❌</td>
-	<td>❌️</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>❌️</td>
 	<td>❌️</td>
 </tr>
@@ -113,7 +113,7 @@ and supported by the SMW Library.
 	<td>✔️</td>
 </tr>
 <tr>
-  <td rowspan="4">Key Derivation</td>
+  <td rowspan="5">Key Derivation</td>
   <td>TLS 1.2 key agreement</td>
 	<td>✔️<sup><a href="#t_note_1">1</a></sup></td>
 	<td>❌</td>
@@ -147,6 +147,15 @@ and supported by the SMW Library.
 	<td>❌</td>
 	<td>✔️</td>
 	<td>✔️</td>
+	<td>❌️</td>
+</tr>
+<tr>
+  <td>OEM Master Key agreement<sup><a href="#t_note_2">2</a></sup></td>
+	<td>❌</td>
+	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️</td>
+	<td>❌</td>
 	<td>❌️</td>
 </tr>
 <tr>
@@ -187,8 +196,8 @@ and supported by the SMW Library.
 </tr>
 <tr>
   <td colspan="2">Commit key storage</td>
-	<td>✔️<sup><a href="#t_note_2">2</a></td>
-	<td>✔️<sup><a href="#t_note_2">2</a></td>
+	<td>✔️<sup><a href="#t_note_3">3</a></td>
+	<td>✔️<sup><a href="#t_note_3">3</a></td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>❌️️</td>
@@ -305,7 +314,7 @@ and supported by the SMW Library.
 <tr>
   <td rowspan="4">Data Storage</td>
 	<td colspan="2">Get information</td>
-	<td>✔️<sup><a href="#t_note_3">3</a></sup></td>
+	<td>✔️<sup><a href="#t_note_4">4</a></sup></td>
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
@@ -343,9 +352,15 @@ and supported by the SMW Library.
 </table>
 
 <p>
-<a name="t_note_1"><sup>1</sup></a> Require specific SECO Firmware (TLS 1.2 + HMAC). Build option ENABLE_TLS must be set ON.<br>
-<a name="t_note_2"><sup>2</sup></a> Do nothing, returns always success.<br>
-<a name="t_note_3"><sup>3</sup></a> Retrieve only information from SMW object database.<br>
+<a name="t_note_1"><sup>1</sup></a> Require specific SECO Firmware (TLS 1.2 +
+                                    HMAC). Build option ENABLE_TLS must be set
+				    ON.<br>
+<a name="t_note_2"><sup>2</sup></a> OEM Master key allows user to import a
+                                    secure key using the EdgeLock Enclave
+				    blob.<br>
+<a name="t_note_3"><sup>3</sup></a> Do nothing, returns always success.<br>
+<a name="t_note_4"><sup>4</sup></a> Retrieve only information from SMW object
+                                    database.<br>
 </p>
 
 Following <a href="#table-certificate">Certificates table</a> lists the certificate types supported by SMW, PKCS#11 and PSA libraries.
@@ -644,12 +659,14 @@ Below is the organization of the project sources.
 |   |   |-- internal_trusted_storage.h
 |   |   |-- protected_storage.h
 |   |   `-- storage_common.h
-|   |-- <span style="color:orange">smw</span>
-|   |   |-- <span style="color:orange">crypto</span>                 SMW's cryptographic interface headers (refer to APIs documentation)
-|   |   |   |-- aead.h
-|   |   |   |-- asymmetric_encryption.h
-|   |   |   `-- op_context.h
+|   |-- <span style="color:orange">smw</span>                        SMW's API headers (refer to APIs documentations)
 |   |   |-- attr.h
+|   |   |-- <span style="color:orange">crypto</span>
+|   |   |    |-- aead.h
+|   |   |    |-- asymmetric_encryption.h
+|   |   |    `-- op_context.h
+|   |   |-- <span style="color:orange">kdf</span>
+|   |   |   `-- oem_master_key.h
 |   |   |-- names.h
 |   |   |-- object.h
 |   |   `-- tls.h

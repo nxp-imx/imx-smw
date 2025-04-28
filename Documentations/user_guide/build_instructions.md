@@ -755,14 +755,16 @@ option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-envi
     |   |   |   |-- protected_storage.h
     |   |   |   `-- storage_common.h
     |   |   |-- <span style="color:orange">smw</span>
+    |   |   |   |-- attr.h
     |   |   |   |-- <span style="color:orange">crypto</span>
     |   |   |   |    |-- aead.h
     |   |   |   |    |-- asymmetric_encryption.h
     |   |   |   |    `-- op_context.h
-    |   |   |   |-- attr.h
+    |   |   |   |-- <span style="color:orange">kdf</span>
+    |   |   |   |   `-- oem_master_key.h
     |   |   |   |-- names.h
     |   |   |   |-- object.h
-|   |   |   |   `-- tls.h
+    |   |   |   `-- tls.h
     |   |   |-- smw_config.h
     |   |   |-- smw_crypto.h
     |   |   |-- smw_device.h

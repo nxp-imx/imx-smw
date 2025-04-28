@@ -672,12 +672,12 @@ int derive_tls12_op(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	switch (tls12_args->pub_op_args->op_name) {
-	case SMW_TLS12_OP_NAME_MASTER_SECRET:
+	switch (tls12_args->op_id) {
+	case SMW_TLS12_OPERATION_ID_MASTER_SECRET:
 		status = tls12_op_derive_master_secret(args, &key_mgt_hdl);
 		break;
 
-	case SMW_TLS12_OP_NAME_KEY_EXPANSION:
+	case SMW_TLS12_OPERATION_ID_KEY_EXPANSION:
 		status = tls12_op_derive_key_expansion(args, &key_mgt_hdl);
 		if (status != SMW_STATUS_OK)
 			goto end;

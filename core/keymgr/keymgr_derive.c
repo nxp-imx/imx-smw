@@ -845,25 +845,6 @@ static int convert_output_args(struct smw_derive_key_args *args,
 }
 
 /**
- * is_hkdf_extract_step() - Check if the step is HKDF_STEP_EXTRACT
- * @args: Pointer to additional HKDF arguments structure
- *
- * Return:
- * True if HKDF step is EXTRACT
- * False otherwise
- */
-static bool is_hkdf_extract_step(struct smw_keymgr_hkdf_args *args)
-{
-	bool is_extract_step = false;
-	enum hkdf_step step = smw_keymgr_get_hkdf_step(args);
-
-	if (step == HKDF_STEP_EXTRACT)
-		is_extract_step = true;
-
-	return is_extract_step;
-}
-
-/**
  * create_key_in_db() - Create a key in the database
  * @id: New key identifier created in the database
  * @derive_key_args: Pointer to internal Key derivation arguments structure
@@ -892,10 +873,11 @@ static int create_key_in_db(unsigned int *new_id,
 	switch (derive_key_args->kdf_id) {
 	case SMW_CONFIG_KDF_ID_HKDF:
 	case SMW_CONFIG_KDF_ID_HKDF_EXPAND:
-		if (!is_hkdf_extract_step(derive_key_args->kdf_args))
-			status = smw_keymgr_db_create(new_id, identifier);
-		else
-			status = SMW_STATUS_OK;
+		status = smw_keymgr_db_create(new_id, identifier);
+		break;
+
+	case SMW_CONFIG_KDF_ID_HKDF_EXTRACT:
+		status = SMW_STATUS_OK;
 		break;
 
 	case SMW_CONFIG_KDF_ID_ECDH:
@@ -973,10 +955,8 @@ static int update_key_in_db(int status, unsigned int *id,
 	struct smw_keymgr_derived_key_desc *key_desc =
 		&derive_key_args->key_derived;
 
-	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF) {
-		if (is_hkdf_extract_step(derive_key_args->kdf_args))
-			goto end;
-	}
+	if (derive_key_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXTRACT)
+		goto end;
 
 	if (status != SMW_STATUS_OK &&
 	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
@@ -1103,22 +1083,6 @@ end:
 	return status;
 }
 
-enum hkdf_step smw_keymgr_get_hkdf_step(struct smw_keymgr_hkdf_args *args)
-{
-	enum hkdf_step step = HKDF_STEP_INVALID;
-
-	if (args && args->pub_args) {
-		if (args->pub_args->expand && args->pub_args->extract)
-			step = HKDF_STEP_FULL;
-		else if (args->pub_args->expand && !args->pub_args->extract)
-			step = HKDF_STEP_EXPAND;
-		else if (!args->pub_args->expand && args->pub_args->extract)
-			step = HKDF_STEP_EXTRACT;
-	}
-
-	return step;
-}
-
 /**
  * smw_keymgr_hkdf_get_salt() - Get salt buffer address
  * @args: Pointer to internal argument structure
@@ -1132,17 +1096,17 @@ smw_keymgr_hkdf_get_salt(struct smw_keymgr_derive_key_args *args)
 {
 	unsigned char *salt = NULL;
 	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
-	enum hkdf_step step = HKDF_STEP_INVALID;
 
 	SMW_DBG_ASSERT(args && args->kdf_args);
 
 	hkdf_args = args->kdf_args;
-	step = smw_keymgr_get_hkdf_step(hkdf_args);
 
-	if (step == HKDF_STEP_EXTRACT)
+	SMW_DBG_ASSERT(hkdf_args->pub_args);
+
+	if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXTRACT)
 		salt = hkdf_args->pub_args->hkdf_extract_args.salt;
-	else if (step == HKDF_STEP_FULL)
-		salt = hkdf_args->pub_args->hkdf_args.salt;
+	else if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF)
+		salt = hkdf_args->pub_args->hkdf_args.extract_args.salt;
 
 	return salt;
 }
@@ -1160,17 +1124,17 @@ smw_keymgr_hkdf_get_salt_len(struct smw_keymgr_derive_key_args *args)
 {
 	unsigned int salt_len = 0;
 	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
-	enum hkdf_step step = HKDF_STEP_INVALID;
 
 	SMW_DBG_ASSERT(args && args->kdf_args);
 
 	hkdf_args = args->kdf_args;
-	step = smw_keymgr_get_hkdf_step(hkdf_args);
 
-	if (step == HKDF_STEP_EXTRACT)
+	SMW_DBG_ASSERT(hkdf_args->pub_args);
+
+	if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXTRACT)
 		salt_len = hkdf_args->pub_args->hkdf_extract_args.salt_len;
-	else if (step == HKDF_STEP_FULL)
-		salt_len = hkdf_args->pub_args->hkdf_args.salt_len;
+	else if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF)
+		salt_len = hkdf_args->pub_args->hkdf_args.extract_args.salt_len;
 
 	return salt_len;
 }
@@ -1188,17 +1152,17 @@ smw_keymgr_hkdf_get_info(struct smw_keymgr_derive_key_args *args)
 {
 	unsigned char *info = NULL;
 	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
-	enum hkdf_step step = HKDF_STEP_INVALID;
 
 	SMW_DBG_ASSERT(args && args->kdf_args);
 
 	hkdf_args = args->kdf_args;
-	step = smw_keymgr_get_hkdf_step(hkdf_args);
 
-	if (step == HKDF_STEP_EXPAND)
+	SMW_DBG_ASSERT(hkdf_args->pub_args);
+
+	if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXPAND)
 		info = hkdf_args->pub_args->hkdf_expand_args.info;
-	else if (step == HKDF_STEP_FULL)
-		info = hkdf_args->pub_args->hkdf_args.info;
+	else if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF)
+		info = hkdf_args->pub_args->hkdf_args.expand_args.info;
 
 	return info;
 }
@@ -1216,17 +1180,17 @@ smw_keymgr_hkdf_get_info_len(struct smw_keymgr_derive_key_args *args)
 {
 	unsigned int info_len = 0;
 	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
-	enum hkdf_step step = HKDF_STEP_INVALID;
 
 	SMW_DBG_ASSERT(args && args->kdf_args);
 
 	hkdf_args = args->kdf_args;
-	step = smw_keymgr_get_hkdf_step(hkdf_args);
 
-	if (step == HKDF_STEP_EXPAND)
+	SMW_DBG_ASSERT(hkdf_args->pub_args);
+
+	if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXPAND)
 		info_len = hkdf_args->pub_args->hkdf_expand_args.info_len;
-	else if (step == HKDF_STEP_FULL)
-		info_len = hkdf_args->pub_args->hkdf_args.info_len;
+	else if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF)
+		info_len = hkdf_args->pub_args->hkdf_args.expand_args.info_len;
 
 	return info_len;
 }
@@ -1243,19 +1207,19 @@ smw_keymgr_hkdf_get_peer_pub_buffer(struct smw_keymgr_derive_key_args *args)
 {
 	unsigned char *peer_pub_buffer = NULL;
 	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
-	enum hkdf_step step = HKDF_STEP_INVALID;
 
 	SMW_DBG_ASSERT(args && args->kdf_args);
 
 	hkdf_args = args->kdf_args;
-	step = smw_keymgr_get_hkdf_step(hkdf_args);
 
-	if (step == HKDF_STEP_EXTRACT)
+	SMW_DBG_ASSERT(hkdf_args->pub_args);
+
+	if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXTRACT)
 		peer_pub_buffer = hkdf_args->pub_args->hkdf_extract_args
 					  .peer_public_buffer;
-	else if (step == HKDF_STEP_FULL)
-		peer_pub_buffer =
-			hkdf_args->pub_args->hkdf_args.peer_public_buffer;
+	else if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF)
+		peer_pub_buffer = hkdf_args->pub_args->hkdf_args.extract_args
+					  .peer_public_buffer;
 
 	return peer_pub_buffer;
 }
@@ -1272,19 +1236,20 @@ smw_keymgr_hkdf_get_peer_pub_buffer_len(struct smw_keymgr_derive_key_args *args)
 {
 	unsigned int peer_pub_buffer_len = 0;
 	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
-	enum hkdf_step step = HKDF_STEP_INVALID;
 
 	SMW_DBG_ASSERT(args && args->kdf_args);
 
 	hkdf_args = args->kdf_args;
-	step = smw_keymgr_get_hkdf_step(hkdf_args);
 
-	if (step == HKDF_STEP_EXTRACT)
+	SMW_DBG_ASSERT(hkdf_args->pub_args);
+
+	if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXTRACT)
 		peer_pub_buffer_len = hkdf_args->pub_args->hkdf_extract_args
 					      .peer_public_buffer_len;
-	else if (step == HKDF_STEP_FULL)
+	else if (args->kdf_id == SMW_CONFIG_KDF_ID_HKDF)
 		peer_pub_buffer_len =
-			hkdf_args->pub_args->hkdf_args.peer_public_buffer_len;
+			hkdf_args->pub_args->hkdf_args.extract_args
+				.peer_public_buffer_len;
 
 	return peer_pub_buffer_len;
 }
@@ -1864,26 +1829,9 @@ static int hkdf_convert_input_args(struct smw_derive_key_args *pub_args,
 	if (!hkdf_pub_args)
 		goto end;
 
-	if (!hkdf_pub_args->expand && !hkdf_pub_args->extract)
-		goto end;
-
-	if (conv_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXPAND) {
-		if (!hkdf_pub_args->expand || hkdf_pub_args->extract) {
-			SMW_DBG_PRINTF(ERROR,
-				       "HKDF expand and arguments invalid\n");
-			goto end;
-		}
-	} else if (conv_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXTRACT) {
-		if (!hkdf_pub_args->extract || hkdf_pub_args->expand) {
-			SMW_DBG_PRINTF(ERROR,
-				       "HKDF extract and arguments invalid\n");
-			goto end;
-		}
-	}
-
 	base_key_desc = pub_args->key_descriptor_base;
 
-	if (hkdf_pub_args->expand && !hkdf_pub_args->extract) {
+	if (conv_args->kdf_id == SMW_CONFIG_KDF_ID_HKDF_EXPAND) {
 		/* The HKDF Extract operation produces the PRK which serves as the base
 		 * key to the HKDF Expand operation.
 		 */

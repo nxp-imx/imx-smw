@@ -448,28 +448,6 @@ struct smw_kdf_tls13_args {
 };
 
 /**
- * struct smw_hkdf_args - HKDF full arguments structure
- * @salt: [in] Salt buffer
- * @salt_len: [in] @salt length in bytes
- * @info: [in] Context and application specific information buffer
- * @info_len: [in] @info length in bytes
- * @peer_public_buffer: [in] Peer public buffer
- * @peer_public_buffer_len: [in] @peer_public_buffer in bytes
- *
- * @info and @salt are optional parameters.
- * If @info and @salt are set, length of the respective buffers should be set.
- * @peer_public_buffer should be a valid public key and should be in hex format.
- */
-struct smw_hkdf_args {
-	unsigned char *salt;
-	unsigned int salt_len;
-	unsigned char *info;
-	unsigned int info_len;
-	unsigned char *peer_public_buffer;
-	unsigned int peer_public_buffer_len;
-};
-
-/**
  * struct smw_hkdf_extract_args - HKDF extract step arguments structure
  * @salt: [in] Salt buffer
  * @salt_len: [in] @salt length in bytes
@@ -501,9 +479,17 @@ struct smw_hkdf_expand_args {
 };
 
 /**
+ * struct smw_hkdf_args - HKDF full arguments structure
+ * @extract_args: [in] HKDF extract arguments structure
+ * @expand_args: [in] HKDF expand arguments structure
+ */
+struct smw_hkdf_args {
+	struct smw_hkdf_extract_args extract_args;
+	struct smw_hkdf_expand_args expand_args;
+};
+
+/**
  * struct smw_kdf_hkdf_args - HMAC-based Key derivation function arguments
- * @extract: [in] Execute the extract step of HKDF
- * @expand: [in] Execute the expand step of HKDF
  * @hash_algo: [in] Hash algorithm name. See &typedef smw_hash_algo_t
  * @hkdf_args: [in/out] HKDF full arguments. See &struct smw_hkdf_args
  * @hkdf_extract_args: [in/out] HKDF extract step arguments.
@@ -557,8 +543,6 @@ struct smw_hkdf_expand_args {
  *      SMW_KEY_TYPE_NAME_RAW.
  */
 struct smw_kdf_hkdf_args {
-	bool extract;
-	bool expand;
 	smw_hash_algo_t hash_algo;
 	union {
 		struct smw_hkdf_args hkdf_args;

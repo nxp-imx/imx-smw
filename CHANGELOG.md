@@ -119,6 +119,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Add DES key generation performance test.
 * Add test to validate ed25519 key generation and signature
+* Do not run DES key generation performance test in debug build.
 
 ---
 ### <a id ="rel_4_2"></a></br>**Release 4.2**

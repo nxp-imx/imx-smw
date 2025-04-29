@@ -18,7 +18,8 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"api": "PSA",
-		"key_name": "generated aes-ccm-128 key"
+		"key_name": "generated aes-ccm-128 key",
+		"restriction_list": "imx95"
 	},
 	"subtest 2": {
 		"command": "AEAD",

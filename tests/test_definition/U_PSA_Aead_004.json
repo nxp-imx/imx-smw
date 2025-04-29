@@ -20,7 +20,8 @@
 		"api": "PSA",
 		"key_name": "generated aes-gcm-128 key",
 		"restriction_list": [
-			"imx8ulp"
+			"imx8ulp",
+			"imx95"
 		]
 	},
 	"subtest 2": {

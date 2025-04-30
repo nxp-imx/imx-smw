@@ -65,13 +65,19 @@
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 1",
-		"restriction_list": "imx95"
+		"restriction_list": [
+			"imx95",
+			"imx943"
+		]
 	},
 	"subtest 2": {
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 2",
-		"restriction_list": "imx95"
+		"restriction_list": [
+			"imx95",
+			"imx943"
+		]
 	},
 	"subtest 3": {
 		"command": "GENERATE",
@@ -123,7 +129,10 @@
 		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
 		"tag": 16,
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
-		"restriction_list": "imx95"
+		"restriction_list": [
+			"imx95",
+			"imx943"
+		]
 	},
 	"subtest 7": {
 		"description": "(CCM) Get output length",

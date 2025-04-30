@@ -19,7 +19,10 @@
 		"command": "GENERATE",
 		"api": "PSA",
 		"key_name": "generated aes-ccm-128 key",
-		"restriction_list": "imx95"
+		"restriction_list": [
+			"imx95",
+			"imx943"
+		]
 	},
 	"subtest 2": {
 		"command": "AEAD",

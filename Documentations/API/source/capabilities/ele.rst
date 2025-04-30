@@ -505,6 +505,9 @@ AEAD
 
 .. [2] Currently supported on i.MX91 and i.MX93
 
+.. note::
+  AEAD is not supported on i.MX95 and i.MX943.
+
 One-shot operations supported:
  - AEAD Encryption
  - AEAD Decryption

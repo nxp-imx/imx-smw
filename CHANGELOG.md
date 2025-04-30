@@ -94,6 +94,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support of the EDDSA signature for TEE subsystem in all configurations
 * Add support of key permitted algo and key usage in Object database.
 * Add a database version information and verification.
+* Remove AEAD support for ELE subsystem in i.MX95 and i.MX943 configuration files.
 
 #### SMW Tests - _version 5.0_
 
@@ -110,6 +111,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Remove "DEFAULT" algorithm and introduce "MSG_HASHED" parameter.
 * Update U_API_Objects_002 to find key by permitted algo or usage.
 * Add tests to validate signature generation and verification using plaintext key buffer.
+* Disable ELE AEAD tests for i.MX95 and i.MX943 platforms.
 
 #### PKCS#11 Library - _version 5.0_
 

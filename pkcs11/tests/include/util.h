@@ -20,6 +20,8 @@ bool is_seco_subsystem(void);
 bool is_ele_subsystem(void);
 bool is_tee_subsystem(void);
 bool is_8ulp(void);
+bool is_943evk(void);
+bool is_95evk(void);
 CK_RV util_set_unique_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG_PTR length,
 			 CK_OBJECT_CLASS class, unsigned int id);
 CK_RV util_get_object_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG length,

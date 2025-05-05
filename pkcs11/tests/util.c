@@ -13,6 +13,10 @@
 #include "util.h"
 #include "test_check.h"
 
+#define IMX8ULP	  "imx8ulp"
+#define IMX943EVK "imx943evk"
+#define IMX95EVK  "imx95evk"
+
 #define TO_CK_BYTES(out, val)                                                  \
 	({                                                                     \
 		__typeof__(out) _out = (out);                                  \
@@ -186,10 +190,9 @@ bool is_tee_subsystem(void)
 #endif
 }
 
-bool is_8ulp(void)
+static bool compare_hostname(const char *device)
 {
 	char hostname[256] = { 0 };
-	const char *device = "imx8ulp";
 
 	if (gethostname(hostname, sizeof(hostname))) {
 		TEST_OUT("%s (%d): Unable to get the hostname\n", __func__,
@@ -203,6 +206,21 @@ bool is_8ulp(void)
 		return true;
 
 	return false;
+}
+
+bool is_8ulp(void)
+{
+	return compare_hostname(IMX8ULP);
+}
+
+bool is_95evk(void)
+{
+	return compare_hostname(IMX95EVK);
+}
+
+bool is_943evk(void)
+{
+	return compare_hostname(IMX943EVK);
 }
 
 CK_RV util_set_unique_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG_PTR length,

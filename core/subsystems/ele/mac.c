@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023 NXP
+ * Copyright 2023, 2025 NXP
  */
 
 #include "smw_status.h"
@@ -97,36 +97,82 @@ static int get_mac_algo(struct mac_algo *alg, struct smw_crypto_mac_args *args)
 	return status;
 }
 
-static int mac(struct hdl *hdl, void *args)
+static int get_private_key_buffer(op_mac_one_go_args_t *op_args,
+				  struct smw_keymgr_descriptor *key_desc,
+				  unsigned char **hex_private_buffer)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+
+	unsigned int private_buf_len = smw_keymgr_get_private_length(key_desc);
+	unsigned char *private_buffer = smw_keymgr_get_private_data(key_desc);
+	unsigned int hex_private_len = 0;
+
+	if (!private_buf_len || !private_buffer)
+		goto end;
+
+	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id,
+					       private_buffer, private_buf_len,
+					       hex_private_buffer,
+					       &hex_private_len);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (SET_OVERFLOW(private_buf_len, op_args->key_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	op_args->key = *hex_private_buffer;
+
+end:
+	return status;
+}
+
+static int mac(struct hdl *hdl, void *args)
+{
+	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 	op_mac_one_go_args_t op_args = { 0 };
 
 	struct smw_crypto_mac_args *mac_args = args;
 	struct mac_algo alg = { 0 };
-	struct smw_keymgr_descriptor *key_descriptor = NULL;
+	struct smw_keymgr_descriptor *key_desc = &mac_args->key_descriptor;
+	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
+	hsm_key_type_t ele_key_type = (hsm_key_type_t)0;
+
+	unsigned char *hex_private_buffer = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (!mac_args)
-		goto end;
 
 	status = get_mac_algo(&alg, mac_args);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	key_descriptor = &mac_args->key_descriptor;
+	if (key_identifier->id) {
+		op_args.key_identifier = key_identifier->id;
+	} else {
+		/* MAC using plaintext key buffer */
+		op_args.flags = HSM_OP_MAC_FLAGS_PLAINTEXT_KEY;
+		status = ele_get_key_type(key_identifier->type_id,
+					  &ele_key_type);
+		if (status != SMW_STATUS_OK)
+			goto end;
 
-	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
-		//TODO: first import key, then generate mac
-		//      for now import is not supported by ELE
-		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
-		goto end;
+		op_args.key_type = ele_key_type;
+
+		if (SET_OVERFLOW(key_identifier->security_size,
+				 op_args.key_size)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
+		status = get_private_key_buffer(&op_args, key_desc,
+						&hex_private_buffer);
+		if (status != SMW_STATUS_OK)
+			goto end;
 	}
 
-	op_args.key_identifier = key_descriptor->identifier.id;
 	op_args.payload = smw_mac_get_input_data(mac_args);
 	op_args.payload_size = smw_mac_get_input_length(mac_args);
 	op_args.mac = smw_mac_get_mac_data(mac_args);
@@ -148,13 +194,13 @@ static int mac(struct hdl *hdl, void *args)
 			goto end;
 		}
 
-		op_args.flags = HSM_OP_MAC_ONE_GO_FLAGS_MAC_GENERATION;
+		op_args.flags |= HSM_OP_MAC_ONE_GO_FLAGS_MAC_GENERATION;
 	} else {
-		op_args.flags = HSM_OP_MAC_ONE_GO_FLAGS_MAC_VERIFICATION;
+		op_args.flags |= HSM_OP_MAC_ONE_GO_FLAGS_MAC_VERIFICATION;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE,
-		       "[%s (%d)] Call hsm_mac_one_go()\n"
+		       "[%s (%d)] Call hsm_do_mac()\n"
 		       "op_mac_one_go_args_t %s\n"
 		       "    key_identifier: 0x%X\n"
 		       "    algo: 0x%08X\n"
@@ -174,7 +220,7 @@ static int mac(struct hdl *hdl, void *args)
 		       op_args.mac_size);
 
 	err = hsm_do_mac(hdl->key_store, &op_args);
-	SMW_DBG_PRINTF(DEBUG, "%s hsm_mac_one_go returned %d\n", __func__, err);
+	SMW_DBG_PRINTF(DEBUG, "%s hsm_do_mac returned %d\n", __func__, err);
 
 	status = ele_convert_err(err);
 
@@ -182,6 +228,11 @@ static int mac(struct hdl *hdl, void *args)
 		smw_mac_set_mac_length(mac_args, op_args.exp_mac_size);
 
 end:
+	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
+		if (hex_private_buffer)
+			SMW_UTILS_FREE(hex_private_buffer);
+	}
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

@@ -1,0 +1,174 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "HMAC",
+			"security_size": 256,
+			"priv_key": [
+				"519b423d715f8b581f4fa8ee59f4771a",
+				"5b44c8130b4e3eacca54a56dda72b464"
+			]
+		},
+		"key 2": {
+			"type": "HMAC",
+			"security_size": 256,
+			"priv_key": [
+				"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+				"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"
+			]
+		},
+		"key 3": {
+			"type": "HMAC",
+			"security_size": 512,
+			"priv_key": [
+				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": "Get the MAC size - Output buffer is NULL",
+		"command": "MAC_COMPUTE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		]
+	},
+	"subtest 2": {
+		"command": "MAC_COMPUTE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"output": 32,
+		"mac_id": 1
+	},
+	"subtest 3": {
+		"command": "MAC_COMPUTE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": 0,
+		"output": 32,
+		"mac_id": 2
+	},
+	"subtest 4": {
+		"command": "MAC_VERIFY",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"mac_id": 1,
+		"depends": 2
+	},
+	"subtest 5": {
+		"command": "MAC_VERIFY",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": 0,
+		"mac_id": 2,
+		"depends": 3
+	},
+	"subtest 6": {
+		"command": "MAC_VERIFY",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 1",
+		"input": [
+			"6bc1bee22e409f96e93d7e117393172a"
+		],
+		"mac": [
+			"633ae70f0c69dec8a0d955b5f0f3f869",
+			"e61093015a1a15ebfa8b9a5134cfb913"
+		]
+	},
+	"subtest 7": {
+		"description": "256bits plaintext key with HMAC-SHA-256",
+		"command": "MAC_COMPUTE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 2",
+		"input": [
+			"4869205468657265"
+		],
+		"output": 32,
+		"mac": [
+			"198a607eb44bfbc69903a0f1cf2bbdc5",
+			"ba0aa3f3d9ae3c1c7a3b1696a0b68cf7"
+		]
+	},
+	"subtest 8": {
+		"description": "256bits plaintext key with HMAC-SHA-384",
+		"command": "MAC_COMPUTE",
+		"algo": "HMAC",
+		"hash": "SHA384",
+		"key_name": "key 2",
+		"input": [
+			"4869205468657265"
+		],
+		"output": 48,
+		"mac": [
+			"c3f1615943d1dd07a83bb644b97fb3dc",
+			"2b8a936aa5389de2a3e9dd91bc3bae0d",
+			"0c30334a301733aa54ed5e1f0769e868"
+		]
+	},
+	"subtest 9": {
+		"description": "512bits plaintext key with HMAC-SHA-256",
+		"command": "MAC_COMPUTE",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "key 3",
+		"input": [
+			"54686973206973206120746573742075",
+			"73696e672061206c6172676572207468",
+			"616e20626c6f636b2d73697a65206b65",
+			"7920616e642061206c61726765722074",
+			"68616e20626c6f636b2d73697a652064",
+			"6174612e20546865206b6579206e6565",
+			"647320746f2062652068617368656420",
+			"6265666f7265206265696e6720757365",
+			"642062792074686520484d414320616c",
+			"676f726974686d2e"
+		],
+		"output": 32,
+		"mac": [
+			"20ceafe1d2f6c4b49fe4aab58ad8af4d",
+			"16da60ac096dd08f0fd745e897601f52"
+		]
+	},
+	"subtest 10": {
+		"description": "512bits plaintext key with HMAC-SHA-384",
+		"command": "MAC_COMPUTE",
+		"algo": "HMAC",
+		"hash": "SHA384",
+		"key_name": "key 3",
+		"input": [
+			"54686973206973206120746573742075",
+			"73696e672061206c6172676572207468",
+			"616e20626c6f636b2d73697a65206b65",
+			"7920616e642061206c61726765722074",
+			"68616e20626c6f636b2d73697a652064",
+			"6174612e20546865206b6579206e6565",
+			"647320746f2062652068617368656420",
+			"6265666f7265206265696e6720757365",
+			"642062792074686520484d414320616c",
+			"676f726974686d2e"
+		],
+		"output": 48,
+		"mac": [
+			"c49734b6bd8cd536eb5996ea2507ff3e",
+			"87e899e01ca4f97ba1e6d219cd675c0a",
+			"ff34c6ecae46597e3ff989aeafe2d4d0"
+		]
+	},
+
+}

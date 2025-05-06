@@ -84,6 +84,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * SECO: Fix coverity finding.
 * SECO: Handle signature message hashed flag.
 * ELE: Add support for signature generation using plaintext private key buffer.
+* ELE: Add support for hash mac generation using plaintext private key buffer.
 
 ##### 3. ARM PSA APIs
 
@@ -115,6 +116,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Disable ELE AEAD tests for i.MX95 and i.MX943 platforms.
 * ELE tests: Add tests to validate X25519 key exchange: U_ELE_Generate_005, U_ELE_Derive_009,
   U_ELE_Derive_010, U_ELE_Derive_011.
+* Add tests to validate HMAC generation and verification using plaintext key buffer.
 
 #### PKCS#11 Library - _version 5.0_
 

@@ -40,14 +40,15 @@ static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
 	};
 
 	unsigned int i = 0;
+	unsigned int key_count = 0;
 	struct timespec start = { 0 };
 	struct timespec end = { 0 };
-	unsigned long start_ms = 0;
-	unsigned long end_ms = 0;
-	unsigned long next_run = 0;
-	unsigned long average = 0;
+	unsigned long long start_ms = 0;
+	unsigned long long end_ms = 0;
+	unsigned long long next_run = 0;
+	unsigned long long average = 0;
 	double deviation = 0;
-	unsigned long rounded_deviation = 0;
+	unsigned long long rounded_deviation = 0;
 
 	SUBTEST_START();
 
@@ -70,16 +71,25 @@ static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
 			goto end;
 
+		/*
+		 * Stop the performance test, if conversion
+		 * to milliseconds overflow.
+		 */
 		if (ADD_OVERFLOW(start.tv_sec * SEC_TO_MILLISEC,
 				 start.tv_nsec / NS_TO_MILLISEC, &start_ms))
-			goto end;
+			break;
 
+		/*
+		 * Stop the performance test, if conversion
+		 * to milliseconds overflow.
+		 */
 		if (ADD_OVERFLOW(end.tv_sec * SEC_TO_MILLISEC,
 				 end.tv_nsec / NS_TO_MILLISEC, &end_ms))
-			goto end;
+			break;
 
+		/* Discard the test time value if not valid. */
 		if (SUB_OVERFLOW(end_ms, start_ms, &next_run))
-			goto end;
+			continue;
 
 		if (ADD_OVERFLOW(average, next_run, &average))
 			goto end;
@@ -88,21 +98,24 @@ static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
 			goto end;
 
 		deviation += next_run;
+		key_count++;
 	}
 
 	TEST_OUT("Key Destroy\n");
 	for (i = 0; i < GENERATE_KEY_COUNT; i++) {
-		ret = pfunc->C_DestroyObject(sess, hkey[i]);
-		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-			goto end;
+		if (hkey[i] != CK_INVALID_HANDLE) {
+			ret = pfunc->C_DestroyObject(sess, hkey[i]);
+			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+				goto end;
+		}
 	}
 
-	average = average / GENERATE_KEY_COUNT;
-	TEST_OUT("Average time %ld\n", average);
-	deviation = deviation / GENERATE_KEY_COUNT - average * average;
+	average = average / key_count;
+	TEST_OUT("Average time %lld\n", average);
+	deviation = deviation / key_count - average * average;
 	deviation = sqrt(deviation);
 	rounded_deviation = deviation;
-	TEST_OUT("Standard deviation %ld\n", rounded_deviation);
+	TEST_OUT("Standard deviation %lld\n", rounded_deviation);
 
 	/*
 	 * Check that 68% of values are in range

@@ -339,6 +339,8 @@ MAC generation operation can compute either a full MAC length or a truncated
 MAC length. The operation algorithm and key permitted algorithm allows to
 select the MAC length to be generated.
 
+ELE subsystem supports MAC operation using either a key ID or a plaintext key buffer.
+
  .. table:: ELE MAC - Compute
    :align: center
    :widths: 22 30 13 35
@@ -385,6 +387,8 @@ Verify MAC operation
 MAC verification operation can verify either a full MAC length or a truncated
 MAC length. The operation algorithm and key permitted algorithm allows to
 select the MAC length to be generated.
+
+ELE subsystem supports MAC operation using either a key ID or a plaintext key buffer.
 
  .. table:: ELE MAC - Verify
    :align: center

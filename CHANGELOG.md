@@ -130,6 +130,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Test TLS 1.3 Key exchange tests.
 * Test TLS 1.3 AES GCM multi-part operation.
 * Test TLS 1.3 Hash MAC operation.
+* Fix performance test result calculation on 32bits platforms.
 
 ---
 ### <a id ="rel_4_2"></a></br>**Release 4.2**

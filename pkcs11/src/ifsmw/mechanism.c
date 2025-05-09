@@ -1967,10 +1967,12 @@ end:
 static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 			     struct lib_signature_params *params)
 {
+	CK_RV ret = CKR_OK;
 	const struct libdev *devinfo = NULL;
 	struct lib_signature_ctx *ctx = params->ctx;
 	smw_subsystem_t subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_keypair_buffer keypair_buffer = { 0 };
 	smw_attr_algo_t sign_algo = 0;
 	smw_hash_algo_t hash_algo = SMW_HASH_ALGO_NAME_NONE;
 	unsigned char *input = NULL;
@@ -1986,6 +1988,12 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 	obj_key = (struct libobj_obj *)ctx->hkey;
 
 	key_desc.id = get_key_token_id(obj_key);
+	if (!key_desc.id) {
+		key_desc.buffer = &keypair_buffer;
+		ret = key_desc_setup(&key_desc, (struct libobj_obj *)ctx->hkey);
+		if (ret != CKR_OK)
+			return ret;
+	}
 
 	subsystem_name = devinfo->name;
 	sign_algo = entry->smw_algo_id;
@@ -2845,6 +2853,7 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	struct lib_signature_ctx *ctx = NULL;
 	struct lib_signature_params *params = NULL;
 	struct smw_key_descriptor key_desc = { 0 };
+	struct smw_keypair_buffer keypair_buffer = { 0 };
 	struct smw_mac_args smw_args = { 0 };
 
 	DBG_TRACE("MAC mechanism");
@@ -2861,6 +2870,13 @@ static CK_RV op_mmac_common(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 		return ret;
 
 	key_desc.id = get_key_token_id((struct libobj_obj *)ctx->hkey);
+	if (!key_desc.id) {
+		key_desc.buffer = &keypair_buffer;
+		ret = key_desc_setup(&key_desc, (struct libobj_obj *)ctx->hkey);
+		if (ret != CKR_OK)
+			return ret;
+	}
+
 	smw_args.subsystem_name = devinfo->name;
 	smw_args.key_descriptor = &key_desc;
 

@@ -103,6 +103,127 @@ static CK_RV obj_add_to_list(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 }
 
 /**
+ * find_lock_session_object() - Find and lock a session object
+ * @hsession: Session Handle
+ * @obj: Object to find
+ * @list: Output of the object's list
+ *
+ * Try to find the object by handle in the session object lists.
+ * If object is found, it's locked.
+ * IF parameter @list is not NULL, the function return the pointer
+ * to the list where object is present.
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OBJECT_HANDLE_INVALID          - Object not found
+ * CKR_MUTEX_BAD                      - Mutex not correct
+ * CKR_HOST_MEMORY                    - Memory error
+ * CKR_OK                             - Success
+ */
+static CK_RV find_lock_session_object(CK_SESSION_HANDLE hsession,
+				      struct libobj_obj *obj,
+				      struct libobj_list **list)
+{
+	CK_RV ret = CKR_OK;
+	struct libobj_list *objects = NULL;
+	struct libobj_obj *fobj = NULL;
+
+	DBG_TRACE("Find and lock session object %p", obj);
+
+	ret = libsess_get_objects(hsession, &objects);
+	if (ret != CKR_OK)
+		return ret;
+
+	ret = LLIST_LOCK(objects);
+	if (ret != CKR_OK)
+		return ret;
+
+	LIST_FIND(fobj, objects, obj);
+	if (fobj == obj)
+		ret = libmutex_lock(obj->lock);
+
+	LLIST_UNLOCK(objects);
+
+	if (fobj != obj) {
+		DBG_TRACE("Object %p NOT in session list", obj);
+		return CKR_OBJECT_HANDLE_INVALID;
+	}
+
+	if (ret == CKR_OK) {
+		DBG_TRACE("Object %p found in session list %p", obj, objects);
+		if (list)
+			*list = objects;
+	}
+
+	// coverity[missing_unlock]
+	return ret;
+}
+
+/**
+ * find_lock_token_object() - Find and lock a token object
+ * @hsession: Session Handle
+ * @obj: Object to find
+ * @list: Output of the object's list
+ *
+ * Try to find the object by handle in the token object lists.
+ * If object is found, it's locked.
+ * IF parameter @list is not NULL, the function return the pointer
+ * to the list where object is present.
+ *
+ * Return:
+ * CKR_CRYPTOKI_NOT_INITIALIZED       - Context not initialized
+ * CKR_GENERAL_ERROR                  - No slot defined
+ * CKR_SESSION_HANDLE_INVALID         - Session Handle invalid
+ * CKR_OBJECT_HANDLE_INVALID          - Object not found
+ * CKR_MUTEX_BAD                      - Mutex not correct
+ * CKR_HOST_MEMORY                    - Memory error
+ * CKR_OK                             - Success
+ */
+static CK_RV find_lock_token_object(CK_SESSION_HANDLE hsession,
+				    struct libobj_obj *obj,
+				    struct libobj_list **list)
+{
+	CK_RV ret = CKR_OK;
+	struct libdevice *dev = NULL;
+	struct libobj_list *objects = NULL;
+	struct libobj_obj *fobj = NULL;
+
+	DBG_TRACE("Find and lock token object %p", obj);
+
+	ret = libsess_get_device(hsession, &dev);
+	if (ret != CKR_OK)
+		return ret;
+
+	/* Try to find the object in the token list */
+	objects = &dev->objects;
+	ret = LLIST_LOCK(objects);
+	if (ret != CKR_OK)
+		return ret;
+
+	LIST_FIND(fobj, objects, obj);
+	if (fobj == obj)
+		ret = libmutex_lock(obj->lock);
+
+	LLIST_UNLOCK(objects);
+
+	if (fobj != obj) {
+		DBG_TRACE("Object %p NOT in token list", obj);
+		return CKR_OBJECT_HANDLE_INVALID;
+	}
+
+	if (ret == CKR_OK) {
+		DBG_TRACE("Object %p found in token list %p", obj, objects);
+		if (list)
+			*list = objects;
+	}
+
+	// coverity[missing_unlock]
+	return ret;
+}
+
+/**
  * find_lock_object() - Find and lock a token or session object
  * @hsession: Session Handle
  * @obj: Object to find
@@ -128,61 +249,53 @@ static CK_RV find_lock_object(CK_SESSION_HANDLE hsession,
 {
 	CK_RV ret = CKR_OK;
 	struct libdevice *dev = NULL;
-	struct libobj_list *objects = NULL;
-	struct libobj_obj *fobj = NULL;
+	struct libsess *sess = NULL;
 
-	DBG_TRACE("Find and lock object %p", obj);
+	ret = find_lock_token_object(hsession, obj, list);
+	if (ret == CKR_OK)
+		goto end;
 
+	/*
+	 * Object is not in the token list.
+	 * Try the session object list.
+	 */
+	ret = find_lock_session_object(hsession, obj, list);
+	if (ret == CKR_OK || list)
+		goto end;
+
+	/*
+	 * If no objects list is returned,
+	 * try to find in all sessions.
+	 */
 	ret = libsess_get_device(hsession, &dev);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
-	/* Try to find the object in the token list */
-	objects = &dev->objects;
-	ret = LLIST_LOCK(objects);
-	if (ret != CKR_OK)
-		return ret;
+	if (dev->token.rw_session_count) {
+		sess = LIST_FIRST(&dev->rw_sessions);
+		while (sess) {
+			ret = find_lock_session_object((CK_SESSION_HANDLE)sess,
+						       obj, NULL);
+			if (ret == CKR_OK)
+				goto end;
 
-	LIST_FIND(fobj, objects, obj);
-	if (fobj == obj)
-		ret = libmutex_lock(obj->lock);
-
-	LLIST_UNLOCK(objects);
-
-	if (fobj != obj) {
-		DBG_TRACE("Object %p NOT in token list", obj);
-
-		/*
-		 * Object is not in the token list.
-		 * Try the session object list.
-		 */
-		ret = libsess_get_objects(hsession, &objects);
-		if (ret != CKR_OK)
-			return ret;
-
-		ret = LLIST_LOCK(objects);
-		if (ret != CKR_OK)
-			return ret;
-
-		LIST_FIND(fobj, objects, obj);
-		if (fobj == obj)
-			ret = libmutex_lock(obj->lock);
-
-		LLIST_UNLOCK(objects);
-
-		if (fobj != obj) {
-			DBG_TRACE("Object %p NOT in session list", obj);
-			return CKR_OBJECT_HANDLE_INVALID;
+			sess = LIST_NEXT(sess);
 		}
 	}
 
-	if (ret == CKR_OK) {
-		DBG_TRACE("Object %p found in list %p", obj, objects);
-		if (list)
-			*list = objects;
+	if (dev->token.ro_session_count) {
+		sess = LIST_FIRST(&dev->ro_sessions);
+		while (sess) {
+			ret = find_lock_session_object((CK_SESSION_HANDLE)sess,
+						       obj, NULL);
+			if (ret == CKR_OK)
+				goto end;
+
+			sess = LIST_NEXT(sess);
+		}
 	}
 
-	// coverity[missing_unlock]
+end:
 	return ret;
 }
 

@@ -19,16 +19,6 @@
 #include "keymgr.h"
 #include "hash.h"
 
-enum hkdf_step {
-	HKDF_STEP_INVALID,
-	/* HKDF step 1 expand */
-	HKDF_STEP_EXPAND,
-	/* HKDF step 2 extract */
-	HKDF_STEP_EXTRACT,
-	/* HKDF Step 1 and step 2 combined */
-	HKDF_STEP_FULL
-};
-
 #define KDF_NAME(_name)                                                        \
 	{                                                                      \
 		.name = SMW_KDF_NAME_##_name, .string = #_name                 \
@@ -37,7 +27,11 @@ enum hkdf_step {
 static struct {
 	smw_kdf_t name;
 	const char *string;
-} kdf_names[] = { KDF_NAME(HKDF), KDF_NAME(TLS12_KEY_EXCHANGE), KDF_NAME(ECDH),
+} kdf_names[] = { KDF_NAME(HKDF),
+		  KDF_NAME(HKDF_EXTRACT),
+		  KDF_NAME(HKDF_EXPAND),
+		  KDF_NAME(TLS12_KEY_EXCHANGE),
+		  KDF_NAME(ECDH),
 		  KDF_NAME(TLS12_OP_KEY_EXCHANGE),
 		  KDF_NAME(TLS13_KEY_EXCHANGE) };
 
@@ -443,6 +437,8 @@ static int kdf_tls12_setup_base_key(struct subtest_data *subtest,
 /**
  * kdf_tls12_read_args() - Read the TLS 1.2 function arguments
  * @kdf_args: SMW's TLS 1.2 arguments read
+ * @kdf_name: KDF name
+ * @subtest: Subtest data
  * @oargs: Reference to the test definition json-c arguments array
  *
  * Note: the test definition array must define the arguments in the same
@@ -454,10 +450,12 @@ static int kdf_tls12_setup_base_key(struct subtest_data *subtest,
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int kdf_tls12_read_args(void **kdf_args, struct subtest_data *subtest,
+static int kdf_tls12_read_args(void **kdf_args, smw_kdf_t kdf_name,
+			       struct subtest_data *subtest,
 			       struct json_object *oargs)
 {
 	(void)subtest;
+	(void)kdf_name;
 
 	int res = ERR_CODE(BAD_ARGS);
 	const char *prf_string = NULL;
@@ -823,9 +821,12 @@ end:
 	return res;
 }
 
-static int kdf_tls12_op_read_args(void **kdf_args, struct subtest_data *subtest,
+static int kdf_tls12_op_read_args(void **kdf_args, smw_kdf_t kdf_name,
+				  struct subtest_data *subtest,
 				  struct json_object *oargs)
 {
+	(void)kdf_name;
+
 	int res = ERR_CODE(BAD_ARGS);
 	const char *prf_string = NULL;
 	const char *op_string = NULL;
@@ -1204,6 +1205,7 @@ static int kdf_tls13_setup_base_key(struct subtest_data *subtest,
 /**
  * kdf_tls13_read_args() - Read the TLS 1.3 function arguments
  * @kdf_args: SMW's TLS 1.3 arguments read
+ * @kdf_name: KDF name
  * @subtest: Subtest data
  * @oargs: Reference to the test definition json-c arguments array
  *
@@ -1216,9 +1218,12 @@ static int kdf_tls13_setup_base_key(struct subtest_data *subtest,
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int kdf_tls13_read_args(void **kdf_args, struct subtest_data *subtest,
+static int kdf_tls13_read_args(void **kdf_args, smw_kdf_t kdf_name,
+			       struct subtest_data *subtest,
 			       struct json_object *oargs)
 {
+	(void)kdf_name;
+
 	int res = ERR_CODE(BAD_ARGS);
 	const char *prf_string = NULL;
 	struct tbuffer peer_pub_buf = { 0 };
@@ -1455,31 +1460,6 @@ static int compare_output(unsigned char *received_output,
 }
 
 /**
- * get_hkdf_step() - Return HKDF step.
- * @args: Pointer to public Key derivation arguments structure
- *
- * Return:
- * HKDF step
- */
-static int get_hkdf_step(struct smw_derive_key_args *args)
-{
-	enum hkdf_step step = HKDF_STEP_INVALID;
-	struct smw_kdf_hkdf_args *hkdf_args = NULL;
-
-	if (args && args->kdf_arguments) {
-		hkdf_args = args->kdf_arguments;
-		if (!hkdf_args->extract && hkdf_args->expand)
-			step = HKDF_STEP_EXPAND;
-		else if (!hkdf_args->expand && hkdf_args->extract)
-			step = HKDF_STEP_EXTRACT;
-		else if (hkdf_args->expand && hkdf_args->extract)
-			step = HKDF_STEP_FULL;
-	}
-
-	return step;
-}
-
-/**
  * kdf_hkdf_setup_base_key() - Setup the base key for HKDF.
  * @subtest: Subtest data.
  * @args: Pointer to public key derivation argument structure.
@@ -1501,18 +1481,16 @@ static int kdf_hkdf_setup_base_key(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(PASSED);
 
-	enum hkdf_step step = HKDF_STEP_INVALID;
-
 	if (!args || !subtest || !base_buffer || !key_base) {
 		DBG_PRINT_BAD_ARGS();
 		res = ERR_CODE(BAD_ARGS);
 		return res;
 	}
 
-	step = get_hkdf_step(args);
-	if (step == HKDF_STEP_EXTRACT || step == HKDF_STEP_FULL)
+	if (args->kdf_name == SMW_KDF_NAME_HKDF_EXTRACT ||
+	    args->kdf_name == SMW_KDF_NAME_HKDF)
 		res = setup_derive_base(subtest, key_base, base_buffer);
-	else if (step == HKDF_STEP_EXPAND)
+	else if (args->kdf_name == SMW_KDF_NAME_HKDF_EXPAND)
 		res = setup_prk_descriptor(subtest, key_base, base_buffer);
 
 	return res;
@@ -1521,6 +1499,8 @@ static int kdf_hkdf_setup_base_key(struct subtest_data *subtest,
 /**
  * kdf_hkdf_read_args() - Read the HKDF function arguments
  * @kdf_args: SMW's HMAC-based Key derivation function arguments
+ * @kdf_name: KDF name
+ * @subtest: Subtest data
  * @oargs: Reference to the test definition json-c arguments array
  *
  * Return:
@@ -1529,7 +1509,8 @@ static int kdf_hkdf_setup_base_key(struct subtest_data *subtest,
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int kdf_hkdf_read_args(void **kdf_args, struct subtest_data *subtest,
+static int kdf_hkdf_read_args(void **kdf_args, smw_kdf_t kdf_name,
+			      struct subtest_data *subtest,
 			      struct json_object *oargs)
 {
 	(void)subtest;
@@ -1540,10 +1521,8 @@ static int kdf_hkdf_read_args(void **kdf_args, struct subtest_data *subtest,
 	struct tbuffer info_buf = { 0 };
 	struct tbuffer peer_pub_buf = { 0 };
 	const char *hash_string = NULL;
-	char *hkdf_step = NULL;
 
 	struct smw_kdf_hkdf_args *hkdf_args = NULL;
-	enum hkdf_step step = HKDF_STEP_INVALID;
 
 	if (!kdf_args || !oargs) {
 		DBG_PRINT_BAD_ARGS();
@@ -1560,26 +1539,6 @@ static int kdf_hkdf_read_args(void **kdf_args, struct subtest_data *subtest,
 		goto end;
 
 	hkdf_args->hash_algo = hash_get_algo_name(hash_string);
-
-	/* Get the HKDF step, if defined*/
-	res = util_read_json_type(&hkdf_step, TYPE_OBJ, t_string, oargs);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
-		goto end;
-
-	if (hkdf_step && (!strcmp(hkdf_step, "HKDF_EXPAND"))) {
-		hkdf_args->expand = true;
-		step = HKDF_STEP_EXPAND;
-	} else if (hkdf_step && (!strcmp(hkdf_step, "HKDF_EXTRACT"))) {
-		hkdf_args->extract = true;
-		step = HKDF_STEP_EXTRACT;
-	} else if (res == ERR_CODE(VALUE_NOTFOUND)) {
-		hkdf_args->expand = true;
-		hkdf_args->extract = true;
-		step = HKDF_STEP_FULL;
-	} else {
-		res = ERR_CODE(BAD_ARGS);
-		goto end;
-	}
 
 	/* Get info buffer, if defined */
 	res = util_read_json_type(&info_buf, INFO_OBJ, t_buffer_hex, oargs);
@@ -1602,22 +1561,23 @@ static int kdf_hkdf_read_args(void **kdf_args, struct subtest_data *subtest,
 		goto end;
 	}
 
-	if (step == HKDF_STEP_FULL) {
-		hkdf_args->hkdf_args.info = info_buf.data;
-		hkdf_args->hkdf_args.info_len = info_buf.length;
-		hkdf_args->hkdf_args.salt = salt_buf.data;
-		hkdf_args->hkdf_args.salt_len = salt_buf.length;
-		hkdf_args->hkdf_args.peer_public_buffer = peer_pub_buf.data;
-		hkdf_args->hkdf_args.peer_public_buffer_len =
+	if (kdf_name == SMW_KDF_NAME_HKDF) {
+		hkdf_args->hkdf_args.expand_args.info = info_buf.data;
+		hkdf_args->hkdf_args.expand_args.info_len = info_buf.length;
+		hkdf_args->hkdf_args.extract_args.salt = salt_buf.data;
+		hkdf_args->hkdf_args.extract_args.salt_len = salt_buf.length;
+		hkdf_args->hkdf_args.extract_args.peer_public_buffer =
+			peer_pub_buf.data;
+		hkdf_args->hkdf_args.extract_args.peer_public_buffer_len =
 			peer_pub_buf.length;
-	} else if (step == HKDF_STEP_EXTRACT) {
+	} else if (kdf_name == SMW_KDF_NAME_HKDF_EXTRACT) {
 		hkdf_args->hkdf_extract_args.salt = salt_buf.data;
 		hkdf_args->hkdf_extract_args.salt_len = salt_buf.length;
 		hkdf_args->hkdf_extract_args.peer_public_buffer =
 			peer_pub_buf.data;
 		hkdf_args->hkdf_extract_args.peer_public_buffer_len =
 			peer_pub_buf.length;
-	} else if (step == HKDF_STEP_EXPAND) {
+	} else if (kdf_name == SMW_KDF_NAME_HKDF_EXPAND) {
 		hkdf_args->hkdf_expand_args.info = info_buf.data;
 		hkdf_args->hkdf_expand_args.info_len = info_buf.length;
 	}
@@ -1665,8 +1625,6 @@ static int kdf_hkdf_prepare_result(struct subtest_data *subtest,
 	struct smw_derived_key_descriptor *key = NULL;
 	struct json_object *okey_params = NULL;
 
-	enum hkdf_step step = get_hkdf_step(args);
-
 	res = util_read_json_type(&key_name, OP_OUTPUT_OBJ, t_string,
 				  subtest->params);
 	if (res != ERR_CODE(PASSED))
@@ -1678,7 +1636,8 @@ static int kdf_hkdf_prepare_result(struct subtest_data *subtest,
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	if (step == HKDF_STEP_EXPAND || step == HKDF_STEP_FULL) {
+	if (args->kdf_name == SMW_KDF_NAME_HKDF_EXPAND ||
+	    args->kdf_name == SMW_KDF_NAME_HKDF) {
 		res = util_key_get_key_params(subtest, OP_OUTPUT_OBJ,
 					      &okey_params);
 		if (res != ERR_CODE(PASSED))
@@ -1753,40 +1712,6 @@ end:
 }
 
 /**
- * free_buffers() - Release memory allocated to buffers
- * @hkdf_args: Pointer to HMAC-based Key derivation function arguments
- *
- * Release info, salt or peer public key buffer based on HKDF step.
- *
- * Return:
- * None.
- */
-static void free_buffers(struct smw_kdf_hkdf_args *hkdf_args)
-{
-	if (hkdf_args->expand && !hkdf_args->extract) {
-		if (hkdf_args->hkdf_expand_args.info)
-			free(hkdf_args->hkdf_expand_args.info);
-
-	} else if (!hkdf_args->expand && hkdf_args->extract) {
-		if (hkdf_args->hkdf_extract_args.salt)
-			free(hkdf_args->hkdf_extract_args.salt);
-
-		if (hkdf_args->hkdf_extract_args.peer_public_buffer)
-			free(hkdf_args->hkdf_extract_args.peer_public_buffer);
-
-	} else if (hkdf_args->expand && hkdf_args->extract) {
-		if (hkdf_args->hkdf_args.info)
-			free(hkdf_args->hkdf_args.info);
-
-		if (hkdf_args->hkdf_args.salt)
-			free(hkdf_args->hkdf_args.salt);
-
-		if (hkdf_args->hkdf_args.peer_public_buffer)
-			free(hkdf_args->hkdf_args.peer_public_buffer);
-	}
-}
-
-/**
  * kdf_hkdf_free() - Free the HKDF operation arguments
  * @args: SMW's Key derivation arguments structure
  *
@@ -1801,7 +1726,34 @@ static void kdf_hkdf_free(struct smw_derive_key_args *args)
 		if (args->kdf_arguments) {
 			hkdf_args = args->kdf_arguments;
 
-			free_buffers(hkdf_args);
+			if (args->kdf_name == SMW_KDF_NAME_HKDF_EXPAND) {
+				if (hkdf_args->hkdf_expand_args.info)
+					free(hkdf_args->hkdf_expand_args.info);
+
+			} else if (args->kdf_name ==
+				   SMW_KDF_NAME_HKDF_EXTRACT) {
+				if (hkdf_args->hkdf_extract_args.salt)
+					free(hkdf_args->hkdf_extract_args.salt);
+
+				if (hkdf_args->hkdf_extract_args
+					    .peer_public_buffer)
+					free(hkdf_args->hkdf_extract_args
+						     .peer_public_buffer);
+
+			} else if (args->kdf_name == SMW_KDF_NAME_HKDF) {
+				if (hkdf_args->hkdf_args.expand_args.info)
+					free(hkdf_args->hkdf_args.expand_args
+						     .info);
+
+				if (hkdf_args->hkdf_args.extract_args.salt)
+					free(hkdf_args->hkdf_args.extract_args
+						     .salt);
+
+				if (hkdf_args->hkdf_args.extract_args
+					    .peer_public_buffer)
+					free(hkdf_args->hkdf_args.extract_args
+						     .peer_public_buffer);
+			}
 
 			free(args->kdf_arguments);
 			args->kdf_arguments = NULL;
@@ -1840,6 +1792,8 @@ static int kdf_ecdh_setup_base_key(struct subtest_data *subtest,
 /**
  * kdf_ecdh_read_args() - Read the ECDH function arguments
  * @kdf_args: SMW's ECDH arguments read
+ * @kdf_name: KDF name
+ * @subtest: Subtest data
  * @oargs: Reference to the test definition json-c arguments array
  *
  * Note: the test definition array must define the arguments in the same
@@ -1851,10 +1805,12 @@ static int kdf_ecdh_setup_base_key(struct subtest_data *subtest,
  * -BAD_PARAM_TYPE          - A parameter value is undefined.
  * -INTERNAL_OUT_OF_MEMORY  - Out of memory
  */
-static int kdf_ecdh_read_args(void **kdf_args, struct subtest_data *subtest,
+static int kdf_ecdh_read_args(void **kdf_args, smw_kdf_t kdf_name,
+			      struct subtest_data *subtest,
 			      struct json_object *oargs)
 {
 	(void)subtest;
+	(void)kdf_name;
 
 	int res = ERR_CODE(BAD_ARGS);
 	struct tbuffer peer_pub_buf = { 0 };
@@ -2018,7 +1974,8 @@ static const struct kdf_op {
 			  struct smw_derive_key_args *args,
 			  struct keypair_ops *key_base,
 			  struct smw_keypair_buffer *base_buffer);
-	int (*read_args)(void **kdf_args, struct subtest_data *subtest,
+	int (*read_args)(void **kdf_args, smw_kdf_t kdf_name,
+			 struct subtest_data *subtest,
 			 struct json_object *oargs);
 	int (*prepare_result)(struct subtest_data *subtest,
 			      struct smw_derive_key_args *args);
@@ -2035,6 +1992,22 @@ static const struct kdf_op {
 		},
 		{
 			.name = SMW_KDF_NAME_HKDF,
+			.setup_base = &kdf_hkdf_setup_base_key,
+			.read_args = &kdf_hkdf_read_args,
+			.prepare_result = &kdf_hkdf_prepare_result,
+			.end_operation = &kdf_hkdf_end_operation,
+			.free = &kdf_hkdf_free,
+		},
+		{
+			.name = SMW_KDF_NAME_HKDF_EXTRACT,
+			.setup_base = &kdf_hkdf_setup_base_key,
+			.read_args = &kdf_hkdf_read_args,
+			.prepare_result = &kdf_hkdf_prepare_result,
+			.end_operation = &kdf_hkdf_end_operation,
+			.free = &kdf_hkdf_free,
+		},
+		{
+			.name = SMW_KDF_NAME_HKDF_EXPAND,
 			.setup_base = &kdf_hkdf_setup_base_key,
 			.read_args = &kdf_hkdf_read_args,
 			.prepare_result = &kdf_hkdf_prepare_result,
@@ -2170,8 +2143,8 @@ static int kdf_args_read(struct smw_derive_key_args *args,
 		res = util_read_json_type(&oargs, OP_ARGS_OBJ, t_object,
 					  subtest->params);
 		if (res == ERR_CODE(PASSED) && oargs)
-			res = kdf_op->read_args(&args->kdf_arguments, subtest,
-						oargs);
+			res = kdf_op->read_args(&args->kdf_arguments,
+						args->kdf_name, subtest, oargs);
 	}
 
 	return res;

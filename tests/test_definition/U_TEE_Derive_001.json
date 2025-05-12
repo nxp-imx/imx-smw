@@ -143,35 +143,33 @@
 		"depends": 3
 	},
 	"subtest 5": {
-		"description": "HKDF_EXTRACT step is set",
+		"description": "Unsupported KDF (HKDF_EXTRACT) is set",
 		"command": "DERIVE",
 		"subsystem": "DEFAULT",
 		"op_input": "key 1",
-		"op_type": "HKDF",
+		"op_type": "HKDF_EXTRACT",
 		"op_args": {
-			"algo": "SHA256",
-			"type": "HKDF_EXTRACT"
+			"algo": "SHA256"
 		},
 		"op_output": "key 2",
 		"depends": 1,
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 6": {
-		"description": "HKDF_EXPAND step is set",
+		"description": "Unsupported KDF (HKDF_EXPAND) is set",
 		"command": "DERIVE",
 		"subsystem": "TEE",
 		"op_input": "key 7",
-		"op_type": "HKDF",
+		"op_type": "HKDF_EXPAND",
 		"op_args": {
-			"algo": "SHA256",
-			"type": "HKDF_EXPAND"
+			"algo": "SHA256"
 		},
 		"op_output": "key 2",
 		"depends": 1,
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
+		"result": "SMW_STATUS_OPERATION_NOT_CONFIGURED"
 	},
 	"subtest 7": {
-		"description": "Unsupported KDF",
+		"description": "Unsupported KDF (TLS12_KEY_EXCHANGE) is set",
 		"command": "DERIVE",
 		"subsystem": "TEE",
 		"op_input": "key 4",

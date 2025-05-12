@@ -1344,25 +1344,29 @@ static CK_RV set_hkdf_args(struct libobj_key_derive_params *derive_params,
 		return status;
 
 	hkdf_args = derive_args->kdf_arguments;
-	hkdf_args->expand = derive_params->hkdf_params.expand;
-	hkdf_args->extract = derive_params->hkdf_params.extract;
 	hkdf_args->hash_algo =
 		get_hash_algo(derive_params->hkdf_params.prf_hash_mech);
 
-	if (hkdf_args->extract && hkdf_args->expand) {
-		salt = &hkdf_args->hkdf_args.salt;
-		salt_len = &hkdf_args->hkdf_args.salt_len;
-		info = &hkdf_args->hkdf_args.info;
-		info_len = &hkdf_args->hkdf_args.info_len;
-	} else if (hkdf_args->extract && !hkdf_args->expand) {
+	if (derive_params->hkdf_params.extract &&
+	    derive_params->hkdf_params.expand) {
+		derive_args->kdf_name = SMW_KDF_NAME_HKDF;
+		salt = &hkdf_args->hkdf_args.extract_args.salt;
+		salt_len = &hkdf_args->hkdf_args.extract_args.salt_len;
+		info = &hkdf_args->hkdf_args.expand_args.info;
+		info_len = &hkdf_args->hkdf_args.expand_args.info_len;
+	} else if (derive_params->hkdf_params.extract &&
+		   !derive_params->hkdf_params.expand) {
+		derive_args->kdf_name = SMW_KDF_NAME_HKDF_EXTRACT;
 		salt = &hkdf_args->hkdf_extract_args.salt;
 		salt_len = &hkdf_args->hkdf_extract_args.salt_len;
-	} else if (!hkdf_args->extract && hkdf_args->expand) {
+	} else if (!derive_params->hkdf_params.extract &&
+		   derive_params->hkdf_params.expand) {
+		derive_args->kdf_name = SMW_KDF_NAME_HKDF_EXPAND;
 		info = &hkdf_args->hkdf_expand_args.info;
 		info_len = &hkdf_args->hkdf_expand_args.info_len;
 	}
 
-	if (hkdf_args->extract) {
+	if (derive_params->hkdf_params.extract) {
 		if (derive_params->hkdf_params.salt_type ==
 		    CKF_HKDF_SALT_DATA) {
 			*salt = derive_params->hkdf_params.salt;
@@ -1373,7 +1377,7 @@ static CK_RV set_hkdf_args(struct libobj_key_derive_params *derive_params,
 		}
 	}
 
-	if (hkdf_args->expand) {
+	if (derive_params->hkdf_params.expand) {
 		*info = derive_params->hkdf_params.info;
 
 		if (SET_OVERFLOW(derive_params->hkdf_params.info_len,
@@ -1551,8 +1555,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	struct smw_key_descriptor base_key = { 0 };
 	struct smw_keypair_buffer keypair_buffer = { 0 };
 	struct smw_derived_key_descriptor der_key_desc = { 0 };
-	struct smw_key_attributes *der_key_attributes =
-		&der_key_desc.attributes;
+	struct smw_key_attributes *der_key_attrs = &der_key_desc.attributes;
 	struct smw_kdf_hkdf_args hkdf_args = { 0 };
 	struct smw_kdf_ecdh_args ecdh_args = { 0 };
 	struct smw_kdf_tls13_args tls13_args = { 0 };
@@ -1574,19 +1577,21 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 	if (ret != CKR_OK)
 		return ret;
 
-	ret = get_key_permitted_algo(&der_key_attributes->permitted_algo,
-				     slotid, obj);
+	derive_args.kdf_name = get_kdf(entry->type);
+
+	ret = get_key_permitted_algo(&der_key_attrs->permitted_algo, slotid,
+				     obj);
 	if (ret != CKR_OK)
 		return ret;
 
 	derive_args.subsystem_name = devinfo->name;
 	derive_args.key_descriptor_base = &base_key;
 	derive_args.key_descriptor_derived = &der_key_desc;
-	derive_args.kdf_name = get_kdf(entry->type);
+
 	derive_args.store_derived_key = true;
 
-	args_attrs_key_usage(&der_key_attributes->usage_flags, obj);
-	args_attr_obj_storage(&der_key_attributes->attributes, obj);
+	args_attrs_key_usage(&der_key_attrs->usage_flags, obj);
+	args_attr_obj_storage(&der_key_attrs->attributes, obj);
 
 	if (entry->type == CKM_HKDF_DERIVE) {
 		if (derive_params->ctx) {
@@ -1620,7 +1625,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 		if (ret != CKR_OK)
 			return ret;
 
-		if (SMW_ATTR_GET_ALGO(der_key_attributes->permitted_algo) ==
+		if (SMW_ATTR_GET_ALGO(der_key_attrs->permitted_algo) ==
 		    SMW_ATTR_ALGO_HKDF) {
 			DBG_TRACE("ECDH Derive Key for TLS detected");
 			derive_params->ctx->skipped = true;

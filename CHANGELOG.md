@@ -71,6 +71,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add a new status code `SMW_STATUS_PUBLIC_EXPONENT_NOT_SUPPORTED`.
 * Add support for X25519 key type (used for x25519 TLS key exchange).
 * Add asymmetric encryption and decryption APIs.
+* Update public HKDF arguments structures `smw_hkdf_args` and `smw_kdf_hkdf_args`.
 
 ##### 2. Subsystems
 

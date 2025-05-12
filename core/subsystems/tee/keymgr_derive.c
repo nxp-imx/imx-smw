@@ -315,12 +315,13 @@ static int tee_key_derived_type(struct smw_keymgr_identifier *key_identifier,
  * transient or persistent object.
  *
  * Return:
- * SMW_STATUS_OK                - Success.
- * SMW_STATUS_INVALID_PARAM     - One of the parameters is invalid.
- * SMW_STATUS_ALLOC_FAILURE     - Memory allocation failure.
- * SMW_STATUS_OUTPUT_TOO_SHORT  - Output buffer is too short
- * SMW_STATUS_OPERATION_FAILURE - Operation failed
- * SMW_STATUS_SUBSYSTEM_FAILURE - Subsytem failed.
+ * SMW_STATUS_OK                      - Success.
+ * SMW_STATUS_INVALID_PARAM           - One of the parameters is invalid.
+ * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure.
+ * SMW_STATUS_OUTPUT_TOO_SHORT        - Output buffer is too short.
+ * SMW_STATUS_OPERATION_FAILURE       - Operation failed.
+ * SMW_STATUS_SUBSYSTEM_FAILURE       - Subsytem failed.
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED - Operation is not supported.
  */
 static int hkdf_derive_key(void *args)
 {
@@ -359,7 +360,7 @@ static int hkdf_derive_key(void *args)
 	if (!hkdf_args || !key_id_base || !key_id_derived)
 		goto exit;
 
-	if (smw_keymgr_get_hkdf_step(hkdf_args) != HKDF_STEP_FULL) {
+	if (key_args->kdf_id != SMW_CONFIG_KDF_ID_HKDF) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto exit;
 	}

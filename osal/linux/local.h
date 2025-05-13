@@ -163,59 +163,59 @@ void obj_db_close(void);
 
 /**
  * obj_db_get_info() - Get an object information from DB
- * @obj: OSAL object
+ * @descriptor: object
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int obj_db_get_info(struct osal_obj *obj);
+int obj_db_get_info(struct smw_object_descriptor *descriptor);
 
 /**
  * obj_db_add() - Add an object in the DB
- * @obj: OSAL object
+ * @descriptor: Object descriptor
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int obj_db_add(struct osal_obj *obj);
+int obj_db_add(struct smw_object_descriptor *descriptor);
 
 /**
  * obj_db_update() - Update an object information into the DB
- * @obj: OSAL object
+ * @descriptor: Object descriptor
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int obj_db_update(struct osal_obj *obj);
+int obj_db_update(struct smw_object_descriptor *descriptor);
 
 /**
  * obj_db_delete() - Remove an object from the DB
- * @obj: OSAL object
+ * @descriptor: Object descriptor
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int obj_db_delete(struct osal_obj *obj);
+int obj_db_delete(struct smw_object_descriptor *descriptor);
 
 /**
  * obj_db_find_init() - Init find object
  * @ctx: A pointer to the find context pointer
- * @obj: OSAL object
+ * @descriptor: Object descriptor
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int obj_db_find_init(void **ctx, struct osal_obj *obj);
+int obj_db_find_init(void **ctx, struct smw_object_descriptor *descriptor);
 
 /**
  * obj_db_find_next() - Get next find object
  * @ctx: The find context pointer
- * @obj: OSAL object
+ * @descriptor: Object descriptor
  *
  * Return:
  * 0 if success, -1 otherwise
  */
-int obj_db_find_next(void *ctx, struct osal_obj *obj);
+int obj_db_find_next(void *ctx, struct smw_object_descriptor *descriptor);
 
 /**
  * obj_db_find_finalize() - Release the find context

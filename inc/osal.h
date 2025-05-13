@@ -24,22 +24,6 @@
  */
 
 /**
- * struct osal_obj - OSAL object database operation parameters
- * @id: Object unique id
- * @attributes: Object attributes (set by SMW at object creation)
- * @descriptor: Object descriptor
- *
- * This structure defines the object information to be handled by the OSAL
- * object database if needed.
- *
- */
-struct osal_obj {
-	unsigned int id;
-	smw_attr_attributes_t attributes;
-	struct smw_object_descriptor *descriptor;
-};
-
-/**
  * struct smw_ops - SMW OSAL operations
  * @critical_section_start: [optional] Start critical section
  * @critical_section_stop: [optional] Stop critical section
@@ -91,12 +75,14 @@ struct smw_ops {
 
 	bool (*is_lib_initialized)(void);
 
-	int (*get_obj_info)(struct osal_obj *obj);
-	int (*add_obj_info)(struct osal_obj *obj);
-	int (*update_obj_info)(struct osal_obj *obj);
-	int (*delete_obj_info)(struct osal_obj *obj);
-	int (*find_obj_init)(void **find_ctx, struct osal_obj *obj);
-	int (*find_obj_next)(void *find_ctx, struct osal_obj *obj);
+	int (*get_obj_info)(struct smw_object_descriptor *descriptor);
+	int (*add_obj_info)(struct smw_object_descriptor *descriptor);
+	int (*update_obj_info)(struct smw_object_descriptor *descriptor);
+	int (*delete_obj_info)(struct smw_object_descriptor *descriptor);
+	int (*find_obj_init)(void **find_ctx,
+			     struct smw_object_descriptor *descriptor);
+	int (*find_obj_next)(void *find_ctx,
+			     struct smw_object_descriptor *descriptor);
 	int (*find_obj_final)(void *find_ctx);
 };
 

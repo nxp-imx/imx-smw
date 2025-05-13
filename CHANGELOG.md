@@ -133,6 +133,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support for ed25519 key generation and signature
 * Add TLS 1.3 Key exchange support
 * TLS AES GCM mulpti-part operation transforms to one shot operation.
+* Add CKF_LOGIN_REQUIRED flag to token flags.
 
 #### PKCS#11 Tests - _version 5.0_
 

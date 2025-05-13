@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "debug.h"
@@ -52,7 +52,6 @@ static int data_storage(struct hdl *hdl,
 	op_data_storage_args_t op_args = { 0 };
 
 	struct smw_object_descriptor obj = { 0 };
-	smw_attr_attributes_t attributes = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -66,15 +65,12 @@ static int data_storage(struct hdl *hdl,
 				HSM_OP_DATA_STORAGE_FLAGS_RETRIEVE;
 
 	if (!store) {
-		attributes = data_descriptor->data_attributes.attributes;
-
 		/*
 		 * Request the expected data size, assuming if the data
 		 * is present in the object database, that the size of the
 		 * data is correct
 		 */
-		status = smw_object_db_get_info(op_args.data_id, attributes,
-						&obj);
+		status = smw_object_db_get_info(op_args.data_id, &obj);
 
 		if (status != SMW_STATUS_OK)
 			goto end;

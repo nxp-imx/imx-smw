@@ -31,7 +31,6 @@ static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	struct smw_store_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
 	struct libobj_data *data = get_subobj_from(obj, storage);
-	struct smw_data_attributes data_attr = { 0 };
 
 	ret = libsess_get_slotid(hsession, &slotid);
 	if (ret != CKR_OK)
@@ -46,8 +45,7 @@ static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	if (SET_OVERFLOW(data->value.number, data_descriptor.length))
 		return CKR_FUNCTION_FAILED;
 
-	args_attr_obj_storage(&data_attr.attributes, obj);
-	data_descriptor.data_attributes = &data_attr;
+	args_attr_obj_storage(&data_descriptor.attributes.attributes, obj);
 
 	args.subsystem_name = devinfo->name;
 	args.data_descriptor = &data_descriptor;
@@ -67,21 +65,19 @@ static int get_data_attributes(struct libobj_obj *obj)
 
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_data_info_args data_info = { 0 };
-	struct smw_data_descriptor data_descriptor = { 0 };
-	struct smw_data_attributes data_attributes = { 0 };
+	struct smw_data_descriptor data_desc = { 0 };
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
-	data_descriptor.identifier = get_data_token_id(obj);
-	data_descriptor.data_attributes = &data_attributes;
-	data_info.data_descriptor = &data_descriptor;
+	data_desc.identifier = get_data_token_id(obj);
+	data_info.data_descriptor = &data_desc;
 
 	status = smw_get_data_info(&data_info);
 	ret = smw_status_to_ck_rv(status);
 
 	if (ret == CKR_OK) {
-		args_attr_get_obj_storage(obj, data_attributes.attributes);
+		args_attr_get_obj_storage(obj, data_desc.attributes.attributes);
 
-		data->value.number = data_descriptor.length;
+		data->value.number = data_desc.length;
 	}
 
 	return ret;
@@ -94,12 +90,10 @@ static int get_data_value(const struct libobj_obj *obj)
 	enum smw_status_code status = SMW_STATUS_OK;
 	struct smw_retrieve_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
-	struct smw_data_attributes data_attributes = { 0 };
 	struct libobj_data *data = get_subobj_from(obj, storage);
 
 	data_descriptor.identifier = get_data_token_id(obj);
 	args.data_descriptor = &data_descriptor;
-	data_descriptor.data_attributes = &data_attributes;
 
 	if (!data->value.array && data->value.number) {
 		data->value.array = malloc(data->value.number);

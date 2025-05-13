@@ -306,6 +306,7 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 	CK_ATTRIBUTE_PTR p_attr = NULL;
 	struct smw_key_descriptor *key = &desc->key;
 	struct smw_data_descriptor *data = &desc->data;
+	smw_attr_attributes_t obj_attributes = 0;
 	CK_ULONG i = 0;
 
 	if (!attrs) {
@@ -331,7 +332,23 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 		nb_attrs++;
 	}
 
-	switch (SMW_ATTR_GET_PERSISTENCE(desc->attributes)) {
+	switch (desc->type) {
+	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+		obj_attributes = key->attributes.attributes;
+		break;
+
+	case SMW_OBJECT_TYPE_NAME_DATA:
+		obj_attributes = data->attributes.attributes;
+		break;
+
+	default:
+		ret = CKR_ARGUMENTS_BAD;
+		goto end;
+	}
+
+	switch (SMW_ATTR_GET_PERSISTENCE(obj_attributes)) {
 	case SMW_ATTR_PERSISTENCE_PERSISTENT:
 	case SMW_ATTR_PERSISTENCE_PERMANENT:
 		if (p_attr) {
@@ -520,14 +537,16 @@ CK_RV obj_db_get(struct libobj_obj *obj,
 {
 	CK_RV ret = CKR_OBJECT_HANDLE_INVALID;
 	enum smw_status_code status = SMW_STATUS_OK;
+	struct smw_find_object_db_args find_args = { 0 };
+	smw_attr_attributes_t obj_attributes = 0;
 
 	if (!obj)
 		return CKR_ARGUMENTS_BAD;
 
 	if (is_token_obj(obj, storage))
-		descriptor->attributes = SMW_ATTR_PERSISTENCE_PERSISTENT;
+		obj_attributes = SMW_ATTR_PERSISTENCE_PERSISTENT;
 	else
-		descriptor->attributes = SMW_ATTR_PERSISTENCE_TRANSIENT;
+		obj_attributes = SMW_ATTR_PERSISTENCE_TRANSIENT;
 
 	switch (obj->class) {
 	case CKO_DATA:
@@ -552,11 +571,13 @@ CK_RV obj_db_get(struct libobj_obj *obj,
 	case CKO_PUBLIC_KEY:
 	case CKO_PRIVATE_KEY:
 		descriptor->id = get_key_token_id(obj);
+		descriptor->key.attributes.attributes = obj_attributes;
 		ret = CKR_OK;
 		break;
 
 	case CKO_DATA:
 		descriptor->id = get_data_token_id(obj);
+		descriptor->data.attributes.attributes = obj_attributes;
 		ret = CKR_OK;
 		break;
 
@@ -570,7 +591,8 @@ CK_RV obj_db_get(struct libobj_obj *obj,
 	if (!descriptor->id)
 		return CKR_OBJECT_HANDLE_INVALID;
 
-	status = smw_find_object_db(descriptor);
+	find_args.object_descriptor = descriptor;
+	status = smw_find_object_db(&find_args);
 	if (status != SMW_STATUS_OK)
 		ret = smw_status_to_ck_rv(status);
 
@@ -674,11 +696,12 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		      CK_ULONG nb_attrs, CK_ULONG *pnb_retrieved)
 {
 	CK_RV ret = CKR_ARGUMENTS_BAD;
-	void *find_ctx = NULL;
 	int status = SMW_STATUS_OK;
+	struct smw_find_object_db_args find_args = { 0 };
 	struct smw_object_descriptor descriptor = { 0 };
 	struct smw_key_attributes *key_attr = NULL;
 	struct smw_get_key_attributes_args attr_args = { 0 };
+	smw_attr_attributes_t persistence = 0;
 	CK_ATTRIBUTE_PTR attributes = NULL_PTR;
 	CK_ULONG attributes_count = 0;
 	CK_ULONG nb_retrieved = 0;
@@ -737,20 +760,34 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	/*
 	 * Only retrieve persistent token object.
 	 */
-	descriptor.attributes =
-		SMW_ATTR_SET_PERSISTENCE(descriptor.attributes,
-					 SMW_ATTR_PERSISTENCE_PERSISTENT);
+	persistence = SMW_ATTR_SET_PERSISTENT(0);
+	descriptor.persistency = persistence;
 
-	status = smw_find_object_db_init(&find_ctx, descriptor.attributes,
-					 &descriptor);
+	switch (descriptor.type) {
+	case SMW_OBJECT_TYPE_NAME_DATA:
+		descriptor.data.attributes.attributes = persistence;
+		break;
+
+	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+		descriptor.key.attributes.attributes = persistence;
+		break;
+
+	default:
+		break;
+	}
+
+	find_args.object_descriptor = &descriptor;
+
+	status = smw_find_object_db_init(&find_args);
 	ret = smw_status_to_ck_rv(status);
 	if (ret != CKR_OK)
 		goto end;
 
 	cleanup_smw_object_descriptor(&descriptor);
 
-	while (smw_find_object_db_next(find_ctx, &descriptor) ==
-	       SMW_STATUS_OK) {
+	while (smw_find_object_db_next(&find_args) == SMW_STATUS_OK) {
 		/*
 		 * Look in token list objects of object token id already
 		 * present or not. If not, get all object information and
@@ -825,11 +862,9 @@ end:
 	if (pnb_retrieved)
 		*pnb_retrieved = nb_retrieved;
 
-	if (find_ctx) {
-		status = smw_find_object_db_final(find_ctx);
-		if (ret == CKR_OK)
-			ret = smw_status_to_ck_rv(status);
-	}
+	status = smw_find_object_db_final(&find_args);
+	if (ret == CKR_OK)
+		ret = smw_status_to_ck_rv(status);
 
 	attr_free(&attributes, &attributes_count);
 

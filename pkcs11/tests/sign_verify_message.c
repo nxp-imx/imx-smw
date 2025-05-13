@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "os_mutex.h"
+#include "util.h"
 #include "util_lib.h"
 #include "util_session.h"
 
@@ -15,6 +16,32 @@ static CK_BYTE msg[] = { 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
 			 0x74, 0x6f, 0x73, 0x69, 0x67, 0x6e };
 
 static CK_ULONG msg_len = 13;
+
+static CK_BYTE key_256[] = { 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			     0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			     0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			     0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b };
+
+static CK_BYTE key_384[] = { 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			     0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			     0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			     0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			     0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
+			     0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b };
+
+static CK_BYTE data[] = { 0x48, 0x69, 0x20, 0x54, 0x68, 0x65, 0x72, 0x65 };
+
+static CK_BYTE hmac_256[] = { 0x19, 0x8a, 0x60, 0x7e, 0xb4, 0x4b, 0xfb, 0xc6,
+			      0x99, 0x03, 0xa0, 0xf1, 0xcf, 0x2b, 0xbd, 0xc5,
+			      0xba, 0x0a, 0xa3, 0xf3, 0xd9, 0xae, 0x3c, 0x1c,
+			      0x7a, 0x3b, 0x16, 0x96, 0xa0, 0xb6, 0x8c, 0xf7 };
+
+static CK_BYTE hmac_384[] = { 0xb6, 0xa8, 0xd5, 0x63, 0x6f, 0x5c, 0x6a, 0x72,
+			      0x24, 0xf9, 0x97, 0x7d, 0xcf, 0x7e, 0xe6, 0xc7,
+			      0xfb, 0x6d, 0x0c, 0x48, 0xcb, 0xde, 0xe9, 0x73,
+			      0x7a, 0x95, 0x97, 0x96, 0x48, 0x9b, 0xdd, 0xbc,
+			      0x4c, 0x5d, 0xf6, 0x1d, 0x5b, 0x32, 0x97, 0xb4,
+			      0xfb, 0x68, 0xda, 0xb9, 0xf1, 0xb5, 0x82, 0xc2 };
 
 static int sign_init_bad_params(CK_FUNCTION_LIST_3_0_PTR pfunc)
 {
@@ -777,6 +804,131 @@ end:
 	return status;
 }
 
+static int sign_verify_hmac_plaintext_key(CK_FUNCTION_LIST_3_0_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_MECHANISM sign_verify_mech[] = { { .mechanism = CKM_SHA256_HMAC },
+					    { .mechanism = CKM_SHA384_HMAC } };
+	CK_BYTE_PTR signature = NULL_PTR;
+	CK_ULONG signature_len = 0;
+
+	CK_OBJECT_HANDLE hmac_hsecretkey = 0;
+	CK_OBJECT_CLASS secret_key_class = CKO_SECRET_KEY;
+	CK_BBOOL ck_true = CK_TRUE;
+	CK_KEY_TYPE secret_key_type[] = { CKK_SHA256_HMAC, CKK_SHA384_HMAC };
+	CK_KEY_TYPE key_type = CKK_GENERIC_SECRET;
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA256_HMAC,
+						 CKM_SHA384_HMAC };
+	CK_MECHANISM_TYPE allowed_mech = CKM_NULL;
+	CK_BYTE_PTR keys[] = { key_256, key_384 };
+	CK_ULONG keys_size[] = { sizeof(key_256), sizeof(key_384) };
+	CK_BYTE_PTR signatures[] = { hmac_256, hmac_384 };
+	CK_ULONG signatures_len[] = { sizeof(hmac_256), sizeof(hmac_384) };
+
+	CK_ATTRIBUTE hmac_secretkey_attrs[] = {
+		{ CKA_CLASS, &secret_key_class, sizeof(secret_key_class) },
+		{ CKA_SIGN, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_VERIFY, &ck_true, sizeof(CK_BBOOL) },
+		{ CKA_KEY_TYPE, &key_type, sizeof(CK_KEY_TYPE) },
+		{ CKA_VALUE, NULL_PTR, 0 },
+		{ CKA_ALLOWED_MECHANISMS, &allowed_mech,
+		  sizeof(CK_MECHANISM_TYPE) },
+	};
+
+	unsigned int i = 0;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session((CK_FUNCTION_LIST_PTR)pfunc, 0, &sess) ==
+	    TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0]) ||
+	    !util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[1])) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
+	for (; i < ARRAY_SIZE(sign_verify_mech); i++) {
+		hmac_secretkey_attrs[4].pValue = keys[i];
+		hmac_secretkey_attrs[4].ulValueLen = keys_size[i];
+		key_type = secret_key_type[i];
+		allowed_mech = key_allowed_mech[i];
+
+		TEST_OUT("Create HMAC secret Key\n");
+		ret = pfunc->C_CreateObject(sess, hmac_secretkey_attrs,
+					    ARRAY_SIZE(hmac_secretkey_attrs),
+					    &hmac_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
+			goto end;
+
+		TEST_OUT("Initialize message sign operation\n");
+		ret = pfunc->C_MessageSignInit(sess, &sign_verify_mech[i],
+					       hmac_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
+			goto end;
+
+		TEST_OUT("Get signature length\n");
+		ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, NULL_PTR, 0,
+					   signature, &signature_len);
+		if (CHECK_CK_RV(CKR_OK, "C_SignMessage"))
+			goto end;
+
+		signature = malloc(signature_len);
+		if (CHECK_EXPECTED(signature, "Allocation error"))
+			goto end;
+
+		TEST_OUT("Message sign\n");
+		ret = pfunc->C_SignMessage(sess, NULL_PTR, 0, data,
+					   sizeof(data), signature,
+					   &signature_len);
+		if (CHECK_CK_RV(CKR_OK, "C_SignMessage"))
+			goto end;
+
+		if (!util_compare_buffers(signature, signature_len,
+					  signatures[i], signatures_len[i])) {
+			TEST_OUT("HMAC signature invalid\n");
+			goto end;
+		}
+
+		TEST_OUT("Initialize message verify operation\n");
+		ret = pfunc->C_MessageVerifyInit(sess, &sign_verify_mech[i],
+						 hmac_hsecretkey);
+		if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyInit"))
+			goto end;
+
+		TEST_OUT("Message verify signature\n");
+		ret = pfunc->C_VerifyMessage(sess, NULL_PTR, 0, data,
+					     sizeof(data), signature,
+					     signature_len);
+		if (CHECK_CK_RV(CKR_OK, "C_VerifyMessage"))
+			goto end;
+
+		free(signature);
+		signature = NULL;
+		signature_len = 0;
+	}
+
+	status = TEST_PASS;
+
+end:
+	util_close_session((CK_FUNCTION_LIST_PTR)pfunc, &sess);
+
+	if (signature)
+		free(signature);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_sign_verify_message(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -823,7 +975,10 @@ void tests_pkcs11_sign_verify_message(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (sign_verify_cmac(pfunc) == TEST_FAIL)
 		goto end;
 
-	status = sign_verify_hmac(pfunc);
+	if (sign_verify_hmac(pfunc) == TEST_FAIL)
+		goto end;
+
+	status = sign_verify_hmac_plaintext_key(pfunc);
 
 end:
 	ret = ((CK_FUNCTION_LIST_3_0_PTR)pfunc)->C_Finalize(NULL_PTR);

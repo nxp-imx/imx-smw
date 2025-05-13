@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #ifndef __SMW_STORAGE_H__
@@ -48,13 +48,13 @@ struct smw_data_attributes {
  * @identifier: Data identifier
  * @data: Pointer to the data buffer
  * @length: Length of buffer @data
- * @data_attributes: Data attributes. See &typedef smw_data_attributes_t
+ * @attributes: Data attributes. See &typedef smw_data_attributes_t
  */
 struct smw_data_descriptor {
 	unsigned int identifier;
 	unsigned char *data;
 	unsigned int length;
-	struct smw_data_attributes *data_attributes;
+	struct smw_data_attributes attributes;
 };
 
 /**

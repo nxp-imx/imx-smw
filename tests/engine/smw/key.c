@@ -796,7 +796,7 @@ void usage_callback(void *user_data, const char *attributes[],
 		*usage_flags |= ATTR_ARRAY_FIND_MATCH(usage_info, attributes[i])
 					.smw_usage;
 
-	DBG_PRINT("SMW usage flags: %08x", *usage_flags);
+	DBG_PRINT("SMW usage flags: 0x%08x", *usage_flags);
 }
 
 void attributes_callback(void *user_data, const char *attributes[],
@@ -809,7 +809,7 @@ void attributes_callback(void *user_data, const char *attributes[],
 		*attr |= ATTR_ARRAY_FIND_MATCH(attributes_info, attributes[i])
 				 .smw_attributes;
 
-	DBG_PRINT("SMW RW flags: %08x", *attributes);
+	DBG_PRINT("SMW RW flags: 0x%08x", *attr);
 }
 
 int key_read_attributes(struct json_object *params,

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <stdlib.h>
@@ -27,7 +27,6 @@ int storage_store(struct subtest_data *subtest)
 
 	struct smw_store_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
-	struct smw_data_attributes data_attributes = { 0 };
 	struct smw_data_descriptor *data_descriptor_ptr = NULL;
 	struct smw_encryption_args encryption_args = { 0 };
 	struct smw_sign_args sign_args = { 0 };
@@ -48,7 +47,6 @@ int storage_store(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 	args.subsystem_name = subtest->subsystem;
-	data_descriptor.data_attributes = &data_attributes;
 
 	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
 				  subtest->params);
@@ -164,7 +162,6 @@ int storage_retrieve(struct subtest_data *subtest)
 
 	struct smw_retrieve_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
-	struct smw_data_attributes data_attributes = { 0 };
 	struct smw_data_descriptor *data_descriptor_ptr = NULL;
 	const char *data_name = NULL;
 	unsigned char *expected_data = NULL;
@@ -178,7 +175,6 @@ int storage_retrieve(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 	args.subsystem_name = subtest->subsystem;
-	data_descriptor.data_attributes = &data_attributes;
 
 	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
 				  subtest->params);
@@ -249,7 +245,6 @@ int storage_delete(struct subtest_data *subtest)
 
 	struct smw_delete_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
-	struct smw_data_attributes data_attributes = { 0 };
 	struct smw_data_descriptor *data_descriptor_ptr = NULL;
 	const char *data_name = NULL;
 
@@ -260,7 +255,6 @@ int storage_delete(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 	args.subsystem_name = subtest->subsystem;
-	data_descriptor.data_attributes = &data_attributes;
 
 	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
 				  subtest->params);
@@ -293,9 +287,7 @@ int storage_get_data_info(struct subtest_data *subtest)
 
 	struct smw_data_info_args args = { 0 };
 	struct smw_data_descriptor data_ref = { 0 };
-	struct smw_data_attributes data_ref_attributes = { 0 };
 	struct smw_data_descriptor data_test = { 0 };
-	struct smw_data_attributes data_test_attributes = { 0 };
 	const char *data_name = NULL;
 
 	if (!subtest) {
@@ -305,7 +297,6 @@ int storage_get_data_info(struct subtest_data *subtest)
 
 	args.version = subtest->version;
 	args.subsystem_name = subtest->subsystem;
-	data_ref.data_attributes = &data_ref_attributes;
 
 	res = util_read_json_type(&data_name, DATA_NAME_OBJ, t_string,
 				  subtest->params);
@@ -324,7 +315,6 @@ int storage_get_data_info(struct subtest_data *subtest)
 		}
 
 		data_test.identifier = data_ref.identifier;
-		data_test.data_attributes = &data_test_attributes;
 
 		args.data_descriptor = &data_test;
 	} else if (res != ERR_CODE(VALUE_NOTFOUND)) {
@@ -337,12 +327,12 @@ int storage_get_data_info(struct subtest_data *subtest)
 		goto exit;
 	}
 
-	if ((data_test_attributes.attributes &
-	     data_ref_attributes.attributes) !=
-	    data_ref_attributes.attributes) {
+	if ((data_test.attributes.attributes &
+	     data_ref.attributes.attributes) !=
+	    data_ref.attributes.attributes) {
 		DBG_PRINT("Invalid storage attribute %08x expected %08x",
-			  data_test_attributes.attributes,
-			  data_ref_attributes.attributes);
+			  data_test.attributes.attributes,
+			  data_ref.attributes.attributes);
 		res = ERR_CODE(FAILED);
 	}
 

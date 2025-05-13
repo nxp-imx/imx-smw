@@ -138,16 +138,24 @@ static int
 object_read_attributes(struct json_object *params,
 		       struct smw_object_descriptor *object_descriptor)
 {
+	int res = ERR_CODE(PASSED);
+	smw_attr_attributes_t obj_attr = 0;
+
 	if (!params || !object_descriptor) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
-	object_descriptor->attributes = 0;
+	res = util_attr_read_attributes(params, ATTR_LIST_OBJ,
+					&attributes_callback, &obj_attr);
 
-	return util_attr_read_attributes(params, ATTR_LIST_OBJ,
-					 &attributes_callback,
-					 &object_descriptor->attributes);
+	if (res != ERR_CODE(PASSED))
+		return res;
+
+	object_descriptor->persistency =
+		SMW_ATTR_SET_PERSISTENCE(0, SMW_ATTR_GET_PERSISTENCE(obj_attr));
+
+	return res;
 }
 
 static int
@@ -157,7 +165,7 @@ object_read_descriptor(struct subtest_data *subtest,
 {
 	int res = ERR_CODE(BAD_ARGS);
 	struct keypair_ops key = { 0 };
-	struct smw_key_attributes key_attributes = { 0 };
+	struct smw_key_attributes *key_attributes = NULL;
 	struct json_object *okey_params = NULL;
 	struct smw_data_descriptor *data_descriptor = &object_descriptor->data;
 
@@ -168,8 +176,8 @@ object_read_descriptor(struct subtest_data *subtest,
 		if (res == ERR_CODE(PASSED)) {
 			object_descriptor->id = data_descriptor->identifier;
 			object_descriptor->type = SMW_OBJECT_TYPE_NAME_DATA;
-			object_descriptor->attributes =
-				data_descriptor->data_attributes->attributes;
+			object_descriptor->data.attributes.attributes =
+				data_descriptor->attributes.attributes;
 		}
 
 	} else if (is_key_object(object_name)) {
@@ -190,13 +198,10 @@ object_read_descriptor(struct subtest_data *subtest,
 			if (res != ERR_CODE(PASSED))
 				return res;
 
-			res = key_read_attributes(okey_params, &key_attributes);
+			key_attributes = &object_descriptor->key.attributes;
+			res = key_read_attributes(okey_params, key_attributes);
 			if (res != ERR_CODE(PASSED))
 				return res;
-
-			object_descriptor->key_attributes = key_attributes;
-			object_descriptor->attributes =
-				key_attributes.attributes;
 		}
 	}
 
@@ -228,7 +233,7 @@ static int object_find_test_args_null(struct subtest_data *subtest)
 	if (object_descriptor.id)
 		subtest->smw_status = smw_find_object_db(NULL);
 	else
-		subtest->smw_status = smw_find_object_db_init(NULL, 0, NULL);
+		subtest->smw_status = smw_find_object_db_init(NULL);
 
 	if (subtest->smw_status != SMW_STATUS_OK)
 		res = ERR_CODE(API_STATUS_NOK);
@@ -241,20 +246,19 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(BAD_ARGS);
 
+	struct smw_find_object_db_args args = { 0 };
 	struct smw_object_descriptor object_descriptor = { 0 };
-	struct smw_data_attributes data_attributes = { 0 };
 	const char *object_name = NULL;
 	const char *privacy_string = NULL;
 	uint32_t found = 0;
 	uint32_t object_found = 0;
-	void *ctx = NULL;
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
 		return res;
 	}
 
-	object_descriptor.data.data_attributes = &data_attributes;
+	args.version = subtest->version;
 
 	res = util_read_json_type(&object_name, OBJECT_NAME, t_string,
 				  subtest->params);
@@ -269,23 +273,21 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
+	args.object_descriptor = &object_descriptor;
+
 	if (object_descriptor.id) {
-		subtest->smw_status = smw_find_object_db(&object_descriptor);
+		subtest->smw_status = smw_find_object_db(&args);
 		if (subtest->smw_status == SMW_STATUS_OK)
 			found++;
 	} else {
-		subtest->smw_status =
-			smw_find_object_db_init(&ctx,
-						object_descriptor.attributes,
-						&object_descriptor);
+		subtest->smw_status = smw_find_object_db_init(&args);
 		if (subtest->smw_status == SMW_STATUS_OK) {
-			while (smw_find_object_db_next(ctx,
-						       &object_descriptor) ==
+			while (smw_find_object_db_next(&args) ==
 			       SMW_STATUS_OK) {
 				found++;
 			}
 
-			subtest->smw_status = smw_find_object_db_final(ctx);
+			subtest->smw_status = smw_find_object_db_final(&args);
 		}
 	}
 

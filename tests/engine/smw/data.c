@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <stdint.h>
@@ -39,19 +39,19 @@ static void attributes_callback(void *user_data, const char *attributes[],
 }
 
 static int read_data_attributes(struct json_object *params,
-				struct smw_data_attributes **data_attributes)
+				struct smw_data_attributes *data_attributes)
 {
 	int ret = ERR_CODE(PASSED);
 	int found = 0;
 
-	if (!params || !data_attributes || !*data_attributes) {
+	if (!params || !data_attributes) {
 		DBG_PRINT_BAD_ARGS();
 		return ERR_CODE(BAD_ARGS);
 	}
 
 	ret = util_attr_read_attributes(params, ATTR_LIST_OBJ,
 					&attributes_callback,
-					&((*data_attributes)->attributes));
+					&data_attributes->attributes);
 	if (ret == ERR_CODE(PASSED))
 		found++;
 	else if (ret != ERR_CODE(VALUE_NOTFOUND))
@@ -59,14 +59,14 @@ static int read_data_attributes(struct json_object *params,
 
 	ret = util_attr_read_attributes(params, LIFECYCLE_OBJ,
 					&attributes_callback,
-					&((*data_attributes)->attributes));
+					&data_attributes->attributes);
 	if (ret == ERR_CODE(PASSED))
 		found++;
 	else if (ret != ERR_CODE(VALUE_NOTFOUND))
 		return ret;
 
 	if (!found)
-		*data_attributes = NULL;
+		data_attributes->attributes = 0;
 
 	return ERR_CODE(PASSED);
 }
@@ -145,7 +145,7 @@ static int read_descriptor(struct llist *data_list,
 		return ret;
 
 	ret = read_data_attributes(info->odata_params,
-				   &data_descriptor->data_attributes);
+				   &data_descriptor->attributes);
 	if (ret != ERR_CODE(PASSED))
 		return ret;
 

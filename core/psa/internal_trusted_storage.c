@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include "smw_storage.h"
@@ -53,7 +53,6 @@ __export psa_status_t psa_its_set(psa_storage_uid_t uid, size_t data_length,
 	struct psa_storage_info_t info = { 0 };
 	struct smw_store_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
-	struct smw_data_attributes data_attributes = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -78,11 +77,10 @@ __export psa_status_t psa_its_set(psa_storage_uid_t uid, size_t data_length,
 	if (SET_OVERFLOW(data_length, data_descriptor.length))
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	psa_status = set_data_attributes(create_flags, &data_attributes);
+	psa_status =
+		set_data_attributes(create_flags, &data_descriptor.attributes);
 	if (psa_status != PSA_SUCCESS)
 		return psa_status;
-
-	data_descriptor.data_attributes = &data_attributes;
 
 	args.subsystem_name = get_psa_default_subsystem();
 	args.data_descriptor = &data_descriptor;
@@ -191,7 +189,6 @@ __export psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 
 	struct smw_data_info_args data_info = { 0 };
 	struct smw_data_descriptor data_desc = { 0 };
-	struct smw_data_attributes data_attr = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -201,7 +198,6 @@ __export psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 	if (!p_info)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	data_desc.data_attributes = &data_attr;
 	data_info.data_descriptor = &data_desc;
 	if (SET_OVERFLOW(uid, data_desc.identifier))
 		return PSA_ERROR_INVALID_ARGUMENT;
@@ -213,7 +209,7 @@ __export psa_status_t psa_its_get_info(psa_storage_uid_t uid,
 		p_info->size = data_desc.length;
 
 		get_data_attributes(&p_info->flags,
-				    data_desc.data_attributes->attributes);
+				    data_desc.attributes.attributes);
 
 		psa_status = PSA_SUCCESS;
 	} else if (status == SMW_STATUS_UNKNOWN_ID) {

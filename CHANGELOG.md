@@ -134,6 +134,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add TLS 1.3 Key exchange support
 * TLS AES GCM mulpti-part operation transforms to one shot operation.
 * Add CKF_LOGIN_REQUIRED flag to token flags.
+* Sign/Verify: Add support of plaintext key buffer for session key objects.
 
 #### PKCS#11 Tests - _version 5.0_
 
@@ -145,6 +146,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Test TLS 1.3 Hash MAC operation.
 * Fix performance test result calculation on 32bits platforms.
 * Retry performance test case if it failed.
+* Add SHA256 and SHA384 HMAC SignMessage/VerifyMessage test with a plaintext key.
+* Add RSA SHA512 Sign/Verify test with a plaintext key.
 
 ---
 ### <a id ="rel_4_2"></a></br>**Release 4.2**

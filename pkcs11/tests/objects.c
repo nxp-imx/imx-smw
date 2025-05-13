@@ -1519,6 +1519,102 @@ end:
 	return status;
 }
 
+static int
+get_object_size_created_in_another_session(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE create_sess = 0;
+	CK_SESSION_HANDLE getsize_sess = 0;
+	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_OBJECT_HANDLE hkey = CK_INVALID_HANDLE;
+	CK_ULONG key_len = 16;
+	CK_ULONG size = 0;
+	CK_BBOOL btrue = CK_TRUE;
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
+
+	CK_ATTRIBUTE key_attrs[] = {
+		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
+		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
+	};
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &create_sess) == TEST_FAIL)
+		goto end;
+
+	if (util_open_rw_session(pfunc, 0, &getsize_sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(create_sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	ret = pfunc->C_GenerateKey(create_sess, &genmech, key_attrs,
+				   ARRAY_SIZE(key_attrs), &hkey);
+
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+		goto end;
+
+	ret = pfunc->C_Logout(create_sess);
+	if (CHECK_CK_RV(CKR_OK, "C_Logout"))
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(getsize_sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	TEST_OUT("Get key size #%lu\n", hkey);
+	ret = pfunc->C_GetObjectSize(getsize_sess, hkey, &size);
+	if (CHECK_CK_RV(CKR_OK, "C_GetObjectSize"))
+		goto end;
+
+	ret = pfunc->C_Logout(getsize_sess);
+	if (CHECK_CK_RV(CKR_OK, "C_Logout"))
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(create_sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	TEST_OUT("Key Destroy #%lu\n", hkey);
+	ret = pfunc->C_DestroyObject(create_sess, hkey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	if (CHECK_EXPECTED(key_len == size, "Got %lu but expected %lu size",
+			   size, key_len))
+		goto end;
+
+	ret = pfunc->C_Logout(create_sess);
+	if (CHECK_CK_RV(CKR_OK, "C_Logout"))
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(getsize_sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	TEST_OUT("Get key size #%lu\n", hkey);
+	ret = pfunc->C_GetObjectSize(getsize_sess, hkey, &size);
+	if (CHECK_CK_RV(CKR_OBJECT_HANDLE_INVALID, "C_GetObjectSize"))
+		goto end;
+
+	status = TEST_PASS;
+end:
+	util_close_session(pfunc, &create_sess);
+	util_close_session(pfunc, &getsize_sess);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 static int data_storage_destroy(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status = TEST_FAIL;
@@ -1722,6 +1818,9 @@ void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 		goto end;
 
 	if (get_key_pair_size(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (get_object_size_created_in_another_session(pfunc) == TEST_FAIL)
 		goto end;
 
 	/*

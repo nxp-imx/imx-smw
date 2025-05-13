@@ -23,7 +23,8 @@ const struct libdev seco_info = { .name = SMW_SUBSYSTEM_NAME_SECO,
 				  .flags_slot = CKF_HW_SLOT,
 				  .flags_token =
 					  CKF_TOKEN_INITIALIZED |
-					  CKF_PROTECTED_AUTHENTICATION_PATH,
+					  CKF_PROTECTED_AUTHENTICATION_PATH |
+					  CKF_LOGIN_REQUIRED,
 				  .label_token = "smw-seco",
 				  .profile_id_list = { CKP_BASELINE_PROVIDER },
 				  .profile_count = 1 };

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <string.h>
@@ -25,8 +25,6 @@ static int data_db_create(unsigned int *id,
 			  struct smw_storage_data_descriptor *descriptor)
 {
 	struct smw_object_descriptor obj = { 0 };
-	smw_attr_attributes_t attributes =
-		descriptor->data_attributes.attributes;
 
 	if (descriptor->subsystem_id == SUBSYSTEM_ID_INVALID)
 		obj.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
@@ -36,23 +34,20 @@ static int data_db_create(unsigned int *id,
 
 	obj.type = SMW_OBJECT_TYPE_NAME_DATA;
 	obj.data.length = smw_storage_get_data_length(descriptor);
-	obj.data.data_attributes = &descriptor->data_attributes;
-	obj.attributes = attributes;
+	obj.data.attributes = descriptor->data_attributes;
 
 	if (NXP_IS_EL2GO_OBJECT(descriptor->data_attributes.storage_id))
 		obj.label = DATA_DEFAULT_EL2GO_LABEL;
 	else
 		obj.label = DATA_DEFAULT_LABEL;
 
-	return smw_object_db_create(id, attributes, &obj);
+	return smw_object_db_create(id, &obj);
 }
 
 static int data_db_update(struct smw_storage_data_descriptor *descriptor)
 {
 	struct smw_object_descriptor obj = { 0 };
 	unsigned int id = 0;
-	smw_attr_attributes_t attributes =
-		descriptor->data_attributes.attributes;
 
 	id = smw_storage_get_data_identifier(descriptor);
 
@@ -64,19 +59,19 @@ static int data_db_update(struct smw_storage_data_descriptor *descriptor)
 
 	obj.type = SMW_OBJECT_TYPE_NAME_DATA;
 	obj.data.length = smw_storage_get_data_length(descriptor);
-	obj.data.data_attributes = &descriptor->data_attributes;
-	obj.attributes = attributes;
+	obj.data.attributes = descriptor->data_attributes;
 
-	return smw_object_db_update(id, attributes, &obj);
+	return smw_object_db_update(id, &obj);
 }
 
 static int data_db_delete(unsigned int id,
 			  struct smw_storage_data_descriptor *descriptor)
 {
-	smw_attr_attributes_t attributes =
-		descriptor->data_attributes.attributes;
+	struct smw_object_descriptor obj = { 0 };
 
-	return smw_object_db_delete(id, attributes);
+	obj.data.attributes = descriptor->data_attributes;
+
+	return smw_object_db_delete(id, &obj);
 }
 
 static void set_default_attributes(struct smw_data_attributes *data_attributes)
@@ -97,8 +92,7 @@ static int convert_data_descriptor(struct smw_data_descriptor *in,
 
 	set_default_attributes(&out->data_attributes);
 
-	if (in->data_attributes)
-		out->data_attributes = *in->data_attributes;
+	out->data_attributes = in->attributes;
 
 	out->pub = in;
 
@@ -278,9 +272,7 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 	 * If data is not present in the object data try to find it in
 	 * a subsystem supporting one data storage operation.
 	 */
-	status = smw_object_db_get_info(data_id,
-					in_desc->data_attributes.attributes,
-					&data_info);
+	status = smw_object_db_get_info(data_id, &data_info);
 
 	if (status == SMW_STATUS_OK) {
 		subsystem_name = data_info.subsystem_name;
@@ -293,8 +285,7 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 		}
 
 		if (out_desc) {
-			out_desc->data_attributes.attributes =
-				data_info.attributes;
+			out_desc->data_attributes = data_info.data.attributes;
 			smw_storage_set_data_length(out_desc,
 						    data_info.data.length);
 
@@ -347,7 +338,6 @@ static int get_new_data_id(struct smw_storage_data_descriptor *desc)
 	struct smw_object_descriptor data_info = { 0 };
 	struct smw_data_descriptor tmp_pub_desc = { 0 };
 	struct smw_storage_data_descriptor tmp_desc = { 0 };
-	smw_attr_attributes_t attributes = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -358,14 +348,13 @@ static int get_new_data_id(struct smw_storage_data_descriptor *desc)
 
 	tmp_desc = *desc;
 	tmp_desc.pub = &tmp_pub_desc;
-	attributes = desc->data_attributes.attributes;
+	data_info.data.attributes = desc->data_attributes;
 
 	for (id = data_id; id < UINT32_MAX; id++) {
 		tmp_pub_desc.identifier = id;
 
 		if (id != data_id) {
-			status = smw_object_db_get_info(data_id, attributes,
-							&data_info);
+			status = smw_object_db_get_info(data_id, &data_info);
 
 			if (data_info.label)
 				free(data_info.label);
@@ -804,9 +793,7 @@ enum smw_status_code smw_get_data_info(struct smw_data_info_args *args)
 	status = smw_utils_execute_implicit(OPERATION_ID_STORAGE_GET_DATA_INFO,
 					    data_desc, data_desc->subsystem_id);
 	if (status == SMW_STATUS_OK) {
-		if (args->data_descriptor->data_attributes)
-			*args->data_descriptor->data_attributes =
-				data_desc->data_attributes;
+		args->data_descriptor->attributes = data_desc->data_attributes;
 
 		status = data_db_update(&data_info_args.data_descriptor);
 	}

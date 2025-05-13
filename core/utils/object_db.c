@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -10,23 +10,38 @@
 #include "global.h"
 #include "object_db.h"
 
-static void prepare_osal_obj(unsigned int id, smw_attr_attributes_t attributes,
-			     struct smw_object_descriptor *descriptor,
-			     struct osal_obj *obj)
+void smw_object_db_prep_desc(unsigned int id,
+			     struct smw_object_descriptor *descriptor)
 {
-	if (descriptor)
-		descriptor->id = id;
-	obj->id = id;
-	obj->attributes = attributes;
-	obj->descriptor = descriptor;
+	smw_attr_attributes_t persistence = 0;
+
+	descriptor->id = id;
+
+	switch (descriptor->type) {
+	case SMW_OBJECT_TYPE_NAME_DATA:
+		persistence = descriptor->data.attributes.attributes;
+		break;
+
+	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+		persistence = descriptor->key.attributes.attributes;
+		break;
+
+	default:
+		persistence = descriptor->persistency;
+		break;
+	}
+
+	persistence = SMW_ATTR_GET_PERSISTENCE(persistence);
+	descriptor->persistency = SMW_ATTR_SET_PERSISTENCE(0, persistence);
 }
 
-int smw_object_db_create(unsigned int *id, smw_attr_attributes_t attributes,
+int smw_object_db_create(unsigned int *id,
 			 struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_CREATE;
 	struct smw_ops *ops = get_smw_ops();
-	struct osal_obj obj = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -36,22 +51,22 @@ int smw_object_db_create(unsigned int *id, smw_attr_attributes_t attributes,
 	if (!ops || !ops->add_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(*id, attributes, descriptor, &obj);
+	smw_object_db_prep_desc(*id, descriptor);
 
-	if (!ops->add_obj_info(&obj) && obj.id != INVALID_OBJ_ID) {
-		*id = obj.id;
+	if (!ops->add_obj_info(descriptor) &&
+	    descriptor->id != INVALID_OBJ_ID) {
+		*id = descriptor->id;
 		ret = SMW_STATUS_OK;
 	}
 
 	return ret;
 }
 
-int smw_object_db_update(unsigned int id, smw_attr_attributes_t attributes,
+int smw_object_db_update(unsigned int id,
 			 struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_UPDATE;
 	struct smw_ops *ops = get_smw_ops();
-	struct osal_obj obj = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -61,39 +76,38 @@ int smw_object_db_update(unsigned int id, smw_attr_attributes_t attributes,
 	if (!ops || !ops->update_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(id, attributes, descriptor, &obj);
+	smw_object_db_prep_desc(id, descriptor);
 
-	if (!ops->update_obj_info(&obj))
+	if (!ops->update_obj_info(descriptor))
 		ret = SMW_STATUS_OK;
 
 	return ret;
 }
 
-int smw_object_db_delete(unsigned int id, smw_attr_attributes_t attributes)
+int smw_object_db_delete(unsigned int id,
+			 struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_DELETE;
 	struct smw_ops *ops = get_smw_ops();
-	struct osal_obj obj = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!ops || !ops->delete_obj_info)
+	if (!ops || !ops->delete_obj_info || !descriptor)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(id, attributes, NULL, &obj);
+	smw_object_db_prep_desc(id, descriptor);
 
-	if (!ops->delete_obj_info(&obj))
+	if (!ops->delete_obj_info(descriptor))
 		ret = SMW_STATUS_OK;
 
 	return ret;
 }
 
-int smw_object_db_get_info(unsigned int id, smw_attr_attributes_t attributes,
+int smw_object_db_get_info(unsigned int id,
 			   struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_GET_INFO;
 	struct smw_ops *ops = get_smw_ops();
-	struct osal_obj obj = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -103,11 +117,11 @@ int smw_object_db_get_info(unsigned int id, smw_attr_attributes_t attributes,
 	if (!ops || !ops->get_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	prepare_osal_obj(id, attributes, descriptor, &obj);
+	smw_object_db_prep_desc(id, descriptor);
 
-	if (!ops->get_obj_info(&obj))
+	if (!ops->get_obj_info(descriptor))
 		ret = SMW_STATUS_OK;
-	else if (obj.id == INVALID_OBJ_ID)
+	else if (descriptor->id == INVALID_OBJ_ID)
 		ret = SMW_STATUS_UNKNOWN_ID;
 
 	return ret;

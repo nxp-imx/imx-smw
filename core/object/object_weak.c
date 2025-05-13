@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include "smw_status.h"
@@ -10,9 +10,9 @@
 #include "debug.h"
 
 __weak enum smw_status_code
-smw_find_object_db(struct smw_object_descriptor *descriptor)
+smw_find_object_db(struct smw_find_object_db_args *args)
 {
-	(void)descriptor;
+	(void)args;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -20,12 +20,9 @@ smw_find_object_db(struct smw_object_descriptor *descriptor)
 }
 
 __weak enum smw_status_code
-smw_find_object_db_init(void **ctx, smw_attr_attributes_t attributes,
-			struct smw_object_descriptor *descriptor)
+smw_find_object_db_init(struct smw_find_object_db_args *args)
 {
-	(void)ctx;
-	(void)descriptor;
-	(void)attributes;
+	(void)args;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -33,19 +30,19 @@ smw_find_object_db_init(void **ctx, smw_attr_attributes_t attributes,
 }
 
 __weak enum smw_status_code
-smw_find_object_db_next(void *ctx, struct smw_object_descriptor *descriptor)
+smw_find_object_db_next(struct smw_find_object_db_args *args)
 {
-	(void)ctx;
-	(void)descriptor;
+	(void)args;
 
 	SMW_DBG_TRACE_API_CALL;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
-__weak enum smw_status_code smw_find_object_db_final(void *ctx)
+__weak enum smw_status_code
+smw_find_object_db_final(struct smw_find_object_db_args *args)
 {
-	(void)ctx;
+	(void)args;
 
 	SMW_DBG_TRACE_API_CALL;
 

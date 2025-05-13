@@ -823,6 +823,7 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 	psa_algorithm_t aes_algo_type = PSA_ALG_CBC_NO_PADDING;
 
 	enum smw_status_code smw_status = SMW_STATUS_OK;
+	struct smw_find_object_db_args find_args = { 0 };
 	struct smw_object_descriptor descriptor = { 0 };
 
 	CK_RV ret = CKR_OK;
@@ -916,7 +917,8 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	descriptor.id = psa_id;
-	smw_status = smw_find_object_db(&descriptor);
+	find_args.object_descriptor = &descriptor;
+	smw_status = smw_find_object_db(&find_args);
 	if (smw_status != SMW_STATUS_OK)
 		goto end;
 
@@ -1620,6 +1622,7 @@ static int data_storage_destroy(CK_FUNCTION_LIST_PTR pfunc)
 	int status = TEST_FAIL;
 	enum smw_status_code smw_status = SMW_STATUS_OK;
 	struct smw_object_descriptor descriptor = { 0 };
+	struct smw_find_object_db_args find_args = { 0 };
 
 	CK_RV ret = CKR_OK;
 	CK_SESSION_HANDLE sess = 0;
@@ -1673,7 +1676,9 @@ static int data_storage_destroy(CK_FUNCTION_LIST_PTR pfunc)
 	if (ret != CKR_OK)
 		goto end;
 
-	smw_status = smw_find_object_db(&descriptor);
+	find_args.object_descriptor = &descriptor;
+
+	smw_status = smw_find_object_db(&find_args);
 	if (smw_status != SMW_STATUS_OK)
 		goto end;
 
@@ -1703,7 +1708,7 @@ static int data_storage_destroy(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 
 	TEST_OUT("Check database\n");
-	smw_status = smw_find_object_db(&descriptor);
+	smw_status = smw_find_object_db(&find_args);
 	if (smw_status != SMW_STATUS_UNKNOWN_ID)
 		goto end;
 

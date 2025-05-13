@@ -48,6 +48,24 @@
                 "result": "SMW_STATUS_UNKNOWN_ID"
         },
         "subtest 5": {
+                "description": "Unsupported version no is set",
+                "command": "OBJECT_FIND",
+                "version": 255,
+                "object_name": "key 1",
+                "depends": 1,
+                "result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+        },
+        "subtest 6": {
+                "description": "Unsupported version no is set",
+                "command": "OBJECT_FIND",
+                "version": 255,
+                "attributes_list": [
+                        "PERSISTENT"
+                ],
+                "depends": 1,
+                "result": "SMW_STATUS_VERSION_NOT_SUPPORTED"
+        },
+        "subtest 7": {
                 "command": "DELETE",
                 "key_name": "key 1",
                 "depends": 1

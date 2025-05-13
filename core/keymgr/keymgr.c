@@ -15,6 +15,7 @@
 #include "keymgr_db.h"
 #include "exec.h"
 #include "base64.h"
+#include "object_db.h"
 
 /*
  * OEM SRKH Key Identifier - Hardcoded value
@@ -1411,7 +1412,7 @@ static bool import_el2go_data(struct smw_import_key_args *args,
 
 	struct smw_store_data_args data_args = { 0 };
 	struct smw_data_descriptor data_desc = { 0 };
-	struct smw_data_attributes data_attr = { 0 };
+	struct smw_data_attributes *data_attr = NULL;
 	unsigned int storage_id = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1437,9 +1438,9 @@ static bool import_el2go_data(struct smw_import_key_args *args,
 	data_desc.data = smw_keymgr_get_private_data(key_desc);
 	data_desc.length = smw_keymgr_get_private_length(key_desc);
 
-	data_desc.data_attributes = &data_attr;
-	data_attr.attributes = args->key_descriptor->attributes.attributes;
-	data_attr.storage_id = args->key_descriptor->attributes.storage_id;
+	data_attr = &data_desc.attributes;
+	data_attr->attributes = args->key_descriptor->attributes.attributes;
+	data_attr->storage_id = args->key_descriptor->attributes.storage_id;
 
 	*status = smw_store_data(&data_args);
 	ret = true;
@@ -1456,7 +1457,6 @@ static bool delete_el2go_data(struct smw_delete_key_args *args, int *status)
 
 	struct smw_delete_data_args data_args = { 0 };
 	struct smw_data_descriptor data_desc = { 0 };
-	struct smw_data_attributes data_attributes = { 0 };
 	struct smw_object_descriptor obj_desc = { 0 };
 	unsigned int object_id = 0;
 
@@ -1467,16 +1467,15 @@ static bool delete_el2go_data(struct smw_delete_key_args *args, int *status)
 
 	object_id = args->key_descriptor->id;
 	obj_desc.id = object_id;
-	obj_desc.data.data_attributes = &data_attributes;
 
-	*status = smw_find_object_db(&obj_desc);
+	*status = smw_object_db_get_info(obj_desc.id, &obj_desc);
 	if (*status != SMW_STATUS_OK)
 		goto end;
 
 	if (obj_desc.type != SMW_OBJECT_TYPE_NAME_DATA)
 		goto end;
 
-	if (!NXP_IS_EL2GO_DATA(data_attributes.storage_id))
+	if (!NXP_IS_EL2GO_DATA(obj_desc.data.attributes.storage_id))
 		goto end;
 
 	data_args.data_descriptor = &data_desc;

@@ -135,6 +135,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TLS AES GCM mulpti-part operation transforms to one shot operation.
 * Add CKF_LOGIN_REQUIRED flag to token flags.
 * Sign/Verify: Add support of plaintext key buffer for session key objects.
+* Allow using a session object in all application sessions.
 
 #### PKCS#11 Tests - _version 5.0_
 
@@ -148,6 +149,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Retry performance test case if it failed.
 * Add SHA256 and SHA384 HMAC SignMessage/VerifyMessage test with a plaintext key.
 * Add RSA SHA512 Sign/Verify test with a plaintext key.
+* Test using a session object from another session.
 
 ---
 ### <a id ="rel_4_2"></a></br>**Release 4.2**

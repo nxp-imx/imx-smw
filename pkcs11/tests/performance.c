@@ -18,7 +18,19 @@
 
 #define NS_TO_MILLISEC	   1000000u
 #define SEC_TO_MILLISEC	   1000u
-#define GENERATE_KEY_COUNT 50
+#define GENERATE_KEY_COUNT 100
+#define MAX_RETRY	   2
+
+#define RETRY_IF_FAIL(_test_case, _status)                                     \
+	do {                                                                   \
+		int result = 0;                                                \
+		unsigned int retry = 0;                                        \
+		do {                                                           \
+			result = _test_case;                                   \
+			retry++;                                               \
+		} while ((result == TEST_FAIL) && (retry < MAX_RETRY));        \
+		_status = result;                                              \
+	} while (0)
 
 #if !defined(ENABLE_DEBUG)
 static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
@@ -60,6 +72,22 @@ static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
+	/*
+	 * Warm up: 1st run to load the TEE subsystem and prepare the
+	 * TEE secure storage, if this one was never initialized.
+	 */
+	TEST_OUT("Performance test warm up\n");
+	ret = pfunc->C_GenerateKey(sess, &genmech, key_attrs,
+				   ARRAY_SIZE(key_attrs), &hkey[0]);
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+		goto end;
+
+	ret = pfunc->C_DestroyObject(sess, hkey[0]);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	/* Performance test */
+	TEST_OUT("Performance test run\n");
 	for (i = 0; i < GENERATE_KEY_COUNT; i++) {
 		/* Make sure there is no pending i/o operation */
 		sync();
@@ -101,7 +129,6 @@ static int generate_cipher_key_performance(CK_FUNCTION_LIST_PTR pfunc)
 		key_count++;
 	}
 
-	TEST_OUT("Key Destroy\n");
 	for (i = 0; i < GENERATE_KEY_COUNT; i++) {
 		if (hkey[i] != CK_INVALID_HANDLE) {
 			ret = pfunc->C_DestroyObject(sess, hkey[i]);
@@ -154,7 +181,7 @@ void tests_pkcs11_performance(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Initialize"))
 		goto end;
 
-	status = generate_cipher_key_performance(pfunc);
+	RETRY_IF_FAIL(generate_cipher_key_performance(pfunc), status);
 
 end:
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

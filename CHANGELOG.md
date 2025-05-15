@@ -74,6 +74,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Update public HKDF arguments structures `smw_hkdf_args` and `smw_kdf_hkdf_args`.
 * Add support for EdgeLock Enclave key import.
 * Add algorithm operation class key agreement.
+* Add `smw_find_object_db_args` structure arguments for the object find operations
+* Change the structure `smw_data_descriptor` to integrate the data's attribute
+  structure instead of a pointer.
+* Change the structure `smw_object_descriptor` to remove duplicated key or data
+  attributes.
 
 ##### 2. Subsystems
 

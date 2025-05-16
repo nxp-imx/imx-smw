@@ -360,6 +360,8 @@ static int check_ec_public_key(CK_FUNCTION_LIST_PTR pfunc,
 			goto end;
 
 		key_attrs[0].pValue = ec_params;
+	} else {
+		goto end;
 	}
 
 	ec_point_len = key_attrs[1].ulValueLen;

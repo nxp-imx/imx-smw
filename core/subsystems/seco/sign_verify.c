@@ -232,6 +232,8 @@ static int verify(struct hdl *hdl, void *args)
 	unsigned int security_size = 0;
 	uint8_t *key_buf = NULL;
 	unsigned int key_size = 0;
+	uint8_t *hex_key_buf = NULL;
+	unsigned int hex_key_size = 0;
 	uint8_t *signature = NULL;
 	uint16_t signature_size = 0;
 	uint16_t seco_signature_size = 0;
@@ -254,11 +256,19 @@ static int verify(struct hdl *hdl, void *args)
 		if (status != SMW_STATUS_OK)
 			goto end;
 
-		key_size = smw_keymgr_get_public_length(&export_key_desc);
-		key_buf = smw_keymgr_get_public_data(&export_key_desc);
+		hex_key_size = smw_keymgr_get_public_length(&export_key_desc);
+		hex_key_buf = smw_keymgr_get_public_data(&export_key_desc);
 	} else {
 		key_size = smw_keymgr_get_public_length(key_descriptor);
 		key_buf = smw_keymgr_get_public_data(key_descriptor);
+
+		status =
+			smw_keymgr_set_hex_key_buffer(key_descriptor->format_id,
+						      key_buf, key_size,
+						      &hex_key_buf,
+						      &hex_key_size);
+		if (status != SMW_STATUS_OK)
+			goto end;
 	}
 
 	if (key_size > UINT16_MAX) {
@@ -266,11 +276,15 @@ static int verify(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	op_args.key = key_buf;
+	op_args.key = hex_key_buf;
 	op_args.message = smw_sign_verify_get_msg_buf(verify_args);
 	op_args.signature = smw_sign_verify_get_sign_buf(verify_args);
-	op_args.key_size = key_size;
 	op_args.message_size = smw_sign_verify_get_msg_len(verify_args);
+
+	if (SET_OVERFLOW(hex_key_size, op_args.key_size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
 
 	if (SET_OVERFLOW(smw_sign_verify_get_sign_len(verify_args),
 			 op_args.signature_size)) {
@@ -341,6 +355,10 @@ end:
 
 	if (signature)
 		SMW_UTILS_FREE(signature);
+
+	if (key_descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 &&
+	    hex_key_buf)
+		SMW_UTILS_FREE(hex_key_buf);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

@@ -801,6 +801,11 @@ static int tls12_op_copy_partial_data(struct smw_keymgr_derive_key_args *args)
 	struct smw_op_context *ctx = NULL;
 	struct seco_tls12_partial_data *partial_data = NULL;
 	const struct key_def *key_def = NULL;
+	unsigned int hex_public_key_len = 0;
+	unsigned char *hex_public_key = NULL;
+	unsigned int public_key_len =
+		smw_keymgr_get_public_length(&args->key_base);
+	unsigned char *public_key = smw_keymgr_get_public_data(&args->key_base);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -836,10 +841,16 @@ static int tls12_op_copy_partial_data(struct smw_keymgr_derive_key_args *args)
 	if (!partial_data->peer_public_buffer)
 		goto end;
 
-	partial_data->self_public_buffer_length =
-		smw_keymgr_get_public_length(&args->key_base);
+	status = smw_keymgr_set_hex_key_buffer(args->key_base.format_id,
+					       public_key, public_key_len,
+					       &hex_public_key,
+					       &hex_public_key_len);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	partial_data->self_public_buffer_length = hex_public_key_len;
 	partial_data->self_public_buffer =
-		seco_memdup(smw_keymgr_get_public_data(&args->key_base),
+		seco_memdup(hex_public_key,
 			    partial_data->self_public_buffer_length);
 	if (!partial_data->self_public_buffer)
 		goto end;
@@ -880,6 +891,10 @@ end:
 
 		SMW_UTILS_FREE(partial_data);
 	}
+
+	if (args->key_base.format_id == SMW_KEYMGR_FORMAT_ID_BASE64 &&
+	    hex_public_key)
+		SMW_UTILS_FREE(hex_public_key);
 
 	return status;
 }

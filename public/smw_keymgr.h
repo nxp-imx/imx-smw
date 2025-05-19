@@ -28,9 +28,15 @@
 #define NXP_EL2GO_STORAGE_ID_MASK    (NXP_KEY_DATA_STORAGE_ID_MASK | BIT(21))
 #define NXP_EL2GO_KEY		     NXP_EL2GO_STORAGE_ID_MASK
 #define NXP_EL2GO_DATA		     (NXP_EL2GO_STORAGE_ID_MASK | BIT(15))
-#define NXP_IS_EL2GO_OBJECT(val)     ((val) & (NXP_EL2GO_STORAGE_ID_MASK | BIT(15)))
-#define NXP_IS_EL2GO_KEY(val)	     (NXP_IS_EL2GO_OBJECT(val) == NXP_EL2GO_KEY)
-#define NXP_IS_EL2GO_DATA(val)	     (NXP_IS_EL2GO_OBJECT(val) == NXP_EL2GO_DATA)
+#define NXP_EL2GO_OBJECT_MASK(val)                                             \
+	((val) & (NXP_EL2GO_STORAGE_ID_MASK | BIT(15)))
+#define NXP_IS_EL2GO_KEY(val)  (NXP_EL2GO_OBJECT_MASK(val) == NXP_EL2GO_KEY)
+#define NXP_IS_EL2GO_DATA(val) (NXP_EL2GO_OBJECT_MASK(val) == NXP_EL2GO_DATA)
+#define NXP_IS_EL2GO_OBJECT(val)                                               \
+	({                                                                     \
+		__typeof__(val) _val = val;                                    \
+		NXP_IS_EL2GO_KEY(_val) || NXP_IS_EL2GO_DATA(_val);             \
+	})
 
 /**
  * struct smw_keypair_gen - Generic Keypair object

@@ -61,6 +61,47 @@ static int tee_convert_signature_type_id(enum smw_config_sign_type_id smw_id,
 	return status;
 }
 
+static int set_public_key_buffer(struct smw_keymgr_descriptor *key_desc,
+				 TEEC_Parameter *param,
+				 unsigned char **hex_public_key)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	unsigned int public_key_len = smw_keymgr_get_public_length(key_desc);
+	unsigned char *public_key = smw_keymgr_get_public_data(key_desc);
+	unsigned int hex_public_key_len = 0;
+
+	if (!public_key_len || !public_key)
+		goto end;
+
+	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, public_key,
+					       public_key_len, hex_public_key,
+					       &hex_public_key_len);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (SET_OVERFLOW(hex_public_key_len, param->tmpref.size)) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	param->tmpref.buffer = *hex_public_key;
+
+end:
+	return status;
+}
+
+static int get_pub_key_hex_len(struct smw_keymgr_descriptor *key_desc,
+			       unsigned int *hex_buffer_len)
+{
+	unsigned int pub_size = smw_keymgr_get_public_length(key_desc);
+	unsigned char *pub_buffer = smw_keymgr_get_public_data(key_desc);
+
+	return smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
+						 pub_buffer, pub_size,
+						 hex_buffer_len);
+}
+
 /**
  * sign_verify() - Generate or verify a signature.
  * @args: Sign or verify arguments.
@@ -88,6 +129,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 	unsigned char *ctx = NULL;
 	unsigned int ctx_length = 0;
 	unsigned int sign_length = 0;
+	unsigned char *hex_pub_key = NULL;
 
 	uint32_t param0_type = TEEC_NONE;
 	uint32_t param3_type = TEEC_NONE;
@@ -202,11 +244,13 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		goto exit;
 	}
 
-	shared_params->pub_key_len =
-		smw_keymgr_get_public_length(key_descriptor);
-
 	if (param0_type == TEEC_MEMREF_PARTIAL_INPUT) {
 		status = copy_keys_to_shm(&shm, key_descriptor, key_privacy);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+
+		status = get_pub_key_hex_len(key_descriptor,
+					     &shared_params->pub_key_len);
 		if (status != SMW_STATUS_OK)
 			goto exit;
 
@@ -214,9 +258,17 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		operation.params[0].memref.offset = 0;
 		operation.params[0].memref.size = shm.size;
 	} else if (param0_type == TEEC_MEMREF_TEMP_INPUT) {
-		operation.params[0].tmpref.buffer =
-			smw_keymgr_get_public_data(key_descriptor);
-		operation.params[0].tmpref.size = shared_params->pub_key_len;
+		status = set_public_key_buffer(key_descriptor,
+					       &operation.params[0],
+					       &hex_pub_key);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+
+		if (SET_OVERFLOW(operation.params[0].tmpref.size,
+				 shared_params->pub_key_len)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto exit;
+		}
 	} else {
 		shared_params->id = key_identifier->id;
 	}
@@ -295,6 +347,11 @@ exit:
 
 	if (param0_type == TEEC_MEMREF_PARTIAL_INPUT)
 		TEEC_ReleaseSharedMemory(&shm);
+
+	if (key_descriptor &&
+	    key_descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 &&
+	    hex_pub_key)
+		SMW_UTILS_FREE(hex_pub_key);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

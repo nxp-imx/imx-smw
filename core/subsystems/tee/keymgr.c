@@ -1512,7 +1512,7 @@ static int commit_key_storage(void)
 
 /**
  * get_shared_key_size() - Get shared key memory size.
- * @key_descriptor: Pointer to key descriptor.
+ * @key_desc: Pointer to key descriptor.
  * @privacy: Key privacy.
  * @memory_size: Size to update.
  *
@@ -1522,7 +1522,7 @@ static int commit_key_storage(void)
  * SMW_STATUS_OK		- Success.
  * SMW_STATUS_INVALID_PARAM	- Key privacy is invalid.
  */
-static int get_shared_key_size(struct smw_keymgr_descriptor *key_descriptor,
+static int get_shared_key_size(struct smw_keymgr_descriptor *key_desc,
 			       enum smw_keymgr_privacy_id privacy,
 			       size_t *memory_size)
 {
@@ -1530,37 +1530,63 @@ static int get_shared_key_size(struct smw_keymgr_descriptor *key_descriptor,
 	size_t out_size = 0;
 	unsigned int pub_size = 0;
 	unsigned int priv_size = 0;
+	unsigned int mod_size = 0;
+	unsigned int hex_pub_size = 0;
+	unsigned int hex_priv_size = 0;
+	unsigned int hex_mod_size = 0;
+	unsigned char *pub_buffer = NULL;
+	unsigned char *priv_buffer = NULL;
+	unsigned char *mod_buffer = NULL;
 
 	switch (privacy) {
 	case SMW_KEYMGR_PRIVACY_ID_PAIR:
-		if (!smw_keymgr_get_public_data(key_descriptor) ||
-		    !smw_keymgr_get_private_data(key_descriptor))
+		pub_buffer = smw_keymgr_get_public_data(key_desc);
+		priv_buffer = smw_keymgr_get_private_data(key_desc);
+		pub_size = smw_keymgr_get_public_length(key_desc);
+		priv_size = smw_keymgr_get_private_length(key_desc);
+		if (!pub_buffer || !priv_buffer || !pub_size || !priv_size)
 			goto exit;
 
-		pub_size = smw_keymgr_get_public_length(key_descriptor);
-		priv_size = smw_keymgr_get_private_length(key_descriptor);
+		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
+							   pub_buffer, pub_size,
+							   &hex_pub_size);
+		if (status != SMW_STATUS_OK)
+			goto exit;
 
-		if (!pub_size || !priv_size)
+		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
+							   priv_buffer,
+							   priv_size,
+							   &hex_priv_size);
+		if (status != SMW_STATUS_OK)
 			goto exit;
 
 		break;
 
 	case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
-		if (!smw_keymgr_get_private_data(key_descriptor))
+		priv_buffer = smw_keymgr_get_private_data(key_desc);
+		priv_size = smw_keymgr_get_private_length(key_desc);
+		if (!priv_buffer || !priv_size)
 			goto exit;
 
-		priv_size = smw_keymgr_get_private_length(key_descriptor);
-		if (!priv_size)
+		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
+							   priv_buffer,
+							   priv_size,
+							   &hex_priv_size);
+		if (status != SMW_STATUS_OK)
 			goto exit;
 
 		break;
 
 	case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
-		if (!smw_keymgr_get_public_data(key_descriptor))
+		pub_buffer = smw_keymgr_get_public_data(key_desc);
+		pub_size = smw_keymgr_get_public_length(key_desc);
+		if (!pub_buffer || !pub_size)
 			goto exit;
 
-		pub_size = smw_keymgr_get_public_length(key_descriptor);
-		if (!pub_size)
+		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
+							   pub_buffer, pub_size,
+							   &hex_pub_size);
+		if (status != SMW_STATUS_OK)
 			goto exit;
 
 		break;
@@ -1569,15 +1595,50 @@ static int get_shared_key_size(struct smw_keymgr_descriptor *key_descriptor,
 		goto exit;
 	}
 
-	out_size = smw_keymgr_get_modulus_length(key_descriptor);
-	if (!ADD_OVERFLOW(out_size, pub_size, &out_size)) {
-		if (!ADD_OVERFLOW(out_size, priv_size, &out_size)) {
+	mod_size = smw_keymgr_get_modulus_length(key_desc);
+	mod_buffer = smw_keymgr_get_modulus(key_desc);
+	if (mod_size && mod_buffer) {
+		status = smw_keymgr_get_hex_key_buffer_len(key_desc->format_id,
+							   mod_buffer, mod_size,
+							   &hex_mod_size);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+	}
+
+	if (!ADD_OVERFLOW(hex_mod_size, hex_pub_size, &out_size)) {
+		if (!ADD_OVERFLOW(out_size, hex_priv_size, &out_size)) {
 			*memory_size = out_size;
 			status = SMW_STATUS_OK;
 		}
 	}
 
 exit:
+	return status;
+}
+
+static int copy_key_buffer(enum smw_keymgr_format_id format_id,
+			   unsigned char *buffer, unsigned int buffer_len,
+			   void **key_buffer, bool is_mod)
+{
+	int status = SMW_STATUS_OK;
+
+	unsigned char *hex_key = NULL;
+	unsigned int hex_key_len = 0;
+
+	status = smw_keymgr_set_hex_key_buffer(format_id, buffer, buffer_len,
+					       &hex_key, &hex_key_len);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	SMW_UTILS_MEMCPY(*key_buffer, hex_key, hex_key_len);
+
+	if (!is_mod)
+		*key_buffer += hex_key_len;
+
+	if (format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && hex_key)
+		SMW_UTILS_FREE(hex_key);
+
+end:
 	return status;
 }
 
@@ -1595,6 +1656,8 @@ static int fill_shared_key_memory(struct smw_keymgr_descriptor *key_descriptor,
 				  enum smw_keymgr_privacy_id privacy,
 				  TEEC_SharedMemory *shared_key)
 {
+	int status = SMW_STATUS_INVALID_PARAM;
+
 	void *key_buffer = shared_key->buffer;
 	unsigned char *public_data = NULL;
 	unsigned char *private_data = NULL;
@@ -1612,7 +1675,7 @@ static int fill_shared_key_memory(struct smw_keymgr_descriptor *key_descriptor,
 
 		if (!public_data || !public_length || !private_data ||
 		    !private_length)
-			return SMW_STATUS_INVALID_PARAM;
+			goto end;
 
 		break;
 
@@ -1621,7 +1684,7 @@ static int fill_shared_key_memory(struct smw_keymgr_descriptor *key_descriptor,
 		private_length = smw_keymgr_get_private_length(key_descriptor);
 
 		if (!private_data || !private_length)
-			return SMW_STATUS_INVALID_PARAM;
+			goto end;
 
 		break;
 
@@ -1629,30 +1692,41 @@ static int fill_shared_key_memory(struct smw_keymgr_descriptor *key_descriptor,
 		public_data = smw_keymgr_get_public_data(key_descriptor);
 		public_length = smw_keymgr_get_public_length(key_descriptor);
 		if (!public_data || !public_length)
-			return SMW_STATUS_INVALID_PARAM;
+			goto end;
 
 		break;
 
 	default:
-		return SMW_STATUS_INVALID_PARAM;
+		goto end;
 	}
 
 	if (public_data) {
-		SMW_UTILS_MEMCPY(key_buffer, public_data, public_length);
-		key_buffer += public_length;
+		status = copy_key_buffer(key_descriptor->format_id, public_data,
+					 public_length, &key_buffer, false);
+		if (status != SMW_STATUS_OK)
+			goto end;
 	}
 
 	if (private_data) {
-		SMW_UTILS_MEMCPY(key_buffer, private_data, private_length);
-		key_buffer += private_length;
+		status =
+			copy_key_buffer(key_descriptor->format_id, private_data,
+					private_length, &key_buffer, false);
+		if (status != SMW_STATUS_OK)
+			goto end;
 	}
 
 	modulus_data = smw_keymgr_get_modulus(key_descriptor);
 	modulus_length = smw_keymgr_get_modulus_length(key_descriptor);
-	if (modulus_data && modulus_length)
-		SMW_UTILS_MEMCPY(key_buffer, modulus_data, modulus_length);
+	if (modulus_data && modulus_length) {
+		status =
+			copy_key_buffer(key_descriptor->format_id, modulus_data,
+					modulus_length, &key_buffer, true);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
 
-	return SMW_STATUS_OK;
+end:
+	return status;
 }
 
 int copy_keys_to_shm(TEEC_SharedMemory *shm,
@@ -1693,10 +1767,19 @@ int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
 			  unsigned int *key_id, unsigned int key_usage)
 {
 	TEEC_Operation op = { 0 };
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 	struct keymgr_shared_params import_shared_params = { 0 };
+	unsigned char *hex_priv_key = NULL;
+	unsigned int hex_priv_len = 0;
+	unsigned char *priv_key = smw_keymgr_get_private_data(key);
+	unsigned int priv_key_len = smw_keymgr_get_private_length(key);
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!priv_key || !priv_key_len) {
+		SMW_DBG_PRINTF(ERROR, "Missing import key buffer or length");
+		goto end;
+	}
 
 	status = tee_convert_key_type(&key->identifier,
 				      SMW_CONFIG_HASH_ALGO_ID_INVALID,
@@ -1719,8 +1802,14 @@ int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
 	import_shared_params.security_size = key->identifier.security_size;
 	import_shared_params.key_usage = key_usage;
 
-	op.params[1].tmpref.buffer = smw_keymgr_get_private_data(key);
-	op.params[1].tmpref.size = smw_keymgr_get_private_length(key);
+	status = smw_keymgr_set_hex_key_buffer(key->format_id, priv_key,
+					       priv_key_len, &hex_priv_key,
+					       &hex_priv_len);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	op.params[1].tmpref.buffer = hex_priv_key;
+	op.params[1].tmpref.size = hex_priv_len;
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_IMPORT_KEY, &op);
@@ -1732,6 +1821,9 @@ int tee_import_key_buffer(struct smw_keymgr_descriptor *key,
 	*key_id = import_shared_params.id;
 
 end:
+	if (key->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && hex_priv_key)
+		SMW_UTILS_FREE(hex_priv_key);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

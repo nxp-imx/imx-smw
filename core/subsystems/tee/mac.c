@@ -37,6 +37,19 @@ static int get_mac_algo(enum tee_algorithm_id *alg,
 	return status;
 }
 
+static int get_private_key_buffer(struct smw_keymgr_descriptor *key_desc,
+				  unsigned char **hex_private_buffer,
+				  unsigned int *hex_private_buf_len)
+{
+	unsigned int private_buf_len = smw_keymgr_get_private_length(key_desc);
+	unsigned char *private_buffer = smw_keymgr_get_private_data(key_desc);
+
+	return smw_keymgr_set_hex_key_buffer(key_desc->format_id,
+					     private_buffer, private_buf_len,
+					     hex_private_buffer,
+					     hex_private_buf_len);
+}
+
 /**
  * mac() - Call TA mac operation.
  * @args: MAC arguments.
@@ -56,6 +69,8 @@ static int mac(void *args)
 	struct smw_keymgr_descriptor *key_descriptor = NULL;
 	struct smw_keymgr_identifier *key_identifier = NULL;
 	unsigned int output_length = 0;
+	unsigned char *hex_key = NULL;
+	unsigned int hex_key_len = 0;
 
 	uint32_t key_param_type = TEEC_VALUE_INPUT;
 	uint32_t mac_param_type = TEEC_MEMREF_TEMP_INPUT;
@@ -86,10 +101,14 @@ static int mac(void *args)
 	 */
 	if (key_descriptor->format_id != SMW_KEYMGR_FORMAT_ID_INVALID) {
 		key_param_type = TEEC_MEMREF_TEMP_INPUT;
-		op.params[0].tmpref.buffer =
-			smw_keymgr_get_private_data(key_descriptor);
-		op.params[0].tmpref.size =
-			smw_keymgr_get_private_length(key_descriptor);
+
+		status = get_private_key_buffer(key_descriptor, &hex_key,
+						&hex_key_len);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+
+		op.params[0].tmpref.buffer = hex_key;
+		op.params[0].tmpref.size = hex_key_len;
 	} else {
 		op.params[0].value.a = key_identifier->id;
 	}
@@ -126,6 +145,10 @@ static int mac(void *args)
 	}
 
 exit:
+	if (key_descriptor &&
+	    key_descriptor->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && hex_key)
+		SMW_UTILS_FREE(hex_key);
+
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }

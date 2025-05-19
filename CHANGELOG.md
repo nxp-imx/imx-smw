@@ -96,6 +96,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Add support for asymmetric encryption and decryption for TEE subsystem.
 * SECO: Fix coverity finding.
 * SECO: Handle signature message hashed flag.
+* Apply Base64 to hex conversion consistently for key buffers across all subsystems.
 
 ##### 3. ARM PSA APIs
 
@@ -132,6 +133,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests to validate HMAC generation and verification using plaintext key buffer.
 * Add tests to validate asymmetric encryption and decryption APIs.
 * Add key import using EdgeLock Enclave blob tests.
+* Add subtests to verify cryptographic operations with Base64 encoded key buffer.
 
 #### PKCS#11 Library - _version 5.0_
 

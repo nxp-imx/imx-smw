@@ -1404,9 +1404,7 @@ static void set_key_buffer_format(struct smw_keymgr_descriptor *descriptor)
 		smw_keymgr_get_key_format_name(descriptor->format_id);
 }
 
-static bool import_el2go_data(struct smw_import_key_args *args,
-			      struct smw_keymgr_descriptor *key_desc,
-			      int *status)
+static bool import_el2go_data(struct smw_import_key_args *args, int *status)
 {
 	bool ret = false;
 
@@ -1427,16 +1425,16 @@ static bool import_el2go_data(struct smw_import_key_args *args,
 
 	if (NXP_IS_EL2GO_KEY(storage_id) ||
 	    (NXP_IS_EL2GO_OBJECT(storage_id) &&
-	     key_desc->identifier.id == ELE_OEM_SRKH_KEY_ID))
+	     args->key_descriptor->id == ELE_OEM_SRKH_KEY_ID))
 		goto end;
 
 	data_args.subsystem_name = args->subsystem_name;
 	data_args.data_descriptor = &data_desc;
 
-	data_desc.identifier = key_desc->identifier.id;
+	data_desc.identifier = args->key_descriptor->id;
 
-	data_desc.data = smw_keymgr_get_private_data(key_desc);
-	data_desc.length = smw_keymgr_get_private_length(key_desc);
+	data_desc.data = args->key_descriptor->buffer->gen.private_data;
+	data_desc.length = args->key_descriptor->buffer->gen.private_length;
 
 	data_attr = &data_desc.attributes;
 	data_attr->attributes = args->key_descriptor->attributes.attributes;
@@ -1629,6 +1627,9 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 		goto end;
 	}
 
+	if (import_el2go_data(args, &status))
+		goto end;
+
 	status = import_key_convert_args(args, &import_key_args, &subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -1642,9 +1643,6 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 
 	if (key_attrs)
 		key_desc->identifier.key_attributes = *key_attrs;
-
-	if (import_el2go_data(args, key_desc, &status))
-		goto end;
 
 	/*
 	 * Try to create the key in the database before

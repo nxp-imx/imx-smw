@@ -7,6 +7,15 @@
 				"addf88c1ab997eb58c0455288c3a4fa3",
 				"20ada8c18a69cc90aa99c73b174dfde6"
 			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"format": "BASE64",
+			"priv_key": [
+				"rd+IwauZfrWMBFUojDpPoyCtqMGKacyQ",
+				"qpnHOxdN/eY="
+			]
 		}
 	},
 	"subtest 1": {
@@ -115,5 +124,47 @@
 		"aead_id": 1,
 		"depends": 5,
 		"result": "SMW_STATUS_SIGNATURE_INVALID"
+	},
+	"subtest 7": {
+		"description": [
+			"Encrypt using GCM  mode and expected tag is set",
+			"output buffer = ciphertext + tag",
+			"Key buffer is encoded in Base64 format"
+		],
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"plaintext_len": 0,
+		"tag": "b4fde3ae3ad9218ff6ff0f1737735674",
+		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
+		"aad": "353637383132333435363738",
+		"input": "32333435363738394142434445463031",
+		"output": [
+			"871e90b92e4a549142b62af228cfd90b",
+			"b4fde3ae3ad9218ff6ff0f1737735674"
+		]
+	},
+	"subtest 8": {
+		"description": [
+			"input buffer = ciphertext + tag",
+			"Key buffer is encoded in Base64 format"
+		],
+		"command": "AEAD",
+		"subsystem": "TEE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"plaintext_len": 0,
+		"tag": 16,
+		"iv": "9dbfc7aed2484e2577246c14e2cc43c6",
+		"aad": "353637383132333435363738",
+		"input": [
+			"871e90b92e4a549142b62af228cfd90b",
+			"b4fde3ae3ad9218ff6ff0f1737735674"
+		],
+		"output": "32333435363738394142434445463031",
+		"depends": 7
 	}
 }

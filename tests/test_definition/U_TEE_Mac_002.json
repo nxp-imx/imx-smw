@@ -125,6 +125,15 @@
 				"HMAC",
 				"HASH=SM3"
 			]
+		},
+		"key 8": {
+			"type": "HMAC",
+			"security_size": 256,
+			"format": "BASE64",
+			"priv_key": [
+				"btdtLZfGn9EzlYlSOTHyps/1VLFfc48h",
+				"7HLdl6czCQc="
+			]
 		}
 	},
 	"subtest 1": {
@@ -375,36 +384,66 @@
 		"depends": 7
 	},
 	"subtest 15": {
+		"description": "Compute MAC using SM3 key buffer encoded in Base64 format",
+		"command": "MAC_COMPUTE",
+		"subsystem": "TEE",
+		"algo": "HMAC",
+		"hash": "SM3",
+		"key_name": "key 8",
+		"input": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"output": 32,
+		"mac": [
+			"2672da55660b5437dde775082347ddcb",
+			"0776e696adc151fa040f188f40a875cd"
+		]
+	},
+	"subtest 16": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
 	},
-	"subtest 16": {
+	"subtest 17": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 2
 	},
-	"subtest 17": {
+	"subtest 18": {
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 3
 	},
-	"subtest 18": {
+	"subtest 19": {
 		"command": "DELETE",
 		"key_name": "key 4",
 		"depends": 4
 	},
-	"subtest 19": {
+	"subtest 20": {
 		"command": "DELETE",
 		"key_name": "key 5",
 		"depends": 5
 	},
-	"subtest 20": {
+	"subtest 21": {
 		"command": "DELETE",
 		"key_name": "key 6",
 		"depends": 6
 	},
-	"subtest 21": {
+	"subtest 22": {
 		"command": "DELETE",
 		"key_name": "key 7",
 		"depends": 7

@@ -11,11 +11,11 @@
 		"self 256-bit ecdh key": {
 			"type": "SECP_R1",
 			"security_size": 256,
+			"format": "BASE64",
 			"pub_key": [
-				"76e656a9ea0d51412b83a48891bfb1e7",
-				"0cbb8e2125c620e32636222c32ec2810",
-				"afca3d1d3766f351f44232d0a6f6a6e4",
-				"8d20e493a01abeca121e719215df0541"
+				"duZWqeoNUUErg6SIkb+x5wy7jiElxiDj",
+				"JjYiLDLsKBCvyj0dN2bzUfRCMtCm9qbk",
+				"jSDkk6AavsoSHnGSFd8FQQ=="
 			]
 		},
 		"self 384-bit ecdh key": {
@@ -50,7 +50,7 @@
 			"op_name": "MASTER_SECRET",
 			"key_exchange_name": "ECDHE_ECDSA",
 			"prf_name": "SHA256",
-			"random_data" : {
+			"random_data": {
 				"client_random": [
 					"000102030405060708090a0b0c0d0e0f",
 					"000102030405060708090a0b0c0d0e0f"
@@ -80,7 +80,7 @@
 			"op_name": "KEY_EXPANSION",
 			"encryption_name": "AES_128_CBC",
 			"prf_name": "SHA256",
-			"random_data" : {
+			"random_data": {
 				"client_random": [
 					"000102030405060708090a0b0c0d0e0f",
 					"000102030405060708090a0b0c0d0e0f"
@@ -111,7 +111,7 @@
 			"op_name": "KEY_EXPANSION",
 			"encryption_name": "AES_128_GCM",
 			"prf_name": "SHA256",
-			"random_data" : {
+			"random_data": {
 				"client_random": [
 					"000102030405060708090a0b0c0d0e0f",
 					"000102030405060708090a0b0c0d0e0f"
@@ -158,7 +158,7 @@
 			"op_name": "MASTER_SECRET",
 			"key_exchange_name": "ECDHE_ECDSA",
 			"prf_name": "SHA384",
-			"random_data" : {
+			"random_data": {
 				"client_random": [
 					"000102030405060708090a0b0c0d0e0f",
 					"000102030405060708090a0b0c0d0e0f"
@@ -190,7 +190,7 @@
 			"op_name": "KEY_EXPANSION",
 			"encryption_name": "AES_256_CBC",
 			"prf_name": "SHA384",
-			"random_data" : {
+			"random_data": {
 				"client_random": [
 					"000102030405060708090a0b0c0d0e0f",
 					"000102030405060708090a0b0c0d0e0f"
@@ -221,7 +221,7 @@
 			"op_name": "KEY_EXPANSION",
 			"encryption_name": "AES_256_GCM",
 			"prf_name": "SHA384",
-			"random_data" : {
+			"random_data": {
 				"client_random": [
 					"000102030405060708090a0b0c0d0e0f",
 					"000102030405060708090a0b0c0d0e0f"
@@ -255,9 +255,7 @@
 			"f149e41d848f59276cfddd743bafa9a9",
 			"0e1ee4a263a118142b33e3702176ef0a"
 		],
-		"signature": [
-			"00000000000000000000000000000000"
-		],
+		"signature": 32,
 		"key_name": "master secret 384",
 		"sign_id": 1,
 		"depends": 7

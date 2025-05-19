@@ -104,6 +104,19 @@
 				"VERIFY_HASH",
 				"VERIFY_MESSAGE"
 			]
+		},
+		"key test 2(base64)": {
+			"type": "ED25519",
+			"security_size": 255,
+			"format": "BASE64",
+			"priv_key": [
+				"TM0Imyj/ltqdtsNG7BFOD1uKMZ81q6Yk",
+				"2oz27U+4pvs="
+			],
+			"pub_key": [
+				"PUAXw+hDiVqStwqnTRt+vJyYLM8uxJaM",
+				"wM1V8Sr0Zgw="
+			]
 		}
 	},
 	"subtest 1": {
@@ -503,5 +516,38 @@
 		"command": "DELETE",
 		"key_name": "key test ph",
 		"depends": 19
+	},
+	"subtest 23": {
+		"description": "Pure EDDSA message (1 byte) RFC8032 - key test 2(base64)",
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"message": [
+			"72"
+		],
+		"signature": [
+			"92a009a9f0d4cab8720e820b5f642540",
+			"a2b27b5416503f8fb3762223ebdb69da",
+			"085ac1e43e15996e458f3613d0f11d8c",
+			"387b2eaeb4302aeeb00d291612bb0c00"
+		],
+		"sign_id": 6,
+		"key_name": "key test 2(base64)"
+	},
+	"subtest 24": {
+		"description": "Pure EDDSA message (1 byte) RFC8032 - key test 2(base64)",
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"message": [
+			"72"
+		],
+		"sign_id": 6,
+		"key_name": "key test 2(base64)",
+		"depends": 23
 	}
 }

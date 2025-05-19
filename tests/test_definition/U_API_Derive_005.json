@@ -21,7 +21,8 @@
 		"restriction_list": [
 			"imx8ulp",
 			"imx95",
-			"imx943"
+			"imx943",
+			"imx8qxp"
 		]
 	},
 	"subtest 2": {

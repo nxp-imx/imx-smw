@@ -63,6 +63,12 @@
 				"11111111111111111111111111111111",
 				"22222222222222222222222222222222"
 			]
+		},
+		"key 9": {
+			"type": "AES",
+			"security_size": 128,
+			"format": "BASE64",
+			"priv_key": "BqkhQDa4oVtRLgPVNBIABg=="
 		}
 	},
 	"subtest 1": {
@@ -262,16 +268,39 @@
 		"depends": 2
 	},
 	"subtest 17": {
+		"description": "Encrypt with key buffer (Base64 format)",
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "ENCRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 9",
+		"iv": "3dafba429d9eb430b422da802c9fac41",
+		"input": "53696E676C6520626C6F636B206D7367",
+		"output": "e353779c1079aeb82708942dbe77181a"
+	},
+	"subtest 18": {
+		"description": "Decrypt with key buffer (Base64 format)",
+		"command": "CIPHER",
+		"mode": "CBC",
+		"op_type": "DECRYPT",
+		"subsystem": "TEE",
+		"key_name": "key 9",
+		"iv": "3dafba429d9eb430b422da802c9fac41",
+		"input": "e353779c1079aeb82708942dbe77181a",
+		"output": "53696E676C6520626C6F636B206D7367",
+		"depends": 17
+	},
+	"subtest 19": {
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 2
 	},
-	"subtest 18": {
+	"subtest 20": {
 		"command": "DELETE",
 		"key_name": "key 2",
 		"depends": 3
 	},
-	"subtest 19": {
+	"subtest 21": {
 		"command": "DELETE",
 		"key_name": "key 3",
 		"depends": 4

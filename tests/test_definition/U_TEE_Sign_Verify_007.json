@@ -88,6 +88,55 @@
 				"84f5125f5200eb57868cce6b74c58334",
 				"17990e318372c9239a36dca1a0b28809"
 			]
+		},
+		"key 3": {
+			"type": "SECP_R1",
+			"security_size": 384,
+			"format": "BASE64",
+			"priv_key": [
+				"IBtDLY3xQyQYLWJh2z5LP0aoKESC1S43",
+				"DaQebL30XsKVL123zLzjvClEn0+wgKyX"
+			],
+			"pub_key": [
+				"wrR5RPtd40LQMoWIAXfKX30PL8rXZ4zO",
+				"QinW4ZMvysEb/Dw+l9lCo8Vr80EjAT2/",
+				"NyV5BqgiOGbtoHQ8UZYWp2p1iuWK7oHF",
+				"/TX786hVt3VKNtSgZy35XWxEqBz3Ygwt"
+			]
+		},
+		"key 4": {
+			"type": "RSA",
+			"security_size": 2048,
+			"format": "BASE64",
+			"priv_key": [
+				"AT8TCNOEXEXSYfuSIHhPwisiWy5NBccN",
+				"H9F5oStltOCvjQjNPFvasl5kRDC9fpdT",
+				"tvN8jrh/N20Z36PODvGNWGdFfuxJa341",
+				"azLuy3XNLKJrFDwRWQFnTnzwOb5/et/D",
+				"pdgZUgqFdlvHldJxbl5pLs112irA4cYb",
+				"fRyMkIX+q2/QONR7tqvPqMJvJcnewUmw",
+				"mxt7QVd7y2IuXw7TrxYIz5312qNkcayh",
+				"EgFbwnIK3+zmoyMYEuJkMVl3u0ToD48N",
+				"JV66K7YAuETCjcNSaEsXBQfNxip57kfU",
+				"8ki/VvVRKmaj+9ZfyEE+cdT+J45LijlC",
+				"XQSqtBITm2OW2/9c0mE8AQ=="
+			],
+			"pub_key": [
+				"AQAB"
+			],
+			"modulus": [
+				"1Lgv7wjKhsnFM/gSsaAm/JhZixrNYrdE",
+				"lGZMbgSVhELz0DwuG2S0Jg8XDgEfjeGJ",
+				"hM0BeLP1SDYzKR53KmgxTb6ZdoWP2mtG",
+				"RZFUQxBsSmUkb25jYdWKmCnPHyYmP38D",
+				"vSocF+UAlilLvATV3+UIzxhvwGddr1OC",
+				"JVvItwog9FRDgZTGRyfdVkgTKLY8EpCA",
+				"1EtBKlh0iIGp5j9aNH1yvRGPCc9bnmLq",
+				"7GCjmNbHDC9cIoa+xl8qj0IvZvzdErww",
+				"E901XRzD1X17RK5H0TxGw8UU6PuyeL3j",
+				"FhEQjW1Ya1TBlbaPM3mOQTh7Fax+6rIT",
+				"8ffG4+SG4UDy3zxw3bxy/w=="
+			]
 		}
 	},
 	"subtest 1": {
@@ -177,5 +226,103 @@
 		"sign_id": 1,
 		"key_name": "key 2",
 		"depends": 3
+	},
+	"subtest 5": {
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA384"
+		],
+		"message": [
+			"6b45d88037392e1371d9fd1cd174e9c1",
+			"838d11c3d6133dc17e65fa0c485dcca9",
+			"f52d41b60161246039e42ec784d49400",
+			"bffdb51459f5de654091301a09378f93",
+			"464d52118b48d44b30d781eb1dbed09d",
+			"a11fb4c818dbd442d161aba4b9edc79f",
+			"05e4b7e401651395b53bd8b5bd3f2aaa",
+			"6a00877fa9b45cadb8e648550b4c6cbe"
+		],
+		"sign_id": 2,
+		"key_name": "key 3"
+	},
+	"subtest 6": {
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"ECDSA",
+			"HASH=SHA384"
+		],
+		"message": [
+			"6b45d88037392e1371d9fd1cd174e9c1",
+			"838d11c3d6133dc17e65fa0c485dcca9",
+			"f52d41b60161246039e42ec784d49400",
+			"bffdb51459f5de654091301a09378f93",
+			"464d52118b48d44b30d781eb1dbed09d",
+			"a11fb4c818dbd442d161aba4b9edc79f",
+			"05e4b7e401651395b53bd8b5bd3f2aaa",
+			"6a00877fa9b45cadb8e648550b4c6cbe"
+		],
+		"sign_id": 2,
+		"key_name": "key 3",
+		"depends": 5
+	},
+	"subtest 7": {
+		"description": [
+			"Generate Signature using 2048 RSA key buffer (Base64 format)",
+			"PKCS1V15 padding and SHA-256 hashing"
+		],
+		"command": "SIGN",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA256"
+		],
+		"message": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"signature": [
+			"bf3f3653dad1814fd5f9b426c01d34ec",
+			"7d4dcb153865b4b3075dcadbf5455b3c",
+			"8f3e394d3d7785f2b365ef7853fb2490",
+			"a357b63e1dacc0435bec751716e7813d",
+			"f7417c4eb4b62ce8fb5fe9eb91b032d4",
+			"9d6de179a23159e64f7f915250b68f07",
+			"27ef4cb8c7dfbbe65d023598e41f23c8",
+			"223d208514c5313009351a3b21dfec43",
+			"7aa91d4ac85849a384fe0c97a8826df3",
+			"ec90b6529a2cc545befbf4c70349f22b",
+			"3411d9dd446c2d610af63c3754b803e5",
+			"5f6250853a6fabbbe8826a693ba63652",
+			"8f9897d3c82a13888db191583214e522",
+			"e233c0fb88fa6d9151fc3f0f2ea265d5",
+			"0e2b3ea18e231c3822c38e525460cfaf",
+			"a5ba71409f9b43c2673349ef9d7928b4"
+		],
+		"sign_id": 3,
+		"key_name": "key 4"
+	},
+	"subtest 8": {
+		"description": [
+			"Verify signature using 2048 RSA key buffer (Base64 format)",
+			"PKCS1V15 padding and SHA-256 hashing"
+		],
+		"command": "VERIFY",
+		"subsystem": "TEE",
+		"sign_attr": [
+			"RSA_PKCS1V15",
+			"HASH=SHA256"
+		],
+		"message": [
+			"54657374206d65737361676520666f72",
+			"20525341207369676e6174757265732e",
+			"0a"
+		],
+		"sign_id": 3,
+		"key_name": "key 4",
+		"depends": 7
 	}
 }

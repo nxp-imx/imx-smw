@@ -819,22 +819,32 @@ static int import_key(struct hdl *hdl, void *args)
 	hsm_hdl_t key_mgt_hdl = 0;
 	op_import_key_args_t op_args = { 0 };
 
+	unsigned char *priv_key = NULL;
+	unsigned int priv_key_len = 0;
+	unsigned char *hex_priv_key = NULL;
+	unsigned int hex_priv_key_len = 0;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	key_desc = &key_args->key_descriptor;
 	storage_id = key_desc->identifier.storage_id;
 
-	if (!smw_keymgr_get_private_data(key_desc)) {
-		SMW_DBG_PRINTF(ERROR, "Missing import key buffer");
+	priv_key = smw_keymgr_get_private_data(key_desc);
+	priv_key_len = smw_keymgr_get_private_length(key_desc);
+
+	if (!priv_key || !priv_key_len) {
+		SMW_DBG_PRINTF(ERROR, "Missing import key buffer or length");
 		goto end;
 	}
 
-	status = open_key_mgmt_service(hdl, &key_mgt_hdl);
+	status = smw_keymgr_set_hex_key_buffer(key_desc->format_id, priv_key,
+					       priv_key_len, &hex_priv_key,
+					       &hex_priv_key_len);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	op_args.input_lsb_addr = smw_keymgr_get_private_data(key_desc);
-	op_args.input_size = smw_keymgr_get_private_length(key_desc);
+	op_args.input_lsb_addr = hex_priv_key;
+	op_args.input_size = hex_priv_key_len;
 
 	if (NXP_IS_EL2GO_OBJECT(storage_id))
 		op_args.flags = HSM_OP_IMPORT_KEY_INPUT_E2GO_TLV |
@@ -842,6 +852,10 @@ static int import_key(struct hdl *hdl, void *args)
 	else
 		op_args.flags = HSM_OP_IMPORT_KEY_INPUT_ELE_TLV |
 				HSM_OP_IMPORT_KEY_FLAGS_STRICT_OPERATION;
+
+	status = open_key_mgmt_service(hdl, &key_mgt_hdl);
+	if (status != SMW_STATUS_OK)
+		goto end;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_import_key()\n"
@@ -876,6 +890,9 @@ end:
 		if (status == SMW_STATUS_OK)
 			status = tmp_status;
 	}
+
+	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64 && hex_priv_key)
+		SMW_UTILS_FREE(hex_priv_key);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

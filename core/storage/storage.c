@@ -478,9 +478,7 @@ retrieve_data_convert_args(struct smw_retrieve_data_args *args,
 	if (subsystem_id == SUBSYSTEM_ID_INVALID)
 		conv_args->data_descriptor.subsystem_id = tmp_desc.subsystem_id;
 
-	if (!conv_args->data_descriptor.data_attributes.attributes)
-		conv_args->data_descriptor.data_attributes.attributes =
-			tmp_desc.data_attributes.attributes;
+	conv_args->data_descriptor.data_attributes = tmp_desc.data_attributes;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

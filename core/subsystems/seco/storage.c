@@ -6,6 +6,7 @@
 #include "debug.h"
 #include "storage.h"
 #include "object_db.h"
+#include "object_query.h"
 
 #include "common.h"
 
@@ -161,6 +162,36 @@ static int storage_retrieve(struct hdl *hdl,
 	return data_storage(hdl, &args->data_descriptor, false);
 }
 
+static bool storage_is_object_present(void *args, int *status)
+{
+	struct smw_object_query *obj_query = args;
+	bool handled = false;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!obj_query) {
+		*status = SMW_STATUS_INVALID_PARAM;
+		handled = true;
+		goto end;
+	}
+
+	if (obj_query->type == SMW_QUERY_TYPE_DATA) {
+		/*
+		 * Because of SECO limitation, there is no way to know if
+		 * a data is present or not.
+		 * Return SMW_STATUS_UNKNOWN_ID to ensure that store/retrieve
+		 * operation are executed when this subsystem is selected.
+		 */
+		*status = SMW_STATUS_UNKNOWN_ID;
+		handled = true;
+	}
+
+end:
+	SMW_DBG_PRINTF_COND(VERBOSE, handled, "%s returned %d\n", __func__,
+			    *status);
+	return handled;
+}
+
 bool seco_storage_handle(struct hdl *hdl, enum operation_id operation_id,
 			 void *args, int *status)
 {
@@ -175,16 +206,6 @@ bool seco_storage_handle(struct hdl *hdl, enum operation_id operation_id,
 		*status = storage_retrieve(hdl, args);
 		break;
 
-	case OPERATION_ID_STORAGE_IS_DATA_PRESENT:
-		/*
-		 * Because of SECO limitation, there is no way to know if
-		 * a data is present or not.
-		 * Return SMW_STATUS_UNKNOWN_ID to ensure that store/retrieve
-		 * operation are executed when this subsystem is selected.
-		 */
-		*status = SMW_STATUS_UNKNOWN_ID;
-		break;
-
 	case OPERATION_ID_STORAGE_GET_DATA_INFO:
 		/*
 		 * Because of SECO limitation, there is no way to get data
@@ -194,6 +215,9 @@ bool seco_storage_handle(struct hdl *hdl, enum operation_id operation_id,
 		 */
 		*status = SMW_STATUS_OK;
 		break;
+
+	case OPERATION_ID_IS_OBJECT_PRESENT:
+		return storage_is_object_present(args, status);
 
 	case OPERATION_ID_STORAGE_DELETE:
 	default:

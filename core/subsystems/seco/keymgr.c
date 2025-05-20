@@ -10,10 +10,10 @@
 #include "debug.h"
 #include "utils.h"
 #include "base64.h"
-#include "operations.h"
 #include "subsystems.h"
 #include "config.h"
 #include "keymgr.h"
+#include "object_query.h"
 
 #include "common.h"
 
@@ -641,6 +641,35 @@ static int commit_key_storage(void)
 	return status;
 }
 
+static bool key_is_present(void *args, int *status)
+{
+	struct smw_object_query *obj_query = args;
+	bool handled = false;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!obj_query) {
+		*status = SMW_STATUS_INVALID_PARAM;
+		handled = true;
+		goto end;
+	}
+
+	if (obj_query->type == SMW_QUERY_TYPE_KEY) {
+		/*
+		 * Because of SECO limitation, there is no way to know if
+		 * a key is present or not.
+		 * Return SMW_STATUS_UNKNOWN_ID.
+		 */
+		*status = SMW_STATUS_UNKNOWN_ID;
+		handled = true;
+	}
+
+end:
+	SMW_DBG_PRINTF_COND(VERBOSE, handled, "%s returned %d\n", __func__,
+			    *status);
+	return handled;
+}
+
 int seco_export_public_key(struct hdl *hdl,
 			   struct smw_keymgr_descriptor *key_desc)
 {
@@ -722,6 +751,8 @@ bool seco_key_handle(struct subsystem_context *seco_ctx,
 	case OPERATION_ID_COMMIT_KEY_STORAGE:
 		*status = commit_key_storage();
 		break;
+	case OPERATION_ID_IS_OBJECT_PRESENT:
+		return key_is_present(args, status);
 	default:
 		return false;
 	}

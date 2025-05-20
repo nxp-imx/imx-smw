@@ -1,4 +1,9 @@
 {
+	"keys": {
+		"key 1": {
+			"id": 21,
+		}
+	},
 	"data_list": {
 		"data pointer NULL": {
 			"id": 21,
@@ -69,6 +74,27 @@
 	"subtest 9": {
 		"description": "Re-write data",
 		"command": "STORAGE_STORE",
+		"api": "PSA",
+		"data_name": "data 2",
+		"result": "PSA_ERROR_NOT_PERMITTED",
+		"depends": 7
+	},
+	"subtest 10": {
+		"description": "Delete data using key deletion",
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"result": "PSA_ERROR_INVALID_HANDLE",
+		"depends": 2
+	},
+	"subtest 11": {
+		"command": "STORAGE_DELETE",
+		"api": "PSA",
+		"data_name": "data 1",
+		"depends": 2
+	},
+	"subtest 12": {
+		"command": "STORAGE_DELETE",
 		"api": "PSA",
 		"data_name": "data 2",
 		"result": "PSA_ERROR_NOT_PERMITTED",

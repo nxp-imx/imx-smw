@@ -1,0 +1,42 @@
+{
+	"keys": {
+		"key 1": {
+			"id": 10,
+			"type": "AES",
+			"security_size": 128,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		}
+	},
+	"data_list": {
+		"data 1": {
+			"id": 10
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"description": "Delete key using data deletion",
+		"command": "STORAGE_DELETE",
+		"api": "PSA",
+		"data_name": "data 1",
+		"result": "PSA_ERROR_DOES_NOT_EXIST",
+		"depends": 1
+	},
+	"subtest 3": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

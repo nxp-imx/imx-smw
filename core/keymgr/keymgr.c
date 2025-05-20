@@ -15,6 +15,7 @@
 #include "keymgr_db.h"
 #include "exec.h"
 #include "base64.h"
+#include "object_query.h"
 
 /*
  * OEM SRKH Key Identifier - Hardcoded value
@@ -562,30 +563,6 @@ static int check_export_key_buffer(struct smw_keymgr_descriptor *key_desc)
 	return status;
 }
 
-static int get_key_identifier(struct smw_keymgr_identifier *key_identifier,
-			      enum subsystem_id subsystem_id)
-{
-	int status = SMW_STATUS_OK;
-
-	struct smw_keymgr_get_key_attributes_args attr_args = { 0 };
-
-	attr_args.identifier.id = key_identifier->id;
-
-	status = smw_utils_execute_implicit(OPERATION_ID_GET_KEY_ATTRIBUTES,
-					    &attr_args, subsystem_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	*key_identifier = attr_args.identifier;
-	key_identifier->subsystem_id = subsystem_id;
-
-	status = smw_keymgr_db_create(&key_identifier->id, key_identifier);
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
@@ -635,18 +612,17 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 				  struct smw_keymgr_descriptor *out,
 				  bool new_key, enum subsystem_id *subsystem_id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_INVALID_PARAM;
 
 	enum smw_config_key_type_id type_id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
+	struct smw_object_query obj_query = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	SMW_DBG_ASSERT(out);
 
-	if (!in) {
-		status = SMW_STATUS_INVALID_PARAM;
+	if (!in)
 		goto end;
-	}
 
 	status = smw_config_get_key_type_id(in->type_name, &type_id);
 	if (status != SMW_STATUS_OK)
@@ -665,36 +641,41 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 	out->identifier.type_id = type_id;
 	out->identifier.security_size = in->security_size;
 
-	if (in->id != INVALID_KEY_ID) {
-		status = smw_keymgr_db_get_info(in->id, &out->identifier);
+	if (in->id == INVALID_KEY_ID)
+		goto finish;
 
-		if (status == SMW_STATUS_OK) {
-			if (new_key ||
-			    (in->type_name &&
-			     type_id != out->identifier.type_id) ||
-			    (in->security_size &&
-			     in->security_size !=
-				     out->identifier.security_size) ||
-			    (subsystem_id &&
-			     *subsystem_id != SUBSYSTEM_ID_INVALID &&
-			     *subsystem_id != out->identifier.subsystem_id))
-				status = SMW_STATUS_INVALID_PARAM;
-			else if (subsystem_id &&
-				 *subsystem_id == SUBSYSTEM_ID_INVALID)
-				*subsystem_id = out->identifier.subsystem_id;
-		} else if (status == SMW_STATUS_UNKNOWN_ID) {
-			if (new_key)
-				status = SMW_STATUS_OK;
-			else if (subsystem_id &&
-				 *subsystem_id != SUBSYSTEM_ID_INVALID)
-				status = get_key_identifier(&out->identifier,
-							    *subsystem_id);
+	status = smw_keymgr_db_get_info(in->id, &out->identifier);
+
+	if (status == SMW_STATUS_OK) {
+		if (new_key ||
+		    (in->type_name && type_id != out->identifier.type_id) ||
+		    (in->security_size &&
+		     in->security_size != out->identifier.security_size) ||
+		    (subsystem_id && *subsystem_id != SUBSYSTEM_ID_INVALID &&
+		     *subsystem_id != out->identifier.subsystem_id))
+			status = SMW_STATUS_INVALID_PARAM;
+		else if (subsystem_id && *subsystem_id == SUBSYSTEM_ID_INVALID)
+			*subsystem_id = out->identifier.subsystem_id;
+	} else if (status == SMW_STATUS_UNKNOWN_ID) {
+		if (new_key) {
+			status = SMW_STATUS_OK;
+		} else if (subsystem_id) {
+			obj_query.subsystem_id = *subsystem_id;
+			obj_query.type = SMW_QUERY_TYPE_KEY;
+			obj_query.key = out;
+
+			status = util_object_query_subsystem(&obj_query, NULL,
+							     0);
+
+			if (status == SMW_STATUS_OK)
+				*subsystem_id = obj_query.subsystem_id;
 		}
-
-		if (status != SMW_STATUS_OK)
-			goto end;
 	}
 
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+finish:
 	out->pub = in;
 	(void)setup_key_ops(out);
 

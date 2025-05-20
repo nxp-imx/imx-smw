@@ -1262,7 +1262,7 @@ int get_key_attributes(struct subtest_data *subtest)
 
 	if ((key_test.desc.attributes.attributes &
 	     key_ref_attributes.attributes) != key_ref_attributes.attributes) {
-		DBG_PRINT("Invalid algorithm %08x expected %08x",
+		DBG_PRINT("Invalid attributes %08x expected %08x",
 			  key_test.desc.attributes.attributes,
 			  key_ref_attributes.attributes);
 		error++;

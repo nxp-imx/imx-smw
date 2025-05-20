@@ -1,0 +1,49 @@
+{
+	"obj_db": {
+		"filepath": "/var/tmp/obj_db_smw_test_F_TEE_Keymgr_006.dat"
+	},
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"id": 100,
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"id": 101,
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "TEE",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"command": "GET_KEY_ATTRIBUTES",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 4": {
+		"command": "GET_KEY_ATTRIBUTES",
+		"key_name": "key 2",
+		"depends": 2
+	},
+}

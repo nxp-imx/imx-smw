@@ -79,6 +79,12 @@ The failure is due to the storage manager which is already loaded and a new inst
   structure instead of a pointer.
 * Change the structure `smw_object_descriptor` to remove duplicated key or data
   attributes.
+* Fix the EdgeLock 2GO storage identifier macros.
+* Fix the data update database to not change the storage id.
+* Remove the deletion of the EL2GO data from the smw_delete_key(), return
+`SMW_STATUS_UNKNOWN_ID` if object identifier is not a key.
+* Data operations return `SMW_STATUS_UNKNOWN_ID` if object identifier is not a
+data type.
 
 ##### 2. Subsystems
 
@@ -134,6 +140,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests to validate asymmetric encryption and decryption APIs.
 * Add key import using EdgeLock Enclave blob tests.
 * Add subtests to verify cryptographic operations with Base64 encoded key buffer.
+* Add PSA tests validating data deletion through key deletion and the opposite.
 
 #### PKCS#11 Library - _version 5.0_
 

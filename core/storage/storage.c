@@ -275,6 +275,11 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 	status = smw_object_db_get_info(data_id, &data_info);
 
 	if (status == SMW_STATUS_OK) {
+		if (data_info.type != SMW_OBJECT_TYPE_NAME_DATA) {
+			status = SMW_STATUS_UNKNOWN_ID;
+			goto end;
+		}
+
 		subsystem_name = data_info.subsystem_name;
 
 		if (subsystem_id != SUBSYSTEM_ID_INVALID &&

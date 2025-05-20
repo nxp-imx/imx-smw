@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "debug.h"
 #include "cipher.h"
 #include "utils.h"
 #include "storage.h"
+#include "object_query.h"
 
 #include "common.h"
 
@@ -255,6 +256,23 @@ exit:
 	return status;
 }
 
+static bool storage_is_object_present(struct hdl *hdl, void *args, int *status)
+{
+	struct smw_object_query *obj_query = args;
+	bool handled = false;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (obj_query->type == SMW_QUERY_TYPE_DATA) {
+		*status = storage_get_data_info(hdl, obj_query->data);
+		handled = true;
+	}
+
+	SMW_DBG_PRINTF_COND(VERBOSE, handled, "%s returned %d\n", __func__,
+			    *status);
+	return handled;
+}
+
 bool ele_storage_handle(struct subsystem_context *ele_ctx,
 			enum operation_id operation_id, void *args, int *status)
 {
@@ -269,7 +287,6 @@ bool ele_storage_handle(struct subsystem_context *ele_ctx,
 		*status = storage_retrieve(&ele_ctx->hdl, args);
 		break;
 
-	case OPERATION_ID_STORAGE_IS_DATA_PRESENT:
 	case OPERATION_ID_STORAGE_GET_DATA_INFO:
 		*status = storage_get_data_info(&ele_ctx->hdl, args);
 		break;
@@ -277,6 +294,9 @@ bool ele_storage_handle(struct subsystem_context *ele_ctx,
 	case OPERATION_ID_STORAGE_DELETE:
 		*status = storage_delete(&ele_ctx->hdl, args);
 		break;
+
+	case OPERATION_ID_IS_OBJECT_PRESENT:
+		return storage_is_object_present(&ele_ctx->hdl, args, status);
 
 	default:
 		return false;

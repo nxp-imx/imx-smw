@@ -13,6 +13,7 @@
 #include "config.h"
 #include "keymgr.h"
 #include "keymgr_attest.h"
+#include "object_query.h"
 
 #include "key_group.h"
 
@@ -1164,6 +1165,23 @@ end:
 	return status;
 }
 
+static bool key_is_present(struct hdl *hdl, void *args, int *status)
+{
+	struct smw_object_query *obj_query = args;
+	bool handled = false;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (obj_query->type == SMW_QUERY_TYPE_KEY) {
+		*status = get_key_attributes(hdl, obj_query->key);
+		handled = true;
+	}
+
+	SMW_DBG_PRINTF_COND(VERBOSE, handled, "%s returned %d\n", __func__,
+			    *status);
+	return handled;
+}
+
 int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
 			hsm_pubkey_type_t *ele_type)
 {
@@ -1283,6 +1301,8 @@ bool ele_key_handle(struct subsystem_context *ele_ctx,
 	case OPERATION_ID_KEY_ATTESTATION:
 		*status = key_attestation(hdl, args);
 		break;
+	case OPERATION_ID_IS_OBJECT_PRESENT:
+		return key_is_present(hdl, args, status);
 	default:
 		return false;
 	}

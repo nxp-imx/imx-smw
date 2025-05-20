@@ -15,7 +15,12 @@ target_sources(utils PRIVATE
                mac.c
                name.c
                object_db.c
+               object_query.c
                operation_context.c)
+
+if(ENABLE_STORAGE_MODULE OR ENABLE_KEYMGR_MODULE)
+   add_operation_implicit(IS_OBJECT_PRESENT)
+endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND VERBOSE AND NOT VERBOSE EQUAL 0)
     target_sources(utils PRIVATE list_debug.c)

@@ -117,8 +117,19 @@ int smw_keymgr_db_get_info(unsigned int id,
 	key_identifier_to_object(identifier, &obj);
 
 	ret = smw_object_db_get_info(id, &obj);
-	if (ret == SMW_STATUS_OK)
-		ret = object_to_key_identifier(&obj, identifier);
+	if (ret == SMW_STATUS_OK) {
+		switch (obj.type) {
+		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+			ret = object_to_key_identifier(&obj, identifier);
+			break;
+
+		default:
+			ret = SMW_STATUS_UNKNOWN_ID;
+			break;
+		}
+	}
 
 	if (obj.label)
 		free(obj.label);

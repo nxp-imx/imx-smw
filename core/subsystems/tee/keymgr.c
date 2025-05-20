@@ -17,6 +17,7 @@
 #include "config.h"
 #include "keymgr.h"
 #include "tee.h"
+#include "object_query.h"
 
 #define SECURITY_SIZE_RANGE UINT_MAX
 
@@ -1729,6 +1730,30 @@ end:
 	return status;
 }
 
+static bool key_is_present(void *args, int *status)
+{
+	struct smw_object_query *obj_query = args;
+	bool handled = false;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!obj_query) {
+		*status = SMW_STATUS_INVALID_PARAM;
+		handled = true;
+		goto end;
+	}
+
+	if (obj_query->type == SMW_QUERY_TYPE_KEY) {
+		*status = get_key_attributes(obj_query->key);
+		handled = true;
+	}
+
+end:
+	SMW_DBG_PRINTF_COND(VERBOSE, handled, "%s returned %d\n", __func__,
+			    *status);
+	return handled;
+}
+
 int copy_keys_to_shm(TEEC_SharedMemory *shm,
 		     struct smw_keymgr_descriptor *key_descriptor,
 		     enum smw_keymgr_privacy_id privacy)
@@ -1969,6 +1994,8 @@ bool tee_key_handle(enum operation_id op_id, void *args, int *status)
 	case OPERATION_ID_COMMIT_KEY_STORAGE:
 		*status = commit_key_storage();
 		break;
+	case OPERATION_ID_IS_OBJECT_PRESENT:
+		return key_is_present(args, status);
 	default:
 		return false;
 	}

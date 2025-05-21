@@ -833,7 +833,7 @@ static int encrypt_decrypt_generate_iv(CK_FUNCTION_LIST_3_0_PTR pfunc)
 				goto end;
 
 			continue;
-		} else if ((!is_8ulp() && !is_95evk() && !is_943evk()) &&
+		} else if ((!is_8ulp() && !is_95() && !is_943()) &&
 			   is_ele_subsystem() &&
 			   (gcm_params.ulIvFixedBits != 0 &&
 			    gcm_params.ulIvFixedBits != 32)) {

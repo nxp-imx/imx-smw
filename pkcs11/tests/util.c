@@ -13,9 +13,9 @@
 #include "util.h"
 #include "test_check.h"
 
-#define IMX8ULP	  "imx8ulp"
-#define IMX943EVK "imx943evk"
-#define IMX95EVK  "imx95evk"
+#define IMX8ULP "imx8ulp"
+#define IMX943	"imx943"
+#define IMX95	"imx95"
 
 #define TO_CK_BYTES(out, val)                                                  \
 	({                                                                     \
@@ -202,6 +202,9 @@ static bool compare_hostname(const char *device)
 
 	string_to_lower(hostname, strlen(hostname));
 
+	TEST_OUT("%s (%d): hostname: %s, device name: %s\n", __func__, __LINE__,
+		 hostname, device);
+
 	if (!strncmp(hostname, device, strlen(device)))
 		return true;
 
@@ -213,14 +216,14 @@ bool is_8ulp(void)
 	return compare_hostname(IMX8ULP);
 }
 
-bool is_95evk(void)
+bool is_95(void)
 {
-	return compare_hostname(IMX95EVK);
+	return compare_hostname(IMX95);
 }
 
-bool is_943evk(void)
+bool is_943(void)
 {
-	return compare_hostname(IMX943EVK);
+	return compare_hostname(IMX943);
 }
 
 CK_RV util_set_unique_id(CK_UTF8CHAR_PTR unique_id, CK_ULONG_PTR length,

@@ -357,7 +357,7 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 	struct smw_keymgr_identifier *key_identifier =
 		&key_descriptor->identifier;
 	struct smw_key_attributes *key_attributes =
-		generate_key_args->key_attributes;
+		&key_identifier->key_attributes;
 	unsigned char *public_data = NULL;
 	uint32_t key_id = 0;
 	unsigned char *tmp_key = NULL;
@@ -502,15 +502,25 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 			 */
 			(void)delete_key_operation(seco_ctx,
 						   &key_descriptor->identifier);
+			goto end;
 		}
 	}
 
-	if (key_attributes &&
-	    (key_attributes->permitted_algo || key_attributes->usage_flags)) {
-		key_attributes->permitted_algo = 0;
-		key_attributes->usage_flags = 0;
-		if (status == SMW_STATUS_OK)
-			status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	/*
+	 * SECO handles neither key permitted algorithm nor usage.
+	 * Keep the user permitted algorithm define as input to allow
+	 * user to find the key per algorithm.
+	 * If usage is not set, set all usages.
+	 * TODO in future, add SW management of permitted algorithm and usages.
+	 */
+	if (!key_attributes->usage_flags) {
+		key_attributes->usage_flags =
+			SMW_ATTR_USAGE_DECRYPT | SMW_ATTR_USAGE_ENCRYPT |
+			SMW_ATTR_USAGE_SIGN_HASH | SMW_ATTR_USAGE_SIGN_MESSAGE |
+			SMW_ATTR_USAGE_VERIFY_HASH |
+			SMW_ATTR_USAGE_VERIFY_MESSAGE | SMW_ATTR_USAGE_DERIVE;
+
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 	}
 
 end:
@@ -621,11 +631,21 @@ end:
 static int get_key_attributes(struct hdl *hdl, void *args)
 {
 	(void)hdl;
-	(void)args;
 
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
+
+	struct smw_keymgr_get_key_attributes_args *key_args = args;
+	struct smw_keymgr_identifier *identifier = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	identifier = &key_args->key_descriptor.identifier;
+
+	identifier->key_attributes.usage_flags =
+		SMW_ATTR_USAGE_DECRYPT | SMW_ATTR_USAGE_ENCRYPT |
+		SMW_ATTR_USAGE_SIGN_HASH | SMW_ATTR_USAGE_SIGN_MESSAGE |
+		SMW_ATTR_USAGE_VERIFY_HASH | SMW_ATTR_USAGE_VERIFY_MESSAGE |
+		SMW_ATTR_USAGE_DERIVE;
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

@@ -95,6 +95,8 @@ asymm_encrypt_convert_args(struct smw_asymmetric_encryption_args *args,
 {
 	int status = SMW_STATUS_OK;
 
+	bool new_key = false;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (args->version != 0) {
@@ -108,8 +110,8 @@ asymm_encrypt_convert_args(struct smw_asymmetric_encryption_args *args,
 		goto end;
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
-					       &converted_args->key_desc, false,
-					       subsystem_id);
+					       &converted_args->key_desc,
+					       &new_key, subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

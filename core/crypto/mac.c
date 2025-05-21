@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "smw_crypto.h"
@@ -14,6 +14,8 @@ static int mac_convert_args(struct smw_mac_args *args,
 			    enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_OK;
+
+	bool new_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -29,7 +31,7 @@ static int mac_convert_args(struct smw_mac_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       false, subsystem_id);
+					       &new_key, subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

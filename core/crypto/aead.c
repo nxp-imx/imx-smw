@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -195,6 +195,8 @@ static int convert_init_args(struct smw_aead_init_args *args,
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
+	bool new_key = false;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (args->mode_name == SMW_AEAD_MODE_NAME_NONE ||
@@ -216,8 +218,8 @@ static int convert_init_args(struct smw_aead_init_args *args,
 		converted_args->oneshot_pub->init = args;
 
 	status = smw_keymgr_convert_descriptor(args->key_desc,
-					       &converted_args->key_desc, false,
-					       subsystem_id);
+					       &converted_args->key_desc,
+					       &new_key, subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

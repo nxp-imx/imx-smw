@@ -68,9 +68,11 @@ sign_verify_convert_args(struct smw_sign_verify_args *args,
 {
 	int status = SMW_STATUS_OK;
 
+	bool new_key = false;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (args->version > 1) {
+	if (args->version != 0) {
 		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 		goto end;
 	}
@@ -82,7 +84,7 @@ sign_verify_convert_args(struct smw_sign_verify_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       false, subsystem_id);
+					       &new_key, subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

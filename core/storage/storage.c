@@ -147,6 +147,7 @@ static int convert_sign_args(struct smw_sign_args *args,
 {
 	int status = SMW_STATUS_OK;
 	struct smw_keymgr_descriptor *key_desc = NULL;
+	bool new_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -164,7 +165,7 @@ static int convert_sign_args(struct smw_sign_args *args,
 		key_desc = &converted_args->key_descriptor;
 
 		status = smw_keymgr_convert_descriptor(args->key_descriptor,
-						       key_desc, false,
+						       key_desc, &new_key,
 						       subsystem_id);
 		if (status != SMW_STATUS_OK)
 			goto end;

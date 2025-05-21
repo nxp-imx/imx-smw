@@ -577,14 +577,12 @@ static int generate_key(void *args)
 		goto exit;
 
 	key_identifier = &key_args->key_descriptor.identifier;
-	key_attrs = key_args->key_attributes;
+	key_attrs = &key_identifier->key_attributes;
 
-	if (key_attrs) {
-		perm_algo = key_attrs->permitted_algo;
-		status = smw_utils_hash_attr_to_algo_id(perm_algo, &hash_id);
-		if (status != SMW_STATUS_OK)
-			goto exit;
-	}
+	perm_algo = key_attrs->permitted_algo;
+	status = smw_utils_hash_attr_to_algo_id(perm_algo, &hash_id);
+	if (status != SMW_STATUS_OK)
+		goto exit;
 
 	key = get_key_def_from_smw(key_identifier, hash_id);
 	if (!key) {
@@ -604,16 +602,13 @@ static int generate_key(void *args)
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->key_type;
 
-	if (key_attrs) {
-		status = check_persistence(key_attrs->attributes,
-					   &shared_params.persistent_storage);
-		if (status != SMW_STATUS_OK)
-			goto exit;
+	status = check_persistence(key_attrs->attributes,
+				   &shared_params.persistent_storage);
+	if (status != SMW_STATUS_OK)
+		goto exit;
 
-		key_usage_to_tee(key_attrs->usage_flags,
-				 &shared_params.key_usage);
-		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
-	}
+	key_usage_to_tee(key_attrs->usage_flags, &shared_params.key_usage);
+	key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
 
 	op.params[0].tmpref.buffer = &shared_params;
 	op.params[0].tmpref.size = sizeof(shared_params);
@@ -649,9 +644,25 @@ static int generate_key(void *args)
 	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated\n", __func__,
 		       key_identifier->id);
 
-	if (smw_keymgr_get_public_data(&key_args->key_descriptor))
+	if (smw_keymgr_get_public_data(&key_args->key_descriptor)) {
 		status = update_public_buffers(&key_args->key_descriptor,
 					       CMD_GENERATE_KEY, &op, false);
+		if (status != SMW_STATUS_OK)
+			goto exit;
+	}
+
+	if (key->permitted_algo &&
+	    key_attrs->permitted_algo != key->permitted_algo) {
+		key_attrs->permitted_algo = key->permitted_algo;
+
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	}
+
+	if (key_attrs->usage_flags != actual_usage_flags) {
+		key_attrs->usage_flags = actual_usage_flags;
+
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	}
 
 exit:
 	if (key_args &&
@@ -666,17 +677,9 @@ exit:
 		free_tmpref_buffer(GEN_PUB_EXP_PARAM_IDX, &op);
 	}
 
-	if (status != SMW_STATUS_OK) {
+	if (status != SMW_STATUS_OK &&
+	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED)
 		(void)tee_delete_key(shared_params.id);
-
-	} else if (key_attrs)
-		if (key_attrs->permitted_algo ||
-		    key_attrs->usage_flags != actual_usage_flags) {
-			key_attrs->permitted_algo = 0;
-			key_attrs->usage_flags = actual_usage_flags;
-
-			status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
-		}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -1111,13 +1114,12 @@ static int import_key(void *args)
 		goto exit;
 
 	key_identifier = &key_args->key_descriptor.identifier;
-	key_attrs = key_args->key_attributes;
-	if (key_attrs) {
-		perm_algo = key_attrs->permitted_algo;
-		status = smw_utils_hash_attr_to_algo_id(perm_algo, &hash_id);
-		if (status != SMW_STATUS_OK)
-			goto exit;
-	}
+	key_attrs = &key_identifier->key_attributes;
+
+	perm_algo = key_attrs->permitted_algo;
+	status = smw_utils_hash_attr_to_algo_id(perm_algo, &hash_id);
+	if (status != SMW_STATUS_OK)
+		goto exit;
 
 	key = get_key_def_from_smw(key_identifier, hash_id);
 	if (!key) {
@@ -1152,16 +1154,13 @@ static int import_key(void *args)
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->key_type;
 
-	if (key_attrs) {
-		status = check_persistence(key_attrs->attributes,
-					   &shared_params.persistent_storage);
-		if (status != SMW_STATUS_OK)
-			goto exit;
+	status = check_persistence(key_attrs->attributes,
+				   &shared_params.persistent_storage);
+	if (status != SMW_STATUS_OK)
+		goto exit;
 
-		key_usage_to_tee(key_attrs->usage_flags,
-				 &shared_params.key_usage);
-		key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
-	}
+	key_usage_to_tee(key_attrs->usage_flags, &shared_params.key_usage);
+	key_usage_to_smw(shared_params.key_usage, &actual_usage_flags);
 
 	/*
 	 * params[0]: Pointer to import shared params structure.
@@ -1192,6 +1191,18 @@ static int import_key(void *args)
 	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is imported\n", __func__,
 		       key_identifier->id);
 
+	if (key_attrs->permitted_algo != key->permitted_algo) {
+		key_attrs->permitted_algo = key->permitted_algo;
+
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	}
+
+	if (key_attrs->usage_flags != actual_usage_flags) {
+		key_attrs->usage_flags = actual_usage_flags;
+
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	}
+
 exit:
 	if (key_args &&
 	    key_args->key_descriptor.format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
@@ -1205,16 +1216,10 @@ exit:
 		free_tmpref_buffer(IMP_MOD_PARAM_IDX, &op);
 	}
 
-	if (status != SMW_STATUS_OK) {
+	if (status != SMW_STATUS_OK &&
+	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
 		if (shared_params.id)
 			(void)tee_delete_key(shared_params.id);
-	} else if (key_attrs &&
-		   (key_attrs->permitted_algo ||
-		    key_attrs->usage_flags != actual_usage_flags)) {
-		key_attrs->permitted_algo = 0;
-		key_attrs->usage_flags = actual_usage_flags;
-
-		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 	}
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1413,7 +1418,8 @@ static int get_key_attributes(void *args)
 	if (!args)
 		goto exit;
 
-	key_identifier = &key_args->identifier;
+	key_identifier = &key_args->key_descriptor.identifier;
+	key_attributes = &key_identifier->key_attributes;
 
 	/*
 	 * params[0].value.a = TEE Key ID.
@@ -1479,22 +1485,15 @@ static int get_key_attributes(void *args)
 
 	persistent_flag = op.params[GET_KEY_ATTRS_PERSISTENT_FLAG_IDX].value.b;
 
-	key_persistence_to_smw(persistent_flag,
-			       &key_identifier->key_attributes.attributes);
+	key_persistence_to_smw(persistent_flag, &key_attributes->attributes);
 
-	key_identifier->storage_id = 0;
 	key_identifier->type_id = key_def->key_type_id;
 	key_identifier->security_size =
 		op.params[GET_KEY_ATTRS_KEY_SIZE_IDX].value.a;
 
-	key_attributes = key_args->key_attributes;
-	if (key_attributes) {
-		key_attributes->storage_id = key_identifier->storage_id;
-		key_attributes->attributes =
-			key_identifier->key_attributes.attributes;
-		key_attributes->permitted_algo = key_def->permitted_algo;
-		key_usage_to_smw(tee_usage, &key_attributes->usage_flags);
-	}
+	key_attributes->attributes = key_identifier->key_attributes.attributes;
+	key_attributes->permitted_algo = key_def->permitted_algo;
+	key_usage_to_smw(tee_usage, &key_attributes->usage_flags);
 
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1733,6 +1732,8 @@ end:
 static bool key_is_present(void *args, int *status)
 {
 	struct smw_object_query *obj_query = args;
+	struct smw_keymgr_get_key_attributes_args attr_args = { 0 };
+	struct smw_keymgr_identifier *identifier = NULL;
 	bool handled = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -1744,7 +1745,12 @@ static bool key_is_present(void *args, int *status)
 	}
 
 	if (obj_query->type == SMW_QUERY_TYPE_KEY) {
-		*status = get_key_attributes(obj_query->key);
+		identifier = &attr_args.key_descriptor.identifier;
+		*identifier = obj_query->key->identifier;
+		*status = get_key_attributes(&attr_args);
+		if (*status == SMW_STATUS_OK)
+			obj_query->key->identifier = *identifier;
+
 		handled = true;
 	}
 

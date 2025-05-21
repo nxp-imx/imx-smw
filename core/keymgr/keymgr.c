@@ -15,6 +15,7 @@
 #include "keymgr_db.h"
 #include "exec.h"
 #include "base64.h"
+#include "object_db.h"
 #include "object_query.h"
 
 /*
@@ -610,7 +611,8 @@ int setup_key_ops(struct smw_keymgr_descriptor *descriptor)
 
 int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 				  struct smw_keymgr_descriptor *out,
-				  bool new_key, enum subsystem_id *subsystem_id)
+				  bool *new_key,
+				  enum subsystem_id *subsystem_id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -621,7 +623,7 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 
 	SMW_DBG_ASSERT(out);
 
-	if (!in)
+	if (!in || !new_key)
 		goto end;
 
 	status = smw_config_get_key_type_id(in->type_name, &type_id);
@@ -640,6 +642,7 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 	out->identifier.id = in->id;
 	out->identifier.type_id = type_id;
 	out->identifier.security_size = in->security_size;
+	out->identifier.key_attributes = in->attributes;
 
 	if (in->id == INVALID_KEY_ID)
 		goto finish;
@@ -647,7 +650,7 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 	status = smw_keymgr_db_get_info(in->id, &out->identifier);
 
 	if (status == SMW_STATUS_OK) {
-		if (new_key ||
+		if (*new_key ||
 		    (in->type_name && type_id != out->identifier.type_id) ||
 		    (in->security_size &&
 		     in->security_size != out->identifier.security_size) ||
@@ -657,7 +660,7 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 		else if (subsystem_id && *subsystem_id == SUBSYSTEM_ID_INVALID)
 			*subsystem_id = out->identifier.subsystem_id;
 	} else if (status == SMW_STATUS_UNKNOWN_ID) {
-		if (new_key) {
+		if (*new_key) {
 			status = SMW_STATUS_OK;
 		} else if (subsystem_id) {
 			obj_query.subsystem_id = *subsystem_id;
@@ -667,8 +670,10 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 			status = util_object_query_subsystem(&obj_query, NULL,
 							     0);
 
-			if (status == SMW_STATUS_OK)
+			if (status == SMW_STATUS_OK) {
 				*subsystem_id = obj_query.subsystem_id;
+				*new_key = true;
+			}
 		}
 	}
 
@@ -693,6 +698,7 @@ int smw_keymgr_convert_descriptors(struct smw_key_descriptor **in,
 	unsigned int i = 0;
 	struct smw_keymgr_descriptor **keymgr_desc = NULL;
 	struct smw_key_descriptor *key = NULL;
+	bool new_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -721,8 +727,10 @@ int smw_keymgr_convert_descriptors(struct smw_key_descriptor **in,
 			goto end;
 		}
 
+		new_key = false;
+
 		status = smw_keymgr_convert_descriptor(key, keymgr_desc[i],
-						       false, subsystem_id);
+						       &new_key, subsystem_id);
 		if (status != SMW_STATUS_OK) {
 			smw_keymgr_free_keys_ptr_array(keymgr_desc, nb_keys);
 			goto end;
@@ -743,6 +751,8 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 {
 	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 
+	bool new_key = true;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (args->version != 0)
@@ -755,17 +765,9 @@ generate_key_convert_args(struct smw_generate_key_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       true, NULL);
+					       &new_key, NULL);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	converted_args->key_attributes = &args->key_descriptor->attributes;
-
-	if (converted_args->key_attributes)
-		converted_args->key_descriptor.identifier.storage_id =
-			converted_args->key_attributes->storage_id;
-	else
-		converted_args->key_descriptor.identifier.storage_id = 0;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -777,14 +779,14 @@ import_key_convert_args(struct smw_import_key_args *args,
 			struct smw_keymgr_import_key_args *converted_args,
 			enum subsystem_id *subsystem_id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+
+	bool new_key = true;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (args->version != 0) {
-		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+	if (args->version != 0)
 		goto end;
-	}
 
 	status =
 		smw_config_get_subsystem_id(args->subsystem_name, subsystem_id);
@@ -793,17 +795,9 @@ import_key_convert_args(struct smw_import_key_args *args,
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       true, NULL);
+					       &new_key, NULL);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	converted_args->key_attributes = &args->key_descriptor->attributes;
-
-	if (converted_args->key_attributes)
-		converted_args->key_descriptor.identifier.storage_id =
-			converted_args->key_attributes->storage_id;
-	else
-		converted_args->key_descriptor.identifier.storage_id = 0;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -815,18 +809,18 @@ export_key_convert_args(struct smw_export_key_args *args,
 			struct smw_keymgr_export_key_args *converted_args,
 			enum subsystem_id *subsystem_id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+
+	bool new_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (args->version != 0) {
-		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+	if (args->version != 0)
 		goto end;
-	}
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       false, subsystem_id);
+					       &new_key, subsystem_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -838,23 +832,51 @@ delete_key_convert_args(struct smw_delete_key_args *args,
 			struct smw_keymgr_delete_key_args *converted_args,
 			enum subsystem_id *subsystem_id)
 {
-	int status = SMW_STATUS_OK;
+	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+
+	bool new_key = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (args->version > 1) {
-		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+	if (args->version != 0)
 		goto end;
-	}
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &converted_args->key_descriptor,
-					       false, subsystem_id);
+					       &new_key, subsystem_id);
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int
+get_attrs_key_convert_args(struct smw_get_key_attributes_args *args,
+			   struct smw_keymgr_get_key_attributes_args *conv_args,
+			   enum subsystem_id *subsystem_id, bool *new_key)
+{
+	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
+
+	struct smw_key_descriptor *desc = args->key_descriptor;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (args->version != 0)
+		goto end;
+
+	status =
+		smw_config_get_subsystem_id(args->subsystem_name, subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (args->version < 1)
-		goto end;
+	/* Clean up input user key descriptor */
+	SMW_UTILS_MEMSET(&desc->attributes, 0, sizeof(desc->attributes));
+	desc->security_size = 0;
+	desc->type_name = SMW_KEY_TYPE_NAME_NONE;
+
+	status = smw_keymgr_convert_descriptor(args->key_descriptor,
+					       &conv_args->key_descriptor,
+					       new_key, subsystem_id);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -1482,7 +1504,6 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 
 	struct smw_keymgr_generate_key_args generate_key_args = { 0 };
 	struct smw_keymgr_descriptor *key_desc = NULL;
-	struct smw_key_attributes *key_attrs = NULL;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	unsigned int new_id = INVALID_KEY_ID;
 
@@ -1501,14 +1522,10 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 		goto end;
 
 	key_desc = &generate_key_args.key_descriptor;
-	key_attrs = generate_key_args.key_attributes;
 
 	status = check_generate_key_buffer(key_desc);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	if (key_attrs)
-		key_desc->identifier.key_attributes = *key_attrs;
 
 	/*
 	 * Try to create the key in the database before
@@ -1526,6 +1543,8 @@ enum smw_status_code smw_generate_key(struct smw_generate_key_args *args)
 		(void)smw_keymgr_db_delete(new_id, &key_desc->identifier);
 		goto end;
 	}
+
+	args->key_descriptor->attributes = key_desc->identifier.key_attributes;
 
 	ret = set_key_identifier(new_id, key_desc);
 	if (ret == SMW_STATUS_OK)
@@ -1545,7 +1564,6 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 
 	struct smw_keymgr_import_key_args import_key_args = { 0 };
 	struct smw_keymgr_descriptor *key_desc = NULL;
-	struct smw_key_attributes *key_attrs = NULL;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	unsigned int new_id = INVALID_KEY_ID;
 
@@ -1569,14 +1587,10 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 		goto end;
 
 	key_desc = &import_key_args.key_descriptor;
-	key_attrs = import_key_args.key_attributes;
 
 	status = check_import_key_buffer(key_desc);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	if (key_attrs)
-		key_desc->identifier.key_attributes = *key_attrs;
 
 	/*
 	 * Try to create the key in the database before
@@ -1594,6 +1608,8 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 		(void)smw_keymgr_db_delete(new_id, &key_desc->identifier);
 		goto end;
 	}
+
+	args->key_descriptor->attributes = key_desc->identifier.key_attributes;
 
 	if (smw_keymgr_get_public_data(key_desc) &&
 	    smw_keymgr_get_private_data(key_desc))
@@ -1710,6 +1726,7 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 	unsigned int private_length = 0;
 	unsigned int modulus_length = 0;
 	unsigned int public_exponent_length = 0;
+	bool new_key = false;
 
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 
@@ -1727,7 +1744,7 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 		goto end;
 	}
 
-	status = smw_keymgr_convert_descriptor(descriptor, &key_desc, false,
+	status = smw_keymgr_convert_descriptor(descriptor, &key_desc, &new_key,
 					       &subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -1827,63 +1844,26 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	int status = SMW_STATUS_INVALID_PARAM;
 
 	struct smw_keymgr_get_key_attributes_args attr_args = { 0 };
-	struct smw_keymgr_identifier *key_identifier = &attr_args.identifier;
+	struct smw_keymgr_identifier *key_identifier = NULL;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
-	bool key_not_present = false;
+	bool new_key = false;
 
 	SMW_DBG_TRACE_API_CALL;
 
 	if (!args)
 		goto end;
 
-	if (args->version != 0) {
-		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
-		goto end;
-	}
-
-	status = smw_config_get_subsystem_id(args->subsystem_name,
-					     &subsystem_id);
+	status = get_attrs_key_convert_args(args, &attr_args, &subsystem_id,
+					    &new_key);
 	if (status != SMW_STATUS_OK)
 		goto end;
-
-	status = smw_keymgr_db_get_info(args->key_descriptor->id,
-					key_identifier);
-
-	if (status == SMW_STATUS_OK) {
-		if (subsystem_id == SUBSYSTEM_ID_INVALID) {
-			subsystem_id = key_identifier->subsystem_id;
-		} else if (subsystem_id != key_identifier->subsystem_id) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto end;
-		}
-	} else if (status == SMW_STATUS_UNKNOWN_ID) {
-		if (subsystem_id == SUBSYSTEM_ID_INVALID) {
-			status = SMW_STATUS_INVALID_PARAM;
-			goto end;
-		}
-
-		key_identifier->id = args->key_descriptor->id;
-		key_not_present = true;
-	} else {
-		goto end;
-	}
-
-	attr_args.key_attributes = &args->key_descriptor->attributes;
 
 	status = smw_utils_execute_implicit(OPERATION_ID_GET_KEY_ATTRIBUTES,
 					    &attr_args, subsystem_id);
-
-	if (status == SMW_STATUS_OPERATION_NOT_SUPPORTED) {
-		attr_args.key_attributes->usage_flags |=
-			SMW_ATTR_USAGE_DECRYPT | SMW_ATTR_USAGE_ENCRYPT |
-			SMW_ATTR_USAGE_SIGN_HASH | SMW_ATTR_USAGE_SIGN_MESSAGE |
-			SMW_ATTR_USAGE_VERIFY_HASH |
-			SMW_ATTR_USAGE_VERIFY_MESSAGE | SMW_ATTR_USAGE_DERIVE;
-		status = SMW_STATUS_OK;
-	}
-
 	if (status != SMW_STATUS_OK)
 		goto end;
+
+	key_identifier = &attr_args.key_descriptor.identifier;
 
 	/* Convert the key type */
 	args->key_descriptor->type_name =
@@ -1896,7 +1876,9 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 	args->key_privacy_name =
 		smw_keymgr_get_key_privacy_name(key_identifier->privacy_id);
 
-	if (key_not_present) {
+	args->key_descriptor->attributes = key_identifier->key_attributes;
+
+	if (new_key) {
 		key_identifier->subsystem_id = subsystem_id;
 		status = smw_keymgr_db_create(&key_identifier->id,
 					      key_identifier);

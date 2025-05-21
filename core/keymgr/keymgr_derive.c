@@ -553,13 +553,14 @@ static int tls12_convert_args(struct smw_derive_key_args *pub_args,
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_tls12_args *tls_args = NULL;
 	struct smw_kdf_tls12_args *args = pub_args->kdf_arguments;
+	bool new_key = false;
 
 	if (!args || !args->kdf_input || !args->kdf_input_length)
 		goto end;
 
 	/* Get the input key base for the derivation */
 	status = smw_keymgr_convert_descriptor(pub_args->key_descriptor_base,
-					       &conv_args->key_base, false,
+					       &conv_args->key_base, &new_key,
 					       subsystem_id);
 	if (status != SMW_STATUS_OK)
 		return status;
@@ -1832,6 +1833,7 @@ static int hkdf_convert_input_args(struct smw_derive_key_args *pub_args,
 	struct smw_keymgr_hkdf_args *hkdf_args = NULL;
 	struct smw_key_descriptor *base_key_desc = NULL;
 	struct smw_kdf_hkdf_args *hkdf_pub_args = pub_args->kdf_arguments;
+	bool new_key = false;
 
 	if (!hkdf_pub_args)
 		goto end;
@@ -1856,7 +1858,7 @@ static int hkdf_convert_input_args(struct smw_derive_key_args *pub_args,
 		/* Get the input key base for the derivation */
 		status = smw_keymgr_convert_descriptor(base_key_desc,
 						       &conv_args->key_base,
-						       false, subsystem_id);
+						       &new_key, subsystem_id);
 		if (status == SMW_STATUS_OK)
 			status = hkdf_validate_key_base(conv_args);
 	}
@@ -1916,12 +1918,13 @@ static int ecdh_convert_input_args(struct smw_derive_key_args *pub_args,
 	struct smw_keymgr_ecdh_args *ecdh_args = NULL;
 	struct smw_key_descriptor *base_key_desc = NULL;
 	struct smw_kdf_ecdh_args *ecdh_pub_args = pub_args->kdf_arguments;
+	bool new_key = false;
 
 	base_key_desc = pub_args->key_descriptor_base;
 
 	/* Get the input key base for the derivation */
 	status = smw_keymgr_convert_descriptor(base_key_desc,
-					       &conv_args->key_base, false,
+					       &conv_args->key_base, &new_key,
 					       subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -1954,6 +1957,7 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 	struct smw_kdf_tls12_master_secret_args *ms = NULL;
 	struct smw_kdf_tls12_key_expansion_args *ke = NULL;
 	enum smw_tls12_encryption_id enc_id = SMW_TLS12_ENCRYPTION_ID_INVALID;
+	bool new_key = false;
 
 	if (!pub_args)
 		goto end;
@@ -2028,7 +2032,7 @@ tls12_op_convert_input_args(struct smw_derive_key_args *pub_args,
 
 	/* Get the input key base for the derivation */
 	status = smw_keymgr_convert_descriptor(pub_args->key_descriptor_base,
-					       &conv_args->key_base, false,
+					       &conv_args->key_base, &new_key,
 					       subsystem_id);
 	if (status != SMW_STATUS_OK)
 		return status;
@@ -2098,6 +2102,7 @@ tls13_convert_input_args(struct smw_derive_key_args *pub_args,
 	struct smw_keymgr_tls13_args *tls_args = NULL;
 	struct smw_kdf_tls13_args *args = pub_args->kdf_arguments;
 	struct smw_key_descriptor *base = pub_args->key_descriptor_base;
+	bool new_key = false;
 
 	if (!args)
 		goto end;
@@ -2108,7 +2113,7 @@ tls13_convert_input_args(struct smw_derive_key_args *pub_args,
 	if (base) {
 		status = smw_keymgr_convert_descriptor(base,
 						       &conv_args->key_base,
-						       false, subsystem_id);
+						       &new_key, subsystem_id);
 		if (status != SMW_STATUS_OK)
 			return status;
 	}
@@ -2120,9 +2125,11 @@ tls13_convert_input_args(struct smw_derive_key_args *pub_args,
 	}
 
 	if (args->psk) {
+		new_key = false;
+
 		status =
 			smw_keymgr_convert_descriptor(args->psk, &tls_args->psk,
-						      false, subsystem_id);
+						      &new_key, subsystem_id);
 		if (status != SMW_STATUS_OK)
 			goto end;
 	}

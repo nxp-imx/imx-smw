@@ -31,7 +31,6 @@
  * @security_size: Security size in bits
  * @id: Key ID set by the subsystem
  * @attributes: Key attributes
- * @storage_id: Key storage identifier
  * @group: Key group (may not be used by all subsystems)
  */
 struct smw_keymgr_identifier {
@@ -41,7 +40,6 @@ struct smw_keymgr_identifier {
 	unsigned int security_size;
 	uint32_t id;
 	struct smw_key_attributes key_attributes;
-	uint32_t storage_id;
 	uint16_t group;
 };
 
@@ -92,23 +90,19 @@ struct smw_keymgr_descriptor {
 /**
  * struct smw_keymgr_generate_key_args - Key generation arguments
  * @key_descriptor: Descriptor of the generated Key
- * @key_attributes: Pointer to the public Key attributes structure
  *
  */
 struct smw_keymgr_generate_key_args {
 	struct smw_keymgr_descriptor key_descriptor;
-	struct smw_key_attributes *key_attributes;
 };
 
 /**
  * struct smw_keymgr_import_key_args - Key import arguments
  * @key_descriptor: Descriptor of the imported Key
- * @key_attributes: Pointer to the public Key attributes structure
  *
  */
 struct smw_keymgr_import_key_args {
 	struct smw_keymgr_descriptor key_descriptor;
-	struct smw_key_attributes *key_attributes;
 };
 
 /**
@@ -131,13 +125,11 @@ struct smw_keymgr_delete_key_args {
 
 /**
  * struct smw_keymgr_get_key_attributes_args - Get Key attributes arguments
- * @identifier: Key identifier
- * @key_attributes: Pointer to the public Key attributes structure
+ * @key_descriptor: Descriptor of the Key to delete
  *
  */
 struct smw_keymgr_get_key_attributes_args {
-	struct smw_keymgr_identifier identifier;
-	struct smw_key_attributes *key_attributes;
+	struct smw_keymgr_descriptor key_descriptor;
 };
 
 /**
@@ -493,7 +485,7 @@ int smw_keymgr_update_modulus_buffer(struct smw_keymgr_descriptor *descriptor,
  * smw_keymgr_convert_descriptor() - Key descriptor conversion.
  * @in: Pointer to a public Key descriptor.
  * @out: Pointer to an internal Key descriptor.
- * @new_key: True if it's a new key or false.
+ * @new_key: [in/out] True if it's a new key or false.
  * @subsystem_id: Pointer to Secure Subsystem ID.
  *
  * This function converts a public Key descriptor
@@ -504,7 +496,7 @@ int smw_keymgr_update_modulus_buffer(struct smw_keymgr_descriptor *descriptor,
  */
 int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 				  struct smw_keymgr_descriptor *out,
-				  bool new_key,
+				  bool *new_key,
 				  enum subsystem_id *subsystem_id);
 
 /**

@@ -80,7 +80,7 @@ int smw_keymgr_db_create(unsigned int *id,
 
 	*id = identifier->id;
 
-	if (NXP_IS_EL2GO_OBJECT(identifier->storage_id))
+	if (NXP_IS_EL2GO_OBJECT(identifier->key_attributes.storage_id))
 		obj.label = KEY_DEFAULT_EL2GO_LABEL;
 	else
 		obj.label = KEY_DEFAULT_LABEL;

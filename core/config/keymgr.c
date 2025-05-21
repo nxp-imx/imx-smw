@@ -429,19 +429,16 @@ __weak int asymm_encrypt_key_usable(unsigned int *ref,
 }
 
 static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
-				struct smw_key_attributes *attributes,
 				unsigned int ref)
 {
 	int status = SMW_STATUS_OK;
 
 	smw_attr_algo_t class = SMW_ATTR_CLASS_NONE;
+	struct smw_key_attributes *attributes = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!attributes) {
-		status = SMW_STATUS_OK;
-		goto end;
-	}
+	attributes = &key_desc->identifier.key_attributes;
 
 	if (ref >= SUBSYSTEM_ID_NB) {
 		status = SMW_STATUS_INVALID_PARAM;
@@ -525,8 +522,7 @@ static int generate_key_check_subsystem_caps(void *args, void *node)
 
 	status = check_key_descriptor(&key_args->key_descriptor, op_params);
 	if (status == SMW_STATUS_OK)
-		status = check_key_attributes(&key_args->key_descriptor,
-					      key_args->key_attributes, ref);
+		status = check_key_attributes(&key_args->key_descriptor, ref);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -570,8 +566,7 @@ static int import_key_check_subsystem_caps(void *args, void *node)
 
 	status = check_key_descriptor(&key_args->key_descriptor, op_params);
 	if (status == SMW_STATUS_OK)
-		status = check_key_attributes(&key_args->key_descriptor,
-					      key_args->key_attributes, ref);
+		status = check_key_attributes(&key_args->key_descriptor, ref);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

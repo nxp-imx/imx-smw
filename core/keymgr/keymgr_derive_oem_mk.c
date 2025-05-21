@@ -229,6 +229,7 @@ int smw_keymgr_oem_mk_convert_input(struct smw_derive_key_args *args,
 	struct smw_key_descriptor *base_key_desc = NULL;
 	struct smw_keymgr_oem_mk_args *oem_mk_args = NULL;
 	struct smw_kdf_oem_master_key_args *pub_kdf_args = NULL;
+	bool new_key = false;
 
 	if (args->version != 0) {
 		status = SMW_STATUS_VERSION_NOT_SUPPORTED;
@@ -247,7 +248,7 @@ int smw_keymgr_oem_mk_convert_input(struct smw_derive_key_args *args,
 
 	/* Get the input key base for the derivation */
 	status = smw_keymgr_convert_descriptor(base_key_desc,
-					       &conv_args->key_base, false,
+					       &conv_args->key_base, &new_key,
 					       subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;

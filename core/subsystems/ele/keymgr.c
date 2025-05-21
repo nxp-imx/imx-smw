@@ -598,7 +598,7 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 	struct smw_keymgr_generate_key_args *key_args = args;
 	struct smw_keymgr_descriptor *key_desc = &key_args->key_descriptor;
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
-	struct smw_key_attributes *key_attributes = key_args->key_attributes;
+	struct smw_key_attributes *key_attributes = NULL;
 	unsigned char *public_data = NULL;
 	uint32_t key_id = 0;
 	unsigned char *tmp_key = NULL;
@@ -610,6 +610,8 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 	smw_attr_usage_t actual_usage_flags = SMW_ATTR_USAGE_NONE;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key_attributes = &key_identifier->key_attributes;
 
 	status = ele_get_key_type(key_identifier->type_id, &op_args.key_type);
 	if (status != SMW_STATUS_OK)
@@ -651,16 +653,13 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		goto end;
 	}
 
-	if (key_attributes) {
-		ele_set_key_policy(&op_args.permitted_algo, &op_args.key_usage,
-				   key_attributes->permitted_algo,
-				   key_attributes->usage_flags);
-		ele_get_key_policy(&actual_permitted_algo, &actual_usage_flags,
-				   op_args.permitted_algo, op_args.key_usage);
-	}
+	ele_set_key_policy(&op_args.permitted_algo, &op_args.key_usage,
+			   key_attributes->permitted_algo,
+			   key_attributes->usage_flags);
+	ele_get_key_policy(&actual_permitted_algo, &actual_usage_flags,
+			   op_args.permitted_algo, op_args.key_usage);
 
-	persistence = key_identifier->key_attributes.attributes;
-	persistence = SMW_ATTR_GET_PERSISTENCE(persistence);
+	persistence = SMW_ATTR_GET_PERSISTENCE(key_attributes->attributes);
 
 	switch (persistence) {
 	case SMW_ATTR_PERSISTENCE_PERSISTENT:
@@ -779,17 +778,20 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 			 * is going to remove it from the key database
 			 */
 			(void)delete_key_operation(key_mgt_hdl, key_identifier);
+			goto end;
 		}
 	}
 
-	if (key_attributes &&
-	    (key_attributes->usage_flags != actual_usage_flags ||
-	     key_attributes->permitted_algo != actual_permitted_algo)) {
-		key_attributes->usage_flags = actual_usage_flags;
+	if (key_attributes->permitted_algo != actual_permitted_algo) {
 		key_attributes->permitted_algo = actual_permitted_algo;
 
-		if (status == SMW_STATUS_OK)
-			status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
+	}
+
+	if (key_attributes->usage_flags != actual_usage_flags) {
+		key_attributes->usage_flags = actual_usage_flags;
+
+		status = SMW_STATUS_KEY_POLICY_WARNING_IGNORED;
 	}
 
 end:
@@ -828,7 +830,7 @@ static int import_key(struct hdl *hdl, void *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	key_desc = &key_args->key_descriptor;
-	storage_id = key_desc->identifier.storage_id;
+	storage_id = key_desc->identifier.key_attributes.storage_id;
 
 	priv_key = smw_keymgr_get_private_data(key_desc);
 	priv_key_len = smw_keymgr_get_private_length(key_desc);
@@ -1019,12 +1021,15 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 	int status = SMW_STATUS_OK;
 
 	struct smw_keymgr_get_key_attributes_args *key_args = args;
-	struct smw_keymgr_identifier *key_identifier = &key_args->identifier;
-	struct smw_key_attributes *key_attributes = key_args->key_attributes;
+	struct smw_keymgr_identifier *key_identifier = NULL;
+	struct smw_key_attributes *key_attributes = NULL;
 	op_get_key_attr_args_t op_key_attrs = { 0 };
 	const struct key_def *key_def = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key_identifier = &key_args->key_descriptor.identifier;
+	key_attributes = &key_identifier->key_attributes;
 
 	op_key_attrs.key_identifier = key_identifier->id;
 
@@ -1042,22 +1047,17 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 	key_identifier->security_size = op_key_attrs.bit_key_sz;
 	get_key_privacy_by_ele_type(op_key_attrs.key_type,
 				    &key_identifier->privacy_id);
-	key_identifier->storage_id =
-		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
 	ele_get_key_lifecycles(op_key_attrs.lifecycle,
 			       &key_identifier->key_attributes.attributes);
 	get_key_persistence(op_key_attrs.key_lifetime,
 			    &key_identifier->key_attributes.attributes);
 
-	if (key_attributes) {
-		ele_get_key_policy(&key_attributes->permitted_algo,
-				   &key_attributes->usage_flags,
-				   op_key_attrs.permitted_algo,
-				   op_key_attrs.key_usage);
-		key_attributes->storage_id = key_identifier->storage_id;
-		key_attributes->attributes =
-			key_identifier->key_attributes.attributes;
-	}
+	ele_get_key_policy(&key_attributes->permitted_algo,
+			   &key_attributes->usage_flags,
+			   op_key_attrs.permitted_algo, op_key_attrs.key_usage);
+	key_attributes->storage_id =
+		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
+	key_attributes->attributes = key_identifier->key_attributes.attributes;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

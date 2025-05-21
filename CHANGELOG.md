@@ -164,6 +164,7 @@ data type.
 * Add SHA256 and SHA384 HMAC SignMessage/VerifyMessage test with a plaintext key.
 * Add RSA SHA512 Sign/Verify test with a plaintext key.
 * Test using a session object from another session.
+* Fix hostname for i.MX943 and i.MX95.
 
 ---
 ### <a id ="rel_4_2"></a></br>**Release 4.2**

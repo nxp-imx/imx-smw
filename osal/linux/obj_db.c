@@ -590,6 +590,7 @@ static int sql_print_find(struct smw_object_descriptor *descriptor, char *sql,
 	int ret = -1;
 	bool and_operator = false;
 	static const char *select = "SELECT * FROM %s";
+	struct smw_key_attributes *attributes = NULL;
 
 	if (!descriptor)
 		goto end;
@@ -626,25 +627,28 @@ static int sql_print_find(struct smw_object_descriptor *descriptor, char *sql,
 		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
 		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
 		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+			attributes = &descriptor->key.attributes;
+
 			if (descriptor->key.type_name != SMW_KEY_TYPE_NAME_NONE)
 				if (sql_print(sql, length, " AND \"0x%X\" = %d",
 					      TAG_TYPE,
 					      descriptor->key.type_name))
 					goto end;
 
-			if (descriptor->key.attributes.permitted_algo)
+			if (attributes->permitted_algo)
 				if (sql_print(sql, length,
-					      " AND \"0x%X\" = %llu",
+					      " AND (\"0x%X\" & %llu) = %llu",
 					      TAG_PERMITTED_ALGO,
-					      descriptor->key.attributes
-						      .permitted_algo))
+					      attributes->permitted_algo,
+					      attributes->permitted_algo))
 					goto end;
 
-			if (descriptor->key.attributes.usage_flags)
-				if (sql_print(sql, length, " AND \"0x%X\" = %d",
+			if (attributes->usage_flags)
+				if (sql_print(sql, length,
+					      " AND (\"0x%X\" & %d) = %d",
 					      TAG_USAGE,
-					      descriptor->key.attributes
-						      .usage_flags))
+					      attributes->usage_flags,
+					      attributes->usage_flags))
 					goto end;
 
 			if (descriptor->key.security_size)

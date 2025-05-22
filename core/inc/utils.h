@@ -30,7 +30,7 @@
 #define SMW_UTILS_STRLEN  strlen
 #define SMW_UTILS_STRCMP  strcmp
 #define SMW_UTILS_STRNCMP strncmp
-#define SMW_UTILS_STRTOK  strtok
+#define SMW_UTILS_STRTOK_R strtok_r
 #define SMW_UTILS_STRTOL  strtol
 
 #define SMW_UTILS_BSWAP_16 bswap_16

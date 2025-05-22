@@ -100,6 +100,7 @@ data type.
 * TEE: Improve object storage management.
 * TEE: Handle EDDSA additional parameters and signature message hashed flag.
 * TEE: Add support for asymmetric encryption and decryption for TEE subsystem.
+* TEE: Fix random failure when converting TA UUID string to object.
 * SECO: Fix coverity finding.
 * SECO: Handle signature message hashed flag.
 * Apply Base64 to hex conversion consistently for key buffers across all subsystems.

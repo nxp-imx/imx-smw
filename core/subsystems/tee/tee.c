@@ -157,6 +157,7 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 	int res = SMW_STATUS_INVALID_PARAM;
 	static const char delim[2] = "-";
 	char *field = NULL;
+	char *saveptr = NULL;
 	char *tmp = NULL;
 	size_t len = 0;
 	long time_field = 0;
@@ -176,7 +177,7 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 	tmp[len - 1] = 0;
 
 	/* Read the timeLow field */
-	field = SMW_UTILS_STRTOK(tmp, delim);
+	field = SMW_UTILS_STRTOK_R(tmp, delim, &saveptr);
 	if (!field) {
 		SMW_DBG_PRINTF(ERROR, "TA UUID timeLow wrong\n");
 		goto exit;
@@ -189,7 +190,7 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 	}
 
 	/* Read the timeMid field */
-	field = SMW_UTILS_STRTOK(NULL, delim);
+	field = SMW_UTILS_STRTOK_R(NULL, delim, &saveptr);
 	if (!field) {
 		SMW_DBG_PRINTF(ERROR, "TA UUID timeMid wrong\n");
 		goto exit;
@@ -202,7 +203,7 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 	}
 
 	/* Read the timeHiAndVersion field */
-	field = SMW_UTILS_STRTOK(NULL, delim);
+	field = SMW_UTILS_STRTOK_R(NULL, delim, &saveptr);
 	if (!field) {
 		SMW_DBG_PRINTF(ERROR, "TA UUID timeHiAndVersion wrong\n");
 		goto exit;
@@ -221,7 +222,7 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 	 *  - single string of 8 hexadecimal value
 	 *  - or a string split with 2 hexadecimal `-` (Seq-Node)
 	 */
-	field = SMW_UTILS_STRTOK(NULL, delim);
+	field = SMW_UTILS_STRTOK_R(NULL, delim, &saveptr);
 	if (!field) {
 		SMW_DBG_PRINTF(ERROR, "TA UUID clockSeqAndNode wrong\n");
 		goto exit;
@@ -236,7 +237,7 @@ static int ta_uuid_string_to_uuid(const char *str, TEEC_UUID *uuid)
 	} else if (len == 2) {
 		str_to_hex(field, uuid->clockSeqAndNode);
 
-		field = SMW_UTILS_STRTOK(NULL, delim);
+		field = SMW_UTILS_STRTOK_R(NULL, delim, &saveptr);
 		if (!field) {
 			SMW_DBG_PRINTF(ERROR,
 				       "TA UUID clockSeqAndNode wrong\n");

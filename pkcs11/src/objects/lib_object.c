@@ -1547,6 +1547,9 @@ CK_RV libobj_derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	if (ret != CKR_OK)
 		goto end;
 
+	if (mech->mechanism != CKM_TLS12_KEY_AND_MAC_DERIVE && !hderivedkey)
+		return CKR_ARGUMENTS_BAD;
+
 	/*
 	 * First create the storage object for the derived key
 	 */
@@ -1589,10 +1592,12 @@ CK_RV libobj_derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 end:
 	DBG_TRACE("Derive a secret key returned %ld", ret);
 
-	if (ret == CKR_OK)
-		*hderivedkey = (CK_OBJECT_HANDLE)derived_key;
-	else
+	if (ret == CKR_OK) {
+		if (hderivedkey)
+			*hderivedkey = (CK_OBJECT_HANDLE)derived_key;
+	} else {
 		obj_free(derived_key, NULL);
+	}
 
 	return ret;
 }

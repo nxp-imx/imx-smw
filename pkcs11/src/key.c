@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020, 2024 NXP
+ * Copyright 2020, 2024-2025 NXP
  */
 
 #include "lib_object.h"
@@ -108,9 +108,6 @@ CK_RV C_DeriveKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanism,
 
 	if (!pTemplate != !ulAttributeCount)
 		return CKR_TEMPLATE_INCOMPLETE;
-
-	if (!phKey)
-		return CKR_ARGUMENTS_BAD;
 
 	return libobj_derive_key(hSession, pMechanism, hBaseKey, pTemplate,
 				 ulAttributeCount, phKey);

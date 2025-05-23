@@ -211,13 +211,6 @@ static int object_derive_key_hkdf_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_KEY_HANDLE_INVALID, "C_DeriveKey"))
 		goto end;
 
-	TEST_OUT("Derived Key handle NULL\n");
-	ret = pfunc->C_DeriveKey(sess, &derive_mech, base_key,
-				 derived_key_template,
-				 ARRAY_SIZE(derived_key_template), NULL);
-	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DeriveKey"))
-		goto end;
-
 	TEST_OUT("Check invalid mechanism\n");
 	derive_mech.mechanism = CKM_ECDSA;
 	ret = pfunc->C_DeriveKey(sess, &derive_mech, base_key,
@@ -285,6 +278,13 @@ static int object_derive_key_hkdf_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 				 ARRAY_SIZE(derived_key_template),
 				 &derived_key);
 	if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Derived Key handle NULL\n");
+	ret = pfunc->C_DeriveKey(sess, &derive_mech, base_key,
+				 derived_key_template,
+				 ARRAY_SIZE(derived_key_template), NULL);
+	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DeriveKey"))
 		goto end;
 
 	status = TEST_PASS;

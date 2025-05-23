@@ -84,7 +84,13 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Remove the deletion of the EL2GO data from the smw_delete_key(), return
 `SMW_STATUS_UNKNOWN_ID` if object identifier is not a key.
 * Data operations return `SMW_STATUS_UNKNOWN_ID` if object identifier is not a
-data type.
+  data type.
+* API get_key_attributes, add compatibility to query all subsystems when key
+  not present in the database.
+* Clean up internal key operations structures as key attributes are part of
+the key descriptor.
+* Breaking compatibility for the smw_delete_key() API by clearing version
+  to 0.
 
 ##### 2. Subsystems
 
@@ -96,13 +102,24 @@ data type.
 * ELE: Add support for signature generation using plaintext private key buffer.
 * ELE: Add key import using EdgeLock Enclave blob.
 * ELE: Add support for hash mac generation using plaintext private key buffer.
+* ELE: Add support for key and data query.
+* ELE: Key generation update key's permitted algorithm and usage independently.
 * TEE: Fix the ed25519 key security size to be 255 bits.
 * TEE: Improve object storage management.
 * TEE: Handle EDDSA additional parameters and signature message hashed flag.
 * TEE: Add support for asymmetric encryption and decryption for TEE subsystem.
 * TEE: Fix random failure when converting TA UUID string to object.
+* TEE: Add support for key and data query.
+* TEE: Key creation update key's permitted algorithm and usage independently.
 * SECO: Fix coverity finding.
 * SECO: Handle signature message hashed flag.
+* SECO: Add support for key and data query but as not supported returns
+  `SMW_STATUS_UNKNOWN_ID`
+* SECO: Key creation update key's permitted algorithm and usage independently.
+  This subsystem handles neither permitted algorithm nor usage. Require SW
+  implementation to support. For now, don't erase user permitted algorithm and
+  set all usages to allow finding keys per usages and algorithm even if not
+  accurate.
 * Apply Base64 to hex conversion consistently for key buffers across all subsystems.
 
 ##### 3. ARM PSA APIs
@@ -118,6 +135,8 @@ data type.
 * Remove AEAD support for ELE subsystem in i.MX95 and i.MX943 configuration files.
 * Add support for asymmetric encryption and decryption for TEE subsystem in all
   configurations.
+* Update database SQL search request to use bits mask for key's permitted
+  algorithm and usages.
 
 #### SMW Tests - _version 5.0_
 
@@ -142,6 +161,8 @@ data type.
 * Add key import using EdgeLock Enclave blob tests.
 * Add subtests to verify cryptographic operations with Base64 encoded key buffer.
 * Add PSA tests validating data deletion through key deletion and the opposite.
+* Add SMW tests validating get_key_attrinbutes() query when key not present
+  in database.
 
 #### PKCS#11 Library - _version 5.0_
 

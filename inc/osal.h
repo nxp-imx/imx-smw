@@ -24,6 +24,21 @@
  */
 
 /**
+ * struct smw_osal_object - OSAL object descriptor
+ * @obj_desc: Object descriptor (user information)
+ * @obj_id_subsystem: Object identifier in subsystem
+ *
+ * The user API identifier is transported by the @obj_desc->id while the object
+ * identifier in the subsystem is not known or accessible by the user except
+ * when defined by the user at object creation. In this case the object
+ * identifier in the subsystem is same as user.
+ */
+struct smw_osal_object {
+	struct smw_object_descriptor *obj_desc;
+	unsigned int obj_id_subsystem;
+};
+
+/**
  * struct smw_ops - SMW OSAL operations
  * @critical_section_start: [optional] Start critical section
  * @critical_section_stop: [optional] Stop critical section
@@ -75,14 +90,14 @@ struct smw_ops {
 
 	bool (*is_lib_initialized)(void);
 
-	int (*get_obj_info)(struct smw_object_descriptor *descriptor);
-	int (*add_obj_info)(struct smw_object_descriptor *descriptor);
-	int (*update_obj_info)(struct smw_object_descriptor *descriptor);
-	int (*delete_obj_info)(struct smw_object_descriptor *descriptor);
+	int (*get_obj_info)(struct smw_osal_object *descriptor);
+	int (*add_obj_info)(struct smw_osal_object *descriptor);
+	int (*update_obj_info)(struct smw_osal_object *descriptor);
+	int (*delete_obj_info)(struct smw_osal_object *descriptor);
 	int (*find_obj_init)(void **find_ctx,
-			     struct smw_object_descriptor *descriptor);
+			     struct smw_osal_object *descriptor);
 	int (*find_obj_next)(void *find_ctx,
-			     struct smw_object_descriptor *descriptor);
+			     struct smw_osal_object *descriptor);
 	int (*find_obj_final)(void *find_ctx);
 };
 

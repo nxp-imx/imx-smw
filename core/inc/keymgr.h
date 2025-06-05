@@ -29,7 +29,7 @@
  * @type_id: Key type ID
  * @privacy_id: Key privacy ID
  * @security_size: Security size in bits
- * @id: Key ID set by the subsystem
+ * @s_id: Key ID set by the subsystem
  * @attributes: Key attributes
  * @group: Key group (may not be used by all subsystems)
  */
@@ -38,10 +38,20 @@ struct smw_keymgr_identifier {
 	enum smw_config_key_type_id type_id;
 	enum smw_keymgr_privacy_id privacy_id;
 	unsigned int security_size;
-	uint32_t id;
+	uint32_t s_id;
 	struct smw_key_attributes key_attributes;
 	uint16_t group;
 };
+
+#define INIT_SMW_KEYMGR_IDENTIFIER                                             \
+	((struct smw_keymgr_identifier){                                       \
+		.subsystem_id = SUBSYSTEM_ID_INVALID,                          \
+		.type_id = SMW_CONFIG_KEY_TYPE_ID_INVALID,                     \
+		.privacy_id = SMW_KEYMGR_PRIVACY_ID_INVALID,                   \
+		.security_size = 0,                                            \
+		.s_id = INVALID_KEY_ID,                                        \
+		.key_attributes = { 0 },                                       \
+		.group = 0 })
 
 /**
  * struct smw_keymgr_key_ops - keypair with operations

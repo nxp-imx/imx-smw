@@ -457,7 +457,8 @@ smw_keymgr_convert_derived_key_desc(struct smw_derived_key_descriptor *in,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	out->identifier.id = in->id;
+	out->identifier = INIT_SMW_KEYMGR_IDENTIFIER;
+	out->identifier.s_id = in->id;
 	out->identifier.type_id = type_id;
 	out->identifier.security_size = in->security_size;
 	out->pub = in;
@@ -504,7 +505,7 @@ static int smw_keymgr_convert_prk_desc(struct smw_key_descriptor *in,
 			goto end;
 	}
 
-	out->identifier.id = in->id;
+	out->identifier.s_id = in->id;
 	out->pub = in;
 
 	status = setup_key_ops(out);
@@ -925,7 +926,7 @@ set_derived_key_identifier(unsigned int id,
 	if (!descriptor || !descriptor->pub)
 		return status;
 
-	if (descriptor->identifier.id != INVALID_KEY_ID) {
+	if (descriptor->identifier.s_id != INVALID_KEY_ID) {
 		status = smw_keymgr_db_update(id, &descriptor->identifier);
 
 		if (status == SMW_STATUS_OK)

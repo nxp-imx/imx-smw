@@ -618,6 +618,7 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 
 	enum smw_config_key_type_id type_id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
 	struct smw_object_query obj_query = { 0 };
+	struct smw_key_attributes *key_attrs = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -639,46 +640,75 @@ int smw_keymgr_convert_descriptor(struct smw_key_descriptor *in,
 			goto end;
 	}
 
-	out->identifier.id = in->id;
+	out->identifier = INIT_SMW_KEYMGR_IDENTIFIER;
+	out->identifier.s_id = in->id;
 	out->identifier.type_id = type_id;
 	out->identifier.security_size = in->security_size;
 	out->identifier.key_attributes = in->attributes;
+
+	key_attrs = &out->identifier.key_attributes;
 
 	if (in->id == INVALID_KEY_ID)
 		goto finish;
 
 	status = smw_keymgr_db_get_info(in->id, &out->identifier);
 
-	if (status == SMW_STATUS_OK) {
+	switch (status) {
+	case SMW_STATUS_OK:
 		if (*new_key ||
 		    (in->type_name && type_id != out->identifier.type_id) ||
 		    (in->security_size &&
 		     in->security_size != out->identifier.security_size) ||
 		    (subsystem_id && *subsystem_id != SUBSYSTEM_ID_INVALID &&
-		     *subsystem_id != out->identifier.subsystem_id))
+		     *subsystem_id != out->identifier.subsystem_id)) {
 			status = SMW_STATUS_INVALID_PARAM;
-		else if (subsystem_id && *subsystem_id == SUBSYSTEM_ID_INVALID)
+			goto end;
+		} else if (subsystem_id &&
+			   *subsystem_id == SUBSYSTEM_ID_INVALID) {
 			*subsystem_id = out->identifier.subsystem_id;
-	} else if (status == SMW_STATUS_UNKNOWN_ID) {
+		}
+
+		break;
+
+	case SMW_STATUS_UNKNOWN_ID:
 		if (*new_key) {
 			status = SMW_STATUS_OK;
-		} else if (subsystem_id) {
-			obj_query.subsystem_id = *subsystem_id;
-			obj_query.type = SMW_QUERY_TYPE_KEY;
-			obj_query.key = out;
-
-			status = util_object_query_subsystem(&obj_query, NULL,
-							     0);
-
-			if (status == SMW_STATUS_OK) {
-				*subsystem_id = obj_query.subsystem_id;
-				*new_key = true;
-			}
+			break;
 		}
-	}
 
-	if (status != SMW_STATUS_OK)
+		if (!subsystem_id)
+			break;
+
+		/*
+		 * Case where the key is unknown in the database:
+		 * - if the key is persistent/permanent (user defined), set
+		 * the identifier key id in subsystem with user key id and
+		 * query all subsystems or user defined one.
+		 * - if the key is transient, return SMW_STATUS_UNKNOWN_ID.
+		 */
+		if (!out->identifier.s_id &&
+		    SMW_ATTR_IS_TRANSIENT(key_attrs->attributes))
+			goto end;
+
+		out->identifier.s_id = in->id;
+		obj_query.subsystem_id = *subsystem_id;
+		obj_query.type = SMW_QUERY_TYPE_KEY;
+		obj_query.key = out;
+
+		status = util_object_query_subsystem(&obj_query, NULL, 0);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		*subsystem_id = obj_query.subsystem_id;
+		out->identifier.subsystem_id = *subsystem_id;
+
+		*new_key = true;
+
+		break;
+
+	default:
 		goto end;
+	}
 
 finish:
 	out->pub = in;
@@ -858,6 +888,7 @@ get_attrs_key_convert_args(struct smw_get_key_attributes_args *args,
 	int status = SMW_STATUS_VERSION_NOT_SUPPORTED;
 
 	struct smw_key_descriptor *desc = args->key_descriptor;
+	smw_attr_attributes_t persistency = SMW_ATTR_PERSISTENCE_TRANSIENT;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -869,10 +900,12 @@ get_attrs_key_convert_args(struct smw_get_key_attributes_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	/* Clean up input user key descriptor */
+	/* Clean up input user key descriptor except the persistency */
+	persistency = SMW_ATTR_GET_PERSISTENCE(desc->attributes.attributes);
 	SMW_UTILS_MEMSET(&desc->attributes, 0, sizeof(desc->attributes));
 	desc->security_size = 0;
 	desc->type_name = SMW_KEY_TYPE_NAME_NONE;
+	desc->attributes.attributes = persistency;
 
 	status = smw_keymgr_convert_descriptor(args->key_descriptor,
 					       &conv_args->key_descriptor,
@@ -1378,7 +1411,7 @@ static int set_key_identifier(unsigned int id,
 	if (!descriptor || !descriptor->pub)
 		return status;
 
-	if (descriptor->identifier.id != INVALID_KEY_ID) {
+	if (descriptor->identifier.s_id != INVALID_KEY_ID) {
 		status = smw_keymgr_db_update(id, &descriptor->identifier);
 
 		if (status == SMW_STATUS_OK)
@@ -1749,7 +1782,7 @@ smw_get_key_buffers_lengths(struct smw_key_descriptor *descriptor)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (key_desc.identifier.id == INVALID_KEY_ID) {
+	if (key_desc.identifier.s_id == INVALID_KEY_ID) {
 		status = get_standard_public_length(&key_desc.identifier,
 						    key_desc.format_id,
 						    &public_length);
@@ -1796,7 +1829,8 @@ smw_get_key_type_name(struct smw_key_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_identifier key_identifier = { 0 };
+	struct smw_keymgr_identifier key_identifier =
+		INIT_SMW_KEYMGR_IDENTIFIER;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1820,7 +1854,8 @@ smw_get_security_size(struct smw_key_descriptor *descriptor)
 {
 	int status = SMW_STATUS_OK;
 
-	struct smw_keymgr_identifier key_identifier = { 0 };
+	struct smw_keymgr_identifier key_identifier =
+		INIT_SMW_KEYMGR_IDENTIFIER;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1880,7 +1915,7 @@ smw_get_key_attributes(struct smw_get_key_attributes_args *args)
 
 	if (new_key) {
 		key_identifier->subsystem_id = subsystem_id;
-		status = smw_keymgr_db_create(&key_identifier->id,
+		status = smw_keymgr_db_create(&args->key_descriptor->id,
 					      key_identifier);
 	}
 

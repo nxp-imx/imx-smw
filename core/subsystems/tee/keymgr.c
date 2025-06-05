@@ -598,7 +598,7 @@ static int generate_key(void *args)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	shared_params.id = key_identifier->id;
+	shared_params.id = key_identifier->s_id;
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->key_type;
 
@@ -640,9 +640,9 @@ static int generate_key(void *args)
 		goto exit;
 
 	key_identifier->subsystem_id = SUBSYSTEM_ID_TEE;
-	key_identifier->id = shared_params.id;
+	key_identifier->s_id = shared_params.id;
 	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated\n", __func__,
-		       key_identifier->id);
+		       key_identifier->s_id);
 
 	if (smw_keymgr_get_public_data(&key_args->key_descriptor)) {
 		status = update_public_buffers(&key_args->key_descriptor,
@@ -698,16 +698,19 @@ static int delete_key(void *args)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 	struct smw_keymgr_delete_key_args *key_args = args;
+	struct smw_keymgr_identifier *identifier = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!args)
 		goto exit;
 
-	status = tee_delete_key(key_args->key_descriptor.identifier.id);
+	identifier = &key_args->key_descriptor.identifier;
+
+	status = tee_delete_key(identifier->s_id);
 
 	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is %sdeleted\n", __func__,
-		       key_args->key_descriptor.identifier.id,
+		       identifier->s_id,
 		       (status == SMW_STATUS_OK) ? "" : "NOT ");
 
 exit:
@@ -1150,7 +1153,7 @@ static int import_key(void *args)
 	if (status != SMW_STATUS_OK)
 		goto exit;
 
-	shared_params.id = key_identifier->id;
+	shared_params.id = key_identifier->s_id;
 	shared_params.security_size = key_identifier->security_size;
 	shared_params.key_type = key->key_type;
 
@@ -1187,9 +1190,9 @@ static int import_key(void *args)
 		goto exit;
 
 	key_identifier->subsystem_id = SUBSYSTEM_ID_TEE;
-	key_identifier->id = shared_params.id;
+	key_identifier->s_id = shared_params.id;
 	SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is imported\n", __func__,
-		       key_identifier->id);
+		       key_identifier->s_id);
 
 	if (key_attrs->permitted_algo != key->permitted_algo) {
 		key_attrs->permitted_algo = key->permitted_algo;
@@ -1270,7 +1273,7 @@ static int export_key(void *args)
 	 * params[3] = None.
 	 */
 	SET_TEEC_PARAMS_TYPE(op.paramTypes, TEEC_VALUE_INPUT, 0);
-	op.params[0].value.a = key_descriptor->identifier.id;
+	op.params[0].value.a = key_descriptor->identifier.s_id;
 	op.params[0].value.b = key_descriptor->identifier.security_size;
 
 	/* Invoke TA */
@@ -1337,7 +1340,8 @@ static int get_key_lengths(void *args)
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_VALUE_OUTPUT,
 					 TEEC_VALUE_OUTPUT, TEEC_NONE);
 
-	op.params[GET_KEY_LENGTHS_KEY_ID_IDX].value.a = key_desc->identifier.id;
+	op.params[GET_KEY_LENGTHS_KEY_ID_IDX].value.a =
+		key_desc->identifier.s_id;
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_GET_KEY_LENGTHS, &op);
@@ -1432,7 +1436,7 @@ static int get_key_attributes(void *args)
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT,
 					 TEEC_VALUE_OUTPUT, TEEC_VALUE_OUTPUT);
 
-	op.params[GET_KEY_ATTRS_KEY_ID_IDX].value.a = key_identifier->id;
+	op.params[GET_KEY_ATTRS_KEY_ID_IDX].value.a = key_identifier->s_id;
 
 	/* Invoke TA */
 	status = execute_tee_cmd(CMD_GET_KEY_ATTRIBUTES, &op);

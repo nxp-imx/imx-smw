@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <tee_client_api.h>
@@ -230,7 +230,7 @@ static int aead_init(struct smw_op_context *op_context,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	key_id = args->key_desc.identifier.id;
+	key_id = args->key_desc.identifier.s_id;
 
 	/*
 	 * If the key id is not valid, import the key first in
@@ -270,7 +270,7 @@ static int aead_init(struct smw_op_context *op_context,
 	if (status == SMW_STATUS_OK)
 		status = set_aead_context(op_context, args, &context, iv);
 
-	key_id = args->key_desc.identifier.id;
+	key_id = args->key_desc.identifier.s_id;
 	if (key_id == INVALID_KEY_ID) {
 		key_id = op.params[1].value.a;
 

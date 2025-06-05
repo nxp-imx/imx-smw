@@ -401,8 +401,8 @@ static int hkdf_derive_key(void *args)
 	 * params[3] = Salt/info buffer or none.
 	 */
 
-	shared_params.derived_key_id = key_id_derived->id;
-	shared_params.base_key_id = key_id_base->id;
+	shared_params.derived_key_id = key_id_derived->s_id;
+	shared_params.base_key_id = key_id_base->s_id;
 	shared_params.salt_length = smw_keymgr_get_salt_len(key_args);
 	shared_params.info_length = smw_keymgr_get_info_len(key_args);
 	shared_params.base_key_sec_size = key_id_base->security_size;
@@ -496,7 +496,7 @@ static int hkdf_derive_key(void *args)
 	 */
 	if (shared_params.store_derived_key) {
 		key_id_derived->subsystem_id = SUBSYSTEM_ID_TEE;
-		key_id_derived->id = shared_params.derived_key_id;
+		key_id_derived->s_id = shared_params.derived_key_id;
 		key_id_derived->security_size =
 			shared_params.derived_key_sec_size;
 		key_id_derived->type_id =
@@ -507,7 +507,7 @@ static int hkdf_derive_key(void *args)
 			goto exit;
 
 		SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated.\n", __func__,
-			       key_id_derived->id);
+			       key_id_derived->s_id);
 	}
 
 	if (SET_OVERFLOW(op.params[DER_DERIVED_KEY_PARAM_IDX].tmpref.size,
@@ -640,8 +640,8 @@ static int ecdh_derive_key(void *args)
 	 * params[3] = Pointer to peer public buffer.
 	 */
 
-	shared_params.derived_key_id = key_id_derived->id;
-	shared_params.base_key_id = key_id_base->id;
+	shared_params.derived_key_id = key_id_derived->s_id;
+	shared_params.base_key_id = key_id_base->s_id;
 	shared_params.base_key_sec_size = key_id_base->security_size;
 	shared_params.store_derived_key = smw_keymgr_is_store_key_set(key_args);
 
@@ -718,7 +718,7 @@ static int ecdh_derive_key(void *args)
 	 */
 	if (shared_params.store_derived_key) {
 		key_id_derived->subsystem_id = SUBSYSTEM_ID_TEE;
-		key_id_derived->id = shared_params.derived_key_id;
+		key_id_derived->s_id = shared_params.derived_key_id;
 		key_id_derived->security_size =
 			shared_params.derived_key_sec_size;
 		key_id_derived->type_id =
@@ -729,7 +729,7 @@ static int ecdh_derive_key(void *args)
 			goto exit;
 
 		SMW_DBG_PRINTF(DEBUG, "%s: Key #%d is generated.\n", __func__,
-			       key_id_derived->id);
+			       key_id_derived->s_id);
 	}
 
 	if (SET_OVERFLOW(op.params[DER_DERIVED_KEY_PARAM_IDX].tmpref.size,

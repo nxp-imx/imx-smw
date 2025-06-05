@@ -270,7 +270,7 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 			goto exit;
 		}
 	} else {
-		shared_params->id = key_identifier->id;
+		shared_params->id = key_identifier->s_id;
 	}
 
 	shared_params->key_type = key_type_id;

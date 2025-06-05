@@ -220,7 +220,7 @@ static int asymm_encrypt_decrypt(struct smw_crypto_asymm_enc_args *args,
 		operation.params[0].memref.offset = 0;
 		operation.params[0].memref.size = shm.size;
 	} else {
-		shared_params->id = key_identifier->id;
+		shared_params->id = key_identifier->s_id;
 	}
 
 	shared_params->key_type = key_type_id;

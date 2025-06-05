@@ -110,7 +110,7 @@ static int mac(void *args)
 		op.params[0].tmpref.buffer = hex_key;
 		op.params[0].tmpref.size = hex_key_len;
 	} else {
-		op.params[0].value.a = key_identifier->id;
+		op.params[0].value.a = key_identifier->s_id;
 	}
 
 	if (mac_args->op_id == SMW_CONFIG_MAC_OP_ID_COMPUTE)

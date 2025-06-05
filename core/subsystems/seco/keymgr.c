@@ -233,7 +233,7 @@ static int export_key_operation(struct hdl *hdl,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	op_export_key_args.key_identifier = key_desc->identifier.id;
+	op_export_key_args.key_identifier = key_desc->identifier.s_id;
 
 	op_export_key_args.out_key = tmp_key;
 	op_export_key_args.out_key_size = key_size;
@@ -284,7 +284,7 @@ static int delete_key_operation(struct subsystem_context *seco_ctx,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	manage_key_args.key_identifier = &key_identifier->id;
+	manage_key_args.key_identifier = &key_identifier->s_id;
 	manage_key_args.flags = HSM_OP_MANAGE_KEY_FLAGS_DELETE;
 
 	if (SMW_ATTR_IS_PERSISTENT(key_attributes->attributes) ||
@@ -487,7 +487,7 @@ static int generate_key(struct subsystem_context *seco_ctx, void *args)
 		goto end;
 
 	key_identifier->subsystem_id = SUBSYSTEM_ID_SECO;
-	key_identifier->id = key_id;
+	key_identifier->s_id = key_id;
 	key_identifier->group = key_group;
 
 	SMW_DBG_PRINTF(DEBUG, "Key identifier: 0x%08X\n", key_id);

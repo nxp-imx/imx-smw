@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -673,7 +673,7 @@ static int aead(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	op_aead_args.key_identifier = key_desc->identifier.id;
+	op_aead_args.key_identifier = key_desc->identifier.s_id;
 
 	/* Get output length feature */
 	if (!smw_crypto_get_aead_output(aead_args)) {

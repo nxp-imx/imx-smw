@@ -111,7 +111,7 @@ int seco_tls_mac_finish(struct hdl *hdl, void *args)
 
 	op_tls_args.verify_data_output_size = TLS12_MAC_FINISH_DEFAULT_LEN;
 
-	op_tls_args.key_identifier = key_identifier->id;
+	op_tls_args.key_identifier = key_identifier->s_id;
 	op_tls_args.handshake_hash_input =
 		smw_sign_verify_get_msg_buf(smw_args);
 	op_tls_args.verify_data_output = smw_sign_verify_get_sign_buf(smw_args);

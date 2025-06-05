@@ -136,7 +136,7 @@ static int sign(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	op_args.key_identifier = key_identifier->id;
+	op_args.key_identifier = key_identifier->s_id;
 	op_args.message = smw_sign_verify_get_msg_buf(sign_args);
 	op_args.signature = smw_sign_verify_get_sign_buf(sign_args);
 	op_args.message_size = smw_sign_verify_get_msg_len(sign_args);
@@ -247,7 +247,8 @@ static int verify(struct hdl *hdl, void *args)
 	}
 
 	if (key_descriptor->format_id == SMW_KEYMGR_FORMAT_ID_INVALID) {
-		export_key_desc.identifier.id = key_descriptor->identifier.id;
+		export_key_desc.identifier.s_id =
+			key_descriptor->identifier.s_id;
 		export_key_desc.identifier.type_id =
 			key_descriptor->identifier.type_id;
 		export_key_desc.identifier.security_size = security_size;

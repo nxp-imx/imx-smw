@@ -53,6 +53,7 @@ static int data_storage(struct hdl *hdl,
 	op_data_storage_args_t op_args = { 0 };
 
 	struct smw_object_descriptor obj = { 0 };
+	unsigned int tmp_id = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -71,8 +72,13 @@ static int data_storage(struct hdl *hdl,
 		 * is present in the object database, that the size of the
 		 * data is correct
 		 */
-		status = smw_object_db_get_info(op_args.data_id, &obj);
+		tmp_id = smw_storage_get_data_identifier(data_descriptor);
 
+		obj.type = SMW_OBJECT_TYPE_NAME_DATA;
+		obj.id = tmp_id;
+		obj.data.identifier = tmp_id;
+
+		status = smw_object_db_get_info(&tmp_id, &obj);
 		if (status != SMW_STATUS_OK)
 			goto end;
 

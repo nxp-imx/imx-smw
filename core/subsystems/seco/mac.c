@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -125,7 +125,7 @@ static int mac(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	op_args.key_identifier = key_descriptor->identifier.id;
+	op_args.key_identifier = key_descriptor->identifier.s_id;
 	op_args.algorithm = alg.id;
 	op_args.payload = smw_mac_get_input_data(mac_args);
 	op_args.mac = smw_mac_get_mac_data(mac_args);

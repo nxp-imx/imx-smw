@@ -276,7 +276,7 @@ static void delete_db_shared_keys(unsigned int *ids_array, int nb_shared_keys)
 	struct smw_key_attributes *key_attributes =
 		&key_identifier.key_attributes;
 
-	key_identifier.id = INVALID_KEY_ID;
+	key_identifier.s_id = INVALID_KEY_ID;
 	key_identifier.subsystem_id = SUBSYSTEM_ID_SECO;
 	/* Only transient key are generated */
 	key_attributes->attributes =
@@ -316,7 +316,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 	for (; !shared_key_id && idx < nb_shared_keys; idx++)
 		new_key_ids[idx] = INVALID_KEY_ID;
 
-	key_identifier.id = INVALID_KEY_ID;
+	key_identifier.s_id = INVALID_KEY_ID;
 	key_identifier.subsystem_id = SUBSYSTEM_ID_SECO;
 	/* Only transient key are generated */
 	key_attributes->attributes =
@@ -342,7 +342,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 						      &key_identifier);
 		} else {
 			/* Update the Client MAC write Key */
-			key_identifier.id = *shared_key_id++;
+			key_identifier.s_id = *shared_key_id++;
 			smw_keymgr_tls12_set_client_mac_key_id(tls_args,
 							       *new_key_id);
 			status = smw_keymgr_db_update(*new_key_id,
@@ -363,7 +363,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 						      &key_identifier);
 		} else {
 			/* Update the Server MAC write Key */
-			key_identifier.id = *shared_key_id++;
+			key_identifier.s_id = *shared_key_id++;
 			smw_keymgr_tls12_set_server_mac_key_id(tls_args,
 							       *new_key_id);
 			status = smw_keymgr_db_update(*new_key_id,
@@ -394,7 +394,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 		status = smw_keymgr_db_create(new_key_id, &key_identifier);
 	} else {
 		/* Update the Client Encryption write Key */
-		key_identifier.id = *shared_key_id++;
+		key_identifier.s_id = *shared_key_id++;
 		smw_keymgr_tls12_set_client_enc_key_id(tls_args, *new_key_id);
 		status = smw_keymgr_db_update(*new_key_id, &key_identifier);
 	}
@@ -411,7 +411,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 		status = smw_keymgr_db_create(new_key_id, &key_identifier);
 	} else {
 		/* Update the Server Encryption write Key */
-		key_identifier.id = *shared_key_id++;
+		key_identifier.s_id = *shared_key_id++;
 		smw_keymgr_tls12_set_server_enc_key_id(tls_args, *new_key_id);
 		status = smw_keymgr_db_update(*new_key_id, &key_identifier);
 	}
@@ -438,7 +438,7 @@ static int add_update_db_shared_keys(struct smw_keymgr_derive_key_args *args,
 		status = smw_keymgr_db_create(new_key_id, &key_identifier);
 	} else {
 		/* Update the Master Key */
-		key_identifier.id = *shared_key_id;
+		key_identifier.s_id = *shared_key_id;
 		if (partial) {
 			status = smw_keymgr_db_update(args->key_base.pub->id,
 						      &key_identifier);
@@ -871,7 +871,7 @@ static int tls12_op_copy_partial_data(struct smw_keymgr_derive_key_args *args)
 
 	args->key_derived.identifier.type_id =
 		SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER;
-	args->key_derived.identifier.id = (uint32_t)-1;
+	args->key_derived.identifier.s_id = (uint32_t)-1;
 	args->key_derived.identifier.privacy_id = SMW_KEYMGR_PRIVACY_ID_PRIVATE;
 	args->key_derived.identifier.security_size =
 		TLS12_MASTER_SECRET_SEC_SIZE;

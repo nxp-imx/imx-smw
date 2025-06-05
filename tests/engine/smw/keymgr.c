@@ -1219,6 +1219,7 @@ int get_key_attributes(struct subtest_data *subtest)
 
 	/* Set only the key identifier */
 	key_test.desc.id = key_ref.desc.id;
+	key_test.desc.attributes.attributes = key_ref_attributes.attributes;
 
 	subtest->smw_status = smw_get_key_attributes(&args);
 	if (subtest->smw_status != SMW_STATUS_OK) {

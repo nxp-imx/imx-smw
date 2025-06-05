@@ -22,57 +22,67 @@ static void set_data_identifier(struct smw_storage_data_descriptor *descriptor,
 		descriptor->pub->identifier = id;
 }
 
-static int data_db_create(unsigned int *id,
-			  struct smw_storage_data_descriptor *descriptor)
+static void
+data_descriptor_to_object(unsigned int u_id,
+			  struct smw_storage_data_descriptor *descriptor,
+			  struct smw_object_descriptor *obj)
 {
-	struct smw_object_descriptor obj = { 0 };
+	obj->type = SMW_OBJECT_TYPE_NAME_DATA;
+
+	obj->id = u_id;
+	obj->data.identifier = u_id;
 
 	if (descriptor->subsystem_id == SUBSYSTEM_ID_INVALID)
-		obj.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
+		obj->subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
 	else
-		obj.subsystem_name =
+		obj->subsystem_name =
 			smw_config_get_subsystem_name(descriptor->subsystem_id);
 
-	obj.type = SMW_OBJECT_TYPE_NAME_DATA;
-	obj.data.length = smw_storage_get_data_length(descriptor);
-	obj.data.attributes = descriptor->data_attributes;
+	obj->data.length = smw_storage_get_data_length(descriptor);
+	obj->data.attributes = descriptor->data_attributes;
+}
+
+static int data_db_create(unsigned int *u_id,
+			  struct smw_storage_data_descriptor *descriptor)
+{
+	int status = SMW_STATUS_OK;
+
+	struct smw_object_descriptor obj = { 0 };
+
+	data_descriptor_to_object(*u_id, descriptor, &obj);
 
 	if (NXP_IS_EL2GO_OBJECT(descriptor->data_attributes.storage_id))
 		obj.label = DATA_DEFAULT_EL2GO_LABEL;
 	else
 		obj.label = DATA_DEFAULT_LABEL;
 
-	return smw_object_db_create(id, &obj);
+	status = smw_object_db_create(*u_id, &obj);
+	if (status == SMW_STATUS_OK)
+		*u_id = obj.id;
+
+	return status;
 }
 
 static int data_db_update(struct smw_storage_data_descriptor *descriptor)
 {
 	struct smw_object_descriptor obj = { 0 };
-	unsigned int id = 0;
+	unsigned int u_id = 0;
 
-	id = smw_storage_get_data_identifier(descriptor);
+	u_id = smw_storage_get_data_identifier(descriptor);
 
-	if (descriptor->subsystem_id == SUBSYSTEM_ID_INVALID)
-		obj.subsystem_name = SMW_SUBSYSTEM_NAME_NONE;
-	else
-		obj.subsystem_name =
-			smw_config_get_subsystem_name(descriptor->subsystem_id);
+	data_descriptor_to_object(u_id, descriptor, &obj);
 
-	obj.type = SMW_OBJECT_TYPE_NAME_DATA;
-	obj.data.length = smw_storage_get_data_length(descriptor);
-	obj.data.attributes = descriptor->data_attributes;
-
-	return smw_object_db_update(id, &obj);
+	return smw_object_db_update(u_id, &obj);
 }
 
-static int data_db_delete(unsigned int id,
+static int data_db_delete(unsigned int u_id,
 			  struct smw_storage_data_descriptor *descriptor)
 {
 	struct smw_object_descriptor obj = { 0 };
 
-	obj.data.attributes = descriptor->data_attributes;
+	data_descriptor_to_object(u_id, descriptor, &obj);
 
-	return smw_object_db_delete(id, &obj);
+	return smw_object_db_delete(&obj);
 }
 
 static void set_default_attributes(struct smw_data_attributes *data_attributes)
@@ -247,7 +257,10 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 	 * If data is not present in the object data try to find it in
 	 * a subsystem supporting one data storage operation.
 	 */
-	status = smw_object_db_get_info(data_id, &data_info);
+
+	data_descriptor_to_object(data_id, in_desc, &data_info);
+
+	status = smw_object_db_get_info(&data_id, &data_info);
 
 	if (status == SMW_STATUS_OK) {
 		if (data_info.type != SMW_OBJECT_TYPE_NAME_DATA) {
@@ -327,13 +340,14 @@ static int get_new_data_id(struct smw_storage_data_descriptor *desc)
 
 	tmp_desc = *desc;
 	tmp_desc.pub = &tmp_pub_desc;
-	data_info.data.attributes = desc->data_attributes;
 
 	for (id = data_id; id < UINT32_MAX; id++) {
 		tmp_pub_desc.identifier = id;
 
 		if (id != data_id) {
-			status = smw_object_db_get_info(data_id, &data_info);
+			data_descriptor_to_object(data_id, &tmp_desc,
+						  &data_info);
+			status = smw_object_db_get_info(&data_id, &data_info);
 
 			smw_object_db_clean_descriptor(&data_info);
 

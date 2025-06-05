@@ -25,7 +25,8 @@ smw_update_object_db(struct smw_object_descriptor *descriptor)
 		goto end;
 	}
 
-	status = smw_object_db_update(descriptor->id, descriptor);
+	/* Object identifier in the subsystem is unknown here. */
+	status = smw_object_db_update(INVALID_OBJ_ID, descriptor);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -36,6 +37,7 @@ enum smw_status_code smw_find_object_db(struct smw_find_object_db_args *args)
 {
 	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 	struct smw_object_descriptor *obj_desc = NULL;
+	unsigned int s_id = INVALID_OBJ_ID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -54,7 +56,7 @@ enum smw_status_code smw_find_object_db(struct smw_find_object_db_args *args)
 		goto end;
 	}
 
-	status = smw_object_db_get_info(obj_desc->id, obj_desc);
+	status = smw_object_db_get_info(&s_id, obj_desc);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -66,7 +68,8 @@ smw_find_object_db_init(struct smw_find_object_db_args *args)
 {
 	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 	struct smw_ops *ops = get_smw_ops();
-	struct smw_object_descriptor *obj_desc = NULL;
+	struct smw_osal_object obj = { 0 };
+	unsigned int s_id = INVALID_OBJ_ID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -83,11 +86,9 @@ smw_find_object_db_init(struct smw_find_object_db_args *args)
 		goto end;
 	}
 
-	obj_desc = args->object_descriptor;
+	smw_object_db_prepare(s_id, args->object_descriptor, &obj);
 
-	smw_object_db_prep_desc(obj_desc->id, obj_desc);
-
-	if (!ops->find_obj_init(&args->ctx, obj_desc))
+	if (!ops->find_obj_init(&args->ctx, &obj))
 		status = SMW_STATUS_OK;
 	else
 		status = SMW_STATUS_OBJ_DB_FIND;
@@ -102,7 +103,8 @@ smw_find_object_db_next(struct smw_find_object_db_args *args)
 {
 	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 	struct smw_ops *ops = get_smw_ops();
-	struct smw_object_descriptor *obj_desc = NULL;
+	struct smw_osal_object obj = { 0 };
+	unsigned int s_id = INVALID_OBJ_ID;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -119,13 +121,11 @@ smw_find_object_db_next(struct smw_find_object_db_args *args)
 		goto end;
 	}
 
-	obj_desc = args->object_descriptor;
+	smw_object_db_prepare(s_id, args->object_descriptor, &obj);
 
-	smw_object_db_prep_desc(obj_desc->id, obj_desc);
-
-	if (!ops->find_obj_next(args->ctx, obj_desc))
+	if (!ops->find_obj_next(args->ctx, &obj))
 		status = SMW_STATUS_OK;
-	else if (obj_desc->id == INVALID_OBJ_ID)
+	else if (args->object_descriptor->id == INVALID_OBJ_ID)
 		status = SMW_STATUS_UNKNOWN_ID;
 	else
 		status = SMW_STATUS_OBJ_DB_FIND;

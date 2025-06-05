@@ -71,64 +71,65 @@ end:
 	return ret;
 }
 
-void smw_object_db_prep_desc(unsigned int id,
-			     struct smw_object_descriptor *descriptor)
+void smw_object_db_prepare(unsigned int s_id,
+			   struct smw_object_descriptor *obj_desc,
+			   struct smw_osal_object *obj)
 {
 	smw_attr_attributes_t persistence = 0;
 
-	descriptor->id = id;
+	obj->obj_id_subsystem = s_id;
+	obj->obj_desc = obj_desc;
 
-	switch (descriptor->type) {
+	switch (obj_desc->type) {
 	case SMW_OBJECT_TYPE_NAME_DATA:
-		persistence = descriptor->data.attributes.attributes;
+		persistence = obj_desc->data.attributes.attributes;
 		break;
 
 	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
 	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
 	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
-		persistence = descriptor->key.attributes.attributes;
+		persistence = obj_desc->key.attributes.attributes;
 		break;
 
 	default:
-		persistence = descriptor->persistency;
+		persistence = obj_desc->persistency;
 		break;
 	}
 
 	persistence = SMW_ATTR_GET_PERSISTENCE(persistence);
-	descriptor->persistency = SMW_ATTR_SET_PERSISTENCE(0, persistence);
+	obj_desc->persistency = SMW_ATTR_SET_PERSISTENCE(0, persistence);
 }
 
-int smw_object_db_create(unsigned int *id,
+int smw_object_db_create(unsigned int s_id,
 			 struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_CREATE;
 	struct smw_ops *ops = get_smw_ops();
+	struct smw_osal_object obj = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!id || !descriptor)
+	if (!descriptor)
 		return SMW_STATUS_INVALID_PARAM;
 
 	if (!ops || !ops->add_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	smw_object_db_prep_desc(*id, descriptor);
+	smw_object_db_prepare(s_id, descriptor, &obj);
 
-	if (!ops->add_obj_info(descriptor) &&
-	    descriptor->id != INVALID_OBJ_ID) {
-		*id = descriptor->id;
+	if (!ops->add_obj_info(&obj) && descriptor->id != INVALID_OBJ_ID)
 		ret = SMW_STATUS_OK;
-	}
 
 	return ret;
 }
 
-int smw_object_db_update(unsigned int id,
+int smw_object_db_update(unsigned int s_id,
 			 struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_UPDATE;
 	struct smw_ops *ops = get_smw_ops();
 	bool free_user_id = false;
+	struct smw_osal_object obj = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -138,7 +139,7 @@ int smw_object_db_update(unsigned int id,
 	if (!ops || !ops->update_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	smw_object_db_prep_desc(id, descriptor);
+	smw_object_db_prepare(s_id, descriptor, &obj);
 
 	/*
 	 * If the descriptor User ID is not defined, assign the user id to
@@ -153,7 +154,7 @@ int smw_object_db_update(unsigned int id,
 			return ret;
 	}
 
-	if (!ops->update_obj_info(descriptor))
+	if (!ops->update_obj_info(&obj))
 		ret = SMW_STATUS_OK;
 
 	if (free_user_id) {
@@ -164,30 +165,31 @@ int smw_object_db_update(unsigned int id,
 	return ret;
 }
 
-int smw_object_db_delete(unsigned int id,
-			 struct smw_object_descriptor *descriptor)
+int smw_object_db_delete(struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_DELETE;
 	struct smw_ops *ops = get_smw_ops();
+	struct smw_osal_object obj = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (!ops || !ops->delete_obj_info || !descriptor)
 		return SMW_STATUS_OPS_INVALID;
 
-	smw_object_db_prep_desc(id, descriptor);
+	smw_object_db_prepare(INVALID_OBJ_ID, descriptor, &obj);
 
-	if (!ops->delete_obj_info(descriptor))
+	if (!ops->delete_obj_info(&obj))
 		ret = SMW_STATUS_OK;
 
 	return ret;
 }
 
-int smw_object_db_get_info(unsigned int id,
+int smw_object_db_get_info(unsigned int *s_id,
 			   struct smw_object_descriptor *descriptor)
 {
 	int ret = SMW_STATUS_OBJ_DB_GET_INFO;
 	struct smw_ops *ops = get_smw_ops();
+	struct smw_osal_object obj = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -197,12 +199,14 @@ int smw_object_db_get_info(unsigned int id,
 	if (!ops || !ops->get_obj_info)
 		return SMW_STATUS_OPS_INVALID;
 
-	smw_object_db_prep_desc(id, descriptor);
+	smw_object_db_prepare(*s_id, descriptor, &obj);
 
-	if (!ops->get_obj_info(descriptor))
+	if (!ops->get_obj_info(&obj)) {
 		ret = SMW_STATUS_OK;
-	else if (descriptor->id == INVALID_OBJ_ID)
+		*s_id = obj.obj_id_subsystem;
+	} else if (descriptor->id == INVALID_OBJ_ID) {
 		ret = SMW_STATUS_UNKNOWN_ID;
+	}
 
 	return ret;
 }

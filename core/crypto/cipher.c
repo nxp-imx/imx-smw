@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include "smw_status.h"
@@ -141,7 +141,7 @@ static int check_keys(struct smw_crypto_cipher_args *args,
 
 	for (; i < args->nb_keys; i++) {
 		/* Key ID or key buffer must be set */
-		if (!args->keys_desc[i]->identifier.id &&
+		if (!args->keys_desc[i]->identifier.s_id &&
 		    !args->keys_desc[i]->pub->buffer)
 			goto end;
 
@@ -156,7 +156,7 @@ static int check_keys(struct smw_crypto_cipher_args *args,
 			goto end;
 
 		/* Subsystem must be the same for all keys */
-		if (args->keys_desc[i]->identifier.id &&
+		if (args->keys_desc[i]->identifier.s_id &&
 		    args->keys_desc[i]->identifier.subsystem_id != subsystem_id)
 			goto end;
 
@@ -223,7 +223,7 @@ smw_crypto_get_cipher_key_id(struct smw_crypto_cipher_args *args,
 			     unsigned int idx)
 {
 	if (args && idx < args->nb_keys && args->keys_desc[idx])
-		return args->keys_desc[idx]->identifier.id;
+		return args->keys_desc[idx]->identifier.s_id;
 
 	return 0;
 }
@@ -302,7 +302,8 @@ smw_crypto_get_cipher_nb_key_buffer(struct smw_crypto_cipher_args *args)
 
 	/* Key is defined as buffer if ID is not set and buffer set */
 	for (; i < args->nb_keys; i++) {
-		if (args->keys_desc[i] && !args->keys_desc[i]->identifier.id &&
+		if (args->keys_desc[i] &&
+		    !args->keys_desc[i]->identifier.s_id &&
 		    smw_keymgr_get_private_data(args->keys_desc[i]))
 			if (INC_OVERFLOW(nb_buffers, 1)) {
 				nb_buffers = 0;

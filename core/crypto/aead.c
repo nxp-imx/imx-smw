@@ -153,7 +153,7 @@ static int check_key(struct smw_crypto_aead_args *args,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	/* Key ID or key buffer must be set */
-	if (!args->key_desc.identifier.id && !args->key_desc.pub->buffer)
+	if (!args->key_desc.identifier.s_id && !args->key_desc.pub->buffer)
 		goto end;
 
 	/*
@@ -165,7 +165,7 @@ static int check_key(struct smw_crypto_aead_args *args,
 	     !args->key_desc.pub->security_size))
 		goto end;
 
-	if (args->key_desc.identifier.id &&
+	if (args->key_desc.identifier.s_id &&
 	    args->key_desc.identifier.subsystem_id != subsystem_id)
 		goto end;
 

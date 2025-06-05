@@ -149,8 +149,8 @@ static int mac(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (key_identifier->id) {
-		op_args.key_identifier = key_identifier->id;
+	if (key_identifier->s_id) {
+		op_args.key_identifier = key_identifier->s_id;
 	} else {
 		/* MAC using plaintext key buffer */
 		op_args.flags = HSM_OP_MAC_FLAGS_PLAINTEXT_KEY;

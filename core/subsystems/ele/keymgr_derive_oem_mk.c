@@ -142,8 +142,8 @@ derive_oem_master_key_prepare(struct subsystem_context *ele_ctx,
 	payload->derived_key_security_size = 256;
 	payload->derived_key_usage = HSM_KEY_USAGE_DERIVE;
 	payload->derived_key_permitted_algo = PERMITTED_ALGO_HMAC_KDF_SHA256;
-	payload->derived_key_id = args->key_derived.identifier.id;
-	payload->private_key_id = args->key_base.identifier.id;
+	payload->derived_key_id = args->key_derived.identifier.s_id;
+	payload->private_key_id = args->key_base.identifier.s_id;
 
 	status = set_key_group_lifetime(ele_ctx,
 					args->key_attributes->attributes,
@@ -282,9 +282,9 @@ static int derive_oem_master_key(struct subsystem_context *ele_ctx,
 		goto end;
 
 	args->key_derived.identifier.group = payload->derived_key_group;
-	args->key_derived.identifier.id = key_ex_args.out_derived_key_id;
+	args->key_derived.identifier.s_id = key_ex_args.out_derived_key_id;
 	SMW_DBG_PRINTF(DEBUG, "OEM Master key created id=0x%08X\n",
-		       args->key_derived.identifier.id);
+		       args->key_derived.identifier.s_id);
 
 end:
 	if (key_mgt_hdl) {

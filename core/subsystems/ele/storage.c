@@ -117,7 +117,7 @@ static int store_data_encrypted(struct subsystem_context *ele_ctx,
 	if (SMW_ATTR_IS_READ_ONCE(attributes))
 		op_args.flags |= HSM_OP_ENC_DATA_STORAGE_FLAGS_READ_ONCE;
 
-	op_args.enc_key_id = key_identifier->id;
+	op_args.enc_key_id = key_identifier->s_id;
 
 	status = ele_set_cipher_algo(key_identifier->type_id, enc_args->mode_id,
 				     &op_args.enc_algo);
@@ -125,7 +125,7 @@ static int store_data_encrypted(struct subsystem_context *ele_ctx,
 		goto end;
 
 	key_identifier = &sign_args->key_descriptor.identifier;
-	op_args.sign_key_id = key_identifier->id;
+	op_args.sign_key_id = key_identifier->s_id;
 
 	status = get_mac_algo(sign_args, &op_args.sign_algo);
 	if (status != SMW_STATUS_OK)

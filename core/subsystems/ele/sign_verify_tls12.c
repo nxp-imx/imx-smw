@@ -125,7 +125,7 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	payload.ver = 1;
-	payload.key_id = key_identifier->id;
+	payload.key_id = key_identifier->s_id;
 
 	status = ele_get_key_store_id(&payload.keystore_id);
 	if (status != SMW_STATUS_OK)

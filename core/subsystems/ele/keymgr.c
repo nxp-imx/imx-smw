@@ -355,7 +355,7 @@ static int delete_key_operation(hsm_hdl_t key_mgt_hdl,
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	op_args.key_identifier = key_identifier->id;
+	op_args.key_identifier = key_identifier->s_id;
 	if (SMW_ATTR_IS_PERSISTENT(key_identifier->key_attributes.attributes) ||
 	    SMW_ATTR_IS_PERMANENT(key_identifier->key_attributes.attributes))
 		op_args.flags = HSM_OP_DEL_KEY_FLAGS_STRICT_OPERATION;
@@ -531,7 +531,7 @@ static int export_key_operation(struct hdl *hdl,
 		op_args.out_key = tmp_key;
 	}
 
-	op_args.key_identifier = key_identifier->id;
+	op_args.key_identifier = key_identifier->s_id;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_pub_key_recovery()\n"
@@ -698,7 +698,7 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		 * NVM storage group full. ELE erases the key identifier of
 		 * the operation argument.
 		 */
-		key_id = key_identifier->id;
+		key_id = key_identifier->s_id;
 
 		status = ele_get_key_group(ele_ctx, persistent_grp, &key_group);
 		if (status != SMW_STATUS_OK)
@@ -762,7 +762,7 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 		goto end;
 
 	key_identifier->subsystem_id = SUBSYSTEM_ID_ELE;
-	key_identifier->id = key_id;
+	key_identifier->s_id = key_id;
 	key_identifier->group = key_group;
 
 	SMW_DBG_PRINTF(DEBUG, "Key identifier: 0x%08X\n", key_id);
@@ -878,7 +878,7 @@ static int import_key(struct hdl *hdl, void *args)
 	if (status == SMW_STATUS_OK) {
 		SMW_DBG_PRINTF(DEBUG, "hsm_import_key key id 0x%08X\n",
 			       op_args.key_identifier);
-		key_desc->identifier.id = op_args.key_identifier;
+		key_desc->identifier.s_id = op_args.key_identifier;
 
 		/*
 		 * In case of key importation, the key group is unknown.
@@ -975,7 +975,7 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 
 	key_desc = args;
 
-	key_attrs.key_identifier = key_desc->identifier.id;
+	key_attrs.key_identifier = key_desc->identifier.s_id;
 
 	status = get_key_attributes_operation(hdl, &key_attrs);
 
@@ -1031,7 +1031,7 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 	key_identifier = &key_args->key_descriptor.identifier;
 	key_attributes = &key_identifier->key_attributes;
 
-	op_key_attrs.key_identifier = key_identifier->id;
+	op_key_attrs.key_identifier = key_identifier->s_id;
 
 	status = get_key_attributes_operation(hdl, &op_key_attrs);
 	if (status != SMW_STATUS_OK)
@@ -1117,8 +1117,8 @@ static int key_attestation(struct hdl *hdl, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	op_args.key_identifier = attest_args->key_descriptor.identifier.id;
-	op_args.key_attestation_id = attest_key_descriptor->identifier.id;
+	op_args.key_identifier = attest_args->key_descriptor.identifier.s_id;
+	op_args.key_attestation_id = attest_key_descriptor->identifier.s_id;
 
 	status = set_sign_algo(&attest_args->sign_attributes,
 			       &op_args.attest_algo);
@@ -1216,7 +1216,7 @@ int ele_export_public_key(struct hdl *hdl,
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	/* First get the key attributes */
-	key_attrs.key_identifier = key_desc->identifier.id;
+	key_attrs.key_identifier = key_desc->identifier.s_id;
 	status = get_key_attributes_operation(hdl, &key_attrs);
 	if (status != SMW_STATUS_OK)
 		goto end;

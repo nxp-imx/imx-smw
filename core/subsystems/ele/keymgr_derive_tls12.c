@@ -148,7 +148,7 @@ static int tls12_store_key_id(struct smw_keymgr_derive_key_args *args,
 		return SMW_STATUS_OK;
 
 	key_identifier.type_id = type_id;
-	key_identifier.id = *key_id;
+	key_identifier.s_id = *key_id;
 	key_identifier.subsystem_id = SUBSYSTEM_ID_ELE;
 	key_identifier.security_size = bits;
 	key_attributes->attributes =
@@ -353,7 +353,7 @@ tls12_op_derive_master_secret(struct smw_keymgr_derive_key_args *args,
 		goto end;
 
 	payload->ver = 1;
-	payload->key_id = args->key_base.identifier.id;
+	payload->key_id = args->key_base.identifier.s_id;
 
 	status = ele_get_key_store_id(&payload->keystore_id);
 	if (status != SMW_STATUS_OK)
@@ -429,7 +429,7 @@ tls12_op_derive_master_secret(struct smw_keymgr_derive_key_args *args,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	args->key_derived.identifier.id = key_ex_args.out_derived_key_id;
+	args->key_derived.identifier.s_id = key_ex_args.out_derived_key_id;
 	args->key_derived.identifier.security_size =
 		TLS12_MASTER_SECRET_SEC_SIZE;
 	args->key_derived.identifier.subsystem_id = SUBSYSTEM_ID_ELE;
@@ -478,7 +478,7 @@ tls12_op_derive_key_expansion(struct smw_keymgr_derive_key_args *args,
 		goto end;
 
 	payload->ver = 1;
-	payload->key_id = args->key_base.identifier.id;
+	payload->key_id = args->key_base.identifier.s_id;
 
 	status = ele_get_key_store_id(&payload->keystore_id);
 	if (status != SMW_STATUS_OK)
@@ -576,7 +576,7 @@ static int tls12_op_derive_ivs(struct smw_keymgr_derive_key_args *args,
 		goto end;
 
 	payload->ver = 1;
-	payload->key_id = args->key_base.identifier.id;
+	payload->key_id = args->key_base.identifier.s_id;
 
 	status = ele_get_key_store_id(&payload->keystore_id);
 	if (status != SMW_STATUS_OK)
@@ -663,7 +663,7 @@ int derive_tls12_op(struct hdl *hdl, struct smw_keymgr_derive_key_args *args)
 	if (!args || !args->kdf_args)
 		goto end;
 
-	if (args->key_base.identifier.id == INVALID_KEY_ID)
+	if (args->key_base.identifier.s_id == INVALID_KEY_ID)
 		goto end;
 
 	tls12_args = args->kdf_args;

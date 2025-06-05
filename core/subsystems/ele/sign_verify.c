@@ -296,8 +296,8 @@ static int sign(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	if (key_identifier->id) {
-		op_args.key_identifier = key_identifier->id;
+	if (key_identifier->s_id) {
+		op_args.key_identifier = key_identifier->s_id;
 	} else {
 		/* Sign using plaintext key buffer */
 		op_args.flags = HSM_OP_GENERATE_SIGN_FLAGS_PLAINTEXT_KEY;
@@ -430,7 +430,7 @@ static int verify(struct hdl *hdl, void *args)
 	format_id = key_desc->format_id;
 
 	if (format_id == SMW_KEYMGR_FORMAT_ID_INVALID) {
-		export_key_desc.identifier.id = key_desc->identifier.id;
+		export_key_desc.identifier.s_id = key_desc->identifier.s_id;
 
 		status = ele_export_public_key(hdl, &export_key_desc);
 		if (status != SMW_STATUS_OK)

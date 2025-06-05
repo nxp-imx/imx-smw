@@ -231,18 +231,18 @@ static int tls13_set_payload_args(struct smw_keymgr_derive_key_args *args,
 	if (!payload)
 		goto end;
 
-	if (psk->identifier.id) {
+	if (psk->identifier.s_id) {
 		if (psk->identifier.subsystem_id != SUBSYSTEM_ID_ELE) {
 			status = SMW_STATUS_KEY_INVALID;
 			goto end;
 		}
 
-		payload->psk_id = psk->identifier.id;
+		payload->psk_id = psk->identifier.s_id;
 	}
 
 	payload->ver = 1;
 	payload->rsv = 0;
-	payload->key_id = args->key_base.identifier.id;
+	payload->key_id = args->key_base.identifier.s_id;
 
 	status = ele_get_key_store_id(&payload->keystore_id);
 	if (status != SMW_STATUS_OK)
@@ -270,7 +270,7 @@ static int tls13_set_payload_args(struct smw_keymgr_derive_key_args *args,
 	/* Handshake/Master secrets need both the base key and peer public key */
 	if (is_handshake_secret(payload->tls1_3_algo) ||
 	    is_master_secret(payload->tls1_3_algo)) {
-		if (!args->key_base.identifier.id) {
+		if (!args->key_base.identifier.s_id) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
@@ -338,7 +338,7 @@ tls13_set_derived_identifier(struct smw_keymgr_derive_key_args *args,
 	if (is_iv(payload->tls1_3_algo))
 		return;
 
-	args->key_derived.identifier.id = key_id;
+	args->key_derived.identifier.s_id = key_id;
 	args->key_derived.identifier.security_size = payload->key_bits;
 	args->key_derived.identifier.subsystem_id = SUBSYSTEM_ID_ELE;
 

@@ -124,29 +124,27 @@ size_t util_rfc2279_to_byte(CK_BYTE_PTR dst, size_t len_dst,
 size_t util_get_bignum_bits(struct libbignumber *bignum);
 
 /**
- * util_byte_to_hex() - Convert an array of byte to a string
- * @dst: String output
- * @len_dst: Length of the @dst array
- * @src: Byte array to convert
- * @len_src: Length of the @src array
+ * util_base64_encode() - Encode a byte array to a base64 null terminated string
+ * @base64: [out] Base64 null terminated string
+ * @out: [in] Byte array
  *
  * Return:
- * The length of string converted
+ * CKR_OK               - Success
+ * CKR_FUNCTION_FAILED  - Failure
+ * CKR_HOST_MEMORY      - Out of memory
  */
-size_t util_byte_to_hex(CK_CHAR_PTR dst, size_t len_dst, const CK_BYTE_PTR src,
-			size_t len_src);
+CK_RV util_base64_encode(char **base64, struct libbytes *src);
 
 /**
- * util_hex_to_byte() - Convert string to an array of byte
- * @dst: Byte array output
- * @len_dst: Length of the @dst array
- * @src: String to convert
- * @len_src: Length of the @src array
+ * util_base64_decode() - Decode a base64 null terminated string to byte array
+ * @out: [out] Byte array
+ * @base64: [in] Base64 null terminated string
  *
  * Return:
- * The length of byte array converted
+ * CKR_OK               - Success
+ * CKR_FUNCTION_FAILED  - Failure
+ * CKR_HOST_MEMORY      - Out of memory
  */
-size_t util_hex_to_byte(CK_BYTE_PTR dst, size_t len_dst, const CK_CHAR_PTR src,
-			size_t len_src);
+CK_RV util_base64_decode(struct libbytes *out, const char *base64);
 
 #endif /* __UTIL_H__ */

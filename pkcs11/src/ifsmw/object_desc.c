@@ -249,23 +249,8 @@ static CK_RV attrs_to_object_descriptor(struct smw_object_descriptor *desc,
 		}
 	}
 
-	if (user_id.number) {
-		len = user_id.number * 2;
-		if (len) {
-			desc->user_id =
-				calloc(1, len + 1 /* zero terminated string */);
-			if (!desc->user_id) {
-				ret = CKR_HOST_MEMORY;
-				goto end;
-			}
-
-			if (!util_byte_to_hex((CK_CHAR_PTR)desc->user_id, len,
-					      user_id.array, user_id.number)) {
-				ret = CKR_ARGUMENTS_BAD;
-				goto end;
-			}
-		}
-	}
+	if (user_id.number)
+		ret = util_base64_encode(&desc->user_id, &user_id);
 
 end:
 	if (unique_id.string)
@@ -452,18 +437,18 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 			else
 				p_attr->type = CKA_ID;
 
-			user_id.array = (CK_BYTE_PTR)desc->user_id;
-			user_id.number = strlen(desc->user_id);
-
-			if (p_attr->ulValueLen < user_id.number / 2) {
-				p_attr->ulValueLen = user_id.number / 2;
-			} else if (!util_hex_to_byte(p_attr->pValue,
-						     p_attr->ulValueLen,
-						     user_id.array,
-						     user_id.number)) {
-				ret = CKR_ARGUMENTS_BAD;
+			ret = util_base64_decode(&user_id, desc->user_id);
+			if (ret != CKR_OK)
 				goto end;
-			}
+
+			if (p_attr->ulValueLen < user_id.number)
+				p_attr->ulValueLen = user_id.number;
+			else
+				memcpy(p_attr->pValue, user_id.array,
+				       p_attr->ulValueLen);
+
+			if (user_id.array)
+				free(user_id.array);
 		}
 
 		nb_attrs++;
@@ -609,7 +594,6 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	struct libbytes label = { 0 };
 	struct libbytes user_id = { 0 };
 	struct smw_object_descriptor descriptor = { 0 };
-	size_t len = 0;
 
 	ret = obj_db_get(obj, &descriptor);
 	if (ret)
@@ -637,6 +621,9 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 					     obj_storage->label.string,
 					     obj_storage->label.length);
 			label.array[label.number - 1] = 0;
+
+			if (descriptor.label)
+				free(descriptor.label);
 
 			descriptor.label = (char *)label.array;
 		}
@@ -668,18 +655,12 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	}
 
 	if (user_id.number) {
-		len = user_id.number * 2;
-		descriptor.user_id = calloc(1, len + 1);
-		if (!descriptor.user_id) {
-			ret = CKR_HOST_MEMORY;
-			goto end;
-		}
+		if (descriptor.user_id)
+			free(descriptor.user_id);
 
-		if (!util_byte_to_hex((CK_CHAR_PTR)descriptor.user_id, len,
-				      user_id.array, user_id.number)) {
-			ret = CKR_ARGUMENTS_BAD;
+		ret = util_base64_encode(&descriptor.user_id, &user_id);
+		if (ret != CKR_OK)
 			goto end;
-		}
 	}
 
 	status = smw_update_object_db(&descriptor);
@@ -871,6 +852,34 @@ end:
 	cleanup_smw_object_descriptor(&descriptor);
 
 	DBG_TRACE("%s return %lx", __func__, ret);
+
+	return ret;
+}
+
+CK_RV obj_db_get_size(struct libobj_obj *obj, CK_ULONG_PTR pulSize)
+{
+	CK_RV ret = CKR_OK;
+	struct smw_object_descriptor desc = { 0 };
+
+	ret = obj_db_get(obj, &desc);
+	if (ret == CKR_OK) {
+		switch (desc.type) {
+		case SMW_OBJECT_TYPE_NAME_DATA:
+			*pulSize = desc.data.length;
+			break;
+
+		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+			*pulSize = BITS_TO_BYTES_SIZE(desc.key.security_size);
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	cleanup_smw_object_descriptor(&desc);
 
 	return ret;
 }

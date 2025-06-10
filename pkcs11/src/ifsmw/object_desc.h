@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #ifndef __OBJECT_DESC_H__
@@ -48,5 +48,16 @@ CK_RV obj_db_update(struct libobj_obj *obj);
  */
 CK_RV obj_db_get(struct libobj_obj *obj,
 		 struct smw_object_descriptor *descriptor);
+
+/**
+ * obj_db_get_size() - Get the object size
+ * @obj: Object
+ * @pulSize: Object's size
+ *
+ * return:
+ * CKR_OK             - Success
+ * CKR_GENERAL_ERROR  - Bad type of object
+ */
+CK_RV obj_db_get_size(struct libobj_obj *obj, CK_ULONG_PTR pulSize);
 
 #endif /* __OBJECT_DESC_H__ */

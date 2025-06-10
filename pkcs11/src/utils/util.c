@@ -6,9 +6,69 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "trace.h"
 #include "util.h"
+
+#define PADDING_CHAR '=' /* Base64 padding character */
+#define BAD_CHAR     0xFF
+
+/* Hex to Base64 encoding table */
+static const char encoding_table[] = {
+	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+	'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+	'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
+};
+
+/* Mask used to avoid encoding table buffer over-read */
+#define ENC_MAX_ARRAY_MASK (ARRAY_SIZE(encoding_table) - 1)
+
+static size_t get_b64_from_hex_len(size_t hex_len)
+{
+	size_t b64_len = 0;
+
+	b64_len = hex_len + 2;
+	b64_len /= 3;
+	if (MUL_OVERFLOW(b64_len, 4, &b64_len))
+		b64_len = 0;
+
+	return b64_len;
+}
+
+static size_t get_hex_from_b64_len(const char *base64, size_t base64_len)
+{
+	size_t hex_len = 0;
+	size_t i = base64_len;
+
+	if (base64_len % 4 || !base64_len)
+		return 0;
+
+	hex_len = (base64_len / 4) * 3;
+
+	while (--i && base64[i] == PADDING_CHAR && hex_len)
+		hex_len--;
+
+	return hex_len;
+}
+
+static unsigned char conv_b64_to_hex(unsigned char c)
+{
+	if (c >= 'A' && c <= 'Z')
+		return (c - 'A');
+	else if (c >= 'a' && c <= 'z')
+		return (c - 'a' + 26);
+	else if (c >= '0' && c <= '9')
+		return (c - '0' + 52);
+	else if (c == '+')
+		return 62;
+	else if (c == '/')
+		return 63;
+
+	return BAD_CHAR;
+}
 
 bool util_check_ptrs_null(int nb, ...)
 {
@@ -161,67 +221,6 @@ size_t util_rfc2279_to_byte(CK_BYTE_PTR dst, size_t len_dst,
 	return idx;
 }
 
-size_t util_byte_to_hex(CK_CHAR_PTR dst, size_t len_dst, const CK_BYTE_PTR src,
-			size_t len_src)
-{
-	size_t len = 0;
-	size_t idx = 0;
-	int l = 0;
-
-	for (; idx < len_src && len < len_dst; idx++, len += 2) {
-		l = sprintf((char *)dst + len, "%02hhX", src[idx]);
-		if (l != 2)
-			return 0;
-	}
-
-	return idx;
-}
-
-static CK_BYTE util_hex_to_dec(CK_BYTE b)
-{
-	if (b >= 'a' && b <= 'f')
-		b = b - 'a' + 10;
-	else if (b >= 'A' && b <= 'F')
-		b = b - 'A' + 10;
-	else if (b >= '0' && b <= '9')
-		b = b - '0';
-	else
-		/* Valid value are 0 to 15 */
-		return 0x10;
-
-	return b;
-}
-
-size_t util_hex_to_byte(CK_BYTE_PTR dst, size_t len_dst, const CK_CHAR_PTR src,
-			size_t len_src)
-{
-	CK_BYTE msb = 0;
-	CK_BYTE lsb = 0;
-	size_t len = 0;
-	size_t idx = 0;
-
-	if (!len_src || len_src & 1)
-		return 0;
-
-	len_src -= 2;
-	for (; idx <= len_src && len < len_dst; idx += 2, len++) {
-		msb = src[idx];
-		lsb = src[idx + 1];
-
-		msb = util_hex_to_dec(msb);
-		if (msb >= 0x10)
-			return 0;
-
-		lsb = util_hex_to_dec(lsb);
-		if (lsb >= 0x10)
-			return 0;
-
-		dst[len] = (CK_BYTE)((msb << 4) & 0xF0) | lsb;
-	}
-
-	return idx;
-}
-
 size_t util_get_bignum_bits(struct libbignumber *bignum)
 {
 	size_t nb_bits = 0;
@@ -247,4 +246,156 @@ size_t util_get_bignum_bits(struct libbignumber *bignum)
 	}
 
 	return nb_bits;
+}
+
+CK_RV util_base64_encode(char **base64, struct libbytes *src)
+{
+	CK_RV ret = CKR_FUNCTION_FAILED;
+
+	size_t len_b64 = 0;
+	size_t rest = 0;
+	CK_BYTE_PTR in = NULL;
+	char *tmp_b64 = NULL;
+	char *p = NULL;
+	size_t index = 0;
+
+	if (!base64 || !src || !src->array || !src->number)
+		goto exit;
+
+	rest = src->number;
+	in = src->array;
+
+	len_b64 = get_b64_from_hex_len(src->number);
+	if (!len_b64) {
+		DBG_TRACE("Error Input buffer length is 0");
+		goto exit;
+	}
+
+	tmp_b64 = calloc(1, len_b64);
+	if (!tmp_b64) {
+		DBG_TRACE("Allocation error of the Base64 buffer");
+		ret = CKR_HOST_MEMORY;
+		goto exit;
+	}
+
+	p = tmp_b64;
+
+	while (rest >= 3) {
+		/* Convert 3 input bytes into 4 Base64 bytes */
+		index = (*in >> 2) & ENC_MAX_ARRAY_MASK;
+		*p++ = encoding_table[index];
+
+		index = (*in & 0x03) << 4;
+		index |= *(in + 1) >> 4;
+		index &= ENC_MAX_ARRAY_MASK;
+		*p++ = encoding_table[index];
+
+		index = (*(in + 1) & 0x0F) << 2;
+		index |= (*(in + 2) >> 6);
+		index &= ENC_MAX_ARRAY_MASK;
+		*p++ = encoding_table[index];
+
+		index = (*(in + 2) & 0x3F) & ENC_MAX_ARRAY_MASK;
+		*p++ = encoding_table[index];
+
+		rest -= 3;
+		in += 3;
+	}
+
+	/* Convert last bytes and add padding */
+	if (rest) {
+		*p++ = encoding_table[(*in >> 2) & ENC_MAX_ARRAY_MASK];
+		if (rest == 1) {
+			index = ((*in & 0x03) << 4) & ENC_MAX_ARRAY_MASK;
+			*p++ = encoding_table[index];
+
+			*p++ = PADDING_CHAR;
+		} else {
+			index = (*in & 0x03) << 4;
+			index |= *(in + 1) >> 4;
+			index &= ENC_MAX_ARRAY_MASK;
+			*p++ = encoding_table[index];
+
+			index = ((*(in + 1) & 0x0F) << 2) & ENC_MAX_ARRAY_MASK;
+			*p++ = encoding_table[index];
+		}
+		*p++ = PADDING_CHAR;
+	}
+
+	*base64 = tmp_b64;
+	ret = CKR_OK;
+
+exit:
+	return ret;
+}
+
+CK_RV util_base64_decode(struct libbytes *out, const char *base64)
+{
+	CK_RV ret = CKR_FUNCTION_FAILED;
+
+	size_t i = 0;
+	size_t len = 0;
+	CK_BYTE_PTR tmp_hex = NULL;
+	CK_BYTE_PTR p = NULL;
+	const char *end_b64 = NULL;
+	CK_BYTE decode[4] = { 0 };
+
+	if (!out || !base64)
+		goto exit;
+
+	len = get_hex_from_b64_len(base64, strlen(base64));
+	if (!len) {
+		DBG_TRACE("Error Base64 buffer length is invalid");
+		goto exit;
+	}
+
+	tmp_hex = malloc(len);
+	if (!tmp_hex) {
+		DBG_TRACE("Allocation error of the hexadecimal buffer");
+		ret = CKR_HOST_MEMORY;
+		goto exit;
+	}
+
+	p = tmp_hex;
+	end_b64 = base64 + strlen(base64);
+
+	while ((*base64 != PADDING_CHAR) && (base64 < end_b64)) {
+		/* Read 4 bytes to convert it in 3 */
+		for (i = 0; (i < 4) && (*base64 != PADDING_CHAR); i++) {
+			decode[i] = conv_b64_to_hex(*base64++);
+			if (decode[i] == BAD_CHAR) {
+				DBG_TRACE("Base64 buffer is bad");
+				ret = CKR_FUNCTION_FAILED;
+				goto exit;
+			}
+		}
+
+		*p = (decode[0] << 2) & UCHAR_MAX;
+		*p |= decode[1] >> 4;
+		p++;
+
+		if (i <= 2)
+			break;
+
+		*p = (decode[1] << 4) & UCHAR_MAX;
+		*p |= decode[2] >> 2;
+		p++;
+
+		if (i <= 3)
+			break;
+
+		*p = (decode[2] << 6) & UCHAR_MAX;
+		*p |= decode[3];
+		p++;
+	}
+
+	out->array = tmp_hex;
+	out->number = len;
+	ret = CKR_OK;
+
+exit:
+	if (ret != CKR_OK && tmp_hex)
+		free(tmp_hex);
+
+	return ret;
 }

@@ -1187,7 +1187,6 @@ CK_RV libobj_get_size(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 {
 	CK_RV ret = CKR_OK;
 	struct libobj_obj *libobj = (struct libobj_obj *)hobject;
-	struct smw_object_descriptor desc = { 0 };
 
 	DBG_TRACE("Get size(s) of object (%p) in session %lu", libobj,
 		  hsession);
@@ -1200,33 +1199,14 @@ CK_RV libobj_get_size(CK_SESSION_HANDLE hsession, CK_OBJECT_HANDLE hobject,
 
 	/*
 	 * Since we currently support only session CKO_CERTIFICATE objects and
-	 * they are not stored in the DB, retrieve the size from certificate object.
+	 * they are not stored in the DB, retrieve the size from certificate
+	 * object.
 	 */
-	if (libobj->class == CKO_CERTIFICATE) {
+	if (libobj->class == CKO_CERTIFICATE)
 		ret = cert_get_size(libobj, pulSize);
+	else
+		ret = obj_db_get_size(libobj, pulSize);
 
-		goto unlock;
-	}
-
-	ret = obj_db_get(libobj, &desc);
-	if (ret == CKR_OK) {
-		switch (desc.type) {
-		case SMW_OBJECT_TYPE_NAME_DATA:
-			*pulSize = desc.data.length;
-			break;
-
-		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
-		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
-		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
-			*pulSize = BITS_TO_BYTES_SIZE(desc.key.security_size);
-			break;
-
-		default:
-			break;
-		}
-	}
-
-unlock:
 	libmutex_unlock(libobj->lock);
 
 end:

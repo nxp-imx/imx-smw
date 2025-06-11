@@ -1599,6 +1599,7 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	struct smw_keymgr_descriptor *key_desc = NULL;
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	unsigned int new_id = INVALID_KEY_ID;
+	bool key_in_db = true;
 
 	SMW_DBG_TRACE_API_CALL;
 
@@ -1615,6 +1616,15 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	if (import_el2go_data(args, &status))
 		goto end;
 
+	/*
+	 * EdgeLock 2GO Provisioning OEM Secret Key must not be inserted in the
+	 * database. This key is not accessible from user.
+	 */
+	if (NXP_IS_EL2GO_KEY(args->key_descriptor->attributes.storage_id) &&
+	    args->key_descriptor->type_name ==
+		    SMW_KEY_TYPE_NAME_EL2GO_PROV_OEM_KEY)
+		key_in_db = false;
+
 	status = import_key_convert_args(args, &import_key_args, &subsystem_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
@@ -1629,12 +1639,17 @@ enum smw_status_code smw_import_key(struct smw_import_key_args *args)
 	 * Try to create the key in the database before
 	 * importing the key.
 	 */
-	status = smw_keymgr_db_create(&new_id, &key_desc->identifier);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	if (key_in_db) {
+		status = smw_keymgr_db_create(&new_id, &key_desc->identifier);
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
 
 	status = smw_utils_execute_operation(OPERATION_ID_IMPORT_KEY,
 					     &import_key_args, subsystem_id);
+	if (!key_in_db)
+		goto end;
+
 	if (status != SMW_STATUS_OK &&
 	    status != SMW_STATUS_KEY_POLICY_WARNING_IGNORED) {
 		/* Delete the key from the database */

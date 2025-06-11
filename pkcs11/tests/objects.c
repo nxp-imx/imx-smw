@@ -937,6 +937,12 @@ static int object_attribute_cipher_key(CK_FUNCTION_LIST_PTR pfunc)
 	status = TEST_PASS;
 
 end:
+	if (descriptor.label)
+		free(descriptor.label);
+
+	if (descriptor.user_id)
+		free(descriptor.user_id);
+
 	util_close_session(pfunc, &sess);
 
 	/* Free the attributes */
@@ -1682,7 +1688,8 @@ static int data_storage_destroy(CK_FUNCTION_LIST_PTR pfunc)
 	if (smw_status != SMW_STATUS_OK)
 		goto end;
 
-	if (!util_compare_buffers(label, strlen((char *)label),
+	if (!descriptor.label ||
+	    !util_compare_buffers(label, strlen((char *)label),
 				  (unsigned char *)descriptor.label,
 				  strlen(descriptor.label))) {
 		TEST_OUT("Retrieved Label is not correct\n");
@@ -1714,6 +1721,12 @@ static int data_storage_destroy(CK_FUNCTION_LIST_PTR pfunc)
 
 	status = TEST_PASS;
 end:
+	if (descriptor.label)
+		free(descriptor.label);
+
+	if (descriptor.user_id)
+		free(descriptor.user_id);
+
 	util_close_session(pfunc, &sess);
 
 	SUBTEST_END(status);
@@ -1763,6 +1776,133 @@ static int get_data_size(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_EXPECTED(sizeof(data) == size,
 			   "Got %lu but expected %lu size", size, sizeof(data)))
 		goto end;
+
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &sess);
+
+	SUBTEST_END(status);
+	return status;
+}
+
+static int generate_cipher_key_check_user_id(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+	psa_status_t psa_status = PSA_SUCCESS;
+	psa_key_attributes_t attributes = PSA_KEY_ATTRIBUTES_INIT;
+	psa_key_id_t psa_id = PSA_KEY_ID_NULL;
+	psa_key_type_t psa_key_type = PSA_KEY_TYPE_AES;
+	psa_algorithm_t aes_algo_type = PSA_ALG_CBC_NO_PADDING;
+
+	CK_RV ret = CKR_OK;
+	CK_SESSION_HANDLE sess = 0;
+	CK_MECHANISM genmech = { .mechanism = CKM_AES_KEY_GEN };
+	CK_OBJECT_HANDLE hgeneratedkey = CK_INVALID_HANDLE;
+	CK_OBJECT_HANDLE hkey[2] = { CK_INVALID_HANDLE };
+	CK_ULONG key_len = 16;
+	CK_BBOOL btrue = CK_TRUE;
+	CK_KEY_TYPE key_type = CKK_AES;
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_AES_ECB };
+
+	CK_ATTRIBUTE key_attrs[] = {
+		{ CKA_VALUE_LEN, &key_len, sizeof(key_len) },
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+		{ CKA_ENCRYPT, &btrue, sizeof(btrue) },
+		{ CKA_ALLOWED_MECHANISMS, &key_allowed_mech,
+		  sizeof(key_allowed_mech) },
+	};
+	CK_ULONG nb_keys_match = 0;
+	CK_ATTRIBUTE match_attrs[] = {
+		{ CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+		{ CKA_TOKEN, &btrue, sizeof(CK_BBOOL) },
+	};
+
+	CK_ATTRIBUTE getkeyAttr[] = {
+		{ CKA_ID, NULL_PTR, 0 },
+	};
+
+	unsigned int i = 0;
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
+		goto end;
+
+	TEST_OUT("Login to R/W Session as User\n");
+	ret = pfunc->C_Login(sess, CKU_USER, NULL_PTR, 0);
+	if (CHECK_CK_RV(CKR_OK, "C_Login"))
+		goto end;
+
+	/* Initialize PSA Crypto */
+	psa_status = psa_crypto_init();
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	TEST_OUT("Generate Key Secret key\n");
+	/* Set key attributes */
+	psa_set_key_lifetime(&attributes, PSA_KEY_LIFETIME_PERSISTENT);
+	psa_set_key_usage_flags(&attributes,
+				PSA_KEY_USAGE_ENCRYPT | PSA_KEY_USAGE_DECRYPT);
+	psa_set_key_type(&attributes, psa_key_type);
+	psa_set_key_bits(&attributes, BYTES_TO_BITS(key_len));
+	psa_set_key_algorithm(&attributes, aes_algo_type);
+
+	/* Generate the key */
+	psa_status = psa_generate_key(&attributes, &psa_id);
+	if (psa_status != PSA_SUCCESS)
+		goto end;
+
+	ret = pfunc->C_GenerateKey(sess, &genmech, key_attrs,
+				   ARRAY_SIZE(key_attrs), &hgeneratedkey);
+
+	if (CHECK_CK_RV(CKR_OK, "C_GenerateKey"))
+		goto end;
+
+	ret = pfunc->C_FindObjectsInit(sess, match_attrs,
+				       ARRAY_SIZE(match_attrs));
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsInit"))
+		goto end;
+
+	ret = pfunc->C_FindObjects(sess, hkey, ARRAY_SIZE(hkey),
+				   &nb_keys_match);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjects"))
+		goto end;
+
+	ret = pfunc->C_FindObjectsFinal(sess);
+	if (CHECK_CK_RV(CKR_OK, "C_FindObjectsFinal"))
+		goto end;
+
+	if (CHECK_EXPECTED(nb_keys_match == ARRAY_SIZE(hkey),
+			   "Got %lu but expected %zu objects", nb_keys_match,
+			   ARRAY_SIZE(hkey)))
+		goto end;
+
+	for (; i < nb_keys_match; i++) {
+		TEST_OUT("Get Key user id attributes\n");
+		ret = pfunc->C_GetAttributeValue(sess, hkey[i], getkeyAttr,
+						 ARRAY_SIZE(getkeyAttr));
+		if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
+			goto end;
+
+		if (hgeneratedkey == hkey[i]) {
+			if (CHECK_EXPECTED(getkeyAttr->ulValueLen == 0,
+					   "CKA_ID not defined as expected"))
+				goto end;
+
+		} else {
+			if (CHECK_EXPECTED(getkeyAttr->ulValueLen != 0,
+					   "CKA_ID attribute found"))
+				goto end;
+		}
+	}
+
+	for (i = 0; i < nb_keys_match; i++) {
+		TEST_OUT("Key Destroy #%lu\n", hkey[i]);
+		ret = pfunc->C_DestroyObject(sess, hkey[i]);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+	}
 
 	status = TEST_PASS;
 
@@ -1826,6 +1966,9 @@ void tests_pkcs11_objects(void *lib_hdl, CK_VOID_PTR pfunc)
 		goto end;
 
 	if (get_object_size_created_in_another_session(pfunc) == TEST_FAIL)
+		goto end;
+
+	if (generate_cipher_key_check_user_id(pfunc) == TEST_FAIL)
 		goto end;
 
 	/*

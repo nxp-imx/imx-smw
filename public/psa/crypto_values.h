@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #ifndef __PSA_CRYPTO_VALUES_H__
@@ -91,6 +91,13 @@
 #define PSA_ALG_TLS12_PRF_BASE		 ((psa_algorithm_t)0x08000200)
 #define PSA_ALG_TLS12_PSK_TO_MS_BASE	 ((psa_algorithm_t)0x08000300)
 
+/*
+ * Define NXP Vendor Algorithm.
+ */
+#define PSA_ALG_VENDOR_MASK ((psa_algorithm_t)0x80000000)
+#define PSA_ALG_VENDOR_CKDF_BASE                                               \
+	((psa_algorithm_t)PSA_ALG_VENDOR_MASK | 0x0800FF00)
+
 #define PSA_ALG_CATEGORY_MASK		       ((psa_algorithm_t)0x7f000000)
 #define PSA_ALG_CATEGORY_AEAD		       ((psa_algorithm_t)0x05000000)
 #define PSA_ALG_CATEGORY_ASYMMETRIC_ENCRYPTION ((psa_algorithm_t)0x07000000)
@@ -144,12 +151,11 @@
 	((PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, 0) ==                      \
 	  PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CCM, 0)) ?                   \
 		 PSA_ALG_CCM :                                                 \
-		 (PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, 0) ==              \
-		  PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_GCM, 0)) ?           \
+	 (PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, 0) ==                      \
+	  PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_GCM, 0)) ?                   \
 		 PSA_ALG_GCM :                                                 \
-		 (PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, 0) ==              \
-		  PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CHACHA20_POLY1305,   \
-						  0)) ?                        \
+	 (PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, 0) ==                      \
+	  PSA_ALG_AEAD_WITH_SHORTENED_TAG(PSA_ALG_CHACHA20_POLY1305, 0)) ?     \
 		 PSA_ALG_CHACHA20_POLY1305 :                                   \
 		 PSA_ALG_NONE)
 
@@ -160,7 +166,7 @@
  *
  * Return:
  * The tag length specified by the input algorithm.
- * 
+ *
  * 0 if @aead_alg is not a supported AEAD algorithm.
  */
 #define PSA_ALG_AEAD_TAG_LENGTH(aead_alg)                                      \
@@ -189,11 +195,11 @@
  * the specified AEAD algorithm.
  */
 #define PSA_ALG_AEAD_WITH_SHORTENED_TAG(aead_alg, tag_length)                  \
-	((psa_algorithm_t)(                                                    \
-		((aead_alg) & ~(PSA_ALG_AEAD_TAG_LENGTH_MASK |                 \
-				PSA_ALG_AEAD_AT_LEAST_THIS_LENGTH_FLAG)) |     \
-		((tag_length) << PSA_AEAD_TAG_LENGTH_OFFSET &                  \
-		 PSA_ALG_AEAD_TAG_LENGTH_MASK)))
+	((psa_algorithm_t)(((aead_alg) &                                       \
+			    ~(PSA_ALG_AEAD_TAG_LENGTH_MASK |                   \
+			      PSA_ALG_AEAD_AT_LEAST_THIS_LENGTH_FLAG)) |       \
+			   ((tag_length) << PSA_AEAD_TAG_LENGTH_OFFSET &       \
+			    PSA_ALG_AEAD_TAG_LENGTH_MASK)))
 
 /**
  * PSA_ALG_AEAD_WITH_AT_LEAST_THIS_LENGTH_TAG() - Macro to build an AEAD minimum-tag-length
@@ -452,7 +458,7 @@
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
 #define PSA_ALG_HKDF_EXTRACT(hash_alg)                                         \
-	(PSA_ALG_HKDF_EXTRACT_BASE | ((hash_alg)&PSA_ALG_HASH_MASK))
+	(PSA_ALG_HKDF_EXTRACT_BASE | ((hash_alg) & PSA_ALG_HASH_MASK))
 
 /**
  * PSA_ALG_HKDF_EXPAND() - Macro to build an HKDF-Expand algorithm.
@@ -490,7 +496,7 @@
  * Unspecified if @hash_alg is not a supported hash algorithm.
  */
 #define PSA_ALG_HKDF_EXPAND(hash_alg)                                          \
-	(PSA_ALG_HKDF_EXPAND_BASE | ((hash_alg)&PSA_ALG_HASH_MASK))
+	(PSA_ALG_HKDF_EXPAND_BASE | ((hash_alg) & PSA_ALG_HASH_MASK))
 
 /**
  * PSA_ALG_HMAC() - Macro to build an HMAC message-authentication-code algorithm from an underlying
@@ -1023,9 +1029,9 @@
 #define PSA_ALG_IS_WILDCARD(alg)                                               \
 	(PSA_ALG_IS_HASH_AND_SIGN(alg) ?                                       \
 		 PSA_ALG_GET_HASH(alg) == PSA_ALG_ANY_HASH :                   \
-		 PSA_ALG_IS_MAC(alg) ?                                         \
+	 PSA_ALG_IS_MAC(alg) ?                                                 \
 		 (alg & (PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG)) != 0 :        \
-		 PSA_ALG_IS_AEAD(alg) ?                                        \
+	 PSA_ALG_IS_AEAD(alg) ?                                                \
 		 (alg & (PSA_ALG_AEAD_AT_LEAST_THIS_LENGTH_FLAG)) != 0 :       \
 		 alg == PSA_ALG_ANY_HASH)
 
@@ -1263,7 +1269,7 @@
  * The derivation is constructed as described in [SP800-108] §4.1, with the iteration counter **i**
  * and output length **L** encoded as big-endian, 32-bit values. The resulting output stream
  * K1 || K2 || K3 || ... is computed as\:
- * 
+ *
  * Ki = HMAC(Kin, [i]4 || Label || 0x00 || Context || [L]4), for i=1,2,3...
  *
  * Where [x]n is the big-endian, n-byte encoding of the integer x.
@@ -1389,11 +1395,11 @@
  * for the specified MAC algorithm.
  */
 #define PSA_ALG_TRUNCATED_MAC(mac_alg, mac_length)                             \
-	((psa_algorithm_t)(                                                    \
-		((mac_alg) & ~(PSA_ALG_MAC_TRUNCATION_MASK |                   \
-			       PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG)) |       \
-		((mac_length) << PSA_MAC_TRUNCATION_OFFSET &                   \
-		 PSA_ALG_MAC_TRUNCATION_MASK)))
+	((psa_algorithm_t)(((mac_alg) &                                        \
+			    ~(PSA_ALG_MAC_TRUNCATION_MASK |                    \
+			      PSA_ALG_MAC_AT_LEAST_THIS_LENGTH_FLAG)) |        \
+			   ((mac_length) << PSA_MAC_TRUNCATION_OFFSET &        \
+			    PSA_ALG_MAC_TRUNCATION_MASK)))
 
 /**
  * PSA_BLOCK_CIPHER_BLOCK_LENGTH() - The block size of a block cipher.
@@ -1857,6 +1863,19 @@
  * See &typedef psa_key_persistence_t for more information.
  */
 #define PSA_KEY_PERSISTENCE_VOLATILE ((psa_key_persistence_t)0x00)
+
+/**
+ * DOC: PSA_KEY_TYPE_VENDOR
+ * Key type where vendor bit is set defines specific vendor implementation
+ * key type.
+ *
+ * Vendor key type list:
+ *
+ * * PSA_KEY_TYPE_DG_PROVISIONING_KEY: EdgeLock 2GO Provisioning OEM Key
+ *
+ */
+#define PSA_KEY_TYPE_VENDOR		 BIT(15)
+#define PSA_KEY_TYPE_DG_PROVISIONING_KEY (PSA_KEY_TYPE_VENDOR | 0x1F80)
 
 /**
  * DOC: PSA_KEY_TYPE_AES

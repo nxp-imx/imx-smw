@@ -33,7 +33,7 @@
  * +------------------------------------------------------------------+
  * | Bits                                                             |
  * +---------+-------------+-----------+---------+--------+-----------+
- * | [61:40] | [39:32]     | [31:24]   | [23:16] | [15:8] | [7:0]     |
+ * | [63:40] | [39:32]     | [31:24]   | [23:16] | [15:8] | [7:0]     |
  * +---------+-------------+-----------+---------+--------+-----------+
  * |         | Additional  | Operation | Hash    | Mode / | Main      |
  * +         +             +           +         +        +           +
@@ -293,6 +293,7 @@ typedef uint32_t smw_attr_storage_id_t;
  * - SMW_ATTR_ALGO_HKDF_EXPAND: HMAC-based Key Derivation Function Expand step.
  * - SMW_ATTR_ALGO_TLS_1_2: Transport Layer Security 1.2.
  * - SMW_ATTR_ALGO_TLS_1_3: Transport Layer Security 1.3.
+ * - SMW_ATTR_ALGO_CKDF: Custom Key Derivation Function.
  * - SMW_ATTR_ALGO_HASH: Hash.
  */
 #define SMW_ATTR_ALGO_NONE	   0x00
@@ -314,6 +315,7 @@ typedef uint32_t smw_attr_storage_id_t;
 #define SMW_ATTR_ALGO_HKDF_EXPAND  0x10
 #define SMW_ATTR_ALGO_TLS_1_2	   0x11
 #define SMW_ATTR_ALGO_TLS_1_3	   0x12
+#define SMW_ATTR_ALGO_CKDF	   0x80
 #define SMW_ATTR_ALGO_HASH	   0xFF
 
 /**

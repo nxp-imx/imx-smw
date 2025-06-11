@@ -450,6 +450,9 @@ static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 
 	psa_key_type = psa_get_key_type(attributes);
 
+	if (psa_key_type == PSA_KEY_TYPE_DG_PROVISIONING_KEY)
+		return SMW_KEY_TYPE_NAME_EL2GO_PROV_OEM_KEY;
+
 	if (psa_key_type == PSA_KEY_TYPE_RAW_DATA)
 		return SMW_KEY_TYPE_NAME_RAW;
 
@@ -595,6 +598,63 @@ static psa_algorithm_t get_psa_cipher_alg(smw_attr_algo_t mode)
 	}
 
 	return psa_alg;
+}
+
+#define KDF_ALGO(_smw, _psa, _hash)                                            \
+	{                                                                      \
+		.smw_algo = SMW_ATTR_ALGO_##_smw,                              \
+		.psa_algo = PSA_ALG_##_psa##_BASE, .with_hash = _hash          \
+	}
+static const struct {
+	smw_attr_algo_t smw_algo;
+	psa_algorithm_t psa_algo;
+	bool with_hash;
+} kdf_algo[] = {
+	KDF_ALGO(HKDF, HKDF, true),
+	KDF_ALGO(HKDF_EXTRACT, HKDF_EXTRACT, true),
+	KDF_ALGO(HKDF_EXPAND, HKDF_EXPAND, true),
+	KDF_ALGO(TLS_1_2, TLS12_PRF, true),
+	KDF_ALGO(CKDF, VENDOR_CKDF, false),
+};
+
+static smw_attr_algo_t get_smw_kdf_algo(psa_algorithm_t psa_algo)
+{
+	smw_attr_algo_t smw_algo = SMW_ATTR_ALGO_NONE;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(kdf_algo); i++) {
+		if (psa_algo != kdf_algo[i].psa_algo)
+			continue;
+
+		smw_algo = kdf_algo[i].smw_algo;
+		break;
+	}
+
+	return smw_algo;
+}
+
+static psa_algorithm_t get_psa_kdf_algo(smw_attr_algo_t smw_algo,
+					psa_algorithm_t psa_hash)
+{
+	psa_algorithm_t psa_algo = 0;
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(kdf_algo); i++) {
+		if (smw_algo != kdf_algo[i].smw_algo)
+			continue;
+
+		psa_algo = kdf_algo[i].psa_algo;
+		if (kdf_algo[i].with_hash)
+			SET_BITS(psa_algo, psa_hash);
+
+		break;
+	}
+
+	return smw_algo;
 }
 
 static psa_key_usage_t get_psa_usage_flags(smw_attr_usage_t smw_usage_flags)
@@ -769,12 +829,12 @@ static psa_status_t get_psa_alg(psa_algorithm_t *psa_alg,
 		break;
 
 	case SMW_ATTR_CLASS_KEY_DERIVATION:
+		*psa_alg = get_psa_kdf_algo(algo, psa_hash);
+		break;
+
+	case SMW_ATTR_CLASS_KEY_AGREEMENT:
 		if (algo == SMW_ATTR_ALGO_ECDH)
 			*psa_alg = PSA_ALG_ECDH;
-		else if (algo == SMW_ATTR_ALGO_HKDF)
-			*psa_alg = PSA_ALG_HKDF(psa_hash);
-		else if (algo == SMW_ATTR_ALGO_TLS_1_2)
-			*psa_alg = PSA_ALG_TLS12_PRF(psa_hash);
 
 		break;
 
@@ -909,6 +969,16 @@ static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg,
 			curve = SMW_ATTR_CURVE_ED25519;
 			hash = SMW_ATTR_HASH_NONE;
 		}
+
+		break;
+
+	case PSA_ALG_CATEGORY_KEY_DERIVATION:
+		class = SMW_ATTR_CLASS_KEY_DERIVATION;
+		hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
+
+		psa_alg_base = psa_alg;
+		CLEAR_BITS(psa_alg_base, PSA_ALG_HASH_MASK);
+		algo = get_smw_kdf_algo(psa_alg_base);
 
 		break;
 

@@ -92,6 +92,10 @@ the key descriptor.
 * Breaking compatibility for the smw_delete_key() API by clearing version
   to 0.
 * [PATCH] Fix sign/verify with pre-hashed RSA PKCS.
+* [PATCH] Define a default object user_id (PKCS#11 key CKA_ID or data
+  CKA_OBJECT_ID) value if not set.
+* [PATCH] Free all object descriptors buffer allocated when getting database
+  information.
 
 ##### 2. Subsystems
 
@@ -122,6 +126,8 @@ the key descriptor.
   set all usages to allow finding keys per usages and algorithm even if not
   accurate.
 * Apply Base64 to hex conversion consistently for key buffers across all subsystems.
+* SECO: [PATCH] Free all object descriptors buffer allocated when getting
+  database information.
 
 ##### 3. ARM PSA APIs
 
@@ -165,6 +171,8 @@ the key descriptor.
 * Add SMW tests validating get_key_attrinbutes() query when key not present
   in database.
 * [PATCH] Add tests for sign/verify with pre-hashed RSA PKCS.
+* [PATCH] Free all object descriptors buffer allocated when getting database
+  information.
 
 #### PKCS#11 Library
 
@@ -191,6 +199,9 @@ the key descriptor.
 * Add RSA SHA512 Sign/Verify test with a plaintext key.
 * Test using a session object from another session.
 * Fix hostname for i.MX943 and i.MX95.
+* [PATCH] Check CKA_ID default value if none is given by the user.
+* [PATCH] Free all object descriptors buffer allocated when getting database
+  information.
 
 ---
 ### <a id ="rel_4_2"></a></br>**Release 4.2**
@@ -291,7 +302,7 @@ Sign and Verify algorithm in ELE configuration file.
 * Add tests for `CKM_ECDH1_DERIVE` mechanism.
 * Update EC key test to validate all supported NIST curves.
 * Add tests for `CKO_CERTIFICATE` object.
-* Add tests finding keys generated without using PKCS11 generate operation.
+* Add tests finding keys generated without using PKCS#11 generate operation.
 * Add tests for `CKK_GENERIC_SECRET` key type.
 
 ---

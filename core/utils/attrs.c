@@ -174,12 +174,58 @@ int smw_utils_sign_attr_to_ids(smw_attr_algo_t attr,
 	return status;
 }
 
+int smw_utils_key_attr_to_sign_ids(smw_attr_algo_t attr,
+				   enum smw_config_sign_algo_id *algo_id,
+				   enum smw_config_sign_type_id *type_id,
+				   bool *is_curve)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	unsigned int i = 0;
+	unsigned int size = ARRAY_SIZE(sign_list);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	*algo_id = SMW_CONFIG_SIGN_ALGO_ID_INVALID;
+	*type_id = SMW_CONFIG_SIGN_TYPE_ID_INVALID;
+
+	for (; i < size; i++) {
+		if (sign_list[i].class != SMW_ATTR_GET_CLASS(attr))
+			continue;
+
+		if (sign_list[i].algo != SMW_ATTR_GET_ALGO(attr))
+			continue;
+
+		*algo_id = sign_list[i].algo_id;
+
+		if (sign_list[i].is_curve) {
+			if (sign_list[i].curve != SMW_ATTR_CURVE_ANY &&
+			    sign_list[i].curve != SMW_ATTR_GET_CURVE(attr))
+				continue;
+		} else if (sign_list[i].mode != SMW_ATTR_GET_MODE(attr)) {
+			continue;
+		}
+
+		*type_id = sign_list[i].type_id;
+		*is_curve = sign_list[i].is_curve;
+
+		SMW_DBG_PRINTF(DEBUG,
+			       "Attr 0x%" PRIx64 " algo_id=%d type_id=%d\n",
+			       attr, *algo_id, *type_id);
+
+		status = SMW_STATUS_OK;
+		break;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 #define ASYMM_ENC_RSA_ALGO(_mode_id)                                           \
 	{                                                                      \
 		.algo = SMW_ATTR_ALGO_RSA, .mode = SMW_ATTR_MODE_##_mode_id,   \
 		.algo_id = SMW_CONFIG_ASYMM_ENC_ALGO_ID_RSA,                   \
 		.mode_id = SMW_CONFIG_ASYMM_ENC_MODE_ID_##_mode_id,            \
-		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_RSA,                     \
 	}
 
 static const struct {
@@ -187,14 +233,12 @@ static const struct {
 	smw_attr_algo_t mode;
 	enum smw_config_asymm_enc_algo_id algo_id;
 	enum smw_config_asymm_enc_mode_id mode_id;
-	enum smw_config_key_type_id key_type_id;
 } asymm_enc_list[] = { ASYMM_ENC_RSA_ALGO(OAEP), ASYMM_ENC_RSA_ALGO(PKCS1_1_5),
 		       ASYMM_ENC_RSA_ALGO(NO_PAD) };
 
 int smw_utils_asymm_enc_attr_to_ids(smw_attr_algo_t attr,
 				    enum smw_config_asymm_enc_algo_id *algo_id,
-				    enum smw_config_asymm_enc_mode_id *mode_id,
-				    enum smw_config_key_type_id *key_type_id)
+				    enum smw_config_asymm_enc_mode_id *mode_id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
@@ -214,9 +258,6 @@ int smw_utils_asymm_enc_attr_to_ids(smw_attr_algo_t attr,
 	*algo_id = SMW_CONFIG_ASYMM_ENC_ALGO_ID_INVALID;
 	*mode_id = SMW_CONFIG_ASYMM_ENC_MODE_ID_INVALID;
 
-	if (key_type_id)
-		*key_type_id = SMW_CONFIG_KEY_TYPE_ID_INVALID;
-
 	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	for (; i < size; i++) {
@@ -224,9 +265,6 @@ int smw_utils_asymm_enc_attr_to_ids(smw_attr_algo_t attr,
 			continue;
 
 		*algo_id = asymm_enc_list[i].algo_id;
-
-		if (key_type_id)
-			*key_type_id = asymm_enc_list[i].key_type_id;
 
 		if (asymm_enc_list[i].mode != mode)
 			continue;

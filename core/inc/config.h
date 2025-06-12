@@ -270,7 +270,6 @@ int smw_config_get_asymm_encrypt_mode_id(smw_asymmetric_encryption_mode_t name,
  * @attr: Algorithm attribute.
  * @algo_id: Pointer where the algorithm ID is written.
  * @mode_id: Pointer where the encryption mode ID is written.
- * @key_type_id: Pointer where the key type ID is written.
  *
  * Return:
  * SMW_STATUS_OK                       - Success
@@ -278,8 +277,24 @@ int smw_config_get_asymm_encrypt_mode_id(smw_asymmetric_encryption_mode_t name,
  */
 int smw_utils_asymm_enc_attr_to_ids(smw_attr_algo_t attr,
 				    enum smw_config_asymm_enc_algo_id *algo_id,
-				    enum smw_config_asymm_enc_mode_id *mode_id,
-				    enum smw_config_key_type_id *key_type_id);
+				    enum smw_config_asymm_enc_mode_id *mode_id);
+
+/**
+ * smw_utils_key_attr_to_sign_ids() - Get the Signature algo and type IDs from
+ *                                    the key permitted algorithm attribute.
+ * @attr: Algorithm attribute.
+ * @algo_id: Pointer where the algorithm ID is written.
+ * @type_id: Pointer where the signature type ID is written.
+ * @is_curve: Pointer to store if the algo is a curve-based algorithm
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Not supported
+ */
+int smw_utils_key_attr_to_sign_ids(smw_attr_algo_t attr,
+				   enum smw_config_sign_algo_id *algo_id,
+				   enum smw_config_sign_type_id *type_id,
+				   bool *is_curve);
 
 /**
  * smw_config_get_psa_config() - Get the PSA configuration.

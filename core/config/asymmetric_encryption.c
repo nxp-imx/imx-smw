@@ -287,7 +287,6 @@ static int check_asymm_enc_dec(smw_subsystem_t subsystem,
 
 static int check_common_key_usable(enum operation_id operation_id,
 				   unsigned int *ref,
-				   enum smw_config_key_type_id key_type_id,
 				   smw_attr_algo_t permitted_algo)
 {
 	int status = SMW_STATUS_OK;
@@ -299,8 +298,6 @@ static int check_common_key_usable(enum operation_id operation_id,
 		SMW_CONFIG_ASYMM_ENC_ALGO_ID_INVALID;
 	enum smw_config_asymm_enc_mode_id mode_id =
 		SMW_CONFIG_ASYMM_ENC_MODE_ID_INVALID;
-	enum smw_config_key_type_id smw_key_type_id =
-		SMW_CONFIG_KEY_TYPE_ID_INVALID;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -312,7 +309,7 @@ static int check_common_key_usable(enum operation_id operation_id,
 	algo = SMW_ATTR_GET_ALGO(permitted_algo);
 
 	status = smw_utils_asymm_enc_attr_to_ids(permitted_algo, &algo_id,
-						 &mode_id, &key_type_id);
+						 &mode_id);
 	if (status != SMW_STATUS_OK &&
 	    status != SMW_STATUS_OPERATION_NOT_SUPPORTED)
 		goto end;
@@ -320,8 +317,7 @@ static int check_common_key_usable(enum operation_id operation_id,
 	if ((algo == SMW_ATTR_ALGO_NONE ||
 	     check_id(algo_id, params.algo_bitmap)) &&
 	    ((mode == SMW_ATTR_MODE_NONE || mode == SMW_ATTR_MODE_ANY) ||
-	     check_id(mode_id, params.mode_bitmap)) &&
-	    key_type_id == smw_key_type_id)
+	     check_id(mode_id, params.mode_bitmap)))
 		status = SMW_STATUS_OK;
 	else
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -335,24 +331,23 @@ DEFINE_CONFIG_OPERATION_FUNC(asymm_encrypt);
 DEFINE_CONFIG_OPERATION_FUNC(asymm_decrypt);
 
 int asymm_encrypt_key_usable(unsigned int *ref,
-			     enum smw_config_key_type_id key_type_id,
 			     struct smw_key_attributes *attributes)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	smw_attr_usage_t usages = attributes->usage_flags;
 
 	if (SMW_ATTR_USAGE_IS_ENCRYPT(usages)) {
-		status = check_common_key_usable(OPERATION_ID_ASYMM_ENCRYPT,
-						 ref, key_type_id,
-						 attributes->permitted_algo);
+		status =
+			check_common_key_usable(OPERATION_ID_ASYMM_ENCRYPT, ref,
+						attributes->permitted_algo);
 		if (status != SMW_STATUS_OK)
 			goto end;
 	}
 
 	if (SMW_ATTR_USAGE_IS_DECRYPT(usages))
-		status = check_common_key_usable(OPERATION_ID_ASYMM_DECRYPT,
-						 ref, key_type_id,
-						 attributes->permitted_algo);
+		status =
+			check_common_key_usable(OPERATION_ID_ASYMM_DECRYPT, ref,
+						attributes->permitted_algo);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

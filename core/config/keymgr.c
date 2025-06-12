@@ -385,11 +385,9 @@ __weak int cipher_key_usable(unsigned int *ref,
 }
 
 __weak int sign_key_usable(unsigned int *ref,
-			   enum smw_config_key_type_id key_type_id,
 			   struct smw_key_attributes *attributes)
 {
 	(void)ref;
-	(void)key_type_id;
 	(void)attributes;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -418,11 +416,9 @@ __weak int mac_key_usable(unsigned int *ref,
 }
 
 __weak int asymm_encrypt_key_usable(unsigned int *ref,
-				    enum smw_config_key_type_id key_type_id,
 				    struct smw_key_attributes *attributes)
 {
 	(void)ref;
-	(void)key_type_id;
 	(void)attributes;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
@@ -464,6 +460,16 @@ static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 	 * only ELE supports keys for the CHACHA20_POLY1305 mode. So, during key
 	 * generation, search for the configured operations for the first match
 	 * for both the key type and algorithm.
+	 *
+	 * Currently, we do not read the supported key types for signing and
+	 * asymmetric encryption security operations from the configuration file.
+	 * Therefore, during key generation or import, key type validation is not
+	 * required when the key is intended for signing or asymmetric encryption
+	 * purposes.
+	 * For signing operation, check if the subsystem supports the signature
+	 * algorithm and signature type.
+	 * Similarly, for asymmetric operation, check if the subsystem supports
+	 * asymmetric encryption algorithm and encryption mode.
 	 */
 
 	switch (class) {
@@ -473,8 +479,7 @@ static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 		break;
 
 	case SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE:
-		status = sign_key_usable(&ref, key_desc->identifier.type_id,
-					 attributes);
+		status = sign_key_usable(&ref, attributes);
 		break;
 
 	case SMW_ATTR_CLASS_AEAD:
@@ -493,9 +498,7 @@ static int check_key_attributes(struct smw_keymgr_descriptor *key_desc,
 		break;
 
 	case SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION:
-		status = asymm_encrypt_key_usable(&ref,
-						  key_desc->identifier.type_id,
-						  attributes);
+		status = asymm_encrypt_key_usable(&ref, attributes);
 		break;
 
 	default:

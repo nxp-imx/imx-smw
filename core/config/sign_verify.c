@@ -45,15 +45,6 @@ static const char *const sign_algo_strings[] = {
 	[SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2] = TLS_1_2_STR,
 };
 
-static unsigned int sign_algo_attrs[] = {
-	[SMW_CONFIG_SIGN_ALGO_ID_ECDSA] = SMW_ATTR_ALGO_ECDSA,
-	[SMW_CONFIG_SIGN_ALGO_ID_EDDSA] = SMW_ATTR_ALGO_EDDSA,
-	[SMW_CONFIG_SIGN_ALGO_ID_DSA] = SMW_ATTR_ALGO_DSA,
-	[SMW_CONFIG_SIGN_ALGO_ID_RSA] = SMW_ATTR_ALGO_RSA,
-	[SMW_CONFIG_SIGN_ALGO_ID_TLS_1_2] = SMW_ATTR_ALGO_TLS_1_2,
-	[SMW_CONFIG_CIPHER_MODE_ID_NB] = 0,
-};
-
 static const char *const sign_type_strings[] = {
 	[SMW_CONFIG_SIGN_TYPE_ID_DEFAULT] = DEFAULT_STR,
 	[SMW_CONFIG_SIGN_TYPE_ID_PKCS1_1_5] = PKCS1_1_5_STR,
@@ -305,14 +296,16 @@ static int check_sign_verify_common(smw_subsystem_t subsystem,
 
 static int check_common_key_usable(enum operation_id operation_id,
 				   unsigned int *ref,
-				   enum smw_config_key_type_id key_type_id,
 				   smw_attr_algo_t permitted_algo)
 {
 	int status = SMW_STATUS_OK;
+
 	struct sign_verify_params params = { 0 };
-	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
-	smw_attr_algo_t curve = SMW_ATTR_CURVE_NONE;
-	size_t idx = 0;
+	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
+	enum smw_config_sign_algo_id algo_id = SMW_CONFIG_SIGN_ALGO_ID_INVALID;
+	enum smw_config_sign_type_id sign_type_id =
+		SMW_CONFIG_SIGN_TYPE_ID_INVALID;
+	bool is_curve = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -320,26 +313,30 @@ static int check_common_key_usable(enum operation_id operation_id,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	curve = SMW_ATTR_GET_CURVE(permitted_algo);
-	if (curve == SMW_ATTR_CURVE_NONE || curve == SMW_ATTR_CURVE_ANY) {
-		status = SMW_STATUS_OK;
+	status = smw_utils_key_attr_to_sign_ids(permitted_algo, &algo_id,
+						&sign_type_id, &is_curve);
+	if (status != SMW_STATUS_OK)
 		goto end;
-	}
 
-	algo = SMW_ATTR_GET_ALGO(permitted_algo);
 	status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
-	if (!check_id(key_type_id, params.type_bitmap))
+	if (SMW_ATTR_GET_ALGO(permitted_algo) != SMW_ATTR_ALGO_NONE &&
+	    !check_id(algo_id, params.algo_bitmap))
 		goto end;
 
-	for (; idx < ARRAY_SIZE(sign_algo_attrs); idx++) {
-		if ((algo == SMW_ATTR_ALGO_NONE ||
-		     algo == sign_algo_attrs[idx]) &&
-		    check_id(idx, params.algo_bitmap)) {
-			status = SMW_STATUS_OK;
-			break;
-		}
+	/*
+	 * For curve based signing algos (ECDSA and EDDSA), sign type can't be set
+	 * during the key creation. Therefore, it is not required to check whether
+	 * sign type is supported.
+	 */
+	if (!is_curve) {
+		mode = SMW_ATTR_GET_MODE(permitted_algo);
+		if (mode != SMW_ATTR_MODE_NONE && mode != SMW_ATTR_MODE_ANY &&
+		    !check_id(sign_type_id, params.type_bitmap))
+			goto end;
 	}
+
+	status = SMW_STATUS_OK;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -349,8 +346,7 @@ end:
 DEFINE_CONFIG_OPERATION_FUNC(sign);
 DEFINE_CONFIG_OPERATION_FUNC(verify);
 
-int sign_key_usable(unsigned int *ref, enum smw_config_key_type_id key_type_id,
-		    struct smw_key_attributes *attributes)
+int sign_key_usable(unsigned int *ref, struct smw_key_attributes *attributes)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 	bool check_sign = false;
@@ -381,7 +377,6 @@ int sign_key_usable(unsigned int *ref, enum smw_config_key_type_id key_type_id,
 
 	if (check_sign) {
 		status = check_common_key_usable(OPERATION_ID_SIGN, ref,
-						 key_type_id,
 						 attributes->permitted_algo);
 
 		if (usages && status == SMW_STATUS_OPERATION_NOT_SUPPORTED)
@@ -390,7 +385,6 @@ int sign_key_usable(unsigned int *ref, enum smw_config_key_type_id key_type_id,
 
 	if (check_verify)
 		status = check_common_key_usable(OPERATION_ID_VERIFY, ref,
-						 key_type_id,
 						 attributes->permitted_algo);
 
 end:

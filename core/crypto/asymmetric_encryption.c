@@ -31,7 +31,7 @@ asymm_encrypt_convert_attributes(smw_attr_algo_t in,
 		goto end;
 
 	status = smw_utils_asymm_enc_attr_to_ids(in, &out->algo_id,
-						 &out->mode_id, NULL);
+						 &out->mode_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 

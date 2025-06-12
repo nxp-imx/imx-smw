@@ -50,6 +50,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### SMW Library
 ##### 1. SMW APIs
 
+* Currently, we do not read the supported key types for signing and asymmetric
+  encryption  security operations from the configuration file. Therefore, remove
+  key type validation during key generation or import, when the key is intended
+  for signing or asymmetric encryption purposes.
+* Enable reading of EDDSA signature types (`PURE_EDDSA`, `EDDSA_PH` and `EDDSA_CTX`) from config file.
 
 ##### 2. Subsystems
 
@@ -59,6 +64,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 4. OSAL
 
+* Define the supported sign type values in the config files.
 
 #### SMW Tests
 

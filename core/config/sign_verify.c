@@ -52,6 +52,9 @@ static const char *const sign_type_strings[] = {
 	[SMW_CONFIG_SIGN_TYPE_ID_CLIENT] = CLIENT_STR,
 	[SMW_CONFIG_SIGN_TYPE_ID_SERVER] = SERVER_STR,
 	[SMW_CONFIG_SIGN_TYPE_ID_CMAC] = CMAC_STR,
+	[SMW_CONFIG_SIGN_TYPE_ID_PURE_EDDSA] = PURE_EDDSA_STR,
+	[SMW_CONFIG_SIGN_TYPE_ID_EDDSA_PH] = EDDSA_PH_STR,
+	[SMW_CONFIG_SIGN_TYPE_ID_EDDSA_CTX] = EDDSA_CTX_STR,
 };
 
 static int read_signature_algo_strings(char **start, char *end,

@@ -21,11 +21,14 @@
 #define TLS_1_2_STR "TLS_1_2"
 
 /* Signature type strings */
-#define PKCS1_1_5_STR "PKCS1_1_5"
-#define PSS_STR	      "PSS"
-#define CLIENT_STR    "CLIENT"
-#define SERVER_STR    "SERVER"
-#define CMAC_STR      "CMAC"
+#define PKCS1_1_5_STR  "PKCS1_1_5"
+#define PSS_STR	       "PSS"
+#define CLIENT_STR     "CLIENT"
+#define SERVER_STR     "SERVER"
+#define CMAC_STR       "CMAC"
+#define PURE_EDDSA_STR "PURE_EDDSA"
+#define EDDSA_PH_STR   "EDDSA_PH"
+#define EDDSA_CTX_STR  "EDDSA_CTX"
 
 /**
  * struct smw_sign_verify_attributes - Sign Verify attributes.

@@ -18,7 +18,7 @@ Each component handles its own version number specified in each component main C
 
 The releases are listed from the most recent to the first one.
 
-1. [Release 5.0](#rel_5_0)
+1. [Release 5.0.1](#rel_5_0)
 2. [Release 4.2](#rel_4_2)
 3. [Release 4.1](#rel_4_1)
 4. [Release 4.0](#rel_4_0)
@@ -32,7 +32,7 @@ The releases are listed from the most recent to the first one.
 12. [Release 1.0](#rel_1_0)
 
 ---
-### <a id ="rel_5_0"></a></br>**Release 5.0**
+### <a id ="rel_5_0"></a></br>**Release 5.0.1**
 ---
 #### Known Issues
 ##### 1. SECO Subsystem
@@ -46,7 +46,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   find operation is not able to find all keys whose template defines key usage
   and permitted algorithm.
 
-#### SMW Library - _version 5.0_
+#### SMW Library
 ##### 1. SMW APIs
 
 * Device manager returns the correct status code if the arguments version is
@@ -138,7 +138,7 @@ the key descriptor.
 * Update database SQL search request to use bits mask for key's permitted
   algorithm and usages.
 
-#### SMW Tests - _version 5.0_
+#### SMW Tests
 
 * Disable the tests that validate algorithms and key types that are currently
   unsupported on the i.MX943 platform.
@@ -164,7 +164,7 @@ the key descriptor.
 * Add SMW tests validating get_key_attrinbutes() query when key not present
   in database.
 
-#### PKCS#11 Library - _version 5.0_
+#### PKCS#11 Library
 
 * Add support for ed25519 key generation and signature
 * Add TLS 1.3 Key exchange support
@@ -172,8 +172,9 @@ the key descriptor.
 * Add CKF_LOGIN_REQUIRED flag to token flags.
 * Sign/Verify: Add support of plaintext key buffer for session key objects.
 * Allow using a session object in all application sessions.
+* [PATCH] Fix memory leak in case of RSA private key import.
 
-#### PKCS#11 Tests - _version 5.0_
+#### PKCS#11 Tests
 
 * Add DES key generation performance test.
 * Add test to validate ed25519 key generation and signature

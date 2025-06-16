@@ -18,18 +18,56 @@ Each component handles its own version number specified in each component main C
 
 The releases are listed from the most recent to the first one.
 
-1. [Release 5.0.1](#rel_5_0)
-2. [Release 4.2](#rel_4_2)
-3. [Release 4.1](#rel_4_1)
-4. [Release 4.0](#rel_4_0)
-5. [Release 3.0](#rel_3_0)
-6. [Release 2.5](#rel_2_5)
-7. [Release 2.4](#rel_2_4)
-8. [Release 2.3](#rel_2_3)
-9. [Release 2.2](#rel_2_2)
-10. [Release 2.1](#rel_2_1)
-11. [Release 2.0](#rel_2_0)
-12. [Release 1.0](#rel_1_0)
+1. [Release 5.1](#rel_5_1)
+2. [Release 5.0.1](#rel_5_0)
+3. [Release 4.2](#rel_4_2)
+4. [Release 4.1](#rel_4_1)
+5. [Release 4.0](#rel_4_0)
+6. [Release 3.0](#rel_3_0)
+7. [Release 2.5](#rel_2_5)
+8. [Release 2.4](#rel_2_4)
+9. [Release 2.3](#rel_2_3)
+10. [Release 2.2](#rel_2_2)
+11. [Release 2.1](#rel_2_1)
+12. [Release 2.0](#rel_2_0)
+13. [Release 1.0](#rel_1_0)
+
+---
+### <a id ="rel_5_1"></a></br>**Release 5.1**
+---
+#### Known Issues
+##### 1. SECO Subsystem
+
+* When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
+The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+##### 2. PKCS#11
+
+* As some subsystems are not handling key usage and permitted algorithm, the
+  find operation is not able to find all keys whose template defines key usage
+  and permitted algorithm.
+
+#### SMW Library
+##### 1. SMW APIs
+
+
+##### 2. Subsystems
+
+
+##### 3. ARM PSA APIs
+
+
+##### 4. OSAL
+
+
+#### SMW Tests
+
+* Enable ELE RSA tests on the i.MX95 B0 platform.
+
+#### PKCS#11 Library
+
+
+#### PKCS#11 Tests
 
 ---
 ### <a id ="rel_5_0"></a></br>**Release 5.0.1**

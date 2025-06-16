@@ -248,10 +248,7 @@
 		],
 		"sign_id": 0,
 		"key_name": "key 1",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 2": {
 		"description": [
@@ -290,10 +287,7 @@
 		],
 		"sign_id": 1,
 		"key_name": "key 1",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 4": {
 		"description": [
@@ -358,10 +352,7 @@
 		],
 		"sign_id": 2,
 		"key_name": "key 2",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 6": {
 		"description": [
@@ -400,10 +391,7 @@
 		],
 		"sign_id": 3,
 		"key_name": "key 2",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 8": {
 		"description": [
@@ -481,10 +469,7 @@
 		],
 		"sign_id": 4,
 		"key_name": "key 3",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 10": {
 		"description": [
@@ -534,10 +519,7 @@
 		],
 		"sign_id": 5,
 		"key_name": "key 3",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 12": {
 		"description": [
@@ -602,10 +584,7 @@
 		],
 		"sign_id": 6,
 		"key_name": "key 4",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95"
-		]
+		"restriction_list": "imx8ulp"
 	},
 	"subtest 14": {
 		"description": "Unsupported RSA public exponent",

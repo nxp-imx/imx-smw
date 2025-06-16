@@ -316,11 +316,6 @@ CK_RV key_rsa_private_create(CK_SESSION_HANDLE hsession, struct libobj_obj *obj,
 	if (ret != CKR_OK)
 		goto end;
 
-	ret = attr_get_value(new_key, &attr_key_rsa_private[PRIV_MODULUS],
-			     attrs, NO_OVERWRITE);
-	if (ret != CKR_OK)
-		goto end;
-
 	/*
 	 * Private key public exponent can be omitted, in this case
 	 * the token must use the default value 65537. otherwise it

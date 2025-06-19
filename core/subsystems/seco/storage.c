@@ -124,8 +124,7 @@ static int data_storage(struct hdl *hdl,
 		status = seco_convert_err(err);
 
 end:
-	if (obj.label)
-		free(obj.label);
+	smw_object_db_clean_descriptor(&obj);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;

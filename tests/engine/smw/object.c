@@ -279,13 +279,34 @@ static int object_find_no_test_error(struct subtest_data *subtest)
 		subtest->smw_status = smw_find_object_db(&args);
 		if (subtest->smw_status == SMW_STATUS_OK)
 			found++;
+
+		if (object_descriptor.label)
+			free(object_descriptor.label);
+
+		if (object_descriptor.user_id)
+			free(object_descriptor.user_id);
 	} else {
 		subtest->smw_status = smw_find_object_db_init(&args);
 		if (subtest->smw_status == SMW_STATUS_OK) {
 			while (smw_find_object_db_next(&args) ==
 			       SMW_STATUS_OK) {
 				found++;
+				if (object_descriptor.label) {
+					free(object_descriptor.label);
+					object_descriptor.label = NULL;
+				}
+
+				if (object_descriptor.user_id) {
+					free(object_descriptor.user_id);
+					object_descriptor.user_id = NULL;
+				}
 			}
+
+			if (object_descriptor.label)
+				free(object_descriptor.label);
+
+			if (object_descriptor.user_id)
+				free(object_descriptor.user_id);
 
 			subtest->smw_status = smw_find_object_db_final(&args);
 		}

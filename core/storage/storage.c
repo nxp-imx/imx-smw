@@ -302,8 +302,7 @@ static int find_data(struct smw_storage_data_descriptor *in_desc,
 	}
 
 end:
-	if (data_info.label)
-		free(data_info.label);
+	smw_object_db_clean_descriptor(&data_info);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -336,8 +335,7 @@ static int get_new_data_id(struct smw_storage_data_descriptor *desc)
 		if (id != data_id) {
 			status = smw_object_db_get_info(data_id, &data_info);
 
-			if (data_info.label)
-				free(data_info.label);
+			smw_object_db_clean_descriptor(&data_info);
 
 			if (status == SMW_STATUS_OK)
 				continue;

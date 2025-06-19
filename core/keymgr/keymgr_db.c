@@ -6,7 +6,6 @@
 #include "smw_status.h"
 #include "smw/object.h"
 
-#include "utils.h"
 #include "keymgr.h"
 #include "object_db.h"
 
@@ -131,8 +130,7 @@ int smw_keymgr_db_get_info(unsigned int id,
 		}
 	}
 
-	if (obj.label)
-		free(obj.label);
+	smw_object_db_clean_descriptor(&obj);
 
 	return ret;
 }

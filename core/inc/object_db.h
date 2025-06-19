@@ -82,4 +82,13 @@ int smw_object_db_delete(unsigned int id, struct smw_object_descriptor *obj);
  */
 int smw_object_db_get_info(unsigned int id, struct smw_object_descriptor *obj);
 
+/**
+ * smw_object_db_clean_descriptor() - Clean the object descriptor
+ * @obj: Object descriptor
+ *
+ * Return:
+ * None.
+ */
+void smw_object_db_clean_descriptor(struct smw_object_descriptor *obj);
+
 #endif /* __OBJECT_DB_H__ */

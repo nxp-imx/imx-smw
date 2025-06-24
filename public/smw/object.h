@@ -22,7 +22,7 @@
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
  * @persistency: Object persistency attributes. See &typedef smw_attr_attributes_t.
  * @label: Object description
- * @user_id: User defined ID
+ * @user_id: User defined ID in base64 null terminated string.
  * @group: Key group (may not be used by all subsystems)
  * @key: Key descriptor. See &struct smw_key_descriptor
  * @data: Data descriptor. See &struct smw_data_descriptor

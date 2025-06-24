@@ -47,14 +47,11 @@ sign_verify_convert_attributes(smw_attr_algo_t in,
 
 		break;
 
-	case SMW_CONFIG_SIGN_ALGO_ID_EDDSA:
-	case SMW_CONFIG_SIGN_ALGO_ID_ECDSA:
-		out->msg_hashed = SMW_ATTR_IS_MSG_HASHED(in);
-		break;
-
 	default:
 		break;
 	}
+
+	out->msg_hashed = SMW_ATTR_IS_MSG_HASHED(in);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

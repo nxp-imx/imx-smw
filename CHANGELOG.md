@@ -91,6 +91,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 the key descriptor.
 * Breaking compatibility for the smw_delete_key() API by clearing version
   to 0.
+* [PATCH] Fix sign/verify with pre-hashed RSA PKCS.
 
 ##### 2. Subsystems
 
@@ -163,6 +164,7 @@ the key descriptor.
 * Add PSA tests validating data deletion through key deletion and the opposite.
 * Add SMW tests validating get_key_attrinbutes() query when key not present
   in database.
+* [PATCH] Add tests for sign/verify with pre-hashed RSA PKCS.
 
 #### PKCS#11 Library
 
@@ -173,6 +175,7 @@ the key descriptor.
 * Sign/Verify: Add support of plaintext key buffer for session key objects.
 * Allow using a session object in all application sessions.
 * [PATCH] Fix memory leak in case of RSA private key import.
+* [PATCH] Fix sign/verify with RSA PKCS mechanisms.
 
 #### PKCS#11 Tests
 

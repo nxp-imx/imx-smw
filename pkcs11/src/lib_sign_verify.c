@@ -57,6 +57,35 @@ static CK_BBOOL is_rsa_pss_mechanism(CK_MECHANISM_TYPE type)
 }
 
 /**
+ * is_rsa_pkcs_mechanism() - Check if mechanism type is RSA PKCS
+ * @type: Mechanism type
+ *
+ * Return:
+ * True if RSA PKCS mechanism
+ * False otherwise
+ */
+static CK_BBOOL is_rsa_pkcs_mechanism(CK_MECHANISM_TYPE type)
+{
+	switch (type) {
+	case CKM_MD2_RSA_PKCS:
+	case CKM_MD5_RSA_PKCS:
+	case CKM_SHA1_RSA_PKCS:
+	case CKM_SHA224_RSA_PKCS:
+	case CKM_SHA256_RSA_PKCS:
+	case CKM_SHA384_RSA_PKCS:
+	case CKM_SHA512_RSA_PKCS:
+	case CKM_SHA3_224_RSA_PKCS:
+	case CKM_SHA3_256_RSA_PKCS:
+	case CKM_SHA3_384_RSA_PKCS:
+	case CKM_SHA3_512_RSA_PKCS:
+		return CK_TRUE;
+
+	default:
+		return CK_FALSE;
+	}
+}
+
+/**
  * get_hash_mech_from_rsa_pss_mech() - Get hash mechanism from RSA PSS mechanism
  * @sign_mech: RSA PSS signature mechanism
  *
@@ -231,6 +260,37 @@ static CK_BBOOL is_general_length_mac_mechanism(CK_MECHANISM_TYPE mechanism)
 }
 
 /**
+ * is_mac_mechanism() - Check if mechanism type is CMAC/HMAC
+ * @mechanism: Mechanism type
+ *
+ * Return:
+ * True if CMAC/HMAC mechanism
+ * False otherwise
+ */
+static CK_BBOOL is_mac_mechanism(CK_MECHANISM_TYPE mechanism)
+{
+	switch (mechanism) {
+	case CKM_AES_CMAC:
+	case CKM_DES3_CMAC:
+	case CKM_MD2_HMAC:
+	case CKM_MD5_HMAC:
+	case CKM_SHA_1_HMAC:
+	case CKM_SHA224_HMAC:
+	case CKM_SHA256_HMAC:
+	case CKM_SHA384_HMAC:
+	case CKM_SHA512_HMAC:
+	case CKM_SHA3_256_HMAC:
+	case CKM_SHA3_224_HMAC:
+	case CKM_SHA3_384_HMAC:
+	case CKM_SHA3_512_HMAC:
+		return CK_TRUE;
+
+	default:
+		return CK_FALSE;
+	}
+}
+
+/**
  * check_mac() - Check MAC mechanism parameters
  * @pparameter: Pointer to mechanism parameter
  * @ulparameterlen: Mechanism parameter length
@@ -278,6 +338,34 @@ static CK_BBOOL is_eddsa_mechanism(CK_MECHANISM_TYPE type)
 {
 	switch (type) {
 	case CKM_EDDSA:
+		return CK_TRUE;
+
+	default:
+		return CK_FALSE;
+	}
+}
+
+/**
+ * is_ecdsa_mechanism() - Check if mechanism type is ECDSA
+ * @type: Mechanism type
+ *
+ * Return:
+ * True if ECDSA mechanism
+ * False otherwise
+ */
+static CK_BBOOL is_ecdsa_mechanism(CK_MECHANISM_TYPE type)
+{
+	switch (type) {
+	case CKM_ECDSA:
+	case CKM_ECDSA_SHA1:
+	case CKM_ECDSA_SHA224:
+	case CKM_ECDSA_SHA256:
+	case CKM_ECDSA_SHA384:
+	case CKM_ECDSA_SHA512:
+	case CKM_ECDSA_SHA3_224:
+	case CKM_ECDSA_SHA3_256:
+	case CKM_ECDSA_SHA3_384:
+	case CKM_ECDSA_SHA3_512:
 		return CK_TRUE;
 
 	default:
@@ -386,14 +474,19 @@ static CK_RV check_signature_params(CK_MECHANISM_TYPE mechanism,
 	if (is_rsa_pss_mechanism(mechanism)) {
 		ctx->type = SIGN_TYPE_RSA;
 		ret = check_rsa_pss(mechanism, pparameter, ulparameterlen, ctx);
+	} else if (is_rsa_pkcs_mechanism(mechanism)) {
+		ctx->type = SIGN_TYPE_RSA;
+		ret = CKR_OK;
 	} else if (is_general_length_mac_mechanism(mechanism)) {
 		ctx->type = SIGN_TYPE_MAC;
 		ret = check_mac(pparameter, ulparameterlen, ctx);
+	} else if (is_mac_mechanism(mechanism)) {
+		ctx->type = SIGN_TYPE_MAC;
+		ret = CKR_OK;
 	} else if (is_eddsa_mechanism(mechanism)) {
 		ctx->type = SIGN_TYPE_EDDSA;
 		ret = check_eddsa(pparameter, ulparameterlen, ctx);
-	} else {
-		/* By default signature is ECDSA */
+	} else if (is_ecdsa_mechanism(mechanism)) {
 		ctx->type = SIGN_TYPE_ECDSA;
 		ret = CKR_OK;
 	}

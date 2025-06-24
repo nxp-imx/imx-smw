@@ -1913,8 +1913,6 @@ static CK_RV sign(struct lib_signature_params *params,
 			if (status != SMW_STATUS_OK)
 				goto end;
 
-			sign_algo = SMW_ATTR_SET_HASH(sign_algo,
-						      SMW_ATTR_HASH_NONE);
 			sign_algo = SMW_ATTR_SET_MSG_HASHED(sign_algo);
 
 			smw_sign_verify_args.message =

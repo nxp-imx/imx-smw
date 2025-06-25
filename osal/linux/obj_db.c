@@ -153,7 +153,8 @@ get_obj_persistency(struct smw_object_descriptor *desc)
 }
 
 static struct obj_db *get_database_obj(smw_attr_attributes_t persistency,
-				       unsigned int obj_id)
+				       unsigned int obj_id,
+				       bool log __maybe_unused)
 {
 	struct osal_ctx *ctx = get_osal_ctx();
 	struct obj_db *db = NULL;
@@ -178,7 +179,7 @@ static struct obj_db *get_database_obj(smw_attr_attributes_t persistency,
 			db = ctx->obj_db_persistent;
 	}
 
-	DBG_PRINTF_COND(ERROR, !db, "Object database not valid\n");
+	DBG_PRINTF_COND(ERROR, !db && log, "Object database not valid\n");
 
 end:
 	return db;
@@ -1103,7 +1104,8 @@ static int obj_db_exec(struct smw_object_descriptor *descriptor, char *sql,
 	if (!descriptor || !sql)
 		goto exit;
 
-	db = get_database_obj(get_obj_persistency(descriptor), descriptor->id);
+	db = get_database_obj(get_obj_persistency(descriptor), descriptor->id,
+			      true);
 	if (!db)
 		goto exit;
 
@@ -1325,7 +1327,7 @@ int obj_db_open(const char *filename)
 	/*
 	 * Step 1. Create/Open persistent database
 	 */
-	db = get_database_obj(SMW_ATTR_PERSISTENCE_PERSISTENT, 0);
+	db = get_database_obj(SMW_ATTR_PERSISTENCE_PERSISTENT, 0, false);
 	db = create_db(db);
 	if (!db)
 		goto end;
@@ -1353,7 +1355,7 @@ int obj_db_open(const char *filename)
 	/*
 	 * Step 1. Create/Open transient database
 	 */
-	db = get_database_obj(SMW_ATTR_PERSISTENCE_TRANSIENT, 0);
+	db = get_database_obj(SMW_ATTR_PERSISTENCE_TRANSIENT, 0, false);
 	db = create_db(db);
 	if (!db)
 		goto end;
@@ -1390,7 +1392,7 @@ void obj_db_close(void)
 	/*
 	 * Step 1. Close persistent database if exist
 	 */
-	db = get_database_obj(SMW_ATTR_PERSISTENCE_PERSISTENT, 0);
+	db = get_database_obj(SMW_ATTR_PERSISTENCE_PERSISTENT, 0, false);
 	if (db) {
 		close_db_file(db);
 		ctx->obj_db_persistent = NULL;
@@ -1399,7 +1401,7 @@ void obj_db_close(void)
 	/*
 	 * Step 2. Create/Open transient database
 	 */
-	db = get_database_obj(SMW_ATTR_PERSISTENCE_TRANSIENT, 0);
+	db = get_database_obj(SMW_ATTR_PERSISTENCE_TRANSIENT, 0, false);
 	if (db) {
 		close_db_file(db);
 		ctx->obj_db_transient = NULL;
@@ -1534,7 +1536,8 @@ int obj_db_find_init(void **find_ctx, struct smw_object_descriptor *descriptor)
 	if (!ctx || !descriptor)
 		return ret;
 
-	db = get_database_obj(get_obj_persistency(descriptor), descriptor->id);
+	db = get_database_obj(get_obj_persistency(descriptor), descriptor->id,
+			      true);
 	if (!db)
 		return ret;
 

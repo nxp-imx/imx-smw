@@ -649,6 +649,13 @@ static CK_RV tls_update_buffers(struct lib_cipher_params *params,
 		/* Support only one contiguous output buffer */
 		if (ctx->output + ctx->output_length != params->poutput)
 			goto end;
+
+		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT)) {
+			if (ADD_OVERFLOW(ctx->output_length,
+					 params->output_length,
+					 &ctx->output_length))
+				goto end;
+		}
 	}
 
 	ret = CKR_OK;
@@ -915,10 +922,6 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 	params.output_length = *poutput_length;
 	params.state = state;
 
-	ret = tls_update_buffers(&params, ctx);
-	if (ret != CKR_OK)
-		goto end;
-
 	/* Update mechanism parameter */
 	if (pparameter) {
 		ret = check_cipher_params(mechanism.mechanism, pparameter,
@@ -946,6 +949,10 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 			goto end;
 		}
 
+	ret = tls_update_buffers(&params, ctx);
+	if (ret != CKR_OK)
+		goto end;
+
 	/* Run operation */
 	ret = libdev_operate_mechanism(hsession, &mechanism, &params);
 	if (ret != CKR_BUFFER_TOO_SMALL && ret != CKR_OK)
@@ -953,11 +960,11 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 
 	/* Update output data buffer length */
 	obj = (struct libobj_obj *)ctx->hkey;
-	if (!get_key_is_tls(obj) || ret == CKR_BUFFER_TOO_SMALL) {
+	if ((get_key_tls(obj) == NOT_TLS_KEY) | !poutput)
 		*poutput_length = params.output_length;
-		if (!poutput)
-			ret = CKR_OK;
-	}
+
+	if (ret == CKR_BUFFER_TOO_SMALL && !poutput)
+		ret = CKR_OK;
 
 	if (ret == CKR_OK) {
 		ctx->current_state = state;

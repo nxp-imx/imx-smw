@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2024 NXP
+ * Copyright 2020-2025 NXP
  */
 
 #include <util.h>
@@ -276,6 +276,11 @@ TEE_Result hash_final(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 				&params[2].memref.size);
 	if (res != TEE_SUCCESS)
 		EMSG("Failed to compute digest: 0x%x", res);
+
+	if (res == TEE_SUCCESS) {
+		TEE_FreeOperation(context->handle);
+		context->handle = NULL;
+	}
 
 	return res;
 }

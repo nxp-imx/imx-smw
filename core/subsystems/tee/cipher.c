@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2024 NXP
+ * Copyright 2021-2025 NXP
  */
 
 #include <tee_client_api.h>
@@ -200,6 +200,9 @@ static int cipher_init(struct smw_op_context *op_context,
 	op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_INPUT,
 					 param2_type, TEEC_MEMREF_TEMP_INOUT);
 
+	context.one_shot =
+		(args->op_step == SMW_OP_STEP_ONESHOT) ? true : false;
+
 	op.params[3].tmpref.buffer = &context;
 	op.params[3].tmpref.size = sizeof(context);
 
@@ -257,6 +260,8 @@ static int cipher_multi_part_common(struct smw_op_context *op_context,
 		goto end;
 
 	context.handle = cipher_ctx->tee_handle;
+	context.one_shot =
+		(args->op_step == SMW_OP_STEP_ONESHOT) ? true : false;
 
 	/*
 	 * params[0] = Operation handle

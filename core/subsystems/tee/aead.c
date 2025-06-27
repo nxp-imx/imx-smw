@@ -181,7 +181,7 @@ static int aead_init(struct smw_op_context *op_context,
 	op.params[0].tmpref.buffer = iv;
 	if (user_iv) {
 		if (user_iv_len && user_iv_len <= TEE_MAX_IV_LEN)
-			memcpy(iv, user_iv, user_iv_len);
+			SMW_UTILS_MEMCPY(iv, user_iv, user_iv_len);
 
 		op.params[0].tmpref.size = user_iv_len;
 	}
@@ -257,6 +257,10 @@ static int aead_init(struct smw_op_context *op_context,
 
 	op.params[2].tmpref.buffer = &shared_params;
 	op.params[2].tmpref.size = sizeof(shared_params);
+
+	context.one_shot =
+		(args->op_step == SMW_OP_STEP_ONESHOT) ? true : false;
+
 	op.params[3].tmpref.buffer = &context;
 	op.params[3].tmpref.size = sizeof(context);
 
@@ -442,6 +446,8 @@ static int aead_multi_part_common(struct smw_op_context *op_context,
 	}
 
 	context.handle = aead_ctx->tee_handle;
+	context.one_shot =
+		(args->op_step == SMW_OP_STEP_ONESHOT) ? true : false;
 
 	/*
 	 * Parameters for TEE_AEUpdate

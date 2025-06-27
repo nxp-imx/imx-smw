@@ -232,9 +232,11 @@ struct aead_shared_params {
 /**
  * struct shared_context - Context operation handle
  * @handle: Pointer to operation handle
+ * @one_shot: True if the operation is one-shot, else false
  */
 struct shared_context {
 	void *handle;
+	bool one_shot;
 };
 
 /**

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <types_ext.h>
@@ -218,7 +218,6 @@ TEE_Result aead_encrypt_final(uint32_t param_types,
 			      TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_OperationHandle op_handle = TEE_HANDLE_NULL;
 	struct shared_context *context = NULL;
 
 	FMSG("Executing %s", __func__);
@@ -238,15 +237,17 @@ TEE_Result aead_encrypt_final(uint32_t param_types,
 		return res;
 
 	context = params[0].memref.buffer;
-	op_handle = context->handle;
 
-	res = TEE_AEEncryptFinal(op_handle, params[1].memref.buffer,
+	res = TEE_AEEncryptFinal(context->handle, params[1].memref.buffer,
 				 params[1].memref.size, params[2].memref.buffer,
 				 &params[2].memref.size,
 				 params[3].memref.buffer,
 				 &params[3].memref.size);
-	if (res == TEE_SUCCESS)
-		TEE_FreeOperation(op_handle);
+
+	if (res == TEE_SUCCESS || context->one_shot) {
+		TEE_FreeOperation(context->handle);
+		context->handle = NULL;
+	}
 
 	FMSG("Return status of %s = 0x%x", __func__, res);
 
@@ -284,7 +285,8 @@ TEE_Result aead_decrypt_final(uint32_t param_types,
 				 &params[2].memref.size,
 				 params[3].memref.buffer,
 				 params[3].memref.size);
-	if (res == TEE_SUCCESS || res == TEE_ERROR_MAC_INVALID)
+	if (res == TEE_SUCCESS || res == TEE_ERROR_MAC_INVALID ||
+	    context->one_shot)
 		TEE_FreeOperation(op_handle);
 
 	FMSG("Return status of %s = 0x%x", __func__, res);

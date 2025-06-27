@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021-2023 NXP
+ * Copyright 2021-2023, 2025 NXP
  */
 
 #include <util.h>
@@ -175,7 +175,6 @@ TEE_Result cipher_update(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 TEE_Result cipher_final(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
-	TEE_OperationHandle op_handle = TEE_HANDLE_NULL;
 	uint32_t exp_param_types = 0;
 	struct shared_context *context = NULL;
 
@@ -195,14 +194,15 @@ TEE_Result cipher_final(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		return res;
 
 	context = params[0].memref.buffer;
-	op_handle = context->handle;
 
-	res = TEE_CipherDoFinal(op_handle, params[1].memref.buffer,
+	res = TEE_CipherDoFinal(context->handle, params[1].memref.buffer,
 				params[1].memref.size, params[2].memref.buffer,
 				&params[2].memref.size);
 
-	if (res == TEE_SUCCESS)
-		TEE_FreeOperation(op_handle);
+	if (res == TEE_SUCCESS || context->one_shot) {
+		TEE_FreeOperation(context->handle);
+		context->handle = NULL;
+	}
 
 	return res;
 }

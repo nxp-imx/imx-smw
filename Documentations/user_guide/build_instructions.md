@@ -27,7 +27,8 @@
   - [4.4. Enabling test suites](#44-enabling-test-suites)
 - [5. SMW/PKCS#11 Libraries installation](#5-smwpkcs11-libraries-installation)
   - [5.1. Install command](#51-install-command)
-  - [5.2. Install result](#52-install-result)
+  - [5.2. Install result (full install)](#52-install-result-full-install)
+  - [5.3. Install result (minimal install)](#53-install-result-minimal-install)
 - [6. Tests](#6-tests)
   - [6.1. Compilation](#61-compilation)
   - [6.2. Installation](#62-installation)
@@ -235,7 +236,7 @@ the `TEEC_ROOT` directory.
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DTEEC_ROOT=[export path] -DTEEC_SRC_PATH=[source path] -P ./scripts/build_teec.cmake
 ```
 
-> :memo: **Note:**
+> 📝 **Note:**
 > The option `BUILD_DIR` can be setup to define the OPTEE Client build directory
 prefix. The default `BUILD_DIR` value is `./ext_build`. The intermediate objects
 are built in the `[BUILD_DIR]/optee_client` (by default `./ext_build/optee_client`).
@@ -257,7 +258,7 @@ the `TA_DEV_KIT_ROOT` directory.
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DTA_dEV_KIT_ROOT=[export path] -DOPTEE_OS_SRC_PATH=[source path] -DPLATFORM=[platform] -P ./scripts/build_tadevkit.cmake
 ```
 
-> :memo: **Notes:**
+> 📝 **Notes:**
 > - The option `PLATFORM` must be one of the NXP OPTEE OS supported platforms
 (refer to the script `scripts/nxp_build.sh` present in NXP OPTEE OS sources). The
 `PLATFORM` name is used to create the OPTEE OS build directory `build.[PLATFORM]`.
@@ -310,7 +311,7 @@ is described in [Toolchains](#2-toolchains).
 $ cmake -DCMAKE_TOOLCHAIN_FILE=./scripts/aarch[XX]_toolchain.cmake -DJSONC_ROOT=[export path] -DJSONC_SRC_PATH=[source path] -P ./scripts/build_jsonc.cmake
 ```
 
-> :memo: **Note:**
+> 📝 **Note:**
 > The option `JSONC_VERSION` can be defined to build a specific JSON-C library.
 If not define, the version 0.15 is built.
 
@@ -713,7 +714,7 @@ The following command shows how to install this project in a specific destinatio
 	[build]$ make DESTDIR=[path/to/install] install
 	```
 
-> :memo: **Note**:
+> 📝 **Note**:
 > _DESTDIR_ is the path to the installation directory in which _`usr`_ folder
 is created or already present. Hence, project library `libsmw.so` is installed
 in _`[DESTDIR]/[CMAKE_INSTALL_PREFIX]/lib`_ (i.e. _`[DESTDIR]/usr/lib`_ by
@@ -727,11 +728,18 @@ super-user privilege.
 [build]$ sudo make DESTDIR=[path/to/install] install
 ```
 
-## 5.2. Install result
+## 5.2. Install result (full install)
 
-> :memo: **Note 1**: The <i>x</i> and <i>y</i> are respectively for the project major and minor version.
+The full install is performed when following install command detailed 
+previously. This installation allows to build application on device.
 
-> :memo: **Note 2**: The `usr/lib/cmake` folder is not present if the project
+In case of NXP Yocto build, the installation is minimal as shown in 
+the [install result (minimal install)](#53-install-result-minimal-install).
+
+> 📝 **Note 1**: The <i>x</i> and <i>y</i> are respectively for the 
+  project major and minor version.
+
+> 📝 **Note 2**: The `usr/lib/cmake` folder is not present if the project
 option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-environment-options)).
 
 <pre>
@@ -798,6 +806,35 @@ option `DISABLE_CMAKE_CONFIG=ON` (see [Build environment options](#41-build-envi
 
 </pre>
 
+## 5.3. Install result (minimal install)
+
+The minimal install is installing only files and libraries to run application
+compiled on a host (e.g. Yocto).
+
+
+> 📝 **Note 1**: The <i>x</i> and <i>y</i> are respectively for the project major and minor version.
+
+<pre>
+`-- <span style="color:orange">etc</span>
+    `-- <span style="color:orange">opt</span>
+        `-- <span style="color:orange">smw</span>
+            |-- smw.conf
+            `-- smw_system_conf.sh
+`-- <span style="color:orange">usr</span>
+    `-- <span style="color:orange">lib</span>
+    |   `-- libsmw.so.<i>x</i> -> libsmw.so.<i>x.y</i>
+    |   |-- libsmw.so.<i>x.y</i>
+    |   |-- libsmw_pkcs11.so.<i>x</i> -> libsmw_pkcs11.so.<i>x.y</i>
+    |   |-- libsmw_pkcs11.so.<i>x.y</i>
+    |   `-- <span style="color:orange">optee_armtz</span>
+    |       `-- 11b5c4aa-6d20-11ea-bc55-0242ac130003.ta
+    `-- <span style="color:orange">share</span>
+        `-- <span style="color:orange">smw</span>
+            `-- <span style="color:orange">config</span>      SMW Library configuration files
+                |-- ...
+
+</pre>
+
 # 6. Tests
 SMW library provides a test suite for SMW and PKCS#11 APIs.
 
@@ -842,7 +879,7 @@ super-user privilege.
 [build]$ sudo make DESTDIR=[path/to/install] install_tests
 ```
 
-> :memo: **Note**:
+> 📝 **Note**:
 > Like the [SMW/PKCS#11 Libraries installation](#5-smwpkcs11-libraries-installation),
 > files are installed in _`[DESTDIR]/[CMAKE_INSTALL_PREFIX]`_ destination folder
 > (i.e. _`[DESTDIR]/usr`_ by default).
@@ -1058,5 +1095,5 @@ the cmake <a href="https://cmake.org/cmake/help/latest/command/find_package.html
 The cmake `-DNXP_SMW_DIR` variable must be set to the path where is present the
 `NXP_SMWConfig.cmake` file. Usually, it's in the SMW installation path `/usr/lib/cmake/`.
 
-> :memo: **Note:** The `DISABLE_CMAKE_CONFIG` must not be set to `ON` in order to
+> 📝 **Note:** The `DISABLE_CMAKE_CONFIG` must not be set to `ON` in order to
 > generate the cmake package files (see [Build environment options](#41-build-environment-options)).

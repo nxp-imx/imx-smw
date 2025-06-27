@@ -8,7 +8,8 @@
 	- [4.2. Linux OS](#42-linux-os)
 		- [4.2.1. Use of system configuration file](#421-use-of-system-configuration-file)
 		- [4.2.2. Use of OSAL APIs and system environment](#422-use-of-osal-apis-and-system-environment)
-- [5. Files Organization](#5-files-organization)
+- [5. PKCS11](#5-pkcs11)
+- [6. Files Organization](#6-files-organization)
 
 
 # 1. Introduction
@@ -82,7 +83,7 @@ and supported by the SMW Library.
 	<td>❌</td>
 	<td>✔️</td>
 	<td>✔️</td>
-	<td>️❌</td>
+	<td>️❌<sup><a href="#t_note_5">5</a></sup></td>
 	<td>✔️</td>
 </tr>
 <tr>
@@ -361,6 +362,10 @@ and supported by the SMW Library.
 <a name="t_note_3"><sup>3</sup></a> Do nothing, returns always success.<br>
 <a name="t_note_4"><sup>4</sup></a> Retrieve only information from SMW object
                                     database.<br>
+<a name="t_note_5"><sup>5</sup></a> EdgeLock 2GO assets can't be provisioned 
+                                    using PKCS#11 APIs. But it's possible to 
+									use/access provisioned assets with the 
+									PKCS#11 APIs (see <a href="#5-pkcs11">5. PKCS11</a>).<br>
 </p>
 
 Following <a href="#table-certificate">Certificates table</a> lists the certificate types supported by SMW, PKCS#11 and PSA libraries.
@@ -472,7 +477,7 @@ The Security Middleware proposes a Linux OSAL reference module allowing to
 use a system configuration file (smw.conf) and exposing OSAL APIs plus
 system environment to configure the database and the subsystem(s) at runtime.
 
-> :memo: **Note:**
+> 📝 **Note:**
 > The linux OSAL reference module tries to read the system configuration file
 > (smw.conf) during when the function `smw_osal_lib_init(void)` is called.
 > The OSAL APIs exposes for the same or system environment variable are
@@ -579,7 +584,15 @@ additional information is printed in the specified debug file.
 $ export SMW_LOG_LEVEL=[0-5]
 ```
 
-# 5. Files Organization
+# 5. PKCS11
+
+The [PKCS11-Tool User Guide](./pkcs11/pkcs11_tool_user_guide.md) details and
+gives some command lines description to start manipulating keys with 
+`pkcs11-tool`.
+This user guide provides also more information on the PKCS11 APIs and mechanisms
+supported.
+
+# 6. Files Organization
 Below is the organization of the project sources.
 
 <pre>

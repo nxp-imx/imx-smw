@@ -52,6 +52,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. Subsystems
 
+* TEE: Fix memory leak in case of one-short AEAD, one-shot cipher and multi-part hash operations.
 
 ##### 3. ARM PSA APIs
 
@@ -81,7 +82,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
-##### 2. PKCS#11
+##### 2. TEE Subsystem
+
+* In case of one-shot AEAD, one-shot cipher or multi-part hash, the operation handle is not freed once the operation is finished.
+If the user repeat these kinds of operations several times, the TEE subsystem will run out of memory.
+
+##### 3. PKCS#11
 
 * As some subsystems are not handling key usage and permitted algorithm, the
   find operation is not able to find all keys whose template defines key usage

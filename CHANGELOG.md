@@ -49,6 +49,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Enable reading of EDDSA signature types (`PURE_EDDSA`, `EDDSA_PH` and `EDDSA_CTX`) from config file.
 * Rename internal object `id` to `s_id` and `id` to `u_id` to
   clearly identify the id value meaning.
+* Add support for the EL2GO OEM Secret Shared key. Key must not be in the database.
 
 ##### 2. Subsystems
 
@@ -57,6 +58,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 ##### 3. ARM PSA APIs
 
 * Fix key generation using ELE subsystem with permitted algorithm set to an asymmetric encryption algorithm.
+* Add support of the `PSA_KEY_TYPE_DG_PROVISIONING_KEY` Vendor algorithm used
+  to provision the EL2GO OEM Secret Shared key (EL2GO Production flow).
 
 ##### 4. OSAL
 

@@ -851,6 +851,7 @@ static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg,
 
 	case PSA_ALG_CATEGORY_ASYMMETRIC_ENCRYPTION:
 		class = SMW_ATTR_CLASS_ASYMMETRIC_ENCRYPTION;
+		algo = SMW_ATTR_ALGO_RSA;
 		if (PSA_ALG_IS_RSA_OAEP(psa_alg)) {
 			hash = get_smw_hash(PSA_ALG_GET_HASH(psa_alg));
 			mode = SMW_ATTR_MODE_OAEP;

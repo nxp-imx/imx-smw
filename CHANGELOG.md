@@ -56,6 +56,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 3. ARM PSA APIs
 
+* Fix key generation using ELE subsystem with permitted algorithm set to an asymmetric encryption algorithm.
 
 ##### 4. OSAL
 
@@ -92,6 +93,10 @@ If the user repeat these kinds of operations several times, the TEE subsystem wi
 * As some subsystems are not handling key usage and permitted algorithm, the
   find operation is not able to find all keys whose template defines key usage
   and permitted algorithm.
+
+##### 3. ARM PSA APIs
+
+* RSA key cannot be generated using ELE subsystem if permitted algorithm is an asymmetric encryption algorithm.
 
 #### SMW Library
 ##### 1. SMW APIs

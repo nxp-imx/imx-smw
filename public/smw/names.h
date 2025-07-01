@@ -143,6 +143,7 @@ typedef enum {
  * * SMW_KEY_TYPE_NAME_HKDF_IKM: HKDF IKM key
  * * SMW_KEY_TYPE_NAME_X25519: X25519 key
  * * SMW_KEY_TYPE_NAME_EL2GO_PROV_OEM_KEY: EdgeLock 2GO Provisioning OEM Key
+ * * SMW_KEY_TYPE_NAME_ED448: Twisted Edwards 448 key
  * * SMW_KEY_TYPE_NAME_NB: Number of key types
  */
 typedef enum {
@@ -165,6 +166,7 @@ typedef enum {
 	SMW_KEY_TYPE_NAME_HKDF_IKM,
 	SMW_KEY_TYPE_NAME_X25519,
 	SMW_KEY_TYPE_NAME_EL2GO_PROV_OEM_KEY,
+	SMW_KEY_TYPE_NAME_ED448,
 	SMW_KEY_TYPE_NAME_NB
 } smw_key_type_t;
 

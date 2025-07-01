@@ -133,6 +133,7 @@ static const struct hash_algo_info {
 		       HASH_ALGO(SHA3_384, SHA3_384, 48, 128),
 		       HASH_ALGO(SHA3_512, SHA3_512, 64, 128),
 		       HASH_ALGO(SM3, SM3, 32, 64),
+		       HASH_ALGO(SHAKE256_512, SHAKE256, 64, 136),
 		       { .psa_alg_id = PSA_ALG_NONE,
 			 .smw_alg_name = SMW_HASH_ALGO_NAME_NONE,
 			 .smw_alg_id = SMW_ATTR_HASH_ANY,

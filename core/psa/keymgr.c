@@ -60,7 +60,8 @@ struct ecc_key_type {
 static const struct ecc_key_type ecc_key_type[] = {
 	ECC_KEY_TYPE(SECP_R1, SECP_R1),
 	ECC_KEY_TYPE(BRAINPOOL_R1, BRAINPOOL_P_R1),
-	ECC_KEY_TYPE(ED25519, TWISTED_EDWARDS)
+	ECC_KEY_TYPE(ED25519, TWISTED_EDWARDS),
+	ECC_KEY_TYPE(ED448, TWISTED_EDWARDS)
 };
 
 #define KEY_USAGE(_name)                                                       \
@@ -168,7 +169,8 @@ static bool is_ecc_key_type(smw_key_type_t type_name)
 	if (type_name == SMW_KEY_TYPE_NAME_SECP_R1 ||
 	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_R1 ||
 	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1 ||
-	    type_name == SMW_KEY_TYPE_NAME_ED25519)
+	    type_name == SMW_KEY_TYPE_NAME_ED25519 ||
+	    type_name == SMW_KEY_TYPE_NAME_ED448)
 		return true;
 
 	return false;
@@ -317,11 +319,21 @@ static void set_ecc_key_buffer(psa_key_type_t key_type, const uint8_t *data,
 		set_gen_private_key_buffer(data, data_length, keypair_gen);
 }
 
-static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family)
+static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family,
+					   unsigned int security_size)
 {
 	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (ecc_family == PSA_ECC_FAMILY_TWISTED_EDWARDS) {
+		if (security_size == 255)
+			return SMW_KEY_TYPE_NAME_ED25519;
+		else if (security_size == 448)
+			return SMW_KEY_TYPE_NAME_ED448;
+		else
+			return SMW_KEY_TYPE_NAME_NONE;
+	}
 
 	for (; i < ARRAY_SIZE(ecc_key_type); i++) {
 		if (ecc_key_type[i].ecc_family == ecc_family)
@@ -477,7 +489,7 @@ static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 	if (PSA_KEY_TYPE_IS_ECC(psa_key_type)) {
 		ecc_family = PSA_KEY_TYPE_ECC_GET_FAMILY(psa_key_type);
 
-		return get_ecc_smw_key_type(ecc_family);
+		return get_ecc_smw_key_type(ecc_family, security_size);
 	}
 
 	for (; i < ARRAY_SIZE(cipher_key_type); i++) {
@@ -967,6 +979,10 @@ static smw_attr_algo_t get_smw_algo(psa_algorithm_t psa_alg,
 		} else if (psa_alg == PSA_ALG_ED25519PH) {
 			algo = SMW_ATTR_ALGO_EDDSA;
 			curve = SMW_ATTR_CURVE_ED25519;
+			hash = SMW_ATTR_HASH_NONE;
+		} else if (psa_alg == PSA_ALG_ED448PH) {
+			algo = SMW_ATTR_ALGO_EDDSA;
+			curve = SMW_ATTR_CURVE_ED448;
 			hash = SMW_ATTR_HASH_NONE;
 		}
 

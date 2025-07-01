@@ -159,6 +159,7 @@ static bool is_conversion_req(enum smw_config_key_type_id type_id)
 	switch (type_id) {
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_X25519:
+	case SMW_CONFIG_KEY_TYPE_ID_ED448:
 		is_conversion_req = true;
 		break;
 
@@ -176,15 +177,19 @@ int check_and_convert_endian(unsigned char *src, unsigned char *dst,
 	int status = SMW_STATUS_INVALID_PARAM;
 
 	if (!src || size == 0)
-		return status;
+		goto end;
 
 	status = SMW_STATUS_OK;
 
-	if (!is_imx91_or_imx93() || !is_conversion_req(type_id))
-		return status;
+	if (!is_imx91_or_imx93() || !is_conversion_req(type_id)) {
+		SMW_DBG_PRINTF(VERBOSE, "%s conversion not required\n",
+			       __func__);
+		goto end;
+	}
 
 	status = convert_endian(src, dst, size);
 
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
 	return status;

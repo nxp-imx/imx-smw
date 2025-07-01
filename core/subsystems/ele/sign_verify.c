@@ -43,6 +43,7 @@ static const unsigned int secp_r1_key_sizes[] = { 224, 256, 384, 521, 0 };
 static const unsigned int brainpool_r1_key_sizes[] = { 224, 256, 384, 0 };
 static const unsigned int rsa_key_sizes[] = { 2048, 3072, 4096, 0 };
 static const unsigned int ed25519_key_sizes[] = { 255, 0 };
+static const unsigned int ed448_key_sizes[] = { 448, 0 };
 
 static const struct signature_scheme {
 	enum smw_config_key_type_id key_type_id;
@@ -89,6 +90,9 @@ static const struct signature_scheme {
 			    PURE_EDDSA),
 	SIGNATURE_SCHEME_ID(ED25519, ed25519_key_sizes, EDDSA_PH, INVALID,
 			    ED25519PH),
+	SIGNATURE_SCHEME_ID(ED448, ed448_key_sizes, PURE_EDDSA, INVALID,
+			    PURE_EDDSA),
+	SIGNATURE_SCHEME_ID(ED448, ed448_key_sizes, EDDSA_PH, INVALID, ED448PH),
 };
 
 static bool check_security_size(unsigned int security_size,
@@ -570,7 +574,8 @@ static int verify(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519) {
+	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519 ||
+	    key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED448) {
 		op_args.signature = temp_sign;
 		op_args.key = temp_pub_key;
 	}

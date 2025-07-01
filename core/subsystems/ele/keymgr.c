@@ -19,6 +19,7 @@
 
 static unsigned int ecc_public_key_length(unsigned int security_size);
 static unsigned int ed_public_key_length(unsigned int security_size);
+static unsigned int ed448_public_key_length(unsigned int security_size);
 static unsigned int rsa_public_key_length(unsigned int security_size);
 static unsigned int rsa_modulus_length(unsigned int security_size);
 
@@ -59,13 +60,41 @@ static unsigned int rsa_modulus_length(unsigned int security_size);
 #define ELE_ASYM_KEYPAIR_KEY_TYPE(type)                                        \
 	SET_CLEAR_MASK(type, ELE_ASYM_KEYPAIR_TYPE_MASK, ELE_KEY_CATEGORY_MASK)
 
-#define KEY_DEF(_key_type_id, _key_type, _public_length, _modulus_length)      \
+#define KEY_DEF(_key_type_id, _key_type, _security_size, _public_length,       \
+		_modulus_length)                                               \
 	{                                                                      \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,          \
 		.key_type = HSM_KEY_TYPE_##_key_type,                          \
+		.security_size = _security_size,                               \
 		.public_length = _public_length,                               \
 		.modulus_length = _modulus_length                              \
 	}
+
+#define KEY_DEF_SYM(_key_type, _security_size)                                 \
+	{                                                                      \
+		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type,             \
+		.key_type = HSM_KEY_TYPE_##_key_type,                          \
+		.security_size = _security_size, .public_length = NULL,        \
+		.modulus_length = NULL                                         \
+	}
+
+#define KEY_DEF_ECC_NIST(_security_size)                                       \
+	KEY_DEF(SECP_R1, ECC_NIST, _security_size, ecc_public_key_length, NULL)
+
+#define KEY_DEF_ECC_BP(_security_size)                                         \
+	KEY_DEF(BRAINPOOL_R1, ECC_BP_R1, _security_size,                       \
+		ecc_public_key_length, NULL)
+
+#define KEY_DEF_RSA(_security_size)                                            \
+	KEY_DEF(RSA, RSA, _security_size, rsa_public_key_length,               \
+		rsa_modulus_length)
+
+#define KEY_DEF_EDWARDS_CURVE(_key_type, _security_size, _public_length)       \
+	KEY_DEF(_key_type, ECC_TWISTED_EDWARDS, _security_size,                \
+		_public_length, NULL)
+
+#define KEY_DEF_MONTGOMERY_CURVE(_key_type, _security_size, _public_length)    \
+	KEY_DEF(_key_type, ECC_MONTGOMERY, _security_size, _public_length, NULL)
 
 /**
  * struct key_def - ELE Key definition
@@ -77,18 +106,33 @@ static unsigned int rsa_modulus_length(unsigned int security_size);
 static const struct key_def {
 	enum smw_config_key_type_id key_type_id;
 	unsigned int key_type;
+	unsigned int security_size;
 	unsigned int (*public_length)(unsigned int security_size);
 	unsigned int (*modulus_length)(unsigned int security_size);
 } key_def_list[] = {
-	KEY_DEF(SECP_R1, ECC_NIST, ecc_public_key_length, NULL),
-	KEY_DEF(BRAINPOOL_R1, ECC_BP_R1, ecc_public_key_length, NULL),
-	KEY_DEF(AES, AES, NULL, NULL),
-	KEY_DEF(HMAC, HMAC, NULL, NULL),
-	KEY_DEF(RSA, RSA, rsa_public_key_length, rsa_modulus_length),
-	KEY_DEF(ED25519, ECC_TWISTED_EDWARDS, ed_public_key_length, NULL),
-	KEY_DEF(DERIVE, DERIVE, NULL, NULL),
-	KEY_DEF(HKDF_IKM, DERIVE, NULL, NULL),
-	KEY_DEF(X25519, ECC_MONTGOMERY, ed_public_key_length, NULL),
+	KEY_DEF_ECC_NIST(224),
+	KEY_DEF_ECC_NIST(256),
+	KEY_DEF_ECC_NIST(384),
+	KEY_DEF_ECC_NIST(521),
+	KEY_DEF_ECC_BP(224),
+	KEY_DEF_ECC_BP(256),
+	KEY_DEF_ECC_BP(384),
+	KEY_DEF_SYM(AES, 128),
+	KEY_DEF_SYM(AES, 192),
+	KEY_DEF_SYM(AES, 256),
+	KEY_DEF_SYM(HMAC, 224),
+	KEY_DEF_SYM(HMAC, 256),
+	KEY_DEF_SYM(HMAC, 384),
+	KEY_DEF_SYM(HMAC, 512),
+	KEY_DEF_RSA(2048),
+	KEY_DEF_RSA(3072),
+	KEY_DEF_RSA(4096),
+	KEY_DEF_EDWARDS_CURVE(ED25519, 255, ed_public_key_length),
+	KEY_DEF_EDWARDS_CURVE(ED448, 448, ed448_public_key_length),
+	KEY_DEF_MONTGOMERY_CURVE(X25519, 255, ed_public_key_length),
+	KEY_DEF(DERIVE, DERIVE, 384, NULL, NULL),
+	KEY_DEF(HKDF_IKM, DERIVE, 256, NULL, NULL),
+	KEY_DEF(HKDF_IKM, DERIVE, 384, NULL, NULL),
 };
 
 #define SIGN_ALGO(_algo_id, _type_id, _hash_id, _sign_algo)                    \
@@ -127,6 +171,11 @@ static unsigned int ed_public_key_length(unsigned int security_size)
 	return BITS_TO_BYTES_SIZE(security_size);
 }
 
+static unsigned int ed448_public_key_length(unsigned int security_size)
+{
+	return BITS_TO_BYTES_SIZE(security_size) + 1;
+}
+
 static unsigned int rsa_public_key_length(unsigned int security_size)
 {
 	(void)security_size;
@@ -158,7 +207,8 @@ get_key_def_by_smw_type(enum smw_config_key_type_id key_type_id)
 	return ret_key;
 }
 
-static const struct key_def *get_key_def_by_ele_type(unsigned int key_type)
+static const struct key_def *get_key_def_by_ele_type(unsigned int key_type,
+						     unsigned int security_size)
 {
 	unsigned int i = 0;
 	unsigned int size = ARRAY_SIZE(key_def_list);
@@ -171,7 +221,8 @@ static const struct key_def *get_key_def_by_ele_type(unsigned int key_type)
 		full_key_type = ELE_ASYM_KEYPAIR_KEY_TYPE(key_type);
 
 	for (; i < size; i++, key++) {
-		if (key->key_type == full_key_type) {
+		if (key->key_type == full_key_type &&
+		    key->security_size == security_size) {
 			ret_key = key;
 			break;
 		}
@@ -281,6 +332,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 	case SMW_CONFIG_KEY_TYPE_ID_BRAINPOOL_T1:
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_X25519:
+	case SMW_CONFIG_KEY_TYPE_ID_ED448:
 		if (smw_keymgr_get_public_data(key_descriptor) &&
 		    !smw_keymgr_get_private_data(key_descriptor)) {
 			status = SMW_STATUS_OK;
@@ -1014,7 +1066,8 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 	status = get_key_attributes_operation(hdl, &key_attrs);
 
 	if (status == SMW_STATUS_OK) {
-		key_def = get_key_def_by_ele_type(key_attrs.key_type);
+		key_def = get_key_def_by_ele_type(key_attrs.key_type,
+						  key_attrs.bit_key_sz);
 		if (key_def && key_def->public_length)
 			public_length =
 				key_def->public_length(key_attrs.bit_key_sz);
@@ -1071,7 +1124,8 @@ static int get_key_attributes(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	key_def = get_key_def_by_ele_type(op_key_attrs.key_type);
+	key_def = get_key_def_by_ele_type(op_key_attrs.key_type,
+					  op_key_attrs.bit_key_sz);
 	if (!key_def) {
 		status = SMW_STATUS_KEY_INVALID;
 		goto end;
@@ -1256,7 +1310,8 @@ int ele_export_public_key(struct hdl *hdl,
 		goto end;
 
 	/* Get the ELE key definition */
-	key_def = get_key_def_by_ele_type(key_attrs.key_type);
+	key_def = get_key_def_by_ele_type(key_attrs.key_type,
+					  key_attrs.bit_key_sz);
 	if (!key_def) {
 		SMW_DBG_PRINTF(VERBOSE,
 			       "%s: ELE key type 0x%08x not supported\n",

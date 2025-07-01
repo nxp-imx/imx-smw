@@ -50,7 +50,8 @@ static const char *const key_type_strings[] = {
 	[SMW_CONFIG_KEY_TYPE_ID_DH] = "DH",
 	[SMW_CONFIG_KEY_TYPE_ID_TLS_MASTER] = "TLS_MASTER",
 	[SMW_CONFIG_KEY_TYPE_ID_RAW] = "RAW",
-	[SMW_CONFIG_KEY_TYPE_ID_DERIVE] = "DERIVE"
+	[SMW_CONFIG_KEY_TYPE_ID_DERIVE] = "DERIVE",
+	[SMW_CONFIG_KEY_TYPE_ID_ED448] = "ED448",
 };
 
 static const char *const kdf_strings[] = {

@@ -199,6 +199,17 @@ static unsigned int get_sign_size(struct smw_keymgr_descriptor *key)
 
 		break;
 
+	case SMW_CONFIG_KEY_TYPE_ID_ED448:
+		size = key->identifier.security_size;
+
+		if (ADD_OVERFLOW(BITS_TO_BYTES_SIZE(size), 1, &size))
+			size = 0;
+
+		if (MUL_OVERFLOW(size, 2, &size))
+			size = 0;
+
+		break;
+
 	case SMW_CONFIG_KEY_TYPE_ID_RSA:
 		/* Signature size is modulus size */
 		size = key->identifier.security_size;

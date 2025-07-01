@@ -71,6 +71,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Fix endianness handling for signature and key buffers on i.MX91 and i.MX93 platforms
   to ensure consistent little-endian formatting across all platforms and key types.
 * ELE: Integrate new AEAD API.
+* ELE: Add support for Ed448 key management and signature operations.
 
 ##### 3. ARM PSA APIs
 
@@ -96,6 +97,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add cross-subsystem signature verification tests between TEE and ELE subsystems.
 * Enable ELE AEAD tests on the i.MX95 B0 platform.
 * Add ELE test cases to validate AEAD operations using a plaintext key buffer.
+* Add test to validate Ed448 key management.
+* Add tests to verify signature generation and verification using both Ed448 key
+  ID and buffers for ELE subsystem.
 
 #### PKCS#11 Library
 

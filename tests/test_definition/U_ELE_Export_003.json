@@ -1,0 +1,64 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "ED448",
+			"security_size": 448,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"PURE_EDDSA"
+			]
+		},
+		"key 2": {
+			"key_name": "key 1",
+			"pub_key": 26
+		},
+		"key 3": {
+			"key_name": "key 1",
+			"pub_key": 64
+		}
+	},
+	"subtest 1": {
+		"description": "Generate an ED448 key with the permitted algorithm set to PURE EDDSA",
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"description": "Export public key with a buffer length shorter than required",
+		"command": "EXPORT_PUBLIC",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"depends": 1,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
+	},
+	"subtest 3": {
+		"description": "Get the attributes of key 2",
+		"command": "GET_KEY_ATTRIBUTES",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"depends": 1
+	},
+	"subtest 4": {
+		"description": "Export public key with a buffer length longer than required",
+		"command": "EXPORT_PUBLIC",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"depends": 1
+	},
+	"subtest 5": {
+		"command": "DELETE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

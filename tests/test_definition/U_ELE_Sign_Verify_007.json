@@ -1,0 +1,271 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "ED448",
+			"security_size": 448,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"VERIFY_HASH"
+			],
+			"permitted_algo": [
+				"ED448PH"
+			]
+		},
+		"key 2": {
+			"type": "ED448",
+			"security_size": 448,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"PURE_EDDSA"
+			]
+		},
+		"key 3": {
+			"type": "ED448",
+			"security_size": 448,
+			"attributes_list": [
+				"TRANSIENT"
+			],
+			"usage": [
+				"SIGN_HASH",
+				"SIGN_MESSAGE",
+				"VERIFY_HASH",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"EDDSA"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 3": {
+		"command": "GENERATE",
+		"subsystem": "ELE",
+		"key_name": "key 3",
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 4": {
+		"description": "Sign pre-hashed message using Ed448ph",
+		"command": "SIGN",
+		"sign_attr": [
+			"ED448PH",
+			"MSG_HASHED"
+		],
+		"message": [
+			"bad101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"description": "Verify signature",
+		"command": "VERIFY",
+		"sign_attr": [
+			"ED448PH",
+			"MSG_HASHED"
+		],
+		"message": [
+			"bad101250ec6f26652249d59dc974b73",
+			"61d571a8101cdfd36aba3b5854d3ae08",
+			"6b5fdd4597721b66e3c0dc5d8c606d96",
+			"57d0e323283a5217d1f53f2f284f57b8"
+		],
+		"sign_id": 0,
+		"key_name": "key 1",
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": "Sign message Pure EDDSA",
+		"command": "SIGN",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"message": "64a65f3cdedcdd66811e2915",
+		"sign_id": 1,
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 7": {
+		"description": "Verify message Pure EDDSA",
+		"command": "VERIFY",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"message": "64a65f3cdedcdd66811e2915",
+		"sign_id": 1,
+		"key_name": "key 2",
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": "Sign pre-hashed message with key all EDDSA",
+		"command": "SIGN",
+		"sign_attr": [
+			"ED448PH",
+			"MSG_HASHED"
+		],
+		"message": [
+			"483366601360a8771c6863080cc4114d",
+			"8db44530f8f1e1ee4f94ea37e78b5739",
+			"d5a15bef186a5386c75744c0527e1faa",
+			"9f8726e462a12a4feb06bd8801e751e4"
+		],
+		"sign_id": 2,
+		"key_name": "key 3",
+		"depends": 3,
+		"restriction_list": [
+			"imx8ulp",
+			"imx95",
+			"imx943"
+		]
+	},
+	"subtest 9": {
+		"description": "Verify Pre-hashed message with key all EDDSA",
+		"command": "VERIFY",
+		"sign_attr": [
+			"ED448PH",
+			"MSG_HASHED"
+		],
+		"message": [
+			"483366601360a8771c6863080cc4114d",
+			"8db44530f8f1e1ee4f94ea37e78b5739",
+			"d5a15bef186a5386c75744c0527e1faa",
+			"9f8726e462a12a4feb06bd8801e751e4"
+		],
+		"sign_id": 2,
+		"key_name": "key 3",
+		"depends": 8
+	},
+	"subtest 10": {
+		"description": "Sign message Pure EDDSA with key all EDDSA",
+		"command": "SIGN",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"message": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"sign_id": 3,
+		"key_name": "key 3",
+		"depends": 3
+	},
+	"subtest 11": {
+		"description": "Verify message Pure EDDSA with key all EDDSA",
+		"command": "VERIFY",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"message": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"sign_id": 3,
+		"key_name": "key 3",
+		"depends": 10
+	},
+	"subtest 12": {
+		"description": "Sign message Pure EDDSA wrong key",
+		"command": "SIGN",
+		"subsystem": "ELE",
+		"sign_attr": [
+			"PURE_EDDSA"
+		],
+		"message": [
+			"4f05600950664d5190a2ebc29c9edb89",
+			"c20079a4d3e6bc3b27d75e34e2fa3d02",
+			"768502bd69790078598d5fcf3d6779bf",
+			"ed1284bbe5ad72fb456015181d9587d6",
+			"e864c940564eaafb4f2fead4346ea09b",
+			"6877d9340f6b82eb1515880872213da3",
+			"ad88feba9f4f13817a71d6f90a1a17c4",
+			"3a15c038d988b5b29edffe2d6a062813",
+			"cedbe852cde302b3e33b696846d2a8e3",
+			"6bd680efcc6cd3f9e9a4c1ae8cac10cc",
+			"5244d131677140399176ed46700019a0",
+			"04a163806f7fa467fc4e17b4617bbd76",
+			"41aaff7ff56396ba8c08a8be100b33a2",
+			"0b5daf134a2aefa5e1c3496770dcf6ba",
+			"a4f7bb"
+		],
+		"sign_id": 4,
+		"key_name": "key 1",
+		"result": "SMW_STATUS_KEY_INVALID",
+		"depends": 1
+	},
+	"subtest 13": {
+		"command": "DELETE",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 14": {
+		"command": "DELETE",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 15": {
+		"command": "DELETE",
+		"key_name": "key 3",
+		"depends": 3
+	}
+}

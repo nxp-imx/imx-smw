@@ -40,6 +40,9 @@ static unsigned int get_signature_len(struct smw_key_descriptor *key_desc)
 	    key_desc->type_name == SMW_KEY_TYPE_NAME_ED25519)
 		return BITS_TO_BYTES_SIZE(key_desc->security_size) * 2;
 
+	if (key_desc->type_name == SMW_KEY_TYPE_NAME_ED448)
+		return (BITS_TO_BYTES_SIZE(key_desc->security_size) * 2 + 2);
+
 	if (key_desc->type_name == SMW_KEY_TYPE_NAME_RSA)
 		return BITS_TO_BYTES_SIZE(key_desc->security_size);
 

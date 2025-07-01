@@ -10,6 +10,58 @@
 #include "object_db.h"
 #include "osal.h"
 
+static int find_data_in_subsystem(struct smw_object_descriptor *obj)
+{
+	struct smw_data_info_args data_info = { 0 };
+	struct smw_data_descriptor data_desc = { 0 };
+
+	data_info.data_descriptor = &data_desc;
+	data_desc.identifier = obj->id;
+
+	return smw_get_data_info(&data_info);
+}
+
+static int find_key_in_subsystem(struct smw_object_descriptor *obj)
+{
+	struct smw_get_key_attributes_args key_attrs = { 0 };
+	struct smw_key_descriptor key_desc = { 0 };
+
+	key_attrs.key_descriptor = &key_desc;
+	key_desc.id = obj->id;
+
+	return smw_get_key_attributes(&key_attrs);
+}
+
+static int find_object_in_subsystem(struct smw_object_descriptor *obj)
+{
+	int status = SMW_STATUS_OK;
+
+	switch (obj->type) {
+	case SMW_OBJECT_TYPE_NAME_DATA:
+		status = find_data_in_subsystem(obj);
+		break;
+
+	case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
+	case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
+	case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
+		status = find_key_in_subsystem(obj);
+		break;
+
+	default:
+		/* Unknown object type, hence try to get key then data */
+		obj->type = SMW_OBJECT_TYPE_NAME_KEY_PAIR;
+		status = find_key_in_subsystem(obj);
+		if (status == SMW_STATUS_OK)
+			break;
+
+		obj->type = SMW_OBJECT_TYPE_NAME_DATA;
+		status = find_data_in_subsystem(obj);
+		break;
+	}
+
+	return status;
+}
+
 enum smw_status_code
 smw_update_object_db(struct smw_object_descriptor *descriptor)
 {
@@ -37,6 +89,7 @@ enum smw_status_code smw_find_object_db(struct smw_find_object_db_args *args)
 {
 	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 	struct smw_object_descriptor *obj_desc = NULL;
+	struct smw_object_descriptor cpy_obj_desc = { 0 };
 	unsigned int s_id = INVALID_OBJ_ID;
 
 	SMW_DBG_TRACE_API_CALL;
@@ -56,7 +109,26 @@ enum smw_status_code smw_find_object_db(struct smw_find_object_db_args *args)
 		goto end;
 	}
 
+	/*
+	 * Create a copy of the object descriptor in case object not present
+	 * in the database. The database get information can overwrite user
+	 * input data.
+	 */
+	cpy_obj_desc = *obj_desc;
+
 	status = smw_object_db_get_info(&s_id, obj_desc);
+
+	if (status == SMW_STATUS_UNKNOWN_ID) {
+		/*
+		 * Object ID is not present in the database, query the
+		 * subsystem.
+		 */
+		status = find_object_in_subsystem(&cpy_obj_desc);
+		if (status == SMW_STATUS_OK) {
+			*obj_desc = cpy_obj_desc;
+			status = smw_object_db_get_info(&s_id, obj_desc);
+		}
+	}
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);

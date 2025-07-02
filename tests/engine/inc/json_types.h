@@ -65,6 +65,7 @@
 #define OBJECT_ATTRIBUTE	  "object_attribute"
 #define OBJECT_FOUND		  "object_found"
 #define OBJECT_NAME		  "object_name"
+#define OBJECT_ID		  "object_id"
 #define OEM_SALT_HKDF_OBJ	  "oem_salt_hkdf"
 #define OEM_SALT_PEER_KEY_OBJ	  "oem_salt_peer_key"
 #define OFFSET_OBJ		  "offset"

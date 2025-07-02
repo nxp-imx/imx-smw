@@ -148,12 +148,16 @@ object_read_attributes(struct json_object *params,
 
 	res = util_attr_read_attributes(params, ATTR_LIST_OBJ,
 					&attributes_callback, &obj_attr);
-
-	if (res != ERR_CODE(PASSED))
+	if (res != ERR_CODE(VALUE_NOTFOUND) && res != ERR_CODE(PASSED))
 		return res;
 
 	object_descriptor->persistency =
 		SMW_ATTR_SET_PERSISTENCE(0, SMW_ATTR_GET_PERSISTENCE(obj_attr));
+
+	res = util_read_json_type(&object_descriptor->id, OBJECT_ID, t_uint,
+				  params);
+	if (res == ERR_CODE(VALUE_NOTFOUND))
+		res = ERR_CODE(PASSED);
 
 	return res;
 }

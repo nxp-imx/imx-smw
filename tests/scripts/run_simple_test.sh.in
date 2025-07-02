@@ -30,12 +30,16 @@ if [ -e /etc/systemd/system/nvm_daemon.service ]; then
   fi
 fi
 
+tmp_database_file=
 final_status_file=
 if [ $# -gt 1 ]; then
   final_status_file=$(basename "$1")
   final_status_file="${final_status_file%%.*}"
+  tmp_database_file="${final_status_file}"
   final_status_file="${status_file_path}${final_status_file}${status_file_ext}"
   touch "${final_status_file}"
+
+  find "/var/tmp/" -maxdepth 1 -type f -name "*${tmp_database_file}.dat" -exec rm {} \;
 fi
 
 for def in "$@"

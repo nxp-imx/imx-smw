@@ -1,0 +1,79 @@
+{
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"id": 100,
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"id": 101,
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			]
+		}
+	},
+	"data_list": {
+		"data 1": {
+			"id": 111
+		}
+	},
+	"subtest 1": {
+		"description": "Find key 1 by id without setting object type, re-fill DB",
+		"command": "OBJECT_FIND",
+		"object_id": 100
+	},
+	"subtest 2": {
+		"description": "Find key 2 by id without setting object type, re-fill DB",
+		"command": "OBJECT_FIND",
+		"object_id": 101
+	},
+	"subtest 3": {
+		"description": "Find data 1 by id without setting object type, re-fill DB",
+		"command": "OBJECT_FIND",
+		"object_id": 111
+	},
+	"subtest 4": {
+		"description": "Check key 1 attributes",
+		"command": "GET_KEY_ATTRIBUTES",
+		"key_name": "key 1"
+	},
+	"subtest 5": {
+		"description": "Check key 2 attributes",
+		"command": "GET_KEY_ATTRIBUTES",
+		"key_name": "key 2"
+	},
+	"subtest 6": {
+		"command": "STORAGE_GET_DATA_INFO",
+		"data_name": "data 1"
+	},
+	"subtest 7": {
+		"description": "Delete key 1",
+		"command": "DELETE",
+		"key_name": "key 1"
+	},
+	"subtest 8": {
+		"description": "Delete key 2",
+		"command": "DELETE",
+		"key_name": "key 2"
+	},
+	"subtest 9": {
+		"description": "Delete data 1",
+		"command": "STORAGE_DELETE",
+		"data_name": "data 1"
+	}
+}

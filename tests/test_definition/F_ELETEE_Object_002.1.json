@@ -1,0 +1,83 @@
+{
+	"obj_db": {
+		"filepath": "/var/tmp/obj_db_smw_test_F_ELETEE_Object_002.dat"
+	},
+	"keys": {
+		"key 1": {
+			"type": "SECP_R1",
+			"id": 100,
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"SIGN_MESSAGE"
+			],
+			"permitted_algo": [
+				"ECDSA",
+				"HASH=SHA256"
+			]
+		},
+		"key 2": {
+			"type": "AES",
+			"id": 101,
+			"security_size": 256,
+			"attributes_list": [
+				"PERSISTENT"
+			],
+			"usage": [
+				"ENCRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		},
+		"data_list": {
+			"data 1": {
+				"id": 111,
+				"attributes_list": [
+					"PERSISTENT"
+				]
+			},
+			"data 2": {
+				"data_name": "data 1",
+				"data": "CAFE",
+				"attributes_list": [
+					"PERSISTENT"
+				]
+			}
+		}
+	},
+	"subtest 1": {
+		"description": "Generate key 1 in temporary database",
+		"command": "GENERATE",
+		"key_name": "key 1"
+	},
+	"subtest 2": {
+		"description": "Generate key 2 in temporary database",
+		"command": "GENERATE",
+		"key_name": "key 2"
+	},
+	"subtest 3": {
+		"description": "Store data 1 in temporary database",
+		"command": "STORAGE_STORE",
+		"data_name": "data 2"
+	},
+	"subtest 4": {
+		"description": "Check key 1 attributes",
+		"command": "GET_KEY_ATTRIBUTES",
+		"key_name": "key 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"description": "Check key 2 attributes",
+		"command": "GET_KEY_ATTRIBUTES",
+		"key_name": "key 2",
+		"depends": 2
+	},
+	"subtest 6": {
+		"command": "STORAGE_GET_DATA_INFO",
+		"data_name": "data 1",
+		"depends": 3
+	}
+}

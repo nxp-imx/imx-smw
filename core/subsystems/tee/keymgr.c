@@ -1496,7 +1496,10 @@ static int get_key_attributes(void *args)
 		op.params[GET_KEY_ATTRS_KEY_SIZE_IDX].value.a;
 
 	key_attributes->attributes = key_identifier->key_attributes.attributes;
-	key_attributes->permitted_algo = key_def->permitted_algo;
+
+	if (key_def->permitted_algo)
+		key_attributes->permitted_algo = key_def->permitted_algo;
+
 	key_usage_to_smw(tee_usage, &key_attributes->usage_flags);
 
 exit:

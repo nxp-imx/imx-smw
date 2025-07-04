@@ -11,6 +11,12 @@
 #include "tee_subsystem.h"
 #include "hash.h"
 
+/*
+ * Define the SHAKE256 default length even if it's an extendable-output
+ * function https://doi.org/10.6028/NIST.FIPS.202
+ */
+#define TEE_SHAKE256_HASH_SIZE 32
+
 #define ALGORITHM_INFO(_algo)                                                  \
 	{                                                                      \
 		.ca_id = TEE_ALGORITHM_ID_##_algo, .ta_id = TEE_ALG_##_algo,   \
@@ -27,7 +33,7 @@ static const struct algorithm_info {
 			ALGORITHM_INFO(SHA384),	  ALGORITHM_INFO(SHA512),
 			ALGORITHM_INFO(SHA3_224), ALGORITHM_INFO(SHA3_256),
 			ALGORITHM_INFO(SHA3_384), ALGORITHM_INFO(SHA3_512),
-			ALGORITHM_INFO(SM3) };
+			ALGORITHM_INFO(SM3),	  ALGORITHM_INFO(SHAKE256) };
 
 static TEE_Result get_algorithm_info(enum tee_algorithm_id ca_id,
 				     const struct algorithm_info **info)

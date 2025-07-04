@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include <tee_client_api.h>
@@ -31,7 +31,8 @@ static const struct {
 		      ALGORITHM_ID(SHA384),   ALGORITHM_ID(SHA512),
 		      ALGORITHM_ID(SHA3_224), ALGORITHM_ID(SHA3_256),
 		      ALGORITHM_ID(SHA3_384), ALGORITHM_ID(SHA3_512),
-		      ALGORITHM_ID(SM3),      ALGORITHM_ID(INVALID) };
+		      ALGORITHM_ID(SM3),      ALGORITHM_ID(SHAKE256),
+		      ALGORITHM_ID(INVALID) };
 
 int tee_convert_hash_algorithm_id(enum smw_config_hash_algo_id smw_id,
 				  enum tee_algorithm_id *tee_id)

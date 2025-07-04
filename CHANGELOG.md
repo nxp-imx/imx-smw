@@ -50,10 +50,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Rename internal object `id` to `s_id` and `id` to `u_id` to
   clearly identify the id value meaning.
 * Add support for the EL2GO OEM Secret Shared key. Key must not be in the database.
+* Enhance smw_find_object_db() API to query subsystem if the object
+  identifier is not present in the database.
 
 ##### 2. Subsystems
 
 * TEE: Fix memory leak in case of one-short AEAD, one-shot cipher and multi-part hash operations.
+* TEE: Fix the get attribute's permitted algorithm overwriting the database
+  value when key is created.
 
 ##### 3. ARM PSA APIs
 
@@ -70,6 +74,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Enable ELE RSA tests on the i.MX95 B0 platform.
 * Fix test missing the setting of the key persistency.
+* Add test validating the smw_find_object_db().
 
 #### PKCS#11 Library
 

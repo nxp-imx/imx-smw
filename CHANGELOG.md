@@ -73,6 +73,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 #### PKCS#11 Library
 
+* Clean up object retrieve function removing unnecessary call to the get
+  key attributes.
 
 #### PKCS#11 Tests
 

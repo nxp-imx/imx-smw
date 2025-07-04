@@ -14,22 +14,23 @@
 #include "util.h"
 #include "util_context.h"
 
-#define HASH_DEF(_name, _len)                                                  \
+#define HASH_DEF(_name, _len, _is_xof)                                         \
 	{                                                                      \
 		.name = SMW_HASH_ALGO_NAME_##_name, .string = #_name,          \
-		.digest_len = _len                                             \
+		.digest_len = _len, .is_xof = _is_xof                          \
 	}
 
 static struct {
 	smw_hash_algo_t name;
 	const char *string;
 	unsigned int digest_len;
-} hash_def[] = { HASH_DEF(MD5, 16),	 HASH_DEF(SHA1, 20),
-		 HASH_DEF(SHA224, 28),	 HASH_DEF(SHA256, 32),
-		 HASH_DEF(SHA384, 48),	 HASH_DEF(SHA512, 64),
-		 HASH_DEF(SHA3_224, 28), HASH_DEF(SHA3_256, 32),
-		 HASH_DEF(SHA3_384, 48), HASH_DEF(SHA3_512, 64),
-		 HASH_DEF(SM3, 32) };
+	bool is_xof;
+} hash_def[] = { HASH_DEF(MD5, 16, false),	HASH_DEF(SHA1, 20, false),
+		 HASH_DEF(SHA224, 28, false),	HASH_DEF(SHA256, 32, false),
+		 HASH_DEF(SHA384, 48, false),	HASH_DEF(SHA512, 64, false),
+		 HASH_DEF(SHA3_224, 28, false), HASH_DEF(SHA3_256, 32, false),
+		 HASH_DEF(SHA3_384, 48, false), HASH_DEF(SHA3_512, 64, false),
+		 HASH_DEF(SM3, 32, false),	HASH_DEF(SHAKE256, 32, true) };
 
 smw_hash_algo_t hash_get_algo_name(const char *string)
 {
@@ -63,6 +64,43 @@ static int get_hash_digest_len(smw_hash_algo_t name, unsigned int *len)
 			*len = hash_def[i].digest_len;
 			break;
 		}
+	}
+
+	return ERR_CODE(PASSED);
+}
+
+static int get_check_hash_digest_len(smw_hash_algo_t name, unsigned int len,
+				     unsigned int *out_len)
+{
+	unsigned int i = 0;
+	unsigned int array_size = ARRAY_SIZE(hash_def);
+
+	if (name == SMW_HASH_ALGO_NAME_NONE || !out_len) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	for (; i < array_size; i++) {
+		if (name != hash_def[i].name)
+			continue;
+
+		/*
+		 * In case hash algorithm is an extendable-output
+		 * function (XOF), length is variable.
+		 * Array hash_def defines the default length in this case.
+		 */
+		if (hash_def[i].is_xof)
+			break;
+
+		if (len != hash_def[i].digest_len) {
+			DBG_PRINT("Bad length, got %d expected %d", len,
+				  hash_def[i].digest_len);
+			return ERR_CODE(SUBSYSTEM);
+		}
+
+		*out_len = hash_def[i].digest_len;
+
+		break;
 	}
 
 	return ERR_CODE(PASSED);
@@ -345,15 +383,13 @@ int hash(struct subtest_data *subtest)
 	}
 
 	/*
-	 * If Hash operation succeeded and expected digest or digest length
-	 * is set in the test definition file then compare operation result.
+	 * If Hash operation succeeded, check if operation returned
+	 * the correct length.
 	 */
-	res = get_hash_digest_len(args.algo_name, &output_len);
+	res = get_check_hash_digest_len(args.algo_name, args.output_length,
+					&digest_len);
 	if (res != ERR_CODE(PASSED))
 		goto exit;
-
-	if (output_len < digest_len)
-		digest_len = output_len;
 
 	res = util_compare_buffers(args.output, args.output_length, digest_hex,
 				   digest_len);
@@ -563,16 +599,14 @@ int hash_final(struct subtest_data *subtest)
 
 	if (!is_api_test(subtest)) {
 		/*
-		 * If Hash operation succeeded and expected digest or digest length
-		 * is set in the test definition file then compare operation result.
+		 * If Hash operation succeeded, check if operation returned
+		 * the correct length.
 		 */
-		res = get_hash_digest_len(algo_name, &output_len);
+		res = get_check_hash_digest_len(algo_name, args.output_length,
+						&digest_len);
 		if (res != ERR_CODE(PASSED))
 			goto exit;
 	}
-
-	if (output_len < digest_len)
-		digest_len = output_len;
 
 	res = util_compare_buffers(args.output, args.output_length, digest_hex,
 				   digest_len);

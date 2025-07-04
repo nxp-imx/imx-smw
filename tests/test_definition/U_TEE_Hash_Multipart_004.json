@@ -1,0 +1,52 @@
+{
+	"subtest 1": {
+		"command": "OP_CONTEXT_ALLOCATE",
+		"subsystem": "TEE",
+		"context_id": 0
+	},
+	"subtest 2": {
+		"description": [
+			"SHAKE256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shakebytetestvectors.zip/SHAKE256ShortMsg.rsp"
+		],
+		"command": "HASH_INIT",
+		"algo": "SHAKE256",
+		"context_id": 0,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"SHAKE256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shakebytetestvectors.zip/SHAKE256ShortMsg.rsp"
+		],
+		"command": "HASH_UPDATE",
+		"input": [
+			"33abf921debbda87d59a30e8c5d1b137",
+			"a41392e4f072ecb038d264c1de9d0bf1",
+			"1bb8836c43b6647a4b4cdd9988059fcf",
+		],
+		"context_id": 0,
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": [
+			"SHAKE256",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shakebytetestvectors.zip/SHAKE256ShortMsg.rsp"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHAKE256",
+		"input": [
+			"b937f63e483639f9cdc76516d4d80505",
+			"e06e5520b0de"
+		],
+		"digest": [
+			"5a09deaf9d55211a207ade48a4e1928c",
+			"ca4ed330c0cc3a4b22c1052d7aa3b34a"
+		],
+		"context_id": 0,
+		"depends": 2
+	}
+}

@@ -274,7 +274,6 @@ end:
 }
 
 static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
-					struct smw_key_attributes *key_attr,
 					CK_OBJECT_CLASS req_class,
 					CK_ATTRIBUTE_PTR *attrs,
 					CK_ULONG_PTR attrs_count)
@@ -465,8 +464,8 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 		}
 
 		/* Step 2. Get all values length */
-		ret = object_descriptor_to_attrs(desc, key_attr, req_class,
-						 attrs, attrs_count);
+		ret = object_descriptor_to_attrs(desc, req_class, attrs,
+						 attrs_count);
 		if (ret != CKR_OK)
 			goto end;
 
@@ -480,8 +479,8 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 		}
 
 		/* Step 4. Get all values */
-		ret = object_descriptor_to_attrs(desc, key_attr, req_class,
-						 attrs, attrs_count);
+		ret = object_descriptor_to_attrs(desc, req_class, attrs,
+						 attrs_count);
 		if (ret != CKR_OK)
 			goto end;
 	}
@@ -680,8 +679,6 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 	int status = SMW_STATUS_OK;
 	struct smw_find_object_db_args find_args = { 0 };
 	struct smw_object_descriptor descriptor = { 0 };
-	struct smw_key_attributes *key_attr = NULL;
-	struct smw_get_key_attributes_args attr_args = { 0 };
 	smw_attr_attributes_t persistence = 0;
 	CK_ATTRIBUTE_PTR attributes = NULL_PTR;
 	CK_ULONG attributes_count = 0;
@@ -792,32 +789,9 @@ CK_RV obj_db_retrieve(CK_SESSION_HANDLE hsession, CK_ATTRIBUTE_PTR attrs,
 		if (is_present)
 			continue;
 
-		/*
-		 * Get key attributes
-		 */
-		switch (descriptor.type) {
-		case SMW_OBJECT_TYPE_NAME_KEY_PAIR:
-		case SMW_OBJECT_TYPE_NAME_PUBLIC_KEY:
-		case SMW_OBJECT_TYPE_NAME_SECRET_KEY:
-			attr_args.subsystem_name = devinfo->name;
-			attr_args.key_descriptor = &descriptor.key;
-			descriptor.key.id = descriptor.id;
-
-			status = smw_get_key_attributes(&attr_args);
-			ret = smw_status_to_ck_rv(status);
-			if (ret != CKR_OK)
-				goto end;
-
-			key_attr = &attr_args.key_descriptor->attributes;
-			break;
-
-		default:
-			break;
-		}
-
 		/* Build the attributes template to create the PKCS11 object */
-		ret = object_descriptor_to_attrs(&descriptor, key_attr,
-						 object_class, &attributes,
+		ret = object_descriptor_to_attrs(&descriptor, object_class,
+						 &attributes,
 						 &attributes_count);
 		if (ret != CKR_OK)
 			goto end;

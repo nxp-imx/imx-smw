@@ -204,6 +204,7 @@ typedef enum {
  * * SMW_HASH_ALGO_NAME_SHA3_384: Secure Hash Algorithm 3, 384 bits
  * * SMW_HASH_ALGO_NAME_SHA3_512: Secure Hash Algorithm 3, 512 bits
  * * SMW_HASH_ALGO_NAME_SM3: ShangMi 3
+ * * SMW_HASH_ALGO_NAME_SHAKE_256: Secure Hash Algorithm KECCAK, 256 bits
  * * SMW_HASH_ALGO_NAME_NB: Number of Hash algorithms
  */
 typedef enum {
@@ -219,6 +220,7 @@ typedef enum {
 	SMW_HASH_ALGO_NAME_SHA3_384,
 	SMW_HASH_ALGO_NAME_SHA3_512,
 	SMW_HASH_ALGO_NAME_SM3,
+	SMW_HASH_ALGO_NAME_SHAKE256,
 	SMW_HASH_ALGO_NAME_NB
 } smw_hash_algo_t;
 

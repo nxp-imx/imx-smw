@@ -18,7 +18,8 @@ static const char *const hash_algo_strings[] = {
 	[SMW_CONFIG_HASH_ALGO_ID_SHA3_256] = "SHA3_256",
 	[SMW_CONFIG_HASH_ALGO_ID_SHA3_384] = "SHA3_384",
 	[SMW_CONFIG_HASH_ALGO_ID_SHA3_512] = "SHA3_512",
-	[SMW_CONFIG_HASH_ALGO_ID_SM3] = "SM3"
+	[SMW_CONFIG_HASH_ALGO_ID_SM3] = "SM3",
+	[SMW_CONFIG_HASH_ALGO_ID_SHAKE256] = "SHAKE256"
 };
 
 int read_hash_algo_strings(char **start, char *end, unsigned long *bitmap)

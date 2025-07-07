@@ -858,7 +858,7 @@ the Finished data. In both cases, the key type, size, algorithm and usage
 need to be set for the derived key.
 
 .. note::
-  Only supported on i.MX91 and i.MX93
+  Only supported on i.MX91, i.MX93 and i.MX95
 
 OEM Master key
 ^^^^^^^^^^^^^^

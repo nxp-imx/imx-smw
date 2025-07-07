@@ -78,6 +78,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Define the supported sign type values in the config files.
 * Add a specific OSAL object structure to handle subsystem's object identifier.
+* Enable TLS Key derivation on i.MX95B0 in the ele_imx95_config.txt file.
 
 #### SMW Tests
 
@@ -85,6 +86,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix test missing the setting of the key persistency.
 * Add test validating the smw_find_object_db().
 * Add test validating SHAKE256 digest algorithm.
+* Enable TLS key derivation tests on i.MX95.
 
 #### PKCS#11 Library
 

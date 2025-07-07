@@ -879,6 +879,7 @@ static int import_key(struct hdl *hdl, void *args)
 		SMW_DBG_PRINTF(DEBUG, "hsm_import_key key id 0x%08X\n",
 			       op_args.key_identifier);
 		key_desc->identifier.s_id = op_args.key_identifier;
+		key_desc->identifier.subsystem_id = SUBSYSTEM_ID_ELE;
 
 		/*
 		 * In case of key importation, the key group is unknown.

@@ -221,9 +221,20 @@ Hash
    +--------------------+------+------+
    | SHA3_512           |      |  X   |
    +--------------------+------+------+
+   | SHAKE256           |      |  X   |
+   +--------------------+------+------+
 
 Operations supported:
  - One shot and multi-part
+
+.. note::
+  The SHAKE256 is an extendable-output function (XOF) where digest length can
+  be any length as detailed in the `FIPS 202<https://doi.org/10.6028/NIST.FIPS.202>`.
+
+.. note::
+  In case of multi-part operation, the ELE Secure Enclave doesn't support
+  additional input data during the final operation.
+
 
 Signature
 ---------

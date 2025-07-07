@@ -33,7 +33,12 @@ The releases are listed from the most recent to the first one.
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
 
-##### 2. PKCS#11
+##### 2. ELE Subsystem
+
+* Shake digest in multi-part operation doesn't support input data during the
+  final operation.
+
+##### 3. PKCS#11
 
 * As some subsystems are not handling key usage and permitted algorithm, the
   find operation is not able to find all keys whose template defines key usage
@@ -52,12 +57,15 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add support for the EL2GO OEM Secret Shared key. Key must not be in the database.
 * Enhance smw_find_object_db() API to query subsystem if the object
   identifier is not present in the database.
+* Add support for the SHAKE256 digest algorithm.
 
 ##### 2. Subsystems
 
 * TEE: Fix memory leak in case of one-short AEAD, one-shot cipher and multi-part hash operations.
 * TEE: Fix the get attribute's permitted algorithm overwriting the database
   value when key is created.
+* TEE: Add support for the SHAKE256 digest algorithm.
+* ELE: Add support for the SHAKE256 digest algorithm.
 
 ##### 3. ARM PSA APIs
 
@@ -75,6 +83,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Enable ELE RSA tests on the i.MX95 B0 platform.
 * Fix test missing the setting of the key persistency.
 * Add test validating the smw_find_object_db().
+* Add test validating SHAKE256 digest algorithm.
 
 #### PKCS#11 Library
 

@@ -119,9 +119,15 @@ Hash
    +--------------------+
    | SM3                |
    +--------------------+
+   | SHAKE256           |
+   +--------------------+
 
 Operations supported:
  - One shot and multi-part
+
+.. note::
+  The SHAKE256 is an extendable-output function (XOF) where digest length can
+  be any length as detailed in the `FIPS 202<https://doi.org/10.6028/NIST.FIPS.202>`.
 
 Signature
 ^^^^^^^^^
@@ -305,7 +311,7 @@ Operations supported:
 
 Asymmetric encryption and decryption
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 
+
 .. table:: TEE Asymmetric encryption and decryption
    :align: center
    :widths: 20 13 35 32

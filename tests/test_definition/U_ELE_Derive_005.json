@@ -39,7 +39,6 @@
 		"key_name": "self 256-bit ecdh key",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -49,7 +48,6 @@
 		"key_name": "self 384-bit ecdh key",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -59,7 +57,6 @@
 		"context_id": 0,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -69,7 +66,6 @@
 		"context_id": 1,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},

@@ -24,7 +24,6 @@
 		"key_name": "self ecdh key",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},

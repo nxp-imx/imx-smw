@@ -65,7 +65,6 @@
 		"key_name": "self 384-bit ecdh key",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -210,7 +209,10 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 1,
-		"depends": 7
+		"depends": 7,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 9": {
 		"description": [
@@ -272,7 +274,10 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 1,
-		"depends": 11
+		"depends": 11,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 13": {
 		"description": [
@@ -348,7 +353,10 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 2,
-		"depends": 15
+		"depends": 15,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 17": {
 		"description": [
@@ -410,7 +418,10 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 2,
-		"depends": 19
+		"depends": 19,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 21": {
 		"description": [
@@ -486,7 +497,10 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 3,
-		"depends": 23
+		"depends": 23,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 25": {
 		"description": [
@@ -548,7 +562,10 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 3,
-		"depends": 27
+		"depends": 27,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 29": {
 		"description": [
@@ -624,7 +641,10 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 4,
-		"depends": 31
+		"depends": 31,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 33": {
 		"description": [
@@ -686,7 +706,10 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 4,
-		"depends": 35
+		"depends": 35,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 37": {
 		"description": [

@@ -44,6 +44,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     m
     ${CMAKE_THREAD_LIBS_INIT})
 
+target_link_libraries(${PROJECT_NAME} PRIVATE ${EXT_LIBS})
+
 # If TEE subsystem defined, include tests
 if(DEFINED FIND_PACKAGE_MESSAGE_DETAILS_Teec AND
    DEFINED FIND_PACKAGE_MESSAGE_DETAILS_TA_dev_kit)

@@ -24,7 +24,8 @@ target_include_directories(osal
                            PRIVATE ${CMAKE_SOURCE_DIR}/inc
                            PUBLIC ${CMAKE_SOURCE_DIR}/public)
 
-set(EXT_LIBS ${EXT_LIBS} ${SQLite3_LIBRARY} PARENT_SCOPE)
+set(INTERFACE_LIBS ${INTERFACE_LIBS} ${SQLite3_LIB_NAMES} PARENT_SCOPE)
+set(EXT_LIBS ${EXT_LIBS} ${SQLite3_LIBRARIES} PARENT_SCOPE)
 
 macro(make_smw_conf)
   #

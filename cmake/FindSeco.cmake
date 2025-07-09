@@ -23,8 +23,10 @@ The following cache variables may also be set:
 
 ``SECO_INCLUDE_DIR``
   the directory containing ``hsm_api.h``.
-``SECO_LIBRARY``
+``SECO_LIBRARIES``
   the path to the EdgeLock Enclave (SECO) library.
+``SECO_LIB_NAMES``
+  name of the EdgeLock Enclave (SECO) library without path.
 
 #]=======================================================================]
 if(NOT DEFINED SECO_ROOT)
@@ -52,6 +54,7 @@ if(${CMAKE_FIND_PACKAGE_NAME}_FOUND)
     get_filename_component(SECO_TOP_INCLUDE_DIR ${SECO_INCLUDE_DIR} DIRECTORY)
     set(SECO_LIBRARIES ${SECO_LIBRARY})
     set(SECO_INCLUDE_DIRS "${SECO_INCLUDE_DIR};${SECO_TOP_INCLUDE_DIR}")
+    get_filename_component(SECO_LIB_NAMES ${SECO_LIBRARY} NAME)
 endif()
 
 mark_as_advanced(SECO_LIBRARY SECO_INCLUDE_DIR SECO_TOP_INCLUDE_DIR)

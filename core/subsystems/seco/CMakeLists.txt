@@ -39,4 +39,5 @@ target_sources(seco PRIVATE
 target_include_directories(seco PRIVATE ${INCLUDE_DIR}
                            ${SECO_INCLUDE_DIRS})
 
+set(INTERFACE_LIBS ${INTERFACE_LIBS} ${SECO_LIB_NAMES} PARENT_SCOPE)
 set(EXT_LIBS ${EXT_LIBS} ${SECO_LIBRARIES} PARENT_SCOPE)

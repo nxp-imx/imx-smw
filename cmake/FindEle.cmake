@@ -23,8 +23,10 @@ The following cache variables may also be set:
 
 ``ELE_INCLUDE_DIR``
   the directory containing ``hsm_api.h``.
-``ELE_LIBRARY``
+``ELE_LIBRARIES``
   the path to the EdgeLock Enclave library.
+``ELE_LIB_NAMES``
+  name of the EdgeLock Enclave library without path.
 
 #]=======================================================================]
 if(NOT DEFINED ELE_ROOT)
@@ -51,8 +53,9 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME} REQUIRED_VARS
 
 if(${CMAKE_FIND_PACKAGE_NAME}_FOUND)
   get_filename_component(ELE_TOP_INCLUDE_DIR ${ELE_INCLUDE_DIR} DIRECTORY)
-  set(ELE_LIBRARIES ${ELE_LIBRARY})
   set(ELE_INCLUDE_DIRS "${ELE_INCLUDE_DIR};${ELE_TOP_INCLUDE_DIR}")
+  set(ELE_LIBRARIES ${ELE_LIBRARY})
+  get_filename_component(ELE_LIB_NAMES ${ELE_LIBRARY} NAME)
 endif()
 
 mark_as_advanced(ELE_LIBRARY ELE_INCLUDE_DIR ELE_TOP_INCLUDE_DIR)

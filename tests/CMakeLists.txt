@@ -65,6 +65,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${JSONC_LIBRARY})
 target_link_libraries(${PROJECT_NAME} PRIVATE pthread rt)
 target_link_libraries(${PROJECT_NAME} PRIVATE smw)
 
+target_link_libraries(${PROJECT_NAME} PRIVATE ${EXT_LIBS})
+
 # Include utils
 include(${CMAKE_SOURCE_DIR}/tests/cmake/utils.cmake)
 
@@ -153,7 +155,15 @@ add_custom_target(install_${PROJECT_NAME}
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         VERBATIM)
 
+add_custom_target(remove_backtrace
+        COMMAND "${CMAKE_COMMAND}" -E echo "Running remove_backtrace.sh..."
+        COMMAND bash "${CMAKE_SOURCE_DIR}/scripts/remove_backtrace.sh" "${CMAKE_BINARY_DIR}"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Removing _BACKTRACE_TRIPLES from CTestTestfile.cmake"
+        VERBATIM)
+
 if(TARGET install_tests)
+    add_dependencies(install_tests remove_backtrace)
     add_dependencies(install_tests install_${PROJECT_NAME})
 endif()
 

@@ -55,4 +55,5 @@ target_include_directories(ele PRIVATE
                            ${ELE_INCLUDE_DIRS}
                            ${CMAKE_CURRENT_SOURCE_DIR})
 
+set(INTERFACE_LIBS ${INTERFACE_LIBS} ${ELE_LIB_NAMES} PARENT_SCOPE)
 set(EXT_LIBS ${EXT_LIBS} ${ELE_LIBRARIES} PARENT_SCOPE)

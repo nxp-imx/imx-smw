@@ -25,6 +25,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
 target_link_libraries(${PROJECT_NAME} PRIVATE smw)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PSA_LIBS})
 
+target_link_libraries(${PROJECT_NAME} PRIVATE ${EXT_LIBS})
+
 # Add PSA testsuite
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${PSA_ARCH_TESTS}/${PSA_ARCH_TESTS_API_DIR}/${PSA_CUSTOM_TEST_LIST}
         DESTINATION ${SMW_TESTS_TARGET_PSA_DIR}/${PSA_ARCH_TESTS}/${PSA_ARCH_TESTS_API_DIR}

@@ -13,7 +13,7 @@ add_subsystem(tee)
 
 set(OBJ_LIST ${OBJ_LIST} $<TARGET_OBJECTS:tee> PARENT_SCOPE)
 
-message(STATUS "    OPTEE client Library: ${TEEC_LIBRARY}")
+message(STATUS "    OPTEE client Library: ${TEEC_LIBRARIES}")
 message(STATUS "    OPTEE client Header : ${TEEC_INCLUDE_DIR}")
 message(STATUS "    OPTEE TA Dev Kit    : ${TA_DEV_KIT_DIR}")
 
@@ -49,7 +49,8 @@ target_include_directories(tee PRIVATE
 
 target_include_directories(tee SYSTEM PRIVATE ${TEEC_INCLUDE_DIR})
 
-set(EXT_LIBS ${EXT_LIBS} ${TEEC_LIBRARY} PARENT_SCOPE)
+set(INTERFACE_LIBS ${INTERFACE_LIBS} ${TEEC_LIB_NAMES} PARENT_SCOPE)
+set(EXT_LIBS ${EXT_LIBS} ${TEEC_LIBRARIES} PARENT_SCOPE)
 
 string(REGEX REPLACE "-gcc$" "-" CROSS_COMPILE  ${CMAKE_C_COMPILER})
 

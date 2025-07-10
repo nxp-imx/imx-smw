@@ -66,6 +66,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   value when key is created.
 * TEE: Add support for the SHAKE256 digest algorithm.
 * ELE: Add support for the SHAKE256 digest algorithm.
+* ELE: Update TLS1.2 KDF support
 
 ##### 3. ARM PSA APIs
 
@@ -89,9 +90,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Clean up object retrieve function removing unnecessary call to the get
   key attributes.
+* Add TLS 1.2 Key exchange and MAC support
 
 #### PKCS#11 Tests
 
+* Test TLS 1.2 Key exchange tests.
+* Test TLS 1.2 Hash MAC operation.
 
 ---
 ### <a id ="rel_5_0"></a></br>**Release 5.0.1**

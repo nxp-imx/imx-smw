@@ -118,9 +118,9 @@ and supported by the SMW Library.
   <td>TLS 1.2 key agreement</td>
 	<td>✔️<sup><a href="#t_note_1">1</a></sup></td>
 	<td>❌</td>
-	<td>❌</td>
 	<td>✔️</td>
-	<td>❌</td>
+	<td>✔️</td>
+	<td>✔️</td>
 	<td>❌</td>
 </tr>
 <tr>

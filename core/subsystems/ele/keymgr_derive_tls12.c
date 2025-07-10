@@ -48,8 +48,8 @@ static const struct tls12_ciphersuite {
 	unsigned int mac_size;
 	unsigned int iv_size;
 } tls12_ciphersuites[] = {
-	TLS12_CIPHERSUITE(AES_128_CBC, CBC_NO_PADDING, 128, 32, 0),
-	TLS12_CIPHERSUITE(AES_256_CBC, CBC_NO_PADDING, 256, 64, 0),
+	TLS12_CIPHERSUITE(AES_128_CBC, CBC_NO_PADDING, 128, 32, 16),
+	TLS12_CIPHERSUITE(AES_256_CBC, CBC_NO_PADDING, 256, 64, 16),
 	TLS12_CIPHERSUITE(AES_128_CCM, CCM, 128, 0, 12),
 	TLS12_CIPHERSUITE(AES_256_CCM, CCM, 256, 0, 12),
 	TLS12_CIPHERSUITE(AES_128_GCM, GCM, 128, 0, 4),
@@ -312,8 +312,8 @@ static int tls12_set_derive_args(struct smw_keymgr_derive_key_args *args,
 		break;
 
 	case IV:
-		/* ELE returns maximum 2 IVs, at most 12 bytes each => 24 bytes */
-		key_ex_args->output_sz = 24;
+		/* ELE returns maximum 2 IVs, at most 16 bytes each => 32 bytes */
+		key_ex_args->output_sz = 32;
 		key_ex_args->output =
 			SMW_UTILS_CALLOC(1, key_ex_args->output_sz);
 		if (!key_ex_args->output)

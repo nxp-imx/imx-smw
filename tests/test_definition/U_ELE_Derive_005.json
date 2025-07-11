@@ -415,6 +415,8 @@
 					"000102030405060708090a0b0c0d0e0f"
 				]
 			},
+			"client_write_iv": "00000000000000000000000000000000",
+			"server_write_iv": "00000000000000000000000000000000",
 			"client_w_enc_key_name": "client write enc key",
 			"server_w_enc_key_name": "server write enc key",
 			"client_w_mac_key_name": "client write mac key",
@@ -508,6 +510,8 @@
 					"000102030405060708090a0b0c0d0e0f"
 				]
 			},
+			"client_write_iv": "00000000000000000000000000000000",
+			"server_write_iv": "00000000000000000000000000000000",
 			"client_w_enc_key_name": "client write enc key",
 			"server_w_enc_key_name": "server write enc key",
 			"client_w_mac_key_name": "client write mac key",

@@ -31,6 +31,12 @@ static CK_BYTE server_random[] = { 0x12, 0xd4, 0xd9, 0x0c, 0x3c, 0x89, 0xce,
 				   0x63, 0xa5, 0xd0, 0x5c, 0x41, 0x3c, 0xe4,
 				   0xa3, 0x42, 0xeb, 0x8d };
 
+static CK_BYTE session_hash[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+				  0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
+				  0x0e, 0x0f, 0x00, 0x01, 0x02, 0x03, 0x04,
+				  0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+				  0x0c, 0x0d, 0x0e, 0x0f };
+
 static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status = TEST_FAIL;
@@ -61,6 +67,8 @@ static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	CK_MECHANISM ecdh_mech = { CKM_ECDH1_DERIVE, (void *)&ecdh_params,
 				   sizeof(ecdh_params) };
 	CK_TLS12_MASTER_KEY_DERIVE_PARAMS tls12_master_params = { 0 };
+	CK_TLS12_EXTENDED_MASTER_KEY_DERIVE_PARAMS
+	tls12_extended_master_params = { 0 };
 	CK_TLS12_KEY_MAT_PARAMS tls12_block_params = { 0 };
 	CK_MECHANISM tls12_mech = { CKM_TLS12_MASTER_KEY_DERIVE_DH,
 				    (void *)&tls12_master_params,
@@ -284,6 +292,53 @@ static int object_derive_key_tls12_bad_param(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DeriveKey"))
 		goto end;
 
+	TEST_OUT("Null TLS12 mechanism parameter\n");
+	tls12_mech.mechanism = CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH;
+	tls12_mech.pParameter = NULL;
+	tls12_mech.ulParameterLen = 0;
+	ret = pfunc->C_DeriveKey(sess, &tls12_mech, ecdhe_key,
+				 derived_key_template,
+				 ARRAY_SIZE(derived_key_template),
+				 &derived_key);
+	if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Invalid TLS12 mechanism parameter length\n");
+	tls12_mech.mechanism = CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH;
+	tls12_mech.pParameter = &tls12_extended_master_params;
+	tls12_mech.ulParameterLen = 1;
+	ret = pfunc->C_DeriveKey(sess, &tls12_mech, ecdhe_key,
+				 derived_key_template,
+				 ARRAY_SIZE(derived_key_template),
+				 &derived_key);
+	if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("session hash set but with length=0\n");
+	tls12_mech.ulParameterLen = sizeof(tls12_extended_master_params);
+	tls12_extended_master_params.prfHashMechanism = CKM_SHA256;
+	tls12_extended_master_params.pVersion = NULL;
+	tls12_extended_master_params.pSessionHash = session_hash;
+	tls12_extended_master_params.ulSessionHashLen = 0;
+	ret = pfunc->C_DeriveKey(sess, &tls12_mech, ecdhe_key,
+				 derived_key_template,
+				 ARRAY_SIZE(derived_key_template),
+				 &derived_key);
+	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("session hash NULL but with valid length\n");
+	tls12_extended_master_params.prfHashMechanism = CKM_SHA256;
+	tls12_extended_master_params.pVersion = NULL;
+	tls12_extended_master_params.pSessionHash = NULL;
+	tls12_extended_master_params.ulSessionHashLen = sizeof(session_hash);
+	ret = pfunc->C_DeriveKey(sess, &tls12_mech, ecdhe_key,
+				 derived_key_template,
+				 ARRAY_SIZE(derived_key_template),
+				 &derived_key);
+	if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_DeriveKey"))
+		goto end;
+
 	status = TEST_PASS;
 
 end:
@@ -320,9 +375,16 @@ static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
 	};
 
 	CK_TLS12_MASTER_KEY_DERIVE_PARAMS tls12_master_params = { 0 };
+	CK_TLS12_EXTENDED_MASTER_KEY_DERIVE_PARAMS
+	tls12_extended_master_params = { 0 };
 	CK_MECHANISM tls12_master_mech = { CKM_TLS12_MASTER_KEY_DERIVE_DH,
 					   (void *)&tls12_master_params,
 					   sizeof(tls12_master_params) };
+	CK_MECHANISM tls12_extended_master_mech = {
+		CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH,
+		(void *)&tls12_extended_master_params,
+		sizeof(tls12_extended_master_params)
+	};
 	CK_TLS12_KEY_MAT_PARAMS tls12_block_params = { 0 };
 	CK_SSL3_KEY_MAT_OUT key_material = { 0 };
 	CK_BYTE client_iv[20] = { 0 };
@@ -415,6 +477,69 @@ static int object_derive_key_tls12(CK_FUNCTION_LIST_PTR pfunc)
 		sizeof(server_random);
 
 	ret = pfunc->C_DeriveKey(sess, &tls12_master_mech, ecdhe_key,
+				 derived_key_template,
+				 ARRAY_SIZE(derived_key_template),
+				 &derived_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Set CKM_TLS12_KEY_AND_MAC_DERIVE mechanism parameters\n");
+	tls12_block_params.prfHashMechanism = CKM_SHA256;
+	tls12_block_params.bIsExport = false;
+	tls12_block_params.RandomInfo.pClientRandom = client_random;
+	tls12_block_params.RandomInfo.pServerRandom = server_random;
+	tls12_block_params.RandomInfo.ulClientRandomLen = sizeof(client_random);
+	tls12_block_params.RandomInfo.ulServerRandomLen = sizeof(server_random);
+	tls12_block_params.ulIVSizeInBits =
+		BYTES_TO_BITS(ARRAY_SIZE(client_iv));
+	tls12_block_params.ulKeySizeInBits = 160;
+	tls12_block_params.ulMacSizeInBits = 256;
+	tls12_block_params.pReturnedKeyMaterial = &key_material;
+	key_material.pIVClient = client_iv;
+	key_material.pIVServer = server_iv;
+
+	derived_key_type = CKK_AES;
+	derived_key_allowed_mech = CKM_AES_CBC;
+	ret = pfunc->C_DeriveKey(sess, &tls12_block_mech, derived_key,
+				 derived_key_template,
+				 ARRAY_SIZE(derived_key_template), NULL_PTR);
+	if (CHECK_CK_RV(CKR_OK, "C_DeriveKey"))
+		goto end;
+
+	TEST_OUT("Delete the client key\n");
+	ret = pfunc->C_DestroyObject(sess, key_material.hClientKey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the client MAC key\n");
+	ret = pfunc->C_DestroyObject(sess, key_material.hClientMacSecret);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the server key\n");
+	ret = pfunc->C_DestroyObject(sess, key_material.hServerKey);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the server MAC key\n");
+	ret = pfunc->C_DestroyObject(sess, key_material.hServerMacSecret);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Delete the derived key\n");
+	ret = pfunc->C_DestroyObject(sess, derived_key);
+	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+		goto end;
+
+	TEST_OUT("Set CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH mech params\n");
+	tls12_extended_master_params.prfHashMechanism = CKM_SHA256;
+	tls12_extended_master_params.pVersion = NULL;
+	tls12_extended_master_params.pSessionHash = session_hash;
+	tls12_extended_master_params.ulSessionHashLen = sizeof(session_hash);
+
+	derived_key_allowed_mech = CKM_TLS12_KEY_AND_MAC_DERIVE;
+	derived_key_type = CKK_GENERIC_SECRET;
+	ret = pfunc->C_DeriveKey(sess, &tls12_extended_master_mech, ecdhe_key,
 				 derived_key_template,
 				 ARRAY_SIZE(derived_key_template),
 				 &derived_key);

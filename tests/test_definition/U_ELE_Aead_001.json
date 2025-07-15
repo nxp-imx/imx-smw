@@ -42,23 +42,6 @@
 			"permitted_algo": [
 				"CHACHA20_POLY1305"
 			]
-		},
-		"key 4": {
-			"type": "AES",
-			"security_size": 256,
-			"priv_key": [
-				"d6c4cf73c639e025654dd3232fe3aa71",
-				"38f21bc8922271b4a6c0af999100b6b5"
-			],
-			"attributes_list": [
-				"TRANSIENT"
-			],
-			"usage": [
-				"ENCRYPT"
-			],
-			"permitted_algo": [
-				"CCM"
-			]
 		}
 	},
 	"subtest 1": {
@@ -89,7 +72,7 @@
 		"key_name": "key 2",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
-		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"aad": "353637383132333435363738",
 		"input": "30313233343536373839404142434445",
 		"tag": 16,
@@ -104,24 +87,24 @@
 		"mode": "XTS",
 		"op_type": "ENCRYPT",
 		"input": "30313233343536373839404142434445",
-		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"iv": "60cc50e0887532e0d4f3d2f2",
 		"aad": "353637383132333435363738",
 		"tag": 16,
 		"depends": 1,
 		"result": "SMW_STATUS_UNKNOWN_MODE_NAME"
 	},
 	"subtest 6": {
-		"description": "(CCM) Key buffer not supported",
+		"description": "(CCM) Tag length = 10",
 		"command": "AEAD",
 		"subsystem": "ELE",
-		"key_name": "key 4",
+		"key_name": "key 1",
 		"mode": "CCM",
 		"op_type": "ENCRYPT",
 		"input": "30313233343536373839404142434445",
 		"aad": "353637383132333435363738",
-		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
-		"tag": 16,
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"tag": 10,
+		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"restriction_list": "imx943"
 	},
 	"subtest 7": {

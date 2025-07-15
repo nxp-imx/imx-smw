@@ -13,6 +13,15 @@
 			"permitted_algo": [
 				"GCM"
 			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 256,
+			"format": "BASE64",
+			"priv_key": [
+				"TI6/4UROwbLVA8aYZlmvLJT6/pRfcsHo",
+				"SGpaz+24oPg="
+			]
 		}
 	},
 	"subtest 1": {
@@ -317,5 +326,40 @@
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
+	},
+	"subtest 22": {
+		"description": [
+			"Encrypt using GCM mode with a dedicated tag field set",
+			"Plaintext key buffer (Base64 format) is set",
+			"https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS/gcmtestvectors.zip/gcmDecrypt256.rsp"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"tag_field_set": true,
+		"iv": "473360e0ad24889959858995",
+		"input": "7789b41cb3ee548814ca0b388c10b343",
+		"output": "d2c78110ac7e8f107c0df0570bd7c90c",
+		"tag": "c26a379b6d98ef2852ead8ce83a833a7",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
+	},
+	"subtest 23": {
+		"description": "Decrypt using GCM mode",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"tag_field_set": true,
+		"iv": "473360e0ad24889959858995",
+		"input": "d2c78110ac7e8f107c0df0570bd7c90c",
+		"tag": "c26a379b6d98ef2852ead8ce83a833a7",
+		"output": "7789b41cb3ee548814ca0b388c10b343",
+		"depends": 22
 	}
 }

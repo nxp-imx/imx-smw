@@ -13,6 +13,11 @@
 			"permitted_algo": [
 				"CCM"
 			]
+		},
+		"key 2": {
+			"type": "AES",
+			"security_size": 128,
+			"priv_key": "e58d5c8f8c9ed9785679e08abc7c8116"
 		}
 	},
 	"subtest 1": {
@@ -134,5 +139,73 @@
 		"command": "DELETE",
 		"key_name": "key 1",
 		"depends": 1
+	},
+	"subtest 10": {
+		"description": [
+			"Encrypt using CCM mode and expected output is set",
+			"output buffer = ciphertext + tag",
+			"Plaintext key buffer is set"
+		],
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"tag": 16,
+		"iv": "a9f593c09eaeea8bf0c1cf6a",
+		"input": [
+			"aca650ccccda604e16a8b54a3335e0bc",
+			"2fd9444f33e3d9b82afe6f4453576349",
+			"74f0f1728cf113452321cbe5858304b0",
+			"1d4a14ae7f3b45980ee8033ad2a8599b",
+			"78c29494c9e5f8945a8cade3eb5a30d1",
+			"56c0d83271626daddb650954093443fb",
+			"ac9701c02e5a973f39c2e1761a4b48c7",
+			"64bf6db215a54b285a06eca3af0a83f7"
+		],
+		"output": [
+			"f5775c416282a339dc66b56f5a3ad0dd",
+			"acdb3f96efbd812b4d01f98686b5518b",
+			"1fa4ebe5e85213e1c7ede704397ef353",
+			"6fc8cf3df4fb52b7870e8eb2fd2fbcd5",
+			"cf263231d2c09dcae5c31cdc99e36efb",
+			"e5737bf067d58a0a535b242bcbca2a56",
+			"04791e183cb0c2e5e851425e11b4e528",
+			"237f123b5de8e349dd6d1a4506465f72",
+			"57001080003872271900d3f39c9661fd"
+		],
+		"restriction_list": "imx943"
+	},
+	"subtest 11": {
+		"description": "input buffer = ciphertext + tag",
+		"command": "AEAD",
+		"subsystem": "ELE",
+		"key_name": "key 2",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"tag": 16,
+		"iv": "a9f593c09eaeea8bf0c1cf6a",
+		"input": [
+			"f5775c416282a339dc66b56f5a3ad0dd",
+			"acdb3f96efbd812b4d01f98686b5518b",
+			"1fa4ebe5e85213e1c7ede704397ef353",
+			"6fc8cf3df4fb52b7870e8eb2fd2fbcd5",
+			"cf263231d2c09dcae5c31cdc99e36efb",
+			"e5737bf067d58a0a535b242bcbca2a56",
+			"04791e183cb0c2e5e851425e11b4e528",
+			"237f123b5de8e349dd6d1a4506465f72",
+			"57001080003872271900d3f39c9661fd"
+		],
+		"output": [
+			"aca650ccccda604e16a8b54a3335e0bc",
+			"2fd9444f33e3d9b82afe6f4453576349",
+			"74f0f1728cf113452321cbe5858304b0",
+			"1d4a14ae7f3b45980ee8033ad2a8599b",
+			"78c29494c9e5f8945a8cade3eb5a30d1",
+			"56c0d83271626daddb650954093443fb",
+			"ac9701c02e5a973f39c2e1761a4b48c7",
+			"64bf6db215a54b285a06eca3af0a83f7"
+		],
+		"depends": 10
 	}
 }

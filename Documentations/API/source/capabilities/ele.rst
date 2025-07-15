@@ -540,7 +540,8 @@ AEAD
 .. [2] Currently supported on i.MX91, i.MX93 and i.MX95.
 
 .. note::
-  AEAD is not supported on i.MX943.
+  - AEAD is not supported on i.MX943.
+  - The ELE subsystem supports AEAD encryption and decryption using either a key identifier or a plaintext key buffer.
 
 One-shot operations supported:
  - AEAD Encryption

@@ -94,6 +94,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Enable TLS key derivation tests on i.MX95.
 * Add cross-subsystem signature verification tests between TEE and ELE subsystems.
 * Enable ELE AEAD tests on the i.MX95 B0 platform.
+* Add ELE test cases to validate AEAD operations using a plaintext key buffer.
 
 #### PKCS#11 Library
 

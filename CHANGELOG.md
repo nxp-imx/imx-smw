@@ -70,6 +70,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Update TLS1.2 KDF support
 * ELE: Fix endianness handling for signature and key buffers on i.MX91 and i.MX93 platforms
   to ensure consistent little-endian formatting across all platforms and key types.
+* ELE: Integrate new AEAD API.
 
 ##### 3. ARM PSA APIs
 

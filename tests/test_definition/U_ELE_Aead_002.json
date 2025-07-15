@@ -19,10 +19,7 @@
 		"command": "GENERATE",
 		"subsystem": "ELE",
 		"key_name": "key 1",
-		"restriction_list": [
-			"imx95",
-			"imx943"
-		]
+		"restriction_list": "imx943"
 	},
 	"subtest 2": {
 		"description": "(CCM) One-shot AEAD Encryption - tag is part of output",

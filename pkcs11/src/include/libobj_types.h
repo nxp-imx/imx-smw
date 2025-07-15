@@ -371,6 +371,8 @@ struct libobj_key_derive_params {
 			CK_VERSION_PTR pVersion;
 			CK_SSL3_KEY_MAT_OUT_PTR pReturnedKeyMaterial;
 			CK_MECHANISM_TYPE prfHashMechanism;
+			CK_BYTE_PTR pSessionHash;
+			CK_ULONG ulSessionHashLen;
 		} tls12_params;
 	};
 };

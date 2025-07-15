@@ -414,6 +414,8 @@ static struct mentry mkeyderive[] = {
 	M_KEYDERIVE(SECP_R1, ECDH, ECDH, ECDH1),
 	M_KEYDERIVE_TLS12(SECP_R1, OP_KEY_EXCHANGE, NONE, KEY_AND_MAC),
 	M_KEYDERIVE_TLS12_DH(SECP_R1, OP_KEY_EXCHANGE, NONE, MASTER_KEY),
+	M_KEYDERIVE_TLS12_DH(SECP_R1, OP_KEY_EXCHANGE, NONE,
+			     EXTENDED_MASTER_KEY),
 };
 
 /*
@@ -1612,6 +1614,7 @@ static CK_RV set_tls12_args(CK_MECHANISM_TYPE type,
 	struct smw_kdf_tls12_master_secret_args *ms = NULL;
 	struct smw_kdf_tls12_key_expansion_args *ke = NULL;
 	struct smw_kdf_tls12_random_data *rd = NULL;
+	struct smw_kdf_tls12_session_hash *sh = NULL;
 	struct smw_key_descriptor *base_key = NULL;
 	struct smw_derived_key_descriptor *derived_key = NULL;
 	struct lib_derive_ctx *ctx = NULL;
@@ -1629,28 +1632,43 @@ static CK_RV set_tls12_args(CK_MECHANISM_TYPE type,
 	if (!ctx)
 		return status;
 
+	if (params->tls12_params.bIsExport)
+		return CKR_MECHANISM_PARAM_INVALID;
+
 	tls12_args = derive_args->kdf_arguments;
 	if (!tls12_args)
 		return status;
 
 	derived_key = derive_args->key_descriptor_derived;
 
-	random_info = &params->tls12_params.RandomInfo;
+	if (type == CKM_TLS12_MASTER_KEY_DERIVE_DH ||
+	    type == CKM_TLS12_KEY_AND_MAC_DERIVE) {
+		random_info = &params->tls12_params.RandomInfo;
 
-	if (!random_info->ulClientRandomLen || !random_info->ulServerRandomLen)
-		return status;
+		if (!random_info->ulClientRandomLen ||
+		    !random_info->ulServerRandomLen)
+			return status;
 
-	if (params->tls12_params.bIsExport)
-		return CKR_MECHANISM_PARAM_INVALID;
+		rd = calloc(1, sizeof(*rd));
+		if (!rd)
+			return CKR_HOST_MEMORY;
 
-	rd = calloc(1, sizeof(*rd));
-	if (!rd)
-		return CKR_HOST_MEMORY;
+		rd->client_random = random_info->pClientRandom;
+		rd->client_random_length = random_info->ulClientRandomLen;
+		rd->server_random = random_info->pServerRandom;
+		rd->server_random_length = random_info->ulServerRandomLen;
+	} else if (type == CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH) {
+		sh = calloc(1, sizeof(*sh));
+		if (!sh)
+			return CKR_HOST_MEMORY;
 
-	rd->client_random = random_info->pClientRandom;
-	rd->client_random_length = random_info->ulClientRandomLen;
-	rd->server_random = random_info->pServerRandom;
-	rd->server_random_length = random_info->ulServerRandomLen;
+		sh->hash = params->tls12_params.pSessionHash;
+		if (SET_OVERFLOW(params->tls12_params.ulSessionHashLen,
+				 sh->hash_length)) {
+			status = CKR_ARGUMENTS_BAD;
+			goto end;
+		}
+	}
 
 	switch (type) {
 	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
@@ -1667,6 +1685,43 @@ static CK_RV set_tls12_args(CK_MECHANISM_TYPE type,
 		}
 
 		ms->random_data = rd;
+
+		ctx_args.subsystem_name = derive_args->subsystem_name;
+		smw_status = smw_allocate_context(&ctx_args);
+		if (smw_status != SMW_STATUS_OK) {
+			status = smw_status_to_ck_rv(smw_status);
+			goto end;
+		}
+
+		tls12_args->context = ctx_args.context;
+		ctx->context = ctx_args.context;
+
+		status = key_desc_setup(base_key,
+					(struct libobj_obj *)ctx->hkey);
+		if (status != CKR_OK)
+			goto end;
+
+		status = base_key_desc_setup((struct libobj_obj *)ctx->hkey,
+					     base_key);
+		if (status != CKR_OK)
+			goto end;
+
+		break;
+
+	case CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH:
+		tls12_args->op_name = SMW_TLS12_OP_NAME_MASTER_SECRET;
+		ms = &tls12_args->master_secret;
+
+		ms->ext_master_key = true;
+		ms->key_exchange_name = SMW_TLS12_KEA_NAME_ECDHE_ECDSA;
+		ms->peer_public_buffer = ctx->peer_buffer;
+		if (SET_OVERFLOW(ctx->peer_buffer_len,
+				 ms->peer_public_buffer_length)) {
+			status = CKR_ARGUMENTS_BAD;
+			goto end;
+		}
+
+		ms->session_hash = sh;
 
 		ctx_args.subsystem_name = derive_args->subsystem_name;
 		smw_status = smw_allocate_context(&ctx_args);
@@ -1735,6 +1790,9 @@ end:
 	if (status != CKR_OK) {
 		if (rd)
 			free(rd);
+
+		if (sh)
+			free(sh);
 
 		smw_cancel_operation(&ctx_args);
 	}
@@ -1985,6 +2043,7 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 
 	case CKM_TLS12_KEY_AND_MAC_DERIVE:
 	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+	case CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH:
 		derive_args.kdf_arguments = &tls12_args;
 		ret = set_tls12_args(entry->type, derive_params, &derive_args);
 		if (ret != CKR_OK)
@@ -2012,9 +2071,39 @@ static CK_RV op_mkeyderive(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 			ret = get_tls12_objects(derive_params, &derive_args);
 	}
 
-	if (entry->type == CKM_HKDF_DERIVE && derive_params->ctx) {
-		if (tls13_args.psk)
+	switch (entry->type) {
+	case CKM_HKDF_DERIVE:
+		if (derive_params->ctx && tls13_args.psk)
 			free(tls13_args.psk);
+		break;
+
+	case CKM_TLS12_KEY_AND_MAC_DERIVE:
+		if (tls12_args.key_expansion.random_data)
+			free(tls12_args.key_expansion.random_data);
+
+		(void)libdev_cancel_operation((void **)&tls12_args.context);
+		break;
+
+	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+		if (tls12_args.master_secret.random_data)
+			free(tls12_args.master_secret.random_data);
+
+		if (ret != CKR_OK)
+			(void)libdev_cancel_operation(
+				(void **)&tls12_args.context);
+		break;
+
+	case CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH:
+		if (tls12_args.master_secret.session_hash)
+			free(tls12_args.master_secret.session_hash);
+
+		if (ret != CKR_OK)
+			(void)libdev_cancel_operation(
+				(void **)&tls12_args.context);
+		break;
+
+	default:
+		break;
 	}
 
 	return ret;

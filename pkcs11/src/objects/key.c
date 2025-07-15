@@ -2056,6 +2056,8 @@ check_tls12_derive_mech_params(CK_MECHANISM_PTR mech,
 	CK_RV ret = CKR_MECHANISM_PARAM_INVALID;
 	CK_TLS12_KEY_MAT_PARAMS_PTR tls12_params = NULL_PTR;
 	CK_TLS12_MASTER_KEY_DERIVE_PARAMS_PTR tls12_master_params = NULL_PTR;
+	CK_TLS12_EXTENDED_MASTER_KEY_DERIVE_PARAMS_PTR
+	tls12_extended_master_params = NULL_PTR;
 
 	if (!mech->pParameter) {
 		DBG_TRACE("TLS 1.2 mechanism pParameter not set");
@@ -2102,6 +2104,28 @@ check_tls12_derive_mech_params(CK_MECHANISM_PTR mech,
 		derive_params->tls12_params.pVersion =
 			tls12_master_params->pVersion;
 		ret = CKR_OK;
+		break;
+
+	case CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH:
+		if (mech->ulParameterLen !=
+		    sizeof(CK_TLS12_EXTENDED_MASTER_KEY_DERIVE_PARAMS)) {
+			DBG_TRACE("TLS 1.2 mechanism ulParameterLen error");
+			goto end;
+		}
+		tls12_extended_master_params =
+			(CK_TLS12_EXTENDED_MASTER_KEY_DERIVE_PARAMS_PTR)
+				mech->pParameter;
+
+		derive_params->tls12_params.prfHashMechanism =
+			tls12_extended_master_params->prfHashMechanism;
+		derive_params->tls12_params.pSessionHash =
+			tls12_extended_master_params->pSessionHash;
+		derive_params->tls12_params.ulSessionHashLen =
+			tls12_extended_master_params->ulSessionHashLen;
+		derive_params->tls12_params.pVersion =
+			tls12_extended_master_params->pVersion;
+		ret = CKR_OK;
+		break;
 
 	default:
 		break;
@@ -2139,6 +2163,7 @@ static CK_RV check_input_params(CK_KEY_TYPE base_key_type,
 
 	case CKM_TLS12_KEY_AND_MAC_DERIVE:
 	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+	case CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH:
 		if (base_key_type != CKK_GENERIC_SECRET) {
 			ret = CKR_KEY_FUNCTION_NOT_PERMITTED;
 			break;
@@ -2252,6 +2277,7 @@ set_derived_key_attr(CK_SESSION_HANDLE hsession,
 	case CKM_ECDH1_DERIVE:
 	case CKM_TLS12_KEY_AND_MAC_DERIVE:
 	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+	case CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH:
 		ret = set_kdf_derived_key_attr(hsession, derive_params, attrs);
 		break;
 
@@ -2301,6 +2327,7 @@ CK_RV derive_key(CK_SESSION_HANDLE hsession, CK_MECHANISM_PTR mech,
 	switch (mech->mechanism) {
 	case CKM_HKDF_DERIVE:
 	case CKM_TLS12_MASTER_KEY_DERIVE_DH:
+	case CKM_TLS12_EXTENDED_MASTER_KEY_DERIVE_DH:
 	case CKM_TLS12_KEY_AND_MAC_DERIVE:
 		/* Get the previous ECDH parameters */
 		ret = libdev_find_opctx(device, CKF_DERIVE, &find_mech,

@@ -537,10 +537,10 @@ AEAD
 
 .. [1] Not supported on i.MX8ULP
 
-.. [2] Currently supported on i.MX91 and i.MX93
+.. [2] Currently supported on i.MX91, i.MX93 and i.MX95.
 
 .. note::
-  AEAD is not supported on i.MX95 and i.MX943.
+  AEAD is not supported on i.MX943.
 
 One-shot operations supported:
  - AEAD Encryption

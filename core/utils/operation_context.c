@@ -36,6 +36,14 @@ static int cancel_and_free_context(struct smw_op_context **op_context,
 
 	enum subsystem_id subsystem_id = (*op_context)->subsystem_id;
 
+	if ((*op_context)->op_state == CTX_OP_STATE_ALLOC) {
+		/* Nothing to cancel, just free the context */
+		SMW_UTILS_FREE(*op_context);
+		*op_context = NULL;
+		status = SMW_STATUS_OK;
+		goto end;
+	}
+
 	if (subsystem_id >= SUBSYSTEM_ID_NB ||
 	    subsystem_id == SUBSYSTEM_ID_INVALID)
 		goto end;

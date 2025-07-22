@@ -52,26 +52,39 @@ static void key_identifier_to_object(unsigned int u_id,
 {
 	int status = SMW_STATUS_OK;
 	enum smw_keymgr_privacy_id privacy = identifier->privacy_id;
+	enum smw_keymgr_privacy_id default_privacy =
+		SMW_KEYMGR_PRIVACY_ID_INVALID;
 
-	if (privacy == SMW_KEYMGR_PRIVACY_ID_INVALID &&
-	    identifier->type_id != SMW_CONFIG_KEY_TYPE_ID_INVALID) {
+	if (identifier->type_id != SMW_CONFIG_KEY_TYPE_ID_INVALID) {
 		status = smw_keymgr_get_privacy_id(identifier->type_id,
-						   &privacy);
+						   &default_privacy);
 		if (status != SMW_STATUS_OK)
 			return;
 	}
+
+	if (privacy == SMW_KEYMGR_PRIVACY_ID_INVALID)
+		privacy = default_privacy;
 
 	switch (privacy) {
 	case SMW_KEYMGR_PRIVACY_ID_PAIR:
 		obj->type = SMW_OBJECT_TYPE_NAME_KEY_PAIR;
 		break;
+
 	case SMW_KEYMGR_PRIVACY_ID_PUBLIC:
 		obj->type = SMW_OBJECT_TYPE_NAME_PUBLIC_KEY;
 		break;
+
 	case SMW_KEYMGR_PRIVACY_ID_PRIVATE:
+		if (default_privacy == SMW_KEYMGR_PRIVACY_ID_PAIR)
+			obj->type = SMW_OBJECT_TYPE_NAME_KEY_PAIR;
+		else
+			obj->type = SMW_OBJECT_TYPE_NAME_SECRET_KEY;
+		break;
+
 	case SMW_KEYMGR_PRIVACY_ID_SHARED_SECRET:
 		obj->type = SMW_OBJECT_TYPE_NAME_SECRET_KEY;
 		break;
+
 	default:
 		break;
 	}

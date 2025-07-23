@@ -58,6 +58,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Enhance smw_find_object_db() API to query subsystem if the object
   identifier is not present in the database.
 * Add support for the SHAKE256 digest algorithm.
+* Store private asymmetric key as key pair object in the database.
 
 ##### 2. Subsystems
 

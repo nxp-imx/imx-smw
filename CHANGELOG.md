@@ -67,6 +67,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Add support for the SHAKE256 digest algorithm.
 * ELE: Add support for the SHAKE256 digest algorithm.
 * ELE: Update TLS1.2 KDF support
+* ELE: Fix endianness handling for signature and key buffers on i.MX91 and i.MX93 platforms
+  to ensure consistent little-endian formatting across all platforms and key types.
 
 ##### 3. ARM PSA APIs
 
@@ -87,6 +89,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add test validating the smw_find_object_db().
 * Add test validating SHAKE256 digest algorithm.
 * Enable TLS key derivation tests on i.MX95.
+* Add cross-subsystem signature verification tests between TEE and ELE subsystems.
 
 #### PKCS#11 Library
 
@@ -112,6 +115,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * In case of one-shot AEAD, one-shot cipher or multi-part hash, the operation handle is not freed once the operation is finished.
 If the user repeat these kinds of operations several times, the TEE subsystem will run out of memory.
+
+##### 3. ELE Subsystem
+
+* On i.MX91 and i.MX93 platforms, EdDSA signatures are generated in big-endian format.
+* For EdDSA signature verification on i.MX91 and i.MX93 platforms, the signature and public key buffers must be
+  provided in big-endian format.
+* On i.MX91 and i.MX93 platforms, the exported key buffer via the key generation API (when a public key buffer is
+  provided) or the key export API is encoded in big-endian format for ECC Edwards and X25519 key pairs.
 
 ##### 3. PKCS#11
 
@@ -288,6 +299,14 @@ the key descriptor.
 
 * When 2 or more applications load the SMW Library and configure the SECO subsystem, only one application is able to get the SECO configured properly. The other applications get the `SMW_STATUS_SUBSYSTEM_LOAD_FAILURE` status error code when trying to configure/access the SECO subsystem. </br>
 The failure is due to the storage manager which is already loaded and a new instance (new application) of the SMW library is trying to load it.
+
+##### 2. ELE Subsystem
+
+* On i.MX91 and i.MX93 platforms, EdDSA signatures are generated in big-endian format.
+* For EdDSA signature verification on i.MX91 and i.MX93 platforms, the signature and public key buffers must be
+  provided in big-endian format.
+* On i.MX91 and i.MX93 platforms, the exported key buffer via the key generation API (when a public key buffer is
+  provided) or the key export API is encoded in big-endian format for ECC Edwards key pair.
 
 ##### 2. SMW APIs
 

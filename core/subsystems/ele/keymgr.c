@@ -479,6 +479,7 @@ static int export_key_operation(struct hdl *hdl,
 	op_pub_key_recovery_args_t op_args = { 0 };
 
 	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
+	enum smw_config_key_type_id key_type_id = key_identifier->type_id;
 	unsigned char *public_data = NULL;
 	unsigned char *modulus_data = NULL;
 	unsigned char *tmp_key = NULL;
@@ -491,7 +492,7 @@ static int export_key_operation(struct hdl *hdl,
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	if (key_identifier->type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
+	if (key_type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
 		/* Set the operation output with user public key arguments */
 		public_data = smw_keymgr_get_public_data(key_desc);
 		public_length = smw_keymgr_get_public_length(key_desc);
@@ -552,8 +553,21 @@ static int export_key_operation(struct hdl *hdl,
 
 	public_length = op_args.exp_out_key_size;
 
-	if (key_identifier->type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
+	if (key_type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
 		if (status == SMW_STATUS_OK) {
+			/*
+			 * On i.MX93 and i.MX91, the exported public key buffer is encoded
+			 * in big-endian format for ECC Edwards and X25519 key pairs. Hence,
+			 * Convert it to little endian format.
+			 */
+			status = check_and_convert_endian(op_args.out_key, NULL,
+							  public_length,
+							  key_type_id);
+			if (status != SMW_STATUS_OK) {
+				status = SMW_STATUS_OPERATION_FAILURE;
+				goto end;
+			}
+
 			status =
 				smw_keymgr_update_public_buffer(key_desc,
 								op_args.out_key,
@@ -768,6 +782,25 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 	SMW_DBG_PRINTF(DEBUG, "Key identifier: 0x%08X\n", key_id);
 
 	if (public_data) {
+		/*
+		 * On i.MX93 and i.MX91, the exported public key buffer is encoded
+		 * in big-endian format for ECC Edwards and X25519 key pairs. Hence,
+		 * Convert it to little endian format.
+		 */
+		status = check_and_convert_endian(op_args.out_key, NULL,
+						  op_args.exp_out_size,
+						  key_identifier->type_id);
+		if (status != SMW_STATUS_OK) {
+			status = SMW_STATUS_OPERATION_FAILURE;
+
+			/*
+			 * Delete the key in subsystem as smw_generate_key()
+			 * is going to remove it from the key database
+			 */
+			(void)delete_key_operation(key_mgt_hdl, key_identifier);
+			goto end;
+		}
+
 		status = smw_keymgr_update_public_buffer(key_desc,
 							 op_args.out_key,
 							 op_args.exp_out_size);

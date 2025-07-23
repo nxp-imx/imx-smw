@@ -115,3 +115,118 @@ end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
 }
+
+static bool is_imx91_or_imx93(void)
+{
+	bool is_imx91_or_imx93 = false;
+
+	uint16_t soc_id = se_get_soc_id();
+
+	SMW_DBG_PRINTF(DEBUG, "soc_id = 0X%x\n", soc_id);
+
+	if (soc_id == SOC_IMX91 || soc_id == SOC_IMX93)
+		is_imx91_or_imx93 = true;
+
+	return is_imx91_or_imx93;
+}
+
+static int convert_endian(unsigned char *src, unsigned char *dst,
+			  unsigned int size)
+{
+	unsigned int i = 0;
+
+	if (!src || size == 0)
+		return SMW_STATUS_INVALID_PARAM;
+
+	if (dst) {
+		for (; i < size; i++)
+			dst[i] = src[size - 1 - i];
+	} else {
+		for (; i < size / 2; i++) {
+			src[i] ^= src[size - 1 - i];
+			src[size - 1 - i] ^= src[i];
+			src[i] ^= src[size - 1 - i];
+		}
+	}
+
+	return SMW_STATUS_OK;
+}
+
+static bool is_conversion_req(enum smw_config_key_type_id type_id)
+{
+	bool is_conversion_req = false;
+
+	switch (type_id) {
+	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
+	case SMW_CONFIG_KEY_TYPE_ID_X25519:
+		is_conversion_req = true;
+		break;
+
+	default:
+		break;
+	}
+
+	return is_conversion_req;
+}
+
+int check_and_convert_endian(unsigned char *src, unsigned char *dst,
+			     unsigned int size,
+			     enum smw_config_key_type_id type_id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	if (!src || size == 0)
+		return status;
+
+	status = SMW_STATUS_OK;
+
+	if (!is_imx91_or_imx93() || !is_conversion_req(type_id))
+		return status;
+
+	status = convert_endian(src, dst, size);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	return status;
+}
+
+int check_and_convert_sign_endian(unsigned char *sign,
+				  unsigned char *converted_sign,
+				  unsigned int sign_len,
+				  enum smw_config_key_type_id type_id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+	unsigned int part_size = 0;
+
+	if (!sign || sign_len == 0)
+		return status;
+
+	status = SMW_STATUS_OK;
+
+	if (!is_imx91_or_imx93() || !is_conversion_req(type_id))
+		return status;
+
+	part_size = sign_len / 2;
+
+	/*
+	 * The signature is a concatenation of two components: R and S.
+	 * Convert the endianness of each component (R and S) individually,
+	 * then concatenate the results to form the final converted signature.
+	 */
+	if (converted_sign) {
+		status = convert_endian(sign, converted_sign, part_size);
+		if (status == SMW_STATUS_OK)
+			status = convert_endian(sign + part_size,
+						converted_sign + part_size,
+						part_size);
+	} else {
+		status = convert_endian(sign, NULL, part_size);
+		if (status == SMW_STATUS_OK)
+			status = convert_endian(sign + part_size, NULL,
+						part_size);
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+
+	return status;
+}

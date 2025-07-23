@@ -17,6 +17,12 @@
 
 #include "common.h"
 
+/* Covers both Ed25519 (64) and Ed448 (114) */
+#define MAX_ED_SIGN_SIZE 114
+
+/* Covers both Ed25519 (32) and Ed448 (57) */
+#define MAX_ED_PUB_KEY_SIZE 57
+
 /* Workaround */
 #define HSM_SIGNATURE_SCHEME_ECDSA_ANY 0x06000600
 
@@ -388,6 +394,20 @@ static int sign(struct hdl *hdl, void *args)
 
 	smw_sign_verify_set_sign_len(sign_args, op_args.exp_signature_size);
 
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	/*
+	 * For platforms i.MX91 and i.MX93, signature generated using EDDSA
+	 * algorithm is encoded in big-endian format. Hence, convert it to little
+	 * endian.
+	 */
+	status = check_and_convert_sign_endian(op_args.signature, NULL,
+					       op_args.exp_signature_size,
+					       key_identifier->type_id);
+	if (status != SMW_STATUS_OK)
+		status = SMW_STATUS_OPERATION_FAILURE;
+
 end:
 	if (key_desc->format_id == SMW_KEYMGR_FORMAT_ID_BASE64) {
 		if (hex_private_buffer)
@@ -424,6 +444,8 @@ static int verify(struct hdl *hdl, void *args)
 	unsigned int key_size = 0;
 	unsigned char *hex_key_buf = NULL;
 	unsigned int hex_key_size = 0;
+	unsigned char temp_sign[MAX_ED_SIGN_SIZE] = { 0 };
+	unsigned char temp_pub_key[MAX_ED_PUB_KEY_SIZE] = { 0 };
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
@@ -528,6 +550,29 @@ static int verify(struct hdl *hdl, void *args)
 	    smw_sign_verify_get_ed25519ctx_buf(args)) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto end;
+	}
+
+	/*
+	 * On i.MX91 and i.MX93 platforms, EDDSA-based signature verification
+	 * mandates the following input format requirements:
+	 * - The signature must also be encoded in big-endian format to
+	 *   ensure correct cryptographic validation.
+	 * - The public key buffer must be encoded in big-endian format.
+	 */
+	status = check_and_convert_sign_endian(op_args.signature, temp_sign,
+					       op_args.signature_size,
+					       key_type_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	status = check_and_convert_endian(hex_key_buf, temp_pub_key,
+					  hex_key_size, key_type_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519) {
+		op_args.signature = temp_sign;
+		op_args.key = temp_pub_key;
 	}
 
 	if (verify_args->attributes.msg_hashed)

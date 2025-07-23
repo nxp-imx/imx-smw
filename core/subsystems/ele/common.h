@@ -529,4 +529,49 @@ unsigned int ele_get_sign_msg_block_length(void);
 int derive_oem_mk(struct subsystem_context *ele_ctx,
 		  struct smw_keymgr_derive_key_args *args);
 
+/**
+ * check_and_convert_sign_endian() - Converts the endianness of a signature
+ * @sign: Input signature buffer.
+ * @converted_sign: Output buffer for the converted signature.
+ * @sign_len: Length of the @sign buffer.
+ * @type_id: Key type ID.
+ *
+ * This function converts the endianness of signature buffer @sign, but only if
+ * 1. The platform is i.MX91 or i.MX93.
+ * 2. The key type is either ECC key pair Edwards or ECC key pair Montgomery.
+ *
+ * @converted_sign is an optional buffer. If it is NULL, conversion is done
+ * in-place on @sign.
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_INVALID_PARAM            - One of the parameter is invalid.
+ */
+int check_and_convert_sign_endian(unsigned char *sign,
+				  unsigned char *converted_sign,
+				  unsigned int sign_len,
+				  enum smw_config_key_type_id type_id);
+
+/**
+ * check_and_convert_endian() - Converts the endianness of a buffer
+ * @src: Input buffer.
+ * @dst: Output buffer for the converted data.
+ * @size: Length of the @src buffer.
+ * @type_id: Key type ID.
+ *
+ * This function converts the endianness of input buffer @src, but only if
+ * 1. The platform is i.MX91 or i.MX93.
+ * 2. The key type is either ECC key pair Edwards or ECC key pair Montgomery.
+ *
+ * @dst is an optional buffer. If it is NULL, conversion is done
+ * in-place on @src.
+ *
+ * Return:
+ * SMW_STATUS_OK                       - Success
+ * SMW_STATUS_INVALID_PARAM            - One of the parameter is invalid.
+ */
+int check_and_convert_endian(unsigned char *src, unsigned char *dst,
+			     unsigned int size,
+			     enum smw_config_key_type_id type_id);
+
 #endif /* __COMMON_H__ */

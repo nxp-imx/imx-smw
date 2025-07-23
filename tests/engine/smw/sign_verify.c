@@ -114,6 +114,79 @@ static int set_sign_verify_bad_args(struct subtest_data *subtest,
 	return ret;
 }
 
+static int read_public_key_descriptor(struct llist *keys,
+				      struct keypair_ops *key_test,
+				      const char *key_name)
+{
+	int ret = ERR_CODE(PASSED);
+	struct key_data *data = NULL;
+	const char *type_string = NULL;
+	const char *format_string = NULL;
+	struct smw_key_descriptor *desc = &key_test->desc;
+
+	if (!desc || !key_name) {
+		DBG_PRINT_BAD_ARGS();
+		return ERR_CODE(BAD_ARGS);
+	}
+
+	ret = util_list_find_node(keys, (uintptr_t)key_name, (void **)&data);
+	if (ret != ERR_CODE(PASSED))
+		return ret;
+
+	if (!data)
+		return ERR_CODE(KEY_NOTFOUND);
+
+	/*
+	 * For a given key, if the key ID is 0 and a public key buffer is present
+	 * in the key's linked list node, copy the buffer from the node and
+	 * retrieve the key type, size, and format from the test definition file.
+	 * This scenario typically occurs when a public key buffer is exported
+	 * using the smw_export_key() API, and is later used for signature
+	 * verification.
+	 */
+	if (!data->identifier && data->pub_key.data && data->pub_key.length) {
+		*key_public_length(key_test) = data->pub_key.length;
+		*key_public_data(key_test) = malloc(data->pub_key.length);
+		if (!*key_public_data(key_test)) {
+			DBG_PRINT_ALLOC_FAILURE();
+			return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+		}
+
+		memcpy(*key_public_data(key_test), data->pub_key.data,
+		       data->pub_key.length);
+
+		/* Read 'type' parameter if defined */
+		ret = util_read_json_type(&type_string, TYPE_OBJ, t_string,
+					  data->okey_params);
+		if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+			return ret;
+
+		if (ret == ERR_CODE(PASSED))
+			desc->type_name = key_get_type_name(type_string);
+
+		/* Read 'security_size' parameter if defined */
+		ret = util_read_json_type(&desc->security_size, SEC_SIZE_OBJ,
+					  t_int, data->okey_params);
+		if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+			return ret;
+
+		/* Read 'format' parameter if defined */
+		ret = util_read_json_type(&format_string, FORMAT_OBJ, t_string,
+					  data->okey_params);
+		if (ret != ERR_CODE(PASSED) && ret != ERR_CODE(VALUE_NOTFOUND))
+			return ret;
+
+		desc->buffer->format_name = key_get_format_name(format_string);
+
+		ret = ERR_CODE(PASSED);
+
+	} else {
+		ret = key_read_descriptor(keys, key_test, key_name);
+	}
+
+	return ret;
+}
+
 int sign_verify(struct subtest_data *subtest, int operation)
 {
 	int res = ERR_CODE(PASSED);
@@ -158,8 +231,14 @@ int sign_verify(struct subtest_data *subtest, int operation)
 	if (res != ERR_CODE(PASSED))
 		return res;
 
-	/* Read the json-c key description */
-	res = key_read_descriptor(list_keys(subtest), &key_test, key_name);
+	if (operation == SIGN_OPERATION)
+		/* Read the json-c key description */
+		res = key_read_descriptor(list_keys(subtest), &key_test,
+					  key_name);
+	else
+		res = read_public_key_descriptor(list_keys(subtest), &key_test,
+						 key_name);
+
 	if (res != ERR_CODE(PASSED))
 		return res;
 

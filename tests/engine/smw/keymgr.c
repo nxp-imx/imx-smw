@@ -1090,6 +1090,8 @@ int export_key(struct subtest_data *subtest, enum export_type export_type)
 	struct smw_keypair_buffer key_buffer = { 0 };
 	struct smw_keypair_buffer exp_key_buffer = { 0 };
 	const char *key_name = NULL;
+	bool save_flag = false;
+	struct key_data key_data = { 0 };
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -1144,6 +1146,17 @@ int export_key(struct subtest_data *subtest, enum export_type export_type)
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
+	/*
+	 * By default, exported public key buffer is not stored in the respective
+	 * key's linked list node. If "save_output" tag is set to true, the exported
+	 * public key buffer is stored in the list and can be reused later,
+	 * e.g., for signature verification.
+	 */
+	res = util_read_json_type(&save_flag, SAVE_OUT_OBJ, t_boolean,
+				  subtest->params);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
+		goto exit;
+
 	res = set_export_opt_params(subtest, &args, &key_test, &exp_key_test,
 				    export_type);
 	if (res != ERR_CODE(PASSED))
@@ -1159,11 +1172,23 @@ int export_key(struct subtest_data *subtest, enum export_type export_type)
 	if (subtest->smw_status != SMW_STATUS_OK)
 		res = ERR_CODE(API_STATUS_NOK);
 
-	if (subtest->smw_status == SMW_STATUS_OK)
+	if (subtest->smw_status == SMW_STATUS_OK) {
 		res = compare_keys(&key_test, &exp_key_test);
+		if (res != ERR_CODE(PASSED))
+			goto exit;
+
+		if (save_flag) {
+			key_test.desc.id = 0;
+			key_prepare_key_data(&key_test, &key_data);
+			res = util_key_update_node(list_keys(subtest), key_name,
+						   &key_data);
+		}
+	}
 
 exit:
-	key_free_key(&key_test);
+	if (!save_flag)
+		key_free_key(&key_test);
+
 	key_free_key(&exp_key_test);
 
 	return res;

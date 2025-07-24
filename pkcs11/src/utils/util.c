@@ -271,7 +271,7 @@ CK_RV util_base64_encode(char **base64, struct libbytes *src)
 		goto exit;
 	}
 
-	tmp_b64 = calloc(1, len_b64);
+	tmp_b64 = calloc(1, len_b64 + 1 /* Null terminated string */);
 	if (!tmp_b64) {
 		DBG_TRACE("Allocation error of the Base64 buffer");
 		ret = CKR_HOST_MEMORY;

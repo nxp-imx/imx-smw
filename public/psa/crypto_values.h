@@ -97,6 +97,23 @@
 #define PSA_ALG_VENDOR_MASK ((psa_algorithm_t)0x80000000)
 #define PSA_ALG_VENDOR_CKDF_BASE                                               \
 	((psa_algorithm_t)PSA_ALG_VENDOR_MASK | 0x0800FF00)
+#define PSA_ALG_VENDOR_TLS13_BASE                                              \
+	((psa_algorithm_t)PSA_ALG_VENDOR_MASK | 0x0800D000)
+
+#define PSA_ALG_VENDOR_TLS13_SECRET_MASK ((psa_algorithm_t)0xf00)
+
+#define PSA_ALG_VENDOR_TLS13_EARLY_SECRET                                      \
+	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x000)
+#define PSA_ALG_VENDOR_TLS13_HANDSHAKE_SECRET                                  \
+	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x100)
+#define PSA_ALG_VENDOR_TLS13_MASTER_SECRET                                     \
+	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x200)
+#define PSA_ALG_VENDOR_TLS13_KEYING_MATERIAL                                   \
+	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x300)
+#define PSA_ALG_VENDOR_TLS13_IV                                                \
+	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x400)
+#define PSA_ALG_VENDOR_TLS13_INTERNAL                                          \
+	((psa_algorithm_t)PSA_ALG_VENDOR_TLS13_BASE | 0x500)
 
 #define PSA_ALG_CATEGORY_MASK		       ((psa_algorithm_t)0x7f000000)
 #define PSA_ALG_CATEGORY_AEAD		       ((psa_algorithm_t)0x05000000)
@@ -373,6 +390,7 @@
  * - PSA_ALG_RSA_PSS()
  * - PSA_ALG_TLS12_PRF()
  * - PSA_ALG_TLS12_PSK_TO_MS()
+ * - PSA_ALG_VENDOR_TLS13()
  *
  * Return:
  * The underlying hash algorithm if @alg is a composite algorithm that uses a hash algorithm.
@@ -497,6 +515,53 @@
  */
 #define PSA_ALG_HKDF_EXPAND(hash_alg)                                          \
 	(PSA_ALG_HKDF_EXPAND_BASE | ((hash_alg) & PSA_ALG_HASH_MASK))
+
+/**
+ * PSA_ALG_VENDOR_TLS13() - Macro to build a TLS1.3 algorithm.
+ * @hash_alg: A hash algorithm (PSA_ALG_XXX value such that PSA_ALG_IS_HASH(hash_alg) is true).
+ *
+ * PSA_ALG_HKDF, as defined in the PSA specification, can be used either standalone (for, simply,
+ * HKDF derivation) or as part of a more complex key derivation scheme such as TLS 1.3. However,
+ * in particular the ELE subsystem may not support standalone HKDF, but may support TLS 1.3 via
+ * a separate internal API.
+ *
+ * In order to support TLS1.3, this vendor algorithm is introduced and is mapped to the internal
+ * values used by ELE.
+ *
+ * This vendor algorithm uses the following inputs:
+ * - PSA_KEY_DERIVATION_INPUT_SECRET: The pre-shared key identifier used for the early secrets.
+ *   Optional. Use this step together with the psa_key_derivation_input_key() function.
+ * - PSA_KEY_DERIVATION_INPUT_OTHER_SECRET: When deriving a TLS1.3 secret such as "c hs traffic"
+ *   or "c ap traffic", this is the identifier of the base key ID used for ECDH. In this case,
+ *   you must use this step together with the psa_key_derivation_key_agreement() function.
+ *   Otherwise, when deriving key material or an IV ("key", "iv", "finished"), it is the ID of
+ *   the secret derived previously. Use this step together with the psa_key_derivation_input_key()
+ *   function.
+ * - PSA_KEY_DERIVATION_INPUT_INFO: The byte array that corresponds to the expanded label, as
+ *   defined in RFC 8446. Use this step together with the psa_key_derivation_input_bytes()
+ *   function.
+ * 
+ * The expanded label contains the TLS1.3 label, which corresponds to either a TLS1.3 secret
+ * (e.g. client handshake secret), a key (e.g. client application traffic key), or an IV (e.g.
+ * server handshake traffic IV). When deriving a secret or key, use the
+ * psa_key_derivation_output_key(), and when deriving an IV use psa_key_derivation_output_bytes().
+ *
+ * Thus, to derive e.g. an encryption key, without using a PSK, you need to follow this call
+ * sequence (simplified):
+ *
+ * - psa_key_derivation_setup(PSA_ALG_VENDOR_TLS13(PSA_ALG_SHA256))
+ * - psa_key_derivation_key_agreement(PSA_KEY_DERIVATION_INPUT_OTHER_SECRET, private_ec_key_id,
+ *   peer_public_key)
+ * - psa_key_derivation_input_bytes(PSA_KEY_DERIVATION_INPUT_INFO, expanded_label)
+ * - secret_id = psa_key_derivation_output_key()
+ * - psa_key_derivation_setup(PSA_ALG_VENDOR_TLS13(PSA_ALG_SHA256))
+ * - psa_key_derivation_input_key(PSA_KEY_DERIVATION_INPUT_OTHER_SECRET, secret_id)
+ * - psa_key_derivation_input_bytes(PSA_KEY_DERIVATION_INPUT_INFO, expanded_label)
+ * - encryption_key_id = psa_key_derivation_output_key()
+ */
+#define PSA_ALG_VENDOR_TLS13(hash_alg)                                         \
+	((psa_algorithm_t)(PSA_ALG_VENDOR_TLS13_BASE |                         \
+			   ((hash_alg) & (PSA_ALG_HASH_MASK))))
 
 /**
  * PSA_ALG_HMAC() - Macro to build an HMAC message-authentication-code algorithm from an underlying
@@ -692,6 +757,15 @@
  * supported key derivation algorithm identifier.
  */
 #define PSA_ALG_IS_HKDF(alg) (((alg) & ~PSA_ALG_HASH_MASK) == PSA_ALG_HKDF_BASE)
+
+/**
+ * PSA_ALG_IS_VENDOR_TLS13() - Whether the specified algorithm is a TLS1.3 algorithm.
+ * @alg: An algorithm identifier (value of &typedef psa_algorithm_t).
+ *
+ */
+#define PSA_ALG_IS_VENDOR_TLS13(alg)                                           \
+	(((alg) & ~PSA_ALG_HASH_MASK & ~PSA_ALG_VENDOR_TLS13_SECRET_MASK) ==   \
+	 PSA_ALG_VENDOR_TLS13_BASE)
 
 /**
  * PSA_ALG_IS_HKDF_EXTRACT() - Whether the specified algorithm is an HKDF-Extract algorithm.

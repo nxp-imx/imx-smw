@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #ifndef __PSA_CRYPTO_H__
@@ -2854,8 +2854,6 @@ static psa_key_attributes_t psa_key_attributes_init(void);
  * psa_key_derivation_abort() - Abort a key derivation operation.
  * @operation: The operation to abort.
  *
- * **Warning: Not supported**
- *
  * Aborting an operation frees all associated resources except for the operation object itself.
  * Once aborted, the operation object can be reused for another operation by calling
  * psa_key_derivation_setup() again.
@@ -2919,8 +2917,6 @@ psa_key_derivation_get_capacity(const psa_key_derivation_operation_t *operation,
  * @step: Which step the input data is for.
  * @data: Input data to use.
  * @data_length: Size of the @data buffer in bytes.
- *
- * **Warning: Not supported**
  *
  * Which inputs are required and in what order depends on the algorithm. Refer to the documentation
  * of each key derivation or key agreement algorithm for information.
@@ -3019,8 +3015,6 @@ psa_key_derivation_input_integer(psa_key_derivation_operation_t *operation,
  * @key: Identifier of the key. It must have an appropriate type for step and must allow the usage
  *       PSA_KEY_USAGE_DERIVE.
  *
- * **Warning: Not supported**
- *
  * Which inputs are required and in what order depends on the algorithm. Refer to the documentation
  * of each key derivation or key agreement algorithm for information.
  *
@@ -3081,8 +3075,6 @@ psa_key_derivation_input_key(psa_key_derivation_operation_t *operation,
  *            psa_export_public_key().
  * @peer_key_length: Size of @peer_key in bytes.
  *
- * **Warning: Not supported**
- *
  * A key agreement algorithm takes two inputs: a private key @private_key a public key @peer_key.
  * The result of this function is passed as input to a key derivation. The output of this key
  * derivation can be extracted by reading from the resulting operation to produce keys and other
@@ -3142,8 +3134,6 @@ static psa_key_derivation_operation_t psa_key_derivation_operation_init(void);
  * @output: Buffer where the output will be written.
  * @output_length: Number of bytes to @output.
  *
- * **Warning: Not supported**
- *
  * This function calculates output bytes from a key derivation algorithm and returns those bytes.
  * If the key derivation’s output is viewed as a stream of bytes, this function consumes the
  * requested number of bytes from the stream and returns them to the caller. The operation’s
@@ -3180,8 +3170,6 @@ psa_key_derivation_output_bytes(psa_key_derivation_operation_t *operation,
  * @attributes: The attributes for the new key.
  * @operation: The key derivation operation object to read from.
  * @key: On success, an identifier for the newly created key. PSA_KEY_ID_NULL on failure.
- *
- * **Warning: Not supported**
  *
  * This function calculates output bytes from a key derivation algorithm and uses those bytes to
  * generate a key deterministically. The key’s location, policy, type and size are taken from
@@ -3423,8 +3411,6 @@ psa_key_derivation_set_capacity(psa_key_derivation_operation_t *operation,
  *             set up yet.
  * @alg: The key derivation algorithm to compute (PSA_ALG_XXX value such that
  *       PSA_ALG_IS_KEY_DERIVATION(alg) is true).
- *
- * **Warning: Not supported**
  *
  * A key derivation algorithm takes some inputs and uses them to generate a byte stream in a
  * deterministic way. This byte stream can be used to produce keys and other cryptographic material.

@@ -1,0 +1,706 @@
+{
+	"keys": {
+		"derived secret 1": {
+			"type": "DERIVE",
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"derived key 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"derived IV 1": {
+			"key_data": "000000000000000000000000"
+		},
+		"derived finished 1": {
+			"type": "HMAC",
+			"security_size": 256,
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			]
+		},
+		"key 1": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_3",
+				"HASH=SHA256"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"Derive `ext binder` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"info": [
+			"002010746c733133206578742062696e",
+			"646572200102030405060708090a0b0c",
+			"0d0e0f100102030405060708090a0b0c",
+			"0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"Derive `res binder` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"info": [
+			"002010746c733133206578742062696e",
+			"646572200102030405060708090a0b0c",
+			"0d0e0f100102030405060708090a0b0c",
+			"0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"depends": 1
+	},
+	"subtest 4": {
+		"description": [
+			"Derive `c e traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"info": [
+			"002011746c7331332063206520747261",
+			"66666963200102030405060708090a0b",
+			"0c0d0e0f100102030405060708090a0b",
+			"0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"depends": 1
+	},
+	"subtest 5": {
+		"description": [
+			"Derive `e exp master` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"info": [
+			"002012746c733133206520657870206d",
+			"6173746572200102030405060708090a",
+			"0b0c0d0e0f100102030405060708090a",
+			"0b0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"depends": 1
+	},
+	"subtest 6": {
+		"description": [
+			"Derive `c hs traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"info": [
+			"002012746c7331332063206873207472",
+			"6166666963200102030405060708090a",
+			"0b0c0d0e0f100102030405060708090a",
+			"0b0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"depends": 1
+	},
+	"subtest 7": {
+		"description": [
+			"Derive encryption key from `c hs traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"002009746c733133206b657920010203",
+			"0405060708090a0b0c0d0e0f10010203",
+			"0405060708090a0b0c0d0e0f10"
+		],
+		"op_output": "derived key 1",
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": [
+			"Encrypt data with the encryption key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 1,
+		"depends": 7
+	},
+	"subtest 9": {
+		"description": [
+			"Decrypt data with the encryption key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 1,
+		"depends": 8
+	},
+	"subtest 10": {
+		"description": [
+			"Derive encryption IV from `c hs traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"002008746c7331332069762001020304",
+			"05060708090a0b0c0d0e0f1001020304",
+			"05060708090a0b0c0d0e0f10"
+		],
+		"op_output": "derived IV 1",
+		"depends": 6
+	},
+	"subtest 11": {
+		"description": [
+			"Derive finished key from `c hs traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"00200e746c7331332066696e69736865",
+			"64200102030405060708090a0b0c0d0e",
+			"0f100102030405060708090a0b0c0d0e",
+			"0f10"
+		],
+		"op_output": "derived finished 1",
+		"depends": 6
+	},
+	"subtest 12": {
+		"description": [
+			"Sign data with the finished key"
+		],
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"output": 32,
+		"mac_id": 1,
+		"depends": 11
+	},
+	"subtest 13": {
+		"description": [
+			"Verify signature with the finished key"
+		],
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 1,
+		"depends": 12
+	},
+	"subtest 14": {
+		"description": [
+			"Derive `s hs traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"info": [
+			"002012746c7331332073206873207472",
+			"6166666963200102030405060708090a",
+			"0b0c0d0e0f100102030405060708090a",
+			"0b0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"depends": 1
+	},
+	"subtest 15": {
+		"description": [
+			"Derive encryption key from `s hs traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"002009746c733133206b657920010203",
+			"0405060708090a0b0c0d0e0f10010203",
+			"0405060708090a0b0c0d0e0f10"
+		],
+		"op_output": "derived key 1",
+		"depends": 14
+	},
+	"subtest 16": {
+		"description": [
+			"Encrypt data with the encryption key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 2,
+		"depends": 15
+	},
+	"subtest 17": {
+		"description": [
+			"Decrypt data with the encryption key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 2,
+		"depends": 16
+	},
+	"subtest 18": {
+		"description": [
+			"Derive encryption IV from `s hs traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"002008746c7331332069762001020304",
+			"05060708090a0b0c0d0e0f1001020304",
+			"05060708090a0b0c0d0e0f10"
+		],
+		"op_output": "derived IV 1",
+		"depends": 14
+	},
+	"subtest 19": {
+		"description": [
+			"Derive finished key from `s hs traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"00200e746c7331332066696e69736865",
+			"64200102030405060708090a0b0c0d0e",
+			"0f100102030405060708090a0b0c0d0e",
+			"0f10"
+		],
+		"op_output": "derived finished 1",
+		"depends": 14
+	},
+	"subtest 20": {
+		"description": [
+			"Sign data with the finished key"
+		],
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"output": 32,
+		"mac_id": 2,
+		"depends": 19
+	},
+	"subtest 21": {
+		"description": [
+			"Verify signature with the finished key"
+		],
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 2,
+		"depends": 20
+	},
+	"subtest 22": {
+		"description": [
+			"Derive `c ap traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"info": [
+			"002012746c7331332063206170207472",
+			"6166666963200102030405060708090a",
+			"0b0c0d0e0f100102030405060708090a",
+			"0b0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"depends": 1
+	},
+	"subtest 23": {
+		"description": [
+			"Derive encryption key from `c ap traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"002009746c733133206b657920010203",
+			"0405060708090a0b0c0d0e0f10010203",
+			"0405060708090a0b0c0d0e0f10"
+		],
+		"op_output": "derived key 1",
+		"depends": 22
+	},
+	"subtest 24": {
+		"description": [
+			"Encrypt data with the encryption key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 3,
+		"depends": 23
+	},
+	"subtest 25": {
+		"description": [
+			"Decrypt data with the encryption key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 3,
+		"depends": 24
+	},
+	"subtest 26": {
+		"description": [
+			"Derive encryption IV from `c ap traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"002008746c7331332069762001020304",
+			"05060708090a0b0c0d0e0f1001020304",
+			"05060708090a0b0c0d0e0f10"
+		],
+		"op_output": "derived IV 1",
+		"depends": 22
+	},
+	"subtest 27": {
+		"description": [
+			"Derive finished key from `c ap traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"00200e746c7331332066696e69736865",
+			"64200102030405060708090a0b0c0d0e",
+			"0f100102030405060708090a0b0c0d0e",
+			"0f10"
+		],
+		"op_output": "derived finished 1",
+		"depends": 22
+	},
+	"subtest 28": {
+		"description": [
+			"Sign data with the finished key"
+		],
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"output": 32,
+		"mac_id": 3,
+		"depends": 27
+	},
+	"subtest 29": {
+		"description": [
+			"Verify signature with the finished key"
+		],
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 3,
+		"depends": 28
+	},
+	"subtest 30": {
+		"description": [
+			"Derive `s ap traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"info": [
+			"002012746c7331332073206170207472",
+			"6166666963200102030405060708090a",
+			"0b0c0d0e0f100102030405060708090a",
+			"0b0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"depends": 1
+	},
+	"subtest 31": {
+		"description": [
+			"Derive encryption key from `s ap traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"002009746c733133206b657920010203",
+			"0405060708090a0b0c0d0e0f10010203",
+			"0405060708090a0b0c0d0e0f10"
+		],
+		"op_output": "derived key 1",
+		"depends": 30
+	},
+	"subtest 32": {
+		"description": [
+			"Encrypt data with the encryption key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived key 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 4,
+		"depends": 31
+	},
+	"subtest 33": {
+		"description": [
+			"Decrypt data with the encryption key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived key 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 4,
+		"depends": 32
+	},
+	"subtest 34": {
+		"description": [
+			"Derive encryption IV from `s ap traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"002008746c7331332069762001020304",
+			"05060708090a0b0c0d0e0f1001020304",
+			"05060708090a0b0c0d0e0f10"
+		],
+		"op_output": "derived IV 1",
+		"depends": 30
+	},
+	"subtest 35": {
+		"description": [
+			"Derive finished key from `s ap traffic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"key_name": "derived secret 1",
+		"info": [
+			"00200e746c7331332066696e69736865",
+			"64200102030405060708090a0b0c0d0e",
+			"0f100102030405060708090a0b0c0d0e",
+			"0f10"
+		],
+		"op_output": "derived finished 1",
+		"depends": 30
+	},
+	"subtest 36": {
+		"description": [
+			"Sign data with the finished key"
+		],
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"output": 32,
+		"mac_id": 4,
+		"depends": 35
+	},
+	"subtest 37": {
+		"description": [
+			"Verify signature with the finished key"
+		],
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived finished 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 4,
+		"depends": 36
+	},
+	"subtest 38": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

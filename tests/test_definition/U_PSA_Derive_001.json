@@ -1,0 +1,143 @@
+{
+	"keys": {
+		"derived secret 1": {
+			"type": "DERIVE",
+			"usage": [
+				"DERIVE"
+			]
+		}
+	},
+	"subtest 1": {
+		"description": [
+			"Try to derive `ext binder` using PSA and UNKNOWN hash"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=UNKNOWN"
+		],
+		"info": [
+			"002010746c733133206578742062696e",
+			"646572200102030405060708090a0b0c",
+			"0d0e0f100102030405060708090a0b0c",
+			"0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"result": "PSA_ERROR_NOT_SUPPORTED"
+	},
+	"subtest 2": {
+		"description": [
+			"Try to derive `ext binder` using PSA and MD5 hash"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=MD5"
+		],
+		"info": [
+			"002010746c733133206578742062696e",
+			"646572200102030405060708090a0b0c",
+			"0d0e0f100102030405060708090a0b0c",
+			"0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"result": "PSA_ERROR_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"description": [
+			"Try to derive `invalid lbl` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"info": [
+			"002011746c73313320696e76616c6964",
+			"206c626c200102030405060708090a0b",
+			"0c0d0e0f100102030405060708090a0b",
+			"0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	},
+	"subtest 4": {
+		"description": [
+			"Try to derive `c hs trafic` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"info": [
+			"002011746c73313320696e76616c6964",
+			"206c626c200102030405060708090a0b",
+			"0c0d0e0f100102030405060708090a0b",
+			"0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	},
+	"subtest 5": {
+		"description": [
+			"Try to derive `c hs trafficc` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"info": [
+			"002013746c7331332063206873207472",
+			"61666669636320010203040506070809",
+			"0a0b0c0d0e0f10010203040506070809",
+			"0a0b0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	},
+	"subtest 6": {
+		"description": [
+			"Try to derive `c hs traffic` using PSA with no key"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"info": [
+			"002012746c7331332063206873207472",
+			"6166666963200102030405060708090a",
+			"0b0c0d0e0f100102030405060708090a",
+			"0b0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	},
+	"subtest 7": {
+		"description": [
+			"Try to derive `c ap traffic` using PSA with no key"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_3",
+			"HASH=SHA256"
+		],
+		"info": [
+			"002012746c7331332063206873207472",
+			"6166666963200102030405060708090a",
+			"0b0c0d0e0f100102030405060708090a",
+			"0b0c0d0e0f10"
+		],
+		"op_output": "derived secret 1",
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	}
+}

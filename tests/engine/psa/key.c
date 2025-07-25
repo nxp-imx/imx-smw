@@ -33,6 +33,7 @@
 #define DH_STR	     "DH"
 #define RSA_STR	     "RSA"
 #define RAW_DATA_STR "RAW_DATA"
+#define DERIVE_TYPE_STR "DERIVE"
 
 #define ANY_STR			    "ANY"
 #define ALL_AEAD_STR		    "ALL_AEAD"
@@ -123,7 +124,8 @@ static const struct ecc_key_type ecc_key_type[] = {
 	ECC_KEY_TYPE("SECP_R1", SECP_R1),
 	ECC_KEY_TYPE("BRAINPOOL_R1", BRAINPOOL_P_R1),
 	ECC_KEY_TYPE("ED25519", TWISTED_EDWARDS),
-	ECC_KEY_TYPE("ED448", TWISTED_EDWARDS)
+	ECC_KEY_TYPE("ED448", TWISTED_EDWARDS),
+	ECC_KEY_TYPE("X25519", MONTGOMERY),
 };
 
 #define KEY_HASH(_string)                                                      \
@@ -246,6 +248,16 @@ psa_key_type_t get_cipher_psa_key_type(const char *key_type_string)
 	return PSA_KEY_TYPE_NONE;
 }
 
+static psa_key_type_t get_general_psa_key_type(const char *key_type_string)
+{
+	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
+
+	if (!strncmp(key_type_string, DERIVE_TYPE_STR, strlen(DERIVE_TYPE_STR)))
+		psa_key_type = PSA_KEY_TYPE_DERIVE;
+
+	return psa_key_type;
+}
+
 static psa_key_type_t get_raw_psa_key_type(const char *key_type_string)
 {
 	psa_key_type_t psa_key_type = PSA_KEY_TYPE_NONE;
@@ -281,6 +293,8 @@ static int get_psa_key_type(psa_key_type_t *psa_key_type,
 		*psa_key_type = get_cipher_psa_key_type(key_type_string);
 	if (*psa_key_type == PSA_KEY_TYPE_NONE)
 		*psa_key_type = get_raw_psa_key_type(key_type_string);
+	if (*psa_key_type == PSA_KEY_TYPE_NONE)
+		*psa_key_type = get_general_psa_key_type(key_type_string);
 	if (*psa_key_type != PSA_KEY_TYPE_NONE)
 		ret = ERR_CODE(PASSED);
 
@@ -413,6 +427,7 @@ static const struct util_attr_info algo_info_psa[] = {
 	ATTR_ALGO_PSA(RSA_PKCS1V15_SIGN_BASE, PSA_ALG_RSA_PKCS1V15_SIGN_BASE),
 	ATTR_ALGO_PSA(RSA_PSS_ANY_SALT, PSA_ALG_RSA_PSS_ANY_SALT_BASE),
 	ATTR_ALGO_PSA(RSA_PSS, PSA_ALG_RSA_PSS_BASE),
+	ATTR_ALGO_PSA(TLS_1_3, PSA_ALG_VENDOR_TLS13_BASE),
 	{ .string = NULL }
 };
 

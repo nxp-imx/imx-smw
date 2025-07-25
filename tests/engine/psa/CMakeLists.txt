@@ -3,6 +3,7 @@ target_sources(${PROJECT_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/aead.c
                ${CMAKE_CURRENT_SOURCE_DIR}/cipher.c
                ${CMAKE_CURRENT_SOURCE_DIR}/data.c
+               ${CMAKE_CURRENT_SOURCE_DIR}/derive.c
                ${CMAKE_CURRENT_SOURCE_DIR}/exec.c
                ${CMAKE_CURRENT_SOURCE_DIR}/hash.c
                ${CMAKE_CURRENT_SOURCE_DIR}/key.c

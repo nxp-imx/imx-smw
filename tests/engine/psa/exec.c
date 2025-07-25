@@ -15,6 +15,7 @@
 #include "mac.h"
 #include "storage.h"
 #include "aead.h"
+#include "derive.h"
 
 /**
  * execute_delete_key_cmd() - Execute delete key command.
@@ -258,6 +259,15 @@ static int execute_aead_cmd(char *cmd, struct subtest_data *subtest)
 	return ERR_CODE(UNDEFINED_CMD);
 }
 
+static int execute_derive_cmd(char *cmd, struct subtest_data *subtest)
+{
+	if (!strcmp(cmd, DERIVE))
+		return derive_psa(subtest);
+
+	DBG_PRINT("Undefined command");
+	return ERR_CODE(UNDEFINED_CMD);
+}
+
 int execute_command_psa(char *cmd, struct subtest_data *subtest)
 {
 	static struct cmd_op {
@@ -277,6 +287,7 @@ int execute_command_psa(char *cmd, struct subtest_data *subtest)
 		{ GET_KEY_ATTRIBUTES, &execute_get_key_attrs_cmd },
 		{ STORAGE, &execute_storage_cmd },
 		{ AEAD, &execute_aead_cmd },
+		{ DERIVE, &execute_derive_cmd },
 	};
 
 	for (size_t idx = 0; idx < ARRAY_SIZE(cmd_list); idx++) {

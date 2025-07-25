@@ -79,6 +79,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Fix key generation using ELE subsystem with permitted algorithm set to an asymmetric encryption algorithm.
 * Add support of the `PSA_KEY_TYPE_DG_PROVISIONING_KEY` Vendor algorithm used
   to provision the EL2GO OEM Secret Shared key (EL2GO Production flow).
+* Add support of the `PSA_ALG_VENDOR_TLS13` vendor algorithm for TLS1.3 and implement
+  the related PSA key derivation functions.
 
 ##### 4. OSAL
 
@@ -102,6 +104,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add tests to verify signature generation and verification using both Ed448 key
   ID and buffers for ELE subsystem.
 * Enable i.MX95 HMAC.
+* Add PSA tests validating key derivation using the `PSA_ALG_VENDOR_TLS13` algorithm.
 
 #### PKCS#11 Library
 

@@ -130,7 +130,7 @@ and supported by the SMW Library.
 	<td>✔️</td>
 	<td>✔️</td>
 	<td>✔️</td>
-	<td>❌️</td>
+	<td>✔️<sup><a href="#t_note_6">6</a></sup></td>
 </tr>
 <tr>
   <td>HKDF</td>
@@ -366,6 +366,7 @@ and supported by the SMW Library.
                                     using PKCS#11 APIs. But it's possible to 
 									use/access provisioned assets with the 
 									PKCS#11 APIs (see <a href="#5-pkcs11">5. PKCS11</a>).<br>
+<a name="t_note_6"><sup>6</sup></a> Using a vendor algorithm. See the declaration of <code>PSA_ALG_VENDOR_TLS13</code> for more details.<br>
 </p>
 
 Following <a href="#table-certificate">Certificates table</a> lists the certificate types supported by SMW, PKCS#11 and PSA libraries.

@@ -6,6 +6,7 @@
 #include <inttypes.h>
 
 #include "smw_keymgr.h"
+#include "smw_crypto.h"
 
 #include "psa/crypto.h"
 
@@ -24,6 +25,13 @@
 		.psa_key_type = PSA_KEY_TYPE_##_psa,                           \
 	}
 
+#define KEY_TYPE_GENERAL(_smw, _algo, _psa)                                    \
+	{                                                                      \
+		.smw_key_type = SMW_KEY_TYPE_NAME_##_smw,                      \
+		.smw_algo = SMW_ATTR_ALGO_##_algo,                             \
+		.psa_key_type = PSA_KEY_TYPE_##_psa,                           \
+	}
+
 /**
  * struct - Cipher key type
  * @smw_key_type: SMW key type name.
@@ -39,6 +47,16 @@ static const struct cipher_key_type {
 	KEY_TYPE(DES, DES),
 	KEY_TYPE(DES3, DES),
 	KEY_TYPE(SM4, SM4),
+};
+
+static const struct {
+	smw_key_type_t smw_key_type;
+	smw_attr_algo_t smw_algo;
+	psa_key_type_t psa_key_type;
+} general_key_type[] = {
+	KEY_TYPE_GENERAL(DERIVE, NONE, DERIVE),
+	KEY_TYPE_GENERAL(DERIVE, TLS_1_2, DERIVE),
+	KEY_TYPE_GENERAL(DERIVE, TLS_1_3, DERIVE),
 };
 
 #define ECC_KEY_TYPE(_smw, _family)                                            \
@@ -61,7 +79,8 @@ static const struct ecc_key_type ecc_key_type[] = {
 	ECC_KEY_TYPE(SECP_R1, SECP_R1),
 	ECC_KEY_TYPE(BRAINPOOL_R1, BRAINPOOL_P_R1),
 	ECC_KEY_TYPE(ED25519, TWISTED_EDWARDS),
-	ECC_KEY_TYPE(ED448, TWISTED_EDWARDS)
+	ECC_KEY_TYPE(ED448, TWISTED_EDWARDS),
+	ECC_KEY_TYPE(X25519, MONTGOMERY),
 };
 
 #define KEY_USAGE(_name)                                                       \
@@ -170,7 +189,8 @@ static bool is_ecc_key_type(smw_key_type_t type_name)
 	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_R1 ||
 	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1 ||
 	    type_name == SMW_KEY_TYPE_NAME_ED25519 ||
-	    type_name == SMW_KEY_TYPE_NAME_ED448)
+	    type_name == SMW_KEY_TYPE_NAME_ED448 ||
+	    type_name == SMW_KEY_TYPE_NAME_X25519)
 		return true;
 
 	return false;
@@ -428,6 +448,23 @@ psa_key_type_t get_cipher_psa_key_type(smw_key_type_t smw_key_type)
 	return PSA_KEY_TYPE_NONE;
 }
 
+psa_key_type_t get_general_psa_key_type(smw_key_type_t smw_key_type)
+{
+	unsigned int i = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	for (; i < ARRAY_SIZE(general_key_type); i++) {
+		if (general_key_type[i].smw_key_type == smw_key_type) {
+			SMW_DBG_PRINTF(DEBUG, "Key type name: %d\n",
+				       general_key_type[i].smw_key_type);
+			return general_key_type[i].psa_key_type;
+		}
+	}
+
+	return PSA_KEY_TYPE_NONE;
+}
+
 static smw_attr_algo_t get_cipher_algo_key_type(smw_key_type_t smw_key_type)
 {
 	smw_attr_algo_t smw_algo = SMW_ATTR_ALGO_NONE;
@@ -467,6 +504,9 @@ static smw_key_type_t get_smw_key_type(const psa_key_attributes_t *attributes,
 
 	if (psa_key_type == PSA_KEY_TYPE_RAW_DATA)
 		return SMW_KEY_TYPE_NAME_RAW;
+
+	if (psa_key_type == PSA_KEY_TYPE_DERIVE)
+		return SMW_KEY_TYPE_NAME_DERIVE;
 
 	if (PSA_KEY_TYPE_IS_DH(psa_key_type))
 		return SMW_KEY_TYPE_NAME_DH;
@@ -527,6 +567,8 @@ static psa_status_t get_psa_key_type(psa_key_type_t *psa_key_type,
 			*psa_key_type = get_hmac_psa_key_type(smw_key_type);
 		if (*psa_key_type == PSA_KEY_TYPE_NONE)
 			*psa_key_type = get_cipher_psa_key_type(smw_key_type);
+		if (*psa_key_type == PSA_KEY_TYPE_NONE)
+			*psa_key_type = get_general_psa_key_type(smw_key_type);
 		if (*psa_key_type != PSA_KEY_TYPE_NONE)
 			status = PSA_SUCCESS;
 	}
@@ -627,6 +669,7 @@ static const struct {
 	KDF_ALGO(HKDF_EXPAND, HKDF_EXPAND, true),
 	KDF_ALGO(TLS_1_2, TLS12_PRF, true),
 	KDF_ALGO(CKDF, VENDOR_CKDF, false),
+	KDF_ALGO(TLS_1_3, VENDOR_TLS13, true),
 };
 
 static smw_attr_algo_t get_smw_kdf_algo(psa_algorithm_t psa_algo)
@@ -661,12 +704,12 @@ static psa_algorithm_t get_psa_kdf_algo(smw_attr_algo_t smw_algo,
 
 		psa_algo = kdf_algo[i].psa_algo;
 		if (kdf_algo[i].with_hash)
-			SET_BITS(psa_algo, psa_hash);
+			SET_BITS(psa_algo, (psa_hash & PSA_ALG_HASH_MASK));
 
 		break;
 	}
 
-	return smw_algo;
+	return psa_algo;
 }
 
 static psa_key_usage_t get_psa_usage_flags(smw_attr_usage_t smw_usage_flags)
@@ -1529,11 +1572,17 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 __export psa_status_t
 psa_key_derivation_abort(psa_key_derivation_operation_t *operation)
 {
-	(void)operation;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (operation->info)
+		SMW_UTILS_FREE(operation->info);
+
+	if (operation->peerbuf)
+		SMW_UTILS_FREE(operation->peerbuf);
+
+	memset(operation, 0, sizeof(*operation));
+
+	return PSA_SUCCESS;
 }
 
 __export psa_status_t
@@ -1549,20 +1598,36 @@ psa_key_derivation_get_capacity(const psa_key_derivation_operation_t *operation,
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
+extern smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg);
+
 __export psa_status_t
 /* Without this comment clang-format does not meet the checkpatch requirement. */
 psa_key_derivation_input_bytes(psa_key_derivation_operation_t *operation,
 			       psa_key_derivation_step_t step,
 			       const uint8_t *data, size_t data_length)
 {
-	(void)operation;
-	(void)step;
-	(void)data;
-	(void)data_length;
+	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (PSA_ALG_IS_VENDOR_TLS13(operation->alg) &&
+	    step == PSA_KEY_DERIVATION_INPUT_INFO) {
+		if (operation->info || operation->infolen) {
+			psa_status = PSA_ERROR_ALREADY_EXISTS;
+		} else {
+			operation->infolen = data_length;
+			operation->info = SMW_UTILS_MALLOC(operation->infolen);
+			if (!operation->info) {
+				psa_status = PSA_ERROR_INSUFFICIENT_MEMORY;
+			} else {
+				SMW_UTILS_MEMCPY(operation->info, data,
+						 operation->infolen);
+
+				psa_status = PSA_SUCCESS;
+			}
+		}
+	}
+	return psa_status;
 }
 
 __export psa_status_t
@@ -1583,13 +1648,29 @@ __export psa_status_t
 psa_key_derivation_input_key(psa_key_derivation_operation_t *operation,
 			     psa_key_derivation_step_t step, psa_key_id_t key)
 {
-	(void)operation;
-	(void)step;
-	(void)key;
+	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (PSA_ALG_IS_VENDOR_TLS13(operation->alg)) {
+		if (step == PSA_KEY_DERIVATION_INPUT_SECRET) {
+			if (operation->secret_id) {
+				psa_status = PSA_ERROR_ALREADY_EXISTS;
+			} else {
+				operation->secret_id = key;
+				psa_status = PSA_SUCCESS;
+			}
+		} else if (step == PSA_KEY_DERIVATION_INPUT_OTHER_SECRET) {
+			if (operation->other_secret_id) {
+				psa_status = PSA_ERROR_ALREADY_EXISTS;
+			} else {
+				operation->other_secret_id = key;
+				psa_status = PSA_SUCCESS;
+			}
+		}
+	}
+
+	return psa_status;
 }
 
 __export psa_status_t
@@ -1600,13 +1681,146 @@ psa_key_derivation_key_agreement(psa_key_derivation_operation_t *operation,
 				 const uint8_t *peer_key,
 				 size_t peer_key_length)
 {
-	(void)operation;
-	(void)step;
-	(void)private_key;
-	(void)peer_key;
-	(void)peer_key_length;
+	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
+	psa_key_attributes_t private_attr = psa_key_attributes_init();
+	bool skip_bytes = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (PSA_ALG_IS_VENDOR_TLS13(operation->alg)) {
+		if (step == PSA_KEY_DERIVATION_INPUT_OTHER_SECRET) {
+			if (operation->other_secret_id || operation->peerbuf ||
+			    operation->peerbuflen)
+				return PSA_ERROR_ALREADY_EXISTS;
+
+			psa_status = psa_get_key_attributes(private_key,
+							    &private_attr);
+			if (psa_status != PSA_SUCCESS)
+				return psa_status;
+
+			if (!PSA_ALG_IS_VENDOR_TLS13(private_attr.alg))
+				return PSA_ERROR_NOT_PERMITTED;
+
+			if (PSA_KEY_TYPE_IS_ECC(private_attr.type) &&
+			    PSA_KEY_TYPE_ECC_GET_FAMILY(private_attr.type) ==
+				    PSA_ECC_FAMILY_SECP_R1 &&
+			    peer_key[0] == 0x04) {
+				/*
+				 * SECP_R1 keys should be in uncompressed format with a 0x04
+				 * leading byte. Skip the leading byte in this case.
+				 */
+				skip_bytes = 1;
+			}
+
+			operation->other_secret_id = private_key;
+			operation->peerbuflen = peer_key_length - skip_bytes;
+			operation->peerbuf =
+				SMW_UTILS_MALLOC(operation->peerbuflen);
+			if (!operation->peerbuf)
+				return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+			SMW_UTILS_MEMCPY(operation->peerbuf,
+					 peer_key + skip_bytes,
+					 operation->peerbuflen);
+
+			psa_status = PSA_SUCCESS;
+		}
+	}
+
+	return psa_status;
+}
+
+static psa_status_t
+psa_key_derivation_output_tls13(const psa_key_attributes_t *attributes,
+				psa_key_derivation_operation_t *operation,
+				psa_key_id_t *key, uint8_t *output,
+				size_t output_length)
+{
+	struct smw_kdf_tls13_args tls13 = { 0 };
+	struct smw_key_descriptor base = { 0 };
+	struct smw_key_descriptor psk = { 0 };
+	struct smw_derived_key_descriptor derived = { 0 };
+	struct smw_derive_key_args derive = { 0 };
+	enum smw_status_code status = SMW_STATUS_OK;
+	psa_key_attributes_t *attr = (psa_key_attributes_t *)attributes;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (operation->other_secret_id) {
+		base.id = operation->other_secret_id;
+		derive.store_derived_key = true;
+	} else {
+		base.type_name = SMW_KEY_TYPE_NAME_DERIVE;
+	}
+
+	if (SET_OVERFLOW(operation->infolen, tls13.expanded_label_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	tls13.expanded_label = operation->info;
+
+	if (SET_OVERFLOW(operation->peerbuflen,
+			 tls13.peer_public_buffer_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	tls13.peer_public_buffer = operation->peerbuf;
+
+	tls13.prf_name = get_hash_algo_name(PSA_ALG_GET_HASH(operation->alg));
+
+	if (operation->secret_id) {
+		psk.id = operation->secret_id;
+		tls13.psk = &psk;
+	}
+
+	if (key) {
+		if (SET_OVERFLOW(attr->bits, derived.security_size))
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		derived.type_name =
+			get_smw_key_type(attr, derived.security_size);
+
+		if (derived.type_name == SMW_KEY_TYPE_NAME_NONE)
+			return PSA_ERROR_NOT_SUPPORTED;
+
+		derived.attributes.usage_flags =
+			get_smw_usage_flags(attr->usage_flags);
+		derived.attributes.permitted_algo =
+			get_smw_algo(attr->alg, derived.type_name);
+	} else {
+		if (SET_OVERFLOW(output_length, derived.shared_secret_len))
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		derived.shared_secret = output;
+	}
+
+	derive.kdf_name = SMW_KDF_NAME_TLS13_KEY_EXCHANGE;
+	derive.kdf_arguments = &tls13;
+	derive.subsystem_name = get_psa_default_subsystem();
+	derive.key_descriptor_base = &base;
+	derive.key_descriptor_derived = &derived;
+
+	status = smw_derive_key(&derive);
+	if (status != SMW_STATUS_OK)
+		return util_smw_to_psa_status(status);
+
+	if (key)
+		*key = derived.id;
+
+	return PSA_SUCCESS;
+}
+
+__export psa_status_t
+/* Without this comment clang-format does not meet the checkpatch requirement. */
+psa_key_derivation_output_common(const psa_key_attributes_t *attributes,
+				 psa_key_derivation_operation_t *operation,
+				 psa_key_id_t *key, uint8_t *output,
+				 size_t output_length)
+{
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (PSA_ALG_IS_VENDOR_TLS13(operation->alg))
+		return psa_key_derivation_output_tls13(attributes, operation,
+						       key, output,
+						       output_length);
 
 	return PSA_ERROR_NOT_SUPPORTED;
 }
@@ -1615,13 +1829,16 @@ __export psa_status_t
 psa_key_derivation_output_bytes(psa_key_derivation_operation_t *operation,
 				uint8_t *output, size_t output_length)
 {
-	(void)operation;
-	(void)output;
-	(void)output_length;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!operation)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!output || !output_length)
+		return PSA_ERROR_INSUFFICIENT_DATA;
+
+	return psa_key_derivation_output_common(NULL, operation, NULL, output,
+						output_length);
 }
 
 __export psa_status_t
@@ -1630,13 +1847,16 @@ psa_key_derivation_output_key(const psa_key_attributes_t *attributes,
 			      psa_key_derivation_operation_t *operation,
 			      psa_key_id_t *key)
 {
-	(void)attributes;
-	(void)operation;
-	(void)key;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	return PSA_ERROR_NOT_SUPPORTED;
+	if (!attributes || !key)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	if (!operation)
+		return PSA_ERROR_BAD_STATE;
+
+	return psa_key_derivation_output_common(attributes, operation, key,
+						NULL, 0);
 }
 
 __export psa_status_t
@@ -1657,10 +1877,16 @@ __export psa_status_t
 psa_key_derivation_setup(psa_key_derivation_operation_t *operation,
 			 psa_algorithm_t alg)
 {
-	(void)operation;
-	(void)alg;
-
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (PSA_ALG_IS_VENDOR_TLS13(alg)) {
+		if (PSA_ALG_GET_HASH(alg) != PSA_ALG_SHA_256 &&
+		    PSA_ALG_GET_HASH(alg) != PSA_ALG_SHA_384)
+			return PSA_ERROR_NOT_SUPPORTED;
+
+		operation->alg = alg;
+		return PSA_SUCCESS;
+	}
 
 	return PSA_ERROR_NOT_SUPPORTED;
 }

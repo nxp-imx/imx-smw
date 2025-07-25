@@ -147,7 +147,7 @@ static const struct hash_algo_info *get_hash_algo_info(psa_algorithm_t alg)
 	return GET_ALGO_INFO(alg, hash_algo_info);
 }
 
-static smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
+smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
 {
 	const struct hash_algo_info *info = get_hash_algo_info(alg);
 

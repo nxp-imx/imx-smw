@@ -20,13 +20,25 @@ This will define the following variables:
   name of the libraries without path.
 
 #]=======================================================================]
+if(NOT DEFINED SQLite3_DIR)
+    message("SQLite_DIR not defined")
+endif()
+
+if(DEFINED SQLite3_DIR AND NOT IS_ABSOLUTE ${SQLite3_DIR})
+    set(SQLite3_DIR "${CMAKE_SOURCE_DIR}/${SQLite3_DIR}")
+endif()
+
 # Look for the necessary header
-find_path(SQLite3_INCLUDE_DIR NAMES sqlite3.h)
-mark_as_advanced(SQLite3_INCLUDE_DIR)
+find_path(SQLite3_INCLUDE_DIR NAMES sqlite3.h
+          PATHS ${SQLite3_DIR}
+          PATH_SUFFIXES usr/${CMAKE_INSTALL_INCLUDEDIR} ${CMAKE_INSTALL_INCLUDEDIR}
+          CMAKE_FIND_ROOT_PATH_BOTH)
 
 # Look for the necessary library
-find_library(SQLite3_LIBRARY NAMES sqlite3 sqlite)
-mark_as_advanced(SQLite3_LIBRARY)
+find_library(SQLite3_LIBRARY NAMES sqlite3 sqlite
+             PATHS ${SQLite3_DIR}
+             PATH_SUFFIXES usr/${CMAKE_INSTALL_LIBDIR} ${CMAKE_INSTALL_LIBDIR}
+             CMAKE_FIND_ROOT_PATH_BOTH)
 
 # Extract version information from the header file
 if(SQLite3_INCLUDE_DIR)
@@ -39,14 +51,25 @@ if(SQLite3_INCLUDE_DIR)
 endif()
 
 include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(${CMAKE_FIND_PACKAGE_NAME}
-    REQUIRED_VARS SQLite3_INCLUDE_DIR SQLite3_LIBRARY
+find_package_handle_standard_args(${CMAKE_FIND_PACKAGE_NAME}
+    REQUIRED_VARS SQLite3_LIBRARY
     VERSION_VAR SQLite3_VERSION)
-mark_as_advanced(SQLite3_FOUND)
 
 # Create the imported target
 if(SQLite3_FOUND)
   set(SQLite3_INCLUDE_DIRS ${SQLite3_INCLUDE_DIR})
   set(SQLite3_LIBRARIES ${SQLite3_LIBRARY})
   get_filename_component(SQLite3_LIB_NAMES ${SQLite3_LIBRARY} NAME)
+
+  # Avoid redefining the target
+  if(NOT TARGET SQLite3::SQLite3)
+    # Define the imported target
+    add_library(SQLite3::SQLite3 SHARED IMPORTED GLOBAL)
+
+    set_target_properties(SQLite3::SQLite3 PROPERTIES
+        IMPORTED_LOCATION "${SQLite3_LIBRARIES}")
+  endif()
+
 endif()
+
+mark_as_advanced(SQLite3_INCLUDE_DIR SQLite3_LIBRARY SQLite3_FOUND SQLite3_LIB_NAMES)

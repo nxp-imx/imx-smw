@@ -7,6 +7,8 @@ SEARCH_DIR="${1:-.}"
 find "$SEARCH_DIR" -name "CTestTestfile.cmake" | while read -r file; do
     echo "Processing: $file"
 
-    # Remove lines containing _BACKTRACE_TRIPLES
+    # Remove the comment line starting with Build directory
+    sed -i '/^# Build directory/d' "$file"
+    # Remove path after the _BACKTRACE_TRIPLES
     sed -i 's/_BACKTRACE_TRIPLES\s*".*"\s*//g' "$file"
 done

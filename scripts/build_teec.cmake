@@ -17,7 +17,7 @@ include(GNUInstallDirs)
 find_package(Teec)
 find_package(LibUUID)
 
-if(TEEC_FOUND)
+if(Teec_FOUND)
     message(STATUS "OPTEE Client and TA Development kit already installed")
     return()
 endif()

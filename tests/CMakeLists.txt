@@ -163,7 +163,9 @@ add_custom_target(remove_backtrace
         VERBATIM)
 
 if(TARGET install_tests)
-    add_dependencies(install_tests remove_backtrace)
+    if(YOCTO_BUILD)
+        add_dependencies(install_tests remove_backtrace)
+    endif()
     add_dependencies(install_tests install_${PROJECT_NAME})
 endif()
 

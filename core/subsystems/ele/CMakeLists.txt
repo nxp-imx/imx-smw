@@ -55,5 +55,19 @@ target_include_directories(ele PRIVATE
                            ${ELE_INCLUDE_DIRS}
                            ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(INTERFACE_LIBS ${INTERFACE_LIBS} ${ELE_LIB_NAMES} PARENT_SCOPE)
-set(EXT_LIBS ${EXT_LIBS} ${ELE_LIBRARIES} PARENT_SCOPE)
+target_link_libraries(ele PRIVATE Ele::Ele)
+
+set(EXT_LIBS ${EXT_LIBS} Ele::Ele PARENT_SCOPE)
+
+install(FILES ${CMAKE_LOCAL_MODULE_PATH}/FindEle.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
+
+set(FIND_DEPENDENCIES ${FIND_DEPENDENCIES}
+    "set(ELE_ROOT \${PACKAGE_PREFIX_DIR})")
+set(FIND_DEPENDENCIES ${FIND_DEPENDENCIES}
+    "find_dependency(Ele REQUIRED)" PARENT_SCOPE)
+
+if(NOT YOCTO_BUILD)
+  include(install_so_lib)
+  install_so_lib(${ELE_LIBRARIES} ${CMAKE_INSTALL_LIBDIR})
+endif()

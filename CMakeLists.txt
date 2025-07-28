@@ -27,7 +27,8 @@ if(CODE_COVERAGE)
     set(VERBOSE 5)
 endif()
 
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_LOCAL_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_LOCAL_MODULE_PATH} ${CMAKE_MODULE_PATH})
 set(CMAKE_INSTALL_PREFIX /usr)
 include(GNUInstallDirs)
 
@@ -143,6 +144,8 @@ endif()
 if(NOT DISABLE_CMAKE_CONFIG)
     # Create the SMW Package configuration
     include(CMakePackageConfigHelpers)
+
+    string(REPLACE ";" "\n" DEPENDENCIES "${FIND_DEPENDENCIES}")
 
     configure_package_config_file(cmake/NXP_SMWConfig.cmake.in
         ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cmake/NXP_SMWConfig.cmake

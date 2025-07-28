@@ -24,8 +24,20 @@ target_include_directories(osal
                            PRIVATE ${CMAKE_SOURCE_DIR}/inc
                            PUBLIC ${CMAKE_SOURCE_DIR}/public)
 
-set(INTERFACE_LIBS ${INTERFACE_LIBS} ${SQLite3_LIB_NAMES} PARENT_SCOPE)
-set(EXT_LIBS ${EXT_LIBS} ${SQLite3_LIBRARIES} PARENT_SCOPE)
+set(EXT_LIBS ${EXT_LIBS} SQLite3::SQLite3 PARENT_SCOPE)
+
+install(FILES ${CMAKE_LOCAL_MODULE_PATH}/FindSQLite3.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
+
+set(FIND_DEPENDENCIES ${FIND_DEPENDENCIES}
+    "set(SQLite3_DIR \${PACKAGE_PREFIX_DIR})")
+set(FIND_DEPENDENCIES ${FIND_DEPENDENCIES}
+    "find_dependency(SQLite3 REQUIRED)" PARENT_SCOPE)
+
+if(NOT YOCTO_BUILD)
+  include(install_so_lib)
+  install_so_lib(${SQLite3_LIBRARIES} ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 macro(make_smw_conf)
   #

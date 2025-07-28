@@ -49,8 +49,20 @@ target_include_directories(tee PRIVATE
 
 target_include_directories(tee SYSTEM PRIVATE ${TEEC_INCLUDE_DIR})
 
-set(INTERFACE_LIBS ${INTERFACE_LIBS} ${TEEC_LIB_NAMES} PARENT_SCOPE)
-set(EXT_LIBS ${EXT_LIBS} ${TEEC_LIBRARIES} PARENT_SCOPE)
+set(EXT_LIBS ${EXT_LIBS} Teec::Teec PARENT_SCOPE)
+
+install(FILES ${CMAKE_LOCAL_MODULE_PATH}/FindTeec.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
+
+set(FIND_DEPENDENCIES ${FIND_DEPENDENCIES}
+    "set(TEEC_ROOT \${PACKAGE_PREFIX_DIR})")
+set(FIND_DEPENDENCIES ${FIND_DEPENDENCIES}
+    "find_dependency(Teec REQUIRED)" PARENT_SCOPE)
+
+if(NOT YOCTO_BUILD)
+  include(install_so_lib)
+  install_so_lib(${TEEC_LIBRARIES} ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 string(REGEX REPLACE "-gcc$" "-" CROSS_COMPILE  ${CMAKE_C_COMPILER})
 

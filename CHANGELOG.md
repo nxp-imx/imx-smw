@@ -84,6 +84,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add a specific OSAL object structure to handle subsystem's object identifier.
 * Enable TLS Key derivation on i.MX95B0 in the ele_imx95_config.txt file.
 * Update the i.MX95 configuration file to enable support for AEAD one-shot operations.
+* Call library destructor on SIGINT signal.
 
 #### SMW Tests
 

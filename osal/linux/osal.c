@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2019-2024 NXP
+ * Copyright 2019-2025 NXP
  */
+
+#include <signal.h>
 #include <sqlite3.h>
 
 #include "local.h"
@@ -15,6 +17,16 @@ __attribute__((constructor)) static void constructor(void);
 
 static struct osal_ctx *osal_ctx;
 
+static void handler(int sig, siginfo_t *info, void *ucontext)
+{
+	(void)sig;
+	(void)info;
+	(void)ucontext;
+
+	DBG_PRINTF(DEBUG, "SIGINT catched, call destructor\n");
+	exit(EXIT_SUCCESS); /* exit() will call destructor method */
+}
+
 inline struct osal_ctx *get_osal_ctx(void)
 {
 	return osal_ctx;
@@ -22,6 +34,8 @@ inline struct osal_ctx *get_osal_ctx(void)
 
 static void constructor(void)
 {
+	struct sigaction sa;
+
 	set_log_file();
 	set_log_level();
 
@@ -33,6 +47,26 @@ static void constructor(void)
 	}
 
 	DBG_PRINTF(DEBUG, "OSAL context ready\n");
+
+	if (sigaction(SIGINT, NULL, &sa) == -1) {
+		DBG_PRINTF(DEBUG, "OSAL get SIGINT handler failed\n");
+		return;
+	}
+
+	if (sa.sa_handler == SIG_DFL || sa.sa_handler == SIG_IGN) {
+		sa.sa_sigaction = handler;
+		sa.sa_flags = SA_SIGINFO;
+		sigemptyset(&sa.sa_mask);
+
+		if (sigaction(SIGINT, &sa, NULL) == -1) {
+			DBG_PRINTF(DEBUG, "OSAL set SIGINT handler failed\n");
+			return;
+		}
+
+		DBG_PRINTF(DEBUG, "OSAL SIGINT handler ready\n");
+	} else {
+		DBG_PRINTF(DEBUG, "SIGINT handler already set\n");
+	}
 }
 
 static inline void free_context(void)

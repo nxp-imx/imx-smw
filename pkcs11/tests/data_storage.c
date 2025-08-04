@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2024 NXP
+ * Copyright 2024-2025 NXP
  */
 
 #include <stdlib.h>
@@ -120,14 +120,19 @@ static int data_storage_store(CK_FUNCTION_LIST_PTR pfunc)
 	CK_UTF8CHAR label[] = "Data";
 	CK_BYTE data[] = { 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 	CK_BYTE retrieved_data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	CK_BYTE obj_id[] = { 0x2A, 0x88, 0x01 };
+	CK_BYTE retrieved_obj_id[] = { 0x00, 0x00, 0x00, 0x00 };
 	CK_ATTRIBUTE data_template[] = {
 		{ CKA_CLASS, &data_class, sizeof(data_class) },
 		{ CKA_LABEL, label, sizeof(label) - 1 },
 		{ CKA_VALUE, data, sizeof(data) },
-		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) }
+		{ CKA_TOKEN, &token, sizeof(CK_BBOOL) },
+		{ CKA_OBJECT_ID, &obj_id, sizeof(obj_id) }
 	};
-	CK_ATTRIBUTE retrieve_template[] = { { CKA_VALUE, retrieved_data,
-					       sizeof(retrieved_data) } };
+	CK_ATTRIBUTE retrieve_template[] = {
+		{ CKA_VALUE, retrieved_data, sizeof(retrieved_data) },
+		{ CKA_OBJECT_ID, retrieved_obj_id, sizeof(retrieved_obj_id) }
+	};
 
 	SUBTEST_START();
 
@@ -153,6 +158,13 @@ static int data_storage_store(CK_FUNCTION_LIST_PTR pfunc)
 		goto end;
 	}
 
+	if (!util_compare_buffers(obj_id, sizeof(obj_id),
+				  retrieve_template[1].pValue,
+				  retrieve_template[1].ulValueLen)) {
+		TEST_OUT("Retrieved Object ID is not the same\n");
+		goto end;
+	}
+
 	TEST_OUT("Destroy %sData\n", token ? "Token " : "");
 	ret = pfunc->C_DestroyObject(sess, hdata);
 	if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
@@ -174,6 +186,13 @@ static int data_storage_store(CK_FUNCTION_LIST_PTR pfunc)
 				  retrieve_template[0].pValue,
 				  retrieve_template[0].ulValueLen)) {
 		TEST_OUT("Retrieved Data is not the same\n");
+		goto end;
+	}
+
+	if (util_compare_buffers(obj_id, sizeof(obj_id),
+				 retrieve_template[1].pValue,
+				 retrieve_template[1].ulValueLen)) {
+		TEST_OUT("Retrieved Object ID is incorrect\n");
 		goto end;
 	}
 

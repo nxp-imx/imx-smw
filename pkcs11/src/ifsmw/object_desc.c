@@ -18,6 +18,7 @@
 
 #include "key_desc.h"
 #include "object_desc.h"
+#include "util_asn1.h"
 
 #include "trace.h"
 
@@ -154,6 +155,7 @@ static CK_RV attrs_to_object_descriptor(struct smw_object_descriptor *desc,
 	struct librfc2279 unique_id = { 0 };
 	struct librfc2279 label = { 0 };
 	struct libbytes user_id = { 0 };
+	struct libbytes obj_id = { 0 };
 	struct libbytes ec_params = { 0 };
 	unsigned int i = 0;
 	size_t len = 0;
@@ -161,6 +163,18 @@ static CK_RV attrs_to_object_descriptor(struct smw_object_descriptor *desc,
 	for (; i < nb_attrs; i++) {
 		switch (attrs[i].type) {
 		case CKA_OBJECT_ID:
+			if (user_id.array) {
+				ret = CKR_ARGUMENTS_BAD;
+				break;
+			}
+
+			ret = attr_to_byte_array(&obj_id, &attrs[i]);
+			if (ret != CKR_OK)
+				break;
+
+			ret = util_asn1_decode_object_id(&user_id, &obj_id);
+			break;
+
 		case CKA_ID:
 			if (user_id.array)
 				ret = CKR_ARGUMENTS_BAD;
@@ -259,6 +273,9 @@ end:
 	if (user_id.array)
 		free(user_id.array);
 
+	if (obj_id.array)
+		free(obj_id.array);
+
 	if (label.string)
 		free(label.string);
 
@@ -286,6 +303,7 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 	CK_ULONG obj_length = 0;
 	struct libbytes label = { 0 };
 	struct libbytes user_id = { 0 };
+	struct libbytes obj_id = { 0 };
 	CK_ULONG nb_attrs = 0;
 	CK_ATTRIBUTE_PTR p_attr = NULL;
 	struct smw_key_descriptor *key = &desc->key;
@@ -431,20 +449,46 @@ static CK_RV object_descriptor_to_attrs(struct smw_object_descriptor *desc,
 
 	if (desc->user_id) {
 		if (p_attr) {
-			if (object_class == CKO_DATA)
-				p_attr->type = CKA_OBJECT_ID;
-			else
-				p_attr->type = CKA_ID;
-
 			ret = util_base64_decode(&user_id, desc->user_id);
 			if (ret != CKR_OK)
 				goto end;
 
-			if (p_attr->ulValueLen < user_id.number)
-				p_attr->ulValueLen = user_id.number;
-			else
-				memcpy(p_attr->pValue, user_id.array,
-				       p_attr->ulValueLen);
+			switch (object_class) {
+			case CKO_DATA:
+				p_attr->type = CKA_OBJECT_ID;
+				ret = util_asn1_encode_object_id(&obj_id,
+								 &user_id);
+				if (ret != CKR_OK) {
+					if (user_id.array)
+						free(user_id.array);
+
+					goto end;
+				}
+
+				if (p_attr->ulValueLen < obj_id.number) {
+					p_attr->ulValueLen = obj_id.number;
+				} else {
+					memcpy(p_attr->pValue, obj_id.array,
+					       p_attr->ulValueLen);
+				}
+
+				if (obj_id.array)
+					free(obj_id.array);
+
+				break;
+
+			default:
+				p_attr->type = CKA_ID;
+
+				if (p_attr->ulValueLen < user_id.number) {
+					p_attr->ulValueLen = user_id.number;
+				} else {
+					memcpy(p_attr->pValue, user_id.array,
+					       p_attr->ulValueLen);
+				}
+
+				break;
+			}
 
 			if (user_id.array)
 				free(user_id.array);
@@ -632,8 +676,9 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	case CKO_DATA:
 		data = get_subobj_from(obj, storage);
 		if (data && data->id.number) {
-			user_id.number = data->id.number;
-			user_id.array = data->id.array;
+			ret = util_asn1_decode_object_id(&user_id, &data->id);
+			if (ret != CKR_OK)
+				goto end;
 		}
 
 		break;
@@ -669,6 +714,9 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 end:
 	cleanup_smw_object_descriptor(&descriptor);
 
+	if (obj->class == CKO_DATA && user_id.array)
+		free(user_id.array);
+
 	return ret;
 }
 
@@ -686,8 +734,8 @@ CK_RV obj_db_retrieve_obj(CK_SESSION_HANDLE hsession,
 		return ret;
 
 	/* Build the attributes template to create the PKCS11 object */
-	ret = object_descriptor_to_attrs(descriptor, object_class,
-					 &attributes, &attributes_count);
+	ret = object_descriptor_to_attrs(descriptor, object_class, &attributes,
+					 &attributes_count);
 	if (ret != CKR_OK)
 		return ret;
 

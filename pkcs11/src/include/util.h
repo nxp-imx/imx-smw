@@ -23,19 +23,39 @@
 	({                                                                     \
 		__typeof__(out) _out = 0;                                      \
 		__typeof__(buf) _buf = (buf);                                  \
-		size_t i = len;                                                \
-		int ret = 0;                                                   \
-		if (i > sizeof(_out)) {                                        \
-			ret = 1;                                               \
+		size_t _i = (len);                                             \
+		int _ret = 0;                                                  \
+		if (_i > sizeof(_out)) {                                       \
+			_ret = 1;                                              \
 		} else {                                                       \
-			_out = _buf[--i] & UINT8_MAX;                          \
-			for (; i; i--) {                                       \
+			_out = _buf[--_i] & UINT8_MAX;                         \
+			for (; _i; _i--) {                                     \
 				_out <<= 8;                                    \
-				_out |= _buf[i - 1] & UINT8_MAX;               \
+				_out |= _buf[_i - 1] & UINT8_MAX;              \
 			}                                                      \
 			out = _out;                                            \
 		}                                                              \
-		ret;                                                           \
+		_ret;                                                          \
+	})
+
+#define TO_INT_BE(out, buf, len)                                               \
+	({                                                                     \
+		__typeof__(out) _out = 0;                                      \
+		__typeof__(buf) _buf = (buf);                                  \
+		size_t _i = 0;                                                 \
+		size_t _maxlen = (len);                                        \
+		int _ret = 0;                                                  \
+		if (_maxlen > sizeof(_out)) {                                  \
+			_ret = 1;                                              \
+		} else {                                                       \
+			_out = _buf[_i++] & UINT8_MAX;                         \
+			for (; _i < _maxlen; _i++) {                           \
+				_out <<= 8;                                    \
+				_out |= _buf[_i] & UINT8_MAX;                  \
+			}                                                      \
+			out = _out;                                            \
+		}                                                              \
+		_ret;                                                          \
 	})
 
 /**
@@ -146,5 +166,33 @@ CK_RV util_base64_encode(char **base64, struct libbytes *src);
  * CKR_HOST_MEMORY      - Out of memory
  */
 CK_RV util_base64_decode(struct libbytes *out, const char *base64);
+
+/**
+ * util_base128_encode() - Encode big-endian byte array in base128 input
+ * @out: [out] Base128 byte array
+ * @in: [in] Big-endian byte array
+ *
+ * Function allocates the @out->array, user must free it.
+ *
+ * return:
+ * CKR_OK               - Success
+ * CKR_HOST_MEMORY      - Out of memory
+ * CKR_DATA_INVALID     - Input buffer invalid
+ */
+CK_RV util_base128_encode(struct libbytes *out, struct libbytes *in);
+
+/**
+ * util_base128_decode() - Decode base128 input into big-endian byte array
+ * @out: [out] Big-endian byte array
+ * @in: [in] Base128 byte array
+ *
+ * Function allocates the @out->array, user must free it.
+ *
+ * return:
+ * CKR_OK               - Success
+ * CKR_HOST_MEMORY      - Out of memory
+ * CKR_DATA_INVALID     - Input buffer invalid
+ */
+CK_RV util_base128_decode(struct libbytes *out, struct libbytes *in);
 
 #endif /* __UTIL_H__ */

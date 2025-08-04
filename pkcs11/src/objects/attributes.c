@@ -10,7 +10,6 @@
 
 #include "trace.h"
 #include "util.h"
-#include "util_asn1.h"
 
 /**
  * obj_find_attr() - Find an attribute type in object template

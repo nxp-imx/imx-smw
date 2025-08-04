@@ -26,6 +26,50 @@ static const char encoding_table[] = {
 /* Mask used to avoid encoding table buffer over-read */
 #define ENC_MAX_ARRAY_MASK (ARRAY_SIZE(encoding_table) - 1)
 
+static CK_BYTE divide_by_128(CK_BYTE_PTR bytes, size_t len)
+{
+	unsigned int remainder = 0;
+	unsigned int current = 0;
+	size_t i = 0;
+
+	for (; i < len; i++) {
+		current = (remainder << 8) | bytes[i];
+		bytes[i] = (current >> 7) & UINT8_MAX;
+		remainder = current % 128;
+	}
+
+	return remainder & UINT8_MAX;
+}
+
+static void multiply_add_128(CK_BYTE_PTR bytes, size_t len, CK_BYTE value)
+{
+	unsigned int carry = value;
+	unsigned int tmp = 0;
+	size_t i = len;
+
+	for (; i > 0; i--) {
+		tmp = bytes[i - 1] << 7;
+
+		if (ADD_OVERFLOW(tmp, carry, &tmp))
+			tmp = 0;
+
+		bytes[i - 1] = tmp & 0xFF;
+		carry = tmp >> 8;
+	}
+}
+
+static int is_zero(CK_BYTE_PTR bytes, size_t len)
+{
+	size_t i = 0;
+
+	for (; i < len; i++) {
+		if (bytes[i] != 0)
+			return 0;
+	}
+
+	return 1;
+}
+
 static size_t get_b64_from_hex_len(size_t hex_len)
 {
 	size_t b64_len = 0;
@@ -398,4 +442,96 @@ exit:
 		free(tmp_hex);
 
 	return ret;
+}
+
+CK_RV util_base128_encode(struct libbytes *out, struct libbytes *in)
+{
+	CK_RV ret = CKR_DATA_INVALID;
+	CK_BYTE *work = NULL;
+	CK_BYTE tmp = 0;
+	size_t i = 0;
+
+	if (!in->number)
+		goto end;
+
+	work = malloc(in->number);
+	if (!work) {
+		DBG_TRACE("Allocation error");
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	/* First pass, calculate the out->number */
+	memcpy(work, in->array, in->number);
+
+	out->number = 0;
+	while (!is_zero(work, in->number)) {
+		(void)divide_by_128(work, in->number);
+		if (INC_OVERFLOW(out->number, 1)) {
+			ret = CKR_DATA_INVALID;
+			goto end;
+		}
+	}
+
+	if (!out->number) {
+		ret = CKR_DATA_INVALID;
+		goto end;
+	}
+
+	/* Allocate the out->array buffer */
+	out->array = malloc(out->number);
+	if (!out->array) {
+		DBG_TRACE("Allocation error");
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	/* Second pass, fill the out->array */
+	memcpy(work, in->array, in->number);
+
+	while (!is_zero(work, in->number))
+		out->array[i++] = divide_by_128(work, in->number);
+
+	/* Reverse in-place and apply continuation bits after */
+	for (i = 0; i < out->number / 2; i++) {
+		tmp = out->array[i];
+		out->array[i] = out->array[out->number - i - 1];
+		out->array[out->number - i - 1] = tmp;
+	}
+
+	for (i = 0; i < out->number - 1; i++)
+		out->array[i] |= 0x80;
+
+	ret = CKR_OK;
+
+end:
+	if (work)
+		free(work);
+
+	return ret;
+}
+
+CK_RV util_base128_decode(struct libbytes *out, struct libbytes *in)
+{
+	CK_BYTE byte = 0;
+	size_t i = 0;
+
+	if (!in->number)
+		return CKR_DATA_INVALID;
+
+	out->number = in->number;
+
+	/* Allocate the out->array buffer */
+	out->array = calloc(out->number, 1);
+	if (!out->array) {
+		DBG_TRACE("Allocation error");
+		return CKR_HOST_MEMORY;
+	}
+
+	for (; i < in->number; i++) {
+		byte = in->array[i] & 0x7F;
+		multiply_add_128(out->array, out->number, byte);
+	}
+
+	return CKR_OK;
 }

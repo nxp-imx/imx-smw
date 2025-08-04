@@ -444,3 +444,66 @@ CK_RV util_asn1_get_field_octet_string(uint8_t *in, size_t inlen, uint8_t **out,
 end:
 	return ret;
 }
+
+CK_RV util_asn1_encode_object_id(struct libbytes *out, struct libbytes *in)
+{
+	CK_RV ret = CKR_OK;
+	struct libbytes tmp = { 0 };
+
+	if (!out || !in)
+		return CKR_ARGUMENTS_BAD;
+
+	if (!in->number || !in->array)
+		return CKR_ARGUMENTS_BAD;
+
+	ret = util_base128_encode(&tmp, in);
+	if (ret != CKR_OK)
+		return ret;
+
+	out->number = 1 + tmp.number;
+	out->array = malloc(out->number);
+	if (out->array) {
+		out->array[0] = ANSI_ISO_MEMBER_BODY_TAG;
+		memcpy(&out->array[1], tmp.array, tmp.number);
+	} else {
+		ret = CKR_HOST_MEMORY;
+	}
+
+	free(tmp.array);
+
+	return ret;
+}
+
+CK_RV util_asn1_decode_object_id(struct libbytes *out, struct libbytes *in)
+{
+	CK_RV ret = CKR_OK;
+	unsigned int tag = 0;
+	struct libbytes tmp = { 0 };
+
+	if (!out || !in)
+		return CKR_ARGUMENTS_BAD;
+
+	if (!in->number || !in->array)
+		return CKR_ARGUMENTS_BAD;
+
+	if (in->number < 2)
+		return CKR_DATA_INVALID;
+
+	tag = in->array[0];
+	/* TAG value first byte can be 0, 1 or 2 */
+	tag /= 40;
+	if (tag > 2)
+		return CKR_DATA_INVALID;
+
+	/* TAG value second byte must be equal to 2 */
+	tag = in->array[0] - tag * 40;
+	if (tag != 2)
+		return CKR_DATA_INVALID;
+
+	tmp.array = &in->array[1];
+	tmp.number = in->number - 1;
+
+	ret = util_base128_decode(out, &tmp);
+
+	return ret;
+}

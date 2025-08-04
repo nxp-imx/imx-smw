@@ -48,10 +48,11 @@ struct curve_def {
 #define ASN1_OBJECT_IDENTIFIER 6
 #define ASN1_OCTET_STRING_TAG  0x04
 
-/*
- * DER ANSI X9.62 Uncompress key tag
- */
+/* DER ANSI X9.62 Uncompress key tag */
 #define ANSI_UNCOMPRESS_KEY_TAG 0x04
+
+/* DER OID ISO tag */
+#define ANSI_ISO_MEMBER_BODY_TAG 0x2A
 
 /**
  * util_asn1_ec_params_to_curve() - Convert EC parameters to a defined EC curve
@@ -137,5 +138,29 @@ CK_RV util_asn1_decode_octet_string(uint8_t *in, size_t inlen, uint8_t *out,
  */
 CK_RV util_asn1_get_field_octet_string(uint8_t *in, size_t inlen, uint8_t **out,
 				       size_t *outlen);
+/**
+ * util_asn1_encode_object_id() - Encode an OBJECT IDENTIFIER
+ * @out: [out] Encoded value
+ * @id: [in] Identifier to encode
+ *
+ * return:
+ * CKR_OK                        - Success
+ * CKR_ARGUMENTS_BAD             - Bad arguments
+ * CKR_HOST_MEMORY               - Out of memory
+ */
+CK_RV util_asn1_encode_object_id(struct libbytes *out, struct libbytes *in);
+
+/**
+ * util_asn1_decode_object_id() - Decode an OBJECT IDENTIFIER
+ * @out: [out] Decoded value
+ * @id: [in] ASN1 object identifier to decode
+ *
+ * return:
+ * CKR_OK                        - Success
+ * CKR_ARGUMENTS_BAD             - Bad arguments
+ * CKR_DATA_INVALID              - Input buffer invalid
+ * CKR_HOST_MEMORY               - Out of memory
+ */
+CK_RV util_asn1_decode_object_id(struct libbytes *out, struct libbytes *in);
 
 #endif /* __UTIL_ASN1_H__ */

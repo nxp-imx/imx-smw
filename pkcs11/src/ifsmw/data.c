@@ -11,6 +11,7 @@
 #include "smw/names.h"
 
 #include "util.h"
+#include "util_asn1.h"
 #include "trace.h"
 
 #include "lib_session.h"
@@ -31,19 +32,37 @@ static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 	struct smw_store_data_args args = { 0 };
 	struct smw_data_descriptor data_descriptor = { 0 };
 	struct libobj_data *data = get_subobj_from(obj, storage);
+	struct libbytes data_id = { 0 };
 
 	ret = libsess_get_slotid(hsession, &slotid);
 	if (ret != CKR_OK)
-		return ret;
+		goto end;
 
 	devinfo = libdev_get_devinfo(slotid);
-	if (!devinfo)
-		return CKR_SLOT_ID_INVALID;
+	if (!devinfo) {
+		ret = CKR_SLOT_ID_INVALID;
+		goto end;
+	}
+
+	if (data->id.array) {
+		/* User defined a data id */
+		ret = util_asn1_decode_object_id(&data_id, &data->id);
+		if (ret != CKR_OK)
+			goto end;
+
+		if (TO_INT_BE(data_descriptor.identifier, data_id.array,
+			      data_id.number)) {
+			ret = CKR_FUNCTION_FAILED;
+			goto end;
+		}
+	}
 
 	data_descriptor.data = data->value.array;
 
-	if (SET_OVERFLOW(data->value.number, data_descriptor.length))
-		return CKR_FUNCTION_FAILED;
+	if (SET_OVERFLOW(data->value.number, data_descriptor.length)) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
 
 	args_attr_obj_storage(&data_descriptor.attributes.attributes, obj);
 
@@ -55,6 +74,10 @@ static int store_data(CK_SESSION_HANDLE hsession, struct libobj_obj *obj)
 
 	if (status == SMW_STATUS_OK)
 		set_data_token_id(obj, data_descriptor.identifier);
+
+end:
+	if (data_id.array)
+		free(data_id.array);
 
 	return ret;
 }

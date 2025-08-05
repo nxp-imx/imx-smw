@@ -27,7 +27,6 @@
 		"key_name": "self x25519 key",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},

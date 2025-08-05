@@ -80,7 +80,6 @@
 		"key_name": "key 1",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -94,7 +93,6 @@
 		"key_name": "key 2",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -108,7 +106,6 @@
 		"key_name": "key 3",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -139,7 +136,6 @@
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -155,7 +151,6 @@
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -171,7 +166,6 @@
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	}

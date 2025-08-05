@@ -210,40 +210,24 @@
 		"key_name": "key 9",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
 	"subtest 15": {
 		"command": "EXPORT_PUBLIC",
 		"key_name": "key 10",
-		"depends": 14,
-		"restriction_list": [
-			"imx8ulp",
-			"imx95",
-			"imx943"
-		]
+		"depends": 14
 	},
 	"subtest 16": {
 		"command": "EXPORT_PRIVATE",
 		"key_name": "key 11",
 		"depends": 14,
-		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
-		"restriction_list": [
-			"imx8ulp",
-			"imx95",
-			"imx943"
-		]
+		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED"
 	},
 	"subtest 17": {
 		"command": "DELETE",
 		"key_name": "key 9",
-		"depends": 14,
-		"restriction_list": [
-			"imx8ulp",
-			"imx95",
-			"imx943"
-		]
+		"depends": 14
 	},
 	"subtest 18": {
 		"command": "GENERATE",
@@ -251,7 +235,6 @@
 		"key_name": "key 12",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -272,7 +255,6 @@
 		"key_name": "key 15",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},

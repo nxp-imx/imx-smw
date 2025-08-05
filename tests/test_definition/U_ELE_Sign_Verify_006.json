@@ -59,7 +59,6 @@
 		"key_name": "key test 2",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -164,7 +163,6 @@
 		"key_name": "key test 1024",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -360,7 +358,6 @@
 		"key_name": "key test 2",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		],
 		"result": "SMW_STATUS_INVALID_PARAM"

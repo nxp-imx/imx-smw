@@ -176,7 +176,6 @@
 		"key_name": "key 8",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -186,7 +185,6 @@
 		"key_name": "key 9",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -196,7 +194,6 @@
 		"key_name": "key 10",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},

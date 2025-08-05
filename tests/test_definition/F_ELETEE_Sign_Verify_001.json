@@ -84,7 +84,8 @@
 		"command": "EXPORT_PUBLIC",
 		"subsystem": "ELE",
 		"key_name": "key 2",
-		"save_output": true
+		"save_output": true,
+		"depends": 1
 	},
 	"subtest 4": {
 		"description": [
@@ -104,7 +105,10 @@
 		],
 		"sign_id": 0,
 		"key_name": "key 2",
-		"depends": 3
+		"depends": [
+			2,
+			3
+		]
 	},
 	"subtest 5": {
 		"command": "DELETE",
@@ -136,7 +140,8 @@
 		"command": "EXPORT_PUBLIC",
 		"subsystem": "TEE",
 		"key_name": "key 4",
-		"save_output": true
+		"save_output": true,
+		"depends": 6
 	},
 	"subtest 9": {
 		"description": [
@@ -156,7 +161,10 @@
 		],
 		"sign_id": 1,
 		"key_name": "key 4",
-		"depends": 8
+		"depends": [
+			7,
+			8
+		]
 	},
 	"subtest 10": {
 		"command": "DELETE",

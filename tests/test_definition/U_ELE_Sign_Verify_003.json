@@ -61,7 +61,6 @@
 		"key_name": "key 2",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -71,7 +70,6 @@
 		"key_name": "key 3",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -175,7 +173,10 @@
 		],
 		"sign_id": 2,
 		"key_name": "key 3",
-		"depends": 3
+		"depends": 3,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 9": {
 		"description": "Verify message Pre-hashed with key all EDDSA",
@@ -323,7 +324,10 @@
 		"sign_id": 6,
 		"key_name": "key 2",
 		"result": "SMW_STATUS_OPERATION_NOT_SUPPORTED",
-		"depends": 2
+		"depends": 2,
+		"restriction_list": [
+			"imx95"
+		]
 	},
 	"subtest 15": {
 		"command": "DELETE",

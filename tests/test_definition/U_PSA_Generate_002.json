@@ -34,7 +34,6 @@
 		"key_name": "key 1",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -44,7 +43,6 @@
 		"key_name": "key 2",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -55,7 +53,6 @@
 		"depends": 1,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -66,7 +63,6 @@
 		"depends": 2,
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	}

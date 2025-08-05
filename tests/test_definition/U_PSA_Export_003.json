@@ -35,7 +35,6 @@
 		"key_name": "key 1",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},

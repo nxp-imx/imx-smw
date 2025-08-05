@@ -650,7 +650,16 @@ static CK_RV tls_update_buffers(struct lib_cipher_params *params,
 		if (ctx->output + ctx->output_length != params->poutput)
 			goto end;
 
-		if (params->op_flag & (CKF_ENCRYPT | CKF_MESSAGE_ENCRYPT)) {
+		if (params->op_flag & CKF_ENCRYPT) {
+			/* Get tag value if none was set in parameters  */
+			if (!ctx->tag) {
+				ctx->tag = calloc(1, ctx->tag_length);
+				if (!ctx->tag) {
+					ret = CKR_HOST_MEMORY;
+					goto end;
+				}
+			}
+
 			if (ADD_OVERFLOW(ctx->output_length,
 					 params->output_length,
 					 &ctx->output_length))
@@ -960,7 +969,7 @@ CK_RV lib_encrypt_decrypt(CK_SESSION_HANDLE hsession, CK_VOID_PTR pparameter,
 
 	/* Update output data buffer length */
 	obj = (struct libobj_obj *)ctx->hkey;
-	if ((get_key_tls(obj) == NOT_TLS_KEY) | !poutput)
+	if ((get_key_tls(obj) == NOT_TLS_KEY) || !poutput)
 		*poutput_length = params.output_length;
 
 	if (ret == CKR_BUFFER_TOO_SMALL && !poutput)

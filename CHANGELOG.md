@@ -105,12 +105,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 * Clean up object retrieve function removing unnecessary call to the get
   key attributes.
-* Add TLS 1.2 Key exchange and MAC support
+* Add TLS 1.2 Key exchange and MAC support.
+* Encode and decode data id (CKA_OBJECT_ID) in OID format.
 
 #### PKCS#11 Tests
 
 * Test TLS 1.2 Key exchange tests.
 * Test TLS 1.2 Hash MAC operation.
+* Test data CKA_OBJECT_ID using OID format.
 
 ---
 ### <a id ="rel_5_0"></a></br>**Release 5.0.1**

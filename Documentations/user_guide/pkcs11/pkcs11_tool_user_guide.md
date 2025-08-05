@@ -28,6 +28,10 @@
   - [✅ Verification](#-verification)
   - [🛡️ Authenticated Encryption (AEAD)](#️-authenticated-encryption-aead)
   - [🎲 Random Number Generation](#-random-number-generation)
+  - [📥 Reading, Writing and Deleting Data](#-reading-writing-and-deleting-data)
+    - [Write data](#write-data)
+    - [Read data](#read-data)
+    - [Delete data](#delete-data)
 - [Cryptography Mechanisms Supported](#cryptography-mechanisms-supported)
   - [Key Generation](#key-generation)
   - [Key Derivation](#key-derivation)
@@ -46,12 +50,12 @@
 
 # Introduction
 
-`pkcs11-tool` is a command-line utility used to interact with PKCS#11 
-cryptographic tokens such as smart cards and Hardware Security Modules (HSMs). 
-It allows users to perform operations like listing objects, 
+`pkcs11-tool` is a command-line utility used to interact with PKCS#11
+cryptographic tokens such as smart cards and Hardware Security Modules (HSMs).
+It allows users to perform operations like listing objects,
 generating key pairs, signing data, and more.
 
-This guide explains some typical command lines example that could be executed 
+This guide explains some typical command lines example that could be executed
 on NXP platforms.
 
 
@@ -59,21 +63,21 @@ on NXP platforms.
 
 Before using `pkcs11-tool`, ensure the following:
 
-- You have installed the `pkcs11-tool` utility (usually part of the 
+- You have installed the `pkcs11-tool` utility (usually part of the
   [OpenSC](https://github.com/OpenSC/OpenSC/wiki) package).
-- Ensure that SMW's PKCS11 library is installed on your system. The shared 
+- Ensure that SMW's PKCS11 library is installed on your system. The shared
   library file `libsmw_pkcs11.so.x.y` (where `x.y` is the library major.minor
-  version)  must be present in the system folder usually `\usr\lib\`. 
+  version)  must be present in the system folder usually `\usr\lib\`.
   On linux based system, the symbol file `libsmw_pkcs11.so.x` is also present and
   should be used as pkcs11-tool module parameter (*--module*).
 
   More information are available in [build instruction](../build_instructions.md),
   chapter `Install command`.
 - If running on a NXP platform with a Secure Enclave (e.g. SECO or ELE Secure
-  Enclave) enabled (configured) in the SMW library, make sure that the 
+  Enclave) enabled (configured) in the SMW library, make sure that the
   NVM Secure Storage kernel service is up and running using the command:
 
-  ```sh 
+  ```sh
   systemctl start nvm_daemon
   ```
 
@@ -87,8 +91,8 @@ export MODULE_PKCS11=/usr/lib/libsmw_pkcs11.so.5
 
 > 📝 **Note 1:**
 > For the following command example, the SMW's PKCS11 library
-  major version 5 is used. If another version is used, replace the shared 
-  library major version with the correct value. 
+  major version 5 is used. If another version is used, replace the shared
+  library major version with the correct value.
 
 > 📝 **Note 2:**
 > For a concrete use case, the following examples are
@@ -102,24 +106,21 @@ export MODULE_PKCS11=/usr/lib/libsmw_pkcs11.so.5
 # Limitations
 
 This user guide doesn't provide all possible `pkcs11-tool` command lines and
-doesn't guaranty that all possible options of the listed operations are 
-functional with the SMW's PKCS11 library where targeted Secure Subsystem are 
+doesn't guaranty that all possible options of the listed operations are
+functional with the SMW's PKCS11 library where targeted Secure Subsystem are
 TEE, ELE or SECO.
 
-Indeed, PKCS11 library doesn't support all PKCS11 interfaces 
-[PKCS11 API](#pkcs11-apis-supported) and Secure Subsystem targeted for the 
-PKCS11 operation can have particular behaviours not managed by the tool 
+Indeed, PKCS11 library doesn't support all PKCS11 interfaces
+[PKCS11 API](#pkcs11-apis-supported) and Secure Subsystem targeted for the
+PKCS11 operation can have particular behaviours not managed by the tool
 implementation.
-
-Manipulating data with PKCS11 tool is not fully functional because of a 
-mis-encoding of the CKA_OBJECT_ID.
 
 Support of the token certificate is not yet available. Only PKCS11 session
 certificate are handled.
 
 # Commands and Examples
 
-## 📋 Listing Tokens 
+## 📋 Listing Tokens
 
 To list all available tokens:
 
@@ -145,7 +146,7 @@ Slot 0 (0x0): Security Middleware Abstraction
   uri                : pkcs11:model=;manufacturer=NXP%20Semiconductor;serial=;token=smw
 ```
 
-## 📋 Listing Objects 
+## 📋 Listing Objects
 
 ### Listing all
 
@@ -155,12 +156,12 @@ Slot 0 (0x0): Security Middleware Abstraction
 pkcs11-tool --module $MODULE_PKCS11 --login -O
 ```
 
-This command lists all objects stored on the token. 
+This command lists all objects stored on the token.
 
 #### Example on i.MX93 platform
 
-In this example, 2 persistent keys (one AES symmetric and one ECDSA 
-asymmetric) and 1 persistent data have been previously created using SMW's APIs. 
+In this example, 2 persistent keys (one AES symmetric and one ECDSA
+asymmetric) and 1 persistent data have been previously created using SMW's APIs.
 
 ```sh
 root@imx93evk:~# pkcs11-tool --module $MODULE_PKCS11 --login -O
@@ -195,8 +196,8 @@ Secret Key Object; AES length 16
 Data object 3842370016
   label:          'Data'
   application:    ''
-  app_id:         0.21
-  flags:           modifiable
+  app_id:         1.2.21
+  flags:          modifiable
   uri:            pkcs11:model=;manufacturer=NXP%20Semiconductor;serial=;token=smw;object=Data;type=data
 ```
 
@@ -209,10 +210,10 @@ Data object 3842370016
 pkcs11-tool --module $MODULE_PKCS11 --login -O --label "MyLabel"
 ```
 
-This command lists all objects stored on the token where label is "*MyLabel*". 
+This command lists all objects stored on the token where label is "*MyLabel*".
 
 > 📝 **Note:**
-> SMW library pre-defined default label for objects not 
+> SMW library pre-defined default label for objects not
 > created by PKCS11 (e.g. using ARM PSA, SMW APIs, EdgeLock 2GO provisioning):
 >
 >  - "Key": Default key label
@@ -222,8 +223,8 @@ This command lists all objects stored on the token where label is "*MyLabel*".
 
 #### Example on i.MX93 platform
 
-In this example, 2 persistent keys (one AES symmetric key and one ECDSA 
-asymmetric) and 1 persistent data have been previously created using SMW's APIs. 
+In this example, 2 persistent keys (one AES symmetric key and one ECDSA
+asymmetric) and 1 persistent data have been previously created using SMW's APIs.
 
 Keys are labelled "Key" and Data is labelled "Data".
 
@@ -269,7 +270,7 @@ warning: PKCS11 function C_GetAttributeValue(VERIFY_RECOVER) failed: rv = CKR_AT
 pkcs11-tool --module $MODULE_PKCS11 -M
 ```
 
-This command will list all mechanisms supported on the token. 
+This command will list all mechanisms supported on the token.
 The output mechanisms will be like:
 
   - RSA-PKCS
@@ -331,16 +332,16 @@ pkcs11-tool --module $MODULE_PKCS11 \
 >
 >  - --usage-sign:    Specify 'sign' usage for the private key and 'verify'
 >                     usage for the public key.
->  - --usage-decrypt: Specify 'decrypt' usage flag. 
->                     For RSA keys, sets 'decrypt' usage flag for the 
+>  - --usage-decrypt: Specify 'decrypt' usage flag.
+>                     For RSA keys, sets 'decrypt' usage flag for the
                       private key and 'encrypt' usage flag for the public key.
                       For secret keys, sets both 'encrypt' and 'decrypt' flags.
 >  - --usage-derive:  Specify 'derive' usage flag (EC key only).
 
 > 📝 **Note 2:**
-> The mechanism name to set with the option 
-  `--allowed-mechanism` must be one of the mechanisms resulting of the 
-  [Listing Mechanisms](#-listing-mechanisms). 
+> The mechanism name to set with the option
+  `--allowed-mechanism` must be one of the mechanisms resulting of the
+  [Listing Mechanisms](#-listing-mechanisms).
 
 
 ### Generate an RSA key pair:
@@ -453,7 +454,7 @@ warning: PKCS11 function C_GetAttributeValue(VERIFY_RECOVER) failed: rv = CKR_AT
 
 ## 🔐 Encryption
 
-**Definition**: The process of converting plaintext into ciphertext using a 
+**Definition**: The process of converting plaintext into ciphertext using a
   cryptographic algorithm and key.
 
 **Use Cases**:
@@ -476,11 +477,11 @@ pkcs11-tool --module $MODULE_PKCS11 \
 > 📝 **Note:**
 > Command may return an error if the plaintext to encrypt
   is not a multiple cipher block as C_EncryptUpdate might not supported by
-  the subsystem targeted. 
+  the subsystem targeted.
 
 ## 🔓 Decryption
 
-**Definition**: The process of converting ciphertext back into plaintext 
+**Definition**: The process of converting ciphertext back into plaintext
   using the appropriate decryption key.
 
 **Use Cases**:
@@ -500,10 +501,10 @@ pkcs11-tool --module $MODULE_PKCS11 \
             --output-file plaintext.txt
 ```
 
-> 📝 **Note:** 
+> 📝 **Note:**
 > Command may return an error if the cipher to decrypt
   is not a multiple cipher block as C_DecryptUpdate might not supported by
-  the subsystem targeted. 
+  the subsystem targeted.
 
 ## ✍️ Signing
 
@@ -587,12 +588,64 @@ pkcs11-tool --module $MODULE_PKCS11 \
 ```
 
 
+## 📥 Reading, Writing and Deleting Data
+
+`pkcs11-tool` provides some object command that could be used to
+manage the data object type.
+
+The data identifier is handles with the `--application-id` tool
+parameter using OID format.
+For the data identifier, the OID must be `1.2.<id>` where `<id>`
+is the data identifier in the secure subsystem.
+
+### Write data
+
+**Definition**: Write a data with the content of the input file.
+
+```sh
+pkcs11-tool --module $MODULE_PKCS11 \
+            --login \
+            --write-object <file> \
+            --type data \
+            --label <label> \
+            --application-id 1.2.<id>
+```
+
+### Read data
+
+**Definition**: Read a data and display it on the console or
+store it in a file if the `--output-file <file>` is specified.
+
+```sh
+pkcs11-tool --module $MODULE_PKCS11 \
+            --login \
+            --read-object \
+            --output-file <file> \
+            --type data \
+            --label <label> \
+            --application-id 1.2.<id>
+```
+
+### Delete data
+
+**Definition**: Delete a data.
+
+```sh
+pkcs11-tool --module $MODULE_PKCS11 \
+            --login \
+            --delete-object \
+            --type data \
+            --label <label> \
+            --application-id 1.2.<id>
+```
+
+
 # Cryptography Mechanisms Supported
 
 SMW's PKCS11 secure subsystem token target fully depends on the library
 subsystem versus operation configuration and the subsystem capabilities.
 
-Please refer to the [User Guide](../user_guide.md) and 
+Please refer to the [User Guide](../user_guide.md) and
 the [User API documentation](../../API/SecurityMiddleware_API.pdf), chapters
 `Subsystems Capabilities` and `How to write a configuration file`
 
@@ -624,10 +677,10 @@ the [User API documentation](../../API/SecurityMiddleware_API.pdf), chapters
 | `CKM_ECDH1_DERIVE` | Elliptic Curve Diffie-Hellman key derivation. |
 
 
-## Digest 
+## Digest
 
 | Mechanism Name | Description                 |
-|:---------------|:----------------------------|
+| :------------- | :-------------------------- |
 | `CKM_MD5`      | MD5 hashing algorithm.      |
 | `CKM_SHA_1`    | SHA-1 hashing algorithm.    |
 | `CKM_SHA224`   | SHA-224 hashing algorithm.  |
@@ -669,7 +722,7 @@ the [User API documentation](../../API/SecurityMiddleware_API.pdf), chapters
 | `CKM_DES3_CMAC`             | Full block Triple-DES CMAC signature generation and verification.     |
 
 
-## Asymmetric Signature 
+## Asymmetric Signature
 
 | Mechanism Name        | Description                                                         |
 | :-------------------- | :------------------------------------------------------------------ |
@@ -697,7 +750,7 @@ the [User API documentation](../../API/SecurityMiddleware_API.pdf), chapters
 ## Symmetric Encryption
 
 | Mechanism Name | Description                                                                                        |
-|:---------------|:---------------------------------------------------------------------------------------------------|
+| :------------- | :------------------------------------------------------------------------------------------------- |
 | `CKM_AES_ECB`  | AES encryption/decryption in Electronic CodeBook (ECB) mode.                                       |
 | `CKM_AES_CBC`  | AES encryption/decryption in Cipher Block Chaining (CBC) mode.                                     |
 | `CKM_AES_CTR`  | AES encryption/decryption in Counter (CTR) mode.                                                   |
@@ -721,7 +774,7 @@ the [User API documentation](../../API/SecurityMiddleware_API.pdf), chapters
 ## Authentication Encryption
 
 | Mechanism Name          | Description                                                                                        |
-|:------------------------|:---------------------------------------------------------------------------------------------------|
+| :---------------------- | :------------------------------------------------------------------------------------------------- |
 | `CKM_AES_CCM`           | AES encryption/decryption in Counter with cipher block chaining message authentication code (CCM). |
 | `CKM_AES_GCM`           | AES encryption/decryption in Galois/Counter Mode (GCM).                                            |
 | `CKM_CHACHA20_POLY1305` | ChaCha20 stream cipher with the Poly1305 message authentication code.                              |
@@ -829,12 +882,12 @@ Following table lists all PKCS11 APIs implemented in the SMW's PKCS11 library.
 # Best Practices for Using pkcs11-tool
 
 ## 🔐 Use the Correct PKCS#11 Module
-- Always specify the correct path to your PKCS#11 library using 
+- Always specify the correct path to your PKCS#11 library using
   `--module /path/to/pkcs11.so`.
-- The library name is `libsmw_pkcs11.so.x` (where `x` is the library 
+- The library name is `libsmw_pkcs11.so.x` (where `x` is the library
   major version) must be present in the system folder `\usr\lib\`.
   For example the SMW library version 5.0 or later version 5.1, 5.2, ..., 5.x
-  will have the file (symbol link) `\usr\lib\libsmw_pkcs11.so.5`  
+  will have the file (symbol link) `\usr\lib\libsmw_pkcs11.so.5`
 
 ## 📋 List and Understand Capabilities
 - Use `-L` to list tokens:

@@ -81,11 +81,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Add support for Ed448 key management and signature operations.
 * ELE: Enable i.MX95 HMAC.
 * ELE: Add support for x448 key management and derivation operations.
+* ELE: Edwards curve (Pre-hashed signature not supported).
 * ELE: Replace SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY by SMW_STATUS_ALLOC_FAILURE
   when allocation done in the library.
 * SECO: Replace SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY by SMW_STATUS_ALLOC_FAILURE
   when allocation done in the library.
-
 
 ##### 3. ARM PSA APIs
 
@@ -120,6 +120,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add PSA tests validating key derivation using the `PSA_ALG_VENDOR_TLS13` algorithm.
 * Add tests validating x448 key.
 * Add SMW tests to verify "get output buffer length" feature.
+* Enable i.MX95 Edwards curve (Pre-hashed signature not supported).
 
 #### PKCS#11 Library
 

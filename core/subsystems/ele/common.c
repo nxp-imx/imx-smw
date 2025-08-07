@@ -160,6 +160,7 @@ static bool is_conversion_req(enum smw_config_key_type_id type_id)
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_ED448:
+	case SMW_CONFIG_KEY_TYPE_ID_X448:
 		is_conversion_req = true;
 		break;
 

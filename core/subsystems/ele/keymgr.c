@@ -130,6 +130,7 @@ static const struct key_def {
 	KEY_DEF_EDWARDS_CURVE(ED25519, 255, ed_public_key_length),
 	KEY_DEF_EDWARDS_CURVE(ED448, 448, ed448_public_key_length),
 	KEY_DEF_MONTGOMERY_CURVE(X25519, 255, ed_public_key_length),
+	KEY_DEF_MONTGOMERY_CURVE(X448, 448, ed_public_key_length),
 	KEY_DEF(DERIVE, DERIVE, 384, NULL, NULL),
 	KEY_DEF(HKDF_IKM, DERIVE, 256, NULL, NULL),
 	KEY_DEF(HKDF_IKM, DERIVE, 384, NULL, NULL),
@@ -333,6 +334,7 @@ static int check_export_key_config(struct smw_keymgr_descriptor *key_descriptor)
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_ED448:
+	case SMW_CONFIG_KEY_TYPE_ID_X448:
 		if (smw_keymgr_get_public_data(key_descriptor) &&
 		    !smw_keymgr_get_private_data(key_descriptor)) {
 			status = SMW_STATUS_OK;
@@ -608,9 +610,10 @@ static int export_key_operation(struct hdl *hdl,
 	if (key_type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
 		if (status == SMW_STATUS_OK) {
 			/*
-			 * On i.MX93 and i.MX91, the exported public key buffer is encoded
-			 * in big-endian format for ECC Edwards and X25519 key pairs. Hence,
-			 * Convert it to little endian format.
+			 * On i.MX93 and i.MX91, the exported public key buffer
+			 * is encoded in big-endian format for ECC Edwards and
+			 * Montgomery key pairs.
+			 * Hence, convert it to little endian format.
 			 */
 			status = check_and_convert_endian(op_args.out_key, NULL,
 							  public_length,

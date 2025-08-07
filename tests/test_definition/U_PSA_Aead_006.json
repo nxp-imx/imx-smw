@@ -21,7 +21,6 @@
 		"key_name": "generated aes-chacha20-256 key",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},

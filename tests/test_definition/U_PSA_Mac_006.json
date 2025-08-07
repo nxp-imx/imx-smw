@@ -20,8 +20,7 @@
 	"subtest 1": {
 		"command": "GENERATE",
 		"api": "PSA",
-		"key_name": "key 1",
-		"restriction_list": "imx95"
+		"key_name": "key 1"
 	},
 	"subtest 2": {
 		"description": "Get the MAC size - Output buffer is NULL",

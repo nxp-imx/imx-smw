@@ -33,7 +33,6 @@
 		"key_name": "generated aes-chacha-256 key encrypt",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -43,7 +42,6 @@
 		"key_name": "generated aes-chacha-256 key decrypt",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},

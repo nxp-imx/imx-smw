@@ -209,10 +209,7 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 1,
-		"depends": 7,
-		"restriction_list": [
-			"imx95"
-		]
+		"depends": 7
 	},
 	"subtest 9": {
 		"description": [
@@ -274,10 +271,7 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 1,
-		"depends": 11,
-		"restriction_list": [
-			"imx95"
-		]
+		"depends": 11
 	},
 	"subtest 13": {
 		"description": [
@@ -353,10 +347,7 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 2,
-		"depends": 15,
-		"restriction_list": [
-			"imx95"
-		]
+		"depends": 15
 	},
 	"subtest 17": {
 		"description": [
@@ -418,10 +409,7 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 2,
-		"depends": 19,
-		"restriction_list": [
-			"imx95"
-		]
+		"depends": 19
 	},
 	"subtest 21": {
 		"description": [
@@ -497,10 +485,7 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 3,
-		"depends": 23,
-		"restriction_list": [
-			"imx95"
-		]
+		"depends": 23
 	},
 	"subtest 25": {
 		"description": [
@@ -562,10 +547,7 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 3,
-		"depends": 27,
-		"restriction_list": [
-			"imx95"
-		]
+		"depends": 27
 	},
 	"subtest 29": {
 		"description": [
@@ -641,10 +623,7 @@
 		"tag": 16,
 		"tag_field_set": true,
 		"aead_id": 4,
-		"depends": 31,
-		"restriction_list": [
-			"imx95"
-		]
+		"depends": 31
 	},
 	"subtest 33": {
 		"description": [
@@ -706,10 +685,7 @@
 		"input": "6bc1bee22e409f96e93d7e117393172a",
 		"output": 48,
 		"mac_id": 4,
-		"depends": 35,
-		"restriction_list": [
-			"imx95"
-		]
+		"depends": 35
 	},
 	"subtest 37": {
 		"description": [

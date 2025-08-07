@@ -1,8 +1,8 @@
 {
 	"keys": {
 		"key 1": {
-			"type": "X25519",
-			"security_size": 255,
+			"type": "X448",
+			"security_size": 448,
 			"usage": [
 				"DERIVE"
 			],
@@ -12,8 +12,8 @@
 			]
 		},
 		"key 2": {
-			"type": "X25519",
-			"security_size": 255,
+			"type": "X448",
+			"security_size": 448,
 			"usage": [
 				"DERIVE"
 			],
@@ -23,8 +23,8 @@
 			]
 		},
 		"key 3": {
-			"type": "X25519",
-			"security_size": 255,
+			"type": "X448",
+			"security_size": 448,
 			"usage": [
 				"DERIVE"
 			],
@@ -34,9 +34,9 @@
 			]
 		},
 		"key 4": {
-			"type": "X25519",
-			"security_size": 255,
-			"pub_key": 31,
+			"type": "X448",
+			"security_size": 448,
+			"pub_key": 55,
 			"usage": [
 				"DERIVE"
 			],
@@ -46,9 +46,9 @@
 			]
 		},
 		"key 5": {
-			"type": "X25519",
-			"security_size": 255,
-			"pub_key": 31,
+			"type": "X448",
+			"security_size": 448,
+			"pub_key": 55,
 			"usage": [
 				"DERIVE"
 			],
@@ -58,9 +58,9 @@
 			]
 		},
 		"key 6": {
-			"type": "X25519",
-			"security_size": 255,
-			"pub_key": 31,
+			"type": "X448",
+			"security_size": 448,
+			"pub_key": 55,
 			"usage": [
 				"DERIVE"
 			],
@@ -72,7 +72,7 @@
 	},
 	"subtest 1": {
 		"description": [
-			"Generate a Montgomery 25519 key with the",
+			"Generate a Montgomery 448 key with the",
 			"permitted algorithm TLS 1.3 SHA256"
 		],
 		"command": "GENERATE",
@@ -80,13 +80,12 @@
 		"key_name": "key 1",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
 	"subtest 2": {
 		"description": [
-			"Generate a Montgomery 25519 key with the",
+			"Generate a Montgomery 448 key with the",
 			"permitted algorithm TLS 1.3 SHA384"
 		],
 		"command": "GENERATE",
@@ -94,13 +93,12 @@
 		"key_name": "key 2",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
 	"subtest 3": {
 		"description": [
-			"Generate a Montgomery 25519 key with the",
+			"Generate a Montgomery 448 key with the",
 			"permitted algorithm TLS 1.3 ANY HASH"
 		],
 		"command": "GENERATE",
@@ -108,7 +106,6 @@
 		"key_name": "key 3",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
@@ -129,7 +126,7 @@
 	},
 	"subtest 7": {
 		"description": [
-			"Generate a Montgomery 25519 key with the",
+			"Generate a Montgomery 448 key with the",
 			"permitted algorithm TLS 1.3 SHA256.",
 			"Ask for the public key with a too short buffer"
 		],
@@ -139,13 +136,12 @@
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
 	"subtest 8": {
 		"description": [
-			"Generate a Montgomery 25519 key with the",
+			"Generate a Montgomery 448 key with the",
 			"permitted algorithm TLS 1.3 SHA384.",
 			"Ask for the public key with a too short buffer"
 		],
@@ -155,13 +151,12 @@
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	},
 	"subtest 9": {
 		"description": [
-			"Generate a Montgomery 25519 key with the",
+			"Generate a Montgomery 448 key with the",
 			"permitted algorithm TLS 1.3 ANY HASH.",
 			"Ask for the public key with a too short buffer"
 		],
@@ -171,7 +166,6 @@
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT",
 		"restriction_list": [
 			"imx8ulp",
-			"imx95",
 			"imx943"
 		]
 	}

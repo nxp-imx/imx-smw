@@ -45,6 +45,7 @@ static int key_type_to_object_type(smw_key_type_t key_type_name,
 	case SMW_KEY_TYPE_NAME_ED25519:
 	case SMW_KEY_TYPE_NAME_ED448:
 	case SMW_KEY_TYPE_NAME_X25519:
+	case SMW_KEY_TYPE_NAME_X448:
 	case SMW_KEY_TYPE_NAME_DSA_SM2_FP:
 	case SMW_KEY_TYPE_NAME_RSA:
 	case SMW_KEY_TYPE_NAME_RAW:

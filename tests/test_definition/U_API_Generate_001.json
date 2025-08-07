@@ -43,6 +43,11 @@
 			"type": "X25519",
 			"security_size": 255,
 			"priv_key": 32
+		},
+		"key 11": {
+			"type": "X448",
+			"security_size": 448,
+			"priv_key": 56
 		}
 	},
 	"subtest 1": {
@@ -130,6 +135,13 @@
 		"command": "GENERATE",
 		"subsystem": "DEFAULT",
 		"key_name": "key 10",
+		"result": "SMW_STATUS_INVALID_PARAM"
+	},
+	"subtest 13": {
+		"description": "Private key buffer len is set (buffer NULL)",
+		"command": "GENERATE",
+		"subsystem": "DEFAULT",
+		"key_name": "key 11",
 		"result": "SMW_STATUS_INVALID_PARAM"
 	}
 }

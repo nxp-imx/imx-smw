@@ -59,6 +59,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   identifier is not present in the database.
 * Add support for the SHAKE256 digest algorithm.
 * Store private asymmetric key as key pair object in the database.
+* Add support for the x448 key.
 
 ##### 2. Subsystems
 
@@ -73,6 +74,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Integrate new AEAD API.
 * ELE: Add support for Ed448 key management and signature operations.
 * ELE: Enable i.MX95 HMAC.
+* ELE: Add support for x448 key management and derivation operations.
 
 ##### 3. ARM PSA APIs
 
@@ -105,6 +107,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   ID and buffers for ELE subsystem.
 * Enable i.MX95 HMAC.
 * Add PSA tests validating key derivation using the `PSA_ALG_VENDOR_TLS13` algorithm.
+* Add tests validating x448 key.
 
 #### PKCS#11 Library
 

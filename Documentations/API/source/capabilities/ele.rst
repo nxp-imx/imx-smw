@@ -27,7 +27,9 @@ Key manager
    +--------------------+--------------------------+------+---------+------+------+
    | ED448              | 448                      |      |   X     |      |      |
    +--------------------+--------------------------+------+---------+------+------+
-   | X25519             | 255                      |      |   X     |      |      |
+   | X25519             | 255                      |      |   X     |      |  X   |
+   +--------------------+--------------------------+------+---------+------+------+
+   | X448               | 448                      |      |   X     |      |  X   |
    +--------------------+--------------------------+------+---------+------+------+
    | EL2GO_PROV_OEM_KEY | N/A                      |      |   X     |      |  X   |
    +--------------------+--------------------------+------+---------+------+------+
@@ -823,7 +825,7 @@ ciphersuites:
 TLS 1.3 (TLS13-KDF)
 ^^^^^^^^^^^^^^^^^^^
 The early secret, ECDH shared secret, handshake secret and master secret are
-computed internally and not exported. Both SECP_R1 and X25519 key types are
+computed internally and not exported. The SECP_R1, X25519 and X448 key types are
 supported. The subsystem supports derivation of the following TLS1.3 secrets:
 
 .. table:: ELE TLS1.3 secrets

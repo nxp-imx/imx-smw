@@ -19,7 +19,7 @@ Key manager
    +--------------------+--------------------------+------+---------+------+------+
    | Brainpool R1       | 224 / 256 / 384          |  X   |   X     |  X   |  X   |
    +--------------------+--------------------------+------+---------+------+------+
-   | HMAC               | 224 / 256 / 384 / 512    |  X   |   X     |  X   |      |
+   | HMAC               | 224 / 256 / 384 / 512    |  X   |   X     |  X   |  X   |
    +--------------------+--------------------------+------+---------+------+------+
    | RSA                | 2048 / 3072 / 4096       |      |   X     |  X   |  X   |
    +--------------------+--------------------------+------+---------+------+------+
@@ -173,7 +173,7 @@ applicable in ELE subsystem. Only one permitted algorithm is allowed per key.
    +----------------------+----------+--------------------------+-------------------------------------+
    | ED25519PH            | N/A      | N/A                      |                                     |
    +----------------------+----------+--------------------------+-------------------------------------+
-   | ED448PH              | N/A      | N/A                      |                                     |  
+   | ED448PH              | N/A      | N/A                      |                                     |
    +----------------------+----------+--------------------------+-------------------------------------+
    | TLS1_3_MASTER_SECRET | SHA256   | N/A                      | Derivation restricted key           |
    +                      +----------+--------------------------+-------------------------------------+
@@ -190,6 +190,7 @@ applicable in ELE subsystem. Only one permitted algorithm is allowed per key.
    | CKDF                 | N/A      | N/A                      | Custom Key Derivation Function.     |
    |                      |          |                          | Allow importing EL2GO OEM Secret Key|
    +----------------------+----------+--------------------------+-------------------------------------+
+
 
 Hash
 ----
@@ -273,7 +274,7 @@ Signature
    | PURE_EDDSA         | ED25519      | 255                      | None (Message)          |
    |                    +--------------+--------------------------+-------------------------+
    |                    | ED448        | 448                      | None (Message)          |
-   +--------------------+--------------+--------------------------+-------------------------+                    
+   +--------------------+--------------+--------------------------+-------------------------+
    | ED25519PH          | ED25519      | 255                      | None (pre-hashed)       |
    +--------------------+--------------+--------------------------+-------------------------+
    | ED448PH            | ED448        | 448                      | None (pre-hashed)       |
@@ -543,7 +544,7 @@ AEAD
 
 .. [1] Not supported on i.MX8ULP
 
-.. [2] Currently supported on i.MX91, i.MX93 and i.MX95.
+.. [2] Supported on i.MX91, i.MX93 and i.MX95.
 
 .. note::
   - AEAD is not supported on i.MX943.
@@ -880,7 +881,7 @@ The SMW library offers the possibility to pre-fill the message payload to be
 signed (see :ref:smw_kdf_oem_master_key_args).
 
 The NXP SPSDK tool can be used to sign the message and can be installed from
-`SPSK releases <https://github.com/nxp-mcuxpresso/spsdk/releases>`_.
+`SPSDK releases <https://github.com/nxp-mcuxpresso/spsdk/releases>`_.
 The documentation is available `here <https://spsdk.readthedocs.io/en/latest/index.html>`_.
 The command used to sign is `nxpimage <https://spsdk.readthedocs.io/en/latest/apps/nxpimage.html#nxpimage-signed-msg>`_.
 

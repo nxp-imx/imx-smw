@@ -72,6 +72,7 @@ The failure is due to the storage manager which is already loaded and a new inst
   to ensure consistent little-endian formatting across all platforms and key types.
 * ELE: Integrate new AEAD API.
 * ELE: Add support for Ed448 key management and signature operations.
+* ELE: Enable i.MX95 HMAC.
 
 ##### 3. ARM PSA APIs
 
@@ -100,6 +101,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add test to validate Ed448 key management.
 * Add tests to verify signature generation and verification using both Ed448 key
   ID and buffers for ELE subsystem.
+* Enable i.MX95 HMAC.
 
 #### PKCS#11 Library
 

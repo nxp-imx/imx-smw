@@ -126,6 +126,7 @@ static const struct ecc_key_type ecc_key_type[] = {
 	ECC_KEY_TYPE("ED25519", TWISTED_EDWARDS),
 	ECC_KEY_TYPE("ED448", TWISTED_EDWARDS),
 	ECC_KEY_TYPE("X25519", MONTGOMERY),
+	ECC_KEY_TYPE("X448", MONTGOMERY),
 };
 
 #define KEY_HASH(_string)                                                      \

@@ -15,6 +15,8 @@ if(NOT ENABLE_TLS)
     list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Derive_003.json)
     list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Derive_004.json)
     list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Derive_005.json)
+    list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Derive_006.json)
+    list(REMOVE_ITEM TESTS ${TEST_DEF_SRC_DIR}/U_${GROUP}_Derive_007.json)
 endif()
 
 add_and_install_tests("${TESTS}" "${CMD}")

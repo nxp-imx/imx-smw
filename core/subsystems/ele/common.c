@@ -116,20 +116,6 @@ end:
 	return status;
 }
 
-static bool is_imx91_or_imx93(void)
-{
-	bool is_imx91_or_imx93 = false;
-
-	uint16_t soc_id = se_get_soc_id();
-
-	SMW_DBG_PRINTF(DEBUG, "soc_id = 0X%x\n", soc_id);
-
-	if (soc_id == SOC_IMX91 || soc_id == SOC_IMX93)
-		is_imx91_or_imx93 = true;
-
-	return is_imx91_or_imx93;
-}
-
 static int convert_endian(unsigned char *src, unsigned char *dst,
 			  unsigned int size)
 {
@@ -152,43 +138,67 @@ static int convert_endian(unsigned char *src, unsigned char *dst,
 	return SMW_STATUS_OK;
 }
 
-static bool is_conversion_req(enum smw_config_key_type_id type_id)
+static int is_conversion_req(struct subsystem_context *ele_ctx,
+			     enum smw_config_key_type_id type_id, bool *convert)
 {
-	bool is_conversion_req = false;
+	int status = SMW_STATUS_OK;
+
+	struct ele_info *info = &ele_ctx->info;
+
+	*convert = false;
+
+	status = ele_get_device_info(ele_ctx);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (!info->edwards_be)
+		goto end;
 
 	switch (type_id) {
 	case SMW_CONFIG_KEY_TYPE_ID_ED25519:
 	case SMW_CONFIG_KEY_TYPE_ID_X25519:
 	case SMW_CONFIG_KEY_TYPE_ID_ED448:
 	case SMW_CONFIG_KEY_TYPE_ID_X448:
-		is_conversion_req = true;
+		SMW_DBG_PRINTF(VERBOSE, "%s conversion required\n", __func__);
+		*convert = true;
 		break;
 
 	default:
 		break;
 	}
 
-	return is_conversion_req;
+end:
+	return status;
 }
 
-int check_and_convert_endian(unsigned char *src, unsigned char *dst,
+int check_and_convert_endian(struct subsystem_context *ele_ctx,
+			     unsigned char *src, unsigned char **dst,
 			     unsigned int size,
 			     enum smw_config_key_type_id type_id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
 
+	unsigned char *out = NULL;
+	bool convert = false;
+
 	if (!src || size == 0)
 		goto end;
 
-	status = SMW_STATUS_OK;
-
-	if (!is_imx91_or_imx93() || !is_conversion_req(type_id)) {
-		SMW_DBG_PRINTF(VERBOSE, "%s conversion not required\n",
-			       __func__);
+	status = is_conversion_req(ele_ctx, type_id, &convert);
+	if (status != SMW_STATUS_OK || !convert)
 		goto end;
+
+	if (dst) {
+		*dst = SMW_UTILS_MALLOC(size);
+		if (!*dst) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		out = *dst;
 	}
 
-	status = convert_endian(src, dst, size);
+	status = convert_endian(src, out, size);
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -196,21 +206,25 @@ end:
 	return status;
 }
 
-int check_and_convert_sign_endian(unsigned char *sign,
-				  unsigned char *converted_sign,
+int check_and_convert_sign_endian(struct subsystem_context *ele_ctx,
+				  unsigned char *sign,
+				  unsigned char **converted_sign,
 				  unsigned int sign_len,
 				  enum smw_config_key_type_id type_id)
 {
 	int status = SMW_STATUS_INVALID_PARAM;
+
+	bool convert = false;
 	unsigned int part_size = 0;
+	unsigned char *out_r = NULL;
+	unsigned char *out_s = NULL;
 
 	if (!sign || sign_len == 0)
-		return status;
+		goto end;
 
-	status = SMW_STATUS_OK;
-
-	if (!is_imx91_or_imx93() || !is_conversion_req(type_id))
-		return status;
+	status = is_conversion_req(ele_ctx, type_id, &convert);
+	if (status != SMW_STATUS_OK || !convert)
+		goto end;
 
 	part_size = sign_len / 2;
 
@@ -220,18 +234,21 @@ int check_and_convert_sign_endian(unsigned char *sign,
 	 * then concatenate the results to form the final converted signature.
 	 */
 	if (converted_sign) {
-		status = convert_endian(sign, converted_sign, part_size);
-		if (status == SMW_STATUS_OK)
-			status = convert_endian(sign + part_size,
-						converted_sign + part_size,
-						part_size);
-	} else {
-		status = convert_endian(sign, NULL, part_size);
-		if (status == SMW_STATUS_OK)
-			status = convert_endian(sign + part_size, NULL,
-						part_size);
+		*converted_sign = SMW_UTILS_MALLOC(sign_len);
+		if (!*converted_sign) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		out_r = *converted_sign;
+		out_s = *converted_sign + part_size;
 	}
 
+	status = convert_endian(sign, out_r, part_size);
+	if (status == SMW_STATUS_OK)
+		status = convert_endian(sign + part_size, out_s, part_size);
+
+end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
 	return status;

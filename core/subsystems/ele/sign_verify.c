@@ -17,15 +17,6 @@
 
 #include "common.h"
 
-/* Covers both Ed25519 (64) and Ed448 (114) */
-#define MAX_ED_SIGN_SIZE 114
-
-/* Covers both Ed25519 (32) and Ed448 (57) */
-#define MAX_ED_PUB_KEY_SIZE 57
-
-/* Workaround */
-#define HSM_SIGNATURE_SCHEME_ECDSA_ANY 0x06000600
-
 #define SIGNATURE_SCHEME_ID(_key_type_id, _key_sizes, _type, _hash, _scheme)   \
 	{                                                                      \
 		.key_type_id = SMW_CONFIG_KEY_TYPE_ID_##_key_type_id,          \
@@ -277,7 +268,7 @@ end:
 	return status;
 }
 
-static int sign(struct hdl *hdl, void *args)
+static int sign(struct subsystem_context *ele_ctx, void *args)
 {
 	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
@@ -302,7 +293,7 @@ static int sign(struct hdl *hdl, void *args)
 			//      for now import is not supported by ELE
 			goto end;
 
-		status = tls_mac_finish(hdl, args);
+		status = tls_mac_finish(&ele_ctx->hdl, args);
 		goto end;
 	}
 
@@ -391,7 +382,7 @@ static int sign(struct hdl *hdl, void *args)
 		       op_args.message, op_args.message_size, op_args.signature,
 		       op_args.signature_size);
 
-	err = hsm_do_sign(hdl->key_store, &op_args);
+	err = hsm_do_sign(ele_ctx->hdl.key_store, &op_args);
 	SMW_DBG_PRINTF(DEBUG, "hsm_do_sign returned %d\n", err);
 
 	status = ele_convert_err(err);
@@ -406,7 +397,7 @@ static int sign(struct hdl *hdl, void *args)
 	 * algorithm is encoded in big-endian format. Hence, convert it to little
 	 * endian.
 	 */
-	status = check_and_convert_sign_endian(op_args.signature, NULL,
+	status = check_and_convert_sign_endian(ele_ctx, op_args.signature, NULL,
 					       op_args.exp_signature_size,
 					       key_identifier->type_id);
 	if (status != SMW_STATUS_OK)
@@ -428,18 +419,46 @@ end:
 	return status;
 }
 
-static int verify(struct hdl *hdl, void *args)
+static int verify_export_key(struct subsystem_context *ele_ctx,
+			     struct smw_keymgr_descriptor *export_key_desc,
+			     unsigned char **hex_key_buf,
+			     unsigned int *hex_key_size)
+{
+	int status = SMW_STATUS_OK;
+
+	status = ele_export_public_key(ele_ctx, export_key_desc);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (export_key_desc->identifier.type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
+		*hex_key_size = smw_keymgr_get_modulus_length(export_key_desc);
+		*hex_key_buf = smw_keymgr_get_modulus(export_key_desc);
+
+	} else {
+		*hex_key_size = smw_keymgr_get_public_length(export_key_desc);
+		*hex_key_buf = smw_keymgr_get_public_data(export_key_desc);
+	}
+
+end:
+	return status;
+}
+
+static int verify(struct subsystem_context *ele_ctx, void *args)
 {
 	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
+	hsm_hdl_t op_handle = ele_ctx->hdl.session;
 	op_verify_sign_args_t op_args = { 0 };
 	hsm_verification_status_t verification_status = 0;
 
+	struct ele_info *info = &ele_ctx->info;
 	struct smw_crypto_sign_verify_args *verify_args = args;
 	struct smw_keymgr_descriptor *key_desc = &verify_args->key_descriptor;
-
 	struct smw_keymgr_descriptor export_key_desc = { 0 };
+	struct smw_keymgr_descriptor *opaque_key_desc = NULL;
+
+	struct smw_keymgr_get_key_attributes_args key_attrs = { 0 };
 
 	enum smw_config_key_type_id key_type_id = 0;
 	enum smw_keymgr_format_id format_id = 0;
@@ -448,34 +467,45 @@ static int verify(struct hdl *hdl, void *args)
 	unsigned int key_size = 0;
 	unsigned char *hex_key_buf = NULL;
 	unsigned int hex_key_size = 0;
-	unsigned char temp_sign[MAX_ED_SIGN_SIZE] = { 0 };
-	unsigned char temp_pub_key[MAX_ED_PUB_KEY_SIZE] = { 0 };
+	unsigned char *temp_sign = NULL;
+	unsigned char *temp_pub_key = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	format_id = key_desc->format_id;
 
-	if (format_id == SMW_KEYMGR_FORMAT_ID_INVALID) {
-		export_key_desc.identifier.s_id = key_desc->identifier.s_id;
+	op_args.flags = HSM_OP_VERIFY_SIGN_FLAGS_PLAINTEXT_KEY;
 
-		status = ele_export_public_key(hdl, &export_key_desc);
+	if (key_desc->identifier.s_id) {
+		status = ele_get_device_info(ele_ctx);
 		if (status != SMW_STATUS_OK)
 			goto end;
 
-		security_size = export_key_desc.identifier.security_size;
-		key_type_id = export_key_desc.identifier.type_id;
+		if (info->sign_verif_opaque_key) {
+			op_handle = ele_ctx->hdl.key_store;
 
-		if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_RSA) {
-			hex_key_size =
-				smw_keymgr_get_modulus_length(&export_key_desc);
-			hex_key_buf = smw_keymgr_get_modulus(&export_key_desc);
+			opaque_key_desc = &key_attrs.key_descriptor;
+			opaque_key_desc->identifier.s_id =
+				key_desc->identifier.s_id;
 
+			op_args.key_identifier = key_desc->identifier.s_id;
+			op_args.flags = HSM_OP_VERIFY_SIGN_FLAGS_OPAQUE_KEY;
+
+			status = ele_get_key_attributes(&ele_ctx->hdl,
+							&key_attrs);
 		} else {
-			hex_key_size =
-				smw_keymgr_get_public_length(&export_key_desc);
-			hex_key_buf =
-				smw_keymgr_get_public_data(&export_key_desc);
+			opaque_key_desc = &export_key_desc;
+			opaque_key_desc->identifier.s_id =
+				key_desc->identifier.s_id;
+			status = verify_export_key(ele_ctx, opaque_key_desc,
+						   &hex_key_buf, &hex_key_size);
 		}
+
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		security_size = opaque_key_desc->identifier.security_size;
+		key_type_id = opaque_key_desc->identifier.type_id;
 
 	} else {
 		/* Verify signature using plaintext key buffer */
@@ -517,20 +547,36 @@ static int verify(struct hdl *hdl, void *args)
 		goto end;
 	}
 
-	status = ele_set_pubkey_type(key_type_id, &op_args.pkey_type);
-	if (status != SMW_STATUS_OK)
-		goto end;
+	if (!(key_desc->identifier.s_id && info->sign_verif_opaque_key)) {
+		status = ele_set_pubkey_type(key_type_id, &op_args.pkey_type);
+		if (status != SMW_STATUS_OK)
+			goto end;
 
-	op_args.key_sz = security_size;
-	op_args.key = hex_key_buf;
+		op_args.key_sz = security_size;
+		op_args.key = hex_key_buf;
+
+		if (SET_OVERFLOW(hex_key_size, op_args.key_size)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+
+		/*
+		 * On some device (e.g. i.MX93 and i.MX91), the
+		 * public key buffer msut be big-endian.
+		 */
+		status = check_and_convert_endian(ele_ctx, hex_key_buf,
+						  &temp_pub_key, hex_key_size,
+						  key_type_id);
+		if (status != SMW_STATUS_OK)
+			goto end;
+
+		if (temp_pub_key)
+			op_args.key = temp_pub_key;
+	}
+
 	op_args.message = smw_sign_verify_get_msg_buf(verify_args);
 	op_args.signature = smw_sign_verify_get_sign_buf(verify_args);
 	op_args.message_size = smw_sign_verify_get_msg_len(verify_args);
-
-	if (SET_OVERFLOW(hex_key_size, op_args.key_size)) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
-	}
 
 	if (SET_OVERFLOW(smw_sign_verify_get_sign_len(verify_args),
 			 op_args.signature_size)) {
@@ -557,33 +603,23 @@ static int verify(struct hdl *hdl, void *args)
 	}
 
 	/*
-	 * On i.MX91 and i.MX93 platforms, EDDSA-based signature verification
-	 * mandates the following input format requirements:
-	 * - The signature must also be encoded in big-endian format to
-	 *   ensure correct cryptographic validation.
-	 * - The public key buffer must be encoded in big-endian format.
+	 * On some device (e.g. i.MX93 and i.MX91), the EDDSA-based signature
+	 * to verify must be in big-endian format.
 	 */
-	status = check_and_convert_sign_endian(op_args.signature, temp_sign,
+	status = check_and_convert_sign_endian(ele_ctx, op_args.signature,
+					       &temp_sign,
 					       op_args.signature_size,
 					       key_type_id);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
-	status = check_and_convert_endian(hex_key_buf, temp_pub_key,
-					  hex_key_size, key_type_id);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519 ||
-	    key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED448) {
+	if (temp_sign)
 		op_args.signature = temp_sign;
-		op_args.key = temp_pub_key;
-	}
 
 	if (verify_args->attributes.msg_hashed)
-		op_args.flags = HSM_OP_VERIFY_SIGN_FLAGS_INPUT_DIGEST;
+		op_args.flags |= HSM_OP_VERIFY_SIGN_FLAGS_INPUT_DIGEST;
 	else
-		op_args.flags = HSM_OP_VERIFY_SIGN_FLAGS_INPUT_MESSAGE;
+		op_args.flags |= HSM_OP_VERIFY_SIGN_FLAGS_INPUT_MESSAGE;
 
 	SMW_DBG_PRINTF(VERBOSE,
 		       "[%s (%d)] Call hsm_verify_sign()\n"
@@ -591,6 +627,7 @@ static int verify(struct hdl *hdl, void *args)
 		       "    scheme_id: 0x%08X\n"
 		       "    flags: 0x%X\n"
 		       "    Public Key\n"
+		       "      - id: 0x%08X\n"
 		       "      - type: 0x%04X\n"
 		       "      - security size: %d\n"
 		       "      - buffer: %p\n"
@@ -603,12 +640,12 @@ static int verify(struct hdl *hdl, void *args)
 		       "      - buffer: %p\n"
 		       "      - size: %d\n",
 		       __func__, __LINE__, op_args.scheme_id, op_args.flags,
-		       op_args.pkey_type, op_args.key_sz, op_args.key,
-		       op_args.key_size, op_args.salt_len, op_args.message,
-		       op_args.message_size, op_args.signature,
-		       op_args.signature_size);
+		       op_args.key_identifier, op_args.pkey_type,
+		       op_args.key_sz, op_args.key, op_args.key_size,
+		       op_args.salt_len, op_args.message, op_args.message_size,
+		       op_args.signature, op_args.signature_size);
 
-	err = hsm_verify_sign(hdl->session, &op_args, &verification_status);
+	err = hsm_verify_sign(op_handle, &op_args, &verification_status);
 
 	status = ele_convert_err(err);
 	SMW_DBG_PRINTF(DEBUG, "hsm_verify_sign returned %d\n", err);
@@ -617,6 +654,12 @@ static int verify(struct hdl *hdl, void *args)
 		status = SMW_STATUS_SIGNATURE_INVALID;
 
 end:
+	if (temp_pub_key)
+		free(temp_pub_key);
+
+	if (temp_sign)
+		free(temp_sign);
+
 	if (export_key_desc.pub)
 		(void)smw_keymgr_free_keypair_buffer(&export_key_desc);
 
@@ -627,15 +670,16 @@ end:
 	return status;
 }
 
-bool ele_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
-			    void *args, int *status)
+bool ele_sign_verify_handle(struct subsystem_context *ele_ctx,
+			    enum operation_id operation_id, void *args,
+			    int *status)
 {
 	switch (operation_id) {
 	case OPERATION_ID_SIGN:
-		*status = sign(hdl, args);
+		*status = sign(ele_ctx, args);
 		break;
 	case OPERATION_ID_VERIFY:
-		*status = verify(hdl, args);
+		*status = verify(ele_ctx, args);
 		break;
 	default:
 		return false;

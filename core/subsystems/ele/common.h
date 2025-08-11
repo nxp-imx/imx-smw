@@ -54,6 +54,8 @@ struct hdl {
  * @uid_length: Chip Unique ID length
  * @uid: Chip Unique ID buffer
  * @srkh_fused: True if OEM SRKH is fused
+ * @sign_verif_opaque_key: True if the signature verification support opaque key
+ * @edwards_be: True if the Edwards key and signature are big endian in ELE
  *
  * This structure stores some useful ELE information.
  */
@@ -67,6 +69,8 @@ struct ele_info {
 	unsigned int uid_length;
 	unsigned char *uid;
 	bool srkh_fused;
+	bool sign_verif_opaque_key;
+	bool edwards_be;
 };
 
 /**
@@ -153,7 +157,7 @@ bool ele_mac_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 
 /**
  * ele_sign_verify_handle() - Handle the Sign and Verify operation.
- * @hdl: Pointer to the ELE handles structure.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @operation_id: Security Operation ID.
  * @args: Pointer to a structure of arguments defined by the internal API.
  * @status: Error code set only if the Security Operation is handled.
@@ -165,8 +169,9 @@ bool ele_mac_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
  * * true:	- the Security Operation has been handled.
  * * false:	- the Security Operation has not been handled.
  */
-bool ele_sign_verify_handle(struct hdl *hdl, enum operation_id operation_id,
-			    void *args, int *status);
+bool ele_sign_verify_handle(struct subsystem_context *ele_ctx,
+			    enum operation_id operation_id, void *args,
+			    int *status);
 
 /**
  * ele_rng_handle() - Handle the random generation operation.
@@ -324,7 +329,7 @@ void ele_get_key_policy(smw_attr_algo_t *smw_permitted_algo,
 
 /**
  * ele_export_public_key() - Export the ELE public key
- * @hdl: Pointer to the ELE handles structure.
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @key_desc: Key descriptor.
  *
  * The function exports the public key of the given @key_desc->identifier.id.
@@ -340,7 +345,7 @@ void ele_get_key_policy(smw_attr_algo_t *smw_permitted_algo,
  * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Key type not supported
  * Other SMW status error.
  */
-int ele_export_public_key(struct hdl *hdl,
+int ele_export_public_key(struct subsystem_context *ele_ctx,
 			  struct smw_keymgr_descriptor *key_desc);
 
 /**
@@ -500,6 +505,20 @@ int ele_get_key_type(enum smw_config_key_type_id key_type_id,
 		     hsm_key_type_t *ele_key_type);
 
 /**
+ * ele_get_key_attribures() - Get the key attributes
+ * @hdl: Pointer to subsystem context handlers
+ * @key_args: Pointer to the key attributes argument.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_KEY_INVALID             - Key invalid
+ * SMW_STATUS_UNKNOWN_ID              - Key identifier unknown
+ * Other operation error.
+ */
+int ele_get_key_attributes(struct hdl *hdl,
+			   struct smw_keymgr_get_key_attributes_args *key_args);
+
+/**
  * ele_fill_sign_msg_block() - Fill the signed message block
  * @msg: Message block to be filled
  * @cmd: Payload command
@@ -531,46 +550,58 @@ int derive_oem_mk(struct subsystem_context *ele_ctx,
 
 /**
  * check_and_convert_sign_endian() - Converts the endianness of a signature
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @sign: Input signature buffer.
- * @converted_sign: Output buffer for the converted signature.
+ * @converted_sign: Pointer to the output buffer for the converted signature.
  * @sign_len: Length of the @sign buffer.
  * @type_id: Key type ID.
  *
  * This function converts the endianness of signature buffer @sign, but only if
- * 1. The platform is i.MX91 or i.MX93.
- * 2. The key type is either ECC key pair Edwards or ECC key pair Montgomery.
+ * the platform requests signature of the key type in big endian.
  *
- * @converted_sign is an optional buffer. If it is NULL, conversion is done
- * in-place on @sign.
+ * @converted_sign is an optional. If it is NULL, conversion is done
+ * in-place on @sign, otherwise the buffer is allocated and must be freed by
+ * the caller.
  *
  * Return:
  * SMW_STATUS_OK                       - Success
  * SMW_STATUS_INVALID_PARAM            - One of the parameter is invalid.
+ * SMW_STATUS_MUTEX_LOCK_FAILURE       - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE     - Mutex unlock failure
+ * SMW_STATUS_ALLOC_FAILURE            - Memory allocation failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Operation not supported
  */
-int check_and_convert_sign_endian(unsigned char *sign,
-				  unsigned char *converted_sign,
+int check_and_convert_sign_endian(struct subsystem_context *ele_ctx,
+				  unsigned char *sign,
+				  unsigned char **converted_sign,
 				  unsigned int sign_len,
 				  enum smw_config_key_type_id type_id);
 
 /**
  * check_and_convert_endian() - Converts the endianness of a buffer
+ * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @src: Input buffer.
- * @dst: Output buffer for the converted data.
+ * @dst: Pointer to output buffer for the converted data.
  * @size: Length of the @src buffer.
  * @type_id: Key type ID.
  *
  * This function converts the endianness of input buffer @src, but only if
- * 1. The platform is i.MX91 or i.MX93.
- * 2. The key type is either ECC key pair Edwards or ECC key pair Montgomery.
+ * the platform requests key type in big endian.
  *
- * @dst is an optional buffer. If it is NULL, conversion is done
- * in-place on @src.
+ * @dst is an optional. If it is NULL, conversion is done
+ * in-place on @src, otherwise the buffer is allocated and must be freed by
+ * the caller.
  *
  * Return:
  * SMW_STATUS_OK                       - Success
  * SMW_STATUS_INVALID_PARAM            - One of the parameter is invalid.
+ * SMW_STATUS_MUTEX_LOCK_FAILURE       - Mutex lock failure
+ * SMW_STATUS_MUTEX_UNLOCK_FAILURE     - Mutex unlock failure
+ * SMW_STATUS_ALLOC_FAILURE            - Memory allocation failure
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED  - Operation not supported
  */
-int check_and_convert_endian(unsigned char *src, unsigned char *dst,
+int check_and_convert_endian(struct subsystem_context *ele_ctx,
+			     unsigned char *src, unsigned char **dst,
 			     unsigned int size,
 			     enum smw_config_key_type_id type_id);
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 
 #include "compiler.h"
@@ -22,6 +22,27 @@ struct ele_get_info_head {
 	uint8_t reserved;
 	uint32_t uid[ELE_NB_UID_WORD];
 };
+
+static void features_per_soc(struct ele_info *info)
+{
+	SMW_DBG_PRINTF(DEBUG, "soc_id = 0x%x\n", info->soc_id);
+
+	switch (info->soc_id) {
+	case SOC_IMX8ULP:
+	case SOC_IMX943:
+		break;
+
+	case SOC_IMX91:
+	case SOC_IMX93:
+		info->edwards_be = true;
+		break;
+
+	default:
+		/* All others SOC (95, 943, 952, ...)*/
+		info->sign_verif_opaque_key = true;
+		break;
+	}
+}
 
 static int get_uid(struct subsystem_context *ele_ctx, unsigned char *uid,
 		   unsigned int *uid_length)
@@ -201,6 +222,9 @@ int ele_get_device_info(struct subsystem_context *ele_ctx)
 			}
 		}
 	}
+
+	/* Set the specific SOC features */
+	features_per_soc(info);
 
 	info->valid = true;
 

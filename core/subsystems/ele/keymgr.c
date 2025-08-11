@@ -523,7 +523,7 @@ static int update_export_rsa_key_data(struct smw_keymgr_descriptor *key_desc,
 	return status;
 }
 
-static int export_key_operation(struct hdl *hdl,
+static int export_key_operation(struct subsystem_context *ele_ctx,
 				struct smw_keymgr_descriptor *key_desc)
 {
 	int status = SMW_STATUS_OK;
@@ -596,11 +596,11 @@ static int export_key_operation(struct hdl *hdl,
 		       "    Public Key\n"
 		       "      - buffer: %p\n"
 		       "      - size: %d\n",
-		       __func__, __LINE__, hdl->key_store,
+		       __func__, __LINE__, ele_ctx->hdl.key_store,
 		       op_args.key_identifier, op_args.out_key,
 		       op_args.out_key_size);
 
-	err = hsm_pub_key_recovery(hdl->key_store, &op_args);
+	err = hsm_pub_key_recovery(ele_ctx->hdl.key_store, &op_args);
 	SMW_DBG_PRINTF(DEBUG, "hsm_pub_key_recovery returned %d\n", err);
 
 	status = ele_convert_err(err);
@@ -610,12 +610,13 @@ static int export_key_operation(struct hdl *hdl,
 	if (key_type_id != SMW_CONFIG_KEY_TYPE_ID_RSA) {
 		if (status == SMW_STATUS_OK) {
 			/*
-			 * On i.MX93 and i.MX91, the exported public key buffer
-			 * is encoded in big-endian format for ECC Edwards and
-			 * Montgomery key pairs.
-			 * Hence, convert it to little endian format.
+			 * On some device (e.g. i.MX93 and i.MX91), the
+			 * exported public key buffer is encoded in big-endian
+			 * format for ECC Edwards and Mongomery key. Hence,
+			 * convert it to little endian format.
 			 */
-			status = check_and_convert_endian(op_args.out_key, NULL,
+			status = check_and_convert_endian(ele_ctx,
+							  op_args.out_key, NULL,
 							  public_length,
 							  key_type_id);
 			if (status != SMW_STATUS_OK) {
@@ -838,12 +839,13 @@ static int generate_key(struct subsystem_context *ele_ctx, void *args)
 
 	if (public_data) {
 		/*
-		 * On i.MX93 and i.MX91, the exported public key buffer is encoded
-		 * in big-endian format for ECC Edwards and X25519 key pairs. Hence,
-		 * Convert it to little endian format.
+		 * On some device (e.g. i.MX93 and i.MX91), the
+		 * exported public key buffer is encoded in big-endian
+		 * format for ECC Edwards and Mongomery key. Hence,
+		 * convert it to little endian format.
 		 */
-		status = check_and_convert_endian(op_args.out_key, NULL,
-						  op_args.exp_out_size,
+		status = check_and_convert_endian(ele_ctx, op_args.out_key,
+						  NULL, op_args.exp_out_size,
 						  key_identifier->type_id);
 		if (status != SMW_STATUS_OK) {
 			status = SMW_STATUS_OPERATION_FAILURE;
@@ -990,7 +992,7 @@ end:
 	return status;
 }
 
-static int export_key(struct hdl *hdl, void *args)
+static int export_key(struct subsystem_context *ele_ctx, void *args)
 {
 	int status = SMW_STATUS_OK;
 
@@ -998,7 +1000,7 @@ static int export_key(struct hdl *hdl, void *args)
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	status = export_key_operation(hdl, &key_args->key_descriptor);
+	status = export_key_operation(ele_ctx, &key_args->key_descriptor);
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
@@ -1106,55 +1108,6 @@ static int get_key_lengths(struct hdl *hdl, void *args)
 	return status;
 }
 
-static int get_key_attributes(struct hdl *hdl, void *args)
-{
-	int status = SMW_STATUS_OK;
-
-	struct smw_keymgr_get_key_attributes_args *key_args = args;
-	struct smw_keymgr_identifier *key_identifier = NULL;
-	struct smw_key_attributes *key_attributes = NULL;
-	op_get_key_attr_args_t op_key_attrs = { 0 };
-	const struct key_def *key_def = NULL;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	key_identifier = &key_args->key_descriptor.identifier;
-	key_attributes = &key_identifier->key_attributes;
-
-	op_key_attrs.key_identifier = key_identifier->s_id;
-
-	status = get_key_attributes_operation(hdl, &op_key_attrs);
-	if (status != SMW_STATUS_OK)
-		goto end;
-
-	key_def = get_key_def_by_ele_type(op_key_attrs.key_type,
-					  op_key_attrs.bit_key_sz);
-	if (!key_def) {
-		status = SMW_STATUS_KEY_INVALID;
-		goto end;
-	}
-
-	key_identifier->type_id = key_def->key_type_id;
-	key_identifier->security_size = op_key_attrs.bit_key_sz;
-	get_key_privacy_by_ele_type(op_key_attrs.key_type,
-				    &key_identifier->privacy_id);
-	ele_get_key_lifecycles(op_key_attrs.lifecycle,
-			       &key_identifier->key_attributes.attributes);
-	get_key_persistence(op_key_attrs.key_lifetime,
-			    &key_identifier->key_attributes.attributes);
-
-	ele_get_key_policy(&key_attributes->permitted_algo,
-			   &key_attributes->usage_flags,
-			   op_key_attrs.permitted_algo, op_key_attrs.key_usage);
-	key_attributes->storage_id =
-		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
-	key_attributes->attributes = key_identifier->key_attributes.attributes;
-
-end:
-	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
-	return status;
-}
-
 static int commit_key_storage(struct hdl *hdl)
 {
 	int status = SMW_STATUS_OK;
@@ -1258,19 +1211,73 @@ end:
 
 static bool key_is_present(struct hdl *hdl, void *args, int *status)
 {
+	struct smw_keymgr_get_key_attributes_args key_attr = { 0 };
 	struct smw_object_query *obj_query = args;
 	bool handled = false;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
 	if (obj_query->type == SMW_QUERY_TYPE_KEY) {
-		*status = get_key_attributes(hdl, obj_query->key);
+		key_attr.key_descriptor = *obj_query->key;
+		*status = ele_get_key_attributes(hdl, &key_attr);
+		if (*status == SMW_STATUS_OK)
+			*obj_query->key = key_attr.key_descriptor;
+
 		handled = true;
 	}
 
 	SMW_DBG_PRINTF_COND(VERBOSE, handled, "%s returned %d\n", __func__,
 			    *status);
 	return handled;
+}
+
+int ele_get_key_attributes(struct hdl *hdl,
+			   struct smw_keymgr_get_key_attributes_args *key_args)
+{
+	int status = SMW_STATUS_OK;
+
+	struct smw_keymgr_identifier *key_identifier = NULL;
+	struct smw_key_attributes *key_attributes = NULL;
+	op_get_key_attr_args_t op_key_attrs = { 0 };
+	const struct key_def *key_def = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	key_identifier = &key_args->key_descriptor.identifier;
+	key_attributes = &key_identifier->key_attributes;
+
+	op_key_attrs.key_identifier = key_identifier->s_id;
+
+	status = get_key_attributes_operation(hdl, &op_key_attrs);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	key_def = get_key_def_by_ele_type(op_key_attrs.key_type,
+					  op_key_attrs.bit_key_sz);
+	if (!key_def) {
+		status = SMW_STATUS_KEY_INVALID;
+		goto end;
+	}
+
+	key_identifier->type_id = key_def->key_type_id;
+	key_identifier->security_size = op_key_attrs.bit_key_sz;
+	get_key_privacy_by_ele_type(op_key_attrs.key_type,
+				    &key_identifier->privacy_id);
+	ele_get_key_lifecycles(op_key_attrs.lifecycle,
+			       &key_identifier->key_attributes.attributes);
+	get_key_persistence(op_key_attrs.key_lifetime,
+			    &key_identifier->key_attributes.attributes);
+
+	ele_get_key_policy(&key_attributes->permitted_algo,
+			   &key_attributes->usage_flags,
+			   op_key_attrs.permitted_algo, op_key_attrs.key_usage);
+	key_attributes->storage_id =
+		ELE_KEY_LIFETIME_LOCATION_GET(op_key_attrs.key_lifetime);
+	key_attributes->attributes = key_identifier->key_attributes.attributes;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
 }
 
 int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
@@ -1294,7 +1301,7 @@ int ele_set_pubkey_type(enum smw_config_key_type_id key_type_id,
 	return status;
 }
 
-int ele_export_public_key(struct hdl *hdl,
+int ele_export_public_key(struct subsystem_context *ele_ctx,
 			  struct smw_keymgr_descriptor *key_desc)
 {
 	int status = SMW_STATUS_OK;
@@ -1308,7 +1315,7 @@ int ele_export_public_key(struct hdl *hdl,
 
 	/* First get the key attributes */
 	key_attrs.key_identifier = key_desc->identifier.s_id;
-	status = get_key_attributes_operation(hdl, &key_attrs);
+	status = get_key_attributes_operation(&ele_ctx->hdl, &key_attrs);
 	if (status != SMW_STATUS_OK)
 		goto end;
 
@@ -1346,7 +1353,7 @@ int ele_export_public_key(struct hdl *hdl,
 		goto end;
 
 	/* Export the public key */
-	status = export_key_operation(hdl, key_desc);
+	status = export_key_operation(ele_ctx, key_desc);
 
 end:
 	if (status != SMW_STATUS_OK && key_desc->pub)
@@ -1376,7 +1383,7 @@ bool ele_key_handle(struct subsystem_context *ele_ctx,
 		*status = import_key(hdl, args);
 		break;
 	case OPERATION_ID_EXPORT_KEY:
-		*status = export_key(hdl, args);
+		*status = export_key(ele_ctx, args);
 		break;
 	case OPERATION_ID_DELETE_KEY:
 		*status = delete_key(ele_ctx, args);
@@ -1385,7 +1392,7 @@ bool ele_key_handle(struct subsystem_context *ele_ctx,
 		*status = get_key_lengths(hdl, args);
 		break;
 	case OPERATION_ID_GET_KEY_ATTRIBUTES:
-		*status = get_key_attributes(hdl, args);
+		*status = ele_get_key_attributes(hdl, args);
 		break;
 	case OPERATION_ID_COMMIT_KEY_STORAGE:
 		*status = commit_key_storage(hdl);

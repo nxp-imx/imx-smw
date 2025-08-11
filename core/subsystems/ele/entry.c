@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include "smw_osal.h"
@@ -221,11 +221,11 @@ __weak bool ele_hash_handle(struct hdl *hdl, enum operation_id operation_id,
 	return false;
 }
 
-__weak bool ele_sign_verify_handle(struct hdl *hdl,
+__weak bool ele_sign_verify_handle(struct subsystem_context *ele_ctx,
 				   enum operation_id operation_id, void *args,
 				   int *status)
 {
-	(void)hdl;
+	(void)ele_ctx;
 	(void)operation_id;
 	(void)args;
 	(void)status;
@@ -318,7 +318,7 @@ static int execute(enum operation_id operation_id, void *args)
 		goto end;
 	else if (ele_hash_handle(hdl, operation_id, args, &status))
 		goto end;
-	else if (ele_sign_verify_handle(hdl, operation_id, args, &status))
+	else if (ele_sign_verify_handle(&ele_ctx, operation_id, args, &status))
 		goto end;
 	else if (ele_rng_handle(hdl, operation_id, args, &status))
 		goto end;

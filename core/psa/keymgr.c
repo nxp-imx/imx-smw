@@ -59,10 +59,11 @@ static const struct {
 	KEY_TYPE_GENERAL(DERIVE, TLS_1_3, DERIVE),
 };
 
-#define ECC_KEY_TYPE(_smw, _family)                                            \
+#define ECC_KEY_TYPE(_smw, _family, _fixed_size)                               \
 	{                                                                      \
 		.smw_key_type = SMW_KEY_TYPE_NAME_##_smw,                      \
-		.ecc_family = PSA_ECC_FAMILY_##_family                         \
+		.ecc_family = PSA_ECC_FAMILY_##_family,                        \
+		.fixed_size = _fixed_size                                      \
 	}
 
 /**
@@ -73,14 +74,16 @@ static const struct {
 struct ecc_key_type {
 	smw_key_type_t smw_key_type;
 	psa_ecc_family_t ecc_family;
+	size_t fixed_size;
 };
 
 static const struct ecc_key_type ecc_key_type[] = {
-	ECC_KEY_TYPE(SECP_R1, SECP_R1),
-	ECC_KEY_TYPE(BRAINPOOL_R1, BRAINPOOL_P_R1),
-	ECC_KEY_TYPE(ED25519, TWISTED_EDWARDS),
-	ECC_KEY_TYPE(ED448, TWISTED_EDWARDS),
-	ECC_KEY_TYPE(X25519, MONTGOMERY),
+	ECC_KEY_TYPE(SECP_R1, SECP_R1, 0),
+	ECC_KEY_TYPE(BRAINPOOL_R1, BRAINPOOL_P_R1, 0),
+	ECC_KEY_TYPE(ED25519, TWISTED_EDWARDS, 255),
+	ECC_KEY_TYPE(ED448, TWISTED_EDWARDS, 448),
+	ECC_KEY_TYPE(X25519, MONTGOMERY, 255),
+	ECC_KEY_TYPE(X448, MONTGOMERY, 448),
 };
 
 #define KEY_USAGE(_name)                                                       \
@@ -190,7 +193,8 @@ static bool is_ecc_key_type(smw_key_type_t type_name)
 	    type_name == SMW_KEY_TYPE_NAME_BRAINPOOL_T1 ||
 	    type_name == SMW_KEY_TYPE_NAME_ED25519 ||
 	    type_name == SMW_KEY_TYPE_NAME_ED448 ||
-	    type_name == SMW_KEY_TYPE_NAME_X25519)
+	    type_name == SMW_KEY_TYPE_NAME_X25519 ||
+	    type_name == SMW_KEY_TYPE_NAME_X448)
 		return true;
 
 	return false;
@@ -342,25 +346,24 @@ static void set_ecc_key_buffer(psa_key_type_t key_type, const uint8_t *data,
 static smw_key_type_t get_ecc_smw_key_type(psa_ecc_family_t ecc_family,
 					   unsigned int security_size)
 {
+	smw_key_type_t key_type = SMW_KEY_TYPE_NAME_NONE;
 	unsigned int i = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (ecc_family == PSA_ECC_FAMILY_TWISTED_EDWARDS) {
-		if (security_size == 255)
-			return SMW_KEY_TYPE_NAME_ED25519;
-		else if (security_size == 448)
-			return SMW_KEY_TYPE_NAME_ED448;
-		else
-			return SMW_KEY_TYPE_NAME_NONE;
-	}
-
 	for (; i < ARRAY_SIZE(ecc_key_type); i++) {
-		if (ecc_key_type[i].ecc_family == ecc_family)
-			return ecc_key_type[i].smw_key_type;
+		if (ecc_key_type[i].ecc_family != ecc_family)
+			continue;
+
+		if (ecc_key_type[i].fixed_size &&
+		    ecc_key_type[i].fixed_size != security_size)
+			continue;
+
+		key_type = ecc_key_type[i].smw_key_type;
+		break;
 	}
 
-	return SMW_KEY_TYPE_NAME_NONE;
+	return key_type;
 }
 
 static psa_key_type_t get_ecc_psa_key_type(smw_key_type_t smw_key_type,

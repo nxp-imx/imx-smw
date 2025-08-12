@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #include "smw_status.h"
@@ -383,6 +383,15 @@ enum smw_status_code smw_hash_final(struct smw_hash_final_args *args)
 	status = smw_utils_execute_final(OPERATION_ID_HASH_MULTI_PART,
 					 &hash_args,
 					 args->context->subsystem_id);
+
+	/*
+	 * Get output buffer length feature - If the output buffer is NULL and
+	 * subsystem returns SMW_STATUS_OUTPUT_TOO_SHORT, update the status to
+	 * SMW_STATUS_OK.
+	 */
+	if (status == SMW_STATUS_OUTPUT_TOO_SHORT && !args->output)
+		status = SMW_STATUS_OK;
+
 	if (status == SMW_STATUS_OUTPUT_TOO_SHORT ||
 	    status == SMW_STATUS_INVALID_PARAM ||
 	    (status == SMW_STATUS_OK && !args->output))

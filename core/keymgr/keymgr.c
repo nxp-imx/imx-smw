@@ -1746,11 +1746,22 @@ enum smw_status_code smw_delete_key(struct smw_delete_key_args *args)
 	enum subsystem_id subsystem_id = SUBSYSTEM_ID_INVALID;
 	struct smw_keymgr_descriptor *key_desc = NULL;
 	struct smw_keymgr_identifier *identifier = NULL;
+	unsigned int storage_id = 0;
 
 	SMW_DBG_TRACE_API_CALL;
 
 	if (!args || !args->key_descriptor) {
 		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	/* In case of EdgeLock 2GO data, don't continue */
+	storage_id = args->key_descriptor->attributes.storage_id;
+	if (NXP_IS_EL2GO_DATA(storage_id) ||
+	    args->key_descriptor->id == ELE_OEM_SRKH_KEY_ID) {
+		status = SMW_STATUS_UNKNOWN_ID;
 		goto end;
 	}
 

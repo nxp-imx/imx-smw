@@ -1,6 +1,4 @@
 {
-
-
 	"subtest 1": {
 		"command": "OP_CONTEXT_ALLOCATE",
 		"subsystem": "SECO",
@@ -348,6 +346,22 @@
 		"result": "SMW_STATUS_OUTPUT_TOO_SHORT"
 	},
 	"subtest 25": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp",
+			"Get digest length - Digest buffer is NULL"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHA512",
+		"input": [
+			"a4f7bb"
+		],
+		"digest": 0,
+		"context_id": 5,
+		"depends": 22
+	},
+	"subtest 26": {
 		"description": [
 			"SHA512",
 			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",

@@ -3,6 +3,10 @@
 		"data 1": {
 			"id": 21,
 			"data": "ABCDEF"
+		},
+		"data 1 retrieve": {
+			"data_name": "data 1",
+			"data": 0
 		}
 	},
 	"subtest 1": {
@@ -14,6 +18,15 @@
 		"command": "STORAGE_RETRIEVE",
 		"subsystem": "SECO",
 		"data_name": "data 1",
+		"output": 3,
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": "Get the data buffer length - Data buffer is NULL",
+		"command": "STORAGE_RETRIEVE",
+		"subsystem": "SECO",
+		"data_name": "data 1 retrieve",
+		"output": 3,
 		"depends": 1
 	}
 }

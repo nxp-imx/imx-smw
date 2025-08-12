@@ -11,6 +11,10 @@
 			"attributes_list": [
 				"PERSISTENT"
 			]
+		},
+		"data 2 retrieve": {
+			"data_name": "data 2",
+			"data": 0
 		}
 	},
 	"subtest 1": {
@@ -42,6 +46,14 @@
 		"depends": 4
 	},
 	"subtest 6": {
+		"description": "Get the data buffer length - Data buffer is NULL",
+		"command": "STORAGE_RETRIEVE",
+		"subsystem": "TEE",
+		"data_name": "data 2 retrieve",
+		"output": 3,
+		"depends": 4
+	},
+	"subtest 7": {
 		"command": "STORAGE_DELETE",
 		"subsystem": "TEE",
 		"data_name": "data 2",

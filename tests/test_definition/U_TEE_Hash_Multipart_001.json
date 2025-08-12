@@ -432,6 +432,22 @@
 		"description": [
 			"SHA512",
 			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
+			"shabytetestvectors.zip/SHA512LongMsg.rsp",
+			"Get digest length - Digest buffer is NULL"
+		],
+		"command": "HASH_FINAL",
+		"algo": "SHA512",
+		"input": [
+			"a4f7bb"
+		],
+		"digest": 0,
+		"context_id": 7,
+		"depends": 30
+	},
+	"subtest 34": {
+		"description": [
+			"SHA512",
+			"https://csrc.nist.gov/Projects/cryptographic-algorithm-validation-program/Secure-Hashing",
 			"shabytetestvectors.zip/SHA512LongMsg.rsp"
 		],
 		"command": "HASH_FINAL",

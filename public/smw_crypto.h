@@ -264,6 +264,18 @@ struct smw_cipher_args {
  *
  * This function computes a hash.
  *
+ * To query the required digest buffer length, set @args->output to NULL.
+ * The function will then set the required digest buffer length in
+ * @args->output_length and return SMW_STATUS_OK.
+ *
+ * On operation completion, the @args->output_length is updated to
+ * the correct value when
+ *
+ *  - Digest buffer length is bigger than expected. In this case, operation
+ *    succeeds.
+ *  - Digest buffer length is shorter than expected. In this case, operation
+ *    fails and returns SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
  * Return:
  * See &enum smw_status_code
  *	- Common return codes
@@ -321,10 +333,11 @@ enum smw_status_code smw_hash_update(struct smw_hash_update_args *args);
  *
  * Output data field of @args can be a NULL pointer to get the required output
  * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK
- * and the operation is no terminated (context remains valid) unless required
+ * and the operation is not terminated (context remains valid) unless required
  * output buffer length is 0.
  *
  * Output length @args field is updated to the correct value when:
+ *
  *  - Output length is bigger than expected. In this case operation succeeded.
  *  - Output length is shorter than expected. In this case operation failed and
  *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
@@ -345,6 +358,18 @@ enum smw_status_code smw_hash_final(struct smw_hash_final_args *args);
  *
  * This function generates a signature.
  * When TLS_MAC_FINISH attribute is set, the key type must be TLS_MASTER.
+ *
+ * To query the required signature buffer length, set @args->signature to
+ * NULL. The function will then set the required signature buffer length in
+ * @args->signature_length and return SMW_STATUS_OK.
+ *
+ * On operation completion, the @args->signature_length is updated to
+ * the correct value when
+ *
+ *  - Signature buffer length is bigger than expected. In this case, operation
+ *    succeeds.
+ *  - Signature buffer length is shorter than expected. In this case, operation
+ *    fails and returns SMW_STATUS_OUTPUT_TOO_SHORT.
  *
  * Return:
  * &enum smw_status_code
@@ -388,6 +413,7 @@ enum smw_status_code smw_rng(struct smw_rng_args *args);
  * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK.
  *
  * Output length @args field is updated to the correct value when:
+ *
  *  - Output length is bigger than expected. In this case operation succeeded.
  *  - Output length is shorter than expected. In this case operation failed and
  *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
@@ -441,6 +467,7 @@ enum smw_status_code smw_cipher_init(struct smw_cipher_init_args *args);
  * buffer length. If this feature succeed, returned error code is SMW_STATUS_OK.
  *
  * Output length @args field is updated to the correct value when:
+ *
  *  - Output length is bigger than expected. In this case operation succeeded.
  *  - Output length is shorter than expected. In this case operation failed and
  *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
@@ -474,6 +501,7 @@ enum smw_status_code smw_cipher_update(struct smw_cipher_data_args *args);
  * output buffer length is 0.
  *
  * Output length @args field is updated to the correct value when:
+ *
  *  - Output length is bigger than expected. In this case operation succeeded.
  *  - Output length is shorter than expected. In this case operation failed and
  *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
@@ -493,6 +521,18 @@ enum smw_status_code smw_cipher_final(struct smw_cipher_data_args *args);
  * @args: Pointer to the structure that contains the MAC arguments.
  *
  * This function computes a Message Authentication Code.
+ *
+ * To query the required MAC buffer length, set @args->mac to NULL. The function
+ * will then set the required MAC buffer length in @args->mac_length and return
+ * SMW_STATUS_OK.
+ *
+ * On operation completion, the @args->mac_length is updated to
+ * the correct value when
+ *
+ *  - MAC buffer length is bigger than expected. In this case, operation
+ *    succeeds.
+ *  - MAC buffer length is shorter than expected. In this case, operation
+ *    fails and returns SMW_STATUS_OUTPUT_TOO_SHORT.
  *
  * Return:
  * See &enum smw_status_code

@@ -190,6 +190,19 @@ enum smw_status_code smw_store_data(struct smw_store_data_args *args);
  *
  * Retrieves the data.
  *
+ * To query the required data buffer length for data retrieval, set
+ * @args->data_descriptor->data to NULL. The function will then set the required
+ * data buffer length in @args->data_descriptor->length and return
+ * SMW_STATUS_OK.
+ *
+ * On operation completion, the @args->data_descriptor->length is updated to
+ * the correct value when
+ *
+ *  - Data buffer length is bigger than expected. In this case, operation
+ *    succeeds.
+ *  - Data buffer length is shorter than expected. In this case, operation fails
+ *    and returns SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
  * Return:
  * See &enum smw_status_code
  *	- Common return codes

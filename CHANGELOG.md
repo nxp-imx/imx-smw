@@ -63,6 +63,9 @@ The failure is due to the storage manager which is already loaded and a new inst
 * In case EL2GO data, smw_key_delete() returns immediately with error SMW_STATUS_UNKNOWN_ID.
 * Fix the internal key derivation conversion missing the key attributes.
 * Fix the OEM Master key synchronization flag when persistent key.
+* Update APIs documentation to include details about querying the required output buffer length.
+* Update the smw_hash_final() API to return SMW_STATUS_OK when the output buffer is NULL and the subsystem
+  returns SMW_STATUS_OUTPUT_TOO_SHORT to ensure consistent behavior across all subsystems.
 
 ##### 2. Subsystems
 
@@ -116,6 +119,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Enable i.MX95 HMAC.
 * Add PSA tests validating key derivation using the `PSA_ALG_VENDOR_TLS13` algorithm.
 * Add tests validating x448 key.
+* Add SMW tests to verify "get output buffer length" feature.
 
 #### PKCS#11 Library
 

@@ -119,6 +119,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Add TLS 1.2 Key exchange and MAC support.
 * Encode and decode data id (CKA_OBJECT_ID) in OID format.
 * TLS: IV and Tag properly returned in the output buffer.
+* Fix decoding data id (CKA_OBJECT_ID).
 
 #### PKCS#11 Tests
 

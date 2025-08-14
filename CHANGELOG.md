@@ -61,6 +61,8 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Store private asymmetric key as key pair object in the database.
 * Add support for the x448 key.
 * In case EL2GO data, smw_key_delete() returns immediately with error SMW_STATUS_UNKNOWN_ID.
+* Fix the internal key derivation conversion missing the key attributes.
+* Fix the OEM Master key synchronization flag when persistent key.
 
 ##### 2. Subsystems
 

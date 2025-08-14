@@ -226,6 +226,8 @@ static int derive_oem_master_key(struct subsystem_context *ele_ctx,
 	hsm_err_t err = HSM_NO_ERROR;
 	hsm_hdl_t key_mgt_hdl = 0;
 	op_key_exchange_args_t key_ex_args = { 0 };
+
+	unsigned char *msg = NULL;
 	struct payload_oem_mk *payload = NULL;
 
 	status = ele_is_oem_srkh_fused(ele_ctx, &srkh_fused);
@@ -237,13 +239,21 @@ static int derive_oem_master_key(struct subsystem_context *ele_ctx,
 		goto end;
 	}
 
-	payload = (struct payload_oem_mk *)smw_keymgr_oem_get_payload(args);
-	if (!payload) {
+	msg = smw_keymgr_oem_get_payload(args);
+	if (!msg) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
 
 	key_ex_args.flags = HSM_OP_KEY_EXCHANGE_FLAGS_INPUT_SIGNED_CONTENT;
+
+	payload = (void *)msg + ele_get_sign_msg_block_length();
+
+	if (payload->derived_key_lifetime & HSM_SE_KEY_STORAGE_PERSISTENT ||
+	    payload->derived_key_lifetime & HSM_SE_KEY_STORAGE_PERS_PERM) {
+		key_ex_args.flags |= HSM_OP_KEY_EXCHANGE_FLAGS_STRICT_OPERATION;
+	}
+
 	key_ex_args.in_content = smw_keymgr_oem_get_payload(args);
 	key_ex_args.in_content_sz = smw_keymgr_oem_get_payload_len(args);
 	key_ex_args.in_pub_buffer = args->ops.get_peer(args);

@@ -41,20 +41,25 @@ static CK_BYTE divide_by_128(CK_BYTE_PTR bytes, size_t len)
 	return remainder & UINT8_MAX;
 }
 
-static void multiply_add_128(CK_BYTE_PTR bytes, size_t len, CK_BYTE value)
+static void multiply_add_128(CK_BYTE_PTR bytes, size_t *len, CK_BYTE value)
 {
 	unsigned int carry = value;
 	unsigned int tmp = 0;
-	size_t i = len;
+	size_t i = 0;
 
-	for (; i > 0; i--) {
-		tmp = bytes[i - 1] << 7;
+	for (; i < *len; i++) {
+		tmp = bytes[i] << 7;
 
-		if (ADD_OVERFLOW(tmp, carry, &tmp))
-			tmp = 0;
+		if (ADD_OVERFLOW(tmp, carry, &carry))
+			carry = 0;
 
-		bytes[i - 1] = tmp & 0xFF;
-		carry = tmp >> 8;
+		bytes[i] = carry & 0xFF;
+		carry >>= 8;
+	}
+
+	if (carry > 0) {
+		bytes[*len] = carry & 0xFF;
+		(*len)++;
 	}
 }
 
@@ -513,25 +518,54 @@ end:
 
 CK_RV util_base128_decode(struct libbytes *out, struct libbytes *in)
 {
+	CK_RV ret = CKR_DATA_INVALID;
 	CK_BYTE byte = 0;
 	size_t i = 0;
+	CK_BYTE_PTR tmp = NULL;
+	size_t tmp_size = 0;
 
 	if (!in->number)
-		return CKR_DATA_INVALID;
+		goto end;
 
-	out->number = in->number;
+	if (MUL_OVERFLOW(in->number, 2, &tmp_size)) {
+		ret = CKR_FUNCTION_FAILED;
+		goto end;
+	}
+
+	tmp = calloc(1, tmp_size);
+	if (!tmp) {
+		DBG_TRACE("Allocation error");
+		ret = CKR_HOST_MEMORY;
+		goto end;
+	}
+
+	tmp_size = 1;
+	for (; i < in->number; i++) {
+		byte = in->array[i] & 0x7F;
+		multiply_add_128(tmp, &tmp_size, byte);
+
+		if (!(in->array[i] & 0x80))
+			break;
+	}
+
+	out->number = tmp_size;
 
 	/* Allocate the out->array buffer */
 	out->array = calloc(out->number, 1);
 	if (!out->array) {
 		DBG_TRACE("Allocation error");
-		return CKR_HOST_MEMORY;
+		ret = CKR_HOST_MEMORY;
+		goto end;
 	}
 
-	for (; i < in->number; i++) {
-		byte = in->array[i] & 0x7F;
-		multiply_add_128(out->array, out->number, byte);
-	}
+	for (i = 0; i < out->number; i++)
+		out->array[i] = tmp[out->number - i - 1];
 
-	return CKR_OK;
+	ret = CKR_OK;
+
+end:
+	if (tmp)
+		free(tmp);
+
+	return ret;
 }

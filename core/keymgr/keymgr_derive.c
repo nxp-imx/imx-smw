@@ -462,6 +462,8 @@ smw_keymgr_convert_derived_key_desc(struct smw_derived_key_descriptor *in,
 	out->identifier.s_id = in->id;
 	out->identifier.type_id = type_id;
 	out->identifier.security_size = in->security_size;
+	out->identifier.key_attributes = in->attributes;
+
 	out->pub = in;
 
 end:

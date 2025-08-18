@@ -78,6 +78,11 @@ The failure is due to the storage manager which is already loaded and a new inst
 * ELE: Add support for Ed448 key management and signature operations.
 * ELE: Enable i.MX95 HMAC.
 * ELE: Add support for x448 key management and derivation operations.
+* ELE: Replace SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY by SMW_STATUS_ALLOC_FAILURE
+  when allocation done in the library.
+* SECO: Replace SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY by SMW_STATUS_ALLOC_FAILURE
+  when allocation done in the library.
+
 
 ##### 3. ARM PSA APIs
 

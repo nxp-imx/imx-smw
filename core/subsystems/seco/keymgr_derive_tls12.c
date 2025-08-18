@@ -1035,7 +1035,7 @@ static int tls12_op_derive(struct subsystem_context *seco_ctx,
 
 	op_args.kdf_input = SMW_UTILS_CALLOC(1, op_args.kdf_input_size);
 	if (!op_args.kdf_input) {
-		status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+		status = SMW_STATUS_ALLOC_FAILURE;
 		goto end;
 	}
 

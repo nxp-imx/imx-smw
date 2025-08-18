@@ -224,7 +224,7 @@ static int tls13_set_payload_args(struct smw_keymgr_derive_key_args *args,
 				  struct tls13_ele_payload **out_payload)
 {
 	struct tls13_ele_payload *payload = NULL;
-	enum smw_status_code status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+	enum smw_status_code status = SMW_STATUS_ALLOC_FAILURE;
 	struct smw_keymgr_descriptor *psk = smw_keymgr_tls13_get_psk(args);
 
 	payload = SMW_UTILS_CALLOC(1, sizeof(*payload));

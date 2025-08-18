@@ -155,7 +155,7 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	key_ex_args.user_fixed_info =
 		SMW_UTILS_CALLOC(1, key_ex_args.user_fixed_info_sz);
 	if (!key_ex_args.user_fixed_info) {
-		status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+		status = SMW_STATUS_ALLOC_FAILURE;
 		goto end;
 	}
 

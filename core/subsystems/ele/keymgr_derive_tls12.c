@@ -117,7 +117,7 @@ static int build_user_info(unsigned char **output, unsigned int *output_length,
 
 	*output = SMW_UTILS_CALLOC(1, *output_length);
 	if (!*output)
-		return SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+		return SMW_STATUS_ALLOC_FAILURE;
 
 	p = *output;
 	if (in1 && len1) {
@@ -307,7 +307,7 @@ static int tls12_set_derive_args(struct smw_keymgr_derive_key_args *args,
 		key_ex_args->output =
 			SMW_UTILS_CALLOC(1, key_ex_args->output_sz);
 		if (!key_ex_args->output)
-			status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+			status = SMW_STATUS_ALLOC_FAILURE;
 
 		break;
 
@@ -317,7 +317,7 @@ static int tls12_set_derive_args(struct smw_keymgr_derive_key_args *args,
 		key_ex_args->output =
 			SMW_UTILS_CALLOC(1, key_ex_args->output_sz);
 		if (!key_ex_args->output)
-			status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+			status = SMW_STATUS_ALLOC_FAILURE;
 
 		break;
 
@@ -333,7 +333,7 @@ static int
 tls12_op_derive_master_secret(struct smw_keymgr_derive_key_args *args,
 			      hsm_hdl_t *key_mgt_hdl)
 {
-	int status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+	int status = SMW_STATUS_ALLOC_FAILURE;
 	struct tls12_ms_ele_op_payload *payload = NULL;
 	op_key_exchange_args_t key_ex_args = { 0 };
 	struct smw_keymgr_tls12_args *tls_args = args->kdf_args;
@@ -458,7 +458,7 @@ static int
 tls12_op_derive_key_expansion(struct smw_keymgr_derive_key_args *args,
 			      hsm_hdl_t *key_mgt_hdl)
 {
-	int status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+	int status = SMW_STATUS_ALLOC_FAILURE;
 	struct tls12_kb_ele_op_payload *payload = NULL;
 	op_key_exchange_args_t key_ex_args = { 0 };
 	struct smw_keymgr_tls12_args *tls_args = args->kdf_args;
@@ -555,7 +555,7 @@ end:
 static int tls12_op_derive_ivs(struct smw_keymgr_derive_key_args *args,
 			       hsm_hdl_t *key_mgt_hdl)
 {
-	int status = SMW_STATUS_SUBSYSTEM_OUT_OF_MEMORY;
+	int status = SMW_STATUS_ALLOC_FAILURE;
 	struct tls12_kb_ele_op_payload *payload = NULL;
 	op_key_exchange_args_t key_ex_args = { 0 };
 	struct smw_keymgr_tls12_args *tls_args = args->kdf_args;

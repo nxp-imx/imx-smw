@@ -62,7 +62,10 @@
 			"0c0d0e0f10"
 		],
 		"op_output": "derived secret 1",
-		"result": "PSA_ERROR_INVALID_ARGUMENT"
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"restriction_list": [
+			"imx943"
+		]
 	},
 	"subtest 4": {
 		"description": [
@@ -81,7 +84,10 @@
 			"0c0d0e0f10"
 		],
 		"op_output": "derived secret 1",
-		"result": "PSA_ERROR_INVALID_ARGUMENT"
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"restriction_list": [
+			"imx943"
+		]
 	},
 	"subtest 5": {
 		"description": [
@@ -100,7 +106,10 @@
 			"0a0b0c0d0e0f10"
 		],
 		"op_output": "derived secret 1",
-		"result": "PSA_ERROR_INVALID_ARGUMENT"
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"restriction_list": [
+			"imx943"
+		]
 	},
 	"subtest 6": {
 		"description": [
@@ -119,7 +128,10 @@
 			"0b0c0d0e0f10"
 		],
 		"op_output": "derived secret 1",
-		"result": "PSA_ERROR_INVALID_ARGUMENT"
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"restriction_list": [
+			"imx943"
+		]
 	},
 	"subtest 7": {
 		"description": [
@@ -138,6 +150,9 @@
 			"0b0c0d0e0f10"
 		],
 		"op_output": "derived secret 1",
-		"result": "PSA_ERROR_INVALID_ARGUMENT"
+		"result": "PSA_ERROR_INVALID_ARGUMENT",
+		"restriction_list": [
+			"imx943"
+		]
 	}
 }

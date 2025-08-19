@@ -64,6 +64,7 @@ case ${platform} in
   imx943evk)
     optee_plat="imx-mx943evk"
     opt_ele=1
+    opt_tls=1
     ;;
 
   imx93evk)

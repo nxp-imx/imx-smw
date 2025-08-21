@@ -80,6 +80,7 @@ void tests_pkcs11_find_ext(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_parallel(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_callback(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_digest(void *lib_hdl, CK_VOID_PTR pfunc);
+void tests_pkcs11_digest_multipart(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_sign_verify(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_sign_verify_message(void *lib_hdl, CK_VOID_PTR pfunc);
 void tests_pkcs11_sign_verify_multipart(void *lib_hdl, CK_VOID_PTR pfunc);

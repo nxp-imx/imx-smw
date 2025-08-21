@@ -10,6 +10,7 @@
 #include "util_lib.h"
 #include "util_session.h"
 #include "util.h"
+#include "util_digest.h"
 
 static CK_BYTE data1[] =
 	"Multi-part cipher operations using symmetric crypto algorithms (part 1)";
@@ -1232,6 +1233,141 @@ end:
 	return status;
 }
 
+static int operation_state_digest(CK_FUNCTION_LIST_PTR pfunc)
+{
+	int status = TEST_FAIL;
+	CK_RV ret = CKR_OK;
+
+	enum mechanism_id id = MECH_ID_SHA256;
+	CK_MECHANISM digest_mech = { 0 };
+	CK_SESSION_HANDLE session = 0;
+	CK_BYTE_PTR operation_state = NULL_PTR;
+	CK_ULONG operation_state_len = 0;
+	CK_BYTE_PTR message = NULL_PTR;
+	CK_ULONG total_message_length = 0;
+	CK_ULONG message_part_length = 0;
+	CK_BYTE_PTR digest_1 = NULL_PTR;
+	CK_ULONG digest_length_1 = 0;
+	CK_BYTE_PTR digest_2 = NULL_PTR;
+	CK_ULONG digest_length_2 = 0;
+	bool match = false;
+
+	digest_mech.mechanism = DIGEST_MECHANISM(id);
+
+	SUBTEST_START();
+
+	if (util_open_rw_session(pfunc, 0, &session) != TEST_PASS)
+		goto end;
+
+	if (!util_lib_is_mech_supported(pfunc, 0, digest_mech.mechanism)) {
+		status = TEST_SKIP;
+		goto end;
+	}
+
+	TEST_OUT("Initialize digest operation\n");
+	ret = pfunc->C_DigestInit(session, &digest_mech);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestInit"))
+		goto end;
+
+	digest_length_1 = DIGEST_LENGTH(id);
+	digest_1 = malloc(digest_length_1);
+	if (CHECK_EXPECTED(digest_1, "Allocation error"))
+		goto end;
+
+	message = (CK_BYTE_PTR)TV_MSG(id);
+	total_message_length = TV_MSG_LEN(id);
+	message_part_length = total_message_length / 2;
+
+	TEST_OUT("Call C_DigestUpdate with first part of data\n");
+	ret = pfunc->C_DigestUpdate(session, message, message_part_length);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestUpdate"))
+		goto end;
+
+	TEST_OUT("Get the size needed to save the operation state\n");
+	ret = pfunc->C_GetOperationState(session, NULL_PTR,
+					 &operation_state_len);
+	if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_GetOperationState"))
+		goto end;
+
+	TEST_OUT("Allocate the operation state buffer\n");
+	operation_state = calloc(1, operation_state_len);
+	if (CHECK_EXPECTED(operation_state, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Save the operation state\n");
+	ret = pfunc->C_GetOperationState(session, operation_state,
+					 &operation_state_len);
+	if (ret == CKR_STATE_UNSAVEABLE) {
+		TEST_OUT("Cannot save the operation state!\n");
+		status = TEST_SKIP;
+		goto end;
+	} else if (CHECK_CK_RV(CKR_OK, "C_GetOperationState")) {
+		goto end;
+	}
+
+	TEST_OUT("Call C_DigestUpdate with second part of data\n");
+	ret = pfunc->C_DigestUpdate(session, message + message_part_length,
+				    total_message_length - message_part_length);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestUpdate"))
+		goto end;
+
+	TEST_OUT("Finalize the multi-part digest operation\n");
+	ret = pfunc->C_DigestFinal(session, digest_1, &digest_length_1);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestFinal"))
+		goto end;
+
+	match = check_digest(TV_DIGEST(id), DIGEST_LENGTH(id), digest_1,
+			     digest_length_1);
+	if (CHECK_EXPECTED(match, "Digest mismatch"))
+		goto end;
+
+	TEST_OUT("Retrieve the saved operation state\n");
+	ret = pfunc->C_SetOperationState(session, operation_state,
+					 operation_state_len, CK_INVALID_HANDLE,
+					 CK_INVALID_HANDLE);
+	if (CHECK_CK_RV(CKR_OK, "C_SetOperationState"))
+		goto end;
+
+	digest_length_2 = DIGEST_LENGTH(id);
+	digest_2 = malloc(digest_length_2);
+	if (CHECK_EXPECTED(digest_2, "Allocation error"))
+		goto end;
+
+	TEST_OUT("Call C_DigestUpdate with second part of data\n");
+	ret = pfunc->C_DigestUpdate(session, message + message_part_length,
+				    total_message_length - message_part_length);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestUpdate"))
+		goto end;
+
+	TEST_OUT("Finalize the multi-part digest operation\n");
+	ret = pfunc->C_DigestFinal(session, digest_2, &digest_length_2);
+	if (CHECK_CK_RV(CKR_OK, "C_DigestFinal"))
+		goto end;
+
+	if (!util_compare_buffers(digest_1, digest_length_1, digest_2,
+				  digest_length_2)) {
+		TEST_OUT("Digest do not match!\n");
+		goto end;
+	}
+
+	status = TEST_PASS;
+
+end:
+	util_close_session(pfunc, &session);
+
+	if (operation_state)
+		free(operation_state);
+
+	if (digest_1)
+		free(digest_1);
+
+	if (digest_2)
+		free(digest_2);
+
+	SUBTEST_END(status);
+	return status;
+}
+
 void tests_pkcs11_operation_state(void *lib_hdl, CK_VOID_PTR pfunc)
 {
 	(void)lib_hdl;
@@ -1278,7 +1414,7 @@ void tests_pkcs11_operation_state(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (operation_state_sign_verify_rsa_pkcs(pfunc) == TEST_FAIL)
 		goto end;
 
-	status = TEST_PASS;
+	status = operation_state_digest(pfunc);
 
 end:
 	ret = ((CK_FUNCTION_LIST_PTR)pfunc)->C_Finalize(NULL_PTR);

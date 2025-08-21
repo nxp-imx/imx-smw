@@ -1120,39 +1120,137 @@ static CK_RV info_mdigest(CK_SLOT_ID slotid, CK_MECHANISM_TYPE type,
 	return ret;
 }
 
+static enum smw_status_code
+initialize_digest(smw_subsystem_t name, struct smw_hash_init_args *init_args)
+{
+	enum smw_status_code status = SMW_STATUS_OK;
+
+	struct smw_context_args op_ctx_args = { 0 };
+
+	op_ctx_args.subsystem_name = name;
+	status = smw_allocate_context(&op_ctx_args);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	init_args->context = op_ctx_args.context;
+	status = smw_hash_init(init_args);
+
+end:
+	return status;
+}
+
 static CK_RV op_mdigest(CK_SLOT_ID slotid, struct mentry *entry, void *args)
 {
 	CK_RV ret = CKR_SLOT_ID_INVALID;
-	enum smw_status_code status = SMW_STATUS_OK;
+	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 	const struct libdev *devinfo = NULL;
 	struct libdig_params *params = args;
-	struct smw_hash_args hash_args = { 0 };
+	struct lib_digest_ctx *ctx = params->ctx;
+
+	struct smw_hash_args oneshot_args = { 0 };
+	struct smw_hash_init_args init_args = { 0 };
+	struct smw_hash_update_args update_args = { 0 };
+	struct smw_hash_final_args final_args = { 0 };
+
+	CK_ULONG digest_len = 0;
 
 	DBG_TRACE("Digest mechanism");
 	devinfo = libdev_get_devinfo(slotid);
 	if (!devinfo)
 		return ret;
 
-	hash_args.subsystem_name = devinfo->name;
-	hash_args.algo_name = entry->smw_hash;
+	switch (params->state) {
+	case OP_ONE_SHOT:
+		oneshot_args.subsystem_name = devinfo->name;
+		oneshot_args.algo_name = entry->smw_hash;
+		oneshot_args.input = params->pdata;
+		if (SET_OVERFLOW(params->data_len, oneshot_args.input_length))
+			goto end;
 
-	hash_args.input = params->pData;
-	if (SET_OVERFLOW(params->ulDataLen, hash_args.input_length))
-		return CKR_ARGUMENTS_BAD;
+		oneshot_args.output = params->pdigest;
+		if (SET_OVERFLOW(params->digest_len,
+				 oneshot_args.output_length))
+			goto end;
 
-	hash_args.output = params->pDigest;
-	if (SET_OVERFLOW(*params->pulDigestLen, hash_args.output_length))
-		return CKR_ARGUMENTS_BAD;
+		status = smw_hash(&oneshot_args);
+		digest_len = oneshot_args.output_length;
+		break;
 
-	status = smw_hash(&hash_args);
+	case OP_UPDATE:
+		if (ctx->current_state == OP_INIT) {
+			init_args.input = params->pdata;
+			if (SET_OVERFLOW(params->data_len,
+					 init_args.input_length))
+				goto end;
 
+			init_args.algo_name = entry->smw_hash;
+
+			status = initialize_digest(devinfo->name, &init_args);
+			if (status != SMW_STATUS_OK)
+				goto end;
+
+			ctx->context = init_args.context;
+		} else if (ctx->current_state == OP_UPDATE) {
+			update_args.context = ctx->context;
+			update_args.input = params->pdata;
+			if (SET_OVERFLOW(params->data_len,
+					 update_args.input_length))
+				goto end;
+
+			status = smw_hash_update(&update_args);
+			ctx->context = update_args.context;
+		}
+
+		break;
+
+	case OP_FINAL:
+		if (ctx->context) {
+			final_args.context = ctx->context;
+			final_args.output = params->pdigest;
+			if (SET_OVERFLOW(params->digest_len,
+					 final_args.output_length)) {
+				status = SMW_STATUS_INVALID_PARAM;
+				goto end;
+			}
+
+			status = smw_hash_final(&final_args);
+			ctx->context = final_args.context;
+			digest_len = final_args.output_length;
+		} else if (ctx->current_state == OP_INIT ||
+			   ctx->current_state == OP_FINAL) {
+			/*
+			 * This scenario occurs when C_DigestFinal is called to compute the
+			 * digest length for empty input data, without any intermediate
+			 * C_DigestUpdate. Either C_DigestInit was previously executed, or
+			 * C_DigestFinal is used solely to retrieve the required output
+			 * buffer size.
+			 */
+			oneshot_args.subsystem_name = devinfo->name;
+			oneshot_args.algo_name = entry->smw_hash;
+			oneshot_args.output = params->pdigest;
+			if (SET_OVERFLOW(params->digest_len,
+					 oneshot_args.output_length))
+				goto end;
+
+			status = smw_hash(&oneshot_args);
+			digest_len = oneshot_args.output_length;
+		}
+
+		break;
+
+	default:
+		break;
+	}
+
+end:
 	ret = smw_status_to_ck_rv(status);
 
-	if (ret == CKR_OK || ret == CKR_BUFFER_TOO_SMALL)
-		*params->pulDigestLen = hash_args.output_length;
+	if ((ret == CKR_OK || ret == CKR_BUFFER_TOO_SMALL) &&
+	    (params->state == OP_ONE_SHOT || params->state == OP_FINAL))
+		params->digest_len = digest_len;
 
-	DBG_TRACE("Digest on %d status %d return %ld", devinfo->name, status,
-		  ret);
+	DBG_TRACE("Digest on subsystem %d status %d return %ld", devinfo->name,
+		  status, ret);
 	return ret;
 }
 
@@ -2395,7 +2493,6 @@ static CK_RV sign(struct lib_signature_params *params,
 {
 	CK_RV ret = CKR_OK;
 	enum smw_status_code status = SMW_STATUS_OK;
-	struct smw_context_args op_ctx_args = { 0 };
 	struct smw_sign_verify_args smw_sign_verify_args = { 0 };
 	struct smw_hash_init_args smw_hash_init_args = { 0 };
 	struct smw_hash_update_args smw_hash_update_args = { 0 };
@@ -2442,19 +2539,11 @@ static CK_RV sign(struct lib_signature_params *params,
 	case OP_NEXT:
 		if (ctx->current_state == OP_INIT ||
 		    ctx->current_state == OP_BEGIN) {
-			op_ctx_args.subsystem_name = subsystem_name;
-			status = smw_allocate_context(&op_ctx_args);
-			if (status != SMW_STATUS_OK)
-				goto end;
-
-			ctx->context = op_ctx_args.context;
-
-			smw_hash_init_args.context = op_ctx_args.context;
 			smw_hash_init_args.algo_name = hash_algo;
 			smw_hash_init_args.input = input;
 			smw_hash_init_args.input_length = input_length;
-
-			status = smw_hash_init(&smw_hash_init_args);
+			status = initialize_digest(subsystem_name,
+						   &smw_hash_init_args);
 			if (status == SMW_STATUS_OK)
 				ctx->context = smw_hash_init_args.context;
 		} else if (ctx->current_state == OP_UPDATE ||

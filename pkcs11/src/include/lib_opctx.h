@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #ifndef __LIB_OPCTX_H__
@@ -16,13 +16,13 @@
  * @NOT_INIT: State not initialized.
  * @OP_INIT: C_(Encrypt|Decrypt|Sign|Verify)Init
  * or C_Message(Encrypt|Decrypt|Sign|Verify)Init.
- * @OP_ONE_SHOT: C_(Encrypt|Decrypt|Sign|Verify)
+ * @OP_ONE_SHOT: C_(Encrypt|Decrypt|Sign|Verify|Digest)
  * or C_(Encrypt|Decrypt|Sign|Verify)cryptMessage.
- * @OP_UPDATE: C_(Encrypt|Decrypt|Sign|Verify)Update.
+ * @OP_UPDATE: C_(Encrypt|Decrypt|Sign|Verify|Digest)Update.
  * @OP_BEGIN: C_(Encrypt|Decrypt|Sign|Verify)MessageBegin.
  * @OP_NEXT: C_(Encrypt|Decrypt|Sign|Verify)MessageNext, more input.
  * @OP_END: C_(Encrypt|Decrypt|Sign|Verify)MessageNext, no more input.
- * @OP_FINAL: C_(Encrypt|Decrypt|Sign|Verify)Final.
+ * @OP_FINAL: C_(Encrypt|Decrypt|Sign|Verify|Digest)Final.
  */
 enum op_state {
 	NOT_INIT = 0,

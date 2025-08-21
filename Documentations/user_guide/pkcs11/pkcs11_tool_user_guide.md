@@ -824,8 +824,8 @@ Following table lists all PKCS11 APIs implemented in the SMW's PKCS11 library.
 | C_DecryptFinal        |    Yes    |
 | C_DigestInit          |    Yes    |
 | C_Digest              |    Yes    |
-| C_DigestUpdate        |  **No**   |
-| C_DigestKey           |  **No**   |
+| C_DigestUpdate        |    Yes    |
+| C_DigestKey           |    Yes    |
 | C_DigestFinal         |    Yes    |
 | C_SignInit            |    Yes    |
 | C_Sign                |    Yes    |

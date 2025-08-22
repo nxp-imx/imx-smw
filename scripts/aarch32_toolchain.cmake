@@ -1,6 +1,6 @@
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm32)
-set(CMAKE_SIZEOF_VOID_P 32)
+set(CMAKE_SIZEOF_VOID_P 4)
 
 # Check the process is try the compilation
 # if yes, compiler already defined so return

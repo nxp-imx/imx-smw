@@ -35,10 +35,15 @@ The failure is due to the storage manager which is already loaded and a new inst
 
 ##### 2. ELE Subsystem
 
-* Shake digest in multi-part operation doesn't support input data during the
-  final operation.
+* ECC Signature verification with imported public key having x or y coordinate
+  MSB=0 is not supported.
 
-##### 3. PKCS#11
+##### 3. TEE Subsystem
+
+* ECC Signature verification with imported public key having x or y coordinate
+  MSB=0 is not supported.
+
+##### 4. PKCS#11
 
 * As some subsystems are not handling key usage and permitted algorithm, the
   find operation is not able to find all keys whose template defines key usage
@@ -72,6 +77,7 @@ The failure is due to the storage manager which is already loaded and a new inst
 * TEE: Fix memory leak in case of one-short AEAD, one-shot cipher and multi-part hash operations.
 * TEE: Fix the get attribute's permitted algorithm overwriting the database
   value when key is created.
+* TEE: Rework TA to set the x or y MSB to 0 in case size is odd.
 * TEE: Add support for the SHAKE256 digest algorithm.
 * ELE: Add support for the SHAKE256 digest algorithm.
 * ELE: Update TLS1.2 KDF support

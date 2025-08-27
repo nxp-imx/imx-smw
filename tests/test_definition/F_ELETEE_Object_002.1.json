@@ -31,21 +31,21 @@
 			"permitted_algo": [
 				"ECB_NO_PADDING"
 			]
+		}
+	},
+	"data_list": {
+		"data 1": {
+			"id": 111,
+			"attributes_list": [
+				"PERSISTENT"
+			]
 		},
-		"data_list": {
-			"data 1": {
-				"id": 111,
-				"attributes_list": [
-					"PERSISTENT"
-				]
-			},
-			"data 2": {
-				"data_name": "data 1",
-				"data": "CAFE",
-				"attributes_list": [
-					"PERSISTENT"
-				]
-			}
+		"data 2": {
+			"data_name": "data 1",
+			"data": "CAFE",
+			"attributes_list": [
+				"PERSISTENT"
+			]
 		}
 	},
 	"subtest 1": {

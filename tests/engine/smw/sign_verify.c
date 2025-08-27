@@ -295,6 +295,12 @@ int sign_verify(struct subtest_data *subtest, int operation)
 	if (res != ERR_CODE(PASSED) && res != ERR_CODE(VALUE_NOTFOUND))
 		goto exit;
 
+	/* Read expected signature buffer if any */
+	res = util_read_hex_buffer(&exp_sign, &exp_sign_length, subtest->params,
+				   SIGN_OBJ);
+	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
+		goto exit;
+
 	if (sign_id != INT_MAX) {
 		res = util_sign_find_node(list_signatures(subtest), sign_id,
 					  &list_sign, &list_sign_length);
@@ -330,13 +336,12 @@ int sign_verify(struct subtest_data *subtest, int operation)
 			args.signature = list_sign;
 			args.signature_length = list_sign_length;
 		}
+	} else if (operation == VERIFY_OPERATION && exp_sign &&
+		   exp_sign_length) {
+		/* Signature hardcoded in the test definition */
+		smw_sign_verify_args->signature = exp_sign;
+		smw_sign_verify_args->signature_length = exp_sign_length;
 	}
-
-	/* Read expected signature buffer if any */
-	res = util_read_hex_buffer(&exp_sign, &exp_sign_length, subtest->params,
-				   SIGN_OBJ);
-	if (res != ERR_CODE(PASSED) && res != ERR_CODE(MISSING_PARAMS))
-		goto exit;
 
 	/* Specific test cases */
 	res = set_sign_verify_bad_args(subtest, &smw_sign_verify_args, exp_sign,

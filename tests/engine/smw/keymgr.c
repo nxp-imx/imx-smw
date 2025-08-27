@@ -874,6 +874,35 @@ end:
 	return res;
 }
 
+static bool is_public_key_valid(struct keypair_ops *key_test)
+{
+	struct smw_delete_key_args args = { 0 };
+
+	unsigned char **key = NULL;
+	unsigned int *size = 0;
+
+	if (key_test->desc.type_name != SMW_KEY_TYPE_NAME_SECP_R1)
+		return true;
+
+	if (!key_is_public_key_defined(key_test))
+		return true;
+
+	key = key_public_data(key_test);
+	size = key_public_length(key_test);
+
+	if (*size && (*key)[*size - 1] && (*key)[(*size / 2) - 1])
+		return true;
+
+	args.key_descriptor = &key_test->desc;
+
+	(void)smw_delete_key(&args);
+
+	if (SMW_ATTR_IS_TRANSIENT(key_test->desc.attributes.attributes))
+		key_test->desc.id = 0;
+
+	return false;
+}
+
 int generate_key(struct subtest_data *subtest)
 {
 	int res = ERR_CODE(PASSED);
@@ -926,6 +955,7 @@ int generate_key(struct subtest_data *subtest)
 	if (res != ERR_CODE(PASSED))
 		goto exit;
 
+retry:
 	/* Call generate key function and compare result with expected one */
 	subtest->smw_status = smw_generate_key(smw_gen_args);
 
@@ -933,6 +963,9 @@ int generate_key(struct subtest_data *subtest)
 		subtest->smw_status = SMW_STATUS_OK;
 
 	if (subtest->smw_status == SMW_STATUS_OK) {
+		if (!is_public_key_valid(&key_test))
+			goto retry;
+
 		key_prepare_key_data(&key_test, &key_data);
 		res = util_key_update_node(list_keys(subtest), key_name,
 					   &key_data);

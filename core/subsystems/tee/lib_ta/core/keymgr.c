@@ -356,7 +356,7 @@ TEE_Result set_key_usage(uint32_t key_usage, TEE_ObjectHandle key_handle)
 
 /**
  * get_ecc_public_key_size() - Get the asymmetric public key size.
- * @handle: Key handle.
+ * @obj_info: Key object information.
  * @size: Public key size retrieved in bytes.
  *
  * Return:
@@ -364,34 +364,21 @@ TEE_Result set_key_usage(uint32_t key_usage, TEE_ObjectHandle key_handle)
  * TEE_ERROR_GENERIC  - Unexpected success.
  * Error code from TEE_GetObjectBufferAttribute().
  */
-static TEE_Result get_ecc_public_key_size(TEE_ObjectHandle handle, size_t *size)
+static TEE_Result get_ecc_public_key_size(TEE_ObjectInfo *obj_info,
+					  size_t *size)
 {
-	TEE_Result res = TEE_SUCCESS;
-	size_t x_size = 0;
-	size_t y_size = 0;
+	TEE_Result res = TEE_ERROR_GENERIC;
+	size_t tmp = 0;
 
 	FMSG("Executing %s", __func__);
 
-	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_ECC_PUBLIC_VALUE_X,
-					   NULL, &x_size);
-	if (res == TEE_ERROR_SHORT_BUFFER)
-		res = TEE_GetObjectBufferAttribute(handle,
-						   TEE_ATTR_ECC_PUBLIC_VALUE_Y,
-						   NULL, &y_size);
+	if (ADD_OVERFLOW(obj_info->objectSize, 7, &tmp))
+		return res;
 
-	if (!res) {
-		res = TEE_ERROR_GENERIC;
-	} else if (res == TEE_ERROR_SHORT_BUFFER) {
-		if (ROUNDUP_OVERFLOW(x_size, 2, &x_size) ||
-		    ROUNDUP_OVERFLOW(y_size, 2, &y_size)) {
-			res = TEE_ERROR_GENERIC;
-		} else {
-			if (ADD_OVERFLOW(x_size, y_size, size))
-				res = TEE_ERROR_GENERIC;
-			else
-				res = TEE_SUCCESS;
-		}
-	}
+	tmp /= 8;
+
+	if (!MUL_OVERFLOW(tmp, 2, size))
+		res = TEE_SUCCESS;
 
 	return res;
 }
@@ -465,6 +452,7 @@ static TEE_Result get_rsa_public_key_size(TEE_ObjectHandle handle,
 /**
  * export_pub_key_ecc() - Export asymmetric public key.
  * @handle: Key handle.
+ * @obj_info: Key object information?
  * @pub_key: Pointer to public key buffer.
  * @pub_key_size: Pointer to @pub_key size (bytes).
  *
@@ -475,42 +463,49 @@ static TEE_Result get_rsa_public_key_size(TEE_ObjectHandle handle,
  * Error code from TEE_GetObjectBufferAttribute().
  */
 static TEE_Result export_pub_key_ecc(TEE_ObjectHandle handle,
+				     TEE_ObjectInfo *obj_info,
 				     unsigned char *pub_key,
 				     size_t *pub_key_size)
 {
 	TEE_Result res = TEE_ERROR_NO_DATA;
-	size_t x_size = 0;
-	size_t y_size = 0;
+	size_t half_size = 0;
+	size_t size = 0;
 
 	FMSG("Executing %s", __func__);
 
 	if (!pub_key)
 		return res;
 
-	res = get_ecc_public_key_size(handle, &x_size);
+	res = get_ecc_public_key_size(obj_info, &size);
 	if (res)
 		return res;
 
-	if (*pub_key_size < x_size) {
-		*pub_key_size = x_size;
+	if (*pub_key_size < size) {
+		*pub_key_size = size;
 		return TEE_ERROR_SHORT_BUFFER;
 	}
 
-	*pub_key_size = x_size;
+	half_size = size / 2;
+	*pub_key_size = size;
+
 	/* Get first part of public key */
 	res = TEE_GetObjectBufferAttribute(handle, TEE_ATTR_ECC_PUBLIC_VALUE_X,
-					   pub_key, &x_size);
+					   pub_key, &size);
 	if (!res) {
-		/* Get second part of the public key */
-		if (ROUNDUP_OVERFLOW(x_size, 2, &x_size))
-			return TEE_ERROR_GENERIC;
-
-		if (SUB_OVERFLOW(*pub_key_size, x_size, &y_size))
-			return TEE_ERROR_GENERIC;
+		/* If x size is odd, ensure the MSB = 0 */
+		if (size & 1)
+			pub_key[size] = 0;
 
 		res = TEE_GetObjectBufferAttribute(handle,
 						   TEE_ATTR_ECC_PUBLIC_VALUE_Y,
-						   pub_key + x_size, &y_size);
+						   pub_key + half_size,
+						   &half_size);
+
+		if (!res) {
+			/* If y size is odd, ensure the MSB = 0 */
+			if (half_size & 1)
+				pub_key[*pub_key_size - 1] = 0;
+		}
 	}
 
 	if (res)
@@ -1113,13 +1108,20 @@ static TEE_Result export_pub_key_rsa(TEE_ObjectHandle handle,
 	return res;
 }
 
-static TEE_Result export_public_key(uint32_t obj_type, TEE_ObjectHandle handle,
+static TEE_Result export_public_key(TEE_ObjectHandle handle,
 				    unsigned char *pub_data, size_t *pub_len,
 				    unsigned char *modulus, size_t *modulus_len)
 {
-	TEE_Result res = TEE_ERROR_NOT_SUPPORTED;
+	TEE_Result res = TEE_SUCCESS;
+	TEE_ObjectInfo obj_info = { 0 };
 
-	switch (obj_type) {
+	res = TEE_GetObjectInfo1(handle, &obj_info);
+	if (res) {
+		EMSG("Failed to get object info: 0x%x", res);
+		return res;
+	}
+
+	switch (obj_info.objectType) {
 	case TEE_TYPE_RSA_PUBLIC_KEY:
 	case TEE_TYPE_RSA_KEYPAIR:
 		res = export_pub_key_rsa(handle, modulus, modulus_len, pub_data,
@@ -1129,7 +1131,7 @@ static TEE_Result export_public_key(uint32_t obj_type, TEE_ObjectHandle handle,
 
 	case TEE_TYPE_ECDSA_PUBLIC_KEY:
 	case TEE_TYPE_ECDSA_KEYPAIR:
-		res = export_pub_key_ecc(handle, pub_data, pub_len);
+		res = export_pub_key_ecc(handle, &obj_info, pub_data, pub_len);
 		break;
 
 	case TEE_TYPE_ED25519_PUBLIC_KEY:
@@ -1138,6 +1140,7 @@ static TEE_Result export_public_key(uint32_t obj_type, TEE_ObjectHandle handle,
 		break;
 
 	default:
+		res = TEE_ERROR_NOT_SUPPORTED;
 		break;
 	}
 
@@ -1291,8 +1294,8 @@ TEE_Result generate_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		goto err;
 	}
 
-	res = export_public_key(object_type, obj_data.handle, pub_key,
-				pub_key_size, modulus, modulus_size);
+	res = export_public_key(obj_data.handle, pub_key, pub_key_size, modulus,
+				modulus_size);
 
 	if (res != TEE_SUCCESS && res != TEE_ERROR_NO_DATA &&
 	    res != TEE_ERROR_NOT_SUPPORTED) {
@@ -1520,7 +1523,6 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 {
 	TEE_Result res = TEE_ERROR_BAD_PARAMETERS;
 	TEE_ObjectHandle key_handle = TEE_HANDLE_NULL;
-	TEE_ObjectInfo obj_info = { 0 };
 	bool persistent = false;
 	size_t *modulus_len = NULL;
 	size_t *pub_len = NULL;
@@ -1556,19 +1558,12 @@ TEE_Result export_key(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS])
 		return res;
 	}
 
-	res = TEE_GetObjectInfo1(key_handle, &obj_info);
-	if (res) {
-		EMSG("Failed to get object info: 0x%x", res);
-		goto exit;
-	}
-
 	pub_data = params[EXP_PUB_KEY_PARAM_IDX].memref.buffer;
 	pub_len = &params[EXP_PUB_KEY_PARAM_IDX].memref.size;
 
-	res = export_public_key(obj_info.objectType, key_handle, pub_data,
-				pub_len, modulus, modulus_len);
+	res = export_public_key(key_handle, pub_data, pub_len, modulus,
+				modulus_len);
 
-exit:
 	if (persistent)
 		TEE_CloseObject(key_handle);
 
@@ -1635,7 +1630,7 @@ TEE_Result get_key_lengths(uint32_t param_types,
 
 	case TEE_TYPE_ECDSA_PUBLIC_KEY:
 	case TEE_TYPE_ECDSA_KEYPAIR:
-		res = get_ecc_public_key_size(key_handle, &public_length);
+		res = get_ecc_public_key_size(&obj_info, &public_length);
 		break;
 
 	case TEE_TYPE_ED25519_PUBLIC_KEY:

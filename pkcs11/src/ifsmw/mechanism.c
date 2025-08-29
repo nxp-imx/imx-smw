@@ -658,19 +658,59 @@ static CK_RV get_key_permitted_algo(smw_attr_algo_t *permitted_algo,
 	CK_RV ret = CKR_OK;
 	struct libmech_list *mech_list = NULL;
 	struct mentry *entry = NULL;
+	smw_attr_algo_t mode_and_hash = 0;
+	smw_attr_algo_t smw_algo = 0;
+	size_t i = 1;
 
 	mech_list = get_key_mech_list(obj);
 
-	/* Only one permitted algorithm is supported. */
 	if (mech_list->number) {
 		ret = find_mechanism(slotid, mech_list->mech[0], NULL, &entry);
 		if (ret != CKR_OK) {
 			DBG_TRACE("Key allowed mechanism 0x%lx error %ld",
 				  mech_list->mech[0], ret);
-		} else {
-			DBG_TRACE("Key permitted algorithm 0x%" PRIx64,
-				  entry->smw_algo_id);
-			*permitted_algo = entry->smw_algo_id;
+			return ret;
+		}
+
+		DBG_TRACE("Key permitted algorithm 0x%" PRIx64,
+			  entry->smw_algo_id);
+		*permitted_algo = entry->smw_algo_id;
+
+		if (mech_list->number == 1)
+			return ret;
+
+		/* Support Any mode or Any hash for a specific Algo */
+		smw_algo = entry->smw_algo_id;
+
+		for (; i < mech_list->number; i++) {
+			ret = find_mechanism(slotid, mech_list->mech[i], NULL,
+					     &entry);
+			if (ret != CKR_OK)
+				return ret;
+
+			/* Get algo mode and/or hash */
+			mode_and_hash |= entry->smw_algo_id ^ smw_algo;
+			/* Continue if algorithm is always the same */
+			if (mode_and_hash &
+			    ~((SMW_ATTR_MODE_MASK << SMW_ATTR_MODE_OFFSET) |
+			      (SMW_ATTR_HASH_MASK << SMW_ATTR_HASH_OFFSET))) {
+				smw_algo = 0;
+				break;
+			}
+		}
+
+		if (smw_algo) {
+			/* Set Any mode */
+			if (SMW_ATTR_GET_MODE(mode_and_hash))
+				*permitted_algo =
+					SMW_ATTR_SET_MODE(*permitted_algo,
+							  SMW_ATTR_MODE_ANY);
+
+			/* Set Any hash */
+			if (SMW_ATTR_GET_HASH(mode_and_hash))
+				*permitted_algo =
+					SMW_ATTR_SET_HASH(*permitted_algo,
+							  SMW_ATTR_HASH_ANY);
 		}
 	}
 
@@ -707,13 +747,15 @@ static smw_aead_mode_t get_aead_mode(CK_MECHANISM_TYPE mech_type)
 	return mode;
 }
 
-static bool get_aead_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
+static bool get_aead_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
+			  CK_MECHANISM_TYPE *mech)
 {
 	bool found = false;
 	unsigned int i = 0;
 
 	for (; i < ARRAY_SIZE(maead); i++) {
-		if (perm_algo == maead[i].smw_algo_id) {
+		if (smw_key == maead[i].smw_key_type &&
+		    perm_algo == maead[i].smw_algo_id) {
 			*mech = maead[i].type;
 			found = true;
 			break;
@@ -723,6 +765,30 @@ static bool get_aead_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 	DBG_TRACE("%s mechanism (0x%08lX)", found ? "Found" : "No", *mech);
 
 	return found;
+}
+
+static CK_RV get_all_mech(CK_MECHANISM_TYPE *mech, size_t *nb_mech,
+			  struct mentry *array, size_t array_size)
+{
+	unsigned int i = 0;
+
+	if (!mech || !nb_mech)
+		return CKR_ARGUMENTS_BAD;
+
+	if (*nb_mech < array_size) {
+		*nb_mech = array_size;
+		return CKR_BUFFER_TOO_SMALL;
+	}
+
+	for (; i < array_size; i++)
+		mech[i] = array[i].type;
+
+	return CKR_OK;
+}
+
+static CK_RV get_all_aead_mech(CK_MECHANISM_TYPE *mech, size_t *nb_mech)
+{
+	return get_all_mech(mech, nb_mech, maead, ARRAY_SIZE(maead));
 }
 
 static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
@@ -773,7 +839,8 @@ static bool get_sign_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 	return found;
 }
 
-static bool get_mac_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
+static bool get_mac_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
+			 CK_MECHANISM_TYPE *mech)
 {
 	bool found = false;
 	unsigned int i = 0;
@@ -783,7 +850,8 @@ static bool get_mac_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 
 	if (algo == SMW_ATTR_ALGO_HMAC) {
 		for (; i < ARRAY_SIZE(mhmac); i++) {
-			if (perm_algo == mhmac[i].smw_algo_id) {
+			if (smw_key == mhmac[i].smw_key_type &&
+			    perm_algo == mhmac[i].smw_algo_id) {
 				*mech = mhmac[i].type;
 				found = true;
 				break;
@@ -791,7 +859,8 @@ static bool get_mac_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 		}
 	} else {
 		for (; i < ARRAY_SIZE(mcmac); i++) {
-			if (perm_algo == mcmac[i].smw_algo_id) {
+			if (smw_key == mcmac[i].smw_key_type &&
+			    perm_algo == mcmac[i].smw_algo_id) {
 				*mech = mcmac[i].type;
 				found = true;
 				break;
@@ -802,6 +871,11 @@ static bool get_mac_mech(smw_attr_algo_t perm_algo, CK_MECHANISM_TYPE *mech)
 	DBG_TRACE("%s mechanism (0x%08lX)", found ? "Found" : "No", *mech);
 
 	return found;
+}
+
+static CK_RV get_all_cipher_mech(CK_MECHANISM_TYPE *mech, size_t *nb_mech)
+{
+	return get_all_mech(mech, nb_mech, mcipher, ARRAY_SIZE(mcipher));
 }
 
 static bool get_cipher_mech(smw_attr_algo_t perm_algo, smw_key_type_t smw_key,
@@ -830,46 +904,100 @@ static CK_RV get_key_allowed_algo(struct libobj_obj *obj,
 	CK_RV ret = CKR_OK;
 	bool found = false;
 	smw_attr_algo_t class = SMW_ATTR_CLASS_NONE;
-	CK_MECHANISM_TYPE mech = 0;
 	smw_attr_algo_t algo = SMW_ATTR_ALGO_NONE;
-	smw_key_type_t smw_key = SMW_KEY_TYPE_NAME_NONE;
+	smw_attr_algo_t mode = SMW_ATTR_MODE_NONE;
+	smw_key_type_t smw_key_type = SMW_KEY_TYPE_NAME_NONE;
 	struct libmech_list *mech_list = get_key_mech_list(obj);
-	CK_MECHANISM_TYPE key_allowed_mech[1] = { 0 };
+	CK_MECHANISM_TYPE mech = 0;
+	CK_MECHANISM_TYPE_PTR key_allowed_mech = NULL;
+	size_t nb_allowed_mech = 0;
 	struct CK_ATTRIBUTE mech_attr = { .type = CKA_ALLOWED_MECHANISMS,
-					  .pValue = &key_allowed_mech,
-					  .ulValueLen =
-						  sizeof(key_allowed_mech) };
+					  .pValue = NULL,
+					  .ulValueLen = 0 };
 
 	algo = attr_args->key_descriptor->attributes.permitted_algo;
 	class = SMW_ATTR_GET_CLASS(algo);
-	smw_key = attr_args->key_descriptor->type_name;
+	mode = SMW_ATTR_GET_MODE(algo);
+	smw_key_type = attr_args->key_descriptor->type_name;
 
-	switch (class) {
-	case SMW_ATTR_CLASS_AEAD:
-		found = get_aead_mech(algo, &mech);
-		break;
+	if (mode == SMW_ATTR_MODE_ANY) {
+		switch (class) {
+		case SMW_ATTR_CLASS_AEAD:
+			ret = get_all_aead_mech(key_allowed_mech,
+						&nb_allowed_mech);
+			if (ret != CKR_BUFFER_TOO_SMALL)
+				return ret;
 
-	case SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE:
-		found = get_sign_mech(algo, &mech);
-		break;
+			key_allowed_mech = calloc(nb_allowed_mech,
+						  sizeof(CK_MECHANISM_TYPE));
+			if (!key_allowed_mech)
+				return CKR_HOST_MEMORY;
 
-	case SMW_ATTR_CLASS_MAC:
-		found = get_mac_mech(algo, &mech);
-		break;
+			ret = get_all_aead_mech(key_allowed_mech,
+						&nb_allowed_mech);
+			if (ret == CKR_OK)
+				found = true;
 
-	case SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION:
-		found = get_cipher_mech(algo, smw_key, &mech);
-		break;
+			break;
 
-	default:
-		break;
+		case SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION:
+			ret = get_all_cipher_mech(key_allowed_mech,
+						  &nb_allowed_mech);
+			if (ret != CKR_BUFFER_TOO_SMALL)
+				return ret;
+
+			key_allowed_mech = calloc(nb_allowed_mech,
+						  sizeof(CK_MECHANISM_TYPE));
+			if (!key_allowed_mech)
+				return CKR_HOST_MEMORY;
+
+			ret = get_all_cipher_mech(key_allowed_mech,
+						  &nb_allowed_mech);
+			if (ret == CKR_OK)
+				found = true;
+
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	if (!found) {
+		key_allowed_mech = &mech;
+		nb_allowed_mech = 1;
+
+		switch (class) {
+		case SMW_ATTR_CLASS_AEAD:
+			found = get_aead_mech(algo, smw_key_type,
+					      key_allowed_mech);
+			break;
+
+		case SMW_ATTR_CLASS_ASYMMETRIC_SIGNATURE:
+			found = get_sign_mech(algo, key_allowed_mech);
+			break;
+
+		case SMW_ATTR_CLASS_MAC:
+			found = get_mac_mech(algo, smw_key_type,
+					     key_allowed_mech);
+			break;
+
+		case SMW_ATTR_CLASS_SYMMETRIC_ENCRYPTION:
+			found = get_cipher_mech(algo, smw_key_type,
+						key_allowed_mech);
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	if (found) {
 		if (mech_list->mech)
 			free(mech_list->mech);
 
-		key_allowed_mech[0] = mech;
+		mech_attr.pValue = key_allowed_mech;
+		mech_attr.ulValueLen = nb_allowed_mech;
 		ret = attr_to_mech_list(mech_list, &mech_attr);
 	}
 

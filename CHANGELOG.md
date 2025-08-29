@@ -136,12 +136,14 @@ The failure is due to the storage manager which is already loaded and a new inst
 * Encode and decode data id (CKA_OBJECT_ID) in OID format.
 * TLS: IV and Tag properly returned in the output buffer.
 * Fix decoding data id (CKA_OBJECT_ID).
+* Enable multiple cipher modes with CKA_ALLOWED_MECHANISMS attributes.
 
 #### PKCS#11 Tests
 
 * Test TLS 1.2 Key exchange tests.
 * Test TLS 1.2 Hash MAC operation.
 * Test data CKA_OBJECT_ID using OID format.
+* Test encrypt/decrypt operation with an AES key supporting multiple mechanisms.
 
 ---
 ### <a id ="rel_5_0"></a></br>**Release 5.0.1**

@@ -219,7 +219,7 @@ static int object_generate_rsa_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	CK_ULONG modulus_bits = 0;
 	CK_BBOOL btrue = CK_TRUE;
 
-	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA224_RSA_PKCS,
+	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA224_RSA_PKCS_PSS,
 						 CKM_SHA256_RSA_PKCS_PSS };
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_VERIFY, &btrue, sizeof(btrue) },
@@ -309,7 +309,7 @@ static int object_rsa_keypair_usage(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token)
 	CK_BBOOL bsign = CK_FALSE;
 
 	CK_MECHANISM_TYPE key_allowed_mech[] = { CKM_SHA256_RSA_PKCS_PSS,
-						 CKM_SHA384_RSA_PKCS };
+						 CKM_SHA384_RSA_PKCS_PSS };
 	CK_ATTRIBUTE pubkey_attrs[] = {
 		{ CKA_VERIFY, &bverify, sizeof(bverify) },
 		{ CKA_MODULUS_BITS, &modulus_bits, sizeof(CK_ULONG) },

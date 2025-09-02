@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2020-2021, 2023-2024 NXP
+ * Copyright 2020-2021, 2023-2025 NXP
  */
 
 #include <tee_client_api.h>
@@ -157,7 +157,17 @@ static int hash(void *args)
 	op.params[1].tmpref.buffer = smw_crypto_get_hash_input_data(hash_args);
 	op.params[1].tmpref.size = smw_crypto_get_hash_input_length(hash_args);
 	op.params[2].tmpref.buffer = smw_crypto_get_hash_output_data(hash_args);
-	op.params[2].tmpref.size = smw_crypto_get_hash_output_length(hash_args);
+
+	/*
+	 * For final operation, TEE requires an digest length set to 0 if digest
+	 * buffer is NULL.
+	 */
+	if (!op.params[2].tmpref.buffer)
+		op.params[2].tmpref.size = 0;
+	else
+		op.params[2].tmpref.size =
+			smw_crypto_get_hash_output_length(hash_args);
+
 	op.params[3].tmpref.buffer = &context;
 	op.params[3].tmpref.size = sizeof(context);
 

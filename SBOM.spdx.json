@@ -1,0 +1,86 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "created": "2025-09-04T08:05:44Z",
+    "creators": [
+      "Organization: NXP"
+    ],
+    "licenseListVersion": "3.20"
+  },
+  "name": "imx-smw-v5.1",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://nxp.com/spdx/20c7f21f-debe-436d-a7e9-25167624d85e",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-package-20c7f21f-debe-436d-a7e9-25167624d85e",
+      "name": "imx-smw",
+      "versionInfo": "v5.1",
+      "licenseConcluded": "(BSD-3-Clause)",
+      "licenseDeclared": "(BSD-3-Clause)",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: NXP",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-fe7081c6-cbc1-4f64-a78e-f08ca00362c9",
+      "name": "PKCS#11 headers",
+      "versionInfo": "v3.2",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: PKCS#11 headers",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-73072a28-a9c2-42e4-9c34-3a3077154603",
+      "name": "PSA Certified API Specifications",
+      "versionInfo": "crypto-1.2.1",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: PSA Certified API Specifications",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    },
+    {
+      "SPDXID": "SPDXRef-package-326f4eed-1f2a-453e-8da3-54a3243795df",
+      "name": "RFC 6234 US Secure Hash Algorithms (SHA and SHA-based HMAC and HKDF)",
+      "versionInfo": "may 2011",
+      "licenseConcluded": "BSD-3-Clause",
+      "licenseDeclared": "BSD-3-Clause",
+      "downloadLocation": "NOASSERTION",
+      "originator": "Organization: RFC 6234 US Secure Hash Algorithms (SHA and SHA-based HMAC and HKDF)",
+      "supplier": "NOASSERTION",
+      "externalRefs": [],
+      "filesAnalyzed": false
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-package-20c7f21f-debe-436d-a7e9-25167624d85e"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-20c7f21f-debe-436d-a7e9-25167624d85e",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-326f4eed-1f2a-453e-8da3-54a3243795df"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-20c7f21f-debe-436d-a7e9-25167624d85e",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-73072a28-a9c2-42e4-9c34-3a3077154603"
+    },
+    {
+      "spdxElementId": "SPDXRef-package-20c7f21f-debe-436d-a7e9-25167624d85e",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-package-fe7081c6-cbc1-4f64-a78e-f08ca00362c9"
+    }
+  ]
+}

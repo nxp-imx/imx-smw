@@ -8,6 +8,8 @@ endif()
 if(ENABLE_SIGN_VERIFY)
 add_operation(SIGN)
 add_operation(VERIFY)
+add_operation(SIGN_MULTI_PART)
+add_operation(VERIFY_MULTI_PART)
 endif()
 
 if(ENABLE_RNG)
@@ -38,7 +40,8 @@ endif()
 # If at least one of the operation that supports MULTI_PART is enabled, context
 # features are enabled
 #
-if (ENABLE_CIPHER OR ENABLE_AEAD OR ENABLE_HASH OR ENABLE_TLS)
+if (ENABLE_CIPHER OR ENABLE_AEAD OR ENABLE_HASH OR ENABLE_TLS OR
+    ENABLE_SIGN_VERIFY)
 set(ENABLE_CONTEXT ON)
 endif()
 

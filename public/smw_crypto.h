@@ -151,7 +151,7 @@ struct smw_sign_verify_args {
  * @sign_algo: Signature algorithm and attributes. See &typedef smw_attr_algo_t
  * @message: Location of the message
  * @message_length: Length of the message
- * @ed25519_params: Pointer to ed25519 parameters
+ * @eddsa_params: Pointer to edwards signature parameters
  * @context: Pointer to an opaque operation context structure
  *
  * @subsystem_name designates the Secure Subsystem to be used.
@@ -167,7 +167,7 @@ struct smw_sign_verify_init_args {
 	unsigned char *message;
 	unsigned int message_length;
 	union {
-		struct smw_ed25519_params *ed25519_params;
+		struct smw_eddsa_params *eddsa_params;
 	};
 	/* Outputs */
 	struct smw_op_context *context;

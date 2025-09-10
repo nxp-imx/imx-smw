@@ -10,6 +10,8 @@
 
 #include "keymgr.h"
 #include "config.h"
+#include "exec.h"
+#include "operation_context.h"
 
 #define DEFAULT_STR "DEFAULT"
 
@@ -53,15 +55,23 @@ struct smw_sign_verify_attributes {
  * struct smw_crypto_sign_verify_args - Sign or verify arguments
  * @key_descriptor: Descriptor of the Key
  * @attributes: Signature attributes
- * @pub: Pointer to the public API arguments structure
+ * @op_step: Multi-part operation step
+ * @one_shot_pub: Pointer to the public API one-shot arguments structure
+ * @init_pub: Pointer to the public API initialization arguments structure
+ * @update_pub: Pointer to the public API update arguments structure
+ * @final_pub: Pointer to the public API final arguments structure
  *
- * @subsystem_name designates the Secure Subsystem to be used.
- * If this field is NULL, the default configured Secure Subsystem is used.
  */
 struct smw_crypto_sign_verify_args {
 	struct smw_keymgr_descriptor key_descriptor;
 	struct smw_sign_verify_attributes attributes;
-	struct smw_sign_verify_args *pub;
+	enum smw_op_step op_step;
+	union {
+		struct smw_sign_verify_args *oneshot_pub;
+		struct smw_sign_verify_init_args *init_pub;
+		struct smw_sign_verify_update_args *update_pub;
+		struct smw_sign_verify_final_args *final_pub;
+	};
 };
 
 /**
@@ -146,29 +156,26 @@ void smw_sign_verify_set_sign_len(struct smw_crypto_sign_verify_args *args,
 				  unsigned int signature_length);
 
 /**
- * smw_sign_verify_get_eddsactx_buf() - Return the eddsa context buffer.
+ * smw_sign_verify_get_eddsa_param() - Return the eddsa context parameters.
  * @args: Pointer to the internal Sign/Verify args structure.
  *
- * This function returns the address of the Sign/Verify eddsa context buffer.
+ * This function returns the Sign/Verify eddsa context parameters.
  *
  * Return:
  * NULL
- * address of the Sign/Verify eddsa context buffer.
+ * address of the Sign/Verify eddsa context parameters.
  */
-unsigned char *
-smw_sign_verify_get_eddsactx_buf(struct smw_crypto_sign_verify_args *args);
+struct smw_eddsa_params *
+smw_sign_verify_get_eddsa_context(struct smw_crypto_sign_verify_args *args);
 
 /**
- * smw_sign_verify_get_eddsactx_len() - Return the eddsa context length.
- * @args: Pointer to the internal Sign/Verify args structure.
- *
- * This function returns the length of the Sign/Verify eddsa context buffer.
+ * smw_sing_verify_get_op_context() - Get signature operation context pointer
+ * @args: Pointer to internal signature arguments.
  *
  * Return:
- * 0
- * length of the Sign/Verify eddsa context buffer.
+ * Address of operation context structure
  */
-unsigned int
-smw_sign_verify_get_eddsactx_len(struct smw_crypto_sign_verify_args *args);
+struct smw_op_context *
+smw_sign_verify_get_op_context(struct smw_crypto_sign_verify_args *args);
 
 #endif /* __SIGN_VERIFY_H__ */

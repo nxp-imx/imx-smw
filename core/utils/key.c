@@ -4,7 +4,7 @@
  */
 
 #include "debug.h"
-#include "key.h"
+#include "keymgr.h"
 #include "utils.h"
 
 /*
@@ -23,6 +23,165 @@
 	(SMW_KEY_FORMAT_NAME_HEX - SMW_KEYMGR_FORMAT_ID_HEX)
 
 #define SMW_KEYMGR_FORMAT_ID_DEFAULT SMW_KEYMGR_FORMAT_ID_HEX
+
+static int copy_rsa_key(struct smw_keypair_rsa *dst,
+			struct smw_keypair_rsa *src)
+{
+	int status = SMW_STATUS_OK;
+
+	if (src->modulus && src->modulus_length) {
+		dst->modulus_length = src->modulus_length;
+		dst->modulus = SMW_UTILS_MALLOC(dst->modulus_length);
+		if (!dst->modulus) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		SMW_UTILS_MEMCPY(dst->modulus, src->modulus,
+				 dst->modulus_length);
+	}
+
+	if (src->public_exponent && src->public_exponent_length) {
+		dst->public_exponent_length = src->public_exponent_length;
+		dst->public_exponent =
+			SMW_UTILS_MALLOC(dst->public_exponent_length);
+		if (!dst->public_exponent) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		SMW_UTILS_MEMCPY(dst->public_exponent, src->public_exponent,
+				 dst->public_exponent_length);
+	}
+
+	if (src->public_data && src->public_length) {
+		dst->public_length = src->public_length;
+		dst->public_data = SMW_UTILS_MALLOC(dst->public_length);
+		if (!dst->public_data) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		SMW_UTILS_MEMCPY(dst->public_data, src->public_data,
+				 dst->public_length);
+	}
+
+	if (src->private_data && src->private_length) {
+		dst->private_length = src->private_length;
+		dst->private_data = SMW_UTILS_MALLOC(dst->private_length);
+		if (!dst->private_data) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		SMW_UTILS_MEMCPY(dst->private_data, src->private_data,
+				 dst->private_length);
+	}
+
+end:
+	return status;
+}
+
+static int copy_gen_key(struct smw_keypair_gen *dst,
+			struct smw_keypair_gen *src)
+{
+	int status = SMW_STATUS_OK;
+
+	if (src->public_data && src->public_length) {
+		dst->public_length = src->public_length;
+		dst->public_data = SMW_UTILS_MALLOC(dst->public_length);
+		if (!dst->public_data) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		SMW_UTILS_MEMCPY(dst->public_data, src->public_data,
+				 dst->public_length);
+	}
+
+	if (src->private_data && src->private_length) {
+		dst->private_length = src->private_length;
+		dst->private_data = SMW_UTILS_MALLOC(dst->private_length);
+		if (!dst->private_data) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		SMW_UTILS_MEMCPY(dst->private_data, src->private_data,
+				 dst->private_length);
+	}
+
+end:
+	return status;
+}
+
+static int copy_keypair_buffer(struct smw_keypair_buffer *dst,
+			       struct smw_keypair_buffer *src,
+			       enum smw_config_key_type_id type_id)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	if (!dst || !src)
+		goto end;
+
+	dst->format_name = src->format_name;
+
+	switch (type_id) {
+	case SMW_CONFIG_KEY_TYPE_ID_NB:
+	case SMW_CONFIG_KEY_TYPE_ID_INVALID:
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_RSA:
+		status = copy_rsa_key(&dst->rsa, &src->rsa);
+		break;
+
+	default:
+		status = copy_gen_key(&dst->gen, &src->gen);
+		break;
+	}
+
+end:
+	return status;
+}
+
+static void free_keypair_buffer(struct smw_keypair_buffer *buf,
+				enum smw_config_key_type_id type_id)
+{
+	if (!buf)
+		return;
+
+	switch (type_id) {
+	case SMW_CONFIG_KEY_TYPE_ID_NB:
+	case SMW_CONFIG_KEY_TYPE_ID_INVALID:
+		break;
+
+	case SMW_CONFIG_KEY_TYPE_ID_RSA:
+		if (buf->rsa.modulus)
+			SMW_UTILS_FREE(buf->rsa.modulus);
+
+		if (buf->rsa.public_exponent)
+			SMW_UTILS_FREE(buf->rsa.public_exponent);
+
+		if (buf->rsa.public_data)
+			SMW_UTILS_FREE(buf->rsa.public_data);
+
+		if (buf->rsa.private_data)
+			SMW_UTILS_FREE(buf->rsa.private_data);
+
+		break;
+
+	default:
+		if (buf->gen.public_data)
+			SMW_UTILS_FREE(buf->gen.public_data);
+
+		if (buf->gen.private_data)
+			SMW_UTILS_FREE(buf->gen.private_data);
+
+		break;
+	}
+
+	SMW_UTILS_FREE(buf);
+}
 
 int smw_keymgr_get_key_privacy_id(smw_key_privacy_t name,
 				  enum smw_keymgr_privacy_id *id)
@@ -144,4 +303,82 @@ int smw_keymgr_get_hex_key_buffer_len(enum smw_keymgr_format_id format_id,
 exit:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
+}
+
+int smw_keymgr_copy_key(struct smw_keymgr_descriptor *out,
+			struct smw_keymgr_descriptor *in)
+{
+	int status = SMW_STATUS_OK;
+	struct smw_key_descriptor *pub = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!out || !in) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	/* Copy key descriptors without public structure and ops */
+	*out = *in;
+	out->pub = NULL;
+	SMW_UTILS_MEMSET(&out->ops, 0, sizeof(out->ops));
+
+	/* Allocate the public key structure if any */
+	if (in->pub) {
+		pub = SMW_UTILS_CALLOC(1, sizeof(*pub));
+		if (!pub) {
+			status = SMW_STATUS_ALLOC_FAILURE;
+			goto end;
+		}
+
+		/* Copy input public key descriptor without key buffer */
+		*pub = *in->pub;
+		pub->buffer = NULL;
+		out->pub = pub;
+
+		if (in->pub->buffer) {
+			/* Allocate the key buffers and do a copy */
+			pub->buffer = SMW_UTILS_CALLOC(1, sizeof(*pub->buffer));
+			if (!pub->buffer) {
+				status = SMW_STATUS_ALLOC_FAILURE;
+				goto end;
+			}
+
+			status = copy_keypair_buffer(pub->buffer,
+						     in->pub->buffer,
+						     out->identifier.type_id);
+		}
+	}
+
+end:
+	if (status != SMW_STATUS_OK) {
+		if (pub) {
+			free_keypair_buffer(pub->buffer,
+					    out->identifier.type_id);
+
+			SMW_UTILS_FREE(pub);
+		}
+	} else {
+		out->pub = pub;
+		status = setup_key_ops(out);
+		if (status == SMW_STATUS_NO_KEY_BUFFER)
+			status = SMW_STATUS_OK;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+void smw_keymgr_free_key(struct smw_keymgr_descriptor *desc)
+{
+	if (!desc)
+		return;
+
+	if (desc->pub) {
+		free_keypair_buffer(desc->pub->buffer,
+				    desc->identifier.type_id);
+		SMW_UTILS_FREE(desc->pub);
+	}
+
+	SMW_UTILS_MEMSET(desc, 0, sizeof(*desc));
 }

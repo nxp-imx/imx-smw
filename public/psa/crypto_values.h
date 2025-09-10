@@ -1376,11 +1376,26 @@
  *
  * - PSA_KEY_DERIVATION_INPUT_SEED is the seed.
  *
- * - PSA_KEY_DERIVATION_INPUT_SECRET is the secret key.
+ * - either PSA_KEY_DERIVATION_INPUT_SECRET, which is the secret key,
+ *
+ * - or PSA_KEY_DERIVATION_INPUT_OTHER_SECRET, which is the output of
+ *   psa_key_derivation_key_agreement().
  *
  * - PSA_KEY_DERIVATION_INPUT_LABEL is the label.
  *
  * Each input may only be passed once.
+ *
+ * For the application to TLS-1.2 master secret\:
+ *
+ * - The seed is the concatenation of ClientHello.Random + ServerHello.Random.
+ *
+ * - The label is "master secret".
+ *
+ * For the application to TLS-1.2 extended master secret\:
+ *
+ * - The seed is the Session Hash.
+ *
+ * - The label is "extended master secret".
  *
  * For the application to TLS-1.2 key expansion\:
  *

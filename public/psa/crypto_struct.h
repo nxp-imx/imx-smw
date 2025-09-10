@@ -6,6 +6,8 @@
 #ifndef __PSA_CRYPTO_STRUCT_H__
 #define __PSA_CRYPTO_STRUCT_H__
 
+#include <stdbool.h>
+
 /**
  * DOC:
  * This file contains the definitions of the data structures exposed by the PSA Cryptography API.
@@ -87,16 +89,7 @@ static inline struct psa_key_attributes_s psa_key_attributes_init(void)
 }
 
 struct psa_key_derivation_operation_s {
-	psa_algorithm_t alg;
-
-	psa_key_id_t secret_id;
-	psa_key_id_t other_secret_id;
-
-	unsigned char *peerbuf;
-	size_t peerbuflen;
-
-	unsigned char *info;
-	size_t infolen;
+	void *op_context;
 };
 
 /**
@@ -105,9 +98,7 @@ struct psa_key_derivation_operation_s {
  * &typedef psa_key_derivation_operation_t.
  */
 #define PSA_KEY_DERIVATION_OPERATION_INIT                                      \
-	((psa_key_derivation_operation_t){ PSA_ALG_NONE, PSA_KEY_ID_NULL,      \
-					   PSA_KEY_ID_NULL, NULL, 0, NULL,     \
-					   0 })
+	((psa_key_derivation_operation_t){ NULL })
 
 static inline struct psa_key_derivation_operation_s
 psa_key_derivation_operation_init(void)

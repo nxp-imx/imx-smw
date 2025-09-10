@@ -16,7 +16,16 @@
 
 #include "asn1.h"
 #include "common.h"
+#include "crypto.h"
 #include "util_status.h"
+#include "keymgr.h"
+
+#define MASTER_SECRET_STR     ("master secret")
+#define KEY_EXPANSION_STR     ("key expansion")
+#define EXT_MASTER_SECRET_STR ("extended master secret")
+#define CLIENT_FINISHED_STR   ("client finished")
+#define SERVER_FINISHED_STR   ("server finished")
+#define TLS12_LEN(_str)	      (sizeof(_str##_STR) - 1)
 
 #define KEY_TYPE(_smw, _psa)                                                   \
 	{                                                                      \
@@ -180,6 +189,32 @@ static const struct {
 } key_persistence[] = { KEY_PERSISTENCE(TRANSIENT, VOLATILE),
 			KEY_PERSISTENCE(PERSISTENT, DEFAULT),
 			KEY_PERSISTENCE(PERMANENT, READ_ONLY) };
+
+#define PSA_TLS12_CIPHERSUITE(_key_type, _alg, _bits, _enc, _aead)             \
+	{                                                                      \
+		.key_type = PSA_KEY_TYPE_##_key_type,                          \
+		.algorithm = PSA_ALG_##_alg, .bits = _bits,                    \
+		.enc = SMW_TLS12_ENC_NAME_##_enc, .aead = _aead                \
+	}
+
+static const struct psa_tls12_ciphersuite {
+	psa_key_type_t key_type;
+	psa_algorithm_t algorithm;
+	size_t bits;
+	smw_tls12_enc_t enc;
+	bool aead;
+} psa_tls12_ciphersuites[] = {
+	PSA_TLS12_CIPHERSUITE(AES, CBC_NO_PADDING, 128, AES_128_CBC, false),
+	PSA_TLS12_CIPHERSUITE(AES, CBC_NO_PADDING, 256, AES_256_CBC, false),
+	PSA_TLS12_CIPHERSUITE(AES, CCM, 128, AES_128_CCM, true),
+	PSA_TLS12_CIPHERSUITE(AES, CCM, 256, AES_256_CCM, true),
+	PSA_TLS12_CIPHERSUITE(AES, GCM, 128, AES_128_GCM, true),
+	PSA_TLS12_CIPHERSUITE(AES, GCM, 256, AES_256_GCM, true),
+	PSA_TLS12_CIPHERSUITE(AES, CHACHA20_POLY1305, 256, CHACHA20_POLY1305,
+			      true),
+	PSA_TLS12_CIPHERSUITE(CHACHA20, CHACHA20_POLY1305, 256,
+			      CHACHA20_POLY1305, true),
+};
 
 static bool is_ecc_key_type(smw_key_type_t type_name)
 {
@@ -1337,6 +1372,452 @@ end:
 	return util_smw_to_psa_status(status);
 }
 
+static const struct psa_tls12_ciphersuite *
+get_psa_ciphersuite(const psa_key_attributes_t *attr)
+{
+	size_t i = 0;
+
+	psa_key_type_t key_type = psa_get_key_type(attr);
+	psa_algorithm_t algorithm = psa_get_key_algorithm(attr);
+	size_t bits = psa_get_key_bits(attr);
+
+	for (; i < ARRAY_SIZE(psa_tls12_ciphersuites); i++) {
+		if (psa_tls12_ciphersuites[i].key_type == key_type &&
+		    psa_tls12_ciphersuites[i].algorithm == algorithm &&
+		    psa_tls12_ciphersuites[i].bits == bits)
+			return &psa_tls12_ciphersuites[i];
+	}
+
+	return NULL;
+}
+
+static psa_status_t
+key_derivation_output_tls12_ms(struct psa_key_derivation_context *opctx,
+			       struct smw_kdf_tls12_master_secret_args *ms,
+			       bool ext_master_key)
+{
+	psa_status_t psa_status = PSA_ERROR_INVALID_ARGUMENT;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	ms->ext_master_key = ext_master_key;
+	ms->key_exchange_name = SMW_TLS12_KEA_NAME_ECDHE_ECDSA;
+	ms->peer_public_buffer = opctx->peerbuf;
+	if (SET_OVERFLOW(opctx->peerbuflen, ms->peer_public_buffer_length))
+		goto end;
+
+	if (ms->ext_master_key) {
+		ms->session_hash =
+			SMW_UTILS_CALLOC(1, sizeof(*ms->session_hash));
+		if (!ms->session_hash)
+			return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+		ms->session_hash->hash =
+			opctx->tls12.seed + TLS12_LEN(EXT_MASTER_SECRET);
+
+		if (SET_OVERFLOW(opctx->tls12.seedlen,
+				 ms->session_hash->hash_length))
+			goto end;
+
+		if (DEC_OVERFLOW(ms->session_hash->hash_length,
+				 TLS12_LEN(EXT_MASTER_SECRET)))
+			goto end;
+	} else {
+		ms->random_data = SMW_UTILS_CALLOC(1, sizeof(*ms->random_data));
+		if (!ms->random_data)
+			return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+		/**
+		 * The seed contains the label, and concatenated client and server randoms.
+		 * Thus, the random length is (seedlen - MASTER_SECRET_LEN) / 2
+		 */
+		if (SET_OVERFLOW(opctx->tls12.seedlen,
+				 ms->random_data->client_random_length))
+			goto end;
+
+		if (DEC_OVERFLOW(ms->random_data->client_random_length,
+				 TLS12_LEN(MASTER_SECRET)))
+			goto end;
+
+		ms->random_data->client_random_length /= 2;
+		ms->random_data->server_random_length =
+			ms->random_data->client_random_length;
+
+		ms->random_data->server_random =
+			opctx->tls12.seed + TLS12_LEN(MASTER_SECRET);
+		ms->random_data->client_random =
+			ms->random_data->server_random +
+			ms->random_data->server_random_length;
+	}
+
+	psa_status = PSA_SUCCESS;
+
+end:
+	if (psa_status != PSA_SUCCESS) {
+		if (ms->ext_master_key) {
+			if (ms->session_hash)
+				SMW_UTILS_FREE(ms->session_hash);
+		} else {
+			if (ms->random_data)
+				SMW_UTILS_FREE(ms->random_data);
+		}
+	}
+
+	return psa_status;
+}
+
+static psa_status_t
+key_derivation_output_tls12_ke(struct psa_key_derivation_context *opctx,
+			       const psa_key_attributes_t *attributes,
+			       struct smw_kdf_tls12_key_expansion_args *ke)
+{
+	psa_status_t psa_status = PSA_ERROR_INVALID_ARGUMENT;
+	const struct psa_tls12_ciphersuite *ciphersuite = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!ke || !attributes)
+		return psa_status;
+
+	ciphersuite = get_psa_ciphersuite(attributes);
+	if (!ciphersuite)
+		return PSA_ERROR_NOT_SUPPORTED;
+
+	/* The attributes of the first output key determines the encryption type */
+	ke->encryption_name = ciphersuite->enc;
+
+	opctx->tls12.nbkeys = (ciphersuite->aead) ?
+				      (KEY_DERIVATION_MAX_KEYS - 2) :
+				      KEY_DERIVATION_MAX_KEYS;
+
+	ke->client_w_iv_length = sizeof(opctx->tls12.ivs[0]);
+	ke->client_w_iv = opctx->tls12.ivs[0];
+	ke->server_w_iv_length = sizeof(opctx->tls12.ivs[1]);
+	ke->server_w_iv = opctx->tls12.ivs[1];
+
+	ke->random_data = SMW_UTILS_CALLOC(1, sizeof(*ke->random_data));
+	if (!ke->random_data)
+		return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+	/**
+	 * The seed contains the label, and concatenated server and client randoms.
+	 * Thus, the random length is (seedlen - KEY_EXPANSION_LEN) / 2
+	 */
+	if (SET_OVERFLOW(opctx->tls12.seedlen,
+			 ke->random_data->server_random_length))
+		goto end;
+
+	if (DEC_OVERFLOW(ke->random_data->server_random_length,
+			 TLS12_LEN(KEY_EXPANSION)))
+		goto end;
+
+	ke->random_data->server_random_length /= 2;
+	ke->random_data->client_random_length =
+		ke->random_data->server_random_length;
+
+	ke->random_data->server_random =
+		opctx->tls12.seed + TLS12_LEN(KEY_EXPANSION);
+	ke->random_data->client_random = ke->random_data->server_random +
+					 ke->random_data->server_random_length;
+
+	psa_status = PSA_SUCCESS;
+
+end:
+	if (psa_status != PSA_SUCCESS) {
+		if (ke->random_data)
+			SMW_UTILS_FREE(ke->random_data);
+	}
+
+	return psa_status;
+}
+
+static psa_status_t
+key_derivation_output_tls12(const psa_key_attributes_t *attributes,
+			    struct psa_key_derivation_context *opctx,
+			    psa_key_id_t *key, uint8_t *output,
+			    size_t output_length)
+{
+	struct smw_kdf_tls12_op_args tls12 = { 0 };
+	struct smw_key_descriptor base = { 0 };
+	struct smw_derived_key_descriptor derived = { 0 };
+	struct smw_derive_key_args derive = { 0 };
+	struct smw_sign_verify_args sign = { 0 };
+	smw_attr_algo_t hash_id = SMW_ATTR_HASH_NONE;
+	smw_attr_algo_t mode_id = SMW_ATTR_MODE_NONE;
+	enum smw_status_code status = SMW_STATUS_OK;
+	psa_status_t psa_status = PSA_SUCCESS;
+
+	struct smw_kdf_tls12_master_secret_args *ms = NULL;
+	struct smw_kdf_tls12_key_expansion_args *ke = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!opctx->tls12.seed || !opctx->tls12.seedlen)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	if (opctx->other_secret_id)
+		base.id = opctx->other_secret_id;
+	else if (opctx->secret_id)
+		base.id = opctx->secret_id;
+	else
+		return PSA_ERROR_NOT_PERMITTED;
+
+	tls12.context = opctx->tls12.ctx;
+	tls12.prf_name = get_hash_algo_name(PSA_ALG_GET_HASH(opctx->alg));
+
+	if (tls12.prf_name == SMW_HASH_ALGO_NAME_NONE)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	if (opctx->tls12.seedlen >= TLS12_LEN(MASTER_SECRET) &&
+	    !SMW_UTILS_MEMCMP(opctx->tls12.seed, MASTER_SECRET_STR,
+			      TLS12_LEN(MASTER_SECRET))) {
+		tls12.op_name = SMW_TLS12_OP_NAME_MASTER_SECRET;
+		ms = &tls12.master_secret;
+
+		psa_status = key_derivation_output_tls12_ms(opctx, ms, false);
+		if (psa_status != PSA_SUCCESS)
+			goto end;
+	} else if (opctx->tls12.seedlen >= TLS12_LEN(EXT_MASTER_SECRET) &&
+		   !SMW_UTILS_MEMCMP(opctx->tls12.seed, EXT_MASTER_SECRET_STR,
+				     TLS12_LEN(EXT_MASTER_SECRET))) {
+		tls12.op_name = SMW_TLS12_OP_NAME_MASTER_SECRET;
+		ms = &tls12.master_secret;
+
+		psa_status = key_derivation_output_tls12_ms(opctx, ms, true);
+		if (psa_status != PSA_SUCCESS)
+			goto end;
+	} else if (opctx->tls12.seedlen >= TLS12_LEN(KEY_EXPANSION) &&
+		   !SMW_UTILS_MEMCMP(opctx->tls12.seed, KEY_EXPANSION_STR,
+				     TLS12_LEN(KEY_EXPANSION))) {
+		/* Derivation already done? */
+		if (opctx->tls12.done)
+			goto output_data;
+
+		/* Mark operation as done, even if it fails. */
+		opctx->tls12.done = true;
+
+		tls12.op_name = SMW_TLS12_OP_NAME_KEY_EXPANSION;
+		ke = &tls12.key_expansion;
+
+		psa_status =
+			key_derivation_output_tls12_ke(opctx, attributes, ke);
+		if (psa_status != PSA_SUCCESS)
+			goto end;
+	} else if (opctx->tls12.seedlen >= TLS12_LEN(CLIENT_FINISHED) &&
+		   (!SMW_UTILS_MEMCMP(opctx->tls12.seed, CLIENT_FINISHED_STR,
+				      TLS12_LEN(CLIENT_FINISHED)) ||
+		    !SMW_UTILS_MEMCMP(opctx->tls12.seed, SERVER_FINISHED_STR,
+				      TLS12_LEN(SERVER_FINISHED)))) {
+		/* The TLS1.2 verify_data is computed through the SMW sign API */
+		sign.key_descriptor = &base;
+		sign.signature = output;
+		if (SET_OVERFLOW(output_length, sign.signature_length))
+			goto end;
+
+		sign.message = opctx->tls12.seed + TLS12_LEN(CLIENT_FINISHED);
+
+		if (SET_OVERFLOW(opctx->tls12.seedlen, sign.message_length))
+			goto end;
+
+		if (DEC_OVERFLOW(sign.message_length,
+				 TLS12_LEN(CLIENT_FINISHED)))
+			goto end;
+
+		hash_id = get_hash_algo_attr(PSA_ALG_GET_HASH(opctx->alg));
+		if (hash_id == SMW_ATTR_HASH_NONE) {
+			psa_status = PSA_ERROR_INVALID_ARGUMENT;
+			goto end;
+		}
+
+		if (!SMW_UTILS_MEMCMP(opctx->tls12.seed, CLIENT_FINISHED_STR,
+				      TLS12_LEN(CLIENT_FINISHED)))
+			mode_id = SMW_ATTR_MODE_CLIENT;
+		else
+			mode_id = SMW_ATTR_MODE_SERVER;
+
+		sign.sign_algo = SMW_ATTR_NAME(CLASS, ASYMMETRIC_SIGNATURE) |
+				 SMW_ATTR_NAME(ALGO, TLS_1_2) |
+				 SMW_ATTR_VALUE(MODE, mode_id) |
+				 SMW_ATTR_VALUE(HASH, hash_id);
+
+		status = smw_sign(&sign);
+		return util_smw_to_psa_status(status);
+	} else {
+		return PSA_ERROR_INVALID_ARGUMENT;
+	}
+
+	derive.kdf_name = SMW_KDF_NAME_TLS12_OP_KEY_EXCHANGE;
+	derive.kdf_arguments = &tls12;
+	derive.subsystem_name = get_psa_default_subsystem();
+	derive.key_descriptor_base = &base;
+	derive.key_descriptor_derived = &derived;
+	derive.store_derived_key = true;
+
+	status = smw_derive_key(&derive);
+	if (status != SMW_STATUS_OK) {
+		psa_status = util_smw_to_psa_status(status);
+		goto end;
+	}
+
+	if (ke) {
+		if (ke->client_w_iv_length != ke->server_w_iv_length ||
+		    ke->client_w_iv_length > KEY_DERIVATION_MAX_IVLEN) {
+			psa_status = PSA_ERROR_CORRUPTION_DETECTED;
+			goto end;
+		}
+
+		opctx->tls12.keys[0] = ke->client_w_enc_key_id;
+		opctx->tls12.keys[1] = ke->server_w_enc_key_id;
+		opctx->tls12.keys[2] = ke->client_w_mac_key_id;
+		opctx->tls12.keys[3] = ke->server_w_mac_key_id;
+
+		opctx->tls12.ivlen = ke->client_w_iv_length;
+	}
+
+output_data:
+	if (key) {
+		if (ms) {
+			*key = derived.id;
+		} else {
+			if (opctx->tls12.keyidx >= opctx->tls12.nbkeys)
+				return PSA_ERROR_NOT_PERMITTED;
+
+			*key = opctx->tls12.keys[opctx->tls12.keyidx++];
+		}
+	} else if (output) {
+		if (opctx->tls12.ividx >= KEY_DERIVATION_MAX_IVS)
+			return PSA_ERROR_NOT_PERMITTED;
+
+		if (output_length < opctx->tls12.ivlen)
+			return PSA_ERROR_BUFFER_TOO_SMALL;
+
+		if (output_length > opctx->tls12.ivlen)
+			return PSA_ERROR_INSUFFICIENT_DATA;
+
+		SMW_UTILS_MEMCPY(output, opctx->tls12.ivs[opctx->tls12.ividx++],
+				 opctx->tls12.ivlen);
+	}
+
+end:
+	if (ms) {
+		if (ms->ext_master_key) {
+			if (ms->session_hash)
+				SMW_UTILS_FREE(ms->session_hash);
+		} else {
+			if (ms->random_data)
+				SMW_UTILS_FREE(ms->random_data);
+		}
+	} else if (ke) {
+		if (ke->random_data)
+			SMW_UTILS_FREE(ke->random_data);
+	}
+
+	return psa_status;
+}
+
+static psa_status_t
+key_derivation_output_tls13(const psa_key_attributes_t *attributes,
+			    struct psa_key_derivation_context *opctx,
+			    psa_key_id_t *key, uint8_t *output,
+			    size_t output_length)
+{
+	struct smw_kdf_tls13_args tls13 = { 0 };
+	struct smw_key_descriptor base = { 0 };
+	struct smw_key_descriptor psk = { 0 };
+	struct smw_derived_key_descriptor derived = { 0 };
+	struct smw_derive_key_args derive = { 0 };
+	enum smw_status_code status = SMW_STATUS_OK;
+	psa_key_attributes_t *attr = (psa_key_attributes_t *)attributes;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (opctx->other_secret_id) {
+		base.id = opctx->other_secret_id;
+		derive.store_derived_key = true;
+	} else {
+		base.type_name = SMW_KEY_TYPE_NAME_DERIVE;
+	}
+
+	if (SET_OVERFLOW(opctx->tls13.infolen, tls13.expanded_label_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	tls13.expanded_label = opctx->tls13.info;
+
+	if (SET_OVERFLOW(opctx->peerbuflen, tls13.peer_public_buffer_length))
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	tls13.peer_public_buffer = opctx->peerbuf;
+
+	tls13.prf_name = get_hash_algo_name(PSA_ALG_GET_HASH(opctx->alg));
+
+	if (opctx->secret_id) {
+		psk.id = opctx->secret_id;
+		tls13.psk = &psk;
+	}
+
+	if (key) {
+		if (!attr)
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		if (SET_OVERFLOW(attr->bits, derived.security_size))
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		derived.type_name =
+			get_smw_key_type(attr, derived.security_size);
+
+		if (derived.type_name == SMW_KEY_TYPE_NAME_NONE)
+			return PSA_ERROR_NOT_SUPPORTED;
+
+		derived.attributes.usage_flags =
+			get_smw_usage_flags(attr->usage_flags);
+		derived.attributes.permitted_algo =
+			get_smw_algo(attr->alg, derived.type_name);
+	} else {
+		if (SET_OVERFLOW(output_length, derived.shared_secret_len))
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		derived.shared_secret = output;
+	}
+
+	derive.kdf_name = SMW_KDF_NAME_TLS13_KEY_EXCHANGE;
+	derive.kdf_arguments = &tls13;
+	derive.subsystem_name = get_psa_default_subsystem();
+	derive.key_descriptor_base = &base;
+	derive.key_descriptor_derived = &derived;
+
+	status = smw_derive_key(&derive);
+	if (status != SMW_STATUS_OK)
+		return util_smw_to_psa_status(status);
+
+	if (key)
+		*key = derived.id;
+
+	return PSA_SUCCESS;
+}
+
+static psa_status_t
+key_derivation_output_common(const psa_key_attributes_t *attributes,
+			     psa_key_derivation_operation_t *operation,
+			     psa_key_id_t *key, uint8_t *output,
+			     size_t output_length)
+{
+	struct psa_key_derivation_context *opctx = operation->op_context;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!opctx)
+		return PSA_ERROR_BAD_STATE;
+
+	if (PSA_ALG_IS_VENDOR_TLS13(opctx->alg))
+		return key_derivation_output_tls13(attributes, opctx, key,
+						   output, output_length);
+	else if (PSA_ALG_IS_TLS12_PRF(opctx->alg))
+		return key_derivation_output_tls12(attributes, opctx, key,
+						   output, output_length);
+
+	return PSA_ERROR_NOT_SUPPORTED;
+}
+
 __export psa_status_t psa_copy_key(psa_key_id_t source_key,
 				   const psa_key_attributes_t *attributes,
 				   psa_key_id_t *target_key)
@@ -1575,13 +2056,35 @@ __export psa_status_t psa_import_key(const psa_key_attributes_t *attributes,
 __export psa_status_t
 psa_key_derivation_abort(psa_key_derivation_operation_t *operation)
 {
+	struct smw_context_args ctx_args = { 0 };
+	struct psa_key_derivation_context *opctx = NULL;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (operation->info)
-		SMW_UTILS_FREE(operation->info);
+	if (!operation || !operation->op_context)
+		return PSA_ERROR_BAD_STATE;
 
-	if (operation->peerbuf)
-		SMW_UTILS_FREE(operation->peerbuf);
+	opctx = operation->op_context;
+
+	if (opctx->peerbuf)
+		SMW_UTILS_FREE(opctx->peerbuf);
+
+	if (PSA_ALG_IS_VENDOR_TLS13(opctx->alg)) {
+		if (opctx->tls13.info)
+			SMW_UTILS_FREE(opctx->tls13.info);
+	} else if (PSA_ALG_IS_TLS12_PRF(opctx->alg)) {
+		if (opctx->tls12.seed)
+			SMW_UTILS_FREE(opctx->tls12.seed);
+
+		if (opctx->tls12.ctx) {
+			ctx_args.context = opctx->tls12.ctx;
+			ctx_args.subsystem_name = get_psa_default_subsystem();
+
+			(void)smw_cancel_operation(&ctx_args);
+		}
+	}
+
+	SMW_UTILS_FREE(opctx);
 
 	memset(operation, 0, sizeof(*operation));
 
@@ -1601,8 +2104,6 @@ psa_key_derivation_get_capacity(const psa_key_derivation_operation_t *operation,
 	return PSA_ERROR_NOT_SUPPORTED;
 }
 
-extern smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg);
-
 __export psa_status_t
 /* Without this comment clang-format does not meet the checkpatch requirement. */
 psa_key_derivation_input_bytes(psa_key_derivation_operation_t *operation,
@@ -1610,29 +2111,57 @@ psa_key_derivation_input_bytes(psa_key_derivation_operation_t *operation,
 			       const uint8_t *data, size_t data_length)
 {
 	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
+	struct psa_key_derivation_context *opctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (PSA_ALG_IS_VENDOR_TLS13(operation->alg) &&
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	if (!operation || !operation->op_context)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!data || !data_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	opctx = operation->op_context;
+
+	if (PSA_ALG_IS_VENDOR_TLS13(opctx->alg) &&
 	    step == PSA_KEY_DERIVATION_INPUT_INFO) {
-		if (operation->info || operation->infolen) {
+		if (opctx->tls13.info || opctx->tls13.infolen) {
 			psa_status = PSA_ERROR_ALREADY_EXISTS;
 		} else {
-			if (!data || !data_length)
-				return PSA_ERROR_INVALID_ARGUMENT;
-
-			operation->infolen = data_length;
-			operation->info = SMW_UTILS_MALLOC(operation->infolen);
-			if (!operation->info) {
+			opctx->tls13.infolen = data_length;
+			opctx->tls13.info =
+				SMW_UTILS_MALLOC(opctx->tls13.infolen);
+			if (!opctx->tls13.info) {
 				psa_status = PSA_ERROR_INSUFFICIENT_MEMORY;
 			} else {
-				SMW_UTILS_MEMCPY(operation->info, data,
-						 operation->infolen);
+				SMW_UTILS_MEMCPY(opctx->tls13.info, data,
+						 opctx->tls13.infolen);
+
+				psa_status = PSA_SUCCESS;
+			}
+		}
+	} else if (PSA_ALG_IS_TLS12_PRF(opctx->alg) &&
+		   step == PSA_KEY_DERIVATION_INPUT_SEED) {
+		if (opctx->tls12.seed || opctx->tls12.seedlen) {
+			psa_status = PSA_ERROR_ALREADY_EXISTS;
+		} else {
+			opctx->tls12.seedlen = data_length;
+			opctx->tls12.seed =
+				SMW_UTILS_MALLOC(opctx->tls12.seedlen);
+			if (!opctx->tls12.seed) {
+				psa_status = PSA_ERROR_INSUFFICIENT_MEMORY;
+			} else {
+				SMW_UTILS_MEMCPY(opctx->tls12.seed, data,
+						 opctx->tls12.seedlen);
 
 				psa_status = PSA_SUCCESS;
 			}
 		}
 	}
+
 	return psa_status;
 }
 
@@ -1655,22 +2184,47 @@ psa_key_derivation_input_key(psa_key_derivation_operation_t *operation,
 			     psa_key_derivation_step_t step, psa_key_id_t key)
 {
 	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
+	struct psa_key_derivation_context *opctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (PSA_ALG_IS_VENDOR_TLS13(operation->alg)) {
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	if (!operation || !operation->op_context)
+		return PSA_ERROR_BAD_STATE;
+
+	opctx = operation->op_context;
+
+	if (PSA_ALG_IS_VENDOR_TLS13(opctx->alg)) {
 		if (step == PSA_KEY_DERIVATION_INPUT_SECRET) {
-			if (operation->secret_id) {
+			if (opctx->secret_id) {
 				psa_status = PSA_ERROR_ALREADY_EXISTS;
 			} else {
-				operation->secret_id = key;
+				opctx->secret_id = key;
 				psa_status = PSA_SUCCESS;
 			}
 		} else if (step == PSA_KEY_DERIVATION_INPUT_OTHER_SECRET) {
-			if (operation->other_secret_id) {
+			if (opctx->other_secret_id) {
 				psa_status = PSA_ERROR_ALREADY_EXISTS;
 			} else {
-				operation->other_secret_id = key;
+				opctx->other_secret_id = key;
+				psa_status = PSA_SUCCESS;
+			}
+		}
+	} else if (PSA_ALG_IS_TLS12_PRF(opctx->alg)) {
+		if (step == PSA_KEY_DERIVATION_INPUT_SECRET) {
+			if (opctx->secret_id) {
+				psa_status = PSA_ERROR_ALREADY_EXISTS;
+			} else {
+				opctx->secret_id = key;
+				psa_status = PSA_SUCCESS;
+			}
+		} else if (step == PSA_KEY_DERIVATION_INPUT_OTHER_SECRET) {
+			if (opctx->other_secret_id) {
+				psa_status = PSA_ERROR_ALREADY_EXISTS;
+			} else {
+				opctx->other_secret_id = key;
 				psa_status = PSA_SUCCESS;
 			}
 		}
@@ -1687,47 +2241,84 @@ psa_key_derivation_key_agreement(psa_key_derivation_operation_t *operation,
 				 const uint8_t *peer_key,
 				 size_t peer_key_length)
 {
-	psa_status_t psa_status = PSA_ERROR_NOT_SUPPORTED;
+	psa_status_t psa_status = PSA_SUCCESS;
 	psa_key_attributes_t private_attr = psa_key_attributes_init();
-	bool skip_bytes = 0;
+	int skip_bytes = 0;
+	struct psa_key_derivation_context *opctx = NULL;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (PSA_ALG_IS_VENDOR_TLS13(operation->alg)) {
-		if (step == PSA_KEY_DERIVATION_INPUT_OTHER_SECRET) {
-			if (operation->other_secret_id || operation->peerbuf ||
-			    operation->peerbuflen)
-				return PSA_ERROR_ALREADY_EXISTS;
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
 
-			psa_status = psa_get_key_attributes(private_key,
-							    &private_attr);
-			if (psa_status != PSA_SUCCESS)
-				return psa_status;
+	if (!operation || !operation->op_context)
+		return PSA_ERROR_BAD_STATE;
+
+	if (!peer_key || !peer_key_length)
+		return PSA_ERROR_INVALID_ARGUMENT;
+
+	opctx = operation->op_context;
+
+	psa_status = psa_get_key_attributes(private_key, &private_attr);
+	if (psa_status != PSA_SUCCESS)
+		return psa_status;
+
+	if (PSA_KEY_TYPE_IS_ECC(private_attr.type) &&
+	    PSA_KEY_TYPE_ECC_GET_FAMILY(private_attr.type) ==
+		    PSA_ECC_FAMILY_SECP_R1) {
+		/*
+		 * SECP_R1 keys should be in uncompressed format with a 0x04
+		 * leading byte.
+		 */
+		if (peer_key[0] != 0x04)
+			return PSA_ERROR_INVALID_ARGUMENT;
+
+		skip_bytes = 1;
+	}
+
+	if (PSA_ALG_IS_VENDOR_TLS13(opctx->alg)) {
+		if (step == PSA_KEY_DERIVATION_INPUT_OTHER_SECRET) {
+			if (opctx->other_secret_id || opctx->peerbuf ||
+			    opctx->peerbuflen)
+				return PSA_ERROR_ALREADY_EXISTS;
 
 			if (!PSA_ALG_IS_VENDOR_TLS13(private_attr.alg))
 				return PSA_ERROR_NOT_PERMITTED;
 
-			if (PSA_KEY_TYPE_IS_ECC(private_attr.type) &&
-			    PSA_KEY_TYPE_ECC_GET_FAMILY(private_attr.type) ==
-				    PSA_ECC_FAMILY_SECP_R1 &&
-			    peer_key[0] == 0x04) {
-				/*
-				 * SECP_R1 keys should be in uncompressed format with a 0x04
-				 * leading byte. Skip the leading byte in this case.
-				 */
-				skip_bytes = 1;
-			}
+			opctx->other_secret_id = private_key;
+			opctx->peerbuflen = peer_key_length - skip_bytes;
+			if (opctx->peerbuflen == 0)
+				return PSA_ERROR_INVALID_ARGUMENT;
 
-			operation->other_secret_id = private_key;
-			operation->peerbuflen = peer_key_length - skip_bytes;
-			operation->peerbuf =
-				SMW_UTILS_MALLOC(operation->peerbuflen);
-			if (!operation->peerbuf)
+			opctx->peerbuf = SMW_UTILS_MALLOC(opctx->peerbuflen);
+			if (!opctx->peerbuf)
 				return PSA_ERROR_INSUFFICIENT_MEMORY;
 
-			SMW_UTILS_MEMCPY(operation->peerbuf,
-					 peer_key + skip_bytes,
-					 operation->peerbuflen);
+			SMW_UTILS_MEMCPY(opctx->peerbuf, peer_key + skip_bytes,
+					 opctx->peerbuflen);
+
+			psa_status = PSA_SUCCESS;
+		}
+	} else if (PSA_ALG_IS_TLS12_PRF(opctx->alg)) {
+		if (step == PSA_KEY_DERIVATION_INPUT_OTHER_SECRET) {
+			if (opctx->other_secret_id || opctx->peerbuf ||
+			    opctx->peerbuflen)
+				return PSA_ERROR_ALREADY_EXISTS;
+
+			if (!PSA_ALG_IS_TLS12_PRF(private_attr.alg))
+				return PSA_ERROR_NOT_PERMITTED;
+
+			opctx->other_secret_id = private_key;
+			opctx->peerbuflen = peer_key_length - skip_bytes;
+			if (opctx->peerbuflen == 0)
+				return PSA_ERROR_INVALID_ARGUMENT;
+
+			opctx->peerbuf = SMW_UTILS_MALLOC(opctx->peerbuflen);
+			if (!opctx->peerbuf)
+				return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+			SMW_UTILS_MEMCPY(opctx->peerbuf, peer_key + skip_bytes,
+					 opctx->peerbuflen);
 
 			psa_status = PSA_SUCCESS;
 		}
@@ -1736,115 +2327,23 @@ psa_key_derivation_key_agreement(psa_key_derivation_operation_t *operation,
 	return psa_status;
 }
 
-static psa_status_t
-psa_key_derivation_output_tls13(const psa_key_attributes_t *attributes,
-				psa_key_derivation_operation_t *operation,
-				psa_key_id_t *key, uint8_t *output,
-				size_t output_length)
-{
-	struct smw_kdf_tls13_args tls13 = { 0 };
-	struct smw_key_descriptor base = { 0 };
-	struct smw_key_descriptor psk = { 0 };
-	struct smw_derived_key_descriptor derived = { 0 };
-	struct smw_derive_key_args derive = { 0 };
-	enum smw_status_code status = SMW_STATUS_OK;
-	psa_key_attributes_t *attr = (psa_key_attributes_t *)attributes;
-
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (operation->other_secret_id) {
-		base.id = operation->other_secret_id;
-		derive.store_derived_key = true;
-	} else {
-		base.type_name = SMW_KEY_TYPE_NAME_DERIVE;
-	}
-
-	if (SET_OVERFLOW(operation->infolen, tls13.expanded_label_length))
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	tls13.expanded_label = operation->info;
-
-	if (SET_OVERFLOW(operation->peerbuflen,
-			 tls13.peer_public_buffer_length))
-		return PSA_ERROR_INVALID_ARGUMENT;
-
-	tls13.peer_public_buffer = operation->peerbuf;
-
-	tls13.prf_name = get_hash_algo_name(PSA_ALG_GET_HASH(operation->alg));
-
-	if (operation->secret_id) {
-		psk.id = operation->secret_id;
-		tls13.psk = &psk;
-	}
-
-	if (key) {
-		if (SET_OVERFLOW(attr->bits, derived.security_size))
-			return PSA_ERROR_INVALID_ARGUMENT;
-
-		derived.type_name =
-			get_smw_key_type(attr, derived.security_size);
-
-		if (derived.type_name == SMW_KEY_TYPE_NAME_NONE)
-			return PSA_ERROR_NOT_SUPPORTED;
-
-		derived.attributes.usage_flags =
-			get_smw_usage_flags(attr->usage_flags);
-		derived.attributes.permitted_algo =
-			get_smw_algo(attr->alg, derived.type_name);
-	} else {
-		if (SET_OVERFLOW(output_length, derived.shared_secret_len))
-			return PSA_ERROR_INVALID_ARGUMENT;
-
-		derived.shared_secret = output;
-	}
-
-	derive.kdf_name = SMW_KDF_NAME_TLS13_KEY_EXCHANGE;
-	derive.kdf_arguments = &tls13;
-	derive.subsystem_name = get_psa_default_subsystem();
-	derive.key_descriptor_base = &base;
-	derive.key_descriptor_derived = &derived;
-
-	status = smw_derive_key(&derive);
-	if (status != SMW_STATUS_OK)
-		return util_smw_to_psa_status(status);
-
-	if (key)
-		*key = derived.id;
-
-	return PSA_SUCCESS;
-}
-
-__export psa_status_t
-/* Without this comment clang-format does not meet the checkpatch requirement. */
-psa_key_derivation_output_common(const psa_key_attributes_t *attributes,
-				 psa_key_derivation_operation_t *operation,
-				 psa_key_id_t *key, uint8_t *output,
-				 size_t output_length)
-{
-	SMW_DBG_TRACE_FUNCTION_CALL;
-
-	if (PSA_ALG_IS_VENDOR_TLS13(operation->alg))
-		return psa_key_derivation_output_tls13(attributes, operation,
-						       key, output,
-						       output_length);
-
-	return PSA_ERROR_NOT_SUPPORTED;
-}
-
 __export psa_status_t
 psa_key_derivation_output_bytes(psa_key_derivation_operation_t *operation,
 				uint8_t *output, size_t output_length)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (!operation)
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
+	if (!operation || !operation->op_context)
 		return PSA_ERROR_BAD_STATE;
 
 	if (!output || !output_length)
 		return PSA_ERROR_INSUFFICIENT_DATA;
 
-	return psa_key_derivation_output_common(NULL, operation, NULL, output,
-						output_length);
+	return key_derivation_output_common(NULL, operation, NULL, output,
+					    output_length);
 }
 
 __export psa_status_t
@@ -1855,14 +2354,17 @@ psa_key_derivation_output_key(const psa_key_attributes_t *attributes,
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
+
 	if (!attributes || !key)
 		return PSA_ERROR_INVALID_ARGUMENT;
 
-	if (!operation)
+	if (!operation || !operation->op_context)
 		return PSA_ERROR_BAD_STATE;
 
-	return psa_key_derivation_output_common(attributes, operation, key,
-						NULL, 0);
+	return key_derivation_output_common(attributes, operation, key, NULL,
+					    0);
 }
 
 __export psa_status_t
@@ -1883,14 +2385,50 @@ __export psa_status_t
 psa_key_derivation_setup(psa_key_derivation_operation_t *operation,
 			 psa_algorithm_t alg)
 {
+	struct smw_context_args ctx_args = { 0 };
+	struct psa_key_derivation_context *opctx = NULL;
+	enum smw_status_code status = SMW_STATUS_OK;
+
 	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!smw_utils_is_lib_initialized())
+		return PSA_ERROR_BAD_STATE;
 
 	if (PSA_ALG_IS_VENDOR_TLS13(alg)) {
 		if (PSA_ALG_GET_HASH(alg) != PSA_ALG_SHA_256 &&
 		    PSA_ALG_GET_HASH(alg) != PSA_ALG_SHA_384)
 			return PSA_ERROR_NOT_SUPPORTED;
 
-		operation->alg = alg;
+		opctx = SMW_UTILS_CALLOC(1, sizeof(*opctx));
+		if (!opctx)
+			return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+		opctx->alg = alg;
+		operation->op_context = opctx;
+
+		return PSA_SUCCESS;
+	} else if (PSA_ALG_IS_TLS12_PRF(alg)) {
+		if (PSA_ALG_GET_HASH(alg) != PSA_ALG_SHA_256 &&
+		    PSA_ALG_GET_HASH(alg) != PSA_ALG_SHA_384)
+			return PSA_ERROR_NOT_SUPPORTED;
+
+		opctx = SMW_UTILS_CALLOC(1, sizeof(*opctx));
+		if (!opctx)
+			return PSA_ERROR_INSUFFICIENT_MEMORY;
+
+		ctx_args.subsystem_name = get_psa_default_subsystem();
+
+		status = smw_allocate_context(&ctx_args);
+		if (status != SMW_STATUS_OK) {
+			SMW_UTILS_FREE(opctx);
+			return util_smw_to_psa_status(status);
+		}
+
+		opctx->alg = alg;
+		opctx->tls12.ctx = ctx_args.context;
+
+		operation->op_context = opctx;
+
 		return PSA_SUCCESS;
 	}
 

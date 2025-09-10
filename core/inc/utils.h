@@ -21,17 +21,18 @@
 
 #define SMW_ALL_ONES (-1UL)
 
-#define SMW_UTILS_MALLOC  malloc
-#define SMW_UTILS_CALLOC  calloc
-#define SMW_UTILS_REALLOC realloc
-#define SMW_UTILS_FREE	  free
-#define SMW_UTILS_MEMCPY  memcpy
-#define SMW_UTILS_MEMSET  memset
-#define SMW_UTILS_STRLEN  strlen
-#define SMW_UTILS_STRCMP  strcmp
-#define SMW_UTILS_STRNCMP strncmp
+#define SMW_UTILS_MALLOC   malloc
+#define SMW_UTILS_CALLOC   calloc
+#define SMW_UTILS_REALLOC  realloc
+#define SMW_UTILS_FREE	   free
+#define SMW_UTILS_MEMCMP   memcmp
+#define SMW_UTILS_MEMCPY   memcpy
+#define SMW_UTILS_MEMSET   memset
+#define SMW_UTILS_STRLEN   strlen
+#define SMW_UTILS_STRCMP   strcmp
+#define SMW_UTILS_STRNCMP  strncmp
 #define SMW_UTILS_STRTOK_R strtok_r
-#define SMW_UTILS_STRTOL  strtol
+#define SMW_UTILS_STRTOL   strtol
 
 #define SMW_UTILS_BSWAP_16 bswap_16
 #define SMW_UTILS_BSWAP_32 bswap_32

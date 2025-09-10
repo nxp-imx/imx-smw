@@ -160,6 +160,18 @@ smw_hash_algo_t get_hash_algo_name(psa_algorithm_t alg)
 	return info->smw_alg_name;
 }
 
+smw_attr_algo_t get_hash_algo_attr(psa_algorithm_t alg)
+{
+	const struct hash_algo_info *info = get_hash_algo_info(alg);
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	if (!info)
+		return SMW_ATTR_HASH_NONE;
+
+	return info->smw_alg_id;
+}
+
 static const struct mac_algo_info {
 	psa_algorithm_t psa_alg_id;
 	smw_mac_algo_t smw_alg_name;

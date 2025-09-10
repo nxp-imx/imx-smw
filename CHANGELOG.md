@@ -67,10 +67,12 @@ The failure is due to the storage manager which is already loaded and a new inst
 #### PKCS#11 Library
 
 * Add support for multi-part hash operations.
+* Add support for ed448 key generation and signature
 
 #### PKCS#11 Tests
 
 * Add tests to validate multi-part hash operations.
+* Add test to validate ed448 key generation and signature
 
 ---
 ### <a id ="rel_5_1"></a></br>**Release 5.1**

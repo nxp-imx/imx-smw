@@ -48,6 +48,7 @@ const char *get_slot_label(CK_ULONG slotid);
 
 /* Edwards curves index */
 #define EC_ED25519 0
+#define EC_ED448   1
 
 struct asn1_ec_curve {
 	size_t security_size;
@@ -58,6 +59,7 @@ struct asn1_ec_curve {
 
 extern const struct asn1_ec_curve ec_curves[];
 extern const struct asn1_ec_curve ed_curves[];
+extern const size_t ed_curves_count;
 
 int util_to_asn1_string(CK_ATTRIBUTE_PTR attr,
 			const struct asn1_ec_curve *curve);

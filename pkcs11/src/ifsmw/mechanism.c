@@ -108,6 +108,9 @@ smw_key_type_t smw_ec_name[] = { SMW_KEY_TYPE_NAME_SECP_R1,
 				 SMW_KEY_TYPE_NAME_BRAINPOOL_R1,
 				 SMW_KEY_TYPE_NAME_BRAINPOOL_T1 };
 
+smw_key_type_t smw_ed_name[] = { SMW_KEY_TYPE_NAME_ED448,
+				 SMW_KEY_TYPE_NAME_ED25519 };
+
 /**
  * struct mentry - Definition of a mechanism supported by each device
  * @type: Cryptoki Mechanism type
@@ -390,7 +393,8 @@ static struct mentry mdigest[] = {
  */
 static struct mentry meckeygen[] = {
 	M_ECKEYGEN(smw_ec_name, ARRAY_SIZE(smw_ec_name), EC_KEY_PAIR_GEN),
-	M_KEYGEN(ED25519, EC_EDWARDS_KEY_PAIR_GEN),
+	M_ECKEYGEN(smw_ed_name, ARRAY_SIZE(smw_ed_name),
+		   EC_EDWARDS_KEY_PAIR_GEN),
 };
 
 /*
@@ -2497,15 +2501,15 @@ static CK_RV sign(struct lib_signature_params *params,
 	struct smw_hash_init_args smw_hash_init_args = { 0 };
 	struct smw_hash_update_args smw_hash_update_args = { 0 };
 	struct smw_hash_final_args smw_hash_final_args = { 0 };
-	struct smw_ed25519_params ed25519_params = { 0 };
+	struct smw_eddsa_params eddsa_params = { 0 };
 
 	struct lib_signature_ctx *ctx = params->ctx;
 
 	if (ctx->type == SIGN_TYPE_EDDSA && ctx->sign.eddsa.context_data) {
-		smw_sign_verify_args.ed25519_params = &ed25519_params;
-		ed25519_params.context = ctx->sign.eddsa.context_data;
+		smw_sign_verify_args.eddsa_params = &eddsa_params;
+		eddsa_params.context = ctx->sign.eddsa.context_data;
 		if (SET_OVERFLOW(ctx->sign.eddsa.context_len,
-				 ed25519_params.context_length)) {
+				 eddsa_params.context_length)) {
 			status = SMW_STATUS_INVALID_PARAM;
 			goto end;
 		}
@@ -2751,6 +2755,10 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 						SMW_KEY_TYPE_NAME_ED25519))
 				sign_algo = SMW_SIGN_EDDSA(ED25519, NONE,
 							   PREHASHED);
+			else if (is_edwards_key_type(obj_key,
+						     SMW_KEY_TYPE_NAME_ED448))
+				sign_algo =
+					SMW_SIGN_EDDSA(ED448, NONE, PREHASHED);
 
 			sign_algo = SMW_ATTR_SET_MSG_HASHED(sign_algo);
 		} else if (ctx->sign.eddsa.context_data) {
@@ -2758,6 +2766,10 @@ static CK_RV op_msign_common(CK_SLOT_ID slotid, struct mentry *entry,
 						SMW_KEY_TYPE_NAME_ED25519))
 				sign_algo =
 					SMW_SIGN_EDDSA(ED25519, NONE, CONTEXT);
+			else if (is_edwards_key_type(obj_key,
+						     SMW_KEY_TYPE_NAME_ED448))
+				sign_algo =
+					SMW_SIGN_EDDSA(ED448, NONE, CONTEXT);
 		}
 
 		break;

@@ -209,7 +209,7 @@ int sign_verify(struct subtest_data *subtest, int operation)
 	unsigned char *exp_sign = NULL;
 	struct smw_sign_verify_args args = { 0 };
 	struct smw_sign_verify_args *smw_sign_verify_args = &args;
-	struct smw_ed25519_params ed25519_params = { 0 };
+	struct smw_eddsa_params eddsa_params = { 0 };
 
 	if (!subtest) {
 		DBG_PRINT_BAD_ARGS();
@@ -281,11 +281,12 @@ int sign_verify(struct subtest_data *subtest, int operation)
 		goto exit;
 
 	if (res == ERR_CODE(PASSED)) {
-		if (key_test.desc.type_name == SMW_KEY_TYPE_NAME_ED25519) {
-			ed25519_params.context = context;
-			ed25519_params.context_length = context_length;
+		if (key_test.desc.type_name == SMW_KEY_TYPE_NAME_ED25519 ||
+		    key_test.desc.type_name == SMW_KEY_TYPE_NAME_ED448) {
+			eddsa_params.context = context;
+			eddsa_params.context_length = context_length;
 
-			args.ed25519_params = &ed25519_params;
+			args.eddsa_params = &eddsa_params;
 		}
 	}
 

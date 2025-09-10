@@ -100,14 +100,23 @@ struct smw_hash_final_args {
 };
 
 /**
- * struct smw_ed25519_params - ed25519 parameters
+ * struct smw_eddsa_params - eddsa parameters
  * @context: Location of the context
  * @context_length: Length of the context
  */
-struct smw_ed25519_params {
+struct smw_eddsa_params {
 	unsigned char *context;
 	unsigned int context_length;
 };
+
+/**
+ * DOC: struct smw_ed25519_params
+ *
+ * **Warning: deprecated **
+ *	This structure is deprecated and will be removed in a future library
+ *	release. Please use the new @smw_eddsa_params structure instead.
+ */
+#define smw_ed25519_params smw_eddsa_params
 
 /**
  * struct smw_sign_verify_args - Sign or verify arguments
@@ -120,7 +129,7 @@ struct smw_ed25519_params {
  * @message_length: Length of the message
  * @signature: Location of the signature
  * @signature_length: Length of the signature
- * @ed25519_params: Pointer to ed25519 parameters
+ * @eddsa_params: Pointer to eddsa parameters
  *
  * @subsystem_name designates the Secure Subsystem to be used.
  * If this field is SMW_SUBSYSTEM_NAME_NONE, the default configured
@@ -137,7 +146,7 @@ struct smw_sign_verify_args {
 	unsigned char *signature;
 	unsigned int signature_length;
 	union {
-		struct smw_ed25519_params *ed25519_params;
+		struct smw_eddsa_params *eddsa_params;
 	};
 };
 

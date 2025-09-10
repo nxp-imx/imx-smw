@@ -26,12 +26,17 @@
 		SMW_ATTR_SIGN_PARAM_EDDSA_##_param)
 
 #define EC_STR_ED25519 "ed25519"
+#define EC_STR_ED448   "ed448"
 
 const CK_BYTE ed25519[] = ASN1_OID_ED25519;
+const CK_BYTE ed448[] = ASN1_OID_ED448;
 
 const struct asn1_ec_curve ed_curves[] = {
 	[EC_ED25519] = { 255, EC_STR_ED25519, ed25519, sizeof(ed25519) },
+	[EC_ED448] = { 448, EC_STR_ED448, ed448, sizeof(ed448) },
 };
+
+const size_t ed_curves_count = ARRAY_SIZE(ed_curves);
 
 static int object_edwards_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 				     CK_BBOOL bverify)
@@ -59,86 +64,75 @@ static int object_edwards_key_public(CK_FUNCTION_LIST_PTR pfunc, CK_BBOOL token,
 		  sizeof(key_allowed_mech) },
 	};
 
-	unsigned int i = 0;
-
 	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
 		goto end;
 
-	for (; i < ARRAY_SIZE(ed_curves); i++) {
-		/* Set the CKA_EC_POINT size function of the security size */
-		security_size = ed_curves[i].security_size;
-		pubkey_len = BITS_TO_BYTES_SIZE(security_size);
+	/* Set the CKA_EC_POINT size function of the security size */
+	security_size = ed_curves[EC_ED25519].security_size;
+	pubkey_len = BITS_TO_BYTES_SIZE(security_size);
 
-		if (pubkey)
-			free(pubkey);
+	pubkey = calloc(1, pubkey_len);
+	if (CHECK_EXPECTED(pubkey, "Out of memory"))
+		goto end;
 
-		pubkey = calloc(1, pubkey_len);
-		if (CHECK_EXPECTED(pubkey, "Out of memory"))
+	keyTemplate[3].pValue = pubkey;
+	keyTemplate[3].ulValueLen = pubkey_len;
+
+	TEST_OUT("Create %sKey Public by curve name\n", token ? "Token " : "");
+	if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
+					       &ed_curves[EC_ED25519]),
+			   "ASN1 Conversion"))
+		goto end;
+
+	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
+				    &hkey);
+
+	free(keyTemplate[2].pValue);
+	keyTemplate[2].pValue = NULL;
+
+	if (bverify || !token) {
+		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
 			goto end;
 
-		keyTemplate[3].pValue = pubkey;
-		keyTemplate[3].ulValueLen = pubkey_len;
+		TEST_OUT("Key public by curve name created #%lu\n", hkey);
 
-		TEST_OUT("Create %sKey Public by curve name\n",
-			 token ? "Token " : "");
-		if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
-						       &ed_curves[i]),
-				   "ASN1 Conversion"))
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
+			goto end;
+	} else {
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
+			goto end;
+	}
+
+	TEST_OUT("Create %sKey Public by curve oid\n", token ? "Token " : "");
+
+	if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2],
+					    &ed_curves[EC_ED25519]),
+			   "ASN1 Conversion"))
+		goto end;
+
+	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
+				    &hkey);
+
+	free(keyTemplate[2].pValue);
+	keyTemplate[2].pValue = NULL;
+
+	if (bverify || !token) {
+		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
 			goto end;
 
-		ret = pfunc->C_CreateObject(sess, keyTemplate,
-					    ARRAY_SIZE(keyTemplate), &hkey);
+		TEST_OUT("Key public created by curve oid #%lu\n", hkey);
 
-		free(keyTemplate[2].pValue);
-		keyTemplate[2].pValue = NULL;
-
-		if (bverify || !token) {
-			if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
-				goto end;
-
-			TEST_OUT("Key public by curve name created #%lu\n",
-				 hkey);
-
-			TEST_OUT("Key Destroy #%lu\n", hkey);
-			ret = pfunc->C_DestroyObject(sess, hkey);
-			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-				goto end;
-		} else {
-			if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
-				goto end;
-		}
-
-		TEST_OUT("Create %sKey Public by curve oid\n",
-			 token ? "Token " : "");
-
-		if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2],
-						    &ed_curves[i]),
-				   "ASN1 Conversion"))
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 			goto end;
-
-		ret = pfunc->C_CreateObject(sess, keyTemplate,
-					    ARRAY_SIZE(keyTemplate), &hkey);
-
-		free(keyTemplate[2].pValue);
-		keyTemplate[2].pValue = NULL;
-
-		if (bverify || !token) {
-			if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
-				goto end;
-
-			TEST_OUT("Key public created by curve oid #%lu\n",
-				 hkey);
-
-			TEST_OUT("Key Destroy #%lu\n", hkey);
-			ret = pfunc->C_DestroyObject(sess, hkey);
-			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-				goto end;
-		} else {
-			if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
-				goto end;
-		}
+	} else {
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
+			goto end;
 	}
 
 	status = TEST_PASS;
@@ -183,8 +177,6 @@ static int object_edwards_key_private(CK_FUNCTION_LIST_PTR pfunc,
 		  sizeof(key_allowed_mech) },
 	};
 
-	unsigned int i = 0;
-
 	SUBTEST_START();
 
 	if (util_open_rw_session(pfunc, 0, &sess) == TEST_FAIL)
@@ -195,57 +187,51 @@ static int object_edwards_key_private(CK_FUNCTION_LIST_PTR pfunc,
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	for (; i < ARRAY_SIZE(ed_curves); i++) {
-		TEST_OUT("Create %sKey Private by curve name\n",
-			 token ? "Token " : "");
-		if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
-						       &ed_curves[i]),
-				   "ASN1 Conversion"))
+	TEST_OUT("Create %sKey Private by curve name\n", token ? "Token " : "");
+	if (CHECK_EXPECTED(util_to_asn1_string(&keyTemplate[2],
+					       &ed_curves[EC_ED25519]),
+			   "ASN1 Conversion"))
+		goto end;
+
+	/* Set the CKA_EC_POINT size according to the security size */
+	security_size = ed_curves[EC_ED25519].security_size;
+	pubkey_len = BITS_TO_BYTES_SIZE(security_size);
+
+	pubkey = calloc(1, pubkey_len);
+	if (CHECK_EXPECTED(pubkey, "Out of memory"))
+		goto end;
+
+	keyTemplate[4].pValue = pubkey;
+	keyTemplate[4].ulValueLen = pubkey_len;
+
+	/* Set the CKA_VALUE size according to the security size */
+	keyTemplate[3].ulValueLen = BITS_TO_BYTES_SIZE(security_size);
+	ret = pfunc->C_CreateObject(sess, keyTemplate, ARRAY_SIZE(keyTemplate),
+				    &hkey);
+
+	free(keyTemplate[2].pValue);
+	keyTemplate[2].pValue = NULL;
+
+	if (bsign || !token) {
+		if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
 			goto end;
 
-		/* Set the CKA_EC_POINT size according to the security size */
-		security_size = ed_curves[i].security_size;
-		pubkey_len = BITS_TO_BYTES_SIZE(security_size);
+		TEST_OUT("Key private by curve name created #%lu\n", hkey);
 
-		if (pubkey)
-			free(pubkey);
-
-		pubkey = calloc(1, pubkey_len);
-		if (CHECK_EXPECTED(pubkey, "Out of memory"))
+		TEST_OUT("Key Destroy #%lu\n", hkey);
+		ret = pfunc->C_DestroyObject(sess, hkey);
+		if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
 			goto end;
-
-		keyTemplate[4].pValue = pubkey;
-		keyTemplate[4].ulValueLen = pubkey_len;
-
-		/* Set the CKA_VALUE size according to the security size */
-		keyTemplate[3].ulValueLen = BITS_TO_BYTES_SIZE(security_size);
-		ret = pfunc->C_CreateObject(sess, keyTemplate,
-					    ARRAY_SIZE(keyTemplate), &hkey);
-
-		free(keyTemplate[2].pValue);
-		keyTemplate[2].pValue = NULL;
-
-		if (bsign || !token) {
-			if (CHECK_CK_RV(CKR_OK, "C_CreateObject"))
-				goto end;
-
-			TEST_OUT("Key private by curve name created #%lu\n",
-				 hkey);
-
-			TEST_OUT("Key Destroy #%lu\n", hkey);
-			ret = pfunc->C_DestroyObject(sess, hkey);
-			if (CHECK_CK_RV(CKR_OK, "C_DestroyObject"))
-				goto end;
-		} else {
-			if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
-				goto end;
-		}
+	} else {
+		if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
+			goto end;
+	}
 
 		TEST_OUT("Create %sKey Private by curve oid\n",
 			 token ? "Token " : "");
 
 		if (CHECK_EXPECTED(util_to_asn1_oid(&keyTemplate[2],
-						    &ed_curves[i]),
+						    &ed_curves[EC_ED25519]),
 				   "ASN1 Conversion"))
 			goto end;
 
@@ -270,7 +256,6 @@ static int object_edwards_key_private(CK_FUNCTION_LIST_PTR pfunc,
 			if (CHECK_CK_RV(CKR_ARGUMENTS_BAD, "C_CreateObject"))
 				goto end;
 		}
-	}
 
 	status = TEST_PASS;
 end:
@@ -325,7 +310,7 @@ static int object_generate_edwards_keypair(CK_FUNCTION_LIST_PTR pfunc,
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	for (; i < ARRAY_SIZE(ed_curves); i++) {
+	for (; i < ed_curves_count; i++) {
 		TEST_OUT("Generate %sKeypair by curve name\n",
 			 token ? "Token " : "");
 		if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
@@ -443,7 +428,7 @@ static int object_edwards_keypair_usage(CK_FUNCTION_LIST_PTR pfunc,
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	for (; i < ARRAY_SIZE(ed_curves); i++) {
+	for (; i < ed_curves_count; i++) {
 		TEST_OUT("Generate %sKeypair no usage by curve name\n",
 			 token ? "Token " : "");
 		if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],

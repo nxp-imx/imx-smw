@@ -963,7 +963,7 @@ end:
 	return status;
 }
 
-static int sign_verify_ed25519(CK_FUNCTION_LIST_PTR pfunc)
+static int sign_verify_eddsa(CK_FUNCTION_LIST_PTR pfunc)
 {
 	int status = TEST_FAIL;
 
@@ -1016,6 +1016,7 @@ static int sign_verify_ed25519(CK_FUNCTION_LIST_PTR pfunc)
 	};
 
 	size_t idx = 0;
+	unsigned int i = 0;
 
 	SUBTEST_START();
 
@@ -1027,80 +1028,90 @@ static int sign_verify_ed25519(CK_FUNCTION_LIST_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	TEST_OUT("Generate Edwards Keypair by curve name\n");
-	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       &ed_curves[EC_ED25519]),
-			   "ASN1 Conversion"))
-		goto end;
+	for (; i < ed_curves_count; i++) {
+		TEST_OUT("Generate Edwards Keypair by curve name\n");
+		if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
+						       &ed_curves[i]),
+				   "ASN1 Conversion"))
+			goto end;
 
-	ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,
-				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
-				       ARRAY_SIZE(privkey_attrs), &hpubkey,
-				       &hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
-		goto end;
+		ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,
+					       ARRAY_SIZE(pubkey_attrs),
+					       privkey_attrs,
+					       ARRAY_SIZE(privkey_attrs),
+					       &hpubkey, &hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+			goto end;
 
-	for (; idx < ARRAY_SIZE(sign_verify_mech); idx++) {
-		params = sign_verify_mech[idx].pParameter;
+		for (idx = 0; idx < ARRAY_SIZE(sign_verify_mech); idx++) {
+			params = sign_verify_mech[idx].pParameter;
 
-		TEST_OUT("Initialize sign operation\n");
-		ret = pfunc->C_SignInit(sess, &sign_verify_mech[idx], hprivkey);
-		if (params && params->ulContextDataLen > 255) {
-			if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
-					"C_SignInit"))
+			TEST_OUT("Initialize sign operation\n");
+			ret = pfunc->C_SignInit(sess, &sign_verify_mech[idx],
+						hprivkey);
+			if (params && params->ulContextDataLen > 255) {
+				if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
+						"C_SignInit"))
+					goto end;
+
+				continue;
+			} else {
+				if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+					goto end;
+			}
+
+			payload = msg;
+			payload_len = msg_len;
+
+			if (params && params->phFlag) {
+				payload = msg_sha512;
+				payload_len = msg_sha512_len;
+			}
+
+			/* Set a wrong signature length */
+			signature_len = 20;
+			signature = malloc(signature_len);
+			if (CHECK_EXPECTED(signature, "Allocation error"))
 				goto end;
 
-			continue;
-		} else {
-			if (CHECK_CK_RV(CKR_OK, "C_SignInit"))
+			TEST_OUT("Sign message with buffer too small\n");
+			ret = pfunc->C_Sign(sess, payload, payload_len,
+					    signature, &signature_len);
+			if (ret == CKR_FUNCTION_NOT_SUPPORTED) {
+				free(signature);
+				signature = NULL;
+				continue;
+			}
+
+			if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_Sign"))
 				goto end;
+
+			/* Realloc signature buffer with new signature length */
+			signature = realloc(signature, signature_len);
+			if (CHECK_EXPECTED(signature, "Allocation error"))
+				goto end;
+
+			TEST_OUT("Sign message\n");
+			ret = pfunc->C_Sign(sess, payload, payload_len,
+					    signature, &signature_len);
+			if (CHECK_CK_RV(CKR_OK, "C_Sign"))
+				goto end;
+
+			TEST_OUT("Initialize verify operation\n");
+			ret = pfunc->C_VerifyInit(sess, &sign_verify_mech[idx],
+						  hpubkey);
+			if (CHECK_CK_RV(CKR_OK, "C_VerifyInit"))
+				goto end;
+
+			TEST_OUT("Verify signature\n");
+			ret = pfunc->C_Verify(sess, payload, payload_len,
+					      signature, signature_len);
+			if (CHECK_CK_RV(CKR_OK, "C_Verify"))
+				goto end;
+
+			free(signature);
+			signature = NULL;
 		}
-
-		payload = msg;
-		payload_len = msg_len;
-
-		if (params && params->phFlag) {
-			payload = msg_sha512;
-			payload_len = msg_sha512_len;
-		}
-
-		/* Set a wrong signature length */
-		signature_len = 20;
-		signature = malloc(signature_len);
-		if (CHECK_EXPECTED(signature, "Allocation error"))
-			goto end;
-
-		TEST_OUT("Sign message with signature buffer too small\n");
-		ret = pfunc->C_Sign(sess, payload, payload_len, signature,
-				    &signature_len);
-		if (CHECK_CK_RV(CKR_BUFFER_TOO_SMALL, "C_Sign"))
-			goto end;
-
-		/* Realloc signature buffer with new signature length */
-		signature = realloc(signature, signature_len);
-		if (CHECK_EXPECTED(signature, "Allocation error"))
-			goto end;
-
-		TEST_OUT("Sign message\n");
-		ret = pfunc->C_Sign(sess, payload, payload_len, signature,
-				    &signature_len);
-		if (CHECK_CK_RV(CKR_OK, "C_Sign"))
-			goto end;
-
-		TEST_OUT("Initialize verify operation\n");
-		ret = pfunc->C_VerifyInit(sess, &sign_verify_mech[idx],
-					  hpubkey);
-		if (CHECK_CK_RV(CKR_OK, "C_VerifyInit"))
-			goto end;
-
-		TEST_OUT("Verify signature\n");
-		ret = pfunc->C_Verify(sess, payload, payload_len, signature,
-				      signature_len);
-		if (CHECK_CK_RV(CKR_OK, "C_Verify"))
-			goto end;
-
-		free(signature);
-		signature = NULL;
 	}
 
 	status = TEST_PASS;
@@ -1586,7 +1597,7 @@ void tests_pkcs11_sign_verify(void *lib_hdl, CK_VOID_PTR pfunc)
 	if (sign_verify_rsa_pss(pfunc) == TEST_FAIL)
 		goto end;
 
-	if (sign_verify_ed25519(pfunc) == TEST_FAIL)
+	if (sign_verify_eddsa(pfunc) == TEST_FAIL)
 		goto end;
 
 	if (sign_verify_key_usage(pfunc) == TEST_FAIL)

@@ -1024,6 +1024,7 @@ static int sign_verify_multipart_eddsa(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	CK_BYTE_PTR signature = NULL_PTR;
 	CK_ULONG signature_len = 0;
 	CK_BYTE_PTR payload = NULL_PTR;
+	CK_BYTE_PTR last_byte = NULL_PTR;
 	CK_ULONG payload_len = 0;
 	CK_ULONG tmp_len = 0;
 
@@ -1069,6 +1070,7 @@ static int sign_verify_multipart_eddsa(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	};
 
 	size_t idx = 0;
+	unsigned int i = 0;
 
 	SUBTEST_START();
 
@@ -1081,178 +1083,195 @@ static int sign_verify_multipart_eddsa(CK_FUNCTION_LIST_3_0_PTR pfunc)
 	if (CHECK_CK_RV(CKR_OK, "C_Login"))
 		goto end;
 
-	TEST_OUT("Generate EC Keypair by curve name\n");
-	if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
-					       &ed_curves[EC_ED25519]),
-			   "ASN1 Conversion"))
-		goto end;
+	for (; i < ed_curves_count; i++) {
+		TEST_OUT("Generate EC Keypair by curve name\n");
+		if (CHECK_EXPECTED(util_to_asn1_string(&pubkey_attrs[0],
+						       &ed_curves[i]),
+				   "ASN1 Conversion"))
+			goto end;
 
-	if (!util_lib_is_mech_supported(pfunc, 0, key_allowed_mech[0])) {
-		status = TEST_SKIP;
-		goto end;
-	}
+		if (!util_lib_is_mech_supported(pfunc, 0,
+						key_allowed_mech[0])) {
+			status = TEST_SKIP;
+			goto end;
+		}
 
-	ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,
-				       ARRAY_SIZE(pubkey_attrs), privkey_attrs,
-				       ARRAY_SIZE(privkey_attrs), &hpubkey,
-				       &hprivkey);
-	if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
-		goto end;
+		ret = pfunc->C_GenerateKeyPair(sess, &key_mech, pubkey_attrs,
+					       ARRAY_SIZE(pubkey_attrs),
+					       privkey_attrs,
+					       ARRAY_SIZE(privkey_attrs),
+					       &hpubkey, &hprivkey);
+		if (CHECK_CK_RV(CKR_OK, "C_GenerateKeyPair"))
+			goto end;
 
-	for (; idx < ARRAY_SIZE(sign_verify_mech); idx++) {
-		params = sign_verify_mech[idx].pParameter;
+		for (idx = 0; idx < ARRAY_SIZE(sign_verify_mech); idx++) {
+			params = sign_verify_mech[idx].pParameter;
 
-		TEST_OUT("Initialize sign operation\n");
-		ret = pfunc->C_MessageSignInit(sess, &sign_verify_mech[idx],
-					       hprivkey);
-		if (params && params->ulContextDataLen > 255) {
-			if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
-					"C_MessageSignInit"))
+			TEST_OUT("Initialize sign operation\n");
+			ret = pfunc->C_MessageSignInit(sess,
+						       &sign_verify_mech[idx],
+						       hprivkey);
+			if (params && params->ulContextDataLen > 255) {
+				if (CHECK_CK_RV(CKR_MECHANISM_PARAM_INVALID,
+						"C_MessageSignInit"))
+					goto end;
+
+				continue;
+			} else {
+				if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
+					goto end;
+			}
+
+			payload = msg;
+			payload_len = msg_len;
+
+			if (params && params->phFlag) {
+				payload = msg_sha512;
+				payload_len = msg_sha512_len;
+			}
+
+			last_byte = payload + payload_len - 1;
+
+			TEST_OUT("Begin multi-part sign operation\n");
+			ret = pfunc->C_SignMessageBegin(sess, NULL_PTR, 0);
+			if (CHECK_CK_RV(CKR_OK, "C_SignMessageBegin"))
 				goto end;
 
-			continue;
-		} else {
+			TEST_OUT("Start multi-part sign operation\n");
+			ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0,
+						       payload, payload_len - 1,
+						       NULL_PTR, NULL_PTR);
+			if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
+				goto end;
+
+			TEST_OUT("Get signature length\n");
+			ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0,
+						       NULL_PTR, 0, NULL_PTR,
+						       &signature_len);
+			if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
+				goto end;
+
+			/* Alloc signature buffer with new signature length */
+			signature = malloc(signature_len);
+			if (CHECK_EXPECTED(signature, "Allocation error"))
+				goto end;
+
+			TEST_OUT("Finish multi-part sign operation\n");
+			ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0,
+						       last_byte, 1, signature,
+						       &signature_len);
+			if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
+				goto end;
+
+			TEST_OUT("Finish multi-part sign process\n");
+			ret = pfunc->C_MessageSignFinal(sess);
+			if (CHECK_CK_RV(CKR_OK, "C_MessageSignFinal"))
+				goto end;
+
+			TEST_OUT("Initialize verify operation\n");
+			ret = pfunc->C_MessageVerifyInit(sess,
+							 &sign_verify_mech[idx],
+							 hpubkey);
+			if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyInit"))
+				goto end;
+
+			TEST_OUT("Begin multi-part verify operation\n");
+			ret = pfunc->C_VerifyMessageBegin(sess, NULL_PTR, 0);
+			if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageBegin"))
+				goto end;
+
+			TEST_OUT("Start multi-part verify operation\n");
+			ret = pfunc->C_VerifyMessageNext(sess, NULL_PTR, 0,
+							 payload,
+							 payload_len - 1,
+							 NULL_PTR, 0);
+			if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageNext"))
+				goto end;
+
+			TEST_OUT("Finish multi-part verify operation\n");
+			ret = pfunc->C_VerifyMessageNext(sess, NULL_PTR, 0,
+							 last_byte, 1,
+							 signature,
+							 signature_len);
+			if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageNext"))
+				goto end;
+
+			TEST_OUT("Finish multi-part verify process\n");
+			ret = pfunc->C_MessageVerifyFinal(sess);
+			if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyFinal"))
+				goto end;
+
+			tmp_len = signature_len;
+			signature_len *= 2;
+			signature = realloc(signature, signature_len);
+			if (CHECK_EXPECTED(signature, "Allocation error"))
+				goto end;
+
+			TEST_OUT("Initialize sign operation\n");
+			ret = pfunc->C_MessageSignInit(sess,
+						       &sign_verify_mech[idx],
+						       hprivkey);
 			if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
 				goto end;
+
+			TEST_OUT("Begin multi-part sign operation\n");
+			ret = pfunc->C_SignMessageBegin(sess, NULL_PTR, 0);
+			if (CHECK_CK_RV(CKR_OK, "C_SignMessageBegin"))
+				goto end;
+
+			TEST_OUT("Get signature length\n");
+			ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0,
+						       NULL_PTR, 0, NULL_PTR,
+						       &signature_len);
+			if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
+				goto end;
+
+			TEST_OUT("Check updated signature buffer length\n");
+			if (CHECK_EXPECTED(signature_len == tmp_len,
+					   "Signature length not updated"))
+				goto end;
+
+			TEST_OUT("Finish multi-part sign operation\n");
+			ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0,
+						       payload, payload_len,
+						       signature,
+						       &signature_len);
+			if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
+				goto end;
+
+			TEST_OUT("Finish multi-part sign process\n");
+			ret = pfunc->C_MessageSignFinal(sess);
+			if (CHECK_CK_RV(CKR_OK, "C_MessageSignFinal"))
+				goto end;
+
+			TEST_OUT("Initialize verify operation\n");
+			ret = pfunc->C_MessageVerifyInit(sess,
+							 &sign_verify_mech[idx],
+							 hpubkey);
+			if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyInit"))
+				goto end;
+
+			TEST_OUT("Begin multi-part verify operation\n");
+			ret = pfunc->C_VerifyMessageBegin(sess, NULL_PTR, 0);
+			if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageBegin"))
+				goto end;
+
+			TEST_OUT("Finish multi-part verify operation\n");
+			ret = pfunc->C_VerifyMessageNext(sess, NULL_PTR, 0,
+							 payload, payload_len,
+							 signature,
+							 signature_len);
+			if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageNext"))
+				goto end;
+
+			TEST_OUT("Finish multi-part verify process\n");
+			ret = pfunc->C_MessageVerifyFinal(sess);
+			if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyFinal"))
+				goto end;
+
+			free(signature);
+			signature = NULL;
 		}
-
-		payload = msg;
-		payload_len = msg_len;
-
-		if (params && params->phFlag) {
-			payload = msg_sha512;
-			payload_len = msg_sha512_len;
-		}
-
-		TEST_OUT("Begin multi-part sign operation\n");
-		ret = pfunc->C_SignMessageBegin(sess, NULL_PTR, 0);
-		if (CHECK_CK_RV(CKR_OK, "C_SignMessageBegin"))
-			goto end;
-
-		TEST_OUT("Start multi-part sign operation\n");
-		ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0, payload,
-					       payload_len - 1, NULL_PTR,
-					       NULL_PTR);
-		if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
-			goto end;
-
-		TEST_OUT("Get signature length\n");
-		ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0, NULL_PTR, 0,
-					       NULL_PTR, &signature_len);
-		if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
-			goto end;
-
-		/* Alloc signature buffer with new signature length */
-		signature = malloc(signature_len);
-		if (CHECK_EXPECTED(signature, "Allocation error"))
-			goto end;
-
-		TEST_OUT("Finish multi-part sign operation\n");
-		ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0,
-					       payload + payload_len - 1, 1,
-					       signature, &signature_len);
-		if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
-			goto end;
-
-		TEST_OUT("Finish multi-part sign process\n");
-		ret = pfunc->C_MessageSignFinal(sess);
-		if (CHECK_CK_RV(CKR_OK, "C_MessageSignFinal"))
-			goto end;
-
-		TEST_OUT("Initialize verify operation\n");
-		ret = pfunc->C_MessageVerifyInit(sess, &sign_verify_mech[idx],
-						 hpubkey);
-		if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyInit"))
-			goto end;
-
-		TEST_OUT("Begin multi-part verify operation\n");
-		ret = pfunc->C_VerifyMessageBegin(sess, NULL_PTR, 0);
-		if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageBegin"))
-			goto end;
-
-		TEST_OUT("Start multi-part verify operation\n");
-		ret = pfunc->C_VerifyMessageNext(sess, NULL_PTR, 0, payload,
-						 payload_len - 1, NULL_PTR, 0);
-		if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageNext"))
-			goto end;
-
-		TEST_OUT("Finish multi-part verify operation\n");
-		ret = pfunc->C_VerifyMessageNext(sess, NULL_PTR, 0,
-						 payload + payload_len - 1, 1,
-						 signature, signature_len);
-		if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageNext"))
-			goto end;
-
-		TEST_OUT("Finish multi-part verify process\n");
-		ret = pfunc->C_MessageVerifyFinal(sess);
-		if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyFinal"))
-			goto end;
-
-		tmp_len = signature_len;
-		signature_len *= 2;
-		signature = realloc(signature, signature_len);
-		if (CHECK_EXPECTED(signature, "Allocation error"))
-			goto end;
-
-		TEST_OUT("Initialize sign operation\n");
-		ret = pfunc->C_MessageSignInit(sess, &sign_verify_mech[idx],
-					       hprivkey);
-		if (CHECK_CK_RV(CKR_OK, "C_MessageSignInit"))
-			goto end;
-
-		TEST_OUT("Begin multi-part sign operation\n");
-		ret = pfunc->C_SignMessageBegin(sess, NULL_PTR, 0);
-		if (CHECK_CK_RV(CKR_OK, "C_SignMessageBegin"))
-			goto end;
-
-		TEST_OUT("Get signature length\n");
-		ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0, NULL_PTR, 0,
-					       NULL_PTR, &signature_len);
-		if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
-			goto end;
-
-		TEST_OUT("Check updated signature buffer length\n");
-		if (CHECK_EXPECTED(signature_len == tmp_len,
-				   "Signature length not updated"))
-			goto end;
-
-		TEST_OUT("Finish multi-part sign operation\n");
-		ret = pfunc->C_SignMessageNext(sess, NULL_PTR, 0, payload,
-					       payload_len, signature,
-					       &signature_len);
-		if (CHECK_CK_RV(CKR_OK, "C_SignMessageNext"))
-			goto end;
-
-		TEST_OUT("Finish multi-part sign process\n");
-		ret = pfunc->C_MessageSignFinal(sess);
-		if (CHECK_CK_RV(CKR_OK, "C_MessageSignFinal"))
-			goto end;
-
-		TEST_OUT("Initialize verify operation\n");
-		ret = pfunc->C_MessageVerifyInit(sess, &sign_verify_mech[idx],
-						 hpubkey);
-		if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyInit"))
-			goto end;
-
-		TEST_OUT("Begin multi-part verify operation\n");
-		ret = pfunc->C_VerifyMessageBegin(sess, NULL_PTR, 0);
-		if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageBegin"))
-			goto end;
-
-		TEST_OUT("Finish multi-part verify operation\n");
-		ret = pfunc->C_VerifyMessageNext(sess, NULL_PTR, 0, payload,
-						 payload_len, signature,
-						 signature_len);
-		if (CHECK_CK_RV(CKR_OK, "C_VerifyMessageNext"))
-			goto end;
-
-		TEST_OUT("Finish multi-part verify process\n");
-		ret = pfunc->C_MessageVerifyFinal(sess);
-		if (CHECK_CK_RV(CKR_OK, "C_MessageVerifyFinal"))
-			goto end;
-
-		free(signature);
-		signature = NULL;
 	}
 
 	status = TEST_PASS;

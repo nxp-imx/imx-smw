@@ -406,6 +406,7 @@ static void usage_callback(void *user_data, const char *attributes[],
 }
 
 static const struct util_attr_info algo_info_psa[] = {
+	ATTR_ALGO_PSA(CBC_NO_PADDING, PSA_ALG_CBC_NO_PADDING),
 	ATTR_ALGO_PSA(ECB_NO_PADDING, PSA_ALG_ECB_NO_PADDING),
 	ATTR_ALGO_PSA(CFB, PSA_ALG_CFB),
 	ATTR_ALGO_PSA(CTR, PSA_ALG_CTR),
@@ -428,6 +429,7 @@ static const struct util_attr_info algo_info_psa[] = {
 	ATTR_ALGO_PSA(RSA_PKCS1V15_SIGN_BASE, PSA_ALG_RSA_PKCS1V15_SIGN_BASE),
 	ATTR_ALGO_PSA(RSA_PSS_ANY_SALT, PSA_ALG_RSA_PSS_ANY_SALT_BASE),
 	ATTR_ALGO_PSA(RSA_PSS, PSA_ALG_RSA_PSS_BASE),
+	ATTR_ALGO_PSA(TLS_1_2, PSA_ALG_TLS12_PRF_BASE),
 	ATTR_ALGO_PSA(TLS_1_3, PSA_ALG_VENDOR_TLS13_BASE),
 	{ .string = NULL }
 };
@@ -814,6 +816,8 @@ int key_read_descriptor_psa(struct llist *keys, struct keypair_psa *key_test,
 	if (res == ERR_CODE(PASSED))
 		res = read_descriptor(keys, key_test, key_name, key_names);
 
+	key_test->name = key_name;
+
 	err = util_list_clear(key_names);
 	if (res == ERR_CODE(PASSED))
 		res = err;
@@ -827,4 +831,64 @@ void key_prepare_key_data_psa(struct keypair_psa *key_test,
 	key_data->identifier = key_test->attributes.id;
 	key_data->pub_key.data = NULL;
 	key_data->pub_key.length = 0;
+}
+
+int key_read_descriptors_psa(struct subtest_data *subtest, const char *key,
+			     unsigned int *nb_keys, struct keypair_psa **keys)
+{
+	int res = ERR_CODE(BAD_ARGS);
+	unsigned int i = 0;
+	struct keypair_psa *key_test = NULL;
+	struct json_object *okey_name = NULL;
+	struct json_object *obj = NULL;
+	const char *key_name = NULL;
+
+	res = util_read_json_type(&key_name, key, t_string, subtest->params);
+	if (res == ERR_CODE(PASSED)) {
+		*nb_keys = 1;
+	} else if (res == ERR_CODE(BAD_PARAM_TYPE)) {
+		res = util_read_json_type(&okey_name, key, t_array,
+					  subtest->params);
+		if (res != ERR_CODE(PASSED))
+			return res;
+
+		if (SET_OVERFLOW(json_object_array_length(okey_name), *nb_keys))
+			return ERR_CODE(INTERNAL);
+	} else {
+		return res;
+	}
+
+	*keys = (struct keypair_psa *)calloc(*nb_keys,
+					     sizeof(struct keypair_psa));
+	if (!*keys)
+		return ERR_CODE(INTERNAL_OUT_OF_MEMORY);
+
+	for (i = 0; i < *nb_keys; i++) {
+		key_test = &(*keys)[i];
+
+		res = key_desc_init_psa(key_test);
+		if (res != ERR_CODE(PASSED)) {
+			free(*keys);
+			return res;
+		}
+
+		if (okey_name) {
+			obj = json_object_array_get_idx(okey_name, i);
+			if (obj)
+				key_name = json_object_get_string(obj);
+		}
+
+		if (key_name) {
+			res = key_read_descriptor_psa(list_keys(subtest),
+						      key_test, key_name);
+			if (res != ERR_CODE(PASSED)) {
+				free(*keys);
+				return res;
+			}
+		}
+
+		key_name = NULL;
+	}
+
+	return ERR_CODE(PASSED);
 }

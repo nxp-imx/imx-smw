@@ -99,6 +99,7 @@
 #define SECONDS_OBJ		  "seconds"
 #define SECRET_OBJ		  "secret"
 #define SEC_SIZE_OBJ		  "security_size"
+#define SEED_OBJ		  "seed"
 #define SERVER_RANDOM_OBJ	  "server_random"
 #define SERVER_W_ENC_KEY_NAME_OBJ "server_w_enc_key_name"
 #define SERVER_W_MAC_KEY_NAME_OBJ "server_w_mac_key_name"

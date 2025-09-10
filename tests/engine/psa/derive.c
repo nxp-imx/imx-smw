@@ -13,6 +13,8 @@
 
 #include <psa/crypto.h>
 
+#include <stdlib.h>
+
 static psa_status_t input_key_agreement(psa_key_derivation_operation_t *op,
 					psa_key_derivation_step_t step,
 					struct keypair_psa key,
@@ -48,13 +50,15 @@ int derive_psa(struct subtest_data *subtest)
 	int res = ERR_CODE(PASSED);
 	psa_algorithm_t alg = PSA_ALG_NONE;
 	struct tbuffer info = { 0 };
+	struct tbuffer seed = { 0 };
 	const char *secret = NULL;
 	struct keypair_psa secret_key = { 0 };
 	const char *other_secret = NULL;
 	struct keypair_psa other_secret_key = { 0 };
 	struct key_data key_data = { 0 };
-	const char *output_key_name = NULL;
-	struct keypair_psa out_key = { 0 };
+	struct keypair_psa *output_keys = NULL;
+	unsigned int nb_output_keys = 0;
+	unsigned int i = 0;
 	struct tbuffer peer_public_data = { 0 };
 	psa_key_derivation_operation_t op = psa_key_derivation_operation_init();
 	psa_key_derivation_step_t step = (psa_key_derivation_step_t)0;
@@ -132,55 +136,69 @@ int derive_psa(struct subtest_data *subtest)
 
 	res = util_read_json_type(&info, INFO_OBJ, t_buffer_hex,
 				  subtest->params);
-	if (res != ERR_CODE(PASSED))
-		goto end;
-
-	step = PSA_KEY_DERIVATION_INPUT_INFO;
-	subtest->psa_status =
-		psa_key_derivation_input_bytes(&op, step, info.data,
-					       info.length);
-	if (subtest->psa_status != PSA_SUCCESS) {
-		res = ERR_CODE(API_STATUS_NOK);
-		goto end;
-	}
-
-	res = util_read_json_type(&output_key_name, OP_OUTPUT_OBJ, t_string,
-				  subtest->params);
-	if (res != ERR_CODE(PASSED))
-		goto end;
-
-	res = key_desc_init_psa(&out_key);
-	if (res != ERR_CODE(PASSED))
-		goto end;
-
-	res = key_read_descriptor_psa(list_keys(subtest), &out_key,
-				      output_key_name);
-	if (res != ERR_CODE(PASSED))
-		goto end;
-
-	if (out_key.data) {
+	if (res == ERR_CODE(PASSED)) {
+		step = PSA_KEY_DERIVATION_INPUT_INFO;
 		subtest->psa_status =
-			output_bytes(&op, out_key.data, out_key.data_length);
-
-		free(out_key.data);
-	} else {
-		subtest->psa_status = output_key(&op, &out_key);
+			psa_key_derivation_input_bytes(&op, step, info.data,
+						       info.length);
+		if (subtest->psa_status != PSA_SUCCESS) {
+			res = ERR_CODE(API_STATUS_NOK);
+			goto end;
+		}
 	}
 
-	if (subtest->psa_status != PSA_SUCCESS) {
-		res = ERR_CODE(API_STATUS_NOK);
+	res = util_read_json_type(&seed, SEED_OBJ, t_buffer_hex,
+				  subtest->params);
+	if (res == ERR_CODE(PASSED)) {
+		step = PSA_KEY_DERIVATION_INPUT_SEED;
+		subtest->psa_status =
+			psa_key_derivation_input_bytes(&op, step, seed.data,
+						       seed.length);
+		if (subtest->psa_status != PSA_SUCCESS) {
+			res = ERR_CODE(API_STATUS_NOK);
+			goto end;
+		}
+	}
+
+	res = key_read_descriptors_psa(subtest, OP_OUTPUT_OBJ, &nb_output_keys,
+				       &output_keys);
+	if (res != ERR_CODE(PASSED))
 		goto end;
-	}
 
-	key_prepare_key_data_psa(&out_key, &key_data);
-	res = util_key_update_node(list_keys(subtest), output_key_name,
-				   &key_data);
+	for (i = 0; i < nb_output_keys; i++) {
+		if (output_keys[i].data)
+			subtest->psa_status =
+				output_bytes(&op, output_keys[i].data,
+					     output_keys[i].data_length);
+		else
+			subtest->psa_status = output_key(&op, &output_keys[i]);
+		if (subtest->psa_status != PSA_SUCCESS) {
+			res = ERR_CODE(API_STATUS_NOK);
+			goto end;
+		}
+
+		key_prepare_key_data_psa(&output_keys[i], &key_data);
+		res = util_key_update_node(list_keys(subtest),
+					   output_keys[i].name, &key_data);
+	}
 
 end:
 	psa_key_derivation_abort(&op);
 
 	if (peer_public_data.data)
 		free(peer_public_data.data);
+
+	if (output_keys) {
+		for (i = 0; i < nb_output_keys; i++) {
+			if (output_keys[i].data)
+				free(output_keys[i].data);
+		}
+
+		free(output_keys);
+	}
+
+	if (seed.data)
+		free(seed.data);
 
 	if (info.data)
 		free(info.data);

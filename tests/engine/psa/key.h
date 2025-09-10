@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
- * Copyright 2023-2024 NXP
+ * Copyright 2023-2025 NXP
  */
 #ifndef __KEY_H__
 #define __KEY_H__
@@ -14,6 +14,7 @@
 
 /**
  * struct keypair_psa - Test keypair
+ * @name: Name of the key in the JSON test definition.
  * @attributes: PSA key attributes.
  * @data: Buffer where the key data has been written.
  * @data_length: Length of @data.
@@ -22,6 +23,7 @@
  * PSA keypair object.
  */
 struct keypair_psa {
+	const char *name;
 	psa_key_attributes_t attributes;
 	uint8_t *data;
 	size_t data_length;
@@ -75,5 +77,25 @@ void key_prepare_key_data_psa(struct keypair_psa *key_test,
  */
 void algorithm_callback_psa(void *user_data, const char *params[],
 			    size_t n_params);
+
+/**
+ * key_read_descriptors_psa() - Read multiple PSA keys in a single step
+ * @subtest: Subtest data.
+ * @key: Key value to read.
+ * @nb_keys: Pointer to the number of keys.
+ * @keys: Address of the pointer to the output keys list.
+ *
+ * This function reads the keys descriptions present in the test definition file
+ * and set the keys structure.
+ *
+ * Return:
+ * PASSED                   - Success.
+ * -INTERNAL                - Number of keys is too large.
+ * -INTERNAL_OUT_OF_MEMORY  - Memory allocation failed.
+ * -BAD_ARGS                - One of the arguments is bad.
+ * -FAILED                  - Error in definition file
+ */
+int key_read_descriptors_psa(struct subtest_data *subtest, const char *key,
+			     unsigned int *nb_keys, struct keypair_psa **keys);
 
 #endif /* __KEY_H__ */

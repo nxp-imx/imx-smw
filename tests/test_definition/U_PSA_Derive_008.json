@@ -1,0 +1,722 @@
+{
+	"keys": {
+		"derived master secret": {
+			"type": "DERIVE",
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"derived aes-128-ecb 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"ECB_NO_PADDING"
+			]
+		},
+		"derived aes-128-chacha 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CHACHA20_POLY1305"
+			]
+		},
+		"derived aes-128-cbc 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			]
+		},
+		"derived aes-128-cbc 2": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			]
+		},
+		"derived hmac-256 1": {
+			"type": "HMAC",
+			"security_size": 256,
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			]
+		},
+		"derived hmac-256 2": {
+			"type": "HMAC",
+			"security_size": 256,
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			]
+		},
+		"derived aes-128-ccm 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
+		},
+		"derived aes-128-ccm 2": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
+		},
+		"derived aes-128-gcm 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"derived aes-128-gcm 2": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"derived IV 3bytes 1": {
+			"key_data": "000000"
+		},
+		"derived IV 3bytes 2": {
+			"key_data": "000000"
+		},
+		"derived IV 4bytes 1": {
+			"key_data": "00000000"
+		},
+		"derived IV 4bytes 2": {
+			"key_data": "00000000"
+		},
+		"derived IV 4bytes 3": {
+			"key_data": "00000000"
+		},
+		"derived IV 5bytes 1": {
+			"key_data": "0000000000"
+		},
+		"derived IV 5bytes 2": {
+			"key_data": "0000000000"
+		},
+		"derived IV 12bytes 1": {
+			"key_data": "000000000000000000000000"
+		},
+		"derived IV 12bytes 2": {
+			"key_data": "000000000000000000000000"
+		},
+		"derived IV 12bytes 3": {
+			"key_data": "000000000000000000000000"
+		},
+		"derived IV 16bytes 1": {
+			"key_data": "00000000000000000000000000000000"
+		},
+		"derived IV 16bytes 2": {
+			"key_data": "00000000000000000000000000000000"
+		},
+		"derived IV 16bytes 3": {
+			"key_data": "00000000000000000000000000000000"
+		},
+		"derived client finished": {
+			"key_data": "00000000000000000000"
+		},
+		"derived server finished": {
+			"key_data": "00000000000000000000"
+		},
+		"key 1": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_2",
+				"HASH=SHA256"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"Derive `master secret` using PSA with UNKNOWN hash"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=UNKNOWN"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"seed": [
+			"6d617374657220736563726574",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived master secret",
+		"depends": 1,
+		"result": "PSA_ERROR_NOT_SUPPORTED"
+	},
+	"subtest 3": {
+		"description": [
+			"Derive `master secret` using PSA with MD5 hash"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=MD5"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"seed": [
+			"6d617374657220736563726574",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived master secret",
+		"depends": 1,
+		"result": "PSA_ERROR_NOT_SUPPORTED"
+	},
+	"subtest 4": {
+		"description": [
+			"Derive TLS1.2 using PSA without a seed"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"op_output": "derived master secret",
+		"depends": 1,
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	},
+	"subtest 5": {
+		"description": [
+			"Derive TLS1.2 using PSA with too small seed (master)"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"seed": [
+			"6d6173746572"
+		],
+		"op_output": "derived master secret",
+		"depends": 1,
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	},
+	"subtest 6": {
+		"description": [
+			"Derive TLS1.2 using PSA with invalid seed label (testtesttest)"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"seed": [
+			"746573747465737474657374",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived master secret",
+		"depends": 1,
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	},
+	"subtest 7": {
+		"description": [
+			"Derive `master secret` using PSA with invalid peer key (missing uncompressed flag)"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"0a8fbf8511ca8258cc31b27c8f909001",
+			"c8346fde247056c6f292d809689a65cd",
+			"35048f6c58851a70e2f905781a608863",
+			"5af3369ef67443a72c741115e70f7b55"
+		],
+		"seed": [
+			"6d617374657220736563726574",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived master secret",
+		"depends": 1,
+		"result": "PSA_ERROR_INVALID_ARGUMENT"
+	},
+	"subtest 8": {
+		"description": [
+			"Derive `master secret` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"seed": [
+			"6d617374657220736563726574",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived master secret",
+		"depends": 1
+	},
+	"subtest 9": {
+		"description": [
+			"Derive `key expansion` using PSA with invalid cipher (AES-128-ECB)"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-ecb 1"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_NOT_SUPPORTED"
+	},
+	"subtest 10": {
+		"description": [
+			"Derive `key expansion` using PSA with invalid cipher (CHACHA20-128)"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-chacha 1"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_NOT_SUPPORTED"
+	},
+	"subtest 11": {
+		"description": [
+			"Derive `key expansion` using PSA with AES-128-CBC and invalid IV lengths"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-cbc 1",
+			"derived aes-128-cbc 2",
+			"derived hmac-256 1",
+			"derived hmac-256 2",
+			"derived IV 5bytes 1",
+			"derived IV 5bytes 2"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL"
+	},
+	"subtest 12": {
+		"description": [
+			"Derive `key expansion` using PSA with AES-128-CCM and invalid IV lengths"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-ccm 1",
+			"derived aes-128-ccm 2",
+			"derived IV 5bytes 1",
+			"derived IV 5bytes 2"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL"
+	},
+	"subtest 13": {
+		"description": [
+			"Derive `key expansion` using PSA with AES-128-GCM and invalid IV lengths"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-gcm 1",
+			"derived aes-128-gcm 2",
+			"derived IV 3bytes 1",
+			"derived IV 3bytes 2"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL"
+	},
+	"subtest 14": {
+		"description": [
+			"Derive `key expansion` using PSA with AES-128-CBC and too many keys"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-cbc 1",
+			"derived aes-128-cbc 2",
+			"derived hmac-256 1",
+			"derived hmac-256 2",
+			"derived aes-128-cbc 1"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_NOT_PERMITTED"
+	},
+	"subtest 15": {
+		"description": [
+			"Derive `key expansion` using PSA with AES-128-CCM and too many keys"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-ccm 1",
+			"derived aes-128-ccm 2",
+			"derived aes-128-ccm 1",
+			"derived aes-128-ccm 2"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_NOT_PERMITTED"
+	},
+	"subtest 16": {
+		"description": [
+			"Derive `key expansion` using PSA with AES-128-GCM and too many keys"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-gcm 1",
+			"derived aes-128-gcm 2",
+			"derived aes-128-gcm 1",
+			"derived aes-128-gcm 2"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_NOT_PERMITTED"
+	},
+	"subtest 17": {
+		"description": [
+			"Derive `key expansion` using PSA with AES-128-CBC and too many IVs"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-cbc 1",
+			"derived aes-128-cbc 2",
+			"derived hmac-256 1",
+			"derived hmac-256 2",
+			"derived IV 16bytes 1",
+			"derived IV 16bytes 2",
+			"derived IV 16bytes 3"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_NOT_PERMITTED"
+	},
+	"subtest 18": {
+		"description": [
+			"Derive `key expansion` using PSA with AES-128-CCM and too many IVs"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-ccm 1",
+			"derived aes-128-ccm 2",
+			"derived IV 12bytes 1",
+			"derived IV 12bytes 2",
+			"derived IV 12bytes 3"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_NOT_PERMITTED"
+	},
+	"subtest 19": {
+		"description": [
+			"Derive `key expansion` using PSA with AES-128-GCM and too many IVs"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-gcm 1",
+			"derived aes-128-gcm 2",
+			"derived IV 4bytes 1",
+			"derived IV 4bytes 2",
+			"derived IV 4bytes 3"
+		],
+		"depends": 8,
+		"result": "PSA_ERROR_NOT_PERMITTED"
+	},
+	"subtest 20": {
+		"description": [
+			"Derive `client finished` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"636c69656e742066696e6973686564",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived client finished",
+		"depends": 8,
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL"
+	},
+	"subtest 21": {
+		"description": [
+			"Derive `server finished` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"7365727665722066696e6973686564",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived client finished",
+		"depends": 8,
+		"result": "PSA_ERROR_BUFFER_TOO_SMALL"
+	},
+	"subtest 22": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

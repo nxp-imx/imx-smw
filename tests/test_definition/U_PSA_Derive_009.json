@@ -1,0 +1,896 @@
+{
+	"keys": {
+		"derived master secret": {
+			"type": "DERIVE",
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"derived ext master secret": {
+			"type": "DERIVE",
+			"usage": [
+				"DERIVE"
+			]
+		},
+		"derived aes-128-cbc 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			]
+		},
+		"derived aes-128-cbc 2": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CBC_NO_PADDING"
+			]
+		},
+		"derived aes-128-ccm 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
+		},
+		"derived aes-128-ccm 2": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"CCM"
+			]
+		},
+		"derived aes-128-gcm 1": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"derived aes-128-gcm 2": {
+			"type": "AES",
+			"security_size": 128,
+			"usage": [
+				"ENCRYPT",
+				"DECRYPT"
+			],
+			"permitted_algo": [
+				"GCM"
+			]
+		},
+		"derived hmac-256 1": {
+			"type": "HMAC",
+			"security_size": 256,
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			]
+		},
+		"derived hmac-256 2": {
+			"type": "HMAC",
+			"security_size": 256,
+			"usage": [
+				"SIGN_MESSAGE",
+				"VERIFY_MESSAGE"
+			],
+			"permitted_algo": [
+				"HMAC",
+				"HASH=SHA256"
+			]
+		},
+		"derived IV 4bytes 1": {
+			"key_data": "00000000"
+		},
+		"derived IV 4bytes 2": {
+			"key_data": "00000000"
+		},
+		"derived IV 12bytes 1": {
+			"key_data": "000000000000000000000000"
+		},
+		"derived IV 12bytes 2": {
+			"key_data": "000000000000000000000000"
+		},
+		"derived client finished": {
+			"key_data": "000000000000000000000000"
+		},
+		"derived server finished": {
+			"key_data": "000000000000000000000000"
+		},
+		"key 1": {
+			"type": "SECP_R1",
+			"security_size": 256,
+			"usage": [
+				"DERIVE"
+			],
+			"permitted_algo": [
+				"TLS_1_2",
+				"HASH=SHA256"
+			]
+		}
+	},
+	"subtest 1": {
+		"command": "GENERATE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"restriction_list": [
+			"imx8ulp",
+			"imx943"
+		]
+	},
+	"subtest 2": {
+		"description": [
+			"Derive `master secret` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"seed": [
+			"6d617374657220736563726574",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived master secret",
+		"depends": 1
+	},
+	"subtest 3": {
+		"description": [
+			"Derive `key expansion` with AES-128-CBC using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-cbc 1",
+			"derived aes-128-cbc 2",
+			"derived hmac-256 1",
+			"derived hmac-256 2"
+		],
+		"depends": 2
+	},
+	"subtest 4": {
+		"description": [
+			"Encrypt data with the first derived key"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "derived aes-128-cbc 1",
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"depends": 3
+	},
+	"subtest 5": {
+		"description": [
+			"Decrypt data with the first derived key"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "DECRYPT",
+		"key_name": "derived aes-128-cbc 1",
+		"input": [
+			"60cc50e0887532e0d4f3d2f20c3c5d58",
+			"ebabce95b14d3c8d6fb350390790311c"
+		],
+		"depends": 4
+	},
+	"subtest 6": {
+		"description": [
+			"Encrypt data with the second derived key"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "derived aes-128-cbc 2",
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"depends": 3
+	},
+	"subtest 7": {
+		"description": [
+			"Decrypt data with the second derived key"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "DECRYPT",
+		"key_name": "derived aes-128-cbc 2",
+		"input": [
+			"60cc50e0887532e0d4f3d2f20c3c5d58",
+			"ebabce95b14d3c8d6fb350390790311c"
+		],
+		"depends": 6
+	},
+	"subtest 8": {
+		"description": [
+			"Sign data with the first HMAC key"
+		],
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived hmac-256 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"output": 32,
+		"mac_id": 1,
+		"depends": 3
+	},
+	"subtest 9": {
+		"description": [
+			"Verify signature with the first HMAC key"
+		],
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived hmac-256 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 1,
+		"depends": 8
+	},
+	"subtest 10": {
+		"description": [
+			"Sign data with the second HMAC key"
+		],
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived hmac-256 2",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"output": 32,
+		"mac_id": 2,
+		"depends": 3
+	},
+	"subtest 11": {
+		"description": [
+			"Verify signature with the second HMAC key"
+		],
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived hmac-256 2",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 2,
+		"depends": 10
+	},
+	"subtest 12": {
+		"description": [
+			"Derive `key expansion` with AES-128-CCM using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-ccm 1",
+			"derived aes-128-ccm 2",
+			"derived IV 12bytes 1",
+			"derived IV 12bytes 2"
+		],
+		"depends": 2
+	},
+	"subtest 13": {
+		"description": [
+			"Encrypt data with the first derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-ccm 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 1,
+		"depends": 12
+	},
+	"subtest 14": {
+		"description": [
+			"Decrypt data with the first derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-ccm 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 1,
+		"depends": 13
+	},
+	"subtest 15": {
+		"description": [
+			"Encrypt data with the second derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-ccm 2",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 2,
+		"depends": 12
+	},
+	"subtest 16": {
+		"description": [
+			"Decrypt data with the second derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-ccm 2",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 2,
+		"depends": 15
+	},
+	"subtest 17": {
+		"description": [
+			"Derive `key expansion` with AES-128-GCM using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-gcm 1",
+			"derived aes-128-gcm 2",
+			"derived IV 4bytes 1",
+			"derived IV 4bytes 2"
+		],
+		"depends": 2
+	},
+	"subtest 18": {
+		"description": [
+			"Encrypt data with the first derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-gcm 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 3,
+		"depends": 17
+	},
+	"subtest 19": {
+		"description": [
+			"Decrypt data with the first derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-gcm 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 3,
+		"depends": 18
+	},
+	"subtest 20": {
+		"description": [
+			"Encrypt data with the second derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-gcm 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 4,
+		"depends": 17
+	},
+	"subtest 21": {
+		"description": [
+			"Decrypt data with the second derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-gcm 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 4,
+		"depends": 20
+	},
+	"subtest 22": {
+		"description": [
+			"Derive `client finished` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"636c69656e742066696e6973686564",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived client finished",
+		"depends": 2
+	},
+	"subtest 23": {
+		"description": [
+			"Derive `server finished` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived master secret",
+		"seed": [
+			"7365727665722066696e6973686564",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived server finished",
+		"depends": 2
+	},
+	"subtest 24": {
+		"description": [
+			"Derive `ext master secret` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"key_name": "key 1",
+		"peer_public_key": [
+			"040a8fbf8511ca8258cc31b27c8f9090",
+			"01c8346fde247056c6f292d809689a65",
+			"cd35048f6c58851a70e2f905781a6088",
+			"635af3369ef67443a72c741115e70f7b",
+			"55"
+		],
+		"seed": [
+			"657874656e646564206d617374657220736563726574",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived ext master secret",
+		"depends": 1
+	},
+	"subtest 25": {
+		"description": [
+			"Derive `key expansion` with AES-128-CBC using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived ext master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-cbc 1",
+			"derived aes-128-cbc 2",
+			"derived hmac-256 1",
+			"derived hmac-256 2"
+		],
+		"depends": 24
+	},
+	"subtest 26": {
+		"description": [
+			"Encrypt data with the first derived key"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "derived aes-128-cbc 1",
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"depends": 25
+	},
+	"subtest 27": {
+		"description": [
+			"Decrypt data with the first derived key"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "DECRYPT",
+		"key_name": "derived aes-128-cbc 1",
+		"input": [
+			"60cc50e0887532e0d4f3d2f20c3c5d58",
+			"ebabce95b14d3c8d6fb350390790311c"
+		],
+		"depends": 26
+	},
+	"subtest 28": {
+		"description": [
+			"Encrypt data with the second derived key"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "ENCRYPT",
+		"key_name": "derived aes-128-cbc 2",
+		"input": "ebabce95b14d3c8d6fb350390790311c",
+		"iv": "60cc50e0887532e0d4f3d2f20c3c5d58",
+		"depends": 25
+	},
+	"subtest 29": {
+		"description": [
+			"Decrypt data with the second derived key"
+		],
+		"command": "CIPHER",
+		"api": "PSA",
+		"mode": "CBC_NO_PADDING",
+		"op_type": "DECRYPT",
+		"key_name": "derived aes-128-cbc 2",
+		"input": [
+			"60cc50e0887532e0d4f3d2f20c3c5d58",
+			"ebabce95b14d3c8d6fb350390790311c"
+		],
+		"depends": 28
+	},
+	"subtest 30": {
+		"description": [
+			"Sign data with the first HMAC key"
+		],
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived hmac-256 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"output": 32,
+		"mac_id": 3,
+		"depends": 25
+	},
+	"subtest 31": {
+		"description": [
+			"Verify signature with the first HMAC key"
+		],
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived hmac-256 1",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 3,
+		"depends": 30
+	},
+	"subtest 32": {
+		"description": [
+			"Sign data with the second HMAC key"
+		],
+		"command": "MAC_COMPUTE",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived hmac-256 2",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"output": 32,
+		"mac_id": 4,
+		"depends": 25
+	},
+	"subtest 33": {
+		"description": [
+			"Verify signature with the second HMAC key"
+		],
+		"command": "MAC_VERIFY",
+		"api": "PSA",
+		"algo": "HMAC",
+		"hash": "SHA256",
+		"key_name": "derived hmac-256 2",
+		"input": "6bc1bee22e409f96e93d7e117393172a",
+		"mac_id": 4,
+		"depends": 32
+	},
+	"subtest 34": {
+		"description": [
+			"Derive `key expansion` with AES-128-CCM using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived ext master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-ccm 1",
+			"derived aes-128-ccm 2",
+			"derived IV 12bytes 1",
+			"derived IV 12bytes 2"
+		],
+		"depends": 24
+	},
+	"subtest 35": {
+		"description": [
+			"Encrypt data with the first derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-ccm 1",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 5,
+		"depends": 34
+	},
+	"subtest 36": {
+		"description": [
+			"Decrypt data with the first derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-ccm 1",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 5,
+		"depends": 35
+	},
+	"subtest 37": {
+		"description": [
+			"Encrypt data with the second derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-ccm 2",
+		"mode": "CCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 6,
+		"depends": 34
+	},
+	"subtest 38": {
+		"description": [
+			"Decrypt data with the second derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-ccm 2",
+		"mode": "CCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 6,
+		"depends": 37
+	},
+	"subtest 39": {
+		"description": [
+			"Derive `key expansion` with AES-128-GCM using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived ext master secret",
+		"seed": [
+			"6b657920657870616e73696f6e",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": [
+			"derived aes-128-gcm 1",
+			"derived aes-128-gcm 2",
+			"derived IV 4bytes 1",
+			"derived IV 4bytes 2"
+		],
+		"depends": 24
+	},
+	"subtest 40": {
+		"description": [
+			"Encrypt data with the first derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-gcm 1",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 7,
+		"depends": 39
+	},
+	"subtest 41": {
+		"description": [
+			"Decrypt data with the first derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-gcm 1",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 7,
+		"depends": 40
+	},
+	"subtest 42": {
+		"description": [
+			"Encrypt data with the second derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-gcm 2",
+		"mode": "GCM",
+		"op_type": "ENCRYPT",
+		"input": "30313233343536373839404142434445",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"aead_id": 8,
+		"depends": 39
+	},
+	"subtest 43": {
+		"description": [
+			"Decrypt data with the second derived key"
+		],
+		"command": "AEAD",
+		"api": "PSA",
+		"key_name": "derived aes-128-gcm 2",
+		"mode": "GCM",
+		"op_type": "DECRYPT",
+		"iv": "60cc50e0887532e0d4f3d2f2",
+		"aad": "353637383132333435363738",
+		"output": "30313233343536373839404142434445",
+		"aead_id": 8,
+		"depends": 42
+	},
+	"subtest 44": {
+		"description": [
+			"Derive `client finished` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived ext master secret",
+		"seed": [
+			"636c69656e742066696e6973686564",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived client finished",
+		"depends": 24
+	},
+	"subtest 45": {
+		"description": [
+			"Derive `server finished` using PSA"
+		],
+		"command": "DERIVE",
+		"api": "PSA",
+		"algo": [
+			"TLS_1_2",
+			"HASH=SHA256"
+		],
+		"secret": "derived ext master secret",
+		"seed": [
+			"7365727665722066696e6973686564",
+			"000102030405060708090a0b0c0d0e0f",
+			"000102030405060708090a0b0c0d0e0f"
+		],
+		"op_output": "derived server finished",
+		"depends": 24
+	},
+	"subtest 46": {
+		"command": "DELETE",
+		"api": "PSA",
+		"key_name": "key 1",
+		"depends": 1
+	}
+}

@@ -171,6 +171,16 @@ static int verify_read_params(char **start, char *end, void **params)
 	return sign_verify_read_params(start, end, params);
 }
 
+static int sign_multi_part_read_params(char **start, char *end, void **params)
+{
+	return sign_verify_read_params(start, end, params);
+}
+
+static int verify_multi_part_read_params(char **start, char *end, void **params)
+{
+	return sign_verify_read_params(start, end, params);
+}
+
 static void sign_verify_merge_params(void *caps, void *params)
 {
 	struct sign_verify_params *sign_verify_caps = caps;
@@ -193,6 +203,16 @@ static void verify_merge_params(void *caps, void *params)
 	sign_verify_merge_params(caps, params);
 }
 
+static void sign_multi_part_merge_params(void *caps, void *params)
+{
+	sign_verify_merge_params(caps, params);
+}
+
+static void verify_multi_part_merge_params(void *caps, void *params)
+{
+	sign_verify_merge_params(caps, params);
+}
+
 __weak void sign_verify_print_params(void *params)
 {
 	(void)params;
@@ -204,6 +224,16 @@ static void sign_print_params(void *params)
 }
 
 static void verify_print_params(void *params)
+{
+	sign_verify_print_params(params);
+}
+
+static void sign_multi_part_print_params(void *params)
+{
+	sign_verify_print_params(params);
+}
+
+static void verify_multi_part_print_params(void *params)
 {
 	sign_verify_print_params(params);
 }
@@ -236,6 +266,16 @@ static int sign_check_subsystem_caps(void *args, void *node)
 }
 
 static int verify_check_subsystem_caps(void *args, void *node)
+{
+	return sign_verify_check_subsystem_caps(args, node);
+}
+
+static int sign_multi_part_check_subsystem_caps(void *args, void *node)
+{
+	return sign_verify_check_subsystem_caps(args, node);
+}
+
+static int verify_multi_part_check_subsystem_caps(void *args, void *node)
 {
 	return sign_verify_check_subsystem_caps(args, node);
 }
@@ -348,6 +388,8 @@ end:
 
 DEFINE_CONFIG_OPERATION_FUNC(sign);
 DEFINE_CONFIG_OPERATION_FUNC(verify);
+DEFINE_CONFIG_OPERATION_FUNC(sign_multi_part);
+DEFINE_CONFIG_OPERATION_FUNC(verify_multi_part);
 
 int sign_key_usable(unsigned int *ref, struct smw_key_attributes *attributes)
 {

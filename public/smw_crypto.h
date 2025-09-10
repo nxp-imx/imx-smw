@@ -110,15 +110,6 @@ struct smw_eddsa_params {
 };
 
 /**
- * DOC: struct smw_ed25519_params
- *
- * **Warning: deprecated **
- *	This structure is deprecated and will be removed in a future library
- *	release. Please use the new @smw_eddsa_params structure instead.
- */
-#define smw_ed25519_params smw_eddsa_params
-
-/**
  * struct smw_sign_verify_args - Sign or verify arguments
  * @version: Version of this structure
  * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
@@ -148,6 +139,74 @@ struct smw_sign_verify_args {
 	union {
 		struct smw_eddsa_params *eddsa_params;
 	};
+};
+
+/**
+ * struct smw_sign_verify_init_args - Sign or verify multi-part initialization
+ *                                    arguments
+ * @version: Version of this structure
+ * @subsystem_name: Secure Subsystem name. See &typedef smw_subsystem_t
+ * @key_descriptor: Pointer to a Key descriptor object.
+ *		    See &struct smw_key_descriptor
+ * @sign_algo: Signature algorithm and attributes. See &typedef smw_attr_algo_t
+ * @message: Location of the message
+ * @message_length: Length of the message
+ * @ed25519_params: Pointer to ed25519 parameters
+ * @context: Pointer to an opaque operation context structure
+ *
+ * @subsystem_name designates the Secure Subsystem to be used.
+ * If this field is SMW_SUBSYSTEM_NAME_NONE, the default configured
+ * Secure Subsystem is used.
+ */
+struct smw_sign_verify_init_args {
+	/* Inputs */
+	unsigned char version;
+	smw_subsystem_t subsystem_name;
+	struct smw_key_descriptor *key_descriptor;
+	smw_attr_algo_t sign_algo;
+	unsigned char *message;
+	unsigned int message_length;
+	union {
+		struct smw_ed25519_params *ed25519_params;
+	};
+	/* Outputs */
+	struct smw_op_context *context;
+};
+
+/**
+ * struct smw_sign_verify_update_args - Sign or verify multi-part update
+ *                                      arguments
+ * @version: Version of this structure
+ * @context: Pointer to an opaque operation context structure
+ * @message: Location of the message
+ * @message_length: Length of the message
+ */
+struct smw_sign_verify_update_args {
+	/* Inputs */
+	unsigned char version;
+	struct smw_op_context *context;
+	unsigned char *message;
+	unsigned int message_length;
+};
+
+/**
+ * struct smw_sign_verify_final_args - Sign or verify multi-part final arguments
+ * @version: Version of this structure
+ * @context: Pointer to an opaque operation context structure
+ * @message: Location of the message
+ * @message_length: Length of the message
+ * @signature: Location of the signature
+ * @signature_length: Length of the signature
+ */
+struct smw_sign_verify_final_args {
+	/* Inputs */
+	unsigned char version;
+	struct smw_op_context *context;
+	unsigned char *message;
+	unsigned int message_length;
+	/* Outputs */
+	unsigned char *signature;
+	unsigned int signature_length;
 };
 
 /**
@@ -388,6 +447,78 @@ enum smw_status_code smw_hash_final(struct smw_hash_final_args *args);
 enum smw_status_code smw_sign(struct smw_sign_verify_args *args);
 
 /**
+ * smw_sign_init() - Signature generation multi-part initialization
+ * @args: Pointer to the structure that contains the signature multi-part
+ *        initialization arguments.
+ *
+ * This function executes a signature generation multi-part initialization.
+ * The operation context must be allocated using smw_allocate_context() API
+ * prior to invoking this API.
+ *
+ * If the returned error code is SMW_STATUS_OK or SMW_STATUS_INVALID_PARAM, the
+ * operation is not terminated and the context remains valid.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_sign_init(struct smw_sign_verify_init_args *args);
+
+/**
+ * smw_sign_update() - Signature generation multi-part update
+ * @args: Pointer to the structure that contains the signature multi-part update
+ *        arguments.
+ *
+ * This function executes a signature generation multi-part update operation.
+ *
+ * The context used must be initialized by the signature generation
+ * multi-part initialization.
+ *
+ * If the returned error code is SMW_STATUS_OK, SMW_STATUS_INVALID_PARAM or
+ * SMW_STATUS_VERSION_NOT_SUPPORTED the operation is not terminated and the
+ * context remains valid.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_sign_update(struct smw_sign_verify_update_args *args);
+
+/**
+ * smw_sign_final() - Signature generation multi-part final
+ * @args: Pointer to the structure that contains the signature multi-part final
+ *        arguments.
+ *
+ * This function executes a signature generation multi-part final operation.
+ *
+ * The context used must be initialized by the signature generation
+ * multi-part initialization.
+ *
+ * Input message field of @args can be a NULL pointer if no additional data are
+ * used.
+ *
+ * Output signature field of @args can be a NULL pointer to get the required
+ * output buffer length. If this feature succeed, returned error code
+ * is SMW_STATUS_OK and the operation is not terminated (context remains valid)
+ * unless required output signature length is 0.
+ *
+ * Output signature length @args field is updated to the correct value when:
+ *
+ *  - Length is bigger than expected. In this case operation succeeded.
+ *  - Length is shorter than expected. In this case operation failed and
+ *    returned SMW_STATUS_OUTPUT_TOO_SHORT.
+ *
+ * If the returned error code is SMW_STATUS_INVALID_PARAM,
+ * SMW_STATUS_VERSION_NOT_SUPPORTED or SMW_STATUS_OUTPUT_TOO_SHORT the operation
+ * is not terminated and the context remains valid.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_sign_final(struct smw_sign_verify_final_args *args);
+
+/**
  * smw_verify() - Verify a signature.
  * @args: Pointer to the structure that contains the Verify arguments.
  *
@@ -399,6 +530,71 @@ enum smw_status_code smw_sign(struct smw_sign_verify_args *args);
  *	- Specific return codes - Signature
  */
 enum smw_status_code smw_verify(struct smw_sign_verify_args *args);
+
+/**
+ * smw_verify_init() - Signature verification multi-part initialization
+ * @args: Pointer to the structure that contains the signature multi-part
+ *        initialization arguments.
+ *
+ * This function executes a signature verification multi-part initialization.
+ * The operation context must be allocated using smw_allocate_context() API
+ * prior to invoking this API.
+ *
+ * If the returned error code is SMW_STATUS_OK or SMW_STATUS_INVALID_PARAM, the
+ * operation is not terminated and the context remains valid.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_verify_init(struct smw_sign_verify_init_args *args);
+
+/**
+ * smw_verify_update() - Signature verification multi-part update
+ * @args: Pointer to the structure that contains the signature multi-part update
+ *        arguments.
+ *
+ * This function executes a signature verification multi-part update operation.
+ *
+ * The context used must be initialized by the signature verification
+ * multi-part initialization.
+ *
+ * If the returned error code is SMW_STATUS_OK, SMW_STATUS_INVALID_PARAM or
+ * SMW_STATUS_VERSION_NOT_SUPPORTED the operation is not terminated and the
+ * context remains valid.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code
+smw_verify_update(struct smw_sign_verify_update_args *args);
+
+/**
+ * smw_verify_final() - Signature verification multi-part final
+ * @args: Pointer to the structure that contains the signature multi-part final
+ *        arguments.
+ *
+ * This function executes a signature verification multi-part final operation.
+ *
+ * The context used must be initialized by the signature generation
+ * multi-part initialization.
+ *
+ * Input message field of @args can be a NULL pointer if no additional data are
+ * used.
+ *
+ * Input signature field of @args must be set with a correct length to perform
+ * the signature verification of message given in all multi-part steps.
+ *
+ * If the returned error code is SMW_STATUS_INVALID_PARAM,
+ * SMW_STATUS_VERSION_NOT_SUPPORTED the operation is not terminated and the
+ * context remains valid.
+ *
+ * Return:
+ * See &enum smw_status_code
+ *	- Common return codes
+ */
+enum smw_status_code smw_verify_final(struct smw_sign_verify_final_args *args);
 
 /**
  * smw_rng() - Compute a random number.

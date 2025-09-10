@@ -60,6 +60,8 @@ typedef enum {
  * * SMW_OPERATION_NAME_HASH_MULTI_PART: Hash multi-part
  * * SMW_OPERATION_NAME_ASYMM_ENCRYPT: Asymmetric encryption
  * * SMW_OPERATION_NAME_ASYMM_DECRYPT: Asymmetric decryption
+ * * SMW_OPERATION_NAME_SIGN_MULTI_PART: Signature generation multi-part
+ * * SMW_OPERATION_NAME_VERIFY_MULTI_PART: Signature verification multi-part
  * * SMW_OPERATION_NAME_NB: Number of operations
  */
 typedef enum {
@@ -95,6 +97,8 @@ typedef enum {
 	SMW_OPERATION_NAME_HASH_MULTI_PART,
 	SMW_OPERATION_NAME_ASYMM_ENCRYPT,
 	SMW_OPERATION_NAME_ASYMM_DECRYPT,
+	SMW_OPERATION_NAME_SIGN_MULTI_PART,
+	SMW_OPERATION_NAME_VERIFY_MULTI_PART,
 	SMW_OPERATION_NAME_NB
 } smw_operation_t;
 

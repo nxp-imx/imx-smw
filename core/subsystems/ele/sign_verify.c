@@ -6,7 +6,6 @@
 #include "smw_status.h"
 #include "smw_crypto.h"
 
-#include "compiler.h"
 #include "global.h"
 #include "debug.h"
 #include "utils.h"
@@ -14,8 +13,21 @@
 #include "config.h"
 #include "keymgr.h"
 #include "sign_verify.h"
+#include "hash.h"
 
 #include "common.h"
+
+/**
+ * struct sign_context - Signature context
+ * @hash_ctx: Hash context
+ * @attributes: Signature attributes
+ * @key_descriptor: Signature key descriptor
+ */
+struct sign_context {
+	struct smw_op_context hash_ctx;
+	struct smw_sign_verify_attributes attributes;
+	struct smw_keymgr_descriptor key_descriptor;
+};
 
 #define SIGNATURE_SCHEME_ID(_key_type_id, _key_sizes, _type, _hash, _scheme)   \
 	{                                                                      \
@@ -79,11 +91,19 @@ static const struct signature_scheme {
 			    RSA_PKCS1_PSS_MGF1_SHA512),
 	SIGNATURE_SCHEME_ID(ED25519, ed25519_key_sizes, PURE_EDDSA, INVALID,
 			    PURE_EDDSA),
+	SIGNATURE_SCHEME_ID(ED25519, ed25519_key_sizes, PURE_EDDSA, SHA512,
+			    PURE_EDDSA),
 	SIGNATURE_SCHEME_ID(ED25519, ed25519_key_sizes, EDDSA_PH, INVALID,
+			    ED25519PH),
+	SIGNATURE_SCHEME_ID(ED25519, ed25519_key_sizes, EDDSA_PH, SHA512,
 			    ED25519PH),
 	SIGNATURE_SCHEME_ID(ED448, ed448_key_sizes, PURE_EDDSA, INVALID,
 			    PURE_EDDSA),
+	SIGNATURE_SCHEME_ID(ED448, ed448_key_sizes, PURE_EDDSA, SHAKE256,
+			    PURE_EDDSA),
 	SIGNATURE_SCHEME_ID(ED448, ed448_key_sizes, EDDSA_PH, INVALID, ED448PH),
+	SIGNATURE_SCHEME_ID(ED448, ed448_key_sizes, EDDSA_PH, SHAKE256,
+			    ED448PH),
 };
 
 static bool check_security_size(unsigned int security_size,
@@ -120,8 +140,14 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 		if (scheme->key_type_id == key_type_id) {
 			if (scheme->type_id !=
 				    SMW_CONFIG_SIGN_TYPE_ID_DEFAULT &&
-			    scheme->type_id != type_id)
+			    scheme->type_id != type_id) {
+				/*
+				 * In case the signature type is not default, if user
+				 * doesn't set the correct one, returns invalid parameter.
+				 */
+				status = SMW_STATUS_INVALID_PARAM;
 				continue;
+			}
 
 			if (scheme->hash_id != hash_id)
 				continue;
@@ -140,14 +166,6 @@ static int set_signature_scheme(enum smw_config_key_type_id key_type_id,
 
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 	return status;
-}
-
-__weak int tls_mac_finish(struct hdl *hdl, void *args)
-{
-	(void)hdl;
-	(void)args;
-
-	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }
 
 static int check_rsa_pub_expo(struct smw_keymgr_descriptor *key_desc)
@@ -270,7 +288,7 @@ end:
 
 static int sign(struct subsystem_context *ele_ctx, void *args)
 {
-	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+	int status = SMW_STATUS_OK;
 
 	hsm_err_t err = HSM_NO_ERROR;
 	op_generate_sign_args_t op_args = { 0 };
@@ -295,6 +313,22 @@ static int sign(struct subsystem_context *ele_ctx, void *args)
 
 		status = tls_mac_finish(&ele_ctx->hdl, args);
 		goto end;
+	}
+
+	if (sign_args->attributes.algo_id == SMW_CONFIG_SIGN_ALGO_ID_RSA) {
+		/*
+		 * Salt length optional attribute is only for RSASSA-PSS
+		 * signature type.
+		 */
+		if (sign_args->attributes.type_id ==
+			    SMW_CONFIG_SIGN_TYPE_ID_PKCS1_1_5 &&
+		    sign_args->attributes.salt_length) {
+			SMW_DBG_PRINTF(ERROR,
+				       "Salt length not supported for %s\n",
+				       "RSA PKCS1_V1_5");
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
 	}
 
 	if (key_identifier->s_id) {
@@ -332,10 +366,12 @@ static int sign(struct subsystem_context *ele_ctx, void *args)
 	op_args.signature = smw_sign_verify_get_sign_buf(sign_args);
 	op_args.message_size = smw_sign_verify_get_msg_len(sign_args);
 
-	if (SET_OVERFLOW(smw_sign_verify_get_sign_len(sign_args),
-			 op_args.signature_size)) {
-		status = SMW_STATUS_INVALID_PARAM;
-		goto end;
+	if (op_args.signature) {
+		if (SET_OVERFLOW(smw_sign_verify_get_sign_len(sign_args),
+				 op_args.signature_size)) {
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
 	}
 
 	status = set_signature_scheme(key_identifier->type_id,
@@ -346,7 +382,7 @@ static int sign(struct subsystem_context *ele_ctx, void *args)
 		goto end;
 
 	if (key_identifier->type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519 &&
-	    smw_sign_verify_get_eddsactx_buf(args)) {
+	    smw_sign_verify_get_eddsa_context(args)) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto end;
 	}
@@ -476,6 +512,22 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 
 	op_args.flags = HSM_OP_VERIFY_SIGN_FLAGS_PLAINTEXT_KEY;
 
+	if (verify_args->attributes.algo_id == SMW_CONFIG_SIGN_ALGO_ID_RSA) {
+		/*
+		 * Salt length optional attribute is only for RSASSA-PSS
+		 * signature type.
+		 */
+		if (verify_args->attributes.type_id ==
+			    SMW_CONFIG_SIGN_TYPE_ID_PKCS1_1_5 &&
+		    verify_args->attributes.salt_length) {
+			SMW_DBG_PRINTF(ERROR,
+				       "Salt length not supported for %s\n",
+				       "RSA PKCS1_V1_5");
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+	}
+
 	if (key_desc->identifier.s_id) {
 		status = ele_get_device_info(ele_ctx);
 		if (status != SMW_STATUS_OK)
@@ -597,7 +649,7 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 		goto end;
 
 	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519 &&
-	    smw_sign_verify_get_eddsactx_buf(args)) {
+	    smw_sign_verify_get_eddsa_context(args)) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto end;
 	}
@@ -670,6 +722,326 @@ end:
 	return status;
 }
 
+/**
+ * set_sign_context() - Allocate and initialize signature subsystem specific ctx
+ * @op_context: Pointer to operation context arguments structure
+ *
+ * This function initializes the members of operation context structure. It also
+ * allocates memory to Hash subsystem specific context and initializes its
+ * members.
+ *
+ * Return:
+ * SMW_STATUS_OK            - Success
+ * SMW_STATUS_INVALID_PARAM - One of the parameters is invalid
+ * SMW_STATUS_ALLOC_FAILURE - Memory allocation failure
+ */
+static int set_sign_context(struct smw_op_context *op_context,
+			    struct smw_crypto_sign_verify_args *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct sign_context *ctx = NULL;
+
+	if (!op_context)
+		goto end;
+
+	op_context->op_id = SMW_CRYPTO_OP_ID_SIGN_MULTI_PART;
+
+	ctx = SMW_UTILS_CALLOC(1, sizeof(*ctx));
+	if (!ctx) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		SMW_DBG_PRINTF(DEBUG,
+			       "Sign subsystem context allocation failure\n");
+		goto end;
+	}
+
+	ctx->attributes = args->attributes;
+
+	status = smw_keymgr_copy_key(&ctx->key_descriptor,
+				     &args->key_descriptor);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	op_context->subsystem_context = ctx;
+	op_context->op_state = CTX_OP_STATE_INIT;
+
+	smw_crypto_set_ctx_subsystem_id(op_context, SUBSYSTEM_ID_ELE);
+
+	status = SMW_STATUS_OK;
+
+end:
+	if (status != SMW_STATUS_OK && ctx)
+		SMW_UTILS_FREE(ctx);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int signature_init(struct subsystem_context *ele_ctx,
+			  struct smw_crypto_sign_verify_args *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct smw_crypto_hash_args hash_args = { 0 };
+	struct smw_hash_init_args init_pub = { 0 };
+	struct smw_sign_verify_attributes *sign_attrs = NULL;
+	struct smw_keymgr_descriptor *key_desc = &args->key_descriptor;
+	struct smw_keymgr_identifier *key_identifier = &key_desc->identifier;
+
+	struct smw_op_context *op_context = NULL;
+	struct sign_context *ctx = NULL;
+	hsm_signature_scheme_id_t scheme_id = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	op_context = smw_sign_verify_get_op_context(args);
+	if (!op_context)
+		goto end;
+
+	sign_attrs = &args->attributes;
+
+	status = set_signature_scheme(key_identifier->type_id,
+				      key_identifier->security_size,
+				      &args->attributes, &scheme_id);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	if (sign_attrs->algo_id == SMW_CONFIG_SIGN_ALGO_ID_RSA) {
+		/*
+		 * Salt length optional attribute is only for RSASSA-PSS
+		 * signature type.
+		 */
+		if (sign_attrs->type_id == SMW_CONFIG_SIGN_TYPE_ID_PKCS1_1_5 &&
+		    sign_attrs->salt_length) {
+			SMW_DBG_PRINTF(ERROR,
+				       "Salt length not supported for %s\n",
+				       "RSA PKCS1_V1_5");
+			status = SMW_STATUS_INVALID_PARAM;
+			goto end;
+		}
+	} else if (sign_attrs->algo_id == SMW_CONFIG_SIGN_ALGO_ID_EDDSA) {
+		if (sign_attrs->type_id == SMW_CONFIG_SIGN_TYPE_ID_PURE_EDDSA) {
+			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+			goto end;
+		}
+
+		if (key_identifier->type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519) {
+			if (smw_sign_verify_get_eddsa_context(args)) {
+				status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+				goto end;
+			}
+			/* Force the hash algorithm to be SHA512 */
+			sign_attrs->hash_id = SMW_CONFIG_HASH_ALGO_ID_SHA512;
+		} else if (key_identifier->type_id ==
+			   SMW_CONFIG_KEY_TYPE_ID_ED448) {
+			/* Force the hash algorithm to be SHA512 */
+			sign_attrs->hash_id = SMW_CONFIG_HASH_ALGO_ID_SHAKE256;
+		}
+	}
+
+	status = set_sign_context(op_context, args);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	ctx = op_context->subsystem_context;
+	if (!ctx) {
+		status = SMW_STATUS_OPERATION_FAILURE;
+		goto end;
+	}
+
+	hash_args.algo_id = sign_attrs->hash_id;
+	hash_args.op_step = SMW_OP_STEP_INIT;
+	hash_args.init_pub = &init_pub;
+
+	init_pub.input = smw_sign_verify_get_msg_buf(args);
+	init_pub.input_length = smw_sign_verify_get_msg_len(args);
+	init_pub.context = &ctx->hash_ctx;
+
+	if (!ele_hash_handle(&ele_ctx->hdl, OPERATION_ID_HASH_MULTI_PART,
+			     &hash_args, &status))
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int signature_update(struct subsystem_context *ele_ctx,
+			    struct smw_crypto_sign_verify_args *args)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct smw_crypto_hash_args hash_args = { 0 };
+	struct smw_hash_update_args update_pub = { 0 };
+
+	struct smw_op_context *op_context = NULL;
+	struct sign_context *ctx = NULL;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	op_context = smw_sign_verify_get_op_context(args);
+	if (!op_context || !op_context->subsystem_context)
+		goto end;
+
+	ctx = op_context->subsystem_context;
+
+	hash_args.op_step = SMW_OP_STEP_UPDATE;
+	hash_args.update_pub = &update_pub;
+
+	update_pub.input = smw_sign_verify_get_msg_buf(args);
+	update_pub.input_length = smw_sign_verify_get_msg_len(args);
+	update_pub.context = &ctx->hash_ctx;
+
+	if (!ele_hash_handle(&ele_ctx->hdl, OPERATION_ID_HASH_MULTI_PART,
+			     &hash_args, &status))
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+end:
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int signature_final(struct subsystem_context *ele_ctx,
+			   struct smw_crypto_sign_verify_args *args,
+			   bool is_verify)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct smw_sign_verify_final_args pub_args = { 0 };
+	struct smw_crypto_sign_verify_args tmp_args = { 0 };
+
+	struct smw_crypto_hash_args hash_args = { 0 };
+	struct smw_hash_final_args final_pub = { 0 };
+
+	struct smw_op_context *op_context = NULL;
+	struct sign_context *ctx = NULL;
+
+	unsigned char *digest = NULL;
+	unsigned int digest_length = 0;
+
+	SMW_DBG_TRACE_FUNCTION_CALL;
+
+	op_context = smw_sign_verify_get_op_context(args);
+	if (!op_context || !op_context->subsystem_context)
+		goto end;
+
+	ctx = op_context->subsystem_context;
+
+	hash_args.op_step = SMW_OP_STEP_FINAL;
+	hash_args.final_pub = &final_pub;
+
+	final_pub.input = smw_sign_verify_get_msg_buf(args);
+	final_pub.input_length = smw_sign_verify_get_msg_len(args);
+	final_pub.context = &ctx->hash_ctx;
+
+	/* First get the digest length */
+	if (!ele_hash_handle(&ele_ctx->hdl, OPERATION_ID_HASH_MULTI_PART,
+			     &hash_args, &status))
+		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	if (status != SMW_STATUS_OK && status != SMW_STATUS_OUTPUT_TOO_SHORT)
+		goto end;
+
+	digest_length = smw_crypto_get_hash_output_length(&hash_args);
+	digest = SMW_UTILS_MALLOC(digest_length);
+	if (!digest) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+
+	if (smw_sign_verify_get_sign_buf(args)) {
+		final_pub.output = digest;
+		final_pub.output_length = digest_length;
+
+		if (!ele_hash_handle(&ele_ctx->hdl,
+				     OPERATION_ID_HASH_MULTI_PART, &hash_args,
+				     &status))
+			status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+		if (status != SMW_STATUS_OK)
+			goto end;
+	}
+
+	/* Do digest buffer signature using temporary operation arguments */
+	tmp_args.key_descriptor = ctx->key_descriptor;
+	tmp_args.attributes = ctx->attributes;
+	tmp_args.attributes.msg_hashed = true;
+	tmp_args.op_step = SMW_OP_STEP_FINAL;
+	tmp_args.final_pub = &pub_args;
+
+	pub_args.context = smw_sign_verify_get_op_context(args);
+	pub_args.message = digest;
+	pub_args.message_length = digest_length;
+	pub_args.signature = smw_sign_verify_get_sign_buf(args);
+	pub_args.signature_length = smw_sign_verify_get_sign_len(args);
+
+	if (is_verify) {
+		status = verify(ele_ctx, &tmp_args);
+	} else {
+		status = sign(ele_ctx, &tmp_args);
+		smw_sign_verify_set_sign_len(args, pub_args.signature_length);
+	}
+
+end:
+	if (digest)
+		SMW_UTILS_FREE(digest);
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int sign_multipart(struct subsystem_context *ele_ctx,
+			  struct smw_crypto_sign_verify_args *args)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	switch (args->op_step) {
+	case SMW_OP_STEP_INIT:
+		status = signature_init(ele_ctx, args);
+		break;
+
+	case SMW_OP_STEP_UPDATE:
+		status = signature_update(ele_ctx, args);
+		break;
+
+	case SMW_OP_STEP_FINAL:
+		status = signature_final(ele_ctx, args, false);
+		break;
+
+	default:
+		break;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
+static int verify_multipart(struct subsystem_context *ele_ctx,
+			    struct smw_crypto_sign_verify_args *args)
+{
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
+
+	switch (args->op_step) {
+	case SMW_OP_STEP_INIT:
+		status = signature_init(ele_ctx, args);
+		break;
+
+	case SMW_OP_STEP_UPDATE:
+		status = signature_update(ele_ctx, args);
+		break;
+
+	case SMW_OP_STEP_FINAL:
+		status = signature_final(ele_ctx, args, true);
+		break;
+
+	default:
+		break;
+	}
+
+	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
+	return status;
+}
+
 bool ele_sign_verify_handle(struct subsystem_context *ele_ctx,
 			    enum operation_id operation_id, void *args,
 			    int *status)
@@ -681,9 +1053,78 @@ bool ele_sign_verify_handle(struct subsystem_context *ele_ctx,
 	case OPERATION_ID_VERIFY:
 		*status = verify(ele_ctx, args);
 		break;
+	case OPERATION_ID_SIGN_MULTI_PART:
+		*status = sign_multipart(ele_ctx, args);
+		break;
+	case OPERATION_ID_VERIFY_MULTI_PART:
+		*status = verify_multipart(ele_ctx, args);
+		break;
 	default:
 		return false;
 	}
 
 	return true;
+}
+
+void ele_free_sign_context(struct smw_op_context *ctx)
+{
+	struct sign_context *sign_ctx = NULL;
+
+	if (ctx && ctx->subsystem_context) {
+		sign_ctx = ctx->subsystem_context;
+
+		ele_free_hash_context(&sign_ctx->hash_ctx);
+
+		if (sign_ctx->hash_ctx.subsystem_context) {
+			SMW_UTILS_FREE(sign_ctx->hash_ctx.subsystem_context);
+			sign_ctx->hash_ctx.subsystem_context = NULL;
+		}
+
+		smw_keymgr_free_key(&sign_ctx->key_descriptor);
+	}
+}
+
+int ele_copy_sign_context(struct smw_op_context *src_ctx,
+			  struct smw_op_context *dst_ctx)
+{
+	int status = SMW_STATUS_INVALID_PARAM;
+
+	struct sign_context *src_sign_ctx = NULL;
+	struct sign_context *dst_sign_ctx = NULL;
+
+	if (!src_ctx || !dst_ctx || !src_ctx->subsystem_context)
+		goto end;
+
+	src_sign_ctx = src_ctx->subsystem_context;
+
+	/* Allocate the subsystem context for the destination */
+	dst_sign_ctx = SMW_UTILS_CALLOC(1, sizeof(*dst_sign_ctx));
+	if (!dst_sign_ctx) {
+		status = SMW_STATUS_ALLOC_FAILURE;
+		goto end;
+	}
+
+	status = ele_copy_hash_context(&src_sign_ctx->hash_ctx,
+				       &dst_sign_ctx->hash_ctx);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+	dst_sign_ctx->attributes = src_sign_ctx->attributes;
+
+	status = smw_keymgr_copy_key(&dst_sign_ctx->key_descriptor,
+				     &src_sign_ctx->key_descriptor);
+	if (status != SMW_STATUS_OK)
+		goto end;
+
+end:
+	if (dst_ctx)
+		dst_ctx->subsystem_context = dst_sign_ctx;
+
+	if (status != SMW_STATUS_OK && dst_sign_ctx) {
+		ele_free_sign_context(dst_ctx);
+		SMW_UTILS_FREE(dst_sign_ctx);
+		dst_ctx->subsystem_context = NULL;
+	}
+
+	return status;
 }

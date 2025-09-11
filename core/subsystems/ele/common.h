@@ -18,20 +18,6 @@
 #define ELE_UID_SIZE	(ELE_NB_UID_WORD * sizeof(uint32_t))
 
 /**
- * struct hash_context - Hash context
- * @ele_algo: ELE Hash algorithm
- * @ele_ctx: ELE operation context
- * @ele_ctx_size: ELE operation context size
- * @digest_length: Digest length
- */
-struct hash_context {
-	hsm_hash_algo_t ele_algo;
-	uint8_t *ele_ctx;
-	uint16_t ele_ctx_size;
-	uint32_t digest_length;
-};
-
-/**
  * struct hdl - ELE handles
  * @session: Session handle
  * @key_store: Key store service flow handle
@@ -105,6 +91,26 @@ const struct ele_hash_algo *
 ele_get_hash_algo(enum smw_config_hash_algo_id algo_id);
 
 /**
+ * ele_free_hash_context() - Free the hash context
+ * @ctx: Hash context
+ */
+void ele_free_hash_context(struct smw_op_context *ctx);
+
+/**
+ * ele_copy_hash_context() - Copy the hash context
+ * @src_ctx: Source operation context arguments structure
+ * @dst_ctx: Destination operation context arguments structure
+ *
+ * Allocates and copies the hash source context to destination source context.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure
+ */
+int ele_copy_hash_context(struct smw_op_context *src_ctx,
+			  struct smw_op_context *dst_ctx);
+
+/**
  * ele_key_handle() - Handle the Key operations.
  * @ele_ctx: Pointer to the ELE subsystem context structure.
  * @operation_id: Security Operation ID.
@@ -154,6 +160,30 @@ bool ele_hash_handle(struct hdl *hdl, enum operation_id operation_id,
  */
 bool ele_mac_handle(struct hdl *hdl, enum operation_id operation_id, void *args,
 		    int *status);
+
+/**
+ * ele_free_sign_context() - Free the ELE signature context
+ * @ctx: Signature context
+ *
+ * Return:
+ * None.
+ */
+void ele_free_sign_context(struct smw_op_context *ctx);
+
+/**
+ * ele_copy_sign_context() - Copy the signature context
+ * @src_ctx: Source operation context arguments structure
+ * @dst_ctx: Destination operation context arguments structure
+ *
+ * Allocates and copies the hash source context to destination source context.
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_INVALID_PARAM           - Parameter invalid
+ * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure
+ */
+int ele_copy_sign_context(struct smw_op_context *src_ctx,
+			  struct smw_op_context *dst_ctx);
 
 /**
  * ele_sign_verify_handle() - Handle the Sign and Verify operation.
@@ -474,15 +504,6 @@ int open_key_mgmt_service(struct hdl *hdl, hsm_hdl_t *key_management_hdl);
 int close_key_mgt_service(hsm_hdl_t key_management_hdl);
 
 /**
- * ele_free_hash_context() - Free the ELE Hash context
- * @ctx: Hash context
- *
- * Return:
- * None.
- */
-void ele_free_hash_context(struct hash_context *ctx);
-
-/**
  * ele_get_key_store_id() - Get the configured ELE keystore identifier
  * @keystore_id: The ELE keystore identifier
  *
@@ -604,5 +625,19 @@ int check_and_convert_endian(struct subsystem_context *ele_ctx,
 			     unsigned char *src, unsigned char **dst,
 			     unsigned int size,
 			     enum smw_config_key_type_id type_id);
+
+/**
+ * tls_mac_finish() - Compute TLS 1.2 finished message
+ * @hdl: Pointer to the SECO handles structure.
+ * @args: Pointer to SMW signature arguments.
+ *
+ * Return:
+ * SMW_STATUS_OK			- Success
+ * SMW_STATUS_OPERATION_NOT_SUPPORTED	- Operation not supported
+ * SMW_STATUS_OUTPUT_TOO_SHORT		- Output buffer length is too short
+ * SMW_STATUS_INVALID_PARAM		- One of the parameters is invalid
+ * SMW_STATUS_SUBSYSTEM_FAILURE		- Subsystem failure
+ */
+int tls_mac_finish(struct hdl *hdl, void *args);
 
 #endif /* __COMMON_H__ */

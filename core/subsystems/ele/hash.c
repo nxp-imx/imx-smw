@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2022-2024 NXP
+ * Copyright 2022-2025 NXP
  */
 
 #include "smw_status.h"
@@ -12,6 +12,20 @@
 #include "hash.h"
 
 #include "common.h"
+
+/**
+ * struct hash_context - Hash context
+ * @ele_algo: ELE Hash algorithm
+ * @ele_ctx: ELE operation context
+ * @ele_ctx_size: ELE operation context size
+ * @digest_length: Digest length
+ */
+struct hash_context {
+	hsm_hash_algo_t ele_algo;
+	uint8_t *ele_ctx;
+	uint16_t ele_ctx_size;
+	uint32_t digest_length;
+};
 
 /**
  * set_hash_context() - Initialize the operation context
@@ -295,4 +309,65 @@ bool ele_hash_handle(struct hdl *hdl, enum operation_id operation_id,
 	}
 
 	return true;
+}
+
+void ele_free_hash_context(struct smw_op_context *ctx)
+{
+	struct hash_context *hash_ctx = NULL;
+
+	if (ctx && ctx->subsystem_context) {
+		hash_ctx = ctx->subsystem_context;
+
+		if (hash_ctx && hash_ctx->ele_ctx)
+			SMW_UTILS_FREE(hash_ctx->ele_ctx);
+	}
+}
+
+int ele_copy_hash_context(struct smw_op_context *src_ctx,
+			  struct smw_op_context *dst_ctx)
+{
+	int status = SMW_STATUS_ALLOC_FAILURE;
+
+	struct hash_context *src_hash_ctx = NULL;
+	struct hash_context *dst_hash_ctx = NULL;
+
+	if (!src_ctx || !dst_ctx || !src_ctx->subsystem_context) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	src_hash_ctx = src_ctx->subsystem_context;
+
+	dst_hash_ctx = SMW_UTILS_MALLOC(sizeof(*dst_hash_ctx));
+	if (!dst_hash_ctx)
+		goto end;
+
+	*dst_hash_ctx = *src_hash_ctx;
+	dst_hash_ctx->ele_ctx = NULL;
+
+	if (!dst_hash_ctx->ele_ctx_size || !src_hash_ctx->ele_ctx) {
+		status = SMW_STATUS_INVALID_PARAM;
+		goto end;
+	}
+
+	dst_hash_ctx->ele_ctx = SMW_UTILS_MALLOC(dst_hash_ctx->ele_ctx_size);
+	if (!dst_hash_ctx->ele_ctx)
+		goto end;
+
+	SMW_UTILS_MEMCPY(dst_hash_ctx->ele_ctx, src_hash_ctx->ele_ctx,
+			 dst_hash_ctx->ele_ctx_size);
+
+	dst_ctx->subsystem_context = dst_hash_ctx;
+
+	status = SMW_STATUS_OK;
+
+end:
+	if (status != SMW_STATUS_OK && dst_hash_ctx) {
+		if (dst_hash_ctx->ele_ctx)
+			SMW_UTILS_FREE(dst_hash_ctx->ele_ctx);
+
+		SMW_UTILS_FREE(dst_hash_ctx);
+	}
+
+	return status;
 }

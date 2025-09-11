@@ -18,7 +18,7 @@ message(STATUS "    ELE  Headers  : ${ELE_INCLUDE_DIRS}")
 add_library(ele OBJECT "")
 set_target_properties(ele PROPERTIES C_VISIBILITY_PRESET hidden)
 
-if (ENABLE_CIPHER OR ENABLE_AEAD OR ENABLE_HASH)
+if (ENABLE_HASH OR ENABLE_SIGN_VERIFY)
     set(ENABLE_CONTEXT ON)
 endif()
 

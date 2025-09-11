@@ -120,6 +120,7 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	struct smw_keymgr_identifier *key_identifier =
 		&key_descriptor->identifier;
 
+	unsigned char *msg = NULL;
 	unsigned int msg_len = 0;
 
 	SMW_DBG_TRACE_FUNCTION_CALL;
@@ -141,8 +142,9 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	if (status != SMW_STATUS_OK)
 		goto end;
 
+	msg = smw_sign_verify_get_msg_buf(smw_args);
 	msg_len = smw_sign_verify_get_msg_len(smw_args);
-	if (msg_len == 0) {
+	if (!msg || !msg_len) {
 		status = SMW_STATUS_INVALID_PARAM;
 		goto end;
 	}
@@ -160,8 +162,7 @@ int tls_mac_finish(struct hdl *hdl, void *args)
 	}
 
 	SMW_UTILS_MEMCPY(key_ex_args.user_fixed_info, label, label_len);
-	SMW_UTILS_MEMCPY(key_ex_args.user_fixed_info + label_len,
-			 smw_sign_verify_get_msg_buf(smw_args), msg_len);
+	SMW_UTILS_MEMCPY(key_ex_args.user_fixed_info + label_len, msg, msg_len);
 
 	key_ex_args.flags = HSM_OP_KEY_EXCHANGE_FLAGS_INPUT_PLAINTEXT_CONTENT;
 	key_ex_args.in_content_sz = (uint32_t)sizeof(payload);

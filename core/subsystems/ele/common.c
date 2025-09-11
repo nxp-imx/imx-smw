@@ -18,13 +18,19 @@
 		.ele_algo = HSM_HASH_ALGO_##_ele_id, .length = _length         \
 	}
 
+/*
+ * https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.202.pdf table 4
+ * gives the digest length corresponding to the security strenghs.
+ * In case of SHAKE256, the minimum security strengh is 256 bits requesting
+ * 512 bits for the digest length.
+ */
 static const struct ele_hash_algo hash_algos[] = {
 	HASH_ALGO(MD5, MD5, 16),	   HASH_ALGO(SHA1, SHA_1, 20),
 	HASH_ALGO(SHA224, SHA_224, 28),	   HASH_ALGO(SHA256, SHA_256, 32),
 	HASH_ALGO(SHA384, SHA_384, 48),	   HASH_ALGO(SHA512, SHA_512, 64),
 	HASH_ALGO(SHA3_224, SHA3_224, 28), HASH_ALGO(SHA3_256, SHA3_256, 32),
 	HASH_ALGO(SHA3_384, SHA3_384, 48), HASH_ALGO(SHA3_512, SHA3_512, 64),
-	HASH_ALGO(SHAKE256, SHAKE_256, 32)
+	HASH_ALGO(SHAKE256, SHAKE_256, 64)
 };
 
 const struct ele_hash_algo *
@@ -86,15 +92,6 @@ __weak int ele_get_device_info(struct subsystem_context *ele_ctx)
 	(void)ele_ctx;
 
 	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
-}
-
-void ele_free_hash_context(struct hash_context *ctx)
-{
-	if (ctx->ele_ctx) {
-		SMW_UTILS_FREE(ctx->ele_ctx);
-		ctx->ele_ctx = NULL;
-		ctx->ele_ctx_size = 0;
-	}
 }
 
 int ele_get_key_store_id(uint32_t *keystore_id)
@@ -250,4 +247,40 @@ end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
 
 	return status;
+}
+
+__weak void ele_free_hash_context(struct smw_op_context *ctx)
+{
+	(void)ctx;
+}
+
+__weak int ele_copy_hash_context(struct smw_op_context *src_ctx,
+				 struct smw_op_context *dst_ctx)
+{
+	(void)src_ctx;
+	(void)dst_ctx;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak void ele_free_sign_context(struct smw_op_context *ctx)
+{
+	(void)ctx;
+}
+
+__weak int ele_copy_sign_context(struct smw_op_context *src_ctx,
+				 struct smw_op_context *dst_ctx)
+{
+	(void)src_ctx;
+	(void)dst_ctx;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
+}
+
+__weak int tls_mac_finish(struct hdl *hdl, void *args)
+{
+	(void)hdl;
+	(void)args;
+
+	return SMW_STATUS_OPERATION_NOT_SUPPORTED;
 }

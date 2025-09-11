@@ -346,7 +346,7 @@ static int sign(struct subsystem_context *ele_ctx, void *args)
 		goto end;
 
 	if (key_identifier->type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519 &&
-	    smw_sign_verify_get_ed25519ctx_buf(args)) {
+	    smw_sign_verify_get_eddsactx_buf(args)) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto end;
 	}
@@ -597,7 +597,7 @@ static int verify(struct subsystem_context *ele_ctx, void *args)
 		goto end;
 
 	if (key_type_id == SMW_CONFIG_KEY_TYPE_ID_ED25519 &&
-	    smw_sign_verify_get_ed25519ctx_buf(args)) {
+	    smw_sign_verify_get_eddsactx_buf(args)) {
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		goto end;
 	}

@@ -175,8 +175,8 @@ static int sign_verify(struct smw_crypto_sign_verify_args *args,
 		}
 
 	} else if (sign_attrs->algo_id == SMW_CONFIG_SIGN_ALGO_ID_EDDSA) {
-		ctx = smw_sign_verify_get_ed25519ctx_buf(args);
-		ctx_length = smw_sign_verify_get_ed25519ctx_len(args);
+		ctx = smw_sign_verify_get_eddsactx_buf(args);
+		ctx_length = smw_sign_verify_get_eddsactx_len(args);
 
 		if (ctx && ctx_length) {
 			if (ADD_OVERFLOW(shared_params_size, ctx_length,

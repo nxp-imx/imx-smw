@@ -161,23 +161,23 @@ smw_sign_verify_set_sign_len(struct smw_crypto_sign_verify_args *args,
 }
 
 inline unsigned char *
-smw_sign_verify_get_ed25519ctx_buf(struct smw_crypto_sign_verify_args *args)
+smw_sign_verify_get_eddsactx_buf(struct smw_crypto_sign_verify_args *args)
 {
 	unsigned char *context_buffer = NULL;
 
-	if (args->pub && args->pub->ed25519_params)
-		context_buffer = args->pub->ed25519_params->context;
+	if (args->pub && args->pub->eddsa_params)
+		context_buffer = args->pub->eddsa_params->context;
 
 	return context_buffer;
 }
 
 inline unsigned int
-smw_sign_verify_get_ed25519ctx_len(struct smw_crypto_sign_verify_args *args)
+smw_sign_verify_get_eddsactx_len(struct smw_crypto_sign_verify_args *args)
 {
 	unsigned int context_length = 0;
 
-	if (args->pub && args->pub->ed25519_params)
-		context_length = args->pub->ed25519_params->context_length;
+	if (args->pub && args->pub->eddsa_params)
+		context_length = args->pub->eddsa_params->context_length;
 
 	return context_length;
 }

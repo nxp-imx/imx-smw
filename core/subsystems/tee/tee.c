@@ -382,6 +382,11 @@ __weak void *tee_get_ctx_ops(void)
 	return NULL;
 }
 
+__weak void tee_free_sign_context(struct smw_op_context *ctx)
+{
+	(void)ctx;
+}
+
 int tee_convert_result(TEEC_Result result)
 {
 	int status = SMW_STATUS_SUBSYSTEM_FAILURE;

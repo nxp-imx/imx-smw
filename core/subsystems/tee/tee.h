@@ -8,6 +8,8 @@
 
 #include "keymgr.h"
 #include "utils.h"
+#include "operation_context.h"
+#include "sign_verify.h"
 
 #include "tee_subsystem.h"
 
@@ -39,6 +41,20 @@ struct cipher_context {
  */
 struct hash_context {
 	void *tee_handle;
+};
+
+/**
+ * struct sign_context - Signature context
+ * @hash_ctx: Hash context
+ * @attributes: Signature attributes
+ * @eddsa_params: Edwards signature parameters
+ * @key_descriptor: Signature key descriptor
+ */
+struct sign_context {
+	struct smw_op_context hash_ctx;
+	struct smw_sign_verify_attributes attributes;
+	struct smw_eddsa_params eddsa_params;
+	struct smw_keymgr_descriptor key_descriptor;
 };
 
 /*
@@ -136,6 +152,30 @@ bool tee_hash_handle(enum operation_id operation_id, void *args, int *status);
  */
 bool tee_sign_verify_handle(enum operation_id operation_id, void *args,
 			    int *status);
+
+/**
+ * tee_free_sign_context() - Free the signature context
+ * @ctx: Signature context
+ *
+ * Return:
+ * None.
+ */
+void tee_free_sign_context(struct smw_op_context *ctx);
+
+/**
+ * tee_copy_sign_context() - Copy the signature context
+ * @src_context: Pointer to source operation context arguments structure
+ * @dst_context: Pointer to destination operation context arguments structure
+ * @tee_dst_ctx: Pointer to optee context operation handle structure
+ *
+ * Return:
+ * SMW_STATUS_OK                      - Success
+ * SMW_STATUS_INVALID_PARAM           - Parameter invalid
+ * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure
+ */
+int tee_copy_sign_context(struct smw_op_context *src_context,
+			  struct smw_op_context *dst_context,
+			  struct shared_context *tee_dst_ctx);
 
 /**
  * tee_mac_handle() - Handle the MAC operation.

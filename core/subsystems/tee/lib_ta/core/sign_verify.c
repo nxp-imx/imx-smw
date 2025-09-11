@@ -339,9 +339,13 @@ TEE_Result sign_verify(uint32_t param_types, TEE_Param params[TEE_NUM_PARAMS],
 			TEE_InitValueAttribute(&sign_verify_attr[attr_count],
 					       TEE_ATTR_EDDSA_PREHASH, 1, 0);
 			attr_count++;
-		} else if (shared_params->signature_type ==
-				   TEE_SIGNATURE_TYPE_EDDSA_CTX &&
-			   shared_params->ctx_length) {
+		}
+
+		if ((shared_params->signature_type ==
+			     TEE_SIGNATURE_TYPE_EDDSA_CTX ||
+		     shared_params->signature_type ==
+			     TEE_SIGNATURE_TYPE_EDDSA_PH) &&
+		    shared_params->ctx_length) {
 			TEE_InitRefAttribute(&sign_verify_attr[attr_count],
 					     TEE_ATTR_EDDSA_CTX,
 					     shared_params->ctx,

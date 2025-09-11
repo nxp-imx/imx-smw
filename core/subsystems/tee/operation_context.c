@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Copyright 2021, 2023-2024 NXP
+ * Copyright 2021, 2023-2025 NXP
  */
 
 #include <tee_client_api.h>
@@ -11,17 +11,17 @@
 #include "utils.h"
 #include "config.h"
 #include "tee.h"
-#include "operation_context.h"
 
 #include "smw_status.h"
 
 static int get_subsystem_context_handle(struct smw_op_context *ctx,
 					void **handle)
 {
+	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
 	struct aead_context *aead_ctx = NULL;
 	struct cipher_context *cipher_ctx = NULL;
 	struct hash_context *hash_ctx = NULL;
-	enum smw_status_code status = SMW_STATUS_INVALID_PARAM;
+	struct sign_context *sign_ctx = NULL;
 
 	if (!ctx->subsystem_context)
 		goto end;
@@ -48,6 +48,17 @@ static int get_subsystem_context_handle(struct smw_op_context *ctx,
 		status = SMW_STATUS_OK;
 		break;
 
+	case SMW_CRYPTO_OP_ID_SIGN_MULTI_PART:
+		sign_ctx = ctx->subsystem_context;
+		hash_ctx = sign_ctx->hash_ctx.subsystem_context;
+		if (!hash_ctx)
+			break;
+
+		*handle = hash_ctx->tee_handle;
+
+		status = SMW_STATUS_OK;
+		break;
+
 	default:
 		status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 		break;
@@ -65,14 +76,24 @@ end:
  * Return:
  * None.
  */
-static void free_context(struct smw_op_context *ctx)
+static void tee_free_context(struct smw_op_context *ctx)
 {
 	SMW_DBG_TRACE_FUNCTION_CALL;
 
-	if (ctx->subsystem_context) {
-		SMW_UTILS_FREE(ctx->subsystem_context);
-		ctx->subsystem_context = NULL;
+	if (!ctx->subsystem_context)
+		return;
+
+	switch (ctx->op_id) {
+	case SMW_CRYPTO_OP_ID_SIGN_MULTI_PART:
+		tee_free_sign_context(ctx);
+		break;
+
+	default:
+		break;
 	}
+
+	SMW_UTILS_FREE(ctx->subsystem_context);
+	ctx->subsystem_context = NULL;
 }
 
 /**
@@ -85,7 +106,7 @@ static void free_context(struct smw_op_context *ctx)
  * SMW_STATUS_SUBSYSTEM_FAILURE       - Subsystem failure
  * SMW_STATUS_OPERATION_NOT_SUPPORTED - Operation not supported by subsystem
  */
-static int cancel_operation(struct smw_op_context *ctx)
+static int tee_cancel_operation(struct smw_op_context *ctx)
 {
 	int status = SMW_STATUS_OK;
 
@@ -134,12 +155,13 @@ end:
  * SMW_STATUS_OK                      - Success
  * SMW_STATUS_INVALID_PARAM           - One of the parameters is invalid
  * SMW_STATUS_ALLOC_FAILURE           - Memory allocation failure
+ * SMw_STATUS_OPERATION_NOT_SUPPORTED - Operation is not supported
  */
 static int allocate_copy_subsystem_context(struct smw_op_context *src_context,
 					   struct smw_op_context *dst_context,
 					   struct shared_context *tee_dst_ctx)
 {
-	int status = SMW_STATUS_INVALID_PARAM;
+	int status = SMW_STATUS_OPERATION_NOT_SUPPORTED;
 
 	struct aead_context *src_aead_ctx = NULL;
 	struct aead_context *dst_aead_ctx = NULL;
@@ -164,6 +186,7 @@ static int allocate_copy_subsystem_context(struct smw_op_context *src_context,
 		dst_aead_ctx->tee_handle = tee_dst_ctx->handle;
 		dst_context->subsystem_context = dst_aead_ctx;
 
+		status = SMW_STATUS_OK;
 		break;
 
 	case SMW_CRYPTO_OP_ID_CIPHER_MULTI_PART:
@@ -176,6 +199,7 @@ static int allocate_copy_subsystem_context(struct smw_op_context *src_context,
 		dst_cipher_ctx->tee_handle = tee_dst_ctx->handle;
 		dst_context->subsystem_context = dst_cipher_ctx;
 
+		status = SMW_STATUS_OK;
 		break;
 
 	case SMW_CRYPTO_OP_ID_HASH_MULTI_PART:
@@ -188,6 +212,12 @@ static int allocate_copy_subsystem_context(struct smw_op_context *src_context,
 		dst_hash_ctx->tee_handle = tee_dst_ctx->handle;
 		dst_context->subsystem_context = dst_hash_ctx;
 
+		status = SMW_STATUS_OK;
+		break;
+
+	case SMW_CRYPTO_OP_ID_SIGN_MULTI_PART:
+		status = tee_copy_sign_context(src_context, dst_context,
+					       tee_dst_ctx);
 		break;
 
 	default:
@@ -195,8 +225,6 @@ static int allocate_copy_subsystem_context(struct smw_op_context *src_context,
 	}
 
 	smw_crypto_copy_ctx_members(dst_context, src_context);
-
-	status = SMW_STATUS_OK;
 
 end:
 	SMW_DBG_PRINTF(VERBOSE, "%s returned %d\n", __func__, status);
@@ -214,8 +242,8 @@ end:
  * SMW_STATUS_SUBSYSTEM_FAILURE       - Subsystem failure
  * SMW_STATUS_OPERATION_NOT_SUPPORTED - Operation not supported by subsystem
  */
-static int copy_context(struct smw_op_context *src_ctx,
-			struct smw_op_context *dst_ctx)
+static int tee_copy_context(struct smw_op_context *src_ctx,
+			    struct smw_op_context *dst_ctx)
 {
 	int status = SMW_STATUS_OK;
 
@@ -259,9 +287,11 @@ end:
 }
 
 /* TEE context operations structure */
-static struct smw_crypto_context_ops tee_ctx_ops = { .cancel = cancel_operation,
-						     .copy = copy_context,
-						     .free = free_context };
+static struct smw_crypto_context_ops tee_ctx_ops = {
+	.cancel = tee_cancel_operation,
+	.copy = tee_copy_context,
+	.free = tee_free_context
+};
 
 void *tee_get_ctx_ops(void)
 {

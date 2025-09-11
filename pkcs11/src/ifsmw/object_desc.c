@@ -244,7 +244,7 @@ static CK_RV attrs_to_object_descriptor(struct smw_object_descriptor *desc,
 			continue;
 		}
 
-		if (ret)
+		if (ret != CKR_OK)
 			goto end;
 	}
 
@@ -636,16 +636,23 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	struct libobj_storage *obj_storage = get_object_from(obj);
 	struct libbytes label = { 0 };
 	struct libbytes user_id = { 0 };
+	struct libbytes desc_user_id = { 0 };
 	struct smw_object_descriptor descriptor = { 0 };
 
 	ret = obj_db_get(obj, &descriptor);
-	if (ret)
+	if (ret != CKR_OK)
 		return ret;
 
 	if (!get_unique_id_obj(obj, storage)->length) {
 		ret = libobj_set_unique_id(obj, descriptor.id);
-		if (ret)
+		if (ret != CKR_OK)
 			return ret;
+	}
+
+	if (descriptor.user_id) {
+		ret = util_base64_decode(&desc_user_id, descriptor.user_id);
+		if (ret != CKR_OK)
+			goto end;
 	}
 
 	if (obj_storage && obj_storage->label.length) {
@@ -675,10 +682,18 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	switch (obj->class) {
 	case CKO_DATA:
 		data = get_subobj_from(obj, storage);
-		if (data && data->id.number) {
-			ret = util_asn1_decode_object_id(&user_id, &data->id);
-			if (ret != CKR_OK)
-				goto end;
+		if (data) {
+			if (data->id.number) {
+				ret = util_asn1_decode_object_id(&user_id,
+								 &data->id);
+				if (ret != CKR_OK)
+					goto end;
+			} else if (desc_user_id.number) {
+				ret = util_asn1_encode_object_id(&data->id,
+								 &desc_user_id);
+				if (ret != CKR_OK)
+					goto end;
+			}
 		}
 
 		break;
@@ -687,9 +702,21 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	case CKO_PUBLIC_KEY:
 	case CKO_SECRET_KEY:
 		key = get_subobj_from(obj, storage);
-		if (key && key->id.number) {
-			user_id.number = key->id.number;
-			user_id.array = key->id.array;
+		if (key) {
+			if (key->id.number) {
+				user_id.number = key->id.number;
+				user_id.array = key->id.array;
+			} else {
+				key->id.number = desc_user_id.number;
+				key->id.array = calloc(1, key->id.number);
+				if (!key->id.array) {
+					ret = CKR_HOST_MEMORY;
+					goto end;
+				}
+
+				memcpy(key->id.array, desc_user_id.array,
+				       key->id.number);
+			}
 		}
 
 		break;
@@ -699,6 +726,7 @@ CK_RV obj_db_update(struct libobj_obj *obj)
 	}
 
 	if (user_id.number) {
+		/* Update user id */
 		if (descriptor.user_id)
 			free(descriptor.user_id);
 
@@ -716,6 +744,9 @@ end:
 
 	if (obj->class == CKO_DATA && user_id.array)
 		free(user_id.array);
+
+	if (desc_user_id.array)
+		free(desc_user_id.array);
 
 	return ret;
 }

@@ -1885,16 +1885,9 @@ static int generate_cipher_key_check_user_id(CK_FUNCTION_LIST_PTR pfunc)
 		if (CHECK_CK_RV(CKR_OK, "C_GetAttributeValue"))
 			goto end;
 
-		if (hgeneratedkey == hkey[i]) {
-			if (CHECK_EXPECTED(getkeyAttr->ulValueLen == 0,
-					   "CKA_ID not defined as expected"))
-				goto end;
-
-		} else {
-			if (CHECK_EXPECTED(getkeyAttr->ulValueLen != 0,
-					   "CKA_ID attribute found"))
-				goto end;
-		}
+		if (CHECK_EXPECTED(getkeyAttr->ulValueLen != 0,
+				   "CKA_ID attribute not found"))
+			goto end;
 	}
 
 	for (i = 0; i < nb_keys_match; i++) {
